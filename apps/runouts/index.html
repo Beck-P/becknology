@@ -3,27 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chore Chaos App</title>
+  <title>Runouts</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script type="importmap">
-  {
-    "imports": {
-      "react": "https://esm.sh/react@18",
-      "react/jsx-runtime": "https://esm.sh/react@18/jsx-runtime",
-      "react-dom": "https://esm.sh/react-dom@18",
-      "react-dom/client": "https://esm.sh/react-dom@18/client",
-      "framer-motion": "https://esm.sh/framer-motion@11?external=react,react-dom"
-    }
-  }
-  </script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     html, body { min-height: 100%; }
     body {
       margin: 0;
-      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      background: #0a0a1a;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    select option { background: #1e1e2e; color: #e2e8f0; }
+    .pixel-font { font-family: 'Press Start 2P', monospace; }
+    @keyframes scanline { 0% { top: -100%; } 100% { top: 100%; } }
+    @keyframes flicker { 0%,100% { opacity: 1; } 92% { opacity: 1; } 93% { opacity: 0.8; } 94% { opacity: 1; } }
+    @keyframes neon-pulse { 0%,100% { text-shadow: 0 0 10px #818cf8, 0 0 40px #6366f1, 0 0 80px #4f46e5; } 50% { text-shadow: 0 0 20px #a5b4fc, 0 0 60px #818cf8, 0 0 120px #6366f1; } }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .crt-scanlines::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); pointer-events: none; z-index: 1; }
+    .neon-text { animation: neon-pulse 3s ease-in-out infinite; }
+    .float-slow { animation: float 4s ease-in-out infinite; }
+    .float-med { animation: float 3s ease-in-out infinite 0.5s; }
+    .float-fast { animation: float 2.5s ease-in-out infinite 1s; }
+    .pixel-border { border: 3px solid; border-image: repeating-linear-gradient(90deg, #6366f1 0px, #6366f1 4px, transparent 4px, transparent 8px) 3; }
+    .pixel-border-cyan { border: 3px solid; border-image: repeating-linear-gradient(90deg, #22d3ee 0px, #22d3ee 4px, transparent 4px, transparent 8px) 3; }
+    .pixel-border-pink { border: 3px solid; border-image: repeating-linear-gradient(90deg, #ec4899 0px, #ec4899 4px, transparent 4px, transparent 8px) 3; }
+    .arcade-card { transition: all 0.15s; }
+    .arcade-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 0 20px rgba(99,102,241,0.3), 0 8px 30px rgba(0,0,0,0.4); }
+    .arcade-card:active { transform: translateY(0) scale(0.98); }
+    @keyframes coin-spin { 0% { transform: rotateY(0); } 100% { transform: rotateY(360deg); } }
+    .coin-spin { animation: coin-spin 2s linear infinite; display: inline-block; }
     @keyframes pulse-glow-rose {
       0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
       50% { box-shadow: 0 0 28px 10px rgba(244, 63, 94, 0.35); }
@@ -38,13 +49,23 @@
 </head>
 <body>
   <div id="root">
-    <div style="padding:24px;font-family:system-ui,sans-serif;color:#0f172a;">Loading app…</div>
+    <div style="padding:24px;font-family:monospace;color:#6366f1;text-align:center;margin-top:40vh;">Loading...</div>
   </div>
 
-  <script type="text/babel" data-type="module" data-presets="react">
-    import React, { useMemo, useState, useEffect } from "react";
-    import { createRoot } from "react-dom/client";
-    import { AnimatePresence, motion } from "framer-motion";
+  <script type="text/babel" data-presets="react">
+    const { useMemo, useState, useEffect } = React;
+
+    // Motion shim — renders plain elements, strips animation props
+    const stripMotionProps = (props) => {
+      const omit = new Set(['initial', 'animate', 'exit', 'transition', 'layout', 'layoutId', 'whileHover', 'whileTap', 'whileInView', 'viewport']);
+      return Object.fromEntries(Object.entries(props).filter(([key]) => !omit.has(key)));
+    };
+    const motion = new Proxy({}, {
+      get: (_, tag) => React.forwardRef(({ children, ...props }, ref) => React.createElement(tag, { ref, ...stripMotionProps(props) }, children))
+    });
+    function AnimatePresence({ children }) {
+      return <>{children}</>;
+    }
 
     function Icon({ symbol, className = '' }) {
       return <span className={className} aria-hidden="true" style={{display:'inline-flex',alignItems:'center',justifyContent:'center'}}>{symbol}</span>;
@@ -241,62 +262,72 @@ const HORSE_EMOJIS = ["🐎", "🦄", "🐴", "🏇"];
 const MODE_META = [
   {
     id: "holdem",
-    name: "Texas Hold'em",
-    blurb: "2 hole cards each, then the board flips out before the weakest hand gets stuck.",
+    name: "Texas Hold’em",
+    icon: "🃏",
+    blurb: "2 hole cards, board flips, weakest hand loses.",
     accent: "from-sky-500 to-blue-600",
   },
   {
     id: "plo",
     name: "PLO",
-    blurb: "4 hole cards each, exact Omaha rules, animated reveal all the way through showdown.",
+    icon: "🂠",
+    blurb: "4 hole cards, Omaha rules, full showdown.",
     accent: "from-violet-500 to-fuchsia-600",
   },
   {
     id: "rng",
     name: "Random Number",
-    blurb: "Everybody gets a dramatic random number reveal. Lowest loses.",
+    icon: "#️⃣",
+    blurb: "Dramatic number reveal. Lowest loses.",
     accent: "from-emerald-500 to-green-600",
   },
   {
     id: "wheel",
     name: "Wheel Spinner",
-    blurb: "Classic wheel-of-doom energy with a full spin animation.",
+    icon: "🎡",
+    blurb: "Spin the wheel of doom.",
     accent: "from-orange-500 to-amber-600",
   },
   {
     id: "dice",
     name: "Dice Duel",
-    blurb: "Each person gets their dice one at a time. Lowest total gets picked.",
+    icon: "🎲",
+    blurb: "Roll 2d6. Lowest total gets picked.",
     accent: "from-rose-500 to-red-600",
   },
   {
     id: "high-card",
-    name: "High Card Draw",
-    blurb: "One card each, flipped with suspense. Lowest card loses.",
+    name: "High Card",
+    icon: "🂡",
+    blurb: "One card each. Lowest rank loses.",
     accent: "from-cyan-500 to-sky-600",
   },
   {
     id: "coin-flips",
-    name: "Coin Flip Gauntlet",
-    blurb: "Five rounds of flips. Fewest heads gets stuck doing it.",
+    name: "Coin Gauntlet",
+    icon: "🪙",
+    blurb: "5 flips. Fewest heads gets stuck.",
     accent: "from-yellow-500 to-orange-500",
   },
   {
     id: "black-marble",
     name: "Black Marble",
-    blurb: "Draw order plays out on screen until the bad marble appears.",
+    icon: "🔮",
+    blurb: "Draw until someone hits the black one.",
     accent: "from-slate-700 to-slate-900",
   },
   {
     id: "slots",
     name: "Slot Machine",
-    blurb: "Each player’s slot result pops in with casino-style drama.",
+    icon: "🎰",
+    blurb: "Casino reels. Worst combo loses.",
     accent: "from-pink-500 to-rose-600",
   },
   {
     id: "horse-race",
-    name: "Lucky Horse Race",
-    blurb: "Watch twelve random turns move the racers live on the track.",
+    name: "Horse Race",
+    icon: "🏇",
+    blurb: "12 random turns on the track.",
     accent: "from-lime-500 to-emerald-600",
   },
 ];
@@ -1340,7 +1371,7 @@ function WheelPlayback({ result, step, done }) {
             </div>
           </div>
 
-          <div className={`grid w-full grid-cols-2 gap-3 ${result.wheel.names.length <= 4 ? "sm:grid-cols-4" : "sm:grid-cols-3 lg:grid-cols-4"}`}
+          <div className={`grid w-full grid-cols-2 gap-3 ${result.wheel.names.length <= 4 ? "sm:grid-cols-4" : "sm:grid-cols-3 lg:grid-cols-4"}`}>
             {result.wheel.names.map((name, index) => {
               const isSelected = done && name === result.selectedName;
               const isWinner = result.selectionGoal === "winner";
@@ -1824,7 +1855,7 @@ function PlaybackStage({ result, step, done }) {
 
 function ChoreChaosApp() {
   const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
-  const [taskLabel, setTaskLabel] = useState("do the chores");
+  const [taskLabel, setTaskLabel] = useState("");
   const [selectionGoal, setSelectionGoal] = useState("winner");
   const [selectedModeId, setSelectedModeId] = useState("auto");
   const [gameFormat, setGameFormat] = useState("single");
@@ -1934,228 +1965,167 @@ function ChoreChaosApp() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),_transparent_28%),linear-gradient(180deg,_#f8fafc_0%,_#f1f5f9_100%)] p-4 text-slate-900 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="mb-6 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-          <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur xl:p-8">
-            <div className="mb-5 flex items-center gap-3 text-sky-600">
-              <div className="rounded-2xl bg-sky-100 p-3">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-sky-700">
-                Chore Chaos
-              </span>
+    <div className="relative min-h-screen overflow-hidden bg-[#0a0a1a] p-4 text-white sm:p-6 lg:p-8">
+      <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.2) 0%, transparent 50%), radial-gradient(ellipse at 20% 100%, rgba(236,72,153,0.12) 0%, transparent 40%), radial-gradient(ellipse at 80% 60%, rgba(34,211,238,0.08) 0%, transparent 35%)" }} />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+
+      <div className="relative mx-auto max-w-6xl">
+
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
+          <div className="mb-4 flex items-center justify-center gap-4">
+            <span className="float-slow text-4xl">👾</span>
+            <span className="float-med text-3xl">🕹️</span>
+            <span className="float-fast text-4xl">🎮</span>
+          </div>
+          <h1 className="pixel-font neon-text text-3xl tracking-wider sm:text-5xl" style={{ color: "#a5b4fc" }}>
+            RUNOUTS
+          </h1>
+          <p className="pixel-font mt-4 text-[8px] uppercase leading-relaxed tracking-widest text-cyan-400/70 sm:text-[10px]">
+            Insert coins ● Pick a game ● Someone loses
+          </p>
+          <div className="mx-auto mt-3 h-[2px] w-48 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="crt-scanlines relative mb-10 overflow-hidden bg-[#0d0d24] p-5 sm:p-6" style={{ border: "3px solid #2d2b6b", boxShadow: "0 0 30px rgba(99,102,241,0.15), inset 0 0 60px rgba(0,0,0,0.5)" }}>
+          <div className="relative z-10">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="pixel-font text-[10px] text-fuchsia-400">▶</span>
+              <span className="pixel-font text-[9px] uppercase tracking-widest text-fuchsia-400">Players</span>
             </div>
-
-            <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
-              Animated random game modes to decide who gets stuck with the chores.
-            </h1>
-            <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
-              Add names, choose a single-round or tournament format, and launch a full-screen game view that takes over until the reveal is complete.
-            </p>
-
-            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {names.map((name, index) => (
-                <div key={index} className="block">
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="text-sm font-semibold text-slate-500">Person {index + 1}</div>
-                    {names.length > 2 ? (
-                      <button
-                        onClick={() => removePlayer(index)}
-                        className="rounded-full px-2 py-0.5 text-xs font-medium text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
-                      >
-                        Remove
-                      </button>
-                    ) : null}
-                  </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {names.map((name, index) => {
+                const colors = ["text-cyan-400 border-cyan-500/30 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(34,211,238,0.25)]", "text-fuchsia-400 border-fuchsia-500/30 focus:border-fuchsia-400 focus:shadow-[0_0_20px_rgba(236,72,153,0.25)]", "text-green-400 border-green-500/30 focus:border-green-400 focus:shadow-[0_0_20px_rgba(34,197,94,0.25)]", "text-amber-400 border-amber-500/30 focus:border-amber-400 focus:shadow-[0_0_20px_rgba(245,158,11,0.25)]"];
+                return (
+                <div key={index} className="group relative">
+                  <div className="pixel-font absolute left-3 top-1/2 -translate-y-1/2 text-[8px] text-slate-600">P{index + 1}</div>
                   <input
                     value={name}
                     onChange={(event) => updateName(index, event.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    placeholder={`Name ${index + 1}`}
+                    className={`w-full border bg-black/40 px-4 py-3 pl-10 font-mono text-sm outline-none transition ${colors[index % colors.length]}`}
+                    placeholder="..."
                   />
+                  {names.length > 2 ? (
+                    <button
+                      onClick={() => removePlayer(index)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-1 font-mono text-xs text-slate-700 opacity-0 transition hover:text-rose-400 group-hover:opacity-100"
+                    >
+                      ×
+                    </button>
+                  ) : null}
                 </div>
-              ))}
+                );
+              })}
               <button
                 onClick={addPlayer}
-                className="flex h-[4.5rem] items-center justify-center self-end rounded-2xl border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-400 transition hover:border-sky-400 hover:text-sky-600"
+                className="flex items-center justify-center border border-dashed border-white/10 py-3 font-mono text-xs text-slate-600 transition hover:border-indigo-500/50 hover:text-indigo-400"
               >
-                + Add person
+                + ADD PLAYER
               </button>
             </div>
 
-            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_180px_180px_220px]">
-              <label className="block">
-                <div className="mb-2 text-sm font-semibold text-slate-500">Stakes</div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div>
+                <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-yellow-500/80">What's at stake</div>
                 <input
                   value={taskLabel}
                   onChange={(event) => setTaskLabel(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                  placeholder={selectionGoal === "winner" ? "skip chores" : "do the dishes"}
+                  className="w-full border border-yellow-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-yellow-300 placeholder-slate-600 outline-none transition focus:border-yellow-400 focus:shadow-[0_0_16px_rgba(234,179,8,0.2)]"
+                  placeholder="enter the stakes..."
                 />
-              </label>
-
-              <label className="block">
-                <div className="mb-2 text-sm font-semibold text-slate-500">Format</div>
+              </div>
+              <div>
+                <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-green-500/80">Format</div>
                 <select
                   value={gameFormat}
                   onChange={(event) => setGameFormat(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-[0.95rem] text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                  className="w-full border border-green-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-green-300 outline-none transition focus:border-green-400"
                 >
-                  <option value="single">Single round</option>
+                  <option value="single">Single Round</option>
                   <option value="tournament">Tournament</option>
                 </select>
-              </label>
-
-              <label className="block">
-                <div className="mb-2 text-sm font-semibold text-slate-500">Pick a...</div>
+              </div>
+              <div>
+                <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-rose-500/80">Picking a...</div>
                 <select
                   value={selectionGoal}
                   onChange={(event) => setSelectionGoal(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-[0.95rem] text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                  className="w-full border border-rose-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-rose-300 outline-none transition focus:border-rose-400"
                 >
                   <option value="loser">Loser</option>
                   <option value="winner">Winner</option>
                 </select>
-              </label>
-
-              <label className="block">
-                <div className="mb-2 text-sm font-semibold text-slate-500">Manual mode</div>
-                <select
-                  value={selectedModeId}
-                  onChange={(event) => setSelectedModeId(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-[0.95rem] text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                >
-                  <option value="auto">Auto-pick a random mode</option>
-                  {MODE_META.map((mode) => (
-                    <option key={mode.id} value={mode.id}>
-                      {mode.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                onClick={() => startGame()}
-                disabled={!canRun}
-                className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Shuffle className="h-4 w-4" />
-                Play game
-              </button>
-
-              <button
-                onClick={() => startGame(selectedModeId === "auto" ? pickRandom(MODES).id : selectedModeId)}
-                disabled={!canRun}
-                className="inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Dices className="h-4 w-4" />
-                Play selected
-              </button>
-
-              <button
-                onClick={playAgain}
-                disabled={!result || !canRun}
-                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Play last game again
-              </button>
-            </div>
-
-            {!hasEnoughPlayers ? <p className="mt-4 text-sm font-medium text-amber-600">Need at least 2 people to play.</p> : null}
-            {hasEnoughPlayers && !allFilled ? <p className="mt-4 text-sm font-medium text-amber-600">Fill in all names to spin it up.</p> : null}
-            {hasEnoughPlayers && allFilled && !namesAreUnique ? <p className="mt-4 text-sm font-medium text-amber-600">Use unique names so the results are crystal clear.</p> : null}
-          </div>
-
-          <div className="rounded-[2rem] border border-white/60 bg-slate-950 p-6 text-white shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-white/10 p-3">
-                <Trophy className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">What you get</div>
-                <div className="mt-1 text-2xl font-bold">The chaos menu</div>
               </div>
             </div>
 
-            <div className="mt-6 grid gap-3">
-              {MODE_META.map((mode) => (
-                <button
-                  key={mode.id}
-                  onClick={() => setSelectedModeId(mode.id)}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    selectedModeId === mode.id ? "border-white/30 bg-white/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
-                  }`}
-                >
-                  <div className="text-base font-semibold">{mode.name}</div>
-                  <div className="mt-1 text-sm leading-6 text-slate-300">{mode.blurb}</div>
-                </button>
-              ))}
-            </div>
+            {!hasEnoughPlayers ? <p className="pixel-font mt-3 text-[8px] text-amber-400">▸ NEED AT LEAST 2 PLAYERS</p> : null}
+            {hasEnoughPlayers && !allFilled ? <p className="pixel-font mt-3 text-[8px] text-amber-400">▸ FILL IN ALL NAMES TO PLAY</p> : null}
+            {hasEnoughPlayers && allFilled && !namesAreUnique ? <p className="pixel-font mt-3 text-[8px] text-amber-400">▸ NAMES MUST BE UNIQUE</p> : null}
           </div>
         </motion.div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
-          <div className="space-y-6">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="rounded-[2rem] border border-dashed border-slate-300 bg-white/70 p-10 text-center shadow-sm">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-sky-100 text-sky-600">
-                <Sparkles className="h-8 w-8" />
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900">Big-screen game mode</h2>
-              <p className="mx-auto mt-3 max-w-2xl text-slate-600">
-                When you hit play, the game takes over the full screen so the group can focus on the reveal. Tournament mode keeps going round by round until only one person has never won. Then use <span className="font-semibold">Exit</span> or <span className="font-semibold">Play again</span>.
-              </p>
-            </motion.div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="rounded-[2rem] border border-white/60 bg-white/85 p-6 shadow-xl backdrop-blur">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl bg-slate-100 p-3 text-slate-700">
-                  <Shuffle className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">Recent picks</div>
-                  <div className="mt-1 text-2xl font-bold text-slate-900">History</div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {history.length ? (
-                  history.map((entry, index) => (
-                    <div key={entry.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">{entry.selectedName}</div>
-                          <div className="text-sm text-slate-500">{entry.modeName} • {entry.format === "tournament" ? "tournament" : entry.selectionGoal === "winner" ? "winner" : "loser"}</div>
-                        </div>
-                        <div className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">#{index + 1}</div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-                    No rounds yet. The first victim will show up here.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-white/60 bg-white/85 p-6 shadow-xl backdrop-blur">
-              <div className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">How it feels now</div>
-              <div className="mt-2 text-2xl font-bold text-slate-900">Tap-through suspense</div>
-              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
-                <p>1. Each mode waits for your click before revealing the next beat.</p>
-                <p>2. Tournament mode makes winners safe and shrinks the field each round.</p>
-                <p>3. The full-screen game view keeps all the attention on the action.</p>
-                <p>4. You can still reveal all whenever the group wants the answer instantly.</p>
-              </div>
-            </div>
-          </div>
+        <div className="mb-5 flex items-center gap-3">
+          <div className="h-[2px] flex-1 bg-gradient-to-r from-indigo-500/50 to-transparent" />
+          <span className="pixel-font text-[9px] uppercase tracking-widest text-indigo-400">Select Game</span>
+          <div className="h-[2px] flex-1 bg-gradient-to-l from-indigo-500/50 to-transparent" />
         </div>
+
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          <button
+            onClick={() => { setSelectedModeId("auto"); startGame(); }}
+            disabled={!canRun}
+            className="arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1))", border: "2px solid rgba(99,102,241,0.4)", boxShadow: "0 0 20px rgba(99,102,241,0.15)" }}
+          >
+            <div className="coin-spin mb-3 text-4xl">🎲</div>
+            <div className="pixel-font text-[10px] text-indigo-300" style={{ textShadow: "0 0 10px rgba(129,140,248,0.5)" }}>RANDOM</div>
+            <div className="pixel-font mt-2 text-[7px] text-indigo-400/60">??? SURPRISE ???</div>
+          </button>
+
+          {MODE_META.map((mode) => (
+            <button
+              key={mode.id}
+              onClick={() => { setSelectedModeId(mode.id); startGame(mode.id); }}
+              disabled={!canRun}
+              className="arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="relative">
+                <div className="mb-3 text-4xl transition-transform group-hover:scale-125" style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.2))" }}>{mode.icon}</div>
+                <div className="pixel-font text-[9px] leading-tight text-white">{mode.name}</div>
+                <div className="pixel-font mt-2 text-[6px] leading-relaxed text-slate-500">{mode.blurb}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {result ? (
+          <div className="mb-6 flex justify-center">
+            <button
+              onClick={playAgain}
+              disabled={!canRun}
+              className="pixel-font inline-flex items-center gap-2 border border-cyan-500/30 bg-cyan-500/10 px-5 py-3 text-[8px] text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-40"
+            >
+              ↻ REPLAY {MODE_META.find(m => m.id === result.modeId)?.name?.toUpperCase()}
+            </button>
+          </div>
+        ) : null}
+
+        {history.length ? (
+          <div className="mb-6 border-t border-white/[0.05] pt-5">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="pixel-font text-[7px] uppercase tracking-widest text-slate-600">Recent</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {history.map((entry) => (
+                <div key={entry.id} className="border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                  <span className="pixel-font text-[8px] text-white">{entry.selectedName}</span>
+                  <span className="pixel-font ml-2 text-[7px] text-slate-600">{entry.modeName}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <AnimatePresence>
@@ -2251,7 +2221,7 @@ function ChoreChaosApp() {
   );
 }
 
-    createRoot(document.getElementById('root')).render(<ChoreChaosApp />);
+    ReactDOM.createRoot(document.getElementById('root')).render(<ChoreChaosApp />);
   </script>
 </body>
 </html>
