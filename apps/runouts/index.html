@@ -226,7 +226,7 @@ const RANK_PLURALS = {
   13: "Kings",
   14: "Aces",
 };
-const WHEEL_COLORS = ["#60a5fa", "#f472b6", "#f59e0b", "#34d399"];
+const WHEEL_COLORS = ["#60a5fa", "#f472b6", "#f59e0b", "#34d399", "#a78bfa", "#fb923c", "#22d3ee", "#f87171"];
 const SLOT_SYMBOLS = ["🍒", "🍋", "⭐", "🍀", "🔔", "7️⃣"];
 const SLOT_WEIGHTS = {
   "🍒": 2,
@@ -760,7 +760,7 @@ function buildWheelResult(names, taskLabel, selectionGoal, currentRotation) {
       headline: name === selectedName ? "Wheel landed here" : "Missed by fate",
       subline: name === selectedName ? `Selected as ${choosingWinner ? "winner" : "loser"}` : "Safe this round",
       selected: name === selectedName,
-      chips: ["25% slice"],
+      chips: [`${Math.round(100 / names.length)}% slice`],
     })),
   };
 }
@@ -862,7 +862,7 @@ function buildBlackMarbleResult(names, taskLabel, selectionGoal) {
   const choosingWinner = selectionGoal === "winner";
   const targetMarble = choosingWinner ? "Gold" : "Black";
   const safeMarble = choosingWinner ? "Black" : "White";
-  const bag = shuffle([safeMarble, safeMarble, safeMarble, targetMarble]);
+  const bag = shuffle([...Array(names.length - 1).fill(safeMarble), targetMarble]);
   const order = shuffle(names);
   const selectedName = order[bag.indexOf(targetMarble)];
 
@@ -1340,7 +1340,7 @@ function WheelPlayback({ result, step, done }) {
             </div>
           </div>
 
-          <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className={`grid w-full grid-cols-2 gap-3 ${result.wheel.names.length <= 4 ? "sm:grid-cols-4" : "sm:grid-cols-3 lg:grid-cols-4"}`}
             {result.wheel.names.map((name, index) => {
               const isSelected = done && name === result.selectedName;
               const isWinner = result.selectionGoal === "winner";
@@ -1836,14 +1836,25 @@ function ChoreChaosApp() {
   const [gameActive, setGameActive] = useState(false);
 
   const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
-  const nameSet = new Set(cleanedNames.filter(Boolean));
-  const hasFourNames = cleanedNames.every(Boolean);
-  const namesAreUnique = nameSet.size === 4;
-  const canRun = hasFourNames && namesAreUnique;
+  const filledNames = cleanedNames.filter(Boolean);
+  const nameSet = new Set(filledNames);
+  const allFilled = cleanedNames.every(Boolean);
+  const namesAreUnique = nameSet.size === cleanedNames.length;
+  const hasEnoughPlayers = cleanedNames.length >= 2;
+  const canRun = allFilled && namesAreUnique && hasEnoughPlayers;
   const currentConfig = result ? getPlaybackConfig(result) : null;
 
   function updateName(index, value) {
     setNames((current) => current.map((entry, idx) => (idx === index ? value : entry)));
+  }
+
+  function addPlayer() {
+    setNames((current) => [...current, ""]);
+  }
+
+  function removePlayer(index) {
+    if (names.length <= 2) return;
+    setNames((current) => current.filter((_, idx) => idx !== index));
   }
 
   function pushHistory(outcome) {
@@ -1940,21 +1951,37 @@ function ChoreChaosApp() {
               Animated random game modes to decide who gets stuck with the chores.
             </h1>
             <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
-              Add four names, choose a single-round or tournament format, and launch a full-screen game view that takes over until the reveal is complete.
+              Add names, choose a single-round or tournament format, and launch a full-screen game view that takes over until the reveal is complete.
             </p>
 
             <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {cleanedNames.map((name, index) => (
-                <label key={index} className="block">
-                  <div className="mb-2 text-sm font-semibold text-slate-500">Person {index + 1}</div>
+              {names.map((name, index) => (
+                <div key={index} className="block">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="text-sm font-semibold text-slate-500">Person {index + 1}</div>
+                    {names.length > 2 ? (
+                      <button
+                        onClick={() => removePlayer(index)}
+                        className="rounded-full px-2 py-0.5 text-xs font-medium text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
                   <input
                     value={name}
                     onChange={(event) => updateName(index, event.target.value)}
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
                     placeholder={`Name ${index + 1}`}
                   />
-                </label>
+                </div>
               ))}
+              <button
+                onClick={addPlayer}
+                className="flex h-[4.5rem] items-center justify-center self-end rounded-2xl border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-400 transition hover:border-sky-400 hover:text-sky-600"
+              >
+                + Add person
+              </button>
             </div>
 
             <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_180px_180px_220px]">
@@ -2038,8 +2065,9 @@ function ChoreChaosApp() {
               </button>
             </div>
 
-            {!hasFourNames ? <p className="mt-4 text-sm font-medium text-amber-600">Enter all four names to spin it up.</p> : null}
-            {hasFourNames && !namesAreUnique ? <p className="mt-4 text-sm font-medium text-amber-600">Use four unique names so the results are crystal clear.</p> : null}
+            {!hasEnoughPlayers ? <p className="mt-4 text-sm font-medium text-amber-600">Need at least 2 people to play.</p> : null}
+            {hasEnoughPlayers && !allFilled ? <p className="mt-4 text-sm font-medium text-amber-600">Fill in all names to spin it up.</p> : null}
+            {hasEnoughPlayers && allFilled && !namesAreUnique ? <p className="mt-4 text-sm font-medium text-amber-600">Use unique names so the results are crystal clear.</p> : null}
           </div>
 
           <div className="rounded-[2rem] border border-white/60 bg-slate-950 p-6 text-white shadow-xl">
