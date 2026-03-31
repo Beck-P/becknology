@@ -45,6 +45,141 @@
     }
     .pulse-loser { animation: pulse-glow-rose 1.5s ease-in-out infinite; }
     .pulse-winner { animation: pulse-glow-gold 1.5s ease-in-out infinite; }
+
+    /* CRT curvature + vignette */
+    .crt-screen {
+      border-radius: 18px / 12px;
+      box-shadow: 0 0 80px rgba(99,102,241,0.08), inset 0 0 120px rgba(0,0,0,0.3);
+    }
+    .crt-vignette::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+      z-index: 100;
+    }
+    /* Full-page scanlines */
+    .crt-global-scanlines::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 6px);
+      pointer-events: none;
+      z-index: 99;
+    }
+    /* Panel scanlines (more pronounced) */
+    .crt-scanlines::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+      pointer-events: none;
+      z-index: 1;
+    }
+    /* Phosphor glow on text */
+    .phosphor { text-shadow: 0 0 2px currentColor, 0 0 8px currentColor; }
+    /* Screen flicker */
+    @keyframes crt-flicker {
+      0%,100% { opacity: 1; }
+      41% { opacity: 1; }
+      42% { opacity: 0.92; }
+      43% { opacity: 1; }
+      77% { opacity: 1; }
+      78% { opacity: 0.95; }
+      79% { opacity: 1; }
+    }
+    .crt-flicker { animation: crt-flicker 8s infinite; }
+
+    /* Synthwave grid */
+    @keyframes grid-scroll { 0% { transform: perspective(400px) rotateX(65deg) translateY(0); } 100% { transform: perspective(400px) rotateX(65deg) translateY(50px); } }
+    .synthwave-grid {
+      position: absolute;
+      bottom: -40%;
+      left: -20%;
+      right: -20%;
+      height: 80%;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.25) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.25) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: grid-scroll 2s linear infinite;
+      mask-image: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 70%);
+      -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 70%);
+    }
+    /* Starfield */
+    @keyframes twinkle1 { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
+    @keyframes twinkle2 { 0%,100% { opacity: 0.8; } 50% { opacity: 0.15; } }
+    @keyframes twinkle3 { 0%,100% { opacity: 0.5; } 50% { opacity: 0.05; } }
+    .star { position: absolute; width: 2px; height: 2px; border-radius: 50%; }
+    .star-bright { background: #e0e7ff; box-shadow: 0 0 4px 1px rgba(165,180,252,0.6); }
+    .star-dim { background: #818cf8; box-shadow: 0 0 2px rgba(129,140,248,0.4); }
+    .star-pink { background: #f9a8d4; box-shadow: 0 0 3px rgba(244,114,182,0.5); }
+
+    /* CSS Pixel Art Sprites */
+    .pixel-sprite { position: absolute; image-rendering: pixelated; pointer-events: none; }
+    /* Space invader (11x8 grid, 4px per pixel) */
+    .invader {
+      width: 4px; height: 4px; background: transparent;
+      box-shadow:
+        8px 0 0 var(--pc), 32px 0 0 var(--pc),
+        12px 4px 0 var(--pc), 16px 4px 0 var(--pc), 20px 4px 0 var(--pc), 24px 4px 0 var(--pc), 28px 4px 0 var(--pc),
+        4px 8px 0 var(--pc), 8px 8px 0 var(--pc), 12px 8px 0 var(--pc), 16px 8px 0 var(--pc), 20px 8px 0 var(--pc), 24px 8px 0 var(--pc), 28px 8px 0 var(--pc), 32px 8px 0 var(--pc), 36px 8px 0 var(--pc),
+        0px 12px 0 var(--pc), 4px 12px 0 var(--pc), 8px 12px 0 var(--pc), 12px 12px 0 var(--pc), 16px 12px 0 var(--pc), 20px 12px 0 var(--pc), 24px 12px 0 var(--pc), 28px 12px 0 var(--pc), 32px 12px 0 var(--pc), 36px 12px 0 var(--pc), 40px 12px 0 var(--pc),
+        0px 16px 0 var(--pc), 8px 16px 0 var(--pc), 12px 16px 0 var(--pc), 16px 16px 0 var(--pc), 20px 16px 0 var(--pc), 24px 16px 0 var(--pc), 28px 16px 0 var(--pc), 32px 16px 0 var(--pc), 40px 16px 0 var(--pc),
+        0px 20px 0 var(--pc), 8px 20px 0 var(--pc), 32px 20px 0 var(--pc), 40px 20px 0 var(--pc),
+        12px 24px 0 var(--pc), 16px 24px 0 var(--pc), 24px 24px 0 var(--pc), 28px 24px 0 var(--pc);
+    }
+    /* Pixel coin (8x8 grid, 3px per pixel) */
+    .pixel-coin {
+      width: 3px; height: 3px; background: transparent;
+      box-shadow:
+        6px 0 0 #fbbf24, 9px 0 0 #fbbf24, 12px 0 0 #fbbf24,
+        3px 3px 0 #fbbf24, 6px 3px 0 #fcd34d, 9px 3px 0 #fcd34d, 12px 3px 0 #fcd34d, 15px 3px 0 #fbbf24,
+        0px 6px 0 #fbbf24, 3px 6px 0 #fcd34d, 6px 6px 0 #fde68a, 9px 6px 0 #fbbf24, 12px 6px 0 #fde68a, 15px 6px 0 #fcd34d, 18px 6px 0 #fbbf24,
+        0px 9px 0 #fbbf24, 3px 9px 0 #fcd34d, 6px 9px 0 #fde68a, 9px 9px 0 #fbbf24, 12px 9px 0 #fde68a, 15px 9px 0 #fcd34d, 18px 9px 0 #fbbf24,
+        0px 12px 0 #fbbf24, 3px 12px 0 #fcd34d, 6px 12px 0 #fde68a, 9px 12px 0 #fbbf24, 12px 12px 0 #fde68a, 15px 12px 0 #fcd34d, 18px 12px 0 #fbbf24,
+        3px 15px 0 #fbbf24, 6px 15px 0 #fcd34d, 9px 15px 0 #fcd34d, 12px 15px 0 #fcd34d, 15px 15px 0 #fbbf24,
+        6px 18px 0 #fbbf24, 9px 18px 0 #fbbf24, 12px 18px 0 #fbbf24;
+    }
+    /* Pixel heart (7x6 grid, 3px per pixel) */
+    .pixel-heart {
+      width: 3px; height: 3px; background: transparent;
+      box-shadow:
+        3px 0 0 #f43f5e, 6px 0 0 #f43f5e, 12px 0 0 #f43f5e, 15px 0 0 #f43f5e,
+        0px 3px 0 #f43f5e, 3px 3px 0 #fb7185, 6px 3px 0 #fb7185, 9px 3px 0 #f43f5e, 12px 3px 0 #fb7185, 15px 3px 0 #fb7185, 18px 3px 0 #f43f5e,
+        0px 6px 0 #f43f5e, 3px 6px 0 #fb7185, 6px 6px 0 #fb7185, 9px 6px 0 #fb7185, 12px 6px 0 #fb7185, 15px 6px 0 #fb7185, 18px 6px 0 #f43f5e,
+        3px 9px 0 #f43f5e, 6px 9px 0 #fb7185, 9px 9px 0 #fb7185, 12px 9px 0 #fb7185, 15px 9px 0 #f43f5e,
+        6px 12px 0 #f43f5e, 9px 12px 0 #fb7185, 12px 12px 0 #f43f5e,
+        9px 15px 0 #f43f5e;
+    }
+    /* Pixel joystick (7x9 grid, 3px per pixel) */
+    .pixel-joystick {
+      width: 3px; height: 3px; background: transparent;
+      box-shadow:
+        6px 0 0 #818cf8, 9px 0 0 #818cf8, 12px 0 0 #818cf8,
+        6px 3px 0 #a5b4fc, 9px 3px 0 #6366f1, 12px 3px 0 #a5b4fc,
+        9px 6px 0 #6366f1,
+        9px 9px 0 #6366f1,
+        9px 12px 0 #6366f1,
+        3px 15px 0 #475569, 6px 15px 0 #475569, 9px 15px 0 #475569, 12px 15px 0 #475569, 15px 15px 0 #475569,
+        0px 18px 0 #334155, 3px 18px 0 #475569, 6px 18px 0 #64748b, 9px 18px 0 #64748b, 12px 18px 0 #64748b, 15px 18px 0 #475569, 18px 18px 0 #334155,
+        0px 21px 0 #334155, 3px 21px 0 #334155, 6px 21px 0 #475569, 9px 21px 0 #475569, 12px 21px 0 #475569, 15px 21px 0 #334155, 18px 21px 0 #334155;
+    }
+    /* Pixel divider */
+    .pixel-divider {
+      height: 6px;
+      background: repeating-linear-gradient(90deg,
+        transparent 0px, transparent 4px,
+        #6366f1 4px, #6366f1 8px,
+        transparent 8px, transparent 16px,
+        #ec4899 16px, #ec4899 20px,
+        transparent 20px, transparent 28px,
+        #22d3ee 28px, #22d3ee 32px,
+        transparent 32px, transparent 40px
+      );
+      opacity: 0.4;
+    }
   </style>
 </head>
 <body>
@@ -1965,32 +2100,77 @@ function ChoreChaosApp() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0a0a1a] p-4 text-white sm:p-6 lg:p-8">
+    <div className="crt-vignette crt-global-scanlines crt-flicker relative min-h-screen overflow-hidden bg-[#0a0a1a] text-white">
+      {/* Gradient orbs */}
       <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.2) 0%, transparent 50%), radial-gradient(ellipse at 20% 100%, rgba(236,72,153,0.12) 0%, transparent 40%), radial-gradient(ellipse at 80% 60%, rgba(34,211,238,0.08) 0%, transparent 35%)" }} />
+      {/* Dot grid */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+      {/* Starfield */}
+      <div className="pointer-events-none absolute inset-0">
+        {[
+          { x: 8, y: 5, c: "star-bright", a: "twinkle1", d: "3s" },
+          { x: 15, y: 12, c: "star-dim", a: "twinkle2", d: "4s" },
+          { x: 25, y: 3, c: "star-pink", a: "twinkle3", d: "5s" },
+          { x: 35, y: 18, c: "star-bright", a: "twinkle1", d: "3.5s" },
+          { x: 45, y: 7, c: "star-dim", a: "twinkle2", d: "6s" },
+          { x: 55, y: 22, c: "star-pink", a: "twinkle1", d: "4.5s" },
+          { x: 65, y: 4, c: "star-bright", a: "twinkle3", d: "5.5s" },
+          { x: 72, y: 15, c: "star-dim", a: "twinkle2", d: "3.2s" },
+          { x: 82, y: 8, c: "star-pink", a: "twinkle1", d: "4.8s" },
+          { x: 90, y: 20, c: "star-bright", a: "twinkle3", d: "6.5s" },
+          { x: 5, y: 35, c: "star-dim", a: "twinkle1", d: "7s" },
+          { x: 18, y: 28, c: "star-bright", a: "twinkle2", d: "3.8s" },
+          { x: 38, y: 32, c: "star-pink", a: "twinkle3", d: "5.2s" },
+          { x: 60, y: 30, c: "star-dim", a: "twinkle1", d: "4.2s" },
+          { x: 78, y: 35, c: "star-bright", a: "twinkle2", d: "6.2s" },
+          { x: 92, y: 38, c: "star-pink", a: "twinkle3", d: "3.6s" },
+          { x: 12, y: 45, c: "star-bright", a: "twinkle1", d: "5.8s" },
+          { x: 50, y: 42, c: "star-dim", a: "twinkle2", d: "4.4s" },
+          { x: 85, y: 48, c: "star-pink", a: "twinkle1", d: "7.2s" },
+          { x: 30, y: 50, c: "star-bright", a: "twinkle3", d: "3.4s" },
+        ].map((s, i) => (
+          <div key={i} className={`star ${s.c}`} style={{ left: `${s.x}%`, top: `${s.y}%`, animation: `${s.a} ${s.d} ease-in-out infinite` }} />
+        ))}
+      </div>
+      {/* Synthwave grid */}
+      <div className="synthwave-grid" />
+      {/* Pixel art corner sprites */}
+      <div className="pixel-sprite invader float-slow" style={{ '--pc': '#818cf8', top: '15%', left: '3%', opacity: 0.3 }} />
+      <div className="pixel-sprite invader float-med" style={{ '--pc': '#f472b6', top: '40%', right: '2%', opacity: 0.25, transform: 'scale(0.8)' }} />
+      <div className="pixel-sprite pixel-coin float-fast" style={{ top: '25%', right: '5%', opacity: 0.35 }} />
+      <div className="pixel-sprite pixel-heart float-slow" style={{ bottom: '30%', left: '4%', opacity: 0.3 }} />
+      <div className="pixel-sprite pixel-joystick float-med" style={{ bottom: '20%', right: '4%', opacity: 0.25 }} />
+      <div className="pixel-sprite pixel-coin float-fast" style={{ top: '60%', left: '6%', opacity: 0.2, transform: 'scale(0.7)' }} />
 
-      <div className="relative mx-auto max-w-6xl">
+      <div className="crt-screen relative mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
 
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
-          <div className="mb-4 flex items-center justify-center gap-4">
-            <span className="float-slow text-4xl">👾</span>
-            <span className="float-med text-3xl">🕹️</span>
-            <span className="float-fast text-4xl">🎮</span>
+          <div className="relative mb-6 flex items-center justify-center gap-8">
+            <div className="float-slow relative" style={{ width: 44, height: 32 }}>
+              <div className="invader" style={{ '--pc': '#22d3ee' }} />
+            </div>
+            <div className="float-med relative" style={{ width: 21, height: 27 }}>
+              <div className="pixel-joystick" />
+            </div>
+            <div className="float-fast relative" style={{ width: 44, height: 32 }}>
+              <div className="invader" style={{ '--pc': '#f472b6' }} />
+            </div>
           </div>
           <h1 className="pixel-font neon-text text-3xl tracking-wider sm:text-5xl" style={{ color: "#a5b4fc" }}>
             RUNOUTS
           </h1>
-          <p className="pixel-font mt-4 text-[8px] uppercase leading-relaxed tracking-widest text-cyan-400/70 sm:text-[10px]">
+          <p className="pixel-font phosphor mt-4 text-[8px] uppercase leading-relaxed tracking-widest text-cyan-400/70 sm:text-[10px]">
             Insert coins ● Pick a game ● Someone loses
           </p>
-          <div className="mx-auto mt-3 h-[2px] w-48 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+          <div className="mx-auto mt-4 h-[2px] w-64 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+          <div className="mx-auto mt-1 h-[1px] w-48 bg-gradient-to-r from-transparent via-fuchsia-500/50 to-transparent" />
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="crt-scanlines relative mb-10 overflow-hidden bg-[#0d0d24] p-5 sm:p-6" style={{ border: "3px solid #2d2b6b", boxShadow: "0 0 30px rgba(99,102,241,0.15), inset 0 0 60px rgba(0,0,0,0.5)" }}>
           <div className="relative z-10">
             <div className="mb-4 flex items-center gap-2">
               <span className="pixel-font text-[10px] text-fuchsia-400">▶</span>
-              <span className="pixel-font text-[9px] uppercase tracking-widest text-fuchsia-400">Players</span>
+              <span className="pixel-font phosphor text-[9px] uppercase tracking-widest text-fuchsia-400">Players</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {names.map((name, index) => {
@@ -2063,10 +2243,18 @@ function ChoreChaosApp() {
           </div>
         </motion.div>
 
-        <div className="mb-5 flex items-center gap-3">
-          <div className="h-[2px] flex-1 bg-gradient-to-r from-indigo-500/50 to-transparent" />
-          <span className="pixel-font text-[9px] uppercase tracking-widest text-indigo-400">Select Game</span>
-          <div className="h-[2px] flex-1 bg-gradient-to-l from-indigo-500/50 to-transparent" />
+        <div className="pixel-divider mb-6" />
+
+        <div className="mb-5 flex items-center gap-4">
+          <div className="relative" style={{ width: 21, height: 21 }}>
+            <div className="pixel-coin" style={{ transform: 'scale(0.8)' }} />
+          </div>
+          <div className="h-[2px] flex-1 bg-gradient-to-r from-fuchsia-500/50 via-indigo-500/30 to-transparent" />
+          <span className="pixel-font phosphor text-[9px] uppercase tracking-widest text-indigo-400">Select Game</span>
+          <div className="h-[2px] flex-1 bg-gradient-to-l from-cyan-500/50 via-indigo-500/30 to-transparent" />
+          <div className="relative" style={{ width: 21, height: 21 }}>
+            <div className="pixel-coin" style={{ transform: 'scale(0.8)' }} />
+          </div>
         </div>
 
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
@@ -2112,7 +2300,8 @@ function ChoreChaosApp() {
         ) : null}
 
         {history.length ? (
-          <div className="mb-6 border-t border-white/[0.05] pt-5">
+          <div className="mb-6 pt-2">
+            <div className="pixel-divider mb-5" />
             <div className="mb-3 flex items-center gap-2">
               <span className="pixel-font text-[7px] uppercase tracking-widest text-slate-600">Recent</span>
             </div>
