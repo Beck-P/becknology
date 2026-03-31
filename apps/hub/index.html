@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beck's Apps</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4rem 2rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #888;
+      margin-bottom: 3rem;
+      font-size: 1.1rem;
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .app-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .app-card:hover {
+      border-color: #555;
+      transform: translateY(-2px);
+    }
+
+    .app-card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .app-card p {
+      color: #888;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #2a2a2a;
+      color: #aaa;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      margin-top: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Beck's Apps</h1>
+  <p class="subtitle">Games, tools, and experiments</p>
+
+  <div class="apps-grid">
+
+    <!-- Add new apps here. Copy this card template: -->
+    <a class="app-card" href="https://placeholder-app-url.vercel.app">
+      <h2>Placeholder App</h2>
+      <p>A starter app to test the monorepo setup. Replace this with your first real project.</p>
+      <span class="tag">demo</span>
+    </a>
+
+    <!--
+    <a class="app-card" href="https://your-next-app.vercel.app">
+      <h2>App Name</h2>
+      <p>Short description of what this app does.</p>
+      <span class="tag">game</span>
+    </a>
+    -->
+
+  </div>
+</body>
+</html>
