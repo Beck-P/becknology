@@ -1015,7 +1015,7 @@ function getPlaybackConfig(result) {
   if (!result.isTournament) {
     return { totalSteps: getSingleTotalSteps(result) };
   }
-  const totalSteps = result.rounds.reduce((sum, round) => sum + getSingleTotalSteps(round) + 1, 0);
+  const totalSteps = result.rounds.reduce((sum, round) => sum + getSingleTotalSteps(round) + 2, 0);
   return { totalSteps };
 }
 
@@ -1076,7 +1076,7 @@ function getTournamentProgress(result, step) {
         roundIndex: index,
       };
     }
-    cursor += 1;
+    cursor += 2;
   }
 
   return {
