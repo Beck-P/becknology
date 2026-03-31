@@ -2,6 +2,6 @@
   "rewrites": [
     { "source": "/", "destination": "/apps/hub/index.html" },
     { "source": "/placeholder-app", "destination": "/apps/placeholder-app/index.html" },
-    { "source": "/chore-chaos", "destination": "/apps/chore-chaos/index.html" }
+    { "source": "/runouts", "destination": "/apps/runouts/index.html" }
   ]
 }
