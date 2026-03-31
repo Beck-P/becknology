@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chore Chaos App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="padding:24px;font-family:system-ui,sans-serif;color:#0f172a;">Loading app…</div>
+  </div>
+
+  <script type="text/babel" data-presets="react">
+    const { useMemo, useState } = React;
+
+    const stripMotionProps = (props) => {
+      const omit = new Set(['initial', 'animate', 'exit', 'transition', 'layout', 'layoutId', 'whileHover', 'whileTap', 'whileInView', 'viewport']);
+      return Object.fromEntries(Object.entries(props).filter(([key]) => !omit.has(key)));
+    };
+
+    const motion = new Proxy({}, {
+      get: (_, tag) => React.forwardRef(({ children, ...props }, ref) => React.createElement(tag, { ref, ...stripMotionProps(props) }, children))
+    });
+
+    function AnimatePresence({ children }) {
+      return <>{children}</>;
+    }
+
+    function Icon({ symbol, className = '' }) {
+      return <span className={className} aria-hidden="true" style={{display:'inline-flex',alignItems:'center',justifyContent:'center'}}>{symbol}</span>;
+    }
+    const Dices = (props) => <Icon symbol="🎲" {...props} />;
+    const FastForward = (props) => <Icon symbol="⏩" {...props} />;
+    const RotateCcw = (props) => <Icon symbol="🔄" {...props} />;
+    const Shuffle = (props) => <Icon symbol="🔀" {...props} />;
+    const Sparkles = (props) => <Icon symbol="✨" {...props} />;
+    const Trophy = (props) => <Icon symbol="🏆" {...props} />;
+
+
+const SUITS = ["s", "h", "d", "c"];
+const SUIT_SYMBOLS = { s: "♠", h: "♥", d: "♦", c: "♣" };
+const SUIT_NAMES = { s: "Spade", h: "Heart", d: "Diamond", c: "Club" };
+const RANK_LABELS = {
+  2: "2",
+  3: "3",
+  4: "4",
+  5: "5",
+  6: "6",
+  7: "7",
+  8: "8",
+  9: "9",
+  10: "10",
+  11: "J",
+  12: "Q",
+  13: "K",
+  14: "A",
+};
+const RANK_WORDS = {
+  2: "Two",
+  3: "Three",
+  4: "Four",
+  5: "Five",
+  6: "Six",
+  7: "Seven",
+  8: "Eight",
+  9: "Nine",
+  10: "Ten",
+  11: "Jack",
+  12: "Queen",
+  13: "King",
+  14: "Ace",
+};
+const RANK_PLURALS = {
+  2: "Twos",
+  3: "Threes",
+  4: "Fours",
+  5: "Fives",
+  6: "Sixes",
+  7: "Sevens",
+  8: "Eights",
+  9: "Nines",
+  10: "Tens",
+  11: "Jacks",
+  12: "Queens",
+  13: "Kings",
+  14: "Aces",
+};
+const WHEEL_COLORS = ["#60a5fa", "#f472b6", "#f59e0b", "#34d399"];
+const SLOT_SYMBOLS = ["🍒", "🍋", "⭐", "🍀", "🔔", "7️⃣"];
+const SLOT_WEIGHTS = {
+  "🍒": 2,
+  "🍋": 3,
+  "⭐": 4,
+  "🍀": 5,
+  "🔔": 6,
+  "7️⃣": 7,
+};
+const HORSE_EMOJIS = ["🐎", "🦄", "🐴", "🏇"];
+
+const MODE_META = [
+  {
+    id: "holdem",
+    name: "Texas Hold'em",
+    blurb: "2 hole cards each, then the board flips out before the weakest hand gets stuck.",
+    accent: "from-sky-500 to-blue-600",
+  },
+  {
+    id: "plo",
+    name: "PLO",
+    blurb: "4 hole cards each, exact Omaha rules, animated reveal all the way through showdown.",
+    accent: "from-violet-500 to-fuchsia-600",
+  },
+  {
+    id: "rng",
+    name: "Random Number",
+    blurb: "Everybody gets a dramatic random number reveal. Lowest loses.",
+    accent: "from-emerald-500 to-green-600",
+  },
+  {
+    id: "wheel",
+    name: "Wheel Spinner",
+    blurb: "Classic wheel-of-doom energy with a full spin animation.",
+    accent: "from-orange-500 to-amber-600",
+  },
+  {
+    id: "dice",
+    name: "Dice Duel",
+    blurb: "Each person gets their dice one at a time. Lowest total gets picked.",
+    accent: "from-rose-500 to-red-600",
+  },
+  {
+    id: "high-card",
+    name: "High Card Draw",
+    blurb: "One card each, flipped with suspense. Lowest card loses.",
+    accent: "from-cyan-500 to-sky-600",
+  },
+  {
+    id: "coin-flips",
+    name: "Coin Flip Gauntlet",
+    blurb: "Five rounds of flips. Fewest heads gets stuck doing it.",
+    accent: "from-yellow-500 to-orange-500",
+  },
+  {
+    id: "black-marble",
+    name: "Black Marble",
+    blurb: "Draw order plays out on screen until the bad marble appears.",
+    accent: "from-slate-700 to-slate-900",
+  },
+  {
+    id: "slots",
+    name: "Slot Machine",
+    blurb: "Each player’s slot result pops in with casino-style drama.",
+    accent: "from-pink-500 to-rose-600",
+  },
+  {
+    id: "horse-race",
+    name: "Lucky Horse Race",
+    blurb: "Watch twelve random turns move the racers live on the track.",
+    accent: "from-lime-500 to-emerald-600",
+  },
+];
+
+function secureRandomInt(max) {
+  if (max <= 0) return 0;
+  const maxUint = 0x100000000;
+  const limit = maxUint - (maxUint % max);
+  const arr = new Uint32Array(1);
+  let value = 0;
+  do {
+    crypto.getRandomValues(arr);
+    value = arr[0];
+  } while (value >= limit);
+  return value % max;
+}
+
+function shuffle(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = secureRandomInt(i + 1);
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function pickRandom(items) {
+  return items[secureRandomInt(items.length)];
+}
+
+function compareScores(a, b) {
+  const length = Math.max(a.length, b.length);
+  for (let i = 0; i < length; i += 1) {
+    const left = a[i] ?? 0;
+    const right = b[i] ?? 0;
+    if (left !== right) return left - right;
+  }
+  return 0;
+}
+
+function combinations(items, size) {
+  const results = [];
+  const current = [];
+
+  function walk(start, depth) {
+    if (depth === size) {
+      results.push([...current]);
+      return;
+    }
+    for (let i = start; i <= items.length - (size - depth); i += 1) {
+      current.push(items[i]);
+      walk(i + 1, depth + 1);
+      current.pop();
+    }
+  }
+
+  walk(0, 0);
+  return results;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function rankLabel(rank) {
+  return RANK_LABELS[rank];
+}
+
+function rankWord(rank) {
+  return RANK_WORDS[rank];
+}
+
+function rankPlural(rank) {
+  return RANK_PLURALS[rank];
+}
+
+function formatCard(card) {
+  return `${rankLabel(card.rank)}${SUIT_SYMBOLS[card.suit]}`;
+}
+
+function cardKey(card) {
+  return `${rankLabel(card.rank)}${card.suit}`;
+}
+
+function createDeck() {
+  const deck = [];
+  for (let rank = 2; rank <= 14; rank += 1) {
+    for (const suit of SUITS) {
+      deck.push({ rank, suit });
+    }
+  }
+  return deck;
+}
+
+function straightHigh(ranksDesc) {
+  if (ranksDesc.length !== 5) return null;
+  const wheel = [14, 5, 4, 3, 2];
+  if (wheel.every((rank, index) => ranksDesc[index] === rank)) return 5;
+  for (let i = 1; i < ranksDesc.length; i += 1) {
+    if (ranksDesc[i - 1] - 1 !== ranksDesc[i]) return null;
+  }
+  return ranksDesc[0];
+}
+
+function describeHand(score, cards) {
+  const category = score[0];
+  if (category === 8) return `Straight flush, ${rankWord(score[1])} high`;
+  if (category === 7) return `Four of a kind, ${rankPlural(score[1])}`;
+  if (category === 6) return `Full house, ${rankPlural(score[1])} over ${rankPlural(score[2])}`;
+  if (category === 5) return `${SUIT_NAMES[cards[0].suit]} flush, ${rankWord(score[1])} high`;
+  if (category === 4) return `Straight, ${rankWord(score[1])} high`;
+  if (category === 3) return `Three of a kind, ${rankPlural(score[1])}`;
+  if (category === 2) return `Two pair, ${rankPlural(score[1])} and ${rankPlural(score[2])}`;
+  if (category === 1) return `Pair of ${rankPlural(score[1])}`;
+  return `High card, ${rankWord(score[1])}`;
+}
+
+function evaluateFive(cards) {
+  const ranksDesc = cards.map((card) => card.rank).sort((a, b) => b - a);
+  const counts = {};
+  ranksDesc.forEach((rank) => {
+    counts[rank] = (counts[rank] || 0) + 1;
+  });
+
+  const groups = Object.entries(counts)
+    .map(([rank, count]) => ({ rank: Number(rank), count }))
+    .sort((a, b) => b.count - a.count || b.rank - a.rank);
+
+  const flush = cards.every((card) => card.suit === cards[0].suit);
+  const uniqueRanksDesc = [...new Set(ranksDesc)].sort((a, b) => b - a);
+  const straight = straightHigh(uniqueRanksDesc);
+
+  if (flush && straight) {
+    const score = [8, straight];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 4) {
+    const score = [7, groups[0].rank, groups[1].rank];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 3 && groups[1]?.count === 2) {
+    const score = [6, groups[0].rank, groups[1].rank];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (flush) {
+    const score = [5, ...ranksDesc];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (straight) {
+    const score = [4, straight];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 3) {
+    const kickers = groups.slice(1).map((group) => group.rank).sort((a, b) => b - a);
+    const score = [3, groups[0].rank, ...kickers];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 2 && groups[1]?.count === 2) {
+    const pairRanks = groups
+      .filter((group) => group.count === 2)
+      .map((group) => group.rank)
+      .sort((a, b) => b - a);
+    const kicker = groups.find((group) => group.count === 1)?.rank ?? 0;
+    const score = [2, pairRanks[0], pairRanks[1], kicker];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 2) {
+    const kickers = groups.filter((group) => group.count === 1).map((group) => group.rank).sort((a, b) => b - a);
+    const score = [1, groups[0].rank, ...kickers];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  const score = [0, ...ranksDesc];
+  return { score, label: describeHand(score, cards), cards };
+}
+
+function bestHoldemHand(holeCards, board) {
+  const sevenCards = [...holeCards, ...board];
+  let best = null;
+  for (const combo of combinations(sevenCards, 5)) {
+    const evaluated = evaluateFive(combo);
+    if (!best || compareScores(evaluated.score, best.score) > 0) {
+      best = evaluated;
+    }
+  }
+  return best;
+}
+
+function bestPloHand(holeCards, board) {
+  const holeCombos = combinations(holeCards, 2);
+  const boardCombos = combinations(board, 3);
+  let best = null;
+
+  for (const holeCombo of holeCombos) {
+    for (const boardCombo of boardCombos) {
+      const evaluated = evaluateFive([...holeCombo, ...boardCombo]);
+      if (!best || compareScores(evaluated.score, best.score) > 0) {
+        best = evaluated;
+      }
+    }
+  }
+
+  return best;
+}
+
+function findTiedByGoal(participants, getScore, selectionGoal = "loser") {
+  let tied = [participants[0]];
+  let targetScore = getScore(participants[0]);
+
+  for (const participant of participants.slice(1)) {
+    const score = getScore(participant);
+    const comparison = compareScores(score, targetScore);
+    const shouldReplace = selectionGoal === "winner" ? comparison > 0 : comparison < 0;
+    if (shouldReplace) {
+      targetScore = score;
+      tied = [participant];
+    } else if (comparison === 0) {
+      tied.push(participant);
+    }
+  }
+
+  return tied;
+}
+
+function calculatePokerPercentages(players, partialBoard, selectionGoal, evaluator) {
+  const usedCards = new Set(
+    [...partialBoard, ...players.flatMap((player) => player.holeCards)].map((card) => cardKey(card))
+  );
+  const remainingDeck = createDeck().filter((card) => !usedCards.has(cardKey(card)));
+  const missingBoardCards = 5 - partialBoard.length;
+  const exact = missingBoardCards <= 2;
+  const runouts = exact
+    ? combinations(remainingDeck, missingBoardCards)
+    : Array.from({ length: missingBoardCards === 5 ? 1500 : 1200 }, () => shuffle(remainingDeck).slice(0, missingBoardCards));
+
+  const selectionShares = Object.fromEntries(players.map((player) => [player.name, 0]));
+
+  runouts.forEach((runout) => {
+    const board = [...partialBoard, ...runout];
+    const evaluated = players.map((player) => ({
+      name: player.name,
+      score: evaluator(player.holeCards, board).score,
+    }));
+    const tied = findTiedByGoal(evaluated, (player) => player.score, selectionGoal);
+    tied.forEach((player) => {
+      selectionShares[player.name] += 1 / tied.length;
+    });
+  });
+
+  const denominator = runouts.length || 1;
+  return {
+    byPlayer: Object.fromEntries(
+      players.map((player) => [player.name, Number(((selectionShares[player.name] / denominator) * 100).toFixed(1))])
+    ),
+    method: exact ? (missingBoardCards === 0 ? "Locked" : "Exact") : `Sim • ${runouts.length}`,
+  };
+}
+
+function describeHoldemStartingHand(holeCards) {
+  const sorted = [...holeCards].sort((a, b) => b.rank - a.rank);
+  if (sorted[0].rank === sorted[1].rank) {
+    return `Pair of ${rankPlural(sorted[0].rank)}`;
+  }
+  return `High card, ${rankWord(sorted[0].rank)}`;
+}
+
+function getCurrentHoldemHandLabel(holeCards, visibleBoard) {
+  if (visibleBoard.length === 0) {
+    return describeHoldemStartingHand(holeCards);
+  }
+  return bestHoldemHand(holeCards, visibleBoard).label;
+}
+
+function getCurrentPloHandLabel(holeCards, visibleBoard) {
+  if (visibleBoard.length < 3) {
+    return "Need flop to make a hand";
+  }
+  return bestPloHand(holeCards, visibleBoard).label;
+}
+
+function resolveByGoal(participants, getScore, selectionGoal = "loser") {
+  let tied = [participants[0]];
+  let targetScore = getScore(participants[0]);
+
+  for (const participant of participants.slice(1)) {
+    const score = getScore(participant);
+    const comparison = compareScores(score, targetScore);
+    const shouldReplace = selectionGoal === "winner" ? comparison > 0 : comparison < 0;
+    if (shouldReplace) {
+      targetScore = score;
+      tied = [participant];
+    } else if (comparison === 0) {
+      tied.push(participant);
+    }
+  }
+
+  return {
+    tied,
+    picked: tied[secureRandomInt(tied.length)],
+  };
+}
+
+function modeById(id) {
+  return MODES.find((mode) => mode.id === id);
+}
+
+function buildOutcomeHeadline(selectedName, taskLabel, selectionGoal) {
+  return selectionGoal === "winner" ? `${selectedName} wins ${taskLabel}` : `${selectedName} has to ${taskLabel}`;
+}
+
+function buildHoldemResult(names, taskLabel, selectionGoal) {
+  const deck = shuffle(createDeck());
+  const players = names.map((name) => ({
+    name,
+    holeCards: [deck.pop(), deck.pop()],
+  }));
+  const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+
+  const evaluatedPlayers = players.map((player) => ({
+    ...player,
+    best: bestHoldemHand(player.holeCards, board),
+  }));
+
+  const resolution = resolveByGoal(evaluatedPlayers, (player) => player.best.score, selectionGoal);
+  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const choosingWinner = selectionGoal === "winner";
+  const pokerPercentages = {
+    preflop: calculatePokerPercentages(players, [], selectionGoal, bestHoldemHand),
+    flop: calculatePokerPercentages(players, board.slice(0, 3), selectionGoal, bestHoldemHand),
+    turn: calculatePokerPercentages(players, board.slice(0, 4), selectionGoal, bestHoldemHand),
+    river: calculatePokerPercentages(players, board, selectionGoal, bestHoldemHand),
+  };
+
+  return {
+    modeId: "holdem",
+    modeName: "Texas Hold'em",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary:
+      tiedNames.length > 1
+        ? `${choosingWinner ? "Best" : "Worst"} hand was tied, so the app broke it randomly between ${tiedNames.join(", ")}.`
+        : `${choosingWinner ? "Strongest" : "Weakest"} showdown hand gets selected.`,
+    board,
+    pokerPercentages,
+    players: evaluatedPlayers.map((player) => ({
+      name: player.name,
+      cards: player.holeCards,
+      headline: player.best.label,
+      subline: player.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} hand` : "Safe this round",
+      selected: player.name === selectedName,
+      chips: ["Hold'em", "2 hole cards"],
+    })),
+  };
+}
+
+function buildPloResult(names, taskLabel, selectionGoal) {
+  const deck = shuffle(createDeck());
+  const players = names.map((name) => ({
+    name,
+    holeCards: [deck.pop(), deck.pop(), deck.pop(), deck.pop()],
+  }));
+  const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+
+  const evaluatedPlayers = players.map((player) => ({
+    ...player,
+    best: bestPloHand(player.holeCards, board),
+  }));
+
+  const resolution = resolveByGoal(evaluatedPlayers, (player) => player.best.score, selectionGoal);
+  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const choosingWinner = selectionGoal === "winner";
+  const pokerPercentages = {
+    preflop: calculatePokerPercentages(players, [], selectionGoal, bestPloHand),
+    flop: calculatePokerPercentages(players, board.slice(0, 3), selectionGoal, bestPloHand),
+    turn: calculatePokerPercentages(players, board.slice(0, 4), selectionGoal, bestPloHand),
+    river: calculatePokerPercentages(players, board, selectionGoal, bestPloHand),
+  };
+
+  return {
+    modeId: "plo",
+    modeName: "PLO",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary:
+      tiedNames.length > 1
+        ? `Exact-two-card Omaha tie for the ${choosingWinner ? "best" : "worst"} hand, so the tiebreak went to ${selectedName}.`
+        : `${choosingWinner ? "Strongest" : "Weakest"} PLO showdown hand gets selected.`,
+    board,
+    pokerPercentages,
+    players: evaluatedPlayers.map((player) => ({
+      name: player.name,
+      cards: player.holeCards,
+      headline: player.best.label,
+      subline: player.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} Omaha hand` : "Safe this round",
+      selected: player.name === selectedName,
+      chips: ["Omaha", "4 hole cards"],
+    })),
+  };
+}
+
+function buildRngResult(names, taskLabel, selectionGoal) {
+  const players = names.map((name) => ({
+    name,
+    value: secureRandomInt(100) + 1,
+  }));
+  const resolution = resolveByGoal(players, (player) => [player.value], selectionGoal);
+  const selectedName = resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  return {
+    modeId: "rng",
+    modeName: "Random Number",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary: `Everyone got a number from 1 to 100. ${choosingWinner ? "Highest" : "Lowest"} number gets selected.`,
+    players: players.map((player) => ({
+      name: player.name,
+      value: player.value,
+      headline: `${player.value}`,
+      subline: player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} number` : "Not selected",
+      selected: player.name === selectedName,
+      chips: ["1–100"],
+    })),
+  };
+}
+
+function buildWheelResult(names, taskLabel, selectionGoal, currentRotation) {
+  const selectedName = pickRandom(names);
+  const selectedIndex = names.indexOf(selectedName);
+  const segment = 360 / names.length;
+  const segmentCenter = selectedIndex * segment + segment / 2;
+  const extraTurns = 5 + secureRandomInt(4);
+  const nextRotation = currentRotation + extraTurns * 360 + (360 - segmentCenter);
+  const choosingWinner = selectionGoal === "winner";
+
+  return {
+    modeId: "wheel",
+    modeName: "Wheel Spinner",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary: `Pure wheel-of-fate chaos. The wheel randomly picks the ${choosingWinner ? "winner" : "loser"}.`,
+    wheel: {
+      names,
+      rotation: nextRotation,
+    },
+    players: names.map((name) => ({
+      name,
+      headline: name === selectedName ? "Wheel landed here" : "Missed by fate",
+      subline: name === selectedName ? `Selected as ${choosingWinner ? "winner" : "loser"}` : "Safe this round",
+      selected: name === selectedName,
+      chips: ["25% slice"],
+    })),
+  };
+}
+
+function buildDiceResult(names, taskLabel, selectionGoal) {
+  const players = names.map((name) => {
+    const d1 = secureRandomInt(6) + 1;
+    const d2 = secureRandomInt(6) + 1;
+    return {
+      name,
+      d1,
+      d2,
+      total: d1 + d2,
+    };
+  });
+  const resolution = resolveByGoal(players, (player) => [player.total, player.d1, player.d2], selectionGoal);
+  const selectedName = resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  return {
+    modeId: "dice",
+    modeName: "Dice Duel",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary: `Two dice each. ${choosingWinner ? "Highest" : "Lowest"} total gets selected.`,
+    players: players.map((player) => ({
+      name: player.name,
+      d1: player.d1,
+      d2: player.d2,
+      total: player.total,
+      headline: `${player.d1} + ${player.d2} = ${player.total}`,
+      subline: player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} roll` : "Not selected",
+      selected: player.name === selectedName,
+      chips: ["2d6"],
+    })),
+  };
+}
+
+function buildHighCardResult(names, taskLabel, selectionGoal) {
+  const deck = shuffle(createDeck());
+  const players = names.map((name) => ({
+    name,
+    card: deck.pop(),
+  }));
+  const resolution = resolveByGoal(players, (player) => [player.card.rank], selectionGoal);
+  const selectedName = resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  return {
+    modeId: "high-card",
+    modeName: "High Card Draw",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary: `Everyone drew one card. ${choosingWinner ? "Highest" : "Lowest"} rank gets selected; ties break randomly.`,
+    players: players.map((player) => ({
+      name: player.name,
+      cards: [player.card],
+      card: player.card,
+      headline: formatCard(player.card),
+      subline: player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} card` : "Not selected",
+      selected: player.name === selectedName,
+      chips: [rankWord(player.card.rank)],
+    })),
+  };
+}
+
+function buildCoinFlipResult(names, taskLabel, selectionGoal) {
+  const players = names.map((name) => {
+    const flips = Array.from({ length: 5 }, () => (secureRandomInt(2) === 0 ? "T" : "H"));
+    const heads = flips.filter((flip) => flip === "H").length;
+    return { name, flips, heads };
+  });
+  const resolution = resolveByGoal(players, (player) => [player.heads], selectionGoal);
+  const selectedName = resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  return {
+    modeId: "coin-flips",
+    modeName: "Coin Flip Gauntlet",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary: `Five flips each. ${choosingWinner ? "Most" : "Fewest"} heads gets selected.`,
+    players: players.map((player) => ({
+      name: player.name,
+      flips: player.flips,
+      heads: player.heads,
+      headline: `${player.flips.join(" ")}`,
+      subline: `${player.heads} heads${player.name === selectedName ? ` • ${choosingWinner ? "most" : "fewest"} total` : ""}`,
+      selected: player.name === selectedName,
+      chips: ["5 flips"],
+    })),
+  };
+}
+
+function buildBlackMarbleResult(names, taskLabel, selectionGoal) {
+  const choosingWinner = selectionGoal === "winner";
+  const targetMarble = choosingWinner ? "Gold" : "Black";
+  const safeMarble = choosingWinner ? "Black" : "White";
+  const bag = shuffle([safeMarble, safeMarble, safeMarble, targetMarble]);
+  const order = shuffle(names);
+  const selectedName = order[bag.indexOf(targetMarble)];
+
+  return {
+    modeId: "black-marble",
+    modeName: choosingWinner ? "Gold Marble" : "Black Marble",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary: choosingWinner
+      ? "One gold marble, three black marbles. Lucky draw picks the winner."
+      : "Three safe marbles. One black marble. Bad luck decides everything.",
+    players: order.map((name, index) => ({
+      name,
+      marble: bag[index],
+      headline: `${bag[index]} marble`,
+      subline: `Draw #${index + 1}${name === selectedName ? ` • ${choosingWinner ? "lucky" : "unlucky"} draw` : " • safe"}`,
+      selected: name === selectedName,
+      chips: [bag[index]],
+    })),
+  };
+}
+
+function scoreSlots(reels) {
+  const counts = {};
+  reels.forEach((symbol) => {
+    counts[symbol] = (counts[symbol] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || SLOT_WEIGHTS[b[0]] - SLOT_WEIGHTS[a[0]]);
+  const topSymbol = entries[0][0];
+  const topCount = entries[0][1];
+  const base = reels.reduce((sum, symbol) => sum + SLOT_WEIGHTS[symbol], 0);
+  if (topCount === 3) return { value: 100 + SLOT_WEIGHTS[topSymbol], label: `Triple ${topSymbol}` };
+  if (topCount === 2) return { value: 50 + SLOT_WEIGHTS[topSymbol] + base / 100, label: `Pair of ${topSymbol}` };
+  return { value: base, label: "No match" };
+}
+
+function buildSlotsResult(names, taskLabel, selectionGoal) {
+  const players = names.map((name) => {
+    const reels = Array.from({ length: 3 }, () => pickRandom(SLOT_SYMBOLS));
+    const score = scoreSlots(reels);
+    return { name, reels, score };
+  });
+  const resolution = resolveByGoal(players, (player) => [player.score.value], selectionGoal);
+  const selectedName = resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  return {
+    modeId: "slots",
+    modeName: "Slot Machine",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary: `${choosingWinner ? "Best" : "Worst"} slot score gets selected.`,
+    players: players.map((player) => ({
+      name: player.name,
+      reels: player.reels,
+      score: player.score,
+      headline: `${player.reels.join(" ")}`,
+      subline: `${player.score.label}${player.name === selectedName ? ` • ${choosingWinner ? "best" : "worst"} score` : ""}`,
+      selected: player.name === selectedName,
+      chips: [player.score.label],
+    })),
+  };
+}
+
+function buildHorseRaceResult(names, taskLabel, selectionGoal) {
+  const positions = Object.fromEntries(names.map((name) => [name, 0]));
+  const turns = [];
+
+  for (let turn = 1; turn <= 12; turn += 1) {
+    const mover = pickRandom(names);
+    positions[mover] += 1;
+    turns.push({
+      turn,
+      mover,
+      positions: { ...positions },
+      text: `Turn ${turn}: ${mover} advances to ${positions[mover]}`,
+    });
+  }
+
+  const players = names.map((name) => ({
+    name,
+    position: positions[name],
+  }));
+
+  const resolution = resolveByGoal(players, (player) => [player.position], selectionGoal);
+  const selectedName = resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  return {
+    modeId: "horse-race",
+    modeName: "Lucky Horse Race",
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    summary: `Twelve random turns. Whoever finishes ${choosingWinner ? "first" : "last"} gets selected.`,
+    turns,
+    race: {
+      max: Math.max(...players.map((player) => player.position), 1),
+    },
+    players: players.map((player) => ({
+      name: player.name,
+      progress: player.position,
+      headline: `${player.position} spaces moved`,
+      subline: player.name === selectedName ? `Finished ${choosingWinner ? "in front" : "at the back"}` : "Not selected",
+      selected: player.name === selectedName,
+      chips: ["Race"],
+    })),
+  };
+}
+
+const MODES = [
+  { id: "holdem", run: buildHoldemResult },
+  { id: "plo", run: buildPloResult },
+  { id: "rng", run: buildRngResult },
+  { id: "wheel", run: buildWheelResult },
+  { id: "dice", run: buildDiceResult },
+  { id: "high-card", run: buildHighCardResult },
+  { id: "coin-flips", run: buildCoinFlipResult },
+  { id: "black-marble", run: buildBlackMarbleResult },
+  { id: "slots", run: buildSlotsResult },
+  { id: "horse-race", run: buildHorseRaceResult },
+];
+
+function getSingleTotalSteps(result) {
+  switch (result?.modeId) {
+    case "holdem":
+    case "plo":
+      return (result?.players?.length ?? 4) + 4;
+    case "rng":
+    case "dice":
+    case "high-card":
+    case "black-marble":
+    case "slots":
+      return (result?.players?.length ?? 4) + 1;
+    case "wheel":
+      return 2;
+    case "coin-flips":
+      return 6;
+    case "horse-race":
+      return (result?.turns?.length ?? 12) + 1;
+    default:
+      return 1;
+  }
+}
+
+function getPlaybackConfig(result) {
+  if (!result) return { totalSteps: 1 };
+  if (!result.isTournament) {
+    return { totalSteps: getSingleTotalSteps(result) };
+  }
+  const totalSteps = result.rounds.reduce((sum, round) => sum + getSingleTotalSteps(round) + 1, 0);
+  return { totalSteps };
+}
+
+function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotation = 0) {
+  const mode = modeById(baseModeId);
+  let remainingNames = [...names];
+  let localWheelRotation = currentWheelRotation;
+  const rounds = [];
+  const safeNames = [];
+
+  while (remainingNames.length > 1) {
+    const roundResult = mode.run(remainingNames, "win immunity", "winner", localWheelRotation);
+    if (roundResult.modeId === "wheel") {
+      localWheelRotation = roundResult.wheel.rotation;
+    }
+    rounds.push({
+      ...roundResult,
+      roundLabel: `Round ${rounds.length + 1}`,
+      remainingAtStart: [...remainingNames],
+    });
+    safeNames.push(roundResult.selectedName);
+    remainingNames = remainingNames.filter((name) => name !== roundResult.selectedName);
+  }
+
+  const finalLoser = remainingNames[0];
+  return {
+    modeId: baseModeId,
+    modeName: `${modeById(baseModeId)?.name ?? "Game"} Tournament`,
+    selectionGoal: "loser",
+    selectedName: finalLoser,
+    headline: `${finalLoser} has to ${taskLabel}`,
+    summary: `${finalLoser} was the only person who never won a round. Win once and you're safe.`,
+    isTournament: true,
+    rounds,
+    safeNames,
+    finalLoser,
+    wheelRotation: localWheelRotation,
+  };
+}
+
+function getTournamentProgress(result, step) {
+  let cursor = 0;
+  for (let index = 0; index < result.rounds.length; index += 1) {
+    const round = result.rounds[index];
+    const roundSteps = getSingleTotalSteps(round);
+    if (step <= cursor + roundSteps) {
+      return {
+        phase: "round",
+        roundIndex: index,
+        roundStep: Math.max(0, step - cursor),
+        roundDone: step - cursor >= roundSteps,
+      };
+    }
+    cursor += roundSteps;
+    if (step <= cursor + 1) {
+      return {
+        phase: "summary",
+        roundIndex: index,
+      };
+    }
+    cursor += 1;
+  }
+
+  return {
+    phase: "summary",
+    roundIndex: result.rounds.length - 1,
+  };
+}
+
+function CardFace({ card, hidden = false, large = false }) {
+  const red = card?.suit === "h" || card?.suit === "d";
+  return (
+    <motion.div
+      initial={{ rotateY: hidden ? 0 : 140, opacity: 0.45, scale: 0.9, y: 10 }}
+      animate={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 170, damping: 16, mass: 0.95 }}
+      className={`flex items-center justify-center rounded-2xl border shadow-sm [transform-style:preserve-3d] ${
+        large ? "h-24 w-16 text-lg" : "h-14 w-10 text-sm"
+      } ${
+        hidden
+          ? "border-sky-300 bg-gradient-to-br from-sky-500 to-indigo-600 text-white"
+          : red
+            ? "border-rose-200 bg-white text-rose-600"
+            : "border-slate-200 bg-white text-slate-800"
+      }`}
+    >
+      {hidden ? "★" : formatCard(card)}
+    </motion.div>
+  );
+}
+
+function RevealBanner({ modeName, step, totalSteps, done }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Live mode</div>
+        <div className="mt-1 text-xl font-bold text-slate-900">{modeName}</div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="w-36 overflow-hidden rounded-full bg-slate-100">
+          <motion.div
+            className="h-2 rounded-full bg-slate-900"
+            animate={{ width: `${(step / totalSteps) * 100}%` }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </div>
+        <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+          {done ? "Final" : step === 0 ? `Ready • 0/${totalSteps}` : `Step ${step}/${totalSteps}`}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlayerResultCard({ name, title, subtitle, selected, children }) {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 28, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      className={`rounded-3xl border p-4 shadow-sm ${
+        selected ? "border-rose-300 bg-gradient-to-br from-rose-50 to-orange-50" : "border-slate-200 bg-white"
+      }`}
+    >
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-base font-semibold text-slate-900">{name}</div>
+          <div className="text-sm text-slate-500">{subtitle}</div>
+        </div>
+        <div className={`rounded-full px-3 py-1 text-xs font-semibold ${selected ? "bg-rose-500 text-white" : "bg-slate-100 text-slate-600"}`}>
+          {selected ? "Selected" : "Watching"}
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div className="text-lg font-semibold text-slate-900">{title}</div>
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+function PokerPlayback({ result, step, done, omaha = false }) {
+  const playerCount = result.players.length;
+  const playerRevealCount = clamp(step, 0, playerCount);
+  const flopVisible = step >= playerCount + 1;
+  const turnVisible = step >= playerCount + 2;
+  const riverVisible = step >= playerCount + 3;
+  const verdictVisible = done;
+  const visibleBoard = result.board.filter((_, index) => {
+    if (index <= 2) return flopVisible;
+    if (index === 3) return turnVisible;
+    return riverVisible;
+  });
+  const stageKey = step >= playerCount + 3 ? "river" : step >= playerCount + 2 ? "turn" : step >= playerCount + 1 ? "flop" : step >= playerCount ? "preflop" : null;
+  const currentPercentages = stageKey ? result.pokerPercentages?.[stageKey] : null;
+  const chanceLabel = result.selectionGoal === "winner" ? "Win chance" : "Picked chance";
+  const streetLabel = stageKey ? `${stageKey.charAt(0).toUpperCase()}${stageKey.slice(1)}` : "Waiting";
+
+  return (
+    <div className="space-y-6">
+      <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+        <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+          <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+          <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+            {verdictVisible ? result.headline : omaha ? "Omaha cards are hitting the table..." : "The Hold'em hand is building..."}
+          </div>
+          <div className="mt-3 max-w-2xl text-white/90">
+            {verdictVisible ? result.summary : `Hole cards reveal first, then flop, turn, river, and live ${chanceLabel.toLowerCase()} updates.`}
+          </div>
+        </div>
+
+        <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+          {result.players.map((player, index) => {
+            const revealed = index < playerRevealCount;
+            return (
+              <PlayerResultCard
+                key={player.name}
+                name={player.name}
+                title={
+                  verdictVisible
+                    ? player.headline
+                    : revealed
+                      ? omaha
+                        ? getCurrentPloHandLabel(player.cards, visibleBoard)
+                        : getCurrentHoldemHandLabel(player.cards, visibleBoard)
+                      : "Hidden hole cards"
+                }
+                subtitle={
+                  verdictVisible
+                    ? player.subline
+                    : revealed
+                      ? stageKey === "preflop"
+                        ? omaha
+                          ? "Waiting for the flop"
+                          : "Current preflop hand"
+                        : stageKey
+                          ? `Current ${stageKey} hand`
+                          : "Cards revealed"
+                      : "Cards still face down"
+                }
+                selected={verdictVisible && player.selected}
+              >
+                <div className="flex flex-wrap gap-2">
+                  {player.cards.map((card, cardIndex) => (
+                    <CardFace key={`${player.name}-${cardIndex}-${cardKey(card)}`} card={card} hidden={!revealed} />
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {player.chips.map((chip) => (
+                    <span key={chip} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+                {revealed && currentPercentages ? (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">{chanceLabel}</div>
+                    <div className="mt-1 text-2xl font-black tracking-tight text-slate-900">{currentPercentages.byPlayer[player.name]}%</div>
+                  </div>
+                ) : null}
+              </PlayerResultCard>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <div className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Community cards</div>
+            <div className="mt-1 text-xl font-semibold text-slate-900">Board reveal</div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700">
+              {riverVisible ? "River out" : turnVisible ? "Turn out" : flopVisible ? "Flop out" : "Waiting..."}
+            </div>
+            {currentPercentages ? (
+              <div className="rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-sky-700">
+                {streetLabel} • {currentPercentages.method}
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {result.board.map((card, index) => {
+            const shown = visibleBoard.includes(card);
+            return <CardFace key={cardKey(card)} card={card} hidden={!shown} large />;
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WheelPlayback({ result, step, done }) {
+  const angleStep = 360 / result.wheel.names.length;
+  const gradient = result.wheel.names
+    .map((_, index) => {
+      const start = index * angleStep;
+      const end = (index + 1) * angleStep;
+      return `${WHEEL_COLORS[index % WHEEL_COLORS.length]} ${start}deg ${end}deg`;
+    })
+    .join(", ");
+  const spinStarted = step >= 1;
+
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+      <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+        <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
+          {done ? result.headline : spinStarted ? "The wheel is spinning..." : "Click to spin the wheel..."}
+        </div>
+        <div className="mt-3 max-w-2xl text-white/90">
+          {done ? result.summary : spinStarted ? "One more click reveals who got picked." : "Everybody gets a slice. Start the spin when you're ready."}
+        </div>
+      </div>
+
+      <div className="p-6">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6">
+          <div className="relative h-80 w-80">
+            <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-2 text-3xl text-slate-900">▼</div>
+            <motion.div
+              className="absolute inset-0 rounded-full border-8 border-white shadow-2xl"
+              initial={false}
+              animate={{ rotate: spinStarted ? result.wheel.rotation : result.wheel.rotation - 360 }}
+              transition={{ duration: 3.4, ease: [0.12, 0.9, 0.1, 1] }}
+              style={{ background: `conic-gradient(${gradient})` }}
+            />
+            <div className="absolute inset-[26%] z-10 flex items-center justify-center rounded-full border border-white/70 bg-white/85 backdrop-blur">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={done ? result.selectedName : spinStarted ? "spinning" : "ready"}
+                  initial={{ opacity: 0, scale: 0.55, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center"
+                >
+                  <div className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                    {done ? "Picked" : spinStarted ? "Spinning" : "Ready"}
+                  </div>
+                  <div className="mt-1 text-xl font-bold text-slate-900">{done ? result.selectedName : spinStarted ? "???" : "Tap next"}</div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
+            {result.wheel.names.map((name, index) => (
+              <div
+                key={name}
+                className={`rounded-2xl border px-3 py-3 text-center text-sm font-semibold ${
+                  done && name === result.selectedName ? "border-rose-300 bg-rose-50 text-rose-600" : "border-slate-200 bg-slate-50 text-slate-700"
+                }`}
+              >
+                <div className="mx-auto mb-2 h-3 w-3 rounded-full" style={{ backgroundColor: WHEEL_COLORS[index % WHEEL_COLORS.length] }} />
+                {name}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NumberPlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+      <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+        <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{done ? result.headline : "Numbers are dropping in..."}</div>
+        <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : "Lowest number gets the chore."}</div>
+      </div>
+      <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+        {result.players.map((player, index) => {
+          const isShown = index < revealed;
+          return (
+            <motion.div
+              key={player.name}
+              className={`rounded-3xl border p-5 text-center shadow-sm ${done && player.selected ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+            >
+              <div className="text-base font-semibold text-slate-900">{player.name}</div>
+              <motion.div
+                key={isShown ? player.value : `${player.name}-hidden`}
+                initial={{ opacity: 0, scale: 0.45, y: 18, filter: "blur(10px)" }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-4 text-6xl font-black tracking-tight text-slate-900"
+              >
+                {isShown ? player.value : "?"}
+              </motion.div>
+              <div className="mt-3 text-sm text-slate-500">{done ? player.subline : isShown ? "Locked in" : "Waiting"}</div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DicePlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+      <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+        <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{done ? result.headline : "Dice are hitting the table..."}</div>
+        <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : "Lowest total ends up stuck with it."}</div>
+      </div>
+      <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+        {result.players.map((player, index) => {
+          const isShown = index < revealed;
+          return (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              title={done ? player.headline : isShown ? `${player.total}` : "Rolling..."}
+              subtitle={done ? player.subline : isShown ? "Dice locked" : "Waiting to roll"}
+              selected={done && player.selected}
+            >
+              <div className="flex gap-3">
+                {[player.d1, player.d2].map((value, dieIndex) => (
+                  <motion.div
+                    key={`${player.name}-${dieIndex}`}
+                    animate={{ rotate: isShown ? [14, -10, 6, 0] : [0, 20, -20, 0], scale: isShown ? [0.82, 1.12, 0.98, 1] : [1, 1.12, 1] }}
+                    transition={{ duration: isShown ? 1.05 : 0.9, repeat: isShown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-2xl font-black text-slate-900"
+                  >
+                    {isShown ? value : "•"}
+                  </motion.div>
+                ))}
+              </div>
+            </PlayerResultCard>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function HighCardPlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+      <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+        <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{done ? result.headline : "Cards are flipping..."}</div>
+        <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : "Lowest rank loses. Everybody watch the turn."}</div>
+      </div>
+      <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+        {result.players.map((player, index) => {
+          const isShown = index < revealed;
+          return (
+            <motion.div
+              key={player.name}
+              className={`rounded-3xl border p-5 text-center shadow-sm ${done && player.selected ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+            >
+              <div className="text-base font-semibold text-slate-900">{player.name}</div>
+              <div className="mt-4 flex justify-center">
+                <CardFace card={player.card} hidden={!isShown} large />
+              </div>
+              <div className="mt-4 text-sm text-slate-500">{done ? player.subline : isShown ? "Card shown" : "Waiting"}</div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CoinPlayback({ result, step, done }) {
+  const roundsShown = clamp(step, 0, 5);
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+      <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+        <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{done ? result.headline : `Flip round ${Math.max(1, roundsShown)} in progress...`}</div>
+        <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : "Five rounds. Fewest heads is doomed."}</div>
+      </div>
+      <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+        {result.players.map((player) => (
+          <PlayerResultCard
+            key={player.name}
+            name={player.name}
+            title={done ? `${player.heads} heads` : `${Math.min(roundsShown, 5)} flips shown`}
+            subtitle={done ? player.subline : "Watch the sequence build"}
+            selected={done && player.selected}
+          >
+            <div className="grid grid-cols-5 gap-2">
+              {player.flips.map((flip, index) => {
+                const shown = index < roundsShown;
+                return (
+                  <motion.div
+                    key={`${player.name}-${index}`}
+                    animate={{ rotateY: shown ? [180, 0] : [0, 180, 0], scale: shown ? [0.82, 1.08, 1] : 1 }}
+                    transition={{ duration: shown ? 0.95 : 0.8, repeat: shown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
+                    className={`flex h-12 items-center justify-center rounded-2xl border text-sm font-bold ${
+                      shown
+                        ? flip === "H"
+                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                          : "border-slate-200 bg-slate-100 text-slate-700"
+                        : "border-slate-200 bg-white text-slate-300"
+                    }`}
+                  >
+                    {shown ? flip : "?"}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </PlayerResultCard>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MarblePlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+      <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+        <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{done ? result.headline : "The bag is opening..."}</div>
+        <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : "Safe marbles first... until somebody hits the black one."}</div>
+      </div>
+      <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+        {result.players.map((player, index) => {
+          const isShown = index < revealed;
+          const isBlack = player.marble === "Black";
+          return (
+            <motion.div
+              key={player.name}
+              className={`rounded-3xl border p-5 text-center shadow-sm ${done && player.selected ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+            >
+              <div className="text-base font-semibold text-slate-900">{player.name}</div>
+              <div className="mt-4 text-sm text-slate-500">Draw #{index + 1}</div>
+              <motion.div
+                animate={{ scale: isShown ? [0.84, 1.12, 1] : [1, 1.12, 1], opacity: isShown ? [0.45, 1] : [0.45, 1, 0.45] }}
+                transition={{ duration: isShown ? 0.95 : 0.9, repeat: isShown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
+                className={`mx-auto mt-4 flex h-20 w-20 items-center justify-center rounded-full border-4 text-sm font-bold ${
+                  isShown
+                    ? isBlack
+                      ? "border-slate-800 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-700"
+                    : "border-slate-200 bg-slate-100 text-slate-300"
+                }`}
+              >
+                {isShown ? player.marble : "?"}
+              </motion.div>
+              <div className="mt-4 text-sm text-slate-500">{done ? player.subline : isShown ? "Draw revealed" : "Waiting"}</div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SlotsPlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+      <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+        <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{done ? result.headline : "Casino chaos loading..."}</div>
+        <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : "Best combo is safe. Worst score gets the chore."}</div>
+      </div>
+      <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+        {result.players.map((player, index) => {
+          const isShown = index < revealed;
+          return (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              title={done ? player.score.label : isShown ? "Reels stopped" : "Spinning..."}
+              subtitle={done ? player.subline : "Watch the reels lock in"}
+              selected={done && player.selected}
+            >
+              <div className="flex gap-2">
+                {player.reels.map((symbol, reelIndex) => (
+                  <motion.div
+                    key={`${player.name}-${reelIndex}`}
+                    animate={{ y: isShown ? [28, -8, 4, 0] : [0, -12, 12, 0], scale: isShown ? [0.86, 1.08, 1] : 1, opacity: isShown ? [0.45, 1] : [1, 0.45, 1] }}
+                    transition={{ duration: isShown ? 1 : 0.75, repeat: isShown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-3xl"
+                  >
+                    {isShown ? symbol : "🎰"}
+                  </motion.div>
+                ))}
+              </div>
+            </PlayerResultCard>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function HorseRacePlayback({ result, step, done }) {
+  const turnsShown = clamp(step - 1, 0, result.turns.length);
+  const latestPositions = turnsShown > 0 ? result.turns[turnsShown - 1].positions : Object.fromEntries(result.players.map((player) => [player.name, 0]));
+  const latestTurn = turnsShown > 0 ? result.turns[turnsShown - 1] : null;
+
+  return (
+    <div className="space-y-6">
+      <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+        <div className={`bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+          <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+          <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{done ? result.headline : latestTurn ? latestTurn.text : "The gates are opening..."}</div>
+          <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : `Turn ${Math.max(turnsShown, 0)} of ${result.turns.length}`}</div>
+        </div>
+
+        <div className="space-y-4 p-6">
+          {result.players.map((player, index) => {
+            const progress = latestPositions[player.name] ?? 0;
+            const pct = result.race.max > 0 ? (progress / result.race.max) * 100 : 0;
+            const finalSelected = done && player.selected;
+            return (
+              <div key={player.name} className={`rounded-3xl border p-4 ${finalSelected ? "border-rose-300 bg-rose-50" : "border-slate-200 bg-white"}`}>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-base font-semibold text-slate-900">{player.name}</div>
+                    <div className="text-sm text-slate-500">{done ? player.subline : `${progress} spaces so far`}</div>
+                  </div>
+                  <div className="text-2xl">{HORSE_EMOJIS[index % HORSE_EMOJIS.length]}</div>
+                </div>
+                <div className="relative h-16 overflow-hidden rounded-2xl bg-slate-100">
+                  <div className="absolute inset-y-0 left-0 right-0 bg-[linear-gradient(90deg,transparent_0%,transparent_49%,rgba(255,255,255,0.8)_50%,transparent_51%,transparent_100%)] bg-[length:60px_100%] opacity-70" />
+                  <motion.div
+                    className="absolute left-2 top-1/2 -translate-y-1/2 text-3xl"
+                    animate={{ x: `${pct}%` }}
+                    transition={{ type: "spring", stiffness: 70, damping: 14, mass: 1.25 }}
+                  >
+                    {HORSE_EMOJIS[index % HORSE_EMOJIS.length]}
+                  </motion.div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-4 text-xl font-semibold text-slate-900">Race log</div>
+        <div className="space-y-2">
+          {result.turns.slice(0, turnsShown).map((turn) => (
+            <div key={turn.turn} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              {turn.text}
+            </div>
+          ))}
+          {!turnsShown ? <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">Waiting for the first move...</div> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TournamentPlayback({ result, step, done }) {
+  const progress = getTournamentProgress(result, step);
+  const currentRound = result.rounds[Math.max(progress.roundIndex, 0)];
+  const safeSoFar = result.rounds.slice(0, progress.phase === "summary" ? progress.roundIndex + 1 : progress.roundIndex).map((round) => round.selectedName);
+  const remainingNow = progress.phase === "summary"
+    ? progress.roundIndex < result.rounds.length - 1
+      ? result.rounds[progress.roundIndex + 1].remainingAtStart
+      : [result.finalLoser]
+    : currentRound?.remainingAtStart ?? [];
+
+  if (done) {
+    return (
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+          <div className="bg-gradient-to-r from-slate-950 to-slate-800 px-6 py-6 text-white">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">Tournament complete</div>
+            <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{result.headline}</div>
+            <div className="mt-3 max-w-2xl text-white/90">{result.summary}</div>
+          </div>
+          <div className="grid gap-4 p-6 md:grid-cols-2">
+            <div className="rounded-3xl border border-rose-300 bg-rose-50 p-5 shadow-sm">
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-500">Final loser</div>
+              <div className="mt-2 text-3xl font-black text-slate-950">{result.finalLoser}</div>
+              <div className="mt-2 text-sm text-slate-600">The only player who never won a round.</div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Safe order</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {result.safeNames.map((name, index) => (
+                  <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+                    Round {index + 1}: {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (progress.phase === "summary") {
+    const roundWinner = result.rounds[progress.roundIndex].selectedName;
+    const nextPlayers = progress.roundIndex < result.rounds.length - 1 ? result.rounds[progress.roundIndex + 1].remainingAtStart : [result.finalLoser];
+    return (
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+          <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-6 text-white">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.rounds[progress.roundIndex].roundLabel} complete</div>
+            <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{roundWinner} is safe</div>
+            <div className="mt-3 max-w-2xl text-white/90">
+              {progress.roundIndex < result.rounds.length - 1 ? `Next round: ${nextPlayers.join(", ")}` : `${result.finalLoser} is the only person left without a win.`}
+            </div>
+          </div>
+          <div className="grid gap-4 p-6 md:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Safe so far</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[...safeSoFar].map((name, index) => (
+                  <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Still in danger</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {nextPlayers.map((name) => (
+                  <span key={name} className="rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Tournament status</div>
+          <div className="mt-2 text-2xl font-black text-slate-950">{currentRound.roundLabel}</div>
+          <div className="mt-2 text-slate-600">Win this round and you're safe. One person will be left at the end.</div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {safeSoFar.length ? safeSoFar.map((name, index) => (
+              <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+                Safe: {name}
+              </span>
+            )) : <span className="rounded-full bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">No one safe yet</span>}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {remainingNow.map((name) => (
+              <span key={name} className="rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+                Playing: {name}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Rounds</div>
+          <div className="mt-3 space-y-2">
+            {result.rounds.map((round, index) => {
+              const active = index === progress.roundIndex;
+              const complete = index < progress.roundIndex || progress.phase === "summary";
+              return (
+                <div key={`${round.roundLabel}-${index}`} className={`rounded-2xl border px-4 py-3 ${active ? "border-sky-300 bg-sky-50" : complete ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}>
+                  <div className="text-sm font-semibold text-slate-900">{round.roundLabel}</div>
+                  <div className="text-sm text-slate-500">{complete ? `${round.selectedName} won immunity` : round.remainingAtStart.join(", ")}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <PlaybackStage result={currentRound} step={progress.roundStep} done={progress.roundDone} />
+    </div>
+  );
+}
+
+function PlaybackStage({ result, step, done }) {
+  if (result.isTournament) {
+    return <TournamentPlayback result={result} step={step} done={done} />;
+  }
+  switch (result.modeId) {
+    case "holdem":
+      return <PokerPlayback result={result} step={step} done={done} />;
+    case "plo":
+      return <PokerPlayback result={result} step={step} done={done} omaha />;
+    case "rng":
+      return <NumberPlayback result={result} step={step} done={done} />;
+    case "wheel":
+      return <WheelPlayback result={result} step={step} done={done} />;
+    case "dice":
+      return <DicePlayback result={result} step={step} done={done} />;
+    case "high-card":
+      return <HighCardPlayback result={result} step={step} done={done} />;
+    case "coin-flips":
+      return <CoinPlayback result={result} step={step} done={done} />;
+    case "black-marble":
+      return <MarblePlayback result={result} step={step} done={done} />;
+    case "slots":
+      return <SlotsPlayback result={result} step={step} done={done} />;
+    case "horse-race":
+      return <HorseRacePlayback result={result} step={step} done={done} />;
+    default:
+      return null;
+  }
+}
+
+function ChoreChaosApp() {
+  const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
+  const [taskLabel, setTaskLabel] = useState("do the chores");
+  const [selectionGoal, setSelectionGoal] = useState("winner");
+  const [selectedModeId, setSelectedModeId] = useState("auto");
+  const [gameFormat, setGameFormat] = useState("single");
+  const [result, setResult] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [playbackStep, setPlaybackStep] = useState(0);
+  const [playbackDone, setPlaybackDone] = useState(false);
+  const [gameActive, setGameActive] = useState(false);
+
+  const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
+  const nameSet = new Set(cleanedNames.filter(Boolean));
+  const hasFourNames = cleanedNames.every(Boolean);
+  const namesAreUnique = nameSet.size === 4;
+  const canRun = hasFourNames && namesAreUnique;
+  const currentConfig = result ? getPlaybackConfig(result) : null;
+
+  function updateName(index, value) {
+    setNames((current) => current.map((entry, idx) => (idx === index ? value : entry)));
+  }
+
+  function pushHistory(outcome) {
+    setHistory((current) => [
+      {
+        id: `${Date.now()}-${secureRandomInt(100000)}`,
+        modeName: outcome.modeName,
+        selectedName: outcome.selectedName,
+        selectionGoal: outcome.selectionGoal,
+        format: outcome.isTournament ? "tournament" : "single",
+      },
+      ...current,
+    ].slice(0, 8));
+  }
+
+  function createOutcome(forcedModeId = null) {
+    const resolvedModeId = forcedModeId
+      ? forcedModeId
+      : selectedModeId === "auto"
+        ? pickRandom(MODES).id
+        : selectedModeId;
+
+    if (gameFormat === "tournament") {
+      return buildTournamentOutcome(cleanedNames, taskLabel.trim() || "do the chores", resolvedModeId, wheelRotation);
+    }
+
+    const mode = modeById(resolvedModeId);
+    return {
+      ...mode.run(cleanedNames, taskLabel.trim() || "do the chores", selectionGoal, wheelRotation),
+      runId: `${Date.now()}-${secureRandomInt(100000)}`,
+    };
+  }
+
+  function startGame(forcedModeId = null) {
+    if (!canRun) return;
+    const outcome = {
+      ...createOutcome(forcedModeId),
+      runId: `${Date.now()}-${secureRandomInt(100000)}`,
+    };
+    if (outcome.modeId === "wheel" && outcome.wheel) {
+      setWheelRotation(outcome.wheel.rotation);
+    }
+    if (outcome.isTournament && outcome.wheelRotation) {
+      setWheelRotation(outcome.wheelRotation);
+    }
+    setResult(outcome);
+    setPlaybackStep(0);
+    setPlaybackDone(false);
+    setGameActive(true);
+    pushHistory(outcome);
+  }
+
+  function playAgain() {
+    if (!result || !canRun) return;
+    startGame(result.modeId);
+  }
+
+  function advancePlayback() {
+    if (!result || playbackDone) return;
+    const config = getPlaybackConfig(result);
+    const nextStep = Math.min(playbackStep + 1, config.totalSteps);
+    setPlaybackStep(nextStep);
+    if (nextStep >= config.totalSteps) {
+      setPlaybackDone(true);
+    }
+  }
+
+  function revealAll() {
+    if (!result) return;
+    const config = getPlaybackConfig(result);
+    setPlaybackStep(config.totalSteps);
+    setPlaybackDone(true);
+  }
+
+  function exitGame() {
+    setGameActive(false);
+  }
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),_transparent_28%),linear-gradient(180deg,_#f8fafc_0%,_#f1f5f9_100%)] p-4 text-slate-900 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="mb-6 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+          <div className="rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur xl:p-8">
+            <div className="mb-5 flex items-center gap-3 text-sky-600">
+              <div className="rounded-2xl bg-sky-100 p-3">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-sky-700">
+                Chore Chaos
+              </span>
+            </div>
+
+            <h1 className="max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+              Animated random game modes to decide who gets stuck with the chores.
+            </h1>
+            <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
+              Add four names, choose a single-round or tournament format, and launch a full-screen game view that takes over until the reveal is complete.
+            </p>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {cleanedNames.map((name, index) => (
+                <label key={index} className="block">
+                  <div className="mb-2 text-sm font-semibold text-slate-500">Person {index + 1}</div>
+                  <input
+                    value={name}
+                    onChange={(event) => updateName(index, event.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                    placeholder={`Name ${index + 1}`}
+                  />
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_180px_180px_220px]">
+              <label className="block">
+                <div className="mb-2 text-sm font-semibold text-slate-500">Stakes</div>
+                <input
+                  value={taskLabel}
+                  onChange={(event) => setTaskLabel(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                  placeholder={selectionGoal === "winner" ? "skip chores" : "do the dishes"}
+                />
+              </label>
+
+              <label className="block">
+                <div className="mb-2 text-sm font-semibold text-slate-500">Format</div>
+                <select
+                  value={gameFormat}
+                  onChange={(event) => setGameFormat(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-[0.95rem] text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                >
+                  <option value="single">Single round</option>
+                  <option value="tournament">Tournament</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <div className="mb-2 text-sm font-semibold text-slate-500">Pick a...</div>
+                <select
+                  value={selectionGoal}
+                  onChange={(event) => setSelectionGoal(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-[0.95rem] text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                >
+                  <option value="loser">Loser</option>
+                  <option value="winner">Winner</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <div className="mb-2 text-sm font-semibold text-slate-500">Manual mode</div>
+                <select
+                  value={selectedModeId}
+                  onChange={(event) => setSelectedModeId(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-[0.95rem] text-base shadow-sm outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                >
+                  <option value="auto">Auto-pick a random mode</option>
+                  {MODE_META.map((mode) => (
+                    <option key={mode.id} value={mode.id}>
+                      {mode.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={() => startGame()}
+                disabled={!canRun}
+                className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Shuffle className="h-4 w-4" />
+                Play game
+              </button>
+
+              <button
+                onClick={() => startGame(selectedModeId === "auto" ? pickRandom(MODES).id : selectedModeId)}
+                disabled={!canRun}
+                className="inline-flex items-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Dices className="h-4 w-4" />
+                Play selected
+              </button>
+
+              <button
+                onClick={playAgain}
+                disabled={!result || !canRun}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Play last game again
+              </button>
+            </div>
+
+            {!hasFourNames ? <p className="mt-4 text-sm font-medium text-amber-600">Enter all four names to spin it up.</p> : null}
+            {hasFourNames && !namesAreUnique ? <p className="mt-4 text-sm font-medium text-amber-600">Use four unique names so the results are crystal clear.</p> : null}
+          </div>
+
+          <div className="rounded-[2rem] border border-white/60 bg-slate-950 p-6 text-white shadow-xl">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-white/10 p-3">
+                <Trophy className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">What you get</div>
+                <div className="mt-1 text-2xl font-bold">The chaos menu</div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-3">
+              {MODE_META.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => setSelectedModeId(mode.id)}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    selectedModeId === mode.id ? "border-white/30 bg-white/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <div className="text-base font-semibold">{mode.name}</div>
+                  <div className="mt-1 text-sm leading-6 text-slate-300">{mode.blurb}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+          <div className="space-y-6">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="rounded-[2rem] border border-dashed border-slate-300 bg-white/70 p-10 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-sky-100 text-sky-600">
+                <Sparkles className="h-8 w-8" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Big-screen game mode</h2>
+              <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+                When you hit play, the game takes over the full screen so the group can focus on the reveal. Tournament mode keeps going round by round until only one person has never won. Then use <span className="font-semibold">Exit</span> or <span className="font-semibold">Play again</span>.
+              </p>
+            </motion.div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-[2rem] border border-white/60 bg-white/85 p-6 shadow-xl backdrop-blur">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="rounded-2xl bg-slate-100 p-3 text-slate-700">
+                  <Shuffle className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">Recent picks</div>
+                  <div className="mt-1 text-2xl font-bold text-slate-900">History</div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {history.length ? (
+                  history.map((entry, index) => (
+                    <div key={entry.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">{entry.selectedName}</div>
+                          <div className="text-sm text-slate-500">{entry.modeName} • {entry.format === "tournament" ? "tournament" : entry.selectionGoal === "winner" ? "winner" : "loser"}</div>
+                        </div>
+                        <div className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">#{index + 1}</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                    No rounds yet. The first victim will show up here.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-white/60 bg-white/85 p-6 shadow-xl backdrop-blur">
+              <div className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">How it feels now</div>
+              <div className="mt-2 text-2xl font-bold text-slate-900">Tap-through suspense</div>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                <p>1. Each mode waits for your click before revealing the next beat.</p>
+                <p>2. Tournament mode makes winners safe and shrinks the field each round.</p>
+                <p>3. The full-screen game view keeps all the attention on the action.</p>
+                <p>4. You can still reveal all whenever the group wants the answer instantly.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {gameActive && result ? (
+          <motion.div
+            key={result.runId}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-950/80 p-3 backdrop-blur-md sm:p-6"
+          >
+            <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_26%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] shadow-2xl">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 bg-white/80 px-4 py-4 backdrop-blur sm:px-6">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Game view</div>
+                  <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{result.modeName}</div>
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  {!playbackDone ? (
+                    <>
+                      <button
+                        onClick={advancePlayback}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {playbackStep === 0 ? "Start reveal" : "Next reveal"}
+                      </button>
+                      <button
+                        onClick={revealAll}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        <FastForward className="h-4 w-4" />
+                        Reveal all
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={playAgain}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        Play again
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
+                <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                  <RevealBanner
+                    modeName={result.modeName}
+                    step={playbackDone ? currentConfig?.totalSteps ?? playbackStep : playbackStep}
+                    totalSteps={currentConfig?.totalSteps ?? 1}
+                    done={playbackDone}
+                  />
+
+                  <div className="flex-1">
+                    <PlaybackStage result={result} step={playbackStep} done={playbackDone} />
+                  </div>
+
+                  {playbackDone ? (
+                    <div className="rounded-[2rem] border border-slate-200 bg-white/85 p-6 text-center shadow-xl backdrop-blur">
+                      <div className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">Round complete</div>
+                      <div className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{result.headline}</div>
+                      <div className="mx-auto mt-3 max-w-3xl text-slate-600">Choose <span className="font-semibold">Play again</span> to run it back in full screen, or <span className="font-semibold">Exit</span> to return to setup.</div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<ChoreChaosApp />);
+  </script>
+</body>
+</html>
