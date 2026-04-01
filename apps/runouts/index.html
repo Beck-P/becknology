@@ -7834,11 +7834,9 @@ function VoteGrid({ votes, deadline, onVote, playerName }) {
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
         {/* Random option */}
         <button
-          onClick={() => !hasVoted && onVote({ action: 'vote_game', modeId: 'random' })}
-          disabled={!!hasVoted}
+          onClick={() => onVote({ action: 'vote_game', modeId: 'random' })}
           className={`relative p-3 rounded-xl text-center transition ${
-            hasVoted === 'random' ? 'bg-indigo-500/30 border-2 border-indigo-400' :
-            hasVoted ? 'opacity-40 cursor-not-allowed bg-white/[0.02] border border-white/[0.05]' :
+            hasVoted === 'random' ? 'bg-indigo-500/30 border-2 border-indigo-400 ring-1 ring-indigo-400/50' :
             'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-indigo-500/30'
           }`}
         >
@@ -7850,11 +7848,9 @@ function VoteGrid({ votes, deadline, onVote, playerName }) {
         {MODE_META.map(mode => (
           <button
             key={mode.id}
-            onClick={() => !hasVoted && onVote({ action: 'vote_game', modeId: mode.id })}
-            disabled={!!hasVoted}
+            onClick={() => onVote({ action: 'vote_game', modeId: mode.id })}
             className={`relative p-3 rounded-xl text-center transition ${
-              hasVoted === mode.id ? 'bg-indigo-500/30 border-2 border-indigo-400' :
-              hasVoted ? 'opacity-40 cursor-not-allowed bg-white/[0.02] border border-white/[0.05]' :
+              hasVoted === mode.id ? 'bg-indigo-500/30 border-2 border-indigo-400 ring-1 ring-indigo-400/50' :
               'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-indigo-500/30'
             }`}
           >
@@ -8070,6 +8066,8 @@ function ChoreChaosApp() {
   const [voteActive, setVoteActive] = useState(false);
   const [votes, setVotes] = useState({});
   const [voteDeadline, setVoteDeadline] = useState(null);
+  const [spectatorSeries, setSpectatorSeries] = useState(null);
+  const [seriesTied, setSeriesTied] = useState(null);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -9445,6 +9443,7 @@ function ChoreChaosApp() {
     setSeriesComplete(false);
     setShowSeriesSetup(false);
     setShowSeriesScoreboard(false);
+    setSeriesTied(null);
     seriesScoreRef.current = {};
     seriesRoundRecordedRef.current = null;
   }
@@ -9470,6 +9469,40 @@ function ChoreChaosApp() {
       setGameActive(false);
       setTimeout(() => startGame(pickRandom(MODES).id), 100);
     }
+  }
+
+  function startSeriesSuddenDeath(forcedModeId) {
+    // Sudden death round — only the tied players participate
+    if (!seriesTied || seriesTied.length < 2) return;
+    const tiedPlayerNames = seriesTied;
+    setSeriesTied(null);
+    setSeriesRound(prev => prev + 1);
+
+    const modeId = forcedModeId || pickRandom(MODES).id;
+    const outcome = {
+      ...createOutcome(modeId, tiedPlayerNames),
+      runId: `${Date.now()}-${secureRandomInt(100000)}`,
+    };
+    outcome.taskLabel = taskLabel.trim();
+    outcome.isSeriesSuddenDeath = true;
+    if (outcome.modeId === "wheel" && outcome.wheel) {
+      setWheelRotation(outcome.wheel.rotation);
+    }
+    setResult(outcome);
+    setPlaybackStep(0);
+    setPlaybackDone(false);
+    setGameActive(true);
+    setSuddenDeathRound(0);
+    setSuddenDeathNames(null);
+    setVoteActive(false);
+    setVotes({});
+    setVoteDeadline(null);
+    setShowSeriesScoreboard(false);
+    broadcastEvent({
+      type: 'game_start',
+      result: outcome,
+      series: { active: true, config: seriesConfig, scores: seriesScoreRef.current, round: seriesRound + 1, history: seriesHistory, suddenDeath: true },
+    });
   }
 
   function createOutcome(forcedModeId = null, forcedNames = null) {
@@ -9513,6 +9546,7 @@ function ChoreChaosApp() {
       setSeriesHistory([]);
       setSeriesComplete(false);
       setShowSeriesScoreboard(false);
+      setSeriesTied(null);
       // If interactive, start a vote for the first mode
       if (interactiveMode && !forcedModeId) {
         startVote();
@@ -9680,7 +9714,21 @@ function ChoreChaosApp() {
 
     // Check if clinched
     if (isSeriesClinched(newScores, seriesConfig.totalRounds, seriesRound)) {
-      setSeriesComplete(true);
+      // Check for tie at the top
+      const sorted = Object.entries(newScores).sort((a, b) => b[1] - a[1]);
+      const topScore = sorted[0][1];
+      const tiedPlayers = sorted.filter(([_, s]) => s === topScore).map(([n]) => n);
+
+      if (tiedPlayers.length > 1 && seriesRound >= seriesConfig.totalRounds) {
+        // TIE at the top — go to sudden death instead of declaring winner
+        setSeriesTied(tiedPlayers);
+        broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: false, tied: tiedPlayers });
+      } else {
+        setSeriesComplete(true);
+        broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: true });
+      }
+    } else {
+      broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: false });
     }
   }, [seriesActive, playbackDone, result?.runId]);
 
@@ -9888,6 +9936,7 @@ function ChoreChaosApp() {
         case 'game_start':
           window.__votes = {};
           setSpectatorState({ type: 'playing', result: payload.result, step: 0, done: false });
+          if (payload.series) setSpectatorSeries(payload.series);
           // Auto-set pending action for real-time interactive modes on player side
           if (roomModeRef.current === 'player') {
             if (payload.result?.modeId === 'rocket') {
@@ -10003,9 +10052,13 @@ function ChoreChaosApp() {
           window.__votes = {};
           setPendingAction(null);
           break;
+        case 'series_update':
+          setSpectatorSeries(prev => prev ? { ...prev, scores: payload.scores, round: payload.round, history: payload.history, complete: payload.complete, tied: payload.tied || null } : prev);
+          break;
         case 'game_reset':
           window.__votes = {};
           setSpectatorState({ type: 'waiting' });
+          setSpectatorSeries(null);
           break;
         case 'room_closed':
           setRoomClosed(true);
@@ -10122,6 +10175,16 @@ function ChoreChaosApp() {
         <div className="fixed inset-0 z-50 bg-slate-950 p-0 sm:p-6">
           <div className={`theme-${specResult.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
             <ThemeArt modeId={specResult.modeId} />
+            {spectatorSeries?.active ? (
+              <div className="relative z-10 flex items-center justify-between px-4 py-2 border-b border-white/5 bg-white/[0.02]" style={{ fontSize: 10 }}>
+                <span className="pixel-font text-[7px] text-indigo-400">
+                  {spectatorSeries.round > spectatorSeries.config.totalRounds ? `Sudden Death \u2022 Round ${spectatorSeries.round}` : `Best of ${spectatorSeries.config.totalRounds} \u2022 Round ${spectatorSeries.round}`}
+                </span>
+                <span className="font-mono text-[9px] text-slate-400">
+                  {Object.entries(spectatorSeries.scores).map(([name, score]) => `${name}: ${score}`).join('  ')}
+                </span>
+              </div>
+            ) : null}
             <div className="modal-toolbar relative z-10 flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur sm:px-6 sm:py-4">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Spectating</div>
@@ -10151,6 +10214,23 @@ function ChoreChaosApp() {
                       <VerdictReveal text={specResult.headline} isWinner={specResult.selectionGoal === "winner"} />
                     </div>
                   </div>
+                ) : null}
+                {specDone && spectatorSeries?.active && !spectatorSeries?.complete ? (
+                  <SeriesScoreboard
+                    scores={spectatorSeries.scores}
+                    history={spectatorSeries.history}
+                    round={spectatorSeries.round}
+                    totalRounds={spectatorSeries.config.totalRounds}
+                    selectionGoal={spectatorSeries.config.selectionGoal}
+                  />
+                ) : null}
+                {specDone && spectatorSeries?.active && spectatorSeries?.complete ? (
+                  <SeriesResult
+                    scores={spectatorSeries.scores}
+                    history={spectatorSeries.history}
+                    totalRounds={spectatorSeries.config.totalRounds}
+                    selectionGoal={spectatorSeries.config.selectionGoal}
+                  />
                 ) : null}
               </div>
             </div>
@@ -10201,6 +10281,16 @@ function ChoreChaosApp() {
         <div className="fixed inset-0 z-50 bg-slate-950 p-0 sm:p-6">
           <div className={`theme-${specResult.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
             <ThemeArt modeId={specResult.modeId} />
+            {spectatorSeries?.active ? (
+              <div className="relative z-10 flex items-center justify-between px-4 py-2 border-b border-white/5 bg-white/[0.02]" style={{ fontSize: 10 }}>
+                <span className="pixel-font text-[7px] text-indigo-400">
+                  {spectatorSeries.round > spectatorSeries.config.totalRounds ? `Sudden Death \u2022 Round ${spectatorSeries.round}` : `Best of ${spectatorSeries.config.totalRounds} \u2022 Round ${spectatorSeries.round}`}
+                </span>
+                <span className="font-mono text-[9px] text-slate-400">
+                  {Object.entries(spectatorSeries.scores).map(([name, score]) => `${name}: ${score}`).join('  ')}
+                </span>
+              </div>
+            ) : null}
             <div className="modal-toolbar relative z-10 flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur sm:px-6 sm:py-4">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-500">Playing as {playerName}</div>
@@ -10230,6 +10320,23 @@ function ChoreChaosApp() {
                       <VerdictReveal text={specResult.headline} isWinner={specResult.selectionGoal === "winner"} />
                     </div>
                   </div>
+                ) : null}
+                {specDone && spectatorSeries?.active && !spectatorSeries?.complete ? (
+                  <SeriesScoreboard
+                    scores={spectatorSeries.scores}
+                    history={spectatorSeries.history}
+                    round={spectatorSeries.round}
+                    totalRounds={spectatorSeries.config.totalRounds}
+                    selectionGoal={spectatorSeries.config.selectionGoal}
+                  />
+                ) : null}
+                {specDone && spectatorSeries?.active && spectatorSeries?.complete ? (
+                  <SeriesResult
+                    scores={spectatorSeries.scores}
+                    history={spectatorSeries.history}
+                    totalRounds={spectatorSeries.config.totalRounds}
+                    selectionGoal={spectatorSeries.config.selectionGoal}
+                  />
                 ) : null}
                 {pendingAction?.action === 'vote_game' && specDone ? (
                   <VoteGrid
@@ -10720,7 +10827,7 @@ function ChoreChaosApp() {
                       Best of {seriesConfig.totalRounds}
                     </span>
                     <span className="text-xs font-semibold text-slate-400">
-                      Round {seriesRound} of {seriesConfig.totalRounds}
+                      {seriesRound > seriesConfig.totalRounds ? `Sudden Death \u2022 Round ${seriesRound}` : `Round ${seriesRound} of ${seriesConfig.totalRounds}`}
                     </span>
                     <div className="flex flex-wrap items-center gap-3">
                       {Object.entries(seriesScores).sort((a, b) => b[1] - a[1]).map(([name, score]) => (
@@ -10735,7 +10842,7 @@ function ChoreChaosApp() {
                 <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                    {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : seriesActive ? `Series round ${seriesRound}` : "Game view"}
+                    {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : seriesActive && seriesConfig && seriesRound > seriesConfig.totalRounds ? `Sudden death \u2022 Round ${seriesRound}` : seriesActive ? `Series round ${seriesRound}` : "Game view"}
                   </div>
                   <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{result.modeName}</div>
                 </div>
@@ -10763,6 +10870,22 @@ function ChoreChaosApp() {
                     <>
                       <button
                         onClick={startSuddenDeath}
+                        className="sudden-death-btn inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+                      >
+                        {"\u2694\uFE0F"} SUDDEN DEATH
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit
+                      </button>
+                    </>
+                  ) : seriesActive && seriesTied ? (
+                    <>
+                      <span className="text-xs font-black uppercase tracking-widest text-orange-500 animate-pulse">SERIES TIED — {seriesTied.join(' vs ')}</span>
+                      <button
+                        onClick={() => startSeriesSuddenDeath(null)}
                         className="sudden-death-btn inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
                       >
                         {"\u2694\uFE0F"} SUDDEN DEATH
@@ -10922,7 +11045,9 @@ function ChoreChaosApp() {
                             <span>{result.summary}</span>
                           ) : seriesActive && seriesConfig ? (
                             <span>
-                              {seriesComplete
+                              {seriesTied
+                                ? `Series tied! ${seriesTied.join(' and ')} are locked at the top. Time for sudden death.`
+                                : seriesComplete
                                 ? `Series complete! ${result.selectedName} clinched it.`
                                 : `Round ${seriesRound} of ${seriesConfig.totalRounds} complete. Click Next Round to continue the series.`
                               }
@@ -10985,6 +11110,21 @@ function ChoreChaosApp() {
                   <>
                     <button
                       onClick={startSuddenDeath}
+                      className="sudden-death-btn flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-white shadow-lg"
+                    >
+                      {"\u2694\uFE0F"} SUDDEN DEATH
+                    </button>
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      Exit
+                    </button>
+                  </>
+                ) : seriesActive && seriesTied ? (
+                  <>
+                    <button
+                      onClick={() => startSeriesSuddenDeath(null)}
                       className="sudden-death-btn flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-white shadow-lg"
                     >
                       {"\u2694\uFE0F"} SUDDEN DEATH
