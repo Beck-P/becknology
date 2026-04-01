@@ -700,10 +700,9 @@ const BG = {
     ctx.fillRect(dockEndX - 1, dockTopY + Math.round(dockH / 2), hullL - dockEndX + 2, 1);
   },
 
-  ship(t, waterType) {
-    const { W, H } = G;
-    const wt = waterType || 'emerald';
-    const skyH = Math.round(H * 0.48), deckY = Math.round(H * 0.64);
+  // --- Helper: draw sky+water for ship scenes ---
+  _shipSkyWater(t, wt, skyH, waterEnd) {
+    const { W } = G;
     const skyS = { emerald:[['#2A4A6A',0],['#4A7A9A',0.3],['#7AABB8',0.6],['#B4D8E8',1]],
       crimson:[['#2A1020',0],['#5A2A3A',0.25],['#9A4A5A',0.5],['#DD7A6A',0.8],['#FFB090',1]],
       midnight:[['#050010',0],['#0A0A1E',0.3],['#101030',0.6],['#1A2040',1]] };
@@ -714,11 +713,97 @@ const BG = {
       midnight:[['rgba(25,25,50,0.4)',0.2],['rgba(35,35,65,0.3)',0.4]] };
     (cc[wt] || cc.emerald).forEach(([c, y], i) => drawCloudBand(skyH, t, c, 0.09, 10 + i * 15, y));
     const wb = { emerald:'#0A4A35', crimson:'#4A1A1A', midnight:'#050510' };
-    ctx.fillStyle = wb[wt] || wb.emerald; ctx.fillRect(0, skyH, W, deckY - skyH);
+    ctx.fillStyle = wb[wt] || wb.emerald; ctx.fillRect(0, skyH, W, waterEnd - skyH);
     const rt = { emerald:'rgba(5,50,35,0.28)', crimson:'rgba(50,12,12,0.28)', midnight:'rgba(3,3,10,0.25)' };
-    drawReflection(skyH, rt[wt] || rt.emerald, t, deckY - skyH);
+    drawReflection(skyH, rt[wt] || rt.emerald, t, waterEnd - skyH);
     const wr = { emerald:'52,211,153', crimson:'248,113,113', midnight:'59,130,246' };
-    drawWaveHL(skyH, deckY, t, wr[wt] || wr.emerald, 4);
+    drawWaveHL(skyH, waterEnd, t, wr[wt] || wr.emerald, 4);
+  },
+
+  // --- Full ship on open water (establishing shot) ---
+  shipFull(t, waterType) {
+    const { W, H } = G;
+    const wt = waterType || 'emerald';
+    const skyH = Math.round(H * 0.4);
+    BG._shipSkyWater(t, wt, skyH, H);
+    // Draw a full ship floating on the water
+    const bob = Math.round(Math.sin(t * 0.001) * 1);
+    const cx = Math.round(W * 0.5), waterLine = Math.round(H * 0.52) + bob;
+    const hw = Math.max(24, Math.round(W * 0.25));
+    const hh = Math.max(10, Math.round(H * 0.07));
+    // Hull (only top portion visible above water)
+    const visRows = Math.round(hh * 0.35);
+    for (let row = 0; row < visRows; row++) {
+      const frac = row / hh;
+      const inset = Math.round(frac * frac * hw * 0.12);
+      ctx.fillStyle = frac > 0.3 ? '#4A2210' : '#6B3A18';
+      ctx.fillRect(cx - Math.round(hw / 2) + inset, waterLine + row, hw - inset * 2, 1);
+    }
+    ctx.fillStyle = '#8B5A20'; ctx.fillRect(cx - Math.round(hw / 2) + 1, waterLine + 1, hw - 2, 1);
+    // Deck
+    ctx.fillStyle = '#A07818'; ctx.fillRect(cx - Math.round(hw / 2), waterLine - 1, hw, 2);
+    // Railing
+    const railH = Math.max(3, Math.round(H * 0.012));
+    ctx.fillStyle = '#7A5A20'; ctx.fillRect(cx - Math.round(hw / 2), waterLine - railH, hw, 1);
+    ctx.fillStyle = '#6B4A18';
+    for (let i = 0; i <= 5; i++) ctx.fillRect(cx - Math.round(hw / 2) + Math.round(i * hw / 5), waterLine - railH, 1, railH);
+    // Bow/stern accents
+    ctx.fillStyle = '#5A3018';
+    ctx.fillRect(cx - Math.round(hw / 2) - 2, waterLine, 3, 2);
+    ctx.fillRect(cx + Math.round(hw / 2), waterLine - 1, 2, 3);
+    // Main mast
+    const mastTop = waterLine - Math.round(H * 0.22);
+    ctx.fillStyle = '#6B4A20'; ctx.fillRect(cx - 1, mastTop, 2, waterLine - mastTop);
+    // Large sail
+    const sT = mastTop + 3, sB = mastTop + Math.round(H * 0.15);
+    const sW = Math.max(14, Math.round(hw * 0.55));
+    ctx.fillStyle = '#D8DDE4';
+    for (let sy = sT; sy < sB; sy++) {
+      const f = (sy - sT) / (sB - sT);
+      const b = Math.round(Math.sin(f * Math.PI) * sW * 0.1);
+      ctx.fillRect(cx - Math.round(sW / 2) - b, sy, sW + b * 2, 1);
+    }
+    ctx.fillStyle = '#BCC4CE';
+    for (let sy = sT + 2; sy < sB - 2; sy++) {
+      const f = (sy - sT) / (sB - sT);
+      const b = Math.round(Math.sin(f * Math.PI) * sW * 0.06);
+      ctx.fillRect(cx - Math.round(sW * 0.25), sy, Math.round(sW * 0.5) + b, 1);
+    }
+    ctx.fillStyle = '#C8CED6';
+    ctx.fillRect(cx - Math.round(sW / 2), sT, sW, 1);
+    ctx.fillRect(cx - Math.round(sW / 2), sB - 1, sW, 1);
+    ctx.fillStyle = '#6B4A20'; ctx.fillRect(cx - Math.round(sW / 2) - 2, sT - 1, sW + 4, 1);
+    // Flag
+    ctx.fillStyle = wt === 'crimson' ? '#CC3333' : wt === 'midnight' ? '#3B82F6' : '#34D399';
+    ctx.fillRect(cx + 1, mastTop - 2, Math.round(W * 0.025), 2);
+    // Water around hull
+    const wc = wt === 'crimson' ? '#5A2020' : wt === 'midnight' ? '#080818' : '#086848';
+    ctx.fillStyle = wc;
+    ctx.fillRect(cx - Math.round(hw / 2) - 5, waterLine + visRows, hw + 10, H - waterLine - visRows);
+    // Foam at waterline
+    ctx.fillStyle = wt === 'crimson' ? 'rgba(255,180,180,0.3)' : wt === 'midnight' ? 'rgba(100,140,220,0.2)' : 'rgba(100,230,170,0.3)';
+    for (let x = cx - Math.round(hw / 2) - 3; x < cx + Math.round(hw / 2) + 3; x++) {
+      ctx.fillRect(x, waterLine + visRows - 1 + Math.round(Math.sin(x * 0.2 + t * 0.003) * 0.5), 1, 1);
+    }
+    // Midnight: bioluminescence
+    if (wt === 'midnight') {
+      for (let i = 0; i < 10; i++) {
+        const bx = Math.round((hash(i * 7 + 800) * W));
+        const by = Math.round(H * 0.55 + hash(i * 13 + 900) * H * 0.3);
+        const ba = 0.1 + 0.15 * Math.sin(t * 0.001 + i * 2);
+        ctx.fillStyle = `rgba(80,180,255,${ba})`;
+        ctx.fillRect(bx, by, 2, 1);
+      }
+    }
+  },
+
+  // --- Ship deck view (conversations, close-up) ---
+  ship(t, waterType) {
+    const { W, H } = G;
+    const wt = waterType || 'emerald';
+    const skyH = Math.round(H * 0.48), deckY = Math.round(H * 0.64);
+    BG._shipSkyWater(t, wt, skyH, deckY);
+    // Distant island silhouette
     if (wt !== 'midnight') {
       ctx.fillStyle = wt === 'crimson' ? 'rgba(60,20,20,0.4)' : 'rgba(10,50,30,0.3)';
       ctx.beginPath(); ctx.moveTo(0, skyH);
@@ -729,14 +814,29 @@ const BG = {
       }
       ctx.lineTo(W, skyH); ctx.fill();
     }
+    // Midnight: bioluminescence in water
+    if (wt === 'midnight') {
+      for (let i = 0; i < 8; i++) {
+        const bx = Math.round(hash(i * 7 + 800) * W);
+        const by = Math.round(skyH + 3 + hash(i * 13 + 900) * (deckY - skyH - 5));
+        ctx.fillStyle = `rgba(80,180,255,${0.08 + 0.12 * Math.sin(t * 0.001 + i * 2)})`;
+        ctx.fillRect(bx, by, 2, 1);
+      }
+    }
+    // === DECK ===
     drawGrad(deckY, H, [['#8B6914',0],['#7A5A10',0.05],['#5A4010',1]]);
+    // Plank lines
     ctx.fillStyle = '#9A7A20';
     for (let i = 0; i < 6; i++) ctx.fillRect(0, deckY + 1 + Math.round(i * H * 0.045), W, 1);
+    // Railing
     ctx.fillStyle = '#5A3A10'; ctx.fillRect(0, deckY - 2, W, 3);
     for (let x = 0; x < W; x += Math.max(6, Math.round(W * 0.06)))
       ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
+    // Main mast (center)
     const mx = Math.round(W * 0.5);
+    ctx.fillStyle = '#5A3A10';
     ctx.fillRect(mx - 1, Math.round(H * 0.14), 2, Math.round(H * 0.32));
+    // Sail
     ctx.fillStyle = '#F5E8D0';
     ctx.beginPath(); ctx.moveTo(mx, Math.round(H * 0.15));
     ctx.lineTo(mx + Math.round(W * 0.14), Math.round(H * 0.2));
@@ -745,8 +845,87 @@ const BG = {
     ctx.beginPath(); ctx.moveTo(mx, Math.round(H * 0.22));
     ctx.lineTo(mx + Math.round(W * 0.1), Math.round(H * 0.24));
     ctx.lineTo(mx, Math.round(H * 0.36)); ctx.fill();
+    // Flag
     ctx.fillStyle = wt === 'crimson' ? '#CC3333' : wt === 'midnight' ? '#3B82F6' : '#34D399';
     ctx.fillRect(mx, Math.round(H * 0.13), Math.round(W * 0.04), 2);
+
+    // === DECK FURNITURE ===
+    // Barrels (left side)
+    const by = deckY + Math.round(H * 0.02);
+    ctx.fillStyle = '#6B4A20';
+    ctx.fillRect(Math.round(W * 0.06), by - 5, 4, 5);
+    ctx.fillRect(Math.round(W * 0.11), by - 6, 4, 5);
+    ctx.fillStyle = '#8B6A30'; // barrel bands
+    ctx.fillRect(Math.round(W * 0.06), by - 4, 4, 1);
+    ctx.fillRect(Math.round(W * 0.06), by - 2, 4, 1);
+    ctx.fillRect(Math.round(W * 0.11), by - 5, 4, 1);
+    ctx.fillRect(Math.round(W * 0.11), by - 3, 4, 1);
+    // Crate
+    ctx.fillStyle = '#7A5A28';
+    ctx.fillRect(Math.round(W * 0.16), by - 4, 5, 4);
+    ctx.fillStyle = '#6A4A20';
+    ctx.fillRect(Math.round(W * 0.16), by - 4, 5, 1);
+    ctx.fillRect(Math.round(W * 0.18), by - 4, 1, 4);
+    // Coiled rope
+    ctx.fillStyle = '#C4A870';
+    ctx.fillRect(Math.round(W * 0.06), by - 7, 3, 2);
+    ctx.fillStyle = '#B49860';
+    ctx.fillRect(Math.round(W * 0.07), by - 8, 2, 1);
+
+    // Ship's wheel (right side)
+    const wx = Math.round(W * 0.82), wy = deckY - Math.round(H * 0.02);
+    ctx.fillStyle = '#5A3A10';
+    ctx.fillRect(wx, wy, 2, Math.round(H * 0.02));
+    // Wheel spokes
+    ctx.fillStyle = '#7A5A20';
+    for (let a = 0; a < 8; a++) {
+      const angle = a * Math.PI / 4 + t * 0.0003;
+      const sx = wx + 1 + Math.round(Math.cos(angle) * 3);
+      const sy = wy - 1 + Math.round(Math.sin(angle) * 3);
+      ctx.fillRect(sx, sy, 1, 1);
+    }
+    ctx.fillStyle = '#6B4A18';
+    ctx.fillRect(wx, wy - 1, 2, 1); // hub
+
+    // Lantern (near left)
+    const lx = Math.round(W * 0.25);
+    ctx.fillStyle = '#5A3A10'; ctx.fillRect(lx, deckY - Math.round(H * 0.04), 1, Math.round(H * 0.04));
+    ctx.fillStyle = '#FFD040';
+    ctx.fillRect(lx - 1, deckY - Math.round(H * 0.05), 3, 2);
+    // Lantern glow
+    const lg = ctx.createRadialGradient(lx, deckY - Math.round(H * 0.04), 0, lx, deckY - Math.round(H * 0.04), Math.round(W * 0.04));
+    lg.addColorStop(0, 'rgba(255,200,80,0.12)'); lg.addColorStop(1, 'rgba(255,200,80,0)');
+    ctx.fillStyle = lg; ctx.fillRect(lx - Math.round(W * 0.04), deckY - Math.round(H * 0.07), Math.round(W * 0.08), Math.round(H * 0.06));
+
+    // Lantern (right)
+    const lx2 = Math.round(W * 0.72);
+    ctx.fillStyle = '#5A3A10'; ctx.fillRect(lx2, deckY - Math.round(H * 0.04), 1, Math.round(H * 0.04));
+    ctx.fillStyle = '#FFD040'; ctx.fillRect(lx2 - 1, deckY - Math.round(H * 0.05), 3, 2);
+    const lg2 = ctx.createRadialGradient(lx2, deckY - Math.round(H * 0.04), 0, lx2, deckY - Math.round(H * 0.04), Math.round(W * 0.04));
+    lg2.addColorStop(0, 'rgba(255,200,80,0.12)'); lg2.addColorStop(1, 'rgba(255,200,80,0)');
+    ctx.fillStyle = lg2; ctx.fillRect(lx2 - Math.round(W * 0.04), deckY - Math.round(H * 0.07), Math.round(W * 0.08), Math.round(H * 0.06));
+
+    // Rigging ropes from mast
+    ctx.fillStyle = 'rgba(140,120,90,0.4)';
+    ctx.beginPath(); ctx.moveTo(mx, Math.round(H * 0.2));
+    ctx.lineTo(Math.round(W * 0.15), deckY - 2); ctx.lineTo(Math.round(W * 0.15) + 1, deckY - 2);
+    ctx.lineTo(mx + 1, Math.round(H * 0.2)); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(mx, Math.round(H * 0.2));
+    ctx.lineTo(Math.round(W * 0.88), deckY - 2); ctx.lineTo(Math.round(W * 0.88) + 1, deckY - 2);
+    ctx.lineTo(mx + 1, Math.round(H * 0.2)); ctx.fill();
+
+    // Cabin structure (far right, behind wheel)
+    ctx.fillStyle = '#5A4010';
+    ctx.fillRect(Math.round(W * 0.88), deckY - Math.round(H * 0.06), Math.round(W * 0.1), Math.round(H * 0.06));
+    ctx.fillStyle = '#6B5020';
+    ctx.fillRect(Math.round(W * 0.88), deckY - Math.round(H * 0.06), Math.round(W * 0.1), 1);
+    // Cabin window
+    ctx.fillStyle = '#FFE8A0';
+    ctx.fillRect(Math.round(W * 0.91), deckY - Math.round(H * 0.04), 2, 2);
+    // Cabin glow
+    const cg = ctx.createRadialGradient(Math.round(W * 0.92), deckY - Math.round(H * 0.03), 0, Math.round(W * 0.92), deckY - Math.round(H * 0.03), Math.round(W * 0.03));
+    cg.addColorStop(0, 'rgba(255,230,160,0.08)'); cg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = cg; ctx.fillRect(Math.round(W * 0.88), deckY - Math.round(H * 0.06), Math.round(W * 0.12), Math.round(H * 0.06));
   },
 
   burritos(t) {
@@ -1132,7 +1311,7 @@ function emitParticles(scene) {
     const cols = ['#FF6B35','#FFD700','#DC2626','#FF8C42'];
     addP('leaf', Math.random() * W, -5, { vy: 0.025 + Math.random() * 0.015,
       color: cols[Math.floor(Math.random() * cols.length)], seed: Math.random() * 99, maxLife: 5000 });
-  } else if (bg === 'ship' || bg === 'shore') {
+  } else if (bg === 'ship' || bg === 'shipFull' || bg === 'shore') {
     const wt = scene.waterType || 'emerald';
     const c = wt === 'midnight' ? '#3B82F6' : wt === 'crimson' ? '#F87171' : '#A7F3D0';
     addP('sparkle', Math.random() * W, H * 0.3 + Math.random() * H * 0.15, { vy: 0.005, color: c, maxLife: 3000 });
@@ -1598,9 +1777,12 @@ const scenes = [
   ]},
 
   // 3 — Captain Conversation
-  { id: 'captain', bg: 'ship', music: 'emerald', waterType: 'emerald', dialogue: [
-    { s:'n', t:"The ship was called the Wandering Thought, which seemed appropriate for a vessel crewed entirely by people who looked like they had somewhere better to be." },
-    { s:'n', t:"The captain was a weathered man with kind eyes and an accent she couldn't quite place." },
+  { id: 'captain', bg: 'shipFull', music: 'emerald', waterType: 'emerald',
+    init() { this.bg = 'shipFull'; },
+    dialogue: [
+    { s:'n', t:'The ship was called the Wandering Thought, which seemed appropriate for a vessel crewed entirely by people who looked like they had somewhere better to be.' },
+    { s:'n', t:'It cut through the emerald water like a needle through silk — if silk were made of waves and the needle were held by someone who had clearly been drinking.' },
+    { s:'n', t:'The captain was a weathered man with kind eyes and an accent she couldn\'t quite place.', onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'c', t:'You look like someone chasing something.' },
     { s:'u', t:"Someone. I'm chasing someone." },
     { s:'c', t:'Ah. Even worse. At least cargo stays where you put it.' },
@@ -1677,11 +1859,11 @@ const scenes = [
   ]},
 
   // 6 — Golden Oreo
-  { id: 'golden-oreo', bg: 'ship', music: 'crimson', waterType: 'crimson',
-    init() { this.waterType = 'crimson'; },
+  { id: 'golden-oreo', bg: 'shipFull', music: 'crimson', waterType: 'crimson',
+    init() { this.waterType = 'crimson'; this.bg = 'shipFull'; },
     dialogue: [
     { s:'n', t:'She woke up on a new ship. It was called the Golden Oreo, which was a ridiculous name for a vessel, and she loved it immediately.' },
-    { s:'n', t:'The crew was small but capable — women who looked like they had been sailing since before the sea was invented.' },
+    { s:'n', t:'The crew was small but capable — women who looked like they had been sailing since before the sea was invented.', onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'b', t:'I hate boats. I hate water. I hate being a rat on a boat on water.' },
     { s:'u', t:"You're alive." },
     { s:'b', t:'Technically. Which is the worst kind of alive.' },
@@ -1817,11 +1999,12 @@ const scenes = [
   ]},
 
   // 11 — Midnight Sea
-  { id: 'midnight-sea', bg: 'ship', music: 'midnight', waterType: 'midnight',
-    init() { this.waterType = 'midnight'; },
+  { id: 'midnight-sea', bg: 'shipFull', music: 'midnight', waterType: 'midnight',
+    init() { this.waterType = 'midnight'; this.bg = 'shipFull'; },
     dialogue: [
     { s:'n', t:'The midnight sea was the color of ink and bad decisions.' },
-    { s:'n', t:"The water was alive — or something in it was. Shapes moved beneath the surface. Tentacles. Shadows. Things that didn't bother having names." },
+    { s:'n', t:'The Golden Oreo was a small, bright thing in a very large, dark nothing. It sailed on anyway.' },
+    { s:'n', t:"The water was alive — or something in it was. Shapes moved beneath the surface. Tentacles. Shadows. Things that didn't bother having names.", onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'b', t:'This is fine.' },
     { s:'u', t:"You're shaking." },
     { s:'b', t:'I am vibrating. With confidence.' },
@@ -1909,6 +2092,7 @@ function render() {
   const bg = scene.bg;
   if (bg === 'autumn') BG.autumn(t);
   else if (bg === 'shore') BG.shore(t);
+  else if (bg === 'shipFull') BG.shipFull(t, scene.waterType);
   else if (bg === 'ship') BG.ship(t, scene.waterType);
   else if (bg === 'burritos') BG.burritos(t);
   else if (bg === 'cafe') BG.cafe(t);
@@ -1917,8 +2101,8 @@ function render() {
   else if (bg === 'tower') BG.tower(t);
   else if (bg === 'towerTop') BG.towerTop(t);
 
-  // Characters (hide during certain minigames)
-  if (G.phase !== 'minigame' || !['navigate','timing'].includes(G.mg?.type)) {
+  // Characters (hide during minigames and wide establishing shots)
+  if (scene.bg !== 'shipFull' && (G.phase !== 'minigame' || !['navigate','timing'].includes(G.mg?.type))) {
     drawSceneChars(scene.id, t);
   }
 
