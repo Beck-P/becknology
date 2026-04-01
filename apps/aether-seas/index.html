@@ -1659,6 +1659,108 @@ function drawFelix(x, y, t) {
   ctx.restore();
 }
 
+// Large white lion / sphinx cat
+function drawWhiteLion(x, y, t) {
+  const s = PX;
+  const bob = Math.sin((t || 0) * 0.001) * 1;
+  ctx.save(); ctx.translate(x, y + bob);
+  // Large body (seated, wide)
+  ctx.fillStyle = '#E8E0D8';
+  ctx.fillRect(-4*s, -4*s, 8*s, 4*s);
+  // Chest/belly lighter
+  ctx.fillStyle = '#F5F0EA';
+  ctx.fillRect(-2*s, -3*s, 4*s, 3*s);
+  // Head (large, regal)
+  ctx.fillStyle = '#E8E0D8';
+  ctx.fillRect(-3*s, -9*s, 6*s, 5*s);
+  // Mane (golden, flows around head)
+  ctx.fillStyle = '#D4AA60';
+  ctx.fillRect(-4*s, -10*s, 8*s, 2*s); // top mane
+  ctx.fillRect(-5*s, -9*s, 2*s, 4*s);  // left mane
+  ctx.fillRect(3*s, -9*s, 2*s, 4*s);   // right mane
+  ctx.fillRect(-4*s, -5*s, 2*s, 2*s);  // lower left
+  ctx.fillRect(2*s, -5*s, 2*s, 2*s);   // lower right
+  // Darker mane accents
+  ctx.fillStyle = '#C09A50';
+  ctx.fillRect(-5*s, -8*s, s, 3*s);
+  ctx.fillRect(4*s, -8*s, s, 3*s);
+  // Eyes (calm, golden)
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(-2*s, -7*s, s, s);
+  ctx.fillRect(s, -7*s, s, s);
+  // Pupils (narrow slits)
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(-2*s, -7*s, Math.max(1, Math.round(s * 0.4)), s);
+  ctx.fillRect(s, -7*s, Math.max(1, Math.round(s * 0.4)), s);
+  // Nose
+  ctx.fillStyle = '#C8A090';
+  ctx.fillRect(0, -6*s, s, s);
+  // Front paws
+  ctx.fillStyle = '#E8E0D8';
+  ctx.fillRect(-3*s, 0, 2*s, s);
+  ctx.fillRect(s, 0, 2*s, s);
+  ctx.restore();
+}
+
+// Wizard werewolf cat (patchy grey fur, mystical)
+function drawWizardCat(x, y, t) {
+  const s = PX;
+  const bob = Math.sin((t || 0) * 0.0012 + 1) * 1;
+  ctx.save(); ctx.translate(x, y + bob);
+  // Body (seated, in a starry robe)
+  ctx.fillStyle = '#2A2050';
+  ctx.fillRect(-3*s, -4*s, 6*s, 4*s);
+  // Star pattern on robe
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(-2*s, -3*s, s, s);
+  ctx.fillRect(s, -2*s, s, s);
+  ctx.fillRect(0, -4*s, s, s);
+  // Head (patchy grey)
+  ctx.fillStyle = '#707070';
+  ctx.fillRect(-2*s, -8*s, 5*s, 4*s);
+  // Patchy lighter fur
+  ctx.fillStyle = '#909090';
+  ctx.fillRect(-s, -7*s, 2*s, 2*s);
+  ctx.fillRect(s, -8*s, s, s);
+  // Dark patches
+  ctx.fillStyle = '#505050';
+  ctx.fillRect(-2*s, -6*s, s, s);
+  ctx.fillRect(2*s, -7*s, s, s);
+  // Tall pointy ears
+  ctx.fillStyle = '#707070';
+  ctx.fillRect(-2*s, -10*s, s, 2*s);
+  ctx.fillRect(2*s, -10*s, s, 2*s);
+  // Inner ears
+  ctx.fillStyle = '#B08080';
+  ctx.fillRect(-2*s, -9*s, s, s);
+  ctx.fillRect(2*s, -9*s, s, s);
+  // Eyes (glowing purple, mystical)
+  ctx.fillStyle = '#AA66FF';
+  ctx.fillRect(-s, -7*s, s, s);
+  ctx.fillRect(s, -7*s, s, s);
+  // Wizard hat
+  ctx.fillStyle = '#2A1A50';
+  ctx.fillRect(-3*s, -11*s, 7*s, s);  // brim
+  ctx.fillRect(-s, -14*s, 3*s, 3*s);  // cone
+  ctx.fillRect(0, -15*s, s, s);       // tip
+  // Star on hat
+  ctx.fillStyle = '#FFD700';
+  ctx.fillRect(0, -13*s, s, s);
+  // Staff (leaning beside)
+  ctx.fillStyle = '#6A4A20';
+  ctx.fillRect(3*s, -12*s, s, 12*s);
+  // Staff orb
+  ctx.fillStyle = '#AA66FF';
+  ctx.fillRect(3*s, -13*s, s, s);
+  ctx.fillStyle = 'rgba(170,102,255,0.3)';
+  ctx.fillRect(2*s, -14*s, 3*s, 3*s);
+  // Paws
+  ctx.fillStyle = '#707070';
+  ctx.fillRect(-2*s, 0, 2*s, s);
+  ctx.fillRect(s, 0, 2*s, s);
+  ctx.restore();
+}
+
 // ============================================================
 // DRAWING — Characters per scene
 // ============================================================
@@ -1783,8 +1885,20 @@ function drawSceneChars(sceneId, t) {
       drawBeckRat(W * 0.55, H * 0.36, t);
       break;
     case 'cat-cafe':
-      drawUlisa(W * 0.4, H * 0.63, 1, t);
-      drawBeckRat(W * 0.55, H * 0.67, t);
+      // Mythical cats behind the counter
+      drawWhiteLion(W * 0.72, H * 0.55, t);
+      drawWizardCat(W * 0.85, H * 0.56, t);
+      // Captain (dark skin, standing to the side)
+      drawPerson(W * 0.12, H * 0.63, '#1A0A05', '#6B4A28', '#A08050', '#3A2A15', 0, 1, t);
+      ctx.fillStyle = '#8B5A3A';
+      const ccx = Math.round(W * 0.12), ccy = Math.round(H * 0.63) + Math.round(Math.sin(t * 0.0015) * 1.5);
+      ctx.fillRect(ccx - 2*PX, ccy - 11*PX, 4*PX, 4*PX);
+      ctx.fillStyle = '#F5F0E0';
+      ctx.fillRect(ccx - PX, ccy - 10*PX, PX, PX);
+      ctx.fillRect(ccx + PX, ccy - 10*PX, PX, PX);
+      // Ulisa and Beck
+      drawUlisa(W * 0.35, H * 0.63, 1, t);
+      drawBeckRat(W * 0.48, H * 0.67, t);
       break;
     case 'art-museum':
       drawUlisa(W * 0.4, H * 0.7, 1, t);
