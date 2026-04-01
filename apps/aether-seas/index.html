@@ -980,19 +980,19 @@ const BG = {
   shipBattle(t) {
     const { W, H } = G;
     const skyH = Math.round(H * 0.48), deckY = Math.round(H * 0.64);
-    // Dramatic stormy crimson sky
-    drawGrad(0, skyH, [['#1A0810',0],['#3A1020',0.2],['#6A2030',0.4],['#AA4040',0.65],['#DD6050',0.85],['#FF9070',1]]);
-    // Storm clouds — heavier
-    drawCloudBand(skyH, t, 'rgba(60,20,20,0.5)', 0.14, 5, 0.15);
-    drawCloudBand(skyH, t, 'rgba(100,40,30,0.45)', 0.12, 15, 0.3);
-    drawCloudBand(skyH, t, 'rgba(150,60,45,0.4)', 0.1, 28, 0.45);
-    drawCloudBand(skyH, t, 'rgba(190,80,60,0.3)', 0.07, 40, 0.58);
-    // Crimson moon
-    drawMoonWithSpores(t, 'crimson', skyH);
-    // Angry crimson water
-    ctx.fillStyle = '#4A1A1A'; ctx.fillRect(0, skyH, W, deckY - skyH);
-    drawReflection(skyH, 'rgba(50,12,12,0.3)', t, deckY - skyH);
-    drawWaveHL(skyH, deckY, t, '248,113,113', 6);
+    // Stormy emerald sky — darker and more dramatic
+    drawGrad(0, skyH, [['#051510',0],['#0A2A1A',0.2],['#153A25',0.4],['#2A5A3A',0.6],['#3A7A4A',0.85],['#4A9A58',1]]);
+    // Storm clouds — heavy emerald-tinted
+    drawCloudBand(skyH, t, 'rgba(15,50,30,0.5)', 0.14, 5, 0.15);
+    drawCloudBand(skyH, t, 'rgba(25,70,40,0.45)', 0.12, 15, 0.3);
+    drawCloudBand(skyH, t, 'rgba(40,90,50,0.4)', 0.1, 28, 0.45);
+    drawCloudBand(skyH, t, 'rgba(60,110,65,0.3)', 0.07, 40, 0.58);
+    // Emerald moon
+    drawMoonWithSpores(t, 'emerald', skyH);
+    // Churning emerald water
+    ctx.fillStyle = '#064A32'; ctx.fillRect(0, skyH, W, deckY - skyH);
+    drawReflection(skyH, 'rgba(5,50,30,0.3)', t, deckY - skyH);
+    drawWaveHL(skyH, deckY, t, '52,211,153', 6);
 
     // === Enemy B&N ship (right side, in the water) ===
     const eX = Math.round(W * 0.82), eWY = skyH + Math.round((deckY - skyH) * 0.2);
@@ -1045,7 +1045,7 @@ const BG = {
       if (st < 0.4) {
         const sx = Math.round(W * 0.12 + hash(i * 11 + 700) * W * 0.5);
         const sy = skyH + Math.round(hash(i * 13 + 800) * (deckY - skyH) * 0.4);
-        ctx.fillStyle = `rgba(255,180,180,${0.4 - st})`;
+        ctx.fillStyle = `rgba(150,255,200,${0.4 - st})`;
         ctx.fillRect(sx - 2, sy - 1, 4, 1); ctx.fillRect(sx - 1, sy - 2, 2, 1); ctx.fillRect(sx - 1, sy, 2, 1);
       }
     }
@@ -1401,12 +1401,12 @@ function drawSceneChars(sceneId, t) {
       drawConnor(W * 0.6, H * 0.6, -1, t);
       break;
     case 'captain':
-      drawUlisa(W * 0.3, H * 0.64, 1, t);
+      drawUlisa(W * 0.3, H * 0.68, 1, t);
       // Captain — dark skin, dark hair, brown coat, tan pants, dark boots
-      drawPerson(W * 0.65, H * 0.62, '#1A0A05', '#6B4A28', '#A08050', '#3A2A15', 0, -1, t);
+      drawPerson(W * 0.65, H * 0.68, '#1A0A05', '#6B4A28', '#A08050', '#3A2A15', 0, -1, t);
       // Override skin color for captain (dark skin)
       ctx.fillStyle = '#8B5A3A';
-      const cpx = Math.round(W * 0.65), cpy = Math.round(H * 0.62) + Math.round(Math.sin(t * 0.0015) * 1.5);
+      const cpx = Math.round(W * 0.65), cpy = Math.round(H * 0.68) + Math.round(Math.sin(t * 0.0015) * 1.5);
       ctx.fillRect(cpx - 2*PX, cpy - 11*PX, 4*PX, 4*PX);
       // Captain's hat
       ctx.fillStyle = '#4A3018';
@@ -2016,15 +2016,24 @@ const scenes = [
     { s:'b', t:'...noted.' },
   ]},
 
-  // 5 — Barnes & Noble Attack
-  { id: 'barnes-noble', bg: 'ship', music: 'crimson', waterType: 'crimson',
-    init() { this.waterType = 'crimson'; this.bg = 'ship'; },
+  // 5 — Barnes & Noble Attack (on emerald sea)
+  { id: 'barnes-noble', bg: 'shipFull', music: 'emerald', waterType: 'emerald',
+    init() { this.waterType = 'emerald'; this.bg = 'shipFull'; },
     dialogue: [
-    { s:'n', t:'The sea had turned from emerald to crimson — the color of ambition and overdue library books.' },
-    { s:'n', t:'The attack came without warning.', onShow(){ scenes[G.sceneIdx].bg = 'shipBattle'; } },
-    { s:'cr', t:'SHIP OFF THE STARBOARD BOW!' },
-    { s:'n', t:"A massive vessel bore down on them. Its flag was unmistakable: a green banner emblazoned with BARNES & NOBLE." },
+    // Phase 0 — calm establishing shot on emerald sea
+    { s:'n', t:'They sailed on through the emerald sea. The water shimmered. The air was still. It was the kind of quiet that comes right before something very loud.' },
+    // Phase 1 — cut to deck, confusion
+    { s:'cr', t:'SHIP OFF THE STARBOARD BOW!', onShow(){ scenes[G.sceneIdx].bg = 'ship'; scenes[G.sceneIdx].waterType = 'emerald'; } },
+    { s:'n', t:'Everyone turned. A shadow cut through the fog.' },
+    { s:'b', t:'That\'s... a very large ship.' },
+    { s:'u', t:'Is that a bookstore?' },
+    // Phase 2 — enemy ship arrives, cut to wide shot
+    { s:'n', t:'A massive vessel bore down on them. Its flag was unmistakable: a green banner emblazoned with BARNES & NOBLE.', onShow(){ scenes[G.sceneIdx].bg = 'shipFull'; } },
     { s:'b', t:'Oh no.' },
+    // Phase 3 — cut to battle, books start flying
+    { s:'n', t:'The first book was fired.', onShow(){ scenes[G.sceneIdx].bg = 'shipBattle'; } },
+    { s:'n', t:'It arced through the emerald sky in slow motion — 1,232 pages of Brandon Sanderson hardcover, tumbling end over end, glinting in the spore-light.' },
+    { s:'n', t:'It was, objectively, a beautiful trajectory. It was also aimed directly at the deck.' },
     { s:'c', t:"They're loading the cannons!" },
     { s:'b', t:'Those aren\'t cannonballs. Those are... books.' },
     { s:'n', t:'Brandon Sanderson hardcovers. The biggest, heaviest books in all the land. Each one capable of sinking a small dinghy on impact.' },
@@ -2048,7 +2057,7 @@ const scenes = [
     { s:'n', t:'But the damage was done. The ship listed hard to port.' },
     { s:'c', t:'Abandon ship! Head for the Golden Oreo!' },
     { s:'b', t:'The what?' },
-    { s:'n', t:'The ship cracked in half. The crimson sea swallowed it whole.' },
+    { s:'n', t:'The ship cracked in half. The emerald sea swallowed it whole.' },
   ]},
 
   // 6 — Golden Oreo
@@ -2056,6 +2065,7 @@ const scenes = [
     init() { this.waterType = 'crimson'; this.bg = 'shipFull'; },
     dialogue: [
     { s:'n', t:'She woke up on a new ship. It was called the Golden Oreo, which was a ridiculous name for a vessel, and she loved it immediately.' },
+    { s:'n', t:'The sea had changed. Where it was once emerald, it was now the color of crimson — deeper, warmer, and somehow more opinionated.' },
     { s:'n', t:'The crew was small but capable — women who looked like they had been sailing since before the sea was invented.', onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'b', t:'I hate boats. I hate water. I hate being a rat on a boat on water.' },
     { s:'u', t:"You're alive." },
