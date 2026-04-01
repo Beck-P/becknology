@@ -343,6 +343,7 @@
     (function() {
       document.addEventListener('click', function(e) {
         if (e.target.closest('a, button')) return;
+        if (document.body.dataset.wasDrawing) return;
 
         var ripple = document.createElement('div');
         ripple.style.cssText =
@@ -359,6 +360,216 @@
         document.body.appendChild(ripple);
         setTimeout(function() { ripple.remove(); }, 400);
       });
+    })();
+    // Heart drawing easter egg — draw a heart to find a secret
+    (function() {
+      var pts = [];
+      var drawing = false;
+      var moved = false;
+      var startPos = null;
+
+      // Trail canvas
+      var canvas = document.createElement('canvas');
+      canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9998;';
+      document.body.appendChild(canvas);
+      var ctx = canvas.getContext('2d');
+
+      function sizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      sizeCanvas();
+      window.addEventListener('resize', sizeCanvas);
+
+      // Heart template (parametric curve, 60 points)
+      var heartTmpl = [];
+      for (var i = 0; i < 60; i++) {
+        var t = (i / 60) * Math.PI * 2;
+        heartTmpl.push({
+          x: 16 * Math.pow(Math.sin(t), 3),
+          y: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))
+        });
+      }
+
+      function xyFrom(e) {
+        var src = e.touches ? e.touches[0] : e;
+        return src ? { x: src.clientX, y: src.clientY } : null;
+      }
+
+      function pdist(a, b) {
+        var dx = a.x - b.x, dy = a.y - b.y;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function normalize(pts) {
+        var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (var i = 0; i < pts.length; i++) {
+          if (pts[i].x < minX) minX = pts[i].x;
+          if (pts[i].x > maxX) maxX = pts[i].x;
+          if (pts[i].y < minY) minY = pts[i].y;
+          if (pts[i].y > maxY) maxY = pts[i].y;
+        }
+        var s = Math.max(maxX - minX, maxY - minY) || 1;
+        var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+        var r = [];
+        for (var i = 0; i < pts.length; i++) {
+          r.push({ x: (pts[i].x - cx) / s, y: (pts[i].y - cy) / s });
+        }
+        return r;
+      }
+
+      function resample(pts, n) {
+        if (pts.length < 2) return pts;
+        var dists = [0];
+        for (var i = 1; i < pts.length; i++) {
+          dists.push(dists[i - 1] + pdist(pts[i], pts[i - 1]));
+        }
+        var total = dists[dists.length - 1];
+        if (total === 0) return [pts[0]];
+        var r = [];
+        for (var i = 0; i < n; i++) {
+          var target = (i / (n - 1)) * total;
+          for (var j = 1; j < dists.length; j++) {
+            if (dists[j] >= target) {
+              var seg = dists[j] - dists[j - 1];
+              var ratio = seg > 0 ? (target - dists[j - 1]) / seg : 0;
+              r.push({
+                x: pts[j - 1].x + (pts[j].x - pts[j - 1].x) * ratio,
+                y: pts[j - 1].y + (pts[j].y - pts[j - 1].y) * ratio
+              });
+              break;
+            }
+          }
+        }
+        return r;
+      }
+
+      function avgMinDist(a, b) {
+        var total = 0;
+        for (var i = 0; i < a.length; i++) {
+          var minD = Infinity;
+          for (var j = 0; j < b.length; j++) {
+            var dx = a[i].x - b[j].x, dy = a[i].y - b[j].y;
+            var d = dx * dx + dy * dy;
+            if (d < minD) minD = d;
+          }
+          total += Math.sqrt(minD);
+        }
+        return total / a.length;
+      }
+
+      function isHeart() {
+        if (pts.length < 20) return false;
+        var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (var i = 0; i < pts.length; i++) {
+          if (pts[i].x < minX) minX = pts[i].x;
+          if (pts[i].x > maxX) maxX = pts[i].x;
+          if (pts[i].y < minY) minY = pts[i].y;
+          if (pts[i].y > maxY) maxY = pts[i].y;
+        }
+        if ((maxX - minX) < 30 || (maxY - minY) < 30) return false;
+
+        var sampled = resample(pts, 60);
+        var nDrawn = normalize(sampled);
+        var nHeart = normalize(heartTmpl);
+        var d1 = avgMinDist(nDrawn, nHeart);
+        var d2 = avgMinDist(nHeart, nDrawn);
+        return (d1 + d2) / 2 < 0.18;
+      }
+
+      function showHeartAndGo() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var cx = canvas.width / 2, cy = canvas.height / 2;
+        var scale = Math.min(canvas.width, canvas.height) * 0.015;
+
+        ctx.beginPath();
+        for (var i = 0; i <= 60; i++) {
+          var t = (i / 60) * Math.PI * 2;
+          var hx = cx + scale * 16 * Math.pow(Math.sin(t), 3);
+          var hy = cy + scale * (-(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)));
+          if (i === 0) ctx.moveTo(hx, hy);
+          else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(160, 120, 220, 0.25)';
+        ctx.shadowColor = 'rgba(160, 120, 220, 0.5)';
+        ctx.shadowBlur = 30;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(160, 120, 220, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        setTimeout(function() {
+          window.location.href = '/aether-seas';
+        }, 1000);
+      }
+
+      function drawTrailSegment(from, to) {
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.strokeStyle = 'rgba(160, 120, 220, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.stroke();
+      }
+
+      function endDraw() {
+        if (!drawing) return;
+        drawing = false;
+        if (moved) {
+          document.body.dataset.wasDrawing = '1';
+          setTimeout(function() { delete document.body.dataset.wasDrawing; }, 100);
+        }
+        if (moved && isHeart()) {
+          showHeartAndGo();
+        } else {
+          setTimeout(function() { ctx.clearRect(0, 0, canvas.width, canvas.height); }, 300);
+        }
+      }
+
+      // Mouse events
+      document.addEventListener('mousedown', function(e) {
+        if (e.target.closest('a, button')) return;
+        startPos = { x: e.clientX, y: e.clientY };
+        pts = [startPos];
+        moved = false;
+        drawing = true;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!drawing) return;
+        var p = { x: e.clientX, y: e.clientY };
+        if (!moved && pdist(p, startPos) > 10) moved = true;
+        if (!moved) return;
+        pts.push(p);
+        drawTrailSegment(pts[pts.length - 2], p);
+      });
+      document.addEventListener('mouseup', endDraw);
+
+      // Touch events
+      document.addEventListener('touchstart', function(e) {
+        if (e.target.closest('a, button')) return;
+        var p = xyFrom(e);
+        if (!p) return;
+        startPos = p;
+        pts = [p];
+        moved = false;
+        drawing = true;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }, { passive: true });
+      document.addEventListener('touchmove', function(e) {
+        if (!drawing) return;
+        var p = xyFrom(e);
+        if (!p) return;
+        if (!moved && pdist(p, startPos) > 10) moved = true;
+        if (!moved) return;
+        pts.push(p);
+        drawTrailSegment(pts[pts.length - 2], p);
+      }, { passive: true });
+      document.addEventListener('touchend', endDraw);
     })();
   </script>
 
