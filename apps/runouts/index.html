@@ -2985,6 +2985,36 @@ function buildDiceResult(names, taskLabel, selectionGoal) {
 }
 
 function buildHighCardResult(names, taskLabel, selectionGoal) {
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    const deck = shuffle(createDeck());
+    const draftHands = {};
+    names.forEach(name => {
+      draftHands[name] = [deck.pop(), deck.pop(), deck.pop()];
+    });
+
+    return {
+      modeId: "high-card",
+      modeName: "High Card Draw",
+      selectionGoal,
+      draftPhase: true,
+      draftHands,
+      selectedName: null,
+      isTie: false,
+      headline: "Pick a card...",
+      summary: "Players are choosing their card blind.",
+      players: names.map(name => ({
+        name,
+        selected: false,
+        headline: "Picking...",
+        subline: "",
+        rank: 0,
+        chips: [],
+      })),
+    };
+  }
+
   const deck = shuffle(createDeck());
   const players = names.map((name) => ({
     name,
@@ -3154,6 +3184,51 @@ function buildSlotsResult(names, taskLabel, selectionGoal) {
 }
 
 function buildHorseRaceResult(names, taskLabel, selectionGoal) {
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    // Build race data but enter draft phase for lane picks
+    const LANE_NAMES = ['\uD83C\uDFC7 Lane 1', '\uD83C\uDFC7 Lane 2', '\uD83C\uDFC7 Lane 3', '\uD83C\uDFC7 Lane 4', '\uD83C\uDFC7 Lane 5', '\uD83C\uDFC7 Lane 6'].slice(0, Math.max(names.length, 3));
+
+    const positions = Object.fromEntries(names.map((name) => [name, 0]));
+    const turns = [];
+    for (let turn = 1; turn <= 12; turn += 1) {
+      const mover = pickRandom(names);
+      positions[mover] += 1;
+      turns.push({ turn, mover, positions: { ...positions }, text: 'Turn ' + turn + ': ' + mover + ' advances to ' + positions[mover] });
+    }
+
+    const players = names.map((name) => ({
+      name,
+      position: positions[name],
+      progress: positions[name],
+    }));
+
+    return {
+      modeId: "horse-race",
+      modeName: "Lucky Horse Race",
+      selectionGoal,
+      draftPhase: true,
+      lanes: LANE_NAMES,
+      lanePickOrder: shuffle([...names]),
+      turns,
+      race: { max: Math.max(...players.map(p => p.position), 1) },
+      selectedName: null,
+      isTie: false,
+      headline: "Pick your lane...",
+      summary: "Players are choosing their lane.",
+      players: players.map(p => ({
+        name: p.name,
+        progress: p.progress,
+        selected: false,
+        headline: p.progress + ' spaces moved',
+        subline: "Picking lane...",
+        rank: 0,
+        chips: ["Race"],
+      })),
+    };
+  }
+
   const positions = Object.fromEntries(names.map((name) => [name, 0]));
   const turns = [];
 
@@ -7488,6 +7563,193 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
               </>
             );
           })()
+        ) : pendingAction.action === 'stop_number' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-cyan-300 mb-2">#️⃣ YOUR NUMBER</div>
+            <button onClick={() => onAction({ action: 'stop_number' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              STOP ✋
+            </button>
+          </>
+        ) : pendingAction.action === 'stop_number' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">Waiting for {pendingAction.playerName}...</div>
+        ) : pendingAction.action === 'spin_wheel' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-amber-300 mb-2">🎡 YOU'RE THE SPINNER</div>
+            <button onClick={() => onAction({ action: 'spin_wheel' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-pink-500 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              SPIN THE WHEEL 🎡
+            </button>
+          </>
+        ) : pendingAction.action === 'spin_wheel' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is spinning...</div>
+        ) : pendingAction.action === 'pull_slots' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-pink-300 mb-2">🎰 YOUR TURN</div>
+            <button onClick={() => onAction({ action: 'pull_slots' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              PULL THE LEVER 🎰
+            </button>
+          </>
+        ) : pendingAction.action === 'pull_slots' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">Waiting for {pendingAction.playerName}...</div>
+        ) : pendingAction.action === 'flip_coin' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-yellow-300 mb-2">🪙 YOUR FLIP</div>
+            <button onClick={() => onAction({ action: 'flip_coin' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              FLIP 🪙
+            </button>
+          </>
+        ) : pendingAction.action === 'flip_coin' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is flipping...</div>
+        ) : pendingAction.action === 'roll_dice' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-amber-300 mb-2">{"\uD83C\uDFB2"} YOUR ROLL</div>
+            <button onClick={() => onAction({ action: 'roll_dice' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-600 to-red-600 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              ROLL DICE {"\uD83C\uDFB2"}
+            </button>
+          </>
+        ) : pendingAction.action === 'roll_dice' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">Waiting for {pendingAction.playerName} to roll...</div>
+        ) : pendingAction.action === 'reroll_dice' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-amber-300 mb-2">You rolled: {pendingAction.d1} + {pendingAction.d2} = {pendingAction.total}</div>
+            <div className="flex gap-2">
+              <button onClick={() => onAction({ action: 'keep_dice' })}
+                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                KEEP {"\u2713"}
+              </button>
+              <button onClick={() => onAction({ action: 'reroll_die', dieIndex: 0 })}
+                className="flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                Re-roll {pendingAction.d1}
+              </button>
+              <button onClick={() => onAction({ action: 'reroll_die', dieIndex: 1 })}
+                className="flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                Re-roll {pendingAction.d2}
+              </button>
+            </div>
+          </>
+        ) : pendingAction.action === 'reroll_dice' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is deciding...</div>
+        ) : pendingAction.action === 'pick_card_blind' ? (
+          (() => {
+            const myCards = pendingAction.hands?.[playerName];
+            if (!myCards) return <div className="pixel-font text-[9px] text-slate-500">Waiting for others to pick...</div>;
+            return (
+              <>
+                <div className="pixel-font text-[9px] text-indigo-300 mb-3">{"\uD83C\uDCCF"} PICK A CARD BLIND</div>
+                <div className="flex justify-center gap-3 mb-2">
+                  {[0, 1, 2].map(i => (
+                    <button key={i} onClick={() => onAction({ action: 'pick_card_blind', cardIndex: i })}
+                      className="w-16 h-20 rounded-lg border-2 border-indigo-400/50 bg-indigo-900/50 flex items-center justify-center text-3xl transition hover:bg-indigo-700/50 active:scale-90 hover:border-indigo-400">
+                      {"\uD83C\uDCA0"}
+                    </button>
+                  ))}
+                </div>
+                <div className="pixel-font text-[7px] text-slate-600">Tap a card to pick it</div>
+              </>
+            );
+          })()
+        ) : pendingAction.action === 'drop_plinko' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-cyan-300 mb-2">{"\uD83D\uDD34"} DROP YOUR BALL</div>
+            <div className="flex flex-wrap justify-center gap-1.5 mb-1">
+              {Array.from({ length: 13 }, (_, i) => (
+                <button key={i} onClick={() => onAction({ action: 'drop_plinko', column: i })}
+                  className="w-8 h-8 rounded-lg bg-cyan-600/30 border border-cyan-400/30 text-cyan-300 font-mono text-xs font-bold transition hover:bg-cyan-500/40 active:scale-90">
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <div className="pixel-font text-[7px] text-slate-600">Pick a column (1-13)</div>
+          </>
+        ) : pendingAction.action === 'drop_plinko' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is choosing a column...</div>
+        ) : pendingAction.action === 'pick_lane' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-green-300 mb-2">{"\uD83C\uDFC7"} PICK YOUR LANE</div>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+              {(pendingAction.lanes || []).filter(l => !pendingAction.taken[l]).map(l => (
+                <button key={l} onClick={() => onAction({ action: 'pick_lane', lane: l })}
+                  className="w-full py-2.5 px-3 rounded-lg bg-green-500/15 border border-green-500/20 text-left transition hover:bg-green-500/25 active:scale-95">
+                  <span className="font-bold text-sm text-green-300">{l}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : pendingAction.action === 'pick_lane' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is picking a lane...</div>
+        ) : pendingAction.action === 'whip_horse' ? (
+          (() => {
+            const whips = pendingAction.whipsRemaining?.[playerName] || 0;
+            if (whips <= 0) {
+              return (
+                <div className="text-center">
+                  <div className="pixel-font text-[9px] text-slate-500">No whips remaining</div>
+                  <div className="pixel-font text-[8px] text-slate-600 mt-1">Turn {pendingAction.turnNumber}/{pendingAction.totalTurns}</div>
+                </div>
+              );
+            }
+            return (
+              <>
+                <div className="pixel-font text-[9px] text-green-300 mb-2">{"\uD83C\uDFC7"} RACE — Turn {pendingAction.turnNumber}/{pendingAction.totalTurns}</div>
+                <button onClick={() => onAction({ action: 'whip_horse' })}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-base shadow-lg transition hover:scale-[1.02] active:scale-95">
+                  {"\uD83E\uDE7F"} WHIP! ({whips} left)
+                </button>
+                <div className="pixel-font text-[7px] text-slate-600 mt-1">Guarantee your horse advances this turn</div>
+              </>
+            );
+          })()
+        ) : pendingAction.action === 'shield' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[11px] text-red-400 mb-2 animate-pulse" style={{ textShadow: '0 0 10px rgba(239,68,68,0.5)' }}>
+              {"\u26A0\uFE0F"} TARGETED! USE SHIELD?
+            </div>
+            <button onClick={() => onAction({ action: 'shield' })}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-lg shadow-lg shadow-blue-600/30 transition hover:scale-[1.02] active:scale-95 animate-pulse">
+              {"\uD83D\uDEE1\uFE0F"} ACTIVATE SHIELD
+            </button>
+          </>
+        ) : pendingAction.action === 'shield' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-red-400">{"\uD83D\uDD2B"} Targeting {pendingAction.playerName}...</div>
+        ) : pendingAction.action === 'shield_unavailable' ? (
+          <div className="pixel-font text-[9px] text-slate-500">{"\uD83D\uDD2B"} Firing at {pendingAction.playerName}... (shield used)</div>
+        ) : pendingAction.action === 'move_direction' ? (
+          (() => {
+            const alive = pendingAction.aliveNames || [];
+            const isAlive = alive.includes(playerName);
+            const received = pendingAction.received || {};
+            if (!isAlive) {
+              return <div className="pixel-font text-[9px] text-slate-500">Eliminated — watching zone {pendingAction.phase}</div>;
+            }
+            if (received[playerName]) {
+              return <div className="pixel-font text-[9px] text-emerald-400">Move locked in!</div>;
+            }
+            return (
+              <>
+                <div className="pixel-font text-[9px] text-orange-300 mb-2">{"\uD83D\uDFE2"} ZONE SHRINKING — Phase {pendingAction.phase}</div>
+                <div className="grid grid-cols-3 gap-1.5 max-w-[160px] mx-auto">
+                  <div />
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'up' })}
+                    className="py-2 rounded-lg bg-orange-500/20 border border-orange-400/30 text-orange-300 font-bold text-lg transition active:scale-90">{"\u2191"}</button>
+                  <div />
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'left' })}
+                    className="py-2 rounded-lg bg-orange-500/20 border border-orange-400/30 text-orange-300 font-bold text-lg transition active:scale-90">{"\u2190"}</button>
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'stay' })}
+                    className="py-2 rounded-lg bg-slate-500/20 border border-slate-400/30 text-slate-300 font-bold text-xs transition active:scale-90">STAY</button>
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'right' })}
+                    className="py-2 rounded-lg bg-orange-500/20 border border-orange-400/30 text-orange-300 font-bold text-lg transition active:scale-90">{"\u2192"}</button>
+                  <div />
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'down' })}
+                    className="py-2 rounded-lg bg-orange-500/20 border border-orange-400/30 text-orange-300 font-bold text-lg transition active:scale-90">{"\u2193"}</button>
+                  <div />
+                </div>
+              </>
+            );
+          })()
         ) : pendingAction.action === 'choose_cards' ? (
           (() => {
             const myCards = pendingAction.hands?.[playerName];
@@ -7499,7 +7761,7 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
         ) : (
           <div className="pixel-font text-[9px] text-amber-400">ACTION REQUIRED</div>
         )}
-        {pendingAction.deadline && (isMyTurn || pendingAction.action === 'choose_cards' || pendingAction.action === 'pick_stock') ? (
+        {pendingAction.deadline && (isMyTurn || pendingAction.action === 'choose_cards' || pendingAction.action === 'pick_stock' || pendingAction.action === 'pick_card_blind' || pendingAction.action === 'move_direction') ? (
           <CountdownTimer deadline={pendingAction.deadline} />
         ) : null}
       </div>
@@ -7550,6 +7812,11 @@ function ChoreChaosApp() {
   const [draftChoices, setDraftChoices] = useState({});
   const [stockDraftState, setStockDraftState] = useState(null);
   const [stockSellState, setStockSellState] = useState({});
+  const [highCardDraftHands, setHighCardDraftHands] = useState(null);
+  const [horseWhips, setHorseWhips] = useState({});
+  const [horseLanePicks, setHorseLanePicks] = useState(null);
+  const [usedShields, setUsedShields] = useState({});
+  const [battleMoves, setBattleMoves] = useState(null);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -8168,6 +8435,804 @@ function ChoreChaosApp() {
     };
   }, [interactiveMode, gameActive, result, stockSellState]);
 
+  // Interactive Dice Duel — roll + optional re-roll
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'dice') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      // Re-resolve the result based on potentially re-rolled dice
+      const selGoal = result.selectionGoal;
+      const choosingWinner = selGoal === 'winner';
+      const resolution = resolveByGoal(result.players, (p) => [p.total, p.d1, p.d2], selGoal);
+      const tiedNames = resolution.tied.map(p => p.name);
+      const hasTie = tiedNames.length > 1;
+      const selectedName = hasTie ? null : resolution.picked.name;
+
+      result.isTie = hasTie;
+      result.tiedNames = hasTie ? tiedNames : undefined;
+      result.selectedName = selectedName;
+      result.headline = hasTie ? "IT'S A TIE" : pickRandomMessage(
+        selGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        selGoal === "winner" ? "win" : "lose"
+      );
+
+      result.players.forEach(p => {
+        const isTied = hasTie && tiedNames.includes(p.name);
+        p.headline = p.d1 + ' + ' + p.d2 + ' = ' + p.total;
+        p.subline = hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (p.name === selectedName ? (choosingWinner ? "Highest" : "Lowest") + " roll" : "Not selected");
+        p.selected = hasTie ? false : p.name === selectedName;
+        p.tied = isTied;
+      });
+
+      return;
+    }
+
+    const playerIndex = playbackStep;
+    if (playerIndex >= result.players.length) {
+      advancePlayback();
+      return;
+    }
+    const currentPlayer = result.players[playerIndex];
+    const playerNameCur = currentPlayer?.name;
+    if (!playerNameCur) return;
+
+    broadcastEvent({ type: 'turn_prompt', playerName: playerNameCur, action: 'roll_dice', timeoutSeconds: 10 });
+    setPendingAction({ type: 'turn', playerName: playerNameCur, action: 'roll_dice', deadline: Date.now() + 10000 });
+
+    let rerollTimer = null;
+
+    currentActionHandler.current = (payload) => {
+      if (payload.playerName !== playerNameCur) return;
+
+      if (payload.action === 'roll_dice') {
+        // Show roll result and give re-roll option
+        broadcastEvent({
+          type: 'turn_prompt', playerName: playerNameCur, action: 'reroll_dice', timeoutSeconds: 8,
+          d1: currentPlayer.d1, d2: currentPlayer.d2, total: currentPlayer.total,
+        });
+        setPendingAction({
+          type: 'turn', playerName: playerNameCur, action: 'reroll_dice',
+          d1: currentPlayer.d1, d2: currentPlayer.d2, total: currentPlayer.total,
+          deadline: Date.now() + 8000,
+        });
+
+        currentActionHandler.current = (payload2) => {
+          if (payload2.playerName !== playerNameCur) return;
+          if (payload2.action === 'keep_dice') {
+            advancePlayback();
+          } else if (payload2.action === 'reroll_die') {
+            const dieIndex = payload2.dieIndex; // 0 or 1
+            const newValue = 1 + secureRandomInt(6);
+            if (dieIndex === 0) {
+              currentPlayer.d1 = newValue;
+            } else {
+              currentPlayer.d2 = newValue;
+            }
+            currentPlayer.total = currentPlayer.d1 + currentPlayer.d2;
+            currentPlayer.headline = currentPlayer.d1 + ' + ' + currentPlayer.d2 + ' = ' + currentPlayer.total;
+            advancePlayback();
+          }
+        };
+
+        rerollTimer = setTimeout(() => {
+          if (playbackStep === playerIndex) advancePlayback();
+        }, 8000);
+      }
+    };
+
+    const timeout = startTimeout(10, () => {
+      if (playbackStep === playerIndex) advancePlayback();
+    });
+
+    return () => {
+      timeout.clear();
+      if (rerollTimer) clearTimeout(rerollTimer);
+    };
+  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // Interactive High Card — blind card pick
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'high-card') return;
+    if (!result.draftPhase) return;
+
+    // Deal 3 cards per player for blind pick
+    broadcastEvent({
+      type: 'choice_prompt',
+      action: 'pick_card_blind',
+      timeoutSeconds: 15,
+      hands: result.draftHands,
+    });
+
+    setPendingAction({
+      type: 'choice',
+      action: 'pick_card_blind',
+      hands: result.draftHands,
+      deadline: Date.now() + 15000,
+      received: {},
+      playersNeeded: Object.keys(result.draftHands),
+    });
+
+    const choices = {};
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'pick_card_blind') return;
+      const actor = payload.playerName;
+      if (!result.draftHands[actor]) return;
+      if (choices[actor] !== undefined) return;
+
+      const cardIndex = payload.cardIndex;
+      if (typeof cardIndex !== 'number' || cardIndex < 0 || cardIndex >= 3) return;
+
+      choices[actor] = cardIndex;
+      setHighCardDraftHands(prev => ({ ...prev, [actor]: cardIndex }));
+
+      const allPlayers = Object.keys(result.draftHands);
+      if (allPlayers.every(name => choices[name] !== undefined)) {
+        finalizeHighCard(choices);
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      const allPlayers = Object.keys(result.draftHands);
+      allPlayers.forEach(name => {
+        if (choices[name] === undefined) {
+          choices[name] = secureRandomInt(3);
+        }
+      });
+      finalizeHighCard(choices);
+    }, 15000);
+
+    function finalizeHighCard(allChoices) {
+      const selGoal = result.selectionGoal;
+      const choosingWinner = selGoal === 'winner';
+
+      const players = Object.entries(allChoices).map(([name, idx]) => {
+        const card = result.draftHands[name][idx];
+        return { name, card, cards: [card] };
+      });
+
+      const resolution = resolveByGoal(players, (p) => [p.card.rank], selGoal);
+      const tiedNames = resolution.tied.map(p => p.name);
+      const hasTie = tiedNames.length > 1;
+      const selectedName = hasTie ? null : resolution.picked.name;
+
+      const modeName = "High Card Draw";
+      const headline = hasTie ? "IT'S A TIE" : pickRandomMessage(
+        selGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        selGoal === "winner" ? "win" : "lose"
+      );
+
+      const finalResult = {
+        modeId: "high-card",
+        modeName,
+        selectionGoal: selGoal,
+        selectedName,
+        isTie: hasTie,
+        tiedNames: hasTie ? tiedNames : undefined,
+        headline,
+        summary: hasTie
+          ? tiedNames.join(" and ") + " drew the same rank!"
+          : "Everyone picked a card blind. " + (choosingWinner ? "Highest" : "Lowest") + " rank gets selected.",
+        draftPhase: false,
+        players: players.map(p => {
+          const isTied = hasTie && tiedNames.includes(p.name);
+          return {
+            name: p.name,
+            cards: [p.card],
+            card: p.card,
+            headline: formatCard(p.card),
+            subline: hasTie
+              ? (isTied ? "TIED" : "Not selected")
+              : (p.name === selectedName ? (choosingWinner ? "Highest" : "Lowest") + " card" : "Not selected"),
+            selected: hasTie ? false : p.name === selectedName,
+            tied: isTied,
+            chips: [rankWord(p.card.rank)],
+          };
+        }),
+      };
+      finalResult.runId = result.runId;
+      finalResult.taskLabel = result.taskLabel;
+
+      setResult(finalResult);
+      setPlaybackStep(0);
+      setPendingAction(null);
+      currentActionHandler.current = null;
+
+      broadcastEvent({ type: 'draft_complete' });
+      broadcastEvent({ type: 'game_start', result: finalResult });
+
+      if (!finalResult.isTie) {
+        pushHistory(finalResult);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [interactiveMode, gameActive, result?.draftPhase, result?.modeId]);
+
+  // Interactive Plinko — choose drop column
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'plinko') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      // Re-resolve winner based on updated scores
+      const selGoal = result.selectionGoal;
+      const resolution = resolveByGoal(result.players, (p) => [p.score], selGoal);
+      const tiedNames = resolution.tied.map(p => p.name);
+      const hasTie = tiedNames.length > 1;
+      const selectedName = hasTie ? null : resolution.picked.name;
+
+      result.isTie = hasTie;
+      result.tiedNames = hasTie ? tiedNames : undefined;
+      result.selectedName = hasTie ? tiedNames[0] : selectedName;
+      result.headline = hasTie
+        ? 'It\'s a tie between ' + tiedNames.join(' and ') + '!'
+        : pickRandomMessage(
+            selGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+            selectedName,
+            selGoal === "winner" ? "win" : "lose"
+          );
+      result.players.forEach(p => {
+        p.selected = hasTie ? false : p.name === selectedName;
+        p.tied = hasTie && tiedNames.includes(p.name);
+      });
+      return;
+    }
+
+    const playerIndex = playbackStep;
+    if (playerIndex >= result.players.length) {
+      advancePlayback();
+      return;
+    }
+    const currentPlayer = result.players[playerIndex];
+    const playerNameCur = currentPlayer?.name;
+    if (!playerNameCur) return;
+
+    broadcastEvent({ type: 'turn_prompt', playerName: playerNameCur, action: 'drop_plinko', timeoutSeconds: 10 });
+    setPendingAction({ type: 'turn', playerName: playerNameCur, action: 'drop_plinko', deadline: Date.now() + 10000, slotCount: 13 });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'drop_plinko' || payload.playerName !== playerNameCur) return;
+      const col = typeof payload.column === 'number' ? Math.max(0, Math.min(12, payload.column)) : secureRandomInt(13);
+
+      // Regenerate path from chosen starting column
+      // The original plinko: path is array of 0/1, finalSlot = sum of path values (0..12)
+      // With column choice, we bias the path towards the chosen column area
+      const SLOT_VALUES = [1, 2, 3, 5, 8, 13, 21, 13, 8, 5, 3, 2, 1];
+      const ROWS = 12;
+      const path = [];
+      // Bias: distribute roughly (col) 1s across the path, rest 0s, with randomness
+      const targetOnes = col;
+      let onesLeft = targetOnes;
+      let slotsLeft = ROWS;
+      for (let r = 0; r < ROWS; r++) {
+        // Probability of placing a 1 here = onesLeft / slotsLeft, with some noise
+        const prob = Math.max(0, Math.min(1, onesLeft / slotsLeft + (Math.random() - 0.5) * 0.3));
+        const choice = Math.random() < prob ? 1 : 0;
+        path.push(choice);
+        if (choice === 1) onesLeft--;
+        slotsLeft--;
+      }
+      let finalSlot = 0;
+      for (let r = 0; r < ROWS; r++) {
+        finalSlot += path[r];
+      }
+      finalSlot = Math.max(0, Math.min(12, finalSlot));
+      const score = SLOT_VALUES[finalSlot];
+
+      currentPlayer.path = path;
+      currentPlayer.finalSlot = finalSlot;
+      currentPlayer.score = score;
+      currentPlayer.headline = 'Slot ' + (finalSlot + 1) + ': ' + score + ' pts';
+      currentPlayer.subline = 'Scored ' + score + ' point' + (score !== 1 ? 's' : '');
+      currentPlayer.chips = [score + ' pts', 'Slot #' + (finalSlot + 1)];
+      currentPlayer.startCol = col;
+
+      advancePlayback();
+    };
+
+    const timeout = startTimeout(10, () => advancePlayback());
+    return () => { timeout.clear(); };
+  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // Interactive Horse Race — lane pick + whip
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'horse-race') return;
+
+    // Phase 1: Lane pick draft
+    if (result.draftPhase) {
+      if (!horseLanePicks) {
+        const initial = { taken: {}, currentPickerIndex: 0, playerLanes: {} };
+        setHorseLanePicks(initial);
+        return;
+      }
+
+      const { taken, currentPickerIndex, playerLanes } = horseLanePicks;
+      const pickOrder = result.lanePickOrder;
+      const lanes = result.lanes;
+
+      if (currentPickerIndex >= pickOrder.length) {
+        // All picked — finalize and start race
+        const raceResult = {
+          ...result,
+          draftPhase: false,
+          playerLanes,
+        };
+        raceResult.runId = result.runId;
+        raceResult.taskLabel = result.taskLabel;
+        setResult(raceResult);
+        setPlaybackStep(0);
+        setPendingAction(null);
+        currentActionHandler.current = null;
+        setHorseWhips(Object.fromEntries(result.lanePickOrder.map(n => [n, 2])));
+        broadcastEvent({ type: 'draft_complete' });
+        broadcastEvent({ type: 'game_start', result: raceResult });
+        return;
+      }
+
+      const currentPicker = pickOrder[currentPickerIndex];
+
+      broadcastEvent({
+        type: 'choice_prompt',
+        action: 'pick_lane',
+        timeoutSeconds: 8,
+        lanes,
+        currentPicker,
+        taken,
+      });
+
+      setPendingAction({
+        type: 'turn',
+        action: 'pick_lane',
+        playerName: currentPicker,
+        lanes,
+        taken,
+        deadline: Date.now() + 8000,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'pick_lane' || payload.playerName !== currentPicker) return;
+        const lane = payload.lane;
+        if (!lane || taken[lane]) return;
+        if (!lanes.includes(lane)) return;
+
+        const newTaken = { ...taken, [lane]: currentPicker };
+        const newPlayerLanes = { ...playerLanes, [currentPicker]: lane };
+
+        setHorseLanePicks({
+          taken: newTaken,
+          currentPickerIndex: currentPickerIndex + 1,
+          playerLanes: newPlayerLanes,
+        });
+      };
+
+      const timeout = setTimeout(() => {
+        const available = lanes.filter(l => !taken[l]);
+        if (available.length === 0) return;
+        const picked = available[secureRandomInt(available.length)];
+
+        setHorseLanePicks({
+          taken: { ...taken, [picked]: currentPicker },
+          currentPickerIndex: currentPickerIndex + 1,
+          playerLanes: { ...playerLanes, [currentPicker]: picked },
+        });
+      }, 8000);
+
+      return () => clearTimeout(timeout);
+    }
+
+    // Phase 2: Race with whip — step-based
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      // Re-resolve winner from final positions (whips may have changed things)
+      const selGoal = result.selectionGoal;
+      const choosingWinner = selGoal === 'winner';
+      const finalPositions = result.turns.length > 0 ? result.turns[result.turns.length - 1].positions : {};
+      result.players.forEach(p => { p.progress = finalPositions[p.name] || p.progress; });
+      const resolution = resolveByGoal(result.players, (p) => [p.progress], selGoal);
+      const tiedNames = resolution.tied.map(p => p.name);
+      const hasTie = tiedNames.length > 1;
+      const selectedName = hasTie ? null : resolution.picked.name;
+
+      result.isTie = hasTie;
+      result.tiedNames = hasTie ? tiedNames : undefined;
+      result.selectedName = selectedName;
+      result.headline = hasTie ? "IT'S A TIE" : pickRandomMessage(
+        selGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        selGoal === "winner" ? "win" : "lose"
+      );
+      result.players.forEach(p => {
+        const isTied = hasTie && tiedNames.includes(p.name);
+        p.headline = p.progress + ' spaces moved';
+        p.subline = hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (p.name === selectedName ? 'Finished ' + (choosingWinner ? "in front" : "at the back") : "Not selected");
+        p.selected = hasTie ? false : p.name === selectedName;
+        p.tied = isTied;
+      });
+      return;
+    }
+
+    const turnIndex = playbackStep;
+    if (turnIndex >= result.turns.length) {
+      advancePlayback();
+      return;
+    }
+
+    // Give all surviving players a chance to whip for 4 seconds
+    const aliveNames = result.players.map(p => p.name);
+
+    broadcastEvent({
+      type: 'turn_prompt',
+      action: 'whip_horse',
+      timeoutSeconds: 4,
+      turnNumber: turnIndex + 1,
+      totalTurns: result.turns.length,
+      whipsRemaining: horseWhips,
+    });
+
+    setPendingAction({
+      type: 'realtime',
+      action: 'whip_horse',
+      modeId: 'horse-race',
+      turnNumber: turnIndex + 1,
+      totalTurns: result.turns.length,
+      whipsRemaining: horseWhips,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'whip_horse') return;
+      const actor = payload.playerName;
+      if (!actor || !horseWhips[actor] || horseWhips[actor] <= 0) return;
+
+      // Apply whip: guaranteed advance this turn
+      const turn = result.turns[turnIndex];
+      if (!turn) return;
+
+      // Advance this player's position
+      turn.positions[actor] = (turn.positions[actor] || 0) + 1;
+      // Update all future turns
+      for (let i = turnIndex + 1; i < result.turns.length; i++) {
+        result.turns[i].positions[actor] = (result.turns[i].positions[actor] || 0) + 1;
+      }
+      // Update player final position
+      const p = result.players.find(pl => pl.name === actor);
+      if (p) {
+        p.progress = (p.progress || 0) + 1;
+        p.headline = p.progress + ' spaces moved';
+      }
+
+      setHorseWhips(prev => ({ ...prev, [actor]: prev[actor] - 1 }));
+
+      broadcastEvent({
+        type: 'horse_whip',
+        playerName: actor,
+        whipsRemaining: horseWhips[actor] - 1,
+      });
+    };
+
+    const timer = setTimeout(() => {
+      advancePlayback();
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [interactiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase]);
+
+  // Interactive Space Invaders — shield reaction
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'space-invaders') return;
+    if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
+
+    const elimIndex = playbackStep;
+    if (elimIndex >= result.eliminationOrder.length) {
+      // All eliminations processed, advance to finish
+      advancePlayback();
+      return;
+    }
+
+    let targetName = result.eliminationOrder[elimIndex];
+
+    // If target has a shield and hasn't used it yet, give them a chance
+    if (!usedShields[targetName]) {
+      broadcastEvent({
+        type: 'turn_prompt',
+        playerName: targetName,
+        action: 'shield',
+        timeoutSeconds: 3,
+        elimIndex,
+      });
+
+      setPendingAction({
+        type: 'turn',
+        playerName: targetName,
+        action: 'shield',
+        deadline: Date.now() + 3000,
+        elimIndex,
+      });
+
+      let shielded = false;
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'shield' || payload.playerName !== targetName) return;
+        if (shielded) return;
+        shielded = true;
+
+        setUsedShields(prev => ({ ...prev, [targetName]: true }));
+
+        // Re-pick target: random from remaining (not shielded target, not already eliminated)
+        const eliminated = result.eliminationOrder.slice(0, elimIndex);
+        const remaining = result.players
+          .map(p => p.name)
+          .filter(n => n !== targetName && !eliminated.includes(n));
+
+        if (remaining.length > 0) {
+          const newTarget = remaining[secureRandomInt(remaining.length)];
+          // Swap in elimination order
+          const newTargetElimIdx = result.eliminationOrder.indexOf(newTarget);
+          if (newTargetElimIdx >= 0) {
+            result.eliminationOrder[elimIndex] = newTarget;
+            result.eliminationOrder[newTargetElimIdx] = targetName;
+          } else {
+            result.eliminationOrder[elimIndex] = newTarget;
+          }
+
+          // Update player data
+          result.players.forEach(p => {
+            const ei = result.eliminationOrder.indexOf(p.name);
+            const isSurvivor = ei === -1 || ei >= result.eliminationOrder.length;
+            if (isSurvivor) {
+              p.headline = "LAST ALIEN STANDING";
+              p.subline = "Survived the onslaught";
+              p.chips = ["Survivor"];
+              p.destroyedAt = null;
+            } else {
+              p.destroyedAt = ei + 1;
+              p.headline = 'Destroyed: Shot #' + (ei + 1);
+              p.subline = 'Eliminated';
+              p.chips = ['Shot #' + (ei + 1)];
+            }
+          });
+
+          broadcastEvent({ type: 'shield_used', playerName: targetName, newTarget: newTarget });
+        }
+
+        advancePlayback();
+      };
+
+      const timer = setTimeout(() => {
+        if (!shielded) advancePlayback();
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    } else {
+      // Target already used shield — just advance
+      setPendingAction({
+        type: 'turn',
+        playerName: targetName,
+        action: 'shield_unavailable',
+        deadline: Date.now() + 2000,
+      });
+
+      broadcastEvent({
+        type: 'turn_prompt',
+        playerName: targetName,
+        action: 'shield_unavailable',
+        timeoutSeconds: 2,
+      });
+
+      const timer = setTimeout(() => advancePlayback(), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [interactiveMode, gameActive, result, playbackStep, playbackDone, usedShields]);
+
+  // Interactive Battle Royale — directional movement
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'battle-royale') return;
+    if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
+
+    const phase = playbackStep; // 0-indexed, each phase = one elimination
+    if (phase >= result.zones.length - 1) {
+      advancePlayback();
+      return;
+    }
+
+    const nextZone = result.zones[phase + 1];
+    const eliminated = result.eliminationOrder.slice(0, phase);
+    const alive = result.players.filter(p => !eliminated.includes(p.name)).map(p => p.name);
+
+    if (alive.length <= 1) return;
+
+    // Collect movement choices from all alive players
+    broadcastEvent({
+      type: 'choice_prompt',
+      action: 'move_direction',
+      timeoutSeconds: 6,
+      aliveNames: alive,
+      zone: nextZone,
+      phase: phase + 1,
+    });
+
+    setPendingAction({
+      type: 'choice',
+      action: 'move_direction',
+      deadline: Date.now() + 6000,
+      aliveNames: alive,
+      zone: nextZone,
+      phase: phase + 1,
+      received: {},
+    });
+
+    const moveChoices = {};
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'move_direction') return;
+      const actor = payload.playerName;
+      if (!alive.includes(actor) || moveChoices[actor]) return;
+
+      const dir = payload.direction;
+      if (!['up', 'down', 'left', 'right', 'stay'].includes(dir)) return;
+
+      moveChoices[actor] = dir;
+      setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+
+      // Check if all alive players have moved
+      if (alive.every(name => moveChoices[name])) {
+        applyMovesAndAdvance(moveChoices);
+      }
+    };
+
+    function applyMovesAndAdvance(moves) {
+      const MOVE_DIST = 10;
+      const dirMap = {
+        up: { dx: 0, dy: -MOVE_DIST },
+        down: { dx: 0, dy: MOVE_DIST },
+        left: { dx: -MOVE_DIST, dy: 0 },
+        right: { dx: MOVE_DIST, dy: 0 },
+        stay: { dx: 0, dy: 0 },
+      };
+
+      // Apply moves to positions
+      alive.forEach(name => {
+        const dir = moves[name] || 'stay';
+        const pos = result.positions.find(p => p.name === name);
+        if (!pos) return;
+        const d = dirMap[dir];
+        pos.x = Math.max(0, Math.min(100, pos.x + d.dx));
+        pos.y = Math.max(0, Math.min(100, pos.y + d.dy));
+      });
+
+      // Recalculate who's farthest from zone center
+      let farthest = null;
+      let farthestDist = -1;
+      for (const name of alive) {
+        const pos = result.positions.find(p => p.name === name);
+        const dx = pos.x - nextZone.cx;
+        const dy = pos.y - nextZone.cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > farthestDist) {
+          farthestDist = dist;
+          farthest = name;
+        }
+      }
+
+      // Update elimination order for this phase
+      if (farthest) {
+        result.eliminationOrder[phase] = farthest;
+
+        // Update player data
+        result.players.forEach(p => {
+          const ei = result.eliminationOrder.indexOf(p.name);
+          const isEliminated = ei >= 0 && ei <= phase;
+          if (isEliminated) {
+            p.headline = 'Eliminated: Phase ' + (ei + 1);
+            p.subline = 'Caught outside zone ' + (ei + 1);
+            p.chips = ['Phase ' + (ei + 1)];
+            p.selected = false;
+            p.rank = result.players.length - ei;
+          }
+        });
+
+        // Check if only one remains
+        const remaining = alive.filter(n => n !== farthest);
+        if (remaining.length === 1) {
+          const survivor = remaining[0];
+          result.selectedName = survivor;
+          const sp = result.players.find(p => p.name === survivor);
+          if (sp) {
+            sp.headline = "VICTORY ROYALE";
+            sp.subline = "Last one in the zone";
+            sp.chips = ["Winner"];
+            sp.selected = true;
+            sp.rank = 1;
+          }
+          result.headline = pickRandomMessage(
+            result.selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+            survivor,
+            result.selectionGoal === "winner" ? "win" : "lose"
+          );
+          result.summary = 'The zone closed in ' + (phase + 1) + ' times. ' + survivor + ' was the last one standing.';
+        }
+      }
+
+      advancePlayback();
+    }
+
+    const timeout = setTimeout(() => {
+      // Auto-stay for anyone who hasn't moved
+      alive.forEach(name => {
+        if (!moveChoices[name]) {
+          moveChoices[name] = 'stay';
+        }
+      });
+      applyMovesAndAdvance(moveChoices);
+    }, 6000);
+
+    return () => clearTimeout(timeout);
+  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // Interactive turn management for RNG, Wheel, Slots, Coin Gauntlet
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result) return;
+    const mode = result.modeId;
+    if (['black-marble', 'bomb', 'rocket', 'holdem', 'plo', 'stock-market', 'dice', 'high-card', 'plinko', 'horse-race', 'space-invaders', 'battle-royale'].includes(mode)) return;
+    if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
+
+    let action, playerName;
+
+    if (mode === 'rng' || mode === 'slots') {
+      // Step-based, one player per step
+      const playerIndex = playbackStep;
+      if (playerIndex >= result.players.length) return;
+      playerName = result.players[playerIndex]?.name;
+      action = mode === 'rng' ? 'stop_number' : 'pull_slots';
+    } else if (mode === 'wheel') {
+      // Single spin — first player gets the button
+      if (playbackStep >= 1) return;
+      playerName = result.players[0]?.name;
+      action = 'spin_wheel';
+    } else if (mode === 'coin-flips') {
+      // Round-based — cycle through players
+      if (playbackStep >= 5) return;
+      playerName = result.players[playbackStep % result.players.length]?.name;
+      action = 'flip_coin';
+    } else {
+      return;
+    }
+
+    if (!playerName) return;
+
+    const timeoutSec = mode === 'coin-flips' ? 5 : 10;
+
+    broadcastEvent({
+      type: 'turn_prompt',
+      playerName,
+      action,
+      timeoutSeconds: timeoutSec,
+    });
+
+    setPendingAction({
+      type: 'turn',
+      playerName,
+      action,
+      deadline: Date.now() + timeoutSec * 1000,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== action || payload.playerName !== playerName) return;
+      advancePlayback();
+    };
+
+    const timeout = startTimeout(timeoutSec, () => advancePlayback());
+    return () => { timeout.clear(); };
+  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+
   const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
 
   const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
@@ -8274,6 +9339,11 @@ function ChoreChaosApp() {
     setDraftChoices({});
     setStockDraftState(null);
     setStockSellState({});
+    setHighCardDraftHands(null);
+    setHorseWhips({});
+    setHorseLanePicks(null);
+    setUsedShields({});
+    setBattleMoves(null);
     window.__interactiveRocketEjects = {};
     window.__draftChoices = {};
     window.__rocketInteractive = false;
@@ -8282,7 +9352,7 @@ function ChoreChaosApp() {
     window.__stockDraftState = null;
     window.__stockInteractive = false;
     window.__stockDrawIndex = 0;
-    // Don't record interactive bomb/rocket/poker-draft/stock-draft immediately — they record on completion
+    // Don't record interactive bomb/rocket/poker-draft/stock-draft/high-card-draft/horse-race-draft immediately — they record on completion
     if (!(interactiveMode && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || outcome.draftPhase))) {
       pushHistory(outcome);
     }
@@ -8348,6 +9418,11 @@ function ChoreChaosApp() {
     setDraftChoices({});
     setStockDraftState(null);
     setStockSellState({});
+    setHighCardDraftHands(null);
+    setHorseWhips({});
+    setHorseLanePicks(null);
+    setUsedShields({});
+    setBattleMoves(null);
     window.__interactiveRocketEjects = {};
     window.__draftChoices = {};
     window.__rocketInteractive = false;
@@ -9071,7 +10146,7 @@ function ChoreChaosApp() {
                 </div>
                 <div className="hidden sm:flex flex-wrap items-center justify-end gap-3">
                   {!playbackDone ? (
-                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || (result.modeId === 'black-marble' && interactiveMode) || result.draftPhase) ? null : (
+                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || ((result.modeId === 'black-marble' || result.modeId === 'rng' || result.modeId === 'slots' || result.modeId === 'coin-flips' || result.modeId === 'wheel' || result.modeId === 'dice' || result.modeId === 'high-card' || result.modeId === 'plinko' || result.modeId === 'horse-race' || result.modeId === 'space-invaders' || result.modeId === 'battle-royale') && interactiveMode) || result.draftPhase) ? null : (
                     <>
                       <button
                         onClick={advancePlayback}
@@ -9201,7 +10276,7 @@ function ChoreChaosApp() {
 
               <div className="sm:hidden relative z-10 flex flex-wrap items-center justify-center gap-2 border-t border-white/10 bg-black/90 px-3 py-3 backdrop-blur safe-area-bottom">
                 {!playbackDone ? (
-                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || (result.modeId === 'black-marble' && interactiveMode) || result.draftPhase) ? null : (
+                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || ((result.modeId === 'black-marble' || result.modeId === 'rng' || result.modeId === 'slots' || result.modeId === 'coin-flips' || result.modeId === 'wheel' || result.modeId === 'dice' || result.modeId === 'high-card' || result.modeId === 'plinko' || result.modeId === 'horse-race' || result.modeId === 'space-invaders' || result.modeId === 'battle-royale') && interactiveMode) || result.draftPhase) ? null : (
                   <>
                     <button
                       onClick={advancePlayback}
