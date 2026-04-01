@@ -56,6 +56,10 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;image-re
   background:rgba(8,8,20,0.6);padding:8px 12px;border-radius:8px;pointer-events:none}
 
 /* Sound toggle */
+#skip{position:fixed;top:12px;left:12px;z-index:30;padding:4px 10px;border-radius:8px;
+  background:rgba(8,8,20,0.4);border:1px solid rgba(255,255,255,0.1);
+  color:rgba(240,230,211,0.4);font-size:10px;font-family:-apple-system,sans-serif;
+  cursor:pointer;pointer-events:auto;display:none}
 #snd{position:fixed;top:12px;right:12px;z-index:30;width:42px;height:42px;
   border-radius:50%;background:rgba(8,8,20,0.5);
   border:1px solid rgba(255,255,255,0.12);color:#f0e6d3;font-size:17px;
@@ -90,6 +94,7 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;image-re
 <div id="mgui"><div id="mghud"></div></div>
 <div id="fade"></div>
 <div id="ending"><h1>The End</h1><p>♥</p></div>
+<button id="skip">hold to skip ⏩</button>
 <button id="snd">♪</button>
 
 <script>
@@ -1107,6 +1112,157 @@ const BG = {
     ctx.fillStyle = lg; ctx.fillRect(0, deckY - Math.round(H * 0.07), Math.round(W * 0.5), Math.round(H * 0.06));
   },
 
+  // --- Open emerald water (driftwood crossing) ---
+  openWater(t) {
+    const { W, H } = G;
+    const skyH = Math.round(H * 0.4);
+    drawGrad(0, skyH, [['#0A2A30',0],['#1A4A48',0.3],['#2A6A5A',0.6],['#4A8A70',1]]);
+    drawMoonWithSpores(t, 'emerald', skyH);
+    drawCloudBand(skyH, t, 'rgba(40,120,80,0.25)', 0.07, 50, 0.35);
+    drawGrad(skyH, H, [['#06503A',0],['#08604A',0.2],['#0A7058',0.5],['#0D8868',0.8],['#15A080',1]]);
+    drawWaveHL(skyH, H, t, '52,211,153', 6);
+    // Driftwood plank
+    const dwy = Math.round(H * 0.55), bob = Math.round(Math.sin(t * 0.001) * 1.5);
+    ctx.fillStyle = '#6B4A20';
+    ctx.fillRect(Math.round(W * 0.25), dwy + bob, Math.round(W * 0.5), 3);
+    ctx.fillStyle = '#7A5A28';
+    ctx.fillRect(Math.round(W * 0.25), dwy + bob, Math.round(W * 0.5), 1);
+    ctx.fillStyle = '#5A3A18';
+    ctx.fillRect(Math.round(W * 0.28), dwy + bob + 1, Math.round(W * 0.15), 1);
+    // Foam around driftwood
+    ctx.fillStyle = 'rgba(100,230,170,0.3)';
+    for (let x = Math.round(W * 0.24); x < Math.round(W * 0.76); x += 3)
+      ctx.fillRect(x, dwy + bob + 3 + Math.round(Math.sin(x * 0.2 + t * 0.003) * 0.5), 2, 1);
+  },
+
+  // --- Looking up at a ship from water level ---
+  shipBelow(t) {
+    const { W, H } = G;
+    // Emerald water fills most of screen
+    drawGrad(0, Math.round(H * 0.25), [['#0A2A30',0],['#1A4A48',0.5],['#2A6A5A',1]]);
+    drawMoonWithSpores(t, 'emerald', Math.round(H * 0.25));
+    drawGrad(Math.round(H * 0.25), H, [['#06503A',0],['#08604A',0.3],['#0A7058',0.6],['#0D8868',1]]);
+    drawWaveHL(Math.round(H * 0.25), H, t, '52,211,153', 5);
+    // Massive ship hull looming above — takes up right/upper portion
+    const hullL = Math.round(W * 0.4), hullBot = Math.round(H * 0.45);
+    for (let row = 0; row < Math.round(H * 0.2); row++) {
+      const y = hullBot - Math.round(H * 0.2) + row;
+      const frac = row / (H * 0.2);
+      const inset = Math.round((1 - frac) * W * 0.04);
+      ctx.fillStyle = frac > 0.7 ? '#3A1808' : frac > 0.4 ? '#4A2210' : '#5A3018';
+      ctx.fillRect(hullL + inset, y, W - hullL - inset, 1);
+    }
+    // Deck edge at top of hull
+    ctx.fillStyle = '#8B6914'; ctx.fillRect(hullL, hullBot - Math.round(H * 0.2) - 1, W - hullL, 2);
+    // Railing and posts
+    ctx.fillStyle = '#6B4A18';
+    for (let i = 0; i < 4; i++) {
+      const px = hullL + Math.round(i * (W - hullL) / 3);
+      ctx.fillRect(px, hullBot - Math.round(H * 0.23), 2, Math.round(H * 0.03));
+    }
+    ctx.fillRect(hullL, hullBot - Math.round(H * 0.23), W - hullL, 1);
+    // Portholes
+    ctx.fillStyle = '#2A1408';
+    for (let i = 0; i < 3; i++)
+      ctx.fillRect(hullL + 8 + i * Math.round((W - hullL) / 4), hullBot - Math.round(H * 0.1), 3, 3);
+    // Water splash at hull waterline
+    ctx.fillStyle = 'rgba(100,230,170,0.35)';
+    for (let x = hullL - 2; x < W; x += 2)
+      ctx.fillRect(x, hullBot + Math.round(Math.sin(x * 0.15 + t * 0.003) * 1), 1, 1);
+    // Driftwood where Ulisa stands (bottom left)
+    const dwy = Math.round(H * 0.6), bob = Math.round(Math.sin(t * 0.001) * 1);
+    ctx.fillStyle = '#6B4A20';
+    ctx.fillRect(Math.round(W * 0.05), dwy + bob, Math.round(W * 0.35), 3);
+    ctx.fillStyle = '#7A5A28';
+    ctx.fillRect(Math.round(W * 0.05), dwy + bob, Math.round(W * 0.35), 1);
+  },
+
+  // --- Bookstore interior (working at B&N) ---
+  bookstore(t) {
+    const { W, H } = G;
+    drawGrad(0, H, [['#2A1A10',0],['#3A2A18',0.3],['#4A3420',0.7],['#3A2818',1]]);
+    // Warm lighting
+    const lg = ctx.createRadialGradient(Math.round(W * 0.5), Math.round(H * 0.3), 0, Math.round(W * 0.5), Math.round(H * 0.3), Math.round(W * 0.45));
+    lg.addColorStop(0, 'rgba(255,200,120,0.2)'); lg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+    // Floor
+    ctx.fillStyle = '#3A2A18'; ctx.fillRect(0, Math.round(H * 0.65), W, Math.round(H * 0.35));
+    ctx.fillStyle = '#2E2010';
+    for (let i = 0; i < 5; i++) ctx.fillRect(0, Math.round(H * 0.65 + i * H * 0.06), W, 1);
+    // Tall bookshelves (left and right walls)
+    for (let side = 0; side < 2; side++) {
+      const sx = side === 0 ? 0 : Math.round(W * 0.82);
+      const sw = Math.round(W * 0.18);
+      ctx.fillStyle = '#4A3420'; ctx.fillRect(sx, 0, sw, Math.round(H * 0.65));
+      // Shelf rows
+      for (let row = 0; row < 5; row++) {
+        const sy = Math.round(H * 0.08 + row * H * 0.11);
+        ctx.fillStyle = '#3A2818'; ctx.fillRect(sx, sy + Math.round(H * 0.08), sw, 2);
+        // Books on shelf (colored spines)
+        const bookColors = ['#CC3333','#2255AA','#228844','#885522','#6644AA','#AA6622','#3366AA','#44AA44'];
+        for (let b = 0; b < 6; b++) {
+          ctx.fillStyle = bookColors[(row * 6 + b + side * 3) % bookColors.length];
+          const bw = 2 + Math.round(hash(row * 10 + b + side * 50) * 2);
+          ctx.fillRect(sx + 2 + b * Math.round(sw / 7), sy + 1, bw, Math.round(H * 0.07));
+        }
+      }
+    }
+    // Counter in center
+    ctx.fillStyle = '#5A4020'; ctx.fillRect(Math.round(W * 0.3), Math.round(H * 0.52), Math.round(W * 0.4), Math.round(H * 0.04));
+    ctx.fillStyle = '#6A5028'; ctx.fillRect(Math.round(W * 0.3), Math.round(H * 0.52), Math.round(W * 0.4), 1);
+    // Stack of books on counter
+    ctx.fillStyle = '#2255AA'; ctx.fillRect(Math.round(W * 0.55), Math.round(H * 0.48), 4, 4);
+    ctx.fillStyle = '#CC3333'; ctx.fillRect(Math.round(W * 0.56), Math.round(H * 0.47), 4, 3);
+    ctx.fillStyle = '#228844'; ctx.fillRect(Math.round(W * 0.54), Math.round(H * 0.46), 5, 2);
+    // "B&N" sign
+    ctx.fillStyle = '#2E8B20';
+    ctx.fillRect(Math.round(W * 0.35), Math.round(H * 0.06), Math.round(W * 0.3), Math.round(H * 0.06));
+    ctx.fillStyle = '#F5F0E0';
+    ctx.font = `bold ${Math.max(4, Math.round(W * 0.035))}px -apple-system,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('BARNES & NOBLE', Math.round(W * 0.5), Math.round(H * 0.1));
+  },
+
+  // --- Sea transition: emerald to crimson ---
+  seaCrossing(t) {
+    const { W, H } = G;
+    const skyH = Math.round(H * 0.42);
+    // Sky blends from emerald tones to warm crimson sunset
+    drawGrad(0, skyH, [['#0A1A20',0],['#1A2A30',0.15],['#2A3A38',0.3],['#4A3A30',0.5],['#6A3A2A',0.7],['#AA5040',0.85],['#DD7050',1]]);
+    drawStars(Math.round(H * 0.15), t);
+    drawMoonWithSpores(t, 'emerald', skyH);
+    drawCloudBand(skyH, t, 'rgba(60,80,60,0.3)', 0.07, 55, 0.3);
+    drawCloudBand(skyH, t, 'rgba(100,60,50,0.25)', 0.06, 70, 0.5);
+    // Water: emerald on left, crimson on right
+    for (let x = 0; x < W; x++) {
+      const frac = x / W;
+      const r = Math.round(6 + frac * 70);
+      const g2 = Math.round(80 - frac * 55);
+      const b = Math.round(58 - frac * 40);
+      ctx.fillStyle = `rgb(${r},${g2},${b})`;
+      ctx.fillRect(x, skyH, 1, H - skyH);
+    }
+    // Wave highlights blend
+    for (let i = 0; i < 8; i++) {
+      const wy = skyH + 3 + Math.round(i * (H - skyH) / 9);
+      for (let x = 0; x < W; x += 4) {
+        if (hash(x * 2 + i * 13 + Math.floor(t * 0.0008)) > 0.55) {
+          const frac = x / W;
+          const a = Math.max(0.03, 0.12 - i * 0.012);
+          ctx.fillStyle = frac < 0.5 ? `rgba(52,211,153,${a})` : `rgba(248,113,113,${a})`;
+          ctx.fillRect(x + Math.round(Math.sin(x * 0.08 + t * 0.001)), wy, 2, 1);
+        }
+      }
+    }
+    // The dividing line where colors meet — a shimmering boundary
+    const midX = Math.round(W * 0.5);
+    for (let y = skyH; y < H; y += 2) {
+      const shimmer = Math.round(Math.sin(y * 0.1 + t * 0.002) * 3);
+      ctx.fillStyle = `rgba(255,220,180,${0.06 + 0.03 * Math.sin(y * 0.05 + t * 0.001)})`;
+      ctx.fillRect(midX + shimmer, y, 1, 2);
+    }
+  },
+
   burritos(t) {
     const { W, H } = G;
     drawSky(['#87CEEB','#FFB347'], H * 0.4);
@@ -1408,9 +1564,13 @@ function drawSceneChars(sceneId, t) {
       ctx.fillStyle = '#8B5A3A';
       const cpx = Math.round(W * 0.65), cpy = Math.round(H * 0.68) + Math.round(Math.sin(t * 0.0015) * 1.5);
       ctx.fillRect(cpx - 2*PX, cpy - 11*PX, 4*PX, 4*PX);
+      // Redraw eyes on dark skin
+      ctx.fillStyle = '#F5F0E0';
+      ctx.fillRect(cpx - PX, cpy - 10*PX, PX, PX);
+      ctx.fillRect(cpx + PX, cpy - 10*PX, PX, PX);
       // Captain's hat
       ctx.fillStyle = '#4A3018';
-      ctx.fillRect(Math.round(W * 0.65) - 3*PX, Math.round(H * 0.62) - 13*PX, 6*PX, PX);
+      ctx.fillRect(cpx - 3*PX, cpy - 13*PX, 6*PX, PX);
       ctx.fillStyle = '#3A2010';
       ctx.fillRect(Math.round(W * 0.65) - 2*PX, Math.round(H * 0.62) - 14*PX, 4*PX, PX);
       break;
@@ -1419,8 +1579,34 @@ function drawSceneChars(sceneId, t) {
       drawBeckRat(W * 0.62, H * 0.68, t);
       break;
     case 'barnes-noble':
-      drawUlisa(W * 0.28, H * 0.64, 1, t);
-      drawBeckRat(W * 0.52, H * 0.68, t);
+      drawUlisa(W * 0.28, H * 0.68, 1, t);
+      drawBeckRat(W * 0.52, H * 0.72, t);
+      break;
+    case 'driftwood':
+      drawUlisa(W * 0.42, H * 0.53, 1, t);
+      drawBeckRat(W * 0.55, H * 0.53, t);
+      break;
+    case 'bn-arrival': {
+      // Ulisa low-left on driftwood, B&N captain high-right on ship
+      drawUlisa(W * 0.15, H * 0.58, 1, t);
+      drawBeckRat(W * 0.25, H * 0.58, t);
+      // B&N Captain on the ship above (dark skin, green uniform)
+      drawPerson(W * 0.65, H * 0.22, '#1A0A05', '#2E6B20', '#1A5018', '#3A2A15', 0, -1, t);
+      ctx.fillStyle = '#6B4A30';
+      const bnx = Math.round(W * 0.65), bny = Math.round(H * 0.22) + Math.round(Math.sin(t * 0.0015) * 1.5);
+      ctx.fillRect(bnx - 2*PX, bny - 11*PX, 4*PX, 4*PX);
+      ctx.fillStyle = '#F5F0E0'; // eyes
+      ctx.fillRect(bnx - PX, bny - 10*PX, PX, PX);
+      ctx.fillRect(bnx + PX, bny - 10*PX, PX, PX);
+      break;
+    }
+    case 'bn-work':
+      drawUlisa(W * 0.4, H * 0.63, 1, t);
+      drawBeckRat(W * 0.55, H * 0.67, t);
+      break;
+    case 'sea-crossing':
+      drawUlisa(W * 0.4, H * 0.52, 1, t);
+      drawBeckRat(W * 0.52, H * 0.55, t);
       break;
     case 'golden-oreo':
       drawUlisa(W * 0.25, H * 0.64, 1, t);
@@ -1504,7 +1690,7 @@ function emitParticles(scene) {
     const cols = ['#FF6B35','#FFD700','#DC2626','#FF8C42'];
     addP('leaf', Math.random() * W, -5, { vy: 0.025 + Math.random() * 0.015,
       color: cols[Math.floor(Math.random() * cols.length)], seed: Math.random() * 99, maxLife: 5000 });
-  } else if (bg === 'ship' || bg === 'shipFull' || bg === 'shipBattle' || bg === 'shore') {
+  } else if (bg === 'ship' || bg === 'shipFull' || bg === 'shipBattle' || bg === 'shore' || bg === 'openWater' || bg === 'shipBelow' || bg === 'seaCrossing') {
     const wt = scene.waterType || 'emerald';
     const c = wt === 'midnight' ? '#3B82F6' : wt === 'crimson' ? '#F87171' : '#A7F3D0';
     addP('sparkle', Math.random() * W, H * 0.3 + Math.random() * H * 0.15, { vy: 0.005, color: c, maxLife: 3000 });
@@ -1544,6 +1730,7 @@ function loadScene(idx) {
   const scene = scenes[idx];
   if (scene.music) audio.playMusic(scene.music);
   if (scene.init) scene.init();
+  document.getElementById('skip').style.display = 'block';
   showDialogue();
 }
 
@@ -2055,17 +2242,70 @@ const scenes = [
     { s:'n', t:'The Barnes & Noble captain lowered his cannon and saluted. A fellow reader. The bombardment ceased.' },
     { s:'b', t:"That was either very brave or very concerning. I'm going with concerning." },
     { s:'n', t:'But the damage was done. The ship listed hard to port.' },
-    { s:'c', t:'Abandon ship! Head for the Golden Oreo!' },
-    { s:'b', t:'The what?' },
+    { s:'c', t:'Abandon ship!' },
     { s:'n', t:'The ship cracked in half. The emerald sea swallowed it whole.' },
   ]},
 
-  // 6 — Golden Oreo
+  // 5b — Driftwood Crossing
+  { id: 'driftwood', bg: 'openWater', music: 'emerald', dialogue: [
+    { s:'n', t:'She pulled herself onto a plank of driftwood. Beck-rat clung to her shoulder like a very small, very opinionated parrot.' },
+    { s:'b', t:'This is fine. We are floating on a stick in an ocean full of things that want to eat us. This is completely fine.' },
+    { s:'u', t:"There's a ship ahead." },
+    { s:'b', t:'The one that was just shooting books at us?' },
+    { s:'u', t:'Yes.' },
+    { s:'b', t:'Excellent. Great plan. Love it.' },
+    { s:'n', t:'She paddled. The emerald water was warm and strangely calm, as if it had decided that enough dramatic things had happened today.' },
+  ]},
+
+  // 5c — Arriving at B&N Ship
+  { id: 'bn-arrival', bg: 'shipBelow', music: 'emerald', dialogue: [
+    { s:'n', t:'The Barnes & Noble ship towered above them. Its hull was dark and massive, blocking out the moon.' },
+    { s:'n', t:'A face appeared at the railing. Green uniform. Stern expression. The unmistakable energy of someone who worked in retail.' },
+    { s:'n', t:'"State your business."' },
+    { s:'u', t:'My ship just sank. Because you shot books at it.' },
+    { s:'n', t:'The captain considered this.' },
+    { s:'n', t:'"Those were promotional copies. We have a surplus."' },
+    { s:'u', t:'Can we come aboard?' },
+    { s:'n', t:'"Do you have any retail experience?"' },
+    { s:'b', t:'Oh no.' },
+    { s:'u', t:'I... have read a lot of books?' },
+    { s:'n', t:'The captain nodded slowly. "Close enough. Welcome to Barnes & Noble. Your shift starts now."' },
+  ]},
+
+  // 5d — Working at B&N
+  { id: 'bn-work', bg: 'bookstore', music: 'emerald', dialogue: [
+    { s:'n', t:'And so, in the middle of the emerald sea, Uh-Lee-Suh got a job at Barnes & Noble.' },
+    { s:'n', t:'The floating bookstore was exactly what it sounds like: a ship full of books, staffed entirely by people who took reading very, very seriously.' },
+    { s:'u', t:'Excuse me, do you have the new Sanderson?' },
+    { s:'n', t:'She was talking to a customer who was, somehow, also a pelican.' },
+    { s:'b', t:'I would help shelve books, but I am very small.' },
+    { s:'n', t:'Beck-rat spent most of the shift hiding behind the fantasy section and making sarcastic comments about cover art.' },
+    { s:'b', t:'This one has a shirtless man holding a sword. Groundbreaking.' },
+    { s:'n', t:'She worked for exactly one shift. It was the longest three hours of her life. But it earned them safe passage east.' },
+    { s:'n', t:'"You have earned your sea-legs and your employee discount," the captain said. "Go well."' },
+  ]},
+
+  // 5e — Emerald to Crimson Sea Crossing
+  { id: 'sea-crossing', bg: 'seaCrossing', music: 'emerald', dialogue: [
+    { s:'n', t:'They set off on a small dinghy — part of their employee compensation package — and sailed east.' },
+    { s:'n', t:'Slowly, the water began to change.' },
+    { s:'n', t:'The emerald faded at the edges, warming into something deeper. Something red.' },
+    { s:'b', t:'The sea is changing color.' },
+    { s:'u', t:'Is that normal?' },
+    { s:'b', t:'Nothing about any of this is normal. But yes.' },
+    { s:'n', t:'The boundary between the two seas was beautiful — a shimmering line where green met red, like the edge of a sunset touching the earth.' },
+    { s:'b', t:'...' },
+    { s:'u', t:'What?' },
+    { s:'b', t:'Nothing. It\'s just... kind of beautiful out here.' },
+    { s:'u', t:'Yeah. It is.' },
+    { s:'n', t:'They sailed in comfortable silence as the emerald faded behind them and the crimson sea stretched ahead, vast and warm and full of whatever came next.' },
+  ]},
+
+  // 6 — Golden Oreo (now on crimson sea)
   { id: 'golden-oreo', bg: 'shipFull', music: 'crimson', waterType: 'crimson',
     init() { this.waterType = 'crimson'; this.bg = 'shipFull'; },
     dialogue: [
-    { s:'n', t:'She woke up on a new ship. It was called the Golden Oreo, which was a ridiculous name for a vessel, and she loved it immediately.' },
-    { s:'n', t:'The sea had changed. Where it was once emerald, it was now the color of crimson — deeper, warmer, and somehow more opinionated.' },
+    { s:'n', t:'The Golden Oreo found them the next morning — or rather, they found it, floating like a golden promise on the crimson tide.' },
     { s:'n', t:'The crew was small but capable — women who looked like they had been sailing since before the sea was invented.', onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'b', t:'I hate boats. I hate water. I hate being a rat on a boat on water.' },
     { s:'u', t:"You're alive." },
@@ -2297,6 +2537,10 @@ function render() {
   else if (bg === 'shore') BG.shore(t);
   else if (bg === 'shipFull') BG.shipFull(t, scene.waterType);
   else if (bg === 'shipBattle') BG.shipBattle(t);
+  else if (bg === 'openWater') BG.openWater(t);
+  else if (bg === 'shipBelow') BG.shipBelow(t);
+  else if (bg === 'bookstore') BG.bookstore(t);
+  else if (bg === 'seaCrossing') BG.seaCrossing(t);
   else if (bg === 'ship') BG.ship(t, scene.waterType);
   else if (bg === 'burritos') BG.burritos(t);
   else if (bg === 'cafe') BG.cafe(t);
@@ -2407,6 +2651,19 @@ $dbox.addEventListener('click', (e) => {
   e.stopPropagation();
   advanceDialogue();
 });
+
+// Hold to skip
+const $skip = document.getElementById('skip');
+let _skipInt = null;
+function startSkip(e) { e.preventDefault(); e.stopPropagation();
+  _skipInt = setInterval(() => {
+    if (G.state === 'playing' && G.phase === 'dialogue') advanceDialogue();
+  }, 120);
+}
+function stopSkip() { if (_skipInt) { clearInterval(_skipInt); _skipInt = null; } }
+$skip.addEventListener('touchstart', startSkip); $skip.addEventListener('mousedown', startSkip);
+$skip.addEventListener('touchend', stopSkip); $skip.addEventListener('mouseup', stopSkip);
+$skip.addEventListener('mouseleave', stopSkip);
 
 $snd.addEventListener('click', (e) => {
   e.stopPropagation();
