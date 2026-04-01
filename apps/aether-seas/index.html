@@ -1226,25 +1226,25 @@ const BG = {
   // --- Sea transition: emerald to crimson ---
   seaCrossing(t) {
     const { W, H } = G;
-    const skyH = Math.round(H * 0.42);
+    const skyH = Math.round(H * 0.42), deckY = Math.round(H * 0.64);
     // Sky blends from emerald tones to warm crimson sunset
     drawGrad(0, skyH, [['#0A1A20',0],['#1A2A30',0.15],['#2A3A38',0.3],['#4A3A30',0.5],['#6A3A2A',0.7],['#AA5040',0.85],['#DD7050',1]]);
     drawStars(Math.round(H * 0.15), t);
     drawMoonWithSpores(t, 'emerald', skyH);
     drawCloudBand(skyH, t, 'rgba(60,80,60,0.3)', 0.07, 55, 0.3);
     drawCloudBand(skyH, t, 'rgba(100,60,50,0.25)', 0.06, 70, 0.5);
-    // Water: emerald on left, crimson on right
+    // Water: emerald on left, crimson on right (stops at deck)
     for (let x = 0; x < W; x++) {
       const frac = x / W;
       const r = Math.round(6 + frac * 70);
       const g2 = Math.round(80 - frac * 55);
       const b = Math.round(58 - frac * 40);
       ctx.fillStyle = `rgb(${r},${g2},${b})`;
-      ctx.fillRect(x, skyH, 1, H - skyH);
+      ctx.fillRect(x, skyH, 1, deckY - skyH);
     }
     // Wave highlights blend
-    for (let i = 0; i < 8; i++) {
-      const wy = skyH + 3 + Math.round(i * (H - skyH) / 9);
+    for (let i = 0; i < 6; i++) {
+      const wy = skyH + 3 + Math.round(i * (deckY - skyH) / 7);
       for (let x = 0; x < W; x += 4) {
         if (hash(x * 2 + i * 13 + Math.floor(t * 0.0008)) > 0.55) {
           const frac = x / W;
@@ -1254,13 +1254,21 @@ const BG = {
         }
       }
     }
-    // The dividing line where colors meet — a shimmering boundary
+    // Shimmering boundary line
     const midX = Math.round(W * 0.5);
-    for (let y = skyH; y < H; y += 2) {
+    for (let y = skyH; y < deckY; y += 2) {
       const shimmer = Math.round(Math.sin(y * 0.1 + t * 0.002) * 3);
       ctx.fillStyle = `rgba(255,220,180,${0.06 + 0.03 * Math.sin(y * 0.05 + t * 0.001)})`;
       ctx.fillRect(midX + shimmer, y, 1, 2);
     }
+    // Ship deck
+    drawGrad(deckY, H, [['#8B6914',0],['#7A5A10',0.05],['#5A4010',1]]);
+    ctx.fillStyle = '#9A7A20';
+    for (let i = 0; i < 6; i++) ctx.fillRect(0, deckY + 1 + Math.round(i * H * 0.045), W, 1);
+    // Railing
+    ctx.fillStyle = '#5A3A10'; ctx.fillRect(0, deckY - 2, W, 3);
+    for (let x = 0; x < W; x += Math.max(6, Math.round(W * 0.06)))
+      ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
   },
 
   burritos(t) {
@@ -1605,8 +1613,8 @@ function drawSceneChars(sceneId, t) {
       drawBeckRat(W * 0.55, H * 0.67, t);
       break;
     case 'sea-crossing':
-      drawUlisa(W * 0.4, H * 0.52, 1, t);
-      drawBeckRat(W * 0.52, H * 0.55, t);
+      drawUlisa(W * 0.35, H * 0.68, 1, t);
+      drawBeckRat(W * 0.5, H * 0.72, t);
       break;
     case 'golden-oreo':
       drawUlisa(W * 0.25, H * 0.64, 1, t);
@@ -2287,7 +2295,7 @@ const scenes = [
 
   // 5e — Emerald to Crimson Sea Crossing
   { id: 'sea-crossing', bg: 'seaCrossing', music: 'emerald', dialogue: [
-    { s:'n', t:'They set off on a small dinghy — part of their employee compensation package — and sailed east.' },
+    { s:'n', t:'The Golden Oreo sailed east. Uh-Lee-Suh stood at the railing with Beck-rat on the rail beside her.' },
     { s:'n', t:'Slowly, the water began to change.' },
     { s:'n', t:'The emerald faded at the edges, warming into something deeper. Something red.' },
     { s:'b', t:'The sea is changing color.' },
