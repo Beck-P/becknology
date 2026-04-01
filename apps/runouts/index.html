@@ -1824,8 +1824,92 @@ function modeById(id) {
   return MODES.find((mode) => mode.id === id);
 }
 
-function buildOutcomeHeadline(selectedName, taskLabel, selectionGoal) {
-  return selectionGoal === "winner" ? `${selectedName} wins ${taskLabel}` : `${selectedName} has to ${taskLabel}`;
+const WIN_MESSAGES = [
+  "{name} is the man",
+  "{name} is so back",
+  "I want to grow up and be like {name}",
+  "{name} could have my children",
+  "I'd let {name} date my daughter",
+  "{name} needed this",
+  "{name} put in the call",
+  "{name} woke up feeling dangerous",
+  "{name} doesn't miss",
+  "{name} is him",
+  "{name} was simply built different today",
+  "{name} owns this house now",
+  "Everyone say thank you {name}",
+  "{name} walked so we could run",
+  "{name}'s mom would be so proud",
+  "The prophecy spoke of {name}",
+  "{name} is inevitable",
+  "We are all witnesses. {name} is that guy",
+  "{name} just different gravy",
+  "Clear eyes, full hearts, {name} wins",
+  "{name} with the plot armor",
+  "{name} is carrying this friend group",
+  "{name}'s aura is immaculate right now",
+  "{name} chose violence and it worked",
+  "{name} has earned the right to do nothing",
+  "Somebody get {name} a throne",
+  "{name} is the main character today",
+  "{name} really said 'not today'",
+  "{name} understood the assignment",
+  "We don't deserve {name}",
+];
+
+const LOSE_MESSAGES = [
+  "{name} is not the man",
+  "{name} is a fish",
+  "{name} down bad",
+  "{name} fell off",
+  "{name} is cooked",
+  "Couldn't be {name} right now",
+  "{name} took one for the team. Again.",
+  "{name} in their flop era",
+  "Someone check on {name}",
+  "{name}'s vibes are off",
+  "{name} was not him today",
+  "{name} fumbled the bag",
+  "Thoughts and prayers for {name}",
+  "{name} is a liability",
+  "{name} will remember this day",
+  "{name} has been humbled",
+  "Rest in peace {name}'s evening",
+  "The universe said no to {name}",
+  "{name} is giving quitter energy",
+  "{name} caught a stray",
+  "{name} needs to sit down and think about what they've done",
+  "{name} really thought they had it",
+  "{name} playing like they want to lose",
+  "{name} and it's not even close",
+  "Someone get {name} a tissue",
+  "{name} is the weakest link. Goodbye.",
+  "{name} couldn't beat a goldfish right now",
+  "{name} owes everyone an apology",
+  "This is a {name} intervention",
+  "{name} just got sent to the shadow realm",
+];
+
+let _lastWinIdx = -1;
+let _lastLoseIdx = -1;
+
+function pickRandomMessage(messages, name, lastIdxRef) {
+  let idx = secureRandomInt(messages.length);
+  if (messages.length > 1) {
+    while (idx === (lastIdxRef === "win" ? _lastWinIdx : _lastLoseIdx)) {
+      idx = secureRandomInt(messages.length);
+    }
+  }
+  if (lastIdxRef === "win") _lastWinIdx = idx;
+  else _lastLoseIdx = idx;
+  return messages[idx].replace(/\{name\}/g, name);
+}
+
+function buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName) {
+  const msg = selectionGoal === "winner"
+    ? pickRandomMessage(WIN_MESSAGES, selectedName, "win")
+    : pickRandomMessage(LOSE_MESSAGES, selectedName, "lose");
+  return msg;
 }
 
 function buildHoldemResult(names, taskLabel, selectionGoal) {
@@ -1852,12 +1936,13 @@ function buildHoldemResult(names, taskLabel, selectionGoal) {
     river: calculatePokerPercentages(players, board, selectionGoal, bestHoldemHand),
   };
 
+  const modeName = "Texas Hold'em";
   return {
     modeId: "holdem",
-    modeName: "Texas Hold'em",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary:
       tiedNames.length > 1
         ? `${choosingWinner ? "Best" : "Worst"} hand was tied, so the app broke it randomly between ${tiedNames.join(", ")}.`
@@ -1899,12 +1984,13 @@ function buildPloResult(names, taskLabel, selectionGoal) {
     river: calculatePokerPercentages(players, board, selectionGoal, bestPloHand),
   };
 
+  const modeName = "PLO";
   return {
     modeId: "plo",
-    modeName: "PLO",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary:
       tiedNames.length > 1
         ? `Exact-two-card Omaha tie for the ${choosingWinner ? "best" : "worst"} hand, so the tiebreak went to ${selectedName}.`
@@ -1931,12 +2017,13 @@ function buildRngResult(names, taskLabel, selectionGoal) {
   const selectedName = resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
+  const modeName = "Random Number";
   return {
     modeId: "rng",
-    modeName: "Random Number",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: `Everyone got a number from 1 to 100. ${choosingWinner ? "Highest" : "Lowest"} number gets selected.`,
     players: players.map((player) => ({
       name: player.name,
@@ -1958,12 +2045,13 @@ function buildWheelResult(names, taskLabel, selectionGoal, currentRotation) {
   const nextRotation = currentRotation + extraTurns * 360 + (360 - segmentCenter);
   const choosingWinner = selectionGoal === "winner";
 
+  const modeName = "Wheel Spinner";
   return {
     modeId: "wheel",
-    modeName: "Wheel Spinner",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: `Pure wheel-of-fate chaos. The wheel randomly picks the ${choosingWinner ? "winner" : "loser"}.`,
     wheel: {
       names,
@@ -1994,12 +2082,13 @@ function buildDiceResult(names, taskLabel, selectionGoal) {
   const selectedName = resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
+  const modeName = "Dice Duel";
   return {
     modeId: "dice",
-    modeName: "Dice Duel",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: `Two dice each. ${choosingWinner ? "Highest" : "Lowest"} total gets selected.`,
     players: players.map((player) => ({
       name: player.name,
@@ -2024,12 +2113,13 @@ function buildHighCardResult(names, taskLabel, selectionGoal) {
   const selectedName = resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
+  const modeName = "High Card Draw";
   return {
     modeId: "high-card",
-    modeName: "High Card Draw",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: `Everyone drew one card. ${choosingWinner ? "Highest" : "Lowest"} rank gets selected; ties break randomly.`,
     players: players.map((player) => ({
       name: player.name,
@@ -2053,12 +2143,13 @@ function buildCoinFlipResult(names, taskLabel, selectionGoal) {
   const selectedName = resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
+  const modeName = "Coin Flip Gauntlet";
   return {
     modeId: "coin-flips",
-    modeName: "Coin Flip Gauntlet",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: `Five flips each. ${choosingWinner ? "Most" : "Fewest"} heads gets selected.`,
     players: players.map((player) => ({
       name: player.name,
@@ -2079,13 +2170,14 @@ function buildBlackMarbleResult(names, taskLabel, selectionGoal) {
   const bag = shuffle([...Array(names.length - 1).fill(safeMarble), targetMarble]);
   const order = shuffle(names);
   const selectedName = order[bag.indexOf(targetMarble)];
+  const modeName = choosingWinner ? "Gold Marble" : "Black Marble";
 
   return {
     modeId: "black-marble",
-    modeName: choosingWinner ? "Gold Marble" : "Black Marble",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: choosingWinner
       ? "One gold marble, three black marbles. Lucky draw picks the winner."
       : "Three safe marbles. One black marble. Bad luck decides everything.",
@@ -2124,12 +2216,13 @@ function buildSlotsResult(names, taskLabel, selectionGoal) {
   const selectedName = resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
+  const modeName = "Slot Machine";
   return {
     modeId: "slots",
-    modeName: "Slot Machine",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: `${choosingWinner ? "Best" : "Worst"} slot score gets selected.`,
     players: players.map((player) => ({
       name: player.name,
@@ -2167,12 +2260,13 @@ function buildHorseRaceResult(names, taskLabel, selectionGoal) {
   const selectedName = resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
+  const modeName = "Lucky Horse Race";
   return {
     modeId: "horse-race",
-    modeName: "Lucky Horse Race",
+    modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal),
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: `Twelve random turns. Whoever finishes ${choosingWinner ? "first" : "last"} gets selected.`,
     turns,
     race: {
@@ -2255,12 +2349,13 @@ function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotati
   }
 
   const finalLoser = remainingNames[0];
+  const modeName = `${modeById(baseModeId)?.name ?? "Game"} Tournament`;
   return {
     modeId: baseModeId,
-    modeName: `${modeById(baseModeId)?.name ?? "Game"} Tournament`,
+    modeName,
     selectionGoal: "loser",
     selectedName: finalLoser,
-    headline: `${finalLoser} has to ${taskLabel}`,
+    headline: pickRandomMessage(LOSE_MESSAGES, finalLoser, "lose"),
     summary: `${finalLoser} was the only person who never won a round. Win once and you're safe.`,
     isTournament: true,
     rounds,
