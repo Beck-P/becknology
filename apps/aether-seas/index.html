@@ -672,20 +672,31 @@ const BG = {
     ctx.fillStyle = '#6B4A20';
     ctx.fillRect(mastX, mastTop - flagH - 1, 1, 1);
 
-    // Water overlay on lower hull — submerges bottom of ship
-    ctx.fillStyle = '#08604A';
-    ctx.fillRect(hullL - 4, waterCoverStart, hullW + 8, hullBot - waterCoverStart + 4);
-    // Darker water below
-    ctx.fillStyle = '#06503A';
-    ctx.fillRect(hullL - 5, waterCoverStart + 3, hullW + 10, hullBot - waterCoverStart);
+    // Water overlay on lower hull — gradient to blend with surrounding sea
+    const waterDepth = hullBot - waterCoverStart + 4;
+    for (let row = 0; row < waterDepth; row++) {
+      const frac = row / waterDepth;
+      const y = waterCoverStart + row;
+      // Blend from lighter surface to darker depth, matching the sea gradient
+      const r = Math.round(6 + frac * 4);
+      const g = Math.round(96 - frac * 30);
+      const b = Math.round(74 - frac * 20);
+      // Taper width so it doesn't look like a rectangle
+      const taper = Math.round(frac * frac * 3);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(hullL - 3 + taper, y, hullW + 6 - taper * 2, 1);
+    }
     // Wave foam at waterline around hull
     ctx.fillStyle = '#1AAA78';
     for (let x = hullL - 3; x < hullR + 3; x++) {
       const wy = waterCoverStart - 1 + Math.round(Math.sin(x * 0.2 + t * 0.003) * 0.8);
       ctx.fillRect(x, wy, 1, 1);
     }
-    ctx.fillStyle = 'rgba(167,243,208,0.4)';
-    ctx.fillRect(hullL - 2, waterCoverStart, hullW + 4, 1);
+    // Subtle foam highlight
+    ctx.fillStyle = 'rgba(167,243,208,0.3)';
+    for (let x = hullL - 2; x < hullR + 2; x += 2) {
+      ctx.fillRect(x, waterCoverStart + Math.round(Math.sin(x * 0.3 + t * 0.002) * 0.5), 1, 1);
+    }
 
     // Rope from dock to ship
     ctx.fillStyle = '#8B7355';
