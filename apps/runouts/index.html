@@ -3189,6 +3189,18 @@ function buildSpaceInvadersResult(names, taskLabel, selectionGoal) {
   };
 }
 
+function generateTickTimings(totalTicks) {
+  const timings = [];
+  const startInterval = 800;
+  const endInterval = 250;
+  for (let i = 0; i < totalTicks; i++) {
+    const progress = i / Math.max(totalTicks - 1, 1);
+    const interval = startInterval - (startInterval - endInterval) * (progress * progress);
+    timings.push(Math.round(interval));
+  }
+  return timings;
+}
+
 function buildBombResult(names, taskLabel, selectionGoal) {
   const modeName = "Bomb";
   const totalTicks = 15 + secureRandomInt(16);
@@ -3224,6 +3236,7 @@ function buildBombResult(names, taskLabel, selectionGoal) {
     headline,
     summary: `The bomb was passed ${totalTicks} times before detonating on ${selectedName}.`,
     totalTicks,
+    tickTimings: generateTickTimings(totalTicks),
     sequence,
     players: names.map((name) => {
       const isSelected = name === selectedName;
@@ -5578,7 +5591,7 @@ function SpaceInvadersPlayback({ result, step, done }) {
   );
 }
 
-function BombPlayback({ result, step, done }) {
+function BombPlayback({ result, step, done, interactiveBombState }) {
   const [phase, setPhase] = useState('ready');
   const [tickIndex, setTickIndex] = useState(0);
   const [exploded, setExploded] = useState(false);
@@ -5587,6 +5600,7 @@ function BombPlayback({ result, step, done }) {
   const animFrameRef = React.useRef(null);
   const tickIndexRef = React.useRef(0);
 
+  const isInteractive = !!interactiveBombState;
   const totalTicks = result.totalTicks;
   const sequence = result.sequence;
   const playerNames = result.players.map(p => p.name);
@@ -5605,7 +5619,9 @@ function BombPlayback({ result, step, done }) {
     setTickIndex(0);
   }
 
+  // Autonomous animation (non-interactive only)
   useEffect(() => {
+    if (isInteractive) return;
     if (phase !== 'ticking') return;
 
     let accumulatedTime = 0;
@@ -5644,7 +5660,7 @@ function BombPlayback({ result, step, done }) {
 
     animFrameRef.current = requestAnimationFrame(tick);
     return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
-  }, [phase, totalTicks]);
+  }, [phase, totalTicks, isInteractive]);
 
   useEffect(() => {
     if (phase === 'complete') {
@@ -5652,19 +5668,42 @@ function BombPlayback({ result, step, done }) {
     }
   }, [phase]);
 
-  const currentHolder = tickIndex < totalTicks ? sequence[tickIndex] : sequence[totalTicks - 1];
-  const fusePercent = totalTicks > 0 ? Math.max(0, 1 - tickIndex / totalTicks) : 1;
-  const isComplete = phase === 'complete' || done;
+  // Interactive mode: derive display state from interactiveBombState
+  const iTickIndex = isInteractive ? (interactiveBombState.tickNumber || 0) : tickIndex;
+  const iExploded = isInteractive ? (interactiveBombState.phase === 'detonated') : exploded;
+  const iHolder = isInteractive
+    ? interactiveBombState.holder
+    : (tickIndex < totalTicks ? sequence[tickIndex] : sequence[totalTicks - 1]);
+  const iPhase = isInteractive
+    ? (interactiveBombState.phase === 'detonated' ? 'complete' : 'ticking')
+    : phase;
+
+  const currentHolder = iHolder;
+  const fusePercent = totalTicks > 0 ? Math.max(0, 1 - iTickIndex / totalTicks) : 1;
+  const isComplete = iPhase === 'complete' || done;
+
+  // Trigger shaking on interactive detonation
+  useEffect(() => {
+    if (isInteractive && interactiveBombState.phase === 'detonated' && !shaking) {
+      setShaking(true);
+      setTimeout(() => setShaking(false), 500);
+    }
+  }, [isInteractive, interactiveBombState?.phase]);
 
   const angleStep = (2 * Math.PI) / playerNames.length;
   const radius = playerNames.length <= 4 ? 100 : playerNames.length <= 6 ? 120 : 140;
+
+  // Determine the selected name for explosion display
+  const explodedName = isInteractive
+    ? (interactiveBombState.phase === 'detonated' ? interactiveBombState.holder : null)
+    : result.selectedName;
 
   return (
     <div className="space-y-4">
       <ModeHeader
         result={result}
         done={isComplete}
-        pendingText={phase === 'ready' ? 'Bomb is armed...' : exploded ? 'KABOOM!' : `Tick ${tickIndex} of ${totalTicks}`}
+        pendingText={iPhase === 'ready' ? 'Bomb is armed...' : iExploded ? 'KABOOM!' : `Tick ${iTickIndex} of ${totalTicks}`}
         pendingSummary="Don't be holding the bomb when it blows."
       />
 
@@ -5699,9 +5738,9 @@ function BombPlayback({ result, step, done }) {
               const angle = angleStep * idx - Math.PI / 2;
               const x = Math.cos(angle) * radius + radius + 40;
               const y = Math.sin(angle) * radius + radius + 40;
-              const isHolding = !exploded && currentHolder === name;
-              const isExplodedOn = exploded && name === result.selectedName;
-              const isSafe = exploded && name !== result.selectedName;
+              const isHolding = !iExploded && currentHolder === name;
+              const isExplodedOn = iExploded && name === explodedName;
+              const isSafe = iExploded && name !== explodedName;
 
               return (
                 <motion.div
@@ -5725,7 +5764,7 @@ function BombPlayback({ result, step, done }) {
                       boxShadow: isHolding ? '0 0 12px rgba(239,68,68,0.3)' : isExplodedOn ? '0 0 16px rgba(239,68,68,0.4)' : 'none',
                     }}
                   >
-                    {isHolding && !exploded ? (
+                    {isHolding && !iExploded ? (
                       <div className="text-lg" style={{ animation: 'bomb-pulse 0.5s ease-in-out infinite' }}>💣</div>
                     ) : isExplodedOn ? (
                       <motion.div
@@ -5748,7 +5787,7 @@ function BombPlayback({ result, step, done }) {
             })}
 
             {/* Center bomb (when not being held) */}
-            {phase === 'ready' ? (
+            {iPhase === 'ready' ? (
               <div className="absolute text-3xl" style={{ left: radius + 40 - 16, top: radius + 40 - 16 }}>
                 💣
               </div>
@@ -5756,8 +5795,8 @@ function BombPlayback({ result, step, done }) {
           </div>
         </div>
 
-        {/* Start button */}
-        {phase === 'ready' ? (
+        {/* Start button (non-interactive only) */}
+        {!isInteractive && iPhase === 'ready' ? (
           <div className="absolute inset-0 flex items-center justify-center z-20">
             <button
               onClick={startFuse}
@@ -6332,7 +6371,7 @@ function StockMarketPlayback({ result, step, done }) {
   );
 }
 
-function PlaybackStage({ result, step, done }) {
+function PlaybackStage({ result, step, done, interactiveBombState }) {
   if (result.isTournament) {
     return <TournamentPlayback result={result} step={step} done={done} />;
   }
@@ -6362,7 +6401,7 @@ function PlaybackStage({ result, step, done }) {
     case "space-invaders":
       return <SpaceInvadersPlayback result={result} step={step} done={done} />;
     case "bomb":
-      return <BombPlayback result={result} step={step} done={done} />;
+      return <BombPlayback result={result} step={step} done={done} interactiveBombState={interactiveBombState} />;
     case "plinko":
       return <PlinkoPlayback result={result} step={step} done={done} />;
     case "battle-royale":
@@ -6913,7 +6952,28 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-indigo-500/30 p-4 backdrop-blur" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
       <div className="max-w-md mx-auto text-center">
-        {pendingAction.action === 'draw' && isMyTurn ? (
+        {pendingAction.action === 'pass_bomb' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[11px] text-red-400 mb-3 animate-pulse" style={{ textShadow: '0 0 10px rgba(239,68,68,0.5)' }}>
+              PASS THE BOMB!
+            </div>
+            <div className="space-y-2">
+              {(pendingAction.targets || []).map(target => (
+                <button
+                  key={target}
+                  onClick={() => onAction({ action: 'pass_bomb', target })}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-orange-500 text-white font-bold text-base shadow-lg transition hover:scale-[1.02] active:scale-95"
+                >
+                  Throw to {target}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : pendingAction.action === 'pass_bomb' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-red-400">
+            Bomb is with {pendingAction.playerName}... {(pendingAction.tickNumber || 0) + 1}/{pendingAction.totalTicks || '?'}
+          </div>
+        ) : pendingAction.action === 'draw' && isMyTurn ? (
           <>
             <div className="pixel-font text-[11px] text-purple-300 mb-3" style={{ textShadow: '0 0 10px rgba(168,85,247,0.5)' }}>
               {"\uD83D\uDD2E"} YOUR TURN {"\uD83D\uDD2E"}
@@ -6981,6 +7041,7 @@ function ChoreChaosApp() {
   const [roomPlayerNames, setRoomPlayerNames] = useState([]);
   const currentActionHandler = React.useRef(null);
   const roomModeRef = React.useRef(roomMode);
+  const [interactiveBombState, setInteractiveBombState] = useState(null);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -7057,6 +7118,151 @@ function ChoreChaosApp() {
       timeout.clear();
     };
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // Interactive Bomb turn management
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'bomb') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      return;
+    }
+
+    // Initialize bomb state on first run
+    if (!interactiveBombState && playbackStep >= 0) {
+      const firstHolder = result.players[secureRandomInt(result.players.length)].name;
+      const state = {
+        holder: firstHolder,
+        previousHolder: null,
+        tickNumber: 0,
+        sequence: [firstHolder],
+        phase: 'waiting',
+      };
+      setInteractiveBombState(state);
+      return; // Let the next render pick up the new state
+    }
+
+    if (!interactiveBombState || interactiveBombState.phase !== 'waiting') return;
+
+    const { holder, previousHolder, tickNumber, sequence } = interactiveBombState;
+    const totalTicks = result.totalTicks;
+    const tickTimings = result.tickTimings;
+
+    // Check if bomb should detonate
+    if (tickNumber >= totalTicks - 1) {
+      const selectedName = holder;
+      // Build final result
+      const timesHeld = {};
+      result.players.forEach(p => { timesHeld[p.name] = 0; });
+      sequence.forEach(n => { timesHeld[n] = (timesHeld[n] || 0) + 1; });
+
+      const headline = pickRandomMessage(
+        result.selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        result.selectionGoal === "winner" ? "win" : "lose"
+      );
+
+      const finalPlayers = result.players.map(p => ({
+        ...p,
+        selected: p.name === selectedName,
+        timesHeld: timesHeld[p.name] || 0,
+        headline: p.name === selectedName ? "BOOM!" : "Survived",
+        subline: `Held the bomb ${timesHeld[p.name] || 0} time${(timesHeld[p.name] || 0) !== 1 ? 's' : ''}`,
+        chips: p.name === selectedName ? ["💥", `Held ${timesHeld[p.name] || 0}x`] : ["Safe", `Held ${timesHeld[p.name] || 0}x`],
+      }));
+      const sorted = [...finalPlayers].sort((a, b) => a.timesHeld - b.timesHeld);
+      sorted.forEach((p, i) => { p.rank = i + 1; });
+      // Apply ranks back
+      finalPlayers.forEach(p => {
+        const s = sorted.find(x => x.name === p.name);
+        if (s) p.rank = s.rank;
+      });
+
+      // Update result object in place
+      result.selectedName = selectedName;
+      result.headline = headline;
+      result.summary = `The bomb went off in ${selectedName}'s hands.`;
+      result.sequence = sequence;
+      result.players = finalPlayers;
+      result.isTie = false;
+
+      setInteractiveBombState(prev => ({ ...prev, phase: 'detonated' }));
+
+      broadcastEvent({ type: 'bomb_detonated', holder: selectedName, finalResult: result });
+
+      // Trigger completion
+      setPlaybackDone(true);
+      setPlaybackStep(2);
+      setPendingAction(null);
+      currentActionHandler.current = null;
+
+      // Record to leaderboard
+      pushHistory(result);
+      return;
+    }
+
+    // Normal tick: prompt current holder to pass
+    const targets = result.players
+      .map(p => p.name)
+      .filter(n => n !== holder && (previousHolder === null || n !== previousHolder || result.players.length <= 2));
+
+    const timeoutMs = tickTimings[tickNumber] || 500;
+
+    broadcastEvent({
+      type: 'turn_prompt',
+      playerName: holder,
+      action: 'pass_bomb',
+      targets,
+      timeoutMs,
+    });
+
+    broadcastEvent({
+      type: 'bomb_state',
+      holder,
+      tickNumber,
+      totalTicks,
+      timeoutMs,
+    });
+
+    setPendingAction({
+      type: 'turn',
+      playerName: holder,
+      action: 'pass_bomb',
+      targets,
+      deadline: Date.now() + timeoutMs,
+      tickNumber,
+      totalTicks,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'pass_bomb' || payload.playerName !== holder) return;
+      const target = targets.includes(payload.target) ? payload.target : targets[secureRandomInt(targets.length)];
+
+      setInteractiveBombState(prev => ({
+        holder: target,
+        previousHolder: holder,
+        tickNumber: prev.tickNumber + 1,
+        sequence: [...prev.sequence, target],
+        phase: 'waiting',
+      }));
+    };
+
+    // Timeout: auto-pass
+    const timer = setTimeout(() => {
+      const target = targets[secureRandomInt(targets.length)];
+      setInteractiveBombState(prev => ({
+        holder: target,
+        previousHolder: holder,
+        tickNumber: prev.tickNumber + 1,
+        sequence: [...prev.sequence, target],
+        phase: 'waiting',
+      }));
+    }, timeoutMs);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [interactiveMode, gameActive, result, playbackStep, playbackDone, interactiveBombState]);
 
   const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
 
@@ -7159,7 +7365,11 @@ function ChoreChaosApp() {
     setGameActive(true);
     setSuddenDeathRound(0);
     setSuddenDeathNames(null);
-    pushHistory(outcome);
+    setInteractiveBombState(null);
+    // Don't record interactive bomb immediately — it records on detonation
+    if (!(interactiveMode && outcome.modeId === 'bomb')) {
+      pushHistory(outcome);
+    }
     broadcastEvent({ type: 'game_start', result: outcome });
   }
 
@@ -7217,6 +7427,7 @@ function ChoreChaosApp() {
     setGameActive(false);
     setSuddenDeathRound(0);
     setSuddenDeathNames(null);
+    setInteractiveBombState(null);
     broadcastEvent({ type: 'game_reset' });
   }
 
@@ -7338,15 +7549,30 @@ function ChoreChaosApp() {
           break;
         case 'turn_prompt':
           if (roomModeRef.current === 'player') {
+            const deadlineMs = payload.timeoutMs
+              ? payload.timeoutMs
+              : (payload.timeoutSeconds || 10) * 1000;
             setPendingAction({
               type: 'turn',
               playerName: payload.playerName,
               action: payload.action,
-              deadline: Date.now() + (payload.timeoutSeconds || 10) * 1000,
+              deadline: Date.now() + deadlineMs,
               turnNumber: payload.turnNumber,
               totalDraws: payload.totalDraws,
+              targets: payload.targets,
+              tickNumber: payload.tickNumber,
+              totalTicks: payload.totalTicks,
             });
           }
+          break;
+        case 'bomb_state':
+          // Update spectator state so they can see the bomb moving
+          break;
+        case 'bomb_detonated':
+          if (payload.finalResult) {
+            setSpectatorState(prev => prev ? { ...prev, result: payload.finalResult, done: true } : prev);
+          }
+          if (roomModeRef.current === 'player') setPendingAction(null);
           break;
         case 'game_reset':
           setSpectatorState({ type: 'waiting' });
@@ -7925,7 +8151,7 @@ function ChoreChaosApp() {
                   />
 
                   <div className="flex-1">
-                    <PlaybackStage result={result} step={playbackStep} done={playbackDone} />
+                    <PlaybackStage result={result} step={playbackStep} done={playbackDone} interactiveBombState={interactiveBombState} />
                   </div>
 
                   {playbackDone ? (() => {
