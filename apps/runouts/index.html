@@ -7999,6 +7999,14 @@ function SeriesResult({ scores, history, totalRounds, selectionGoal }) {
 }
 
 function ChoreChaosApp() {
+  // ── Device mode state ──
+  const [deviceMode, setDeviceMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('room') ? null : 'choose';
+  });
+  const [hostName, setHostName] = useState('');
+  const [hostSetupDone, setHostSetupDone] = useState(false);
+
   const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
   const [taskLabel, setTaskLabel] = useState("");
   const [selectionGoal, setSelectionGoal] = useState("winner");
@@ -9974,6 +9982,14 @@ function ChoreChaosApp() {
     setPlayerName(null);
   }
 
+  function handleCreateRoom() {
+    const trimmedName = hostName.trim();
+    if (!trimmedName) return;
+    setNames([trimmedName]);
+    setHostSetupDone(true);
+    setTimeout(() => createRoom(), 50);
+  }
+
   function broadcastEvent(payload) {
     if (roomMode !== 'host' || !roomChannel) return;
     roomChannel.send({ type: 'broadcast', event: 'game_event', payload });
@@ -10379,6 +10395,177 @@ function ChoreChaosApp() {
     }
   }
 
+  // ── Landing screen: choose Host or Same Device ──
+  if (deviceMode === 'choose' && roomMode === 'none') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6">
+        <div className="mb-4 flex items-center justify-center gap-8">
+          <div className="float-slow relative" style={{ width: 44, height: 32 }}>
+            <div className="invader" style={{ '--pc': '#22d3ee' }} />
+          </div>
+          <div className="float-med relative" style={{ width: 21, height: 27 }}>
+            <div className="pixel-joystick" />
+          </div>
+          <div className="float-fast relative" style={{ width: 44, height: 32 }}>
+            <div className="invader" style={{ '--pc': '#f472b6' }} />
+          </div>
+        </div>
+        <h1 className="pixel-font neon-text text-3xl tracking-wider sm:text-5xl" style={{ color: "#a5b4fc" }}>RUNOUTS</h1>
+        <p className="pixel-font mt-4 text-[8px] uppercase leading-relaxed tracking-widest text-cyan-400/70 sm:text-[10px]">
+          Insert coins {"\u25CF"} Pick a game {"\u25CF"} Someone loses
+        </p>
+
+        <div className="mt-12 flex flex-col sm:flex-row gap-4 w-full max-w-md">
+          <button
+            onClick={() => setDeviceMode('host')}
+            className="flex-1 py-6 px-6 rounded-2xl text-center transition hover:scale-105 active:scale-95"
+            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15))', border: '2px solid rgba(99,102,241,0.4)', boxShadow: '0 0 30px rgba(99,102,241,0.15)' }}
+          >
+            <div className="text-3xl mb-2">{"\uD83D\uDCE1"}</div>
+            <div className="pixel-font text-[11px] text-indigo-300">HOST A GAME</div>
+            <div className="pixel-font text-[7px] text-slate-500 mt-1">Friends join on their phones</div>
+          </button>
+
+          <button
+            onClick={() => setDeviceMode('local')}
+            className="flex-1 py-6 px-6 rounded-2xl text-center transition hover:scale-105 active:scale-95"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <div className="text-3xl mb-2">{"\uD83D\uDD79\uFE0F"}</div>
+            <div className="pixel-font text-[11px] text-white">SAME DEVICE</div>
+            <div className="pixel-font text-[7px] text-slate-500 mt-1">Everyone plays on this screen</div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Host setup screen ──
+  if (deviceMode === 'host' && !hostSetupDone) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6">
+        <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-4">Host Setup</div>
+        <div className="pixel-font text-xl text-indigo-300 mb-8" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>RUNOUTS</div>
+
+        <div className="w-full max-w-sm space-y-4">
+          <div>
+            <div className="pixel-font text-[7px] text-fuchsia-400 uppercase tracking-widest mb-1.5">Your Name</div>
+            <input value={hostName} onChange={e => setHostName(e.target.value)}
+              className="w-full border border-indigo-500/30 bg-white/[0.06] px-4 py-3 font-mono text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-400"
+              placeholder="Enter your name..." autoFocus />
+          </div>
+
+          <div>
+            <div className="pixel-font text-[7px] text-green-400 uppercase tracking-widest mb-1.5">Format</div>
+            <select value={gameFormat} onChange={e => setGameFormat(e.target.value)}
+              className="w-full border border-green-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-green-300 outline-none">
+              <option value="single">Single Round</option>
+              <option value="tournament">Tournament</option>
+              <option value="best-of-3">Best of 3</option>
+              <option value="best-of-5">Best of 5</option>
+              <option value="best-of-7">Best of 7</option>
+            </select>
+          </div>
+
+          <div>
+            <div className="pixel-font text-[7px] text-rose-400 uppercase tracking-widest mb-1.5">Picking a...</div>
+            <select value={selectionGoal} onChange={e => setSelectionGoal(e.target.value)}
+              className="w-full border border-rose-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-rose-300 outline-none">
+              <option value="loser">Loser</option>
+              <option value="winner">Winner</option>
+            </select>
+          </div>
+
+          <div>
+            <div className="pixel-font text-[7px] text-yellow-400 uppercase tracking-widest mb-1.5">Stakes (optional)</div>
+            <input value={taskLabel} onChange={e => setTaskLabel(e.target.value)}
+              className="w-full border border-yellow-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-yellow-300 placeholder-slate-600 outline-none"
+              placeholder="what's at stake?" />
+          </div>
+
+          <button onClick={handleCreateRoom} disabled={!hostName.trim()}
+            className="w-full py-4 rounded-xl font-bold text-sm transition hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2))', border: '2px solid rgba(99,102,241,0.5)', color: '#a5b4fc', textShadow: '0 0 8px rgba(99,102,241,0.4)' }}>
+            {"\uD83D\uDCE1"} CREATE ROOM
+          </button>
+
+          <button onClick={() => setDeviceMode('choose')} className="w-full py-2 font-mono text-xs text-slate-600 hover:text-slate-400 transition">
+            {"\u2190"} Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Host lobby screen ──
+  if (deviceMode === 'host' && hostSetupDone && roomMode === 'host' && !gameActive) {
+    return (
+      <div className="min-h-screen bg-[#0a0a1a] text-white p-6">
+        <div className="max-w-lg mx-auto">
+          <div className="text-center mb-8">
+            <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-2">Room Code</div>
+            <div className="pixel-font text-3xl text-cyan-300 mb-4" style={{ textShadow: '0 0 15px rgba(34,211,238,0.5)' }}>{roomCode}</div>
+
+            <div className="flex justify-center mb-4">
+              <div id="room-qr" className="bg-white p-1 rounded" style={{ width: 120, height: 120 }} />
+            </div>
+
+            <button onClick={() => navigator.clipboard.writeText(`https://becknology.vercel.app/runouts?room=${roomCode}`)}
+              className="pixel-font text-[8px] border border-white/10 bg-white/5 px-4 py-2 text-slate-400 hover:text-white transition">
+              COPY LINK
+            </button>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 mb-6">
+            <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Settings</div>
+            <div className="flex flex-wrap gap-3">
+              <span className="px-2 py-1 rounded bg-green-500/10 border border-green-500/20 font-mono text-xs text-green-400">{gameFormat}</span>
+              <span className="px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 font-mono text-xs text-rose-400">Pick a {selectionGoal}</span>
+              {taskLabel ? <span className="px-2 py-1 rounded bg-yellow-500/10 border border-yellow-500/20 font-mono text-xs text-yellow-400">{taskLabel}</span> : null}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 mb-6">
+            <div className="pixel-font text-[7px] text-indigo-400 uppercase tracking-widest mb-3">Players ({Object.keys(joinedPlayers).length})</div>
+            <div className="space-y-2">
+              {Object.keys(joinedPlayers).map(function(name) {
+                return (
+                  <div key={name} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/15">
+                    <span className="text-sm">{"\uD83D\uDCF1"}</span>
+                    <span className="font-mono text-sm font-bold text-indigo-300">{name}</span>
+                    {name === playerName ? <span className="pixel-font text-[6px] text-slate-500">(you)</span> : null}
+                  </div>
+                );
+              })}
+            </div>
+            {Object.keys(joinedPlayers).length < 2 ? (
+              <div className="pixel-font text-[8px] text-amber-400 mt-3 animate-pulse">Waiting for players to join...</div>
+            ) : null}
+          </div>
+
+          <button
+            onClick={() => { if (interactiveMode) startVote(); else startGame(pickRandom(MODES).id); }}
+            disabled={Object.keys(joinedPlayers).length < 2}
+            className="w-full py-4 rounded-xl pixel-font text-sm transition hover:scale-[1.02] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ background: Object.keys(joinedPlayers).length >= 2 ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)', border: '2px solid rgba(16,185,129,0.5)', color: '#d1fae5', textShadow: '0 0 8px rgba(16,185,129,0.4)' }}>
+            {"\uD83D\uDE80"} START ({Object.keys(joinedPlayers).length} players)
+          </button>
+
+          {voteActive && !gameActive ? (
+            <div className="mt-4">
+              <VoteGrid votes={votes} deadline={voteDeadline} onVote={handleHostAction} playerName={playerName} />
+            </div>
+          ) : null}
+
+          <div className="flex gap-3 mt-4">
+            <button onClick={closeRoom} className="flex-1 py-2 font-mono text-xs text-slate-600 hover:text-rose-400 transition">Close Room</button>
+            <button onClick={() => { closeRoom(); setDeviceMode('choose'); setHostSetupDone(false); }} className="flex-1 py-2 font-mono text-xs text-slate-600 hover:text-slate-400 transition">{"\u2190"} Back</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="crt-vignette crt-global-scanlines crt-flicker relative min-h-screen overflow-hidden bg-[#0a0a1a] text-white">
       {/* Gradient orbs */}
@@ -10444,6 +10631,11 @@ function ChoreChaosApp() {
           </p>
           <div className="mx-auto mt-4 h-[2px] w-64 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
           <div className="mx-auto mt-1 h-[1px] w-48 bg-gradient-to-r from-transparent via-fuchsia-500/50 to-transparent" />
+          {deviceMode === 'local' ? (
+            <button onClick={() => setDeviceMode('choose')} className="mt-4 font-mono text-xs text-slate-600 hover:text-slate-400 transition">
+              {"\u2190"} Back to menu
+            </button>
+          ) : null}
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="crt-scanlines relative mb-10 overflow-hidden bg-[#0d0d24] p-5 sm:p-6" style={{ border: "3px solid #2d2b6b", boxShadow: "0 0 30px rgba(99,102,241,0.15), inset 0 0 60px rgba(0,0,0,0.5)" }}>
@@ -10582,17 +10774,9 @@ function ChoreChaosApp() {
           </div>
         ) : null}
 
-        {/* Room controls — host or standalone */}
-        {roomMode !== 'spectator' && roomMode !== 'player' && roomMode !== 'joining' ? (
-          roomMode === 'none' ? (
-            _supabase ? (
-              <div className="mb-6 flex justify-center">
-                <button onClick={createRoom} className="pixel-font inline-flex items-center gap-3 border-2 border-indigo-500/40 bg-indigo-500/10 px-6 py-4 text-[10px] text-indigo-300 transition hover:bg-indigo-500/20 hover:border-indigo-400">
-                  {"\uD83C\uDFAE"} START ROOM
-                </button>
-              </div>
-            ) : null
-          ) : roomMode === 'host' ? (
+        {/* Room controls — host or standalone (hidden in local mode) */}
+        {deviceMode !== 'local' && roomMode !== 'spectator' && roomMode !== 'player' && roomMode !== 'joining' ? (
+          roomMode === 'host' ? (
             <div className="mb-6 crt-scanlines relative overflow-hidden bg-[#0d0d24] p-5" style={{ border: '3px solid #2d2b6b', boxShadow: '0 0 30px rgba(99,102,241,0.15)' }}>
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
