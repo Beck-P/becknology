@@ -1061,6 +1061,80 @@
     .theme-art-layer { pointer-events: none; position: absolute; inset: 0; overflow: hidden; z-index: 0; }
     .theme-art-layer * { pointer-events: none; }
     .theme-art-sprite { position: absolute; image-rendering: pixelated; will-change: transform; }
+
+    /* ═══════════════════════════════════════════════════════
+       MOBILE RESPONSIVE OVERRIDES
+       ═══════════════════════════════════════════════════════ */
+
+    /* Minimum tap target sizes on mobile */
+    @media (max-width: 640px) {
+      button, select, input { min-height: 44px; }
+    }
+
+    /* Pixel font section headers: prevent overflow on very small screens */
+    @media (max-width: 400px) {
+      .pixel-title-scale { transform: scale(0.85); transform-origin: center; }
+    }
+
+    /* Mobile modal: full-screen, no bezel, no rounded corners */
+    @media (max-width: 639px) {
+      .mobile-modal-overlay { padding: 0 !important; }
+      .mobile-modal-overlay .arcade-bezel {
+        border-radius: 0 !important;
+        border-width: 0 !important;
+      }
+      .mobile-modal-overlay .arcade-bezel::after {
+        display: none;
+      }
+    }
+
+    /* Poker table: stack vertically on mobile */
+    @media (max-width: 639px) {
+      .poker-table-felt {
+        aspect-ratio: auto !important;
+        border-radius: 1rem !important;
+        min-height: 180px !important;
+        padding: 1rem;
+      }
+      .poker-community-cards {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        padding: 0.75rem 0;
+      }
+      .poker-players-grid {
+        margin-top: 0 !important;
+      }
+    }
+
+    /* Slots reels: scale down on mobile */
+    @media (max-width: 639px) {
+      .slots-reel-cell {
+        width: 3.5rem !important;
+        height: 3.5rem !important;
+        font-size: 1.5rem !important;
+      }
+    }
+
+    /* Horse race: narrower lanes on mobile */
+    @media (max-width: 639px) {
+      .horse-race-lane {
+        height: 2.5rem !important;
+      }
+    }
+
+    /* Coin path: more compact on mobile */
+    @media (max-width: 639px) {
+      .coin-path-row {
+        height: 60px !important;
+      }
+      .coin-token {
+        height: 2.5rem !important;
+        width: 2.5rem !important;
+        font-size: 0.75rem !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2712,12 +2786,12 @@ function PokerPlayback({ result, step, done, omaha = false }) {
         </div>
 
         {/* Stage label */}
-        <div className="flex items-center justify-center gap-4 py-3" style={{ background: "rgba(0,0,0,0.4)", borderTop: "1px solid rgba(74,222,128,0.15)", borderBottom: "1px solid rgba(74,222,128,0.15)" }}>
+        <div className="flex flex-wrap items-center justify-center gap-2 px-2 py-3 sm:gap-4 sm:px-0" style={{ background: "rgba(0,0,0,0.4)", borderTop: "1px solid rgba(74,222,128,0.15)", borderBottom: "1px solid rgba(74,222,128,0.15)" }}>
           {["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"].map((label) => {
             const activeStage = verdictVisible ? "SHOWDOWN" : streetLabel.toUpperCase();
             const isActive = label === activeStage;
             return (
-              <div key={label} className="text-xs font-bold tracking-[0.2em]" style={{
+              <div key={label} className="text-[10px] font-bold tracking-[0.1em] sm:text-xs sm:tracking-[0.2em]" style={{
                 fontFamily: "var(--mode-font, inherit)",
                 color: isActive ? "#4ade80" : "rgba(255,255,255,0.25)",
                 textShadow: isActive ? "0 0 12px rgba(74,222,128,0.6)" : "none",
@@ -2731,7 +2805,7 @@ function PokerPlayback({ result, step, done, omaha = false }) {
         {/* Poker table */}
         <div className="relative mx-auto my-8 px-4" style={{ maxWidth: "760px" }}>
           {/* Felt table */}
-          <div className="relative mx-auto overflow-hidden" style={{
+          <div className="poker-table-felt relative mx-auto overflow-hidden" style={{
             borderRadius: "50%/40%",
             background: "radial-gradient(ellipse, #1e5c34 0%, #145028 40%, #0d3a1c 70%, #092a14 100%)",
             border: "6px solid #3a2a1a",
@@ -2747,8 +2821,8 @@ function PokerPlayback({ result, step, done, omaha = false }) {
             }} />
 
             {/* Community cards in center */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 z-10">
-              <div className="flex gap-2">
+            <div className="poker-community-cards absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 z-10">
+              <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
                 {result.board.map((card, index) => {
                   const shown = visibleBoard.includes(card);
                   const staggerDelay = index <= 2 ? index * 0.45 : 0;
@@ -2764,8 +2838,8 @@ function PokerPlayback({ result, step, done, omaha = false }) {
           </div>
 
           {/* Players around the table */}
-          <div className="relative" style={{ marginTop: "-20px" }}>
-            <div className="grid gap-4" style={{ gridTemplateColumns: playerCount <= 2 ? "1fr 1fr" : playerCount === 3 ? "1fr 1fr 1fr" : "1fr 1fr 1fr 1fr" }}>
+          <div className="poker-players-grid relative" style={{ marginTop: "-20px" }}>
+            <div className={`grid gap-4 grid-cols-1 ${playerCount <= 2 ? "sm:grid-cols-2" : playerCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
               {result.players.map((player, index) => {
                 const revealed = index < playerRevealCount;
                 const isSelected = verdictVisible && player.selected;
@@ -2863,7 +2937,7 @@ function WheelPlayback({ result, step, done }) {
       <div className="p-6" style={{ background: "linear-gradient(180deg, #1a1a3e 0%, #0f0f2a 100%)" }}>
         <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-6">
           {/* Stage lights effect */}
-          <div className="relative h-80 w-80">
+          <div className="relative h-64 w-64 sm:h-80 sm:w-80">
             {/* Spotlight glow */}
             <div className="absolute -inset-8 rounded-full" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
             <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-2 text-3xl" style={{ color: "#fbbf24", filter: "drop-shadow(0 0 6px rgba(251,191,36,0.5))" }}>▼</div>
@@ -2906,7 +2980,7 @@ function WheelPlayback({ result, step, done }) {
           ) : null}
 
           {/* Podiums */}
-          <div className="flex w-full items-end justify-center gap-3 pt-4" style={{ minHeight: "120px" }}>
+          <div className="flex w-full flex-wrap items-end justify-center gap-2 pt-4 sm:gap-3" style={{ minHeight: "120px" }}>
             {result.wheel.names.map((name, index) => {
               const isSelected = done && name === result.selectedName;
               const isWinner = result.selectionGoal === "winner";
@@ -2917,8 +2991,8 @@ function WheelPlayback({ result, step, done }) {
                   key={name}
                   animate={isSelected ? { scale: [1, 1.05, 1] } : {}}
                   transition={isSelected ? { duration: 1.2, repeat: Infinity } : undefined}
-                  className="flex flex-col items-center flex-1"
-                  style={{ maxWidth: "120px" }}
+                  className="flex flex-col items-center flex-1 min-w-0"
+                  style={{ maxWidth: "120px", minWidth: "60px" }}
                 >
                   <div className="text-xs font-bold text-center mb-1 truncate w-full" style={{ color: isSelected ? "#fbbf24" : "#aaa" }}>{name}</div>
                   <motion.div
@@ -3046,7 +3120,7 @@ function DicePlayback({ result, step, done }) {
       <ModeHeader result={result} done={done} pendingText="Dice are hitting the table..." pendingSummary="Lowest total ends up stuck with it." />
 
       <div className="p-6">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {result.players.map((player, index) => {
             const isShown = index < revealed;
             const isSelected = done && player.selected;
@@ -3205,7 +3279,7 @@ function HighCardPlayback({ result, step, done }) {
         </div>
 
         {/* Player face-off layout */}
-        <div className={`grid gap-6 ${playerCount <= 2 ? "grid-cols-2" : playerCount === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
+        <div className={`grid gap-6 grid-cols-1 ${playerCount <= 2 ? "sm:grid-cols-2" : playerCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2 md:grid-cols-4"}`}>
           {result.players.map((player, index) => {
             const isShown = index < revealed;
             const isSelected = done && player.selected;
@@ -3328,7 +3402,7 @@ function CoinPlayback({ result, step, done }) {
                 </div>
 
                 {/* Winding path with waypoints */}
-                <div className="relative flex items-center justify-between" style={{ height: "80px" }}>
+                <div className="coin-path-row relative flex items-center justify-between" style={{ height: "80px" }}>
                   {/* Path line */}
                   <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none" }}>
                     <path
@@ -3354,7 +3428,7 @@ function CoinPlayback({ result, step, done }) {
                           y: yOffset,
                         }}
                         transition={{ duration: shown ? 1.6 : 0.8, repeat: shown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
-                        className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold"
+                        className="coin-token relative z-10 flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold"
                         style={{
                           background: shown
                             ? isHeads
@@ -3441,9 +3515,9 @@ function MarblePlayback({ result, step, done }) {
         </div>
 
         {/* Players in circle layout with constellation lines */}
-        <div className="relative mx-auto" style={{ maxWidth: "500px", minHeight: "300px" }}>
+        <div className="relative mx-auto" style={{ maxWidth: "500px" }}>
           {/* Constellation connecting lines */}
-          <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none" }}>
+          <svg className="absolute inset-0 w-full h-full hidden sm:block" style={{ pointerEvents: "none" }}>
             {result.players.map((_, index) => {
               const nextIndex = (index + 1) % playerCount;
               const angle1 = (index / playerCount) * Math.PI * 2 - Math.PI / 2;
@@ -3479,7 +3553,7 @@ function MarblePlayback({ result, step, done }) {
           </svg>
 
           {/* Player nodes */}
-          <div className={`grid gap-4 ${playerCount <= 2 ? "grid-cols-2" : playerCount === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4"}`}>
+          <div className={`grid gap-4 grid-cols-1 ${playerCount <= 2 ? "sm:grid-cols-2" : playerCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2 md:grid-cols-4"}`}>
             {result.players.map((player, index) => {
               const isShown = index < revealed;
               const isBlack = player.marble === "Black";
@@ -3592,7 +3666,7 @@ function SlotsPlayback({ result, step, done }) {
         </div>
 
         {/* Slot machines per player */}
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {result.players.map((player, index) => {
             const isShown = index < revealed;
             const isSelected = done && player.selected;
@@ -3642,7 +3716,7 @@ function SlotsPlayback({ result, step, done }) {
                         key={`${player.name}-${reelIndex}`}
                         animate={{ y: isShown ? [28, -8, 4, 0] : [0, -12, 12, 0], scale: isShown ? [0.86, 1.08, 1] : 1, opacity: isShown ? [0.45, 1] : [1, 0.45, 1] }}
                         transition={{ duration: isShown ? 1 : 0.75, delay: isShown ? reelIndex * 0.3 : 0, repeat: isShown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
-                        className="flex h-20 w-20 items-center justify-center text-4xl"
+                        className="slots-reel-cell flex h-20 w-20 items-center justify-center text-4xl"
                         style={{
                           background: "rgba(0,0,0,0.4)",
                           borderLeft: reelIndex > 0 ? "1px solid rgba(236,72,153,0.1)" : "none",
@@ -3739,7 +3813,7 @@ function HorseRacePlayback({ result, step, done }) {
                 </div>
 
                 {/* Race lane */}
-                <div className="relative h-12" style={{ background: `linear-gradient(90deg, ${laneColor}15, ${laneColor}08)` }}>
+                <div className="horse-race-lane relative h-12" style={{ background: `linear-gradient(90deg, ${laneColor}15, ${laneColor}08)` }}>
                   {/* Lane lines */}
                   <div className="absolute inset-0" style={{
                     background: "repeating-linear-gradient(90deg, transparent 0px, transparent 58px, rgba(255,255,255,0.05) 58px, rgba(255,255,255,0.05) 60px)",
@@ -3773,8 +3847,8 @@ function HorseRacePlayback({ result, step, done }) {
             key={raceCallIndex}
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            className="text-center text-sm font-bold"
-            style={{ fontFamily: "'Press Start 2P', monospace", color: "#fbbf24", fontSize: "10px", letterSpacing: "0.1em" }}
+            className="text-center text-sm font-bold break-words"
+            style={{ fontFamily: "'Press Start 2P', monospace", color: "#fbbf24", fontSize: "10px", letterSpacing: "0.1em", wordBreak: "break-word" }}
           >
             {raceCallTexts[raceCallIndex]}
           </motion.div>
@@ -4708,7 +4782,7 @@ function ChoreChaosApp() {
               <div className="invader" style={{ '--pc': '#f472b6' }} />
             </div>
           </div>
-          <h1 className="pixel-font neon-text text-3xl tracking-wider sm:text-5xl" style={{ color: "#a5b4fc" }}>
+          <h1 className="pixel-font pixel-title-scale neon-text text-2xl tracking-wider sm:text-5xl" style={{ color: "#a5b4fc" }}>
             RUNOUTS
           </h1>
           <p className="pixel-font phosphor mt-4 text-[8px] uppercase leading-relaxed tracking-widest text-cyan-400/70 sm:text-[10px]">
@@ -4724,7 +4798,7 @@ function ChoreChaosApp() {
               <span className="pixel-font text-[10px] text-fuchsia-400">▶</span>
               <span className="pixel-font phosphor text-[9px] uppercase tracking-widest text-fuchsia-400">Players</span>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {names.map((name, index) => {
                 const colors = ["text-cyan-400 border-cyan-500/30 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(34,211,238,0.25)]", "text-fuchsia-400 border-fuchsia-500/30 focus:border-fuchsia-400 focus:shadow-[0_0_20px_rgba(236,72,153,0.25)]", "text-green-400 border-green-500/30 focus:border-green-400 focus:shadow-[0_0_20px_rgba(34,197,94,0.25)]", "text-amber-400 border-amber-500/30 focus:border-amber-400 focus:shadow-[0_0_20px_rgba(245,158,11,0.25)]"];
                 return (
@@ -4809,7 +4883,7 @@ function ChoreChaosApp() {
           </div>
         </div>
 
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <button
             onClick={() => { setSelectedModeId("auto"); startGame(); }}
             disabled={!canRun}
@@ -4862,11 +4936,11 @@ function ChoreChaosApp() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 80, damping: 18, mass: 1 }}
-            className="fixed inset-0 z-50 bg-slate-950/80 p-3 backdrop-blur-md sm:p-6"
+            className="mobile-modal-overlay fixed inset-0 z-50 bg-slate-950/80 p-0 backdrop-blur-md sm:p-6"
           >
-            <div className={`theme-${result.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl`}>
+            <div className={`theme-${result.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
               <ThemeArt modeId={result.modeId} />
-              <div className="modal-toolbar relative z-10 flex items-center justify-between gap-4 border-b border-slate-200/80 bg-white/80 px-4 py-4 backdrop-blur sm:px-6">
+              <div className="modal-toolbar relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur sm:gap-4 sm:px-6 sm:py-4">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
                     {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : "Game view"}
