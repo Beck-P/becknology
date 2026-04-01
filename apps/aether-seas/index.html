@@ -445,25 +445,87 @@ const BG = {
     for (let i = 0; i < 15; i++) ctx.fillRect(Math.round(hash(i * 11) * W), sandY + Math.round(hash(i * 19) * H * 0.06) + 2, 2, 1);
     ctx.fillStyle = '#6B8E34';
     for (let i = 0; i < 12; i++) ctx.fillRect(Math.round(hash(i * 7 + 200) * W * 0.5), sandY - 1, 1, 2);
+    // Dock — starts on sand, extends into water
+    const dockW = Math.round(W * 0.04);
+    const dockStartX = Math.round(W * 0.62);
+    const dockEndX = Math.round(W * 0.85);
+    const dockTopY = Math.round(sandY - H * 0.01);
+    // Main plank surface
     ctx.fillStyle = '#6B5030';
-    const dockY = Math.round(skyH + (sandY - skyH) * 0.25);
-    ctx.fillRect(Math.round(W * 0.55), dockY, Math.round(W * 0.38), 3);
-    ctx.fillRect(Math.round(W * 0.65), dockY, 2, Math.round((sandY - dockY) * 0.7));
-    ctx.fillRect(Math.round(W * 0.82), dockY, 2, Math.round((sandY - dockY) * 0.7));
-    ctx.fillStyle = '#7A6040'; ctx.fillRect(Math.round(W * 0.55), dockY + 1, Math.round(W * 0.38), 1);
-    // Boat at end of dock
-    const boatX = Math.round(W * 0.88), boatY = dockY + 1;
-    const bob = Math.round(Math.sin(t * 0.0015) * 1);
-    ctx.fillStyle = '#4A2A12';
-    ctx.fillRect(boatX - 5, boatY + bob, 10, 3);
-    ctx.fillRect(boatX - 4, boatY + 3 + bob, 8, 2);
-    ctx.fillStyle = '#3A1A0A'; ctx.fillRect(boatX, boatY - 6 + bob, 1, 6);
-    ctx.fillStyle = '#E8D8C0';
+    ctx.fillRect(dockStartX, dockTopY, dockEndX - dockStartX, 3);
+    // Plank highlights
+    ctx.fillStyle = '#7A6040';
+    ctx.fillRect(dockStartX, dockTopY, dockEndX - dockStartX, 1);
+    // Support posts going down into water/sand
+    ctx.fillStyle = '#5A4020';
+    const postSpacing = Math.round((dockEndX - dockStartX) / 3);
+    for (let i = 0; i <= 3; i++) {
+      const px = dockStartX + i * postSpacing;
+      const postBot = px < Math.round(W * 0.68) ? sandY + Math.round(H * 0.04) : sandY;
+      ctx.fillRect(px, dockTopY + 2, 2, postBot - dockTopY);
+    }
+    // Cross braces
+    ctx.fillStyle = '#5A4020';
+    for (let i = 0; i < 3; i++) {
+      const bx = dockStartX + i * postSpacing + Math.round(postSpacing * 0.3);
+      ctx.fillRect(bx, dockTopY + Math.round(H * 0.02), postSpacing - Math.round(postSpacing * 0.3), 1);
+    }
+
+    // Ship moored at end of dock
+    const bob = Math.round(Math.sin(t * 0.0012) * 1);
+    const shipX = Math.round(W * 0.88);
+    const shipY = Math.round(sandY - H * 0.02) + bob;
+    const sw = Math.round(W * 0.18);
+    const sh = Math.round(H * 0.06);
+    // Hull
+    ctx.fillStyle = '#5A3018';
     ctx.beginPath();
-    ctx.moveTo(boatX + 1, boatY - 5 + bob);
-    ctx.lineTo(boatX + 4, boatY - 3 + bob);
-    ctx.lineTo(boatX + 1, boatY - 1 + bob);
+    ctx.moveTo(shipX - sw / 2, shipY);
+    ctx.lineTo(shipX - sw / 2 - 3, shipY + sh);
+    ctx.lineTo(shipX + sw / 2 + 3, shipY + sh);
+    ctx.lineTo(shipX + sw / 2, shipY);
     ctx.fill();
+    // Hull stripe
+    ctx.fillStyle = '#4A2010';
+    ctx.fillRect(shipX - Math.round(sw / 2), shipY + 1, sw, 2);
+    // Hull bottom
+    ctx.fillStyle = '#3A1808';
+    ctx.fillRect(shipX - Math.round(sw / 2) - 1, shipY + sh - 2, sw + 2, 2);
+    // Deck
+    ctx.fillStyle = '#8B6914';
+    ctx.fillRect(shipX - Math.round(sw / 2), shipY - 1, sw, 2);
+    // Railing posts
+    ctx.fillStyle = '#6B5030';
+    for (let i = 0; i < 5; i++) {
+      ctx.fillRect(shipX - Math.round(sw / 2) + Math.round(i * sw / 4), shipY - Math.round(H * 0.02), 1, Math.round(H * 0.02));
+    }
+    // Railing rail
+    ctx.fillRect(shipX - Math.round(sw / 2), shipY - Math.round(H * 0.02), sw, 1);
+    // Main mast
+    const mastX = shipX;
+    const mastTop = shipY - Math.round(H * 0.14);
+    ctx.fillStyle = '#5A3A10';
+    ctx.fillRect(mastX - 1, mastTop, 2, shipY - mastTop);
+    // Sail
+    ctx.fillStyle = '#F0E4D0';
+    ctx.beginPath();
+    ctx.moveTo(mastX + 1, mastTop + 2);
+    ctx.lineTo(mastX + Math.round(sw * 0.4), mastTop + Math.round(H * 0.03));
+    ctx.lineTo(mastX + 1, shipY - Math.round(H * 0.03));
+    ctx.fill();
+    // Sail shadow
+    ctx.fillStyle = '#DDD0B8';
+    ctx.beginPath();
+    ctx.moveTo(mastX + 1, mastTop + Math.round(H * 0.04));
+    ctx.lineTo(mastX + Math.round(sw * 0.3), mastTop + Math.round(H * 0.05));
+    ctx.lineTo(mastX + 1, shipY - Math.round(H * 0.04));
+    ctx.fill();
+    // Flag
+    ctx.fillStyle = '#8B2FC0';
+    ctx.fillRect(mastX, mastTop - 1, Math.round(W * 0.03), 2);
+    // Rope from dock to ship
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(dockEndX - 1, dockTopY + 1, shipX - Math.round(sw / 2) - dockEndX + 2, 1);
   },
 
   ship(t, waterType) {
