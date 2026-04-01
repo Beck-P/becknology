@@ -768,6 +768,72 @@
     .theme-horse-race .verdict-card { background: rgba(15, 30, 15, 0.9) !important; border-color: rgba(34, 197, 94, 0.25) !important; }
     .theme-horse-race .verdict-card * { color: #86efac !important; }
 
+    /* ═══════════════════════════════════════════════════════
+       11. ROCKET — Deep Space Launch
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-rocket {
+      border: 1px solid rgba(139, 92, 246, 0.3) !important;
+      box-shadow: 0 0 14px rgba(99, 102, 241, 0.12), 0 0 6px rgba(139, 92, 246, 0.08);
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.04)) !important;
+    }
+    .card-hint-rocket::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(1px 1px at 15% 20%, rgba(224,231,255,0.6), transparent),
+        radial-gradient(1px 1px at 40% 60%, rgba(165,180,252,0.5), transparent),
+        radial-gradient(1px 1px at 70% 30%, rgba(224,231,255,0.4), transparent),
+        radial-gradient(1px 1px at 85% 75%, rgba(139,92,246,0.5), transparent),
+        radial-gradient(1px 1px at 55% 85%, rgba(165,180,252,0.3), transparent);
+      pointer-events: none;
+      animation: twinkle1 4s ease-in-out infinite;
+      will-change: opacity;
+    }
+    .card-hint-rocket:hover {
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.3), 0 0 12px rgba(99, 102, 241, 0.2), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(139, 92, 246, 0.6) !important;
+    }
+    .theme-rocket {
+      background: linear-gradient(180deg, #0a0520, #0f0830, #0a0520) !important;
+      color: #c4b5fd;
+      --mode-font: 'Orbitron', sans-serif;
+    }
+    .theme-rocket::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(1px 1px at 10% 15%, rgba(224,231,255,0.5), transparent),
+        radial-gradient(1px 1px at 25% 45%, rgba(165,180,252,0.4), transparent),
+        radial-gradient(1px 1px at 50% 20%, rgba(224,231,255,0.3), transparent),
+        radial-gradient(1px 1px at 75% 60%, rgba(139,92,246,0.4), transparent),
+        radial-gradient(1px 1px at 90% 30%, rgba(224,231,255,0.3), transparent),
+        radial-gradient(1px 1px at 35% 80%, rgba(165,180,252,0.35), transparent),
+        radial-gradient(1px 1px at 60% 90%, rgba(224,231,255,0.25), transparent),
+        radial-gradient(1px 1px at 85% 85%, rgba(139,92,246,0.3), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .theme-rocket .mode-header-bg {
+      background: linear-gradient(to right, #3730a3, #6d28d9, #4c1d95) !important;
+    }
+    .theme-rocket .modal-toolbar { background: rgba(10, 5, 32, 0.95) !important; border-color: rgba(139, 92, 246, 0.2) !important; }
+    .theme-rocket .modal-toolbar * { color: #c4b5fd !important; }
+    .theme-rocket .modal-toolbar button { background: rgba(139, 92, 246, 0.12) !important; border-color: rgba(139, 92, 246, 0.3) !important; color: #c4b5fd !important; }
+    .theme-rocket .modal-toolbar button:hover { background: rgba(139, 92, 246, 0.25) !important; }
+    .theme-rocket .mode-banner { background: rgba(10, 5, 32, 0.9) !important; border-color: rgba(139, 92, 246, 0.15) !important; }
+    .theme-rocket .mode-banner * { color: #c4b5fd !important; }
+    .theme-rocket .mode-banner .progress-track { background: rgba(139, 92, 246, 0.1) !important; }
+    .theme-rocket .mode-banner .progress-bar { background: linear-gradient(90deg, #3730a3, #8b5cf6, #6d28d9) !important; box-shadow: 0 0 14px rgba(139, 92, 246, 0.5) !important; }
+    .theme-rocket .mode-banner .step-badge { background: rgba(139, 92, 246, 0.12) !important; color: #c4b5fd !important; }
+    .theme-rocket .verdict-card { background: rgba(10, 5, 32, 0.9) !important; border-color: rgba(139, 92, 246, 0.3) !important; }
+    .theme-rocket .verdict-card * { color: #c4b5fd !important; }
+
+    @keyframes rocket-fly { 0% { transform: translateY(0); } 100% { transform: translateY(-20px); } }
+    @keyframes rocket-explode { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+    @keyframes milestone-fade { 0% { opacity: 0; transform: translateY(10px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
+
     /* ── Themed result text decorative label ── */
     .theme-verdict-label {
       font-family: 'Press Start 2P', monospace;
@@ -822,6 +888,7 @@
     .theme-black-marble.arcade-bezel { --bezel-accent: #8b5cf6; }
     .theme-slots.arcade-bezel { --bezel-accent: #ec4899; }
     .theme-horse-race.arcade-bezel { --bezel-accent: #22c55e; }
+    .theme-rocket.arcade-bezel { --bezel-accent: #8b5cf6; }
 
     /* Arcade screen dark mode — no white anywhere inside the game modal */
     .arcade-bezel { background: #0c0c1a !important; color: #e2e8f0 !important; }
@@ -1151,9 +1218,11 @@
     // Supabase setup — replace with your project credentials
     const SUPABASE_URL = 'https://nwtfrlxgydbeuqfcftzn.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_mjJW8ba__7yjbwAAx81sXg_oMlDkrol';
-    const _supabase = (typeof supabase !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL')
-      ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    const _sbLib = typeof supabase !== 'undefined' ? supabase : (typeof window !== 'undefined' ? window.supabase : null);
+    const _supabase = (_sbLib && _sbLib.createClient && SUPABASE_URL !== 'YOUR_SUPABASE_URL')
+      ? _sbLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
       : null;
+    if (!_supabase) console.warn('Supabase not initialized. typeof supabase:', typeof supabase, 'window.supabase:', typeof window?.supabase);
 
     function Icon({ symbol, className = '' }) {
       return <span className={className} aria-hidden="true" style={{display:'inline-flex',alignItems:'center',justifyContent:'center'}}>{symbol}</span>;
@@ -1458,6 +1527,23 @@
                 <div style={{position:'absolute',bottom:12,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'2px solid rgba(34,197,94,0.3)',background:'rgba(13,26,13,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#86efac',letterSpacing:'0.15em',opacity:0.5,whiteSpace:'nowrap'}}>PHOTO FINISH</div>
               </div>
             );
+          case 'rocket':
+            return (
+              <div className="theme-art-layer">
+                {/* Twinkling stars */}
+                {[{x:8,y:12,s:3,d:2.5},{x:25,y:35,s:2,d:3.2},{x:42,y:8,s:2,d:2.8},{x:65,y:22,s:3,d:3.5},{x:80,y:45,s:2,d:2.2},{x:15,y:70,s:2,d:4},{x:55,y:65,s:3,d:2.9},{x:90,y:15,s:2,d:3.8}].map((s, i) => (
+                  <div key={i} style={{position:'absolute',left:`${s.x}%`,top:`${s.y}%`,width:s.s,height:s.s,borderRadius:'50%',background:i % 3 === 0 ? '#c4b5fd' : i % 2 === 0 ? '#e0e7ff' : '#8b5cf6',boxShadow:`0 0 ${s.s + 2}px rgba(139,92,246,0.5)`,animation:`twinkle${(i % 3) + 1} ${s.d}s ease-in-out infinite`,animationDelay:`${i * 0.4}s`}} />
+                ))}
+                {/* Pixel planet bottom-right */}
+                <div style={{position:'absolute',bottom:20,right:24,width:28,height:28,borderRadius:'50%',background:'radial-gradient(circle at 40% 35%, #6d28d9, #3730a3 60%, #1e1b4b)',boxShadow:'0 0 12px rgba(109,40,217,0.3)',opacity:0.6}} />
+                {/* Ring around planet */}
+                <div style={{position:'absolute',bottom:28,right:12,width:52,height:12,borderRadius:'50%',border:'1px solid rgba(139,92,246,0.25)',transform:'rotate(-15deg)',opacity:0.4}} />
+                {/* Subtle nebula glow */}
+                <div style={{position:'absolute',top:'15%',left:'10%',width:180,height:180,borderRadius:'50%',background:'radial-gradient(circle, rgba(99,102,241,0.06), transparent 70%)',animation:'nebula-pulse 7s ease-in-out infinite',willChange:'opacity'}} />
+                {/* MISSION CONTROL label */}
+                <div style={{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'1px solid rgba(139,92,246,0.2)',background:'rgba(10,5,32,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#8b5cf6',letterSpacing:'0.15em',opacity:0.4,whiteSpace:'nowrap'}}>MISSION CONTROL</div>
+              </div>
+            );
           default:
             return null;
         }
@@ -1669,6 +1755,17 @@ const MODE_META = [
     themeClass: "theme-horse-race",
     resultWin: "PHOTO FINISH",
     resultLose: "LAST PLACE",
+  },
+  {
+    id: "rocket",
+    name: "Rocket Launch",
+    icon: "🚀",
+    blurb: "Launch into space. Last rocket flying wins.",
+    accent: "from-indigo-500 to-violet-700",
+    cardHint: "card-hint-rocket",
+    themeClass: "theme-rocket",
+    resultWin: "ORBIT ACHIEVED",
+    resultLose: "BURNED UP",
   },
 ];
 
@@ -2528,6 +2625,83 @@ function buildHorseRaceResult(names, taskLabel, selectionGoal) {
   };
 }
 
+function buildRocketResult(names, taskLabel, selectionGoal) {
+  const modeName = "Rocket Launch";
+
+  function generateCrashTime() {
+    const minTime = 5;
+    const maxTime = 120;
+    const lambda = 3;
+    const u = Math.random();
+    const expVal = -Math.log(1 - u * (1 - Math.exp(-lambda))) / lambda;
+    return minTime + expVal * (maxTime - minTime);
+  }
+
+  function distanceAtTime(t) {
+    return 100 * t + 0.5 * 200 * t * t;
+  }
+
+  function formatDistance(d) {
+    if (d >= 1000000) return (d / 1000000).toFixed(2) + 'M km';
+    if (d >= 1000) return Math.round(d).toLocaleString() + ' km';
+    return Math.round(d) + ' km';
+  }
+
+  function formatFlightTime(t) {
+    const mins = Math.floor(t / 60);
+    const secs = Math.floor(t % 60);
+    return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `0:${secs.toString().padStart(2, '0')}`;
+  }
+
+  const crashTimes = names.map(() => generateCrashTime());
+  const shuffledTimes = shuffle(crashTimes);
+  const players = names.map((name, i) => ({
+    name,
+    crashTime: shuffledTimes[i],
+    distance: distanceAtTime(shuffledTimes[i]),
+  }));
+
+  // Rank by crash time (don't sort the array — keep original name order for display)
+  const sortedByTime = [...players].sort((a, b) => a.crashTime - b.crashTime);
+  sortedByTime.forEach((p, i) => {
+    p.rank = players.length - i;
+  });
+
+  const survivor = sortedByTime[sortedByTime.length - 1];
+  const selected = survivor.name;
+
+  let subline = `${formatFlightTime(survivor.crashTime)} flight time`;
+  if (survivor.distance > 384000) subline += ' — past the Moon';
+  else if (survivor.distance > 36000) subline += ' — geostationary orbit';
+
+  const headline = pickRandomMessage(
+    selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+    selected,
+    selectionGoal === "winner" ? "win" : "lose"
+  );
+
+  return {
+    modeId: "rocket",
+    modeName,
+    selectionGoal,
+    selectedName: selected,
+    isTie: false,
+    headline,
+    summary: `All other rockets burned up. ${selected} made it to ${formatDistance(survivor.distance)}.`,
+    players: players.map(p => ({
+      name: p.name,
+      selected: p.name === selected,
+      crashTime: p.crashTime,
+      distance: p.distance,
+      distanceFormatted: formatDistance(p.distance),
+      headline: p.name === selected ? `Survived to ${formatDistance(p.distance)}` : `Crashed at ${formatDistance(p.distance)}`,
+      subline: p.name === selected ? subline : `${formatFlightTime(p.crashTime)} flight time`,
+      rank: p.rank,
+      chips: [formatDistance(p.distance)],
+    })),
+  };
+}
+
 const MODES = [
   { id: "holdem", run: buildHoldemResult },
   { id: "plo", run: buildPloResult },
@@ -2539,6 +2713,7 @@ const MODES = [
   { id: "black-marble", run: buildBlackMarbleResult },
   { id: "slots", run: buildSlotsResult },
   { id: "horse-race", run: buildHorseRaceResult },
+  { id: "rocket", run: buildRocketResult },
 ];
 
 function getSingleTotalSteps(result) {
@@ -2558,6 +2733,8 @@ function getSingleTotalSteps(result) {
       return 6;
     case "horse-race":
       return (result?.turns?.length ?? 12) + 1;
+    case "rocket":
+      return 2;
     default:
       return 1;
   }
@@ -4040,6 +4217,401 @@ function TournamentPlayback({ result, step, done }) {
   );
 }
 
+function RocketPlayback({ result, step, done }) {
+  const [phase, setPhase] = useState('ready');
+  const [countdown, setCountdown] = useState(3);
+  const [elapsed, setElapsed] = useState(0);
+  const [crashed, setCrashed] = useState([]);
+  const [currentMilestone, setCurrentMilestone] = useState(null);
+  const [milestoneKey, setMilestoneKey] = useState(0);
+  const startTimeRef = React.useRef(null);
+  const animFrameRef = React.useRef(null);
+  const crashedRef = React.useRef(new Set());
+  const milestonesHitRef = React.useRef(new Set());
+
+  const TIME_SCALE = 3;
+
+  const MILESTONES = [
+    { distance: 100, label: 'Leaving the atmosphere' },
+    { distance: 400, label: 'Passing the ISS' },
+    { distance: 2000, label: 'Low Earth orbit' },
+    { distance: 20000, label: 'Passing GPS satellites' },
+    { distance: 36000, label: 'Geostationary orbit' },
+    { distance: 384000, label: 'Passing the Moon' },
+    { distance: 800000, label: 'Deep space' },
+    { distance: 1000000, label: 'Uncharted territory' },
+  ];
+
+  function distanceAtTime(t) {
+    return 100 * t + 0.5 * 200 * t * t;
+  }
+
+  function formatDist(d) {
+    if (d >= 1000000) return (d / 1000000).toFixed(1) + 'M km';
+    return Math.round(d).toLocaleString() + ' km';
+  }
+
+  // Original order for display (randomized), sorted for crash detection logic
+  const displayPlayers = result.players;
+  const sortedPlayers = useMemo(() =>
+    [...result.players].sort((a, b) => a.crashTime - b.crashTime),
+  [result.players]);
+
+  const maxCrashTime = sortedPlayers[sortedPlayers.length - 1].crashTime;
+
+  function startLaunch() {
+    setPhase('countdown');
+    setCountdown(3);
+  }
+
+  useEffect(() => {
+    if (phase !== 'countdown') return;
+    if (countdown <= 0) {
+      setPhase('flying');
+      startTimeRef.current = performance.now();
+      return;
+    }
+    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [phase, countdown]);
+
+  useEffect(() => {
+    if (phase !== 'flying') return;
+
+    function tick(now) {
+      const realElapsed = (now - startTimeRef.current) / 1000;
+      const simElapsed = realElapsed * TIME_SCALE;
+      setElapsed(simElapsed);
+
+      const newCrashes = [];
+      for (const p of sortedPlayers) {
+        if (!crashedRef.current.has(p.name) && simElapsed >= p.crashTime) {
+          crashedRef.current.add(p.name);
+          newCrashes.push(p.name);
+        }
+      }
+      if (newCrashes.length > 0) {
+        setCrashed(prev => [...prev, ...newCrashes]);
+      }
+
+      const leadingDist = distanceAtTime(simElapsed);
+      for (const m of MILESTONES) {
+        if (!milestonesHitRef.current.has(m.distance) && leadingDist >= m.distance) {
+          milestonesHitRef.current.add(m.distance);
+          setCurrentMilestone(m.label);
+          setMilestoneKey(k => k + 1);
+          setTimeout(() => setCurrentMilestone(null), 2500);
+        }
+      }
+
+      if (crashedRef.current.size >= sortedPlayers.length - 1) {
+        setPhase('complete');
+        return;
+      }
+
+      animFrameRef.current = requestAnimationFrame(tick);
+    }
+
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+  }, [phase, sortedPlayers]);
+
+  useEffect(() => {
+    if (phase === 'complete') {
+      window.dispatchEvent(new Event('rocket-complete'));
+    }
+  }, [phase]);
+
+  const ROCKET_COLORS = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb923c', '#22d3ee', '#f87171'];
+  const leadingDistance = distanceAtTime(Math.min(elapsed, maxCrashTime));
+  const isComplete = phase === 'complete' || done;
+
+  return (
+    <div className="space-y-4">
+      <ModeHeader
+        result={result}
+        done={isComplete}
+        pendingText={phase === 'ready' ? 'Ready for launch...' : phase === 'countdown' ? `T-minus ${countdown}...` : 'Rockets are flying!'}
+        pendingSummary="Last rocket flying gets selected."
+      />
+
+      {(() => {
+        const flightProgress = Math.min(elapsed / maxCrashTime, 1);
+        const bgDarkness = Math.min(flightProgress * 1.2, 1);
+        const skyColor = phase === 'flying' || phase === 'complete'
+          ? `rgb(${Math.round(10 - bgDarkness * 8)}, ${Math.round(15 - bgDarkness * 13)}, ${Math.round(40 - bgDarkness * 35)})`
+          : '#0a0f28';
+        const showStars = flightProgress > 0.15;
+        const showDeepStars = flightProgress > 0.4;
+
+        return phase === 'ready' ? (
+        <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(to top, #2a1a0a 0%, #1a2a1a 8%, #0a1428 40%, #0a0f28 70%, #050510 100%)', minHeight: 380 }}>
+          {/* Sky stars */}
+          {[{x:10,y:8},{x:25,y:15},{x:45,y:5},{x:65,y:12},{x:80,y:8},{x:90,y:18}].map((s,i) => (
+            <div key={i} className="absolute rounded-full bg-white" style={{ left:`${s.x}%`, top:`${s.y}%`, width:2, height:2, opacity:0.3 }} />
+          ))}
+          {/* Moon */}
+          <div className="absolute right-[12%] top-[10%] w-8 h-8 rounded-full" style={{ background: 'radial-gradient(circle at 35% 35%, #e5e7eb, #9ca3af, #6b7280)', boxShadow: '0 0 15px rgba(229,231,235,0.2)' }} />
+          {/* Ground layers */}
+          <div className="absolute bottom-0 left-0 right-0 h-20" style={{ background: 'linear-gradient(to top, #3d2b1a 0%, #2d4a2d 40%, #1a3a1a 80%, transparent 100%)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-8" style={{ background: 'linear-gradient(to top, #2a1a0a, #3d2b1a)' }} />
+          {/* Grass tufts */}
+          {[5,12,20,28,38,48,55,62,72,80,88,95].map((x,i) => (
+            <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 18 + (i%3)*2, fontSize: i%2===0 ? 10 : 8, opacity: 0.7 }}>🌿</div>
+          ))}
+          {/* Trees */}
+          {[8,22,42,68,85].map((x,i) => (
+            <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 22, fontSize: i%2===0 ? 18 : 14 }}>🌲</div>
+          ))}
+          {/* Launch pad */}
+          <div className="absolute bottom-[18px] left-[15%] right-[15%] h-[6px] rounded" style={{ background: 'linear-gradient(to right, transparent, #4b5563, #6b7280, #4b5563, transparent)' }} />
+          {/* Rockets on pad */}
+          <div className="absolute bottom-6 left-0 right-0 flex justify-around px-8">
+            {displayPlayers.map((p, i) => (
+              <div key={p.name} className="text-center">
+                <div className="text-2xl sm:text-3xl">🚀</div>
+                <div className="pixel-font text-[7px] mt-1" style={{ color: ROCKET_COLORS[i % ROCKET_COLORS.length] }}>{p.name}</div>
+              </div>
+            ))}
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <button
+              onClick={startLaunch}
+              className="pixel-font inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-4 text-sm text-white shadow-lg shadow-violet-600/30 transition hover:scale-105 active:scale-95"
+              style={{ textShadow: '0 0 10px rgba(139,92,246,0.5)' }}
+            >
+              🚀 LAUNCH
+            </button>
+          </div>
+        </div>
+      ) : phase === 'countdown' ? (
+        <div className="relative overflow-hidden rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(to top, #2a1a0a 0%, #1a2a1a 8%, #0a1428 40%, #0a0f28 70%, #050510 100%)', minHeight: 380 }}>
+          <div className="absolute bottom-0 left-0 right-0 h-20" style={{ background: 'linear-gradient(to top, #3d2b1a 0%, #2d4a2d 40%, #1a3a1a 80%, transparent 100%)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-8" style={{ background: 'linear-gradient(to top, #2a1a0a, #3d2b1a)' }} />
+          {[5,12,20,28,38,48,55,62,72,80,88,95].map((x,i) => (
+            <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 18 + (i%3)*2, fontSize: i%2===0 ? 10 : 8, opacity: 0.7 }}>🌿</div>
+          ))}
+          {[8,22,42,68,85].map((x,i) => (
+            <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 22, fontSize: i%2===0 ? 18 : 14 }}>🌲</div>
+          ))}
+          <div className="absolute bottom-[18px] left-[15%] right-[15%] h-[6px] rounded" style={{ background: 'linear-gradient(to right, transparent, #4b5563, #6b7280, #4b5563, transparent)' }} />
+          <div className="absolute bottom-6 left-0 right-0 flex justify-around px-8">
+            {displayPlayers.map((p, i) => (
+              <div key={p.name} className="text-center">
+                <div className="text-2xl sm:text-3xl" style={{ animation: 'rocket-fly 0.15s ease-in-out infinite alternate' }}>🚀</div>
+                <div className="pixel-font text-[7px] mt-1" style={{ color: ROCKET_COLORS[i % ROCKET_COLORS.length] }}>{p.name}</div>
+              </div>
+            ))}
+          </div>
+          <motion.div
+            key={countdown}
+            initial={{ scale: 3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="pixel-font text-7xl text-violet-300 relative z-10"
+            style={{ textShadow: '0 0 40px rgba(139,92,246,0.8), 0 0 80px rgba(139,92,246,0.4)' }}
+          >
+            {countdown}
+          </motion.div>
+        </div>
+      ) : (
+        <>
+          <div className="relative overflow-hidden rounded-2xl" style={{ background: `linear-gradient(to top, ${flightProgress < 0.3 ? '#1a2a1a' : '#050508'} 0%, ${skyColor} 30%, ${flightProgress > 0.5 ? '#020205' : '#0a0f28'} 100%)`, minHeight: 400, transition: 'background 2s ease' }}>
+            {/* Stars — fade in as atmosphere thins */}
+            {showStars ? (
+              <div className="absolute inset-0 pointer-events-none" style={{ opacity: Math.min((flightProgress - 0.15) * 2, 1), transition: 'opacity 1s' }}>
+                {[{x:5,y:10,s:2},{x:15,y:25,s:1},{x:25,y:8,s:2},{x:35,y:35,s:1},{x:45,y:15,s:2},{x:55,y:40,s:1},{x:65,y:5,s:2},{x:75,y:30,s:1},{x:85,y:12,s:2},{x:92,y:38,s:1},{x:10,y:45,s:1},{x:50,y:50,s:2},{x:70,y:48,s:1},{x:30,y:55,s:2},{x:80,y:55,s:1},{x:3,y:30,s:1},{x:40,y:22,s:2},{x:58,y:8,s:1},{x:73,y:42,s:2},{x:95,y:5,s:1}].map((s,i) => (
+                  <div key={i} className="absolute rounded-full bg-white" style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, animation: `twinkle${(i%3)+1} ${3+i%4}s ease-in-out infinite` }} />
+                ))}
+              </div>
+            ) : null}
+            {/* Colored deep space stars + nebula glow */}
+            {showDeepStars ? (
+              <div className="absolute inset-0 pointer-events-none" style={{ opacity: Math.min((flightProgress - 0.4) * 3, 0.8) }}>
+                {[{x:8,y:5,c:'#c4b5fd'},{x:22,y:18,c:'#f9a8d4'},{x:42,y:3,c:'#93c5fd'},{x:62,y:22,c:'#c4b5fd'},{x:78,y:8,c:'#fcd34d'},{x:88,y:28,c:'#f9a8d4'},{x:18,y:42,c:'#93c5fd'},{x:52,y:32,c:'#fcd34d'},{x:33,y:12,c:'#86efac'},{x:72,y:38,c:'#fda4af'},{x:48,y:48,c:'#c4b5fd'},{x:15,y:55,c:'#93c5fd'}].map((s,i) => (
+                  <div key={i} className="absolute rounded-full" style={{ left: `${s.x}%`, top: `${s.y}%`, width: 3, height: 3, background: s.c, boxShadow: `0 0 6px ${s.c}`, animation: `twinkle${(i%3)+1} ${2+i%3}s ease-in-out infinite` }} />
+                ))}
+              </div>
+            ) : null}
+
+            {/* Ground fading away */}
+            {flightProgress < 0.3 ? (
+              <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ opacity: 1 - flightProgress * 3.5 }}>
+                <div className="absolute bottom-0 left-0 right-0 h-20" style={{ background: 'linear-gradient(to top, #3d2b1a 0%, #2d4a2d 40%, #1a3a1a 80%, transparent 100%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 h-8" style={{ background: 'linear-gradient(to top, #2a1a0a, #3d2b1a)' }} />
+                {[5,12,20,28,38,48,55,62,72,80,88,95].map((x,i) => (
+                  <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 18 + (i%3)*2, fontSize: i%2===0 ? 10 : 8, opacity: 0.7 }}>🌿</div>
+                ))}
+                {[8,22,42,68,85].map((x,i) => (
+                  <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 22, fontSize: i%2===0 ? 18 : 14 }}>🌲</div>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Atmosphere blue glow fading */}
+            {flightProgress > 0.02 && flightProgress < 0.2 ? (
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(100,180,255,0.08), transparent 50%)', opacity: 1 - (flightProgress - 0.02) * 6 }} />
+            ) : null}
+
+            {/* Earth visible below as you leave */}
+            {flightProgress > 0.12 && flightProgress < 0.5 ? (
+              <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: Math.min((flightProgress - 0.12) * 4, 1) * (1 - Math.max(0, (flightProgress - 0.35) * 6.6)), width: 300, height: 80 }}>
+                <div className="w-full h-full rounded-[50%]" style={{ background: 'radial-gradient(ellipse at 50% 0%, #1e3a5f 0%, #1a4a2e 30%, #0d2818 60%, transparent 100%)', boxShadow: '0 0 30px rgba(30,58,95,0.3)' }} />
+              </div>
+            ) : null}
+
+            {/* Moon passing by */}
+            {flightProgress > 0.4 && flightProgress < 0.7 ? (
+              <motion.div
+                className="absolute pointer-events-none"
+                style={{ right: '8%', top: '15%', opacity: Math.min((flightProgress - 0.4) * 5, 1) * (1 - Math.max(0, (flightProgress - 0.6) * 10)) }}
+              >
+                <div className="w-12 h-12 rounded-full" style={{ background: 'radial-gradient(circle at 35% 35%, #e5e7eb, #9ca3af, #6b7280)', boxShadow: '0 0 20px rgba(229,231,235,0.3)' }} />
+              </motion.div>
+            ) : null}
+
+            {/* Asteroids drifting by in deep space */}
+            {flightProgress > 0.5 ? (
+              <div className="absolute inset-0 pointer-events-none" style={{ opacity: Math.min((flightProgress - 0.5) * 3, 0.6) }}>
+                {[{x:15,y:20,s:8},{x:75,y:35,s:6},{x:45,y:55,s:10},{x:88,y:15,s:7}].map((a,i) => (
+                  <div key={i} className="absolute" style={{ left:`${a.x}%`, top:`${a.y}%`, fontSize: a.s }}>☄️</div>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Distant planet in deep space */}
+            {flightProgress > 0.7 ? (
+              <div className="absolute pointer-events-none" style={{ left: '5%', top: '20%', opacity: Math.min((flightProgress - 0.7) * 4, 0.7) }}>
+                <div className="w-16 h-16 rounded-full" style={{ background: 'radial-gradient(circle at 40% 30%, #c084fc, #7c3aed, #4c1d95)', boxShadow: '0 0 25px rgba(139,92,246,0.4)' }} />
+                <div className="absolute top-1/2 left-[-4px] right-[-4px] h-[3px] rounded-full -translate-y-1/2" style={{ background: 'linear-gradient(to right, transparent, rgba(196,181,253,0.4), transparent)', transform: 'rotate(-15deg)' }} />
+              </div>
+            ) : null}
+
+            {/* Saturn-like ringed planet even deeper */}
+            {flightProgress > 0.85 ? (
+              <div className="absolute pointer-events-none" style={{ right: '10%', top: '25%', opacity: Math.min((flightProgress - 0.85) * 5, 0.5) }}>
+                <div className="w-10 h-10 rounded-full" style={{ background: 'radial-gradient(circle at 35% 35%, #fcd34d, #d97706, #92400e)', boxShadow: '0 0 15px rgba(252,211,77,0.3)' }} />
+                <div className="absolute top-1/2 left-[-10px] right-[-10px] h-[2px] rounded-full -translate-y-1/2" style={{ background: 'linear-gradient(to right, transparent 5%, rgba(252,211,77,0.5) 30%, rgba(252,211,77,0.3) 70%, transparent 95%)', transform: 'rotate(-10deg)' }} />
+              </div>
+            ) : null}
+
+            <div className="absolute top-3 left-0 right-0 text-center z-10">
+              <div className="pixel-font text-[7px] text-slate-500 uppercase tracking-widest mb-1">Altitude</div>
+              <div className="font-mono text-2xl sm:text-3xl font-black text-white" style={{ textShadow: '0 0 20px rgba(139,92,246,0.4)' }}>
+                {formatDist(leadingDistance)}
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {currentMilestone ? (
+                <motion.div
+                  key={milestoneKey}
+                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                  transition={{ type: 'spring', stiffness: 100, damping: 15 }}
+                  className="absolute top-16 left-0 right-0 text-center z-10"
+                >
+                  <span className="inline-block rounded-xl bg-violet-500/30 border border-violet-400/40 px-5 py-2.5 pixel-font text-[9px] sm:text-[11px] text-violet-200 backdrop-blur-sm" style={{ textShadow: '0 0 12px rgba(139,92,246,0.6)', boxShadow: '0 0 20px rgba(139,92,246,0.2)' }}>
+                    {currentMilestone}
+                  </span>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <div className="absolute bottom-4 left-0 right-0 flex justify-around items-end px-4 sm:px-8">
+              {displayPlayers.map((player, idx) => {
+                const hasCrashed = crashed.includes(player.name);
+                const isSurvivor = isComplete && player.name === result.selectedName;
+                const rocketProgress = hasCrashed
+                  ? (player.crashTime / maxCrashTime)
+                  : Math.min(elapsed / maxCrashTime, 1);
+                const rocketY = rocketProgress * 600;
+                const color = ROCKET_COLORS[idx % ROCKET_COLORS.length];
+
+                return (
+                  <div key={player.name} className="relative text-center" style={{ width: `${Math.max(60, 100 / displayPlayers.length)}px` }}>
+                    {hasCrashed ? (
+                      <motion.div
+                        initial={{ scale: 1, opacity: 1 }}
+                        animate={{ scale: [1, 1.8, 2.5, 0], opacity: [1, 1, 0.8, 0] }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        className="absolute left-1/2 -translate-x-1/2"
+                        style={{ bottom: `${Math.min(rocketY, 380)}px` }}
+                      >
+                        <div className="text-2xl">💥</div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        className="absolute left-1/2 -translate-x-1/2"
+                        animate={{ y: -rocketY }}
+                        transition={{ duration: 0.3, ease: 'linear' }}
+                        style={{ bottom: 0 }}
+                      >
+                        <div className="text-2xl sm:text-3xl" style={{ filter: isSurvivor ? `drop-shadow(0 0 12px ${color})` : 'none' }}>🚀</div>
+                        {phase === 'flying' && !hasCrashed ? (
+                          <motion.div
+                            className="absolute left-1/2 -translate-x-1/2 top-full"
+                            animate={{ opacity: [0.6, 1, 0.6], scaleY: [0.8, 1.2, 0.8] }}
+                            transition={{ duration: 0.2, repeat: Infinity }}
+                          >
+                            <div className="text-xs" style={{ filter: `drop-shadow(0 0 4px ${color})` }}>🔥</div>
+                          </motion.div>
+                        ) : null}
+                      </motion.div>
+                    )}
+                    <div className="pixel-font text-[6px] sm:text-[7px]" style={{ color: hasCrashed ? '#4b5563' : color }}>{player.name}</div>
+                    {hasCrashed ? <div className="font-mono text-[8px] text-slate-600">💥 {player.distanceFormatted}</div> : null}
+                    {isSurvivor ? <div className="font-mono text-[8px] text-violet-300">🏆 {player.distanceFormatted}</div> : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {crashed.length > 0 ? (
+            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+              <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Crash Log</div>
+              <div className="flex flex-wrap gap-2">
+                {crashed.map((name) => {
+                  const p = sortedPlayers.find(pl => pl.name === name);
+                  return (
+                    <div key={name} className="font-mono text-[10px] text-slate-500 border border-white/5 bg-white/[0.02] px-2 py-1 rounded">
+                      💥 {name} — {p?.distanceFormatted || '???'}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+        </>
+      );
+      })()}
+
+      {isComplete ? (
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[...result.players].sort((a, b) => a.rank - b.rank).map(player => (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              selectionGoal={result.selectionGoal}
+              title={player.headline}
+              subtitle={player.subline}
+              selected={player.selected}
+            >
+              <div className="flex flex-wrap gap-2">
+                {player.chips.map(chip => (
+                  <span key={chip} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">{chip}</span>
+                ))}
+                <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">Rank #{player.rank}</span>
+              </div>
+            </PlayerResultCard>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function PlaybackStage({ result, step, done }) {
   if (result.isTournament) {
     return <TournamentPlayback result={result} step={step} done={done} />;
@@ -4065,6 +4637,8 @@ function PlaybackStage({ result, step, done }) {
       return <SlotsPlayback result={result} step={step} done={done} />;
     case "horse-race":
       return <HorseRacePlayback result={result} step={step} done={done} />;
+    case "rocket":
+      return <RocketPlayback result={result} step={step} done={done} />;
     default:
       return null;
   }
@@ -4584,6 +5158,17 @@ function ChoreChaosApp() {
   }, []);
 
   useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
+
+  useEffect(() => {
+    function handleRocketComplete() {
+      if (result?.modeId === 'rocket' && !playbackDone) {
+        setPlaybackStep(2);
+        setPlaybackDone(true);
+      }
+    }
+    window.addEventListener('rocket-complete', handleRocketComplete);
+    return () => window.removeEventListener('rocket-complete', handleRocketComplete);
+  }, [result, playbackDone]);
 
   const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
 
@@ -5192,6 +5777,7 @@ function ChoreChaosApp() {
                 </div>
                 <div className="hidden sm:flex flex-wrap items-center justify-end gap-3">
                   {!playbackDone ? (
+                    result.modeId === 'rocket' ? null : (
                     <>
                       <button
                         onClick={advancePlayback}
@@ -5208,6 +5794,7 @@ function ChoreChaosApp() {
                         Reveal all
                       </button>
                     </>
+                    )
                   ) : result.isTie ? (
                     <>
                       <button
@@ -5226,7 +5813,7 @@ function ChoreChaosApp() {
                   ) : (
                     <>
                       <button
-                        onClick={() => startGame()}
+                        onClick={() => { setGameActive(false); setTimeout(() => startGame(pickRandom(MODES).id), 50); }}
                         className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:-translate-y-0.5"
                       >
                         <Shuffle className="h-4 w-4" />
@@ -5320,6 +5907,7 @@ function ChoreChaosApp() {
 
               <div className="sm:hidden relative z-10 flex flex-wrap items-center justify-center gap-2 border-t border-white/10 bg-black/90 px-3 py-3 backdrop-blur safe-area-bottom">
                 {!playbackDone ? (
+                  result.modeId === 'rocket' ? null : (
                   <>
                     <button
                       onClick={advancePlayback}
@@ -5336,6 +5924,7 @@ function ChoreChaosApp() {
                       All
                     </button>
                   </>
+                  )
                 ) : result.isTie ? (
                   <>
                     <button
@@ -5354,7 +5943,7 @@ function ChoreChaosApp() {
                 ) : (
                   <>
                     <button
-                      onClick={() => startGame()}
+                      onClick={() => { setGameActive(false); setTimeout(() => startGame(pickRandom(MODES).id), 50); }}
                       className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
                     >
                       <Shuffle className="h-4 w-4" />
