@@ -784,14 +784,22 @@ const BG = {
       const fy = Math.round(Math.sin(fx * 0.7 + t * 0.005) * Math.min(fx * 0.3, 1));
       ctx.fillRect(cx + 1 + fx, mastTop - 2 + fy, 1, 2);
     }
-    // Water around hull
-    const wc = wt === 'crimson' ? '#5A2020' : wt === 'midnight' ? '#080818' : '#086848';
-    ctx.fillStyle = wc;
-    ctx.fillRect(cx - Math.round(hw / 2) - 5, waterLine + visRows, hw + 10, H - waterLine - visRows);
-    // Foam at waterline
-    ctx.fillStyle = wt === 'crimson' ? 'rgba(255,180,180,0.3)' : wt === 'midnight' ? 'rgba(100,140,220,0.2)' : 'rgba(100,230,170,0.3)';
-    for (let x = cx - Math.round(hw / 2) - 3; x < cx + Math.round(hw / 2) + 3; x++) {
+    // Water blending over lower hull — no rectangle, just cover the visible hull rows
+    // The hull rows below visRows were never drawn, so the water/reflection already fills that space.
+    // Just add foam at the waterline where hull meets water.
+    const foamC = wt === 'crimson' ? 'rgba(255,180,180,0.35)' : wt === 'midnight' ? 'rgba(100,140,220,0.25)' : 'rgba(100,230,170,0.35)';
+    ctx.fillStyle = foamC;
+    for (let x = cx - Math.round(hw / 2) - 2; x < cx + Math.round(hw / 2) + 2; x++) {
       ctx.fillRect(x, waterLine + visRows - 1 + Math.round(Math.sin(x * 0.2 + t * 0.003) * 0.5), 1, 1);
+    }
+    // Small wake/ripple lines beside the hull
+    const wakeC = wt === 'crimson' ? 'rgba(200,100,100,0.2)' : wt === 'midnight' ? 'rgba(80,120,200,0.15)' : 'rgba(80,200,150,0.2)';
+    ctx.fillStyle = wakeC;
+    for (let i = 0; i < 3; i++) {
+      const wy = waterLine + visRows + 1 + i * 2;
+      const wOff = Math.round(Math.sin(wy * 0.3 + t * 0.002) * 1);
+      ctx.fillRect(cx - Math.round(hw / 2) - 3 - i + wOff, wy, 2, 1);
+      ctx.fillRect(cx + Math.round(hw / 2) + 1 + i + wOff, wy, 2, 1);
     }
     // Midnight: bioluminescence
     if (wt === 'midnight') {
