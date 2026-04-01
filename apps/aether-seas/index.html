@@ -1509,12 +1509,48 @@ function drawConnor(x, y, f, t) {
 
 function drawFelix(x, y, t) {
   const s = PX;
-  const bob = Math.sin((t || 0) * 0.004) * 1.5;
+  const bob = Math.sin((t || 0) * 0.003) * 1.5;
   ctx.save(); ctx.translate(x, y + bob);
-  ctx.fillStyle = '#2D2D2D';
-  ctx.fillRect(-2*s, -3*s, 4*s, 3*s); ctx.fillRect(-s, -5*s, 3*s, 2*s);
-  ctx.fillStyle = '#FF3333'; ctx.fillRect(0, -4*s, s, s); ctx.fillRect(s, -4*s, s, s);
-  ctx.fillStyle = '#C0C0C0'; ctx.fillRect(2*s, -3*s, s, 2*s); // knife
+  // Body (grey)
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(-2*s, -4*s, 5*s, 4*s);
+  // White chest patch
+  ctx.fillStyle = '#D0D0D0';
+  ctx.fillRect(-s, -3*s, 2*s, 3*s);
+  // Head (grey)
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(-2*s, -7*s, 4*s, 3*s);
+  // White muzzle
+  ctx.fillStyle = '#D0D0D0';
+  ctx.fillRect(-s, -5*s, 2*s, s);
+  // Pointy ears
+  ctx.fillStyle = '#707070';
+  ctx.fillRect(-2*s, -8*s, s, s);
+  ctx.fillRect(s, -8*s, s, s);
+  // Inner ears (pink)
+  ctx.fillStyle = '#DDA0A0';
+  ctx.fillRect(-2*s, -8*s, s, s);
+  ctx.fillRect(s, -8*s, s, s);
+  // Eyes (angry green)
+  ctx.fillStyle = '#44CC44';
+  ctx.fillRect(-s, -6*s, s, s);
+  ctx.fillRect(s, -6*s, s, s);
+  // Pupils
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(-s, -6*s, Math.max(1, Math.round(s * 0.5)), s);
+  ctx.fillRect(s, -6*s, Math.max(1, Math.round(s * 0.5)), s);
+  // Tail (curled up)
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(3*s, -3*s, s, s);
+  ctx.fillRect(3*s, -4*s, s, s);
+  ctx.fillRect(2*s, -5*s, s, s);
+  // White tail tip
+  ctx.fillStyle = '#D0D0D0';
+  ctx.fillRect(2*s, -5*s, s, s);
+  // Paws
+  ctx.fillStyle = '#D0D0D0';
+  ctx.fillRect(-2*s, 0, s, s);
+  ctx.fillRect(2*s, 0, s, s);
   ctx.restore();
 }
 
@@ -1617,9 +1653,13 @@ function drawSceneChars(sceneId, t) {
       drawBeckRat(W * 0.5, H * 0.72, t);
       break;
     case 'golden-oreo':
-      drawUlisa(W * 0.25, H * 0.64, 1, t);
-      drawBeckRat(W * 0.5, H * 0.68, t);
-      drawFelix(W * 0.72, H * 0.68, t);
+      drawUlisa(W * 0.25, H * 0.68, 1, t);
+      drawBeckRat(W * 0.5, H * 0.72, t);
+      drawFelix(W * 0.72, H * 0.7, t);
+      break;
+    case 'litos-approach':
+      drawUlisa(W * 0.3, H * 0.68, 1, t);
+      drawBeckRat(W * 0.45, H * 0.72, t);
       break;
     case 'litos-burritos':
       drawUlisa(W * 0.3, H * 0.52, 1, t);
@@ -2318,32 +2358,53 @@ const scenes = [
     { s:'b', t:'I hate boats. I hate water. I hate being a rat on a boat on water.' },
     { s:'u', t:"You're alive." },
     { s:'b', t:'Technically. Which is the worst kind of alive.' },
-    { s:'n', t:'A second rat appeared on the railing. This one was darker, smaller, and holding what appeared to be a tiny knife.' },
+    { s:'n', t:'A grey and white cat appeared on the railing. It had angry green eyes and the general energy of someone who had been personally wronged.' },
     { s:'f', t:'BECK.' },
     { s:'b', t:'Oh no.' },
     { s:'f', t:'TODAY IS THE DAY, BECK.' },
     { s:'b', t:'It is never the day, Felix.' },
     { s:'f', t:'I WILL END YOU.' },
     { s:'b', t:"You've been saying that for three weeks. You have not ended me. This is becoming embarrassing for both of us." },
-    { s:'n', t:'Felix lunged. Beck-rat sidestepped with the casual grace of someone who had been dodging murder attempts as a hobby.' },
+    { s:'n', t:'Felix pounced. Beck-rat sidestepped with the casual grace of someone who had been dodging a cat for three weeks straight.' },
     { s:'b', t:'Anyway. Where were we.' },
     { s:'u', t:'You were telling me what happened to you.' },
-    { s:'b', t:"No I wasn't. I was being a normal rat. Felix, stop trying to stab me, we have a guest." },
+    { s:'b', t:"No I wasn't. I was being a normal rat. Felix, stop trying to eat me, we have a guest." },
   ]},
 
-  // 7 — Litos Burritos
+  // 7a — Spotting Litos Island (on ship deck)
+  { id: 'litos-approach', bg: 'ship', music: 'crimson', waterType: 'crimson', dialogue: [
+    { s:'cr', t:'ISLAND OFF THE PORT BOW! PREPARING TO DOCK!' },
+    { s:'n', t:'An island materialized through the haze. It was small, golden, and smelled improbably good.' },
+    { s:'b', t:'What is that smell?' },
+    { s:'u', t:'It smells like... seasoned rice? And slow-cooked beans?' },
+    { s:'b', t:'...' },
+    { s:'b', t:'I need to go look for food.' },
+    { s:'u', t:'Beck, we should stay on the ship—' },
+    { s:'b', t:"I'll be five minutes. Ten tops. I'm a rat. We're fast." },
+    { s:'n', t:'He was already running down the gangplank before she finished the sentence.' },
+    { s:'u', t:'Beck!' },
+    { s:'n', t:'He did not stop.' },
+    { s:'n', t:'Twenty minutes passed. Then forty. Then an hour.' },
+    { s:'u', t:"Something's wrong." },
+    { s:'n', t:'She went after him.' },
+  ]},
+
+  // 7b — Litos Burritos (finding Beck in the time loop)
   { id: 'litos-burritos', bg: 'burritos', music: 'emerald', dialogue: [
-    { s:'n', t:'The island of Litos appeared through the morning fog — an idyllic port town where everything smelled of seasoned rice and slow-cooked beans.' },
-    { s:'b', t:'Oh no.' },
-    { s:'u', t:'What?' },
-    { s:'b', t:'We should leave. Immediately. Right now. No reason.' },
-    { s:'n', t:'They did not leave.' },
-    { s:'b', t:'Just one. Just one burrito. Then we go. I promise.' },
-    { s:'n', t:'He did not keep this promise.' },
-    { s:'n', t:'Three burritos later, the sky flickered. The town reset. Everyone was back at the entrance.' },
+    { s:'n', t:'The island of Litos was an idyllic port town where everything smelled like heaven and nothing made sense.' },
+    { s:'n', t:'She found Beck-rat at a shop called Litos Burritos. He was on his fourth burrito. He looked both deeply happy and deeply confused.' },
+    { s:'b', t:'Oh. Hello. You should... not be here.' },
+    { s:'u', t:'You said five minutes. It\'s been an hour.' },
+    { s:'b', t:'That\'s impossible. I\'ve only had four burritos.' },
+    { s:'u', t:'Beck.' },
+    { s:'b', t:'Fine. Possibly seven. The guac was incredible.' },
+    { s:'n', t:'Then the sky flickered. The town reset. She was back at the entrance.' },
+    { s:'u', t:'What just happened?' },
     { s:'b', t:"Wait. Didn't we just..." },
-    { s:'n', t:'They had. They were in a time loop. The kind specifically calibrated around perfectly seasoned burritos.' },
+    { s:'n', t:'They had. Beck-rat was trapped in a time loop. The kind specifically calibrated around perfectly seasoned burritos. And now she was in it too.' },
     { s:'b', t:'This is the best curse I have ever experienced.' },
+    { s:'u', t:'We need to get you out of here.' },
+    { s:'b', t:'Or — and hear me out — we don\'t.' },
     { s:'n', t:'Break Beck out of the burrito time loop!',
       action:'minigame', game:'timeloop', data:{
         hudText:'Break the loop!',
@@ -2425,7 +2486,7 @@ const scenes = [
     { s:'u', t:'What does a potato understand?' },
     { s:'b', t:'Solitude. Velvet. The futility of existence. All the important things.' },
     { s:'n', t:'They walked through the gallery laughing at art that was probably very expensive, and for a while the quest felt less like a quest and more like a really good afternoon.' },
-    { s:'n', t:'Felix appeared from behind a sculpture and threw a tiny knife at Beck-rat. He missed.' },
+    { s:'n', t:'Felix appeared from behind a sculpture and swiped at Beck-rat. He missed.' },
     { s:'f', t:'NEXT TIME, BECK.' },
     { s:'b', t:'He says, for the fifteenth time.' },
   ]},
@@ -2520,7 +2581,7 @@ const scenes = [
       action:'choice', choices:[{ text:'Yes' }, { text:'Obviously' }], onChoice:()=>{} },
     { s:'n', t:'She said yes. Or obviously. Either way, it was the right answer.' },
     { s:'n', t:'They stood together at the top of the tower, above the midnight sea, under a sky full of stars that had been waiting for exactly this moment.' },
-    { s:'n', t:'The seas calmed. The spores drifted. Somewhere, a very annoyed rat named Felix was looking for someone to stab.' },
+    { s:'n', t:'The seas calmed. The spores drifted. Somewhere, a very annoyed cat named Felix was looking for a rat to chase.' },
     { s:'n', t:'But up here, everything was warm, and bright, and exactly as it should be.' },
     { s:'m', t:'So... about the burrito thing.' },
     { s:'u', t:"We're not talking about the burrito thing." },
