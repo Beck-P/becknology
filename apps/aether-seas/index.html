@@ -1271,6 +1271,93 @@ const BG = {
       ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
   },
 
+  // --- Ship hold (below deck interior) ---
+  shipHold(t) {
+    const { W, H } = G;
+    drawGrad(0, H, [['#1A1008',0],['#221510',0.4],['#1A1008',1]]);
+    // Ceiling beams
+    ctx.fillStyle = '#2A1A0A';
+    for (let x = 0; x < W; x += Math.max(8, Math.round(W * 0.1)))
+      ctx.fillRect(x, 0, Math.max(2, Math.round(W * 0.02)), H);
+    // Floor planks
+    ctx.fillStyle = '#2A1808'; ctx.fillRect(0, Math.round(H * 0.68), W, Math.round(H * 0.32));
+    ctx.fillStyle = '#221408';
+    for (let x = 0; x < W; x += Math.max(5, Math.round(W * 0.05)))
+      ctx.fillRect(x, Math.round(H * 0.68), 1, Math.round(H * 0.32));
+    // Porthole window (right side, showing sea outside)
+    const phx = Math.round(W * 0.78), phy = Math.round(H * 0.35), phr = Math.max(4, Math.round(W * 0.04));
+    ctx.fillStyle = '#4A3018'; // frame
+    for (let dy = -phr - 1; dy <= phr + 1; dy++) {
+      const dx = Math.round(Math.sqrt(Math.max(0, (phr + 1) * (phr + 1) - dy * dy)));
+      ctx.fillRect(phx - dx, phy + dy, dx * 2, 1);
+    }
+    // Sea through porthole
+    ctx.fillStyle = '#6A2020'; // crimson sea
+    for (let dy = -phr; dy <= phr; dy++) {
+      const dx = Math.round(Math.sqrt(Math.max(0, phr * phr - dy * dy)));
+      ctx.fillStyle = dy < 0 ? '#3A1020' : '#6A2020';
+      ctx.fillRect(phx - dx, phy + dy, dx * 2, 1);
+    }
+    // Light from porthole
+    const pg = ctx.createRadialGradient(phx, phy, phr, phx - Math.round(W * 0.1), phy, Math.round(W * 0.2));
+    pg.addColorStop(0, 'rgba(200,120,100,0.12)'); pg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = pg; ctx.fillRect(0, 0, W, H);
+    // Barrels and crates
+    ctx.fillStyle = '#3A2810';
+    ctx.fillRect(Math.round(W * 0.05), Math.round(H * 0.5), Math.round(W * 0.08), Math.round(H * 0.18));
+    ctx.fillStyle = '#4A3818';
+    ctx.fillRect(Math.round(W * 0.05), Math.round(H * 0.5), Math.round(W * 0.08), 1);
+    ctx.fillRect(Math.round(W * 0.05), Math.round(H * 0.58), Math.round(W * 0.08), 1);
+    // Crate stack
+    ctx.fillStyle = '#3A2A14';
+    ctx.fillRect(Math.round(W * 0.14), Math.round(H * 0.55), Math.round(W * 0.07), Math.round(H * 0.13));
+    ctx.fillRect(Math.round(W * 0.15), Math.round(H * 0.48), Math.round(W * 0.05), Math.round(H * 0.07));
+    ctx.fillStyle = '#2A1A0A';
+    ctx.fillRect(Math.round(W * 0.14), Math.round(H * 0.55), Math.round(W * 0.07), 1);
+    // Rope coils
+    ctx.fillStyle = '#8A7050';
+    ctx.fillRect(Math.round(W * 0.9), Math.round(H * 0.6), 3, 2);
+    ctx.fillRect(Math.round(W * 0.88), Math.round(H * 0.62), 4, 2);
+  },
+
+  // --- Crimson to midnight sea transition (with ship deck) ---
+  seaDarkening(t) {
+    const { W, H } = G;
+    const skyH = Math.round(H * 0.42), deckY = Math.round(H * 0.64);
+    drawGrad(0, skyH, [['#0A0510',0],['#1A0A1A',0.15],['#2A1020',0.3],['#3A1525',0.5],['#2A1030',0.7],['#1A0A20',0.85],['#0A0515',1]]);
+    drawStars(Math.round(H * 0.25), t);
+    drawMoonWithSpores(t, 'crimson', skyH);
+    drawCloudBand(skyH, t, 'rgba(50,20,30,0.3)', 0.07, 55, 0.3);
+    drawCloudBand(skyH, t, 'rgba(30,15,25,0.25)', 0.06, 70, 0.5);
+    // Water: crimson on left fading to midnight on right
+    for (let x = 0; x < W; x++) {
+      const f = x / W;
+      const r = Math.round(74 - f * 65);
+      const g = Math.round(26 - f * 20);
+      const b = Math.round(26 + f * 15);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(x, skyH, 1, deckY - skyH);
+    }
+    for (let i = 0; i < 5; i++) {
+      const wy = skyH + 3 + Math.round(i * (deckY - skyH) / 6);
+      for (let x = 0; x < W; x += 4) {
+        if (hash(x * 2 + i * 13 + Math.floor(t * 0.0008)) > 0.55) {
+          const f = x / W;
+          const a = Math.max(0.03, 0.1 - i * 0.015);
+          ctx.fillStyle = f < 0.5 ? `rgba(248,113,113,${a})` : `rgba(80,120,200,${a})`;
+          ctx.fillRect(x + Math.round(Math.sin(x * 0.08 + t * 0.001)), wy, 2, 1);
+        }
+      }
+    }
+    // Ship deck
+    drawGrad(deckY, H, [['#8B6914',0],['#7A5A10',0.05],['#5A4010',1]]);
+    ctx.fillStyle = '#9A7A20';
+    for (let i = 0; i < 6; i++) ctx.fillRect(0, deckY + 1 + Math.round(i * H * 0.045), W, 1);
+    ctx.fillStyle = '#5A3A10'; ctx.fillRect(0, deckY - 2, W, 3);
+    for (let x = 0; x < W; x += Math.max(6, Math.round(W * 0.06)))
+      ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
+  },
+
   // --- Cabin door (eavesdropping scene) ---
   cabinDoor(t) {
     const { W, H } = G;
@@ -1900,13 +1987,19 @@ function drawSceneChars(sceneId, t) {
       drawUlisa(W * 0.35, H * 0.63, 1, t);
       drawBeckRat(W * 0.48, H * 0.67, t);
       break;
-    case 'art-museum':
-      drawUlisa(W * 0.4, H * 0.7, 1, t);
-      drawBeckRat(W * 0.56, H * 0.73, t);
+    case 'crew-celebration':
+      drawUlisa(W * 0.4, H * 0.68, 1, t);
       break;
-    case 'lake-sunset':
-      drawUlisa(W * 0.35, H * 0.62, 1, t);
-      drawBeckRat(W * 0.5, H * 0.65, t);
+    case 'beck-sabotage':
+      drawUlisa(W * 0.25, H * 0.65, 1, t);
+      drawBeckRat(W * 0.65, H * 0.65, t);
+      break;
+    case 'the-fight':
+      drawUlisa(W * 0.3, H * 0.68, -1, t);
+      drawBeckRat(W * 0.55, H * 0.72, t);
+      break;
+    case 'alone-at-sea':
+      drawUlisa(W * 0.4, H * 0.68, 1, t);
       break;
     case 'midnight-sea':
       drawUlisa(W * 0.3, H * 0.64, 1, t);
@@ -2743,50 +2836,62 @@ const scenes = [
     { s:'n', t:'They left the café warmer and wiser. Or at least warmer.' },
   ]},
 
-  // 9 — Art Museum
-  { id: 'art-museum', bg: 'museum', music: 'emerald', dialogue: [
-    { s:'n', t:'The next island was home to the Grand Aether Gallery — a museum where the art was magnificent and the explanations were unhinged.' },
-    { s:'b', t:'I have opinions about art.' },
-    { s:'u', t:'I know.' },
-    { s:'b', t:'Strong opinions.' },
-    { s:'u', t:'I know.' },
-    { s:'n', t:'Pick the best captions!',
-      action:'minigame', game:'quiz', data:{
-        hudText:'Art Critic Challenge',
-        questions:[
-          { question:'A painting of a single potato on a velvet pillow. Best caption:',
-            options:['"Solitude" — Artist Unknown','"This Is Not a Potato" — Magraté','"Lunch" — Beck-rat, age 5'], answer:2 },
-          { question:'A sculpture of a very buff seagull flexing. Best caption:',
-            options:['"The Burden of Wingspan"','"Gull Diesel"','"Bird"'], answer:1 },
-          { question:'A landscape of a sunset over an empty parking lot. Best caption:',
-            options:['"Where the Heart Parks"','"Lot of Emotions"','"No Validation Required"'], answer:2 },
-        ]} },
-    { s:'b', t:'I liked the potato one. The potato understood something the rest of us don\'t.' },
-    { s:'u', t:'What does a potato understand?' },
-    { s:'b', t:'Solitude. Velvet. The futility of existence. All the important things.' },
-    { s:'n', t:'They walked through the gallery laughing at art that was probably very expensive, and for a while the quest felt less like a quest and more like a really good afternoon.' },
-    { s:'n', t:'Felix appeared from behind a sculpture and swiped at Beck-rat. He missed.' },
-    { s:'f', t:'NEXT TIME, BECK.' },
-    { s:'b', t:'He says, for the fifteenth time.' },
+  // 9 — Crew Celebration
+  { id: 'crew-celebration', bg: 'ship', music: 'crimson', waterType: 'crimson', dialogue: [
+    { s:'n', t:'She climbed the stairs back to the deck, matcha in hand. The crimson spores sealed behind her.' },
+    { s:'n', t:'The crew stared. Then someone started clapping. Then everyone was clapping.' },
+    { s:'cr', t:'She actually did it.' },
+    { s:'cr', t:'Nobody has ever come back with the matcha. Nobody.' },
+    { s:'u', t:'The riddles weren\'t that hard.' },
+    { s:'cr', t:'It\'s not the riddles. It\'s that you went down there by choice.' },
+    { s:'n', t:'The captain took the matcha, sipped it once, and closed his eyes for a very long time.' },
+    { s:'cr', t:'"We owe you a debt. We\'ll take you as far east as the crimson sea goes. To the midnight waters."' },
+    { s:'u', t:'Thank you.' },
+    { s:'n', t:'For the first time since the journey began, she felt like she had a crew behind her. It was a nice feeling.' },
   ]},
 
-  // 10 — Lake Sunset
-  { id: 'lake-sunset', bg: 'lakeSunset', music: 'emerald', dialogue: [
-    { s:'n', t:'The Golden Oreo sailed past an island with no name.' },
-    { s:'n', t:'Just a lake, still as glass, and a small town glowing in the distance. The sun was setting the way suns do in stories — slowly, and with intention.' },
-    { s:'n', t:'They stood at the railing. The only sound was the water against the hull.' },
+  // 10a — Beck Sabotage (ship hold)
+  { id: 'beck-sabotage', bg: 'shipHold', music: 'crimson', dialogue: [
+    { s:'n', t:'That night, she heard a noise from the hold. Something scraping. Something falling.' },
+    { s:'n', t:'She found Beck-rat next to the porthole window. Beside him was a pile of food rations. He was pushing them out the window, one by one, into the crimson sea.' },
+    { s:'u', t:'Beck. What are you doing?' },
     { s:'b', t:'...' },
-    { s:'u', t:"You're quiet." },
-    { s:'b', t:"Rats are often quiet. It's a feature, not a bug." },
-    { s:'n', t:'A long moment passed. The kind of moment that holds more than words.' },
-    { s:'b', t:"You didn't have to come, you know. For me." },
-    { s:'u', t:'I know.' },
-    { s:'b', t:"The seas are dangerous. And I am very small. And probably not worth the trouble." },
-    { s:'u', t:"You're definitely worth the trouble." },
+    { s:'u', t:'Are you throwing away the food?' },
+    { s:'b', t:'No calories allowed. Ship runs out of food, ship turns back. Simple.' },
+    { s:'u', t:'You\'re sabotaging the journey.' },
+    { s:'b', t:'I\'m... making a practical suggestion about resource management.' },
+    { s:'u', t:'Beck.' },
+    { s:'b', t:'She\'ll have no choice but to turn back. It\'s... it\'s for the best.' },
+  ]},
+
+  // 10b — The Fight (on deck)
+  { id: 'the-fight', bg: 'ship', music: 'crimson', waterType: 'crimson', dialogue: [
+    { s:'u', t:'For the BEST?' },
+    { s:'b', t:'You don\'t understand—' },
+    { s:'u', t:'Then explain it to me!' },
+    { s:'b', t:'I can\'t.' },
+    { s:'u', t:'Why not?' },
+    { s:'b', t:'Because if I explain it, you\'ll just... you\'ll keep going anyway. And the midnight sea is dangerous, and the tower is worse, and I can\'t—' },
+    { s:'n', t:'He stopped. His tiny rat hands were shaking.' },
+    { s:'b', t:'It\'s for the best. You wouldn\'t understand.' },
+    { s:'u', t:'You\'re right. I don\'t understand. Because what I understand is that you\'re being really, really dumb right now.' },
     { s:'b', t:'...' },
-    { s:'b', t:'That\'s debatable. But thank you.' },
-    { s:'n', t:"He said it so quietly she almost didn't hear it. But she did." },
-    { s:'n', t:'The sun set. The stars came out. And the sea ahead turned dark.' },
+    { s:'u', t:'I didn\'t sail across two seas and work at a floating Barnes & Noble to be stopped by a rat with a bad plan and no explanation.' },
+    { s:'u', t:'I\'m going to the midnight sea. With or without you.' },
+    { s:'n', t:'She turned and walked away. Beck-rat watched her go. He did not follow.' },
+    { s:'n', t:'He sat alone on the railing for a very long time, which for a talking rat is basically a confession.' },
+  ]},
+
+  // 10c — Alone at Sea (crimson to midnight transition)
+  { id: 'alone-at-sea', bg: 'seaDarkening', music: 'crimson', dialogue: [
+    { s:'n', t:'She stood at the railing alone. The crimson sea stretched in every direction.' },
+    { s:'n', t:'Slowly, the water began to darken. The red deepened, then cooled, then faded into something that looked like a bruise.' },
+    { s:'n', t:'She thought about Mitchell. The way he smiled when she said she\'d read all of Sanderson. The way he looked at her like she was the most interesting person in any room.' },
+    { s:'n', t:'She thought about Beck-rat. His stupid jokes. His tiny navy scarf. The way he told her to turn back and then looked relieved every time she didn\'t.' },
+    { s:'n', t:'She was angry. And sad. And alone on a ship heading toward the most dangerous water in the world.' },
+    { s:'n', t:'But she thought about that golden afternoon at the bird sanctuary, and she knew — whatever she felt in that moment was real. And real things are worth fighting for.' },
+    { s:'n', t:'The last of the crimson faded. The sea became midnight.' },
+    { s:'n', t:'She sailed on.' },
   ]},
 
   // 11 — Midnight Sea
@@ -2794,12 +2899,17 @@ const scenes = [
     init() { this.waterType = 'midnight'; this.bg = 'shipFull'; },
     dialogue: [
     { s:'n', t:'The midnight sea was the color of ink and bad decisions.' },
-    { s:'n', t:'The Golden Oreo was a small, bright thing in a very large, dark nothing. It sailed on anyway.' },
+    { s:'n', t:'The Golden Oreo was a small, bright thing in a very large, dark nothing. She sailed on anyway.' },
     { s:'n', t:"The water was alive — or something in it was. Shapes moved beneath the surface. Tentacles. Shadows. Things that didn't bother having names.", onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
-    { s:'b', t:'This is fine.' },
-    { s:'u', t:"You're shaking." },
-    { s:'b', t:'I am vibrating. With confidence.' },
-    { s:'cr', t:'Captain! Creatures off the bow! We need a navigator!' },
+    { s:'n', t:'She gripped the wheel. Alone.' },
+    { s:'b', t:'...not alone.' },
+    { s:'n', t:'Beck-rat was sitting on the railing. He looked terrible. Fur matted. Scarf crooked. The general energy of a rat who had not slept and had been thinking too much.' },
+    { s:'b', t:'I\'m sorry. I was scared. And dumb. You were right about the dumb part.' },
+    { s:'u', t:'...' },
+    { s:'b', t:'I still think you should turn back. But I know you won\'t. So... I\'m here.' },
+    { s:'u', t:'Thank you.' },
+    { s:'b', t:'I would have helped sooner, but I was very busy being ashamed.' },
+    { s:'cr', t:'Creatures off the bow! We need a navigator!' },
     { s:'n', t:'Navigate through the midnight sea!',
       action:'minigame', game:'navigate', data:{ target:10 } },
     { s:'n', t:'The creatures fell behind. The tower appeared on the horizon — a dark spire rising from an island that glittered with unnatural light.' },
@@ -2891,6 +3001,8 @@ function render() {
   else if (bg === 'seaCrossing') BG.seaCrossing(t);
   else if (bg === 'cabinDoor') BG.cabinDoor(t);
   else if (bg === 'seaParting') BG.seaParting(t);
+  else if (bg === 'shipHold') BG.shipHold(t);
+  else if (bg === 'seaDarkening') BG.seaDarkening(t);
   else if (bg === 'ship') BG.ship(t, scene.waterType);
   else if (bg === 'burritos') BG.burritos(t);
   else if (bg === 'cafe') BG.cafe(t);
