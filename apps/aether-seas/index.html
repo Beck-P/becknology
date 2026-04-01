@@ -618,17 +618,21 @@ const BG = {
       ctx.fillRect(hullL + Math.round(i * hullW / 4), railY, 1, deckY2 - railY);
     }
 
-    // Main mast
+    // Main mast — thick
     const mastX = shipCX;
     const mastH = Math.max(20, Math.round(H * 0.2));
     const mastTop = railY - mastH;
     ctx.fillStyle = '#6B4A20';
-    ctx.fillRect(mastX - 1, mastTop, 2, mastH + (deckY2 - railY));
+    ctx.fillRect(mastX - 1, mastTop, 3, mastH + (deckY2 - railY));
+    ctx.fillStyle = '#7A5A28'; ctx.fillRect(mastX - 1, mastTop, 1, mastH + (deckY2 - railY));
 
     // Main sail — big rectangle with billow
     const sailTop = mastTop + 3;
     const sailBot = mastTop + Math.round(mastH * 0.7);
     const sailW = Math.max(12, Math.round(hullW * 0.6));
+    // Cross beam
+    ctx.fillStyle = '#6B4A20';
+    ctx.fillRect(mastX - Math.round(sailW / 2) - 2, sailTop - 1, sailW + 4, 2);
     // Sail body (light gray)
     ctx.fillStyle = '#D8DDE4';
     for (let sy = sailTop; sy < sailBot; sy++) {
@@ -755,12 +759,15 @@ const BG = {
     ctx.fillStyle = '#5A3018';
     ctx.fillRect(cx - Math.round(hw / 2) - 2, waterLine, 3, 2);
     ctx.fillRect(cx + Math.round(hw / 2), waterLine - 1, 2, 3);
-    // Main mast
+    // Main mast — thick, full height
     const mastTop = waterLine - Math.round(H * 0.22);
-    ctx.fillStyle = '#6B4A20'; ctx.fillRect(cx - 1, mastTop, 2, waterLine - mastTop);
+    ctx.fillStyle = '#6B4A20'; ctx.fillRect(cx - 1, mastTop, 3, waterLine - mastTop);
+    ctx.fillStyle = '#7A5A28'; ctx.fillRect(cx - 1, mastTop, 1, waterLine - mastTop);
     // Large sail
     const sT = mastTop + 3, sB = mastTop + Math.round(H * 0.15);
     const sW = Math.max(14, Math.round(hw * 0.55));
+    // Cross beam
+    ctx.fillStyle = '#6B4A20'; ctx.fillRect(cx - Math.round(sW / 2) - 2, sT - 1, sW + 4, 2);
     ctx.fillStyle = '#D8DDE4';
     for (let sy = sT; sy < sB; sy++) {
       const f = (sy - sT) / (sB - sT);
@@ -1050,13 +1057,35 @@ const BG = {
     ctx.fillStyle = '#5A3A10'; ctx.fillRect(0, deckY - 2, W, 3);
     for (let x = 0; x < W; x += Math.max(6, Math.round(W * 0.06)))
       ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
-    // Mast + sail
+    // Mast — thick, extends to deck
     const mx = Math.round(W * 0.5);
-    ctx.fillStyle = '#5A3A10'; ctx.fillRect(mx - 1, Math.round(H * 0.14), 2, Math.round(H * 0.32));
-    ctx.fillStyle = '#F5E8D0';
-    ctx.beginPath(); ctx.moveTo(mx, Math.round(H * 0.15));
-    ctx.lineTo(mx + Math.round(W * 0.14), Math.round(H * 0.2));
-    ctx.lineTo(mx, Math.round(H * 0.38)); ctx.fill();
+    const bmastTop = Math.round(H * 0.18);
+    ctx.fillStyle = '#5A3A10';
+    ctx.fillRect(mx - 1, bmastTop, 3, deckY - bmastTop);
+    ctx.fillStyle = '#6B4A18'; ctx.fillRect(mx - 1, bmastTop, 1, deckY - bmastTop);
+    // Cross beam
+    ctx.fillStyle = '#5A3A10';
+    ctx.fillRect(mx - Math.round(W * 0.08), bmastTop + 2, Math.round(W * 0.16), 2);
+    // Rectangular sail with billow
+    const bsailL = mx - Math.round(W * 0.07), bsailR = mx + Math.round(W * 0.07);
+    const bsailT = bmastTop + 5, bsailB = Math.round(H * 0.42);
+    ctx.fillStyle = '#F0E4D0';
+    for (let sy = bsailT; sy < bsailB; sy++) {
+      const f = (sy - bsailT) / (bsailB - bsailT);
+      const billow = Math.round(Math.sin(f * Math.PI) * W * 0.015);
+      ctx.fillRect(bsailL - billow, sy, bsailR - bsailL + billow * 2, 1);
+    }
+    ctx.fillStyle = '#D8D0C0';
+    for (let sy = bsailT + 2; sy < bsailB - 2; sy++) {
+      const f = (sy - bsailT) / (bsailB - bsailT);
+      const billow = Math.round(Math.sin(f * Math.PI) * W * 0.01);
+      const sw3 = Math.round((bsailR - bsailL) * 0.4);
+      ctx.fillRect(mx - Math.round(sw3 / 2), sy, sw3 + billow, 1);
+    }
+    ctx.fillStyle = '#C8C0B0';
+    ctx.fillRect(bsailL, bsailT, bsailR - bsailL, 1);
+    ctx.fillRect(bsailL - 1, bsailB - 1, bsailR - bsailL + 2, 1);
+    ctx.fillRect(bsailL - 1, Math.round((bsailT + bsailB) / 2), bsailR - bsailL + 2, 1);
     // Scattered books on deck
     const bookPositions = [[0.12,0.02],[0.32,0.03],[0.65,0.01],[0.78,0.025],[0.22,0.04]];
     bookPositions.forEach(([bpx, bpy]) => {
@@ -1373,8 +1402,12 @@ function drawSceneChars(sceneId, t) {
       break;
     case 'captain':
       drawUlisa(W * 0.3, H * 0.64, 1, t);
-      // Captain — dark hair, brown coat, tan pants, dark boots
-      drawPerson(W * 0.65, H * 0.62, '#2A1A0A', '#6B4A28', '#A08050', '#3A2A15', 0, -1, t);
+      // Captain — dark skin, dark hair, brown coat, tan pants, dark boots
+      drawPerson(W * 0.65, H * 0.62, '#1A0A05', '#6B4A28', '#A08050', '#3A2A15', 0, -1, t);
+      // Override skin color for captain (dark skin)
+      ctx.fillStyle = '#8B5A3A';
+      const cpx = Math.round(W * 0.65), cpy = Math.round(H * 0.62) + Math.round(Math.sin(t * 0.0015) * 1.5);
+      ctx.fillRect(cpx - 2*PX, cpy - 11*PX, 4*PX, 4*PX);
       // Captain's hat
       ctx.fillStyle = '#4A3018';
       ctx.fillRect(Math.round(W * 0.65) - 3*PX, Math.round(H * 0.62) - 13*PX, 6*PX, PX);
