@@ -7801,6 +7801,88 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
   );
 }
 
+function VoteGrid({ votes, deadline, onVote, playerName }) {
+  const [timeLeft, setTimeLeft] = useState(10);
+
+  useEffect(() => {
+    if (!deadline) return;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setTimeLeft(remaining);
+    }, 100);
+    return () => clearInterval(interval);
+  }, [deadline]);
+
+  const hasVoted = playerName && votes[playerName];
+
+  // Count votes per mode
+  const voteCounts = {};
+  Object.values(votes).forEach(id => { voteCounts[id] = (voteCounts[id] || 0) + 1; });
+
+  return (
+    <div className="rounded-2xl border border-indigo-500/20 bg-[#0a0a1a] p-5">
+      <div className="text-center mb-4">
+        <div className="pixel-font text-[11px] text-indigo-300" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>
+          {"\uD83D\uDDF3\uFE0F"} VOTE FOR NEXT GAME
+        </div>
+        <div className="pixel-font text-[8px] text-slate-500 mt-1">{timeLeft}s remaining</div>
+        <div className="mx-auto mt-2 h-1 w-32 rounded-full bg-white/10 overflow-hidden">
+          <div className="h-full rounded-full bg-indigo-500 transition-all duration-100" style={{ width: `${timeLeft * 10}%` }} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+        {/* Random option */}
+        <button
+          onClick={() => !hasVoted && onVote({ action: 'vote_game', modeId: 'random' })}
+          disabled={!!hasVoted}
+          className={`relative p-3 rounded-xl text-center transition ${
+            hasVoted === 'random' ? 'bg-indigo-500/30 border-2 border-indigo-400' :
+            hasVoted ? 'opacity-40 cursor-not-allowed bg-white/[0.02] border border-white/[0.05]' :
+            'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-indigo-500/30'
+          }`}
+        >
+          <div className="text-2xl mb-1">{"\uD83C\uDFB2"}</div>
+          <div className="pixel-font text-[7px] text-indigo-300">RANDOM</div>
+          {voteCounts['random'] ? <div className="absolute top-1 right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center pixel-font text-[6px]">{voteCounts['random']}</div> : null}
+        </button>
+
+        {MODE_META.map(mode => (
+          <button
+            key={mode.id}
+            onClick={() => !hasVoted && onVote({ action: 'vote_game', modeId: mode.id })}
+            disabled={!!hasVoted}
+            className={`relative p-3 rounded-xl text-center transition ${
+              hasVoted === mode.id ? 'bg-indigo-500/30 border-2 border-indigo-400' :
+              hasVoted ? 'opacity-40 cursor-not-allowed bg-white/[0.02] border border-white/[0.05]' :
+              'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-indigo-500/30'
+            }`}
+          >
+            <div className="text-2xl mb-1">{mode.icon}</div>
+            <div className="pixel-font text-[6px] text-white leading-tight">{mode.name}</div>
+            {voteCounts[mode.id] ? <div className="absolute top-1 right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center pixel-font text-[6px]">{voteCounts[mode.id]}</div> : null}
+          </button>
+        ))}
+      </div>
+
+      {/* Who voted for what */}
+      {Object.keys(votes).length > 0 ? (
+        <div className="flex flex-wrap gap-2 justify-center">
+          {Object.entries(votes).map(([name, modeId]) => {
+            const mode = MODE_META.find(m => m.id === modeId);
+            return (
+              <div key={name} className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+                <span className="font-mono text-[10px] text-white">{name}</span>
+                <span className="ml-1.5 text-[10px]">{modeId === 'random' ? '\uD83C\uDFB2' : mode?.icon}</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ChoreChaosApp() {
   const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
   const [taskLabel, setTaskLabel] = useState("");
@@ -7849,6 +7931,9 @@ function ChoreChaosApp() {
   const [horseLanePicks, setHorseLanePicks] = useState(null);
   const [usedShields, setUsedShields] = useState({});
   const [battleMoves, setBattleMoves] = useState(null);
+  const [voteActive, setVoteActive] = useState(false);
+  const [votes, setVotes] = useState({});
+  const [voteDeadline, setVoteDeadline] = useState(null);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -9267,6 +9352,35 @@ function ChoreChaosApp() {
     return () => { timeout.clear(); };
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
 
+  // ── Vote handler + auto-resolve timer ─────────────────────
+  useEffect(() => {
+    if (!voteActive) return;
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'vote_game') return;
+      const voter = payload.playerName;
+      const modeId = payload.modeId;
+      if (!voter || !modeId) return;
+
+      setVotes(prev => ({ ...prev, [voter]: modeId }));
+
+      // Broadcast the vote to everyone
+      broadcastEvent({ type: 'vote_cast', playerName: voter, modeId });
+    };
+
+    // 10-second timeout
+    const timer = setTimeout(() => resolveVote(), 10000);
+    return () => clearTimeout(timer);
+  }, [voteActive]);
+
+  // Check if all players have voted
+  useEffect(() => {
+    if (!voteActive) return;
+    const allPlayerNames = Object.keys(joinedPlayers);
+    const allVoted = allPlayerNames.length > 0 && allPlayerNames.every(name => votes[name]);
+    if (allVoted) resolveVote();
+  }, [votes, voteActive, joinedPlayers]);
+
   const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
 
   const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
@@ -9378,6 +9492,9 @@ function ChoreChaosApp() {
     setHorseLanePicks(null);
     setUsedShields({});
     setBattleMoves(null);
+    setVoteActive(false);
+    setVotes({});
+    setVoteDeadline(null);
     window.__interactiveRocketEjects = {};
     window.__draftChoices = {};
     window.__rocketInteractive = false;
@@ -9465,7 +9582,73 @@ function ChoreChaosApp() {
     window.__stockDraftState = null;
     window.__stockInteractive = false;
     window.__stockDrawIndex = 0;
+    setVoteActive(false);
+    setVotes({});
+    setVoteDeadline(null);
     broadcastEvent({ type: 'game_reset' });
+  }
+
+  // ── Vote for Next Game ────────────────────────────────────
+
+  function startVote() {
+    const deadline = Date.now() + 10000;
+    setVoteActive(true);
+    setVotes({});
+    setVoteDeadline(deadline);
+
+    broadcastEvent({
+      type: 'vote_start',
+      modes: MODE_META.map(m => ({ id: m.id, name: m.name, icon: m.icon })),
+      deadline,
+    });
+
+    setPendingAction({
+      type: 'vote',
+      action: 'vote_game',
+      modes: MODE_META.map(m => ({ id: m.id, name: m.name, icon: m.icon })),
+      deadline,
+    });
+  }
+
+  function resolveVote() {
+    if (!voteActive) return;
+    setVoteActive(false);
+    setPendingAction(null);
+    currentActionHandler.current = null;
+
+    // Count votes
+    const counts = {};
+    Object.values(votes).forEach(modeId => {
+      counts[modeId] = (counts[modeId] || 0) + 1;
+    });
+
+    // Handle "random" votes
+    if (counts['random']) {
+      for (let i = 0; i < counts['random']; i++) {
+        const randomMode = pickRandom(MODES).id;
+        counts[randomMode] = (counts[randomMode] || 0) + 1;
+      }
+      delete counts['random'];
+    }
+
+    // Find winner(s)
+    const maxVotes = Math.max(...Object.values(counts), 0);
+    if (maxVotes === 0) {
+      // No votes — pick random
+      setGameActive(false);
+      setTimeout(() => startGame(pickRandom(MODES).id), 100);
+      return;
+    }
+
+    const winners = Object.keys(counts).filter(id => counts[id] === maxVotes);
+    const winnerId = winners.length === 1 ? winners[0] : pickRandom(winners);
+
+    // Broadcast result
+    broadcastEvent({ type: 'vote_result', winnerId, winnerName: MODE_META.find(m => m.id === winnerId)?.name, counts });
+
+    // Launch the winning game
+    setGameActive(false);
+    setTimeout(() => startGame(winnerId), 500);
   }
 
   // ── Room / Spectator helpers ──────────────────────────────
@@ -9599,6 +9782,7 @@ function ChoreChaosApp() {
           if (payload.joinedPlayers) setJoinedPlayers(payload.joinedPlayers);
           break;
         case 'game_start':
+          window.__votes = {};
           setSpectatorState({ type: 'playing', result: payload.result, step: 0, done: false });
           // Auto-set pending action for real-time interactive modes on player side
           if (roomModeRef.current === 'player') {
@@ -9694,7 +9878,29 @@ function ChoreChaosApp() {
         case 'draft_complete':
           setPendingAction(null);
           break;
+        case 'vote_start':
+          window.__votes = {};
+          if (roomModeRef.current === 'player') {
+            setPendingAction({
+              type: 'vote',
+              action: 'vote_game',
+              modes: payload.modes,
+              deadline: payload.deadline,
+            });
+          }
+          break;
+        case 'vote_cast':
+          window.__votes = window.__votes || {};
+          window.__votes[payload.playerName] = payload.modeId;
+          // Force re-render by updating pendingAction
+          setPendingAction(prev => prev ? { ...prev, _tick: Date.now() } : prev);
+          break;
+        case 'vote_result':
+          window.__votes = {};
+          setPendingAction(null);
+          break;
         case 'game_reset':
+          window.__votes = {};
           setSpectatorState({ type: 'waiting' });
           break;
         case 'room_closed':
@@ -9861,9 +10067,22 @@ function ChoreChaosApp() {
           </div>
           <div className="pixel-font text-2xl text-cyan-300 mb-4" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>{roomCode}</div>
           {spectatorState?.hostName ? <p className="font-mono text-sm text-slate-400 mb-4">Connected to {spectatorState.hostName}'s room</p> : null}
-          <div className="font-mono text-sm text-slate-500 animate-pulse">Waiting for the next game...</div>
-          {!spectatorConnected ? <div className="font-mono text-xs text-amber-400 mt-4">Connecting...</div> : null}
-          <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
+          {pendingAction?.action === 'vote_game' ? (
+            <div className="w-full max-w-lg">
+              <VoteGrid
+                votes={window.__votes || {}}
+                deadline={pendingAction.deadline}
+                onVote={(action) => { sendPlayerAction(action); window.__votes = window.__votes || {}; window.__votes[playerName] = action.modeId; setPendingAction(prev => prev ? { ...prev, _tick: Date.now() } : prev); }}
+                playerName={playerName}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="font-mono text-sm text-slate-500 animate-pulse">Waiting for the next game...</div>
+              {!spectatorConnected ? <div className="font-mono text-xs text-amber-400 mt-4">Connecting...</div> : null}
+              <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
+            </>
+          )}
         </div>
       );
     }
@@ -9908,10 +10127,20 @@ function ChoreChaosApp() {
                     </div>
                   </div>
                 ) : null}
+                {pendingAction?.action === 'vote_game' && specDone ? (
+                  <VoteGrid
+                    votes={window.__votes || {}}
+                    deadline={pendingAction.deadline}
+                    onVote={(action) => { sendPlayerAction(action); window.__votes = window.__votes || {}; window.__votes[playerName] = action.modeId; setPendingAction(prev => prev ? { ...prev, _tick: Date.now() } : prev); }}
+                    playerName={playerName}
+                  />
+                ) : null}
               </div>
             </div>
           </div>
-          <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
+          {pendingAction?.action !== 'vote_game' ? (
+            <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
+          ) : null}
         </div>
       );
     }
@@ -10167,11 +10396,28 @@ function ChoreChaosApp() {
                 {/* Interactive mode indicator */}
                 <div className="mt-2 text-center">
                   {interactiveMode ? (
-                    <span className="pixel-font text-[7px] text-green-400">{"\uD83C\uDFAE"} Interactive Mode</span>
+                    <>
+                      <span className="pixel-font text-[7px] text-green-400">{"\uD83C\uDFAE"} Interactive Mode</span>
+                      {!gameActive ? (
+                        <div className="mt-3">
+                          <button
+                            onClick={startVote}
+                            className="pixel-font inline-flex items-center gap-2 border-2 border-violet-500/40 bg-violet-500/10 px-5 py-3 text-[9px] text-violet-300 transition hover:bg-violet-500/20 hover:border-violet-400"
+                          >
+                            {"\uD83D\uDDF3\uFE0F"} VOTE FOR NEXT GAME
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
                   ) : (
                     <span className="pixel-font text-[7px] text-slate-500">{"\uD83D\uDC40"} Spectator Only</span>
                   )}
                 </div>
+                {voteActive && !gameActive ? (
+                  <div className="mt-4">
+                    <VoteGrid votes={votes} deadline={voteDeadline} onVote={handleHostAction} playerName={playerName} />
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null
@@ -10243,6 +10489,14 @@ function ChoreChaosApp() {
                         <Shuffle className="h-4 w-4" />
                         New random game
                       </button>
+                      {interactiveMode ? (
+                        <button
+                          onClick={startVote}
+                          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:-translate-y-0.5"
+                        >
+                          {"\uD83D\uDDF3\uFE0F"} Vote next
+                        </button>
+                      ) : null}
                       <button
                         onClick={playAgain}
                         className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5"
@@ -10332,6 +10586,10 @@ function ChoreChaosApp() {
                     </div>
                     );
                   })() : null}
+
+                  {voteActive && playbackDone ? (
+                    <VoteGrid votes={votes} deadline={voteDeadline} onVote={handleHostAction} playerName={playerName} />
+                  ) : null}
                 </div>
               </div>
 
@@ -10379,6 +10637,14 @@ function ChoreChaosApp() {
                       <Shuffle className="h-4 w-4" />
                       Random
                     </button>
+                    {interactiveMode ? (
+                      <button
+                        onClick={startVote}
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                      >
+                        {"\uD83D\uDDF3\uFE0F"} Vote
+                      </button>
+                    ) : null}
                     <button
                       onClick={playAgain}
                       className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-800 px-4 py-3 text-sm font-semibold text-white shadow-lg"
