@@ -1521,7 +1521,7 @@
   </div>
 
   <script type="text/babel-source" id="app-source">
-    const { useMemo, useState, useEffect, useCallback } = React;
+    const { useMemo, useState, useEffect, useCallback, useRef } = React;
     const { motion, AnimatePresence } = window.__FM;
 
     // Supabase setup — replace with your project credentials
@@ -7883,12 +7883,140 @@ function VoteGrid({ votes, deadline, onVote, playerName }) {
   );
 }
 
+function SeriesScoreboard({ scores, history, round, totalRounds, selectionGoal }) {
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const isLoserMode = selectionGoal === 'loser';
+
+  return (
+    <div className="rounded-2xl border border-indigo-500/20 bg-[#0d0d24] p-6">
+      <div className="text-center mb-4">
+        <div className="pixel-font text-[11px] text-indigo-300" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>
+          {"\uD83C\uDFC6"} SERIES SCOREBOARD
+        </div>
+        <div className="pixel-font text-[8px] text-slate-500 mt-1">
+          Round {round} of {totalRounds} {"\u2022"} {isLoserMode ? 'Most losses loses' : 'Most wins wins'}
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        {sorted.map(([name, score], i) => (
+          <div key={name} className="flex items-center justify-between px-4 py-2 rounded-xl" style={{
+            background: i === 0 ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.03)',
+            border: i === 0 ? '1px solid rgba(251,191,36,0.3)' : '1px solid rgba(255,255,255,0.05)',
+          }}>
+            <div className="flex items-center gap-3">
+              <span className="pixel-font text-[10px]" style={{ color: i === 0 ? '#fbbf24' : '#94a3b8' }}>
+                #{i + 1}
+              </span>
+              <span className="font-mono text-sm font-bold text-white">{name}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {Array.from({ length: score }, (_, j) => (
+                  <div key={j} className="w-1.5 h-4 rounded-sm" style={{ background: isLoserMode ? '#ef4444' : '#fbbf24' }} />
+                ))}
+                {Array.from({ length: Math.max(0, totalRounds - score) }, (_, j) => (
+                  <div key={`e-${j}`} className="w-1.5 h-4 rounded-sm bg-white/10" />
+                ))}
+              </div>
+              <span className="pixel-font text-[10px] text-white">{score}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {history.length > 0 ? (
+        <>
+          <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Round History</div>
+          <div className="flex flex-wrap gap-2">
+            {history.map((h, i) => (
+              <div key={i} className="px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <span className="pixel-font text-[7px] text-slate-500">R{h.round}</span>
+                <span className="font-mono text-[9px] text-white ml-1">{h.selectedName}</span>
+                <span className="font-mono text-[8px] text-slate-600 ml-1">({h.modeName})</span>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function SeriesResult({ scores, history, totalRounds, selectionGoal }) {
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const champion = sorted[0];
+  const isLoserMode = selectionGoal === 'loser';
+
+  return (
+    <div className="rounded-2xl border border-amber-400/30 bg-gradient-to-br from-[#1a1033] to-[#0d0d24] p-8 text-center">
+      <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-2">Series Complete</div>
+      <div className="pixel-font text-2xl mb-4" style={{
+        color: isLoserMode ? '#f87171' : '#fbbf24',
+        textShadow: isLoserMode ? '0 0 20px rgba(248,113,113,0.5)' : '0 0 20px rgba(251,191,36,0.5)',
+      }}>
+        {isLoserMode ? '\uD83D\uDC80 ULTIMATE LOSER \uD83D\uDC80' : '\uD83D\uDC51 SERIES CHAMPION \uD83D\uDC51'}
+      </div>
+      <div className="pixel-font text-xl text-white mb-6" style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>
+        {champion[0]}
+      </div>
+      <div className="pixel-font text-[9px] text-slate-400 mb-6">
+        {champion[1]} {isLoserMode ? 'losses' : 'wins'} in {history.length} round{history.length !== 1 ? 's' : ''}
+      </div>
+
+      <div className="space-y-1.5 mb-4">
+        {sorted.map(([name, score], i) => (
+          <div key={name} className="flex items-center justify-between px-4 py-1.5 rounded-lg" style={{
+            background: i === 0 ? (isLoserMode ? 'rgba(248,113,113,0.15)' : 'rgba(251,191,36,0.15)') : 'rgba(255,255,255,0.03)',
+            border: i === 0 ? (isLoserMode ? '1px solid rgba(248,113,113,0.3)' : '1px solid rgba(251,191,36,0.3)') : '1px solid rgba(255,255,255,0.05)',
+          }}>
+            <span className="font-mono text-sm font-bold text-white">{name}</span>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {Array.from({ length: score }, (_, j) => (
+                  <div key={j} className="w-1.5 h-4 rounded-sm" style={{ background: isLoserMode ? '#ef4444' : '#fbbf24' }} />
+                ))}
+              </div>
+              <span className="pixel-font text-[10px] text-white">{score}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {history.length > 0 ? (
+        <div className="flex flex-wrap justify-center gap-2 mt-4">
+          {history.map((h, i) => (
+            <div key={i} className="px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+              <span className="pixel-font text-[7px] text-slate-500">R{h.round}</span>
+              <span className="font-mono text-[9px] text-white ml-1">{h.selectedName}</span>
+              <span className="font-mono text-[8px] text-slate-600 ml-1">({h.modeName})</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ChoreChaosApp() {
   const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
   const [taskLabel, setTaskLabel] = useState("");
   const [selectionGoal, setSelectionGoal] = useState("winner");
   const [selectedModeId, setSelectedModeId] = useState("auto");
   const [gameFormat, setGameFormat] = useState("single");
+
+  // ── Series (Best of N) state ──
+  const [seriesActive, setSeriesActive] = useState(false);
+  const [seriesConfig, setSeriesConfig] = useState(null);
+  const [seriesScores, setSeriesScores] = useState({});
+  const [seriesRound, setSeriesRound] = useState(0);
+  const [seriesHistory, setSeriesHistory] = useState([]);
+  const [seriesComplete, setSeriesComplete] = useState(false);
+  const [showSeriesSetup, setShowSeriesSetup] = useState(false);
+  const [showSeriesScoreboard, setShowSeriesScoreboard] = useState(false);
+  const seriesScoreRef = useRef({});
+  const seriesRoundRecordedRef = useRef(null);
+
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -9434,13 +9562,50 @@ function ChoreChaosApp() {
         modeName: outcome.modeName,
         selectedName: outcome.selectedName,
         selectionGoal: outcome.selectionGoal,
-        format: outcome.isTournament ? "tournament" : "single",
+        format: outcome.isTournament ? "tournament" : seriesActive ? "series" : "single",
         suddenDeath: outcome.suddenDeathRound > 0,
       },
       ...current,
     ].slice(0, 8));
     // Fire-and-forget: record to Supabase then refresh leaderboard
     recordGame(outcome).then(() => fetchLeaderboard());
+  }
+
+  // ── Series helpers ──
+  function resetSeriesState() {
+    setSeriesActive(false);
+    setSeriesConfig(null);
+    setSeriesScores({});
+    setSeriesRound(0);
+    setSeriesHistory([]);
+    setSeriesComplete(false);
+    setShowSeriesSetup(false);
+    setShowSeriesScoreboard(false);
+    seriesScoreRef.current = {};
+    seriesRoundRecordedRef.current = null;
+  }
+
+  function isSeriesClinched(scores, totalRounds, currentRound) {
+    const vals = Object.values(scores);
+    if (vals.length === 0) return false;
+    const sorted = [...vals].sort((a, b) => b - a);
+    const maxScore = sorted[0];
+    const secondHighest = sorted[1] || 0;
+    const remainingRounds = totalRounds - currentRound;
+    if (currentRound >= totalRounds) return true;
+    if (maxScore > secondHighest + remainingRounds) return true;
+    return false;
+  }
+
+  function startSeriesNextRound(forcedModeId) {
+    // Start the next round in an active series
+    if (forcedModeId) {
+      setGameActive(false);
+      setTimeout(() => startGame(forcedModeId), 100);
+    } else {
+      setGameActive(false);
+      setTimeout(() => startGame(pickRandom(MODES).id), 100);
+    }
   }
 
   function createOutcome(forcedModeId = null, forcedNames = null) {
@@ -9465,6 +9630,32 @@ function ChoreChaosApp() {
 
   function startGame(forcedModeId = null) {
     if (!canRun) return;
+
+    // Initialize a new series if selecting a best-of format and not already in one
+    if (['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat) && !seriesActive) {
+      const totalRounds = gameFormat === 'best-of-3' ? 3 : gameFormat === 'best-of-5' ? 5 : 7;
+      const initScores = Object.fromEntries(cleanedNames.map(n => [n, 0]));
+      setSeriesActive(true);
+      setSeriesConfig({ totalRounds, selectionGoal });
+      setSeriesScores(initScores);
+      seriesScoreRef.current = initScores;
+      setSeriesRound(0);
+      setSeriesHistory([]);
+      setSeriesComplete(false);
+      setShowSeriesScoreboard(false);
+      // If interactive, start a vote for the first mode
+      if (interactiveMode && !forcedModeId) {
+        startVote();
+        return;
+      }
+      // Otherwise fall through to start with forced mode or random
+    }
+
+    // If series is active, increment round counter
+    if (seriesActive || ['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat)) {
+      setSeriesRound(prev => prev + 1);
+    }
+
     const outcome = {
       ...createOutcome(forcedModeId),
       runId: `${Date.now()}-${secureRandomInt(100000)}`,
@@ -9495,6 +9686,7 @@ function ChoreChaosApp() {
     setVoteActive(false);
     setVotes({});
     setVoteDeadline(null);
+    setShowSeriesScoreboard(false);
     window.__interactiveRocketEjects = {};
     window.__draftChoices = {};
     window.__rocketInteractive = false;
@@ -9507,7 +9699,11 @@ function ChoreChaosApp() {
     if (!(interactiveMode && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || outcome.draftPhase))) {
       pushHistory(outcome);
     }
-    broadcastEvent({ type: 'game_start', result: outcome });
+    broadcastEvent({
+      type: 'game_start',
+      result: outcome,
+      series: seriesActive ? { active: true, config: seriesConfig, scores: seriesScoreRef.current, round: seriesRound, history: seriesHistory } : null,
+    });
   }
 
   function startSuddenDeath() {
@@ -9585,8 +9781,38 @@ function ChoreChaosApp() {
     setVoteActive(false);
     setVotes({});
     setVoteDeadline(null);
+    resetSeriesState();
     broadcastEvent({ type: 'game_reset' });
   }
+
+  // ── Series round completion tracking ──
+  useEffect(() => {
+    if (!seriesActive || !seriesConfig || !result || !playbackDone) return;
+    if (result.isTie) return; // Don't count ties — wait for sudden death
+    if (!result.selectedName) return;
+    // Prevent double-recording the same round
+    const roundKey = `${result.runId}-${seriesRound}`;
+    if (seriesRoundRecordedRef.current === roundKey) return;
+    seriesRoundRecordedRef.current = roundKey;
+
+    const newScores = { ...seriesScoreRef.current };
+    newScores[result.selectedName] = (newScores[result.selectedName] || 0) + 1;
+    seriesScoreRef.current = newScores;
+    setSeriesScores(newScores);
+
+    const newHistory = [...seriesHistory, {
+      round: seriesRound,
+      modeId: result.modeId,
+      modeName: result.modeName,
+      selectedName: result.selectedName,
+    }];
+    setSeriesHistory(newHistory);
+
+    // Check if clinched
+    if (isSeriesClinched(newScores, seriesConfig.totalRounds, seriesRound)) {
+      setSeriesComplete(true);
+    }
+  }, [seriesActive, playbackDone, result?.runId]);
 
   // ── Vote for Next Game ────────────────────────────────────
 
@@ -10269,6 +10495,9 @@ function ChoreChaosApp() {
                 >
                   <option value="single">Single Round</option>
                   <option value="tournament">Tournament</option>
+                  <option value="best-of-3">Best of 3</option>
+                  <option value="best-of-5">Best of 5</option>
+                  <option value="best-of-7">Best of 7</option>
                 </select>
               </div>
               <div>
@@ -10438,10 +10667,29 @@ function ChoreChaosApp() {
           >
             <div className={`theme-${result.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
               <ThemeArt modeId={result.modeId} />
-              <div className="modal-toolbar relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur sm:gap-4 sm:px-6 sm:py-4">
+              <div className="modal-toolbar relative z-10 flex flex-col border-b border-slate-200/80 bg-white/80 backdrop-blur">
+                {seriesActive && seriesConfig ? (
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-b border-slate-200/50 bg-gradient-to-r from-indigo-50/80 to-violet-50/80 px-3 py-2 sm:px-6">
+                    <span className="text-xs font-bold uppercase tracking-widest text-indigo-600">
+                      Best of {seriesConfig.totalRounds}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">
+                      Round {seriesRound} of {seriesConfig.totalRounds}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {Object.entries(seriesScores).sort((a, b) => b[1] - a[1]).map(([name, score]) => (
+                        <span key={name} className="flex items-center gap-1">
+                          <span className="text-xs font-bold text-slate-700">{name}:</span>
+                          <span className={`text-xs font-black ${score > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>{score}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-                    {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : "Game view"}
+                    {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : seriesActive ? `Series round ${seriesRound}` : "Game view"}
                   </div>
                   <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{result.modeName}</div>
                 </div>
@@ -10472,6 +10720,53 @@ function ChoreChaosApp() {
                         className="sudden-death-btn inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
                       >
                         {"\u2694\uFE0F"} SUDDEN DEATH
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit
+                      </button>
+                    </>
+                  ) : seriesActive && !seriesComplete ? (
+                    <>
+                      {interactiveMode ? (
+                        <button
+                          onClick={startVote}
+                          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:-translate-y-0.5"
+                        >
+                          {"\uD83D\uDDF3\uFE0F"} Next Round
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => startSeriesNextRound(null)}
+                          className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:-translate-y-0.5"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          Next Round
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowSeriesScoreboard(prev => !prev)}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5"
+                      >
+                        {"\uD83D\uDCCA"} Scoreboard
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit Series
+                      </button>
+                    </>
+                  ) : seriesActive && seriesComplete ? (
+                    <>
+                      <button
+                        onClick={() => { resetSeriesState(); setGameActive(false); setTimeout(() => startGame(), 100); }}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:-translate-y-0.5"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        New Series
                       </button>
                       <button
                         onClick={exitGame}
@@ -10512,6 +10807,7 @@ function ChoreChaosApp() {
                       </button>
                     </>
                   )}
+                </div>
                 </div>
               </div>
 
@@ -10578,6 +10874,13 @@ function ChoreChaosApp() {
                         <div className="mx-auto mt-3 max-w-3xl text-slate-600">
                           {suddenDeathRound > 0 ? (
                             <span>{result.summary}</span>
+                          ) : seriesActive && seriesConfig ? (
+                            <span>
+                              {seriesComplete
+                                ? `Series complete! ${result.selectedName} clinched it.`
+                                : `Round ${seriesRound} of ${seriesConfig.totalRounds} complete. Click Next Round to continue the series.`
+                              }
+                            </span>
                           ) : (
                             <span>Choose <span className="font-semibold">Play again</span> to run it back in full screen, or <span className="font-semibold">Exit</span> to return to setup.</span>
                           )}
@@ -10586,6 +10889,25 @@ function ChoreChaosApp() {
                     </div>
                     );
                   })() : null}
+
+                  {seriesActive && playbackDone && seriesComplete && seriesConfig ? (
+                    <SeriesResult
+                      scores={seriesScores}
+                      history={seriesHistory}
+                      totalRounds={seriesConfig.totalRounds}
+                      selectionGoal={seriesConfig.selectionGoal}
+                    />
+                  ) : null}
+
+                  {seriesActive && playbackDone && !seriesComplete && (showSeriesScoreboard || !result.isTie) && seriesConfig ? (
+                    <SeriesScoreboard
+                      scores={seriesScores}
+                      history={seriesHistory}
+                      round={seriesRound}
+                      totalRounds={seriesConfig.totalRounds}
+                      selectionGoal={seriesConfig.selectionGoal}
+                    />
+                  ) : null}
 
                   {voteActive && playbackDone ? (
                     <VoteGrid votes={votes} deadline={voteDeadline} onVote={handleHostAction} playerName={playerName} />
@@ -10620,6 +10942,51 @@ function ChoreChaosApp() {
                       className="sudden-death-btn flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-white shadow-lg"
                     >
                       {"\u2694\uFE0F"} SUDDEN DEATH
+                    </button>
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      Exit
+                    </button>
+                  </>
+                ) : seriesActive && !seriesComplete ? (
+                  <>
+                    {interactiveMode ? (
+                      <button
+                        onClick={startVote}
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                      >
+                        {"\uD83D\uDDF3\uFE0F"} Next Round
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => startSeriesNextRound(null)}
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                      >
+                        Next Round
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowSeriesScoreboard(prev => !prev)}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-800 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                    >
+                      {"\uD83D\uDCCA"}
+                    </button>
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      Exit
+                    </button>
+                  </>
+                ) : seriesActive && seriesComplete ? (
+                  <>
+                    <button
+                      onClick={() => { resetSeriesState(); setGameActive(false); setTimeout(() => startGame(), 100); }}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                    >
+                      New Series
                     </button>
                     <button
                       onClick={exitGame}
