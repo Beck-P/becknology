@@ -11,7 +11,7 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#080810;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;
   font-family:Georgia,'Times New Roman',serif}
-canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
 
 /* Title */
 #title{position:fixed;top:0;left:0;width:100%;height:100%;z-index:20;
@@ -268,112 +268,238 @@ const audio = {
 // ============================================================
 // DRAWING — Backgrounds
 // ============================================================
+// --- Noise helpers for organic shapes ---
+function hash(n) { let x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function noise1d(x) {
+  const i = Math.floor(x), f = x - i;
+  return hash(i) * (1 - f * f * (3 - 2 * f)) + hash(i + 1) * f * f * (3 - 2 * f);
+}
+function fbm(x, oct) {
+  let v = 0, a = 0.5, freq = 1;
+  for (let i = 0; i < oct; i++) { v += noise1d(x * freq) * a; freq *= 2; a *= 0.5; }
+  return v;
+}
+
+// --- Reflection canvas (reused each frame) ---
+const _rc = document.createElement('canvas');
+const _rx = _rc.getContext('2d');
+
 function drawSky(colors, h) {
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, colors[0]);
-  g.addColorStop(1, colors[1]);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, G.W, h);
+  const g = ctx.createLinearGradient(0, 0, 0, Math.round(h));
+  g.addColorStop(0, colors[0]); g.addColorStop(1, colors[1]);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, G.W, Math.round(h));
+}
+
+function drawGrad(y0, y1, stops) {
+  const g = ctx.createLinearGradient(0, y0, 0, y1);
+  stops.forEach(([c, s]) => g.addColorStop(s, c));
+  ctx.fillStyle = g; ctx.fillRect(0, y0, G.W, y1 - y0);
+}
+
+function drawStars(maxY, t) {
+  const my = Math.round(maxY);
+  for (let i = 0; i < 50; i++) {
+    const sx = Math.round((i * 137.5 + 23) % G.W);
+    const sy = Math.round((i * 83.7 + 11) % my);
+    ctx.fillStyle = `rgba(255,255,255,${0.2 + 0.6 * Math.sin(t * 0.0008 + i * 2.1)})`;
+    ctx.fillRect(sx, sy, hash(i * 17) > 0.88 ? 2 : 1, 1);
+  }
 }
 
 function drawWater(y0, colors, t) {
   const { W, H } = G;
   for (let layer = 0; layer < 3; layer++) {
-    const y = y0 + layer * H * 0.06;
+    const y = Math.round(y0 + layer * H * 0.05);
     ctx.fillStyle = colors[layer];
-    ctx.beginPath();
-    ctx.moveTo(0, H);
-    for (let x = 0; x <= W; x += 3) {
-      ctx.lineTo(x, y + Math.sin(x * 0.015 + t * 0.001 + layer * 1.5) * (3 + layer * 2));
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x++) {
+      ctx.lineTo(x, y + Math.round(Math.sin(x * 0.06 + t * 0.001 + layer * 1.5) * (1.5 + layer)));
     }
     ctx.lineTo(W, H); ctx.fill();
   }
 }
 
-function drawStars(maxY, t) {
-  for (let i = 0; i < 40; i++) {
-    const sx = (i * 137.5 + 23) % G.W;
-    const sy = (i * 83.7 + 11) % maxY;
-    ctx.fillStyle = `rgba(255,255,255,${0.25 + 0.5 * Math.sin(t * 0.001 + i * 2.1)})`;
-    ctx.fillRect(sx, sy, 1.5, 1.5);
+function drawCloudBand(maxH, t, color, amp, seed, yFrac) {
+  const { W } = G;
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.moveTo(-1, Math.round(maxH));
+  for (let x = -1; x <= W + 1; x++) {
+    const n = fbm(x * 0.012 + seed + t * 0.00003, 4);
+    ctx.lineTo(x, Math.round(maxH * yFrac + (n - 0.5) * maxH * amp));
+  }
+  ctx.lineTo(W + 1, Math.round(maxH)); ctx.fill();
+}
+
+function drawHill(baseY, height, color, seed) {
+  const { W, H } = G;
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.moveTo(-1, H);
+  for (let x = -1; x <= W + 1; x++) {
+    ctx.lineTo(x, Math.round(baseY - fbm(x * 0.008 + seed, 4) * height));
+  }
+  ctx.lineTo(W + 1, H); ctx.fill();
+}
+
+function drawReflection(waterY, tint, t, maxR) {
+  const { W, H } = G;
+  const wy = Math.round(waterY);
+  _rc.width = W; _rc.height = wy;
+  _rx.drawImage(canvas, 0, 0, W, wy, 0, 0, W, wy);
+  const rows = maxR || Math.min(H - wy, wy);
+  for (let y = 0; y < rows; y++) {
+    const srcY = wy - 1 - y;
+    if (srcY < 0) break;
+    const dx = Math.round(Math.sin(y * 0.2 + t * 0.002) * 1.5);
+    ctx.drawImage(_rc, 0, srcY, W, 1, dx, wy + y, W, 1);
+  }
+  ctx.fillStyle = tint || 'rgba(0,15,40,0.2)';
+  ctx.fillRect(0, wy, W, rows);
+  for (let i = 0; i < 6; i++) {
+    const sy = wy + 2 + Math.round(i * rows / 7);
+    const sx = Math.round((hash(i * 7 + 99) * W * 0.6 + t * 0.003 * (i + 1)) % W);
+    ctx.fillStyle = `rgba(255,240,210,${Math.max(0.04, 0.18 - i * 0.025)})`;
+    ctx.fillRect(sx, sy, 2 + Math.round(hash(i * 13 + 77) * 2), 1);
   }
 }
 
-function drawTree(x, y, h, autumn) {
-  ctx.fillStyle = '#5D4037';
-  ctx.fillRect(x - 3, y - h * 0.4, 6, h * 0.4);
-  const cols = autumn ? ['#FF6B35','#FFD700','#DC2626','#FF8C42'] : ['#2E7D32','#4CAF50','#388E3C'];
-  for (let i = 0; i < 3; i++) {
-    ctx.fillStyle = cols[i % cols.length];
-    const w = (3 - i) * h * 0.14;
-    const cy = y - h * 0.4 - i * h * 0.18;
-    ctx.beginPath();
-    ctx.moveTo(x, cy - h * 0.18);
-    ctx.lineTo(x + w, cy);
-    ctx.lineTo(x - w, cy);
-    ctx.fill();
+function drawPixelTree(x, y, h, colors, seed) {
+  const cx = Math.round(x), cy = Math.round(y);
+  ctx.fillStyle = '#4A2A15';
+  const tw = Math.max(2, Math.round(h * 0.07));
+  const th = Math.round(h * 0.4);
+  ctx.fillRect(cx - Math.floor(tw / 2), cy - th, tw, th);
+  for (let L = 0; L < colors.length; L++) {
+    ctx.fillStyle = colors[L];
+    const r = Math.round(h * (0.2 - L * 0.025));
+    const bx = cx + Math.round((hash(seed + L * 7) - 0.5) * r * 0.5);
+    const by = cy - th - Math.round(L * h * 0.1) - r;
+    for (let dy = -r; dy <= r; dy++) {
+      const dx = Math.round(Math.sqrt(Math.max(0, r * r - dy * dy)) + (hash(seed + dy + L * 10) - 0.5) * r * 0.35);
+      if (dx > 0) ctx.fillRect(bx - dx, by + dy, dx * 2, 1);
+    }
+  }
+}
+
+function drawWaveHL(startY, endY, t, rgb, n) {
+  const { W } = G;
+  for (let i = 0; i < n; i++) {
+    const wy = Math.round(startY + 2 + i * (endY - startY) / (n + 1));
+    ctx.fillStyle = `rgba(${rgb},${Math.max(0.03, 0.15 - i * 0.02)})`;
+    for (let x = 0; x < W; x += 3) {
+      if (hash(x * 2 + i * 13 + Math.floor(t * 0.0008)) > 0.55)
+        ctx.fillRect(x + Math.round(Math.sin(x * 0.08 + t * 0.001)), wy, 2, 1);
+    }
   }
 }
 
 const BG = {
   autumn(t) {
     const { W, H } = G;
-    drawSky(['#FFB347','#87CEEB'], H * 0.6);
-    ctx.fillStyle = '#8B7355'; ctx.fillRect(0, H * 0.6, W, H * 0.4);
-    ctx.fillStyle = '#7B9E44'; ctx.fillRect(0, H * 0.58, W, H * 0.04);
-    ctx.fillStyle = '#D2B48C'; ctx.fillRect(W * 0.15, H * 0.63, W * 0.7, H * 0.05);
-    drawTree(W * 0.08, H * 0.6, H * 0.32, true);
-    drawTree(W * 0.28, H * 0.58, H * 0.28, true);
-    drawTree(W * 0.72, H * 0.59, H * 0.3, true);
-    drawTree(W * 0.92, H * 0.6, H * 0.26, true);
-    // Birds
-    for (let i = 0; i < 5; i++) {
-      const bx = (W * 0.2 + i * W * 0.12 + Math.sin(t * 0.0008 + i) * 15) % W;
-      const by = H * 0.12 + Math.sin(t * 0.001 + i * 2) * 10;
-      ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(bx - 6, by + 2); ctx.quadraticCurveTo(bx - 3, by - 3, bx, by);
-      ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx + 3, by - 3, bx + 6, by + 2);
-      ctx.stroke();
+    const skyH = Math.round(H * 0.55);
+    drawGrad(0, skyH, [['#1a1a4e',0],['#4a3a6e',0.2],['#8B5A5A',0.4],['#CC7A4A',0.6],['#FFB347',0.82],['#FFE4A0',1]]);
+    drawCloudBand(skyH, t, 'rgba(160,120,140,0.45)', 0.14, 10, 0.28);
+    drawCloudBand(skyH, t, 'rgba(200,150,130,0.4)', 0.11, 25, 0.42);
+    drawCloudBand(skyH, t, 'rgba(225,195,165,0.3)', 0.07, 40, 0.55);
+    drawHill(skyH + Math.round(H * 0.02), H * 0.05, '#3a5a2a', 7);
+    drawHill(skyH, H * 0.03, '#4a6a3a', 15);
+    drawGrad(skyH - 1, H, [['#7B9E44',0],['#6B8E34',0.05],['#8B7355',0.18],['#5D4037',1]]);
+    ctx.fillStyle = '#C4A882';
+    const pathY = skyH + Math.round(H * 0.1);
+    for (let x = 0; x < W; x++) {
+      const pw = Math.round(4 + Math.sin(x * 0.04 + 1) * 1.5);
+      ctx.fillRect(x, pathY - Math.round(pw / 2), 1, pw);
+    }
+    ctx.fillStyle = '#A08060';
+    for (let x = 0; x < W; x += 2) ctx.fillRect(x, pathY + 2, 1, 1);
+    drawPixelTree(W * 0.06, skyH, H * 0.28, ['#CC3300','#EE6622','#FFB347'], 1);
+    drawPixelTree(W * 0.22, skyH - 2, H * 0.34, ['#BB2200','#DD5500','#FFAA22','#FFD700'], 2);
+    drawPixelTree(W * 0.48, skyH + 3, H * 0.18, ['#DD4400','#FF8844'], 5);
+    drawPixelTree(W * 0.72, skyH - 1, H * 0.3, ['#AA3300','#EE7744','#FFCC44'], 3);
+    drawPixelTree(W * 0.93, skyH, H * 0.26, ['#CC5500','#FF9944','#FFD700'], 4);
+    ctx.fillStyle = '#8BA84A';
+    for (let i = 0; i < 25; i++) {
+      const gx = Math.round(hash(i * 7) * W), gy = Math.round(skyH + hash(i * 13) * H * 0.04);
+      ctx.fillRect(gx, gy - 2, 1, 2);
+      if (hash(i * 3) > 0.5) ctx.fillRect(gx + 1, gy - 1, 1, 1);
+    }
+    for (let i = 0; i < 4; i++) {
+      const bx = Math.round((W * 0.2 + i * W * 0.15 + Math.sin(t * 0.0005 + i) * 5) % W);
+      const by = Math.round(H * 0.08 + Math.sin(t * 0.0007 + i * 2) * 3);
+      ctx.fillStyle = '#2a2a3a';
+      ctx.fillRect(bx - 2, by, 1, 1); ctx.fillRect(bx - 1, by - 1, 1, 1);
+      ctx.fillRect(bx + 1, by - 1, 1, 1); ctx.fillRect(bx + 2, by, 1, 1);
     }
   },
 
   shore(t) {
     const { W, H } = G;
-    drawSky(['#87CEEB','#B4D7E8'], H * 0.45);
-    drawWater(H * 0.35, ['#059669','#34D399','#A7F3D0'], t);
-    ctx.fillStyle = '#F5DEB3'; ctx.fillRect(0, H * 0.58, W, H * 0.42);
-    ctx.fillStyle = '#DEB887'; ctx.fillRect(0, H * 0.57, W, H * 0.03);
-    // Dock
-    ctx.fillStyle = '#8B7355';
-    ctx.fillRect(W * 0.55, H * 0.42, W * 0.38, H * 0.035);
-    ctx.fillRect(W * 0.65, H * 0.42, 4, H * 0.16);
-    ctx.fillRect(W * 0.82, H * 0.42, 4, H * 0.16);
+    const skyH = Math.round(H * 0.38), sandY = Math.round(H * 0.58);
+    drawGrad(0, skyH, [['#3A6A9A',0],['#6A9ABB',0.4],['#9AC0D8',0.7],['#C0D8E8',1]]);
+    drawCloudBand(skyH, t, 'rgba(220,235,250,0.35)', 0.07, 50, 0.32);
+    drawCloudBand(skyH, t, 'rgba(235,242,255,0.25)', 0.05, 65, 0.5);
+    ctx.fillStyle = '#0A5A40'; ctx.fillRect(0, skyH, W, sandY - skyH);
+    drawReflection(skyH, 'rgba(5,60,40,0.3)', t, sandY - skyH);
+    drawWaveHL(skyH, sandY, t, '52,211,153', 4);
+    drawGrad(sandY, H, [['#E8D5B0',0],['#F5DEB3',0.08],['#DEB887',1]]);
+    ctx.fillStyle = '#D4C4A0';
+    for (let i = 0; i < 15; i++) ctx.fillRect(Math.round(hash(i * 11) * W), sandY + Math.round(hash(i * 19) * H * 0.06) + 2, 2, 1);
+    ctx.fillStyle = '#6B8E34';
+    for (let i = 0; i < 12; i++) ctx.fillRect(Math.round(hash(i * 7 + 200) * W * 0.5), sandY - 1, 1, 2);
+    ctx.fillStyle = '#6B5030';
+    const dockY = Math.round(skyH + (sandY - skyH) * 0.25);
+    ctx.fillRect(Math.round(W * 0.55), dockY, Math.round(W * 0.38), 3);
+    ctx.fillRect(Math.round(W * 0.65), dockY, 2, Math.round((sandY - dockY) * 0.7));
+    ctx.fillRect(Math.round(W * 0.82), dockY, 2, Math.round((sandY - dockY) * 0.7));
+    ctx.fillStyle = '#7A6040'; ctx.fillRect(Math.round(W * 0.55), dockY + 1, Math.round(W * 0.38), 1);
   },
 
   ship(t, waterType) {
     const { W, H } = G;
     const wt = waterType || 'emerald';
-    const skyC = wt === 'crimson' ? ['#FFB4B4','#E08888'] : wt === 'midnight' ? ['#0F172A','#1E293B'] : ['#87CEEB','#B4D7E8'];
-    const watC = wt === 'crimson' ? ['#DC2626','#F87171','#FECACA'] : wt === 'midnight' ? ['#0F172A','#1E3A5F','#0a0a20'] : ['#059669','#34D399','#A7F3D0'];
-    drawSky(skyC, H * 0.55);
-    if (wt === 'midnight') drawStars(H * 0.4, t);
-    drawWater(H * 0.5, watC, t);
-    // Deck
-    ctx.fillStyle = '#8B6914'; ctx.fillRect(0, H * 0.66, W, H * 0.34);
-    ctx.fillStyle = '#A0822A';
-    for (let i = 0; i < 7; i++) ctx.fillRect(0, H * 0.66 + i * H * 0.045, W, 1);
-    // Railing
-    ctx.fillStyle = '#654321'; ctx.fillRect(0, H * 0.64, W, H * 0.025);
-    for (let x = 0; x < W; x += 28) ctx.fillRect(x, H * 0.56, 3, H * 0.09);
-    // Mast + sail
-    ctx.fillRect(W * 0.5 - 2, H * 0.15, 4, H * 0.42);
-    ctx.fillStyle = '#FFF8E7';
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.16);
-    ctx.lineTo(W * 0.5 + W * 0.18, H * 0.22);
-    ctx.lineTo(W * 0.5, H * 0.42);
-    ctx.fill();
+    const skyH = Math.round(H * 0.48), deckY = Math.round(H * 0.64);
+    const skyS = { emerald:[['#2A4A6A',0],['#4A7A9A',0.3],['#7AABB8',0.6],['#B4D8E8',1]],
+      crimson:[['#2A1020',0],['#5A2A3A',0.25],['#9A4A5A',0.5],['#DD7A6A',0.8],['#FFB090',1]],
+      midnight:[['#050010',0],['#0A0A1E',0.3],['#101030',0.6],['#1A2040',1]] };
+    drawGrad(0, skyH, skyS[wt] || skyS.emerald);
+    if (wt === 'midnight') drawStars(skyH, t);
+    const cc = { emerald:[['rgba(180,210,230,0.3)',0.3],['rgba(200,225,240,0.25)',0.45],['rgba(220,235,245,0.18)',0.58]],
+      crimson:[['rgba(140,70,70,0.35)',0.25],['rgba(190,110,90,0.3)',0.4],['rgba(220,150,120,0.25)',0.55]],
+      midnight:[['rgba(25,25,50,0.4)',0.2],['rgba(35,35,65,0.3)',0.4]] };
+    (cc[wt] || cc.emerald).forEach(([c, y], i) => drawCloudBand(skyH, t, c, 0.09, 10 + i * 15, y));
+    const wb = { emerald:'#0A4A35', crimson:'#4A1A1A', midnight:'#050510' };
+    ctx.fillStyle = wb[wt] || wb.emerald; ctx.fillRect(0, skyH, W, deckY - skyH);
+    const rt = { emerald:'rgba(5,50,35,0.28)', crimson:'rgba(50,12,12,0.28)', midnight:'rgba(3,3,10,0.25)' };
+    drawReflection(skyH, rt[wt] || rt.emerald, t, deckY - skyH);
+    const wr = { emerald:'52,211,153', crimson:'248,113,113', midnight:'59,130,246' };
+    drawWaveHL(skyH, deckY, t, wr[wt] || wr.emerald, 4);
+    if (wt !== 'midnight') {
+      ctx.fillStyle = wt === 'crimson' ? 'rgba(60,20,20,0.4)' : 'rgba(10,50,30,0.3)';
+      ctx.beginPath(); ctx.moveTo(0, skyH);
+      const ix = Math.round(W * 0.8);
+      for (let x = ix - 15; x <= ix + 15; x++) {
+        const d = Math.abs(x - ix) / 15;
+        ctx.lineTo(x, skyH - Math.round((1 - d * d) * H * 0.025));
+      }
+      ctx.lineTo(W, skyH); ctx.fill();
+    }
+    drawGrad(deckY, H, [['#8B6914',0],['#7A5A10',0.05],['#5A4010',1]]);
+    ctx.fillStyle = '#9A7A20';
+    for (let i = 0; i < 6; i++) ctx.fillRect(0, deckY + 1 + Math.round(i * H * 0.045), W, 1);
+    ctx.fillStyle = '#5A3A10'; ctx.fillRect(0, deckY - 2, W, 3);
+    for (let x = 0; x < W; x += Math.max(6, Math.round(W * 0.06)))
+      ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
+    const mx = Math.round(W * 0.5);
+    ctx.fillRect(mx - 1, Math.round(H * 0.14), 2, Math.round(H * 0.32));
+    ctx.fillStyle = '#F5E8D0';
+    ctx.beginPath(); ctx.moveTo(mx, Math.round(H * 0.15));
+    ctx.lineTo(mx + Math.round(W * 0.14), Math.round(H * 0.2));
+    ctx.lineTo(mx, Math.round(H * 0.38)); ctx.fill();
+    ctx.fillStyle = '#E8D8C0';
+    ctx.beginPath(); ctx.moveTo(mx, Math.round(H * 0.22));
+    ctx.lineTo(mx + Math.round(W * 0.1), Math.round(H * 0.24));
+    ctx.lineTo(mx, Math.round(H * 0.36)); ctx.fill();
+    ctx.fillStyle = wt === 'crimson' ? '#CC3333' : wt === 'midnight' ? '#3B82F6' : '#34D399';
+    ctx.fillRect(mx, Math.round(H * 0.13), Math.round(W * 0.04), 2);
   },
 
   burritos(t) {
@@ -439,73 +565,108 @@ const BG = {
 
   lakeSunset(t) {
     const { W, H } = G;
-    const sg = ctx.createLinearGradient(0, 0, 0, H * 0.48);
-    sg.addColorStop(0, '#1a0a3e'); sg.addColorStop(0.3, '#C04060');
-    sg.addColorStop(0.6, '#FF8C42'); sg.addColorStop(1, '#FFD700');
-    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H * 0.48);
-    drawStars(H * 0.2, t);
-    // Mountains
-    ctx.fillStyle = '#1a0a2e'; ctx.beginPath(); ctx.moveTo(0, H * 0.42);
-    for (let x = 0; x <= W; x += 15) ctx.lineTo(x, H * 0.37 + Math.sin(x * 0.008 + 2) * H * 0.04);
-    ctx.lineTo(W, H * 0.5); ctx.lineTo(0, H * 0.5); ctx.fill();
-    // Reflection
-    const wg = ctx.createLinearGradient(0, H * 0.46, 0, H);
-    wg.addColorStop(0, '#FFB347'); wg.addColorStop(0.3, '#C04060'); wg.addColorStop(1, '#1a0a3e');
-    ctx.fillStyle = wg; ctx.fillRect(0, H * 0.46, W, H * 0.54);
-    // Sun ripples
-    for (let i = 0; i < 5; i++) {
-      const ry = H * 0.5 + i * H * 0.04;
-      const rw = W * 0.12 - i * W * 0.015;
-      ctx.fillStyle = `rgba(255,200,100,${0.25 - i * 0.04})`;
-      ctx.fillRect(W * 0.5 - rw / 2 + Math.sin(t * 0.001 + i) * 3, ry, rw, 2);
+    const waterY = Math.round(H * 0.46);
+    drawGrad(0, waterY, [['#0A0A30',0],['#1A1050',0.12],['#3A1A58',0.25],['#6B3A5E',0.38],
+      ['#AA4A5A',0.5],['#DD6A4A',0.65],['#FF9A45',0.8],['#FFD060',0.92],['#FFF0A0',1]]);
+    drawStars(Math.round(H * 0.18), t);
+    drawCloudBand(waterY, t, 'rgba(80,40,65,0.45)', 0.12, 5, 0.15);
+    drawCloudBand(waterY, t, 'rgba(140,60,70,0.4)', 0.1, 18, 0.28);
+    drawCloudBand(waterY, t, 'rgba(190,100,80,0.35)', 0.08, 30, 0.42);
+    drawCloudBand(waterY, t, 'rgba(220,150,90,0.3)', 0.06, 42, 0.55);
+    const sunX = Math.round(W * 0.5), sunY = Math.round(waterY * 0.88);
+    const sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, Math.round(W * 0.12));
+    sg.addColorStop(0, 'rgba(255,240,180,0.5)'); sg.addColorStop(0.5, 'rgba(255,200,100,0.15)');
+    sg.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, waterY);
+    drawHill(waterY + 1, H * 0.04, '#120525', 3);
+    drawHill(waterY - 1, H * 0.06, '#0E0420', 8);
+    drawHill(waterY + 2, H * 0.025, '#180830', 20);
+    ctx.fillStyle = '#FFE0A0';
+    for (let i = 0; i < 6; i++) {
+      const tx = Math.round(W * 0.6 + i * W * 0.03);
+      const ty = Math.round(waterY - 2 - hash(i * 7 + 500) * H * 0.015);
+      ctx.fillRect(tx, ty, 1, 1);
+      if (hash(i * 11 + 600) > 0.5) ctx.fillRect(tx + 1, ty + 1, 1, 1);
     }
-    // Distant town
-    ctx.fillStyle = '#2a1a3e';
-    for (let i = 0; i < 5; i++) {
-      ctx.fillRect(W * 0.62 + i * W * 0.035, H * 0.39 - H * 0.02 - Math.random() * H * 0.015, W * 0.015, H * 0.03);
+    ctx.fillStyle = '#0A0520'; ctx.fillRect(0, waterY, W, H - waterY);
+    drawReflection(waterY, 'rgba(8,4,20,0.12)', t);
+    for (let i = 0; i < 10; i++) {
+      const py = waterY + 2 + Math.round(i * (H - waterY) / 12);
+      const pw = Math.max(1, Math.round(W * 0.05 - i * W * 0.003));
+      ctx.fillStyle = `rgba(255,220,140,${Math.max(0.03, 0.22 - i * 0.018)})`;
+      ctx.fillRect(Math.round(W * 0.5 - pw / 2) + Math.round(Math.sin(py * 0.2 + t * 0.002)), py, pw, 1);
     }
   },
 
   tower(t) {
     const { W, H } = G;
-    const tg = ctx.createLinearGradient(0, 0, 0, H);
-    tg.addColorStop(0, '#0a0015'); tg.addColorStop(1, '#1a0a2e');
-    ctx.fillStyle = tg; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#201030'; ctx.fillRect(0, 0, W * 0.07, H); ctx.fillRect(W * 0.93, 0, W * 0.07, H);
-    for (let i = 0; i < 15; i++) {
-      const px = W * 0.1 + (i * 173.7) % (W * 0.8);
-      const py = (H * 0.1 + (i * 97.3 + t * 0.015) % (H * 0.7));
-      ctx.fillStyle = `rgba(139,92,246,${0.2 + 0.4 * Math.sin(t * 0.002 + i * 3)})`;
-      ctx.fillRect(px, py, 2.5, 2.5);
+    drawGrad(0, H, [['#050010',0],['#0A0520',0.4],['#150A30',1]]);
+    const wallW = Math.max(4, Math.round(W * 0.07));
+    ctx.fillStyle = '#1A1028'; ctx.fillRect(0, 0, wallW, H); ctx.fillRect(W - wallW, 0, wallW, H);
+    ctx.fillStyle = '#201230';
+    for (let y = 0; y < H; y += 4) {
+      const off = (Math.floor(y / 4) % 2) * 2;
+      for (let x = 0; x < wallW; x += 4) ctx.fillRect(x + off, y, 3, 3);
+      for (let x = W - wallW; x < W; x += 4) ctx.fillRect(x + off, y, 3, 3);
     }
-    ctx.fillStyle = '#150a25'; ctx.fillRect(0, H * 0.75, W, H * 0.25);
-    ctx.strokeStyle = '#2a1a45';
-    for (let x = 0; x < W; x += W * 0.08) ctx.strokeRect(x, H * 0.75, W * 0.08, H * 0.08);
+    for (let i = 0; i < 20; i++) {
+      const px = Math.round(W * 0.1 + (i * 173.7) % (W * 0.8));
+      const py = Math.round((H * 0.1 + (i * 97.3 + t * 0.01) % (H * 0.65)));
+      const bright = 0.15 + 0.45 * Math.sin(t * 0.002 + i * 3);
+      ctx.fillStyle = `rgba(139,92,246,${bright * 0.3})`; ctx.fillRect(px - 1, py - 1, 3, 3);
+      ctx.fillStyle = `rgba(139,92,246,${bright})`; ctx.fillRect(px, py, 1, 1);
+    }
+    ctx.fillStyle = '#120820'; ctx.fillRect(0, Math.round(H * 0.75), W, Math.round(H * 0.25));
+    ctx.fillStyle = '#1A1030'; ctx.fillRect(0, Math.round(H * 0.75), W, 1);
+    const tw = Math.max(4, Math.round(W * 0.07));
+    for (let x = 0; x < W; x += tw) ctx.fillRect(x, Math.round(H * 0.75) + 1, tw - 1, tw - 1);
   },
 
   towerTop(t) {
     const { W, H } = G;
-    const sg = ctx.createLinearGradient(0, 0, 0, H);
-    sg.addColorStop(0, '#050015'); sg.addColorStop(0.5, '#150a3e'); sg.addColorStop(1, '#2C1654');
-    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H);
-    drawStars(H * 0.6, t);
-    // Glow
-    const mg = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.35);
-    mg.addColorStop(0, 'rgba(167,243,208,0.12)'); mg.addColorStop(1, 'rgba(167,243,208,0)');
+    drawGrad(0, Math.round(H * 0.72), [['#030012',0],['#08032A',0.3],['#120840',0.6],['#1A0A50',1]]);
+    for (let i = 0; i < 70; i++) {
+      const sx = Math.round((i * 137.5 + 23) % W), sy = Math.round((i * 83.7 + 11) % (H * 0.65));
+      const bright = 0.2 + 0.6 * Math.sin(t * 0.0006 + i * 2.1);
+      const big = hash(i * 17) > 0.9;
+      ctx.fillStyle = `rgba(255,255,255,${bright})`;
+      ctx.fillRect(sx, sy, big ? 2 : 1, 1);
+      if (big) ctx.fillRect(sx, sy + 1, 1, 1);
+    }
+    const mg = ctx.createRadialGradient(Math.round(W * 0.5), Math.round(H * 0.42), 0, Math.round(W * 0.5), Math.round(H * 0.42), Math.round(W * 0.3));
+    mg.addColorStop(0, 'rgba(100,230,180,0.12)'); mg.addColorStop(0.4, 'rgba(139,92,246,0.06)'); mg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = mg; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#201040'; ctx.fillRect(0, H * 0.72, W, H * 0.28);
+    for (let i = 0; i < 3; i++) {
+      const ay = Math.round(H * 0.15 + i * H * 0.08);
+      ctx.fillStyle = `rgba(100,220,180,${0.04 + 0.02 * Math.sin(t * 0.0005 + i)})`;
+      for (let x = 0; x < W; x++) {
+        const h = Math.round(2 + fbm(x * 0.02 + i * 5 + t * 0.00005, 3) * 3);
+        ctx.fillRect(x, ay + Math.round(Math.sin(x * 0.03 + t * 0.0003) * 2), 1, h);
+      }
+    }
+    const platY = Math.round(H * 0.72);
+    ctx.fillStyle = '#1A1040'; ctx.fillRect(0, platY, W, H - platY);
+    ctx.fillStyle = '#2A1A55'; ctx.fillRect(0, platY, W, 2);
+    ctx.fillStyle = '#201245';
+    for (let x = 0; x < W; x += Math.max(4, Math.round(W * 0.06)))
+      ctx.fillRect(x, platY + 2, Math.max(3, Math.round(W * 0.06) - 1), Math.max(3, Math.round(H * 0.04)));
   },
 
   ending(t) {
     const { W, H } = G;
-    const sg = ctx.createLinearGradient(0, 0, 0, H * 0.42);
-    sg.addColorStop(0, '#050020'); sg.addColorStop(1, '#2C1654');
-    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H * 0.42);
-    drawStars(H * 0.38, t);
-    const hg = ctx.createLinearGradient(0, H * 0.36, 0, H * 0.46);
-    hg.addColorStop(0, '#FF6B6B'); hg.addColorStop(1, '#FFB347');
-    ctx.fillStyle = hg; ctx.fillRect(0, H * 0.36, W, H * 0.1);
-    drawWater(H * 0.43, ['#1E3A5F','#2C1654','#0a0020'], t);
+    const waterY = Math.round(H * 0.42);
+    drawGrad(0, waterY, [['#050020',0],['#150840',0.25],['#301850',0.45],['#6A3055',0.65],['#BB5A55',0.82],['#FFB080',1]]);
+    drawStars(Math.round(H * 0.28), t);
+    drawCloudBand(waterY, t, 'rgba(100,50,70,0.28)', 0.06, 55, 0.38);
+    drawCloudBand(waterY, t, 'rgba(160,80,80,0.22)', 0.05, 70, 0.54);
+    ctx.fillStyle = '#080420'; ctx.fillRect(0, waterY, W, H - waterY);
+    drawReflection(waterY, 'rgba(5,3,15,0.12)', t);
+    for (let i = 0; i < 6; i++) {
+      const py = waterY + 2 + Math.round(i * (H - waterY) / 8);
+      const pw = Math.max(1, Math.round(W * 0.03));
+      ctx.fillStyle = `rgba(255,200,140,${Math.max(0.03, 0.12 - i * 0.015)})`;
+      ctx.fillRect(Math.round(W * 0.5 - pw / 2) + Math.round(Math.sin(py * 0.2 + t * 0.002)), py, pw, 1);
+    }
   }
 };
 
@@ -718,10 +879,15 @@ function emitParticles(scene) {
 // GAME ENGINE
 // ============================================================
 function resize() {
-  G.W = window.innerWidth; G.H = window.innerHeight;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = G.W * dpr; canvas.height = G.H * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const sw = window.innerWidth, sh = window.innerHeight;
+  // Low-res pixel art canvas — CSS scales it up with pixelated rendering
+  const short = Math.min(sw, sh);
+  const scale = short < 600 ? 2 : 3;
+  G.W = Math.ceil(sw / scale);
+  G.H = Math.ceil(sh / scale);
+  canvas.width = G.W; canvas.height = G.H;
+  canvas.style.width = sw + 'px';
+  canvas.style.height = sh + 'px';
 }
 
 function loadScene(idx) {
