@@ -1992,14 +1992,29 @@ function drawSceneChars(sceneId, t) {
       break;
     case 'beck-sabotage':
       drawUlisa(W * 0.25, H * 0.65, 1, t);
-      drawBeckRat(W * 0.65, H * 0.65, t);
-      break;
-    case 'the-fight':
-      drawUlisa(W * 0.3, H * 0.68, -1, t);
-      drawBeckRat(W * 0.55, H * 0.72, t);
+      drawBeckRat(W * 0.6, H * 0.65, t);
       break;
     case 'alone-at-sea':
       drawUlisa(W * 0.4, H * 0.68, 1, t);
+      break;
+    case 'ny-arrival':
+      drawUlisa(W * 0.35, H * 0.68, 1, t);
+      break;
+    case 'tower-lobby':
+      drawUlisa(W * 0.35, H * 0.73, 1, t);
+      drawBeckRat(W * 0.5, H * 0.76, t);
+      break;
+    case 'tower-stairs':
+      drawUlisa(W * 0.4, H * 0.73, 1, t);
+      drawBeckRat(W * 0.48, H * 0.68, t);
+      break;
+    case 'tower-ghost':
+      drawUlisa(W * 0.3, H * 0.7, 1, t);
+      drawBeckRat(W * 0.42, H * 0.74, t);
+      break;
+    case 'back-home':
+      drawUlisa(W * 0.33, H * 0.57, 1, t);
+      drawMitchell(W * 0.58, H * 0.55, -1, t);
       break;
     case 'midnight-sea':
       drawUlisa(W * 0.3, H * 0.64, 1, t);
@@ -2850,46 +2865,55 @@ const scenes = [
     { s:'n', t:'For the first time since the journey began, she felt like she had a crew behind her. It was a nice feeling.' },
   ]},
 
-  // 10a — Beck Sabotage (ship hold)
+  // 10a — Beck alone in hold, talking to himself
   { id: 'beck-sabotage', bg: 'shipHold', music: 'crimson', dialogue: [
-    { s:'n', t:'That night, she heard a noise from the hold. Something scraping. Something falling.' },
-    { s:'n', t:'She found Beck-rat next to the porthole window. Beside him was a pile of food rations. He was pushing them out the window, one by one, into the crimson sea.' },
-    { s:'u', t:'Beck. What are you doing?' },
-    { s:'b', t:'...' },
-    { s:'u', t:'Are you throwing away the food?' },
-    { s:'b', t:'No calories allowed. Ship runs out of food, ship turns back. Simple.' },
-    { s:'u', t:'You\'re sabotaging the journey.' },
-    { s:'b', t:'I\'m... making a practical suggestion about resource management.' },
+    { s:'n', t:'Below deck. The hold was dark and smelled like old rope and bad decisions.' },
+    { s:'b', t:'It\'s for the best. She\'ll run out of food. She\'ll turn back. She\'ll be safe.' },
+    { s:'b', t:'This is the right thing to do. This is definitely the right thing to do.' },
+    { s:'b', t:'She\'ll hate me. But she\'ll be alive. And not in a cursed tower. Which is better.' },
+    { s:'n', t:'He pushed another ration out the porthole. It splashed into the crimson sea below.' },
+    { s:'b', t:'No calories allowed.' },
+    { s:'n', t:'Then he heard footsteps on the stairs.' },
+    { s:'u', t:'Beck?' },
+    { s:'b', t:'...oh no.' },
+    { s:'u', t:'What are you doing down here?' },
+    { s:'n', t:'She saw the pile. The open porthole. The rations floating in the crimson water outside.' },
+    { s:'u', t:'Are you throwing away our food?' },
+    { s:'b', t:'I\'m... no. These fell. Gravity. Very strong down here.' },
     { s:'u', t:'Beck.' },
-    { s:'b', t:'She\'ll have no choice but to turn back. It\'s... it\'s for the best.' },
-  ]},
-
-  // 10b — The Fight (on deck)
-  { id: 'the-fight', bg: 'ship', music: 'crimson', waterType: 'crimson', dialogue: [
-    { s:'u', t:'For the BEST?' },
-    { s:'b', t:'You don\'t understand—' },
-    { s:'u', t:'Then explain it to me!' },
-    { s:'b', t:'I can\'t.' },
-    { s:'u', t:'Why not?' },
-    { s:'b', t:'Because if I explain it, you\'ll just... you\'ll keep going anyway. And the midnight sea is dangerous, and the tower is worse, and I can\'t—' },
+    { s:'b', t:'Fine. Yes. Ship runs out of food, ship turns back. You go home safe. Simple.' },
+    { s:'u', t:'You\'re sabotaging my journey.' },
+    { s:'b', t:'I\'m saving your life! The midnight sea is DANGEROUS. The tower is WORSE. And I can\'t—' },
     { s:'n', t:'He stopped. His tiny rat hands were shaking.' },
     { s:'b', t:'It\'s for the best. You wouldn\'t understand.' },
     { s:'u', t:'You\'re right. I don\'t understand. Because what I understand is that you\'re being really, really dumb right now.' },
     { s:'b', t:'...' },
-    { s:'u', t:'I didn\'t sail across two seas and work at a floating Barnes & Noble to be stopped by a rat with a bad plan and no explanation.' },
-    { s:'u', t:'I\'m going to the midnight sea. With or without you.' },
-    { s:'n', t:'She turned and walked away. Beck-rat watched her go. He did not follow.' },
-    { s:'n', t:'He sat alone on the railing for a very long time, which for a talking rat is basically a confession.' },
+    { s:'u', t:'I didn\'t sail across two seas and work at a floating Barnes & Noble and answer riddles for cats to be stopped by a rat throwing food out a window.' },
+    { s:'b', t:'I\'m trying to protect you—' },
+    { s:'u', t:'I don\'t need you to protect me. I need you to trust me.' },
+    { s:'n', t:'Silence. The ship creaked. The crimson sea sloshed against the hull.' },
+    { s:'b', t:'...I\'m sorry.' },
+    { s:'u', t:'I know.' },
+    { s:'n', t:'She found a small cage in the corner of the hold. The kind used for transporting chickens.' },
+    { s:'u', t:'Get in.' },
+    { s:'b', t:'You\'re putting me in a cage?' },
+    { s:'u', t:'I\'m putting you somewhere you can\'t throw any more food overboard.' },
+    { s:'b', t:'...fair.' },
+    { s:'n', t:'He climbed in. She closed the door. He looked up at her through the bars with the saddest eyes a rat has ever had.' },
+    { s:'b', t:'For what it\'s worth... I really am sorry.' },
+    { s:'n', t:'She walked up the stairs without looking back.' },
   ]},
 
-  // 10c — Alone at Sea (crimson to midnight transition)
+  // 10b — Alone at Sea (crimson to midnight)
   { id: 'alone-at-sea', bg: 'seaDarkening', music: 'crimson', dialogue: [
     { s:'n', t:'She stood at the railing alone. The crimson sea stretched in every direction.' },
     { s:'n', t:'Slowly, the water began to darken. The red deepened, then cooled, then faded into something that looked like a bruise.' },
     { s:'n', t:'She thought about Mitchell. The way he smiled when she said she\'d read all of Sanderson. The way he looked at her like she was the most interesting person in any room.' },
     { s:'n', t:'She thought about Beck-rat. His stupid jokes. His tiny navy scarf. The way he told her to turn back and then looked relieved every time she didn\'t.' },
+    { s:'n', t:'And now he was in a cage in the hold because he tried to throw her food overboard. Because he was scared. Because he cared too much and showed it in the worst possible way.' },
     { s:'n', t:'She was angry. And sad. And alone on a ship heading toward the most dangerous water in the world.' },
     { s:'n', t:'But she thought about that golden afternoon at the bird sanctuary, and she knew — whatever she felt in that moment was real. And real things are worth fighting for.' },
+    { s:'n', t:'Even when the real thing is a talking rat who makes terrible decisions.' },
     { s:'n', t:'The last of the crimson faded. The sea became midnight.' },
     { s:'n', t:'She sailed on.' },
   ]},
@@ -2902,57 +2926,110 @@ const scenes = [
     { s:'n', t:'The Golden Oreo was a small, bright thing in a very large, dark nothing. She sailed on anyway.' },
     { s:'n', t:"The water was alive — or something in it was. Shapes moved beneath the surface. Tentacles. Shadows. Things that didn't bother having names.", onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'n', t:'She gripped the wheel. Alone.' },
-    { s:'b', t:'...not alone.' },
-    { s:'n', t:'Beck-rat was sitting on the railing. He looked terrible. Fur matted. Scarf crooked. The general energy of a rat who had not slept and had been thinking too much.' },
-    { s:'b', t:'I\'m sorry. I was scared. And dumb. You were right about the dumb part.' },
-    { s:'u', t:'...' },
-    { s:'b', t:'I still think you should turn back. But I know you won\'t. So... I\'m here.' },
-    { s:'u', t:'Thank you.' },
-    { s:'b', t:'I would have helped sooner, but I was very busy being ashamed.' },
-    { s:'cr', t:'Creatures off the bow! We need a navigator!' },
     { s:'n', t:'Navigate through the midnight sea!',
       action:'minigame', game:'navigate', data:{ target:10 } },
-    { s:'n', t:'The creatures fell behind. The tower appeared on the horizon — a dark spire rising from an island that glittered with unnatural light.' },
-    { s:'b', t:'I would have helped, but I am very small.' },
-    { s:'u', t:'You helped just by being here.' },
-    { s:'b', t:'That is the nicest thing anyone has ever said to a rat.' },
-    { s:'n', t:'The island was called New York. Nobody could explain why.' },
-    { s:'n', t:'The Golden Oreo dropped anchor. Uh-Lee-Suh looked up at the tower. It was very tall. She had come very far.' },
-    { s:'b', t:"You don't have to do this." },
+    { s:'n', t:'The creatures fell behind. An island appeared on the horizon, dark and jagged against the starlight.' },
+    { s:'n', t:'And on the island stood a tower. Massive. Impossibly tall. Glowing faintly with a light that didn\'t look friendly.' },
+    { s:'n', t:'A sign at the dock read: WELCOME TO NEW YORK. And below that, in smaller letters: GHOST HQ.' },
+  ]},
+
+  // 12a — Arrival at New York
+  { id: 'ny-arrival', bg: 'shipFull', music: 'midnight', waterType: 'midnight',
+    init() { this.waterType = 'midnight'; },
+    dialogue: [
+    { s:'n', t:'She docked the ship alone. The island was dark and quiet. The tower loomed above, its windows flickering with pale ghostly light.' },
+    { s:'n', t:'She stood on the deck and looked up at it.' },
+    { s:'u', t:'This is it.' },
+    { s:'u', t:'I\'m going to go in there, defeat the evil ghost, and get Mitchell back.' },
+    { s:'n', t:'She said it out loud because saying things out loud makes them more real. Even when they\'re terrifying.' },
+    { s:'n', t:'From below deck, she heard it. Tiny. Desperate. Unmistakable.' },
+    { s:'b', t:'...squeak.' },
+    { s:'n', t:'It was the saddest squeak she had ever heard. It was the kind of squeak that contained an entire apology, three regrets, and a very sincere request to not be left in a chicken cage.' },
+    { s:'u', t:'...' },
+    { s:'n', t:'She went below. Beck-rat was pressed against the bars, looking up at her.' },
+    { s:'b', t:'Let me help. Please. I know I was dumb. I know I was wrong. But please don\'t go in there alone.' },
+    { s:'u', t:'You threw my food overboard.' },
+    { s:'b', t:'Yes.' },
+    { s:'u', t:'And you tried to make me turn back.' },
+    { s:'b', t:'Yes.' },
+    { s:'u', t:'And you\'re very, very small.' },
+    { s:'b', t:'...also yes.' },
+    { s:'n', t:'She opened the cage.' },
+    { s:'b', t:'Thank you. I promise I will be helpful. Or at least present. Which is almost the same thing.' },
+  ]},
+
+  // 12b — Tower Lobby
+  { id: 'tower-lobby', bg: 'tower', music: 'midnight', dialogue: [
+    { s:'n', t:'The tower door swung open with a sound like a very old library clearing its throat.' },
+    { s:'n', t:'Inside was... not what she expected.' },
+    { s:'u', t:'Woah.' },
+    { s:'b', t:'...is this a lobby?' },
+    { s:'n', t:'It was. A proper lobby. Marble floors. Tall ceilings. Floating candelabras that drifted lazily through the air, trailing soft purple light.' },
+    { s:'n', t:'There was a reception desk. It was unmanned. A small sign read: GHOST HQ — PLEASE TAKE A NUMBER.' },
+    { s:'b', t:'This is the most well-organized evil lair I\'ve ever seen.' },
+    { s:'u', t:'It\'s kind of beautiful, actually.' },
+    { s:'b', t:'Beautiful and evil are not mutually exclusive. I\'m told I\'m adorable and I tried to sabotage your food supply.' },
+    { s:'u', t:'You\'re not adorable.' },
+    { s:'b', t:'Debatable.' },
+  ]},
+
+  // 12c — Climbing the Tower (Beck apologizes)
+  { id: 'tower-stairs', bg: 'tower', music: 'midnight', dialogue: [
+    { s:'n', t:'They found the staircase — a spiral of dark stone that wound upward into the flickering light above.' },
+    { s:'n', t:'Beck-rat rode on her shoulder as she climbed. For a while, neither of them spoke.' },
+    { s:'b', t:'Hey.' },
+    { s:'u', t:'Hey.' },
+    { s:'b', t:'I\'m sorry. For real. Not just cage-sorry. Actually sorry.' },
     { s:'u', t:'I know.' },
-    { s:'b', t:"...yeah. I know you know." },
+    { s:'b', t:'I was scared that you\'d get hurt. And instead of telling you that, I threw food out a window. Which, in hindsight, was not my best moment.' },
+    { s:'u', t:'It was not.' },
+    { s:'b', t:'You came all this way for someone who turned into a rat and then tried to make you give up. That\'s... that\'s either the bravest or the most stubborn thing anyone has ever done.' },
+    { s:'u', t:'Both. Definitely both.' },
+    { s:'b', t:'I don\'t deserve someone who would sail three seas for me.' },
+    { s:'u', t:'You\'re right. You deserve someone who would sail four. But three is what we had.' },
+    { s:'n', t:'He was quiet for a moment. Then he said something so softly she almost missed it.' },
+    { s:'b', t:'Thank you. For not listening.' },
   ]},
 
-  // 12 — Tower
-  { id: 'tower', bg: 'tower', music: 'midnight', dialogue: [
-    { s:'n', t:'The tower was cold and old and full of the kind of silence that listens back.' },
-    { s:'n', t:'She climbed. Beck-rat rode on her shoulder, trying very hard to look brave and mostly looking like a very determined hamster.' },
-    { s:'b', t:'For the record, this is the scariest thing I have ever done, and I once ate cheese that had been expired for a month.' },
-    { s:'n', t:'At the top of the tower stood a figure in flowing midnight robes. The Keeper.' },
-    { s:'w', t:"So. You're the one who sailed three seas for a rat." },
-    { s:'u', t:"He's not just a rat." },
-    { s:'w', t:"No. He isn't. But the fog on his mind is thick. It is made of foolishness, and hesitation, and all the things he could not bring himself to say." },
-    { s:'w', t:'If you know him — truly know him — you can break it. Tap the memories. In the order they happened.' },
-    { s:'b', t:'This feels invasive.' },
-    { s:'w', t:'Quiet, rat.' },
-    { s:'n', t:'Remember the journey. Tap the memories in order.',
-      action:'minigame', game:'memory', data:{
-        fragments:[
-          { label:'🍂 Birds and autumn leaves', done:false },
-          { label:'⛵ A ridiculous abduction', done:false },
-          { label:'🌮 A burrito time loop', done:false },
-          { label:'🌅 A quiet sunset', done:false },
-        ],
-        order:[0,1,2,3],
-      } },
-    { s:'n', t:'The sigils blazed. The tower shook. Light poured through the cracks like dawn breaking through a long, long night.' },
-    { s:'w', t:'Well done. The fog lifts.' },
-    { s:'n', t:'The Keeper smiled — not unkindly — and dissolved into starlight.' },
-    { s:'b', t:'I feel... different. I feel...' },
-    { s:'n', t:'The light was blinding now. Warm. Golden. The kind of light that fixes things.' },
+  // 12d — The Ghost
+  { id: 'tower-ghost', bg: 'towerTop', music: 'midnight', dialogue: [
+    { s:'n', t:'At the top of the tower, the air shimmered. A figure materialized — translucent, elegant, mildly inconvenienced.' },
+    { s:'w', t:'Oh. You\'re here. I was hoping you\'d turn back.' },
+    { s:'u', t:'Give me Mitchell back.' },
+    { s:'w', t:'Straight to business. I respect that.' },
+    { s:'w', t:'The curse is simple, really. Your rat friend is trapped in his rattiest form because of fear, hesitation, and an almost impressive inability to express his feelings.' },
+    { s:'b', t:'That feels personal.' },
+    { s:'w', t:'It is extremely personal. You are a very emotionally constipated rat.' },
+    { s:'u', t:'How do I break the curse?' },
+    { s:'w', t:'Oh, it\'s easy. Hilariously easy, actually.' },
+    { s:'w', t:'All you have to do... is get him to eat sushi.' },
+    { s:'u', t:'...what?' },
+    { s:'b', t:'WHAT?' },
+    { s:'w', t:'Sushi. Raw fish. The one food he has refused to eat for his entire life. The thing he is most irrationally stubborn about.' },
+    { s:'w', t:'If he eats it willingly, the curse breaks. Simple.' },
+    { s:'b', t:'I am NOT eating sushi. I have NEVER eaten sushi. I will NEVER eat sushi.' },
+    { s:'u', t:'Beck.' },
+    { s:'b', t:'It\'s RAW FISH. Do you know what raw fish is? It\'s FISH that is RAW.' },
+    { s:'u', t:'Beck. Do you want to be a rat forever?' },
+    { s:'b', t:'...I want it noted that this is under duress.' },
+    { s:'n', t:'A single piece of sushi appeared, floating in a gentle beam of moonlight. It was, objectively, a very beautiful piece of sushi.',
+      action:'minigame', game:'quiz', data:{
+        hudText:'Get Beck to eat the sushi!',
+        questions:[
+          { question:'Beck is staring at the sushi. How do you convince him?',
+            options:['It\'s basically just rice with a hat','Think of it as a very fancy burrito','Would you rather be a rat forever?'], answer:2 },
+          { question:'He\'s leaning closer... but hesitating. What do you say?',
+            options:['I believe in you, Beck','It probably tastes like chicken','I\'ll eat one too if you do'], answer:0 },
+          { question:'He\'s opened his mouth. One last push:',
+            options:['For me?','Just close your eyes and think of burritos','JUST EAT THE FISH, BECK'], answer:0 },
+        ]} },
+    { s:'b', t:'I... I ate it.' },
+    { s:'b', t:'It was...' },
+    { s:'b', t:'...actually not terrible?' },
+    { s:'n', t:'The tower exploded with light.' },
   ]},
 
-  // 13 — Final Reveal
+  // 13 — The Transformation
   { id: 'finale', bg: 'towerTop', music: 'victory', dialogue: [
     { s:'n', t:'The light faded. The rat was gone.' },
     { s:'n', t:'And in its place stood a tall, blonde man in a navy sweater, looking exactly as confused as you\'d expect someone to look after being a rodent for several weeks.' },
@@ -2961,20 +3038,26 @@ const scenes = [
     { s:'u', t:'Hi.' },
     { s:'m', t:'I... okay. I have some things to say.' },
     { s:'m', t:'First: I was a rat. You may have noticed.' },
-    { s:'m', t:"Second: you sailed across three seas, fought a Barnes & Noble warship, broke a burrito time loop, solved riddles for a puma, and climbed a tower. For me." },
-    { s:'m', t:'And I told you to turn back. Multiple times.' },
-    { s:'m', t:'I told you to turn back because I was scared. And small. And a rat. But mostly scared.' },
+    { s:'m', t:"Second: you sailed across three seas, fought a Barnes & Noble warship, broke a burrito time loop, earned matcha from mystical cats, put me in a cage, and then made me eat sushi. For me." },
+    { s:'m', t:'And I told you to turn back. Multiple times. I threw your food overboard. I was scared and dumb and I showed it in the worst way possible.' },
     { s:'m', t:"You were braver and smarter than me. You didn't listen. And I am so, so glad you didn't listen." },
     { s:'n', t:'He looked at her the way the sun looks at the sea on the kind of evening where everything is forgiven and nothing needs explaining.' },
     { s:'m', t:"Thank you for sailing the aether seas for me. Can this rat be your boyfriend? (ps: I'm not a dog)",
       action:'choice', choices:[{ text:'Yes' }, { text:'Obviously' }], onChoice:()=>{} },
     { s:'n', t:'She said yes. Or obviously. Either way, it was the right answer.' },
-    { s:'n', t:'They stood together at the top of the tower, above the midnight sea, under a sky full of stars that had been waiting for exactly this moment.' },
-    { s:'n', t:'The seas calmed. The spores drifted. Somewhere, a very annoyed cat named Felix was looking for a rat to chase.' },
-    { s:'n', t:'But up here, everything was warm, and bright, and exactly as it should be.' },
+  ]},
+
+  // 14 — Back at the Bird Sanctuary
+  { id: 'back-home', bg: 'autumn', music: 'autumn', dialogue: [
+    { s:'n', t:'The bird sanctuary was golden with autumn again. The same path. The same copper leaves. The same birdsong.' },
+    { s:'n', t:'But this time, they walked it together. And they both knew what it had cost to get here.' },
     { s:'m', t:'So... about the burrito thing.' },
     { s:'u', t:"We're not talking about the burrito thing." },
+    { s:'m', t:'What about the sushi thing?' },
+    { s:'u', t:'We\'re DEFINITELY not talking about the sushi thing.' },
     { s:'m', t:'Fair.' },
+    { s:'n', t:'The birds sang. The leaves fell. Somewhere across the aether seas, a very annoyed cat named Felix was looking for a rat to chase.' },
+    { s:'n', t:'But here, in the golden light of the sanctuary where it all began, everything was warm, and bright, and exactly as it should be.' },
     { s:'n', t:"And they lived. Not happily ever after — that's for stories that end. They lived happily ever forward, which is much better, because it means the story keeps going." },
     { s:'n', t:'', action:'end' },
   ]},
