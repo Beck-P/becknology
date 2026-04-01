@@ -471,61 +471,127 @@ const BG = {
       ctx.fillRect(bx, dockTopY + Math.round(H * 0.02), postSpacing - Math.round(postSpacing * 0.3), 1);
     }
 
-    // Ship moored at end of dock
+    // === Big pixel art ship moored at dock ===
     const bob = Math.round(Math.sin(t * 0.0012) * 1);
-    const shipX = Math.round(W * 0.88);
-    const shipY = Math.round(sandY - H * 0.02) + bob;
-    const sw = Math.round(W * 0.18);
-    const sh = Math.round(H * 0.06);
-    // Hull
-    ctx.fillStyle = '#5A3018';
-    ctx.beginPath();
-    ctx.moveTo(shipX - sw / 2, shipY);
-    ctx.lineTo(shipX - sw / 2 - 3, shipY + sh);
-    ctx.lineTo(shipX + sw / 2 + 3, shipY + sh);
-    ctx.lineTo(shipX + sw / 2, shipY);
-    ctx.fill();
-    // Hull stripe
-    ctx.fillStyle = '#4A2010';
-    ctx.fillRect(shipX - Math.round(sw / 2), shipY + 1, sw, 2);
-    // Hull bottom
-    ctx.fillStyle = '#3A1808';
-    ctx.fillRect(shipX - Math.round(sw / 2) - 1, shipY + sh - 2, sw + 2, 2);
-    // Deck
-    ctx.fillStyle = '#8B6914';
-    ctx.fillRect(shipX - Math.round(sw / 2), shipY - 1, sw, 2);
-    // Railing posts
-    ctx.fillStyle = '#6B5030';
-    for (let i = 0; i < 5; i++) {
-      ctx.fillRect(shipX - Math.round(sw / 2) + Math.round(i * sw / 4), shipY - Math.round(H * 0.02), 1, Math.round(H * 0.02));
+    const shipCX = Math.round(W * 0.88);        // center X
+    const hullW = Math.max(20, Math.round(W * 0.22)); // hull width
+    const hullH = Math.max(10, Math.round(H * 0.08)); // hull height
+    const deckY2 = Math.round(sandY - H * 0.04) + bob; // deck line (waterline)
+    const hullBot = deckY2 + hullH;
+    const hullL = shipCX - Math.round(hullW / 2);
+    const hullR = shipCX + Math.round(hullW / 2);
+
+    // Hull — curved shape, row by row
+    for (let row = 0; row < hullH; row++) {
+      const frac = row / hullH;
+      // Narrow at bottom, wide at top
+      const inset = Math.round(frac * frac * hullW * 0.15);
+      const lx = hullL + inset;
+      const rx = hullR - inset;
+      // Color: lighter brown at top, darker at bottom
+      if (frac > 0.75) ctx.fillStyle = '#3A1808';
+      else if (frac > 0.5) ctx.fillStyle = '#4A2210';
+      else ctx.fillStyle = '#6B3A18';
+      ctx.fillRect(lx, deckY2 + row, rx - lx, 1);
     }
-    // Railing rail
-    ctx.fillRect(shipX - Math.round(sw / 2), shipY - Math.round(H * 0.02), sw, 1);
+    // Hull highlight stripe near top
+    ctx.fillStyle = '#8B5A20';
+    ctx.fillRect(hullL + 1, deckY2 + 1, hullW - 2, 1);
+    // Hull dark trim at waterline
+    ctx.fillStyle = '#2A1005';
+    const botInset = Math.round(hullW * 0.15);
+    ctx.fillRect(hullL + botInset, hullBot - 1, hullW - botInset * 2, 1);
+
+    // Portholes / cabin windows
+    ctx.fillStyle = '#2A1408';
+    const portY = deckY2 + Math.round(hullH * 0.35);
+    const portCount = Math.max(3, Math.round(hullW / 6));
+    const portSpacing = Math.round((hullW - 8) / portCount);
+    for (let i = 0; i < portCount; i++) {
+      ctx.fillRect(hullL + 4 + i * portSpacing, portY, 2, 2);
+    }
+
+    // Deck surface
+    ctx.fillStyle = '#A07818';
+    ctx.fillRect(hullL, deckY2 - 1, hullW, 2);
+    ctx.fillStyle = '#8B6914';
+    ctx.fillRect(hullL, deckY2 - 2, hullW, 1);
+
+    // Bow accent (pointed left side)
+    ctx.fillStyle = '#5A3018';
+    ctx.fillRect(hullL - 2, deckY2 + 1, 3, 2);
+    ctx.fillRect(hullL - 3, deckY2 + 2, 2, 2);
+    // Stern accent (right side)
+    ctx.fillRect(hullR, deckY2 + 1, 2, Math.round(hullH * 0.3));
+    ctx.fillStyle = '#6B3A18';
+    ctx.fillRect(hullR, deckY2 - 2, 2, 3);
+
+    // Railing
+    ctx.fillStyle = '#7A5A20';
+    const railY = deckY2 - Math.max(3, Math.round(H * 0.015));
+    ctx.fillRect(hullL, railY, hullW, 1);
+    ctx.fillStyle = '#6B4A18';
+    for (let i = 0; i <= 4; i++) {
+      ctx.fillRect(hullL + Math.round(i * hullW / 4), railY, 1, deckY2 - railY);
+    }
+
     // Main mast
-    const mastX = shipX;
-    const mastTop = shipY - Math.round(H * 0.14);
-    ctx.fillStyle = '#5A3A10';
-    ctx.fillRect(mastX - 1, mastTop, 2, shipY - mastTop);
-    // Sail
-    ctx.fillStyle = '#F0E4D0';
-    ctx.beginPath();
-    ctx.moveTo(mastX + 1, mastTop + 2);
-    ctx.lineTo(mastX + Math.round(sw * 0.4), mastTop + Math.round(H * 0.03));
-    ctx.lineTo(mastX + 1, shipY - Math.round(H * 0.03));
-    ctx.fill();
-    // Sail shadow
-    ctx.fillStyle = '#DDD0B8';
-    ctx.beginPath();
-    ctx.moveTo(mastX + 1, mastTop + Math.round(H * 0.04));
-    ctx.lineTo(mastX + Math.round(sw * 0.3), mastTop + Math.round(H * 0.05));
-    ctx.lineTo(mastX + 1, shipY - Math.round(H * 0.04));
-    ctx.fill();
-    // Flag
-    ctx.fillStyle = '#8B2FC0';
-    ctx.fillRect(mastX, mastTop - 1, Math.round(W * 0.03), 2);
+    const mastX = shipCX;
+    const mastH = Math.max(20, Math.round(H * 0.2));
+    const mastTop = railY - mastH;
+    ctx.fillStyle = '#6B4A20';
+    ctx.fillRect(mastX - 1, mastTop, 2, mastH + (deckY2 - railY));
+
+    // Main sail — big rectangle with billow
+    const sailTop = mastTop + 3;
+    const sailBot = mastTop + Math.round(mastH * 0.7);
+    const sailW = Math.max(12, Math.round(hullW * 0.6));
+    // Sail body (light gray)
+    ctx.fillStyle = '#D8DDE4';
+    for (let sy = sailTop; sy < sailBot; sy++) {
+      const frac2 = (sy - sailTop) / (sailBot - sailTop);
+      const billow = Math.round(Math.sin(frac2 * Math.PI) * sailW * 0.12);
+      ctx.fillRect(mastX - Math.round(sailW / 2) - billow, sy, sailW + billow * 2, 1);
+    }
+    // Sail shading — darker center
+    ctx.fillStyle = '#BCC4CE';
+    for (let sy = sailTop + 2; sy < sailBot - 2; sy++) {
+      const frac2 = (sy - sailTop) / (sailBot - sailTop);
+      const billow = Math.round(Math.sin(frac2 * Math.PI) * sailW * 0.08);
+      const shadeW = Math.round(sailW * 0.5);
+      ctx.fillRect(mastX - Math.round(shadeW / 2), sy, shadeW + billow, 1);
+    }
+    // Sail highlight — bright edge left
+    ctx.fillStyle = '#EEF0F4';
+    for (let sy = sailTop + 1; sy < sailBot - 1; sy++) {
+      const frac2 = (sy - sailTop) / (sailBot - sailTop);
+      const billow = Math.round(Math.sin(frac2 * Math.PI) * sailW * 0.12);
+      ctx.fillRect(mastX - Math.round(sailW / 2) - billow, sy, 2, 1);
+    }
+    // Horizontal sail ribs
+    ctx.fillStyle = '#C8CED6';
+    ctx.fillRect(mastX - Math.round(sailW / 2), sailTop, sailW, 1);
+    ctx.fillRect(mastX - Math.round(sailW / 2), sailBot - 1, sailW, 1);
+    ctx.fillRect(mastX - Math.round(sailW / 2) - 1, Math.round((sailTop + sailBot) / 2), sailW + 2, 1);
+
+    // Cross beam
+    ctx.fillStyle = '#6B4A20';
+    ctx.fillRect(mastX - Math.round(sailW / 2) - 2, sailTop - 1, sailW + 4, 1);
+
+    // Flag at top
+    const flagW = Math.max(4, Math.round(W * 0.03));
+    const flagH = Math.max(3, Math.round(H * 0.015));
+    ctx.fillStyle = '#CC2020';
+    ctx.fillRect(mastX + 1, mastTop - flagH, flagW, flagH);
+    ctx.fillStyle = '#AA1818';
+    ctx.fillRect(mastX + 1, mastTop - flagH, flagW, 1);
+    // Flag pole tip
+    ctx.fillStyle = '#6B4A20';
+    ctx.fillRect(mastX, mastTop - flagH - 1, 1, 1);
+
     // Rope from dock to ship
     ctx.fillStyle = '#8B7355';
-    ctx.fillRect(dockEndX - 1, dockTopY + 1, shipX - Math.round(sw / 2) - dockEndX + 2, 1);
+    ctx.fillRect(dockEndX - 1, dockTopY + 1, hullL - dockEndX + 2, 1);
   },
 
   ship(t, waterType) {
