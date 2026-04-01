@@ -9487,6 +9487,10 @@ function ChoreChaosApp() {
           event: 'game_event',
           payload: { type: 'room_created', hostName: names[0] || 'Host', playerNames: cleanedNames }
         });
+        // Host registers as a player
+        const hostName = cleanedNames[0] || 'Host';
+        channel.track({ joinedAt: Date.now(), role: 'player', playerName: hostName });
+        setPlayerName(hostName);
       }
     });
   }
@@ -9506,6 +9510,7 @@ function ChoreChaosApp() {
     setViewerCount(0);
     setJoinedPlayers({});
     setInteractiveMode(false);
+    setPlayerName(null);
   }
 
   function broadcastEvent(payload) {
@@ -9520,6 +9525,11 @@ function ChoreChaosApp() {
       event: 'player_action',
       payload: { playerName: playerName, ...action }
     });
+  }
+
+  function handleHostAction(action) {
+    if (!playerName || !currentActionHandler.current) return;
+    currentActionHandler.current({ playerName, ...action });
   }
 
   // Spectator/Player: connect to room (only triggered on initial 'joining' state)
@@ -10218,6 +10228,12 @@ function ChoreChaosApp() {
                   <div className="flex-1">
                     <PlaybackStage result={result} step={playbackStep} done={playbackDone} interactiveBombState={interactiveBombState} />
                   </div>
+
+                  {interactiveMode && pendingAction && playerName && !playbackDone ? (
+                    <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 backdrop-blur">
+                      <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} playerName={playerName} />
+                    </div>
+                  ) : null}
 
                   {playbackDone ? (() => {
                     const modeMeta = MODE_META.find(m => m.id === result.modeId);
