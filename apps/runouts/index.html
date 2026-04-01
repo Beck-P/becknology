@@ -2208,6 +2208,12 @@ const MODE_META = [
   },
 ];
 
+function startTimeout(seconds, onTimeout) {
+  const deadline = Date.now() + seconds * 1000;
+  const timer = setTimeout(onTimeout, seconds * 1000);
+  return { deadline, timer, clear: () => clearTimeout(timer) };
+}
+
 function secureRandomInt(max) {
   if (max <= 0) return 0;
   const maxUint = 0x100000000;
@@ -6835,6 +6841,108 @@ function Leaderboard({ stats, loading }) {
   );
 }
 
+function JoinScreen({ roomCode, names, joinedPlayers, onJoinAsPlayer, onJoinAsSpectator }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6">
+      <div className="pixel-font text-[9px] text-slate-500 mb-2 uppercase tracking-widest">Join Room</div>
+      <div className="pixel-font text-2xl text-cyan-300 mb-6" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>{roomCode}</div>
+      <div className="pixel-font text-[9px] text-slate-400 mb-4">WHO ARE YOU?</div>
+      <div className="space-y-2 w-full max-w-xs">
+        {names.map(function(name) {
+          var taken = joinedPlayers[name];
+          return (
+            <button
+              key={name}
+              disabled={taken}
+              onClick={function() { onJoinAsPlayer(name); }}
+              className={"w-full py-3 px-4 rounded-xl font-mono text-sm font-bold transition " + (
+                taken
+                  ? "bg-white/5 text-slate-600 cursor-not-allowed"
+                  : "bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/30"
+              )}
+            >
+              {name} {taken ? "(joined)" : ""}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        onClick={onJoinAsSpectator}
+        className="mt-6 font-mono text-sm text-slate-500 hover:text-slate-300 transition"
+      >
+        Just Watch
+      </button>
+      {names.length === 0 ? (
+        <div className="font-mono text-xs text-amber-400 mt-4 animate-pulse">Waiting for room info...</div>
+      ) : null}
+    </div>
+  );
+}
+
+function CountdownTimer({ deadline }) {
+  const { useState, useEffect } = React;
+  const [remaining, setRemaining] = useState(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
+
+  useEffect(function() {
+    var interval = setInterval(function() {
+      var r = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setRemaining(r);
+      if (r <= 0) clearInterval(interval);
+    }, 100);
+    return function() { clearInterval(interval); };
+  }, [deadline]);
+
+  return (
+    <div className="mt-2">
+      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-100" style={{
+          width: Math.max(0, remaining * 10) + "%",
+          background: remaining > 5 ? "#22c55e" : remaining > 2 ? "#fbbf24" : "#ef4444"
+        }} />
+      </div>
+      <div className="pixel-font text-[8px] text-slate-500 mt-1">{remaining}s</div>
+    </div>
+  );
+}
+
+function PlayerActionBar({ pendingAction, onAction, playerName }) {
+  if (!pendingAction) return null;
+
+  const isMyTurn = pendingAction.playerName === playerName;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-indigo-500/30 p-4 backdrop-blur" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+      <div className="max-w-md mx-auto text-center">
+        {pendingAction.action === 'draw' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[11px] text-purple-300 mb-3" style={{ textShadow: '0 0 10px rgba(168,85,247,0.5)' }}>
+              {"\uD83D\uDD2E"} YOUR TURN {"\uD83D\uDD2E"}
+            </div>
+            <button
+              onClick={() => onAction({ action: 'draw' })}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-lg shadow-lg shadow-purple-600/30 transition hover:scale-[1.02] active:scale-95"
+              style={{ textShadow: '0 0 8px rgba(139,92,246,0.5)' }}
+            >
+              {"\uD83E\uDD1E"} DRAW FROM THE BAG
+            </button>
+          </>
+        ) : pendingAction.action === 'draw' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">
+            Waiting for {pendingAction.playerName} to draw...
+          </div>
+        ) : pendingAction.type === "waiting" ? (
+          <div className="pixel-font text-[9px] text-indigo-400 animate-pulse">WAITING FOR YOUR TURN...</div>
+        ) : (
+          <div className="pixel-font text-[9px] text-amber-400">ACTION REQUIRED</div>
+        )}
+        {pendingAction.deadline && isMyTurn ? (
+          <CountdownTimer deadline={pendingAction.deadline} />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function ChoreChaosApp() {
   const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
   const [taskLabel, setTaskLabel] = useState("");
@@ -6852,10 +6960,10 @@ function ChoreChaosApp() {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 
-  // Room / spectator state
+  // Room / spectator / player state
   const [roomMode, setRoomMode] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('room') ? 'spectator' : 'none';
+    return params.get('room') ? 'joining' : 'none';
   });
   const [roomCode, setRoomCode] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -6866,6 +6974,13 @@ function ChoreChaosApp() {
   const [spectatorState, setSpectatorState] = useState(null);
   const [spectatorConnected, setSpectatorConnected] = useState(false);
   const [roomClosed, setRoomClosed] = useState(false);
+  const [playerName, setPlayerName] = useState(null);
+  const [joinedPlayers, setJoinedPlayers] = useState({});
+  const [interactiveMode, setInteractiveMode] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [roomPlayerNames, setRoomPlayerNames] = useState([]);
+  const currentActionHandler = React.useRef(null);
+  const roomModeRef = React.useRef(roomMode);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -6883,6 +6998,8 @@ function ChoreChaosApp() {
 
   useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
 
+  useEffect(() => { roomModeRef.current = roomMode; }, [roomMode]);
+
   useEffect(() => {
     function handleRocketComplete() {
       if ((result?.modeId === 'rocket' || result?.modeId === 'bomb' || result?.modeId === 'stock-market') && !playbackDone) {
@@ -6893,6 +7010,53 @@ function ChoreChaosApp() {
     window.addEventListener('rocket-complete', handleRocketComplete);
     return () => window.removeEventListener('rocket-complete', handleRocketComplete);
   }, [result, playbackDone]);
+
+  // Interactive Black Marble turn management
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'black-marble') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      return;
+    }
+
+    const drawerIndex = playbackStep;
+    if (drawerIndex >= result.players.length) return;
+
+    const currentDrawer = result.players[drawerIndex]?.name;
+    if (!currentDrawer) return;
+
+    broadcastEvent({
+      type: 'turn_prompt',
+      playerName: currentDrawer,
+      action: 'draw',
+      timeoutSeconds: 10,
+      turnNumber: drawerIndex + 1,
+      totalDraws: result.players.length,
+    });
+
+    setPendingAction({
+      type: 'turn',
+      playerName: currentDrawer,
+      action: 'draw',
+      deadline: Date.now() + 10000,
+      turnNumber: drawerIndex + 1,
+      totalDraws: result.players.length,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'draw' || payload.playerName !== currentDrawer) return;
+      advancePlayback();
+    };
+
+    const timeout = startTimeout(10, () => {
+      advancePlayback();
+    });
+
+    return () => {
+      timeout.clear();
+    };
+  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
 
   const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
 
@@ -7074,7 +7238,29 @@ function ChoreChaosApp() {
 
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState();
-      setViewerCount(Object.keys(state).length);
+      const players = {};
+      let total = 0;
+      Object.values(state).flat().forEach(p => {
+        total++;
+        if (p.role === 'player' && p.playerName) {
+          players[p.playerName] = true;
+        }
+      });
+      setJoinedPlayers(players);
+      setViewerCount(total);
+      setInteractiveMode(Object.keys(players).length > 0);
+      // Re-broadcast room_info so new joiners get the current state
+      channel.send({
+        type: 'broadcast',
+        event: 'game_event',
+        payload: { type: 'room_info', names: cleanedNames, joinedPlayers: players }
+      });
+    });
+
+    channel.on('broadcast', { event: 'player_action' }, ({ payload }) => {
+      if (currentActionHandler.current) {
+        currentActionHandler.current(payload);
+      }
     });
 
     channel.subscribe((status) => {
@@ -7085,7 +7271,7 @@ function ChoreChaosApp() {
         channel.send({
           type: 'broadcast',
           event: 'game_event',
-          payload: { type: 'room_created', hostName: names[0] || 'Host' }
+          payload: { type: 'room_created', hostName: names[0] || 'Host', playerNames: cleanedNames }
         });
       }
     });
@@ -7104,6 +7290,8 @@ function ChoreChaosApp() {
     setRoomCode(null);
     setRoomChannel(null);
     setViewerCount(0);
+    setJoinedPlayers({});
+    setInteractiveMode(false);
   }
 
   function broadcastEvent(payload) {
@@ -7111,9 +7299,21 @@ function ChoreChaosApp() {
     roomChannel.send({ type: 'broadcast', event: 'game_event', payload });
   }
 
-  // Spectator: connect to room
+  function sendPlayerAction(action) {
+    if (roomMode !== 'player' || !roomChannel || !playerName) return;
+    roomChannel.send({
+      type: 'broadcast',
+      event: 'player_action',
+      payload: { playerName: playerName, ...action }
+    });
+  }
+
+  // Spectator/Player: connect to room (only triggered on initial 'joining' state)
+  const isJoining = roomMode === 'joining' || roomMode === 'spectator' || roomMode === 'player';
+  const channelCreatedRef = React.useRef(false);
   useEffect(() => {
-    if (roomMode !== 'spectator' || !roomCode || !_supabase) return;
+    if (!isJoining || !roomCode || !_supabase || channelCreatedRef.current) return;
+    channelCreatedRef.current = true;
 
     const channel = _supabase.channel(`room:${roomCode}`, {
       config: { broadcast: { self: false } }
@@ -7123,12 +7323,30 @@ function ChoreChaosApp() {
       switch (payload.type) {
         case 'room_created':
           setSpectatorState({ type: 'waiting', hostName: payload.hostName });
+          setRoomPlayerNames(payload.playerNames || []);
+          break;
+        case 'room_info':
+          setRoomPlayerNames(payload.names || []);
+          if (payload.joinedPlayers) setJoinedPlayers(payload.joinedPlayers);
           break;
         case 'game_start':
           setSpectatorState({ type: 'playing', result: payload.result, step: 0, done: false });
           break;
         case 'step':
           setSpectatorState(prev => prev ? { ...prev, step: payload.step, done: payload.done } : prev);
+          if (roomModeRef.current === 'player') setPendingAction(null);
+          break;
+        case 'turn_prompt':
+          if (roomModeRef.current === 'player') {
+            setPendingAction({
+              type: 'turn',
+              playerName: payload.playerName,
+              action: payload.action,
+              deadline: Date.now() + (payload.timeoutSeconds || 10) * 1000,
+              turnNumber: payload.turnNumber,
+              totalDraws: payload.totalDraws,
+            });
+          }
           break;
         case 'game_reset':
           setSpectatorState({ type: 'waiting' });
@@ -7143,16 +7361,28 @@ function ChoreChaosApp() {
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
         setSpectatorConnected(true);
-        channel.track({ joinedAt: Date.now() });
+        // Track as generic joiner initially; will re-track when user picks a role
+        channel.track({
+          joinedAt: Date.now(),
+          role: 'spectator',
+          playerName: null
+        });
       }
     });
 
     setRoomChannel(channel);
 
     return () => {
+      channelCreatedRef.current = false;
       _supabase.removeChannel(channel);
     };
-  }, [roomMode, roomCode]);
+  }, [roomCode]);
+
+  // Broadcast updated player names when host changes them
+  useEffect(() => {
+    if (roomMode !== 'host' || !roomChannel) return;
+    broadcastEvent({ type: 'room_info', names: cleanedNames, joinedPlayers: joinedPlayers });
+  }, [cleanedNames.join(',')]);
 
   // QR code generation for host
   useEffect(() => {
@@ -7166,20 +7396,54 @@ function ChoreChaosApp() {
     }
   }, [roomMode, roomCode]);
 
-  // ── Spectator mode early returns ──────────────────────────
-  if (roomMode === 'spectator') {
-    if (roomClosed) {
-      return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
-          <div className="pixel-font text-2xl text-rose-400 mb-4">ROOM CLOSED</div>
-          <p className="font-mono text-sm text-slate-400 mb-6">The host ended the session</p>
-          <button onClick={() => { window.location.href = window.location.pathname; }} className="pixel-font text-[10px] border border-indigo-500/40 bg-indigo-500/10 px-6 py-3 text-indigo-300">
-            START YOUR OWN SESSION
-          </button>
-        </div>
-      );
-    }
+  // ── Join / Spectator / Player mode early returns ──────────────────────────
 
+  // Handlers for the join screen
+  function handleJoinAsPlayer(name) {
+    setPlayerName(name);
+    setRoomMode('player');
+    // Re-track presence with player role
+    if (roomChannel) {
+      roomChannel.track({ joinedAt: Date.now(), role: 'player', playerName: name });
+    }
+  }
+
+  function handleJoinAsSpectator() {
+    setRoomMode('spectator');
+    // Re-track presence as spectator
+    if (roomChannel) {
+      roomChannel.track({ joinedAt: Date.now(), role: 'spectator', playerName: null });
+    }
+  }
+
+  // Room closed — applies to joining, spectator, and player modes
+  if ((roomMode === 'joining' || roomMode === 'spectator' || roomMode === 'player') && roomClosed) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
+        <div className="pixel-font text-2xl text-rose-400 mb-4">ROOM CLOSED</div>
+        <p className="font-mono text-sm text-slate-400 mb-6">The host ended the session</p>
+        <button onClick={() => { window.location.href = window.location.pathname; }} className="pixel-font text-[10px] border border-indigo-500/40 bg-indigo-500/10 px-6 py-3 text-indigo-300">
+          START YOUR OWN SESSION
+        </button>
+      </div>
+    );
+  }
+
+  // Join screen — user hasn't picked a role yet
+  if (roomMode === 'joining') {
+    return (
+      <JoinScreen
+        roomCode={roomCode}
+        names={roomPlayerNames}
+        joinedPlayers={joinedPlayers}
+        onJoinAsPlayer={handleJoinAsPlayer}
+        onJoinAsSpectator={handleJoinAsSpectator}
+      />
+    );
+  }
+
+  // Spectator waiting screen
+  if (roomMode === 'spectator') {
     if (!spectatorState || spectatorState.type === 'waiting') {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
@@ -7235,6 +7499,73 @@ function ChoreChaosApp() {
               </div>
             </div>
           </div>
+        </div>
+      );
+    }
+  }
+
+  // Player waiting screen
+  if (roomMode === 'player') {
+    if (!spectatorState || spectatorState.type === 'waiting') {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
+          <div className="flex items-center gap-2 justify-center mb-2">
+            <span className="pixel-font text-[9px] text-indigo-400 uppercase tracking-widest">Playing as</span>
+            <span className="pixel-font text-[9px] text-cyan-300">{playerName}</span>
+          </div>
+          <div className="pixel-font text-2xl text-cyan-300 mb-4" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>{roomCode}</div>
+          {spectatorState?.hostName ? <p className="font-mono text-sm text-slate-400 mb-4">Connected to {spectatorState.hostName}'s room</p> : null}
+          <div className="font-mono text-sm text-slate-500 animate-pulse">Waiting for the next game...</div>
+          {!spectatorConnected ? <div className="font-mono text-xs text-amber-400 mt-4">Connecting...</div> : null}
+          <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
+        </div>
+      );
+    }
+
+    if (spectatorState.type === 'playing') {
+      const specResult = spectatorState.result;
+      const specStep = spectatorState.step;
+      const specDone = spectatorState.done;
+      const specConfig = getPlaybackConfig(specResult);
+
+      return (
+        <div className="fixed inset-0 z-50 bg-slate-950 p-0 sm:p-6">
+          <div className={`theme-${specResult.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
+            <ThemeArt modeId={specResult.modeId} />
+            <div className="modal-toolbar relative z-10 flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur sm:px-6 sm:py-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-500">Playing as {playerName}</div>
+                <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{specResult.modeName}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span className="pixel-font text-[8px] text-indigo-400">PLAYING</span>
+              </div>
+            </div>
+
+            <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
+              <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                <RevealBanner
+                  modeName={specResult.modeName}
+                  step={specDone ? specConfig.totalSteps : specStep}
+                  totalSteps={specConfig.totalSteps}
+                  done={specDone}
+                />
+                <div className="flex-1">
+                  <PlaybackStage result={specResult} step={specStep} done={specDone} />
+                </div>
+                {specDone ? (
+                  <div className="verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur border-slate-200 bg-white/85">
+                    {specResult.selectionGoal === "winner" ? <Celebration /> : <SadOverlay />}
+                    <div className="relative z-10">
+                      <VerdictReveal text={specResult.headline} isWinner={specResult.selectionGoal === "winner"} />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+          <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
         </div>
       );
     }
@@ -7441,7 +7772,7 @@ function ChoreChaosApp() {
         ) : null}
 
         {/* Room controls — host or standalone */}
-        {roomMode !== 'spectator' ? (
+        {roomMode !== 'spectator' && roomMode !== 'player' && roomMode !== 'joining' ? (
           roomMode === 'none' ? (
             _supabase ? (
               <div className="mb-6 flex justify-center">
@@ -7472,6 +7803,29 @@ function ChoreChaosApp() {
                   </button>
                   <div id="room-qr" className="bg-white p-1 rounded" style={{ width: 80, height: 80 }} />
                 </div>
+                {/* Connected players */}
+                {Object.keys(joinedPlayers).length > 0 ? (
+                  <div className="mt-4 border-t border-white/5 pt-3">
+                    <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+                      {Object.keys(joinedPlayers).map(function(pName) {
+                        return (
+                          <span key={pName} className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 border border-indigo-500/20 px-3 py-1">
+                            <span className="text-xs">{"\uD83D\uDCF1"}</span>
+                            <span className="pixel-font text-[7px] text-indigo-300">{pName}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+                {/* Interactive mode indicator */}
+                <div className="mt-2 text-center">
+                  {interactiveMode ? (
+                    <span className="pixel-font text-[7px] text-green-400">{"\uD83C\uDFAE"} Interactive Mode</span>
+                  ) : (
+                    <span className="pixel-font text-[7px] text-slate-500">{"\uD83D\uDC40"} Spectator Only</span>
+                  )}
+                </div>
               </div>
             </div>
           ) : null
@@ -7501,7 +7855,7 @@ function ChoreChaosApp() {
                 </div>
                 <div className="hidden sm:flex flex-wrap items-center justify-end gap-3">
                   {!playbackDone ? (
-                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market') ? null : (
+                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || (result.modeId === 'black-marble' && interactiveMode)) ? null : (
                     <>
                       <button
                         onClick={advancePlayback}
@@ -7631,7 +7985,7 @@ function ChoreChaosApp() {
 
               <div className="sm:hidden relative z-10 flex flex-wrap items-center justify-center gap-2 border-t border-white/10 bg-black/90 px-3 py-3 backdrop-blur safe-area-bottom">
                 {!playbackDone ? (
-                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market') ? null : (
+                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || (result.modeId === 'black-marble' && interactiveMode)) ? null : (
                   <>
                     <button
                       onClick={advancePlayback}
