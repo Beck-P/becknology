@@ -991,25 +991,48 @@ function initMemory(data) {
 // --- Timing (Dock Stealth) ---
 function initTiming(data) {
   G.mg.timing = { gx: 0, gdir: 1, gspd: 0.12, progress: 0, target: data.target || 3, safe: false, cd: 0 };
-  $mgui.innerHTML = `<div id="mghud">Sneak past! Tap when the guard turns away. (0/${G.mg.timing.target})</div>
-    <button class="ch-btn" style="position:fixed;bottom:24px;left:16px;right:16px;text-align:center;padding:22px;font-size:17px" onclick="sneakTap()">SNEAK</button>`;
+  $mgui.innerHTML = `<div id="mghud">Sneak past when the guard looks away!</div>
+    <div id="timing-status" style="position:fixed;top:45%;left:50%;transform:translate(-50%,-50%);
+      font-size:clamp(22px,6vw,32px);font-weight:bold;font-family:-apple-system,sans-serif;
+      text-shadow:0 2px 12px rgba(0,0,0,0.8);pointer-events:none;transition:color 0.2s"></div>
+    <div style="position:fixed;bottom:0;left:0;right:0;padding:14px 16px 28px;
+      background:rgba(8,8,20,0.92);border-top:1px solid rgba(167,243,208,0.1)">
+      <div id="timing-dots" style="text-align:center;margin-bottom:10px;font-size:18px;letter-spacing:4px"></div>
+      <button id="sneak-btn" style="display:block;width:100%;padding:22px;border-radius:14px;
+        border:2px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.12);
+        color:#f0e6d3;font-size:clamp(17px,4.5vw,22px);font-family:Georgia,serif;
+        cursor:pointer;transition:all 0.15s">SNEAK</button>
+    </div>`;
+  document.getElementById('sneak-btn').addEventListener('click', function() {
+    if (!G.mg?.timing) return;
+    const tm = G.mg.timing;
+    if (tm.cd > 0) return;
+    const btn = document.getElementById('sneak-btn');
+    const status = document.getElementById('timing-status');
+    if (tm.safe) {
+      audio.sfx('success'); tm.progress++; tm.cd = 400;
+      if (btn) { btn.textContent = 'SNEAKED!'; btn.style.background = 'rgba(52,211,153,0.25)'; btn.style.borderColor = '#34D399'; }
+      if (status) { status.textContent = 'NICE!'; status.style.color = '#34D399'; }
+      updateTimingDots();
+      if (tm.progress >= tm.target) { setTimeout(endMinigame, 400); }
+      else { setTimeout(() => { if (btn) { btn.textContent = 'SNEAK'; btn.style.background = ''; btn.style.borderColor = ''; } }, 350); }
+    } else {
+      audio.sfx('fail'); tm.cd = 700;
+      if (btn) { btn.textContent = 'SPOTTED!'; btn.style.background = 'rgba(248,113,113,0.25)'; btn.style.borderColor = '#F87171'; }
+      if (status) { status.textContent = 'SPOTTED!'; status.style.color = '#F87171'; }
+      setTimeout(() => { if (btn) { btn.textContent = 'SNEAK'; btn.style.background = ''; btn.style.borderColor = ''; } }, 600);
+    }
+  });
+  updateTimingDots();
 }
-window.sneakTap = function() {
-  if (!G.mg?.timing) return;
-  const tm = G.mg.timing;
-  if (tm.cd > 0) return;
-  if (tm.safe) {
-    audio.sfx('success'); tm.progress++; tm.cd = 400;
-    document.getElementById('mghud').textContent = `Sneak past! (${tm.progress}/${tm.target})`;
-    if (tm.progress >= tm.target) endMinigame();
-  } else {
-    audio.sfx('fail'); tm.cd = 600;
-    document.getElementById('mghud').textContent = 'Spotted! Wait...';
-    setTimeout(() => {
-      if (G.mg?.timing) document.getElementById('mghud').textContent = `Sneak past! (${tm.progress}/${tm.target})`;
-    }, 600);
-  }
-};
+function updateTimingDots() {
+  const dots = document.getElementById('timing-dots');
+  const tm = G.mg?.timing;
+  if (!dots || !tm) return;
+  let h = '';
+  for (let i = 0; i < tm.target; i++) h += i < tm.progress ? '● ' : '○ ';
+  dots.innerHTML = `<span style="color:#34D399">${h.trim()}</span>`;
+}
 
 function updateTiming(dt) {
   if (!G.mg?.timing) return;
@@ -1018,24 +1041,38 @@ function updateTiming(dt) {
   if (tm.gx > 100) { tm.gdir = -1; tm.safe = true; }
   if (tm.gx < 0) { tm.gdir = 1; tm.safe = false; }
   if (tm.cd > 0) tm.cd -= dt;
+  // Update live status indicator
+  const status = document.getElementById('timing-status');
+  const btn = document.getElementById('sneak-btn');
+  if (tm.cd <= 0 && status) {
+    status.textContent = tm.safe ? 'GO NOW!' : 'WAIT...';
+    status.style.color = tm.safe ? '#34D399' : '#F87171';
+  }
+  if (tm.cd <= 0 && btn) {
+    btn.style.background = tm.safe ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)';
+    btn.style.borderColor = tm.safe ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)';
+  }
 }
 
 function drawTiming() {
   if (!G.mg?.timing) return;
   const { W, H } = G; const tm = G.mg.timing;
   const gx = W * 0.15 + (tm.gx / 100) * W * 0.7;
-  // Guard (reuse Connor sprite facing guard direction)
   drawConnor(gx, H * 0.56, tm.gdir, G.t);
-  // Indicator
-  ctx.fillStyle = tm.safe ? 'rgba(52,211,153,0.5)' : 'rgba(248,113,113,0.5)';
-  ctx.fillRect(W * 0.35, H * 0.12, W * 0.3, 6);
+  // Safe zone tint
+  if (tm.safe) {
+    ctx.fillStyle = 'rgba(52,211,153,0.06)'; ctx.fillRect(0, 0, W, H);
+  }
+  // Indicator bar
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(W * 0.2, H * 0.14, W * 0.6, 8);
   ctx.fillStyle = tm.safe ? '#34D399' : '#F87171';
-  const indicX = W * 0.35 + (tm.gx / 100) * W * 0.3;
-  ctx.fillRect(indicX - 4, H * 0.11, 8, 8);
-  // Progress dots
+  const indicX = W * 0.2 + (tm.gx / 100) * W * 0.6;
+  ctx.beginPath(); ctx.arc(indicX, H * 0.14 + 4, 8, 0, Math.PI * 2); ctx.fill();
+  // Progress dots on canvas
   for (let i = 0; i < tm.target; i++) {
     ctx.fillStyle = i < tm.progress ? '#34D399' : 'rgba(255,255,255,0.15)';
-    ctx.beginPath(); ctx.arc(W * 0.38 + i * 24, H * 0.08, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(W * 0.5 - (tm.target - 1) * 14 + i * 28, H * 0.08, 6, 0, Math.PI * 2); ctx.fill();
   }
 }
 
