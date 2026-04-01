@@ -5088,10 +5088,15 @@ function RocketPlayback({ result, step, done }) {
       const realElapsed = (now - startTimeRef.current) / 1000;
       const simElapsed = realElapsed * TIME_SCALE;
       setElapsed(simElapsed);
+      window.__rocketElapsed = simElapsed;
+
+      // Read interactive eject state from window
+      const iEjects = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+      const isRocketInteractive = typeof window !== 'undefined' && window.__rocketInteractive;
 
       const newCrashes = [];
       for (const p of sortedPlayers) {
-        if (!crashedRef.current.has(p.name) && simElapsed >= p.crashTime) {
+        if (!crashedRef.current.has(p.name) && !iEjects[p.name] && simElapsed >= p.crashTime) {
           crashedRef.current.add(p.name);
           newCrashes.push(p.name);
         }
@@ -5110,9 +5115,17 @@ function RocketPlayback({ result, step, done }) {
         }
       }
 
-      if (crashedRef.current.size >= sortedPlayers.length - 1) {
-        setPhase('complete');
-        return;
+      if (isRocketInteractive) {
+        const doneCount = sortedPlayers.filter(p => crashedRef.current.has(p.name) || iEjects[p.name]).length;
+        if (doneCount >= sortedPlayers.length) {
+          setPhase('complete');
+          return;
+        }
+      } else {
+        if (crashedRef.current.size >= sortedPlayers.length - 1) {
+          setPhase('complete');
+          return;
+        }
       }
 
       animFrameRef.current = requestAnimationFrame(tick);
@@ -5325,11 +5338,17 @@ function RocketPlayback({ result, step, done }) {
             </AnimatePresence>
 
             <div className="absolute bottom-4 left-0 right-0 flex justify-around items-end px-4 sm:px-8">
-              {displayPlayers.map((player, idx) => {
+              {(() => {
+                const iEjectsDisplay = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+                return displayPlayers.map((player, idx) => {
                 const hasCrashed = crashed.includes(player.name);
+                const hasEjected = !!iEjectsDisplay[player.name];
                 const isSurvivor = isComplete && player.name === result.selectedName;
+                const ejectData = iEjectsDisplay[player.name];
                 const rocketProgress = hasCrashed
                   ? (player.crashTime / maxCrashTime)
+                  : hasEjected
+                  ? (ejectData.time / maxCrashTime)
                   : Math.min(elapsed / maxCrashTime, 1);
                 const rocketY = rocketProgress * 600;
                 const color = ROCKET_COLORS[idx % ROCKET_COLORS.length];
@@ -5345,6 +5364,16 @@ function RocketPlayback({ result, step, done }) {
                         style={{ bottom: `${Math.min(rocketY, 380)}px` }}
                       >
                         <div className="text-2xl">💥</div>
+                      </motion.div>
+                    ) : hasEjected ? (
+                      <motion.div
+                        initial={{ scale: 1.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        className="absolute left-1/2 -translate-x-1/2"
+                        style={{ bottom: `${Math.min(rocketY, 380)}px` }}
+                      >
+                        <div className="text-2xl" style={{ filter: `drop-shadow(0 0 8px ${color})` }}>🪂</div>
                       </motion.div>
                     ) : (
                       <motion.div
@@ -5365,19 +5394,29 @@ function RocketPlayback({ result, step, done }) {
                         ) : null}
                       </motion.div>
                     )}
-                    <div className="pixel-font text-[6px] sm:text-[7px]" style={{ color: hasCrashed ? '#4b5563' : color }}>{player.name}</div>
+                    <div className="pixel-font text-[6px] sm:text-[7px]" style={{ color: (hasCrashed || hasEjected) ? '#4b5563' : color }}>{player.name}</div>
                     {hasCrashed ? <div className="font-mono text-[8px] text-slate-600">💥 {player.distanceFormatted}</div> : null}
-                    {isSurvivor ? <div className="font-mono text-[8px] text-violet-300">🏆 {player.distanceFormatted}</div> : null}
+                    {hasEjected ? <div className="font-mono text-[8px] text-green-400">🪂 {formatDist(ejectData.distance)}</div> : null}
+                    {isSurvivor && !hasEjected ? <div className="font-mono text-[8px] text-violet-300">🏆 {player.distanceFormatted}</div> : null}
                   </div>
                 );
-              })}
+              });
+              })()}
             </div>
           </div>
 
-          {crashed.length > 0 ? (
+          {(() => {
+            const iEjectsLog = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+            const ejectedNames = Object.keys(iEjectsLog);
+            return (crashed.length > 0 || ejectedNames.length > 0) ? (
             <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
-              <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Crash Log</div>
+              <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Flight Log</div>
               <div className="flex flex-wrap gap-2">
+                {ejectedNames.map((name) => (
+                  <div key={name} className="font-mono text-[10px] text-green-400/80 border border-green-500/20 bg-green-500/[0.05] px-2 py-1 rounded">
+                    🪂 {name} — {formatDist(iEjectsLog[name].distance)}
+                  </div>
+                ))}
                 {crashed.map((name) => {
                   const p = sortedPlayers.find(pl => pl.name === name);
                   return (
@@ -5388,7 +5427,8 @@ function RocketPlayback({ result, step, done }) {
                 })}
               </div>
             </div>
-          ) : null}
+          ) : null;
+          })()}
         </>
       );
       })()}
@@ -6990,6 +7030,30 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
           <div className="pixel-font text-[9px] text-slate-500">
             Waiting for {pendingAction.playerName} to draw...
           </div>
+        ) : pendingAction.action === 'eject' ? (
+          (() => {
+            const ejects = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+            const hasEjected = ejects[playerName];
+            if (hasEjected) {
+              return (
+                <div className="pixel-font text-[9px] text-green-400">
+                  🪂 LANDED SAFELY — {hasEjected.distance >= 1000000 ? (hasEjected.distance/1000000).toFixed(1) + 'M km' : Math.round(hasEjected.distance).toLocaleString() + ' km'}
+                </div>
+              );
+            }
+            return (
+              <>
+                <div className="pixel-font text-[9px] text-indigo-300 mb-2">🚀 YOUR ROCKET IS FLYING</div>
+                <button
+                  onClick={() => onAction({ action: 'eject' })}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-lg shadow-lg shadow-red-600/30 transition hover:scale-[1.02] active:scale-95"
+                >
+                  🪂 EJECT
+                </button>
+                <div className="pixel-font text-[8px] text-slate-600 mt-2">Tap to land safely at current distance</div>
+              </>
+            );
+          })()
         ) : pendingAction.type === "waiting" ? (
           <div className="pixel-font text-[9px] text-indigo-400 animate-pulse">WAITING FOR YOUR TURN...</div>
         ) : (
@@ -7042,6 +7106,7 @@ function ChoreChaosApp() {
   const currentActionHandler = React.useRef(null);
   const roomModeRef = React.useRef(roomMode);
   const [interactiveBombState, setInteractiveBombState] = useState(null);
+  const [interactiveRocketEjects, setInteractiveRocketEjects] = useState({});
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -7064,13 +7129,61 @@ function ChoreChaosApp() {
   useEffect(() => {
     function handleRocketComplete() {
       if ((result?.modeId === 'rocket' || result?.modeId === 'bomb' || result?.modeId === 'stock-market') && !playbackDone) {
+        // Interactive rocket: compute final result from eject decisions
+        if (result?.modeId === 'rocket' && interactiveMode && Object.keys(interactiveRocketEjects).length > 0) {
+          const formatDist = (d) => d >= 1000000 ? (d/1000000).toFixed(2) + 'M km' : Math.round(d).toLocaleString() + ' km';
+
+          const finalPlayers = result.players.map(p => {
+            const eject = interactiveRocketEjects[p.name];
+            const ejected = !!eject;
+            const crashed = !ejected;
+            const finalDistance = ejected ? eject.distance : p.distance;
+            // Crashed players get 50% penalty
+            const effectiveDistance = crashed ? finalDistance * 0.5 : finalDistance;
+            return {
+              ...p,
+              ejected,
+              crashed,
+              distance: finalDistance,
+              effectiveDistance,
+              distanceFormatted: formatDist(finalDistance),
+              time: ejected ? eject.time : p.crashTime,
+            };
+          });
+
+          finalPlayers.sort((a, b) => b.effectiveDistance - a.effectiveDistance);
+          finalPlayers.forEach((p, i) => { p.rank = i + 1; });
+
+          const selected = result.selectionGoal === 'winner' ? finalPlayers[0] : finalPlayers[finalPlayers.length - 1];
+
+          result.selectedName = selected.name;
+          result.headline = pickRandomMessage(
+            result.selectionGoal === 'winner' ? WIN_MESSAGES : LOSE_MESSAGES,
+            selected.name,
+            result.selectionGoal === 'winner' ? 'win' : 'lose'
+          );
+          result.summary = selected.name + ' ' + (selected.ejected ? 'ejected' : 'crashed') + ' at ' + selected.distanceFormatted + '.';
+          result.isTie = false;
+          result.players = finalPlayers.map(p => ({
+            ...p,
+            selected: p.name === selected.name,
+            headline: p.ejected ? 'Ejected at ' + p.distanceFormatted : 'Crashed at ' + p.distanceFormatted,
+            subline: p.ejected ? 'Safe landing' : 'Burned up',
+            chips: [p.distanceFormatted, p.ejected ? 'Ejected' : 'Crashed'],
+          }));
+
+          pushHistory(result);
+          setPendingAction(null);
+          currentActionHandler.current = null;
+        }
+
         setPlaybackStep(2);
         setPlaybackDone(true);
       }
     }
     window.addEventListener('rocket-complete', handleRocketComplete);
     return () => window.removeEventListener('rocket-complete', handleRocketComplete);
-  }, [result, playbackDone]);
+  }, [result, playbackDone, interactiveMode, interactiveRocketEjects]);
 
   // Interactive Black Marble turn management
   useEffect(() => {
@@ -7264,6 +7377,54 @@ function ChoreChaosApp() {
     };
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone, interactiveBombState]);
 
+  // Interactive Rocket eject management
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'rocket') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      window.__rocketInteractive = false;
+      return;
+    }
+
+    // Expose interactive state on window for cross-component communication
+    window.__interactiveRocketEjects = interactiveRocketEjects;
+    window.__rocketInteractive = true;
+
+    // Register action handler for eject actions
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'eject') return;
+      const actor = payload.playerName;
+      if (!actor || interactiveRocketEjects[actor]) return; // Already ejected
+
+      const currentElapsed = window.__rocketElapsed || 0;
+      const distance = 100 * currentElapsed + 0.5 * 200 * currentElapsed * currentElapsed;
+
+      setInteractiveRocketEjects(prev => ({
+        ...prev,
+        [actor]: { time: currentElapsed, distance }
+      }));
+
+      broadcastEvent({
+        type: 'rocket_eject',
+        playerName: actor,
+        distance,
+        distanceFormatted: distance >= 1000000 ? (distance/1000000).toFixed(1) + 'M km' : Math.round(distance).toLocaleString() + ' km',
+      });
+    };
+
+    // Set pending action so all flying players see the EJECT button
+    setPendingAction({
+      type: 'realtime',
+      action: 'eject',
+      modeId: 'rocket',
+    });
+
+    return () => {
+      currentActionHandler.current = null;
+    };
+  }, [interactiveMode, gameActive, result, playbackDone, interactiveRocketEjects]);
+
   const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
 
   const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
@@ -7366,8 +7527,12 @@ function ChoreChaosApp() {
     setSuddenDeathRound(0);
     setSuddenDeathNames(null);
     setInteractiveBombState(null);
-    // Don't record interactive bomb immediately — it records on detonation
-    if (!(interactiveMode && outcome.modeId === 'bomb')) {
+    setInteractiveRocketEjects({});
+    window.__interactiveRocketEjects = {};
+    window.__rocketInteractive = false;
+    window.__rocketElapsed = 0;
+    // Don't record interactive bomb/rocket immediately — they record on completion
+    if (!(interactiveMode && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket'))) {
       pushHistory(outcome);
     }
     broadcastEvent({ type: 'game_start', result: outcome });
@@ -7428,6 +7593,10 @@ function ChoreChaosApp() {
     setSuddenDeathRound(0);
     setSuddenDeathNames(null);
     setInteractiveBombState(null);
+    setInteractiveRocketEjects({});
+    window.__interactiveRocketEjects = {};
+    window.__rocketInteractive = false;
+    window.__rocketElapsed = 0;
     broadcastEvent({ type: 'game_reset' });
   }
 
