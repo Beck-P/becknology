@@ -3360,7 +3360,7 @@ function render() {
   // Minigame overlays
   if (G.phase === 'minigame' && G.mg) {
     if (G.mg.type === 'navigate') drawNav();
-    if (G.mg.type === 'timing') drawTiming();
+    else if (G.mg.type === 'timing') drawTiming();
   }
 }
 
@@ -3392,7 +3392,7 @@ function update(dt) {
   // Minigame updates
   if (G.phase === 'minigame' && G.mg) {
     if (G.mg.type === 'navigate') updateNav(dt);
-    if (G.mg.type === 'timing') updateTiming(dt);
+    else if (G.mg.type === 'timing') updateTiming(dt);
   }
 }
 
@@ -3400,6 +3400,7 @@ let lastTime = 0;
 function loop(time) {
   const dt = Math.min(time - lastTime, 50);
   lastTime = time;
+  try {
 
   if (G.state === 'title') {
     // Animated title background
@@ -3431,6 +3432,7 @@ function loop(time) {
     update(dt);
   }
 
+  } catch(e) { console.error('loop error:', e); }
   requestAnimationFrame(loop);
 }
 
