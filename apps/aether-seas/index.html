@@ -1271,6 +1271,111 @@ const BG = {
       ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
   },
 
+  // --- Cabin door (eavesdropping scene) ---
+  cabinDoor(t) {
+    const { W, H } = G;
+    // Dark ship interior
+    drawGrad(0, H, [['#1A1008',0],['#2A1A10',0.3],['#3A2818',0.7],['#2A1A10',1]]);
+    // Wood plank walls
+    ctx.fillStyle = '#3A2818';
+    for (let y = 0; y < H; y += Math.max(4, Math.round(H * 0.03))) {
+      ctx.fillRect(0, y, W, 1);
+      ctx.fillStyle = '#2A1A0A'; ctx.fillRect(0, y + 1, W, 1); ctx.fillStyle = '#3A2818';
+    }
+    // Floor
+    ctx.fillStyle = '#2A1808'; ctx.fillRect(0, Math.round(H * 0.7), W, Math.round(H * 0.3));
+    ctx.fillStyle = '#3A2818';
+    for (let x = 0; x < W; x += Math.max(6, Math.round(W * 0.06)))
+      ctx.fillRect(x, Math.round(H * 0.7), 1, Math.round(H * 0.3));
+    // Door frame (center-right)
+    const doorL = Math.round(W * 0.45), doorW2 = Math.round(W * 0.25);
+    const doorTop = Math.round(H * 0.15), doorBot = Math.round(H * 0.7);
+    ctx.fillStyle = '#4A3420';
+    ctx.fillRect(doorL - 3, doorTop - 3, doorW2 + 6, doorBot - doorTop + 6);
+    // Door
+    ctx.fillStyle = '#5A4028';
+    ctx.fillRect(doorL, doorTop, doorW2, doorBot - doorTop);
+    // Door planks
+    ctx.fillStyle = '#4A3018';
+    ctx.fillRect(doorL + Math.round(doorW2 * 0.5), doorTop, 1, doorBot - doorTop);
+    ctx.fillRect(doorL, doorTop + Math.round((doorBot - doorTop) * 0.33), doorW2, 1);
+    ctx.fillRect(doorL, doorTop + Math.round((doorBot - doorTop) * 0.66), doorW2, 1);
+    // Door handle
+    ctx.fillStyle = '#C0A060';
+    ctx.fillRect(doorL + doorW2 - 4, Math.round((doorTop + doorBot) / 2), 2, 2);
+    // Light leaking from under/around door
+    ctx.fillStyle = 'rgba(255,200,120,0.12)';
+    ctx.fillRect(doorL - 1, doorTop, 1, doorBot - doorTop);
+    ctx.fillRect(doorL + doorW2, doorTop, 1, doorBot - doorTop);
+    ctx.fillRect(doorL, doorBot, doorW2, 2);
+    // Warm glow from gap
+    const dg = ctx.createRadialGradient(doorL + Math.round(doorW2 / 2), Math.round((doorTop + doorBot) / 2), 0,
+      doorL + Math.round(doorW2 / 2), Math.round((doorTop + doorBot) / 2), Math.round(W * 0.2));
+    dg.addColorStop(0, 'rgba(255,180,80,0.08)'); dg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
+    // Lantern on wall (left side)
+    const lx = Math.round(W * 0.15);
+    ctx.fillStyle = '#5A3A10'; ctx.fillRect(lx, Math.round(H * 0.3), 1, 4);
+    ctx.fillStyle = '#FFD040'; ctx.fillRect(lx - 1, Math.round(H * 0.28), 3, 2);
+    const lg = ctx.createRadialGradient(lx, Math.round(H * 0.29), 0, lx, Math.round(H * 0.29), Math.round(W * 0.06));
+    lg.addColorStop(0, 'rgba(255,200,80,0.15)'); lg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = lg; ctx.fillRect(0, Math.round(H * 0.2), Math.round(W * 0.3), Math.round(H * 0.2));
+  },
+
+  // --- Crimson sea parting with steps ---
+  seaParting(t) {
+    const { W, H } = G;
+    const skyH = Math.round(H * 0.35);
+    // Dark crimson sky
+    drawGrad(0, skyH, [['#1A0810',0],['#3A1020',0.3],['#6A2030',0.6],['#AA4040',1]]);
+    drawStars(Math.round(H * 0.15), t);
+    drawMoonWithSpores(t, 'crimson', skyH);
+    drawCloudBand(skyH, t, 'rgba(100,30,30,0.35)', 0.08, 50, 0.3);
+    // Crimson sea — left and right sides, parted in the middle
+    const gapL = Math.round(W * 0.35), gapR = Math.round(W * 0.65);
+    // Left water wall
+    drawGrad(skyH, H, [['#4A1A1A',0],['#6A2020',0.3],['#8A3030',0.6],['#AA4040',1]]);
+    // Clear the gap
+    ctx.fillStyle = '#0A0508'; ctx.fillRect(gapL, skyH, gapR - gapL, H - skyH);
+    // Steps going down into the gap
+    const stepW = Math.round((gapR - gapL) * 0.6);
+    const stepX = Math.round(W * 0.5 - stepW / 2);
+    for (let i = 0; i < 12; i++) {
+      const sy = skyH + Math.round(i * (H - skyH) / 10);
+      const sw = stepW - Math.round(i * stepW * 0.03);
+      const sx = Math.round(W * 0.5 - sw / 2);
+      ctx.fillStyle = i % 2 === 0 ? '#3A2020' : '#2A1515';
+      ctx.fillRect(sx, sy, sw, Math.max(2, Math.round((H - skyH) / 11)));
+      // Step edge highlight
+      ctx.fillStyle = '#5A3030'; ctx.fillRect(sx, sy, sw, 1);
+    }
+    // Water walls — wavy edges facing the gap
+    ctx.fillStyle = '#8A3030';
+    for (let y = skyH; y < H; y++) {
+      const waveL = gapL + Math.round(Math.sin(y * 0.08 + t * 0.002) * 3);
+      const waveR = gapR + Math.round(Math.sin(y * 0.08 + t * 0.002 + 2) * 3);
+      ctx.fillRect(waveL - 2, y, 2, 1);
+      ctx.fillRect(waveR, y, 2, 1);
+    }
+    // Crimson spore mist at the bottom of the gap
+    for (let i = 0; i < 8; i++) {
+      const mx = gapL + Math.round(hash(i * 7 + 300) * (gapR - gapL));
+      const my = Math.round(H * 0.7 + hash(i * 13 + 400) * H * 0.2);
+      const ma = 0.1 + 0.1 * Math.sin(t * 0.001 + i * 2);
+      ctx.fillStyle = `rgba(255,100,80,${ma})`;
+      ctx.fillRect(mx, my, 2, 1);
+    }
+    // Glowing edges of the water walls
+    ctx.fillStyle = 'rgba(255,120,100,0.15)';
+    for (let y = skyH; y < H; y += 2) {
+      ctx.fillRect(gapL - 1, y, 1, 1);
+      ctx.fillRect(gapR, y, 1, 1);
+    }
+    // Ship deck at top
+    ctx.fillStyle = '#8B6914'; ctx.fillRect(0, skyH - 3, W, 3);
+    ctx.fillStyle = '#5A3A10'; ctx.fillRect(0, skyH - 5, W, 2);
+  },
+
   burritos(t) {
     const { W, H } = G;
     drawSky(['#87CEEB','#FFB347'], H * 0.4);
@@ -1664,6 +1769,18 @@ function drawSceneChars(sceneId, t) {
     case 'litos-burritos':
       drawUlisa(W * 0.3, H * 0.52, 1, t);
       drawBeckRat(W * 0.55, H * 0.55, t);
+      break;
+    case 'beck-eavesdrop':
+      // Beck-rat listening at the cabin door (left side, small)
+      drawBeckRat(W * 0.35, H * 0.68, t);
+      break;
+    case 'beck-warns':
+      drawUlisa(W * 0.3, H * 0.68, 1, t);
+      drawBeckRat(W * 0.5, H * 0.72, t);
+      break;
+    case 'sea-parts':
+      drawUlisa(W * 0.45, H * 0.33, 1, t);
+      drawBeckRat(W * 0.55, H * 0.36, t);
       break;
     case 'cat-cafe':
       drawUlisa(W * 0.4, H * 0.63, 1, t);
@@ -2434,18 +2551,66 @@ const scenes = [
     { s:'n', t:'The sky stopped flickering. Time resumed its normal, burrito-free flow.' },
     { s:'b', t:'For the record, I regret nothing.' },
     { s:'b', t:'Also for the record, the guac was incredible.' },
-    { s:'n', t:'The Golden Oreo sailed on. The sea deepened ahead.' },
+    { s:'n', t:'They made it back to the Golden Oreo. The ship sailed on.' },
   ]},
 
-  // 8 — Cat Cafe
-  { id: 'cat-cafe', bg: 'cafe', music: 'emerald', dialogue: [
-    { s:'n', t:'The next island had no name, only a reputation. It was home to the Celestial Cat Café — where the tea was eternal and the cats were deeply suspicious.' },
+  // 8a — Beck Eavesdrops
+  { id: 'beck-eavesdrop', bg: 'cabinDoor', music: 'crimson', dialogue: [
+    { s:'n', t:'That night, Beck-rat couldn\'t sleep. Which was unusual, because rats are excellent sleepers.' },
+    { s:'n', t:'He heard voices from the captain\'s quarters. Low. Conspiratorial. The kind of voices that make you press your ear to a door.' },
+    { s:'n', t:'So he did.' },
+    { s:'cr', t:'"...the Celestial Cat Café. Below the crimson spores."' },
+    { s:'cr', t:'"They only accept one thing in trade: a human. Someone to tend the café for a season."' },
+    { s:'cr', t:'"And in return?"' },
+    { s:'cr', t:'"Matcha. The real kind. The kind that makes you see the color of sound."' },
+    { s:'cr', t:'"The girl. She\'s clever. The cats would accept her."' },
+    { s:'n', t:'Beck-rat\'s blood went cold. Which was saying something, because his blood was already fairly cold on account of being a rat.' },
+  ]},
+
+  // 8b — Beck Warns Ulisa
+  { id: 'beck-warns', bg: 'ship', music: 'crimson', waterType: 'crimson', dialogue: [
+    { s:'b', t:'We have a problem.' },
+    { s:'u', t:'What kind of problem?' },
+    { s:'b', t:'The kind where the crew is planning to trade you to a cat café in exchange for magic matcha.' },
+    { s:'u', t:'...what?' },
+    { s:'b', t:'Below the spores. There\'s a Celestial Cat Café. The cats want a human to work there. The crew wants matcha. You are the human. This is the problem.' },
+    { s:'u', t:'How do you know this?' },
+    { s:'b', t:'I was eavesdropping. It\'s one of the few advantages of being very small.' },
+    { s:'u', t:'So what do we do?' },
+    { s:'b', t:'We go anyway. But on our terms. You\'re smarter than the cats. You answer their riddles, you earn the matcha yourself, and the crew gets nothing on you.' },
+    { s:'b', t:'Also I should mention that cats eat rats, so I am being extremely brave right now and I want that acknowledged.' },
+    { s:'u', t:'Acknowledged.' },
+    { s:'b', t:'Thank you.' },
+  ]},
+
+  // 8c — The Crimson Sea Parts
+  { id: 'sea-parts', bg: 'seaParting', music: 'crimson', dialogue: [
+    { s:'n', t:'The next morning, the captain called everyone to the deck.' },
+    { s:'cr', t:'"We\'ve arrived. The passage below."' },
+    { s:'n', t:'The crimson sea began to tremble. Then, slowly, impossibly, it parted.' },
+    { s:'n', t:'The water pulled apart like curtains, revealing a staircase of dark stone spiraling downward into the spores. Crimson mist curled up from below.' },
+    { s:'cr', t:'"The Celestial Cat Café is at the bottom. You go down. You prove your worth. You get the matcha."' },
+    { s:'u', t:'And if I don\'t prove my worth?' },
+    { s:'cr', t:'"Then you stay and become a barista."' },
+    { s:'b', t:'Worst. Employee. Benefits. Ever.' },
+    { s:'n', t:'She looked at Beck-rat. He looked at her. Then they walked down the stairs together, into the crimson spores, toward whatever was waiting below.' },
+  ]},
+
+  // 8d — Cat Cafe (below the spores)
+  { id: 'cat-cafe', bg: 'cafe', music: 'crimson', dialogue: [
+    { s:'n', t:'The Celestial Cat Café existed in a pocket of calm beneath the crimson sea. The spores drifted overhead like a ceiling of red stars.' },
     { s:'n', t:'Three figures sat behind the counter.' },
     { s:'n', t:'A wizard werewolf in a star-covered bathrobe. A massive white lion who appeared to be napping. And an extremely energetic puma vibrating at a frequency that suggested espresso.' },
-    { s:'b', t:'I would like to leave.' },
+    { s:'b', t:'I would very much like to leave.' },
     { s:'u', t:'We just got here.' },
-    { s:'b', t:"Cats eat rats. This is a fundamental flaw in the itinerary." },
-    { s:'n', t:'The wizard werewolf spoke: "Travelers. We will grant you passage and matcha — IF you answer our riddles."' },
+    { s:'b', t:"CATS. EAT. RATS. This is a fundamental flaw in the itinerary." },
+    { s:'n', t:'The wizard werewolf looked at them. Then at Beck-rat. Then back at them.' },
+    { s:'n', t:'"You came willingly. Interesting. Most humans are... delivered."' },
+    { s:'u', t:'I\'m here to earn the matcha. Not to be traded for it.' },
+    { s:'n', t:'The wizard werewolf\'s eyes widened. The white lion opened one eye. Even the puma stopped bouncing.' },
+    { s:'n', t:'"Very well. You know the rules. Answer our riddles, and the matcha is yours. Fail, and..."' },
+    { s:'b', t:'And what?' },
+    { s:'n', t:'"You make lattes for a year."' },
     { s:'b', t:"Oh good. Riddles. My favorite thing that isn't burritos." },
     { s:'n', t:'Answer the riddles!',
       action:'minigame', game:'quiz', data:{
@@ -2610,6 +2775,8 @@ function render() {
   else if (bg === 'shipBelow') BG.shipBelow(t);
   else if (bg === 'bookstore') BG.bookstore(t);
   else if (bg === 'seaCrossing') BG.seaCrossing(t);
+  else if (bg === 'cabinDoor') BG.cabinDoor(t);
+  else if (bg === 'seaParting') BG.seaParting(t);
   else if (bg === 'ship') BG.ship(t, scene.waterType);
   else if (bg === 'burritos') BG.burritos(t);
   else if (bg === 'cafe') BG.cafe(t);
