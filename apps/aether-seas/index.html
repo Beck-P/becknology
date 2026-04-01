@@ -451,6 +451,19 @@ const BG = {
     ctx.fillRect(Math.round(W * 0.65), dockY, 2, Math.round((sandY - dockY) * 0.7));
     ctx.fillRect(Math.round(W * 0.82), dockY, 2, Math.round((sandY - dockY) * 0.7));
     ctx.fillStyle = '#7A6040'; ctx.fillRect(Math.round(W * 0.55), dockY + 1, Math.round(W * 0.38), 1);
+    // Boat at end of dock
+    const boatX = Math.round(W * 0.88), boatY = dockY + 1;
+    const bob = Math.round(Math.sin(t * 0.0015) * 1);
+    ctx.fillStyle = '#4A2A12';
+    ctx.fillRect(boatX - 5, boatY + bob, 10, 3);
+    ctx.fillRect(boatX - 4, boatY + 3 + bob, 8, 2);
+    ctx.fillStyle = '#3A1A0A'; ctx.fillRect(boatX, boatY - 6 + bob, 1, 6);
+    ctx.fillStyle = '#E8D8C0';
+    ctx.beginPath();
+    ctx.moveTo(boatX + 1, boatY - 5 + bob);
+    ctx.lineTo(boatX + 4, boatY - 3 + bob);
+    ctx.lineTo(boatX + 1, boatY - 1 + bob);
+    ctx.fill();
   },
 
   ship(t, waterType) {
@@ -756,10 +769,38 @@ function drawSceneChars(sceneId, t) {
       drawUlisa(W * 0.33, H * 0.57, 1, t);
       drawMitchell(W * 0.62, H * 0.54, -1, t);
       break;
-    case 'abduction':
-      drawUlisa(W * 0.15, H * 0.57, 1, t);
-      drawMitchell(W * 0.55, H * 0.54, 1, t);
+    case 'abduction': {
+      const ap = scenes[G.sceneIdx].phase || 0;
+      if (ap === 0) {
+        // Peaceful walk together
+        drawUlisa(W * 0.3, H * 0.62, 1, t);
+        drawMitchell(W * 0.52, H * 0.6, -1, t);
+      } else if (ap === 1) {
+        // Interrupted — both looking right at approaching ship
+        drawUlisa(W * 0.25, H * 0.62, 1, t);
+        drawMitchell(W * 0.45, H * 0.6, 1, t);
+      } else if (ap === 2) {
+        // Gibsabella & Real Zono confront, Mitchell between them
+        drawUlisa(W * 0.12, H * 0.62, 1, t);
+        drawPerson(W * 0.5, H * 0.6, '#2a1a3a', '#7B2FC0', '#6A20A0', '#FFD700', 0, -1, t); // Gibsabella
+        drawMitchell(W * 0.62, H * 0.6, -1, t);
+        drawPerson(W * 0.74, H * 0.6, '#2a1a3a', '#1A7040', '#156030', '#FFD700', 0, -1, t); // Real Zono
+        // Crowns
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(Math.round(W * 0.5) - 3*PX, Math.round(H * 0.6) - 13*PX, 6*PX, PX);
+        ctx.fillRect(Math.round(W * 0.74) - 3*PX, Math.round(H * 0.6) - 13*PX, 6*PX, PX);
+      } else if (ap === 3) {
+        // Dragging Mitchell toward the boat
+        drawUlisa(W * 0.12, H * 0.62, 1, t);
+        drawPerson(W * 0.6, H * 0.6, '#2a1a3a', '#7B2FC0', '#6A20A0', '#FFD700', 0, 1, t);
+        drawMitchell(W * 0.7, H * 0.6, 1, t);
+        drawPerson(W * 0.8, H * 0.6, '#2a1a3a', '#1A7040', '#156030', '#FFD700', 0, 1, t);
+      } else {
+        // Ulisa alone on shore
+        drawUlisa(W * 0.35, H * 0.62, 1, t);
+      }
       break;
+    }
     case 'connor':
       drawUlisa(W * 0.33, H * 0.57, 1, t);
       drawConnor(W * 0.62, H * 0.54, -1, t);
@@ -1268,23 +1309,40 @@ const scenes = [
   ]},
 
   // 1 — Abduction
-  { id: 'abduction', bg: 'shore', music: 'emerald', dialogue: [
+  { id: 'abduction', bg: 'shore', music: 'emerald',
+    init() { this.phase = 0; },
+    dialogue: [
+    // Phase 0 — peaceful walk
+    { s:'n', t:'A few days later, they walked along the shore together.' },
+    { s:'n', t:'The sand was warm. The air smelled like salt and possibility. A breeze carried the sound of waves and absolutely nothing else of concern.' },
+    { s:'u', t:'I like this.' },
+    { s:'m', t:'The beach?' },
+    { s:'u', t:'All of it.' },
+    { s:'n', t:'He smiled. She smiled. The sun smiled. Everyone was smiling. It was aggressively pleasant.' },
+    { s:'n', t:'All was great.' },
+    // Phase 1 — ominous turn
+    { s:'n', t:'Until it wasn\'t.', onShow(){ scenes[G.sceneIdx].phase = 1; } },
     { s:'n', t:'It happened on a Tuesday. The worst things always happen on Tuesdays.' },
-    { s:'n', t:'They were walking along the shore when the horizon split open and a ship the size of a bad decision sailed directly toward them.' },
-    { s:'g', t:'MITCHELL BECKLEY.' },
+    { s:'n', t:'The horizon split open and a ship the size of a bad decision sailed directly toward them.' },
+    // Phase 2 — confrontation
+    { s:'g', t:'MITCHELL BECKLEY.', onShow(){ scenes[G.sceneIdx].phase = 2; } },
     { s:'n', t:'The voice belonged to a figure in a purple robe so elaborate it had its own weather system.' },
     { s:'g', t:'You have been SUMMONED by the Royal Court of Absolutely Not.' },
     { s:'d', t:'THIS IS FOR YOUR OWN GOOD, BOY.' },
-    { s:'n', t:'A second figure in green velvet stepped off the ship. He was wearing a crown made entirely of disapproval.' },
+    { s:'n', t:'A second figure in green velvet stepped off the boat. He was wearing a crown made entirely of disapproval.' },
     { s:'m', t:'I would like to formally object—' },
     { s:'g', t:'OBJECTION DENIED.' },
     { s:'m', t:"I wasn't finished—" },
     { s:'d', t:'SENTENCE: IMMEDIATE DEPARTURE BY BOAT.' },
-    { s:'m', t:"This is absolutely not my fault! I was being completely normal!" },
+    // Phase 3 — dragging Mitchell away
+    { s:'m', t:"This is absolutely not my fault! I was being completely normal!", onShow(){ scenes[G.sceneIdx].phase = 3; } },
     { s:'n', t:'He was, in fact, being completely normal. This somehow made it worse.' },
+    { s:'n', t:'They seized him by each arm and marched him toward the boat like a man being escorted from a party he was technically still enjoying.' },
     { s:'m', t:'I WILL EXPLAIN LATER. THIS IS TEMPORARY. EVERYTHING IS FINE.' },
-    { s:'n', t:'Everything was not fine. And he would not explain later.' },
-    { s:'n', t:'She watched the ship disappear into the emerald horizon, which shimmered with the sort of beauty that feels personally insulting when you are sad.' },
+    // Phase 4 — Ulisa alone
+    { s:'n', t:'Everything was not fine. And he would not explain later.', onShow(){ scenes[G.sceneIdx].phase = 4; } },
+    { s:'n', t:'The boat pulled away from the dock. The sails caught the wind. And just like that, he was gone.' },
+    { s:'n', t:'She stood on the shore alone, watching the ship disappear into the emerald horizon, which shimmered with the sort of beauty that feels personally insulting when you are sad.' },
   ]},
 
   // 2 — Connor + Stealth
