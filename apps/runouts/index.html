@@ -9517,7 +9517,8 @@ function ChoreChaosApp() {
   const allFilled = cleanedNames.every(Boolean);
   const namesAreUnique = nameSet.size === cleanedNames.length;
   const hasEnoughPlayers = cleanedNames.length >= 2;
-  const canRun = allFilled && namesAreUnique && hasEnoughPlayers;
+  const multiplayerReady = interactiveMode && Object.keys(joinedPlayers).length >= 2;
+  const canRun = multiplayerReady || (allFilled && namesAreUnique && hasEnoughPlayers);
   const currentConfig = result ? getPlaybackConfig(result) : null;
 
   function updateName(index, value) {
@@ -9615,10 +9616,13 @@ function ChoreChaosApp() {
         ? pickRandom(MODES).id
         : selectedModeId;
 
-    const playerNames = forcedNames || cleanedNames;
+    const activePlayerNames = interactiveMode && Object.keys(joinedPlayers).length >= 2
+      ? Object.keys(joinedPlayers)
+      : cleanedNames;
+    const playerNames = forcedNames || activePlayerNames;
 
     if (!forcedNames && gameFormat === "tournament") {
-      return buildTournamentOutcome(cleanedNames, taskLabel.trim() || "do the chores", resolvedModeId, wheelRotation);
+      return buildTournamentOutcome(activePlayerNames, taskLabel.trim() || "do the chores", resolvedModeId, wheelRotation);
     }
 
     const mode = modeById(resolvedModeId);
@@ -9634,7 +9638,10 @@ function ChoreChaosApp() {
     // Initialize a new series if selecting a best-of format and not already in one
     if (['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat) && !seriesActive) {
       const totalRounds = gameFormat === 'best-of-3' ? 3 : gameFormat === 'best-of-5' ? 5 : 7;
-      const initScores = Object.fromEntries(cleanedNames.map(n => [n, 0]));
+      const seriesNames = interactiveMode && Object.keys(joinedPlayers).length >= 2
+        ? Object.keys(joinedPlayers)
+        : cleanedNames;
+      const initScores = Object.fromEntries(seriesNames.map(n => [n, 0]));
       setSeriesActive(true);
       setSeriesConfig({ totalRounds, selectionGoal });
       setSeriesScores(initScores);
