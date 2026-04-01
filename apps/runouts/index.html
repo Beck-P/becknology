@@ -3784,7 +3784,7 @@ function getSingleTotalSteps(result) {
     case "wheel":
       return 2;
     case "coin-flips":
-      return 6;
+      return (result?.players?.length ?? 4) * 5 + 1;
     case "horse-race":
       return (result?.turns?.length ?? 12) + 1;
     case "rocket":
@@ -4655,13 +4655,25 @@ function HighCardPlayback({ result, step, done }) {
 }
 
 function CoinPlayback({ result, step, done }) {
-  const roundsShown = clamp(step, 0, 5);
+  const playerCount = result.players.length;
+  const currentPlayerIndex = Math.min(Math.floor(step / 5), playerCount - 1);
+  const currentFlipInPlayer = step - currentPlayerIndex * 5;
+
+  function getFlipsShown(playerIdx) {
+    if (done) return 5;
+    if (playerIdx < currentPlayerIndex) return 5;
+    if (playerIdx === currentPlayerIndex) return clamp(currentFlipInPlayer, 0, 5);
+    return 0;
+  }
+
+  const activePlayerName = currentPlayerIndex < playerCount ? result.players[currentPlayerIndex]?.name : null;
+  const roundsShown = done ? 5 : clamp(currentFlipInPlayer, 0, 5);
   return (
     <div className="overflow-hidden rounded-[2rem] shadow-xl" style={{
       background: "linear-gradient(180deg, #1a2a3a 0%, #0a1520 100%)",
       border: "2px solid #3a5a7a",
     }}>
-      <ModeHeader result={result} done={done} pendingText={`Flip round ${Math.max(1, roundsShown)} in progress...`} pendingSummary="Five rounds. Fewest heads is doomed." />
+      <ModeHeader result={result} done={done} pendingText={activePlayerName ? `${activePlayerName}'s flip ${Math.max(1, roundsShown)} of 5...` : "Flipping..."} pendingSummary="Five flips each. Fewest heads is doomed." />
 
       <div className="p-6">
         {/* Pirate header */}
@@ -4674,17 +4686,19 @@ function CoinPlayback({ result, step, done }) {
 
         {/* Player paths */}
         <div className="space-y-6">
-          {result.players.map((player) => {
+          {result.players.map((player, pIdx) => {
             const isSelected = done && player.selected;
             const isTied = done && player.tied;
             const isWinner = result.selectionGoal === "winner";
+            const playerFlipsShown = getFlipsShown(pIdx);
+            const isActivePlayer = pIdx === currentPlayerIndex && !done;
             return (
-              <div key={player.name} className={`rounded-xl p-4 ${isTied ? "pulse-tie" : ""}`} style={{
+              <div key={player.name} className={`rounded-xl p-4 transition-all duration-300 ${isTied ? "pulse-tie" : ""}`} style={{
                 background: isTied
                   ? "rgba(245,158,11,0.15)"
                   : isSelected
                     ? isWinner ? "rgba(184,134,11,0.15)" : "rgba(139,0,0,0.15)"
-                    : "rgba(255,255,255,0.04)",
+                    : isActivePlayer ? "rgba(212,167,106,0.1)" : "rgba(255,255,255,0.04)",
                 border: isTied
                   ? "2px solid rgba(245,158,11,0.4)"
                   : isSelected
@@ -4719,7 +4733,7 @@ function CoinPlayback({ result, step, done }) {
                   </svg>
 
                   {player.flips.map((flip, index) => {
-                    const shown = index < roundsShown;
+                    const shown = index < playerFlipsShown;
                     const isHeads = flip === "H";
                     const yOffset = index % 2 === 0 ? -8 : 8;
                     return (
@@ -9216,9 +9230,11 @@ function ChoreChaosApp() {
       playerName = result.players[0]?.name;
       action = 'spin_wheel';
     } else if (mode === 'coin-flips') {
-      // Round-based — cycle through players
-      if (playbackStep >= 5) return;
-      playerName = result.players[playbackStep % result.players.length]?.name;
+      // Per-player sequential: player 1 does all 5 flips, then player 2, etc.
+      const totalFlipSteps = result.players.length * 5;
+      if (playbackStep >= totalFlipSteps) return;
+      const currentPlayerIdx = Math.floor(playbackStep / 5);
+      playerName = result.players[currentPlayerIdx]?.name;
       action = 'flip_coin';
     } else {
       return;
