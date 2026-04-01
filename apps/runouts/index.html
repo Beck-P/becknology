@@ -5,9 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Runouts</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18",
+      "react/jsx-runtime": "https://esm.sh/react@18/jsx-runtime",
+      "react/jsx-dev-runtime": "https://esm.sh/react@18/jsx-dev-runtime",
+      "react-dom": "https://esm.sh/react-dom@18?external=react",
+      "react-dom/client": "https://esm.sh/react-dom@18/client?external=react"
+    }
+  }
+  </script>
+  <script src="https://unpkg.com/@babel/standalone@7.26.10/babel.min.js"></script>
+  <script type="module">
+    import React from 'react';
+    import ReactDOMPkg from 'react-dom';
+    import { createRoot } from 'react-dom/client';
+    import { motion, AnimatePresence } from 'https://esm.sh/framer-motion@11?external=react,react-dom';
+
+    window.React = React;
+    window.ReactDOM = { ...ReactDOMPkg, createRoot };
+    window.__FM = { motion, AnimatePresence };
+
+    const appScript = document.getElementById('app-source');
+    if (appScript && window.Babel) {
+      try {
+        const transformed = window.Babel.transform(appScript.textContent, { presets: ['react'] }).code;
+        const runScript = document.createElement('script');
+        runScript.textContent = transformed;
+        document.body.appendChild(runScript);
+      } catch (e) {
+        document.getElementById('root').innerHTML = '<pre style="color:red;padding:24px;font-size:12px;">' + e.message + '</pre>';
+      }
+    }
+  </script>
   <style>
     html, body { min-height: 100%; }
     body {
@@ -1003,23 +1034,12 @@
 </head>
 <body>
   <div id="root">
-    <div style="padding:24px;font-family:monospace;color:#6366f1;text-align:center;margin-top:40vh;">Loading...</div>
+    <div style="padding:24px;font-family:monospace;color:#6366f1;text-align:center;margin-top:40vh;">Loading game...</div>
   </div>
 
-  <script type="text/babel" data-presets="react">
+  <script type="text/babel-source" id="app-source">
     const { useMemo, useState, useEffect } = React;
-
-    // Motion shim — renders plain elements, strips animation props
-    const stripMotionProps = (props) => {
-      const omit = new Set(['initial', 'animate', 'exit', 'transition', 'layout', 'layoutId', 'whileHover', 'whileTap', 'whileInView', 'viewport']);
-      return Object.fromEntries(Object.entries(props).filter(([key]) => !omit.has(key)));
-    };
-    const motion = new Proxy({}, {
-      get: (_, tag) => React.forwardRef(({ children, ...props }, ref) => React.createElement(tag, { ref, ...stripMotionProps(props) }, children))
-    });
-    function AnimatePresence({ children }) {
-      return <>{children}</>;
-    }
+    const { motion, AnimatePresence } = window.__FM;
 
     function Icon({ symbol, className = '' }) {
       return <span className={className} aria-hidden="true" style={{display:'inline-flex',alignItems:'center',justifyContent:'center'}}>{symbol}</span>;
