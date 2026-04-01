@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Orbitron:wght@400;700&family=Source+Code+Pro:wght@400;600&family=Bungee&family=MedievalSharp&family=Rye&family=Pirata+One&family=Cinzel+Decorative:wght@400;700&family=Monoton&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script type="importmap">
   {
     "imports": {
@@ -4553,6 +4554,21 @@ function ChoreChaosApp() {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
 
+  // Room / spectator state
+  const [roomMode, setRoomMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('room') ? 'spectator' : 'none';
+  });
+  const [roomCode, setRoomCode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('room') || null;
+  });
+  const [roomChannel, setRoomChannel] = useState(null);
+  const [viewerCount, setViewerCount] = useState(0);
+  const [spectatorState, setSpectatorState] = useState(null);
+  const [spectatorConnected, setSpectatorConnected] = useState(false);
+  const [roomClosed, setRoomClosed] = useState(false);
+
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
     try {
@@ -4671,6 +4687,7 @@ function ChoreChaosApp() {
     setSuddenDeathRound(0);
     setSuddenDeathNames(null);
     pushHistory(outcome);
+    broadcastEvent({ type: 'game_start', result: outcome });
   }
 
   function startSuddenDeath() {
@@ -4696,6 +4713,7 @@ function ChoreChaosApp() {
     setPlaybackDone(false);
     setSuddenDeathRound(nextRound);
     setSuddenDeathNames(tiedPlayerNames);
+    broadcastEvent({ type: 'game_start', result: outcome });
   }
 
   function playAgain() {
@@ -4711,6 +4729,7 @@ function ChoreChaosApp() {
     if (nextStep >= config.totalSteps) {
       setPlaybackDone(true);
     }
+    broadcastEvent({ type: 'step', step: nextStep, done: nextStep >= config.totalSteps });
   }
 
   function revealAll() {
@@ -4718,12 +4737,198 @@ function ChoreChaosApp() {
     const config = getPlaybackConfig(result);
     setPlaybackStep(config.totalSteps);
     setPlaybackDone(true);
+    broadcastEvent({ type: 'step', step: config.totalSteps, done: true });
   }
 
   function exitGame() {
     setGameActive(false);
     setSuddenDeathRound(0);
     setSuddenDeathNames(null);
+    broadcastEvent({ type: 'game_reset' });
+  }
+
+  // ── Room / Spectator helpers ──────────────────────────────
+
+  function generateRoomCode() {
+    const name = names[0] || 'GAME';
+    const prefix = name.slice(0, 4).toUpperCase().replace(/[^A-Z]/g, 'X');
+    const suffix = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}-${suffix}`;
+  }
+
+  function createRoom() {
+    if (!_supabase) return;
+    const code = generateRoomCode();
+    const channel = _supabase.channel(`room:${code}`, {
+      config: { broadcast: { self: false } }
+    });
+
+    channel.on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState();
+      setViewerCount(Object.keys(state).length);
+    });
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        setRoomCode(code);
+        setRoomMode('host');
+        setRoomChannel(channel);
+        channel.send({
+          type: 'broadcast',
+          event: 'game_event',
+          payload: { type: 'room_created', hostName: names[0] || 'Host' }
+        });
+      }
+    });
+  }
+
+  function closeRoom() {
+    if (roomChannel) {
+      roomChannel.send({
+        type: 'broadcast',
+        event: 'game_event',
+        payload: { type: 'room_closed' }
+      });
+      _supabase.removeChannel(roomChannel);
+    }
+    setRoomMode('none');
+    setRoomCode(null);
+    setRoomChannel(null);
+    setViewerCount(0);
+  }
+
+  function broadcastEvent(payload) {
+    if (roomMode !== 'host' || !roomChannel) return;
+    roomChannel.send({ type: 'broadcast', event: 'game_event', payload });
+  }
+
+  // Spectator: connect to room
+  useEffect(() => {
+    if (roomMode !== 'spectator' || !roomCode || !_supabase) return;
+
+    const channel = _supabase.channel(`room:${roomCode}`, {
+      config: { broadcast: { self: false } }
+    });
+
+    channel.on('broadcast', { event: 'game_event' }, ({ payload }) => {
+      switch (payload.type) {
+        case 'room_created':
+          setSpectatorState({ type: 'waiting', hostName: payload.hostName });
+          break;
+        case 'game_start':
+          setSpectatorState({ type: 'playing', result: payload.result, step: 0, done: false });
+          break;
+        case 'step':
+          setSpectatorState(prev => prev ? { ...prev, step: payload.step, done: payload.done } : prev);
+          break;
+        case 'game_reset':
+          setSpectatorState({ type: 'waiting' });
+          break;
+        case 'room_closed':
+          setRoomClosed(true);
+          _supabase.removeChannel(channel);
+          break;
+      }
+    });
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        setSpectatorConnected(true);
+        channel.track({ joinedAt: Date.now() });
+      }
+    });
+
+    setRoomChannel(channel);
+
+    return () => {
+      _supabase.removeChannel(channel);
+    };
+  }, [roomMode, roomCode]);
+
+  // QR code generation for host
+  useEffect(() => {
+    if (roomMode !== 'host' || !roomCode) return;
+    const el = document.getElementById('room-qr');
+    if (el && typeof qrcode !== 'undefined') {
+      const qr = qrcode(0, 'M');
+      qr.addData(`https://becknology.vercel.app/runouts?room=${roomCode}`);
+      qr.make();
+      el.innerHTML = `<img src="${qr.createDataURL(2)}" style="width:100%;height:100%;image-rendering:pixelated;" />`;
+    }
+  }, [roomMode, roomCode]);
+
+  // ── Spectator mode early returns ──────────────────────────
+  if (roomMode === 'spectator') {
+    if (roomClosed) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
+          <div className="pixel-font text-2xl text-rose-400 mb-4">ROOM CLOSED</div>
+          <p className="font-mono text-sm text-slate-400 mb-6">The host ended the session</p>
+          <button onClick={() => { window.location.href = window.location.pathname; }} className="pixel-font text-[10px] border border-indigo-500/40 bg-indigo-500/10 px-6 py-3 text-indigo-300">
+            START YOUR OWN SESSION
+          </button>
+        </div>
+      );
+    }
+
+    if (!spectatorState || spectatorState.type === 'waiting') {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
+          <div className="pixel-font text-[9px] text-slate-500 mb-2 uppercase tracking-widest">Spectator Mode</div>
+          <div className="pixel-font text-2xl text-cyan-300 mb-4" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>{roomCode}</div>
+          {spectatorState?.hostName ? <p className="font-mono text-sm text-slate-400 mb-4">Connected to {spectatorState.hostName}'s room</p> : null}
+          <div className="font-mono text-sm text-slate-500 animate-pulse">Waiting for the next game...</div>
+          {!spectatorConnected ? <div className="font-mono text-xs text-amber-400 mt-4">Connecting...</div> : null}
+        </div>
+      );
+    }
+
+    if (spectatorState.type === 'playing') {
+      const specResult = spectatorState.result;
+      const specStep = spectatorState.step;
+      const specDone = spectatorState.done;
+      const specConfig = getPlaybackConfig(specResult);
+
+      return (
+        <div className="fixed inset-0 z-50 bg-slate-950 p-0 sm:p-6">
+          <div className={`theme-${specResult.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
+            <ThemeArt modeId={specResult.modeId} />
+            <div className="modal-toolbar relative z-10 flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur sm:px-6 sm:py-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Spectating</div>
+                <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{specResult.modeName}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="pixel-font text-[8px] text-red-400">LIVE</span>
+              </div>
+            </div>
+
+            <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
+              <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                <RevealBanner
+                  modeName={specResult.modeName}
+                  step={specDone ? specConfig.totalSteps : specStep}
+                  totalSteps={specConfig.totalSteps}
+                  done={specDone}
+                />
+                <div className="flex-1">
+                  <PlaybackStage result={specResult} step={specStep} done={specDone} />
+                </div>
+                {specDone ? (
+                  <div className="verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur border-slate-200 bg-white/85">
+                    {specResult.selectionGoal === "winner" ? <Celebration /> : <SadOverlay />}
+                    <div className="relative z-10">
+                      <VerdictReveal text={specResult.headline} isWinner={specResult.selectionGoal === "winner"} />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
@@ -4924,6 +5129,43 @@ function ChoreChaosApp() {
               ↻ REPLAY {MODE_META.find(m => m.id === result.modeId)?.name?.toUpperCase()}
             </button>
           </div>
+        ) : null}
+
+        {/* Room controls — host or standalone */}
+        {roomMode !== 'spectator' ? (
+          roomMode === 'none' ? (
+            _supabase ? (
+              <div className="mb-6 flex justify-center">
+                <button onClick={createRoom} className="pixel-font inline-flex items-center gap-3 border-2 border-indigo-500/40 bg-indigo-500/10 px-6 py-4 text-[10px] text-indigo-300 transition hover:bg-indigo-500/20 hover:border-indigo-400">
+                  {"\uD83C\uDFAE"} START ROOM
+                </button>
+              </div>
+            ) : null
+          ) : roomMode === 'host' ? (
+            <div className="mb-6 crt-scanlines relative overflow-hidden bg-[#0d0d24] p-5" style={{ border: '3px solid #2d2b6b', boxShadow: '0 0 30px rgba(99,102,241,0.15)' }}>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{"\uD83D\uDCE1"}</span>
+                    <span className="pixel-font text-[9px] uppercase tracking-widest text-green-400">Room Live</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="pixel-font text-[8px] text-slate-400">{"\uD83D\uDC40"} {viewerCount} watching</span>
+                    <button onClick={closeRoom} className="pixel-font text-[7px] text-slate-600 hover:text-rose-400 transition">CLOSE ROOM</button>
+                  </div>
+                </div>
+                <div className="pixel-font text-center text-2xl tracking-widest text-cyan-300 mb-3" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>
+                  {roomCode}
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-4">
+                  <button onClick={() => { navigator.clipboard.writeText(`https://becknology.vercel.app/runouts?room=${roomCode}`); }} className="pixel-font text-[7px] border border-white/10 bg-white/5 px-3 py-2 text-slate-400 hover:text-white transition">
+                    COPY LINK
+                  </button>
+                  <div id="room-qr" className="bg-white p-1 rounded" style={{ width: 80, height: 80 }} />
+                </div>
+              </div>
+            </div>
+          ) : null
         ) : null}
 
         <Leaderboard stats={leaderboardStats} loading={leaderboardLoading} />
