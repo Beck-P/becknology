@@ -6,6 +6,7 @@
   <title>Runouts</title>
   <link href="https://fonts.googleapis.com/css2?family=VT323&family=Orbitron:wght@400;700&family=Source+Code+Pro:wght@400;600&family=Bungee&family=MedievalSharp&family=Rye&family=Pirata+One&family=Cinzel+Decorative:wght@400;700&family=Monoton&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="importmap">
   {
     "imports": {
@@ -77,6 +78,16 @@
     }
     .pulse-loser { animation: pulse-glow-rose 1.5s ease-in-out infinite; }
     .pulse-winner { animation: pulse-glow-gold 1.5s ease-in-out infinite; }
+    @keyframes pulse-glow-tie {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); }
+      50% { box-shadow: 0 0 28px 10px rgba(234, 179, 8, 0.5); }
+    }
+    .pulse-tie { animation: pulse-glow-tie 1s ease-in-out infinite; }
+    @keyframes sudden-death-pulse {
+      0%, 100% { box-shadow: 0 0 8px 2px rgba(249, 115, 22, 0.4); }
+      50% { box-shadow: 0 0 24px 8px rgba(249, 115, 22, 0.7); }
+    }
+    .sudden-death-btn { animation: sudden-death-pulse 1.2s ease-in-out infinite; }
 
     /* CRT curvature + vignette */
     .crt-screen {
@@ -1058,8 +1069,15 @@
   </div>
 
   <script type="text/babel-source" id="app-source">
-    const { useMemo, useState, useEffect } = React;
+    const { useMemo, useState, useEffect, useCallback } = React;
     const { motion, AnimatePresence } = window.__FM;
+
+    // Supabase setup — replace with your project credentials
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const _supabase = (typeof supabase !== 'undefined' && SUPABASE_URL !== 'YOUR_SUPABASE_URL')
+      ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
 
     function Icon({ symbol, className = '' }) {
       return <span className={className} aria-hidden="true" style={{display:'inline-flex',alignItems:'center',justifyContent:'center'}}>{symbol}</span>;
@@ -1157,6 +1175,47 @@
               {d.emoji}
             </motion.div>
           ))}
+        </div>
+      );
+    }
+
+    function TieAnimation({ tiedNames }) {
+      const particles = useMemo(() =>
+        Array.from({ length: 24 }, (_, i) => ({
+          emoji: ["\u26A1", "\uD83D\uDD25", "\u2694\uFE0F", "\uD83D\uDCA5"][i % 4],
+          x: (Math.random() - 0.5) * 500,
+          y: (Math.random() - 0.5) * 400,
+          rotate: Math.random() * 720 - 360,
+          delay: Math.random() * 0.6,
+          size: 20 + Math.random() * 24,
+        })),
+      []);
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {particles.map((p, i) => (
+            <motion.div
+              key={i}
+              className="absolute left-1/2 top-1/2"
+              style={{ fontSize: p.size }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+              animate={{ x: p.x, y: p.y, opacity: [1, 1, 0.8, 0], scale: [0, 1.5, 1, 0.5], rotate: p.rotate }}
+              transition={{ duration: 2.5, delay: p.delay, ease: "easeOut" }}
+            >
+              {p.emoji}
+            </motion.div>
+          ))}
+          {tiedNames ? (
+            <motion.div
+              className="absolute inset-0 flex items-end justify-center pb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 1, 0.8] }}
+              transition={{ duration: 2, delay: 0.3 }}
+            >
+              <div className="text-sm font-bold tracking-widest" style={{ color: "#f59e0b" }}>
+                {tiedNames.join(" vs ")}
+              </div>
+            </motion.div>
+          ) : null}
         </div>
       );
     }
@@ -1345,14 +1404,16 @@
 
     function ModeHeader({ result, done, pendingText, pendingSummary }) {
       const isWinner = result.selectionGoal === "winner";
+      const isTie = result.isTie;
       return (
         <div className={`mode-header-bg relative overflow-hidden bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
-          {done && isWinner ? <Celebration /> : null}
-          {done && !isWinner ? <SadOverlay /> : null}
+          {done && isTie ? <TieAnimation tiedNames={result.tiedNames} /> : null}
+          {done && !isTie && isWinner ? <Celebration /> : null}
+          {done && !isTie && !isWinner ? <SadOverlay /> : null}
           <div className="relative z-10">
             <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
             {done
-              ? <VerdictReveal text={result.headline} isWinner={isWinner} />
+              ? <VerdictReveal text={result.headline} isWinner={isTie ? false : isWinner} />
               : <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{pendingText}</div>
             }
             <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : pendingSummary}</div>
@@ -1946,8 +2007,9 @@ function buildHoldemResult(names, taskLabel, selectionGoal) {
   }));
 
   const resolution = resolveByGoal(evaluatedPlayers, (player) => player.best.score, selectionGoal);
-  const selectedName = resolution.picked.name;
   const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
   const pokerPercentages = {
     preflop: calculatePokerPercentages(players, [], selectionGoal, bestHoldemHand),
@@ -1962,21 +2024,28 @@ function buildHoldemResult(names, taskLabel, selectionGoal) {
     modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
-    summary:
-      tiedNames.length > 1
-        ? `${choosingWinner ? "Best" : "Worst"} hand was tied, so the app broke it randomly between ${tiedNames.join(", ")}.`
-        : `${choosingWinner ? "Strongest" : "Weakest"} showdown hand gets selected.`,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} tied with the same ${choosingWinner ? "best" : "worst"} hand!`
+      : `${choosingWinner ? "Strongest" : "Weakest"} showdown hand gets selected.`,
     board,
     pokerPercentages,
-    players: evaluatedPlayers.map((player) => ({
-      name: player.name,
-      cards: player.holeCards,
-      headline: player.best.label,
-      subline: player.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} hand` : "Safe this round",
-      selected: player.name === selectedName,
-      chips: ["Hold'em", "2 hole cards"],
-    })),
+    players: evaluatedPlayers.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        cards: player.holeCards,
+        headline: player.best.label,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Safe this round")
+          : (player.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} hand` : "Safe this round"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["Hold'em", "2 hole cards"],
+      };
+    }),
   };
 }
 
@@ -1994,8 +2063,9 @@ function buildPloResult(names, taskLabel, selectionGoal) {
   }));
 
   const resolution = resolveByGoal(evaluatedPlayers, (player) => player.best.score, selectionGoal);
-  const selectedName = resolution.picked.name;
   const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
   const pokerPercentages = {
     preflop: calculatePokerPercentages(players, [], selectionGoal, bestPloHand),
@@ -2010,21 +2080,28 @@ function buildPloResult(names, taskLabel, selectionGoal) {
     modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
-    summary:
-      tiedNames.length > 1
-        ? `Exact-two-card Omaha tie for the ${choosingWinner ? "best" : "worst"} hand, so the tiebreak went to ${selectedName}.`
-        : `${choosingWinner ? "Strongest" : "Weakest"} PLO showdown hand gets selected.`,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} tied with the same ${choosingWinner ? "best" : "worst"} Omaha hand!`
+      : `${choosingWinner ? "Strongest" : "Weakest"} PLO showdown hand gets selected.`,
     board,
     pokerPercentages,
-    players: evaluatedPlayers.map((player) => ({
-      name: player.name,
-      cards: player.holeCards,
-      headline: player.best.label,
-      subline: player.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} Omaha hand` : "Safe this round",
-      selected: player.name === selectedName,
-      chips: ["Omaha", "4 hole cards"],
-    })),
+    players: evaluatedPlayers.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        cards: player.holeCards,
+        headline: player.best.label,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Safe this round")
+          : (player.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} Omaha hand` : "Safe this round"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["Omaha", "4 hole cards"],
+      };
+    }),
   };
 }
 
@@ -2034,7 +2111,9 @@ function buildRngResult(names, taskLabel, selectionGoal) {
     value: secureRandomInt(100) + 1,
   }));
   const resolution = resolveByGoal(players, (player) => [player.value], selectionGoal);
-  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
   const modeName = "Random Number";
@@ -2043,16 +2122,26 @@ function buildRngResult(names, taskLabel, selectionGoal) {
     modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
-    summary: `Everyone got a number from 1 to 100. ${choosingWinner ? "Highest" : "Lowest"} number gets selected.`,
-    players: players.map((player) => ({
-      name: player.name,
-      value: player.value,
-      headline: `${player.value}`,
-      subline: player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} number` : "Not selected",
-      selected: player.name === selectedName,
-      chips: ["1–100"],
-    })),
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} rolled the same number!`
+      : `Everyone got a number from 1 to 100. ${choosingWinner ? "Highest" : "Lowest"} number gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        value: player.value,
+        headline: `${player.value}`,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} number` : "Not selected"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["1\u2013100"],
+      };
+    }),
   };
 }
 
@@ -2099,7 +2188,9 @@ function buildDiceResult(names, taskLabel, selectionGoal) {
     };
   });
   const resolution = resolveByGoal(players, (player) => [player.total, player.d1, player.d2], selectionGoal);
-  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
   const modeName = "Dice Duel";
@@ -2108,18 +2199,28 @@ function buildDiceResult(names, taskLabel, selectionGoal) {
     modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
-    summary: `Two dice each. ${choosingWinner ? "Highest" : "Lowest"} total gets selected.`,
-    players: players.map((player) => ({
-      name: player.name,
-      d1: player.d1,
-      d2: player.d2,
-      total: player.total,
-      headline: `${player.d1} + ${player.d2} = ${player.total}`,
-      subline: player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} roll` : "Not selected",
-      selected: player.name === selectedName,
-      chips: ["2d6"],
-    })),
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} rolled the same total!`
+      : `Two dice each. ${choosingWinner ? "Highest" : "Lowest"} total gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        d1: player.d1,
+        d2: player.d2,
+        total: player.total,
+        headline: `${player.d1} + ${player.d2} = ${player.total}`,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} roll` : "Not selected"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["2d6"],
+      };
+    }),
   };
 }
 
@@ -2130,7 +2231,9 @@ function buildHighCardResult(names, taskLabel, selectionGoal) {
     card: deck.pop(),
   }));
   const resolution = resolveByGoal(players, (player) => [player.card.rank], selectionGoal);
-  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
   const modeName = "High Card Draw";
@@ -2139,17 +2242,27 @@ function buildHighCardResult(names, taskLabel, selectionGoal) {
     modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
-    summary: `Everyone drew one card. ${choosingWinner ? "Highest" : "Lowest"} rank gets selected; ties break randomly.`,
-    players: players.map((player) => ({
-      name: player.name,
-      cards: [player.card],
-      card: player.card,
-      headline: formatCard(player.card),
-      subline: player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} card` : "Not selected",
-      selected: player.name === selectedName,
-      chips: [rankWord(player.card.rank)],
-    })),
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} drew the same rank!`
+      : `Everyone drew one card. ${choosingWinner ? "Highest" : "Lowest"} rank gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        cards: [player.card],
+        card: player.card,
+        headline: formatCard(player.card),
+        subline: hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} card` : "Not selected"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: [rankWord(player.card.rank)],
+      };
+    }),
   };
 }
 
@@ -2160,7 +2273,9 @@ function buildCoinFlipResult(names, taskLabel, selectionGoal) {
     return { name, flips, heads };
   });
   const resolution = resolveByGoal(players, (player) => [player.heads], selectionGoal);
-  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
   const modeName = "Coin Flip Gauntlet";
@@ -2169,17 +2284,27 @@ function buildCoinFlipResult(names, taskLabel, selectionGoal) {
     modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
-    summary: `Five flips each. ${choosingWinner ? "Most" : "Fewest"} heads gets selected.`,
-    players: players.map((player) => ({
-      name: player.name,
-      flips: player.flips,
-      heads: player.heads,
-      headline: `${player.flips.join(" ")}`,
-      subline: `${player.heads} heads${player.name === selectedName ? ` • ${choosingWinner ? "most" : "fewest"} total` : ""}`,
-      selected: player.name === selectedName,
-      chips: ["5 flips"],
-    })),
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} flipped the same number of heads!`
+      : `Five flips each. ${choosingWinner ? "Most" : "Fewest"} heads gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        flips: player.flips,
+        heads: player.heads,
+        headline: `${player.flips.join(" ")}`,
+        subline: hasTie
+          ? `${player.heads} heads${isTied ? " \u2022 TIED" : ""}`
+          : `${player.heads} heads${player.name === selectedName ? ` \u2022 ${choosingWinner ? "most" : "fewest"} total` : ""}`,
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["5 flips"],
+      };
+    }),
   };
 }
 
@@ -2233,7 +2358,9 @@ function buildSlotsResult(names, taskLabel, selectionGoal) {
     return { name, reels, score };
   });
   const resolution = resolveByGoal(players, (player) => [player.score.value], selectionGoal);
-  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
   const modeName = "Slot Machine";
@@ -2242,17 +2369,27 @@ function buildSlotsResult(names, taskLabel, selectionGoal) {
     modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
-    summary: `${choosingWinner ? "Best" : "Worst"} slot score gets selected.`,
-    players: players.map((player) => ({
-      name: player.name,
-      reels: player.reels,
-      score: player.score,
-      headline: `${player.reels.join(" ")}`,
-      subline: `${player.score.label}${player.name === selectedName ? ` • ${choosingWinner ? "best" : "worst"} score` : ""}`,
-      selected: player.name === selectedName,
-      chips: [player.score.label],
-    })),
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} hit the same slot score!`
+      : `${choosingWinner ? "Best" : "Worst"} slot score gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        reels: player.reels,
+        score: player.score,
+        headline: `${player.reels.join(" ")}`,
+        subline: hasTie
+          ? `${player.score.label}${isTied ? " \u2022 TIED" : ""}`
+          : `${player.score.label}${player.name === selectedName ? ` \u2022 ${choosingWinner ? "best" : "worst"} score` : ""}`,
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: [player.score.label],
+      };
+    }),
   };
 }
 
@@ -2277,7 +2414,9 @@ function buildHorseRaceResult(names, taskLabel, selectionGoal) {
   }));
 
   const resolution = resolveByGoal(players, (player) => [player.position], selectionGoal);
-  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
   const choosingWinner = selectionGoal === "winner";
 
   const modeName = "Lucky Horse Race";
@@ -2286,20 +2425,30 @@ function buildHorseRaceResult(names, taskLabel, selectionGoal) {
     modeName,
     selectionGoal,
     selectedName,
-    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
-    summary: `Twelve random turns. Whoever finishes ${choosingWinner ? "first" : "last"} gets selected.`,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} finished in the same position!`
+      : `Twelve random turns. Whoever finishes ${choosingWinner ? "first" : "last"} gets selected.`,
     turns,
     race: {
       max: Math.max(...players.map((player) => player.position), 1),
     },
-    players: players.map((player) => ({
-      name: player.name,
-      progress: player.position,
-      headline: `${player.position} spaces moved`,
-      subline: player.name === selectedName ? `Finished ${choosingWinner ? "in front" : "at the back"}` : "Not selected",
-      selected: player.name === selectedName,
-      chips: ["Race"],
-    })),
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        progress: player.position,
+        headline: `${player.position} spaces moved`,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (player.name === selectedName ? `Finished ${choosingWinner ? "in front" : "at the back"}` : "Not selected"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["Race"],
+      };
+    }),
   };
 }
 
@@ -2466,20 +2615,22 @@ function RevealBanner({ modeName, step, totalSteps, done }) {
   );
 }
 
-function PlayerResultCard({ name, title, subtitle, selected, selectionGoal, children }) {
+function PlayerResultCard({ name, title, subtitle, selected, selectionGoal, tied, children }) {
   const isWinner = selectionGoal === "winner";
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 28, scale: 0.96 }}
-      animate={selected ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1], rotate: isWinner ? 0 : [0, -1.5, 1.5, -0.8, 0.5, 0] } : { opacity: 1, y: 0, scale: 1 }}
-      transition={selected ? { duration: 0.8 } : undefined}
+      animate={selected ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1], rotate: isWinner ? 0 : [0, -1.5, 1.5, -0.8, 0.5, 0] } : tied ? { opacity: 1, y: 0, scale: [0.96, 1.02, 1] } : { opacity: 1, y: 0, scale: 1 }}
+      transition={selected || tied ? { duration: 0.8 } : undefined}
       className={`rounded-3xl border p-4 shadow-sm ${
-        selected
-          ? isWinner
-            ? "border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50 pulse-winner"
-            : "border-rose-300 bg-gradient-to-br from-rose-50 to-orange-50 pulse-loser"
-          : "border-slate-200 bg-white"
+        tied
+          ? "border-yellow-400 bg-gradient-to-br from-yellow-50 to-amber-50 pulse-tie"
+          : selected
+            ? isWinner
+              ? "border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50 pulse-winner"
+              : "border-rose-300 bg-gradient-to-br from-rose-50 to-orange-50 pulse-loser"
+            : "border-slate-200 bg-white"
       }`}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -2488,13 +2639,15 @@ function PlayerResultCard({ name, title, subtitle, selected, selectionGoal, chil
           <div className="text-sm text-slate-500">{subtitle}</div>
         </div>
         <div className={`rounded-full px-3 py-1 text-xs font-semibold ${
-          selected
-            ? isWinner
-              ? "bg-amber-500 text-white"
-              : "bg-rose-500 text-white"
-            : "bg-slate-100 text-slate-600"
+          tied
+            ? "bg-yellow-500 text-white"
+            : selected
+              ? isWinner
+                ? "bg-amber-500 text-white"
+                : "bg-rose-500 text-white"
+              : "bg-slate-100 text-slate-600"
         }`}>
-          {selected ? (isWinner ? "Winner!" : "Selected") : "Watching"}
+          {tied ? "Tied!" : selected ? (isWinner ? "Winner!" : "Selected") : "Watching"}
         </div>
       </div>
       <div className="space-y-3">
@@ -2616,24 +2769,31 @@ function PokerPlayback({ result, step, done, omaha = false }) {
               {result.players.map((player, index) => {
                 const revealed = index < playerRevealCount;
                 const isSelected = verdictVisible && player.selected;
+                const isTied = verdictVisible && player.tied;
                 const isWinner = result.selectionGoal === "winner";
                 return (
                   <motion.div
                     key={player.name}
                     layout
                     initial={{ opacity: 0, y: 20 }}
-                    animate={isSelected ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1] } : { opacity: 1, y: 0, scale: 1 }}
-                    className="rounded-2xl p-3 text-center"
+                    animate={isSelected || isTied ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1] } : { opacity: 1, y: 0, scale: 1 }}
+                    className={`rounded-2xl p-3 text-center ${isTied ? "pulse-tie" : ""}`}
                     style={{
-                      background: isSelected
-                        ? isWinner ? "rgba(234,179,8,0.2)" : "rgba(239,68,68,0.2)"
-                        : "rgba(0,0,0,0.35)",
-                      border: isSelected
-                        ? isWinner ? "2px solid rgba(234,179,8,0.6)" : "2px solid rgba(239,68,68,0.6)"
-                        : "1px solid rgba(74,222,128,0.15)",
-                      boxShadow: isSelected
-                        ? isWinner ? "0 0 20px rgba(234,179,8,0.3)" : "0 0 20px rgba(239,68,68,0.3)"
-                        : "none",
+                      background: isTied
+                        ? "rgba(245,158,11,0.2)"
+                        : isSelected
+                          ? isWinner ? "rgba(234,179,8,0.2)" : "rgba(239,68,68,0.2)"
+                          : "rgba(0,0,0,0.35)",
+                      border: isTied
+                        ? "2px solid rgba(245,158,11,0.6)"
+                        : isSelected
+                          ? isWinner ? "2px solid rgba(234,179,8,0.6)" : "2px solid rgba(239,68,68,0.6)"
+                          : "1px solid rgba(74,222,128,0.15)",
+                      boxShadow: isTied
+                        ? "0 0 20px rgba(245,158,11,0.3)"
+                        : isSelected
+                          ? isWinner ? "0 0 20px rgba(234,179,8,0.3)" : "0 0 20px rgba(239,68,68,0.3)"
+                          : "none",
                     }}
                   >
                     <div className="text-sm font-bold" style={{ color: "#e2e8f0" }}>{player.name}</div>
@@ -2805,7 +2965,7 @@ function NumberPlayback({ result, step, done }) {
         {/* Header line */}
         {done ? (
           <div>
-            <div className="text-sm font-bold mb-1" style={{ color: result.selectionGoal === "winner" ? "#fbbf24" : "#f87171" }}>
+            <div className="text-sm font-bold mb-1" style={{ color: result.isTie ? "#f59e0b" : result.selectionGoal === "winner" ? "#fbbf24" : "#f87171" }}>
               {"> "}{result.headline}
             </div>
             <div className="text-xs mb-4" style={{ color: "#666" }}>{"> "}{result.summary}</div>
@@ -2821,6 +2981,7 @@ function NumberPlayback({ result, step, done }) {
         {result.players.map((player, index) => {
           const isShown = index < revealed;
           const isSelected = done && player.selected;
+          const isTied = done && player.tied;
           const isWinner = result.selectionGoal === "winner";
           return (
             <motion.div
@@ -2829,9 +2990,9 @@ function NumberPlayback({ result, step, done }) {
               animate={{ opacity: 1 }}
               className="rounded px-3 py-2 text-sm"
               style={{
-                background: isSelected ? (isWinner ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)") : "transparent",
-                color: isSelected ? (isWinner ? "#fbbf24" : "#f87171") : isShown ? "#00ff41" : "#333",
-                border: isSelected ? `1px solid ${isWinner ? "rgba(251,191,36,0.3)" : "rgba(248,113,113,0.3)"}` : "1px solid transparent",
+                background: isTied ? "rgba(245,158,11,0.15)" : isSelected ? (isWinner ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)") : "transparent",
+                color: isTied ? "#f59e0b" : isSelected ? (isWinner ? "#fbbf24" : "#f87171") : isShown ? "#00ff41" : "#333",
+                border: isTied ? "1px solid rgba(245,158,11,0.3)" : isSelected ? `1px solid ${isWinner ? "rgba(251,191,36,0.3)" : "rgba(248,113,113,0.3)"}` : "1px solid transparent",
               }}
             >
               <span style={{ color: "#666" }}>{">"} </span>
@@ -2841,7 +3002,11 @@ function NumberPlayback({ result, step, done }) {
               <span className="text-2xl font-black" style={{ fontFamily: "'Source Code Pro', monospace" }}>
                 <CyclingNumber value={player.value} active={isShown} />
               </span>
-              {done && isSelected ? (
+              {done && isTied ? (
+                <span className="ml-3 text-xs font-bold" style={{ color: "#f59e0b" }}>
+                  {"<<<"} TIED
+                </span>
+              ) : done && isSelected ? (
                 <span className="ml-3 text-xs font-bold" style={{ color: isWinner ? "#fbbf24" : "#f87171" }}>
                   {"<<<"} {player.subline}
                 </span>
@@ -2885,6 +3050,7 @@ function DicePlayback({ result, step, done }) {
           {result.players.map((player, index) => {
             const isShown = index < revealed;
             const isSelected = done && player.selected;
+            const isTied = done && player.tied;
             const isWinner = result.selectionGoal === "winner";
             const hpPct = Math.round((player.total / 12) * 100);
             return (
@@ -2892,22 +3058,34 @@ function DicePlayback({ result, step, done }) {
                 key={player.name}
                 layout
                 initial={{ opacity: 0, x: -20 }}
-                animate={isSelected ? { opacity: 1, x: 0, scale: [0.96, 1.03, 1] } : { opacity: 1, x: 0, scale: 1 }}
-                className="rounded-xl p-4"
+                animate={isSelected || isTied ? { opacity: 1, x: 0, scale: [0.96, 1.03, 1] } : { opacity: 1, x: 0, scale: 1 }}
+                className={isTied ? "rounded-xl p-4 pulse-tie" : "rounded-xl p-4"}
                 style={{
                   background: "linear-gradient(135deg, #f5e6d0 0%, #e8d5b8 50%, #dcc8a5 100%)",
-                  border: isSelected
-                    ? isWinner ? "3px solid #b8860b" : "3px solid #8b0000"
-                    : "2px solid #8b7355",
-                  boxShadow: isSelected
-                    ? isWinner ? "0 0 20px rgba(184,134,11,0.4), inset 0 0 15px rgba(184,134,11,0.1)" : "0 0 20px rgba(139,0,0,0.4)"
-                    : "inset 0 0 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.3)",
+                  border: isTied
+                    ? "3px solid #d97706"
+                    : isSelected
+                      ? isWinner ? "3px solid #b8860b" : "3px solid #8b0000"
+                      : "2px solid #8b7355",
+                  boxShadow: isTied
+                    ? "0 0 20px rgba(217,119,6,0.4)"
+                    : isSelected
+                      ? isWinner ? "0 0 20px rgba(184,134,11,0.4), inset 0 0 15px rgba(184,134,11,0.1)" : "0 0 20px rgba(139,0,0,0.4)"
+                      : "inset 0 0 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.3)",
                 }}
               >
                 {/* Character name */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-lg font-bold" style={{ fontFamily: "'MedievalSharp', cursive", color: "#3a2a1a" }}>{player.name}</div>
-                  {isSelected ? (
+                  {isTied ? (
+                    <span className="text-xs font-bold px-2 py-1 rounded" style={{
+                      background: "#d97706",
+                      color: "#fff",
+                      fontFamily: "'MedievalSharp', cursive",
+                    }}>
+                      TIED
+                    </span>
+                  ) : isSelected ? (
                     <span className="text-xs font-bold px-2 py-1 rounded" style={{
                       background: isWinner ? "#b8860b" : "#8b0000",
                       color: "#fff",
@@ -3031,24 +3209,34 @@ function HighCardPlayback({ result, step, done }) {
           {result.players.map((player, index) => {
             const isShown = index < revealed;
             const isSelected = done && player.selected;
+            const isTied = done && player.tied;
             const isWinner = result.selectionGoal === "winner";
             return (
               <motion.div
                 key={player.name}
                 initial={{ opacity: 0, y: 20 }}
-                animate={isSelected ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1] } : { opacity: 1, y: 0, scale: 1 }}
+                animate={isSelected || isTied ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1] } : { opacity: 1, y: 0, scale: 1 }}
                 className="flex flex-col items-center text-center"
               >
                 {/* Wanted poster / Star badge */}
-                <div className="rounded-lg p-4 relative" style={{
-                  background: isSelected
+                <div className={`rounded-lg p-4 relative ${isTied ? "pulse-tie" : ""}`} style={{
+                  background: isSelected || isTied
                     ? "linear-gradient(135deg, #f5e6d0, #e8d0a8)"
                     : "linear-gradient(135deg, #f0e0c8, #dcc8a5)",
-                  border: isSelected ? "3px solid #8b4513" : "2px solid #8b7355",
-                  boxShadow: isSelected ? "0 0 20px rgba(139,69,19,0.4), inset 0 0 20px rgba(139,69,19,0.1)" : "2px 2px 8px rgba(0,0,0,0.3)",
+                  border: isTied ? "3px solid #d97706" : isSelected ? "3px solid #8b4513" : "2px solid #8b7355",
+                  boxShadow: isTied ? "0 0 20px rgba(217,119,6,0.4)" : isSelected ? "0 0 20px rgba(139,69,19,0.4), inset 0 0 20px rgba(139,69,19,0.1)" : "2px 2px 8px rgba(0,0,0,0.3)",
                   minWidth: "120px",
                 }}>
-                  {isSelected ? (
+                  {isTied ? (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-0.5 rounded" style={{
+                      background: "#d97706",
+                      color: "#fff",
+                      fontFamily: "'Rye', cursive",
+                      letterSpacing: "0.15em",
+                    }}>
+                      TIED
+                    </div>
+                  ) : isSelected ? (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-0.5 rounded" style={{
                       background: "#8b4513",
                       color: "#f5e6d0",
@@ -3111,15 +3299,20 @@ function CoinPlayback({ result, step, done }) {
         <div className="space-y-6">
           {result.players.map((player) => {
             const isSelected = done && player.selected;
+            const isTied = done && player.tied;
             const isWinner = result.selectionGoal === "winner";
             return (
-              <div key={player.name} className="rounded-xl p-4" style={{
-                background: isSelected
-                  ? isWinner ? "rgba(184,134,11,0.15)" : "rgba(139,0,0,0.15)"
-                  : "rgba(255,255,255,0.04)",
-                border: isSelected
-                  ? isWinner ? "2px solid rgba(184,134,11,0.4)" : "2px solid rgba(139,0,0,0.4)"
-                  : "1px solid rgba(255,255,255,0.08)",
+              <div key={player.name} className={`rounded-xl p-4 ${isTied ? "pulse-tie" : ""}`} style={{
+                background: isTied
+                  ? "rgba(245,158,11,0.15)"
+                  : isSelected
+                    ? isWinner ? "rgba(184,134,11,0.15)" : "rgba(139,0,0,0.15)"
+                    : "rgba(255,255,255,0.04)",
+                border: isTied
+                  ? "2px solid rgba(245,158,11,0.4)"
+                  : isSelected
+                    ? isWinner ? "2px solid rgba(184,134,11,0.4)" : "2px solid rgba(139,0,0,0.4)"
+                    : "1px solid rgba(255,255,255,0.08)",
               }}>
                 {/* Player name */}
                 <div className="flex items-center justify-between mb-3">
@@ -3127,9 +3320,9 @@ function CoinPlayback({ result, step, done }) {
                   {done ? (
                     <div className="text-xs font-bold" style={{
                       fontFamily: "'Pirata One', cursive",
-                      color: isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#6a8aaa",
+                      color: isTied ? "#f59e0b" : isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#6a8aaa",
                     }}>
-                      {player.heads} heads
+                      {isTied ? "TIED" : `${player.heads} heads`}
                     </div>
                   ) : null}
                 </div>
@@ -3394,7 +3587,7 @@ function SlotsPlayback({ result, step, done }) {
               textShadow: "0 0 20px rgba(236,72,153,0.5), 0 0 40px rgba(236,72,153,0.3)",
             }}
           >
-            {done ? (result.players.find((p) => p.selected)?.selected && result.selectionGoal === "winner" ? "JACKPOT" : "BUST") : "SLOTS"}
+            {done ? (result.isTie ? "TIE" : result.players.find((p) => p.selected)?.selected && result.selectionGoal === "winner" ? "JACKPOT" : "BUST") : "SLOTS"}
           </motion.div>
         </div>
 
@@ -3403,22 +3596,27 @@ function SlotsPlayback({ result, step, done }) {
           {result.players.map((player, index) => {
             const isShown = index < revealed;
             const isSelected = done && player.selected;
+            const isTied = done && player.tied;
             const isWinner = result.selectionGoal === "winner";
             return (
               <motion.div
                 key={player.name}
                 layout
                 initial={{ opacity: 0, scale: 0.95 }}
-                animate={isSelected ? { opacity: 1, scale: [0.96, 1.03, 1] } : { opacity: 1, scale: 1 }}
-                className="rounded-xl overflow-hidden"
+                animate={isSelected || isTied ? { opacity: 1, scale: [0.96, 1.03, 1] } : { opacity: 1, scale: 1 }}
+                className={`rounded-xl overflow-hidden ${isTied ? "pulse-tie" : ""}`}
                 style={{
                   background: "linear-gradient(180deg, #2a1a3e, #1a0a2e)",
-                  border: isSelected
-                    ? isWinner ? "2px solid #fbbf24" : "2px solid #f87171"
-                    : "2px solid rgba(236,72,153,0.2)",
-                  boxShadow: isSelected
-                    ? isWinner ? "0 0 30px rgba(251,191,36,0.3)" : "0 0 30px rgba(248,113,113,0.3)"
-                    : "0 4px 20px rgba(0,0,0,0.4)",
+                  border: isTied
+                    ? "2px solid #f59e0b"
+                    : isSelected
+                      ? isWinner ? "2px solid #fbbf24" : "2px solid #f87171"
+                      : "2px solid rgba(236,72,153,0.2)",
+                  boxShadow: isTied
+                    ? "0 0 30px rgba(245,158,11,0.3)"
+                    : isSelected
+                      ? isWinner ? "0 0 30px rgba(251,191,36,0.3)" : "0 0 30px rgba(248,113,113,0.3)"
+                      : "0 4px 20px rgba(0,0,0,0.4)",
                 }}
               >
                 {/* Player name bar */}
@@ -3427,8 +3625,8 @@ function SlotsPlayback({ result, step, done }) {
                   borderBottom: "1px solid rgba(236,72,153,0.15)",
                 }}>
                   <div className="text-sm font-bold" style={{ color: "#e2e8f0" }}>{player.name}</div>
-                  <div className="text-xs font-semibold" style={{ color: isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#a78bfa" }}>
-                    {done ? player.score.label : isShown ? "STOPPED" : "SPINNING"}
+                  <div className="text-xs font-semibold" style={{ color: isTied ? "#f59e0b" : isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#a78bfa" }}>
+                    {done ? (isTied ? "TIED" : player.score.label) : isShown ? "STOPPED" : "SPINNING"}
                   </div>
                 </div>
 
@@ -3513,17 +3711,22 @@ function HorseRacePlayback({ result, step, done }) {
             const progress = latestPositions[player.name] ?? 0;
             const pct = result.race.max > 0 ? Math.min((progress / result.race.max) * 85, 85) : 0;
             const finalSelected = done && player.selected;
+            const isTied = done && player.tied;
             const justMoved = latestTurn?.mover === player.name;
             const isWinner = result.selectionGoal === "winner";
             const laneColor = laneColors[index % laneColors.length];
             return (
-              <div key={player.name} className="rounded-xl overflow-hidden" style={{
-                border: finalSelected
-                  ? isWinner ? "2px solid #fbbf24" : "2px solid #f87171"
-                  : "1px solid rgba(255,255,255,0.1)",
-                boxShadow: finalSelected
-                  ? isWinner ? "0 0 15px rgba(251,191,36,0.3)" : "0 0 15px rgba(248,113,113,0.3)"
-                  : "none",
+              <div key={player.name} className={`rounded-xl overflow-hidden ${isTied ? "pulse-tie" : ""}`} style={{
+                border: isTied
+                  ? "2px solid #f59e0b"
+                  : finalSelected
+                    ? isWinner ? "2px solid #fbbf24" : "2px solid #f87171"
+                    : "1px solid rgba(255,255,255,0.1)",
+                boxShadow: isTied
+                  ? "0 0 15px rgba(245,158,11,0.3)"
+                  : finalSelected
+                    ? isWinner ? "0 0 15px rgba(251,191,36,0.3)" : "0 0 15px rgba(248,113,113,0.3)"
+                    : "none",
               }}>
                 {/* Lane label */}
                 <div className="flex items-center gap-2 px-3 py-1.5" style={{ background: "rgba(0,0,0,0.3)" }}>
@@ -3592,10 +3795,11 @@ function HorseRacePlayback({ result, step, done }) {
           <div className="p-3 space-y-1">
             {sortedPlayers.map((player, index) => {
               const isSelected = player.selected;
+              const isTied = player.tied;
               const isWinner = result.selectionGoal === "winner";
               return (
                 <div key={player.name} className="flex items-center gap-3 px-3 py-2 rounded" style={{
-                  background: isSelected ? (isWinner ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)") : "transparent",
+                  background: isTied ? "rgba(245,158,11,0.15)" : isSelected ? (isWinner ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)") : "transparent",
                 }}>
                   <div className="text-xs font-bold w-8" style={{
                     fontFamily: "'Press Start 2P', monospace",
@@ -3606,10 +3810,10 @@ function HorseRacePlayback({ result, step, done }) {
                   </div>
                   <div className="flex-1 text-xs font-bold" style={{
                     fontFamily: "'Press Start 2P', monospace",
-                    color: isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#aaa",
+                    color: isTied ? "#f59e0b" : isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#aaa",
                     fontSize: "9px",
                   }}>
-                    {player.name}
+                    {player.name} {isTied ? "(TIED)" : ""}
                   </div>
                   <div className="text-xs" style={{ color: "#666", fontFamily: "'Press Start 2P', monospace", fontSize: "8px" }}>
                     {latestPositions[player.name] ?? 0} SPC
@@ -3790,6 +3994,473 @@ function PlaybackStage({ result, step, done }) {
   }
 }
 
+function computeStats(games) {
+  const playerMap = {};     // lowercase name -> stats object
+  const nameDisplay = {};   // lowercase name -> most recent display name
+  const pairMap = {};       // "a|b" (sorted lowercase) -> { p1Wins, p2Wins, totalGames, p1, p2 }
+
+  function getPlayer(name) {
+    const key = name.toLowerCase();
+    if (!playerMap[key]) {
+      playerMap[key] = {
+        games: 0, wins: 0, losses: 0,
+        currentStreak: 0, longestWinStreak: 0, longestLossStreak: 0,
+        lastPlayed: null,
+        perMode: {},
+      };
+    }
+    nameDisplay[key] = name; // always overwrite with latest capitalization
+    return playerMap[key];
+  }
+
+  for (const game of games) {
+    const players = game.all_players || [];
+    const selectedKey = (game.selected_player || '').toLowerCase();
+    const goal = game.selection_goal;
+    const playedAt = game.played_at || game.created_at || null;
+
+    const playerKeys = players.map(p => p.name.toLowerCase());
+
+    for (const p of players) {
+      const key = p.name.toLowerCase();
+      const stats = getPlayer(p.name);
+      stats.games++;
+      if (playedAt) stats.lastPlayed = playedAt;
+
+      // Determine win/loss
+      // When goal="loser": selected player LOST, everyone else WON
+      // When goal="winner": selected player WON, everyone else LOST
+      const isSelected = key === selectedKey;
+      const won = (goal === 'winner' && isSelected) || (goal === 'loser' && !isSelected);
+
+      if (won) {
+        stats.wins++;
+        if (stats.currentStreak > 0) stats.currentStreak++;
+        else stats.currentStreak = 1;
+        if (stats.currentStreak > stats.longestWinStreak) stats.longestWinStreak = stats.currentStreak;
+      } else {
+        stats.losses++;
+        if (stats.currentStreak < 0) stats.currentStreak--;
+        else stats.currentStreak = -1;
+        if (Math.abs(stats.currentStreak) > stats.longestLossStreak) stats.longestLossStreak = Math.abs(stats.currentStreak);
+      }
+
+      // Per-mode stats
+      const modeId = game.mode_id || 'unknown';
+      if (!stats.perMode[modeId]) stats.perMode[modeId] = { games: 0, wins: 0, modeName: game.mode_name || modeId };
+      stats.perMode[modeId].games++;
+      if (won) stats.perMode[modeId].wins++;
+    }
+
+    // Track rivalries (pairwise)
+    for (let i = 0; i < playerKeys.length; i++) {
+      for (let j = i + 1; j < playerKeys.length; j++) {
+        const sorted = [playerKeys[i], playerKeys[j]].sort();
+        const pairKey = sorted.join('|');
+        if (!pairMap[pairKey]) {
+          pairMap[pairKey] = { p1: sorted[0], p2: sorted[1], p1Selected: 0, p2Selected: 0, totalGames: 0 };
+        }
+        pairMap[pairKey].totalGames++;
+        if (selectedKey === sorted[0]) pairMap[pairKey].p1Selected++;
+        if (selectedKey === sorted[1]) pairMap[pairKey].p2Selected++;
+      }
+    }
+  }
+
+  // Build player array
+  const playerList = Object.keys(playerMap).map(key => {
+    const s = playerMap[key];
+    const winPct = s.games > 0 ? Math.round((s.wins / s.games) * 100) : 0;
+    // Favorite mode: highest games played
+    let favMode = null;
+    let favModeGames = 0;
+    for (const [modeId, modeStats] of Object.entries(s.perMode)) {
+      if (modeStats.games > favModeGames) {
+        favModeGames = modeStats.games;
+        favMode = modeStats.modeName;
+      }
+    }
+    return {
+      name: nameDisplay[key],
+      games: s.games,
+      wins: s.wins,
+      losses: s.losses,
+      winPct,
+      currentStreak: s.currentStreak,
+      longestWinStreak: s.longestWinStreak,
+      longestLossStreak: s.longestLossStreak,
+      lastPlayed: s.lastPlayed,
+      perMode: s.perMode,
+      favMode,
+    };
+  });
+
+  // Sort: 3+ games first by winPct desc, then <3 games by winPct desc
+  playerList.sort((a, b) => {
+    const aQ = a.games >= 3 ? 1 : 0;
+    const bQ = b.games >= 3 ? 1 : 0;
+    if (aQ !== bQ) return bQ - aQ;
+    if (a.winPct !== b.winPct) return b.winPct - a.winPct;
+    return b.games - a.games;
+  });
+
+  // Build rivalries (3+ games together)
+  const rivalries = Object.values(pairMap)
+    .filter(r => r.totalGames >= 3)
+    .map(r => {
+      // For rivalries, "wins" is based on selection goal context:
+      // We count how many times each was on the winning side.
+      // Since we only have selection counts, we need to derive wins.
+      // In a game, the selected player's outcome depends on selection_goal.
+      // Instead, let's compute rivalry wins from the player stats per-game.
+      // But we don't have per-game breakdown per pair, so we use a simpler metric:
+      // Count games where p1 was selected vs p2 was selected.
+      // This isn't "wins" — it's "times selected". Display accordingly.
+      return {
+        player1: nameDisplay[r.p1] || r.p1,
+        player2: nameDisplay[r.p2] || r.p2,
+        p1Selected: r.p1Selected,
+        p2Selected: r.p2Selected,
+        totalGames: r.totalGames,
+      };
+    })
+    .sort((a, b) => b.totalGames - a.totalGames);
+
+  // Awards (min thresholds)
+  const qualified = playerList.filter(p => p.games >= 5);
+  const qualified3 = playerList.filter(p => p.games >= 3);
+
+  const mostAccurate = qualified.length ? qualified.reduce((best, p) => p.winPct > best.winPct ? p : best) : null;
+  const cursed = qualified.length ? qualified.reduce((worst, p) => p.winPct < worst.winPct ? p : worst) : null;
+  const onFire = qualified3.length ? qualified3.reduce((best, p) => p.currentStreak > best.currentStreak ? p : best) : null;
+  const downBad = qualified3.length ? qualified3.reduce((worst, p) => p.currentStreak < worst.currentStreak ? p : worst) : null;
+  const mostGames = playerList.length ? playerList.reduce((best, p) => p.games > best.games ? p : best) : null;
+
+  // Luckiest/Unluckiest mode (player+mode combo, min 3 games in that mode)
+  let luckiestMode = null;
+  let unluckiestMode = null;
+  for (const player of playerList) {
+    for (const [modeId, modeStats] of Object.entries(player.perMode)) {
+      if (modeStats.games < 3) continue;
+      const pct = Math.round((modeStats.wins / modeStats.games) * 100);
+      if (!luckiestMode || pct > luckiestMode.pct) {
+        luckiestMode = { name: player.name, modeName: modeStats.modeName, pct, wins: modeStats.wins, games: modeStats.games };
+      }
+      if (!unluckiestMode || pct < unluckiestMode.pct) {
+        unluckiestMode = { name: player.name, modeName: modeStats.modeName, pct, wins: modeStats.wins, games: modeStats.games };
+      }
+    }
+  }
+
+  const biggestRivalry = rivalries.length ? rivalries[0] : null;
+
+  return {
+    players: playerList,
+    rivalries,
+    awards: {
+      mostAccurate: mostAccurate ? { name: mostAccurate.name, stat: `${mostAccurate.winPct}% (${mostAccurate.wins}-${mostAccurate.losses})` } : null,
+      cursed: cursed ? { name: cursed.name, stat: `${cursed.winPct}% (${cursed.wins}-${cursed.losses})` } : null,
+      onFire: onFire && onFire.currentStreak > 0 ? { name: onFire.name, stat: `W${onFire.currentStreak}` } : null,
+      downBad: downBad && downBad.currentStreak < 0 ? { name: downBad.name, stat: `L${Math.abs(downBad.currentStreak)}` } : null,
+      mostGames: mostGames ? { name: mostGames.name, stat: `${mostGames.games} games` } : null,
+      luckiestMode,
+      unluckiestMode,
+      biggestRivalry,
+    },
+  };
+}
+
+function Leaderboard({ stats, loading }) {
+  const [expanded, setExpanded] = useState(false);
+  const [sortCol, setSortCol] = useState('winPct');
+  const [sortDir, setSortDir] = useState('desc');
+
+  function toggleExpand() { setExpanded(e => !e); }
+
+  function handleSort(col) {
+    if (sortCol === col) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
+    else { setSortCol(col); setSortDir('desc'); }
+  }
+
+  const sortedPlayers = useMemo(() => {
+    if (!stats || !stats.players) return [];
+    const list = [...stats.players];
+    list.sort((a, b) => {
+      let av = a[sortCol], bv = b[sortCol];
+      if (sortCol === 'name') {
+        av = av.toLowerCase(); bv = bv.toLowerCase();
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      if (sortCol === 'lastPlayed') {
+        av = av || ''; bv = bv || '';
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      return sortDir === 'asc' ? (av - bv) : (bv - av);
+    });
+    return list;
+  }, [stats, sortCol, sortDir]);
+
+  const top5 = useMemo(() => {
+    if (!stats || !stats.players) return [];
+    return stats.players.filter(p => p.games >= 3).slice(0, 5);
+  }, [stats]);
+
+  function streakDisplay(streak) {
+    if (streak === 0) return <span className="text-slate-600">-</span>;
+    if (streak > 0) return <span className="text-emerald-400">W{streak}{streak >= 3 ? ' \uD83D\uDD25' : ''}</span>;
+    return <span className="text-red-400">L{Math.abs(streak)}{Math.abs(streak) >= 3 ? ' \uD83D\uDC80' : ''}</span>;
+  }
+
+  function modeWinColor(pct) {
+    if (pct > 60) return 'text-emerald-400';
+    if (pct >= 40) return 'text-yellow-400';
+    return 'text-red-400';
+  }
+
+  function sortArrow(col) {
+    if (sortCol !== col) return '';
+    return sortDir === 'desc' ? ' \u25BC' : ' \u25B2';
+  }
+
+  if (loading) {
+    return (
+      <div className="mb-6 pt-2">
+        <div className="pixel-divider mb-5" />
+        <div className="pixel-font text-[8px] text-slate-500 text-center py-4">Loading leaderboard...</div>
+      </div>
+    );
+  }
+
+  if (!stats || !stats.players || stats.players.length === 0) {
+    return (
+      <div className="mb-6 pt-2">
+        <div className="pixel-divider mb-5" />
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-lg">{'\uD83C\uDFC6'}</span>
+          <span className="pixel-font text-[9px] uppercase tracking-widest text-indigo-400">Leaderboard</span>
+        </div>
+        <div className="pixel-font text-[8px] text-slate-500 text-center py-4">No data yet {'\u2014'} play a game!</div>
+      </div>
+    );
+  }
+
+  const { rivalries = [], awards = {} } = stats;
+
+  return (
+    <div className="mb-6 pt-2">
+      <div className="pixel-divider mb-5" />
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{'\uD83C\uDFC6'}</span>
+          <span className="pixel-font text-[9px] uppercase tracking-widest text-indigo-400">Leaderboard</span>
+        </div>
+        <button onClick={toggleExpand} className="pixel-font text-[7px] text-slate-500 hover:text-indigo-400 transition">
+          {expanded ? "COLLAPSE" : "EXPAND"}
+        </button>
+      </div>
+
+      {/* Compact: top 5 table */}
+      {!expanded ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left" style={{ borderCollapse: 'separate', borderSpacing: '0 2px' }}>
+            <thead>
+              <tr>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 pl-2 w-8">#</th>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2">Player</th>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center">W-L</th>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center">Win%</th>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center">Streak</th>
+              </tr>
+            </thead>
+            <tbody>
+              {top5.map((p, i) => (
+                <tr key={p.name}
+                  className="transition-colors"
+                  style={i === 0 ? {
+                    background: 'rgba(251,191,36,0.06)',
+                    borderLeft: '2px solid #fbbf24',
+                    boxShadow: 'inset 0 0 12px rgba(251,191,36,0.08)',
+                  } : { background: 'rgba(255,255,255,0.02)' }}
+                >
+                  <td className="py-2 pl-2 pixel-font text-[9px] text-slate-500" style={i === 0 ? { color: '#fbbf24' } : {}}>{i + 1}</td>
+                  <td className="py-2 pixel-font text-[9px] text-white" style={i === 0 ? { color: '#fbbf24' } : {}}>{p.name}</td>
+                  <td className="py-2 text-center font-mono text-[10px] text-slate-400">{p.wins}-{p.losses}</td>
+                  <td className="py-2 text-center font-mono text-[10px] text-slate-300">{p.winPct}%</td>
+                  <td className="py-2 text-center font-mono text-[10px]">{streakDisplay(p.currentStreak)}</td>
+                </tr>
+              ))}
+              {top5.length === 0 ? (
+                <tr><td colSpan={5} className="pixel-font text-[8px] text-slate-600 text-center py-3">Need 3+ games to qualify</td></tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div>
+          {/* Expanded: full table */}
+          <div className="overflow-x-auto mb-6">
+            <table className="w-full text-left" style={{ borderCollapse: 'separate', borderSpacing: '0 2px' }}>
+              <thead>
+                <tr>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 pl-2 w-8 cursor-pointer hover:text-indigo-400" onClick={() => handleSort('winPct')}>#</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 cursor-pointer hover:text-indigo-400" onClick={() => handleSort('name')}>Player{sortArrow('name')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('games')}>Games{sortArrow('games')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('wins')}>W-L{sortArrow('wins')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('winPct')}>Win%{sortArrow('winPct')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('longestWinStreak')}>Best{sortArrow('longestWinStreak')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('longestLossStreak')}>Worst{sortArrow('longestLossStreak')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center">Streak</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center hidden sm:table-cell">Fav Mode</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedPlayers.map((p, i) => {
+                  const dimmed = p.games < 3;
+                  const isFirst = i === 0 && !dimmed;
+                  const modeEntries = Object.entries(p.perMode);
+                  return (
+                    <React.Fragment key={p.name}>
+                      <tr
+                        className="transition-colors"
+                        style={isFirst ? {
+                          background: 'rgba(251,191,36,0.06)',
+                          borderLeft: '2px solid #fbbf24',
+                          boxShadow: 'inset 0 0 12px rgba(251,191,36,0.08)',
+                        } : { background: 'rgba(255,255,255,0.02)' }}
+                      >
+                        <td className={`py-2 pl-2 pixel-font text-[9px] ${dimmed ? 'text-slate-700' : 'text-slate-500'}`} style={isFirst ? { color: '#fbbf24' } : {}}>{i + 1}</td>
+                        <td className={`py-2 pixel-font text-[9px] ${dimmed ? 'text-slate-600 italic' : 'text-white'}`} style={isFirst ? { color: '#fbbf24' } : {}}>{p.name}</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-slate-400'}`}>{p.games}</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-slate-400'}`}>{p.wins}-{p.losses}</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-slate-300'}`}>{p.winPct}%</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-emerald-400'}`}>{p.longestWinStreak > 0 ? `W${p.longestWinStreak}` : '-'}</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-red-400'}`}>{p.longestLossStreak > 0 ? `L${p.longestLossStreak}` : '-'}</td>
+                        <td className="py-2 text-center font-mono text-[10px]">{streakDisplay(p.currentStreak)}</td>
+                        <td className={`py-2 text-center pixel-font text-[7px] hidden sm:table-cell ${dimmed ? 'text-slate-700' : 'text-slate-500'}`}>{p.favMode || '-'}</td>
+                      </tr>
+                      {modeEntries.length > 0 ? (
+                        <tr style={{ background: 'transparent' }}>
+                          <td></td>
+                          <td colSpan={8} className="pb-2 pt-0">
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 pl-1">
+                              {modeEntries.map(([modeId, ms]) => {
+                                const pct = ms.games > 0 ? Math.round((ms.wins / ms.games) * 100) : 0;
+                                return (
+                                  <span key={modeId} className={`font-mono text-[9px] ${modeWinColor(pct)}`}>
+                                    {ms.modeName} {ms.wins}-{ms.games - ms.wins}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Rivalries */}
+          {rivalries.length > 0 ? (
+            <div className="mb-6">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-sm">{'\u2694\uFE0F'}</span>
+                <span className="pixel-font text-[8px] uppercase tracking-widest text-indigo-400">Rivalries</span>
+              </div>
+              <div className="space-y-1">
+                {rivalries.map((r, i) => {
+                  const lead = r.p1Selected > r.p2Selected
+                    ? `${r.player1} selected ${r.p1Selected}x`
+                    : r.p2Selected > r.p1Selected
+                      ? `${r.player2} selected ${r.p2Selected}x`
+                      : 'Tied!';
+                  return (
+                    <div key={i} className="flex items-center gap-2 border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                      <span className="font-mono text-[10px] text-white">{r.player1} vs {r.player2}</span>
+                      <span className="font-mono text-[9px] text-slate-500">{r.totalGames} games</span>
+                      <span className="font-mono text-[9px] text-indigo-400">{lead}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Awards */}
+          {Object.values(awards).some(Boolean) ? (
+            <div className="mb-4">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-sm">{'\uD83C\uDFC5'}</span>
+                <span className="pixel-font text-[8px] uppercase tracking-widest text-indigo-400">Awards</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {awards.mostAccurate ? (
+                  <div className="border border-emerald-500/20 bg-emerald-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-emerald-400 mb-1">{'\uD83C\uDFAF'} Most Accurate</div>
+                    <div className="font-mono text-[10px] text-white">{awards.mostAccurate.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.mostAccurate.stat}</div>
+                  </div>
+                ) : null}
+                {awards.cursed ? (
+                  <div className="border border-purple-500/20 bg-purple-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-purple-400 mb-1">{'\uD83D\uDE08'} Cursed</div>
+                    <div className="font-mono text-[10px] text-white">{awards.cursed.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.cursed.stat}</div>
+                  </div>
+                ) : null}
+                {awards.onFire ? (
+                  <div className="border border-orange-500/20 bg-orange-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-orange-400 mb-1">{'\uD83D\uDD25'} On Fire</div>
+                    <div className="font-mono text-[10px] text-white">{awards.onFire.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.onFire.stat}</div>
+                  </div>
+                ) : null}
+                {awards.downBad ? (
+                  <div className="border border-red-500/20 bg-red-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-red-400 mb-1">{'\uD83D\uDC80'} Down Bad</div>
+                    <div className="font-mono text-[10px] text-white">{awards.downBad.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.downBad.stat}</div>
+                  </div>
+                ) : null}
+                {awards.mostGames ? (
+                  <div className="border border-cyan-500/20 bg-cyan-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-cyan-400 mb-1">{'\uD83C\uDFAE'} Most Games</div>
+                    <div className="font-mono text-[10px] text-white">{awards.mostGames.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.mostGames.stat}</div>
+                  </div>
+                ) : null}
+                {awards.luckiestMode ? (
+                  <div className="border border-green-500/20 bg-green-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-green-400 mb-1">{'\uD83C\uDF40'} Luckiest Mode</div>
+                    <div className="font-mono text-[10px] text-white">{awards.luckiestMode.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.luckiestMode.modeName} {awards.luckiestMode.pct}%</div>
+                  </div>
+                ) : null}
+                {awards.unluckiestMode ? (
+                  <div className="border border-rose-500/20 bg-rose-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-rose-400 mb-1">{'\uD83E\uDEE0'} Unluckiest Mode</div>
+                    <div className="font-mono text-[10px] text-white">{awards.unluckiestMode.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.unluckiestMode.modeName} {awards.unluckiestMode.pct}%</div>
+                  </div>
+                ) : null}
+                {awards.biggestRivalry ? (
+                  <div className="border border-amber-500/20 bg-amber-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-amber-400 mb-1">{'\u2694\uFE0F'} Biggest Rivalry</div>
+                    <div className="font-mono text-[10px] text-white">{awards.biggestRivalry.player1} vs {awards.biggestRivalry.player2}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.biggestRivalry.totalGames} games</div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ChoreChaosApp() {
   const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
   const [taskLabel, setTaskLabel] = useState("");
@@ -3802,6 +4473,28 @@ function ChoreChaosApp() {
   const [playbackStep, setPlaybackStep] = useState(0);
   const [playbackDone, setPlaybackDone] = useState(false);
   const [gameActive, setGameActive] = useState(false);
+  const [suddenDeathRound, setSuddenDeathRound] = useState(0);
+  const [suddenDeathNames, setSuddenDeathNames] = useState(null);
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+
+  const fetchLeaderboard = useCallback(async () => {
+    if (!_supabase) { setLeaderboardLoading(false); return; }
+    try {
+      const { data } = await _supabase
+        .from('runouts_games')
+        .select('*')
+        .order('played_at', { ascending: true });
+      setLeaderboardData(data || []);
+    } catch (e) {
+      // Silent fail
+    }
+    setLeaderboardLoading(false);
+  }, []);
+
+  useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
+
+  const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
 
   const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
   const filledNames = cleanedNames.filter(Boolean);
@@ -3825,7 +4518,29 @@ function ChoreChaosApp() {
     setNames((current) => current.filter((_, idx) => idx !== index));
   }
 
+  async function recordGame(outcome) {
+    if (!_supabase || outcome.isTie) return;
+    try {
+      await _supabase.from('runouts_games').insert({
+        mode_id: outcome.modeId,
+        mode_name: outcome.modeName,
+        selection_goal: outcome.selectionGoal,
+        stakes: outcome.taskLabel || null,
+        selected_player: outcome.selectedName,
+        all_players: outcome.players.map(p => ({
+          name: p.name,
+          selected: p.selected || false,
+          headline: p.headline || null,
+        })),
+        headline: outcome.headline,
+      });
+    } catch (e) {
+      // Silent fail — don't block gameplay
+    }
+  }
+
   function pushHistory(outcome) {
+    if (outcome.isTie) return; // Don't push tie rounds to history; wait for resolution
     setHistory((current) => [
       {
         id: `${Date.now()}-${secureRandomInt(100000)}`,
@@ -3833,25 +4548,30 @@ function ChoreChaosApp() {
         selectedName: outcome.selectedName,
         selectionGoal: outcome.selectionGoal,
         format: outcome.isTournament ? "tournament" : "single",
+        suddenDeath: outcome.suddenDeathRound > 0,
       },
       ...current,
     ].slice(0, 8));
+    // Fire-and-forget: record to Supabase then refresh leaderboard
+    recordGame(outcome).then(() => fetchLeaderboard());
   }
 
-  function createOutcome(forcedModeId = null) {
+  function createOutcome(forcedModeId = null, forcedNames = null) {
     const resolvedModeId = forcedModeId
       ? forcedModeId
       : selectedModeId === "auto"
         ? pickRandom(MODES).id
         : selectedModeId;
 
-    if (gameFormat === "tournament") {
+    const playerNames = forcedNames || cleanedNames;
+
+    if (!forcedNames && gameFormat === "tournament") {
       return buildTournamentOutcome(cleanedNames, taskLabel.trim() || "do the chores", resolvedModeId, wheelRotation);
     }
 
     const mode = modeById(resolvedModeId);
     return {
-      ...mode.run(cleanedNames, taskLabel.trim() || "do the chores", selectionGoal, wheelRotation),
+      ...mode.run(playerNames, taskLabel.trim() || "do the chores", selectionGoal, wheelRotation),
       runId: `${Date.now()}-${secureRandomInt(100000)}`,
     };
   }
@@ -3862,6 +4582,7 @@ function ChoreChaosApp() {
       ...createOutcome(forcedModeId),
       runId: `${Date.now()}-${secureRandomInt(100000)}`,
     };
+    outcome.taskLabel = taskLabel.trim();
     if (outcome.modeId === "wheel" && outcome.wheel) {
       setWheelRotation(outcome.wheel.rotation);
     }
@@ -3872,7 +4593,34 @@ function ChoreChaosApp() {
     setPlaybackStep(0);
     setPlaybackDone(false);
     setGameActive(true);
+    setSuddenDeathRound(0);
+    setSuddenDeathNames(null);
     pushHistory(outcome);
+  }
+
+  function startSuddenDeath() {
+    if (!result || !result.isTie || !result.tiedNames) return;
+    const nextRound = suddenDeathRound + 1;
+    const tiedPlayerNames = result.tiedNames;
+    const outcome = {
+      ...createOutcome(result.modeId, tiedPlayerNames),
+      runId: `${Date.now()}-${secureRandomInt(100000)}`,
+    };
+    outcome.taskLabel = taskLabel.trim();
+    if (outcome.modeId === "wheel" && outcome.wheel) {
+      setWheelRotation(outcome.wheel.rotation);
+    }
+    // If sudden death resolved (no tie), annotate the result
+    if (!outcome.isTie) {
+      outcome.suddenDeathRound = nextRound;
+      outcome.summary = outcome.summary + ` Decided after ${nextRound} round${nextRound > 1 ? "s" : ""} of sudden death.`;
+      pushHistory(outcome);
+    }
+    setResult(outcome);
+    setPlaybackStep(0);
+    setPlaybackDone(false);
+    setSuddenDeathRound(nextRound);
+    setSuddenDeathNames(tiedPlayerNames);
   }
 
   function playAgain() {
@@ -3899,6 +4647,8 @@ function ChoreChaosApp() {
 
   function exitGame() {
     setGameActive(false);
+    setSuddenDeathRound(0);
+    setSuddenDeathNames(null);
   }
 
   return (
@@ -4101,22 +4851,7 @@ function ChoreChaosApp() {
           </div>
         ) : null}
 
-        {history.length ? (
-          <div className="mb-6 pt-2">
-            <div className="pixel-divider mb-5" />
-            <div className="mb-3 flex items-center gap-2">
-              <span className="pixel-font text-[7px] uppercase tracking-widest text-slate-600">Recent</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {history.map((entry) => (
-                <div key={entry.id} className="border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                  <span className="pixel-font text-[8px] text-white">{entry.selectedName}</span>
-                  <span className="pixel-font ml-2 text-[7px] text-slate-600">{entry.modeName}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
+        <Leaderboard stats={leaderboardStats} loading={leaderboardLoading} />
       </div>
 
       <AnimatePresence>
@@ -4133,7 +4868,9 @@ function ChoreChaosApp() {
               <ThemeArt modeId={result.modeId} />
               <div className="modal-toolbar relative z-10 flex items-center justify-between gap-4 border-b border-slate-200/80 bg-white/80 px-4 py-4 backdrop-blur sm:px-6">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Game view</div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : "Game view"}
+                  </div>
                   <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{result.modeName}</div>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-3">
@@ -4152,6 +4889,21 @@ function ChoreChaosApp() {
                       >
                         <FastForward className="h-4 w-4" />
                         Reveal all
+                      </button>
+                    </>
+                  ) : result.isTie ? (
+                    <>
+                      <button
+                        onClick={startSuddenDeath}
+                        className="sudden-death-btn inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+                      >
+                        {"\u2694\uFE0F"} SUDDEN DEATH
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit
                       </button>
                     </>
                   ) : (
@@ -4177,7 +4929,7 @@ function ChoreChaosApp() {
               <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
                 <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
                   <RevealBanner
-                    modeName={result.modeName}
+                    modeName={suddenDeathRound > 0 ? `${result.modeName} \u2022 Sudden Death #${suddenDeathRound}` : result.modeName}
                     step={playbackDone ? currentConfig?.totalSteps ?? playbackStep : playbackStep}
                     totalSteps={currentConfig?.totalSteps ?? 1}
                     done={playbackDone}
@@ -4190,6 +4942,31 @@ function ChoreChaosApp() {
                   {playbackDone ? (() => {
                     const modeMeta = MODE_META.find(m => m.id === result.modeId);
                     const themedLabel = result.selectionGoal === "winner" ? modeMeta?.resultWin : modeMeta?.resultLose;
+
+                    if (result.isTie) {
+                      return (
+                        <div className="verdict-card relative overflow-hidden rounded-[2rem] border border-yellow-400 bg-gradient-to-br from-yellow-50/90 to-amber-50/90 p-6 text-center shadow-xl backdrop-blur">
+                          <TieAnimation tiedNames={result.tiedNames} />
+                          <div className="relative z-10">
+                            <div className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-600">
+                              {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : "Dead heat"}
+                            </div>
+                            <VerdictReveal text="IT'S A TIE" isWinner={false} />
+                            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                              {result.tiedNames.map((name) => (
+                                <span key={name} className="rounded-full bg-yellow-500 px-4 py-2 text-sm font-bold text-white shadow">
+                                  {name}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="mx-auto mt-4 max-w-3xl text-slate-600">
+                              {result.summary} Click <span className="font-bold text-orange-600">{"\u2694\uFE0F"} Sudden Death</span> to settle it.
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     return (
                     <div className={`verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur ${
                       result.selectionGoal === "winner"
@@ -4203,7 +4980,13 @@ function ChoreChaosApp() {
                           {result.selectionGoal === "winner" ? "We have a winner!" : "Round complete"}
                         </div>
                         <VerdictReveal text={result.headline} isWinner={result.selectionGoal === "winner"} />
-                        <div className="mx-auto mt-3 max-w-3xl text-slate-600">Choose <span className="font-semibold">Play again</span> to run it back in full screen, or <span className="font-semibold">Exit</span> to return to setup.</div>
+                        <div className="mx-auto mt-3 max-w-3xl text-slate-600">
+                          {suddenDeathRound > 0 ? (
+                            <span>{result.summary}</span>
+                          ) : (
+                            <span>Choose <span className="font-semibold">Play again</span> to run it back in full screen, or <span className="font-semibold">Exit</span> to return to setup.</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     );
