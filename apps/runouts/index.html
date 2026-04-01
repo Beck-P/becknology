@@ -22,7 +22,7 @@
     @keyframes flicker { 0%,100% { opacity: 1; } 92% { opacity: 1; } 93% { opacity: 0.8; } 94% { opacity: 1; } }
     @keyframes neon-pulse { 0%,100% { text-shadow: 0 0 10px #818cf8, 0 0 40px #6366f1, 0 0 80px #4f46e5; } 50% { text-shadow: 0 0 20px #a5b4fc, 0 0 60px #818cf8, 0 0 120px #6366f1; } }
     @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-    .crt-scanlines::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px); pointer-events: none; z-index: 1; }
+    .crt-scanlines::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px); pointer-events: none; z-index: 1; }
     .neon-text { animation: neon-pulse 3s ease-in-out infinite; }
     .float-slow { animation: float 4s ease-in-out infinite; }
     .float-med { animation: float 3s ease-in-out infinite 0.5s; }
@@ -64,7 +64,7 @@
       content: '';
       position: fixed;
       inset: 0;
-      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 6px);
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
       pointer-events: none;
       z-index: 99;
     }
@@ -73,7 +73,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
       pointer-events: none;
       z-index: 1;
     }
@@ -179,6 +179,549 @@
         transparent 32px, transparent 40px
       );
       opacity: 0.4;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       THEME SYSTEM — Card Hints & Modal Themes
+       ═══════════════════════════════════════════════════════ */
+
+    /* ── Shared keyframes for themes ── */
+    @keyframes phosphor-flicker {
+      0%,100% { opacity: 1; }
+      92% { opacity: 1; }
+      93% { opacity: 0.85; }
+      94% { opacity: 1; }
+      97% { opacity: 0.9; }
+      98% { opacity: 1; }
+    }
+    @keyframes glitch-shift {
+      0%,100% { transform: translate(0); filter: none; }
+      20% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
+      40% { transform: translate(1px, -1px); }
+      60% { transform: translate(-1px, 2px); filter: hue-rotate(-90deg); }
+      80% { transform: translate(2px, -1px); }
+    }
+    @keyframes matrix-drip {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 200px; }
+    }
+    @keyframes marquee-chase {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 0; }
+    }
+    @keyframes torch-flicker {
+      0%,100% { opacity: 0.6; }
+      25% { opacity: 0.7; }
+      50% { opacity: 0.55; }
+      75% { opacity: 0.65; }
+    }
+    @keyframes wave-drift {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 20px; }
+    }
+    @keyframes nebula-pulse {
+      0%,100% { opacity: 0.5; }
+      50% { opacity: 0.8; }
+    }
+    @keyframes neon-throb {
+      0%,100% { filter: brightness(1); }
+      50% { filter: brightness(1.3); }
+    }
+    @keyframes led-blink {
+      0%,100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       1. HOLDEM — Green Phosphor Terminal
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-holdem {
+      border: 1px solid rgba(0, 255, 65, 0.3) !important;
+      box-shadow: 0 0 12px rgba(0, 255, 65, 0.1), inset 0 0 20px rgba(0, 255, 65, 0.03);
+      background: linear-gradient(180deg, rgba(0, 255, 65, 0.04), rgba(0, 0, 0, 0.2)) !important;
+      animation: phosphor-flicker 8s infinite;
+    }
+    .card-hint-holdem:hover {
+      box-shadow: 0 0 24px rgba(0, 255, 65, 0.25), 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+      border-color: rgba(0, 255, 65, 0.6) !important;
+    }
+    .theme-holdem {
+      background: radial-gradient(ellipse at top, rgba(0, 255, 65, 0.06), transparent 50%), #0a0f0a !important;
+      color: #00ff41;
+    }
+    .theme-holdem .mode-header-bg {
+      background: linear-gradient(to right, #003d10, #0a2e0a) !important;
+    }
+    .theme-holdem .mode-header-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 65, 0.04) 2px, rgba(0, 255, 65, 0.04) 4px);
+      pointer-events: none;
+    }
+    .theme-holdem .modal-toolbar { background: rgba(0, 20, 5, 0.95) !important; border-color: rgba(0, 255, 65, 0.15) !important; }
+    .theme-holdem .modal-toolbar * { color: #00ff41 !important; }
+    .theme-holdem .modal-toolbar button { background: rgba(0, 255, 65, 0.12) !important; border-color: rgba(0, 255, 65, 0.3) !important; color: #00ff41 !important; }
+    .theme-holdem .modal-toolbar button:hover { background: rgba(0, 255, 65, 0.22) !important; }
+    .theme-holdem .mode-banner { background: rgba(0, 20, 5, 0.9) !important; border-color: rgba(0, 255, 65, 0.2) !important; }
+    .theme-holdem .mode-banner * { color: #00ff41 !important; }
+    .theme-holdem .mode-banner .progress-track { background: rgba(0, 255, 65, 0.1) !important; }
+    .theme-holdem .mode-banner .progress-bar { background: linear-gradient(90deg, #003d10, #00ff41, #003d10) !important; box-shadow: 0 0 12px rgba(0, 255, 65, 0.5) !important; }
+    .theme-holdem .mode-banner .step-badge { background: rgba(0, 255, 65, 0.15) !important; color: #00ff41 !important; }
+    .theme-holdem .verdict-card { background: rgba(0, 40, 10, 0.9) !important; border-color: rgba(0, 255, 65, 0.3) !important; }
+    .theme-holdem .verdict-card * { color: #00ff41 !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       2. PLO — Glitch Casino
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-plo {
+      border: 1px solid rgba(168, 85, 247, 0.35) !important;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.1), 0 0 4px rgba(236, 72, 153, 0.1);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.06), rgba(236, 72, 153, 0.04)) !important;
+    }
+    .card-hint-plo:hover {
+      animation: glitch-shift 0.3s steps(4) 1;
+      box-shadow: 0 0 24px rgba(168, 85, 247, 0.3), 0 0 8px rgba(236, 72, 153, 0.2), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(168, 85, 247, 0.7) !important;
+    }
+    .theme-plo {
+      background: linear-gradient(135deg, #0d0015, #1a0025, #0f0020) !important;
+      color: #e0b0ff;
+    }
+    .theme-plo .mode-header-bg {
+      background: linear-gradient(to right, #4a0e6e, #7b1fa2, #880e4f) !important;
+      animation: glitch-shift 6s steps(6) infinite;
+    }
+    .theme-plo .modal-toolbar { background: rgba(13, 0, 21, 0.95) !important; border-color: rgba(168, 85, 247, 0.2) !important; }
+    .theme-plo .modal-toolbar * { color: #d8b4fe !important; }
+    .theme-plo .modal-toolbar button { background: rgba(168, 85, 247, 0.12) !important; border-color: rgba(168, 85, 247, 0.3) !important; color: #d8b4fe !important; }
+    .theme-plo .modal-toolbar button:hover { background: rgba(168, 85, 247, 0.25) !important; }
+    .theme-plo .mode-banner { background: rgba(20, 0, 30, 0.9) !important; border-color: rgba(168, 85, 247, 0.2) !important; }
+    .theme-plo .mode-banner * { color: #d8b4fe !important; }
+    .theme-plo .mode-banner .progress-track { background: rgba(168, 85, 247, 0.1) !important; }
+    .theme-plo .mode-banner .progress-bar { background: linear-gradient(90deg, #7b1fa2, #ec4899, #7b1fa2) !important; box-shadow: 0 0 12px rgba(168, 85, 247, 0.5) !important; }
+    .theme-plo .mode-banner .step-badge { background: rgba(168, 85, 247, 0.15) !important; color: #d8b4fe !important; }
+    .theme-plo .verdict-card { background: rgba(20, 0, 35, 0.9) !important; border-color: rgba(168, 85, 247, 0.3) !important; }
+    .theme-plo .verdict-card * { color: #d8b4fe !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       3. RNG — Matrix Terminal
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-rng {
+      border: 1px solid rgba(34, 211, 238, 0.25) !important;
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.08);
+      background: linear-gradient(180deg, rgba(34, 211, 238, 0.03), rgba(0, 255, 65, 0.02)) !important;
+    }
+    .card-hint-rng::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent 0px, transparent 6px, rgba(34, 211, 238, 0.03) 6px, rgba(34, 211, 238, 0.03) 7px);
+      pointer-events: none;
+      animation: matrix-drip 4s linear infinite;
+      will-change: background-position;
+    }
+    .card-hint-rng:hover {
+      box-shadow: 0 0 20px rgba(34, 211, 238, 0.2), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(34, 211, 238, 0.5) !important;
+    }
+    .theme-rng {
+      background: #020a02 !important;
+      color: #22d3ee;
+    }
+    .theme-rng::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(34, 211, 238, 0.015) 3px, rgba(34, 211, 238, 0.015) 4px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .theme-rng .mode-header-bg {
+      background: linear-gradient(to right, #022c22, #064e3b, #022c22) !important;
+    }
+    .theme-rng .modal-toolbar { background: rgba(2, 10, 2, 0.95) !important; border-color: rgba(34, 211, 238, 0.15) !important; }
+    .theme-rng .modal-toolbar * { color: #22d3ee !important; }
+    .theme-rng .modal-toolbar button { background: rgba(34, 211, 238, 0.1) !important; border-color: rgba(34, 211, 238, 0.25) !important; color: #22d3ee !important; }
+    .theme-rng .modal-toolbar button:hover { background: rgba(34, 211, 238, 0.2) !important; }
+    .theme-rng .mode-banner { background: rgba(2, 10, 2, 0.9) !important; border-color: rgba(34, 211, 238, 0.15) !important; }
+    .theme-rng .mode-banner * { color: #22d3ee !important; }
+    .theme-rng .mode-banner .progress-track { background: rgba(34, 211, 238, 0.1) !important; }
+    .theme-rng .mode-banner .progress-bar { background: linear-gradient(90deg, #064e3b, #22d3ee, #064e3b) !important; box-shadow: 0 0 12px rgba(34, 211, 238, 0.5) !important; }
+    .theme-rng .mode-banner .step-badge { background: rgba(34, 211, 238, 0.12) !important; color: #22d3ee !important; }
+    .theme-rng .verdict-card { background: rgba(2, 15, 2, 0.9) !important; border-color: rgba(34, 211, 238, 0.25) !important; }
+    .theme-rng .verdict-card * { color: #22d3ee !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       4. WHEEL — Neon Carnival
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-wheel {
+      border: 1px solid rgba(251, 191, 36, 0.3) !important;
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.1);
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), rgba(236, 72, 153, 0.03)) !important;
+    }
+    .card-hint-wheel::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      background: repeating-linear-gradient(90deg,
+        rgba(251, 191, 36, 0.4) 0px, rgba(251, 191, 36, 0.4) 4px,
+        transparent 4px, transparent 8px,
+        rgba(236, 72, 153, 0.3) 8px, rgba(236, 72, 153, 0.3) 12px,
+        transparent 12px, transparent 16px
+      );
+      mask-image: linear-gradient(to bottom, transparent 0%, transparent 95%, black 95%, black 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 95%, black 95%, black 100%);
+      pointer-events: none;
+      animation: marquee-chase 1s linear infinite;
+      will-change: background-position;
+    }
+    .card-hint-wheel:hover {
+      box-shadow: 0 0 24px rgba(251, 191, 36, 0.3), 0 0 8px rgba(236, 72, 153, 0.15), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(251, 191, 36, 0.6) !important;
+    }
+    .theme-wheel {
+      background: linear-gradient(135deg, #0c0a1f, #12102a) !important;
+      color: #fbbf24;
+    }
+    .theme-wheel .mode-header-bg {
+      background: linear-gradient(to right, #92400e, #d97706, #be185d) !important;
+    }
+    .theme-wheel .modal-toolbar { background: rgba(12, 10, 31, 0.95) !important; border-color: rgba(251, 191, 36, 0.2) !important; }
+    .theme-wheel .modal-toolbar * { color: #fbbf24 !important; }
+    .theme-wheel .modal-toolbar button { background: rgba(251, 191, 36, 0.1) !important; border-color: rgba(251, 191, 36, 0.3) !important; color: #fbbf24 !important; }
+    .theme-wheel .modal-toolbar button:hover { background: rgba(251, 191, 36, 0.2) !important; }
+    .theme-wheel .mode-banner { background: rgba(12, 10, 31, 0.9) !important; border-color: rgba(251, 191, 36, 0.2) !important; }
+    .theme-wheel .mode-banner * { color: #fbbf24 !important; }
+    .theme-wheel .mode-banner .progress-track { background: rgba(251, 191, 36, 0.1) !important; }
+    .theme-wheel .mode-banner .progress-bar { background: linear-gradient(90deg, #92400e, #fbbf24, #ec4899, #fbbf24, #92400e) !important; box-shadow: 0 0 12px rgba(251, 191, 36, 0.5) !important; }
+    .theme-wheel .mode-banner .step-badge { background: rgba(251, 191, 36, 0.15) !important; color: #fbbf24 !important; }
+    .theme-wheel .verdict-card { background: rgba(18, 12, 35, 0.9) !important; border-color: rgba(251, 191, 36, 0.3) !important; }
+    .theme-wheel .verdict-card * { color: #fbbf24 !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       5. DICE — Dungeon Crawler RPG
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-dice {
+      border: 1px solid rgba(217, 119, 6, 0.3) !important;
+      box-shadow: 0 0 10px rgba(217, 119, 6, 0.08);
+      background: linear-gradient(180deg, rgba(217, 119, 6, 0.05), rgba(120, 53, 15, 0.06)) !important;
+    }
+    .card-hint-dice::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-conic-gradient(rgba(217, 119, 6, 0.03) 0% 25%, transparent 0% 50%) 0 0 / 8px 8px;
+      pointer-events: none;
+      opacity: 0.5;
+      animation: torch-flicker 3s ease-in-out infinite;
+      will-change: opacity;
+    }
+    .card-hint-dice:hover {
+      box-shadow: 0 0 20px rgba(217, 119, 6, 0.25), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(217, 119, 6, 0.6) !important;
+    }
+    .theme-dice {
+      background: linear-gradient(180deg, #1a1008, #0f0a04, #1a1008) !important;
+      color: #fbbf24;
+    }
+    .theme-dice::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-conic-gradient(rgba(217, 119, 6, 0.02) 0% 25%, transparent 0% 50%) 0 0 / 12px 12px;
+      pointer-events: none;
+      z-index: 0;
+      animation: torch-flicker 4s ease-in-out infinite;
+      will-change: opacity;
+    }
+    .theme-dice .mode-header-bg {
+      background: linear-gradient(to right, #78350f, #92400e, #78350f) !important;
+    }
+    .theme-dice .modal-toolbar { background: rgba(26, 16, 8, 0.95) !important; border-color: rgba(217, 119, 6, 0.2) !important; }
+    .theme-dice .modal-toolbar * { color: #fbbf24 !important; }
+    .theme-dice .modal-toolbar button { background: rgba(217, 119, 6, 0.12) !important; border-color: rgba(217, 119, 6, 0.3) !important; color: #fbbf24 !important; }
+    .theme-dice .modal-toolbar button:hover { background: rgba(217, 119, 6, 0.22) !important; }
+    .theme-dice .mode-banner { background: rgba(26, 16, 8, 0.9) !important; border-color: rgba(217, 119, 6, 0.2) !important; }
+    .theme-dice .mode-banner * { color: #fbbf24 !important; }
+    .theme-dice .mode-banner .progress-track { background: rgba(217, 119, 6, 0.1) !important; }
+    .theme-dice .mode-banner .progress-bar { background: linear-gradient(90deg, #78350f, #d97706, #78350f) !important; box-shadow: 0 0 12px rgba(217, 119, 6, 0.4) !important; }
+    .theme-dice .mode-banner .step-badge { background: rgba(217, 119, 6, 0.15) !important; color: #fbbf24 !important; }
+    .theme-dice .verdict-card { background: rgba(30, 20, 8, 0.9) !important; border-color: rgba(217, 119, 6, 0.3) !important; }
+    .theme-dice .verdict-card * { color: #fbbf24 !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       6. HIGH-CARD — Wild West Showdown
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-high-card {
+      border: 1px solid rgba(180, 140, 80, 0.3) !important;
+      box-shadow: 0 0 8px rgba(180, 140, 80, 0.08);
+      background: linear-gradient(135deg, rgba(180, 140, 80, 0.06), rgba(120, 80, 40, 0.04)) !important;
+    }
+    .card-hint-high-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 3px double rgba(180, 140, 80, 0.2);
+      pointer-events: none;
+    }
+    .card-hint-high-card:hover {
+      box-shadow: 0 0 20px rgba(180, 140, 80, 0.2), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(180, 140, 80, 0.6) !important;
+    }
+    .theme-high-card {
+      background: linear-gradient(180deg, #1a1408, #120e06, #1a1408) !important;
+      color: #d4a854;
+    }
+    .theme-high-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(180, 140, 80, 0.04), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .theme-high-card .mode-header-bg {
+      background: linear-gradient(to right, #78560f, #a16207, #78560f) !important;
+    }
+    .theme-high-card .modal-toolbar { background: rgba(26, 20, 8, 0.95) !important; border-color: rgba(180, 140, 80, 0.2) !important; }
+    .theme-high-card .modal-toolbar * { color: #d4a854 !important; }
+    .theme-high-card .modal-toolbar button { background: rgba(180, 140, 80, 0.1) !important; border-color: rgba(180, 140, 80, 0.3) !important; color: #d4a854 !important; }
+    .theme-high-card .modal-toolbar button:hover { background: rgba(180, 140, 80, 0.2) !important; }
+    .theme-high-card .mode-banner { background: rgba(26, 20, 8, 0.9) !important; border-color: rgba(180, 140, 80, 0.2) !important; }
+    .theme-high-card .mode-banner * { color: #d4a854 !important; }
+    .theme-high-card .mode-banner .progress-track { background: rgba(180, 140, 80, 0.1) !important; }
+    .theme-high-card .mode-banner .progress-bar { background: linear-gradient(90deg, #78560f, #d4a854, #78560f) !important; box-shadow: 0 0 10px rgba(180, 140, 80, 0.4) !important; }
+    .theme-high-card .mode-banner .step-badge { background: rgba(180, 140, 80, 0.15) !important; color: #d4a854 !important; }
+    .theme-high-card .verdict-card { background: rgba(30, 22, 10, 0.9) !important; border-color: rgba(180, 140, 80, 0.3) !important; }
+    .theme-high-card .verdict-card * { color: #d4a854 !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       7. COIN-FLIPS — Pirate Treasure Hunt
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-coin-flips {
+      border: 1px solid rgba(234, 179, 8, 0.25) !important;
+      box-shadow: 0 0 10px rgba(30, 58, 138, 0.15);
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.08), rgba(234, 179, 8, 0.04)) !important;
+    }
+    .card-hint-coin-flips::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 30%;
+      background: repeating-linear-gradient(170deg,
+        transparent 0px, transparent 8px,
+        rgba(30, 58, 138, 0.05) 8px, rgba(30, 58, 138, 0.05) 10px
+      );
+      pointer-events: none;
+      animation: wave-drift 6s linear infinite;
+      will-change: background-position;
+    }
+    .card-hint-coin-flips:hover {
+      box-shadow: 0 0 20px rgba(234, 179, 8, 0.2), 0 0 12px rgba(30, 58, 138, 0.15), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(234, 179, 8, 0.5) !important;
+    }
+    .theme-coin-flips {
+      background: linear-gradient(180deg, #0a1628, #071020, #0a1628) !important;
+      color: #fbbf24;
+    }
+    .theme-coin-flips::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40%;
+      background: repeating-linear-gradient(170deg,
+        transparent 0px, transparent 14px,
+        rgba(30, 58, 138, 0.04) 14px, rgba(30, 58, 138, 0.04) 16px
+      );
+      pointer-events: none;
+      z-index: 0;
+      animation: wave-drift 8s linear infinite;
+      will-change: background-position;
+    }
+    .theme-coin-flips .mode-header-bg {
+      background: linear-gradient(to right, #1e3a8a, #1d4ed8, #92400e) !important;
+    }
+    .theme-coin-flips .modal-toolbar { background: rgba(10, 22, 40, 0.95) !important; border-color: rgba(234, 179, 8, 0.15) !important; }
+    .theme-coin-flips .modal-toolbar * { color: #fbbf24 !important; }
+    .theme-coin-flips .modal-toolbar button { background: rgba(234, 179, 8, 0.1) !important; border-color: rgba(234, 179, 8, 0.25) !important; color: #fbbf24 !important; }
+    .theme-coin-flips .modal-toolbar button:hover { background: rgba(234, 179, 8, 0.2) !important; }
+    .theme-coin-flips .mode-banner { background: rgba(10, 22, 40, 0.9) !important; border-color: rgba(234, 179, 8, 0.15) !important; }
+    .theme-coin-flips .mode-banner * { color: #fbbf24 !important; }
+    .theme-coin-flips .mode-banner .progress-track { background: rgba(234, 179, 8, 0.1) !important; }
+    .theme-coin-flips .mode-banner .progress-bar { background: linear-gradient(90deg, #1e3a8a, #fbbf24, #1e3a8a) !important; box-shadow: 0 0 12px rgba(234, 179, 8, 0.4) !important; }
+    .theme-coin-flips .mode-banner .step-badge { background: rgba(234, 179, 8, 0.12) !important; color: #fbbf24 !important; }
+    .theme-coin-flips .verdict-card { background: rgba(10, 26, 50, 0.9) !important; border-color: rgba(234, 179, 8, 0.25) !important; }
+    .theme-coin-flips .verdict-card * { color: #fbbf24 !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       8. BLACK-MARBLE — Cosmic Fortune Teller
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-black-marble {
+      border: 1px solid rgba(139, 92, 246, 0.25) !important;
+      box-shadow: 0 0 14px rgba(88, 28, 135, 0.12);
+      background: radial-gradient(circle at 60% 40%, rgba(139, 92, 246, 0.06), rgba(30, 27, 75, 0.08)) !important;
+    }
+    .card-hint-black-marble::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 70%, rgba(139, 92, 246, 0.06), transparent 50%),
+                  radial-gradient(circle at 70% 30%, rgba(88, 28, 135, 0.04), transparent 40%);
+      pointer-events: none;
+      animation: nebula-pulse 5s ease-in-out infinite;
+      will-change: opacity;
+    }
+    .card-hint-black-marble:hover {
+      box-shadow: 0 0 28px rgba(139, 92, 246, 0.25), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(139, 92, 246, 0.5) !important;
+    }
+    .theme-black-marble {
+      background: radial-gradient(ellipse at 30% 20%, rgba(88, 28, 135, 0.15), transparent 50%),
+                  radial-gradient(ellipse at 70% 80%, rgba(67, 56, 202, 0.1), transparent 50%),
+                  #05020f !important;
+      color: #c4b5fd;
+    }
+    .theme-black-marble::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.05), transparent 40%),
+                  radial-gradient(circle at 80% 70%, rgba(88, 28, 135, 0.04), transparent 35%);
+      pointer-events: none;
+      z-index: 0;
+      animation: nebula-pulse 6s ease-in-out infinite;
+      will-change: opacity;
+    }
+    .theme-black-marble .mode-header-bg {
+      background: linear-gradient(to right, #3b0764, #581c87, #312e81) !important;
+    }
+    .theme-black-marble .modal-toolbar { background: rgba(5, 2, 15, 0.95) !important; border-color: rgba(139, 92, 246, 0.15) !important; }
+    .theme-black-marble .modal-toolbar * { color: #c4b5fd !important; }
+    .theme-black-marble .modal-toolbar button { background: rgba(139, 92, 246, 0.1) !important; border-color: rgba(139, 92, 246, 0.25) !important; color: #c4b5fd !important; }
+    .theme-black-marble .modal-toolbar button:hover { background: rgba(139, 92, 246, 0.2) !important; }
+    .theme-black-marble .mode-banner { background: rgba(10, 5, 25, 0.9) !important; border-color: rgba(139, 92, 246, 0.15) !important; }
+    .theme-black-marble .mode-banner * { color: #c4b5fd !important; }
+    .theme-black-marble .mode-banner .progress-track { background: rgba(139, 92, 246, 0.1) !important; }
+    .theme-black-marble .mode-banner .progress-bar { background: linear-gradient(90deg, #3b0764, #8b5cf6, #581c87) !important; box-shadow: 0 0 14px rgba(139, 92, 246, 0.5) !important; }
+    .theme-black-marble .mode-banner .step-badge { background: rgba(139, 92, 246, 0.12) !important; color: #c4b5fd !important; }
+    .theme-black-marble .verdict-card { background: rgba(10, 5, 25, 0.9) !important; border-color: rgba(139, 92, 246, 0.25) !important; }
+    .theme-black-marble .verdict-card * { color: #c4b5fd !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       9. SLOTS — Vegas Neon Strip
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-slots {
+      border: 1px solid rgba(236, 72, 153, 0.3) !important;
+      box-shadow: 0 0 12px rgba(236, 72, 153, 0.1), 0 0 6px rgba(56, 189, 248, 0.08);
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(56, 189, 248, 0.03), rgba(234, 179, 8, 0.03)) !important;
+      animation: neon-throb 3s ease-in-out infinite;
+      will-change: filter;
+    }
+    .card-hint-slots:hover {
+      box-shadow: 0 0 28px rgba(236, 72, 153, 0.3), 0 0 14px rgba(56, 189, 248, 0.2), 0 0 8px rgba(234, 179, 8, 0.15), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(236, 72, 153, 0.6) !important;
+    }
+    .theme-slots {
+      background: linear-gradient(135deg, #0f0515, #0a0020, #150818) !important;
+      color: #f9a8d4;
+    }
+    .theme-slots::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(236, 72, 153, 0.06), transparent 40%),
+        radial-gradient(circle at 80% 50%, rgba(56, 189, 248, 0.05), transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(234, 179, 8, 0.04), transparent 30%);
+      pointer-events: none;
+      z-index: 0;
+      animation: neon-throb 4s ease-in-out infinite;
+      will-change: filter;
+    }
+    .theme-slots .mode-header-bg {
+      background: linear-gradient(to right, #be185d, #ec4899, #0ea5e9, #fbbf24, #be185d) !important;
+      background-size: 200% 100%;
+    }
+    .theme-slots .modal-toolbar { background: rgba(15, 5, 21, 0.95) !important; border-color: rgba(236, 72, 153, 0.2) !important; }
+    .theme-slots .modal-toolbar * { color: #f9a8d4 !important; }
+    .theme-slots .modal-toolbar button { background: rgba(236, 72, 153, 0.12) !important; border-color: rgba(236, 72, 153, 0.3) !important; color: #f9a8d4 !important; }
+    .theme-slots .modal-toolbar button:hover { background: rgba(236, 72, 153, 0.25) !important; }
+    .theme-slots .mode-banner { background: rgba(15, 5, 21, 0.9) !important; border-color: rgba(236, 72, 153, 0.2) !important; }
+    .theme-slots .mode-banner * { color: #f9a8d4 !important; }
+    .theme-slots .mode-banner .progress-track { background: rgba(236, 72, 153, 0.1) !important; }
+    .theme-slots .mode-banner .progress-bar { background: linear-gradient(90deg, #be185d, #ec4899, #0ea5e9, #fbbf24) !important; box-shadow: 0 0 14px rgba(236, 72, 153, 0.5) !important; }
+    .theme-slots .mode-banner .step-badge { background: rgba(236, 72, 153, 0.15) !important; color: #f9a8d4 !important; }
+    .theme-slots .verdict-card { background: rgba(20, 8, 30, 0.9) !important; border-color: rgba(236, 72, 153, 0.3) !important; }
+    .theme-slots .verdict-card * { color: #f9a8d4 !important; }
+
+    /* ═══════════════════════════════════════════════════════
+       10. HORSE-RACE — Retro Racetrack
+       ═══════════════════════════════════════════════════════ */
+    .card-hint-horse-race {
+      border: 1px solid rgba(34, 197, 94, 0.25) !important;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.08);
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.04), rgba(120, 80, 40, 0.03)) !important;
+    }
+    .card-hint-horse-race::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: repeating-linear-gradient(90deg,
+        #22c55e 0px, #22c55e 6px,
+        #fef9c3 6px, #fef9c3 12px
+      );
+      pointer-events: none;
+      opacity: 0.4;
+      animation: led-blink 2s ease-in-out infinite;
+      will-change: opacity;
+    }
+    .card-hint-horse-race:hover {
+      box-shadow: 0 0 18px rgba(34, 197, 94, 0.2), 0 8px 30px rgba(0,0,0,0.4) !important;
+      border-color: rgba(34, 197, 94, 0.5) !important;
+    }
+    .theme-horse-race {
+      background: linear-gradient(180deg, #0d1a0d, #0a140a, #0d1a0d) !important;
+      color: #86efac;
+    }
+    .theme-horse-race::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center bottom, rgba(34, 197, 94, 0.05), transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .theme-horse-race .mode-header-bg {
+      background: linear-gradient(to right, #166534, #15803d, #78350f) !important;
+    }
+    .theme-horse-race .modal-toolbar { background: rgba(13, 26, 13, 0.95) !important; border-color: rgba(34, 197, 94, 0.15) !important; }
+    .theme-horse-race .modal-toolbar * { color: #86efac !important; }
+    .theme-horse-race .modal-toolbar button { background: rgba(34, 197, 94, 0.1) !important; border-color: rgba(34, 197, 94, 0.25) !important; color: #86efac !important; }
+    .theme-horse-race .modal-toolbar button:hover { background: rgba(34, 197, 94, 0.2) !important; }
+    .theme-horse-race .mode-banner { background: rgba(13, 26, 13, 0.9) !important; border-color: rgba(34, 197, 94, 0.15) !important; }
+    .theme-horse-race .mode-banner * { color: #86efac !important; }
+    .theme-horse-race .mode-banner .progress-track { background: rgba(34, 197, 94, 0.1) !important; }
+    .theme-horse-race .mode-banner .progress-bar { background: linear-gradient(90deg, #166534, #22c55e, #166534) !important; box-shadow: 0 0 10px rgba(34, 197, 94, 0.4) !important; }
+    .theme-horse-race .mode-banner .step-badge { background: rgba(34, 197, 94, 0.12) !important; color: #86efac !important; }
+    .theme-horse-race .verdict-card { background: rgba(15, 30, 15, 0.9) !important; border-color: rgba(34, 197, 94, 0.25) !important; }
+    .theme-horse-race .verdict-card * { color: #86efac !important; }
+
+    /* ── Themed result text decorative label ── */
+    .theme-verdict-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 4px;
     }
   </style>
 </head>
@@ -318,7 +861,7 @@
     function ModeHeader({ result, done, pendingText, pendingSummary }) {
       const isWinner = result.selectionGoal === "winner";
       return (
-        <div className={`relative overflow-hidden bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className={`mode-header-bg relative overflow-hidden bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
           {done && isWinner ? <Celebration /> : null}
           {done && !isWinner ? <SadOverlay /> : null}
           <div className="relative z-10">
@@ -401,6 +944,10 @@ const MODE_META = [
     icon: "🃏",
     blurb: "2 hole cards, board flips, weakest hand loses.",
     accent: "from-sky-500 to-blue-600",
+    cardHint: "card-hint-holdem",
+    themeClass: "theme-holdem",
+    resultWin: "ROYAL FLUSH",
+    resultLose: "MUCKED",
   },
   {
     id: "plo",
@@ -408,6 +955,10 @@ const MODE_META = [
     icon: "🂠",
     blurb: "4 hole cards, Omaha rules, full showdown.",
     accent: "from-violet-500 to-fuchsia-600",
+    cardHint: "card-hint-plo",
+    themeClass: "theme-plo",
+    resultWin: "NUTS",
+    resultLose: "GLITCHED",
   },
   {
     id: "rng",
@@ -415,6 +966,10 @@ const MODE_META = [
     icon: "#️⃣",
     blurb: "Dramatic number reveal. Lowest loses.",
     accent: "from-emerald-500 to-green-600",
+    cardHint: "card-hint-rng",
+    themeClass: "theme-rng",
+    resultWin: "OVERFLOW",
+    resultLose: "NULL",
   },
   {
     id: "wheel",
@@ -422,6 +977,10 @@ const MODE_META = [
     icon: "🎡",
     blurb: "Spin the wheel of doom.",
     accent: "from-orange-500 to-amber-600",
+    cardHint: "card-hint-wheel",
+    themeClass: "theme-wheel",
+    resultWin: "JACKPOT",
+    resultLose: "BANKRUPT",
   },
   {
     id: "dice",
@@ -429,6 +988,10 @@ const MODE_META = [
     icon: "🎲",
     blurb: "Roll 2d6. Lowest total gets picked.",
     accent: "from-rose-500 to-red-600",
+    cardHint: "card-hint-dice",
+    themeClass: "theme-dice",
+    resultWin: "VICTORIOUS",
+    resultLose: "DEFEATED",
   },
   {
     id: "high-card",
@@ -436,6 +999,10 @@ const MODE_META = [
     icon: "🂡",
     blurb: "One card each. Lowest rank loses.",
     accent: "from-cyan-500 to-sky-600",
+    cardHint: "card-hint-high-card",
+    themeClass: "theme-high-card",
+    resultWin: "FASTEST DRAW",
+    resultLose: "OUTDRAWN",
   },
   {
     id: "coin-flips",
@@ -443,6 +1010,10 @@ const MODE_META = [
     icon: "🪙",
     blurb: "5 flips. Fewest heads gets stuck.",
     accent: "from-yellow-500 to-orange-500",
+    cardHint: "card-hint-coin-flips",
+    themeClass: "theme-coin-flips",
+    resultWin: "TREASURE FOUND",
+    resultLose: "WALKED THE PLANK",
   },
   {
     id: "black-marble",
@@ -450,6 +1021,10 @@ const MODE_META = [
     icon: "🔮",
     blurb: "Draw until someone hits the black one.",
     accent: "from-slate-700 to-slate-900",
+    cardHint: "card-hint-black-marble",
+    themeClass: "theme-black-marble",
+    resultWin: "FATE FAVORS",
+    resultLose: "CURSED",
   },
   {
     id: "slots",
@@ -457,6 +1032,10 @@ const MODE_META = [
     icon: "🎰",
     blurb: "Casino reels. Worst combo loses.",
     accent: "from-pink-500 to-rose-600",
+    cardHint: "card-hint-slots",
+    themeClass: "theme-slots",
+    resultWin: "TRIPLE SEVENS",
+    resultLose: "BUST",
   },
   {
     id: "horse-race",
@@ -464,6 +1043,10 @@ const MODE_META = [
     icon: "🏇",
     blurb: "12 random turns on the track.",
     accent: "from-lime-500 to-emerald-600",
+    cardHint: "card-hint-horse-race",
+    themeClass: "theme-horse-race",
+    resultWin: "PHOTO FINISH",
+    resultLose: "LAST PLACE",
   },
 ];
 
@@ -1282,20 +1865,20 @@ function CardFace({ card, hidden = false, large = false, delay = 0 }) {
 
 function RevealBanner({ modeName, step, totalSteps, done }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+    <div className="mode-banner flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
       <div>
         <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Live mode</div>
         <div className="mt-1 text-xl font-bold text-slate-900">{modeName}</div>
       </div>
       <div className="flex items-center gap-3">
-        <div className="w-36 overflow-hidden rounded-full bg-slate-100">
+        <div className="progress-track w-36 overflow-hidden rounded-full bg-slate-100">
           <motion.div
-            className="h-2 rounded-full bg-gradient-to-r from-slate-900 via-sky-500 to-slate-900 shadow-[0_0_12px_2px_rgba(56,189,248,0.5)]"
+            className="progress-bar h-2 rounded-full bg-gradient-to-r from-slate-900 via-sky-500 to-slate-900 shadow-[0_0_12px_2px_rgba(56,189,248,0.5)]"
             animate={{ width: `${(step / totalSteps) * 100}%` }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           />
         </div>
-        <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+        <div className="step-badge rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
           {done ? "Final" : step === 0 ? `Ready • 0/${totalSteps}` : `Step ${step}/${totalSteps}`}
         </div>
       </div>
@@ -1362,7 +1945,7 @@ function PokerPlayback({ result, step, done, omaha = false }) {
   return (
     <div className="space-y-6">
       <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
-        <div className={`relative overflow-hidden bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+        <div className={`mode-header-bg relative overflow-hidden bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
           {verdictVisible && result.selectionGoal === "winner" ? <Celebration /> : null}
           {verdictVisible && result.selectionGoal === "loser" ? <SadOverlay /> : null}
           <div className="relative z-10">
@@ -2274,7 +2857,7 @@ function ChoreChaosApp() {
               key={mode.id}
               onClick={() => { setSelectedModeId(mode.id); startGame(mode.id); }}
               disabled={!canRun}
-              className="arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40"
+              className={`arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40 ${mode.cardHint}`}
               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
@@ -2327,8 +2910,8 @@ function ChoreChaosApp() {
             transition={{ type: "spring", stiffness: 80, damping: 18, mass: 1 }}
             className="fixed inset-0 z-50 bg-slate-950/80 p-3 backdrop-blur-md sm:p-6"
           >
-            <div className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_26%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)] shadow-2xl">
-              <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 bg-white/80 px-4 py-4 backdrop-blur sm:px-6">
+            <div className={`theme-${result.modeId} relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl`}>
+              <div className="modal-toolbar flex items-center justify-between gap-4 border-b border-slate-200/80 bg-white/80 px-4 py-4 backdrop-blur sm:px-6">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Game view</div>
                   <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{result.modeName}</div>
@@ -2384,14 +2967,18 @@ function ChoreChaosApp() {
                     <PlaybackStage result={result} step={playbackStep} done={playbackDone} />
                   </div>
 
-                  {playbackDone ? (
-                    <div className={`relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur ${
+                  {playbackDone ? (() => {
+                    const modeMeta = MODE_META.find(m => m.id === result.modeId);
+                    const themedLabel = result.selectionGoal === "winner" ? modeMeta?.resultWin : modeMeta?.resultLose;
+                    return (
+                    <div className={`verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur ${
                       result.selectionGoal === "winner"
                         ? "border-amber-300 bg-gradient-to-br from-amber-50/90 to-yellow-50/90"
                         : "border-slate-200 bg-white/85"
                     }`}>
                       {result.selectionGoal === "winner" ? <Celebration /> : <SadOverlay />}
                       <div className="relative z-10">
+                        {themedLabel ? <div className="theme-verdict-label">{themedLabel}</div> : null}
                         <div className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
                           {result.selectionGoal === "winner" ? "We have a winner!" : "Round complete"}
                         </div>
@@ -2399,7 +2986,8 @@ function ChoreChaosApp() {
                         <div className="mx-auto mt-3 max-w-3xl text-slate-600">Choose <span className="font-semibold">Play again</span> to run it back in full screen, or <span className="font-semibold">Exit</span> to return to setup.</div>
                       </div>
                     </div>
-                  ) : null}
+                    );
+                  })() : null}
                 </div>
               </div>
             </div>
