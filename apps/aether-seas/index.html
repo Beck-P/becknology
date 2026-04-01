@@ -434,52 +434,77 @@ const BG = {
   shore(t) {
     const { W, H } = G;
     const skyH = Math.round(H * 0.38), sandY = Math.round(H * 0.58);
-    drawGrad(0, skyH, [['#3A6A9A',0],['#6A9ABB',0.4],['#9AC0D8',0.7],['#C0D8E8',1]]);
-    drawCloudBand(skyH, t, 'rgba(220,235,250,0.35)', 0.07, 50, 0.32);
-    drawCloudBand(skyH, t, 'rgba(235,242,255,0.25)', 0.05, 65, 0.5);
-    ctx.fillStyle = '#0A5A40'; ctx.fillRect(0, skyH, W, sandY - skyH);
-    drawReflection(skyH, 'rgba(5,60,40,0.3)', t, sandY - skyH);
-    drawWaveHL(skyH, sandY, t, '52,211,153', 4);
+    // Sky with warm teal tones
+    drawGrad(0, skyH, [['#2A5A7A',0],['#4A8A9A',0.3],['#6AAAAA',0.6],['#90C8C0',0.85],['#B0D8D0',1]]);
+    drawCloudBand(skyH, t, 'rgba(200,230,220,0.35)', 0.07, 50, 0.32);
+    drawCloudBand(skyH, t, 'rgba(220,240,230,0.25)', 0.05, 65, 0.5);
+    // Emerald sea — solid green base, then lighter reflection on top
+    drawGrad(skyH, sandY, [['#06503A',0],['#08604A',0.3],['#0A7058',0.6],['#0D8868',0.85],['#15A080',1]]);
+    // Wave texture
+    for (let i = 0; i < 5; i++) {
+      const wy = skyH + 3 + Math.round(i * (sandY - skyH) / 6);
+      ctx.fillStyle = `rgba(30,180,130,${0.18 - i * 0.025})`;
+      for (let x = 0; x < W; x += 3) {
+        if (hash(x * 2 + i * 13 + Math.floor(t * 0.0008)) > 0.5)
+          ctx.fillRect(x + Math.round(Math.sin(x * 0.08 + t * 0.001)), wy, 2, 1);
+      }
+    }
+    // Foam line at shore
+    ctx.fillStyle = 'rgba(167,243,208,0.35)';
+    for (let x = 0; x < W; x++) {
+      const fy = sandY - 1 + Math.round(Math.sin(x * 0.12 + t * 0.002) * 0.8);
+      ctx.fillRect(x, fy, 1, 1);
+    }
+    // Sand
     drawGrad(sandY, H, [['#E8D5B0',0],['#F5DEB3',0.08],['#DEB887',1]]);
     ctx.fillStyle = '#D4C4A0';
     for (let i = 0; i < 15; i++) ctx.fillRect(Math.round(hash(i * 11) * W), sandY + Math.round(hash(i * 19) * H * 0.06) + 2, 2, 1);
     ctx.fillStyle = '#6B8E34';
     for (let i = 0; i < 12; i++) ctx.fillRect(Math.round(hash(i * 7 + 200) * W * 0.5), sandY - 1, 1, 2);
-    // Dock — starts on sand, extends into water
-    const dockW = Math.round(W * 0.04);
-    const dockStartX = Math.round(W * 0.62);
-    const dockEndX = Math.round(W * 0.85);
-    const dockTopY = Math.round(sandY - H * 0.01);
-    // Main plank surface
-    ctx.fillStyle = '#6B5030';
-    ctx.fillRect(dockStartX, dockTopY, dockEndX - dockStartX, 3);
-    // Plank highlights
-    ctx.fillStyle = '#7A6040';
+    // Dock — wide planks from sand out over water
+    const dockStartX = Math.round(W * 0.6);
+    const dockEndX = Math.round(W * 0.82);
+    const dockTopY = Math.round(sandY - Math.max(2, H * 0.008));
+    const dockH = Math.max(4, Math.round(H * 0.02));
+    // Plank surface
+    ctx.fillStyle = '#6B4A28';
+    ctx.fillRect(dockStartX, dockTopY, dockEndX - dockStartX, dockH);
+    // Plank highlight top edge
+    ctx.fillStyle = '#8A6838';
     ctx.fillRect(dockStartX, dockTopY, dockEndX - dockStartX, 1);
-    // Support posts going down into water/sand
-    ctx.fillStyle = '#5A4020';
+    // Plank lines
+    ctx.fillStyle = '#5A3A1A';
+    for (let py = dockTopY + 2; py < dockTopY + dockH; py += 2)
+      ctx.fillRect(dockStartX, py, dockEndX - dockStartX, 1);
+    // Dark underside
+    ctx.fillStyle = '#3A2510';
+    ctx.fillRect(dockStartX, dockTopY + dockH, dockEndX - dockStartX, 1);
+    // Support posts — thick, with visible tops
+    ctx.fillStyle = '#4A3018';
     const postSpacing = Math.round((dockEndX - dockStartX) / 3);
     for (let i = 0; i <= 3; i++) {
       const px = dockStartX + i * postSpacing;
-      const postBot = px < Math.round(W * 0.68) ? sandY + Math.round(H * 0.04) : sandY;
-      ctx.fillRect(px, dockTopY + 2, 2, postBot - dockTopY);
-    }
-    // Cross braces
-    ctx.fillStyle = '#5A4020';
-    for (let i = 0; i < 3; i++) {
-      const bx = dockStartX + i * postSpacing + Math.round(postSpacing * 0.3);
-      ctx.fillRect(bx, dockTopY + Math.round(H * 0.02), postSpacing - Math.round(postSpacing * 0.3), 1);
+      const postW = Math.max(2, Math.round(W * 0.012));
+      const postBot = sandY + Math.round(H * 0.06);
+      ctx.fillRect(px, dockTopY + dockH, postW, postBot - dockTopY - dockH);
+      // Post cap on top of dock
+      ctx.fillStyle = '#5A3A20';
+      ctx.fillRect(px - 1, dockTopY - 2, postW + 2, 2);
+      ctx.fillStyle = '#4A3018';
     }
 
-    // === Big pixel art ship moored at dock ===
+    // === Big pixel art ship — partially submerged ===
     const bob = Math.round(Math.sin(t * 0.0012) * 1);
-    const shipCX = Math.round(W * 0.88);        // center X
-    const hullW = Math.max(20, Math.round(W * 0.22)); // hull width
-    const hullH = Math.max(10, Math.round(H * 0.08)); // hull height
-    const deckY2 = Math.round(sandY - H * 0.04) + bob; // deck line (waterline)
+    const shipCX = Math.round(W * 0.88);
+    const hullW = Math.max(20, Math.round(W * 0.22));
+    const hullH = Math.max(10, Math.round(H * 0.08));
+    // Deck sits right at the water surface (skyH), hull extends down into water
+    const deckY2 = skyH + 2 + bob;
     const hullBot = deckY2 + hullH;
     const hullL = shipCX - Math.round(hullW / 2);
     const hullR = shipCX + Math.round(hullW / 2);
+    // How much hull is visible above water overlay
+    const waterCoverStart = deckY2 + Math.round(hullH * 0.3); // water covers bottom 70%
 
     // Hull — curved shape, row by row
     for (let row = 0; row < hullH; row++) {
@@ -589,9 +614,24 @@ const BG = {
     ctx.fillStyle = '#6B4A20';
     ctx.fillRect(mastX, mastTop - flagH - 1, 1, 1);
 
+    // Water overlay on lower hull — submerges bottom of ship
+    ctx.fillStyle = '#08604A';
+    ctx.fillRect(hullL - 4, waterCoverStart, hullW + 8, hullBot - waterCoverStart + 4);
+    // Darker water below
+    ctx.fillStyle = '#06503A';
+    ctx.fillRect(hullL - 5, waterCoverStart + 3, hullW + 10, hullBot - waterCoverStart);
+    // Wave foam at waterline around hull
+    ctx.fillStyle = '#1AAA78';
+    for (let x = hullL - 3; x < hullR + 3; x++) {
+      const wy = waterCoverStart - 1 + Math.round(Math.sin(x * 0.2 + t * 0.003) * 0.8);
+      ctx.fillRect(x, wy, 1, 1);
+    }
+    ctx.fillStyle = 'rgba(167,243,208,0.4)';
+    ctx.fillRect(hullL - 2, waterCoverStart, hullW + 4, 1);
+
     // Rope from dock to ship
     ctx.fillStyle = '#8B7355';
-    ctx.fillRect(dockEndX - 1, dockTopY + 1, hullL - dockEndX + 2, 1);
+    ctx.fillRect(dockEndX - 1, dockTopY + Math.round(dockH / 2), hullL - dockEndX + 2, 1);
   },
 
   ship(t, waterType) {
