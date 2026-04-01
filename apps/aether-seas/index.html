@@ -434,10 +434,76 @@ const BG = {
   shore(t) {
     const { W, H } = G;
     const skyH = Math.round(H * 0.38), sandY = Math.round(H * 0.58);
-    // Sky with warm teal tones
-    drawGrad(0, skyH, [['#2A5A7A',0],['#4A8A9A',0.3],['#6AAAAA',0.6],['#90C8C0',0.85],['#B0D8D0',1]]);
-    drawCloudBand(skyH, t, 'rgba(200,230,220,0.35)', 0.07, 50, 0.32);
-    drawCloudBand(skyH, t, 'rgba(220,240,230,0.25)', 0.05, 65, 0.5);
+    // Dark sky for emerald moon
+    drawGrad(0, skyH, [['#0A1A20',0],['#0E2A28',0.25],['#153A30',0.5],['#1A4A38',0.75],['#205A42',1]]);
+    // Stars
+    for (let i = 0; i < 35; i++) {
+      const sx = Math.round((i * 137.5 + 23) % W);
+      const sy = Math.round((i * 83.7 + 11) % (skyH * 0.7));
+      ctx.fillStyle = `rgba(180,255,220,${0.15 + 0.35 * Math.sin(t * 0.0008 + i * 2.1)})`;
+      ctx.fillRect(sx, sy, hash(i * 17) > 0.9 ? 2 : 1, 1);
+    }
+    // Emerald moon
+    const moonX = Math.round(W * 0.35), moonY = Math.round(skyH * 0.32);
+    const moonR = Math.max(8, Math.round(W * 0.06));
+    // Moon glow (outer)
+    const mg = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, moonR * 3);
+    mg.addColorStop(0, 'rgba(80,255,160,0.2)');
+    mg.addColorStop(0.5, 'rgba(50,200,120,0.08)');
+    mg.addColorStop(1, 'rgba(30,150,80,0)');
+    ctx.fillStyle = mg; ctx.fillRect(0, 0, W, skyH);
+    // Moon body
+    for (let dy = -moonR; dy <= moonR; dy++) {
+      const dx = Math.round(Math.sqrt(Math.max(0, moonR * moonR - dy * dy)));
+      // Gradient from bright center to darker edge
+      const edgeFrac = Math.abs(dy) / moonR;
+      const r = Math.round(80 + (1 - edgeFrac) * 100);
+      const g2 = Math.round(200 + (1 - edgeFrac) * 55);
+      const b = Math.round(120 + (1 - edgeFrac) * 80);
+      ctx.fillStyle = `rgb(${r},${g2},${b})`;
+      ctx.fillRect(moonX - dx, moonY + dy, dx * 2, 1);
+    }
+    // Moon craters (darker spots)
+    ctx.fillStyle = 'rgba(40,150,90,0.4)';
+    ctx.fillRect(moonX - 2, moonY - 2, 3, 2);
+    ctx.fillRect(moonX + 3, moonY + 1, 2, 2);
+    ctx.fillRect(moonX - 4, moonY + 3, 2, 1);
+    // Moon bright highlight
+    ctx.fillStyle = 'rgba(200,255,220,0.35)';
+    ctx.fillRect(moonX - Math.round(moonR * 0.3), moonY - Math.round(moonR * 0.5), Math.round(moonR * 0.4), Math.round(moonR * 0.3));
+    // Spores falling from moon — glowing drips
+    for (let i = 0; i < 12; i++) {
+      const sporeX = moonX + Math.round((hash(i * 7 + 100) - 0.5) * moonR * 1.8);
+      const sporeStartY = moonY + moonR + 2;
+      const sporeLen = Math.round(hash(i * 13 + 200) * skyH * 0.4 + skyH * 0.1);
+      const sporePhase = (t * 0.0008 + hash(i * 19 + 300) * 6.28) % 6.28;
+      const sporeAlpha = 0.15 + 0.2 * Math.sin(sporePhase);
+      // Drip trail
+      for (let sy = 0; sy < sporeLen; sy++) {
+        const fade = 1 - sy / sporeLen;
+        ctx.fillStyle = `rgba(120,255,180,${sporeAlpha * fade * 0.5})`;
+        ctx.fillRect(sporeX + Math.round(Math.sin(sy * 0.15 + t * 0.001 + i) * 1), sporeStartY + sy, 1, 1);
+      }
+      // Bright spore dot at bottom of trail
+      const dotY = sporeStartY + sporeLen;
+      if (dotY < skyH) {
+        ctx.fillStyle = `rgba(150,255,200,${sporeAlpha + 0.15})`;
+        ctx.fillRect(sporeX, dotY, 1, 1);
+        ctx.fillStyle = `rgba(100,255,170,${sporeAlpha * 0.3})`;
+        ctx.fillRect(sporeX - 1, dotY - 1, 3, 3);
+      }
+    }
+    // Spore glow on water surface (reflection of falling spores)
+    for (let i = 0; i < 6; i++) {
+      const rx = moonX + Math.round((hash(i * 11 + 400) - 0.5) * moonR * 2);
+      const ry = skyH + 2 + Math.round(hash(i * 17 + 500) * (sandY - skyH) * 0.4);
+      const ra = 0.08 + 0.08 * Math.sin(t * 0.001 + i * 2);
+      ctx.fillStyle = `rgba(120,255,180,${ra})`;
+      ctx.fillRect(rx + Math.round(Math.sin(ry * 0.2 + t * 0.002)), ry, 2, 1);
+    }
+    // Dark emerald cloud bands
+    drawCloudBand(skyH, t, 'rgba(20,80,50,0.4)', 0.08, 50, 0.35);
+    drawCloudBand(skyH, t, 'rgba(25,90,55,0.3)', 0.06, 65, 0.55);
     // Emerald sea — solid green base, then lighter reflection on top
     drawGrad(skyH, sandY, [['#06503A',0],['#08604A',0.3],['#0A7058',0.6],['#0D8868',0.85],['#15A080',1]]);
     // Wave texture
@@ -461,9 +527,9 @@ const BG = {
     for (let i = 0; i < 15; i++) ctx.fillRect(Math.round(hash(i * 11) * W), sandY + Math.round(hash(i * 19) * H * 0.06) + 2, 2, 1);
     ctx.fillStyle = '#6B8E34';
     for (let i = 0; i < 12; i++) ctx.fillRect(Math.round(hash(i * 7 + 200) * W * 0.5), sandY - 1, 1, 2);
-    // Dock — wide planks from sand out over water
+    // Dock — wide planks from sand out to the ship
     const dockStartX = Math.round(W * 0.6);
-    const dockEndX = Math.round(W * 0.82);
+    const dockEndX = Math.round(W * 0.78); // extends right up to the ship
     const dockTopY = Math.round(sandY - Math.max(2, H * 0.008));
     const dockH = Math.max(4, Math.round(H * 0.02));
     // Plank surface
