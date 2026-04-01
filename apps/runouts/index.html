@@ -8176,7 +8176,6 @@ function ChoreChaosApp() {
       type: 'turn_prompt',
       playerName: currentDrawer,
       action: 'draw',
-      timeoutSeconds: 10,
       turnNumber: drawerIndex + 1,
       totalDraws: result.players.length,
     });
@@ -8185,7 +8184,6 @@ function ChoreChaosApp() {
       type: 'turn',
       playerName: currentDrawer,
       action: 'draw',
-      deadline: Date.now() + 10000,
       turnNumber: drawerIndex + 1,
       totalDraws: result.players.length,
     });
@@ -8193,14 +8191,6 @@ function ChoreChaosApp() {
     currentActionHandler.current = (payload) => {
       if (payload.action !== 'draw' || payload.playerName !== currentDrawer) return;
       advancePlayback();
-    };
-
-    const timeout = startTimeout(10, () => {
-      advancePlayback();
-    });
-
-    return () => {
-      timeout.clear();
     };
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
 
@@ -8407,7 +8397,6 @@ function ChoreChaosApp() {
     broadcastEvent({
       type: 'choice_prompt',
       action: 'choose_cards',
-      timeoutSeconds: 20,
       modeId: result.modeId,
       keepCount: result.keepCount,
       hands: result.draftHands,
@@ -8419,7 +8408,6 @@ function ChoreChaosApp() {
       modeId: result.modeId,
       keepCount: result.keepCount,
       hands: result.draftHands,
-      deadline: Date.now() + 20000,
       received: {},
       playersNeeded: Object.keys(result.draftHands),
     });
@@ -8447,19 +8435,6 @@ function ChoreChaosApp() {
       }
     };
 
-    // Timeout: auto-pick for anyone who hasn't submitted
-    const timeout = setTimeout(() => {
-      const allPlayers = Object.keys(result.draftHands);
-      allPlayers.forEach(name => {
-        if (!choices[name]) {
-          // Auto-pick first N cards
-          choices[name] = Array.from({ length: result.keepCount }, (_, i) => i);
-        }
-      });
-      setDraftChoices({ ...choices });
-      completeDraft(choices);
-    }, 20000);
-
     function completeDraft(allChoices) {
       const finalResult = finalizeDraftResult(result, allChoices);
       finalResult.runId = result.runId;
@@ -8479,9 +8454,6 @@ function ChoreChaosApp() {
       }
     }
 
-    return () => {
-      clearTimeout(timeout);
-    };
   }, [interactiveMode, gameActive, result?.draftPhase]);
 
   // Expose draft choices on window for PokerPlayback to read
@@ -8521,7 +8493,6 @@ function ChoreChaosApp() {
     broadcastEvent({
       type: 'choice_prompt',
       action: 'pick_stock',
-      timeoutSeconds: 10,
       stockPool: stockPool.map(s => ({ ticker: s.ticker, note: s.note })),
       pickOrder,
       currentPicker,
@@ -8534,7 +8505,6 @@ function ChoreChaosApp() {
       playerName: currentPicker,
       stockPool: stockPool.map(s => ({ ticker: s.ticker, note: s.note })),
       taken,
-      deadline: Date.now() + 10000,
     });
 
     currentActionHandler.current = (payload) => {
@@ -8560,32 +8530,6 @@ function ChoreChaosApp() {
         playerStocks: newPlayerStocks,
       });
     };
-
-    // Timeout: auto-pick random available stock
-    const timeout = setTimeout(() => {
-      const available = stockPool.filter(s => !taken[s.ticker]);
-      if (available.length === 0) return;
-      const picked = available[secureRandomInt(available.length)];
-
-      const newTaken = { ...taken, [picked.ticker]: currentPicker };
-      const newPlayerStocks = { ...playerStocks, [currentPicker]: picked.ticker };
-
-      broadcastEvent({
-        type: 'stock_picked',
-        playerName: currentPicker,
-        ticker: picked.ticker,
-        taken: newTaken,
-        nextPicker: pickOrder[currentPickerIndex + 1] || null,
-      });
-
-      setStockDraftState({
-        taken: newTaken,
-        currentPickerIndex: currentPickerIndex + 1,
-        playerStocks: newPlayerStocks,
-      });
-    }, 10000);
-
-    return () => clearTimeout(timeout);
 
     function finalizeDraft() {
       // Build the chart result from player stock picks
@@ -8733,10 +8677,8 @@ function ChoreChaosApp() {
     const playerNameCur = currentPlayer?.name;
     if (!playerNameCur) return;
 
-    broadcastEvent({ type: 'turn_prompt', playerName: playerNameCur, action: 'roll_dice', timeoutSeconds: 10 });
-    setPendingAction({ type: 'turn', playerName: playerNameCur, action: 'roll_dice', deadline: Date.now() + 10000 });
-
-    let rerollTimer = null;
+    broadcastEvent({ type: 'turn_prompt', playerName: playerNameCur, action: 'roll_dice' });
+    setPendingAction({ type: 'turn', playerName: playerNameCur, action: 'roll_dice' });
 
     currentActionHandler.current = (payload) => {
       if (payload.playerName !== playerNameCur) return;
@@ -8744,13 +8686,12 @@ function ChoreChaosApp() {
       if (payload.action === 'roll_dice') {
         // Show roll result and give re-roll option
         broadcastEvent({
-          type: 'turn_prompt', playerName: playerNameCur, action: 'reroll_dice', timeoutSeconds: 8,
+          type: 'turn_prompt', playerName: playerNameCur, action: 'reroll_dice',
           d1: currentPlayer.d1, d2: currentPlayer.d2, total: currentPlayer.total,
         });
         setPendingAction({
           type: 'turn', playerName: playerNameCur, action: 'reroll_dice',
           d1: currentPlayer.d1, d2: currentPlayer.d2, total: currentPlayer.total,
-          deadline: Date.now() + 8000,
         });
 
         currentActionHandler.current = (payload2) => {
@@ -8770,20 +8711,7 @@ function ChoreChaosApp() {
             advancePlayback();
           }
         };
-
-        rerollTimer = setTimeout(() => {
-          if (playbackStep === playerIndex) advancePlayback();
-        }, 8000);
       }
-    };
-
-    const timeout = startTimeout(10, () => {
-      if (playbackStep === playerIndex) advancePlayback();
-    });
-
-    return () => {
-      timeout.clear();
-      if (rerollTimer) clearTimeout(rerollTimer);
     };
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
 
@@ -8796,7 +8724,6 @@ function ChoreChaosApp() {
     broadcastEvent({
       type: 'choice_prompt',
       action: 'pick_card_blind',
-      timeoutSeconds: 15,
       hands: result.draftHands,
     });
 
@@ -8804,7 +8731,6 @@ function ChoreChaosApp() {
       type: 'choice',
       action: 'pick_card_blind',
       hands: result.draftHands,
-      deadline: Date.now() + 15000,
       received: {},
       playersNeeded: Object.keys(result.draftHands),
     });
@@ -8828,16 +8754,6 @@ function ChoreChaosApp() {
         finalizeHighCard(choices);
       }
     };
-
-    const timeout = setTimeout(() => {
-      const allPlayers = Object.keys(result.draftHands);
-      allPlayers.forEach(name => {
-        if (choices[name] === undefined) {
-          choices[name] = secureRandomInt(3);
-        }
-      });
-      finalizeHighCard(choices);
-    }, 15000);
 
     function finalizeHighCard(allChoices) {
       const selGoal = result.selectionGoal;
@@ -8904,7 +8820,6 @@ function ChoreChaosApp() {
       }
     }
 
-    return () => clearTimeout(timeout);
   }, [interactiveMode, gameActive, result?.draftPhase, result?.modeId]);
 
   // Interactive Plinko — choose drop column
@@ -8946,8 +8861,8 @@ function ChoreChaosApp() {
     const playerNameCur = currentPlayer?.name;
     if (!playerNameCur) return;
 
-    broadcastEvent({ type: 'turn_prompt', playerName: playerNameCur, action: 'drop_plinko', timeoutSeconds: 10 });
-    setPendingAction({ type: 'turn', playerName: playerNameCur, action: 'drop_plinko', deadline: Date.now() + 10000, slotCount: 13 });
+    broadcastEvent({ type: 'turn_prompt', playerName: playerNameCur, action: 'drop_plinko' });
+    setPendingAction({ type: 'turn', playerName: playerNameCur, action: 'drop_plinko', slotCount: 13 });
 
     currentActionHandler.current = (payload) => {
       if (payload.action !== 'drop_plinko' || payload.playerName !== playerNameCur) return;
@@ -8989,8 +8904,6 @@ function ChoreChaosApp() {
       advancePlayback();
     };
 
-    const timeout = startTimeout(10, () => advancePlayback());
-    return () => { timeout.clear(); };
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // Interactive Horse Race — lane pick + whip
@@ -9033,7 +8946,6 @@ function ChoreChaosApp() {
       broadcastEvent({
         type: 'choice_prompt',
         action: 'pick_lane',
-        timeoutSeconds: 8,
         lanes,
         currentPicker,
         taken,
@@ -9045,7 +8957,6 @@ function ChoreChaosApp() {
         playerName: currentPicker,
         lanes,
         taken,
-        deadline: Date.now() + 8000,
       });
 
       currentActionHandler.current = (payload) => {
@@ -9064,19 +8975,6 @@ function ChoreChaosApp() {
         });
       };
 
-      const timeout = setTimeout(() => {
-        const available = lanes.filter(l => !taken[l]);
-        if (available.length === 0) return;
-        const picked = available[secureRandomInt(available.length)];
-
-        setHorseLanePicks({
-          taken: { ...taken, [picked]: currentPicker },
-          currentPickerIndex: currentPickerIndex + 1,
-          playerLanes: { ...playerLanes, [currentPicker]: picked },
-        });
-      }, 8000);
-
-      return () => clearTimeout(timeout);
     }
 
     // Phase 2: Race with whip — step-based
@@ -9125,7 +9023,6 @@ function ChoreChaosApp() {
     broadcastEvent({
       type: 'turn_prompt',
       action: 'whip_horse',
-      timeoutSeconds: 4,
       turnNumber: turnIndex + 1,
       totalTurns: result.turns.length,
       whipsRemaining: horseWhips,
@@ -9170,12 +9067,6 @@ function ChoreChaosApp() {
         whipsRemaining: horseWhips[actor] - 1,
       });
     };
-
-    const timer = setTimeout(() => {
-      advancePlayback();
-    }, 4000);
-
-    return () => clearTimeout(timer);
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase]);
 
   // Interactive Space Invaders — shield reaction
@@ -9198,7 +9089,6 @@ function ChoreChaosApp() {
         type: 'turn_prompt',
         playerName: targetName,
         action: 'shield',
-        timeoutSeconds: 3,
         elimIndex,
       });
 
@@ -9206,16 +9096,11 @@ function ChoreChaosApp() {
         type: 'turn',
         playerName: targetName,
         action: 'shield',
-        deadline: Date.now() + 3000,
         elimIndex,
       });
 
-      let shielded = false;
-
       currentActionHandler.current = (payload) => {
         if (payload.action !== 'shield' || payload.playerName !== targetName) return;
-        if (shielded) return;
-        shielded = true;
 
         setUsedShields(prev => ({ ...prev, [targetName]: true }));
 
@@ -9258,30 +9143,21 @@ function ChoreChaosApp() {
 
         advancePlayback();
       };
-
-      const timer = setTimeout(() => {
-        if (!shielded) advancePlayback();
-      }, 3000);
-
-      return () => clearTimeout(timer);
     } else {
       // Target already used shield — just advance
       setPendingAction({
         type: 'turn',
         playerName: targetName,
         action: 'shield_unavailable',
-        deadline: Date.now() + 2000,
       });
 
       broadcastEvent({
         type: 'turn_prompt',
         playerName: targetName,
         action: 'shield_unavailable',
-        timeoutSeconds: 2,
       });
 
-      const timer = setTimeout(() => advancePlayback(), 2000);
-      return () => clearTimeout(timer);
+      advancePlayback();
     }
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone, usedShields]);
 
@@ -9306,7 +9182,6 @@ function ChoreChaosApp() {
     broadcastEvent({
       type: 'choice_prompt',
       action: 'move_direction',
-      timeoutSeconds: 6,
       aliveNames: alive,
       zone: nextZone,
       phase: phase + 1,
@@ -9315,7 +9190,6 @@ function ChoreChaosApp() {
     setPendingAction({
       type: 'choice',
       action: 'move_direction',
-      deadline: Date.now() + 6000,
       aliveNames: alive,
       zone: nextZone,
       phase: phase + 1,
@@ -9416,18 +9290,6 @@ function ChoreChaosApp() {
 
       advancePlayback();
     }
-
-    const timeout = setTimeout(() => {
-      // Auto-stay for anyone who hasn't moved
-      alive.forEach(name => {
-        if (!moveChoices[name]) {
-          moveChoices[name] = 'stay';
-        }
-      });
-      applyMovesAndAdvance(moveChoices);
-    }, 6000);
-
-    return () => clearTimeout(timeout);
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // Interactive turn management for RNG, Wheel, Slots, Coin Gauntlet
@@ -9463,29 +9325,22 @@ function ChoreChaosApp() {
 
     if (!playerName) return;
 
-    const timeoutSec = mode === 'coin-flips' ? 5 : 10;
-
     broadcastEvent({
       type: 'turn_prompt',
       playerName,
       action,
-      timeoutSeconds: timeoutSec,
     });
 
     setPendingAction({
       type: 'turn',
       playerName,
       action,
-      deadline: Date.now() + timeoutSec * 1000,
     });
 
     currentActionHandler.current = (payload) => {
       if (payload.action !== action || payload.playerName !== playerName) return;
       advancePlayback();
     };
-
-    const timeout = startTimeout(timeoutSec, () => advancePlayback());
-    return () => { timeout.clear(); };
   }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // ── Vote handler + auto-resolve timer ─────────────────────
@@ -9504,8 +9359,8 @@ function ChoreChaosApp() {
       broadcastEvent({ type: 'vote_cast', playerName: voter, modeId });
     };
 
-    // 10-second timeout
-    const timer = setTimeout(() => resolveVote(), 10000);
+    // 30-second timeout
+    const timer = setTimeout(() => resolveVote(), 30000);
     return () => clearTimeout(timer);
   }, [voteActive]);
 
@@ -9832,7 +9687,7 @@ function ChoreChaosApp() {
   // ── Vote for Next Game ────────────────────────────────────
 
   function startVote() {
-    const deadline = Date.now() + 10000;
+    const deadline = Date.now() + 30000;
     setVoteActive(true);
     setVotes({});
     setVoteDeadline(deadline);
@@ -10886,7 +10741,7 @@ function ChoreChaosApp() {
                 </div>
                 <div className="hidden sm:flex flex-wrap items-center justify-end gap-3">
                   {!playbackDone ? (
-                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || ((result.modeId === 'black-marble' || result.modeId === 'rng' || result.modeId === 'slots' || result.modeId === 'coin-flips' || result.modeId === 'wheel' || result.modeId === 'dice' || result.modeId === 'high-card' || result.modeId === 'plinko' || result.modeId === 'horse-race' || result.modeId === 'space-invaders' || result.modeId === 'battle-royale') && interactiveMode) || result.draftPhase) ? null : (
+                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || result.draftPhase) ? null : (
                     <>
                       <button
                         onClick={advancePlayback}
@@ -11108,7 +10963,7 @@ function ChoreChaosApp() {
 
               <div className="sm:hidden relative z-10 flex flex-wrap items-center justify-center gap-2 border-t border-white/10 bg-black/90 px-3 py-3 backdrop-blur safe-area-bottom">
                 {!playbackDone ? (
-                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || ((result.modeId === 'black-marble' || result.modeId === 'rng' || result.modeId === 'slots' || result.modeId === 'coin-flips' || result.modeId === 'wheel' || result.modeId === 'dice' || result.modeId === 'high-card' || result.modeId === 'plinko' || result.modeId === 'horse-race' || result.modeId === 'space-invaders' || result.modeId === 'battle-royale') && interactiveMode) || result.draftPhase) ? null : (
+                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || result.draftPhase) ? null : (
                   <>
                     <button
                       onClick={advancePlayback}
