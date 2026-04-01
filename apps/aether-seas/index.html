@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#080810">
+<title>The Aether Seas</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#080810;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;
+  font-family:Georgia,'Times New Roman',serif}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block}
+
+/* Title */
+#title{position:fixed;top:0;left:0;width:100%;height:100%;z-index:20;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:auto;transition:opacity 1s}
+#title h1{font-size:clamp(28px,8vw,48px);color:#A7F3D0;
+  text-shadow:0 0 30px rgba(52,211,153,0.4),0 2px 4px rgba(0,0,0,0.5);
+  letter-spacing:4px;margin-bottom:10px}
+#title h2{font-size:clamp(13px,3.5vw,17px);color:#f0e6d3;opacity:0.6;
+  font-weight:normal;font-style:italic;margin-bottom:50px;letter-spacing:1px}
+#title .tap{font-size:13px;color:rgba(240,230,211,0.4);animation:pulse 2.5s ease-in-out infinite;
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+@keyframes pulse{0%,100%{opacity:0.3}50%{opacity:0.7}}
+
+/* Dialogue */
+#dbox{position:fixed;bottom:0;left:0;right:0;z-index:12;pointer-events:auto;
+  background:rgba(8,8,20,0.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  padding:18px 20px 26px;min-height:26vh;
+  border-top:1.5px solid rgba(167,243,208,0.12);display:none}
+#dbox .speaker{font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  margin-bottom:6px;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+#dbox .text{font-size:clamp(16px,4.2vw,20px);line-height:1.65;color:#f0e6d3;min-height:2.5em}
+#dbox .hint{text-align:right;font-size:10px;color:rgba(240,230,211,0.25);margin-top:10px;
+  font-family:-apple-system,sans-serif;opacity:0;transition:opacity 0.3s}
+
+/* Choices */
+#choices{position:fixed;bottom:0;left:0;right:0;z-index:13;
+  padding:16px 16px 28px;display:none;flex-direction:column;gap:10px;
+  background:rgba(8,8,20,0.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-top:1.5px solid rgba(167,243,208,0.12)}
+.ch-prompt{color:#f0e6d3;font-size:clamp(15px,3.8vw,18px);margin-bottom:12px;padding:0 4px}
+.ch-btn{display:block;width:100%;padding:16px 20px;
+  background:rgba(167,243,208,0.07);border:1.5px solid rgba(167,243,208,0.18);
+  border-radius:14px;color:#f0e6d3;font-size:clamp(15px,3.8vw,18px);
+  font-family:Georgia,serif;text-align:left;cursor:pointer;transition:all 0.15s}
+.ch-btn:active{background:rgba(167,243,208,0.18);transform:scale(0.98)}
+
+/* Minigame overlay */
+#mgui{position:fixed;top:0;left:0;width:100%;height:100%;z-index:14;display:none;pointer-events:auto}
+#mghud{position:fixed;top:16px;left:16px;right:56px;z-index:15;
+  color:#f0e6d3;font-size:13px;font-family:-apple-system,sans-serif;
+  background:rgba(8,8,20,0.6);padding:8px 12px;border-radius:8px;pointer-events:none}
+
+/* Sound toggle */
+#snd{position:fixed;top:12px;right:12px;z-index:30;width:42px;height:42px;
+  border-radius:50%;background:rgba(8,8,20,0.5);
+  border:1px solid rgba(255,255,255,0.12);color:#f0e6d3;font-size:17px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto}
+
+/* Fade overlay */
+#fade{position:fixed;top:0;left:0;width:100%;height:100%;
+  background:#080810;z-index:18;opacity:0;pointer-events:none;transition:opacity 0.5s}
+
+/* Ending */
+#ending{position:fixed;top:0;left:0;width:100%;height:100%;z-index:20;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;transition:opacity 1.5s}
+#ending h1{font-size:clamp(24px,7vw,40px);color:#A7F3D0;margin-bottom:8px;
+  text-shadow:0 0 20px rgba(52,211,153,0.3)}
+#ending p{font-size:clamp(16px,4vw,22px);color:#f0e6d3;opacity:0.6;font-style:italic}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="title">
+  <h1>The Aether Seas</h1>
+  <h2>A Love Story in Several Rats</h2>
+  <div class="tap">tap to begin</div>
+</div>
+<div id="dbox">
+  <div class="speaker"></div>
+  <div class="text"></div>
+  <div class="hint">tap to continue ▾</div>
+</div>
+<div id="choices"></div>
+<div id="mgui"><div id="mghud"></div></div>
+<div id="fade"></div>
+<div id="ending"><h1>The End</h1><p>♥</p></div>
+<button id="snd">♪</button>
+
+<script>
+// ============================================================
+// THE AETHER SEAS — A Love Story in Several Rats
+// ============================================================
+
+// --- DOM ---
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const $title = document.getElementById('title');
+const $dbox = document.getElementById('dbox');
+const $speaker = $dbox.querySelector('.speaker');
+const $text = $dbox.querySelector('.text');
+const $hint = $dbox.querySelector('.hint');
+const $choices = document.getElementById('choices');
+const $fade = document.getElementById('fade');
+const $mgui = document.getElementById('mgui');
+const $mghud = document.getElementById('mghud');
+const $snd = document.getElementById('snd');
+const $ending = document.getElementById('ending');
+
+// --- CONSTANTS ---
+const PX = 3; // pixel scale for characters
+const SPEAKER_COLORS = {
+  n:  { name: '',               color: '#f0e6d3' },
+  u:  { name: 'Uh-Lee-Suh',    color: '#F5A0C0' },
+  b:  { name: 'Beck-rat',       color: '#A8D8EA' },
+  m:  { name: 'Mitchell',       color: '#6FB5A3' },
+  c:  { name: 'Captain Harrow', color: '#CD853F' },
+  k:  { name: 'Connor',         color: '#FFD700' },
+  g:  { name: 'Sir Gibsabella', color: '#C084FC' },
+  d:  { name: 'Duke Real Zono', color: '#4ADE80' },
+  f:  { name: 'Felix',          color: '#F87171' },
+  w:  { name: 'The Keeper',     color: '#A78BFA' },
+  cr: { name: 'Crew',           color: '#DEB887' },
+};
+
+// --- GAME STATE ---
+const G = {
+  state: 'title',     // title | playing | transition | ending
+  phase: 'dialogue',  // dialogue | choice | minigame
+  sceneIdx: -1,
+  dIdx: 0,
+  charIdx: 0,
+  charTimer: 0,
+  textDone: false,
+  t: 0,
+  W: 0, H: 0,
+  mg: null,
+  pTimer: 0,
+};
+const particles = [];
+
+// ============================================================
+// AUDIO
+// ============================================================
+const audio = {
+  ctx: null, on: true, nodes: [], _int: null,
+
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  resume() { if (this.ctx?.state === 'suspended') this.ctx.resume(); },
+
+  stopAll() {
+    this.nodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    this.nodes = [];
+    if (this._int) { clearInterval(this._int); this._int = null; }
+  },
+
+  playMusic(key) {
+    if (!this.on || !this.ctx) return;
+    this.stopAll();
+    const ac = this.ctx;
+    const master = ac.createGain();
+    master.gain.value = 0.1;
+    master.connect(ac.destination);
+
+    const C = {
+      autumn:  { drone: 174.61, pad: 261.63, notes: [349.23,392,440,523.25,587.33] },
+      emerald: { drone: 130.81, pad: 196,    notes: [261.63,293.66,329.63,392,440] },
+      crimson: { drone: 110,    pad: 165,    notes: [220,261.63,293.66,349.23,392] },
+      midnight:{ drone: 73.42,  pad: 110,    notes: [146.83,174.61,196,220,261.63] },
+      victory: { drone: 130.81, pad: 196,    notes: [261.63,329.63,392,523.25,659.25] },
+    };
+    const c = C[key] || C.emerald;
+
+    // Drone
+    const dr = ac.createOscillator();
+    dr.type = 'sine'; dr.frequency.value = c.drone;
+    const dg = ac.createGain(); dg.gain.value = 0.2;
+    dr.connect(dg); dg.connect(master); dr.start();
+    this.nodes.push(dr);
+
+    // Pad + LFO
+    const pd = ac.createOscillator();
+    pd.type = 'triangle'; pd.frequency.value = c.pad;
+    const pg = ac.createGain(); pg.gain.value = 0.1;
+    const lfo = ac.createOscillator(); lfo.frequency.value = 0.2;
+    const lg = ac.createGain(); lg.gain.value = 6;
+    lfo.connect(lg); lg.connect(pd.frequency);
+    pd.connect(pg); pg.connect(master);
+    lfo.start(); pd.start();
+    this.nodes.push(pd, lfo);
+
+    // Melodic pings
+    const pingFn = () => {
+      if (!this.on || !this.ctx) return;
+      const note = c.notes[Math.floor(Math.random() * c.notes.length)];
+      const oct = Math.random() > 0.6 ? 2 : 1;
+      const o = ac.createOscillator();
+      o.type = 'sine'; o.frequency.value = note * oct;
+      const e = ac.createGain();
+      e.gain.setValueAtTime(0.05, ac.currentTime);
+      e.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 2.5);
+      o.connect(e); e.connect(master);
+      o.start(); o.stop(ac.currentTime + 2.5);
+    };
+    this._int = setInterval(pingFn, 3000);
+    setTimeout(pingFn, 500);
+  },
+
+  sfx(type) {
+    if (!this.on || !this.ctx) return;
+    const ac = this.ctx;
+    if (type === 'tap') {
+      const o = ac.createOscillator(); o.frequency.value = 600 + Math.random() * 200;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.06, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.06);
+      o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.06);
+    } else if (type === 'sparkle') {
+      const o = ac.createOscillator();
+      o.frequency.setValueAtTime(1200, ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(2400, ac.currentTime + 0.15);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.05, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.2);
+      o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.2);
+    } else if (type === 'success') {
+      [0, 0.1, 0.2].forEach((t, i) => {
+        const o = ac.createOscillator();
+        o.frequency.value = [523.25, 659.25, 783.99][i];
+        const e = ac.createGain();
+        e.gain.setValueAtTime(0, ac.currentTime + t);
+        e.gain.linearRampToValueAtTime(0.06, ac.currentTime + t + 0.02);
+        e.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.3);
+        o.connect(e); e.connect(ac.destination);
+        o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.3);
+      });
+    } else if (type === 'fail') {
+      const o = ac.createOscillator();
+      o.frequency.setValueAtTime(300, ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(100, ac.currentTime + 0.2);
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.06, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.25);
+      o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.25);
+    } else if (type === 'magic') {
+      [0,0.06,0.12,0.18,0.24].forEach((t, i) => {
+        const o = ac.createOscillator();
+        o.frequency.value = 400 + i * 180;
+        o.type = i % 2 ? 'triangle' : 'sine';
+        const e = ac.createGain();
+        e.gain.setValueAtTime(0.03, ac.currentTime + t);
+        e.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + 0.5);
+        o.connect(e); e.connect(ac.destination);
+        o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.5);
+      });
+    }
+  }
+};
+
+// ============================================================
+// DRAWING — Backgrounds
+// ============================================================
+function drawSky(colors, h) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, colors[0]);
+  g.addColorStop(1, colors[1]);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, G.W, h);
+}
+
+function drawWater(y0, colors, t) {
+  const { W, H } = G;
+  for (let layer = 0; layer < 3; layer++) {
+    const y = y0 + layer * H * 0.06;
+    ctx.fillStyle = colors[layer];
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x += 3) {
+      ctx.lineTo(x, y + Math.sin(x * 0.015 + t * 0.001 + layer * 1.5) * (3 + layer * 2));
+    }
+    ctx.lineTo(W, H); ctx.fill();
+  }
+}
+
+function drawStars(maxY, t) {
+  for (let i = 0; i < 40; i++) {
+    const sx = (i * 137.5 + 23) % G.W;
+    const sy = (i * 83.7 + 11) % maxY;
+    ctx.fillStyle = `rgba(255,255,255,${0.25 + 0.5 * Math.sin(t * 0.001 + i * 2.1)})`;
+    ctx.fillRect(sx, sy, 1.5, 1.5);
+  }
+}
+
+function drawTree(x, y, h, autumn) {
+  ctx.fillStyle = '#5D4037';
+  ctx.fillRect(x - 3, y - h * 0.4, 6, h * 0.4);
+  const cols = autumn ? ['#FF6B35','#FFD700','#DC2626','#FF8C42'] : ['#2E7D32','#4CAF50','#388E3C'];
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = cols[i % cols.length];
+    const w = (3 - i) * h * 0.14;
+    const cy = y - h * 0.4 - i * h * 0.18;
+    ctx.beginPath();
+    ctx.moveTo(x, cy - h * 0.18);
+    ctx.lineTo(x + w, cy);
+    ctx.lineTo(x - w, cy);
+    ctx.fill();
+  }
+}
+
+const BG = {
+  autumn(t) {
+    const { W, H } = G;
+    drawSky(['#FFB347','#87CEEB'], H * 0.6);
+    ctx.fillStyle = '#8B7355'; ctx.fillRect(0, H * 0.6, W, H * 0.4);
+    ctx.fillStyle = '#7B9E44'; ctx.fillRect(0, H * 0.58, W, H * 0.04);
+    ctx.fillStyle = '#D2B48C'; ctx.fillRect(W * 0.15, H * 0.63, W * 0.7, H * 0.05);
+    drawTree(W * 0.08, H * 0.6, H * 0.32, true);
+    drawTree(W * 0.28, H * 0.58, H * 0.28, true);
+    drawTree(W * 0.72, H * 0.59, H * 0.3, true);
+    drawTree(W * 0.92, H * 0.6, H * 0.26, true);
+    // Birds
+    for (let i = 0; i < 5; i++) {
+      const bx = (W * 0.2 + i * W * 0.12 + Math.sin(t * 0.0008 + i) * 15) % W;
+      const by = H * 0.12 + Math.sin(t * 0.001 + i * 2) * 10;
+      ctx.strokeStyle = '#444'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(bx - 6, by + 2); ctx.quadraticCurveTo(bx - 3, by - 3, bx, by);
+      ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx + 3, by - 3, bx + 6, by + 2);
+      ctx.stroke();
+    }
+  },
+
+  shore(t) {
+    const { W, H } = G;
+    drawSky(['#87CEEB','#B4D7E8'], H * 0.45);
+    drawWater(H * 0.35, ['#059669','#34D399','#A7F3D0'], t);
+    ctx.fillStyle = '#F5DEB3'; ctx.fillRect(0, H * 0.58, W, H * 0.42);
+    ctx.fillStyle = '#DEB887'; ctx.fillRect(0, H * 0.57, W, H * 0.03);
+    // Dock
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(W * 0.55, H * 0.42, W * 0.38, H * 0.035);
+    ctx.fillRect(W * 0.65, H * 0.42, 4, H * 0.16);
+    ctx.fillRect(W * 0.82, H * 0.42, 4, H * 0.16);
+  },
+
+  ship(t, waterType) {
+    const { W, H } = G;
+    const wt = waterType || 'emerald';
+    const skyC = wt === 'crimson' ? ['#FFB4B4','#E08888'] : wt === 'midnight' ? ['#0F172A','#1E293B'] : ['#87CEEB','#B4D7E8'];
+    const watC = wt === 'crimson' ? ['#DC2626','#F87171','#FECACA'] : wt === 'midnight' ? ['#0F172A','#1E3A5F','#0a0a20'] : ['#059669','#34D399','#A7F3D0'];
+    drawSky(skyC, H * 0.55);
+    if (wt === 'midnight') drawStars(H * 0.4, t);
+    drawWater(H * 0.5, watC, t);
+    // Deck
+    ctx.fillStyle = '#8B6914'; ctx.fillRect(0, H * 0.66, W, H * 0.34);
+    ctx.fillStyle = '#A0822A';
+    for (let i = 0; i < 7; i++) ctx.fillRect(0, H * 0.66 + i * H * 0.045, W, 1);
+    // Railing
+    ctx.fillStyle = '#654321'; ctx.fillRect(0, H * 0.64, W, H * 0.025);
+    for (let x = 0; x < W; x += 28) ctx.fillRect(x, H * 0.56, 3, H * 0.09);
+    // Mast + sail
+    ctx.fillRect(W * 0.5 - 2, H * 0.15, 4, H * 0.42);
+    ctx.fillStyle = '#FFF8E7';
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, H * 0.16);
+    ctx.lineTo(W * 0.5 + W * 0.18, H * 0.22);
+    ctx.lineTo(W * 0.5, H * 0.42);
+    ctx.fill();
+  },
+
+  burritos(t) {
+    const { W, H } = G;
+    drawSky(['#87CEEB','#FFB347'], H * 0.4);
+    ctx.fillStyle = '#F5DEB3'; ctx.fillRect(0, H * 0.5, W, H * 0.5);
+    ctx.fillStyle = '#E8D5B0'; ctx.fillRect(0, H * 0.48, W, H * 0.04);
+    // Shop
+    ctx.fillStyle = '#CD853F'; ctx.fillRect(W * 0.2, H * 0.3, W * 0.6, H * 0.2);
+    ctx.fillStyle = '#8B4513';
+    ctx.beginPath(); ctx.moveTo(W * 0.15, H * 0.3); ctx.lineTo(W * 0.5, H * 0.15); ctx.lineTo(W * 0.85, H * 0.3); ctx.fill();
+    // Sign
+    ctx.fillStyle = '#FFD700'; ctx.fillRect(W * 0.3, H * 0.2, W * 0.4, H * 0.06);
+    ctx.fillStyle = '#5D3A1A'; ctx.font = `bold ${Math.max(11, W * 0.03)}px -apple-system,sans-serif`;
+    ctx.textAlign = 'center'; ctx.fillText('LITOS BURRITOS', W * 0.5, H * 0.245);
+    // Door
+    ctx.fillStyle = '#5D3A1A'; ctx.fillRect(W * 0.44, H * 0.36, W * 0.12, H * 0.14);
+    // Windows
+    ctx.fillStyle = '#FFE4B5';
+    ctx.fillRect(W * 0.26, H * 0.35, W * 0.1, H * 0.08);
+    ctx.fillRect(W * 0.64, H * 0.35, W * 0.1, H * 0.08);
+  },
+
+  cafe(t) {
+    const { W, H } = G;
+    ctx.fillStyle = '#3E2723'; ctx.fillRect(0, 0, W, H);
+    const lg = ctx.createRadialGradient(W * 0.5, H * 0.3, 0, W * 0.5, H * 0.3, W * 0.5);
+    lg.addColorStop(0, 'rgba(255,180,80,0.25)'); lg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#5D4037'; ctx.fillRect(0, H * 0.65, W, H * 0.35);
+    // Counter
+    ctx.fillStyle = '#795548'; ctx.fillRect(W * 0.05, H * 0.52, W * 0.9, H * 0.06);
+    // Shelves
+    ctx.fillStyle = '#4E342E';
+    ctx.fillRect(W * 0.05, H * 0.2, W * 0.12, H * 0.03);
+    ctx.fillRect(W * 0.83, H * 0.2, W * 0.12, H * 0.03);
+    ctx.fillRect(W * 0.05, H * 0.32, W * 0.12, H * 0.03);
+    ctx.fillRect(W * 0.83, H * 0.32, W * 0.12, H * 0.03);
+    // Cups on shelves
+    const cupColors = ['#A7F3D0','#F5A0C0','#A8D8EA','#FFD700'];
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = cupColors[i];
+      ctx.fillRect(W * 0.07 + i * W * 0.025, H * 0.17, W * 0.015, H * 0.03);
+    }
+  },
+
+  museum(t) {
+    const { W, H } = G;
+    ctx.fillStyle = '#F5F5F0'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#D4C5A9'; ctx.fillRect(0, H * 0.72, W, H * 0.28);
+    // Frames
+    const frameColors = ['#E8D4B0','#D4E8D0','#D0D4E8'];
+    for (let i = 0; i < 3; i++) {
+      const fx = W * 0.08 + i * W * 0.3;
+      ctx.fillStyle = '#8B7355'; ctx.fillRect(fx, H * 0.12, W * 0.22, H * 0.35);
+      ctx.fillStyle = frameColors[i]; ctx.fillRect(fx + 5, H * 0.12 + 5, W * 0.22 - 10, H * 0.35 - 10);
+    }
+    // Bench
+    ctx.fillStyle = '#654321'; ctx.fillRect(W * 0.3, H * 0.6, W * 0.4, H * 0.04);
+    ctx.fillRect(W * 0.33, H * 0.64, W * 0.02, H * 0.08);
+    ctx.fillRect(W * 0.65, H * 0.64, W * 0.02, H * 0.08);
+  },
+
+  lakeSunset(t) {
+    const { W, H } = G;
+    const sg = ctx.createLinearGradient(0, 0, 0, H * 0.48);
+    sg.addColorStop(0, '#1a0a3e'); sg.addColorStop(0.3, '#C04060');
+    sg.addColorStop(0.6, '#FF8C42'); sg.addColorStop(1, '#FFD700');
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H * 0.48);
+    drawStars(H * 0.2, t);
+    // Mountains
+    ctx.fillStyle = '#1a0a2e'; ctx.beginPath(); ctx.moveTo(0, H * 0.42);
+    for (let x = 0; x <= W; x += 15) ctx.lineTo(x, H * 0.37 + Math.sin(x * 0.008 + 2) * H * 0.04);
+    ctx.lineTo(W, H * 0.5); ctx.lineTo(0, H * 0.5); ctx.fill();
+    // Reflection
+    const wg = ctx.createLinearGradient(0, H * 0.46, 0, H);
+    wg.addColorStop(0, '#FFB347'); wg.addColorStop(0.3, '#C04060'); wg.addColorStop(1, '#1a0a3e');
+    ctx.fillStyle = wg; ctx.fillRect(0, H * 0.46, W, H * 0.54);
+    // Sun ripples
+    for (let i = 0; i < 5; i++) {
+      const ry = H * 0.5 + i * H * 0.04;
+      const rw = W * 0.12 - i * W * 0.015;
+      ctx.fillStyle = `rgba(255,200,100,${0.25 - i * 0.04})`;
+      ctx.fillRect(W * 0.5 - rw / 2 + Math.sin(t * 0.001 + i) * 3, ry, rw, 2);
+    }
+    // Distant town
+    ctx.fillStyle = '#2a1a3e';
+    for (let i = 0; i < 5; i++) {
+      ctx.fillRect(W * 0.62 + i * W * 0.035, H * 0.39 - H * 0.02 - Math.random() * H * 0.015, W * 0.015, H * 0.03);
+    }
+  },
+
+  tower(t) {
+    const { W, H } = G;
+    const tg = ctx.createLinearGradient(0, 0, 0, H);
+    tg.addColorStop(0, '#0a0015'); tg.addColorStop(1, '#1a0a2e');
+    ctx.fillStyle = tg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#201030'; ctx.fillRect(0, 0, W * 0.07, H); ctx.fillRect(W * 0.93, 0, W * 0.07, H);
+    for (let i = 0; i < 15; i++) {
+      const px = W * 0.1 + (i * 173.7) % (W * 0.8);
+      const py = (H * 0.1 + (i * 97.3 + t * 0.015) % (H * 0.7));
+      ctx.fillStyle = `rgba(139,92,246,${0.2 + 0.4 * Math.sin(t * 0.002 + i * 3)})`;
+      ctx.fillRect(px, py, 2.5, 2.5);
+    }
+    ctx.fillStyle = '#150a25'; ctx.fillRect(0, H * 0.75, W, H * 0.25);
+    ctx.strokeStyle = '#2a1a45';
+    for (let x = 0; x < W; x += W * 0.08) ctx.strokeRect(x, H * 0.75, W * 0.08, H * 0.08);
+  },
+
+  towerTop(t) {
+    const { W, H } = G;
+    const sg = ctx.createLinearGradient(0, 0, 0, H);
+    sg.addColorStop(0, '#050015'); sg.addColorStop(0.5, '#150a3e'); sg.addColorStop(1, '#2C1654');
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H);
+    drawStars(H * 0.6, t);
+    // Glow
+    const mg = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.35);
+    mg.addColorStop(0, 'rgba(167,243,208,0.12)'); mg.addColorStop(1, 'rgba(167,243,208,0)');
+    ctx.fillStyle = mg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#201040'; ctx.fillRect(0, H * 0.72, W, H * 0.28);
+  },
+
+  ending(t) {
+    const { W, H } = G;
+    const sg = ctx.createLinearGradient(0, 0, 0, H * 0.42);
+    sg.addColorStop(0, '#050020'); sg.addColorStop(1, '#2C1654');
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, H * 0.42);
+    drawStars(H * 0.38, t);
+    const hg = ctx.createLinearGradient(0, H * 0.36, 0, H * 0.46);
+    hg.addColorStop(0, '#FF6B6B'); hg.addColorStop(1, '#FFB347');
+    ctx.fillStyle = hg; ctx.fillRect(0, H * 0.36, W, H * 0.1);
+    drawWater(H * 0.43, ['#1E3A5F','#2C1654','#0a0020'], t);
+  }
+};
+
+// ============================================================
+// DRAWING — Characters
+// ============================================================
+function drawPerson(x, y, hair, shirt, pants, shoes, hairLen, facing, t) {
+  const s = PX;
+  const bob = Math.sin((t || 0) * 0.0015) * 1.5;
+  ctx.save();
+  ctx.translate(x, y + bob);
+  if (facing < 0) ctx.scale(-1, 1);
+  // Head
+  ctx.fillStyle = '#F5DEB3'; ctx.fillRect(-2*s, -11*s, 4*s, 4*s);
+  // Hair
+  ctx.fillStyle = hair;
+  ctx.fillRect(-3*s, -12*s, 6*s, 3*s);
+  if (hairLen > 0) { ctx.fillRect(-3*s, -9*s, s, hairLen*s); ctx.fillRect(2*s, -9*s, s, hairLen*s); }
+  // Eyes
+  ctx.fillStyle = '#3a2a1a'; ctx.fillRect(-s, -10*s, s, s); ctx.fillRect(s, -10*s, s, s);
+  // Shirt
+  ctx.fillStyle = shirt;
+  ctx.fillRect(-2*s, -7*s, 4*s, 4*s);
+  ctx.fillRect(-3*s, -7*s, s, 3*s); ctx.fillRect(2*s, -7*s, s, 3*s);
+  // Pants
+  ctx.fillStyle = pants;
+  ctx.fillRect(-2*s, -3*s, 2*s, 3*s); ctx.fillRect(0, -3*s, 2*s, 3*s);
+  // Shoes
+  ctx.fillStyle = shoes;
+  ctx.fillRect(-2*s, 0, 2*s, s); ctx.fillRect(0, 0, 2*s, s);
+  ctx.restore();
+}
+
+function drawUlisa(x, y, f, t) { drawPerson(x, y, '#F0C060', '#F5A0B0', '#4A6FA5', '#FFF', 5, f, t); }
+function drawMitchell(x, y, f, t) { drawPerson(x, y, '#F0C060', '#1E3A5F', '#4A6FA5', '#654321', 0, f, t); }
+
+function drawBeckRat(x, y, t) {
+  const s = PX;
+  const bob = Math.sin((t || 0) * 0.003) * 2;
+  ctx.save(); ctx.translate(x, y + bob);
+  ctx.fillStyle = '#909090';
+  ctx.fillRect(-2*s, -3*s, 4*s, 3*s); // body
+  ctx.fillRect(-s, -5*s, 3*s, 2*s);   // head
+  ctx.fillStyle = '#B8B8B8'; // ears
+  ctx.fillRect(-s, -6*s, s, s); ctx.fillRect(s, -6*s, s, s);
+  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0, -4*s, s, s); // eye
+  ctx.fillStyle = '#FF8888'; ctx.fillRect(s, -4*s, s, s);  // nose
+  ctx.fillStyle = '#1E3A5F'; ctx.fillRect(-2*s, -3*s, 4*s, s); // scarf
+  ctx.fillStyle = '#808080'; // tail
+  ctx.fillRect(-3*s, -s, s, s); ctx.fillRect(-4*s, -2*s, s, s);
+  ctx.restore();
+}
+
+function drawConnor(x, y, f, t) {
+  const s = PX;
+  const bob = Math.sin((t || 0) * 0.0015) * 1.5;
+  ctx.save(); ctx.translate(x, y + bob); if (f < 0) ctx.scale(-1, 1);
+  ctx.fillStyle = '#C0C0C0'; // armor
+  ctx.fillRect(-2*s, -7*s, 4*s, 4*s);
+  ctx.fillRect(-3*s, -7*s, s, 3*s); ctx.fillRect(2*s, -7*s, s, 3*s);
+  ctx.fillRect(-2*s, -11*s, 4*s, 4*s); // helmet
+  ctx.fillStyle = '#FFD700'; ctx.fillRect(-2*s, -11*s, 4*s, s);
+  ctx.fillStyle = '#1a1a3a'; ctx.fillRect(-s, -9*s, 2*s, s); // visor
+  ctx.fillStyle = '#808080'; ctx.fillRect(-2*s, -3*s, 2*s, 3*s); ctx.fillRect(0, -3*s, 2*s, 3*s);
+  ctx.fillStyle = '#654321'; ctx.fillRect(-2*s, 0, 2*s, s); ctx.fillRect(0, 0, 2*s, s);
+  ctx.restore();
+}
+
+function drawFelix(x, y, t) {
+  const s = PX;
+  const bob = Math.sin((t || 0) * 0.004) * 1.5;
+  ctx.save(); ctx.translate(x, y + bob);
+  ctx.fillStyle = '#2D2D2D';
+  ctx.fillRect(-2*s, -3*s, 4*s, 3*s); ctx.fillRect(-s, -5*s, 3*s, 2*s);
+  ctx.fillStyle = '#FF3333'; ctx.fillRect(0, -4*s, s, s); ctx.fillRect(s, -4*s, s, s);
+  ctx.fillStyle = '#C0C0C0'; ctx.fillRect(2*s, -3*s, s, 2*s); // knife
+  ctx.restore();
+}
+
+// ============================================================
+// DRAWING — Characters per scene
+// ============================================================
+function drawSceneChars(sceneId, t) {
+  const { W, H } = G;
+  switch (sceneId) {
+    case 'bird-sanctuary':
+      drawUlisa(W * 0.33, H * 0.57, 1, t);
+      drawMitchell(W * 0.62, H * 0.54, -1, t);
+      break;
+    case 'abduction':
+      drawUlisa(W * 0.15, H * 0.57, 1, t);
+      drawMitchell(W * 0.55, H * 0.54, 1, t);
+      break;
+    case 'connor':
+      drawUlisa(W * 0.33, H * 0.57, 1, t);
+      drawConnor(W * 0.62, H * 0.54, -1, t);
+      break;
+    case 'captain':
+      drawUlisa(W * 0.33, H * 0.64, 1, t);
+      break;
+    case 'beck-rat-reveal':
+      drawUlisa(W * 0.3, H * 0.64, 1, t);
+      drawBeckRat(W * 0.62, H * 0.68, t);
+      break;
+    case 'barnes-noble':
+      drawUlisa(W * 0.28, H * 0.64, 1, t);
+      drawBeckRat(W * 0.52, H * 0.68, t);
+      break;
+    case 'golden-oreo':
+      drawUlisa(W * 0.25, H * 0.64, 1, t);
+      drawBeckRat(W * 0.5, H * 0.68, t);
+      drawFelix(W * 0.72, H * 0.68, t);
+      break;
+    case 'litos-burritos':
+      drawUlisa(W * 0.3, H * 0.52, 1, t);
+      drawBeckRat(W * 0.55, H * 0.55, t);
+      break;
+    case 'cat-cafe':
+      drawUlisa(W * 0.4, H * 0.63, 1, t);
+      drawBeckRat(W * 0.55, H * 0.67, t);
+      break;
+    case 'art-museum':
+      drawUlisa(W * 0.4, H * 0.7, 1, t);
+      drawBeckRat(W * 0.56, H * 0.73, t);
+      break;
+    case 'lake-sunset':
+      drawUlisa(W * 0.35, H * 0.62, 1, t);
+      drawBeckRat(W * 0.5, H * 0.65, t);
+      break;
+    case 'midnight-sea':
+      drawUlisa(W * 0.3, H * 0.64, 1, t);
+      drawBeckRat(W * 0.5, H * 0.68, t);
+      break;
+    case 'tower':
+      drawUlisa(W * 0.38, H * 0.73, 1, t);
+      drawBeckRat(W * 0.52, H * 0.76, t);
+      break;
+    case 'finale':
+      drawUlisa(W * 0.35, H * 0.7, 1, t);
+      drawMitchell(W * 0.6, H * 0.67, -1, t);
+      break;
+  }
+}
+
+// ============================================================
+// PARTICLES
+// ============================================================
+function addP(type, x, y, data) {
+  particles.push({ type, x, y, life: 1, age: 0, vx: 0, vy: 0, maxLife: 3000, ...data });
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.age += dt; p.life -= dt / p.maxLife;
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    if (p.type === 'leaf') p.x += Math.sin(p.age * 0.002 + (p.seed || 0)) * 0.3;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    const a = Math.min(1, p.life * 2);
+    ctx.globalAlpha = a;
+    if (p.type === 'leaf') {
+      ctx.fillStyle = p.color || '#FF8C42';
+      ctx.fillRect(p.x, p.y, 4, 3);
+    } else if (p.type === 'sparkle') {
+      ctx.fillStyle = p.color || '#FFD700';
+      ctx.globalAlpha = a * (0.4 + 0.6 * Math.sin(p.age * 0.008));
+      ctx.fillRect(p.x, p.y, 2, 2);
+    } else if (p.type === 'magic') {
+      ctx.fillStyle = p.color || '#A78BFA';
+      ctx.globalAlpha = a * (0.3 + 0.7 * Math.sin(p.age * 0.004));
+      const sz = 2 + Math.sin(p.age * 0.003);
+      ctx.fillRect(p.x, p.y, sz, sz);
+    }
+  });
+  ctx.globalAlpha = 1;
+}
+
+function emitParticles(scene) {
+  const { W, H } = G;
+  if (!scene) return;
+  const bg = scene.bg;
+  if (bg === 'autumn') {
+    const cols = ['#FF6B35','#FFD700','#DC2626','#FF8C42'];
+    addP('leaf', Math.random() * W, -5, { vy: 0.025 + Math.random() * 0.015,
+      color: cols[Math.floor(Math.random() * cols.length)], seed: Math.random() * 99, maxLife: 5000 });
+  } else if (bg === 'ship' || bg === 'shore') {
+    const wt = scene.waterType || 'emerald';
+    const c = wt === 'midnight' ? '#3B82F6' : wt === 'crimson' ? '#F87171' : '#A7F3D0';
+    addP('sparkle', Math.random() * W, H * 0.3 + Math.random() * H * 0.15, { vy: 0.005, color: c, maxLife: 3000 });
+  } else if (bg === 'lakeSunset') {
+    addP('sparkle', Math.random() * W, Math.random() * H * 0.25, { vy: 0.003, color: '#FFD700', maxLife: 4000 });
+  } else if (bg === 'tower' || bg === 'towerTop') {
+    const cols = ['#A78BFA','#C084FC','#34D399'];
+    addP('magic', W * 0.1 + Math.random() * W * 0.8, H, {
+      vy: -0.025 - Math.random() * 0.015, vx: (Math.random() - 0.5) * 0.008,
+      color: cols[Math.floor(Math.random() * cols.length)], maxLife: 4000 });
+  } else if (bg === 'ending') {
+    const cols = ['#FFD700','#A7F3D0','#A78BFA','#F5A0C0'];
+    addP('sparkle', Math.random() * W, Math.random() * H, {
+      vy: -0.005, color: cols[Math.floor(Math.random() * cols.length)], maxLife: 5000 });
+  }
+}
+
+// ============================================================
+// GAME ENGINE
+// ============================================================
+function resize() {
+  G.W = window.innerWidth; G.H = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = G.W * dpr; canvas.height = G.H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function loadScene(idx) {
+  G.sceneIdx = idx; G.dIdx = 0; G.charIdx = 0; G.charTimer = 0;
+  G.textDone = false; G.phase = 'dialogue'; G.mg = null;
+  particles.length = 0;
+  const scene = scenes[idx];
+  if (scene.music) audio.playMusic(scene.music);
+  if (scene.init) scene.init();
+  showDialogue();
+}
+
+function showDialogue() {
+  const scene = scenes[G.sceneIdx];
+  if (!scene || G.dIdx >= scene.dialogue.length) {
+    if (G.sceneIdx < scenes.length - 1) transitionTo(G.sceneIdx + 1);
+    else showEnding();
+    return;
+  }
+  const d = scene.dialogue[G.dIdx];
+
+  // Handle actions
+  if (d.action === 'choice') { showChoices(d); return; }
+  if (d.action === 'minigame') { startMinigame(d); return; }
+  if (d.action === 'end') { showEnding(); return; }
+
+  // Normal dialogue line
+  $dbox.style.display = 'block'; $choices.style.display = 'none';
+  const sp = SPEAKER_COLORS[d.s] || SPEAKER_COLORS.n;
+  $speaker.textContent = sp.name; $speaker.style.color = sp.color;
+  $text.textContent = ''; G.charIdx = 0; G.textDone = false;
+  $hint.style.opacity = '0';
+  if (d.onShow) d.onShow();
+}
+
+function advanceDialogue() {
+  if (G.state !== 'playing' || G.phase !== 'dialogue') return;
+  const d = scenes[G.sceneIdx]?.dialogue[G.dIdx];
+  if (!d) return;
+  if (G.textDone) {
+    audio.sfx('tap'); G.dIdx++; showDialogue();
+  } else {
+    $text.textContent = d.t; G.textDone = true; G.charIdx = d.t.length;
+    $hint.style.opacity = '1';
+  }
+}
+
+function showChoices(d) {
+  G.phase = 'choice';
+  $dbox.style.display = 'none';
+  $choices.style.display = 'flex';
+  $choices.innerHTML = '';
+  if (d.prompt) {
+    const p = document.createElement('div');
+    p.className = 'ch-prompt'; p.textContent = d.prompt;
+    $choices.appendChild(p);
+  }
+  d.choices.forEach((ch, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'ch-btn'; btn.textContent = ch.text;
+    btn.onclick = () => {
+      audio.sfx('sparkle'); $choices.style.display = 'none';
+      if (d.onChoice) d.onChoice(i);
+      G.dIdx++; G.phase = 'dialogue'; showDialogue();
+    };
+    $choices.appendChild(btn);
+  });
+}
+
+function transitionTo(idx) {
+  G.state = 'transition';
+  $dbox.style.display = 'none'; $choices.style.display = 'none'; $mgui.style.display = 'none';
+  $fade.style.opacity = '1';
+  setTimeout(() => {
+    loadScene(idx);
+    setTimeout(() => { $fade.style.opacity = '0'; G.state = 'playing'; }, 350);
+  }, 550);
+}
+
+function showEnding() {
+  G.state = 'ending';
+  audio.playMusic('victory');
+  $dbox.style.display = 'none'; $choices.style.display = 'none';
+  setTimeout(() => { $ending.style.display = 'flex'; $ending.style.opacity = '1'; }, 1200);
+}
+
+// ============================================================
+// MINIGAMES
+// ============================================================
+function startMinigame(d) {
+  G.phase = 'minigame';
+  G.mg = { type: d.game, data: d.data, done: false };
+  $dbox.style.display = 'none'; $mgui.style.display = 'block';
+
+  if (d.game === 'quiz') initQuiz(d.data);
+  else if (d.game === 'timeloop') initTimeLoop(d.data);
+  else if (d.game === 'navigate') initNavigation(d.data);
+  else if (d.game === 'memory') initMemory(d.data);
+  else if (d.game === 'timing') initTiming(d.data);
+}
+
+function endMinigame() {
+  $mgui.style.display = 'none'; $mgui.innerHTML = '<div id="mghud"></div>';
+  G.mg = null; G.dIdx++; G.phase = 'dialogue';
+  showDialogue();
+}
+
+// --- Quiz ---
+function initQuiz(data) {
+  let qIdx = 0;
+  function show() {
+    if (qIdx >= data.questions.length) { audio.sfx('success'); endMinigame(); return; }
+    const q = data.questions[qIdx];
+    $mgui.innerHTML = `<div id="mghud">${data.hudText || ''}</div>`;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;bottom:0;left:0;right:0;padding:14px 16px 28px;background:rgba(8,8,20,0.92);border-top:1px solid rgba(167,243,208,0.1)';
+    const qt = document.createElement('p');
+    qt.style.cssText = 'color:#f0e6d3;font-size:15px;line-height:1.5;margin-bottom:14px;font-family:Georgia,serif';
+    qt.textContent = q.question; wrap.appendChild(qt);
+    q.options.forEach((opt, i) => {
+      const b = document.createElement('button'); b.className = 'ch-btn'; b.textContent = opt;
+      b.onclick = () => {
+        if (i === q.answer) { audio.sfx('success'); qIdx++; show(); }
+        else { audio.sfx('fail'); b.style.borderColor = '#F87171'; b.style.opacity = '0.5';
+          setTimeout(() => { b.style.borderColor = ''; b.style.opacity = ''; }, 400); }
+      };
+      wrap.appendChild(b);
+    });
+    $mgui.appendChild(wrap);
+  }
+  show();
+}
+
+// --- Time Loop ---
+function initTimeLoop(data) {
+  let loopN = 0;
+  function show() {
+    const loop = data.loops[Math.min(loopN, data.loops.length - 1)];
+    $mgui.innerHTML = `<div id="mghud">${data.hudText || 'Break the loop!'}</div>`;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;bottom:0;left:0;right:0;padding:14px 16px 28px;background:rgba(8,8,20,0.92);border-top:1px solid rgba(167,243,208,0.1)';
+    const qt = document.createElement('p');
+    qt.style.cssText = 'color:#f0e6d3;font-size:15px;line-height:1.5;margin-bottom:8px;font-family:Georgia,serif';
+    qt.textContent = loop.prompt; wrap.appendChild(qt);
+    if (loop.beckLine) {
+      const bl = document.createElement('p');
+      bl.style.cssText = 'color:#A8D8EA;font-size:13px;font-style:italic;margin-bottom:14px';
+      bl.textContent = `Beck-rat: "${loop.beckLine}"`; wrap.appendChild(bl);
+    }
+    loop.options.forEach(opt => {
+      const b = document.createElement('button'); b.className = 'ch-btn'; b.textContent = opt.text;
+      b.onclick = () => {
+        if (opt.correct) { audio.sfx('success'); endMinigame(); }
+        else {
+          audio.sfx('fail'); loopN++;
+          $fade.style.opacity = '0.7';
+          setTimeout(() => { $fade.style.opacity = '0'; show(); }, 350);
+        }
+      };
+      wrap.appendChild(b);
+    });
+    $mgui.appendChild(wrap);
+  }
+  show();
+}
+
+// --- Navigation (Midnight Sea) ---
+function initNavigation(data) {
+  G.mg.nav = { lane: 1, obs: [], score: 0, target: data.target || 8, spT: 0, shipY: G.H * 0.55 };
+  $mgui.innerHTML = `<div id="mghud">Navigate: 0/${G.mg.nav.target}</div>
+    <div style="position:fixed;bottom:16px;left:16px;right:16px;display:flex;gap:10px">
+      <button class="ch-btn" style="flex:1;text-align:center;padding:22px;font-size:20px" onclick="navMove(-1)">◀</button>
+      <button class="ch-btn" style="flex:1;text-align:center;padding:22px;font-size:20px" onclick="navMove(1)">▶</button>
+    </div>`;
+}
+window.navMove = function(dir) {
+  if (!G.mg?.nav) return;
+  const n = G.mg.nav;
+  n.lane = Math.max(0, Math.min(2, n.lane + dir));
+  audio.sfx('tap');
+};
+
+function updateNav(dt) {
+  if (!G.mg?.nav) return;
+  const n = G.mg.nav;
+  n.spT += dt;
+  if (n.spT > 900) {
+    n.spT = 0;
+    n.obs.push({ lane: Math.floor(Math.random() * 3), y: -20,
+      type: ['tentacle','shadow','spore'][Math.floor(Math.random() * 3)] });
+  }
+  for (let i = n.obs.length - 1; i >= 0; i--) {
+    const o = n.obs[i]; o.y += dt * 0.18;
+    if (o.y > n.shipY - 15 && o.y < n.shipY + 15 && o.lane === n.lane) {
+      n.obs.splice(i, 1); audio.sfx('fail');
+    } else if (o.y > G.H + 20) {
+      n.obs.splice(i, 1); n.score++;
+      document.getElementById('mghud').textContent = `Navigate: ${n.score}/${n.target}`;
+      if (n.score >= n.target) { audio.sfx('success'); endMinigame(); }
+    }
+  }
+}
+
+function drawNav() {
+  if (!G.mg?.nav) return;
+  const { W, H } = G; const n = G.mg.nav; const lw = W / 3;
+  // Lane highlight
+  ctx.fillStyle = 'rgba(167,243,208,0.06)';
+  ctx.fillRect(n.lane * lw, 0, lw, H);
+  // Ship
+  const sx = n.lane * lw + lw / 2;
+  ctx.fillStyle = '#8B6914';
+  ctx.fillRect(sx - 10, n.shipY - 6, 20, 12);
+  ctx.fillStyle = '#FFF8E7';
+  ctx.beginPath(); ctx.moveTo(sx, n.shipY - 16); ctx.lineTo(sx + 8, n.shipY - 6); ctx.lineTo(sx, n.shipY - 3); ctx.fill();
+  // Obstacles
+  n.obs.forEach(o => {
+    const ox = o.lane * lw + lw / 2;
+    if (o.type === 'tentacle') {
+      ctx.fillStyle = '#4B0082';
+      for (let j = 0; j < 3; j++) ctx.fillRect(ox + Math.sin(o.y * 0.05 + j) * 6 - 3, o.y + j * 5, 5, 4);
+    } else if (o.type === 'shadow') {
+      ctx.fillStyle = 'rgba(20,0,40,0.7)';
+      ctx.beginPath(); ctx.arc(ox, o.y, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#FF3333'; ctx.fillRect(ox - 3, o.y - 2, 2, 2); ctx.fillRect(ox + 1, o.y - 2, 2, 2);
+    } else {
+      ctx.fillStyle = '#7B68EE';
+      for (let j = 0; j < 4; j++) {
+        const a = (j / 4) * Math.PI * 2 + o.y * 0.02;
+        ctx.fillRect(ox + Math.cos(a) * 8, o.y + Math.sin(a) * 8, 3, 3);
+      }
+    }
+  });
+}
+
+// --- Memory Fragments ---
+function initMemory(data) {
+  let step = 0;
+  function show() {
+    $mgui.innerHTML = `<div id="mghud">Tap the memories in order... (${step}/${data.order.length})</div>`;
+    const grid = document.createElement('div');
+    grid.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;width:min(92vw,360px)';
+    data.fragments.forEach((frag, i) => {
+      const b = document.createElement('button'); b.className = 'ch-btn';
+      b.style.cssText = `text-align:center;padding:18px 12px;min-height:70px;font-size:14px;${frag.done ? 'opacity:0.25;border-color:#34D399;' : ''}`;
+      b.textContent = frag.label;
+      if (!frag.done) {
+        b.onclick = () => {
+          if (data.order[step] === i) {
+            audio.sfx('sparkle'); frag.done = true; step++;
+            if (step >= data.order.length) {
+              audio.sfx('magic'); setTimeout(endMinigame, 500);
+            } else show();
+          } else {
+            audio.sfx('fail'); b.style.borderColor = '#F87171';
+            setTimeout(() => { b.style.borderColor = ''; }, 400);
+          }
+        };
+      }
+      grid.appendChild(b);
+    });
+    $mgui.appendChild(grid);
+  }
+  show();
+}
+
+// --- Timing (Dock Stealth) ---
+function initTiming(data) {
+  G.mg.timing = { gx: 0, gdir: 1, gspd: 0.12, progress: 0, target: data.target || 3, safe: false, cd: 0 };
+  $mgui.innerHTML = `<div id="mghud">Sneak past! Tap when the guard turns away. (0/${G.mg.timing.target})</div>
+    <button class="ch-btn" style="position:fixed;bottom:24px;left:16px;right:16px;text-align:center;padding:22px;font-size:17px" onclick="sneakTap()">SNEAK</button>`;
+}
+window.sneakTap = function() {
+  if (!G.mg?.timing) return;
+  const tm = G.mg.timing;
+  if (tm.cd > 0) return;
+  if (tm.safe) {
+    audio.sfx('success'); tm.progress++; tm.cd = 400;
+    document.getElementById('mghud').textContent = `Sneak past! (${tm.progress}/${tm.target})`;
+    if (tm.progress >= tm.target) endMinigame();
+  } else {
+    audio.sfx('fail'); tm.cd = 600;
+    document.getElementById('mghud').textContent = 'Spotted! Wait...';
+    setTimeout(() => {
+      if (G.mg?.timing) document.getElementById('mghud').textContent = `Sneak past! (${tm.progress}/${tm.target})`;
+    }, 600);
+  }
+};
+
+function updateTiming(dt) {
+  if (!G.mg?.timing) return;
+  const tm = G.mg.timing;
+  tm.gx += tm.gdir * tm.gspd * dt;
+  if (tm.gx > 100) { tm.gdir = -1; tm.safe = true; }
+  if (tm.gx < 0) { tm.gdir = 1; tm.safe = false; }
+  if (tm.cd > 0) tm.cd -= dt;
+}
+
+function drawTiming() {
+  if (!G.mg?.timing) return;
+  const { W, H } = G; const tm = G.mg.timing;
+  const gx = W * 0.15 + (tm.gx / 100) * W * 0.7;
+  // Guard (reuse Connor sprite facing guard direction)
+  drawConnor(gx, H * 0.56, tm.gdir, G.t);
+  // Indicator
+  ctx.fillStyle = tm.safe ? 'rgba(52,211,153,0.5)' : 'rgba(248,113,113,0.5)';
+  ctx.fillRect(W * 0.35, H * 0.12, W * 0.3, 6);
+  ctx.fillStyle = tm.safe ? '#34D399' : '#F87171';
+  const indicX = W * 0.35 + (tm.gx / 100) * W * 0.3;
+  ctx.fillRect(indicX - 4, H * 0.11, 8, 8);
+  // Progress dots
+  for (let i = 0; i < tm.target; i++) {
+    ctx.fillStyle = i < tm.progress ? '#34D399' : 'rgba(255,255,255,0.15)';
+    ctx.beginPath(); ctx.arc(W * 0.38 + i * 24, H * 0.08, 5, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// ============================================================
+// SCENES
+// ============================================================
+const scenes = [
+
+  // 0 — Bird Sanctuary
+  { id: 'bird-sanctuary', bg: 'autumn', music: 'autumn', dialogue: [
+    { s:'n', t:'It began, as most love stories do, with birds.' },
+    { s:'n', t:'The sanctuary was golden with autumn — the kind of afternoon where the light forgives everything and the air smells like cinnamon for no good reason.' },
+    { s:'n', t:'She was there because she liked animals. He was there because he liked her.' },
+    { s:'n', t:'They walked a winding path through copper leaves and birdsong, and for a little while, the world was impossibly small.' },
+    { s:'m', t:"So you've read all of Sanderson?" },
+    { s:'u', t:'Every single one. Twice.' },
+    { s:'m', t:'Even the 1,200-page ones?' },
+    { s:'u', t:'Especially the 1,200-page ones.' },
+    { s:'n', t:'He smiled like someone who had just found buried treasure in a place he was already looking.' },
+    { s:'m', t:"That might be my favorite thing anyone has ever said." },
+    { s:'n', t:"They talked about dogs they wanted to adopt. Books they'd reread. Jokes nobody else laughed at." },
+    { s:'n', t:'The specific kind of silence that means someone is thinking with you, not just near you.' },
+    { s:'n', t:'They walked for two hours. Neither checked their phone. This was, historically speaking, unprecedented.' },
+    { s:'u', t:'This was really nice.' },
+    { s:'m', t:'Yeah. It really was.' },
+    { s:'n', t:'The birds sang. The leaves fell. And for exactly one golden afternoon, everything was simple.' },
+  ]},
+
+  // 1 — Abduction
+  { id: 'abduction', bg: 'shore', music: 'emerald', dialogue: [
+    { s:'n', t:'It happened on a Tuesday. The worst things always happen on Tuesdays.' },
+    { s:'n', t:'They were walking along the shore when the horizon split open and a ship the size of a bad decision sailed directly toward them.' },
+    { s:'g', t:'MITCHELL BECKLEY.' },
+    { s:'n', t:'The voice belonged to a figure in a purple robe so elaborate it had its own weather system.' },
+    { s:'g', t:'You have been SUMMONED by the Royal Court of Absolutely Not.' },
+    { s:'d', t:'THIS IS FOR YOUR OWN GOOD, BOY.' },
+    { s:'n', t:'A second figure in green velvet stepped off the ship. He was wearing a crown made entirely of disapproval.' },
+    { s:'m', t:'I would like to formally object—' },
+    { s:'g', t:'OBJECTION DENIED.' },
+    { s:'m', t:"I wasn't finished—" },
+    { s:'d', t:'SENTENCE: IMMEDIATE DEPARTURE BY BOAT.' },
+    { s:'m', t:"This is absolutely not my fault! I was being completely normal!" },
+    { s:'n', t:'He was, in fact, being completely normal. This somehow made it worse.' },
+    { s:'m', t:'I WILL EXPLAIN LATER. THIS IS TEMPORARY. EVERYTHING IS FINE.' },
+    { s:'n', t:'Everything was not fine. And he would not explain later.' },
+    { s:'n', t:'She watched the ship disappear into the emerald horizon, which shimmered with the sort of beauty that feels personally insulting when you are sad.' },
+  ]},
+
+  // 2 — Connor + Stealth
+  { id: 'connor', bg: 'shore', music: 'emerald', dialogue: [
+    { s:'n', t:"The next morning, she stood at the edge of the dock and made a decision that was either very brave or very reckless. She could not tell the difference, and frankly, it didn't matter." },
+    { s:'u', t:"I'm going after him." },
+    { s:'n', t:'A figure in slightly-too-large armor appeared beside her.' },
+    { s:'k', t:"I couldn't help but overhear your noble quest. I am Sir Connor, Knight of the Awkward Pause." },
+    { s:'u', t:'...is that a real knighthood?' },
+    { s:'k', t:"All knighthoods are real if you believe hard enough. Now — the docks are guarded. But I know a way." },
+    { s:'n', t:"Connor's plan involved three distractions, one borrowed hat, and a level of confidence that bordered on delusional. It was, against all odds, a good plan." },
+    { s:'k', t:"I'll distract them. You sneak through when the guard turns away. Ready?" },
+    { s:'n', t:'Sneak past the dock sentries!', action:'minigame', game:'timing', data:{ target:3 } },
+    { s:'n', t:'She made it to the dock, slightly out of breath and fully committed.' },
+    { s:'k', t:"Godspeed. May your seas be calm and your decisions marginally better than his." },
+    { s:'u', t:'Thank you, Connor.' },
+    { s:'k', t:"I'll be here. Awkwardly. As is my way." },
+    { s:'n', t:'She boarded the first ship heading east, and the emerald sea opened before her like a dare.' },
+  ]},
+
+  // 3 — Captain Conversation
+  { id: 'captain', bg: 'ship', music: 'emerald', waterType: 'emerald', dialogue: [
+    { s:'n', t:"The ship was called the Wandering Thought, which seemed appropriate for a vessel crewed entirely by people who looked like they had somewhere better to be." },
+    { s:'n', t:"The captain was a weathered man with kind eyes and an accent she couldn't quite place." },
+    { s:'c', t:'You look like someone chasing something.' },
+    { s:'u', t:"Someone. I'm chasing someone." },
+    { s:'c', t:'Ah. Even worse. At least cargo stays where you put it.' },
+    { s:'n', t:'They sailed through emerald waters that shimmered like stained glass.' },
+    { s:'c', t:"In my homeland, when two people wish to be together, the whole village throws a celebration that lasts three days." },
+    { s:'u', t:'That sounds lovely.' },
+    { s:'c', t:'It is. Very festive. Great food. Everyone dances. And we all drink camel pee.' },
+    { s:'u', t:"I'm sorry, you drink what?" },
+    { s:'c', t:'Camel pee. It is traditional. Very refreshing. An acquired taste.' },
+    { s:'u', t:'I... will keep that in mind.' },
+    { s:'c', t:'You should visit. Bring this person you are chasing. We will throw a party.' },
+    { s:'n', t:'She smiled, and for a moment the weight of the journey felt lighter.' },
+  ]},
+
+  // 4 — Beck-rat Reveal
+  { id: 'beck-rat-reveal', bg: 'ship', music: 'emerald', waterType: 'emerald', dialogue: [
+    { s:'n', t:'She heard the voice before she saw the rat.' },
+    { s:'b', t:'You should not be on this ship.' },
+    { s:'n', t:'The rat was small, gray, and wearing what appeared to be a very tiny navy scarf.' },
+    { s:'u', t:'...Mitchell?' },
+    { s:'b', t:"I'm a talking rat. Lots of those around. Very common. Nothing to see here." },
+    { s:'u', t:"You're wearing his scarf." },
+    { s:'b', t:'Many rats enjoy knitwear.' },
+    { s:'u', t:'Mitchell.' },
+    { s:'b', t:'My name is... Reginald. Sir Reginald. Of the... Sea Rats.' },
+    { s:'u', t:'Reginald.' },
+    { s:'b', t:'Yes. Very common rat name. Extremely normal.' },
+    { s:'u', t:"You look exactly like Mitchell if Mitchell were a rat." },
+    { s:'b', t:"That is a very strange thing to say about a rat you just met." },
+    { s:'u', t:'What happened to you?' },
+    { s:'b', t:"Nothing happened. I'm a rat. I've always been a rat. This is a rat life and I am living it." },
+    { s:'u', t:"I'm coming to save you." },
+    { s:'b', t:"I don't need saving. I have cheese. Life is fine." },
+    { s:'b', t:'Also, you should really turn back. The seas ahead are extremely dangerous and I am telling you this entirely for your own good and not because I am scared.' },
+    { s:'u', t:'No.' },
+    { s:'b', t:'That was a very firm no.' },
+    { s:'u', t:'Very firm.' },
+    { s:'b', t:'...noted.' },
+  ]},
+
+  // 5 — Barnes & Noble Attack
+  { id: 'barnes-noble', bg: 'ship', music: 'crimson', waterType: 'crimson',
+    init() { this.waterType = 'crimson'; },
+    dialogue: [
+    { s:'n', t:'The sea had turned from emerald to crimson — the color of ambition and overdue library books.' },
+    { s:'n', t:'The attack came without warning.' },
+    { s:'cr', t:'SHIP OFF THE STARBOARD BOW!' },
+    { s:'n', t:"A massive vessel bore down on them. Its flag was unmistakable: a green banner emblazoned with BARNES & NOBLE." },
+    { s:'b', t:'Oh no.' },
+    { s:'c', t:"They're loading the cannons!" },
+    { s:'b', t:'Those aren\'t cannonballs. Those are... books.' },
+    { s:'n', t:'Brandon Sanderson hardcovers. The biggest, heaviest books in all the land. Each one capable of sinking a small dinghy on impact.' },
+    { s:'b', t:'I respect the choice of ammunition, honestly.' },
+    { s:'n', t:'A massive copy of The Way of Kings sailed through the air and struck Beck-rat directly in the face.' },
+    { s:'b', t:'I would have dodged, but I am very small.' },
+    { s:'c', t:'We cannot outrun them! Someone must negotiate! They respect only one thing — BOOK KNOWLEDGE.' },
+    { s:'n', t:'Uh-Lee-Suh stepped forward. She had been training for this her entire life.',
+      action:'minigame', game:'quiz', data:{
+        hudText:'Prove your book knowledge!',
+        questions:[
+          { question:'A copy of Rhythm of War flies at you! Who is the main character of the Stormlight Archive?',
+            options:['Kaladin Stormblessed','Gandalf','Percy Jackson'], answer:0 },
+          { question:'The B&N captain demands: "What metal do Mistborn burn for strength?"',
+            options:['Gold','Pewter','Silver'], answer:1 },
+          { question:'Final challenge! "Complete the title: The _____ of Kings."',
+            options:['Return','Way','Lord'], answer:1 },
+        ]} },
+    { s:'n', t:'The Barnes & Noble captain lowered his cannon and saluted. A fellow reader. The bombardment ceased.' },
+    { s:'b', t:"That was either very brave or very concerning. I'm going with concerning." },
+    { s:'n', t:'But the damage was done. The ship listed hard to port.' },
+    { s:'c', t:'Abandon ship! Head for the Golden Oreo!' },
+    { s:'b', t:'The what?' },
+    { s:'n', t:'The ship cracked in half. The crimson sea swallowed it whole.' },
+  ]},
+
+  // 6 — Golden Oreo
+  { id: 'golden-oreo', bg: 'ship', music: 'crimson', waterType: 'crimson',
+    init() { this.waterType = 'crimson'; },
+    dialogue: [
+    { s:'n', t:'She woke up on a new ship. It was called the Golden Oreo, which was a ridiculous name for a vessel, and she loved it immediately.' },
+    { s:'n', t:'The crew was small but capable — women who looked like they had been sailing since before the sea was invented.' },
+    { s:'b', t:'I hate boats. I hate water. I hate being a rat on a boat on water.' },
+    { s:'u', t:"You're alive." },
+    { s:'b', t:'Technically. Which is the worst kind of alive.' },
+    { s:'n', t:'A second rat appeared on the railing. This one was darker, smaller, and holding what appeared to be a tiny knife.' },
+    { s:'f', t:'BECK.' },
+    { s:'b', t:'Oh no.' },
+    { s:'f', t:'TODAY IS THE DAY, BECK.' },
+    { s:'b', t:'It is never the day, Felix.' },
+    { s:'f', t:'I WILL END YOU.' },
+    { s:'b', t:"You've been saying that for three weeks. You have not ended me. This is becoming embarrassing for both of us." },
+    { s:'n', t:'Felix lunged. Beck-rat sidestepped with the casual grace of someone who had been dodging murder attempts as a hobby.' },
+    { s:'b', t:'Anyway. Where were we.' },
+    { s:'u', t:'You were telling me what happened to you.' },
+    { s:'b', t:"No I wasn't. I was being a normal rat. Felix, stop trying to stab me, we have a guest." },
+  ]},
+
+  // 7 — Litos Burritos
+  { id: 'litos-burritos', bg: 'burritos', music: 'emerald', dialogue: [
+    { s:'n', t:'The island of Litos appeared through the morning fog — an idyllic port town where everything smelled of seasoned rice and slow-cooked beans.' },
+    { s:'b', t:'Oh no.' },
+    { s:'u', t:'What?' },
+    { s:'b', t:'We should leave. Immediately. Right now. No reason.' },
+    { s:'n', t:'They did not leave.' },
+    { s:'b', t:'Just one. Just one burrito. Then we go. I promise.' },
+    { s:'n', t:'He did not keep this promise.' },
+    { s:'n', t:'Three burritos later, the sky flickered. The town reset. Everyone was back at the entrance.' },
+    { s:'b', t:"Wait. Didn't we just..." },
+    { s:'n', t:'They had. They were in a time loop. The kind specifically calibrated around perfectly seasoned burritos.' },
+    { s:'b', t:'This is the best curse I have ever experienced.' },
+    { s:'n', t:'Break Beck out of the burrito time loop!',
+      action:'minigame', game:'timeloop', data:{
+        hudText:'Break the loop!',
+        loops:[
+          { prompt:'Beck-rat is heading for the burrito shop again. What do you do?',
+            beckLine:"Just one more. One more won't hurt.",
+            options:[
+              { text:'Let him have one more burrito', correct:false },
+              { text:'Physically carry him away', correct:false },
+              { text:'Order a burrito yourself', correct:false },
+          ]},
+          { prompt:'The loop resets. Beck is already walking toward the shop. Again.',
+            beckLine:"I can stop whenever I want. I am choosing not to want.",
+            options:[
+              { text:'Block the shop entrance', correct:false },
+              { text:'Convince him the burritos are poisoned', correct:false },
+              { text:'Get the burrito to go', correct:true },
+          ]},
+          { prompt:'So close! The loop flickered. One more try.',
+            beckLine:"Fine. FINE. But I want guac.",
+            options:[
+              { text:'No guac. We leave now.', correct:false },
+              { text:'Yes guac. And then we sail.', correct:true },
+              { text:'Distract him with cheese instead', correct:false },
+          ]},
+        ]} },
+    { s:'n', t:'The sky stopped flickering. Time resumed its normal, burrito-free flow.' },
+    { s:'b', t:'For the record, I regret nothing.' },
+    { s:'b', t:'Also for the record, the guac was incredible.' },
+    { s:'n', t:'The Golden Oreo sailed on. The sea deepened ahead.' },
+  ]},
+
+  // 8 — Cat Cafe
+  { id: 'cat-cafe', bg: 'cafe', music: 'emerald', dialogue: [
+    { s:'n', t:'The next island had no name, only a reputation. It was home to the Celestial Cat Café — where the tea was eternal and the cats were deeply suspicious.' },
+    { s:'n', t:'Three figures sat behind the counter.' },
+    { s:'n', t:'A wizard werewolf in a star-covered bathrobe. A massive white lion who appeared to be napping. And an extremely energetic puma vibrating at a frequency that suggested espresso.' },
+    { s:'b', t:'I would like to leave.' },
+    { s:'u', t:'We just got here.' },
+    { s:'b', t:"Cats eat rats. This is a fundamental flaw in the itinerary." },
+    { s:'n', t:'The wizard werewolf spoke: "Travelers. We will grant you passage and matcha — IF you answer our riddles."' },
+    { s:'b', t:"Oh good. Riddles. My favorite thing that isn't burritos." },
+    { s:'n', t:'Answer the riddles!',
+      action:'minigame', game:'quiz', data:{
+        hudText:'Riddles of the Cat Café',
+        questions:[
+          { question:'The wizard werewolf asks: "I have cities but no houses, forests but no trees, and water but no fish. What am I?"',
+            options:['A map','A dream','A snow globe'], answer:0 },
+          { question:'The white lion yawns: "The more you take, the more you leave behind. What am I?"',
+            options:['Time','Footsteps','Cookies'], answer:1 },
+          { question:'The puma bounces: "I speak without a mouth and hear without ears. I have no body, but come alive with wind. What am I?"',
+            options:['A ghost','An echo','A kite'], answer:1 },
+        ]} },
+    { s:'n', t:'The wizard werewolf nodded and poured two cups of matcha. One human-sized. One rat-sized.' },
+    { s:'b', t:'I will accept this matcha, but I want it known that I did not enjoy the riddle process.' },
+    { s:'n', t:'The white lion opened one eye, looked directly at Beck-rat, and went back to sleep. This was, apparently, a blessing.' },
+    { s:'n', t:'They left the café warmer and wiser. Or at least warmer.' },
+  ]},
+
+  // 9 — Art Museum
+  { id: 'art-museum', bg: 'museum', music: 'emerald', dialogue: [
+    { s:'n', t:'The next island was home to the Grand Aether Gallery — a museum where the art was magnificent and the explanations were unhinged.' },
+    { s:'b', t:'I have opinions about art.' },
+    { s:'u', t:'I know.' },
+    { s:'b', t:'Strong opinions.' },
+    { s:'u', t:'I know.' },
+    { s:'n', t:'Pick the best captions!',
+      action:'minigame', game:'quiz', data:{
+        hudText:'Art Critic Challenge',
+        questions:[
+          { question:'A painting of a single potato on a velvet pillow. Best caption:',
+            options:['"Solitude" — Artist Unknown','"This Is Not a Potato" — Magraté','"Lunch" — Beck-rat, age 5'], answer:2 },
+          { question:'A sculpture of a very buff seagull flexing. Best caption:',
+            options:['"The Burden of Wingspan"','"Gull Diesel"','"Bird"'], answer:1 },
+          { question:'A landscape of a sunset over an empty parking lot. Best caption:',
+            options:['"Where the Heart Parks"','"Lot of Emotions"','"No Validation Required"'], answer:2 },
+        ]} },
+    { s:'b', t:'I liked the potato one. The potato understood something the rest of us don\'t.' },
+    { s:'u', t:'What does a potato understand?' },
+    { s:'b', t:'Solitude. Velvet. The futility of existence. All the important things.' },
+    { s:'n', t:'They walked through the gallery laughing at art that was probably very expensive, and for a while the quest felt less like a quest and more like a really good afternoon.' },
+    { s:'n', t:'Felix appeared from behind a sculpture and threw a tiny knife at Beck-rat. He missed.' },
+    { s:'f', t:'NEXT TIME, BECK.' },
+    { s:'b', t:'He says, for the fifteenth time.' },
+  ]},
+
+  // 10 — Lake Sunset
+  { id: 'lake-sunset', bg: 'lakeSunset', music: 'emerald', dialogue: [
+    { s:'n', t:'The Golden Oreo sailed past an island with no name.' },
+    { s:'n', t:'Just a lake, still as glass, and a small town glowing in the distance. The sun was setting the way suns do in stories — slowly, and with intention.' },
+    { s:'n', t:'They stood at the railing. The only sound was the water against the hull.' },
+    { s:'b', t:'...' },
+    { s:'u', t:"You're quiet." },
+    { s:'b', t:"Rats are often quiet. It's a feature, not a bug." },
+    { s:'n', t:'A long moment passed. The kind of moment that holds more than words.' },
+    { s:'b', t:"You didn't have to come, you know. For me." },
+    { s:'u', t:'I know.' },
+    { s:'b', t:"The seas are dangerous. And I am very small. And probably not worth the trouble." },
+    { s:'u', t:"You're definitely worth the trouble." },
+    { s:'b', t:'...' },
+    { s:'b', t:'That\'s debatable. But thank you.' },
+    { s:'n', t:"He said it so quietly she almost didn't hear it. But she did." },
+    { s:'n', t:'The sun set. The stars came out. And the sea ahead turned dark.' },
+  ]},
+
+  // 11 — Midnight Sea
+  { id: 'midnight-sea', bg: 'ship', music: 'midnight', waterType: 'midnight',
+    init() { this.waterType = 'midnight'; },
+    dialogue: [
+    { s:'n', t:'The midnight sea was the color of ink and bad decisions.' },
+    { s:'n', t:"The water was alive — or something in it was. Shapes moved beneath the surface. Tentacles. Shadows. Things that didn't bother having names." },
+    { s:'b', t:'This is fine.' },
+    { s:'u', t:"You're shaking." },
+    { s:'b', t:'I am vibrating. With confidence.' },
+    { s:'cr', t:'Captain! Creatures off the bow! We need a navigator!' },
+    { s:'n', t:'Navigate through the midnight sea!',
+      action:'minigame', game:'navigate', data:{ target:10 } },
+    { s:'n', t:'The creatures fell behind. The tower appeared on the horizon — a dark spire rising from an island that glittered with unnatural light.' },
+    { s:'b', t:'I would have helped, but I am very small.' },
+    { s:'u', t:'You helped just by being here.' },
+    { s:'b', t:'That is the nicest thing anyone has ever said to a rat.' },
+    { s:'n', t:'The island was called New York. Nobody could explain why.' },
+    { s:'n', t:'The Golden Oreo dropped anchor. Uh-Lee-Suh looked up at the tower. It was very tall. She had come very far.' },
+    { s:'b', t:"You don't have to do this." },
+    { s:'u', t:'I know.' },
+    { s:'b', t:"...yeah. I know you know." },
+  ]},
+
+  // 12 — Tower
+  { id: 'tower', bg: 'tower', music: 'midnight', dialogue: [
+    { s:'n', t:'The tower was cold and old and full of the kind of silence that listens back.' },
+    { s:'n', t:'She climbed. Beck-rat rode on her shoulder, trying very hard to look brave and mostly looking like a very determined hamster.' },
+    { s:'b', t:'For the record, this is the scariest thing I have ever done, and I once ate cheese that had been expired for a month.' },
+    { s:'n', t:'At the top of the tower stood a figure in flowing midnight robes. The Keeper.' },
+    { s:'w', t:"So. You're the one who sailed three seas for a rat." },
+    { s:'u', t:"He's not just a rat." },
+    { s:'w', t:"No. He isn't. But the fog on his mind is thick. It is made of foolishness, and hesitation, and all the things he could not bring himself to say." },
+    { s:'w', t:'If you know him — truly know him — you can break it. Tap the memories. In the order they happened.' },
+    { s:'b', t:'This feels invasive.' },
+    { s:'w', t:'Quiet, rat.' },
+    { s:'n', t:'Remember the journey. Tap the memories in order.',
+      action:'minigame', game:'memory', data:{
+        fragments:[
+          { label:'🍂 Birds and autumn leaves', done:false },
+          { label:'⛵ A ridiculous abduction', done:false },
+          { label:'🌮 A burrito time loop', done:false },
+          { label:'🌅 A quiet sunset', done:false },
+        ],
+        order:[0,1,2,3],
+      } },
+    { s:'n', t:'The sigils blazed. The tower shook. Light poured through the cracks like dawn breaking through a long, long night.' },
+    { s:'w', t:'Well done. The fog lifts.' },
+    { s:'n', t:'The Keeper smiled — not unkindly — and dissolved into starlight.' },
+    { s:'b', t:'I feel... different. I feel...' },
+    { s:'n', t:'The light was blinding now. Warm. Golden. The kind of light that fixes things.' },
+  ]},
+
+  // 13 — Final Reveal
+  { id: 'finale', bg: 'towerTop', music: 'victory', dialogue: [
+    { s:'n', t:'The light faded. The rat was gone.' },
+    { s:'n', t:'And in its place stood a tall, blonde man in a navy sweater, looking exactly as confused as you\'d expect someone to look after being a rodent for several weeks.' },
+    { s:'m', t:'...' },
+    { s:'m', t:'Hi.' },
+    { s:'u', t:'Hi.' },
+    { s:'m', t:'I... okay. I have some things to say.' },
+    { s:'m', t:'First: I was a rat. You may have noticed.' },
+    { s:'m', t:"Second: you sailed across three seas, fought a Barnes & Noble warship, broke a burrito time loop, solved riddles for a puma, and climbed a tower. For me." },
+    { s:'m', t:'And I told you to turn back. Multiple times.' },
+    { s:'m', t:'I told you to turn back because I was scared. And small. And a rat. But mostly scared.' },
+    { s:'m', t:"You were braver and smarter than me. You didn't listen. And I am so, so glad you didn't listen." },
+    { s:'n', t:'He looked at her the way the sun looks at the sea on the kind of evening where everything is forgiven and nothing needs explaining.' },
+    { s:'m', t:"Thank you for sailing the aether seas for me. Can this rat be your boyfriend? (ps: I'm not a dog)",
+      action:'choice', choices:[{ text:'Yes' }, { text:'Obviously' }], onChoice:()=>{} },
+    { s:'n', t:'She said yes. Or obviously. Either way, it was the right answer.' },
+    { s:'n', t:'They stood together at the top of the tower, above the midnight sea, under a sky full of stars that had been waiting for exactly this moment.' },
+    { s:'n', t:'The seas calmed. The spores drifted. Somewhere, a very annoyed rat named Felix was looking for someone to stab.' },
+    { s:'n', t:'But up here, everything was warm, and bright, and exactly as it should be.' },
+    { s:'m', t:'So... about the burrito thing.' },
+    { s:'u', t:"We're not talking about the burrito thing." },
+    { s:'m', t:'Fair.' },
+    { s:'n', t:"And they lived. Not happily ever after — that's for stories that end. They lived happily ever forward, which is much better, because it means the story keeps going." },
+    { s:'n', t:'', action:'end' },
+  ]},
+];
+
+// ============================================================
+// RENDER + GAME LOOP
+// ============================================================
+function render() {
+  const { W, H, t } = G;
+  ctx.clearRect(0, 0, W, H);
+  const scene = scenes[G.sceneIdx];
+  if (!scene) return;
+
+  // Background
+  const bg = scene.bg;
+  if (bg === 'autumn') BG.autumn(t);
+  else if (bg === 'shore') BG.shore(t);
+  else if (bg === 'ship') BG.ship(t, scene.waterType);
+  else if (bg === 'burritos') BG.burritos(t);
+  else if (bg === 'cafe') BG.cafe(t);
+  else if (bg === 'museum') BG.museum(t);
+  else if (bg === 'lakeSunset') BG.lakeSunset(t);
+  else if (bg === 'tower') BG.tower(t);
+  else if (bg === 'towerTop') BG.towerTop(t);
+
+  // Characters (hide during certain minigames)
+  if (G.phase !== 'minigame' || !['navigate','timing'].includes(G.mg?.type)) {
+    drawSceneChars(scene.id, t);
+  }
+
+  // Particles
+  drawParticles();
+
+  // Minigame overlays
+  if (G.phase === 'minigame' && G.mg) {
+    if (G.mg.type === 'navigate') drawNav();
+    if (G.mg.type === 'timing') drawTiming();
+  }
+}
+
+function update(dt) {
+  G.t += dt;
+
+  // Typewriter
+  if (G.state === 'playing' && G.phase === 'dialogue' && !G.textDone) {
+    G.charTimer += dt;
+    const d = scenes[G.sceneIdx]?.dialogue[G.dIdx];
+    if (d && G.charTimer > 28) {
+      G.charTimer = 0; G.charIdx++;
+      $text.textContent = d.t.substring(0, G.charIdx);
+      if (G.charIdx >= d.t.length) {
+        G.textDone = true; $hint.style.opacity = '1';
+      }
+    }
+  }
+
+  // Particles
+  updateParticles(dt);
+  G.pTimer += dt;
+  if (G.pTimer > 250) {
+    G.pTimer = 0;
+    if (G.state === 'ending') emitParticles({ bg: 'ending' });
+    else emitParticles(scenes[G.sceneIdx]);
+  }
+
+  // Minigame updates
+  if (G.phase === 'minigame' && G.mg) {
+    if (G.mg.type === 'navigate') updateNav(dt);
+    if (G.mg.type === 'timing') updateTiming(dt);
+  }
+}
+
+let lastTime = 0;
+function loop(time) {
+  const dt = Math.min(time - lastTime, 50);
+  lastTime = time;
+
+  if (G.state === 'title') {
+    // Animated title background
+    ctx.clearRect(0, 0, G.W, G.H);
+    drawSky(['#050020','#0d3a2a'], G.H * 0.55);
+    drawStars(G.H * 0.45, time);
+    drawWater(G.H * 0.5, ['#059669','#34D399','#A7F3D0'], time);
+    // Tiny ship silhouette
+    const sx = G.W * 0.5 + Math.sin(time * 0.0003) * G.W * 0.1;
+    ctx.fillStyle = '#1a3a2a';
+    ctx.fillRect(sx - 8, G.H * 0.48, 16, 6);
+    ctx.fillRect(sx - 1, G.H * 0.44, 2, 8);
+    // Title sparkles
+    for (let i = 0; i < 12; i++) {
+      const px = (i * 173.7 + time * 0.008) % G.W;
+      const py = (i * 97.3 + Math.sin(time * 0.001 + i) * 15) % G.H;
+      ctx.fillStyle = `rgba(167,243,208,${0.15 + 0.25 * Math.sin(time * 0.002 + i * 3)})`;
+      ctx.fillRect(px, py, 2, 2);
+    }
+  } else if (G.state === 'playing' || G.state === 'transition') {
+    render();
+    update(dt);
+  } else if (G.state === 'ending') {
+    ctx.clearRect(0, 0, G.W, G.H);
+    BG.ending(time);
+    drawUlisa(G.W * 0.4, G.H * 0.62, 1, time);
+    drawMitchell(G.W * 0.57, G.H * 0.59, -1, time);
+    drawParticles();
+    update(dt);
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// ============================================================
+// INPUT
+// ============================================================
+$title.addEventListener('click', () => {
+  audio.init(); audio.resume();
+  $title.style.opacity = '0';
+  setTimeout(() => {
+    $title.style.display = 'none';
+    G.state = 'playing';
+    loadScene(0);
+  }, 1000);
+});
+
+$dbox.addEventListener('click', (e) => {
+  e.stopPropagation();
+  advanceDialogue();
+});
+
+$snd.addEventListener('click', (e) => {
+  e.stopPropagation();
+  audio.on = !audio.on;
+  $snd.style.opacity = audio.on ? '1' : '0.4';
+  $snd.textContent = audio.on ? '♪' : '✕';
+  if (!audio.on) audio.stopAll();
+  else { audio.init(); audio.resume(); const s = scenes[G.sceneIdx]; if (s?.music) audio.playMusic(s.music); }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('resize', resize);
+resize();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
