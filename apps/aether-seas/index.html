@@ -1372,7 +1372,14 @@ function drawSceneChars(sceneId, t) {
       drawConnor(W * 0.6, H * 0.6, -1, t);
       break;
     case 'captain':
-      drawUlisa(W * 0.33, H * 0.64, 1, t);
+      drawUlisa(W * 0.3, H * 0.64, 1, t);
+      // Captain — dark hair, brown coat, tan pants, dark boots
+      drawPerson(W * 0.65, H * 0.62, '#2A1A0A', '#6B4A28', '#A08050', '#3A2A15', 0, -1, t);
+      // Captain's hat
+      ctx.fillStyle = '#4A3018';
+      ctx.fillRect(Math.round(W * 0.65) - 3*PX, Math.round(H * 0.62) - 13*PX, 6*PX, PX);
+      ctx.fillStyle = '#3A2010';
+      ctx.fillRect(Math.round(W * 0.65) - 2*PX, Math.round(H * 0.62) - 14*PX, 4*PX, PX);
       break;
     case 'beck-rat-reveal':
       drawUlisa(W * 0.3, H * 0.64, 1, t);
