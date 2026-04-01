@@ -2612,6 +2612,42 @@ function buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName) 
 }
 
 function buildHoldemResult(names, taskLabel, selectionGoal) {
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    const deck = shuffle(createDeck());
+    const draftHands = {};
+    names.forEach(name => {
+      draftHands[name] = [deck.pop(), deck.pop(), deck.pop(), deck.pop()]; // 4 cards, keep 2
+    });
+    const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+    const modeName = "Texas Hold'em";
+
+    return {
+      modeId: "holdem",
+      modeName,
+      selectionGoal,
+      draftPhase: true,
+      draftHands,
+      keepCount: 2,
+      board,
+      headline: "Drafting cards...",
+      summary: "Players are choosing their hole cards.",
+      selectedName: null,
+      isTie: false,
+      players: names.map(name => ({
+        name,
+        selected: false,
+        holeCards: [],
+        cards: [],
+        headline: "Drafting...",
+        subline: "Choosing cards",
+        rank: 0,
+        chips: ["Hold'em", "Draft"],
+      })),
+    };
+  }
+
   const deck = shuffle(createDeck());
   const players = names.map((name) => ({
     name,
@@ -2668,6 +2704,42 @@ function buildHoldemResult(names, taskLabel, selectionGoal) {
 }
 
 function buildPloResult(names, taskLabel, selectionGoal) {
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    const deck = shuffle(createDeck());
+    const draftHands = {};
+    names.forEach(name => {
+      draftHands[name] = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()]; // 6 cards, keep 4
+    });
+    const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+    const modeName = "PLO";
+
+    return {
+      modeId: "plo",
+      modeName,
+      selectionGoal,
+      draftPhase: true,
+      draftHands,
+      keepCount: 4,
+      board,
+      headline: "Drafting cards...",
+      summary: "Players are choosing their hole cards.",
+      selectedName: null,
+      isTie: false,
+      players: names.map(name => ({
+        name,
+        selected: false,
+        holeCards: [],
+        cards: [],
+        headline: "Drafting...",
+        subline: "Choosing cards",
+        rank: 0,
+        chips: ["Omaha", "Draft"],
+      })),
+    };
+  }
+
   const deck = shuffle(createDeck());
   const players = names.map((name) => ({
     name,
@@ -2720,6 +2792,76 @@ function buildPloResult(names, taskLabel, selectionGoal) {
         chips: ["Omaha", "4 hole cards"],
       };
     }),
+  };
+}
+
+function finalizeDraftResult(draftResult, playerChoices) {
+  const board = draftResult.board;
+  const isOmaha = draftResult.modeId === 'plo';
+  const evaluator = isOmaha ? bestPloHand : bestHoldemHand;
+  const selectionGoal = draftResult.selectionGoal;
+
+  const evaluatedPlayers = Object.entries(playerChoices).map(([name, indices]) => {
+    const holeCards = indices.map(i => draftResult.draftHands[name][i]);
+    return {
+      name,
+      holeCards,
+      best: evaluator(holeCards, board),
+    };
+  });
+
+  const resolution = resolveByGoal(evaluatedPlayers, p => p.best.score, selectionGoal);
+  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map(p => p.name);
+  const choosingWinner = selectionGoal === "winner";
+  const isTie = tiedNames.length > 1;
+
+  // Calculate percentages
+  const playersForCalc = evaluatedPlayers.map(p => ({
+    name: p.name,
+    holeCards: p.holeCards,
+  }));
+  const pokerPercentages = {
+    preflop: calculatePokerPercentages(playersForCalc, [], selectionGoal, evaluator),
+    flop: calculatePokerPercentages(playersForCalc, board.slice(0, 3), selectionGoal, evaluator),
+    turn: calculatePokerPercentages(playersForCalc, board.slice(0, 4), selectionGoal, evaluator),
+    river: calculatePokerPercentages(playersForCalc, board, selectionGoal, evaluator),
+  };
+
+  const modeName = isOmaha ? "PLO" : "Texas Hold'em";
+
+  const headline = isTie ? "IT'S A TIE" : pickRandomMessage(
+    selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+    selectedName,
+    selectionGoal === "winner" ? "win" : "lose"
+  );
+
+  return {
+    modeId: draftResult.modeId,
+    modeName,
+    selectionGoal,
+    selectedName: isTie ? null : selectedName,
+    isTie,
+    tiedNames: isTie ? tiedNames : undefined,
+    headline,
+    summary: isTie
+      ? `${tiedNames.join(" and ")} tied with the same ${choosingWinner ? "best" : "worst"} hand!`
+      : `${choosingWinner ? "Strongest" : "Weakest"} showdown hand gets selected.`,
+    board,
+    pokerPercentages,
+    draftPhase: false,
+    players: evaluatedPlayers.map(p => ({
+      name: p.name,
+      cards: p.holeCards,
+      holeCards: p.holeCards,
+      headline: p.best.label,
+      subline: isTie
+        ? (tiedNames.includes(p.name) ? "TIED" : "Safe this round")
+        : (p.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} hand` : "Safe this round"),
+      selected: !isTie && p.name === selectedName,
+      tied: isTie && tiedNames.includes(p.name),
+      chips: [isOmaha ? "Omaha" : "Hold'em", `${isOmaha ? 4 : 2} hole cards`],
+    })),
   };
 }
 
@@ -3413,6 +3555,74 @@ function buildStockMarketResult(names, taskLabel, selectionGoal) {
     return prices;
   }
 
+  // Interactive mode: generate a stock pool for drafting
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    const TICKER_POOL = ["$DOGE","$TSLA","$STONK","$GME","$MOON","$AAPL","$REKT","$COPE","$PUMP","$YOLO","$HODL","$FOMO","$APE","$CHAD","$NVDA","$PLTR"];
+    const NOTES = [
+      "Much wow. Very volatile.",
+      "Elon tweeted again.",
+      "It only goes up. Right?",
+      "The squeeze hasn't squoze.",
+      "Literally can't go tits up.",
+      "The safe play. Boring.",
+      "Named after your portfolio.",
+      "For when $REKT isn't enough.",
+      "Pump it. PUMP IT.",
+      "You only lose once.",
+      "Diamond hands required.",
+      "Fear of missing out... on losses.",
+      "Return to monke.",
+      "The chosen one.",
+      "To the moon or the floor.",
+      "Trust the process.",
+    ];
+
+    const selectedTickers = shuffle(TICKER_POOL).slice(0, 8);
+
+    const stockPool = selectedTickers.map((ticker, i) => {
+      const volatility = 0.03 + Math.random() * 0.05;
+      const drift = (Math.random() - 0.5) * 0.02;
+      const prices = [100];
+      for (let j = 1; j < 60; j++) {
+        const change = prices[j-1] * (gaussianRandom() * volatility + drift);
+        prices.push(Math.max(0.01, prices[j-1] + change));
+      }
+      return {
+        ticker,
+        note: NOTES[i % NOTES.length],
+        prices,
+        endPrice: prices[59],
+        percentChange: ((prices[59] - 100) / 100 * 100),
+      };
+    });
+
+    const pickOrder = shuffle([...names]);
+
+    return {
+      modeId: "stock-market",
+      modeName,
+      selectionGoal,
+      draftPhase: true,
+      stockPool,
+      pickOrder,
+      selectedName: null,
+      isTie: false,
+      headline: "Picking stocks...",
+      summary: "Players are choosing their stocks.",
+      players: names.map(name => ({
+        name,
+        selected: false,
+        ticker: null,
+        headline: "Picking...",
+        subline: "",
+        rank: 0,
+        chips: [],
+      })),
+    };
+  }
+
   const players = names.map((name, i) => {
     const prices = generatePriceHistory();
     const finalPrice = prices[prices.length - 1];
@@ -3717,6 +3927,39 @@ function PlayerResultCard({ name, title, subtitle, selected, selectionGoal, tied
 }
 
 function PokerPlayback({ result, step, done, omaha = false }) {
+  if (result.draftPhase) {
+    const draftSubmissions = (typeof window !== 'undefined' && window.__draftChoices) || {};
+    return (
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/60 shadow-xl backdrop-blur" style={{ background: "radial-gradient(ellipse, #1a472a 0%, #0d2818 60%, #091a10 100%)" }}>
+          <div className="mode-header-bg relative overflow-hidden px-6 py-5 text-white" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.3))" }}>
+            <div className="relative z-10">
+              <div className="text-sm font-semibold uppercase tracking-[0.25em]" style={{ color: "#4ade80", fontFamily: "var(--mode-font, inherit)" }}>{result.modeName}</div>
+              <div className="mt-2 text-2xl font-black tracking-tight sm:text-3xl" style={{ color: "#e2e8f0" }}>Players are drafting their cards...</div>
+              <div className="mt-2 max-w-2xl text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
+                Each player picks {result.keepCount} hole cards from {result.keepCount === 2 ? "4" : "6"} options.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="text-center py-8">
+          <div className="pixel-font text-xl text-indigo-300 animate-pulse mb-4">{'\uD83C\uDCCF'} DRAFT IN PROGRESS {'\uD83C\uDCCF'}</div>
+          <div className="font-mono text-sm text-slate-500 mb-4">Waiting for all players to lock in...</div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {Object.keys(result.draftHands).map(name => {
+              const submitted = draftSubmissions[name];
+              return (
+                <div key={name} className={`px-3 py-1.5 rounded-lg font-mono text-xs ${submitted ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-slate-500 animate-pulse'}`}>
+                  {name} {submitted ? '\u2713' : '...'}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const playerCount = result.players.length;
   const playerRevealCount = clamp(step, 0, playerCount);
   const flopVisible = step >= playerCount + 1;
@@ -6228,6 +6471,47 @@ function StockMarketPlayback({ result, step, done }) {
 
   const STOCK_COLORS = ['#10b981', '#22d3ee', '#ec4899', '#fbbf24', '#a78bfa', '#fb923c', '#60a5fa', '#f87171'];
 
+  // Draft phase: show stock picking UI
+  if (result.draftPhase) {
+    const draftState = (typeof window !== 'undefined' && window.__stockDraftState) || {};
+    return (
+      <div className="space-y-6">
+        <ModeHeader result={result} done={false} pendingText="Players are picking stocks..." pendingSummary="Each player chooses their stock from the pool." />
+        <div className="text-center py-12">
+          <div className="pixel-font text-xl text-emerald-300 animate-pulse mb-4">{"\uD83D\uDCC8"} STOCK DRAFT {"\uD83D\uDCC8"}</div>
+          <div className="font-mono text-sm text-slate-500">Waiting for picks...</div>
+          {/* Show pick order and status */}
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {(result.pickOrder || []).map((name, i) => {
+              const hasPicked = draftState?.playerStocks?.[name];
+              return (
+                <div key={name} className={`px-3 py-1.5 rounded-lg font-mono text-xs ${
+                  hasPicked ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-500'
+                }`}>
+                  {name} {hasPicked ? `\u2713 ${draftState.playerStocks[name]}` : '...'}
+                </div>
+              );
+            })}
+          </div>
+          {/* Show available stocks */}
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-lg mx-auto">
+            {(result.stockPool || []).map(s => {
+              const takenBy = draftState?.taken?.[s.ticker];
+              return (
+                <div key={s.ticker} className={`px-2 py-2 rounded-lg font-mono text-[10px] ${
+                  takenBy ? 'bg-white/5 text-slate-600 line-through' : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                }`}>
+                  <div className="font-bold text-xs">{s.ticker}</div>
+                  <div className="text-[8px] opacity-60">{takenBy ? `\u2192 ${takenBy}` : s.note}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   function startTrading() {
     setPhase('trading');
     startTimeRef.current = performance.now();
@@ -6240,6 +6524,7 @@ function StockMarketPlayback({ result, step, done }) {
       const elapsed = (now - startTimeRef.current) / 1000;
       const newIndex = Math.min(59, Math.floor(elapsed * 4));
       setDrawIndex(newIndex);
+      window.__stockDrawIndex = newIndex;
 
       if (newIndex >= 59) {
         setPhase('complete');
@@ -6255,6 +6540,41 @@ function StockMarketPlayback({ result, step, done }) {
 
   useEffect(() => {
     if (phase === 'complete') {
+      const sellState = (typeof window !== 'undefined' && window.__stockSellState) || {};
+      const isStockInteractive = typeof window !== 'undefined' && window.__stockInteractive;
+
+      if (isStockInteractive && result.isInteractiveChart) {
+        // Compute final result with sell decisions
+        const finalPlayers = result.players.map(p => {
+          const sold = sellState[p.name];
+          const finalPrice = sold ? sold.price : p.prices[59];
+          const pctChange = ((finalPrice - 100) / 100 * 100);
+          return {
+            ...p,
+            endPrice: finalPrice,
+            percentChange: pctChange,
+            sold: !!sold,
+            headline: `${p.ticker} \u2014 ${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}%`,
+            subline: sold ? `Sold at $${finalPrice.toFixed(2)}` : `Held to $${finalPrice.toFixed(2)}`,
+            chips: [p.ticker, `${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}%`, sold ? 'SOLD' : 'HELD'],
+          };
+        });
+
+        finalPlayers.sort((a, b) => b.percentChange - a.percentChange);
+        finalPlayers.forEach((p, i) => { p.rank = i + 1; });
+
+        const selected = result.selectionGoal === 'winner' ? finalPlayers[0] : finalPlayers[finalPlayers.length - 1];
+
+        result.selectedName = selected.name;
+        result.headline = pickRandomMessage(
+          result.selectionGoal === 'winner' ? WIN_MESSAGES : LOSE_MESSAGES,
+          selected.name, result.selectionGoal === 'winner' ? 'win' : 'lose'
+        );
+        result.summary = `${selected.name}'s ${selected.ticker} ${selected.percentChange >= 0 ? 'gained' : 'lost'} ${Math.abs(selected.percentChange).toFixed(1)}%.`;
+        result.isTie = false;
+        result.players = finalPlayers.map(p => ({ ...p, selected: p.name === selected.name }));
+      }
+
       window.dispatchEvent(new Event('rocket-complete'));
     }
   }, [phase]);
@@ -6958,6 +7278,63 @@ function JoinScreen({ roomCode, names, joinedPlayers, onJoinAsPlayer, onJoinAsSp
   );
 }
 
+function CardDraftPicker({ cards, keepCount, onSubmit }) {
+  const [selected, setSelected] = useState([]);
+
+  function toggleCard(index) {
+    setSelected(prev => {
+      if (prev.includes(index)) return prev.filter(i => i !== index);
+      if (prev.length >= keepCount) return prev;
+      return [...prev, index];
+    });
+  }
+
+  const canLock = selected.length === keepCount;
+
+  return (
+    <>
+      <div className="pixel-font text-[9px] text-indigo-300 mb-3">{'\uD83C\uDCCF'} CHOOSE YOUR HAND — Pick {keepCount}</div>
+      <div className="flex flex-wrap justify-center gap-2 mb-3">
+        {cards.map((card, i) => {
+          const isSelected = selected.includes(i);
+          const red = card.suit === 'h' || card.suit === 'd';
+          return (
+            <button
+              key={i}
+              onClick={() => toggleCard(i)}
+              className={`relative rounded-lg border-2 p-2 text-center transition ${
+                isSelected
+                  ? 'border-indigo-400 bg-indigo-500/20 scale-110'
+                  : 'border-white/10 bg-white/5 opacity-60'
+              }`}
+              style={{ minWidth: 44, minHeight: 60 }}
+            >
+              <div className={`font-bold ${red ? 'text-rose-400' : 'text-white'}`} style={{ fontSize: 16 }}>
+                {rankLabel(card.rank)}
+              </div>
+              <div className={`${red ? 'text-rose-400' : 'text-slate-300'}`} style={{ fontSize: 14 }}>
+                {SUIT_SYMBOLS[card.suit]}
+              </div>
+              {isSelected ? <div className="absolute -top-1 -right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">{'\u2713'}</div> : null}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        disabled={!canLock}
+        onClick={() => onSubmit(selected)}
+        className={`w-full py-3 rounded-xl font-bold text-sm transition ${
+          canLock
+            ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg hover:scale-[1.02] active:scale-95'
+            : 'bg-white/5 text-slate-600 cursor-not-allowed'
+        }`}
+      >
+        {canLock ? '\uD83D\uDD12 LOCK IN' : `Select ${keepCount - selected.length} more`}
+      </button>
+    </>
+  );
+}
+
 function CountdownTimer({ deadline }) {
   const { useState, useEffect } = React;
   const [remaining, setRemaining] = useState(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
@@ -7054,12 +7431,75 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
               </>
             );
           })()
+        ) : pendingAction.action === 'pick_stock' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-emerald-300 mb-2">{"\uD83D\uDCC8"} YOUR PICK</div>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {(pendingAction.stockPool || []).filter(s => !pendingAction.taken[s.ticker]).map(s => (
+                <button
+                  key={s.ticker}
+                  onClick={() => onAction({ action: 'pick_stock', ticker: s.ticker })}
+                  className="w-full py-2.5 px-3 rounded-lg bg-emerald-500/15 border border-emerald-500/20 text-left transition hover:bg-emerald-500/25 active:scale-95"
+                >
+                  <span className="font-mono text-sm font-bold text-emerald-300">{s.ticker}</span>
+                  <span className="ml-2 font-mono text-[10px] text-slate-500">{s.note}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : pendingAction.action === 'pick_stock' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">
+            {pendingAction.playerName} is picking...
+          </div>
+        ) : pendingAction.action === 'sell' ? (
+          (() => {
+            const sellState = (typeof window !== 'undefined' && window.__stockSellState) || {};
+            const hasSold = sellState[playerName];
+            const myTicker = pendingAction.playerStocks?.[playerName];
+
+            if (hasSold) {
+              return (
+                <div className="text-center">
+                  <div className="pixel-font text-[9px] text-emerald-400 mb-1">SOLD {myTicker}</div>
+                  <div className="font-mono text-lg font-bold text-white">${hasSold.price.toFixed(2)}</div>
+                  <div className={`font-mono text-xs ${hasSold.percentChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {hasSold.percentChange >= 0 ? '+' : ''}{hasSold.percentChange.toFixed(1)}%
+                  </div>
+                </div>
+              );
+            }
+
+            if (!myTicker) {
+              return <div className="pixel-font text-[9px] text-slate-500">Watching the charts...</div>;
+            }
+
+            return (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="pixel-font text-[9px] text-emerald-300">{myTicker}</span>
+                  <span className="font-mono text-xs text-slate-500">HOLDING</span>
+                </div>
+                <button
+                  onClick={() => onAction({ action: 'sell', ticker: myTicker })}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 text-white font-bold text-base shadow-lg shadow-emerald-600/30 transition hover:scale-[1.02] active:scale-95"
+                >
+                  {"\uD83D\uDCB0"} SELL NOW
+                </button>
+              </>
+            );
+          })()
+        ) : pendingAction.action === 'choose_cards' ? (
+          (() => {
+            const myCards = pendingAction.hands?.[playerName];
+            if (!myCards) return <div className="pixel-font text-[9px] text-slate-500">Waiting for others to draft...</div>;
+            return <CardDraftPicker cards={myCards} keepCount={pendingAction.keepCount} onSubmit={(indices) => onAction({ action: 'choose_cards', indices })} />;
+          })()
         ) : pendingAction.type === "waiting" ? (
           <div className="pixel-font text-[9px] text-indigo-400 animate-pulse">WAITING FOR YOUR TURN...</div>
         ) : (
           <div className="pixel-font text-[9px] text-amber-400">ACTION REQUIRED</div>
         )}
-        {pendingAction.deadline && isMyTurn ? (
+        {pendingAction.deadline && (isMyTurn || pendingAction.action === 'choose_cards' || pendingAction.action === 'pick_stock') ? (
           <CountdownTimer deadline={pendingAction.deadline} />
         ) : null}
       </div>
@@ -7107,6 +7547,9 @@ function ChoreChaosApp() {
   const roomModeRef = React.useRef(roomMode);
   const [interactiveBombState, setInteractiveBombState] = useState(null);
   const [interactiveRocketEjects, setInteractiveRocketEjects] = useState({});
+  const [draftChoices, setDraftChoices] = useState({});
+  const [stockDraftState, setStockDraftState] = useState(null);
+  const [stockSellState, setStockSellState] = useState({});
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -7125,6 +7568,8 @@ function ChoreChaosApp() {
   useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
 
   useEffect(() => { roomModeRef.current = roomMode; }, [roomMode]);
+
+  useEffect(() => { window.__interactiveMode = interactiveMode; }, [interactiveMode]);
 
   useEffect(() => {
     function handleRocketComplete() {
@@ -7177,13 +7622,20 @@ function ChoreChaosApp() {
           currentActionHandler.current = null;
         }
 
+        // Interactive stock market: result was computed in StockMarketPlayback before this event
+        if (result?.isInteractiveChart && result?.selectedName) {
+          pushHistory(result);
+          setPendingAction(null);
+          currentActionHandler.current = null;
+        }
+
         setPlaybackStep(2);
         setPlaybackDone(true);
       }
     }
     window.addEventListener('rocket-complete', handleRocketComplete);
     return () => window.removeEventListener('rocket-complete', handleRocketComplete);
-  }, [result, playbackDone, interactiveMode, interactiveRocketEjects]);
+  }, [result, playbackDone, interactiveMode, interactiveRocketEjects, stockSellState]);
 
   // Interactive Black Marble turn management
   useEffect(() => {
@@ -7425,6 +7877,297 @@ function ChoreChaosApp() {
     };
   }, [interactiveMode, gameActive, result, playbackDone, interactiveRocketEjects]);
 
+  // Interactive Poker draft management
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result) return;
+    if (result.modeId !== 'holdem' && result.modeId !== 'plo') return;
+    if (!result.draftPhase) return;
+
+    // Broadcast draft prompt to all players
+    broadcastEvent({
+      type: 'choice_prompt',
+      action: 'choose_cards',
+      timeoutSeconds: 20,
+      modeId: result.modeId,
+      keepCount: result.keepCount,
+      hands: result.draftHands,
+    });
+
+    setPendingAction({
+      type: 'choice',
+      action: 'choose_cards',
+      modeId: result.modeId,
+      keepCount: result.keepCount,
+      hands: result.draftHands,
+      deadline: Date.now() + 20000,
+      received: {},
+      playersNeeded: Object.keys(result.draftHands),
+    });
+
+    const choices = {};
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'choose_cards') return;
+      const actor = payload.playerName;
+      if (!result.draftHands[actor]) return;
+      if (choices[actor]) return; // Already submitted
+
+      const indices = payload.indices;
+      if (!Array.isArray(indices) || indices.length !== result.keepCount) return;
+
+      choices[actor] = indices;
+      setDraftChoices({ ...choices });
+
+      // Check if all players have submitted
+      const allPlayers = Object.keys(result.draftHands);
+      const allSubmitted = allPlayers.every(name => choices[name]);
+
+      if (allSubmitted) {
+        completeDraft(choices);
+      }
+    };
+
+    // Timeout: auto-pick for anyone who hasn't submitted
+    const timeout = setTimeout(() => {
+      const allPlayers = Object.keys(result.draftHands);
+      allPlayers.forEach(name => {
+        if (!choices[name]) {
+          // Auto-pick first N cards
+          choices[name] = Array.from({ length: result.keepCount }, (_, i) => i);
+        }
+      });
+      setDraftChoices({ ...choices });
+      completeDraft(choices);
+    }, 20000);
+
+    function completeDraft(allChoices) {
+      const finalResult = finalizeDraftResult(result, allChoices);
+      finalResult.runId = result.runId;
+      finalResult.taskLabel = result.taskLabel;
+
+      setResult(finalResult);
+      setPlaybackStep(0);
+      setPendingAction(null);
+      currentActionHandler.current = null;
+
+      broadcastEvent({ type: 'draft_complete' });
+      broadcastEvent({ type: 'game_start', result: finalResult });
+
+      // Record to leaderboard now that hand is finalized
+      if (!finalResult.isTie) {
+        pushHistory(finalResult);
+      }
+    }
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [interactiveMode, gameActive, result?.draftPhase]);
+
+  // Expose draft choices on window for PokerPlayback to read
+  useEffect(() => {
+    window.__draftChoices = draftChoices;
+  }, [draftChoices]);
+
+  // Interactive Stock Market draft management
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'stock-market') return;
+    if (!result.draftPhase) return;
+
+    // Initialize draft state if not already
+    if (!stockDraftState) {
+      const initial = { taken: {}, currentPickerIndex: 0, playerStocks: {} };
+      setStockDraftState(initial);
+      window.__stockDraftState = initial;
+      return;
+    }
+
+    const { taken, currentPickerIndex, playerStocks } = stockDraftState;
+    const { pickOrder, stockPool } = result;
+
+    // Sync to window for StockMarketPlayback to read
+    window.__stockDraftState = stockDraftState;
+
+    // Check if draft is complete
+    if (currentPickerIndex >= pickOrder.length) {
+      // All players have picked — finalize and start chart
+      finalizeDraft();
+      return;
+    }
+
+    const currentPicker = pickOrder[currentPickerIndex];
+
+    // Broadcast draft state
+    broadcastEvent({
+      type: 'choice_prompt',
+      action: 'pick_stock',
+      timeoutSeconds: 10,
+      stockPool: stockPool.map(s => ({ ticker: s.ticker, note: s.note })),
+      pickOrder,
+      currentPicker,
+      taken,
+    });
+
+    setPendingAction({
+      type: 'turn',
+      action: 'pick_stock',
+      playerName: currentPicker,
+      stockPool: stockPool.map(s => ({ ticker: s.ticker, note: s.note })),
+      taken,
+      deadline: Date.now() + 10000,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'pick_stock' || payload.playerName !== currentPicker) return;
+      const ticker = payload.ticker;
+      if (!ticker || taken[ticker]) return; // Invalid or already taken
+      if (!stockPool.find(s => s.ticker === ticker)) return;
+
+      const newTaken = { ...taken, [ticker]: currentPicker };
+      const newPlayerStocks = { ...playerStocks, [currentPicker]: ticker };
+
+      broadcastEvent({
+        type: 'stock_picked',
+        playerName: currentPicker,
+        ticker,
+        taken: newTaken,
+        nextPicker: pickOrder[currentPickerIndex + 1] || null,
+      });
+
+      setStockDraftState({
+        taken: newTaken,
+        currentPickerIndex: currentPickerIndex + 1,
+        playerStocks: newPlayerStocks,
+      });
+    };
+
+    // Timeout: auto-pick random available stock
+    const timeout = setTimeout(() => {
+      const available = stockPool.filter(s => !taken[s.ticker]);
+      if (available.length === 0) return;
+      const picked = available[secureRandomInt(available.length)];
+
+      const newTaken = { ...taken, [picked.ticker]: currentPicker };
+      const newPlayerStocks = { ...playerStocks, [currentPicker]: picked.ticker };
+
+      broadcastEvent({
+        type: 'stock_picked',
+        playerName: currentPicker,
+        ticker: picked.ticker,
+        taken: newTaken,
+        nextPicker: pickOrder[currentPickerIndex + 1] || null,
+      });
+
+      setStockDraftState({
+        taken: newTaken,
+        currentPickerIndex: currentPickerIndex + 1,
+        playerStocks: newPlayerStocks,
+      });
+    }, 10000);
+
+    return () => clearTimeout(timeout);
+
+    function finalizeDraft() {
+      // Build the chart result from player stock picks
+      const chartResult = {
+        modeId: "stock-market",
+        modeName: "Stock Market",
+        selectionGoal: result.selectionGoal,
+        draftPhase: false,
+        isInteractiveChart: true,
+        stockPool: result.stockPool,
+        playerStocks,
+        selectedName: null,
+        isTie: false,
+        headline: "Trading...",
+        summary: "Charts are live.",
+        players: Object.entries(playerStocks).map(([name, ticker]) => {
+          const stock = stockPool.find(s => s.ticker === ticker);
+          return {
+            name,
+            selected: false,
+            ticker,
+            prices: stock.prices,
+            startPrice: 100,
+            endPrice: stock.endPrice,
+            percentChange: stock.percentChange,
+            headline: ticker,
+            subline: "$100 start",
+            rank: 0,
+            chips: [ticker],
+          };
+        }),
+      };
+      chartResult.runId = result.runId;
+      chartResult.taskLabel = result.taskLabel;
+
+      setResult(chartResult);
+      setPlaybackStep(0);
+      setPendingAction(null);
+      currentActionHandler.current = null;
+
+      broadcastEvent({ type: 'draft_complete' });
+      broadcastEvent({ type: 'game_start', result: chartResult });
+    }
+  }, [interactiveMode, gameActive, result, stockDraftState]);
+
+  // Interactive Stock Market sell management
+  useEffect(() => {
+    if (!interactiveMode || !gameActive || !result || result.modeId !== 'stock-market') return;
+    if (result.draftPhase || !result.isInteractiveChart) return;
+
+    // Sync sell state to window for StockMarketPlayback to read
+    window.__stockSellState = stockSellState;
+    window.__stockInteractive = true;
+
+    // Set pending action for sell button (all players, real-time)
+    const playerStocks = result.playerStocks || {};
+    setPendingAction({
+      type: 'realtime',
+      action: 'sell',
+      modeId: 'stock-market',
+      playerStocks,
+      sold: stockSellState,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'sell') return;
+      const actor = payload.playerName;
+      if (stockSellState[actor]) return; // Already sold
+
+      const ticker = playerStocks[actor];
+      if (!ticker) return;
+
+      const currentProgress = window.__stockDrawIndex || 0;
+      const stock = result.players.find(p => p.name === actor);
+      if (!stock) return;
+
+      const priceIndex = Math.min(currentProgress, 59);
+      const price = stock.prices[priceIndex];
+      const percentChange = ((price - 100) / 100 * 100);
+
+      const newSellState = {
+        ...stockSellState,
+        [actor]: { ticker, price, percentChange, progress: currentProgress / 59 },
+      };
+
+      setStockSellState(newSellState);
+      window.__stockSellState = newSellState;
+
+      broadcastEvent({
+        type: 'stock_sold',
+        playerName: actor,
+        ticker,
+        price: price.toFixed(2),
+        percentChange: percentChange.toFixed(1),
+      });
+    };
+
+    return () => {
+      currentActionHandler.current = null;
+    };
+  }, [interactiveMode, gameActive, result, stockSellState]);
+
   const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
 
   const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
@@ -7528,11 +8271,19 @@ function ChoreChaosApp() {
     setSuddenDeathNames(null);
     setInteractiveBombState(null);
     setInteractiveRocketEjects({});
+    setDraftChoices({});
+    setStockDraftState(null);
+    setStockSellState({});
     window.__interactiveRocketEjects = {};
+    window.__draftChoices = {};
     window.__rocketInteractive = false;
     window.__rocketElapsed = 0;
-    // Don't record interactive bomb/rocket immediately — they record on completion
-    if (!(interactiveMode && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket'))) {
+    window.__stockSellState = {};
+    window.__stockDraftState = null;
+    window.__stockInteractive = false;
+    window.__stockDrawIndex = 0;
+    // Don't record interactive bomb/rocket/poker-draft/stock-draft immediately — they record on completion
+    if (!(interactiveMode && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || outcome.draftPhase))) {
       pushHistory(outcome);
     }
     broadcastEvent({ type: 'game_start', result: outcome });
@@ -7594,9 +8345,17 @@ function ChoreChaosApp() {
     setSuddenDeathNames(null);
     setInteractiveBombState(null);
     setInteractiveRocketEjects({});
+    setDraftChoices({});
+    setStockDraftState(null);
+    setStockSellState({});
     window.__interactiveRocketEjects = {};
+    window.__draftChoices = {};
     window.__rocketInteractive = false;
     window.__rocketElapsed = 0;
+    window.__stockSellState = {};
+    window.__stockDraftState = null;
+    window.__stockInteractive = false;
+    window.__stockDrawIndex = 0;
     broadcastEvent({ type: 'game_reset' });
   }
 
@@ -7711,6 +8470,20 @@ function ChoreChaosApp() {
           break;
         case 'game_start':
           setSpectatorState({ type: 'playing', result: payload.result, step: 0, done: false });
+          // Auto-set pending action for real-time interactive modes on player side
+          if (roomModeRef.current === 'player') {
+            if (payload.result?.modeId === 'rocket') {
+              setPendingAction({ type: 'realtime', action: 'eject', modeId: 'rocket' });
+            } else if (payload.result?.modeId === 'stock-market' && payload.result?.isInteractiveChart) {
+              setPendingAction({
+                type: 'realtime',
+                action: 'sell',
+                modeId: 'stock-market',
+                playerStocks: payload.result.playerStocks || {},
+                sold: {},
+              });
+            }
+          }
           break;
         case 'step':
           setSpectatorState(prev => prev ? { ...prev, step: payload.step, done: payload.done } : prev);
@@ -7742,6 +8515,54 @@ function ChoreChaosApp() {
             setSpectatorState(prev => prev ? { ...prev, result: payload.finalResult, done: true } : prev);
           }
           if (roomModeRef.current === 'player') setPendingAction(null);
+          break;
+        case 'choice_prompt':
+          if (roomModeRef.current === 'player') {
+            if (payload.action === 'pick_stock') {
+              setPendingAction({
+                type: 'turn',
+                action: 'pick_stock',
+                playerName: payload.currentPicker,
+                stockPool: payload.stockPool,
+                taken: payload.taken,
+                deadline: Date.now() + (payload.timeoutSeconds || 10) * 1000,
+              });
+            } else {
+              setPendingAction({
+                type: 'choice',
+                action: payload.action,
+                modeId: payload.modeId,
+                keepCount: payload.keepCount,
+                hands: payload.hands,
+                deadline: Date.now() + (payload.timeoutSeconds || 20) * 1000,
+              });
+            }
+          }
+          break;
+        case 'stock_picked':
+          // Update the pending action with new taken state
+          if (roomModeRef.current === 'player') {
+            setPendingAction(prev => prev && prev.action === 'pick_stock' ? {
+              ...prev,
+              taken: payload.taken,
+              playerName: payload.nextPicker || prev.playerName,
+            } : prev);
+          }
+          break;
+        case 'stock_sold':
+          // Update sell state on window so PlayerActionBar can read it
+          if (typeof window !== 'undefined') {
+            const prevSellState = window.__stockSellState || {};
+            prevSellState[payload.playerName] = {
+              ticker: payload.ticker,
+              price: parseFloat(payload.price),
+              percentChange: parseFloat(payload.percentChange),
+            };
+            window.__stockSellState = prevSellState;
+          }
+          break;
+        case 'draft_complete':
+          setPendingAction(null);
           break;
         case 'game_reset':
           setSpectatorState({ type: 'waiting' });
@@ -8250,7 +9071,7 @@ function ChoreChaosApp() {
                 </div>
                 <div className="hidden sm:flex flex-wrap items-center justify-end gap-3">
                   {!playbackDone ? (
-                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || (result.modeId === 'black-marble' && interactiveMode)) ? null : (
+                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || (result.modeId === 'black-marble' && interactiveMode) || result.draftPhase) ? null : (
                     <>
                       <button
                         onClick={advancePlayback}
@@ -8380,7 +9201,7 @@ function ChoreChaosApp() {
 
               <div className="sm:hidden relative z-10 flex flex-wrap items-center justify-center gap-2 border-t border-white/10 bg-black/90 px-3 py-3 backdrop-blur safe-area-bottom">
                 {!playbackDone ? (
-                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || (result.modeId === 'black-marble' && interactiveMode)) ? null : (
+                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || (result.modeId === 'black-marble' && interactiveMode) || result.draftPhase) ? null : (
                   <>
                     <button
                       onClick={advancePlayback}
