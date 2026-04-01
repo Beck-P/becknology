@@ -919,6 +919,10 @@
     /* Poker card faces — keep these light for readability */
     .arcade-bezel [class*="rounded-2xl"][class*="border"][class*="text-rose-600"] { background: rgba(30,20,30,0.9) !important; border-color: rgba(244,63,94,0.3) !important; color: #fb7185 !important; }
     .arcade-bezel [class*="rounded-2xl"][class*="border"][class*="text-slate-800"] { background: rgba(20,20,35,0.9) !important; border-color: rgba(255,255,255,0.15) !important; color: #e2e8f0 !important; }
+    /* Keep playing card faces white */
+    .arcade-bezel [class*="rounded-lg"][class*="border-2"][class*="bg-white"] { background: #ffffff !important; }
+    .arcade-bezel [class*="rounded-lg"][class*="border-2"][class*="text-rose-600"] { color: #dc2626 !important; }
+    .arcade-bezel [class*="rounded-lg"][class*="border-2"][class*="text-slate-900"] { color: #1e293b !important; }
     /* Chips/badges */
     .arcade-bezel [class*="rounded-full"][class*="bg-slate-100"] { background: rgba(255,255,255,0.06) !important; color: #94a3b8 !important; }
     .arcade-bezel [class*="rounded-full"][class*="bg-sky-50"] { background: rgba(56,189,248,0.1) !important; }
@@ -2816,30 +2820,56 @@ function getTournamentProgress(result, step) {
   };
 }
 
-function CardFace({ card, hidden = false, large = false, delay = 0 }) {
+function CardFace({ card, hidden = false, large = false, delay = 0, deal = false, dealIndex = 0 }) {
   const red = card?.suit === "h" || card?.suit === "d";
   const sizeClass = large ? "h-24 w-16 text-lg" : "h-14 w-10 text-sm";
+  const dealDelay = dealIndex * 0.15 + delay;
+  const shouldHide = deal && hidden;
   return (
     <motion.div
-      initial={false}
-      animate={{ rotateY: hidden ? 180 : 0 }}
-      transition={{ type: "spring", stiffness: 15, damping: 7, mass: 3, delay }}
+      initial={deal ? { x: 300, y: -80, rotateY: 180, opacity: 0, scale: 0.85, rotate: 8 } : false}
+      animate={shouldHide
+        ? { x: 0, y: 0, rotateY: 180, opacity: 1, scale: 1, rotate: 0 }
+        : deal
+          ? { x: 0, y: 0, rotateY: 0, opacity: 1, scale: 1, rotate: 0 }
+          : { rotateY: hidden ? 180 : 0, opacity: 1 }
+      }
+      transition={deal ? {
+        x: { type: "spring", stiffness: 90, damping: 16, delay: dealDelay },
+        y: { type: "spring", stiffness: 90, damping: 16, delay: dealDelay },
+        rotate: { type: "spring", stiffness: 90, damping: 16, delay: dealDelay },
+        opacity: { duration: 0.15, delay: dealDelay },
+        scale: { type: "spring", stiffness: 150, damping: 18, delay: dealDelay },
+        rotateY: { type: "spring", stiffness: 15, damping: 7, mass: 3, delay: hidden ? dealDelay : dealDelay + 0.1 },
+      } : {
+        rotateY: { type: "spring", stiffness: 15, damping: 7, mass: 3, delay },
+      }}
       className={`relative ${sizeClass}`}
       style={{ transformStyle: "preserve-3d", perspective: 1000 }}
     >
+      {/* Front face — white card */}
       <div
-        className={`absolute inset-0 flex items-center justify-center rounded-2xl border shadow-sm ${
-          red ? "border-rose-200 bg-white text-rose-600" : "border-slate-200 bg-white text-slate-800"
+        className={`absolute inset-0 flex flex-col items-center justify-center rounded-lg border-2 shadow-md ${
+          red ? "border-rose-300 bg-white text-rose-600" : "border-slate-300 bg-white text-slate-900"
         }`}
         style={{ backfaceVisibility: "hidden" }}
       >
-        {formatCard(card)}
+        <div className={`font-bold ${large ? "text-xl" : "text-sm"}`}>{rankLabel(card.rank)}</div>
+        <div className={`${large ? "text-lg" : "text-xs"} ${red ? "text-rose-500" : "text-slate-700"}`}>{SUIT_SYMBOLS[card.suit]}</div>
       </div>
+      {/* Back face — red card back with pixel diamond pattern */}
       <div
-        className="absolute inset-0 flex items-center justify-center rounded-2xl border border-sky-300 bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-sm"
-        style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        className="absolute inset-0 flex items-center justify-center rounded-lg border-2 border-red-800 shadow-md overflow-hidden"
+        style={{
+          backfaceVisibility: "hidden",
+          transform: "rotateY(180deg)",
+          background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)",
+        }}
       >
-        ★
+        <div className="absolute inset-[3px] border border-red-400/30 rounded" style={{
+          backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.08) 3px, rgba(255,255,255,0.08) 4px), repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.08) 3px, rgba(255,255,255,0.08) 4px)",
+        }} />
+        <div className="relative z-10 text-red-300/50 font-bold" style={{ fontSize: large ? 18 : 10 }}>♦</div>
       </div>
     </motion.div>
   );
@@ -3005,7 +3035,8 @@ function PokerPlayback({ result, step, done, omaha = false }) {
                 {result.board.map((card, index) => {
                   const shown = visibleBoard.includes(card);
                   const staggerDelay = index <= 2 ? index * 0.45 : 0;
-                  return <CardFace key={cardKey(card)} card={card} hidden={!shown} large delay={staggerDelay} />;
+                  if (!shown) return <div key={cardKey(card)} className="h-24 w-16 rounded-lg border-2 border-dashed border-white/10 flex items-center justify-center text-white/10 text-lg">?</div>;
+                  return <CardFace key={cardKey(card)} card={card} hidden={false} large delay={staggerDelay} deal dealIndex={index <= 2 ? index : 0} />;
                 })}
               </div>
               {currentPercentages ? (
@@ -3061,9 +3092,9 @@ function PokerPlayback({ result, step, done, omaha = false }) {
                       }
                     </div>
                     <div className={`flex justify-center gap-1.5 mt-2 ${omaha ? "flex-wrap" : ""}`} style={omaha ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", justifyItems: "center" } : {}}>
-                      {player.cards.map((card, cardIndex) => (
-                        <CardFace key={`${player.name}-${cardIndex}-${cardKey(card)}`} card={card} hidden={!revealed} />
-                      ))}
+                      {revealed ? player.cards.map((card, cardIndex) => (
+                        <CardFace key={`${player.name}-${cardIndex}-${cardKey(card)}`} card={card} hidden={false} deal dealIndex={cardIndex} />
+                      )) : <div className="h-10 flex items-center justify-center text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>🂠 🂠{omaha ? " 🂠 🂠" : ""}</div>}
                     </div>
                     <div className="flex flex-wrap justify-center gap-1 mt-2">
                       {player.chips.map((chip) => (
@@ -3507,7 +3538,7 @@ function HighCardPlayback({ result, step, done }) {
                   </div>
 
                   <div className="flex justify-center mb-3">
-                    <CardFace card={player.card} hidden={!isShown} large />
+                    {isShown ? <CardFace card={player.card} hidden={false} large deal dealIndex={0} /> : <div className="h-24 w-16 rounded-lg border-2 border-dashed border-amber-900/20 flex items-center justify-center text-amber-900/30 text-lg">?</div>}
                   </div>
 
                   <div className="text-xs" style={{ color: "#6b5335", fontFamily: "'Rye', cursive" }}>
