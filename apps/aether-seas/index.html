@@ -2459,15 +2459,13 @@ function startMinigame(d) {
 }
 
 function endMinigame() {
-  if (G.phase !== 'minigame') return; // guard against double-calls
-  G.phase = 'dialogue'; // set immediately to prevent re-entry
+  if (G.phase !== 'minigame') return;
+  G.phase = 'dialogue';
   G.mg = null;
-  setTimeout(() => {
-    $mgui.style.display = 'none';
-    $mgui.innerHTML = '<div id="mghud"></div>';
-    G.dIdx++;
-    showDialogue();
-  }, 100);
+  $mgui.style.display = 'none';
+  $mgui.innerHTML = '<div id="mghud"></div>';
+  G.dIdx++;
+  showDialogue();
 }
 
 // --- Quiz ---
@@ -2561,7 +2559,7 @@ function updateNav(dt) {
     } else if (o.y > G.H + 20) {
       n.obs.splice(i, 1); n.score++;
       document.getElementById('mghud').textContent = `Navigate: ${n.score}/${n.target}`;
-      if (n.score >= n.target) { audio.sfx('success'); endMinigame(); }
+      if (n.score >= n.target) { audio.sfx('success'); endMinigame(); return; }
     }
   }
 }
