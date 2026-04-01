@@ -3,99 +3,364 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beck's Apps</title>
+  <title>Becknology</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #0a0a0a;
-      color: #e5e5e5;
+      color: #e0e0e0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 4rem 2rem;
+      overflow-x: hidden;
     }
 
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
+    /* ---- Atmosphere ---- */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image:
+        linear-gradient(rgba(140, 100, 200, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(140, 100, 200, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    .subtitle {
-      color: #888;
-      margin-bottom: 3rem;
-      font-size: 1.1rem;
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 100;
+      background: repeating-linear-gradient(
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.015) 3px,
+        rgba(0, 0, 0, 0.015) 6px
+      );
     }
 
+    body > *:not(style) {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ---- ASCII Hero ---- */
+    .ascii-title {
+      font-family: 'Courier New', Consolas, monospace;
+      white-space: pre;
+      font-size: 10px;
+      line-height: 1.15;
+      color: #d0d0d0;
+      text-align: center;
+      padding: 60px 20px 0;
+      letter-spacing: 2px;
+      user-select: none;
+      text-shadow: 0 0 30px rgba(160, 120, 220, 0.08);
+      position: relative;
+      overflow: hidden;
+      animation: fade-in 0.8s ease-out;
+    }
+
+    .ascii-title::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(
+        180deg,
+        transparent,
+        rgba(160, 120, 220, 0.15),
+        transparent
+      );
+      box-shadow: 0 0 15px rgba(160, 120, 220, 0.1);
+      animation: scanline-sweep 4s linear infinite;
+    }
+
+    .subtitle-text {
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: 0.8rem;
+      color: #555;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 20px;
+      text-align: center;
+      animation: fade-in 0.8s ease-out 0.2s both;
+    }
+
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(160, 120, 220, 0.4), transparent);
+      margin: 30px auto;
+      animation: fade-in 0.8s ease-out 0.3s both;
+    }
+
+    /* ---- App Cards ---- */
     .apps-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-      max-width: 900px;
+      gap: 1.2rem;
+      max-width: 700px;
       width: 100%;
+      padding: 0 2rem;
+      animation: fade-in 0.8s ease-out 0.4s both;
     }
 
     .app-card {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 12px;
-      padding: 1.5rem;
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 8px;
+      padding: 1.4rem;
       text-decoration: none;
       color: inherit;
-      transition: border-color 0.2s, transform 0.2s;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
 
     .app-card:hover {
-      border-color: #555;
-      transform: translateY(-2px);
+      border-color: rgba(160, 120, 220, 0.3);
+      box-shadow: 0 0 20px rgba(160, 120, 220, 0.06);
     }
 
     .app-card h2 {
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: 1rem;
+      color: #ccc;
+      margin-bottom: 0.4rem;
     }
 
     .app-card p {
-      color: #888;
-      font-size: 0.9rem;
+      color: #666;
+      font-size: 0.85rem;
       line-height: 1.4;
     }
 
     .tag {
       display: inline-block;
-      background: #2a2a2a;
-      color: #aaa;
-      font-size: 0.75rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 999px;
-      margin-top: 0.75rem;
+      font-family: 'Courier New', Consolas, monospace;
+      background: transparent;
+      color: #555;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      margin-top: 0.6rem;
+      border: 1px solid #222;
+    }
+
+    /* ---- Footer ---- */
+    .footer {
+      margin-top: 80px;
+      padding-bottom: 40px;
+      text-align: center;
+      animation: fade-in 0.8s ease-out 0.5s both;
+    }
+
+    .footer p {
+      font-family: 'Courier New', Consolas, monospace;
+      font-size: 0.7rem;
+      color: #333;
+      letter-spacing: 2px;
+    }
+
+    /* ---- Animations ---- */
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scanline-sweep {
+      0% { top: -10%; }
+      100% { top: 110%; }
+    }
+
+    @keyframes ripple-out {
+      0% {
+        width: 4px;
+        height: 4px;
+        opacity: 0.6;
+        box-shadow: 0 0 0 0 rgba(160, 120, 220, 0.3);
+      }
+      100% {
+        width: 20px;
+        height: 20px;
+        opacity: 0;
+        box-shadow: 0 0 8px 4px rgba(160, 120, 220, 0);
+      }
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 900px) {
+      .ascii-title {
+        font-size: 7px;
+        letter-spacing: 1px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .ascii-title {
+        font-size: 4.5px;
+        letter-spacing: 0.5px;
+        padding: 30px 10px 0;
+      }
+      .subtitle-text {
+        font-size: 0.65rem;
+        letter-spacing: 3px;
+      }
+      .apps-grid {
+        padding: 0 1rem;
+        gap: 1rem;
+      }
+      .footer {
+        margin-top: 50px;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Beck's Apps</h1>
-  <p class="subtitle">Games, tools, and experiments</p>
+
+  <div class="ascii-title">
+ ██████╗ ███████╗ ██████╗██╗  ██╗███╗   ██╗ ██████╗ ██╗      ██████╗  ██████╗██╗   ██╗
+ ██╔══██╗██╔════╝██╔════╝██║ ██╔╝████╗  ██║██╔═══██╗██║     ██╔═══██╗██╔════╝╚██╗ ██╔╝
+ ██████╔╝█████╗  ██║     █████╔╝ ██╔██╗ ██║██║   ██║██║     ██║   ██║██║  ███╗╚████╔╝
+ ██╔══██╗██╔══╝  ██║     ██╔═██╗ ██║╚██╗██║██║   ██║██║     ██║   ██║██║   ██║ ╚██╔╝
+ ██████╔╝███████╗╚██████╗██║  ██╗██║ ╚████║╚██████╔╝███████╗╚██████╔╝╚██████╔╝  ██║
+ ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝  ╚═╝
+  </div>
+
+  <p class="subtitle-text">games · tools · experiments</p>
+
+  <div class="divider"></div>
 
   <div class="apps-grid">
 
     <!-- Add new apps here. Copy this card template: -->
     <a class="app-card" href="/runouts">
-      <h2>Runouts</h2>
+      <h2>> runouts</h2>
       <p>Animated random game modes to decide who gets stuck with the chores.</p>
       <span class="tag">game</span>
     </a>
 
     <!--
     <a class="app-card" href="/app-name">
-      <h2>App Name</h2>
+      <h2>> app-name</h2>
       <p>Short description of what this app does.</p>
-      <span class="tag">game</span>
+      <span class="tag">category</span>
     </a>
     -->
 
   </div>
+
+  <div class="footer">
+    <p>made by beck</p>
+  </div>
+
+  <script>
+    // Periodic glitch effect on ASCII title
+    (function() {
+      const title = document.querySelector('.ascii-title');
+      if (!title) return;
+
+      function glitch() {
+        const offset = (Math.random() * 6 - 3).toFixed(0);
+
+        title.style.transition = 'none';
+        title.style.textShadow = offset + 'px 0 rgba(160, 120, 220, 0.3), ' + (-offset) + 'px 0 rgba(100, 200, 220, 0.2)';
+
+        setTimeout(function() {
+          title.style.textShadow = '0 0 30px rgba(160, 120, 220, 0.08)';
+        }, 80);
+
+        setTimeout(function() {
+          title.style.textShadow = (offset * 0.5) + 'px 0 rgba(160, 120, 220, 0.15)';
+        }, 120);
+
+        setTimeout(function() {
+          title.style.textShadow = '0 0 30px rgba(160, 120, 220, 0.08)';
+        }, 180);
+      }
+
+      function scheduleGlitch() {
+        var delay = 8000 + Math.random() * 4000;
+        setTimeout(function() {
+          glitch();
+          scheduleGlitch();
+        }, delay);
+      }
+
+      scheduleGlitch();
+    })();
+
+    // Konami code: up up down down left right left right B A
+    (function() {
+      var konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+      var konamiIndex = 0;
+
+      document.addEventListener('keydown', function(e) {
+        if (e.keyCode === konamiCode[konamiIndex]) {
+          konamiIndex++;
+          if (konamiIndex === konamiCode.length) {
+            konamiIndex = 0;
+            activateKonami();
+          }
+        } else {
+          konamiIndex = 0;
+        }
+      });
+
+      function activateKonami() {
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;pointer-events:none;';
+        document.body.appendChild(overlay);
+
+        var colors = [
+          'rgba(160, 120, 220, 0.15)',
+          'rgba(100, 200, 220, 0.1)',
+          'rgba(220, 120, 160, 0.1)',
+          'transparent'
+        ];
+
+        var i = 0;
+        var flash = setInterval(function() {
+          overlay.style.background = colors[i % colors.length];
+          document.body.style.transform = i % 2 === 0 ? 'translateX(2px)' : 'translateX(-2px)';
+          i++;
+          if (i > 12) {
+            clearInterval(flash);
+            document.body.style.transform = '';
+            overlay.remove();
+          }
+        }, 50);
+      }
+    })();
+
+    // Click ripple — subtle pixel burst
+    (function() {
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('a, button')) return;
+
+        var ripple = document.createElement('div');
+        ripple.style.cssText =
+          'position:fixed;' +
+          'left:' + e.clientX + 'px;' +
+          'top:' + e.clientY + 'px;' +
+          'width:4px;height:4px;' +
+          'background:rgba(160,120,220,0.4);' +
+          'border-radius:0;' +
+          'pointer-events:none;' +
+          'z-index:9999;' +
+          'transform:translate(-50%,-50%);' +
+          'animation:ripple-out 0.4s ease-out forwards;';
+        document.body.appendChild(ripple);
+        setTimeout(function() { ripple.remove(); }, 400);
+      });
+    })();
+  </script>
+
 </body>
 </html>
