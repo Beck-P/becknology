@@ -129,7 +129,7 @@ const SPEAKER_COLORS = {
   g:  { name: 'Sir Gibsabella', color: '#C084FC' },
   d:  { name: 'Duke Real Zono', color: '#4ADE80' },
   f:  { name: 'Felix',          color: '#F87171' },
-  w:  { name: 'The Keeper',     color: '#A78BFA' },
+  w:  { name: 'The Ghost',      color: '#A78BFA' },
   cr: { name: 'Crew',           color: '#DEB887' },
 };
 
@@ -1631,6 +1631,254 @@ const BG = {
       ctx.fillStyle = `rgba(255,200,140,${Math.max(0.03, 0.12 - i * 0.015)})`;
       ctx.fillRect(Math.round(W * 0.5 - pw / 2) + Math.round(Math.sin(py * 0.2 + t * 0.002)), py, pw, 1);
     }
+  },
+
+  // --- New York island with Ghost HQ tower ---
+  nyIsland(t) {
+    const { W, H } = G;
+    const skyH = Math.round(H * 0.4);
+    // Dark midnight sky
+    drawGrad(0, skyH, [['#030010',0],['#08031A',0.3],['#0E0828',0.6],['#151035',1]]);
+    drawStars(skyH, t);
+    drawMoonWithSpores(t, 'midnight', skyH);
+    // Midnight water
+    drawGrad(skyH, H, [['#050515',0],['#0A0A25',0.3],['#080820',0.6],['#050515',1]]);
+    // Bioluminescence
+    for (let i = 0; i < 8; i++) {
+      const bx = Math.round(hash(i * 7 + 800) * W);
+      const by = Math.round(skyH + 3 + hash(i * 13 + 900) * (H - skyH) * 0.5);
+      ctx.fillStyle = `rgba(80,180,255,${0.08 + 0.1 * Math.sin(t * 0.001 + i * 2)})`;
+      ctx.fillRect(bx, by, 2, 1);
+    }
+    // Island silhouette (dark landmass right side)
+    const islandL = Math.round(W * 0.5);
+    drawHill(skyH + 2, H * 0.06, '#0A0815', 5);
+    ctx.fillStyle = '#0A0812';
+    ctx.fillRect(islandL, skyH - Math.round(H * 0.02), W - islandL, H - skyH + Math.round(H * 0.02));
+    // Rocky shore detail
+    ctx.fillStyle = '#121020';
+    for (let x = islandL; x < islandL + 10; x++) {
+      ctx.fillRect(x, skyH - Math.round(Math.sin(x * 0.3) * H * 0.01) - 1, 1, 3);
+    }
+    // Massive tower on the island
+    const tw = Math.max(8, Math.round(W * 0.08));
+    const towerX = Math.round(W * 0.72);
+    const towerBot = skyH - Math.round(H * 0.02);
+    const towerH = Math.round(H * 0.35);
+    // Tower body
+    ctx.fillStyle = '#151020';
+    ctx.fillRect(towerX - Math.round(tw / 2), towerBot - towerH, tw, towerH);
+    // Tower layers/floors
+    ctx.fillStyle = '#1A1428';
+    for (let i = 0; i < 6; i++) {
+      const fy = towerBot - Math.round(i * towerH / 6);
+      ctx.fillRect(towerX - Math.round(tw / 2) - 1, fy, tw + 2, 1);
+    }
+    // Tower windows (ghostly glow)
+    for (let i = 0; i < 5; i++) {
+      const wy = towerBot - Math.round((i + 1) * towerH / 7);
+      ctx.fillStyle = `rgba(170,130,255,${0.3 + 0.15 * Math.sin(t * 0.001 + i)})`;
+      ctx.fillRect(towerX - 2, wy, 2, 2);
+      ctx.fillRect(towerX + 1, wy, 2, 2);
+    }
+    // Tower top (pointed)
+    ctx.fillStyle = '#151020';
+    ctx.fillRect(towerX - Math.round(tw / 2 + 1), towerBot - towerH, tw + 2, 1);
+    ctx.fillRect(towerX - 2, towerBot - towerH - Math.round(H * 0.03), 4, Math.round(H * 0.03));
+    ctx.fillRect(towerX - 1, towerBot - towerH - Math.round(H * 0.05), 2, Math.round(H * 0.02));
+    // Ghost glow at tower top
+    const gg = ctx.createRadialGradient(towerX, towerBot - towerH - Math.round(H * 0.04), 0,
+      towerX, towerBot - towerH - Math.round(H * 0.04), Math.round(W * 0.06));
+    gg.addColorStop(0, 'rgba(170,130,255,0.2)'); gg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gg; ctx.fillRect(towerX - Math.round(W * 0.08), towerBot - towerH - Math.round(H * 0.08), Math.round(W * 0.16), Math.round(H * 0.1));
+    // GHOST HQ sign on island
+    ctx.fillStyle = 'rgba(170,130,255,0.4)';
+    ctx.font = `bold ${Math.max(3, Math.round(W * 0.02))}px -apple-system,sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('GHOST HQ', towerX, towerBot + Math.round(H * 0.03));
+    // Ship docked (left side, small)
+    const sx = Math.round(W * 0.2), swy = skyH + 2 + Math.round(Math.sin(t * 0.001) * 1);
+    ctx.fillStyle = '#3A2010';
+    ctx.fillRect(sx - 6, swy, 12, 3);
+    ctx.fillStyle = '#5A3A10';
+    ctx.fillRect(sx, swy - 8, 1, 8);
+    ctx.fillStyle = '#D0D4DA';
+    ctx.fillRect(sx + 1, swy - 7, 4, 4);
+  },
+
+  // --- Tower lobby (marble, candelabras, reception desk) ---
+  towerLobby(t) {
+    const { W, H } = G;
+    // Dark elegant interior
+    drawGrad(0, H, [['#0A0818',0],['#121025',0.3],['#1A1530',0.5],['#121025',0.8],['#0A0818',1]]);
+    // Marble floor
+    const floorY = Math.round(H * 0.65);
+    ctx.fillStyle = '#2A2538';
+    ctx.fillRect(0, floorY, W, H - floorY);
+    // Floor tile pattern
+    ctx.fillStyle = '#322D40';
+    for (let x = 0; x < W; x += Math.max(5, Math.round(W * 0.06))) {
+      ctx.fillRect(x, floorY, 1, H - floorY);
+      for (let y = floorY; y < H; y += Math.max(5, Math.round(H * 0.05)))
+        ctx.fillRect(x, y, Math.max(5, Math.round(W * 0.06)), 1);
+    }
+    // Floor highlight (marble sheen)
+    ctx.fillStyle = 'rgba(200,190,220,0.04)';
+    ctx.fillRect(0, floorY, W, 1);
+    // Tall pillars
+    for (let side = 0; side < 2; side++) {
+      const px = side === 0 ? Math.round(W * 0.1) : Math.round(W * 0.88);
+      ctx.fillStyle = '#1E1830';
+      ctx.fillRect(px - 2, Math.round(H * 0.1), 5, floorY - Math.round(H * 0.1));
+      ctx.fillStyle = '#252040';
+      ctx.fillRect(px - 3, Math.round(H * 0.1), 7, 2);
+      ctx.fillRect(px - 3, floorY - 1, 7, 2);
+    }
+    // Floating candelabras
+    for (let i = 0; i < 3; i++) {
+      const cx = Math.round(W * 0.25 + i * W * 0.25);
+      const cy = Math.round(H * 0.2 + Math.sin(t * 0.0008 + i * 2) * 3);
+      // Candelabra base
+      ctx.fillStyle = '#8A7A50';
+      ctx.fillRect(cx - 2, cy, 5, 2);
+      ctx.fillRect(cx, cy + 2, 1, 3);
+      // Candles
+      ctx.fillStyle = '#E0D0A0';
+      ctx.fillRect(cx - 2, cy - 3, 1, 3);
+      ctx.fillRect(cx, cy - 4, 1, 4);
+      ctx.fillRect(cx + 2, cy - 3, 1, 3);
+      // Flames
+      ctx.fillStyle = '#FFD060';
+      ctx.fillRect(cx - 2, cy - 4, 1, 1);
+      ctx.fillRect(cx, cy - 5, 1, 1);
+      ctx.fillRect(cx + 2, cy - 4, 1, 1);
+      // Glow
+      const cg = ctx.createRadialGradient(cx, cy - 2, 0, cx, cy - 2, Math.round(W * 0.06));
+      cg.addColorStop(0, 'rgba(170,130,255,0.1)'); cg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = cg; ctx.fillRect(cx - Math.round(W * 0.06), cy - Math.round(H * 0.06), Math.round(W * 0.12), Math.round(H * 0.1));
+    }
+    // Reception desk (center)
+    ctx.fillStyle = '#2A2040';
+    ctx.fillRect(Math.round(W * 0.35), floorY - Math.round(H * 0.06), Math.round(W * 0.3), Math.round(H * 0.06));
+    ctx.fillStyle = '#322848';
+    ctx.fillRect(Math.round(W * 0.35), floorY - Math.round(H * 0.06), Math.round(W * 0.3), 1);
+    // "Take a number" sign
+    ctx.fillStyle = 'rgba(170,130,255,0.3)';
+    ctx.fillRect(Math.round(W * 0.45), floorY - Math.round(H * 0.09), Math.round(W * 0.1), Math.round(H * 0.025));
+    // Archway in the back
+    ctx.fillStyle = '#0A0812';
+    ctx.fillRect(Math.round(W * 0.4), Math.round(H * 0.15), Math.round(W * 0.2), Math.round(H * 0.35));
+    ctx.fillStyle = '#1A1428';
+    ctx.fillRect(Math.round(W * 0.39), Math.round(H * 0.15), Math.round(W * 0.22), 2);
+    // Floating purple particles
+    for (let i = 0; i < 10; i++) {
+      const px = Math.round(W * 0.15 + (i * 137) % (W * 0.7));
+      const py = Math.round((H * 0.1 + (i * 97 + t * 0.008) % (H * 0.5)));
+      ctx.fillStyle = `rgba(170,130,255,${0.1 + 0.15 * Math.sin(t * 0.002 + i * 3)})`;
+      ctx.fillRect(px, py, 1, 1);
+    }
+  },
+
+  // --- Tower staircase (spiral stairs, torches) ---
+  towerStairs(t) {
+    const { W, H } = G;
+    drawGrad(0, H, [['#08050F',0],['#0E0A18',0.3],['#151020',0.6],['#0E0A18',1]]);
+    // Stone walls
+    ctx.fillStyle = '#151020';
+    ctx.fillRect(0, 0, Math.round(W * 0.12), H);
+    ctx.fillRect(Math.round(W * 0.88), 0, Math.round(W * 0.12), H);
+    // Brick texture
+    ctx.fillStyle = '#1A1428';
+    for (let y = 0; y < H; y += 4) {
+      const off = (Math.floor(y / 4) % 2) * 2;
+      for (let x = 0; x < Math.round(W * 0.12); x += 4) ctx.fillRect(x + off, y, 3, 3);
+      for (let x = Math.round(W * 0.88); x < W; x += 4) ctx.fillRect(x + off, y, 3, 3);
+    }
+    // Spiral stairs (going up and to the right)
+    for (let i = 0; i < 10; i++) {
+      const sy = Math.round(H * 0.85 - i * H * 0.075);
+      const sx = Math.round(W * 0.15 + (i % 3) * W * 0.12);
+      const sw = Math.round(W * 0.25);
+      ctx.fillStyle = i % 2 === 0 ? '#1E1830' : '#161228';
+      ctx.fillRect(sx, sy, sw, Math.max(2, Math.round(H * 0.02)));
+      ctx.fillStyle = '#252040';
+      ctx.fillRect(sx, sy, sw, 1);
+    }
+    // Torches on walls
+    for (let i = 0; i < 3; i++) {
+      const ty = Math.round(H * 0.2 + i * H * 0.25);
+      // Left torch
+      ctx.fillStyle = '#5A3A10';
+      ctx.fillRect(Math.round(W * 0.1), ty, 2, 4);
+      ctx.fillStyle = '#FFB040';
+      ctx.fillRect(Math.round(W * 0.1), ty - 1, 2, 1);
+      ctx.fillStyle = '#FF8020';
+      ctx.fillRect(Math.round(W * 0.1), ty - 2 + Math.round(Math.sin(t * 0.005 + i) * 0.5), 1, 1);
+      // Torch glow
+      const tg = ctx.createRadialGradient(Math.round(W * 0.1) + 1, ty, 0, Math.round(W * 0.1) + 1, ty, Math.round(W * 0.08));
+      tg.addColorStop(0, 'rgba(255,160,60,0.12)'); tg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = tg;
+      ctx.fillRect(0, ty - Math.round(H * 0.06), Math.round(W * 0.25), Math.round(H * 0.12));
+      // Right torch
+      ctx.fillStyle = '#5A3A10';
+      ctx.fillRect(Math.round(W * 0.88), ty + Math.round(H * 0.05), 2, 4);
+      ctx.fillStyle = '#FFB040';
+      ctx.fillRect(Math.round(W * 0.88), ty + Math.round(H * 0.05) - 1, 2, 1);
+    }
+    // Floating dust/magic particles
+    for (let i = 0; i < 12; i++) {
+      const px = Math.round(W * 0.15 + (i * 173) % (W * 0.7));
+      const py = Math.round((H * 0.05 + (i * 97 + t * 0.01) % (H * 0.8)));
+      ctx.fillStyle = `rgba(170,130,255,${0.08 + 0.12 * Math.sin(t * 0.002 + i * 3)})`;
+      ctx.fillRect(px, py, 1, 1);
+    }
+  },
+
+  // --- Tower top with ghost figure ---
+  towerGhost(t) {
+    const { W, H } = G;
+    // Open sky
+    drawGrad(0, Math.round(H * 0.5), [['#030012',0],['#08032A',0.3],['#120840',0.6],['#1A0A50',1]]);
+    drawStars(Math.round(H * 0.45), t);
+    drawMoonWithSpores(t, 'midnight', Math.round(H * 0.5));
+    // Aurora bands
+    for (let i = 0; i < 3; i++) {
+      const ay = Math.round(H * 0.1 + i * H * 0.06);
+      ctx.fillStyle = `rgba(170,130,255,${0.04 + 0.02 * Math.sin(t * 0.0005 + i)})`;
+      for (let x = 0; x < W; x++) {
+        const h = Math.round(2 + fbm(x * 0.02 + i * 5 + t * 0.00005, 3) * 3);
+        ctx.fillRect(x, ay + Math.round(Math.sin(x * 0.03 + t * 0.0003) * 2), 1, h);
+      }
+    }
+    // Platform
+    const platY = Math.round(H * 0.65);
+    ctx.fillStyle = '#1A1040'; ctx.fillRect(0, platY, W, H - platY);
+    ctx.fillStyle = '#2A1A55'; ctx.fillRect(0, platY, W, 2);
+    ctx.fillStyle = '#201245';
+    for (let x = 0; x < W; x += Math.max(4, Math.round(W * 0.06)))
+      ctx.fillRect(x, platY + 2, Math.max(3, Math.round(W * 0.06) - 1), Math.max(3, Math.round(H * 0.04)));
+    // Ghost figure (translucent, center-right, floating above platform)
+    const gx = Math.round(W * 0.68), gy = Math.round(H * 0.45) + Math.round(Math.sin(t * 0.001) * 3);
+    // Ghost body (translucent flowing shape)
+    ctx.fillStyle = 'rgba(200,180,255,0.2)';
+    for (let dy = -8; dy <= 8; dy++) {
+      const wide = dy < -3 ? 3 : dy < 3 ? 4 + Math.round(Math.sin(dy * 0.3 + t * 0.002) * 1) : 3 - Math.round((dy - 3) * 0.3);
+      ctx.fillRect(gx - wide, gy + dy, wide * 2, 1);
+    }
+    // Ghost head
+    ctx.fillStyle = 'rgba(220,200,255,0.3)';
+    for (let dy = -4; dy <= 0; dy++) {
+      const dx = Math.round(Math.sqrt(Math.max(0, 16 - dy * dy)));
+      ctx.fillRect(gx - dx, gy - 10 + dy, dx * 2, 1);
+    }
+    // Ghost eyes (glowing purple)
+    ctx.fillStyle = 'rgba(170,100,255,0.7)';
+    ctx.fillRect(gx - 2, gy - 11, 1, 1);
+    ctx.fillRect(gx + 1, gy - 11, 1, 1);
+    // Ghost glow
+    const ghostGlow = ctx.createRadialGradient(gx, gy - 5, 0, gx, gy - 5, Math.round(W * 0.1));
+    ghostGlow.addColorStop(0, 'rgba(170,130,255,0.12)'); ghostGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = ghostGlow; ctx.fillRect(gx - Math.round(W * 0.1), gy - Math.round(H * 0.1), Math.round(W * 0.2), Math.round(H * 0.15));
   }
 };
 
@@ -1998,7 +2246,7 @@ function drawSceneChars(sceneId, t) {
       drawUlisa(W * 0.4, H * 0.68, 1, t);
       break;
     case 'ny-arrival':
-      drawUlisa(W * 0.35, H * 0.68, 1, t);
+      drawUlisa(W * 0.2, H * 0.52, 1, t);
       break;
     case 'tower-lobby':
       drawUlisa(W * 0.35, H * 0.73, 1, t);
@@ -2009,8 +2257,8 @@ function drawSceneChars(sceneId, t) {
       drawBeckRat(W * 0.48, H * 0.68, t);
       break;
     case 'tower-ghost':
-      drawUlisa(W * 0.3, H * 0.7, 1, t);
-      drawBeckRat(W * 0.42, H * 0.74, t);
+      drawUlisa(W * 0.25, H * 0.63, 1, t);
+      drawBeckRat(W * 0.38, H * 0.67, t);
       break;
     case 'back-home':
       drawUlisa(W * 0.33, H * 0.57, 1, t);
@@ -2083,7 +2331,7 @@ function emitParticles(scene) {
     addP('sparkle', Math.random() * W, H * 0.3 + Math.random() * H * 0.15, { vy: 0.005, color: c, maxLife: 3000 });
   } else if (bg === 'lakeSunset') {
     addP('sparkle', Math.random() * W, Math.random() * H * 0.25, { vy: 0.003, color: '#FFD700', maxLife: 4000 });
-  } else if (bg === 'tower' || bg === 'towerTop') {
+  } else if (bg === 'tower' || bg === 'towerTop' || bg === 'towerLobby' || bg === 'towerStairs' || bg === 'towerGhost') {
     const cols = ['#A78BFA','#C084FC','#34D399'];
     addP('magic', W * 0.1 + Math.random() * W * 0.8, H, {
       vy: -0.025 - Math.random() * 0.015, vx: (Math.random() - 0.5) * 0.008,
@@ -2934,8 +3182,7 @@ const scenes = [
   ]},
 
   // 12a — Arrival at New York
-  { id: 'ny-arrival', bg: 'shipFull', music: 'midnight', waterType: 'midnight',
-    init() { this.waterType = 'midnight'; },
+  { id: 'ny-arrival', bg: 'nyIsland', music: 'midnight',
     dialogue: [
     { s:'n', t:'She docked the ship alone. The island was dark and quiet. The tower loomed above, its windows flickering with pale ghostly light.' },
     { s:'n', t:'She stood on the deck and looked up at it.' },
@@ -2959,7 +3206,7 @@ const scenes = [
   ]},
 
   // 12b — Tower Lobby
-  { id: 'tower-lobby', bg: 'tower', music: 'midnight', dialogue: [
+  { id: 'tower-lobby', bg: 'towerLobby', music: 'midnight', dialogue: [
     { s:'n', t:'The tower door swung open with a sound like a very old library clearing its throat.' },
     { s:'n', t:'Inside was... not what she expected.' },
     { s:'u', t:'Woah.' },
@@ -2974,7 +3221,7 @@ const scenes = [
   ]},
 
   // 12c — Climbing the Tower (Beck apologizes)
-  { id: 'tower-stairs', bg: 'tower', music: 'midnight', dialogue: [
+  { id: 'tower-stairs', bg: 'towerStairs', music: 'midnight', dialogue: [
     { s:'n', t:'They found the staircase — a spiral of dark stone that wound upward into the flickering light above.' },
     { s:'n', t:'Beck-rat rode on her shoulder as she climbed. For a while, neither of them spoke.' },
     { s:'b', t:'Hey.' },
@@ -2992,7 +3239,7 @@ const scenes = [
   ]},
 
   // 12d — The Ghost
-  { id: 'tower-ghost', bg: 'towerTop', music: 'midnight', dialogue: [
+  { id: 'tower-ghost', bg: 'towerGhost', music: 'midnight', dialogue: [
     { s:'n', t:'At the top of the tower, the air shimmered. A figure materialized — translucent, elegant, mildly inconvenienced.' },
     { s:'w', t:'Oh. You\'re here. I was hoping you\'d turn back.' },
     { s:'u', t:'Give me Mitchell back.' },
@@ -3086,6 +3333,10 @@ function render() {
   else if (bg === 'seaParting') BG.seaParting(t);
   else if (bg === 'shipHold') BG.shipHold(t);
   else if (bg === 'seaDarkening') BG.seaDarkening(t);
+  else if (bg === 'nyIsland') BG.nyIsland(t);
+  else if (bg === 'towerLobby') BG.towerLobby(t);
+  else if (bg === 'towerStairs') BG.towerStairs(t);
+  else if (bg === 'towerGhost') BG.towerGhost(t);
   else if (bg === 'ship') BG.ship(t, scene.waterType);
   else if (bg === 'burritos') BG.burritos(t);
   else if (bg === 'cafe') BG.cafe(t);
