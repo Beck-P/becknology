@@ -147,6 +147,7 @@ const G = {
   W: 0, H: 0,
   mg: null,
   pTimer: 0,
+  transformFlash: 0,
 };
 const particles = [];
 
@@ -534,6 +535,16 @@ const BG = {
     // Dark emerald cloud bands
     drawCloudBand(skyH, t, 'rgba(20,80,50,0.4)', 0.08, 50, 0.35);
     drawCloudBand(skyH, t, 'rgba(25,90,55,0.3)', 0.06, 65, 0.55);
+    // Abduction mood shift — darken sky as phases progress
+    const currentScene = scenes[G.sceneIdx];
+    if (currentScene && currentScene.id === 'abduction') {
+      const phase = currentScene.phase || 0;
+      if (phase >= 1) {
+        const darkness = Math.min(0.35, phase * 0.08);
+        ctx.fillStyle = `rgba(10,5,20,${darkness})`;
+        ctx.fillRect(0, 0, W, skyH);
+      }
+    }
     // Emerald sea — solid green base, then lighter reflection on top
     drawGrad(skyH, sandY, [['#06503A',0],['#08604A',0.3],['#0A7058',0.6],['#0D8868',0.85],['#15A080',1]]);
     // Wave texture
@@ -1182,6 +1193,37 @@ const BG = {
     ctx.fillStyle = 'rgba(100,230,170,0.3)';
     for (let x = Math.round(W * 0.24); x < Math.round(W * 0.76); x += 3)
       ctx.fillRect(x, dwy + bob + 3 + Math.round(Math.sin(x * 0.2 + t * 0.003) * 0.5), 2, 1);
+    // Floating wreckage from the shipwreck
+    const wreckY = Math.round(H * 0.48);
+    // Barrel
+    ctx.fillStyle = '#5A3A18';
+    const barrelBob = Math.round(Math.sin(t * 0.0012 + 1) * 1.5);
+    ctx.fillRect(Math.round(W * 0.12), wreckY + barrelBob, 3, 3);
+    ctx.fillStyle = '#6A4A28';
+    ctx.fillRect(Math.round(W * 0.12), wreckY + barrelBob + 1, 3, 1);
+    // Wood planks
+    ctx.fillStyle = '#6B4A20';
+    ctx.fillRect(Math.round(W * 0.82), wreckY + 2 + Math.round(Math.sin(t * 0.001 + 3) * 1), 4, 1);
+    ctx.fillRect(Math.round(W * 0.72), wreckY - 1 + Math.round(Math.sin(t * 0.0009 + 5) * 1.5), 3, 1);
+    // Torn sail fragment
+    ctx.fillStyle = '#D8D0C0';
+    const sailBob = Math.round(Math.sin(t * 0.0008 + 2) * 1);
+    ctx.fillRect(Math.round(W * 0.9), wreckY + 1 + sailBob, 2, 2);
+    ctx.fillStyle = '#C0B8A8';
+    ctx.fillRect(Math.round(W * 0.9), wreckY + sailBob, 2, 1);
+    // Distant smoke column from the sinking ship
+    const smokeBaseX = Math.round(W * 0.15);
+    for (let i = 0; i < 6; i++) {
+      const smokeX = smokeBaseX + Math.round(Math.sin(t * 0.0006 + i * 0.7) * (1 + i * 0.3));
+      const smokeY = Math.round(H * 0.35 - i * H * 0.04);
+      if (smokeY > 0) {
+        ctx.fillStyle = `rgba(80,70,60,${0.12 - i * 0.015})`;
+        ctx.fillRect(smokeX, smokeY, 2 - (i > 3 ? 1 : 0), 2);
+      }
+    }
+    // Smoke base glow (fire on the water)
+    ctx.fillStyle = 'rgba(200,100,40,0.08)';
+    ctx.fillRect(smokeBaseX - 2, Math.round(H * 0.36), 5, 2);
   },
 
   // --- Looking up at a ship from water level ---
@@ -1405,6 +1447,25 @@ const BG = {
     ctx.fillStyle = '#5A3A10'; ctx.fillRect(0, deckY - 2, W, 3);
     for (let x = 0; x < W; x += Math.max(6, Math.round(W * 0.06)))
       ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
+    // Lone lantern on railing
+    const llx = Math.round(W * 0.42), lly = deckY - Math.round(H * 0.04);
+    ctx.fillStyle = '#5A3A10'; ctx.fillRect(llx, lly, 1, Math.round(H * 0.04));
+    ctx.fillStyle = '#FFD040'; ctx.fillRect(llx - 1, lly - 2, 3, 2);
+    // Warm glow
+    const llg = ctx.createRadialGradient(llx, lly - 1, 0, llx, lly - 1, Math.round(W * 0.08));
+    llg.addColorStop(0, 'rgba(255,200,80,0.18)'); llg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = llg; ctx.fillRect(llx - Math.round(W * 0.08), lly - Math.round(H * 0.06), Math.round(W * 0.16), Math.round(H * 0.1));
+    // Shooting star
+    const starCycle = (t * 0.0002) % 5;
+    if (starCycle < 0.3) {
+      const starX = Math.round(W * 0.6 + starCycle * W * 0.8);
+      const starY = Math.round(skyH * 0.15 + starCycle * skyH * 0.3);
+      ctx.fillStyle = `rgba(255,255,255,${0.6 - starCycle * 1.5})`;
+      ctx.fillRect(starX, starY, 2, 1);
+      ctx.fillStyle = `rgba(255,255,255,${0.3 - starCycle * 0.8})`;
+      ctx.fillRect(starX - 2, starY + 1, 2, 1);
+      ctx.fillRect(starX - 4, starY + 2, 1, 1);
+    }
   },
 
   // --- Cabin door (eavesdropping scene) ---
@@ -1679,7 +1740,12 @@ const BG = {
 
   towerTop(t) {
     const { W, H } = G;
-    drawGrad(0, Math.round(H * 0.72), [['#030012',0],['#08032A',0.3],['#120840',0.6],['#1A0A50',1]]);
+    if (G.transformFlash > 0) {
+      // Golden sky gradient for transformation
+      drawGrad(0, Math.round(H * 0.72), [['#2A1A10',0],['#6A4A20',0.3],['#AA8040',0.6],['#FFD080',1]]);
+    } else {
+      drawGrad(0, Math.round(H * 0.72), [['#030012',0],['#08032A',0.3],['#120840',0.6],['#1A0A50',1]]);
+    }
     drawMoonWithSpores(t, 'midnight', Math.round(H * 0.72));
     for (let i = 0; i < 70; i++) {
       const sx = Math.round((i * 137.5 + 23) % W), sy = Math.round((i * 83.7 + 11) % (H * 0.65));
@@ -1689,12 +1755,20 @@ const BG = {
       ctx.fillRect(sx, sy, big ? 2 : 1, 1);
       if (big) ctx.fillRect(sx, sy + 1, 1, 1);
     }
+    if (G.transformFlash > 0) {
+      // Radial burst of golden light at center
+      const burst = ctx.createRadialGradient(Math.round(W * 0.5), Math.round(H * 0.4), 0, Math.round(W * 0.5), Math.round(H * 0.4), Math.round(W * 0.4));
+      burst.addColorStop(0, 'rgba(255,255,240,0.35)'); burst.addColorStop(0.3, 'rgba(255,215,100,0.2)'); burst.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = burst; ctx.fillRect(0, 0, W, H);
+    }
     const mg = ctx.createRadialGradient(Math.round(W * 0.5), Math.round(H * 0.42), 0, Math.round(W * 0.5), Math.round(H * 0.42), Math.round(W * 0.3));
     mg.addColorStop(0, 'rgba(100,230,180,0.12)'); mg.addColorStop(0.4, 'rgba(139,92,246,0.06)'); mg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = mg; ctx.fillRect(0, 0, W, H);
     for (let i = 0; i < 3; i++) {
       const ay = Math.round(H * 0.15 + i * H * 0.08);
-      ctx.fillStyle = `rgba(100,220,180,${0.04 + 0.02 * Math.sin(t * 0.0005 + i)})`;
+      ctx.fillStyle = G.transformFlash > 0
+        ? `rgba(255,200,100,${0.06 + 0.03 * Math.sin(t * 0.0005 + i)})`
+        : `rgba(100,220,180,${0.04 + 0.02 * Math.sin(t * 0.0005 + i)})`;
       for (let x = 0; x < W; x++) {
         const h = Math.round(2 + fbm(x * 0.02 + i * 5 + t * 0.00005, 3) * 3);
         ctx.fillRect(x, ay + Math.round(Math.sin(x * 0.03 + t * 0.0003) * 2), 1, h);
@@ -1734,6 +1808,18 @@ const BG = {
     drawGrad(0, skyH, [['#030010',0],['#08031A',0.3],['#0E0828',0.6],['#151035',1]]);
     drawStars(skyH, t);
     drawMoonWithSpores(t, 'midnight', skyH);
+    // Lightning flashes
+    const lightningCycle = (t * 0.00025 + 0.7) % 4;
+    if (lightningCycle < 0.05) {
+      ctx.fillStyle = `rgba(200,180,255,${0.35 - lightningCycle * 5})`;
+      ctx.fillRect(0, 0, W, skyH);
+    }
+    // Secondary flash (offset timing)
+    const lightningCycle2 = (t * 0.00025 + 2.3) % 5.5;
+    if (lightningCycle2 < 0.04) {
+      ctx.fillStyle = `rgba(180,160,240,${0.25 - lightningCycle2 * 4})`;
+      ctx.fillRect(0, 0, W, skyH);
+    }
     // Midnight water
     drawGrad(skyH, H, [['#050515',0],['#0A0A25',0.3],['#080820',0.6],['#050515',1]]);
     // Bioluminescence
@@ -2452,10 +2538,21 @@ function emitParticles(scene) {
   } else if (bg === 'lakeSunset') {
     addP('sparkle', Math.random() * W, Math.random() * H * 0.25, { vy: 0.003, color: '#FFD700', maxLife: 4000 });
   } else if (bg === 'tower' || bg === 'towerTop' || bg === 'towerLobby' || bg === 'towerStairs' || bg === 'towerGhost') {
-    const cols = ['#A78BFA','#C084FC','#34D399'];
-    addP('magic', W * 0.1 + Math.random() * W * 0.8, H, {
-      vy: -0.025 - Math.random() * 0.015, vx: (Math.random() - 0.5) * 0.008,
-      color: cols[Math.floor(Math.random() * cols.length)], maxLife: 4000 });
+    if (bg === 'towerTop' && G.transformFlash > 0) {
+      // Golden sparkle particles during transformation
+      const cols = ['#FFD700','#FFF0A0','#FFB060'];
+      addP('magic', W * 0.1 + Math.random() * W * 0.8, H, {
+        vy: -0.03 - Math.random() * 0.02, vx: (Math.random() - 0.5) * 0.012,
+        color: cols[Math.floor(Math.random() * cols.length)], maxLife: 3500 });
+      // Extra golden particles for intensity
+      addP('sparkle', Math.random() * W, Math.random() * H * 0.5, {
+        vy: -0.01, color: '#FFD700', maxLife: 2500 });
+    } else {
+      const cols = ['#A78BFA','#C084FC','#34D399'];
+      addP('magic', W * 0.1 + Math.random() * W * 0.8, H, {
+        vy: -0.025 - Math.random() * 0.015, vx: (Math.random() - 0.5) * 0.008,
+        color: cols[Math.floor(Math.random() * cols.length)], maxLife: 4000 });
+    }
   } else if (bg === 'ending') {
     const cols = ['#FFD700','#A7F3D0','#A78BFA','#F5A0C0'];
     addP('sparkle', Math.random() * W, Math.random() * H, {
@@ -3401,7 +3498,7 @@ const scenes = [
     { s:'b', t:'I... I ate it.' },
     { s:'b', t:'It was...' },
     { s:'b', t:'...actually not terrible?' },
-    { s:'n', t:'The tower exploded with light.', onShow(){ triggerShake(300); } },
+    { s:'n', t:'The tower exploded with light.', onShow(){ triggerShake(300); G.transformFlash = 1; } },
   ]},
 
   // 13 — The Transformation
