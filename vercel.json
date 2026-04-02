@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd apps/runouts && npm install && npm run build && cd ../.. && mkdir -p public && cp -r apps public/apps && cp -r apps/runouts/dist public/runouts",
+  "buildCommand": "bash build.sh",
   "outputDirectory": "public",
   "rewrites": [
     { "source": "/", "destination": "/apps/hub/index.html" },
