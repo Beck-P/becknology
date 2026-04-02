@@ -5898,15 +5898,15 @@ function CardDraftPicker({ cards, keepCount, onSubmit }) {
               onClick={() => toggleCard(i)}
               className={`relative rounded-lg border-2 p-2 text-center transition ${
                 isSelected
-                  ? 'border-indigo-400 bg-indigo-500/20 scale-110'
-                  : 'border-white/10 bg-white/5 opacity-60'
+                  ? 'border-indigo-400 scale-110 shadow-lg shadow-indigo-500/30'
+                  : 'border-slate-400 opacity-80'
               }`}
-              style={{ minWidth: 44, minHeight: 60 }}
+              style={{ minWidth: 48, minHeight: 64, background: '#ffffff' }}
             >
-              <div className={`font-bold ${red ? 'text-rose-400' : 'text-white'}`} style={{ fontSize: 16 }}>
+              <div className="font-extrabold" style={{ fontSize: 18, color: red ? '#dc2626' : '#000000' }}>
                 {rankLabel(card.rank)}
               </div>
-              <div className={`${red ? 'text-rose-400' : 'text-slate-300'}`} style={{ fontSize: 14 }}>
+              <div style={{ fontSize: 16, color: red ? '#e11d48' : '#000000' }}>
                 {SUIT_SYMBOLS[card.suit]}
               </div>
               {isSelected ? <div className="absolute -top-1 -right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">{'\u2713'}</div> : null}
