@@ -8066,6 +8066,7 @@ function ChoreChaosApp() {
   const [battleMoves, setBattleMoves] = useState(null);
   const [voteActive, setVoteActive] = useState(false);
   const [votes, setVotes] = useState({});
+  const votesRef = useRef({});
   const [voteDeadline, setVoteDeadline] = useState(null);
   const [spectatorSeries, setSpectatorSeries] = useState(null);
   const [seriesTied, setSeriesTied] = useState(null);
@@ -8949,7 +8950,7 @@ function ChoreChaosApp() {
 
       result.isTie = hasTie;
       result.tiedNames = hasTie ? tiedNames : undefined;
-      result.selectedName = hasTie ? tiedNames[0] : selectedName;
+      result.selectedName = hasTie ? null : selectedName;
       result.headline = hasTie
         ? 'It\'s a tie between ' + tiedNames.join(' and ') + '!'
         : pickRandomMessage(
@@ -9269,7 +9270,7 @@ function ChoreChaosApp() {
         action: 'shield_unavailable',
       });
 
-      advancePlayback();
+      setTimeout(() => advancePlayback(), 0);
     }
   }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, usedShields]);
 
@@ -9507,7 +9508,11 @@ function ChoreChaosApp() {
       const modeId = payload.modeId;
       if (!voter || !modeId) return;
 
-      setVotes(prev => ({ ...prev, [voter]: modeId }));
+      setVotes(prev => {
+        const updated = { ...prev, [voter]: modeId };
+        votesRef.current = updated;
+        return updated;
+      });
 
       // Broadcast the vote to everyone
       broadcastEvent({ type: 'vote_cast', playerName: voter, modeId });
@@ -9552,7 +9557,7 @@ function ChoreChaosApp() {
   }
 
   async function recordGame(outcome) {
-    if (!_supabase || outcome.isTie) return;
+    if (!_supabase || outcome.isTie || outcome.isTournament || !outcome.players) return;
     try {
       await _supabase.from('runouts_games').insert({
         mode_id: outcome.modeId,
@@ -9651,7 +9656,7 @@ function ChoreChaosApp() {
     setSuddenDeathRound(0);
     setSuddenDeathNames(null);
     setVoteActive(false);
-    setVotes({});
+    setVotes({}); votesRef.current = {};
     setVoteDeadline(null);
     setShowSeriesScoreboard(false);
     broadcastEvent({
@@ -9745,7 +9750,7 @@ function ChoreChaosApp() {
     setBattleMoves(null);
     setHandoffReady(false);
     setVoteActive(false);
-    setVotes({});
+    setVotes({}); votesRef.current = {};
     setVoteDeadline(null);
     setShowSeriesScoreboard(false);
     window.__interactiveRocketEjects = {};
@@ -9841,7 +9846,7 @@ function ChoreChaosApp() {
     window.__stockInteractive = false;
     window.__stockDrawIndex = 0;
     setVoteActive(false);
-    setVotes({});
+    setVotes({}); votesRef.current = {};
     setVoteDeadline(null);
     resetSeriesState();
     broadcastEvent({ type: 'game_reset' });
@@ -9888,14 +9893,14 @@ function ChoreChaosApp() {
     } else {
       broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: false });
     }
-  }, [seriesActive, playbackDone, result?.runId]);
+  }, [seriesActive, playbackDone, result?.runId, seriesRound, seriesConfig, seriesHistory]);
 
   // ── Vote for Next Game ────────────────────────────────────
 
   function startVote() {
     const deadline = Date.now() + 30000;
     setVoteActive(true);
-    setVotes({});
+    setVotes({}); votesRef.current = {};
     setVoteDeadline(deadline);
 
     broadcastEvent({
@@ -9918,9 +9923,10 @@ function ChoreChaosApp() {
     setPendingAction(null);
     currentActionHandler.current = null;
 
-    // Count votes
+    // Count votes (use ref for latest values in case called from timeout)
+    const currentVotes = votesRef.current;
     const counts = {};
-    Object.values(votes).forEach(modeId => {
+    Object.values(currentVotes).forEach(modeId => {
       counts[modeId] = (counts[modeId] || 0) + 1;
     });
 
