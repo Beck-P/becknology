@@ -1471,3 +1471,12 @@
         font-size: 0.75rem !important;
       }
     }
+
+    /* Prevent horizontal overflow globally */
+    html { overflow-x: hidden; }
+
+    /* Better touch handling */
+    button, select, input { -webkit-tap-highlight-color: transparent; }
+
+    /* Smooth scrolling in modal */
+    .overflow-y-auto { -webkit-overflow-scrolling: touch; }

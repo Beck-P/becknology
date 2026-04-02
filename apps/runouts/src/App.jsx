@@ -4742,7 +4742,7 @@ function PlinkoPlayback({ result, step, done }) {
       />
 
       <div className="relative overflow-hidden rounded-2xl flex justify-center" style={{ background: 'linear-gradient(180deg, #1a0a18, #0f0610)', minHeight: 420, padding: '20px 0' }}>
-        <svg width={boardWidth} height={boardHeight + 60} viewBox={`0 0 ${boardWidth} ${boardHeight + 60}`} style={{ overflow: 'visible' }}>
+        <svg viewBox={`0 0 ${boardWidth} ${boardHeight + 60}`} className="w-full h-auto" style={{ maxHeight: 420 }}>
           {/* Pegs */}
           {Array.from({ length: ROWS }, (_, row) => {
             const pegsInRow = row + 2;
@@ -4911,7 +4911,7 @@ function BattleRoyalePlayback({ result, step, done }) {
 
         {/* Map area */}
         <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: 30 }}>
-          <div className="relative" style={{ width: mapSize, height: mapSize }}>
+          <div className="relative w-full" style={{ maxWidth: mapSize, aspectRatio: '1 / 1' }}>
             {/* Map border */}
             <div className="absolute inset-0 border border-cyan-800/30 rounded" />
 
@@ -4966,7 +4966,7 @@ function BattleRoyalePlayback({ result, step, done }) {
                     boxShadow: isSurvivor ? `0 0 12px ${PLAYER_COLORS[idx % PLAYER_COLORS.length]}` : isFlashing ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
                     border: isFlashing ? '1px solid #ef4444' : 'none',
                   }} />
-                  <div className="pixel-font text-[6px] mt-0.5" style={{
+                  <div className="pixel-font text-[8px] mt-0.5" style={{
                     color: isEliminated ? '#4b5563' : PLAYER_COLORS[idx % PLAYER_COLORS.length],
                     textDecoration: isEliminated ? 'line-through' : 'none',
                   }}>
@@ -5185,7 +5185,7 @@ function StockMarketPlayback({ result, step, done }) {
 
         {/* Chart */}
         <div className="flex items-center justify-center pt-4">
-          <svg width={chartWidth} height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ overflow: 'visible' }}>
+          <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto" style={{ maxHeight: 300 }}>
             {/* Y-axis grid lines */}
             {Array.from({ length: gridLines + 1 }, (_, i) => {
               const price = minPrice + i * priceStep;
@@ -5516,7 +5516,7 @@ function computeStats(games) {
   };
 }
 
-function Leaderboard({ stats, loading }) {
+function Leaderboard({ stats, loading, error }) {
   const [expanded, setExpanded] = useState(false);
   const [sortCol, setSortCol] = useState('winPct');
   const [sortDir, setSortDir] = useState('desc');
@@ -5573,6 +5573,15 @@ function Leaderboard({ stats, loading }) {
       <div className="mb-6 pt-2">
         <div className="pixel-divider mb-5" />
         <div className="pixel-font text-[8px] text-slate-500 text-center py-4">Loading leaderboard...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mb-6 pt-2">
+        <div className="pixel-divider mb-5" />
+        <div className="pixel-font text-[8px] text-rose-400 text-center py-4">Failed to load leaderboard</div>
       </div>
     );
   }
@@ -6126,17 +6135,17 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
         ) : pendingAction.action === 'reroll_dice' && isMyTurn ? (
           <>
             <div className="pixel-font text-[9px] text-amber-300 mb-2">You rolled: {pendingAction.d1} + {pendingAction.d2} = {pendingAction.total}</div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button onClick={() => onAction({ action: 'keep_dice' })}
-                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                className="w-full sm:flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
                 KEEP {"\u2713"}
               </button>
               <button onClick={() => onAction({ action: 'reroll_die', dieIndex: 0 })}
-                className="flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                className="w-full sm:flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
                 Re-roll {pendingAction.d1}
               </button>
               <button onClick={() => onAction({ action: 'reroll_die', dieIndex: 1 })}
-                className="flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                className="w-full sm:flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
                 Re-roll {pendingAction.d2}
               </button>
             </div>
@@ -6309,7 +6318,7 @@ function VoteGrid({ votes, deadline, onVote, playerName }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
         {/* Random option */}
         <button
           onClick={() => onVote({ action: 'vote_game', modeId: 'random' })}
@@ -6333,7 +6342,7 @@ function VoteGrid({ votes, deadline, onVote, playerName }) {
             }`}
           >
             <div className="text-2xl mb-1">{mode.icon}</div>
-            <div className="pixel-font text-[6px] text-white leading-tight">{mode.name}</div>
+            <div className="pixel-font text-[7px] text-white leading-tight">{mode.name}</div>
             {voteCounts[mode.id] ? <div className="absolute top-1 right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center pixel-font text-[6px]">{voteCounts[mode.id]}</div> : null}
           </button>
         ))}
@@ -6499,6 +6508,21 @@ export default function ChoreChaosApp() {
   const seriesScoreRef = useRef({});
   const seriesRoundRecordedRef = useRef(null);
 
+  // Restore series state from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('runouts_series'));
+      if (saved && saved.config && !saved.complete) {
+        setSeriesActive(true);
+        setSeriesConfig(saved.config);
+        setSeriesScores(saved.scores || {});
+        seriesScoreRef.current = saved.scores || {};
+        setSeriesRound(saved.round || 0);
+        setSeriesHistory(saved.history || []);
+      }
+    } catch (e) {}
+  }, []);
+
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -6509,6 +6533,7 @@ export default function ChoreChaosApp() {
   const [suddenDeathNames, setSuddenDeathNames] = useState(null);
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const [leaderboardError, setLeaderboardError] = useState(false);
 
   // Room / spectator / player state
   const [roomMode, setRoomMode] = useState(() => {
@@ -6552,13 +6577,16 @@ export default function ChoreChaosApp() {
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
     try {
-      const { data } = await _supabase
+      const { data, error } = await _supabase
         .from('runouts_games')
         .select('*')
         .order('played_at', { ascending: true });
+      if (error) throw error;
       setLeaderboardData(data || []);
+      setLeaderboardError(false);
     } catch (e) {
-      // Silent fail
+      console.error('Leaderboard fetch failed:', e);
+      setLeaderboardError(true);
     }
     setLeaderboardLoading(false);
   }, []);
@@ -8373,6 +8401,23 @@ export default function ChoreChaosApp() {
     }
   }, [seriesActive, playbackDone, result?.runId, seriesRound, seriesConfig, seriesHistory]);
 
+  // ── Series localStorage persistence ──
+  useEffect(() => {
+    if (seriesActive && seriesConfig) {
+      try {
+        localStorage.setItem('runouts_series', JSON.stringify({
+          scores: seriesScores,
+          round: seriesRound,
+          config: seriesConfig,
+          history: seriesHistory,
+          complete: seriesComplete,
+        }));
+      } catch (e) {}
+    } else {
+      localStorage.removeItem('runouts_series');
+    }
+  }, [seriesActive, seriesScores, seriesRound, seriesConfig, seriesHistory, seriesComplete]);
+
   // ── Vote for Next Game ────────────────────────────────────
 
   function startVote() {
@@ -9447,7 +9492,7 @@ export default function ChoreChaosApp() {
           ) : null
         ) : null}
 
-        <Leaderboard stats={leaderboardStats} loading={leaderboardLoading} />
+        <Leaderboard stats={leaderboardStats} loading={leaderboardLoading} error={leaderboardError} />
       </div>
 
       <AnimatePresence>
@@ -9818,9 +9863,11 @@ export default function ChoreChaosApp() {
                   {voteActive && playbackDone ? (
                     <VoteGrid votes={votes} deadline={voteDeadline} onVote={handleHostAction} playerName={playerName} />
                   ) : null}
+                  {pendingAction && !playbackDone ? <div className="h-24 sm:hidden" /> : null}
                 </div>
               </div>
 
+              {!pendingAction ? (
               <div className="sm:hidden relative z-10 flex flex-wrap items-center justify-center gap-2 border-t border-white/10 bg-black/90 px-3 py-3 backdrop-blur safe-area-bottom">
                 {!playbackDone ? (
                   (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || result.draftPhase) ? null : (
@@ -9949,6 +9996,7 @@ export default function ChoreChaosApp() {
                   </>
                 )}
               </div>
+              ) : null}
             </div>
           </motion.div>
         ) : null}
