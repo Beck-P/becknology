@@ -150,6 +150,10 @@ const G = {
 };
 const particles = [];
 
+// --- SCREEN SHAKE ---
+let shake = { x: 0, y: 0, remaining: 0 };
+function triggerShake(duration) { shake.remaining = duration; }
+
 // ============================================================
 // AUDIO
 // ============================================================
@@ -396,6 +400,14 @@ function drawWaveHL(startY, endY, t, rgb, n) {
         ctx.fillRect(x + Math.round(Math.sin(x * 0.08 + t * 0.001)), wy, 2, 1);
     }
   }
+  // Dense flowing shimmer
+  for (let x = 0; x < W; x += 2) {
+    const shimY = Math.round(startY + (x * 7 + Math.floor(t * 0.002)) % Math.max(1, Math.round(endY - startY)));
+    if (hash(x + Math.floor(t * 0.0005) * 100) > 0.75) {
+      ctx.fillStyle = `rgba(${rgb},0.06)`;
+      ctx.fillRect(x, shimY, 1, 1);
+    }
+  }
 }
 
 function drawMoonWithSpores(t, hue, skyH) {
@@ -475,6 +487,26 @@ const BG = {
       const gx = Math.round(hash(i * 7) * W), gy = Math.round(skyH + hash(i * 13) * H * 0.04);
       ctx.fillRect(gx, gy - 2, 1, 2);
       if (hash(i * 3) > 0.5) ctx.fillRect(gx + 1, gy - 1, 1, 1);
+    }
+    // Flowers
+    const flowerColors = ['#FF6B8A','#FFD700','#FF8C42','#A78BFA','#F5A0C0'];
+    for (let i = 0; i < 12; i++) {
+      const fx = Math.round(hash(i*11+50) * W);
+      const fy = skyH + Math.round(hash(i*13+60) * H * 0.06) + 2;
+      ctx.fillStyle = flowerColors[i % flowerColors.length];
+      ctx.fillRect(fx, fy, 1, 1);
+      ctx.fillStyle = '#4A7A2A';
+      ctx.fillRect(fx, fy + 1, 1, 1);
+    }
+    // Fireflies
+    for (let i = 0; i < 6; i++) {
+      const ffx = Math.round(W * 0.1 + hash(i*7+70) * W * 0.8);
+      const ffy = Math.round(skyH * 0.7 + hash(i*13+80) * skyH * 0.25 + Math.sin(t * 0.0008 + i * 2) * 3);
+      const ffa = 0.2 + 0.4 * Math.sin(t * 0.001 + i * 1.5);
+      ctx.fillStyle = `rgba(255,240,150,${ffa})`;
+      ctx.fillRect(ffx, ffy, 1, 1);
+      ctx.fillStyle = `rgba(255,240,150,${ffa * 0.3})`;
+      ctx.fillRect(ffx-1, ffy-1, 3, 3);
     }
     for (let i = 0; i < 4; i++) {
       const bx = Math.round((W * 0.2 + i * W * 0.15 + Math.sin(t * 0.0005 + i) * 5) % W);
@@ -866,6 +898,11 @@ const BG = {
     const mastTopY = Math.round(H * 0.18);
     ctx.fillStyle = '#5A3A10';
     ctx.fillRect(mx - 1, mastTopY, 3, deckY - mastTopY); // mast reaches deck
+    // Crow's nest
+    ctx.fillStyle = '#5A3A10';
+    ctx.fillRect(mx - 3, mastTopY + 2, 7, 1);
+    ctx.fillRect(mx - 4, mastTopY + 1, 1, 2);
+    ctx.fillRect(mx + 3, mastTopY + 1, 1, 2);
     // Mast highlight
     ctx.fillStyle = '#6B4A18';
     ctx.fillRect(mx - 1, mastTopY, 1, deckY - mastTopY);
@@ -980,6 +1017,17 @@ const BG = {
     const cg = ctx.createRadialGradient(Math.round(W * 0.92), deckY - Math.round(H * 0.03), 0, Math.round(W * 0.92), deckY - Math.round(H * 0.03), Math.round(W * 0.03));
     cg.addColorStop(0, 'rgba(255,230,160,0.08)'); cg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = cg; ctx.fillRect(Math.round(W * 0.88), deckY - Math.round(H * 0.06), Math.round(W * 0.12), Math.round(H * 0.06));
+
+    // Wave spray at edges
+    for (let i = 0; i < 4; i++) {
+      const sprayT = ((t * 0.001 + i * 1.3) % 2);
+      if (sprayT < 0.3) {
+        const spX = i < 2 ? 1 + i : W - 2 - (i-2);
+        const spY = deckY - Math.round(sprayT * H * 0.05);
+        ctx.fillStyle = `rgba(255,255,255,${0.2 - sprayT * 0.5})`;
+        ctx.fillRect(spX, spY, 1, 1);
+      }
+    }
   },
 
   // --- Barnes & Noble battle scene ---
@@ -1483,6 +1531,28 @@ const BG = {
     ctx.fillStyle = '#FFE4B5';
     ctx.fillRect(W * 0.26, H * 0.35, W * 0.1, H * 0.08);
     ctx.fillRect(W * 0.64, H * 0.35, W * 0.1, H * 0.08);
+    // String lights across storefront
+    const lightsY = Math.round(H * 0.28);
+    ctx.fillStyle = '#3A2010';
+    ctx.fillRect(Math.round(W * 0.22), lightsY, Math.round(W * 0.56), 1);
+    const lightColors = ['#FF4444','#FFD700','#44FF44','#4488FF','#FF44FF'];
+    for (let i = 0; i < 8; i++) {
+      const lx = Math.round(W * 0.24 + i * W * 0.065);
+      const bright = 0.6 + 0.4 * Math.sin(t * 0.002 + i * 1.2);
+      ctx.fillStyle = lightColors[i % lightColors.length];
+      ctx.globalAlpha = bright;
+      ctx.fillRect(lx, lightsY + 1, 2, 2);
+      ctx.globalAlpha = 1;
+    }
+    // Chimney smoke
+    for (let i = 0; i < 4; i++) {
+      const smokeX = Math.round(W * 0.6 + Math.sin(t * 0.0008 + i * 0.5) * 2);
+      const smokeY = Math.round(H * 0.12 - i * 3 - ((t * 0.005 + i * 10) % 15));
+      if (smokeY > 0) {
+        ctx.fillStyle = `rgba(150,140,130,${0.15 - i * 0.03})`;
+        ctx.fillRect(smokeX, smokeY, 2, 2);
+      }
+    }
   },
 
   cafe(t) {
@@ -1505,6 +1575,28 @@ const BG = {
     for (let i = 0; i < 4; i++) {
       ctx.fillStyle = cupColors[i];
       ctx.fillRect(W * 0.07 + i * W * 0.025, H * 0.17, W * 0.015, H * 0.03);
+    }
+    // Steam from cups
+    for (let cup = 0; cup < 2; cup++) {
+      const steamX = Math.round(W * 0.46 + cup * W * 0.08);
+      for (let i = 0; i < 3; i++) {
+        const sy = Math.round(H * 0.49 - i * 3 - ((t * 0.003 + cup * 5 + i * 8) % 10));
+        const sx = steamX + Math.round(Math.sin(t * 0.002 + i + cup) * 1);
+        ctx.fillStyle = `rgba(255,255,255,${0.1 - i * 0.025})`;
+        ctx.fillRect(sx, sy, 1, 1);
+      }
+    }
+    // Paw prints on floor
+    ctx.fillStyle = 'rgba(80,60,40,0.08)';
+    for (let i = 0; i < 5; i++) {
+      const px = Math.round(W * 0.25 + hash(i*7+300) * W * 0.5);
+      const py = Math.round(H * 0.68 + hash(i*13+400) * H * 0.15);
+      // Main pad
+      ctx.fillRect(px, py, 2, 2);
+      // Toe beans
+      ctx.fillRect(px-1, py-1, 1, 1);
+      ctx.fillRect(px+2, py-1, 1, 1);
+      ctx.fillRect(px, py-2, 1, 1);
     }
   },
 
@@ -1880,6 +1972,24 @@ const BG = {
     const ghostGlow = ctx.createRadialGradient(gx, gy - 5, 0, gx, gy - 5, Math.round(W * 0.1));
     ghostGlow.addColorStop(0, 'rgba(170,130,255,0.12)'); ghostGlow.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = ghostGlow; ctx.fillRect(gx - Math.round(W * 0.1), gy - Math.round(H * 0.1), Math.round(W * 0.2), Math.round(H * 0.15));
+    // Magical energy swirl around the ghost
+    for (let i = 0; i < 15; i++) {
+      const angle = (i / 15) * Math.PI * 2 + t * 0.001;
+      const radius = Math.round(W * 0.08 + Math.sin(t * 0.0008 + i) * W * 0.02);
+      const ex = gx + Math.round(Math.cos(angle) * radius);
+      const ey = gy - 5 + Math.round(Math.sin(angle) * radius * 0.6);
+      const ea = 0.1 + 0.15 * Math.sin(t * 0.002 + i * 0.8);
+      ctx.fillStyle = `rgba(170,130,255,${ea})`;
+      ctx.fillRect(ex, ey, 1, 1);
+    }
+    // Sushi beam of light (always visible during ghost scene)
+    const sushiX = Math.round(W * 0.45), sushiY = Math.round(H * 0.55);
+    ctx.fillStyle = 'rgba(255,240,200,0.06)';
+    ctx.fillRect(sushiX - 1, Math.round(H * 0.3), 3, sushiY - Math.round(H * 0.3));
+    // Sushi piece
+    ctx.fillStyle = '#F5F0E0'; ctx.fillRect(sushiX - 2, sushiY, 4, 2);
+    ctx.fillStyle = '#FF6B4A'; ctx.fillRect(sushiX - 2, sushiY - 1, 4, 1);
+    ctx.fillStyle = '#1A1A1A'; ctx.fillRect(sushiX - 2, sushiY + 2, 4, 1);
   }
 };
 
@@ -1892,6 +2002,9 @@ function drawPerson(x, y, hair, shirt, pants, shoes, hairLen, facing, t) {
   ctx.save();
   ctx.translate(x, y + bob);
   if (facing < 0) ctx.scale(-1, 1);
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fillRect(-2*s, 1*s, 4*s, s);
   // Head
   ctx.fillStyle = '#F5DEB3'; ctx.fillRect(-2*s, -11*s, 4*s, 4*s);
   // Hair
@@ -1920,6 +2033,9 @@ function drawBeckRat(x, y, t) {
   const s = PX;
   const bob = Math.sin((t || 0) * 0.003) * 2;
   ctx.save(); ctx.translate(x, y + bob);
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fillRect(-2*s, 1*s, 4*s, s);
   ctx.fillStyle = '#909090';
   ctx.fillRect(-2*s, -3*s, 4*s, 3*s); // body
   ctx.fillRect(-s, -5*s, 3*s, 2*s);   // head
@@ -1952,6 +2068,9 @@ function drawFelix(x, y, t) {
   const s = PX;
   const bob = Math.sin((t || 0) * 0.003) * 1.5;
   ctx.save(); ctx.translate(x, y + bob);
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fillRect(-2*s, 1*s, 4*s, s);
   // Body (grey)
   ctx.fillStyle = '#808080';
   ctx.fillRect(-2*s, -4*s, 5*s, 4*s);
@@ -2862,7 +2981,7 @@ const scenes = [
     { s:'n', t:'A massive vessel bore down on them. Its flag was unmistakable: a green banner emblazoned with BARNES & NOBLE.', onShow(){ scenes[G.sceneIdx].bg = 'shipFull'; } },
     { s:'b', t:'Oh no.' },
     // Phase 3 — cut to battle, books start flying
-    { s:'n', t:'The first book was fired.', onShow(){ scenes[G.sceneIdx].bg = 'shipBattle'; } },
+    { s:'n', t:'The first book was fired.', onShow(){ scenes[G.sceneIdx].bg = 'shipBattle'; triggerShake(300); } },
     { s:'n', t:'It arced through the emerald sky in slow motion — 1,232 pages of Brandon Sanderson hardcover, tumbling end over end, glinting in the spore-light.' },
     { s:'n', t:'It was, objectively, a beautiful trajectory. It was also aimed directly at the deck.' },
     { s:'c', t:"They're loading the cannons!" },
@@ -3066,7 +3185,7 @@ const scenes = [
   { id: 'sea-parts', bg: 'seaParting', music: 'crimson', dialogue: [
     { s:'n', t:'The next morning, the captain called everyone to the deck.' },
     { s:'cr', t:'"We\'ve arrived. The passage below."' },
-    { s:'n', t:'The crimson sea began to tremble. Then, slowly, impossibly, it parted.' },
+    { s:'n', t:'The crimson sea began to tremble. Then, slowly, impossibly, it parted.', onShow(){ triggerShake(300); } },
     { s:'n', t:'The water pulled apart like curtains, revealing a staircase of dark stone spiraling downward into the spores. Crimson mist curled up from below.' },
     { s:'cr', t:'"The Celestial Cat Café is at the bottom. You go down. You prove your worth. You get the matcha."' },
     { s:'u', t:'And if I don\'t prove my worth?' },
@@ -3282,7 +3401,7 @@ const scenes = [
     { s:'b', t:'I... I ate it.' },
     { s:'b', t:'It was...' },
     { s:'b', t:'...actually not terrible?' },
-    { s:'n', t:'The tower exploded with light.' },
+    { s:'n', t:'The tower exploded with light.', onShow(){ triggerShake(300); } },
   ]},
 
   // 13 — The Transformation
@@ -3325,8 +3444,9 @@ const scenes = [
 function render() {
   const { W, H, t } = G;
   ctx.clearRect(0, 0, W, H);
+  ctx.save(); ctx.translate(shake.x, shake.y);
   const scene = scenes[G.sceneIdx];
-  if (!scene) return;
+  if (!scene) { ctx.restore(); return; }
 
   // Background
   const bg = scene.bg;
@@ -3367,10 +3487,43 @@ function render() {
     if (G.mg.type === 'navigate') drawNav();
     else if (G.mg.type === 'timing') drawTiming();
   }
+
+  // Foreground depth
+  const bg2 = scene.bg;
+  if (bg2 === 'autumn' || bg2 === 'burritos') {
+    // Grass blades in foreground
+    ctx.fillStyle = 'rgba(80,140,50,0.4)';
+    for (let i = 0; i < 8; i++) {
+      const gx = Math.round(hash(i*17+999) * W);
+      ctx.fillRect(gx, H - Math.round(H*0.08) - Math.round(Math.sin(t*0.002+i)*1), 1, Math.round(H*0.08));
+      ctx.fillRect(gx+1, H - Math.round(H*0.06), 1, Math.round(H*0.06));
+    }
+  } else if (bg2 === 'ship' || bg2 === 'shipBattle' || bg2 === 'seaCrossing' || bg2 === 'seaDarkening') {
+    // Wave foam at bottom edges
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    for (let x = 0; x < W; x += 2) {
+      if (hash(x*3+Math.floor(t*0.001)) > 0.7)
+        ctx.fillRect(x, H - 1, 1, 1);
+    }
+  }
+
+  // Vignette
+  const vg = ctx.createRadialGradient(W*0.5, H*0.5, Math.min(W,H)*0.3, W*0.5, H*0.5, Math.max(W,H)*0.7);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.25)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+  ctx.restore();
 }
 
 function update(dt) {
   G.t += dt;
+
+  // Screen shake
+  if (shake.remaining > 0) {
+    shake.remaining -= dt;
+    shake.x = Math.round((Math.random() - 0.5) * 3);
+    shake.y = Math.round((Math.random() - 0.5) * 2);
+  } else { shake.x = 0; shake.y = 0; }
 
   // Typewriter
   if (G.state === 'playing' && G.phase === 'dialogue' && !G.textDone) {
