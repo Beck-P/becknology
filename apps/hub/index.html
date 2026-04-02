@@ -194,6 +194,48 @@
       }
     }
 
+    /* ---- Page Transition ---- */
+    .page-transition {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .page-transition.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .page-transition .glitch-slice {
+      position: absolute;
+      left: 0;
+      right: 0;
+      background: #0a0a0a;
+      overflow: hidden;
+    }
+
+    @keyframes slice-in {
+      0% { transform: translateX(0); opacity: 0; }
+      30% { opacity: 1; }
+      50% { transform: translateX(var(--offset)); }
+      70% { transform: translateX(calc(var(--offset) * -0.3)); }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes transition-fade {
+      0% { background: transparent; }
+      60% { background: rgba(10, 10, 10, 0.3); }
+      100% { background: #0a0a0a; }
+    }
+
+    .page-transition.active .backdrop {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      animation: transition-fade 0.5s ease-in forwards;
+    }
+
     /* ---- Responsive ---- */
     @media (max-width: 900px) {
       .ascii-title {
@@ -265,6 +307,55 @@
   <div class="footer">
     <p>made by beck</p>
   </div>
+
+  <!-- Page transition overlay -->
+  <div class="page-transition" id="page-transition"></div>
+
+  <script>
+    // Page transition on card clicks
+    (function() {
+      var transition = document.getElementById('page-transition');
+
+      document.querySelectorAll('.app-card').forEach(function(card) {
+        card.addEventListener('click', function(e) {
+          e.preventDefault();
+          var href = card.getAttribute('href');
+          playTransition(function() {
+            window.location.href = href;
+          });
+        });
+      });
+
+      function playTransition(callback) {
+        transition.innerHTML = '';
+
+        // Create horizontal glitch slices
+        var sliceCount = 8;
+        var sliceHeight = 100 / sliceCount;
+
+        for (var i = 0; i < sliceCount; i++) {
+          var slice = document.createElement('div');
+          slice.className = 'glitch-slice';
+          slice.style.top = (i * sliceHeight) + 'vh';
+          slice.style.height = sliceHeight + 'vh';
+          slice.style.setProperty('--offset', ((Math.random() * 60 - 30)) + 'px');
+          slice.style.animation = 'slice-in ' + (0.3 + Math.random() * 0.2).toFixed(2) + 's ease-out forwards';
+          slice.style.animationDelay = (i * 0.02) + 's';
+          transition.appendChild(slice);
+        }
+
+        // Dark backdrop
+        var backdrop = document.createElement('div');
+        backdrop.className = 'backdrop';
+        transition.appendChild(backdrop);
+
+        transition.classList.add('active');
+
+        setTimeout(callback, 500);
+      }
+    })();
+
+  </script>
 
   <script>
     // Periodic glitch effect on ASCII title
