@@ -163,8 +163,9 @@
     var canvas = document.getElementById('art');
     var ctx = canvas.getContext('2d');
     var W, H, dpr;
-    var currentSeed = 0, animFrame = null, frameCount = 0, maxFrames = 400;
+    var currentSeed = 0, animFrame = null, frameCount = 0;
     var mouseX = -9999, mouseY = -9999;
+    var deviceTiltX = 0, deviceTiltY = 0, shakeEnergy = 0;
 
     var MODE_FLOW = 0, MODE_WARP = 1, MODE_CLIFFORD = 2, MODE_DEJONG = 3;
     var modeNames = ['flow', 'warp', 'clifford', 'de jong'];
@@ -220,6 +221,15 @@
           var cs = Math.cos(r * inc), sn = Math.sin(r * inc);
           gridPlot(cx + (px-cx)*cs - (py-cy)*sn, cy + (px-cx)*sn + (py-cy)*cs, angle + r*inc, hue);
         }
+      }
+    }
+
+    function gridDecay(factor) {
+      for (var i = 0; i < gridN; i++) {
+        gridDensity[i] *= factor;
+        gridDirX[i] *= factor;
+        gridDirY[i] *= factor;
+        gridHue[i] *= factor;
       }
     }
 
@@ -365,10 +375,16 @@
         var p = particles[i];
         p.px = p.x; p.py = p.y; p.maxLife = p.life;
       }
-      maxFrames = 500;
     }
 
     function animateFlow() {
+      // Evolve the noise field — slowly drifts so patterns transform
+      zOffset += 0.0015;
+
+      // Breathing rhythm — gentle pulse on noise strength
+      var breathe = Math.sin(frameCount * 0.008) * 0.4;
+      var currentStrength = noiseStrength + breathe;
+
       for (var i = 0; i < particles.length; i++) {
         var p = particles[i];
 
@@ -384,11 +400,12 @@
         var n = currentMode === MODE_WARP
           ? warpedNoise(nx, ny, warpStrength, octaves)
           : fbm(nx, ny, octaves);
-        var angle = n * Math.PI * 2 * noiseStrength;
+        var angle = n * Math.PI * 2 * currentStrength;
 
         p.vx += Math.cos(angle) * 0.3;
         p.vy += Math.sin(angle) * 0.3;
 
+        // Mouse/touch influence
         if (mouseX > 0 && mouseY > 0 && !isCycling) {
           var dx = mouseX - p.x, dy = mouseY - p.y;
           var dist = Math.sqrt(dx * dx + dy * dy);
@@ -396,6 +413,18 @@
             var f = mouseForce / (dist * dist);
             p.vx += dx * f; p.vy += dy * f;
           }
+        }
+
+        // Device tilt influence
+        if (Math.abs(deviceTiltX) > 0.05 || Math.abs(deviceTiltY) > 0.05) {
+          p.vx += deviceTiltX * 0.15;
+          p.vy += deviceTiltY * 0.15;
+        }
+
+        // Shake burst — temporary energy injection
+        if (shakeEnergy > 0.1) {
+          p.vx += (Math.random() - 0.5) * shakeEnergy * 0.5;
+          p.vy += (Math.random() - 0.5) * shakeEnergy * 0.5;
         }
 
         // Warp point vortex forces
@@ -440,7 +469,6 @@
       attrD = srandRange(-2.5, 2.5);
       attrX = 0.1; attrY = 0.1;
       attrIterPerFrame = 50000;
-      maxFrames = 250;
       symmetry = SYMM_NONE;
     }
 
@@ -448,10 +476,19 @@
       var scale = Math.min(W, H) / 5.5;
       var ox = W / 2, oy = H / 2;
 
-      var mxOff = 0, myOff = 0;
+      // Slowly evolve attractor parameters — shape morphs over time
+      var drift = Math.sin(frameCount * 0.003) * 0.002;
+      var drift2 = Math.cos(frameCount * 0.004) * 0.002;
+
+      var mxOff = drift + deviceTiltX * 0.02;
+      var myOff = drift2 + deviceTiltY * 0.02;
       if (mouseX > 0 && mouseY > 0) {
-        mxOff = (mouseX - W/2) * 0.001;
-        myOff = (mouseY - H/2) * 0.001;
+        mxOff += (mouseX - W/2) * 0.001;
+        myOff += (mouseY - H/2) * 0.001;
+      }
+      if (shakeEnergy > 0.1) {
+        mxOff += (Math.random() - 0.5) * shakeEnergy * 0.01;
+        myOff += (Math.random() - 0.5) * shakeEnergy * 0.01;
       }
 
       for (var i = 0; i < attrIterPerFrame; i++) {
@@ -482,13 +519,14 @@
 
     // ==================== MAIN LOOP ====================
     function animate() {
-      // Color shift: cycle when held, decay back when released
-      if (isCycling) {
-        hueShift += 1.5;
-      } else if (Math.abs(hueShift) > 0.1) {
-        hueShift *= 0.97; // smooth decay back to original
-        if (Math.abs(hueShift) < 0.1) hueShift = 0;
-      }
+      // Grid decay — old data fades so patterns evolve
+      if (frameCount % 2 === 0) gridDecay(0.997);
+
+      // Ambient hue drift — very slow, always shifting
+      hueShift += 0.03;
+
+      // Color cycle: faster when held, slow drift otherwise
+      if (isCycling) hueShift += 1.5;
 
       // Warp points decay after release
       if (warpPoints.length > 0 && interState !== 'warping') {
@@ -498,15 +536,17 @@
         }
       }
 
-      // Keep particles flowing — never fully stop
-      var pastMax = frameCount >= maxFrames;
+      // Shake energy decays
+      if (shakeEnergy > 0.01) shakeEnergy *= 0.92;
+
+      // Always simulate — never stop
       if (currentMode <= MODE_WARP) animateFlow();
-      else if (!pastMax) animateAttractor();
+      else animateAttractor();
 
-      var needsRender = hueShift !== 0 || warpPoints.length > 0 || isCycling;
-      if (frameCount % 3 === 0 || needsRender) renderGrid();
+      // Always render (every 3 frames for performance)
+      if (frameCount % 3 === 0) renderGrid();
 
-      if (!pastMax) frameCount++;
+      frameCount++;
       animFrame = requestAnimationFrame(animate);
     }
 
@@ -615,6 +655,24 @@
     });
 
     window.addEventListener('resize', function() { generate(currentSeed); });
+
+    // Device tilt — tilting phone steers particles
+    window.addEventListener('deviceorientation', function(e) {
+      deviceTiltX = Math.max(-1, Math.min(1, (e.gamma || 0) / 45));
+      deviceTiltY = Math.max(-1, Math.min(1, ((e.beta || 0) - 45) / 45));
+    });
+
+    // Device shake — burst of chaotic energy
+    var lastShakeTime = 0;
+    window.addEventListener('devicemotion', function(e) {
+      var acc = e.accelerationIncludingGravity;
+      if (!acc) return;
+      var mag = Math.sqrt((acc.x||0)*(acc.x||0) + (acc.y||0)*(acc.y||0) + (acc.z||0)*(acc.z||0));
+      if (mag > 25 && Date.now() - lastShakeTime > 300) {
+        shakeEnergy = Math.min(10, shakeEnergy + mag * 0.15);
+        lastShakeTime = Date.now();
+      }
+    });
 
     generate();
   </script>
