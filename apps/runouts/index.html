@@ -8068,6 +8068,7 @@ function ChoreChaosApp() {
   const [voteDeadline, setVoteDeadline] = useState(null);
   const [spectatorSeries, setSpectatorSeries] = useState(null);
   const [seriesTied, setSeriesTied] = useState(null);
+  const [handoffReady, setHandoffReady] = useState(false);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -8087,13 +8088,40 @@ function ChoreChaosApp() {
 
   useEffect(() => { roomModeRef.current = roomMode; }, [roomMode]);
 
-  useEffect(() => { window.__interactiveMode = interactiveMode; }, [interactiveMode]);
+  // ── Derived state for local interactive mode ──
+  const _trimmedNames = names.map(n => n.trim());
+  const _filledCount = _trimmedNames.filter(Boolean).length;
+  const _allFilled = _trimmedNames.every(Boolean);
+  const _namesUnique = new Set(_trimmedNames.filter(Boolean)).size === _filledCount;
+  const _hasEnough = _filledCount >= 2;
+  const _localCanRun = _allFilled && _namesUnique && _hasEnough;
+  const localInteractiveMode = deviceMode === 'local' && _localCanRun;
+
+  function isPrivateAction(action) {
+    return action === 'choose_cards' || action === 'pick_card_blind' || action === 'pick_stock';
+  }
+
+  useEffect(() => { window.__interactiveMode = interactiveMode || localInteractiveMode; }, [interactiveMode, localInteractiveMode]);
+
+  // In local interactive mode, track playerName to whoever's turn it is
+  useEffect(() => {
+    if (localInteractiveMode && pendingAction?.playerName) {
+      setPlayerName(pendingAction.playerName);
+    }
+  }, [localInteractiveMode, pendingAction?.playerName]);
+
+  // Reset handoff when pending action changes to a new player
+  useEffect(() => {
+    if (pendingAction?.playerName) {
+      setHandoffReady(false);
+    }
+  }, [pendingAction?.playerName]);
 
   useEffect(() => {
     function handleRocketComplete() {
       if ((result?.modeId === 'rocket' || result?.modeId === 'bomb' || result?.modeId === 'stock-market') && !playbackDone) {
         // Interactive rocket: compute final result from eject decisions
-        if (result?.modeId === 'rocket' && interactiveMode && Object.keys(interactiveRocketEjects).length > 0) {
+        if (result?.modeId === 'rocket' && (interactiveMode || localInteractiveMode) && Object.keys(interactiveRocketEjects).length > 0) {
           const formatDist = (d) => d >= 1000000 ? (d/1000000).toFixed(2) + 'M km' : Math.round(d).toLocaleString() + ' km';
 
           const finalPlayers = result.players.map(p => {
@@ -8157,7 +8185,7 @@ function ChoreChaosApp() {
 
   // Interactive Black Marble turn management
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'black-marble') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'black-marble') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -8194,7 +8222,7 @@ function ChoreChaosApp() {
 
   // Interactive Bomb turn management
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'bomb') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'bomb') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -8339,7 +8367,7 @@ function ChoreChaosApp() {
 
   // Interactive Rocket eject management
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'rocket') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'rocket') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -8387,7 +8415,7 @@ function ChoreChaosApp() {
 
   // Interactive Poker draft management
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result) return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result) return;
     if (result.modeId !== 'holdem' && result.modeId !== 'plo') return;
     if (!result.draftPhase) return;
 
@@ -8400,38 +8428,83 @@ function ChoreChaosApp() {
       hands: result.draftHands,
     });
 
-    setPendingAction({
-      type: 'choice',
-      action: 'choose_cards',
-      modeId: result.modeId,
-      keepCount: result.keepCount,
-      hands: result.draftHands,
-      received: {},
-      playersNeeded: Object.keys(result.draftHands),
-    });
-
+    const allPlayers = Object.keys(result.draftHands);
     const choices = {};
 
-    currentActionHandler.current = (payload) => {
-      if (payload.action !== 'choose_cards') return;
-      const actor = payload.playerName;
-      if (!result.draftHands[actor]) return;
-      if (choices[actor]) return; // Already submitted
+    if (localInteractiveMode && !interactiveMode) {
+      // Local mode: cycle through players one at a time with handoff
+      const currentPicker = allPlayers[0];
+      setPendingAction({
+        type: 'turn',
+        action: 'choose_cards',
+        playerName: currentPicker,
+        modeId: result.modeId,
+        keepCount: result.keepCount,
+        hands: result.draftHands,
+      });
 
-      const indices = payload.indices;
-      if (!Array.isArray(indices) || indices.length !== result.keepCount) return;
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'choose_cards') return;
+        const actor = payload.playerName;
+        if (!result.draftHands[actor]) return;
+        if (choices[actor]) return;
 
-      choices[actor] = indices;
-      setDraftChoices({ ...choices });
+        const indices = payload.indices;
+        if (!Array.isArray(indices) || indices.length !== result.keepCount) return;
 
-      // Check if all players have submitted
-      const allPlayers = Object.keys(result.draftHands);
-      const allSubmitted = allPlayers.every(name => choices[name]);
+        choices[actor] = indices;
+        setDraftChoices({ ...choices });
 
-      if (allSubmitted) {
-        completeDraft(choices);
-      }
-    };
+        const allSubmitted = allPlayers.every(name => choices[name]);
+        if (allSubmitted) {
+          completeDraft(choices);
+        } else {
+          // Advance to next unsubmitted player
+          const nextPlayer = allPlayers.find(name => !choices[name]);
+          if (nextPlayer) {
+            setPendingAction({
+              type: 'turn',
+              action: 'choose_cards',
+              playerName: nextPlayer,
+              modeId: result.modeId,
+              keepCount: result.keepCount,
+              hands: result.draftHands,
+            });
+          }
+        }
+      };
+    } else {
+      // Multiplayer mode: all players pick simultaneously
+      setPendingAction({
+        type: 'choice',
+        action: 'choose_cards',
+        modeId: result.modeId,
+        keepCount: result.keepCount,
+        hands: result.draftHands,
+        received: {},
+        playersNeeded: allPlayers,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'choose_cards') return;
+        const actor = payload.playerName;
+        if (!result.draftHands[actor]) return;
+        if (choices[actor]) return; // Already submitted
+
+        const indices = payload.indices;
+        if (!Array.isArray(indices) || indices.length !== result.keepCount) return;
+
+        choices[actor] = indices;
+        setDraftChoices({ ...choices });
+
+        // Check if all players have submitted
+        const allSubmitted = allPlayers.every(name => choices[name]);
+
+        if (allSubmitted) {
+          completeDraft(choices);
+        }
+      };
+    }
 
     function completeDraft(allChoices) {
       const finalResult = finalizeDraftResult(result, allChoices);
@@ -8461,7 +8534,7 @@ function ChoreChaosApp() {
 
   // Interactive Stock Market draft management
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'stock-market') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'stock-market') return;
     if (!result.draftPhase) return;
 
     // Initialize draft state if not already
@@ -8575,7 +8648,7 @@ function ChoreChaosApp() {
 
   // Interactive Stock Market sell management
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'stock-market') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'stock-market') return;
     if (result.draftPhase || !result.isInteractiveChart) return;
 
     // Sync sell state to window for StockMarketPlayback to read
@@ -8632,7 +8705,7 @@ function ChoreChaosApp() {
 
   // Interactive Dice Duel — roll + optional re-roll
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'dice') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'dice') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -8715,7 +8788,7 @@ function ChoreChaosApp() {
 
   // Interactive High Card — blind card pick
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'high-card') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'high-card') return;
     if (!result.draftPhase) return;
 
     // Deal 3 cards per player for blind pick
@@ -8725,33 +8798,73 @@ function ChoreChaosApp() {
       hands: result.draftHands,
     });
 
-    setPendingAction({
-      type: 'choice',
-      action: 'pick_card_blind',
-      hands: result.draftHands,
-      received: {},
-      playersNeeded: Object.keys(result.draftHands),
-    });
-
+    const allPlayers = Object.keys(result.draftHands);
     const choices = {};
 
-    currentActionHandler.current = (payload) => {
-      if (payload.action !== 'pick_card_blind') return;
-      const actor = payload.playerName;
-      if (!result.draftHands[actor]) return;
-      if (choices[actor] !== undefined) return;
+    if (localInteractiveMode && !interactiveMode) {
+      // Local mode: cycle through players one at a time with handoff
+      const currentPicker = allPlayers[0];
+      setPendingAction({
+        type: 'turn',
+        action: 'pick_card_blind',
+        playerName: currentPicker,
+        hands: result.draftHands,
+      });
 
-      const cardIndex = payload.cardIndex;
-      if (typeof cardIndex !== 'number' || cardIndex < 0 || cardIndex >= 3) return;
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'pick_card_blind') return;
+        const actor = payload.playerName;
+        if (!result.draftHands[actor]) return;
+        if (choices[actor] !== undefined) return;
 
-      choices[actor] = cardIndex;
-      setHighCardDraftHands(prev => ({ ...prev, [actor]: cardIndex }));
+        const cardIndex = payload.cardIndex;
+        if (typeof cardIndex !== 'number' || cardIndex < 0 || cardIndex >= 3) return;
 
-      const allPlayers = Object.keys(result.draftHands);
-      if (allPlayers.every(name => choices[name] !== undefined)) {
-        finalizeHighCard(choices);
-      }
-    };
+        choices[actor] = cardIndex;
+        setHighCardDraftHands(prev => ({ ...prev, [actor]: cardIndex }));
+
+        if (allPlayers.every(name => choices[name] !== undefined)) {
+          finalizeHighCard(choices);
+        } else {
+          // Advance to next unsubmitted player
+          const nextPlayer = allPlayers.find(name => choices[name] === undefined);
+          if (nextPlayer) {
+            setPendingAction({
+              type: 'turn',
+              action: 'pick_card_blind',
+              playerName: nextPlayer,
+              hands: result.draftHands,
+            });
+          }
+        }
+      };
+    } else {
+      // Multiplayer mode: all players pick simultaneously
+      setPendingAction({
+        type: 'choice',
+        action: 'pick_card_blind',
+        hands: result.draftHands,
+        received: {},
+        playersNeeded: allPlayers,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'pick_card_blind') return;
+        const actor = payload.playerName;
+        if (!result.draftHands[actor]) return;
+        if (choices[actor] !== undefined) return;
+
+        const cardIndex = payload.cardIndex;
+        if (typeof cardIndex !== 'number' || cardIndex < 0 || cardIndex >= 3) return;
+
+        choices[actor] = cardIndex;
+        setHighCardDraftHands(prev => ({ ...prev, [actor]: cardIndex }));
+
+        if (allPlayers.every(name => choices[name] !== undefined)) {
+          finalizeHighCard(choices);
+        }
+      };
+    }
 
     function finalizeHighCard(allChoices) {
       const selGoal = result.selectionGoal;
@@ -8822,7 +8935,7 @@ function ChoreChaosApp() {
 
   // Interactive Plinko — choose drop column
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'plinko') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'plinko') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -8906,7 +9019,7 @@ function ChoreChaosApp() {
 
   // Interactive Horse Race — lane pick + whip
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'horse-race') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'horse-race') return;
 
     // Phase 1: Lane pick draft
     if (result.draftPhase) {
@@ -9069,7 +9182,7 @@ function ChoreChaosApp() {
 
   // Interactive Space Invaders — shield reaction
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'space-invaders') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'space-invaders') return;
     if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
 
     const elimIndex = playbackStep;
@@ -9161,7 +9274,7 @@ function ChoreChaosApp() {
 
   // Interactive Battle Royale — directional movement
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result || result.modeId !== 'battle-royale') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'battle-royale') return;
     if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
 
     const phase = playbackStep; // 0-indexed, each phase = one elimination
@@ -9185,33 +9298,75 @@ function ChoreChaosApp() {
       phase: phase + 1,
     });
 
-    setPendingAction({
-      type: 'choice',
-      action: 'move_direction',
-      aliveNames: alive,
-      zone: nextZone,
-      phase: phase + 1,
-      received: {},
-    });
-
     const moveChoices = {};
 
-    currentActionHandler.current = (payload) => {
-      if (payload.action !== 'move_direction') return;
-      const actor = payload.playerName;
-      if (!alive.includes(actor) || moveChoices[actor]) return;
+    if (localInteractiveMode && !interactiveMode) {
+      // Local mode: cycle through alive players one at a time
+      const currentMover = alive[0];
+      setPendingAction({
+        type: 'turn',
+        action: 'move_direction',
+        playerName: currentMover,
+        aliveNames: alive,
+        zone: nextZone,
+        phase: phase + 1,
+      });
 
-      const dir = payload.direction;
-      if (!['up', 'down', 'left', 'right', 'stay'].includes(dir)) return;
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'move_direction') return;
+        const actor = payload.playerName;
+        if (!alive.includes(actor) || moveChoices[actor]) return;
 
-      moveChoices[actor] = dir;
-      setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+        const dir = payload.direction;
+        if (!['up', 'down', 'left', 'right', 'stay'].includes(dir)) return;
 
-      // Check if all alive players have moved
-      if (alive.every(name => moveChoices[name])) {
-        applyMovesAndAdvance(moveChoices);
-      }
-    };
+        moveChoices[actor] = dir;
+        setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+
+        if (alive.every(name => moveChoices[name])) {
+          applyMovesAndAdvance(moveChoices);
+        } else {
+          const nextMover = alive.find(name => !moveChoices[name]);
+          if (nextMover) {
+            setPendingAction({
+              type: 'turn',
+              action: 'move_direction',
+              playerName: nextMover,
+              aliveNames: alive,
+              zone: nextZone,
+              phase: phase + 1,
+            });
+          }
+        }
+      };
+    } else {
+      // Multiplayer mode: all alive players move simultaneously
+      setPendingAction({
+        type: 'choice',
+        action: 'move_direction',
+        aliveNames: alive,
+        zone: nextZone,
+        phase: phase + 1,
+        received: {},
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'move_direction') return;
+        const actor = payload.playerName;
+        if (!alive.includes(actor) || moveChoices[actor]) return;
+
+        const dir = payload.direction;
+        if (!['up', 'down', 'left', 'right', 'stay'].includes(dir)) return;
+
+        moveChoices[actor] = dir;
+        setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+
+        // Check if all alive players have moved
+        if (alive.every(name => moveChoices[name])) {
+          applyMovesAndAdvance(moveChoices);
+        }
+      };
+    }
 
     function applyMovesAndAdvance(moves) {
       const MOVE_DIST = 10;
@@ -9292,7 +9447,7 @@ function ChoreChaosApp() {
 
   // Interactive turn management for RNG, Wheel, Slots, Coin Gauntlet
   useEffect(() => {
-    if (!interactiveMode || !gameActive || !result) return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result) return;
     const mode = result.modeId;
     if (['black-marble', 'bomb', 'rocket', 'holdem', 'plo', 'stock-market', 'dice', 'high-card', 'plinko', 'horse-race', 'space-invaders', 'battle-royale'].includes(mode)) return;
     if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
@@ -9512,7 +9667,7 @@ function ChoreChaosApp() {
         ? pickRandom(MODES).id
         : selectedModeId;
 
-    const activePlayerNames = interactiveMode && Object.keys(joinedPlayers).length >= 2
+    const activePlayerNames = (interactiveMode && Object.keys(joinedPlayers).length >= 2)
       ? Object.keys(joinedPlayers)
       : cleanedNames;
     const playerNames = forcedNames || activePlayerNames;
@@ -9534,7 +9689,7 @@ function ChoreChaosApp() {
     // Initialize a new series if selecting a best-of format and not already in one
     if (['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat) && !seriesActive) {
       const totalRounds = gameFormat === 'best-of-3' ? 3 : gameFormat === 'best-of-5' ? 5 : 7;
-      const seriesNames = interactiveMode && Object.keys(joinedPlayers).length >= 2
+      const seriesNames = (interactiveMode && Object.keys(joinedPlayers).length >= 2)
         ? Object.keys(joinedPlayers)
         : cleanedNames;
       const initScores = Object.fromEntries(seriesNames.map(n => [n, 0]));
@@ -9587,6 +9742,7 @@ function ChoreChaosApp() {
     setHorseLanePicks(null);
     setUsedShields({});
     setBattleMoves(null);
+    setHandoffReady(false);
     setVoteActive(false);
     setVotes({});
     setVoteDeadline(null);
@@ -9600,7 +9756,7 @@ function ChoreChaosApp() {
     window.__stockInteractive = false;
     window.__stockDrawIndex = 0;
     // Don't record interactive bomb/rocket/poker-draft/stock-draft/high-card-draft/horse-race-draft immediately — they record on completion
-    if (!(interactiveMode && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || outcome.draftPhase))) {
+    if (!((interactiveMode || localInteractiveMode) && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || outcome.draftPhase))) {
       pushHistory(outcome);
     }
     broadcastEvent({
@@ -9674,6 +9830,7 @@ function ChoreChaosApp() {
     setHorseLanePicks(null);
     setUsedShields({});
     setBattleMoves(null);
+    setHandoffReady(false);
     window.__interactiveRocketEjects = {};
     window.__draftChoices = {};
     window.__rocketInteractive = false;
@@ -10993,9 +11150,102 @@ function ChoreChaosApp() {
                     <PlaybackStage result={result} step={playbackStep} done={playbackDone} interactiveBombState={interactiveBombState} />
                   </div>
 
-                  {interactiveMode && pendingAction && playerName && !playbackDone ? (
+                  {(interactiveMode || localInteractiveMode) && pendingAction && (playerName || (localInteractiveMode && pendingAction.type === 'realtime')) && !playbackDone ? (
                     <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 backdrop-blur">
-                      <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} playerName={playerName} />
+                      {localInteractiveMode && !interactiveMode && pendingAction.type === 'realtime' && pendingAction.action === 'eject' ? (
+                        (() => {
+                          const ejects = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+                          return (
+                            <div>
+                              <div className="pixel-font text-[9px] text-indigo-300 mb-3 text-center">{"\uD83D\uDE80"} EJECT BUTTONS</div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {cleanedNames.map(name => {
+                                  const hasEjected = ejects[name];
+                                  return hasEjected ? (
+                                    <div key={name} className="py-3 px-4 rounded-xl bg-green-900/30 border border-green-500/20 text-center">
+                                      <div className="pixel-font text-[8px] text-green-400">{"\uD83E\uDE82"} {name}</div>
+                                      <div className="pixel-font text-[7px] text-green-600 mt-1">{hasEjected.distance >= 1000000 ? (hasEjected.distance/1000000).toFixed(1) + 'M km' : Math.round(hasEjected.distance).toLocaleString() + ' km'}</div>
+                                    </div>
+                                  ) : (
+                                    <button key={name} onClick={() => { if (currentActionHandler.current) currentActionHandler.current({ playerName: name, action: 'eject' }); }}
+                                      className="py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-sm shadow-lg shadow-red-600/30 transition hover:scale-[1.02] active:scale-95">
+                                      {"\uD83E\uDE82"} {name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : localInteractiveMode && !interactiveMode && pendingAction.type === 'realtime' && pendingAction.action === 'sell' ? (
+                        (() => {
+                          const sellState = (typeof window !== 'undefined' && window.__stockSellState) || {};
+                          const playerStocks = pendingAction.playerStocks || {};
+                          return (
+                            <div>
+                              <div className="pixel-font text-[9px] text-emerald-300 mb-3 text-center">{"\uD83D\uDCC8"} SELL BUTTONS</div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {cleanedNames.filter(name => playerStocks[name]).map(name => {
+                                  const hasSold = sellState[name];
+                                  return hasSold ? (
+                                    <div key={name} className="py-3 px-4 rounded-xl bg-emerald-900/30 border border-emerald-500/20 text-center">
+                                      <div className="pixel-font text-[8px] text-emerald-400">{"\u2705"} {name}</div>
+                                      <div className="pixel-font text-[7px] text-emerald-600 mt-1">${hasSold.price?.toFixed ? hasSold.price.toFixed(2) : hasSold.price} ({hasSold.percentChange > 0 ? '+' : ''}{hasSold.percentChange?.toFixed ? hasSold.percentChange.toFixed(1) : hasSold.percentChange}%)</div>
+                                    </div>
+                                  ) : (
+                                    <button key={name} onClick={() => { if (currentActionHandler.current) currentActionHandler.current({ playerName: name, action: 'sell' }); }}
+                                      className="py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition hover:scale-[1.02] active:scale-95">
+                                      {"\uD83D\uDCB0"} {name} — SELL
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : localInteractiveMode && !interactiveMode && pendingAction.type === 'realtime' && pendingAction.action === 'whip_horse' ? (
+                        (() => {
+                          const whipsRemaining = pendingAction.whipsRemaining || {};
+                          return (
+                            <div>
+                              <div className="pixel-font text-[9px] text-green-300 mb-3 text-center">{"\uD83C\uDFC7"} WHIP — Turn {pendingAction.turnNumber}/{pendingAction.totalTurns}</div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {cleanedNames.map(name => {
+                                  const whips = whipsRemaining[name] || 0;
+                                  return whips > 0 ? (
+                                    <button key={name} onClick={() => { if (currentActionHandler.current) currentActionHandler.current({ playerName: name, action: 'whip_horse' }); }}
+                                      className="py-3 px-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-sm shadow-lg transition hover:scale-[1.02] active:scale-95">
+                                      {"\uD83E\uDE7F"} {name} ({whips})
+                                    </button>
+                                  ) : (
+                                    <div key={name} className="py-3 px-4 rounded-xl bg-slate-800/30 border border-slate-700/20 text-center">
+                                      <div className="pixel-font text-[8px] text-slate-500">{name}</div>
+                                      <div className="pixel-font text-[7px] text-slate-600 mt-1">No whips</div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="pixel-font text-[7px] text-slate-600 mt-2 text-center">Tap to guarantee your horse advances</div>
+                            </div>
+                          );
+                        })()
+                      ) : localInteractiveMode && isPrivateAction(pendingAction.action) && !handoffReady ? (
+                        <div className="rounded-2xl border border-indigo-500/20 bg-[#0a0a1a] p-8 text-center">
+                          <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-4">Pass the device</div>
+                          <div className="pixel-font text-xl text-indigo-300 mb-6" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>
+                            {pendingAction.playerName}
+                          </div>
+                          <div className="font-mono text-sm text-slate-500 mb-6">Only look when it's your turn!</div>
+                          <button
+                            onClick={() => setHandoffReady(true)}
+                            className="w-full max-w-xs mx-auto py-4 rounded-xl pixel-font text-sm transition hover:scale-[1.02] active:scale-95"
+                            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2))', border: '2px solid rgba(99,102,241,0.5)', color: '#a5b4fc' }}>
+                            I'M READY
+                          </button>
+                        </div>
+                      ) : (
+                        <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} playerName={playerName} />
+                      )}
                     </div>
                   ) : null}
 
