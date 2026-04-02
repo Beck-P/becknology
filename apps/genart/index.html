@@ -482,25 +482,31 @@
 
     // ==================== MAIN LOOP ====================
     function animate() {
-      if (frameCount >= maxFrames) {
-        if (isCycling) {
-          hueShift += 1.5;
-          renderGrid();
-          animFrame = requestAnimationFrame(animate);
-        } else {
-          renderGrid();
-        }
-        return;
+      // Color shift: cycle when held, decay back when released
+      if (isCycling) {
+        hueShift += 1.5;
+      } else if (Math.abs(hueShift) > 0.1) {
+        hueShift *= 0.97; // smooth decay back to original
+        if (Math.abs(hueShift) < 0.1) hueShift = 0;
       }
 
+      // Warp points decay after release
+      if (warpPoints.length > 0 && interState !== 'warping') {
+        for (var w = warpPoints.length - 1; w >= 0; w--) {
+          warpPoints[w].s *= 0.985;
+          if (warpPoints[w].s < 0.1) warpPoints.splice(w, 1);
+        }
+      }
+
+      // Keep particles flowing — never fully stop
+      var pastMax = frameCount >= maxFrames;
       if (currentMode <= MODE_WARP) animateFlow();
-      else animateAttractor();
+      else if (!pastMax) animateAttractor();
 
-      if (isCycling) hueShift += 1.5;
+      var needsRender = hueShift !== 0 || warpPoints.length > 0 || isCycling;
+      if (frameCount % 3 === 0 || needsRender) renderGrid();
 
-      if (frameCount % 3 === 0 || isCycling) renderGrid();
-
-      frameCount++;
+      if (!pastMax) frameCount++;
       animFrame = requestAnimationFrame(animate);
     }
 
@@ -536,10 +542,6 @@
         if (interState === 'pressed') {
           interState = 'cycling';
           isCycling = true;
-          // Restart render loop if animation finished
-          if (frameCount >= maxFrames) {
-            animFrame = requestAnimationFrame(animate);
-          }
         }
       }, 350);
     }
@@ -556,7 +558,6 @@
       }
 
       if (interState === 'cycling') {
-        // Started moving while cycling — switch to warping
         var dx = x - pressOrigin.x, dy = y - pressOrigin.y;
         if (Math.sqrt(dx * dx + dy * dy) > 10) {
           isCycling = false;
@@ -567,12 +568,6 @@
       if (interState === 'warping') {
         warpPoints.push({ x: x, y: y, s: 8 });
         if (warpPoints.length > 600) warpPoints = warpPoints.slice(-600);
-        // Restart render loop if animation finished
-        if (frameCount >= maxFrames) {
-          // Re-run a few frames with warp forces
-          frameCount = maxFrames - 30;
-          if (!animFrame) animFrame = requestAnimationFrame(animate);
-        }
       }
     }
 
