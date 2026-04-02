@@ -8129,8 +8129,8 @@ function ChoreChaosApp() {
             const ejected = !!eject;
             const crashed = !ejected;
             const finalDistance = ejected ? eject.distance : p.distance;
-            // Crashed players get 50% penalty
-            const effectiveDistance = crashed ? finalDistance * 0.5 : finalDistance;
+            // Crashed players lose everything
+            const effectiveDistance = crashed ? 0 : finalDistance;
             return {
               ...p,
               ejected,
@@ -8218,7 +8218,7 @@ function ChoreChaosApp() {
       if (payload.action !== 'draw' || payload.playerName !== currentDrawer) return;
       advancePlayback();
     };
-  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // Interactive Bomb turn management
   useEffect(() => {
@@ -8363,7 +8363,7 @@ function ChoreChaosApp() {
     return () => {
       clearTimeout(timer);
     };
-  }, [interactiveMode, gameActive, result, playbackStep, playbackDone, interactiveBombState]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, interactiveBombState]);
 
   // Interactive Rocket eject management
   useEffect(() => {
@@ -8411,7 +8411,7 @@ function ChoreChaosApp() {
     return () => {
       currentActionHandler.current = null;
     };
-  }, [interactiveMode, gameActive, result, playbackDone, interactiveRocketEjects]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackDone, interactiveRocketEjects]);
 
   // Interactive Poker draft management
   useEffect(() => {
@@ -8525,7 +8525,7 @@ function ChoreChaosApp() {
       }
     }
 
-  }, [interactiveMode, gameActive, result?.draftPhase]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result?.draftPhase]);
 
   // Expose draft choices on window for PokerPlayback to read
   useEffect(() => {
@@ -8644,7 +8644,7 @@ function ChoreChaosApp() {
       broadcastEvent({ type: 'draft_complete' });
       broadcastEvent({ type: 'game_start', result: chartResult });
     }
-  }, [interactiveMode, gameActive, result, stockDraftState]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, stockDraftState]);
 
   // Interactive Stock Market sell management
   useEffect(() => {
@@ -8701,7 +8701,7 @@ function ChoreChaosApp() {
     return () => {
       currentActionHandler.current = null;
     };
-  }, [interactiveMode, gameActive, result, stockSellState]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, stockSellState]);
 
   // Interactive Dice Duel — roll + optional re-roll
   useEffect(() => {
@@ -8784,7 +8784,7 @@ function ChoreChaosApp() {
         };
       }
     };
-  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // Interactive High Card — blind card pick
   useEffect(() => {
@@ -8931,7 +8931,7 @@ function ChoreChaosApp() {
       }
     }
 
-  }, [interactiveMode, gameActive, result?.draftPhase, result?.modeId]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result?.draftPhase, result?.modeId]);
 
   // Interactive Plinko — choose drop column
   useEffect(() => {
@@ -9015,7 +9015,7 @@ function ChoreChaosApp() {
       advancePlayback();
     };
 
-  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // Interactive Horse Race — lane pick + whip
   useEffect(() => {
@@ -9178,7 +9178,7 @@ function ChoreChaosApp() {
         whipsRemaining: horseWhips[actor] - 1,
       });
     };
-  }, [interactiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase]);
 
   // Interactive Space Invaders — shield reaction
   useEffect(() => {
@@ -9270,7 +9270,7 @@ function ChoreChaosApp() {
 
       advancePlayback();
     }
-  }, [interactiveMode, gameActive, result, playbackStep, playbackDone, usedShields]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, usedShields]);
 
   // Interactive Battle Royale — directional movement
   useEffect(() => {
@@ -9443,7 +9443,7 @@ function ChoreChaosApp() {
 
       advancePlayback();
     }
-  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // Interactive turn management for RNG, Wheel, Slots, Coin Gauntlet
   useEffect(() => {
@@ -9494,7 +9494,7 @@ function ChoreChaosApp() {
       if (payload.action !== action || payload.playerName !== playerName) return;
       advancePlayback();
     };
-  }, [interactiveMode, gameActive, result, playbackStep, playbackDone]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // ── Vote handler + auto-resolve timer ─────────────────────
   useEffect(() => {
