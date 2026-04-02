@@ -195,45 +195,37 @@
     }
 
     /* ---- Page Transition ---- */
-    .page-transition {
+    .page-transition-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
+      background: #0a0a0a;
       z-index: 9999;
-      pointer-events: none;
       opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
     }
 
-    .page-transition.active {
+    .page-transition-overlay.active {
       opacity: 1;
       pointer-events: all;
     }
 
-    .page-transition .glitch-slice {
-      position: absolute;
-      left: 0;
-      right: 0;
-      background: #0a0a0a;
-      overflow: hidden;
+    body.glitching {
+      animation: page-glitch 0.4s steps(1) forwards;
     }
 
-    @keyframes slice-in {
-      0% { transform: translateX(0); opacity: 0; }
-      30% { opacity: 1; }
-      50% { transform: translateX(var(--offset)); }
-      70% { transform: translateX(calc(var(--offset) * -0.3)); }
-      100% { transform: translateX(0); opacity: 1; }
-    }
-
-    @keyframes transition-fade {
-      0% { background: transparent; }
-      60% { background: rgba(10, 10, 10, 0.3); }
-      100% { background: #0a0a0a; }
-    }
-
-    .page-transition.active .backdrop {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      animation: transition-fade 0.5s ease-in forwards;
+    @keyframes page-glitch {
+      0% { filter: none; transform: none; }
+      10% { filter: hue-rotate(90deg) saturate(2); transform: translateX(4px) skewX(1deg); }
+      20% { filter: none; transform: translateX(-3px); }
+      30% { filter: invert(0.05) hue-rotate(180deg); transform: translateX(2px) skewX(-0.5deg); }
+      40% { filter: none; transform: none; }
+      50% { filter: hue-rotate(45deg) brightness(1.2); transform: translateX(-4px) skewX(1deg); }
+      60% { filter: none; transform: translateX(3px); }
+      70% { filter: saturate(3) hue-rotate(270deg); transform: translateX(-2px) skewX(-1deg); }
+      80% { filter: none; transform: none; }
+      90% { filter: brightness(1.5); transform: translateX(1px); }
+      100% { filter: none; transform: none; }
     }
 
     /* ---- Responsive ---- */
@@ -309,50 +301,32 @@
   </div>
 
   <!-- Page transition overlay -->
-  <div class="page-transition" id="page-transition"></div>
+  <div class="page-transition-overlay" id="page-transition-overlay"></div>
 
   <script>
     // Page transition on card clicks
     (function() {
-      var transition = document.getElementById('page-transition');
+      var overlay = document.getElementById('page-transition-overlay');
 
       document.querySelectorAll('.app-card').forEach(function(card) {
         card.addEventListener('click', function(e) {
           e.preventDefault();
           var href = card.getAttribute('href');
-          playTransition(function() {
+
+          // Glitch the page content
+          document.body.classList.add('glitching');
+
+          // Fade to black after glitch
+          setTimeout(function() {
+            overlay.classList.add('active');
+          }, 300);
+
+          // Navigate
+          setTimeout(function() {
             window.location.href = href;
-          });
+          }, 550);
         });
       });
-
-      function playTransition(callback) {
-        transition.innerHTML = '';
-
-        // Create horizontal glitch slices
-        var sliceCount = 8;
-        var sliceHeight = 100 / sliceCount;
-
-        for (var i = 0; i < sliceCount; i++) {
-          var slice = document.createElement('div');
-          slice.className = 'glitch-slice';
-          slice.style.top = (i * sliceHeight) + 'vh';
-          slice.style.height = sliceHeight + 'vh';
-          slice.style.setProperty('--offset', ((Math.random() * 60 - 30)) + 'px');
-          slice.style.animation = 'slice-in ' + (0.3 + Math.random() * 0.2).toFixed(2) + 's ease-out forwards';
-          slice.style.animationDelay = (i * 0.02) + 's';
-          transition.appendChild(slice);
-        }
-
-        // Dark backdrop
-        var backdrop = document.createElement('div');
-        backdrop.className = 'backdrop';
-        transition.appendChild(backdrop);
-
-        transition.classList.add('active');
-
-        setTimeout(callback, 500);
-      }
     })();
 
   </script>
