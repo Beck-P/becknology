@@ -1,0 +1,9958 @@
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createClient } from '@supabase/supabase-js';
+import qrcode from 'qrcode-generator';
+import './index.css';
+
+    // Supabase setup — replace with your project credentials
+    const SUPABASE_URL = 'https://nwtfrlxgydbeuqfcftzn.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_mjJW8ba__7yjbwAAx81sXg_oMlDkrol';
+    const _supabase = SUPABASE_URL !== 'YOUR_SUPABASE_URL'
+      ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      : null;
+
+    function Icon({ symbol, className = '' }) {
+      return <span className={className} aria-hidden="true" style={{display:'inline-flex',alignItems:'center',justifyContent:'center'}}>{symbol}</span>;
+    }
+    const Dices = (props) => <Icon symbol="🎲" {...props} />;
+    const FastForward = (props) => <Icon symbol="⏩" {...props} />;
+    const RotateCcw = (props) => <Icon symbol="🔄" {...props} />;
+    const Shuffle = (props) => <Icon symbol="🔀" {...props} />;
+    const Sparkles = (props) => <Icon symbol="✨" {...props} />;
+    const Trophy = (props) => <Icon symbol="🏆" {...props} />;
+
+    function CyclingNumber({ value, active }) {
+      const [display, setDisplay] = useState("?");
+      useEffect(() => {
+        if (!active) { setDisplay("?"); return; }
+        let count = 0;
+        const interval = setInterval(() => {
+          count++;
+          if (count >= 18) { clearInterval(interval); setDisplay(value); }
+          else { setDisplay(Math.floor(Math.random() * 100) + 1); }
+        }, 55);
+        return () => clearInterval(interval);
+      }, [active, value]);
+      return display;
+    }
+
+    function CyclingSlot({ symbol, active, delay = 0 }) {
+      const [display, setDisplay] = useState("🎰");
+      useEffect(() => {
+        if (!active) { setDisplay("🎰"); return; }
+        const timeout = setTimeout(() => {
+          let count = 0;
+          const interval = setInterval(() => {
+            count++;
+            if (count >= 16) { clearInterval(interval); setDisplay(symbol); }
+            else { setDisplay(SLOT_SYMBOLS[Math.floor(Math.random() * SLOT_SYMBOLS.length)]); }
+          }, 55);
+          return () => clearInterval(interval);
+        }, delay);
+        return () => clearTimeout(timeout);
+      }, [active, symbol, delay]);
+      return display;
+    }
+
+    function Celebration() {
+      const particles = useMemo(() =>
+        Array.from({ length: 28 }, (_, i) => ({
+          emoji: ["🎉", "⭐", "🏆", "✨", "🎊", "🥇", "👑"][i % 7],
+          x: (Math.random() - 0.5) * 600,
+          y: -(Math.random() * 350 + 80),
+          rotate: Math.random() * 720 - 360,
+          delay: Math.random() * 0.7,
+          size: 18 + Math.random() * 22,
+        })),
+      []);
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {particles.map((p, i) => (
+            <motion.div
+              key={i}
+              className="absolute left-1/2 top-1/2"
+              style={{ fontSize: p.size }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+              animate={{ x: p.x, y: p.y, opacity: [1, 1, 0], scale: [0, 1.3, 0.6], rotate: p.rotate }}
+              transition={{ duration: 2.8, delay: p.delay, ease: "easeOut" }}
+            >
+              {p.emoji}
+            </motion.div>
+          ))}
+        </div>
+      );
+    }
+
+    function SadOverlay() {
+      const drops = useMemo(() =>
+        Array.from({ length: 18 }, (_, i) => ({
+          emoji: ["😢", "💀", "😭", "🪦", "☠️", "📉"][i % 6],
+          x: 5 + Math.random() * 90,
+          delay: Math.random() * 2.5,
+          duration: 2.5 + Math.random() * 2,
+          size: 16 + Math.random() * 16,
+        })),
+      []);
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {drops.map((d, i) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{ left: `${d.x}%`, fontSize: d.size, top: -30 }}
+              initial={{ y: -30, opacity: 0.7, rotate: 0 }}
+              animate={{ y: 600, opacity: [0.7, 0.5, 0], rotate: [0, 15, -15, 8, -5] }}
+              transition={{ duration: d.duration, delay: d.delay, ease: "easeIn" }}
+            >
+              {d.emoji}
+            </motion.div>
+          ))}
+        </div>
+      );
+    }
+
+    function TieAnimation({ tiedNames }) {
+      const particles = useMemo(() =>
+        Array.from({ length: 24 }, (_, i) => ({
+          emoji: ["\u26A1", "\uD83D\uDD25", "\u2694\uFE0F", "\uD83D\uDCA5"][i % 4],
+          x: (Math.random() - 0.5) * 500,
+          y: (Math.random() - 0.5) * 400,
+          rotate: Math.random() * 720 - 360,
+          delay: Math.random() * 0.6,
+          size: 20 + Math.random() * 24,
+        })),
+      []);
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {particles.map((p, i) => (
+            <motion.div
+              key={i}
+              className="absolute left-1/2 top-1/2"
+              style={{ fontSize: p.size }}
+              initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+              animate={{ x: p.x, y: p.y, opacity: [1, 1, 0.8, 0], scale: [0, 1.5, 1, 0.5], rotate: p.rotate }}
+              transition={{ duration: 2.5, delay: p.delay, ease: "easeOut" }}
+            >
+              {p.emoji}
+            </motion.div>
+          ))}
+          {tiedNames ? (
+            <motion.div
+              className="absolute inset-0 flex items-end justify-center pb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 1, 0.8] }}
+              transition={{ duration: 2, delay: 0.3 }}
+            >
+              <div className="text-sm font-bold tracking-widest" style={{ color: "#f59e0b" }}>
+                {tiedNames.join(" vs ")}
+              </div>
+            </motion.div>
+          ) : null}
+        </div>
+      );
+    }
+
+    function ThemeArt({ modeId }) {
+      const art = useMemo(() => {
+        switch (modeId) {
+          case 'holdem':
+            return (
+              <div className="theme-art-layer">
+                {/* Green poker chip top-right */}
+                <div className="theme-art-sprite pixel-chip float-slow" style={{top:16,right:20,transform:'scale(1.3)'}} />
+                {/* Blinking block cursor bottom-left */}
+                <div style={{position:'absolute',bottom:24,left:20,width:10,height:16,background:'#00ff41',animation:'cursor-blink 1s steps(1) infinite',opacity:0.7}} />
+                {/* Scrolling ticker at bottom */}
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:18,overflow:'hidden',opacity:0.3}}>
+                  <div style={{display:'inline-block',whiteSpace:'nowrap',fontFamily:"'Press Start 2P', monospace",fontSize:8,color:'#00ff41',animation:'ticker-scroll 12s linear infinite',willChange:'transform'}}>
+                    {"DEALER WINS: 47% \u25CF POT ODDS: 3.2:1 \u25CF DEALER WINS: 47% \u25CF POT ODDS: 3.2:1 \u25CF "}
+                  </div>
+                </div>
+              </div>
+            );
+          case 'plo':
+            return (
+              <div className="theme-art-layer">
+                {/* Glitched heart with offset shadows */}
+                <div style={{position:'absolute',top:20,right:28}}>
+                  <div className="pixel-heart" style={{position:'absolute',filter:'brightness(0) invert(1)',opacity:0.2,transform:'translate(-2px, 1px)',mixBlendMode:'screen'}} />
+                  <div className="pixel-heart" style={{position:'absolute',filter:'hue-rotate(180deg)',opacity:0.15,transform:'translate(2px, -1px)',mixBlendMode:'screen'}} />
+                  <div className="pixel-heart" style={{position:'relative',opacity:0.5}} />
+                </div>
+                {/* Glitch bars */}
+                <div style={{position:'absolute',top:'25%',left:0,right:0,height:2,background:'rgba(236,72,153,0.4)',animation:'glitch-bar 3s steps(1) infinite',willChange:'opacity'}} />
+                <div style={{position:'absolute',top:'55%',left:0,right:0,height:1,background:'rgba(168,85,247,0.3)',animation:'glitch-bar 4.5s steps(1) infinite 1s',willChange:'opacity'}} />
+                <div style={{position:'absolute',top:'78%',left:0,right:0,height:2,background:'rgba(34,211,238,0.3)',animation:'glitch-bar 3.8s steps(1) infinite 0.5s',willChange:'opacity'}} />
+                {/* Static noise grain */}
+                <div style={{position:'absolute',inset:0,background:'repeating-linear-gradient(0deg,transparent,transparent 1px,rgba(168,85,247,0.015) 1px,rgba(168,85,247,0.015) 2px)',opacity:0.8}} />
+              </div>
+            );
+          case 'rng':
+            return (
+              <div className="theme-art-layer">
+                {/* Rain columns */}
+                {[8, 22, 45, 68, 88].map((left, i) => (
+                  <div key={i} style={{position:'absolute',top:0,left:`${left}%`,width:1,height:'100%',background:'linear-gradient(180deg, transparent 0%, rgba(34,211,238,0.3) 30%, rgba(0,255,65,0.2) 60%, transparent 100%)',animation:`rain-fall ${2.5 + i * 0.4}s linear infinite`,animationDelay:`${i * 0.6}s`,willChange:'transform',opacity:0.5}} />
+                ))}
+                {/* Terminal prompt */}
+                <div style={{position:'absolute',bottom:20,left:16,fontFamily:"'Press Start 2P', monospace",fontSize:10,color:'#22d3ee',opacity:0.4}}>
+                  <span>{">_"}</span>
+                  <span style={{display:'inline-block',width:8,height:12,background:'#22d3ee',marginLeft:2,animation:'cursor-blink 1s steps(1) infinite'}} />
+                </div>
+                {/* Grid paper */}
+                <div style={{position:'absolute',inset:0,background:'repeating-linear-gradient(0deg,transparent,transparent 19px,rgba(34,211,238,0.04) 19px,rgba(34,211,238,0.04) 20px), repeating-linear-gradient(90deg,transparent,transparent 19px,rgba(34,211,238,0.04) 19px,rgba(34,211,238,0.04) 20px)',opacity:0.5}} />
+              </div>
+            );
+          case 'wheel':
+            return (
+              <div className="theme-art-layer">
+                {/* Marquee chase lights along top */}
+                <div style={{position:'absolute',top:6,left:20,right:20,height:4,background:'repeating-linear-gradient(90deg,#fbbf24 0px,#fbbf24 4px,transparent 4px,transparent 8px,#ec4899 8px,#ec4899 12px,transparent 12px,transparent 16px,#38bdf8 16px,#38bdf8 20px,transparent 20px,transparent 32px)',animation:'marquee-dots 1.2s linear infinite',willChange:'background-position',opacity:0.6,borderRadius:2}} />
+                {/* Star burst top-left */}
+                <div className="theme-art-sprite pixel-star-burst float-slow" style={{top:24,left:16,transform:'scale(1.2)',opacity:0.8}} />
+                {/* Spotlight cone */}
+                <div style={{position:'absolute',top:0,left:'50%',transform:'translateX(-50%)',width:120,height:200,background:'radial-gradient(ellipse at top center, rgba(251,191,36,0.08) 0%, transparent 70%)',opacity:0.6}} />
+              </div>
+            );
+          case 'dice':
+            return (
+              <div className="theme-art-layer">
+                {/* Torch left side */}
+                <div style={{position:'absolute',top:'30%',left:8}}>
+                  <div className="theme-art-sprite pixel-torch" style={{transform:'scale(1.3)',opacity:0.9}} />
+                  <div style={{position:'absolute',top:-10,left:-8,width:40,height:40,borderRadius:'50%',background:'radial-gradient(circle,rgba(251,191,36,0.15),transparent 70%)',animation:'torch-flicker 3s ease-in-out infinite'}} />
+                </div>
+                {/* Torch right side */}
+                <div style={{position:'absolute',top:'30%',right:8}}>
+                  <div className="theme-art-sprite pixel-torch" style={{transform:'scale(1.3)',opacity:0.9}} />
+                  <div style={{position:'absolute',top:-10,right:-8,width:40,height:40,borderRadius:'50%',background:'radial-gradient(circle,rgba(251,191,36,0.15),transparent 70%)',animation:'torch-flicker 3s ease-in-out infinite 0.5s'}} />
+                </div>
+                {/* Skull at bottom center */}
+                <div className="theme-art-sprite pixel-skull" style={{bottom:16,left:'50%',transform:'translateX(-50%) scale(1.2)',opacity:0.5}} />
+                {/* Stone wall texture */}
+                <div style={{position:'absolute',inset:0,background:'repeating-linear-gradient(0deg, rgba(120,100,80,0.03) 0px, rgba(120,100,80,0.03) 20px, rgba(80,60,40,0.04) 20px, rgba(80,60,40,0.04) 21px), repeating-linear-gradient(90deg, rgba(100,80,60,0.02) 0px, rgba(100,80,60,0.02) 40px, rgba(70,50,30,0.03) 40px, rgba(70,50,30,0.03) 41px)',opacity:0.7}} />
+              </div>
+            );
+          case 'high-card':
+            return (
+              <div className="theme-art-layer">
+                {/* Badge top-right */}
+                <div className="theme-art-sprite pixel-badge" style={{top:18,right:20,transform:'scale(1.2)',opacity:0.7}} />
+                {/* Dust particles */}
+                {[{x:15,y:40},{x:30,y:65},{x:55,y:30},{x:70,y:55},{x:85,y:45},{x:45,y:75},{x:20,y:20},{x:75,y:80}].map((p, i) => (
+                  <div key={i} style={{position:'absolute',left:`${p.x}%`,top:`${p.y}%`,width:3,height:3,borderRadius:'50%',background:'#d4a854',opacity:0.3,animation:`dust-drift ${4 + i * 0.7}s ease-in-out infinite`,animationDelay:`${i * 0.8}s`,willChange:'transform'}} />
+                ))}
+                {/* Sandy texture at bottom */}
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:'15%',background:'repeating-linear-gradient(170deg, transparent 0px, transparent 6px, rgba(180,140,80,0.04) 6px, rgba(180,140,80,0.04) 8px)',opacity:0.6}} />
+              </div>
+            );
+          case 'coin-flips':
+            return (
+              <div className="theme-art-layer">
+                {/* Treasure chest bottom-right */}
+                <div className="theme-art-sprite pixel-chest" style={{bottom:20,right:16,transform:'scale(1.3)',opacity:0.6}} />
+                {/* Ocean waves at bottom */}
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:'18%',background:'repeating-linear-gradient(170deg, transparent 0px, transparent 10px, rgba(30,58,138,0.06) 10px, rgba(30,58,138,0.06) 12px, transparent 12px, transparent 18px, rgba(56,189,248,0.04) 18px, rgba(56,189,248,0.04) 20px)',animation:'wave-drift 6s linear infinite',willChange:'background-position'}} />
+                {/* Scattered coins */}
+                <div className="theme-art-sprite pixel-coin float-slow" style={{top:20,left:'15%',transform:'scale(0.8)',opacity:0.5}} />
+                <div className="theme-art-sprite pixel-coin float-med" style={{top:'45%',right:'10%',transform:'scale(1.1)',opacity:0.4}} />
+                <div className="theme-art-sprite pixel-coin float-fast" style={{bottom:'30%',left:'25%',transform:'scale(0.6)',opacity:0.3}} />
+                <div className="theme-art-sprite pixel-coin float-slow" style={{top:'60%',left:'65%',transform:'scale(0.9)',opacity:0.35}} />
+              </div>
+            );
+          case 'black-marble':
+            return (
+              <div className="theme-art-layer">
+                {/* Crystal at bottom center */}
+                <div className="theme-art-sprite pixel-crystal" style={{bottom:14,left:'50%',transform:'translateX(-50%) scale(1.4)',opacity:0.6}} />
+                {/* Enhanced starfield */}
+                {Array.from({length:12}, (_, i) => ({
+                  x: 5 + (i * 37 + 13) % 90,
+                  y: 5 + (i * 53 + 7) % 90,
+                  size: i % 3 === 0 ? 3 : 2,
+                  delay: (i * 0.4) % 3,
+                  dur: 2 + (i % 4) * 0.7,
+                })).map((s, i) => (
+                  <div key={i} style={{position:'absolute',left:`${s.x}%`,top:`${s.y}%`,width:s.size,height:s.size,borderRadius:'50%',background:i % 4 === 0 ? '#c4b5fd' : i % 3 === 0 ? '#e0e7ff' : '#8b5cf6',boxShadow:`0 0 ${s.size + 2}px rgba(139,92,246,0.5)`,animation:`twinkle${(i % 3) + 1} ${s.dur}s ease-in-out infinite`,animationDelay:`${s.delay}s`}} />
+                ))}
+                {/* Nebula clouds */}
+                <div style={{position:'absolute',top:'10%',left:'10%',width:200,height:200,borderRadius:'50%',background:'radial-gradient(circle, rgba(88,28,135,0.08), transparent 70%)',animation:'nebula-pulse 8s ease-in-out infinite',willChange:'opacity'}} />
+                <div style={{position:'absolute',bottom:'15%',right:'10%',width:160,height:160,borderRadius:'50%',background:'radial-gradient(circle, rgba(67,56,202,0.06), transparent 70%)',animation:'nebula-pulse 6s ease-in-out infinite 2s',willChange:'opacity'}} />
+              </div>
+            );
+          case 'slots':
+            return (
+              <div className="theme-art-layer">
+                {/* Cherry top-left */}
+                <div className="theme-art-sprite pixel-cherry" style={{top:16,left:16,transform:'scale(1.2)',opacity:0.7}} />
+                {/* Seven top-right */}
+                <div className="theme-art-sprite pixel-seven" style={{top:16,right:20,transform:'scale(1.3)',opacity:0.7}} />
+                {/* Chase lights left side */}
+                <div style={{position:'absolute',top:60,left:4,bottom:20,width:4,background:'repeating-linear-gradient(180deg, #ec4899 0px, #ec4899 4px, transparent 4px, transparent 8px, #38bdf8 8px, #38bdf8 12px, transparent 12px, transparent 16px, #fbbf24 16px, #fbbf24 20px, transparent 20px, transparent 32px)',animation:'marquee-dots-v 1s linear infinite',willChange:'background-position',opacity:0.5,borderRadius:2}} />
+                {/* Chase lights right side */}
+                <div style={{position:'absolute',top:60,right:4,bottom:20,width:4,background:'repeating-linear-gradient(180deg, #fbbf24 0px, #fbbf24 4px, transparent 4px, transparent 8px, #ec4899 8px, #ec4899 12px, transparent 12px, transparent 16px, #38bdf8 16px, #38bdf8 20px, transparent 20px, transparent 32px)',animation:'marquee-dots-v 1s linear infinite 0.5s',willChange:'background-position',opacity:0.5,borderRadius:2}} />
+                {/* JACKPOT background text */}
+                <div style={{position:'absolute',top:'40%',left:'50%',transform:'translate(-50%,-50%)',fontFamily:"'Press Start 2P', monospace",fontSize:48,color:'#ec4899',opacity:0.04,letterSpacing:'0.2em',animation:'neon-throb 3s ease-in-out infinite',willChange:'filter',whiteSpace:'nowrap'}}>JACKPOT</div>
+                {/* Dollar sign particles */}
+                {[15, 35, 55, 75, 90].map((left, i) => (
+                  <div key={i} style={{position:'absolute',bottom:10,left:`${left}%`,fontFamily:"'Press Start 2P', monospace",fontSize:14,color:'#fbbf24',opacity:0.4,animation:`dollar-rise ${3 + i * 0.5}s ease-out infinite`,animationDelay:`${i * 0.8}s`,willChange:'transform'}}>$</div>
+                ))}
+              </div>
+            );
+          case 'horse-race':
+            return (
+              <div className="theme-art-layer">
+                {/* Green turf texture */}
+                <div style={{position:'absolute',top:0,left:0,right:0,height:'35%',background:'repeating-linear-gradient(90deg, rgba(34,197,94,0.03) 0px, rgba(34,197,94,0.03) 20px, rgba(22,163,74,0.04) 20px, rgba(22,163,74,0.04) 40px)',opacity:0.7}} />
+                {/* Flag top-right */}
+                <div className="theme-art-sprite pixel-flag" style={{top:16,right:20,transform:'scale(1.3)',opacity:0.7}} />
+                {/* Lane markers */}
+                {[30, 50, 70].map((top, i) => (
+                  <div key={i} style={{position:'absolute',top:`${top}%`,left:'5%',right:'5%',height:1,borderTop:'2px dashed rgba(255,255,255,0.08)'}} />
+                ))}
+                {/* PHOTO FINISH banner */}
+                <div style={{position:'absolute',bottom:12,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'2px solid rgba(34,197,94,0.3)',background:'rgba(13,26,13,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#86efac',letterSpacing:'0.15em',opacity:0.5,whiteSpace:'nowrap'}}>PHOTO FINISH</div>
+              </div>
+            );
+          case 'rocket':
+            return (
+              <div className="theme-art-layer">
+                {/* Twinkling stars */}
+                {[{x:8,y:12,s:3,d:2.5},{x:25,y:35,s:2,d:3.2},{x:42,y:8,s:2,d:2.8},{x:65,y:22,s:3,d:3.5},{x:80,y:45,s:2,d:2.2},{x:15,y:70,s:2,d:4},{x:55,y:65,s:3,d:2.9},{x:90,y:15,s:2,d:3.8}].map((s, i) => (
+                  <div key={i} style={{position:'absolute',left:`${s.x}%`,top:`${s.y}%`,width:s.s,height:s.s,borderRadius:'50%',background:i % 3 === 0 ? '#c4b5fd' : i % 2 === 0 ? '#e0e7ff' : '#8b5cf6',boxShadow:`0 0 ${s.s + 2}px rgba(139,92,246,0.5)`,animation:`twinkle${(i % 3) + 1} ${s.d}s ease-in-out infinite`,animationDelay:`${i * 0.4}s`}} />
+                ))}
+                {/* Pixel planet bottom-right */}
+                <div style={{position:'absolute',bottom:20,right:24,width:28,height:28,borderRadius:'50%',background:'radial-gradient(circle at 40% 35%, #6d28d9, #3730a3 60%, #1e1b4b)',boxShadow:'0 0 12px rgba(109,40,217,0.3)',opacity:0.6}} />
+                {/* Ring around planet */}
+                <div style={{position:'absolute',bottom:28,right:12,width:52,height:12,borderRadius:'50%',border:'1px solid rgba(139,92,246,0.25)',transform:'rotate(-15deg)',opacity:0.4}} />
+                {/* Subtle nebula glow */}
+                <div style={{position:'absolute',top:'15%',left:'10%',width:180,height:180,borderRadius:'50%',background:'radial-gradient(circle, rgba(99,102,241,0.06), transparent 70%)',animation:'nebula-pulse 7s ease-in-out infinite',willChange:'opacity'}} />
+                {/* MISSION CONTROL label */}
+                <div style={{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'1px solid rgba(139,92,246,0.2)',background:'rgba(10,5,32,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#8b5cf6',letterSpacing:'0.15em',opacity:0.4,whiteSpace:'nowrap'}}>MISSION CONTROL</div>
+              </div>
+            );
+          case 'space-invaders':
+            return (
+              <div className="theme-art-layer">
+                {/* Green pixel dots (shields) */}
+                {[{x:15,y:70,w:20,h:8},{x:45,y:70,w:20,h:8},{x:75,y:70,w:20,h:8}].map((s, i) => (
+                  <div key={i} style={{position:'absolute',left:`${s.x}%`,top:`${s.y}%`,width:s.w,height:s.h,background:'rgba(34,197,94,0.15)',borderRadius:2,boxShadow:'0 0 6px rgba(34,197,94,0.1)'}} />
+                ))}
+                {/* Floating pixel dots */}
+                {[{x:10,y:15,s:3},{x:30,y:25,s:2},{x:50,y:10,s:3},{x:70,y:30,s:2},{x:88,y:18,s:3},{x:20,y:50,s:2},{x:60,y:45,s:3},{x:82,y:55,s:2}].map((s, i) => (
+                  <div key={i} style={{position:'absolute',left:`${s.x}%`,top:`${s.y}%`,width:s.s,height:s.s,background:'#22c55e',opacity:0.3,animation:`twinkle${(i%3)+1} ${2.5+i*0.4}s ease-in-out infinite`,animationDelay:`${i*0.3}s`}} />
+                ))}
+                {/* CRT scanlines */}
+                <div style={{position:'absolute',inset:0,background:'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(34,197,94,0.02) 2px,rgba(34,197,94,0.02) 4px)',opacity:0.8}} />
+                {/* GAME OVER label */}
+                <div style={{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'1px solid rgba(34,197,94,0.2)',background:'rgba(0,0,0,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#22c55e',letterSpacing:'0.15em',opacity:0.4,whiteSpace:'nowrap'}}>INSERT COIN</div>
+              </div>
+            );
+          case 'bomb':
+            return (
+              <div className="theme-art-layer">
+                {/* Hazard stripe pattern */}
+                <div style={{position:'absolute',top:0,left:0,right:0,height:8,background:'repeating-linear-gradient(90deg, #f97316 0px, #f97316 8px, #1a1a2e 8px, #1a1a2e 16px)',opacity:0.15}} />
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:8,background:'repeating-linear-gradient(90deg, #f97316 0px, #f97316 8px, #1a1a2e 8px, #1a1a2e 16px)',opacity:0.15}} />
+                {/* Spark particles */}
+                {[{x:20,y:30},{x:45,y:20},{x:70,y:40},{x:85,y:25},{x:15,y:60},{x:55,y:55}].map((s, i) => (
+                  <div key={i} style={{position:'absolute',left:`${s.x}%`,top:`${s.y}%`,width:3,height:3,borderRadius:'50%',background:i%2===0?'#f97316':'#ef4444',opacity:0.4,animation:`fuse-spark ${1.5+i*0.3}s ease-in-out infinite`,animationDelay:`${i*0.4}s`}} />
+                ))}
+                {/* WARNING label */}
+                <div style={{position:'absolute',bottom:14,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'1px solid rgba(239,68,68,0.2)',background:'rgba(26,26,46,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#ef4444',letterSpacing:'0.15em',opacity:0.4,whiteSpace:'nowrap'}}>DANGER ZONE</div>
+              </div>
+            );
+          case 'plinko':
+            return (
+              <div className="theme-art-layer">
+                {/* Neon peg dots */}
+                {[{x:20,y:15},{x:40,y:25},{x:60,y:15},{x:80,y:25},{x:30,y:40},{x:50,y:35},{x:70,y:40},{x:15,y:55},{x:45,y:50},{x:75,y:55},{x:85,y:45},{x:25,y:65},{x:55,y:60},{x:65,y:70}].map((s, i) => (
+                  <div key={i} style={{position:'absolute',left:`${s.x}%`,top:`${s.y}%`,width:4,height:4,borderRadius:'50%',background:i%2===0?'#ec4899':'#fbbf24',boxShadow:`0 0 6px ${i%2===0?'rgba(236,72,153,0.5)':'rgba(251,191,36,0.5)'}`,opacity:0.4,animation:`led-blink ${1.5+i*0.2}s ease-in-out infinite`,animationDelay:`${i*0.3}s`}} />
+                ))}
+                {/* PLINKO label */}
+                <div style={{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'1px solid rgba(236,72,153,0.2)',background:'rgba(26,10,24,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#ec4899',letterSpacing:'0.15em',opacity:0.4,whiteSpace:'nowrap'}}>PLINKO</div>
+              </div>
+            );
+          case 'battle-royale':
+            return (
+              <div className="theme-art-layer">
+                {/* Cyan grid */}
+                <div style={{position:'absolute',inset:0,background:'repeating-linear-gradient(0deg,transparent 0px,transparent 29px,rgba(34,211,238,0.04) 29px,rgba(34,211,238,0.04) 30px), repeating-linear-gradient(90deg,transparent 0px,transparent 29px,rgba(34,211,238,0.04) 29px,rgba(34,211,238,0.04) 30px)',opacity:0.5}} />
+                {/* Crosshair decoration */}
+                <div style={{position:'absolute',top:'30%',right:'20%',width:24,height:24,border:'1px solid rgba(34,211,238,0.2)',borderRadius:'50%',opacity:0.4}}>
+                  <div style={{position:'absolute',top:'50%',left:-6,width:8,height:1,background:'rgba(34,211,238,0.3)'}} />
+                  <div style={{position:'absolute',top:'50%',right:-6,width:8,height:1,background:'rgba(34,211,238,0.3)'}} />
+                  <div style={{position:'absolute',left:'50%',top:-6,width:1,height:8,background:'rgba(34,211,238,0.3)'}} />
+                  <div style={{position:'absolute',left:'50%',bottom:-6,width:1,height:8,background:'rgba(34,211,238,0.3)'}} />
+                </div>
+                {/* CLASSIFIED watermark */}
+                <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%) rotate(-15deg)',fontFamily:"'Orbitron', sans-serif",fontSize:36,color:'#22d3ee',opacity:0.03,letterSpacing:'0.3em',whiteSpace:'nowrap'}}>CLASSIFIED</div>
+                {/* Label */}
+                <div style={{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'1px solid rgba(34,211,238,0.2)',background:'rgba(5,10,24,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#22d3ee',letterSpacing:'0.15em',opacity:0.4,whiteSpace:'nowrap'}}>ZONE ACTIVE</div>
+              </div>
+            );
+          case 'stock-market':
+            return (
+              <div className="theme-art-layer">
+                {/* Green grid dots */}
+                <div style={{position:'absolute',inset:0,background:'repeating-linear-gradient(0deg,transparent 0px,transparent 14px,rgba(16,185,129,0.04) 14px,rgba(16,185,129,0.04) 15px), repeating-linear-gradient(90deg,transparent 0px,transparent 29px,rgba(16,185,129,0.03) 29px,rgba(16,185,129,0.03) 30px)',opacity:0.6}} />
+                {/* Ticker tape animation */}
+                <div style={{position:'absolute',top:8,left:0,right:0,height:14,overflow:'hidden',opacity:0.25}}>
+                  <div style={{display:'inline-block',whiteSpace:'nowrap',fontFamily:"'Source Code Pro', monospace",fontSize:8,color:'#10b981',animation:'ticker-scroll 18s linear infinite',willChange:'transform'}}>
+                    {"$DOGE +42% \u25CF $MOON -12% \u25CF $YOLO +88% \u25CF $HODL -5% \u25CF $STONK +120% \u25CF $DOGE +42% \u25CF $MOON -12% \u25CF $YOLO +88% \u25CF "}
+                  </div>
+                </div>
+                {/* WALL ST label */}
+                <div style={{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',padding:'3px 12px',border:'1px solid rgba(16,185,129,0.2)',background:'rgba(0,0,0,0.7)',fontFamily:"'Press Start 2P', monospace",fontSize:7,color:'#10b981',letterSpacing:'0.15em',opacity:0.4,whiteSpace:'nowrap'}}>WALL ST</div>
+              </div>
+            );
+          default:
+            return null;
+        }
+      }, [modeId]);
+      return art;
+    }
+
+    function VerdictReveal({ text, isWinner }) {
+      return (
+        <motion.div
+          initial={{ scale: 2.5, opacity: 0, filter: "blur(20px)", y: -30 }}
+          animate={{ scale: 1, opacity: 1, filter: "blur(0px)", y: 0 }}
+          transition={{ type: "spring", stiffness: 50, damping: 10, mass: 1.5 }}
+          className="mt-3 text-3xl font-black tracking-tight sm:text-4xl"
+        >
+          {text}
+        </motion.div>
+      );
+    }
+
+    function ModeHeader({ result, done, pendingText, pendingSummary }) {
+      const isWinner = result.selectionGoal === "winner";
+      const isTie = result.isTie;
+      return (
+        <div className={`mode-header-bg relative overflow-hidden bg-gradient-to-r px-6 py-6 text-white ${MODE_META.find((mode) => mode.id === result.modeId)?.accent ?? "from-slate-700 to-slate-900"}`}>
+          {done && isTie ? <TieAnimation tiedNames={result.tiedNames} /> : null}
+          {done && !isTie && isWinner ? <Celebration /> : null}
+          {done && !isTie && !isWinner ? <SadOverlay /> : null}
+          <div className="relative z-10">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.modeName}</div>
+            {done
+              ? <VerdictReveal text={result.headline} isWinner={isTie ? false : isWinner} />
+              : <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{pendingText}</div>
+            }
+            <div className="mt-3 max-w-2xl text-white/90">{done ? result.summary : pendingSummary}</div>
+          </div>
+        </div>
+      );
+    }
+
+
+const SUITS = ["s", "h", "d", "c"];
+const SUIT_SYMBOLS = { s: "♠", h: "♥", d: "♦", c: "♣" };
+const SUIT_NAMES = { s: "Spade", h: "Heart", d: "Diamond", c: "Club" };
+const RANK_LABELS = {
+  2: "2",
+  3: "3",
+  4: "4",
+  5: "5",
+  6: "6",
+  7: "7",
+  8: "8",
+  9: "9",
+  10: "10",
+  11: "J",
+  12: "Q",
+  13: "K",
+  14: "A",
+};
+const RANK_WORDS = {
+  2: "Two",
+  3: "Three",
+  4: "Four",
+  5: "Five",
+  6: "Six",
+  7: "Seven",
+  8: "Eight",
+  9: "Nine",
+  10: "Ten",
+  11: "Jack",
+  12: "Queen",
+  13: "King",
+  14: "Ace",
+};
+const RANK_PLURALS = {
+  2: "Twos",
+  3: "Threes",
+  4: "Fours",
+  5: "Fives",
+  6: "Sixes",
+  7: "Sevens",
+  8: "Eights",
+  9: "Nines",
+  10: "Tens",
+  11: "Jacks",
+  12: "Queens",
+  13: "Kings",
+  14: "Aces",
+};
+const WHEEL_COLORS = ["#60a5fa", "#f472b6", "#f59e0b", "#34d399", "#a78bfa", "#fb923c", "#22d3ee", "#f87171"];
+const SLOT_SYMBOLS = ["🍒", "🍋", "⭐", "🍀", "🔔", "7️⃣"];
+const SLOT_WEIGHTS = {
+  "🍒": 2,
+  "🍋": 3,
+  "⭐": 4,
+  "🍀": 5,
+  "🔔": 6,
+  "7️⃣": 7,
+};
+const HORSE_EMOJIS = ["🐎", "🦄", "🐴", "🏇"];
+
+const MODE_META = [
+  {
+    id: "holdem",
+    name: "Texas Hold’em",
+    icon: "🃏",
+    blurb: "2 hole cards, board flips, weakest hand loses.",
+    accent: "from-sky-500 to-blue-600",
+    cardHint: "card-hint-holdem",
+    themeClass: "theme-holdem",
+    resultWin: "ROYAL FLUSH",
+    resultLose: "MUCKED",
+  },
+  {
+    id: "plo",
+    name: "PLO",
+    icon: "🂠",
+    blurb: "4 hole cards, Omaha rules, full showdown.",
+    accent: "from-violet-500 to-fuchsia-600",
+    cardHint: "card-hint-plo",
+    themeClass: "theme-plo",
+    resultWin: "NUTS",
+    resultLose: "GLITCHED",
+  },
+  {
+    id: "rng",
+    name: "Random Number",
+    icon: "#️⃣",
+    blurb: "Dramatic number reveal. Lowest loses.",
+    accent: "from-emerald-500 to-green-600",
+    cardHint: "card-hint-rng",
+    themeClass: "theme-rng",
+    resultWin: "OVERFLOW",
+    resultLose: "NULL",
+  },
+  {
+    id: "wheel",
+    name: "Wheel Spinner",
+    icon: "🎡",
+    blurb: "Spin the wheel of doom.",
+    accent: "from-orange-500 to-amber-600",
+    cardHint: "card-hint-wheel",
+    themeClass: "theme-wheel",
+    resultWin: "JACKPOT",
+    resultLose: "BANKRUPT",
+  },
+  {
+    id: "dice",
+    name: "Dice Duel",
+    icon: "🎲",
+    blurb: "Roll 2d6. Lowest total gets picked.",
+    accent: "from-rose-500 to-red-600",
+    cardHint: "card-hint-dice",
+    themeClass: "theme-dice",
+    resultWin: "VICTORIOUS",
+    resultLose: "DEFEATED",
+  },
+  {
+    id: "high-card",
+    name: "High Card",
+    icon: "🂡",
+    blurb: "One card each. Lowest rank loses.",
+    accent: "from-cyan-500 to-sky-600",
+    cardHint: "card-hint-high-card",
+    themeClass: "theme-high-card",
+    resultWin: "FASTEST DRAW",
+    resultLose: "OUTDRAWN",
+  },
+  {
+    id: "coin-flips",
+    name: "Coin Gauntlet",
+    icon: "🪙",
+    blurb: "5 flips. Fewest heads gets stuck.",
+    accent: "from-yellow-500 to-orange-500",
+    cardHint: "card-hint-coin-flips",
+    themeClass: "theme-coin-flips",
+    resultWin: "TREASURE FOUND",
+    resultLose: "WALKED THE PLANK",
+  },
+  {
+    id: "black-marble",
+    name: "Black Marble",
+    icon: "🔮",
+    blurb: "Draw until someone hits the black one.",
+    accent: "from-slate-700 to-slate-900",
+    cardHint: "card-hint-black-marble",
+    themeClass: "theme-black-marble",
+    resultWin: "FATE FAVORS",
+    resultLose: "CURSED",
+  },
+  {
+    id: "slots",
+    name: "Slot Machine",
+    icon: "🎰",
+    blurb: "Casino reels. Worst combo loses.",
+    accent: "from-pink-500 to-rose-600",
+    cardHint: "card-hint-slots",
+    themeClass: "theme-slots",
+    resultWin: "TRIPLE SEVENS",
+    resultLose: "BUST",
+  },
+  {
+    id: "horse-race",
+    name: "Horse Race",
+    icon: "🏇",
+    blurb: "12 random turns on the track.",
+    accent: "from-lime-500 to-emerald-600",
+    cardHint: "card-hint-horse-race",
+    themeClass: "theme-horse-race",
+    resultWin: "PHOTO FINISH",
+    resultLose: "LAST PLACE",
+  },
+  {
+    id: "rocket",
+    name: "Rocket Launch",
+    icon: "🚀",
+    blurb: "Launch into space. Last rocket flying wins.",
+    accent: "from-indigo-500 to-violet-700",
+    cardHint: "card-hint-rocket",
+    themeClass: "theme-rocket",
+    resultWin: "ORBIT ACHIEVED",
+    resultLose: "BURNED UP",
+  },
+  {
+    id: "space-invaders",
+    name: "Space Invaders",
+    icon: "👾",
+    blurb: "Aliens descend. Laser fires. Last one standing.",
+    accent: "from-green-500 to-emerald-700",
+    cardHint: "card-hint-space-invaders",
+    themeClass: "theme-space-invaders",
+    resultWin: "LAST ALIEN",
+    resultLose: "VAPORIZED",
+  },
+  {
+    id: "bomb",
+    name: "Bomb",
+    icon: "💣",
+    blurb: "Hot potato. Don't hold it when it blows.",
+    accent: "from-red-600 to-orange-500",
+    cardHint: "card-hint-bomb",
+    themeClass: "theme-bomb",
+    resultWin: "SURVIVED",
+    resultLose: "DETONATED",
+  },
+  {
+    id: "plinko",
+    name: "Plinko",
+    icon: "📍",
+    blurb: "Drop the ball. Watch it bounce. Pray.",
+    accent: "from-pink-500 to-amber-500",
+    cardHint: "card-hint-plinko",
+    themeClass: "theme-plinko",
+    resultWin: "JACKPOT",
+    resultLose: "GUTTER",
+  },
+  {
+    id: "battle-royale",
+    name: "Battle Royale",
+    icon: "🎯",
+    blurb: "Zone shrinks. Players drop. Last one in wins.",
+    accent: "from-cyan-400 to-blue-800",
+    cardHint: "card-hint-battle-royale",
+    themeClass: "theme-battle-royale",
+    resultWin: "VICTORY ROYALE",
+    resultLose: "ELIMINATED",
+  },
+  {
+    id: "stock-market",
+    name: "Stock Market",
+    icon: "📈",
+    blurb: "Invest. Pray. Watch the charts.",
+    accent: "from-emerald-400 to-red-500",
+    cardHint: "card-hint-stock-market",
+    themeClass: "theme-stock-market",
+    resultWin: "TO THE MOON",
+    resultLose: "LIQUIDATED",
+  },
+];
+
+function startTimeout(seconds, onTimeout) {
+  const deadline = Date.now() + seconds * 1000;
+  const timer = setTimeout(onTimeout, seconds * 1000);
+  return { deadline, timer, clear: () => clearTimeout(timer) };
+}
+
+function secureRandomInt(max) {
+  if (max <= 0) return 0;
+  const maxUint = 0x100000000;
+  const limit = maxUint - (maxUint % max);
+  const arr = new Uint32Array(1);
+  let value = 0;
+  do {
+    crypto.getRandomValues(arr);
+    value = arr[0];
+  } while (value >= limit);
+  return value % max;
+}
+
+function shuffle(items) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = secureRandomInt(i + 1);
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function pickRandom(items) {
+  return items[secureRandomInt(items.length)];
+}
+
+function compareScores(a, b) {
+  const length = Math.max(a.length, b.length);
+  for (let i = 0; i < length; i += 1) {
+    const left = a[i] ?? 0;
+    const right = b[i] ?? 0;
+    if (left !== right) return left - right;
+  }
+  return 0;
+}
+
+function combinations(items, size) {
+  const results = [];
+  const current = [];
+
+  function walk(start, depth) {
+    if (depth === size) {
+      results.push([...current]);
+      return;
+    }
+    for (let i = start; i <= items.length - (size - depth); i += 1) {
+      current.push(items[i]);
+      walk(i + 1, depth + 1);
+      current.pop();
+    }
+  }
+
+  walk(0, 0);
+  return results;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function rankLabel(rank) {
+  return RANK_LABELS[rank];
+}
+
+function rankWord(rank) {
+  return RANK_WORDS[rank];
+}
+
+function rankPlural(rank) {
+  return RANK_PLURALS[rank];
+}
+
+function formatCard(card) {
+  return `${rankLabel(card.rank)}${SUIT_SYMBOLS[card.suit]}`;
+}
+
+function cardKey(card) {
+  return `${rankLabel(card.rank)}${card.suit}`;
+}
+
+function createDeck() {
+  const deck = [];
+  for (let rank = 2; rank <= 14; rank += 1) {
+    for (const suit of SUITS) {
+      deck.push({ rank, suit });
+    }
+  }
+  return deck;
+}
+
+function straightHigh(ranksDesc) {
+  if (ranksDesc.length !== 5) return null;
+  const wheel = [14, 5, 4, 3, 2];
+  if (wheel.every((rank, index) => ranksDesc[index] === rank)) return 5;
+  for (let i = 1; i < ranksDesc.length; i += 1) {
+    if (ranksDesc[i - 1] - 1 !== ranksDesc[i]) return null;
+  }
+  return ranksDesc[0];
+}
+
+function describeHand(score, cards) {
+  const category = score[0];
+  if (category === 8) return `Straight flush, ${rankWord(score[1])} high`;
+  if (category === 7) return `Four of a kind, ${rankPlural(score[1])}`;
+  if (category === 6) return `Full house, ${rankPlural(score[1])} over ${rankPlural(score[2])}`;
+  if (category === 5) return `${SUIT_NAMES[cards[0].suit]} flush, ${rankWord(score[1])} high`;
+  if (category === 4) return `Straight, ${rankWord(score[1])} high`;
+  if (category === 3) return `Three of a kind, ${rankPlural(score[1])}`;
+  if (category === 2) return `Two pair, ${rankPlural(score[1])} and ${rankPlural(score[2])}`;
+  if (category === 1) return `Pair of ${rankPlural(score[1])}`;
+  return `High card, ${rankWord(score[1])}`;
+}
+
+function evaluateFive(cards) {
+  const ranksDesc = cards.map((card) => card.rank).sort((a, b) => b - a);
+  const counts = {};
+  ranksDesc.forEach((rank) => {
+    counts[rank] = (counts[rank] || 0) + 1;
+  });
+
+  const groups = Object.entries(counts)
+    .map(([rank, count]) => ({ rank: Number(rank), count }))
+    .sort((a, b) => b.count - a.count || b.rank - a.rank);
+
+  const flush = cards.every((card) => card.suit === cards[0].suit);
+  const uniqueRanksDesc = [...new Set(ranksDesc)].sort((a, b) => b - a);
+  const straight = straightHigh(uniqueRanksDesc);
+
+  if (flush && straight) {
+    const score = [8, straight];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 4) {
+    const score = [7, groups[0].rank, groups[1].rank];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 3 && groups[1]?.count === 2) {
+    const score = [6, groups[0].rank, groups[1].rank];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (flush) {
+    const score = [5, ...ranksDesc];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (straight) {
+    const score = [4, straight];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 3) {
+    const kickers = groups.slice(1).map((group) => group.rank).sort((a, b) => b - a);
+    const score = [3, groups[0].rank, ...kickers];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 2 && groups[1]?.count === 2) {
+    const pairRanks = groups
+      .filter((group) => group.count === 2)
+      .map((group) => group.rank)
+      .sort((a, b) => b - a);
+    const kicker = groups.find((group) => group.count === 1)?.rank ?? 0;
+    const score = [2, pairRanks[0], pairRanks[1], kicker];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  if (groups[0].count === 2) {
+    const kickers = groups.filter((group) => group.count === 1).map((group) => group.rank).sort((a, b) => b - a);
+    const score = [1, groups[0].rank, ...kickers];
+    return { score, label: describeHand(score, cards), cards };
+  }
+
+  const score = [0, ...ranksDesc];
+  return { score, label: describeHand(score, cards), cards };
+}
+
+function bestHoldemHand(holeCards, board) {
+  const sevenCards = [...holeCards, ...board];
+  let best = null;
+  for (const combo of combinations(sevenCards, 5)) {
+    const evaluated = evaluateFive(combo);
+    if (!best || compareScores(evaluated.score, best.score) > 0) {
+      best = evaluated;
+    }
+  }
+  return best;
+}
+
+function bestPloHand(holeCards, board) {
+  const holeCombos = combinations(holeCards, 2);
+  const boardCombos = combinations(board, 3);
+  let best = null;
+
+  for (const holeCombo of holeCombos) {
+    for (const boardCombo of boardCombos) {
+      const evaluated = evaluateFive([...holeCombo, ...boardCombo]);
+      if (!best || compareScores(evaluated.score, best.score) > 0) {
+        best = evaluated;
+      }
+    }
+  }
+
+  return best;
+}
+
+function findTiedByGoal(participants, getScore, selectionGoal = "loser") {
+  let tied = [participants[0]];
+  let targetScore = getScore(participants[0]);
+
+  for (const participant of participants.slice(1)) {
+    const score = getScore(participant);
+    const comparison = compareScores(score, targetScore);
+    const shouldReplace = selectionGoal === "winner" ? comparison > 0 : comparison < 0;
+    if (shouldReplace) {
+      targetScore = score;
+      tied = [participant];
+    } else if (comparison === 0) {
+      tied.push(participant);
+    }
+  }
+
+  return tied;
+}
+
+function calculatePokerPercentages(players, partialBoard, selectionGoal, evaluator) {
+  const usedCards = new Set(
+    [...partialBoard, ...players.flatMap((player) => player.holeCards)].map((card) => cardKey(card))
+  );
+  const remainingDeck = createDeck().filter((card) => !usedCards.has(cardKey(card)));
+  const missingBoardCards = 5 - partialBoard.length;
+  const exact = missingBoardCards <= 2;
+  const runouts = exact
+    ? combinations(remainingDeck, missingBoardCards)
+    : Array.from({ length: missingBoardCards === 5 ? 1500 : 1200 }, () => shuffle(remainingDeck).slice(0, missingBoardCards));
+
+  const selectionShares = Object.fromEntries(players.map((player) => [player.name, 0]));
+
+  runouts.forEach((runout) => {
+    const board = [...partialBoard, ...runout];
+    const evaluated = players.map((player) => ({
+      name: player.name,
+      score: evaluator(player.holeCards, board).score,
+    }));
+    const tied = findTiedByGoal(evaluated, (player) => player.score, selectionGoal);
+    tied.forEach((player) => {
+      selectionShares[player.name] += 1 / tied.length;
+    });
+  });
+
+  const denominator = runouts.length || 1;
+  return {
+    byPlayer: Object.fromEntries(
+      players.map((player) => [player.name, Number(((selectionShares[player.name] / denominator) * 100).toFixed(1))])
+    ),
+    method: exact ? (missingBoardCards === 0 ? "Locked" : "Exact") : `Sim • ${runouts.length}`,
+  };
+}
+
+function describeHoldemStartingHand(holeCards) {
+  const sorted = [...holeCards].sort((a, b) => b.rank - a.rank);
+  if (sorted[0].rank === sorted[1].rank) {
+    return `Pair of ${rankPlural(sorted[0].rank)}`;
+  }
+  return `High card, ${rankWord(sorted[0].rank)}`;
+}
+
+function getCurrentHoldemHandLabel(holeCards, visibleBoard) {
+  if (visibleBoard.length === 0) {
+    return describeHoldemStartingHand(holeCards);
+  }
+  return bestHoldemHand(holeCards, visibleBoard).label;
+}
+
+function getCurrentPloHandLabel(holeCards, visibleBoard) {
+  if (visibleBoard.length < 3) {
+    return "Need flop to make a hand";
+  }
+  return bestPloHand(holeCards, visibleBoard).label;
+}
+
+function resolveByGoal(participants, getScore, selectionGoal = "loser") {
+  let tied = [participants[0]];
+  let targetScore = getScore(participants[0]);
+
+  for (const participant of participants.slice(1)) {
+    const score = getScore(participant);
+    const comparison = compareScores(score, targetScore);
+    const shouldReplace = selectionGoal === "winner" ? comparison > 0 : comparison < 0;
+    if (shouldReplace) {
+      targetScore = score;
+      tied = [participant];
+    } else if (comparison === 0) {
+      tied.push(participant);
+    }
+  }
+
+  return {
+    tied,
+    picked: tied[secureRandomInt(tied.length)],
+  };
+}
+
+function modeById(id) {
+  return MODES.find((mode) => mode.id === id);
+}
+
+const WIN_MESSAGES = [
+  "{name} is the man",
+  "{name} is so back",
+  "I want to grow up and be like {name}",
+  "{name} could have my children",
+  "I'd let {name} date my daughter",
+  "{name} needed this",
+  "{name} put in the call",
+  "{name} woke up feeling dangerous",
+  "{name} doesn't miss",
+  "{name} is him",
+  "{name} was simply built different today",
+  "{name} owns this house now",
+  "Everyone say thank you {name}",
+  "{name} walked so we could run",
+  "{name}'s mom would be so proud",
+  "The prophecy spoke of {name}",
+  "{name} is inevitable",
+  "We are all witnesses. {name} is that guy",
+  "{name} just different gravy",
+  "Clear eyes, full hearts, {name} wins",
+  "{name} with the plot armor",
+  "{name} is carrying this friend group",
+  "{name}'s aura is immaculate right now",
+  "{name} chose violence and it worked",
+  "{name} has earned the right to do nothing",
+  "Somebody get {name} a throne",
+  "{name} is the main character today",
+  "{name} really said 'not today'",
+  "{name} understood the assignment",
+  "We don't deserve {name}",
+];
+
+const LOSE_MESSAGES = [
+  "{name} is not the man",
+  "{name} is a fish",
+  "{name} down bad",
+  "{name} fell off",
+  "{name} is cooked",
+  "Couldn't be {name} right now",
+  "{name} took one for the team. Again.",
+  "{name} in their flop era",
+  "Someone check on {name}",
+  "{name}'s vibes are off",
+  "{name} was not him today",
+  "{name} fumbled the bag",
+  "Thoughts and prayers for {name}",
+  "{name} is a liability",
+  "{name} will remember this day",
+  "{name} has been humbled",
+  "Rest in peace {name}'s evening",
+  "The universe said no to {name}",
+  "{name} is giving quitter energy",
+  "{name} caught a stray",
+  "{name} needs to sit down and think about what they've done",
+  "{name} really thought they had it",
+  "{name} playing like they want to lose",
+  "{name} and it's not even close",
+  "Someone get {name} a tissue",
+  "{name} is the weakest link. Goodbye.",
+  "{name} couldn't beat a goldfish right now",
+  "{name} owes everyone an apology",
+  "This is a {name} intervention",
+  "{name} just got sent to the shadow realm",
+];
+
+let _lastWinIdx = -1;
+let _lastLoseIdx = -1;
+
+function pickRandomMessage(messages, name, lastIdxRef) {
+  let idx = secureRandomInt(messages.length);
+  if (messages.length > 1) {
+    while (idx === (lastIdxRef === "win" ? _lastWinIdx : _lastLoseIdx)) {
+      idx = secureRandomInt(messages.length);
+    }
+  }
+  if (lastIdxRef === "win") _lastWinIdx = idx;
+  else _lastLoseIdx = idx;
+  return messages[idx].replace(/\{name\}/g, name);
+}
+
+function buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName) {
+  const msg = selectionGoal === "winner"
+    ? pickRandomMessage(WIN_MESSAGES, selectedName, "win")
+    : pickRandomMessage(LOSE_MESSAGES, selectedName, "lose");
+  return msg;
+}
+
+function buildHoldemResult(names, taskLabel, selectionGoal) {
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    const deck = shuffle(createDeck());
+    const draftHands = {};
+    names.forEach(name => {
+      draftHands[name] = [deck.pop(), deck.pop(), deck.pop(), deck.pop()]; // 4 cards, keep 2
+    });
+    const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+    const modeName = "Texas Hold'em";
+
+    return {
+      modeId: "holdem",
+      modeName,
+      selectionGoal,
+      draftPhase: true,
+      draftHands,
+      keepCount: 2,
+      board,
+      headline: "Drafting cards...",
+      summary: "Players are choosing their hole cards.",
+      selectedName: null,
+      isTie: false,
+      players: names.map(name => ({
+        name,
+        selected: false,
+        holeCards: [],
+        cards: [],
+        headline: "Drafting...",
+        subline: "Choosing cards",
+        rank: 0,
+        chips: ["Hold'em", "Draft"],
+      })),
+    };
+  }
+
+  const deck = shuffle(createDeck());
+  const players = names.map((name) => ({
+    name,
+    holeCards: [deck.pop(), deck.pop()],
+  }));
+  const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+
+  const evaluatedPlayers = players.map((player) => ({
+    ...player,
+    best: bestHoldemHand(player.holeCards, board),
+  }));
+
+  const resolution = resolveByGoal(evaluatedPlayers, (player) => player.best.score, selectionGoal);
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+  const pokerPercentages = {
+    preflop: calculatePokerPercentages(players, [], selectionGoal, bestHoldemHand),
+    flop: calculatePokerPercentages(players, board.slice(0, 3), selectionGoal, bestHoldemHand),
+    turn: calculatePokerPercentages(players, board.slice(0, 4), selectionGoal, bestHoldemHand),
+    river: calculatePokerPercentages(players, board, selectionGoal, bestHoldemHand),
+  };
+
+  const modeName = "Texas Hold'em";
+  return {
+    modeId: "holdem",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} tied with the same ${choosingWinner ? "best" : "worst"} hand!`
+      : `${choosingWinner ? "Strongest" : "Weakest"} showdown hand gets selected.`,
+    board,
+    pokerPercentages,
+    players: evaluatedPlayers.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        cards: player.holeCards,
+        headline: player.best.label,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Safe this round")
+          : (player.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} hand` : "Safe this round"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["Hold'em", "2 hole cards"],
+      };
+    }),
+  };
+}
+
+function buildPloResult(names, taskLabel, selectionGoal) {
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    const deck = shuffle(createDeck());
+    const draftHands = {};
+    names.forEach(name => {
+      draftHands[name] = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()]; // 6 cards, keep 4
+    });
+    const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+    const modeName = "PLO";
+
+    return {
+      modeId: "plo",
+      modeName,
+      selectionGoal,
+      draftPhase: true,
+      draftHands,
+      keepCount: 4,
+      board,
+      headline: "Drafting cards...",
+      summary: "Players are choosing their hole cards.",
+      selectedName: null,
+      isTie: false,
+      players: names.map(name => ({
+        name,
+        selected: false,
+        holeCards: [],
+        cards: [],
+        headline: "Drafting...",
+        subline: "Choosing cards",
+        rank: 0,
+        chips: ["Omaha", "Draft"],
+      })),
+    };
+  }
+
+  const deck = shuffle(createDeck());
+  const players = names.map((name) => ({
+    name,
+    holeCards: [deck.pop(), deck.pop(), deck.pop(), deck.pop()],
+  }));
+  const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+
+  const evaluatedPlayers = players.map((player) => ({
+    ...player,
+    best: bestPloHand(player.holeCards, board),
+  }));
+
+  const resolution = resolveByGoal(evaluatedPlayers, (player) => player.best.score, selectionGoal);
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+  const pokerPercentages = {
+    preflop: calculatePokerPercentages(players, [], selectionGoal, bestPloHand),
+    flop: calculatePokerPercentages(players, board.slice(0, 3), selectionGoal, bestPloHand),
+    turn: calculatePokerPercentages(players, board.slice(0, 4), selectionGoal, bestPloHand),
+    river: calculatePokerPercentages(players, board, selectionGoal, bestPloHand),
+  };
+
+  const modeName = "PLO";
+  return {
+    modeId: "plo",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} tied with the same ${choosingWinner ? "best" : "worst"} Omaha hand!`
+      : `${choosingWinner ? "Strongest" : "Weakest"} PLO showdown hand gets selected.`,
+    board,
+    pokerPercentages,
+    players: evaluatedPlayers.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        cards: player.holeCards,
+        headline: player.best.label,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Safe this round")
+          : (player.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} Omaha hand` : "Safe this round"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["Omaha", "4 hole cards"],
+      };
+    }),
+  };
+}
+
+function finalizeDraftResult(draftResult, playerChoices) {
+  const board = draftResult.board;
+  const isOmaha = draftResult.modeId === 'plo';
+  const evaluator = isOmaha ? bestPloHand : bestHoldemHand;
+  const selectionGoal = draftResult.selectionGoal;
+
+  const evaluatedPlayers = Object.entries(playerChoices).map(([name, indices]) => {
+    const holeCards = indices.map(i => draftResult.draftHands[name][i]);
+    return {
+      name,
+      holeCards,
+      best: evaluator(holeCards, board),
+    };
+  });
+
+  const resolution = resolveByGoal(evaluatedPlayers, p => p.best.score, selectionGoal);
+  const selectedName = resolution.picked.name;
+  const tiedNames = resolution.tied.map(p => p.name);
+  const choosingWinner = selectionGoal === "winner";
+  const isTie = tiedNames.length > 1;
+
+  // Calculate percentages
+  const playersForCalc = evaluatedPlayers.map(p => ({
+    name: p.name,
+    holeCards: p.holeCards,
+  }));
+  const pokerPercentages = {
+    preflop: calculatePokerPercentages(playersForCalc, [], selectionGoal, evaluator),
+    flop: calculatePokerPercentages(playersForCalc, board.slice(0, 3), selectionGoal, evaluator),
+    turn: calculatePokerPercentages(playersForCalc, board.slice(0, 4), selectionGoal, evaluator),
+    river: calculatePokerPercentages(playersForCalc, board, selectionGoal, evaluator),
+  };
+
+  const modeName = isOmaha ? "PLO" : "Texas Hold'em";
+
+  const headline = isTie ? "IT'S A TIE" : pickRandomMessage(
+    selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+    selectedName,
+    selectionGoal === "winner" ? "win" : "lose"
+  );
+
+  return {
+    modeId: draftResult.modeId,
+    modeName,
+    selectionGoal,
+    selectedName: isTie ? null : selectedName,
+    isTie,
+    tiedNames: isTie ? tiedNames : undefined,
+    headline,
+    summary: isTie
+      ? `${tiedNames.join(" and ")} tied with the same ${choosingWinner ? "best" : "worst"} hand!`
+      : `${choosingWinner ? "Strongest" : "Weakest"} showdown hand gets selected.`,
+    board,
+    pokerPercentages,
+    draftPhase: false,
+    players: evaluatedPlayers.map(p => ({
+      name: p.name,
+      cards: p.holeCards,
+      holeCards: p.holeCards,
+      headline: p.best.label,
+      subline: isTie
+        ? (tiedNames.includes(p.name) ? "TIED" : "Safe this round")
+        : (p.name === selectedName ? `Selected with the ${choosingWinner ? "best" : "worst"} hand` : "Safe this round"),
+      selected: !isTie && p.name === selectedName,
+      tied: isTie && tiedNames.includes(p.name),
+      chips: [isOmaha ? "Omaha" : "Hold'em", `${isOmaha ? 4 : 2} hole cards`],
+    })),
+  };
+}
+
+function buildRngResult(names, taskLabel, selectionGoal) {
+  const players = names.map((name) => ({
+    name,
+    value: secureRandomInt(100) + 1,
+  }));
+  const resolution = resolveByGoal(players, (player) => [player.value], selectionGoal);
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  const modeName = "Random Number";
+  return {
+    modeId: "rng",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} rolled the same number!`
+      : `Everyone got a number from 1 to 100. ${choosingWinner ? "Highest" : "Lowest"} number gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        value: player.value,
+        headline: `${player.value}`,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} number` : "Not selected"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["1\u2013100"],
+      };
+    }),
+  };
+}
+
+function buildWheelResult(names, taskLabel, selectionGoal, currentRotation) {
+  const selectedName = pickRandom(names);
+  const selectedIndex = names.indexOf(selectedName);
+  const segment = 360 / names.length;
+  const segmentCenter = selectedIndex * segment + segment / 2;
+  const extraTurns = 5 + secureRandomInt(4);
+  const nextRotation = currentRotation + extraTurns * 360 + (360 - segmentCenter);
+  const choosingWinner = selectionGoal === "winner";
+
+  const modeName = "Wheel Spinner";
+  return {
+    modeId: "wheel",
+    modeName,
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: `Pure wheel-of-fate chaos. The wheel randomly picks the ${choosingWinner ? "winner" : "loser"}.`,
+    wheel: {
+      names,
+      rotation: nextRotation,
+    },
+    players: names.map((name) => ({
+      name,
+      headline: name === selectedName ? "Wheel landed here" : "Missed by fate",
+      subline: name === selectedName ? `Selected as ${choosingWinner ? "winner" : "loser"}` : "Safe this round",
+      selected: name === selectedName,
+      chips: [`${Math.round(100 / names.length)}% slice`],
+    })),
+  };
+}
+
+function buildDiceResult(names, taskLabel, selectionGoal) {
+  const players = names.map((name) => {
+    const d1 = secureRandomInt(6) + 1;
+    const d2 = secureRandomInt(6) + 1;
+    return {
+      name,
+      d1,
+      d2,
+      total: d1 + d2,
+    };
+  });
+  const resolution = resolveByGoal(players, (player) => [player.total, player.d1, player.d2], selectionGoal);
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  const modeName = "Dice Duel";
+  return {
+    modeId: "dice",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} rolled the same total!`
+      : `Two dice each. ${choosingWinner ? "Highest" : "Lowest"} total gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        d1: player.d1,
+        d2: player.d2,
+        total: player.total,
+        headline: `${player.d1} + ${player.d2} = ${player.total}`,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} roll` : "Not selected"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["2d6"],
+      };
+    }),
+  };
+}
+
+function buildHighCardResult(names, taskLabel, selectionGoal) {
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    const deck = shuffle(createDeck());
+    const draftHands = {};
+    names.forEach(name => {
+      draftHands[name] = [deck.pop(), deck.pop(), deck.pop()];
+    });
+
+    return {
+      modeId: "high-card",
+      modeName: "High Card Draw",
+      selectionGoal,
+      draftPhase: true,
+      draftHands,
+      selectedName: null,
+      isTie: false,
+      headline: "Pick a card...",
+      summary: "Players are choosing their card blind.",
+      players: names.map(name => ({
+        name,
+        selected: false,
+        headline: "Picking...",
+        subline: "",
+        rank: 0,
+        chips: [],
+      })),
+    };
+  }
+
+  const deck = shuffle(createDeck());
+  const players = names.map((name) => ({
+    name,
+    card: deck.pop(),
+  }));
+  const resolution = resolveByGoal(players, (player) => [player.card.rank], selectionGoal);
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  const modeName = "High Card Draw";
+  return {
+    modeId: "high-card",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} drew the same rank!`
+      : `Everyone drew one card. ${choosingWinner ? "Highest" : "Lowest"} rank gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        cards: [player.card],
+        card: player.card,
+        headline: formatCard(player.card),
+        subline: hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (player.name === selectedName ? `${choosingWinner ? "Highest" : "Lowest"} card` : "Not selected"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: [rankWord(player.card.rank)],
+      };
+    }),
+  };
+}
+
+function buildCoinFlipResult(names, taskLabel, selectionGoal) {
+  const players = names.map((name) => {
+    const flips = Array.from({ length: 5 }, () => (secureRandomInt(2) === 0 ? "T" : "H"));
+    const heads = flips.filter((flip) => flip === "H").length;
+    return { name, flips, heads };
+  });
+  const resolution = resolveByGoal(players, (player) => [player.heads], selectionGoal);
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  const modeName = "Coin Flip Gauntlet";
+  return {
+    modeId: "coin-flips",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} flipped the same number of heads!`
+      : `Five flips each. ${choosingWinner ? "Most" : "Fewest"} heads gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        flips: player.flips,
+        heads: player.heads,
+        headline: `${player.flips.join(" ")}`,
+        subline: hasTie
+          ? `${player.heads} heads${isTied ? " \u2022 TIED" : ""}`
+          : `${player.heads} heads${player.name === selectedName ? ` \u2022 ${choosingWinner ? "most" : "fewest"} total` : ""}`,
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["5 flips"],
+      };
+    }),
+  };
+}
+
+function buildBlackMarbleResult(names, taskLabel, selectionGoal) {
+  const choosingWinner = selectionGoal === "winner";
+  const targetMarble = choosingWinner ? "Gold" : "Black";
+  const safeMarble = choosingWinner ? "Black" : "White";
+  const bag = shuffle([...Array(names.length - 1).fill(safeMarble), targetMarble]);
+  const order = shuffle(names);
+  const selectedName = order[bag.indexOf(targetMarble)];
+  const modeName = choosingWinner ? "Gold Marble" : "Black Marble";
+
+  return {
+    modeId: "black-marble",
+    modeName,
+    selectionGoal,
+    selectedName,
+    headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: choosingWinner
+      ? "One gold marble, three black marbles. Lucky draw picks the winner."
+      : "Three safe marbles. One black marble. Bad luck decides everything.",
+    players: order.map((name, index) => ({
+      name,
+      marble: bag[index],
+      headline: `${bag[index]} marble`,
+      subline: `Draw #${index + 1}${name === selectedName ? ` • ${choosingWinner ? "lucky" : "unlucky"} draw` : " • safe"}`,
+      selected: name === selectedName,
+      chips: [bag[index]],
+    })),
+  };
+}
+
+function scoreSlots(reels) {
+  const counts = {};
+  reels.forEach((symbol) => {
+    counts[symbol] = (counts[symbol] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || SLOT_WEIGHTS[b[0]] - SLOT_WEIGHTS[a[0]]);
+  const topSymbol = entries[0][0];
+  const topCount = entries[0][1];
+  const base = reels.reduce((sum, symbol) => sum + SLOT_WEIGHTS[symbol], 0);
+  if (topCount === 3) return { value: 100 + SLOT_WEIGHTS[topSymbol], label: `Triple ${topSymbol}` };
+  if (topCount === 2) return { value: 50 + SLOT_WEIGHTS[topSymbol] + base / 100, label: `Pair of ${topSymbol}` };
+  return { value: base, label: "No match" };
+}
+
+function buildSlotsResult(names, taskLabel, selectionGoal) {
+  const players = names.map((name) => {
+    const reels = Array.from({ length: 3 }, () => pickRandom(SLOT_SYMBOLS));
+    const score = scoreSlots(reels);
+    return { name, reels, score };
+  });
+  const resolution = resolveByGoal(players, (player) => [player.score.value], selectionGoal);
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  const modeName = "Slot Machine";
+  return {
+    modeId: "slots",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} hit the same slot score!`
+      : `${choosingWinner ? "Best" : "Worst"} slot score gets selected.`,
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        reels: player.reels,
+        score: player.score,
+        headline: `${player.reels.join(" ")}`,
+        subline: hasTie
+          ? `${player.score.label}${isTied ? " \u2022 TIED" : ""}`
+          : `${player.score.label}${player.name === selectedName ? ` \u2022 ${choosingWinner ? "best" : "worst"} score` : ""}`,
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: [player.score.label],
+      };
+    }),
+  };
+}
+
+function buildHorseRaceResult(names, taskLabel, selectionGoal) {
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    // Build race data but enter draft phase for lane picks
+    const LANE_NAMES = ['\uD83C\uDFC7 Lane 1', '\uD83C\uDFC7 Lane 2', '\uD83C\uDFC7 Lane 3', '\uD83C\uDFC7 Lane 4', '\uD83C\uDFC7 Lane 5', '\uD83C\uDFC7 Lane 6'].slice(0, Math.max(names.length, 3));
+
+    const positions = Object.fromEntries(names.map((name) => [name, 0]));
+    const turns = [];
+    for (let turn = 1; turn <= 12; turn += 1) {
+      const mover = pickRandom(names);
+      positions[mover] += 1;
+      turns.push({ turn, mover, positions: { ...positions }, text: 'Turn ' + turn + ': ' + mover + ' advances to ' + positions[mover] });
+    }
+
+    const players = names.map((name) => ({
+      name,
+      position: positions[name],
+      progress: positions[name],
+    }));
+
+    return {
+      modeId: "horse-race",
+      modeName: "Lucky Horse Race",
+      selectionGoal,
+      draftPhase: true,
+      lanes: LANE_NAMES,
+      lanePickOrder: shuffle([...names]),
+      turns,
+      race: { max: Math.max(...players.map(p => p.position), 1) },
+      selectedName: null,
+      isTie: false,
+      headline: "Pick your lane...",
+      summary: "Players are choosing their lane.",
+      players: players.map(p => ({
+        name: p.name,
+        progress: p.progress,
+        selected: false,
+        headline: p.progress + ' spaces moved',
+        subline: "Picking lane...",
+        rank: 0,
+        chips: ["Race"],
+      })),
+    };
+  }
+
+  const positions = Object.fromEntries(names.map((name) => [name, 0]));
+  const turns = [];
+
+  for (let turn = 1; turn <= 12; turn += 1) {
+    const mover = pickRandom(names);
+    positions[mover] += 1;
+    turns.push({
+      turn,
+      mover,
+      positions: { ...positions },
+      text: `Turn ${turn}: ${mover} advances to ${positions[mover]}`,
+    });
+  }
+
+  const players = names.map((name) => ({
+    name,
+    position: positions[name],
+  }));
+
+  const resolution = resolveByGoal(players, (player) => [player.position], selectionGoal);
+  const tiedNames = resolution.tied.map((player) => player.name);
+  const hasTie = tiedNames.length > 1;
+  const selectedName = hasTie ? null : resolution.picked.name;
+  const choosingWinner = selectionGoal === "winner";
+
+  const modeName = "Lucky Horse Race";
+  return {
+    modeId: "horse-race",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tiedNames : undefined,
+    headline: hasTie ? "IT'S A TIE" : buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
+    summary: hasTie
+      ? `${tiedNames.join(" and ")} finished in the same position!`
+      : `Twelve random turns. Whoever finishes ${choosingWinner ? "first" : "last"} gets selected.`,
+    turns,
+    race: {
+      max: Math.max(...players.map((player) => player.position), 1),
+    },
+    players: players.map((player) => {
+      const isTied = hasTie && tiedNames.includes(player.name);
+      return {
+        name: player.name,
+        progress: player.position,
+        headline: `${player.position} spaces moved`,
+        subline: hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (player.name === selectedName ? `Finished ${choosingWinner ? "in front" : "at the back"}` : "Not selected"),
+        selected: hasTie ? false : player.name === selectedName,
+        tied: isTied,
+        chips: ["Race"],
+      };
+    }),
+  };
+}
+
+function buildRocketResult(names, taskLabel, selectionGoal) {
+  const modeName = "Rocket Launch";
+
+  function generateCrashTime() {
+    const minTime = 5;
+    const maxTime = 120;
+    const lambda = 3;
+    const u = Math.random();
+    const expVal = -Math.log(1 - u * (1 - Math.exp(-lambda))) / lambda;
+    return minTime + expVal * (maxTime - minTime);
+  }
+
+  function distanceAtTime(t) {
+    return 100 * t + 0.5 * 200 * t * t;
+  }
+
+  function formatDistance(d) {
+    if (d >= 1000000) return (d / 1000000).toFixed(2) + 'M km';
+    if (d >= 1000) return Math.round(d).toLocaleString() + ' km';
+    return Math.round(d) + ' km';
+  }
+
+  function formatFlightTime(t) {
+    const mins = Math.floor(t / 60);
+    const secs = Math.floor(t % 60);
+    return mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `0:${secs.toString().padStart(2, '0')}`;
+  }
+
+  const crashTimes = names.map(() => generateCrashTime());
+  const shuffledTimes = shuffle(crashTimes);
+  const players = names.map((name, i) => ({
+    name,
+    crashTime: shuffledTimes[i],
+    distance: distanceAtTime(shuffledTimes[i]),
+  }));
+
+  // Rank by crash time (don't sort the array — keep original name order for display)
+  const sortedByTime = [...players].sort((a, b) => a.crashTime - b.crashTime);
+  sortedByTime.forEach((p, i) => {
+    p.rank = players.length - i;
+  });
+
+  const survivor = sortedByTime[sortedByTime.length - 1];
+  const selected = survivor.name;
+
+  let subline = `${formatFlightTime(survivor.crashTime)} flight time`;
+  if (survivor.distance > 384000) subline += ' — past the Moon';
+  else if (survivor.distance > 36000) subline += ' — geostationary orbit';
+
+  const headline = pickRandomMessage(
+    selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+    selected,
+    selectionGoal === "winner" ? "win" : "lose"
+  );
+
+  return {
+    modeId: "rocket",
+    modeName,
+    selectionGoal,
+    selectedName: selected,
+    isTie: false,
+    headline,
+    summary: `All other rockets burned up. ${selected} made it to ${formatDistance(survivor.distance)}.`,
+    players: players.map(p => ({
+      name: p.name,
+      selected: p.name === selected,
+      crashTime: p.crashTime,
+      distance: p.distance,
+      distanceFormatted: formatDistance(p.distance),
+      headline: p.name === selected ? `Survived to ${formatDistance(p.distance)}` : `Crashed at ${formatDistance(p.distance)}`,
+      subline: p.name === selected ? subline : `${formatFlightTime(p.crashTime)} flight time`,
+      rank: p.rank,
+      chips: [formatDistance(p.distance)],
+    })),
+  };
+}
+
+function buildSpaceInvadersResult(names, taskLabel, selectionGoal) {
+  const modeName = "Space Invaders";
+  const shuffled = shuffle(names);
+  const survivor = shuffled[shuffled.length - 1];
+  const selectedName = survivor;
+  const choosingWinner = selectionGoal === "winner";
+
+  const eliminationOrder = shuffled.slice(0, shuffled.length - 1);
+
+  const headline = pickRandomMessage(
+    selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+    selectedName,
+    selectionGoal === "winner" ? "win" : "lose"
+  );
+
+  return {
+    modeId: "space-invaders",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: false,
+    headline,
+    summary: `The laser picked off aliens one by one. ${selectedName} was the last alien standing.`,
+    eliminationOrder,
+    players: names.map((name) => {
+      const elimIndex = eliminationOrder.indexOf(name);
+      const isSurvivor = name === survivor;
+      const destroyedAt = isSurvivor ? null : elimIndex + 1;
+      const rank = isSurvivor ? 1 : names.length - elimIndex;
+      return {
+        name,
+        selected: name === selectedName,
+        destroyedAt,
+        rank,
+        headline: isSurvivor ? "LAST ALIEN STANDING" : `Destroyed: Shot #${destroyedAt}`,
+        subline: isSurvivor ? "Survived the onslaught" : `Eliminated ${choosingWinner ? "early" : ""}`,
+        chips: isSurvivor ? ["Survivor"] : [`Shot #${destroyedAt}`],
+      };
+    }),
+  };
+}
+
+function generateTickTimings(totalTicks) {
+  const timings = [];
+  const startInterval = 800;
+  const endInterval = 250;
+  for (let i = 0; i < totalTicks; i++) {
+    const progress = i / Math.max(totalTicks - 1, 1);
+    const interval = startInterval - (startInterval - endInterval) * (progress * progress);
+    timings.push(Math.round(interval));
+  }
+  return timings;
+}
+
+function buildBombResult(names, taskLabel, selectionGoal) {
+  const modeName = "Bomb";
+  const totalTicks = 15 + secureRandomInt(16);
+  const selectedName = pickRandom(names);
+  const sequence = [];
+  let current = pickRandom(names);
+
+  for (let i = 0; i < totalTicks - 1; i++) {
+    sequence.push(current);
+    let next;
+    do { next = pickRandom(names); } while (next === current && names.length > 1);
+    current = next;
+  }
+  sequence.push(selectedName);
+
+  const timesHeld = {};
+  names.forEach(n => { timesHeld[n] = 0; });
+  sequence.forEach(n => { timesHeld[n]++; });
+
+  const choosingWinner = selectionGoal === "winner";
+  const headline = pickRandomMessage(
+    selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+    selectedName,
+    selectionGoal === "winner" ? "win" : "lose"
+  );
+
+  return {
+    modeId: "bomb",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: false,
+    headline,
+    summary: `The bomb was passed ${totalTicks} times before detonating on ${selectedName}.`,
+    totalTicks,
+    tickTimings: generateTickTimings(totalTicks),
+    sequence,
+    players: names.map((name) => {
+      const isSelected = name === selectedName;
+      return {
+        name,
+        selected: isSelected,
+        timesHeld: timesHeld[name],
+        headline: isSelected ? "BOOM!" : "Survived",
+        subline: isSelected ? `Held the bomb ${timesHeld[name]} time${timesHeld[name] !== 1 ? "s" : ""}` : `Held ${timesHeld[name]} time${timesHeld[name] !== 1 ? "s" : ""}`,
+        rank: isSelected ? names.length : 1,
+        chips: [`Held ${timesHeld[name]}x`],
+      };
+    }),
+  };
+}
+
+function buildPlinkoResult(names, taskLabel, selectionGoal) {
+  const modeName = "Plinko";
+  const SLOT_VALUES = [1, 2, 3, 5, 8, 13, 21, 13, 8, 5, 3, 2, 1];
+  const ROWS = 12;
+
+  const players = names.map((name) => {
+    const path = [];
+    let col = 0;
+    for (let r = 0; r < ROWS; r++) {
+      const choice = secureRandomInt(2);
+      path.push(choice);
+      col += choice;
+    }
+    const finalSlot = col;
+    const score = SLOT_VALUES[finalSlot];
+    return { name, path, finalSlot, score };
+  });
+
+  const { tied, picked } = resolveByGoal(players, (p) => [p.score], selectionGoal);
+  const hasTie = tied.length > 1;
+  const selectedName = hasTie ? null : picked.name;
+
+  const headline = hasTie
+    ? `It's a tie between ${tied.map(t => t.name).join(' and ')}!`
+    : pickRandomMessage(
+        selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        selectionGoal === "winner" ? "win" : "lose"
+      );
+
+  return {
+    modeId: "plinko",
+    modeName,
+    selectionGoal,
+    selectedName: hasTie ? tied[0].name : selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tied.map(t => t.name) : undefined,
+    headline,
+    summary: hasTie
+      ? `${tied.map(t => t.name).join(' and ')} both scored ${tied[0].score} points.`
+      : `${selectedName} landed in the ${SLOT_VALUES[picked.finalSlot]}-point slot.`,
+    slotValues: SLOT_VALUES,
+    rows: ROWS,
+    players: players.map((p) => ({
+      name: p.name,
+      path: p.path,
+      finalSlot: p.finalSlot,
+      score: p.score,
+      selected: hasTie ? false : p.name === selectedName,
+      tied: hasTie && tied.some(t => t.name === p.name),
+      rank: hasTie ? (tied.some(t => t.name === p.name) ? 1 : 2) :
+        (p.name === selectedName ? 1 : players.length),
+      headline: p.name === (hasTie ? null : selectedName) ? `Slot ${p.finalSlot + 1}: ${p.score} pts` : `Slot ${p.finalSlot + 1}: ${p.score} pts`,
+      subline: `Scored ${p.score} point${p.score !== 1 ? 's' : ''}`,
+      chips: [`${p.score} pts`, `Slot #${p.finalSlot + 1}`],
+    })),
+  };
+}
+
+function buildBattleRoyaleResult(names, taskLabel, selectionGoal) {
+  const modeName = "Battle Royale";
+
+  const positions = names.map((name) => ({
+    name,
+    x: 10 + secureRandomInt(80),
+    y: 10 + secureRandomInt(80),
+  }));
+
+  const zones = [{ cx: 50, cy: 50, radius: 45 }];
+  const shrinkAmount = 45 / names.length * 0.9;
+  for (let i = 1; i < names.length; i++) {
+    const prev = zones[i - 1];
+    const newCx = Math.max(10, Math.min(90, prev.cx + (secureRandomInt(11) - 5)));
+    const newCy = Math.max(10, Math.min(90, prev.cy + (secureRandomInt(11) - 5)));
+    const newRadius = Math.max(5, prev.radius - shrinkAmount);
+    zones.push({ cx: newCx, cy: newCy, radius: newRadius });
+  }
+
+  const alive = new Set(names);
+  const eliminationOrder = [];
+
+  for (let phase = 1; phase < names.length; phase++) {
+    const zone = zones[phase];
+    let farthest = null;
+    let farthestDist = -1;
+
+    for (const name of alive) {
+      const pos = positions.find(p => p.name === name);
+      const dx = pos.x - zone.cx;
+      const dy = pos.y - zone.cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > farthestDist) {
+        farthestDist = dist;
+        farthest = name;
+      }
+    }
+
+    alive.delete(farthest);
+    eliminationOrder.push(farthest);
+  }
+
+  const survivor = [...alive][0];
+  const selectedName = survivor;
+
+  const headline = pickRandomMessage(
+    selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+    selectedName,
+    selectionGoal === "winner" ? "win" : "lose"
+  );
+
+  return {
+    modeId: "battle-royale",
+    modeName,
+    selectionGoal,
+    selectedName,
+    isTie: false,
+    headline,
+    summary: `The zone closed in ${names.length - 1} times. ${selectedName} was the last one standing.`,
+    positions,
+    zones,
+    eliminationOrder,
+    players: names.map((name) => {
+      const pos = positions.find(p => p.name === name);
+      const elimIndex = eliminationOrder.indexOf(name);
+      const isSurvivor = name === survivor;
+      const rank = isSurvivor ? 1 : names.length - elimIndex;
+      return {
+        name,
+        x: pos.x,
+        y: pos.y,
+        selected: name === selectedName,
+        rank,
+        headline: isSurvivor ? "VICTORY ROYALE" : `Eliminated: Phase ${elimIndex + 1}`,
+        subline: isSurvivor ? "Last one in the zone" : `Caught outside zone ${elimIndex + 1}`,
+        chips: isSurvivor ? ["Winner"] : [`Phase ${elimIndex + 1}`],
+      };
+    }),
+  };
+}
+
+function buildStockMarketResult(names, taskLabel, selectionGoal) {
+  const modeName = "Stock Market";
+  const TICKERS = ["$DOGE","$MOON","$YOLO","$HODL","$FOMO","$STONK","$APE","$REKT","$PUMP","$CHAD","$COPE","$WAGMI","$TSLA","$GME","$NVDA","$PLTR","$COIN"];
+  const shuffledTickers = shuffle(TICKERS);
+
+  function gaussianRandom() {
+    return Math.sqrt(-2 * Math.log(Math.random())) * Math.cos(2 * Math.PI * Math.random());
+  }
+
+  function generatePriceHistory() {
+    const volatility = 0.03 + Math.random() * 0.05;
+    const drift = (Math.random() - 0.5) * 0.02;
+    const prices = [100];
+    for (let i = 1; i < 60; i++) {
+      const change = prices[i - 1] * (gaussianRandom() * volatility + drift);
+      prices.push(Math.max(0.01, prices[i - 1] + change));
+    }
+    return prices;
+  }
+
+  // Interactive mode: generate a stock pool for drafting
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  if (isInteractive) {
+    const TICKER_POOL = ["$DOGE","$TSLA","$STONK","$GME","$MOON","$AAPL","$REKT","$COPE","$PUMP","$YOLO","$HODL","$FOMO","$APE","$CHAD","$NVDA","$PLTR"];
+    const NOTES = [
+      "Much wow. Very volatile.",
+      "Elon tweeted again.",
+      "It only goes up. Right?",
+      "The squeeze hasn't squoze.",
+      "Literally can't go tits up.",
+      "The safe play. Boring.",
+      "Named after your portfolio.",
+      "For when $REKT isn't enough.",
+      "Pump it. PUMP IT.",
+      "You only lose once.",
+      "Diamond hands required.",
+      "Fear of missing out... on losses.",
+      "Return to monke.",
+      "The chosen one.",
+      "To the moon or the floor.",
+      "Trust the process.",
+    ];
+
+    const selectedTickers = shuffle(TICKER_POOL).slice(0, 8);
+
+    const stockPool = selectedTickers.map((ticker, i) => {
+      const volatility = 0.03 + Math.random() * 0.05;
+      const drift = (Math.random() - 0.5) * 0.02;
+      const prices = [100];
+      for (let j = 1; j < 60; j++) {
+        const change = prices[j-1] * (gaussianRandom() * volatility + drift);
+        prices.push(Math.max(0.01, prices[j-1] + change));
+      }
+      return {
+        ticker,
+        note: NOTES[i % NOTES.length],
+        prices,
+        endPrice: prices[59],
+        percentChange: ((prices[59] - 100) / 100 * 100),
+      };
+    });
+
+    const pickOrder = shuffle([...names]);
+
+    return {
+      modeId: "stock-market",
+      modeName,
+      selectionGoal,
+      draftPhase: true,
+      stockPool,
+      pickOrder,
+      selectedName: null,
+      isTie: false,
+      headline: "Picking stocks...",
+      summary: "Players are choosing their stocks.",
+      players: names.map(name => ({
+        name,
+        selected: false,
+        ticker: null,
+        headline: "Picking...",
+        subline: "",
+        rank: 0,
+        chips: [],
+      })),
+    };
+  }
+
+  const players = names.map((name, i) => {
+    const prices = generatePriceHistory();
+    const finalPrice = prices[prices.length - 1];
+    const percentChange = ((finalPrice - 100) / 100 * 100).toFixed(1);
+    return {
+      name,
+      ticker: shuffledTickers[i % shuffledTickers.length],
+      prices,
+      finalPrice,
+      percentChange: parseFloat(percentChange),
+    };
+  });
+
+  const { tied, picked } = resolveByGoal(players, (p) => [p.finalPrice], selectionGoal);
+  const hasTie = tied.length > 1;
+  const selectedName = hasTie ? null : picked.name;
+
+  const headline = hasTie
+    ? `It's a tie between ${tied.map(t => t.name).join(' and ')}!`
+    : pickRandomMessage(
+        selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        hasTie ? tied[0].name : selectedName,
+        selectionGoal === "winner" ? "win" : "lose"
+      );
+
+  return {
+    modeId: "stock-market",
+    modeName,
+    selectionGoal,
+    selectedName: hasTie ? tied[0].name : selectedName,
+    isTie: hasTie,
+    tiedNames: hasTie ? tied.map(t => t.name) : undefined,
+    headline,
+    summary: hasTie
+      ? `${tied.map(t => t.name).join(' and ')} finished at the same price.`
+      : `${picked.name}'s ${picked.ticker} ${picked.percentChange >= 0 ? 'gained' : 'lost'} ${Math.abs(picked.percentChange)}%.`,
+    players: players.map((p) => ({
+      name: p.name,
+      ticker: p.ticker,
+      prices: p.prices,
+      finalPrice: p.finalPrice,
+      percentChange: p.percentChange,
+      selected: hasTie ? false : p.name === selectedName,
+      tied: hasTie && tied.some(t => t.name === p.name),
+      rank: hasTie ? (tied.some(t => t.name === p.name) ? 1 : 2) :
+        (p.name === selectedName ? 1 : players.length),
+      headline: `${p.ticker}: $${p.finalPrice.toFixed(2)}`,
+      subline: `${p.percentChange >= 0 ? '+' : ''}${p.percentChange}%`,
+      chips: [p.ticker, `${p.percentChange >= 0 ? '+' : ''}${p.percentChange}%`],
+    })),
+  };
+}
+
+const MODES = [
+  { id: "holdem", run: buildHoldemResult },
+  { id: "plo", run: buildPloResult },
+  { id: "rng", run: buildRngResult },
+  { id: "wheel", run: buildWheelResult },
+  { id: "dice", run: buildDiceResult },
+  { id: "high-card", run: buildHighCardResult },
+  { id: "coin-flips", run: buildCoinFlipResult },
+  { id: "black-marble", run: buildBlackMarbleResult },
+  { id: "slots", run: buildSlotsResult },
+  { id: "horse-race", run: buildHorseRaceResult },
+  { id: "rocket", run: buildRocketResult },
+  { id: "space-invaders", run: buildSpaceInvadersResult },
+  { id: "bomb", run: buildBombResult },
+  { id: "plinko", run: buildPlinkoResult },
+  { id: "battle-royale", run: buildBattleRoyaleResult },
+  { id: "stock-market", run: buildStockMarketResult },
+];
+
+function getSingleTotalSteps(result) {
+  switch (result?.modeId) {
+    case "holdem":
+    case "plo":
+      return (result?.players?.length ?? 4) + 4;
+    case "rng":
+    case "dice":
+    case "high-card":
+    case "black-marble":
+    case "slots":
+      return (result?.players?.length ?? 4) + 1;
+    case "wheel":
+      return 2;
+    case "coin-flips":
+      return (result?.players?.length ?? 4) * 5 + 1;
+    case "horse-race":
+      return (result?.turns?.length ?? 12) + 1;
+    case "rocket":
+      return 2;
+    case "space-invaders":
+      return (result?.players?.length ?? 4);
+    case "bomb":
+      return 2;
+    case "plinko":
+      return (result?.players?.length ?? 4);
+    case "battle-royale":
+      return (result?.players?.length ?? 4);
+    case "stock-market":
+      return 2;
+    default:
+      return 1;
+  }
+}
+
+function getPlaybackConfig(result) {
+  if (!result) return { totalSteps: 1 };
+  if (!result.isTournament) {
+    return { totalSteps: getSingleTotalSteps(result) };
+  }
+  const totalSteps = result.rounds.reduce((sum, round) => sum + getSingleTotalSteps(round) + 2, 0);
+  return { totalSteps };
+}
+
+function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotation = 0) {
+  const mode = modeById(baseModeId);
+  let remainingNames = [...names];
+  let localWheelRotation = currentWheelRotation;
+  const rounds = [];
+  const safeNames = [];
+
+  while (remainingNames.length > 1) {
+    const roundResult = mode.run(remainingNames, "win immunity", "winner", localWheelRotation);
+    if (roundResult.modeId === "wheel") {
+      localWheelRotation = roundResult.wheel.rotation;
+    }
+    rounds.push({
+      ...roundResult,
+      roundLabel: `Round ${rounds.length + 1}`,
+      remainingAtStart: [...remainingNames],
+    });
+    safeNames.push(roundResult.selectedName);
+    remainingNames = remainingNames.filter((name) => name !== roundResult.selectedName);
+  }
+
+  const finalLoser = remainingNames[0];
+  const modeName = `${modeById(baseModeId)?.name ?? "Game"} Tournament`;
+  return {
+    modeId: baseModeId,
+    modeName,
+    selectionGoal: "loser",
+    selectedName: finalLoser,
+    headline: pickRandomMessage(LOSE_MESSAGES, finalLoser, "lose"),
+    summary: `${finalLoser} was the only person who never won a round. Win once and you're safe.`,
+    isTournament: true,
+    rounds,
+    safeNames,
+    finalLoser,
+    wheelRotation: localWheelRotation,
+  };
+}
+
+function getTournamentProgress(result, step) {
+  let cursor = 0;
+  for (let index = 0; index < result.rounds.length; index += 1) {
+    const round = result.rounds[index];
+    const roundSteps = getSingleTotalSteps(round);
+    if (step <= cursor + roundSteps) {
+      return {
+        phase: "round",
+        roundIndex: index,
+        roundStep: Math.max(0, step - cursor),
+        roundDone: step - cursor >= roundSteps,
+      };
+    }
+    cursor += roundSteps;
+    if (step <= cursor + 1) {
+      return {
+        phase: "summary",
+        roundIndex: index,
+      };
+    }
+    cursor += 2;
+  }
+
+  return {
+    phase: "summary",
+    roundIndex: result.rounds.length - 1,
+  };
+}
+
+function CardFace({ card, hidden = false, large = false, delay = 0, deal = false, dealIndex = 0 }) {
+  const red = card?.suit === "h" || card?.suit === "d";
+  const sizeClass = large ? "h-24 w-16 text-lg" : "h-14 w-10 text-sm";
+  const dealDelay = dealIndex * 0.15 + delay;
+  const shouldHide = deal && hidden;
+  return (
+    <motion.div
+      initial={deal ? { x: 300, y: -80, rotateY: 180, opacity: 0, scale: 0.85, rotate: 8 } : false}
+      animate={shouldHide
+        ? { x: 0, y: 0, rotateY: 180, opacity: 1, scale: 1, rotate: 0 }
+        : deal
+          ? { x: 0, y: 0, rotateY: 0, opacity: 1, scale: 1, rotate: 0 }
+          : { rotateY: hidden ? 180 : 0, opacity: 1 }
+      }
+      transition={deal ? {
+        x: { type: "spring", stiffness: 90, damping: 16, delay: dealDelay },
+        y: { type: "spring", stiffness: 90, damping: 16, delay: dealDelay },
+        rotate: { type: "spring", stiffness: 90, damping: 16, delay: dealDelay },
+        opacity: { duration: 0.15, delay: dealDelay },
+        scale: { type: "spring", stiffness: 150, damping: 18, delay: dealDelay },
+        rotateY: { type: "spring", stiffness: 15, damping: 7, mass: 3, delay: hidden ? dealDelay : dealDelay + 0.1 },
+      } : {
+        rotateY: { type: "spring", stiffness: 15, damping: 7, mass: 3, delay },
+      }}
+      className={`relative ${sizeClass}`}
+      style={{ transformStyle: "preserve-3d", perspective: 1000 }}
+    >
+      {/* Front face — white card */}
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-center rounded-lg border-2 shadow-md ${
+          red ? "border-rose-300 bg-white text-rose-600" : "border-slate-300 bg-white text-slate-900"
+        }`}
+        style={{ backfaceVisibility: "hidden" }}
+      >
+        <div className={`font-bold ${large ? "text-xl" : "text-sm"}`}>{rankLabel(card.rank)}</div>
+        <div className={`${large ? "text-lg" : "text-xs"} ${red ? "text-rose-500" : "text-slate-700"}`}>{SUIT_SYMBOLS[card.suit]}</div>
+      </div>
+      {/* Back face — red card back with pixel diamond pattern */}
+      <div
+        className="absolute inset-0 flex items-center justify-center rounded-lg border-2 border-red-800 shadow-md overflow-hidden"
+        style={{
+          backfaceVisibility: "hidden",
+          transform: "rotateY(180deg)",
+          background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)",
+        }}
+      >
+        <div className="absolute inset-[3px] border border-red-400/30 rounded" style={{
+          backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.08) 3px, rgba(255,255,255,0.08) 4px), repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.08) 3px, rgba(255,255,255,0.08) 4px)",
+        }} />
+        <div className="relative z-10 text-red-300/50 font-bold" style={{ fontSize: large ? 18 : 10 }}>♦</div>
+      </div>
+    </motion.div>
+  );
+}
+
+function RevealBanner({ modeName, step, totalSteps, done }) {
+  return (
+    <div className="mode-banner flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Live mode</div>
+        <div className="mt-1 text-xl font-bold text-slate-900">{modeName}</div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="progress-track w-36 overflow-hidden rounded-full bg-slate-100">
+          <motion.div
+            className="progress-bar h-2 rounded-full bg-gradient-to-r from-slate-900 via-sky-500 to-slate-900 shadow-[0_0_12px_2px_rgba(56,189,248,0.5)]"
+            animate={{ width: `${(step / totalSteps) * 100}%` }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </div>
+        <div className="step-badge rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+          {done ? "Final" : step === 0 ? `Ready • 0/${totalSteps}` : `Step ${step}/${totalSteps}`}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlayerResultCard({ name, title, subtitle, selected, selectionGoal, tied, children }) {
+  const isWinner = selectionGoal === "winner";
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 28, scale: 0.96 }}
+      animate={selected ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1], rotate: isWinner ? 0 : [0, -1.5, 1.5, -0.8, 0.5, 0] } : tied ? { opacity: 1, y: 0, scale: [0.96, 1.02, 1] } : { opacity: 1, y: 0, scale: 1 }}
+      transition={selected || tied ? { duration: 0.8 } : undefined}
+      className={`rounded-3xl border p-4 shadow-sm ${
+        tied
+          ? "border-yellow-400 bg-gradient-to-br from-yellow-50 to-amber-50 pulse-tie"
+          : selected
+            ? isWinner
+              ? "border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50 pulse-winner"
+              : "border-rose-300 bg-gradient-to-br from-rose-50 to-orange-50 pulse-loser"
+            : "border-slate-200 bg-white"
+      }`}
+    >
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-base font-semibold text-slate-900">{name}</div>
+          <div className="text-sm text-slate-500">{subtitle}</div>
+        </div>
+        <div className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          tied
+            ? "bg-yellow-500 text-white"
+            : selected
+              ? isWinner
+                ? "bg-amber-500 text-white"
+                : "bg-rose-500 text-white"
+              : "bg-slate-100 text-slate-600"
+        }`}>
+          {tied ? "Tied!" : selected ? (isWinner ? "Winner!" : "Selected") : "Watching"}
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div className="text-lg font-semibold text-slate-900">{title}</div>
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+function PokerPlayback({ result, step, done, omaha = false }) {
+  if (result.draftPhase) {
+    const draftSubmissions = (typeof window !== 'undefined' && window.__draftChoices) || {};
+    return (
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/60 shadow-xl backdrop-blur" style={{ background: "radial-gradient(ellipse, #1a472a 0%, #0d2818 60%, #091a10 100%)" }}>
+          <div className="mode-header-bg relative overflow-hidden px-6 py-5 text-white" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.3))" }}>
+            <div className="relative z-10">
+              <div className="text-sm font-semibold uppercase tracking-[0.25em]" style={{ color: "#4ade80", fontFamily: "var(--mode-font, inherit)" }}>{result.modeName}</div>
+              <div className="mt-2 text-2xl font-black tracking-tight sm:text-3xl" style={{ color: "#e2e8f0" }}>Players are drafting their cards...</div>
+              <div className="mt-2 max-w-2xl text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
+                Each player picks {result.keepCount} hole cards from {result.keepCount === 2 ? "4" : "6"} options.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="text-center py-8">
+          <div className="pixel-font text-xl text-indigo-300 animate-pulse mb-4">{'\uD83C\uDCCF'} DRAFT IN PROGRESS {'\uD83C\uDCCF'}</div>
+          <div className="font-mono text-sm text-slate-500 mb-4">Waiting for all players to lock in...</div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {Object.keys(result.draftHands).map(name => {
+              const submitted = draftSubmissions[name];
+              return (
+                <div key={name} className={`px-3 py-1.5 rounded-lg font-mono text-xs ${submitted ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-slate-500 animate-pulse'}`}>
+                  {name} {submitted ? '\u2713' : '...'}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const playerCount = result.players.length;
+  const playerRevealCount = clamp(step, 0, playerCount);
+  const flopVisible = step >= playerCount + 1;
+  const turnVisible = step >= playerCount + 2;
+  const riverVisible = step >= playerCount + 3;
+  const verdictVisible = done;
+  const visibleBoard = result.board.filter((_, index) => {
+    if (index <= 2) return flopVisible;
+    if (index === 3) return turnVisible;
+    return riverVisible;
+  });
+  const stageKey = step >= playerCount + 3 ? "river" : step >= playerCount + 2 ? "turn" : step >= playerCount + 1 ? "flop" : step >= playerCount ? "preflop" : null;
+  const currentPercentages = stageKey ? result.pokerPercentages?.[stageKey] : null;
+  const chanceLabel = result.selectionGoal === "winner" ? "Win chance" : "Picked chance";
+  const streetLabel = stageKey ? `${stageKey.charAt(0).toUpperCase()}${stageKey.slice(1)}` : "Waiting";
+
+  const playerPositions2 = [
+    { top: "0%", left: "50%", transform: "translateX(-50%)" },
+    { bottom: "0%", left: "50%", transform: "translateX(-50%)" },
+  ];
+  const playerPositions3 = [
+    { top: "0%", left: "50%", transform: "translateX(-50%)" },
+    { bottom: "8%", left: "8%" },
+    { bottom: "8%", right: "8%" },
+  ];
+  const playerPositions4 = [
+    { top: "0%", left: "25%", transform: "translateX(-50%)" },
+    { top: "0%", right: "25%", transform: "translateX(50%)" },
+    { bottom: "0%", left: "25%", transform: "translateX(-50%)" },
+    { bottom: "0%", right: "25%", transform: "translateX(50%)" },
+  ];
+  const positionsMap = playerCount <= 2 ? playerPositions2 : playerCount === 3 ? playerPositions3 : playerPositions4;
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="overflow-hidden rounded-[2rem] border border-white/60 shadow-xl backdrop-blur" style={{ background: "radial-gradient(ellipse, #1a472a 0%, #0d2818 60%, #091a10 100%)" }}>
+        <div className="mode-header-bg relative overflow-hidden px-6 py-5 text-white" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.3))" }}>
+          {verdictVisible && result.selectionGoal === "winner" ? <Celebration /> : null}
+          {verdictVisible && result.selectionGoal === "loser" ? <SadOverlay /> : null}
+          <div className="relative z-10">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em]" style={{ color: "#4ade80", fontFamily: "var(--mode-font, inherit)" }}>{result.modeName}</div>
+            {verdictVisible
+              ? <VerdictReveal text={result.headline} isWinner={result.selectionGoal === "winner"} />
+              : <div className="mt-2 text-2xl font-black tracking-tight sm:text-3xl" style={{ color: "#e2e8f0" }}>{omaha ? "Omaha cards are hitting the table..." : "The Hold'em hand is building..."}</div>
+            }
+            <div className="mt-2 max-w-2xl text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
+              {verdictVisible ? result.summary : `Hole cards reveal first, then flop, turn, river, and live ${chanceLabel.toLowerCase()} updates.`}
+            </div>
+          </div>
+        </div>
+
+        {/* Stage label */}
+        <div className="flex flex-wrap items-center justify-center gap-2 px-2 py-3 sm:gap-4 sm:px-0" style={{ background: "rgba(0,0,0,0.4)", borderTop: "1px solid rgba(74,222,128,0.15)", borderBottom: "1px solid rgba(74,222,128,0.15)" }}>
+          {["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"].map((label) => {
+            const activeStage = verdictVisible ? "SHOWDOWN" : streetLabel.toUpperCase();
+            const isActive = label === activeStage;
+            return (
+              <div key={label} className="text-[10px] font-bold tracking-[0.1em] sm:text-xs sm:tracking-[0.2em]" style={{
+                fontFamily: "var(--mode-font, inherit)",
+                color: isActive ? "#4ade80" : "rgba(255,255,255,0.25)",
+                textShadow: isActive ? "0 0 12px rgba(74,222,128,0.6)" : "none",
+              }}>
+                {label}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Poker table */}
+        <div className="relative mx-auto my-8 px-4" style={{ maxWidth: "760px" }}>
+          {/* Felt table */}
+          <div className="poker-table-felt relative mx-auto overflow-hidden" style={{
+            borderRadius: "50%/40%",
+            background: "radial-gradient(ellipse, #1e5c34 0%, #145028 40%, #0d3a1c 70%, #092a14 100%)",
+            border: "6px solid #3a2a1a",
+            boxShadow: "0 0 0 3px #5a4a3a, 0 0 40px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,0,0,0.3)",
+            aspectRatio: "2/1.1",
+            minHeight: "240px",
+          }}>
+            {/* Rail texture */}
+            <div className="absolute inset-0" style={{
+              borderRadius: "50%/40%",
+              boxShadow: "inset 0 0 0 12px rgba(30,92,52,0.4), inset 0 0 0 14px rgba(0,0,0,0.2)",
+              pointerEvents: "none",
+            }} />
+
+            {/* Community cards in center */}
+            <div className="poker-community-cards absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 z-10">
+              <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+                {result.board.map((card, index) => {
+                  const shown = visibleBoard.includes(card);
+                  const staggerDelay = index <= 2 ? index * 0.45 : 0;
+                  if (!shown) return <div key={cardKey(card)} className="h-24 w-16 rounded-lg border-2 border-dashed border-white/10 flex items-center justify-center text-white/10 text-lg">?</div>;
+                  return <CardFace key={cardKey(card)} card={card} hidden={false} large delay={staggerDelay} deal dealIndex={index <= 2 ? index : 0} />;
+                })}
+              </div>
+              {currentPercentages ? (
+                <div className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,0,0,0.5)", color: "#4ade80", fontFamily: "var(--mode-font, inherit)" }}>
+                  {streetLabel} {currentPercentages.method}
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Players around the table */}
+          <div className="poker-players-grid relative" style={{ marginTop: "-20px" }}>
+            <div className={`grid gap-4 grid-cols-1 ${playerCount <= 2 ? "sm:grid-cols-2" : playerCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
+              {result.players.map((player, index) => {
+                const revealed = index < playerRevealCount;
+                const isSelected = verdictVisible && player.selected;
+                const isTied = verdictVisible && player.tied;
+                const isWinner = result.selectionGoal === "winner";
+                return (
+                  <motion.div
+                    key={player.name}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={isSelected || isTied ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1] } : { opacity: 1, y: 0, scale: 1 }}
+                    className={`rounded-2xl p-3 text-center ${isTied ? "pulse-tie" : ""}`}
+                    style={{
+                      background: isTied
+                        ? "rgba(245,158,11,0.2)"
+                        : isSelected
+                          ? isWinner ? "rgba(234,179,8,0.2)" : "rgba(239,68,68,0.2)"
+                          : "rgba(0,0,0,0.35)",
+                      border: isTied
+                        ? "2px solid rgba(245,158,11,0.6)"
+                        : isSelected
+                          ? isWinner ? "2px solid rgba(234,179,8,0.6)" : "2px solid rgba(239,68,68,0.6)"
+                          : "1px solid rgba(74,222,128,0.15)",
+                      boxShadow: isTied
+                        ? "0 0 20px rgba(245,158,11,0.3)"
+                        : isSelected
+                          ? isWinner ? "0 0 20px rgba(234,179,8,0.3)" : "0 0 20px rgba(239,68,68,0.3)"
+                          : "none",
+                    }}
+                  >
+                    <div className="text-sm font-bold" style={{ color: "#e2e8f0" }}>{player.name}</div>
+                    <div className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      {verdictVisible
+                        ? player.subline
+                        : revealed
+                          ? stageKey === "preflop"
+                            ? omaha ? "Waiting for the flop" : "Current preflop hand"
+                            : stageKey ? `Current ${stageKey} hand` : "Cards revealed"
+                          : "Cards still face down"
+                      }
+                    </div>
+                    <div className={`flex justify-center gap-1.5 mt-2 ${omaha ? "flex-wrap" : ""}`} style={omaha ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", justifyItems: "center" } : {}}>
+                      {revealed ? player.cards.map((card, cardIndex) => (
+                        <CardFace key={`${player.name}-${cardIndex}-${cardKey(card)}`} card={card} hidden={false} deal dealIndex={cardIndex} />
+                      )) : <div className="h-10 flex items-center justify-center text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>🂠 🂠{omaha ? " 🂠 🂠" : ""}</div>}
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-1 mt-2">
+                      {player.chips.map((chip) => (
+                        <span key={chip} className="rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: "rgba(74,222,128,0.12)", color: "#86efac" }}>
+                          {chip}
+                        </span>
+                      ))}
+                    </div>
+                    {revealed && currentPercentages ? (
+                      <div className="mt-2 rounded-xl px-2 py-1.5" style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(74,222,128,0.2)" }}>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.15em]" style={{ color: "rgba(74,222,128,0.6)" }}>{chanceLabel}</div>
+                        <div className="text-xl font-black" style={{ color: "#4ade80", fontFamily: "var(--mode-font, inherit)" }}>{currentPercentages.byPlayer[player.name]}%</div>
+                      </div>
+                    ) : null}
+                    {verdictVisible ? (
+                      <div className="mt-1 text-xs font-bold" style={{ color: isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#86efac", fontFamily: "var(--mode-font, inherit)" }}>
+                        {player.headline}
+                      </div>
+                    ) : revealed ? (
+                      <div className="mt-1 text-xs font-semibold" style={{ color: "#86efac", fontFamily: "var(--mode-font, inherit)" }}>
+                        {omaha ? getCurrentPloHandLabel(player.cards, visibleBoard) : getCurrentHoldemHandLabel(player.cards, visibleBoard)}
+                      </div>
+                    ) : null}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WheelPlayback({ result, step, done }) {
+  const angleStep = 360 / result.wheel.names.length;
+  const gradient = result.wheel.names
+    .map((_, index) => {
+      const start = index * angleStep;
+      const end = (index + 1) * angleStep;
+      return `${WHEEL_COLORS[index % WHEEL_COLORS.length]} ${start}deg ${end}deg`;
+    })
+    .join(", ");
+  const spinStarted = step >= 1;
+
+  return (
+    <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+      <ModeHeader result={result} done={done} pendingText={spinStarted ? "The wheel is spinning..." : "Click to spin the wheel..."} pendingSummary={spinStarted ? "One more click reveals who got picked." : "Everybody gets a slice. Start the spin when you're ready."} />
+
+      <div className="p-6" style={{ background: "linear-gradient(180deg, #1a1a3e 0%, #0f0f2a 100%)" }}>
+        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-6">
+          {/* Stage lights effect */}
+          <div className="relative h-64 w-64 sm:h-80 sm:w-80">
+            {/* Spotlight glow */}
+            <div className="absolute -inset-8 rounded-full" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+            <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-2 text-3xl" style={{ color: "#fbbf24", filter: "drop-shadow(0 0 6px rgba(251,191,36,0.5))" }}>▼</div>
+            <motion.div
+              className="absolute inset-0 rounded-full shadow-2xl"
+              initial={false}
+              animate={{ rotate: spinStarted ? result.wheel.rotation : result.wheel.rotation - 360 }}
+              transition={{ duration: 3.4, ease: [0.12, 0.9, 0.1, 1] }}
+              style={{ background: `conic-gradient(${gradient})`, border: "6px solid rgba(255,255,255,0.9)", boxShadow: "0 0 30px rgba(251,191,36,0.2), inset 0 0 20px rgba(0,0,0,0.3)" }}
+            />
+            <div className="absolute inset-[26%] z-10 flex items-center justify-center rounded-full" style={{ background: "radial-gradient(circle, #2a2a4e, #1a1a3e)", border: "3px solid rgba(251,191,36,0.4)", boxShadow: "0 0 15px rgba(251,191,36,0.15)" }}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={done ? result.selectedName : spinStarted ? "spinning" : "ready"}
+                  initial={{ opacity: 0, scale: 0.55, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-center"
+                >
+                  <div className="text-xs font-medium uppercase tracking-[0.2em]" style={{ color: "rgba(251,191,36,0.7)" }}>
+                    {done ? "Picked" : spinStarted ? "Spinning" : "Ready"}
+                  </div>
+                  <div className="mt-1 text-xl font-bold" style={{ color: "#fff" }}>{done ? result.selectedName : spinStarted ? "???" : "Tap next"}</div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* Verdict text in Bungee */}
+          {done ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center"
+            >
+              <div className="text-2xl font-bold" style={{ fontFamily: "'Bungee', cursive", color: "#fbbf24", textShadow: "0 0 20px rgba(251,191,36,0.4)" }}>
+                {result.selectedName}
+              </div>
+            </motion.div>
+          ) : null}
+
+          {/* Podiums */}
+          <div className="flex w-full flex-wrap items-end justify-center gap-2 pt-4 sm:gap-3" style={{ minHeight: "120px" }}>
+            {result.wheel.names.map((name, index) => {
+              const isSelected = done && name === result.selectedName;
+              const isWinner = result.selectionGoal === "winner";
+              const segColor = WHEEL_COLORS[index % WHEEL_COLORS.length];
+              const podiumHeight = isSelected ? 100 : 60 + (index % 3) * 10;
+              return (
+                <motion.div
+                  key={name}
+                  animate={isSelected ? { scale: [1, 1.05, 1] } : {}}
+                  transition={isSelected ? { duration: 1.2, repeat: Infinity } : undefined}
+                  className="flex flex-col items-center flex-1 min-w-0"
+                  style={{ maxWidth: "120px", minWidth: "60px" }}
+                >
+                  <div className="text-xs font-bold text-center mb-1 truncate w-full" style={{ color: isSelected ? "#fbbf24" : "#aaa" }}>{name}</div>
+                  <motion.div
+                    animate={{ height: podiumHeight }}
+                    transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                    className="w-full rounded-t-lg"
+                    style={{
+                      background: `linear-gradient(180deg, ${segColor}, ${segColor}88)`,
+                      boxShadow: isSelected ? `0 0 24px ${segColor}88, 0 0 48px rgba(251,191,36,0.3)` : `0 2px 8px rgba(0,0,0,0.3)`,
+                      border: isSelected ? "2px solid rgba(251,191,36,0.6)" : "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  />
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NumberPlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  return (
+    <div className="overflow-hidden rounded-2xl shadow-xl" style={{ border: "1px solid #333", fontFamily: "'Source Code Pro', monospace" }}>
+      {/* Terminal title bar */}
+      <div className="flex items-center gap-2 px-4 py-2" style={{ background: "#1a1a2e", borderBottom: "1px solid #333" }}>
+        <div className="flex gap-1.5">
+          <div className="h-3 w-3 rounded-full" style={{ background: "#ff5f57" }} />
+          <div className="h-3 w-3 rounded-full" style={{ background: "#febc2e" }} />
+          <div className="h-3 w-3 rounded-full" style={{ background: "#28c840" }} />
+        </div>
+        <div className="flex-1 text-center text-xs font-semibold" style={{ color: "#666" }}>RUNOUTS_RNG v2.4.1</div>
+      </div>
+
+      {/* Terminal body */}
+      <div className="p-5 space-y-1" style={{ background: "#0a0a1a", color: "#00ff41", minHeight: "280px" }}>
+        {/* System boot text */}
+        <div className="text-xs" style={{ color: "#333" }}>system initialized. seed: crypto.getRandomValues()</div>
+        <div className="text-xs" style={{ color: "#333" }}>players loaded: {result.players.length}</div>
+        <div className="text-xs mb-4" style={{ color: "#333" }}>---</div>
+
+        {/* Header line */}
+        {done ? (
+          <div>
+            <div className="text-sm font-bold mb-1" style={{ color: result.isTie ? "#f59e0b" : result.selectionGoal === "winner" ? "#fbbf24" : "#f87171" }}>
+              {"> "}{result.headline}
+            </div>
+            <div className="text-xs mb-4" style={{ color: "#666" }}>{"> "}{result.summary}</div>
+          </div>
+        ) : (
+          <div>
+            <div className="text-sm font-bold mb-1" style={{ color: "#00ff41" }}>{"> "}Processing results...</div>
+            <div className="text-xs mb-4" style={{ color: "#666" }}>{"> "}Lowest number gets the chore.</div>
+          </div>
+        )}
+
+        {/* Player result lines */}
+        {result.players.map((player, index) => {
+          const isShown = index < revealed;
+          const isSelected = done && player.selected;
+          const isTied = done && player.tied;
+          const isWinner = result.selectionGoal === "winner";
+          return (
+            <motion.div
+              key={player.name}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="rounded px-3 py-2 text-sm"
+              style={{
+                background: isTied ? "rgba(245,158,11,0.15)" : isSelected ? (isWinner ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)") : "transparent",
+                color: isTied ? "#f59e0b" : isSelected ? (isWinner ? "#fbbf24" : "#f87171") : isShown ? "#00ff41" : "#333",
+                border: isTied ? "1px solid rgba(245,158,11,0.3)" : isSelected ? `1px solid ${isWinner ? "rgba(251,191,36,0.3)" : "rgba(248,113,113,0.3)"}` : "1px solid transparent",
+              }}
+            >
+              <span style={{ color: "#666" }}>{">"} </span>
+              <span>RESULT: </span>
+              <span className="font-bold">{player.name}</span>
+              <span> = </span>
+              <span className="text-2xl font-black" style={{ fontFamily: "'Source Code Pro', monospace" }}>
+                <CyclingNumber value={player.value} active={isShown} />
+              </span>
+              {done && isTied ? (
+                <span className="ml-3 text-xs font-bold" style={{ color: "#f59e0b" }}>
+                  {"<<<"} TIED
+                </span>
+              ) : done && isSelected ? (
+                <span className="ml-3 text-xs font-bold" style={{ color: isWinner ? "#fbbf24" : "#f87171" }}>
+                  {"<<<"} {player.subline}
+                </span>
+              ) : isShown ? (
+                <span className="ml-3 text-xs" style={{ color: "#666" }}>[locked]</span>
+              ) : (
+                <span className="ml-3 text-xs" style={{ color: "#333" }}>[pending]</span>
+              )}
+            </motion.div>
+          );
+        })}
+
+        {/* Blinking cursor */}
+        {!done ? (
+          <motion.div
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 1, repeat: Infinity }}
+            className="mt-4 text-sm"
+            style={{ color: "#00ff41" }}
+          >
+            {">"} _
+          </motion.div>
+        ) : (
+          <div className="mt-4 text-xs" style={{ color: "#333" }}>
+            {">"} process complete. exit code 0
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DicePlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  return (
+    <div className="overflow-hidden rounded-[2rem] shadow-xl" style={{ background: "linear-gradient(180deg, #2a1a0e 0%, #1a0f08 100%)", border: "2px solid #4a3520" }}>
+      <ModeHeader result={result} done={done} pendingText="Dice are hitting the table..." pendingSummary="Lowest total ends up stuck with it." />
+
+      <div className="p-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {result.players.map((player, index) => {
+            const isShown = index < revealed;
+            const isSelected = done && player.selected;
+            const isTied = done && player.tied;
+            const isWinner = result.selectionGoal === "winner";
+            const hpPct = Math.round((player.total / 12) * 100);
+            return (
+              <motion.div
+                key={player.name}
+                layout
+                initial={{ opacity: 0, x: -20 }}
+                animate={isSelected || isTied ? { opacity: 1, x: 0, scale: [0.96, 1.03, 1] } : { opacity: 1, x: 0, scale: 1 }}
+                className={isTied ? "rounded-xl p-4 pulse-tie" : "rounded-xl p-4"}
+                style={{
+                  background: "linear-gradient(135deg, #f5e6d0 0%, #e8d5b8 50%, #dcc8a5 100%)",
+                  border: isTied
+                    ? "3px solid #d97706"
+                    : isSelected
+                      ? isWinner ? "3px solid #b8860b" : "3px solid #8b0000"
+                      : "2px solid #8b7355",
+                  boxShadow: isTied
+                    ? "0 0 20px rgba(217,119,6,0.4)"
+                    : isSelected
+                      ? isWinner ? "0 0 20px rgba(184,134,11,0.4), inset 0 0 15px rgba(184,134,11,0.1)" : "0 0 20px rgba(139,0,0,0.4)"
+                      : "inset 0 0 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.3)",
+                }}
+              >
+                {/* Character name */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-lg font-bold" style={{ fontFamily: "'MedievalSharp', cursive", color: "#3a2a1a" }}>{player.name}</div>
+                  {isTied ? (
+                    <span className="text-xs font-bold px-2 py-1 rounded" style={{
+                      background: "#d97706",
+                      color: "#fff",
+                      fontFamily: "'MedievalSharp', cursive",
+                    }}>
+                      TIED
+                    </span>
+                  ) : isSelected ? (
+                    <span className="text-xs font-bold px-2 py-1 rounded" style={{
+                      background: isWinner ? "#b8860b" : "#8b0000",
+                      color: "#fff",
+                      fontFamily: "'MedievalSharp', cursive",
+                    }}>
+                      {isWinner ? "CHAMPION" : "DEFEATED"}
+                    </span>
+                  ) : null}
+                </div>
+
+                {/* HP Bar */}
+                <div className="mb-3">
+                  <div className="flex items-center justify-between text-xs mb-1" style={{ color: "#5a4a3a", fontFamily: "'MedievalSharp', cursive" }}>
+                    <span>Vitality</span>
+                    <span>{isShown ? `${player.total}/12` : "??/12"}</span>
+                  </div>
+                  <div className="h-4 rounded-full overflow-hidden" style={{ background: "#8b7355", border: "1px solid #6b5335" }}>
+                    <motion.div
+                      animate={{ width: isShown ? `${hpPct}%` : "100%" }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      className="h-full rounded-full"
+                      style={{
+                        background: isShown
+                          ? hpPct > 60 ? "linear-gradient(90deg, #228b22, #32cd32)" : hpPct > 30 ? "linear-gradient(90deg, #b8860b, #daa520)" : "linear-gradient(90deg, #8b0000, #dc143c)"
+                          : "linear-gradient(90deg, #666, #888)",
+                      }}
+                    />
+                  </div>
+                  {done && isSelected && !isWinner ? (
+                    <div className="text-center text-xs font-bold mt-1" style={{ color: "#8b0000", fontFamily: "'MedievalSharp', cursive" }}>DEFEATED</div>
+                  ) : null}
+                </div>
+
+                {/* Dice + Attack result */}
+                <div className="flex items-center gap-4">
+                  <div className="flex gap-2">
+                    {[player.d1, player.d2].map((value, dieIndex) => (
+                      <motion.div
+                        key={`${player.name}-${dieIndex}`}
+                        animate={{
+                          rotate: isShown ? [720, -30, 15, -5, 0] : [0, 360],
+                          scale: isShown ? [0.4, 1.25, 0.9, 1.05, 1] : [1, 1.12, 1],
+                        }}
+                        transition={{
+                          duration: isShown ? 1.6 : 0.9,
+                          delay: isShown ? dieIndex * 0.35 : 0,
+                          repeat: isShown ? 0 : Infinity,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                        className="flex h-14 w-14 items-center justify-center rounded-lg text-xl font-black"
+                        style={{
+                          background: "linear-gradient(145deg, #f0e0c8, #d4c4a8)",
+                          border: "2px solid #8b7355",
+                          color: "#3a2a1a",
+                          boxShadow: "2px 2px 6px rgba(0,0,0,0.2), inset 1px 1px 2px rgba(255,255,255,0.3)",
+                        }}
+                      >
+                        {isShown ? value : "?"}
+                      </motion.div>
+                    ))}
+                  </div>
+                  {isShown ? (
+                    <div className="flex-1">
+                      <div className="text-lg font-bold" style={{ fontFamily: "'MedievalSharp', cursive", color: "#3a2a1a" }}>
+                        {"ATK: "}{player.total}
+                      </div>
+                      <div className="text-xs" style={{ color: "#6b5335" }}>
+                        {done ? player.subline : "Dice locked"}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 text-sm" style={{ color: "#8b7355", fontFamily: "'MedievalSharp', cursive" }}>
+                      Awaiting fate...
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HighCardPlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  const playerCount = result.players.length;
+  return (
+    <div className="overflow-hidden rounded-[2rem] shadow-xl" style={{
+      background: "linear-gradient(180deg, #d4a76a 0%, #c4955a 20%, #8b6914 100%)",
+      border: "3px solid #6b4e1a",
+    }}>
+      <ModeHeader result={result} done={done} pendingText="Cards are flipping..." pendingSummary="Lowest rank loses. Everybody watch the turn." />
+
+      <div className="p-6 relative" style={{ minHeight: "320px" }}>
+        {/* Dusty atmosphere */}
+        <div className="absolute inset-0 opacity-20" style={{
+          background: "radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
+
+        {/* Center deck */}
+        <div className="flex items-center justify-center mb-6">
+          <div className="flex flex-col items-center">
+            <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'Rye', cursive", color: "#3a2a1a" }}>
+              The Draw
+            </div>
+            <div className="relative">
+              <div className="h-24 w-16 rounded-xl" style={{
+                background: "linear-gradient(135deg, #1e3a5f, #0f2744)",
+                border: "2px solid #4a3520",
+                boxShadow: "3px 3px 0 #4a3520, 6px 6px 0 #3a2510, 0 0 20px rgba(0,0,0,0.3)",
+              }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Player face-off layout */}
+        <div className={`grid gap-6 grid-cols-1 ${playerCount <= 2 ? "sm:grid-cols-2" : playerCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2 md:grid-cols-4"}`}>
+          {result.players.map((player, index) => {
+            const isShown = index < revealed;
+            const isSelected = done && player.selected;
+            const isTied = done && player.tied;
+            const isWinner = result.selectionGoal === "winner";
+            return (
+              <motion.div
+                key={player.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={isSelected || isTied ? { opacity: 1, y: 0, scale: [0.96, 1.04, 1] } : { opacity: 1, y: 0, scale: 1 }}
+                className="flex flex-col items-center text-center"
+              >
+                {/* Wanted poster / Star badge */}
+                <div className={`rounded-lg p-4 relative ${isTied ? "pulse-tie" : ""}`} style={{
+                  background: isSelected || isTied
+                    ? "linear-gradient(135deg, #f5e6d0, #e8d0a8)"
+                    : "linear-gradient(135deg, #f0e0c8, #dcc8a5)",
+                  border: isTied ? "3px solid #d97706" : isSelected ? "3px solid #8b4513" : "2px solid #8b7355",
+                  boxShadow: isTied ? "0 0 20px rgba(217,119,6,0.4)" : isSelected ? "0 0 20px rgba(139,69,19,0.4), inset 0 0 20px rgba(139,69,19,0.1)" : "2px 2px 8px rgba(0,0,0,0.3)",
+                  minWidth: "120px",
+                }}>
+                  {isTied ? (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-0.5 rounded" style={{
+                      background: "#d97706",
+                      color: "#fff",
+                      fontFamily: "'Rye', cursive",
+                      letterSpacing: "0.15em",
+                    }}>
+                      TIED
+                    </div>
+                  ) : isSelected ? (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-0.5 rounded" style={{
+                      background: "#8b4513",
+                      color: "#f5e6d0",
+                      fontFamily: "'Rye', cursive",
+                      letterSpacing: "0.15em",
+                    }}>
+                      WANTED
+                    </div>
+                  ) : done ? (
+                    <div className="absolute -top-2 -right-2 text-lg">{"\u2B50"}</div>
+                  ) : null}
+
+                  <div className="text-base font-bold mb-3" style={{ fontFamily: "'Rye', cursive", color: "#3a2a1a" }}>
+                    {player.name}
+                  </div>
+
+                  <div className="flex justify-center mb-3">
+                    {isShown ? <CardFace card={player.card} hidden={false} large deal dealIndex={0} /> : <div className="h-24 w-16 rounded-lg border-2 border-dashed border-amber-900/20 flex items-center justify-center text-amber-900/30 text-lg">?</div>}
+                  </div>
+
+                  <div className="text-xs" style={{ color: "#6b5335", fontFamily: "'Rye', cursive" }}>
+                    {done ? player.subline : isShown ? "Card drawn" : "Hand on holster..."}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* VS separators for 2-player */}
+        {playerCount === 2 ? (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-4 text-2xl font-black" style={{ fontFamily: "'Rye', cursive", color: "#3a2a1a", textShadow: "1px 1px 0 rgba(255,255,255,0.3)", opacity: 0.6 }}>
+            VS
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function CoinPlayback({ result, step, done }) {
+  const playerCount = result.players.length;
+  const currentPlayerIndex = Math.min(Math.floor(step / 5), playerCount - 1);
+  const currentFlipInPlayer = step - currentPlayerIndex * 5;
+
+  function getFlipsShown(playerIdx) {
+    if (done) return 5;
+    if (playerIdx < currentPlayerIndex) return 5;
+    if (playerIdx === currentPlayerIndex) return clamp(currentFlipInPlayer, 0, 5);
+    return 0;
+  }
+
+  const activePlayerName = currentPlayerIndex < playerCount ? result.players[currentPlayerIndex]?.name : null;
+  const roundsShown = done ? 5 : clamp(currentFlipInPlayer, 0, 5);
+  return (
+    <div className="overflow-hidden rounded-[2rem] shadow-xl" style={{
+      background: "linear-gradient(180deg, #1a2a3a 0%, #0a1520 100%)",
+      border: "2px solid #3a5a7a",
+    }}>
+      <ModeHeader result={result} done={done} pendingText={activePlayerName ? `${activePlayerName}'s flip ${Math.max(1, roundsShown)} of 5...` : "Flipping..."} pendingSummary="Five flips each. Fewest heads is doomed." />
+
+      <div className="p-6">
+        {/* Pirate header */}
+        <div className="text-center mb-6">
+          <div className="text-lg font-bold" style={{ fontFamily: "'Pirata One', cursive", color: "#d4a76a" }}>
+            The Treasure Path
+          </div>
+          <div className="text-xs" style={{ color: "#6a8aaa" }}>Five coins on the trail to fortune...</div>
+        </div>
+
+        {/* Player paths */}
+        <div className="space-y-6">
+          {result.players.map((player, pIdx) => {
+            const isSelected = done && player.selected;
+            const isTied = done && player.tied;
+            const isWinner = result.selectionGoal === "winner";
+            const playerFlipsShown = getFlipsShown(pIdx);
+            const isActivePlayer = pIdx === currentPlayerIndex && !done;
+            return (
+              <div key={player.name} className={`rounded-xl p-4 transition-all duration-300 ${isTied ? "pulse-tie" : ""}`} style={{
+                background: isTied
+                  ? "rgba(245,158,11,0.15)"
+                  : isSelected
+                    ? isWinner ? "rgba(184,134,11,0.15)" : "rgba(139,0,0,0.15)"
+                    : isActivePlayer ? "rgba(212,167,106,0.1)" : "rgba(255,255,255,0.04)",
+                border: isTied
+                  ? "2px solid rgba(245,158,11,0.4)"
+                  : isSelected
+                    ? isWinner ? "2px solid rgba(184,134,11,0.4)" : "2px solid rgba(139,0,0,0.4)"
+                    : "1px solid rgba(255,255,255,0.08)",
+              }}>
+                {/* Player name */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-bold" style={{ fontFamily: "'Pirata One', cursive", color: "#d4a76a" }}>{player.name}</div>
+                  {done ? (
+                    <div className="text-xs font-bold" style={{
+                      fontFamily: "'Pirata One', cursive",
+                      color: isTied ? "#f59e0b" : isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#6a8aaa",
+                    }}>
+                      {isTied ? "TIED" : `${player.heads} heads`}
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Winding path with waypoints */}
+                <div className="coin-path-row relative flex items-center justify-between" style={{ height: "80px" }}>
+                  {/* Path line */}
+                  <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none" }}>
+                    <path
+                      d={`M 10 40 Q ${80/5 * 1.5} 15, ${80/5 * 2} 40 T ${80/5 * 4} 40 T ${80/5 * 6} 40 T ${80/5 * 8} 40 T ${80/5 * 10} 40`}
+                      fill="none"
+                      stroke="rgba(212,167,106,0.2)"
+                      strokeWidth="2"
+                      strokeDasharray="4 4"
+                      style={{ transform: "scale(1)", transformOrigin: "center" }}
+                    />
+                  </svg>
+
+                  {player.flips.map((flip, index) => {
+                    const shown = index < playerFlipsShown;
+                    const isHeads = flip === "H";
+                    const yOffset = index % 2 === 0 ? -8 : 8;
+                    return (
+                      <motion.div
+                        key={`${player.name}-${index}`}
+                        animate={{
+                          rotateY: shown ? [0, 360, 720, 1080, 0] : [0, 180, 0],
+                          scale: shown ? [1, 0.7, 1, 0.7, 1.15, 1] : 1,
+                          y: yOffset,
+                        }}
+                        transition={{ duration: shown ? 1.6 : 0.8, repeat: shown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
+                        className="coin-token relative z-10 flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold"
+                        style={{
+                          background: shown
+                            ? isHeads
+                              ? "radial-gradient(circle at 35% 35%, #fde68a, #d4a76a, #b8860b)"
+                              : "radial-gradient(circle at 35% 35%, #e2e8f0, #94a3b8, #64748b)"
+                            : "radial-gradient(circle, #334155, #1e293b)",
+                          border: shown
+                            ? isHeads ? "2px solid #b8860b" : "2px solid #64748b"
+                            : "2px solid #475569",
+                          color: shown
+                            ? isHeads ? "#3a2a1a" : "#1e293b"
+                            : "#475569",
+                          boxShadow: shown && isHeads ? "0 0 12px rgba(184,134,11,0.4)" : "none",
+                        }}
+                      >
+                        {shown ? flip : "?"}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Result text */}
+                {done ? (
+                  <div className="mt-2 text-center text-xs font-bold" style={{
+                    fontFamily: "'Pirata One', cursive",
+                    color: isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#6a8aaa",
+                  }}>
+                    {isSelected
+                      ? isWinner ? "CLAIMED THE TREASURE" : "WALKED THE PLANK"
+                      : player.subline
+                    }
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MarblePlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  const playerCount = result.players.length;
+
+  return (
+    <div className="overflow-hidden rounded-[2rem] shadow-xl" style={{
+      background: "radial-gradient(ellipse at center, #1a1a3e 0%, #0a0a1e 60%, #050510 100%)",
+      border: "1px solid rgba(139,92,246,0.3)",
+    }}>
+      <ModeHeader result={result} done={done} pendingText="The bag is opening..." pendingSummary="Safe marbles first... until somebody hits the black one." />
+
+      <div className="p-6 relative" style={{ minHeight: "400px" }}>
+        {/* Starfield dots */}
+        {Array.from({ length: 20 }, (_, i) => (
+          <div key={`star-${i}`} className="absolute rounded-full" style={{
+            width: "2px",
+            height: "2px",
+            background: "rgba(255,255,255,0.3)",
+            left: `${5 + (i * 47) % 90}%`,
+            top: `${10 + (i * 31) % 80}%`,
+            animation: `twinkle${(i % 3) + 1} ${2 + (i % 3)}s ease-in-out infinite`,
+          }} />
+        ))}
+
+        {/* Central marble bag */}
+        <div className="flex flex-col items-center mb-8">
+          <motion.div
+            animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="flex h-20 w-20 items-center justify-center rounded-full text-3xl"
+            style={{
+              background: "radial-gradient(circle at 35% 35%, #4a3a6a, #2a1a4a, #1a0a3a)",
+              border: "2px solid rgba(139,92,246,0.4)",
+              boxShadow: "0 0 30px rgba(139,92,246,0.2), inset 0 0 15px rgba(0,0,0,0.5)",
+            }}
+          >
+            {"\uD83D\uDD2E"}
+          </motion.div>
+          <div className="mt-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(139,92,246,0.6)", fontFamily: "'Cinzel Decorative', cursive" }}>
+            The Vessel
+          </div>
+        </div>
+
+        {/* Players in circle layout with constellation lines */}
+        <div className="relative mx-auto" style={{ maxWidth: "500px" }}>
+          {/* Constellation connecting lines */}
+          <svg className="absolute inset-0 w-full h-full hidden sm:block" style={{ pointerEvents: "none" }}>
+            {result.players.map((_, index) => {
+              const nextIndex = (index + 1) % playerCount;
+              const angle1 = (index / playerCount) * Math.PI * 2 - Math.PI / 2;
+              const angle2 = (nextIndex / playerCount) * Math.PI * 2 - Math.PI / 2;
+              const cx = 50, cy = 50, r = 38;
+              return (
+                <line
+                  key={`line-${index}`}
+                  x1={`${cx + Math.cos(angle1) * r}%`}
+                  y1={`${cy + Math.sin(angle1) * r}%`}
+                  x2={`${cx + Math.cos(angle2) * r}%`}
+                  y2={`${cy + Math.sin(angle2) * r}%`}
+                  stroke="rgba(139,92,246,0.15)"
+                  strokeWidth="1"
+                  strokeDasharray="3 6"
+                />
+              );
+            })}
+            {/* Node dots on constellation */}
+            {result.players.map((_, index) => {
+              const angle = (index / playerCount) * Math.PI * 2 - Math.PI / 2;
+              const cx = 50, cy = 50, r = 38;
+              return (
+                <circle
+                  key={`node-${index}`}
+                  cx={`${cx + Math.cos(angle) * r}%`}
+                  cy={`${cy + Math.sin(angle) * r}%`}
+                  r="3"
+                  fill="rgba(139,92,246,0.4)"
+                />
+              );
+            })}
+          </svg>
+
+          {/* Player nodes */}
+          <div className={`grid gap-4 grid-cols-1 ${playerCount <= 2 ? "sm:grid-cols-2" : playerCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2 md:grid-cols-4"}`}>
+            {result.players.map((player, index) => {
+              const isShown = index < revealed;
+              const isBlack = player.marble === "Black";
+              const isSelected = done && player.selected;
+              const isWinner = result.selectionGoal === "winner";
+              return (
+                <motion.div
+                  key={player.name}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={isShown && isBlack ? { opacity: 1, scale: 1, rotate: [0, -4, 4, -3, 3, -1, 0] } : { opacity: 1, scale: 1 }}
+                  transition={{ duration: isShown && isBlack ? 1.2 : 0.5 }}
+                  className="flex flex-col items-center text-center p-3 rounded-xl"
+                  style={{
+                    background: isSelected
+                      ? isWinner ? "rgba(139,92,246,0.15)" : "rgba(239,68,68,0.1)"
+                      : "rgba(255,255,255,0.03)",
+                    border: isSelected
+                      ? isWinner ? "1px solid rgba(139,92,246,0.4)" : "1px solid rgba(239,68,68,0.3)"
+                      : "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <div className="text-sm font-semibold mb-1" style={{ color: "rgba(255,255,255,0.85)", fontFamily: "'Cinzel Decorative', cursive", fontSize: "12px" }}>{player.name}</div>
+                  <div className="text-[10px] mb-2" style={{ color: "rgba(139,92,246,0.5)" }}>Draw #{index + 1}</div>
+
+                  {/* Marble */}
+                  <motion.div
+                    animate={{
+                      scale: isShown ? (isBlack ? [0.3, 1.4, 0.8, 1.15, 0.95, 1] : [0.84, 1.12, 1]) : [1, 1.12, 1],
+                      opacity: isShown ? [0.45, 1] : [0.45, 1, 0.45],
+                    }}
+                    transition={{ duration: isShown ? (1.2 + index * 0.4) : 0.9, repeat: isShown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
+                    className="flex h-16 w-16 items-center justify-center rounded-full text-xs font-bold"
+                    style={{
+                      background: isShown
+                        ? isBlack
+                          ? "radial-gradient(circle at 35% 35%, #4a4a5a, #1a1a2a, #050510)"
+                          : "radial-gradient(circle at 35% 35%, #e0e7ff, #a5b4fc, #6366f1)"
+                        : "radial-gradient(circle at 35% 35%, #2a2a3e, #1a1a2e)",
+                      border: isShown
+                        ? isBlack ? "3px solid rgba(255,255,255,0.2)" : "2px solid rgba(139,92,246,0.4)"
+                        : "2px solid rgba(139,92,246,0.15)",
+                      color: isShown
+                        ? isBlack ? "rgba(255,255,255,0.8)" : "#1a1a3e"
+                        : "rgba(139,92,246,0.3)",
+                      boxShadow: isShown && isBlack ? "0 0 20px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.3)" : isShown ? "0 0 15px rgba(139,92,246,0.2)" : "none",
+                    }}
+                  >
+                    {isShown ? player.marble : "?"}
+                  </motion.div>
+
+                  <div className="mt-2 text-[11px]" style={{ color: "rgba(139,92,246,0.6)", fontFamily: "'Cinzel Decorative', cursive" }}>
+                    {done ? player.subline : isShown ? "Revealed" : "Awaiting fate"}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Verdict */}
+        {done ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mt-6"
+          >
+            <div className="text-lg font-bold" style={{ fontFamily: "'Cinzel Decorative', cursive", color: "#a78bfa", textShadow: "0 0 20px rgba(139,92,246,0.4)" }}>
+              THE FATES HAVE CHOSEN
+            </div>
+          </motion.div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function SlotsPlayback({ result, step, done }) {
+  const revealed = clamp(step, 0, result.players.length);
+  return (
+    <div className="overflow-hidden rounded-[2rem] shadow-xl" style={{
+      background: "linear-gradient(180deg, #1a0a2e 0%, #0a0018 100%)",
+      border: "3px solid transparent",
+      backgroundClip: "padding-box",
+      position: "relative",
+    }}>
+      {/* Chrome bezel border */}
+      <div className="absolute inset-0 rounded-[2rem] -z-10" style={{
+        background: "linear-gradient(135deg, #888 0%, #ccc 20%, #666 40%, #ddd 60%, #888 80%, #aaa 100%)",
+        margin: "-3px",
+        borderRadius: "calc(2rem + 3px)",
+      }} />
+
+      <ModeHeader result={result} done={done} pendingText="Casino chaos loading..." pendingSummary="Best combo is safe. Worst score gets the chore." />
+
+      <div className="p-6" style={{ background: "radial-gradient(ellipse at top, rgba(236,72,153,0.08) 0%, transparent 60%)" }}>
+        {/* Vegas header */}
+        <div className="text-center mb-6">
+          <motion.div
+            animate={{ scale: [1, 1.02, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-3xl font-bold"
+            style={{
+              fontFamily: "'Monoton', cursive",
+              color: "#ec4899",
+              textShadow: "0 0 20px rgba(236,72,153,0.5), 0 0 40px rgba(236,72,153,0.3)",
+            }}
+          >
+            {done ? (result.isTie ? "TIE" : result.players.find((p) => p.selected)?.selected && result.selectionGoal === "winner" ? "JACKPOT" : "BUST") : "SLOTS"}
+          </motion.div>
+        </div>
+
+        {/* Slot machines per player */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {result.players.map((player, index) => {
+            const isShown = index < revealed;
+            const isSelected = done && player.selected;
+            const isTied = done && player.tied;
+            const isWinner = result.selectionGoal === "winner";
+            return (
+              <motion.div
+                key={player.name}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={isSelected || isTied ? { opacity: 1, scale: [0.96, 1.03, 1] } : { opacity: 1, scale: 1 }}
+                className={`rounded-xl overflow-hidden ${isTied ? "pulse-tie" : ""}`}
+                style={{
+                  background: "linear-gradient(180deg, #2a1a3e, #1a0a2e)",
+                  border: isTied
+                    ? "2px solid #f59e0b"
+                    : isSelected
+                      ? isWinner ? "2px solid #fbbf24" : "2px solid #f87171"
+                      : "2px solid rgba(236,72,153,0.2)",
+                  boxShadow: isTied
+                    ? "0 0 30px rgba(245,158,11,0.3)"
+                    : isSelected
+                      ? isWinner ? "0 0 30px rgba(251,191,36,0.3)" : "0 0 30px rgba(248,113,113,0.3)"
+                      : "0 4px 20px rgba(0,0,0,0.4)",
+                }}
+              >
+                {/* Player name bar */}
+                <div className="px-4 py-2 flex items-center justify-between" style={{
+                  background: "linear-gradient(90deg, rgba(236,72,153,0.15), rgba(139,92,246,0.15))",
+                  borderBottom: "1px solid rgba(236,72,153,0.15)",
+                }}>
+                  <div className="text-sm font-bold" style={{ color: "#e2e8f0" }}>{player.name}</div>
+                  <div className="text-xs font-semibold" style={{ color: isTied ? "#f59e0b" : isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#a78bfa" }}>
+                    {done ? (isTied ? "TIED" : player.score.label) : isShown ? "STOPPED" : "SPINNING"}
+                  </div>
+                </div>
+
+                {/* Reel display */}
+                <div className="p-4 flex justify-center">
+                  <div className="flex gap-1 p-2 rounded-xl" style={{
+                    background: "linear-gradient(180deg, #0a0018, #1a0a2e, #0a0018)",
+                    border: "2px solid",
+                    borderImage: "linear-gradient(180deg, #888, #444, #888) 1",
+                  }}>
+                    {player.reels.map((symbol, reelIndex) => (
+                      <motion.div
+                        key={`${player.name}-${reelIndex}`}
+                        animate={{ y: isShown ? [28, -8, 4, 0] : [0, -12, 12, 0], scale: isShown ? [0.86, 1.08, 1] : 1, opacity: isShown ? [0.45, 1] : [1, 0.45, 1] }}
+                        transition={{ duration: isShown ? 1 : 0.75, delay: isShown ? reelIndex * 0.3 : 0, repeat: isShown ? 0 : Infinity, ease: [0.22, 1, 0.36, 1] }}
+                        className="slots-reel-cell flex h-20 w-20 items-center justify-center text-4xl"
+                        style={{
+                          background: "rgba(0,0,0,0.4)",
+                          borderLeft: reelIndex > 0 ? "1px solid rgba(236,72,153,0.1)" : "none",
+                        }}
+                      >
+                        {isShown ? symbol : <CyclingSlot symbol={symbol} active={isShown} delay={reelIndex * 300} />}
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Credits display */}
+                <div className="px-4 pb-3 flex items-center justify-between">
+                  <div className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(236,72,153,0.5)" }}>Credits</div>
+                  <div className="text-lg font-black" style={{
+                    fontFamily: "'Monoton', cursive",
+                    color: isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#ec4899",
+                    textShadow: isSelected ? `0 0 10px ${isWinner ? "rgba(251,191,36,0.5)" : "rgba(248,113,113,0.5)"}` : "none",
+                    fontSize: "14px",
+                  }}>
+                    {done ? player.subline : isShown ? "LOCKED" : "---"}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HorseRacePlayback({ result, step, done }) {
+  const turnsShown = clamp(step - 1, 0, result.turns.length);
+  const latestPositions = turnsShown > 0 ? result.turns[turnsShown - 1].positions : Object.fromEntries(result.players.map((player) => [player.name, 0]));
+  const latestTurn = turnsShown > 0 ? result.turns[turnsShown - 1] : null;
+
+  const laneColors = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4"];
+  const raceCallTexts = [
+    "AND THEY'RE OFF!",
+    "ROUNDING THE BEND...",
+    "NECK AND NECK!",
+    "AND DOWN THE STRETCH...",
+    "HERE THEY COME!",
+    "WHAT A RACE!",
+    "PHOTO FINISH!",
+  ];
+  const raceCallIndex = done ? 6 : turnsShown > 0 ? Math.min(Math.floor((turnsShown / result.turns.length) * 6), 5) : 0;
+
+  // Sort players by position for standings
+  const sortedPlayers = done
+    ? [...result.players].sort((a, b) => (latestPositions[b.name] ?? 0) - (latestPositions[a.name] ?? 0))
+    : result.players;
+  const placeSuffixes = ["1st", "2nd", "3rd", "4th", "5th", "6th"];
+
+  return (
+    <div className="space-y-4">
+      <div className="overflow-hidden rounded-[2rem] shadow-xl" style={{
+        background: "linear-gradient(180deg, #1a4a2a 0%, #0d3018 60%, #081a0e 100%)",
+        border: "2px solid #2a5a3a",
+      }}>
+        <ModeHeader result={result} done={done} pendingText={latestTurn ? latestTurn.text : "The gates are opening..."} pendingSummary={`Turn ${Math.max(turnsShown, 0)} of ${result.turns.length}`} />
+
+        <div className="p-4 space-y-2">
+          {result.players.map((player, index) => {
+            const progress = latestPositions[player.name] ?? 0;
+            const pct = result.race.max > 0 ? Math.min((progress / result.race.max) * 85, 85) : 0;
+            const finalSelected = done && player.selected;
+            const isTied = done && player.tied;
+            const justMoved = latestTurn?.mover === player.name;
+            const isWinner = result.selectionGoal === "winner";
+            const laneColor = laneColors[index % laneColors.length];
+            return (
+              <div key={player.name} className={`rounded-xl overflow-hidden ${isTied ? "pulse-tie" : ""}`} style={{
+                border: isTied
+                  ? "2px solid #f59e0b"
+                  : finalSelected
+                    ? isWinner ? "2px solid #fbbf24" : "2px solid #f87171"
+                    : "1px solid rgba(255,255,255,0.1)",
+                boxShadow: isTied
+                  ? "0 0 15px rgba(245,158,11,0.3)"
+                  : finalSelected
+                    ? isWinner ? "0 0 15px rgba(251,191,36,0.3)" : "0 0 15px rgba(248,113,113,0.3)"
+                    : "none",
+              }}>
+                {/* Lane label */}
+                <div className="flex items-center gap-2 px-3 py-1.5" style={{ background: "rgba(0,0,0,0.3)" }}>
+                  <div className="h-3 w-3 rounded-full" style={{ background: laneColor }} />
+                  <div className="text-xs font-bold" style={{ color: "#e2e8f0" }}>{player.name}</div>
+                  <div className="flex-1" />
+                  <div className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {done ? player.subline : `${progress} spaces`}
+                  </div>
+                </div>
+
+                {/* Race lane */}
+                <div className="horse-race-lane relative h-12" style={{ background: `linear-gradient(90deg, ${laneColor}15, ${laneColor}08)` }}>
+                  {/* Lane lines */}
+                  <div className="absolute inset-0" style={{
+                    background: "repeating-linear-gradient(90deg, transparent 0px, transparent 58px, rgba(255,255,255,0.05) 58px, rgba(255,255,255,0.05) 60px)",
+                    pointerEvents: "none",
+                  }} />
+
+                  {/* Finish line - checkered pattern on the right */}
+                  <div className="absolute right-0 top-0 bottom-0 w-8" style={{
+                    background: `repeating-conic-gradient(#fff 0% 25%, #111 0% 50%) 0 0 / 8px 8px`,
+                    opacity: 0.6,
+                  }} />
+
+                  {/* Horse */}
+                  <motion.div
+                    className="absolute top-1/2 -translate-y-1/2 text-2xl"
+                    style={{ left: "4px" }}
+                    animate={{ x: `${pct * 3}px`, y: justMoved ? [0, -8, 0, -4, 0] : 0, scale: justMoved ? [1, 1.2, 1] : 1 }}
+                    transition={{ type: "spring", stiffness: 70, damping: 14, mass: 1.25 }}
+                  >
+                    {HORSE_EMOJIS[index % HORSE_EMOJIS.length]}
+                  </motion.div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Race call ticker */}
+        <div className="px-4 py-3" style={{ background: "rgba(0,0,0,0.4)", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+          <motion.div
+            key={raceCallIndex}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-center text-sm font-bold break-words"
+            style={{ fontFamily: "'Press Start 2P', monospace", color: "#fbbf24", fontSize: "10px", letterSpacing: "0.1em", wordBreak: "break-word" }}
+          >
+            {raceCallTexts[raceCallIndex]}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Standings / Scoreboard */}
+      {done ? (
+        <div className="rounded-2xl overflow-hidden shadow-lg" style={{
+          background: "#111",
+          border: "2px solid #333",
+        }}>
+          <div className="px-4 py-2 text-center" style={{ background: "#222", borderBottom: "1px solid #333" }}>
+            <div className="text-xs font-bold" style={{ fontFamily: "'Press Start 2P', monospace", color: "#fbbf24", fontSize: "10px" }}>
+              FINAL STANDINGS
+            </div>
+          </div>
+          <div className="p-3 space-y-1">
+            {sortedPlayers.map((player, index) => {
+              const isSelected = player.selected;
+              const isTied = player.tied;
+              const isWinner = result.selectionGoal === "winner";
+              return (
+                <div key={player.name} className="flex items-center gap-3 px-3 py-2 rounded" style={{
+                  background: isTied ? "rgba(245,158,11,0.15)" : isSelected ? (isWinner ? "rgba(251,191,36,0.15)" : "rgba(248,113,113,0.15)") : "transparent",
+                }}>
+                  <div className="text-xs font-bold w-8" style={{
+                    fontFamily: "'Press Start 2P', monospace",
+                    color: index === 0 ? "#fbbf24" : index === 1 ? "#c0c0c0" : index === 2 ? "#cd7f32" : "#666",
+                    fontSize: "10px",
+                  }}>
+                    {placeSuffixes[index] || `${index + 1}th`}
+                  </div>
+                  <div className="flex-1 text-xs font-bold" style={{
+                    fontFamily: "'Press Start 2P', monospace",
+                    color: isTied ? "#f59e0b" : isSelected ? (isWinner ? "#fbbf24" : "#f87171") : "#aaa",
+                    fontSize: "9px",
+                  }}>
+                    {player.name} {isTied ? "(TIED)" : ""}
+                  </div>
+                  <div className="text-xs" style={{ color: "#666", fontFamily: "'Press Start 2P', monospace", fontSize: "8px" }}>
+                    {latestPositions[player.name] ?? 0} SPC
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl p-4 shadow-lg" style={{ background: "#111", border: "1px solid #333" }}>
+          <div className="mb-3 text-xs font-bold" style={{ fontFamily: "'Press Start 2P', monospace", color: "#fbbf24", fontSize: "10px" }}>RACE LOG</div>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {result.turns.slice(0, turnsShown).map((turn) => (
+              <div key={turn.turn} className="text-xs px-2 py-1 rounded" style={{ background: "rgba(255,255,255,0.03)", color: "#888", fontFamily: "'Press Start 2P', monospace", fontSize: "8px" }}>
+                {turn.text}
+              </div>
+            ))}
+            {!turnsShown ? <div className="text-xs" style={{ color: "#555", fontFamily: "'Press Start 2P', monospace", fontSize: "8px" }}>Waiting for the starting gun...</div> : null}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TournamentPlayback({ result, step, done }) {
+  const progress = getTournamentProgress(result, step);
+  const currentRound = result.rounds[Math.max(progress.roundIndex, 0)];
+  const safeSoFar = result.rounds.slice(0, progress.phase === "summary" ? progress.roundIndex + 1 : progress.roundIndex).map((round) => round.selectedName);
+  const remainingNow = progress.phase === "summary"
+    ? progress.roundIndex < result.rounds.length - 1
+      ? result.rounds[progress.roundIndex + 1].remainingAtStart
+      : [result.finalLoser]
+    : currentRound?.remainingAtStart ?? [];
+
+  if (done) {
+    return (
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+          <div className="bg-gradient-to-r from-slate-950 to-slate-800 px-6 py-6 text-white">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">Tournament complete</div>
+            <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{result.headline}</div>
+            <div className="mt-3 max-w-2xl text-white/90">{result.summary}</div>
+          </div>
+          <div className="grid gap-4 p-6 md:grid-cols-2">
+            <div className="rounded-3xl border border-rose-300 bg-rose-50 p-5 shadow-sm">
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-500">Final loser</div>
+              <div className="mt-2 text-3xl font-black text-slate-950">{result.finalLoser}</div>
+              <div className="mt-2 text-sm text-slate-600">The only player who never won a round.</div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Safe order</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {result.safeNames.map((name, index) => (
+                  <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+                    Round {index + 1}: {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (progress.phase === "summary") {
+    const roundWinner = result.rounds[progress.roundIndex].selectedName;
+    const nextPlayers = progress.roundIndex < result.rounds.length - 1 ? result.rounds[progress.roundIndex + 1].remainingAtStart : [result.finalLoser];
+    return (
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
+          <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-6 text-white">
+            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.rounds[progress.roundIndex].roundLabel} complete</div>
+            <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{roundWinner} is safe</div>
+            <div className="mt-3 max-w-2xl text-white/90">
+              {progress.roundIndex < result.rounds.length - 1 ? `Next round: ${nextPlayers.join(", ")}` : `${result.finalLoser} is the only person left without a win.`}
+            </div>
+          </div>
+          <div className="grid gap-4 p-6 md:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Safe so far</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[...safeSoFar].map((name, index) => (
+                  <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Still in danger</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {nextPlayers.map((name) => (
+                  <span key={name} className="rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Tournament status</div>
+          <div className="mt-2 text-2xl font-black text-slate-950">{currentRound.roundLabel}</div>
+          <div className="mt-2 text-slate-600">Win this round and you're safe. One person will be left at the end.</div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {safeSoFar.length ? safeSoFar.map((name, index) => (
+              <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
+                Safe: {name}
+              </span>
+            )) : <span className="rounded-full bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">No one safe yet</span>}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {remainingNow.map((name) => (
+              <span key={name} className="rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
+                Playing: {name}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Rounds</div>
+          <div className="mt-3 space-y-2">
+            {result.rounds.map((round, index) => {
+              const active = index === progress.roundIndex;
+              const complete = index < progress.roundIndex || progress.phase === "summary";
+              return (
+                <div key={`${round.roundLabel}-${index}`} className={`rounded-2xl border px-4 py-3 ${active ? "border-sky-300 bg-sky-50" : complete ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}>
+                  <div className="text-sm font-semibold text-slate-900">{round.roundLabel}</div>
+                  <div className="text-sm text-slate-500">{complete ? `${round.selectedName} won immunity` : round.remainingAtStart.join(", ")}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <PlaybackStage result={currentRound} step={progress.roundStep} done={progress.roundDone} />
+    </div>
+  );
+}
+
+function RocketPlayback({ result, step, done }) {
+  const [phase, setPhase] = useState('ready');
+  const [countdown, setCountdown] = useState(3);
+  const [elapsed, setElapsed] = useState(0);
+  const [crashed, setCrashed] = useState([]);
+  const [currentMilestone, setCurrentMilestone] = useState(null);
+  const [milestoneKey, setMilestoneKey] = useState(0);
+  const startTimeRef = React.useRef(null);
+  const animFrameRef = React.useRef(null);
+  const crashedRef = React.useRef(new Set());
+  const milestonesHitRef = React.useRef(new Set());
+
+  const TIME_SCALE = 3;
+
+  const MILESTONES = [
+    { distance: 100, label: 'Leaving the atmosphere' },
+    { distance: 400, label: 'Passing the ISS' },
+    { distance: 2000, label: 'Low Earth orbit' },
+    { distance: 20000, label: 'Passing GPS satellites' },
+    { distance: 36000, label: 'Geostationary orbit' },
+    { distance: 384000, label: 'Passing the Moon' },
+    { distance: 800000, label: 'Deep space' },
+    { distance: 1000000, label: 'Uncharted territory' },
+  ];
+
+  function distanceAtTime(t) {
+    return 100 * t + 0.5 * 200 * t * t;
+  }
+
+  function formatDist(d) {
+    if (d >= 1000000) return (d / 1000000).toFixed(1) + 'M km';
+    return Math.round(d).toLocaleString() + ' km';
+  }
+
+  // Original order for display (randomized), sorted for crash detection logic
+  const displayPlayers = result.players;
+  const sortedPlayers = useMemo(() =>
+    [...result.players].sort((a, b) => a.crashTime - b.crashTime),
+  [result.players]);
+
+  const maxCrashTime = sortedPlayers[sortedPlayers.length - 1].crashTime;
+
+  function startLaunch() {
+    setPhase('countdown');
+    setCountdown(3);
+  }
+
+  useEffect(() => {
+    if (phase !== 'countdown') return;
+    if (countdown <= 0) {
+      setPhase('flying');
+      startTimeRef.current = performance.now();
+      return;
+    }
+    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [phase, countdown]);
+
+  useEffect(() => {
+    if (phase !== 'flying') return;
+
+    function tick(now) {
+      const realElapsed = (now - startTimeRef.current) / 1000;
+      const simElapsed = realElapsed * TIME_SCALE;
+      setElapsed(simElapsed);
+      window.__rocketElapsed = simElapsed;
+
+      // Read interactive eject state from window
+      const iEjects = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+      const isRocketInteractive = typeof window !== 'undefined' && window.__rocketInteractive;
+
+      const newCrashes = [];
+      for (const p of sortedPlayers) {
+        if (!crashedRef.current.has(p.name) && !iEjects[p.name] && simElapsed >= p.crashTime) {
+          crashedRef.current.add(p.name);
+          newCrashes.push(p.name);
+        }
+      }
+      if (newCrashes.length > 0) {
+        setCrashed(prev => [...prev, ...newCrashes]);
+      }
+
+      const leadingDist = distanceAtTime(simElapsed);
+      for (const m of MILESTONES) {
+        if (!milestonesHitRef.current.has(m.distance) && leadingDist >= m.distance) {
+          milestonesHitRef.current.add(m.distance);
+          setCurrentMilestone(m.label);
+          setMilestoneKey(k => k + 1);
+          setTimeout(() => setCurrentMilestone(null), 2500);
+        }
+      }
+
+      if (isRocketInteractive) {
+        const doneCount = sortedPlayers.filter(p => crashedRef.current.has(p.name) || iEjects[p.name]).length;
+        if (doneCount >= sortedPlayers.length) {
+          setPhase('complete');
+          return;
+        }
+      } else {
+        if (crashedRef.current.size >= sortedPlayers.length - 1) {
+          setPhase('complete');
+          return;
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(tick);
+    }
+
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+  }, [phase, sortedPlayers]);
+
+  useEffect(() => {
+    if (phase === 'complete') {
+      window.dispatchEvent(new Event('rocket-complete'));
+    }
+  }, [phase]);
+
+  const ROCKET_COLORS = ['#60a5fa', '#f472b6', '#34d399', '#fbbf24', '#a78bfa', '#fb923c', '#22d3ee', '#f87171'];
+  const leadingDistance = distanceAtTime(Math.min(elapsed, maxCrashTime));
+  const isComplete = phase === 'complete' || done;
+
+  return (
+    <div className="space-y-4">
+      <ModeHeader
+        result={result}
+        done={isComplete}
+        pendingText={phase === 'ready' ? 'Ready for launch...' : phase === 'countdown' ? `T-minus ${countdown}...` : 'Rockets are flying!'}
+        pendingSummary="Last rocket flying gets selected."
+      />
+
+      {(() => {
+        const flightProgress = Math.min(elapsed / maxCrashTime, 1);
+        const bgDarkness = Math.min(flightProgress * 1.2, 1);
+        const skyColor = phase === 'flying' || phase === 'complete'
+          ? `rgb(${Math.round(10 - bgDarkness * 8)}, ${Math.round(15 - bgDarkness * 13)}, ${Math.round(40 - bgDarkness * 35)})`
+          : '#0a0f28';
+        const showStars = flightProgress > 0.15;
+        const showDeepStars = flightProgress > 0.4;
+
+        return phase === 'ready' ? (
+        <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(to top, #2a1a0a 0%, #1a2a1a 8%, #0a1428 40%, #0a0f28 70%, #050510 100%)', minHeight: 380 }}>
+          {/* Sky stars */}
+          {[{x:10,y:8},{x:25,y:15},{x:45,y:5},{x:65,y:12},{x:80,y:8},{x:90,y:18}].map((s,i) => (
+            <div key={i} className="absolute rounded-full bg-white" style={{ left:`${s.x}%`, top:`${s.y}%`, width:2, height:2, opacity:0.3 }} />
+          ))}
+          {/* Moon */}
+          <div className="absolute right-[12%] top-[10%] w-8 h-8 rounded-full" style={{ background: 'radial-gradient(circle at 35% 35%, #e5e7eb, #9ca3af, #6b7280)', boxShadow: '0 0 15px rgba(229,231,235,0.2)' }} />
+          {/* Ground layers */}
+          <div className="absolute bottom-0 left-0 right-0 h-20" style={{ background: 'linear-gradient(to top, #3d2b1a 0%, #2d4a2d 40%, #1a3a1a 80%, transparent 100%)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-8" style={{ background: 'linear-gradient(to top, #2a1a0a, #3d2b1a)' }} />
+          {/* Grass tufts */}
+          {[5,12,20,28,38,48,55,62,72,80,88,95].map((x,i) => (
+            <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 18 + (i%3)*2, fontSize: i%2===0 ? 10 : 8, opacity: 0.7 }}>🌿</div>
+          ))}
+          {/* Trees */}
+          {[8,22,42,68,85].map((x,i) => (
+            <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 22, fontSize: i%2===0 ? 18 : 14 }}>🌲</div>
+          ))}
+          {/* Launch pad */}
+          <div className="absolute bottom-[18px] left-[15%] right-[15%] h-[6px] rounded" style={{ background: 'linear-gradient(to right, transparent, #4b5563, #6b7280, #4b5563, transparent)' }} />
+          {/* Rockets on pad */}
+          <div className="absolute bottom-6 left-0 right-0 flex justify-around px-8">
+            {displayPlayers.map((p, i) => (
+              <div key={p.name} className="text-center">
+                <div className="text-2xl sm:text-3xl">🚀</div>
+                <div className="pixel-font text-[7px] mt-1" style={{ color: ROCKET_COLORS[i % ROCKET_COLORS.length] }}>{p.name}</div>
+              </div>
+            ))}
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <button
+              onClick={startLaunch}
+              className="pixel-font inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-4 text-sm text-white shadow-lg shadow-violet-600/30 transition hover:scale-105 active:scale-95"
+              style={{ textShadow: '0 0 10px rgba(139,92,246,0.5)' }}
+            >
+              🚀 LAUNCH
+            </button>
+          </div>
+        </div>
+      ) : phase === 'countdown' ? (
+        <div className="relative overflow-hidden rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(to top, #2a1a0a 0%, #1a2a1a 8%, #0a1428 40%, #0a0f28 70%, #050510 100%)', minHeight: 380 }}>
+          <div className="absolute bottom-0 left-0 right-0 h-20" style={{ background: 'linear-gradient(to top, #3d2b1a 0%, #2d4a2d 40%, #1a3a1a 80%, transparent 100%)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-8" style={{ background: 'linear-gradient(to top, #2a1a0a, #3d2b1a)' }} />
+          {[5,12,20,28,38,48,55,62,72,80,88,95].map((x,i) => (
+            <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 18 + (i%3)*2, fontSize: i%2===0 ? 10 : 8, opacity: 0.7 }}>🌿</div>
+          ))}
+          {[8,22,42,68,85].map((x,i) => (
+            <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 22, fontSize: i%2===0 ? 18 : 14 }}>🌲</div>
+          ))}
+          <div className="absolute bottom-[18px] left-[15%] right-[15%] h-[6px] rounded" style={{ background: 'linear-gradient(to right, transparent, #4b5563, #6b7280, #4b5563, transparent)' }} />
+          <div className="absolute bottom-6 left-0 right-0 flex justify-around px-8">
+            {displayPlayers.map((p, i) => (
+              <div key={p.name} className="text-center">
+                <div className="text-2xl sm:text-3xl" style={{ animation: 'rocket-fly 0.15s ease-in-out infinite alternate' }}>🚀</div>
+                <div className="pixel-font text-[7px] mt-1" style={{ color: ROCKET_COLORS[i % ROCKET_COLORS.length] }}>{p.name}</div>
+              </div>
+            ))}
+          </div>
+          <motion.div
+            key={countdown}
+            initial={{ scale: 3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="pixel-font text-7xl text-violet-300 relative z-10"
+            style={{ textShadow: '0 0 40px rgba(139,92,246,0.8), 0 0 80px rgba(139,92,246,0.4)' }}
+          >
+            {countdown}
+          </motion.div>
+        </div>
+      ) : (
+        <>
+          <div className="relative overflow-hidden rounded-2xl" style={{ background: `linear-gradient(to top, ${flightProgress < 0.3 ? '#1a2a1a' : '#050508'} 0%, ${skyColor} 30%, ${flightProgress > 0.5 ? '#020205' : '#0a0f28'} 100%)`, minHeight: 400, transition: 'background 2s ease' }}>
+            {/* Stars — fade in as atmosphere thins */}
+            {showStars ? (
+              <div className="absolute inset-0 pointer-events-none" style={{ opacity: Math.min((flightProgress - 0.15) * 2, 1), transition: 'opacity 1s' }}>
+                {[{x:5,y:10,s:2},{x:15,y:25,s:1},{x:25,y:8,s:2},{x:35,y:35,s:1},{x:45,y:15,s:2},{x:55,y:40,s:1},{x:65,y:5,s:2},{x:75,y:30,s:1},{x:85,y:12,s:2},{x:92,y:38,s:1},{x:10,y:45,s:1},{x:50,y:50,s:2},{x:70,y:48,s:1},{x:30,y:55,s:2},{x:80,y:55,s:1},{x:3,y:30,s:1},{x:40,y:22,s:2},{x:58,y:8,s:1},{x:73,y:42,s:2},{x:95,y:5,s:1}].map((s,i) => (
+                  <div key={i} className="absolute rounded-full bg-white" style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.s, height: s.s, animation: `twinkle${(i%3)+1} ${3+i%4}s ease-in-out infinite` }} />
+                ))}
+              </div>
+            ) : null}
+            {/* Colored deep space stars + nebula glow */}
+            {showDeepStars ? (
+              <div className="absolute inset-0 pointer-events-none" style={{ opacity: Math.min((flightProgress - 0.4) * 3, 0.8) }}>
+                {[{x:8,y:5,c:'#c4b5fd'},{x:22,y:18,c:'#f9a8d4'},{x:42,y:3,c:'#93c5fd'},{x:62,y:22,c:'#c4b5fd'},{x:78,y:8,c:'#fcd34d'},{x:88,y:28,c:'#f9a8d4'},{x:18,y:42,c:'#93c5fd'},{x:52,y:32,c:'#fcd34d'},{x:33,y:12,c:'#86efac'},{x:72,y:38,c:'#fda4af'},{x:48,y:48,c:'#c4b5fd'},{x:15,y:55,c:'#93c5fd'}].map((s,i) => (
+                  <div key={i} className="absolute rounded-full" style={{ left: `${s.x}%`, top: `${s.y}%`, width: 3, height: 3, background: s.c, boxShadow: `0 0 6px ${s.c}`, animation: `twinkle${(i%3)+1} ${2+i%3}s ease-in-out infinite` }} />
+                ))}
+              </div>
+            ) : null}
+
+            {/* Ground fading away */}
+            {flightProgress < 0.3 ? (
+              <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ opacity: 1 - flightProgress * 3.5 }}>
+                <div className="absolute bottom-0 left-0 right-0 h-20" style={{ background: 'linear-gradient(to top, #3d2b1a 0%, #2d4a2d 40%, #1a3a1a 80%, transparent 100%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 h-8" style={{ background: 'linear-gradient(to top, #2a1a0a, #3d2b1a)' }} />
+                {[5,12,20,28,38,48,55,62,72,80,88,95].map((x,i) => (
+                  <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 18 + (i%3)*2, fontSize: i%2===0 ? 10 : 8, opacity: 0.7 }}>🌿</div>
+                ))}
+                {[8,22,42,68,85].map((x,i) => (
+                  <div key={i} className="absolute" style={{ left:`${x}%`, bottom: 22, fontSize: i%2===0 ? 18 : 14 }}>🌲</div>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Atmosphere blue glow fading */}
+            {flightProgress > 0.02 && flightProgress < 0.2 ? (
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(100,180,255,0.08), transparent 50%)', opacity: 1 - (flightProgress - 0.02) * 6 }} />
+            ) : null}
+
+            {/* Earth visible below as you leave */}
+            {flightProgress > 0.12 && flightProgress < 0.5 ? (
+              <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 pointer-events-none" style={{ opacity: Math.min((flightProgress - 0.12) * 4, 1) * (1 - Math.max(0, (flightProgress - 0.35) * 6.6)), width: 300, height: 80 }}>
+                <div className="w-full h-full rounded-[50%]" style={{ background: 'radial-gradient(ellipse at 50% 0%, #1e3a5f 0%, #1a4a2e 30%, #0d2818 60%, transparent 100%)', boxShadow: '0 0 30px rgba(30,58,95,0.3)' }} />
+              </div>
+            ) : null}
+
+            {/* Moon passing by */}
+            {flightProgress > 0.4 && flightProgress < 0.7 ? (
+              <motion.div
+                className="absolute pointer-events-none"
+                style={{ right: '8%', top: '15%', opacity: Math.min((flightProgress - 0.4) * 5, 1) * (1 - Math.max(0, (flightProgress - 0.6) * 10)) }}
+              >
+                <div className="w-12 h-12 rounded-full" style={{ background: 'radial-gradient(circle at 35% 35%, #e5e7eb, #9ca3af, #6b7280)', boxShadow: '0 0 20px rgba(229,231,235,0.3)' }} />
+              </motion.div>
+            ) : null}
+
+            {/* Asteroids drifting by in deep space */}
+            {flightProgress > 0.5 ? (
+              <div className="absolute inset-0 pointer-events-none" style={{ opacity: Math.min((flightProgress - 0.5) * 3, 0.6) }}>
+                {[{x:15,y:20,s:8},{x:75,y:35,s:6},{x:45,y:55,s:10},{x:88,y:15,s:7}].map((a,i) => (
+                  <div key={i} className="absolute" style={{ left:`${a.x}%`, top:`${a.y}%`, fontSize: a.s }}>☄️</div>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Distant planet in deep space */}
+            {flightProgress > 0.7 ? (
+              <div className="absolute pointer-events-none" style={{ left: '5%', top: '20%', opacity: Math.min((flightProgress - 0.7) * 4, 0.7) }}>
+                <div className="w-16 h-16 rounded-full" style={{ background: 'radial-gradient(circle at 40% 30%, #c084fc, #7c3aed, #4c1d95)', boxShadow: '0 0 25px rgba(139,92,246,0.4)' }} />
+                <div className="absolute top-1/2 left-[-4px] right-[-4px] h-[3px] rounded-full -translate-y-1/2" style={{ background: 'linear-gradient(to right, transparent, rgba(196,181,253,0.4), transparent)', transform: 'rotate(-15deg)' }} />
+              </div>
+            ) : null}
+
+            {/* Saturn-like ringed planet even deeper */}
+            {flightProgress > 0.85 ? (
+              <div className="absolute pointer-events-none" style={{ right: '10%', top: '25%', opacity: Math.min((flightProgress - 0.85) * 5, 0.5) }}>
+                <div className="w-10 h-10 rounded-full" style={{ background: 'radial-gradient(circle at 35% 35%, #fcd34d, #d97706, #92400e)', boxShadow: '0 0 15px rgba(252,211,77,0.3)' }} />
+                <div className="absolute top-1/2 left-[-10px] right-[-10px] h-[2px] rounded-full -translate-y-1/2" style={{ background: 'linear-gradient(to right, transparent 5%, rgba(252,211,77,0.5) 30%, rgba(252,211,77,0.3) 70%, transparent 95%)', transform: 'rotate(-10deg)' }} />
+              </div>
+            ) : null}
+
+            <div className="absolute top-3 left-0 right-0 text-center z-10">
+              <div className="pixel-font text-[7px] text-slate-500 uppercase tracking-widest mb-1">Altitude</div>
+              <div className="font-mono text-2xl sm:text-3xl font-black text-white" style={{ textShadow: '0 0 20px rgba(139,92,246,0.4)' }}>
+                {formatDist(leadingDistance)}
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {currentMilestone ? (
+                <motion.div
+                  key={milestoneKey}
+                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                  transition={{ type: 'spring', stiffness: 100, damping: 15 }}
+                  className="absolute top-16 left-0 right-0 text-center z-10"
+                >
+                  <span className="inline-block rounded-xl bg-violet-500/30 border border-violet-400/40 px-5 py-2.5 pixel-font text-[9px] sm:text-[11px] text-violet-200 backdrop-blur-sm" style={{ textShadow: '0 0 12px rgba(139,92,246,0.6)', boxShadow: '0 0 20px rgba(139,92,246,0.2)' }}>
+                    {currentMilestone}
+                  </span>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <div className="absolute bottom-4 left-0 right-0 flex justify-around items-end px-4 sm:px-8">
+              {(() => {
+                const iEjectsDisplay = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+                return displayPlayers.map((player, idx) => {
+                const hasCrashed = crashed.includes(player.name);
+                const hasEjected = !!iEjectsDisplay[player.name];
+                const isSurvivor = isComplete && player.name === result.selectedName;
+                const ejectData = iEjectsDisplay[player.name];
+                const rocketProgress = hasCrashed
+                  ? (player.crashTime / maxCrashTime)
+                  : hasEjected
+                  ? (ejectData.time / maxCrashTime)
+                  : Math.min(elapsed / maxCrashTime, 1);
+                const rocketY = rocketProgress * 600;
+                const color = ROCKET_COLORS[idx % ROCKET_COLORS.length];
+
+                return (
+                  <div key={player.name} className="relative text-center" style={{ width: `${Math.max(60, 100 / displayPlayers.length)}px` }}>
+                    {hasCrashed ? (
+                      <motion.div
+                        initial={{ scale: 1, opacity: 1 }}
+                        animate={{ scale: [1, 1.8, 2.5, 0], opacity: [1, 1, 0.8, 0] }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        className="absolute left-1/2 -translate-x-1/2"
+                        style={{ bottom: `${Math.min(rocketY, 380)}px` }}
+                      >
+                        <div className="text-2xl">💥</div>
+                      </motion.div>
+                    ) : hasEjected ? (
+                      <motion.div
+                        initial={{ scale: 1.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        className="absolute left-1/2 -translate-x-1/2"
+                        style={{ bottom: `${Math.min(rocketY, 380)}px` }}
+                      >
+                        <div className="text-2xl" style={{ filter: `drop-shadow(0 0 8px ${color})` }}>🪂</div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        className="absolute left-1/2 -translate-x-1/2"
+                        animate={{ y: -rocketY }}
+                        transition={{ duration: 0.3, ease: 'linear' }}
+                        style={{ bottom: 0 }}
+                      >
+                        <div className="text-2xl sm:text-3xl" style={{ filter: isSurvivor ? `drop-shadow(0 0 12px ${color})` : 'none' }}>🚀</div>
+                        {phase === 'flying' && !hasCrashed ? (
+                          <motion.div
+                            className="absolute left-1/2 -translate-x-1/2 top-full"
+                            animate={{ opacity: [0.6, 1, 0.6], scaleY: [0.8, 1.2, 0.8] }}
+                            transition={{ duration: 0.2, repeat: Infinity }}
+                          >
+                            <div className="text-xs" style={{ filter: `drop-shadow(0 0 4px ${color})` }}>🔥</div>
+                          </motion.div>
+                        ) : null}
+                      </motion.div>
+                    )}
+                    <div className="pixel-font text-[6px] sm:text-[7px]" style={{ color: (hasCrashed || hasEjected) ? '#4b5563' : color }}>{player.name}</div>
+                    {hasCrashed ? <div className="font-mono text-[8px] text-slate-600">💥 {player.distanceFormatted}</div> : null}
+                    {hasEjected ? <div className="font-mono text-[8px] text-green-400">🪂 {formatDist(ejectData.distance)}</div> : null}
+                    {isSurvivor && !hasEjected ? <div className="font-mono text-[8px] text-violet-300">🏆 {player.distanceFormatted}</div> : null}
+                  </div>
+                );
+              });
+              })()}
+            </div>
+          </div>
+
+          {(() => {
+            const iEjectsLog = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+            const ejectedNames = Object.keys(iEjectsLog);
+            return (crashed.length > 0 || ejectedNames.length > 0) ? (
+            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+              <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Flight Log</div>
+              <div className="flex flex-wrap gap-2">
+                {ejectedNames.map((name) => (
+                  <div key={name} className="font-mono text-[10px] text-green-400/80 border border-green-500/20 bg-green-500/[0.05] px-2 py-1 rounded">
+                    🪂 {name} — {formatDist(iEjectsLog[name].distance)}
+                  </div>
+                ))}
+                {crashed.map((name) => {
+                  const p = sortedPlayers.find(pl => pl.name === name);
+                  return (
+                    <div key={name} className="font-mono text-[10px] text-slate-500 border border-white/5 bg-white/[0.02] px-2 py-1 rounded">
+                      💥 {name} — {p?.distanceFormatted || '???'}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null;
+          })()}
+        </>
+      );
+      })()}
+
+      {isComplete ? (
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[...result.players].sort((a, b) => a.rank - b.rank).map(player => (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              selectionGoal={result.selectionGoal}
+              title={player.headline}
+              subtitle={player.subline}
+              selected={player.selected}
+            >
+              <div className="flex flex-wrap gap-2">
+                {player.chips.map(chip => (
+                  <span key={chip} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">{chip}</span>
+                ))}
+                <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">Rank #{player.rank}</span>
+              </div>
+            </PlayerResultCard>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SpaceInvadersPlayback({ result, step, done }) {
+  const eliminationOrder = result.eliminationOrder || [];
+  const totalAliens = result.players.length;
+  const destroyedCount = Math.min(step, eliminationOrder.length);
+  const destroyedNames = new Set(eliminationOrder.slice(0, destroyedCount));
+  const currentTarget = step > 0 && step <= eliminationOrder.length ? eliminationOrder[step - 1] : null;
+  const [showLaser, setShowLaser] = useState(false);
+  const [showExplosion, setShowExplosion] = useState(null);
+  const [flashDestroyed, setFlashDestroyed] = useState(null);
+
+  const prevStepRef = React.useRef(0);
+
+  useEffect(() => {
+    if (step > prevStepRef.current && step <= eliminationOrder.length) {
+      const target = eliminationOrder[step - 1];
+      setShowLaser(true);
+      const t1 = setTimeout(() => {
+        setShowLaser(false);
+        setShowExplosion(target);
+        setFlashDestroyed(target);
+      }, 400);
+      const t2 = setTimeout(() => {
+        setShowExplosion(null);
+      }, 1000);
+      const t3 = setTimeout(() => {
+        setFlashDestroyed(null);
+      }, 1500);
+      prevStepRef.current = step;
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }
+    prevStepRef.current = step;
+  }, [step, eliminationOrder]);
+
+  const cols = totalAliens <= 4 ? 2 : totalAliens <= 6 ? 3 : 4;
+  const isComplete = done || destroyedCount >= eliminationOrder.length;
+  const survivorName = result.selectedName;
+
+  return (
+    <div className="space-y-4">
+      <ModeHeader
+        result={result}
+        done={isComplete}
+        pendingText={destroyedCount === 0 ? "Aliens are forming up..." : `Shot ${destroyedCount} of ${eliminationOrder.length}`}
+        pendingSummary="Laser fires. Last alien standing gets selected."
+      />
+
+      <div className="relative overflow-hidden rounded-2xl" style={{ background: '#000', minHeight: 380 }}>
+        {/* Score display */}
+        <div className="absolute top-3 left-4 z-10">
+          <div className="pixel-font text-[7px] text-green-500/60 uppercase tracking-widest">Score</div>
+          <div className="pixel-font text-sm text-green-400" style={{ textShadow: '0 0 8px rgba(34,197,94,0.5)' }}>{destroyedCount * 100}</div>
+        </div>
+        <div className="absolute top-3 right-4 z-10">
+          <div className="pixel-font text-[7px] text-green-500/60 uppercase tracking-widest">Hi-Score</div>
+          <div className="pixel-font text-sm text-green-400/50">9999</div>
+        </div>
+
+        {/* Alien formation */}
+        <div className="absolute top-16 left-0 right-0 flex justify-center z-10">
+          <div className="grid gap-x-6 gap-y-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+            {result.players.map((player) => {
+              const isDestroyed = destroyedNames.has(player.name);
+              const isExploding = showExplosion === player.name;
+              const isFlashing = flashDestroyed === player.name;
+              const isSurvivor = isComplete && player.name === survivorName;
+
+              return (
+                <div key={player.name} className="text-center" style={{ minWidth: 70 }}>
+                  {isExploding ? (
+                    <motion.div
+                      initial={{ scale: 1, opacity: 1 }}
+                      animate={{ scale: [1, 1.8, 2.2, 0], opacity: [1, 1, 0.6, 0] }}
+                      transition={{ duration: 0.6 }}
+                      className="text-2xl sm:text-3xl"
+                    >
+                      💥
+                    </motion.div>
+                  ) : isDestroyed ? (
+                    <div className="text-2xl sm:text-3xl" style={{ opacity: 0.25, color: '#4b5563' }}>✕</div>
+                  ) : (
+                    <div
+                      className="text-2xl sm:text-3xl"
+                      style={{
+                        animation: 'invader-drift 2s ease-in-out infinite',
+                        filter: isSurvivor ? 'drop-shadow(0 0 12px #22c55e)' : 'none',
+                      }}
+                    >
+                      👾
+                    </div>
+                  )}
+                  <div
+                    className="pixel-font text-[7px] mt-1"
+                    style={{
+                      color: isDestroyed ? '#4b5563' : isSurvivor ? '#22c55e' : '#4ade80',
+                      textDecoration: isDestroyed ? 'line-through' : 'none',
+                      textShadow: isSurvivor ? '0 0 8px rgba(34,197,94,0.6)' : 'none',
+                    }}
+                  >
+                    {player.name}
+                  </div>
+                  {isFlashing ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="pixel-font text-[6px] text-red-400 mt-0.5"
+                    >
+                      DESTROYED
+                    </motion.div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Laser line */}
+        {showLaser ? (
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[2px] z-20" style={{
+            height: '60%',
+            background: 'linear-gradient(to top, #22c55e, #4ade80, transparent)',
+            boxShadow: '0 0 8px #22c55e, 0 0 16px #22c55e',
+            animation: 'laser-fire 0.4s ease-out forwards',
+          }} />
+        ) : null}
+
+        {/* Turret */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center z-10">
+          <div style={{ width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '16px solid #22c55e', margin: '0 auto', filter: 'drop-shadow(0 0 6px rgba(34,197,94,0.5))' }} />
+        </div>
+
+        {/* Ground line */}
+        <div className="absolute bottom-4 left-[10%] right-[10%] h-[2px] z-10" style={{ background: 'linear-gradient(to right, transparent, #22c55e, transparent)', boxShadow: '0 0 6px rgba(34,197,94,0.3)' }} />
+
+        {/* Last alien standing text */}
+        {isComplete ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute bottom-20 left-0 right-0 text-center z-20"
+          >
+            <span className="pixel-font text-[10px] sm:text-xs text-green-400 px-4 py-2 rounded-lg" style={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(34,197,94,0.4)', textShadow: '0 0 10px rgba(34,197,94,0.6)' }}>
+              LAST ALIEN STANDING
+            </span>
+          </motion.div>
+        ) : null}
+      </div>
+
+      {isComplete ? (
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[...result.players].sort((a, b) => a.rank - b.rank).map(player => (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              selectionGoal={result.selectionGoal}
+              title={player.headline}
+              subtitle={player.subline}
+              selected={player.selected}
+            >
+              <div className="flex flex-wrap gap-2">
+                {player.chips.map(chip => (
+                  <span key={chip} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">{chip}</span>
+                ))}
+                <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">Rank #{player.rank}</span>
+              </div>
+            </PlayerResultCard>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function BombPlayback({ result, step, done, interactiveBombState }) {
+  const [phase, setPhase] = useState('ready');
+  const [tickIndex, setTickIndex] = useState(0);
+  const [exploded, setExploded] = useState(false);
+  const [shaking, setShaking] = useState(false);
+  const startTimeRef = React.useRef(null);
+  const animFrameRef = React.useRef(null);
+  const tickIndexRef = React.useRef(0);
+
+  const isInteractive = !!interactiveBombState;
+  const totalTicks = result.totalTicks;
+  const sequence = result.sequence;
+  const playerNames = result.players.map(p => p.name);
+
+  function getTickInterval(idx) {
+    const remaining = totalTicks - idx;
+    if (remaining <= 5) return 250;
+    if (remaining <= 10) return 400;
+    return 600;
+  }
+
+  function startFuse() {
+    setPhase('ticking');
+    startTimeRef.current = performance.now();
+    tickIndexRef.current = 0;
+    setTickIndex(0);
+  }
+
+  // Autonomous animation (non-interactive only)
+  useEffect(() => {
+    if (isInteractive) return;
+    if (phase !== 'ticking') return;
+
+    let accumulatedTime = 0;
+    for (let i = 0; i < tickIndexRef.current; i++) {
+      accumulatedTime += getTickInterval(i);
+    }
+
+    function tick(now) {
+      const elapsed = now - startTimeRef.current;
+      let currentTick = 0;
+      let timeSum = 0;
+      for (let i = 0; i < totalTicks; i++) {
+        timeSum += getTickInterval(i);
+        if (elapsed >= timeSum) {
+          currentTick = i + 1;
+        } else {
+          break;
+        }
+      }
+
+      if (currentTick > tickIndexRef.current) {
+        tickIndexRef.current = currentTick;
+        setTickIndex(currentTick);
+      }
+
+      if (currentTick >= totalTicks) {
+        setExploded(true);
+        setShaking(true);
+        setTimeout(() => setShaking(false), 500);
+        setPhase('complete');
+        return;
+      }
+
+      animFrameRef.current = requestAnimationFrame(tick);
+    }
+
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+  }, [phase, totalTicks, isInteractive]);
+
+  useEffect(() => {
+    if (phase === 'complete') {
+      window.dispatchEvent(new Event('rocket-complete'));
+    }
+  }, [phase]);
+
+  // Interactive mode: derive display state from interactiveBombState
+  const iTickIndex = isInteractive ? (interactiveBombState.tickNumber || 0) : tickIndex;
+  const iExploded = isInteractive ? (interactiveBombState.phase === 'detonated') : exploded;
+  const iHolder = isInteractive
+    ? interactiveBombState.holder
+    : (tickIndex < totalTicks ? sequence[tickIndex] : sequence[totalTicks - 1]);
+  const iPhase = isInteractive
+    ? (interactiveBombState.phase === 'detonated' ? 'complete' : 'ticking')
+    : phase;
+
+  const currentHolder = iHolder;
+  const fusePercent = totalTicks > 0 ? Math.max(0, 1 - iTickIndex / totalTicks) : 1;
+  const isComplete = iPhase === 'complete' || done;
+
+  // Trigger shaking on interactive detonation
+  useEffect(() => {
+    if (isInteractive && interactiveBombState.phase === 'detonated' && !shaking) {
+      setShaking(true);
+      setTimeout(() => setShaking(false), 500);
+    }
+  }, [isInteractive, interactiveBombState?.phase]);
+
+  const angleStep = (2 * Math.PI) / playerNames.length;
+  const radius = playerNames.length <= 4 ? 100 : playerNames.length <= 6 ? 120 : 140;
+
+  // Determine the selected name for explosion display
+  const explodedName = isInteractive
+    ? (interactiveBombState.phase === 'detonated' ? interactiveBombState.holder : null)
+    : result.selectedName;
+
+  return (
+    <div className="space-y-4">
+      <ModeHeader
+        result={result}
+        done={isComplete}
+        pendingText={iPhase === 'ready' ? 'Bomb is armed...' : iExploded ? 'KABOOM!' : `Tick ${iTickIndex} of ${totalTicks}`}
+        pendingSummary="Don't be holding the bomb when it blows."
+      />
+
+      <div
+        className="relative overflow-hidden rounded-2xl"
+        style={{
+          background: 'repeating-linear-gradient(-45deg, #1a1a2e, #1a1a2e 20px, #1e1e34 20px, #1e1e34 22px)',
+          minHeight: 380,
+          animation: shaking ? 'screen-shake 0.5s ease-out' : 'none',
+        }}
+      >
+        {/* Fuse bar */}
+        <div className="absolute top-3 left-4 right-4 z-10">
+          <div className="pixel-font text-[7px] text-red-400/60 uppercase tracking-widest mb-1">Fuse</div>
+          <div className="h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{
+                background: fusePercent > 0.3 ? 'linear-gradient(90deg, #f97316, #ef4444)' : 'linear-gradient(90deg, #ef4444, #dc2626)',
+                boxShadow: fusePercent <= 0.3 ? '0 0 10px rgba(239,68,68,0.6)' : 'none',
+              }}
+              animate={{ width: `${fusePercent * 100}%` }}
+              transition={{ duration: 0.2 }}
+            />
+          </div>
+        </div>
+
+        {/* Player circle */}
+        <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: 30 }}>
+          <div className="relative" style={{ width: radius * 2 + 80, height: radius * 2 + 80 }}>
+            {playerNames.map((name, idx) => {
+              const angle = angleStep * idx - Math.PI / 2;
+              const x = Math.cos(angle) * radius + radius + 40;
+              const y = Math.sin(angle) * radius + radius + 40;
+              const isHolding = !iExploded && currentHolder === name;
+              const isExplodedOn = iExploded && name === explodedName;
+              const isSafe = iExploded && name !== explodedName;
+
+              return (
+                <motion.div
+                  key={name}
+                  className="absolute text-center"
+                  style={{
+                    left: x - 35,
+                    top: y - 22,
+                    width: 70,
+                  }}
+                  animate={{
+                    scale: isHolding ? [1, 1.05, 1] : 1,
+                  }}
+                  transition={{ duration: 0.3, repeat: isHolding ? Infinity : 0 }}
+                >
+                  <div
+                    className="rounded-xl px-2 py-2 text-center"
+                    style={{
+                      background: isExplodedOn ? 'rgba(239,68,68,0.3)' : isSafe ? 'rgba(34,197,94,0.15)' : isHolding ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)',
+                      border: `1px solid ${isExplodedOn ? 'rgba(239,68,68,0.6)' : isSafe ? 'rgba(34,197,94,0.4)' : isHolding ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                      boxShadow: isHolding ? '0 0 12px rgba(239,68,68,0.3)' : isExplodedOn ? '0 0 16px rgba(239,68,68,0.4)' : 'none',
+                    }}
+                  >
+                    {isHolding && !iExploded ? (
+                      <div className="text-lg" style={{ animation: 'bomb-pulse 0.5s ease-in-out infinite' }}>💣</div>
+                    ) : isExplodedOn ? (
+                      <motion.div
+                        initial={{ scale: 1 }}
+                        animate={{ scale: [1, 2, 1.5] }}
+                        transition={{ duration: 0.5 }}
+                        className="text-lg"
+                      >
+                        💥
+                      </motion.div>
+                    ) : null}
+                    <div className="pixel-font text-[7px]" style={{
+                      color: isExplodedOn ? '#fca5a5' : isSafe ? '#86efac' : isHolding ? '#fca5a5' : '#94a3b8',
+                    }}>
+                      {name}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+
+            {/* Center bomb (when not being held) */}
+            {iPhase === 'ready' ? (
+              <div className="absolute text-3xl" style={{ left: radius + 40 - 16, top: radius + 40 - 16 }}>
+                💣
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Start button (non-interactive only) */}
+        {!isInteractive && iPhase === 'ready' ? (
+          <div className="absolute inset-0 flex items-center justify-center z-20">
+            <button
+              onClick={startFuse}
+              className="pixel-font inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-red-600 to-orange-500 px-8 py-4 text-sm text-white shadow-lg shadow-red-600/30 transition hover:scale-105 active:scale-95"
+              style={{ textShadow: '0 0 10px rgba(239,68,68,0.5)' }}
+            >
+              💣 LIGHT THE FUSE
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {isComplete ? (
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[...result.players].sort((a, b) => a.rank - b.rank).map(player => (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              selectionGoal={result.selectionGoal}
+              title={player.headline}
+              subtitle={player.subline}
+              selected={player.selected}
+            >
+              <div className="flex flex-wrap gap-2">
+                {player.chips.map(chip => (
+                  <span key={chip} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">{chip}</span>
+                ))}
+              </div>
+            </PlayerResultCard>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function PlinkoPlayback({ result, step, done }) {
+  const SLOT_VALUES = result.slotValues || [1, 2, 3, 5, 8, 13, 21, 13, 8, 5, 3, 2, 1];
+  const ROWS = result.rows || 12;
+  const totalPlayers = result.players.length;
+  const droppedCount = Math.min(step, totalPlayers);
+  const droppedPlayers = result.players.slice(0, droppedCount);
+
+  const [animatingBall, setAnimatingBall] = useState(null);
+  const [animRow, setAnimRow] = useState(-1);
+  const [landedBalls, setLandedBalls] = useState(new Set());
+  const prevStepRef = React.useRef(0);
+
+  useEffect(() => {
+    if (step > prevStepRef.current && step <= totalPlayers) {
+      const player = result.players[step - 1];
+      setAnimatingBall(player);
+      setAnimRow(-1);
+      let row = 0;
+      const interval = setInterval(() => {
+        setAnimRow(row);
+        row++;
+        if (row > ROWS) {
+          clearInterval(interval);
+          setLandedBalls(prev => new Set([...prev, player.name]));
+          setTimeout(() => setAnimatingBall(null), 500);
+        }
+      }, 280);
+      prevStepRef.current = step;
+      return () => clearInterval(interval);
+    }
+    prevStepRef.current = step;
+  }, [step, totalPlayers, ROWS, result.players]);
+
+  const BALL_COLORS = ['#ec4899', '#fbbf24', '#60a5fa', '#34d399', '#a78bfa', '#fb923c', '#22d3ee', '#f87171'];
+  const isComplete = done || droppedCount >= totalPlayers;
+
+  function getBallX(path, row) {
+    let col = 0;
+    for (let r = 0; r <= Math.min(row, path.length - 1); r++) {
+      col += path[r];
+    }
+    return col;
+  }
+
+  const boardWidth = 320;
+  const boardHeight = 340;
+  const pegSpacingY = boardHeight / (ROWS + 2);
+  const slotWidth = boardWidth / 13;
+
+  return (
+    <div className="space-y-4">
+      <ModeHeader
+        result={result}
+        done={isComplete}
+        pendingText={droppedCount === 0 ? "Ready to drop..." : `Ball ${droppedCount} of ${totalPlayers}`}
+        pendingSummary="Each ball bounces down through the pegs."
+      />
+
+      <div className="relative overflow-hidden rounded-2xl flex justify-center" style={{ background: 'linear-gradient(180deg, #1a0a18, #0f0610)', minHeight: 420, padding: '20px 0' }}>
+        <svg width={boardWidth} height={boardHeight + 60} viewBox={`0 0 ${boardWidth} ${boardHeight + 60}`} style={{ overflow: 'visible' }}>
+          {/* Pegs */}
+          {Array.from({ length: ROWS }, (_, row) => {
+            const pegsInRow = row + 2;
+            const rowWidth = (pegsInRow - 1) * slotWidth;
+            const startX = (boardWidth - rowWidth) / 2;
+            return Array.from({ length: pegsInRow }, (_, pegIdx) => (
+              <circle
+                key={`peg-${row}-${pegIdx}`}
+                cx={startX + pegIdx * slotWidth}
+                cy={(row + 1) * pegSpacingY}
+                r={3}
+                fill={pegIdx % 2 === 0 ? '#ec4899' : '#22d3ee'}
+                opacity={0.5}
+              >
+                <animate attributeName="opacity" values="0.3;0.6;0.3" dur={`${2 + pegIdx * 0.3}s`} repeatCount="indefinite" />
+              </circle>
+            ));
+          })}
+
+          {/* Slot labels at bottom */}
+          {SLOT_VALUES.map((val, i) => {
+            const x = (i + 0.5) * slotWidth;
+            const isCenter = i >= 5 && i <= 7;
+            return (
+              <g key={`slot-${i}`}>
+                <rect x={x - slotWidth / 2 + 1} y={boardHeight - 5} width={slotWidth - 2} height={30} rx={4}
+                  fill={isCenter ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)'}
+                  stroke={isCenter ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.08)'} strokeWidth={1} />
+                <text x={x} y={boardHeight + 15} textAnchor="middle" fill={isCenter ? '#fbbf24' : '#94a3b8'}
+                  fontSize={10} fontFamily="'Press Start 2P', monospace">{val}</text>
+              </g>
+            );
+          })}
+
+          {/* Dropped balls (landed) */}
+          {droppedPlayers.filter(p => p !== animatingBall).map((player, idx) => {
+            const x = (player.finalSlot + 0.5) * slotWidth;
+            return (
+              <circle key={`landed-${idx}`} cx={x} cy={boardHeight + 8} r={6}
+                fill={BALL_COLORS[idx % BALL_COLORS.length]} opacity={0.7}>
+                <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite" />
+              </circle>
+            );
+          })}
+
+          {/* Animating ball */}
+          {animatingBall && animRow >= 0 ? (() => {
+            const playerIdx = result.players.indexOf(animatingBall);
+            const col = getBallX(animatingBall.path, Math.min(animRow, ROWS - 1));
+            const totalCols = Math.min(animRow + 2, ROWS + 1);
+            const rowWidthAtRow = (totalCols - 1) * slotWidth;
+            const startXAtRow = (boardWidth - rowWidthAtRow) / 2;
+            let cx, cy;
+            if (animRow >= ROWS) {
+              cx = (animatingBall.finalSlot + 0.5) * slotWidth;
+              cy = boardHeight + 8;
+            } else {
+              const pegsInRow = animRow + 2;
+              const rw = (pegsInRow - 1) * slotWidth;
+              const sx = (boardWidth - rw) / 2;
+              cx = sx + col * slotWidth;
+              cy = (animRow + 1) * pegSpacingY;
+            }
+            return (
+              <circle cx={cx} cy={cy} r={8}
+                fill={BALL_COLORS[playerIdx % BALL_COLORS.length]}
+                style={{ filter: `drop-shadow(0 0 8px ${BALL_COLORS[playerIdx % BALL_COLORS.length]})`, transition: 'cx 0.2s ease-out, cy 0.2s ease-out' }} />
+            );
+          })() : null}
+        </svg>
+
+        {/* Player legend */}
+        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap justify-center gap-2">
+          {result.players.map((p, i) => (
+            <div key={p.name} className="pixel-font text-[7px] px-2 py-1 rounded" style={{
+              background: i < droppedCount ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+              color: BALL_COLORS[i % BALL_COLORS.length],
+              opacity: i < droppedCount ? 1 : 0.4,
+            }}>
+              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: BALL_COLORS[i % BALL_COLORS.length], marginRight: 4, verticalAlign: 'middle' }} />
+              {p.name} {landedBalls.has(p.name) ? `(${p.score})` : ''}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {isComplete ? (
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[...result.players].sort((a, b) => a.rank - b.rank).map(player => (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              selectionGoal={result.selectionGoal}
+              title={player.headline}
+              subtitle={player.subline}
+              selected={player.selected}
+              tied={player.tied}
+            >
+              <div className="flex flex-wrap gap-2">
+                {player.chips.map(chip => (
+                  <span key={chip} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">{chip}</span>
+                ))}
+              </div>
+            </PlayerResultCard>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function BattleRoyalePlayback({ result, step, done }) {
+  const totalPlayers = result.players.length;
+  const eliminationOrder = result.eliminationOrder || [];
+  const elimCount = Math.min(step, eliminationOrder.length);
+  const destroyedNames = new Set(eliminationOrder.slice(0, elimCount));
+  const aliveCount = totalPlayers - elimCount;
+  const currentPhase = Math.min(step, result.zones.length - 1);
+  const zone = result.zones[currentPhase] || result.zones[0];
+
+  const [flashElim, setFlashElim] = useState(null);
+  const prevStepRef = React.useRef(0);
+
+  useEffect(() => {
+    if (step > prevStepRef.current && step <= eliminationOrder.length) {
+      const target = eliminationOrder[step - 1];
+      setFlashElim(target);
+      const t = setTimeout(() => setFlashElim(null), 1500);
+      prevStepRef.current = step;
+      return () => clearTimeout(t);
+    }
+    prevStepRef.current = step;
+  }, [step, eliminationOrder]);
+
+  const isComplete = done || elimCount >= eliminationOrder.length;
+  const survivorName = result.selectedName;
+  const mapSize = 300;
+  const scale = mapSize / 100;
+
+  const PLAYER_COLORS = ['#22d3ee', '#f472b6', '#fbbf24', '#34d399', '#a78bfa', '#fb923c', '#60a5fa', '#f87171'];
+
+  return (
+    <div className="space-y-4">
+      <ModeHeader
+        result={result}
+        done={isComplete}
+        pendingText={elimCount === 0 ? "Players dropping in..." : `Phase ${elimCount} of ${eliminationOrder.length}`}
+        pendingSummary="Zone shrinks each phase. Furthest player gets eliminated."
+      />
+
+      <div className="relative overflow-hidden rounded-2xl" style={{ background: '#050a18', minHeight: 400 }}>
+        {/* Grid background */}
+        <div className="absolute inset-0" style={{ background: 'repeating-linear-gradient(0deg,transparent 0px,transparent 29px,rgba(34,211,238,0.04) 29px,rgba(34,211,238,0.04) 30px), repeating-linear-gradient(90deg,transparent 0px,transparent 29px,rgba(34,211,238,0.04) 29px,rgba(34,211,238,0.04) 30px)' }} />
+
+        {/* Top-left: zone phase */}
+        <div className="absolute top-3 left-4 z-10">
+          <div className="pixel-font text-[7px] text-cyan-500/60 uppercase tracking-widest">Zone Phase</div>
+          <div className="pixel-font text-sm text-cyan-400">{currentPhase}/{result.zones.length - 1}</div>
+        </div>
+
+        {/* Top-right: alive count */}
+        <div className="absolute top-3 right-4 z-10">
+          <div className="pixel-font text-[7px] text-cyan-500/60 uppercase tracking-widest">Alive</div>
+          <div className="pixel-font text-sm text-cyan-400">{aliveCount}/{totalPlayers}</div>
+        </div>
+
+        {/* Map area */}
+        <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: 30 }}>
+          <div className="relative" style={{ width: mapSize, height: mapSize }}>
+            {/* Map border */}
+            <div className="absolute inset-0 border border-cyan-800/30 rounded" />
+
+            {/* Danger zone (area outside zone circle) */}
+            <div className="absolute inset-0 overflow-hidden rounded">
+              <div className="absolute inset-0" style={{
+                background: step > 0 ? 'rgba(239,68,68,0.06)' : 'transparent',
+                transition: 'background 1.5s ease',
+              }} />
+            </div>
+
+            {/* Zone circle */}
+            <motion.div
+              className="absolute rounded-full"
+              style={{
+                border: '2px solid rgba(34,211,238,0.5)',
+                background: 'rgba(34,211,238,0.04)',
+                boxShadow: '0 0 20px rgba(34,211,238,0.15), inset 0 0 20px rgba(34,211,238,0.05)',
+              }}
+              animate={{
+                width: zone.radius * 2 * scale,
+                height: zone.radius * 2 * scale,
+                left: zone.cx * scale - zone.radius * scale,
+                top: zone.cy * scale - zone.radius * scale,
+              }}
+              transition={{ duration: 1.5, ease: 'easeInOut' }}
+            />
+
+            {/* Players */}
+            {result.players.map((player, idx) => {
+              const isEliminated = destroyedNames.has(player.name);
+              const isFlashing = flashElim === player.name;
+              const isSurvivor = isComplete && player.name === survivorName;
+              const px = player.x * scale;
+              const py = player.y * scale;
+
+              return (
+                <motion.div
+                  key={player.name}
+                  className="absolute"
+                  style={{ left: px - 14, top: py - 14, width: 28, textAlign: 'center', zIndex: isSurvivor ? 10 : 1 }}
+                  animate={{
+                    opacity: isEliminated && !isFlashing ? 0.3 : 1,
+                    scale: isFlashing ? [1, 1.3, 0.8] : isSurvivor ? 1.1 : 1,
+                  }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <div style={{
+                    width: 10, height: 10, margin: '0 auto',
+                    transform: 'rotate(45deg)',
+                    background: isEliminated ? '#4b5563' : PLAYER_COLORS[idx % PLAYER_COLORS.length],
+                    boxShadow: isSurvivor ? `0 0 12px ${PLAYER_COLORS[idx % PLAYER_COLORS.length]}` : isFlashing ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
+                    border: isFlashing ? '1px solid #ef4444' : 'none',
+                  }} />
+                  <div className="pixel-font text-[6px] mt-0.5" style={{
+                    color: isEliminated ? '#4b5563' : PLAYER_COLORS[idx % PLAYER_COLORS.length],
+                    textDecoration: isEliminated ? 'line-through' : 'none',
+                  }}>
+                    {isEliminated && !isFlashing ? '☠' : ''}{player.name}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* VICTORY ROYALE */}
+        {isComplete ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute bottom-16 left-0 right-0 text-center z-20"
+          >
+            <span className="pixel-font text-[10px] sm:text-xs text-cyan-300 px-4 py-2 rounded-lg" style={{ background: 'rgba(5,10,24,0.9)', border: '1px solid rgba(34,211,238,0.4)', textShadow: '0 0 10px rgba(34,211,238,0.6)' }}>
+              VICTORY ROYALE
+            </span>
+          </motion.div>
+        ) : null}
+
+        {/* Event log at bottom */}
+        <div className="absolute bottom-3 left-4 right-4 z-10">
+          {flashElim ? (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="pixel-font text-[7px] text-red-400/80 text-center"
+            >
+              {flashElim} was eliminated from the zone
+            </motion.div>
+          ) : null}
+        </div>
+      </div>
+
+      {isComplete ? (
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[...result.players].sort((a, b) => a.rank - b.rank).map(player => (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              selectionGoal={result.selectionGoal}
+              title={player.headline}
+              subtitle={player.subline}
+              selected={player.selected}
+            >
+              <div className="flex flex-wrap gap-2">
+                {player.chips.map(chip => (
+                  <span key={chip} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">{chip}</span>
+                ))}
+                <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">Rank #{player.rank}</span>
+              </div>
+            </PlayerResultCard>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StockMarketPlayback({ result, step, done }) {
+  const [phase, setPhase] = useState('ready');
+  const [drawIndex, setDrawIndex] = useState(0);
+  const startTimeRef = React.useRef(null);
+  const animFrameRef = React.useRef(null);
+
+  const STOCK_COLORS = ['#10b981', '#22d3ee', '#ec4899', '#fbbf24', '#a78bfa', '#fb923c', '#60a5fa', '#f87171'];
+
+  // Draft phase: show stock picking UI
+  if (result.draftPhase) {
+    const draftState = (typeof window !== 'undefined' && window.__stockDraftState) || {};
+    return (
+      <div className="space-y-6">
+        <ModeHeader result={result} done={false} pendingText="Players are picking stocks..." pendingSummary="Each player chooses their stock from the pool." />
+        <div className="text-center py-12">
+          <div className="pixel-font text-xl text-emerald-300 animate-pulse mb-4">{"\uD83D\uDCC8"} STOCK DRAFT {"\uD83D\uDCC8"}</div>
+          <div className="font-mono text-sm text-slate-500">Waiting for picks...</div>
+          {/* Show pick order and status */}
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {(result.pickOrder || []).map((name, i) => {
+              const hasPicked = draftState?.playerStocks?.[name];
+              return (
+                <div key={name} className={`px-3 py-1.5 rounded-lg font-mono text-xs ${
+                  hasPicked ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-500'
+                }`}>
+                  {name} {hasPicked ? `\u2713 ${draftState.playerStocks[name]}` : '...'}
+                </div>
+              );
+            })}
+          </div>
+          {/* Show available stocks */}
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-lg mx-auto">
+            {(result.stockPool || []).map(s => {
+              const takenBy = draftState?.taken?.[s.ticker];
+              return (
+                <div key={s.ticker} className={`px-2 py-2 rounded-lg font-mono text-[10px] ${
+                  takenBy ? 'bg-white/5 text-slate-600 line-through' : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                }`}>
+                  <div className="font-bold text-xs">{s.ticker}</div>
+                  <div className="text-[8px] opacity-60">{takenBy ? `\u2192 ${takenBy}` : s.note}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function startTrading() {
+    setPhase('trading');
+    startTimeRef.current = performance.now();
+  }
+
+  useEffect(() => {
+    if (phase !== 'trading') return;
+
+    function tick(now) {
+      const elapsed = (now - startTimeRef.current) / 1000;
+      const newIndex = Math.min(59, Math.floor(elapsed * 4));
+      setDrawIndex(newIndex);
+      window.__stockDrawIndex = newIndex;
+
+      if (newIndex >= 59) {
+        setPhase('complete');
+        return;
+      }
+
+      animFrameRef.current = requestAnimationFrame(tick);
+    }
+
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+  }, [phase]);
+
+  useEffect(() => {
+    if (phase === 'complete') {
+      const sellState = (typeof window !== 'undefined' && window.__stockSellState) || {};
+      const isStockInteractive = typeof window !== 'undefined' && window.__stockInteractive;
+
+      if (isStockInteractive && result.isInteractiveChart) {
+        // Compute final result with sell decisions
+        const finalPlayers = result.players.map(p => {
+          const sold = sellState[p.name];
+          const finalPrice = sold ? sold.price : p.prices[59];
+          const pctChange = ((finalPrice - 100) / 100 * 100);
+          return {
+            ...p,
+            endPrice: finalPrice,
+            percentChange: pctChange,
+            sold: !!sold,
+            headline: `${p.ticker} \u2014 ${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}%`,
+            subline: sold ? `Sold at $${finalPrice.toFixed(2)}` : `Held to $${finalPrice.toFixed(2)}`,
+            chips: [p.ticker, `${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}%`, sold ? 'SOLD' : 'HELD'],
+          };
+        });
+
+        finalPlayers.sort((a, b) => b.percentChange - a.percentChange);
+        finalPlayers.forEach((p, i) => { p.rank = i + 1; });
+
+        const selected = result.selectionGoal === 'winner' ? finalPlayers[0] : finalPlayers[finalPlayers.length - 1];
+
+        result.selectedName = selected.name;
+        result.headline = pickRandomMessage(
+          result.selectionGoal === 'winner' ? WIN_MESSAGES : LOSE_MESSAGES,
+          selected.name, result.selectionGoal === 'winner' ? 'win' : 'lose'
+        );
+        result.summary = `${selected.name}'s ${selected.ticker} ${selected.percentChange >= 0 ? 'gained' : 'lost'} ${Math.abs(selected.percentChange).toFixed(1)}%.`;
+        result.isTie = false;
+        result.players = finalPlayers.map(p => ({ ...p, selected: p.name === selected.name }));
+      }
+
+      window.dispatchEvent(new Event('rocket-complete'));
+    }
+  }, [phase]);
+
+  const isComplete = phase === 'complete' || done;
+
+  const allPrices = result.players.flatMap(p => p.prices || []);
+  const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) * 1.1 : 200;
+  const minPrice = allPrices.length > 0 ? Math.max(0, Math.min(...allPrices) * 0.9) : 0;
+
+  const chartWidth = 500;
+  const chartHeight = 260;
+  const chartPadX = 50;
+  const chartPadY = 20;
+  const plotWidth = chartWidth - chartPadX - 10;
+  const plotHeight = chartHeight - chartPadY * 2;
+
+  function priceToY(price) {
+    return chartPadY + plotHeight - ((price - minPrice) / (maxPrice - minPrice)) * plotHeight;
+  }
+
+  function indexToX(idx) {
+    return chartPadX + (idx / 59) * plotWidth;
+  }
+
+  const gridLines = 5;
+  const priceStep = (maxPrice - minPrice) / gridLines;
+
+  return (
+    <div className="space-y-4">
+      <ModeHeader
+        result={result}
+        done={isComplete}
+        pendingText={phase === 'ready' ? 'Markets opening...' : phase === 'trading' ? 'Trading in progress...' : 'MARKET CLOSED'}
+        pendingSummary="Watch the charts. Best/worst stock gets selected."
+      />
+
+      <div className="relative overflow-hidden rounded-2xl" style={{ background: '#000', minHeight: 380 }}>
+        {/* Grid background */}
+        <div className="absolute inset-0" style={{ background: 'repeating-linear-gradient(0deg,transparent 0px,transparent 14px,rgba(16,185,129,0.03) 14px,rgba(16,185,129,0.03) 15px), repeating-linear-gradient(90deg,transparent 0px,transparent 29px,rgba(16,185,129,0.02) 29px,rgba(16,185,129,0.02) 30px)' }} />
+
+        {/* Chart */}
+        <div className="flex items-center justify-center pt-4">
+          <svg width={chartWidth} height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ overflow: 'visible' }}>
+            {/* Y-axis grid lines */}
+            {Array.from({ length: gridLines + 1 }, (_, i) => {
+              const price = minPrice + i * priceStep;
+              const y = priceToY(price);
+              return (
+                <g key={`grid-${i}`}>
+                  <line x1={chartPadX} y1={y} x2={chartWidth - 10} y2={y} stroke="rgba(16,185,129,0.1)" strokeWidth={0.5} />
+                  <text x={chartPadX - 5} y={y + 3} textAnchor="end" fill="#10b981" fontSize={8} fontFamily="'Source Code Pro', monospace" opacity={0.5}>
+                    ${Math.round(price)}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* $100 baseline */}
+            <line x1={chartPadX} y1={priceToY(100)} x2={chartWidth - 10} y2={priceToY(100)}
+              stroke="rgba(255,255,255,0.15)" strokeWidth={0.5} strokeDasharray="4,4" />
+
+            {/* Price lines */}
+            {result.players.map((player, pIdx) => {
+              const endIdx = phase === 'ready' ? 0 : Math.min(drawIndex + 1, 60);
+              if (endIdx < 2) return null;
+              const points = player.prices.slice(0, endIdx).map((price, i) =>
+                `${indexToX(i)},${priceToY(price)}`
+              ).join(' ');
+              return (
+                <polyline key={player.name} points={points}
+                  fill="none" stroke={STOCK_COLORS[pIdx % STOCK_COLORS.length]}
+                  strokeWidth={1.5} opacity={0.8} />
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Sidebar: current prices */}
+        <div className="absolute top-4 right-4 z-10 space-y-1">
+          {result.players.map((player, pIdx) => {
+            const currentIdx = phase === 'ready' ? 0 : Math.min(drawIndex, 59);
+            const currentPrice = player.prices[currentIdx];
+            const pctChange = ((currentPrice - 100) / 100 * 100).toFixed(1);
+            const isUp = currentPrice >= 100;
+            const isMooning = currentPrice > 200;
+            const isTanking = currentPrice < 20;
+            return (
+              <div key={player.name} className="font-mono text-[9px] flex items-center gap-1.5 py-0.5" style={{ color: STOCK_COLORS[pIdx % STOCK_COLORS.length] }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: STOCK_COLORS[pIdx % STOCK_COLORS.length], display: 'inline-block', flexShrink: 0 }} />
+                <span className="font-bold" style={{ minWidth: 50 }}>{player.name}</span>
+                <span className="pixel-font text-[6px]" style={{ minWidth: 40, opacity: 0.7 }}>{player.ticker}</span>
+                <span className="font-bold" style={{ color: isUp ? '#10b981' : '#ef4444', minWidth: 45, textAlign: 'right' }}>
+                  ${currentPrice.toFixed(0)}
+                </span>
+                <span style={{ fontSize: 8, color: isUp ? '#10b981' : '#ef4444', minWidth: 40, textAlign: 'right' }}>
+                  {isUp ? '+' : ''}{pctChange}%
+                  {isMooning ? ' \uD83D\uDE80' : isTanking ? ' \uD83D\uDC80' : ''}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Start button */}
+        {phase === 'ready' ? (
+          <div className="absolute inset-0 flex items-center justify-center z-20">
+            <button
+              onClick={startTrading}
+              className="pixel-font inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-8 py-4 text-sm text-white shadow-lg shadow-emerald-600/30 transition hover:scale-105 active:scale-95"
+              style={{ textShadow: '0 0 10px rgba(16,185,129,0.5)' }}
+            >
+              📈 START TRADING
+            </button>
+          </div>
+        ) : null}
+
+        {/* Market closed overlay */}
+        {isComplete ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
+          >
+            <span className="pixel-font text-sm sm:text-base text-emerald-400 px-6 py-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(16,185,129,0.4)', textShadow: '0 0 10px rgba(16,185,129,0.6)' }}>
+              MARKET CLOSED
+            </span>
+          </motion.div>
+        ) : null}
+      </div>
+
+      {isComplete ? (
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[...result.players].sort((a, b) => a.rank - b.rank).map(player => (
+            <PlayerResultCard
+              key={player.name}
+              name={player.name}
+              selectionGoal={result.selectionGoal}
+              title={player.headline}
+              subtitle={player.subline}
+              selected={player.selected}
+              tied={player.tied}
+            >
+              <div className="flex flex-wrap gap-2">
+                {player.chips.map(chip => (
+                  <span key={chip} className="rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-slate-400">{chip}</span>
+                ))}
+              </div>
+            </PlayerResultCard>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function PlaybackStage({ result, step, done, interactiveBombState }) {
+  if (result.isTournament) {
+    return <TournamentPlayback result={result} step={step} done={done} />;
+  }
+  switch (result.modeId) {
+    case "holdem":
+      return <PokerPlayback result={result} step={step} done={done} />;
+    case "plo":
+      return <PokerPlayback result={result} step={step} done={done} omaha />;
+    case "rng":
+      return <NumberPlayback result={result} step={step} done={done} />;
+    case "wheel":
+      return <WheelPlayback result={result} step={step} done={done} />;
+    case "dice":
+      return <DicePlayback result={result} step={step} done={done} />;
+    case "high-card":
+      return <HighCardPlayback result={result} step={step} done={done} />;
+    case "coin-flips":
+      return <CoinPlayback result={result} step={step} done={done} />;
+    case "black-marble":
+      return <MarblePlayback result={result} step={step} done={done} />;
+    case "slots":
+      return <SlotsPlayback result={result} step={step} done={done} />;
+    case "horse-race":
+      return <HorseRacePlayback result={result} step={step} done={done} />;
+    case "rocket":
+      return <RocketPlayback result={result} step={step} done={done} />;
+    case "space-invaders":
+      return <SpaceInvadersPlayback result={result} step={step} done={done} />;
+    case "bomb":
+      return <BombPlayback result={result} step={step} done={done} interactiveBombState={interactiveBombState} />;
+    case "plinko":
+      return <PlinkoPlayback result={result} step={step} done={done} />;
+    case "battle-royale":
+      return <BattleRoyalePlayback result={result} step={step} done={done} />;
+    case "stock-market":
+      return <StockMarketPlayback result={result} step={step} done={done} />;
+    default:
+      return null;
+  }
+}
+
+function computeStats(games) {
+  const playerMap = {};     // lowercase name -> stats object
+  const nameDisplay = {};   // lowercase name -> most recent display name
+  const pairMap = {};       // "a|b" (sorted lowercase) -> { p1Wins, p2Wins, totalGames, p1, p2 }
+
+  function getPlayer(name) {
+    const key = name.toLowerCase();
+    if (!playerMap[key]) {
+      playerMap[key] = {
+        games: 0, wins: 0, losses: 0,
+        currentStreak: 0, longestWinStreak: 0, longestLossStreak: 0,
+        lastPlayed: null,
+        perMode: {},
+      };
+    }
+    nameDisplay[key] = name; // always overwrite with latest capitalization
+    return playerMap[key];
+  }
+
+  for (const game of games) {
+    const players = game.all_players || [];
+    const selectedKey = (game.selected_player || '').toLowerCase();
+    const goal = game.selection_goal;
+    const playedAt = game.played_at || game.created_at || null;
+
+    const playerKeys = players.map(p => p.name.toLowerCase());
+
+    for (const p of players) {
+      const key = p.name.toLowerCase();
+      const stats = getPlayer(p.name);
+      stats.games++;
+      if (playedAt) stats.lastPlayed = playedAt;
+
+      // Determine win/loss
+      // When goal="loser": selected player LOST, everyone else WON
+      // When goal="winner": selected player WON, everyone else LOST
+      const isSelected = key === selectedKey;
+      const won = (goal === 'winner' && isSelected) || (goal === 'loser' && !isSelected);
+
+      if (won) {
+        stats.wins++;
+        if (stats.currentStreak > 0) stats.currentStreak++;
+        else stats.currentStreak = 1;
+        if (stats.currentStreak > stats.longestWinStreak) stats.longestWinStreak = stats.currentStreak;
+      } else {
+        stats.losses++;
+        if (stats.currentStreak < 0) stats.currentStreak--;
+        else stats.currentStreak = -1;
+        if (Math.abs(stats.currentStreak) > stats.longestLossStreak) stats.longestLossStreak = Math.abs(stats.currentStreak);
+      }
+
+      // Per-mode stats
+      const modeId = game.mode_id || 'unknown';
+      if (!stats.perMode[modeId]) stats.perMode[modeId] = { games: 0, wins: 0, modeName: game.mode_name || modeId };
+      stats.perMode[modeId].games++;
+      if (won) stats.perMode[modeId].wins++;
+    }
+
+    // Track rivalries (pairwise)
+    for (let i = 0; i < playerKeys.length; i++) {
+      for (let j = i + 1; j < playerKeys.length; j++) {
+        const sorted = [playerKeys[i], playerKeys[j]].sort();
+        const pairKey = sorted.join('|');
+        if (!pairMap[pairKey]) {
+          pairMap[pairKey] = { p1: sorted[0], p2: sorted[1], p1Selected: 0, p2Selected: 0, totalGames: 0 };
+        }
+        pairMap[pairKey].totalGames++;
+        if (selectedKey === sorted[0]) pairMap[pairKey].p1Selected++;
+        if (selectedKey === sorted[1]) pairMap[pairKey].p2Selected++;
+      }
+    }
+  }
+
+  // Build player array
+  const playerList = Object.keys(playerMap).map(key => {
+    const s = playerMap[key];
+    const winPct = s.games > 0 ? Math.round((s.wins / s.games) * 100) : 0;
+    // Favorite mode: highest games played
+    let favMode = null;
+    let favModeGames = 0;
+    for (const [modeId, modeStats] of Object.entries(s.perMode)) {
+      if (modeStats.games > favModeGames) {
+        favModeGames = modeStats.games;
+        favMode = modeStats.modeName;
+      }
+    }
+    return {
+      name: nameDisplay[key],
+      games: s.games,
+      wins: s.wins,
+      losses: s.losses,
+      winPct,
+      currentStreak: s.currentStreak,
+      longestWinStreak: s.longestWinStreak,
+      longestLossStreak: s.longestLossStreak,
+      lastPlayed: s.lastPlayed,
+      perMode: s.perMode,
+      favMode,
+    };
+  });
+
+  // Sort: 3+ games first by winPct desc, then <3 games by winPct desc
+  playerList.sort((a, b) => {
+    const aQ = a.games >= 3 ? 1 : 0;
+    const bQ = b.games >= 3 ? 1 : 0;
+    if (aQ !== bQ) return bQ - aQ;
+    if (a.winPct !== b.winPct) return b.winPct - a.winPct;
+    return b.games - a.games;
+  });
+
+  // Build rivalries (3+ games together)
+  const rivalries = Object.values(pairMap)
+    .filter(r => r.totalGames >= 3)
+    .map(r => {
+      // For rivalries, "wins" is based on selection goal context:
+      // We count how many times each was on the winning side.
+      // Since we only have selection counts, we need to derive wins.
+      // In a game, the selected player's outcome depends on selection_goal.
+      // Instead, let's compute rivalry wins from the player stats per-game.
+      // But we don't have per-game breakdown per pair, so we use a simpler metric:
+      // Count games where p1 was selected vs p2 was selected.
+      // This isn't "wins" — it's "times selected". Display accordingly.
+      return {
+        player1: nameDisplay[r.p1] || r.p1,
+        player2: nameDisplay[r.p2] || r.p2,
+        p1Selected: r.p1Selected,
+        p2Selected: r.p2Selected,
+        totalGames: r.totalGames,
+      };
+    })
+    .sort((a, b) => b.totalGames - a.totalGames);
+
+  // Awards (min thresholds)
+  const qualified = playerList.filter(p => p.games >= 5);
+  const qualified3 = playerList.filter(p => p.games >= 3);
+
+  const mostAccurate = qualified.length ? qualified.reduce((best, p) => p.winPct > best.winPct ? p : best) : null;
+  const cursed = qualified.length ? qualified.reduce((worst, p) => p.winPct < worst.winPct ? p : worst) : null;
+  const onFire = qualified3.length ? qualified3.reduce((best, p) => p.currentStreak > best.currentStreak ? p : best) : null;
+  const downBad = qualified3.length ? qualified3.reduce((worst, p) => p.currentStreak < worst.currentStreak ? p : worst) : null;
+  const mostGames = playerList.length ? playerList.reduce((best, p) => p.games > best.games ? p : best) : null;
+
+  // Luckiest/Unluckiest mode (player+mode combo, min 3 games in that mode)
+  let luckiestMode = null;
+  let unluckiestMode = null;
+  for (const player of playerList) {
+    for (const [modeId, modeStats] of Object.entries(player.perMode)) {
+      if (modeStats.games < 3) continue;
+      const pct = Math.round((modeStats.wins / modeStats.games) * 100);
+      if (!luckiestMode || pct > luckiestMode.pct) {
+        luckiestMode = { name: player.name, modeName: modeStats.modeName, pct, wins: modeStats.wins, games: modeStats.games };
+      }
+      if (!unluckiestMode || pct < unluckiestMode.pct) {
+        unluckiestMode = { name: player.name, modeName: modeStats.modeName, pct, wins: modeStats.wins, games: modeStats.games };
+      }
+    }
+  }
+
+  const biggestRivalry = rivalries.length ? rivalries[0] : null;
+
+  return {
+    players: playerList,
+    rivalries,
+    awards: {
+      mostAccurate: mostAccurate ? { name: mostAccurate.name, stat: `${mostAccurate.winPct}% (${mostAccurate.wins}-${mostAccurate.losses})` } : null,
+      cursed: cursed ? { name: cursed.name, stat: `${cursed.winPct}% (${cursed.wins}-${cursed.losses})` } : null,
+      onFire: onFire && onFire.currentStreak > 0 ? { name: onFire.name, stat: `W${onFire.currentStreak}` } : null,
+      downBad: downBad && downBad.currentStreak < 0 ? { name: downBad.name, stat: `L${Math.abs(downBad.currentStreak)}` } : null,
+      mostGames: mostGames ? { name: mostGames.name, stat: `${mostGames.games} games` } : null,
+      luckiestMode,
+      unluckiestMode,
+      biggestRivalry,
+    },
+  };
+}
+
+function Leaderboard({ stats, loading }) {
+  const [expanded, setExpanded] = useState(false);
+  const [sortCol, setSortCol] = useState('winPct');
+  const [sortDir, setSortDir] = useState('desc');
+
+  function toggleExpand() { setExpanded(e => !e); }
+
+  function handleSort(col) {
+    if (sortCol === col) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
+    else { setSortCol(col); setSortDir('desc'); }
+  }
+
+  const sortedPlayers = useMemo(() => {
+    if (!stats || !stats.players) return [];
+    const list = [...stats.players];
+    list.sort((a, b) => {
+      let av = a[sortCol], bv = b[sortCol];
+      if (sortCol === 'name') {
+        av = av.toLowerCase(); bv = bv.toLowerCase();
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      if (sortCol === 'lastPlayed') {
+        av = av || ''; bv = bv || '';
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      }
+      return sortDir === 'asc' ? (av - bv) : (bv - av);
+    });
+    return list;
+  }, [stats, sortCol, sortDir]);
+
+  const top5 = useMemo(() => {
+    if (!stats || !stats.players) return [];
+    return stats.players.filter(p => p.games >= 3).slice(0, 5);
+  }, [stats]);
+
+  function streakDisplay(streak) {
+    if (streak === 0) return <span className="text-slate-600">-</span>;
+    if (streak > 0) return <span className="text-emerald-400">W{streak}{streak >= 3 ? ' \uD83D\uDD25' : ''}</span>;
+    return <span className="text-red-400">L{Math.abs(streak)}{Math.abs(streak) >= 3 ? ' \uD83D\uDC80' : ''}</span>;
+  }
+
+  function modeWinColor(pct) {
+    if (pct > 60) return 'text-emerald-400';
+    if (pct >= 40) return 'text-yellow-400';
+    return 'text-red-400';
+  }
+
+  function sortArrow(col) {
+    if (sortCol !== col) return '';
+    return sortDir === 'desc' ? ' \u25BC' : ' \u25B2';
+  }
+
+  if (loading) {
+    return (
+      <div className="mb-6 pt-2">
+        <div className="pixel-divider mb-5" />
+        <div className="pixel-font text-[8px] text-slate-500 text-center py-4">Loading leaderboard...</div>
+      </div>
+    );
+  }
+
+  if (!stats || !stats.players || stats.players.length === 0) {
+    return (
+      <div className="mb-6 pt-2">
+        <div className="pixel-divider mb-5" />
+        <div className="mb-4 flex items-center gap-2">
+          <span className="text-lg">{'\uD83C\uDFC6'}</span>
+          <span className="pixel-font text-[9px] uppercase tracking-widest text-indigo-400">Leaderboard</span>
+        </div>
+        <div className="pixel-font text-[8px] text-slate-500 text-center py-4">No data yet {'\u2014'} play a game!</div>
+      </div>
+    );
+  }
+
+  const { rivalries = [], awards = {} } = stats;
+
+  return (
+    <div className="mb-6 pt-2">
+      <div className="pixel-divider mb-5" />
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{'\uD83C\uDFC6'}</span>
+          <span className="pixel-font text-[9px] uppercase tracking-widest text-indigo-400">Leaderboard</span>
+        </div>
+        <button onClick={toggleExpand} className="pixel-font text-[7px] text-slate-500 hover:text-indigo-400 transition">
+          {expanded ? "COLLAPSE" : "EXPAND"}
+        </button>
+      </div>
+
+      {/* Compact: top 5 table */}
+      {!expanded ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left" style={{ borderCollapse: 'separate', borderSpacing: '0 2px' }}>
+            <thead>
+              <tr>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 pl-2 w-8">#</th>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2">Player</th>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center">W-L</th>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center">Win%</th>
+                <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center">Streak</th>
+              </tr>
+            </thead>
+            <tbody>
+              {top5.map((p, i) => (
+                <tr key={p.name}
+                  className="transition-colors"
+                  style={i === 0 ? {
+                    background: 'rgba(251,191,36,0.06)',
+                    borderLeft: '2px solid #fbbf24',
+                    boxShadow: 'inset 0 0 12px rgba(251,191,36,0.08)',
+                  } : { background: 'rgba(255,255,255,0.02)' }}
+                >
+                  <td className="py-2 pl-2 pixel-font text-[9px] text-slate-500" style={i === 0 ? { color: '#fbbf24' } : {}}>{i + 1}</td>
+                  <td className="py-2 pixel-font text-[9px] text-white" style={i === 0 ? { color: '#fbbf24' } : {}}>{p.name}</td>
+                  <td className="py-2 text-center font-mono text-[10px] text-slate-400">{p.wins}-{p.losses}</td>
+                  <td className="py-2 text-center font-mono text-[10px] text-slate-300">{p.winPct}%</td>
+                  <td className="py-2 text-center font-mono text-[10px]">{streakDisplay(p.currentStreak)}</td>
+                </tr>
+              ))}
+              {top5.length === 0 ? (
+                <tr><td colSpan={5} className="pixel-font text-[8px] text-slate-600 text-center py-3">Need 3+ games to qualify</td></tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div>
+          {/* Expanded: full table */}
+          <div className="overflow-x-auto mb-6">
+            <table className="w-full text-left" style={{ borderCollapse: 'separate', borderSpacing: '0 2px' }}>
+              <thead>
+                <tr>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 pl-2 w-8 cursor-pointer hover:text-indigo-400" onClick={() => handleSort('winPct')}>#</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 cursor-pointer hover:text-indigo-400" onClick={() => handleSort('name')}>Player{sortArrow('name')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('games')}>Games{sortArrow('games')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('wins')}>W-L{sortArrow('wins')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('winPct')}>Win%{sortArrow('winPct')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('longestWinStreak')}>Best{sortArrow('longestWinStreak')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center cursor-pointer hover:text-indigo-400" onClick={() => handleSort('longestLossStreak')}>Worst{sortArrow('longestLossStreak')}</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center">Streak</th>
+                  <th className="pixel-font text-[6px] uppercase tracking-widest text-slate-600 pb-2 text-center hidden sm:table-cell">Fav Mode</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedPlayers.map((p, i) => {
+                  const dimmed = p.games < 3;
+                  const isFirst = i === 0 && !dimmed;
+                  const modeEntries = Object.entries(p.perMode);
+                  return (
+                    <React.Fragment key={p.name}>
+                      <tr
+                        className="transition-colors"
+                        style={isFirst ? {
+                          background: 'rgba(251,191,36,0.06)',
+                          borderLeft: '2px solid #fbbf24',
+                          boxShadow: 'inset 0 0 12px rgba(251,191,36,0.08)',
+                        } : { background: 'rgba(255,255,255,0.02)' }}
+                      >
+                        <td className={`py-2 pl-2 pixel-font text-[9px] ${dimmed ? 'text-slate-700' : 'text-slate-500'}`} style={isFirst ? { color: '#fbbf24' } : {}}>{i + 1}</td>
+                        <td className={`py-2 pixel-font text-[9px] ${dimmed ? 'text-slate-600 italic' : 'text-white'}`} style={isFirst ? { color: '#fbbf24' } : {}}>{p.name}</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-slate-400'}`}>{p.games}</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-slate-400'}`}>{p.wins}-{p.losses}</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-slate-300'}`}>{p.winPct}%</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-emerald-400'}`}>{p.longestWinStreak > 0 ? `W${p.longestWinStreak}` : '-'}</td>
+                        <td className={`py-2 text-center font-mono text-[10px] ${dimmed ? 'text-slate-700' : 'text-red-400'}`}>{p.longestLossStreak > 0 ? `L${p.longestLossStreak}` : '-'}</td>
+                        <td className="py-2 text-center font-mono text-[10px]">{streakDisplay(p.currentStreak)}</td>
+                        <td className={`py-2 text-center pixel-font text-[7px] hidden sm:table-cell ${dimmed ? 'text-slate-700' : 'text-slate-500'}`}>{p.favMode || '-'}</td>
+                      </tr>
+                      {modeEntries.length > 0 ? (
+                        <tr style={{ background: 'transparent' }}>
+                          <td></td>
+                          <td colSpan={8} className="pb-2 pt-0">
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 pl-1">
+                              {modeEntries.map(([modeId, ms]) => {
+                                const pct = ms.games > 0 ? Math.round((ms.wins / ms.games) * 100) : 0;
+                                return (
+                                  <span key={modeId} className={`font-mono text-[9px] ${modeWinColor(pct)}`}>
+                                    {ms.modeName} {ms.wins}-{ms.games - ms.wins}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Rivalries */}
+          {rivalries.length > 0 ? (
+            <div className="mb-6">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-sm">{'\u2694\uFE0F'}</span>
+                <span className="pixel-font text-[8px] uppercase tracking-widest text-indigo-400">Rivalries</span>
+              </div>
+              <div className="space-y-1">
+                {rivalries.map((r, i) => {
+                  const lead = r.p1Selected > r.p2Selected
+                    ? `${r.player1} selected ${r.p1Selected}x`
+                    : r.p2Selected > r.p1Selected
+                      ? `${r.player2} selected ${r.p2Selected}x`
+                      : 'Tied!';
+                  return (
+                    <div key={i} className="flex items-center gap-2 border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                      <span className="font-mono text-[10px] text-white">{r.player1} vs {r.player2}</span>
+                      <span className="font-mono text-[9px] text-slate-500">{r.totalGames} games</span>
+                      <span className="font-mono text-[9px] text-indigo-400">{lead}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Awards */}
+          {Object.values(awards).some(Boolean) ? (
+            <div className="mb-4">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-sm">{'\uD83C\uDFC5'}</span>
+                <span className="pixel-font text-[8px] uppercase tracking-widest text-indigo-400">Awards</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {awards.mostAccurate ? (
+                  <div className="border border-emerald-500/20 bg-emerald-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-emerald-400 mb-1">{'\uD83C\uDFAF'} Most Accurate</div>
+                    <div className="font-mono text-[10px] text-white">{awards.mostAccurate.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.mostAccurate.stat}</div>
+                  </div>
+                ) : null}
+                {awards.cursed ? (
+                  <div className="border border-purple-500/20 bg-purple-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-purple-400 mb-1">{'\uD83D\uDE08'} Cursed</div>
+                    <div className="font-mono text-[10px] text-white">{awards.cursed.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.cursed.stat}</div>
+                  </div>
+                ) : null}
+                {awards.onFire ? (
+                  <div className="border border-orange-500/20 bg-orange-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-orange-400 mb-1">{'\uD83D\uDD25'} On Fire</div>
+                    <div className="font-mono text-[10px] text-white">{awards.onFire.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.onFire.stat}</div>
+                  </div>
+                ) : null}
+                {awards.downBad ? (
+                  <div className="border border-red-500/20 bg-red-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-red-400 mb-1">{'\uD83D\uDC80'} Down Bad</div>
+                    <div className="font-mono text-[10px] text-white">{awards.downBad.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.downBad.stat}</div>
+                  </div>
+                ) : null}
+                {awards.mostGames ? (
+                  <div className="border border-cyan-500/20 bg-cyan-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-cyan-400 mb-1">{'\uD83C\uDFAE'} Most Games</div>
+                    <div className="font-mono text-[10px] text-white">{awards.mostGames.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.mostGames.stat}</div>
+                  </div>
+                ) : null}
+                {awards.luckiestMode ? (
+                  <div className="border border-green-500/20 bg-green-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-green-400 mb-1">{'\uD83C\uDF40'} Luckiest Mode</div>
+                    <div className="font-mono text-[10px] text-white">{awards.luckiestMode.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.luckiestMode.modeName} {awards.luckiestMode.pct}%</div>
+                  </div>
+                ) : null}
+                {awards.unluckiestMode ? (
+                  <div className="border border-rose-500/20 bg-rose-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-rose-400 mb-1">{'\uD83E\uDEE0'} Unluckiest Mode</div>
+                    <div className="font-mono text-[10px] text-white">{awards.unluckiestMode.name}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.unluckiestMode.modeName} {awards.unluckiestMode.pct}%</div>
+                  </div>
+                ) : null}
+                {awards.biggestRivalry ? (
+                  <div className="border border-amber-500/20 bg-amber-500/[0.05] px-3 py-2">
+                    <div className="pixel-font text-[7px] text-amber-400 mb-1">{'\u2694\uFE0F'} Biggest Rivalry</div>
+                    <div className="font-mono text-[10px] text-white">{awards.biggestRivalry.player1} vs {awards.biggestRivalry.player2}</div>
+                    <div className="font-mono text-[8px] text-slate-500">{awards.biggestRivalry.totalGames} games</div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function JoinScreen({ roomCode, names, joinedPlayers, onJoinAsPlayer, onJoinAsSpectator }) {
+  const [inputName, setInputName] = useState('');
+  const trimmed = inputName.trim();
+  const nameTaken = trimmed && joinedPlayers[trimmed];
+  const canJoin = trimmed.length >= 1 && !nameTaken;
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6">
+      <div className="pixel-font text-[9px] text-slate-500 mb-2 uppercase tracking-widest">Join Room</div>
+      <div className="pixel-font text-2xl text-cyan-300 mb-6" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>{roomCode}</div>
+
+      <div className="pixel-font text-[9px] text-slate-400 mb-4">ENTER YOUR NAME</div>
+      <div className="w-full max-w-xs space-y-3">
+        <input
+          value={inputName}
+          onChange={function(e) { setInputName(e.target.value); }}
+          onKeyDown={function(e) { if (e.key === 'Enter' && canJoin) onJoinAsPlayer(trimmed); }}
+          className="w-full rounded-xl border border-indigo-500/30 bg-white/[0.06] px-4 py-3 font-mono text-sm text-white placeholder-slate-500 outline-none transition focus:border-indigo-400 focus:shadow-[0_0_16px_rgba(99,102,241,0.2)]"
+          placeholder="Your name..."
+          autoFocus
+        />
+        {nameTaken ? <div className="pixel-font text-[8px] text-amber-400">▸ That name is taken</div> : null}
+        <button
+          disabled={!canJoin}
+          onClick={function() { onJoinAsPlayer(trimmed); }}
+          className={"w-full py-3 px-4 rounded-xl font-mono text-sm font-bold transition " + (
+            canJoin
+              ? "bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/30"
+              : "bg-white/5 text-slate-600 cursor-not-allowed"
+          )}
+        >
+          JOIN GAME
+        </button>
+      </div>
+
+      {Object.keys(joinedPlayers).length > 0 ? (
+        <div className="mt-6 w-full max-w-xs">
+          <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Players in room</div>
+          <div className="flex flex-wrap gap-2">
+            {Object.keys(joinedPlayers).map(function(name) {
+              return <span key={name} className="px-2 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 font-mono text-xs text-indigo-300">📱 {name}</span>;
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      <button
+        onClick={onJoinAsSpectator}
+        className="mt-6 font-mono text-sm text-slate-500 hover:text-slate-300 transition"
+      >
+        Just Watch 👀
+      </button>
+    </div>
+  );
+}
+
+function CardDraftPicker({ cards, keepCount, onSubmit }) {
+  const [selected, setSelected] = useState([]);
+
+  function toggleCard(index) {
+    setSelected(prev => {
+      if (prev.includes(index)) return prev.filter(i => i !== index);
+      if (prev.length >= keepCount) return prev;
+      return [...prev, index];
+    });
+  }
+
+  const canLock = selected.length === keepCount;
+
+  return (
+    <>
+      <div className="pixel-font text-[9px] text-indigo-300 mb-3">{'\uD83C\uDCCF'} CHOOSE YOUR HAND — Pick {keepCount}</div>
+      <div className="flex flex-wrap justify-center gap-2 mb-3">
+        {cards.map((card, i) => {
+          const isSelected = selected.includes(i);
+          const red = card.suit === 'h' || card.suit === 'd';
+          return (
+            <button
+              key={i}
+              onClick={() => toggleCard(i)}
+              className={`relative rounded-lg border-2 p-2 text-center transition ${
+                isSelected
+                  ? 'border-indigo-400 bg-indigo-500/20 scale-110'
+                  : 'border-white/10 bg-white/5 opacity-60'
+              }`}
+              style={{ minWidth: 44, minHeight: 60 }}
+            >
+              <div className={`font-bold ${red ? 'text-rose-400' : 'text-white'}`} style={{ fontSize: 16 }}>
+                {rankLabel(card.rank)}
+              </div>
+              <div className={`${red ? 'text-rose-400' : 'text-slate-300'}`} style={{ fontSize: 14 }}>
+                {SUIT_SYMBOLS[card.suit]}
+              </div>
+              {isSelected ? <div className="absolute -top-1 -right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">{'\u2713'}</div> : null}
+            </button>
+          );
+        })}
+      </div>
+      <button
+        disabled={!canLock}
+        onClick={() => onSubmit(selected)}
+        className={`w-full py-3 rounded-xl font-bold text-sm transition ${
+          canLock
+            ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg hover:scale-[1.02] active:scale-95'
+            : 'bg-white/5 text-slate-600 cursor-not-allowed'
+        }`}
+      >
+        {canLock ? '\uD83D\uDD12 LOCK IN' : `Select ${keepCount - selected.length} more`}
+      </button>
+    </>
+  );
+}
+
+function CountdownTimer({ deadline }) {
+  const { useState, useEffect } = React;
+  const [remaining, setRemaining] = useState(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
+
+  useEffect(function() {
+    var interval = setInterval(function() {
+      var r = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setRemaining(r);
+      if (r <= 0) clearInterval(interval);
+    }, 100);
+    return function() { clearInterval(interval); };
+  }, [deadline]);
+
+  return (
+    <div className="mt-2">
+      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-100" style={{
+          width: Math.max(0, remaining * 10) + "%",
+          background: remaining > 5 ? "#22c55e" : remaining > 2 ? "#fbbf24" : "#ef4444"
+        }} />
+      </div>
+      <div className="pixel-font text-[8px] text-slate-500 mt-1">{remaining}s</div>
+    </div>
+  );
+}
+
+function PlayerActionBar({ pendingAction, onAction, playerName }) {
+  if (!pendingAction) return null;
+
+  const isMyTurn = pendingAction.playerName === playerName;
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-indigo-500/30 p-4 backdrop-blur" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+      <div className="max-w-md mx-auto text-center">
+        {pendingAction.action === 'pass_bomb' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[11px] text-red-400 mb-3 animate-pulse" style={{ textShadow: '0 0 10px rgba(239,68,68,0.5)' }}>
+              PASS THE BOMB!
+            </div>
+            <div className="space-y-2">
+              {(pendingAction.targets || []).map(target => (
+                <button
+                  key={target}
+                  onClick={() => onAction({ action: 'pass_bomb', target })}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-orange-500 text-white font-bold text-base shadow-lg transition hover:scale-[1.02] active:scale-95"
+                >
+                  Throw to {target}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : pendingAction.action === 'pass_bomb' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-red-400">
+            Bomb is with {pendingAction.playerName}... {(pendingAction.tickNumber || 0) + 1}/{pendingAction.totalTicks || '?'}
+          </div>
+        ) : pendingAction.action === 'draw' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[11px] text-purple-300 mb-3" style={{ textShadow: '0 0 10px rgba(168,85,247,0.5)' }}>
+              {"\uD83D\uDD2E"} YOUR TURN {"\uD83D\uDD2E"}
+            </div>
+            <button
+              onClick={() => onAction({ action: 'draw' })}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-lg shadow-lg shadow-purple-600/30 transition hover:scale-[1.02] active:scale-95"
+              style={{ textShadow: '0 0 8px rgba(139,92,246,0.5)' }}
+            >
+              {"\uD83E\uDD1E"} DRAW FROM THE BAG
+            </button>
+          </>
+        ) : pendingAction.action === 'draw' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">
+            Waiting for {pendingAction.playerName} to draw...
+          </div>
+        ) : pendingAction.action === 'eject' ? (
+          (() => {
+            const ejects = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+            const hasEjected = ejects[playerName];
+            if (hasEjected) {
+              return (
+                <div className="pixel-font text-[9px] text-green-400">
+                  🪂 LANDED SAFELY — {hasEjected.distance >= 1000000 ? (hasEjected.distance/1000000).toFixed(1) + 'M km' : Math.round(hasEjected.distance).toLocaleString() + ' km'}
+                </div>
+              );
+            }
+            return (
+              <>
+                <div className="pixel-font text-[9px] text-indigo-300 mb-2">🚀 YOUR ROCKET IS FLYING</div>
+                <button
+                  onClick={() => onAction({ action: 'eject' })}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-lg shadow-lg shadow-red-600/30 transition hover:scale-[1.02] active:scale-95"
+                >
+                  🪂 EJECT
+                </button>
+                <div className="pixel-font text-[8px] text-slate-600 mt-2">Tap to land safely at current distance</div>
+              </>
+            );
+          })()
+        ) : pendingAction.action === 'pick_stock' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-emerald-300 mb-2">{"\uD83D\uDCC8"} YOUR PICK</div>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {(pendingAction.stockPool || []).filter(s => !pendingAction.taken[s.ticker]).map(s => (
+                <button
+                  key={s.ticker}
+                  onClick={() => onAction({ action: 'pick_stock', ticker: s.ticker })}
+                  className="w-full py-2.5 px-3 rounded-lg bg-emerald-500/15 border border-emerald-500/20 text-left transition hover:bg-emerald-500/25 active:scale-95"
+                >
+                  <span className="font-mono text-sm font-bold text-emerald-300">{s.ticker}</span>
+                  <span className="ml-2 font-mono text-[10px] text-slate-500">{s.note}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : pendingAction.action === 'pick_stock' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">
+            {pendingAction.playerName} is picking...
+          </div>
+        ) : pendingAction.action === 'sell' ? (
+          (() => {
+            const sellState = (typeof window !== 'undefined' && window.__stockSellState) || {};
+            const hasSold = sellState[playerName];
+            const myTicker = pendingAction.playerStocks?.[playerName];
+
+            if (hasSold) {
+              return (
+                <div className="text-center">
+                  <div className="pixel-font text-[9px] text-emerald-400 mb-1">SOLD {myTicker}</div>
+                  <div className="font-mono text-lg font-bold text-white">${hasSold.price.toFixed(2)}</div>
+                  <div className={`font-mono text-xs ${hasSold.percentChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {hasSold.percentChange >= 0 ? '+' : ''}{hasSold.percentChange.toFixed(1)}%
+                  </div>
+                </div>
+              );
+            }
+
+            if (!myTicker) {
+              return <div className="pixel-font text-[9px] text-slate-500">Watching the charts...</div>;
+            }
+
+            return (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="pixel-font text-[9px] text-emerald-300">{myTicker}</span>
+                  <span className="font-mono text-xs text-slate-500">HOLDING</span>
+                </div>
+                <button
+                  onClick={() => onAction({ action: 'sell', ticker: myTicker })}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 text-white font-bold text-base shadow-lg shadow-emerald-600/30 transition hover:scale-[1.02] active:scale-95"
+                >
+                  {"\uD83D\uDCB0"} SELL NOW
+                </button>
+              </>
+            );
+          })()
+        ) : pendingAction.action === 'stop_number' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-cyan-300 mb-2">#️⃣ YOUR NUMBER</div>
+            <button onClick={() => onAction({ action: 'stop_number' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              STOP ✋
+            </button>
+          </>
+        ) : pendingAction.action === 'stop_number' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">Waiting for {pendingAction.playerName}...</div>
+        ) : pendingAction.action === 'spin_wheel' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-amber-300 mb-2">🎡 YOU'RE THE SPINNER</div>
+            <button onClick={() => onAction({ action: 'spin_wheel' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-pink-500 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              SPIN THE WHEEL 🎡
+            </button>
+          </>
+        ) : pendingAction.action === 'spin_wheel' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is spinning...</div>
+        ) : pendingAction.action === 'pull_slots' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-pink-300 mb-2">🎰 YOUR TURN</div>
+            <button onClick={() => onAction({ action: 'pull_slots' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-pink-600 to-rose-500 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              PULL THE LEVER 🎰
+            </button>
+          </>
+        ) : pendingAction.action === 'pull_slots' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">Waiting for {pendingAction.playerName}...</div>
+        ) : pendingAction.action === 'flip_coin' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-yellow-300 mb-2">🪙 YOUR FLIP</div>
+            <button onClick={() => onAction({ action: 'flip_coin' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              FLIP 🪙
+            </button>
+          </>
+        ) : pendingAction.action === 'flip_coin' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is flipping...</div>
+        ) : pendingAction.action === 'roll_dice' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-amber-300 mb-2">{"\uD83C\uDFB2"} YOUR ROLL</div>
+            <button onClick={() => onAction({ action: 'roll_dice' })}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-600 to-red-600 text-white font-bold text-lg shadow-lg transition hover:scale-[1.02] active:scale-95">
+              ROLL DICE {"\uD83C\uDFB2"}
+            </button>
+          </>
+        ) : pendingAction.action === 'roll_dice' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">Waiting for {pendingAction.playerName} to roll...</div>
+        ) : pendingAction.action === 'reroll_dice' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-amber-300 mb-2">You rolled: {pendingAction.d1} + {pendingAction.d2} = {pendingAction.total}</div>
+            <div className="flex gap-2">
+              <button onClick={() => onAction({ action: 'keep_dice' })}
+                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                KEEP {"\u2713"}
+              </button>
+              <button onClick={() => onAction({ action: 'reroll_die', dieIndex: 0 })}
+                className="flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                Re-roll {pendingAction.d1}
+              </button>
+              <button onClick={() => onAction({ action: 'reroll_die', dieIndex: 1 })}
+                className="flex-1 py-3 rounded-xl bg-amber-600 text-white font-bold text-sm shadow-lg transition active:scale-95">
+                Re-roll {pendingAction.d2}
+              </button>
+            </div>
+          </>
+        ) : pendingAction.action === 'reroll_dice' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is deciding...</div>
+        ) : pendingAction.action === 'pick_card_blind' ? (
+          (() => {
+            const myCards = pendingAction.hands?.[playerName];
+            if (!myCards) return <div className="pixel-font text-[9px] text-slate-500">Waiting for others to pick...</div>;
+            return (
+              <>
+                <div className="pixel-font text-[9px] text-indigo-300 mb-3">{"\uD83C\uDCCF"} PICK A CARD BLIND</div>
+                <div className="flex justify-center gap-3 mb-2">
+                  {[0, 1, 2].map(i => (
+                    <button key={i} onClick={() => onAction({ action: 'pick_card_blind', cardIndex: i })}
+                      className="w-16 h-20 rounded-lg border-2 border-indigo-400/50 bg-indigo-900/50 flex items-center justify-center text-3xl transition hover:bg-indigo-700/50 active:scale-90 hover:border-indigo-400">
+                      {"\uD83C\uDCA0"}
+                    </button>
+                  ))}
+                </div>
+                <div className="pixel-font text-[7px] text-slate-600">Tap a card to pick it</div>
+              </>
+            );
+          })()
+        ) : pendingAction.action === 'drop_plinko' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-cyan-300 mb-2">{"\uD83D\uDD34"} DROP YOUR BALL</div>
+            <div className="flex flex-wrap justify-center gap-1.5 mb-1">
+              {Array.from({ length: 13 }, (_, i) => (
+                <button key={i} onClick={() => onAction({ action: 'drop_plinko', column: i })}
+                  className="w-8 h-8 rounded-lg bg-cyan-600/30 border border-cyan-400/30 text-cyan-300 font-mono text-xs font-bold transition hover:bg-cyan-500/40 active:scale-90">
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <div className="pixel-font text-[7px] text-slate-600">Pick a column (1-13)</div>
+          </>
+        ) : pendingAction.action === 'drop_plinko' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is choosing a column...</div>
+        ) : pendingAction.action === 'pick_lane' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[9px] text-green-300 mb-2">{"\uD83C\uDFC7"} PICK YOUR LANE</div>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+              {(pendingAction.lanes || []).filter(l => !pendingAction.taken[l]).map(l => (
+                <button key={l} onClick={() => onAction({ action: 'pick_lane', lane: l })}
+                  className="w-full py-2.5 px-3 rounded-lg bg-green-500/15 border border-green-500/20 text-left transition hover:bg-green-500/25 active:scale-95">
+                  <span className="font-bold text-sm text-green-300">{l}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : pendingAction.action === 'pick_lane' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-slate-500">{pendingAction.playerName} is picking a lane...</div>
+        ) : pendingAction.action === 'whip_horse' ? (
+          (() => {
+            const whips = pendingAction.whipsRemaining?.[playerName] || 0;
+            if (whips <= 0) {
+              return (
+                <div className="text-center">
+                  <div className="pixel-font text-[9px] text-slate-500">No whips remaining</div>
+                  <div className="pixel-font text-[8px] text-slate-600 mt-1">Turn {pendingAction.turnNumber}/{pendingAction.totalTurns}</div>
+                </div>
+              );
+            }
+            return (
+              <>
+                <div className="pixel-font text-[9px] text-green-300 mb-2">{"\uD83C\uDFC7"} RACE — Turn {pendingAction.turnNumber}/{pendingAction.totalTurns}</div>
+                <button onClick={() => onAction({ action: 'whip_horse' })}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-base shadow-lg transition hover:scale-[1.02] active:scale-95">
+                  {"\uD83E\uDE7F"} WHIP! ({whips} left)
+                </button>
+                <div className="pixel-font text-[7px] text-slate-600 mt-1">Guarantee your horse advances this turn</div>
+              </>
+            );
+          })()
+        ) : pendingAction.action === 'shield' && isMyTurn ? (
+          <>
+            <div className="pixel-font text-[11px] text-red-400 mb-2 animate-pulse" style={{ textShadow: '0 0 10px rgba(239,68,68,0.5)' }}>
+              {"\u26A0\uFE0F"} TARGETED! USE SHIELD?
+            </div>
+            <button onClick={() => onAction({ action: 'shield' })}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-lg shadow-lg shadow-blue-600/30 transition hover:scale-[1.02] active:scale-95 animate-pulse">
+              {"\uD83D\uDEE1\uFE0F"} ACTIVATE SHIELD
+            </button>
+          </>
+        ) : pendingAction.action === 'shield' && !isMyTurn ? (
+          <div className="pixel-font text-[9px] text-red-400">{"\uD83D\uDD2B"} Targeting {pendingAction.playerName}...</div>
+        ) : pendingAction.action === 'shield_unavailable' ? (
+          <div className="pixel-font text-[9px] text-slate-500">{"\uD83D\uDD2B"} Firing at {pendingAction.playerName}... (shield used)</div>
+        ) : pendingAction.action === 'move_direction' ? (
+          (() => {
+            const alive = pendingAction.aliveNames || [];
+            const isAlive = alive.includes(playerName);
+            const received = pendingAction.received || {};
+            if (!isAlive) {
+              return <div className="pixel-font text-[9px] text-slate-500">Eliminated — watching zone {pendingAction.phase}</div>;
+            }
+            if (received[playerName]) {
+              return <div className="pixel-font text-[9px] text-emerald-400">Move locked in!</div>;
+            }
+            return (
+              <>
+                <div className="pixel-font text-[9px] text-orange-300 mb-2">{"\uD83D\uDFE2"} ZONE SHRINKING — Phase {pendingAction.phase}</div>
+                <div className="grid grid-cols-3 gap-1.5 max-w-[160px] mx-auto">
+                  <div />
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'up' })}
+                    className="py-2 rounded-lg bg-orange-500/20 border border-orange-400/30 text-orange-300 font-bold text-lg transition active:scale-90">{"\u2191"}</button>
+                  <div />
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'left' })}
+                    className="py-2 rounded-lg bg-orange-500/20 border border-orange-400/30 text-orange-300 font-bold text-lg transition active:scale-90">{"\u2190"}</button>
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'stay' })}
+                    className="py-2 rounded-lg bg-slate-500/20 border border-slate-400/30 text-slate-300 font-bold text-xs transition active:scale-90">STAY</button>
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'right' })}
+                    className="py-2 rounded-lg bg-orange-500/20 border border-orange-400/30 text-orange-300 font-bold text-lg transition active:scale-90">{"\u2192"}</button>
+                  <div />
+                  <button onClick={() => onAction({ action: 'move_direction', direction: 'down' })}
+                    className="py-2 rounded-lg bg-orange-500/20 border border-orange-400/30 text-orange-300 font-bold text-lg transition active:scale-90">{"\u2193"}</button>
+                  <div />
+                </div>
+              </>
+            );
+          })()
+        ) : pendingAction.action === 'choose_cards' ? (
+          (() => {
+            const myCards = pendingAction.hands?.[playerName];
+            if (!myCards) return <div className="pixel-font text-[9px] text-slate-500">Waiting for others to draft...</div>;
+            return <CardDraftPicker cards={myCards} keepCount={pendingAction.keepCount} onSubmit={(indices) => onAction({ action: 'choose_cards', indices })} />;
+          })()
+        ) : pendingAction.type === "waiting" ? (
+          <div className="pixel-font text-[9px] text-indigo-400 animate-pulse">WAITING FOR YOUR TURN...</div>
+        ) : (
+          <div className="pixel-font text-[9px] text-amber-400">ACTION REQUIRED</div>
+        )}
+        {pendingAction.deadline && (isMyTurn || pendingAction.action === 'choose_cards' || pendingAction.action === 'pick_stock' || pendingAction.action === 'pick_card_blind' || pendingAction.action === 'move_direction') ? (
+          <CountdownTimer deadline={pendingAction.deadline} />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function VoteGrid({ votes, deadline, onVote, playerName }) {
+  const [timeLeft, setTimeLeft] = useState(10);
+
+  useEffect(() => {
+    if (!deadline) return;
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setTimeLeft(remaining);
+    }, 100);
+    return () => clearInterval(interval);
+  }, [deadline]);
+
+  const hasVoted = playerName && votes[playerName];
+
+  // Count votes per mode
+  const voteCounts = {};
+  Object.values(votes).forEach(id => { voteCounts[id] = (voteCounts[id] || 0) + 1; });
+
+  return (
+    <div className="rounded-2xl border border-indigo-500/20 bg-[#0a0a1a] p-5">
+      <div className="text-center mb-4">
+        <div className="pixel-font text-[11px] text-indigo-300" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>
+          {"\uD83D\uDDF3\uFE0F"} VOTE FOR NEXT GAME
+        </div>
+        <div className="pixel-font text-[8px] text-slate-500 mt-1">{timeLeft}s remaining</div>
+        <div className="mx-auto mt-2 h-1 w-32 rounded-full bg-white/10 overflow-hidden">
+          <div className="h-full rounded-full bg-indigo-500 transition-all duration-100" style={{ width: `${timeLeft * 10}%` }} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+        {/* Random option */}
+        <button
+          onClick={() => onVote({ action: 'vote_game', modeId: 'random' })}
+          className={`relative p-3 rounded-xl text-center transition ${
+            hasVoted === 'random' ? 'bg-indigo-500/30 border-2 border-indigo-400 ring-1 ring-indigo-400/50' :
+            'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-indigo-500/30'
+          }`}
+        >
+          <div className="text-2xl mb-1">{"\uD83C\uDFB2"}</div>
+          <div className="pixel-font text-[7px] text-indigo-300">RANDOM</div>
+          {voteCounts['random'] ? <div className="absolute top-1 right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center pixel-font text-[6px]">{voteCounts['random']}</div> : null}
+        </button>
+
+        {MODE_META.map(mode => (
+          <button
+            key={mode.id}
+            onClick={() => onVote({ action: 'vote_game', modeId: mode.id })}
+            className={`relative p-3 rounded-xl text-center transition ${
+              hasVoted === mode.id ? 'bg-indigo-500/30 border-2 border-indigo-400 ring-1 ring-indigo-400/50' :
+              'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-indigo-500/30'
+            }`}
+          >
+            <div className="text-2xl mb-1">{mode.icon}</div>
+            <div className="pixel-font text-[6px] text-white leading-tight">{mode.name}</div>
+            {voteCounts[mode.id] ? <div className="absolute top-1 right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center pixel-font text-[6px]">{voteCounts[mode.id]}</div> : null}
+          </button>
+        ))}
+      </div>
+
+      {/* Who voted for what */}
+      {Object.keys(votes).length > 0 ? (
+        <div className="flex flex-wrap gap-2 justify-center">
+          {Object.entries(votes).map(([name, modeId]) => {
+            const mode = MODE_META.find(m => m.id === modeId);
+            return (
+              <div key={name} className="px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+                <span className="font-mono text-[10px] text-white">{name}</span>
+                <span className="ml-1.5 text-[10px]">{modeId === 'random' ? '\uD83C\uDFB2' : mode?.icon}</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SeriesScoreboard({ scores, history, round, totalRounds, selectionGoal }) {
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const isLoserMode = selectionGoal === 'loser';
+
+  return (
+    <div className="rounded-2xl border border-indigo-500/20 bg-[#0d0d24] p-6">
+      <div className="text-center mb-4">
+        <div className="pixel-font text-[11px] text-indigo-300" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>
+          {"\uD83C\uDFC6"} SERIES SCOREBOARD
+        </div>
+        <div className="pixel-font text-[8px] text-slate-500 mt-1">
+          Round {round} of {totalRounds} {"\u2022"} {isLoserMode ? 'Most losses loses' : 'Most wins wins'}
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        {sorted.map(([name, score], i) => (
+          <div key={name} className="flex items-center justify-between px-4 py-2 rounded-xl" style={{
+            background: i === 0 ? 'rgba(251,191,36,0.1)' : 'rgba(255,255,255,0.03)',
+            border: i === 0 ? '1px solid rgba(251,191,36,0.3)' : '1px solid rgba(255,255,255,0.05)',
+          }}>
+            <div className="flex items-center gap-3">
+              <span className="pixel-font text-[10px]" style={{ color: i === 0 ? '#fbbf24' : '#94a3b8' }}>
+                #{i + 1}
+              </span>
+              <span className="font-mono text-sm font-bold text-white">{name}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {Array.from({ length: score }, (_, j) => (
+                  <div key={j} className="w-1.5 h-4 rounded-sm" style={{ background: isLoserMode ? '#ef4444' : '#fbbf24' }} />
+                ))}
+                {Array.from({ length: Math.max(0, totalRounds - score) }, (_, j) => (
+                  <div key={`e-${j}`} className="w-1.5 h-4 rounded-sm bg-white/10" />
+                ))}
+              </div>
+              <span className="pixel-font text-[10px] text-white">{score}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {history.length > 0 ? (
+        <>
+          <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Round History</div>
+          <div className="flex flex-wrap gap-2">
+            {history.map((h, i) => (
+              <div key={i} className="px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                <span className="pixel-font text-[7px] text-slate-500">R{h.round}</span>
+                <span className="font-mono text-[9px] text-white ml-1">{h.selectedName}</span>
+                <span className="font-mono text-[8px] text-slate-600 ml-1">({h.modeName})</span>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function SeriesResult({ scores, history, totalRounds, selectionGoal }) {
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const champion = sorted[0];
+  const isLoserMode = selectionGoal === 'loser';
+
+  return (
+    <div className="rounded-2xl border border-amber-400/30 bg-gradient-to-br from-[#1a1033] to-[#0d0d24] p-8 text-center">
+      <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-2">Series Complete</div>
+      <div className="pixel-font text-2xl mb-4" style={{
+        color: isLoserMode ? '#f87171' : '#fbbf24',
+        textShadow: isLoserMode ? '0 0 20px rgba(248,113,113,0.5)' : '0 0 20px rgba(251,191,36,0.5)',
+      }}>
+        {isLoserMode ? '\uD83D\uDC80 ULTIMATE LOSER \uD83D\uDC80' : '\uD83D\uDC51 SERIES CHAMPION \uD83D\uDC51'}
+      </div>
+      <div className="pixel-font text-xl text-white mb-6" style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>
+        {champion[0]}
+      </div>
+      <div className="pixel-font text-[9px] text-slate-400 mb-6">
+        {champion[1]} {isLoserMode ? 'losses' : 'wins'} in {history.length} round{history.length !== 1 ? 's' : ''}
+      </div>
+
+      <div className="space-y-1.5 mb-4">
+        {sorted.map(([name, score], i) => (
+          <div key={name} className="flex items-center justify-between px-4 py-1.5 rounded-lg" style={{
+            background: i === 0 ? (isLoserMode ? 'rgba(248,113,113,0.15)' : 'rgba(251,191,36,0.15)') : 'rgba(255,255,255,0.03)',
+            border: i === 0 ? (isLoserMode ? '1px solid rgba(248,113,113,0.3)' : '1px solid rgba(251,191,36,0.3)') : '1px solid rgba(255,255,255,0.05)',
+          }}>
+            <span className="font-mono text-sm font-bold text-white">{name}</span>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {Array.from({ length: score }, (_, j) => (
+                  <div key={j} className="w-1.5 h-4 rounded-sm" style={{ background: isLoserMode ? '#ef4444' : '#fbbf24' }} />
+                ))}
+              </div>
+              <span className="pixel-font text-[10px] text-white">{score}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {history.length > 0 ? (
+        <div className="flex flex-wrap justify-center gap-2 mt-4">
+          {history.map((h, i) => (
+            <div key={i} className="px-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+              <span className="pixel-font text-[7px] text-slate-500">R{h.round}</span>
+              <span className="font-mono text-[9px] text-white ml-1">{h.selectedName}</span>
+              <span className="font-mono text-[8px] text-slate-600 ml-1">({h.modeName})</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export default function ChoreChaosApp() {
+  // ── Device mode state ──
+  const [deviceMode, setDeviceMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('room') ? null : 'choose';
+  });
+  const [hostName, setHostName] = useState('');
+  const [hostSetupDone, setHostSetupDone] = useState(false);
+
+  const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
+  const [taskLabel, setTaskLabel] = useState("");
+  const [selectionGoal, setSelectionGoal] = useState("winner");
+  const [selectedModeId, setSelectedModeId] = useState("auto");
+  const [gameFormat, setGameFormat] = useState("single");
+
+  // ── Series (Best of N) state ──
+  const [seriesActive, setSeriesActive] = useState(false);
+  const [seriesConfig, setSeriesConfig] = useState(null);
+  const [seriesScores, setSeriesScores] = useState({});
+  const [seriesRound, setSeriesRound] = useState(0);
+  const [seriesHistory, setSeriesHistory] = useState([]);
+  const [seriesComplete, setSeriesComplete] = useState(false);
+  const [showSeriesSetup, setShowSeriesSetup] = useState(false);
+  const [showSeriesScoreboard, setShowSeriesScoreboard] = useState(false);
+  const seriesScoreRef = useRef({});
+  const seriesRoundRecordedRef = useRef(null);
+
+  const [result, setResult] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [playbackStep, setPlaybackStep] = useState(0);
+  const [playbackDone, setPlaybackDone] = useState(false);
+  const [gameActive, setGameActive] = useState(false);
+  const [suddenDeathRound, setSuddenDeathRound] = useState(0);
+  const [suddenDeathNames, setSuddenDeathNames] = useState(null);
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+
+  // Room / spectator / player state
+  const [roomMode, setRoomMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('room') ? 'joining' : 'none';
+  });
+  const [roomCode, setRoomCode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('room') || null;
+  });
+  const [roomChannel, setRoomChannel] = useState(null);
+  const [viewerCount, setViewerCount] = useState(0);
+  const [spectatorState, setSpectatorState] = useState(null);
+  const [spectatorConnected, setSpectatorConnected] = useState(false);
+  const [roomClosed, setRoomClosed] = useState(false);
+  const [playerName, setPlayerName] = useState(null);
+  const [joinedPlayers, setJoinedPlayers] = useState({});
+  const [interactiveMode, setInteractiveMode] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [roomPlayerNames, setRoomPlayerNames] = useState([]);
+  const currentActionHandler = React.useRef(null);
+  const roomModeRef = React.useRef(roomMode);
+  const [interactiveBombState, setInteractiveBombState] = useState(null);
+  const [interactiveRocketEjects, setInteractiveRocketEjects] = useState({});
+  const [draftChoices, setDraftChoices] = useState({});
+  const [stockDraftState, setStockDraftState] = useState(null);
+  const [stockSellState, setStockSellState] = useState({});
+  const [highCardDraftHands, setHighCardDraftHands] = useState(null);
+  const [horseWhips, setHorseWhips] = useState({});
+  const [horseLanePicks, setHorseLanePicks] = useState(null);
+  const [usedShields, setUsedShields] = useState({});
+  const [battleMoves, setBattleMoves] = useState(null);
+  const [voteActive, setVoteActive] = useState(false);
+  const [votes, setVotes] = useState({});
+  const votesRef = useRef({});
+  const [voteDeadline, setVoteDeadline] = useState(null);
+  const [spectatorSeries, setSpectatorSeries] = useState(null);
+  const [seriesTied, setSeriesTied] = useState(null);
+  const [handoffReady, setHandoffReady] = useState(false);
+
+  const fetchLeaderboard = useCallback(async () => {
+    if (!_supabase) { setLeaderboardLoading(false); return; }
+    try {
+      const { data } = await _supabase
+        .from('runouts_games')
+        .select('*')
+        .order('played_at', { ascending: true });
+      setLeaderboardData(data || []);
+    } catch (e) {
+      // Silent fail
+    }
+    setLeaderboardLoading(false);
+  }, []);
+
+  useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
+
+  useEffect(() => { roomModeRef.current = roomMode; }, [roomMode]);
+
+  // ── Derived state for local interactive mode ──
+  const _trimmedNames = names.map(n => n.trim());
+  const _filledCount = _trimmedNames.filter(Boolean).length;
+  const _allFilled = _trimmedNames.every(Boolean);
+  const _namesUnique = new Set(_trimmedNames.filter(Boolean)).size === _filledCount;
+  const _hasEnough = _filledCount >= 2;
+  const _localCanRun = _allFilled && _namesUnique && _hasEnough;
+  const localInteractiveMode = deviceMode === 'local' && _localCanRun;
+
+  function isPrivateAction(action) {
+    return action === 'choose_cards' || action === 'pick_card_blind' || action === 'pick_stock';
+  }
+
+  useEffect(() => { window.__interactiveMode = interactiveMode || localInteractiveMode; }, [interactiveMode, localInteractiveMode]);
+
+  // In local interactive mode, track playerName to whoever's turn it is
+  useEffect(() => {
+    if (localInteractiveMode && pendingAction?.playerName) {
+      setPlayerName(pendingAction.playerName);
+    }
+  }, [localInteractiveMode, pendingAction?.playerName]);
+
+  // Reset handoff when pending action changes to a new player
+  useEffect(() => {
+    if (pendingAction?.playerName) {
+      setHandoffReady(false);
+    }
+  }, [pendingAction?.playerName]);
+
+  useEffect(() => {
+    function handleRocketComplete() {
+      if ((result?.modeId === 'rocket' || result?.modeId === 'bomb' || result?.modeId === 'stock-market') && !playbackDone) {
+        // Interactive rocket: compute final result from eject decisions
+        if (result?.modeId === 'rocket' && (interactiveMode || localInteractiveMode) && Object.keys(interactiveRocketEjects).length > 0) {
+          const formatDist = (d) => d >= 1000000 ? (d/1000000).toFixed(2) + 'M km' : Math.round(d).toLocaleString() + ' km';
+
+          const finalPlayers = result.players.map(p => {
+            const eject = interactiveRocketEjects[p.name];
+            const ejected = !!eject;
+            const crashed = !ejected;
+            const finalDistance = ejected ? eject.distance : p.distance;
+            // Crashed players lose everything
+            const effectiveDistance = crashed ? 0 : finalDistance;
+            return {
+              ...p,
+              ejected,
+              crashed,
+              distance: finalDistance,
+              effectiveDistance,
+              distanceFormatted: formatDist(finalDistance),
+              time: ejected ? eject.time : p.crashTime,
+            };
+          });
+
+          finalPlayers.sort((a, b) => b.effectiveDistance - a.effectiveDistance);
+          finalPlayers.forEach((p, i) => { p.rank = i + 1; });
+
+          const selected = result.selectionGoal === 'winner' ? finalPlayers[0] : finalPlayers[finalPlayers.length - 1];
+
+          result.selectedName = selected.name;
+          result.headline = pickRandomMessage(
+            result.selectionGoal === 'winner' ? WIN_MESSAGES : LOSE_MESSAGES,
+            selected.name,
+            result.selectionGoal === 'winner' ? 'win' : 'lose'
+          );
+          result.summary = selected.name + ' ' + (selected.ejected ? 'ejected' : 'crashed') + ' at ' + selected.distanceFormatted + '.';
+          result.isTie = false;
+          result.players = finalPlayers.map(p => ({
+            ...p,
+            selected: p.name === selected.name,
+            headline: p.ejected ? 'Ejected at ' + p.distanceFormatted : 'Crashed at ' + p.distanceFormatted,
+            subline: p.ejected ? 'Safe landing' : 'Burned up',
+            chips: [p.distanceFormatted, p.ejected ? 'Ejected' : 'Crashed'],
+          }));
+
+          pushHistory(result);
+          setPendingAction(null);
+          currentActionHandler.current = null;
+        }
+
+        // Interactive stock market: result was computed in StockMarketPlayback before this event
+        if (result?.isInteractiveChart && result?.selectedName) {
+          pushHistory(result);
+          setPendingAction(null);
+          currentActionHandler.current = null;
+        }
+
+        setPlaybackStep(2);
+        setPlaybackDone(true);
+      }
+    }
+    window.addEventListener('rocket-complete', handleRocketComplete);
+    return () => window.removeEventListener('rocket-complete', handleRocketComplete);
+  }, [result, playbackDone, interactiveMode, interactiveRocketEjects, stockSellState]);
+
+  // Interactive Black Marble turn management
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'black-marble') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      return;
+    }
+
+    const drawerIndex = playbackStep;
+    if (drawerIndex >= result.players.length) return;
+
+    const currentDrawer = result.players[drawerIndex]?.name;
+    if (!currentDrawer) return;
+
+    broadcastEvent({
+      type: 'turn_prompt',
+      playerName: currentDrawer,
+      action: 'draw',
+      turnNumber: drawerIndex + 1,
+      totalDraws: result.players.length,
+    });
+
+    setPendingAction({
+      type: 'turn',
+      playerName: currentDrawer,
+      action: 'draw',
+      turnNumber: drawerIndex + 1,
+      totalDraws: result.players.length,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'draw' || payload.playerName !== currentDrawer) return;
+      advancePlayback();
+    };
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // Interactive Bomb turn management
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'bomb') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      return;
+    }
+
+    // Initialize bomb state on first run
+    if (!interactiveBombState && playbackStep >= 0) {
+      const firstHolder = result.players[secureRandomInt(result.players.length)].name;
+      const state = {
+        holder: firstHolder,
+        previousHolder: null,
+        tickNumber: 0,
+        sequence: [firstHolder],
+        phase: 'waiting',
+      };
+      setInteractiveBombState(state);
+      return; // Let the next render pick up the new state
+    }
+
+    if (!interactiveBombState || interactiveBombState.phase !== 'waiting') return;
+
+    const { holder, previousHolder, tickNumber, sequence } = interactiveBombState;
+    const totalTicks = result.totalTicks;
+    const tickTimings = result.tickTimings;
+
+    // Check if bomb should detonate
+    if (tickNumber >= totalTicks - 1) {
+      const selectedName = holder;
+      // Build final result
+      const timesHeld = {};
+      result.players.forEach(p => { timesHeld[p.name] = 0; });
+      sequence.forEach(n => { timesHeld[n] = (timesHeld[n] || 0) + 1; });
+
+      const headline = pickRandomMessage(
+        result.selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        result.selectionGoal === "winner" ? "win" : "lose"
+      );
+
+      const finalPlayers = result.players.map(p => ({
+        ...p,
+        selected: p.name === selectedName,
+        timesHeld: timesHeld[p.name] || 0,
+        headline: p.name === selectedName ? "BOOM!" : "Survived",
+        subline: `Held the bomb ${timesHeld[p.name] || 0} time${(timesHeld[p.name] || 0) !== 1 ? 's' : ''}`,
+        chips: p.name === selectedName ? ["💥", `Held ${timesHeld[p.name] || 0}x`] : ["Safe", `Held ${timesHeld[p.name] || 0}x`],
+      }));
+      const sorted = [...finalPlayers].sort((a, b) => a.timesHeld - b.timesHeld);
+      sorted.forEach((p, i) => { p.rank = i + 1; });
+      // Apply ranks back
+      finalPlayers.forEach(p => {
+        const s = sorted.find(x => x.name === p.name);
+        if (s) p.rank = s.rank;
+      });
+
+      // Update result object in place
+      result.selectedName = selectedName;
+      result.headline = headline;
+      result.summary = `The bomb went off in ${selectedName}'s hands.`;
+      result.sequence = sequence;
+      result.players = finalPlayers;
+      result.isTie = false;
+
+      setInteractiveBombState(prev => ({ ...prev, phase: 'detonated' }));
+
+      broadcastEvent({ type: 'bomb_detonated', holder: selectedName, finalResult: result });
+
+      // Trigger completion
+      setPlaybackDone(true);
+      setPlaybackStep(2);
+      setPendingAction(null);
+      currentActionHandler.current = null;
+
+      // Record to leaderboard
+      pushHistory(result);
+      return;
+    }
+
+    // Normal tick: prompt current holder to pass
+    const targets = result.players
+      .map(p => p.name)
+      .filter(n => n !== holder && (previousHolder === null || n !== previousHolder || result.players.length <= 2));
+
+    const timeoutMs = tickTimings[tickNumber] || 500;
+
+    broadcastEvent({
+      type: 'turn_prompt',
+      playerName: holder,
+      action: 'pass_bomb',
+      targets,
+      timeoutMs,
+    });
+
+    broadcastEvent({
+      type: 'bomb_state',
+      holder,
+      tickNumber,
+      totalTicks,
+      timeoutMs,
+    });
+
+    setPendingAction({
+      type: 'turn',
+      playerName: holder,
+      action: 'pass_bomb',
+      targets,
+      deadline: Date.now() + timeoutMs,
+      tickNumber,
+      totalTicks,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'pass_bomb' || payload.playerName !== holder) return;
+      const target = targets.includes(payload.target) ? payload.target : targets[secureRandomInt(targets.length)];
+
+      setInteractiveBombState(prev => ({
+        holder: target,
+        previousHolder: holder,
+        tickNumber: prev.tickNumber + 1,
+        sequence: [...prev.sequence, target],
+        phase: 'waiting',
+      }));
+    };
+
+    // Timeout: auto-pass
+    const timer = setTimeout(() => {
+      const target = targets[secureRandomInt(targets.length)];
+      setInteractiveBombState(prev => ({
+        holder: target,
+        previousHolder: holder,
+        tickNumber: prev.tickNumber + 1,
+        sequence: [...prev.sequence, target],
+        phase: 'waiting',
+      }));
+    }, timeoutMs);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, interactiveBombState]);
+
+  // Interactive Rocket eject management
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'rocket') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      window.__rocketInteractive = false;
+      return;
+    }
+
+    // Expose interactive state on window for cross-component communication
+    window.__interactiveRocketEjects = interactiveRocketEjects;
+    window.__rocketInteractive = true;
+
+    // Register action handler for eject actions
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'eject') return;
+      const actor = payload.playerName;
+      if (!actor || interactiveRocketEjects[actor]) return; // Already ejected
+
+      const currentElapsed = window.__rocketElapsed || 0;
+      const distance = 100 * currentElapsed + 0.5 * 200 * currentElapsed * currentElapsed;
+
+      setInteractiveRocketEjects(prev => ({
+        ...prev,
+        [actor]: { time: currentElapsed, distance }
+      }));
+
+      broadcastEvent({
+        type: 'rocket_eject',
+        playerName: actor,
+        distance,
+        distanceFormatted: distance >= 1000000 ? (distance/1000000).toFixed(1) + 'M km' : Math.round(distance).toLocaleString() + ' km',
+      });
+    };
+
+    // Set pending action so all flying players see the EJECT button
+    setPendingAction({
+      type: 'realtime',
+      action: 'eject',
+      modeId: 'rocket',
+    });
+
+    return () => {
+      currentActionHandler.current = null;
+    };
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackDone, interactiveRocketEjects]);
+
+  // Interactive Poker draft management
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result) return;
+    if (result.modeId !== 'holdem' && result.modeId !== 'plo') return;
+    if (!result.draftPhase) return;
+
+    // Broadcast draft prompt to all players
+    broadcastEvent({
+      type: 'choice_prompt',
+      action: 'choose_cards',
+      modeId: result.modeId,
+      keepCount: result.keepCount,
+      hands: result.draftHands,
+    });
+
+    const allPlayers = Object.keys(result.draftHands);
+    const choices = {};
+
+    if (localInteractiveMode && !interactiveMode) {
+      // Local mode: cycle through players one at a time with handoff
+      const currentPicker = allPlayers[0];
+      setPendingAction({
+        type: 'turn',
+        action: 'choose_cards',
+        playerName: currentPicker,
+        modeId: result.modeId,
+        keepCount: result.keepCount,
+        hands: result.draftHands,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'choose_cards') return;
+        const actor = payload.playerName;
+        if (!result.draftHands[actor]) return;
+        if (choices[actor]) return;
+
+        const indices = payload.indices;
+        if (!Array.isArray(indices) || indices.length !== result.keepCount) return;
+
+        choices[actor] = indices;
+        setDraftChoices({ ...choices });
+
+        const allSubmitted = allPlayers.every(name => choices[name]);
+        if (allSubmitted) {
+          completeDraft(choices);
+        } else {
+          // Advance to next unsubmitted player
+          const nextPlayer = allPlayers.find(name => !choices[name]);
+          if (nextPlayer) {
+            setPendingAction({
+              type: 'turn',
+              action: 'choose_cards',
+              playerName: nextPlayer,
+              modeId: result.modeId,
+              keepCount: result.keepCount,
+              hands: result.draftHands,
+            });
+          }
+        }
+      };
+    } else {
+      // Multiplayer mode: all players pick simultaneously
+      setPendingAction({
+        type: 'choice',
+        action: 'choose_cards',
+        modeId: result.modeId,
+        keepCount: result.keepCount,
+        hands: result.draftHands,
+        received: {},
+        playersNeeded: allPlayers,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'choose_cards') return;
+        const actor = payload.playerName;
+        if (!result.draftHands[actor]) return;
+        if (choices[actor]) return; // Already submitted
+
+        const indices = payload.indices;
+        if (!Array.isArray(indices) || indices.length !== result.keepCount) return;
+
+        choices[actor] = indices;
+        setDraftChoices({ ...choices });
+
+        // Check if all players have submitted
+        const allSubmitted = allPlayers.every(name => choices[name]);
+
+        if (allSubmitted) {
+          completeDraft(choices);
+        }
+      };
+    }
+
+    function completeDraft(allChoices) {
+      const finalResult = finalizeDraftResult(result, allChoices);
+      finalResult.runId = result.runId;
+      finalResult.taskLabel = result.taskLabel;
+
+      setResult(finalResult);
+      setPlaybackStep(0);
+      setPendingAction(null);
+      currentActionHandler.current = null;
+
+      broadcastEvent({ type: 'draft_complete' });
+      broadcastEvent({ type: 'game_start', result: finalResult });
+
+      // Record to leaderboard now that hand is finalized
+      if (!finalResult.isTie) {
+        pushHistory(finalResult);
+      }
+    }
+
+  }, [interactiveMode, localInteractiveMode, gameActive, result?.draftPhase]);
+
+  // Expose draft choices on window for PokerPlayback to read
+  useEffect(() => {
+    window.__draftChoices = draftChoices;
+  }, [draftChoices]);
+
+  // Interactive Stock Market draft management
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'stock-market') return;
+    if (!result.draftPhase) return;
+
+    // Initialize draft state if not already
+    if (!stockDraftState) {
+      const initial = { taken: {}, currentPickerIndex: 0, playerStocks: {} };
+      setStockDraftState(initial);
+      window.__stockDraftState = initial;
+      return;
+    }
+
+    const { taken, currentPickerIndex, playerStocks } = stockDraftState;
+    const { pickOrder, stockPool } = result;
+
+    // Sync to window for StockMarketPlayback to read
+    window.__stockDraftState = stockDraftState;
+
+    // Check if draft is complete
+    if (currentPickerIndex >= pickOrder.length) {
+      // All players have picked — finalize and start chart
+      finalizeDraft();
+      return;
+    }
+
+    const currentPicker = pickOrder[currentPickerIndex];
+
+    // Broadcast draft state
+    broadcastEvent({
+      type: 'choice_prompt',
+      action: 'pick_stock',
+      stockPool: stockPool.map(s => ({ ticker: s.ticker, note: s.note })),
+      pickOrder,
+      currentPicker,
+      taken,
+    });
+
+    setPendingAction({
+      type: 'turn',
+      action: 'pick_stock',
+      playerName: currentPicker,
+      stockPool: stockPool.map(s => ({ ticker: s.ticker, note: s.note })),
+      taken,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'pick_stock' || payload.playerName !== currentPicker) return;
+      const ticker = payload.ticker;
+      if (!ticker || taken[ticker]) return; // Invalid or already taken
+      if (!stockPool.find(s => s.ticker === ticker)) return;
+
+      const newTaken = { ...taken, [ticker]: currentPicker };
+      const newPlayerStocks = { ...playerStocks, [currentPicker]: ticker };
+
+      broadcastEvent({
+        type: 'stock_picked',
+        playerName: currentPicker,
+        ticker,
+        taken: newTaken,
+        nextPicker: pickOrder[currentPickerIndex + 1] || null,
+      });
+
+      setStockDraftState({
+        taken: newTaken,
+        currentPickerIndex: currentPickerIndex + 1,
+        playerStocks: newPlayerStocks,
+      });
+    };
+
+    function finalizeDraft() {
+      // Build the chart result from player stock picks
+      const chartResult = {
+        modeId: "stock-market",
+        modeName: "Stock Market",
+        selectionGoal: result.selectionGoal,
+        draftPhase: false,
+        isInteractiveChart: true,
+        stockPool: result.stockPool,
+        playerStocks,
+        selectedName: null,
+        isTie: false,
+        headline: "Trading...",
+        summary: "Charts are live.",
+        players: Object.entries(playerStocks).map(([name, ticker]) => {
+          const stock = stockPool.find(s => s.ticker === ticker);
+          if (!stock) return { name, selected: false, ticker, prices: Array(60).fill(100), startPrice: 100, endPrice: 100, percentChange: 0, headline: ticker, subline: "No data", rank: 0, chips: [ticker] };
+          return {
+            name,
+            selected: false,
+            ticker,
+            prices: stock.prices,
+            startPrice: 100,
+            endPrice: stock.endPrice,
+            percentChange: stock.percentChange,
+            headline: ticker,
+            subline: "$100 start",
+            rank: 0,
+            chips: [ticker],
+          };
+        }),
+      };
+      chartResult.runId = result.runId;
+      chartResult.taskLabel = result.taskLabel;
+
+      setResult(chartResult);
+      setPlaybackStep(0);
+      setPendingAction(null);
+      currentActionHandler.current = null;
+
+      broadcastEvent({ type: 'draft_complete' });
+      broadcastEvent({ type: 'game_start', result: chartResult });
+    }
+  }, [interactiveMode, localInteractiveMode, gameActive, result, stockDraftState]);
+
+  // Interactive Stock Market sell management
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'stock-market') return;
+    if (result.draftPhase || !result.isInteractiveChart) return;
+
+    // Sync sell state to window for StockMarketPlayback to read
+    window.__stockSellState = stockSellState;
+    window.__stockInteractive = true;
+
+    // Set pending action for sell button (all players, real-time)
+    const playerStocks = result.playerStocks || {};
+    setPendingAction({
+      type: 'realtime',
+      action: 'sell',
+      modeId: 'stock-market',
+      playerStocks,
+      sold: stockSellState,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'sell') return;
+      const actor = payload.playerName;
+      if (stockSellState[actor]) return; // Already sold
+
+      const ticker = playerStocks[actor];
+      if (!ticker) return;
+
+      const currentProgress = window.__stockDrawIndex || 0;
+      const stock = result.players.find(p => p.name === actor);
+      if (!stock) return;
+
+      const priceIndex = Math.min(currentProgress, 59);
+      const price = stock.prices[priceIndex];
+      const percentChange = ((price - 100) / 100 * 100);
+
+      const newSellState = {
+        ...stockSellState,
+        [actor]: { ticker, price, percentChange, progress: currentProgress / 59 },
+      };
+
+      setStockSellState(newSellState);
+      window.__stockSellState = newSellState;
+
+      broadcastEvent({
+        type: 'stock_sold',
+        playerName: actor,
+        ticker,
+        price: price.toFixed(2),
+        percentChange: percentChange.toFixed(1),
+      });
+    };
+
+    return () => {
+      currentActionHandler.current = null;
+    };
+  }, [interactiveMode, localInteractiveMode, gameActive, result, stockSellState]);
+
+  // Interactive Dice Duel — roll + optional re-roll
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'dice') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      // Re-resolve the result based on potentially re-rolled dice
+      const selGoal = result.selectionGoal;
+      const choosingWinner = selGoal === 'winner';
+      const resolution = resolveByGoal(result.players, (p) => [p.total, p.d1, p.d2], selGoal);
+      const tiedNames = resolution.tied.map(p => p.name);
+      const hasTie = tiedNames.length > 1;
+      const selectedName = hasTie ? null : resolution.picked.name;
+
+      result.isTie = hasTie;
+      result.tiedNames = hasTie ? tiedNames : undefined;
+      result.selectedName = selectedName;
+      result.headline = hasTie ? "IT'S A TIE" : pickRandomMessage(
+        selGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        selGoal === "winner" ? "win" : "lose"
+      );
+
+      result.players.forEach(p => {
+        const isTied = hasTie && tiedNames.includes(p.name);
+        p.headline = p.d1 + ' + ' + p.d2 + ' = ' + p.total;
+        p.subline = hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (p.name === selectedName ? (choosingWinner ? "Highest" : "Lowest") + " roll" : "Not selected");
+        p.selected = hasTie ? false : p.name === selectedName;
+        p.tied = isTied;
+      });
+
+      return;
+    }
+
+    const playerIndex = playbackStep;
+    if (playerIndex >= result.players.length) {
+      advancePlayback();
+      return;
+    }
+    const currentPlayer = result.players[playerIndex];
+    const playerNameCur = currentPlayer?.name;
+    if (!playerNameCur) return;
+
+    broadcastEvent({ type: 'turn_prompt', playerName: playerNameCur, action: 'roll_dice' });
+    setPendingAction({ type: 'turn', playerName: playerNameCur, action: 'roll_dice' });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.playerName !== playerNameCur) return;
+
+      if (payload.action === 'roll_dice') {
+        // Show roll result and give re-roll option
+        broadcastEvent({
+          type: 'turn_prompt', playerName: playerNameCur, action: 'reroll_dice',
+          d1: currentPlayer.d1, d2: currentPlayer.d2, total: currentPlayer.total,
+        });
+        setPendingAction({
+          type: 'turn', playerName: playerNameCur, action: 'reroll_dice',
+          d1: currentPlayer.d1, d2: currentPlayer.d2, total: currentPlayer.total,
+        });
+
+        currentActionHandler.current = (payload2) => {
+          if (payload2.playerName !== playerNameCur) return;
+          if (payload2.action === 'keep_dice') {
+            advancePlayback();
+          } else if (payload2.action === 'reroll_die') {
+            const dieIndex = payload2.dieIndex; // 0 or 1
+            const newValue = 1 + secureRandomInt(6);
+            if (dieIndex === 0) {
+              currentPlayer.d1 = newValue;
+            } else {
+              currentPlayer.d2 = newValue;
+            }
+            currentPlayer.total = currentPlayer.d1 + currentPlayer.d2;
+            currentPlayer.headline = currentPlayer.d1 + ' + ' + currentPlayer.d2 + ' = ' + currentPlayer.total;
+            advancePlayback();
+          }
+        };
+      }
+    };
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // Interactive High Card — blind card pick
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'high-card') return;
+    if (!result.draftPhase) return;
+
+    // Deal 3 cards per player for blind pick
+    broadcastEvent({
+      type: 'choice_prompt',
+      action: 'pick_card_blind',
+      hands: result.draftHands,
+    });
+
+    const allPlayers = Object.keys(result.draftHands);
+    const choices = {};
+
+    if (localInteractiveMode && !interactiveMode) {
+      // Local mode: cycle through players one at a time with handoff
+      const currentPicker = allPlayers[0];
+      setPendingAction({
+        type: 'turn',
+        action: 'pick_card_blind',
+        playerName: currentPicker,
+        hands: result.draftHands,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'pick_card_blind') return;
+        const actor = payload.playerName;
+        if (!result.draftHands[actor]) return;
+        if (choices[actor] !== undefined) return;
+
+        const cardIndex = payload.cardIndex;
+        if (typeof cardIndex !== 'number' || cardIndex < 0 || cardIndex >= 3) return;
+
+        choices[actor] = cardIndex;
+        setHighCardDraftHands(prev => ({ ...prev, [actor]: cardIndex }));
+
+        if (allPlayers.every(name => choices[name] !== undefined)) {
+          finalizeHighCard(choices);
+        } else {
+          // Advance to next unsubmitted player
+          const nextPlayer = allPlayers.find(name => choices[name] === undefined);
+          if (nextPlayer) {
+            setPendingAction({
+              type: 'turn',
+              action: 'pick_card_blind',
+              playerName: nextPlayer,
+              hands: result.draftHands,
+            });
+          }
+        }
+      };
+    } else {
+      // Multiplayer mode: all players pick simultaneously
+      setPendingAction({
+        type: 'choice',
+        action: 'pick_card_blind',
+        hands: result.draftHands,
+        received: {},
+        playersNeeded: allPlayers,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'pick_card_blind') return;
+        const actor = payload.playerName;
+        if (!result.draftHands[actor]) return;
+        if (choices[actor] !== undefined) return;
+
+        const cardIndex = payload.cardIndex;
+        if (typeof cardIndex !== 'number' || cardIndex < 0 || cardIndex >= 3) return;
+
+        choices[actor] = cardIndex;
+        setHighCardDraftHands(prev => ({ ...prev, [actor]: cardIndex }));
+
+        if (allPlayers.every(name => choices[name] !== undefined)) {
+          finalizeHighCard(choices);
+        }
+      };
+    }
+
+    function finalizeHighCard(allChoices) {
+      const selGoal = result.selectionGoal;
+      const choosingWinner = selGoal === 'winner';
+
+      const players = Object.entries(allChoices).map(([name, idx]) => {
+        const card = result.draftHands[name][idx];
+        return { name, card, cards: [card] };
+      });
+
+      const resolution = resolveByGoal(players, (p) => [p.card.rank], selGoal);
+      const tiedNames = resolution.tied.map(p => p.name);
+      const hasTie = tiedNames.length > 1;
+      const selectedName = hasTie ? null : resolution.picked.name;
+
+      const modeName = "High Card Draw";
+      const headline = hasTie ? "IT'S A TIE" : pickRandomMessage(
+        selGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        selGoal === "winner" ? "win" : "lose"
+      );
+
+      const finalResult = {
+        modeId: "high-card",
+        modeName,
+        selectionGoal: selGoal,
+        selectedName,
+        isTie: hasTie,
+        tiedNames: hasTie ? tiedNames : undefined,
+        headline,
+        summary: hasTie
+          ? tiedNames.join(" and ") + " drew the same rank!"
+          : "Everyone picked a card blind. " + (choosingWinner ? "Highest" : "Lowest") + " rank gets selected.",
+        draftPhase: false,
+        players: players.map(p => {
+          const isTied = hasTie && tiedNames.includes(p.name);
+          return {
+            name: p.name,
+            cards: [p.card],
+            card: p.card,
+            headline: formatCard(p.card),
+            subline: hasTie
+              ? (isTied ? "TIED" : "Not selected")
+              : (p.name === selectedName ? (choosingWinner ? "Highest" : "Lowest") + " card" : "Not selected"),
+            selected: hasTie ? false : p.name === selectedName,
+            tied: isTied,
+            chips: [rankWord(p.card.rank)],
+          };
+        }),
+      };
+      finalResult.runId = result.runId;
+      finalResult.taskLabel = result.taskLabel;
+
+      setResult(finalResult);
+      setPlaybackStep(0);
+      setPendingAction(null);
+      currentActionHandler.current = null;
+
+      broadcastEvent({ type: 'draft_complete' });
+      broadcastEvent({ type: 'game_start', result: finalResult });
+
+      if (!finalResult.isTie) {
+        pushHistory(finalResult);
+      }
+    }
+
+  }, [interactiveMode, localInteractiveMode, gameActive, result?.draftPhase, result?.modeId]);
+
+  // Interactive Plinko — choose drop column
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'plinko') return;
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      // Re-resolve winner based on updated scores
+      const selGoal = result.selectionGoal;
+      const resolution = resolveByGoal(result.players, (p) => [p.score], selGoal);
+      const tiedNames = resolution.tied.map(p => p.name);
+      const hasTie = tiedNames.length > 1;
+      const selectedName = hasTie ? null : resolution.picked.name;
+
+      result.isTie = hasTie;
+      result.tiedNames = hasTie ? tiedNames : undefined;
+      result.selectedName = hasTie ? null : selectedName;
+      result.headline = hasTie
+        ? 'It\'s a tie between ' + tiedNames.join(' and ') + '!'
+        : pickRandomMessage(
+            selGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+            selectedName,
+            selGoal === "winner" ? "win" : "lose"
+          );
+      result.players.forEach(p => {
+        p.selected = hasTie ? false : p.name === selectedName;
+        p.tied = hasTie && tiedNames.includes(p.name);
+      });
+      return;
+    }
+
+    const playerIndex = playbackStep;
+    if (playerIndex >= result.players.length) {
+      advancePlayback();
+      return;
+    }
+    const currentPlayer = result.players[playerIndex];
+    const playerNameCur = currentPlayer?.name;
+    if (!playerNameCur) return;
+
+    broadcastEvent({ type: 'turn_prompt', playerName: playerNameCur, action: 'drop_plinko' });
+    setPendingAction({ type: 'turn', playerName: playerNameCur, action: 'drop_plinko', slotCount: 13 });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'drop_plinko' || payload.playerName !== playerNameCur) return;
+      const col = typeof payload.column === 'number' ? Math.max(0, Math.min(12, payload.column)) : secureRandomInt(13);
+
+      // Regenerate path from chosen starting column
+      // The original plinko: path is array of 0/1, finalSlot = sum of path values (0..12)
+      // With column choice, we bias the path towards the chosen column area
+      const SLOT_VALUES = [1, 2, 3, 5, 8, 13, 21, 13, 8, 5, 3, 2, 1];
+      const ROWS = 12;
+      const path = [];
+      // Bias: distribute roughly (col) 1s across the path, rest 0s, with randomness
+      const targetOnes = col;
+      let onesLeft = targetOnes;
+      let slotsLeft = ROWS;
+      for (let r = 0; r < ROWS; r++) {
+        // Probability of placing a 1 here = onesLeft / slotsLeft, with some noise
+        const prob = Math.max(0, Math.min(1, onesLeft / slotsLeft + (Math.random() - 0.5) * 0.3));
+        const choice = Math.random() < prob ? 1 : 0;
+        path.push(choice);
+        if (choice === 1) onesLeft--;
+        slotsLeft--;
+      }
+      let finalSlot = 0;
+      for (let r = 0; r < ROWS; r++) {
+        finalSlot += path[r];
+      }
+      finalSlot = Math.max(0, Math.min(12, finalSlot));
+      const score = SLOT_VALUES[finalSlot];
+
+      currentPlayer.path = path;
+      currentPlayer.finalSlot = finalSlot;
+      currentPlayer.score = score;
+      currentPlayer.headline = 'Slot ' + (finalSlot + 1) + ': ' + score + ' pts';
+      currentPlayer.subline = 'Scored ' + score + ' point' + (score !== 1 ? 's' : '');
+      currentPlayer.chips = [score + ' pts', 'Slot #' + (finalSlot + 1)];
+      currentPlayer.startCol = col;
+
+      advancePlayback();
+    };
+
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // Interactive Horse Race — lane pick + whip
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'horse-race') return;
+
+    // Phase 1: Lane pick draft
+    if (result.draftPhase) {
+      if (!horseLanePicks) {
+        const initial = { taken: {}, currentPickerIndex: 0, playerLanes: {} };
+        setHorseLanePicks(initial);
+        return;
+      }
+
+      const { taken, currentPickerIndex, playerLanes } = horseLanePicks;
+      const pickOrder = result.lanePickOrder;
+      const lanes = result.lanes;
+
+      if (currentPickerIndex >= pickOrder.length) {
+        // All picked — finalize and start race
+        const raceResult = {
+          ...result,
+          draftPhase: false,
+          playerLanes,
+        };
+        raceResult.runId = result.runId;
+        raceResult.taskLabel = result.taskLabel;
+        setResult(raceResult);
+        setPlaybackStep(0);
+        setPendingAction(null);
+        currentActionHandler.current = null;
+        setHorseWhips(Object.fromEntries(result.lanePickOrder.map(n => [n, 2])));
+        broadcastEvent({ type: 'draft_complete' });
+        broadcastEvent({ type: 'game_start', result: raceResult });
+        return;
+      }
+
+      const currentPicker = pickOrder[currentPickerIndex];
+
+      broadcastEvent({
+        type: 'choice_prompt',
+        action: 'pick_lane',
+        lanes,
+        currentPicker,
+        taken,
+      });
+
+      setPendingAction({
+        type: 'turn',
+        action: 'pick_lane',
+        playerName: currentPicker,
+        lanes,
+        taken,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'pick_lane' || payload.playerName !== currentPicker) return;
+        const lane = payload.lane;
+        if (!lane || taken[lane]) return;
+        if (!lanes.includes(lane)) return;
+
+        const newTaken = { ...taken, [lane]: currentPicker };
+        const newPlayerLanes = { ...playerLanes, [currentPicker]: lane };
+
+        setHorseLanePicks({
+          taken: newTaken,
+          currentPickerIndex: currentPickerIndex + 1,
+          playerLanes: newPlayerLanes,
+        });
+      };
+
+    }
+
+    // Phase 2: Race with whip — step-based
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      // Re-resolve winner from final positions (whips may have changed things)
+      const selGoal = result.selectionGoal;
+      const choosingWinner = selGoal === 'winner';
+      const finalPositions = result.turns.length > 0 ? result.turns[result.turns.length - 1].positions : {};
+      result.players.forEach(p => { p.progress = finalPositions[p.name] || p.progress; });
+      const resolution = resolveByGoal(result.players, (p) => [p.progress], selGoal);
+      const tiedNames = resolution.tied.map(p => p.name);
+      const hasTie = tiedNames.length > 1;
+      const selectedName = hasTie ? null : resolution.picked.name;
+
+      result.isTie = hasTie;
+      result.tiedNames = hasTie ? tiedNames : undefined;
+      result.selectedName = selectedName;
+      result.headline = hasTie ? "IT'S A TIE" : pickRandomMessage(
+        selGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+        selectedName,
+        selGoal === "winner" ? "win" : "lose"
+      );
+      result.players.forEach(p => {
+        const isTied = hasTie && tiedNames.includes(p.name);
+        p.headline = p.progress + ' spaces moved';
+        p.subline = hasTie
+          ? (isTied ? "TIED" : "Not selected")
+          : (p.name === selectedName ? 'Finished ' + (choosingWinner ? "in front" : "at the back") : "Not selected");
+        p.selected = hasTie ? false : p.name === selectedName;
+        p.tied = isTied;
+      });
+      return;
+    }
+
+    const turnIndex = playbackStep;
+    if (turnIndex >= result.turns.length) {
+      advancePlayback();
+      return;
+    }
+
+    // Give all surviving players a chance to whip for 4 seconds
+    const aliveNames = result.players.map(p => p.name);
+
+    broadcastEvent({
+      type: 'turn_prompt',
+      action: 'whip_horse',
+      turnNumber: turnIndex + 1,
+      totalTurns: result.turns.length,
+      whipsRemaining: horseWhips,
+    });
+
+    setPendingAction({
+      type: 'realtime',
+      action: 'whip_horse',
+      modeId: 'horse-race',
+      turnNumber: turnIndex + 1,
+      totalTurns: result.turns.length,
+      whipsRemaining: horseWhips,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'whip_horse') return;
+      const actor = payload.playerName;
+      if (!actor || !horseWhips[actor] || horseWhips[actor] <= 0) return;
+
+      // Apply whip: guaranteed advance this turn
+      const turn = result.turns[turnIndex];
+      if (!turn) return;
+
+      // Advance this player's position
+      turn.positions[actor] = (turn.positions[actor] || 0) + 1;
+      // Update all future turns
+      for (let i = turnIndex + 1; i < result.turns.length; i++) {
+        result.turns[i].positions[actor] = (result.turns[i].positions[actor] || 0) + 1;
+      }
+      // Update player final position
+      const p = result.players.find(pl => pl.name === actor);
+      if (p) {
+        p.progress = (p.progress || 0) + 1;
+        p.headline = p.progress + ' spaces moved';
+      }
+
+      setHorseWhips(prev => ({ ...prev, [actor]: prev[actor] - 1 }));
+
+      broadcastEvent({
+        type: 'horse_whip',
+        playerName: actor,
+        whipsRemaining: horseWhips[actor] - 1,
+      });
+    };
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase]);
+
+  // Interactive Space Invaders — shield reaction
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'space-invaders') return;
+    if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
+
+    const elimIndex = playbackStep;
+    if (elimIndex >= result.eliminationOrder.length) {
+      // All eliminations processed, advance to finish
+      advancePlayback();
+      return;
+    }
+
+    let targetName = result.eliminationOrder[elimIndex];
+
+    // If target has a shield and hasn't used it yet, give them a chance
+    if (!usedShields[targetName]) {
+      broadcastEvent({
+        type: 'turn_prompt',
+        playerName: targetName,
+        action: 'shield',
+        elimIndex,
+      });
+
+      setPendingAction({
+        type: 'turn',
+        playerName: targetName,
+        action: 'shield',
+        elimIndex,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'shield' || payload.playerName !== targetName) return;
+
+        setUsedShields(prev => ({ ...prev, [targetName]: true }));
+
+        // Re-pick target: random from remaining (not shielded target, not already eliminated)
+        const eliminated = result.eliminationOrder.slice(0, elimIndex);
+        const remaining = result.players
+          .map(p => p.name)
+          .filter(n => n !== targetName && !eliminated.includes(n));
+
+        if (remaining.length > 0) {
+          const newTarget = remaining[secureRandomInt(remaining.length)];
+          // Swap in elimination order
+          const newTargetElimIdx = result.eliminationOrder.indexOf(newTarget);
+          if (newTargetElimIdx >= 0) {
+            result.eliminationOrder[elimIndex] = newTarget;
+            result.eliminationOrder[newTargetElimIdx] = targetName;
+          } else {
+            result.eliminationOrder[elimIndex] = newTarget;
+          }
+
+          // Update player data
+          result.players.forEach(p => {
+            const ei = result.eliminationOrder.indexOf(p.name);
+            const isSurvivor = ei === -1 || ei >= result.eliminationOrder.length;
+            if (isSurvivor) {
+              p.headline = "LAST ALIEN STANDING";
+              p.subline = "Survived the onslaught";
+              p.chips = ["Survivor"];
+              p.destroyedAt = null;
+            } else {
+              p.destroyedAt = ei + 1;
+              p.headline = 'Destroyed: Shot #' + (ei + 1);
+              p.subline = 'Eliminated';
+              p.chips = ['Shot #' + (ei + 1)];
+            }
+          });
+
+          broadcastEvent({ type: 'shield_used', playerName: targetName, newTarget: newTarget });
+        }
+
+        advancePlayback();
+      };
+    } else {
+      // Target already used shield — just advance
+      setPendingAction({
+        type: 'turn',
+        playerName: targetName,
+        action: 'shield_unavailable',
+      });
+
+      broadcastEvent({
+        type: 'turn_prompt',
+        playerName: targetName,
+        action: 'shield_unavailable',
+      });
+
+      setTimeout(() => advancePlayback(), 0);
+    }
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, usedShields]);
+
+  // Interactive Battle Royale — directional movement
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'battle-royale') return;
+    if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
+
+    const phase = playbackStep; // 0-indexed, each phase = one elimination
+    if (phase >= result.zones.length - 1) {
+      advancePlayback();
+      return;
+    }
+
+    const nextZone = result.zones[phase + 1];
+    const eliminated = result.eliminationOrder.slice(0, phase);
+    const alive = result.players.filter(p => !eliminated.includes(p.name)).map(p => p.name);
+
+    if (alive.length <= 1) return;
+
+    // Collect movement choices from all alive players
+    broadcastEvent({
+      type: 'choice_prompt',
+      action: 'move_direction',
+      aliveNames: alive,
+      zone: nextZone,
+      phase: phase + 1,
+    });
+
+    const moveChoices = {};
+
+    if (localInteractiveMode && !interactiveMode) {
+      // Local mode: cycle through alive players one at a time
+      const currentMover = alive[0];
+      setPendingAction({
+        type: 'turn',
+        action: 'move_direction',
+        playerName: currentMover,
+        aliveNames: alive,
+        zone: nextZone,
+        phase: phase + 1,
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'move_direction') return;
+        const actor = payload.playerName;
+        if (!alive.includes(actor) || moveChoices[actor]) return;
+
+        const dir = payload.direction;
+        if (!['up', 'down', 'left', 'right', 'stay'].includes(dir)) return;
+
+        moveChoices[actor] = dir;
+        setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+
+        if (alive.every(name => moveChoices[name])) {
+          applyMovesAndAdvance(moveChoices);
+        } else {
+          const nextMover = alive.find(name => !moveChoices[name]);
+          if (nextMover) {
+            setPendingAction({
+              type: 'turn',
+              action: 'move_direction',
+              playerName: nextMover,
+              aliveNames: alive,
+              zone: nextZone,
+              phase: phase + 1,
+            });
+          }
+        }
+      };
+    } else {
+      // Multiplayer mode: all alive players move simultaneously
+      setPendingAction({
+        type: 'choice',
+        action: 'move_direction',
+        aliveNames: alive,
+        zone: nextZone,
+        phase: phase + 1,
+        received: {},
+      });
+
+      currentActionHandler.current = (payload) => {
+        if (payload.action !== 'move_direction') return;
+        const actor = payload.playerName;
+        if (!alive.includes(actor) || moveChoices[actor]) return;
+
+        const dir = payload.direction;
+        if (!['up', 'down', 'left', 'right', 'stay'].includes(dir)) return;
+
+        moveChoices[actor] = dir;
+        setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+
+        // Check if all alive players have moved
+        if (alive.every(name => moveChoices[name])) {
+          applyMovesAndAdvance(moveChoices);
+        }
+      };
+    }
+
+    function applyMovesAndAdvance(moves) {
+      const MOVE_DIST = 10;
+      const dirMap = {
+        up: { dx: 0, dy: -MOVE_DIST },
+        down: { dx: 0, dy: MOVE_DIST },
+        left: { dx: -MOVE_DIST, dy: 0 },
+        right: { dx: MOVE_DIST, dy: 0 },
+        stay: { dx: 0, dy: 0 },
+      };
+
+      // Apply moves to positions
+      alive.forEach(name => {
+        const dir = moves[name] || 'stay';
+        const pos = result.positions.find(p => p.name === name);
+        if (!pos) return;
+        const d = dirMap[dir];
+        pos.x = Math.max(0, Math.min(100, pos.x + d.dx));
+        pos.y = Math.max(0, Math.min(100, pos.y + d.dy));
+      });
+
+      // Recalculate who's farthest from zone center
+      let farthest = null;
+      let farthestDist = -1;
+      for (const name of alive) {
+        const pos = result.positions.find(p => p.name === name);
+        const dx = pos.x - nextZone.cx;
+        const dy = pos.y - nextZone.cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > farthestDist) {
+          farthestDist = dist;
+          farthest = name;
+        }
+      }
+
+      // Update elimination order for this phase
+      if (farthest) {
+        result.eliminationOrder[phase] = farthest;
+
+        // Update player data
+        result.players.forEach(p => {
+          const ei = result.eliminationOrder.indexOf(p.name);
+          const isEliminated = ei >= 0 && ei <= phase;
+          if (isEliminated) {
+            p.headline = 'Eliminated: Phase ' + (ei + 1);
+            p.subline = 'Caught outside zone ' + (ei + 1);
+            p.chips = ['Phase ' + (ei + 1)];
+            p.selected = false;
+            p.rank = result.players.length - ei;
+          }
+        });
+
+        // Check if only one remains
+        const remaining = alive.filter(n => n !== farthest);
+        if (remaining.length === 1) {
+          const survivor = remaining[0];
+          result.selectedName = survivor;
+          const sp = result.players.find(p => p.name === survivor);
+          if (sp) {
+            sp.headline = "VICTORY ROYALE";
+            sp.subline = "Last one in the zone";
+            sp.chips = ["Winner"];
+            sp.selected = true;
+            sp.rank = 1;
+          }
+          result.headline = pickRandomMessage(
+            result.selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
+            survivor,
+            result.selectionGoal === "winner" ? "win" : "lose"
+          );
+          result.summary = 'The zone closed in ' + (phase + 1) + ' times. ' + survivor + ' was the last one standing.';
+        }
+      }
+
+      advancePlayback();
+    }
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // Interactive turn management for RNG, Wheel, Slots, Coin Gauntlet
+  useEffect(() => {
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result) return;
+    const mode = result.modeId;
+    if (['black-marble', 'bomb', 'rocket', 'holdem', 'plo', 'stock-market', 'dice', 'high-card', 'plinko', 'horse-race', 'space-invaders', 'battle-royale'].includes(mode)) return;
+    if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
+
+    let action, playerName;
+
+    if (mode === 'rng' || mode === 'slots') {
+      // Step-based, one player per step
+      const playerIndex = playbackStep;
+      if (playerIndex >= result.players.length) return;
+      playerName = result.players[playerIndex]?.name;
+      action = mode === 'rng' ? 'stop_number' : 'pull_slots';
+    } else if (mode === 'wheel') {
+      // Single spin — first player gets the button
+      if (playbackStep >= 1) return;
+      playerName = result.players[0]?.name;
+      action = 'spin_wheel';
+    } else if (mode === 'coin-flips') {
+      // Per-player sequential: player 1 does all 5 flips, then player 2, etc.
+      const totalFlipSteps = result.players.length * 5;
+      if (playbackStep >= totalFlipSteps) return;
+      const currentPlayerIdx = Math.floor(playbackStep / 5);
+      playerName = result.players[currentPlayerIdx]?.name;
+      action = 'flip_coin';
+    } else {
+      return;
+    }
+
+    if (!playerName) return;
+
+    broadcastEvent({
+      type: 'turn_prompt',
+      playerName,
+      action,
+    });
+
+    setPendingAction({
+      type: 'turn',
+      playerName,
+      action,
+    });
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== action || payload.playerName !== playerName) return;
+      advancePlayback();
+    };
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
+
+  // ── Vote handler + auto-resolve timer ─────────────────────
+  useEffect(() => {
+    if (!voteActive) return;
+
+    currentActionHandler.current = (payload) => {
+      if (payload.action !== 'vote_game') return;
+      const voter = payload.playerName;
+      const modeId = payload.modeId;
+      if (!voter || !modeId) return;
+
+      setVotes(prev => {
+        const updated = { ...prev, [voter]: modeId };
+        votesRef.current = updated;
+        return updated;
+      });
+
+      // Broadcast the vote to everyone
+      broadcastEvent({ type: 'vote_cast', playerName: voter, modeId });
+    };
+
+    // 30-second timeout
+    const timer = setTimeout(() => resolveVote(), 30000);
+    return () => clearTimeout(timer);
+  }, [voteActive]);
+
+  // Check if all players have voted
+  useEffect(() => {
+    if (!voteActive) return;
+    const allPlayerNames = Object.keys(joinedPlayers);
+    const allVoted = allPlayerNames.length > 0 && allPlayerNames.every(name => votes[name]);
+    if (allVoted) resolveVote();
+  }, [votes, voteActive, joinedPlayers]);
+
+  const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
+
+  const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
+  const filledNames = cleanedNames.filter(Boolean);
+  const nameSet = new Set(filledNames);
+  const allFilled = cleanedNames.every(Boolean);
+  const namesAreUnique = nameSet.size === cleanedNames.length;
+  const hasEnoughPlayers = cleanedNames.length >= 2;
+  const multiplayerReady = interactiveMode && Object.keys(joinedPlayers).length >= 2;
+  const canRun = multiplayerReady || (allFilled && namesAreUnique && hasEnoughPlayers);
+  const currentConfig = result ? getPlaybackConfig(result) : null;
+
+  function updateName(index, value) {
+    setNames((current) => current.map((entry, idx) => (idx === index ? value : entry)));
+  }
+
+  function addPlayer() {
+    setNames((current) => [...current, ""]);
+  }
+
+  function removePlayer(index) {
+    if (names.length <= 2) return;
+    setNames((current) => current.filter((_, idx) => idx !== index));
+  }
+
+  async function recordGame(outcome) {
+    if (!_supabase || outcome.isTie || outcome.isTournament || !outcome.players) return;
+    try {
+      await _supabase.from('runouts_games').insert({
+        mode_id: outcome.modeId,
+        mode_name: outcome.modeName,
+        selection_goal: outcome.selectionGoal,
+        stakes: outcome.taskLabel || null,
+        selected_player: outcome.selectedName,
+        all_players: outcome.players.map(p => ({
+          name: p.name,
+          selected: p.selected || false,
+          headline: p.headline || null,
+        })),
+        headline: outcome.headline,
+      });
+    } catch (e) {
+      // Silent fail — don't block gameplay
+    }
+  }
+
+  function pushHistory(outcome) {
+    if (outcome.isTie) return; // Don't push tie rounds to history; wait for resolution
+    setHistory((current) => [
+      {
+        id: `${Date.now()}-${secureRandomInt(100000)}`,
+        modeName: outcome.modeName,
+        selectedName: outcome.selectedName,
+        selectionGoal: outcome.selectionGoal,
+        format: outcome.isTournament ? "tournament" : seriesActive ? "series" : "single",
+        suddenDeath: outcome.suddenDeathRound > 0,
+      },
+      ...current,
+    ].slice(0, 8));
+    // Fire-and-forget: record to Supabase then refresh leaderboard
+    recordGame(outcome).then(() => fetchLeaderboard());
+  }
+
+  // ── Series helpers ──
+  function resetSeriesState() {
+    setSeriesActive(false);
+    setSeriesConfig(null);
+    setSeriesScores({});
+    setSeriesRound(0);
+    setSeriesHistory([]);
+    setSeriesComplete(false);
+    setShowSeriesSetup(false);
+    setShowSeriesScoreboard(false);
+    setSeriesTied(null);
+    seriesScoreRef.current = {};
+    seriesRoundRecordedRef.current = null;
+  }
+
+  function isSeriesClinched(scores, totalRounds, currentRound) {
+    const vals = Object.values(scores);
+    if (vals.length === 0) return false;
+    const sorted = [...vals].sort((a, b) => b - a);
+    const maxScore = sorted[0];
+    const secondHighest = sorted[1] || 0;
+    const remainingRounds = totalRounds - currentRound;
+    if (currentRound >= totalRounds) return true;
+    if (maxScore > secondHighest + remainingRounds) return true;
+    return false;
+  }
+
+  function startSeriesNextRound(forcedModeId) {
+    // Start the next round in an active series
+    if (forcedModeId) {
+      setGameActive(false);
+      setTimeout(() => startGame(forcedModeId), 100);
+    } else {
+      setGameActive(false);
+      setTimeout(() => startGame(pickRandom(MODES).id), 100);
+    }
+  }
+
+  function startSeriesSuddenDeath(forcedModeId) {
+    // Sudden death round — only the tied players participate
+    if (!seriesTied || seriesTied.length < 2) return;
+    const tiedPlayerNames = seriesTied;
+    setSeriesTied(null);
+    setSeriesRound(prev => prev + 1);
+
+    const modeId = forcedModeId || pickRandom(MODES).id;
+    const outcome = {
+      ...createOutcome(modeId, tiedPlayerNames),
+      runId: `${Date.now()}-${secureRandomInt(100000)}`,
+    };
+    outcome.taskLabel = taskLabel.trim();
+    outcome.isSeriesSuddenDeath = true;
+    if (outcome.modeId === "wheel" && outcome.wheel) {
+      setWheelRotation(outcome.wheel.rotation);
+    }
+    setResult(outcome);
+    setPlaybackStep(0);
+    setPlaybackDone(false);
+    setGameActive(true);
+    setSuddenDeathRound(0);
+    setSuddenDeathNames(null);
+    setVoteActive(false);
+    setVotes({}); votesRef.current = {};
+    setVoteDeadline(null);
+    setShowSeriesScoreboard(false);
+    broadcastEvent({
+      type: 'game_start',
+      result: outcome,
+      series: { active: true, config: seriesConfig, scores: seriesScoreRef.current, round: seriesRound + 1, history: seriesHistory, suddenDeath: true },
+    });
+  }
+
+  function createOutcome(forcedModeId = null, forcedNames = null) {
+    const resolvedModeId = forcedModeId
+      ? forcedModeId
+      : selectedModeId === "auto"
+        ? pickRandom(MODES).id
+        : selectedModeId;
+
+    const activePlayerNames = (interactiveMode && Object.keys(joinedPlayers).length >= 2)
+      ? Object.keys(joinedPlayers)
+      : cleanedNames;
+    const playerNames = forcedNames || activePlayerNames;
+
+    if (!forcedNames && gameFormat === "tournament") {
+      return buildTournamentOutcome(activePlayerNames, taskLabel.trim() || "do the chores", resolvedModeId, wheelRotation);
+    }
+
+    const mode = modeById(resolvedModeId);
+    return {
+      ...mode.run(playerNames, taskLabel.trim() || "do the chores", selectionGoal, wheelRotation),
+      runId: `${Date.now()}-${secureRandomInt(100000)}`,
+    };
+  }
+
+  function startGame(forcedModeId = null) {
+    if (!canRun) return;
+
+    // Initialize a new series if selecting a best-of format and not already in one
+    if (['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat) && !seriesActive) {
+      const totalRounds = gameFormat === 'best-of-3' ? 3 : gameFormat === 'best-of-5' ? 5 : 7;
+      const seriesNames = (interactiveMode && Object.keys(joinedPlayers).length >= 2)
+        ? Object.keys(joinedPlayers)
+        : cleanedNames;
+      const initScores = Object.fromEntries(seriesNames.map(n => [n, 0]));
+      setSeriesActive(true);
+      setSeriesConfig({ totalRounds, selectionGoal });
+      setSeriesScores(initScores);
+      seriesScoreRef.current = initScores;
+      setSeriesRound(0);
+      setSeriesHistory([]);
+      setSeriesComplete(false);
+      setShowSeriesScoreboard(false);
+      setSeriesTied(null);
+      // If interactive, start a vote for the first mode
+      if (interactiveMode && !forcedModeId) {
+        startVote();
+        return;
+      }
+      // Otherwise fall through to start with forced mode or random
+    }
+
+    // If series is active, increment round counter
+    if (seriesActive || ['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat)) {
+      setSeriesRound(prev => prev + 1);
+    }
+
+    const outcome = {
+      ...createOutcome(forcedModeId),
+      runId: `${Date.now()}-${secureRandomInt(100000)}`,
+    };
+    outcome.taskLabel = taskLabel.trim();
+    if (outcome.modeId === "wheel" && outcome.wheel) {
+      setWheelRotation(outcome.wheel.rotation);
+    }
+    if (outcome.isTournament && outcome.wheelRotation) {
+      setWheelRotation(outcome.wheelRotation);
+    }
+    setResult(outcome);
+    setPlaybackStep(0);
+    setPlaybackDone(false);
+    setGameActive(true);
+    setSuddenDeathRound(0);
+    setSuddenDeathNames(null);
+    setInteractiveBombState(null);
+    setInteractiveRocketEjects({});
+    setDraftChoices({});
+    setStockDraftState(null);
+    setStockSellState({});
+    setHighCardDraftHands(null);
+    setHorseWhips({});
+    setHorseLanePicks(null);
+    setUsedShields({});
+    setBattleMoves(null);
+    setHandoffReady(false);
+    setVoteActive(false);
+    setVotes({}); votesRef.current = {};
+    setVoteDeadline(null);
+    setShowSeriesScoreboard(false);
+    window.__interactiveRocketEjects = {};
+    window.__draftChoices = {};
+    window.__rocketInteractive = false;
+    window.__rocketElapsed = 0;
+    window.__stockSellState = {};
+    window.__stockDraftState = null;
+    window.__stockInteractive = false;
+    window.__stockDrawIndex = 0;
+    // Don't record interactive bomb/rocket/poker-draft/stock-draft/high-card-draft/horse-race-draft immediately — they record on completion
+    if (!((interactiveMode || localInteractiveMode) && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || outcome.draftPhase))) {
+      pushHistory(outcome);
+    }
+    broadcastEvent({
+      type: 'game_start',
+      result: outcome,
+      series: seriesActive ? { active: true, config: seriesConfig, scores: seriesScoreRef.current, round: seriesRound, history: seriesHistory } : null,
+    });
+  }
+
+  function startSuddenDeath() {
+    if (!result || !result.isTie || !result.tiedNames) return;
+    const nextRound = suddenDeathRound + 1;
+    const tiedPlayerNames = result.tiedNames;
+    const outcome = {
+      ...createOutcome(result.modeId, tiedPlayerNames),
+      runId: `${Date.now()}-${secureRandomInt(100000)}`,
+    };
+    outcome.taskLabel = taskLabel.trim();
+    if (outcome.modeId === "wheel" && outcome.wheel) {
+      setWheelRotation(outcome.wheel.rotation);
+    }
+    // If sudden death resolved (no tie), annotate the result
+    if (!outcome.isTie) {
+      outcome.suddenDeathRound = nextRound;
+      outcome.summary = outcome.summary + ` Decided after ${nextRound} round${nextRound > 1 ? "s" : ""} of sudden death.`;
+      pushHistory(outcome);
+    }
+    setResult(outcome);
+    setPlaybackStep(0);
+    setPlaybackDone(false);
+    setSuddenDeathRound(nextRound);
+    setSuddenDeathNames(tiedPlayerNames);
+    broadcastEvent({ type: 'game_start', result: outcome });
+  }
+
+  function playAgain() {
+    if (!result || !canRun) return;
+    startGame(result.modeId);
+  }
+
+  function advancePlayback() {
+    if (!result || playbackDone) return;
+    const config = getPlaybackConfig(result);
+    const nextStep = Math.min(playbackStep + 1, config.totalSteps);
+    setPlaybackStep(nextStep);
+    if (nextStep >= config.totalSteps) {
+      setPlaybackDone(true);
+    }
+    broadcastEvent({ type: 'step', step: nextStep, done: nextStep >= config.totalSteps });
+  }
+
+  function revealAll() {
+    if (!result) return;
+    const config = getPlaybackConfig(result);
+    setPlaybackStep(config.totalSteps);
+    setPlaybackDone(true);
+    broadcastEvent({ type: 'step', step: config.totalSteps, done: true });
+  }
+
+  function exitGame() {
+    setGameActive(false);
+    setSuddenDeathRound(0);
+    setSuddenDeathNames(null);
+    setInteractiveBombState(null);
+    setInteractiveRocketEjects({});
+    setDraftChoices({});
+    setStockDraftState(null);
+    setStockSellState({});
+    setHighCardDraftHands(null);
+    setHorseWhips({});
+    setHorseLanePicks(null);
+    setUsedShields({});
+    setBattleMoves(null);
+    setHandoffReady(false);
+    window.__interactiveRocketEjects = {};
+    window.__draftChoices = {};
+    window.__rocketInteractive = false;
+    window.__rocketElapsed = 0;
+    window.__stockSellState = {};
+    window.__stockDraftState = null;
+    window.__stockInteractive = false;
+    window.__stockDrawIndex = 0;
+    setVoteActive(false);
+    setVotes({}); votesRef.current = {};
+    setVoteDeadline(null);
+    resetSeriesState();
+    broadcastEvent({ type: 'game_reset' });
+  }
+
+  // ── Series round completion tracking ──
+  useEffect(() => {
+    if (!seriesActive || !seriesConfig || !result || !playbackDone) return;
+    if (result.isTie) return; // Don't count ties — wait for sudden death
+    if (!result.selectedName) return;
+    // Prevent double-recording the same round
+    const roundKey = `${result.runId}-${seriesRound}`;
+    if (seriesRoundRecordedRef.current === roundKey) return;
+    seriesRoundRecordedRef.current = roundKey;
+
+    const newScores = { ...seriesScoreRef.current };
+    newScores[result.selectedName] = (newScores[result.selectedName] || 0) + 1;
+    seriesScoreRef.current = newScores;
+    setSeriesScores(newScores);
+
+    const newHistory = [...seriesHistory, {
+      round: seriesRound,
+      modeId: result.modeId,
+      modeName: result.modeName,
+      selectedName: result.selectedName,
+    }];
+    setSeriesHistory(newHistory);
+
+    // Check if clinched
+    if (isSeriesClinched(newScores, seriesConfig.totalRounds, seriesRound)) {
+      // Check for tie at the top
+      const sorted = Object.entries(newScores).sort((a, b) => b[1] - a[1]);
+      const topScore = sorted[0][1];
+      const tiedPlayers = sorted.filter(([_, s]) => s === topScore).map(([n]) => n);
+
+      if (tiedPlayers.length > 1 && seriesRound >= seriesConfig.totalRounds) {
+        // TIE at the top — go to sudden death instead of declaring winner
+        setSeriesTied(tiedPlayers);
+        broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: false, tied: tiedPlayers });
+      } else {
+        setSeriesComplete(true);
+        broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: true });
+      }
+    } else {
+      broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: false });
+    }
+  }, [seriesActive, playbackDone, result?.runId, seriesRound, seriesConfig, seriesHistory]);
+
+  // ── Vote for Next Game ────────────────────────────────────
+
+  function startVote() {
+    const deadline = Date.now() + 30000;
+    setVoteActive(true);
+    setVotes({}); votesRef.current = {};
+    setVoteDeadline(deadline);
+
+    broadcastEvent({
+      type: 'vote_start',
+      modes: MODE_META.map(m => ({ id: m.id, name: m.name, icon: m.icon })),
+      deadline,
+    });
+
+    setPendingAction({
+      type: 'vote',
+      action: 'vote_game',
+      modes: MODE_META.map(m => ({ id: m.id, name: m.name, icon: m.icon })),
+      deadline,
+    });
+  }
+
+  function resolveVote() {
+    if (!voteActive) return;
+    setVoteActive(false);
+    setPendingAction(null);
+    currentActionHandler.current = null;
+
+    // Count votes (use ref for latest values in case called from timeout)
+    const currentVotes = votesRef.current;
+    const counts = {};
+    Object.values(currentVotes).forEach(modeId => {
+      counts[modeId] = (counts[modeId] || 0) + 1;
+    });
+
+    // Handle "random" votes
+    if (counts['random']) {
+      for (let i = 0; i < counts['random']; i++) {
+        const randomMode = pickRandom(MODES).id;
+        counts[randomMode] = (counts[randomMode] || 0) + 1;
+      }
+      delete counts['random'];
+    }
+
+    // Find winner(s)
+    const maxVotes = Math.max(...Object.values(counts), 0);
+    if (maxVotes === 0) {
+      // No votes — pick random
+      setGameActive(false);
+      setTimeout(() => startGame(pickRandom(MODES).id), 100);
+      return;
+    }
+
+    const winners = Object.keys(counts).filter(id => counts[id] === maxVotes);
+    const winnerId = winners.length === 1 ? winners[0] : pickRandom(winners);
+
+    // Broadcast result
+    broadcastEvent({ type: 'vote_result', winnerId, winnerName: MODE_META.find(m => m.id === winnerId)?.name, counts });
+
+    // Launch the winning game
+    setGameActive(false);
+    setTimeout(() => startGame(winnerId), 500);
+  }
+
+  // ── Room / Spectator helpers ──────────────────────────────
+
+  function generateRoomCode() {
+    const name = names[0] || 'GAME';
+    const prefix = name.slice(0, 4).toUpperCase().replace(/[^A-Z]/g, 'X');
+    const suffix = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}-${suffix}`;
+  }
+
+  function createRoom() {
+    if (!_supabase) return;
+    const code = generateRoomCode();
+    const channel = _supabase.channel(`room:${code}`, {
+      config: { broadcast: { self: false } }
+    });
+
+    channel.on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState();
+      const players = {};
+      let total = 0;
+      Object.values(state).flat().forEach(p => {
+        total++;
+        if (p.role === 'player' && p.playerName) {
+          players[p.playerName] = true;
+        }
+      });
+      setJoinedPlayers(players);
+      setViewerCount(total);
+      setInteractiveMode(Object.keys(players).length > 0);
+      // Add any new remote player names to the names list
+      const playerNames = Object.keys(players);
+      setNames(current => {
+        const currentSet = new Set(current.map(n => n.trim()).filter(Boolean));
+        const newNames = playerNames.filter(n => !currentSet.has(n));
+        if (newNames.length === 0) return current;
+        // Remove empty slots first, then add new names
+        const filled = current.filter(n => n.trim());
+        return [...filled, ...newNames];
+      });
+      // Re-broadcast room_info so new joiners get the current state
+      const updatedNames = [...new Set([...cleanedNames.filter(Boolean), ...playerNames])];
+      channel.send({
+        type: 'broadcast',
+        event: 'game_event',
+        payload: { type: 'room_info', names: updatedNames, joinedPlayers: players }
+      });
+    });
+
+    channel.on('broadcast', { event: 'player_action' }, ({ payload }) => {
+      if (currentActionHandler.current) {
+        currentActionHandler.current(payload);
+      }
+    });
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        setRoomCode(code);
+        setRoomMode('host');
+        setRoomChannel(channel);
+        channel.send({
+          type: 'broadcast',
+          event: 'game_event',
+          payload: { type: 'room_created', hostName: names[0] || 'Host', playerNames: cleanedNames }
+        });
+        // Host registers as a player
+        const hostName = cleanedNames[0] || 'Host';
+        channel.track({ joinedAt: Date.now(), role: 'player', playerName: hostName });
+        setPlayerName(hostName);
+      }
+    });
+  }
+
+  function closeRoom() {
+    if (roomChannel) {
+      roomChannel.send({
+        type: 'broadcast',
+        event: 'game_event',
+        payload: { type: 'room_closed' }
+      });
+      _supabase.removeChannel(roomChannel);
+    }
+    setRoomMode('none');
+    setRoomCode(null);
+    setRoomChannel(null);
+    setViewerCount(0);
+    setJoinedPlayers({});
+    setInteractiveMode(false);
+    setPlayerName(null);
+  }
+
+  function handleCreateRoom() {
+    const trimmedName = hostName.trim();
+    if (!trimmedName) return;
+    setNames([trimmedName]);
+    setHostSetupDone(true);
+    setTimeout(() => createRoom(), 50);
+  }
+
+  function broadcastEvent(payload) {
+    if (roomMode !== 'host' || !roomChannel) return;
+    roomChannel.send({ type: 'broadcast', event: 'game_event', payload });
+  }
+
+  function sendPlayerAction(action) {
+    if (roomMode !== 'player' || !roomChannel || !playerName) return;
+    roomChannel.send({
+      type: 'broadcast',
+      event: 'player_action',
+      payload: { playerName: playerName, ...action }
+    });
+  }
+
+  function handleHostAction(action) {
+    if (!playerName || !currentActionHandler.current) return;
+    currentActionHandler.current({ playerName, ...action });
+  }
+
+  // Spectator/Player: connect to room (only triggered on initial 'joining' state)
+  const isJoining = roomMode === 'joining' || roomMode === 'spectator' || roomMode === 'player';
+  const channelCreatedRef = React.useRef(false);
+  useEffect(() => {
+    if (!isJoining || !roomCode || !_supabase || channelCreatedRef.current) return;
+    channelCreatedRef.current = true;
+
+    const channel = _supabase.channel(`room:${roomCode}`, {
+      config: { broadcast: { self: false } }
+    });
+
+    channel.on('broadcast', { event: 'game_event' }, ({ payload }) => {
+      switch (payload.type) {
+        case 'room_created':
+          setSpectatorState({ type: 'waiting', hostName: payload.hostName });
+          setRoomPlayerNames(payload.playerNames || []);
+          break;
+        case 'room_info':
+          setRoomPlayerNames(payload.names || []);
+          if (payload.joinedPlayers) setJoinedPlayers(payload.joinedPlayers);
+          break;
+        case 'game_start':
+          window.__votes = {};
+          setSpectatorState({ type: 'playing', result: payload.result, step: 0, done: false });
+          if (payload.series) setSpectatorSeries(payload.series);
+          // Auto-set pending action for real-time interactive modes on player side
+          if (roomModeRef.current === 'player') {
+            if (payload.result?.modeId === 'rocket') {
+              setPendingAction({ type: 'realtime', action: 'eject', modeId: 'rocket' });
+            } else if (payload.result?.modeId === 'stock-market' && payload.result?.isInteractiveChart) {
+              setPendingAction({
+                type: 'realtime',
+                action: 'sell',
+                modeId: 'stock-market',
+                playerStocks: payload.result.playerStocks || {},
+                sold: {},
+              });
+            }
+          }
+          break;
+        case 'step':
+          setSpectatorState(prev => prev ? { ...prev, step: payload.step, done: payload.done } : prev);
+          if (roomModeRef.current === 'player') setPendingAction(null);
+          break;
+        case 'turn_prompt':
+          if (roomModeRef.current === 'player') {
+            const deadlineMs = payload.timeoutMs
+              ? payload.timeoutMs
+              : (payload.timeoutSeconds || 10) * 1000;
+            setPendingAction({
+              type: 'turn',
+              playerName: payload.playerName,
+              action: payload.action,
+              deadline: Date.now() + deadlineMs,
+              turnNumber: payload.turnNumber,
+              totalDraws: payload.totalDraws,
+              targets: payload.targets,
+              tickNumber: payload.tickNumber,
+              totalTicks: payload.totalTicks,
+            });
+          }
+          break;
+        case 'bomb_state':
+          // Update spectator state so they can see the bomb moving
+          break;
+        case 'bomb_detonated':
+          if (payload.finalResult) {
+            setSpectatorState(prev => prev ? { ...prev, result: payload.finalResult, done: true } : prev);
+          }
+          if (roomModeRef.current === 'player') setPendingAction(null);
+          break;
+        case 'choice_prompt':
+          if (roomModeRef.current === 'player') {
+            if (payload.action === 'pick_stock') {
+              setPendingAction({
+                type: 'turn',
+                action: 'pick_stock',
+                playerName: payload.currentPicker,
+                stockPool: payload.stockPool,
+                taken: payload.taken,
+                deadline: Date.now() + (payload.timeoutSeconds || 10) * 1000,
+              });
+            } else {
+              setPendingAction({
+                type: 'choice',
+                action: payload.action,
+                modeId: payload.modeId,
+                keepCount: payload.keepCount,
+                hands: payload.hands,
+                deadline: Date.now() + (payload.timeoutSeconds || 20) * 1000,
+              });
+            }
+          }
+          break;
+        case 'stock_picked':
+          // Update the pending action with new taken state
+          if (roomModeRef.current === 'player') {
+            setPendingAction(prev => prev && prev.action === 'pick_stock' ? {
+              ...prev,
+              taken: payload.taken,
+              playerName: payload.nextPicker || prev.playerName,
+            } : prev);
+          }
+          break;
+        case 'stock_sold':
+          // Update sell state on window so PlayerActionBar can read it
+          if (typeof window !== 'undefined') {
+            const prevSellState = window.__stockSellState || {};
+            prevSellState[payload.playerName] = {
+              ticker: payload.ticker,
+              price: parseFloat(payload.price),
+              percentChange: parseFloat(payload.percentChange),
+            };
+            window.__stockSellState = prevSellState;
+          }
+          break;
+        case 'draft_complete':
+          setPendingAction(null);
+          break;
+        case 'vote_start':
+          window.__votes = {};
+          if (roomModeRef.current === 'player') {
+            setPendingAction({
+              type: 'vote',
+              action: 'vote_game',
+              modes: payload.modes,
+              deadline: payload.deadline,
+            });
+          }
+          break;
+        case 'vote_cast':
+          window.__votes = window.__votes || {};
+          window.__votes[payload.playerName] = payload.modeId;
+          // Force re-render by updating pendingAction
+          setPendingAction(prev => prev ? { ...prev, _tick: Date.now() } : prev);
+          break;
+        case 'vote_result':
+          window.__votes = {};
+          setPendingAction(null);
+          break;
+        case 'series_update':
+          setSpectatorSeries(prev => prev ? { ...prev, scores: payload.scores, round: payload.round, history: payload.history, complete: payload.complete, tied: payload.tied || null } : prev);
+          break;
+        case 'game_reset':
+          window.__votes = {};
+          setSpectatorState({ type: 'waiting' });
+          setSpectatorSeries(null);
+          break;
+        case 'room_closed':
+          setRoomClosed(true);
+          _supabase.removeChannel(channel);
+          break;
+      }
+    });
+
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        setSpectatorConnected(true);
+        // Track as generic joiner initially; will re-track when user picks a role
+        channel.track({
+          joinedAt: Date.now(),
+          role: 'spectator',
+          playerName: null
+        });
+      }
+    });
+
+    setRoomChannel(channel);
+
+    return () => {
+      channelCreatedRef.current = false;
+      _supabase.removeChannel(channel);
+    };
+  }, [roomCode]);
+
+  // Broadcast updated player names when host changes them
+  useEffect(() => {
+    if (roomMode !== 'host' || !roomChannel) return;
+    broadcastEvent({ type: 'room_info', names: cleanedNames, joinedPlayers: joinedPlayers });
+  }, [cleanedNames.join(',')]);
+
+  // QR code generation for host
+  useEffect(() => {
+    if (roomMode !== 'host' || !roomCode) return;
+    const el = document.getElementById('room-qr');
+    if (el) {
+      const qr = qrcode(0, 'M');
+      qr.addData(`https://becknology.vercel.app/runouts?room=${roomCode}`);
+      qr.make();
+      el.innerHTML = `<img src="${qr.createDataURL(2)}" style="width:100%;height:100%;image-rendering:pixelated;" />`;
+    }
+  }, [roomMode, roomCode]);
+
+  // ── Join / Spectator / Player mode early returns ──────────────────────────
+
+  // Handlers for the join screen
+  function handleJoinAsPlayer(name) {
+    setPlayerName(name);
+    setRoomMode('player');
+    // Re-track presence with player role
+    if (roomChannel) {
+      roomChannel.track({ joinedAt: Date.now(), role: 'player', playerName: name });
+    }
+  }
+
+  function handleJoinAsSpectator() {
+    setRoomMode('spectator');
+    // Re-track presence as spectator
+    if (roomChannel) {
+      roomChannel.track({ joinedAt: Date.now(), role: 'spectator', playerName: null });
+    }
+  }
+
+  // Room closed — applies to joining, spectator, and player modes
+  if ((roomMode === 'joining' || roomMode === 'spectator' || roomMode === 'player') && roomClosed) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
+        <div className="pixel-font text-2xl text-rose-400 mb-4">ROOM CLOSED</div>
+        <p className="font-mono text-sm text-slate-400 mb-6">The host ended the session</p>
+        <button onClick={() => { window.location.href = window.location.pathname; }} className="pixel-font text-[10px] border border-indigo-500/40 bg-indigo-500/10 px-6 py-3 text-indigo-300">
+          START YOUR OWN SESSION
+        </button>
+      </div>
+    );
+  }
+
+  // Join screen — user hasn't picked a role yet
+  if (roomMode === 'joining') {
+    return (
+      <JoinScreen
+        roomCode={roomCode}
+        names={roomPlayerNames}
+        joinedPlayers={joinedPlayers}
+        onJoinAsPlayer={handleJoinAsPlayer}
+        onJoinAsSpectator={handleJoinAsSpectator}
+      />
+    );
+  }
+
+  // Spectator waiting screen
+  if (roomMode === 'spectator') {
+    if (!spectatorState || spectatorState.type === 'waiting') {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
+          <div className="pixel-font text-[9px] text-slate-500 mb-2 uppercase tracking-widest">Spectator Mode</div>
+          <div className="pixel-font text-2xl text-cyan-300 mb-4" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>{roomCode}</div>
+          {spectatorState?.hostName ? <p className="font-mono text-sm text-slate-400 mb-4">Connected to {spectatorState.hostName}'s room</p> : null}
+          <div className="font-mono text-sm text-slate-500 animate-pulse">Waiting for the next game...</div>
+          {!spectatorConnected ? <div className="font-mono text-xs text-amber-400 mt-4">Connecting...</div> : null}
+        </div>
+      );
+    }
+
+    if (spectatorState.type === 'playing') {
+      const specResult = spectatorState.result;
+      const specStep = spectatorState.step;
+      const specDone = spectatorState.done;
+      const specConfig = getPlaybackConfig(specResult);
+
+      return (
+        <div className="fixed inset-0 z-50 bg-slate-950 p-0 sm:p-6">
+          <div className={`theme-${specResult.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
+            <ThemeArt modeId={specResult.modeId} />
+            {spectatorSeries?.active ? (
+              <div className="relative z-10 flex items-center justify-between px-4 py-2 border-b border-white/5 bg-white/[0.02]" style={{ fontSize: 10 }}>
+                <span className="pixel-font text-[7px] text-indigo-400">
+                  {spectatorSeries.round > spectatorSeries.config.totalRounds ? `Sudden Death \u2022 Round ${spectatorSeries.round}` : `Best of ${spectatorSeries.config.totalRounds} \u2022 Round ${spectatorSeries.round}`}
+                </span>
+                <span className="font-mono text-[9px] text-slate-400">
+                  {Object.entries(spectatorSeries.scores).map(([name, score]) => `${name}: ${score}`).join('  ')}
+                </span>
+              </div>
+            ) : null}
+            <div className="modal-toolbar relative z-10 flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur sm:px-6 sm:py-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Spectating</div>
+                <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{specResult.modeName}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="pixel-font text-[8px] text-red-400">LIVE</span>
+              </div>
+            </div>
+
+            <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
+              <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                <RevealBanner
+                  modeName={specResult.modeName}
+                  step={specDone ? specConfig.totalSteps : specStep}
+                  totalSteps={specConfig.totalSteps}
+                  done={specDone}
+                />
+                <div className="flex-1">
+                  <PlaybackStage result={specResult} step={specStep} done={specDone} />
+                </div>
+                {specDone ? (
+                  <div className="verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur border-slate-200 bg-white/85">
+                    {specResult.selectionGoal === "winner" ? <Celebration /> : <SadOverlay />}
+                    <div className="relative z-10">
+                      <VerdictReveal text={specResult.headline} isWinner={specResult.selectionGoal === "winner"} />
+                    </div>
+                  </div>
+                ) : null}
+                {specDone && spectatorSeries?.active && !spectatorSeries?.complete ? (
+                  <SeriesScoreboard
+                    scores={spectatorSeries.scores}
+                    history={spectatorSeries.history}
+                    round={spectatorSeries.round}
+                    totalRounds={spectatorSeries.config.totalRounds}
+                    selectionGoal={spectatorSeries.config.selectionGoal}
+                  />
+                ) : null}
+                {specDone && spectatorSeries?.active && spectatorSeries?.complete ? (
+                  <SeriesResult
+                    scores={spectatorSeries.scores}
+                    history={spectatorSeries.history}
+                    totalRounds={spectatorSeries.config.totalRounds}
+                    selectionGoal={spectatorSeries.config.selectionGoal}
+                  />
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Player waiting screen
+  if (roomMode === 'player') {
+    if (!spectatorState || spectatorState.type === 'waiting') {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
+          <div className="flex items-center gap-2 justify-center mb-2">
+            <span className="pixel-font text-[9px] text-indigo-400 uppercase tracking-widest">Playing as</span>
+            <span className="pixel-font text-[9px] text-cyan-300">{playerName}</span>
+          </div>
+          <div className="pixel-font text-2xl text-cyan-300 mb-4" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>{roomCode}</div>
+          {spectatorState?.hostName ? <p className="font-mono text-sm text-slate-400 mb-4">Connected to {spectatorState.hostName}'s room</p> : null}
+          {pendingAction?.action === 'vote_game' ? (
+            <div className="w-full max-w-lg">
+              <VoteGrid
+                votes={window.__votes || {}}
+                deadline={pendingAction.deadline}
+                onVote={(action) => { sendPlayerAction(action); window.__votes = window.__votes || {}; window.__votes[playerName] = action.modeId; setPendingAction(prev => prev ? { ...prev, _tick: Date.now() } : prev); }}
+                playerName={playerName}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="font-mono text-sm text-slate-500 animate-pulse">Waiting for the next game...</div>
+              {!spectatorConnected ? <div className="font-mono text-xs text-amber-400 mt-4">Connecting...</div> : null}
+              <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
+            </>
+          )}
+        </div>
+      );
+    }
+
+    if (spectatorState.type === 'playing') {
+      const specResult = spectatorState.result;
+      const specStep = spectatorState.step;
+      const specDone = spectatorState.done;
+      const specConfig = getPlaybackConfig(specResult);
+
+      return (
+        <div className="fixed inset-0 z-50 bg-slate-950 p-0 sm:p-6">
+          <div className={`theme-${specResult.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
+            <ThemeArt modeId={specResult.modeId} />
+            {spectatorSeries?.active ? (
+              <div className="relative z-10 flex items-center justify-between px-4 py-2 border-b border-white/5 bg-white/[0.02]" style={{ fontSize: 10 }}>
+                <span className="pixel-font text-[7px] text-indigo-400">
+                  {spectatorSeries.round > spectatorSeries.config.totalRounds ? `Sudden Death \u2022 Round ${spectatorSeries.round}` : `Best of ${spectatorSeries.config.totalRounds} \u2022 Round ${spectatorSeries.round}`}
+                </span>
+                <span className="font-mono text-[9px] text-slate-400">
+                  {Object.entries(spectatorSeries.scores).map(([name, score]) => `${name}: ${score}`).join('  ')}
+                </span>
+              </div>
+            ) : null}
+            <div className="modal-toolbar relative z-10 flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur sm:px-6 sm:py-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.22em] text-indigo-500">Playing as {playerName}</div>
+                <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{specResult.modeName}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span className="pixel-font text-[8px] text-indigo-400">PLAYING</span>
+              </div>
+            </div>
+
+            <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
+              <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                <RevealBanner
+                  modeName={specResult.modeName}
+                  step={specDone ? specConfig.totalSteps : specStep}
+                  totalSteps={specConfig.totalSteps}
+                  done={specDone}
+                />
+                <div className="flex-1">
+                  <PlaybackStage result={specResult} step={specStep} done={specDone} />
+                </div>
+                {specDone ? (
+                  <div className="verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur border-slate-200 bg-white/85">
+                    {specResult.selectionGoal === "winner" ? <Celebration /> : <SadOverlay />}
+                    <div className="relative z-10">
+                      <VerdictReveal text={specResult.headline} isWinner={specResult.selectionGoal === "winner"} />
+                    </div>
+                  </div>
+                ) : null}
+                {specDone && spectatorSeries?.active && !spectatorSeries?.complete ? (
+                  <SeriesScoreboard
+                    scores={spectatorSeries.scores}
+                    history={spectatorSeries.history}
+                    round={spectatorSeries.round}
+                    totalRounds={spectatorSeries.config.totalRounds}
+                    selectionGoal={spectatorSeries.config.selectionGoal}
+                  />
+                ) : null}
+                {specDone && spectatorSeries?.active && spectatorSeries?.complete ? (
+                  <SeriesResult
+                    scores={spectatorSeries.scores}
+                    history={spectatorSeries.history}
+                    totalRounds={spectatorSeries.config.totalRounds}
+                    selectionGoal={spectatorSeries.config.selectionGoal}
+                  />
+                ) : null}
+                {pendingAction?.action === 'vote_game' && specDone ? (
+                  <VoteGrid
+                    votes={window.__votes || {}}
+                    deadline={pendingAction.deadline}
+                    onVote={(action) => { sendPlayerAction(action); window.__votes = window.__votes || {}; window.__votes[playerName] = action.modeId; setPendingAction(prev => prev ? { ...prev, _tick: Date.now() } : prev); }}
+                    playerName={playerName}
+                  />
+                ) : null}
+              </div>
+            </div>
+          </div>
+          {pendingAction?.action !== 'vote_game' ? (
+            <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
+          ) : null}
+        </div>
+      );
+    }
+  }
+
+  // ── Landing screen: choose Host or Same Device ──
+  if (deviceMode === 'choose' && roomMode === 'none') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6">
+        <div className="mb-4 flex items-center justify-center gap-8">
+          <div className="float-slow relative" style={{ width: 44, height: 32 }}>
+            <div className="invader" style={{ '--pc': '#22d3ee' }} />
+          </div>
+          <div className="float-med relative" style={{ width: 21, height: 27 }}>
+            <div className="pixel-joystick" />
+          </div>
+          <div className="float-fast relative" style={{ width: 44, height: 32 }}>
+            <div className="invader" style={{ '--pc': '#f472b6' }} />
+          </div>
+        </div>
+        <h1 className="pixel-font neon-text text-3xl tracking-wider sm:text-5xl" style={{ color: "#a5b4fc" }}>RUNOUTS</h1>
+        <p className="pixel-font mt-4 text-[8px] uppercase leading-relaxed tracking-widest text-cyan-400/70 sm:text-[10px]">
+          Insert coins {"\u25CF"} Pick a game {"\u25CF"} Someone loses
+        </p>
+
+        <div className="mt-12 flex flex-col sm:flex-row gap-4 w-full max-w-md">
+          <button
+            onClick={() => setDeviceMode('host')}
+            className="flex-1 py-6 px-6 rounded-2xl text-center transition hover:scale-105 active:scale-95"
+            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.15))', border: '2px solid rgba(99,102,241,0.4)', boxShadow: '0 0 30px rgba(99,102,241,0.15)' }}
+          >
+            <div className="text-3xl mb-2">{"\uD83D\uDCE1"}</div>
+            <div className="pixel-font text-[11px] text-indigo-300">HOST A GAME</div>
+            <div className="pixel-font text-[7px] text-slate-500 mt-1">Friends join on their phones</div>
+          </button>
+
+          <button
+            onClick={() => setDeviceMode('local')}
+            className="flex-1 py-6 px-6 rounded-2xl text-center transition hover:scale-105 active:scale-95"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <div className="text-3xl mb-2">{"\uD83D\uDD79\uFE0F"}</div>
+            <div className="pixel-font text-[11px] text-white">SAME DEVICE</div>
+            <div className="pixel-font text-[7px] text-slate-500 mt-1">Everyone plays on this screen</div>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Host setup screen ──
+  if (deviceMode === 'host' && !hostSetupDone) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6">
+        <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-4">Host Setup</div>
+        <div className="pixel-font text-xl text-indigo-300 mb-8" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>RUNOUTS</div>
+
+        <div className="w-full max-w-sm space-y-4">
+          <div>
+            <div className="pixel-font text-[7px] text-fuchsia-400 uppercase tracking-widest mb-1.5">Your Name</div>
+            <input value={hostName} onChange={e => setHostName(e.target.value)}
+              className="w-full border border-indigo-500/30 bg-white/[0.06] px-4 py-3 font-mono text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-400"
+              placeholder="Enter your name..." autoFocus />
+          </div>
+
+          <div>
+            <div className="pixel-font text-[7px] text-green-400 uppercase tracking-widest mb-1.5">Format</div>
+            <select value={gameFormat} onChange={e => setGameFormat(e.target.value)}
+              className="w-full border border-green-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-green-300 outline-none">
+              <option value="single">Single Round</option>
+              <option value="tournament">Tournament</option>
+              <option value="best-of-3">Best of 3</option>
+              <option value="best-of-5">Best of 5</option>
+              <option value="best-of-7">Best of 7</option>
+            </select>
+          </div>
+
+          <div>
+            <div className="pixel-font text-[7px] text-rose-400 uppercase tracking-widest mb-1.5">Picking a...</div>
+            <select value={selectionGoal} onChange={e => setSelectionGoal(e.target.value)}
+              className="w-full border border-rose-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-rose-300 outline-none">
+              <option value="loser">Loser</option>
+              <option value="winner">Winner</option>
+            </select>
+          </div>
+
+          <div>
+            <div className="pixel-font text-[7px] text-yellow-400 uppercase tracking-widest mb-1.5">Stakes (optional)</div>
+            <input value={taskLabel} onChange={e => setTaskLabel(e.target.value)}
+              className="w-full border border-yellow-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-yellow-300 placeholder-slate-600 outline-none"
+              placeholder="what's at stake?" />
+          </div>
+
+          <button onClick={handleCreateRoom} disabled={!hostName.trim()}
+            className="w-full py-4 rounded-xl font-bold text-sm transition hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2))', border: '2px solid rgba(99,102,241,0.5)', color: '#a5b4fc', textShadow: '0 0 8px rgba(99,102,241,0.4)' }}>
+            {"\uD83D\uDCE1"} CREATE ROOM
+          </button>
+
+          <button onClick={() => setDeviceMode('choose')} className="w-full py-2 font-mono text-xs text-slate-600 hover:text-slate-400 transition">
+            {"\u2190"} Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Host lobby screen ──
+  if (deviceMode === 'host' && hostSetupDone && roomMode === 'host' && !gameActive) {
+    return (
+      <div className="min-h-screen bg-[#0a0a1a] text-white p-6">
+        <div className="max-w-lg mx-auto">
+          <div className="text-center mb-8">
+            <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-2">Room Code</div>
+            <div className="pixel-font text-3xl text-cyan-300 mb-4" style={{ textShadow: '0 0 15px rgba(34,211,238,0.5)' }}>{roomCode}</div>
+
+            <div className="flex justify-center mb-4">
+              <div id="room-qr" className="bg-white p-1 rounded" style={{ width: 120, height: 120 }} />
+            </div>
+
+            <button onClick={() => navigator.clipboard.writeText(`https://becknology.vercel.app/runouts?room=${roomCode}`)}
+              className="pixel-font text-[8px] border border-white/10 bg-white/5 px-4 py-2 text-slate-400 hover:text-white transition">
+              COPY LINK
+            </button>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 mb-6">
+            <div className="pixel-font text-[7px] text-slate-600 uppercase tracking-widest mb-2">Settings</div>
+            <div className="flex flex-wrap gap-3">
+              <span className="px-2 py-1 rounded bg-green-500/10 border border-green-500/20 font-mono text-xs text-green-400">{gameFormat}</span>
+              <span className="px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 font-mono text-xs text-rose-400">Pick a {selectionGoal}</span>
+              {taskLabel ? <span className="px-2 py-1 rounded bg-yellow-500/10 border border-yellow-500/20 font-mono text-xs text-yellow-400">{taskLabel}</span> : null}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-4 mb-6">
+            <div className="pixel-font text-[7px] text-indigo-400 uppercase tracking-widest mb-3">Players ({Object.keys(joinedPlayers).length})</div>
+            <div className="space-y-2">
+              {Object.keys(joinedPlayers).map(function(name) {
+                return (
+                  <div key={name} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/15">
+                    <span className="text-sm">{"\uD83D\uDCF1"}</span>
+                    <span className="font-mono text-sm font-bold text-indigo-300">{name}</span>
+                    {name === playerName ? <span className="pixel-font text-[6px] text-slate-500">(you)</span> : null}
+                  </div>
+                );
+              })}
+            </div>
+            {Object.keys(joinedPlayers).length < 2 ? (
+              <div className="pixel-font text-[8px] text-amber-400 mt-3 animate-pulse">Waiting for players to join...</div>
+            ) : null}
+          </div>
+
+          <button
+            onClick={() => { if (interactiveMode) startVote(); else startGame(pickRandom(MODES).id); }}
+            disabled={Object.keys(joinedPlayers).length < 2}
+            className="w-full py-4 rounded-xl pixel-font text-sm transition hover:scale-[1.02] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ background: Object.keys(joinedPlayers).length >= 2 ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)', border: '2px solid rgba(16,185,129,0.5)', color: '#d1fae5', textShadow: '0 0 8px rgba(16,185,129,0.4)' }}>
+            {"\uD83D\uDE80"} START ({Object.keys(joinedPlayers).length} players)
+          </button>
+
+          {voteActive && !gameActive ? (
+            <div className="mt-4">
+              <VoteGrid votes={votes} deadline={voteDeadline} onVote={handleHostAction} playerName={playerName} />
+            </div>
+          ) : null}
+
+          <div className="flex gap-3 mt-4">
+            <button onClick={closeRoom} className="flex-1 py-2 font-mono text-xs text-slate-600 hover:text-rose-400 transition">Close Room</button>
+            <button onClick={() => { closeRoom(); setDeviceMode('choose'); setHostSetupDone(false); }} className="flex-1 py-2 font-mono text-xs text-slate-600 hover:text-slate-400 transition">{"\u2190"} Back</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="crt-vignette crt-global-scanlines crt-flicker relative min-h-screen overflow-hidden bg-[#0a0a1a] text-white">
+      {/* Gradient orbs */}
+      <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.2) 0%, transparent 50%), radial-gradient(ellipse at 20% 100%, rgba(236,72,153,0.12) 0%, transparent 40%), radial-gradient(ellipse at 80% 60%, rgba(34,211,238,0.08) 0%, transparent 35%)" }} />
+      {/* Dot grid */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+      {/* Starfield */}
+      <div className="pointer-events-none absolute inset-0">
+        {[
+          { x: 8, y: 5, c: "star-bright", a: "twinkle1", d: "3s" },
+          { x: 15, y: 12, c: "star-dim", a: "twinkle2", d: "4s" },
+          { x: 25, y: 3, c: "star-pink", a: "twinkle3", d: "5s" },
+          { x: 35, y: 18, c: "star-bright", a: "twinkle1", d: "3.5s" },
+          { x: 45, y: 7, c: "star-dim", a: "twinkle2", d: "6s" },
+          { x: 55, y: 22, c: "star-pink", a: "twinkle1", d: "4.5s" },
+          { x: 65, y: 4, c: "star-bright", a: "twinkle3", d: "5.5s" },
+          { x: 72, y: 15, c: "star-dim", a: "twinkle2", d: "3.2s" },
+          { x: 82, y: 8, c: "star-pink", a: "twinkle1", d: "4.8s" },
+          { x: 90, y: 20, c: "star-bright", a: "twinkle3", d: "6.5s" },
+          { x: 5, y: 35, c: "star-dim", a: "twinkle1", d: "7s" },
+          { x: 18, y: 28, c: "star-bright", a: "twinkle2", d: "3.8s" },
+          { x: 38, y: 32, c: "star-pink", a: "twinkle3", d: "5.2s" },
+          { x: 60, y: 30, c: "star-dim", a: "twinkle1", d: "4.2s" },
+          { x: 78, y: 35, c: "star-bright", a: "twinkle2", d: "6.2s" },
+          { x: 92, y: 38, c: "star-pink", a: "twinkle3", d: "3.6s" },
+          { x: 12, y: 45, c: "star-bright", a: "twinkle1", d: "5.8s" },
+          { x: 50, y: 42, c: "star-dim", a: "twinkle2", d: "4.4s" },
+          { x: 85, y: 48, c: "star-pink", a: "twinkle1", d: "7.2s" },
+          { x: 30, y: 50, c: "star-bright", a: "twinkle3", d: "3.4s" },
+        ].map((s, i) => (
+          <div key={i} className={`star ${s.c}`} style={{ left: `${s.x}%`, top: `${s.y}%`, animation: `${s.a} ${s.d} ease-in-out infinite` }} />
+        ))}
+      </div>
+      {/* Synthwave grid */}
+      <div className="synthwave-grid" />
+      {/* Pixel art corner sprites */}
+      <div className="pixel-sprite invader float-slow" style={{ '--pc': '#818cf8', top: '15%', left: '3%', opacity: 0.3 }} />
+      <div className="pixel-sprite invader float-med" style={{ '--pc': '#f472b6', top: '40%', right: '2%', opacity: 0.25, transform: 'scale(0.8)' }} />
+      <div className="pixel-sprite pixel-coin float-fast" style={{ top: '25%', right: '5%', opacity: 0.35 }} />
+      <div className="pixel-sprite pixel-heart float-slow" style={{ bottom: '30%', left: '4%', opacity: 0.3 }} />
+      <div className="pixel-sprite pixel-joystick float-med" style={{ bottom: '20%', right: '4%', opacity: 0.25 }} />
+      <div className="pixel-sprite pixel-coin float-fast" style={{ top: '60%', left: '6%', opacity: 0.2, transform: 'scale(0.7)' }} />
+
+      <div className="crt-screen relative mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center">
+          <div className="relative mb-6 flex items-center justify-center gap-8">
+            <div className="float-slow relative" style={{ width: 44, height: 32 }}>
+              <div className="invader" style={{ '--pc': '#22d3ee' }} />
+            </div>
+            <div className="float-med relative" style={{ width: 21, height: 27 }}>
+              <div className="pixel-joystick" />
+            </div>
+            <div className="float-fast relative" style={{ width: 44, height: 32 }}>
+              <div className="invader" style={{ '--pc': '#f472b6' }} />
+            </div>
+          </div>
+          <h1 className="pixel-font pixel-title-scale neon-text text-2xl tracking-wider sm:text-5xl" style={{ color: "#a5b4fc" }}>
+            RUNOUTS
+          </h1>
+          <p className="pixel-font phosphor mt-4 text-[8px] uppercase leading-relaxed tracking-widest text-cyan-400/70 sm:text-[10px]">
+            Insert coins ● Pick a game ● Someone loses
+          </p>
+          <div className="mx-auto mt-4 h-[2px] w-64 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+          <div className="mx-auto mt-1 h-[1px] w-48 bg-gradient-to-r from-transparent via-fuchsia-500/50 to-transparent" />
+          {deviceMode === 'local' ? (
+            <button onClick={() => setDeviceMode('choose')} className="mt-4 font-mono text-xs text-slate-600 hover:text-slate-400 transition">
+              {"\u2190"} Back to menu
+            </button>
+          ) : null}
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="crt-scanlines relative mb-10 overflow-hidden bg-[#0d0d24] p-5 sm:p-6" style={{ border: "3px solid #2d2b6b", boxShadow: "0 0 30px rgba(99,102,241,0.15), inset 0 0 60px rgba(0,0,0,0.5)" }}>
+          <div className="relative z-10">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="pixel-font text-[10px] text-fuchsia-400">▶</span>
+              <span className="pixel-font phosphor text-[9px] uppercase tracking-widest text-fuchsia-400">Players</span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {names.map((name, index) => {
+                const colors = ["text-cyan-400 border-cyan-500/30 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(34,211,238,0.25)]", "text-fuchsia-400 border-fuchsia-500/30 focus:border-fuchsia-400 focus:shadow-[0_0_20px_rgba(236,72,153,0.25)]", "text-green-400 border-green-500/30 focus:border-green-400 focus:shadow-[0_0_20px_rgba(34,197,94,0.25)]", "text-amber-400 border-amber-500/30 focus:border-amber-400 focus:shadow-[0_0_20px_rgba(245,158,11,0.25)]"];
+                return (
+                <div key={index} className="group relative">
+                  <div className="pixel-font absolute left-3 top-1/2 -translate-y-1/2 text-[8px] text-slate-600">P{index + 1}</div>
+                  <input
+                    value={name}
+                    onChange={(event) => updateName(index, event.target.value)}
+                    className={`w-full border bg-black/40 px-4 py-3 pl-10 font-mono text-sm outline-none transition ${colors[index % colors.length]}`}
+                    placeholder="..."
+                  />
+                  {names.length > 2 ? (
+                    <button
+                      onClick={() => removePlayer(index)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-1 font-mono text-xs text-slate-700 opacity-0 transition hover:text-rose-400 group-hover:opacity-100"
+                    >
+                      ×
+                    </button>
+                  ) : null}
+                </div>
+                );
+              })}
+              <button
+                onClick={addPlayer}
+                className="flex items-center justify-center border border-dashed border-white/10 py-3 font-mono text-xs text-slate-600 transition hover:border-indigo-500/50 hover:text-indigo-400"
+              >
+                + ADD PLAYER
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <div>
+                <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-yellow-500/80">What's at stake</div>
+                <input
+                  value={taskLabel}
+                  onChange={(event) => setTaskLabel(event.target.value)}
+                  className="w-full border border-yellow-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-yellow-300 placeholder-slate-600 outline-none transition focus:border-yellow-400 focus:shadow-[0_0_16px_rgba(234,179,8,0.2)]"
+                  placeholder="enter the stakes..."
+                />
+              </div>
+              <div>
+                <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-green-500/80">Format</div>
+                <select
+                  value={gameFormat}
+                  onChange={(event) => setGameFormat(event.target.value)}
+                  className="w-full border border-green-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-green-300 outline-none transition focus:border-green-400"
+                >
+                  <option value="single">Single Round</option>
+                  <option value="tournament">Tournament</option>
+                  <option value="best-of-3">Best of 3</option>
+                  <option value="best-of-5">Best of 5</option>
+                  <option value="best-of-7">Best of 7</option>
+                </select>
+              </div>
+              <div>
+                <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-rose-500/80">Picking a...</div>
+                <select
+                  value={selectionGoal}
+                  onChange={(event) => setSelectionGoal(event.target.value)}
+                  className="w-full border border-rose-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-rose-300 outline-none transition focus:border-rose-400"
+                >
+                  <option value="loser">Loser</option>
+                  <option value="winner">Winner</option>
+                </select>
+              </div>
+            </div>
+
+            {!hasEnoughPlayers ? <p className="pixel-font mt-3 text-[8px] text-amber-400">▸ NEED AT LEAST 2 PLAYERS</p> : null}
+            {hasEnoughPlayers && !allFilled ? <p className="pixel-font mt-3 text-[8px] text-amber-400">▸ FILL IN ALL NAMES TO PLAY</p> : null}
+            {hasEnoughPlayers && allFilled && !namesAreUnique ? <p className="pixel-font mt-3 text-[8px] text-amber-400">▸ NAMES MUST BE UNIQUE</p> : null}
+          </div>
+        </motion.div>
+
+        <div className="pixel-divider mb-6" />
+
+        <div className="mb-5 flex items-center gap-4">
+          <div className="relative" style={{ width: 21, height: 21 }}>
+            <div className="pixel-coin" style={{ transform: 'scale(0.8)' }} />
+          </div>
+          <div className="h-[2px] flex-1 bg-gradient-to-r from-fuchsia-500/50 via-indigo-500/30 to-transparent" />
+          <span className="pixel-font phosphor text-[9px] uppercase tracking-widest text-indigo-400">Select Game</span>
+          <div className="h-[2px] flex-1 bg-gradient-to-l from-cyan-500/50 via-indigo-500/30 to-transparent" />
+          <div className="relative" style={{ width: 21, height: 21 }}>
+            <div className="pixel-coin" style={{ transform: 'scale(0.8)' }} />
+          </div>
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          <button
+            onClick={() => { setSelectedModeId("auto"); startGame(); }}
+            disabled={!canRun}
+            className="arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1))", border: "2px solid rgba(99,102,241,0.4)", boxShadow: "0 0 20px rgba(99,102,241,0.15)" }}
+          >
+            <div className="coin-spin mb-3 text-4xl">🎲</div>
+            <div className="pixel-font text-[10px] text-indigo-300" style={{ textShadow: "0 0 10px rgba(129,140,248,0.5)" }}>RANDOM</div>
+            <div className="pixel-font mt-2 text-[7px] text-indigo-400/60">??? SURPRISE ???</div>
+          </button>
+
+          {MODE_META.map((mode) => (
+            <button
+              key={mode.id}
+              onClick={() => { setSelectedModeId(mode.id); startGame(mode.id); }}
+              disabled={!canRun}
+              className={`arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40 ${mode.cardHint}`}
+              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="relative">
+                <div className="mb-3 text-4xl transition-transform group-hover:scale-125" style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.2))" }}>{mode.icon}</div>
+                <div className="pixel-font text-[9px] leading-tight text-white">{mode.name}</div>
+                <div className="pixel-font mt-2 text-[6px] leading-relaxed text-slate-500">{mode.blurb}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {result ? (
+          <div className="mb-6 flex justify-center">
+            <button
+              onClick={playAgain}
+              disabled={!canRun}
+              className="pixel-font inline-flex items-center gap-2 border border-cyan-500/30 bg-cyan-500/10 px-5 py-3 text-[8px] text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-40"
+            >
+              ↻ REPLAY {MODE_META.find(m => m.id === result.modeId)?.name?.toUpperCase()}
+            </button>
+          </div>
+        ) : null}
+
+        {/* Room controls — host or standalone (hidden in local mode) */}
+        {deviceMode !== 'local' && roomMode !== 'spectator' && roomMode !== 'player' && roomMode !== 'joining' ? (
+          roomMode === 'host' ? (
+            <div className="mb-6 crt-scanlines relative overflow-hidden bg-[#0d0d24] p-5" style={{ border: '3px solid #2d2b6b', boxShadow: '0 0 30px rgba(99,102,241,0.15)' }}>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{"\uD83D\uDCE1"}</span>
+                    <span className="pixel-font text-[9px] uppercase tracking-widest text-green-400">Room Live</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="pixel-font text-[8px] text-slate-400">{"\uD83D\uDC40"} {viewerCount} watching</span>
+                    <button onClick={closeRoom} className="pixel-font text-[7px] text-slate-600 hover:text-rose-400 transition">CLOSE ROOM</button>
+                  </div>
+                </div>
+                <div className="pixel-font text-center text-2xl tracking-widest text-cyan-300 mb-3" style={{ textShadow: '0 0 10px rgba(34,211,238,0.5)' }}>
+                  {roomCode}
+                </div>
+                <div className="flex flex-wrap items-center justify-center gap-4">
+                  <button onClick={() => { navigator.clipboard.writeText(`https://becknology.vercel.app/runouts?room=${roomCode}`); }} className="pixel-font text-[7px] border border-white/10 bg-white/5 px-3 py-2 text-slate-400 hover:text-white transition">
+                    COPY LINK
+                  </button>
+                  <div id="room-qr" className="bg-white p-1 rounded" style={{ width: 80, height: 80 }} />
+                </div>
+                {/* Connected players */}
+                {Object.keys(joinedPlayers).length > 0 ? (
+                  <div className="mt-4 border-t border-white/5 pt-3">
+                    <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+                      {Object.keys(joinedPlayers).map(function(pName) {
+                        return (
+                          <span key={pName} className="inline-flex items-center gap-1 rounded-full bg-indigo-500/15 border border-indigo-500/20 px-3 py-1">
+                            <span className="text-xs">{"\uD83D\uDCF1"}</span>
+                            <span className="pixel-font text-[7px] text-indigo-300">{pName}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+                {/* Interactive mode indicator */}
+                <div className="mt-2 text-center">
+                  {interactiveMode ? (
+                    <>
+                      <span className="pixel-font text-[7px] text-green-400">{"\uD83C\uDFAE"} Interactive Mode</span>
+                      {!gameActive ? (
+                        <div className="mt-3">
+                          <button
+                            onClick={startVote}
+                            className="pixel-font inline-flex items-center gap-2 border-2 border-violet-500/40 bg-violet-500/10 px-5 py-3 text-[9px] text-violet-300 transition hover:bg-violet-500/20 hover:border-violet-400"
+                          >
+                            {"\uD83D\uDDF3\uFE0F"} VOTE FOR NEXT GAME
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <span className="pixel-font text-[7px] text-slate-500">{"\uD83D\uDC40"} Spectator Only</span>
+                  )}
+                </div>
+                {voteActive && !gameActive ? (
+                  <div className="mt-4">
+                    <VoteGrid votes={votes} deadline={voteDeadline} onVote={handleHostAction} playerName={playerName} />
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null
+        ) : null}
+
+        <Leaderboard stats={leaderboardStats} loading={leaderboardLoading} />
+      </div>
+
+      <AnimatePresence>
+        {gameActive && result ? (
+          <motion.div
+            key={result.runId}
+            initial={{ opacity: 0, scale: 0.85, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 80, damping: 18, mass: 1 }}
+            className="mobile-modal-overlay fixed inset-0 z-50 bg-slate-950/80 p-0 backdrop-blur-md sm:p-6"
+          >
+            <div className={`theme-${result.modeId} arcade-bezel relative flex h-full flex-col overflow-hidden rounded-none sm:rounded-[2rem] border border-white/10 shadow-2xl`}>
+              <ThemeArt modeId={result.modeId} />
+              <div className="modal-toolbar relative z-10 flex flex-col border-b border-slate-200/80 bg-white/80 backdrop-blur">
+                {seriesActive && seriesConfig ? (
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-b border-slate-200/50 bg-gradient-to-r from-indigo-50/80 to-violet-50/80 px-3 py-2 sm:px-6">
+                    <span className="text-xs font-bold uppercase tracking-widest text-indigo-600">
+                      Best of {seriesConfig.totalRounds}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">
+                      {seriesRound > seriesConfig.totalRounds ? `Sudden Death \u2022 Round ${seriesRound}` : `Round ${seriesRound} of ${seriesConfig.totalRounds}`}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {Object.entries(seriesScores).sort((a, b) => b[1] - a[1]).map(([name, score]) => (
+                        <span key={name} className="flex items-center gap-1">
+                          <span className="text-xs font-bold text-slate-700">{name}:</span>
+                          <span className={`text-xs font-black ${score > 0 ? 'text-indigo-600' : 'text-slate-400'}`}>{score}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-6 sm:py-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : seriesActive && seriesConfig && seriesRound > seriesConfig.totalRounds ? `Sudden death \u2022 Round ${seriesRound}` : seriesActive ? `Series round ${seriesRound}` : "Game view"}
+                  </div>
+                  <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{result.modeName}</div>
+                </div>
+                <div className="hidden sm:flex flex-wrap items-center justify-end gap-3">
+                  {!playbackDone ? (
+                    (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || result.draftPhase) ? null : (
+                    <>
+                      <button
+                        onClick={advancePlayback}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {playbackStep === 0 ? "Start reveal" : "Next reveal"}
+                      </button>
+                      <button
+                        onClick={revealAll}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        <FastForward className="h-4 w-4" />
+                        Reveal all
+                      </button>
+                    </>
+                    )
+                  ) : result.isTie ? (
+                    <>
+                      <button
+                        onClick={startSuddenDeath}
+                        className="sudden-death-btn inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+                      >
+                        {"\u2694\uFE0F"} SUDDEN DEATH
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit
+                      </button>
+                    </>
+                  ) : seriesActive && seriesTied ? (
+                    <>
+                      <span className="text-xs font-black uppercase tracking-widest text-orange-500 animate-pulse">SERIES TIED — {seriesTied.join(' vs ')}</span>
+                      <button
+                        onClick={() => startSeriesSuddenDeath(null)}
+                        className="sudden-death-btn inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5"
+                      >
+                        {"\u2694\uFE0F"} SUDDEN DEATH
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit
+                      </button>
+                    </>
+                  ) : seriesActive && !seriesComplete ? (
+                    <>
+                      {interactiveMode ? (
+                        <button
+                          onClick={startVote}
+                          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:-translate-y-0.5"
+                        >
+                          {"\uD83D\uDDF3\uFE0F"} Next Round
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => startSeriesNextRound(null)}
+                          className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:-translate-y-0.5"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          Next Round
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowSeriesScoreboard(prev => !prev)}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5"
+                      >
+                        {"\uD83D\uDCCA"} Scoreboard
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit Series
+                      </button>
+                    </>
+                  ) : seriesActive && seriesComplete ? (
+                    <>
+                      <button
+                        onClick={() => { resetSeriesState(); setGameActive(false); setTimeout(() => startGame(), 100); }}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:-translate-y-0.5"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        New Series
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { setGameActive(false); setTimeout(() => startGame(pickRandom(MODES).id), 50); }}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition hover:-translate-y-0.5"
+                      >
+                        <Shuffle className="h-4 w-4" />
+                        New random game
+                      </button>
+                      {interactiveMode ? (
+                        <button
+                          onClick={startVote}
+                          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:-translate-y-0.5"
+                        >
+                          {"\uD83D\uDDF3\uFE0F"} Vote next
+                        </button>
+                      ) : null}
+                      <button
+                        onClick={playAgain}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        Play again
+                      </button>
+                      <button
+                        onClick={exitGame}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        Exit
+                      </button>
+                    </>
+                  )}
+                </div>
+                </div>
+              </div>
+
+              <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
+                <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                  <RevealBanner
+                    modeName={suddenDeathRound > 0 ? `${result.modeName} \u2022 Sudden Death #${suddenDeathRound}` : result.modeName}
+                    step={playbackDone ? currentConfig?.totalSteps ?? playbackStep : playbackStep}
+                    totalSteps={currentConfig?.totalSteps ?? 1}
+                    done={playbackDone}
+                  />
+
+                  <div className="flex-1">
+                    <PlaybackStage result={result} step={playbackStep} done={playbackDone} interactiveBombState={interactiveBombState} />
+                  </div>
+
+                  {(interactiveMode || localInteractiveMode) && pendingAction && (playerName || (localInteractiveMode && pendingAction.type === 'realtime')) && !playbackDone ? (
+                    <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 backdrop-blur">
+                      {localInteractiveMode && !interactiveMode && pendingAction.type === 'realtime' && pendingAction.action === 'eject' ? (
+                        (() => {
+                          const ejects = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+                          return (
+                            <div>
+                              <div className="pixel-font text-[9px] text-indigo-300 mb-3 text-center">{"\uD83D\uDE80"} EJECT BUTTONS</div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {cleanedNames.map(name => {
+                                  const hasEjected = ejects[name];
+                                  return hasEjected ? (
+                                    <div key={name} className="py-3 px-4 rounded-xl bg-green-900/30 border border-green-500/20 text-center">
+                                      <div className="pixel-font text-[8px] text-green-400">{"\uD83E\uDE82"} {name}</div>
+                                      <div className="pixel-font text-[7px] text-green-600 mt-1">{hasEjected.distance >= 1000000 ? (hasEjected.distance/1000000).toFixed(1) + 'M km' : Math.round(hasEjected.distance).toLocaleString() + ' km'}</div>
+                                    </div>
+                                  ) : (
+                                    <button key={name} onClick={() => { if (currentActionHandler.current) currentActionHandler.current({ playerName: name, action: 'eject' }); }}
+                                      className="py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-sm shadow-lg shadow-red-600/30 transition hover:scale-[1.02] active:scale-95">
+                                      {"\uD83E\uDE82"} {name}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : localInteractiveMode && !interactiveMode && pendingAction.type === 'realtime' && pendingAction.action === 'sell' ? (
+                        (() => {
+                          const sellState = (typeof window !== 'undefined' && window.__stockSellState) || {};
+                          const playerStocks = pendingAction.playerStocks || {};
+                          return (
+                            <div>
+                              <div className="pixel-font text-[9px] text-emerald-300 mb-3 text-center">{"\uD83D\uDCC8"} SELL BUTTONS</div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {cleanedNames.filter(name => playerStocks[name]).map(name => {
+                                  const hasSold = sellState[name];
+                                  return hasSold ? (
+                                    <div key={name} className="py-3 px-4 rounded-xl bg-emerald-900/30 border border-emerald-500/20 text-center">
+                                      <div className="pixel-font text-[8px] text-emerald-400">{"\u2705"} {name}</div>
+                                      <div className="pixel-font text-[7px] text-emerald-600 mt-1">${hasSold.price?.toFixed ? hasSold.price.toFixed(2) : hasSold.price} ({hasSold.percentChange > 0 ? '+' : ''}{hasSold.percentChange?.toFixed ? hasSold.percentChange.toFixed(1) : hasSold.percentChange}%)</div>
+                                    </div>
+                                  ) : (
+                                    <button key={name} onClick={() => { if (currentActionHandler.current) currentActionHandler.current({ playerName: name, action: 'sell' }); }}
+                                      className="py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition hover:scale-[1.02] active:scale-95">
+                                      {"\uD83D\uDCB0"} {name} — SELL
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : localInteractiveMode && !interactiveMode && pendingAction.type === 'realtime' && pendingAction.action === 'whip_horse' ? (
+                        (() => {
+                          const whipsRemaining = pendingAction.whipsRemaining || {};
+                          return (
+                            <div>
+                              <div className="pixel-font text-[9px] text-green-300 mb-3 text-center">{"\uD83C\uDFC7"} WHIP — Turn {pendingAction.turnNumber}/{pendingAction.totalTurns}</div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {cleanedNames.map(name => {
+                                  const whips = whipsRemaining[name] || 0;
+                                  return whips > 0 ? (
+                                    <button key={name} onClick={() => { if (currentActionHandler.current) currentActionHandler.current({ playerName: name, action: 'whip_horse' }); }}
+                                      className="py-3 px-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-sm shadow-lg transition hover:scale-[1.02] active:scale-95">
+                                      {"\uD83E\uDE7F"} {name} ({whips})
+                                    </button>
+                                  ) : (
+                                    <div key={name} className="py-3 px-4 rounded-xl bg-slate-800/30 border border-slate-700/20 text-center">
+                                      <div className="pixel-font text-[8px] text-slate-500">{name}</div>
+                                      <div className="pixel-font text-[7px] text-slate-600 mt-1">No whips</div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="pixel-font text-[7px] text-slate-600 mt-2 text-center">Tap to guarantee your horse advances</div>
+                            </div>
+                          );
+                        })()
+                      ) : localInteractiveMode && isPrivateAction(pendingAction.action) && !handoffReady ? (
+                        <div className="rounded-2xl border border-indigo-500/20 bg-[#0a0a1a] p-8 text-center">
+                          <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-4">Pass the device</div>
+                          <div className="pixel-font text-xl text-indigo-300 mb-6" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>
+                            {pendingAction.playerName}
+                          </div>
+                          <div className="font-mono text-sm text-slate-500 mb-6">Only look when it's your turn!</div>
+                          <button
+                            onClick={() => setHandoffReady(true)}
+                            className="w-full max-w-xs mx-auto py-4 rounded-xl pixel-font text-sm transition hover:scale-[1.02] active:scale-95"
+                            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2))', border: '2px solid rgba(99,102,241,0.5)', color: '#a5b4fc' }}>
+                            I'M READY
+                          </button>
+                        </div>
+                      ) : (
+                        <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} playerName={playerName} />
+                      )}
+                    </div>
+                  ) : null}
+
+                  {playbackDone ? (() => {
+                    const modeMeta = MODE_META.find(m => m.id === result.modeId);
+                    const themedLabel = result.selectionGoal === "winner" ? modeMeta?.resultWin : modeMeta?.resultLose;
+
+                    if (result.isTie) {
+                      return (
+                        <div className="verdict-card relative overflow-hidden rounded-[2rem] border border-yellow-400 bg-gradient-to-br from-yellow-50/90 to-amber-50/90 p-6 text-center shadow-xl backdrop-blur">
+                          <TieAnimation tiedNames={result.tiedNames} />
+                          <div className="relative z-10">
+                            <div className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-600">
+                              {suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : "Dead heat"}
+                            </div>
+                            <VerdictReveal text="IT'S A TIE" isWinner={false} />
+                            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                              {result.tiedNames.map((name) => (
+                                <span key={name} className="rounded-full bg-yellow-500 px-4 py-2 text-sm font-bold text-white shadow">
+                                  {name}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="mx-auto mt-4 max-w-3xl text-slate-600">
+                              {result.summary} Click <span className="font-bold text-orange-600">{"\u2694\uFE0F"} Sudden Death</span> to settle it.
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                    <div className={`verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur ${
+                      result.selectionGoal === "winner"
+                        ? "border-amber-300 bg-gradient-to-br from-amber-50/90 to-yellow-50/90"
+                        : "border-slate-200 bg-white/85"
+                    }`}>
+                      {result.selectionGoal === "winner" ? <Celebration /> : <SadOverlay />}
+                      <div className="relative z-10">
+                        {themedLabel ? <div className="theme-verdict-label">{themedLabel}</div> : null}
+                        <div className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-400">
+                          {result.selectionGoal === "winner" ? "We have a winner!" : "Round complete"}
+                        </div>
+                        <VerdictReveal text={result.headline} isWinner={result.selectionGoal === "winner"} />
+                        <div className="mx-auto mt-3 max-w-3xl text-slate-600">
+                          {suddenDeathRound > 0 ? (
+                            <span>{result.summary}</span>
+                          ) : seriesActive && seriesConfig ? (
+                            <span>
+                              {seriesTied
+                                ? `Series tied! ${seriesTied.join(' and ')} are locked at the top. Time for sudden death.`
+                                : seriesComplete
+                                ? `Series complete! ${result.selectedName} clinched it.`
+                                : `Round ${seriesRound} of ${seriesConfig.totalRounds} complete. Click Next Round to continue the series.`
+                              }
+                            </span>
+                          ) : (
+                            <span>Choose <span className="font-semibold">Play again</span> to run it back in full screen, or <span className="font-semibold">Exit</span> to return to setup.</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    );
+                  })() : null}
+
+                  {seriesActive && playbackDone && seriesComplete && seriesConfig ? (
+                    <SeriesResult
+                      scores={seriesScores}
+                      history={seriesHistory}
+                      totalRounds={seriesConfig.totalRounds}
+                      selectionGoal={seriesConfig.selectionGoal}
+                    />
+                  ) : null}
+
+                  {seriesActive && playbackDone && !seriesComplete && (showSeriesScoreboard || !result.isTie) && seriesConfig ? (
+                    <SeriesScoreboard
+                      scores={seriesScores}
+                      history={seriesHistory}
+                      round={seriesRound}
+                      totalRounds={seriesConfig.totalRounds}
+                      selectionGoal={seriesConfig.selectionGoal}
+                    />
+                  ) : null}
+
+                  {voteActive && playbackDone ? (
+                    <VoteGrid votes={votes} deadline={voteDeadline} onVote={handleHostAction} playerName={playerName} />
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="sm:hidden relative z-10 flex flex-wrap items-center justify-center gap-2 border-t border-white/10 bg-black/90 px-3 py-3 backdrop-blur safe-area-bottom">
+                {!playbackDone ? (
+                  (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || result.draftPhase) ? null : (
+                  <>
+                    <button
+                      onClick={advancePlayback}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {playbackStep === 0 ? "Start" : "Next"}
+                    </button>
+                    <button
+                      onClick={revealAll}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      <FastForward className="h-4 w-4" />
+                      All
+                    </button>
+                  </>
+                  )
+                ) : result.isTie ? (
+                  <>
+                    <button
+                      onClick={startSuddenDeath}
+                      className="sudden-death-btn flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-white shadow-lg"
+                    >
+                      {"\u2694\uFE0F"} SUDDEN DEATH
+                    </button>
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      Exit
+                    </button>
+                  </>
+                ) : seriesActive && seriesTied ? (
+                  <>
+                    <button
+                      onClick={() => startSeriesSuddenDeath(null)}
+                      className="sudden-death-btn flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-white shadow-lg"
+                    >
+                      {"\u2694\uFE0F"} SUDDEN DEATH
+                    </button>
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      Exit
+                    </button>
+                  </>
+                ) : seriesActive && !seriesComplete ? (
+                  <>
+                    {interactiveMode ? (
+                      <button
+                        onClick={startVote}
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                      >
+                        {"\uD83D\uDDF3\uFE0F"} Next Round
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => startSeriesNextRound(null)}
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                      >
+                        Next Round
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setShowSeriesScoreboard(prev => !prev)}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-800 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                    >
+                      {"\uD83D\uDCCA"}
+                    </button>
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      Exit
+                    </button>
+                  </>
+                ) : seriesActive && seriesComplete ? (
+                  <>
+                    <button
+                      onClick={() => { resetSeriesState(); setGameActive(false); setTimeout(() => startGame(), 100); }}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                    >
+                      New Series
+                    </button>
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      Exit
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setGameActive(false); setTimeout(() => startGame(pickRandom(MODES).id), 50); }}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                    >
+                      <Shuffle className="h-4 w-4" />
+                      Random
+                    </button>
+                    {interactiveMode ? (
+                      <button
+                        onClick={startVote}
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                      >
+                        {"\uD83D\uDDF3\uFE0F"} Vote
+                      </button>
+                    ) : null}
+                    <button
+                      onClick={playAgain}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-800 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Replay
+                    </button>
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-slate-300"
+                    >
+                      Exit
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
