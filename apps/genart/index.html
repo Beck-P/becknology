@@ -378,11 +378,11 @@
     }
 
     function animateFlow() {
-      // Evolve the noise field — slowly drifts so patterns transform
-      zOffset += 0.0015;
+      // Evolve the noise field — drifts so patterns visibly transform
+      zOffset += 0.004;
 
-      // Breathing rhythm — gentle pulse on noise strength
-      var breathe = Math.sin(frameCount * 0.008) * 0.4;
+      // Breathing rhythm — visible pulse on noise strength
+      var breathe = Math.sin(frameCount * 0.012) * 0.7;
       var currentStrength = noiseStrength + breathe;
 
       for (var i = 0; i < particles.length; i++) {
@@ -519,8 +519,8 @@
 
     // ==================== MAIN LOOP ====================
     function animate() {
-      // Grid decay — old data fades so patterns evolve
-      if (frameCount % 2 === 0) gridDecay(0.997);
+      // Grid decay — aggressive so patterns visibly dissolve and reform
+      gridDecay(0.99);
 
       // Ambient hue drift — very slow, always shifting
       hueShift += 0.03;
