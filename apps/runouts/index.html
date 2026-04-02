@@ -6671,9 +6671,9 @@ function StockMarketPlayback({ result, step, done }) {
 
   const isComplete = phase === 'complete' || done;
 
-  const allPrices = result.players.flatMap(p => p.prices);
-  const maxPrice = Math.max(...allPrices) * 1.1;
-  const minPrice = Math.max(0, Math.min(...allPrices) * 0.9);
+  const allPrices = result.players.flatMap(p => p.prices || []);
+  const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) * 1.1 : 200;
+  const minPrice = allPrices.length > 0 ? Math.max(0, Math.min(...allPrices) * 0.9) : 0;
 
   const chartWidth = 500;
   const chartHeight = 260;
@@ -8620,6 +8620,7 @@ function ChoreChaosApp() {
         summary: "Charts are live.",
         players: Object.entries(playerStocks).map(([name, ticker]) => {
           const stock = stockPool.find(s => s.ticker === ticker);
+          if (!stock) return { name, selected: false, ticker, prices: Array(60).fill(100), startPrice: 100, endPrice: 100, percentChange: 0, headline: ticker, subline: "No data", rank: 0, chips: [ticker] };
           return {
             name,
             selected: false,
