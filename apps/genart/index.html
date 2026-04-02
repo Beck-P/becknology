@@ -67,9 +67,11 @@
       letter-spacing: 2px;
       z-index: 20;
       text-align: right;
-      transition: color 0.3s;
+      transition: color 0.2s;
+      cursor: pointer;
     }
     body:hover .seed-display { color: #444; }
+    .seed-display:hover { color: rgba(160, 120, 220, 0.7) !important; }
 
     .saving-indicator {
       position: fixed;
@@ -92,7 +94,7 @@
   <div class="scanlines"></div>
   <a href="/" class="hub-link">← hub</a>
   <div class="seed-display" id="seed-display"></div>
-  <div class="info">click to regenerate · hold to save · move mouse to interact</div>
+  <div class="info">click to regenerate · hold to shift color · drag to warp · tap seed to save</div>
   <div class="saving-indicator" id="saving">saved</div>
 
   <script>
@@ -177,6 +179,9 @@
     var mouseForce = 0;
     var baseHue = 270, hueRange = 60;
     var attrA, attrB, attrC, attrD, attrX, attrY, attrIterPerFrame;
+    var hueShift = 0;
+    var warpPoints = [];
+    var isCycling = false;
 
     // ==================== GRID ====================
     var CELL_W = 10, CELL_H = 17, FONT_SIZE = 14;
@@ -271,7 +276,7 @@
             ch = dChars[lvl];
           }
 
-          var avgHue = gridHue[i] / d;
+          var avgHue = gridHue[i] / d + hueShift;
           var sat = 20 + norm * 60;
           var light = 10 + norm * 55;
           var rgb = hsl(avgHue, sat, light);
@@ -303,6 +308,9 @@
       seedNoise(currentSeed);
       resize();
       initGrid();
+      hueShift = 0;
+      warpPoints = [];
+      isCycling = false;
 
       ctx.globalCompositeOperation = 'source-over';
       ctx.fillStyle = '#0a0a0a';
@@ -381,12 +389,25 @@
         p.vx += Math.cos(angle) * 0.3;
         p.vy += Math.sin(angle) * 0.3;
 
-        if (mouseX > 0 && mouseY > 0) {
+        if (mouseX > 0 && mouseY > 0 && !isCycling) {
           var dx = mouseX - p.x, dy = mouseY - p.y;
           var dist = Math.sqrt(dx * dx + dy * dy);
           if (dist > 5 && dist < 300) {
             var f = mouseForce / (dist * dist);
             p.vx += dx * f; p.vy += dy * f;
+          }
+        }
+
+        // Warp point vortex forces
+        for (var w = 0; w < warpPoints.length; w++) {
+          var wp = warpPoints[w];
+          var wdx = wp.x - p.x, wdy = wp.y - p.y;
+          var wd2 = wdx * wdx + wdy * wdy;
+          if (wd2 < 40000 && wd2 > 25) {
+            var wdist = Math.sqrt(wd2);
+            var wf = wp.s / (wdist + 30);
+            p.vx += (-wdy / wdist * wf + wdx / wdist * wf * 0.2) * 0.06;
+            p.vy += (wdx / wdist * wf + wdy / wdist * wf * 0.2) * 0.06;
           }
         }
 
@@ -462,32 +483,35 @@
     // ==================== MAIN LOOP ====================
     function animate() {
       if (frameCount >= maxFrames) {
-        renderGrid();
+        if (isCycling) {
+          hueShift += 1.5;
+          renderGrid();
+          animFrame = requestAnimationFrame(animate);
+        } else {
+          renderGrid();
+        }
         return;
       }
 
       if (currentMode <= MODE_WARP) animateFlow();
       else animateAttractor();
 
-      if (frameCount % 3 === 0) renderGrid();
+      if (isCycling) hueShift += 1.5;
+
+      if (frameCount % 3 === 0 || isCycling) renderGrid();
 
       frameCount++;
       animFrame = requestAnimationFrame(animate);
     }
 
     // ==================== INTERACTION ====================
-    var pressTimer = null, didSave = false;
+    // States: idle, pressed, cycling, warping
+    var interState = 'idle';
+    var pressOrigin = { x: 0, y: 0, time: 0 };
+    var holdTimer = null;
 
-    function startPress() {
-      didSave = false;
-      pressTimer = setTimeout(function() { didSave = true; saveImage(); }, 600);
-    }
-    function endPress() {
-      clearTimeout(pressTimer);
-      if (!didSave) generate();
-    }
     function saveImage() {
-      renderGrid(); // ensure final render
+      renderGrid();
       var link = document.createElement('a');
       link.download = 'genart-' + currentSeed + '.png';
       link.href = canvas.toDataURL('image/png');
@@ -497,18 +521,99 @@
       setTimeout(function() { el.classList.remove('show'); }, 1200);
     }
 
-    canvas.addEventListener('mousedown', startPress);
-    canvas.addEventListener('mouseup', endPress);
-    canvas.addEventListener('mouseleave', function() { clearTimeout(pressTimer); });
-    canvas.addEventListener('touchstart', function(e) { e.preventDefault(); startPress(); }, { passive: false });
-    canvas.addEventListener('touchend', function(e) { e.preventDefault(); endPress(); });
+    // Save via seed display click
+    document.getElementById('seed-display').addEventListener('click', function(e) {
+      e.stopPropagation();
+      saveImage();
+    });
 
-    document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
-    document.addEventListener('touchmove', function(e) {
-      if (e.touches.length) { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; }
-    }, { passive: true });
+    function onDown(x, y, e) {
+      if (e && e.target && e.target.closest('.seed-display, .hub-link')) return;
+      pressOrigin = { x: x, y: y, time: Date.now() };
+      interState = 'pressed';
+
+      holdTimer = setTimeout(function() {
+        if (interState === 'pressed') {
+          interState = 'cycling';
+          isCycling = true;
+          // Restart render loop if animation finished
+          if (frameCount >= maxFrames) {
+            animFrame = requestAnimationFrame(animate);
+          }
+        }
+      }, 350);
+    }
+
+    function onMove(x, y) {
+      mouseX = x; mouseY = y;
+
+      if (interState === 'pressed') {
+        var dx = x - pressOrigin.x, dy = y - pressOrigin.y;
+        if (Math.sqrt(dx * dx + dy * dy) > 10) {
+          clearTimeout(holdTimer);
+          interState = 'warping';
+        }
+      }
+
+      if (interState === 'cycling') {
+        // Started moving while cycling — switch to warping
+        var dx = x - pressOrigin.x, dy = y - pressOrigin.y;
+        if (Math.sqrt(dx * dx + dy * dy) > 10) {
+          isCycling = false;
+          interState = 'warping';
+        }
+      }
+
+      if (interState === 'warping') {
+        warpPoints.push({ x: x, y: y, s: 8 });
+        if (warpPoints.length > 600) warpPoints = warpPoints.slice(-600);
+        // Restart render loop if animation finished
+        if (frameCount >= maxFrames) {
+          // Re-run a few frames with warp forces
+          frameCount = maxFrames - 30;
+          if (!animFrame) animFrame = requestAnimationFrame(animate);
+        }
+      }
+    }
+
+    function onUp() {
+      clearTimeout(holdTimer);
+
+      if (interState === 'pressed') {
+        var elapsed = Date.now() - pressOrigin.time;
+        if (elapsed < 300) generate();
+      }
+
+      if (interState === 'cycling') {
+        isCycling = false;
+      }
+
+      interState = 'idle';
+    }
+
+    // Mouse events
+    canvas.addEventListener('mousedown', function(e) { onDown(e.clientX, e.clientY, e); });
+    document.addEventListener('mousemove', function(e) { onMove(e.clientX, e.clientY); });
+    canvas.addEventListener('mouseup', onUp);
+    canvas.addEventListener('mouseleave', function() {
+      clearTimeout(holdTimer);
+      if (interState === 'cycling') isCycling = false;
+      interState = 'idle';
+    });
     document.addEventListener('mouseleave', function() { mouseX = -9999; mouseY = -9999; });
 
+    // Touch events
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if (e.touches.length) onDown(e.touches[0].clientX, e.touches[0].clientY, e);
+    }, { passive: false });
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (e.touches.length) onMove(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
+    canvas.addEventListener('touchend', function(e) { e.preventDefault(); onUp(); });
+
+    // Keyboard
     document.addEventListener('keydown', function(e) {
       if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); generate(); }
       if (e.key === 's' || e.key === 'S') saveImage();
