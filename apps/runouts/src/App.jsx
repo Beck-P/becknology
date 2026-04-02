@@ -2388,12 +2388,12 @@ function CardFace({ card, hidden = false, large = false, delay = 0, deal = false
       {/* Front face — white card */}
       <div
         className={`absolute inset-0 flex flex-col items-center justify-center rounded-lg border-2 shadow-md ${
-          red ? "border-rose-300 bg-white text-rose-600" : "border-slate-300 bg-white text-slate-900"
+          red ? "border-rose-300 text-rose-600" : "border-slate-400 text-black"
         }`}
-        style={{ backfaceVisibility: "hidden" }}
+        style={{ backfaceVisibility: "hidden", background: "#ffffff" }}
       >
-        <div className={`font-bold ${large ? "text-xl" : "text-sm"}`}>{rankLabel(card.rank)}</div>
-        <div className={`${large ? "text-lg" : "text-xs"} ${red ? "text-rose-500" : "text-slate-700"}`}>{SUIT_SYMBOLS[card.suit]}</div>
+        <div className={`font-extrabold ${large ? "text-xl" : "text-sm"}`} style={{ color: red ? '#dc2626' : '#000000' }}>{rankLabel(card.rank)}</div>
+        <div className={large ? "text-lg" : "text-xs"} style={{ color: red ? '#e11d48' : '#000000' }}>{SUIT_SYMBOLS[card.suit]}</div>
       </div>
       {/* Back face — red card back with pixel diamond pattern */}
       <div
