@@ -1,0 +1,6 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - heading "The Aether Seas" [level=1] [ref=e4]
+    - heading "A Love Story in Several Rats" [level=2] [ref=e5]
+    - generic [ref=e6]: tap to begin
+  - button "♪" [ref=e7] [cursor=pointer]
