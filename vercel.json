@@ -3,7 +3,7 @@
   "rewrites": [
     { "source": "/", "destination": "/apps/hub/index.html" },
 { "source": "/runouts", "destination": "/apps/runouts/dist/index.html" },
-{ "source": "/runouts/assets/(.*)", "destination": "/apps/runouts/dist/assets/$1" },
+{ "source": "/runouts/(.*)", "destination": "/apps/runouts/dist/$1" },
     { "source": "/aether-seas", "destination": "/apps/aether-seas/index.html" },
     { "source": "/typist", "destination": "/apps/typist/index.html" },
     { "source": "/typist/(.*)", "destination": "/apps/typist/$1" },
