@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genart — Becknology</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      overflow: hidden;
+      cursor: crosshair;
+      font-family: 'Courier New', Consolas, monospace;
+    }
+
+    canvas#art {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* Scanlines */
+    .scanlines {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+      background: repeating-linear-gradient(
+        transparent,
+        transparent 3px,
+        rgba(0, 0, 0, 0.015) 3px,
+        rgba(0, 0, 0, 0.015) 6px
+      );
+    }
+
+    .hub-link {
+      position: fixed;
+      top: 1rem;
+      left: 1.5rem;
+      color: #333;
+      text-decoration: none;
+      font-size: 0.75rem;
+      z-index: 20;
+      transition: color 0.2s;
+    }
+
+    .hub-link:hover {
+      color: rgba(160, 120, 220, 0.6);
+    }
+
+    .info {
+      position: fixed;
+      bottom: 1rem;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #2a2a2a;
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      z-index: 20;
+      pointer-events: none;
+      transition: color 0.3s;
+    }
+
+    body:hover .info {
+      color: #444;
+    }
+
+    .seed-display {
+      position: fixed;
+      top: 1rem;
+      right: 1.5rem;
+      color: #222;
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      z-index: 20;
+      transition: color 0.3s;
+    }
+
+    body:hover .seed-display {
+      color: #444;
+    }
+
+    .saving-indicator {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(160, 120, 220, 0.8);
+      font-size: 0.9rem;
+      letter-spacing: 4px;
+      z-index: 30;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .saving-indicator.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="art"></canvas>
+  <div class="scanlines"></div>
+  <a href="/" class="hub-link">← hub</a>
+  <div class="seed-display" id="seed-display"></div>
+  <div class="info">click to regenerate · hold to save</div>
+  <div class="saving-indicator" id="saving">saved</div>
+
+  <script>
+    // ---- Simplex-inspired noise ----
+    var perm = new Uint8Array(512);
+    var grad = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+
+    function seedNoise(s) {
+      var p = new Uint8Array(256);
+      for (var i = 0; i < 256; i++) p[i] = i;
+      // Fisher-Yates shuffle with seed
+      for (var i = 255; i > 0; i--) {
+        s = (s * 16807 + 0) % 2147483647;
+        var j = s % (i + 1);
+        var tmp = p[i]; p[i] = p[j]; p[j] = tmp;
+      }
+      for (var i = 0; i < 512; i++) perm[i] = p[i & 255];
+    }
+
+    function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+    function lerp(a, b, t) { return a + t * (b - a); }
+
+    function noise2d(x, y) {
+      var xi = Math.floor(x) & 255, yi = Math.floor(y) & 255;
+      var xf = x - Math.floor(x), yf = y - Math.floor(y);
+      var u = fade(xf), v = fade(yf);
+
+      var aa = perm[perm[xi] + yi] & 7;
+      var ab = perm[perm[xi] + yi + 1] & 7;
+      var ba = perm[perm[xi + 1] + yi] & 7;
+      var bb = perm[perm[xi + 1] + yi + 1] & 7;
+
+      var x1 = lerp(grad[aa][0] * xf + grad[aa][1] * yf,
+                     grad[ba][0] * (xf - 1) + grad[ba][1] * yf, u);
+      var x2 = lerp(grad[ab][0] * xf + grad[ab][1] * (yf - 1),
+                     grad[bb][0] * (xf - 1) + grad[bb][1] * (yf - 1), u);
+      return lerp(x1, x2, v);
+    }
+
+    function fbm(x, y, octaves) {
+      var val = 0, amp = 1, freq = 1, max = 0;
+      for (var i = 0; i < octaves; i++) {
+        val += noise2d(x * freq, y * freq) * amp;
+        max += amp;
+        amp *= 0.5;
+        freq *= 2;
+      }
+      return val / max;
+    }
+
+    // ---- Canvas setup ----
+    var canvas = document.getElementById('art');
+    var ctx = canvas.getContext('2d');
+    var W, H, dpr;
+    var currentSeed = 0;
+    var particles = [];
+    var animFrame = null;
+    var frameCount = 0;
+    var maxFrames = 300;
+
+    // ---- Color palettes ----
+    var palettes = [
+      // Purple dominant
+      function(t) {
+        var r = 80 + t * 80;
+        var g = 40 + t * 80;
+        var b = 140 + t * 80;
+        return [r, g, b];
+      },
+      // Cool purple-cyan
+      function(t) {
+        var r = 60 + t * 40;
+        var g = 80 + t * 120;
+        var b = 160 + t * 60;
+        return [r, g, b];
+      },
+      // Warm purple-rose
+      function(t) {
+        var r = 120 + t * 100;
+        var g = 50 + t * 50;
+        var b = 120 + t * 80;
+        return [r, g, b];
+      },
+      // Monochrome with purple tint
+      function(t) {
+        var v = 100 + t * 120;
+        return [v * 0.85, v * 0.75, v];
+      },
+      // Deep space
+      function(t) {
+        var r = 40 + t * 120;
+        var g = 20 + t * 60;
+        var b = 100 + t * 155;
+        return [r, g, b];
+      }
+    ];
+
+    var currentPalette;
+
+    function resize() {
+      dpr = window.devicePixelRatio || 1;
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.scale(dpr, dpr);
+    }
+
+    // ---- Particle ----
+    function createParticle(seed) {
+      // Use seeded random for reproducible initial positions
+      seed = (seed * 16807 + 0) % 2147483647;
+      var x = (seed / 2147483647) * W;
+      seed = (seed * 16807 + 0) % 2147483647;
+      var y = (seed / 2147483647) * H;
+      seed = (seed * 16807 + 0) % 2147483647;
+      var life = 100 + (seed / 2147483647) * 200;
+
+      return { x: x, y: y, px: x, py: y, vx: 0, vy: 0, life: life, maxLife: life, seed: seed };
+    }
+
+    // ---- Flow field parameters ----
+    var noiseScale, noiseStrength, particleSpeed, octaves, zOffset;
+
+    function randomizeParams() {
+      var s = currentSeed;
+      function srand() { s = (s * 16807 + 0) % 2147483647; return s / 2147483647; }
+
+      noiseScale = 0.002 + srand() * 0.004;
+      noiseStrength = 1 + srand() * 3;
+      particleSpeed = 1 + srand() * 2;
+      octaves = 2 + Math.floor(srand() * 3);
+      zOffset = srand() * 1000;
+      currentPalette = palettes[Math.floor(srand() * palettes.length)];
+    }
+
+    // ---- Generate ----
+    function generate(seed) {
+      if (animFrame) cancelAnimationFrame(animFrame);
+
+      currentSeed = seed || Math.floor(Math.random() * 2147483647);
+      document.getElementById('seed-display').textContent = 'seed: ' + currentSeed;
+
+      seedNoise(currentSeed);
+      randomizeParams();
+      resize();
+
+      // Clear to dark
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(0, 0, W, H);
+
+      // Create particles
+      particles = [];
+      var count = Math.min(800, Math.floor((W * H) / 2000));
+      var s = currentSeed;
+      for (var i = 0; i < count; i++) {
+        s = (s * 16807 + 0) % 2147483647;
+        particles.push(createParticle(s));
+      }
+
+      frameCount = 0;
+      animate();
+    }
+
+    // ---- Animate ----
+    function animate() {
+      if (frameCount >= maxFrames) return;
+
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+
+        if (p.life <= 0) {
+          // Respawn
+          p.seed = (p.seed * 16807 + 0) % 2147483647;
+          p.x = (p.seed / 2147483647) * W;
+          p.seed = (p.seed * 16807 + 0) % 2147483647;
+          p.y = (p.seed / 2147483647) * H;
+          p.px = p.x;
+          p.py = p.y;
+          p.vx = 0;
+          p.vy = 0;
+          p.seed = (p.seed * 16807 + 0) % 2147483647;
+          p.life = 100 + (p.seed / 2147483647) * 200;
+          p.maxLife = p.life;
+          continue;
+        }
+
+        // Flow field angle from noise
+        var n = fbm(p.x * noiseScale + zOffset, p.y * noiseScale + zOffset, octaves);
+        var angle = n * Math.PI * 2 * noiseStrength;
+
+        p.vx += Math.cos(angle) * 0.3;
+        p.vy += Math.sin(angle) * 0.3;
+        p.vx *= 0.92;
+        p.vy *= 0.92;
+
+        p.px = p.x;
+        p.py = p.y;
+        p.x += p.vx * particleSpeed;
+        p.y += p.vy * particleSpeed;
+
+        // Wrap edges
+        if (p.x < 0) { p.x += W; p.px = p.x; }
+        if (p.x > W) { p.x -= W; p.px = p.x; }
+        if (p.y < 0) { p.y += H; p.py = p.y; }
+        if (p.y > H) { p.y -= H; p.py = p.y; }
+
+        // Color based on position and life
+        var t = 1 - (p.life / p.maxLife);
+        var lifeAlpha = Math.sin(t * Math.PI);
+        var speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        var colorT = (speed / (particleSpeed * 2));
+        if (colorT > 1) colorT = 1;
+
+        var rgb = currentPalette(colorT);
+        var alpha = lifeAlpha * (0.02 + speed * 0.01);
+        if (alpha > 0.15) alpha = 0.15;
+
+        ctx.beginPath();
+        ctx.moveTo(p.px, p.py);
+        ctx.lineTo(p.x, p.y);
+        ctx.strokeStyle = 'rgba(' + Math.floor(rgb[0]) + ',' + Math.floor(rgb[1]) + ',' + Math.floor(rgb[2]) + ',' + alpha.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        p.life--;
+      }
+
+      frameCount++;
+      animFrame = requestAnimationFrame(animate);
+    }
+
+    // ---- Interaction ----
+    var pressTimer = null;
+    var didSave = false;
+
+    function startPress(e) {
+      didSave = false;
+      pressTimer = setTimeout(function() {
+        didSave = true;
+        saveImage();
+      }, 600);
+    }
+
+    function endPress(e) {
+      clearTimeout(pressTimer);
+      if (!didSave) {
+        generate();
+      }
+    }
+
+    function saveImage() {
+      // Draw without scanlines — just the canvas
+      var link = document.createElement('a');
+      link.download = 'genart-' + currentSeed + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      var indicator = document.getElementById('saving');
+      indicator.classList.add('show');
+      setTimeout(function() { indicator.classList.remove('show'); }, 1200);
+    }
+
+    canvas.addEventListener('mousedown', startPress);
+    canvas.addEventListener('mouseup', endPress);
+    canvas.addEventListener('mouseleave', function() { clearTimeout(pressTimer); });
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      startPress(e);
+    }, { passive: false });
+    canvas.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      endPress(e);
+    });
+
+    // Keyboard
+    document.addEventListener('keydown', function(e) {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        generate();
+      }
+      if (e.key === 's' || e.key === 'S') {
+        saveImage();
+      }
+    });
+
+    window.addEventListener('resize', function() {
+      generate(currentSeed);
+    });
+
+    // ---- Init ----
+    generate();
+  </script>
+
+</body>
+</html>
