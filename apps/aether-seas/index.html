@@ -155,6 +155,72 @@ const particles = [];
 let shake = { x: 0, y: 0, remaining: 0 };
 function triggerShake(duration) { shake.remaining = duration; }
 
+// --- EMOTIONS (pixel icons above characters) ---
+const emotions = [];
+function addEmotion(type, x, y) {
+  emotions.push({ type, x, y: y - 16 * PX, life: 1, age: 0, vy: -0.018 });
+}
+function updateEmotions(dt) {
+  for (let i = emotions.length - 1; i >= 0; i--) {
+    const e = emotions[i];
+    e.age += dt; e.life -= dt / 2200;
+    e.y += e.vy * dt;
+    e.vy *= 0.998; // slow down
+    if (e.life <= 0) emotions.splice(i, 1);
+  }
+}
+function drawEmotions() {
+  emotions.forEach(e => {
+    const a = Math.min(1, e.life * 2.5) * Math.min(1, e.age / 150);
+    if (a <= 0) return;
+    ctx.globalAlpha = a;
+    const px = Math.round(e.x), py = Math.round(e.y);
+    if (e.type === 'heart') {
+      ctx.fillStyle = '#FF6B8A';
+      ctx.fillRect(px-2, py, 1, 2); ctx.fillRect(px-1, py-1, 1, 3);
+      ctx.fillRect(px, py, 1, 3); ctx.fillRect(px+1, py-1, 1, 3);
+      ctx.fillRect(px+2, py, 1, 2);
+    } else if (e.type === 'exclaim') {
+      ctx.fillStyle = '#FFD700';
+      ctx.fillRect(px, py, 1, 3); ctx.fillRect(px, py+4, 1, 1);
+    } else if (e.type === 'question') {
+      ctx.fillStyle = '#A8D8EA';
+      ctx.fillRect(px-1, py, 3, 1); ctx.fillRect(px+1, py+1, 1, 1);
+      ctx.fillRect(px, py+2, 1, 1); ctx.fillRect(px, py+4, 1, 1);
+    } else if (e.type === 'sweat') {
+      ctx.fillStyle = '#87CEEB';
+      ctx.fillRect(px, py, 1, 1); ctx.fillRect(px-1, py+1, 3, 1);
+      ctx.fillRect(px, py+2, 1, 1);
+    } else if (e.type === 'anger') {
+      ctx.fillStyle = '#F87171';
+      ctx.fillRect(px-1, py, 1, 1); ctx.fillRect(px+1, py, 1, 1);
+      ctx.fillRect(px, py+1, 1, 1);
+      ctx.fillRect(px-1, py+2, 1, 1); ctx.fillRect(px+1, py+2, 1, 1);
+    } else if (e.type === 'sparkle') {
+      ctx.fillStyle = '#FFD700';
+      ctx.fillRect(px, py-1, 1, 3); ctx.fillRect(px-1, py, 3, 1);
+      ctx.fillStyle = '#FFF8E0';
+      ctx.fillRect(px, py, 1, 1);
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+// Convenience: emit on a character position by scene id
+function emitEmotion(type, charKey) {
+  const { W, H } = G;
+  const pos = {
+    u30: [W*0.3, H*0.68], u35: [W*0.35, H*0.68], u40: [W*0.4, H*0.68], u25: [W*0.25, H*0.68],
+    b50: [W*0.5, H*0.72], b45: [W*0.45, H*0.72], b60: [W*0.6, H*0.65], b48: [W*0.48, H*0.68],
+    m58: [W*0.58, H*0.55], m60: [W*0.6, H*0.67],
+  };
+  const p = pos[charKey];
+  if (p) addEmotion(type, p[0], p[1]);
+}
+
+// --- PARALLAX ---
+const parallax = { x: 0, y: 0, tx: 0, ty: 0 };
+const PAR = 2.5; // max parallax offset in pixels
+
 // ============================================================
 // AUDIO
 // ============================================================
@@ -457,6 +523,32 @@ function drawMoonWithSpores(t, hue, skyH) {
       ctx.fillRect(sx, sy0 + slen, 1, 1);
     }
   }
+}
+
+// --- Dynamic lantern with flicker ---
+function drawLantern(x, baseY, t, poleH) {
+  const { W, H } = G;
+  const ph = poleH || Math.round(H * 0.04);
+  const flicker = 0.75 + 0.25 * (Math.sin(t * 0.008 + x * 0.13) * Math.sin(t * 0.013 + x * 0.07) * 0.5 + 0.5);
+  const glowR = Math.round(W * 0.04 * (0.85 + 0.15 * Math.sin(t * 0.005 + x * 0.1)));
+  // Pole
+  ctx.fillStyle = '#5A3A10';
+  ctx.fillRect(x, baseY - ph, 1, ph);
+  // Flame body
+  const fh = 2 + Math.round(Math.sin(t * 0.01 + x) * 0.5);
+  ctx.fillStyle = '#FFD040';
+  ctx.fillRect(x - 1, baseY - ph - fh, 3, fh);
+  // Flame tip
+  ctx.fillStyle = '#FFF0A0';
+  ctx.fillRect(x, baseY - ph - fh - 1, 1, 1);
+  // Dynamic glow
+  const gy = baseY - ph - 1;
+  const lg = ctx.createRadialGradient(x, gy, 0, x, gy, glowR);
+  lg.addColorStop(0, `rgba(255,200,80,${(0.14 * flicker).toFixed(3)})`);
+  lg.addColorStop(0.5, `rgba(255,170,50,${(0.05 * flicker).toFixed(3)})`);
+  lg.addColorStop(1, 'rgba(255,200,80,0)');
+  ctx.fillStyle = lg;
+  ctx.fillRect(x - glowR, gy - glowR, glowR * 2, glowR * 2);
 }
 
 const BG = {
@@ -989,23 +1081,9 @@ const BG = {
     ctx.fillStyle = '#6B4A18';
     ctx.fillRect(wx, wy - 1, 2, 1); // hub
 
-    // Lantern (near left)
-    const lx = Math.round(W * 0.25);
-    ctx.fillStyle = '#5A3A10'; ctx.fillRect(lx, deckY - Math.round(H * 0.04), 1, Math.round(H * 0.04));
-    ctx.fillStyle = '#FFD040';
-    ctx.fillRect(lx - 1, deckY - Math.round(H * 0.05), 3, 2);
-    // Lantern glow
-    const lg = ctx.createRadialGradient(lx, deckY - Math.round(H * 0.04), 0, lx, deckY - Math.round(H * 0.04), Math.round(W * 0.04));
-    lg.addColorStop(0, 'rgba(255,200,80,0.12)'); lg.addColorStop(1, 'rgba(255,200,80,0)');
-    ctx.fillStyle = lg; ctx.fillRect(lx - Math.round(W * 0.04), deckY - Math.round(H * 0.07), Math.round(W * 0.08), Math.round(H * 0.06));
-
-    // Lantern (right)
-    const lx2 = Math.round(W * 0.72);
-    ctx.fillStyle = '#5A3A10'; ctx.fillRect(lx2, deckY - Math.round(H * 0.04), 1, Math.round(H * 0.04));
-    ctx.fillStyle = '#FFD040'; ctx.fillRect(lx2 - 1, deckY - Math.round(H * 0.05), 3, 2);
-    const lg2 = ctx.createRadialGradient(lx2, deckY - Math.round(H * 0.04), 0, lx2, deckY - Math.round(H * 0.04), Math.round(W * 0.04));
-    lg2.addColorStop(0, 'rgba(255,200,80,0.12)'); lg2.addColorStop(1, 'rgba(255,200,80,0)');
-    ctx.fillStyle = lg2; ctx.fillRect(lx2 - Math.round(W * 0.04), deckY - Math.round(H * 0.07), Math.round(W * 0.08), Math.round(H * 0.06));
+    // Lanterns (dynamic flicker)
+    drawLantern(Math.round(W * 0.25), deckY, t);
+    drawLantern(Math.round(W * 0.72), deckY, t);
 
     // Rigging ropes from mast
     ctx.fillStyle = 'rgba(140,120,90,0.4)';
@@ -1163,13 +1241,9 @@ const BG = {
     const by2 = deckY + Math.round(H * 0.02);
     ctx.fillStyle = '#6B4A20'; ctx.fillRect(Math.round(W * 0.08), by2 - 3, 5, 4);
     ctx.fillStyle = '#8B6A30'; ctx.fillRect(Math.round(W * 0.08), by2 - 2, 5, 1);
-    // Swinging lantern
-    const lx = Math.round(W * 0.28), swing = Math.round(Math.sin(t * 0.004) * 2);
-    ctx.fillStyle = '#5A3A10'; ctx.fillRect(lx + swing, deckY - Math.round(H * 0.04), 1, Math.round(H * 0.04));
-    ctx.fillStyle = '#FFD040'; ctx.fillRect(lx - 1 + swing, deckY - Math.round(H * 0.05), 3, 2);
-    const lg = ctx.createRadialGradient(lx + swing, deckY - Math.round(H * 0.04), 0, lx + swing, deckY - Math.round(H * 0.04), Math.round(W * 0.04));
-    lg.addColorStop(0, 'rgba(255,200,80,0.15)'); lg.addColorStop(1, 'rgba(255,200,80,0)');
-    ctx.fillStyle = lg; ctx.fillRect(0, deckY - Math.round(H * 0.07), Math.round(W * 0.5), Math.round(H * 0.06));
+    // Swinging lantern (dynamic flicker)
+    const swing = Math.round(Math.sin(t * 0.004) * 2);
+    drawLantern(Math.round(W * 0.28) + swing, deckY, t);
   },
 
   // --- Open emerald water (driftwood crossing) ---
@@ -1447,14 +1521,8 @@ const BG = {
     ctx.fillStyle = '#5A3A10'; ctx.fillRect(0, deckY - 2, W, 3);
     for (let x = 0; x < W; x += Math.max(6, Math.round(W * 0.06)))
       ctx.fillRect(x, deckY - Math.round(H * 0.05), 2, Math.round(H * 0.05));
-    // Lone lantern on railing
-    const llx = Math.round(W * 0.42), lly = deckY - Math.round(H * 0.04);
-    ctx.fillStyle = '#5A3A10'; ctx.fillRect(llx, lly, 1, Math.round(H * 0.04));
-    ctx.fillStyle = '#FFD040'; ctx.fillRect(llx - 1, lly - 2, 3, 2);
-    // Warm glow
-    const llg = ctx.createRadialGradient(llx, lly - 1, 0, llx, lly - 1, Math.round(W * 0.08));
-    llg.addColorStop(0, 'rgba(255,200,80,0.18)'); llg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = llg; ctx.fillRect(llx - Math.round(W * 0.08), lly - Math.round(H * 0.06), Math.round(W * 0.16), Math.round(H * 0.1));
+    // Lone lantern on railing (dynamic flicker)
+    drawLantern(Math.round(W * 0.42), deckY, t);
     // Shooting star
     const starCycle = (t * 0.0002) % 5;
     if (starCycle < 0.3) {
@@ -1510,13 +1578,8 @@ const BG = {
       doorL + Math.round(doorW2 / 2), Math.round((doorTop + doorBot) / 2), Math.round(W * 0.2));
     dg.addColorStop(0, 'rgba(255,180,80,0.08)'); dg.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
-    // Lantern on wall (left side)
-    const lx = Math.round(W * 0.15);
-    ctx.fillStyle = '#5A3A10'; ctx.fillRect(lx, Math.round(H * 0.3), 1, 4);
-    ctx.fillStyle = '#FFD040'; ctx.fillRect(lx - 1, Math.round(H * 0.28), 3, 2);
-    const lg = ctx.createRadialGradient(lx, Math.round(H * 0.29), 0, lx, Math.round(H * 0.29), Math.round(W * 0.06));
-    lg.addColorStop(0, 'rgba(255,200,80,0.15)'); lg.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = lg; ctx.fillRect(0, Math.round(H * 0.2), Math.round(W * 0.3), Math.round(H * 0.2));
+    // Lantern on wall (dynamic flicker)
+    drawLantern(Math.round(W * 0.15), Math.round(H * 0.34), t, 4);
   },
 
   // --- Crimson sea parting with steps ---
@@ -2084,7 +2147,10 @@ const BG = {
 // ============================================================
 function drawPerson(x, y, hair, shirt, pants, shoes, hairLen, facing, t) {
   const s = PX;
-  const bob = Math.sin((t || 0) * 0.0015) * 1.5;
+  const tt = t || 0;
+  const bob = Math.sin(tt * 0.0015) * 1.5;
+  const blink = (tt * 0.001 + x * 0.01) % 3.8 < 0.1;
+  const breathOff = Math.round(Math.sin(tt * 0.002) * 0.4);
   ctx.save();
   ctx.translate(x, y + bob);
   if (facing < 0) ctx.scale(-1, 1);
@@ -2096,13 +2162,18 @@ function drawPerson(x, y, hair, shirt, pants, shoes, hairLen, facing, t) {
   // Hair
   ctx.fillStyle = hair;
   ctx.fillRect(-3*s, -12*s, 6*s, 3*s);
-  if (hairLen > 0) { ctx.fillRect(-3*s, -9*s, s, hairLen*s); ctx.fillRect(2*s, -9*s, s, hairLen*s); }
-  // Eyes
-  ctx.fillStyle = '#3a2a1a'; ctx.fillRect(-s, -10*s, s, s); ctx.fillRect(s, -10*s, s, s);
-  // Shirt
+  if (hairLen > 0) {
+    const sway = Math.round(Math.sin(tt * 0.0012) * 0.6);
+    ctx.fillRect(-3*s + sway, -9*s, s, hairLen*s);
+    ctx.fillRect(2*s + sway, -9*s, s, hairLen*s);
+  }
+  // Eyes (blink)
+  ctx.fillStyle = blink ? '#F5DEB3' : '#3a2a1a';
+  ctx.fillRect(-s, -10*s, s, s); ctx.fillRect(s, -10*s, s, s);
+  // Shirt (breathing)
   ctx.fillStyle = shirt;
-  ctx.fillRect(-2*s, -7*s, 4*s, 4*s);
-  ctx.fillRect(-3*s, -7*s, s, 3*s); ctx.fillRect(2*s, -7*s, s, 3*s);
+  ctx.fillRect(-2*s, -7*s + breathOff, 4*s, 4*s - breathOff);
+  ctx.fillRect(-3*s, -7*s + breathOff, s, 3*s); ctx.fillRect(2*s, -7*s + breathOff, s, 3*s);
   // Pants
   ctx.fillStyle = pants;
   ctx.fillRect(-2*s, -3*s, 2*s, 3*s); ctx.fillRect(0, -3*s, 2*s, 3*s);
@@ -2117,7 +2188,11 @@ function drawMitchell(x, y, f, t) { drawPerson(x, y, '#F0C060', '#1E3A5F', '#4A6
 
 function drawBeckRat(x, y, t) {
   const s = PX;
-  const bob = Math.sin((t || 0) * 0.003) * 2;
+  const tt = t || 0;
+  const bob = Math.sin(tt * 0.003) * 2;
+  const blink = (tt * 0.001 + 1.7) % 4.2 < 0.1;
+  const tailTwitch = Math.sin(tt * 0.004) > 0.85 ? 1 : 0;
+  const earWiggle = Math.sin(tt * 0.006) > 0.9 ? 1 : 0;
   ctx.save(); ctx.translate(x, y + bob);
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.12)';
@@ -2125,13 +2200,15 @@ function drawBeckRat(x, y, t) {
   ctx.fillStyle = '#909090';
   ctx.fillRect(-2*s, -3*s, 4*s, 3*s); // body
   ctx.fillRect(-s, -5*s, 3*s, 2*s);   // head
-  ctx.fillStyle = '#B8B8B8'; // ears
-  ctx.fillRect(-s, -6*s, s, s); ctx.fillRect(s, -6*s, s, s);
-  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0, -4*s, s, s); // eye
+  ctx.fillStyle = '#B8B8B8'; // ears (with wiggle)
+  ctx.fillRect(-s, -6*s - earWiggle, s, s); ctx.fillRect(s, -6*s, s, s);
+  // Eye (with blink)
+  ctx.fillStyle = blink ? '#909090' : '#1a1a1a';
+  ctx.fillRect(0, -4*s, s, s);
   ctx.fillStyle = '#FF8888'; ctx.fillRect(s, -4*s, s, s);  // nose
   ctx.fillStyle = '#1E3A5F'; ctx.fillRect(-2*s, -3*s, 4*s, s); // scarf
-  ctx.fillStyle = '#808080'; // tail
-  ctx.fillRect(-3*s, -s, s, s); ctx.fillRect(-4*s, -2*s, s, s);
+  ctx.fillStyle = '#808080'; // tail (with twitch)
+  ctx.fillRect(-3*s, -s - tailTwitch, s, s); ctx.fillRect(-4*s, -2*s - tailTwitch, s, s);
   ctx.restore();
 }
 
@@ -2152,7 +2229,10 @@ function drawConnor(x, y, f, t) {
 
 function drawFelix(x, y, t) {
   const s = PX;
-  const bob = Math.sin((t || 0) * 0.003) * 1.5;
+  const tt = t || 0;
+  const bob = Math.sin(tt * 0.003) * 1.5;
+  const slowBlink = (tt * 0.001 + 2.5) % 5 < 0.12;
+  const tailSway = Math.round(Math.sin(tt * 0.005) * 1);
   ctx.save(); ctx.translate(x, y + bob);
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.12)';
@@ -2177,22 +2257,24 @@ function drawFelix(x, y, t) {
   ctx.fillStyle = '#DDA0A0';
   ctx.fillRect(-2*s, -8*s, s, s);
   ctx.fillRect(s, -8*s, s, s);
-  // Eyes (angry green)
-  ctx.fillStyle = '#44CC44';
-  ctx.fillRect(-s, -6*s, s, s);
-  ctx.fillRect(s, -6*s, s, s);
-  // Pupils
-  ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(-s, -6*s, Math.max(1, Math.round(s * 0.5)), s);
-  ctx.fillRect(s, -6*s, Math.max(1, Math.round(s * 0.5)), s);
-  // Tail (curled up)
+  // Eyes (slow deliberate blink)
+  if (slowBlink) {
+    ctx.fillStyle = '#808080';
+    ctx.fillRect(-s, -6*s, s, s); ctx.fillRect(s, -6*s, s, s);
+  } else {
+    ctx.fillStyle = '#44CC44';
+    ctx.fillRect(-s, -6*s, s, s); ctx.fillRect(s, -6*s, s, s);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-s, -6*s, Math.max(1, Math.round(s * 0.5)), s);
+    ctx.fillRect(s, -6*s, Math.max(1, Math.round(s * 0.5)), s);
+  }
+  // Tail (sways side to side)
   ctx.fillStyle = '#808080';
-  ctx.fillRect(3*s, -3*s, s, s);
-  ctx.fillRect(3*s, -4*s, s, s);
-  ctx.fillRect(2*s, -5*s, s, s);
-  // White tail tip
+  ctx.fillRect(3*s + tailSway, -3*s, s, s);
+  ctx.fillRect(3*s + tailSway, -4*s, s, s);
+  ctx.fillRect(2*s + tailSway, -5*s, s, s);
   ctx.fillStyle = '#D0D0D0';
-  ctx.fillRect(2*s, -5*s, s, s);
+  ctx.fillRect(2*s + tailSway, -5*s, s, s);
   // Paws
   ctx.fillStyle = '#D0D0D0';
   ctx.fillRect(-2*s, 0, s, s);
@@ -2508,16 +2590,42 @@ function drawParticles() {
     ctx.globalAlpha = a;
     if (p.type === 'leaf') {
       ctx.fillStyle = p.color || '#FF8C42';
-      ctx.fillRect(p.x, p.y, 4, 3);
+      // Rotating pixel leaf — cycles through 4 orientations
+      const phase = Math.floor(p.age * 0.0015 + (p.seed || 0)) % 4;
+      const px = Math.round(p.x), py = Math.round(p.y);
+      if (phase === 0) { ctx.fillRect(px, py, 3, 2); ctx.fillRect(px+1, py-1, 1, 1); }
+      else if (phase === 1) { ctx.fillRect(px, py, 2, 3); ctx.fillRect(px-1, py+1, 1, 1); }
+      else if (phase === 2) { ctx.fillRect(px, py, 3, 2); ctx.fillRect(px+1, py+2, 1, 1); }
+      else { ctx.fillRect(px, py, 2, 3); ctx.fillRect(px+2, py+1, 1, 1); }
+      // Vein
+      ctx.globalAlpha = a * 0.3;
+      ctx.fillStyle = 'rgba(100,60,20,1)';
+      ctx.fillRect(px + 1, py, 1, phase % 2 === 0 ? 2 : 3);
     } else if (p.type === 'sparkle') {
       ctx.fillStyle = p.color || '#FFD700';
-      ctx.globalAlpha = a * (0.4 + 0.6 * Math.sin(p.age * 0.008));
-      ctx.fillRect(p.x, p.y, 2, 2);
+      const pulse = 0.4 + 0.6 * Math.sin(p.age * 0.008);
+      ctx.globalAlpha = a * pulse;
+      const px = Math.round(p.x), py = Math.round(p.y);
+      // Cross/star shape that breathes
+      const arm = pulse > 0.7 ? 1 : 0;
+      ctx.fillRect(px, py, 2, 2);                        // center
+      ctx.fillRect(px - arm, py + 1, 1, 1);              // left
+      ctx.fillRect(px + 2, py, 1, 1);                    // right
+      ctx.fillRect(px + 1, py - arm, 1, 1);              // top
+      ctx.fillRect(px, py + 2, 1, 1);                    // bottom
     } else if (p.type === 'magic') {
       ctx.fillStyle = p.color || '#A78BFA';
       ctx.globalAlpha = a * (0.3 + 0.7 * Math.sin(p.age * 0.004));
-      const sz = 2 + Math.sin(p.age * 0.003);
-      ctx.fillRect(p.x, p.y, sz, sz);
+      const sz = Math.round(2 + Math.sin(p.age * 0.003));
+      const px = Math.round(p.x), py = Math.round(p.y);
+      ctx.fillRect(px, py, sz, sz);
+      // Trailing afterimages
+      if (p.vx !== 0 || p.vy !== 0) {
+        ctx.globalAlpha = a * 0.12;
+        ctx.fillRect(px - Math.round(p.vx * 120), py - Math.round(p.vy * 120), Math.max(1, sz - 1), Math.max(1, sz - 1));
+        ctx.globalAlpha = a * 0.06;
+        ctx.fillRect(px - Math.round(p.vx * 240), py - Math.round(p.vy * 240), 1, 1);
+      }
     }
   });
   ctx.globalAlpha = 1;
@@ -2942,16 +3050,16 @@ const scenes = [
     { s:'n', t:'Their first date was at a bird sanctuary. It was his idea.' },
     { s:'n', t:'The sanctuary was golden with autumn — the kind of afternoon where the light forgives everything and the air smells like cinnamon for no good reason.' },
     { s:'n', t:'They walked a winding path through copper leaves and birdsong, and for a little while, the world was impossibly small.' },
-    { s:'m', t:"So you've read all of Sanderson?" },
+    { s:'m', t:"So you've read all of Sanduhson?" },
     { s:'u', t:'Every single one. Twice.' },
     { s:'m', t:'Even the 1,200-page ones?' },
     { s:'u', t:'Especially the 1,200-page ones.' },
     { s:'n', t:'He smiled like someone who had just found buried treasure in a place he was already looking.' },
-    { s:'m', t:"That might be my favorite thing anyone has ever said." },
+    { s:'m', t:"That might be my favorite thing anyone has ever said.", onShow(){ addEmotion('heart', G.W*0.58, G.H*0.42); } },
     { s:'n', t:"They talked about dogs they wanted to adopt. Books they'd reread. Jokes nobody else laughed at." },
     { s:'n', t:'The specific kind of silence that means someone is thinking with you, not just near you.' },
     { s:'n', t:'They walked for two hours. Neither checked their phone. This was, historically speaking, unprecedented.' },
-    { s:'u', t:'This was really nice.' },
+    { s:'u', t:'This was really nice.', onShow(){ addEmotion('heart', G.W*0.35, G.H*0.42); } },
     { s:'m', t:'Yeah. It really was.' },
     { s:'n', t:'The birds sang. The leaves fell. And for exactly one golden afternoon, everything was simple.' },
   ]},
@@ -2973,7 +3081,7 @@ const scenes = [
     { s:'n', t:'It happened on a Tuesday. The worst things always happen on Tuesdays.' },
     { s:'n', t:'The horizon split open and a ship the size of a bad decision sailed directly toward them.' },
     // Phase 2 — confrontation
-    { s:'g', t:'MITCHELL BECKLEY.', onShow(){ scenes[G.sceneIdx].phase = 2; } },
+    { s:'g', t:'MITCHELL BECKLEY.', onShow(){ scenes[G.sceneIdx].phase = 2; addEmotion('exclaim', G.W*0.35, G.H*0.55); addEmotion('exclaim', G.W*0.55, G.H*0.52); } },
     { s:'n', t:'The voice belonged to a figure in a purple robe so elaborate it had its own weather system.' },
     { s:'g', t:'You have been SUMMONED by the Royal Court of Absolutely Not.' },
     { s:'d', t:'THIS IS FOR YOUR OWN GOOD, BOY.' },
@@ -3015,7 +3123,7 @@ const scenes = [
   { id: 'captain', bg: 'shipFull', music: 'emerald', waterType: 'emerald',
     init() { this.bg = 'shipFull'; },
     dialogue: [
-    { s:'n', t:'The ship was called the Wandering Thought, which seemed appropriate for a vessel crewed entirely by people who looked like they had somewhere better to be.' },
+    { s:'n', t:'The ship was called the Golden Oreo, which seemed like a terrible name for a boat and an excellent name for a cookie. It was crewed entirely by people who looked like they had somewhere better to be.' },
     { s:'n', t:'It cut through the emerald water like a needle through silk — if silk were made of waves and the needle were held by someone who had clearly been drinking.' },
     { s:'n', t:'The captain was a weathered man with kind eyes and an accent she couldn\'t quite place.', onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'c', t:'You look like someone chasing something.' },
@@ -3079,11 +3187,11 @@ const scenes = [
     { s:'b', t:'Oh no.' },
     // Phase 3 — cut to battle, books start flying
     { s:'n', t:'The first book was fired.', onShow(){ scenes[G.sceneIdx].bg = 'shipBattle'; triggerShake(300); } },
-    { s:'n', t:'It arced through the emerald sky in slow motion — 1,232 pages of Brandon Sanderson hardcover, tumbling end over end, glinting in the spore-light.' },
+    { s:'n', t:'It arced through the emerald sky in slow motion — 1,232 pages of Bwandon Sanduhson hardcover, tumbling end over end, glinting in the spore-light.' },
     { s:'n', t:'It was, objectively, a beautiful trajectory. It was also aimed directly at the deck.' },
     { s:'c', t:"They're loading the cannons!" },
     { s:'b', t:'Those aren\'t cannonballs. Those are... books.' },
-    { s:'n', t:'Brandon Sanderson hardcovers. The biggest, heaviest books in all the land. Each one capable of sinking a small dinghy on impact.' },
+    { s:'n', t:'Bwandon Sanduhson hardcovers. The biggest, heaviest books in all the land. Each one capable of sinking a small dinghy on impact.' },
     { s:'b', t:'I respect the choice of ammunition, honestly.' },
     { s:'n', t:'A massive copy of The Way of Kings sailed through the air and struck Beck-rat directly in the face.' },
     { s:'b', t:'I would have dodged, but I am very small.' },
@@ -3136,7 +3244,7 @@ const scenes = [
   { id: 'bn-work', bg: 'bookstore', music: 'emerald', dialogue: [
     { s:'n', t:'And so, in the middle of the emerald sea, Uh-Lee-Suh got a job at Barnes & Noble.' },
     { s:'n', t:'The floating bookstore was exactly what it sounds like: a ship full of books, staffed entirely by people who took reading very, very seriously.' },
-    { s:'u', t:'Excuse me, do you have the new Sanderson?' },
+    { s:'u', t:'Excuse me, do you have the new Sanduhson?' },
     { s:'n', t:'She was talking to a customer who was, somehow, also a pelican.' },
     { s:'b', t:'I would help shelve books, but I am very small.' },
     { s:'n', t:'Beck-rat spent most of the shift hiding behind the fantasy section and making sarcastic comments about cover art.' },
@@ -3147,7 +3255,7 @@ const scenes = [
 
   // 5e — Emerald to Crimson Sea Crossing
   { id: 'sea-crossing', bg: 'seaCrossing', music: 'emerald', dialogue: [
-    { s:'n', t:'The Golden Oreo sailed east. Uh-Lee-Suh stood at the railing with Beck-rat on the rail beside her.' },
+    { s:'n', t:'The Barnes & Noble ship sailed east. Uh-Lee-Suh stood at the railing with Beck-rat on the rail beside her.' },
     { s:'n', t:'Slowly, the water began to change.' },
     { s:'n', t:'The emerald faded at the edges, warming into something deeper. Something red.' },
     { s:'b', t:'The sea is changing color.' },
@@ -3161,12 +3269,12 @@ const scenes = [
     { s:'n', t:'They sailed in comfortable silence as the emerald faded behind them and the crimson sea stretched ahead, vast and warm and full of whatever came next.' },
   ]},
 
-  // 6 — Golden Oreo (now on crimson sea)
+  // 6 — Crimson sea aboard the B&N ship
   { id: 'golden-oreo', bg: 'shipFull', music: 'crimson', waterType: 'crimson',
     init() { this.waterType = 'crimson'; this.bg = 'shipFull'; },
     dialogue: [
-    { s:'n', t:'The Golden Oreo found them the next morning — or rather, they found it, floating like a golden promise on the crimson tide.' },
-    { s:'n', t:'The crew was small but capable — women who looked like they had been sailing since before the sea was invented.', onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
+    { s:'n', t:'The Barnes & Noble ship cut into the crimson sea like a bookmark into a spine. The water was red now, and everything smelled faintly of cinnamon.' },
+    { s:'n', t:'The crew was small but capable — people who looked like they had been sailing since before the sea was invented.', onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'b', t:'I hate boats. I hate water. I hate being a rat on a boat on water.' },
     { s:'u', t:"You're alive." },
     { s:'b', t:'Technically. Which is the worst kind of alive.' },
@@ -3246,7 +3354,7 @@ const scenes = [
     { s:'n', t:'The sky stopped flickering. Time resumed its normal, burrito-free flow.' },
     { s:'b', t:'For the record, I regret nothing.' },
     { s:'b', t:'Also for the record, the guac was incredible.' },
-    { s:'n', t:'They made it back to the Golden Oreo. The ship sailed on.' },
+    { s:'n', t:'They made it back to the ship. The Barnes & Noble sailed on.' },
   ]},
 
   // 8a — Beck Eavesdrops
@@ -3259,7 +3367,7 @@ const scenes = [
     { s:'cr', t:'"And in return?"' },
     { s:'cr', t:'"Matcha. The real kind. The kind that makes you see the color of sound."' },
     { s:'cr', t:'"The girl. She\'s clever. The cats would accept her."' },
-    { s:'n', t:'Beck-rat\'s blood went cold. Which was saying something, because his blood was already fairly cold on account of being a rat.' },
+    { s:'n', t:'Beck-rat\'s blood went cold. Which was saying something, because his blood was already fairly cold on account of being a rat.', onShow(){ addEmotion('exclaim', G.W*0.35, G.H*0.56); } },
   ]},
 
   // 8b — Beck Warns Ulisa
@@ -3298,7 +3406,7 @@ const scenes = [
     { s:'n', t:'A wizard werewolf in a star-covered bathrobe. A massive white lion who appeared to be napping. And an extremely energetic puma vibrating at a frequency that suggested espresso.' },
     { s:'b', t:'I would very much like to leave.' },
     { s:'u', t:'We just got here.' },
-    { s:'b', t:"CATS. EAT. RATS. This is a fundamental flaw in the itinerary." },
+    { s:'b', t:"CATS. EAT. RATS. This is a fundamental flaw in the itinerary.", onShow(){ addEmotion('sweat', G.W*0.48, G.H*0.55); } },
     { s:'n', t:'The wizard werewolf looked at them. Then at Beck-rat. Then back at them.' },
     { s:'n', t:'"You came willingly. Interesting. Most humans are... delivered."' },
     { s:'u', t:'I\'m here to earn the matcha. Not to be traded for it.' },
@@ -3351,7 +3459,7 @@ const scenes = [
     { s:'b', t:'...oh no.' },
     { s:'u', t:'What are you doing down here?' },
     { s:'n', t:'She saw the pile. The open porthole. The rations floating in the crimson water outside.' },
-    { s:'u', t:'Are you throwing away our food?' },
+    { s:'u', t:'Are you throwing away our food?', onShow(){ addEmotion('anger', G.W*0.25, G.H*0.53); } },
     { s:'b', t:'I\'m... no. These fell. Gravity. Very strong down here.' },
     { s:'u', t:'Beck.' },
     { s:'b', t:'Fine. Yes. Ship runs out of food, ship turns back. You go home safe. Simple.' },
@@ -3365,7 +3473,7 @@ const scenes = [
     { s:'b', t:'I\'m trying to protect you—' },
     { s:'u', t:'I don\'t need you to protect me. I need you to trust me.' },
     { s:'n', t:'Silence. The ship creaked. The crimson sea sloshed against the hull.' },
-    { s:'b', t:'...I\'m sorry.' },
+    { s:'b', t:'...I\'m sorry.', onShow(){ addEmotion('sweat', G.W*0.6, G.H*0.53); } },
     { s:'u', t:'I know.' },
     { s:'n', t:'She found a small cage in the corner of the hold. The kind used for transporting chickens.' },
     { s:'u', t:'Get in.' },
@@ -3381,7 +3489,7 @@ const scenes = [
   { id: 'alone-at-sea', bg: 'seaDarkening', music: 'crimson', dialogue: [
     { s:'n', t:'She stood at the railing alone. The crimson sea stretched in every direction.' },
     { s:'n', t:'Slowly, the water began to darken. The red deepened, then cooled, then faded into something that looked like a bruise.' },
-    { s:'n', t:'She thought about Mitchell. The way he smiled when she said she\'d read all of Sanderson. The way he looked at her like she was the most interesting person in any room.' },
+    { s:'n', t:'She thought about Mitchell. The way he smiled when she said she\'d read all of Sanduhson. The way he looked at her like she was the most interesting person in any room.' },
     { s:'n', t:'She thought about Beck-rat. His stupid jokes. His tiny navy scarf. The way he told her to turn back and then looked relieved every time she didn\'t.' },
     { s:'n', t:'And now he was in a cage in the hold because he tried to throw her food overboard. Because he was scared. Because he cared too much and showed it in the worst possible way.' },
     { s:'n', t:'She was angry. And sad. And alone on a ship heading toward the most dangerous water in the world.' },
@@ -3396,7 +3504,7 @@ const scenes = [
     init() { this.waterType = 'midnight'; this.bg = 'shipFull'; },
     dialogue: [
     { s:'n', t:'The midnight sea was the color of ink and bad decisions.' },
-    { s:'n', t:'The Golden Oreo was a small, bright thing in a very large, dark nothing. She sailed on anyway.' },
+    { s:'n', t:'The Barnes & Noble ship was a small, bright thing in a very large, dark nothing. She sailed on anyway.' },
     { s:'n', t:"The water was alive — or something in it was. Shapes moved beneath the surface. Tentacles. Shadows. Things that didn't bother having names.", onShow(){ scenes[G.sceneIdx].bg = 'ship'; } },
     { s:'n', t:'She gripped the wheel. Alone.' },
     { s:'n', t:'Navigate through the midnight sea!',
@@ -3505,9 +3613,9 @@ const scenes = [
   { id: 'finale', bg: 'towerTop', music: 'victory', dialogue: [
     { s:'n', t:'The light faded. The rat was gone.' },
     { s:'n', t:'And in its place stood a tall, blonde man in a navy sweater, looking exactly as confused as you\'d expect someone to look after being a rodent for several weeks.' },
-    { s:'m', t:'...' },
+    { s:'m', t:'...', onShow(){ addEmotion('sparkle', G.W*0.6, G.H*0.55); } },
     { s:'m', t:'Hi.' },
-    { s:'u', t:'Hi.' },
+    { s:'u', t:'Hi.', onShow(){ addEmotion('heart', G.W*0.35, G.H*0.58); addEmotion('heart', G.W*0.6, G.H*0.55); } },
     { s:'m', t:'I... okay. I have some things to say.' },
     { s:'m', t:'First: I was a rat. You may have noticed.' },
     { s:'m', t:"Second: you sailed across three seas, fought a Barnes & Noble warship, broke a burrito time loop, earned matcha from mystical cats, put me in a cage, and then made me eat sushi. For me." },
@@ -3516,7 +3624,7 @@ const scenes = [
     { s:'n', t:'He looked at her the way the sun looks at the sea on the kind of evening where everything is forgiven and nothing needs explaining.' },
     { s:'m', t:"Thank you for sailing the aether seas for me. Can this rat be your boyfriend? (ps: I'm not a dog)",
       action:'choice', choices:[{ text:'Yes' }, { text:'Obviously' }], onChoice:()=>{} },
-    { s:'n', t:'She said yes. Or obviously. Either way, it was the right answer.' },
+    { s:'n', t:'She said yes. Or obviously. Either way, it was the right answer.', onShow(){ addEmotion('heart', G.W*0.35, G.H*0.58); addEmotion('heart', G.W*0.6, G.H*0.55); addEmotion('sparkle', G.W*0.48, G.H*0.5); } },
   ]},
 
   // 14 — Back at the Bird Sanctuary
@@ -3545,7 +3653,12 @@ function render() {
   const scene = scenes[G.sceneIdx];
   if (!scene) { ctx.restore(); return; }
 
-  // Background
+  const px = Math.round(parallax.x * PAR);
+  const py = Math.round(parallax.y * PAR * 0.5);
+
+  // === BACKGROUND LAYER (subtle parallax — feels distant) ===
+  ctx.save();
+  ctx.translate(-Math.round(px * 0.3), -Math.round(py * 0.3));
   const bg = scene.bg;
   if (bg === 'autumn') BG.autumn(t);
   else if (bg === 'shore') BG.shore(t);
@@ -3570,25 +3683,34 @@ function render() {
   else if (bg === 'lakeSunset') BG.lakeSunset(t);
   else if (bg === 'tower') BG.tower(t);
   else if (bg === 'towerTop') BG.towerTop(t);
+  ctx.restore();
 
-  // Characters (hide during minigames and wide establishing shots)
+  // === CHARACTER + EMOTION LAYER (more parallax — feels closer) ===
+  ctx.save();
+  ctx.translate(-Math.round(px * 0.65), -Math.round(py * 0.4));
   if (scene.bg !== 'shipFull' && (G.phase !== 'minigame' || !['navigate','timing'].includes(G.mg?.type))) {
     drawSceneChars(scene.id, t);
   }
+  drawEmotions();
+  ctx.restore();
 
-  // Particles
+  // === PARTICLE LAYER (most parallax — foreground) ===
+  ctx.save();
+  ctx.translate(-px, -Math.round(py * 0.6));
   drawParticles();
+  ctx.restore();
 
-  // Minigame overlays
+  // Minigame overlays (no parallax — UI layer)
   if (G.phase === 'minigame' && G.mg) {
     if (G.mg.type === 'navigate') drawNav();
     else if (G.mg.type === 'timing') drawTiming();
   }
 
-  // Foreground depth
+  // Foreground depth (strong parallax)
+  ctx.save();
+  ctx.translate(-px, -Math.round(py * 0.6));
   const bg2 = scene.bg;
   if (bg2 === 'autumn' || bg2 === 'burritos') {
-    // Grass blades in foreground
     ctx.fillStyle = 'rgba(80,140,50,0.4)';
     for (let i = 0; i < 8; i++) {
       const gx = Math.round(hash(i*17+999) * W);
@@ -3596,24 +3718,43 @@ function render() {
       ctx.fillRect(gx+1, H - Math.round(H*0.06), 1, Math.round(H*0.06));
     }
   } else if (bg2 === 'ship' || bg2 === 'shipBattle' || bg2 === 'seaCrossing' || bg2 === 'seaDarkening') {
-    // Wave foam at bottom edges
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
     for (let x = 0; x < W; x += 2) {
       if (hash(x*3+Math.floor(t*0.001)) > 0.7)
         ctx.fillRect(x, H - 1, 1, 1);
     }
   }
+  ctx.restore();
 
+  // === POST-PROCESSING (no parallax — screen-space) ===
   // Vignette
   const vg = ctx.createRadialGradient(W*0.5, H*0.5, Math.min(W,H)*0.3, W*0.5, H*0.5, Math.max(W,H)*0.7);
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.25)');
   ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+  // Scanlines (very subtle, every 3rd row)
+  ctx.fillStyle = 'rgba(0,0,0,0.025)';
+  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+
+  // Film grain (sparse, animated)
+  const grainCount = Math.round(W * H * 0.006);
+  const grainSeed = Math.floor(t * 0.01);
+  for (let i = 0; i < grainCount; i++) {
+    const gx = Math.round(hash(i * 3 + grainSeed) * W);
+    const gy = Math.round(hash(i * 7 + grainSeed + 500) * H);
+    ctx.fillStyle = hash(i * 11 + grainSeed) > 0.5 ? 'rgba(255,255,255,0.018)' : 'rgba(0,0,0,0.03)';
+    ctx.fillRect(gx, gy, 1, 1);
+  }
 
   ctx.restore();
 }
 
 function update(dt) {
   G.t += dt;
+
+  // Parallax smoothing
+  parallax.x += (parallax.tx - parallax.x) * 0.04;
+  parallax.y += (parallax.ty - parallax.y) * 0.04;
 
   // Screen shake
   if (shake.remaining > 0) {
@@ -3635,8 +3776,9 @@ function update(dt) {
     }
   }
 
-  // Particles
+  // Particles + emotions
   updateParticles(dt);
+  updateEmotions(dt);
   G.pTimer += dt;
   if (G.pTimer > 250) {
     G.pTimer = 0;
@@ -3670,11 +3812,14 @@ function loop(time) {
     ctx.fillRect(sx - 1, G.H * 0.44, 2, 8);
     // Title sparkles
     for (let i = 0; i < 12; i++) {
-      const px = (i * 173.7 + time * 0.008) % G.W;
-      const py = (i * 97.3 + Math.sin(time * 0.001 + i) * 15) % G.H;
+      const tpx = (i * 173.7 + time * 0.008) % G.W;
+      const tpy = (i * 97.3 + Math.sin(time * 0.001 + i) * 15) % G.H;
       ctx.fillStyle = `rgba(167,243,208,${0.15 + 0.25 * Math.sin(time * 0.002 + i * 3)})`;
-      ctx.fillRect(px, py, 2, 2);
+      ctx.fillRect(tpx, tpy, 2, 2);
     }
+    // Scanlines on title
+    ctx.fillStyle = 'rgba(0,0,0,0.02)';
+    for (let y = 0; y < G.H; y += 3) ctx.fillRect(0, y, G.W, 1);
   } else if (G.state === 'playing' || G.state === 'transition') {
     render();
     update(dt);
@@ -3684,6 +3829,12 @@ function loop(time) {
     drawUlisa(G.W * 0.4, G.H * 0.62, 1, time);
     drawMitchell(G.W * 0.57, G.H * 0.59, -1, time);
     drawParticles();
+    // Post-processing on ending
+    const evg = ctx.createRadialGradient(G.W*0.5, G.H*0.5, Math.min(G.W,G.H)*0.3, G.W*0.5, G.H*0.5, Math.max(G.W,G.H)*0.7);
+    evg.addColorStop(0, 'rgba(0,0,0,0)'); evg.addColorStop(1, 'rgba(0,0,0,0.2)');
+    ctx.fillStyle = evg; ctx.fillRect(0, 0, G.W, G.H);
+    ctx.fillStyle = 'rgba(0,0,0,0.02)';
+    for (let y = 0; y < G.H; y += 3) ctx.fillRect(0, y, G.W, 1);
     update(dt);
   }
 
@@ -3694,6 +3845,24 @@ function loop(time) {
 // ============================================================
 // INPUT
 // ============================================================
+// Parallax tracking (mouse + device tilt)
+canvas.addEventListener('mousemove', e => {
+  parallax.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+  parallax.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+canvas.addEventListener('touchmove', e => {
+  if (e.touches[0]) {
+    parallax.tx = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
+    parallax.ty = (e.touches[0].clientY / window.innerHeight - 0.5) * 2;
+  }
+}, { passive: true });
+window.addEventListener('deviceorientation', e => {
+  if (e.gamma != null) {
+    parallax.tx = Math.max(-1, Math.min(1, e.gamma / 20));
+    parallax.ty = Math.max(-1, Math.min(1, (e.beta - 45) / 20));
+  }
+}, { passive: true });
+
 $title.addEventListener('click', () => {
   audio.init(); audio.resume();
   $title.style.opacity = '0';
