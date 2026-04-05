@@ -1,0 +1,448 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0a0a0a;
+  overflow: hidden;
+  font-family: 'Courier New', Consolas, monospace;
+  color: #e0e0e0;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---- Canvas ---- */
+#bridge-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* ---- Overlays ---- */
+.overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.overlay.active {
+  pointer-events: auto;
+}
+
+/* ---- Scanlines ---- */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.015) 3px,
+    rgba(0, 0, 0, 0.015) 6px
+  );
+}
+
+/* ---- Intro ---- */
+.intro-title {
+  font-size: clamp(24px, 6vw, 64px);
+  letter-spacing: 8px;
+  text-align: center;
+  color: #d0d0d0;
+  text-shadow: 0 0 30px rgba(160, 120, 220, 0.15);
+  animation: fade-in 1.5s ease-out;
+}
+
+.intro-prompt {
+  font-size: clamp(12px, 2vw, 18px);
+  letter-spacing: 4px;
+  text-align: center;
+  color: #555;
+  margin-top: 40px;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+/* ---- Identity ---- */
+.identity-panel {
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 40px;
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+}
+
+.identity-panel h2 {
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: #888;
+  margin-bottom: 24px;
+}
+
+.identity-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  background: transparent;
+  border: 1px solid #333;
+  color: #aaa;
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.identity-btn:hover {
+  border-color: rgba(160, 120, 220, 0.4);
+  color: #ddd;
+}
+
+.identity-btn.primary {
+  border-color: rgba(160, 120, 220, 0.3);
+  color: #ccc;
+}
+
+.identity-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  color: #ddd;
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-align: center;
+  text-transform: uppercase;
+  margin: 12px 0;
+  outline: none;
+}
+
+.identity-input:focus {
+  border-color: rgba(160, 120, 220, 0.4);
+}
+
+.identity-error {
+  color: #c44;
+  font-size: 11px;
+  margin-top: 8px;
+  min-height: 16px;
+}
+
+.identity-colors {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 2px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.selected { border-color: #fff; }
+
+/* ---- Cockpit ---- */
+.cockpit-label {
+  position: absolute;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #555;
+  text-align: center;
+  pointer-events: none;
+}
+
+.cockpit-hotspot {
+  position: absolute;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.cockpit-hotspot:hover {
+  border-color: rgba(160, 120, 220, 0.25);
+  box-shadow: 0 0 15px rgba(160, 120, 220, 0.08);
+}
+
+.cockpit-hotspot.offline {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.cockpit-hotspot.offline:hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.offline-text {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #333;
+  text-align: center;
+}
+
+.pilot-switch {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  font-size: 10px;
+  color: #333;
+  cursor: pointer;
+  z-index: 20;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.pilot-switch:hover { color: rgba(160, 120, 220, 0.5); }
+
+/* ---- Star Map ---- */
+.starmap-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.starmap-planet {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.starmap-planet:hover {
+  transform: scale(1.15);
+}
+
+.starmap-planet-label {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #888;
+  white-space: nowrap;
+}
+
+.starmap-info {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 24px;
+  max-width: 260px;
+  display: none;
+}
+
+.starmap-info.visible { display: block; }
+
+.starmap-info h3 {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #ccc;
+  margin-bottom: 8px;
+}
+
+.starmap-info p {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.starmap-info .apps-list {
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 16px;
+}
+
+.starmap-info .apps-list span {
+  display: block;
+  padding: 2px 0;
+}
+
+.jump-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(160, 120, 220, 0.3);
+  color: rgba(160, 120, 220, 0.8);
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.jump-btn:hover {
+  background: rgba(160, 120, 220, 0.08);
+  color: rgba(160, 120, 220, 1);
+}
+
+.starmap-back {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  font-size: 11px;
+  color: #444;
+  cursor: pointer;
+  z-index: 12;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.starmap-back:hover { color: rgba(160, 120, 220, 0.5); }
+
+/* ---- Selection Screen (multi-app worlds) ---- */
+.selection-panel {
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 32px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+}
+
+.selection-panel h2 {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+.selection-app {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  margin: 8px 0;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #aaa;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: left;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.selection-app:hover {
+  border-color: rgba(160, 120, 220, 0.3);
+  color: #ddd;
+}
+
+.selection-app .app-desc {
+  font-size: 10px;
+  color: #555;
+  margin-top: 4px;
+}
+
+.selection-back {
+  font-size: 11px;
+  color: #444;
+  cursor: pointer;
+  margin-top: 16px;
+  display: inline-block;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.selection-back:hover { color: rgba(160, 120, 220, 0.5); }
+
+/* ---- D-Pad (rendered, non-functional in Phase 1) ---- */
+.dpad {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 50;
+  display: grid;
+  grid-template-areas:
+    ".    up    ."
+    "left .     right"
+    ".    down  .";
+  grid-template-columns: 44px 44px 44px;
+  grid-template-rows: 44px 44px 44px;
+  gap: 2px;
+}
+
+.dpad-btn {
+  background: rgba(30, 30, 30, 0.6);
+  border: 1px solid #2a2a2a;
+  color: #444;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dpad-up { grid-area: up; }
+.dpad-left { grid-area: left; }
+.dpad-right { grid-area: right; }
+.dpad-down { grid-area: down; }
+
+.dpad-action {
+  position: fixed;
+  bottom: 52px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  font-size: 16px;
+  background: rgba(30, 30, 30, 0.6);
+  border: 1px solid #2a2a2a;
+  color: #444;
+}
+
+/* ---- Animations ---- */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ---- Responsive ---- */
+@media (min-width: 769px) {
+  .dpad, .dpad-action { display: none !important; }
+}
+
+@media (max-width: 768px) {
+  .starmap-info {
+    right: 16px;
+    left: 16px;
+    max-width: none;
+    top: auto;
+    bottom: 20px;
+    transform: none;
+  }
+
+  .identity-panel { padding: 28px 20px; }
+}

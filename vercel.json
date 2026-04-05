@@ -10,6 +10,8 @@
     { "source": "/aether-seas", "destination": "/apps/aether-seas/index.html" },
     { "source": "/typist", "destination": "/apps/typist/index.html" },
     { "source": "/typist/(.*)", "destination": "/apps/typist/$1" },
-    { "source": "/genart", "destination": "/apps/genart/index.html" }
+    { "source": "/genart", "destination": "/apps/genart/index.html" },
+    { "source": "/bridge", "destination": "/apps/bridge/index.html" },
+    { "source": "/bridge/(.*)", "destination": "/apps/bridge/$1" }
   ]
 }

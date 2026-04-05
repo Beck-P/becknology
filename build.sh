@@ -9,7 +9,7 @@ rm -rf public
 mkdir -p public/apps
 
 # Copy static apps
-for dir in hub aether-seas typist genart cipher-room placeholder-app; do
+for dir in hub aether-seas typist genart cipher-room bridge placeholder-app; do
   if [ -d "apps/$dir" ]; then
     cp -r "apps/$dir" "public/apps/$dir"
   fi
