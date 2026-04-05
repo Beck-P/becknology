@@ -110,27 +110,12 @@ var BridgeCockpit = (function () {
   function draw(ctx, w, h) {
     if (!shown || !cockpitCanvas) return;
 
-    // Draw cockpit: responsive sizing, pinned to bottom
+    // Draw cockpit: fill width, pin to bottom, all screen sizes
     var imgAspect = cockpitCanvas.width / cockpitCanvas.height;
-    var drawW, drawH, drawX, drawY;
-
-    if (w > h) {
-      // Landscape / desktop: fill width
-      drawW = w;
-      drawH = w / imgAspect;
-    } else {
-      // Portrait / mobile: fill at least 55% of height so console is usable
-      drawH = h * 0.55;
-      drawW = drawH * imgAspect;
-      // But never narrower than the screen
-      if (drawW < w) {
-        drawW = w;
-        drawH = w / imgAspect;
-      }
-    }
-
-    drawX = (w - drawW) / 2;
-    drawY = h - drawH;
+    var drawW = w;
+    var drawH = w / imgAspect;
+    var drawX = 0;
+    var drawY = h - drawH;
 
     ctx.drawImage(cockpitCanvas, drawX, drawY, drawW, drawH);
   }
