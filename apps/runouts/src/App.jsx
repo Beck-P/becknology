@@ -2260,23 +2260,23 @@ function getSingleTotalSteps(result) {
     case "high-card":
     case "black-marble":
     case "slots":
-      return (result?.players?.length ?? 4) + 1;
+      return (result?.players?.length ?? 4);
     case "wheel":
       return 2;
     case "coin-flips":
-      return (result?.players?.length ?? 4) * 5 + 1;
+      return (result?.players?.length ?? 4) * 5;
     case "horse-race":
-      return (result?.turns?.length ?? 12) + 1;
+      return (result?.turns?.length ?? 12);
     case "rocket":
       return 2;
     case "space-invaders":
-      return (result?.players?.length ?? 4);
+      return result?.eliminationOrder?.length ?? Math.max((result?.players?.length ?? 4) - 1, 1);
     case "bomb":
       return 2;
     case "plinko":
       return (result?.players?.length ?? 4);
     case "battle-royale":
-      return (result?.players?.length ?? 4);
+      return result?.eliminationOrder?.length ?? Math.max((result?.players?.length ?? 4) - 1, 1);
     case "stock-market":
       return 2;
     default:
@@ -3547,7 +3547,7 @@ function SlotsPlayback({ result, step, done }) {
 }
 
 function HorseRacePlayback({ result, step, done }) {
-  const turnsShown = clamp(step - 1, 0, result.turns.length);
+  const turnsShown = clamp(step, 0, result.turns.length);
   const latestPositions = turnsShown > 0 ? result.turns[turnsShown - 1].positions : Object.fromEntries(result.players.map((player) => [player.name, 0]));
   const latestTurn = turnsShown > 0 ? result.turns[turnsShown - 1] : null;
 
@@ -5044,47 +5044,6 @@ function StockMarketPlayback({ result, step, done }) {
 
   const STOCK_COLORS = ['#10b981', '#22d3ee', '#ec4899', '#fbbf24', '#a78bfa', '#fb923c', '#60a5fa', '#f87171'];
 
-  // Draft phase: show stock picking UI
-  if (result.draftPhase) {
-    const draftState = (typeof window !== 'undefined' && window.__stockDraftState) || {};
-    return (
-      <div className="space-y-6">
-        <ModeHeader result={result} done={false} pendingText="Players are picking stocks..." pendingSummary="Each player chooses their stock from the pool." />
-        <div className="text-center py-12">
-          <div className="pixel-font text-xl text-emerald-300 animate-pulse mb-4">{"\uD83D\uDCC8"} STOCK DRAFT {"\uD83D\uDCC8"}</div>
-          <div className="font-mono text-sm text-slate-500">Waiting for picks...</div>
-          {/* Show pick order and status */}
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {(result.pickOrder || []).map((name, i) => {
-              const hasPicked = draftState?.playerStocks?.[name];
-              return (
-                <div key={name} className={`px-3 py-1.5 rounded-lg font-mono text-xs ${
-                  hasPicked ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-500'
-                }`}>
-                  {name} {hasPicked ? `\u2713 ${draftState.playerStocks[name]}` : '...'}
-                </div>
-              );
-            })}
-          </div>
-          {/* Show available stocks */}
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-lg mx-auto">
-            {(result.stockPool || []).map(s => {
-              const takenBy = draftState?.taken?.[s.ticker];
-              return (
-                <div key={s.ticker} className={`px-2 py-2 rounded-lg font-mono text-[10px] ${
-                  takenBy ? 'bg-white/5 text-slate-600 line-through' : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
-                }`}>
-                  <div className="font-bold text-xs">{s.ticker}</div>
-                  <div className="text-[8px] opacity-60">{takenBy ? `\u2192 ${takenBy}` : s.note}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   function startTrading() {
     if (tradingStartedRef.current) return;
     tradingStartedRef.current = true;
@@ -5095,12 +5054,19 @@ function StockMarketPlayback({ result, step, done }) {
   }
 
   useEffect(() => {
+    if (result.draftPhase) {
+      tradingStartedRef.current = false;
+      setPhase('ready');
+      setDrawIndex(0);
+      return undefined;
+    }
     if (phase !== 'ready') return undefined;
     const timer = setTimeout(() => startTrading(), 1200);
     return () => clearTimeout(timer);
-  }, [phase]);
+  }, [phase, result.draftPhase, result.runId]);
 
   useEffect(() => {
+    if (result.draftPhase) return undefined;
     if (phase !== 'trading') return;
 
     function tick(now) {
@@ -5119,9 +5085,10 @@ function StockMarketPlayback({ result, step, done }) {
 
     animFrameRef.current = requestAnimationFrame(tick);
     return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
-  }, [phase]);
+  }, [phase, result.draftPhase]);
 
   useEffect(() => {
+    if (result.draftPhase) return undefined;
     if (phase === 'complete') {
       const sellState = (typeof window !== 'undefined' && window.__stockSellState) || {};
       const isStockInteractive = typeof window !== 'undefined' && window.__stockInteractive;
@@ -5160,7 +5127,45 @@ function StockMarketPlayback({ result, step, done }) {
 
       window.dispatchEvent(new Event('rocket-complete'));
     }
-  }, [phase]);
+  }, [phase, result, result.draftPhase]);
+
+  if (result.draftPhase) {
+    const draftState = (typeof window !== 'undefined' && window.__stockDraftState) || {};
+    return (
+      <div className="space-y-6">
+        <ModeHeader result={result} done={false} pendingText="Players are picking stocks..." pendingSummary="Each player chooses their stock from the pool." />
+        <div className="text-center py-12">
+          <div className="pixel-font text-xl text-emerald-300 animate-pulse mb-4">{"\uD83D\uDCC8"} STOCK DRAFT {"\uD83D\uDCC8"}</div>
+          <div className="font-mono text-sm text-slate-500">Waiting for picks...</div>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {(result.pickOrder || []).map((name) => {
+              const hasPicked = draftState?.playerStocks?.[name];
+              return (
+                <div key={name} className={`px-3 py-1.5 rounded-lg font-mono text-xs ${
+                  hasPicked ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-500'
+                }`}>
+                  {name} {hasPicked ? `\u2713 ${draftState.playerStocks[name]}` : '...'}
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2 max-w-lg mx-auto">
+            {(result.stockPool || []).map(s => {
+              const takenBy = draftState?.taken?.[s.ticker];
+              return (
+                <div key={s.ticker} className={`px-2 py-2 rounded-lg font-mono text-[10px] ${
+                  takenBy ? 'bg-white/5 text-slate-600 line-through' : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                }`}>
+                  <div className="font-bold text-xs">{s.ticker}</div>
+                  <div className="text-[8px] opacity-60">{takenBy ? `\u2192 ${takenBy}` : s.note}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const isComplete = phase === 'complete' || done;
 
@@ -5896,6 +5901,10 @@ function JoinScreen({ roomCode, names, joinedPlayers, onJoinAsPlayer, onJoinAsSp
 function CardDraftPicker({ cards, keepCount, onSubmit }) {
   const [selected, setSelected] = useState([]);
 
+  useEffect(() => {
+    setSelected([]);
+  }, [cards, keepCount]);
+
   function toggleCard(index) {
     setSelected(prev => {
       if (prev.includes(index)) return prev.filter(i => i !== index);
@@ -5937,7 +5946,7 @@ function CardDraftPicker({ cards, keepCount, onSubmit }) {
       </div>
       <button
         disabled={!canLock}
-        onClick={() => onSubmit(selected)}
+        onClick={() => onSubmit([...selected].sort((a, b) => a - b))}
         className={`w-full py-3 rounded-xl font-bold text-sm transition ${
           canLock
             ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg hover:scale-[1.02] active:scale-95'
@@ -5953,21 +5962,27 @@ function CardDraftPicker({ cards, keepCount, onSubmit }) {
 function CountdownTimer({ deadline }) {
   const { useState, useEffect } = React;
   const [remaining, setRemaining] = useState(Math.max(0, Math.ceil((deadline - Date.now()) / 1000)));
+  const [initialRemaining, setInitialRemaining] = useState(Math.max(1, Math.ceil((deadline - Date.now()) / 1000)));
 
   useEffect(function() {
+    const startingRemaining = Math.max(1, Math.ceil((deadline - Date.now()) / 1000));
+    setInitialRemaining(startingRemaining);
+    setRemaining(startingRemaining);
     var interval = setInterval(function() {
       var r = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
       setRemaining(r);
       if (r <= 0) clearInterval(interval);
-    }, 100);
+    }, 250);
     return function() { clearInterval(interval); };
   }, [deadline]);
+
+  const progressPct = Math.max(0, Math.min(100, (remaining / initialRemaining) * 100));
 
   return (
     <div className="mt-2">
       <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
         <div className="h-full rounded-full transition-all duration-100" style={{
-          width: Math.max(0, remaining * 10) + "%",
+          width: `${progressPct}%`,
           background: remaining > 5 ? "#22c55e" : remaining > 2 ? "#fbbf24" : "#ef4444"
         }} />
       </div>
@@ -5983,7 +5998,7 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/95 border-t border-indigo-500/30 p-4 backdrop-blur" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-      <div className="max-w-md mx-auto text-center">
+      <div className="max-w-md mx-auto text-center max-h-[60vh] overflow-y-auto pr-1">
         {pendingAction.action === 'pass_bomb' && isMyTurn ? (
           <>
             <div className="pixel-font text-[11px] text-red-400 mb-3 animate-pulse" style={{ textShadow: '0 0 10px rgba(239,68,68,0.5)' }}>
@@ -6310,18 +6325,23 @@ function PlayerActionBar({ pendingAction, onAction, playerName }) {
 }
 
 function VoteGrid({ votes, deadline, onVote, playerName }) {
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(() => deadline ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000)) : 0);
+  const [initialTimeLeft, setInitialTimeLeft] = useState(() => deadline ? Math.max(1, Math.ceil((deadline - Date.now()) / 1000)) : 1);
 
   useEffect(() => {
     if (!deadline) return;
+    const startingRemaining = Math.max(1, Math.ceil((deadline - Date.now()) / 1000));
+    setInitialTimeLeft(startingRemaining);
+    setTimeLeft(startingRemaining);
     const interval = setInterval(() => {
       const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
       setTimeLeft(remaining);
-    }, 100);
+    }, 250);
     return () => clearInterval(interval);
   }, [deadline]);
 
   const hasVoted = playerName && votes[playerName];
+  const progressPct = Math.max(0, Math.min(100, (timeLeft / initialTimeLeft) * 100));
 
   // Count votes per mode
   const voteCounts = {};
@@ -6335,7 +6355,7 @@ function VoteGrid({ votes, deadline, onVote, playerName }) {
         </div>
         <div className="pixel-font text-[8px] text-slate-500 mt-1">{timeLeft}s remaining</div>
         <div className="mx-auto mt-2 h-1 w-32 rounded-full bg-white/10 overflow-hidden">
-          <div className="h-full rounded-full bg-indigo-500 transition-all duration-100" style={{ width: `${timeLeft * 10}%` }} />
+          <div className="h-full rounded-full bg-indigo-500 transition-all duration-100" style={{ width: `${progressPct}%` }} />
         </div>
       </div>
 
