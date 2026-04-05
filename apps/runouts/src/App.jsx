@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
-import qrcode from 'qrcode-generator';
 import './index.css';
+import { getSingleTotalSteps, getPlaybackConfig, getPlaybackConfigDiagnostics } from './playbackConfig';
 
     // Supabase setup — replace with your project credentials
     const SUPABASE_URL = 'https://nwtfrlxgydbeuqfcftzn.supabase.co';
@@ -2249,49 +2249,6 @@ const MODES = [
   { id: "battle-royale", run: buildBattleRoyaleResult },
   { id: "stock-market", run: buildStockMarketResult },
 ];
-
-function getSingleTotalSteps(result) {
-  switch (result?.modeId) {
-    case "holdem":
-    case "plo":
-      return (result?.players?.length ?? 4) + 4;
-    case "rng":
-    case "dice":
-    case "high-card":
-    case "black-marble":
-    case "slots":
-      return (result?.players?.length ?? 4);
-    case "wheel":
-      return 2;
-    case "coin-flips":
-      return (result?.players?.length ?? 4) * 5;
-    case "horse-race":
-      return (result?.turns?.length ?? 12);
-    case "rocket":
-      return 2;
-    case "space-invaders":
-      return result?.eliminationOrder?.length ?? Math.max((result?.players?.length ?? 4) - 1, 1);
-    case "bomb":
-      return 2;
-    case "plinko":
-      return (result?.players?.length ?? 4);
-    case "battle-royale":
-      return result?.eliminationOrder?.length ?? Math.max((result?.players?.length ?? 4) - 1, 1);
-    case "stock-market":
-      return 2;
-    default:
-      return 1;
-  }
-}
-
-function getPlaybackConfig(result) {
-  if (!result) return { totalSteps: 1 };
-  if (!result.isTournament) {
-    return { totalSteps: getSingleTotalSteps(result) };
-  }
-  const totalSteps = result.rounds.reduce((sum, round) => sum + getSingleTotalSteps(round) + 2, 0);
-  return { totalSteps };
-}
 
 function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotation = 0) {
   const mode = modeById(baseModeId);
@@ -8129,6 +8086,14 @@ export default function ChoreChaosApp() {
   const canRun = multiplayerReady || (allFilled && namesAreUnique && hasEnoughPlayers);
   const currentConfig = result ? getPlaybackConfig(result) : null;
 
+  useEffect(() => {
+    if (!import.meta.env.DEV || !result) return;
+    const issues = getPlaybackConfigDiagnostics(result);
+    if (issues.length > 0) {
+      console.warn(`[runouts] Playback config warnings for ${result.modeId}:`, issues, result);
+    }
+  }, [result?.runId, result?.modeId, result?.draftPhase]);
+
   function updateName(index, value) {
     setNames((current) => current.map((entry, idx) => (idx === index ? value : entry)));
   }
@@ -8852,12 +8817,26 @@ export default function ChoreChaosApp() {
   useEffect(() => {
     if (roomMode !== 'host' || !roomCode) return;
     const el = document.getElementById('room-qr');
-    if (el) {
-      const qr = qrcode(0, 'M');
-      qr.addData(`https://becknology.vercel.app/runouts?room=${roomCode}`);
-      qr.make();
-      el.innerHTML = `<img src="${qr.createDataURL(2)}" style="width:100%;height:100%;image-rendering:pixelated;" />`;
-    }
+    if (!el) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { default: qrcode } = await import('qrcode-generator');
+        if (cancelled) return;
+        const qr = qrcode(0, 'M');
+        qr.addData(`https://becknology.vercel.app/runouts?room=${roomCode}`);
+        qr.make();
+        el.innerHTML = `<img src="${qr.createDataURL(2)}" style="width:100%;height:100%;image-rendering:pixelated;" />`;
+      } catch (error) {
+        console.error('QR code generation failed:', error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      el.innerHTML = '';
+    };
   }, [roomMode, roomCode]);
 
   // ── Join / Spectator / Player mode early returns ──────────────────────────
