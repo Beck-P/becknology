@@ -218,12 +218,16 @@ body::after {
 }
 
 .cockpit-nav-label {
-  font-size: clamp(11px, 1.6vw, 18px);
-  letter-spacing: 4px;
-  color: rgba(56, 200, 255, 0.95);
-  text-shadow: 0 0 12px rgba(56, 200, 255, 0.6), 0 0 24px rgba(56, 200, 255, 0.3);
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: clamp(12px, 1.8vw, 20px);
+  font-weight: bold;
+  letter-spacing: 5px;
+  color: rgba(40, 220, 80, 0.95);
+  text-shadow: 0 0 8px rgba(40, 220, 80, 0.6), 0 0 20px rgba(40, 220, 80, 0.3);
   pointer-events: none;
   animation: nav-flash 1.2s ease-in-out infinite;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
 }
 
 @keyframes nav-flash {
