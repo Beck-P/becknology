@@ -4458,16 +4458,27 @@ export default function ChoreChaosApp() {
   function startGame(forcedModeId = null) {
     if (!canRun) return;
     resetTransientGameState();
+    const wantsSeries = ['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat);
+    let nextSeriesActive = seriesActive;
+    let nextSeriesConfig = seriesConfig;
+    let nextSeriesScores = seriesScoreRef.current;
+    let nextSeriesHistory = seriesHistory;
+    let nextSeriesRound = seriesRound;
 
     // Initialize a new series if selecting a best-of format and not already in one
-    if (['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat) && !seriesActive) {
+    if (wantsSeries && !seriesActive) {
       const totalRounds = gameFormat === 'best-of-3' ? 3 : gameFormat === 'best-of-5' ? 5 : 7;
       const seriesNames = (interactiveMode && Object.keys(joinedPlayers).length >= 2)
         ? Object.keys(joinedPlayers)
         : cleanedNames;
       const initScores = Object.fromEntries(seriesNames.map(n => [n, 0]));
+      nextSeriesActive = true;
+      nextSeriesConfig = { totalRounds, selectionGoal };
+      nextSeriesScores = initScores;
+      nextSeriesHistory = [];
+      nextSeriesRound = 0;
       setSeriesActive(true);
-      setSeriesConfig({ totalRounds, selectionGoal });
+      setSeriesConfig(nextSeriesConfig);
       setSeriesScores(initScores);
       seriesScoreRef.current = initScores;
       setSeriesRound(0);
@@ -4484,8 +4495,9 @@ export default function ChoreChaosApp() {
     }
 
     // If series is active, increment round counter
-    if (seriesActive || ['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat)) {
-      setSeriesRound(prev => prev + 1);
+    if (nextSeriesActive) {
+      nextSeriesRound += 1;
+      setSeriesRound(nextSeriesRound);
     }
 
     const outcome = {
@@ -4510,7 +4522,7 @@ export default function ChoreChaosApp() {
     broadcastEvent({
       type: 'game_start',
       result: outcome,
-      series: seriesActive ? { active: true, config: seriesConfig, scores: seriesScoreRef.current, round: seriesRound, history: seriesHistory } : null,
+      series: nextSeriesActive ? { active: true, config: nextSeriesConfig, scores: nextSeriesScores, round: nextSeriesRound, history: nextSeriesHistory } : null,
     });
   }
 
@@ -5076,7 +5088,7 @@ export default function ChoreChaosApp() {
       <div className="app-screen flex flex-col items-center justify-center bg-[#0a0a1a] text-white p-6 text-center">
         <div className="pixel-font text-2xl text-rose-400 mb-4">ROOM CLOSED</div>
         <p className="font-mono text-sm text-slate-400 mb-6">The host ended the session</p>
-        <button onClick={() => { window.location.href = window.location.pathname; }} className="pixel-font text-[10px] border border-indigo-500/40 bg-indigo-500/10 px-6 py-3 text-indigo-300">
+        <button onClick={leaveRoom} className="pixel-font text-[10px] border border-indigo-500/40 bg-indigo-500/10 px-6 py-3 text-indigo-300">
           START YOUR OWN SESSION
         </button>
       </div>
