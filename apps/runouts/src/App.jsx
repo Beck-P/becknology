@@ -4303,13 +4303,14 @@ export default function ChoreChaosApp() {
 
   function pushHistory(outcome) {
     if (outcome.isTie) return; // Don't push tie rounds to history; wait for resolution
+    const historyFormat = outcome.historyFormat || (outcome.isTournament ? "tournament" : outcome.isSeriesSuddenDeath || seriesActive ? "series" : "single");
     setHistory((current) => [
       {
         id: `${Date.now()}-${secureRandomInt(100000)}`,
         modeName: outcome.modeName,
         selectedName: outcome.selectedName,
         selectionGoal: outcome.selectionGoal,
-        format: outcome.isTournament ? "tournament" : seriesActive ? "series" : "single",
+        format: historyFormat,
         suddenDeath: outcome.suddenDeathRound > 0,
       },
       ...current,
@@ -4496,6 +4497,7 @@ export default function ChoreChaosApp() {
       ...createOutcome(forcedModeId),
       runId: `${Date.now()}-${secureRandomInt(100000)}`,
     };
+    outcome.historyFormat = outcome.isTournament ? "tournament" : nextSeriesActive ? "series" : "single";
     outcome.taskLabel = taskLabel.trim();
     if (outcome.modeId === "wheel" && outcome.wheel) {
       setWheelRotation(outcome.wheel.rotation);
@@ -4527,6 +4529,7 @@ export default function ChoreChaosApp() {
       ...createOutcome(result.modeId, tiedPlayerNames),
       runId: `${Date.now()}-${secureRandomInt(100000)}`,
     };
+    outcome.historyFormat = seriesActive ? "series" : "single";
     outcome.taskLabel = taskLabel.trim();
     if (outcome.modeId === "wheel" && outcome.wheel) {
       setWheelRotation(outcome.wheel.rotation);
