@@ -175,28 +175,40 @@ const CipherGenerator = (function () {
     const seed = dateSeed(dateStr + ':' + type);
     const rng = createPRNG(seed);
 
-    // Pick template
-    const pool = templates[sizeKey];
-    const template = pool[Math.floor(rng() * pool.length)];
-
-    // Extract slots
-    const slots = extractSlots(template.grid);
-
     // Filter words to appropriate lengths
     const maxLen = size;
     const relevantWords = wordList.filter((w) => w.word.length >= 3 && w.word.length <= maxLen);
 
-    // Fill grid
-    const letterGrid = fillGrid(template.grid, slots, relevantWords, rng);
+    // Try all templates in shuffled order until one fills successfully
+    const pool = [...templates[sizeKey]];
+    shuffle(pool, rng);
+
+    let letterGrid = null;
+    let chosenTemplate = null;
+    let chosenSlots = null;
+
+    for (const template of pool) {
+      const slots = extractSlots(template.grid);
+      // Try with a fresh RNG seeded per template to get different word orderings
+      const templateRng = createPRNG(seed + dateSeed(template.id));
+      const result = fillGrid(template.grid, slots, relevantWords, templateRng);
+      if (result) {
+        letterGrid = result;
+        chosenTemplate = template;
+        chosenSlots = slots;
+        break;
+      }
+    }
+
     if (!letterGrid) {
-      throw new Error('Failed to generate puzzle — not enough words to fill template');
+      throw new Error('Failed to generate puzzle — not enough words to fill any template');
     }
 
     // Assign numbers
-    const numbers = assignNumbers(slots);
+    const numbers = assignNumbers(chosenSlots);
 
     // Build word entries with clues
-    const words = slots.map((slot) => {
+    const words = chosenSlots.map((slot) => {
       const word = slot.cells.map(({ r, c }) => letterGrid[r][c]).join('');
       const entry = wordList.find((w) => w.word === word);
       const clue = entry.clues[Math.floor(rng() * entry.clues.length)];
@@ -217,7 +229,7 @@ const CipherGenerator = (function () {
       size,
       dispatchNum,
       station,
-      templateGrid: template.grid,
+      templateGrid: chosenTemplate.grid,
       letterGrid,
       numbers,
       words,

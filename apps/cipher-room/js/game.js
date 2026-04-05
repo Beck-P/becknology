@@ -453,7 +453,20 @@ const CipherGame = (function () {
     document.getElementById('puzzle-subtitle').textContent = subtitleText;
 
     // Generate puzzle
-    puzzle = await CipherGenerator.generate(today, type);
+    try {
+      puzzle = await CipherGenerator.generate(today, type);
+    } catch (e) {
+      console.error('Puzzle generation failed:', e);
+      document.getElementById('app').innerHTML = `
+        <div style="text-align:center;margin-top:80px;">
+          <div class="classification">TRANSMISSION ERROR</div>
+          <h1 style="margin-top:16px;">DISPATCH UNAVAILABLE</h1>
+          <p class="subtitle" style="margin-top:8px;">Decoding failed. Try the other dispatch.</p>
+          <a href="/cipher-room" class="btn" style="display:inline-block;margin-top:24px;text-decoration:none;">RETURN TO FIELD OFFICE</a>
+        </div>
+      `;
+      return;
+    }
 
     // Update dispatch info
     const dispatchNum = String(puzzle.dispatchNum).padStart(3, '0');
