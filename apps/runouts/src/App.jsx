@@ -2050,7 +2050,7 @@ function buildBattleRoyaleResult(names, taskLabel, selectionGoal) {
   }
 
   const survivor = [...alive][0];
-  const selectedName = survivor;
+  const selectedName = selectionGoal === "winner" ? survivor : eliminationOrder[0];
 
   const headline = pickRandomMessage(
     selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
@@ -2065,7 +2065,9 @@ function buildBattleRoyaleResult(names, taskLabel, selectionGoal) {
     selectedName,
     isTie: false,
     headline,
-    summary: `The zone closed in ${names.length - 1} times. ${selectedName} was the last one standing.`,
+    summary: selectionGoal === "winner"
+      ? `The zone closed in ${names.length - 1} times. ${selectedName} was the last one standing.`
+      : `${selectedName} was the first one caught outside the zone.`,
     positions,
     zones,
     eliminationOrder,
@@ -4862,6 +4864,9 @@ function BattleRoyalePlayback({ result, step, done }) {
   const aliveCount = totalPlayers - elimCount;
   const currentPhase = Math.min(step, result.zones.length - 1);
   const zone = result.zones[currentPhase] || result.zones[0];
+  const survivorName = result.players.find((player) => !eliminationOrder.includes(player.name))?.name
+    || result.players.find((player) => player.rank === 1)?.name
+    || result.selectedName;
 
   const [flashElim, setFlashElim] = useState(null);
   const prevStepRef = React.useRef(0);
@@ -4878,7 +4883,6 @@ function BattleRoyalePlayback({ result, step, done }) {
   }, [step, eliminationOrder]);
 
   const isComplete = done || elimCount >= eliminationOrder.length;
-  const survivorName = result.selectedName;
   const mapSize = 300;
   const scale = mapSize / 100;
 
@@ -4945,8 +4949,9 @@ function BattleRoyalePlayback({ result, step, done }) {
               const isEliminated = destroyedNames.has(player.name);
               const isFlashing = flashElim === player.name;
               const isSurvivor = isComplete && player.name === survivorName;
-              const px = player.x * scale;
-              const py = player.y * scale;
+              const livePosition = result.positions?.find((position) => position.name === player.name);
+              const px = (livePosition?.x ?? player.x) * scale;
+              const py = (livePosition?.y ?? player.y) * scale;
 
               return (
                 <motion.div
@@ -5035,6 +5040,7 @@ function StockMarketPlayback({ result, step, done }) {
   const [drawIndex, setDrawIndex] = useState(0);
   const startTimeRef = React.useRef(null);
   const animFrameRef = React.useRef(null);
+  const tradingStartedRef = React.useRef(false);
 
   const STOCK_COLORS = ['#10b981', '#22d3ee', '#ec4899', '#fbbf24', '#a78bfa', '#fb923c', '#60a5fa', '#f87171'];
 
@@ -5080,9 +5086,19 @@ function StockMarketPlayback({ result, step, done }) {
   }
 
   function startTrading() {
+    if (tradingStartedRef.current) return;
+    tradingStartedRef.current = true;
     setPhase('trading');
+    setDrawIndex(0);
+    window.__stockDrawIndex = 0;
     startTimeRef.current = performance.now();
   }
+
+  useEffect(() => {
+    if (phase !== 'ready') return undefined;
+    const timer = setTimeout(() => startTrading(), 1200);
+    return () => clearTimeout(timer);
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== 'trading') return;
@@ -5249,13 +5265,18 @@ function StockMarketPlayback({ result, step, done }) {
         {/* Start button */}
         {phase === 'ready' ? (
           <div className="absolute inset-0 flex items-center justify-center z-20">
-            <button
-              onClick={startTrading}
-              className="pixel-font inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-8 py-4 text-sm text-white shadow-lg shadow-emerald-600/30 transition hover:scale-105 active:scale-95"
-              style={{ textShadow: '0 0 10px rgba(16,185,129,0.5)' }}
-            >
-              📈 START TRADING
-            </button>
+            <div className="text-center">
+              <button
+                onClick={startTrading}
+                className="pixel-font inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-8 py-4 text-sm text-white shadow-lg shadow-emerald-600/30 transition hover:scale-105 active:scale-95"
+                style={{ textShadow: '0 0 10px rgba(16,185,129,0.5)' }}
+              >
+                📈 START TRADING
+              </button>
+              <div className="pixel-font mt-3 text-[7px] text-emerald-300/80">
+                Auto-starting...
+              </div>
+            </div>
           </div>
         ) : null}
 
@@ -7798,6 +7819,7 @@ export default function ChoreChaosApp() {
     if (alive.length <= 1) return;
 
     // Collect movement choices from all alive players
+    const MOVE_TIMEOUT_MS = 8000;
     broadcastEvent({
       type: 'choice_prompt',
       action: 'move_direction',
@@ -7807,6 +7829,23 @@ export default function ChoreChaosApp() {
     });
 
     const moveChoices = {};
+    let moveResolutionTimer = null;
+    let movesResolved = false;
+
+    function lockMove(actor, dir) {
+      moveChoices[actor] = dir;
+      setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+      setPendingAction(prev => prev && prev.action === 'move_direction'
+        ? { ...prev, received: { ...(prev.received || {}), [actor]: dir } }
+        : prev);
+    }
+
+    function finalizeMoves(moves) {
+      if (movesResolved) return;
+      movesResolved = true;
+      if (moveResolutionTimer) clearTimeout(moveResolutionTimer);
+      applyMovesAndAdvance(moves);
+    }
 
     if (localInteractiveMode && !interactiveMode) {
       // Local mode: cycle through alive players one at a time
@@ -7828,11 +7867,10 @@ export default function ChoreChaosApp() {
         const dir = payload.direction;
         if (!['up', 'down', 'left', 'right', 'stay'].includes(dir)) return;
 
-        moveChoices[actor] = dir;
-        setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+        lockMove(actor, dir);
 
         if (alive.every(name => moveChoices[name])) {
-          applyMovesAndAdvance(moveChoices);
+          finalizeMoves(moveChoices);
         } else {
           const nextMover = alive.find(name => !moveChoices[name]);
           if (nextMover) {
@@ -7856,6 +7894,7 @@ export default function ChoreChaosApp() {
         zone: nextZone,
         phase: phase + 1,
         received: {},
+        deadline: Date.now() + MOVE_TIMEOUT_MS,
       });
 
       currentActionHandler.current = (payload) => {
@@ -7866,14 +7905,21 @@ export default function ChoreChaosApp() {
         const dir = payload.direction;
         if (!['up', 'down', 'left', 'right', 'stay'].includes(dir)) return;
 
-        moveChoices[actor] = dir;
-        setBattleMoves(prev => ({ ...prev, [actor]: dir }));
+        lockMove(actor, dir);
 
         // Check if all alive players have moved
         if (alive.every(name => moveChoices[name])) {
-          applyMovesAndAdvance(moveChoices);
+          finalizeMoves(moveChoices);
         }
       };
+
+      moveResolutionTimer = setTimeout(() => {
+        const fallbackMoves = {};
+        alive.forEach(name => {
+          fallbackMoves[name] = moveChoices[name] || 'stay';
+        });
+        finalizeMoves(fallbackMoves);
+      }, MOVE_TIMEOUT_MS);
     }
 
     function applyMovesAndAdvance(moves) {
@@ -7894,6 +7940,11 @@ export default function ChoreChaosApp() {
         const d = dirMap[dir];
         pos.x = Math.max(0, Math.min(100, pos.x + d.dx));
         pos.y = Math.max(0, Math.min(100, pos.y + d.dy));
+        const player = result.players.find(p => p.name === name);
+        if (player) {
+          player.x = pos.x;
+          player.y = pos.y;
+        }
       });
 
       // Recalculate who's farthest from zone center
@@ -7931,26 +7982,35 @@ export default function ChoreChaosApp() {
         const remaining = alive.filter(n => n !== farthest);
         if (remaining.length === 1) {
           const survivor = remaining[0];
-          result.selectedName = survivor;
+          const selectedName = result.selectionGoal === 'winner' ? survivor : result.eliminationOrder[0];
+          result.selectedName = selectedName;
           const sp = result.players.find(p => p.name === survivor);
           if (sp) {
             sp.headline = "VICTORY ROYALE";
             sp.subline = "Last one in the zone";
             sp.chips = ["Winner"];
-            sp.selected = true;
             sp.rank = 1;
           }
+          result.players.forEach(p => {
+            p.selected = p.name === selectedName;
+          });
           result.headline = pickRandomMessage(
             result.selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
-            survivor,
+            selectedName,
             result.selectionGoal === "winner" ? "win" : "lose"
           );
-          result.summary = 'The zone closed in ' + (phase + 1) + ' times. ' + survivor + ' was the last one standing.';
+          result.summary = result.selectionGoal === 'winner'
+            ? 'The zone closed in ' + (phase + 1) + ' times. ' + survivor + ' was the last one standing.'
+            : selectedName + ' was the first one caught outside the zone.';
         }
       }
 
       advancePlayback();
     }
+
+    return () => {
+      if (moveResolutionTimer) clearTimeout(moveResolutionTimer);
+    };
   }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
 
   // Interactive turn management for RNG, Wheel, Slots, Coin Gauntlet
@@ -8115,6 +8175,39 @@ export default function ChoreChaosApp() {
     seriesRoundRecordedRef.current = null;
   }
 
+  function resetTransientGameState() {
+    setPendingAction(null);
+    currentActionHandler.current = null;
+    setPlaybackStep(0);
+    setPlaybackDone(false);
+    setSuddenDeathRound(0);
+    setSuddenDeathNames(null);
+    setInteractiveBombState(null);
+    setInteractiveRocketEjects({});
+    setDraftChoices({});
+    setStockDraftState(null);
+    setStockSellState({});
+    setHighCardDraftHands(null);
+    setHorseWhips({});
+    setHorseLanePicks(null);
+    setUsedShields({});
+    setBattleMoves(null);
+    setHandoffReady(false);
+    setVoteActive(false);
+    setVotes({});
+    votesRef.current = {};
+    setVoteDeadline(null);
+    setShowSeriesScoreboard(false);
+    window.__interactiveRocketEjects = {};
+    window.__draftChoices = {};
+    window.__rocketInteractive = false;
+    window.__rocketElapsed = 0;
+    window.__stockSellState = {};
+    window.__stockDraftState = null;
+    window.__stockInteractive = false;
+    window.__stockDrawIndex = 0;
+  }
+
   function isSeriesClinched(scores, totalRounds, currentRound) {
     const vals = Object.values(scores);
     if (vals.length === 0) return false;
@@ -8144,6 +8237,7 @@ export default function ChoreChaosApp() {
     const tiedPlayerNames = seriesTied;
     setSeriesTied(null);
     setSeriesRound(prev => prev + 1);
+    resetTransientGameState();
 
     const modeId = forcedModeId || pickRandom(MODES).id;
     const outcome = {
@@ -8197,6 +8291,7 @@ export default function ChoreChaosApp() {
 
   function startGame(forcedModeId = null) {
     if (!canRun) return;
+    resetTransientGameState();
 
     // Initialize a new series if selecting a best-of format and not already in one
     if (['best-of-3', 'best-of-5', 'best-of-7'].includes(gameFormat) && !seriesActive) {
@@ -8242,31 +8337,6 @@ export default function ChoreChaosApp() {
     setPlaybackStep(0);
     setPlaybackDone(false);
     setGameActive(true);
-    setSuddenDeathRound(0);
-    setSuddenDeathNames(null);
-    setInteractiveBombState(null);
-    setInteractiveRocketEjects({});
-    setDraftChoices({});
-    setStockDraftState(null);
-    setStockSellState({});
-    setHighCardDraftHands(null);
-    setHorseWhips({});
-    setHorseLanePicks(null);
-    setUsedShields({});
-    setBattleMoves(null);
-    setHandoffReady(false);
-    setVoteActive(false);
-    setVotes({}); votesRef.current = {};
-    setVoteDeadline(null);
-    setShowSeriesScoreboard(false);
-    window.__interactiveRocketEjects = {};
-    window.__draftChoices = {};
-    window.__rocketInteractive = false;
-    window.__rocketElapsed = 0;
-    window.__stockSellState = {};
-    window.__stockDraftState = null;
-    window.__stockInteractive = false;
-    window.__stockDrawIndex = 0;
     // Don't record interactive bomb/rocket/poker-draft/stock-draft/high-card-draft/horse-race-draft immediately — they record on completion
     if (!((interactiveMode || localInteractiveMode) && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || outcome.draftPhase))) {
       pushHistory(outcome);
@@ -8282,6 +8352,7 @@ export default function ChoreChaosApp() {
     if (!result || !result.isTie || !result.tiedNames) return;
     const nextRound = suddenDeathRound + 1;
     const tiedPlayerNames = result.tiedNames;
+    resetTransientGameState();
     const outcome = {
       ...createOutcome(result.modeId, tiedPlayerNames),
       runId: `${Date.now()}-${secureRandomInt(100000)}`,
@@ -8329,31 +8400,8 @@ export default function ChoreChaosApp() {
   }
 
   function exitGame() {
+    resetTransientGameState();
     setGameActive(false);
-    setSuddenDeathRound(0);
-    setSuddenDeathNames(null);
-    setInteractiveBombState(null);
-    setInteractiveRocketEjects({});
-    setDraftChoices({});
-    setStockDraftState(null);
-    setStockSellState({});
-    setHighCardDraftHands(null);
-    setHorseWhips({});
-    setHorseLanePicks(null);
-    setUsedShields({});
-    setBattleMoves(null);
-    setHandoffReady(false);
-    window.__interactiveRocketEjects = {};
-    window.__draftChoices = {};
-    window.__rocketInteractive = false;
-    window.__rocketElapsed = 0;
-    window.__stockSellState = {};
-    window.__stockDraftState = null;
-    window.__stockInteractive = false;
-    window.__stockDrawIndex = 0;
-    setVoteActive(false);
-    setVotes({}); votesRef.current = {};
-    setVoteDeadline(null);
     resetSeriesState();
     broadcastEvent({ type: 'game_reset' });
   }
@@ -9533,6 +9581,15 @@ export default function ChoreChaosApp() {
                   </div>
                   <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{result.modeName}</div>
                 </div>
+                <div className="flex items-center gap-3">
+                  {!playbackDone ? (
+                    <button
+                      onClick={exitGame}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5"
+                    >
+                      {seriesActive ? 'Exit series' : 'Exit'}
+                    </button>
+                  ) : null}
                 <div className="hidden sm:flex flex-wrap items-center justify-end gap-3">
                   {!playbackDone ? (
                     (result.modeId === 'rocket' || result.modeId === 'bomb' || result.modeId === 'stock-market' || result.draftPhase) ? null : (
@@ -9663,6 +9720,7 @@ export default function ChoreChaosApp() {
                       </button>
                     </>
                   )}
+                </div>
                 </div>
                 </div>
               </div>
