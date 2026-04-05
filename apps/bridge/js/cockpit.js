@@ -110,6 +110,10 @@ var BridgeCockpit = (function () {
   function draw(ctx, w, h) {
     if (!shown || !cockpitCanvas) return;
 
+    // Fill bottom half with dark color to cover any gap below cockpit art
+    ctx.fillStyle = '#111118';
+    ctx.fillRect(0, h * 0.45, w, h * 0.55);
+
     // Draw cockpit: fill full width, pin bottom edge to viewport bottom
     var imgAspect = cockpitCanvas.width / cockpitCanvas.height;
     var drawW = w;
