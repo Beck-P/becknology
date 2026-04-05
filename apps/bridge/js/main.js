@@ -59,7 +59,9 @@ var Bridge = (function () {
     }
 
     // State-specific rendering (guarded — modules load incrementally)
-    if (state === 'cockpit' && typeof BridgeCockpit !== 'undefined') {
+    if (state === 'intro' && typeof BridgeIntro !== 'undefined') {
+      BridgeIntro.draw(ctx, w, h);
+    } else if (state === 'cockpit' && typeof BridgeCockpit !== 'undefined') {
       BridgeCockpit.draw(ctx, w, h);
     } else if (state === 'starmap' && typeof BridgeStarmap !== 'undefined') {
       BridgeStarmap.draw(ctx, w, h);

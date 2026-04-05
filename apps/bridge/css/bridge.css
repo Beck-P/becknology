@@ -59,8 +59,20 @@ body::after {
   text-align: center;
   letter-spacing: 2px;
   text-shadow: 0 0 30px rgba(160, 120, 220, 0.08);
-  animation: fade-in 1s ease-out;
   margin: 0;
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: opacity 0.3s;
+}
+
+.intro-prompt {
+  position: absolute;
+  bottom: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: opacity 0.3s;
 }
 
 @media (max-width: 900px) {
@@ -68,7 +80,7 @@ body::after {
 }
 
 @media (max-width: 600px) {
-  .intro-ascii { font-size: 4.5px; letter-spacing: 0.5px; }
+  .intro-ascii { font-size: 4.5px; letter-spacing: 0.5px; top: 8%; }
 }
 
 .intro-prompt {
