@@ -8869,12 +8869,15 @@ export default function ChoreChaosApp() {
   }
 
   function leaveRoom() {
+    resetTransientGameState();
+    resetSeriesState();
     currentActionHandler.current = null;
     if (roomChannel && _supabase) {
       _supabase.removeChannel(roomChannel);
     }
     channelCreatedRef.current = false;
-    setPendingAction(null);
+    setGameActive(false);
+    setResult(null);
     setSpectatorState(null);
     setSpectatorSeries(null);
     setSpectatorConnected(false);
@@ -8888,7 +8891,6 @@ export default function ChoreChaosApp() {
     setRoomCode(null);
     setRoomMode('none');
     setDeviceMode('choose');
-    window.__votes = {};
     if (window.location.search) {
       window.history.replaceState({}, '', window.location.pathname);
     }
