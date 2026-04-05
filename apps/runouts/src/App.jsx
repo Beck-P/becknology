@@ -4776,7 +4776,9 @@ export default function ChoreChaosApp() {
     setPlayerName(null);
     setResult(null);
     setGameActive(false);
+    setHostSetupDone(false);
     setGameFormat('single');
+    setDeviceMode('choose');
   }
 
   function handleCreateRoom() {
