@@ -506,6 +506,16 @@ body::after {
   /* Bigger touch targets for star map planets */
   .starmap-planet { width: 56px; height: 56px; }
 
+  /* Star map info panel — compact, pinned to bottom, always visible */
+  .starmap-info {
+    padding: 16px;
+    bottom: 12px;
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+  .starmap-info h3 { font-size: 12px; margin-bottom: 4px; }
+  .starmap-info p { font-size: 10px; margin-bottom: 8px; }
+
   /* Jump button easier to tap */
   .jump-btn { padding: 14px; font-size: 14px; }
 
