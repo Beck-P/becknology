@@ -9320,6 +9320,8 @@ export default function ChoreChaosApp() {
 
   return (
     <div className="crt-vignette crt-global-scanlines crt-flicker relative min-h-screen overflow-hidden bg-[#0a0a1a] text-white">
+      {/* Return to Bridge */}
+      <a href="/bridge" className="fixed top-4 left-6 z-50 font-mono text-xs text-slate-600 no-underline transition-colors hover:text-purple-400/60">&larr; Return to Bridge</a>
       {/* Gradient orbs */}
       <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.2) 0%, transparent 50%), radial-gradient(ellipse at 20% 100%, rgba(236,72,153,0.12) 0%, transparent 40%), radial-gradient(ellipse at 80% 60%, rgba(34,211,238,0.08) 0%, transparent 35%)" }} />
       {/* Dot grid */}
