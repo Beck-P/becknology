@@ -2668,18 +2668,10 @@ export default function ChoreChaosApp() {
   const seriesScoreRef = useRef({});
   const seriesRoundRecordedRef = useRef(null);
 
-  // Restore series state from localStorage on mount
+  // Clear legacy persisted series state so fresh visits always start clean.
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('runouts_series'));
-      if (saved && saved.config && !saved.complete) {
-        setSeriesActive(true);
-        setSeriesConfig(saved.config);
-        setSeriesScores(saved.scores || {});
-        seriesScoreRef.current = saved.scores || {};
-        setSeriesRound(saved.round || 0);
-        setSeriesHistory(saved.history || []);
-      }
+      localStorage.removeItem('runouts_series');
     } catch (e) {}
   }, []);
 
@@ -4581,6 +4573,7 @@ export default function ChoreChaosApp() {
     resetTransientGameState();
     setGameActive(false);
     resetSeriesState();
+    setGameFormat('single');
     broadcastEvent({ type: 'game_reset' });
   }
 
@@ -4626,23 +4619,6 @@ export default function ChoreChaosApp() {
       broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: false });
     }
   }, [seriesActive, playbackDone, result?.runId, seriesRound, seriesConfig, seriesHistory]);
-
-  // ── Series localStorage persistence ──
-  useEffect(() => {
-    if (seriesActive && seriesConfig) {
-      try {
-        localStorage.setItem('runouts_series', JSON.stringify({
-          scores: seriesScores,
-          round: seriesRound,
-          config: seriesConfig,
-          history: seriesHistory,
-          complete: seriesComplete,
-        }));
-      } catch (e) {}
-    } else {
-      localStorage.removeItem('runouts_series');
-    }
-  }, [seriesActive, seriesScores, seriesRound, seriesConfig, seriesHistory, seriesComplete]);
 
   // ── Vote for Next Game ────────────────────────────────────
 
@@ -4781,6 +4757,8 @@ export default function ChoreChaosApp() {
   }
 
   function closeRoom() {
+    resetTransientGameState();
+    resetSeriesState();
     if (roomChannel) {
       roomChannel.send({
         type: 'broadcast',
@@ -4796,6 +4774,9 @@ export default function ChoreChaosApp() {
     setJoinedPlayers({});
     setInteractiveMode(false);
     setPlayerName(null);
+    setResult(null);
+    setGameActive(false);
+    setGameFormat('single');
   }
 
   function handleCreateRoom() {
@@ -5077,6 +5058,7 @@ export default function ChoreChaosApp() {
     setRoomCode(null);
     setRoomMode('none');
     setDeviceMode('choose');
+    setGameFormat('single');
     if (window.location.search) {
       window.history.replaceState({}, '', window.location.pathname);
     }
