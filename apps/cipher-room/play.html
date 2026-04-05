@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Cipher Room &mdash; Dispatch</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a href="/cipher-room" class="hub-link">&larr; FIELD OFFICE</a>
+  <div id="app" class="page">
+    <div class="dispatch-header">
+      <div class="classification">TOP SECRET</div>
+      <div class="stamp">DECODE</div>
+      <h1 id="puzzle-title">FLASH CIPHER</h1>
+      <div class="subtitle" id="puzzle-subtitle">DAILY DISPATCH — MINI</div>
+      <div class="dispatch-info" id="dispatch-info">DISPATCH #001 — CAIRO STATION — 04 APR 2026</div>
+    </div>
+
+    <div class="op-clock">
+      OP CLOCK<br>
+      <span class="time" id="timer">00:00</span>
+    </div>
+
+    <div class="grid-container">
+      <div id="grid" class="grid"></div>
+      <input type="text" id="hidden-input" class="hidden-input" autocomplete="off" autocapitalize="characters" autocorrect="off">
+    </div>
+
+    <div class="progress-bar">
+      <div class="label">DECRYPTION PROGRESS</div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="clues-section" id="clues-section"></div>
+  </div>
+
+  <div id="completion-overlay" class="completion-overlay" style="display:none;"></div>
+  <script src="js/prng.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/generator.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/share.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+</body>
+</html>

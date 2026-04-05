@@ -5,6 +5,8 @@
     { "source": "/", "destination": "/apps/hub/index.html" },
     { "source": "/runouts", "destination": "/runouts/index.html" },
     { "source": "/runouts/(.*)", "destination": "/runouts/$1" },
+    { "source": "/cipher-room", "destination": "/apps/cipher-room/index.html" },
+    { "source": "/cipher-room/(.*)", "destination": "/apps/cipher-room/$1" },
     { "source": "/aether-seas", "destination": "/apps/aether-seas/index.html" },
     { "source": "/typist", "destination": "/apps/typist/index.html" },
     { "source": "/typist/(.*)", "destination": "/apps/typist/$1" },

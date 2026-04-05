@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Cipher Room</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a href="/" class="hub-link">&larr; BECKNOLOGY</a>
+
+  <!-- Registration overlay (shown if no agent in localStorage) -->
+  <div id="registration" class="registration" style="display:none;">
+    <div class="classification">AGENT REGISTRATION</div>
+    <h2 style="margin-top:16px;">THE CIPHER ROOM</h2>
+    <div class="subtitle" style="margin-bottom:24px;">ESTABLISH YOUR IDENTITY</div>
+
+    <div id="reg-choice" class="reg-buttons">
+      <button class="btn primary" onclick="CipherHub.showNewAgent()">NEW AGENT</button>
+      <button class="btn" onclick="CipherHub.showReturning()">RETURNING AGENT</button>
+    </div>
+
+    <div id="reg-new" style="display:none;">
+      <p style="font-size:11px;color:#c8b88860;margin-bottom:12px;">Choose a codename, Agent.</p>
+      <input type="text" id="new-codename" class="input-field" placeholder="ENTER CODENAME" maxlength="20" autocomplete="off">
+      <div id="new-error" class="error-msg" style="display:none;"></div>
+      <button class="btn primary" onclick="CipherHub.registerNew()">REGISTER</button>
+      <button class="btn" onclick="CipherHub.showChoice()" style="margin-top:8px;">BACK</button>
+    </div>
+
+    <div id="reg-returning" style="display:none;">
+      <p style="font-size:11px;color:#c8b88860;margin-bottom:12px;">Enter your codename to resume your service record.</p>
+      <input type="text" id="return-codename" class="input-field" placeholder="ENTER CODENAME" maxlength="20" autocomplete="off">
+      <div id="return-error" class="error-msg" style="display:none;"></div>
+      <button class="btn primary" onclick="CipherHub.loginReturning()">CONFIRM IDENTITY</button>
+      <button class="btn" onclick="CipherHub.showChoice()" style="margin-top:8px;">BACK</button>
+    </div>
+  </div>
+
+  <!-- Main hub content (shown after registration) -->
+  <div id="hub" class="page" style="display:none;">
+    <div class="dispatch-header">
+      <div class="classification">TOP SECRET</div>
+      <h1>THE CIPHER ROOM</h1>
+      <div class="subtitle">FIELD OFFICE &mdash; <span id="agent-name">AGENT</span></div>
+    </div>
+
+    <div class="streak">
+      <span class="count" id="streak-count">0</span>
+      CONSECUTIVE DISPATCHES DECODED
+    </div>
+
+    <div class="divider"></div>
+
+    <h2 style="text-align:center;margin-bottom:16px;font-size:10px;letter-spacing:3px;color:#c8b88850;">INCOMING DISPATCHES</h2>
+
+    <div class="dispatches">
+      <a href="/cipher-room/play.html?type=flash" class="dispatch-card" id="card-flash">
+        <div class="card-title">FLASH CIPHER</div>
+        <div class="card-subtitle">5&times;5 &mdash; QUICK DECODE</div>
+        <div class="card-status pending" id="status-flash">PENDING</div>
+      </a>
+      <a href="/cipher-room/play.html?type=dossier" class="dispatch-card" id="card-dossier">
+        <div class="card-title">FULL DOSSIER</div>
+        <div class="card-subtitle">11&times;11 &mdash; DEEP COVER</div>
+        <div class="card-status pending" id="status-dossier">PENDING</div>
+      </a>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Service Record -->
+    <div class="service-record">
+      <h2 style="font-size:10px;letter-spacing:3px;color:#c8b88850;">SERVICE RECORD</h2>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <span class="stat-value" id="stat-total">0</span>
+          <span class="stat-label">Decoded</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-best-flash">--</span>
+          <span class="stat-label">Best Flash</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-best-dossier">--</span>
+          <span class="stat-label">Best Dossier</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+  <script>
+    const CipherHub = (function () {
+      const today = new Date().toISOString().slice(0, 10);
+
+      function formatTime(seconds) {
+        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const s = String(seconds % 60).padStart(2, '0');
+        return `${m}:${s}`;
+      }
+
+      function init() {
+        const agent = CipherStorage.getAgent();
+        if (agent) {
+          showHub(agent);
+        } else {
+          document.getElementById('registration').style.display = 'block';
+        }
+      }
+
+      function showChoice() {
+        document.getElementById('reg-choice').style.display = 'flex';
+        document.getElementById('reg-new').style.display = 'none';
+        document.getElementById('reg-returning').style.display = 'none';
+      }
+
+      function showNewAgent() {
+        document.getElementById('reg-choice').style.display = 'none';
+        document.getElementById('reg-new').style.display = 'block';
+        document.getElementById('new-codename').focus();
+      }
+
+      function showReturning() {
+        document.getElementById('reg-choice').style.display = 'none';
+        document.getElementById('reg-returning').style.display = 'block';
+        document.getElementById('return-codename').focus();
+      }
+
+      async function registerNew() {
+        const codename = document.getElementById('new-codename').value.trim();
+        const errorEl = document.getElementById('new-error');
+        errorEl.style.display = 'none';
+
+        if (!codename) {
+          errorEl.textContent = 'CODENAME REQUIRED';
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        if (typeof CipherSupabase !== 'undefined') {
+          const result = await CipherSupabase.createAgent(codename);
+          if (result.error) {
+            errorEl.textContent = result.error;
+            errorEl.style.display = 'block';
+            return;
+          }
+          CipherStorage.setAgent({ id: result.id, codename: result.codename });
+        } else {
+          // Fallback: no Supabase, local only
+          CipherStorage.setAgent({ id: 'local-' + Date.now(), codename });
+        }
+
+        showHub(CipherStorage.getAgent());
+      }
+
+      async function loginReturning() {
+        const codename = document.getElementById('return-codename').value.trim();
+        const errorEl = document.getElementById('return-error');
+        errorEl.style.display = 'none';
+
+        if (!codename) {
+          errorEl.textContent = 'CODENAME REQUIRED';
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        if (typeof CipherSupabase !== 'undefined') {
+          const result = await CipherSupabase.lookupAgent(codename);
+          if (result.error) {
+            errorEl.textContent = result.error;
+            errorEl.style.display = 'block';
+            return;
+          }
+          CipherStorage.setAgent({ id: result.id, codename: result.codename });
+        } else {
+          errorEl.textContent = 'SUPABASE UNAVAILABLE — CANNOT VERIFY IDENTITY';
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        showHub(CipherStorage.getAgent());
+      }
+
+      function showHub(agent) {
+        document.getElementById('registration').style.display = 'none';
+        document.getElementById('hub').style.display = 'block';
+        document.getElementById('agent-name').textContent = agent.codename.toUpperCase();
+
+        // Update dispatch statuses
+        updateStatus('flash');
+        updateStatus('dossier');
+
+        // Update stats
+        document.getElementById('streak-count').textContent = CipherStorage.getStreak();
+        document.getElementById('stat-total').textContent = CipherStorage.getTotalCompleted();
+
+        const flashStats = CipherStorage.getStats('flash');
+        const dossierStats = CipherStorage.getStats('dossier');
+        document.getElementById('stat-best-flash').textContent =
+          flashStats.bestTime !== null ? formatTime(flashStats.bestTime) : '--';
+        document.getElementById('stat-best-dossier').textContent =
+          dossierStats.bestTime !== null ? formatTime(dossierStats.bestTime) : '--';
+      }
+
+      function updateStatus(type) {
+        const statusEl = document.getElementById(`status-${type}`);
+        if (CipherStorage.isCompleted(today, type)) {
+          const time = CipherStorage.getCompletionTime(today, type);
+          statusEl.textContent = `DECODED — ${formatTime(time)}`;
+          statusEl.className = 'card-status decoded';
+        } else if (CipherStorage.loadGameState(today, type)) {
+          statusEl.textContent = 'IN PROGRESS';
+          statusEl.className = 'card-status in-progress';
+        } else {
+          statusEl.textContent = 'PENDING';
+          statusEl.className = 'card-status pending';
+        }
+      }
+
+      return { init, showChoice, showNewAgent, showReturning, registerNew, loginReturning };
+    })();
+
+    document.addEventListener('DOMContentLoaded', CipherHub.init);
+  </script>
+</body>
+</html>

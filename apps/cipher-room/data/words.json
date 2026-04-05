@@ -1,0 +1,764 @@
+[
+  {
+    "word": "ACE",
+    "clues": [
+      {"type": "absurd", "text": "what every pilot calls themselves after landing once"},
+      {"type": "emoji", "text": "\ud83c\udccf\u2b50"},
+      {"type": "fill", "text": "you're an ___ at this (probably)"}
+    ]
+  },
+  {
+    "word": "APE",
+    "clues": [
+      {"type": "absurd", "text": "your uncle at thanksgiving, behavior-wise"},
+      {"type": "emoji", "text": "\ud83d\udc12"},
+      {"type": "fill", "text": "to go absolutely ___ over something"}
+    ]
+  },
+  {
+    "word": "ARC",
+    "clues": [
+      {"type": "absurd", "text": "what a rainbow does when it's showing off"},
+      {"type": "fill", "text": "character development, in screenwriter speak"}
+    ]
+  },
+  {
+    "word": "BAT",
+    "clues": [
+      {"type": "absurd", "text": "sky puppy"},
+      {"type": "emoji", "text": "\ud83e\udd87"},
+      {"type": "fill", "text": "didn't even ___ an eye"}
+    ]
+  },
+  {
+    "word": "BIG",
+    "clues": [
+      {"type": "absurd", "text": "the Tom Hanks movie where adulting is the horror"},
+      {"type": "fill", "text": "go ___ or go home"}
+    ]
+  },
+  {
+    "word": "BUS",
+    "clues": [
+      {"type": "absurd", "text": "a sardine can with wheels and existential dread"},
+      {"type": "emoji", "text": "\ud83d\ude8c"}
+    ]
+  },
+  {
+    "word": "CAT",
+    "clues": [
+      {"type": "absurd", "text": "a tiny dictator who lives in your house rent-free"},
+      {"type": "emoji", "text": "\ud83d\udc31"},
+      {"type": "fill", "text": "let the ___ out of the bag"}
+    ]
+  },
+  {
+    "word": "CUP",
+    "clues": [
+      {"type": "absurd", "text": "a bowl that got a handle and an attitude"},
+      {"type": "emoji", "text": "\u2615"}
+    ]
+  },
+  {
+    "word": "DIG",
+    "clues": [
+      {"type": "absurd", "text": "what archaeologists do but make it sound impressive"},
+      {"type": "fill", "text": "I ___ it, man"}
+    ]
+  },
+  {
+    "word": "DOG",
+    "clues": [
+      {"type": "absurd", "text": "the only creature genuinely happy to see you every single time"},
+      {"type": "emoji", "text": "\ud83d\udc15"},
+      {"type": "fill", "text": "every ___ has its day"}
+    ]
+  },
+  {
+    "word": "EAR",
+    "clues": [
+      {"type": "absurd", "text": "head handle (you have two)"},
+      {"type": "emoji", "text": "\ud83d\udc42"},
+      {"type": "fill", "text": "playing it by ___"}
+    ]
+  },
+  {
+    "word": "EGG",
+    "clues": [
+      {"type": "absurd", "text": "a breakfast grenade that chickens make"},
+      {"type": "emoji", "text": "\ud83e\udd5a"}
+    ]
+  },
+  {
+    "word": "FIG",
+    "clues": [
+      {"type": "absurd", "text": "nature's pop-tart, if pop-tarts were honest"},
+      {"type": "fill", "text": "___ newton (the cookie, not the scientist)"}
+    ]
+  },
+  {
+    "word": "FOG",
+    "clues": [
+      {"type": "absurd", "text": "a cloud having a midlife crisis at ground level"},
+      {"type": "emoji", "text": "\ud83c\udf2b\ufe0f"}
+    ]
+  },
+  {
+    "word": "GUM",
+    "clues": [
+      {"type": "absurd", "text": "socially acceptable way to chew on nothing"},
+      {"type": "fill", "text": "stuck like ___ on a shoe"}
+    ]
+  },
+  {
+    "word": "HAM",
+    "clues": [
+      {"type": "absurd", "text": "a pig's final career move"},
+      {"type": "fill", "text": "to ___ it up on stage"}
+    ]
+  },
+  {
+    "word": "HUB",
+    "clues": [
+      {"type": "absurd", "text": "the center of everything, or at least it thinks so"},
+      {"type": "fill", "text": "the ___ of the operation"}
+    ]
+  },
+  {
+    "word": "ICE",
+    "clues": [
+      {"type": "absurd", "text": "water's glow-up phase"},
+      {"type": "emoji", "text": "\ud83e\uddca"},
+      {"type": "fill", "text": "break the ___"}
+    ]
+  },
+  {
+    "word": "INK",
+    "clues": [
+      {"type": "absurd", "text": "squid defense mechanism / printer hostage situation"},
+      {"type": "emoji", "text": "\ud83d\udd8b\ufe0f\ud83e\udd91"}
+    ]
+  },
+  {
+    "word": "JAM",
+    "clues": [
+      {"type": "absurd", "text": "fruit's afterlife, or what happens on the freeway"},
+      {"type": "emoji", "text": "\ud83c\udf53\ud83e\udeed"},
+      {"type": "fill", "text": "we're in a real ___ now"}
+    ]
+  },
+  {
+    "word": "JET",
+    "clues": [
+      {"type": "absurd", "text": "a metal tube that somehow flies and costs $12 for a coke"},
+      {"type": "emoji", "text": "\u2708\ufe0f"}
+    ]
+  },
+  {
+    "word": "KEY",
+    "clues": [
+      {"type": "absurd", "text": "the one thing you always lose right before you leave"},
+      {"type": "emoji", "text": "\ud83d\udd11"},
+      {"type": "fill", "text": "___ to the city"}
+    ]
+  },
+  {
+    "word": "LOG",
+    "clues": [
+      {"type": "absurd", "text": "a tree's corpse or your captain's diary"},
+      {"type": "fill", "text": "sleeping like a ___"}
+    ]
+  },
+  {
+    "word": "MAP",
+    "clues": [
+      {"type": "absurd", "text": "a paper GPS for boomers"},
+      {"type": "emoji", "text": "\ud83d\uddfa\ufe0f"}
+    ]
+  },
+  {
+    "word": "MOP",
+    "clues": [
+      {"type": "absurd", "text": "a stick with hair that cleans floors (relatable)"},
+      {"type": "fill", "text": "___ the floor with someone"}
+    ]
+  },
+  {
+    "word": "NUT",
+    "clues": [
+      {"type": "absurd", "text": "squirrel currency"},
+      {"type": "emoji", "text": "\ud83e\udd5c\ud83d\udc3f\ufe0f"},
+      {"type": "fill", "text": "a tough ___ to crack"}
+    ]
+  },
+  {
+    "word": "OAK",
+    "clues": [
+      {"type": "absurd", "text": "a tree that takes 100 years to grow so your grandkids can have a tire swing"},
+      {"type": "emoji", "text": "\ud83c\udf33\ud83d\udcaa"}
+    ]
+  },
+  {
+    "word": "OWL",
+    "clues": [
+      {"type": "absurd", "text": "nocturnal judgmental bird"},
+      {"type": "emoji", "text": "\ud83e\udd89"},
+      {"type": "fill", "text": "night ___"}
+    ]
+  },
+  {
+    "word": "PEN",
+    "clues": [
+      {"type": "absurd", "text": "the sword's nerdy sibling (mightier, allegedly)"},
+      {"type": "emoji", "text": "\ud83d\udd8a\ufe0f"}
+    ]
+  },
+  {
+    "word": "PIE",
+    "clues": [
+      {"type": "absurd", "text": "math's favorite dessert (3.14159...)"},
+      {"type": "emoji", "text": "\ud83e\udd67"},
+      {"type": "fill", "text": "easy as ___"}
+    ]
+  },
+  {
+    "word": "RUG",
+    "clues": [
+      {"type": "absurd", "text": "floor blanket that ties the room together"},
+      {"type": "fill", "text": "swept it under the ___"}
+    ]
+  },
+  {
+    "word": "RUN",
+    "clues": [
+      {"type": "absurd", "text": "voluntary cardio (suspicious behavior)"},
+      {"type": "emoji", "text": "\ud83c\udfc3"},
+      {"type": "fill", "text": "hit the ground ___ning"}
+    ]
+  },
+  {
+    "word": "SPY",
+    "clues": [
+      {"type": "absurd", "text": "someone whose LinkedIn is definitely lying"},
+      {"type": "emoji", "text": "\ud83d\udd75\ufe0f"},
+      {"type": "fill", "text": "I ___ with my little eye"}
+    ]
+  },
+  {
+    "word": "SUN",
+    "clues": [
+      {"type": "absurd", "text": "giant angry star that gives you freckles"},
+      {"type": "emoji", "text": "\u2600\ufe0f"}
+    ]
+  },
+  {
+    "word": "TAP",
+    "clues": [
+      {"type": "absurd", "text": "the lightest assault you can commit"},
+      {"type": "fill", "text": "___ water (the house wine of beverages)"}
+    ]
+  },
+  {
+    "word": "VAN",
+    "clues": [
+      {"type": "absurd", "text": "a car that gave up on being cool and embraced cargo space"},
+      {"type": "emoji", "text": "\ud83d\ude90"}
+    ]
+  },
+  {
+    "word": "WEB",
+    "clues": [
+      {"type": "absurd", "text": "spider's art project / the reason you're reading this"},
+      {"type": "emoji", "text": "\ud83d\udd78\ufe0f"}
+    ]
+  },
+  {
+    "word": "ZAP",
+    "clues": [
+      {"type": "absurd", "text": "what static electricity does when you touch a doorknob in winter"},
+      {"type": "emoji", "text": "\u26a1"}
+    ]
+  },
+  {
+    "word": "CAKE",
+    "clues": [
+      {"type": "absurd", "text": "edible architecture that people set on fire at parties"},
+      {"type": "emoji", "text": "\ud83c\udf82"},
+      {"type": "fill", "text": "piece of ___"}
+    ]
+  },
+  {
+    "word": "CLAM",
+    "clues": [
+      {"type": "absurd", "text": "ocean rock that's actually alive (surprise)"},
+      {"type": "fill", "text": "happy as a ___"}
+    ]
+  },
+  {
+    "word": "CODE",
+    "clues": [
+      {"type": "absurd", "text": "instructions for computers written by people who forgot to eat lunch"},
+      {"type": "emoji", "text": "\ud83d\udcbb\ud83d\udd10"}
+    ]
+  },
+  {
+    "word": "DUCK",
+    "clues": [
+      {"type": "absurd", "text": "a bird that's also a verb for cowardice"},
+      {"type": "emoji", "text": "\ud83e\udd86"},
+      {"type": "fill", "text": "sitting ___"}
+    ]
+  },
+  {
+    "word": "FROG",
+    "clues": [
+      {"type": "absurd", "text": "a prince with commitment issues"},
+      {"type": "emoji", "text": "\ud83d\udc38"},
+      {"type": "fill", "text": "___ in your throat"}
+    ]
+  },
+  {
+    "word": "GATE",
+    "clues": [
+      {"type": "absurd", "text": "a door's outdoor cousin / suffix for any scandal"},
+      {"type": "fill", "text": "___keeping (the internet's favorite hobby)"}
+    ]
+  },
+  {
+    "word": "HERO",
+    "clues": [
+      {"type": "absurd", "text": "a sandwich in New York, a person everywhere else"},
+      {"type": "emoji", "text": "\ud83e\uddb8"},
+      {"type": "fill", "text": "___ of the story"}
+    ]
+  },
+  {
+    "word": "JAZZ",
+    "clues": [
+      {"type": "absurd", "text": "music where the wrong notes are a feature, not a bug"},
+      {"type": "emoji", "text": "\ud83c\udfb7"},
+      {"type": "fill", "text": "and all that ___"}
+    ]
+  },
+  {
+    "word": "KING",
+    "clues": [
+      {"type": "absurd", "text": "the chess piece that everyone else dies to protect"},
+      {"type": "emoji", "text": "\ud83d\udc51\u265f\ufe0f"}
+    ]
+  },
+  {
+    "word": "LAMP",
+    "clues": [
+      {"type": "absurd", "text": "furniture that moths would die for (literally)"},
+      {"type": "emoji", "text": "\ud83d\udca1\ud83e\udeb3"},
+      {"type": "fill", "text": "I love ___ \u2014 Brick Tamland"}
+    ]
+  },
+  {
+    "word": "LAVA",
+    "clues": [
+      {"type": "absurd", "text": "spicy earth juice"},
+      {"type": "emoji", "text": "\ud83c\udf0b\ud83d\udd25"},
+      {"type": "fill", "text": "the floor is ___"}
+    ]
+  },
+  {
+    "word": "MAZE",
+    "clues": [
+      {"type": "absurd", "text": "a hallway designed by someone who hates you"},
+      {"type": "emoji", "text": "\ud83c\udfd7\ufe0f\u2753"}
+    ]
+  },
+  {
+    "word": "MOON",
+    "clues": [
+      {"type": "absurd", "text": "earth's clingy roommate that controls the ocean"},
+      {"type": "emoji", "text": "\ud83c\udf19"}
+    ]
+  },
+  {
+    "word": "NERD",
+    "clues": [
+      {"type": "absurd", "text": "someone who knows too much about one thing (you, reading this)"},
+      {"type": "emoji", "text": "\ud83e\udd13"},
+      {"type": "fill", "text": "___ed out about it"}
+    ]
+  },
+  {
+    "word": "ORCA",
+    "clues": [
+      {"type": "absurd", "text": "a dolphin that chose violence and a tuxedo"},
+      {"type": "emoji", "text": "\ud83d\udc0b\u2b1b\u2b1c"}
+    ]
+  },
+  {
+    "word": "PLUM",
+    "clues": [
+      {"type": "absurd", "text": "a grape that hit the gym"},
+      {"type": "fill", "text": "professor ___, in the library, with the candlestick"}
+    ]
+  },
+  {
+    "word": "QUIZ",
+    "clues": [
+      {"type": "absurd", "text": "a test that's trying to sound more fun than it is"},
+      {"type": "emoji", "text": "\u2753\ud83d\udcdd"}
+    ]
+  },
+  {
+    "word": "REEF",
+    "clues": [
+      {"type": "absurd", "text": "underwater city where the rent is paid in algae"},
+      {"type": "emoji", "text": "\ud83d\udc20\ud83e\udeb8"}
+    ]
+  },
+  {
+    "word": "SAFE",
+    "clues": [
+      {"type": "absurd", "text": "a box that keeps your stuff from everyone including you when you forget the combo"},
+      {"type": "emoji", "text": "\ud83d\udd12\ud83d\udce6"}
+    ]
+  },
+  {
+    "word": "TACO",
+    "clues": [
+      {"type": "absurd", "text": "a food delivery system that self-destructs after one bite"},
+      {"type": "emoji", "text": "\ud83c\udf2e"},
+      {"type": "fill", "text": "let's ___ 'bout it"}
+    ]
+  },
+  {
+    "word": "WAND",
+    "clues": [
+      {"type": "absurd", "text": "a stick with a college degree in magic"},
+      {"type": "emoji", "text": "\ud83e\ude84\u2728"}
+    ]
+  },
+  {
+    "word": "YOGA",
+    "clues": [
+      {"type": "absurd", "text": "paying money to breathe and hurt in a warm room"},
+      {"type": "emoji", "text": "\ud83e\uddd8"},
+      {"type": "fill", "text": "namaste in bed, thanks to ___"}
+    ]
+  },
+  {
+    "word": "ZERO",
+    "clues": [
+      {"type": "absurd", "text": "nothing, but make it mathematical"},
+      {"type": "emoji", "text": "0\ufe0f\u20e3\ud83d\udd73\ufe0f"},
+      {"type": "fill", "text": "ground ___"}
+    ]
+  },
+  {
+    "word": "TOAST",
+    "clues": [
+      {"type": "absurd", "text": "bread's final form"},
+      {"type": "emoji", "text": "\ud83c\udf5e\ud83d\udd25"},
+      {"type": "fill", "text": "raise a ___ to the happy couple"}
+    ]
+  },
+  {
+    "word": "PIANO",
+    "clues": [
+      {"type": "absurd", "text": "furniture that screams when you touch it"},
+      {"type": "emoji", "text": "\ud83c\udfb9"}
+    ]
+  },
+  {
+    "word": "LLAMA",
+    "clues": [
+      {"type": "absurd", "text": "a camel that moved to south america and got bangs"},
+      {"type": "emoji", "text": "\ud83e\udd99"}
+    ]
+  },
+  {
+    "word": "NINJA",
+    "clues": [
+      {"type": "absurd", "text": "someone whose whole job is not being seen (worst influencer ever)"},
+      {"type": "emoji", "text": "\ud83e\udd77"}
+    ]
+  },
+  {
+    "word": "ROBOT",
+    "clues": [
+      {"type": "absurd", "text": "a machine that does your job but doesn't complain about Mondays"},
+      {"type": "emoji", "text": "\ud83e\udd16"}
+    ]
+  },
+  {
+    "word": "GRAVY",
+    "clues": [
+      {"type": "absurd", "text": "meat tea"},
+      {"type": "fill", "text": "it's all ___ from here"}
+    ]
+  },
+  {
+    "word": "KAZOO",
+    "clues": [
+      {"type": "absurd", "text": "an instrument that validates humming as a musical skill"},
+      {"type": "emoji", "text": "\ud83c\udfb6\ud83d\ude24"}
+    ]
+  },
+  {
+    "word": "SNORE",
+    "clues": [
+      {"type": "absurd", "text": "your body's white noise machine (involuntary, annoying)"},
+      {"type": "fill", "text": "what a ___! (it was actually very boring)"}
+    ]
+  },
+  {
+    "word": "MANGO",
+    "clues": [
+      {"type": "absurd", "text": "a fruit that requires an engineering degree to cut"},
+      {"type": "emoji", "text": "\ud83e\udd6d"}
+    ]
+  },
+  {
+    "word": "ZEBRA",
+    "clues": [
+      {"type": "absurd", "text": "a horse that committed to a black and white aesthetic"},
+      {"type": "emoji", "text": "\ud83e\udd93"}
+    ]
+  },
+  {
+    "word": "BRICK",
+    "clues": [
+      {"type": "absurd", "text": "a rectangle with anger issues used to build houses"},
+      {"type": "emoji", "text": "\ud83e\uddf1"}
+    ]
+  },
+  {
+    "word": "GHOST",
+    "clues": [
+      {"type": "absurd", "text": "what happens when someone stops texting back"},
+      {"type": "emoji", "text": "\ud83d\udc7b"},
+      {"type": "fill", "text": "you look like you've seen a ___"}
+    ]
+  },
+  {
+    "word": "PLANT",
+    "clues": [
+      {"type": "absurd", "text": "a pet that dies silently and judges your watering schedule"},
+      {"type": "emoji", "text": "\ud83c\udf31"},
+      {"type": "fill", "text": "___ the seed of doubt"}
+    ]
+  },
+  {
+    "word": "WHALE",
+    "clues": [
+      {"type": "absurd", "text": "the ocean's largest mammal, or a casino's favorite customer"},
+      {"type": "emoji", "text": "\ud83d\udc0b"}
+    ]
+  },
+  {
+    "word": "BANANA",
+    "clues": [
+      {"type": "absurd", "text": "nature's pre-wrapped snack with a built-in comedy prop"},
+      {"type": "emoji", "text": "\ud83c\udf4c"},
+      {"type": "fill", "text": "this situation has gone ___s"}
+    ]
+  },
+  {
+    "word": "CACTUS",
+    "clues": [
+      {"type": "absurd", "text": "the only houseplant that fights back when you try to hug it"},
+      {"type": "emoji", "text": "\ud83c\udf35"}
+    ]
+  },
+  {
+    "word": "DONKEY",
+    "clues": [
+      {"type": "absurd", "text": "a horse that gave up on corporate and went freelance"},
+      {"type": "emoji", "text": "\ud83e\udecf"}
+    ]
+  },
+  {
+    "word": "NAPKIN",
+    "clues": [
+      {"type": "absurd", "text": "a tiny blanket for your lap that absorbs regret"},
+      {"type": "fill", "text": "back-of-the-___ math"}
+    ]
+  },
+  {
+    "word": "PICKLE",
+    "clues": [
+      {"type": "absurd", "text": "a cucumber that went through some things"},
+      {"type": "emoji", "text": "\ud83e\udd52\ud83e\uddea"},
+      {"type": "fill", "text": "in a bit of a ___"}
+    ]
+  },
+  {
+    "word": "PIRATE",
+    "clues": [
+      {"type": "absurd", "text": "a sailor with terrible eye health and great branding"},
+      {"type": "emoji", "text": "\ud83c\udff4\u200d\u2620\ufe0f"}
+    ]
+  },
+  {
+    "word": "ROCKET",
+    "clues": [
+      {"type": "absurd", "text": "a very expensive bottle rocket that occasionally puts people in space"},
+      {"type": "emoji", "text": "\ud83d\ude80"}
+    ]
+  },
+  {
+    "word": "WAFFLE",
+    "clues": [
+      {"type": "absurd", "text": "a pancake with abs"},
+      {"type": "emoji", "text": "\ud83e\uddc7"},
+      {"type": "fill", "text": "stop ___ing and make a decision"}
+    ]
+  },
+  {
+    "word": "WALRUS",
+    "clues": [
+      {"type": "absurd", "text": "a mustache with a sea mammal attached"},
+      {"type": "fill", "text": "I am the ___ \u2014 The Beatles"}
+    ]
+  },
+  {
+    "word": "ZOMBIE",
+    "clues": [
+      {"type": "absurd", "text": "you before coffee, but permanent"},
+      {"type": "emoji", "text": "\ud83e\udddf"}
+    ]
+  },
+  {
+    "word": "BUFFALO",
+    "clues": [
+      {"type": "absurd", "text": "a word that can be a complete sentence if you say it eight times"},
+      {"type": "emoji", "text": "🦬"},
+      {"type": "fill", "text": "___ wings (the animal can't actually fly)"}
+    ]
+  },
+  {
+    "word": "CHIMNEY",
+    "clues": [
+      {"type": "absurd", "text": "Santa's preferred entrance (definitely not a fire hazard)"},
+      {"type": "emoji", "text": "\ud83c\udfe0\ud83c\udf85"}
+    ]
+  },
+  {
+    "word": "COCONUT",
+    "clues": [
+      {"type": "absurd", "text": "a fruit wearing a fur coat that contains its own water bottle"},
+      {"type": "emoji", "text": "\ud83e\udd65"}
+    ]
+  },
+  {
+    "word": "MUSTARD",
+    "clues": [
+      {"type": "absurd", "text": "angry yellow paste made from tiny seeds with big ambitions"},
+      {"type": "fill", "text": "colonel ___! in the conservatory!"}
+    ]
+  },
+  {
+    "word": "PANCAKE",
+    "clues": [
+      {"type": "absurd", "text": "flat cake that's socially acceptable for breakfast"},
+      {"type": "emoji", "text": "\ud83e\udd5e"}
+    ]
+  },
+  {
+    "word": "PENGUIN",
+    "clues": [
+      {"type": "absurd", "text": "a bird in a tuxedo that can't fly but can swim \u2014 mixed priorities"},
+      {"type": "emoji", "text": "\ud83d\udc27"}
+    ]
+  },
+  {
+    "word": "PRETZEL",
+    "clues": [
+      {"type": "absurd", "text": "bread that does yoga"},
+      {"type": "emoji", "text": "\ud83e\udd68"}
+    ]
+  },
+  {
+    "word": "SARDINE",
+    "clues": [
+      {"type": "absurd", "text": "tiny fish that comes in a metal coffin with friends"},
+      {"type": "fill", "text": "packed in like ___s"}
+    ]
+  },
+  {
+    "word": "TORNADO",
+    "clues": [
+      {"type": "absurd", "text": "angry wind that takes your house to Oz"},
+      {"type": "emoji", "text": "\ud83c\udf2a\ufe0f"}
+    ]
+  },
+  {
+    "word": "DINOSAUR",
+    "clues": [
+      {"type": "absurd", "text": "a very large lizard that had its subscription to existence canceled"},
+      {"type": "emoji", "text": "\ud83e\udd95"},
+      {"type": "fill", "text": "you're such a ___ (said to anyone over 40 using technology)"}
+    ]
+  },
+  {
+    "word": "KANGAROO",
+    "clues": [
+      {"type": "absurd", "text": "a deer with a pocket and anger management issues"},
+      {"type": "emoji", "text": "\ud83e\udd98"}
+    ]
+  },
+  {
+    "word": "MUSHROOM",
+    "clues": [
+      {"type": "absurd", "text": "a fungus that convinced us to eat it by looking like a tiny umbrella"},
+      {"type": "emoji", "text": "\ud83c\udf44"}
+    ]
+  },
+  {
+    "word": "SANDWICH",
+    "clues": [
+      {"type": "absurd", "text": "the food equivalent of a hug (bread on both sides)"},
+      {"type": "emoji", "text": "\ud83e\udd6a"}
+    ]
+  },
+  {
+    "word": "UMBRELLA",
+    "clues": [
+      {"type": "absurd", "text": "portable roof you'll definitely leave at the restaurant"},
+      {"type": "emoji", "text": "\u2602\ufe0f"}
+    ]
+  },
+  {
+    "word": "ALLIGATOR",
+    "clues": [
+      {"type": "absurd", "text": "a log that bites"},
+      {"type": "emoji", "text": "\ud83d\udc0a"},
+      {"type": "fill", "text": "see you later, ___"}
+    ]
+  },
+  {
+    "word": "BOOMERANG",
+    "clues": [
+      {"type": "absurd", "text": "a stick with abandonment issues \u2014 always comes back"},
+      {"type": "emoji", "text": "\ud83e\ude83"}
+    ]
+  },
+  {
+    "word": "PINEAPPLE",
+    "clues": [
+      {"type": "absurd", "text": "a fruit wearing medieval armor that starts pizza arguments"},
+      {"type": "emoji", "text": "\ud83c\udf4d\ud83c\udf55\u2753"}
+    ]
+  },
+  {
+    "word": "TRAMPOLINE",
+    "clues": [
+      {"type": "absurd", "text": "a circle of fabric that lets you briefly experience what birds feel"},
+      {"type": "fill", "text": "the ___ park: where insurance premiums go to die"}
+    ]
+  },
+  {
+    "word": "CATERPILLAR",
+    "clues": [
+      {"type": "absurd", "text": "a worm in a sleeping bag waiting for its glow-up"},
+      {"type": "emoji", "text": "\ud83d\udc1b\u27a1\ufe0f\ud83e\udd8b"}
+    ]
+  }
+]

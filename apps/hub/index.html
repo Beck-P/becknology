@@ -293,6 +293,12 @@
       <span class="tag">art</span>
     </a>
 
+    <a class="app-card" href="/cipher-room">
+      <h2>> cipher-room</h2>
+      <p>Daily dispatches need decoding. Crossword puzzles with a field agent dossier vibe.</p>
+      <span class="tag">puzzles</span> <span class="tag">daily</span>
+    </a>
+
     <!--
     <a class="app-card" href="/app-name">
       <h2>> app-name</h2>
@@ -537,7 +543,7 @@
       }
 
       function isHeart() {
-        if (pts.length < 20) return false;
+        if (pts.length < 12) return false;
         var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         for (var i = 0; i < pts.length; i++) {
           if (pts[i].x < minX) minX = pts[i].x;
@@ -545,14 +551,14 @@
           if (pts[i].y < minY) minY = pts[i].y;
           if (pts[i].y > maxY) maxY = pts[i].y;
         }
-        if ((maxX - minX) < 30 || (maxY - minY) < 30) return false;
+        if ((maxX - minX) < 20 || (maxY - minY) < 20) return false;
 
         var sampled = resample(pts, 60);
         var nDrawn = normalize(sampled);
         var nHeart = normalize(heartTmpl);
         var d1 = avgMinDist(nDrawn, nHeart);
         var d2 = avgMinDist(nHeart, nDrawn);
-        return (d1 + d2) / 2 < 0.06;
+        return (d1 + d2) / 2 < 0.08;
       }
 
       function showHeartAndGo() {
