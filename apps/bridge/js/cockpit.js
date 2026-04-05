@@ -103,20 +103,12 @@ var BridgeCockpit = (function () {
   function draw(ctx, w, h) {
     if (!shown || !cockpitCanvas) return;
 
-    // Draw cockpit pinned to bottom, filling width but capped at ~75% height
+    // Draw cockpit: fill full width, pin bottom edge to viewport bottom
     var imgAspect = cockpitCanvas.width / cockpitCanvas.height;
     var drawW = w;
     var drawH = w / imgAspect;
-
-    // Cap: cockpit shouldn't cover more than 75% of viewport
-    var maxH = h * 0.75;
-    if (drawH > maxH) {
-      drawH = maxH;
-      drawW = maxH * imgAspect;
-    }
-
-    var drawX = (w - drawW) / 2;
-    var drawY = h - drawH; // pinned to bottom edge
+    var drawX = 0;
+    var drawY = h - drawH; // bottom of image = bottom of viewport
 
     ctx.drawImage(cockpitCanvas, drawX, drawY, drawW, drawH);
   }
