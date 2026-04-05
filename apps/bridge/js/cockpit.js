@@ -1,8 +1,9 @@
 /**
- * BridgeCockpit — Cockpit frame renderer + interactive hotspots.
+ * BridgeCockpit — Cockpit view using PNG sprite.
  *
- * Draws a pixel-art style cockpit frame on canvas.
- * DOM hotspots overlay the canvas for click interaction:
+ * The cockpit image is drawn over the starfield canvas. Dark windshield
+ * pixels are made transparent so stars show through. DOM hotspots overlay
+ * for click interaction:
  *   - Center screen → star map
  *   - Left panel → stats (OFFLINE in Phase 1)
  *   - Right panel → upgrades (OFFLINE in Phase 1)
@@ -10,14 +11,50 @@
 var BridgeCockpit = (function () {
   var overlay;
   var shown = false;
+  var cockpitCanvas = null;
 
+  // Hotspot positions (% of viewport) — matched to cockpit image layout
   var LAYOUT = {
-    windshield: { x: 0.15, y: 0.05, w: 0.70, h: 0.55 },
-    console: { y: 0.60 },
-    center: { x: 0.30, y: 0.62, w: 0.40, h: 0.28 },
-    left: { x: 0.05, y: 0.65, w: 0.20, h: 0.22 },
-    right: { x: 0.75, y: 0.65, w: 0.20, h: 0.22 },
+    center: { x: 0.33, y: 0.44, w: 0.34, h: 0.26 },
+    left:   { x: 0.02, y: 0.52, w: 0.22, h: 0.38 },
+    right:  { x: 0.76, y: 0.52, w: 0.22, h: 0.38 },
   };
+
+  // ---- Load and process cockpit sprite ----
+  function loadCockpit() {
+    var img = new Image();
+    img.onload = function () {
+      cockpitCanvas = document.createElement('canvas');
+      cockpitCanvas.width = img.width;
+      cockpitCanvas.height = img.height;
+      var cctx = cockpitCanvas.getContext('2d');
+      cctx.drawImage(img, 0, 0);
+
+      // Make dark windshield area semi-transparent so starfield shows through
+      var data = cctx.getImageData(0, 0, cockpitCanvas.width, cockpitCanvas.height);
+      var px = data.data;
+      for (var i = 0; i < px.length; i += 4) {
+        var r = px[i], g = px[i + 1], b = px[i + 2];
+        var brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+
+        // Very dark pixels → transparent (windshield area)
+        if (brightness < 18) {
+          px[i + 3] = 0;
+        } else if (brightness < 45) {
+          // Fade in — darker = more transparent
+          var alpha = Math.round((brightness - 18) / 27 * 255);
+          px[i + 3] = Math.min(px[i + 3], alpha);
+        }
+        // Brighter pixels (instruments, frame) stay fully opaque
+      }
+      cctx.putImageData(data, 0, 0);
+    };
+    img.src = '/bridge/assets/cockpit.png';
+  }
+
+  loadCockpit();
+
+  // ================================================================
 
   function show() {
     overlay = document.getElementById('cockpit-overlay');
@@ -29,17 +66,21 @@ var BridgeCockpit = (function () {
     var pilotName = pilot ? pilot.name : 'PILOT';
 
     overlay.innerHTML =
+      // Center screen hotspot (star map)
       '<div class="cockpit-hotspot" id="hotspot-center" style="' + rectStyle(LAYOUT.center) + '">' +
         '<div class="cockpit-label" style="width:100%;top:8px;">STAR MAP</div>' +
       '</div>' +
+      // Left panel (offline)
       '<div class="cockpit-hotspot offline" style="' + rectStyle(LAYOUT.left) + '">' +
         '<div class="cockpit-label" style="width:100%;top:8px;">STATS</div>' +
         '<div class="offline-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">OFFLINE</div>' +
       '</div>' +
+      // Right panel (offline)
       '<div class="cockpit-hotspot offline" style="' + rectStyle(LAYOUT.right) + '">' +
         '<div class="cockpit-label" style="width:100%;top:8px;">UPGRADES</div>' +
         '<div class="offline-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">OFFLINE</div>' +
       '</div>' +
+      // Pilot switch
       '<a class="pilot-switch" id="pilot-switch">NOT ' + pilotName + '? SWITCH PILOT</a>';
 
     document.getElementById('hotspot-center').addEventListener('click', function () {
@@ -62,85 +103,30 @@ var BridgeCockpit = (function () {
       'width:' + (r.w * 100) + '%;height:' + (r.h * 100) + '%;';
   }
 
+  /** Draw cockpit image over the starfield each frame. */
   function draw(ctx, w, h) {
-    if (!shown) return;
+    if (!shown || !cockpitCanvas) return;
 
-    var col = {
-      frame: '#0d0d10',
-      edge: '#1a1a22',
-      accent: 'rgba(160, 120, 220, 0.08)',
-      line: 'rgba(160, 120, 220, 0.12)',
-      text: 'rgba(160, 120, 220, 0.15)'
-    };
+    // Draw cockpit covering the full viewport (cover mode — no stretching)
+    var imgAspect = cockpitCanvas.width / cockpitCanvas.height;
+    var screenAspect = w / h;
 
-    // Console base (bottom 40%)
-    var consoleY = h * LAYOUT.console.y;
-    ctx.fillStyle = col.frame;
-    ctx.fillRect(0, consoleY, w, h - consoleY);
-
-    // Console top edge
-    ctx.fillStyle = col.edge;
-    ctx.fillRect(0, consoleY, w, 3);
-
-    // Left pillar
-    ctx.fillStyle = col.frame;
-    ctx.fillRect(0, 0, w * 0.12, consoleY);
-    ctx.fillStyle = col.edge;
-    ctx.fillRect(w * 0.12, 0, 2, consoleY);
-
-    // Right pillar
-    ctx.fillStyle = col.frame;
-    ctx.fillRect(w * 0.88, 0, w * 0.12, consoleY);
-    ctx.fillStyle = col.edge;
-    ctx.fillRect(w * 0.88 - 2, 0, 2, consoleY);
-
-    // Top bar
-    ctx.fillStyle = col.frame;
-    ctx.fillRect(0, 0, w, h * 0.04);
-    ctx.fillStyle = col.edge;
-    ctx.fillRect(0, h * 0.04, w, 2);
-
-    // Center screen border
-    var cx = LAYOUT.center;
-    ctx.strokeStyle = col.line;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(cx.x * w - 4, cx.y * h - 4, cx.w * w + 8, cx.h * h + 8);
-
-    // Inner glow on center screen
-    ctx.fillStyle = col.accent;
-    ctx.fillRect(cx.x * w, cx.y * h, cx.w * w, cx.h * h);
-
-    // Left panel border
-    var lx = LAYOUT.left;
-    ctx.strokeStyle = 'rgba(80, 80, 80, 0.2)';
-    ctx.strokeRect(lx.x * w - 2, lx.y * h - 2, lx.w * w + 4, lx.h * h + 4);
-
-    // Right panel border
-    var rx = LAYOUT.right;
-    ctx.strokeRect(rx.x * w - 2, rx.y * h - 2, rx.w * w + 4, rx.h * h + 4);
-
-    // Decorative lines on console
-    ctx.strokeStyle = col.line;
-    ctx.lineWidth = 0.5;
-    for (var i = 0; i < 3; i++) {
-      var ly = consoleY + 8 + i * 12;
-      ctx.beginPath();
-      ctx.moveTo(w * 0.05, ly);
-      ctx.lineTo(w * 0.25, ly);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(w * 0.75, ly);
-      ctx.lineTo(w * 0.95, ly);
-      ctx.stroke();
+    var drawW, drawH, drawX, drawY;
+    if (screenAspect > imgAspect) {
+      // Screen is wider — fit to width, crop top/bottom
+      drawW = w;
+      drawH = w / imgAspect;
+      drawX = 0;
+      drawY = (h - drawH) / 2;
+    } else {
+      // Screen is taller — fit to height, crop sides
+      drawH = h;
+      drawW = h * imgAspect;
+      drawX = (w - drawW) / 2;
+      drawY = 0;
     }
 
-    // Small indicator dots
-    for (var i = 0; i < 4; i++) {
-      ctx.beginPath();
-      ctx.arc(w * 0.06 + i * 10, h * 0.03, 2, 0, Math.PI * 2);
-      ctx.fillStyle = i === 0 ? 'rgba(100, 200, 120, 0.4)' : 'rgba(80, 80, 80, 0.3)';
-      ctx.fill();
-    }
+    ctx.drawImage(cockpitCanvas, drawX, drawY, drawW, drawH);
   }
 
   function hide() {
