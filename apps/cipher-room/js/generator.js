@@ -88,7 +88,7 @@ const CipherGenerator = (function () {
    *  Uses most-constrained-variable heuristic: always picks the unfilled
    *  slot with the fewest compatible words next. Much faster for dense grids.
    *  Returns filled letter grid or null if impossible. */
-  function fillGrid(templateGrid, slots, words, rng) {
+  function fillGrid(templateGrid, slots, words, rng, timeoutMs) {
     const size = templateGrid.length;
     const letterGrid = Array.from({ length: size }, () => Array(size).fill(null));
     const usedWords = new Set();
@@ -102,8 +102,8 @@ const CipherGenerator = (function () {
       wordsByLength[len].push(w);
     });
 
-    // Timeout: give up after 3 seconds
-    const deadline = Date.now() + 3000;
+    // Timeout: give up if taking too long
+    const deadline = Date.now() + (timeoutMs || 3000);
 
     function getCompatibleWords(slot) {
       const candidates = wordsByLength[slot.length] || [];
@@ -195,7 +195,8 @@ const CipherGenerator = (function () {
     const rng = createPRNG(seed);
 
     // Filter words to appropriate lengths
-    const maxLen = size;
+    // 11x11 templates use max 6-letter slots for reliable generation
+    const maxLen = type === 'flash' ? 5 : 6;
     const relevantWords = wordList.filter((w) => w.word.length >= 3 && w.word.length <= maxLen);
 
     // Try all templates in shuffled order until one fills successfully
@@ -210,7 +211,8 @@ const CipherGenerator = (function () {
       const slots = extractSlots(template.grid);
       // Try with a fresh RNG seeded per template to get different word orderings
       const templateRng = createPRNG(seed + dateSeed(template.id));
-      const result = fillGrid(template.grid, slots, relevantWords, templateRng);
+      const timeout = size === 11 ? 10000 : 3000;
+      const result = fillGrid(template.grid, slots, relevantWords, templateRng, timeout);
       if (result) {
         letterGrid = result;
         chosenTemplate = template;
