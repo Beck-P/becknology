@@ -502,4 +502,22 @@ body::after {
   }
 
   .identity-panel { padding: 28px 20px; }
+
+  /* Bigger touch targets for star map planets */
+  .starmap-planet { width: 56px; height: 56px; }
+
+  /* Jump button easier to tap */
+  .jump-btn { padding: 14px; font-size: 14px; }
+
+  /* Selection screen */
+  .selection-app { padding: 18px; font-size: 14px; }
+
+  /* Cockpit nav label */
+  .cockpit-nav-label { font-size: 12px; letter-spacing: 3px; }
+
+  /* Pilot switch link bigger tap target */
+  .pilot-switch { font-size: 12px; padding: 8px; bottom: 8px; right: 8px; }
+
+  /* Intro prompt */
+  .intro-prompt { bottom: 12%; font-size: 14px; }
 }
