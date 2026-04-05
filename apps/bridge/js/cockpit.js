@@ -64,7 +64,7 @@ var BridgeCockpit = (function () {
     overlay.innerHTML =
       // Center screen hotspot (star map) — prominent, clickable
       '<div class="cockpit-hotspot cockpit-nav" id="hotspot-center" style="' + rectStyle(LAYOUT.center) + '">' +
-        '<div class="cockpit-nav-label">▸ OPEN STAR MAP</div>' +
+        '<div class="cockpit-nav-label">CLICK TO NAVIGATE</div>' +
       '</div>' +
       // Left panel (offline)
       '<div class="cockpit-hotspot offline" style="' + rectStyle(LAYOUT.left) + '">' +

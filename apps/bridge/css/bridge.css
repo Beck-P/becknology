@@ -202,38 +202,33 @@ body::after {
   box-shadow: 0 0 15px rgba(160, 120, 220, 0.08);
 }
 
-/* ---- Star Map nav button (prominent) ---- */
+/* ---- Star Map nav button ---- */
 .cockpit-nav {
-  border: 1px solid rgba(56, 152, 240, 0.25);
-  border-radius: 6px;
-  animation: nav-pulse 2.5s ease-in-out infinite;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .cockpit-nav:hover {
-  border-color: rgba(56, 152, 240, 0.5);
-  box-shadow: 0 0 20px rgba(56, 152, 240, 0.15);
-  background: rgba(56, 152, 240, 0.05);
+  border: none;
+  box-shadow: none;
+  background: rgba(56, 152, 240, 0.06);
 }
 
 .cockpit-nav-label {
-  font-size: clamp(10px, 1.4vw, 16px);
-  letter-spacing: 3px;
-  color: rgba(56, 152, 240, 0.7);
-  text-shadow: 0 0 10px rgba(56, 152, 240, 0.3);
+  font-size: clamp(11px, 1.6vw, 18px);
+  letter-spacing: 4px;
+  color: rgba(56, 200, 255, 0.95);
+  text-shadow: 0 0 12px rgba(56, 200, 255, 0.6), 0 0 24px rgba(56, 200, 255, 0.3);
   pointer-events: none;
-  transition: color 0.2s;
+  animation: nav-flash 1.2s ease-in-out infinite;
 }
 
-.cockpit-nav:hover .cockpit-nav-label {
-  color: rgba(56, 152, 240, 0.95);
-}
-
-@keyframes nav-pulse {
-  0%, 100% { border-color: rgba(56, 152, 240, 0.15); box-shadow: 0 0 8px rgba(56, 152, 240, 0.04); }
-  50% { border-color: rgba(56, 152, 240, 0.35); box-shadow: 0 0 16px rgba(56, 152, 240, 0.1); }
+@keyframes nav-flash {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
 .cockpit-hotspot.offline {
