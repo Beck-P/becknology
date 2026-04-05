@@ -16,26 +16,9 @@ var Bridge = (function () {
     BridgeStarfield.init(canvas);
     BridgeState.onChange(onStateChange);
 
-    // Determine starting state
-    var cached = BridgeState.getCachedPilotName();
-    var saved = BridgeState.loadSaved();
-
-    if (cached && saved && saved.state === 'cockpit') {
-      // Returning from an app — restore cockpit directly
-      BridgeDB.lookupPilot(cached).then(function (result) {
-        if (result && !result.error) {
-          BridgeState.setPilot(result);
-          BridgeDB.updateLastSeen(result.id);
-          BridgeState.transition('cockpit');
-        } else {
-          BridgeState.clearPilot();
-          BridgeState.transition('intro');
-        }
-      });
-    } else {
-      // Fresh visit — start from intro
-      BridgeState.transition('intro');
-    }
+    // Always start with the intro (ship flythrough)
+    // Cached pilots skip identity after the zoom — handled in intro.js
+    BridgeState.transition('intro');
 
     requestAnimationFrame(loop);
   }
