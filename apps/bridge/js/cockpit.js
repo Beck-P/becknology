@@ -121,8 +121,9 @@ var BridgeCockpit = (function () {
       drawH = w / imgAspect;
     } else {
       // Screen is taller than image — match height, crop sides
-      drawH = h;
-      drawW = h * imgAspect;
+      // Scale down slightly (90%) so it's not so zoomed in on mobile
+      drawH = h * 0.9;
+      drawW = drawH * imgAspect;
     }
 
     // Center horizontally, vertically favor the bottom (console area)

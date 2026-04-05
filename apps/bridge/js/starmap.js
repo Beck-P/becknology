@@ -100,6 +100,21 @@ var BridgeStarmap = (function () {
 
     info.classList.add('visible');
 
+    // On mobile, position the info panel near the selected planet
+    if (window.innerWidth <= 768) {
+      var planetY = selected.py * 100;
+      // Place above or below the planet depending on position
+      if (planetY > 50) {
+        // Planet is in lower half — show panel above it
+        info.style.top = Math.max(5, planetY - 45) + '%';
+        info.style.bottom = 'auto';
+      } else {
+        // Planet is in upper half — show panel below it
+        info.style.top = (planetY + 10) + '%';
+        info.style.bottom = 'auto';
+      }
+    }
+
     document.getElementById('jump-btn').addEventListener('click', function () {
       BridgeState.transition('travel', { world: selected });
     });
