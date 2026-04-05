@@ -70,6 +70,19 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;image-re
 #fade{position:fixed;top:0;left:0;width:100%;height:100%;
   background:#080810;z-index:18;opacity:0;pointer-events:none;transition:opacity 0.5s}
 
+.hub-link {
+  position: fixed;
+  top: 1rem;
+  left: 1.5rem;
+  color: #333;
+  text-decoration: none;
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: 0.75rem;
+  z-index: 20;
+  transition: color 0.2s;
+}
+.hub-link:hover { color: rgba(160, 120, 220, 0.6); }
+
 /* Ending */
 #ending{position:fixed;top:0;left:0;width:100%;height:100%;z-index:20;display:none;
   flex-direction:column;align-items:center;justify-content:center;
@@ -80,6 +93,7 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%;display:block;image-re
 </style>
 </head>
 <body>
+<a href="/bridge" class="hub-link">&larr; Return to Bridge</a>
 <canvas id="c"></canvas>
 <div id="title">
   <h1>The Aether Seas</h1>
