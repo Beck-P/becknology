@@ -85,14 +85,14 @@ const CipherGenerator = (function () {
   }
 
   /** Try to fill all slots with words using backtracking.
+   *  Uses most-constrained-variable heuristic: always picks the unfilled
+   *  slot with the fewest compatible words next. Much faster for dense grids.
    *  Returns filled letter grid or null if impossible. */
   function fillGrid(templateGrid, slots, words, rng) {
     const size = templateGrid.length;
     const letterGrid = Array.from({ length: size }, () => Array(size).fill(null));
     const usedWords = new Set();
-
-    // Sort slots: most constrained first (shortest slots first helps pruning)
-    const sortedSlots = [...slots].sort((a, b) => a.length - b.length);
+    const filled = new Array(slots.length).fill(false);
 
     // Group words by length
     const wordsByLength = {};
@@ -101,6 +101,9 @@ const CipherGenerator = (function () {
       if (!wordsByLength[len]) wordsByLength[len] = [];
       wordsByLength[len].push(w);
     });
+
+    // Timeout: give up after 3 seconds
+    const deadline = Date.now() + 3000;
 
     function getCompatibleWords(slot) {
       const candidates = wordsByLength[slot.length] || [];
@@ -133,15 +136,31 @@ const CipherGenerator = (function () {
       usedWords.delete(word);
     }
 
-    function solve(idx) {
-      if (idx >= sortedSlots.length) return true;
-      const slot = sortedSlots[idx];
+    function solve(depth) {
+      if (Date.now() > deadline) return false;
+
+      // Find unfilled slot with fewest compatible words (MCV heuristic)
+      let bestIdx = -1;
+      let bestCount = Infinity;
+      for (let i = 0; i < slots.length; i++) {
+        if (filled[i]) continue;
+        const count = getCompatibleWords(slots[i]).length;
+        if (count === 0) return false; // Dead end — prune immediately
+        if (count < bestCount) { bestCount = count; bestIdx = i; }
+      }
+      if (bestIdx === -1) return true; // All slots filled
+
+      const slot = slots[bestIdx];
       const candidates = shuffle(getCompatibleWords(slot), rng);
+      filled[bestIdx] = true;
+
       for (const candidate of candidates) {
         const prev = placeWord(slot, candidate.word);
-        if (solve(idx + 1)) return true;
+        if (solve(depth + 1)) return true;
         removeWord(slot, candidate.word, prev);
       }
+
+      filled[bestIdx] = false;
       return false;
     }
 
