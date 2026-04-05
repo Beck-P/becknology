@@ -30,22 +30,18 @@ var BridgeCockpit = (function () {
       var cctx = cockpitCanvas.getContext('2d');
       cctx.drawImage(img, 0, 0);
 
-      // Make dark windshield area semi-transparent so starfield shows through
+      // Remove white/near-white background (windshield area)
       var data = cctx.getImageData(0, 0, cockpitCanvas.width, cockpitCanvas.height);
       var px = data.data;
       for (var i = 0; i < px.length; i += 4) {
         var r = px[i], g = px[i + 1], b = px[i + 2];
-        var brightness = (r * 0.299 + g * 0.587 + b * 0.114);
-
-        // Very dark pixels → transparent (windshield area)
-        if (brightness < 18) {
+        if (r > 245 && g > 245 && b > 245) {
           px[i + 3] = 0;
-        } else if (brightness < 45) {
-          // Fade in — darker = more transparent
-          var alpha = Math.round((brightness - 18) / 27 * 255);
-          px[i + 3] = Math.min(px[i + 3], alpha);
+        } else if (r > 210 && g > 210 && b > 210) {
+          var avg = (r + g + b) / 3;
+          var fade = Math.max(0, Math.min(255, Math.round((255 - avg) * (255 / 45))));
+          px[i + 3] = Math.min(px[i + 3], fade);
         }
-        // Brighter pixels (instruments, frame) stay fully opaque
       }
       cctx.putImageData(data, 0, 0);
     };
@@ -66,9 +62,9 @@ var BridgeCockpit = (function () {
     var pilotName = pilot ? pilot.name : 'PILOT';
 
     overlay.innerHTML =
-      // Center screen hotspot (star map)
-      '<div class="cockpit-hotspot" id="hotspot-center" style="' + rectStyle(LAYOUT.center) + '">' +
-        '<div class="cockpit-label" style="width:100%;top:8px;">STAR MAP</div>' +
+      // Center screen hotspot (star map) — prominent, clickable
+      '<div class="cockpit-hotspot cockpit-nav" id="hotspot-center" style="' + rectStyle(LAYOUT.center) + '">' +
+        '<div class="cockpit-nav-label">▸ OPEN STAR MAP</div>' +
       '</div>' +
       // Left panel (offline)
       '<div class="cockpit-hotspot offline" style="' + rectStyle(LAYOUT.left) + '">' +
