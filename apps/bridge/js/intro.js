@@ -1,11 +1,9 @@
 /**
  * BridgeIntro — Ship flying through space + BECKNOLOGY ASCII art.
  *
- * Sequence:
- *   1. Ship flies through starfield (top-down isometric view)
- *   2. BECKNOLOGY logo fades in after ~1.5s
- *   3. "CLICK TO BEGIN" appears
- *   4. On click/enter: camera zooms into ship (3rd → 1st person), then cockpit
+ * Ship viewed from ~45° behind: we see the rear hull face, cockpit dome
+ * peeking over the top, engine nacelles on the sides, massive flame trails
+ * going straight down. Inspired by retro pixel art space shooter aesthetic.
  */
 var BridgeIntro = (function () {
   var overlay;
@@ -22,6 +20,12 @@ var BridgeIntro = (function () {
     hHi:      '#8080a2',
     hWhite:   '#9c9cba',
     hPeak:    '#b4b4d0',
+    // Top surface (brighter — lit from above)
+    tMid:     '#585878',
+    tLight:   '#707094',
+    tBright:  '#8888ac',
+    tHi:      '#a0a0c4',
+    tPeak:    '#b8b8d8',
     // Cockpit glass
     gDark:    '#1450a8',
     gMid:     '#2070d8',
@@ -33,17 +37,22 @@ var BridgeIntro = (function () {
     rMid:     '#a43434',
     rBright:  '#cc4838',
     rHi:      '#e06048',
-    // Engine
+    // Engine exhaust
     eDark:    '#1840b0',
     eMid:     '#3068e0',
     eBright:  '#5898ff',
     eWhite:   '#90c0ff',
     eGlow:    '#b0d8ff',
-    // Wings
-    wDark:    '#1a1a30',
-    wMid:     '#282844',
-    wLight:   '#3a3a5a',
-    wHi:      '#4c4c70',
+    // Nacelle
+    nDark:    '#1a1a30',
+    nMid:     '#2a2a44',
+    nLight:   '#3c3c5c',
+    nHi:      '#505074',
+    nBright:  '#646490',
+    // Engine bell
+    bDark:    '#8a4010',
+    bMid:     '#b06020',
+    bBright:  '#d08030',
   };
 
   // ---- Animation state ----
@@ -58,7 +67,6 @@ var BridgeIntro = (function () {
     active: false,
   };
 
-  // ---- ASCII logo (same as hub) ----
   var ASCII_LOGO =
     ' ██████╗ ███████╗ ██████╗██╗  ██╗███╗   ██╗ ██████╗ ██╗      ██████╗  ██████╗██╗   ██╗\n' +
     ' ██╔══██╗██╔════╝██╔════╝██║ ██╔╝████╗  ██║██╔═══██╗██║     ██╔═══██╗██╔════╝╚██╗ ██╔╝\n' +
@@ -68,14 +76,17 @@ var BridgeIntro = (function () {
     ' ╚═════╝ ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝  ╚═╝';
 
   // ================================================================
-  //  SHIP RENDERER — Procedural pixel art, ~20° behind-angle view
+  //  SHIP RENDERER — 45° rear view
   //
-  //  Perspective baked into the art:
-  //    - Nose/cockpit (top) is SMALL and foreshortened (far from camera)
-  //    - Rear hull + engines (bottom) are LARGE and wide (close to camera)
-  //    - Visible rear hull face between engine nacelles
-  //    - Wings attach wide at rear, narrow at front
-  //  Origin (0,0) = center of ship. Nose points up (negative Y).
+  //  Layout (wider than tall):
+  //    [cockpit dome peeking over top, centered]
+  //    [hull top surface — foreshortened, bright]
+  //    [nacelle] [hull rear face — large, dark] [nacelle]
+  //    [exhaust]                                [exhaust]
+  //    [flames ↓]                               [flames ↓]
+  //
+  //  Ship is ~31px wide × ~20px tall (body). Flames extend below.
+  //  Origin at center. Y-negative = top.
   // ================================================================
 
   function drawShip(ctx, cx, cy, s) {
@@ -89,266 +100,237 @@ var BridgeIntro = (function () {
     }
     function mpx(x, y, c) { px(x, y, c); px(-x - 1, y, c); }
     function mrect(x, y, w, h, c) { rect(x, y, w, h, c); rect(-x - w, y, w, h, c); }
-    function hullRow(y, hw, c) { rect(-hw, y, hw * 2 + 1, 1, c); }
 
-    // ----- 1. HULL BODY — behind-angle perspective -----
-    // Nose is narrow (far away), rear is wide (close to camera)
-    // The hull widens progressively toward the bottom
-    var hull = [
-      // Nose — tight, foreshortened
-      [-16, 0], [-15, 1], [-14, 1], [-13, 2], [-12, 2],
-      // Cockpit zone — small (it's far away)
-      [-11, 3], [-10, 3], [-9, 3], [-8, 3],
-      // Forward hull — starts widening
-      [-7, 4], [-6, 4], [-5, 5], [-4, 5],
-      // Mid hull — wider
-      [-3, 6], [-2, 6], [-1, 7], [0, 7],
-      // Rear hull — widest (closest to camera)
-      [1, 7], [2, 8], [3, 8], [4, 8], [5, 8],
-      [6, 8], [7, 8], [8, 7], [9, 7],
-      [10, 6], [11, 5],
-    ];
+    // ===== COCKPIT DOME (peeking over the top of hull) =====
+    // Small dome visible above the hull — we see it from behind
+    rect(-3, -12, 7, 1, C.outline);
+    rect(-2, -13, 5, 1, C.outline);
+    rect(-1, -14, 3, 1, C.outline);
 
-    // Base fill
-    for (var i = 0; i < hull.length; i++) {
-      hullRow(hull[i][0], hull[i][1], C.hLight);
+    // Dome fill (back of dome — darker blue since we see the rear)
+    rect(-2, -13, 5, 1, C.gDark);
+    rect(-1, -14, 3, 1, C.gDark);
+    rect(-2, -12, 5, 1, C.gMid);
+
+    // Dome glare (reflected light on top curve)
+    px(0, -14, C.gMid);
+    px(0, -13, C.gBright);
+    px(1, -13, C.gHi);
+    px(-1, -13, C.gBright);
+
+    // ===== HULL TOP SURFACE (foreshortened — only 3-4 rows visible) =====
+    // This is the top of the ship peeking out — lit by starlight, bright
+    rect(-6, -11, 13, 1, C.outline);
+    rect(-7, -10, 15, 1, C.tPeak);    // brightest edge (catches light)
+    rect(-8, -9, 17, 1, C.tHi);
+    rect(-8, -8, 17, 1, C.tBright);
+    rect(-9, -7, 19, 1, C.tLight);    // transitioning to rear face
+
+    // Top surface highlight details
+    px(0, -10, C.tPeak);
+    mpx(2, -10, C.tHi);
+    mpx(4, -9, C.tBright);
+    // Panel line on top surface
+    for (var x = -7; x <= 7; x++) px(x, -8, C.tMid);
+    for (var x = -6; x <= 6; x++) px(x, -9, C.tPeak);
+
+    // ===== HULL REAR FACE (main visible area — darker, large) =====
+    // This is what faces the camera — the back of the ship
+    rect(-9, -6, 19, 1, C.outline);    // top edge of rear face
+    rect(-9, -5, 19, 10, C.hLight);    // base fill
+    rect(-9, 5, 19, 1, C.outline);     // bottom edge
+
+    // Side outlines
+    for (var y = -6; y <= 5; y++) { px(-9, y, C.outline); px(9, y, C.outline); }
+
+    // Rear face shading — darker at edges, lighter center
+    for (var y = -5; y <= 4; y++) {
+      px(-8, y, C.hDark);
+      px(8, y, C.hDark);
+      px(-7, y, C.hMid);
+      px(7, y, C.hMid);
     }
+    // Center vertical highlight
+    for (var y = -5; y <= 4; y++) px(0, y, C.hHi);
 
-    // ----- 2. HULL SHADING -----
-    // Outline edges
-    for (var i = 0; i < hull.length; i++) {
-      var y = hull[i][0], hw = hull[i][1];
-      px(-hw, y, C.outline);
-      px(hw, y, C.outline);
+    // Rear face horizontal panel lines
+    for (var x = -8; x <= 8; x++) px(x, -2, C.hDark);
+    for (var x = -7; x <= 7; x++) px(x, -3, C.hBright);
+    for (var x = -8; x <= 8; x++) px(x, 2, C.hDark);
+    for (var x = -7; x <= 7; x++) px(x, 1, C.hBright);
+
+    // ===== RED ACCENT PANELS on rear face =====
+    // Left panel
+    rect(-7, -5, 3, 3, C.rDark);
+    rect(-6, -5, 2, 2, C.rMid);
+    px(-6, -5, C.rBright);
+    // Lower left
+    rect(-7, 0, 3, 3, C.rDark);
+    rect(-6, 0, 2, 2, C.rMid);
+    px(-6, 0, C.rBright);
+
+    // Right panel
+    rect(5, -5, 3, 3, C.rDark);
+    rect(5, -5, 2, 2, C.rMid);
+    px(6, -5, C.rBright);
+    // Lower right
+    rect(5, 0, 3, 3, C.rDark);
+    rect(5, 0, 2, 2, C.rMid);
+    px(6, 0, C.rBright);
+
+    // Accent highlights
+    px(-5, -4, C.rHi);
+    px(6, -4, C.rHi);
+    px(-5, 1, C.rHi);
+    px(6, 1, C.rHi);
+
+    // ===== HULL DETAIL PIXELS =====
+    // Vents / panel details on rear face
+    mpx(2, -5, C.hDark);
+    mpx(2, -4, C.hMid);
+    mpx(3, 3, C.hDark);
+    mpx(3, 4, C.hMid);
+    // Status lights
+    mpx(1, -1, C.hPeak);
+    px(0, 0, C.hWhite);
+
+    // ===== WINGS (stubby, extending from sides of rear face) =====
+    // From this angle, wings are foreshortened — just thick stubs
+    // Left wing
+    rect(-14, -7, 5, 1, C.outline);
+    rect(-14, -6, 5, 10, C.nMid);
+    rect(-14, 4, 5, 1, C.outline);
+    // Wing shading
+    for (var y = -6; y <= 3; y++) {
+      px(-14, y, C.outline);
+      px(-13, y, C.nDark);
+      px(-10, y, C.nBright);
     }
-    px(0, -16, C.outline);
-    // Bottom outline (rear face top edge)
-    for (var x = -5; x <= 5; x++) px(x, 11, C.outline);
+    // Wing panel line
+    for (var x = -13; x <= -10; x++) px(x, -1, C.nDark);
+    for (var x = -13; x <= -10; x++) px(x, -2, C.nHi);
 
-    // Dark edge band
-    for (var i = 0; i < hull.length; i++) {
-      var y = hull[i][0], hw = hull[i][1];
-      if (hw > 1) { px(-hw + 1, y, C.hDark); px(hw - 1, y, C.hDark); }
+    // Right wing (mirrored)
+    rect(10, -7, 5, 1, C.outline);
+    rect(10, -6, 5, 10, C.nMid);
+    rect(10, 4, 5, 1, C.outline);
+    for (var y = -6; y <= 3; y++) {
+      px(14, y, C.outline);
+      px(13, y, C.nDark);
+      px(10, y, C.nBright);
     }
+    for (var x = 10; x <= 13; x++) px(x, -1, C.nDark);
+    for (var x = 10; x <= 13; x++) px(x, -2, C.nHi);
 
-    // Mid-dark band
-    for (var i = 0; i < hull.length; i++) {
-      var y = hull[i][0], hw = hull[i][1];
-      if (hw > 2) { px(-hw + 2, y, C.hMid); px(hw - 2, y, C.hMid); }
+    // Wing-tip red accents
+    rect(-14, -5, 1, 3, C.rDark);
+    rect(-14, -4, 1, 1, C.rMid);
+    rect(14, -5, 1, 3, C.rDark);
+    rect(14, -4, 1, 1, C.rMid);
+
+    // ===== ENGINE NACELLES (flanking hull, below wings) =====
+    // Left nacelle
+    rect(-13, 4, 4, 1, C.outline);
+    rect(-13, 5, 4, 5, C.nLight);
+    rect(-13, 10, 4, 1, C.outline);
+    // Nacelle shading
+    for (var y = 5; y <= 9; y++) {
+      px(-13, y, C.outline);
+      px(-12, y, C.nDark);
+      px(-10, y, C.nBright);
     }
+    // Nacelle red stripe
+    px(-13, 6, C.rMid); px(-13, 7, C.rMid); px(-13, 8, C.rMid);
 
-    // Center highlight stripe
-    for (var i = 0; i < hull.length; i++) {
-      px(0, hull[i][0], C.hHi);
+    // Right nacelle
+    rect(10, 4, 4, 1, C.outline);
+    rect(10, 5, 4, 5, C.nLight);
+    rect(10, 10, 4, 1, C.outline);
+    for (var y = 5; y <= 9; y++) {
+      px(13, y, C.outline);
+      px(12, y, C.nDark);
+      px(10, y, C.nBright);
     }
+    px(13, 6, C.rMid); px(13, 7, C.rMid); px(13, 8, C.rMid);
 
-    // Nose tip highlight
-    px(0, -15, C.hWhite);
-    px(0, -14, C.hBright);
+    // ===== ENGINE BELLS / EXHAUST PORTS =====
+    // Left engine bell (warm glow ring)
+    rect(-13, 10, 4, 1, C.bDark);
+    rect(-12, 10, 2, 1, C.bMid);
+    rect(-12, 11, 2, 1, C.bBright);
+    px(-11, 10, C.bBright);
+    // Exhaust port glow
+    rect(-12, 12, 2, 1, C.eBright);
+    px(-11, 12, C.eWhite);
 
-    // ----- 3. HULL PANEL LINES -----
-    var panelYs = [-7, -3, 2, 7];
-    for (var p = 0; p < panelYs.length; p++) {
-      var py = panelYs[p];
-      for (var i = 0; i < hull.length; i++) {
-        if (hull[i][0] === py) {
-          var hw = hull[i][1];
-          for (var x = -hw + 1; x <= hw - 1; x++) px(x, py, C.hDark);
-          if (py > -16) {
-            for (var x = -hw + 2; x <= hw - 2; x++) px(x, py - 1, C.hBright);
-          }
-          break;
-        }
-      }
-    }
+    // Right engine bell
+    rect(10, 10, 4, 1, C.bDark);
+    rect(11, 10, 2, 1, C.bMid);
+    rect(11, 11, 2, 1, C.bBright);
+    px(11, 10, C.bBright);
+    rect(11, 12, 2, 1, C.eBright);
+    px(11, 12, C.eWhite);
 
-    // ----- 4. COCKPIT CANOPY (small — it's far away) -----
-    rect(-1, -11, 3, 1, C.gDark);
-    rect(-2, -10, 5, 1, C.gMid);
-    rect(-2, -9, 5, 1, C.gBright);
-    rect(-1, -8, 3, 1, C.gDark);
-    // Specular
-    px(0, -10, C.gHi);
-    px(0, -9, C.gGlare);
-    px(1, -9, C.gHi);
-    px(-1, -10, C.gBright);
-    // Outline
-    px(-2, -10, C.outline); px(2, -10, C.outline);
-    px(-2, -9, C.outline);  px(2, -9, C.outline);
-    px(-1, -11, C.outline); px(1, -11, C.outline);
-    px(-1, -8, C.outline);  px(1, -8, C.outline);
-
-    // ----- 5. RED ACCENT PANELS (bigger toward rear) -----
-    // Forward panels (smaller)
-    mrect(3, -5, 1, 3, C.rDark);
-    mrect(3, -4, 1, 1, C.rMid);
-
-    // Main panels (wider, on the wide rear hull)
-    mrect(4, -1, 3, 6, C.rDark);
-    mrect(4, 0, 3, 4, C.rMid);
-    mrect(5, 0, 2, 4, C.rBright);
-    mrect(6, 1, 1, 2, C.rHi);
-
-    // ----- 6. HULL DETAILS -----
-    mpx(1, -13, C.hDark);
-    mpx(1, -12, C.hMid);
-    // Running lights
-    mpx(2, -5, C.hPeak);
-    mpx(3, 0, C.hPeak);
-    // Rear hull panel details
-    mpx(2, 8, C.hDark);
-    mpx(3, 8, C.hDark);
-    mpx(2, 9, C.hMid);
-    mpx(3, 9, C.hMid);
-
-    // ----- 7. WINGS (wider at rear, taper forward) -----
-    var wingRows = [
-      // Attach further forward but narrow
-      { y: -2, x1: -8,  x2: -7 },
-      { y: -1, x1: -9,  x2: -7 },
-      { y: 0,  x1: -11, x2: -7 },
-      { y: 1,  x1: -13, x2: -7 },
-      // Widest at rear (close to camera = bigger)
-      { y: 2,  x1: -14, x2: -8 },
-      { y: 3,  x1: -15, x2: -8 },
-      { y: 4,  x1: -15, x2: -8 },
-      { y: 5,  x1: -14, x2: -8 },
-      { y: 6,  x1: -13, x2: -8 },
-      { y: 7,  x1: -11, x2: -8 },
-      { y: 8,  x1: -9,  x2: -7 },
-    ];
-
-    for (var i = 0; i < wingRows.length; i++) {
-      var wr = wingRows[i];
-      // Left wing
-      for (var x = wr.x1; x <= wr.x2; x++) {
-        var shade = C.wMid;
-        if (x === wr.x1 || x === wr.x2) shade = C.outline;
-        else if (x === wr.x1 + 1) shade = C.wDark;
-        else if (x === wr.x2 - 1) shade = C.wHi;
-        px(x, wr.y, shade);
-      }
-      // Right wing (mirrored)
-      for (var x = wr.x1; x <= wr.x2; x++) {
-        var mx = -x - 1;
-        var shade = C.wMid;
-        if (x === wr.x1 || x === wr.x2) shade = C.outline;
-        else if (x === wr.x1 + 1) shade = C.wHi;
-        else if (x === wr.x2 - 1) shade = C.wDark;
-        px(mx, wr.y, shade);
-      }
-    }
-
-    // Wing panel lines
-    for (var i = 0; i < wingRows.length; i++) {
-      var wr = wingRows[i];
-      if (wr.y === 2 || wr.y === 6) {
-        for (var x = wr.x1 + 1; x <= wr.x2 - 1; x++) {
-          px(x, wr.y, C.wDark);
-          px(-x - 1, wr.y, C.wDark);
-        }
-      }
-    }
-
-    // Wing-tip accents (red)
-    px(-15, 3, C.rMid); px(-15, 4, C.rMid); px(-14, 2, C.rDark);
-    px(14, 3, C.rMid);  px(14, 4, C.rMid);  px(13, 2, C.rDark);
-
-    // ----- 8. VISIBLE REAR HULL FACE -----
-    // Because we're looking from behind, we can see the back face
-    // between the engine nacelles — darker, catches less light
-    rect(-5, 12, 11, 3, C.hDark);
-    rect(-4, 12, 9, 3, C.hMid);
-    rect(-3, 13, 7, 1, C.hLight);
-    // Panel line on rear face
-    for (var x = -4; x <= 4; x++) px(x, 12, C.outline);
-    // Rear face edge details
-    px(-5, 12, C.outline); px(5, 12, C.outline);
-    px(-5, 13, C.outline); px(5, 13, C.outline);
-    px(-5, 14, C.outline); px(5, 14, C.outline);
-
-    // ----- 9. ENGINE NACELLES (large — closest to camera) -----
-    // Left nacelle — wider/taller than before
-    rect(-7, 11, 4, 1, C.outline);
-    rect(-7, 12, 4, 1, C.hDark);
-    rect(-7, 13, 4, 1, C.hMid);
-    rect(-7, 14, 4, 1, C.hLight);
-    rect(-7, 15, 4, 1, C.hBright);
-    rect(-7, 16, 4, 1, C.hLight);
-    rect(-7, 17, 4, 1, C.hMid);
-    rect(-7, 18, 4, 1, C.outline);
-    // Inner shading
-    px(-5, 12, C.hLight); px(-5, 13, C.hBright);
-    px(-5, 14, C.hHi);    px(-5, 15, C.hWhite);
-    px(-5, 16, C.hHi);    px(-5, 17, C.hBright);
-    // Red accent on nacelle
-    px(-7, 14, C.rMid); px(-7, 15, C.rMid); px(-7, 16, C.rMid);
-
-    // Right nacelle (mirrored)
-    rect(4, 11, 4, 1, C.outline);
-    rect(4, 12, 4, 1, C.hDark);
-    rect(4, 13, 4, 1, C.hMid);
-    rect(4, 14, 4, 1, C.hLight);
-    rect(4, 15, 4, 1, C.hBright);
-    rect(4, 16, 4, 1, C.hLight);
-    rect(4, 17, 4, 1, C.hMid);
-    rect(4, 18, 4, 1, C.outline);
-    px(5, 12, C.hLight); px(5, 13, C.hBright);
-    px(5, 14, C.hHi);    px(5, 15, C.hWhite);
-    px(5, 16, C.hHi);    px(5, 17, C.hBright);
-    px(7, 14, C.rMid); px(7, 15, C.rMid); px(7, 16, C.rMid);
-
-    // ----- 10. ENGINE EXHAUST PORTS -----
-    rect(-7, 19, 4, 1, C.eDark);
-    rect(-6, 19, 2, 1, C.eMid);
-    rect(-6, 20, 2, 1, C.eBright);
-    px(-5, 19, C.eBright);
-
-    rect(4, 19, 4, 1, C.eDark);
-    rect(5, 19, 2, 1, C.eMid);
-    rect(5, 20, 2, 1, C.eBright);
-    px(5, 19, C.eBright);
+    // ===== CENTRAL ENGINE (between nacelles, in hull) =====
+    // Visible rear exhaust in center hull
+    rect(-3, 5, 7, 1, C.outline);
+    rect(-2, 5, 5, 1, C.hDark);
+    rect(-2, 6, 5, 1, C.bDark);
+    rect(-1, 6, 3, 1, C.bMid);
+    rect(-1, 7, 3, 1, C.eBright);
+    px(0, 7, C.eWhite);
   }
 
-  // ---- ENGINE FLAMES (animated) ----
+  // ---- ENGINE FLAMES (animated — going straight down) ----
   function drawThrust(ctx, cx, cy, s, time) {
     function px(x, y, c) {
       ctx.fillStyle = c;
       ctx.fillRect(Math.round(cx + x * s), Math.round(cy + y * s), Math.ceil(s), Math.ceil(s));
     }
 
-    // Two engine positions (wider nacelles, centered at x=-5.5 and x=5.5)
-    var engines = [-5, 5];
-    var flicker = Math.sin(time * 0.02) * 0.5 + 0.5;
+    var flicker = Math.sin(time * 0.015) * 0.5 + 0.5;
+    // Three engine positions: left nacelle (-11), center (0), right nacelle (11)
+    var engines = [
+      { x: -11, size: 1.0 },
+      { x: 0,   size: 0.7 },
+      { x: 11,  size: 1.0 },
+    ];
 
     for (var e = 0; e < engines.length; e++) {
-      var ex = engines[e];
+      var ex = engines[e].x;
+      var sz = engines[e].size;
+      var flameLen = Math.floor((10 + flicker * 6) * sz);
+      var flameW = Math.max(1, Math.floor(2 * sz));
 
-      // Core flame (blue-white, tight)
-      px(ex, 21, C.eWhite);
-      px(ex, 22, C.eBright);
-      px(ex, 23, C.eMid);
-
-      // Outer flame (orange/yellow, wider and flickering)
-      var flameLen = 8 + Math.floor(flicker * 5);
       for (var f = 0; f < flameLen; f++) {
-        var fy = 21 + f;
-        var alpha = 1 - (f / flameLen);
-        var spread = Math.floor(f * 0.4);
+        var fy = 13 + f;
+        var t = f / flameLen;
 
-        // Core
-        var coreAlpha = alpha * (0.6 + Math.random() * 0.4);
-        ctx.fillStyle = 'rgba(88, 152, 255, ' + coreAlpha + ')';
-        ctx.fillRect(Math.round(cx + ex * s), Math.round(cy + fy * s), Math.ceil(s), Math.ceil(s));
+        // Core (blue → white)
+        var coreAlpha = (1 - t) * (0.7 + Math.random() * 0.3);
+        if (f < 2) {
+          ctx.fillStyle = 'rgba(144, 192, 255, ' + coreAlpha + ')';
+        } else if (f < 4) {
+          ctx.fillStyle = 'rgba(88, 152, 255, ' + coreAlpha + ')';
+        } else {
+          ctx.fillStyle = 'rgba(48, 104, 224, ' + (coreAlpha * 0.7) + ')';
+        }
+        ctx.fillRect(
+          Math.round(cx + ex * s), Math.round(cy + fy * s),
+          Math.ceil(s), Math.ceil(s)
+        );
 
-        // Orange outer glow
+        // Orange/yellow outer flame (wider, flickering)
+        var spread = Math.floor(f * 0.5 * sz) + 1;
         for (var sx = -spread; sx <= spread; sx++) {
           if (sx === 0) continue;
-          var sAlpha = alpha * 0.4 * (0.5 + Math.random() * 0.5);
+          var sAlpha = (1 - t) * 0.5 * (0.4 + Math.random() * 0.6);
           if (f < 3) {
-            ctx.fillStyle = 'rgba(220, 120, 40, ' + sAlpha + ')';
+            ctx.fillStyle = 'rgba(240, 160, 40, ' + sAlpha + ')';
+          } else if (f < 6) {
+            ctx.fillStyle = 'rgba(220, 120, 30, ' + sAlpha + ')';
           } else {
-            ctx.fillStyle = 'rgba(240, 170, 50, ' + sAlpha + ')';
+            ctx.fillStyle = 'rgba(200, 90, 20, ' + (sAlpha * 0.6) + ')';
           }
           ctx.fillRect(
             Math.round(cx + (ex + sx) * s),
@@ -360,16 +342,16 @@ var BridgeIntro = (function () {
 
       // Engine glow halo
       var grad = ctx.createRadialGradient(
-        cx + ex * s, cy + 21 * s, 0,
-        cx + ex * s, cy + 21 * s, s * 6
+        cx + ex * s, cy + 13 * s, 0,
+        cx + ex * s, cy + 13 * s, s * 7 * sz
       );
-      grad.addColorStop(0, 'rgba(88, 152, 255, 0.2)');
-      grad.addColorStop(0.5, 'rgba(88, 152, 255, 0.06)');
-      grad.addColorStop(1, 'rgba(88, 152, 255, 0)');
+      grad.addColorStop(0, 'rgba(240, 160, 60, 0.15)');
+      grad.addColorStop(0.4, 'rgba(200, 100, 30, 0.06)');
+      grad.addColorStop(1, 'rgba(200, 100, 30, 0)');
       ctx.fillStyle = grad;
       ctx.fillRect(
-        cx + (ex - 6) * s, cy + 18 * s,
-        s * 12, s * 18
+        cx + (ex - 8) * s, cy + 10 * s,
+        s * 16, s * 22
       );
     }
   }
@@ -418,31 +400,29 @@ var BridgeIntro = (function () {
     var now = performance.now();
     var elapsed = now - anim.t0;
 
-    // Ship scale — responsive to viewport, ~3px per virtual pixel
-    var baseScale = Math.min(w, h) / 200;
+    // Ship scale — responsive to viewport
+    var baseScale = Math.min(w, h) / 180;
     var scale = Math.max(2, Math.round(baseScale));
 
-    // Ship position: centered, slightly above middle
+    // Ship position: centered, upper-middle area (flames trail down)
     var shipX = w / 2;
-    var shipY = h * 0.48;
+    var shipY = h * 0.38;
 
     // Gentle bob
     anim.bobPhase += 0.015;
     var bob = Math.sin(anim.bobPhase) * 4;
 
     if (anim.zooming) {
-      // ---- Zoom animation (camera approaches from behind at ~20°) ----
       var zoomElapsed = now - anim.zoomStart;
       var t = Math.min(1, zoomElapsed / anim.zoomDuration);
       var eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
       // Ship scales up as camera closes in from behind
-      scale = scale * (1 + eased * 14);
-      // Ship drifts upward on screen (camera behind it, looking over it)
-      // then past mid-screen the ship drops below as we pass through into cockpit
-      var liftPhase = Math.min(1, t * 2.5); // 0→1 in first 40%
-      var dropPhase = Math.max(0, (t - 0.4) / 0.6); // 0→1 in last 60%
-      shipY = h * 0.48 - liftPhase * h * 0.08 + dropPhase * dropPhase * h * 0.9;
+      scale = scale * (1 + eased * 12);
+      // Ship lifts up slightly then drops past as we fly into cockpit
+      var lift = Math.min(1, t * 3);
+      var drop = Math.max(0, (t - 0.35) / 0.65);
+      shipY = h * 0.38 - lift * h * 0.06 + drop * drop * h * 0.8;
       bob = bob * (1 - eased);
 
       var logoEl = document.getElementById('intro-logo');
@@ -462,7 +442,6 @@ var BridgeIntro = (function () {
         return;
       }
     } else {
-      // ---- Logo fade in after 1.5s ----
       if (elapsed > 1500 && anim.logoOpacity < 1) {
         anim.logoOpacity = Math.min(1, (elapsed - 1500) / 1000);
         var logoEl = document.getElementById('intro-logo');
@@ -475,17 +454,17 @@ var BridgeIntro = (function () {
       }
     }
 
-    // ---- Render ship (behind-angle perspective baked into art) ----
+    // Render
     drawShip(ctx, shipX, shipY + bob, scale);
     drawThrust(ctx, shipX, shipY + bob, scale, elapsed);
 
-    // ---- Ambient glow around ship ----
+    // Ambient glow
     if (!anim.zooming) {
-      var grd = ctx.createRadialGradient(shipX, shipY + bob, 0, shipX, shipY + bob, scale * 20);
-      grd.addColorStop(0, 'rgba(100, 80, 160, 0.06)');
+      var grd = ctx.createRadialGradient(shipX, shipY + bob, 0, shipX, shipY + bob, scale * 22);
+      grd.addColorStop(0, 'rgba(100, 80, 160, 0.05)');
       grd.addColorStop(1, 'rgba(100, 80, 160, 0)');
       ctx.fillStyle = grd;
-      ctx.fillRect(shipX - scale * 20, shipY + bob - scale * 20, scale * 40, scale * 40);
+      ctx.fillRect(shipX - scale * 22, shipY + bob - scale * 22, scale * 44, scale * 44);
     }
   }
 

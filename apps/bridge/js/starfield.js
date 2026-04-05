@@ -44,9 +44,9 @@ var BridgeStarfield = (function () {
   function draw(ctx, w, h) {
     speed += (targetSpeed - speed) * 0.05;
 
-    // Vanishing point shifted well above center — "looking forward from behind" perspective
+    // Vanishing point near top — 45° behind view, stars stream downward
     var cx = w / 2;
-    var cy = h * 0.22;
+    var cy = h * 0.15;
 
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
