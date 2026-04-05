@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import './index.css';
 import { getSingleTotalSteps, getPlaybackConfig, getPlaybackConfigDiagnostics } from './playbackConfig';
 
+const Leaderboard = React.lazy(() => import('./Leaderboard'));
+
     // Supabase setup — replace with your project credentials
     const SUPABASE_URL = 'https://nwtfrlxgydbeuqfcftzn.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_mjJW8ba__7yjbwAAx81sXg_oMlDkrol';
@@ -5323,7 +5325,7 @@ function PlaybackStage({ result, step, done, interactiveBombState }) {
   }
 }
 
-function computeStats(games) {
+function _legacyComputeStats(games) {
   const playerMap = {};     // lowercase name -> stats object
   const nameDisplay = {};   // lowercase name -> most recent display name
   const pairMap = {};       // "a|b" (sorted lowercase) -> { p1Wins, p2Wins, totalGames, p1, p2 }
@@ -5499,7 +5501,7 @@ function computeStats(games) {
   };
 }
 
-function Leaderboard({ stats, loading, error }) {
+function LegacyLeaderboard({ stats, loading, error }) {
   const [expanded, setExpanded] = useState(false);
   const [sortCol, setSortCol] = useState('winPct');
   const [sortDir, setSortDir] = useState('desc');
@@ -5799,7 +5801,7 @@ function Leaderboard({ stats, loading, error }) {
   );
 }
 
-function JoinScreen({ roomCode, names, joinedPlayers, onJoinAsPlayer, onJoinAsSpectator }) {
+function JoinScreen({ roomCode, names, joinedPlayers, onJoinAsPlayer, onJoinAsSpectator, onLeave }) {
   const [inputName, setInputName] = useState('');
   const trimmed = inputName.trim();
   const nameTaken = trimmed && joinedPlayers[trimmed];
@@ -5850,6 +5852,13 @@ function JoinScreen({ roomCode, names, joinedPlayers, onJoinAsPlayer, onJoinAsSp
         className="mt-6 font-mono text-sm text-slate-500 hover:text-slate-300 transition"
       >
         Just Watch 👀
+      </button>
+
+      <button
+        onClick={onLeave}
+        className="mt-3 font-mono text-xs text-slate-600 hover:text-slate-400 transition"
+      >
+        ← Leave room
       </button>
     </div>
   );
@@ -8074,8 +8083,6 @@ export default function ChoreChaosApp() {
     if (allVoted) resolveVote();
   }, [votes, voteActive, joinedPlayers]);
 
-  const leaderboardStats = useMemo(() => computeStats(leaderboardData), [leaderboardData]);
-
   const cleanedNames = useMemo(() => names.map((name) => name.trim()), [names]);
   const filledNames = cleanedNames.filter(Boolean);
   const nameSet = new Set(filledNames);
@@ -8638,6 +8645,8 @@ export default function ChoreChaosApp() {
   useEffect(() => {
     if (!isJoining || !roomCode || !_supabase || channelCreatedRef.current) return;
     channelCreatedRef.current = true;
+    setRoomClosed(false);
+    setSpectatorConnected(false);
 
     const channel = _supabase.channel(`room:${roomCode}`, {
       config: { broadcast: { self: false } }
@@ -8805,7 +8814,7 @@ export default function ChoreChaosApp() {
       channelCreatedRef.current = false;
       _supabase.removeChannel(channel);
     };
-  }, [roomCode]);
+  }, [isJoining, roomCode]);
 
   // Broadcast updated player names when host changes them
   useEffect(() => {
@@ -8859,6 +8868,32 @@ export default function ChoreChaosApp() {
     }
   }
 
+  function leaveRoom() {
+    currentActionHandler.current = null;
+    if (roomChannel && _supabase) {
+      _supabase.removeChannel(roomChannel);
+    }
+    channelCreatedRef.current = false;
+    setPendingAction(null);
+    setSpectatorState(null);
+    setSpectatorSeries(null);
+    setSpectatorConnected(false);
+    setRoomClosed(false);
+    setRoomPlayerNames([]);
+    setJoinedPlayers({});
+    setViewerCount(0);
+    setInteractiveMode(false);
+    setPlayerName(null);
+    setRoomChannel(null);
+    setRoomCode(null);
+    setRoomMode('none');
+    setDeviceMode('choose');
+    window.__votes = {};
+    if (window.location.search) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }
+
   // Room closed — applies to joining, spectator, and player modes
   if ((roomMode === 'joining' || roomMode === 'spectator' || roomMode === 'player') && roomClosed) {
     return (
@@ -8881,6 +8916,7 @@ export default function ChoreChaosApp() {
         joinedPlayers={joinedPlayers}
         onJoinAsPlayer={handleJoinAsPlayer}
         onJoinAsSpectator={handleJoinAsSpectator}
+        onLeave={leaveRoom}
       />
     );
   }
@@ -8895,6 +8931,9 @@ export default function ChoreChaosApp() {
           {spectatorState?.hostName ? <p className="font-mono text-sm text-slate-400 mb-4">Connected to {spectatorState.hostName}'s room</p> : null}
           <div className="font-mono text-sm text-slate-500 animate-pulse">Waiting for the next game...</div>
           {!spectatorConnected ? <div className="font-mono text-xs text-amber-400 mt-4">Connecting...</div> : null}
+          <button onClick={leaveRoom} className="mt-6 font-mono text-xs text-slate-500 hover:text-slate-300 transition">
+            ← Leave room
+          </button>
         </div>
       );
     }
@@ -8925,6 +8964,12 @@ export default function ChoreChaosApp() {
                 <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{specResult.modeName}</div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={leaveRoom}
+                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:text-slate-900"
+                >
+                  Leave
+                </button>
                 <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                 <span className="pixel-font text-[8px] text-red-400">LIVE</span>
               </div>
@@ -8998,6 +9043,9 @@ export default function ChoreChaosApp() {
             <>
               <div className="font-mono text-sm text-slate-500 animate-pulse">Waiting for the next game...</div>
               {!spectatorConnected ? <div className="font-mono text-xs text-amber-400 mt-4">Connecting...</div> : null}
+              <button onClick={leaveRoom} className="mt-6 font-mono text-xs text-slate-500 hover:text-slate-300 transition">
+                ← Leave room
+              </button>
               <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} />
             </>
           )}
@@ -9031,6 +9079,12 @@ export default function ChoreChaosApp() {
                 <div className="mt-1 text-2xl font-black text-slate-950 sm:text-3xl">{specResult.modeName}</div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={leaveRoom}
+                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:text-slate-900"
+                >
+                  Leave
+                </button>
                 <span className="inline-block h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
                 <span className="pixel-font text-[8px] text-indigo-400">PLAYING</span>
               </div>
@@ -9539,7 +9593,16 @@ export default function ChoreChaosApp() {
           ) : null
         ) : null}
 
-        <Leaderboard stats={leaderboardStats} loading={leaderboardLoading} error={leaderboardError} />
+        <React.Suspense
+          fallback={(
+            <div className="mb-6 pt-2">
+              <div className="pixel-divider mb-5" />
+              <div className="pixel-font text-[8px] text-slate-500 text-center py-4">Loading leaderboard...</div>
+            </div>
+          )}
+        >
+          <Leaderboard games={leaderboardData} loading={leaderboardLoading} error={leaderboardError} />
+        </React.Suspense>
       </div>
 
       <AnimatePresence>
