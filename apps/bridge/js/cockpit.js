@@ -96,9 +96,7 @@ var BridgeCockpit = (function () {
       BridgeState.transition('identity');
     });
 
-    if (window.innerWidth <= 768) {
-      document.getElementById('dpad').style.display = 'grid';
-    }
+    // D-pad only shown in Phase 2+ (world overworld walking mode)
   }
 
   function rectStyle(r) {
