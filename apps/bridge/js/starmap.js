@@ -93,12 +93,21 @@ var BridgeStarmap = (function () {
     appsHtml += '</div>';
 
     info.innerHTML =
+      '<a class="starmap-info-close" id="info-close">&times;</a>' +
       '<h3>' + selected.name + '</h3>' +
       '<p>' + selected.blurb + '</p>' +
       appsHtml +
       '<button class="jump-btn" id="jump-btn">JUMP HERE</button>';
 
     info.classList.add('visible');
+
+    document.getElementById('info-close').addEventListener('click', function (e) {
+      e.stopPropagation();
+      info.classList.remove('visible');
+      info.style.top = '';
+      info.style.bottom = '';
+      selected = null;
+    });
 
     // On mobile, position the info panel near the selected planet
     if (window.innerWidth <= 768) {

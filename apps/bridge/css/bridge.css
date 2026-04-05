@@ -315,6 +315,21 @@ body::after {
 
 .starmap-info.visible { display: block; }
 
+.starmap-info-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 18px;
+  color: #555;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1;
+  padding: 4px 6px;
+  transition: color 0.2s;
+  z-index: 1;
+}
+.starmap-info-close:hover { color: #aaa; }
+
 .starmap-info h3 {
   font-size: 13px;
   letter-spacing: 3px;
