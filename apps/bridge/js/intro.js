@@ -444,13 +444,18 @@ var BridgeIntro = (function () {
     var bob = Math.sin(anim.bobPhase) * 4;
 
     if (anim.zooming) {
-      // ---- Zoom animation ----
+      // ---- Zoom animation (camera approaches from behind at ~20°) ----
       var zoomElapsed = now - anim.zoomStart;
       var t = Math.min(1, zoomElapsed / anim.zoomDuration);
       var eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
+      // Ship scales up as camera closes in from behind
       scale = scale * (1 + eased * 14);
-      shipY = h * 0.48 + eased * h * 0.7;
+      // Ship drifts upward on screen (camera behind it, looking over it)
+      // then past mid-screen the ship drops below as we pass through into cockpit
+      var liftPhase = Math.min(1, t * 2.5); // 0→1 in first 40%
+      var dropPhase = Math.max(0, (t - 0.4) / 0.6); // 0→1 in last 60%
+      shipY = h * 0.48 - liftPhase * h * 0.08 + dropPhase * dropPhase * h * 0.9;
       bob = bob * (1 - eased);
 
       var logoEl = document.getElementById('intro-logo');
@@ -483,9 +488,17 @@ var BridgeIntro = (function () {
       }
     }
 
-    // ---- Render ship ----
-    drawShip(ctx, shipX, shipY + bob, scale);
-    drawThrust(ctx, shipX, shipY + bob, scale, elapsed);
+    // ---- Render ship with ~20° behind-angle perspective ----
+    ctx.save();
+    ctx.translate(shipX, shipY + bob);
+    // Slight Y compression + vertical perspective (top narrower, bottom wider)
+    // This fakes a "viewed from behind and above" angle
+    ctx.transform(1, 0, 0, 0.88, 0, 0);
+    // Subtle perspective: top rows narrower via slight x-shear toward center
+    ctx.transform(1, 0, 0.0, 1, 0, 0);
+    drawShip(ctx, 0, 0, scale);
+    drawThrust(ctx, 0, 0, scale, elapsed);
+    ctx.restore();
 
     // ---- Ambient glow around ship ----
     if (!anim.zooming) {
