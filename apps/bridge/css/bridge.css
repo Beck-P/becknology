@@ -50,13 +50,25 @@ body::after {
 }
 
 /* ---- Intro ---- */
-.intro-title {
-  font-size: clamp(24px, 6vw, 64px);
-  letter-spacing: 8px;
-  text-align: center;
+.intro-ascii {
+  font-family: 'Courier New', Consolas, monospace;
+  white-space: pre;
+  font-size: 10px;
+  line-height: 1.15;
   color: #d0d0d0;
-  text-shadow: 0 0 30px rgba(160, 120, 220, 0.15);
-  animation: fade-in 1.5s ease-out;
+  text-align: center;
+  letter-spacing: 2px;
+  text-shadow: 0 0 30px rgba(160, 120, 220, 0.08);
+  animation: fade-in 1s ease-out;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .intro-ascii { font-size: 7px; letter-spacing: 1px; }
+}
+
+@media (max-width: 600px) {
+  .intro-ascii { font-size: 4.5px; letter-spacing: 0.5px; }
 }
 
 .intro-prompt {
