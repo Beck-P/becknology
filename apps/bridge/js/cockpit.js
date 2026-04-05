@@ -30,17 +30,24 @@ var BridgeCockpit = (function () {
       var cctx = cockpitCanvas.getContext('2d');
       cctx.drawImage(img, 0, 0);
 
-      // Remove white/near-white background (windshield area)
+      // Remove white/near-white background ONLY in the windshield area (top 55%)
+      // Bottom of image stays opaque (console/desk area)
       var data = cctx.getImageData(0, 0, cockpitCanvas.width, cockpitCanvas.height);
       var px = data.data;
-      for (var i = 0; i < px.length; i += 4) {
-        var r = px[i], g = px[i + 1], b = px[i + 2];
-        if (r > 245 && g > 245 && b > 245) {
-          px[i + 3] = 0;
-        } else if (r > 210 && g > 210 && b > 210) {
-          var avg = (r + g + b) / 3;
-          var fade = Math.max(0, Math.min(255, Math.round((255 - avg) * (255 / 45))));
-          px[i + 3] = Math.min(px[i + 3], fade);
+      var cutoffY = Math.floor(cockpitCanvas.height * 0.55);
+
+      for (var y = 0; y < cockpitCanvas.height; y++) {
+        if (y > cutoffY) break; // only process top portion
+        for (var x = 0; x < cockpitCanvas.width; x++) {
+          var i = (y * cockpitCanvas.width + x) * 4;
+          var r = px[i], g = px[i + 1], b = px[i + 2];
+          if (r > 245 && g > 245 && b > 245) {
+            px[i + 3] = 0;
+          } else if (r > 210 && g > 210 && b > 210) {
+            var avg = (r + g + b) / 3;
+            var fade = Math.max(0, Math.min(255, Math.round((255 - avg) * (255 / 45))));
+            px[i + 3] = Math.min(px[i + 3], fade);
+          }
         }
       }
       cctx.putImageData(data, 0, 0);
