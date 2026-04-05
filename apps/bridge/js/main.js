@@ -14,9 +14,28 @@ var Bridge = (function () {
     window.addEventListener('resize', resize);
 
     BridgeStarfield.init(canvas);
-
     BridgeState.onChange(onStateChange);
-    BridgeState.transition('intro');
+
+    // Determine starting state
+    var cached = BridgeState.getCachedPilotName();
+    var saved = BridgeState.loadSaved();
+
+    if (cached && saved && saved.state === 'cockpit') {
+      // Returning from an app — restore cockpit directly
+      BridgeDB.lookupPilot(cached).then(function (result) {
+        if (result && !result.error) {
+          BridgeState.setPilot(result);
+          BridgeDB.updateLastSeen(result.id);
+          BridgeState.transition('cockpit');
+        } else {
+          BridgeState.clearPilot();
+          BridgeState.transition('intro');
+        }
+      });
+    } else {
+      // Fresh visit — start from intro
+      BridgeState.transition('intro');
+    }
 
     requestAnimationFrame(loop);
   }
