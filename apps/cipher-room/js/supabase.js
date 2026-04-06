@@ -96,7 +96,7 @@ const CipherSupabase = (function () {
     const container = document.getElementById(containerId);
     if (!container) return;
     if (!client) {
-      container.innerHTML = '<p style="font-size:10px;color:#333;">FIELD RANKINGS UNAVAILABLE</p>';
+      container.innerHTML = '<p style="font-size:10px;color:#c8b88830;">FIELD RANKINGS UNAVAILABLE</p>';
       return;
     }
 
@@ -115,7 +115,7 @@ const CipherSupabase = (function () {
 
       let html = '<h3>FIELD RANKINGS</h3>';
       if (!data || data.length === 0) {
-        html += '<p style="font-size:10px;color:#333;">NO RANKINGS YET — YOU\'RE THE FIRST</p>';
+        html += '<p style="font-size:10px;color:#c8b88830;">NO RANKINGS YET — YOU\'RE THE FIRST</p>';
       } else {
         data.forEach((entry, i) => {
           const codename = entry.cipher_room_agents?.codename || 'UNKNOWN';
@@ -133,7 +133,7 @@ const CipherSupabase = (function () {
       container.innerHTML = html;
     } catch (e) {
       console.error('Leaderboard load failed:', e);
-      container.innerHTML = '<p style="font-size:10px;color:#333;">RANKINGS UNAVAILABLE</p>';
+      container.innerHTML = '<p style="font-size:10px;color:#c8b88830;">RANKINGS UNAVAILABLE</p>';
     }
   }
 
