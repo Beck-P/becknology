@@ -22,9 +22,14 @@ var BridgeWorld = (function () {
   // Each draw function signature: fn(ctx, x, y, ts)
 
   var TILESETS = {};
+  var BACKGROUNDS = {};
 
   function registerTileset(name, drawFns) {
     TILESETS[name] = drawFns;
+  }
+
+  function registerBackground(name, drawFn) {
+    BACKGROUNDS[name] = drawFn;
   }
 
   // ---- Glow Helpers ----
@@ -208,19 +213,25 @@ var BridgeWorld = (function () {
     // Update character animation
     BridgeCharacter.update();
 
-    // Smooth camera follow
-    var pos = BridgeCharacter.getRenderPos();
-    camera.x += (pos.x - camera.x) * 0.1;
-    camera.y += (pos.y - camera.y) * 0.1;
+    if (world.fixedCamera) {
+      // Fixed camera: center on map
+      camera.x = world.width / 2;
+      camera.y = world.height / 2;
+    } else {
+      // Smooth camera follow
+      var pos = BridgeCharacter.getRenderPos();
+      camera.x += (pos.x - camera.x) * 0.1;
+      camera.y += (pos.y - camera.y) * 0.1;
 
-    // Clamp camera to map edges
-    var screenW = window.innerWidth;
-    var screenH = window.innerHeight;
-    var halfW = screenW / (2 * tileSize * scale);
-    var halfH = screenH / (2 * tileSize * scale);
+      // Clamp camera to map edges
+      var screenW = window.innerWidth;
+      var screenH = window.innerHeight;
+      var halfW = screenW / (2 * tileSize * scale);
+      var halfH = screenH / (2 * tileSize * scale);
 
-    camera.x = Math.max(halfW, Math.min(world.width - halfW, camera.x));
-    camera.y = Math.max(halfH, Math.min(world.height - halfH, camera.y));
+      camera.x = Math.max(halfW, Math.min(world.width - halfW, camera.x));
+      camera.y = Math.max(halfH, Math.min(world.height - halfH, camera.y));
+    }
 
     // Check interactions
     if (typeof BridgeInteractions !== 'undefined') {
@@ -246,6 +257,12 @@ var BridgeWorld = (function () {
     var startRow = Math.max(0, Math.floor(-offY / ts));
     var endCol = Math.min(world.width, Math.ceil((w - offX) / ts));
     var endRow = Math.min(world.height, Math.ceil((h - offY) / ts));
+
+    // Pass 0: Custom background (if world has one registered)
+    var bgFn = BACKGROUNDS[world.tileset];
+    if (bgFn) {
+      bgFn(ctx, w, h, now);
+    }
 
     // Pass 1: Draw tiles
     for (var row = startRow; row < endRow; row++) {
@@ -315,6 +332,7 @@ var BridgeWorld = (function () {
     update: update,
     draw: draw,
     registerTileset: registerTileset,
+    registerBackground: registerBackground,
     getCamera: function () { return camera; },
     getScale: function () { return scale; },
     getTileSize: function () { return tileSize; }

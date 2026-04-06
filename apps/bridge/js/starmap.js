@@ -29,7 +29,7 @@ var BridgeStarmap = (function () {
       glow: 'rgba(160, 120, 220, 0.3)',
       px: 0.45,
       py: 0.55,
-      hasOverworld: false
+      hasOverworld: true
     },
     {
       id: 'enigma',

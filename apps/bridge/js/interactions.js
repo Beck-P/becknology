@@ -75,6 +75,10 @@ var BridgeInteractions = (function () {
         var msg = messages[Math.floor(Math.random() * messages.length)];
         showDialog(inter.label, msg);
         break;
+
+      case 'leave_world':
+        BridgeWorld.leave();
+        break;
     }
   }
 
