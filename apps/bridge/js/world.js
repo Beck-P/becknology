@@ -14,162 +14,13 @@ var BridgeWorld = (function () {
   var overlay = null;
 
   // ---- Tileset Registry ----
-  // Each tileset maps tile IDs to draw functions: fn(ctx, x, y, ts)
-  // x, y = top-left screen pixel; ts = rendered tile size
+  // World modules register tilesets via registerTileset(name, { tileId: drawFn })
+  // Each draw function signature: fn(ctx, x, y, ts)
 
-  var TILESETS = {
-    arcadia: {
-      1: drawWall,
-      2: drawFloor,
-      3: drawFloorLight,
-      4: drawWallDark,
-      5: drawRunoutsCabinet,
-      6: drawHighScoreBoard,
-      7: drawEntrance,
-      8: drawNeonSign,
-      9: drawCabinet
-    }
-  };
+  var TILESETS = {};
 
-  // ---- Arcadia Tile Draw Functions ----
-
-  function drawFloor(ctx, x, y, ts) {
-    var h = ts / 2;
-    ctx.fillStyle = '#2a2240';
-    ctx.fillRect(x, y, ts, ts);
-    ctx.fillStyle = '#2e2648';
-    ctx.fillRect(x, y, h, h);
-    ctx.fillRect(x + h, y + h, h, h);
-  }
-
-  function drawFloorLight(ctx, x, y, ts) {
-    var h = ts / 2;
-    ctx.fillStyle = '#3a3260';
-    ctx.fillRect(x, y, ts, ts);
-    ctx.fillStyle = '#3e3670';
-    ctx.fillRect(x, y, h, h);
-    ctx.fillRect(x + h, y + h, h, h);
-  }
-
-  function drawWall(ctx, x, y, ts) {
-    var capH = Math.floor(ts * 0.3);
-    ctx.fillStyle = '#1e1835';
-    ctx.fillRect(x, y, ts, capH);
-    ctx.fillStyle = '#2a2245';
-    ctx.fillRect(x, y + capH, ts, ts - capH);
-    // Brick lines
-    ctx.fillStyle = '#1e1835';
-    ctx.fillRect(x, y + Math.floor(ts * 0.5), ts, 1);
-    ctx.fillRect(x + Math.floor(ts * 0.4), y + capH, 1, Math.floor(ts * 0.2));
-    ctx.fillRect(x + Math.floor(ts * 0.7), y + Math.floor(ts * 0.5), 1, Math.floor(ts * 0.2));
-    ctx.fillRect(x + Math.floor(ts * 0.2), y + Math.floor(ts * 0.7), 1, Math.floor(ts * 0.15));
-  }
-
-  function drawWallDark(ctx, x, y, ts) {
-    var capH = Math.floor(ts * 0.3);
-    ctx.fillStyle = '#151230';
-    ctx.fillRect(x, y, ts, capH);
-    ctx.fillStyle = '#201a3a';
-    ctx.fillRect(x, y + capH, ts, ts - capH);
-    ctx.fillStyle = '#151230';
-    ctx.fillRect(x, y + Math.floor(ts * 0.5), ts, 1);
-    ctx.fillRect(x + Math.floor(ts * 0.4), y + capH, 1, Math.floor(ts * 0.2));
-    ctx.fillRect(x + Math.floor(ts * 0.7), y + Math.floor(ts * 0.5), 1, Math.floor(ts * 0.2));
-  }
-
-  function drawCabinet(ctx, x, y, ts) {
-    var u = ts / 16;
-    // Body
-    ctx.fillStyle = '#252040';
-    ctx.fillRect(x + 2*u, y + u, ts - 4*u, ts - 2*u);
-    // Screen top edge
-    ctx.fillStyle = '#1a1830';
-    ctx.fillRect(x + 3*u, y + u, ts - 6*u, 2*u);
-    // Screen
-    ctx.fillStyle = '#3855a0';
-    ctx.fillRect(x + 3*u, y + 3*u, ts - 6*u, Math.floor(ts * 0.35));
-    // Screen glint
-    ctx.fillStyle = '#8090c0';
-    ctx.fillRect(x + Math.floor(ts * 0.4), y + 4*u, 2*u, 2*u);
-    // Controls
-    ctx.fillStyle = '#1e1835';
-    ctx.fillRect(x + 3*u, y + Math.floor(ts * 0.55), ts - 6*u, Math.floor(ts * 0.15));
-    // Joystick
-    ctx.fillStyle = '#888';
-    ctx.fillRect(x + Math.floor(ts * 0.35), y + Math.floor(ts * 0.55), 2*u, 3*u);
-    // Legs
-    ctx.fillStyle = '#1a1830';
-    ctx.fillRect(x + 3*u, y + ts - 3*u, 2*u, 3*u);
-    ctx.fillRect(x + ts - 5*u, y + ts - 3*u, 2*u, 3*u);
-  }
-
-  function drawRunoutsCabinet(ctx, x, y, ts) {
-    var u = ts / 16;
-    ctx.fillStyle = '#252040';
-    ctx.fillRect(x + 2*u, y + u, ts - 4*u, ts - 2*u);
-    ctx.fillStyle = '#1a1830';
-    ctx.fillRect(x + 3*u, y + u, ts - 6*u, 2*u);
-    // Pink screen
-    ctx.fillStyle = '#d06090';
-    ctx.fillRect(x + 3*u, y + 3*u, ts - 6*u, Math.floor(ts * 0.35));
-    // Brighter glint
-    ctx.fillStyle = '#f0a0c0';
-    ctx.fillRect(x + Math.floor(ts * 0.4), y + 4*u, 2*u, 2*u);
-    // Controls
-    ctx.fillStyle = '#1e1835';
-    ctx.fillRect(x + 3*u, y + Math.floor(ts * 0.55), ts - 6*u, Math.floor(ts * 0.15));
-    ctx.fillStyle = '#888';
-    ctx.fillRect(x + Math.floor(ts * 0.35), y + Math.floor(ts * 0.55), 2*u, 3*u);
-    // Legs
-    ctx.fillStyle = '#1a1830';
-    ctx.fillRect(x + 3*u, y + ts - 3*u, 2*u, 3*u);
-    ctx.fillRect(x + ts - 5*u, y + ts - 3*u, 2*u, 3*u);
-  }
-
-  function drawHighScoreBoard(ctx, x, y, ts) {
-    var u = ts / 16;
-    // Panel body
-    ctx.fillStyle = '#1a2a1a';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, ts - 4*u);
-    // Screen
-    ctx.fillStyle = '#40b060';
-    ctx.fillRect(x + 3*u, y + 3*u, ts - 6*u, ts - 7*u);
-    // Text lines
-    ctx.fillStyle = '#2a7040';
-    for (var i = 0; i < 4; i++) {
-      ctx.fillRect(x + 4*u, y + (4 + i * 2)*u, ts - 8*u, u);
-    }
-    // Frame
-    ctx.strokeStyle = '#2a4a2a';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x + 2*u, y + 2*u, ts - 4*u, ts - 4*u);
-  }
-
-  function drawNeonSign(ctx, x, y, ts) {
-    var u = ts / 16;
-    // Sign body
-    ctx.fillStyle = '#1e1835';
-    ctx.fillRect(x + u, y + u, ts - 2*u, Math.floor(ts * 0.35));
-    // Neon bar
-    ctx.fillStyle = '#c040d0';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.floor(ts * 0.2));
-    // Mounting brackets
-    ctx.fillStyle = '#333';
-    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.4), u, 3*u);
-    ctx.fillRect(x + ts - 3*u, y + Math.floor(ts * 0.4), u, 3*u);
-    // Wall below sign
-    var capH = Math.floor(ts * 0.3);
-    ctx.fillStyle = '#2a2245';
-    ctx.fillRect(x, y + Math.floor(ts * 0.55), ts, ts - Math.floor(ts * 0.55));
-  }
-
-  function drawEntrance(ctx, x, y, ts) {
-    // Floor base
-    drawFloor(ctx, x, y, ts);
-    // Threshold line
-    ctx.fillStyle = '#4a4268';
-    ctx.fillRect(x, y, ts, Math.max(1, ts / 16));
-    ctx.fillRect(x, y + ts - Math.max(1, ts / 16), ts, Math.max(1, ts / 16));
+  function registerTileset(name, drawFns) {
+    TILESETS[name] = drawFns;
   }
 
   // ---- Glow Helpers ----
@@ -373,6 +224,7 @@ var BridgeWorld = (function () {
     leave: leave,
     update: update,
     draw: draw,
+    registerTileset: registerTileset,
     getCamera: function () { return camera; },
     getScale: function () { return scale; },
     getTileSize: function () { return tileSize; }
