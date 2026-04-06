@@ -259,65 +259,37 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawShipBody(ctx, x, y, ts, time) {
-    time = time || 0;
-    var u = ts / 16;
+  // ---- Ship (PNG-based) ----
+  // Load the ship sprite used on the intro screen.
+  // The ship spans a 2x2 tile area. The top-left tile (6 at col 2, row 3)
+  // draws the full image; other ship tiles just draw void.
 
+  var shipImg = new Image();
+  shipImg.src = '/bridge/assets/ship.png';
+
+  function drawShipBody(ctx, x, y, ts, time, col, row) {
     // Void behind
     ctx.fillStyle = '#050510';
     ctx.fillRect(x, y, ts, ts);
 
-    // Ship hull
-    ctx.fillStyle = '#2a3040';
-    ctx.fillRect(x + 2*u, y + 3*u, ts - 4*u, ts - 4*u);
-
-    // Hull detail
-    ctx.fillStyle = '#353d50';
-    ctx.fillRect(x + 3*u, y + 4*u, ts - 6*u, 3*u);
-
-    // Engine glow
-    var pulse = 0.5 + Math.sin(time / 400) * 0.3;
-    ctx.globalAlpha = pulse;
-    ctx.fillStyle = '#4080c0';
-    ctx.fillRect(x + 4*u, y + ts - 3*u, 3*u, 2*u);
-    ctx.fillRect(x + 9*u, y + ts - 3*u, 3*u, 2*u);
-    ctx.globalAlpha = 1;
-
-    // Panel lines
-    ctx.fillStyle = '#1e2530';
-    ctx.fillRect(x + 7*u, y + 3*u, u, ts - 4*u);
+    // Only the top-left ship tile (col 2, row 3) draws the full ship image
+    if (col === 2 && row === 3 && shipImg.complete && shipImg.naturalWidth > 0) {
+      // Ship image is tall with flames — crop to top 48% (body only, no flames)
+      var srcW = shipImg.naturalWidth;
+      var srcH = shipImg.naturalHeight * 0.48;
+      var destW = ts * 2;
+      var destH = ts * 2;
+      // Center the ship body in the 2x2 tile area with slight padding
+      var destX = x + ts * 0.1;
+      var destY = y + ts * 0.15;
+      ctx.drawImage(shipImg, 0, 0, srcW, srcH, destX, destY, destW * 0.8, destH * 0.7);
+    }
   }
 
-  function drawShipCockpit(ctx, x, y, ts, time) {
-    time = time || 0;
-    var u = ts / 16;
-
-    // Void behind
+  function drawShipCockpit(ctx, x, y, ts) {
+    // Void behind — ship image is drawn by the body tile
     ctx.fillStyle = '#050510';
     ctx.fillRect(x, y, ts, ts);
-
-    // Ship nose
-    ctx.fillStyle = '#2a3040';
-    ctx.fillRect(x + 3*u, y + 4*u, ts - 6*u, ts - 5*u);
-
-    // Cockpit windshield
-    ctx.fillStyle = '#1a2535';
-    ctx.fillRect(x + 4*u, y + 5*u, ts - 8*u, 4*u);
-
-    // Windshield glow
-    var pulse = 0.6 + Math.sin(time / 1200) * 0.2;
-    ctx.globalAlpha = pulse;
-    ctx.fillStyle = '#3060a0';
-    ctx.fillRect(x + 5*u, y + 6*u, ts - 10*u, 2*u);
-    ctx.globalAlpha = 1;
-
-    // Nose cone
-    ctx.fillStyle = '#353d50';
-    ctx.fillRect(x + 5*u, y + 2*u, ts - 10*u, 3*u);
-
-    // Tip
-    ctx.fillStyle = '#404850';
-    ctx.fillRect(x + 6*u, y + u, ts - 12*u, 2*u);
   }
 
   // ---- Register tileset ----
