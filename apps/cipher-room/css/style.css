@@ -8,7 +8,8 @@
 body {
   background: #0a0908;
   color: #c8b888;
-  font-family: 'Special Elite', 'Courier New', monospace;
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 16px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -27,6 +28,21 @@ body::before {
     radial-gradient(ellipse at 70% 80%, rgba(200,184,136,0.01) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* CRT scanlines */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.03) 3px,
+    rgba(0, 0, 0, 0.03) 6px
+  );
 }
 
 /* --- Navigation --- */
@@ -53,7 +69,7 @@ body::before {
 
 /* --- Typography --- */
 h1 {
-  font-family: 'Special Elite', 'Courier New', monospace;
+  font-family: 'VT323', 'Courier New', monospace;
   font-size: 22px;
   color: #c8b888;
   letter-spacing: 3px;
@@ -173,10 +189,10 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Special Elite', 'Courier New', monospace;
+  font-family: 'VT323', 'Courier New', monospace;
   font-weight: bold;
   position: relative;
-  border: 0.5px solid #b8a87830;
+  border: 1px solid #b8a87840;
   transition: background 0.15s;
   cursor: default;
   user-select: none;
@@ -415,7 +431,7 @@ h2 {
 }
 
 .btn {
-  font-family: 'Special Elite', 'Courier New', monospace;
+  font-family: 'VT323', 'Courier New', monospace;
   font-size: 13px;
   letter-spacing: 2px;
   padding: 12px 24px;
@@ -442,7 +458,7 @@ h2 {
 }
 
 .input-field {
-  font-family: 'Special Elite', 'Courier New', monospace;
+  font-family: 'VT323', 'Courier New', monospace;
   font-size: 16px;
   letter-spacing: 2px;
   padding: 10px 16px;
