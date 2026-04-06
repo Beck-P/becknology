@@ -8,7 +8,7 @@
 (function () {
 
   // ---- Tile Draw Functions ----
-  // Each receives (ctx, x, y, ts) where ts = rendered tile size
+  // Each receives (ctx, x, y, ts, time, col, row) where ts = rendered tile size
 
   function drawFloor(ctx, x, y, ts) {
     var h = ts / 2;
@@ -53,16 +53,24 @@
     ctx.fillRect(x + Math.floor(ts * 0.7), y + Math.floor(ts * 0.5), 1, Math.floor(ts * 0.2));
   }
 
-  function drawCabinet(ctx, x, y, ts) {
+  function drawCabinet(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
+    var SCREEN_COLORS = ['#3855a0', '#388850', '#a07038', '#388890'];
+    var GLINT_COLORS = ['#8090c0', '#80c090', '#c0a080', '#80c0c0'];
+    var idx = (col * 3 + row * 7) % 4;
+    var phase = (time / 800) + (col * 7 + row * 13);
+    var brightness = 1 + Math.sin(phase) * 0.15;
     ctx.fillStyle = '#252040';
     ctx.fillRect(x + 2*u, y + u, ts - 4*u, ts - 2*u);
     ctx.fillStyle = '#1a1830';
     ctx.fillRect(x + 3*u, y + u, ts - 6*u, 2*u);
-    ctx.fillStyle = '#3855a0';
+    ctx.globalAlpha = Math.min(1, brightness);
+    ctx.fillStyle = SCREEN_COLORS[idx];
     ctx.fillRect(x + 3*u, y + 3*u, ts - 6*u, Math.floor(ts * 0.35));
-    ctx.fillStyle = '#8090c0';
+    ctx.fillStyle = GLINT_COLORS[idx];
     ctx.fillRect(x + Math.floor(ts * 0.4), y + 4*u, 2*u, 2*u);
+    ctx.globalAlpha = 1;
     ctx.fillStyle = '#1e1835';
     ctx.fillRect(x + 3*u, y + Math.floor(ts * 0.55), ts - 6*u, Math.floor(ts * 0.15));
     ctx.fillStyle = '#888';
@@ -72,16 +80,21 @@
     ctx.fillRect(x + ts - 5*u, y + ts - 3*u, 2*u, 3*u);
   }
 
-  function drawRunoutsCabinet(ctx, x, y, ts) {
+  function drawRunoutsCabinet(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
+    var phase = (time / 600) + (col * 5 + row * 11);
+    var brightness = 1 + Math.sin(phase) * 0.15;
     ctx.fillStyle = '#252040';
     ctx.fillRect(x + 2*u, y + u, ts - 4*u, ts - 2*u);
     ctx.fillStyle = '#1a1830';
     ctx.fillRect(x + 3*u, y + u, ts - 6*u, 2*u);
+    ctx.globalAlpha = Math.min(1, brightness);
     ctx.fillStyle = '#d06090';
     ctx.fillRect(x + 3*u, y + 3*u, ts - 6*u, Math.floor(ts * 0.35));
     ctx.fillStyle = '#f0a0c0';
     ctx.fillRect(x + Math.floor(ts * 0.4), y + 4*u, 2*u, 2*u);
+    ctx.globalAlpha = 1;
     ctx.fillStyle = '#1e1835';
     ctx.fillRect(x + 3*u, y + Math.floor(ts * 0.55), ts - 6*u, Math.floor(ts * 0.15));
     ctx.fillStyle = '#888';
@@ -106,12 +119,23 @@
     ctx.strokeRect(x + 2*u, y + 2*u, ts - 4*u, ts - 4*u);
   }
 
-  function drawNeonSign(ctx, x, y, ts) {
+  function drawNeonSign(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
+    var seed = col * 17 + row * 31;
+    var t = Math.floor(time / 80);
+    var flicker = 1;
+    if ((t + seed) % 37 === 0 || (t + seed) % 53 === 0) {
+      flicker = 0.4 + Math.random() * 0.3;
+    } else {
+      flicker = 0.9 + Math.sin(time / 400 + seed) * 0.1;
+    }
     ctx.fillStyle = '#1e1835';
     ctx.fillRect(x + u, y + u, ts - 2*u, Math.floor(ts * 0.35));
+    ctx.globalAlpha = flicker;
     ctx.fillStyle = '#c040d0';
     ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.floor(ts * 0.2));
+    ctx.globalAlpha = 1;
     ctx.fillStyle = '#333';
     ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.4), u, 3*u);
     ctx.fillRect(x + ts - 3*u, y + Math.floor(ts * 0.4), u, 3*u);
@@ -126,6 +150,80 @@
     ctx.fillRect(x, y + ts - Math.max(1, ts / 16), ts, Math.max(1, ts / 16));
   }
 
+  function drawFloorDark(ctx, x, y, ts) {
+    var h = ts / 2;
+    ctx.fillStyle = '#221c38';
+    ctx.fillRect(x, y, ts, ts);
+    ctx.fillStyle = '#261e40';
+    ctx.fillRect(x, y, h, h);
+    ctx.fillRect(x + h, y + h, h, h);
+  }
+
+  function drawFloorWorn(ctx, x, y, ts) {
+    var u = ts / 16;
+    ctx.fillStyle = '#2a2240';
+    ctx.fillRect(x, y, ts, ts);
+    ctx.fillStyle = '#1e1a30';
+    ctx.fillRect(x + 3*u, y + 5*u, 2*u, u);
+    ctx.fillRect(x + 8*u, y + 10*u, 3*u, u);
+    ctx.fillRect(x + 6*u, y + 2*u, u, 2*u);
+  }
+
+  function drawPoster(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    var POSTER_COLORS = ['#d06090', '#5cc8d0', '#c8a840', '#60b060'];
+    var idx = (col * 5 + row * 3) % 4;
+    drawWall(ctx, x, y, ts);
+    var fx = x + 3*u;
+    var fy = y + Math.floor(ts * 0.35);
+    var fw = ts - 6*u;
+    var fh = Math.floor(ts * 0.45);
+    ctx.fillStyle = '#1a1830';
+    ctx.fillRect(fx, fy, fw, fh);
+    ctx.fillStyle = POSTER_COLORS[idx];
+    ctx.fillRect(fx + u, fy + u, fw - 2*u, fh - 2*u);
+    ctx.fillStyle = '#1a1830';
+    ctx.fillRect(fx + u, fy + Math.floor(fh * 0.35), fw - 2*u, u);
+    ctx.fillRect(fx + u, fy + Math.floor(fh * 0.6), fw - 2*u, u);
+  }
+
+  function drawBrokenCabinet(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    ctx.fillStyle = '#252040';
+    ctx.fillRect(x + 2*u, y + u, ts - 4*u, ts - 2*u);
+    ctx.fillStyle = '#1a1830';
+    ctx.fillRect(x + 3*u, y + u, ts - 6*u, 2*u);
+    var screenX = x + 3*u;
+    var screenY = y + 3*u;
+    var screenW = ts - 6*u;
+    var screenH = Math.floor(ts * 0.35);
+    var garble = ((Math.floor(time / 100) + col * 23 + row * 41) % 67 === 0);
+    if (garble) {
+      var gColors = ['#d06090', '#3855a0', '#40b060', '#c8a840'];
+      ctx.fillStyle = gColors[(col + row) % 4];
+      ctx.fillRect(screenX, screenY, screenW, screenH);
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(screenX, screenY + 2*u, screenW, u);
+      ctx.fillRect(screenX, screenY + 5*u, screenW, u);
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = '#0e0c1a';
+      ctx.fillRect(screenX, screenY, screenW, screenH);
+      ctx.fillStyle = '#1a1530';
+      ctx.fillRect(screenX + u, screenY + u, 2*u, u);
+      ctx.fillRect(screenX + u + u, screenY + 2*u, u, u);
+      ctx.fillRect(screenX + 2*u + u, screenY + 3*u, 2*u, u);
+    }
+    ctx.fillStyle = '#1a1530';
+    ctx.fillRect(x + 3*u, y + Math.floor(ts * 0.55), ts - 6*u, Math.floor(ts * 0.15));
+    ctx.fillStyle = '#1a1830';
+    ctx.fillRect(x + 3*u, y + ts - 3*u, 2*u, 3*u);
+    ctx.fillRect(x + ts - 5*u, y + ts - 3*u, 2*u, 3*u);
+  }
+
   // ---- Register with engine ----
 
   BridgeWorld.registerTileset('arcadia', {
@@ -137,7 +235,11 @@
     6: drawHighScoreBoard,
     7: drawEntrance,
     8: drawNeonSign,
-    9: drawCabinet
+    9: drawCabinet,
+    10: drawFloorDark,
+    11: drawFloorWorn,
+    12: drawPoster,
+    13: drawBrokenCabinet
   });
 
 })();
