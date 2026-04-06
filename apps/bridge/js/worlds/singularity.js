@@ -260,11 +260,10 @@
   }
 
   // ---- Ship (PNG-based) ----
-  // Uses the same ship.png as the intro screen, with background removal.
-  // One anchor tile draws the full ship; other ship tiles just draw void.
+  // Docked ship sprite with white background removed.
+  // Anchor tile (col 1, row 3) draws the full ship across 3x3 tiles.
 
   var shipCanvas = null;
-  var SHIP_CROP = 0.48; // top 48% = body only, no baked flames
 
   function loadShipSprite() {
     var img = new Image();
@@ -274,43 +273,52 @@
       shipCanvas.height = img.height;
       var sctx = shipCanvas.getContext('2d');
       sctx.drawImage(img, 0, 0);
-      // Remove white/near-white background (same as intro.js)
+      // Remove white/near-white background
       var data = sctx.getImageData(0, 0, shipCanvas.width, shipCanvas.height);
       var px = data.data;
       for (var i = 0; i < px.length; i += 4) {
         var r = px[i], g = px[i + 1], b = px[i + 2];
-        if (r > 245 && g > 245 && b > 245) {
+        if (r > 240 && g > 240 && b > 240) {
           px[i + 3] = 0;
-        } else if (r > 210 && g > 210 && b > 210) {
+        } else if (r > 200 && g > 200 && b > 200) {
           var avg = (r + g + b) / 3;
-          var fade = Math.max(0, Math.min(255, Math.round((255 - avg) * (255 / 45))));
+          var fade = Math.max(0, Math.min(255, Math.round((255 - avg) * (255 / 55))));
           px[i + 3] = Math.min(px[i + 3], fade);
         }
       }
       sctx.putImageData(data, 0, 0);
     };
-    img.src = '/bridge/assets/ship.png';
+    img.src = '/bridge/assets/ship-docked.png';
   }
   loadShipSprite();
 
   function drawShipBody(ctx, x, y, ts, time, col, row) {
+    // Void behind all ship tiles
     ctx.fillStyle = '#050510';
     ctx.fillRect(x, y, ts, ts);
 
-    // Anchor tile (top-left of ship area) draws the full ship
+    // Anchor tile draws the full ship spanning 3x3 tiles
     if (col === 1 && row === 3 && shipCanvas) {
-      var cropH = shipCanvas.height * SHIP_CROP;
-      var shipW = ts * 3;
-      var shipH = shipW * (cropH / shipCanvas.width);
-      // Center in the 3x3 ship area
-      var destX = x + (ts * 3 - shipW) / 2;
-      var destY = y + (ts * 3 - shipH) / 2;
-      ctx.drawImage(shipCanvas, 0, 0, shipCanvas.width, cropH, destX, destY, shipW, shipH);
+      var areaW = ts * 3;
+      var areaH = ts * 3;
+      // Scale ship to fill most of the 3x3 area, preserving aspect ratio
+      var aspect = shipCanvas.width / shipCanvas.height;
+      var shipW, shipH;
+      if (aspect > 1) {
+        shipW = areaW * 0.95;
+        shipH = shipW / aspect;
+      } else {
+        shipH = areaH * 0.95;
+        shipW = shipH * aspect;
+      }
+      var destX = x + (areaW - shipW) / 2;
+      var destY = y + (areaH - shipH) / 2;
+      ctx.drawImage(shipCanvas, 0, 0, shipCanvas.width, shipCanvas.height, destX, destY, shipW, shipH);
     }
   }
 
   function drawShipCockpit(ctx, x, y, ts) {
-    // Void — ship image is drawn by the anchor body tile
+    // Void — ship image drawn by the anchor body tile
     ctx.fillStyle = '#050510';
     ctx.fillRect(x, y, ts, ts);
   }
