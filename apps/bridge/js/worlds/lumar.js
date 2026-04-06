@@ -321,6 +321,42 @@
 
   // ---- Register ----
 
+  // ---- Guard NPC ----
+
+  function drawGuard(ctx, x, y, ts, time) {
+    time = time || 0;
+    var u = ts / 16;
+
+    // Dock planks base
+    drawDockPlanks(ctx, x, y, ts);
+
+    // Guard character — dark uniform, standing facing up (toward player)
+    var bob = Math.sin(time / 800) > 0.85 ? -u : 0;
+    // Head
+    ctx.fillStyle = '#506060';
+    ctx.fillRect(x + 4*u, y + (u)+bob, 8*u, 5*u);
+    // Helmet/cap
+    ctx.fillStyle = '#384848';
+    ctx.fillRect(x + 3*u, y + (u)+bob, 10*u, 2*u);
+    // Eyes (facing up — back of head visible, no eyes)
+    ctx.fillStyle = '#2a3838';
+    ctx.fillRect(x + 4*u, y + (u)+bob, 8*u, 2*u);
+    // Body — dark uniform
+    ctx.fillStyle = '#384848';
+    ctx.fillRect(x + 3*u, y + (6*u)+bob, 10*u, 5*u);
+    // Belt with silver buckle
+    ctx.fillStyle = '#808888';
+    ctx.fillRect(x + 6*u, y + (9*u)+bob, 4*u, u);
+    // Legs
+    ctx.fillStyle = '#2a3838';
+    ctx.fillRect(x + 4*u, y + (11*u)+bob, 3*u, 4*u);
+    ctx.fillRect(x + 9*u, y + (11*u)+bob, 3*u, 4*u);
+    // Boots
+    ctx.fillStyle = '#1a1e20';
+    ctx.fillRect(x + 3*u, y + 14*u, 4*u, u);
+    ctx.fillRect(x + 9*u, y + 14*u, 4*u, u);
+  }
+
   BridgeWorld.registerTileset('lumar', {
     1: drawSaltstoneWall,
     2: drawSaltstoneFloor,
@@ -332,7 +368,8 @@
     8: drawBuilding,
     9: drawLantern,
     10: drawShipBody,
-    11: drawShipCockpit
+    11: drawShipCockpit,
+    12: drawGuard
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);

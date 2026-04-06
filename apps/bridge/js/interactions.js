@@ -79,6 +79,10 @@ var BridgeInteractions = (function () {
       case 'leave_world':
         BridgeWorld.leave();
         break;
+
+      case 'password_gate':
+        showPasswordDialog(inter);
+        break;
     }
   }
 
@@ -111,6 +115,73 @@ var BridgeInteractions = (function () {
     dialogVisible = false;
     var dialogEl = document.getElementById('world-dialog');
     if (dialogEl) dialogEl.remove();
+  }
+
+  function showPasswordDialog(inter) {
+    dialogVisible = true;
+    var promptEl = document.getElementById('interact-prompt');
+    if (promptEl) promptEl.classList.remove('visible');
+
+    var overlay = document.getElementById('world-overlay');
+    var dialogEl = document.createElement('div');
+    dialogEl.id = 'world-dialog';
+    dialogEl.style.cssText =
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+      'background:rgba(10,10,20,0.95);border:1px solid #2a2a3e;border-radius:4px;' +
+      'padding:24px 32px;max-width:320px;width:90%;z-index:30;' +
+      'font-family:"Courier New",Consolas,monospace;text-align:center;';
+
+    dialogEl.innerHTML =
+      '<h3 style="font-size:13px;letter-spacing:3px;color:#40b060;margin-bottom:12px;">' + inter.label + '</h3>' +
+      '<pre style="font-size:11px;color:#888;line-height:1.6;white-space:pre-wrap;margin-bottom:16px;">' +
+        (inter.dialog || '').replace(/\\n/g, '\n') +
+      '</pre>' +
+      '<input id="pw-input" type="text" autocomplete="off" style="' +
+        'width:80%;padding:8px 12px;background:#111;border:1px solid #2a2a3e;' +
+        'color:#ddd;font-family:inherit;font-size:14px;letter-spacing:4px;' +
+        'text-align:center;text-transform:uppercase;outline:none;margin-bottom:12px;' +
+      '" placeholder="..." />' +
+      '<div id="pw-error" style="font-size:10px;color:#c44;min-height:16px;margin-bottom:8px;"></div>' +
+      '<p style="font-size:10px;color:#555;letter-spacing:2px;">PRESS ENTER TO SUBMIT &middot; ESC TO CANCEL</p>';
+
+    overlay.appendChild(dialogEl);
+
+    var input = document.getElementById('pw-input');
+    setTimeout(function () { input.focus(); }, 50);
+
+    function handleKey(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var val = input.value.trim();
+        if (val === inter.password) {
+          // Correct — navigate to target
+          cleanup();
+          BridgeState.setWorldPos({
+            worldId: BridgeWorld.getWorld().tileset,
+            x: BridgeCharacter.getX(),
+            y: BridgeCharacter.getY(),
+            facing: BridgeCharacter.getFacing()
+          });
+          BridgeState.transition('redirect', { url: inter.target });
+        } else {
+          // Wrong password
+          var err = document.getElementById('pw-error');
+          if (err) err.textContent = inter.failMessage || 'ACCESS DENIED.';
+          input.value = '';
+          input.focus();
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cleanup();
+      }
+    }
+
+    function cleanup() {
+      document.removeEventListener('keydown', handleKey);
+      hideDialog();
+    }
+
+    document.addEventListener('keydown', handleKey);
   }
 
   return { update: update };

@@ -18,7 +18,8 @@
     "8": "#1a1e20",
     "9": "#c0a050",
     "10": "#1a1e20",
-    "11": "#1a1e20"
+    "11": "#1a1e20",
+    "12": "#3a3020"
   },
   "tileNames": {
     "0": "void",
@@ -32,7 +33,8 @@
     "8": "building",
     "9": "lantern",
     "10": "ship_body",
-    "11": "ship_cockpit"
+    "11": "ship_cockpit",
+    "12": "guard"
   },
   "tiles": [
     [4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
@@ -46,7 +48,7 @@
     [4,4,4,5,1,1,1,9,3,3,3,9,1,1,1,1,4,4],
     [4,4,4,4,4,4,4,6,3,3,3,6,4,4,4,4,4,4],
     [4,4,4,4,4,4,4,6,3,3,3,6,4,4,4,4,4,4],
-    [4,4,4,4,4,4,4,4,3,3,3,4,4,4,4,4,4,4],
+    [4,4,4,4,4,4,4,4,3,12,3,4,4,4,4,4,4,4],
     [4,4,4,4,4,4,4,4,6,3,6,4,4,4,4,4,4,4],
     [4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4]
   ],
@@ -62,7 +64,7 @@
     [1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1],
     [1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1],
     [1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
   ],
@@ -74,9 +76,7 @@
   "interactions": [
     { "x": 3, "y": 4, "type": "leave_world", "label": "SHIP", "prompt": "RETURN TO COCKPIT" },
     { "x": 3, "y": 5, "type": "leave_world", "label": "SHIP", "prompt": "RETURN TO COCKPIT" },
-    { "x": 9, "y": 12, "type": "app", "target": "/aether-seas", "label": "THE EMERALD VESSEL", "prompt": "BOARD THE SHIP" },
-    { "x": 8, "y": 12, "type": "app", "target": "/aether-seas", "label": "THE EMERALD VESSEL", "prompt": "BOARD THE SHIP" },
-    { "x": 10, "y": 12, "type": "app", "target": "/aether-seas", "label": "THE EMERALD VESSEL", "prompt": "BOARD THE SHIP" },
+    { "x": 9, "y": 11, "type": "password_gate", "target": "/aether-seas", "password": "0403", "label": "DOCK GUARD", "prompt": "PRESS E TO SPEAK", "dialog": "HALT, PILOT.\\n\\nTHIS VESSEL IS UNDER\\nROYAL CHARTER.\\n\\nENTER THE BOARDING CODE:", "failMessage": "WRONG CODE. STEP BACK." },
     { "x": 5, "y": 4, "type": "dialog", "label": "VIEWPORT", "prompt": "PRESS E TO LOOK", "dialog": "THROUGH THE DARK GLASS\\nYOU SEE THE EMERALD SEA\\nSTRETCHING TO THE HORIZON\\n\\nSPORES SHIMMER IN THE MOONLIGHT." },
     { "x": 8, "y": 4, "type": "dialog", "label": "VIEWPORT", "prompt": "PRESS E TO LOOK", "dialog": "THE GREEN MOON HANGS LOW\\nOPPRESSIVELY CLOSE\\n\\nSPORES RAIN ENDLESSLY\\nFROM ITS SURFACE." },
     { "x": 11, "y": 4, "type": "dialog", "label": "VIEWPORT", "prompt": "PRESS E TO LOOK", "dialog": "A DISTANT ISLAND\\nBARE BLACK SALTSTONE\\n\\nNO LIGHTS. NO MOVEMENT.\\nABANDONED?" },
