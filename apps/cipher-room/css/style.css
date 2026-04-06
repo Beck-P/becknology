@@ -48,7 +48,7 @@ body::before {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 480px;
+  max-width: 720px;
 }
 
 /* --- Typography --- */
@@ -136,12 +136,25 @@ h2 {
   margin-top: 2px;
 }
 
+/* --- Play Area (grid + clue bar side by side) --- */
+.play-area {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.play-area-grid {
+  flex-shrink: 0;
+}
+
 /* --- Grid Container --- */
 .grid-container {
   background: #c8b88808;
   border: 1px solid #c8b88815;
   padding: 8px;
-  margin: 0 auto 20px;
+  margin: 0 auto 12px;
   width: fit-content;
   position: relative;
 }
@@ -192,8 +205,8 @@ h2 {
 }
 
 .cell.white:hover { background: #dcd0a8; }
-.cell.word-highlight { background: #e8dca0; border-color: #a0904080; }
-.cell.active { background: #f0e8a8; box-shadow: inset 0 0 0 2.5px #8a6a20; }
+.cell.word-highlight { background: #c8a848; color: #1a1408; }
+.cell.active { background: #e0c050; color: #1a1408; box-shadow: inset 0 0 0 2.5px #6a4a10; }
 
 .cell.black {
   background: #1a1810;
@@ -264,18 +277,15 @@ h2 {
 
 /* --- Active Clue Bar --- */
 .active-clue-bar {
-  text-align: center;
   font-size: 14px;
   color: #c8b888b0;
-  padding: 10px 16px;
-  border-top: 1px solid #c8b88820;
-  border-bottom: 1px solid #c8b88820;
-  margin: 8px 0;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1.4;
+  padding: 12px 16px;
+  border-left: 2px solid #c8a04860;
+  background: #c8b88808;
+  min-width: 180px;
+  max-width: 240px;
+  line-height: 1.5;
+  align-self: center;
 }
 
 .active-clue-bar .clue-num {
@@ -600,6 +610,20 @@ h2 {
 }
 
 @media (max-width: 600px) {
+  .page { max-width: 480px; }
+  .play-area {
+    flex-direction: column;
+    align-items: center;
+  }
+  .active-clue-bar {
+    border-left: none;
+    border-top: 1px solid #c8b88820;
+    border-bottom: 1px solid #c8b88820;
+    text-align: center;
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
   .clues-section {
     max-height: 300px;
     overflow-y: auto;
