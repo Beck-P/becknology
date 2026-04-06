@@ -44,6 +44,17 @@ var BridgeStarmap = (function () {
       px: 0.70,
       py: 0.30,
       hasOverworld: true
+    },
+    {
+      id: 'lumar',
+      name: 'LUMAR',
+      blurb: 'A world of emerald spore seas and moonlit shores. Saltstone islands rise from shimmering green depths.',
+      apps: [{ name: 'Aether Seas', url: '/aether-seas' }],
+      color: '#40a068',
+      glow: 'rgba(64, 160, 104, 0.3)',
+      px: 0.20,
+      py: 0.70,
+      hasOverworld: true
     }
   ];
 
