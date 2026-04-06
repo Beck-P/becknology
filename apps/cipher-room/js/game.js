@@ -145,7 +145,6 @@ const CipherGame = (function () {
       const el = document.querySelector(`.clue[data-number="${activeWord.number}"][data-direction="${activeWord.direction}"]`);
       if (el) {
         el.classList.add('active-clue');
-        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
       // Update active clue bar
       if (bar) {
