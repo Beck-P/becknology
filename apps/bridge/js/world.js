@@ -201,6 +201,45 @@ var BridgeWorld = (function () {
     BridgeState.transition('cockpit');
   }
 
+  function sailTo(destination, destinationName) {
+    if (!active) return;
+    BridgeControls.disable();
+
+    // Show sailing overlay
+    var sailOverlay = document.getElementById('landing-overlay');
+    sailOverlay.style.display = 'flex';
+    sailOverlay.style.flexDirection = 'column';
+    sailOverlay.style.alignItems = 'center';
+    sailOverlay.style.justifyContent = 'center';
+    sailOverlay.classList.add('active');
+    sailOverlay.style.opacity = '1';
+    sailOverlay.style.background = 'rgba(0, 0, 0, 0.85)';
+    sailOverlay.style.transition = 'opacity 1s';
+
+    sailOverlay.innerHTML =
+      '<div class="landing-text">SAILING...</div>' +
+      '<div class="landing-subtitle" style="margin-top:16px;">' + (destinationName || destination).toUpperCase() + '</div>';
+
+    // Load the destination zone
+    load(destination, function () {
+      // After 2s, fade out and show new zone
+      setTimeout(function () {
+        sailOverlay.style.opacity = '0';
+        setTimeout(function () {
+          sailOverlay.style.display = 'none';
+          sailOverlay.classList.remove('active');
+          // Re-show world with new zone data
+          if (overlay) {
+            overlay.style.display = 'none';
+            overlay.classList.remove('active');
+          }
+          show();
+          BridgeControls.enable();
+        }, 1000);
+      }, 1500);
+    });
+  }
+
   function update() {
     if (!active || !world) return;
 
@@ -331,6 +370,7 @@ var BridgeWorld = (function () {
     leave: leave,
     update: update,
     draw: draw,
+    sailTo: sailTo,
     registerTileset: registerTileset,
     registerBackground: registerBackground,
     getCamera: function () { return camera; },

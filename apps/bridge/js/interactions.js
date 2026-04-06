@@ -83,6 +83,10 @@ var BridgeInteractions = (function () {
       case 'password_gate':
         showPasswordDialog(inter);
         break;
+
+      case 'sail_to':
+        BridgeWorld.sailTo(inter.destination, inter.destinationName || inter.label);
+        break;
     }
   }
 
