@@ -13,6 +13,10 @@ var BridgeWorld = (function () {
   var active = false;
   var overlay = null;
 
+  // ---- Ambient Particles ----
+  var particles = [];
+  var PARTICLE_COUNT = 25;
+
   // ---- Tileset Registry ----
   // World modules register tilesets via registerTileset(name, { tileId: drawFn })
   // Each draw function signature: fn(ctx, x, y, ts)
@@ -31,6 +35,85 @@ var BridgeWorld = (function () {
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+  }
+
+  function initParticles() {
+    particles = [];
+    if (!world || !world.tileGlow) return;
+    var glowTiles = [];
+    for (var row = 0; row < world.height; row++) {
+      for (var col = 0; col < world.width; col++) {
+        var tid = world.tiles[row][col];
+        if (world.tileGlow[String(tid)]) {
+          glowTiles.push({ x: col, y: row, glow: world.tileGlow[String(tid)] });
+        }
+      }
+    }
+    if (glowTiles.length === 0) return;
+    for (var i = 0; i < PARTICLE_COUNT; i++) {
+      var src = glowTiles[Math.floor(Math.random() * glowTiles.length)];
+      particles.push(spawnParticle(src));
+    }
+  }
+
+  function spawnParticle(src) {
+    return {
+      x: src.x + (Math.random() - 0.5) * 3,
+      y: src.y + (Math.random() - 0.5) * 3,
+      vx: (Math.random() - 0.5) * 0.005,
+      vy: -Math.random() * 0.008 - 0.002,
+      life: Math.random(),
+      maxLife: 0.8 + Math.random() * 0.4,
+      r: src.glow.color[0],
+      g: src.glow.color[1],
+      b: src.glow.color[2],
+      srcX: src.x,
+      srcY: src.y
+    };
+  }
+
+  function updateParticles() {
+    if (!world || !world.tileGlow || particles.length === 0) return;
+    var glowTiles = [];
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life += 0.008;
+      var dx = p.x - p.srcX;
+      var dy = p.y - p.srcY;
+      if (p.life >= p.maxLife || (dx*dx + dy*dy) > 9) {
+        if (glowTiles.length === 0) {
+          for (var row = 0; row < world.height; row++) {
+            for (var col = 0; col < world.width; col++) {
+              var tid = world.tiles[row][col];
+              if (world.tileGlow[String(tid)]) {
+                glowTiles.push({ x: col, y: row, glow: world.tileGlow[String(tid)] });
+              }
+            }
+          }
+        }
+        if (glowTiles.length > 0) {
+          var src = glowTiles[Math.floor(Math.random() * glowTiles.length)];
+          particles[i] = spawnParticle(src);
+        }
+      }
+    }
+  }
+
+  function drawParticles(ctx, offX, offY, ts) {
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var alpha = p.life < 0.2
+        ? p.life / 0.2
+        : Math.max(0, 1 - (p.life - 0.2) / (p.maxLife - 0.2));
+      alpha *= 0.6;
+      if (alpha <= 0) continue;
+      var sx = offX + p.x * ts;
+      var sy = offY + p.y * ts;
+      ctx.fillStyle = 'rgba(' + p.r + ',' + p.g + ',' + p.b + ',' + alpha.toFixed(2) + ')';
+      ctx.fillRect(sx, sy, Math.max(1, ts * 0.06), Math.max(1, ts * 0.06));
+    }
   }
 
   function load(worldId, callback) {
@@ -74,6 +157,7 @@ var BridgeWorld = (function () {
     camera.x = sx;
     camera.y = sy;
     BridgeCharacter.init(sx, sy);
+    initParticles();
 
     // Enable controls
     BridgeControls.enable();
@@ -142,6 +226,8 @@ var BridgeWorld = (function () {
     if (typeof BridgeInteractions !== 'undefined') {
       BridgeInteractions.update(world, BridgeCharacter, BridgeControls);
     }
+
+    updateParticles();
   }
 
   function draw(ctx, w, h) {
@@ -149,6 +235,7 @@ var BridgeWorld = (function () {
 
     var ts = tileSize * scale;
     var tileset = TILESETS[world.tileset] || {};
+    var now = Date.now();
 
     // Viewport offset (camera centered on screen)
     var offX = w / 2 - camera.x * ts;
@@ -171,7 +258,7 @@ var BridgeWorld = (function () {
         var drawFn = tileset[tileId];
 
         if (drawFn) {
-          drawFn(ctx, tx, ty, Math.ceil(ts));
+          drawFn(ctx, tx, ty, Math.ceil(ts), now, col, row);
         } else {
           // Fallback to flat color
           var color = world.tileColors[String(tileId)];
@@ -208,6 +295,9 @@ var BridgeWorld = (function () {
         var ar = w * ag.radius;
         drawGlow(ctx, acx, acy, ar, ag.color[0], ag.color[1], ag.color[2], ag.alpha);
       }
+
+      // Ambient particles
+      drawParticles(ctx, offX, offY, ts);
 
       ctx.globalCompositeOperation = 'source-over';
     }
