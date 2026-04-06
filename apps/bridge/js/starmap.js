@@ -43,7 +43,7 @@ var BridgeStarmap = (function () {
       glow: 'rgba(92, 200, 208, 0.3)',
       px: 0.70,
       py: 0.30,
-      hasOverworld: false
+      hasOverworld: true
     }
   ];
 
