@@ -32,9 +32,9 @@
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,6,6,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,6,7,2,2,3,2,2,2,2,2,3,0,0,0],
-    [0,0,0,2,1,1,1,1,1,1,1,1,2,5,0,0],
+    [0,6,6,6,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,6,6,7,2,2,3,2,2,2,2,2,3,0,0,0],
+    [0,6,6,2,1,1,1,1,1,1,1,1,2,5,0,0],
     [0,0,0,2,1,1,1,8,1,1,8,1,2,5,4,0],
     [0,0,0,2,1,1,8,1,1,8,1,1,2,5,0,0],
     [0,0,0,2,1,1,1,1,1,1,1,1,2,5,0,0],
@@ -69,9 +69,9 @@
   "interactions": [
     { "x": 12, "y": 6, "type": "app", "target": "/genart", "label": "THE SINGULARITY", "prompt": "GAZE INTO THE VOID" },
     { "x": 12, "y": 7, "type": "app", "target": "/genart", "label": "THE SINGULARITY", "prompt": "GAZE INTO THE VOID" },
+    { "x": 3, "y": 4, "type": "leave_world", "label": "SHIP", "prompt": "RETURN TO COCKPIT" },
     { "x": 3, "y": 5, "type": "leave_world", "label": "SHIP", "prompt": "RETURN TO COCKPIT" },
     { "x": 3, "y": 6, "type": "leave_world", "label": "SHIP", "prompt": "RETURN TO COCKPIT" },
-    { "x": 3, "y": 7, "type": "leave_world", "label": "SHIP", "prompt": "RETURN TO COCKPIT" },
     { "x": 6, "y": 9, "type": "dialog", "label": "???", "prompt": "PRESS E TO READ", "dialog": "FAINT MARKINGS ON THE STONE...\\n\\n\"THE DEEPER YOU LOOK\\nTHE MORE IT LOOKS BACK\"" }
   ]
 }
