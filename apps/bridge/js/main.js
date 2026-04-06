@@ -16,9 +16,31 @@ var Bridge = (function () {
     BridgeStarfield.init(canvas);
     BridgeState.onChange(onStateChange);
 
-    // Always start with the intro (ship flythrough)
-    // Cached pilots skip identity after the zoom — handled in intro.js
-    BridgeState.transition('intro');
+    // Check if returning from an app with a saved world position
+    var savedWorldPos = BridgeState.loadWorldPos();
+    if (savedWorldPos && BridgeState.getCachedPilotName()) {
+      var cached = BridgeState.getCachedPilotName();
+      BridgeDB.lookupPilot(cached).then(function (result) {
+        if (result && !result.error) {
+          BridgeState.setPilot(result);
+          BridgeDB.updateLastSeen(result.id);
+          // Load world and restore position
+          BridgeWorld.load(savedWorldPos.worldId, function () {
+            BridgeState.transition('world', {
+              worldId: savedWorldPos.worldId,
+              spawn: { x: savedWorldPos.x, y: savedWorldPos.y }
+            });
+          });
+        } else {
+          BridgeState.clearPilot();
+          BridgeState.transition('intro');
+        }
+      });
+    } else {
+      // Normal start — intro (ship flythrough)
+      // Cached pilots skip identity after the zoom — handled in intro.js
+      BridgeState.transition('intro');
+    }
 
     requestAnimationFrame(loop);
   }
@@ -37,7 +59,12 @@ var Bridge = (function () {
     ctx.clearRect(0, 0, w, h);
 
     var state = BridgeState.getState();
-    if (state !== 'redirect') {
+
+    // Background: world tiles for world state, starfield for everything else
+    if (state === 'world' && typeof BridgeWorld !== 'undefined') {
+      BridgeWorld.update();
+      BridgeWorld.draw(ctx, w, h);
+    } else if (state !== 'redirect') {
       BridgeStarfield.draw(ctx, w, h);
     }
 
@@ -76,6 +103,12 @@ var Bridge = (function () {
         break;
       case 'travel':
         if (typeof BridgeHyperspace !== 'undefined') BridgeHyperspace.start(context);
+        break;
+      case 'landing':
+        if (typeof BridgeLanding !== 'undefined') BridgeLanding.show(context);
+        break;
+      case 'world':
+        if (typeof BridgeWorld !== 'undefined') BridgeWorld.show(context && context.spawn);
         break;
       case 'redirect':
         window.location.href = context.url;

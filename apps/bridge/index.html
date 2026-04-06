@@ -18,14 +18,16 @@
   <div id="cockpit-overlay" class="overlay" style="display:none;"></div>
   <div id="starmap-overlay" class="overlay" style="display:none;"></div>
   <div id="selection-overlay" class="overlay" style="display:none;"></div>
+  <div id="world-overlay" class="overlay" style="display:none;"></div>
+  <div id="landing-overlay" class="overlay" style="display:none;"></div>
 
-  <!-- Mobile d-pad (Phase 1: rendered but non-functional) -->
+  <!-- Mobile d-pad -->
   <div id="dpad" class="dpad" style="display:none;">
-    <button class="dpad-btn dpad-up" disabled>&#9650;</button>
-    <button class="dpad-btn dpad-left" disabled>&#9664;</button>
-    <button class="dpad-btn dpad-right" disabled>&#9654;</button>
-    <button class="dpad-btn dpad-down" disabled>&#9660;</button>
-    <button class="dpad-btn dpad-action" disabled>A</button>
+    <button class="dpad-btn dpad-up">&#9650;</button>
+    <button class="dpad-btn dpad-left">&#9664;</button>
+    <button class="dpad-btn dpad-right">&#9654;</button>
+    <button class="dpad-btn dpad-down">&#9660;</button>
+    <button class="dpad-btn dpad-action">A</button>
   </div>
 
   <!-- Supabase CDN -->
@@ -39,6 +41,11 @@
   <script src="/bridge/js/identity.js"></script>
   <script src="/bridge/js/cockpit.js"></script>
   <script src="/bridge/js/starmap.js"></script>
+  <script src="/bridge/js/controls.js"></script>
+  <script src="/bridge/js/character.js"></script>
+  <script src="/bridge/js/world.js"></script>
+  <script src="/bridge/js/interactions.js"></script>
+  <script src="/bridge/js/landing.js"></script>
   <script src="/bridge/js/hyperspace.js"></script>
   <script src="/bridge/js/main.js"></script>
 </body>

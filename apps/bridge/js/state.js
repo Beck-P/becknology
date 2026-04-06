@@ -13,6 +13,7 @@ var BridgeState = (function () {
 
   var current = 'intro';
   var pilot = null;       // { id, name, suit_color }
+  var worldPos = null;    // { worldId, x, y, facing }
   var listeners = [];     // onChange callbacks
 
   function getState() { return current; }
@@ -64,6 +65,29 @@ var BridgeState = (function () {
     }
   }
 
+  function setWorldPos(data) {
+    worldPos = data;
+    if (data) {
+      localStorage.setItem('bridge_world_pos', JSON.stringify(data));
+    }
+  }
+
+  function getWorldPos() { return worldPos; }
+
+  function clearWorldPos() {
+    worldPos = null;
+    localStorage.removeItem('bridge_world_pos');
+  }
+
+  function loadWorldPos() {
+    try {
+      var raw = localStorage.getItem('bridge_world_pos');
+      if (!raw) return null;
+      worldPos = JSON.parse(raw);
+      return worldPos;
+    } catch (e) { return null; }
+  }
+
   return {
     getState: getState,
     getPilot: getPilot,
@@ -72,6 +96,10 @@ var BridgeState = (function () {
     getCachedPilotName: getCachedPilotName,
     transition: transition,
     onChange: onChange,
-    loadSaved: loadSaved
+    loadSaved: loadSaved,
+    setWorldPos: setWorldPos,
+    getWorldPos: getWorldPos,
+    clearWorldPos: clearWorldPos,
+    loadWorldPos: loadWorldPos
   };
 })();

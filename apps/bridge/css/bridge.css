@@ -446,7 +446,68 @@ body::after {
 
 .selection-back:hover { color: rgba(160, 120, 220, 0.5); }
 
-/* ---- D-Pad (rendered, non-functional in Phase 1) ---- */
+/* ---- World Overlay ---- */
+.world-hud {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.world-back {
+  position: fixed;
+  top: 12px;
+  left: 16px;
+  font-size: 11px;
+  color: #444;
+  cursor: pointer;
+  z-index: 20;
+  text-decoration: none;
+  pointer-events: auto;
+  transition: color 0.2s;
+}
+.world-back:hover { color: rgba(160, 120, 220, 0.5); }
+
+/* ---- Interaction Prompt ---- */
+.interact-prompt {
+  position: fixed;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: clamp(11px, 1.4vw, 15px);
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: rgba(40, 220, 80, 0.9);
+  text-shadow: 0 0 8px rgba(40, 220, 80, 0.4);
+  animation: blink 1.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 20;
+  display: none;
+}
+
+.interact-prompt.visible { display: block; }
+
+/* ---- Landing Screen ---- */
+.landing-text {
+  font-family: 'Courier New', Consolas, monospace;
+  font-size: clamp(14px, 2.5vw, 24px);
+  letter-spacing: 6px;
+  color: #ccc;
+  text-shadow: 0 0 20px rgba(160, 120, 220, 0.2);
+  text-align: center;
+}
+
+.landing-subtitle {
+  font-size: clamp(10px, 1.2vw, 14px);
+  letter-spacing: 4px;
+  color: #555;
+  margin-top: 16px;
+  text-align: center;
+}
+
+/* ---- D-Pad ---- */
 .dpad {
   position: fixed;
   bottom: 24px;
@@ -476,6 +537,11 @@ body::after {
 .dpad-left { grid-area: left; }
 .dpad-right { grid-area: right; }
 .dpad-down { grid-area: down; }
+
+.dpad-btn:active {
+  background: rgba(60, 60, 80, 0.8);
+  color: #888;
+}
 
 .dpad-action {
   position: fixed;
@@ -545,4 +611,7 @@ body::after {
 
   /* Intro prompt */
   .intro-prompt { bottom: 12%; font-size: 14px; }
+
+  /* Interaction prompt */
+  .interact-prompt { bottom: 28%; font-size: 12px; }
 }

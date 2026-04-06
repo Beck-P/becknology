@@ -17,7 +17,8 @@ var BridgeStarmap = (function () {
       color: '#d06090',
       glow: 'rgba(208, 96, 144, 0.3)',
       px: 0.25,
-      py: 0.35
+      py: 0.35,
+      hasOverworld: true
     },
     {
       id: 'singularity',
@@ -27,7 +28,8 @@ var BridgeStarmap = (function () {
       color: '#a078dc',
       glow: 'rgba(160, 120, 220, 0.3)',
       px: 0.45,
-      py: 0.55
+      py: 0.55,
+      hasOverworld: false
     },
     {
       id: 'enigma',
@@ -40,7 +42,8 @@ var BridgeStarmap = (function () {
       color: '#5cc8d0',
       glow: 'rgba(92, 200, 208, 0.3)',
       px: 0.70,
-      py: 0.30
+      py: 0.30,
+      hasOverworld: false
     }
   ];
 
