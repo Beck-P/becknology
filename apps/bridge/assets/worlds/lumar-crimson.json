@@ -636,5 +636,10 @@
       "prompt": "PRESS E TO READ",
       "dialog": "BY ORDER OF XISIS:\\n\\nTRESPASSERS WILL BE\\nCONSUMED. SUPPLICANTS\\nMAY REQUEST AN AUDIENCE.\\n\\nBRING AN OFFERING\\nOF RARE SPORES."
     }
+  ],
+  "moonColor": [
+    160,
+    50,
+    50
   ]
 }

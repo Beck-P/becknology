@@ -636,5 +636,10 @@
       "prompt": "PRESS E TO EXAMINE",
       "dialog": "A CLUSTER OF ROSEITE CRYSTAL.\\nSOFT PINK. ALMOST BEAUTIFUL.\\n\\nUNTIL YOU REMEMBER\\nWHAT MADE IT GROW."
     }
+  ],
+  "moonColor": [
+    160,
+    70,
+    120
   ]
 }

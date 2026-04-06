@@ -367,10 +367,19 @@
 
   var bgStars = [];
   var bgInited = false;
+  var bgId = null;
 
   function drawLumarBackground(ctx, w, h, time) {
+    // Reset stars if world changed (sailing between zones)
+    var worldData = BridgeWorld.getWorld();
+    if (worldData && worldData._bgId !== bgId) {
+      bgInited = false;
+      bgId = worldData.name;
+      worldData._bgId = bgId;
+    }
     if (!bgInited) {
       bgInited = true;
+      bgStars = [];
       for (var i = 0; i < 40; i++) {
         bgStars.push({
           x: Math.random(), y: Math.random() * 0.5,
@@ -380,44 +389,46 @@
       }
     }
 
-    // Dark night sky with green tint
-    ctx.fillStyle = '#060e0a';
+    // Get moon color from world data (changes per zone)
+    var worldData = BridgeWorld.getWorld();
+    var mc = (worldData && worldData.moonColor) || [60, 140, 80];
+    var mr = mc[0], mg = mc[1], mb = mc[2];
+
+    // Dark night sky
+    ctx.fillStyle = 'rgb(' + Math.floor(mr/10) + ',' + Math.floor(mg/10) + ',' + Math.floor(mb/10) + ')';
     ctx.fillRect(0, 0, w, h);
 
-    // Green moon glow — oppressively close, huge radius
+    // Moon glow — oppressively close, huge radius
     var moonX = w * 0.7;
     var moonY = h * 0.18;
     var moonR = w * 0.15;
     var moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.5, moonX, moonY, w * 0.6);
-    moonGlow.addColorStop(0, 'rgba(60, 140, 80, 0.18)');
-    moonGlow.addColorStop(0.3, 'rgba(40, 100, 60, 0.10)');
-    moonGlow.addColorStop(0.7, 'rgba(30, 80, 50, 0.04)');
+    moonGlow.addColorStop(0, 'rgba(' + mr + ',' + mg + ',' + mb + ', 0.18)');
+    moonGlow.addColorStop(0.3, 'rgba(' + Math.floor(mr*0.7) + ',' + Math.floor(mg*0.7) + ',' + Math.floor(mb*0.7) + ', 0.10)');
+    moonGlow.addColorStop(0.7, 'rgba(' + Math.floor(mr*0.5) + ',' + Math.floor(mg*0.5) + ',' + Math.floor(mb*0.5) + ', 0.04)');
     moonGlow.addColorStop(1, 'transparent');
     ctx.fillStyle = moonGlow;
     ctx.fillRect(0, 0, w, h);
 
-    // Moon disc — massive, ~15% of screen width
+    // Moon disc — massive
     var pulse = 0.85 + Math.sin(time / 3000) * 0.15;
     ctx.globalAlpha = pulse;
-    // Outer disc
-    ctx.fillStyle = '#2a6040';
+    ctx.fillStyle = 'rgb(' + Math.floor(mr*0.45) + ',' + Math.floor(mg*0.45) + ',' + Math.floor(mb*0.45) + ')';
     ctx.beginPath();
     ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
     ctx.fill();
-    // Inner brighter disc
-    ctx.fillStyle = '#3a8050';
+    ctx.fillStyle = 'rgb(' + Math.floor(mr*0.6) + ',' + Math.floor(mg*0.6) + ',' + Math.floor(mb*0.6) + ')';
     ctx.beginPath();
     ctx.arc(moonX, moonY, moonR * 0.85, 0, Math.PI * 2);
     ctx.fill();
-    // Brightest center
-    ctx.fillStyle = '#50a068';
+    ctx.fillStyle = 'rgb(' + Math.floor(mr*0.8) + ',' + Math.floor(mg*0.8) + ',' + Math.floor(mb*0.8) + ')';
     ctx.beginPath();
     ctx.arc(moonX, moonY, moonR * 0.6, 0, Math.PI * 2);
     ctx.fill();
 
     // Surface detail — darker patches/craters
     ctx.globalAlpha = pulse * 0.4;
-    ctx.fillStyle = '#1e4830';
+    ctx.fillStyle = 'rgb(' + Math.floor(mr*0.3) + ',' + Math.floor(mg*0.3) + ',' + Math.floor(mb*0.3) + ')';
     ctx.beginPath();
     ctx.arc(moonX - moonR * 0.3, moonY - moonR * 0.15, moonR * 0.18, 0, Math.PI * 2);
     ctx.fill();
@@ -443,18 +454,16 @@
       ctx.fillRect(s.x * w, s.y * h, s.size, s.size);
     }
 
-    // Lunagree — faint column of green particles falling from the moon
+    // Lunagree — faint column of particles falling from the moon
     var lunX = moonX;
     var lunW = moonR * 0.6;
-    // Vertical green band
     var lunGrad = ctx.createLinearGradient(0, moonY + moonR, 0, h);
-    lunGrad.addColorStop(0, 'rgba(50, 120, 70, 0.06)');
-    lunGrad.addColorStop(0.5, 'rgba(40, 100, 60, 0.04)');
-    lunGrad.addColorStop(1, 'rgba(30, 80, 50, 0.02)');
+    lunGrad.addColorStop(0, 'rgba(' + Math.floor(mr*0.8) + ',' + Math.floor(mg*0.8) + ',' + Math.floor(mb*0.8) + ', 0.06)');
+    lunGrad.addColorStop(0.5, 'rgba(' + Math.floor(mr*0.7) + ',' + Math.floor(mg*0.7) + ',' + Math.floor(mb*0.7) + ', 0.04)');
+    lunGrad.addColorStop(1, 'rgba(' + Math.floor(mr*0.5) + ',' + Math.floor(mg*0.5) + ',' + Math.floor(mb*0.5) + ', 0.02)');
     ctx.fillStyle = lunGrad;
     ctx.fillRect(lunX - lunW / 2, moonY + moonR, lunW, h - moonY - moonR);
-    // Tiny falling particles in the lunagree column
-    ctx.fillStyle = 'rgba(80, 180, 100, 0.15)';
+    ctx.fillStyle = 'rgba(' + Math.min(255, mr+20) + ',' + Math.min(255, mg+40) + ',' + Math.min(255, mb+20) + ', 0.15)';
     for (var p = 0; p < 8; p++) {
       var seed = p * 37 + 11;
       var px = lunX - lunW * 0.4 + ((seed * 7) % 100) / 100 * lunW * 0.8;
@@ -464,12 +473,12 @@
       ctx.fillRect(px, py, pSize, pSize);
     }
 
-    // Emerald sea haze at bottom — stronger green fog
+    // Sea haze at bottom — tinted to moon color
     var haze = ctx.createLinearGradient(0, h * 0.5, 0, h);
     haze.addColorStop(0, 'transparent');
-    haze.addColorStop(0.4, 'rgba(30, 80, 50, 0.04)');
-    haze.addColorStop(0.7, 'rgba(25, 70, 45, 0.10)');
-    haze.addColorStop(1, 'rgba(20, 60, 40, 0.18)');
+    haze.addColorStop(0.4, 'rgba(' + Math.floor(mr*0.5) + ',' + Math.floor(mg*0.5) + ',' + Math.floor(mb*0.5) + ', 0.04)');
+    haze.addColorStop(0.7, 'rgba(' + Math.floor(mr*0.4) + ',' + Math.floor(mg*0.4) + ',' + Math.floor(mb*0.4) + ', 0.10)');
+    haze.addColorStop(1, 'rgba(' + Math.floor(mr*0.3) + ',' + Math.floor(mg*0.3) + ',' + Math.floor(mb*0.3) + ', 0.18)');
     ctx.fillStyle = haze;
     ctx.fillRect(0, 0, w, h);
   }

@@ -707,5 +707,10 @@
       "prompt": "PRESS E TO EXAMINE",
       "dialog": "SOMETHING DARK AND SLICK\\nSHIFTS IN THE SHADOWS.\\n\\nMIDNIGHT ESSENCE.\\nIT MIMICS SHAPES.\\n\\nDON'T LOOK AT IT\\nTOO LONG."
     }
+  ],
+  "moonColor": [
+    40,
+    30,
+    80
   ]
 }

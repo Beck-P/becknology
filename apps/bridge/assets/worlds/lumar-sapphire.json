@@ -644,5 +644,10 @@
       "prompt": "PRESS E TO BROWSE",
       "dialog": "RARE IMPORTS:\\n\\nVERDANT VINE ROPE..12 SILVER\\nROSEITE PATCHES....20 SILVER\\nCRIMSON BLADES.....50 SILVER\\n\\n\"QUALITY GUARANTEED.\\nSURVIVAL NOT GUARANTEED.\""
     }
+  ],
+  "moonColor": [
+    50,
+    100,
+    180
   ]
 }
