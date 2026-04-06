@@ -1,33 +1,33 @@
 /**
  * BridgeCharacter — Player character with grid-based movement.
  *
- * Moves tile-to-tile with smooth interpolation. Placeholder sprite
- * (colored square with direction dot) — swap for PNG sprite sheet later.
+ * ¾ view procedural sprite with 3-frame walk cycle + body bob.
+ * Suit color from pilot data. Swap draw() internals for PNG sprite sheet later.
  *
  * Usage:
  *   BridgeCharacter.init(spawnX, spawnY)
- *   BridgeCharacter.update(collisionGrid)   — call each frame
+ *   BridgeCharacter.update()   — call each frame
  *   BridgeCharacter.draw(ctx, camX, camY, tileSize, scale)
  */
 var BridgeCharacter = (function () {
   var player = {
-    x: 0, y: 0,           // current tile position
-    targetX: 0, targetY: 0, // destination tile
-    moveProgress: 1,       // 0→1 interpolation (1 = arrived)
-    facing: 'down',        // up/down/left/right
+    x: 0, y: 0,
+    targetX: 0, targetY: 0,
+    moveProgress: 1,
+    facing: 'down',
     walking: false,
-    animFrame: 0,
+    animFrame: 0,     // 0-3: cycle is 0→1→0→2 (stand/left/stand/right)
     animTimer: 0,
-    moveSpeed: 0.12,       // progress per frame
+    moveSpeed: 0.12,
   };
 
   var SUIT_COLORS = {
-    purple: '#a078dc',
-    cyan:   '#5cc8d0',
-    red:    '#d06060',
-    green:  '#60b060',
-    gold:   '#c8a840',
-    white:  '#d0d0d0',
+    purple: { base: '#a078dc', light: '#c0a8ee', dark: '#6048a0' },
+    cyan:   { base: '#5cc8d0', light: '#8ce0e8', dark: '#388890' },
+    red:    { base: '#d06060', light: '#e89090', dark: '#903838' },
+    green:  { base: '#60b060', light: '#90d090', dark: '#387838' },
+    gold:   { base: '#c8a840', light: '#e0c870', dark: '#887028' },
+    white:  { base: '#d0d0d0', light: '#f0f0f0', dark: '#909090' },
   };
 
   function init(spawnX, spawnY) {
@@ -103,40 +103,136 @@ var BridgeCharacter = (function () {
     }
   }
 
-  /** Draw the character. Placeholder: colored square + direction dot. */
+  /** Helper: fill a "pixel" rectangle scaled to tile size. */
+  function px(ctx, sx, sy, x, y, w, h, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(sx + x, sy + y, w, h);
+  }
+
+  /** Get walk frame: 3-frame cycle mapped from animFrame 0-3 → stand/left/stand/right */
+  function getWalkFrame() {
+    // 0→stand, 1→left step, 2→stand, 3→right step
+    var f = player.animFrame;
+    if (f === 0 || f === 2) return 0;
+    if (f === 1) return 1;
+    return 2;
+  }
+
+  /** Draw the character — ¾ view procedural sprite with walk animation. */
   function draw(ctx, camX, camY, tileSize, scale) {
     var pos = getRenderPos();
     var dpr = window.devicePixelRatio || 1;
-    var screenX = (pos.x - camX) * tileSize * scale + ctx.canvas.width / (2 * dpr);
-    var screenY = (pos.y - camY) * tileSize * scale + ctx.canvas.height / (2 * dpr);
-    var size = tileSize * scale;
+    var sx = (pos.x - camX) * tileSize * scale + ctx.canvas.width / (2 * dpr);
+    var sy = (pos.y - camY) * tileSize * scale + ctx.canvas.height / (2 * dpr);
+    var ts = tileSize * scale;
 
-    // Get suit color from pilot data
     var pilot = BridgeState.getPilot();
-    var color = SUIT_COLORS[(pilot && pilot.suit_color) || 'purple'];
+    var colors = SUIT_COLORS[(pilot && pilot.suit_color) || 'purple'];
+    var base = colors.base;
+    var light = colors.light;
+    var dark = colors.dark;
+    var outline = '#0a0a16';
 
-    // Body
-    ctx.fillStyle = color;
-    ctx.fillRect(screenX + size * 0.1, screenY + size * 0.1, size * 0.8, size * 0.8);
+    // Unit size (1 game pixel at current scale)
+    var u = ts / 16;
 
-    // Outline
-    ctx.strokeStyle = '#0a0a16';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(screenX + size * 0.1, screenY + size * 0.1, size * 0.8, size * 0.8);
+    var wf = getWalkFrame();
+    // Body bob: shift up 1 unit on step frames
+    var bob = (wf !== 0 && player.walking) ? -u : 0;
 
-    // Direction indicator (small dot showing which way we're facing)
-    ctx.fillStyle = '#fff';
-    var dotX = screenX + size * 0.5;
-    var dotY = screenY + size * 0.5;
-    var dotOff = size * 0.25;
-    if (player.facing === 'up') dotY -= dotOff;
-    else if (player.facing === 'down') dotY += dotOff;
-    else if (player.facing === 'left') dotX -= dotOff;
-    else if (player.facing === 'right') dotX += dotOff;
+    if (player.facing === 'down') {
+      // Head
+      px(ctx, sx, sy, 4*u, (1*u)+bob, 8*u, 5*u, base);
+      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, light);  // hair highlight
+      // Eyes
+      px(ctx, sx, sy, 5*u, (3*u)+bob, 2*u, 2*u, outline);
+      px(ctx, sx, sy, 9*u, (3*u)+bob, 2*u, 2*u, outline);
+      // Body
+      px(ctx, sx, sy, 3*u, (6*u)+bob, 10*u, 5*u, base);
+      px(ctx, sx, sy, 3*u, (9*u)+bob, 10*u, u, dark);  // belt
+      // Legs
+      if (wf === 0) {
+        px(ctx, sx, sy, 4*u, (11*u)+bob, 3*u, 4*u, base);
+        px(ctx, sx, sy, 9*u, (11*u)+bob, 3*u, 4*u, base);
+      } else if (wf === 1) {
+        px(ctx, sx, sy, 3*u, (11*u)+bob, 3*u, 4*u, base);
+        px(ctx, sx, sy, 10*u, (11*u)+bob, 3*u, 3*u, base);
+      } else {
+        px(ctx, sx, sy, 4*u, (11*u)+bob, 3*u, 3*u, base);
+        px(ctx, sx, sy, 10*u, (11*u)+bob, 3*u, 4*u, base);
+      }
+      // Feet
+      px(ctx, sx, sy, 3*u, 14*u, 4*u, u, outline);
+      px(ctx, sx, sy, 9*u, 14*u, 4*u, u, outline);
 
-    ctx.beginPath();
-    ctx.arc(dotX, dotY, size * 0.1, 0, Math.PI * 2);
-    ctx.fill();
+    } else if (player.facing === 'up') {
+      // Head (back view — no eyes, more hair)
+      px(ctx, sx, sy, 4*u, (1*u)+bob, 8*u, 5*u, dark);
+      px(ctx, sx, sy, 4*u, (1*u)+bob, 8*u, 2*u, base); // hair back
+      // Body
+      px(ctx, sx, sy, 3*u, (6*u)+bob, 10*u, 5*u, base);
+      px(ctx, sx, sy, 3*u, (6*u)+bob, 10*u, u, dark);  // collar
+      // Legs
+      if (wf === 0) {
+        px(ctx, sx, sy, 4*u, (11*u)+bob, 3*u, 4*u, base);
+        px(ctx, sx, sy, 9*u, (11*u)+bob, 3*u, 4*u, base);
+      } else if (wf === 1) {
+        px(ctx, sx, sy, 3*u, (11*u)+bob, 3*u, 4*u, base);
+        px(ctx, sx, sy, 10*u, (11*u)+bob, 3*u, 3*u, base);
+      } else {
+        px(ctx, sx, sy, 4*u, (11*u)+bob, 3*u, 3*u, base);
+        px(ctx, sx, sy, 10*u, (11*u)+bob, 3*u, 4*u, base);
+      }
+      // Feet
+      px(ctx, sx, sy, 3*u, 14*u, 4*u, u, outline);
+      px(ctx, sx, sy, 9*u, 14*u, 4*u, u, outline);
+
+    } else if (player.facing === 'left') {
+      // Head (profile — narrower, one eye)
+      px(ctx, sx, sy, 4*u, (1*u)+bob, 7*u, 5*u, base);
+      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, light);
+      px(ctx, sx, sy, 5*u, (3*u)+bob, 2*u, 2*u, outline); // eye
+      // Body (narrower)
+      px(ctx, sx, sy, 4*u, (6*u)+bob, 8*u, 5*u, base);
+      px(ctx, sx, sy, 4*u, (9*u)+bob, 8*u, u, dark);
+      // Legs
+      if (wf === 0) {
+        px(ctx, sx, sy, 5*u, (11*u)+bob, 3*u, 4*u, base);
+        px(ctx, sx, sy, 8*u, (11*u)+bob, 3*u, 4*u, dark);
+      } else if (wf === 1) {
+        px(ctx, sx, sy, 4*u, (11*u)+bob, 3*u, 4*u, base);
+        px(ctx, sx, sy, 9*u, (11*u)+bob, 3*u, 3*u, dark);
+      } else {
+        px(ctx, sx, sy, 5*u, (11*u)+bob, 3*u, 3*u, base);
+        px(ctx, sx, sy, 8*u, (11*u)+bob, 3*u, 4*u, dark);
+      }
+      // Feet
+      px(ctx, sx, sy, 4*u, 14*u, 4*u, u, outline);
+      px(ctx, sx, sy, 8*u, 14*u, 3*u, u, outline);
+
+    } else { // right
+      // Head (profile — mirrored)
+      px(ctx, sx, sy, 5*u, (1*u)+bob, 7*u, 5*u, base);
+      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, light);
+      px(ctx, sx, sy, 9*u, (3*u)+bob, 2*u, 2*u, outline); // eye
+      // Body
+      px(ctx, sx, sy, 4*u, (6*u)+bob, 8*u, 5*u, base);
+      px(ctx, sx, sy, 4*u, (9*u)+bob, 8*u, u, dark);
+      // Legs
+      if (wf === 0) {
+        px(ctx, sx, sy, 5*u, (11*u)+bob, 3*u, 4*u, dark);
+        px(ctx, sx, sy, 8*u, (11*u)+bob, 3*u, 4*u, base);
+      } else if (wf === 1) {
+        px(ctx, sx, sy, 4*u, (11*u)+bob, 3*u, 3*u, dark);
+        px(ctx, sx, sy, 9*u, (11*u)+bob, 3*u, 4*u, base);
+      } else {
+        px(ctx, sx, sy, 5*u, (11*u)+bob, 3*u, 4*u, dark);
+        px(ctx, sx, sy, 8*u, (11*u)+bob, 3*u, 3*u, base);
+      }
+      // Feet
+      px(ctx, sx, sy, 4*u, 14*u, 3*u, u, outline);
+      px(ctx, sx, sy, 8*u, 14*u, 4*u, u, outline);
+    }
   }
 
   return {

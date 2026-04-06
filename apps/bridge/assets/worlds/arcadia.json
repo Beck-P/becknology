@@ -81,6 +81,13 @@
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
   ],
+  "tileGlow": {
+    "5": { "color": [208, 96, 144], "radius": 1.5, "alpha": 0.16 },
+    "6": { "color": [64, 176, 96], "radius": 1.0, "alpha": 0.10 },
+    "8": { "color": [192, 64, 208], "radius": 2.0, "alpha": 0.30 },
+    "9": { "color": [56, 85, 160], "radius": 1.5, "alpha": 0.16 }
+  },
+  "ambientGlow": { "color": [160, 64, 192], "alpha": 0.06, "radius": 0.4 },
   "interactions": [
     { "x": 12, "y": 13, "type": "app", "target": "/runouts", "label": "RUNOUTS", "prompt": "PRESS E TO PLAY" },
     { "x": 16, "y": 13, "type": "app", "target": "/runouts", "label": "RUNOUTS", "prompt": "PRESS E TO PLAY" },
