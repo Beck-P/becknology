@@ -113,7 +113,7 @@
       0,
       14,
       14,
-      4,
+      3,
       20,
       7,
       7,
@@ -467,7 +467,7 @@
       1,
       1,
       1,
-      1,
+      0,
       1,
       1,
       1,
@@ -819,13 +819,6 @@
       "prompt": "RETURN TO COCKPIT"
     },
     {
-      "x": 2,
-      "y": 1,
-      "type": "leave_world",
-      "label": "SHIP",
-      "prompt": "RETURN TO COCKPIT"
-    },
-    {
       "x": 10,
       "y": 12,
       "type": "password_gate",
@@ -837,7 +830,7 @@
       "failMessage": "WRONG CODE. STEP BACK."
     },
     {
-      "x": 1,
+      "x": 2,
       "y": 6,
       "type": "sail_to",
       "destination": "lumar-rose",
@@ -846,7 +839,7 @@
       "prompt": "SAIL TO ROSE COVE"
     },
     {
-      "x": 18,
+      "x": 17,
       "y": 6,
       "type": "sail_to",
       "destination": "lumar-crimson",
@@ -855,7 +848,7 @@
       "prompt": "SAIL TO CRIMSON REACH"
     },
     {
-      "x": 6,
+      "x": 7,
       "y": 1,
       "type": "sail_to",
       "destination": "lumar-sapphire",
@@ -864,7 +857,7 @@
       "prompt": "SAIL TO SAPPHIRE PORT"
     },
     {
-      "x": 13,
+      "x": 12,
       "y": 1,
       "type": "sail_to",
       "destination": "lumar-midnight",
