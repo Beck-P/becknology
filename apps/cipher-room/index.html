@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Cipher Room</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/cipher-room/css/style.css">
 </head>
 <body>
@@ -25,7 +22,7 @@
     </div>
 
     <div id="reg-new" style="display:none;">
-      <p style="font-size:11px;color:#c8b88860;margin-bottom:12px;">Choose a codename, Agent.</p>
+      <p style="font-size:11px;color:#666;margin-bottom:12px;">Choose a codename, Agent.</p>
       <input type="text" id="new-codename" class="input-field" placeholder="ENTER CODENAME" maxlength="20" autocomplete="off">
       <div id="new-error" class="error-msg" style="display:none;"></div>
       <button class="btn primary" onclick="CipherHub.registerNew()">REGISTER</button>
@@ -33,7 +30,7 @@
     </div>
 
     <div id="reg-returning" style="display:none;">
-      <p style="font-size:11px;color:#c8b88860;margin-bottom:12px;">Enter your codename to resume your service record.</p>
+      <p style="font-size:11px;color:#666;margin-bottom:12px;">Enter your codename to resume your service record.</p>
       <input type="text" id="return-codename" class="input-field" placeholder="ENTER CODENAME" maxlength="20" autocomplete="off">
       <div id="return-error" class="error-msg" style="display:none;"></div>
       <button class="btn primary" onclick="CipherHub.loginReturning()">CONFIRM IDENTITY</button>
@@ -56,7 +53,7 @@
 
     <div class="divider"></div>
 
-    <h2 style="text-align:center;margin-bottom:16px;font-size:10px;letter-spacing:3px;color:#c8b88850;">INCOMING DISPATCHES</h2>
+    <h2 style="text-align:center;margin-bottom:16px;font-size:10px;letter-spacing:3px;color:#666;">INCOMING DISPATCHES</h2>
 
     <div class="dispatches">
       <a href="/cipher-room/play.html?type=flash" class="dispatch-card" id="card-flash">
@@ -75,7 +72,7 @@
 
     <!-- Service Record -->
     <div class="service-record">
-      <h2 style="font-size:10px;letter-spacing:3px;color:#c8b88850;">SERVICE RECORD</h2>
+      <h2 style="font-size:10px;letter-spacing:3px;color:#666;">SERVICE RECORD</h2>
       <div class="stat-grid">
         <div class="stat-item">
           <span class="stat-value" id="stat-total">0</span>
