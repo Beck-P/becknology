@@ -4561,7 +4561,7 @@ export default function ChoreChaosApp() {
     if (nextStep >= config.totalSteps) {
       setPlaybackDone(true);
     }
-    broadcastEvent({ type: 'step', step: nextStep, done: nextStep >= config.totalSteps });
+    broadcastEvent({ type: 'step', step: nextStep, done: nextStep >= config.totalSteps, result });
   }
 
   function revealAll() {
@@ -4569,7 +4569,7 @@ export default function ChoreChaosApp() {
     const config = getPlaybackConfig(result);
     setPlaybackStep(config.totalSteps);
     setPlaybackDone(true);
-    broadcastEvent({ type: 'step', step: config.totalSteps, done: true });
+    broadcastEvent({ type: 'step', step: config.totalSteps, done: true, result });
   }
 
   function exitGame() {
@@ -4613,13 +4613,13 @@ export default function ChoreChaosApp() {
       if (tiedPlayers.length > 1 && seriesRound >= seriesConfig.totalRounds) {
         // TIE at the top — go to sudden death instead of declaring winner
         setSeriesTied(tiedPlayers);
-        broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: false, tied: tiedPlayers });
+        broadcastEvent({ type: 'series_update', config: seriesConfig, scores: newScores, round: seriesRound, history: newHistory, complete: false, tied: tiedPlayers });
       } else {
         setSeriesComplete(true);
-        broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: true });
+        broadcastEvent({ type: 'series_update', config: seriesConfig, scores: newScores, round: seriesRound, history: newHistory, complete: true });
       }
     } else {
-      broadcastEvent({ type: 'series_update', scores: newScores, round: seriesRound, history: newHistory, complete: false });
+      broadcastEvent({ type: 'series_update', config: seriesConfig, scores: newScores, round: seriesRound, history: newHistory, complete: false });
     }
   }, [seriesActive, playbackDone, result?.runId, seriesRound, seriesConfig, seriesHistory]);
 
@@ -4696,6 +4696,47 @@ export default function ChoreChaosApp() {
     return `${prefix}-${suffix}`;
   }
 
+  function buildSeriesSnapshot(scoresOverride = seriesScores, historyOverride = seriesHistory, roundOverride = seriesRound, completeOverride = seriesComplete, tiedOverride = seriesTied) {
+    if (!seriesActive || !seriesConfig) return null;
+    return {
+      active: true,
+      config: seriesConfig,
+      scores: scoresOverride,
+      round: roundOverride,
+      history: historyOverride,
+      complete: completeOverride,
+      tied: tiedOverride || null,
+    };
+  }
+
+  function buildRoomInfoPayload(namesOverride = cleanedNames.filter(Boolean), joinedPlayersOverride = joinedPlayers) {
+    return {
+      type: 'room_info',
+      names: namesOverride,
+      joinedPlayers: joinedPlayersOverride,
+      currentGame: gameActive && result
+        ? {
+            result,
+            step: playbackStep,
+            done: playbackDone,
+          }
+        : null,
+      series: buildSeriesSnapshot(),
+    };
+  }
+
+  function resetRoomClientTransientState() {
+    window.__votes = {};
+    window.__interactiveRocketEjects = {};
+    window.__draftChoices = {};
+    window.__rocketInteractive = false;
+    window.__rocketElapsed = 0;
+    window.__stockSellState = {};
+    window.__stockDraftState = null;
+    window.__stockInteractive = false;
+    window.__stockDrawIndex = 0;
+  }
+
   function createRoom() {
     if (!_supabase) return;
     const code = generateRoomCode();
@@ -4731,7 +4772,7 @@ export default function ChoreChaosApp() {
       channel.send({
         type: 'broadcast',
         event: 'game_event',
-        payload: { type: 'room_info', names: updatedNames, joinedPlayers: players }
+        payload: buildRoomInfoPayload(updatedNames, players)
       });
     });
 
@@ -4833,9 +4874,18 @@ export default function ChoreChaosApp() {
         case 'room_info':
           setRoomPlayerNames(payload.names || []);
           if (payload.joinedPlayers) setJoinedPlayers(payload.joinedPlayers);
+          if (payload.currentGame?.result) {
+            setSpectatorState({
+              type: 'playing',
+              result: payload.currentGame.result,
+              step: payload.currentGame.step || 0,
+              done: !!payload.currentGame.done,
+            });
+          }
+          if (payload.series) setSpectatorSeries(payload.series);
           break;
         case 'game_start':
-          window.__votes = {};
+          resetRoomClientTransientState();
           setSpectatorState({ type: 'playing', result: payload.result, step: 0, done: false });
           if (payload.series) setSpectatorSeries(payload.series);
           // Auto-set pending action for real-time interactive modes on player side
@@ -4854,7 +4904,12 @@ export default function ChoreChaosApp() {
           }
           break;
         case 'step':
-          setSpectatorState(prev => prev ? { ...prev, step: payload.step, done: payload.done } : prev);
+          setSpectatorState(prev => prev ? {
+            ...prev,
+            result: payload.result || prev.result,
+            step: payload.step,
+            done: payload.done,
+          } : prev);
           if (roomModeRef.current === 'player') setPendingAction(null);
           break;
         case 'turn_prompt':
@@ -4954,14 +5009,23 @@ export default function ChoreChaosApp() {
           setPendingAction(null);
           break;
         case 'series_update':
-          setSpectatorSeries(prev => prev ? { ...prev, scores: payload.scores, round: payload.round, history: payload.history, complete: payload.complete, tied: payload.tied || null } : prev);
+          setSpectatorSeries(prev => ({
+            active: true,
+            config: payload.config || prev?.config || null,
+            scores: payload.scores,
+            round: payload.round,
+            history: payload.history,
+            complete: payload.complete,
+            tied: payload.tied || null,
+          }));
           break;
         case 'game_reset':
-          window.__votes = {};
+          resetRoomClientTransientState();
           setSpectatorState({ type: 'waiting' });
           setSpectatorSeries(null);
           break;
         case 'room_closed':
+          resetRoomClientTransientState();
           setRoomClosed(true);
           _supabase.removeChannel(channel);
           break;
@@ -4991,8 +5055,8 @@ export default function ChoreChaosApp() {
   // Broadcast updated player names when host changes them
   useEffect(() => {
     if (roomMode !== 'host' || !roomChannel) return;
-    broadcastEvent({ type: 'room_info', names: cleanedNames, joinedPlayers: joinedPlayers });
-  }, [cleanedNames.join(',')]);
+    broadcastEvent(buildRoomInfoPayload(cleanedNames, joinedPlayers));
+  }, [cleanedNames.join(','), Object.keys(joinedPlayers).sort().join(',')]);
 
   // QR code generation for host
   useEffect(() => {
