@@ -192,8 +192,8 @@ h2 {
 }
 
 .cell.white:hover { background: #dcd0a8; }
-.cell.word-highlight { background: #ddd0a0; }
-.cell.active { background: #e8d8a0; box-shadow: inset 0 0 0 2px #8a6a20; }
+.cell.word-highlight { background: #e8dca0; border-color: #a0904080; }
+.cell.active { background: #f0e8a8; box-shadow: inset 0 0 0 2.5px #8a6a20; }
 
 .cell.black {
   background: #1a1810;
@@ -260,6 +260,35 @@ h2 {
   height: 1px;
   background: #c8b88815;
   margin: 12px auto;
+}
+
+/* --- Active Clue Bar --- */
+.active-clue-bar {
+  text-align: center;
+  font-size: 14px;
+  color: #c8b888b0;
+  padding: 10px 16px;
+  border-top: 1px solid #c8b88820;
+  border-bottom: 1px solid #c8b88820;
+  margin: 8px 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+}
+
+.active-clue-bar .clue-num {
+  color: #c8b888d0;
+  font-size: 13px;
+  margin-right: 2px;
+}
+
+.active-clue-bar .clue-dir {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #c8a04890;
+  margin-right: 4px;
 }
 
 /* --- Clues --- */
@@ -568,4 +597,11 @@ h2 {
   .grid.size-5 .cell { width: 42px; height: 42px; font-size: 20px; }
   .grid.size-11 { grid-template-columns: repeat(11, 28px); }
   .grid.size-11 .cell { width: 28px; height: 28px; font-size: 13px; }
+}
+
+@media (max-width: 600px) {
+  .clues-section {
+    max-height: 300px;
+    overflow-y: auto;
+  }
 }

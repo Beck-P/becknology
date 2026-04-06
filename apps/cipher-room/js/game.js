@@ -136,16 +136,24 @@ const CipherGame = (function () {
     renderClueHighlight();
   }
 
-  /** Highlight active clue in the clue list */
+  /** Highlight active clue in the clue list and update the active clue bar */
   function renderClueHighlight() {
     document.querySelectorAll('.clue').forEach(el => el.classList.remove('active-clue'));
     const activeWord = getActiveWord();
+    const bar = document.getElementById('active-clue-bar');
     if (activeWord) {
       const el = document.querySelector(`.clue[data-number="${activeWord.number}"][data-direction="${activeWord.direction}"]`);
       if (el) {
         el.classList.add('active-clue');
         el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
+      // Update active clue bar
+      if (bar) {
+        const dirLabel = activeWord.direction.toUpperCase();
+        bar.innerHTML = `<span class="clue-num">${activeWord.number}.</span> <span class="clue-dir">${dirLabel}</span> &mdash; ${activeWord.clue.text}`;
+      }
+    } else if (bar) {
+      bar.innerHTML = '';
     }
   }
 

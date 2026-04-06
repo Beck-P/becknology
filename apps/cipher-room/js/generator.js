@@ -140,15 +140,23 @@ const CipherGenerator = (function () {
       if (Date.now() > deadline) return false;
 
       // Find unfilled slot with fewest compatible words (MCV heuristic)
-      let bestIdx = -1;
-      let bestCount = Infinity;
+      // To produce different puzzles per seed, pick randomly among slots
+      // whose candidate count is within 2x of the minimum.
+      let minCount = Infinity;
+      const slotCounts = []; // [{idx, count}]
       for (let i = 0; i < slots.length; i++) {
         if (filled[i]) continue;
         const count = getCompatibleWords(slots[i]).length;
         if (count === 0) return false; // Dead end — prune immediately
-        if (count < bestCount) { bestCount = count; bestIdx = i; }
+        slotCounts.push({ idx: i, count });
+        if (count < minCount) minCount = count;
       }
-      if (bestIdx === -1) return true; // All slots filled
+      if (slotCounts.length === 0) return true; // All slots filled
+
+      const threshold = minCount * 2;
+      const eligible = slotCounts.filter((s) => s.count <= threshold);
+      const picked = eligible[Math.floor(rng() * eligible.length)];
+      const bestIdx = picked.idx;
 
       const slot = slots[bestIdx];
       const candidates = shuffle(getCompatibleWords(slot), rng);
