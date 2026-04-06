@@ -58,7 +58,7 @@ var BridgeInteractions = (function () {
       case 'app':
         // Save world position, then navigate to app
         BridgeState.setWorldPos({
-          worldId: BridgeWorld.getWorld().name.toLowerCase(),
+          worldId: BridgeWorld.getWorld().tileset,
           x: BridgeCharacter.getX(),
           y: BridgeCharacter.getY(),
           facing: BridgeCharacter.getFacing()
