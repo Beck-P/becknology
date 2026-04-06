@@ -224,6 +224,123 @@
     ctx.fillRect(x + ts - 5*u, y + ts - 3*u, 2*u, 3*u);
   }
 
+  function drawSidewalk(ctx, x, y, ts) {
+    var h = ts / 2;
+    ctx.fillStyle = '#3a3650';
+    ctx.fillRect(x, y, ts, ts);
+    ctx.fillStyle = '#3e3a55';
+    ctx.fillRect(x, y, h, h);
+    ctx.fillRect(x + h, y + h, h, h);
+    ctx.fillStyle = '#333050';
+    ctx.fillRect(x, y + ts - 1, ts, 1);
+  }
+
+  function drawLampPost(ctx, x, y, ts) {
+    drawSidewalk(ctx, x, y, ts);
+    var u = ts / 16;
+    ctx.fillStyle = '#555';
+    ctx.fillRect(x + 7*u, y + 3*u, 2*u, 11*u);
+    ctx.fillStyle = '#c8a840';
+    ctx.fillRect(x + 5*u, y + u, 6*u, 3*u);
+    ctx.fillStyle = '#f0d870';
+    ctx.fillRect(x + 6*u, y + 2*u, 4*u, u);
+    ctx.fillStyle = '#444';
+    ctx.fillRect(x + 6*u, y + 14*u, 4*u, 2*u);
+  }
+
+  function drawEntranceSign(ctx, x, y, ts, time) {
+    time = time || 0;
+    ctx.fillStyle = '#0e0c1a';
+    ctx.fillRect(x, y, ts, ts);
+    var flicker = 0.85 + Math.sin(time / 500) * 0.15;
+    ctx.globalAlpha = flicker;
+    ctx.fillStyle = '#d06090';
+    var u = ts / 16;
+    ctx.fillRect(x + u, y + 3*u, ts - 2*u, 10*u);
+    ctx.fillStyle = '#1a0a20';
+    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, 8*u);
+    ctx.fillStyle = '#d06090';
+    ctx.fillRect(x + 4*u, y + 5*u, ts - 8*u, u);
+    ctx.fillRect(x + 3*u, y + 6*u, 2*u, 5*u);
+    ctx.fillRect(x + ts - 5*u, y + 6*u, 2*u, 5*u);
+    ctx.fillRect(x + 4*u, y + 8*u, ts - 8*u, u);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawBench(ctx, x, y, ts) {
+    drawFloor(ctx, x, y, ts);
+    var u = ts / 16;
+    ctx.fillStyle = '#4a3828';
+    ctx.fillRect(x + u, y + 6*u, ts - 2*u, 4*u);
+    ctx.fillStyle = '#5a4838';
+    ctx.fillRect(x + u, y + 6*u, ts - 2*u, u);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x + 2*u, y + 10*u, 2*u, 4*u);
+    ctx.fillRect(x + ts - 4*u, y + 10*u, 2*u, 4*u);
+  }
+
+  function drawTable(ctx, x, y, ts) {
+    drawFloor(ctx, x, y, ts);
+    var u = ts / 16;
+    ctx.fillStyle = '#3a3040';
+    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, 3*u);
+    ctx.fillStyle = '#2a2235';
+    ctx.fillRect(x + 2*u, y + 7*u, ts - 4*u, 2*u);
+    ctx.fillStyle = '#222';
+    ctx.fillRect(x + 3*u, y + 9*u, u, 5*u);
+    ctx.fillRect(x + ts - 4*u, y + 9*u, u, 5*u);
+  }
+
+  function drawVendingMachine(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0;
+    var u = ts / 16;
+    ctx.fillStyle = '#1e2838';
+    ctx.fillRect(x + u, y + u, ts - 2*u, ts - 2*u);
+    var phase = (time / 1200) + col * 11;
+    var glow = 0.8 + Math.sin(phase) * 0.2;
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = '#3868a0';
+    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.floor(ts * 0.4));
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#d06060';
+    ctx.fillRect(x + 3*u, y + 3*u, 2*u, 2*u);
+    ctx.fillStyle = '#60b060';
+    ctx.fillRect(x + 6*u, y + 3*u, 2*u, 2*u);
+    ctx.fillStyle = '#c8a840';
+    ctx.fillRect(x + 9*u, y + 3*u, 2*u, 2*u);
+    ctx.fillStyle = '#5cc8d0';
+    ctx.fillRect(x + 3*u, y + 6*u, 2*u, 2*u);
+    ctx.fillStyle = '#d06090';
+    ctx.fillRect(x + 6*u, y + 6*u, 2*u, 2*u);
+    ctx.fillStyle = '#888';
+    ctx.fillRect(x + ts - 4*u, y + Math.floor(ts * 0.5), 2*u, 3*u);
+    ctx.fillStyle = '#0a0a16';
+    ctx.fillRect(x + 3*u, y + ts - 4*u, ts - 6*u, 2*u);
+  }
+
+  var NPC_COLORS = ['#c8a840', '#5cc8d0', '#d06060'];
+
+  function drawNpc(ctx, x, y, ts, time, col, row) {
+    drawFloor(ctx, x, y, ts);
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    var colorIdx = (col * 3 + row * 5) % 3;
+    var c = NPC_COLORS[colorIdx];
+    var bob = Math.sin(time / 600 + col * 7) > 0.8 ? -u : 0;
+    ctx.fillStyle = c;
+    ctx.fillRect(x + 4*u, y + (u)+bob, 8*u, 5*u);
+    ctx.fillStyle = '#0a0a16';
+    ctx.fillRect(x + 5*u, y + (3*u)+bob, 2*u, 2*u);
+    ctx.fillRect(x + 9*u, y + (3*u)+bob, 2*u, 2*u);
+    ctx.fillStyle = c;
+    ctx.fillRect(x + 3*u, y + (6*u)+bob, 10*u, 5*u);
+    ctx.fillRect(x + 4*u, y + (11*u)+bob, 3*u, 4*u);
+    ctx.fillRect(x + 9*u, y + (11*u)+bob, 3*u, 4*u);
+    ctx.fillStyle = '#0a0a16';
+    ctx.fillRect(x + 3*u, y + 14*u, 4*u, u);
+    ctx.fillRect(x + 9*u, y + 14*u, 4*u, u);
+  }
+
   // ---- Register with engine ----
 
   BridgeWorld.registerTileset('arcadia', {
@@ -239,7 +356,14 @@
     10: drawFloorDark,
     11: drawFloorWorn,
     12: drawPoster,
-    13: drawBrokenCabinet
+    13: drawBrokenCabinet,
+    14: drawSidewalk,
+    15: drawLampPost,
+    16: drawEntranceSign,
+    17: drawBench,
+    18: drawTable,
+    19: drawVendingMachine,
+    20: drawNpc
   });
 
 })();
