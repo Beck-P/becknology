@@ -69,6 +69,12 @@ var BridgeInteractions = (function () {
       case 'dialog':
         showDialog(inter.label, inter.dialog);
         break;
+
+      case 'random_dialog':
+        var messages = inter.messages || [inter.dialog];
+        var msg = messages[Math.floor(Math.random() * messages.length)];
+        showDialog(inter.label, msg);
+        break;
     }
   }
 
