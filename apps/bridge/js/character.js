@@ -136,9 +136,15 @@ var BridgeCharacter = (function () {
     // Unit size (1 game pixel at current scale)
     var u = ts / 16;
 
+    // Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.beginPath();
+    ctx.ellipse(sx + ts * 0.5, sy + ts - u, ts * 0.35, ts * 0.12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
     var wf = getWalkFrame();
-    // Body bob: shift up 1 unit on step frames
-    var bob = (wf !== 0 && player.walking) ? -u : 0;
+    // Body bob: shift up 1 unit on step frames, idle breathing when standing
+    var bob = player.walking ? ((wf !== 0) ? -u : 0) : Math.sin(Date.now() / 800) * u * 0.5;
 
     if (player.facing === 'down') {
       // Head
