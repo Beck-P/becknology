@@ -326,6 +326,27 @@ var BridgeWorld = (function () {
       }
     }
 
+    // Pass 1.5: Interactive tile highlights
+    if (world.interactions) {
+      var px = BridgeCharacter.getX();
+      var py = BridgeCharacter.getY();
+      var facing = BridgeCharacter.getFacing();
+      var checkX = px + (facing === 'right' ? 1 : facing === 'left' ? -1 : 0);
+      var checkY = py + (facing === 'down' ? 1 : facing === 'up' ? -1 : 0);
+
+      for (var i = 0; i < world.interactions.length; i++) {
+        var inter = world.interactions[i];
+        if (inter.x === checkX && inter.y === checkY && !BridgeCharacter.isMoving()) {
+          var hx = Math.floor(offX + inter.x * ts);
+          var hy = Math.floor(offY + inter.y * ts);
+          var hPulse = 0.3 + Math.sin(now / 400) * 0.2;
+          ctx.strokeStyle = 'rgba(40, 220, 80, ' + hPulse.toFixed(2) + ')';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(hx + 1, hy + 1, Math.ceil(ts) - 2, Math.ceil(ts) - 2);
+        }
+      }
+    }
+
     // Pass 2: Glow (data-driven from world JSON)
     if (world.tileGlow) {
       ctx.globalCompositeOperation = 'screen';
