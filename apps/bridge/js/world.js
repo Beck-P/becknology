@@ -145,16 +145,19 @@ var BridgeWorld = (function () {
     overlay.style.display = 'block';
     overlay.classList.add('active');
 
+    var showBackLink = !world.shipExit;
     overlay.innerHTML =
       '<div class="world-hud">' +
-        '<a class="world-back" id="world-back">&larr; LEAVE WORLD</a>' +
+        (showBackLink ? '<a class="world-back" id="world-back">&larr; LEAVE WORLD</a>' : '') +
         '<div class="interact-prompt" id="interact-prompt"></div>' +
       '</div>';
 
-    document.getElementById('world-back').addEventListener('click', function (e) {
-      e.preventDefault();
-      leave();
-    });
+    if (showBackLink) {
+      document.getElementById('world-back').addEventListener('click', function (e) {
+        e.preventDefault();
+        leave();
+      });
+    }
 
     // Init camera and character at spawn or restored position
     var sx = spawnOverride ? spawnOverride.x : world.spawns.player[0];
