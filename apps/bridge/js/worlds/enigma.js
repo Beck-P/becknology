@@ -321,4 +321,44 @@
 
   BridgeWorld.registerBackground('enigma', drawStationBackground);
 
+  // ---- Power Flicker Effect ----
+  // Periodic station-wide dimming that makes the outpost feel like its
+  // power supply is failing — double-flicker like a fluorescent tube.
+
+  var flickerOverlay = null;
+
+  function startFlicker() {
+    setInterval(function () {
+      var w = BridgeWorld.getWorld();
+      if (!w || w.tileset !== 'enigma' || !BridgeWorld.isActive()) return;
+
+      // ~8% chance each second → roughly every 10-15 seconds
+      if (Math.random() > 0.08) return;
+
+      // Create or reuse the overlay div
+      if (!flickerOverlay) {
+        flickerOverlay = document.createElement('div');
+        flickerOverlay.style.cssText =
+          'position:fixed;top:0;left:0;right:0;bottom:0;' +
+          'background:rgba(0,0,0,0);pointer-events:none;z-index:14;' +
+          'transition:background 0.05s;';
+        document.body.appendChild(flickerOverlay);
+      }
+
+      // Double-flicker: dim → brief return → dim again → clear
+      flickerOverlay.style.background = 'rgba(0,0,0,0.35)';
+      setTimeout(function () {
+        flickerOverlay.style.background = 'rgba(0,0,0,0.05)';
+      }, 80);
+      setTimeout(function () {
+        flickerOverlay.style.background = 'rgba(0,0,0,0.30)';
+      }, 150);
+      setTimeout(function () {
+        flickerOverlay.style.background = 'rgba(0,0,0,0)';
+      }, 300);
+    }, 1000);
+  }
+
+  startFlicker();
+
 })();
