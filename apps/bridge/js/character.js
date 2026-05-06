@@ -18,7 +18,7 @@ var BridgeCharacter = (function () {
     walking: false,
     animFrame: 0,     // 0-3: cycle is 0→1→0→2 (stand/left/stand/right)
     animTimer: 0,
-    moveSpeed: 0.12,
+    moveSpeed: 0.10,
   };
 
   var SUIT_COLORS = {
