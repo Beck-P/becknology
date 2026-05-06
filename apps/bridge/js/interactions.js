@@ -17,7 +17,9 @@ var BridgeInteractions = (function () {
       return;
     }
 
-    // Find interaction at the tile the player is facing
+    // Find interaction either at the tile the player is facing OR the tile
+    // they are standing on. The same-tile check lets walkable interactions
+    // (NPCs, dock tiles) trigger when you stop on top of them.
     var px = character.getX();
     var py = character.getY();
     var facing = character.getFacing();
@@ -26,13 +28,19 @@ var BridgeInteractions = (function () {
     var checkY = py + (facing === 'down' ? 1 : facing === 'up' ? -1 : 0);
 
     var found = null;
+    var sameTile = null;
     for (var i = 0; i < world.interactions.length; i++) {
       var inter = world.interactions[i];
       if (inter.x === checkX && inter.y === checkY) {
         found = inter;
         break;
       }
+      if (inter.x === px && inter.y === py) {
+        sameTile = inter;
+      }
     }
+    // Prefer the tile in front of you, fall back to the one you're on.
+    if (!found) found = sameTile;
 
     // Show/hide prompt
     var promptEl = document.getElementById('interact-prompt');

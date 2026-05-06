@@ -146,17 +146,30 @@ var BridgeWorld = (function () {
     overlay.style.display = 'block';
     overlay.classList.add('active');
 
-    var showBackLink = !world.shipExit;
+    // Always render an always-visible exit affordance — players should never
+    // get stranded inside a world. The "LEAVE WORLD" link is the universal
+    // escape hatch even for worlds that have a ship-tile exit.
     overlay.innerHTML =
       '<div class="world-hud">' +
-        (showBackLink ? '<a class="world-back" id="world-back">&larr; LEAVE WORLD</a>' : '') +
+        '<a class="world-back" id="world-back" title="Esc">&#9210; LEAVE WORLD</a>' +
         '<div class="interact-prompt" id="interact-prompt"></div>' +
       '</div>';
 
-    if (showBackLink) {
-      document.getElementById('world-back').addEventListener('click', function (e) {
-        e.preventDefault();
-        leave();
+    document.getElementById('world-back').addEventListener('click', function (e) {
+      e.preventDefault();
+      leave();
+    });
+
+    // Esc as a global hotkey while in a world.
+    if (!window.__bridgeEscBound) {
+      window.__bridgeEscBound = true;
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && BridgeState.getState() === 'world' && active) {
+          // If a dialog is open, let the dialog handler take it.
+          if (document.getElementById('world-dialog')) return;
+          e.preventDefault();
+          leave();
+        }
       });
     }
 
@@ -387,6 +400,47 @@ var BridgeWorld = (function () {
       drawParticles(ctx, offX, offY, ts);
 
       ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // Pass 2.7: Exit beacons — pulsing arrow over every leave_world tile so
+    // the way back to the ship is impossible to miss.
+    if (world.interactions) {
+      var beat = (Math.sin(now / 350) + 1) * 0.5; // 0..1
+      for (var bi = 0; bi < world.interactions.length; bi++) {
+        var bint = world.interactions[bi];
+        if (bint.type !== 'leave_world') continue;
+        var bx = Math.floor(offX + bint.x * ts);
+        var by = Math.floor(offY + bint.y * ts);
+        // Soft halo
+        ctx.globalCompositeOperation = 'screen';
+        var bg = ctx.createRadialGradient(bx + ts/2, by + ts/2, 0, bx + ts/2, by + ts/2, ts * 1.4);
+        bg.addColorStop(0, 'rgba(120, 220, 255, ' + (0.35 + beat * 0.35).toFixed(2) + ')');
+        bg.addColorStop(1, 'transparent');
+        ctx.fillStyle = bg;
+        ctx.fillRect(bx - ts, by - ts, ts * 3, ts * 3);
+        ctx.globalCompositeOperation = 'source-over';
+        // Floating "↑ EXIT" arrow above the tile
+        var floatY = by - ts * 0.6 - beat * (ts * 0.18);
+        var arrowAlpha = 0.85 + beat * 0.15;
+        ctx.fillStyle = 'rgba(180, 235, 255, ' + arrowAlpha.toFixed(2) + ')';
+        var arrowW = ts * 0.5;
+        var arrowCx = bx + ts/2;
+        // Triangle head
+        ctx.beginPath();
+        ctx.moveTo(arrowCx, floatY);
+        ctx.lineTo(arrowCx - arrowW/2, floatY + arrowW * 0.6);
+        ctx.lineTo(arrowCx + arrowW/2, floatY + arrowW * 0.6);
+        ctx.closePath();
+        ctx.fill();
+        // Arrow stem
+        ctx.fillRect(arrowCx - arrowW * 0.18, floatY + arrowW * 0.55, arrowW * 0.36, arrowW * 0.55);
+        // "EXIT" label
+        ctx.font = 'bold ' + Math.max(8, Math.floor(ts * 0.18)) + 'px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(220, 245, 255, ' + arrowAlpha.toFixed(2) + ')';
+        ctx.fillText('EXIT', arrowCx, floatY - ts * 0.05);
+        ctx.textAlign = 'start';
+      }
     }
 
     // Pass 3: Character (on top of glow)
