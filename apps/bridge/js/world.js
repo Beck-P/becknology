@@ -123,7 +123,8 @@ var BridgeWorld = (function () {
 
   function load(worldId, callback) {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/bridge/assets/worlds/' + worldId + '.json');
+    // Cache-bust so JSON edits land without a hard reload (cheap — JSONs are tiny).
+    xhr.open('GET', '/bridge/assets/worlds/' + worldId + '.json?v=' + Date.now());
     xhr.onload = function () {
       if (xhr.status === 200) {
         world = JSON.parse(xhr.responseText);
@@ -219,9 +220,15 @@ var BridgeWorld = (function () {
     sailOverlay.style.background = 'rgba(0, 0, 0, 0.85)';
     sailOverlay.style.transition = 'opacity 1s';
 
+    // Sailing animation — a small ship glyph drifting across with wake
     sailOverlay.innerHTML =
+      '<div class="sail-anim" style="position:relative;width:280px;height:32px;margin-bottom:18px;overflow:hidden;">' +
+        '<div class="sail-ship" style="position:absolute;top:8px;left:-40px;font-family:\'Courier New\',monospace;font-size:18px;color:#cfcfd8;letter-spacing:2px;animation:sail-glide 2.6s ease-in forwards;">⛵</div>' +
+        '<div class="sail-wake" style="position:absolute;top:18px;left:0;right:0;height:2px;background:repeating-linear-gradient(90deg,rgba(120,160,200,0.35) 0,rgba(120,160,200,0.35) 8px,transparent 8px,transparent 14px);opacity:0.7;"></div>' +
+      '</div>' +
+      '<style>@keyframes sail-glide { from { left: -40px; } to { left: calc(100% + 20px); } }</style>' +
       '<div class="landing-text">SAILING...</div>' +
-      '<div class="landing-subtitle" style="margin-top:16px;">' + (destinationName || destination).toUpperCase() + '</div>';
+      '<div class="landing-subtitle" style="margin-top:12px;">' + (destinationName || destination).toUpperCase() + '</div>';
 
     // Load the destination zone
     load(destination, function () {
@@ -384,6 +391,30 @@ var BridgeWorld = (function () {
 
     // Pass 3: Character (on top of glow)
     BridgeCharacter.draw(ctx, camera.x, camera.y, tileSize, scale);
+
+    // Pass 4: Edge vignette — soften abrupt black map edges so out-of-bounds
+    // areas read as a fade rather than a sharp render boundary.
+    var vignetteW = Math.min(120, w * 0.12);
+    var grad = ctx.createLinearGradient(0, 0, vignetteW, 0);
+    grad.addColorStop(0, 'rgba(0,0,0,0.7)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, vignetteW, h);
+    var grad2 = ctx.createLinearGradient(w - vignetteW, 0, w, 0);
+    grad2.addColorStop(0, 'transparent');
+    grad2.addColorStop(1, 'rgba(0,0,0,0.7)');
+    ctx.fillStyle = grad2;
+    ctx.fillRect(w - vignetteW, 0, vignetteW, h);
+    var grad3 = ctx.createLinearGradient(0, 0, 0, vignetteW);
+    grad3.addColorStop(0, 'rgba(0,0,0,0.7)');
+    grad3.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad3;
+    ctx.fillRect(0, 0, w, vignetteW);
+    var grad4 = ctx.createLinearGradient(0, h - vignetteW, 0, h);
+    grad4.addColorStop(0, 'transparent');
+    grad4.addColorStop(1, 'rgba(0,0,0,0.7)');
+    ctx.fillStyle = grad4;
+    ctx.fillRect(0, h - vignetteW, w, vignetteW);
   }
 
   return {

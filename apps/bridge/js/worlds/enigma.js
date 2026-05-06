@@ -9,38 +9,76 @@
 
   // ---- Tile Draw Functions ----
 
-  function drawMetalWall(ctx, x, y, ts) {
+  function drawMetalWall(ctx, x, y, ts, time, col, row) {
+    col = col || 0; row = row || 0;
     var u = ts / 16;
+    var lw = Math.max(1, u * 0.4);
     // Top cap (darker)
-    ctx.fillStyle = '#121c25';
+    ctx.fillStyle = '#0e1820';
     ctx.fillRect(x, y, ts, Math.floor(ts * 0.3));
+    // Cap highlight
+    ctx.fillStyle = '#2a3a48';
+    ctx.fillRect(x, y, ts, Math.max(1, u));
     // Front face
     ctx.fillStyle = '#1a2530';
     ctx.fillRect(x, y + Math.floor(ts * 0.3), ts, ts - Math.floor(ts * 0.3));
-    // Panel lines
-    ctx.fillStyle = '#121c25';
-    ctx.fillRect(x, y + Math.floor(ts * 0.55), ts, 1);
-    ctx.fillRect(x + Math.floor(ts * 0.5), y + Math.floor(ts * 0.3), 1, Math.floor(ts * 0.25));
-    // Rivet dots
+    // Vertical panel seam (alternating per col)
+    ctx.fillStyle = '#0a1218';
+    ctx.fillRect(x + Math.floor(ts * 0.5), y + Math.floor(ts * 0.3), lw, ts - Math.floor(ts * 0.3));
+    // Horizontal panel line
+    ctx.fillStyle = '#0a1218';
+    ctx.fillRect(x, y + Math.floor(ts * 0.55), ts, lw);
+    // Subtle highlight under cap
     ctx.fillStyle = '#253540';
+    ctx.fillRect(x, y + Math.floor(ts * 0.3), ts, Math.max(1, u * 0.4));
+    // Rivets — 4 corner dots
+    ctx.fillStyle = '#2a3a48';
     ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.35), u, u);
     ctx.fillRect(x + ts - 3*u, y + Math.floor(ts * 0.35), u, u);
+    ctx.fillRect(x + 2*u, y + ts - 3*u, u, u);
+    ctx.fillRect(x + ts - 3*u, y + ts - 3*u, u, u);
+    // Rivet shadows
+    ctx.fillStyle = '#0e1820';
+    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.35) + u, u, Math.max(1, u * 0.5));
+    ctx.fillRect(x + ts - 3*u, y + Math.floor(ts * 0.35) + u, u, Math.max(1, u * 0.5));
+    // Per-tile streak (oil drip / wear)
+    var seed = (col * 19 + row * 31) % 17;
+    if (seed === 0) {
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(x + 5*u, y + Math.floor(ts * 0.35), Math.max(1, u * 0.5), Math.floor(ts * 0.4));
+    }
   }
 
-  function drawMetalFloor(ctx, x, y, ts) {
+  function drawMetalFloor(ctx, x, y, ts, time, col, row) {
+    col = col || 0; row = row || 0;
     var u = ts / 16;
+    var lw = Math.max(1, u * 0.4);
     ctx.fillStyle = '#182028';
     ctx.fillRect(x, y, ts, ts);
     // Grid plate pattern
     ctx.fillStyle = '#1e2830';
     ctx.fillRect(x + u, y + u, ts - 2*u, ts - 2*u);
     // Cross grooves
-    ctx.fillStyle = '#141c24';
-    ctx.fillRect(x + Math.floor(ts * 0.5), y, 1, ts);
-    ctx.fillRect(x, y + Math.floor(ts * 0.5), ts, 1);
+    ctx.fillStyle = '#0e141c';
+    ctx.fillRect(x + Math.floor(ts * 0.5) - lw*0.5, y, lw, ts);
+    ctx.fillRect(x, y + Math.floor(ts * 0.5) - lw*0.5, ts, lw);
+    // Plate highlight on the upper-left of each quadrant
+    ctx.fillStyle = '#243040';
+    ctx.fillRect(x + 2*u, y + 2*u, Math.max(1, u * 1.5), Math.max(1, u * 0.5));
+    ctx.fillRect(x + Math.floor(ts*0.5) + 2*u, y + 2*u, Math.max(1, u * 1.5), Math.max(1, u * 0.5));
+    // Occasional grime / oil patch
+    var seed = (col * 13 + row * 23) % 11;
+    if (seed === 0) {
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(x + 4*u, y + 9*u, 6*u, 4*u);
+    } else if (seed === 5) {
+      ctx.fillStyle = 'rgba(40,80,90,0.15)';
+      ctx.fillRect(x + 9*u, y + 4*u, 4*u, 4*u);
+    }
   }
 
-  function drawCorridorFloor(ctx, x, y, ts) {
+  function drawCorridorFloor(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
     ctx.fillStyle = '#1e2a35';
     ctx.fillRect(x, y, ts, ts);
@@ -48,9 +86,22 @@
     ctx.fillStyle = '#243040';
     ctx.fillRect(x + 3*u, y, ts - 6*u, ts);
     // Edge grooves
-    ctx.fillStyle = '#162028';
+    ctx.fillStyle = '#0a141c';
     ctx.fillRect(x + 2*u, y, u, ts);
     ctx.fillRect(x + ts - 3*u, y, u, ts);
+    // Animated direction arrow (chevrons moving along the corridor) — visible enough to read
+    var animY = (time / 80) % 16;
+    var aoff = animY * u;
+    var ax = x + Math.floor(ts * 0.5) - 2*u;
+    // Glow pass (additive)
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = 'rgba(80,180,220,0.45)';
+    ctx.fillRect(ax, y + aoff, 4*u, Math.max(1, u * 0.7));
+    ctx.fillRect(ax + u, y + aoff + u, 2*u, Math.max(1, u * 0.6));
+    ctx.globalCompositeOperation = 'source-over';
+    // Inner bright core
+    ctx.fillStyle = 'rgba(180,230,255,0.55)';
+    ctx.fillRect(ax + u, y + aoff, 2*u, Math.max(1, u * 0.5));
   }
 
   function drawServerRack(ctx, x, y, ts, time, col, row) {
@@ -58,32 +109,56 @@
     var u = ts / 16;
 
     // Rack body
-    ctx.fillStyle = '#152025';
+    ctx.fillStyle = '#0e1820';
     ctx.fillRect(x + u, y + u, ts - 2*u, ts - 2*u);
-    // Frame
+    // Frame inner
     ctx.fillStyle = '#1a2830';
     ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, ts - 4*u);
+    // Outer outline
+    ctx.fillStyle = '#050a10';
+    ctx.fillRect(x + u, y + u, ts - 2*u, Math.max(1, u * 0.5));
+    ctx.fillRect(x + u, y + ts - 2*u, ts - 2*u, Math.max(1, u * 0.5));
 
-    // Blinking LEDs (3 rows of lights, each on its own cycle)
+    // Blinking LEDs (3 rows × 4 cols, each on its own cycle)
     var seed = col * 13 + row * 29;
+    var LED_COLORS = ['#40e080', '#40c080', '#e06040', '#40a8e0', '#e0c040'];
     for (var i = 0; i < 3; i++) {
       var ledY = y + (3 + i * 4) * u;
       for (var j = 0; j < 4; j++) {
         var ledX = x + (3 + j * 3) * u;
-        var phase = Math.floor(time / 300) + seed + i * 7 + j * 11;
-        var on = (phase % 5) !== 0;
-        if (on) {
-          var colors = ['#40c080', '#40c080', '#c06040', '#40a0c0'];
-          ctx.fillStyle = colors[(i + j + seed) % 4];
+        var phase = (time / 200) + seed * 0.1 + i * 1.7 + j * 2.3;
+        var lit = (Math.sin(phase) > -0.3);
+        var color = LED_COLORS[(i + j + seed) % LED_COLORS.length];
+        if (lit) {
+          // Glow halo (additive)
+          ctx.globalCompositeOperation = 'screen';
+          var grad = ctx.createRadialGradient(ledX + u*0.5, ledY + u*0.5, 0, ledX + u*0.5, ledY + u*0.5, 2*u);
+          grad.addColorStop(0, color);
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.globalAlpha = 0.7;
+          ctx.fillRect(ledX - 2*u, ledY - 2*u, 5*u, 5*u);
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = color;
+          ctx.fillRect(ledX, ledY, u, u);
         } else {
-          ctx.fillStyle = '#1a2530';
+          ctx.fillStyle = '#0a1218';
+          ctx.fillRect(ledX, ledY, u, u);
         }
-        ctx.fillRect(ledX, ledY, u, u);
       }
     }
 
+    // Activity progress bar — scrolling
+    var pbY = y + 14 * u;
+    ctx.fillStyle = '#0a1218';
+    ctx.fillRect(x + 3*u, pbY, ts - 6*u, Math.max(1, u * 0.7));
+    var pbProg = (Math.sin(time / 800 + col + row * 0.5) + 1) * 0.5;
+    ctx.fillStyle = '#40c8d8';
+    ctx.fillRect(x + 3*u, pbY, (ts - 6*u) * pbProg, Math.max(1, u * 0.7));
+
     // Vent slots at bottom
-    ctx.fillStyle = '#0e1820';
+    ctx.fillStyle = '#050a10';
     ctx.fillRect(x + 3*u, y + ts - 3*u, ts - 6*u, u);
     ctx.fillRect(x + 3*u, y + ts - 5*u, ts - 6*u, u);
   }
@@ -93,118 +168,302 @@
     var u = ts / 16;
 
     // Wall base
-    drawMetalWall(ctx, x, y, ts);
+    drawMetalWall(ctx, x, y, ts, time, col, row);
 
-    // Terminal screen on wall face
-    var pulse = 0.7 + Math.sin(time / 500 + col * 5) * 0.3;
-    ctx.fillStyle = '#0a1520';
-    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.35), ts - 4*u, Math.floor(ts * 0.4));
-    // Screen content (cyan)
-    ctx.globalAlpha = pulse;
-    ctx.fillStyle = '#40c8d8';
-    ctx.fillRect(x + 3*u, y + Math.floor(ts * 0.38), ts - 6*u, Math.floor(ts * 0.34));
-    // Scan line
-    var scanY = ((time / 50 + col * 30) % (ts * 0.34));
-    ctx.fillStyle = 'rgba(100, 220, 240, 0.3)';
-    ctx.fillRect(x + 3*u, y + Math.floor(ts * 0.38) + scanY, ts - 6*u, u);
-    ctx.globalAlpha = 1;
-    // Text lines
-    ctx.fillStyle = '#0a2030';
-    ctx.fillRect(x + 4*u, y + Math.floor(ts * 0.45), ts - 8*u, u);
-    ctx.fillRect(x + 4*u, y + Math.floor(ts * 0.55), ts - 10*u, u);
-    ctx.fillRect(x + 4*u, y + Math.floor(ts * 0.62), ts - 8*u, u);
-  }
+    // Bezel
+    ctx.fillStyle = '#050a10';
+    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.33), ts - 4*u, Math.floor(ts * 0.42));
 
-  function drawViewport(ctx, x, y, ts, time) {
-    time = time || 0;
-    var u = ts / 16;
+    // Screen background — dark teal
+    var sx = x + 3*u;
+    var sy = y + Math.floor(ts * 0.36);
+    var sw = ts - 6*u;
+    var sh = Math.floor(ts * 0.36);
+    ctx.fillStyle = '#082030';
+    ctx.fillRect(sx, sy, sw, sh);
 
-    // Wall base
-    drawMetalWall(ctx, x, y, ts);
-
-    // Viewport window on wall face
-    ctx.fillStyle = '#050a15';
-    ctx.fillRect(x + 3*u, y + Math.floor(ts * 0.3), ts - 6*u, Math.floor(ts * 0.5));
-
-    // Stars through viewport
-    ctx.fillStyle = '#ffffff';
-    var seed = Math.floor(x / ts) * 17 + Math.floor(y / ts) * 31;
-    for (var i = 0; i < 5; i++) {
-      var sx = x + ((seed * (i + 1) * 7) % (ts - 8*u)) + 4*u;
-      var sy = y + Math.floor(ts * 0.32) + ((seed * (i + 1) * 13) % Math.floor(ts * 0.44));
-      var twinkle = Math.sin(time / 800 + i * 2.5) * 0.3 + 0.7;
-      ctx.globalAlpha = twinkle * 0.6;
-      ctx.fillRect(sx, sy, u, u);
+    // Cascading "code" lines — different per terminal seed
+    var seed = col * 11 + row * 17;
+    var lines = 4;
+    for (var i = 0; i < lines; i++) {
+      var lineY = sy + Math.floor(sh * (0.15 + i * 0.2));
+      var lineCol = (Math.floor(time / 400) + seed + i * 3) % 4;
+      var lineLen = ((seed * (i + 1)) % 6) + 4;
+      var lineColors = ['#40c8d8', '#a0e8f0', '#3088a0', '#5cc0d0'];
+      ctx.fillStyle = lineColors[lineCol];
+      ctx.globalAlpha = 0.85 - i * 0.1;
+      ctx.fillRect(sx + u, lineY, lineLen * u * 0.6, Math.max(1, u * 0.7));
+      // Cursor block at end of last line
+      if (i === lines - 1) {
+        var blink = (Math.floor(time / 350) % 2) === 0;
+        if (blink) {
+          ctx.fillStyle = '#a0e8f0';
+          ctx.fillRect(sx + u + lineLen * u * 0.6 + u, lineY, Math.max(1, u * 0.6), Math.max(1, u * 0.7));
+        }
+      }
     }
     ctx.globalAlpha = 1;
 
-    // Crack line
-    ctx.fillStyle = '#1a3040';
-    ctx.fillRect(x + 5*u, y + Math.floor(ts * 0.35), u, Math.floor(ts * 0.15));
-    ctx.fillRect(x + 6*u, y + Math.floor(ts * 0.5), u, Math.floor(ts * 0.1));
+    // Scan line sweeping down
+    var scanY = ((time / 30 + col * 30) % sh);
+    ctx.fillStyle = 'rgba(160, 240, 255, 0.18)';
+    ctx.fillRect(sx, sy + scanY, sw, Math.max(1, u * 1.2));
 
-    // Frame
-    ctx.strokeStyle = '#253540';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x + 3*u, y + Math.floor(ts * 0.3), ts - 6*u, Math.floor(ts * 0.5));
+    // CRT scanlines
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    for (var sl = 0; sl < sh; sl += 2*u) {
+      ctx.fillRect(sx, sy + sl, sw, Math.max(1, u * 0.4));
+    }
+
+    // Screen flicker (rare)
+    if ((Math.floor(time / 80) + seed) % 73 === 0) {
+      ctx.fillStyle = 'rgba(160,240,255,0.2)';
+      ctx.fillRect(sx, sy, sw, sh);
+    }
+
+    // Bezel highlight
+    ctx.fillStyle = 'rgba(80,120,140,0.3)';
+    ctx.fillRect(sx, sy, sw, Math.max(1, u * 0.4));
   }
 
-  function drawBlastDoor(ctx, x, y, ts) {
-    var u = ts / 16;
-    // Floor base
-    drawCorridorFloor(ctx, x, y, ts);
-    // Door frame marks
-    ctx.fillStyle = '#c0a040';
-    ctx.fillRect(x, y, ts, u);
-    ctx.fillRect(x, y + ts - u, ts, u);
-    // Hazard stripe
-    ctx.fillStyle = '#403020';
-    ctx.fillRect(x + 4*u, y, 2*u, u);
-    ctx.fillRect(x + 10*u, y, 2*u, u);
-  }
-
-  function drawAntenna(ctx, x, y, ts, time) {
-    time = time || 0;
-    var u = ts / 16;
-
-    // Floor base
-    drawCorridorFloor(ctx, x, y, ts);
-
-    // Antenna base
-    ctx.fillStyle = '#253540';
-    ctx.fillRect(x + 6*u, y + 10*u, 4*u, 5*u);
-    // Pole
-    ctx.fillStyle = '#2a3a48';
-    ctx.fillRect(x + 7*u, y + 2*u, 2*u, 8*u);
-    // Dish
-    ctx.fillStyle = '#354550';
-    ctx.fillRect(x + 4*u, y + u, 8*u, 3*u);
-    ctx.fillStyle = '#2a3a48';
-    ctx.fillRect(x + 5*u, y + 2*u, 6*u, u);
-
-    // Blinking light on top
-    var blink = Math.sin(time / 400) > 0.3;
-    ctx.fillStyle = blink ? '#40c8d8' : '#1a3040';
-    ctx.fillRect(x + 7*u, y + u, 2*u, u);
-  }
-
-  function drawWallPanel(ctx, x, y, ts, time, col, row) {
-    time = time || 0; col = col || 0;
+  function drawViewport(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
 
     // Wall base
-    drawMetalWall(ctx, x, y, ts);
+    drawMetalWall(ctx, x, y, ts, time, col, row);
 
-    // Panel indicator light
-    var phase = Math.floor(time / 600) + col * 7;
-    var on = (phase % 4) !== 0;
-    ctx.fillStyle = on ? '#40c080' : '#152520';
-    ctx.fillRect(x + 7*u, y + Math.floor(ts * 0.4), 2*u, 2*u);
+    // Outer frame (heavy bezel)
+    ctx.fillStyle = '#050a10';
+    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.28), ts - 4*u, Math.floor(ts * 0.54));
 
-    // Panel border
-    ctx.fillStyle = '#253540';
-    ctx.fillRect(x + 4*u, y + Math.floor(ts * 0.35), ts - 8*u, 1);
-    ctx.fillRect(x + 4*u, y + Math.floor(ts * 0.65), ts - 8*u, 1);
+    // Viewport interior
+    var vx = x + 3*u;
+    var vy = y + Math.floor(ts * 0.3);
+    var vw = ts - 6*u;
+    var vh = Math.floor(ts * 0.5);
+    // Deep space gradient (top darker, bottom lighter)
+    var grad = ctx.createLinearGradient(vx, vy, vx, vy + vh);
+    grad.addColorStop(0, '#040810');
+    grad.addColorStop(0.5, '#0a1828');
+    grad.addColorStop(1, '#102030');
+    ctx.fillStyle = grad;
+    ctx.fillRect(vx, vy, vw, vh);
+
+    // Distant nebula glow
+    var neb = ctx.createRadialGradient(vx + vw * 0.3, vy + vh * 0.6, 0, vx + vw * 0.3, vy + vh * 0.6, vw * 0.6);
+    neb.addColorStop(0, 'rgba(40,120,160,0.12)');
+    neb.addColorStop(1, 'transparent');
+    ctx.fillStyle = neb;
+    ctx.fillRect(vx, vy, vw, vh);
+
+    // Stars (more, with movement parallax)
+    var seed = col * 17 + row * 31 + 7;
+    var driftX = (time / 8000) * vw;
+    for (var i = 0; i < 14; i++) {
+      var sx = vx + (((seed * (i + 1) * 7) % 1000) / 1000) * vw;
+      sx = ((sx - vx + driftX * (0.3 + (i % 3) * 0.2)) % vw) + vx;
+      var sy = vy + (((seed * (i + 1) * 13) % 1000) / 1000) * vh;
+      var size = (i % 3 === 0) ? Math.max(1, u * 0.7) : Math.max(1, u * 0.4);
+      var twinkle = Math.sin(time / (600 + i * 80) + i * 2.5) * 0.3 + 0.7;
+      ctx.fillStyle = i % 5 === 0 ? '#ffe0b0' : '#ffffff';
+      ctx.globalAlpha = twinkle * 0.85;
+      ctx.fillRect(sx, sy, size, size);
+    }
+    ctx.globalAlpha = 1;
+
+    // Distant planet (rare)
+    if (((col + row) % 4) === 1) {
+      var px = vx + vw * 0.7;
+      var py = vy + vh * 0.3;
+      var pr = vw * 0.08;
+      var pgrad = ctx.createRadialGradient(px - pr*0.3, py - pr*0.3, 0, px, py, pr);
+      pgrad.addColorStop(0, '#a0c0e0');
+      pgrad.addColorStop(1, '#304060');
+      ctx.fillStyle = pgrad;
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Crack lines — more elaborate
+    ctx.strokeStyle = 'rgba(140,180,210,0.4)';
+    ctx.lineWidth = Math.max(1, u * 0.4);
+    ctx.beginPath();
+    ctx.moveTo(vx + vw * 0.25, vy + vh * 0.15);
+    ctx.lineTo(vx + vw * 0.35, vy + vh * 0.45);
+    ctx.lineTo(vx + vw * 0.30, vy + vh * 0.7);
+    ctx.lineTo(vx + vw * 0.45, vy + vh * 0.9);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(vx + vw * 0.35, vy + vh * 0.45);
+    ctx.lineTo(vx + vw * 0.55, vy + vh * 0.55);
+    ctx.stroke();
+
+    // Inner reflection sheen
+    ctx.fillStyle = 'rgba(120,180,210,0.06)';
+    ctx.fillRect(vx, vy, vw, Math.max(1, u * 1.2));
+
+    // Frame outline
+    ctx.strokeStyle = '#2a3a48';
+    ctx.lineWidth = Math.max(1, u * 0.4);
+    ctx.strokeRect(vx, vy, vw, vh);
+    // Bottom drip indicator
+    ctx.fillStyle = '#3a5060';
+    ctx.fillRect(x + 4*u, y + Math.floor(ts * 0.82), 2*u, Math.max(1, u * 0.5));
+  }
+
+  function drawBlastDoor(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    // Floor base
+    drawCorridorFloor(ctx, x, y, ts, time, col, row);
+    // Door frame border (top + bottom)
+    ctx.fillStyle = '#0a0e15';
+    ctx.fillRect(x, y, ts, 2*u);
+    ctx.fillRect(x, y + ts - 2*u, ts, 2*u);
+    // Hazard chevrons — yellow/black diagonal stripes (top)
+    var stripeCount = 8;
+    var stripeW = ts / stripeCount;
+    for (var i = 0; i < stripeCount; i++) {
+      ctx.fillStyle = (i % 2 === 0) ? '#e8b830' : '#0a0a0a';
+      ctx.fillRect(x + i * stripeW, y, stripeW, u);
+    }
+    // Hazard chevrons (bottom)
+    for (var j = 0; j < stripeCount; j++) {
+      ctx.fillStyle = (j % 2 === 0) ? '#0a0a0a' : '#e8b830';
+      ctx.fillRect(x + j * stripeW, y + ts - u, stripeW, u);
+    }
+    // Center warning light
+    var warn = (Math.sin(time / 250) > 0);
+    if (warn) {
+      ctx.fillStyle = '#e83838';
+      ctx.fillRect(x + Math.floor(ts*0.5) - u, y + 2*u, 2*u, u);
+      ctx.globalCompositeOperation = 'screen';
+      var grad = ctx.createRadialGradient(x + ts*0.5, y + 2.5*u, 0, x + ts*0.5, y + 2.5*u, 5*u);
+      grad.addColorStop(0, 'rgba(232,56,56,0.6)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(x - 2*u, y, ts + 4*u, 6*u);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    // Side rivets
+    ctx.fillStyle = '#3a4a58';
+    ctx.fillRect(x + u, y + 3*u, u, u);
+    ctx.fillRect(x + ts - 2*u, y + 3*u, u, u);
+    ctx.fillRect(x + u, y + ts - 4*u, u, u);
+    ctx.fillRect(x + ts - 2*u, y + ts - 4*u, u, u);
+  }
+
+  function drawAntenna(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+
+    // Floor base
+    drawCorridorFloor(ctx, x, y, ts, time, col, row);
+
+    // Antenna base
+    ctx.fillStyle = '#1a2530';
+    ctx.fillRect(x + 6*u, y + 10*u, 4*u, 5*u);
+    ctx.fillStyle = '#2a3a48';
+    ctx.fillRect(x + 6*u, y + 10*u, 4*u, u);
+    // Pole
+    ctx.fillStyle = '#2a3a48';
+    ctx.fillRect(x + 7*u, y + 2*u, 2*u, 8*u);
+    ctx.fillStyle = '#3a4a58';
+    ctx.fillRect(x + 7*u, y + 2*u, u, 8*u);
+
+    // Dish — tilted with subtle scanning rotation suggested by widths
+    var sweep = (Math.sin(time / 1500 + col) + 1) * 0.5;
+    var dishLeft = 4*u + sweep * u;
+    var dishRight = 4*u - sweep * u;
+    ctx.fillStyle = '#354550';
+    ctx.fillRect(x + dishLeft, y + u, 16*u - dishLeft - dishRight, 3*u);
+    ctx.fillStyle = '#1e2830';
+    ctx.fillRect(x + dishLeft + u, y + 2*u, 16*u - dishLeft - dishRight - 2*u, u);
+    // Center transmitter
+    ctx.fillStyle = '#404a50';
+    ctx.fillRect(x + 7*u, y + 2*u, 2*u, 2*u);
+
+    // Blinking light on top with halo
+    var blink = (Math.sin(time / 400) > 0);
+    if (blink) {
+      ctx.globalCompositeOperation = 'screen';
+      var grad = ctx.createRadialGradient(x + 8*u, y + u, 0, x + 8*u, y + u, 4*u);
+      grad.addColorStop(0, 'rgba(64,200,216,0.7)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, y - 3*u, ts, 6*u);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#80e8f0';
+      ctx.fillRect(x + 7*u, y + u, 2*u, u);
+    } else {
+      ctx.fillStyle = '#1a3040';
+      ctx.fillRect(x + 7*u, y + u, 2*u, u);
+    }
+
+    // Cable from base to floor
+    ctx.fillStyle = '#0a0e14';
+    ctx.fillRect(x + 5*u, y + 14*u, u, u);
+    ctx.fillRect(x + 10*u, y + 14*u, u, u);
+  }
+
+  function drawWallPanel(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+
+    // Wall base
+    drawMetalWall(ctx, x, y, ts, time, col, row);
+
+    // Recessed panel
+    var px = x + 3*u;
+    var py = y + Math.floor(ts * 0.36);
+    var pw = ts - 6*u;
+    var ph = Math.floor(ts * 0.32);
+    ctx.fillStyle = '#0a1218';
+    ctx.fillRect(px, py, pw, ph);
+    ctx.fillStyle = '#15202a';
+    ctx.fillRect(px + u, py + u, pw - 2*u, ph - 2*u);
+
+    // Three indicator lights — green / amber / red on different cycles.
+    // Larger lights with a brighter halo so they read at distance.
+    var seed = col * 11 + row * 23;
+    var COLORS = ['#40e080', '#e8c040', '#e84040'];
+    for (var i = 0; i < 3; i++) {
+      var lx = px + (1.5 + i * 3) * u;
+      var ly = py + Math.floor(ph * 0.35);
+      var phase = (time / (200 + i * 100)) + seed * 0.1 + i * 1.7;
+      var on = (Math.sin(phase) > -0.2);
+      var col_i = COLORS[i];
+      if (on) {
+        // Glow pass
+        ctx.globalCompositeOperation = 'screen';
+        var grad = ctx.createRadialGradient(lx + u, ly + u, 0, lx + u, ly + u, 4*u);
+        grad.addColorStop(0, col_i);
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = 0.85;
+        ctx.fillRect(lx - 3*u, ly - 3*u, 8*u, 8*u);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = col_i;
+        ctx.fillRect(lx, ly, 2*u, 2*u);
+        // Inner bright core
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.55;
+        ctx.fillRect(lx + u*0.3, ly + u*0.3, u, u);
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = '#0e141a';
+        ctx.fillRect(lx, ly, 2*u, 2*u);
+      }
+    }
+    // Mini gauge bar
+    var gauge = (Math.sin(time / 1200 + col) + 1) * 0.5;
+    ctx.fillStyle = '#0a1218';
+    ctx.fillRect(px + u, py + ph - 2*u, pw - 2*u, Math.max(1, u * 0.6));
+    ctx.fillStyle = '#40c8d8';
+    ctx.fillRect(px + u, py + ph - 2*u, (pw - 2*u) * gauge, Math.max(1, u * 0.6));
   }
 
   // ---- Ship (reuse docked ship PNG) ----
@@ -269,16 +528,19 @@
 
   var bgStars = [];
   var bgInited = false;
+  var shootingStar = null;
 
   function drawStationBackground(ctx, w, h, time) {
     if (!bgInited) {
       bgInited = true;
-      for (var i = 0; i < 60; i++) {
+      for (var i = 0; i < 100; i++) {
         bgStars.push({
           x: Math.random(), y: Math.random(),
-          size: Math.random() + 0.5,
+          size: Math.random() * 1.4 + 0.5,
           brightness: Math.random() * 0.3 + 0.1,
-          speed: Math.random() * 0.3 + 0.8
+          speed: Math.random() * 0.3 + 0.8,
+          parallax: Math.random() * 0.5 + 0.5,
+          warm: Math.random() < 0.15
         });
       }
     }
@@ -287,19 +549,70 @@
     ctx.fillStyle = '#030810';
     ctx.fillRect(0, 0, w, h);
 
-    // Subtle teal nebula
-    var neb = ctx.createRadialGradient(w * 0.3, h * 0.4, 0, w * 0.3, h * 0.4, w * 0.5);
-    neb.addColorStop(0, 'rgba(30, 80, 90, 0.06)');
+    // Subtle drifting teal nebula
+    var nebX = w * 0.3 + Math.sin(time / 8000) * w * 0.05;
+    var nebY = h * 0.4 + Math.cos(time / 9000) * h * 0.05;
+    var neb = ctx.createRadialGradient(nebX, nebY, 0, nebX, nebY, w * 0.55);
+    neb.addColorStop(0, 'rgba(30, 80, 90, 0.10)');
     neb.addColorStop(1, 'transparent');
     ctx.fillStyle = neb;
     ctx.fillRect(0, 0, w, h);
 
-    // Static stars (gentle twinkle)
+    // Second nebula — distant orange
+    var nebX2 = w * 0.75 + Math.cos(time / 11000) * w * 0.04;
+    var nebY2 = h * 0.7;
+    var neb2 = ctx.createRadialGradient(nebX2, nebY2, 0, nebX2, nebY2, w * 0.4);
+    neb2.addColorStop(0, 'rgba(120, 70, 60, 0.05)');
+    neb2.addColorStop(1, 'transparent');
+    ctx.fillStyle = neb2;
+    ctx.fillRect(0, 0, w, h);
+
+    // Stars with parallax drift — brighter so they actually read
+    var driftX = (time / 60000) * w;
     for (var i = 0; i < bgStars.length; i++) {
       var s = bgStars[i];
-      var twinkle = Math.sin(time / (800 * s.speed) + i * 1.7) * 0.15 + s.brightness;
-      ctx.fillStyle = 'rgba(180, 220, 240, ' + twinkle.toFixed(2) + ')';
-      ctx.fillRect(s.x * w, s.y * h, s.size, s.size);
+      var sx = ((s.x * w + driftX * s.parallax) % w + w) % w;
+      var sy = s.y * h;
+      // Boost baseline brightness (was 0.1-0.4, now 0.4-0.85) and amp twinkle
+      var twinkle = Math.sin(time / (800 * s.speed) + i * 1.7) * 0.25 + s.brightness * 1.6 + 0.25;
+      twinkle = Math.min(1, twinkle);
+      var col = s.warm ? '255, 220, 180' : '200, 230, 250';
+      ctx.fillStyle = 'rgba(' + col + ', ' + twinkle.toFixed(2) + ')';
+      ctx.fillRect(sx, sy, s.size, s.size);
+      // Halo for the brighter stars
+      if (s.size > 1.2) {
+        ctx.fillStyle = 'rgba(' + col + ', ' + (twinkle * 0.3).toFixed(2) + ')';
+        ctx.fillRect(sx - 1, sy, s.size + 2, s.size);
+        ctx.fillRect(sx, sy - 1, s.size, s.size + 2);
+      }
+    }
+
+    // Occasional shooting star
+    if (!shootingStar && Math.random() < 0.001) {
+      shootingStar = {
+        x: Math.random() * w * 0.5,
+        y: Math.random() * h * 0.4,
+        vx: 1.5 + Math.random() * 1.5,
+        vy: 0.4 + Math.random() * 0.6,
+        life: 0,
+        maxLife: 60 + Math.random() * 40
+      };
+    }
+    if (shootingStar) {
+      var ss = shootingStar;
+      ss.life++;
+      ss.x += ss.vx * 4;
+      ss.y += ss.vy * 4;
+      var sa = Math.max(0, 1 - ss.life / ss.maxLife);
+      ctx.strokeStyle = 'rgba(220,240,255,' + (sa * 0.8).toFixed(2) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(ss.x - ss.vx * 12, ss.y - ss.vy * 12);
+      ctx.lineTo(ss.x, ss.y);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,' + sa.toFixed(2) + ')';
+      ctx.fillRect(ss.x, ss.y, 1.5, 1.5);
+      if (ss.life > ss.maxLife) shootingStar = null;
     }
   }
 

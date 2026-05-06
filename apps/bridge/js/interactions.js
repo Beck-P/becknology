@@ -123,6 +123,11 @@ var BridgeInteractions = (function () {
 
   function showPasswordDialog(inter) {
     dialogVisible = true;
+    // Disable game controls so the Enter key only reaches the password input,
+    // not BridgeInteractions.update() (which would auto-close the dialog).
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) {
+      BridgeControls.disable();
+    }
     var promptEl = document.getElementById('interact-prompt');
     if (promptEl) promptEl.classList.remove('visible');
 
@@ -183,6 +188,10 @@ var BridgeInteractions = (function () {
     function cleanup() {
       document.removeEventListener('keydown', handleKey);
       hideDialog();
+      // Re-enable controls when leaving the password input.
+      if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) {
+        BridgeControls.enable();
+      }
     }
 
     document.addEventListener('keydown', handleKey);

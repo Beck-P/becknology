@@ -147,14 +147,17 @@ var BridgeCharacter = (function () {
     var bob = player.walking ? ((wf !== 0) ? -u : 0) : Math.sin(Date.now() / 800) * u * 0.5;
 
     if (player.facing === 'down') {
-      // Head
-      px(ctx, sx, sy, 4*u, (1*u)+bob, 8*u, 5*u, base);
-      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, light);  // hair highlight
-      // Eyes
-      px(ctx, sx, sy, 5*u, (3*u)+bob, 2*u, 2*u, outline);
-      px(ctx, sx, sy, 9*u, (3*u)+bob, 2*u, 2*u, outline);
-      // Body
+      // Helmet (player marker — sets player apart from NPCs)
+      px(ctx, sx, sy, 4*u, (1*u)+bob, 8*u, 5*u, dark);
+      // Visor — horizontal stripe across eyes, glowing
+      px(ctx, sx, sy, 3*u, (3*u)+bob, 10*u, 2*u, outline);
+      px(ctx, sx, sy, 4*u, (3*u)+bob, 8*u, u, light);
+      // Helmet top highlight
+      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, base);
+      // Body — pilot suit
       px(ctx, sx, sy, 3*u, (6*u)+bob, 10*u, 5*u, base);
+      // Chest emblem (player insignia)
+      px(ctx, sx, sy, 7*u, (7*u)+bob, 2*u, 2*u, light);
       px(ctx, sx, sy, 3*u, (9*u)+bob, 10*u, u, dark);  // belt
       // Legs
       if (wf === 0) {
@@ -194,10 +197,12 @@ var BridgeCharacter = (function () {
       px(ctx, sx, sy, 9*u, 14*u, 4*u, u, outline);
 
     } else if (player.facing === 'left') {
-      // Head (profile — narrower, one eye)
-      px(ctx, sx, sy, 4*u, (1*u)+bob, 7*u, 5*u, base);
-      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, light);
-      px(ctx, sx, sy, 5*u, (3*u)+bob, 2*u, 2*u, outline); // eye
+      // Helmet (profile, one visor side visible)
+      px(ctx, sx, sy, 4*u, (1*u)+bob, 7*u, 5*u, dark);
+      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, base);
+      // Visor stripe — extends past front of helmet
+      px(ctx, sx, sy, 3*u, (3*u)+bob, 8*u, 2*u, outline);
+      px(ctx, sx, sy, 3*u, (3*u)+bob, 7*u, u, light);
       // Body (narrower)
       px(ctx, sx, sy, 4*u, (6*u)+bob, 8*u, 5*u, base);
       px(ctx, sx, sy, 4*u, (9*u)+bob, 8*u, u, dark);
@@ -217,10 +222,12 @@ var BridgeCharacter = (function () {
       px(ctx, sx, sy, 8*u, 14*u, 3*u, u, outline);
 
     } else { // right
-      // Head (profile — mirrored)
-      px(ctx, sx, sy, 5*u, (1*u)+bob, 7*u, 5*u, base);
-      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, light);
-      px(ctx, sx, sy, 9*u, (3*u)+bob, 2*u, 2*u, outline); // eye
+      // Helmet (profile, mirrored)
+      px(ctx, sx, sy, 5*u, (1*u)+bob, 7*u, 5*u, dark);
+      px(ctx, sx, sy, 5*u, (1*u)+bob, 6*u, u, base);
+      // Visor stripe — mirrored
+      px(ctx, sx, sy, 5*u, (3*u)+bob, 8*u, 2*u, outline);
+      px(ctx, sx, sy, 6*u, (3*u)+bob, 7*u, u, light);
       // Body
       px(ctx, sx, sy, 4*u, (6*u)+bob, 8*u, 5*u, base);
       px(ctx, sx, sy, 4*u, (9*u)+bob, 8*u, u, dark);
