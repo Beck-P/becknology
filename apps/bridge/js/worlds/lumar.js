@@ -453,39 +453,46 @@
     if (!bgInited) {
       bgInited = true;
       bgStars = [];
-      for (var i = 0; i < 60; i++) {
+      // Sparkles distributed across the full viewport — they read as
+      // distant spores drifting on the open sea, not just sky stars.
+      for (var i = 0; i < 80; i++) {
         bgStars.push({
-          x: Math.random(), y: Math.random() * 0.55,
-          size: Math.random() * 1.2 + 0.4,
-          brightness: Math.random() * 0.4 + 0.2,
+          x: Math.random(), y: Math.random(),
+          size: Math.random() * 1.3 + 0.4,
+          brightness: Math.random() * 0.35 + 0.15,
           twinkleSpeed: Math.random() * 0.5 + 0.5
         });
       }
     }
 
-    // Subtle ambient tint per zone (drives the haze, not a moon).
     var mc = (worldData && worldData.moonColor) || [60, 140, 80];
     var mr = mc[0], mg = mc[1], mb = mc[2];
 
-    // Deep night sky — neutral dark, very slightly tinted by zone color.
-    ctx.fillStyle = 'rgb(' + Math.floor(mr/14) + ',' + Math.floor(mg/14) + ',' + Math.floor(mb/14) + ')';
+    // Off-map fill — a dark version of the zone's sea color so anywhere
+    // the camera shows beyond the map edge still reads as open sea, not
+    // a black void.
+    var bgR = Math.floor(mr * 0.18);
+    var bgG = Math.floor(mg * 0.22);
+    var bgB = Math.floor(mb * 0.18);
+    ctx.fillStyle = 'rgb(' + bgR + ',' + bgG + ',' + bgB + ')';
     ctx.fillRect(0, 0, w, h);
 
-    // Stars across the upper portion of the sky.
+    // Drifting spore sparkles across the full viewport.
+    var sparkleR = Math.min(255, mr + 40);
+    var sparkleG = Math.min(255, mg + 60);
+    var sparkleB = Math.min(255, mb + 30);
     for (var i = 0; i < bgStars.length; i++) {
       var s = bgStars[i];
-      var twinkle = Math.sin(time / (900 * s.twinkleSpeed) + i * 2.3) * 0.2 + s.brightness;
+      var twinkle = Math.sin(time / (900 * s.twinkleSpeed) + i * 2.3) * 0.3 + s.brightness;
       twinkle = Math.max(0.05, Math.min(1, twinkle));
-      ctx.fillStyle = 'rgba(220, 230, 220, ' + twinkle.toFixed(2) + ')';
+      ctx.fillStyle = 'rgba(' + sparkleR + ',' + sparkleG + ',' + sparkleB + ', ' + twinkle.toFixed(2) + ')';
       ctx.fillRect(s.x * w, s.y * h, s.size, s.size);
     }
 
-    // Sea haze at the horizon — tinted to the zone's ambient color.
-    var haze = ctx.createLinearGradient(0, h * 0.5, 0, h);
+    // Subtle horizon haze at the bottom edge of the viewport.
+    var haze = ctx.createLinearGradient(0, h * 0.6, 0, h);
     haze.addColorStop(0, 'transparent');
-    haze.addColorStop(0.4, 'rgba(' + Math.floor(mr*0.5) + ',' + Math.floor(mg*0.5) + ',' + Math.floor(mb*0.5) + ', 0.04)');
-    haze.addColorStop(0.7, 'rgba(' + Math.floor(mr*0.4) + ',' + Math.floor(mg*0.4) + ',' + Math.floor(mb*0.4) + ', 0.10)');
-    haze.addColorStop(1, 'rgba(' + Math.floor(mr*0.3) + ',' + Math.floor(mg*0.3) + ',' + Math.floor(mb*0.3) + ', 0.18)');
+    haze.addColorStop(1, 'rgba(' + Math.floor(mr*0.4) + ',' + Math.floor(mg*0.55) + ',' + Math.floor(mb*0.4) + ', 0.22)');
     ctx.fillStyle = haze;
     ctx.fillRect(0, 0, w, h);
   }
