@@ -42,6 +42,110 @@ var BridgeWorld = (function () {
     ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
   }
 
+  // Floating gold banner over an "app" interaction cluster — the universal
+  // "playable game" indicator. Visible from across the map so players can
+  // immediately tell which cabinets/terminals are games vs decoration.
+  function drawGameMarker(ctx, cx, topY, ts, label, beat) {
+    ctx.save();
+    // Halo pulsing under the cluster
+    ctx.globalCompositeOperation = 'screen';
+    var haloCy = topY + ts * 0.4;
+    var halo = ctx.createRadialGradient(cx, haloCy, 0, cx, haloCy, ts * 1.7);
+    halo.addColorStop(0, 'rgba(255, 200, 80, ' + (0.28 + beat * 0.25).toFixed(2) + ')');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(cx - ts * 1.7, topY - ts * 1.5, ts * 3.4, ts * 3.5);
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Floating banner above the cluster — bob in sync with EXIT arrows
+    var floatY = topY - ts * 0.55 - beat * (ts * 0.15);
+    var fontSize = Math.max(10, Math.floor(ts * 0.22));
+    ctx.font = 'bold ' + fontSize + 'px "Courier New", Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var displayLabel = '▶ ' + label;
+    var labelW = ctx.measureText(displayLabel).width;
+    var bannerH = Math.max(18, Math.floor(ts * 0.36));
+    var padX = Math.max(10, Math.floor(ts * 0.18));
+    var bx = cx - labelW / 2 - padX;
+    var by = floatY - bannerH / 2;
+    var bw = labelW + padX * 2;
+
+    // Drop shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(bx + 2, by + 2, bw, bannerH);
+    // Banner background
+    ctx.fillStyle = 'rgba(28, 18, 6, 0.94)';
+    ctx.fillRect(bx, by, bw, bannerH);
+    // Top highlight stripe (gives the banner depth, suggests an arcade marquee)
+    ctx.fillStyle = 'rgba(255, 220, 140, 0.20)';
+    ctx.fillRect(bx, by, bw, Math.max(1, Math.floor(bannerH * 0.28)));
+    // Gold border, pulsing alpha
+    ctx.strokeStyle = 'rgba(255, 200, 80, ' + (0.65 + beat * 0.35).toFixed(2) + ')';
+    ctx.lineWidth = Math.max(1, Math.floor(ts / 24));
+    ctx.strokeRect(bx, by, bw, bannerH);
+    // Label text — shadow then fill for legibility on any background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillText(displayLabel, cx + 1, floatY + 1);
+    ctx.fillStyle = '#ffe890';
+    ctx.fillText(displayLabel, cx, floatY);
+    // Downward chevron pointing at the cluster
+    var triY = by + bannerH + 2;
+    var triSize = Math.max(5, Math.floor(ts * 0.13));
+    ctx.fillStyle = 'rgba(255, 200, 80, ' + (0.85 + beat * 0.15).toFixed(2) + ')';
+    ctx.beginPath();
+    ctx.moveTo(cx, triY + triSize);
+    ctx.lineTo(cx - triSize, triY);
+    ctx.lineTo(cx + triSize, triY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Find connected-component clusters of "app" interactions sharing the same target.
+  // Two adjacent runouts cabinets become one cluster; two physically separate
+  // RUNOUTS cabinets across the room stay as separate clusters.
+  function findAppClusters(interactions) {
+    var byCoord = {};
+    for (var i = 0; i < interactions.length; i++) {
+      var inter = interactions[i];
+      if (inter.type !== 'app') continue;
+      byCoord[inter.x + ',' + inter.y] = inter;
+    }
+    var visited = {};
+    var clusters = [];
+    var keys = Object.keys(byCoord);
+    for (var k = 0; k < keys.length; k++) {
+      var key = keys[k];
+      if (visited[key]) continue;
+      var seed = byCoord[key];
+      var cluster = { minX: seed.x, maxX: seed.x, minY: seed.y, maxY: seed.y, label: seed.label };
+      var queue = [[seed.x, seed.y]];
+      visited[key] = true;
+      while (queue.length) {
+        var pt = queue.shift();
+        var px = pt[0], py = pt[1];
+        if (px < cluster.minX) cluster.minX = px;
+        if (px > cluster.maxX) cluster.maxX = px;
+        if (py < cluster.minY) cluster.minY = py;
+        if (py > cluster.maxY) cluster.maxY = py;
+        var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        for (var d = 0; d < 4; d++) {
+          var nx = px + dirs[d][0], ny = py + dirs[d][1];
+          var nkey = nx + ',' + ny;
+          if (visited[nkey]) continue;
+          var neighbor = byCoord[nkey];
+          if (neighbor && neighbor.target === seed.target) {
+            visited[nkey] = true;
+            queue.push([nx, ny]);
+          }
+        }
+      }
+      clusters.push(cluster);
+    }
+    return clusters;
+  }
+
   function initParticles() {
     particles = [];
     if (!world || !world.tileGlow) return;
@@ -440,6 +544,20 @@ var BridgeWorld = (function () {
         ctx.fillStyle = 'rgba(220, 245, 255, ' + arrowAlpha.toFixed(2) + ')';
         ctx.fillText('EXIT', arrowCx, floatY - ts * 0.05);
         ctx.textAlign = 'start';
+      }
+    }
+
+    // Pass 2.8: Game markers — gold banner over each app-interaction cluster.
+    // Drawn before the character so the player can stand visually in front of
+    // the marker when adjacent to a cabinet.
+    if (world.interactions) {
+      var appClusters = findAppClusters(world.interactions);
+      var gameBeat = (Math.sin(now / 600) + 1) * 0.5;
+      for (var ci = 0; ci < appClusters.length; ci++) {
+        var cl = appClusters[ci];
+        var clusterCx = ((cl.minX + cl.maxX + 1) / 2) * ts + offX;
+        var clusterTopY = cl.minY * ts + offY;
+        drawGameMarker(ctx, clusterCx, clusterTopY, ts, cl.label, gameBeat);
       }
     }
 
