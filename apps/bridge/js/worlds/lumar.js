@@ -443,58 +443,37 @@
   var bgId = null;
 
   function drawLumarBackground(ctx, w, h, time) {
-    // Reset stars if world changed (sailing between zones)
     var worldData = BridgeWorld.getWorld();
-    if (worldData && worldData._bgId !== bgId) {
-      bgInited = false;
-      bgId = worldData.name;
-      worldData._bgId = bgId;
-    }
-    if (!bgInited) {
-      bgInited = true;
-      bgStars = [];
-      // Sparkles distributed across the full viewport — they read as
-      // distant spores drifting on the open sea, not just sky stars.
-      for (var i = 0; i < 80; i++) {
-        bgStars.push({
-          x: Math.random(), y: Math.random(),
-          size: Math.random() * 1.3 + 0.4,
-          brightness: Math.random() * 0.35 + 0.15,
-          twinkleSpeed: Math.random() * 0.5 + 0.5
-        });
+
+    // Pick the sea drawer for this zone — anywhere the camera shows past
+    // the map edge gets tiled with actual animated sea, so the world feels
+    // like it extends infinitely.
+    var zoneName = worldData && worldData.name;
+    var seaDrawer = drawSporeSea;
+    if (zoneName === 'Crimson Reach') seaDrawer = drawCrimsonSea;
+    else if (zoneName === 'Sapphire Port') seaDrawer = drawSapphireSea;
+    else if (zoneName === 'Rose Cove') seaDrawer = drawRoseSea;
+    else if (zoneName === 'Midnight Isle') seaDrawer = drawMidnightSea;
+
+    // Use the engine's camera + scale so off-map sea tiles align with the
+    // in-map sea tiles seeded by the same (col, row).
+    var camera = BridgeWorld.getCamera();
+    var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
+    var offX = w / 2 - camera.x * ts;
+    var offY = h / 2 - camera.y * ts;
+
+    var startCol = Math.floor(-offX / ts) - 1;
+    var endCol = Math.ceil((w - offX) / ts) + 1;
+    var startRow = Math.floor(-offY / ts) - 1;
+    var endRow = Math.ceil((h - offY) / ts) + 1;
+
+    for (var r = startRow; r < endRow; r++) {
+      for (var c = startCol; c < endCol; c++) {
+        var tx = Math.floor(offX + c * ts);
+        var ty = Math.floor(offY + r * ts);
+        seaDrawer(ctx, tx, ty, ts, time, c, r);
       }
     }
-
-    var mc = (worldData && worldData.moonColor) || [60, 140, 80];
-    var mr = mc[0], mg = mc[1], mb = mc[2];
-
-    // Off-map fill — a dark version of the zone's sea color so anywhere
-    // the camera shows beyond the map edge still reads as open sea, not
-    // a black void.
-    var bgR = Math.floor(mr * 0.18);
-    var bgG = Math.floor(mg * 0.22);
-    var bgB = Math.floor(mb * 0.18);
-    ctx.fillStyle = 'rgb(' + bgR + ',' + bgG + ',' + bgB + ')';
-    ctx.fillRect(0, 0, w, h);
-
-    // Drifting spore sparkles across the full viewport.
-    var sparkleR = Math.min(255, mr + 40);
-    var sparkleG = Math.min(255, mg + 60);
-    var sparkleB = Math.min(255, mb + 30);
-    for (var i = 0; i < bgStars.length; i++) {
-      var s = bgStars[i];
-      var twinkle = Math.sin(time / (900 * s.twinkleSpeed) + i * 2.3) * 0.3 + s.brightness;
-      twinkle = Math.max(0.05, Math.min(1, twinkle));
-      ctx.fillStyle = 'rgba(' + sparkleR + ',' + sparkleG + ',' + sparkleB + ', ' + twinkle.toFixed(2) + ')';
-      ctx.fillRect(s.x * w, s.y * h, s.size, s.size);
-    }
-
-    // Subtle horizon haze at the bottom edge of the viewport.
-    var haze = ctx.createLinearGradient(0, h * 0.6, 0, h);
-    haze.addColorStop(0, 'transparent');
-    haze.addColorStop(1, 'rgba(' + Math.floor(mr*0.4) + ',' + Math.floor(mg*0.55) + ',' + Math.floor(mb*0.4) + ', 0.22)');
-    ctx.fillStyle = haze;
-    ctx.fillRect(0, 0, w, h);
   }
 
   // ---- Register ----
