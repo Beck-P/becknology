@@ -251,6 +251,207 @@
     ctx.fillRect(0, 0, w, h);
   }
 
+  function drawLavaPool(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    var pulse = 0.7 + Math.sin(time / 350 + col + row) * 0.3;
+    // Halo first
+    ctx.globalCompositeOperation = 'screen';
+    var grad = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts * 1.4);
+    grad.addColorStop(0, 'rgba(255, 100, 40, ' + (pulse * 0.7).toFixed(2) + ')');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.5, y - ts*0.5, ts * 2, ts * 2);
+    ctx.globalCompositeOperation = 'source-over';
+    // Pool of lava covers most of tile
+    ctx.fillStyle = '#1a0808';
+    ctx.fillRect(x + u, y + u, ts - 2*u, ts - 2*u);
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#ff6020';
+    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, ts - 4*u);
+    ctx.fillStyle = '#ffa040';
+    ctx.fillRect(x + 3*u, y + 3*u, ts - 6*u, ts - 6*u);
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(x + 5*u, y + 5*u, ts - 10*u, ts - 10*u);
+    ctx.globalAlpha = 1;
+    // Bubbles
+    var bubbleX = x + ((time / 80 + col * 7) % 14) * u;
+    var bubbleY = y + ((time / 60 + row * 3) % 14) * u;
+    ctx.fillStyle = '#ff8030';
+    ctx.fillRect(bubbleX, bubbleY, Math.max(1, u * 0.6), Math.max(1, u * 0.6));
+  }
+
+  function drawSkeleton(ctx, x, y, ts, time, col, row) {
+    drawCaveFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Skull
+    ctx.fillStyle = '#d8c8a0';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + 4*u, Math.max(1, u * 2.4), Math.max(1, u * 2), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Eye sockets
+    ctx.fillStyle = '#1a0808';
+    ctx.fillRect(x + Math.floor(ts * 0.4), y + Math.max(1, 3.5*u), Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    ctx.fillRect(x + Math.floor(ts * 0.55), y + Math.max(1, 3.5*u), Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    // Jaw
+    ctx.fillStyle = '#a89870';
+    ctx.fillRect(x + Math.floor(ts * 0.42), y + Math.max(1, 4.5*u), Math.max(1, u * 2), Math.max(1, u * 0.6));
+    // Spine
+    ctx.fillStyle = '#d8c8a0';
+    for (var s = 0; s < 5; s++) {
+      ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.5), y + (6 + s) * u, Math.max(1, u), Math.max(1, u * 0.6));
+    }
+    // Ribs
+    ctx.fillStyle = '#a89870';
+    for (var rb = 0; rb < 3; rb++) {
+      ctx.fillRect(x + 4*u, y + (7 + rb) * u, ts - 8*u, Math.max(1, u * 0.4));
+    }
+    // Arm bones
+    ctx.fillStyle = '#d8c8a0';
+    ctx.fillRect(x + 3*u, y + 8*u, 2*u, Math.max(1, u * 0.7));
+    ctx.fillRect(x + ts - 5*u, y + 8*u, 2*u, Math.max(1, u * 0.7));
+  }
+
+  function drawOreVein(ctx, x, y, ts, time, col, row) {
+    drawCaveWall(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Glittering gold vein in the rock
+    var positions = [
+      { x: 3, y: 5, c: '#e8c860' },
+      { x: 4, y: 6, c: '#ffd870' },
+      { x: 6, y: 7, c: '#e8c860' },
+      { x: 9, y: 4, c: '#ffd870' },
+      { x: 11, y: 8, c: '#c8a040' },
+      { x: 8, y: 11, c: '#e8c860' },
+      { x: 5, y: 10, c: '#ffd870' }
+    ];
+    for (var i = 0; i < positions.length; i++) {
+      var p = positions[i];
+      ctx.fillStyle = p.c;
+      ctx.fillRect(x + p.x * u, y + p.y * u, Math.max(1, u * 1.2), Math.max(1, u * 0.7));
+      // Highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillRect(x + p.x * u, y + p.y * u, Math.max(1, u * 0.4), Math.max(1, u * 0.3));
+    }
+  }
+
+  function drawWoodenSupport(ctx, x, y, ts, time, col, row) {
+    drawCaveFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Vertical posts on both sides
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 2*u, y, Math.max(1, u * 1.4), ts);
+    ctx.fillRect(x + ts - 3*u, y, Math.max(1, u * 1.4), ts);
+    // Highlight
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + 2*u, y, Math.max(1, u * 0.5), ts);
+    ctx.fillRect(x + ts - 3*u, y, Math.max(1, u * 0.5), ts);
+    // Horizontal beam at top
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + u, y, ts - 2*u, Math.max(1, u * 1.4));
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + u, y, ts - 2*u, Math.max(1, u * 0.5));
+    // Diagonal cross-braces
+    ctx.strokeStyle = '#3a2410';
+    ctx.lineWidth = Math.max(1, u * 0.7);
+    ctx.beginPath();
+    ctx.moveTo(x + 3*u, y + 2*u);
+    ctx.lineTo(x + ts - 3*u, y + 6*u);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + ts - 3*u, y + 2*u);
+    ctx.lineTo(x + 3*u, y + 6*u);
+    ctx.stroke();
+    // Iron bolts
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(x + 3*u, y + Math.max(1, u * 0.4), Math.max(1, u * 0.5), Math.max(1, u * 0.5));
+    ctx.fillRect(x + ts - 4*u, y + Math.max(1, u * 0.4), Math.max(1, u * 0.5), Math.max(1, u * 0.5));
+  }
+
+  function drawGlowMushroom(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawCaveFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    var pulse = 0.7 + Math.sin(time / 800 + col + row) * 0.3;
+    // Mushroom #1 (large, center)
+    // Stem
+    ctx.fillStyle = '#a89880';
+    ctx.fillRect(x + 6*u, y + 8*u, 2*u, 5*u);
+    // Cap
+    ctx.fillStyle = '#a060d0';
+    ctx.beginPath();
+    ctx.ellipse(x + 7*u, y + 7*u, Math.max(1, u * 3), Math.max(1, u * 1.7), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Cap highlight
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#e0a0f8';
+    ctx.beginPath();
+    ctx.ellipse(x + 7*u, y + Math.max(1, 6.5*u), Math.max(1, u * 2.5), Math.max(1, u * 1), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // Spots
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(x + 5*u, y + 7*u, Math.max(1, u * 0.6), Math.max(1, u * 0.6));
+    ctx.fillRect(x + 8*u, y + 7*u, Math.max(1, u * 0.6), Math.max(1, u * 0.6));
+    ctx.fillRect(x + 7*u, y + 6*u, Math.max(1, u * 0.5), Math.max(1, u * 0.5));
+    // Mushroom #2 (small, side)
+    ctx.fillStyle = '#a89880';
+    ctx.fillRect(x + 11*u, y + 11*u, Math.max(1, u * 1), 3*u);
+    ctx.fillStyle = '#a060d0';
+    ctx.beginPath();
+    ctx.ellipse(x + 11*u + Math.max(1, u * 0.5), y + 10*u, Math.max(1, u * 1.5), Math.max(1, u), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Halo
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.3;
+    var grad = ctx.createRadialGradient(x + 7*u, y + 7*u, 0, x + 7*u, y + 7*u, ts);
+    grad.addColorStop(0, 'rgba(180, 100, 240, 0.6)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.3, y - ts*0.3, ts * 1.6, ts * 1.6);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  function drawDragonEgg(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawCaveFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Nest of dark twigs
+    ctx.fillStyle = '#3a2410';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + 11*u, 6*u, Math.max(1, u * 2), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1a0808';
+    ctx.fillRect(x + 3*u, y + 11*u, ts - 6*u, Math.max(1, u * 0.7));
+    // Egg
+    var pulse = 0.7 + Math.sin(time / 600) * 0.3;
+    ctx.fillStyle = '#702018';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + 8*u, Math.max(1, u * 2.5), Math.max(1, u * 3.5), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Egg pattern
+    ctx.fillStyle = '#a04030';
+    ctx.fillRect(x + Math.floor(ts * 0.4), y + 6*u, Math.max(1, u * 1.2), Math.max(1, u * 0.5));
+    ctx.fillRect(x + Math.floor(ts * 0.5), y + 8*u, Math.max(1, u * 1), Math.max(1, u * 0.5));
+    ctx.fillRect(x + Math.floor(ts * 0.42), y + 9*u, Math.max(1, u * 1.5), Math.max(1, u * 0.5));
+    // Highlight
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#c06060';
+    ctx.fillRect(x + Math.floor(ts * 0.4), y + 6*u, Math.max(1, u * 0.6), Math.max(1, u * 1));
+    ctx.globalAlpha = 1;
+    // Inner glow
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.35;
+    var grad = ctx.createRadialGradient(x + ts/2, y + 8*u, 0, x + ts/2, y + 8*u, ts * 0.7);
+    grad.addColorStop(0, 'rgba(255, 80, 40, 0.6)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - 2*u, y - 2*u, ts + 4*u, ts + 4*u);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
   BridgeWorld.registerTileset('cave', {
     1: drawCaveWall,
     2: drawCaveFloor,
@@ -258,7 +459,13 @@
     4: drawLavaCrack,
     5: drawDragon,
     6: drawTreasure,
-    7: drawStalagmite
+    7: drawStalagmite,
+    8: drawLavaPool,
+    9: drawSkeleton,
+    10: drawOreVein,
+    11: drawWoodenSupport,
+    12: drawGlowMushroom,
+    13: drawDragonEgg
   });
 
   BridgeWorld.registerBackground('cave', drawCaveBackground);
