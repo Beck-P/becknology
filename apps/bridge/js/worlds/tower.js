@@ -2,94 +2,115 @@
  * Tower World Module — A sorceress's stone tower interior.
  *
  * Cold dark stone, candlelit corners, runes carved into the floor,
- * a magic crystal at the center, and the sorceress herself.
+ * a magic crystal at the center, and the sorceress herself. All drawers
+ * follow the strict 16-px-per-tile pixel art spec in apps/bridge/CLAUDE.md.
  */
 (function () {
 
+  // Tower floor — strict pixel art. 8u stone slabs with 1u dark grout cross.
   function drawTowerFloor(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
     var seed = (col * 23 + row * 17) % 100;
-    // Dark stone tiles, alternating slight tone
-    var base = (col + row) % 2 === 0 ? '#2a2638' : '#252134';
-    ctx.fillStyle = base;
+    var BASE_A = '#2a2638';
+    var BASE_B = '#252134';
+    var DARK = '#15101e';
+    var HI = '#3a3450';
+    ctx.fillStyle = (col + row) % 2 === 0 ? BASE_A : BASE_B;
     ctx.fillRect(x, y, ts, ts);
-    // Grout lines
-    ctx.fillStyle = '#15101e';
-    ctx.fillRect(x, y + Math.floor(ts/2) - Math.max(1, u * 0.3), ts, Math.max(1, u * 0.5));
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.3), y, Math.max(1, u * 0.5), ts);
-    // Speckle / wear
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x, y + 8*u - u, ts, u);
+    ctx.fillRect(x + 8*u - u, y, u, ts);
+    ctx.fillStyle = HI;
+    ctx.fillRect(x, y, ts, u);
+    ctx.fillRect(x, y + 8*u, ts, u);
+    // Speckle (1u purple)
     if (seed % 5 === 0) {
-      ctx.fillStyle = 'rgba(120, 80, 200, 0.12)';
+      ctx.fillStyle = '#5040a0';
       ctx.fillRect(x + 3*u, y + 11*u, u, u);
     }
     if (seed % 7 === 0) {
-      ctx.fillStyle = 'rgba(200, 180, 240, 0.10)';
-      ctx.fillRect(x + 12*u, y + 4*u, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+      ctx.fillStyle = '#7868a8';
+      ctx.fillRect(x + 12*u, y + 4*u, u, u);
     }
   }
 
+  // Tower wall — strict pixel art. 4u dark cap + 12u brick body, 1u
+  // mortar courses and offset joints. Whole-u rects only.
   function drawTowerWall(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Top cap (deep stone)
-    ctx.fillStyle = '#0e0820';
-    ctx.fillRect(x, y, ts, Math.floor(ts * 0.3));
-    // Wall body
-    ctx.fillStyle = '#1a1430';
-    ctx.fillRect(x, y + Math.floor(ts * 0.3), ts, ts - Math.floor(ts * 0.3));
-    // Cap highlight
-    ctx.fillStyle = '#2a2040';
-    ctx.fillRect(x, y, ts, Math.max(1, u * 0.5));
-    // Brick lines (alternating courses)
-    ctx.fillStyle = '#080418';
-    ctx.fillRect(x, y + Math.floor(ts * 0.55), ts, Math.max(1, u * 0.5));
-    ctx.fillRect(x, y + Math.floor(ts * 0.78), ts, Math.max(1, u * 0.5));
-    var brickOff = (row % 2 === 0) ? 0 : Math.floor(ts * 0.5);
-    ctx.fillRect(x + ((Math.floor(ts * 0.5) + brickOff) % ts), y + Math.floor(ts * 0.3), Math.max(1, u * 0.5), Math.floor(ts * 0.25));
-    ctx.fillRect(x + ((Math.floor(ts * 0.25) + (1 - row % 2) * Math.floor(ts * 0.5)) % ts), y + Math.floor(ts * 0.55), Math.max(1, u * 0.5), Math.floor(ts * 0.23));
+    var DARK = '#080418';
+    var CAP = '#0e0820';
+    var CAP_HI = '#2a2040';
+    var BRICK = '#1a1430';
+    // Cap
+    ctx.fillStyle = CAP;
+    ctx.fillRect(x, y, ts, 4*u);
+    ctx.fillStyle = CAP_HI;
+    ctx.fillRect(x, y, ts, u);
+    // Body
+    ctx.fillStyle = BRICK;
+    ctx.fillRect(x, y + 4*u, ts, 12*u);
+    // 1u mortar courses
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x, y + 8*u, ts, u);
+    ctx.fillRect(x, y + 12*u, ts, u);
+    // Brick joints
+    var off1 = (row % 2 === 0) ? 8 : 4;
+    var off2 = (row % 2 === 0) ? 4 : 12;
+    var off3 = (row % 2 === 0) ? 12 : 8;
+    ctx.fillRect(x + off1*u, y + 5*u, u, 3*u);
+    ctx.fillRect(x + off2*u, y + 9*u, u, 3*u);
+    ctx.fillRect(x + off3*u, y + 13*u, u, 3*u);
   }
 
+  // Tower door — strict pixel art. Iron-banded oak with pull ring,
+  // purple wisp glow above.
   function drawTowerDoor(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Floor at the bottom (where the player stands)
     drawTowerFloor(ctx, x, y, ts, time, col, row);
-    // Stone wall arch behind the door (top portion)
-    ctx.fillStyle = '#0e0820';
-    ctx.fillRect(x, y, ts, Math.floor(ts * 0.65));
-    ctx.fillStyle = '#1a1430';
-    ctx.fillRect(x + Math.max(1, u), y + Math.max(1, u), ts - 2*u, Math.floor(ts * 0.6));
-    // Heavy iron-banded oak door
-    var dx = x + 2*u, dy = y + 2*u;
-    var dw = ts - 4*u, dh = Math.floor(ts * 0.55);
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(dx, dy, dw, dh);
-    ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(dx + Math.max(1, u * 0.5), dy + Math.max(1, u * 0.5), dw - u, dh - u);
-    // Vertical planks
-    ctx.fillStyle = '#2a1808';
-    ctx.fillRect(dx + Math.floor(dw * 0.5), dy, Math.max(1, u * 0.5), dh);
-    // Iron rivets on straps
-    ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(dx, dy + 2*u, dw, Math.max(1, u * 0.7));
-    ctx.fillRect(dx, dy + dh - 3*u, dw, Math.max(1, u * 0.7));
+    var DARK = '#0a0408';
+    var STONE = '#0e0820';
+    var WOOD_DK = '#2a1808';
+    var WOOD = '#5a3a1a';
+    var WOOD_HI = '#7a4e22';
+    var IRON = '#1a1a1e';
+    // Stone arch (12u × 13u)
+    ctx.fillStyle = STONE;
+    ctx.fillRect(x + 2*u, y + 2*u, 12*u, 13*u);
+    // Door body
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 3*u, y + 3*u, 10*u, 12*u);
+    ctx.fillStyle = WOOD;
+    ctx.fillRect(x + 3*u, y + 3*u, 10*u, 11*u);
+    ctx.fillStyle = WOOD_HI;
+    ctx.fillRect(x + 3*u, y + 3*u, 10*u, u);
+    // Vertical plank seam
+    ctx.fillStyle = WOOD_DK;
+    ctx.fillRect(x + 8*u, y + 3*u, u, 11*u);
+    // Iron straps (1u × 10u)
+    ctx.fillStyle = IRON;
+    ctx.fillRect(x + 3*u, y + 5*u, 10*u, u);
+    ctx.fillRect(x + 3*u, y + 12*u, 10*u, u);
+    // Iron rivets (1u corners)
     ctx.fillStyle = '#3a3a3a';
-    ctx.fillRect(dx + Math.max(1, u * 0.5), dy + 2*u, Math.max(1, u * 0.4), Math.max(1, u * 0.4));
-    ctx.fillRect(dx + dw - Math.max(1, u * 1), dy + 2*u, Math.max(1, u * 0.4), Math.max(1, u * 0.4));
-    ctx.fillRect(dx + Math.max(1, u * 0.5), dy + dh - 3*u, Math.max(1, u * 0.4), Math.max(1, u * 0.4));
-    ctx.fillRect(dx + dw - Math.max(1, u * 1), dy + dh - 3*u, Math.max(1, u * 0.4), Math.max(1, u * 0.4));
-    // Big iron pull-ring on the door
-    ctx.strokeStyle = '#3a3a3a';
-    ctx.lineWidth = Math.max(1, u * 0.6);
-    ctx.beginPath();
-    ctx.arc(dx + dw - 3*u, dy + Math.floor(dh * 0.55), Math.max(1, u * 1.1), 0, Math.PI * 2);
-    ctx.stroke();
-    // Magic wisp / EXIT sign above the door (subtle purple glow)
+    ctx.fillRect(x + 3*u, y + 5*u, u, u);
+    ctx.fillRect(x + 12*u, y + 5*u, u, u);
+    ctx.fillRect(x + 3*u, y + 12*u, u, u);
+    ctx.fillRect(x + 12*u, y + 12*u, u, u);
+    // Iron pull-ring (stepped O, 3u × 3u with 1u-thick wall)
+    ctx.fillStyle = IRON;
+    ctx.fillRect(x + 10*u, y + 8*u, 3*u, u);
+    ctx.fillRect(x + 10*u, y + 9*u, u, 1*u);
+    ctx.fillRect(x + 12*u, y + 9*u, u, u);
+    ctx.fillRect(x + 10*u, y + 10*u, 3*u, u);
+    // Purple wisp (atmospheric — gradient allowed)
     var pulse = 0.5 + Math.sin(time / 800) * 0.3;
     ctx.globalCompositeOperation = 'screen';
     ctx.globalAlpha = pulse * 0.5;
-    var grad = ctx.createRadialGradient(x + ts/2, y + Math.floor(ts * 0.2), 0, x + ts/2, y + Math.floor(ts * 0.2), ts * 0.5);
+    var grad = ctx.createRadialGradient(x + ts/2, y + 2*u, 0, x + ts/2, y + 2*u, ts * 0.5);
     grad.addColorStop(0, 'rgba(160,100,240,0.7)');
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
@@ -98,16 +119,28 @@
     ctx.globalAlpha = 1;
   }
 
+  // Crystal altar — strict pixel art. Stepped diamond with 3-tone facets,
+  // atmospheric purple halo.
   function drawCrystalAltar(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Altar base
-    ctx.fillStyle = '#0e0820';
+    var DARK = '#080418';
+    var ALTAR_DK = '#0e0820';
+    var ALTAR = '#1a1430';
+    var ALTAR_HI = '#2a2040';
+    var CRYSTAL_DK = '#3a1860';
+    var CRYSTAL = '#503090';
+    var CRYSTAL_HI = '#8060c0';
+    var CRYSTAL_GLINT = '#c0a0f0';
+    // Altar base (10u × 5u)
+    ctx.fillStyle = DARK;
     ctx.fillRect(x + 3*u, y + 9*u, 10*u, 5*u);
-    ctx.fillStyle = '#1a1430';
-    ctx.fillRect(x + 3*u, y + 9*u, 10*u, Math.max(1, u * 0.6));
-    // Pulse halo
+    ctx.fillStyle = ALTAR;
+    ctx.fillRect(x + 3*u, y + 9*u, 10*u, 4*u);
+    ctx.fillStyle = ALTAR_HI;
+    ctx.fillRect(x + 3*u, y + 9*u, 10*u, u);
+    // Halo (atmospheric)
     var pulse = 0.7 + Math.sin(time / 600 + col + row) * 0.3;
     ctx.globalCompositeOperation = 'screen';
     var grad = ctx.createRadialGradient(x + ts/2, y + 5*u, 0, x + ts/2, y + 5*u, ts * 1.4);
@@ -116,55 +149,80 @@
     ctx.fillStyle = grad;
     ctx.fillRect(x - ts, y - ts, ts * 3, ts * 3);
     ctx.globalCompositeOperation = 'source-over';
-    // Crystal — diamond shape
-    ctx.fillStyle = '#503090';
-    ctx.beginPath();
-    ctx.moveTo(x + ts/2, y + 2*u);
-    ctx.lineTo(x + ts/2 + 4*u, y + 6*u);
-    ctx.lineTo(x + ts/2, y + 9*u);
-    ctx.lineTo(x + ts/2 - 4*u, y + 6*u);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#8060c0';
-    ctx.beginPath();
-    ctx.moveTo(x + ts/2, y + 2*u);
-    ctx.lineTo(x + ts/2 + 2*u, y + 6*u);
-    ctx.lineTo(x + ts/2, y + 9*u);
-    ctx.lineTo(x + ts/2 - 2*u, y + 6*u);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#c0a0f0';
-    ctx.fillRect(x + ts/2, y + 3*u, Math.max(1, u), 3*u);
+    // Diamond — stepped (whole-u): 1u tip → 3u → 5u → 7u → 5u → 3u → 1u
+    // Outline first
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 7*u, y + 2*u, 2*u, u);
+    ctx.fillRect(x + 6*u, y + 3*u, 4*u, u);
+    ctx.fillRect(x + 5*u, y + 4*u, 6*u, u);
+    ctx.fillRect(x + 4*u, y + 5*u, 8*u, u);
+    ctx.fillRect(x + 5*u, y + 6*u, 6*u, u);
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, u);
+    ctx.fillRect(x + 7*u, y + 8*u, 2*u, u);
+    // Body (one row inside)
+    ctx.fillStyle = CRYSTAL;
+    ctx.fillRect(x + 7*u, y + 2*u, 2*u, u);
+    ctx.fillRect(x + 6*u, y + 3*u, 4*u, u);
+    ctx.fillRect(x + 5*u, y + 4*u, 6*u, u);
+    ctx.fillRect(x + 4*u, y + 5*u, 8*u, u);
+    ctx.fillRect(x + 5*u, y + 6*u, 6*u, u);
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, u);
+    ctx.fillRect(x + 7*u, y + 8*u, 2*u, u);
+    // Highlight column (1u, left of center)
+    ctx.fillStyle = CRYSTAL_HI;
+    ctx.fillRect(x + 7*u, y + 2*u, u, u);
+    ctx.fillRect(x + 6*u, y + 3*u, u, u);
+    ctx.fillRect(x + 5*u, y + 4*u, u, u);
+    ctx.fillRect(x + 6*u, y + 5*u, u, u);
+    // Glint (1u top)
+    ctx.fillStyle = CRYSTAL_GLINT;
+    ctx.fillRect(x + 7*u, y + 2*u, u, u);
   }
 
+  // Sorceress — strict pixel art. 8u-wide robed figure with hood,
+  // 1u glowing eyes, atmospheric aura.
   function drawSorceress(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
+    var DARK = '#0a0418';
+    var ROBE_DK = '#2a1040';
+    var ROBE = '#3a2050';
+    var ROBE_HI = '#503070';
+    var BELT = '#a060d0';
+    var EYE = '#c0a0f0';
     var bob = Math.sin(time / 700) > 0.85 ? -u : 0;
-    // Robe — long
-    ctx.fillStyle = '#3a2050';
-    ctx.fillRect(x + 3*u, y + (5*u) + bob, 10*u, 9*u);
-    // Robe lighter trim
-    ctx.fillStyle = '#503070';
-    ctx.fillRect(x + 3*u, y + (5*u) + bob, 10*u, Math.max(1, u * 0.6));
-    // Belt
-    ctx.fillStyle = '#a060d0';
-    ctx.fillRect(x + 3*u, y + (9*u) + bob, 10*u, Math.max(1, u * 0.6));
-    // Hood/head
-    ctx.fillStyle = '#3a2050';
-    ctx.fillRect(x + 4*u, y + (1*u) + bob, 8*u, 5*u);
-    // Face shadow
-    ctx.fillStyle = '#1a0a30';
-    ctx.fillRect(x + 5*u, y + (3*u) + bob, 6*u, 3*u);
-    // Glowing eyes
+    // Hood (8u × 5u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 4*u, y + u + bob, 8*u, 5*u);
+    ctx.fillStyle = ROBE;
+    ctx.fillRect(x + 4*u, y + u + bob, 8*u, 5*u);
+    ctx.fillStyle = ROBE_HI;
+    ctx.fillRect(x + 4*u, y + u + bob, 8*u, u);
+    // Hood shadow (face cavity)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 5*u, y + 3*u + bob, 6*u, 3*u);
+    // Eyes — 1u glowing
     var eyeBlink = Math.sin(time / 800) > 0.3 ? 1 : 0;
     if (eyeBlink) {
-      ctx.fillStyle = '#c0a0f0';
-      ctx.fillRect(x + 6*u, y + (3*u) + bob, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
-      ctx.fillRect(x + 9*u, y + (3*u) + bob, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+      ctx.fillStyle = EYE;
+      ctx.fillRect(x + 6*u, y + 4*u + bob, u, u);
+      ctx.fillRect(x + 9*u, y + 4*u + bob, u, u);
     }
-    // Subtle aura
+    // Robe body (10u × 9u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 3*u, y + 5*u + bob, 10*u, 10*u);
+    ctx.fillStyle = ROBE_DK;
+    ctx.fillRect(x + 3*u, y + 5*u + bob, 10*u, 9*u);
+    ctx.fillStyle = ROBE;
+    ctx.fillRect(x + 4*u, y + 6*u + bob, 8*u, 8*u);
+    // Belt (1u)
+    ctx.fillStyle = BELT;
+    ctx.fillRect(x + 3*u, y + 9*u + bob, 10*u, u);
+    // Hem dark band
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 3*u, y + 14*u, 10*u, u);
+    // Aura (atmospheric)
     var pulse = 0.5 + Math.sin(time / 500) * 0.2;
     ctx.globalCompositeOperation = 'screen';
     ctx.globalAlpha = pulse * 0.3;
@@ -177,32 +235,53 @@
     ctx.globalAlpha = 1;
   }
 
+  // Candle — strict pixel art. 2u-wide candle on 4u base, 2-frame flame.
   function drawCandle(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Candleholder base
-    ctx.fillStyle = '#1a1a1e';
+    var DARK = '#0a0a0a';
+    var BASE_DK = '#1a1a1e';
+    var BASE = '#3a3a3a';
+    var BASE_HI = '#5a5a5a';
+    var WAX_DK = '#a0a090';
+    var WAX = '#e0e0d0';
+    // Base (4u × 3u)
+    ctx.fillStyle = DARK;
     ctx.fillRect(x + 6*u, y + 11*u, 4*u, 3*u);
-    ctx.fillStyle = '#3a3a3a';
-    ctx.fillRect(x + 5*u, y + 13*u, 6*u, Math.max(1, u * 0.6));
-    // Candle
-    ctx.fillStyle = '#e0e0d0';
+    ctx.fillStyle = BASE_DK;
+    ctx.fillRect(x + 6*u, y + 11*u, 4*u, 2*u);
+    ctx.fillStyle = BASE;
+    ctx.fillRect(x + 6*u, y + 11*u, 4*u, u);
+    // Foot (6u × 1u)
+    ctx.fillStyle = BASE_HI;
+    ctx.fillRect(x + 5*u, y + 13*u, 6*u, u);
+    // Candle (2u × 4u)
+    ctx.fillStyle = DARK;
     ctx.fillRect(x + 7*u, y + 7*u, 2*u, 4*u);
-    ctx.fillStyle = '#b0b0a0';
-    ctx.fillRect(x + Math.floor(8.4*u), y + 7*u, Math.max(1, u * 0.5), 4*u);
-    // Wick
+    ctx.fillStyle = WAX;
+    ctx.fillRect(x + 7*u, y + 7*u, 2*u, 4*u);
+    ctx.fillStyle = WAX_DK;
+    ctx.fillRect(x + 8*u, y + 7*u, u, 4*u);   // 1u right shadow
+    // Wick (1u)
     ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(x + Math.floor(7.8*u), y + 6*u, Math.max(1, u * 0.4), Math.max(1, u));
-    // Flame
+    ctx.fillRect(x + 7*u, y + 6*u, u, u);
+    // Flame — 2-frame stepped pyramid
+    var flameFrame = Math.floor(time / 180) % 2;
     var flick = 0.7 + Math.sin(time / 130 + col) * 0.3;
     ctx.globalAlpha = flick;
     ctx.fillStyle = '#ffc060';
-    ctx.fillRect(x + Math.floor(7.5*u), y + 4*u, Math.max(1, u), Math.max(1, u * 2));
+    if (flameFrame === 0) {
+      ctx.fillRect(x + 7*u, y + 4*u, u, u);
+      ctx.fillRect(x + 7*u, y + 5*u, 2*u, u);
+    } else {
+      ctx.fillRect(x + 7*u, y + 4*u, 2*u, u);
+      ctx.fillRect(x + 7*u, y + 5*u, u, u);
+    }
     ctx.fillStyle = '#fff0a0';
-    ctx.fillRect(x + Math.floor(7.7*u), y + Math.floor(4.5*u), Math.max(1, u * 0.6), Math.max(1, u));
+    ctx.fillRect(x + 7*u, y + 5*u, u, u);
     ctx.globalAlpha = 1;
-    // Halo
+    // Halo (atmospheric)
     ctx.globalCompositeOperation = 'screen';
     ctx.globalAlpha = 0.4 * flick;
     var grad = ctx.createRadialGradient(x + 8*u, y + 5*u, 0, x + 8*u, y + 5*u, 8*u);
@@ -214,48 +293,65 @@
     ctx.globalAlpha = 1;
   }
 
+  // Bookshelf — strict pixel art. 3 shelves with 2u × 3u books.
   function drawBookshelf(ctx, x, y, ts, time, col, row) {
     drawTowerWall(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Bookshelf box
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + u, y + Math.floor(ts * 0.32), ts - 2*u, Math.floor(ts * 0.48));
-    // Shelves
-    ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(x + u, y + Math.floor(ts * 0.32), ts - 2*u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + u, y + Math.floor(ts * 0.48), ts - 2*u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + u, y + Math.floor(ts * 0.66), ts - 2*u, Math.max(1, u * 0.5));
-    // Books on each shelf
+    var DARK = '#1a0e08';
+    var WOOD = '#3a2410';
+    var WOOD_HI = '#5a3a1a';
+    // Bookshelf box (14u × 9u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + u, y + 5*u, 14*u, 10*u);
+    ctx.fillStyle = WOOD;
+    ctx.fillRect(x + u, y + 5*u, 14*u, 9*u);
+    // Shelf boards (1u each)
+    ctx.fillStyle = WOOD_HI;
+    ctx.fillRect(x + u, y + 5*u, 14*u, u);
+    ctx.fillRect(x + u, y + 9*u, 14*u, u);
+    ctx.fillRect(x + u, y + 13*u, 14*u, u);
+    // Books (2u × 3u each)
     var bookColors = ['#7a2030', '#5a2070', '#205070', '#705020', '#206050'];
     for (var s = 0; s < 2; s++) {
-      var sy = y + Math.floor(ts * (s === 0 ? 0.34 : 0.50));
-      for (var b = 0; b < 5; b++) {
+      var sy = y + (s === 0 ? 6 : 10) * u;
+      for (var b = 0; b < 6; b++) {
         ctx.fillStyle = bookColors[(s * 5 + b) % bookColors.length];
-        ctx.fillRect(x + (2 + b * 2)*u, sy, Math.max(1, u * 1.4), Math.max(1, u * 2.5));
+        ctx.fillRect(x + (2 + b * 2)*u, sy, u, 3*u);
+        ctx.fillStyle = DARK;
+        ctx.fillRect(x + (3 + b * 2)*u, sy, u, 3*u);
       }
     }
   }
 
+  // Floor rune — strict pixel art. Stepped octagonal ring + 1u cardinal
+  // marks.
   function drawRune(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
     var pulse = 0.5 + Math.sin(time / 800 + col + row) * 0.3;
-    // Rune circle
-    ctx.strokeStyle = 'rgba(160, 100, 240, ' + pulse.toFixed(2) + ')';
-    ctx.lineWidth = Math.max(1, u * 0.5);
-    ctx.beginPath();
-    ctx.arc(x + ts/2, y + ts/2, 5*u, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(x + ts/2, y + ts/2, 3*u, 0, Math.PI * 2);
-    ctx.stroke();
-    // Cross marks
-    ctx.fillStyle = 'rgba(200, 160, 255, ' + pulse.toFixed(2) + ')';
-    ctx.fillRect(x + ts/2 - Math.max(1, u * 0.3), y + 3*u, Math.max(1, u * 0.6), 2*u);
-    ctx.fillRect(x + ts/2 - Math.max(1, u * 0.3), y + 11*u, Math.max(1, u * 0.6), 2*u);
-    ctx.fillRect(x + 3*u, y + ts/2 - Math.max(1, u * 0.3), 2*u, Math.max(1, u * 0.6));
-    ctx.fillRect(x + 11*u, y + ts/2 - Math.max(1, u * 0.3), 2*u, Math.max(1, u * 0.6));
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#a070e0';
+    // Stepped octagonal ring (whole-u)
+    ctx.fillRect(x + 6*u, y + 3*u, 4*u, u);     // top edge
+    ctx.fillRect(x + 4*u, y + 4*u, 2*u, u);
+    ctx.fillRect(x + 10*u, y + 4*u, 2*u, u);
+    ctx.fillRect(x + 3*u, y + 5*u, u, u);
+    ctx.fillRect(x + 12*u, y + 5*u, u, u);
+    ctx.fillRect(x + 3*u, y + 6*u, u, 4*u);     // left edge
+    ctx.fillRect(x + 12*u, y + 6*u, u, 4*u);    // right edge
+    ctx.fillRect(x + 3*u, y + 10*u, u, u);
+    ctx.fillRect(x + 12*u, y + 10*u, u, u);
+    ctx.fillRect(x + 4*u, y + 11*u, 2*u, u);
+    ctx.fillRect(x + 10*u, y + 11*u, 2*u, u);
+    ctx.fillRect(x + 6*u, y + 12*u, 4*u, u);
+    // Cardinal marks (1u × 2u each)
+    ctx.fillStyle = '#c0a0f0';
+    ctx.fillRect(x + 7*u, y + 5*u, 2*u, 2*u);
+    ctx.fillRect(x + 7*u, y + 9*u, 2*u, 2*u);
+    ctx.fillRect(x + 5*u, y + 7*u, 2*u, 2*u);
+    ctx.fillRect(x + 9*u, y + 7*u, 2*u, 2*u);
+    ctx.globalAlpha = 1;
   }
 
   function drawTowerBackground(ctx, w, h, time) {
@@ -263,112 +359,150 @@
     ctx.fillRect(0, 0, w, h);
   }
 
+  // Alchemy table — strict pixel art. Wood table + flat 2u × 3u potion
+  // bottles + open book.
   function drawAlchemyTable(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Table
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 2*u, y + 6*u, ts - 4*u, 2*u);
-    ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(x + 2*u, y + 6*u, ts - 4*u, Math.max(1, u * 0.5));
-    // Legs
-    ctx.fillStyle = '#1a1010';
-    ctx.fillRect(x + 3*u, y + 8*u, Math.max(1, u), 6*u);
-    ctx.fillRect(x + ts - 4*u, y + 8*u, Math.max(1, u), 6*u);
-    // Bubbling potion bottle (green)
-    var bubble = Math.sin(time / 250) * 0.5 + 0.5;
-    ctx.fillStyle = '#3a2010';
+    var DARK = '#1a0e08';
+    var WOOD = '#3a2410';
+    var WOOD_HI = '#5a3a1a';
+    // Table top (12u × 2u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 2*u, y + 6*u, 12*u, 3*u);
+    ctx.fillStyle = WOOD;
+    ctx.fillRect(x + 2*u, y + 6*u, 12*u, 2*u);
+    ctx.fillStyle = WOOD_HI;
+    ctx.fillRect(x + 2*u, y + 6*u, 12*u, u);
+    // Legs (1u × 6u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 3*u, y + 8*u, u, 6*u);
+    ctx.fillRect(x + 12*u, y + 8*u, u, 6*u);
+    // Green potion (2u × 3u with 1u bubble)
+    ctx.fillStyle = DARK;
     ctx.fillRect(x + 4*u, y + 3*u, 2*u, 3*u);
     ctx.fillStyle = '#40a060';
-    ctx.fillRect(x + 4*u, y + Math.floor(4*u - bubble * u), 2*u, Math.max(1, u * (2 + bubble)));
-    ctx.globalAlpha = bubble;
-    ctx.fillStyle = '#a0e0a0';
-    ctx.fillRect(x + Math.floor(4.5*u), y + 3*u, Math.max(1, u), Math.max(1, u * 0.5));
-    ctx.globalAlpha = 1;
-    // Purple potion bottle
-    ctx.fillStyle = '#3a2050';
-    ctx.fillRect(x + 7*u, y + 4*u, Math.max(1, u * 1.4), 2*u);
-    ctx.fillStyle = '#a060d0';
-    ctx.fillRect(x + 7*u, y + Math.floor(4.5*u), Math.max(1, u * 1.4), Math.max(1, u * 1.5));
+    ctx.fillRect(x + 4*u, y + 3*u, 2*u, 3*u);
+    var bubble = Math.sin(time / 250) > 0 ? 1 : 0;
+    if (bubble) {
+      ctx.fillStyle = '#a0e0a0';
+      ctx.fillRect(x + 4*u, y + 3*u, u, u);
+    }
     // Cork
     ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(x + Math.floor(7.3*u), y + Math.max(1, u * 3.5), Math.max(1, u * 0.8), Math.max(1, u * 0.6));
-    // Beaker on table
-    ctx.fillStyle = '#a0c0d0';
+    ctx.fillRect(x + 4*u, y + 2*u, 2*u, u);
+    // Purple potion (2u × 3u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 7*u, y + 3*u, 2*u, 3*u);
+    ctx.fillStyle = '#a060d0';
+    ctx.fillRect(x + 7*u, y + 3*u, 2*u, 3*u);
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + 7*u, y + 2*u, 2*u, u);
+    // Beaker (2u × 2u)
+    ctx.fillStyle = DARK;
     ctx.fillRect(x + 10*u, y + 4*u, 2*u, 2*u);
     ctx.fillStyle = '#80a0c0';
-    ctx.fillRect(x + Math.floor(10.5*u), y + 3*u, Math.max(1, u * 0.6), Math.max(1, u * 1.4));
-    // Ingredient pile
-    ctx.fillStyle = '#604030';
-    ctx.fillRect(x + 13*u, y + 5*u, Math.max(1, u * 1.4), Math.max(1, u));
-    // Open book
+    ctx.fillRect(x + 10*u, y + 4*u, 2*u, 2*u);
+    ctx.fillStyle = '#a0c0d0';
+    ctx.fillRect(x + 10*u, y + 4*u, 2*u, u);
+    // Open book (3u × 1u)
     ctx.fillStyle = '#a08040';
-    ctx.fillRect(x + 4*u, y + Math.max(1, 5.5*u), 3*u, Math.max(1, u * 0.6));
+    ctx.fillRect(x + 5*u, y + 5*u, 3*u, u);
     ctx.fillStyle = '#f0e0c0';
-    ctx.fillRect(x + Math.floor(4.5*u), y + Math.max(1, 5.5*u), Math.max(1, u * 2), Math.max(1, u * 0.4));
+    ctx.fillRect(x + 5*u, y + 5*u, 3*u, u);
   }
 
+  // Telescope — strict pixel art. Dark barrel + brass collar + tripod.
   function drawTelescope(ctx, x, y, ts, time, col, row) {
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Tripod
-    ctx.fillStyle = '#3a3a3a';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 6*u, Math.max(1, u * 0.8), 8*u);
-    ctx.fillRect(x + 4*u, y + 12*u, Math.max(1, u * 0.5), 2*u);
-    ctx.fillRect(x + ts - 5*u, y + 12*u, Math.max(1, u * 0.5), 2*u);
-    // Telescope barrel — angled
+    var DARK = '#080418';
+    var BARREL = '#3a3a48';
+    var BARREL_HI = '#5a5a68';
+    var BRASS = '#a08040';
+    var BRASS_HI = '#e0c060';
+    // Tripod (1u × 8u central pole + 2u angled legs)
     ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(x + 4*u, y + 3*u, ts - 8*u, 2*u);
-    ctx.fillStyle = '#3a3a48';
-    ctx.fillRect(x + 4*u, y + 3*u, ts - 8*u, Math.max(1, u * 0.5));
-    // Eyepiece
-    ctx.fillStyle = '#a08040';
-    ctx.fillRect(x + 3*u, y + 3*u, Math.max(1, u * 1.5), 2*u);
-    // Far end
-    ctx.fillStyle = '#080418';
-    ctx.fillRect(x + ts - 6*u, y + 3*u, Math.max(1, u * 2), 2*u);
-    // Brass collar
-    ctx.fillStyle = '#a08040';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.6), y + 4*u, Math.max(1, u * 1.2), Math.max(1, u * 0.5));
+    ctx.fillRect(x + 7*u, y + 6*u, 2*u, 8*u);
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(x + 7*u, y + 6*u, u, 8*u);
+    // Tripod legs (stepped diagonals)
+    ctx.fillStyle = '#1a1a1e';
+    for (var d = 0; d < 4; d++) {
+      ctx.fillRect(x + (5 - d)*u, y + (10 + d)*u, u, u);
+      ctx.fillRect(x + (10 + d)*u, y + (10 + d)*u, u, u);
+    }
+    // Barrel (12u × 2u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 2*u, y + 3*u, 12*u, 3*u);
+    ctx.fillStyle = BARREL;
+    ctx.fillRect(x + 2*u, y + 3*u, 12*u, 2*u);
+    ctx.fillStyle = BARREL_HI;
+    ctx.fillRect(x + 2*u, y + 3*u, 12*u, u);
+    // Eyepiece (2u × 2u)
+    ctx.fillStyle = BRASS;
+    ctx.fillRect(x + 2*u, y + 3*u, 2*u, 2*u);
+    ctx.fillStyle = BRASS_HI;
+    ctx.fillRect(x + 2*u, y + 3*u, 2*u, u);
+    // Far end (2u × 2u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 12*u, y + 3*u, 2*u, 2*u);
+    // Brass collar (2u × 1u)
+    ctx.fillStyle = BRASS;
+    ctx.fillRect(x + 7*u, y + 4*u, 2*u, u);
   }
 
+  // Cauldron — strict pixel art. Stepped iron pot with 3-tone potion,
+  // 1u animated steam, atmospheric halo.
   function drawCauldron(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Tripod stand
-    ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(x + 4*u, y + 11*u, Math.max(1, u * 0.6), 4*u);
-    ctx.fillRect(x + ts - 5*u, y + 11*u, Math.max(1, u * 0.6), 4*u);
-    ctx.fillRect(x + Math.floor(ts/2), y + 11*u, Math.max(1, u * 0.6), 4*u);
-    // Cauldron pot
-    ctx.fillStyle = '#0a0a0a';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + 9*u, 6*u, Math.max(1, u * 2.5), 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Bubbling potion inside
-    var bubble = Math.sin(time / 200) * 0.3 + 0.7;
-    ctx.fillStyle = '#7030a0';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + 8*u, Math.max(1, u * 5), Math.max(1, u * 1.5), 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Bubbles
-    ctx.fillStyle = '#a060d0';
-    ctx.globalAlpha = bubble;
-    ctx.beginPath();
-    ctx.arc(x + ts/2 - 2*u, y + 7*u, Math.max(1, u * 0.5), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + ts/2 + 2*u, y + Math.max(1, 7.5*u), Math.max(1, u * 0.4), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    // Steam rising
-    var steam = (time / 100) % 6;
+    var DARK = '#000000';
+    var IRON_DK = '#0a0a0a';
+    var IRON = '#1a1a1e';
+    var IRON_HI = '#3a3a3a';
+    var POTION_DK = '#3a1860';
+    var POTION = '#7030a0';
+    var POTION_HI = '#a060d0';
+    // Tripod legs (1u verticals)
+    ctx.fillStyle = IRON;
+    ctx.fillRect(x + 4*u, y + 11*u, u, 4*u);
+    ctx.fillRect(x + 11*u, y + 11*u, u, 4*u);
+    ctx.fillRect(x + 8*u, y + 11*u, u, 4*u);
+    // Pot — stepped oval (12u → 14u → 12u)
+    ctx.fillStyle = IRON_DK;
+    ctx.fillRect(x + 3*u, y + 7*u, 10*u, 1*u);
+    ctx.fillRect(x + 2*u, y + 8*u, 12*u, 4*u);
+    ctx.fillRect(x + 3*u, y + 12*u, 10*u, 1*u);
+    ctx.fillStyle = IRON;
+    ctx.fillRect(x + 3*u, y + 7*u, 10*u, u);
+    ctx.fillRect(x + 2*u, y + 8*u, 12*u, 3*u);
+    ctx.fillRect(x + 3*u, y + 11*u, 10*u, u);
+    // Rim (1u top highlight)
+    ctx.fillStyle = IRON_HI;
+    ctx.fillRect(x + 2*u, y + 8*u, 12*u, u);
+    // Potion surface (10u × 1u)
+    ctx.fillStyle = POTION_DK;
+    ctx.fillRect(x + 3*u, y + 8*u, 10*u, u);
+    ctx.fillStyle = POTION;
+    ctx.fillRect(x + 4*u, y + 8*u, 8*u, u);
+    // Bubbles (1u, frame-stepped)
+    var bubble = Math.sin(time / 200) > 0;
+    if (bubble) {
+      ctx.fillStyle = POTION_HI;
+      ctx.fillRect(x + 6*u, y + 8*u, u, u);
+      ctx.fillRect(x + 9*u, y + 8*u, u, u);
+    }
+    // Steam (1u animated)
+    var stFrame = Math.floor(time / 200) % 4;
     ctx.globalAlpha = 0.6;
     ctx.fillStyle = '#c0a0d0';
-    ctx.fillRect(x + ts/2 - 2*u, y + Math.max(0, 5*u - steam * u), Math.max(1, u * 0.7), Math.max(1, u * 0.7));
-    ctx.fillRect(x + ts/2 + 2*u, y + Math.max(0, 4*u - steam * u), Math.max(1, u * 0.6), Math.max(1, u * 0.6));
+    for (var s = 0; s < 2; s++) {
+      var stY = y + (Math.max(0, 5 - stFrame - s)) * u;
+      ctx.fillRect(x + (6 + s * 4)*u, stY, u, u);
+    }
     ctx.globalAlpha = 1;
     // Magical halo
     ctx.globalCompositeOperation = 'screen';
@@ -382,46 +516,43 @@
     ctx.globalAlpha = 1;
   }
 
+  // Familiar — strict pixel art. Stepped black cat with 1u glowing eyes.
   function drawFamiliar(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Floating black cat / familiar
-    var bob = Math.sin(time / 600) * u * 0.5;
-    // Body — black cat curled
-    ctx.fillStyle = '#0a0a0a';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + 8*u + bob, 4*u, Math.max(1, u * 2.5), 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Head
-    ctx.beginPath();
-    ctx.arc(x + 5*u, y + 7*u + bob, Math.max(1, u * 1.5), 0, Math.PI * 2);
-    ctx.fill();
-    // Ears
-    ctx.beginPath();
-    ctx.moveTo(x + 4*u, y + 5*u + bob);
-    ctx.lineTo(x + Math.floor(4.5*u), y + 6*u + bob);
-    ctx.lineTo(x + Math.floor(3.5*u), y + 6*u + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(x + 6*u, y + 5*u + bob);
-    ctx.lineTo(x + Math.floor(6.5*u), y + 6*u + bob);
-    ctx.lineTo(x + Math.floor(5.5*u), y + 6*u + bob);
-    ctx.closePath();
-    ctx.fill();
-    // Tail (curled)
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(x + 9*u, y + 6*u + bob, 2*u, Math.max(1, u));
-    ctx.fillRect(x + 11*u, y + 5*u + bob, Math.max(1, u), 3*u);
-    // Glowing yellow eyes
+    var DARK = '#000000';
+    var FUR_DK = '#0a0a0a';
+    var FUR = '#1a1a1a';
+    var EYE = '#ffe080';
+    var bob = Math.sin(time / 600) > 0.5 ? -u : 0;
+    // Body (8u × 5u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 3*u, y + 7*u + bob, 8*u, 5*u);
+    ctx.fillStyle = FUR;
+    ctx.fillRect(x + 3*u, y + 7*u + bob, 8*u, 4*u);
+    // Head (4u × 4u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 3*u, y + 5*u + bob, 4*u, 4*u);
+    ctx.fillStyle = FUR;
+    ctx.fillRect(x + 3*u, y + 5*u + bob, 4*u, 3*u);
+    // Ears (1u × 2u each)
+    ctx.fillStyle = FUR_DK;
+    ctx.fillRect(x + 3*u, y + 4*u + bob, u, u);
+    ctx.fillRect(x + 6*u, y + 4*u + bob, u, u);
+    // Tail (curled, stepped 1u)
+    ctx.fillStyle = FUR;
+    ctx.fillRect(x + 11*u, y + 7*u + bob, u, 4*u);
+    ctx.fillRect(x + 12*u, y + 6*u + bob, u, 2*u);
+    ctx.fillRect(x + 11*u, y + 6*u + bob, u, u);
+    // Glowing eyes (1u, blink)
     var blink = Math.sin(time / 1500) > 0.3;
     if (blink) {
-      ctx.fillStyle = '#ffe080';
-      ctx.fillRect(x + Math.floor(4.5*u), y + 7*u + bob, Math.max(1, u * 0.5), Math.max(1, u * 0.5));
-      ctx.fillRect(x + Math.floor(5.5*u), y + 7*u + bob, Math.max(1, u * 0.5), Math.max(1, u * 0.5));
+      ctx.fillStyle = EYE;
+      ctx.fillRect(x + 4*u, y + 6*u + bob, u, u);
+      ctx.fillRect(x + 5*u, y + 6*u + bob, u, u);
     }
-    // Magic aura
+    // Aura (atmospheric)
     ctx.globalCompositeOperation = 'screen';
     ctx.globalAlpha = 0.25;
     var grad = ctx.createRadialGradient(x + ts/2, y + 8*u, 0, x + ts/2, y + 8*u, ts * 0.7);
@@ -433,62 +564,81 @@
     ctx.globalAlpha = 1;
   }
 
+  // Scroll pile — strict pixel art. 3 stacked scrolls + 1u red wax seal.
   function drawScrollPile(ctx, x, y, ts, time, col, row) {
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Pile of rolled scrolls
-    ctx.fillStyle = '#d8c8a0';
-    ctx.fillRect(x + 3*u, y + 11*u, ts - 6*u, 2*u);
-    ctx.fillStyle = '#a89870';
-    ctx.fillRect(x + 3*u, y + 11*u, ts - 6*u, Math.max(1, u * 0.5));
-    // Stacked scroll
-    ctx.fillStyle = '#e8d8a8';
-    ctx.fillRect(x + 4*u, y + 9*u, ts - 8*u, 2*u);
-    ctx.fillStyle = '#b89870';
-    ctx.fillRect(x + 4*u, y + 9*u, ts - 8*u, Math.max(1, u * 0.5));
-    // Top scroll (open with red wax seal)
-    ctx.fillStyle = '#f0e0c0';
-    ctx.fillRect(x + 5*u, y + 6*u, ts - 10*u, 3*u);
+    var DARK = '#3a2810';
+    var PAPER_DK = '#a89870';
+    var PAPER = '#d8c8a0';
+    var PAPER_HI = '#f0e0b0';
+    var INK = '#6a4a30';
+    // Bottom scroll (10u × 2u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 3*u, y + 11*u, 10*u, 3*u);
+    ctx.fillStyle = PAPER_DK;
+    ctx.fillRect(x + 3*u, y + 11*u, 10*u, 2*u);
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(x + 3*u, y + 11*u, 10*u, u);
+    // Mid scroll (8u × 2u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 4*u, y + 9*u, 8*u, 2*u);
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(x + 4*u, y + 9*u, 8*u, u);
+    ctx.fillStyle = PAPER_HI;
+    ctx.fillRect(x + 4*u, y + 9*u, 8*u, u);
+    // Top open scroll (6u × 4u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 5*u, y + 5*u, 6*u, 5*u);
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(x + 5*u, y + 5*u, 6*u, 4*u);
+    ctx.fillStyle = PAPER_HI;
+    ctx.fillRect(x + 5*u, y + 5*u, 6*u, u);
+    // Ink lines (1u)
+    ctx.fillStyle = INK;
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, u);
+    // Wax seal (1u)
+    ctx.fillStyle = '#3a0810';
+    ctx.fillRect(x + 7*u, y + 8*u, 2*u, u);
     ctx.fillStyle = '#a02030';
-    ctx.beginPath();
-    ctx.arc(x + ts/2, y + Math.floor(7.5*u), Math.max(1, u * 0.7), 0, Math.PI * 2);
-    ctx.fill();
-    // Text lines on scroll
-    ctx.fillStyle = '#6a4a30';
-    ctx.fillRect(x + Math.floor(5.5*u), y + Math.floor(6.5*u), Math.max(1, u * 1.5), Math.max(1, u * 0.4));
-    ctx.fillRect(x + Math.floor(5.5*u), y + Math.floor(7.3*u), Math.max(1, u * 1.5), Math.max(1, u * 0.4));
+    ctx.fillRect(x + 7*u, y + 8*u, 2*u, u);
+    ctx.fillStyle = '#e04060';
+    ctx.fillRect(x + 7*u, y + 8*u, u, u);
   }
 
+  // Spell circle — strict pixel art. Stepped octagonal ring + 1u center
+  // crystal, atmospheric halo.
   function drawSpellCircle(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawTowerFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
     var pulse = 0.6 + Math.sin(time / 700 + col + row) * 0.3;
-    // Outer rotating ring
-    ctx.save();
-    ctx.translate(x + ts/2, y + ts/2);
-    ctx.rotate(time / 3000);
-    ctx.strokeStyle = 'rgba(160, 100, 240, ' + pulse.toFixed(2) + ')';
-    ctx.lineWidth = Math.max(1, u * 0.4);
-    ctx.beginPath();
-    ctx.arc(0, 0, 6*u, 0, Math.PI * 2);
-    ctx.stroke();
-    // Inner triangle
-    ctx.beginPath();
-    ctx.moveTo(0, -4*u);
-    ctx.lineTo(Math.cos(Math.PI/6) * 4*u, Math.sin(Math.PI/6) * 4*u);
-    ctx.lineTo(-Math.cos(Math.PI/6) * 4*u, Math.sin(Math.PI/6) * 4*u);
-    ctx.closePath();
-    ctx.stroke();
-    // Inner ring
-    ctx.beginPath();
-    ctx.arc(0, 0, 2*u, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-    // Center floating crystal
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = '#a070e0';
+    // Outer stepped octagonal ring
+    ctx.fillRect(x + 6*u, y + 2*u, 4*u, u);
+    ctx.fillRect(x + 4*u, y + 3*u, 2*u, u);
+    ctx.fillRect(x + 10*u, y + 3*u, 2*u, u);
+    ctx.fillRect(x + 3*u, y + 4*u, u, u);
+    ctx.fillRect(x + 12*u, y + 4*u, u, u);
+    ctx.fillRect(x + 2*u, y + 5*u, u, 6*u);
+    ctx.fillRect(x + 13*u, y + 5*u, u, 6*u);
+    ctx.fillRect(x + 3*u, y + 11*u, u, u);
+    ctx.fillRect(x + 12*u, y + 11*u, u, u);
+    ctx.fillRect(x + 4*u, y + 12*u, 2*u, u);
+    ctx.fillRect(x + 10*u, y + 12*u, 2*u, u);
+    ctx.fillRect(x + 6*u, y + 13*u, 4*u, u);
+    // Inner triangle (stepped)
     ctx.fillStyle = '#c0a0f0';
-    ctx.fillRect(x + ts/2 - Math.max(1, u * 0.5), y + ts/2 - Math.max(1, u * 0.5), Math.max(1, u), Math.max(1, u));
-    // Glow
+    ctx.fillRect(x + 7*u, y + 5*u, 2*u, u);
+    ctx.fillRect(x + 6*u, y + 6*u, 4*u, u);
+    ctx.fillRect(x + 5*u, y + 7*u, 6*u, u);
+    ctx.fillRect(x + 5*u, y + 8*u, 6*u, u);   // base
+    // Center crystal (1u)
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + 7*u, y + 7*u, 2*u, 2*u);
+    ctx.globalAlpha = 1;
+    // Halo (atmospheric)
     ctx.globalCompositeOperation = 'screen';
     ctx.globalAlpha = pulse * 0.45;
     var grad = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts * 0.8);
