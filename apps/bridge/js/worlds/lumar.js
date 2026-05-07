@@ -1023,6 +1023,445 @@
     ctx.fill();
   }
 
+  // ---- Town features (Stardew-style) ----
+
+  // Cobblestone path — distinct from saltstone floor, suggests a "main path"
+  function drawCobblestone(ctx, x, y, ts, time, col, row) {
+    col = col || 0; row = row || 0;
+    var u = ts / 16;
+    var seed = (col * 23 + row * 17) % 100;
+    // Base
+    ctx.fillStyle = '#3a3530';
+    ctx.fillRect(x, y, ts, ts);
+    // Cobble stones — irregular pattern using deterministic seeds
+    var stones = [
+      { x: 1, y: 1, w: 5, h: 4, c: '#5a5048' },
+      { x: 7, y: 2, w: 4, h: 5, c: '#4e4540' },
+      { x: 12, y: 1, w: 4, h: 4, c: '#5e5448' },
+      { x: 2, y: 6, w: 4, h: 5, c: '#4a4138' },
+      { x: 7, y: 8, w: 6, h: 4, c: '#5a5048' },
+      { x: 1, y: 12, w: 5, h: 3, c: '#4e4540' },
+      { x: 7, y: 13, w: 4, h: 2, c: '#5a5048' },
+      { x: 12, y: 12, w: 4, h: 3, c: '#4a4138' }
+    ];
+    for (var i = 0; i < stones.length; i++) {
+      var s = stones[i];
+      ctx.fillStyle = s.c;
+      ctx.fillRect(x + s.x * u, y + s.y * u, s.w * u, s.h * u);
+      // Highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(x + s.x * u, y + s.y * u, s.w * u, Math.max(1, u * 0.3));
+    }
+    // Mortar gaps
+    ctx.fillStyle = '#1e1a18';
+    ctx.fillRect(x, y + 5*u, ts, Math.max(1, u * 0.5));
+    ctx.fillRect(x, y + 11*u, ts, Math.max(1, u * 0.5));
+    // Occasional moss
+    if (seed % 11 === 0) {
+      ctx.fillStyle = 'rgba(60,140,80,0.18)';
+      ctx.fillRect(x + 4*u, y + 5*u, 3*u, Math.max(1, u * 0.6));
+    }
+  }
+
+  // Bell tower — town centerpiece, with a swinging bell
+  function drawBellTower(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    // Stone tower base
+    ctx.fillStyle = '#1a1e20';
+    ctx.fillRect(x + 3*u, y + 6*u, 10*u, 9*u);
+    ctx.fillStyle = '#252a28';
+    ctx.fillRect(x + 4*u, y + 6*u, 8*u, 9*u);
+    // Decorative belt
+    ctx.fillStyle = '#404840';
+    ctx.fillRect(x + 3*u, y + 8*u, 10*u, Math.max(1, u * 0.5));
+    // Wooden bell housing on top
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 4*u, y + 3*u, 8*u, 3*u);
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + 4*u, y + 3*u, 8*u, Math.max(1, u * 0.6));
+    // Roof (peaked)
+    ctx.fillStyle = '#2a1810';
+    ctx.beginPath();
+    ctx.moveTo(x + 3*u, y + 3*u);
+    ctx.lineTo(x + ts/2, y + 0);
+    ctx.lineTo(x + ts - 3*u, y + 3*u);
+    ctx.closePath();
+    ctx.fill();
+    // Swinging bell
+    var swing = Math.sin(time / 600) * 0.3;
+    var bellX = x + ts/2 + swing * u;
+    ctx.fillStyle = '#a08040';
+    ctx.beginPath();
+    ctx.ellipse(bellX, y + 5*u, Math.max(1, u * 1.6), Math.max(1, u * 1.6), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#806020';
+    ctx.fillRect(bellX - Math.max(1, u * 0.4), y + 5*u, Math.max(1, u * 0.8), Math.max(1, u * 1));
+    // Doorway in the tower base
+    ctx.fillStyle = '#0a0408';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 1.4), y + 11*u, Math.max(1, u * 2.8), 4*u);
+    // Window slit
+    ctx.fillStyle = '#0a0408';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.5), y + 9*u, Math.max(1, u), Math.max(1, u * 1.4));
+  }
+
+  // Town fountain / well — central feature
+  function drawFountain(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    // Outer stone basin
+    ctx.fillStyle = '#3a4848';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + ts/2 + u, 6*u, Math.max(1, u * 3.5), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner basin
+    ctx.fillStyle = '#1a2030';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + ts/2 + u, 5*u, Math.max(1, u * 2.7), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Water surface (animated)
+    var ripple = Math.sin(time / 700 + col + row) * 0.3;
+    ctx.fillStyle = '#3a6850';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + ts/2 + u + ripple * u, 4*u, Math.max(1, u * 2), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Highlight
+    ctx.fillStyle = '#5a8a60';
+    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + ts/2 + u, 4*u, Math.max(1, u * 0.4));
+    // Center pillar / fountain spout
+    ctx.fillStyle = '#5a6868';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.7), y + 4*u, Math.max(1, u * 1.4), 5*u);
+    ctx.fillStyle = '#80908c';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 4*u, Math.max(1, u * 0.8), 5*u);
+    // Top water spray (animated)
+    var spray = Math.sin(time / 200) * 0.3 + 0.7;
+    ctx.globalAlpha = spray * 0.7;
+    ctx.fillStyle = '#a0d0c0';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.8), y + 2*u, Math.max(1, u * 1.6), Math.max(1, u * 0.6));
+    ctx.fillStyle = '#c0e0d8';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.3), y + Math.max(1, u * 1.5), Math.max(1, u * 0.6), Math.max(1, u * 0.6));
+    ctx.globalAlpha = 1;
+    // Falling drops
+    for (var d = 0; d < 4; d++) {
+      var dropX = x + ts/2 - 2*u + d * u;
+      var dropY = y + 3*u + ((time / 50 + d * 8) % 8) * u;
+      ctx.fillStyle = 'rgba(180,220,200,0.7)';
+      ctx.fillRect(dropX, dropY, Math.max(1, u * 0.4), Math.max(1, u * 0.6));
+    }
+  }
+
+  // Bulletin board with notices
+  function drawBulletinBoard(ctx, x, y, ts, time, col, row) {
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Wood post
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.6), y + 9*u, Math.max(1, u * 1.2), 5*u);
+    // Board
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, 8*u);
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.max(1, u * 0.5));
+    ctx.fillRect(x + 2*u, y + 9*u, ts - 4*u, Math.max(1, u * 0.5));
+    // Vertical planks
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + Math.floor(ts/2), y + 2*u, Math.max(1, u * 0.5), 8*u);
+    // Notices pinned
+    ctx.fillStyle = '#d8c8a0';
+    ctx.fillRect(x + 3*u, y + 3*u, 4*u, 3*u);
+    ctx.fillStyle = '#a89870';
+    ctx.fillRect(x + 3*u, y + 3*u, Math.max(1, u * 0.4), 3*u);
+    // Notice text lines
+    ctx.fillStyle = '#5a4a30';
+    ctx.fillRect(x + Math.floor(3.5*u), y + Math.floor(3.5*u), Math.max(1, u * 2.5), Math.max(1, u * 0.4));
+    ctx.fillRect(x + Math.floor(3.5*u), y + Math.floor(4.5*u), Math.max(1, u * 2), Math.max(1, u * 0.4));
+    // Second notice
+    ctx.fillStyle = '#e8d8a8';
+    ctx.fillRect(x + 8*u, y + 3*u, 4*u, 3*u);
+    ctx.fillStyle = '#5a4a30';
+    ctx.fillRect(x + Math.floor(8.5*u), y + Math.floor(3.5*u), Math.max(1, u * 2.5), Math.max(1, u * 0.4));
+    ctx.fillRect(x + Math.floor(8.5*u), y + Math.floor(4.5*u), Math.max(1, u * 1.7), Math.max(1, u * 0.4));
+    // Wanted poster
+    ctx.fillStyle = '#a8d8a8';
+    ctx.fillRect(x + 5*u, y + 6*u, 6*u, 3*u);
+    ctx.fillStyle = '#3a4a30';
+    ctx.fillRect(x + 5*u, y + 6*u, 6*u, Math.max(1, u * 0.5));
+    ctx.fillRect(x + Math.floor(5.5*u), y + Math.floor(6.8*u), Math.max(1, u * 4), Math.max(1, u * 0.4));
+  }
+
+  // Fishing net hung to dry
+  function drawFishingNet(ctx, x, y, ts, time, col, row) {
+    drawDockPlanks(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Wooden frame poles
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 2*u, y + 2*u, Math.max(1, u * 0.7), ts - 4*u);
+    ctx.fillRect(x + ts - 2*u, y + 2*u, Math.max(1, u * 0.7), ts - 4*u);
+    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.max(1, u * 0.7));
+    // Net (criss-cross pattern)
+    ctx.strokeStyle = 'rgba(90, 70, 50, 0.85)';
+    ctx.lineWidth = Math.max(1, u * 0.3);
+    var gridSize = Math.max(2, u * 1.6);
+    for (var ny = y + 3*u; ny < y + ts - 2*u; ny += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x + 3*u, ny);
+      ctx.lineTo(x + ts - 3*u, ny);
+      ctx.stroke();
+    }
+    for (var nx = x + 3*u; nx < x + ts - 2*u; nx += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(nx, y + 3*u);
+      ctx.lineTo(nx, y + ts - 3*u);
+      ctx.stroke();
+    }
+    // Hanging weights / sinkers
+    ctx.fillStyle = '#202020';
+    ctx.fillRect(x + 5*u, y + ts - 3*u, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    ctx.fillRect(x + 9*u, y + ts - 3*u, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+  }
+
+  // Crab trap stack
+  function drawCrabTrap(ctx, x, y, ts, time, col, row) {
+    drawDockPlanks(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Trap body
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 3*u, y + 5*u, ts - 6*u, 8*u);
+    // Wire mesh pattern
+    ctx.strokeStyle = 'rgba(140, 110, 80, 0.7)';
+    ctx.lineWidth = Math.max(1, u * 0.3);
+    for (var hx = 0; hx < 4; hx++) {
+      ctx.beginPath();
+      ctx.moveTo(x + 3*u + hx * 2.5*u, y + 5*u);
+      ctx.lineTo(x + 3*u + hx * 2.5*u, y + 13*u);
+      ctx.stroke();
+    }
+    for (var hy = 0; hy < 4; hy++) {
+      ctx.beginPath();
+      ctx.moveTo(x + 3*u, y + 5*u + hy * 2*u);
+      ctx.lineTo(x + ts - 3*u, y + 5*u + hy * 2*u);
+      ctx.stroke();
+    }
+    // Buoy
+    ctx.fillStyle = '#c83040';
+    ctx.beginPath();
+    ctx.arc(x + ts - 3*u, y + 4*u, Math.max(1, u * 1.2), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f08070';
+    ctx.fillRect(x + ts - 4*u, y + 3*u, Math.max(1, u * 0.6), Math.max(1, u * 0.6));
+  }
+
+  // Captain's house — saltstone with prominent door
+  function drawCaptainHouse(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawSaltstoneWall(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Round window (porthole)
+    ctx.fillStyle = '#1a1010';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + Math.floor(ts * 0.45), Math.max(1, u * 2.4), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#3a4858';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + Math.floor(ts * 0.45), Math.max(1, u * 2), 0, Math.PI * 2);
+    ctx.fill();
+    // Brass rim
+    ctx.strokeStyle = '#a08040';
+    ctx.lineWidth = Math.max(1, u * 0.4);
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + Math.floor(ts * 0.45), Math.max(1, u * 2.4), 0, Math.PI * 2);
+    ctx.stroke();
+    // Cross strut
+    ctx.strokeStyle = '#806030';
+    ctx.lineWidth = Math.max(1, u * 0.3);
+    ctx.beginPath();
+    ctx.moveTo(x + ts/2 - Math.max(1, u * 2), y + Math.floor(ts * 0.45));
+    ctx.lineTo(x + ts/2 + Math.max(1, u * 2), y + Math.floor(ts * 0.45));
+    ctx.stroke();
+    // Anchor crest above door
+    ctx.fillStyle = '#5a4828';
+    ctx.fillRect(x + Math.floor(ts * 0.4), y + Math.max(1, u * 0.5), Math.floor(ts * 0.2), Math.max(1, u * 0.6));
+  }
+
+  // Statue of a captain — atmospheric
+  function drawCaptainStatue(ctx, x, y, ts, time, col, row) {
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Pedestal base
+    ctx.fillStyle = '#1a1e20';
+    ctx.fillRect(x + 3*u, y + 13*u, 10*u, 2*u);
+    ctx.fillStyle = '#252a28';
+    ctx.fillRect(x + 4*u, y + 11*u, 8*u, 2*u);
+    // Statue body
+    ctx.fillStyle = '#5a5048';
+    ctx.fillRect(x + 5*u, y + 6*u, 6*u, 5*u);
+    // Coat / hat detail
+    ctx.fillStyle = '#3a3530';
+    ctx.fillRect(x + 5*u, y + 6*u, 6*u, Math.max(1, u * 0.6));
+    // Head
+    ctx.fillStyle = '#5a5048';
+    ctx.fillRect(x + 6*u, y + 3*u, 4*u, 3*u);
+    // Tricorn hat
+    ctx.fillStyle = '#3a3530';
+    ctx.beginPath();
+    ctx.moveTo(x + 5*u, y + 4*u);
+    ctx.lineTo(x + ts - 5*u, y + 4*u);
+    ctx.lineTo(x + ts/2 + 2*u, y + 2*u);
+    ctx.lineTo(x + ts/2 - 2*u, y + 2*u);
+    ctx.closePath();
+    ctx.fill();
+    // Outstretched arm pointing
+    ctx.fillStyle = '#5a5048';
+    ctx.fillRect(x + 11*u, y + 7*u, 3*u, Math.max(1, u * 0.8));
+  }
+
+  // Inn entrance — similar to tavern but with different sign
+  function drawInnEntrance(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    drawSaltstoneWall(ctx, x, y, ts, time, col, row);
+    // Stone arch
+    ctx.fillStyle = '#0e1212';
+    ctx.fillRect(x + Math.max(1, u), y + Math.max(1, u * 1.2), ts - 2*u, ts - Math.max(1, u * 1.5));
+    // Wooden door
+    var dx = x + 2*u, dy = y + 2*u;
+    var dw = ts - 4*u, dh = ts - 3*u;
+    ctx.fillStyle = '#4a3a20';
+    ctx.fillRect(dx, dy, dw, dh);
+    // Vertical planks
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(dx + Math.floor(dw * 0.5), dy, Math.max(1, u * 0.4), dh);
+    // Top highlight
+    ctx.fillStyle = '#6a5a30';
+    ctx.fillRect(dx, dy, dw, Math.max(1, u * 0.4));
+    // Iron bands
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(dx, dy + Math.floor(dh * 0.25), dw, Math.max(1, u * 0.5));
+    ctx.fillRect(dx, dy + Math.floor(dh * 0.75), dw, Math.max(1, u * 0.5));
+    // Brass knob
+    ctx.fillStyle = '#a08040';
+    ctx.beginPath();
+    ctx.arc(dx + dw - 2*u, dy + Math.floor(dh * 0.55), Math.max(1, u * 0.7), 0, Math.PI * 2);
+    ctx.fill();
+    // Hanging "INN" sign with bed icon
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + Math.floor(ts * 0.2), y + Math.max(1, u * 0.4), Math.floor(ts * 0.6), Math.max(1, u * 1.4));
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + Math.floor(ts * 0.25), y + Math.max(1, u * 0.6), Math.floor(ts * 0.5), Math.max(1, u));
+    // Z (sleep symbol)
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + Math.floor(ts * 0.45), y + Math.max(1, u * 0.7), Math.max(1, u), Math.max(1, u * 0.4));
+    // Cool blue pulse from window
+    var pulse = 0.5 + Math.sin(time / 1500) * 0.2;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.3;
+    var grad = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts);
+    grad.addColorStop(0, 'rgba(100,160,200,0.5)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.3, y - ts*0.3, ts * 1.6, ts * 1.6);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  // Fish market stall — with fish on display
+  function drawFishMarket(ctx, x, y, ts, time, col, row) {
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Awning shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(x, y + 4*u, ts, 5*u);
+    // Awning — blue/white striped
+    ctx.fillStyle = '#3060a0';
+    ctx.fillRect(x, y + u, ts, 3*u);
+    var stripeW = ts / 5;
+    for (var s = 0; s < 5; s += 2) {
+      ctx.fillStyle = '#a0c0e0';
+      ctx.fillRect(x + s * stripeW, y + u, stripeW, 3*u);
+    }
+    // Awning trim
+    ctx.fillStyle = '#205080';
+    ctx.fillRect(x, y + 4*u, ts, Math.max(1, u * 0.5));
+    // Posts
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 2*u, y + 4*u, Math.max(1, u), 5*u);
+    ctx.fillRect(x + ts - 3*u, y + 4*u, Math.max(1, u), 5*u);
+    // Counter
+    ctx.fillStyle = '#2e2618';
+    ctx.fillRect(x + u, y + 9*u, ts - 2*u, 4*u);
+    ctx.fillStyle = '#3a3020';
+    ctx.fillRect(x + u, y + 9*u, ts - 2*u, Math.max(1, u * 0.6));
+    // Ice bed
+    ctx.fillStyle = '#a0c0e8';
+    ctx.fillRect(x + 2*u, y + 7*u, ts - 4*u, 2*u);
+    ctx.fillStyle = '#c0d8f0';
+    ctx.fillRect(x + 2*u, y + 7*u, ts - 4*u, Math.max(1, u * 0.5));
+    // Fish on ice (silvery)
+    ctx.fillStyle = '#90a0b0';
+    ctx.beginPath();
+    ctx.ellipse(x + 4*u, y + 8*u, 2*u, Math.max(1, u * 0.6), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#c0d0e0';
+    ctx.fillRect(x + 3*u, y + Math.floor(7.7*u), 2*u, Math.max(1, u * 0.4));
+    // Second fish
+    ctx.fillStyle = '#a08070';
+    ctx.beginPath();
+    ctx.ellipse(x + 8*u, y + 8*u, Math.max(1, u * 1.6), Math.max(1, u * 0.5), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Third (red)
+    ctx.fillStyle = '#a04030';
+    ctx.beginPath();
+    ctx.ellipse(x + 12*u, y + 8*u, 2*u, Math.max(1, u * 0.6), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Sign
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(x + Math.floor(ts * 0.3), y + Math.max(1, u * 0.2), Math.floor(ts * 0.4), Math.max(1, u));
+    ctx.fillStyle = '#a0c0e0';
+    ctx.fillRect(x + Math.floor(ts * 0.35), y + Math.max(1, u * 0.4), Math.floor(ts * 0.3), Math.max(1, u * 0.3));
+  }
+
+  // Lantern post (standalone, not against wall)
+  function drawLanternPost(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Pole
+    ctx.fillStyle = '#1e1e1e';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 4*u, Math.max(1, u * 0.8), 10*u);
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 4*u, Math.max(1, u * 0.4), 10*u);
+    // Lantern at top
+    ctx.fillStyle = '#1a1410';
+    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 2*u, 4*u, 4*u);
+    ctx.fillStyle = '#3a2a18';
+    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 2*u, 4*u, Math.max(1, u * 0.6));
+    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 5*u, 4*u, Math.max(1, u * 0.6));
+    // Cage bars
+    ctx.fillStyle = '#3a2a18';
+    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 2*u, Math.max(1, u * 0.4), 4*u);
+    ctx.fillRect(x + Math.floor(ts/2) + 2*u - Math.max(1, u * 0.4), y + 2*u, Math.max(1, u * 0.4), 4*u);
+    // Flame
+    var flick = 0.7 + Math.sin(time / 200 + col) * 0.3;
+    ctx.globalAlpha = flick;
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.7), y + Math.floor(3*u), Math.max(1, u * 1.4), Math.max(1, u * 1.6));
+    ctx.fillStyle = '#ffa040';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + Math.floor(3.4*u), Math.max(1, u * 0.8), Math.max(1, u));
+    ctx.globalAlpha = 1;
+    // Big halo
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.45 * flick;
+    var grad = ctx.createRadialGradient(x + ts/2, y + 4*u, 0, x + ts/2, y + 4*u, 8*u);
+    grad.addColorStop(0, 'rgba(255, 200, 100, 0.7)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - 4*u, y - 4*u, ts + 8*u, ts + 8*u);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
   BridgeWorld.registerTileset('lumar', {
     1: drawSaltstoneWall,
     2: drawSaltstoneFloor,
@@ -1049,7 +1488,18 @@
     24: drawWantedPoster,
     25: drawNpc,
     26: drawTavernEntrance,
-    27: drawCaveEntranceWall
+    27: drawCaveEntranceWall,
+    28: drawCobblestone,
+    29: drawBellTower,
+    30: drawFountain,
+    31: drawBulletinBoard,
+    32: drawFishingNet,
+    33: drawCrabTrap,
+    34: drawCaptainHouse,
+    35: drawCaptainStatue,
+    36: drawInnEntrance,
+    37: drawFishMarket,
+    38: drawLanternPost
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);
