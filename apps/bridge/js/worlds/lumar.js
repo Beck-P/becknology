@@ -387,48 +387,62 @@
   // Loads the PNG, then post-processes the alpha channel to strip the soft
   // anti-aliased halo that DALL-E-style generators leave around the subject.
   var spriteCache = {};
-  function loadBuildingSprite(key, path) {
+  // Target source resolution after chunkify — each pixel of the chunked canvas
+  // becomes ~3 screen pixels at our render scale, matching our procedural
+  // art's "u = ts/16" pixel chunkiness. Lower = blockier. Tune per-sprite.
+  function loadBuildingSprite(key, path, chunkWidth) {
     if (spriteCache[key]) return spriteCache[key];
     var entry = { canvas: null, ready: false };
     spriteCache[key] = entry;
     var img = new Image();
     img.onload = function () {
-      var c = document.createElement('canvas');
-      c.width = img.width;
-      c.height = img.height;
-      var cx = c.getContext('2d');
-      cx.drawImage(img, 0, 0);
-      // Knock out near-white background pixels and harden the alpha edge so
-      // no cream halo bleeds onto the world bg.
+      // Step 1: source canvas at native size for alpha cleanup
+      var src = document.createElement('canvas');
+      src.width = img.width;
+      src.height = img.height;
+      var sCtx = src.getContext('2d');
+      sCtx.drawImage(img, 0, 0);
       try {
-        var data = cx.getImageData(0, 0, c.width, c.height);
+        var data = sCtx.getImageData(0, 0, src.width, src.height);
         var px = data.data;
         for (var i = 0; i < px.length; i += 4) {
           var r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
-          // Pure white background → transparent
           if (r > 240 && g > 240 && b > 240 && a > 0) {
             px[i + 3] = 0;
             continue;
           }
-          // Soft edge anti-alias → drop alpha to harden the silhouette
           if (a > 0 && a < 220) {
-            // If pixel is nearly white-ish AND partially transparent, kill it
             var avg = (r + g + b) / 3;
             if (avg > 220) px[i + 3] = 0;
           }
         }
-        cx.putImageData(data, 0, 0);
-      } catch (e) { /* CORS or other; skip processing */ }
+        sCtx.putImageData(data, 0, 0);
+      } catch (e) { /* CORS — skip */ }
+
+      // Step 2: chunkify — downscale with nearest-neighbor to a low base
+      // resolution so the sprite reads as chunky pixel art matching the
+      // procedural tiles around it.
+      var CW = chunkWidth || 96;
+      var aspect = src.width / src.height;
+      var CH = Math.round(CW / aspect);
+      var c = document.createElement('canvas');
+      c.width = CW;
+      c.height = CH;
+      var cx = c.getContext('2d');
+      cx.imageSmoothingEnabled = false;
+      cx.drawImage(src, 0, 0, CW, CH);
       entry.canvas = c;
       entry.ready = true;
     };
     img.src = path;
     return entry;
   }
-  // Preload the sprites
-  loadBuildingSprite('tavern', '/bridge/assets/buildings/tavern.png');
-  loadBuildingSprite('inn', '/bridge/assets/buildings/inn.png');
-  loadBuildingSprite('lighthouse', '/bridge/assets/buildings/lighthouse.png');
+  // Preload the sprites with chunky base resolutions tuned per building.
+  // Render targets: tavern ~192px wide, inn ~240px wide, lighthouse ~144px
+  // wide. Source ÷3-4 = chunky pixel art at our render scale.
+  loadBuildingSprite('tavern', '/bridge/assets/buildings/tavern.png', 64);
+  loadBuildingSprite('inn', '/bridge/assets/buildings/inn.png', 80);
+  loadBuildingSprite('lighthouse', '/bridge/assets/buildings/lighthouse.png', 36);
 
   // tilesW/tilesH = footprint in tiles. anchorOffsetX = which column within
   // the sprite the anchor tile sits at, measured from the LEFT edge (0-based).
@@ -448,17 +462,84 @@
     ctx.drawImage(s.canvas, destX, destY, areaW, areaH);
   }
 
-  // Tavern PNG — 4 wide × 5 tall, anchor at column index 1 (door is the 2nd tile from left)
+  // Procedural animation overlays for the PNG buildings — give them life
+  // without modifying the static art.
+
+  function drawChimneySmoke(ctx, anchorX, anchorY, ts, time, seed) {
+    // anchorX, anchorY = top-left of the chimney "vent" in screen pixels
+    var u = ts / 16;
+    var puffs = 4;
+    for (var i = 0; i < puffs; i++) {
+      var phase = (time / 220) + i * 1.3 + seed * 0.7;
+      var lifecycle = (phase % 5);                // 0..5
+      var rise = lifecycle * 1.6 * u;             // travels up over lifecycle
+      var sway = Math.sin(phase * 2) * u * 0.6;
+      var pSize = (1.4 + i * 0.25 + lifecycle * 0.3) * u;
+      var alpha = Math.max(0, 0.7 - lifecycle * 0.14);
+      if (alpha <= 0) continue;
+      ctx.fillStyle = 'rgba(220,220,220,' + alpha.toFixed(2) + ')';
+      ctx.fillRect(anchorX + sway, anchorY - rise, pSize, pSize);
+    }
+  }
+
+  function drawWindowFlicker(ctx, areaX, areaY, areaW, areaH, time, seed, color) {
+    // Subtle pulsing warm overlay to simulate "lit windows from inside"
+    var pulse = 0.55 + Math.sin(time / 1300 + seed) * 0.15;
+    if ((Math.floor(time / 90) + seed * 7) % 173 === 0) pulse *= 0.4; // rare flicker
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.10;
+    ctx.fillStyle = color;
+    ctx.fillRect(areaX, areaY + areaH * 0.2, areaW, areaH * 0.55);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  // Tavern PNG — 4 wide × 5 tall, anchor at column index 1
   function drawTavernPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'tavern', 4, 5, 1);
+    // Building footprint in screen pixels
+    var areaW = ts * 4, areaH = ts * 5;
+    var destX = x - 1 * ts;
+    var destY = y + ts - areaH;
+    // Window flicker — warm yellow
+    drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row, 'rgba(255, 220, 120, 1)');
+    // Chimney smoke — chimney is at upper-right of the tavern PNG (~80% across, ~10% down)
+    var chimneyX = destX + areaW * 0.78;
+    var chimneyY = destY + areaH * 0.08;
+    drawChimneySmoke(ctx, chimneyX, chimneyY, ts, time, col + row);
   }
-  // Inn PNG — 5 wide × 5 tall, anchor at column index 2 (door at center)
+
   function drawInnPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'inn', 5, 5, 2);
+    var areaW = ts * 5, areaH = ts * 5;
+    var destX = x - 2 * ts;
+    var destY = y + ts - areaH;
+    drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row + 11, 'rgba(255, 220, 140, 1)');
+    // Inn chimney is at upper-right, slightly less far right
+    var chimneyX = destX + areaW * 0.74;
+    var chimneyY = destY + areaH * 0.10;
+    drawChimneySmoke(ctx, chimneyX, chimneyY, ts, time, col + row + 5);
   }
-  // Lighthouse PNG — 3 wide × 7 tall, anchor at column index 1 (door near center)
+
   function drawLighthousePng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'lighthouse', 3, 7, 1);
+    var areaW = ts * 3, areaH = ts * 7;
+    var destX = x - 1 * ts;
+    var destY = y + ts - areaH;
+    // Lamp pulse — single big warm glow at the top of the lighthouse
+    var pulse = 0.6 + Math.sin(time / 700) * 0.25;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.55;
+    var lampCx = destX + areaW * 0.5;
+    var lampCy = destY + areaH * 0.10;
+    var grad = ctx.createRadialGradient(lampCx, lampCy, 0, lampCx, lampCy, areaW * 1.2);
+    grad.addColorStop(0, 'rgba(255, 220, 120, 0.85)');
+    grad.addColorStop(0.5, 'rgba(255, 180, 80, 0.35)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(destX - areaW, destY - areaH * 0.3, areaW * 3, areaH);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
   }
 
   // ---- Ship (reuse docked ship PNG) ----
