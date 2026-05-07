@@ -859,6 +859,282 @@
 
   // ---- Register with engine ----
 
+  // ---- Street features (Stardew-style neon city) ----
+
+  function drawHoverBike(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawSidewalk(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Hover field — pulsing magenta glow under the bike
+    var hover = Math.sin(time / 600 + col) * 0.15;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.55;
+    var grad = ctx.createRadialGradient(x + ts/2, y + 13*u, 0, x + ts/2, y + 13*u, 7*u);
+    grad.addColorStop(0, 'rgba(232,80,200,0.6)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - u, y + 8*u, ts + 2*u, ts - 6*u);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    // Bike body — sleek, hovers above ground
+    var by = y + 6*u + hover * u;
+    // Main fairing
+    ctx.fillStyle = '#1a1a26';
+    ctx.fillRect(x + 2*u, by + 2*u, ts - 4*u, 4*u);
+    ctx.fillStyle = '#3a3a48';
+    ctx.fillRect(x + 2*u, by + 2*u, ts - 4*u, Math.max(1, u * 0.5));
+    // Cockpit canopy
+    ctx.fillStyle = '#5cc8d0';
+    ctx.fillRect(x + 4*u, by, 8*u, 2*u);
+    ctx.fillStyle = '#80e0e8';
+    ctx.fillRect(x + 4*u, by, 8*u, Math.max(1, u * 0.4));
+    // Twin engine pods at the back
+    ctx.fillStyle = '#080418';
+    ctx.fillRect(x + Math.max(1, u * 0.5), by + 3*u, 2*u, 3*u);
+    ctx.fillRect(x + ts - Math.max(1, u * 2.5), by + 3*u, 2*u, 3*u);
+    // Engine glow
+    var eGlow = 0.8 + Math.sin(time / 150) * 0.2;
+    ctx.globalAlpha = eGlow;
+    ctx.fillStyle = '#ff80c0';
+    ctx.fillRect(x + Math.max(1, u * 0.7), by + 4*u, Math.max(1, u * 1.6), Math.max(1, u * 1));
+    ctx.fillRect(x + ts - Math.max(1, u * 2.3), by + 4*u, Math.max(1, u * 1.6), Math.max(1, u * 1));
+    ctx.globalAlpha = 1;
+    // Highlights on body
+    ctx.fillStyle = '#a040c0';
+    ctx.fillRect(x + 3*u, by + 5*u, ts - 6*u, Math.max(1, u * 0.5));
+  }
+
+  function drawHoloBillboard(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawWallDark(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Billboard frame
+    ctx.fillStyle = '#080418';
+    ctx.fillRect(x + Math.max(1, u * 0.5), y + Math.max(1, u * 0.5), ts - u, ts * 0.55);
+    // Holo screen background
+    var bx = x + Math.max(1, u);
+    var by = y + Math.max(1, u);
+    var bw = ts - 2*u;
+    var bh = Math.floor(ts * 0.5);
+    // Color cycles between pink/purple/cyan over time
+    var phase = (time / 2000) % 3;
+    var bg;
+    if (phase < 1) bg = '#3a1840';
+    else if (phase < 2) bg = '#181a40';
+    else bg = '#1a3040';
+    ctx.fillStyle = bg;
+    ctx.fillRect(bx, by, bw, bh);
+    // Animated content — scrolling bands of color
+    var scroll = (time / 80) % bh;
+    ctx.fillStyle = phase < 1 ? '#e870c0' : (phase < 2 ? '#7080e8' : '#70e0e8');
+    ctx.globalAlpha = 0.7;
+    ctx.fillRect(bx, by + scroll, bw, Math.max(1, u * 0.6));
+    ctx.fillRect(bx, by + (scroll + bh * 0.4) % bh, bw, Math.max(1, u * 0.4));
+    ctx.globalAlpha = 1;
+    // Text-like bars on the screen
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillRect(bx + 2*u, by + 2*u, bw - 4*u, Math.max(1, u * 0.5));
+    ctx.fillRect(bx + 2*u, by + 4*u, bw - 5*u, Math.max(1, u * 0.5));
+    ctx.fillRect(bx + 3*u, by + 6*u, bw - 6*u, Math.max(1, u * 0.5));
+    // Scanline
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    var scanY = ((time / 25 + col * 30) % bh);
+    ctx.fillRect(bx, by + scanY, bw, Math.max(1, u * 0.5));
+    // Mounting brackets
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.55), Math.max(1, u * 0.6), 3*u);
+    ctx.fillRect(x + ts - 3*u, y + Math.floor(ts * 0.55), Math.max(1, u * 0.6), 3*u);
+    // Subtle light cast on wall below
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.25;
+    var glowColor = phase < 1 ? '160, 60, 200' : (phase < 2 ? '60, 80, 200' : '60, 180, 200');
+    ctx.fillStyle = 'rgba(' + glowColor + ', 0.5)';
+    ctx.fillRect(x, y + ts * 0.6, ts, ts * 0.4);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  function drawFoodCart(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawSidewalk(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Cart body
+    ctx.fillStyle = '#a02050';
+    ctx.fillRect(x + 2*u, y + 5*u, ts - 4*u, 7*u);
+    // Cart trim
+    ctx.fillStyle = '#e040a0';
+    ctx.fillRect(x + 2*u, y + 5*u, ts - 4*u, Math.max(1, u * 0.6));
+    ctx.fillStyle = '#601838';
+    ctx.fillRect(x + 2*u, y + 11*u, ts - 4*u, Math.max(1, u * 0.5));
+    // Wheels
+    ctx.fillStyle = '#1a1a1e';
+    ctx.beginPath();
+    ctx.arc(x + 4*u, y + 13*u, Math.max(1, u * 1.5), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + ts - 4*u, y + 13*u, Math.max(1, u * 1.5), 0, Math.PI * 2);
+    ctx.fill();
+    // Wheel hubs
+    ctx.fillStyle = '#3a3a3a';
+    ctx.beginPath();
+    ctx.arc(x + 4*u, y + 13*u, Math.max(1, u * 0.6), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + ts - 4*u, y + 13*u, Math.max(1, u * 0.6), 0, Math.PI * 2);
+    ctx.fill();
+    // Awning / canopy at the top
+    ctx.fillStyle = '#3a1840';
+    ctx.fillRect(x + Math.max(1, u), y + 2*u, ts - 2*u, 3*u);
+    // Stripes on awning
+    ctx.fillStyle = '#7030a0';
+    var stripeW = (ts - 2*u) / 5;
+    for (var s = 0; s < 5; s += 2) {
+      ctx.fillRect(x + u + s * stripeW, y + 2*u, stripeW, 3*u);
+    }
+    // Hanging sign — "RAMEN"
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(x + Math.floor(ts * 0.3), y + Math.max(1, u * 0.4), Math.floor(ts * 0.4), Math.max(1, u * 1.4));
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(x + Math.floor(ts * 0.35), y + Math.max(1, u * 0.6), Math.floor(ts * 0.3), Math.max(1, u));
+    // Steam rising (animated)
+    for (var st = 0; st < 3; st++) {
+      var stY = y + ((time / 100 + st * 6) % 6) * u;
+      ctx.globalAlpha = 0.5 - (st * 0.15);
+      ctx.fillStyle = '#e0e0e0';
+      ctx.fillRect(x + 6*u + st * u, stY, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    }
+    ctx.globalAlpha = 1;
+    // Counter / window opening with bowl
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(x + 3*u, y + 6*u, ts - 6*u, 3*u);
+    ctx.fillStyle = '#a08040';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + 8*u, Math.max(1, u * 1.4), Math.max(1, u * 0.5), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawTrashCan(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawSidewalk(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Can body — gradient cylinder
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(x + 4*u, y + 5*u, 8*u, 8*u);
+    // Highlight
+    ctx.fillStyle = '#5a5a5a';
+    ctx.fillRect(x + 4*u, y + 5*u, Math.max(1, u * 0.5), 8*u);
+    // Lid
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(x + 3*u, y + 4*u, 10*u, Math.max(1, u * 1.2));
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(x + 3*u, y + 4*u, 10*u, Math.max(1, u * 0.4));
+    // Open lid handle
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.5), y + 3*u, Math.max(1, u), Math.max(1, u));
+    // Recycle/holo logo
+    ctx.fillStyle = '#40e080';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + 8*u, Math.max(1, u * 0.8), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1a3a1a';
+    ctx.fillRect(x + ts/2 - Math.max(1, u * 0.3), y + 8*u - Math.max(1, u * 0.3), Math.max(1, u * 0.6), Math.max(1, u * 0.6));
+    // Floor shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + 14*u, 5*u, Math.max(1, u * 0.7), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCrosswalk(ctx, x, y, ts, time, col, row) {
+    drawSidewalk(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Stripes
+    var stripes = 5;
+    var stripeW = ts / stripes;
+    for (var i = 0; i < stripes; i++) {
+      if (i % 2 === 0) {
+        ctx.fillStyle = '#d0d0d0';
+        ctx.fillRect(x + i * stripeW, y, stripeW * 0.8, ts);
+      }
+    }
+  }
+
+  function drawShopWindow(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawWallDark(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Window frame
+    ctx.fillStyle = '#080418';
+    ctx.fillRect(x + Math.max(1, u), y + 2*u, ts - 2*u, ts * 0.55);
+    // Window glass — neon-tinted
+    var phase = (col + row) % 3;
+    var glassColor = phase === 0 ? '#3a1840' : (phase === 1 ? '#1a3040' : '#181a40');
+    ctx.fillStyle = glassColor;
+    ctx.fillRect(x + 2*u, y + 3*u, ts - 4*u, Math.floor(ts * 0.42));
+    // Animated display item inside (silhouette)
+    var itemPulse = 0.6 + Math.sin(time / 800 + col) * 0.2;
+    ctx.globalAlpha = itemPulse;
+    ctx.fillStyle = phase === 0 ? '#e870c0' : (phase === 1 ? '#70e0e8' : '#7080e8');
+    if (phase === 0) {
+      // Vinyl record
+      ctx.beginPath();
+      ctx.arc(x + ts/2, y + Math.floor(ts * 0.32), Math.max(1, u * 2.4), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#080418';
+      ctx.beginPath();
+      ctx.arc(x + ts/2, y + Math.floor(ts * 0.32), Math.max(1, u * 0.7), 0, Math.PI * 2);
+      ctx.fill();
+    } else if (phase === 1) {
+      // Headphones / cyber gear silhouette
+      ctx.fillRect(x + Math.floor(ts * 0.3), y + 4*u, Math.floor(ts * 0.4), 3*u);
+      ctx.fillRect(x + Math.floor(ts * 0.25), y + 5*u, Math.max(1, u), 2*u);
+      ctx.fillRect(x + Math.floor(ts * 0.7), y + 5*u, Math.max(1, u), 2*u);
+    } else {
+      // Books stacked
+      ctx.fillRect(x + 4*u, y + 5*u, ts - 8*u, Math.max(1, u));
+      ctx.fillRect(x + 3*u, y + 6*u, ts - 6*u, Math.max(1, u));
+      ctx.fillRect(x + 4*u, y + 7*u, ts - 8*u, Math.max(1, u));
+    }
+    ctx.globalAlpha = 1;
+    // Window mullions
+    ctx.fillStyle = '#080418';
+    ctx.fillRect(x + Math.floor(ts * 0.5) - Math.max(1, u * 0.3), y + 2*u, Math.max(1, u * 0.6), Math.floor(ts * 0.55));
+    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.32), ts - 4*u, Math.max(1, u * 0.5));
+    // Reflection on glass
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(x + 2*u, y + 3*u, Math.max(1, u * 1.2), Math.floor(ts * 0.42));
+  }
+
+  function drawTrafficCone(ctx, x, y, ts, time, col, row) {
+    drawSidewalk(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Cone body
+    ctx.fillStyle = '#e08030';
+    ctx.beginPath();
+    ctx.moveTo(x + ts/2, y + 5*u);
+    ctx.lineTo(x + ts/2 + 3*u, y + 13*u);
+    ctx.lineTo(x + ts/2 - 3*u, y + 13*u);
+    ctx.closePath();
+    ctx.fill();
+    // White stripe
+    ctx.fillStyle = '#f0f0f0';
+    ctx.beginPath();
+    ctx.moveTo(x + ts/2 - Math.max(1, u * 1.5), y + 9*u);
+    ctx.lineTo(x + ts/2 + Math.max(1, u * 1.5), y + 9*u);
+    ctx.lineTo(x + ts/2 + Math.max(1, u * 1.7), y + 10*u);
+    ctx.lineTo(x + ts/2 - Math.max(1, u * 1.7), y + 10*u);
+    ctx.closePath();
+    ctx.fill();
+    // Base
+    ctx.fillStyle = '#1a1a1e';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + 13*u, 4*u, Math.max(1, u * 0.8), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Highlight
+    ctx.fillStyle = '#ffa050';
+    ctx.fillRect(x + ts/2 - Math.max(1, u * 0.3), y + 6*u, Math.max(1, u * 0.6), 3*u);
+  }
+
   BridgeWorld.registerTileset('arcadia', {
     1: drawWall,
     2: drawFloor,
@@ -880,7 +1156,14 @@
     18: drawTable,
     19: drawVendingMachine,
     20: drawNpc,
-    21: drawArcadeDoor
+    21: drawArcadeDoor,
+    22: drawHoverBike,
+    23: drawHoloBillboard,
+    24: drawFoodCart,
+    25: drawTrashCan,
+    26: drawCrosswalk,
+    27: drawShopWindow,
+    28: drawTrafficCone
   });
 
 })();
