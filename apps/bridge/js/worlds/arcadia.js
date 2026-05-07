@@ -97,47 +97,97 @@
     ctx.globalAlpha = 1;
   }
 
+  // Pool of colored light cast onto the sidewalk under a PNG building —
+  // sells the "this thing is glowing in a wet street" cyberpunk vibe.
+  function drawGroundLight(ctx, cx, cy, radiusX, radiusY, color, alpha) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = alpha;
+    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(radiusX, radiusY));
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.5, color.replace(/,\s*[\d.]+\s*\)$/, ',0.3)'));
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    // Ellipse-ish footprint via scale
+    ctx.translate(cx, cy);
+    ctx.scale(radiusX / Math.max(radiusX, radiusY), radiusY / Math.max(radiusX, radiusY));
+    ctx.fillRect(-Math.max(radiusX, radiusY), -Math.max(radiusX, radiusY), Math.max(radiusX, radiusY) * 2, Math.max(radiusX, radiusY) * 2);
+    ctx.restore();
+  }
+
   function drawArcadeSignPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'arcade-sign', 5, 2, 2);
     var pulse = 0.65 + Math.sin((time || 0) / 600 + (col || 0)) * 0.18;
-    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.35, ts * 2.7, 'rgba(232,80,200,0.65)', pulse * 0.24);
+    // Brighter directional halo above the sign
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.6, ts * 3.5, 'rgba(232,80,200,0.85)', pulse * 0.42);
+    // Wider secondary cyan rim
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.2, ts * 2.2, 'rgba(120,220,232,0.45)', pulse * 0.18);
+    // Spillover light onto the wall directly below the sign
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 0.5, ts * 2.5, ts * 0.7, 'rgba(232,80,200,0.6)', 0.45 * pulse);
   }
 
   function drawArcadiaShopPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'arcadia-shop', 4, 3, 1);
     var pulse = 0.6 + Math.sin((time || 0) / 800 + (row || 0)) * 0.15;
     drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.9, ts * 1.8, 'rgba(232,80,200,0.55)', pulse * 0.18);
+    // Pink sidewalk pool
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 1.2, ts * 2.8, ts * 1.0, 'rgba(232,80,200,0.55)', 0.32 * pulse);
   }
 
   function drawNeonRamenStandPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'neon-ramen-stand', 3, 3, 1);
     var u = ts / 16;
-    for (var i = 0; i < 3; i++) {
-      var phase = Math.floor((time || 0) / 180) + i * 3;
-      var rise = (phase % 8) * u;
-      ctx.globalAlpha = 0.45 - i * 0.1;
-      ctx.fillStyle = '#d8d8e8';
-      ctx.fillRect(x - 2*u + i * 3*u, y - 3*ts + 7*u - rise, u, u);
+    var t = time || 0;
+    // Warm yellow window glow halo
+    var winPulse = 0.7 + Math.sin(t / 700 + (col || 0)) * 0.2;
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.6, ts * 1.8, 'rgba(255,200,120,0.7)', winPulse * 0.32);
+    // Steam — fluffy three-column rise from the canopy
+    for (var s = 0; s < 6; s++) {
+      var sx = x - 2*u + (s % 3) * 3*u;
+      var phase = Math.floor(t / 160 + s * 5) % 16;
+      var sy = y - 3*ts + 4*u - phase * u;
+      ctx.globalAlpha = Math.max(0, 0.55 - phase * 0.04 - (s >= 3 ? 0.1 : 0));
+      ctx.fillStyle = s % 2 === 0 ? '#e8e8f0' : '#c8c8d8';
+      var puff = (phase < 4) ? 1 : 2;
+      ctx.fillRect(sx, sy, u * puff, u * puff);
     }
     ctx.globalAlpha = 1;
+    // Warm sidewalk pool in front of stand
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 0.85, ts * 2.2, ts * 0.9, 'rgba(255,180,90,0.55)', 0.28 * winPulse);
   }
 
   function drawHoloBillboardKioskPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'holo-billboard-kiosk', 3, 3, 1);
-    var pulse = 0.55 + Math.sin((time || 0) / 500 + (col || 0)) * 0.2;
-    drawSpriteGlow(ctx, x, y - ts, ts * 1.6, 'rgba(80,220,232,0.6)', pulse * 0.2);
+    var t = time || 0;
+    // Cycle the cast color so the holo-billboard washes the street in
+    // sync with whatever ad is on the screen.
+    var phase = (t / 2400) % 3;
+    var castColor = phase < 1 ? 'rgba(232,80,200,0.7)' : (phase < 2 ? 'rgba(120,140,232,0.65)' : 'rgba(80,220,232,0.7)');
+    var pulse = 0.55 + Math.sin(t / 500 + (col || 0)) * 0.2;
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.9, ts * 2.0, castColor, pulse * 0.42);
+    // Sidewalk wash
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 1.2, ts * 2.6, ts * 1.1, castColor, 0.28 * pulse);
   }
 
   function drawTokenKioskPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'token-kiosk', 2, 3, 0);
     var pulse = 0.55 + Math.sin((time || 0) / 700 + (row || 0)) * 0.2;
-    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.8, ts * 1.2, 'rgba(255,200,80,0.5)', pulse * 0.14);
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.8, ts * 1.4, 'rgba(255,200,80,0.7)', pulse * 0.24);
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 0.85, ts * 1.6, ts * 0.7, 'rgba(255,200,80,0.6)', 0.3 * pulse);
   }
 
   function drawHoverBikeDockPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'hover-bike-dock', 2, 3, 0);
-    var pulse = 0.7 + Math.sin((time || 0) / 450 + (col || 0)) * 0.18;
-    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.2, ts * 1.3, 'rgba(160,64,220,0.55)', pulse * 0.22);
+    var t = time || 0;
+    var pulse = 0.7 + Math.sin(t / 450 + (col || 0)) * 0.18;
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.2, ts * 1.5, 'rgba(160,64,220,0.65)', pulse * 0.32);
+    // Magenta hover thrust pool
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 0.85, ts * 1.8, ts * 0.7, 'rgba(232,80,200,0.7)', 0.4 * pulse);
+    // Periodic engine flicker — quick brighter pulse every ~4s
+    var flicker = (t % 4000) / 4000;
+    if (flicker > 0.92) {
+      drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.1, ts * 1.6, 'rgba(120,220,232,0.85)', 0.6 * (1 - flicker) * 12);
+    }
   }
 
   // ---- Tile Draw Functions ----
@@ -174,9 +224,9 @@
     }
   }
 
-  // Lit version — same pattern, brighter base.
+  // Lit version — same pattern, brighter base, with a soft lamp pool overlay.
   function drawFloorLight(ctx, x, y, ts, time, col, row) {
-    col = col || 0; row = row || 0;
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
     var BASE = '#3a3260';
     var TILE = '#463a78';
@@ -189,6 +239,17 @@
     ctx.fillStyle = GROUT;
     ctx.fillRect(x + 8*u - u, y, u, ts);
     ctx.fillRect(x, y + 8*u - u, ts, u);
+    // Warm pool — gentle overhead lamp casts a halo on this floor tile
+    var pulse = 0.8 + Math.sin(time / 700 + col * 0.3 + row * 0.7) * 0.18;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.32;
+    var pool = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts * 0.85);
+    pool.addColorStop(0, 'rgba(255,200,140,0.65)');
+    pool.addColorStop(1, 'transparent');
+    ctx.fillStyle = pool;
+    ctx.fillRect(x - ts * 0.2, y - ts * 0.2, ts * 1.4, ts * 1.4);
+    ctx.restore();
   }
 
   // Cyberpunk wall — strict pixel art. 4u dark cap + 12u brick body with
@@ -265,10 +326,21 @@
       ['#3855a0', '#5a78d0'], ['#388850', '#5cc080'], ['#a07038', '#d0a060'],
       ['#388890', '#5ac0c8'], ['#80388c', '#c060c0'], ['#a04040', '#d07070']
     ];
+    var GLOW_COLORS = ['rgba(120,160,232,', 'rgba(120,232,160,', 'rgba(232,180,120,', 'rgba(120,232,232,', 'rgba(232,120,232,', 'rgba(232,120,120,'];
     var GLINT_COLORS = ['#a0b0d8', '#a0d8a8', '#d8c0a0', '#a0d8d8', '#d8a0d8', '#d8a0a0'];
     var idx = (col * 17 + row * 31 + col * row) % 6;
     var phase = (time / 800) + (col * 7 + row * 13);
     var pulse = 0.85 + Math.sin(phase) * 0.15;
+    // Floor cast — colored pool of light spilling forward from the screen
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.45;
+    var castGrad = ctx.createRadialGradient(x + ts * 0.5, y + ts * 1.05, 0, x + ts * 0.5, y + ts * 1.05, ts * 1.0);
+    castGrad.addColorStop(0, GLOW_COLORS[idx] + '0.6)');
+    castGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = castGrad;
+    ctx.fillRect(x - ts * 0.4, y + ts * 0.4, ts * 1.8, ts * 1.0);
+    ctx.restore();
     // Cabinet body
     ctx.fillStyle = '#252040';
     ctx.fillRect(x + 2*u, y + u, ts - 4*u, ts - 2*u);
@@ -322,6 +394,18 @@
     var u = ts / 16;
     var phase = (time / 600) + (col * 5 + row * 11);
     var pulse = 0.7 + Math.sin(phase) * 0.3;
+    // Hot pink floor cast — Runouts gets the brightest pool because it's the
+    // featured game in the arcade.
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.55;
+    var castGrad = ctx.createRadialGradient(x + ts * 0.5, y + ts * 1.1, 0, x + ts * 0.5, y + ts * 1.1, ts * 1.2);
+    castGrad.addColorStop(0, 'rgba(232,120,168,0.75)');
+    castGrad.addColorStop(0.5, 'rgba(160,40,120,0.4)');
+    castGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = castGrad;
+    ctx.fillRect(x - ts * 0.5, y + ts * 0.4, ts * 2.0, ts * 1.1);
+    ctx.restore();
     // Body
     ctx.fillStyle = '#252040';
     ctx.fillRect(x + 2*u, y + u, ts - 4*u, ts - 2*u);
@@ -455,10 +539,48 @@
   function drawEntrance(ctx, x, y, ts, time, col, row) {
     drawFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
+    var t = time || 0;
     // A simple threshold/doormat (the entrance tiles are walkable foyer)
     ctx.fillStyle = '#4a4268';
     ctx.fillRect(x, y, ts, Math.max(1, u));
     ctx.fillRect(x, y + ts - Math.max(1, u), ts, Math.max(1, u));
+    // Pulsing pink threshold strip — "you're crossing into something"
+    var pulse = 0.7 + Math.sin(t / 400 + (col || 0) * 0.7) * 0.3;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.7;
+    ctx.fillStyle = 'rgba(232,80,200,0.9)';
+    ctx.fillRect(x, y + 7*u, ts, 2*u);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    // Pink halo bleeding in from the doorway
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.35;
+    var halo = ctx.createRadialGradient(x + ts / 2, y + ts * 0.5, 0, x + ts / 2, y + ts * 0.5, ts * 1.3);
+    halo.addColorStop(0, 'rgba(255,120,200,0.85)');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - ts * 0.6, y - ts * 0.4, ts * 2.2, ts * 1.8);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  // Floor projector — animated cyan wedge of light projected from the entrance
+  // door onto the interior floor. Drawn behind the door tile so the door
+  // remains visible. Used by drawArcadeDoor to add a "doorway light spill"
+  // effect onto the immediate sidewalk in front.
+  function drawDoorLightBeam(ctx, cx, cy, ts, time, color, intensity) {
+    var t = time || 0;
+    var pulse = 0.7 + Math.sin(t / 800) * 0.3;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * intensity;
+    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, ts * 1.6);
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.5, color.replace(/,\s*[\d.]+\s*\)$/, ',0.3)'));
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - ts * 1.6, cy - ts * 0.4, ts * 3.2, ts * 1.5);
+    ctx.restore();
   }
 
   // Neon-themed arcade door — dark metallic frame with hot-pink neon outline,
@@ -515,15 +637,17 @@
     }
     // Big neon halo bleeding out of the doorway — pink/violet
     ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = neonAlpha * 0.55;
-    var halo = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts * 1.2);
-    halo.addColorStop(0, 'rgba(232, 80, 200, 0.7)');
-    halo.addColorStop(0.5, 'rgba(160, 60, 200, 0.25)');
+    ctx.globalAlpha = neonAlpha * 0.75;
+    var halo = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts * 1.6);
+    halo.addColorStop(0, 'rgba(232, 80, 200, 0.85)');
+    halo.addColorStop(0.4, 'rgba(160, 60, 200, 0.35)');
     halo.addColorStop(1, 'transparent');
     ctx.fillStyle = halo;
-    ctx.fillRect(x - ts * 0.5, y - ts * 0.5, ts * 2, ts * 2);
+    ctx.fillRect(x - ts * 0.7, y - ts * 0.5, ts * 2.4, ts * 2.2);
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
+    // Light spill onto the sidewalk in front of the door
+    drawDoorLightBeam(ctx, x + ts/2, y + ts * 1.1, ts, time, 'rgba(232,80,200,0.85)', 0.55);
   }
 
   function drawFloorDark(ctx, x, y, ts) {
@@ -562,11 +686,15 @@
     var fy = y + Math.floor(ts * 0.32);
     var fw = ts - 6*u;
     var fh = Math.floor(ts * 0.5);
+    // Subtle pulse — backlit poster
+    var pulse = 0.85 + Math.sin(time / 1100 + col + row * 1.7) * 0.15;
     // Frame
     ctx.fillStyle = '#1a1830';
     ctx.fillRect(fx, fy, fw, fh);
+    ctx.globalAlpha = pulse;
     ctx.fillStyle = theme.bg;
     ctx.fillRect(fx + u, fy + u, fw - 2*u, fh - 2*u);
+    ctx.globalAlpha = 1;
     // Icon
     var icx = fx + Math.floor(fw / 2);
     var icy = fy + Math.floor(fh * 0.4);
@@ -602,6 +730,16 @@
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.fillRect(fx, fy, 2*u, u);
     ctx.fillRect(fx + fw - 2*u, fy, 2*u, u);
+    // Atmospheric backlit halo so posters read as glowing wall ads
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.22;
+    var halo = ctx.createRadialGradient(fx + fw/2, fy + fh/2, 0, fx + fw/2, fy + fh/2, ts * 0.85);
+    halo.addColorStop(0, theme.bg);
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - ts * 0.2, y, ts * 1.4, ts);
+    ctx.restore();
   }
 
   function drawBrokenCabinet(ctx, x, y, ts, time, col, row) {
@@ -664,10 +802,32 @@
     ctx.fillStyle = '#15101e';
     ctx.fillRect(x + 3*u, y + ts - 3*u, 2*u, 3*u);
     ctx.fillRect(x + ts - 5*u, y + ts - 3*u, 2*u, 3*u);
+    // Spark spitting from the crack — rare, deterministic per frame
+    var sparkPhase = (Math.floor(time / 130) + col * 17 + row * 41) % 23;
+    if (sparkPhase < 2) {
+      var sparkX = screenX + screenW * 0.4;
+      var sparkY = screenY + screenH * 0.7;
+      ctx.fillStyle = 'rgba(255,232,160,0.9)';
+      ctx.fillRect(sparkX, sparkY, u, u);
+      ctx.fillStyle = 'rgba(255,180,80,0.7)';
+      ctx.fillRect(sparkX - u, sparkY - u, u, u);
+      ctx.fillRect(sparkX + u, sparkY + u, u, u);
+      // Tiny halo around the spark
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = 0.7;
+      var sg = ctx.createRadialGradient(sparkX, sparkY, 0, sparkX, sparkY, 4*u);
+      sg.addColorStop(0, 'rgba(255,200,120,0.9)');
+      sg.addColorStop(1, 'transparent');
+      ctx.fillStyle = sg;
+      ctx.fillRect(sparkX - 4*u, sparkY - 4*u, 8*u, 8*u);
+      ctx.restore();
+    }
   }
 
   // Cyberpunk sidewalk — strict pixel art. 8u × 8u pavers with 1u grout
-  // cross + deterministic 1u grit specks.
+  // cross + deterministic 1u grit specks. Wet-street puddle highlights tint
+  // a few tiles per row for that "rain-slicked Blade Runner" mood.
   function drawSidewalk(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
@@ -697,6 +857,23 @@
     } else if (seed === 7) {
       ctx.fillStyle = '#1a1a26';
       ctx.fillRect(x + 12*u, y + 3*u, u, u);
+    }
+    // Wet-street puddle reflection — 1 in 7 tiles, deterministic. A neon
+    // tone leaks onto the wet pavement so the city feels rain-slicked.
+    var puddle = (col * 53 + row * 11) % 13;
+    if (puddle < 3) {
+      var puddleColors = ['rgba(232,80,200,0.18)', 'rgba(120,220,232,0.16)', 'rgba(160,80,232,0.16)'];
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.fillStyle = puddleColors[puddle];
+      ctx.fillRect(x + 3*u, y + 10*u, 8*u, 4*u);
+      ctx.fillStyle = puddleColors[puddle];
+      ctx.fillRect(x + 5*u, y + 11*u, 6*u, 2*u);
+      // 1u shimmer that drifts slightly per frame
+      var shimmer = ((Math.floor(time / 220) + col + row) % 4);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(x + (5 + shimmer)*u, y + 11*u, u, u);
+      ctx.restore();
     }
   }
 
@@ -736,14 +913,35 @@
     ctx.fillStyle = '#fff8c0';
     ctx.fillRect(x + 7*u, y + 2*u, 2*u, u);
     ctx.globalAlpha = 1;
-    // Halo (atmospheric gradient — allowed by spec)
+    // Halo (atmospheric gradient — allowed by spec). Two-stage halo gives
+    // a hot core and a soft outer pool that washes the sidewalk.
     ctx.globalCompositeOperation = 'screen';
+    // Tight inner halo around the bulb
+    ctx.globalAlpha = pulse * 0.55;
+    var halo1 = ctx.createRadialGradient(x + 8*u, y + 3*u, 0, x + 8*u, y + 3*u, 5*u);
+    halo1.addColorStop(0, 'rgba(255,236,160,0.95)');
+    halo1.addColorStop(0.6, 'rgba(255,200,90,0.4)');
+    halo1.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo1;
+    ctx.fillRect(x - 2*u, y - 4*u, ts + 4*u, ts/2 + 6*u);
+    // Wide soft pool down to the sidewalk
     ctx.globalAlpha = pulse * 0.35;
-    var grad = ctx.createRadialGradient(x + 8*u, y + 3*u, 0, x + 8*u, y + 3*u, 6*u);
-    grad.addColorStop(0, 'rgba(255,224,128,0.7)');
-    grad.addColorStop(1, 'transparent');
-    ctx.fillStyle = grad;
-    ctx.fillRect(x - 2*u, y - 2*u, ts + 4*u, ts/2 + 2*u);
+    var halo2 = ctx.createRadialGradient(x + 8*u, y + 8*u, 0, x + 8*u, y + 8*u, 14*u);
+    halo2.addColorStop(0, 'rgba(255,200,90,0.65)');
+    halo2.addColorStop(0.55, 'rgba(255,160,100,0.18)');
+    halo2.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo2;
+    ctx.fillRect(x - 8*u, y - 4*u, ts + 16*u, ts + 8*u);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    // Warm pool of light on the sidewalk directly below the lamp
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.5;
+    var floor = ctx.createRadialGradient(x + 8*u, y + 16*u, 0, x + 8*u, y + 16*u, 10*u);
+    floor.addColorStop(0, 'rgba(255,210,120,0.65)');
+    floor.addColorStop(1, 'transparent');
+    ctx.fillStyle = floor;
+    ctx.fillRect(x - 6*u, y + 8*u, ts + 12*u, ts);
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
     // Base (4u × 2u)
@@ -806,19 +1004,25 @@
     // Background
     ctx.fillStyle = '#0e0c1a';
     ctx.fillRect(x, y, ts, ts);
-    // Sign frame
+    // Sign frame — slightly thicker outer rim
     ctx.fillStyle = '#1a0a20';
     ctx.fillRect(x + u, y + 3*u, ts - 2*u, 10*u);
+    ctx.fillStyle = '#280f30';
+    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, u);    // top inner highlight
     // Bracket fixtures (poles)
     ctx.fillStyle = '#3a2a30';
     ctx.fillRect(x + 2*u, y, u, 4*u);
     ctx.fillRect(x + ts - 3*u, y, u, 4*u);
-    // Sign body — pink with flicker
+    // Sign body — pink with flicker, with a body-color shift in sync with letters
     var flicker = 0.85 + Math.sin(time / 500 + col * 1.7) * 0.15;
     if ((Math.floor(time / 90) + col * 7) % 89 === 0) flicker *= 0.4;
-    ctx.globalAlpha = flicker;
+    var bodyPulse = 0.85 + Math.sin(time / 320 + col * 0.9) * 0.15;
+    ctx.globalAlpha = flicker * bodyPulse;
     ctx.fillStyle = '#f078a8';
     ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, 8*u);
+    // Top tube highlight (1u brighter band)
+    ctx.fillStyle = '#ffb0d8';
+    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, u);
     // Letter (centered) — render with crossfade
     var px = Math.max(1, Math.floor(u * 0.9));
     var letterW = 3 * px;
@@ -842,6 +1046,17 @@
       ctx.fillStyle = '#ffe0a0';
       ctx.fillRect(dotX, y + 13*u, u, u);
     }
+    ctx.globalAlpha = 1;
+    // Pink atmospheric halo behind the marquee — sells the neon
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = flicker * bodyPulse * 0.55;
+    var halo = ctx.createRadialGradient(x + ts / 2, y + 8*u, 0, x + ts / 2, y + 8*u, ts * 1.2);
+    halo.addColorStop(0, 'rgba(255,120,200,0.85)');
+    halo.addColorStop(0.6, 'rgba(160,60,200,0.25)');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - ts * 0.6, y - ts * 0.5, ts * 2.2, ts * 2);
+    ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
   }
 
@@ -1281,15 +1496,83 @@
     ctx.fillRect(x + 4*u, y + 14*u, 8*u, u);
   }
 
-  // Crosswalk — strict pixel art. Vertical 2u-wide white stripes.
+  // Crosswalk — strict pixel art. Asphalt base + worn vertical 2u white stripes.
   function drawCrosswalk(ctx, x, y, ts, time, col, row) {
-    drawSidewalk(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    ctx.fillStyle = '#d0d0d0';
-    ctx.fillRect(x, y, 2*u, ts);
-    ctx.fillRect(x + 4*u, y, 2*u, ts);
-    ctx.fillRect(x + 8*u, y, 2*u, ts);
-    ctx.fillRect(x + 12*u, y, 2*u, ts);
+    // Asphalt base instead of sidewalk pavers
+    var ASPHALT = '#1c1a26';
+    var ASPHALT_LT = '#252330';
+    var ASPHALT_DK = '#15131e';
+    ctx.fillStyle = ASPHALT;
+    ctx.fillRect(x, y, ts, ts);
+    // Subtle grit specks — deterministic
+    var seed = ((col || 0) * 31 + (row || 0) * 17) % 7;
+    if (seed === 0) {
+      ctx.fillStyle = ASPHALT_LT;
+      ctx.fillRect(x + 3*u, y + 11*u, u, u);
+    } else if (seed === 3) {
+      ctx.fillStyle = ASPHALT_DK;
+      ctx.fillRect(x + 12*u, y + 4*u, u, u);
+    }
+    // Worn white stripes — 2u wide, with a 1u dark groove and a 1u highlight
+    var stripeXs = [0, 4, 8, 12];
+    for (var i = 0; i < stripeXs.length; i++) {
+      var sx = x + stripeXs[i] * u;
+      ctx.fillStyle = '#0e0c14';
+      ctx.fillRect(sx, y, 2*u, ts);
+      ctx.fillStyle = '#c8c4b8';
+      ctx.fillRect(sx, y, 2*u, ts);
+      // 1u top highlight
+      ctx.fillStyle = '#e8e4d0';
+      ctx.fillRect(sx, y, u, ts);
+      // Random scuff (deterministic per col,row,i)
+      var scuffSeed = ((col || 0) * 17 + (row || 0) * 23 + i * 11) % 13;
+      if (scuffSeed === 0) {
+        ctx.fillStyle = ASPHALT;
+        ctx.fillRect(sx, y + 4*u, 2*u, u);
+      } else if (scuffSeed === 5) {
+        ctx.fillStyle = ASPHALT;
+        ctx.fillRect(sx, y + 11*u, 2*u, u);
+      }
+    }
+  }
+
+  // Asphalt road with center yellow lane stripe — paired with crosswalk to
+  // sell the "this is a street, not a sidewalk" idea on the road row.
+  function drawRoad(ctx, x, y, ts, time, col, row) {
+    var u = ts / 16;
+    var ASPHALT = '#1c1a26';
+    var ASPHALT_LT = '#252330';
+    var ASPHALT_DK = '#15131e';
+    ctx.fillStyle = ASPHALT;
+    ctx.fillRect(x, y, ts, ts);
+    // Faint horizontal seams (1u)
+    ctx.fillStyle = ASPHALT_DK;
+    ctx.fillRect(x, y + 5*u, ts, u);
+    ctx.fillRect(x, y + 11*u, ts, u);
+    // 2u-wide yellow center lane stripe — dashed: only on every other column
+    if (((col || 0) % 2) === 0) {
+      ctx.fillStyle = '#0e0a04';
+      ctx.fillRect(x + 7*u, y + 7*u, 2*u, 4*u);
+      ctx.fillStyle = '#d8a050';
+      ctx.fillRect(x + 7*u, y + 7*u, 2*u, 3*u);
+      ctx.fillStyle = '#f8d090';
+      ctx.fillRect(x + 7*u, y + 7*u, 2*u, u);
+    }
+    // 1u grit
+    var seed = ((col || 0) * 23 + (row || 0) * 7) % 9;
+    if (seed === 0) {
+      ctx.fillStyle = ASPHALT_LT;
+      ctx.fillRect(x + 2*u, y + 3*u, u, u);
+    } else if (seed === 4) {
+      ctx.fillStyle = ASPHALT_LT;
+      ctx.fillRect(x + 13*u, y + 13*u, u, u);
+    }
+    // Faint wet-street reflection band
+    ctx.globalAlpha = 0.05;
+    ctx.fillStyle = '#e870c0';
+    ctx.fillRect(x, y + 9*u, ts, u);
+    ctx.globalAlpha = 1;
   }
 
   function drawShopWindow(ctx, x, y, ts, time, col, row) {
@@ -1375,6 +1658,248 @@
     ctx.fillRect(x + 4*u, y + 14*u, 8*u, u);
   }
 
+  // ---- Backdrop ----
+  // Cyberpunk night sky for the outdoor street (Arcadia District).
+  // Indoors (Arcadia Arcade) keeps a flat dark cabinet-hall background.
+  var BG_STARS = null;
+  var BG_SKYLINE = null;
+
+  function ensureBgStars() {
+    if (BG_STARS) return;
+    BG_STARS = [];
+    // Deterministic stars so they don't shimmer per resize
+    for (var i = 0; i < 90; i++) {
+      var s = Math.sin(i * 374.713) * 43758.5453;
+      var rand1 = s - Math.floor(s);
+      var s2 = Math.sin(i * 91.117) * 12345.6789;
+      var rand2 = s2 - Math.floor(s2);
+      var s3 = Math.sin(i * 17.31) * 9876.5432;
+      var rand3 = s3 - Math.floor(s3);
+      BG_STARS.push({
+        x: rand1,
+        y: rand2 * 0.55, // upper portion only
+        size: rand3 < 0.85 ? 1 : 2,
+        speed: 0.6 + rand3 * 0.8,
+        phase: rand2 * 6.28,
+        hue: rand3 < 0.4 ? 'pink' : (rand3 < 0.75 ? 'cyan' : 'white')
+      });
+    }
+    // Distant skyline silhouette — deterministic block heights
+    BG_SKYLINE = [];
+    var skylineWidth = 64;
+    for (var b = 0; b < skylineWidth; b++) {
+      var sb = Math.sin(b * 51.91) * 1234.567;
+      var rb = sb - Math.floor(sb);
+      var sb2 = Math.sin(b * 17.713) * 4567.891;
+      var rb2 = sb2 - Math.floor(sb2);
+      BG_SKYLINE.push({
+        h: 0.18 + rb * 0.32,
+        windowSeed: rb2,
+        antenna: rb < 0.18
+      });
+    }
+  }
+
+  function drawArcadiaBackground(ctx, w, h, time) {
+    var worldData = BridgeWorld.getWorld();
+    var isInterior = worldData && worldData.name === 'Arcadia Arcade';
+
+    if (isInterior) {
+      // Smooth cabinet-hall void color so void tiles fade out instead of
+      // reading as raw black.
+      var grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#0a0814');
+      grad.addColorStop(1, '#08060f');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+      return;
+    }
+
+    ensureBgStars();
+
+    // Deep night sky gradient — magenta-purple top, hot pink horizon haze.
+    // The lower bias is louder than realism — we want the sky to read as
+    // "Blade Runner neon night" not a literal night sky.
+    var sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, '#1a0828');
+    sky.addColorStop(0.45, '#280a3a');
+    sky.addColorStop(0.7, '#5a1850');
+    sky.addColorStop(0.85, '#3a1a48');
+    sky.addColorStop(1, '#180820');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    // Subtle horizontal scanline-ish atmospheric haze bands
+    ctx.globalAlpha = 0.08;
+    for (var hb = 0; hb < 4; hb++) {
+      var hbY = h * (0.18 + hb * 0.13);
+      ctx.fillStyle = hb % 2 === 0 ? '#e870c0' : '#80e0e8';
+      ctx.fillRect(0, hbY, w, 1);
+    }
+    ctx.globalAlpha = 1;
+
+    // Distant moon/neon disk
+    var moonX = w * 0.78;
+    var moonY = h * 0.085;
+    var moonR = Math.max(8, Math.min(w, h) * 0.025);
+    var moonGrad = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonR * 5);
+    moonGrad.addColorStop(0, 'rgba(255, 220, 180, 0.85)');
+    moonGrad.addColorStop(0.3, 'rgba(255, 160, 220, 0.55)');
+    moonGrad.addColorStop(0.7, 'rgba(160, 80, 200, 0.18)');
+    moonGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = moonGrad;
+    ctx.fillRect(moonX - moonR * 6, moonY - moonR * 6, moonR * 12, moonR * 12);
+    ctx.fillStyle = 'rgba(255, 235, 210, 0.95)';
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+    ctx.fill();
+    // Crater shadow (1 pixel)
+    ctx.fillStyle = 'rgba(180, 140, 160, 0.55)';
+    ctx.beginPath();
+    ctx.arc(moonX - moonR * 0.35, moonY - moonR * 0.15, moonR * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Twinkling stars
+    for (var i = 0; i < BG_STARS.length; i++) {
+      var st = BG_STARS[i];
+      var sx = Math.floor(st.x * w);
+      var sy = Math.floor(st.y * h);
+      var alpha = 0.45 + Math.sin(time / 600 * st.speed + st.phase) * 0.35;
+      var color = st.hue === 'pink' ? 'rgba(232,140,200,' : (st.hue === 'cyan' ? 'rgba(120,220,232,' : 'rgba(240,240,255,');
+      ctx.fillStyle = color + alpha.toFixed(2) + ')';
+      ctx.fillRect(sx, sy, st.size, st.size);
+    }
+
+    // Distant skyline silhouette (parallax, 2 layers).
+    // Position the skyline so its baseline sits where the top wall row begins,
+    // so the buildings sit on the silhouette rather than floating above it.
+    var camera = BridgeWorld.getCamera();
+    var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
+    var camOffX = camera.x * ts;
+    // The street's south wall is at row 13 (after our edits). The buildings
+    // start around row 4 (top wall) and extend down. We want the skyline
+    // baseline to sit just above row 4 in pixel coords.
+    var topWallRow = 4;
+    var topWallY = h / 2 - camera.y * ts + topWallRow * ts;
+
+    // Far skyline (deeper, slower parallax)
+    var skylineBaseY = topWallY + ts * 0.2;
+    var skylineSlotW = w / 28;
+    var farShift = (camOffX * 0.08) % skylineSlotW;
+    ctx.fillStyle = '#1f0a2e';
+    for (var b1 = 0; b1 < 32; b1++) {
+      var sb = BG_SKYLINE[b1 % BG_SKYLINE.length];
+      var bx = b1 * skylineSlotW - farShift - skylineSlotW;
+      var bh = ts * (1.4 + sb.h * 1.6);
+      ctx.fillRect(Math.floor(bx), Math.floor(skylineBaseY - bh), Math.ceil(skylineSlotW + 1), Math.ceil(bh + 2));
+      // 1-2 lit windows
+      if (sb.windowSeed > 0.5) {
+        var wColor = sb.windowSeed > 0.85 ? 'rgba(232,120,200,0.7)' : 'rgba(120,220,232,0.55)';
+        ctx.fillStyle = wColor;
+        var winY = skylineBaseY - bh + bh * 0.4;
+        ctx.fillRect(Math.floor(bx + skylineSlotW * 0.35), Math.floor(winY), Math.max(2, Math.floor(skylineSlotW * 0.18)), 2);
+        ctx.fillStyle = '#1f0a2e';
+      }
+    }
+
+    // Near skyline (closer, faster parallax, darker)
+    var nearShift = (camOffX * 0.18) % skylineSlotW;
+    ctx.fillStyle = '#10061d';
+    for (var b2 = 0; b2 < 32; b2++) {
+      var sb2 = BG_SKYLINE[(b2 + 7) % BG_SKYLINE.length];
+      var bx2 = b2 * (skylineSlotW * 1.15) - nearShift - skylineSlotW;
+      var bh2 = ts * (0.9 + sb2.h * 1.2);
+      ctx.fillRect(Math.floor(bx2), Math.floor(skylineBaseY - bh2 + ts * 0.4), Math.ceil(skylineSlotW * 1.15 + 1), Math.ceil(bh2 + 2));
+      if (sb2.antenna) {
+        ctx.fillRect(Math.floor(bx2 + skylineSlotW * 0.5), Math.floor(skylineBaseY - bh2 + ts * 0.4 - 8), 1, 8);
+        // Blinking antenna light
+        var blink = ((Math.floor(time / 600) + b2) % 4) === 0;
+        if (blink) {
+          ctx.fillStyle = 'rgba(255,80,120,0.9)';
+          ctx.fillRect(Math.floor(bx2 + skylineSlotW * 0.5), Math.floor(skylineBaseY - bh2 + ts * 0.4 - 9), 1, 1);
+          ctx.fillStyle = '#10061d';
+        }
+      }
+      if (sb2.windowSeed > 0.4) {
+        var w2c = sb2.windowSeed > 0.7 ? 'rgba(255,160,200,0.8)' : 'rgba(160,240,255,0.65)';
+        ctx.fillStyle = w2c;
+        ctx.fillRect(Math.floor(bx2 + skylineSlotW * 0.4), Math.floor(skylineBaseY - bh2 + ts * 0.4 + bh2 * 0.5), Math.max(2, Math.floor(skylineSlotW * 0.2)), 2);
+        ctx.fillStyle = '#10061d';
+      }
+    }
+
+    // Drifting cyber-snow / embers (whole-pixel, deterministic seeds)
+    for (var p = 0; p < 28; p++) {
+      var ps = Math.sin(p * 173.31) * 5678.123;
+      var pr = ps - Math.floor(ps);
+      var ps2 = Math.sin(p * 51.713) * 4321.987;
+      var pr2 = ps2 - Math.floor(ps2);
+      var pSpeed = 0.04 + pr2 * 0.08;
+      var px = (((pr * w) + (time * pSpeed * 0.18)) % (w + 40)) - 20;
+      var pyBase = (pr2 * h * 0.85);
+      var py = (pyBase + (time * pSpeed * 0.6) % h) % h;
+      // Sway
+      var sway = Math.sin(time / 800 + p) * 6;
+      var alphaP = 0.35 + Math.sin(time / 700 + p * 1.3) * 0.25;
+      ctx.fillStyle = pr < 0.6 ? 'rgba(232, 140, 220, ' + alphaP.toFixed(2) + ')' : 'rgba(140, 220, 232, ' + alphaP.toFixed(2) + ')';
+      ctx.fillRect(Math.floor(px + sway), Math.floor(py), 1, 1);
+    }
+
+    // Drizzle — short diagonal streaks for foreground rain. Whole-pixel
+    // values, deterministic per-frame seeds. Very subtle so it reads as
+    // "atmospheric drizzle" not "downpour."
+    for (var rd = 0; rd < 38; rd++) {
+      var rs = Math.sin(rd * 53.713) * 9876.123;
+      var rr = rs - Math.floor(rs);
+      var rs2 = Math.sin(rd * 21.317) * 4567.987;
+      var rr2 = rs2 - Math.floor(rs2);
+      var speed = 0.55 + rr2 * 0.6;
+      var rx = ((rr * w) + time * speed * 0.04) % (w + 60) - 30;
+      var ry = ((rr2 * h) + time * speed * 0.55) % (h + 80) - 40;
+      ctx.globalAlpha = 0.18 + rr * 0.18;
+      ctx.fillStyle = rr < 0.5 ? 'rgba(220, 220, 240, 0.7)' : 'rgba(232, 200, 240, 0.5)';
+      // Diagonal streak (3px tall, 1px wide, slight slant)
+      ctx.fillRect(Math.floor(rx), Math.floor(ry), 1, 3);
+      ctx.fillRect(Math.floor(rx) - 1, Math.floor(ry) + 2, 1, 1);
+    }
+    ctx.globalAlpha = 1;
+
+    // Periodic flying hover-craft passing across the upper sky
+    var craftCycle = 12000;
+    var craftT = (time % craftCycle) / craftCycle;
+    if (craftT < 0.7) {
+      var cx = -40 + craftT * (w + 80) / 0.7;
+      var cy = h * 0.22 + Math.sin(craftT * Math.PI * 2) * 8;
+      ctx.fillStyle = '#1a0820';
+      ctx.fillRect(Math.floor(cx), Math.floor(cy), 14, 3);
+      ctx.fillStyle = '#3a1840';
+      ctx.fillRect(Math.floor(cx) + 2, Math.floor(cy), 10, 2);
+      // Pink tail glow
+      ctx.fillStyle = 'rgba(232,80,200,0.9)';
+      ctx.fillRect(Math.floor(cx), Math.floor(cy) + 1, 2, 1);
+      // Cyan headlight
+      ctx.fillStyle = 'rgba(120,220,232,0.95)';
+      ctx.fillRect(Math.floor(cx) + 13, Math.floor(cy) + 1, 1, 1);
+      // Soft halo
+      ctx.globalCompositeOperation = 'screen';
+      var craftHalo = ctx.createRadialGradient(cx + 7, cy + 1, 0, cx + 7, cy + 1, 22);
+      craftHalo.addColorStop(0, 'rgba(232,80,200,0.4)');
+      craftHalo.addColorStop(1, 'transparent');
+      ctx.fillStyle = craftHalo;
+      ctx.fillRect(cx - 16, cy - 16, 50, 36);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    // Ground fog at the horizon — soft purple haze
+    var fog = ctx.createLinearGradient(0, h * 0.55, 0, h * 0.78);
+    fog.addColorStop(0, 'transparent');
+    fog.addColorStop(1, 'rgba(60, 20, 80, 0.45)');
+    ctx.fillStyle = fog;
+    ctx.fillRect(0, h * 0.55, w, h * 0.25);
+  }
+
+  BridgeWorld.registerBackground('arcadia', drawArcadiaBackground);
+
   BridgeWorld.registerTileset('arcadia', {
     1: drawWall,
     2: drawFloor,
@@ -1404,6 +1929,7 @@
     26: drawCrosswalk,
     27: drawShopWindow,
     28: drawTrafficCone,
+    35: drawRoad,
     29: drawArcadeSignPng,
     30: drawArcadiaShopPng,
     31: drawNeonRamenStandPng,
