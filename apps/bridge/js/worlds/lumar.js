@@ -380,6 +380,87 @@
     ctx.globalAlpha = 1;
   }
 
+  // ---- Building sprite loader ----
+  // Generic helper for the multi-tile PNG buildings (tavern, inn, lighthouse,
+  // etc.). Each sprite is anchored at the bottom-center tile of its footprint
+  // and renders extending UP and OUT across the building's full footprint.
+  // Loads the PNG, then post-processes the alpha channel to strip the soft
+  // anti-aliased halo that DALL-E-style generators leave around the subject.
+  var spriteCache = {};
+  function loadBuildingSprite(key, path) {
+    if (spriteCache[key]) return spriteCache[key];
+    var entry = { canvas: null, ready: false };
+    spriteCache[key] = entry;
+    var img = new Image();
+    img.onload = function () {
+      var c = document.createElement('canvas');
+      c.width = img.width;
+      c.height = img.height;
+      var cx = c.getContext('2d');
+      cx.drawImage(img, 0, 0);
+      // Knock out near-white background pixels and harden the alpha edge so
+      // no cream halo bleeds onto the world bg.
+      try {
+        var data = cx.getImageData(0, 0, c.width, c.height);
+        var px = data.data;
+        for (var i = 0; i < px.length; i += 4) {
+          var r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
+          // Pure white background → transparent
+          if (r > 240 && g > 240 && b > 240 && a > 0) {
+            px[i + 3] = 0;
+            continue;
+          }
+          // Soft edge anti-alias → drop alpha to harden the silhouette
+          if (a > 0 && a < 220) {
+            // If pixel is nearly white-ish AND partially transparent, kill it
+            var avg = (r + g + b) / 3;
+            if (avg > 220) px[i + 3] = 0;
+          }
+        }
+        cx.putImageData(data, 0, 0);
+      } catch (e) { /* CORS or other; skip processing */ }
+      entry.canvas = c;
+      entry.ready = true;
+    };
+    img.src = path;
+    return entry;
+  }
+  // Preload the sprites
+  loadBuildingSprite('tavern', '/bridge/assets/buildings/tavern.png');
+  loadBuildingSprite('inn', '/bridge/assets/buildings/inn.png');
+  loadBuildingSprite('lighthouse', '/bridge/assets/buildings/lighthouse.png');
+
+  // tilesW/tilesH = footprint in tiles. anchorOffsetX = which column within
+  // the sprite the anchor tile sits at, measured from the LEFT edge (0-based).
+  // Sprite renders so that its bottom edge aligns with the anchor tile's
+  // bottom edge.
+  function drawBuildingSprite(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX) {
+    var s = spriteCache[key];
+    if (!s || !s.ready) {
+      // Subtle placeholder while loading — empty
+      return;
+    }
+    var areaW = ts * tilesW;
+    var areaH = ts * tilesH;
+    var destX = x - anchorOffsetX * ts;
+    var destY = y + ts - areaH;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(s.canvas, destX, destY, areaW, areaH);
+  }
+
+  // Tavern PNG — 4 wide × 5 tall, anchor at column index 1 (door is the 2nd tile from left)
+  function drawTavernPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'tavern', 4, 5, 1);
+  }
+  // Inn PNG — 5 wide × 5 tall, anchor at column index 2 (door at center)
+  function drawInnPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'inn', 5, 5, 2);
+  }
+  // Lighthouse PNG — 3 wide × 7 tall, anchor at column index 1 (door near center)
+  function drawLighthousePng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'lighthouse', 3, 7, 1);
+  }
+
   // ---- Ship (reuse docked ship PNG) ----
 
   var shipCanvas = null;
@@ -1499,7 +1580,10 @@
     35: drawCaptainStatue,
     36: drawInnEntrance,
     37: drawFishMarket,
-    38: drawLanternPost
+    38: drawLanternPost,
+    39: drawTavernPng,
+    40: drawInnPng,
+    41: drawLighthousePng
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);
