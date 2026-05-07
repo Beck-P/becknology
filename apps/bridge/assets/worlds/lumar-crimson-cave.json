@@ -568,11 +568,11 @@
       "dialog": "AN ANCIENT SKELETON.\\n\\nA TARNISHED MEDAL CLUTCHED\\nIN ONE BONY HAND. THE SHIP\\nMARK ON IT MATCHES YOURS."
     },
     {
-      "x": 16,
+      "x": 12,
       "y": 4,
       "type": "dialog",
       "label": "ORE VEIN",
-      "prompt": "PRESS E TO LOOK",
+      "prompt": "PRESS E TO LOOK AT WALL",
       "dialog": "GOLD GLITTERS IN THE\\nROCK FACE.\\n\\nYOU'D NEED A PICK.\\nAND COURAGE.\\nDRAGON LIVES NEARBY."
     },
     {

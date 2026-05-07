@@ -861,7 +861,7 @@
     },
     {
       "x": 22,
-      "y": 2,
+      "y": 5,
       "type": "dialog",
       "label": "HOLO-BILLBOARD",
       "prompt": "PRESS E TO READ",
@@ -885,7 +885,7 @@
     },
     {
       "x": 4,
-      "y": 2,
+      "y": 5,
       "type": "dialog",
       "label": "RECORD STORE",
       "prompt": "PRESS E TO PEEK",
@@ -893,7 +893,7 @@
     },
     {
       "x": 16,
-      "y": 2,
+      "y": 5,
       "type": "dialog",
       "label": "CYBER GEAR",
       "prompt": "PRESS E TO PEEK",
@@ -901,7 +901,7 @@
     },
     {
       "x": 20,
-      "y": 2,
+      "y": 5,
       "type": "dialog",
       "label": "BOOKSHOP",
       "prompt": "PRESS E TO PEEK",

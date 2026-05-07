@@ -448,8 +448,8 @@
       "dialog": "BULLSEYE!\\n\\n...IS WHAT YOU'D SAY IF\\nYOUR DART HADN'T LANDED\\nIN THE WALL TO THE LEFT."
     },
     {
-      "x": 3,
-      "y": 2,
+      "x": 4,
+      "y": 3,
       "type": "dialog",
       "label": "STOVE",
       "prompt": "PRESS E TO LOOK",
@@ -489,7 +489,7 @@
     },
     {
       "x": 4,
-      "y": 1,
+      "y": 2,
       "type": "dialog",
       "label": "PAINTING",
       "prompt": "PRESS E TO LOOK",
