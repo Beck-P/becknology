@@ -400,6 +400,257 @@
     ctx.fillRect(0, 0, w, h);
   }
 
+  function drawPiano(ctx, x, y, ts, time, col, row) {
+    drawWoodFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Piano body (dark wood)
+    ctx.fillStyle = '#1a1008';
+    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, 8*u);
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, Math.max(1, u * 0.8));
+    // Top of piano lid
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, Math.max(1, u * 0.5));
+    // Keys
+    ctx.fillStyle = '#f0e8d0';
+    ctx.fillRect(x + 3*u, y + 8*u, ts - 6*u, 2*u);
+    // Black keys
+    ctx.fillStyle = '#0a0a0a';
+    var keyW = (ts - 6*u) / 8;
+    for (var k = 0; k < 7; k++) {
+      if (k !== 2 && k !== 5) {
+        ctx.fillRect(x + 3*u + (k + 0.6) * keyW, y + 8*u, keyW * 0.7, Math.max(1, u * 1.2));
+      }
+    }
+    // White key dividers
+    ctx.fillStyle = '#a09080';
+    for (var w = 1; w < 8; w++) {
+      ctx.fillRect(x + 3*u + w * keyW, y + 8*u + Math.max(1, u * 1.2), Math.max(1, u * 0.3), Math.max(1, u * 0.8));
+    }
+    // Pedal
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.5), y + 11*u, Math.max(1, u), Math.max(1, u * 0.8));
+    // Sheet music stand
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 4*u, y + 2*u, ts - 8*u, 2*u);
+    ctx.fillStyle = '#d0c8a0';
+    ctx.fillRect(x + 5*u, y + 2*u, ts - 10*u, Math.max(1, u * 1.4));
+  }
+
+  function drawDartBoard(ctx, x, y, ts, time, col, row) {
+    drawTavernWall(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Wooden mounting board
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 3*u, y + 4*u, ts - 6*u, ts - 8*u);
+    // Dart board concentric rings
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + ts/2, Math.max(1, u * 4), 0, Math.PI * 2);
+    ctx.fill();
+    // Outer ring (red/green)
+    ctx.fillStyle = '#a02030';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + ts/2, Math.max(1, u * 3.5), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1a601a';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + ts/2, Math.max(1, u * 2.8), 0, Math.PI * 2);
+    ctx.fill();
+    // Inner segments
+    ctx.fillStyle = '#a09080';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + ts/2, Math.max(1, u * 2.2), 0, Math.PI * 2);
+    ctx.fill();
+    // Bullseye
+    ctx.fillStyle = '#a02030';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + ts/2, Math.max(1, u * 1), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.arc(x + ts/2, y + ts/2, Math.max(1, u * 0.4), 0, Math.PI * 2);
+    ctx.fill();
+    // Dart sticking out
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + ts/2 + u, y + ts/2 - 2*u, Math.max(1, u * 0.4), 2*u);
+    ctx.fillStyle = '#d0d0d0';
+    ctx.fillRect(x + ts/2 + u + Math.max(1, u * 0.5), y + ts/2 - 3*u, Math.max(1, u * 0.7), Math.max(1, u));
+  }
+
+  function drawStove(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawTavernWall(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Stove body — dark iron
+    ctx.fillStyle = '#1a1018';
+    ctx.fillRect(x + 2*u, y + 5*u, ts - 4*u, 10*u);
+    // Top with stove pot
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(x + u, y + 4*u, ts - 2*u, Math.max(1, u * 1.5));
+    // Pot
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(x + 4*u, y + 2*u, ts - 8*u, 3*u);
+    // Pot lid
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(x + 4*u, y + 2*u, ts - 8*u, Math.max(1, u * 0.5));
+    // Steam from pot
+    var steam = (time / 100) % 8;
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#e0e0e0';
+    ctx.fillRect(x + Math.floor(ts * 0.4), y + Math.max(0, 2*u - steam * u), Math.max(1, u * 0.7), Math.max(1, u * 0.8));
+    ctx.fillRect(x + Math.floor(ts * 0.55), y + Math.max(0, u - steam * u), Math.max(1, u * 0.7), Math.max(1, u * 0.8));
+    ctx.globalAlpha = 1;
+    // Stove door (front)
+    ctx.fillStyle = '#3a2418';
+    ctx.fillRect(x + 4*u, y + 8*u, ts - 8*u, 4*u);
+    // Fire viewing window
+    var fire = 0.7 + Math.sin(time / 150) * 0.3;
+    ctx.globalAlpha = fire;
+    ctx.fillStyle = '#ff8030';
+    ctx.fillRect(x + 5*u, y + 9*u, ts - 10*u, 2*u);
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(x + Math.floor(ts/2) - u, y + Math.floor(9.5*u), 2*u, Math.max(1, u));
+    ctx.globalAlpha = 1;
+    // Halo glow from stove
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.35 * fire;
+    var grad = ctx.createRadialGradient(x + ts/2, y + 10*u, 0, x + ts/2, y + 10*u, ts);
+    grad.addColorStop(0, 'rgba(255,160,60,0.6)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.5, y - ts*0.5, ts * 2, ts * 2);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPatron(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    drawWoodFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    var bob = Math.sin(time / 700 + col * 5) > 0.85 ? -u : 0;
+    // Variable color based on tile position
+    var pal = [
+      { suit: '#3a607a', skin: '#e0c0a0', hair: '#3a2410' },
+      { suit: '#603030', skin: '#d0a880', hair: '#2a1a08' },
+      { suit: '#506030', skin: '#e8d0b0', hair: '#5a3a1a' }
+    ];
+    var p = pal[(col * 7 + row * 11) % 3];
+    // Body
+    ctx.fillStyle = p.suit;
+    ctx.fillRect(x + 3*u, y + (6*u) + bob, 10*u, 5*u);
+    // Vest highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(x + 3*u, y + (6*u) + bob, 10*u, Math.max(1, u * 0.5));
+    // Arm holding mug
+    ctx.fillStyle = p.suit;
+    ctx.fillRect(x + 11*u, y + (8*u) + bob, 2*u, 2*u);
+    ctx.fillStyle = '#c8aa70';
+    ctx.fillRect(x + 12*u, y + (7*u) + bob, 2*u, 2*u);
+    ctx.fillStyle = '#f0e8d0';
+    ctx.fillRect(x + 12*u, y + (7*u) + bob, 2*u, Math.max(1, u * 0.4));
+    // Skin
+    ctx.fillStyle = p.skin;
+    ctx.fillRect(x + 4*u, y + (u) + bob, 8*u, 5*u);
+    // Hair
+    ctx.fillStyle = p.hair;
+    ctx.fillRect(x + 4*u, y + (u) + bob, 8*u, Math.max(1, u * 1.4));
+    // Eyes
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(x + 5*u, y + (3*u) + bob, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    ctx.fillRect(x + 9*u, y + (3*u) + bob, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    // Smile
+    ctx.fillStyle = p.hair;
+    ctx.fillRect(x + 6*u, y + (4*u) + bob, 4*u, Math.max(1, u * 0.4));
+    // Legs
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 4*u, y + (11*u) + bob, 3*u, 4*u);
+    ctx.fillRect(x + 9*u, y + (11*u) + bob, 3*u, 4*u);
+    // Boots
+    ctx.fillStyle = '#1a1208';
+    ctx.fillRect(x + 3*u, y + 14*u, 4*u, u);
+    ctx.fillRect(x + 9*u, y + 14*u, 4*u, u);
+  }
+
+  function drawBarrel(ctx, x, y, ts, time, col, row) {
+    drawWoodFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Barrel body
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + 3*u, y + 4*u, ts - 6*u, 9*u);
+    // Iron bands (top and bottom)
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(x + 3*u, y + 5*u, ts - 6*u, Math.max(1, u * 0.7));
+    ctx.fillRect(x + 3*u, y + 8*u, ts - 6*u, Math.max(1, u * 0.7));
+    ctx.fillRect(x + 3*u, y + 11*u, ts - 6*u, Math.max(1, u * 0.7));
+    // Wood plank vertical seams
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.3), y + 4*u, Math.max(1, u * 0.6), 9*u);
+    // Top of barrel (round)
+    ctx.fillStyle = '#3a2410';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + 4*u, Math.max(1, u * 4.5), Math.max(1, u * 1.2), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5a3a1a';
+    ctx.beginPath();
+    ctx.ellipse(x + ts/2, y + Math.max(1, 3.7*u), Math.max(1, u * 4.5), Math.max(1, u * 1.2), 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tap on the side
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + ts - 4*u, y + 9*u, Math.max(1, u * 1.5), Math.max(1, u * 1.2));
+    ctx.fillRect(x + ts - 3*u, y + 10*u, Math.max(1, u * 0.6), Math.max(1, u * 1.2));
+  }
+
+  function drawCoatRack(ctx, x, y, ts, time, col, row) {
+    drawWoodFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Pole
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 3*u, Math.max(1, u * 0.8), 11*u);
+    // Hooks at top
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + 5*u, y + 3*u, 2*u, Math.max(1, u * 0.5));
+    ctx.fillRect(x + ts - 7*u, y + 3*u, 2*u, Math.max(1, u * 0.5));
+    // Hat hanging
+    ctx.fillStyle = '#3a2030';
+    ctx.fillRect(x + 4*u, y + 3*u, 4*u, 2*u);
+    ctx.fillRect(x + 5*u, y + 2*u, 2*u, Math.max(1, u * 1.2));
+    // Coat hanging
+    ctx.fillStyle = '#603020';
+    ctx.fillRect(x + 9*u, y + 4*u, 4*u, 5*u);
+    ctx.fillStyle = '#3a1810';
+    ctx.fillRect(x + 9*u, y + 4*u, 4*u, Math.max(1, u * 0.5));
+    // Base
+    ctx.fillStyle = '#1a1010';
+    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 13*u, 4*u, Math.max(1, u * 0.8));
+  }
+
+  function drawWallPainting(ctx, x, y, ts, time, col, row) {
+    drawTavernWall(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // Frame
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + 3*u, y + 3*u, ts - 6*u, 7*u);
+    ctx.fillStyle = '#1a1010';
+    ctx.fillRect(x + Math.max(1, 3.5*u), y + Math.max(1, 3.5*u), ts - 7*u, 6*u);
+    // Painting — sea / ship
+    var grad = ctx.createLinearGradient(x, y + 4*u, x, y + 9*u);
+    grad.addColorStop(0, '#3a4858');
+    grad.addColorStop(0.5, '#1a3050');
+    grad.addColorStop(1, '#205040');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x + 4*u, y + 4*u, ts - 8*u, 5*u);
+    // Ship silhouette
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 6*u, 4*u, Math.max(1, u * 0.8));
+    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 4*u, Math.max(1, u * 0.8), 2*u);
+    // Sun/moon
+    ctx.fillStyle = '#e8c060';
+    ctx.beginPath();
+    ctx.arc(x + Math.floor(ts/2) + 3*u, y + 5*u, Math.max(1, u * 0.7), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   BridgeWorld.registerTileset('tavern', {
     1: drawTavernWall,
     2: drawWoodFloor,
@@ -410,7 +661,14 @@
     7: drawFireplace,
     8: drawBartender,
     9: drawShelf,
-    10: drawWindow
+    10: drawWindow,
+    11: drawPiano,
+    12: drawDartBoard,
+    13: drawStove,
+    14: drawPatron,
+    15: drawBarrel,
+    16: drawCoatRack,
+    17: drawWallPainting
   });
 
   BridgeWorld.registerBackground('tavern', drawTavernBackground);
