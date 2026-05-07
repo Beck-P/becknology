@@ -77,42 +77,42 @@
 >
 > *Note: marquee sign is wall-mounted signage, not a freestanding building — keep the chunky pixel-art rendering but ignore the roof-from-above rule.*
 >
-> Subject: a glowing pink and purple neon sign reading "ARCADIA" in bold geometric tube letters, mounted on a dark metallic backing panel. **Hot pink and purple neon-tube letters** with bright cyan electric arcs between them. Glowing pink halo bloom around each letter. Small lens flares on the brightest tube curves. Mounting brackets at the top and bottom. Cyberpunk 80s arcade aesthetic. Limited palette: hot pink, deep purple, electric cyan, dark metal, white tube cores. **Black space surrounding the sign** so we can layer atmospheric haze.
+> Subject: a glowing pink and purple neon sign reading "ARCADIA" in bold geometric tube letters, mounted on a dark metallic backing panel. **Hot pink and purple neon-tube letters** with bright cyan electric arcs between them. Glowing pink halo bloom around each letter. Small lens flares on the brightest tube curves. Mounting brackets at the top and bottom. Cyberpunk 80s arcade aesthetic. Limited palette: hot pink, deep purple, electric cyan, dark metal, white tube cores. Transparent background around the sign only — no black box, no matte, no colored backdrop, no checkerboard, and no surrounding wall panel beyond the sign asset.
 
 ### Cyberpunk shop — `arcadia-shop.png` — 768 × 1024 native
 > [STANDARD HEADER]
 >
 > Building type: a single-story cyberpunk storefront.
 >
-> Design details: dark metal walls with exposed pipes and conduits, flat metal roof clearly visible from above with HVAC units and an antenna. **A wide front display window showing flat dark blue glass** (no products inside — we layer those in code). A neon sign hanging above the door, glowing pink (we'll animate the flicker). A dark metal door with a panel scanner beside it. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, black glass.
+> Design details: dark metal walls with exposed pipes and conduits, flat metal roof clearly visible from above with HVAC units and an antenna. **A wide front display window showing flat dark blue glass** (no products inside — we layer those in code). A neon sign hanging above the door, glowing pink (we'll animate the flicker). A dark metal door with a panel scanner beside it. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, black glass. Transparent background around the building only — no black box, no matte, no colored backdrop, and no checkerboard.
 
 ### Neon ramen stand — `neon-ramen-stand.png` — 768 × 1024 native
 > [STANDARD HEADER]
 >
 > Building type: a compact neon ramen street stand.
 >
-> Design details: dark metal cart base with a small front counter and a flat overhanging roof canopy clearly visible from above. Cyan tube-light trim along the canopy edge, hot pink underglow beneath the counter, a small square service window with flat warm-yellow glow and no interior detail. A noodle bowl icon sign made of simple geometric neon shapes, no readable text. Steam vents on the upper roof corners with empty space above them for procedural steam. Small token slot and panel scanner beside the counter. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, warm yellow glass.
+> Design details: dark metal cart base with a small front counter and a flat overhanging roof canopy clearly visible from above. Cyan tube-light trim along the canopy edge, hot pink underglow beneath the counter, a small square service window with flat warm-yellow glow and no interior detail. A noodle bowl icon sign made of simple geometric neon shapes, no readable text. Steam vents on the upper roof corners with empty space above them for procedural steam. Small token slot and panel scanner beside the counter. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, warm yellow glass. Transparent background around the stand only — no black box, no matte, no colored backdrop, and no checkerboard.
 
 ### Holo-billboard kiosk — `holo-billboard-kiosk.png` — 768 × 1024 native
 > [STANDARD HEADER]
 >
 > Building type: a compact freestanding holo-billboard kiosk.
 >
-> Design details: a dark metal pedestal with a thick base, two vertical side struts, and a wide translucent smoked-glass display panel facing forward. The top cap is visible from above like a shallow roof slab. The screen shows flat cyan and magenta geometric ad bars only, no readable text and no detailed images inside. Cyan neon edge strips, purple underglow, small antenna nubs on the top cap. Limited palette: dark metal grey, smoked dark glass, hot pink neon, electric cyan, deep purple.
+> Design details: a dark metal pedestal with a thick base, two vertical side struts, and a wide translucent smoked-glass display panel facing forward. The top cap is visible from above like a shallow roof slab. The screen shows flat cyan and magenta geometric ad bars only, no readable text and no detailed images inside. Cyan neon edge strips, purple underglow, small antenna nubs on the top cap. Limited palette: dark metal grey, smoked dark glass, hot pink neon, electric cyan, deep purple. Transparent background around the kiosk only — no black box, no matte, no colored backdrop, and no checkerboard.
 
 ### Token kiosk — `token-kiosk.png` — 768 × 768 native
 > [STANDARD HEADER]
 >
 > Building type: a small arcade token kiosk.
 >
-> Design details: squat armored payment booth with a flat roof visible from above, dark metal body, front-facing token dispensing window with flat warm-yellow glow and no interior detail. A cyan-lit card scanner, pink token chute, tiny antenna on the roof, exposed conduit loops on both sides, and a heavy base bolted to the sidewalk. Include a simple coin icon on a small sign panel, no readable text. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, brass token yellow.
+> Design details: squat armored payment booth with a flat roof visible from above, dark metal body, front-facing token dispensing window with flat warm-yellow glow and no interior detail. A cyan-lit card scanner, pink token chute, tiny antenna on the roof, exposed conduit loops on both sides, and a heavy base bolted to the sidewalk. Include a simple coin icon on a small sign panel, no readable text. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, brass token yellow. Transparent background around the kiosk only — no black box, no matte, no colored backdrop, and no checkerboard.
 
 ### Hover-bike dock — `hover-bike-dock.png` — 768 × 768 native
 > [STANDARD HEADER]
 >
 > Building type: a compact hover-bike dock and parked hover-bike.
 >
-> Design details: low dark metal charging platform with a roofless rectangular docking frame visible from above, a sleek parked hover-bike facing forward with cyan smoked-glass canopy, hot pink engine pods, purple magnetic lift rails, and small cyan charging cables attached to the dock. Keep the silhouette compact and readable as a street object. No rider, no readable text, no realistic motorcycle perspective. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, black glass.
+> Design details: low dark metal charging platform with a roofless rectangular docking frame visible from above, a sleek parked hover-bike facing forward with cyan smoked-glass canopy, hot pink engine pods, purple magnetic lift rails, and small cyan charging cables attached to the dock. Keep the silhouette compact and readable as a street object. No rider, no readable text, no realistic motorcycle perspective. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, black glass. Transparent background around the dock only — no black box, no matte, no colored backdrop, and no checkerboard.
 
 ## Future NPC sprite sheets
 

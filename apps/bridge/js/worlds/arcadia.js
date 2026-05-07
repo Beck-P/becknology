@@ -98,19 +98,19 @@
   }
 
   function drawArcadeSignPng(ctx, x, y, ts, time, col, row) {
-    drawBuildingSprite(ctx, x, y, ts, 'arcade-sign', 6, 3, 2);
+    drawBuildingSprite(ctx, x, y, ts, 'arcade-sign', 5, 2, 2);
     var pulse = 0.65 + Math.sin((time || 0) / 600 + (col || 0)) * 0.18;
-    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.7, ts * 3.5, 'rgba(232,80,200,0.65)', pulse * 0.28);
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.35, ts * 2.7, 'rgba(232,80,200,0.65)', pulse * 0.24);
   }
 
   function drawArcadiaShopPng(ctx, x, y, ts, time, col, row) {
-    drawBuildingSprite(ctx, x, y, ts, 'arcadia-shop', 5, 5, 2);
+    drawBuildingSprite(ctx, x, y, ts, 'arcadia-shop', 4, 3, 1);
     var pulse = 0.6 + Math.sin((time || 0) / 800 + (row || 0)) * 0.15;
-    drawSpriteGlow(ctx, x, y - ts * 1.4, ts * 2.4, 'rgba(232,80,200,0.55)', pulse * 0.22);
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.9, ts * 1.8, 'rgba(232,80,200,0.55)', pulse * 0.18);
   }
 
   function drawNeonRamenStandPng(ctx, x, y, ts, time, col, row) {
-    drawBuildingSprite(ctx, x, y, ts, 'neon-ramen-stand', 4, 4, 2);
+    drawBuildingSprite(ctx, x, y, ts, 'neon-ramen-stand', 3, 3, 1);
     var u = ts / 16;
     for (var i = 0; i < 3; i++) {
       var phase = Math.floor((time || 0) / 180) + i * 3;
@@ -123,21 +123,21 @@
   }
 
   function drawHoloBillboardKioskPng(ctx, x, y, ts, time, col, row) {
-    drawBuildingSprite(ctx, x, y, ts, 'holo-billboard-kiosk', 3, 4, 1);
+    drawBuildingSprite(ctx, x, y, ts, 'holo-billboard-kiosk', 3, 3, 1);
     var pulse = 0.55 + Math.sin((time || 0) / 500 + (col || 0)) * 0.2;
-    drawSpriteGlow(ctx, x, y - ts * 1.5, ts * 2.0, 'rgba(80,220,232,0.6)', pulse * 0.24);
+    drawSpriteGlow(ctx, x, y - ts, ts * 1.6, 'rgba(80,220,232,0.6)', pulse * 0.2);
   }
 
   function drawTokenKioskPng(ctx, x, y, ts, time, col, row) {
-    drawBuildingSprite(ctx, x, y, ts, 'token-kiosk', 3, 4, 1);
+    drawBuildingSprite(ctx, x, y, ts, 'token-kiosk', 2, 3, 0);
     var pulse = 0.55 + Math.sin((time || 0) / 700 + (row || 0)) * 0.2;
-    drawSpriteGlow(ctx, x, y - ts * 1.1, ts * 1.6, 'rgba(255,200,80,0.5)', pulse * 0.18);
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.8, ts * 1.2, 'rgba(255,200,80,0.5)', pulse * 0.14);
   }
 
   function drawHoverBikeDockPng(ctx, x, y, ts, time, col, row) {
-    drawBuildingSprite(ctx, x, y, ts, 'hover-bike-dock', 3, 3, 1);
+    drawBuildingSprite(ctx, x, y, ts, 'hover-bike-dock', 2, 3, 0);
     var pulse = 0.7 + Math.sin((time || 0) / 450 + (col || 0)) * 0.18;
-    drawSpriteGlow(ctx, x, y - ts * 0.2, ts * 1.7, 'rgba(160,64,220,0.55)', pulse * 0.26);
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.2, ts * 1.3, 'rgba(160,64,220,0.55)', pulse * 0.22);
   }
 
   // ---- Tile Draw Functions ----
