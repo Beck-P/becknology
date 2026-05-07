@@ -79,50 +79,39 @@
     }
   }
 
+  // Dock planks — strict 16-px-per-tile pixel art. 4 horizontal planks per
+  // tile, hard 1u dark seams + 1u top highlight per plank. Whole-u only.
   function drawDockPlanks(ctx, x, y, ts, time, col, row) {
-    time = time || 0; col = col || 0; row = row || 0;
+    col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Wood base — slightly varied per tile (some lighter, some darker)
-    var hue = (col + row) % 2 === 0 ? '#3a3020' : '#352a1c';
-    ctx.fillStyle = hue;
-    ctx.fillRect(x, y, ts, ts);
-    // Plank lines (heavier shadow)
-    ctx.fillStyle = '#181208';
-    ctx.fillRect(x, y + 3*u, ts, Math.max(1, u * 0.8));
-    ctx.fillRect(x, y + 7*u, ts, Math.max(1, u * 0.8));
-    ctx.fillRect(x, y + 11*u, ts, Math.max(1, u * 0.8));
-    ctx.fillRect(x, y + 15*u, ts, Math.max(1, u * 0.8));
-    // Plank top highlight
-    ctx.fillStyle = '#4a3a28';
-    ctx.fillRect(x, y + 4*u, ts, Math.max(1, u * 0.4));
-    ctx.fillRect(x, y + 8*u, ts, Math.max(1, u * 0.4));
-    ctx.fillRect(x, y + 12*u, ts, Math.max(1, u * 0.4));
-    // Wood grain — randomized per tile
     var seed = col * 13 + row * 17;
-    ctx.fillStyle = 'rgba(70, 50, 30, 0.5)';
-    ctx.fillRect(x + (seed % 4) * u, y + u, 4*u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + ((seed * 3) % 6) * u + 2*u, y + 5*u, 5*u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + ((seed * 5) % 6) * u + u, y + 9*u, 3*u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + ((seed * 7) % 6) * u + 3*u, y + 13*u, 4*u, Math.max(1, u * 0.5));
-    // Knot
-    if (seed % 7 === 0) {
-      ctx.fillStyle = '#1a1006';
-      ctx.fillRect(x + 4*u, y + 5*u, 2*u, 2*u);
-      ctx.fillStyle = '#2a1a0a';
-      ctx.fillRect(x + 4*u, y + 5*u, u, u);
+    var darkBase = (col + row) % 2 === 0 ? '#3a3020' : '#352a1c';
+    var seam = '#181208';
+    var hi = '#4a3a28';
+    var grain = '#2a2014';
+    // Base
+    ctx.fillStyle = darkBase;
+    ctx.fillRect(x, y, ts, ts);
+    // 4 planks, each 4u tall: 0-3, 4-7, 8-11, 12-15
+    for (var p = 0; p < 4; p++) {
+      var py = y + p * 4 * u;
+      ctx.fillStyle = hi;
+      ctx.fillRect(x, py, ts, u);              // top highlight 1u
+      ctx.fillStyle = seam;
+      ctx.fillRect(x, py + 3*u, ts, u);        // bottom seam 1u
+      // Optional grain dash on the plank (1u tall)
+      if ((seed + p) % 3 === 0) {
+        ctx.fillStyle = grain;
+        var gx = x + ((seed * (p + 1)) % 8) * u;
+        ctx.fillRect(gx, py + u, 4*u, u);
+      }
     }
-    // Nail dots — slight rust tint
+    // Iron nails — 1u square at fixed positions
     ctx.fillStyle = '#3a3030';
     ctx.fillRect(x + u, y + 2*u, u, u);
     ctx.fillRect(x + ts - 2*u, y + 6*u, u, u);
     ctx.fillRect(x + u, y + 10*u, u, u);
     ctx.fillRect(x + ts - 2*u, y + 14*u, u, u);
-    // Highlight on each nail
-    ctx.fillStyle = '#5a5050';
-    ctx.fillRect(x + u, y + 2*u, u * 0.5, u * 0.5);
-    ctx.fillRect(x + ts - 2*u, y + 6*u, u * 0.5, u * 0.5);
-    ctx.fillRect(x + u, y + 10*u, u * 0.5, u * 0.5);
-    ctx.fillRect(x + ts - 2*u, y + 14*u, u * 0.5, u * 0.5);
   }
 
   // Shared sea drawer — handles all 5 sea variants via color triplets.
@@ -454,14 +443,14 @@
     img.src = path;
     return entry;
   }
-  // Preload the sprites with chunky base resolutions.
-  // Strict 16-px-per-tile (Stardew density) would be 64/80/48 for these
-  // buildings. Going slightly higher (~24-px-per-tile equivalent) keeps the
-  // sign and window detail readable without diverging from the procedural
-  // tiles around them, which use sub-tile detail.
-  loadBuildingSprite('tavern', '/bridge/assets/buildings/tavern.png', 96);
-  loadBuildingSprite('inn', '/bridge/assets/buildings/inn.png', 120);
-  loadBuildingSprite('lighthouse', '/bridge/assets/buildings/lighthouse.png', 72);
+  // Preload the sprites with chunky base resolutions tuned to ~20 px per
+  // tile, slightly above strict Stardew 16-px density. Procedural drawers
+  // around them use 16-art-pixels-per-tile via whole-u rects, so 20 keeps
+  // building detail (lantern, sign, knocker) readable without the buildings
+  // looking smoother than the world.
+  loadBuildingSprite('tavern', '/bridge/assets/buildings/tavern.png', 80);
+  loadBuildingSprite('inn', '/bridge/assets/buildings/inn.png', 100);
+  loadBuildingSprite('lighthouse', '/bridge/assets/buildings/lighthouse.png', 60);
 
   // tilesW/tilesH = footprint in tiles. anchorOffsetX = which column within
   // the sprite the anchor tile sits at, measured from the LEFT edge (0-based).
@@ -1379,43 +1368,50 @@
     }
   }
 
-  // Bulletin board with notices
+  // Bulletin board — strict pixel art. Whole-u rects, dark outline, simple
+  // notice rectangles with 1u text lines.
   function drawBulletinBoard(ctx, x, y, ts, time, col, row) {
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Wood post
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.6), y + 9*u, Math.max(1, u * 1.2), 5*u);
-    // Board
-    ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, 8*u);
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + 2*u, y + 9*u, ts - 4*u, Math.max(1, u * 0.5));
-    // Vertical planks
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + Math.floor(ts/2), y + 2*u, Math.max(1, u * 0.5), 8*u);
-    // Notices pinned
-    ctx.fillStyle = '#d8c8a0';
-    ctx.fillRect(x + 3*u, y + 3*u, 4*u, 3*u);
-    ctx.fillStyle = '#a89870';
-    ctx.fillRect(x + 3*u, y + 3*u, Math.max(1, u * 0.4), 3*u);
-    // Notice text lines
+    var WOOD_DARK = '#2a1808';
+    var WOOD_MID = '#5a3a1a';
+    var WOOD_HI = '#7a4e22';
+    // Posts (2 of them, 1u wide, 5u tall) — frame the board
+    ctx.fillStyle = WOOD_DARK;
+    ctx.fillRect(x + 4*u, y + 9*u, u, 5*u);
+    ctx.fillRect(x + 11*u, y + 9*u, u, 5*u);
+    // Board background — 10u × 8u with hard outline
+    ctx.fillStyle = WOOD_DARK;
+    ctx.fillRect(x + 3*u, y + u, 10*u, 8*u);          // outline
+    ctx.fillStyle = WOOD_MID;
+    ctx.fillRect(x + 4*u, y + 2*u, 8*u, 6*u);         // body
+    // Top edge highlight (1u)
+    ctx.fillStyle = WOOD_HI;
+    ctx.fillRect(x + 4*u, y + 2*u, 8*u, u);
+    // Roof above the board
+    ctx.fillStyle = WOOD_DARK;
+    ctx.fillRect(x + 2*u, y, 12*u, u);
+    ctx.fillStyle = WOOD_MID;
+    ctx.fillRect(x + 3*u, y + u, 10*u, u);
+    // Three pinned notices — flat colored rectangles with 1u text lines
+    ctx.fillStyle = '#d8c8a0';                         // beige
+    ctx.fillRect(x + 5*u, y + 3*u, 3*u, 2*u);
     ctx.fillStyle = '#5a4a30';
-    ctx.fillRect(x + Math.floor(3.5*u), y + Math.floor(3.5*u), Math.max(1, u * 2.5), Math.max(1, u * 0.4));
-    ctx.fillRect(x + Math.floor(3.5*u), y + Math.floor(4.5*u), Math.max(1, u * 2), Math.max(1, u * 0.4));
-    // Second notice
-    ctx.fillStyle = '#e8d8a8';
-    ctx.fillRect(x + 8*u, y + 3*u, 4*u, 3*u);
+    ctx.fillRect(x + 5*u, y + 3*u, 3*u, u);            // header
+    ctx.fillStyle = '#e8d8a8';                         // off-white
+    ctx.fillRect(x + 8*u, y + 3*u, 3*u, 2*u);
     ctx.fillStyle = '#5a4a30';
-    ctx.fillRect(x + Math.floor(8.5*u), y + Math.floor(3.5*u), Math.max(1, u * 2.5), Math.max(1, u * 0.4));
-    ctx.fillRect(x + Math.floor(8.5*u), y + Math.floor(4.5*u), Math.max(1, u * 1.7), Math.max(1, u * 0.4));
-    // Wanted poster
-    ctx.fillStyle = '#a8d8a8';
-    ctx.fillRect(x + 5*u, y + 6*u, 6*u, 3*u);
+    ctx.fillRect(x + 8*u, y + 4*u, 3*u, u);            // text line
+    ctx.fillStyle = '#a8d8a8';                         // green WANTED poster
+    ctx.fillRect(x + 5*u, y + 5*u, 6*u, 3*u);
     ctx.fillStyle = '#3a4a30';
-    ctx.fillRect(x + 5*u, y + 6*u, 6*u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + Math.floor(5.5*u), y + Math.floor(6.8*u), Math.max(1, u * 4), Math.max(1, u * 0.4));
+    ctx.fillRect(x + 5*u, y + 5*u, 6*u, u);            // header
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, u);            // text line
+    // Pin tacks (1u red squares)
+    ctx.fillStyle = '#a02020';
+    ctx.fillRect(x + 5*u, y + 3*u, u, u);
+    ctx.fillRect(x + 8*u, y + 3*u, u, u);
+    ctx.fillRect(x + 5*u, y + 5*u, u, u);
   }
 
   // Fishing net hung to dry
@@ -1449,35 +1445,36 @@
     ctx.fillRect(x + 9*u, y + ts - 3*u, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
   }
 
-  // Crab trap stack
+  // Crab trap — strict pixel art. Whole-u grid for the wire mesh.
   function drawCrabTrap(ctx, x, y, ts, time, col, row) {
     drawDockPlanks(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Trap body
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 3*u, y + 5*u, ts - 6*u, 8*u);
-    // Wire mesh pattern
-    ctx.strokeStyle = 'rgba(140, 110, 80, 0.7)';
-    ctx.lineWidth = Math.max(1, u * 0.3);
-    for (var hx = 0; hx < 4; hx++) {
-      ctx.beginPath();
-      ctx.moveTo(x + 3*u + hx * 2.5*u, y + 5*u);
-      ctx.lineTo(x + 3*u + hx * 2.5*u, y + 13*u);
-      ctx.stroke();
+    var FRAME = '#2a1808';
+    var WIRE = '#7a5630';
+    var WIRE_HI = '#a07840';
+    // Trap body — 10u × 8u
+    ctx.fillStyle = FRAME;
+    ctx.fillRect(x + 3*u, y + 5*u, 10*u, 8*u);
+    // Wire mesh — 1u-wide vertical bars at 2u intervals
+    ctx.fillStyle = WIRE;
+    for (var bx = 0; bx < 5; bx++) {
+      ctx.fillRect(x + (4 + bx * 2)*u, y + 6*u, u, 6*u);
     }
-    for (var hy = 0; hy < 4; hy++) {
-      ctx.beginPath();
-      ctx.moveTo(x + 3*u, y + 5*u + hy * 2*u);
-      ctx.lineTo(x + ts - 3*u, y + 5*u + hy * 2*u);
-      ctx.stroke();
-    }
-    // Buoy
+    // 1u horizontal mid-band
+    ctx.fillRect(x + 4*u, y + 9*u, 9*u, u);
+    // Highlights
+    ctx.fillStyle = WIRE_HI;
+    ctx.fillRect(x + 3*u, y + 5*u, 10*u, u);    // top band
+    // Bottom shadow
+    ctx.fillStyle = '#1a0808';
+    ctx.fillRect(x + 3*u, y + 12*u, 10*u, u);
+    // Buoy — 2u × 2u red square with darker outline
+    ctx.fillStyle = '#1a0606';
+    ctx.fillRect(x + 12*u, y + 3*u, 2*u, 2*u);
     ctx.fillStyle = '#c83040';
-    ctx.beginPath();
-    ctx.arc(x + ts - 3*u, y + 4*u, Math.max(1, u * 1.2), 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(x + 12*u, y + 3*u, 2*u, 2*u);
     ctx.fillStyle = '#f08070';
-    ctx.fillRect(x + ts - 4*u, y + 3*u, Math.max(1, u * 0.6), Math.max(1, u * 0.6));
+    ctx.fillRect(x + 12*u, y + 3*u, u, u);     // 1u highlight
   }
 
   // Captain's house — saltstone with prominent door
@@ -1512,36 +1509,52 @@
     ctx.fillRect(x + Math.floor(ts * 0.4), y + Math.max(1, u * 0.5), Math.floor(ts * 0.2), Math.max(1, u * 0.6));
   }
 
-  // Statue of a captain — atmospheric
+  // Captain statue — strict pixel art. Whole-u rects only, hard outline,
+  // 3-tone shading (highlight / midtone / shadow + dark outline).
   function drawCaptainStatue(ctx, x, y, ts, time, col, row) {
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Pedestal base
-    ctx.fillStyle = '#1a1e20';
-    ctx.fillRect(x + 3*u, y + 13*u, 10*u, 2*u);
-    ctx.fillStyle = '#252a28';
-    ctx.fillRect(x + 4*u, y + 11*u, 8*u, 2*u);
-    // Statue body
-    ctx.fillStyle = '#5a5048';
-    ctx.fillRect(x + 5*u, y + 6*u, 6*u, 5*u);
-    // Coat / hat detail
-    ctx.fillStyle = '#3a3530';
-    ctx.fillRect(x + 5*u, y + 6*u, 6*u, Math.max(1, u * 0.6));
-    // Head
-    ctx.fillStyle = '#5a5048';
-    ctx.fillRect(x + 6*u, y + 3*u, 4*u, 3*u);
-    // Tricorn hat
-    ctx.fillStyle = '#3a3530';
-    ctx.beginPath();
-    ctx.moveTo(x + 5*u, y + 4*u);
-    ctx.lineTo(x + ts - 5*u, y + 4*u);
-    ctx.lineTo(x + ts/2 + 2*u, y + 2*u);
-    ctx.lineTo(x + ts/2 - 2*u, y + 2*u);
-    ctx.closePath();
-    ctx.fill();
-    // Outstretched arm pointing
-    ctx.fillStyle = '#5a5048';
-    ctx.fillRect(x + 11*u, y + 7*u, 3*u, Math.max(1, u * 0.8));
+    var DARK = '#0e1212';
+    var SH = '#2a3030';
+    var MID = '#5a5048';
+    var HI = '#7a7068';
+    // Pedestal — 8u × 3u stone block, with hard outline
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 4*u, y + 12*u, 8*u, 3*u);
+    ctx.fillStyle = SH;
+    ctx.fillRect(x + 4*u, y + 12*u, 8*u, u);
+    ctx.fillStyle = MID;
+    ctx.fillRect(x + 5*u, y + 12*u, 6*u, u);  // top of pedestal lighter
+    // Statue body — 4u × 5u
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, 5*u);  // outline
+    ctx.fillStyle = MID;
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, 5*u);
+    ctx.fillStyle = HI;
+    ctx.fillRect(x + 6*u, y + 7*u, u, 5*u);    // left highlight column
+    ctx.fillStyle = SH;
+    ctx.fillRect(x + 9*u, y + 7*u, u, 5*u);    // right shadow column
+    // Coat collar — 1u dark band
+    ctx.fillStyle = SH;
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, u);
+    // Head — 2u × 2u
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 7*u, y + 5*u, 2*u, 2*u);  // outline
+    ctx.fillStyle = MID;
+    ctx.fillRect(x + 7*u, y + 5*u, 2*u, 2*u);
+    ctx.fillStyle = HI;
+    ctx.fillRect(x + 7*u, y + 5*u, u, u);      // forehead highlight
+    // Tricorn hat — 6u × 1u brim + 2u × 1u crown
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 5*u, y + 4*u, 6*u, u);    // brim
+    ctx.fillRect(x + 7*u, y + 3*u, 2*u, u);    // crown
+    ctx.fillStyle = SH;
+    ctx.fillRect(x + 5*u, y + 4*u, 6*u, u);    // brim midtone overlay
+    // Outstretched arm — 3u × 1u extending right
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 10*u, y + 8*u, 3*u, u);
+    ctx.fillStyle = MID;
+    ctx.fillRect(x + 10*u, y + 8*u, 3*u, u);
   }
 
   // Inn entrance — similar to tavern but with different sign
@@ -1649,38 +1662,53 @@
     ctx.fillRect(x + Math.floor(ts * 0.35), y + Math.max(1, u * 0.4), Math.floor(ts * 0.3), Math.max(1, u * 0.3));
   }
 
-  // Lantern post (standalone, not against wall)
+  // Lantern post — strict pixel art. Whole-u rects only, hard 3-tone
+  // shading. Procedural flicker on the flame, halo as gradient (the only
+  // gradient allowed per spec — atmosphere/light overlay).
   function drawLanternPost(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Pole
+    var cx = x + 8*u;     // tile center X (whole-u)
+    // Iron pole — 1u wide, 10u tall, with shadow side 1u and highlight side none
     ctx.fillStyle = '#1e1e1e';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 4*u, Math.max(1, u * 0.8), 10*u);
+    ctx.fillRect(cx - u, y + 4*u, u, 10*u);
     ctx.fillStyle = '#3a3a3a';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 4*u, Math.max(1, u * 0.4), 10*u);
-    // Lantern at top
-    ctx.fillStyle = '#1a1410';
-    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 2*u, 4*u, 4*u);
+    ctx.fillRect(cx, y + 4*u, u, 10*u);
+    // Base — 4u wide × 1u tall stone footing
+    ctx.fillStyle = '#252a28';
+    ctx.fillRect(cx - 2*u, y + 14*u, 4*u, u);
+    ctx.fillStyle = '#0e1212';
+    ctx.fillRect(cx - 2*u, y + 15*u, 4*u, u);
+    // Lantern body — 4u × 4u with hard outline + 3-tone interior
+    ctx.fillStyle = '#0a0408';
+    ctx.fillRect(cx - 2*u, y + 2*u, 4*u, 4*u);          // outline
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(cx - 2*u, y + 2*u, 4*u, u);            // top
+    ctx.fillRect(cx - 2*u, y + 5*u, 4*u, u);            // bottom
     ctx.fillStyle = '#3a2a18';
-    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 2*u, 4*u, Math.max(1, u * 0.6));
-    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 5*u, 4*u, Math.max(1, u * 0.6));
-    // Cage bars
-    ctx.fillStyle = '#3a2a18';
-    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + 2*u, Math.max(1, u * 0.4), 4*u);
-    ctx.fillRect(x + Math.floor(ts/2) + 2*u - Math.max(1, u * 0.4), y + 2*u, Math.max(1, u * 0.4), 4*u);
-    // Flame
-    var flick = 0.7 + Math.sin(time / 200 + col) * 0.3;
+    ctx.fillRect(cx - 2*u, y + 3*u, u, 2*u);            // left bar
+    ctx.fillRect(cx + u,   y + 3*u, u, 2*u);            // right bar
+    // Flame — 2-frame animation (alternates shape)
+    var flameFrame = Math.floor(time / 180) % 2;
+    var flick = 0.85 + Math.sin(time / 200 + col) * 0.15;
     ctx.globalAlpha = flick;
     ctx.fillStyle = '#ffe080';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.7), y + Math.floor(3*u), Math.max(1, u * 1.4), Math.max(1, u * 1.6));
-    ctx.fillStyle = '#ffa040';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + Math.floor(3.4*u), Math.max(1, u * 0.8), Math.max(1, u));
+    if (flameFrame === 0) {
+      ctx.fillRect(cx - u, y + 3*u, 2*u, 2*u);
+      ctx.fillStyle = '#ffa040';
+      ctx.fillRect(cx, y + 4*u, u, u);
+    } else {
+      ctx.fillRect(cx - u, y + 3*u, 2*u, u);
+      ctx.fillRect(cx, y + 4*u, u, u);
+      ctx.fillStyle = '#ffa040';
+      ctx.fillRect(cx, y + 3*u, u, u);
+    }
     ctx.globalAlpha = 1;
-    // Big halo
+    // Halo — gradient (atmosphere overlay, allowed by spec)
     ctx.globalCompositeOperation = 'screen';
     ctx.globalAlpha = 0.45 * flick;
-    var grad = ctx.createRadialGradient(x + ts/2, y + 4*u, 0, x + ts/2, y + 4*u, 8*u);
+    var grad = ctx.createRadialGradient(cx, y + 4*u, 0, cx, y + 4*u, 8*u);
     grad.addColorStop(0, 'rgba(255, 200, 100, 0.7)');
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
