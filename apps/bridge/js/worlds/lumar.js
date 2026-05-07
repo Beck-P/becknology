@@ -1206,41 +1206,74 @@
 
   // ---- Town features (Stardew-style) ----
 
-  // Cobblestone path — distinct from saltstone floor, suggests a "main path"
+  // Cobblestone path — strict 16-px-per-tile pixel art per the art-direction
+  // doc. Whole-u dimensions only, 3-tone shading per stone, hard mortar
+  // boundaries. Adjacent tiles share a mortar grid so the path tiles
+  // seamlessly without visible repetition.
   function drawCobblestone(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
     var seed = (col * 23 + row * 17) % 100;
-    // Base
-    ctx.fillStyle = '#3a3530';
+    // Mortar base — fills the whole tile, stones paint over it leaving 1u gaps
+    ctx.fillStyle = '#1e1a18';
     ctx.fillRect(x, y, ts, ts);
-    // Cobble stones — irregular pattern using deterministic seeds
-    var stones = [
-      { x: 1, y: 1, w: 5, h: 4, c: '#5a5048' },
-      { x: 7, y: 2, w: 4, h: 5, c: '#4e4540' },
-      { x: 12, y: 1, w: 4, h: 4, c: '#5e5448' },
-      { x: 2, y: 6, w: 4, h: 5, c: '#4a4138' },
-      { x: 7, y: 8, w: 6, h: 4, c: '#5a5048' },
-      { x: 1, y: 12, w: 5, h: 3, c: '#4e4540' },
-      { x: 7, y: 13, w: 4, h: 2, c: '#5a5048' },
-      { x: 12, y: 12, w: 4, h: 3, c: '#4a4138' }
-    ];
+    // Stone palette — 3 midtone variants × hard top highlight × hard bottom shadow
+    var SHADES = ['#4e4540', '#544a44', '#4a4138', '#5a5048'];
+    var HI = '#6e6258';
+    var SH = '#2a2620';
+    // Stone layout — varies by tile seed so the path doesn't look stamped.
+    // Each tile has either a 2×2 grid of stones (~7u each) or a 3×3 grid
+    // (~5u each). Mortar gaps are exactly 1u wide.
+    var pattern = seed % 4;
+    var stones;
+    if (pattern === 0) {
+      // 2x2 stones, 7u + 1u + 7u + 1u
+      stones = [
+        [1, 1, 7, 7],  [9, 1, 6, 7],
+        [1, 9, 7, 6],  [9, 9, 6, 6]
+      ];
+    } else if (pattern === 1) {
+      // 2x3 stones (taller stones at top)
+      stones = [
+        [1, 1, 7, 5],  [9, 1, 6, 5],
+        [1, 7, 7, 4],  [9, 7, 6, 4],
+        [1, 12, 7, 3], [9, 12, 6, 3]
+      ];
+    } else if (pattern === 2) {
+      // 3x2 stones (rectangular)
+      stones = [
+        [1, 1, 4, 7],  [6, 1, 4, 7],  [11, 1, 4, 7],
+        [1, 9, 4, 6],  [6, 9, 4, 6],  [11, 9, 4, 6]
+      ];
+    } else {
+      // Brick-style offset
+      stones = [
+        [1, 1, 14, 4],
+        [1, 6, 6, 4], [8, 6, 7, 4],
+        [1, 11, 14, 4]
+      ];
+    }
     for (var i = 0; i < stones.length; i++) {
       var s = stones[i];
-      ctx.fillStyle = s.c;
-      ctx.fillRect(x + s.x * u, y + s.y * u, s.w * u, s.h * u);
-      // Highlight
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      ctx.fillRect(x + s.x * u, y + s.y * u, s.w * u, Math.max(1, u * 0.3));
+      var sx = x + s[0] * u, sy = y + s[1] * u;
+      var sw = s[2] * u, sh = s[3] * u;
+      ctx.fillStyle = SHADES[(seed + i) % SHADES.length];
+      ctx.fillRect(sx, sy, sw, sh);
+      // 1u top highlight (hard edge)
+      ctx.fillStyle = HI;
+      ctx.fillRect(sx, sy, sw, u);
+      // 1u bottom shadow
+      ctx.fillStyle = SH;
+      ctx.fillRect(sx, sy + sh - u, sw, u);
     }
-    // Mortar gaps
-    ctx.fillStyle = '#1e1a18';
-    ctx.fillRect(x, y + 5*u, ts, Math.max(1, u * 0.5));
-    ctx.fillRect(x, y + 11*u, ts, Math.max(1, u * 0.5));
-    // Occasional moss
-    if (seed % 11 === 0) {
-      ctx.fillStyle = 'rgba(60,140,80,0.18)';
-      ctx.fillRect(x + 4*u, y + 5*u, 3*u, Math.max(1, u * 0.6));
+    // Occasional 1u moss square
+    if (seed % 13 === 0) {
+      ctx.fillStyle = '#4a8048';
+      ctx.fillRect(x + 8*u, y + 8*u, u, u);
+    }
+    if (seed % 17 === 0) {
+      ctx.fillStyle = '#3a6038';
+      ctx.fillRect(x + 4*u, y + 13*u, u, u);
     }
   }
 
@@ -1287,49 +1320,62 @@
     ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.5), y + 9*u, Math.max(1, u), Math.max(1, u * 1.4));
   }
 
-  // Town fountain / well — central feature
+  // Town fountain / well — strict pixel art at 16-px-per-tile density.
+  // Whole-u rectangles only. Stardew-style chunky basin + hard outline.
   function drawFountain(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
-    // Outer stone basin
-    ctx.fillStyle = '#3a4848';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + ts/2 + u, 6*u, Math.max(1, u * 3.5), 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Inner basin
-    ctx.fillStyle = '#1a2030';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + ts/2 + u, 5*u, Math.max(1, u * 2.7), 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Water surface (animated)
-    var ripple = Math.sin(time / 700 + col + row) * 0.3;
-    ctx.fillStyle = '#3a6850';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + ts/2 + u + ripple * u, 4*u, Math.max(1, u * 2), 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Highlight
-    ctx.fillStyle = '#5a8a60';
-    ctx.fillRect(x + Math.floor(ts/2) - 2*u, y + ts/2 + u, 4*u, Math.max(1, u * 0.4));
-    // Center pillar / fountain spout
-    ctx.fillStyle = '#5a6868';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.7), y + 4*u, Math.max(1, u * 1.4), 5*u);
-    ctx.fillStyle = '#80908c';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.4), y + 4*u, Math.max(1, u * 0.8), 5*u);
-    // Top water spray (animated)
-    var spray = Math.sin(time / 200) * 0.3 + 0.7;
-    ctx.globalAlpha = spray * 0.7;
+    // Stone basin — square shape made of pixel rectangles, with hard outline
+    var BASIN_DARK = '#15101a';
+    var BASIN_MID = '#3a4848';
+    var BASIN_HI = '#5a6868';
+    var WATER = '#3a6850';
+    var WATER_HI = '#5a8a60';
+    // Outer outline (1u dark)
+    ctx.fillStyle = BASIN_DARK;
+    ctx.fillRect(x + 2*u, y + 7*u, 12*u, 8*u);
+    // Stone rim (top + bottom + sides, 1u thick)
+    ctx.fillStyle = BASIN_MID;
+    ctx.fillRect(x + 3*u, y + 8*u, 10*u, 6*u);
+    // Top edge highlight
+    ctx.fillStyle = BASIN_HI;
+    ctx.fillRect(x + 3*u, y + 8*u, 10*u, u);
+    // Bottom edge shadow
+    ctx.fillStyle = BASIN_DARK;
+    ctx.fillRect(x + 3*u, y + 13*u, 10*u, u);
+    // Inner water
+    ctx.fillStyle = WATER;
+    ctx.fillRect(x + 4*u, y + 9*u, 8*u, 4*u);
+    // Water highlight (animated band)
+    var ripple = Math.floor(Math.sin(time / 600 + col + row) + 1);
+    ctx.fillStyle = WATER_HI;
+    ctx.fillRect(x + 4*u, y + (10 + ripple)*u, 8*u, u);
+    // Center stone pillar (the fountain spout) — 2u wide, 5u tall
+    ctx.fillStyle = BASIN_MID;
+    ctx.fillRect(x + 7*u, y + 3*u, 2*u, 5*u);
+    ctx.fillStyle = BASIN_HI;
+    ctx.fillRect(x + 7*u, y + 3*u, u, 5*u);
+    ctx.fillStyle = BASIN_DARK;
+    ctx.fillRect(x + 7*u, y + 3*u, 2*u, u);
+    // Top spout cap
+    ctx.fillStyle = BASIN_HI;
+    ctx.fillRect(x + 6*u, y + 2*u, 4*u, u);
+    ctx.fillStyle = BASIN_DARK;
+    ctx.fillRect(x + 6*u, y + 3*u, 4*u, u);
+    // Spray — 3 frame animation cycle, hard pixels
+    var sprayFrame = Math.floor(time / 200) % 3;
     ctx.fillStyle = '#a0d0c0';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.8), y + 2*u, Math.max(1, u * 1.6), Math.max(1, u * 0.6));
-    ctx.fillStyle = '#c0e0d8';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.3), y + Math.max(1, u * 1.5), Math.max(1, u * 0.6), Math.max(1, u * 0.6));
-    ctx.globalAlpha = 1;
-    // Falling drops
-    for (var d = 0; d < 4; d++) {
-      var dropX = x + ts/2 - 2*u + d * u;
-      var dropY = y + 3*u + ((time / 50 + d * 8) % 8) * u;
-      ctx.fillStyle = 'rgba(180,220,200,0.7)';
-      ctx.fillRect(dropX, dropY, Math.max(1, u * 0.4), Math.max(1, u * 0.6));
+    if (sprayFrame === 0) {
+      ctx.fillRect(x + 7*u, y + u, 2*u, u);
+    } else if (sprayFrame === 1) {
+      ctx.fillRect(x + 6*u, y + u, u, u);
+      ctx.fillRect(x + 9*u, y + u, u, u);
+      ctx.fillRect(x + 7*u, y, 2*u, u);
+    } else {
+      ctx.fillRect(x + 5*u, y + u, u, u);
+      ctx.fillRect(x + 10*u, y + u, u, u);
+      ctx.fillRect(x + 7*u, y + u, 2*u, u);
     }
   }
 
