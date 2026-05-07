@@ -9,99 +9,110 @@
 
   // ---- Tile Draw Functions ----
 
+  // Metal wall — strict pixel art. 4u dark cap + 12u panel body, 1u panel
+  // seams, 1u rivets at four corners.
   function drawMetalWall(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
-    var lw = Math.max(1, u * 0.4);
-    // Top cap (darker)
-    ctx.fillStyle = '#0e1820';
-    ctx.fillRect(x, y, ts, Math.floor(ts * 0.3));
-    // Cap highlight
-    ctx.fillStyle = '#2a3a48';
-    ctx.fillRect(x, y, ts, Math.max(1, u));
-    // Front face
-    ctx.fillStyle = '#1a2530';
-    ctx.fillRect(x, y + Math.floor(ts * 0.3), ts, ts - Math.floor(ts * 0.3));
-    // Vertical panel seam (alternating per col)
-    ctx.fillStyle = '#0a1218';
-    ctx.fillRect(x + Math.floor(ts * 0.5), y + Math.floor(ts * 0.3), lw, ts - Math.floor(ts * 0.3));
-    // Horizontal panel line
-    ctx.fillStyle = '#0a1218';
-    ctx.fillRect(x, y + Math.floor(ts * 0.55), ts, lw);
-    // Subtle highlight under cap
-    ctx.fillStyle = '#253540';
-    ctx.fillRect(x, y + Math.floor(ts * 0.3), ts, Math.max(1, u * 0.4));
-    // Rivets — 4 corner dots
-    ctx.fillStyle = '#2a3a48';
-    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.35), u, u);
-    ctx.fillRect(x + ts - 3*u, y + Math.floor(ts * 0.35), u, u);
-    ctx.fillRect(x + 2*u, y + ts - 3*u, u, u);
-    ctx.fillRect(x + ts - 3*u, y + ts - 3*u, u, u);
-    // Rivet shadows
-    ctx.fillStyle = '#0e1820';
-    ctx.fillRect(x + 2*u, y + Math.floor(ts * 0.35) + u, u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + ts - 3*u, y + Math.floor(ts * 0.35) + u, u, Math.max(1, u * 0.5));
-    // Per-tile streak (oil drip / wear)
+    var DARK = '#0a1218';
+    var CAP = '#0e1820';
+    var CAP_HI = '#2a3a48';
+    var PANEL = '#1a2530';
+    // Cap (4u)
+    ctx.fillStyle = CAP;
+    ctx.fillRect(x, y, ts, 4*u);
+    ctx.fillStyle = CAP_HI;
+    ctx.fillRect(x, y, ts, u);
+    // Panel body (12u)
+    ctx.fillStyle = PANEL;
+    ctx.fillRect(x, y + 4*u, ts, 12*u);
+    // 1u under-cap shadow line
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x, y + 4*u, ts, u);
+    // 1u panel seams (vertical center + horizontal mid)
+    ctx.fillRect(x + 8*u, y + 5*u, u, 11*u);
+    ctx.fillRect(x, y + 9*u, ts, u);
+    // Rivets — 1u corner dots
+    ctx.fillStyle = CAP_HI;
+    ctx.fillRect(x + 2*u, y + 6*u, u, u);
+    ctx.fillRect(x + 13*u, y + 6*u, u, u);
+    ctx.fillRect(x + 2*u, y + 13*u, u, u);
+    ctx.fillRect(x + 13*u, y + 13*u, u, u);
+    // 1u oil streak
     var seed = (col * 19 + row * 31) % 17;
     if (seed === 0) {
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fillRect(x + 5*u, y + Math.floor(ts * 0.35), Math.max(1, u * 0.5), Math.floor(ts * 0.4));
+      ctx.fillStyle = '#080c10';
+      ctx.fillRect(x + 5*u, y + 6*u, u, 6*u);
     }
   }
 
+  // Metal floor — strict pixel art. 14u × 14u plate with 1u border, 1u
+  // cross grooves, deterministic 1u grime.
   function drawMetalFloor(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
-    var lw = Math.max(1, u * 0.4);
-    ctx.fillStyle = '#182028';
+    var DARK = '#0a1218';
+    var BASE = '#182028';
+    var PLATE = '#1e2830';
+    var PLATE_HI = '#243040';
+    ctx.fillStyle = BASE;
     ctx.fillRect(x, y, ts, ts);
-    // Grid plate pattern
-    ctx.fillStyle = '#1e2830';
-    ctx.fillRect(x + u, y + u, ts - 2*u, ts - 2*u);
-    // Cross grooves
-    ctx.fillStyle = '#0e141c';
-    ctx.fillRect(x + Math.floor(ts * 0.5) - lw*0.5, y, lw, ts);
-    ctx.fillRect(x, y + Math.floor(ts * 0.5) - lw*0.5, ts, lw);
-    // Plate highlight on the upper-left of each quadrant
-    ctx.fillStyle = '#243040';
-    ctx.fillRect(x + 2*u, y + 2*u, Math.max(1, u * 1.5), Math.max(1, u * 0.5));
-    ctx.fillRect(x + Math.floor(ts*0.5) + 2*u, y + 2*u, Math.max(1, u * 1.5), Math.max(1, u * 0.5));
-    // Occasional grime / oil patch
+    // Plate (14u × 14u)
+    ctx.fillStyle = PLATE;
+    ctx.fillRect(x + u, y + u, 14*u, 14*u);
+    // 1u cross grooves
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 8*u - u, y, u, ts);
+    ctx.fillRect(x, y + 8*u - u, ts, u);
+    // 1u corner highlights
+    ctx.fillStyle = PLATE_HI;
+    ctx.fillRect(x + 2*u, y + 2*u, 2*u, u);
+    ctx.fillRect(x + 9*u, y + 2*u, 2*u, u);
+    ctx.fillRect(x + 2*u, y + 9*u, 2*u, u);
+    ctx.fillRect(x + 9*u, y + 9*u, 2*u, u);
+    // 1u grime
     var seed = (col * 13 + row * 23) % 11;
     if (seed === 0) {
-      ctx.fillStyle = 'rgba(0,0,0,0.25)';
-      ctx.fillRect(x + 4*u, y + 9*u, 6*u, 4*u);
+      ctx.fillStyle = DARK;
+      ctx.fillRect(x + 5*u, y + 11*u, u, u);
+      ctx.fillRect(x + 6*u, y + 11*u, u, u);
     } else if (seed === 5) {
-      ctx.fillStyle = 'rgba(40,80,90,0.15)';
-      ctx.fillRect(x + 9*u, y + 4*u, 4*u, 4*u);
+      ctx.fillStyle = '#2a4848';
+      ctx.fillRect(x + 11*u, y + 5*u, u, u);
     }
   }
 
+  // Corridor floor — strict pixel art. 10u center strip + 1u edge grooves +
+  // animated 4u chevron (atmospheric glow allowed for the chevron).
   function drawCorridorFloor(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    ctx.fillStyle = '#1e2a35';
+    var DARK = '#0a141c';
+    var BASE = '#1e2a35';
+    var STRIP = '#243040';
+    ctx.fillStyle = BASE;
     ctx.fillRect(x, y, ts, ts);
-    // Center strip (lighter)
-    ctx.fillStyle = '#243040';
-    ctx.fillRect(x + 3*u, y, ts - 6*u, ts);
-    // Edge grooves
-    ctx.fillStyle = '#0a141c';
+    // Center strip (10u wide)
+    ctx.fillStyle = STRIP;
+    ctx.fillRect(x + 3*u, y, 10*u, ts);
+    // 1u edge grooves
+    ctx.fillStyle = DARK;
     ctx.fillRect(x + 2*u, y, u, ts);
-    ctx.fillRect(x + ts - 3*u, y, u, ts);
-    // Animated direction arrow (chevrons moving along the corridor) — visible enough to read
-    var animY = (time / 80) % 16;
-    var aoff = animY * u;
-    var ax = x + Math.floor(ts * 0.5) - 2*u;
-    // Glow pass (additive)
+    ctx.fillRect(x + 13*u, y, u, ts);
+    // Chevron animation — frame-stepped, whole-u
+    var aoff = Math.floor((time / 80) % 16) * u;
+    var ax = x + 6*u;
+    // Atmospheric glow halo
     ctx.globalCompositeOperation = 'screen';
-    ctx.fillStyle = 'rgba(80,180,220,0.45)';
-    ctx.fillRect(ax, y + aoff, 4*u, Math.max(1, u * 0.7));
-    ctx.fillRect(ax + u, y + aoff + u, 2*u, Math.max(1, u * 0.6));
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = 'rgba(80,180,220,0.7)';
+    ctx.fillRect(ax, y + aoff, 4*u, u);
+    ctx.fillRect(ax + u, y + aoff + u, 2*u, u);
     ctx.globalCompositeOperation = 'source-over';
-    // Inner bright core
-    ctx.fillStyle = 'rgba(180,230,255,0.55)';
-    ctx.fillRect(ax + u, y + aoff, 2*u, Math.max(1, u * 0.5));
+    ctx.globalAlpha = 1;
+    // Bright core (1u)
+    ctx.fillStyle = '#a0e0e0';
+    ctx.fillRect(ax + u, y + aoff, 2*u, u);
   }
 
   function drawServerRack(ctx, x, y, ts, time, col, row) {
@@ -313,46 +324,44 @@
     ctx.fillRect(x + 4*u, y + Math.floor(ts * 0.82), 2*u, Math.max(1, u * 0.5));
   }
 
+  // Blast door — strict pixel art. Hazard chevron stripes + 2u warning
+  // light + 1u corner rivets.
   function drawBlastDoor(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Floor base
     drawCorridorFloor(ctx, x, y, ts, time, col, row);
-    // Door frame border (top + bottom)
-    ctx.fillStyle = '#0a0e15';
+    var DARK = '#0a0e15';
+    // Door frame top/bottom (2u tall each)
+    ctx.fillStyle = DARK;
     ctx.fillRect(x, y, ts, 2*u);
-    ctx.fillRect(x, y + ts - 2*u, ts, 2*u);
-    // Hazard chevrons — yellow/black diagonal stripes (top)
-    var stripeCount = 8;
-    var stripeW = ts / stripeCount;
-    for (var i = 0; i < stripeCount; i++) {
-      ctx.fillStyle = (i % 2 === 0) ? '#e8b830' : '#0a0a0a';
-      ctx.fillRect(x + i * stripeW, y, stripeW, u);
+    ctx.fillRect(x, y + 14*u, ts, 2*u);
+    // Hazard chevrons — 2u wide alternating yellow/black
+    for (var i = 0; i < 8; i++) {
+      ctx.fillStyle = (i % 2 === 0) ? '#e8b830' : DARK;
+      ctx.fillRect(x + i * 2*u, y, 2*u, u);
+      ctx.fillStyle = (i % 2 === 0) ? DARK : '#e8b830';
+      ctx.fillRect(x + i * 2*u, y + 15*u, 2*u, u);
     }
-    // Hazard chevrons (bottom)
-    for (var j = 0; j < stripeCount; j++) {
-      ctx.fillStyle = (j % 2 === 0) ? '#0a0a0a' : '#e8b830';
-      ctx.fillRect(x + j * stripeW, y + ts - u, stripeW, u);
-    }
-    // Center warning light
+    // Warning light (2u × 1u)
     var warn = (Math.sin(time / 250) > 0);
     if (warn) {
       ctx.fillStyle = '#e83838';
-      ctx.fillRect(x + Math.floor(ts*0.5) - u, y + 2*u, 2*u, u);
+      ctx.fillRect(x + 7*u, y + 2*u, 2*u, u);
+      // Atmospheric halo
       ctx.globalCompositeOperation = 'screen';
-      var grad = ctx.createRadialGradient(x + ts*0.5, y + 2.5*u, 0, x + ts*0.5, y + 2.5*u, 5*u);
+      var grad = ctx.createRadialGradient(x + 8*u, y + 2*u, 0, x + 8*u, y + 2*u, 5*u);
       grad.addColorStop(0, 'rgba(232,56,56,0.6)');
       grad.addColorStop(1, 'transparent');
       ctx.fillStyle = grad;
       ctx.fillRect(x - 2*u, y, ts + 4*u, 6*u);
       ctx.globalCompositeOperation = 'source-over';
     }
-    // Side rivets
+    // Corner rivets (1u each)
     ctx.fillStyle = '#3a4a58';
     ctx.fillRect(x + u, y + 3*u, u, u);
-    ctx.fillRect(x + ts - 2*u, y + 3*u, u, u);
-    ctx.fillRect(x + u, y + ts - 4*u, u, u);
-    ctx.fillRect(x + ts - 2*u, y + ts - 4*u, u, u);
+    ctx.fillRect(x + 14*u, y + 3*u, u, u);
+    ctx.fillRect(x + u, y + 12*u, u, u);
+    ctx.fillRect(x + 14*u, y + 12*u, u, u);
   }
 
   function drawAntenna(ctx, x, y, ts, time, col, row) {
