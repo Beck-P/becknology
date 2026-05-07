@@ -405,15 +405,32 @@
       try {
         var data = sCtx.getImageData(0, 0, src.width, src.height);
         var px = data.data;
+        // Aggressive halo cleanup — DALL-E renders the image with a soft
+        // anti-aliased boundary into a cream/white background. Even if the
+        // alpha is opaque, the colour at the edge is bright + low-saturation.
+        // Strip:
+        //  1) any pure-white pixel (it's the bg)
+        //  2) any low-saturation bright pixel near full alpha (halo bleed)
+        //  3) any partially-transparent pixel that's biased toward white
         for (var i = 0; i < px.length; i += 4) {
           var r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
-          if (r > 240 && g > 240 && b > 240 && a > 0) {
+          if (a === 0) continue;
+          var maxC = Math.max(r, g, b);
+          var minC = Math.min(r, g, b);
+          var sat = maxC - minC;
+          // Pure / near-white
+          if (maxC > 230 && sat < 25) {
             px[i + 3] = 0;
             continue;
           }
-          if (a > 0 && a < 220) {
-            var avg = (r + g + b) / 3;
-            if (avg > 220) px[i + 3] = 0;
+          // Partial alpha + bright = halo edge
+          if (a < 230 && maxC > 200 && sat < 40) {
+            px[i + 3] = 0;
+            continue;
+          }
+          // Cream/off-white interior pixel that bled in (very light, low sat)
+          if (maxC > 215 && sat < 18 && (r + g + b) > 620) {
+            px[i + 3] = 0;
           }
         }
         sCtx.putImageData(data, 0, 0);
@@ -437,12 +454,14 @@
     img.src = path;
     return entry;
   }
-  // Preload the sprites with chunky base resolutions tuned per building.
-  // Render targets: tavern ~192px wide, inn ~240px wide, lighthouse ~144px
-  // wide. Source ÷3-4 = chunky pixel art at our render scale.
-  loadBuildingSprite('tavern', '/bridge/assets/buildings/tavern.png', 64);
-  loadBuildingSprite('inn', '/bridge/assets/buildings/inn.png', 80);
-  loadBuildingSprite('lighthouse', '/bridge/assets/buildings/lighthouse.png', 36);
+  // Preload the sprites with chunky base resolutions.
+  // Strict 16-px-per-tile (Stardew density) would be 64/80/48 for these
+  // buildings. Going slightly higher (~24-px-per-tile equivalent) keeps the
+  // sign and window detail readable without diverging from the procedural
+  // tiles around them, which use sub-tile detail.
+  loadBuildingSprite('tavern', '/bridge/assets/buildings/tavern.png', 96);
+  loadBuildingSprite('inn', '/bridge/assets/buildings/inn.png', 120);
+  loadBuildingSprite('lighthouse', '/bridge/assets/buildings/lighthouse.png', 72);
 
   // tilesW/tilesH = footprint in tiles. anchorOffsetX = which column within
   // the sprite the anchor tile sits at, measured from the LEFT edge (0-based).
