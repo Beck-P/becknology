@@ -240,56 +240,66 @@
   function drawTavernDoor(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Floor base for the bottom of the tile (player stands at threshold)
-    drawWoodFloor(ctx, x, y, ts, time, col, row);
-    // Wall fragment behind the door (top of tile, where the door is mounted)
+    // The door tile sits in the south wall row — fill the whole tile as
+    // wall + door so it reads as "this is the door in the wall."
+    // Wall context (matches drawTavernWall coloring)
     ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x, y, ts, Math.floor(ts * 0.65));
+    ctx.fillRect(x, y, ts, Math.floor(ts * 0.5));
     ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(x + Math.max(1, u), y + Math.max(1, u), ts - 2*u, Math.floor(ts * 0.6));
-    // Stone frame
+    ctx.fillRect(x, y + Math.floor(ts * 0.5), ts, ts - Math.floor(ts * 0.5));
+    // Chair-rail line for continuity with surrounding wall tiles
+    ctx.fillStyle = '#8a5e30';
+    ctx.fillRect(x, y + Math.floor(ts * 0.5) - Math.max(1, u * 0.5), ts, Math.max(1, u));
+    // Stone door frame (full height)
+    var fx = x + Math.max(1, u);
+    var fy = y + Math.max(1, u);
+    var fw = ts - 2*u;
+    var fh = ts - 2*u;
     ctx.fillStyle = '#1a1010';
-    ctx.fillRect(x + Math.max(1, u * 1.2), y + Math.max(1, u * 1.2), ts - Math.max(1, u * 2.4), Math.floor(ts * 0.55));
-    // Door panel (vertical wooden door, slightly ajar)
-    var dx = x + 3*u;
-    var dy = y + 2*u;
-    var dw = ts - 6*u;
-    var dh = Math.floor(ts * 0.5);
+    ctx.fillRect(fx, fy, fw, fh);
+    // Door panel — fills almost the entire tile vertically
+    var dx = x + 2*u;
+    var dy = y + Math.max(1, u * 1.6);
+    var dw = ts - 4*u;
+    var dh = ts - Math.max(1, u * 2.4);
     ctx.fillStyle = '#5a3a1a';
     ctx.fillRect(dx, dy, dw, dh);
-    // Wood grain
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(dx + Math.floor(dw * 0.5), dy, Math.max(1, u * 0.5), dh);
     // Top highlight
     ctx.fillStyle = '#7a4e22';
-    ctx.fillRect(dx, dy, dw, Math.max(1, u * 0.4));
-    // Iron straps
+    ctx.fillRect(dx, dy, dw, Math.max(1, u * 0.5));
+    ctx.fillRect(dx, dy, Math.max(1, u * 0.5), dh);
+    // Vertical wood plank seams
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(dx + Math.floor(dw * 0.33), dy, Math.max(1, u * 0.4), dh);
+    ctx.fillRect(dx + Math.floor(dw * 0.66), dy, Math.max(1, u * 0.4), dh);
+    // Iron straps with rivets
     ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(dx, dy + Math.floor(dh * 0.25), dw, Math.max(1, u * 0.6));
-    ctx.fillRect(dx, dy + Math.floor(dh * 0.75), dw, Math.max(1, u * 0.6));
-    // Doorknob (right)
+    ctx.fillRect(dx, dy + Math.floor(dh * 0.20), dw, Math.max(1, u * 0.7));
+    ctx.fillRect(dx, dy + Math.floor(dh * 0.78), dw, Math.max(1, u * 0.7));
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(dx + Math.max(1, u * 0.4), dy + Math.floor(dh * 0.20), Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    ctx.fillRect(dx + dw - Math.max(1, u * 1), dy + Math.floor(dh * 0.20), Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    ctx.fillRect(dx + Math.max(1, u * 0.4), dy + Math.floor(dh * 0.78), Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    ctx.fillRect(dx + dw - Math.max(1, u * 1), dy + Math.floor(dh * 0.78), Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    // Brass doorknob (right side, mid-height)
+    var knobX = dx + dw - Math.max(1, u * 2.2);
+    var knobY = dy + Math.floor(dh * 0.5);
     ctx.fillStyle = '#a08040';
     ctx.beginPath();
-    ctx.arc(dx + dw - 2*u, dy + Math.floor(dh * 0.55), Math.max(1, u * 0.7), 0, Math.PI * 2);
+    ctx.arc(knobX, knobY, Math.max(1, u * 0.9), 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#e0c060';
-    ctx.fillRect(dx + dw - 2*u - Math.max(1, u * 0.3), dy + Math.floor(dh * 0.5), Math.max(1, u * 0.4), Math.max(1, u * 0.4));
-    // Doormat in front of the door (lower portion of tile)
-    var matY = y + Math.floor(ts * 0.7);
-    ctx.fillStyle = '#704030';
-    ctx.fillRect(x + 2*u, matY, ts - 4*u, ts - matY + y - u);
-    ctx.fillStyle = '#603020';
-    ctx.fillRect(x + 2*u, matY, ts - 4*u, Math.max(1, u * 0.4));
-    // Mat fringe
-    ctx.fillStyle = '#502818';
-    for (var fx = 0; fx < 6; fx++) {
-      ctx.fillRect(x + (3 + fx * 2) * u, matY + Math.max(1, u * 0.4), Math.max(1, u * 0.5), Math.max(1, u * 0.5));
-    }
-    // EXIT sign hint above door
-    var glow = 0.6 + Math.sin(time / 700) * 0.2;
-    ctx.globalAlpha = glow;
-    ctx.fillStyle = '#40e080';
-    ctx.fillRect(x + Math.floor(ts * 0.4), y + Math.max(1, u * 0.4), Math.floor(ts * 0.2), Math.max(1, u * 0.6));
+    ctx.fillRect(knobX - Math.max(1, u * 0.4), knobY - Math.max(1, u * 0.4), Math.max(1, u * 0.5), Math.max(1, u * 0.5));
+    // Warm interior light leaking out (subtle)
+    var glow = 0.55 + Math.sin(time / 1200 + col + row) * 0.15;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = glow * 0.3;
+    var grad = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts);
+    grad.addColorStop(0, 'rgba(255, 200, 120, 0.55)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.3, y - ts*0.3, ts * 1.6, ts * 1.6);
+    ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
   }
 

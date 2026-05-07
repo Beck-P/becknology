@@ -303,60 +303,67 @@
     ctx.fillRect(x, y + ts - Math.max(1, u), ts, Math.max(1, u));
   }
 
-  // Proper closed-door tile — used at the arcade's street facade entrance
-  // and at the side exit of the arcade interior.
+  // Neon-themed arcade door — dark metallic frame with hot-pink neon outline,
+  // smoked-glass panels, and pink-purple light leaking out. Matches the
+  // arcadia world's neon palette so it doesn't read as a wood cottage.
   function drawArcadeDoor(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Stone / wall-dark base behind
-    ctx.fillStyle = '#1e1835';
+    // Wall-dark base (matches surrounding wall_dark tiles)
+    ctx.fillStyle = '#1a1530';
     ctx.fillRect(x, y, ts, ts);
-    // Stone frame around door
-    ctx.fillStyle = '#15102a';
-    ctx.fillRect(x, y, ts, Math.max(1, u * 0.8));
-    ctx.fillRect(x, y + ts - Math.max(1, u * 0.8), ts, Math.max(1, u * 0.8));
-    ctx.fillRect(x, y, Math.max(1, u * 0.8), ts);
-    ctx.fillRect(x + ts - Math.max(1, u * 0.8), y, Math.max(1, u * 0.8), ts);
-    // Brass kickplate at top of door
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 2*u, y + u, ts - 4*u, Math.max(1, u * 1.2));
-    // Door panel — vertical wooden door
-    var dx = x + Math.max(1, u * 1.6);
-    var dw = ts - 2 * Math.max(1, u * 1.6);
-    var dy = y + Math.max(1, u * 1.6);
-    var dh = ts - 2 * Math.max(1, u * 1.6);
-    ctx.fillStyle = '#5a3a1a';
+    // Cap highlight (continuity with wall_dark)
+    ctx.fillStyle = '#251c40';
+    ctx.fillRect(x, y, ts, Math.max(1, u * 0.5));
+    // Dark metallic door frame (almost black)
+    ctx.fillStyle = '#080418';
+    ctx.fillRect(x + Math.max(1, u * 0.6), y + Math.max(1, u * 0.6), ts - Math.max(1, u * 1.2), ts - Math.max(1, u * 1.2));
+    // Inner door area — smoked glass with vertical pink-purple gradient
+    var dx = x + Math.max(1, u * 1.5);
+    var dy = y + Math.max(1, u * 1.5);
+    var dw = ts - Math.max(1, u * 3);
+    var dh = ts - Math.max(1, u * 3);
+    var glassGrad = ctx.createLinearGradient(dx, dy, dx, dy + dh);
+    glassGrad.addColorStop(0, '#1a0a20');
+    glassGrad.addColorStop(0.5, '#3a1840');
+    glassGrad.addColorStop(1, '#1a0a20');
+    ctx.fillStyle = glassGrad;
     ctx.fillRect(dx, dy, dw, dh);
-    // Vertical wood grain
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(dx + Math.floor(dw * 0.33), dy, Math.max(1, u * 0.5), dh);
-    ctx.fillRect(dx + Math.floor(dw * 0.66), dy, Math.max(1, u * 0.5), dh);
-    // Top highlight
-    ctx.fillStyle = '#7a4e22';
-    ctx.fillRect(dx, dy, dw, Math.max(1, u * 0.5));
-    ctx.fillRect(dx, dy, Math.max(1, u * 0.5), dh);
-    // Iron hinges (left edge)
-    ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(dx, dy + 2*u, Math.max(1, u * 1.2), Math.max(1, u * 0.8));
-    ctx.fillRect(dx, dy + dh - 3*u, Math.max(1, u * 1.2), Math.max(1, u * 0.8));
-    // Doorknob (right side, brass with glow)
-    var knobX = dx + dw - 3*u;
-    var knobY = dy + Math.floor(dh * 0.55);
-    ctx.fillStyle = '#a08040';
-    ctx.beginPath();
-    ctx.arc(knobX + u*0.5, knobY + u*0.5, Math.max(1, u * 0.7), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#e0c060';
-    ctx.fillRect(knobX, knobY - Math.max(1, u * 0.3), Math.max(1, u * 0.5), Math.max(1, u * 0.5));
-    // Subtle warm glow leaking through the door (light from inside)
-    var glow = 0.55 + Math.sin(time / 1200 + col + row) * 0.15;
+    // Vertical center line — gap between sliding glass doors
+    ctx.fillStyle = '#0a0418';
+    ctx.fillRect(dx + Math.floor(dw * 0.5) - Math.max(1, u * 0.3), dy, Math.max(1, u * 0.6), dh);
+    // Horizontal middle bar (frame divider)
+    ctx.fillStyle = '#080418';
+    ctx.fillRect(dx, dy + Math.floor(dh * 0.55), dw, Math.max(1, u * 0.5));
+    // Pulsing pink neon outline around the door
+    var pulse = 0.65 + Math.sin(time / 350 + col + row) * 0.35;
+    if ((Math.floor(time / 80) + col * 7) % 113 === 0) pulse *= 0.45; // rare flicker
+    var neonAlpha = Math.max(0.3, Math.min(1, pulse));
+    ctx.strokeStyle = 'rgba(232, 80, 168, ' + neonAlpha.toFixed(2) + ')';
+    ctx.lineWidth = Math.max(1, u * 0.5);
+    ctx.strokeRect(dx, dy, dw, dh);
+    // Inner brighter outline (the neon tube core)
+    ctx.strokeStyle = 'rgba(255, 180, 220, ' + (neonAlpha * 0.7).toFixed(2) + ')';
+    ctx.lineWidth = Math.max(1, u * 0.25);
+    ctx.strokeRect(dx + Math.max(1, u * 0.4), dy + Math.max(1, u * 0.4), dw - Math.max(1, u * 0.8), dh - Math.max(1, u * 0.8));
+    // Touch/scan panel (right side, instead of a knob)
+    var panelX = dx + dw + Math.max(1, u * 0.4);
+    if (panelX + Math.max(1, u * 1.4) < x + ts) {
+      ctx.fillStyle = '#202036';
+      ctx.fillRect(panelX, dy + Math.floor(dh * 0.4), Math.max(1, u * 1.4), Math.max(1, u * 2.4));
+      // Glowing scan slit
+      ctx.fillStyle = 'rgba(255,80,180,' + neonAlpha.toFixed(2) + ')';
+      ctx.fillRect(panelX + Math.max(1, u * 0.3), dy + Math.floor(dh * 0.5), Math.max(1, u * 0.8), Math.max(1, u * 0.4));
+    }
+    // Big neon halo bleeding out of the doorway — pink/violet
     ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = glow * 0.35;
-    var grad = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts);
-    grad.addColorStop(0, 'rgba(255,200,120,0.55)');
-    grad.addColorStop(1, 'transparent');
-    ctx.fillStyle = grad;
-    ctx.fillRect(x - ts*0.5, y - ts*0.5, ts * 2, ts * 2);
+    ctx.globalAlpha = neonAlpha * 0.55;
+    var halo = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts * 1.2);
+    halo.addColorStop(0, 'rgba(232, 80, 200, 0.7)');
+    halo.addColorStop(0.5, 'rgba(160, 60, 200, 0.25)');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - ts * 0.5, y - ts * 0.5, ts * 2, ts * 2);
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
   }
