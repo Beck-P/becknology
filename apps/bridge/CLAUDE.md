@@ -1,11 +1,13 @@
 # Bridge — Art Direction
 
-This file is the single source of truth for the bridge app's visual style. All procedural drawing AND all PNG asset generation must conform to this spec. If a new asset doesn't fit these rules, the asset is wrong, not the rules.
+This file is the single source of truth for the **bridge app's** visual style — applies to `apps/bridge/` only, not to any other Becknology app. All procedural drawing AND all PNG asset generation for the bridge must conform to this spec. If a new asset doesn't fit these rules, the asset is wrong, not the rules.
+
+> **Agents (Claude Code, Codex, etc.):** copy/paste prompts live in `apps/bridge/PNG-PROMPTS.md`. The full master prompt is also embedded in this file under "PNG generation rules" so either is a valid source.
 
 <!-- Last reviewed: 2026-05-07 -->
 
 ## North star
-**Stardew Valley.** Specifically: front-elevation buildings, 16-pixel-per-tile pixel art, hand-drawn character with a 4-frame walk cycle per direction, static buildings with frame-based animated overlays (smoke, water, doors, fire). We are intentionally hybrid — we use both DALL-E PNG sprites and procedural canvas drawing. The job of this doc is to make those two paths produce the same look.
+**Cozy 2D farming RPG (Stardew Valley / Harvest Moon / Rune Factory).** Specifically: high-oblique elevated front-facing building sprites that drop onto a top-down tile map (full facade visible AND most/all of the roof plane visible from above), 16-pixel-per-tile pixel art, hand-drawn character with a 4-frame walk cycle per direction, static buildings with frame-based animated overlays (smoke, water, doors, fire). We are intentionally hybrid — we use both AI-generated PNG sprites and procedural canvas drawing. The job of this doc is to make those two paths produce the same look.
 
 ## Resolution & scale
 
@@ -31,19 +33,41 @@ The procedural drawers in `js/worlds/*.js` should look like they were drawn at 1
 
 ## PNG generation rules
 
-**View angle: front elevation.** No isometric. No slant. The face you'd see standing in front of the building from ground level. (Yes, this looks "flat" — Stardew is the same way. Don't slant.)
+**View angle: high oblique elevated front-facing RPG building view.** The building faces directly forward with the full front facade readable, AND most or nearly all of the roof plane is visible from above. The roof should feel almost top-down while the front wall stays fully visible. This is the classic farming-RPG building sprite that drops onto a top-down tile map (Stardew, Harvest Moon, Rune Factory).
+
+**Not allowed:** true isometric, diagonal rotation, realistic vanishing-point perspective, side view, or pure top-down roof-only view.
 
 **Composition:**
-- Door at bottom-center of the building.
-- Roof visible at top showing roof material/slope.
+- Door at bottom-center so the building sits naturally on a tile map.
+- Roof plane visible from above at a strong high oblique — most/all of the roof readable.
+- Front facade fully readable below the roof.
 - Windows are clearly defined frames with simple yellow-glow glass — *no detail painted inside the window*. We layer animated glow on top.
 - Chimney (if present) at upper-right or upper-left of the roof, with empty space *above* the chimney top. We draw smoke procedurally there.
 - Lantern (if present) beside the door, with a small flame shape. We replace the flame with animated procedural flicker.
 - Hanging sign (if present) attached to a corner of the upper floor by a chain/bracket.
 - Stone or wooden foundation visible at the base, sitting on the ground.
 
-**Style requirements (paste into every prompt):**
-> Stardew Valley pixel art game asset, front-elevation 3/4 perspective, hand-drawn pixel art aesthetic, chunky pixels with no anti-aliasing, flat colors with simple cel shading, limited palette (3-4 tones per element), hard 1-pixel dark outlines on the silhouette, transparent background, centered subject, no text, no logos, no watermarks.
+**Master prompt (paste into every PNG generation — long form):**
+
+> Create a pixel art PNG of a [BUILDING TYPE] for a cozy 2D farming RPG.
+>
+> **View / camera.** Use a consistent elevated front-facing RPG building view. The building faces directly forward. Show the full front facade clearly. Show most or nearly all of the roof plane from above, with a strong high oblique angle. The roof should feel almost top-down while the front wall remains fully readable. This should look like a classic farming RPG building sprite placed on a top-down map. Keep the entrance near the bottom-center so the building sits naturally on a tile map.
+>
+> **Perspective rules.** No true isometric perspective. No diagonal rotation. No realistic vanishing-point perspective. No side view. No pure top-down roof-only view. The angle should be a fixed high oblique building sprite view.
+>
+> **Pixel art style.** Chunkier, more visibly pixelated high-resolution pixel art. Strong visible pixel blocks and pixel clusters. Crisp hard edges. No anti-aliasing. No smooth painting. No blur. No realism. No 3D, no voxel, no low-poly. Clear dark outlines. Slightly simplified forms so the sprite reads cleanly. Cozy retro RPG aesthetic. Warm, inviting lighting. Clean sprite-like shading. Readable at small size.
+>
+> **Visual language / consistency.** Same camera angle, roof visibility, pixel density, chunky pixel treatment, outline thickness, cozy farming-RPG mood, relative scale, and simplified clean sprite rendering as the rest of the building set.
+>
+> **Composition.** Center the building in the canvas. Show the full building with minimal transparent padding. Transparent background. Clear silhouette. Keep the building isolated as a clean game asset sprite.
+>
+> **Design details.** [INSERT BUILDING DETAILS HERE]
+>
+> **Match the same camera angle, roof visibility, outline weight, and chunkier pixel-art rendering as the existing building set.**
+
+**Master prompt — short form (single paragraph):**
+
+> Create a pixel art PNG of a [BUILDING TYPE] for a cozy 2D farming RPG. Use a fixed elevated front-facing building view: show the full front facade, but also show most or nearly all of the roof from above, as if viewed at a high oblique angle. The roof should feel almost top-down while the front wall is still fully visible. No isometric view, no diagonal rotation, no realistic perspective, and no pure top-down roof-only view. Use chunky, visibly pixelated high-resolution pixel art with crisp hard edges, strong pixel blocks, dark outlines, simple clean sprite shading, no anti-aliasing, no smoothing, transparent background, minimal padding, and a warm cozy farming-RPG aesthetic. Keep the camera angle, roof visibility, pixel density, and overall sprite style consistent with the rest of the building set. Design details: [INSERT DETAILS]. Match the same camera angle, roof visibility, outline weight, and chunkier pixel-art rendering as the existing building set.
 
 **Sizing reference (native PNG dimensions):**
 | Asset type | Footprint (tiles) | Native PNG dimensions |
@@ -136,12 +160,13 @@ If a new PNG comes in with a colored background instead of white, this cleanup w
 
 ## Don't
 
-- Don't ask DALL-E for "isometric" or "3/4 perspective" or "slanted." Front elevation only.
-- Don't generate PNGs at 64×64 native — DALL-E renders small badly. Generate 700-1200px and let chunkify handle resolution.
+- Don't ask the image model for "isometric," "diagonal rotation," "realistic perspective," "side view," or "pure top-down roof-only view." High-oblique elevated front-facing only.
+- Don't generate PNGs at 64×64 native — image models render small badly. Generate 700-1200px and let chunkify handle resolution.
 - Don't paint window interiors in PNGs. Yellow rectangle only — we overlay glow.
 - Don't use sub-tile detail in procedural drawers. Whole `u` units only for foreground subjects.
 - Don't introduce a new color palette without adding it to this doc first.
-- Don't mix isometric and front-elevation in the same world.
+- Don't mix view angles in the same world — every building must use the same high-oblique camera.
+- Don't generate art with these prompts for any other Becknology app (aether-seas, cipher-room, etc.). These rules apply to the **bridge app only**.
 
 ## Reference: what good looks like
 
