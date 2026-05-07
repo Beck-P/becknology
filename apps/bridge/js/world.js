@@ -322,6 +322,46 @@ var BridgeWorld = (function () {
     BridgeState.transition('cockpit');
   }
 
+  // Step into another world (a building interior, a parent area on exit).
+  // Quick fade-to-black, swap world JSON, fade back in.
+  function enterWorld(worldId, spawn) {
+    if (!worldId) return;
+    BridgeControls.disable();
+
+    var fade = document.getElementById('landing-overlay');
+    fade.style.display = 'block';
+    fade.classList.add('active');
+    fade.style.background = '#000';
+    fade.style.transition = 'opacity 0.22s ease-in';
+    fade.style.opacity = '0';
+    fade.innerHTML = '';
+    // Force reflow so the transition kicks in
+    void fade.offsetHeight;
+    fade.style.opacity = '1';
+
+    setTimeout(function () {
+      load(worldId, function () {
+        // Hide existing world overlay before re-showing with new data
+        if (overlay) {
+          overlay.style.display = 'none';
+          overlay.classList.remove('active');
+        }
+        var spawnOverride = null;
+        if (spawn) spawnOverride = { x: spawn[0], y: spawn[1] };
+        show(spawnOverride);
+        BridgeState.transition('world', { worldId: worldId });
+        // Fade back in
+        fade.style.transition = 'opacity 0.30s ease-out';
+        fade.style.opacity = '0';
+        setTimeout(function () {
+          fade.style.display = 'none';
+          fade.classList.remove('active');
+          BridgeControls.enable();
+        }, 300);
+      });
+    }, 230);
+  }
+
   function sailTo(destination, destinationName) {
     if (!active) return;
     BridgeControls.disable();
@@ -595,6 +635,7 @@ var BridgeWorld = (function () {
     isActive: isActive,
     show: show,
     leave: leave,
+    enterWorld: enterWorld,
     update: update,
     draw: draw,
     sailTo: sailTo,

@@ -672,24 +672,16 @@
       "type": "sail_to",
       "destination": "lumar",
       "destinationName": "Diggen's Point",
-      "label": "DIGGEN'S POINT",
-      "prompt": "SAIL TO DIGGEN'S POINT"
-    },
-    {
-      "x": 7,
-      "y": 5,
-      "type": "dialog",
-      "label": "THE TOWER",
-      "prompt": "PRESS E TO EXAMINE",
-      "dialog": "THE SORCERESS'S SILVER TOWER.\\nPERFECTLY VERTICAL.\\nPERFECTLY SMOOTH.\\n\\nSHE IS GONE NOW.\\nBUT HER CREATIONS REMAIN.\\n\\nMIDNIGHT ESSENCE\\nSTILL PATROLS THESE SHORES."
+      "label": "DOCK",
+      "prompt": "SAIL BACK"
     },
     {
       "x": 8,
       "y": 5,
-      "type": "dialog",
-      "label": "TOWER DOOR",
-      "prompt": "PRESS E TO EXAMINE",
-      "dialog": "THE DOOR IS SEALED WITH\\nAWAKENED LOCKS.\\n\\nGOLDEN SENTINEL STATUES\\nGUARD THE INTERIOR.\\n\\nTRESS AND HER CREW\\nNOW CONTROL THIS PLACE."
+      "type": "enter_world",
+      "target": "lumar-midnight-tower",
+      "label": "SORCERESS'S TOWER",
+      "prompt": "ENTER TOWER"
     },
     {
       "x": 6,
@@ -697,15 +689,15 @@
       "type": "dialog",
       "label": "ISLANDER",
       "prompt": "PRESS E TO TALK",
-      "dialog": "THE SORCERESS USED TO\\nIMPOSE TARIFFS ON ALL\\nTRADE THROUGH THE\\nMIDNIGHT SEA.\\n\\nSINCE TRESS BANISHED HER,\\nTHE SEA LANES ARE FREE.\\n\\nBUT THE ESSENCE...\\nIT STILL HUNTS AT NIGHT."
+      "dialog": "THE TOWER HAS STOOD HERE\\nLONGER THAN ANY OF US.\\n\\nTHE SORCERESS COMES AND GOES\\nAS THE TIDES PERMIT."
     },
     {
       "x": 9,
       "y": 9,
       "type": "dialog",
       "label": "???",
-      "prompt": "PRESS E TO EXAMINE",
-      "dialog": "SOMETHING DARK AND SLICK\\nSHIFTS IN THE SHADOWS.\\n\\nMIDNIGHT ESSENCE.\\nIT MIMICS SHAPES.\\n\\nDON'T LOOK AT IT\\nTOO LONG."
+      "prompt": "PRESS E TO READ",
+      "dialog": "WORN STONE INSCRIPTION:\\n\\n\"BENEATH THE MIDNIGHT WAVE\\nTHE TOWER WAITS, AWAKE.\""
     }
   ],
   "moonColor": [

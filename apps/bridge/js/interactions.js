@@ -85,7 +85,19 @@ var BridgeInteractions = (function () {
         break;
 
       case 'leave_world':
-        BridgeWorld.leave();
+        // If a parent world is specified, warp back to it (e.g., arcade
+        // interior leaves to the street, not all the way to the cockpit).
+        if (inter.leaveTo) {
+          BridgeWorld.enterWorld(inter.leaveTo, inter.leaveSpawn);
+        } else {
+          BridgeWorld.leave();
+        }
+        break;
+
+      case 'enter_world':
+        // Step into another world (a building interior, a cave, etc.)
+        // with a quick fade transition.
+        BridgeWorld.enterWorld(inter.target, inter.spawn);
         break;
 
       case 'password_gate':
@@ -95,6 +107,109 @@ var BridgeInteractions = (function () {
       case 'sail_to':
         BridgeWorld.sailTo(inter.destination, inter.destinationName || inter.label);
         break;
+
+      case 'menu':
+        showMenuDialog(inter);
+        break;
+    }
+  }
+
+  function showMenuDialog(inter) {
+    dialogVisible = true;
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) {
+      BridgeControls.disable();
+    }
+    var promptEl = document.getElementById('interact-prompt');
+    if (promptEl) promptEl.classList.remove('visible');
+
+    var overlay = document.getElementById('world-overlay');
+    var dialogEl = document.createElement('div');
+    dialogEl.id = 'world-dialog';
+    dialogEl.style.cssText =
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+      'background:rgba(10,10,20,0.95);border:1px solid #2a2a3e;border-radius:4px;' +
+      'padding:24px 28px;min-width:280px;max-width:340px;z-index:30;' +
+      'font-family:"Courier New",Consolas,monospace;text-align:center;';
+
+    var html = '<h3 style="font-size:13px;letter-spacing:3px;color:#40b060;margin-bottom:8px;">' +
+               inter.label + '</h3>';
+    if (inter.dialog) {
+      html += '<pre style="font-size:11px;color:#888;line-height:1.5;white-space:pre-wrap;margin-bottom:14px;">' +
+              inter.dialog.replace(/\\n/g, '\n') + '</pre>';
+    }
+    html += '<div id="menu-options" style="display:flex;flex-direction:column;gap:6px;margin:8px 0;">';
+    for (var i = 0; i < inter.options.length; i++) {
+      var opt = inter.options[i];
+      html += '<button data-opt="' + i + '" class="menu-opt" style="' +
+              'padding:8px 12px;background:rgba(40,40,60,0.6);' +
+              'border:1px solid #2a2a3e;color:#ddd;font-family:inherit;' +
+              'font-size:11px;letter-spacing:2px;cursor:pointer;text-align:left;' +
+              'transition:background 0.15s, border-color 0.15s;">' +
+              '&#9656; ' + opt.label + '</button>';
+    }
+    html += '</div>';
+    html += '<p style="font-size:10px;color:#555;letter-spacing:2px;margin-top:6px;">CLICK · ESC TO CANCEL</p>';
+
+    dialogEl.innerHTML = html;
+    overlay.appendChild(dialogEl);
+
+    // Hover styling
+    var btns = dialogEl.querySelectorAll('.menu-opt');
+    for (var b = 0; b < btns.length; b++) {
+      (function (btn, idx) {
+        btn.addEventListener('mouseenter', function () {
+          btn.style.background = 'rgba(64,160,104,0.25)';
+          btn.style.borderColor = '#40b060';
+        });
+        btn.addEventListener('mouseleave', function () {
+          btn.style.background = 'rgba(40,40,60,0.6)';
+          btn.style.borderColor = '#2a2a3e';
+        });
+        btn.addEventListener('click', function () {
+          handleMenuOption(inter.options[idx]);
+        });
+      })(btns[b], b);
+    }
+
+    function handleEsc(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        cleanup();
+      }
+    }
+    document.addEventListener('keydown', handleEsc);
+
+    function cleanup() {
+      document.removeEventListener('keydown', handleEsc);
+      hideDialog();
+      if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) {
+        BridgeControls.enable();
+      }
+    }
+
+    function handleMenuOption(opt) {
+      cleanup();
+      switch (opt.action) {
+        case 'sail_to':
+          BridgeWorld.sailTo(opt.destination, opt.destinationName || opt.label);
+          break;
+        case 'enter_world':
+          BridgeWorld.enterWorld(opt.target, opt.spawn);
+          break;
+        case 'password_gate':
+          showPasswordDialog(opt);
+          break;
+        case 'leave_world':
+          if (opt.leaveTo) {
+            BridgeWorld.enterWorld(opt.leaveTo, opt.leaveSpawn);
+          } else {
+            BridgeWorld.leave();
+          }
+          break;
+        case 'close':
+        default:
+          break;
+      }
     }
   }
 

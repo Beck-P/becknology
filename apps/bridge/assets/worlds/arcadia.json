@@ -1,5 +1,5 @@
 {
-  "name": "Arcadia",
+  "name": "Arcadia Arcade",
   "width": 30,
   "height": 28,
   "tileSize": 16,
@@ -2054,15 +2054,25 @@
       "x": 3,
       "y": 5,
       "type": "leave_world",
-      "label": "SHIP",
-      "prompt": "RETURN TO COCKPIT"
+      "label": "EXIT",
+      "prompt": "EXIT TO STREET",
+      "leaveTo": "arcadia-street",
+      "leaveSpawn": [
+        13,
+        5
+      ]
     },
     {
       "x": 3,
       "y": 6,
       "type": "leave_world",
-      "label": "SHIP",
-      "prompt": "RETURN TO COCKPIT"
+      "label": "EXIT",
+      "prompt": "EXIT TO STREET",
+      "leaveTo": "arcadia-street",
+      "leaveSpawn": [
+        13,
+        5
+      ]
     }
   ],
   "shipExit": true

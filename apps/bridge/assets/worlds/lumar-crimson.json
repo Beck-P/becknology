@@ -609,8 +609,16 @@
       "type": "sail_to",
       "destination": "lumar",
       "destinationName": "Diggen's Point",
-      "label": "DIGGEN'S POINT",
-      "prompt": "SAIL TO DIGGEN'S POINT"
+      "label": "DOCK",
+      "prompt": "SAIL BACK"
+    },
+    {
+      "x": 6,
+      "y": 9,
+      "type": "enter_world",
+      "target": "lumar-crimson-cave",
+      "label": "DRAGON'S CAVE",
+      "prompt": "DESCEND INTO CAVE"
     },
     {
       "x": 8,
@@ -618,15 +626,7 @@
       "type": "dialog",
       "label": "CRIMSON WATCHER",
       "prompt": "PRESS E TO TALK",
-      "dialog": "DON'T TOUCH THE CRYSTALS.\\nDON'T EVEN BREATHE ON THEM.\\n\\nONE DROP OF MOISTURE AND\\nYOU'LL BE IMPALED BEFORE\\nYOU CAN SCREAM."
-    },
-    {
-      "x": 6,
-      "y": 9,
-      "type": "dialog",
-      "label": "CAVE ENTRANCE",
-      "prompt": "PRESS E TO EXAMINE",
-      "dialog": "A PASSAGE DESCENDS\\nBENEATH THE CRIMSON SEA.\\n\\nTHE AIR IS WARM. SOMETHING\\nVAST BREATHES BELOW.\\n\\nXISIS. THE DRAGON.\\nDO NOT ENTER UNINVITED."
+      "dialog": "DON'T GO DOWN THERE.\\n\\nTHE DRAGON DOESN'T MIND\\nVISITORS, BUT IT'S NOT\\nALWAYS HUNGRY EITHER."
     },
     {
       "x": 5,
@@ -634,7 +634,7 @@
       "type": "dialog",
       "label": "WARNING",
       "prompt": "PRESS E TO READ",
-      "dialog": "BY ORDER OF XISIS:\\n\\nTRESPASSERS WILL BE\\nCONSUMED. SUPPLICANTS\\nMAY REQUEST AN AUDIENCE.\\n\\nBRING AN OFFERING\\nOF RARE SPORES."
+      "dialog": "WEATHERED SIGN:\\n\\n\"BEYOND THIS POINT \u2014\\nDRAGON'S CAVE.\\nENTER WITH RESPECT.\""
     }
   ],
   "moonColor": [

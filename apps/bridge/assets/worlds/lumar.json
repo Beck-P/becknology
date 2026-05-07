@@ -1,5 +1,5 @@
 {
-  "name": "Lumar",
+  "name": "Diggen's Point",
   "width": 20,
   "height": 16,
   "tileSize": 16,
@@ -821,49 +821,57 @@
     {
       "x": 10,
       "y": 12,
-      "type": "password_gate",
-      "target": "/aether-seas",
-      "password": "0403",
-      "label": "DOCK GUARD",
-      "prompt": "PRESS E TO SPEAK",
-      "dialog": "HALT, PILOT.\\n\\nTHIS VESSEL IS UNDER\\nROYAL CHARTER.\\n\\nENTER THE BOARDING CODE:",
-      "failMessage": "WRONG CODE. STEP BACK."
+      "type": "menu",
+      "label": "SHIP CAPTAIN",
+      "prompt": "PRESS E TO SAIL",
+      "dialog": "WHERE TO, PILOT?",
+      "options": [
+        {
+          "label": "CRIMSON REACH",
+          "action": "sail_to",
+          "destination": "lumar-crimson",
+          "destinationName": "Crimson Reach"
+        },
+        {
+          "label": "SAPPHIRE PORT",
+          "action": "sail_to",
+          "destination": "lumar-sapphire",
+          "destinationName": "Sapphire Port"
+        },
+        {
+          "label": "ROSE COVE",
+          "action": "sail_to",
+          "destination": "lumar-rose",
+          "destinationName": "Rose Cove"
+        },
+        {
+          "label": "MIDNIGHT ISLE",
+          "action": "sail_to",
+          "destination": "lumar-midnight",
+          "destinationName": "Midnight Isle"
+        },
+        {
+          "label": "RESCUE HUCK",
+          "action": "password_gate",
+          "target": "/aether-seas",
+          "password": "0403",
+          "label_dialog": "DOCK GUARD",
+          "dialog": "TO RESCUE THE LOST PILOT,\\nENTER THE BOARDING CODE:",
+          "failMessage": "WRONG CODE. STEP BACK."
+        },
+        {
+          "label": "CANCEL",
+          "action": "close"
+        }
+      ]
     },
     {
-      "x": 2,
-      "y": 6,
-      "type": "sail_to",
-      "destination": "lumar-rose",
-      "destinationName": "Rose Cove",
-      "label": "ROSE COVE",
-      "prompt": "SAIL TO ROSE COVE"
-    },
-    {
-      "x": 17,
-      "y": 6,
-      "type": "sail_to",
-      "destination": "lumar-crimson",
-      "destinationName": "Crimson Reach",
-      "label": "CRIMSON REACH",
-      "prompt": "SAIL TO CRIMSON REACH"
-    },
-    {
-      "x": 7,
-      "y": 1,
-      "type": "sail_to",
-      "destination": "lumar-sapphire",
-      "destinationName": "Sapphire Port",
-      "label": "SAPPHIRE PORT",
-      "prompt": "SAIL TO SAPPHIRE PORT"
-    },
-    {
-      "x": 12,
-      "y": 1,
-      "type": "sail_to",
-      "destination": "lumar-midnight",
-      "destinationName": "Midnight Isle",
-      "label": "MIDNIGHT ISLE",
-      "prompt": "SAIL TO MIDNIGHT ISLE"
+      "x": 9,
+      "y": 3,
+      "type": "enter_world",
+      "target": "lumar-tavern",
+      "label": "DIGGEN'S TAVERN",
+      "prompt": "ENTER TAVERN"
     },
     {
       "x": 6,
@@ -880,14 +888,6 @@
       "label": "SPROUTER",
       "prompt": "PRESS E TO TALK",
       "dialog": "CAREFUL AROUND MY TABLE.\\nONE DROP OF SWEAT AND THIS\\nWHOLE POUCH GOES UP IN VINES.\\n\\nSILVER TOOLS ONLY. ALWAYS."
-    },
-    {
-      "x": 11,
-      "y": 3,
-      "type": "dialog",
-      "label": "WANTED",
-      "prompt": "PRESS E TO READ",
-      "dialog": "WANTED: THE CREW OF\\nTHE DEADRUNNER 'BLACK THORN'\\n\\nFOR PIRACY AND MURDER\\nON THE VERDANT SEA\\n\\nREWARD: 500 SILVER MARKS"
     },
     {
       "x": 14,

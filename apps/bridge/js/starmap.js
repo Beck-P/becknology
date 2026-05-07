@@ -10,7 +10,7 @@ var BridgeStarmap = (function () {
 
   var WORLDS = [
     {
-      id: 'arcadia',
+      id: 'arcadia-street',
       name: 'ARCADIA',
       blurb: 'A retro arcade planet bathed in neon light. Cabinets line the streets, high scores flicker on the walls.',
       apps: [{ name: 'Runouts', url: '/runouts' }],
