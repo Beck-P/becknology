@@ -10,94 +10,119 @@
   // ---- Tile Draw Functions ----
   // Each receives (ctx, x, y, ts, time, col, row) where ts = rendered tile size
 
+  // Arcade floor — strict pixel art. 8u checker with 1u dark grout cross
+  // and deterministic 1u debris.
   function drawFloor(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
-    var h = ts / 2;
-    ctx.fillStyle = '#2a2240';
+    var BASE = '#2a2240';
+    var TILE = '#332858';
+    var GROUT = '#15102a';
+    ctx.fillStyle = BASE;
     ctx.fillRect(x, y, ts, ts);
-    // Slightly higher contrast checker
-    ctx.fillStyle = '#332858';
-    ctx.fillRect(x, y, h, h);
-    ctx.fillRect(x + h, y + h, h, h);
-    // Tile grout lines
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.fillRect(x + h - Math.max(1, u*0.4), y, Math.max(1, u*0.5), ts);
-    ctx.fillRect(x, y + h - Math.max(1, u*0.4), ts, Math.max(1, u*0.5));
-    // Occasional debris/sparkle (deterministic per tile)
+    ctx.fillStyle = TILE;
+    ctx.fillRect(x, y, 8*u, 8*u);
+    ctx.fillRect(x + 8*u, y + 8*u, 8*u, 8*u);
+    // 1u grout cross (whole-u)
+    ctx.fillStyle = GROUT;
+    ctx.fillRect(x + 8*u - u, y, u, ts);
+    ctx.fillRect(x, y + 8*u - u, ts, u);
+    // 1u debris/sparkle
     var seed = (col * 41 + row * 17) % 19;
     if (seed === 0) {
-      ctx.fillStyle = 'rgba(255,200,150,0.15)';
+      ctx.fillStyle = '#a08060';
       ctx.fillRect(x + 4*u, y + 11*u, u, u);
     } else if (seed === 5) {
-      ctx.fillStyle = 'rgba(120,80,160,0.25)';
-      ctx.fillRect(x + 11*u, y + 4*u, u*0.8, u*0.8);
+      ctx.fillStyle = '#7050a0';
+      ctx.fillRect(x + 11*u, y + 4*u, u, u);
+    } else if (seed === 11) {
+      ctx.fillStyle = '#403858';
+      ctx.fillRect(x + 6*u, y + 13*u, u, u);
     }
   }
 
+  // Lit version — same pattern, brighter base.
   function drawFloorLight(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
-    var h = ts / 2;
-    ctx.fillStyle = '#3a3260';
+    var BASE = '#3a3260';
+    var TILE = '#463a78';
+    var GROUT = '#251c40';
+    ctx.fillStyle = BASE;
     ctx.fillRect(x, y, ts, ts);
-    ctx.fillStyle = '#463a78';
-    ctx.fillRect(x, y, h, h);
-    ctx.fillRect(x + h, y + h, h, h);
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fillRect(x + h - Math.max(1, u*0.4), y, Math.max(1, u*0.5), ts);
-    ctx.fillRect(x, y + h - Math.max(1, u*0.4), ts, Math.max(1, u*0.5));
+    ctx.fillStyle = TILE;
+    ctx.fillRect(x, y, 8*u, 8*u);
+    ctx.fillRect(x + 8*u, y + 8*u, 8*u, 8*u);
+    ctx.fillStyle = GROUT;
+    ctx.fillRect(x + 8*u - u, y, u, ts);
+    ctx.fillRect(x, y + 8*u - u, ts, u);
   }
 
+  // Cyberpunk wall — strict pixel art. 4u dark cap + 12u brick body with
+  // 1u mortar lines and alternating courses. Whole-u rects only.
   function drawWall(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
-    var capH = Math.floor(ts * 0.3);
-    // Cap (top edge of wall) — slightly darker
-    ctx.fillStyle = '#1e1835';
-    ctx.fillRect(x, y, ts, capH);
-    // Cap highlight
-    ctx.fillStyle = '#3a3252';
-    ctx.fillRect(x, y, ts, Math.max(1, u));
-    // Wall body
-    ctx.fillStyle = '#2a2245';
-    ctx.fillRect(x, y + capH, ts, ts - capH);
-    // Brick lines (mortar) — scale-aware
-    var lw = Math.max(1, u * 0.4);
-    ctx.fillStyle = '#15102a';
-    ctx.fillRect(x, y + Math.floor(ts * 0.5), ts, lw);
-    ctx.fillRect(x, y + Math.floor(ts * 0.75), ts, lw);
-    // Vertical brick offsets per row (alternating courses)
-    var brickShift = (row % 2 === 0) ? 0 : Math.floor(ts * 0.25);
-    ctx.fillRect(x + (Math.floor(ts * 0.25) + brickShift) % ts, y + capH, lw, Math.floor((ts - capH) * 0.5));
-    ctx.fillRect(x + (Math.floor(ts * 0.75) + brickShift) % ts, y + capH, lw, Math.floor((ts - capH) * 0.5));
-    ctx.fillRect(x + (Math.floor(ts * 0.5) + (1 - row % 2) * Math.floor(ts * 0.25)) % ts, y + Math.floor(ts * 0.5), lw, Math.floor((ts - capH) * 0.5));
-    // Subtle wear speckles deterministically
-    var seed = col * 23 + row * 11;
-    if (seed % 5 === 0) {
+    var CAP_DK = '#15102a';
+    var CAP = '#1e1835';
+    var CAP_HI = '#3a3252';
+    var BRICK = '#2a2245';
+    var MORTAR = '#15102a';
+    // 4u cap
+    ctx.fillStyle = CAP;
+    ctx.fillRect(x, y, ts, 4*u);
+    ctx.fillStyle = CAP_HI;
+    ctx.fillRect(x, y, ts, u);            // 1u top highlight
+    // 12u brick body
+    ctx.fillStyle = BRICK;
+    ctx.fillRect(x, y + 4*u, ts, 12*u);
+    // 1u mortar courses
+    ctx.fillStyle = MORTAR;
+    ctx.fillRect(x, y + 8*u, ts, u);
+    ctx.fillRect(x, y + 12*u, ts, u);
+    // Vertical brick joints (alternating per row)
+    var off1 = (row % 2 === 0) ? 8 : 4;
+    var off2 = (row % 2 === 0) ? 4 : 12;
+    var off3 = (row % 2 === 0) ? 12 : 8;
+    ctx.fillRect(x + off1*u, y + 5*u, u, 3*u);
+    ctx.fillRect(x + off2*u, y + 9*u, u, 3*u);
+    ctx.fillRect(x + off3*u, y + 13*u, u, 3*u);
+    // Wear speckles (1u)
+    var seed = (col * 23 + row * 11) % 7;
+    if (seed === 0) {
       ctx.fillStyle = '#1e1a35';
-      ctx.fillRect(x + (seed % 13)*u*0.7 + u, y + capH + (seed % 5)*u, u*0.7, u*0.7);
+      ctx.fillRect(x + 3*u, y + 6*u, u, u);
+    } else if (seed === 3) {
+      ctx.fillStyle = '#1e1a35';
+      ctx.fillRect(x + 11*u, y + 10*u, u, u);
     }
   }
 
+  // Dark wall variant — strict pixel art. Same structure as drawWall but
+  // deeper palette.
   function drawWallDark(ctx, x, y, ts, time, col, row) {
     col = col || 0; row = row || 0;
     var u = ts / 16;
-    var capH = Math.floor(ts * 0.3);
-    ctx.fillStyle = '#151230';
-    ctx.fillRect(x, y, ts, capH);
-    ctx.fillStyle = '#251c40';
-    ctx.fillRect(x, y, ts, Math.max(1, u));
-    ctx.fillStyle = '#201a3a';
-    ctx.fillRect(x, y + capH, ts, ts - capH);
-    var lw = Math.max(1, u * 0.4);
-    ctx.fillStyle = '#0e0820';
-    ctx.fillRect(x, y + Math.floor(ts * 0.5), ts, lw);
-    ctx.fillRect(x, y + Math.floor(ts * 0.75), ts, lw);
-    var brickShift = (row % 2 === 0) ? 0 : Math.floor(ts * 0.25);
-    ctx.fillRect(x + (Math.floor(ts * 0.25) + brickShift) % ts, y + capH, lw, Math.floor((ts - capH) * 0.5));
-    ctx.fillRect(x + (Math.floor(ts * 0.75) + brickShift) % ts, y + capH, lw, Math.floor((ts - capH) * 0.5));
-    ctx.fillRect(x + (Math.floor(ts * 0.5) + (1 - row % 2) * Math.floor(ts * 0.25)) % ts, y + Math.floor(ts * 0.5), lw, Math.floor((ts - capH) * 0.5));
+    var CAP_DK = '#0e0820';
+    var CAP = '#151230';
+    var CAP_HI = '#251c40';
+    var BRICK = '#201a3a';
+    var MORTAR = '#0e0820';
+    ctx.fillStyle = CAP;
+    ctx.fillRect(x, y, ts, 4*u);
+    ctx.fillStyle = CAP_HI;
+    ctx.fillRect(x, y, ts, u);
+    ctx.fillStyle = BRICK;
+    ctx.fillRect(x, y + 4*u, ts, 12*u);
+    ctx.fillStyle = MORTAR;
+    ctx.fillRect(x, y + 8*u, ts, u);
+    ctx.fillRect(x, y + 12*u, ts, u);
+    var off1 = (row % 2 === 0) ? 8 : 4;
+    var off2 = (row % 2 === 0) ? 4 : 12;
+    var off3 = (row % 2 === 0) ? 12 : 8;
+    ctx.fillRect(x + off1*u, y + 5*u, u, 3*u);
+    ctx.fillRect(x + off2*u, y + 9*u, u, 3*u);
+    ctx.fillRect(x + off3*u, y + 13*u, u, 3*u);
   }
 
   function drawCabinet(ctx, x, y, ts, time, col, row) {
@@ -508,68 +533,90 @@
     ctx.fillRect(x + ts - 5*u, y + ts - 3*u, 2*u, 3*u);
   }
 
+  // Cyberpunk sidewalk — strict pixel art. 8u × 8u pavers with 1u grout
+  // cross + deterministic 1u grit specks.
   function drawSidewalk(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Base
-    ctx.fillStyle = '#3a3650';
+    var BASE = '#3a3650';
+    var TILE_LT = '#403c5a';
+    var TILE_DK = '#363248';
+    var GROUT = '#28253a';
+    ctx.fillStyle = BASE;
     ctx.fillRect(x, y, ts, ts);
-    // Concrete pavers — 2x2 division with subtle tone variation per (col,row)
-    var lighten = (col + row) % 2 === 0 ? '#403c5a' : '#363248';
+    // 2x2 paver pattern (alternating per col+row)
+    var lighten = (col + row) % 2 === 0 ? TILE_LT : TILE_DK;
     ctx.fillStyle = lighten;
-    ctx.fillRect(x, y, ts/2, ts/2);
-    ctx.fillRect(x + ts/2, y + ts/2, ts/2, ts/2);
-    // Joint lines (scale-aware)
-    ctx.fillStyle = '#28253a';
-    ctx.fillRect(x, y + ts/2 - Math.max(1, u*0.5), ts, Math.max(1, u));
-    ctx.fillRect(x + ts/2 - Math.max(1, u*0.5), y, Math.max(1, u), ts);
-    // Occasional grit speckle
-    var seed = col * 31 + row * 17;
-    if (seed % 4 === 0) {
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fillRect(x + (seed % 11) * u * 0.8 + u, y + ((seed * 3) % 11) * u * 0.8 + u, Math.max(1, u*0.5), Math.max(1, u*0.5));
+    ctx.fillRect(x, y, 8*u, 8*u);
+    ctx.fillRect(x + 8*u, y + 8*u, 8*u, 8*u);
+    // 1u grout cross
+    ctx.fillStyle = GROUT;
+    ctx.fillRect(x, y + 8*u - u, ts, u);
+    ctx.fillRect(x + 8*u - u, y, u, ts);
+    // 1u grit speckles
+    var seed = (col * 31 + row * 17) % 11;
+    if (seed === 0) {
+      ctx.fillStyle = '#1a1a26';
+      ctx.fillRect(x + 3*u, y + 5*u, u, u);
+    } else if (seed === 4) {
+      ctx.fillStyle = '#1a1a26';
+      ctx.fillRect(x + 11*u, y + 11*u, u, u);
+    } else if (seed === 7) {
+      ctx.fillStyle = '#1a1a26';
+      ctx.fillRect(x + 12*u, y + 3*u, u, u);
     }
   }
 
+  // Cyberpunk lamp post — strict pixel art. 2u-wide pole, 8u × 3u hood,
+  // 4u × 2u bulb with hard 1u top highlight, atmospheric warm halo.
   function drawLampPost(ctx, x, y, ts, time, col, row) {
     drawSidewalk(ctx, x, y, ts);
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Pole
-    ctx.fillStyle = '#3a3a3a';
+    var POLE_DK = '#1a1a1a';
+    var POLE = '#3a3a3a';
+    var POLE_HI = '#555555';
+    var HOOD_DK = '#1a1408';
+    var HOOD = '#2a2418';
+    var HOOD_HI = '#4a3820';
+    // Pole (2u × 11u, 1u left highlight)
+    ctx.fillStyle = POLE_DK;
     ctx.fillRect(x + 7*u, y + 3*u, 2*u, 11*u);
-    ctx.fillStyle = '#555';
+    ctx.fillStyle = POLE;
     ctx.fillRect(x + 7*u, y + 3*u, u, 11*u);
-    // Hood
-    ctx.fillStyle = '#2a2418';
+    ctx.fillStyle = POLE_HI;
+    ctx.fillRect(x + 7*u, y + 3*u, u, u);
+    // Hood (8u × 3u outline)
+    ctx.fillStyle = HOOD_DK;
     ctx.fillRect(x + 4*u, y + u, 8*u, 3*u);
-    ctx.fillStyle = '#4a3820';
+    ctx.fillStyle = HOOD;
     ctx.fillRect(x + 5*u, y + u, 6*u, 2*u);
+    ctx.fillStyle = HOOD_HI;
+    ctx.fillRect(x + 5*u, y + u, 6*u, u);
     // Bulb pulse
     var phase = time / 700 + col * 2.3 + row * 1.7;
     var pulse = 0.85 + Math.sin(phase) * 0.15;
-    // Slight flicker (rare)
     if ((Math.floor(time / 70) + col * 11) % 113 === 0) pulse *= 0.5;
-    // Inner bulb
     ctx.globalAlpha = pulse;
     ctx.fillStyle = '#ffe070';
     ctx.fillRect(x + 6*u, y + 2*u, 4*u, 2*u);
     ctx.fillStyle = '#fff8c0';
     ctx.fillRect(x + 7*u, y + 2*u, 2*u, u);
-    // Soft halo around the bulb area
-    var grad = ctx.createRadialGradient(
-      x + 8*u, y + 3*u, 0,
-      x + 8*u, y + 3*u, 6*u
-    );
-    grad.addColorStop(0, 'rgba(255,224,128,' + (0.35 * pulse).toFixed(2) + ')');
+    ctx.globalAlpha = 1;
+    // Halo (atmospheric gradient — allowed by spec)
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.35;
+    var grad = ctx.createRadialGradient(x + 8*u, y + 3*u, 0, x + 8*u, y + 3*u, 6*u);
+    grad.addColorStop(0, 'rgba(255,224,128,0.7)');
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.fillRect(x - 2*u, y - 2*u, ts + 4*u, ts/2 + 2*u);
+    ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
-    // Base
-    ctx.fillStyle = '#222';
+    // Base (4u × 2u)
+    ctx.fillStyle = POLE_DK;
     ctx.fillRect(x + 6*u, y + 14*u, 4*u, 2*u);
-    ctx.fillStyle = '#444';
+    ctx.fillStyle = POLE_HI;
     ctx.fillRect(x + 6*u, y + 14*u, 4*u, u);
   }
 
@@ -665,67 +712,85 @@
     ctx.globalAlpha = 1;
   }
 
+  // Bench — strict pixel art. 14u × 4u wooden slat, 2u-wide iron legs,
+  // 1u top highlight. Whole-u rects only.
   function drawBench(ctx, x, y, ts, time, col, row) {
     drawFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Wooden slats
-    ctx.fillStyle = '#3a2818';
-    ctx.fillRect(x + u, y + 6*u, ts - 2*u, 4*u);
-    ctx.fillStyle = '#5a4830';
-    ctx.fillRect(x + u, y + 6*u, ts - 2*u, Math.max(1, u));
-    // Slat gaps (highlighted slat lines)
-    ctx.fillStyle = '#2a1a10';
-    ctx.fillRect(x + u, y + 8*u, ts - 2*u, Math.max(1, u * 0.5));
-    // Wood grain
-    ctx.fillStyle = 'rgba(40,20,10,0.4)';
-    ctx.fillRect(x + 4*u, y + 7*u, 3*u, Math.max(1, u * 0.4));
-    ctx.fillRect(x + 9*u, y + 7*u, 4*u, Math.max(1, u * 0.4));
-    // Iron legs
-    ctx.fillStyle = '#1a1a22';
+    var DARK = '#1a0e08';
+    var WOOD = '#3a2818';
+    var WOOD_HI = '#5a4830';
+    var IRON_DK = '#0e0e15';
+    var IRON = '#1a1a22';
+    var IRON_HI = '#2a2a35';
+    // Slat outline
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + u, y + 6*u, 14*u, 5*u);
+    ctx.fillStyle = WOOD;
+    ctx.fillRect(x + u, y + 6*u, 14*u, 4*u);
+    ctx.fillStyle = WOOD_HI;
+    ctx.fillRect(x + u, y + 6*u, 14*u, u);
+    // Plank seam (1u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + u, y + 8*u, 14*u, u);
+    // Iron legs (2u × 5u)
+    ctx.fillStyle = IRON_DK;
     ctx.fillRect(x + 2*u, y + 10*u, 2*u, 5*u);
-    ctx.fillRect(x + ts - 4*u, y + 10*u, 2*u, 5*u);
-    ctx.fillStyle = '#2a2a35';
-    ctx.fillRect(x + 2*u, y + 10*u, u, 5*u);
-    ctx.fillRect(x + ts - 4*u, y + 10*u, u, 5*u);
-    // Floor shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(x + u, y + 14*u, ts - 2*u, u);
+    ctx.fillRect(x + 12*u, y + 10*u, 2*u, 5*u);
+    ctx.fillStyle = IRON;
+    ctx.fillRect(x + 2*u, y + 10*u, 2*u, 4*u);
+    ctx.fillRect(x + 12*u, y + 10*u, 2*u, 4*u);
+    ctx.fillStyle = IRON_HI;
+    ctx.fillRect(x + 2*u, y + 10*u, u, 4*u);
+    ctx.fillRect(x + 12*u, y + 10*u, u, 4*u);
+    // Floor shadow (1u)
+    ctx.fillStyle = '#0a080e';
+    ctx.fillRect(x + u, y + 14*u, 14*u, u);
   }
 
+  // Table — strict pixel art. 12u × 4u top, 1u legs, 1u top highlight.
   function drawTable(ctx, x, y, ts, time, col, row) {
     drawFloor(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Top
-    ctx.fillStyle = '#403648';
-    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, 4*u);
-    // Edge highlight
-    ctx.fillStyle = '#5a4e62';
-    ctx.fillRect(x + 2*u, y + 4*u, ts - 4*u, Math.max(1, u));
-    // Side / shadow
-    ctx.fillStyle = '#2a2235';
-    ctx.fillRect(x + 2*u, y + 7*u, ts - 4*u, 2*u);
-    // Legs
-    ctx.fillStyle = '#1a1622';
+    var DARK = '#0e0a18';
+    var TOP = '#403648';
+    var TOP_HI = '#5a4e62';
+    var SIDE = '#2a2235';
+    var LEG = '#1a1622';
+    // Top outline
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 2*u, y + 4*u, 12*u, 5*u);
+    ctx.fillStyle = TOP;
+    ctx.fillRect(x + 2*u, y + 4*u, 12*u, 4*u);
+    ctx.fillStyle = TOP_HI;
+    ctx.fillRect(x + 2*u, y + 4*u, 12*u, u);
+    // Side band (1u shadow)
+    ctx.fillStyle = SIDE;
+    ctx.fillRect(x + 2*u, y + 8*u, 12*u, u);
+    // Legs (1u × 6u)
+    ctx.fillStyle = LEG;
     ctx.fillRect(x + 3*u, y + 9*u, u, 5*u);
-    ctx.fillRect(x + ts - 4*u, y + 9*u, u, 5*u);
-    // Sci-fi token on the table — varies per table
+    ctx.fillRect(x + 12*u, y + 9*u, u, 5*u);
+    // Item on top
     var item = (col * 7 + row * 11) % 3;
     if (item === 0) {
-      // Coffee cup
-      ctx.fillStyle = '#7a4a30';
-      ctx.fillRect(x + 6*u, y + 3*u, 3*u, 2*u);
+      // Coffee cup (3u × 2u with handle)
       ctx.fillStyle = '#3a1c10';
-      ctx.fillRect(x + 7*u, y + 3*u, u, u);
+      ctx.fillRect(x + 6*u, y + 2*u, 3*u, 2*u);
+      ctx.fillStyle = '#7a4a30';
+      ctx.fillRect(x + 6*u, y + 2*u, 3*u, u);
     } else if (item === 1) {
-      // Token
-      ctx.fillStyle = '#c8a840';
-      ctx.fillRect(x + 7*u, y + 4*u, 2*u, u);
+      // Gold token (1u)
+      ctx.fillStyle = '#806820';
+      ctx.fillRect(x + 7*u, y + 3*u, 2*u, 2*u);
       ctx.fillStyle = '#e8c870';
-      ctx.fillRect(x + 7*u, y + 4*u, u, u);
+      ctx.fillRect(x + 7*u, y + 3*u, u, u);
     } else {
-      // Empty card
+      // Card (3u × 1u)
+      ctx.fillStyle = '#388890';
+      ctx.fillRect(x + 7*u, y + 3*u, 3*u, 2*u);
       ctx.fillStyle = '#5cc8d0';
-      ctx.fillRect(x + 7*u, y + 4*u, 3*u, u);
+      ctx.fillRect(x + 7*u, y + 3*u, 3*u, u);
     }
   }
 
@@ -789,6 +854,8 @@
   ];
   var NPC_HATS = [null, 'cap', 'antenna', 'horns', 'cap'];
 
+  // Arcadia NPC — strict pixel art. 8u-wide character with 1u outline,
+  // 3-tone shading, varied hat per seed.
   function drawNpc(ctx, x, y, ts, time, col, row) {
     drawFloor(ctx, x, y, ts);
     time = time || 0; col = col || 0; row = row || 0;
@@ -796,77 +863,93 @@
     var seed = col * 13 + row * 29;
     var pal = NPC_PALETTES[seed % NPC_PALETTES.length];
     var hat = NPC_HATS[seed % NPC_HATS.length];
-    var heightBoost = (seed % 3 === 0) ? -u : 0;
+    var DARK = '#0a0a16';
     var bob = Math.sin(time / 600 + col * 7) > 0.85 ? -u : 0;
-    bob += heightBoost;
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath();
-    ctx.ellipse(x + ts*0.5, y + ts - u, ts*0.32, ts*0.1, 0, 0, Math.PI*2);
-    ctx.fill();
-    // Head
+    // Shadow (1u)
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(x + 4*u, y + 14*u, 8*u, u);
+    // Head outline (6u × 5u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 5*u, y + u + bob, 6*u, 5*u);
+    // Skin
     ctx.fillStyle = pal.skin;
-    ctx.fillRect(x + 4*u, y + (u)+bob, 8*u, 5*u);
+    ctx.fillRect(x + 5*u, y + u + bob, 6*u, 5*u);
     // Hair / hat
-    ctx.fillStyle = pal.dark;
-    ctx.fillRect(x + 4*u, y + (u)+bob, 8*u, u);
     if (hat === 'cap') {
+      ctx.fillStyle = DARK;
+      ctx.fillRect(x + 4*u, y + u + bob, 8*u, 2*u);
       ctx.fillStyle = pal.suit;
-      ctx.fillRect(x + 3*u, y + (u)+bob, 9*u, 2*u);
+      ctx.fillRect(x + 4*u, y + u + bob, 8*u, u);
       ctx.fillStyle = pal.light;
-      ctx.fillRect(x + 5*u, y + (2*u)+bob, 4*u, u);
+      ctx.fillRect(x + 5*u, y + 2*u + bob, 4*u, u);
     } else if (hat === 'antenna') {
-      ctx.fillStyle = '#444';
+      ctx.fillStyle = pal.dark;
+      ctx.fillRect(x + 5*u, y + u + bob, 6*u, u);
+      ctx.fillStyle = DARK;
       ctx.fillRect(x + 7*u, y + bob, u, 2*u);
       var antPulse = 0.6 + Math.sin(time / 400 + col) * 0.4;
       ctx.globalAlpha = antPulse;
       ctx.fillStyle = pal.light;
-      ctx.fillRect(x + 6*u, y + bob, 3*u, u);
+      ctx.fillRect(x + 7*u, y + bob, u, u);
       ctx.globalAlpha = 1;
     } else if (hat === 'horns') {
       ctx.fillStyle = pal.dark;
-      ctx.fillRect(x + 3*u, y + bob, u, 2*u);
-      ctx.fillRect(x + 12*u, y + bob, u, 2*u);
-    }
-    // Eyes — blink occasionally
-    var blinkPhase = ((time + col * 1500 + row * 700) / 100) % 60;
-    var blinking = blinkPhase < 3;
-    if (!blinking) {
-      ctx.fillStyle = '#0a0a16';
-      ctx.fillRect(x + 5*u, y + (3*u)+bob, 2*u, 2*u);
-      ctx.fillRect(x + 9*u, y + (3*u)+bob, 2*u, 2*u);
+      ctx.fillRect(x + 5*u, y + u + bob, 6*u, u);
+      ctx.fillRect(x + 4*u, y + bob, u, 2*u);
+      ctx.fillRect(x + 11*u, y + bob, u, 2*u);
     } else {
       ctx.fillStyle = pal.dark;
-      ctx.fillRect(x + 5*u, y + (4*u)+bob, 2*u, u);
-      ctx.fillRect(x + 9*u, y + (4*u)+bob, 2*u, u);
+      ctx.fillRect(x + 5*u, y + u + bob, 6*u, u);
     }
-    // Body / suit
+    // Eyes (1u, blink occasionally)
+    var blinkPhase = ((time + col * 1500 + row * 700) / 100) % 60;
+    var blinking = blinkPhase < 3;
+    ctx.fillStyle = DARK;
+    if (!blinking) {
+      ctx.fillRect(x + 6*u, y + 4*u + bob, u, u);
+      ctx.fillRect(x + 9*u, y + 4*u + bob, u, u);
+    } else {
+      ctx.fillRect(x + 6*u, y + 4*u + bob, u, u);
+      ctx.fillRect(x + 9*u, y + 4*u + bob, u, u);
+    }
+    // Body outline (8u × 6u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 4*u, y + 6*u + bob, 8*u, 6*u);
+    // Suit
     ctx.fillStyle = pal.suit;
-    ctx.fillRect(x + 3*u, y + (6*u)+bob, 10*u, 5*u);
+    ctx.fillRect(x + 4*u, y + 6*u + bob, 8*u, 5*u);
     ctx.fillStyle = pal.light;
-    ctx.fillRect(x + 3*u, y + (6*u)+bob, 10*u, u);
+    ctx.fillRect(x + 4*u, y + 6*u + bob, 8*u, u);   // 1u shoulder highlight
     ctx.fillStyle = pal.dark;
-    ctx.fillRect(x + 3*u, y + (10*u)+bob, 10*u, u);
-    // Legs
-    ctx.fillStyle = pal.dark;
-    ctx.fillRect(x + 4*u, y + (11*u)+bob, 3*u, 4*u);
-    ctx.fillRect(x + 9*u, y + (11*u)+bob, 3*u, 4*u);
-    // Feet
-    ctx.fillStyle = '#0a0a16';
-    ctx.fillRect(x + 3*u, y + 14*u, 4*u, u);
-    ctx.fillRect(x + 9*u, y + 14*u, 4*u, u);
+    ctx.fillRect(x + 4*u, y + 10*u + bob, 8*u, u);  // belt
+    // Legs (2u × 4u each)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 5*u, y + 11*u + bob, 2*u, 4*u);
+    ctx.fillRect(x + 9*u, y + 11*u + bob, 2*u, 4*u);
+    // Feet (1u row)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 4*u, y + 14*u, 4*u, u);
+    ctx.fillRect(x + 8*u, y + 14*u, 4*u, u);
   }
 
   // ---- Register with engine ----
 
   // ---- Street features (Stardew-style neon city) ----
 
+  // Hover bike — strict pixel art. 12u × 4u fairing with 8u canopy, 2u
+  // engine pods. Whole-u rects only. Hover glow stays as gradient.
   function drawHoverBike(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawSidewalk(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Hover field — pulsing magenta glow under the bike
-    var hover = Math.sin(time / 600 + col) * 0.15;
+    var DARK = '#080418';
+    var BODY_DK = '#1a1a26';
+    var BODY = '#3a3a48';
+    var BODY_HI = '#5a5a68';
+    var CANOPY = '#388890';
+    var CANOPY_HI = '#80e0e8';
+    var ACCENT = '#a040c0';
+    // Hover glow (atmospheric — gradient allowed)
     ctx.globalCompositeOperation = 'screen';
     ctx.globalAlpha = 0.55;
     var grad = ctx.createRadialGradient(x + ts/2, y + 13*u, 0, x + ts/2, y + 13*u, 7*u);
@@ -876,32 +959,39 @@
     ctx.fillRect(x - u, y + 8*u, ts + 2*u, ts - 6*u);
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
-    // Bike body — sleek, hovers above ground
-    var by = y + 6*u + hover * u;
-    // Main fairing
-    ctx.fillStyle = '#1a1a26';
-    ctx.fillRect(x + 2*u, by + 2*u, ts - 4*u, 4*u);
-    ctx.fillStyle = '#3a3a48';
-    ctx.fillRect(x + 2*u, by + 2*u, ts - 4*u, Math.max(1, u * 0.5));
-    // Cockpit canopy
-    ctx.fillStyle = '#5cc8d0';
+    // Bike body — hover offset (whole-u snap)
+    var hover = Math.sin(time / 600 + col) > 0.5 ? -u : 0;
+    var by = y + 6*u + hover;
+    // Main fairing outline
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 2*u, by + 2*u, 12*u, 5*u);
+    ctx.fillStyle = BODY_DK;
+    ctx.fillRect(x + 2*u, by + 2*u, 12*u, 4*u);
+    ctx.fillStyle = BODY;
+    ctx.fillRect(x + 2*u, by + 3*u, 12*u, 2*u);
+    ctx.fillStyle = BODY_HI;
+    ctx.fillRect(x + 2*u, by + 2*u, 12*u, u);   // 1u top highlight
+    // Cockpit canopy (8u × 2u)
+    ctx.fillStyle = DARK;
     ctx.fillRect(x + 4*u, by, 8*u, 2*u);
-    ctx.fillStyle = '#80e0e8';
-    ctx.fillRect(x + 4*u, by, 8*u, Math.max(1, u * 0.4));
-    // Twin engine pods at the back
-    ctx.fillStyle = '#080418';
-    ctx.fillRect(x + Math.max(1, u * 0.5), by + 3*u, 2*u, 3*u);
-    ctx.fillRect(x + ts - Math.max(1, u * 2.5), by + 3*u, 2*u, 3*u);
-    // Engine glow
+    ctx.fillStyle = CANOPY;
+    ctx.fillRect(x + 4*u, by, 8*u, 2*u);
+    ctx.fillStyle = CANOPY_HI;
+    ctx.fillRect(x + 4*u, by, 8*u, u);
+    // Engine pods (2u × 3u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + u, by + 3*u, 2*u, 3*u);
+    ctx.fillRect(x + 13*u, by + 3*u, 2*u, 3*u);
+    // Engine glow (1u × 1u)
     var eGlow = 0.8 + Math.sin(time / 150) * 0.2;
     ctx.globalAlpha = eGlow;
     ctx.fillStyle = '#ff80c0';
-    ctx.fillRect(x + Math.max(1, u * 0.7), by + 4*u, Math.max(1, u * 1.6), Math.max(1, u * 1));
-    ctx.fillRect(x + ts - Math.max(1, u * 2.3), by + 4*u, Math.max(1, u * 1.6), Math.max(1, u * 1));
+    ctx.fillRect(x + u, by + 4*u, 2*u, u);
+    ctx.fillRect(x + 13*u, by + 4*u, 2*u, u);
     ctx.globalAlpha = 1;
-    // Highlights on body
-    ctx.fillStyle = '#a040c0';
-    ctx.fillRect(x + 3*u, by + 5*u, ts - 6*u, Math.max(1, u * 0.5));
+    // Accent stripe (1u purple)
+    ctx.fillStyle = ACCENT;
+    ctx.fillRect(x + 3*u, by + 5*u, 10*u, u);
   }
 
   function drawHoloBillboard(ctx, x, y, ts, time, col, row) {
@@ -954,109 +1044,119 @@
     ctx.globalAlpha = 1;
   }
 
+  // Food cart — strict pixel art. 12u × 7u body with 12u × 3u striped
+  // awning, 3u stepped wheels, animated 1u steam. Whole-u rects only.
   function drawFoodCart(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawSidewalk(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Cart body
-    ctx.fillStyle = '#a02050';
-    ctx.fillRect(x + 2*u, y + 5*u, ts - 4*u, 7*u);
-    // Cart trim
-    ctx.fillStyle = '#e040a0';
-    ctx.fillRect(x + 2*u, y + 5*u, ts - 4*u, Math.max(1, u * 0.6));
-    ctx.fillStyle = '#601838';
-    ctx.fillRect(x + 2*u, y + 11*u, ts - 4*u, Math.max(1, u * 0.5));
-    // Wheels
-    ctx.fillStyle = '#1a1a1e';
-    ctx.beginPath();
-    ctx.arc(x + 4*u, y + 13*u, Math.max(1, u * 1.5), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + ts - 4*u, y + 13*u, Math.max(1, u * 1.5), 0, Math.PI * 2);
-    ctx.fill();
-    // Wheel hubs
-    ctx.fillStyle = '#3a3a3a';
-    ctx.beginPath();
-    ctx.arc(x + 4*u, y + 13*u, Math.max(1, u * 0.6), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(x + ts - 4*u, y + 13*u, Math.max(1, u * 0.6), 0, Math.PI * 2);
-    ctx.fill();
-    // Awning / canopy at the top
-    ctx.fillStyle = '#3a1840';
-    ctx.fillRect(x + Math.max(1, u), y + 2*u, ts - 2*u, 3*u);
-    // Stripes on awning
-    ctx.fillStyle = '#7030a0';
-    var stripeW = (ts - 2*u) / 5;
-    for (var s = 0; s < 5; s += 2) {
-      ctx.fillRect(x + u + s * stripeW, y + 2*u, stripeW, 3*u);
+    var DARK = '#180a18';
+    var CART = '#a02050';
+    var CART_HI = '#e040a0';
+    var CART_SH = '#601838';
+    var WHEEL = '#1a1a1e';
+    var HUB = '#3a3a3a';
+    var STRIPE_A = '#3a1840';
+    var STRIPE_B = '#7030a0';
+    // Cart body (12u × 7u with outline)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 2*u, y + 5*u, 12*u, 7*u);
+    ctx.fillStyle = CART;
+    ctx.fillRect(x + 2*u, y + 5*u, 12*u, 6*u);
+    ctx.fillStyle = CART_HI;
+    ctx.fillRect(x + 2*u, y + 5*u, 12*u, u);
+    ctx.fillStyle = CART_SH;
+    ctx.fillRect(x + 2*u, y + 11*u, 12*u, u);
+    // Counter window (8u × 3u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 4*u, y + 6*u, 8*u, 3*u);
+    // Bowl on counter (3u × 1u)
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + 7*u, y + 8*u, 2*u, u);
+    ctx.fillStyle = '#e0c060';
+    ctx.fillRect(x + 7*u, y + 8*u, 2*u, u);
+    // Awning (12u × 3u, alternating stripes)
+    for (var sIx = 0; sIx < 4; sIx++) {
+      ctx.fillStyle = (sIx % 2 === 0) ? STRIPE_A : STRIPE_B;
+      ctx.fillRect(x + 2*u + sIx * 3*u, y + 2*u, 3*u, 3*u);
     }
-    // Hanging sign — "RAMEN"
-    ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(x + Math.floor(ts * 0.3), y + Math.max(1, u * 0.4), Math.floor(ts * 0.4), Math.max(1, u * 1.4));
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 2*u, y + 5*u, 12*u, u);     // bottom shadow
+    // Wheels — stepped circles (whole-u)
+    var wheels = [4, 12];
+    for (var wi = 0; wi < 2; wi++) {
+      var wx = x + wheels[wi] * u;
+      ctx.fillStyle = WHEEL;
+      ctx.fillRect(wx - u, y + 12*u, 2*u, u);
+      ctx.fillRect(wx - 2*u, y + 13*u, 4*u, 2*u);
+      ctx.fillRect(wx - u, y + 15*u, 2*u, u);
+      ctx.fillStyle = HUB;
+      ctx.fillRect(wx, y + 13*u, u, 2*u);
+    }
+    // Sign (4u × 1u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 6*u, y, 4*u, u);
     ctx.fillStyle = '#ffe080';
-    ctx.fillRect(x + Math.floor(ts * 0.35), y + Math.max(1, u * 0.6), Math.floor(ts * 0.3), Math.max(1, u));
-    // Steam rising (animated)
-    for (var st = 0; st < 3; st++) {
-      var stY = y + ((time / 100 + st * 6) % 6) * u;
-      ctx.globalAlpha = 0.5 - (st * 0.15);
+    ctx.fillRect(x + 6*u, y, 4*u, u);
+    // Steam (1u animated)
+    for (var stIx = 0; stIx < 3; stIx++) {
+      var stY = y + ((Math.floor(time / 200) + stIx * 6) % 6) * u;
+      ctx.globalAlpha = 0.6 - (stIx * 0.15);
       ctx.fillStyle = '#e0e0e0';
-      ctx.fillRect(x + 6*u + st * u, stY, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+      ctx.fillRect(x + 7*u + stIx * u, stY, u, u);
     }
     ctx.globalAlpha = 1;
-    // Counter / window opening with bowl
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(x + 3*u, y + 6*u, ts - 6*u, 3*u);
-    ctx.fillStyle = '#a08040';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + 8*u, Math.max(1, u * 1.4), Math.max(1, u * 0.5), 0, 0, Math.PI * 2);
-    ctx.fill();
   }
 
+  // Trash can — strict pixel art. 8u × 8u body with 1u left highlight,
+  // 10u × 1u lid. Whole-u rects only.
   function drawTrashCan(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     drawSidewalk(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Can body — gradient cylinder
-    ctx.fillStyle = '#3a3a3a';
+    var DARK = '#0a0a0e';
+    var BODY = '#3a3a3a';
+    var BODY_HI = '#5a5a5a';
+    var BODY_SH = '#1a1a1e';
+    // Body (8u × 8u, with outline)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 4*u, y + 5*u, 8*u, 9*u);
+    ctx.fillStyle = BODY;
     ctx.fillRect(x + 4*u, y + 5*u, 8*u, 8*u);
-    // Highlight
-    ctx.fillStyle = '#5a5a5a';
-    ctx.fillRect(x + 4*u, y + 5*u, Math.max(1, u * 0.5), 8*u);
-    // Lid
-    ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(x + 3*u, y + 4*u, 10*u, Math.max(1, u * 1.2));
-    ctx.fillStyle = '#3a3a3a';
-    ctx.fillRect(x + 3*u, y + 4*u, 10*u, Math.max(1, u * 0.4));
-    // Open lid handle
-    ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(x + Math.floor(ts/2) - Math.max(1, u * 0.5), y + 3*u, Math.max(1, u), Math.max(1, u));
-    // Recycle/holo logo
+    ctx.fillStyle = BODY_HI;
+    ctx.fillRect(x + 4*u, y + 5*u, u, 8*u);   // 1u left highlight
+    ctx.fillStyle = BODY_SH;
+    ctx.fillRect(x + 11*u, y + 5*u, u, 8*u);  // 1u right shadow
+    // Vertical seams (1u dark)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 7*u, y + 5*u, u, 8*u);
+    // Lid (10u × 1u with outline)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 3*u, y + 4*u, 10*u, 2*u);
+    ctx.fillStyle = BODY;
+    ctx.fillRect(x + 3*u, y + 4*u, 10*u, u);
+    // Lid handle (1u)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 7*u, y + 3*u, 2*u, u);
+    // Recycle logo (3u × 3u stepped)
     ctx.fillStyle = '#40e080';
-    ctx.beginPath();
-    ctx.arc(x + ts/2, y + 8*u, Math.max(1, u * 0.8), 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(x + 7*u, y + 8*u, 2*u, 2*u);
     ctx.fillStyle = '#1a3a1a';
-    ctx.fillRect(x + ts/2 - Math.max(1, u * 0.3), y + 8*u - Math.max(1, u * 0.3), Math.max(1, u * 0.6), Math.max(1, u * 0.6));
-    // Floor shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + 14*u, 5*u, Math.max(1, u * 0.7), 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(x + 7*u, y + 8*u, u, u);
+    // Shadow (1u)
+    ctx.fillStyle = '#0a080e';
+    ctx.fillRect(x + 4*u, y + 14*u, 8*u, u);
   }
 
+  // Crosswalk — strict pixel art. Vertical 2u-wide white stripes.
   function drawCrosswalk(ctx, x, y, ts, time, col, row) {
     drawSidewalk(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Stripes
-    var stripes = 5;
-    var stripeW = ts / stripes;
-    for (var i = 0; i < stripes; i++) {
-      if (i % 2 === 0) {
-        ctx.fillStyle = '#d0d0d0';
-        ctx.fillRect(x + i * stripeW, y, stripeW * 0.8, ts);
-      }
-    }
+    ctx.fillStyle = '#d0d0d0';
+    ctx.fillRect(x, y, 2*u, ts);
+    ctx.fillRect(x + 4*u, y, 2*u, ts);
+    ctx.fillRect(x + 8*u, y, 2*u, ts);
+    ctx.fillRect(x + 12*u, y, 2*u, ts);
   }
 
   function drawShopWindow(ctx, x, y, ts, time, col, row) {
@@ -1105,34 +1205,41 @@
     ctx.fillRect(x + 2*u, y + 3*u, Math.max(1, u * 1.2), Math.floor(ts * 0.42));
   }
 
+  // Traffic cone — strict pixel art. Stepped pyramid silhouette + 1u
+  // white stripe + 6u × 1u base. Whole-u rects only.
   function drawTrafficCone(ctx, x, y, ts, time, col, row) {
     drawSidewalk(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
-    // Cone body
-    ctx.fillStyle = '#e08030';
-    ctx.beginPath();
-    ctx.moveTo(x + ts/2, y + 5*u);
-    ctx.lineTo(x + ts/2 + 3*u, y + 13*u);
-    ctx.lineTo(x + ts/2 - 3*u, y + 13*u);
-    ctx.closePath();
-    ctx.fill();
-    // White stripe
-    ctx.fillStyle = '#f0f0f0';
-    ctx.beginPath();
-    ctx.moveTo(x + ts/2 - Math.max(1, u * 1.5), y + 9*u);
-    ctx.lineTo(x + ts/2 + Math.max(1, u * 1.5), y + 9*u);
-    ctx.lineTo(x + ts/2 + Math.max(1, u * 1.7), y + 10*u);
-    ctx.lineTo(x + ts/2 - Math.max(1, u * 1.7), y + 10*u);
-    ctx.closePath();
-    ctx.fill();
-    // Base
-    ctx.fillStyle = '#1a1a1e';
-    ctx.beginPath();
-    ctx.ellipse(x + ts/2, y + 13*u, 4*u, Math.max(1, u * 0.8), 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Highlight
-    ctx.fillStyle = '#ffa050';
-    ctx.fillRect(x + ts/2 - Math.max(1, u * 0.3), y + 6*u, Math.max(1, u * 0.6), 3*u);
+    var DARK = '#3a1810';
+    var ORANGE = '#e08030';
+    var ORANGE_HI = '#ffa050';
+    var WHITE = '#f0f0f0';
+    var BASE = '#1a1a1e';
+    // Stepped cone (whole-u: 2u, 4u, 6u tall stack)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 7*u, y + 5*u, 2*u, 8*u);
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, 6*u);
+    ctx.fillRect(x + 5*u, y + 11*u, 6*u, 2*u);
+    ctx.fillStyle = ORANGE;
+    ctx.fillRect(x + 7*u, y + 5*u, 2*u, 7*u);
+    ctx.fillRect(x + 6*u, y + 7*u, 4*u, 5*u);
+    ctx.fillRect(x + 5*u, y + 11*u, 6*u, u);
+    // 1u top highlight
+    ctx.fillStyle = ORANGE_HI;
+    ctx.fillRect(x + 7*u, y + 5*u, u, 7*u);
+    ctx.fillRect(x + 6*u, y + 7*u, u, 5*u);
+    ctx.fillRect(x + 5*u, y + 11*u, u, u);
+    // White stripe (1u high band, hard-edged)
+    ctx.fillStyle = WHITE;
+    ctx.fillRect(x + 6*u, y + 9*u, 4*u, u);
+    // Base (8u × 1u)
+    ctx.fillStyle = BASE;
+    ctx.fillRect(x + 4*u, y + 13*u, 8*u, u);
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(x + 4*u, y + 13*u, 8*u, u);
+    // Shadow under (1u)
+    ctx.fillStyle = '#0a080e';
+    ctx.fillRect(x + 4*u, y + 14*u, 8*u, u);
   }
 
   BridgeWorld.registerTileset('arcadia', {
