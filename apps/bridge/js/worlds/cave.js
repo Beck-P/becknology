@@ -139,21 +139,50 @@
   }
 
   function drawCaveEntrance(ctx, x, y, ts, time, col, row) {
-    drawCaveFloor(ctx, x, y, ts, time, col, row);
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Stone steps leading up (back to ship)
+    // Floor base
+    drawCaveFloor(ctx, x, y, ts, time, col, row);
+    // Cave-mouth arch back to the surface — a bright opening framed by rock
+    ctx.fillStyle = '#1a0808';
+    ctx.beginPath();
+    ctx.moveTo(x + 2*u, y + ts - 2*u);
+    ctx.lineTo(x + 2*u, y + 4*u);
+    ctx.quadraticCurveTo(x + ts/2, y, x + ts - 2*u, y + 4*u);
+    ctx.lineTo(x + ts - 2*u, y + ts - 2*u);
+    ctx.closePath();
+    ctx.fill();
+    // Daylight inside the arch (the way out)
+    var pulse = 0.7 + Math.sin(time / 1500) * 0.15;
+    ctx.fillStyle = '#3a2818';
+    ctx.beginPath();
+    ctx.moveTo(x + 3*u, y + ts - 3*u);
+    ctx.lineTo(x + 3*u, y + 5*u);
+    ctx.quadraticCurveTo(x + ts/2, y + 2*u, x + ts - 3*u, y + 5*u);
+    ctx.lineTo(x + ts - 3*u, y + ts - 3*u);
+    ctx.closePath();
+    ctx.fill();
+    // Light leaking down the steps
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.45;
+    var grad = ctx.createRadialGradient(x + ts/2, y + 5*u, 0, x + ts/2, y + 5*u, ts * 0.9);
+    grad.addColorStop(0, 'rgba(255,210,140,0.7)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.3, y - ts*0.3, ts * 1.6, ts * 1.6);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    // Stone steps leading UP into the arch
+    var stepW1 = ts - 6*u, stepW2 = ts - 8*u, stepW3 = ts - 10*u;
     ctx.fillStyle = '#3a1a14';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, 3*u);
+    ctx.fillRect(x + 3*u, y + 8*u, stepW1, Math.max(1, u * 1.2));
+    ctx.fillRect(x + 4*u, y + 11*u, stepW2, Math.max(1, u * 1.2));
+    ctx.fillRect(x + 5*u, y + ts - 2*u, stepW3, Math.max(1, u * 1.2));
+    // Step highlights
     ctx.fillStyle = '#5a2818';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.max(1, u * 0.6));
-    ctx.fillStyle = '#3a1a14';
-    ctx.fillRect(x + 3*u, y + 6*u, ts - 6*u, 3*u);
-    ctx.fillStyle = '#5a2818';
-    ctx.fillRect(x + 3*u, y + 6*u, ts - 6*u, Math.max(1, u * 0.6));
-    ctx.fillStyle = '#3a1a14';
-    ctx.fillRect(x + 4*u, y + 10*u, ts - 8*u, 3*u);
-    ctx.fillStyle = '#5a2818';
-    ctx.fillRect(x + 4*u, y + 10*u, ts - 8*u, Math.max(1, u * 0.6));
+    ctx.fillRect(x + 3*u, y + 8*u, stepW1, Math.max(1, u * 0.4));
+    ctx.fillRect(x + 4*u, y + 11*u, stepW2, Math.max(1, u * 0.4));
+    ctx.fillRect(x + 5*u, y + ts - 2*u, stepW3, Math.max(1, u * 0.4));
   }
 
   function drawTreasure(ctx, x, y, ts, time, col, row) {

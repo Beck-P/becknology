@@ -913,6 +913,116 @@
     ctx.fillRect(x + 9*u, y + 14*u, 4*u, u);
   }
 
+  // ---- Door / entrance tiles for buildings, towers, and caves ----
+
+  // Wooden tavern door embedded in a saltstone wall — warm interior glow
+  // leaks out, brass knob, iron hinges. Reads as "you can go in here."
+  function drawTavernEntrance(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    // Saltstone wall context behind the door
+    drawSaltstoneWall(ctx, x, y, ts, time, col, row);
+    // Stone arch frame
+    ctx.fillStyle = '#0e1212';
+    ctx.fillRect(x + Math.max(1, u), y + Math.max(1, u * 1.2), ts - 2*u, ts - Math.max(1, u * 1.5));
+    // Wooden door panel
+    var dx = x + 2*u, dy = y + 2*u;
+    var dw = ts - 4*u, dh = ts - 3*u;
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(dx, dy, dw, dh);
+    // Wood grain — vertical planks
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(dx + Math.floor(dw * 0.33), dy, Math.max(1, u * 0.5), dh);
+    ctx.fillRect(dx + Math.floor(dw * 0.66), dy, Math.max(1, u * 0.5), dh);
+    // Top highlight
+    ctx.fillStyle = '#7a4e22';
+    ctx.fillRect(dx, dy, dw, Math.max(1, u * 0.5));
+    // Iron strap top + bottom
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(dx, dy + Math.max(1, u * 1.5), dw, Math.max(1, u * 0.7));
+    ctx.fillRect(dx, dy + dh - Math.max(1, u * 2), dw, Math.max(1, u * 0.7));
+    // Hinges
+    ctx.fillRect(dx, dy + 2*u, Math.max(1, u * 1.2), Math.max(1, u * 0.8));
+    ctx.fillRect(dx, dy + dh - 3*u, Math.max(1, u * 1.2), Math.max(1, u * 0.8));
+    // Brass doorknob
+    var knobX = dx + dw - 3*u;
+    var knobY = dy + Math.floor(dh * 0.55);
+    ctx.fillStyle = '#a08040';
+    ctx.beginPath();
+    ctx.arc(knobX + u*0.5, knobY + u*0.5, Math.max(1, u * 0.7), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e0c060';
+    ctx.fillRect(knobX, knobY - Math.max(1, u * 0.2), Math.max(1, u * 0.5), Math.max(1, u * 0.5));
+    // Warm glow leaking from inside the tavern
+    var pulse = 0.6 + Math.sin(time / 1100 + col + row) * 0.2;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.45;
+    var grad = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts * 1.2);
+    grad.addColorStop(0, 'rgba(255,180,90,0.7)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.5, y - ts*0.5, ts * 2, ts * 2);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    // Hanging tavern sign above (small wood plaque)
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + Math.floor(ts * 0.3), y + Math.max(1, u * 0.4), Math.floor(ts * 0.4), Math.max(1, u * 1.2));
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + Math.floor(ts * 0.45), y + Math.max(1, u * 0.6), Math.max(1, u * 0.5), Math.max(1, u * 0.8));
+  }
+
+  // Cave entrance — dark archway in a saltstone cliff with glowing red eyes
+  // (lava reflection) inside the maw.
+  function drawCaveEntranceWall(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    drawSaltstoneWall(ctx, x, y, ts, time, col, row);
+    // Stone arch
+    ctx.fillStyle = '#0a0408';
+    ctx.beginPath();
+    ctx.moveTo(x + 2*u, y + ts - u);
+    ctx.lineTo(x + 2*u, y + 5*u);
+    ctx.quadraticCurveTo(x + ts/2, y + Math.max(1, u * 0.8), x + ts - 2*u, y + 5*u);
+    ctx.lineTo(x + ts - 2*u, y + ts - u);
+    ctx.closePath();
+    ctx.fill();
+    // Inner darkness (slightly darker pit)
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.moveTo(x + 3*u, y + ts - 2*u);
+    ctx.lineTo(x + 3*u, y + 6*u);
+    ctx.quadraticCurveTo(x + ts/2, y + 2*u, x + ts - 3*u, y + 6*u);
+    ctx.lineTo(x + ts - 3*u, y + ts - 2*u);
+    ctx.closePath();
+    ctx.fill();
+    // Lava glow from deep inside
+    var pulse = 0.5 + Math.sin(time / 700 + col) * 0.3;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.45;
+    var grad = ctx.createRadialGradient(x + ts/2, y + ts*0.7, 0, x + ts/2, y + ts*0.7, ts * 0.9);
+    grad.addColorStop(0, 'rgba(255,80,30,0.85)');
+    grad.addColorStop(0.5, 'rgba(180,40,20,0.4)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.5, y - ts*0.5, ts * 2, ts * 2);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    // Stalactite hint at top of arch
+    ctx.fillStyle = '#1a0a0a';
+    ctx.beginPath();
+    ctx.moveTo(x + Math.floor(ts * 0.4), y + 4*u);
+    ctx.lineTo(x + Math.floor(ts * 0.5), y + 6*u);
+    ctx.lineTo(x + Math.floor(ts * 0.45), y + 4*u);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + Math.floor(ts * 0.6), y + 4*u);
+    ctx.lineTo(x + Math.floor(ts * 0.55), y + 6*u);
+    ctx.lineTo(x + Math.floor(ts * 0.65), y + 4*u);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   BridgeWorld.registerTileset('lumar', {
     1: drawSaltstoneWall,
     2: drawSaltstoneFloor,
@@ -937,7 +1047,9 @@
     22: drawCrystal,
     23: drawMarketStall,
     24: drawWantedPoster,
-    25: drawNpc
+    25: drawNpc,
+    26: drawTavernEntrance,
+    27: drawCaveEntranceWall
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);

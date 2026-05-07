@@ -51,20 +51,51 @@
   }
 
   function drawTowerDoor(ctx, x, y, ts, time, col, row) {
-    drawTowerFloor(ctx, x, y, ts, time, col, row);
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Wooden door inset on the floor
+    // Floor at the bottom (where the player stands)
+    drawTowerFloor(ctx, x, y, ts, time, col, row);
+    // Stone wall arch behind the door (top portion)
+    ctx.fillStyle = '#0e0820';
+    ctx.fillRect(x, y, ts, Math.floor(ts * 0.65));
+    ctx.fillStyle = '#1a1430';
+    ctx.fillRect(x + Math.max(1, u), y + Math.max(1, u), ts - 2*u, Math.floor(ts * 0.6));
+    // Heavy iron-banded oak door
+    var dx = x + 2*u, dy = y + 2*u;
+    var dw = ts - 4*u, dh = Math.floor(ts * 0.55);
     ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, ts - 4*u);
+    ctx.fillRect(dx, dy, dw, dh);
     ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.max(1, u * 0.6));
-    // Iron straps
+    ctx.fillRect(dx + Math.max(1, u * 0.5), dy + Math.max(1, u * 0.5), dw - u, dh - u);
+    // Vertical planks
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(dx + Math.floor(dw * 0.5), dy, Math.max(1, u * 0.5), dh);
+    // Iron rivets on straps
     ctx.fillStyle = '#1a1a1e';
-    ctx.fillRect(x + 2*u, y + 5*u, ts - 4*u, Math.max(1, u * 0.6));
-    ctx.fillRect(x + 2*u, y + 11*u, ts - 4*u, Math.max(1, u * 0.6));
-    // Doorknob
-    ctx.fillStyle = '#a08040';
-    ctx.fillRect(x + ts - 5*u, y + 8*u, Math.max(1, u * 1.2), Math.max(1, u * 1.2));
+    ctx.fillRect(dx, dy + 2*u, dw, Math.max(1, u * 0.7));
+    ctx.fillRect(dx, dy + dh - 3*u, dw, Math.max(1, u * 0.7));
+    ctx.fillStyle = '#3a3a3a';
+    ctx.fillRect(dx + Math.max(1, u * 0.5), dy + 2*u, Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    ctx.fillRect(dx + dw - Math.max(1, u * 1), dy + 2*u, Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    ctx.fillRect(dx + Math.max(1, u * 0.5), dy + dh - 3*u, Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    ctx.fillRect(dx + dw - Math.max(1, u * 1), dy + dh - 3*u, Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    // Big iron pull-ring on the door
+    ctx.strokeStyle = '#3a3a3a';
+    ctx.lineWidth = Math.max(1, u * 0.6);
+    ctx.beginPath();
+    ctx.arc(dx + dw - 3*u, dy + Math.floor(dh * 0.55), Math.max(1, u * 1.1), 0, Math.PI * 2);
+    ctx.stroke();
+    // Magic wisp / EXIT sign above the door (subtle purple glow)
+    var pulse = 0.5 + Math.sin(time / 800) * 0.3;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.5;
+    var grad = ctx.createRadialGradient(x + ts/2, y + Math.floor(ts * 0.2), 0, x + ts/2, y + Math.floor(ts * 0.2), ts * 0.5);
+    grad.addColorStop(0, 'rgba(160,100,240,0.7)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.5, y - ts*0.5, ts * 2, ts);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
   }
 
   function drawCrystalAltar(ctx, x, y, ts, time, col, row) {

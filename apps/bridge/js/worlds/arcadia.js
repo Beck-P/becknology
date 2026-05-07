@@ -294,11 +294,71 @@
     ctx.fillRect(x, y + Math.floor(ts * 0.55), ts, ts - Math.floor(ts * 0.55));
   }
 
-  function drawEntrance(ctx, x, y, ts) {
-    drawFloor(ctx, x, y, ts);
+  function drawEntrance(ctx, x, y, ts, time, col, row) {
+    drawFloor(ctx, x, y, ts, time, col, row);
+    var u = ts / 16;
+    // A simple threshold/doormat (the entrance tiles are walkable foyer)
     ctx.fillStyle = '#4a4268';
-    ctx.fillRect(x, y, ts, Math.max(1, ts / 16));
-    ctx.fillRect(x, y + ts - Math.max(1, ts / 16), ts, Math.max(1, ts / 16));
+    ctx.fillRect(x, y, ts, Math.max(1, u));
+    ctx.fillRect(x, y + ts - Math.max(1, u), ts, Math.max(1, u));
+  }
+
+  // Proper closed-door tile — used at the arcade's street facade entrance
+  // and at the side exit of the arcade interior.
+  function drawArcadeDoor(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    // Stone / wall-dark base behind
+    ctx.fillStyle = '#1e1835';
+    ctx.fillRect(x, y, ts, ts);
+    // Stone frame around door
+    ctx.fillStyle = '#15102a';
+    ctx.fillRect(x, y, ts, Math.max(1, u * 0.8));
+    ctx.fillRect(x, y + ts - Math.max(1, u * 0.8), ts, Math.max(1, u * 0.8));
+    ctx.fillRect(x, y, Math.max(1, u * 0.8), ts);
+    ctx.fillRect(x + ts - Math.max(1, u * 0.8), y, Math.max(1, u * 0.8), ts);
+    // Brass kickplate at top of door
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + 2*u, y + u, ts - 4*u, Math.max(1, u * 1.2));
+    // Door panel — vertical wooden door
+    var dx = x + Math.max(1, u * 1.6);
+    var dw = ts - 2 * Math.max(1, u * 1.6);
+    var dy = y + Math.max(1, u * 1.6);
+    var dh = ts - 2 * Math.max(1, u * 1.6);
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(dx, dy, dw, dh);
+    // Vertical wood grain
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(dx + Math.floor(dw * 0.33), dy, Math.max(1, u * 0.5), dh);
+    ctx.fillRect(dx + Math.floor(dw * 0.66), dy, Math.max(1, u * 0.5), dh);
+    // Top highlight
+    ctx.fillStyle = '#7a4e22';
+    ctx.fillRect(dx, dy, dw, Math.max(1, u * 0.5));
+    ctx.fillRect(dx, dy, Math.max(1, u * 0.5), dh);
+    // Iron hinges (left edge)
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(dx, dy + 2*u, Math.max(1, u * 1.2), Math.max(1, u * 0.8));
+    ctx.fillRect(dx, dy + dh - 3*u, Math.max(1, u * 1.2), Math.max(1, u * 0.8));
+    // Doorknob (right side, brass with glow)
+    var knobX = dx + dw - 3*u;
+    var knobY = dy + Math.floor(dh * 0.55);
+    ctx.fillStyle = '#a08040';
+    ctx.beginPath();
+    ctx.arc(knobX + u*0.5, knobY + u*0.5, Math.max(1, u * 0.7), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e0c060';
+    ctx.fillRect(knobX, knobY - Math.max(1, u * 0.3), Math.max(1, u * 0.5), Math.max(1, u * 0.5));
+    // Subtle warm glow leaking through the door (light from inside)
+    var glow = 0.55 + Math.sin(time / 1200 + col + row) * 0.15;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = glow * 0.35;
+    var grad = ctx.createRadialGradient(x + ts/2, y + ts/2, 0, x + ts/2, y + ts/2, ts);
+    grad.addColorStop(0, 'rgba(255,200,120,0.55)');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - ts*0.5, y - ts*0.5, ts * 2, ts * 2);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
   }
 
   function drawFloorDark(ctx, x, y, ts) {
@@ -812,7 +872,8 @@
     17: drawBench,
     18: drawTable,
     19: drawVendingMachine,
-    20: drawNpc
+    20: drawNpc,
+    21: drawArcadeDoor
   });
 
 })();

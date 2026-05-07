@@ -238,20 +238,59 @@
   }
 
   function drawTavernDoor(ctx, x, y, ts, time, col, row) {
-    drawWoodFloor(ctx, x, y, ts, time, col, row);
+    time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    // Doormat
+    // Floor base for the bottom of the tile (player stands at threshold)
+    drawWoodFloor(ctx, x, y, ts, time, col, row);
+    // Wall fragment behind the door (top of tile, where the door is mounted)
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x, y, ts, Math.floor(ts * 0.65));
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + Math.max(1, u), y + Math.max(1, u), ts - 2*u, Math.floor(ts * 0.6));
+    // Stone frame
+    ctx.fillStyle = '#1a1010';
+    ctx.fillRect(x + Math.max(1, u * 1.2), y + Math.max(1, u * 1.2), ts - Math.max(1, u * 2.4), Math.floor(ts * 0.55));
+    // Door panel (vertical wooden door, slightly ajar)
+    var dx = x + 3*u;
+    var dy = y + 2*u;
+    var dw = ts - 6*u;
+    var dh = Math.floor(ts * 0.5);
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(dx, dy, dw, dh);
+    // Wood grain
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(dx + Math.floor(dw * 0.5), dy, Math.max(1, u * 0.5), dh);
+    // Top highlight
+    ctx.fillStyle = '#7a4e22';
+    ctx.fillRect(dx, dy, dw, Math.max(1, u * 0.4));
+    // Iron straps
+    ctx.fillStyle = '#1a1a1e';
+    ctx.fillRect(dx, dy + Math.floor(dh * 0.25), dw, Math.max(1, u * 0.6));
+    ctx.fillRect(dx, dy + Math.floor(dh * 0.75), dw, Math.max(1, u * 0.6));
+    // Doorknob (right)
+    ctx.fillStyle = '#a08040';
+    ctx.beginPath();
+    ctx.arc(dx + dw - 2*u, dy + Math.floor(dh * 0.55), Math.max(1, u * 0.7), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e0c060';
+    ctx.fillRect(dx + dw - 2*u - Math.max(1, u * 0.3), dy + Math.floor(dh * 0.5), Math.max(1, u * 0.4), Math.max(1, u * 0.4));
+    // Doormat in front of the door (lower portion of tile)
+    var matY = y + Math.floor(ts * 0.7);
     ctx.fillStyle = '#704030';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, ts - 4*u);
+    ctx.fillRect(x + 2*u, matY, ts - 4*u, ts - matY + y - u);
     ctx.fillStyle = '#603020';
-    ctx.fillRect(x + 2*u, y + 2*u, ts - 4*u, Math.max(1, u * 0.5));
-    ctx.fillRect(x + 2*u, y + ts - 3*u, ts - 4*u, Math.max(1, u * 0.5));
+    ctx.fillRect(x + 2*u, matY, ts - 4*u, Math.max(1, u * 0.4));
     // Mat fringe
     ctx.fillStyle = '#502818';
     for (var fx = 0; fx < 6; fx++) {
-      ctx.fillRect(x + (3 + fx*2)*u, y + Math.max(1, u * 1.4), Math.max(1, u * 0.5), Math.max(1, u * 0.6));
-      ctx.fillRect(x + (3 + fx*2)*u, y + ts - 2*u, Math.max(1, u * 0.5), Math.max(1, u * 0.6));
+      ctx.fillRect(x + (3 + fx * 2) * u, matY + Math.max(1, u * 0.4), Math.max(1, u * 0.5), Math.max(1, u * 0.5));
     }
+    // EXIT sign hint above door
+    var glow = 0.6 + Math.sin(time / 700) * 0.2;
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = '#40e080';
+    ctx.fillRect(x + Math.floor(ts * 0.4), y + Math.max(1, u * 0.4), Math.floor(ts * 0.2), Math.max(1, u * 0.6));
+    ctx.globalAlpha = 1;
   }
 
   function drawBartender(ctx, x, y, ts, time, col, row) {
