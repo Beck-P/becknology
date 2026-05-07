@@ -33,10 +33,12 @@
     "19": "#3a3020",
     "20": "#c0c8c0",
     "21": "#2a2a28",
-    "22": "#606058",
+    "22": "#c0a0b0",
     "23": "#3a3020",
     "24": "#1a1e20",
-    "25": "#252a28"
+    "25": "#252a28",
+    "38": "#3a3a3a",
+    "32": "#5a3a1a"
   },
   "tileNames": {
     "0": "void",
@@ -63,7 +65,9 @@
     "22": "crystal",
     "23": "market_stall",
     "24": "wanted_poster",
-    "25": "npc"
+    "25": "npc",
+    "38": "lantern_post",
+    "32": "fishing_net"
   },
   "tiles": [
     [
@@ -180,7 +184,7 @@
       15,
       15,
       21,
-      2,
+      22,
       2,
       2,
       2,
@@ -220,7 +224,7 @@
       2,
       2,
       2,
-      2,
+      38,
       2,
       22,
       15,
@@ -434,7 +438,7 @@
       1,
       1,
       1,
-      0,
+      1,
       0,
       0,
       0,
@@ -474,7 +478,7 @@
       0,
       0,
       0,
-      0,
+      1,
       0,
       1,
       1,
@@ -630,11 +634,35 @@
     },
     {
       "x": 5,
-      "y": 4,
+      "y": 6,
       "type": "dialog",
-      "label": "CRYSTAL",
+      "label": "ROSE CRYSTAL",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "PINK CRYSTALS GROW\\nFROM THE STONE LIKE FLOWERS.\\n\\nTHEY HUM SOFTLY WHEN\\nTHE TIDE COMES IN."
+    },
+    {
+      "x": 9,
+      "y": 8,
+      "type": "dialog",
+      "label": "ROSE LANTERN",
       "prompt": "PRESS E TO EXAMINE",
-      "dialog": "A CLUSTER OF ROSEITE CRYSTAL.\\nSOFT PINK. ALMOST BEAUTIFUL.\\n\\nUNTIL YOU REMEMBER\\nWHAT MADE IT GROW."
+      "dialog": "PINK FLAME, FAINTLY MUSICAL.\\n\\nIT'S SAID THESE LANTERNS\\nKEEP DREAMS QUIET."
+    },
+    {
+      "x": 7,
+      "y": 6,
+      "type": "dialog",
+      "label": "ABANDONED VIAL",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "A SMALL EMPTY VIAL.\\n\\nROSE PETALS PRESERVED\\nIN GLASS. STOPPER\\nLOST LONG AGO."
+    },
+    {
+      "x": 6,
+      "y": 8,
+      "type": "dialog",
+      "label": "WIND CHIMES",
+      "prompt": "PRESS E TO LISTEN",
+      "dialog": "SHELL CHIMES CLATTER\\nIN THE BREEZE.\\n\\nA SLOW MELODY YOU\\nALMOST RECOGNIZE."
     }
   ],
   "moonColor": [

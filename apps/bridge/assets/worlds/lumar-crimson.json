@@ -35,9 +35,13 @@
     "21": "#2a2a28",
     "22": "#606058",
     "23": "#3a3020",
-    "24": "#1a1e20",
+    "24": "#8a7a60",
     "25": "#252a28",
-    "27": "#1a0808"
+    "27": "#1a0808",
+    "30": "#3a4848",
+    "32": "#5a3a1a",
+    "33": "#3a2410",
+    "38": "#3a3a3a"
   },
   "tileNames": {
     "0": "void",
@@ -65,7 +69,11 @@
     "23": "market_stall",
     "24": "wanted_poster",
     "25": "npc",
-    "27": "cave_entrance"
+    "27": "cave_entrance",
+    "30": "fountain",
+    "32": "fishing_net",
+    "33": "crab_trap",
+    "38": "lantern_post"
   },
   "tiles": [
     [
@@ -164,7 +172,7 @@
       13,
       13,
       21,
-      2,
+      38,
       2,
       2,
       2,
@@ -418,7 +426,7 @@
       1,
       1,
       1,
-      0,
+      1,
       0,
       0,
       0,
@@ -637,6 +645,30 @@
       "label": "WARNING",
       "prompt": "PRESS E TO READ",
       "dialog": "WEATHERED SIGN:\\n\\n\"BEYOND THIS POINT \u2014\\nDRAGON'S CAVE.\\nENTER WITH RESPECT.\""
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "type": "dialog",
+      "label": "PIRATE'S LANTERN",
+      "prompt": "PRESS E TO EXAMINE",
+      "dialog": "AN OLD LANTERN CARVED\\nWITH SKULL MARKS.\\n\\n\"FOR THOSE WHO LIGHT THEIR\\nOWN WAY HOME.\""
+    },
+    {
+      "x": 9,
+      "y": 7,
+      "type": "dialog",
+      "label": "CHARCOAL MARK",
+      "prompt": "PRESS E TO READ",
+      "dialog": "CHARCOAL ON STONE:\\n\\n\"DOWN THE STAIRS, BEAR\\nLEFT, MIND THE LAVA.\\n\u2014 H.M.\""
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "type": "dialog",
+      "label": "OLD ROPE",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "FRAYED MOORING ROPE.\\n\\nSCORCH MARKS ALONG\\nONE END. SOMETHING\\nBURNED IT."
     }
   ],
   "moonColor": [

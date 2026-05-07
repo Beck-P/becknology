@@ -33,10 +33,14 @@
     "19": "#3a3020",
     "20": "#c0c8c0",
     "21": "#2a2a28",
-    "22": "#606058",
+    "22": "#a0a098",
     "23": "#3a3020",
     "24": "#1a1e20",
-    "25": "#252a28"
+    "25": "#252a28",
+    "30": "#3a4848",
+    "32": "#5a3a1a",
+    "33": "#3a2410",
+    "38": "#3a3a3a"
   },
   "tileNames": {
     "0": "void",
@@ -63,7 +67,11 @@
     "22": "crystal",
     "23": "market_stall",
     "24": "wanted_poster",
-    "25": "npc"
+    "25": "npc",
+    "30": "fountain",
+    "32": "fishing_net",
+    "33": "crab_trap",
+    "38": "lantern_post"
   },
   "tiles": [
     [
@@ -162,7 +170,7 @@
       14,
       21,
       2,
-      2,
+      38,
       2,
       2,
       2,
@@ -217,7 +225,7 @@
       21,
       2,
       2,
-      2,
+      22,
       2,
       2,
       25,
@@ -416,7 +424,7 @@
       1,
       1,
       0,
-      0,
+      1,
       0,
       0,
       0,
@@ -471,7 +479,7 @@
       1,
       0,
       0,
-      0,
+      1,
       0,
       0,
       1,
@@ -643,6 +651,38 @@
       "label": "STALL",
       "prompt": "PRESS E TO BROWSE",
       "dialog": "RARE IMPORTS:\\n\\nVERDANT VINE ROPE..12 SILVER\\nROSEITE PATCHES....20 SILVER\\nCRIMSON BLADES.....50 SILVER\\n\\n\"QUALITY GUARANTEED.\\nSURVIVAL NOT GUARANTEED.\""
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "type": "dialog",
+      "label": "BLUE FLAME LANTERN",
+      "prompt": "PRESS E TO EXAMINE",
+      "dialog": "THIS LANTERN BURNS BLUE.\\n\\nA SAILOR'S TRICK FOR\\nSAPPHIRE WATERS \u2014 BLUE\\nFLAME IS HARDER TO SEE\\nFROM AFAR."
+    },
+    {
+      "x": 6,
+      "y": 8,
+      "type": "dialog",
+      "label": "SAPPHIRE CRYSTAL",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "DEEP BLUE CRYSTALS\\nLINE THE SHORE.\\n\\nTRADERS PAY 200 SILVER\\nFOR ONE OF THESE."
+    },
+    {
+      "x": 8,
+      "y": 7,
+      "type": "dialog",
+      "label": "MORNING TIDE",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "THE SAPPHIRE TIDE\\nROLLS IN PEACEFULLY.\\n\\nSOMETHING SILVERY\\nDARTS AWAY."
+    },
+    {
+      "x": 4,
+      "y": 4,
+      "type": "dialog",
+      "label": "TRADER'S NOTE",
+      "prompt": "PRESS E TO READ",
+      "dialog": "PINNED PAPER:\\n\\n\"IF YOU FIND THE BLUE\\nGLASS \u2014 IT'S MINE.\\n\u2014 ZEPHYR T.\""
     }
   ],
   "moonColor": [

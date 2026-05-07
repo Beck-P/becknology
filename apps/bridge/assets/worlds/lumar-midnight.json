@@ -31,12 +31,13 @@
     "16": "#0a0a10",
     "18": "#1a1e20",
     "19": "#3a3020",
-    "20": "#c0c8c0",
+    "20": "#404848",
     "21": "#2a2a28",
-    "22": "#606058",
+    "22": "#5a4868",
     "23": "#3a3020",
     "24": "#1a1e20",
-    "25": "#252a28"
+    "25": "#252a28",
+    "38": "#3a3a3a"
   },
   "tileNames": {
     "0": "void",
@@ -63,7 +64,8 @@
     "22": "crystal",
     "23": "market_stall",
     "24": "wanted_poster",
-    "25": "npc"
+    "25": "npc",
+    "38": "lantern_post"
   },
   "tiles": [
     [
@@ -198,7 +200,7 @@
       16,
       21,
       2,
-      2,
+      38,
       2,
       1,
       1,
@@ -237,7 +239,7 @@
       2,
       2,
       2,
-      2,
+      22,
       2,
       2,
       2,
@@ -488,7 +490,7 @@
       1,
       1,
       0,
-      0,
+      1,
       0,
       1,
       1,
@@ -527,7 +529,7 @@
       0,
       0,
       0,
-      0,
+      1,
       0,
       0,
       0,
@@ -698,6 +700,38 @@
       "label": "???",
       "prompt": "PRESS E TO READ",
       "dialog": "WORN STONE INSCRIPTION:\\n\\n\"BENEATH THE MIDNIGHT WAVE\\nTHE TOWER WAITS, AWAKE.\""
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "type": "dialog",
+      "label": "VOID LANTERN",
+      "prompt": "PRESS E TO EXAMINE",
+      "dialog": "THE FLAME BURNS DARK.\\n\\nIT GIVES OFF NO LIGHT,\\nONLY... ATTENTION.\\nYOU FEEL WATCHED."
+    },
+    {
+      "x": 8,
+      "y": 9,
+      "type": "dialog",
+      "label": "MIDNIGHT CRYSTAL",
+      "prompt": "PRESS E TO TOUCH",
+      "dialog": "BLACK CRYSTAL, INDIGO\\nINSIDE.\\n\\nWHEN YOU LOOK AT IT,\\nIT REFLECTS A FACE\\nTHAT ISN'T YOURS."
+    },
+    {
+      "x": 10,
+      "y": 7,
+      "type": "dialog",
+      "label": "WIND FROM THE TOWER",
+      "prompt": "PRESS E TO FEEL",
+      "dialog": "COLD WIND FROM THE TOWER.\\n\\nIT CARRIES A WHISPER:\\n'CLIMB. CLIMB. CLIMB.'"
+    },
+    {
+      "x": 4,
+      "y": 10,
+      "type": "dialog",
+      "label": "MOORED BOAT",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "AN EMPTY ROWBOAT.\\n\\nTHE MOORING ROPE LOOPS\\nINTO THE WATER \u2014\\nBUT GOES NOWHERE."
     }
   ],
   "moonColor": [
