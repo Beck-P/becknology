@@ -7,6 +7,139 @@
  */
 (function () {
 
+  // ---- Building sprite loader ----
+  // Generic helper for multi-tile PNG buildings. Each sprite is anchored at
+  // the bottom-center tile of its footprint and renders extending up and out.
+  var spriteCache = {};
+
+  function chunkify(src, chunkWidth) {
+    var CW = chunkWidth || 96;
+    var aspect = src.width / src.height;
+    var CH = Math.round(CW / aspect);
+    var c = document.createElement('canvas');
+    c.width = CW;
+    c.height = CH;
+    var cx = c.getContext('2d');
+    cx.imageSmoothingEnabled = false;
+    cx.drawImage(src, 0, 0, CW, CH);
+    return c;
+  }
+
+  function loadBuildingSprite(key, path, chunkWidth) {
+    if (spriteCache[key]) return spriteCache[key];
+    var entry = { canvas: null, ready: false };
+    spriteCache[key] = entry;
+    var img = new Image();
+    img.onload = function () {
+      var src = document.createElement('canvas');
+      src.width = img.width;
+      src.height = img.height;
+      var sCtx = src.getContext('2d');
+      sCtx.drawImage(img, 0, 0);
+      try {
+        var data = sCtx.getImageData(0, 0, src.width, src.height);
+        var px = data.data;
+        for (var i = 0; i < px.length; i += 4) {
+          var r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
+          if (a === 0) continue;
+          var maxC = Math.max(r, g, b);
+          var minC = Math.min(r, g, b);
+          var sat = maxC - minC;
+          if (maxC > 230 && sat < 25) {
+            px[i + 3] = 0;
+            continue;
+          }
+          if (a < 230 && maxC > 200 && sat < 40) {
+            px[i + 3] = 0;
+            continue;
+          }
+          if (maxC > 215 && sat < 18 && (r + g + b) > 620) {
+            px[i + 3] = 0;
+          }
+        }
+        sCtx.putImageData(data, 0, 0);
+      } catch (e) { /* CORS — skip */ }
+
+      entry.canvas = chunkify(src, chunkWidth || 96);
+      entry.ready = true;
+    };
+    img.src = path;
+    return entry;
+  }
+
+  loadBuildingSprite('arcade-sign', '/bridge/assets/buildings/arcade-sign.png', 112);
+  loadBuildingSprite('arcadia-shop', '/bridge/assets/buildings/arcadia-shop.png', 104);
+  loadBuildingSprite('neon-ramen-stand', '/bridge/assets/buildings/neon-ramen-stand.png', 92);
+  loadBuildingSprite('holo-billboard-kiosk', '/bridge/assets/buildings/holo-billboard-kiosk.png', 84);
+  loadBuildingSprite('token-kiosk', '/bridge/assets/buildings/token-kiosk.png', 78);
+  loadBuildingSprite('hover-bike-dock', '/bridge/assets/buildings/hover-bike-dock.png', 78);
+
+  function drawBuildingSprite(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX) {
+    var s = spriteCache[key];
+    if (!s || !s.ready) return;
+    var areaW = ts * tilesW;
+    var areaH = ts * tilesH;
+    var destX = x - anchorOffsetX * ts;
+    var destY = y + ts - areaH;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(s.canvas, destX, destY, areaW, areaH);
+  }
+
+  function drawSpriteGlow(ctx, cx, cy, radius, color, alpha) {
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = alpha;
+    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  function drawArcadeSignPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'arcade-sign', 6, 3, 2);
+    var pulse = 0.65 + Math.sin((time || 0) / 600 + (col || 0)) * 0.18;
+    drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.7, ts * 3.5, 'rgba(232,80,200,0.65)', pulse * 0.28);
+  }
+
+  function drawArcadiaShopPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'arcadia-shop', 5, 5, 2);
+    var pulse = 0.6 + Math.sin((time || 0) / 800 + (row || 0)) * 0.15;
+    drawSpriteGlow(ctx, x, y - ts * 1.4, ts * 2.4, 'rgba(232,80,200,0.55)', pulse * 0.22);
+  }
+
+  function drawNeonRamenStandPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'neon-ramen-stand', 4, 4, 2);
+    var u = ts / 16;
+    for (var i = 0; i < 3; i++) {
+      var phase = Math.floor((time || 0) / 180) + i * 3;
+      var rise = (phase % 8) * u;
+      ctx.globalAlpha = 0.45 - i * 0.1;
+      ctx.fillStyle = '#d8d8e8';
+      ctx.fillRect(x - 2*u + i * 3*u, y - 3*ts + 7*u - rise, u, u);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHoloBillboardKioskPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'holo-billboard-kiosk', 3, 4, 1);
+    var pulse = 0.55 + Math.sin((time || 0) / 500 + (col || 0)) * 0.2;
+    drawSpriteGlow(ctx, x, y - ts * 1.5, ts * 2.0, 'rgba(80,220,232,0.6)', pulse * 0.24);
+  }
+
+  function drawTokenKioskPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'token-kiosk', 3, 4, 1);
+    var pulse = 0.55 + Math.sin((time || 0) / 700 + (row || 0)) * 0.2;
+    drawSpriteGlow(ctx, x, y - ts * 1.1, ts * 1.6, 'rgba(255,200,80,0.5)', pulse * 0.18);
+  }
+
+  function drawHoverBikeDockPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'hover-bike-dock', 3, 3, 1);
+    var pulse = 0.7 + Math.sin((time || 0) / 450 + (col || 0)) * 0.18;
+    drawSpriteGlow(ctx, x, y - ts * 0.2, ts * 1.7, 'rgba(160,64,220,0.55)', pulse * 0.26);
+  }
+
   // ---- Tile Draw Functions ----
   // Each receives (ctx, x, y, ts, time, col, row) where ts = rendered tile size
 
@@ -1270,7 +1403,13 @@
     25: drawTrashCan,
     26: drawCrosswalk,
     27: drawShopWindow,
-    28: drawTrafficCone
+    28: drawTrafficCone,
+    29: drawArcadeSignPng,
+    30: drawArcadiaShopPng,
+    31: drawNeonRamenStandPng,
+    32: drawHoloBillboardKioskPng,
+    33: drawTokenKioskPng,
+    34: drawHoverBikeDockPng
   });
 
 })();
