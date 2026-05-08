@@ -1,0 +1,171 @@
+{
+  "name": "Cyber Noodle Bar",
+  "width": 14,
+  "height": 11,
+  "tileSize": 16,
+  "tileset": "cyber-noodle-bar",
+  "spawns": {
+    "player": [7, 8]
+  },
+  "tileColors": {
+    "0": null,
+    "1": "#1a1228",
+    "2": "#1a1830",
+    "3": "#3a2410",
+    "4": "#3a1830",
+    "5": "#404048",
+    "6": "#181030",
+    "7": "#3a1830",
+    "8": "#a01818",
+    "9": "#e8e8f0",
+    "10": "#5cc8d0",
+    "11": "#3a2848",
+    "12": "#3a2410",
+    "13": "#181420",
+    "14": "#e870c0",
+    "15": "#181a40",
+    "16": "#1e2838"
+  },
+  "tileNames": {
+    "0": "void",
+    "1": "wall",
+    "2": "floor",
+    "3": "counter",
+    "4": "stool",
+    "5": "noodle_pot",
+    "6": "menu_board",
+    "7": "door",
+    "8": "hanging_lantern",
+    "9": "chef",
+    "10": "patron",
+    "11": "small_table",
+    "12": "spice_shelf",
+    "13": "kitchen_floor",
+    "14": "neon_strip",
+    "15": "window",
+    "16": "cooler"
+  },
+  "tiles": [
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [ 1,12, 1, 8,14, 6, 6, 6, 6,14, 8, 1,12, 1],
+    [ 1,13,16,13,13, 5,13,13,13, 9,13,13,13, 1],
+    [ 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+    [ 1, 4, 2, 4, 2,10, 4, 2, 4, 2,10, 4, 2, 1],
+    [ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [ 1, 2, 2,11, 2, 2, 2, 2, 2,11, 2, 2, 2, 1],
+    [ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [ 1,15, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1,15, 1],
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ],
+  "collisions": [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,0,1,0,1,1,0,1,0,1,1,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,0,0,0,0,1,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,0,0,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+  ],
+  "tileGlow": {
+    "5": { "color": [255, 160, 80], "radius": 1.4, "alpha": 0.32 },
+    "6": { "color": [232, 80, 200], "radius": 1.6, "alpha": 0.3 },
+    "8": { "color": [255, 100, 80], "radius": 1.5, "alpha": 0.32 },
+    "14": { "color": [232, 80, 200], "radius": 1.2, "alpha": 0.28 },
+    "16": { "color": [120, 220, 232], "radius": 1.0, "alpha": 0.18 }
+  },
+  "ambientGlow": {
+    "color": [232, 100, 160],
+    "alpha": 0.06,
+    "radius": 0.7
+  },
+  "shipExit": false,
+  "interactions": [
+    {
+      "x": 6,
+      "y": 9,
+      "type": "leave_world",
+      "target": "arcadia-street",
+      "spawn": [8, 8],
+      "label": "STREET",
+      "prompt": "RETURN TO STREET"
+    },
+    {
+      "x": 7,
+      "y": 9,
+      "type": "leave_world",
+      "target": "arcadia-street",
+      "spawn": [8, 8],
+      "label": "STREET",
+      "prompt": "RETURN TO STREET"
+    },
+    {
+      "x": 9,
+      "y": 3,
+      "type": "dialog",
+      "label": "CHEF",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "\"WELCOME TO MIYU'S.\\nPULL UP A STOOL.\"\\n\\nSTEAM RISES OFF THE\\nSPORE-BROTH POT.\\nCHEF MIYU FLICKS\\nA WRIST OF NOODLES\\nWITHOUT LOOKING."
+    },
+    {
+      "x": 5,
+      "y": 3,
+      "type": "dialog",
+      "label": "NOODLE POT",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "A SCRATCHED COMMERCIAL\\nPOT, WAY OLDER THAN\\nYOU.\\n\\nTHE BROTH SMELLS LIKE\\nSALT, EARTH, AND\\nSOMETHING YOU CAN'T\\nNAME."
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "type": "dialog",
+      "label": "PATRON",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "\"THE TONKOTSU.\\nGET THE TONKOTSU.\"\\n\\nSHE DOESN'T LOOK UP\\nFROM HER BOWL."
+    },
+    {
+      "x": 10,
+      "y": 5,
+      "type": "dialog",
+      "label": "PATRON",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "\"FIRST TIME IN ARCADIA?\\n\\nTHERE'S A TOURNAMENT\\nDOWN THE STREET. ASK\\nABOUT RUNOUTS.\""
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "type": "dialog",
+      "label": "MENU BOARD",
+      "prompt": "PRESS E TO READ",
+      "dialog": "MENU\\n\\n* TONKOTSU      8 TKN\\n* MISO         7 TKN\\n* SHOYU        7 TKN\\n* SPORE-BROTH 12 TKN\\n* SPICY        9 TKN"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "type": "dialog",
+      "label": "TABLE",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "AN HALF-EATEN BOWL.\\n\\nWHOEVER WAS HERE LEFT\\nIN A HURRY."
+    },
+    {
+      "x": 9,
+      "y": 7,
+      "type": "dialog",
+      "label": "TABLE",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "STEAM CURLS UP FROM\\nA STILL-WARM BOWL.\\n\\nNEAT CHOPSTICKS,\\nLAID PARALLEL."
+    },
+    {
+      "x": 2,
+      "y": 3,
+      "type": "dialog",
+      "label": "COOLER",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "ROWS OF COLD DRINKS\\nIN COLORS YOU DIDN'T\\nKNOW LIQUIDS COULD BE.\\n\\nTHE GLASS IS COLD\\nAGAINST YOUR PALM."
+    }
+  ]
+}

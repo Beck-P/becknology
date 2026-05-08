@@ -1413,6 +1413,18 @@
       "label": "TOKEN KIOSK",
       "prompt": "PRESS E TO USE",
       "dialog": "THE TOKEN KIOSK HUMS SOFTLY.\n\nA GOLDEN COIN ICON BLINKS.\nTHE DISPENSER SLOT IS WARM,\nBUT NOTHING DROPS."
+    },
+    {
+      "x": 8,
+      "y": 7,
+      "type": "enter_world",
+      "target": "cyber-noodle-bar",
+      "spawn": [
+        7,
+        8
+      ],
+      "label": "CYBER NOODLES",
+      "prompt": "PRESS E TO ENTER"
     }
   ]
 }
