@@ -1302,7 +1302,7 @@
       "type": "enter_world",
       "target": "arcadia",
       "spawn": [
-        15,
+        7,
         8
       ],
       "label": "ARCADIA ARCADE",
@@ -1314,7 +1314,7 @@
       "type": "enter_world",
       "target": "arcadia",
       "spawn": [
-        15,
+        7,
         8
       ],
       "label": "ARCADIA ARCADE",
