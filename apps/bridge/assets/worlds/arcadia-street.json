@@ -1425,6 +1425,54 @@
       ],
       "label": "CYBER NOODLES",
       "prompt": "PRESS E TO ENTER"
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "type": "enter_world",
+      "target": "junk-pawn-shop",
+      "spawn": [
+        7,
+        8
+      ],
+      "label": "JOROS PAWNSHOP",
+      "prompt": "PRESS E TO ENTER"
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "type": "enter_world",
+      "target": "arcadia-shop",
+      "spawn": [
+        7,
+        8
+      ],
+      "label": "ARCADIAMART",
+      "prompt": "PRESS E TO ENTER"
+    },
+    {
+      "x": 16,
+      "y": 7,
+      "type": "enter_world",
+      "target": "tech-repair-shop",
+      "spawn": [
+        7,
+        8
+      ],
+      "label": "TINKERS TECH",
+      "prompt": "PRESS E TO ENTER"
+    },
+    {
+      "x": 19,
+      "y": 7,
+      "type": "enter_world",
+      "target": "chrome-clinic",
+      "spawn": [
+        7,
+        8
+      ],
+      "label": "CHROME CLINIC",
+      "prompt": "PRESS E TO ENTER"
     }
   ]
 }
