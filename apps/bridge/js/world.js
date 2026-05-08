@@ -429,14 +429,21 @@ var BridgeWorld = (function () {
       camera.x += (pos.x - camera.x) * 0.1;
       camera.y += (pos.y - camera.y) * 0.1;
 
-      // Clamp camera to map edges
+      // Clamp camera to map edges. When the map is smaller than the viewport
+      // (interiors, etc.), the normal min/max clamp inverts and pins the camera
+      // to a corner — instead, just center on the map so it sits in the middle
+      // of the screen and the player walks around within the framed view.
       var screenW = window.innerWidth;
       var screenH = window.innerHeight;
       var halfW = screenW / (2 * tileSize * scale);
       var halfH = screenH / (2 * tileSize * scale);
 
-      camera.x = Math.max(halfW, Math.min(world.width - halfW, camera.x));
-      camera.y = Math.max(halfH, Math.min(world.height - halfH, camera.y));
+      camera.x = world.width <= 2 * halfW
+        ? world.width / 2
+        : Math.max(halfW, Math.min(world.width - halfW, camera.x));
+      camera.y = world.height <= 2 * halfH
+        ? world.height / 2
+        : Math.max(halfH, Math.min(world.height - halfH, camera.y));
     }
 
     // Check interactions
