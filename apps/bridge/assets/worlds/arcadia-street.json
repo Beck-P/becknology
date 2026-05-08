@@ -363,15 +363,15 @@
       39,
       0,
       0,
-      0,
       34,
-      0,
       0,
       33,
       0,
       0,
-      0,
       31,
+      0,
+      0,
+      0,
       0,
       0
     ],
@@ -1351,7 +1351,7 @@
       "dialog": "GOT ANY SPARE TOKENS?\\n\\n...NO? THAT'S OK.\\nNOBODY DOES."
     },
     {
-      "x": 23,
+      "x": 22,
       "y": 7,
       "type": "dialog",
       "label": "HOVER-BIKE DOCK",
@@ -1367,7 +1367,7 @@
       "dialog": "[ROTATING ADVERTISEMENT]\\n\\n* RUNOUTS \u2014 TOURNAMENT WEEK\\n* SAGE NOODLE BAR \u2014 OPEN\\n* CYCLE 2189 IS HERE!"
     },
     {
-      "x": 30,
+      "x": 27,
       "y": 7,
       "type": "dialog",
       "label": "NEON RAMEN",
@@ -1407,7 +1407,7 @@
       "dialog": "THROUGH THE CYAN GLASS:\n\nSTERILE LIGHT, CHROME LIMBS,\nAND QUIET MACHINES WAIT\nBEHIND A SEALED DOOR."
     },
     {
-      "x": 26,
+      "x": 24,
       "y": 7,
       "type": "dialog",
       "label": "TOKEN KIOSK",
