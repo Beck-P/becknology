@@ -288,7 +288,12 @@
   }
 
   function drawHoloBillboardKioskPng(ctx, x, y, ts, time, col, row) {
-    drawBuildingSprite(ctx, x, y, ts, 'holo-billboard-kiosk', 3, 3, 1);
+    // anchorOffsetX=2 (right-edge anchor) so the anchor is the last cell
+    // rendered in iteration order — lets the footprint be filled with
+    // SIDEWALK tiles (rather than void) without later cells overdrawing
+    // the building's right edge. That kills the dark-purple cutout that
+    // void-filled footprints leave behind on the sidewalk.
+    drawBuildingSprite(ctx, x, y, ts, 'holo-billboard-kiosk', 3, 3, 2);
     var t = time || 0;
     // Cycle the cast color so the holo-billboard washes the street in
     // sync with whatever ad is on the screen.
