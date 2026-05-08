@@ -5,7 +5,10 @@
   "tileSize": 16,
   "tileset": "chrome-clinic",
   "spawns": {
-    "player": [7, 8]
+    "player": [
+      7,
+      8
+    ]
   },
   "tileColors": {
     "0": null,
@@ -38,96 +41,514 @@
     "12": "window"
   },
   "tiles": [
-    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [ 1, 5, 5, 4, 4, 8, 8, 8, 8,11,11, 5, 5, 1],
-    [ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
-    [ 1, 2, 2, 3, 2, 2, 2, 9, 2, 2, 6, 2, 2, 1],
-    [ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
-    [ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
-    [ 1, 2, 2, 2, 2, 2,10, 2, 2, 2, 2, 2, 2, 1],
-    [ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
-    [ 1,12, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1,12, 1],
-    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      5,
+      5,
+      4,
+      4,
+      8,
+      8,
+      8,
+      8,
+      11,
+      11,
+      5,
+      5,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      3,
+      2,
+      2,
+      2,
+      9,
+      2,
+      2,
+      6,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      10,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      12,
+      1,
+      1,
+      1,
+      1,
+      7,
+      7,
+      1,
+      1,
+      1,
+      1,
+      12,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
   ],
   "collisions": [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,1,0,0,0,1,0,0,1,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,0,0,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
   ],
   "tileGlow": {
-    "8": { "color": [200, 230, 255], "radius": 1.4, "alpha": 0.35 },
-    "3": { "color": [120, 220, 232], "radius": 1.3, "alpha": 0.25 },
-    "4": { "color": [120, 220, 232], "radius": 1.4, "alpha": 0.3 },
-    "11": { "color": [232, 80, 80], "radius": 1.0, "alpha": 0.22 },
-    "5": { "color": [120, 220, 232], "radius": 0.9, "alpha": 0.2 },
-    "10": { "color": [120, 220, 232], "radius": 1.2, "alpha": 0.32 }
+    "8": {
+      "color": [
+        200,
+        230,
+        255
+      ],
+      "radius": 1.4,
+      "alpha": 0.35
+    },
+    "3": {
+      "color": [
+        120,
+        220,
+        232
+      ],
+      "radius": 1.3,
+      "alpha": 0.25
+    },
+    "4": {
+      "color": [
+        120,
+        220,
+        232
+      ],
+      "radius": 1.4,
+      "alpha": 0.3
+    },
+    "11": {
+      "color": [
+        232,
+        80,
+        80
+      ],
+      "radius": 1.0,
+      "alpha": 0.22
+    },
+    "5": {
+      "color": [
+        120,
+        220,
+        232
+      ],
+      "radius": 0.9,
+      "alpha": 0.2
+    },
+    "10": {
+      "color": [
+        120,
+        220,
+        232
+      ],
+      "radius": 1.2,
+      "alpha": 0.32
+    }
   },
   "ambientGlow": {
-    "color": [120, 220, 232],
+    "color": [
+      120,
+      220,
+      232
+    ],
     "alpha": 0.06,
     "radius": 0.7
   },
   "shipExit": false,
   "interactions": [
     {
-      "x": 6, "y": 9, "type": "leave_world",
-      "target": "arcadia-street",
-      "spawn": [19, 8],
-      "label": "STREET", "prompt": "RETURN TO STREET"
+      "x": 6,
+      "y": 9,
+      "type": "leave_world",
+      "label": "STREET",
+      "prompt": "RETURN TO STREET",
+      "leaveTo": "arcadia-street",
+      "leaveSpawn": [
+        19,
+        8
+      ]
     },
     {
-      "x": 7, "y": 9, "type": "leave_world",
-      "target": "arcadia-street",
-      "spawn": [19, 8],
-      "label": "STREET", "prompt": "RETURN TO STREET"
+      "x": 7,
+      "y": 9,
+      "type": "leave_world",
+      "label": "STREET",
+      "prompt": "RETURN TO STREET",
+      "leaveTo": "arcadia-street",
+      "leaveSpawn": [
+        19,
+        8
+      ]
     },
     {
-      "x": 7, "y": 4, "type": "dialog",
-      "label": "DOCTOR", "prompt": "PRESS E TO TALK",
+      "x": 7,
+      "y": 4,
+      "type": "dialog",
+      "label": "DOCTOR",
+      "prompt": "PRESS E TO TALK",
       "dialog": "DR. NAKURI'S MASK\\nMUFFLES HER VOICE.\\n\\n\"FIRST CONSULTATION\\nIS FREE. UPGRADES\\nAREN'T. WHAT ARE YOU\\nLOOKING TO INSTALL?\""
     },
     {
-      "x": 3, "y": 4, "type": "dialog",
-      "label": "EXAM CHAIR", "prompt": "PRESS E TO INSPECT",
+      "x": 3,
+      "y": 4,
+      "type": "dialog",
+      "label": "EXAM CHAIR",
+      "prompt": "PRESS E TO INSPECT",
       "dialog": "THE CHAIR HAS TWO\\nARTICULATED ARMS\\nFOLDED OVERHEAD.\\n\\nA SIGN: 'PLEASE\\nSANITIZE BEFORE USE.'\\n\\nDON'T SIT IN THIS\\nCHAIR LIGHTLY."
     },
     {
-      "x": 3, "y": 2, "type": "dialog",
-      "label": "MEDICAL CABINET", "prompt": "PRESS E TO LOOK",
+      "x": 3,
+      "y": 2,
+      "type": "dialog",
+      "label": "MEDICAL CABINET",
+      "prompt": "PRESS E TO LOOK",
       "dialog": "ROWS OF GLOWING VIALS.\\nCYAN, MAGENTA, GREEN,\\nGOLD.\\n\\nNONE OF THE LABELS\\nARE IN A LANGUAGE\\nYOU READ."
     },
     {
-      "x": 11, "y": 2, "type": "dialog",
-      "label": "MEDICAL CABINET", "prompt": "PRESS E TO LOOK",
-      "dialog": "MORE VIALS. ONE IS\\nLABELED ONLY 'NEURAL\\nFOAM — DO NOT SHAKE.'\\n\\nYOU INSTINCTIVELY\\nDO NOT SHAKE IT."
+      "x": 11,
+      "y": 2,
+      "type": "dialog",
+      "label": "MEDICAL CABINET",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "MORE VIALS. ONE IS\\nLABELED ONLY 'NEURAL\\nFOAM \u2014 DO NOT SHAKE.'\\n\\nYOU INSTINCTIVELY\\nDO NOT SHAKE IT."
     },
     {
-      "x": 4, "y": 2, "type": "dialog",
-      "label": "HOLO-DISPLAY", "prompt": "PRESS E TO LOOK",
+      "x": 4,
+      "y": 2,
+      "type": "dialog",
+      "label": "HOLO-DISPLAY",
+      "prompt": "PRESS E TO LOOK",
       "dialog": "A WIRE-FRAME HUMAN\\nFIGURE ROTATES IN\\nMIDAIR. PINK DOTS\\nMARK CYBERNETIC\\nINSTALL POINTS:\\nWRIST, SPINE, OCULAR.\\n\\nSO MANY OPTIONS."
     },
     {
-      "x": 10, "y": 4, "type": "dialog",
-      "label": "RECOVERY BED", "prompt": "PRESS E TO LOOK",
+      "x": 10,
+      "y": 4,
+      "type": "dialog",
+      "label": "RECOVERY BED",
+      "prompt": "PRESS E TO LOOK",
       "dialog": "A PATIENT REST UNDER\\nA BLUE SHEET.\\n\\nTHEY DON'T MOVE.\\nTHE EKG ON THE\\nMONITOR IS STEADY.\\n\\nDR. NAKURI SAYS\\nNOTHING."
     },
     {
-      "x": 9, "y": 2, "type": "dialog",
-      "label": "STATUS TERMINAL", "prompt": "PRESS E TO READ",
-      "dialog": "PATIENT VITALS:\\nHR 72\\nBP 118/76\\nO2 99%\\nNEURAL TUNING — STABLE\\n\\nALL GREEN."
+      "x": 9,
+      "y": 2,
+      "type": "dialog",
+      "label": "STATUS TERMINAL",
+      "prompt": "PRESS E TO READ",
+      "dialog": "PATIENT VITALS:\\nHR 72\\nBP 118/76\\nO2 99%\\nNEURAL TUNING \u2014 STABLE\\n\\nALL GREEN."
     },
     {
-      "x": 6, "y": 7, "type": "dialog",
-      "label": "MEDICAL DRONE", "prompt": "PRESS E TO TALK",
+      "x": 6,
+      "y": 7,
+      "type": "dialog",
+      "label": "MEDICAL DRONE",
+      "prompt": "PRESS E TO TALK",
       "dialog": "THE DRONE'S CYAN EYE\\nSWEEPS YOU.\\n\\n\"HELLO. PLEASE STATE\\nTHE NATURE OF YOUR\\nMEDICAL EMERGENCY.\"\\n\\nYOU DON'T HAVE ONE."
     }
   ]

@@ -5,7 +5,10 @@
   "tileSize": 16,
   "tileset": "arcadia-shop",
   "spawns": {
-    "player": [7, 8]
+    "player": [
+      7,
+      8
+    ]
   },
   "tileColors": {
     "0": null,
@@ -40,90 +43,497 @@
     "13": "window"
   },
   "tiles": [
-    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [ 1, 6, 6, 6, 6, 8, 8,11, 8, 8, 6, 6, 6, 1],
-    [ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
-    [ 1, 2, 4, 2, 4, 2, 2, 2, 2, 4, 2, 4, 2, 1],
-    [ 1, 2, 2, 2, 2, 2, 2,10, 2, 2, 2, 2, 2, 1],
-    [ 1, 2, 4, 2, 4, 2, 2, 2, 2, 4, 2, 4, 2, 1],
-    [ 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
-    [ 1, 3, 3, 3, 3, 3, 3, 3, 3, 9, 3, 3,12, 1],
-    [ 1,13, 1, 1, 1, 1, 7, 7, 1, 1, 1, 1,13, 1],
-    [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      6,
+      6,
+      6,
+      6,
+      8,
+      8,
+      11,
+      8,
+      8,
+      6,
+      6,
+      6,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      4,
+      2,
+      4,
+      2,
+      2,
+      2,
+      2,
+      4,
+      2,
+      4,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      10,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      4,
+      2,
+      4,
+      2,
+      2,
+      2,
+      2,
+      4,
+      2,
+      4,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      9,
+      3,
+      3,
+      12,
+      1
+    ],
+    [
+      1,
+      13,
+      1,
+      1,
+      1,
+      1,
+      7,
+      7,
+      1,
+      1,
+      1,
+      1,
+      13,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
   ],
   "collisions": [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,0,0,0,0,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,0,0,0,0,1,0,1,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,0,0,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
   ],
   "tileGlow": {
-    "8": { "color": [220, 235, 255], "radius": 1.4, "alpha": 0.32 },
-    "6": { "color": [120, 220, 232], "radius": 1.0, "alpha": 0.22 },
-    "11": { "color": [232, 80, 200], "radius": 1.2, "alpha": 0.22 },
-    "12": { "color": [120, 220, 232], "radius": 0.9, "alpha": 0.18 },
-    "3": { "color": [232, 80, 200], "radius": 0.6, "alpha": 0.12 }
+    "8": {
+      "color": [
+        220,
+        235,
+        255
+      ],
+      "radius": 1.4,
+      "alpha": 0.32
+    },
+    "6": {
+      "color": [
+        120,
+        220,
+        232
+      ],
+      "radius": 1.0,
+      "alpha": 0.22
+    },
+    "11": {
+      "color": [
+        232,
+        80,
+        200
+      ],
+      "radius": 1.2,
+      "alpha": 0.22
+    },
+    "12": {
+      "color": [
+        120,
+        220,
+        232
+      ],
+      "radius": 0.9,
+      "alpha": 0.18
+    },
+    "3": {
+      "color": [
+        232,
+        80,
+        200
+      ],
+      "radius": 0.6,
+      "alpha": 0.12
+    }
   },
   "ambientGlow": {
-    "color": [200, 220, 255],
+    "color": [
+      200,
+      220,
+      255
+    ],
     "alpha": 0.05,
     "radius": 0.7
   },
   "shipExit": false,
   "interactions": [
     {
-      "x": 6, "y": 9, "type": "leave_world",
-      "target": "arcadia-street",
-      "spawn": [4, 8],
-      "label": "STREET", "prompt": "RETURN TO STREET"
+      "x": 6,
+      "y": 9,
+      "type": "leave_world",
+      "label": "STREET",
+      "prompt": "RETURN TO STREET",
+      "leaveTo": "arcadia-street",
+      "leaveSpawn": [
+        4,
+        8
+      ]
     },
     {
-      "x": 7, "y": 9, "type": "leave_world",
-      "target": "arcadia-street",
-      "spawn": [4, 8],
-      "label": "STREET", "prompt": "RETURN TO STREET"
+      "x": 7,
+      "y": 9,
+      "type": "leave_world",
+      "label": "STREET",
+      "prompt": "RETURN TO STREET",
+      "leaveTo": "arcadia-street",
+      "leaveSpawn": [
+        4,
+        8
+      ]
     },
     {
-      "x": 9, "y": 8, "type": "dialog",
-      "label": "CASHIER", "prompt": "PRESS E TO TALK",
+      "x": 9,
+      "y": 8,
+      "type": "dialog",
+      "label": "CASHIER",
+      "prompt": "PRESS E TO TALK",
       "dialog": "\"WELCOME TO ARCADIAMART.\\n\\nNAH, WE DON'T VALIDATE\\nPARKING. NOBODY DRIVES\\nANYMORE.\""
     },
     {
-      "x": 1, "y": 2, "type": "dialog",
-      "label": "COOLER", "prompt": "PRESS E TO BROWSE",
+      "x": 1,
+      "y": 2,
+      "type": "dialog",
+      "label": "COOLER",
+      "prompt": "PRESS E TO BROWSE",
       "dialog": "ROW UPON ROW OF\\nGLOWING CANS.\\n\\nFIZZ, BIO-FIZZ,\\nULTRA-FIZZ, AND ONE\\nCALLED SIMPLY \"FIZZ?\"\\n\\nTHE LAST ONE LOOKS\\nUNSTABLE."
     },
     {
-      "x": 7, "y": 2, "type": "dialog",
-      "label": "WALL POSTER", "prompt": "PRESS E TO READ",
-      "dialog": "[SLEEKBOY 9000]\\n\\nTHE NEXT GENERATION\\nOF PERSONAL SECURITY\\nSCANNERS — NOW WITH\\nTHREAT-NEUTRAL MODE.\\n\\nAVAILABLE NOWHERE\\nNEAR YOU."
+      "x": 7,
+      "y": 2,
+      "type": "dialog",
+      "label": "WALL POSTER",
+      "prompt": "PRESS E TO READ",
+      "dialog": "[SLEEKBOY 9000]\\n\\nTHE NEXT GENERATION\\nOF PERSONAL SECURITY\\nSCANNERS \u2014 NOW WITH\\nTHREAT-NEUTRAL MODE.\\n\\nAVAILABLE NOWHERE\\nNEAR YOU."
     },
     {
-      "x": 7, "y": 5, "type": "dialog",
-      "label": "BROWSING CUSTOMER", "prompt": "PRESS E TO TALK",
+      "x": 7,
+      "y": 5,
+      "type": "dialog",
+      "label": "BROWSING CUSTOMER",
+      "prompt": "PRESS E TO TALK",
       "dialog": "\"YOU EVER SEE A\\nFLAVOR YOU CAN'T\\nIDENTIFY ON THE\\nLABEL? HOW DO YOU\\nDECIDE.\""
     },
     {
-      "x": 2, "y": 4, "type": "dialog",
-      "label": "SNACK SHELF", "prompt": "PRESS E TO LOOK",
+      "x": 2,
+      "y": 4,
+      "type": "dialog",
+      "label": "SNACK SHELF",
+      "prompt": "PRESS E TO LOOK",
       "dialog": "BAGS OF SOMETHING\\nCALLED CRUNCH-NOTS.\\n\\nINGREDIENTS LIST IS\\nA SINGLE WORD: YES."
     },
     {
-      "x": 9, "y": 4, "type": "dialog",
-      "label": "SNACK SHELF", "prompt": "PRESS E TO LOOK",
+      "x": 9,
+      "y": 4,
+      "type": "dialog",
+      "label": "SNACK SHELF",
+      "prompt": "PRESS E TO LOOK",
       "dialog": "DRIED SPORE-CHIPS,\\nSALTED ROOT STRIPS,\\nAND A LONELY BAG OF\\nGUMMY ASTROIDS."
     },
     {
-      "x": 12, "y": 8, "type": "dialog",
-      "label": "VENDING MACHINE", "prompt": "PRESS E TO USE",
+      "x": 12,
+      "y": 8,
+      "type": "dialog",
+      "label": "VENDING MACHINE",
+      "prompt": "PRESS E TO USE",
       "dialog": "THE MACHINE FLASHES\\nA WELCOME MESSAGE.\\n\\n\"INSERT TOKEN.\"\\n\\nYOU DON'T HAVE A\\nTOKEN YET."
     }
   ]
