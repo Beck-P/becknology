@@ -1914,57 +1914,84 @@
     }
     ctx.globalAlpha = 1;
 
-    // Distant moon/neon disk
-    var moonX = w * 0.78;
-    var moonY = h * 0.085;
-    var moonR = Math.max(8, Math.min(w, h) * 0.025);
-    var moonGrad = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonR * 5);
-    moonGrad.addColorStop(0, 'rgba(255, 220, 180, 0.85)');
-    moonGrad.addColorStop(0.3, 'rgba(255, 160, 220, 0.55)');
-    moonGrad.addColorStop(0.7, 'rgba(160, 80, 200, 0.18)');
-    moonGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = moonGrad;
-    ctx.fillRect(moonX - moonR * 6, moonY - moonR * 6, moonR * 12, moonR * 12);
-    ctx.fillStyle = 'rgba(255, 235, 210, 0.95)';
-    ctx.beginPath();
-    ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-    ctx.fill();
-    // Crater shadow (1 pixel)
-    ctx.fillStyle = 'rgba(180, 140, 160, 0.55)';
-    ctx.beginPath();
-    ctx.arc(moonX - moonR * 0.35, moonY - moonR * 0.15, moonR * 0.25, 0, Math.PI * 2);
-    ctx.fill();
+    // ---- Camera setup (used for parallax of every sky element below) ----
+    var camera = BridgeWorld.getCamera();
+    var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
+    var camOffX = camera.x * ts;
+    var worldOriginX = w / 2 - camera.x * ts;
+    var worldOriginY = h / 2 - camera.y * ts;
 
-    // Twinkling stars
+    // ---- Moon ----
+    // Anchored to a fixed world tile so it tracks with the world instead of
+    // sliding under buildings as the camera scrolls. As the player walks
+    // toward the moon, it stays in the same direction; walk past, it slides
+    // off to the side naturally.
+    var moonR = Math.max(8, Math.min(w, h) * 0.025);
+    var moonWorldCol = 22, moonWorldRow = 1;
+    var moonX = worldOriginX + moonWorldCol * ts;
+    var moonY = worldOriginY + moonWorldRow * ts;
+    if (moonX > -moonR * 8 && moonX < w + moonR * 8) {
+      var moonGrad = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonR * 5);
+      moonGrad.addColorStop(0, 'rgba(255, 220, 180, 0.85)');
+      moonGrad.addColorStop(0.3, 'rgba(255, 160, 220, 0.55)');
+      moonGrad.addColorStop(0.7, 'rgba(160, 80, 200, 0.18)');
+      moonGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = moonGrad;
+      ctx.fillRect(moonX - moonR * 6, moonY - moonR * 6, moonR * 12, moonR * 12);
+      ctx.fillStyle = 'rgba(255, 235, 210, 0.95)';
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fill();
+      // Crater shadow
+      ctx.fillStyle = 'rgba(180, 140, 160, 0.55)';
+      ctx.beginPath();
+      ctx.arc(moonX - moonR * 0.35, moonY - moonR * 0.15, moonR * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ---- Stars ----
+    // Slow horizontal parallax (~0.12) so they don't look stamped on the
+    // canvas. Wrap horizontally inside a wider tile (1.5× viewport) so a
+    // star never visibly teleports — by the time it would, another star has
+    // already drifted in to take its place.
+    var starWrap = w * 1.5;
+    var starShift = camOffX * 0.12;
     for (var i = 0; i < BG_STARS.length; i++) {
       var st = BG_STARS[i];
-      var sx = Math.floor(st.x * w);
+      var sx = (st.x * starWrap - starShift) % starWrap;
+      if (sx < 0) sx += starWrap;
+      if (sx > w + 5) continue;
       var sy = Math.floor(st.y * h);
       var alpha = 0.45 + Math.sin(time / 600 * st.speed + st.phase) * 0.35;
       var color = st.hue === 'pink' ? 'rgba(232,140,200,' : (st.hue === 'cyan' ? 'rgba(120,220,232,' : 'rgba(240,240,255,');
       ctx.fillStyle = color + alpha.toFixed(2) + ')';
-      ctx.fillRect(sx, sy, st.size, st.size);
+      ctx.fillRect(Math.floor(sx), sy, st.size, st.size);
     }
 
-    // Distant skyline silhouette (parallax, 2 layers).
-    // Position the skyline so its baseline sits where the top wall row begins,
-    // so the buildings sit on the silhouette rather than floating above it.
-    var camera = BridgeWorld.getCamera();
-    var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
-    var camOffX = camera.x * ts;
+    // ---- Distant skyline silhouettes (parallax, 2 layers) ----
+    // Position the skyline so its baseline sits where the top wall row
+    // begins, so the buildings sit on the silhouette rather than floating
+    // above it.
     // The street's south wall is at row 13 (after our edits). The buildings
     // start around row 4 (top wall) and extend down. We want the skyline
     // baseline to sit just above row 4 in pixel coords.
     var topWallRow = 4;
     var topWallY = h / 2 - camera.y * ts + topWallRow * ts;
 
-    // Far skyline (deeper, slower parallax)
+    // Far skyline (deeper, slower parallax). Track BOTH a continuous shift
+    // (sub-slot drift) AND an integer slot offset so the silhouette pattern
+    // advances cleanly each time the shift wraps — without the slot offset
+    // the buildings would snap back to the same data every slotW of camera
+    // movement, which is what made the silhouettes "pop" between positions.
     var skylineBaseY = topWallY + ts * 0.2;
     var skylineSlotW = w / 28;
-    var farShift = (camOffX * 0.08) % skylineSlotW;
+    var farTotal = camOffX * 0.18;
+    var farSlot = Math.floor(farTotal / skylineSlotW);
+    var farShift = farTotal - farSlot * skylineSlotW;
+    var SK = BG_SKYLINE.length;
     ctx.fillStyle = '#1f0a2e';
     for (var b1 = 0; b1 < 32; b1++) {
-      var sb = BG_SKYLINE[b1 % BG_SKYLINE.length];
+      var sb = BG_SKYLINE[((b1 + farSlot) % SK + SK) % SK];
       var bx = b1 * skylineSlotW - farShift - skylineSlotW;
       var bh = ts * (1.4 + sb.h * 1.6);
       ctx.fillRect(Math.floor(bx), Math.floor(skylineBaseY - bh), Math.ceil(skylineSlotW + 1), Math.ceil(bh + 2));
@@ -1978,12 +2005,15 @@
       }
     }
 
-    // Near skyline (closer, faster parallax, darker)
-    var nearShift = (camOffX * 0.18) % skylineSlotW;
+    // Near skyline (closer, faster parallax, darker). Same slot-shift trick.
+    var nearTotal = camOffX * 0.32;
+    var nearSlotW = skylineSlotW * 1.15;
+    var nearSlot = Math.floor(nearTotal / nearSlotW);
+    var nearShift = nearTotal - nearSlot * nearSlotW;
     ctx.fillStyle = '#10061d';
     for (var b2 = 0; b2 < 32; b2++) {
-      var sb2 = BG_SKYLINE[(b2 + 7) % BG_SKYLINE.length];
-      var bx2 = b2 * (skylineSlotW * 1.15) - nearShift - skylineSlotW;
+      var sb2 = BG_SKYLINE[((b2 + nearSlot + 7) % SK + SK) % SK];
+      var bx2 = b2 * nearSlotW - nearShift - nearSlotW;
       var bh2 = ts * (0.9 + sb2.h * 1.2);
       ctx.fillRect(Math.floor(bx2), Math.floor(skylineBaseY - bh2 + ts * 0.4), Math.ceil(skylineSlotW * 1.15 + 1), Math.ceil(bh2 + 2));
       if (sb2.antenna) {
