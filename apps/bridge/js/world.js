@@ -468,11 +468,17 @@ var BridgeWorld = (function () {
     var offX = w / 2 - camera.x * ts;
     var offY = h / 2 - camera.y * ts;
 
-    // Determine visible tile range
-    var startCol = Math.max(0, Math.floor(-offX / ts));
-    var startRow = Math.max(0, Math.floor(-offY / ts));
-    var endCol = Math.min(world.width, Math.ceil((w - offX) / ts));
-    var endRow = Math.min(world.height, Math.ceil((h - offY) / ts));
+    // Determine visible tile range. Padded by TILE_PAD so multi-tile PNG
+    // buildings whose anchor cell is just off-screen still get a draw call —
+    // their footprint extends from the anchor by up to anchorOffsetX/Y, so
+    // without padding the whole building pops in/out as the anchor crosses
+    // the viewport edge. 5 tiles covers every building width currently in
+    // the world (the arcade is 5w × 4h with anchorOffsetX=4).
+    var TILE_PAD = 5;
+    var startCol = Math.max(0, Math.floor(-offX / ts) - TILE_PAD);
+    var startRow = Math.max(0, Math.floor(-offY / ts) - TILE_PAD);
+    var endCol = Math.min(world.width, Math.ceil((w - offX) / ts) + TILE_PAD);
+    var endRow = Math.min(world.height, Math.ceil((h - offY) / ts) + TILE_PAD);
 
     // Pass 0: Custom background (if world has one registered)
     var bgFn = BACKGROUNDS[world.tileset];
