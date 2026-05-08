@@ -349,7 +349,10 @@ var BridgeWorld = (function () {
         var spawnOverride = null;
         if (spawn) spawnOverride = { x: spawn[0], y: spawn[1] };
         show(spawnOverride);
-        BridgeState.transition('world', { worldId: worldId });
+        // Pass the spawn through the transition context. The state listener
+        // (main.js) re-invokes BridgeWorld.show with context.spawn — without
+        // this, it would call show(undefined) and clobber the override.
+        BridgeState.transition('world', { worldId: worldId, spawn: spawnOverride });
         // Fade back in
         fade.style.transition = 'opacity 0.30s ease-out';
         fade.style.opacity = '0';
