@@ -114,6 +114,41 @@
 >
 > Design details: low dark metal charging platform with a roofless rectangular docking frame visible from above, a sleek parked hover-bike facing forward with cyan smoked-glass canopy, hot pink engine pods, purple magnetic lift rails, and small cyan charging cables attached to the dock. Keep the silhouette compact and readable as a street object. No rider, no readable text, no realistic motorcycle perspective. Limited palette: dark metal grey, hot pink neon, electric cyan, deep purple, black glass. Transparent background around the dock only — no black box, no matte, no colored backdrop, and no checkerboard.
 
+### Arcade facade — `arcade.png` — 1024 × 768 native (wide)
+> [STANDARD HEADER]
+>
+> Building type: a large cyberpunk video arcade building, the centerpiece of the street.
+>
+> Design details: a wide flat-roofed arcade building with a **massive curved hot-pink and electric-cyan neon "ARCADIA" marquee** dominating the top of the facade (geometric tube letters, glowing pink halo, cyan electric arcs between letters, mounted on a dark metal backing panel). Below the marquee, a row of **tall flat warm-yellow display windows** showing flat glow only (no interior detail — animation goes on top in code). A **wide double-door entrance archway at bottom-center** (dark metal frame with smoked-glass panels, hot pink neon outline tubing, slightly recessed). Two narrow wall-mounted neon signs flanking the marquee — geometric shapes, no readable text. Exposed conduit pipes running up the facade. Roof has a few HVAC units and antennas visible from above. Limited palette: dark metal grey `#1a1530`, hot pink neon `#e870c0`, electric cyan `#5cc8d0`, deep purple `#3a1840`, warm yellow window glow `#ffe080`. Transparent background around the building only — no black box, no matte, no colored backdrop, and no checkerboard.
+
+### Cyber noodle bar — `cyber-noodle-bar.png` — 768 × 1024 native
+> [STANDARD HEADER]
+>
+> Building type: a cyberpunk noodle bar with apartments above.
+>
+> Design details: two-story building. Ground floor: a noodle counter with a flat warm-yellow service window (no detail), red lantern hanging beside the door. Upper floors: two narrow apartment windows (flat warm-yellow rectangles). Exterior pipes. Tile-clad facade in dark teal `#1a3540` with hot pink neon trim along the canopy edge. Limited palette: dark teal, dark metal grey, hot pink neon, electric cyan, deep purple, warm yellow glass. Transparent background around the building only — no black box, no matte, no colored backdrop, and no checkerboard.
+
+### Tech repair shop — `tech-repair-shop.png` — 768 × 1024 native
+> [STANDARD HEADER]
+>
+> Building type: a chrome and electronics repair shop.
+>
+> Design details: cluttered storefront with a wide front display window (flat smoked-glass blue-violet, no detail). Exposed circuit-board panel siding. Tall vertical neon sign on the corner — geometric shape only, no readable text. Roof antenna with empty space above. Palette leans cyan `#5cc8d0` + dark metal, with deep purple shadows and hot pink neon accents. Transparent background around the building only — no black box, no matte, no colored backdrop, and no checkerboard.
+
+### Chrome clinic — `chrome-clinic.png` — 768 × 1024 native
+> [STANDARD HEADER]
+>
+> Building type: a cybernetic augmentation clinic.
+>
+> Design details: sterile-looking but neon-lit. Wide horizontal facade with a recessed entrance, two large flat warm-cyan glass windows. Cross-shaped neon sign on the front wall (geometric, no text). White-and-cyan trim, dark metal walls. Flat roof with clean HVAC units and vents visible from above. Limited palette: dark metal grey `#1a1530`, white trim, electric cyan `#5cc8d0`, warm cyan glass `#80e0e8`, deep purple `#3a1840`, restrained hot pink `#e870c0`. Transparent background around the building only — no black box, no matte, no colored backdrop, and no checkerboard.
+
+### Junk pawn shop — `junk-pawn-shop.png` — 768 × 1024 native
+> [STANDARD HEADER]
+>
+> Building type: a grimy cyberpunk pawn and junk shop.
+>
+> Design details: grimy storefront. Cluttered facade, faded neon "$" symbol shape on a wall sign (geometric only). Boarded-up upper window (flat dark plywood texture). Stained concrete walls. Single hanging tube light over the door. Exposed wires, dented dark metal patch plates, rusty roof vents, and scrap boxes. Limited palette: stained concrete grey, dark metal `#1a1530`, deep purple `#3a1840`, faded hot pink neon `#e870c0`, weak warm yellow `#ffe080`, muted cyan `#5cc8d0`. Transparent background around the building only — no black box, no matte, no colored backdrop, and no checkerboard.
+
 ## Future NPC sprite sheets
 
 When we add walk-cycle NPCs, here's the prompt structure. **Note**: image models are bad at sprite sheets — the same character looks different across frames. Best approach is to generate one full-body image and we slice/animate manually, OR use a dedicated pixel-art sprite tool.

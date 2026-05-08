@@ -45,7 +45,12 @@
     "31": "#a02050",
     "32": "#3a1840",
     "33": "#a08040",
-    "34": "#1a1a26"
+    "34": "#1a1a26",
+    "36": "#e870c0",
+    "37": "#1a3540",
+    "38": "#5cc8d0",
+    "39": "#80e0e8",
+    "40": "#3a1840"
   },
   "tileNames": {
     "0": "void",
@@ -82,7 +87,12 @@
     "31": "neon_ramen_stand_png",
     "32": "holo_billboard_kiosk_png",
     "33": "token_kiosk_png",
-    "34": "hover_bike_dock_png"
+    "34": "hover_bike_dock_png",
+    "36": "arcade_png",
+    "37": "cyber_noodle_bar_png",
+    "38": "tech_repair_shop_png",
+    "39": "chrome_clinic_png",
+    "40": "junk_pawn_shop_png"
   },
   "tiles": [
     [
@@ -198,116 +208,116 @@
       0
     ],
     [
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
       0,
       0,
       0,
       0,
       0,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
     ],
     [
-      4,
-      8,
-      4,
-      12,
       0,
       0,
       0,
       0,
-      4,
-      16,
-      16,
       0,
       0,
-      29,
       0,
       0,
-      27,
-      4,
-      8,
-      4,
-      4,
-      4,
-      23,
-      8,
-      4,
-      4
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
     ],
     [
-      4,
-      4,
-      4,
-      4,
       0,
       0,
       0,
       0,
-      4,
-      4,
-      4,
-      4,
-      21,
-      21,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
     ],
     [
-      4,
-      4,
-      4,
-      4,
+      0,
+      40,
+      0,
       0,
       30,
       0,
       0,
-      4,
-      4,
-      4,
-      4,
+      0,
+      37,
+      0,
+      0,
+      0,
       7,
       7,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4,
-      4
+      36,
+      0,
+      38,
+      0,
+      0,
+      39,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
     ],
     [
       14,
@@ -1018,6 +1028,51 @@
       ],
       "radius": 1.6,
       "alpha": 0.18
+    },
+    "36": {
+      "color": [
+        232,
+        112,
+        192
+      ],
+      "radius": 3.4,
+      "alpha": 0.3
+    },
+    "37": {
+      "color": [
+        255,
+        180,
+        96
+      ],
+      "radius": 2,
+      "alpha": 0.18
+    },
+    "38": {
+      "color": [
+        92,
+        200,
+        208
+      ],
+      "radius": 2.1,
+      "alpha": 0.22
+    },
+    "39": {
+      "color": [
+        128,
+        224,
+        232
+      ],
+      "radius": 2.4,
+      "alpha": 0.2
+    },
+    "40": {
+      "color": [
+        232,
+        112,
+        192
+      ],
+      "radius": 1.8,
+      "alpha": 0.16
     }
   },
   "ambientGlow": {
@@ -1033,7 +1088,7 @@
   "interactions": [
     {
       "x": 12,
-      "y": 6,
+      "y": 7,
       "type": "enter_world",
       "target": "arcadia",
       "spawn": [
@@ -1045,7 +1100,7 @@
     },
     {
       "x": 13,
-      "y": 6,
+      "y": 7,
       "type": "enter_world",
       "target": "arcadia",
       "spawn": [
@@ -1099,11 +1154,11 @@
       "type": "dialog",
       "label": "HOLO-BILLBOARD",
       "prompt": "PRESS E TO READ",
-      "dialog": "[ROTATING ADVERTISEMENT]\\n\\n* RUNOUTS \u2014 TOURNAMENT WEEK\\n* SAGE NOODLE BAR \u2014 OPEN\\n* CYCLE 2189 IS HERE!"
+      "dialog": "[ROTATING ADVERTISEMENT]\\n\\n* RUNOUTS — TOURNAMENT WEEK\\n* SAGE NOODLE BAR — OPEN\\n* CYCLE 2189 IS HERE!"
     },
     {
-      "x": 17,
-      "y": 10,
+      "x": 8,
+      "y": 8,
       "type": "dialog",
       "label": "NEON RAMEN",
       "prompt": "PRESS E TO ORDER",
@@ -1134,12 +1189,12 @@
       "dialog": "CHROME HEADPHONES,\\nMOD KITS, WIRES IN A\\nDOZEN COLORS.\\n\\nALL OUT OF YOUR PRICE\\nRANGE."
     },
     {
-      "x": 20,
+      "x": 19,
       "y": 8,
       "type": "dialog",
-      "label": "BOOKSHOP",
+      "label": "CHROME CLINIC",
       "prompt": "PRESS E TO PEEK",
-      "dialog": "DUSTY VOLUMES STACKED\\nFLOOR TO CEILING.\\n\\nA SIGN: 'SHIP MANUALS\\n\u2014 REAL ONES, NOT THE\\nKIND SHIPYARDS PUBLISH.'"
+      "dialog": "THROUGH THE CYAN GLASS:\n\nSTERILE LIGHT, CHROME LIMBS,\nAND QUIET MACHINES WAIT\nBEHIND A SEALED DOOR."
     },
     {
       "x": 9,

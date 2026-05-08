@@ -199,6 +199,11 @@
   loadBuildingSprite('holo-billboard-kiosk', '/bridge/assets/buildings/holo-billboard-kiosk.png', 84);
   loadBuildingSprite('token-kiosk', '/bridge/assets/buildings/token-kiosk.png', 78);
   loadBuildingSprite('hover-bike-dock', '/bridge/assets/buildings/hover-bike-dock.png', 78);
+  loadBuildingSprite('arcade', '/bridge/assets/buildings/arcade.png', 112);
+  loadBuildingSprite('cyber-noodle-bar', '/bridge/assets/buildings/cyber-noodle-bar.png', 96);
+  loadBuildingSprite('tech-repair-shop', '/bridge/assets/buildings/tech-repair-shop.png', 96);
+  loadBuildingSprite('chrome-clinic', '/bridge/assets/buildings/chrome-clinic.png', 100);
+  loadBuildingSprite('junk-pawn-shop', '/bridge/assets/buildings/junk-pawn-shop.png', 96);
 
   function drawBuildingSprite(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX) {
     var s = spriteCache[key];
@@ -314,6 +319,46 @@
     if (flicker > 0.92) {
       drawSpriteGlow(ctx, x + ts * 0.5, y - ts * 0.1, ts * 1.6, 'rgba(120,220,232,0.85)', 0.6 * (1 - flicker) * 12);
     }
+  }
+
+  function drawArcadePng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'arcade', 5, 4, 4);
+    var pulse = 0.7 + Math.sin((time || 0) / 560 + (col || 0)) * 0.18;
+    var centerX = x - ts * 1.5;
+    drawSpriteGlow(ctx, centerX, y - ts * 2.15, ts * 3.8, 'rgba(232,80,200,0.9)', pulse * 0.42);
+    drawSpriteGlow(ctx, centerX, y - ts * 1.85, ts * 2.5, 'rgba(92,200,208,0.65)', pulse * 0.22);
+    drawGroundLight(ctx, centerX, y + ts * 0.95, ts * 2.8, ts * 1.05, 'rgba(255,200,128,0.55)', 0.3 * pulse);
+    drawGroundLight(ctx, centerX, y + ts * 0.85, ts * 2.3, ts * 0.8, 'rgba(232,80,200,0.65)', 0.32 * pulse);
+  }
+
+  function drawCyberNoodleBarPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'cyber-noodle-bar', 3, 4, 1);
+    var t = time || 0;
+    var pulse = 0.65 + Math.sin(t / 760 + (col || 0)) * 0.16;
+    drawSpriteGlow(ctx, x + ts * 0.45, y - ts * 1.0, ts * 1.6, 'rgba(255,200,128,0.7)', pulse * 0.28);
+    drawSpriteGlow(ctx, x + ts * 0.55, y - ts * 1.85, ts * 1.4, 'rgba(232,80,200,0.55)', pulse * 0.16);
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 0.95, ts * 2.0, ts * 0.85, 'rgba(255,176,96,0.55)', 0.28 * pulse);
+  }
+
+  function drawTechRepairShopPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'tech-repair-shop', 3, 4, 1);
+    var pulse = 0.6 + Math.sin((time || 0) / 680 + (row || 0)) * 0.18;
+    drawSpriteGlow(ctx, x + ts * 0.55, y - ts * 1.55, ts * 1.9, 'rgba(92,200,208,0.72)', pulse * 0.3);
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 0.95, ts * 2.0, ts * 0.85, 'rgba(92,200,208,0.55)', 0.28 * pulse);
+  }
+
+  function drawChromeClinicPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'chrome-clinic', 4, 4, 1);
+    var pulse = 0.62 + Math.sin((time || 0) / 720 + (col || 0)) * 0.16;
+    drawSpriteGlow(ctx, x + ts * 0.65, y - ts * 1.55, ts * 2.1, 'rgba(128,224,232,0.72)', pulse * 0.3);
+    drawGroundLight(ctx, x + ts * 0.65, y + ts * 0.95, ts * 2.4, ts * 0.9, 'rgba(128,224,232,0.5)', 0.25 * pulse);
+  }
+
+  function drawJunkPawnShopPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'junk-pawn-shop', 3, 4, 1);
+    var pulse = 0.5 + Math.sin((time || 0) / 900 + (row || 0)) * 0.14;
+    drawSpriteGlow(ctx, x + ts * 0.45, y - ts * 1.45, ts * 1.5, 'rgba(232,80,200,0.5)', pulse * 0.2);
+    drawGroundLight(ctx, x + ts * 0.5, y + ts * 0.9, ts * 1.7, ts * 0.75, 'rgba(255,210,128,0.42)', 0.22 * pulse);
   }
 
   // ---- Tile Draw Functions ----
@@ -2061,7 +2106,12 @@
     31: drawNeonRamenStandPng,
     32: drawHoloBillboardKioskPng,
     33: drawTokenKioskPng,
-    34: drawHoverBikeDockPng
+    34: drawHoverBikeDockPng,
+    36: drawArcadePng,
+    37: drawCyberNoodleBarPng,
+    38: drawTechRepairShopPng,
+    39: drawChromeClinicPng,
+    40: drawJunkPawnShopPng
   });
 
 })();
