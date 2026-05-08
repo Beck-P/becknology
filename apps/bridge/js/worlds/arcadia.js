@@ -25,6 +25,128 @@
     return c;
   }
 
+  // Edge flood-fill matte cleanup. DALL-E sometimes paints a non-white
+  // background — for the cyberpunk PNGs it's typically a dark purple. The
+  // whites-only cleanup below misses that. This pass:
+  //   1. Samples a ring of edge pixels to learn the dominant matte color.
+  //   2. BFS from every edge inward, flagging pixels whose color is similar
+  //      to a learned matte color and whose alpha is opaque-ish.
+  //   3. Stops the flood when it hits a pixel that's clearly part of the
+  //      sprite (high saturation or far from any matte color), so internal
+  //      dark pixels never get clipped.
+  // Tolerance is conservative; stop conditions favor preserving sprite
+  // pixels over removing matte. Anti-aliased edges get an alpha fade.
+  function cleanMatteFlood(data, w, h) {
+    var px = data.data;
+    // Sample edge pixels to learn matte palette
+    var samples = [];
+    var step = Math.max(2, Math.floor(Math.min(w, h) / 64));
+    for (var x = 0; x < w; x += step) {
+      var iTop = (0 * w + x) * 4;
+      var iBot = ((h - 1) * w + x) * 4;
+      if (px[iTop + 3] > 80) samples.push([px[iTop], px[iTop + 1], px[iTop + 2]]);
+      if (px[iBot + 3] > 80) samples.push([px[iBot], px[iBot + 1], px[iBot + 2]]);
+    }
+    for (var y = 0; y < h; y += step) {
+      var iL = (y * w + 0) * 4;
+      var iR = (y * w + (w - 1)) * 4;
+      if (px[iL + 3] > 80) samples.push([px[iL], px[iL + 1], px[iL + 2]]);
+      if (px[iR + 3] > 80) samples.push([px[iR], px[iR + 1], px[iR + 2]]);
+    }
+    if (samples.length < 8) return; // mostly transparent already; nothing to do
+
+    // Cluster samples into up to 3 dominant colors. Cheap k-means lite —
+    // initialize with first sample, then merge similar samples into clusters.
+    var clusters = [];
+    var clusterTol2 = 35 * 35;
+    for (var s = 0; s < samples.length; s++) {
+      var sample = samples[s];
+      var matched = false;
+      for (var c = 0; c < clusters.length; c++) {
+        var cl = clusters[c];
+        var dr = sample[0] - cl.r;
+        var dg = sample[1] - cl.g;
+        var db = sample[2] - cl.b;
+        if (dr * dr + dg * dg + db * db < clusterTol2) {
+          cl.r = (cl.r * cl.n + sample[0]) / (cl.n + 1);
+          cl.g = (cl.g * cl.n + sample[1]) / (cl.n + 1);
+          cl.b = (cl.b * cl.n + sample[2]) / (cl.n + 1);
+          cl.n++;
+          matched = true;
+          break;
+        }
+      }
+      if (!matched && clusters.length < 4) {
+        clusters.push({ r: sample[0], g: sample[1], b: sample[2], n: 1 });
+      }
+    }
+    // Keep clusters with at least 8% of samples — those are dominant matte tones.
+    var minCount = Math.max(3, Math.floor(samples.length * 0.08));
+    var matteColors = clusters.filter(function (c) { return c.n >= minCount; });
+    if (matteColors.length === 0) return;
+
+    // Tolerance for "this pixel is matte" — scaled by saturation of the matte.
+    // Dark/desaturated mattes get a tighter tolerance to avoid eating dark
+    // sprite pixels. Bright colored mattes (rare) get more leeway.
+    var tol = 50;
+    var tol2 = tol * tol;
+    // Wider tolerance for partial-alpha fade
+    var fadeTol2 = (tol + 25) * (tol + 25);
+
+    function distToMatte2(r, g, b) {
+      var best = Infinity;
+      for (var k = 0; k < matteColors.length; k++) {
+        var mc = matteColors[k];
+        var dr = r - mc.r;
+        var dg = g - mc.g;
+        var db = b - mc.b;
+        var d = dr * dr + dg * dg + db * db;
+        if (d < best) best = d;
+      }
+      return best;
+    }
+
+    // BFS flood from every edge pixel. Use an Int32Array as a ring buffer.
+    var visited = new Uint8Array(w * h);
+    var qLen = w * h;
+    var queue = new Int32Array(qLen * 2);
+    var qHead = 0, qTail = 0;
+
+    function enq(qx, qy) {
+      if (qx < 0 || qx >= w || qy < 0 || qy >= h) return;
+      var idx = qy * w + qx;
+      if (visited[idx]) return;
+      visited[idx] = 1;
+      queue[qTail++] = qx;
+      queue[qTail++] = qy;
+    }
+    for (var ex = 0; ex < w; ex++) { enq(ex, 0); enq(ex, h - 1); }
+    for (var ey = 0; ey < h; ey++) { enq(0, ey); enq(w - 1, ey); }
+
+    while (qHead < qTail) {
+      var cx = queue[qHead++], cy = queue[qHead++];
+      var i = (cy * w + cx) * 4;
+      var a = px[i + 3];
+      if (a === 0) {
+        // Already transparent — propagate flood through it
+        enq(cx + 1, cy); enq(cx - 1, cy); enq(cx, cy + 1); enq(cx, cy - 1);
+        continue;
+      }
+      var d2 = distToMatte2(px[i], px[i + 1], px[i + 2]);
+      if (d2 < tol2) {
+        px[i + 3] = 0;
+        enq(cx + 1, cy); enq(cx - 1, cy); enq(cx, cy + 1); enq(cx, cy - 1);
+      } else if (d2 < fadeTol2) {
+        // Anti-aliased fringe — fade alpha proportionally to distance from matte
+        var t = (d2 - tol2) / (fadeTol2 - tol2); // 0 at matte edge → 1 at sprite
+        var newA = Math.floor(a * t * 0.7);
+        if (newA < a) px[i + 3] = newA;
+        // Don't propagate through fringe pixels — sprite is just past them
+      }
+      // Otherwise: sprite pixel; flood stops here
+    }
+  }
+
   function loadBuildingSprite(key, path, chunkWidth) {
     if (spriteCache[key]) return spriteCache[key];
     var entry = { canvas: null, ready: false };
@@ -39,6 +161,7 @@
       try {
         var data = sCtx.getImageData(0, 0, src.width, src.height);
         var px = data.data;
+        // Pass 1: existing white/cream cleanup (for tavern/inn/lighthouse-style PNGs)
         for (var i = 0; i < px.length; i += 4) {
           var r = px[i], g = px[i + 1], b = px[i + 2], a = px[i + 3];
           if (a === 0) continue;
@@ -57,6 +180,9 @@
             px[i + 3] = 0;
           }
         }
+        // Pass 2: edge flood-fill matte cleanup (catches purple/dark mattes
+        // that the whites-only pass misses on the cyberpunk PNGs).
+        cleanMatteFlood(data, src.width, src.height);
         sCtx.putImageData(data, 0, 0);
       } catch (e) { /* CORS — skip */ }
 
