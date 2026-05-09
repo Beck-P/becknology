@@ -257,37 +257,56 @@ var BridgeCatalog = (function () {
       item.preview(ctx);
     }
 
-    // Pull balance + owned decor
     if (typeof BridgeProgression === 'undefined') return;
     BridgeProgression.getBalance().then(function (balance) {
       var balEl = document.getElementById('catalog-balance');
       if (balEl) balEl.textContent = '🪙 ' + (balance == null ? 0 : balance);
     });
-    BridgeProgression.getDecor().then(function (decor) {
-      // Mark owned slots
-      var actions = overlayEl.querySelectorAll('.catalog-action');
-      for (var i = 0; i < actions.length; i++) {
-        var key = actions[i].getAttribute('data-key');
-        var item = getItemByKey(key);
-        if (!item) continue;
-        var ownedKeyInSlot = decor[item.slot];
-        if (ownedKeyInSlot === item.key) {
-          actions[i].textContent = '✓ OWNED';
-          actions[i].style.color = '#80e088';
+    Promise.all([BridgeProgression.getDecor(), BridgeProgression.getLocker()])
+      .then(function (results) {
+        var decor = results[0] || {};
+        var lockerKeys = results[1] || [];
+        var inLocker = {};
+        for (var i = 0; i < lockerKeys.length; i++) inLocker[lockerKeys[i]] = true;
+
+        var actions = overlayEl.querySelectorAll('.catalog-action');
+        for (var i = 0; i < actions.length; i++) {
+          var key = actions[i].getAttribute('data-key');
+          var item = getItemByKey(key);
+          if (!item) continue;
           var card = actions[i].closest('.catalog-card');
+          // Reset card styling
           if (card) {
-            card.style.borderColor = 'rgba(120,224,136,0.55)';
-            card.style.background = 'rgba(40,90,55,0.18)';
+            card.style.borderColor = '';
+            card.style.background = '';
           }
-        } else if (ownedKeyInSlot) {
-          actions[i].textContent = '🪙 ' + item.price + ' · slot full';
-          actions[i].style.color = '#888';
-        } else {
-          actions[i].textContent = '🪙 ' + item.price;
-          actions[i].style.color = '#ffe080';
+          var ownedKeyInSlot = decor[item.slot];
+          var inSlot = ownedKeyInSlot === item.key;
+          var stored = !!inLocker[item.key];
+          if (inSlot) {
+            actions[i].textContent = '✓ ON DISPLAY';
+            actions[i].style.color = '#80e088';
+            if (card) {
+              card.style.borderColor = 'rgba(120,224,136,0.55)';
+              card.style.background = 'rgba(40,90,55,0.18)';
+            }
+          } else if (stored) {
+            actions[i].textContent = '✓ IN LOCKER';
+            actions[i].style.color = '#80e0e8';
+            if (card) {
+              card.style.borderColor = 'rgba(64,200,216,0.45)';
+              card.style.background = 'rgba(40,80,90,0.18)';
+            }
+          } else if (ownedKeyInSlot) {
+            // Slot full but you can still buy — item goes to locker.
+            actions[i].textContent = '🪙 ' + item.price + ' · → LOCKER';
+            actions[i].style.color = '#ffe080';
+          } else {
+            actions[i].textContent = '🪙 ' + item.price;
+            actions[i].style.color = '#ffe080';
+          }
         }
-      }
-    });
+      });
   }
 
   // ---- Buy handler ----
@@ -298,18 +317,20 @@ var BridgeCatalog = (function () {
     setFeedback('PROCESSING…', '#80e0e8');
     BridgeProgression.purchaseDecor(item.slot, item.key, item.price).then(function (res) {
       if (res.ok) {
-        setFeedback('PURCHASED · ' + item.name.toUpperCase(), '#80e088');
+        if (res.destination === 'locker') {
+          setFeedback('PURCHASED · ' + item.name.toUpperCase() + ' → LOCKER', '#80e0e8');
+        } else {
+          setFeedback('PURCHASED · ' + item.name.toUpperCase() + ' → ON DISPLAY', '#80e088');
+        }
         refreshState();
-        // Notify quarters render layer to show the new decor immediately
         if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
           BridgeQuarters.refreshDecor();
         }
-        // First decor purchase → grant the Settled In trophy
         BridgeProgression.recordAchievement('settled_in', 50, { first: item.key });
       } else if (res.reason === 'insufficient') {
         setFeedback('NOT ENOUGH COINS', '#e88860');
-      } else if (res.reason === 'occupied') {
-        setFeedback('SLOT ALREADY FILLED', '#e88860');
+      } else if (res.reason === 'already_owned') {
+        setFeedback('ALREADY OWNED', '#e8c060');
         refreshState();
       } else {
         setFeedback('PURCHASE FAILED', '#e88860');

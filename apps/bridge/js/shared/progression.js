@@ -194,8 +194,11 @@
 
   /**
    * Atomically attempt to buy a decor item. Returns:
-   *   { ok: true, balance: <new balance> } on success
-   *   { ok: false, reason: 'insufficient' | 'occupied' | 'error' }
+   *   { ok: true, balance, destination: 'slot'|'locker' } on success
+   *   { ok: false, reason: 'insufficient'|'already_owned'|'no_pilot'|'no_client'|'error' }
+   *
+   * If the slot is empty, the item goes to the slot. If occupied, the item
+   * goes to the locker (the player can swap from there later).
    */
   function purchaseDecor(slotKey, itemKey, price) {
     return resolvePilot().then(function (pilot) {
@@ -212,33 +215,90 @@
           console.warn('[progression] purchase_decor failed:', res.error);
           return { ok: false, reason: 'error' };
         }
-        if (res.data === -1) return { ok: false, reason: 'insufficient' };
-        if (res.data === -2) return { ok: false, reason: 'occupied' };
-        emitCoinChange(res.data, -price, 'purchase:' + itemKey);
-        return { ok: true, balance: res.data };
+        var d = res.data || {};
+        if (!d.ok) return { ok: false, reason: d.reason || 'error' };
+        emitCoinChange(d.balance, -price, 'purchase:' + itemKey);
+        emitLockerChange();
+        return { ok: true, balance: d.balance, destination: d.destination };
       });
     });
   }
 
-  // ---- Same-tab pub/sub for the bridge HUD to listen on ----
+  /** Returns array of item_keys currently in the locker. */
+  function getLocker() {
+    return resolvePilot().then(function (pilot) {
+      if (!pilot) return [];
+      var client = getClient();
+      if (!client) return [];
+      return client.from('pilot_locker')
+        .select('item_key, stored_at')
+        .eq('pilot_id', pilot.id)
+        .order('stored_at', { ascending: false })
+        .then(function (res) {
+          if (res.error || !res.data) return [];
+          return res.data.map(function (r) { return r.item_key; });
+        });
+    });
+  }
+
+  /**
+   * Move the item currently in the slot to the locker (slot becomes empty).
+   * Returns { ok: true, item } on success or { ok: false, reason }.
+   */
+  function storeDecor(slotKey) {
+    return resolvePilot().then(function (pilot) {
+      if (!pilot) return { ok: false, reason: 'no_pilot' };
+      var client = getClient();
+      if (!client) return { ok: false, reason: 'no_client' };
+      return client.rpc('store_decor', {
+        p_pilot_id: pilot.id,
+        p_slot_key: slotKey
+      }).then(function (res) {
+        if (res.error) {
+          console.warn('[progression] store_decor failed:', res.error);
+          return { ok: false, reason: 'error' };
+        }
+        var d = res.data || {};
+        if (d.ok) emitLockerChange();
+        return d;
+      });
+    });
+  }
+
+  /**
+   * Move an item from the locker into the given slot. If the slot is occupied
+   * the existing slot item swaps back to the locker (atomic).
+   * Returns { ok: true, placed, displaced } or { ok: false, reason }.
+   */
+  function placeDecor(itemKey, slotKey) {
+    return resolvePilot().then(function (pilot) {
+      if (!pilot) return { ok: false, reason: 'no_pilot' };
+      var client = getClient();
+      if (!client) return { ok: false, reason: 'no_client' };
+      return client.rpc('place_decor', {
+        p_pilot_id: pilot.id,
+        p_item_key: itemKey,
+        p_slot_key: slotKey
+      }).then(function (res) {
+        if (res.error) {
+          console.warn('[progression] place_decor failed:', res.error);
+          return { ok: false, reason: 'error' };
+        }
+        var d = res.data || {};
+        if (d.ok) emitLockerChange();
+        return d;
+      });
+    });
+  }
+
+  // ---- Same-tab pub/sub for the bridge HUD/UI to listen on ----
   var _coinListeners = [];
   var _trophyListeners = [];
+  var _lockerListeners = [];
 
-  function onCoinChange(fn) {
-    _coinListeners.push(fn);
-    return function unsubscribe() {
-      var i = _coinListeners.indexOf(fn);
-      if (i >= 0) _coinListeners.splice(i, 1);
-    };
-  }
-
-  function onTrophyEarned(fn) {
-    _trophyListeners.push(fn);
-    return function unsubscribe() {
-      var i = _trophyListeners.indexOf(fn);
-      if (i >= 0) _trophyListeners.splice(i, 1);
-    };
-  }
+  function onCoinChange(fn)    { _coinListeners.push(fn);    return function () { var i = _coinListeners.indexOf(fn);    if (i >= 0) _coinListeners.splice(i, 1); }; }
+  function onTrophyEarned(fn)  { _trophyListeners.push(fn);  return function () { var i = _trophyListeners.indexOf(fn);  if (i >= 0) _trophyListeners.splice(i, 1); }; }
+  function onLockerChange(fn)  { _lockerListeners.push(fn);  return function () { var i = _lockerListeners.indexOf(fn);  if (i >= 0) _lockerListeners.splice(i, 1); }; }
 
   function emitCoinChange(newBalance, delta, reason) {
     for (var i = 0; i < _coinListeners.length; i++) {
@@ -251,6 +311,13 @@
     for (var i = 0; i < _trophyListeners.length; i++) {
       try { _trophyListeners[i]({ key: key }); }
       catch (e) { console.warn('[progression] trophy listener error:', e); }
+    }
+  }
+
+  function emitLockerChange() {
+    for (var i = 0; i < _lockerListeners.length; i++) {
+      try { _lockerListeners[i](); }
+      catch (e) { console.warn('[progression] locker listener error:', e); }
     }
   }
 
@@ -283,9 +350,13 @@
     getBalance: getBalance,
     getAchievements: getAchievements,
     getDecor: getDecor,
+    getLocker: getLocker,
     purchaseDecor: purchaseDecor,
+    storeDecor: storeDecor,
+    placeDecor: placeDecor,
     onCoinChange: onCoinChange,
     onTrophyEarned: onTrophyEarned,
+    onLockerChange: onLockerChange,
     maybeAwardCabinetCrusher: maybeAwardCabinetCrusher,
     maybeAwardWayfarer: maybeAwardWayfarer
   };

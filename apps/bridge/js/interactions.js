@@ -116,6 +116,10 @@ var BridgeInteractions = (function () {
         if (typeof BridgeCatalog !== 'undefined') BridgeCatalog.show();
         break;
 
+      case 'locker':
+        if (typeof BridgeLocker !== 'undefined') BridgeLocker.show();
+        break;
+
       case 'stats_panel':
         if (typeof BridgeStatsPanel !== 'undefined') BridgeStatsPanel.show();
         break;

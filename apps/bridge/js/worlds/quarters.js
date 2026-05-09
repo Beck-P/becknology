@@ -331,6 +331,58 @@
   }
 
   // ---- Trophy shelf (single tile, empty) ----
+  // ---- Storage locker (single tile — your personal inventory chest) ----
+  function drawStorageLocker(ctx, x, y, ts, time, col, row) {
+    var u = ts / 16;
+    drawFloorBase(ctx, x, y, ts, time, col, row, false);
+
+    // Locker body — dark metal cube with brass + cyan accents
+    ctx.fillStyle = PAL.wallDark;
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(3 * u), Math.floor(12 * u), Math.floor(11 * u));
+    // Top highlight
+    ctx.fillStyle = PAL.wallHi;
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(3 * u), Math.floor(12 * u), Math.max(1, u));
+    // Bottom shadow
+    ctx.fillStyle = PAL.chairDeep;
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(13 * u), Math.floor(12 * u), Math.max(1, u));
+
+    // Brass top trim
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(3 * u) - Math.max(1, Math.floor(u * 0.6)), Math.floor(12 * u), Math.max(1, Math.floor(u * 0.6)));
+    ctx.fillStyle = PAL.brassHi;
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(3 * u) - Math.max(1, Math.floor(u * 0.6)), Math.floor(12 * u), Math.max(1, Math.floor(u * 0.3)));
+
+    // Locker face — split into two doors with cyan seam
+    var seamPulse = 0.6 + Math.sin(time / 800) * 0.25;
+    ctx.fillStyle = 'rgba(64, 200, 216, ' + seamPulse.toFixed(2) + ')';
+    ctx.fillRect(x + Math.floor(8 * u) - Math.max(1, Math.floor(u * 0.3)), y + Math.floor(4 * u), Math.max(1, Math.floor(u * 0.6)), Math.floor(9 * u));
+
+    // Door handles (small brass knobs left and right of seam)
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(7 * u), Math.max(1, u), Math.max(1, u));
+    ctx.fillRect(x + Math.floor(9 * u), y + Math.floor(7 * u), Math.max(1, u), Math.max(1, u));
+
+    // Status LED top-center, pulsing cyan
+    var ledOn = (Math.floor(time / 700) % 2) === 0;
+    ctx.fillStyle = ledOn ? 'rgba(120, 240, 248, 1)' : 'rgba(40, 100, 110, 0.6)';
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(4 * u), Math.floor(2 * u), Math.max(1, Math.floor(u * 0.7)));
+
+    // Tiny indicator panel below LED — shows "STORAGE" via a few dashes
+    ctx.fillStyle = 'rgba(120, 220, 240, 0.4)';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(11 * u), Math.floor(2 * u), Math.max(1, Math.floor(u * 0.4)));
+    ctx.fillRect(x + Math.floor(8 * u), y + Math.floor(11 * u), Math.floor(2 * u), Math.max(1, Math.floor(u * 0.4)));
+
+    // Subtle glow above (matches catalog terminal aesthetic)
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var halo = ctx.createRadialGradient(x + ts / 2, y + Math.floor(5 * u), 0, x + ts / 2, y + Math.floor(5 * u), 5 * u);
+    halo.addColorStop(0, 'rgba(64, 200, 216, ' + (0.18 * seamPulse).toFixed(2) + ')');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - 2 * u, y - 2 * u, ts + 4 * u, ts + 2 * u);
+    ctx.restore();
+  }
+
   // ---- Chess table (single tile — small wooden side-table with chess board) ----
   // Interactable: enters the chess app. Theme is the cozy library / fireplace
   // chess opening trainer, which fits Quarters' lived-in vibe.
@@ -1517,7 +1569,8 @@
     13: drawSlotLamp,
     14: drawSlotPoster,
     15: drawSlotNebulaTank,
-    17: drawChessTable
+    17: drawChessTable,
+    18: drawStorageLocker
   });
 
   BridgeWorld.registerOverlay('quarters', quartersOverlay);
