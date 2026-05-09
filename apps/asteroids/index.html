@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Asteroids — Becknology</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/bridge/js/shared/progression.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { background: #050505; color: #fff; font-family: 'Courier New', Consolas, monospace; height: 100%; overflow: hidden; }
@@ -470,6 +472,16 @@
       (beatBest ? '<p class="new-best">★ NEW BEST ★</p>' : '<p>BEST <span class="key">' + bestScore + '</span></p>') +
       '<p style="margin-top:1.5rem;color:#fff;">PRESS ANY KEY TO RESTART</p>';
     overlay.classList.remove('hidden');
+
+    // ---- Bridge progression ----
+    if (typeof BridgeProgression !== 'undefined') {
+      var coinsEarned = Math.floor(score / 50) + (beatBest ? 25 : 0);
+      if (coinsEarned > 0) BridgeProgression.awardCoins(coinsEarned, 'asteroids_game', { score: score, wave: wave });
+      BridgeProgression.recordAchievement('first_light', 100, { game: 'asteroids' });
+      BridgeProgression.recordAchievement('played_asteroids', 0, { score: score }).then(function () {
+        BridgeProgression.maybeAwardCabinetCrusher();
+      });
+    }
   }
 
   function spawnParticles(x, y, color, n, speedRange) {

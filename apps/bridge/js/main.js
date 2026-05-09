@@ -14,6 +14,7 @@ var Bridge = (function () {
     window.addEventListener('resize', resize);
 
     BridgeStarfield.init(canvas);
+    if (typeof BridgeCoinHUD !== 'undefined') BridgeCoinHUD.init();
     BridgeState.onChange(onStateChange);
 
     // Check if returning from an app with a saved world position
@@ -104,6 +105,14 @@ var Bridge = (function () {
         break;
       case 'world':
         if (typeof BridgeWorld !== 'undefined') BridgeWorld.show(context && context.spawn);
+        // Track wayfarer progress when player lands on a hyperspace destination.
+        if (typeof BridgeProgression !== 'undefined' && context && context.worldId) {
+          var destinations = { arcadia: 1, lumar: 1, singularity: 1, enigma: 1 };
+          if (destinations[context.worldId]) {
+            BridgeProgression.recordAchievement('visited_' + context.worldId, 25, { source: 'hyperspace' })
+              .then(function () { BridgeProgression.maybeAwardWayfarer(); });
+          }
+        }
         break;
       case 'redirect':
         window.location.href = context.url;

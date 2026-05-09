@@ -270,6 +270,17 @@ function finishLine() {
   document.querySelectorAll(".opening-item").forEach(b => {
     b.classList.toggle("active", b.dataset.id === current.id);
   });
+
+  // ---- Bridge progression ----
+  if (typeof BridgeProgression !== "undefined") {
+    // Base: 10 coins per completed line, +15 if clean (no errors, no hints)
+    const coinsEarned = 10 + (clean ? 15 : 0);
+    BridgeProgression.awardCoins(coinsEarned, "chess_line", {
+      opening: current.id, clean, errors: errorCount, hints: hintsUsed
+    });
+    BridgeProgression.recordAchievement("first_light", 100, { game: "chess" });
+    BridgeProgression.recordAchievement("bookworm", 50, { opening: current.id });
+  }
 }
 
 function flashError(square, expectedSan) {

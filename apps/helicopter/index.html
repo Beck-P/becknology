@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Helicopter — Becknology</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/bridge/js/shared/progression.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { background: #0a0218; color: #fff; font-family: 'Courier New', Consolas, monospace; height: 100%; overflow: hidden; }
@@ -417,6 +419,16 @@
       (beatBest ? '<p class="new-best">★ NEW BEST ★</p>' : '<p>BEST <span class="key">' + best + '</span></p>') +
       '<p style="margin-top:1.5rem;color:#ff70d0;">PRESS ANY KEY TO RETRY</p>';
     overlay.classList.remove('hidden');
+
+    // ---- Bridge progression ----
+    if (typeof BridgeProgression !== 'undefined') {
+      var coinsEarned = Math.floor(finalDist / 30) + (beatBest ? 25 : 0);
+      if (coinsEarned > 0) BridgeProgression.awardCoins(coinsEarned, 'helicopter_game', { dist: Math.floor(dist), coins: coins, final: finalDist });
+      BridgeProgression.recordAchievement('first_light', 100, { game: 'helicopter' });
+      BridgeProgression.recordAchievement('played_helicopter', 0, { final: finalDist }).then(function () {
+        BridgeProgression.maybeAwardCabinetCrusher();
+      });
+    }
   }
 
   function generateColumn(prev) {

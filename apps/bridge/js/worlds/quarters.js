@@ -331,6 +331,74 @@
   }
 
   // ---- Trophy shelf (single tile, empty) ----
+  // ---- Chess table (single tile — small wooden side-table with chess board) ----
+  // Interactable: enters the chess app. Theme is the cozy library / fireplace
+  // chess opening trainer, which fits Quarters' lived-in vibe.
+  function drawChessTable(ctx, x, y, ts, time, col, row) {
+    var u = ts / 16;
+    drawFloorBase(ctx, x, y, ts, time, col, row, false);
+
+    // Table top (warm wood) — square with brass edge
+    var topY = Math.floor(5 * u);
+    ctx.fillStyle = PAL.floorMid;
+    ctx.fillRect(x + Math.floor(2 * u), y + topY, Math.floor(12 * u), Math.floor(8 * u));
+    ctx.fillStyle = PAL.floorHi;
+    ctx.fillRect(x + Math.floor(2 * u), y + topY, Math.floor(12 * u), Math.max(1, u));
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(x + Math.floor(2 * u), y + topY + Math.floor(8 * u) - Math.max(1, u), Math.floor(12 * u), Math.max(1, u));
+
+    // Chess board on top — 4x4 visible squares (smaller than 8x8 for tile scale)
+    var boardX = x + Math.floor(4 * u);
+    var boardY = y + topY + Math.floor(2 * u);
+    var sq = Math.floor(2 * u);
+    for (var rr = 0; rr < 4; rr++) {
+      for (var cc = 0; cc < 4; cc++) {
+        var dark = (rr + cc) % 2 === 0;
+        ctx.fillStyle = dark ? '#3a2410' : '#d4c8b0';
+        ctx.fillRect(boardX + cc * sq, boardY + rr * sq, sq, sq);
+      }
+    }
+    // Board border
+    ctx.strokeStyle = PAL.floorGrain;
+    ctx.lineWidth = Math.max(1, Math.floor(u * 0.4));
+    ctx.strokeRect(boardX, boardY, sq * 4, sq * 4);
+
+    // A couple of "pieces" — one dark, one light, suggesting an in-progress game
+    var piecePulse = 0.7 + Math.sin(time / 1100) * 0.15;
+    ctx.fillStyle = 'rgba(20, 12, 6, ' + piecePulse.toFixed(2) + ')';
+    ctx.fillRect(boardX + Math.floor(sq * 0.5), boardY + Math.floor(sq * 0.5), Math.max(1, Math.floor(u * 1.0)), Math.max(1, Math.floor(u * 1.0)));
+    ctx.fillStyle = 'rgba(212, 200, 176, ' + piecePulse.toFixed(2) + ')';
+    ctx.fillRect(boardX + sq * 2 + Math.floor(sq * 0.5), boardY + sq * 2 + Math.floor(sq * 0.5), Math.max(1, Math.floor(u * 1.0)), Math.max(1, Math.floor(u * 1.0)));
+
+    // Table legs (visible under the top)
+    ctx.fillStyle = PAL.floorGrain;
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(13 * u), Math.max(1, Math.floor(u * 0.8)), Math.floor(2 * u));
+    ctx.fillRect(x + Math.floor(12 * u), y + Math.floor(13 * u), Math.max(1, Math.floor(u * 0.8)), Math.floor(2 * u));
+
+    // Subtle warm glow above the table — invites interaction
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var halo = ctx.createRadialGradient(x + ts / 2, y + Math.floor(7 * u), 0, x + ts / 2, y + Math.floor(7 * u), Math.floor(8 * u));
+    halo.addColorStop(0, 'rgba(255, 200, 80, 0.10)');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - 2 * u, y, ts + 4 * u, ts);
+    ctx.restore();
+  }
+
+  // Earned trophy keys cached on quarters entry. Stable order — index in
+  // TROPHY_ORDER maps to which shelf slot (left-to-right) that trophy occupies.
+  var TROPHY_ORDER = ['first_light', 'cabinet_crusher', 'wayfarer', 'settled_in', 'bookworm'];
+  var earnedTrophies = new Set();
+
+  function getTrophyForShelf(col) {
+    // Shelves run cols 4..9 (6 tiles). Slot index = col - 4.
+    var slotIdx = col - 4;
+    if (slotIdx < 0 || slotIdx >= TROPHY_ORDER.length) return null;
+    var key = TROPHY_ORDER[slotIdx];
+    return earnedTrophies.has(key) ? key : null;
+  }
+
   function drawTrophyShelf(ctx, x, y, ts, time, col, row) {
     var u = ts / 16;
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
@@ -353,11 +421,155 @@
     ctx.fillStyle = PAL.floorGrain;
     ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(9 * u), 2 * u, Math.floor(2 * u));
 
-    // Subtle ghost marks where trophies *would* sit (very faint)
-    ctx.fillStyle = PAL.ghost;
-    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(4 * u), Math.floor(3 * u), Math.floor(3 * u));
-    ctx.fillRect(x + Math.floor(9 * u), y + Math.floor(4 * u), Math.floor(4 * u), Math.floor(3 * u));
+    var trophyKey = getTrophyForShelf(col);
+    if (trophyKey) {
+      // Earned — draw the trophy on the shelf surface, plus a subtle pedestal
+      drawTrophyPedestal(ctx, x, y, ts);
+      var fn = TROPHY_DRAW[trophyKey];
+      if (fn) fn(ctx, x, y, ts, time);
+      // Subtle gold halo around the trophy
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      var halo = ctx.createRadialGradient(
+        x + ts / 2, y + Math.floor(4.5 * u), 0,
+        x + ts / 2, y + Math.floor(4.5 * u), Math.floor(5 * u)
+      );
+      halo.addColorStop(0, 'rgba(255, 220, 120, 0.18)');
+      halo.addColorStop(1, 'transparent');
+      ctx.fillStyle = halo;
+      ctx.fillRect(x - 2 * u, y - 2 * u, ts + 4 * u, ts + 2 * u);
+      ctx.restore();
+    } else {
+      // Empty — faint silhouette hint of where a trophy would sit
+      ctx.fillStyle = PAL.ghost;
+      ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(4 * u), Math.floor(6 * u), Math.floor(3 * u));
+    }
   }
+
+  // Small brass pedestal under each earned trophy
+  function drawTrophyPedestal(ctx, x, y, ts) {
+    var u = ts / 16;
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(6.5 * u), Math.floor(6 * u), Math.max(1, Math.floor(u * 0.5)));
+    ctx.fillStyle = PAL.brassHi;
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(6.5 * u), Math.floor(6 * u), Math.max(1, Math.floor(u * 0.3)));
+  }
+
+  // ---- Trophy sprite drawers (each ~6-8 art units, perched on the shelf) ----
+  // Drawn within the shelf tile; centered around col/row x + ~ts/2.
+
+  // First Light — small gold star
+  function drawTrophyStar(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var cx = x + Math.floor(8 * u);
+    var cy = y + Math.floor(4 * u);
+    var twinkle = 0.85 + Math.sin(time / 600) * 0.15;
+    ctx.fillStyle = 'rgba(255, 220, 120, ' + twinkle.toFixed(2) + ')';
+    // 4-point star — vertical/horizontal arms + center
+    ctx.fillRect(cx - Math.floor(u * 0.5), cy - 2 * u, u, 5 * u);
+    ctx.fillRect(cx - 2 * u, cy - Math.floor(u * 0.5), 5 * u, u);
+    ctx.fillStyle = 'rgba(255, 255, 200, ' + (twinkle * 0.95).toFixed(2) + ')';
+    ctx.fillRect(cx - Math.floor(u * 0.5), cy - Math.floor(u * 0.5), u, u);
+  }
+
+  // Cabinet Crusher — tiny arcade cabinet silhouette
+  function drawTrophyCabinet(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var cx = x + Math.floor(8 * u);
+    var topY = y + Math.floor(2 * u);
+    // Cabinet body
+    ctx.fillStyle = '#3a2820';
+    ctx.fillRect(cx - 2 * u, topY, 4 * u, 5 * u);
+    // Marquee top
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(cx - 2 * u, topY, 4 * u, Math.max(1, u));
+    // Pulsing screen
+    var pulse = 0.6 + Math.sin(time / 400) * 0.3;
+    ctx.fillStyle = 'rgba(232, 112, 192, ' + pulse.toFixed(2) + ')';
+    ctx.fillRect(cx - Math.floor(1.5 * u), topY + Math.floor(1.5 * u), 3 * u, 2 * u);
+    // Joystick
+    ctx.fillStyle = '#1a1010';
+    ctx.fillRect(cx - Math.max(1, Math.floor(u * 0.5)), topY + 4 * u, Math.max(1, u), Math.max(1, u));
+  }
+
+  // Wayfarer — small compass with rotating needle
+  function drawTrophyCompass(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var cx = x + Math.floor(8 * u);
+    var cy = y + Math.floor(4 * u);
+    // Compass body (brass disc)
+    ctx.fillStyle = PAL.brass;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2.5 * u, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0a0a16';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 1.8 * u, 0, Math.PI * 2);
+    ctx.fill();
+    // Rotating needle
+    var ang = time / 1500;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ang);
+    ctx.fillStyle = '#e84040';
+    ctx.fillRect(-Math.max(1, Math.floor(u * 0.4)), -2 * u, Math.max(1, Math.floor(u * 0.7)), 2 * u);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-Math.max(1, Math.floor(u * 0.4)), 0, Math.max(1, Math.floor(u * 0.7)), 2 * u);
+    ctx.restore();
+  }
+
+  // Settled In — small armchair / pillow trophy
+  function drawTrophyChair(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var cx = x + Math.floor(8 * u);
+    var topY = y + Math.floor(2 * u);
+    // Chair back
+    ctx.fillStyle = PAL.bedMid;
+    ctx.fillRect(cx - 2 * u, topY, 4 * u, 3 * u);
+    ctx.fillStyle = PAL.bedHi;
+    ctx.fillRect(cx - 2 * u, topY, 4 * u, Math.max(1, u));
+    // Seat cushion
+    ctx.fillStyle = PAL.bedDeep;
+    ctx.fillRect(cx - 2 * u, topY + 3 * u, 4 * u, Math.max(1, u));
+    ctx.fillStyle = PAL.pillow;
+    ctx.fillRect(cx - Math.floor(1.5 * u), topY + Math.floor(1.5 * u), 3 * u, Math.max(1, u));
+    // Brass legs
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(cx - 2 * u, topY + 4 * u, Math.max(1, Math.floor(u * 0.5)), Math.max(1, u));
+    ctx.fillRect(cx + Math.floor(1.5 * u), topY + 4 * u, Math.max(1, Math.floor(u * 0.5)), Math.max(1, u));
+  }
+
+  // Bookworm — small open book with glow
+  function drawTrophyBook(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var cx = x + Math.floor(8 * u);
+    var topY = y + Math.floor(2.5 * u);
+    // Book covers (open)
+    ctx.fillStyle = '#5a2018';
+    ctx.fillRect(cx - 3 * u, topY, 3 * u, Math.floor(3.5 * u));
+    ctx.fillRect(cx, topY, 3 * u, Math.floor(3.5 * u));
+    // Pages (cream)
+    ctx.fillStyle = PAL.pillow;
+    ctx.fillRect(cx - Math.floor(2.5 * u), topY + Math.floor(0.5 * u), Math.floor(2.5 * u), Math.floor(2.5 * u));
+    ctx.fillRect(cx, topY + Math.floor(0.5 * u), Math.floor(2.5 * u), Math.floor(2.5 * u));
+    // Text lines
+    ctx.fillStyle = PAL.floorGrain;
+    ctx.fillRect(cx - Math.floor(2 * u), topY + Math.floor(1 * u), Math.max(1, Math.floor(u * 1.5)), Math.max(1, Math.floor(u * 0.4)));
+    ctx.fillRect(cx - Math.floor(2 * u), topY + Math.floor(1.7 * u), Math.max(1, Math.floor(u * 1.5)), Math.max(1, Math.floor(u * 0.4)));
+    ctx.fillRect(cx + Math.floor(0.5 * u), topY + Math.floor(1 * u), Math.max(1, Math.floor(u * 1.5)), Math.max(1, Math.floor(u * 0.4)));
+    ctx.fillRect(cx + Math.floor(0.5 * u), topY + Math.floor(1.7 * u), Math.max(1, Math.floor(u * 1.5)), Math.max(1, Math.floor(u * 0.4)));
+    // Binding
+    ctx.fillStyle = '#3a1010';
+    ctx.fillRect(cx - Math.max(1, Math.floor(u * 0.3)), topY, Math.max(1, Math.floor(u * 0.6)), Math.floor(3.5 * u));
+  }
+
+  var TROPHY_DRAW = {
+    first_light:     drawTrophyStar,
+    cabinet_crusher: drawTrophyCabinet,
+    wayfarer:        drawTrophyCompass,
+    settled_in:      drawTrophyChair,
+    bookworm:        drawTrophyBook
+  };
 
   // ---- Rug (3x2, anchor at col 4 row 7) ----
   // Concentric pattern centered on the rug center.
@@ -541,9 +753,20 @@
 
   // ---- Decor slot silhouettes (faint outline of what would go there) ----
 
+  // ---- Owned-decor cache: slot_key → item_key ----
+  var ownedDecor = {};
+  function refreshDecor() {
+    if (typeof BridgeProgression === 'undefined') return;
+    BridgeProgression.getDecor().then(function (d) { ownedDecor = d || {}; });
+  }
+
   function drawSlotPlant(ctx, x, y, ts, time, col, row) {
     var u = ts / 16;
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
+
+    var owned = ownedDecor.plant;
+    if (owned === 'houseplant') return drawOwnedHouseplant(ctx, x, y, ts);
+    if (owned === 'bonsai')     return drawOwnedBonsai(ctx, x, y, ts);
 
     // Pot outline (truncated cone)
     ctx.fillStyle = PAL.ghost;
@@ -567,6 +790,10 @@
     var u = ts / 16;
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
 
+    var owned = ownedDecor.lamp;
+    if (owned === 'floor_lamp')   return drawOwnedFloorLamp(ctx, x, y, ts, time);
+    if (owned === 'crystal_lamp') return drawOwnedCrystalLamp(ctx, x, y, ts, time);
+
     // Lamp base
     ctx.fillStyle = PAL.ghost;
     ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(13 * u), Math.floor(6 * u), Math.floor(2 * u));
@@ -589,6 +816,10 @@
     // Wall behind (this slot replaces a wall tile)
     drawWall(ctx, x, y, ts, time, col, row);
 
+    if (ownedDecor.poster === 'holo_poster') {
+      return drawOwnedHoloPoster(ctx, x, y, ts, time);
+    }
+
     // Poster outline (rectangle)
     ctx.fillStyle = PAL.ghost;
     ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(2 * u), ts - 4 * u, ts - 4 * u);
@@ -607,6 +838,10 @@
   function drawSlotNebulaTank(ctx, x, y, ts, time, col, row) {
     var u = ts / 16;
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
+
+    if (ownedDecor.tank === 'nebula_tank') {
+      return drawOwnedNebulaTank(ctx, x, y, ts, time);
+    }
 
     // Stand base
     ctx.fillStyle = PAL.ghost;
@@ -627,6 +862,162 @@
     // Tank glass hint (very faint vertical highlight)
     ctx.fillStyle = PAL.ghost;
     ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(3 * u), u, Math.floor(6 * u));
+  }
+
+  // ---- Owned decor sprites — drawn in place when player has bought the item ----
+
+  function drawOwnedHouseplant(ctx, x, y, ts) {
+    var u = ts / 16;
+    // Pot
+    ctx.fillStyle = '#7a4818';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(11 * u), Math.floor(6 * u), Math.floor(4 * u));
+    ctx.fillStyle = '#a06820';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(11 * u), Math.floor(6 * u), Math.max(1, u));
+    ctx.fillStyle = '#5a3010';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(13 * u), Math.floor(8 * u), Math.floor(2 * u));
+    // Soil
+    ctx.fillStyle = '#3a1a08';
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(12 * u), Math.floor(4 * u), u);
+    // Leaves
+    ctx.fillStyle = '#3a8038';
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(5 * u), Math.floor(2 * u), Math.floor(6 * u));
+    ctx.fillStyle = '#5aa050';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(7 * u), Math.floor(2 * u), Math.floor(3 * u));
+    ctx.fillRect(x + Math.floor(9 * u), y + Math.floor(7 * u), Math.floor(2 * u), Math.floor(3 * u));
+    ctx.fillStyle = '#3a8038';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(8 * u), Math.floor(2 * u), Math.floor(2 * u));
+    ctx.fillRect(x + Math.floor(10 * u), y + Math.floor(8 * u), Math.floor(2 * u), Math.floor(2 * u));
+  }
+
+  function drawOwnedBonsai(ctx, x, y, ts) {
+    var u = ts / 16;
+    // Wide shallow pot
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(12 * u), Math.floor(10 * u), Math.floor(3 * u));
+    ctx.fillStyle = '#5a3a1a';
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(12 * u), Math.floor(10 * u), u);
+    // Trunk
+    ctx.fillStyle = '#3a1810';
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(7 * u), Math.floor(2 * u), Math.floor(5 * u));
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(9 * u), Math.floor(2 * u), Math.floor(2 * u));
+    // Foliage clouds
+    ctx.fillStyle = '#3a8038';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(5 * u), Math.floor(4 * u), Math.floor(3 * u));
+    ctx.fillRect(x + Math.floor(8 * u), y + Math.floor(4 * u), Math.floor(4 * u), Math.floor(3 * u));
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(7 * u), Math.floor(6 * u), u);
+    ctx.fillStyle = '#5aa050';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(5 * u), Math.floor(4 * u), u);
+    ctx.fillRect(x + Math.floor(8 * u), y + Math.floor(4 * u), Math.floor(4 * u), u);
+  }
+
+  function drawOwnedFloorLamp(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    // Base
+    ctx.fillStyle = '#3a2820';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(13 * u), Math.floor(6 * u), Math.floor(2 * u));
+    ctx.fillStyle = '#5a3a28';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(13 * u), Math.floor(6 * u), u);
+    // Pole
+    ctx.fillStyle = '#5a3a28';
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(5 * u), Math.floor(2 * u), Math.floor(8 * u));
+    // Shade
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(2 * u), Math.floor(8 * u), Math.floor(3 * u));
+    ctx.fillStyle = '#e0c060';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(4 * u), Math.floor(8 * u), u);
+    // Warm halo
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var glow = ctx.createRadialGradient(x + ts / 2, y + Math.floor(4 * u), 0, x + ts / 2, y + Math.floor(4 * u), 6 * u);
+    var pulse = 0.7 + Math.sin(time / 800) * 0.1;
+    glow.addColorStop(0, 'rgba(255, 224, 128, ' + (0.5 * pulse).toFixed(2) + ')');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - 3 * u, y - 3 * u, ts + 6 * u, ts);
+    ctx.restore();
+  }
+
+  function drawOwnedCrystalLamp(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    // Base
+    ctx.fillStyle = '#1a1430';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(13 * u), Math.floor(6 * u), Math.floor(2 * u));
+    ctx.fillStyle = '#3a2858';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(13 * u), Math.floor(6 * u), u);
+    // Crystal column
+    var pulse = 0.85 + Math.sin(time / 700) * 0.15;
+    ctx.fillStyle = '#503090';
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(4 * u), Math.floor(4 * u), Math.floor(9 * u));
+    ctx.fillStyle = 'rgba(192, 144, 232, ' + pulse.toFixed(2) + ')';
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(4 * u), Math.floor(2 * u), Math.floor(9 * u));
+    ctx.fillStyle = 'rgba(220, 180, 240, ' + (pulse * 0.7).toFixed(2) + ')';
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(4 * u), Math.max(1, u), Math.floor(9 * u));
+    // Glow
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var glow = ctx.createRadialGradient(x + ts / 2, y + Math.floor(6 * u), 0, x + ts / 2, y + Math.floor(6 * u), 7 * u);
+    glow.addColorStop(0, 'rgba(192, 144, 232, ' + (0.5 * pulse).toFixed(2) + ')');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - 3 * u, y - 3 * u, ts + 6 * u, ts);
+    ctx.restore();
+  }
+
+  function drawOwnedHoloPoster(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    // Frame
+    ctx.fillStyle = '#3a2820';
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(2 * u), ts - 4 * u, ts - 4 * u);
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(2 * u), ts - 4 * u, Math.max(1, Math.floor(u * 0.5)));
+    // Poster surface — animated cyan/purple gradient
+    var pulse = 0.85 + Math.sin(time / 900) * 0.15;
+    var grad = ctx.createLinearGradient(x + 3 * u, y + 3 * u, x + ts - 3 * u, y + ts - 3 * u);
+    grad.addColorStop(0, 'rgba(96, 64, 160, ' + pulse.toFixed(2) + ')');
+    grad.addColorStop(1, 'rgba(64, 200, 216, ' + pulse.toFixed(2) + ')');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(3 * u), ts - 6 * u, ts - 6 * u);
+    // Big star burst
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(5 * u), Math.floor(2 * u), Math.floor(6 * u));
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(7 * u), Math.floor(6 * u), Math.floor(2 * u));
+  }
+
+  function drawOwnedNebulaTank(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    // Stand
+    ctx.fillStyle = '#3a2820';
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(13 * u), Math.floor(10 * u), Math.floor(2 * u));
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(13 * u), Math.floor(10 * u), Math.max(1, Math.floor(u * 0.5)));
+    // Tank glass
+    ctx.fillStyle = '#0a0418';
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(2 * u), Math.floor(10 * u), Math.floor(11 * u));
+    // Nebula gradient inside
+    var swirl = 0.85 + Math.sin(time / 1300) * 0.15;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x + Math.floor(3 * u), y + Math.floor(2 * u), Math.floor(10 * u), Math.floor(11 * u));
+    ctx.clip();
+    var grad = ctx.createRadialGradient(x + 8 * u, y + 7 * u, 0, x + 8 * u, y + 7 * u, 7 * u);
+    grad.addColorStop(0, 'rgba(192, 144, 232, ' + swirl.toFixed(2) + ')');
+    grad.addColorStop(0.5, 'rgba(96, 80, 180, ' + (swirl * 0.6).toFixed(2) + ')');
+    grad.addColorStop(1, 'rgba(20, 12, 40, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x + 3 * u, y + 2 * u, 10 * u, 11 * u);
+    // Tiny stars
+    ctx.fillStyle = '#fff';
+    var starOff = Math.floor(time / 100) % 7;
+    ctx.fillRect(x + 5 * u, y + (4 + starOff % 3) * u, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    ctx.fillRect(x + 10 * u, y + (6 + starOff % 4) * u, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    ctx.fillRect(x + 7 * u, y + (10 - starOff % 3) * u, Math.max(1, u * 0.7), Math.max(1, u * 0.7));
+    ctx.restore();
+    // Glass border + reflection
+    ctx.strokeStyle = 'rgba(160, 240, 248, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 3 * u + 0.5, y + 2 * u + 0.5, 10 * u - 1, 11 * u - 1);
+    ctx.fillStyle = 'rgba(160, 240, 248, 0.25)';
+    ctx.fillRect(x + 4 * u, y + 3 * u, Math.max(1, u * 0.8), 4 * u);
   }
 
   // ============================================================
@@ -1125,7 +1516,8 @@
     12: drawSlotPlant,
     13: drawSlotLamp,
     14: drawSlotPoster,
-    15: drawSlotNebulaTank
+    15: drawSlotNebulaTank,
+    17: drawChessTable
   });
 
   BridgeWorld.registerOverlay('quarters', quartersOverlay);
@@ -1149,6 +1541,13 @@
     // Boost the drone's LED briefly to "wake up" when player arrives
     drone.ledBoost = 1;
 
+    // Refresh earned trophies so shelves render with whatever the pilot has.
+    if (typeof BridgeProgression !== 'undefined') {
+      BridgeProgression.getAchievements().then(function (set) {
+        earnedTrophies = set;
+      });
+    }
+
     // Face the player INTO the room on entry (so first sight is "look around"
     // not "look at the door I just came through"). Only override if they're
     // standing at the spawn — preserves last-known facing for restored sessions.
@@ -1162,10 +1561,17 @@
       }
     }, 0);
 
+    // Refresh owned decor so the slots paint the actual items.
+    refreshDecor();
+
     // Slight delay so the world fade-in completes first
     setTimeout(function () {
       showWelcomeToast(firstTime, name);
     }, 350);
   });
+
+  // Public — Catalog calls refreshDecor() right after a purchase so the
+  // newly owned item paints immediately on the slot.
+  window.BridgeQuarters = { refreshDecor: refreshDecor };
 
 })();

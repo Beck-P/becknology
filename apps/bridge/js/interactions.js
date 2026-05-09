@@ -112,6 +112,14 @@ var BridgeInteractions = (function () {
         showMenuDialog(inter);
         break;
 
+      case 'catalog':
+        if (typeof BridgeCatalog !== 'undefined') BridgeCatalog.show();
+        break;
+
+      case 'stats_panel':
+        if (typeof BridgeStatsPanel !== 'undefined') BridgeStatsPanel.show();
+        break;
+
       case 'warp_map':
         // Save the player's bridge-room position so closing the warp map
         // returns them right back to the hologram (not the door spawn).

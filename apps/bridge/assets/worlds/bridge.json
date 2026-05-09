@@ -140,18 +140,16 @@
     {
       "x": 1,
       "y": 5,
-      "type": "dialog",
+      "type": "stats_panel",
       "label": "STATS CONSOLE",
-      "prompt": "ACCESS",
-      "dialog": "STATS CONSOLE\\n\\nOFFLINE\\nMission stats coming soon."
+      "prompt": "ACCESS STATS"
     },
     {
       "x": 2,
       "y": 5,
-      "type": "dialog",
+      "type": "stats_panel",
       "label": "STATS CONSOLE",
-      "prompt": "ACCESS",
-      "dialog": "STATS CONSOLE\\n\\nOFFLINE\\nMission stats coming soon."
+      "prompt": "ACCESS STATS"
     },
     {
       "x": 15,

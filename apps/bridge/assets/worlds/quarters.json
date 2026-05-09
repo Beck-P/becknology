@@ -44,16 +44,17 @@
     "12": "slot_plant",
     "13": "slot_lamp",
     "14": "slot_poster",
-    "15": "slot_nebula_tank"
+    "15": "slot_nebula_tank",
+    "17": "chess_table"
   },
   "tiles": [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
     [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
     [1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1],
-    [1, 6, 6, 2, 3, 8, 8, 8, 8, 3, 2, 7, 7, 7, 2, 1],
+    [1, 6, 6, 2, 8, 8, 8, 8, 8, 8, 2, 7, 7, 7, 2, 1],
     [1, 6, 6, 3, 2, 2, 2, 2, 2, 2, 3, 7, 7, 7, 14, 1],
-    [1, 2, 3, 2, 3, 2, 2, 2, 2, 3, 2, 3, 2, 2, 3, 1],
+    [1, 2, 3, 2, 17, 2, 2, 2, 2, 3, 2, 3, 2, 2, 3, 1],
     [1, 3, 12, 2, 9, 9, 9, 2, 3, 2, 2, 2, 3, 2, 2, 1],
     [1, 2, 2, 3, 9, 9, 9, 3, 2, 2, 3, 2, 2, 3, 2, 1],
     [1, 3, 2, 2, 2, 3, 2, 2, 3, 15, 2, 3, 2, 2, 11, 1],
@@ -65,9 +66,9 @@
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1],
+    [1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
     [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1],
@@ -144,6 +145,14 @@
       ]
     },
     {
+      "x": 4,
+      "y": 4,
+      "type": "dialog",
+      "label": "TROPHY SHELF",
+      "prompt": "EXAMINE",
+      "dialog": "TROPHIES\\n\\nEarn achievements to fill these shelves."
+    },
+    {
       "x": 5,
       "y": 4,
       "type": "dialog",
@@ -176,6 +185,22 @@
       "dialog": "TROPHIES\\n\\nEarn achievements to fill these shelves."
     },
     {
+      "x": 9,
+      "y": 4,
+      "type": "dialog",
+      "label": "TROPHY SHELF",
+      "prompt": "EXAMINE",
+      "dialog": "TROPHIES\\n\\nEarn achievements to fill these shelves."
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "type": "app",
+      "target": "/chess",
+      "label": "CHESS TABLE",
+      "prompt": "PLAY CHESS"
+    },
+    {
       "x": 11,
       "y": 4,
       "type": "dialog",
@@ -202,10 +227,9 @@
     {
       "x": 14,
       "y": 9,
-      "type": "dialog",
+      "type": "catalog",
       "label": "CATALOG TERMINAL",
-      "prompt": "BROWSE",
-      "dialog": "CATALOG TERMINAL\\n\\nINVENTORY OFFLINE\\nNew stock incoming.\\n\\nReturn soon, Pilot."
+      "prompt": "BROWSE CATALOG"
     },
     {
       "x": 2,
