@@ -8,8 +8,8 @@ var BridgeHyperspace = (function () {
   function start(context) {
     var world = context.world;
 
-    // Hide overlays
-    BridgeCockpit.hide();
+    // Hide overlays (cockpit retired; bridge world will be hidden by the
+    // world overlay system when state changes — no manual hide needed here)
     BridgeStarmap.hide();
 
     // Streak mode
@@ -81,7 +81,7 @@ var BridgeHyperspace = (function () {
       html += '</a>';
     }
 
-    html += '<a class="selection-back" id="selection-back">&larr; RETURN TO COCKPIT</a>';
+    html += '<a class="selection-back" id="selection-back">&larr; RETURN TO BRIDGE</a>';
     html += '</div>';
 
     overlay.innerHTML = html;
@@ -90,7 +90,9 @@ var BridgeHyperspace = (function () {
       e.preventDefault();
       overlay.style.display = 'none';
       overlay.classList.remove('active');
-      BridgeState.transition('cockpit');
+      BridgeWorld.load('bridge', function () {
+        BridgeState.transition('world', { worldId: 'bridge' });
+      });
     });
   }
 

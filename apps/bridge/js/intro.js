@@ -286,9 +286,9 @@ var BridgeIntro = (function () {
         if (result && !result.error) {
           BridgeState.setPilot(result);
           BridgeDB.updateLastSeen(result.id);
-          // Load quarters and drop the player inside.
-          BridgeWorld.load('quarters', function () {
-            BridgeState.transition('world', { worldId: 'quarters' });
+          // Load the bridge — the new initial room players land in.
+          BridgeWorld.load('bridge', function () {
+            BridgeState.transition('world', { worldId: 'bridge' });
           });
         } else {
           BridgeState.clearPilot();

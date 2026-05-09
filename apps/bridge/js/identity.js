@@ -122,8 +122,8 @@ var BridgeIdentity = (function () {
     }
 
     BridgeState.setPilot(result);
-    BridgeWorld.load('quarters', function () {
-      BridgeState.transition('world', { worldId: 'quarters' });
+    BridgeWorld.load('bridge', function () {
+      BridgeState.transition('world', { worldId: 'bridge' });
     });
   }
 
@@ -147,8 +147,8 @@ var BridgeIdentity = (function () {
 
     BridgeState.setPilot(result);
     BridgeDB.updateLastSeen(result.id);
-    BridgeWorld.load('quarters', function () {
-      BridgeState.transition('world', { worldId: 'quarters' });
+    BridgeWorld.load('bridge', function () {
+      BridgeState.transition('world', { worldId: 'bridge' });
     });
   }
 

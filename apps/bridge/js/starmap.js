@@ -64,7 +64,7 @@ var BridgeStarmap = (function () {
     overlay.classList.add('active');
     selected = null;
 
-    var html = '<a class="starmap-back" id="starmap-back">&larr; COCKPIT</a>';
+    var html = '<a class="starmap-back" id="starmap-back">&larr; BRIDGE</a>';
     html += '<div class="starmap-container">';
 
     for (var i = 0; i < WORLDS.length; i++) {
@@ -92,7 +92,15 @@ var BridgeStarmap = (function () {
 
     document.getElementById('starmap-back').addEventListener('click', function (e) {
       e.preventDefault();
-      BridgeState.transition('cockpit');
+      // Return to the bridge — preserve hologram position if we have one.
+      var saved = BridgeState.getWorldPos();
+      var spawn = (saved && saved.worldId === 'bridge')
+        ? { x: saved.x, y: saved.y } : null;
+      // Clear it so future returns from worlds use the bridge spawn instead.
+      BridgeState.clearWorldPos();
+      BridgeWorld.load('bridge', function () {
+        BridgeState.transition('world', { worldId: 'bridge', spawn: spawn });
+      });
     });
   }
 

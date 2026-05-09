@@ -1131,11 +1131,15 @@
   BridgeWorld.registerOverlay('quarters', quartersOverlay);
 
   // ---- State listener: welcome toast on quarters entry ----
+  // Track lastWorldId so we fire on real world changes (e.g. bridge→quarters,
+  // not on re-renders that re-dispatch transition('world') with same worldId).
+  var lastWorldId = null;
   BridgeState.onChange(function (newState, prevState, context) {
-    if (newState !== 'world') return;
-    if (!context || context.worldId !== 'quarters') return;
-    // Only fire on entry, not when re-rendering same state
-    if (prevState === 'world') return;
+    var newWorldId = (newState === 'world' && context) ? context.worldId : null;
+    var prevWorldId = lastWorldId;
+    lastWorldId = newWorldId !== null ? newWorldId : lastWorldId;
+    if (newWorldId !== 'quarters') return;
+    if (prevWorldId === 'quarters') return;
 
     var firstTime = !localStorage.getItem('bridge_quarters_welcomed');
     if (firstTime) localStorage.setItem('bridge_quarters_welcomed', '1');

@@ -1325,14 +1325,14 @@
       "y": 10,
       "type": "leave_world",
       "label": "SHIP",
-      "prompt": "RETURN TO COCKPIT"
+      "prompt": "RETURN TO BRIDGE"
     },
     {
       "x": 32,
       "y": 10,
       "type": "leave_world",
       "label": "SHIP",
-      "prompt": "RETURN TO COCKPIT"
+      "prompt": "RETURN TO BRIDGE"
     },
     {
       "x": 10,

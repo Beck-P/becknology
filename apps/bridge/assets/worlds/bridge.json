@@ -1,0 +1,205 @@
+{
+  "name": "The Bridge",
+  "width": 18,
+  "height": 12,
+  "tileSize": 16,
+  "tileset": "bridge",
+  "fixedCamera": true,
+  "spawns": {
+    "player": [8, 10]
+  },
+  "leaveLabel": "&#8592; QUARTERS",
+  "leaveTo": "quarters",
+  "tileColors": {
+    "0": "#050510",
+    "1": "#0a1018",
+    "2": "#1a2030",
+    "3": "#2a3040",
+    "4": "#1a3038",
+    "5": "#050510",
+    "6": "#1a2028",
+    "7": "#1a1410",
+    "8": "#1a2028",
+    "10": "#1a2028"
+  },
+  "tileNames": {
+    "0": "void",
+    "1": "wall",
+    "2": "floor_metal",
+    "3": "floor_metal_alt",
+    "4": "floor_strip_cyan",
+    "5": "viewport",
+    "6": "holo_pedestal",
+    "7": "captain_chair",
+    "8": "console",
+    "10": "quarters_door"
+  },
+  "tiles": [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
+    [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
+    [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
+    [1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1],
+    [1, 8, 8, 2, 3, 2, 2, 3, 2, 2, 2, 3, 2, 2, 3, 8, 8, 1],
+    [1, 8, 8, 3, 2, 2, 2, 2, 6, 6, 6, 2, 2, 2, 2, 8, 8, 1],
+    [1, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 1],
+    [1, 2, 3, 2, 2, 2, 2, 2, 2, 7, 2, 2, 2, 2, 3, 2, 2, 1],
+    [1, 2, 2, 2, 2, 3, 2, 2, 3, 2, 2, 2, 3, 2, 2, 2, 2, 1],
+    [1, 8, 8, 2, 3, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 8, 8, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 10, 10, 1, 1, 1, 1, 1, 1, 1, 1]
+  ],
+  "collisions": [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
+  ],
+  "tileGlow": {
+    "4": {
+      "color": [64, 200, 216],
+      "radius": 0.7,
+      "alpha": 0.18
+    },
+    "6": {
+      "color": [128, 224, 232],
+      "radius": 2.6,
+      "alpha": 0.55
+    },
+    "8": {
+      "color": [64, 200, 216],
+      "radius": 0.6,
+      "alpha": 0.16
+    },
+    "10": {
+      "color": [80, 200, 120],
+      "radius": 1.2,
+      "alpha": 0.32
+    }
+  },
+  "ambientGlow": {
+    "color": [60, 100, 180],
+    "alpha": 0.05,
+    "radius": 0.55
+  },
+  "interactions": [
+    {
+      "x": 8,
+      "y": 6,
+      "type": "warp_map",
+      "label": "WARP MAP",
+      "prompt": "ACCESS WARP MAP"
+    },
+    {
+      "x": 9,
+      "y": 6,
+      "type": "warp_map",
+      "label": "WARP MAP",
+      "prompt": "ACCESS WARP MAP"
+    },
+    {
+      "x": 10,
+      "y": 6,
+      "type": "warp_map",
+      "label": "WARP MAP",
+      "prompt": "ACCESS WARP MAP"
+    },
+    {
+      "x": 9,
+      "y": 8,
+      "type": "dialog",
+      "label": "CAPTAIN'S CHAIR",
+      "prompt": "EXAMINE",
+      "dialog": "A high-backed chair facing the viewport.\\n\\nSit — coming soon."
+    },
+    {
+      "x": 8,
+      "y": 11,
+      "type": "enter_world",
+      "target": "quarters",
+      "label": "QUARTERS",
+      "prompt": "ENTER QUARTERS",
+      "noBeacon": true
+    },
+    {
+      "x": 9,
+      "y": 11,
+      "type": "enter_world",
+      "target": "quarters",
+      "label": "QUARTERS",
+      "prompt": "ENTER QUARTERS",
+      "noBeacon": true
+    },
+    {
+      "x": 1,
+      "y": 5,
+      "type": "dialog",
+      "label": "STATS CONSOLE",
+      "prompt": "ACCESS",
+      "dialog": "STATS CONSOLE\\n\\nOFFLINE\\nMission stats coming soon."
+    },
+    {
+      "x": 2,
+      "y": 5,
+      "type": "dialog",
+      "label": "STATS CONSOLE",
+      "prompt": "ACCESS",
+      "dialog": "STATS CONSOLE\\n\\nOFFLINE\\nMission stats coming soon."
+    },
+    {
+      "x": 15,
+      "y": 5,
+      "type": "dialog",
+      "label": "COMMS CONSOLE",
+      "prompt": "ACCESS",
+      "dialog": "COMMS CONSOLE\\n\\nOFFLINE\\nNo signals on this band."
+    },
+    {
+      "x": 16,
+      "y": 5,
+      "type": "dialog",
+      "label": "COMMS CONSOLE",
+      "prompt": "ACCESS",
+      "dialog": "COMMS CONSOLE\\n\\nOFFLINE\\nNo signals on this band."
+    },
+    {
+      "x": 1,
+      "y": 10,
+      "type": "dialog",
+      "label": "ENGINEERING",
+      "prompt": "ACCESS",
+      "dialog": "ENGINEERING CONSOLE\\n\\nAll systems nominal.\\nNothing to tune — yet."
+    },
+    {
+      "x": 2,
+      "y": 10,
+      "type": "dialog",
+      "label": "ENGINEERING",
+      "prompt": "ACCESS",
+      "dialog": "ENGINEERING CONSOLE\\n\\nAll systems nominal.\\nNothing to tune — yet."
+    },
+    {
+      "x": 15,
+      "y": 10,
+      "type": "dialog",
+      "label": "SENSORS",
+      "prompt": "ACCESS",
+      "dialog": "SENSORS CONSOLE\\n\\nAmbient scan: 4 known systems.\\nDeeper sensors — coming soon."
+    },
+    {
+      "x": 16,
+      "y": 10,
+      "type": "dialog",
+      "label": "SENSORS",
+      "prompt": "ACCESS",
+      "dialog": "SENSORS CONSOLE\\n\\nAmbient scan: 4 known systems.\\nDeeper sensors — coming soon."
+    }
+  ]
+}

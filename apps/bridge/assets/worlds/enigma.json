@@ -815,14 +815,14 @@
       "y": 3,
       "type": "leave_world",
       "label": "SHIP",
-      "prompt": "RETURN TO COCKPIT"
+      "prompt": "RETURN TO BRIDGE"
     },
     {
       "x": 3,
       "y": 4,
       "type": "leave_world",
       "label": "SHIP",
-      "prompt": "RETURN TO COCKPIT"
+      "prompt": "RETURN TO BRIDGE"
     },
     {
       "x": 9,

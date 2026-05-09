@@ -111,6 +111,21 @@ var BridgeInteractions = (function () {
       case 'menu':
         showMenuDialog(inter);
         break;
+
+      case 'warp_map':
+        // Save the player's bridge-room position so closing the warp map
+        // returns them right back to the hologram (not the door spawn).
+        var w = BridgeWorld.getWorld();
+        if (w) {
+          BridgeState.setWorldPos({
+            worldId: w.tileset,
+            x: BridgeCharacter.getX(),
+            y: BridgeCharacter.getY(),
+            facing: BridgeCharacter.getFacing()
+          });
+        }
+        BridgeState.transition('starmap');
+        break;
     }
   }
 

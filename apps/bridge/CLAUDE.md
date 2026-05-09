@@ -123,6 +123,21 @@ Each world has its own constrained palette. Both PNG prompts and procedural draw
 - Warning: `#e84040` `#e8c040`
 - Server LEDs: `#40e080` `#e06040` `#40a8e0`
 
+### Bridge — ship command deck (the navigation hub)
+- Walls (dark navy steel): `#0a1018` `#1a2028` `#2a3038` `#3a4048`
+- Floor (polished metal panel): `#1a2030` `#2a3040` `#3a4050` (alt `#252e40`, grain `#0a0e18`)
+- Cyan strip light: `#40c8d8` `#80e0e8` (subtle pulse alpha)
+- Brass trim: `#a08040` `#e0c060`
+- Hologram cyan: `#40c8d8` `#80e0e8` `#c0f0f8` + purple highlight `#8060c0` `#c0a0f0`
+- Captain's chair (dark leather): `#0a0808` `#1a1410` `#2a1c14` (brass piping `#a08040`)
+- Console panels: dark metal `#0a1018` `#1a2028` + LED accents (cyan `#40c8d8`, yellow `#ffe080`, red `#e84040`)
+- Viewport (deep space): `#050510` + procedural stars/planets/ships
+
+The Bridge is cooler and more techy than Quarters. Where Quarters is cozy
+warmth, Bridge is alert calm. The hologram in the center is the room's
+hero — a rotating sphere of star points and coloured planet markers,
+projected from a glowing pedestal. Walking close brightens it.
+
 ### Quarters — pilot ship interior (cozy + sci-fi)
 - Walls (warm dark metal): `#1a1410` `#2a2018` `#3a2820` `#4a3a30`
 - Floor (warm wood): `#3a2410` `#5a3a1a` `#7a4e22` (alt plank `#4a2e14`, grain `#2a1808`)

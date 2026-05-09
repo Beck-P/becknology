@@ -330,7 +330,13 @@ var BridgeWorld = (function () {
 
     // Clear world position — player chose to leave
     BridgeState.clearWorldPos();
-    BridgeState.transition('cockpit');
+    // Default leave destination is the bridge (the navigation hub).
+    // Worlds may override via world.leaveTo (e.g., bridge → quarters).
+    var dest = (world && world.leaveTo) || 'bridge';
+    active = false;
+    load(dest, function () {
+      BridgeState.transition('world', { worldId: dest });
+    });
   }
 
   // Step into another world (a building interior, a parent area on exit).
