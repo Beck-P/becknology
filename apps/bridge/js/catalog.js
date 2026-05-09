@@ -1,41 +1,74 @@
 /**
- * BridgeCatalog — the in-game decor shop.
+ * BridgeCatalog — shop UI used by the Quarters Catalog Terminal and any
+ * other in-world merchant. Supports BUY (per-shop inventory) and SELL
+ * (everything the pilot owns, anywhere).
  *
- * Opens as a card-grid overlay when the player presses E on the Catalog
- * Terminal in Quarters. Each card shows the item's preview sprite, name,
- * price, and a BUY button (or ✓ OWNED if already purchased).
+ * Usage:
+ *   BridgeCatalog.show()                       // default shop = 'quarters_catalog'
+ *   BridgeCatalog.show('lumar_dockside')       // themed merchant
+ *   BridgeCatalog.getItemByKey('houseplant')   // master item lookup
+ *   BridgeCatalog.getCatalog('quarters_catalog')
  *
- * On purchase: deducts coins atomically server-side via purchase_decor RPC,
- * fires BridgeProgression coin/decor events so the HUD ticks and the room
- * re-renders the slot with the new item.
+ * Items live in the master ITEMS registry. SHOPS map shop key → list of
+ * item keys that shop sells. An item can appear in only one shop.
+ *
+ * Sell price = floor(buy_price / 2). Selling works from the SELL tab in
+ * any shop UI — sells are universal, not shop-specific.
  */
 var BridgeCatalog = (function () {
 
-  // ---- Catalog (the 6 starter items) ----
-  // Each item has a slot (which floor slot it auto-places into),
-  // a price, and a small preview painter for the card.
-  var CATALOG = [
-    { key: 'houseplant',   slot: 'plant',  name: 'Houseplant',    price: 50,  preview: previewHouseplant },
-    { key: 'floor_lamp',   slot: 'lamp',   name: 'Floor Lamp',    price: 75,  preview: previewLamp },
-    { key: 'crystal_lamp', slot: 'lamp',   name: 'Crystal Lamp',  price: 150, preview: previewCrystalLamp },
-    { key: 'holo_poster',  slot: 'poster', name: 'Holo Poster',   price: 200, preview: previewPoster },
-    { key: 'bonsai',       slot: 'plant',  name: 'Bonsai Tree',   price: 350, preview: previewBonsai },
-    { key: 'nebula_tank',  slot: 'tank',   name: 'Nebula Tank',   price: 500, preview: previewTank }
-  ];
+  var SELL_RATIO = 0.5;
+  var DEFAULT_SHOP = 'quarters_catalog';
 
-  function getCatalog() { return CATALOG.slice(); }
-  function getItemByKey(key) {
-    for (var i = 0; i < CATALOG.length; i++) if (CATALOG[i].key === key) return CATALOG[i];
-    return null;
+  // ---- Master item registry ----
+  var ITEMS = {
+    // Quarters catalog (the original 6)
+    houseplant:    { slot: 'plant',  name: 'Houseplant',    price: 50,  preview: previewHouseplant },
+    floor_lamp:    { slot: 'lamp',   name: 'Floor Lamp',    price: 75,  preview: previewLamp },
+    crystal_lamp:  { slot: 'lamp',   name: 'Crystal Lamp',  price: 150, preview: previewCrystalLamp },
+    holo_poster:   { slot: 'poster', name: 'Holo Poster',   price: 200, preview: previewPoster },
+    bonsai:        { slot: 'plant',  name: 'Bonsai Tree',   price: 350, preview: previewBonsai },
+    nebula_tank:   { slot: 'tank',   name: 'Nebula Tank',   price: 500, preview: previewTank },
+    // Lumar dockside merchant — sea/dock theme
+    driftwood_lamp: { slot: 'lamp',  name: 'Driftwood Lamp', price: 120, preview: previewDriftwoodLamp },
+    glass_float:    { slot: 'shelf', name: 'Glass Float',    price: 180, preview: previewGlassFloat },
+    kelp_canister:  { slot: 'shelf', name: 'Kelp Canister',  price: 250, preview: previewKelpCanister },
+    brass_compass:  { slot: 'shelf', name: 'Brass Compass',  price: 400, preview: previewBrassCompass }
+  };
+
+  var SHOPS = {
+    quarters_catalog: {
+      title: 'CATALOG TERMINAL',
+      subtitle: 'DECOR INVENTORY',
+      items: ['houseplant', 'floor_lamp', 'crystal_lamp', 'holo_poster', 'bonsai', 'nebula_tank']
+    },
+    lumar_dockside: {
+      title: "DOCKSIDE MERCHANT",
+      subtitle: 'CURIOS FROM THE TIDE',
+      items: ['driftwood_lamp', 'glass_float', 'kelp_canister', 'brass_compass']
+    }
+  };
+
+  function getItemByKey(key) { return ITEMS[key] ? Object.assign({ key: key }, ITEMS[key]) : null; }
+  function getCatalog(shopKey) {
+    var s = SHOPS[shopKey || DEFAULT_SHOP];
+    if (!s) return [];
+    return s.items.map(function (k) { return getItemByKey(k); }).filter(Boolean);
   }
+  function getShopMeta(shopKey) { return SHOPS[shopKey] || SHOPS[DEFAULT_SHOP]; }
+  function sellPriceOf(item) { return Math.max(1, Math.floor((item.price || 0) * SELL_RATIO)); }
 
   // ---- Open / close ----
   var overlayEl = null;
   var open = false;
+  var currentShop = DEFAULT_SHOP;
+  var currentTab = 'buy'; // 'buy' | 'sell'
 
-  function show() {
+  function show(shopKey) {
     if (open) return;
     open = true;
+    currentShop = shopKey || DEFAULT_SHOP;
+    currentTab = 'buy';
     if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
 
     overlayEl = document.createElement('div');
@@ -50,7 +83,7 @@ var BridgeCatalog = (function () {
     document.body.appendChild(overlayEl);
 
     bindHandlers();
-    refreshState();
+    refreshView();
   }
 
   function hide() {
@@ -58,35 +91,40 @@ var BridgeCatalog = (function () {
     open = false;
     if (overlayEl && overlayEl.parentNode) overlayEl.parentNode.removeChild(overlayEl);
     overlayEl = null;
+    document.removeEventListener('keydown', escHandler);
     if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
   }
 
   function renderShellHTML() {
+    var meta = getShopMeta(currentShop);
     var html = '<div style="' +
       'width:min(720px,92vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;' +
       'background:linear-gradient(180deg,rgba(20,30,46,0.96),rgba(10,18,28,0.96));' +
       'border:1px solid rgba(64,200,216,0.5);border-radius:8px;' +
       'box-shadow:0 0 32px rgba(64,200,216,0.25),inset 0 0 18px rgba(64,200,216,0.06);">';
 
-    // Header
     html += '<div style="padding:18px 24px;border-bottom:1px solid rgba(64,200,216,0.25);' +
             'display:flex;justify-content:space-between;align-items:center;">' +
       '<div>' +
-        '<div style="font-size:11px;letter-spacing:5px;color:rgba(64,200,216,0.7);">CATALOG TERMINAL</div>' +
-        '<div style="font-size:18px;letter-spacing:3px;color:#80e0e8;margin-top:4px;">DECOR INVENTORY</div>' +
+        '<div style="font-size:11px;letter-spacing:5px;color:rgba(64,200,216,0.7);">' + escapeHtml(meta.title) + '</div>' +
+        '<div style="font-size:18px;letter-spacing:3px;color:#80e0e8;margin-top:4px;">' + escapeHtml(meta.subtitle) + '</div>' +
       '</div>' +
       '<div id="catalog-balance" style="' +
-        'font-size:18px;letter-spacing:3px;color:#ffe080;text-align:right;">' +
-        '🪙 …' +
-      '</div>' +
+        'font-size:18px;letter-spacing:3px;color:#ffe080;text-align:right;">🪙 …</div>' +
     '</div>';
 
-    // Grid container
-    html += '<div id="catalog-grid" style="' +
-      'padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:14px;' +
-      'overflow-y:auto;flex:1;">' + renderGridHTML() + '</div>';
+    // Tab strip — BUY | SELL
+    html += '<div id="catalog-tabs" style="' +
+      'display:flex;border-bottom:1px solid rgba(64,200,216,0.25);">' +
+      tabBtn('buy',  'BUY')  +
+      tabBtn('sell', 'SELL') +
+    '</div>';
 
-    // Footer
+    // Content body
+    html += '<div id="catalog-body" style="padding:18px 24px;overflow-y:auto;flex:1;">' +
+      '<div style="text-align:center;color:#666;font-size:11px;letter-spacing:2px;padding:24px;">Loading…</div>' +
+    '</div>';
+
     html += '<div style="padding:12px 24px;border-top:1px solid rgba(64,200,216,0.25);' +
             'display:flex;justify-content:space-between;align-items:center;font-size:10px;' +
             'letter-spacing:3px;color:#777;">' +
@@ -98,170 +136,55 @@ var BridgeCatalog = (function () {
     return html;
   }
 
-  function renderGridHTML() {
-    var html = '';
-    for (var i = 0; i < CATALOG.length; i++) {
-      var it = CATALOG[i];
-      html +=
-        '<div class="catalog-card" data-key="' + it.key + '" style="' +
-          'background:rgba(0,0,0,0.35);border:1px solid rgba(64,200,216,0.2);' +
-          'border-radius:6px;padding:12px;display:grid;grid-template-columns:64px 1fr;gap:12px;' +
-          'transition:background 0.15s, border-color 0.15s;cursor:pointer;align-items:center;">' +
-          '<canvas class="catalog-preview" data-key="' + it.key + '" width="64" height="64" ' +
-            'style="display:block;width:64px;height:64px;background:rgba(60,40,90,0.18);border-radius:4px;image-rendering:pixelated;"></canvas>' +
-          '<div>' +
-            '<div style="font-size:13px;letter-spacing:2px;color:#e0e0e0;">' + escapeHtml(it.name.toUpperCase()) + '</div>' +
-            '<div style="font-size:10px;letter-spacing:2px;color:#888;margin-top:2px;">SLOT: ' + escapeHtml(it.slot.toUpperCase()) + '</div>' +
-            '<div class="catalog-action" data-key="' + it.key + '" style="' +
-              'margin-top:8px;font-size:11px;letter-spacing:3px;color:#ffe080;">🪙 ' + it.price + '</div>' +
-          '</div>' +
-        '</div>';
-    }
-    return html;
+  function tabBtn(key, label) {
+    var active = (currentTab === key);
+    return '<div class="catalog-tab" data-tab="' + key + '" style="' +
+      'flex:1;padding:12px 18px;text-align:center;cursor:pointer;' +
+      'font-size:12px;letter-spacing:4px;' +
+      'color:' + (active ? '#80e0e8' : '#666') + ';' +
+      'border-bottom:2px solid ' + (active ? '#80e0e8' : 'transparent') + ';' +
+      'background:' + (active ? 'rgba(64,200,216,0.06)' : 'transparent') + ';' +
+      'transition:color 0.15s, background 0.15s;">' +
+      escapeHtml(label) +
+    '</div>';
   }
 
-  // ---- Preview painters (small canvases on each card) ----
-
-  function previewHouseplant(ctx) {
-    var w = ctx.canvas.width, h = ctx.canvas.height, u = w / 16;
-    // Pot
-    ctx.fillStyle = '#7a4818';
-    ctx.fillRect(5 * u, 11 * u, 6 * u, 4 * u);
-    ctx.fillStyle = '#a06820';
-    ctx.fillRect(5 * u, 11 * u, 6 * u, u);
-    // Leaves (green)
-    ctx.fillStyle = '#3a8038';
-    ctx.fillRect(7 * u, 4 * u, 2 * u, 7 * u);
-    ctx.fillStyle = '#5aa050';
-    ctx.fillRect(5 * u, 6 * u, 2 * u, 4 * u);
-    ctx.fillRect(9 * u, 6 * u, 2 * u, 4 * u);
-    ctx.fillRect(4 * u, 8 * u, 2 * u, 2 * u);
-    ctx.fillRect(10 * u, 8 * u, 2 * u, 2 * u);
-  }
-
-  function previewLamp(ctx) {
-    var w = ctx.canvas.width, u = w / 16;
-    // Base
-    ctx.fillStyle = '#3a2820';
-    ctx.fillRect(5 * u, 13 * u, 6 * u, 2 * u);
-    // Pole
-    ctx.fillStyle = '#5a3a28';
-    ctx.fillRect(7 * u, 5 * u, 2 * u, 8 * u);
-    // Shade
-    ctx.fillStyle = '#a08040';
-    ctx.fillRect(4 * u, 2 * u, 8 * u, 3 * u);
-    ctx.fillStyle = '#e0c060';
-    ctx.fillRect(4 * u, 4 * u, 8 * u, u);
-    // Glow
-    ctx.fillStyle = 'rgba(255,224,128,0.45)';
-    ctx.fillRect(2 * u, 5 * u, 12 * u, 2 * u);
-  }
-
-  function previewCrystalLamp(ctx) {
-    var w = ctx.canvas.width, u = w / 16;
-    // Base
-    ctx.fillStyle = '#1a1430';
-    ctx.fillRect(5 * u, 13 * u, 6 * u, 2 * u);
-    ctx.fillStyle = '#3a2858';
-    ctx.fillRect(5 * u, 13 * u, 6 * u, u);
-    // Crystal column (purple)
-    var grad = ctx.createLinearGradient(0, 4 * u, 0, 13 * u);
-    grad.addColorStop(0, '#c0a0f0');
-    grad.addColorStop(1, '#503090');
-    ctx.fillStyle = grad;
-    ctx.fillRect(6 * u, 4 * u, 4 * u, 9 * u);
-    // Crystal facet highlights
-    ctx.fillStyle = '#e0c0f8';
-    ctx.fillRect(6 * u, 4 * u, u, 9 * u);
-    // Glow above
-    ctx.fillStyle = 'rgba(192,144,232,0.45)';
-    ctx.fillRect(2 * u, 2 * u, 12 * u, 4 * u);
-  }
-
-  function previewPoster(ctx) {
-    var w = ctx.canvas.width, h = ctx.canvas.height, u = w / 16;
-    // Frame
-    ctx.fillStyle = '#3a2820';
-    ctx.fillRect(2 * u, 2 * u, 12 * u, 12 * u);
-    // Poster background — purple/cyan gradient
-    var g = ctx.createLinearGradient(3 * u, 3 * u, 13 * u, 13 * u);
-    g.addColorStop(0, '#6040a0'); g.addColorStop(1, '#80e0e8');
-    ctx.fillStyle = g;
-    ctx.fillRect(3 * u, 3 * u, 10 * u, 10 * u);
-    // Big star
-    ctx.fillStyle = '#ffe080';
-    ctx.fillRect(7 * u, 5 * u, 2 * u, 6 * u);
-    ctx.fillRect(5 * u, 7 * u, 6 * u, 2 * u);
-  }
-
-  function previewBonsai(ctx) {
-    var w = ctx.canvas.width, u = w / 16;
-    // Pot (wide, shallow)
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(3 * u, 12 * u, 10 * u, 3 * u);
-    ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(3 * u, 12 * u, 10 * u, u);
-    // Trunk
-    ctx.fillStyle = '#3a1810';
-    ctx.fillRect(7 * u, 6 * u, 2 * u, 6 * u);
-    ctx.fillRect(6 * u, 9 * u, 2 * u, 2 * u);
-    // Foliage clouds (bonsai style)
-    ctx.fillStyle = '#3a8038';
-    ctx.fillRect(4 * u, 4 * u, 4 * u, 3 * u);
-    ctx.fillRect(8 * u, 3 * u, 4 * u, 3 * u);
-    ctx.fillRect(5 * u, 6 * u, 6 * u, u);
-    ctx.fillStyle = '#5aa050';
-    ctx.fillRect(4 * u, 4 * u, 4 * u, u);
-    ctx.fillRect(8 * u, 3 * u, 4 * u, u);
-  }
-
-  function previewTank(ctx) {
-    var w = ctx.canvas.width, u = w / 16;
-    // Stand
-    ctx.fillStyle = '#3a2820';
-    ctx.fillRect(3 * u, 13 * u, 10 * u, 2 * u);
-    ctx.fillRect(4 * u, 11 * u, u, 2 * u);
-    ctx.fillRect(11 * u, 11 * u, u, 2 * u);
-    // Tank glass — purple nebula inside
-    ctx.fillStyle = '#0a0418';
-    ctx.fillRect(3 * u, 2 * u, 10 * u, 9 * u);
-    var g = ctx.createRadialGradient(8 * u, 6 * u, 0, 8 * u, 6 * u, 6 * u);
-    g.addColorStop(0, 'rgba(192,144,232,0.85)');
-    g.addColorStop(0.5, 'rgba(96,80,180,0.55)');
-    g.addColorStop(1, 'rgba(20,12,40,0.0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(3 * u, 2 * u, 10 * u, 9 * u);
-    // Star sparkles
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(5 * u, 4 * u, u, u);
-    ctx.fillRect(10 * u, 7 * u, u, u);
-    ctx.fillRect(7 * u, 9 * u, u, u);
-    // Glass border
-    ctx.strokeStyle = 'rgba(160,240,248,0.6)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(3 * u + 0.5, 2 * u + 0.5, 10 * u - 1, 9 * u - 1);
-  }
-
-  // ---- State refresh: paint previews + show owned/buy state per card ----
-  function refreshState() {
+  // ---- View refresh: re-render the body for the current tab ----
+  function refreshView() {
     if (!overlayEl) return;
-    // Paint each preview
-    var canvases = overlayEl.querySelectorAll('canvas.catalog-preview');
-    for (var i = 0; i < canvases.length; i++) {
-      var key = canvases[i].getAttribute('data-key');
-      var item = getItemByKey(key);
-      if (!item) continue;
-      var ctx = canvases[i].getContext('2d');
-      ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, canvases[i].width, canvases[i].height);
-      item.preview(ctx);
+
+    // Refresh tabs (active state)
+    var tabBar = document.getElementById('catalog-tabs');
+    if (tabBar) tabBar.innerHTML = tabBtn('buy', 'BUY') + tabBtn('sell', 'SELL');
+    bindTabHandlers();
+
+    // Body
+    if (currentTab === 'buy') refreshBuyView();
+    else refreshSellView();
+
+    // Balance + feedback persistence
+    if (typeof BridgeProgression !== 'undefined') {
+      BridgeProgression.getBalance().then(function (b) {
+        var el = document.getElementById('catalog-balance');
+        if (el) el.textContent = '🪙 ' + (b == null ? 0 : b);
+      });
     }
+  }
+
+  // ---- BUY view ----
+  function refreshBuyView() {
+    var body = document.getElementById('catalog-body');
+    if (!body) return;
+    var items = getCatalog(currentShop);
+    body.style.padding = '20px 24px';
+    body.innerHTML = '<div id="buy-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+      items.map(buyCardHTML).join('') +
+    '</div>';
+
+    paintPreviews(body, items);
+    bindBuyCards();
 
     if (typeof BridgeProgression === 'undefined') return;
-    BridgeProgression.getBalance().then(function (balance) {
-      var balEl = document.getElementById('catalog-balance');
-      if (balEl) balEl.textContent = '🪙 ' + (balance == null ? 0 : balance);
-    });
     Promise.all([BridgeProgression.getDecor(), BridgeProgression.getLocker()])
       .then(function (results) {
         var decor = results[0] || {};
@@ -269,36 +192,24 @@ var BridgeCatalog = (function () {
         var inLocker = {};
         for (var i = 0; i < lockerKeys.length; i++) inLocker[lockerKeys[i]] = true;
 
-        var actions = overlayEl.querySelectorAll('.catalog-action');
+        var actions = body.querySelectorAll('.catalog-action');
         for (var i = 0; i < actions.length; i++) {
           var key = actions[i].getAttribute('data-key');
           var item = getItemByKey(key);
           if (!item) continue;
           var card = actions[i].closest('.catalog-card');
-          // Reset card styling
-          if (card) {
-            card.style.borderColor = '';
-            card.style.background = '';
-          }
-          var ownedKeyInSlot = decor[item.slot];
-          var inSlot = ownedKeyInSlot === item.key;
+          if (card) { card.style.borderColor = ''; card.style.background = ''; }
+          var inSlot = decor[item.slot] === item.key;
           var stored = !!inLocker[item.key];
           if (inSlot) {
             actions[i].textContent = '✓ ON DISPLAY';
             actions[i].style.color = '#80e088';
-            if (card) {
-              card.style.borderColor = 'rgba(120,224,136,0.55)';
-              card.style.background = 'rgba(40,90,55,0.18)';
-            }
+            if (card) { card.style.borderColor = 'rgba(120,224,136,0.55)'; card.style.background = 'rgba(40,90,55,0.18)'; }
           } else if (stored) {
             actions[i].textContent = '✓ IN LOCKER';
             actions[i].style.color = '#80e0e8';
-            if (card) {
-              card.style.borderColor = 'rgba(64,200,216,0.45)';
-              card.style.background = 'rgba(40,80,90,0.18)';
-            }
-          } else if (ownedKeyInSlot) {
-            // Slot full but you can still buy — item goes to locker.
+            if (card) { card.style.borderColor = 'rgba(64,200,216,0.45)'; card.style.background = 'rgba(40,80,90,0.18)'; }
+          } else if (decor[item.slot]) {
             actions[i].textContent = '🪙 ' + item.price + ' · → LOCKER';
             actions[i].style.color = '#ffe080';
           } else {
@@ -309,46 +220,22 @@ var BridgeCatalog = (function () {
       });
   }
 
-  // ---- Buy handler ----
-  function attemptBuy(key) {
-    var item = getItemByKey(key);
-    if (!item) return;
-    if (typeof BridgeProgression === 'undefined') return;
-    setFeedback('PROCESSING…', '#80e0e8');
-    BridgeProgression.purchaseDecor(item.slot, item.key, item.price).then(function (res) {
-      if (res.ok) {
-        if (res.destination === 'locker') {
-          setFeedback('PURCHASED · ' + item.name.toUpperCase() + ' → LOCKER', '#80e0e8');
-        } else {
-          setFeedback('PURCHASED · ' + item.name.toUpperCase() + ' → ON DISPLAY', '#80e088');
-        }
-        refreshState();
-        if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
-          BridgeQuarters.refreshDecor();
-        }
-        BridgeProgression.recordAchievement('settled_in', 50, { first: item.key });
-      } else if (res.reason === 'insufficient') {
-        setFeedback('NOT ENOUGH COINS', '#e88860');
-      } else if (res.reason === 'already_owned') {
-        setFeedback('ALREADY OWNED', '#e8c060');
-        refreshState();
-      } else {
-        setFeedback('PURCHASE FAILED', '#e88860');
-      }
-    });
+  function buyCardHTML(item) {
+    return '<div class="catalog-card" data-key="' + item.key + '" style="' +
+      'background:rgba(0,0,0,0.35);border:1px solid rgba(64,200,216,0.2);' +
+      'border-radius:6px;padding:12px;display:grid;grid-template-columns:64px 1fr;gap:12px;' +
+      'transition:background 0.15s, border-color 0.15s;cursor:pointer;align-items:center;">' +
+      '<canvas class="catalog-preview" data-key="' + item.key + '" width="64" height="64" ' +
+        'style="display:block;width:64px;height:64px;background:rgba(60,40,90,0.18);border-radius:4px;image-rendering:pixelated;"></canvas>' +
+      '<div>' +
+        '<div style="font-size:13px;letter-spacing:2px;color:#e0e0e0;">' + escapeHtml(item.name.toUpperCase()) + '</div>' +
+        '<div style="font-size:10px;letter-spacing:2px;color:#888;margin-top:2px;">SLOT: ' + escapeHtml(item.slot.toUpperCase()) + '</div>' +
+        '<div class="catalog-action" data-key="' + item.key + '" style="margin-top:8px;font-size:11px;letter-spacing:3px;color:#ffe080;">🪙 ' + item.price + '</div>' +
+      '</div>' +
+    '</div>';
   }
 
-  function setFeedback(text, color) {
-    var el = document.getElementById('catalog-feedback');
-    if (el) {
-      el.textContent = text;
-      el.style.color = color || '#80e0e8';
-    }
-  }
-
-  // ---- Bindings ----
-  function bindHandlers() {
-    // Card hover + click
+  function bindBuyCards() {
     var cards = overlayEl.querySelectorAll('.catalog-card');
     for (var i = 0; i < cards.length; i++) {
       (function (card) {
@@ -358,34 +245,345 @@ var BridgeCatalog = (function () {
           card.style.borderColor = 'rgba(64,200,216,0.55)';
         });
         card.addEventListener('mouseleave', function () {
-          // Defer to refreshState's owned styling
-          card.style.background = '';
-          card.style.borderColor = '';
-          refreshState();
+          card.style.background = ''; card.style.borderColor = '';
+          refreshBuyView(); // re-apply owned styling
         });
         card.addEventListener('click', function () { attemptBuy(key); });
       })(cards[i]);
     }
+  }
 
-    // Backdrop click closes
+  function attemptBuy(key) {
+    var item = getItemByKey(key);
+    if (!item) return;
+    if (typeof BridgeProgression === 'undefined') return;
+    setFeedback('PROCESSING…', '#80e0e8');
+    BridgeProgression.purchaseDecor(item.slot, item.key, item.price).then(function (res) {
+      if (res.ok) {
+        var dest = res.destination === 'locker' ? '→ LOCKER' : '→ ON DISPLAY';
+        var color = res.destination === 'locker' ? '#80e0e8' : '#80e088';
+        setFeedback('PURCHASED · ' + item.name.toUpperCase() + ' ' + dest, color);
+        refreshView();
+        if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
+          BridgeQuarters.refreshDecor();
+        }
+        BridgeProgression.recordAchievement('settled_in', 50, { first: item.key });
+      } else if (res.reason === 'insufficient') {
+        setFeedback('NOT ENOUGH COINS', '#e88860');
+      } else if (res.reason === 'already_owned') {
+        setFeedback('ALREADY OWNED', '#e8c060');
+        refreshView();
+      } else {
+        setFeedback('PURCHASE FAILED', '#e88860');
+      }
+    });
+  }
+
+  // ---- SELL view ----
+  function refreshSellView() {
+    var body = document.getElementById('catalog-body');
+    if (!body) return;
+    if (typeof BridgeProgression === 'undefined') {
+      body.innerHTML = '<div style="text-align:center;color:#666;padding:24px;">Progression unavailable.</div>';
+      return;
+    }
+
+    body.innerHTML = '<div style="text-align:center;color:#666;font-size:11px;letter-spacing:2px;padding:24px;">Loading…</div>';
+    Promise.all([BridgeProgression.getDecor(), BridgeProgression.getLocker()])
+      .then(function (results) {
+        var decor = results[0] || {};
+        var lockerKeys = results[1] || [];
+        var owned = [];
+        // From slots
+        var slotKeys = Object.keys(decor);
+        for (var i = 0; i < slotKeys.length; i++) {
+          var item = getItemByKey(decor[slotKeys[i]]);
+          if (item) owned.push({ item: item, location: 'slot:' + slotKeys[i] });
+        }
+        // From locker
+        for (var j = 0; j < lockerKeys.length; j++) {
+          var item2 = getItemByKey(lockerKeys[j]);
+          if (item2) owned.push({ item: item2, location: 'locker' });
+        }
+
+        if (owned.length === 0) {
+          body.innerHTML = '<div style="text-align:center;color:#666;font-size:11px;letter-spacing:2px;padding:32px;">' +
+            'You don\'t own anything yet. Buy something first to be able to sell it.</div>';
+          return;
+        }
+
+        body.innerHTML =
+          '<div style="font-size:10px;letter-spacing:3px;color:rgba(64,200,216,0.7);margin-bottom:10px;">' +
+            'SELL FOR ' + Math.round(SELL_RATIO * 100) + '% OF BUY PRICE' +
+          '</div>' +
+          '<div id="sell-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+            owned.map(sellCardHTML).join('') +
+          '</div>';
+
+        paintPreviews(body, owned.map(function (o) { return o.item; }));
+        bindSellButtons();
+      });
+  }
+
+  function sellCardHTML(entry) {
+    var item = entry.item;
+    var price = sellPriceOf(item);
+    var locText = entry.location === 'locker'
+      ? 'IN LOCKER'
+      : 'ON DISPLAY · ' + entry.location.replace('slot:', '').toUpperCase();
+    return '<div class="sell-card" data-key="' + item.key + '" style="' +
+      'background:rgba(0,0,0,0.35);border:1px solid rgba(64,200,216,0.2);' +
+      'border-radius:6px;padding:12px;display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;">' +
+      '<canvas class="catalog-preview" data-key="' + item.key + '" width="48" height="48" ' +
+        'style="display:block;width:48px;height:48px;background:rgba(60,40,90,0.18);border-radius:4px;image-rendering:pixelated;"></canvas>' +
+      '<div>' +
+        '<div style="font-size:12px;letter-spacing:2px;color:#e0e0e0;">' + escapeHtml(item.name.toUpperCase()) + '</div>' +
+        '<div style="font-size:9px;letter-spacing:2px;color:#888;margin-top:2px;">' + escapeHtml(locText) + '</div>' +
+      '</div>' +
+      '<button class="sell-btn" data-key="' + item.key + '" data-price="' + price + '" style="' +
+        'padding:8px 14px;background:transparent;border:1px solid #ffe080;color:#ffe080;' +
+        'font-family:inherit;font-size:11px;letter-spacing:3px;cursor:pointer;border-radius:4px;' +
+        'transition:background 0.12s, color 0.12s;">SELL · 🪙 ' + price +
+      '</button>' +
+    '</div>';
+  }
+
+  function bindSellButtons() {
+    var btns = overlayEl.querySelectorAll('.sell-btn');
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        btn.addEventListener('mouseenter', function () { btn.style.background = 'rgba(255,224,128,0.18)'; });
+        btn.addEventListener('mouseleave', function () { btn.style.background = 'transparent'; });
+        btn.addEventListener('click', function () {
+          var key = btn.getAttribute('data-key');
+          var price = parseInt(btn.getAttribute('data-price'), 10);
+          attemptSell(key, price);
+        });
+      })(btns[i]);
+    }
+  }
+
+  function attemptSell(itemKey, price) {
+    var item = getItemByKey(itemKey);
+    if (!item) return;
+    setFeedback('SELLING…', '#80e0e8');
+    BridgeProgression.sellItem(itemKey, price).then(function (res) {
+      if (res && res.ok) {
+        setFeedback('SOLD · ' + item.name.toUpperCase() + ' (+ 🪙 ' + price + ')', '#ffe080');
+        refreshView();
+        if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
+          BridgeQuarters.refreshDecor();
+        }
+      } else if (res && res.reason === 'not_owned') {
+        setFeedback('YOU DON\'T OWN THAT', '#e88860');
+        refreshView();
+      } else {
+        setFeedback('SELL FAILED', '#e88860');
+      }
+    });
+  }
+
+  // ---- Preview painters ----
+  function paintPreviews(container, items) {
+    var canvases = container.querySelectorAll('canvas.catalog-preview');
+    for (var i = 0; i < canvases.length; i++) {
+      var key = canvases[i].getAttribute('data-key');
+      var item = getItemByKey(key);
+      if (!item) continue;
+      var ctx = canvases[i].getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, canvases[i].width, canvases[i].height);
+      // Previews are designed for 64; if the canvas is 48, scale down.
+      if (canvases[i].width === 64) {
+        item.preview(ctx);
+      } else {
+        var tmp = document.createElement('canvas');
+        tmp.width = 64; tmp.height = 64;
+        var tctx = tmp.getContext('2d');
+        tctx.imageSmoothingEnabled = false;
+        item.preview(tctx);
+        ctx.drawImage(tmp, 0, 0, canvases[i].width, canvases[i].height);
+      }
+    }
+  }
+
+  function previewHouseplant(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    ctx.fillStyle = '#7a4818'; ctx.fillRect(5*u, 11*u, 6*u, 4*u);
+    ctx.fillStyle = '#a06820'; ctx.fillRect(5*u, 11*u, 6*u, u);
+    ctx.fillStyle = '#3a8038'; ctx.fillRect(7*u, 4*u, 2*u, 7*u);
+    ctx.fillStyle = '#5aa050'; ctx.fillRect(5*u, 6*u, 2*u, 4*u); ctx.fillRect(9*u, 6*u, 2*u, 4*u);
+    ctx.fillRect(4*u, 8*u, 2*u, 2*u); ctx.fillRect(10*u, 8*u, 2*u, 2*u);
+  }
+  function previewLamp(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    ctx.fillStyle = '#3a2820'; ctx.fillRect(5*u, 13*u, 6*u, 2*u);
+    ctx.fillStyle = '#5a3a28'; ctx.fillRect(7*u, 5*u, 2*u, 8*u);
+    ctx.fillStyle = '#a08040'; ctx.fillRect(4*u, 2*u, 8*u, 3*u);
+    ctx.fillStyle = '#e0c060'; ctx.fillRect(4*u, 4*u, 8*u, u);
+    ctx.fillStyle = 'rgba(255,224,128,0.45)'; ctx.fillRect(2*u, 5*u, 12*u, 2*u);
+  }
+  function previewCrystalLamp(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    ctx.fillStyle = '#1a1430'; ctx.fillRect(5*u, 13*u, 6*u, 2*u);
+    ctx.fillStyle = '#3a2858'; ctx.fillRect(5*u, 13*u, 6*u, u);
+    var grad = ctx.createLinearGradient(0, 4*u, 0, 13*u);
+    grad.addColorStop(0, '#c0a0f0'); grad.addColorStop(1, '#503090');
+    ctx.fillStyle = grad; ctx.fillRect(6*u, 4*u, 4*u, 9*u);
+    ctx.fillStyle = '#e0c0f8'; ctx.fillRect(6*u, 4*u, u, 9*u);
+    ctx.fillStyle = 'rgba(192,144,232,0.45)'; ctx.fillRect(2*u, 2*u, 12*u, 4*u);
+  }
+  function previewPoster(ctx) {
+    var w = ctx.canvas.width, h = ctx.canvas.height, u = w / 16;
+    ctx.fillStyle = '#3a2820'; ctx.fillRect(2*u, 2*u, 12*u, 12*u);
+    var g = ctx.createLinearGradient(3*u, 3*u, 13*u, 13*u);
+    g.addColorStop(0, '#6040a0'); g.addColorStop(1, '#80e0e8');
+    ctx.fillStyle = g; ctx.fillRect(3*u, 3*u, 10*u, 10*u);
+    ctx.fillStyle = '#ffe080'; ctx.fillRect(7*u, 5*u, 2*u, 6*u); ctx.fillRect(5*u, 7*u, 6*u, 2*u);
+  }
+  function previewBonsai(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    ctx.fillStyle = '#3a2410'; ctx.fillRect(3*u, 12*u, 10*u, 3*u);
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(3*u, 12*u, 10*u, u);
+    ctx.fillStyle = '#3a1810'; ctx.fillRect(7*u, 6*u, 2*u, 6*u); ctx.fillRect(6*u, 9*u, 2*u, 2*u);
+    ctx.fillStyle = '#3a8038'; ctx.fillRect(4*u, 4*u, 4*u, 3*u); ctx.fillRect(8*u, 3*u, 4*u, 3*u); ctx.fillRect(5*u, 6*u, 6*u, u);
+    ctx.fillStyle = '#5aa050'; ctx.fillRect(4*u, 4*u, 4*u, u); ctx.fillRect(8*u, 3*u, 4*u, u);
+  }
+  function previewTank(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    ctx.fillStyle = '#3a2820'; ctx.fillRect(3*u, 13*u, 10*u, 2*u);
+    ctx.fillRect(4*u, 11*u, u, 2*u); ctx.fillRect(11*u, 11*u, u, 2*u);
+    ctx.fillStyle = '#0a0418'; ctx.fillRect(3*u, 2*u, 10*u, 9*u);
+    var g = ctx.createRadialGradient(8*u, 6*u, 0, 8*u, 6*u, 6*u);
+    g.addColorStop(0, 'rgba(192,144,232,0.85)');
+    g.addColorStop(0.5, 'rgba(96,80,180,0.55)');
+    g.addColorStop(1, 'rgba(20,12,40,0.0)');
+    ctx.fillStyle = g; ctx.fillRect(3*u, 2*u, 10*u, 9*u);
+    ctx.fillStyle = '#fff'; ctx.fillRect(5*u, 4*u, u, u); ctx.fillRect(10*u, 7*u, u, u); ctx.fillRect(7*u, 9*u, u, u);
+    ctx.strokeStyle = 'rgba(160,240,248,0.6)'; ctx.lineWidth = 1;
+    ctx.strokeRect(3*u + 0.5, 2*u + 0.5, 10*u - 1, 9*u - 1);
+  }
+
+  // ---- Lumar dockside item previews ----
+  function previewDriftwoodLamp(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    // Wide weathered base
+    ctx.fillStyle = '#5a4a30'; ctx.fillRect(4*u, 13*u, 8*u, 2*u);
+    ctx.fillStyle = '#7a6a48'; ctx.fillRect(4*u, 13*u, 8*u, u);
+    // Twisted driftwood pole
+    ctx.fillStyle = '#3a2a18'; ctx.fillRect(7*u, 5*u, 2*u, 8*u);
+    ctx.fillStyle = '#5a4a30'; ctx.fillRect(6*u, 7*u, u, 2*u); ctx.fillRect(9*u, 9*u, u, 2*u);
+    // Frosted-glass shade
+    ctx.fillStyle = '#8aa0a8'; ctx.fillRect(4*u, 2*u, 8*u, 3*u);
+    ctx.fillStyle = '#c8e0e8'; ctx.fillRect(4*u, 2*u, 8*u, u);
+    // Warm halo
+    ctx.fillStyle = 'rgba(255,210,140,0.4)'; ctx.fillRect(2*u, 4*u, 12*u, 2*u);
+  }
+  function previewGlassFloat(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    // Wooden cradle base
+    ctx.fillStyle = '#3a2410'; ctx.fillRect(3*u, 13*u, 10*u, 2*u);
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(3*u, 13*u, 10*u, u);
+    // Net wrap
+    ctx.strokeStyle = '#3a2818'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(4*u, 13*u); ctx.lineTo(8*u, 5*u); ctx.lineTo(12*u, 13*u); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5*u, 12*u); ctx.lineTo(11*u, 12*u); ctx.stroke();
+    // Glass orb
+    var grad = ctx.createRadialGradient(7*u, 7*u, 0, 8*u, 8*u, 5*u);
+    grad.addColorStop(0, '#c8f0e8'); grad.addColorStop(0.6, '#5aa098'); grad.addColorStop(1, '#205848');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(8*u, 8*u, 4.5*u, 0, Math.PI * 2); ctx.fill();
+    // Highlight
+    ctx.fillStyle = 'rgba(220,240,232,0.6)'; ctx.beginPath();
+    ctx.arc(6.5*u, 6.5*u, 1.2*u, 0, Math.PI * 2); ctx.fill();
+  }
+  function previewKelpCanister(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    // Base
+    ctx.fillStyle = '#3a2818'; ctx.fillRect(4*u, 13*u, 8*u, 2*u);
+    // Glass canister
+    ctx.fillStyle = '#0a1820'; ctx.fillRect(4*u, 3*u, 8*u, 10*u);
+    // Bioluminescent water + kelp
+    var grad = ctx.createLinearGradient(0, 4*u, 0, 13*u);
+    grad.addColorStop(0, 'rgba(96,200,160,0.6)');
+    grad.addColorStop(1, 'rgba(40,100,80,0.3)');
+    ctx.fillStyle = grad; ctx.fillRect(5*u, 4*u, 6*u, 8*u);
+    // Kelp strands
+    ctx.fillStyle = '#3a8038';
+    ctx.fillRect(6*u, 5*u, u, 7*u);
+    ctx.fillRect(8*u, 6*u, u, 6*u);
+    ctx.fillRect(10*u, 5*u, u, 7*u);
+    // Glow particles
+    ctx.fillStyle = '#a8f0c8'; ctx.fillRect(7*u, 7*u, u, u);
+    ctx.fillStyle = '#80e0a0'; ctx.fillRect(9*u, 9*u, u, u);
+    // Brass cap
+    ctx.fillStyle = '#a08040'; ctx.fillRect(4*u, 2*u, 8*u, u);
+    ctx.fillStyle = '#e0c060'; ctx.fillRect(4*u, 2*u, 8*u, Math.max(1, u * 0.4));
+    // Glass border
+    ctx.strokeStyle = 'rgba(160,200,200,0.5)'; ctx.lineWidth = 1;
+    ctx.strokeRect(4*u + 0.5, 3*u + 0.5, 8*u - 1, 10*u - 1);
+  }
+  function previewBrassCompass(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    // Wooden display stand
+    ctx.fillStyle = '#3a2410'; ctx.fillRect(3*u, 13*u, 10*u, 2*u);
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(3*u, 13*u, 10*u, u);
+    // Compass body
+    ctx.fillStyle = '#a08040';
+    ctx.beginPath(); ctx.arc(8*u, 7*u, 5*u, 0, Math.PI * 2); ctx.fill();
+    // Inner face
+    ctx.fillStyle = '#0a1418';
+    ctx.beginPath(); ctx.arc(8*u, 7*u, 3.7*u, 0, Math.PI * 2); ctx.fill();
+    // Brass tick marks (N/E/S/W)
+    ctx.fillStyle = '#e0c060';
+    ctx.fillRect(8*u - Math.max(1, u*0.5), 7*u - 4.5*u, Math.max(1, u), Math.max(1, u));
+    ctx.fillRect(8*u + 3.5*u, 7*u - Math.max(1, u*0.5), Math.max(1, u), Math.max(1, u));
+    ctx.fillRect(8*u - Math.max(1, u*0.5), 7*u + 3.5*u, Math.max(1, u), Math.max(1, u));
+    ctx.fillRect(8*u - 4.5*u, 7*u - Math.max(1, u*0.5), Math.max(1, u), Math.max(1, u));
+    // Needle (tilted slightly)
+    ctx.save(); ctx.translate(8*u, 7*u); ctx.rotate(0.3);
+    ctx.fillStyle = '#e84040'; ctx.fillRect(-Math.max(1, u*0.4), -3*u, Math.max(1, u*0.8), 3*u);
+    ctx.fillStyle = '#fff'; ctx.fillRect(-Math.max(1, u*0.4), 0, Math.max(1, u*0.8), 3*u);
+    ctx.restore();
+    // Glass dome highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.beginPath(); ctx.arc(7*u, 5.5*u, 1.5*u, 0, Math.PI * 2); ctx.fill();
+  }
+
+  function setFeedback(text, color) {
+    var el = document.getElementById('catalog-feedback');
+    if (el) { el.textContent = text; el.style.color = color || '#80e0e8'; }
+  }
+
+  function bindHandlers() {
     overlayEl.addEventListener('click', function (e) {
       if (e.target === overlayEl) hide();
     });
-    // Esc closes
     document.addEventListener('keydown', escHandler);
+  }
+
+  function bindTabHandlers() {
+    var tabs = overlayEl.querySelectorAll('.catalog-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      (function (tab) {
+        tab.addEventListener('click', function () {
+          var key = tab.getAttribute('data-tab');
+          if (key === currentTab) return;
+          currentTab = key;
+          refreshView();
+        });
+      })(tabs[i]);
+    }
   }
 
   function escHandler(e) {
     if (!open) return;
     if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      document.removeEventListener('keydown', escHandler);
+      e.preventDefault(); e.stopPropagation();
       hide();
     }
   }
 
-  // ---- Helpers ----
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -397,6 +595,7 @@ var BridgeCatalog = (function () {
     hide: hide,
     isOpen: function () { return open; },
     getCatalog: getCatalog,
-    getItemByKey: getItemByKey
+    getItemByKey: getItemByKey,
+    sellPriceOf: sellPriceOf
   };
 })();

@@ -266,6 +266,34 @@
   }
 
   /**
+   * Sell an item the pilot owns (whether on display or in locker).
+   * Returns { ok: true, balance, origin } or { ok: false, reason }.
+   */
+  function sellItem(itemKey, sellPrice) {
+    return resolvePilot().then(function (pilot) {
+      if (!pilot) return { ok: false, reason: 'no_pilot' };
+      var client = getClient();
+      if (!client) return { ok: false, reason: 'no_client' };
+      return client.rpc('sell_item', {
+        p_pilot_id: pilot.id,
+        p_item_key: itemKey,
+        p_sell_price: Math.floor(sellPrice)
+      }).then(function (res) {
+        if (res.error) {
+          console.warn('[progression] sell_item failed:', res.error);
+          return { ok: false, reason: 'error' };
+        }
+        var d = res.data || {};
+        if (d.ok) {
+          emitCoinChange(d.balance, sellPrice, 'sell:' + itemKey);
+          emitLockerChange();
+        }
+        return d;
+      });
+    });
+  }
+
+  /**
    * Move an item from the locker into the given slot. If the slot is occupied
    * the existing slot item swaps back to the locker (atomic).
    * Returns { ok: true, placed, displaced } or { ok: false, reason }.
@@ -352,6 +380,7 @@
     getDecor: getDecor,
     getLocker: getLocker,
     purchaseDecor: purchaseDecor,
+    sellItem: sellItem,
     storeDecor: storeDecor,
     placeDecor: placeDecor,
     onCoinChange: onCoinChange,

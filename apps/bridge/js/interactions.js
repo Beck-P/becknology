@@ -113,7 +113,8 @@ var BridgeInteractions = (function () {
         break;
 
       case 'catalog':
-        if (typeof BridgeCatalog !== 'undefined') BridgeCatalog.show();
+      case 'shop':
+        if (typeof BridgeCatalog !== 'undefined') BridgeCatalog.show(inter.shop);
         break;
 
       case 'locker':

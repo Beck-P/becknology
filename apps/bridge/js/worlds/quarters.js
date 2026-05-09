@@ -843,8 +843,9 @@
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
 
     var owned = ownedDecor.lamp;
-    if (owned === 'floor_lamp')   return drawOwnedFloorLamp(ctx, x, y, ts, time);
-    if (owned === 'crystal_lamp') return drawOwnedCrystalLamp(ctx, x, y, ts, time);
+    if (owned === 'floor_lamp')     return drawOwnedFloorLamp(ctx, x, y, ts, time);
+    if (owned === 'crystal_lamp')   return drawOwnedCrystalLamp(ctx, x, y, ts, time);
+    if (owned === 'driftwood_lamp') return drawOwnedDriftwoodLamp(ctx, x, y, ts, time);
 
     // Lamp base
     ctx.fillStyle = PAL.ghost;
@@ -914,6 +915,39 @@
     // Tank glass hint (very faint vertical highlight)
     ctx.fillStyle = PAL.ghost;
     ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(3 * u), u, Math.floor(6 * u));
+  }
+
+  // ---- Shelf slot — small wall-mounted shelf for Lumar trinkets ----
+  function drawSlotShelf(ctx, x, y, ts, time, col, row) {
+    var u = ts / 16;
+    // Wall behind
+    ctx.fillStyle = PAL.wallMid;
+    ctx.fillRect(x, y, ts, Math.floor(8 * u));
+
+    // Shelf surface — wood plank with brass front edge
+    ctx.fillStyle = PAL.floorMid;
+    ctx.fillRect(x, y + Math.floor(7 * u), ts, Math.floor(2 * u));
+    ctx.fillStyle = PAL.floorHi;
+    ctx.fillRect(x, y + Math.floor(7 * u), ts, Math.max(1, Math.floor(u * 0.5)));
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(x, y + Math.floor(8 * u) + Math.max(0, Math.floor(u * 0.5)), ts, Math.max(1, Math.floor(u * 0.5)));
+    // Bracket below
+    ctx.fillStyle = PAL.floorGrain;
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(9 * u), 2 * u, Math.floor(2 * u));
+    // Floor underneath the wall+shelf area (rest of the tile)
+    drawFloorBase(ctx, x, y + Math.floor(11 * u), ts, time, col, row, false);
+    // Hack: above floorBase repaints the lower portion so it fits naturally with neighbors.
+    ctx.fillStyle = PAL.floorMid;
+    ctx.fillRect(x, y + Math.floor(11 * u), ts, ts - Math.floor(11 * u));
+
+    var owned = ownedDecor.shelf;
+    if (owned === 'glass_float')   return drawOwnedGlassFloat(ctx, x, y, ts, time);
+    if (owned === 'kelp_canister') return drawOwnedKelpCanister(ctx, x, y, ts, time);
+    if (owned === 'brass_compass') return drawOwnedBrassCompass(ctx, x, y, ts, time);
+
+    // Empty — small ghost silhouette of a knick-knack
+    ctx.fillStyle = PAL.ghost;
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(3 * u), Math.floor(4 * u), Math.floor(4 * u));
   }
 
   // ---- Owned decor sprites — drawn in place when player has bought the item ----
@@ -1070,6 +1104,129 @@
     ctx.strokeRect(x + 3 * u + 0.5, y + 2 * u + 0.5, 10 * u - 1, 11 * u - 1);
     ctx.fillStyle = 'rgba(160, 240, 248, 0.25)';
     ctx.fillRect(x + 4 * u, y + 3 * u, Math.max(1, u * 0.8), 4 * u);
+  }
+
+  // ---- Lumar dockside item renderers (in-room sprites for owned items) ----
+
+  function drawOwnedDriftwoodLamp(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    // Wide weathered stone base
+    ctx.fillStyle = '#5a4a30';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(13 * u), Math.floor(8 * u), Math.floor(2 * u));
+    ctx.fillStyle = '#7a6a48';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(13 * u), Math.floor(8 * u), Math.max(1, u));
+    // Twisted driftwood pole
+    ctx.fillStyle = '#3a2a18';
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(5 * u), Math.floor(2 * u), Math.floor(8 * u));
+    ctx.fillStyle = '#5a4a30';
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(7 * u), Math.max(1, u), Math.floor(2 * u));
+    ctx.fillRect(x + Math.floor(9 * u), y + Math.floor(9 * u), Math.max(1, u), Math.floor(2 * u));
+    // Frosted-glass shade
+    ctx.fillStyle = '#8aa0a8';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(2 * u), Math.floor(8 * u), Math.floor(3 * u));
+    ctx.fillStyle = '#c8e0e8';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(2 * u), Math.floor(8 * u), Math.max(1, u));
+    // Warm halo
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var glow = ctx.createRadialGradient(x + ts / 2, y + Math.floor(4 * u), 0, x + ts / 2, y + Math.floor(4 * u), 7 * u);
+    var pulse = 0.7 + Math.sin(time / 900) * 0.1;
+    glow.addColorStop(0, 'rgba(255, 210, 140, ' + (0.5 * pulse).toFixed(2) + ')');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.fillRect(x - 3 * u, y - 3 * u, ts + 6 * u, ts);
+    ctx.restore();
+  }
+
+  function drawOwnedGlassFloat(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    // Item sits ON the shelf (drawn at row ~2-7 of the tile)
+    var cx = x + ts / 2, cy = y + Math.floor(4.5 * u);
+    // Glass orb with gradient
+    var grad = ctx.createRadialGradient(cx - u, cy - u, 0, cx, cy, 3 * u);
+    grad.addColorStop(0, '#c8f0e8');
+    grad.addColorStop(0.6, '#5aa098');
+    grad.addColorStop(1, '#205848');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, Math.floor(2.8 * u), 0, Math.PI * 2); ctx.fill();
+    // Net wrap (X pattern)
+    ctx.strokeStyle = '#3a2818'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 2 * u, cy - 2 * u); ctx.lineTo(cx + 2 * u, cy + 2 * u);
+    ctx.moveTo(cx + 2 * u, cy - 2 * u); ctx.lineTo(cx - 2 * u, cy + 2 * u);
+    ctx.stroke();
+    // Highlight
+    ctx.fillStyle = 'rgba(220, 240, 232, 0.5)';
+    ctx.beginPath(); ctx.arc(cx - u, cy - u, Math.max(1, Math.floor(u * 0.7)), 0, Math.PI * 2); ctx.fill();
+  }
+
+  function drawOwnedKelpCanister(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var cx = x + ts / 2;
+    var topY = y + Math.floor(2 * u);
+    // Canister glass
+    ctx.fillStyle = '#0a1820';
+    ctx.fillRect(cx - 2 * u, topY, 4 * u, 5 * u);
+    // Bioluminescent water
+    var grad = ctx.createLinearGradient(0, topY, 0, topY + 5 * u);
+    grad.addColorStop(0, 'rgba(96, 200, 160, 0.6)');
+    grad.addColorStop(1, 'rgba(40, 100, 80, 0.3)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - Math.floor(1.7 * u), topY + Math.max(1, Math.floor(u * 0.3)), Math.floor(3.4 * u), 5 * u - Math.max(1, Math.floor(u * 0.5)));
+    // Kelp strands
+    ctx.fillStyle = '#3a8038';
+    ctx.fillRect(cx - Math.floor(1.5 * u), topY + 1 * u, Math.max(1, Math.floor(u * 0.6)), 4 * u);
+    ctx.fillRect(cx, topY + 2 * u, Math.max(1, Math.floor(u * 0.6)), 3 * u);
+    ctx.fillRect(cx + Math.floor(1 * u), topY + 1 * u, Math.max(1, Math.floor(u * 0.6)), 4 * u);
+    // Glow particles
+    var sparkle = (Math.floor(time / 200) % 4);
+    ctx.fillStyle = '#a8f0c8';
+    ctx.fillRect(cx - u + (sparkle * Math.max(1, Math.floor(u * 0.5))), topY + 2 * u, Math.max(1, Math.floor(u * 0.6)), Math.max(1, Math.floor(u * 0.6)));
+    // Brass cap
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(cx - 2 * u, topY, 4 * u, Math.max(1, u));
+    ctx.fillStyle = PAL.brassHi;
+    ctx.fillRect(cx - 2 * u, topY, 4 * u, Math.max(1, Math.floor(u * 0.4)));
+    // Subtle bioluminescent halo
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var halo = ctx.createRadialGradient(cx, topY + Math.floor(3 * u), 0, cx, topY + Math.floor(3 * u), 5 * u);
+    halo.addColorStop(0, 'rgba(120, 240, 184, 0.18)');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - 2 * u, y - u, ts + 4 * u, ts);
+    ctx.restore();
+  }
+
+  function drawOwnedBrassCompass(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var cx = x + ts / 2;
+    var cy = y + Math.floor(4.5 * u);
+    // Compass body (brass disc)
+    ctx.fillStyle = PAL.brass;
+    ctx.beginPath(); ctx.arc(cx, cy, Math.floor(3 * u), 0, Math.PI * 2); ctx.fill();
+    // Inner face (dark)
+    ctx.fillStyle = '#0a1418';
+    ctx.beginPath(); ctx.arc(cx, cy, Math.floor(2.2 * u), 0, Math.PI * 2); ctx.fill();
+    // Brass tick marks (N/E/S/W)
+    ctx.fillStyle = PAL.brassHi;
+    ctx.fillRect(cx - Math.max(1, Math.floor(u * 0.35)), cy - Math.floor(2.7 * u), Math.max(1, Math.floor(u * 0.7)), Math.max(1, Math.floor(u * 0.6)));
+    ctx.fillRect(cx + Math.floor(2.1 * u), cy - Math.max(1, Math.floor(u * 0.35)), Math.max(1, Math.floor(u * 0.6)), Math.max(1, Math.floor(u * 0.7)));
+    ctx.fillRect(cx - Math.max(1, Math.floor(u * 0.35)), cy + Math.floor(2.1 * u), Math.max(1, Math.floor(u * 0.7)), Math.max(1, Math.floor(u * 0.6)));
+    ctx.fillRect(cx - Math.floor(2.7 * u), cy - Math.max(1, Math.floor(u * 0.35)), Math.max(1, Math.floor(u * 0.6)), Math.max(1, Math.floor(u * 0.7)));
+    // Slowly rotating needle
+    var ang = time / 2000;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(ang);
+    ctx.fillStyle = '#e84040';
+    ctx.fillRect(-Math.max(1, Math.floor(u * 0.4)), -Math.floor(2 * u), Math.max(1, Math.floor(u * 0.8)), Math.floor(2 * u));
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(-Math.max(1, Math.floor(u * 0.4)), 0, Math.max(1, Math.floor(u * 0.8)), Math.floor(2 * u));
+    ctx.restore();
+    // Glass dome highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+    ctx.beginPath(); ctx.arc(cx - u, cy - u, Math.max(1, Math.floor(u * 0.9)), 0, Math.PI * 2); ctx.fill();
   }
 
   // ============================================================
@@ -1570,7 +1727,8 @@
     14: drawSlotPoster,
     15: drawSlotNebulaTank,
     17: drawChessTable,
-    18: drawStorageLocker
+    18: drawStorageLocker,
+    19: drawSlotShelf
   });
 
   BridgeWorld.registerOverlay('quarters', quartersOverlay);
