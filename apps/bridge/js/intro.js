@@ -286,7 +286,10 @@ var BridgeIntro = (function () {
         if (result && !result.error) {
           BridgeState.setPilot(result);
           BridgeDB.updateLastSeen(result.id);
-          BridgeState.transition('cockpit');
+          // Load quarters and drop the player inside.
+          BridgeWorld.load('quarters', function () {
+            BridgeState.transition('world', { worldId: 'quarters' });
+          });
         } else {
           BridgeState.clearPilot();
           BridgeState.transition('identity');

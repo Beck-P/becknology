@@ -23,6 +23,7 @@ var BridgeWorld = (function () {
 
   var TILESETS = {};
   var BACKGROUNDS = {};
+  var OVERLAYS = {};
 
   function registerTileset(name, drawFns) {
     TILESETS[name] = drawFns;
@@ -30,6 +31,14 @@ var BridgeWorld = (function () {
 
   function registerBackground(name, drawFn) {
     BACKGROUNDS[name] = drawFn;
+  }
+
+  // Per-tileset overlay drawn between game markers and the character.
+  // Use for moving entities (drones, NPCs), animated screen elements
+  // (viewports), or any content not anchored to a single tile.
+  // Signature: fn(ctx, world, offX, offY, ts, time)
+  function registerOverlay(name, drawFn) {
+    OVERLAYS[name] = drawFn;
   }
 
   // ---- Glow Helpers ----
@@ -251,11 +260,13 @@ var BridgeWorld = (function () {
     overlay.classList.add('active');
 
     // Always render an always-visible exit affordance — players should never
-    // get stranded inside a world. The "LEAVE WORLD" link is the universal
-    // escape hatch even for worlds that have a ship-tile exit.
+    // get stranded inside a world. The "LEAVE" link is the universal escape
+    // hatch even for worlds that have a ship-tile exit. Worlds can override
+    // its label via `leaveLabel` (e.g. quarters → "← COCKPIT").
+    var leaveLabel = world.leaveLabel || '&#9210; LEAVE WORLD';
     overlay.innerHTML =
       '<div class="world-hud">' +
-        '<a class="world-back" id="world-back" title="Esc">&#9210; LEAVE WORLD</a>' +
+        '<a class="world-back" id="world-back" title="Esc">' + leaveLabel + '</a>' +
         '<div class="interact-prompt" id="interact-prompt"></div>' +
       '</div>';
 
@@ -569,6 +580,7 @@ var BridgeWorld = (function () {
       for (var bi = 0; bi < world.interactions.length; bi++) {
         var bint = world.interactions[bi];
         if (bint.type !== 'leave_world') continue;
+        if (bint.noBeacon) continue;
         var bx = Math.floor(offX + bint.x * ts);
         var by = Math.floor(offY + bint.y * ts);
         // Soft halo
@@ -594,11 +606,11 @@ var BridgeWorld = (function () {
         ctx.fill();
         // Arrow stem
         ctx.fillRect(arrowCx - arrowW * 0.18, floatY + arrowW * 0.55, arrowW * 0.36, arrowW * 0.55);
-        // "EXIT" label
+        // Beacon label — uses the interaction's label, falling back to "EXIT"
         ctx.font = 'bold ' + Math.max(8, Math.floor(ts * 0.18)) + 'px "Courier New", monospace';
         ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(220, 245, 255, ' + arrowAlpha.toFixed(2) + ')';
-        ctx.fillText('EXIT', arrowCx, floatY - ts * 0.05);
+        ctx.fillText(bint.label || 'EXIT', arrowCx, floatY - ts * 0.05);
         ctx.textAlign = 'start';
       }
     }
@@ -615,6 +627,12 @@ var BridgeWorld = (function () {
         var clusterTopY = cl.minY * ts + offY;
         drawGameMarker(ctx, clusterCx, clusterTopY, ts, cl.label, gameBeat);
       }
+    }
+
+    // Pass 2.9: Per-tileset overlay (drone, viewport content, NPCs, etc.)
+    var overlayFn = OVERLAYS[world.tileset];
+    if (overlayFn) {
+      overlayFn(ctx, world, offX, offY, ts, now);
     }
 
     // Pass 3: Character (on top of glow)
@@ -657,6 +675,7 @@ var BridgeWorld = (function () {
     sailTo: sailTo,
     registerTileset: registerTileset,
     registerBackground: registerBackground,
+    registerOverlay: registerOverlay,
     getCamera: function () { return camera; },
     getScale: function () { return scale; },
     getTileSize: function () { return tileSize; }

@@ -42,6 +42,11 @@ var BridgeCharacter = (function () {
 
   function getX() { return player.x; }
   function getY() { return player.y; }
+  function setFacing(dir) {
+    if (dir === 'up' || dir === 'down' || dir === 'left' || dir === 'right') {
+      player.facing = dir;
+    }
+  }
   function getFacing() { return player.facing; }
   function isMoving() { return player.moveProgress < 1; }
 
@@ -253,6 +258,7 @@ var BridgeCharacter = (function () {
     getX: getX,
     getY: getY,
     getFacing: getFacing,
+    setFacing: setFacing,
     isMoving: isMoving,
     getRenderPos: getRenderPos,
     tryMove: tryMove,

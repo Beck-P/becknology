@@ -266,6 +266,25 @@ body::after {
 
 .pilot-switch:hover { color: rgba(160, 120, 220, 0.5); }
 
+.quarters-back {
+  position: fixed;
+  bottom: 12px;
+  left: 16px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: rgba(120, 200, 220, 0.55);
+  cursor: pointer;
+  z-index: 20;
+  text-decoration: none;
+  transition: color 0.2s, text-shadow 0.2s;
+  font-family: 'Courier New', Consolas, monospace;
+}
+
+.quarters-back:hover {
+  color: rgba(160, 240, 248, 1);
+  text-shadow: 0 0 8px rgba(64, 200, 216, 0.6);
+}
+
 /* ---- Star Map ---- */
 .starmap-container {
   position: relative;
@@ -626,6 +645,7 @@ body::after {
 
   /* Pilot switch link bigger tap target */
   .pilot-switch { font-size: 12px; padding: 8px; bottom: 8px; right: 8px; }
+  .quarters-back { font-size: 12px; padding: 8px; bottom: 8px; left: 8px; }
 
   /* Intro prompt */
   .intro-prompt { bottom: 12%; font-size: 14px; }

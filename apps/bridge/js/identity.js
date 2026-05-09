@@ -122,7 +122,9 @@ var BridgeIdentity = (function () {
     }
 
     BridgeState.setPilot(result);
-    BridgeState.transition('cockpit');
+    BridgeWorld.load('quarters', function () {
+      BridgeState.transition('world', { worldId: 'quarters' });
+    });
   }
 
   async function doLogin() {
@@ -145,7 +147,9 @@ var BridgeIdentity = (function () {
 
     BridgeState.setPilot(result);
     BridgeDB.updateLastSeen(result.id);
-    BridgeState.transition('cockpit');
+    BridgeWorld.load('quarters', function () {
+      BridgeState.transition('world', { worldId: 'quarters' });
+    });
   }
 
   function hide() {

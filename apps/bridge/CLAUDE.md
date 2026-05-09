@@ -123,6 +123,24 @@ Each world has its own constrained palette. Both PNG prompts and procedural draw
 - Warning: `#e84040` `#e8c040`
 - Server LEDs: `#40e080` `#e06040` `#40a8e0`
 
+### Quarters — pilot ship interior (cozy + sci-fi)
+- Walls (warm dark metal): `#1a1410` `#2a2018` `#3a2820` `#4a3a30`
+- Floor (warm wood): `#3a2410` `#5a3a1a` `#7a4e22` (alt plank `#4a2e14`, grain `#2a1808`)
+- Cyan strip light: `#40c8d8` `#80e0e8` (subtle pulse alpha)
+- Desk lamp / window glow: `#ffe080` `#c08840`
+- Brass shelf trim: `#a08040` `#e0c060`
+- Bed sheets (purple): `#2a1840` `#5a4078` `#8060c0`
+- Pillow: `#d4c8b0` (shadow `#a89880`)
+- Viewport (deep space): `#050510` `#0a0a1a` + procedural stars/planets/ships
+- Drone pet: body `#80e0e8`, core `#1a3038`, LED `#ffe080`
+- Ghost silhouettes (empty decor slots): `rgba(140,140,160,0.16)` fill, `rgba(180,180,200,0.42)` outline
+
+The Quarters palette intentionally bridges Lumar (warm wood) and Enigma (cyan
+sci-fi accents). The room reads as part of the same universe, but with its
+own cozy identity. Animations on top: viewport stars + occasional planet/ship
+events, cyan strip pulse, desk lamp dust motes, coffee-mug steam, cockpit-door
+LED blink, and the drone-pet's idle wander + bob + LED.
+
 ## NPC sprite sheets — future spec
 
 When we add NPC walking animation, this is the format to use:

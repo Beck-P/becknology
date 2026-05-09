@@ -84,7 +84,9 @@ var BridgeCockpit = (function () {
         '<div class="offline-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">OFFLINE</div>' +
       '</div>' +
       // Pilot switch
-      '<a class="pilot-switch" id="pilot-switch">NOT ' + pilotName + '? SWITCH PILOT</a>';
+      '<a class="pilot-switch" id="pilot-switch">NOT ' + pilotName + '? SWITCH PILOT</a>' +
+      // Return-to-quarters affordance (mirror pilot-switch, on the left)
+      '<a class="quarters-back" id="quarters-back">&#8592; QUARTERS</a>';
 
     document.getElementById('hotspot-center').addEventListener('click', function () {
       BridgeState.transition('starmap');
@@ -94,6 +96,11 @@ var BridgeCockpit = (function () {
       e.preventDefault();
       BridgeState.clearPilot();
       BridgeState.transition('identity');
+    });
+
+    document.getElementById('quarters-back').addEventListener('click', function (e) {
+      e.preventDefault();
+      BridgeWorld.enterWorld('quarters');
     });
 
     // D-pad only shown in Phase 2+ (world overworld walking mode)
