@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chess Trainer — Theme Mockups</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  :root {
+    color-scheme: dark;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 24px 64px;
+    background: #14110f;
+    color: #e8e0d4;
+  }
+  header {
+    max-width: 1280px;
+    margin: 0 auto 32px;
+  }
+  h1 {
+    font-size: 28px;
+    margin: 0 0 4px;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    margin: 0;
+    color: #9c9285;
+    font-size: 14px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 20px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #1d1815;
+    border: 1px solid #2a221d;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .scene {
+    aspect-ratio: 4 / 3;
+    position: relative;
+    overflow: hidden;
+    image-rendering: pixelated;
+  }
+  .info {
+    padding: 14px 16px 16px;
+  }
+  .name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .desc {
+    margin: 4px 0 10px;
+    font-size: 13px;
+    color: #9c9285;
+    line-height: 1.4;
+  }
+  .palette {
+    display: flex;
+    gap: 5px;
+  }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* ------------------ shared scene primitives ------------------ */
+  .board {
+    position: absolute;
+    width: 50%;
+    aspect-ratio: 1;
+    bottom: 18%;
+    left: 50%;
+    transform: translateX(-50%);
+    background:
+      repeating-conic-gradient(
+        from 0deg at 50% 50%,
+        var(--light) 0deg 90deg,
+        var(--dark) 90deg 180deg
+      );
+    background-size: 25% 25%;
+    box-shadow:
+      0 6px 0 rgba(0, 0, 0, 0.25),
+      0 12px 18px rgba(0, 0, 0, 0.35),
+      inset 0 0 0 2px var(--frame, var(--dark));
+    image-rendering: pixelated;
+  }
+  .pieces {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    pointer-events: none;
+  }
+  .pieces span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(10px, 1.6vw, 18px);
+    line-height: 1;
+    font-family: "Apple Symbols", "DejaVu Sans", "Segoe UI Symbol", sans-serif;
+  }
+  .pieces .w { color: #f6ecd3; text-shadow: 0 1px 0 #00000099; }
+  .pieces .b { color: #1a120a; text-shadow: 0 1px 0 #ffffff33; }
+
+  /* surface beneath board (table / stump / etc) */
+  .surface {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 18%;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* ===== 1. Back porch in October ===== */
+  .porch {
+    --light: #d4a574;
+    --dark: #5a3d2b;
+    --frame: #3a2618;
+    background:
+      linear-gradient(180deg, #a8c4d0 0%, #c9b890 35%, #8a6a4a 60%, #5a3d2b 100%);
+  }
+  .porch .surface {
+    background: linear-gradient(180deg, #6b4730, #4a3220);
+    box-shadow: 0 6px 0 #2a1a10, 0 10px 18px rgba(0, 0, 0, 0.5);
+  }
+  .porch .planks {
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(180deg,
+        transparent 0,
+        transparent 14px,
+        rgba(0, 0, 0, 0.18) 14px,
+        rgba(0, 0, 0, 0.18) 16px);
+    bottom: 60%;
+    top: auto;
+    height: 40%;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .porch .railing {
+    position: absolute;
+    top: 28%;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: #4a3220;
+    box-shadow: 0 14px 0 #4a3220;
+  }
+  .porch .leaf {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #c87f3a;
+    transform: rotate(20deg);
+    border-radius: 1px;
+    box-shadow: 1px 1px 0 #8a4a1a;
+  }
+  .porch .leaf.l1 { top: 20%; left: 10%; background: #c44536; }
+  .porch .leaf.l2 { top: 35%; left: 85%; background: #d4a047; }
+  .porch .leaf.l3 { top: 55%; left: 8%; }
+  .porch .leaf.l4 { top: 70%; left: 90%; background: #c44536; transform: rotate(-30deg); }
+  .porch .mug {
+    position: absolute;
+    bottom: 12%;
+    right: 8%;
+    font-size: 22px;
+  }
+
+  /* ===== 2. Forest clearing ===== */
+  .forest {
+    --light: #c9a87a;
+    --dark: #6b4730;
+    --frame: #3a2818;
+    background:
+      linear-gradient(180deg, #c4cfc8 0%, #a8b8a8 35%, #5d7a5e 65%, #3d4d3a 100%);
+  }
+  .forest .mountain {
+    position: absolute;
+    top: 25%;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background:
+      conic-gradient(from 90deg at 20% 100%, transparent 45deg, #6b6580 45deg 135deg, transparent 135deg),
+      conic-gradient(from 90deg at 50% 100%, transparent 45deg, #5a5070 45deg 135deg, transparent 135deg),
+      conic-gradient(from 90deg at 80% 100%, transparent 45deg, #6b6580 45deg 135deg, transparent 135deg);
+    background-repeat: no-repeat;
+    background-size: 40% 100%, 50% 100%, 40% 100%;
+    background-position: -10% 100%, 30% 100%, 70% 100%;
+    opacity: 0.7;
+  }
+  .forest .tree {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 24px solid transparent;
+    border-right: 24px solid transparent;
+    border-bottom: 70px solid #2d4a3e;
+  }
+  .forest .tree.left { bottom: 15%; left: -10px; border-bottom-color: #2d4a3e; }
+  .forest .tree.left2 { bottom: 12%; left: 30px; border-bottom-color: #1d3a2e; transform: scale(0.7); }
+  .forest .tree.right { bottom: 18%; right: -10px; border-bottom-color: #2d4a3e; }
+  .forest .stump {
+    position: absolute;
+    bottom: 6%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 22%;
+    background:
+      radial-gradient(ellipse at center, #8a6a4a 30%, #5a3d2b 70%, #3a2818 100%);
+    border-radius: 50% / 30%;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+  }
+  .forest .surface { display: none; }
+  .forest .leaf {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #a85a3a;
+    border-radius: 50%;
+  }
+  .forest .leaf.l1 { top: 30%; left: 20%; background: #c44536; }
+  .forest .leaf.l2 { top: 50%; left: 80%; background: #d4a047; }
+  .forest .leaf.l3 { bottom: 30%; left: 90%; }
+
+  /* ===== 3. Tea house garden ===== */
+  .teahouse {
+    --light: #e8dcc4;
+    --dark: #2b2b2b;
+    --frame: #1a1a1a;
+    background:
+      linear-gradient(180deg, #f4ede0 0%, #e8d8b8 50%, #d8c9a8 100%);
+  }
+  .teahouse .shoji {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background:
+      linear-gradient(90deg, #1a1a1a 0%, #1a1a1a 2px, transparent 2px) 0 0 / 25% 100%,
+      linear-gradient(0deg, #1a1a1a 0%, #1a1a1a 2px, transparent 2px) 0 0 / 100% 33.33%,
+      linear-gradient(180deg, #fffcf2, #f4ede0);
+    border-bottom: 3px solid #2b2b2b;
+  }
+  .teahouse .surface {
+    background: linear-gradient(180deg, #3a3a3a, #1a1a1a);
+    height: 12%;
+    bottom: 12%;
+  }
+  .teahouse .maple-branch {
+    position: absolute;
+    top: 38%;
+    left: -20px;
+    width: 80px;
+    height: 4px;
+    background: #4a2818;
+    transform: rotate(15deg);
+    transform-origin: left center;
+  }
+  .teahouse .leaf {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #c44536;
+    border-radius: 50% 0 50% 0;
+    transform: rotate(45deg);
+  }
+  .teahouse .leaf.l1 { top: 25%; left: 20%; }
+  .teahouse .leaf.l2 { top: 35%; left: 8%; background: #a83020; }
+  .teahouse .leaf.l3 { top: 55%; left: 88%; background: #c44536; }
+  .teahouse .leaf.l4 { top: 70%; left: 5%; }
+  .teahouse .gravel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 15%;
+    background:
+      radial-gradient(ellipse at 20% 50%, transparent 0 8px, #6b9080 8px 10px, transparent 10px),
+      radial-gradient(ellipse at 60% 70%, transparent 0 12px, #6b9080 12px 14px, transparent 14px),
+      #d8c9a8;
+    background-size: 80px 30px, 120px 50px, auto;
+    background-repeat: repeat-x;
+  }
+
+  /* ===== 4. Cabin dock at dawn ===== */
+  .dock {
+    --light: #c9a87a;
+    --dark: #4a3528;
+    --frame: #2a1a10;
+    background:
+      linear-gradient(180deg, #f4c8a0 0%, #e89a7a 25%, #d68070 40%, #a8a4b8 60%, #7a8a98 100%);
+  }
+  .dock .sun {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 30px;
+    background: #ffeacc;
+    border-radius: 50%;
+    box-shadow: 0 0 30px #ffd5a0;
+  }
+  .dock .water {
+    position: absolute;
+    bottom: 35%;
+    left: 0;
+    right: 0;
+    height: 25%;
+    background:
+      repeating-linear-gradient(180deg,
+        transparent 0 4px,
+        rgba(255, 255, 255, 0.15) 4px 5px,
+        transparent 5px 8px),
+      linear-gradient(180deg, #8a98a8 0%, #5a6878 100%);
+  }
+  .dock .planks {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 35%;
+    background:
+      repeating-linear-gradient(90deg,
+        #6b4d35 0,
+        #6b4d35 38px,
+        #2a1a10 38px,
+        #2a1a10 40px);
+  }
+  .dock .surface { display: none; }
+  .dock .reflection {
+    position: absolute;
+    bottom: 33%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40%;
+    height: 4px;
+    background: rgba(255, 200, 150, 0.4);
+    border-radius: 50%;
+    filter: blur(1px);
+  }
+
+  /* ===== 5. Library with fireplace ===== */
+  .library {
+    --light: #c9a87a;
+    --dark: #3a2818;
+    --frame: #1a0e08;
+    background:
+      radial-gradient(ellipse at 20% 80%, #c87a3a 0%, #6a3a18 30%, #2a1a10 60%, #14080a 100%);
+  }
+  .library .shelves {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 35%;
+    height: 70%;
+    background:
+      repeating-linear-gradient(90deg,
+        #4a2818 0 4px,
+        #6b4030 4px 12px,
+        #4a2818 12px 16px,
+        #8a5a3a 16px 22px,
+        #5a3528 22px 28px,
+        #6b4030 28px 36px,
+        #3a2018 36px 40px),
+      #2a1a10;
+    background-size: 40px 100%;
+    border-left: 4px solid #1a0e08;
+  }
+  .library .shelves::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg,
+        transparent 0 60px,
+        #1a0e08 60px 64px);
+  }
+  .library .fire {
+    position: absolute;
+    bottom: 12%;
+    left: 6%;
+    width: 60px;
+    height: 50px;
+    background:
+      radial-gradient(ellipse at 50% 100%, #ffeacc 0%, #ffaa55 30%, #ff6622 60%, transparent 80%);
+    border-radius: 50%;
+    filter: blur(2px);
+  }
+  .library .hearth {
+    position: absolute;
+    bottom: 4%;
+    left: 4%;
+    width: 80px;
+    height: 16px;
+    background: #2a1a10;
+    border-radius: 4px;
+  }
+  .library .surface {
+    background: linear-gradient(180deg, #4a2818, #2a1a10);
+  }
+
+  /* ===== 6. Mountain hut twilight ===== */
+  .hut {
+    --light: #c9b890;
+    --dark: #4a3a28;
+    --frame: #2a1f15;
+    background:
+      linear-gradient(180deg, #3a3868 0%, #5a4878 30%, #6b5878 50%, #2a3838 80%, #1a2828 100%);
+  }
+  .hut .stars {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 50% 60%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 20%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 50%, #fff, transparent),
+      radial-gradient(1px 1px at 35% 80%, #fff, transparent);
+  }
+  .hut .mountain {
+    position: absolute;
+    top: 25%;
+    left: 0;
+    right: 0;
+    height: 35%;
+  }
+  .hut .mountain::before, .hut .mountain::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-left: 90px solid transparent;
+    border-right: 90px solid transparent;
+    border-bottom: 100px solid #1a2828;
+  }
+  .hut .mountain::before { left: -30px; }
+  .hut .mountain::after { right: -30px; border-bottom-color: #2a3838; }
+  .hut .window {
+    position: absolute;
+    top: 50%;
+    left: 70%;
+    width: 28px;
+    height: 22px;
+    background: #ffd57a;
+    box-shadow: 0 0 14px #ffaa44;
+    border: 2px solid #2a1f15;
+  }
+  .hut .surface {
+    background: linear-gradient(180deg, #4a3a28, #2a1f15);
+  }
+
+  /* ===== 7. Park bench in fall ===== */
+  .park {
+    --light: #d4a574;
+    --dark: #5a3d2b;
+    --frame: #3a2618;
+    background:
+      linear-gradient(180deg, #b8c8a8 0%, #d4c08a 40%, #c87f3a 70%, #8a4a2a 100%);
+  }
+  .park .path {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background:
+      linear-gradient(180deg, #b89570 0%, #8a6a4a 100%);
+    clip-path: polygon(35% 0, 65% 0, 90% 100%, 10% 100%);
+  }
+  .park .bench {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 75%;
+    height: 12%;
+    background:
+      repeating-linear-gradient(180deg,
+        #2a1f15 0 4px,
+        transparent 4px 8px,
+        #2a1f15 8px 12px);
+    border-radius: 4px;
+  }
+  .park .surface { display: none; }
+  .park .leaf {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #c44536;
+    transform: rotate(20deg);
+    border-radius: 1px;
+  }
+  .park .leaf.l1 { top: 20%; left: 15%; }
+  .park .leaf.l2 { top: 30%; left: 80%; background: #d4a047; }
+  .park .leaf.l3 { top: 45%; left: 5%; background: #a85a3a; }
+  .park .leaf.l4 { top: 50%; left: 92%; }
+  .park .leaf.l5 { top: 62%; left: 8%; background: #d4a047; transform: rotate(-30deg); }
+  .park .leaf.l6 { bottom: 5%; left: 20%; background: #c44536; }
+  .park .leaf.l7 { bottom: 8%; left: 78%; background: #d4a047; }
+
+  /* ===== 8. Onsen veranda ===== */
+  .onsen {
+    --light: #d8c4a4;
+    --dark: #3a2818;
+    --frame: #1a0e08;
+    background:
+      linear-gradient(180deg, #4a5a6a 0%, #6b7888 30%, #8a98a8 55%, #a8b4c0 85%, #c8d0d8 100%);
+  }
+  .onsen .snow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(2px 2px at 15% 20%, #fff, transparent),
+      radial-gradient(2px 2px at 35% 40%, #fff, transparent),
+      radial-gradient(1px 1px at 60% 30%, #fff, transparent),
+      radial-gradient(2px 2px at 80% 55%, #fff, transparent),
+      radial-gradient(1px 1px at 22% 65%, #fff, transparent),
+      radial-gradient(2px 2px at 70% 75%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 35%, #fff, transparent);
+  }
+  .onsen .bamboo {
+    position: absolute;
+    top: 10%;
+    bottom: 30%;
+    width: 8px;
+    background:
+      linear-gradient(180deg,
+        #4a5a3a 0 28%,
+        #2a3a2a 28% 32%,
+        #4a5a3a 32% 60%,
+        #2a3a2a 60% 64%,
+        #4a5a3a 64% 100%);
+    border-radius: 2px;
+  }
+  .onsen .bamboo.b1 { left: 8%; }
+  .onsen .bamboo.b2 { left: 14%; top: 14%; }
+  .onsen .bamboo.b3 { right: 10%; }
+  .onsen .bamboo.b4 { right: 18%; top: 12%; }
+  .onsen .steam {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 25%;
+    background:
+      radial-gradient(ellipse at 30% 100%, rgba(255, 255, 255, 0.5) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 100%, rgba(255, 255, 255, 0.4) 0%, transparent 60%);
+    filter: blur(4px);
+  }
+  .onsen .surface {
+    background: linear-gradient(180deg, #5a4030, #2a1a10);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Chess Trainer — Theme Mockups</h1>
+  <p>Pixel-art board with PNG sprite pieces. Each scene is the surrounding vibe.</p>
+</header>
+
+<div class="grid">
+
+  <!-- 1. Back porch in October -->
+  <div class="card">
+    <div class="scene porch">
+      <div class="planks"></div>
+      <div class="railing"></div>
+      <div class="leaf l1"></div>
+      <div class="leaf l2"></div>
+      <div class="leaf l3"></div>
+      <div class="leaf l4"></div>
+      <div class="surface"></div>
+      <div class="board">
+        <div class="pieces">
+          <span style="grid-column: 2; grid-row: 1;" class="b">♞</span>
+          <span style="grid-column: 5; grid-row: 1;" class="b">♛</span>
+          <span style="grid-column: 4; grid-row: 4;" class="b">♟</span>
+          <span style="grid-column: 5; grid-row: 5;" class="w">♙</span>
+          <span style="grid-column: 3; grid-row: 7;" class="w">♘</span>
+          <span style="grid-column: 5; grid-row: 8;" class="w">♔</span>
+        </div>
+      </div>
+      <div class="mug">☕</div>
+    </div>
+    <div class="info">
+      <h3 class="name">Back porch, October</h3>
+      <p class="desc">Weathered table, mug of tea, leaves drifting at the edges.</p>
+      <div class="palette">
+        <div class="swatch" style="background: #5a3d2b" title="walnut"></div>
+        <div class="swatch" style="background: #d4a574" title="maple"></div>
+        <div class="swatch" style="background: #c87f3a" title="amber"></div>
+        <div class="swatch" style="background: #c44536" title="red leaf"></div>
+        <div class="swatch" style="background: #a8c4d0" title="soft sky"></div>
+        <div class="swatch" style="background: #f0e3c8" title="parchment"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Forest clearing -->
+  <div class="card">
+    <div class="scene forest">
+      <div class="mountain"></div>
+      <div class="tree left"></div>
+      <div class="tree left2"></div>
+      <div class="tree right"></div>
+      <div class="leaf l1"></div>
+      <div class="leaf l2"></div>
+      <div class="leaf l3"></div>
+      <div class="stump"></div>
+      <div class="board" style="bottom: 14%;">
+        <div class="pieces">
+          <span style="grid-column: 4; grid-row: 1;" class="b">♚</span>
+          <span style="grid-column: 5; grid-row: 4;" class="b">♟</span>
+          <span style="grid-column: 4; grid-row: 5;" class="w">♙</span>
+          <span style="grid-column: 4; grid-row: 8;" class="w">♔</span>
+        </div>
+      </div>
+    </div>
+    <div class="info">
+      <h3 class="name">Forest clearing</h3>
+      <p class="desc">Board on a tree stump. Mist, ferns, distant peaks. Solitary.</p>
+      <div class="palette">
+        <div class="swatch" style="background: #2d4a3e" title="pine"></div>
+        <div class="swatch" style="background: #c4cfc8" title="fog"></div>
+        <div class="swatch" style="background: #e8dcc4" title="birch"></div>
+        <div class="swatch" style="background: #a85a3a" title="rust"></div>
+        <div class="swatch" style="background: #7a9b5e" title="moss"></div>
+        <div class="swatch" style="background: #6b6580" title="dusk"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Tea house garden -->
+  <div class="card">
+    <div class="scene teahouse">
+      <div class="shoji"></div>
+      <div class="maple-branch"></div>
+      <div class="leaf l1"></div>
+      <div class="leaf l2"></div>
+      <div class="leaf l3"></div>
+      <div class="leaf l4"></div>
+      <div class="surface"></div>
+      <div class="board">
+        <div class="pieces">
+          <span style="grid-column: 4; grid-row: 1;" class="b">♚</span>
+          <span style="grid-column: 6; grid-row: 3;" class="b">♟</span>
+          <span style="grid-column: 3; grid-row: 6;" class="w">♕</span>
+          <span style="grid-column: 5; grid-row: 8;" class="w">♔</span>
+        </div>
+      </div>
+      <div class="gravel"></div>
+    </div>
+    <div class="info">
+      <h3 class="name">Tea house garden</h3>
+      <p class="desc">Shoji screens, maple shedding red leaves, raked gravel below.</p>
+      <div class="palette">
+        <div class="swatch" style="background: #2b2b2b" title="ink"></div>
+        <div class="swatch" style="background: #f4ede0" title="paper"></div>
+        <div class="swatch" style="background: #c44536" title="vermillion"></div>
+        <div class="swatch" style="background: #6b9080" title="jade"></div>
+        <div class="swatch" style="background: #d8c9a8" title="sand"></div>
+        <div class="swatch" style="background: #4a2818" title="lacquer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Cabin dock at dawn -->
+  <div class="card">
+    <div class="scene dock">
+      <div class="sun"></div>
+      <div class="water"></div>
+      <div class="planks"></div>
+      <div class="reflection"></div>
+      <div class="board" style="bottom: 8%;">
+        <div class="pieces">
+          <span style="grid-column: 3; grid-row: 1;" class="b">♝</span>
+          <span style="grid-column: 4; grid-row: 4;" class="b">♟</span>
+          <span style="grid-column: 5; grid-row: 5;" class="w">♙</span>
+          <span style="grid-column: 6; grid-row: 8;" class="w">♔</span>
+        </div>
+      </div>
+    </div>
+    <div class="info">
+      <h3 class="name">Cabin dock at dawn</h3>
+      <p class="desc">Mist on the lake, sun cresting. Stillness + water.</p>
+      <div class="palette">
+        <div class="swatch" style="background: #f4c8a0" title="dawn peach"></div>
+        <div class="swatch" style="background: #d68070" title="rose"></div>
+        <div class="swatch" style="background: #6b4d35" title="dock plank"></div>
+        <div class="swatch" style="background: #5a6878" title="lake"></div>
+        <div class="swatch" style="background: #2a1a10" title="shadow"></div>
+        <div class="swatch" style="background: #ffeacc" title="sun"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Library with fireplace -->
+  <div class="card">
+    <div class="scene library">
+      <div class="shelves"></div>
+      <div class="fire"></div>
+      <div class="hearth"></div>
+      <div class="surface"></div>
+      <div class="board">
+        <div class="pieces">
+          <span style="grid-column: 3; grid-row: 1;" class="b">♜</span>
+          <span style="grid-column: 4; grid-row: 4;" class="b">♛</span>
+          <span style="grid-column: 5; grid-row: 5;" class="w">♕</span>
+          <span style="grid-column: 6; grid-row: 8;" class="w">♔</span>
+        </div>
+      </div>
+    </div>
+    <div class="info">
+      <h3 class="name">Library with fireplace</h3>
+      <p class="desc">Bookshelf, leather chair feel, warm hearth glow. Indoor cozy.</p>
+      <div class="palette">
+        <div class="swatch" style="background: #1a0e08" title="ink"></div>
+        <div class="swatch" style="background: #4a2818" title="oak"></div>
+        <div class="swatch" style="background: #c87a3a" title="firelight"></div>
+        <div class="swatch" style="background: #ffaa55" title="ember"></div>
+        <div class="swatch" style="background: #6b4030" title="leather"></div>
+        <div class="swatch" style="background: #c9a87a" title="page"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Mountain hut twilight -->
+  <div class="card">
+    <div class="scene hut">
+      <div class="stars"></div>
+      <div class="mountain"></div>
+      <div class="window"></div>
+      <div class="surface"></div>
+      <div class="board">
+        <div class="pieces">
+          <span style="grid-column: 3; grid-row: 2;" class="b">♞</span>
+          <span style="grid-column: 5; grid-row: 4;" class="b">♟</span>
+          <span style="grid-column: 4; grid-row: 6;" class="w">♙</span>
+          <span style="grid-column: 4; grid-row: 8;" class="w">♔</span>
+        </div>
+      </div>
+    </div>
+    <div class="info">
+      <h3 class="name">Mountain hut, twilight</h3>
+      <p class="desc">Warm window glow against indigo sky. Earned rest after a hike.</p>
+      <div class="palette">
+        <div class="swatch" style="background: #3a3868" title="indigo"></div>
+        <div class="swatch" style="background: #6b5878" title="dusk"></div>
+        <div class="swatch" style="background: #1a2828" title="peak"></div>
+        <div class="swatch" style="background: #ffd57a" title="lamp"></div>
+        <div class="swatch" style="background: #4a3a28" title="hut wood"></div>
+        <div class="swatch" style="background: #c9b890" title="fir"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Park bench in fall -->
+  <div class="card">
+    <div class="scene park">
+      <div class="path"></div>
+      <div class="leaf l1"></div>
+      <div class="leaf l2"></div>
+      <div class="leaf l3"></div>
+      <div class="leaf l4"></div>
+      <div class="leaf l5"></div>
+      <div class="leaf l6"></div>
+      <div class="leaf l7"></div>
+      <div class="bench"></div>
+      <div class="board" style="bottom: 22%;">
+        <div class="pieces">
+          <span style="grid-column: 3; grid-row: 1;" class="b">♚</span>
+          <span style="grid-column: 4; grid-row: 5;" class="w">♙</span>
+          <span style="grid-column: 5; grid-row: 8;" class="w">♔</span>
+        </div>
+      </div>
+    </div>
+    <div class="info">
+      <h3 class="name">Park bench in fall</h3>
+      <p class="desc">Wrought-iron bench, leaves swirling, path receding behind.</p>
+      <div class="palette">
+        <div class="swatch" style="background: #b8c8a8" title="sky"></div>
+        <div class="swatch" style="background: #c87f3a" title="canopy"></div>
+        <div class="swatch" style="background: #c44536" title="red leaf"></div>
+        <div class="swatch" style="background: #d4a047" title="gold leaf"></div>
+        <div class="swatch" style="background: #2a1f15" title="iron"></div>
+        <div class="swatch" style="background: #8a6a4a" title="path"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Onsen veranda -->
+  <div class="card">
+    <div class="scene onsen">
+      <div class="bamboo b1"></div>
+      <div class="bamboo b2"></div>
+      <div class="bamboo b3"></div>
+      <div class="bamboo b4"></div>
+      <div class="snow"></div>
+      <div class="surface"></div>
+      <div class="board">
+        <div class="pieces">
+          <span style="grid-column: 4; grid-row: 1;" class="b">♚</span>
+          <span style="grid-column: 4; grid-row: 4;" class="b">♟</span>
+          <span style="grid-column: 5; grid-row: 5;" class="w">♕</span>
+          <span style="grid-column: 5; grid-row: 8;" class="w">♔</span>
+        </div>
+      </div>
+      <div class="steam"></div>
+    </div>
+    <div class="info">
+      <h3 class="name">Onsen veranda, snow falling</h3>
+      <p class="desc">Bamboo, soft snow, steam rising from a bath below. Winter zen.</p>
+      <div class="palette">
+        <div class="swatch" style="background: #4a5a6a" title="winter sky"></div>
+        <div class="swatch" style="background: #4a5a3a" title="bamboo"></div>
+        <div class="swatch" style="background: #d8c4a4" title="board light"></div>
+        <div class="swatch" style="background: #3a2818" title="board dark"></div>
+        <div class="swatch" style="background: #c8d0d8" title="snow"></div>
+        <div class="swatch" style="background: #ffffff" title="steam"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

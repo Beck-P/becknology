@@ -17,6 +17,8 @@
     { "source": "/breakout", "destination": "/apps/breakout/index.html" },
     { "source": "/space-invaders", "destination": "/apps/space-invaders/index.html" },
     { "source": "/asteroids", "destination": "/apps/asteroids/index.html" },
-    { "source": "/missile-command", "destination": "/apps/missile-command/index.html" }
+    { "source": "/missile-command", "destination": "/apps/missile-command/index.html" },
+    { "source": "/chess", "destination": "/apps/chess/index.html" },
+    { "source": "/chess/(.*)", "destination": "/apps/chess/$1" }
   ]
 }

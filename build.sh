@@ -12,7 +12,7 @@ mkdir -p public/apps
 cp favicon.svg public/
 
 # Copy static apps
-for dir in hub aether-seas typist genart cipher-room bridge placeholder-app helicopter breakout space-invaders asteroids missile-command; do
+for dir in hub aether-seas typist genart cipher-room bridge placeholder-app helicopter breakout space-invaders asteroids missile-command chess; do
   if [ -d "apps/$dir" ]; then
     cp -r "apps/$dir" "public/apps/$dir"
   fi

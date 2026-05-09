@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chess Opening Trainer · Becknology</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/assets/chessboard.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/assets/extensions/markers/markers.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+  <div class="scene"></div>
+  <div class="hearth-glow"></div>
+  <div class="bookshelf"></div>
+  <div class="ember ember-1"></div>
+  <div class="ember ember-2"></div>
+  <div class="ember ember-3"></div>
+
+  <main class="library">
+    <header class="header">
+      <a href="/" class="back-link">← back to hub</a>
+      <h1 class="title">Chess Opening Trainer</h1>
+      <p class="subtitle">Practice your prep by the fire.</p>
+    </header>
+
+    <div class="layout">
+
+      <aside class="opening-picker">
+        <h2>Openings</h2>
+        <div class="opening-list" id="opening-list"></div>
+      </aside>
+
+      <section class="board-area">
+        <div class="board-frame">
+          <div id="board"></div>
+        </div>
+        <div class="status" id="status">Pick an opening to begin.</div>
+      </section>
+
+      <aside class="line-panel">
+        <h2 class="opening-title" id="opening-title">No opening selected</h2>
+        <p class="opening-desc" id="opening-desc">Choose a line from the shelf to your left and play through the moves on the board.</p>
+        <div class="move-list" id="move-list"></div>
+        <div class="controls">
+          <button id="hint-btn" disabled>Hint</button>
+          <button id="reset-btn" disabled>Reset</button>
+        </div>
+        <div class="stats" id="stats">Mastered <span class="stat-num">0</span> / 0</div>
+      </aside>
+
+    </div>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
