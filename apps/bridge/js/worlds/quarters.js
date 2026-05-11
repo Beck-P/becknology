@@ -817,8 +817,9 @@
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
 
     var owned = ownedDecor.plant;
-    if (owned === 'houseplant') return drawOwnedHouseplant(ctx, x, y, ts);
-    if (owned === 'bonsai')     return drawOwnedBonsai(ctx, x, y, ts);
+    if (owned === 'houseplant')  return drawOwnedHouseplant(ctx, x, y, ts);
+    if (owned === 'bonsai')      return drawOwnedBonsai(ctx, x, y, ts);
+    if (owned === 'neon_cactus') return drawOwnedNeonCactus(ctx, x, y, ts, time);
 
     // Pot outline (truncated cone)
     ctx.fillStyle = PAL.ghost;
@@ -869,9 +870,8 @@
     // Wall behind (this slot replaces a wall tile)
     drawWall(ctx, x, y, ts, time, col, row);
 
-    if (ownedDecor.poster === 'holo_poster') {
-      return drawOwnedHoloPoster(ctx, x, y, ts, time);
-    }
+    if (ownedDecor.poster === 'holo_poster')     return drawOwnedHoloPoster(ctx, x, y, ts, time);
+    if (ownedDecor.poster === 'arcade_marquee')  return drawOwnedArcadeMarquee(ctx, x, y, ts, time);
 
     // Poster outline (rectangle)
     ctx.fillStyle = PAL.ghost;
@@ -892,9 +892,8 @@
     var u = ts / 16;
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
 
-    if (ownedDecor.tank === 'nebula_tank') {
-      return drawOwnedNebulaTank(ctx, x, y, ts, time);
-    }
+    if (ownedDecor.tank === 'nebula_tank') return drawOwnedNebulaTank(ctx, x, y, ts, time);
+    if (ownedDecor.tank === 'retro_crt')   return drawOwnedRetroCRT(ctx, x, y, ts, time);
 
     // Stand base
     ctx.fillStyle = PAL.ghost;
@@ -944,6 +943,7 @@
     if (owned === 'glass_float')   return drawOwnedGlassFloat(ctx, x, y, ts, time);
     if (owned === 'kelp_canister') return drawOwnedKelpCanister(ctx, x, y, ts, time);
     if (owned === 'brass_compass') return drawOwnedBrassCompass(ctx, x, y, ts, time);
+    if (owned === 'cosmic_soda')   return drawOwnedCosmicSoda(ctx, x, y, ts, time);
 
     // Empty — small ghost silhouette of a knick-knack
     ctx.fillStyle = PAL.ghost;
@@ -1192,6 +1192,163 @@
     ctx.globalCompositeOperation = 'screen';
     var halo = ctx.createRadialGradient(cx, topY + Math.floor(3 * u), 0, cx, topY + Math.floor(3 * u), 5 * u);
     halo.addColorStop(0, 'rgba(120, 240, 184, 0.18)');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - 2 * u, y - u, ts + 4 * u, ts);
+    ctx.restore();
+  }
+
+  // ---- ArcadiaMart item renderers ----
+
+  function drawOwnedNeonCactus(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var pulse = 0.8 + Math.sin(time / 600) * 0.2;
+    // Black pot
+    ctx.fillStyle = '#0a0418';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(11 * u), Math.floor(6 * u), Math.floor(4 * u));
+    ctx.fillStyle = '#40c8d8';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(11 * u), Math.floor(6 * u), Math.max(1, Math.floor(u * 0.5)));
+    ctx.fillStyle = '#7080e8';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(13 * u), Math.floor(8 * u), Math.max(1, Math.floor(u * 0.4)));
+    // Cactus body — neon pink
+    ctx.fillStyle = '#e870c0';
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(4 * u), Math.floor(2 * u), Math.floor(7 * u));
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(6 * u), Math.floor(2 * u), Math.floor(2 * u));
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(7 * u), Math.max(1, u), Math.floor(3 * u));
+    ctx.fillRect(x + Math.floor(9 * u), y + Math.floor(7 * u), Math.floor(2 * u), Math.floor(2 * u));
+    ctx.fillRect(x + Math.floor(10 * u), y + Math.floor(8 * u), Math.max(1, u), Math.floor(3 * u));
+    // Inner glow line
+    ctx.fillStyle = 'rgba(255, 200, 240, ' + pulse.toFixed(2) + ')';
+    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(4 * u), Math.max(1, Math.floor(u * 0.6)), Math.floor(7 * u));
+    // Halo glow
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var halo = ctx.createRadialGradient(
+      x + ts / 2, y + Math.floor(7 * u), 0,
+      x + ts / 2, y + Math.floor(7 * u), 7 * u
+    );
+    halo.addColorStop(0, 'rgba(232, 112, 192, ' + (0.4 * pulse).toFixed(2) + ')');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - 3 * u, y - 3 * u, ts + 6 * u, ts);
+    ctx.restore();
+  }
+
+  function drawOwnedArcadeMarquee(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    var pulse = 0.7 + Math.sin(time / 250) * 0.3;
+    // Wall behind
+    drawWall(ctx, x, y, ts, time, 0, 0);
+    // Marquee frame — gold bulbs around dark screen
+    ctx.fillStyle = '#0a0a16';
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(3 * u), Math.floor(12 * u), Math.floor(10 * u));
+    // Top + bottom bulb strips
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(3 * u), Math.floor(12 * u), Math.max(1, u));
+    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(12 * u), Math.floor(12 * u), Math.max(1, u));
+    // Pulsing bulbs (top and bottom strips)
+    for (var b = 0; b < 6; b++) {
+      var bulbOn = (Math.floor(time / 180) + b) % 2 === 0;
+      ctx.fillStyle = bulbOn ? '#ffe080' : '#806020';
+      ctx.fillRect(x + Math.floor((3 + b * 2) * u), y + Math.floor(3 * u) + Math.floor(u * 0.2), Math.max(1, Math.floor(u * 0.6)), Math.max(1, Math.floor(u * 0.6)));
+      ctx.fillRect(x + Math.floor((3 + b * 2) * u), y + Math.floor(12 * u) + Math.floor(u * 0.2), Math.max(1, Math.floor(u * 0.6)), Math.max(1, Math.floor(u * 0.6)));
+    }
+    // Screen — gradient with shifting neon text
+    var grad = ctx.createLinearGradient(0, y + 4 * u, 0, y + 12 * u);
+    grad.addColorStop(0, '#3a1840');
+    grad.addColorStop(1, '#0a0418');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(5 * u), Math.floor(10 * u), Math.floor(6 * u));
+    // "PLAY" pixel text — animated neon
+    ctx.fillStyle = 'rgba(232, 112, 192, ' + pulse.toFixed(2) + ')';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(6 * u), Math.max(1, u), Math.floor(3 * u));
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(6 * u), Math.floor(2 * u), Math.max(1, u));
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(7 * u), Math.max(1, u), Math.max(1, u));
+    ctx.fillStyle = 'rgba(92, 200, 208, ' + pulse.toFixed(2) + ')';
+    ctx.fillRect(x + Math.floor(8 * u), y + Math.floor(6 * u), Math.max(1, u), Math.floor(3 * u));
+    ctx.fillRect(x + Math.floor(8 * u), y + Math.floor(6 * u), Math.floor(2 * u), Math.max(1, u));
+    ctx.fillStyle = 'rgba(255, 224, 128, ' + pulse.toFixed(2) + ')';
+    ctx.fillRect(x + Math.floor(11 * u), y + Math.floor(6 * u), Math.max(1, u), Math.floor(3 * u));
+    ctx.fillRect(x + Math.floor(11 * u), y + Math.floor(6 * u), Math.floor(2 * u), Math.max(1, u));
+    // Scanline sweep
+    var scanRow = Math.floor(time / 100) % 6;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor((5 + scanRow) * u), Math.floor(10 * u), Math.max(1, Math.floor(u * 0.4)));
+  }
+
+  function drawOwnedCosmicSoda(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    // Item sits on the shelf surface
+    var cx = x + ts / 2;
+    var topY = y + Math.floor(2 * u);
+    // Can body
+    var grad = ctx.createLinearGradient(0, topY, 0, topY + Math.floor(5 * u));
+    grad.addColorStop(0, '#e870c0');
+    grad.addColorStop(0.5, '#7080e8');
+    grad.addColorStop(1, '#40c8d8');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - Math.floor(1.5 * u), topY + Math.max(1, Math.floor(u * 0.5)), Math.floor(3 * u), Math.floor(5 * u));
+    // Top rim
+    ctx.fillStyle = '#c0c0c0';
+    ctx.fillRect(cx - Math.floor(1.5 * u), topY, Math.floor(3 * u), Math.max(1, Math.floor(u * 0.5)));
+    ctx.fillStyle = '#888';
+    ctx.fillRect(cx - Math.floor(1.5 * u), topY + Math.max(1, Math.floor(u * 0.4)), Math.floor(3 * u), Math.max(1, Math.floor(u * 0.4)));
+    // Label band
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(cx - Math.floor(1.5 * u), topY + Math.floor(2 * u), Math.floor(3 * u), Math.floor(1.5 * u));
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(cx - Math.floor(1.2 * u), topY + Math.floor(2.5 * u), Math.floor(2.4 * u), Math.max(1, Math.floor(u * 0.5)));
+    // Bubble sparkles (animated)
+    var bubble = (Math.floor(time / 150) % 3);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx - u, topY + Math.floor((1 + bubble) * u), Math.max(1, Math.floor(u * 0.6)), Math.max(1, Math.floor(u * 0.6)));
+    ctx.fillRect(cx + Math.floor(u * 0.5), topY + Math.floor(((bubble + 1) % 3 + 1) * u), Math.max(1, Math.floor(u * 0.6)), Math.max(1, Math.floor(u * 0.6)));
+    // Highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.fillRect(cx - Math.floor(1.5 * u), topY + Math.max(1, Math.floor(u * 0.5)), Math.max(1, Math.floor(u * 0.6)), Math.floor(5 * u));
+  }
+
+  function drawOwnedRetroCRT(ctx, x, y, ts, time) {
+    var u = ts / 16;
+    // Wood stand
+    ctx.fillStyle = '#3a2820';
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(13 * u), Math.floor(10 * u), Math.floor(2 * u));
+    ctx.fillStyle = PAL.brass;
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(13 * u), Math.floor(10 * u), Math.max(1, Math.floor(u * 0.4)));
+    // CRT body — beige
+    ctx.fillStyle = '#a09080';
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(2 * u), Math.floor(10 * u), Math.floor(11 * u));
+    ctx.fillStyle = '#c8b8a0';
+    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(2 * u), Math.floor(10 * u), Math.max(1, u));
+    // Screen bezel
+    ctx.fillStyle = '#1a1410';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(3 * u), Math.floor(8 * u), Math.floor(7 * u));
+    // Glitchy static screen
+    var grad = ctx.createLinearGradient(0, y + 4 * u, 0, y + 9 * u);
+    grad.addColorStop(0, '#7080e8');
+    grad.addColorStop(0.5, '#40c8d8');
+    grad.addColorStop(1, '#5cc8d0');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor(4 * u), Math.floor(6 * u), Math.floor(5 * u));
+    // Animated glitch bars
+    var barOff = (Math.floor(time / 90) % 5);
+    ctx.fillStyle = 'rgba(255, 80, 180, 0.7)';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor((4 + barOff) * u), Math.floor(6 * u), Math.max(1, Math.floor(u * 0.5)));
+    var barOff2 = ((barOff + 2) % 5);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillRect(x + Math.floor(5 * u), y + Math.floor((4 + barOff2) * u), Math.floor(6 * u), Math.max(1, Math.floor(u * 0.3)));
+    // Knobs + speaker grille
+    ctx.fillStyle = '#3a2820';
+    ctx.fillRect(x + Math.floor(4 * u), y + Math.floor(11 * u), Math.max(1, Math.floor(u * 0.8)), Math.max(1, Math.floor(u * 0.8)));
+    ctx.fillRect(x + Math.floor(6 * u), y + Math.floor(11 * u), Math.max(1, Math.floor(u * 0.8)), Math.max(1, Math.floor(u * 0.8)));
+    for (var g = 0; g < 4; g++) {
+      ctx.fillRect(x + Math.floor((9 + g * 0.6) * u), y + Math.floor(11 * u), Math.max(1, Math.floor(u * 0.3)), Math.max(1, u));
+    }
+    // Subtle glow
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var halo = ctx.createRadialGradient(x + ts / 2, y + Math.floor(6 * u), 0, x + ts / 2, y + Math.floor(6 * u), 6 * u);
+    halo.addColorStop(0, 'rgba(112, 128, 232, 0.20)');
     halo.addColorStop(1, 'transparent');
     ctx.fillStyle = halo;
     ctx.fillRect(x - 2 * u, y - u, ts + 4 * u, ts);

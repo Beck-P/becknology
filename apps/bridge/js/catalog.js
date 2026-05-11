@@ -33,7 +33,12 @@ var BridgeCatalog = (function () {
     driftwood_lamp: { slot: 'lamp',  name: 'Driftwood Lamp', price: 120, preview: previewDriftwoodLamp },
     glass_float:    { slot: 'shelf', name: 'Glass Float',    price: 180, preview: previewGlassFloat },
     kelp_canister:  { slot: 'shelf', name: 'Kelp Canister',  price: 250, preview: previewKelpCanister },
-    brass_compass:  { slot: 'shelf', name: 'Brass Compass',  price: 400, preview: previewBrassCompass }
+    brass_compass:  { slot: 'shelf', name: 'Brass Compass',  price: 400, preview: previewBrassCompass },
+    // ArcadiaMart — cyberpunk / arcade vibe
+    cosmic_soda:    { slot: 'shelf', name: 'Cosmic Soda',    price: 90,  preview: previewCosmicSoda },
+    neon_cactus:    { slot: 'plant', name: 'Neon Cactus',    price: 150, preview: previewNeonCactus },
+    arcade_marquee: { slot: 'poster',name: 'Arcade Marquee', price: 220, preview: previewArcadeMarquee },
+    retro_crt:      { slot: 'tank',  name: 'Retro CRT',      price: 450, preview: previewRetroCRT }
   };
 
   var SHOPS = {
@@ -46,6 +51,11 @@ var BridgeCatalog = (function () {
       title: "DOCKSIDE MERCHANT",
       subtitle: 'CURIOS FROM THE TIDE',
       items: ['driftwood_lamp', 'glass_float', 'kelp_canister', 'brass_compass']
+    },
+    arcadia_mart: {
+      title: 'ARCADIAMART CASHIER',
+      subtitle: 'NEON & NOSTALGIA',
+      items: ['cosmic_soda', 'neon_cactus', 'arcade_marquee', 'retro_crt']
     }
   };
 
@@ -523,6 +533,109 @@ var BridgeCatalog = (function () {
     ctx.strokeStyle = 'rgba(160,200,200,0.5)'; ctx.lineWidth = 1;
     ctx.strokeRect(4*u + 0.5, 3*u + 0.5, 8*u - 1, 10*u - 1);
   }
+  // ---- ArcadiaMart item previews ----
+  function previewCosmicSoda(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    // Can body — magenta-to-cyan gradient
+    var grad = ctx.createLinearGradient(0, 3*u, 0, 14*u);
+    grad.addColorStop(0, '#e870c0'); grad.addColorStop(0.5, '#7080e8'); grad.addColorStop(1, '#40c8d8');
+    ctx.fillStyle = grad;
+    ctx.fillRect(5*u, 3*u, 6*u, 11*u);
+    // Top rim
+    ctx.fillStyle = '#c0c0c0'; ctx.fillRect(5*u, 2*u, 6*u, u);
+    ctx.fillStyle = '#888'; ctx.fillRect(5*u, 3*u, 6*u, Math.max(1, u*0.4));
+    // Tab
+    ctx.fillStyle = '#888'; ctx.fillRect(7*u, 2*u, 2*u, Math.max(1, u*0.5));
+    // Pull tab hole
+    ctx.fillStyle = '#222'; ctx.fillRect(7*u, 3*u, 2*u, Math.max(1, u*0.4));
+    // Label band
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(5*u, 7*u, 6*u, 3*u);
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(6*u, 8*u, 4*u, Math.max(1, u*0.7));
+    // Bubble sparkles
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(6*u, 5*u, u, u); ctx.fillRect(9*u, 6*u, u, u); ctx.fillRect(7*u, 12*u, u, u);
+    // Highlight stripe
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(5*u, 3*u, Math.max(1, u), 11*u);
+  }
+
+  function previewNeonCactus(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    // Black pot with cyan accent
+    ctx.fillStyle = '#0a0418'; ctx.fillRect(5*u, 11*u, 6*u, 4*u);
+    ctx.fillStyle = '#40c8d8'; ctx.fillRect(5*u, 11*u, 6*u, Math.max(1, u*0.5));
+    ctx.fillStyle = '#7080e8'; ctx.fillRect(4*u, 13*u, 8*u, Math.max(1, u*0.4));
+    // Cactus body (neon pink)
+    ctx.fillStyle = '#e870c0';
+    ctx.fillRect(7*u, 4*u, 2*u, 7*u);
+    // Side arms
+    ctx.fillRect(5*u, 6*u, 2*u, 2*u); ctx.fillRect(5*u, 7*u, u, 3*u);
+    ctx.fillRect(9*u, 7*u, 2*u, 2*u); ctx.fillRect(10*u, 8*u, u, 3*u);
+    // Inner glow line
+    ctx.fillStyle = '#ffb0e0';
+    ctx.fillRect(7*u, 4*u, Math.max(1, u*0.6), 7*u);
+    // Halo glow
+    ctx.fillStyle = 'rgba(232,112,192,0.35)';
+    ctx.fillRect(3*u, 3*u, 10*u, 8*u);
+  }
+
+  function previewArcadeMarquee(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    // Black frame
+    ctx.fillStyle = '#0a0a16'; ctx.fillRect(2*u, 3*u, 12*u, 10*u);
+    // Marquee bezel — gold bulbs
+    ctx.fillStyle = '#a08040';
+    ctx.fillRect(2*u, 3*u, 12*u, u);
+    ctx.fillRect(2*u, 12*u, 12*u, u);
+    // Bulb dots
+    ctx.fillStyle = '#ffe080';
+    for (var b = 0; b < 6; b++) {
+      ctx.fillRect((3 + b*2)*u, 3*u + Math.max(0, u*0.2), Math.max(1, u*0.6), Math.max(1, u*0.6));
+      ctx.fillRect((3 + b*2)*u, 12*u + Math.max(0, u*0.2), Math.max(1, u*0.6), Math.max(1, u*0.6));
+    }
+    // Screen — radial gradient with text-like blocks
+    var grad = ctx.createLinearGradient(0, 4*u, 0, 12*u);
+    grad.addColorStop(0, '#3a1840'); grad.addColorStop(1, '#0a0418');
+    ctx.fillStyle = grad; ctx.fillRect(3*u, 5*u, 10*u, 6*u);
+    // Pixel "PLAY" text approximation (neon)
+    ctx.fillStyle = '#e870c0';
+    ctx.fillRect(4*u, 6*u, u, 3*u); ctx.fillRect(5*u, 6*u, 2*u, u); ctx.fillRect(6*u, 7*u, u, u);
+    ctx.fillStyle = '#5cc8d0';
+    ctx.fillRect(8*u, 6*u, u, 3*u); ctx.fillRect(8*u, 6*u, 2*u, u); ctx.fillRect(9*u, 7*u, u, u);
+    ctx.fillStyle = '#ffe080';
+    ctx.fillRect(11*u, 6*u, u, 3*u); ctx.fillRect(11*u, 6*u, 2*u, u);
+    // Scanline
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(3*u, 9*u, 10*u, Math.max(1, u*0.4));
+  }
+
+  function previewRetroCRT(ctx) {
+    var w = ctx.canvas.width, u = w / 16;
+    // Wood-grain stand
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(2*u, 13*u, 12*u, 2*u);
+    ctx.fillStyle = '#7a4e22'; ctx.fillRect(2*u, 13*u, 12*u, u);
+    // CRT body — beige cabinet
+    ctx.fillStyle = '#a09080'; ctx.fillRect(3*u, 3*u, 10*u, 10*u);
+    ctx.fillStyle = '#c8b8a0'; ctx.fillRect(3*u, 3*u, 10*u, u);
+    // Screen bezel (dark)
+    ctx.fillStyle = '#1a1410'; ctx.fillRect(4*u, 4*u, 8*u, 7*u);
+    // Glitchy static screen
+    var grad = ctx.createLinearGradient(0, 5*u, 0, 10*u);
+    grad.addColorStop(0, '#7080e8'); grad.addColorStop(0.5, '#40c8d8'); grad.addColorStop(1, '#5cc8d0');
+    ctx.fillStyle = grad; ctx.fillRect(5*u, 5*u, 6*u, 5*u);
+    // Glitch bars
+    ctx.fillStyle = 'rgba(255,80,180,0.7)'; ctx.fillRect(5*u, 6*u, 6*u, Math.max(1, u*0.6));
+    ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(5*u, 8*u, 6*u, Math.max(1, u*0.4));
+    // Knobs
+    ctx.fillStyle = '#3a2820';
+    ctx.fillRect(4*u, 11*u, Math.max(1, u*0.8), Math.max(1, u*0.8));
+    ctx.fillRect(6*u, 11*u, Math.max(1, u*0.8), Math.max(1, u*0.8));
+    // Speaker grille
+    ctx.fillStyle = '#3a2820';
+    for (var g = 0; g < 4; g++) ctx.fillRect((9 + g*0.5)*u, 11*u, Math.max(1, u*0.3), Math.max(1, u));
+  }
+
   function previewBrassCompass(ctx) {
     var w = ctx.canvas.width, u = w / 16;
     // Wooden display stand

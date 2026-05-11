@@ -483,10 +483,10 @@
     {
       "x": 9,
       "y": 8,
-      "type": "dialog",
+      "type": "shop",
+      "shop": "arcadia_mart",
       "label": "CASHIER",
-      "prompt": "PRESS E TO TALK",
-      "dialog": "\"WELCOME TO ARCADIAMART.\\n\\nNAH, WE DON'T VALIDATE\\nPARKING. NOBODY DRIVES\\nANYMORE.\""
+      "prompt": "BROWSE WARES"
     },
     {
       "x": 1,
