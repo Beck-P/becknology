@@ -2939,7 +2939,7 @@ export default function ChoreChaosApp() {
       roll_dice: 1100,
       reroll_dice: 1500,
       draw: 1500,
-      drop_plinko: 1100,
+      drop_plinko: 400,
       pass_bomb: 700,
       shield: 800,
       // Decision-only / multi-turn — fast & hidden
@@ -4010,7 +4010,10 @@ export default function ChoreChaosApp() {
       currentPlayer.chips = [score + ' pts', 'Slot #' + (finalSlot + 1)];
       currentPlayer.startCol = col;
 
-      advancePlayback();
+      // Let the ball finish its descent (12 rows * 280ms + landing pause)
+      // before advancing — otherwise the next step's effect interrupts the
+      // animation mid-fall.
+      setTimeout(() => advancePlayback(), 3500);
     };
 
   }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
@@ -4018,6 +4021,70 @@ export default function ChoreChaosApp() {
   // Interactive Horse Race — lane pick + whip
   useEffect(() => {
     if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'horse-race') return;
+
+    // Wager mode: skip the lane-pick draft and the realtime whip phase.
+    // Auto-assign lanes once, then leave pendingAction null so the player
+    // drives the race round-by-round with the standard "Start/Next" button.
+    if (wagerMode) {
+      if (result.draftPhase) {
+        const pickOrder = result.lanePickOrder || result.players.map(p => p.name);
+        const lanes = result.lanes || [];
+        const shuffledLanes = [...lanes].sort(() => Math.random() - 0.5);
+        const playerLanes = {};
+        pickOrder.forEach((name, i) => { playerLanes[name] = shuffledLanes[i] || lanes[i]; });
+        const raceResult = { ...result, draftPhase: false, playerLanes };
+        raceResult.runId = result.runId;
+        raceResult.taskLabel = result.taskLabel;
+        setResult(raceResult);
+        setPlaybackStep(0);
+        setPendingAction(null);
+        currentActionHandler.current = null;
+        setHorseWhips(Object.fromEntries(pickOrder.map(n => [n, 0])));
+        broadcastEvent({ type: 'draft_complete' });
+        broadcastEvent({ type: 'game_start', result: raceResult });
+        return;
+      }
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      // When the race finishes, resolve the winner from final positions and
+      // setResult so the wager payout effect re-fires on the new reference.
+      if (playbackDone && !result.selectedName && !result.isTie) {
+        const selGoal = result.selectionGoal;
+        const choosingWinner = selGoal === 'winner';
+        const finalPositions = result.turns.length > 0 ? result.turns[result.turns.length - 1].positions : {};
+        const resolvedPlayers = result.players.map(p => ({ ...p, progress: finalPositions[p.name] ?? p.progress }));
+        const resolution = resolveByGoal(resolvedPlayers, (p) => [p.progress], selGoal);
+        const tiedNames = resolution.tied.map(p => p.name);
+        const hasTie = tiedNames.length > 1;
+        const selectedName = hasTie ? null : resolution.picked.name;
+        const headline = hasTie ? "IT'S A TIE" : pickRandomMessage(
+          selGoal === 'winner' ? WIN_MESSAGES : LOSE_MESSAGES,
+          selectedName,
+          selGoal === 'winner' ? 'win' : 'lose',
+        );
+        const players = resolvedPlayers.map(p => {
+          const isTied = hasTie && tiedNames.includes(p.name);
+          return {
+            ...p,
+            headline: p.progress + ' spaces moved',
+            subline: hasTie
+              ? (isTied ? 'TIED' : 'Not selected')
+              : (p.name === selectedName ? 'Finished ' + (choosingWinner ? 'in front' : 'at the back') : 'Not selected'),
+            selected: hasTie ? false : p.name === selectedName,
+            tied: isTied,
+          };
+        });
+        setResult({
+          ...result,
+          isTie: hasTie,
+          tiedNames: hasTie ? tiedNames : undefined,
+          selectedName,
+          headline,
+          players,
+        });
+      }
+      return;
+    }
 
     // Phase 1: Lane pick draft
     if (result.draftPhase) {
@@ -4176,7 +4243,7 @@ export default function ChoreChaosApp() {
         whipsRemaining: horseWhips[actor] - 1,
       });
     };
-  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase, wagerMode]);
 
   // Interactive Space Invaders — shield reaction
   useEffect(() => {
