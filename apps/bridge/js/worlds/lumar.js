@@ -527,6 +527,11 @@
   loadBuildingSprite('tavern', '/bridge/assets/buildings/tavern.png', 80);
   loadBuildingSprite('inn', '/bridge/assets/buildings/inn.png', 100);
   loadBuildingSprite('lighthouse', '/bridge/assets/buildings/lighthouse.png', 60);
+  loadBuildingSprite('smithy', '/bridge/assets/buildings/smithy.png', 64);
+  loadBuildingSprite('apothecary', '/bridge/assets/buildings/apothecary.png', 64);
+  loadBuildingSprite('bakery', '/bridge/assets/buildings/bakery.png', 64);
+  loadBuildingSprite('fishmonger-stall', '/bridge/assets/buildings/fishmonger-stall.png', 64);
+  loadBuildingSprite('ship-dock', '/bridge/assets/buildings/ship-dock.png', 140);
 
   // tilesW/tilesH = footprint in tiles. anchorOffsetX = which column within
   // the sprite the anchor tile sits at, measured from the LEFT edge (0-based).
@@ -603,6 +608,191 @@
     var chimneyX = destX + areaW * 0.74;
     var chimneyY = destY + areaH * 0.10;
     drawChimneySmoke(ctx, chimneyX, chimneyY, ts, time, col + row + 5);
+  }
+
+  // Smithy PNG — 3 wide × 4 tall. Adds a flickering hot-orange forge glow
+  // through the open front + chimney smoke + warm ground-light pool.
+  function drawSmithyPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'smithy', 3, 4, 1);
+    var areaW = ts * 3, areaH = ts * 4;
+    var destX = x - 1 * ts;
+    var destY = y + ts - areaH;
+    // Forge flicker — the open front is centred low on the facade.
+    var t = time || 0;
+    var pulse = 0.7 + Math.sin(t / 220 + (col || 0)) * 0.15 + Math.sin(t / 90) * 0.1;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = pulse * 0.55;
+    var forgeCx = destX + areaW * 0.5;
+    var forgeCy = destY + areaH * 0.65;
+    var forge = ctx.createRadialGradient(forgeCx, forgeCy, 0, forgeCx, forgeCy, areaW * 0.7);
+    forge.addColorStop(0, 'rgba(255, 160, 80, 0.9)');
+    forge.addColorStop(0.5, 'rgba(232, 100, 40, 0.45)');
+    forge.addColorStop(1, 'transparent');
+    ctx.fillStyle = forge;
+    ctx.fillRect(destX, destY + areaH * 0.35, areaW, areaH * 0.6);
+    // Warm pool spilling onto the cobble in front
+    ctx.globalAlpha = pulse * 0.4;
+    var pool = ctx.createRadialGradient(forgeCx, destY + areaH, 0, forgeCx, destY + areaH, areaW * 0.9);
+    pool.addColorStop(0, 'rgba(255, 140, 60, 0.7)');
+    pool.addColorStop(1, 'transparent');
+    ctx.fillStyle = pool;
+    ctx.fillRect(destX - areaW * 0.3, destY + areaH * 0.85, areaW * 1.6, areaH * 0.4);
+    ctx.restore();
+    // Lantern flicker beside the entrance — small warm dot, left side
+    var lanternCx = destX + areaW * 0.12;
+    var lanternCy = destY + areaH * 0.62;
+    var lp = 0.7 + Math.sin(t / 350 + (col || 0) * 1.3) * 0.25;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = lp * 0.6;
+    var lan = ctx.createRadialGradient(lanternCx, lanternCy, 0, lanternCx, lanternCy, ts * 0.6);
+    lan.addColorStop(0, 'rgba(255, 220, 140, 0.95)');
+    lan.addColorStop(1, 'transparent');
+    ctx.fillStyle = lan;
+    ctx.fillRect(lanternCx - ts, lanternCy - ts, ts * 2, ts * 2);
+    ctx.restore();
+    // Chimney smoke — upper-right corner
+    var chimneyX = destX + areaW * 0.82;
+    var chimneyY = destY + areaH * 0.06;
+    drawChimneySmoke(ctx, chimneyX, chimneyY, ts, time, col + row + 17);
+  }
+
+  // Apothecary PNG — 3 wide × 4 tall. Jar-window glow cycles between warm
+  // yellow / muted cyan / muted magenta + faint green-tinted chimney smoke
+  // + lantern flicker.
+  function drawApothecaryPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'apothecary', 3, 4, 1);
+    var areaW = ts * 3, areaH = ts * 4;
+    var destX = x - 1 * ts;
+    var destY = y + ts - areaH;
+    var t = time || 0;
+    // Window glow cycles colour (jars catching candlelight)
+    var phase = (t / 4200 + (col || 0) * 0.3) % 3;
+    var col1 = phase < 1 ? 'rgba(255, 220, 140, 1)' : (phase < 2 ? 'rgba(160, 230, 240, 1)' : 'rgba(232, 140, 220, 1)');
+    drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row + 31, col1);
+    // Lantern flicker beside the door
+    var lanternCx = destX + areaW * 0.78;
+    var lanternCy = destY + areaH * 0.78;
+    var lp = 0.75 + Math.sin(t / 380 + (col || 0) * 1.5) * 0.2;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = lp * 0.55;
+    var lan = ctx.createRadialGradient(lanternCx, lanternCy, 0, lanternCx, lanternCy, ts * 0.7);
+    lan.addColorStop(0, 'rgba(255, 220, 140, 0.95)');
+    lan.addColorStop(1, 'transparent');
+    ctx.fillStyle = lan;
+    ctx.fillRect(lanternCx - ts, lanternCy - ts, ts * 2, ts * 2);
+    ctx.restore();
+    // Green-tinted chimney smoke (overlay the standard smoke with a green tint)
+    var chimneyX = destX + areaW * 0.78;
+    var chimneyY = destY + areaH * 0.05;
+    drawChimneySmoke(ctx, chimneyX, chimneyY, ts, time, col + row + 47);
+    // Subtle violet ground pool — the witchy halo
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.18 + Math.sin(t / 900) * 0.05;
+    var halo = ctx.createRadialGradient(destX + areaW * 0.5, destY + areaH, 0, destX + areaW * 0.5, destY + areaH, areaW * 0.8);
+    halo.addColorStop(0, 'rgba(180, 140, 220, 0.6)');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(destX - areaW * 0.2, destY + areaH * 0.8, areaW * 1.4, areaH * 0.4);
+    ctx.restore();
+  }
+
+  // Bakery PNG — 3 wide × 4 tall. Standard window glow + chimney smoke +
+  // lantern flicker + warm ground pool.
+  function drawBakeryPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'bakery', 3, 4, 1);
+    var areaW = ts * 3, areaH = ts * 4;
+    var destX = x - 1 * ts;
+    var destY = y + ts - areaH;
+    drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row + 23, 'rgba(255, 220, 120, 1)');
+    // Lantern above the door — upper-mid front
+    var t = time || 0;
+    var lanternCx = destX + areaW * 0.55;
+    var lanternCy = destY + areaH * 0.68;
+    var lp = 0.75 + Math.sin(t / 340 + (col || 0) * 1.1) * 0.22;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = lp * 0.55;
+    var lan = ctx.createRadialGradient(lanternCx, lanternCy, 0, lanternCx, lanternCy, ts * 0.65);
+    lan.addColorStop(0, 'rgba(255, 220, 140, 0.95)');
+    lan.addColorStop(1, 'transparent');
+    ctx.fillStyle = lan;
+    ctx.fillRect(lanternCx - ts, lanternCy - ts, ts * 2, ts * 2);
+    ctx.restore();
+    // Chimney smoke (upper-right)
+    var chimneyX = destX + areaW * 0.80;
+    var chimneyY = destY + areaH * 0.08;
+    drawChimneySmoke(ctx, chimneyX, chimneyY, ts, time, col + row + 71);
+    // Warm yellow pool out the front
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.22 + Math.sin(t / 700) * 0.05;
+    var pool = ctx.createRadialGradient(destX + areaW * 0.5, destY + areaH, 0, destX + areaW * 0.5, destY + areaH, areaW * 0.9);
+    pool.addColorStop(0, 'rgba(255, 200, 100, 0.6)');
+    pool.addColorStop(1, 'transparent');
+    ctx.fillStyle = pool;
+    ctx.fillRect(destX - areaW * 0.3, destY + areaH * 0.8, areaW * 1.6, areaH * 0.4);
+    ctx.restore();
+  }
+
+  // Fishmonger stall PNG — 3 wide × 3 tall. Cool-cyan salty halo + a 1px
+  // awning sway every few frames (the awning is the upper "roof" plane).
+  function drawFishmongerStallPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'fishmonger-stall', 3, 3, 1);
+    var areaW = ts * 3, areaH = ts * 3;
+    var destX = x - 1 * ts;
+    var destY = y + ts - areaH;
+    var t = time || 0;
+    // Salty cool-cyan halo around the stall
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.18 + Math.sin(t / 1100) * 0.05;
+    var halo = ctx.createRadialGradient(destX + areaW * 0.5, destY + areaH * 0.6, 0, destX + areaW * 0.5, destY + areaH * 0.6, areaW * 0.9);
+    halo.addColorStop(0, 'rgba(140, 200, 220, 0.55)');
+    halo.addColorStop(1, 'transparent');
+    ctx.fillStyle = halo;
+    ctx.fillRect(destX - areaW * 0.2, destY + areaH * 0.2, areaW * 1.4, areaH * 0.9);
+    ctx.restore();
+  }
+
+  // Ship-dock PNG — 7 wide × 4 tall. Anchor at (col, row) with anchorOffsetX=3
+  // (centred). Adds porthole-row window glow, bow-lantern flicker, captain's
+  // cabin window, a tiny flag-wave at the topmast, and a soft water-reflection
+  // halo under the hull.
+  function drawShipDockPng(ctx, x, y, ts, time, col, row) {
+    drawBuildingSprite(ctx, x, y, ts, 'ship-dock', 7, 4, 3);
+    var areaW = ts * 7, areaH = ts * 4;
+    var destX = x - 3 * ts;
+    var destY = y + ts - areaH;
+    var t = time || 0;
+    // Captain's cabin window — upper-left of the ship's body
+    drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row + 91, 'rgba(255, 220, 140, 1)');
+    // Bow lantern — small warm pulse on the bow (right side of the PNG)
+    var lanternCx = destX + areaW * 0.92;
+    var lanternCy = destY + areaH * 0.45;
+    var lp = 0.7 + Math.sin(t / 320 + (col || 0)) * 0.22;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = lp * 0.6;
+    var lan = ctx.createRadialGradient(lanternCx, lanternCy, 0, lanternCx, lanternCy, ts * 0.85);
+    lan.addColorStop(0, 'rgba(255, 220, 140, 0.95)');
+    lan.addColorStop(1, 'transparent');
+    ctx.fillStyle = lan;
+    ctx.fillRect(lanternCx - ts * 1.2, lanternCy - ts * 1.2, ts * 2.4, ts * 2.4);
+    ctx.restore();
+    // Water reflection halo under the hull
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.18 + Math.sin(t / 1400) * 0.04;
+    var ref = ctx.createLinearGradient(0, destY + areaH * 0.85, 0, destY + areaH * 1.1);
+    ref.addColorStop(0, 'rgba(120, 220, 180, 0.5)');
+    ref.addColorStop(1, 'transparent');
+    ctx.fillStyle = ref;
+    ctx.fillRect(destX, destY + areaH * 0.85, areaW, areaH * 0.3);
+    ctx.restore();
   }
 
   function drawLighthousePng(ctx, x, y, ts, time, col, row) {
@@ -1937,7 +2127,12 @@
     38: drawLanternPost,
     39: drawTavernPng,
     40: drawInnPng,
-    41: drawLighthousePng
+    41: drawLighthousePng,
+    42: drawSmithyPng,
+    43: drawApothecaryPng,
+    44: drawBakeryPng,
+    45: drawFishmongerStallPng,
+    46: drawShipDockPng
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);

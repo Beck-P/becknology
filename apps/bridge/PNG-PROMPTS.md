@@ -63,6 +63,43 @@
 >
 > Design details: dark stone walls, conical purple-tiled roof clearly visible from above with a small iron star spire. **Each floor has a single tall arched window glowing flat purple** (no scrying details inside — flat purple panes). Twisting black iron balconies wrap each floor. Gnarled black vines climbing the walls. **An ornate iron-banded oak door under a pointed stone arch at the bottom-center.** A faint surface fog suggested at the foot of the tower. Limited palette: dark stone grey, deep purple, black iron, dark green vine, brown oak. Empty space above the spire.
 
+### Ship at the dock — `ship-dock.png` — 1280 × 768 native (wide)
+> [STANDARD HEADER]
+>
+> *Note: treat like the dragon — creature-scale asset, the strict roof-from-above rule is relaxed. No water in the PNG; the engine renders sea tiles separately.*
+>
+> Subject: a large 3-masted wooden sailing galleon docked alongside a wooden pier, top-down high-oblique view.
+>
+> Design details: dark warm-wood hull (`#3a2410`, `#5a3a1a`, `#7a4e22`), widest at midship, narrower at bow and stern. **The deck is visible from above** — wooden planks, a capstan, a ship's wheel at the stern, a coiled rope pile, two crates lashed down, a lifeboat on davits along one side. **Three vertical masts** as brown wooden pillars with horizontal yard arms; sails are **furled** (rolled bundles wrapped tight to the yards) in weathered cream and dark emerald. A **tattered triangular pennant** at the topmast. A small wooden **captain's cabin at the stern** with a single warm-yellow window (flat glow, no detail) and a closed plank door. A small iron **lantern hanging at the bow** with a flat round flame area (animation hook). A **carved figurehead** at the bow — a simple weathered mermaid or kraken silhouette. A **wooden gangway** extending from one side of the deck with rope rails (only the gangway visible — no surrounding dock). The hull side is visible below the deck plane with caulked planking and a row of brass-rimmed portholes (flat warm yellow, no detail). Limited palette: dark warm wood, weathered cream sails, dark emerald accents, brass, warm yellow windows, dark slate trim. Transparent background — no water, no sky, no dock, no shadow.
+
+### Smithy — `smithy.png` — 768 × 1024 native
+> [STANDARD HEADER]
+>
+> Building type: a stone-and-timber blacksmith's forge.
+>
+> Design details: weathered grey saltstone foundation and walls with warm-wood timber framing (visible cross-beams). Pitched dark-slate roof clearly readable from above, with a fat stone chimney at the upper-right and empty sky above it (smoke animation hook). A wide open front under a heavy timber lintel showing the forge inside: a flat hot-orange rectangle of glowing forge brick (no flame detail inside — animation hook), with a dark iron anvil silhouette in front. Hammers and tongs hanging on hooks on the back wall. A small lantern in an iron bracket beside the entrance with a round flat flame area. A carved wooden hammer-and-anvil sign hanging above the entrance, no text. Outside on the foundation: a stack of horseshoes and a half-barrel of water beside the doorway. Limited palette: weathered grey stone, warm brown timber, dark slate roof, hot orange forge glow, brass lantern, dark iron.
+
+### Fishmonger's stall — `fishmonger-stall.png` — 768 × 768 native
+> [STANDARD HEADER]
+>
+> Building type: a small open-front timber fishmonger's market stall.
+>
+> Design details: a wide wooden counter across the front with two fish barrels flanking it (silver-grey scales packed inside, no individual fish detail — flat silver patches). A tilted dark-green canvas awning above the counter, visible mostly from above (this is the "roof" plane) — show the awning poles, the cloth ripples, and a hand-painted fish-skeleton sign hanging from the front edge of the awning. No back wall — just a heavy timber post structure with cross-bracing. A string of hanging smoked fish strung between two posts under the eaves (small silver-brown dashes). A coiled rope and a wicker fish-basket on the foundation beside the counter. A weathered wooden plank floor under the counter. Two seagulls perched on the awning peak. Limited palette: weathered warm wood, dark emerald-green awning, silver-grey fish, brass scale-weight, off-white seagulls.
+
+### Bakery — `bakery.png` — 768 × 1024 native
+> [STANDARD HEADER]
+>
+> Building type: a small half-timbered cottage bakery.
+>
+> Design details: cream-white plaster walls with dark warm-brown timber framing (vertical beams, diagonal corner braces — Tudor-style half-timbering). Pitched warm-red tile roof clearly visible from above, with a fat stone chimney at the upper-right and empty sky above it (smoke animation hook). A wide front display window with flat warm-yellow glow (animation hook — no bread detail inside). A wooden door with iron strap hinges at bottom-centre, beside the window. A painted hanging sign over the door — a small wooden plank showing a stylised golden loaf, no readable text. A small wooden barrel of flour on the foundation beside the door (off-white powdery top). A small lantern above the door with a flat round flame area. Limited palette: cream plaster, dark warm-brown timber, warm-red roof tile, warm yellow window glow, brass lantern, golden loaf accent.
+
+### Apothecary — `apothecary.png` — 768 × 1024 native
+> [STANDARD HEADER]
+>
+> Building type: a narrow witchy apothecary / herb shop, slightly leaning.
+>
+> Design details: a tall narrow building with a slightly crooked tilted pitched roof in slate-blue tiles, readable from above. The walls are dark-stained wood plank with a stone foundation. The whole building should lean very slightly so the roof line is not perfectly horizontal — fairy-tale silhouette. Hanging dried herb bundles strung from the eaves all along the front facade — vertical bundles in muted purple, sage green, and dusty gold. A tall narrow front window showing rows of small glass jars (flat coloured rectangles — cyan, magenta, gold — no liquid detail). A heavy wooden door with iron strap hinges at bottom-centre. A carved wooden mortar-and-pestle sign above the door, no text. A small stone chimney at the upper-right with empty sky above. A black iron lantern beside the door with a flat round flame area. Limited palette: dark stained wood, slate-blue roof, stone grey foundation, muted herb colours (purple, sage, dusty gold), warm yellow window glow with cyan/magenta jar accents, dark iron.
+
 ### Dragon — `dragon.png` — 1024 × 640 native (wide)
 > [STANDARD HEADER]
 >
