@@ -510,6 +510,18 @@ const StockMarketPlayback = React.lazy(() => loadHeavyModePlaybacks().then((modu
 
 const SUITS = ["s", "h", "d", "c"];
 const SUIT_SYMBOLS = { s: "♠", h: "♥", d: "♦", c: "♣" };
+
+// In wager mode, suppress the action bar for AI turns ONLY when the action
+// is a private decision (draft, pick, BR move). Visual moments — spins,
+// rolls, draws, bomb pass, plinko, shield — stay visible so the player can
+// watch the AI's round play out.
+const WAGER_HIDE_BAR_ACTIONS = new Set([
+  'choose_cards',
+  'pick_card_blind',
+  'pick_stock',
+  'pick_lane',
+  'move_direction',
+]);
 const SUIT_NAMES = { s: "Spade", h: "Heart", d: "Diamond", c: "Club" };
 const RANK_LABELS = {
   2: "2",
@@ -2910,12 +2922,36 @@ export default function ChoreChaosApp() {
   }, []);
 
   // AI auto-play: when an interactive mode pauses for a non-pilot turn,
-  // resolve the pending action with a random valid choice after a short
-  // delay. The pilot still plays their own turns normally.
+  // resolve the pending action with a random valid choice. Delay per action
+  // type — visual modes (spins, dice, drops) pace so the player can watch
+  // the animation; pure decision/draft phases stay near-instant.
   useEffect(() => {
     if (!wagerMode) return;
     if (!pendingAction || !pendingAction.playerName) return;
     if (pendingAction.playerName === wagerPilotName) return; // human's turn
+
+    const AI_DELAY_MS = {
+      // Visual / animated — let the player watch the AI do it
+      stop_number: 1800,
+      spin_wheel: 1500,
+      pull_slots: 1500,
+      flip_coin: 600,
+      roll_dice: 1100,
+      reroll_dice: 1500,
+      draw: 1500,
+      drop_plinko: 1100,
+      pass_bomb: 700,
+      shield: 800,
+      // Decision-only / multi-turn — fast & hidden
+      choose_cards: 30,
+      pick_card_blind: 30,
+      pick_stock: 30,
+      pick_lane: 30,
+      move_direction: 30,
+      eject: 30,
+      sell: 30,
+    };
+    const delay = AI_DELAY_MS[pendingAction.action] ?? 400;
 
     const id = setTimeout(() => {
       const handler = currentActionHandler.current;
@@ -2924,11 +2960,19 @@ export default function ChoreChaosApp() {
       const playerName = pendingAction.playerName;
       try {
         switch (a) {
+          case 'reroll_dice':
+            // After the dice show, AI keeps the roll rather than rerolling.
+            handler({ action: 'keep_dice', playerName });
+            break;
           case 'draw':
           case 'eject':
           case 'sell':
           case 'roll_dice':
-          case 'reroll_dice':
+          case 'stop_number':
+          case 'spin_wheel':
+          case 'pull_slots':
+          case 'flip_coin':
+          case 'shield':
             handler({ action: a, playerName });
             break;
           case 'pass_bomb': {
@@ -2988,7 +3032,7 @@ export default function ChoreChaosApp() {
       } catch (e) {
         console.warn('[wager] AI auto-play handler failed:', a, e);
       }
-    }, 30); // near-instant — AI turns happen invisibly to the player
+    }, delay);
 
     return () => clearTimeout(id);
   }, [wagerMode, wagerPilotName, pendingAction]);
@@ -5567,7 +5611,7 @@ export default function ChoreChaosApp() {
               <button onClick={leaveRoom} className="mt-6 font-mono text-xs text-slate-500 hover:text-slate-300 transition">
                 ← Leave room
               </button>
-              {(wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName) ? null : (
+              {(wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName && WAGER_HIDE_BAR_ACTIONS.has(pendingAction.action)) ? null : (
                 <React.Suspense fallback={null}>
                   <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
                 </React.Suspense>
@@ -5669,7 +5713,7 @@ export default function ChoreChaosApp() {
               </div>
             </div>
           </div>
-          {pendingAction?.action !== 'vote_game' && !(wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName) ? (
+          {pendingAction?.action !== 'vote_game' && !(wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName && WAGER_HIDE_BAR_ACTIONS.has(pendingAction.action)) ? (
             <React.Suspense fallback={null}>
               <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
             </React.Suspense>
@@ -6454,7 +6498,7 @@ export default function ChoreChaosApp() {
                           </button>
                         </div>
                       ) : (
-                        (wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName) ? null : (
+                        (wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName && WAGER_HIDE_BAR_ACTIONS.has(pendingAction.action)) ? null : (
                           <React.Suspense fallback={null}>
                             <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
                           </React.Suspense>
