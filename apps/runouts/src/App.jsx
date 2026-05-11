@@ -3793,6 +3793,50 @@ export default function ChoreChaosApp() {
     };
   }, [interactiveMode, localInteractiveMode, gameActive, result, stockSellState]);
 
+  // Wager mode: auto-sell AI stocks at random points through the chart so
+  // the player isn't asked to sell on AI pilots. Chart timing mirrors
+  // StockMarketPlayback: 1.2s start delay, ~15s total (60 prices / 4 fps).
+  useEffect(() => {
+    if (!wagerMode) return;
+    if (!gameActive || !result || result.modeId !== 'stock-market' || result.isTournament) return;
+    if (result.draftPhase || !result.isInteractiveChart) return;
+    if (playbackDone) return;
+
+    const CHART_START_DELAY_MS = 1200; // matches StockMarketPlayback startTrading()
+    const CHART_DURATION_MS = 15000;   // 60 prices / 4 fps
+
+    const timers = [];
+    result.players.forEach((p) => {
+      if (p.name === wagerPilotName) return; // human sells themselves
+      if (stockSellState[p.name]) return; // already sold
+      // Mix of strategies: some AI sell near a local peak, others random.
+      const prices = p.prices || [];
+      let targetIndex;
+      if (prices.length && Math.random() < 0.4) {
+        // "Smart" AI: find peak in middle 60% of chart, sell near it
+        const lo = Math.floor(prices.length * 0.2);
+        const hi = Math.floor(prices.length * 0.8);
+        let peakIdx = lo;
+        for (let i = lo; i <= hi; i++) if (prices[i] > prices[peakIdx]) peakIdx = i;
+        const jitter = Math.floor((Math.random() - 0.5) * 6);
+        targetIndex = Math.max(lo, Math.min(prices.length - 1, peakIdx + jitter));
+      } else {
+        // Random AI: sell anywhere from 25-90% through the chart
+        targetIndex = Math.floor((0.25 + Math.random() * 0.65) * (prices.length || 60));
+      }
+      const fraction = targetIndex / 60;
+      const realDelayMs = CHART_START_DELAY_MS + fraction * CHART_DURATION_MS;
+      timers.push(setTimeout(() => {
+        const handler = currentActionHandler.current;
+        if (handler) handler({ playerName: p.name, action: 'sell' });
+      }, realDelayMs));
+    });
+
+    return () => timers.forEach((t) => clearTimeout(t));
+    // Intentionally not depending on stockSellState — schedule once per chart.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wagerMode, gameActive, result, playbackDone, wagerPilotName]);
+
   // Interactive Dice Duel — roll + optional re-roll
   useEffect(() => {
     if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'dice') return;
@@ -6597,11 +6641,13 @@ export default function ChoreChaosApp() {
                         (() => {
                           const sellState = (typeof window !== 'undefined' && window.__stockSellState) || {};
                           const playerStocks = pendingAction.playerStocks || {};
+                          // In wager mode, only the pilot sells manually \u2014 AI stocks auto-sell.
+                          const sellNames = (wagerMode ? cleanedNames.filter(n => n === wagerPilotName) : cleanedNames).filter(name => playerStocks[name]);
                           return (
                             <div>
                               <div className="pixel-font text-[9px] text-emerald-300 mb-3 text-center">{"\uD83D\uDCC8"} SELL BUTTONS</div>
                               <div className="grid grid-cols-2 gap-2">
-                                {cleanedNames.filter(name => playerStocks[name]).map(name => {
+                                {sellNames.map(name => {
                                   const hasSold = sellState[name];
                                   return hasSold ? (
                                     <div key={name} className="py-3 px-4 rounded-xl bg-emerald-900/30 border border-emerald-500/20 text-center">
