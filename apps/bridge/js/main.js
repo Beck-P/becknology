@@ -115,7 +115,22 @@ var Bridge = (function () {
         }
         break;
       case 'redirect':
-        window.location.href = context.url;
+        // Fade-to-black so the bridge → app transition matches the
+        // bridge-skin's fade-in on the other side.
+        var fade = document.getElementById('landing-overlay');
+        if (fade) {
+          fade.style.display = 'block';
+          fade.classList.add('active');
+          fade.style.background = '#050510';
+          fade.style.transition = 'opacity 0.28s ease';
+          fade.style.opacity = '0';
+          fade.innerHTML = '';
+          void fade.offsetHeight;
+          fade.style.opacity = '1';
+          setTimeout(function () { window.location.href = context.url; }, 280);
+        } else {
+          window.location.href = context.url;
+        }
         break;
     }
   }

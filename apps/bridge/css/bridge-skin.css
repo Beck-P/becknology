@@ -1,0 +1,90 @@
+/**
+ * Shared "bridge skin" for deep app pages (chess, cipher-room, typist,
+ * aether-seas, genart, runouts). Provides a consistent top bar with
+ * ← BRIDGE link + coin counter + app title, plus a fade-in transition
+ * from black on page load and a matching fade-out when leaving.
+ */
+
+#bridge-skin-fade {
+  position: fixed;
+  inset: 0;
+  background: #050510;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.32s ease;
+}
+#bridge-skin-fade.in    { opacity: 0; }
+#bridge-skin-fade.out   { opacity: 1; pointer-events: auto; }
+
+#bridge-skin-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9997;
+  height: 44px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(20,30,46,0.92), rgba(10,18,28,0.78) 70%, rgba(10,18,28,0));
+  font-family: 'Courier New', Consolas, monospace;
+  color: #e0e0e0;
+  pointer-events: none; /* let clicks through except for the link itself */
+  transition: opacity 0.25s ease;
+  opacity: 0;
+}
+#bridge-skin-bar.show { opacity: 1; }
+
+#bridge-skin-back {
+  pointer-events: auto;
+  background: transparent;
+  border: 1px solid rgba(160, 120, 220, 0.5);
+  color: rgba(220, 200, 255, 0.85);
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 4px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+#bridge-skin-back:hover {
+  background: rgba(60, 40, 100, 0.55);
+  color: #fff;
+  border-color: rgba(200, 160, 255, 0.7);
+}
+
+#bridge-skin-title {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: rgba(64, 200, 216, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-align: center;
+}
+
+#bridge-skin-coin {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(10, 18, 28, 0.78);
+  border: 1px solid rgba(255, 200, 80, 0.45);
+  border-radius: 18px;
+  color: #ffe080;
+  font-size: 12px;
+  letter-spacing: 2px;
+  box-shadow: 0 0 10px rgba(255, 200, 80, 0.16);
+}
+#bridge-skin-coin canvas {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+/* If the host page uses a "back to hub" link we'll hide it via this class. */
+.bridge-skin-hide-existing-back { display: none !important; }

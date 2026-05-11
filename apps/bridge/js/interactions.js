@@ -117,6 +117,12 @@ var BridgeInteractions = (function () {
         if (typeof BridgeCatalog !== 'undefined') BridgeCatalog.show(inter.shop);
         break;
 
+      case 'cabinet':
+        if (typeof BridgeCabinetModal !== 'undefined') {
+          BridgeCabinetModal.show({ url: inter.target, title: inter.label, gameKey: inter.gameKey });
+        }
+        break;
+
       case 'locker':
         if (typeof BridgeLocker !== 'undefined') BridgeLocker.show();
         break;

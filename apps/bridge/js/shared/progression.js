@@ -26,6 +26,34 @@
 
   var PILOT_KEY = 'bridge_pilot';
 
+  // ---- Iframe-bridge (cabinet modal) integration ----
+  // When this script is loaded inside an iframe whose parent is the bridge,
+  // we postMessage coin/achievement events so the bridge HUD can update live
+  // and the user can close the modal with Esc. Detection: window !== parent.
+  var inIframe = (function () {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  })();
+
+  function postToParent(msg) {
+    if (!inIframe) return;
+    try { window.parent.postMessage(msg, '*'); } catch (e) { /* swallow */ }
+  }
+
+  // Esc closes the cabinet modal (parent decides). Don't preventDefault here —
+  // games may want Esc for pause; the postMessage lets the parent override
+  // if it wants to.
+  if (inIframe) {
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        postToParent({ type: 'bridge-request-close', source: 'iframe-esc' });
+      }
+    });
+    // Announce ourselves so the parent can size / focus appropriately.
+    window.addEventListener('load', function () {
+      postToParent({ type: 'bridge-iframe-ready' });
+    });
+  }
+
   // ---- Supabase client (lazy — host app may already have one) ----
   var _client = null;
   function getClient() {
@@ -333,6 +361,7 @@
       try { _coinListeners[i]({ balance: newBalance, delta: delta, reason: reason }); }
       catch (e) { console.warn('[progression] listener error:', e); }
     }
+    postToParent({ type: 'bridge-coins-changed', balance: newBalance, delta: delta, reason: reason });
   }
 
   function emitTrophyEarned(key) {
@@ -340,6 +369,7 @@
       try { _trophyListeners[i]({ key: key }); }
       catch (e) { console.warn('[progression] trophy listener error:', e); }
     }
+    postToParent({ type: 'bridge-trophy-earned', key: key });
   }
 
   function emitLockerChange() {
