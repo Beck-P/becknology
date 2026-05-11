@@ -2355,6 +2355,12 @@ function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotati
   const rounds = [];
   const safeNames = [];
 
+  // Tournament rounds are pre-resolved — disable interactive-mode build
+  // branches (poker draft, lane pick, etc.) while we generate them, then
+  // restore the flag so live gameplay still uses interactive flow.
+  const wasInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+  if (wasInteractive) window.__interactiveMode = false;
+
   while (remainingNames.length > 1) {
     const roundResult = mode.run(remainingNames, "win immunity", "winner", localWheelRotation);
     if (roundResult.modeId === "wheel") {
@@ -2368,6 +2374,8 @@ function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotati
     safeNames.push(roundResult.selectedName);
     remainingNames = remainingNames.filter((name) => name !== roundResult.selectedName);
   }
+
+  if (wasInteractive) window.__interactiveMode = true;
 
   const finalLoser = remainingNames[0];
   const modeName = `${modeById(baseModeId)?.name ?? "Game"} Tournament`;
@@ -3182,7 +3190,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Black Marble turn management
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'black-marble') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'black-marble') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -3219,7 +3227,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Bomb turn management
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'bomb') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'bomb') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -3364,7 +3372,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Rocket eject management
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'rocket') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'rocket') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -3410,9 +3418,36 @@ export default function ChoreChaosApp() {
     };
   }, [interactiveMode, localInteractiveMode, gameActive, result, playbackDone, interactiveRocketEjects]);
 
+  // Wager mode: auto-eject AI rockets at a fraction of their crash time so
+  // the player isn't asked to hit the eject button on AI pilots.
+  useEffect(() => {
+    if (!wagerMode) return;
+    if (!gameActive || !result || result.modeId !== 'rocket' || result.isTournament) return;
+    if (playbackDone) return;
+
+    const TIME_SCALE = 3; // mirrors HeavyModePlaybacks.RocketPlayback
+    const COUNTDOWN_BUFFER_MS = 3500; // 3s countdown + small buffer before flight
+
+    const timers = [];
+    result.players.forEach((p) => {
+      if (p.name === wagerPilotName) return; // human ejects themselves
+      if (interactiveRocketEjects[p.name]) return; // already ejected
+      // Eject between 65% and 92% of their crash time (some bold, some cautious)
+      const fraction = 0.65 + Math.random() * 0.27;
+      const realDelayMs = COUNTDOWN_BUFFER_MS + (p.crashTime * fraction / TIME_SCALE) * 1000;
+      timers.push(setTimeout(() => {
+        const handler = currentActionHandler.current;
+        if (handler) handler({ playerName: p.name, action: 'eject' });
+      }, realDelayMs));
+    });
+
+    return () => timers.forEach((t) => clearTimeout(t));
+  }, [wagerMode, gameActive, result, playbackDone, wagerPilotName]);
+
   // Interactive Poker draft management
   useEffect(() => {
     if (!(interactiveMode || localInteractiveMode) || !gameActive || !result) return;
+    if (result.isTournament) return;
     if (result.modeId !== 'holdem' && result.modeId !== 'plo') return;
     if (!result.draftPhase) return;
 
@@ -3531,7 +3566,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Stock Market draft management
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'stock-market') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'stock-market') return;
     if (!result.draftPhase) return;
 
     // Initialize draft state if not already
@@ -3646,7 +3681,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Stock Market sell management
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'stock-market') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'stock-market') return;
     if (result.draftPhase || !result.isInteractiveChart) return;
 
     // Sync sell state to window for StockMarketPlayback to read
@@ -3703,7 +3738,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Dice Duel — roll + optional re-roll
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'dice') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'dice') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -3786,7 +3821,7 @@ export default function ChoreChaosApp() {
 
   // Interactive High Card — blind card pick
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'high-card') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'high-card') return;
     if (!result.draftPhase) return;
 
     // Deal 3 cards per player for blind pick
@@ -3933,7 +3968,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Plinko — choose drop column
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'plinko') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'plinko') return;
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
@@ -4020,7 +4055,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Horse Race — lane pick + whip
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'horse-race') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'horse-race') return;
 
     // Wager mode: skip the lane-pick draft and the realtime whip phase.
     // Auto-assign lanes once, then leave pendingAction null so the player
@@ -4247,7 +4282,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Space Invaders — shield reaction
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'space-invaders') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'space-invaders') return;
     if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
 
     const elimIndex = playbackStep;
@@ -4339,7 +4374,7 @@ export default function ChoreChaosApp() {
 
   // Interactive Battle Royale — directional movement
   useEffect(() => {
-    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.modeId !== 'battle-royale') return;
+    if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'battle-royale') return;
     if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
 
     const phase = playbackStep; // 0-indexed, each phase = one elimination
@@ -4552,6 +4587,7 @@ export default function ChoreChaosApp() {
   // Interactive turn management for RNG, Wheel, Slots, Coin Gauntlet
   useEffect(() => {
     if (!(interactiveMode || localInteractiveMode) || !gameActive || !result) return;
+    if (result.isTournament) return;
     const mode = result.modeId;
     if (['black-marble', 'bomb', 'rocket', 'holdem', 'plo', 'stock-market', 'dice', 'high-card', 'plinko', 'horse-race', 'space-invaders', 'battle-royale'].includes(mode)) return;
     if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
@@ -6476,11 +6512,13 @@ export default function ChoreChaosApp() {
                       {localInteractiveMode && !interactiveMode && pendingAction.type === 'realtime' && pendingAction.action === 'eject' ? (
                         (() => {
                           const ejects = (typeof window !== 'undefined' && window.__interactiveRocketEjects) || {};
+                          // In wager mode, the player only ejects their own pilot \u2014 AI pilots auto-eject.
+                          const ejectNames = wagerMode ? cleanedNames.filter(n => n === wagerPilotName) : cleanedNames;
                           return (
                             <div>
                               <div className="pixel-font text-[9px] text-indigo-300 mb-3 text-center">{"\uD83D\uDE80"} EJECT BUTTONS</div>
                               <div className="grid grid-cols-2 gap-2">
-                                {cleanedNames.map(name => {
+                                {ejectNames.map(name => {
                                   const hasEjected = ejects[name];
                                   return hasEjected ? (
                                     <div key={name} className="py-3 px-4 rounded-xl bg-green-900/30 border border-green-500/20 text-center">
