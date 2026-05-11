@@ -2938,9 +2938,20 @@ export default function ChoreChaosApp() {
             break;
           }
           case 'pick_stock': {
-            const stocks = pendingAction.stocks || pendingAction.choices || pendingAction.targets || [];
-            const stock = stocks.length ? stocks[Math.floor(Math.random() * stocks.length)] : null;
-            handler({ action: a, playerName, stock, choice: stock });
+            const pool = pendingAction.stockPool || [];
+            const taken = pendingAction.taken || {};
+            const available = pool.filter(s => !taken[s.ticker]);
+            const pick = available.length ? available[Math.floor(Math.random() * available.length)] : null;
+            const ticker = pick ? pick.ticker : null;
+            handler({ action: a, playerName, ticker, choice: ticker });
+            break;
+          }
+          case 'pick_lane': {
+            const lanes = pendingAction.lanes || [];
+            const taken = pendingAction.taken || {};
+            const available = lanes.filter(l => !taken[l]);
+            const lane = available.length ? available[Math.floor(Math.random() * available.length)] : null;
+            handler({ action: a, playerName, lane });
             break;
           }
           case 'drop_plinko': {
@@ -2949,9 +2960,9 @@ export default function ChoreChaosApp() {
             break;
           }
           case 'choose_cards': {
-            // Random pick of 2 distinct card indices from available pool
-            const pool = (pendingAction.cards || pendingAction.hand || []).map((_, i) => i);
-            const pickN = pendingAction.pickCount || 2;
+            const hand = (pendingAction.hands && pendingAction.hands[playerName]) || [];
+            const pool = hand.map((_, i) => i);
+            const pickN = pendingAction.keepCount || pendingAction.pickCount || 2;
             const pick = [];
             while (pick.length < pickN && pool.length) {
               pick.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
@@ -2960,13 +2971,18 @@ export default function ChoreChaosApp() {
             break;
           }
           case 'pick_card_blind': {
-            const cards = pendingAction.cards || pendingAction.hand || [];
-            const index = cards.length ? Math.floor(Math.random() * cards.length) : 0;
-            handler({ action: a, playerName, index, card: index });
+            const hand = (pendingAction.hands && pendingAction.hands[playerName]) || [];
+            const cardIndex = hand.length ? Math.floor(Math.random() * hand.length) : 0;
+            handler({ action: a, playerName, cardIndex, index: cardIndex, card: cardIndex });
+            break;
+          }
+          case 'move_direction': {
+            const dirs = ['up', 'down', 'left', 'right', 'stay'];
+            const direction = dirs[Math.floor(Math.random() * dirs.length)];
+            handler({ action: a, playerName, direction });
             break;
           }
           default:
-            // Unknown action — try the simplest possible payload
             handler({ action: a, playerName });
         }
       } catch (e) {
