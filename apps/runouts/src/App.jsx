@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
 import './index.css';
 import { getSingleTotalSteps, getPlaybackConfig, getPlaybackConfigDiagnostics } from './playbackConfig';
-import { WagerPregame, WagerPayout, computePayout } from './Wager';
+import { WagerSetupBar, WagerRoster, WagerPayout, computePayout } from './Wager';
 
 let leaderboardModulePromise;
 let classicModePlaybacksPromise;
@@ -2729,21 +2729,50 @@ export default function ChoreChaosApp() {
 
   // ── Bridge wager mode (active when loaded inside the cabinet modal iframe) ──
   const [wagerMode, setWagerMode] = useState(false);
-  const [wagerPhase, setWagerPhase] = useState('pregame'); // 'pregame' | 'playing' | 'payout'
+  // Phases: 'pregame' (no active wager — show wager bar), 'playing' (wager
+  // deducted, game(s) running), 'payout' (post-game overlay)
+  const [wagerPhase, setWagerPhase] = useState('pregame');
   const [activeWager, setActiveWager] = useState(null);
   const [wagerBalance, setWagerBalance] = useState(0);
   const [wagerPilotName, setWagerPilotName] = useState('PILOT');
+  const [wagerAmount, setWagerAmount] = useState(() => {
+    try {
+      const last = parseInt(localStorage.getItem('runouts_wager_last') || '0', 10);
+      return Number.isFinite(last) && last > 0 ? last : 25;
+    } catch (e) { return 25; }
+  });
 
   // Detect iframe context + read pilot identity from bridge localStorage.
+  // In iframe (bridge cabinet) mode we force single-device single-player and
+  // lock the roster to the pilot + 3 random fake callsigns.
   useEffect(() => {
     let inIframe = false;
     try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
     if (!inIframe) return;
     setWagerMode(true);
+    // Skip the device-mode chooser screen — go straight to single-device play.
+    setDeviceMode('local');
+    setHostSetupDone(true);
+    setGameFormat('single');
+    let pilot = 'PILOT';
     try {
       const p = (localStorage.getItem('bridge_pilot') || '').toUpperCase().trim();
-      if (p) setWagerPilotName(p);
+      if (p) pilot = p;
     } catch (e) {}
+    setWagerPilotName(pilot);
+    // Lock the roster: pilot + 3 random fake callsigns from the wager pool.
+    const FAKES = [
+      'VOID_RUNNER', 'PIXEL_BANDIT', 'ENIGMA_03', 'CRACKED_TELEMETRY',
+      'NEBULA_FOX', 'HALO_DRIFT', 'CIPHER_KIN', 'STELLAR_ORACLE',
+      'NULL_HARMONIC', 'COSMIC_GHOST', 'IRON_GULL', 'STATIC_TIDE',
+      'KESTREL_07', 'BINARY_MOTH', 'GLITCH_PROPHET', 'MOON_CARGO',
+      'PARALLAX_KID', 'SILICON_OAK', 'RIPTIDE_ECHO', 'NEON_VESPER',
+    ].filter(n => n !== pilot);
+    const fakes = [];
+    while (fakes.length < 3 && FAKES.length) {
+      fakes.push(FAKES.splice(Math.floor(Math.random() * FAKES.length), 1)[0]);
+    }
+    setNames([pilot, ...fakes]);
     if (window.BridgeProgression && window.BridgeProgression.getBalance) {
       window.BridgeProgression.getBalance().then((b) => {
         if (b != null) setWagerBalance(b);
@@ -2751,18 +2780,43 @@ export default function ChoreChaosApp() {
     }
   }, []);
 
-  // When the bridge wager game finishes (playback complete and a result
-  // exists), reckon the outcome and award the payout.
+  // When the bridge wager finishes (single-round playback complete OR
+  // series complete), reckon the outcome and pay out. Tournament wagers
+  // pay out per series — one bet covers the whole bracket; payout only
+  // fires when the series resolves a winner.
   const wagerResolvedRef = useRef(null);
   useEffect(() => {
     if (!wagerMode || wagerPhase !== 'playing') return;
-    if (!playbackDone || !result || result.isTie) return;
-    if (wagerResolvedRef.current === result.runId) return; // already resolved
-    wagerResolvedRef.current = result.runId;
-
+    if (!result || result.isTie) return;
     const w = activeWager;
     if (!w) return;
-    const pilotPicked = result.selectedName === w.pilotName;
+
+    // For best-of-N / tournament series, wait for series completion before
+    // payout. The series result is the most-points pilot.
+    const inSeries = seriesActive && !!seriesConfig;
+    let pickedName = null;
+    let resolveKey = null;
+
+    if (inSeries) {
+      if (!seriesComplete) return; // wait for series end
+      // The "winning" name in a series is whoever has the most points.
+      let topName = null, topScore = -Infinity;
+      Object.entries(seriesScoreRef.current || seriesScores || {}).forEach(([n, s]) => {
+        if (s > topScore) { topScore = s; topName = n; }
+      });
+      pickedName = topName;
+      resolveKey = 'series-' + (result?.runId || '') + '-' + (seriesConfig.totalRounds || '');
+    } else {
+      if (!playbackDone) return;
+      pickedName = result.selectedName;
+      resolveKey = result.runId;
+    }
+
+    if (!pickedName || !resolveKey) return;
+    if (wagerResolvedRef.current === resolveKey) return;
+    wagerResolvedRef.current = resolveKey;
+
+    const pilotPicked = pickedName === w.pilotName;
     const won = (w.goal === 'winner' ? pilotPicked : !pilotPicked);
     const payout = computePayout(w.amount, w.goal, won);
 
@@ -2771,7 +2825,7 @@ export default function ChoreChaosApp() {
         ...w,
         won,
         payout,
-        selectedName: result.selectedName,
+        selectedName: pickedName,
         allNames: [w.pilotName, ...w.fakeNames],
       });
       if (newBalance != null) setWagerBalance(newBalance);
@@ -2784,44 +2838,47 @@ export default function ChoreChaosApp() {
     } else {
       finish(null);
     }
-  }, [wagerMode, wagerPhase, playbackDone, result, activeWager]);
+  }, [wagerMode, wagerPhase, playbackDone, result, activeWager, seriesActive, seriesComplete, seriesConfig, seriesScores]);
 
-  // Begin a wager: deduct + set up Runouts state + start the chosen game.
-  const handleWagerPlay = useCallback(async (opts) => {
-    if (!window.BridgeProgression || !window.BridgeProgression.wagerCoins) return;
-    const res = await window.BridgeProgression.wagerCoins(opts.amount, 'runouts');
+  // Deduct the wager and then proxy through to the normal startGame. Used
+  // as a wrapper around the existing "AUTO" / specific-mode buttons in
+  // wager mode. Returns true if the game should proceed.
+  const beginWagerIfNeeded = useCallback(async () => {
+    if (!wagerMode) return true; // pass-through
+    if (activeWager) return true; // already wagered (e.g. mid-series)
+    if (wagerAmount <= 0 || wagerAmount > wagerBalance) return false;
+    if (!window.BridgeProgression || !window.BridgeProgression.wagerCoins) return false;
+    const res = await window.BridgeProgression.wagerCoins(wagerAmount, 'runouts');
     if (!res || !res.ok) {
-      // Insufficient or error — just stay on pregame; could surface a toast later.
       if (res && typeof res.balance === 'number') setWagerBalance(res.balance);
-      return;
+      return false;
     }
+    try { localStorage.setItem('runouts_wager_last', String(wagerAmount)); } catch (e) {}
     setWagerBalance(res.balance);
-    const newNames = [opts.pilotName, ...opts.fakeNames];
-    setNames(newNames);
-    setSelectionGoal(opts.goal);
-    setSelectedModeId(opts.forcedModeId || 'auto');
-    setGameFormat('single');
     setActiveWager({
-      amount: opts.amount,
-      goal: opts.goal,
-      pilotName: opts.pilotName,
-      fakeNames: opts.fakeNames,
-      forcedModeId: opts.forcedModeId,
-      category: opts.category,
+      amount: wagerAmount,
+      goal: selectionGoal,
+      pilotName: wagerPilotName,
+      fakeNames: names.slice(1),
     });
     setWagerPhase('playing');
-    // Allow state to flush, then start the round.
-    setTimeout(() => {
-      try {
-        startGame(opts.forcedModeId || null);
-      } catch (e) {
-        console.warn('wager: failed to start game', e);
-        setWagerPhase('pregame');
-      }
-    }, 80);
-  }, []);
+    return true;
+  }, [wagerMode, activeWager, wagerAmount, wagerBalance, selectionGoal, wagerPilotName, names]);
 
-  // After payout, reset everything for a fresh wager.
+  // Wrap startGame in wager mode — deduct first, then proceed.
+  const wagerStartGame = useCallback(async (forcedModeId) => {
+    if (!wagerMode) {
+      startGame(forcedModeId);
+      return;
+    }
+    const ok = await beginWagerIfNeeded();
+    if (!ok) return;
+    // Allow state to flush before the game machinery reads names/format.
+    setTimeout(() => startGame(forcedModeId || null), 60);
+  }, [wagerMode, beginWagerIfNeeded]);
+
+  // After payout, reset everything for a fresh wager. Clear series state
+  // too in case the round was a tournament/best-of.
   const handleWagerPlayAgain = useCallback(() => {
     wagerResolvedRef.current = null;
     setActiveWager(null);
@@ -2829,8 +2886,15 @@ export default function ChoreChaosApp() {
     setPlaybackStep(0);
     setPlaybackDone(false);
     setGameActive(false);
+    setSeriesActive(false);
+    setSeriesConfig(null);
+    setSeriesScores({});
+    setSeriesRound(0);
+    setSeriesHistory([]);
+    setSeriesComplete(false);
+    setShowSeriesScoreboard(false);
+    seriesScoreRef.current = {};
     setWagerPhase('pregame');
-    // Refresh balance defensively
     if (window.BridgeProgression && window.BridgeProgression.getBalance) {
       window.BridgeProgression.getBalance().then((b) => { if (b != null) setWagerBalance(b); });
     }
@@ -2844,6 +2908,74 @@ export default function ChoreChaosApp() {
       }
     } catch (e) {}
   }, []);
+
+  // AI auto-play: when an interactive mode pauses for a non-pilot turn,
+  // resolve the pending action with a random valid choice after a short
+  // delay. The pilot still plays their own turns normally.
+  useEffect(() => {
+    if (!wagerMode) return;
+    if (!pendingAction || !pendingAction.playerName) return;
+    if (pendingAction.playerName === wagerPilotName) return; // human's turn
+
+    const id = setTimeout(() => {
+      const handler = currentActionHandler.current;
+      if (!handler) return;
+      const a = pendingAction.action;
+      const playerName = pendingAction.playerName;
+      try {
+        switch (a) {
+          case 'draw':
+          case 'eject':
+          case 'sell':
+          case 'roll_dice':
+          case 'reroll_dice':
+            handler({ action: a, playerName });
+            break;
+          case 'pass_bomb': {
+            const targets = pendingAction.targets || [];
+            const target = targets.length ? targets[Math.floor(Math.random() * targets.length)] : null;
+            handler({ action: a, playerName, target });
+            break;
+          }
+          case 'pick_stock': {
+            const stocks = pendingAction.stocks || pendingAction.choices || pendingAction.targets || [];
+            const stock = stocks.length ? stocks[Math.floor(Math.random() * stocks.length)] : null;
+            handler({ action: a, playerName, stock, choice: stock });
+            break;
+          }
+          case 'drop_plinko': {
+            const slots = pendingAction.slotCount || 13;
+            handler({ action: a, playerName, slot: Math.floor(Math.random() * slots) });
+            break;
+          }
+          case 'choose_cards': {
+            // Random pick of 2 distinct card indices from available pool
+            const pool = (pendingAction.cards || pendingAction.hand || []).map((_, i) => i);
+            const pickN = pendingAction.pickCount || 2;
+            const pick = [];
+            while (pick.length < pickN && pool.length) {
+              pick.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+            }
+            handler({ action: a, playerName, indices: pick, cards: pick, choice: pick });
+            break;
+          }
+          case 'pick_card_blind': {
+            const cards = pendingAction.cards || pendingAction.hand || [];
+            const index = cards.length ? Math.floor(Math.random() * cards.length) : 0;
+            handler({ action: a, playerName, index, card: index });
+            break;
+          }
+          default:
+            // Unknown action — try the simplest possible payload
+            handler({ action: a, playerName });
+        }
+      } catch (e) {
+        console.warn('[wager] AI auto-play handler failed:', a, e);
+      }
+    }, 900 + Math.floor(Math.random() * 600)); // 0.9-1.5s for visual rhythm
+
+    return () => clearTimeout(id);
+  }, [wagerMode, wagerPilotName, pendingAction]);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -5772,6 +5904,22 @@ export default function ChoreChaosApp() {
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="crt-scanlines relative mb-10 overflow-hidden bg-[#0d0d24] p-5 sm:p-6" style={{ border: "3px solid #2d2b6b", boxShadow: "0 0 30px rgba(99,102,241,0.15), inset 0 0 60px rgba(0,0,0,0.5)" }}>
           <div className="relative z-10">
+            {wagerMode ? (
+              <>
+                <WagerSetupBar
+                  balance={wagerBalance}
+                  amount={wagerAmount}
+                  onAmountChange={setWagerAmount}
+                  selectionGoal={selectionGoal}
+                />
+                <div className="mb-4 flex items-center gap-2">
+                  <span className="pixel-font text-[10px] text-fuchsia-400">▶</span>
+                  <span className="pixel-font phosphor text-[9px] uppercase tracking-widest text-fuchsia-400">Roster</span>
+                </div>
+                <WagerRoster pilotName={wagerPilotName} names={names} />
+              </>
+            ) : (
+              <>
             <div className="mb-4 flex items-center gap-2">
               <span className="pixel-font text-[10px] text-fuchsia-400">▶</span>
               <span className="pixel-font phosphor text-[9px] uppercase tracking-widest text-fuchsia-400">Players</span>
@@ -5806,17 +5954,21 @@ export default function ChoreChaosApp() {
                 + ADD PLAYER
               </button>
             </div>
+              </>
+            )}
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <div>
-                <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-yellow-500/80">What's at stake</div>
-                <input
-                  value={taskLabel}
-                  onChange={(event) => setTaskLabel(event.target.value)}
-                  className="w-full border border-yellow-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-yellow-300 placeholder-slate-600 outline-none transition focus:border-yellow-400 focus:shadow-[0_0_16px_rgba(234,179,8,0.2)]"
-                  placeholder="enter the stakes..."
-                />
-              </div>
+            <div className={`mt-5 grid gap-3 ${wagerMode ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
+              {!wagerMode && (
+                <div>
+                  <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-yellow-500/80">What's at stake</div>
+                  <input
+                    value={taskLabel}
+                    onChange={(event) => setTaskLabel(event.target.value)}
+                    className="w-full border border-yellow-500/20 bg-black/40 px-4 py-2.5 font-mono text-sm text-yellow-300 placeholder-slate-600 outline-none transition focus:border-yellow-400 focus:shadow-[0_0_16px_rgba(234,179,8,0.2)]"
+                    placeholder="enter the stakes..."
+                  />
+                </div>
+              )}
               <div>
                 <div className="pixel-font mb-1.5 text-[7px] uppercase tracking-widest text-green-500/80">Format</div>
                 <select
@@ -5866,8 +6018,8 @@ export default function ChoreChaosApp() {
 
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <button
-            onClick={() => { setSelectedModeId("auto"); startGame(); }}
-            disabled={!canRun}
+            onClick={() => { setSelectedModeId("auto"); wagerStartGame(); }}
+            disabled={!canRun || (wagerMode && (wagerAmount <= 0 || wagerAmount > wagerBalance))}
             className="arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40"
             style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1))", border: "2px solid rgba(99,102,241,0.4)", boxShadow: "0 0 20px rgba(99,102,241,0.15)" }}
           >
@@ -5879,8 +6031,8 @@ export default function ChoreChaosApp() {
           {MODE_META.map((mode) => (
             <button
               key={mode.id}
-              onClick={() => { setSelectedModeId(mode.id); startGame(mode.id); }}
-              disabled={!canRun}
+              onClick={() => { setSelectedModeId(mode.id); wagerStartGame(mode.id); }}
+              disabled={!canRun || (wagerMode && (wagerAmount <= 0 || wagerAmount > wagerBalance))}
               className={`arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40 ${mode.cardHint}`}
               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
@@ -6514,15 +6666,7 @@ export default function ChoreChaosApp() {
         ) : null}
       </AnimatePresence>
 
-      {/* Bridge wager overlays — rendered on top of everything when active */}
-      {wagerMode && wagerPhase === 'pregame' && (
-        <WagerPregame
-          pilotName={wagerPilotName}
-          balance={wagerBalance}
-          onPlay={handleWagerPlay}
-          onLeave={handleWagerLeave}
-        />
-      )}
+      {/* Bridge wager post-game overlay — pre-game is inlined into setup */}
       {wagerMode && wagerPhase === 'payout' && activeWager && (
         <WagerPayout
           wager={activeWager}

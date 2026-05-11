@@ -1,73 +1,26 @@
 /**
- * Wager mode — when Runouts is loaded inside the bridge's cabinet modal,
- * we wrap the game in a wager loop:
+ * Wager mode — when Runouts loads inside the bridge's cabinet modal,
+ * the player picks a wager amount and competes against 3 fake AI pilots
+ * using the normal Runouts mode/tournament selector.
  *
- *   PRE-GAME  → player picks wager amount, mode category, and selection goal.
- *               wagerCoins() deducts from their balance. Names auto-populate
- *               (pilot + 3 fake AI competitors).
- *   GAME      → the existing Runouts gameplay runs unmodified.
- *   PAYOUT    → after playbackDone, the wager outcome is reckoned and
- *               coins are awarded (or not). Player can play again or close
- *               the modal.
+ * Components:
+ *   WagerSetupBar  — slim wager-amount bar (chips, slider, numeric) +
+ *                    live projected payout. Sits inside the existing
+ *                    Runouts pre-game UI.
+ *   WagerRoster    — read-only roster display replacing the name editor:
+ *                    pilot highlighted as YOU, 3 AI competitors below.
+ *   WagerPayout    — post-game overlay (won/lost reveal + roster + balance)
  *
- * Detection: window.self !== window.top (iframe context). Direct nav to
- * /runouts stays as the normal app.
- *
- * Math (perfectly fair — no house edge):
- *   - Winner goal: 25% chance pilot is picked. Payout = 4× wager on win.
- *   - Loser  goal: 75% chance pilot is NOT picked. Payout = 1.333× wager.
+ * Payout math (perfectly fair against a 4-contestant runout):
+ *   winner goal: 25% chance × 4×  = EV 1.0
+ *   loser  goal: 75% chance × 1.333× ≈ EV 1.0
  */
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
-
-// ---- Fake pilot callsign pool ----
-const FAKE_CALLSIGNS = [
-  'VOID_RUNNER', 'PIXEL_BANDIT', 'ENIGMA_03', 'CRACKED_TELEMETRY',
-  'NEBULA_FOX', 'HALO_DRIFT', 'CIPHER_KIN', 'STELLAR_ORACLE',
-  'NULL_HARMONIC', 'COSMIC_GHOST', 'IRON_GULL', 'STATIC_TIDE',
-  'KESTREL_07', 'BINARY_MOTH', 'GLITCH_PROPHET', 'MOON_CARGO',
-  'PARALLAX_KID', 'SILICON_OAK', 'RIPTIDE_ECHO', 'NEON_VESPER',
-];
-
-function pickFakeRoster(count, exclude) {
-  const pool = FAKE_CALLSIGNS.filter(n => n !== exclude);
-  const out = [];
-  while (out.length < count && pool.length) {
-    const i = Math.floor(Math.random() * pool.length);
-    out.push(pool.splice(i, 1)[0]);
-  }
-  return out;
-}
-
-// ---- Mode categories (matches Runouts' three lazy-loaded modules) ----
-export const MODE_CATEGORIES = {
-  auto: { label: 'RANDOM', desc: 'Any mode, anything goes', modes: null },
-  classic: {
-    label: 'CLASSIC',
-    desc: 'Wheel, dice, marbles, cards',
-    modes: ['wheel', 'dice', 'high-card', 'coin-flips', 'black-marble', 'slots', 'rng']
-  },
-  heavy: {
-    label: 'HEAVY',
-    desc: 'Rockets, bombs, plinko, mayhem',
-    modes: ['rocket', 'bomb', 'plinko', 'battle-royale']
-  },
-  strategic: {
-    label: 'STRATEGIC',
-    desc: 'Poker, tournaments',
-    modes: ['holdem', 'plo']
-  }
-};
-
-function pickModeFromCategory(category) {
-  const meta = MODE_CATEGORIES[category];
-  if (!meta || !meta.modes || !meta.modes.length) return null;
-  return meta.modes[Math.floor(Math.random() * meta.modes.length)];
-}
+import React, { useMemo } from 'react';
 
 // Payout multipliers (fair odds against 4 contestants total).
 const PAYOUT = {
-  winner: 4.0,   // 25% chance × 4 = 1 (break-even on average)
-  loser:  1.333, // 75% chance × 1.333 ≈ 1
+  winner: 4.0,
+  loser:  1.333,
 };
 
 export function computePayout(amount, goal, won) {
@@ -75,142 +28,115 @@ export function computePayout(amount, goal, won) {
   return Math.floor(amount * (PAYOUT[goal] || 0));
 }
 
-// ---- Pre-game overlay ----
-export function WagerPregame({ pilotName, balance, onPlay, onLeave }) {
-  const [amount, setAmount] = useState(() => {
-    try {
-      const last = parseInt(localStorage.getItem('runouts_wager_last') || '0', 10);
-      if (Number.isFinite(last) && last > 0) return Math.min(last, balance);
-    } catch (e) {}
-    return Math.min(25, balance);
-  });
-  const [category, setCategory] = useState('auto');
-  const [goal, setGoal] = useState('winner');
-  const [fakeNames, setFakeNames] = useState(() => pickFakeRoster(3, pilotName));
+export function wagerProjectedPayout(amount, goal) {
+  return Math.floor(amount * (PAYOUT[goal] || 0));
+}
 
+// ---- Slim wager amount bar (inline in the existing setup UI) ----
+export function WagerSetupBar({ balance, amount, onAmountChange, selectionGoal }) {
   const presets = [10, 25, 50, 100].filter(p => p <= balance);
-  const enoughCoins = amount > 0 && amount <= balance;
-  const projectedPayout = useMemo(
-    () => Math.floor(amount * (PAYOUT[goal] || 0)),
-    [amount, goal]
-  );
+  const projectedPayout = wagerProjectedPayout(amount, selectionGoal);
+  const projectedNet = projectedPayout - amount;
 
-  function reroll() { setFakeNames(pickFakeRoster(3, pilotName)); }
-
-  function handlePlay() {
-    if (!enoughCoins) return;
-    try { localStorage.setItem('runouts_wager_last', String(amount)); } catch (e) {}
-    onPlay({
-      amount,
-      category,
-      goal,
-      forcedModeId: pickModeFromCategory(category),
-      pilotName,
-      fakeNames,
-    });
-  }
+  const safeBalance = Math.max(0, balance || 0);
+  const clamp = (v) => Math.max(0, Math.min(safeBalance, Math.floor(v || 0)));
 
   return (
-    <div style={overlayStyle}>
-      <div style={panelStyle}>
-        <div style={headerStyle}>
-          <div style={{ fontSize: 11, letterSpacing: 5, color: 'rgba(120,144,232,0.7)' }}>RUNOUTS · CABINET</div>
-          <div style={{ fontSize: 24, letterSpacing: 4, color: '#a5b4fc', marginTop: 6 }}>PLACE YOUR WAGER</div>
-        </div>
-
-        {/* Balance */}
-        <Row label="BALANCE">
-          <span style={{ color: '#ffe080', fontSize: 18, letterSpacing: 2 }}>🪙 {balance}</span>
-        </Row>
-
-        {/* Amount picker */}
-        <Row label="WAGER">
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            {presets.map(p => (
-              <button key={p}
-                onClick={() => setAmount(p)}
-                style={chipStyle(amount === p)}>
-                {p}
-              </button>
-            ))}
-            <input
-              type="range"
-              min={0}
-              max={balance}
-              step={1}
-              value={amount}
-              onChange={e => setAmount(parseInt(e.target.value, 10))}
-              style={sliderStyle}
-            />
-            <input
-              type="number"
-              min={0}
-              max={balance}
-              value={amount}
-              onChange={e => setAmount(Math.max(0, Math.min(balance, parseInt(e.target.value || '0', 10))))}
-              style={numberStyle}
-            />
-          </div>
-        </Row>
-
-        {/* Category */}
-        <Row label="MODE">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-            {Object.entries(MODE_CATEGORIES).map(([k, m]) => (
-              <button key={k} onClick={() => setCategory(k)} style={catStyle(category === k)}>
-                <div style={{ fontSize: 11, letterSpacing: 3 }}>{m.label}</div>
-                <div style={{ fontSize: 8, opacity: 0.55, marginTop: 2 }}>{m.desc}</div>
-              </button>
-            ))}
-          </div>
-        </Row>
-
-        {/* Goal */}
-        <Row label="TARGET">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            <button onClick={() => setGoal('winner')} style={catStyle(goal === 'winner')}>
-              <div style={{ fontSize: 11, letterSpacing: 3 }}>PICK WINNER</div>
-              <div style={{ fontSize: 9, marginTop: 2, color: '#80e088' }}>×{PAYOUT.winner.toFixed(2)} payout</div>
-              <div style={{ fontSize: 8, opacity: 0.55, marginTop: 1 }}>25% odds · high reward</div>
-            </button>
-            <button onClick={() => setGoal('loser')} style={catStyle(goal === 'loser')}>
-              <div style={{ fontSize: 11, letterSpacing: 3 }}>PICK LOSER</div>
-              <div style={{ fontSize: 9, marginTop: 2, color: '#80e088' }}>×{PAYOUT.loser.toFixed(2)} payout</div>
-              <div style={{ fontSize: 8, opacity: 0.55, marginTop: 1 }}>75% odds · safer</div>
-            </button>
-          </div>
-        </Row>
-
-        {/* Roster */}
-        <Row label="ROSTER">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={rosterRowStyle(true)}>YOU · {pilotName.toUpperCase()}</div>
-            {fakeNames.map(n => (
-              <div key={n} style={rosterRowStyle(false)}>AI · {n}</div>
-            ))}
-            <button onClick={reroll} style={{ ...catStyle(false), padding: '4px 8px', fontSize: 9, marginTop: 4, opacity: 0.7 }}>
-              ↺ REROLL COMPETITORS
-            </button>
-          </div>
-        </Row>
-
-        {/* Projected */}
-        <div style={{ padding: '14px 18px', borderTop: '1px solid rgba(120,144,232,0.2)', marginTop: 4,
-                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                       fontSize: 11, letterSpacing: 3 }}>
-          <span style={{ color: '#888' }}>IF YOU WIN</span>
-          <span style={{ color: '#ffe080', fontSize: 16 }}>+ 🪙 {projectedPayout - amount} net (recoup {projectedPayout})</span>
-        </div>
-
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: 8, padding: '14px 18px 18px' }}>
-          <button onClick={onLeave} style={cancelBtnStyle}>← LEAVE</button>
-          <button onClick={handlePlay} disabled={!enoughCoins}
-            style={playBtnStyle(enoughCoins)}>
-            PLAY · WAGER 🪙 {amount}
-          </button>
-        </div>
+    <div style={{
+      marginBottom: 16,
+      padding: '14px 16px',
+      background: 'linear-gradient(180deg, rgba(165,180,252,0.10), rgba(99,102,241,0.04))',
+      border: '1px solid rgba(165,180,252,0.35)',
+      borderRadius: 8,
+      boxShadow: '0 0 18px rgba(99,102,241,0.18)',
+      fontFamily: '"Press Start 2P", "Courier New", monospace',
+    }}>
+      {/* header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div style={{ fontSize: 9, letterSpacing: 4, color: '#a5b4fc', textTransform: 'uppercase' }}>▶ Wager</div>
+        <div style={{ fontSize: 10, color: '#ffe080', letterSpacing: 2 }}>BALANCE 🪙 {safeBalance}</div>
       </div>
+
+      {/* chip presets */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+        {presets.map(p => (
+          <button key={p}
+            type="button"
+            onClick={() => onAmountChange(p)}
+            style={chipStyle(amount === p)}>
+            🪙 {p}
+          </button>
+        ))}
+      </div>
+
+      {/* slider + number */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <input
+          type="range"
+          min={0}
+          max={safeBalance}
+          step={1}
+          value={amount}
+          onChange={(e) => onAmountChange(clamp(parseInt(e.target.value, 10)))}
+          style={{ flex: 1, accentColor: '#a5b4fc' }}
+        />
+        <input
+          type="number"
+          min={0}
+          max={safeBalance}
+          value={amount}
+          onChange={(e) => onAmountChange(clamp(parseInt(e.target.value || '0', 10)))}
+          style={{
+            width: 78,
+            padding: '6px 8px',
+            background: 'rgba(0,0,0,0.45)',
+            border: '1px solid rgba(165,180,252,0.4)',
+            color: '#ffe080',
+            fontFamily: 'inherit',
+            fontSize: 11,
+            letterSpacing: 1,
+            borderRadius: 4,
+            textAlign: 'right',
+          }}
+        />
+      </div>
+
+      {/* projection */}
+      <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                     fontSize: 9, letterSpacing: 2, color: '#888', textTransform: 'uppercase' }}>
+        <span>If you win ({selectionGoal === 'winner' ? '×4 · 25% odds' : '×1.33 · 75% odds'})</span>
+        <span style={{ color: amount > 0 ? '#80e088' : '#666' }}>
+          recoup 🪙 {projectedPayout} <span style={{ opacity: 0.65 }}>({projectedNet >= 0 ? '+' : ''}{projectedNet} net)</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ---- Roster display (replaces the name editor in wager mode) ----
+export function WagerRoster({ pilotName, names }) {
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8,
+      fontFamily: '"Courier New", monospace',
+    }}>
+      {names.map((n, i) => {
+        const isPilot = n === pilotName;
+        return (
+          <div key={n + ':' + i} style={{
+            padding: '10px 12px',
+            background: isPilot ? 'rgba(64, 200, 216, 0.16)' : 'rgba(0,0,0,0.35)',
+            border: '1px solid ' + (isPilot ? 'rgba(64, 200, 216, 0.55)' : 'rgba(120,144,232,0.25)'),
+            color: isPilot ? '#80e0e8' : '#b0b0c0',
+            borderRadius: 4,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            fontSize: 11, letterSpacing: 2,
+          }}>
+            <span>{isPilot ? 'YOU' : 'AI'} · {n.toUpperCase()}</span>
+            <span style={{ fontSize: 9, opacity: 0.55 }}>P{i + 1}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -251,11 +177,10 @@ export function WagerPayout({ wager, selectedName, allNames, onPlayAgain, onLeav
           </div>
         </div>
 
-        {/* Roster reveal */}
         <div style={{ padding: '14px 18px 0' }}>
           <div style={{ fontSize: 10, letterSpacing: 4, color: 'rgba(120,144,232,0.7)', marginBottom: 8 }}>FINAL ROSTER</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {allNames.map(n => {
+            {(allNames || []).map(n => {
               const isPilot = n === wager.pilotName;
               const wasPicked = n === selectedName;
               return (
@@ -268,7 +193,7 @@ export function WagerPayout({ wager, selectedName, allNames, onPlayAgain, onLeav
                   fontSize: 12, letterSpacing: 2,
                   color: isPilot ? '#80e0e8' : '#e0e0e0'
                 }}>
-                  <span>{isPilot ? 'YOU · ' : 'AI · '}{n.toUpperCase()}</span>
+                  <span>{isPilot ? 'YOU · ' : 'AI · '}{(n || '').toUpperCase()}</span>
                   <span style={{ fontSize: 10, opacity: 0.75 }}>
                     {wasPicked
                       ? (wager.goal === 'winner' ? '★ WINNER' : '☓ LOSER')
@@ -280,7 +205,6 @@ export function WagerPayout({ wager, selectedName, allNames, onPlayAgain, onLeav
           </div>
         </div>
 
-        {/* Balance + buttons */}
         <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between',
                        alignItems: 'center', borderTop: '1px solid rgba(120,144,232,0.2)', marginTop: 12 }}>
           <div style={{ fontSize: 11, letterSpacing: 3, color: '#888' }}>
@@ -320,60 +244,16 @@ const panelStyle = {
   borderRadius: 8,
   boxShadow: '0 0 36px rgba(120,144,232,0.28), inset 0 0 18px rgba(120,144,232,0.06)',
 };
-const headerStyle = {
-  padding: '18px 18px 8px',
-  borderBottom: '1px solid rgba(120,144,232,0.25)',
-};
-function Row({ label, children }) {
-  return (
-    <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(120,144,232,0.12)' }}>
-      <div style={{ fontSize: 10, letterSpacing: 4, color: 'rgba(120,144,232,0.7)', marginBottom: 6 }}>{label}</div>
-      {children}
-    </div>
-  );
-}
 function chipStyle(active) {
   return {
     padding: '6px 12px',
     background: active ? 'rgba(165,180,252,0.22)' : 'transparent',
     border: '1px solid ' + (active ? 'rgba(165,180,252,0.8)' : 'rgba(120,144,232,0.3)'),
     color: active ? '#a5b4fc' : '#b0b0c0',
-    fontFamily: 'inherit', fontSize: 12, letterSpacing: 2,
+    fontFamily: 'inherit', fontSize: 10, letterSpacing: 2,
     borderRadius: 4, cursor: 'pointer',
   };
 }
-function catStyle(active) {
-  return {
-    padding: '8px 10px',
-    background: active ? 'rgba(165,180,252,0.18)' : 'transparent',
-    border: '1px solid ' + (active ? 'rgba(165,180,252,0.7)' : 'rgba(120,144,232,0.25)'),
-    color: active ? '#fff' : '#b0b0c0',
-    fontFamily: 'inherit', textAlign: 'center', borderRadius: 4, cursor: 'pointer',
-    transition: 'all 0.12s',
-  };
-}
-function rosterRowStyle(isPilot) {
-  return {
-    padding: '6px 10px',
-    background: isPilot ? 'rgba(64,200,216,0.12)' : 'rgba(0,0,0,0.25)',
-    border: '1px solid ' + (isPilot ? 'rgba(64,200,216,0.5)' : 'rgba(120,144,232,0.15)'),
-    color: isPilot ? '#80e0e8' : '#b0b0c0',
-    fontSize: 11, letterSpacing: 2, borderRadius: 4,
-  };
-}
-const sliderStyle = {
-  flex: 1, minWidth: 140, height: 22,
-  accentColor: '#a5b4fc',
-};
-const numberStyle = {
-  width: 80,
-  padding: '6px 8px',
-  background: 'rgba(0,0,0,0.4)',
-  border: '1px solid rgba(120,144,232,0.4)',
-  color: '#ffe080',
-  fontFamily: 'inherit', fontSize: 13, letterSpacing: 2,
-  borderRadius: 4, textAlign: 'right',
-};
 const cancelBtnStyle = {
   padding: '10px 16px',
   background: 'transparent',
