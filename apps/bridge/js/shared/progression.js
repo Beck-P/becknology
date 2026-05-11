@@ -294,6 +294,31 @@
   }
 
   /**
+   * Atomically deduct coins for a wager. Refuses to go negative.
+   * Returns { ok: true, balance } or { ok: false, reason }.
+   */
+  function wagerCoins(amount, gameKey) {
+    return resolvePilot().then(function (pilot) {
+      if (!pilot) return { ok: false, reason: 'no_pilot' };
+      var client = getClient();
+      if (!client) return { ok: false, reason: 'no_client' };
+      return client.rpc('wager_coins', {
+        p_pilot_id: pilot.id,
+        p_amount: Math.floor(amount),
+        p_game_key: gameKey
+      }).then(function (res) {
+        if (res.error) {
+          console.warn('[progression] wager_coins failed:', res.error);
+          return { ok: false, reason: 'error' };
+        }
+        var d = res.data || {};
+        if (d.ok) emitCoinChange(d.balance, -amount, 'wager:' + gameKey);
+        return d;
+      });
+    });
+  }
+
+  /**
    * Sell an item the pilot owns (whether on display or in locker).
    * Returns { ok: true, balance, origin } or { ok: false, reason }.
    */
@@ -411,6 +436,7 @@
     getLocker: getLocker,
     purchaseDecor: purchaseDecor,
     sellItem: sellItem,
+    wagerCoins: wagerCoins,
     storeDecor: storeDecor,
     placeDecor: placeDecor,
     onCoinChange: onCoinChange,

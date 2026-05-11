@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
 import './index.css';
 import { getSingleTotalSteps, getPlaybackConfig, getPlaybackConfigDiagnostics } from './playbackConfig';
+import { WagerPregame, WagerPayout, computePayout } from './Wager';
 
 let leaderboardModulePromise;
 let classicModePlaybacksPromise;
@@ -2725,6 +2726,124 @@ export default function ChoreChaosApp() {
   const [spectatorSeries, setSpectatorSeries] = useState(null);
   const [seriesTied, setSeriesTied] = useState(null);
   const [handoffReady, setHandoffReady] = useState(false);
+
+  // ── Bridge wager mode (active when loaded inside the cabinet modal iframe) ──
+  const [wagerMode, setWagerMode] = useState(false);
+  const [wagerPhase, setWagerPhase] = useState('pregame'); // 'pregame' | 'playing' | 'payout'
+  const [activeWager, setActiveWager] = useState(null);
+  const [wagerBalance, setWagerBalance] = useState(0);
+  const [wagerPilotName, setWagerPilotName] = useState('PILOT');
+
+  // Detect iframe context + read pilot identity from bridge localStorage.
+  useEffect(() => {
+    let inIframe = false;
+    try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
+    if (!inIframe) return;
+    setWagerMode(true);
+    try {
+      const p = (localStorage.getItem('bridge_pilot') || '').toUpperCase().trim();
+      if (p) setWagerPilotName(p);
+    } catch (e) {}
+    if (window.BridgeProgression && window.BridgeProgression.getBalance) {
+      window.BridgeProgression.getBalance().then((b) => {
+        if (b != null) setWagerBalance(b);
+      });
+    }
+  }, []);
+
+  // When the bridge wager game finishes (playback complete and a result
+  // exists), reckon the outcome and award the payout.
+  const wagerResolvedRef = useRef(null);
+  useEffect(() => {
+    if (!wagerMode || wagerPhase !== 'playing') return;
+    if (!playbackDone || !result || result.isTie) return;
+    if (wagerResolvedRef.current === result.runId) return; // already resolved
+    wagerResolvedRef.current = result.runId;
+
+    const w = activeWager;
+    if (!w) return;
+    const pilotPicked = result.selectedName === w.pilotName;
+    const won = (w.goal === 'winner' ? pilotPicked : !pilotPicked);
+    const payout = computePayout(w.amount, w.goal, won);
+
+    const finish = (newBalance) => {
+      setActiveWager({
+        ...w,
+        won,
+        payout,
+        selectedName: result.selectedName,
+        allNames: [w.pilotName, ...w.fakeNames],
+      });
+      if (newBalance != null) setWagerBalance(newBalance);
+      setWagerPhase('payout');
+    };
+
+    if (payout > 0 && window.BridgeProgression && window.BridgeProgression.awardCoins) {
+      window.BridgeProgression.awardCoins(payout, 'runouts_wager_' + w.goal + '_win')
+        .then((b) => finish(typeof b === 'number' ? b : null));
+    } else {
+      finish(null);
+    }
+  }, [wagerMode, wagerPhase, playbackDone, result, activeWager]);
+
+  // Begin a wager: deduct + set up Runouts state + start the chosen game.
+  const handleWagerPlay = useCallback(async (opts) => {
+    if (!window.BridgeProgression || !window.BridgeProgression.wagerCoins) return;
+    const res = await window.BridgeProgression.wagerCoins(opts.amount, 'runouts');
+    if (!res || !res.ok) {
+      // Insufficient or error — just stay on pregame; could surface a toast later.
+      if (res && typeof res.balance === 'number') setWagerBalance(res.balance);
+      return;
+    }
+    setWagerBalance(res.balance);
+    const newNames = [opts.pilotName, ...opts.fakeNames];
+    setNames(newNames);
+    setSelectionGoal(opts.goal);
+    setSelectedModeId(opts.forcedModeId || 'auto');
+    setGameFormat('single');
+    setActiveWager({
+      amount: opts.amount,
+      goal: opts.goal,
+      pilotName: opts.pilotName,
+      fakeNames: opts.fakeNames,
+      forcedModeId: opts.forcedModeId,
+      category: opts.category,
+    });
+    setWagerPhase('playing');
+    // Allow state to flush, then start the round.
+    setTimeout(() => {
+      try {
+        startGame(opts.forcedModeId || null);
+      } catch (e) {
+        console.warn('wager: failed to start game', e);
+        setWagerPhase('pregame');
+      }
+    }, 80);
+  }, []);
+
+  // After payout, reset everything for a fresh wager.
+  const handleWagerPlayAgain = useCallback(() => {
+    wagerResolvedRef.current = null;
+    setActiveWager(null);
+    setResult(null);
+    setPlaybackStep(0);
+    setPlaybackDone(false);
+    setGameActive(false);
+    setWagerPhase('pregame');
+    // Refresh balance defensively
+    if (window.BridgeProgression && window.BridgeProgression.getBalance) {
+      window.BridgeProgression.getBalance().then((b) => { if (b != null) setWagerBalance(b); });
+    }
+  }, []);
+
+  // Player asks to leave the modal from the wager UI — postMessage parent.
+  const handleWagerLeave = useCallback(() => {
+    try {
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'bridge-request-close', source: 'wager-leave' }, '*');
+      }
+    } catch (e) {}
+  }, []);
 
   const fetchLeaderboard = useCallback(async () => {
     if (!_supabase) { setLeaderboardLoading(false); return; }
@@ -6394,6 +6513,26 @@ export default function ChoreChaosApp() {
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {/* Bridge wager overlays — rendered on top of everything when active */}
+      {wagerMode && wagerPhase === 'pregame' && (
+        <WagerPregame
+          pilotName={wagerPilotName}
+          balance={wagerBalance}
+          onPlay={handleWagerPlay}
+          onLeave={handleWagerLeave}
+        />
+      )}
+      {wagerMode && wagerPhase === 'payout' && activeWager && (
+        <WagerPayout
+          wager={activeWager}
+          selectedName={activeWager.selectedName}
+          allNames={activeWager.allNames}
+          balance={wagerBalance}
+          onPlayAgain={handleWagerPlayAgain}
+          onLeave={handleWagerLeave}
+        />
+      )}
     </div>
   );
 }
