@@ -120,7 +120,8 @@ export function PlayerActionBar({ pendingAction, onAction, playerName, rankLabel
           </>
         ) : pendingAction.action === 'pass_bomb' && !isMyTurn ? (
           <div className="pixel-font text-[9px] text-red-400">
-            Bomb is with {pendingAction.playerName}... {(pendingAction.tickNumber || 0) + 1}/{pendingAction.totalTicks || '?'}
+            Bomb is with {pendingAction.playerName}...
+            {pendingAction.round ? ` round ${pendingAction.round}` : ` ${(pendingAction.tickNumber || 0) + 1}/${pendingAction.totalTicks || '?'}`}
           </div>
         ) : pendingAction.action === 'draw' && isMyTurn ? (
           <>

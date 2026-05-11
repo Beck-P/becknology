@@ -614,14 +614,28 @@ export function BombPlayback({ result, step, done, interactiveBombState, ModeHea
   const [tickIndex, setTickIndex] = useState(0);
   const [exploded, setExploded] = useState(false);
   const [shaking, setShaking] = useState(false);
+  const [nowTime, setNowTime] = useState(Date.now());
   const startTimeRef = React.useRef(null);
   const animFrameRef = React.useRef(null);
   const tickIndexRef = React.useRef(0);
 
   const isInteractive = !!interactiveBombState;
+  // Elimination format (multi-round, last alive wins) is detected by the
+  // presence of an `alive` list. Legacy single-round bomb keeps its
+  // sequence-based playback.
+  const eliminationMode = !!(interactiveBombState && interactiveBombState.alive);
+  const PASS_TIMEOUT_MS = 4000;
   const totalTicks = result.totalTicks;
   const sequence = result.sequence;
   const playerNames = result.players.map(p => p.name);
+
+  // Tick the clock so the time-based fuse bar re-renders smoothly.
+  useEffect(() => {
+    if (!eliminationMode) return;
+    if (!interactiveBombState || interactiveBombState.phase !== 'playing') return;
+    const id = setInterval(() => setNowTime(Date.now()), 100);
+    return () => clearInterval(id);
+  }, [eliminationMode, interactiveBombState?.phase]);
 
   function getTickInterval(idx) {
     const remaining = totalTicks - idx;
@@ -688,41 +702,81 @@ export function BombPlayback({ result, step, done, interactiveBombState, ModeHea
 
   // Interactive mode: derive display state from interactiveBombState
   const iTickIndex = isInteractive ? (interactiveBombState.tickNumber || 0) : tickIndex;
-  const iExploded = isInteractive ? (interactiveBombState.phase === 'detonated') : exploded;
+  const legacyExploded = isInteractive ? (interactiveBombState.phase === 'detonated') : exploded;
+  const iExploded = eliminationMode
+    ? (interactiveBombState.phase === 'gameOver')
+    : legacyExploded;
   const iHolder = isInteractive
     ? interactiveBombState.holder
     : (tickIndex < totalTicks ? sequence[tickIndex] : sequence[totalTicks - 1]);
-  const iPhase = isInteractive
-    ? (interactiveBombState.phase === 'detonated' ? 'complete' : 'ticking')
-    : phase;
+  const iPhase = eliminationMode
+    ? (interactiveBombState.phase === 'gameOver' ? 'complete' : 'ticking')
+    : (isInteractive
+        ? (interactiveBombState.phase === 'detonated' ? 'complete' : 'ticking')
+        : phase);
 
   const currentHolder = iHolder;
-  const fusePercent = totalTicks > 0 ? Math.max(0, 1 - iTickIndex / totalTicks) : 1;
+
+  let fusePercent;
+  if (eliminationMode) {
+    if (interactiveBombState.phase === 'playing') {
+      const passLeft = Math.max(0, (interactiveBombState.holderStartedAt + PASS_TIMEOUT_MS) - nowTime);
+      const roundLeft = Math.max(0, (interactiveBombState.roundStartedAt + interactiveBombState.roundDurationMs) - nowTime);
+      // Show whichever fuse is shorter, normalized to its own max.
+      if (passLeft <= roundLeft) {
+        fusePercent = passLeft / PASS_TIMEOUT_MS;
+      } else {
+        fusePercent = roundLeft / interactiveBombState.roundDurationMs;
+      }
+    } else {
+      fusePercent = 0;
+    }
+  } else {
+    fusePercent = totalTicks > 0 ? Math.max(0, 1 - iTickIndex / totalTicks) : 1;
+  }
   const isComplete = iPhase === 'complete' || done;
 
-  // Trigger shaking on interactive detonation
+  // Trigger shaking on detonation
   useEffect(() => {
-    if (isInteractive && interactiveBombState.phase === 'detonated' && !shaking) {
+    if (!isInteractive) return;
+    const detonated = eliminationMode
+      ? (interactiveBombState.phase === 'exploded' || interactiveBombState.phase === 'gameOver')
+      : interactiveBombState.phase === 'detonated';
+    if (detonated && !shaking) {
       setShaking(true);
       setTimeout(() => setShaking(false), 500);
     }
-  }, [isInteractive, interactiveBombState?.phase]);
+  }, [isInteractive, eliminationMode, interactiveBombState?.phase]);
 
   const angleStep = (2 * Math.PI) / playerNames.length;
   const radius = playerNames.length <= 4 ? 100 : playerNames.length <= 6 ? 120 : 140;
 
   // Determine the selected name for explosion display
-  const explodedName = isInteractive
-    ? (interactiveBombState.phase === 'detonated' ? interactiveBombState.holder : null)
-    : result.selectedName;
+  const explodedName = eliminationMode
+    ? (interactiveBombState.phase === 'gameOver' ? null : (interactiveBombState.phase === 'exploded' ? interactiveBombState.holder : null))
+    : (isInteractive
+        ? (interactiveBombState.phase === 'detonated' ? interactiveBombState.holder : null)
+        : result.selectedName);
+
+  const elimAlive = eliminationMode ? (interactiveBombState.alive || []) : null;
+  const elimEliminated = eliminationMode ? (interactiveBombState.eliminated || []) : null;
+  const elimWinner = eliminationMode ? interactiveBombState.winner : null;
+  const headerPending = eliminationMode
+    ? (interactiveBombState.phase === 'gameOver'
+        ? `${elimWinner || 'Survivor'} wins!`
+        : `Round ${interactiveBombState.round || 1} • ${elimAlive ? elimAlive.length : ''} alive`)
+    : (iPhase === 'ready' ? 'Bomb is armed...' : iExploded ? 'KABOOM!' : `Tick ${iTickIndex} of ${totalTicks}`);
+  const headerSummary = eliminationMode
+    ? "Pass in 4s or it goes off in your hands. Round fuse is random — anywhere from 5 to 30 seconds."
+    : "Don't be holding the bomb when it blows.";
 
   return (
     <div className="space-y-4">
       <ModeHeader
         result={result}
         done={isComplete}
-        pendingText={iPhase === 'ready' ? 'Bomb is armed...' : iExploded ? 'KABOOM!' : `Tick ${iTickIndex} of ${totalTicks}`}
-        pendingSummary="Don't be holding the bomb when it blows."
+        pendingText={headerPending}
+        pendingSummary={headerSummary}
       />
 
       <div
@@ -756,9 +810,13 @@ export function BombPlayback({ result, step, done, interactiveBombState, ModeHea
               const angle = angleStep * idx - Math.PI / 2;
               const x = Math.cos(angle) * radius + radius + 40;
               const y = Math.sin(angle) * radius + radius + 40;
-              const isHolding = !iExploded && currentHolder === name;
-              const isExplodedOn = iExploded && name === explodedName;
-              const isSafe = iExploded && name !== explodedName;
+              const isEliminated = eliminationMode && elimEliminated.includes(name);
+              const isWinner = eliminationMode && interactiveBombState.phase === 'gameOver' && name === elimWinner;
+              const isHolding = !iExploded && currentHolder === name && !isEliminated;
+              const isExplodedOn = eliminationMode
+                ? (interactiveBombState.phase === 'exploded' && name === explodedName)
+                : (iExploded && name === explodedName);
+              const isSafe = !eliminationMode && iExploded && name !== explodedName;
 
               return (
                 <motion.div
@@ -771,15 +829,32 @@ export function BombPlayback({ result, step, done, interactiveBombState, ModeHea
                   }}
                   animate={{
                     scale: isHolding ? [1, 1.05, 1] : 1,
+                    opacity: isEliminated ? 0.35 : 1,
                   }}
                   transition={{ duration: 0.3, repeat: isHolding ? Infinity : 0 }}
                 >
                   <div
                     className="rounded-xl px-2 py-2 text-center"
                     style={{
-                      background: isExplodedOn ? 'rgba(239,68,68,0.3)' : isSafe ? 'rgba(34,197,94,0.15)' : isHolding ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)',
-                      border: `1px solid ${isExplodedOn ? 'rgba(239,68,68,0.6)' : isSafe ? 'rgba(34,197,94,0.4)' : isHolding ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                      boxShadow: isHolding ? '0 0 12px rgba(239,68,68,0.3)' : isExplodedOn ? '0 0 16px rgba(239,68,68,0.4)' : 'none',
+                      background: isEliminated ? 'rgba(60,60,80,0.25)'
+                        : isWinner ? 'rgba(34,197,94,0.25)'
+                        : isExplodedOn ? 'rgba(239,68,68,0.3)'
+                        : isSafe ? 'rgba(34,197,94,0.15)'
+                        : isHolding ? 'rgba(239,68,68,0.15)'
+                        : 'rgba(255,255,255,0.06)',
+                      border: `1px solid ${
+                        isEliminated ? 'rgba(120,120,140,0.3)'
+                        : isWinner ? 'rgba(34,197,94,0.6)'
+                        : isExplodedOn ? 'rgba(239,68,68,0.6)'
+                        : isSafe ? 'rgba(34,197,94,0.4)'
+                        : isHolding ? 'rgba(239,68,68,0.4)'
+                        : 'rgba(255,255,255,0.1)'
+                      }`,
+                      boxShadow: isWinner ? '0 0 14px rgba(34,197,94,0.4)'
+                        : isHolding ? '0 0 12px rgba(239,68,68,0.3)'
+                        : isExplodedOn ? '0 0 16px rgba(239,68,68,0.4)'
+                        : 'none',
+                      filter: isEliminated ? 'grayscale(0.6)' : 'none',
                     }}
                   >
                     {isHolding && !iExploded ? (
@@ -793,9 +868,18 @@ export function BombPlayback({ result, step, done, interactiveBombState, ModeHea
                       >
                         💥
                       </motion.div>
+                    ) : isWinner ? (
+                      <div className="text-lg">🏆</div>
+                    ) : isEliminated ? (
+                      <div className="text-base" style={{ opacity: 0.7 }}>☠️</div>
                     ) : null}
                     <div className="pixel-font text-[7px]" style={{
-                      color: isExplodedOn ? '#fca5a5' : isSafe ? '#86efac' : isHolding ? '#fca5a5' : '#94a3b8',
+                      color: isEliminated ? '#9ca3af'
+                        : isWinner ? '#86efac'
+                        : isExplodedOn ? '#fca5a5'
+                        : isSafe ? '#86efac'
+                        : isHolding ? '#fca5a5'
+                        : '#94a3b8',
                     }}>
                       {name}
                     </div>

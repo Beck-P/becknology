@@ -1971,6 +1971,31 @@ function generateTickTimings(totalTicks) {
 
 function buildBombResult(names, taskLabel, selectionGoal) {
   const modeName = "Bomb";
+  const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+
+  // Interactive bomb is elimination-style: each round explodes on whoever
+  // holds it; last alive wins. The interactive useEffect drives all state.
+  if (isInteractive) {
+    return {
+      modeId: "bomb",
+      modeName,
+      selectionGoal: "winner",
+      selectedName: null,
+      isTie: false,
+      headline: "Hot Potato — last alive wins",
+      summary: "Pass within 4 seconds or the bomb goes off in your hands. Last one standing wins.",
+      eliminationMode: true,
+      players: names.map((name) => ({
+        name,
+        selected: false,
+        headline: "Alive",
+        subline: "Pass fast.",
+        rank: 0,
+        chips: ["Alive"],
+      })),
+    };
+  }
+
   const totalTicks = 15 + secureRandomInt(16);
   const selectedName = pickRandom(names);
   const sequence = [];
@@ -2807,7 +2832,7 @@ export default function ChoreChaosApp() {
   const wagerResolvedRef = useRef(null);
   useEffect(() => {
     if (!wagerMode || wagerPhase !== 'playing') return;
-    if (!result || result.isTie) return;
+    if (!result) return;
     const w = activeWager;
     if (!w) return;
 
@@ -2817,15 +2842,37 @@ export default function ChoreChaosApp() {
     let pickedName = null;
     let resolveKey = null;
 
-    if (inSeries) {
-      if (!seriesComplete) return; // wait for series end
-      // The "winning" name in a series is whoever has the most points.
-      let topName = null, topScore = -Infinity;
-      Object.entries(seriesScoreRef.current || seriesScores || {}).forEach(([n, s]) => {
-        if (s > topScore) { topScore = s; topName = n; }
-      });
-      pickedName = topName;
-      resolveKey = 'series-' + (result?.runId || '') + '-' + (seriesConfig.totalRounds || '');
+    // Tie handling: only stall for sudden death if the pilot is in the tied
+    // group. Otherwise the outcome is already decided for the pilot — they
+    // didn't win (round tie) or didn't lose (round tie), so resolve now.
+    if (result.isTie) {
+      const tiedNames = result.tiedNames || [];
+      if (tiedNames.includes(w.pilotName)) return; // pilot in tie → wait for sudden death
+      if (inSeries && !seriesComplete) return; // series mid-flight, let it continue
+      if (!inSeries && !playbackDone) return;
+      // Pilot is definitively not the picked one; surface a tied name for display.
+      pickedName = tiedNames[secureRandomInt(tiedNames.length)] || null;
+      resolveKey = (result.runId || '') + '-tie-skipped';
+    } else if (inSeries) {
+      if (!seriesComplete) {
+        // Series tied at the top — only stall for sudden death if pilot is tied.
+        if (seriesTied && seriesTied.length > 1) {
+          if (seriesTied.includes(w.pilotName)) return; // pilot in series tie → wait
+          // Resolve immediately: pilot isn't at the top, so they didn't win the series.
+          pickedName = seriesTied[secureRandomInt(seriesTied.length)] || null;
+          resolveKey = 'series-tied-skipped-' + (result?.runId || '');
+        } else {
+          return; // wait for series end
+        }
+      } else {
+        // The "winning" name in a series is whoever has the most points.
+        let topName = null, topScore = -Infinity;
+        Object.entries(seriesScoreRef.current || seriesScores || {}).forEach(([n, s]) => {
+          if (s > topScore) { topScore = s; topName = n; }
+        });
+        pickedName = topName;
+        resolveKey = 'series-' + (result?.runId || '') + '-' + (seriesConfig.totalRounds || '');
+      }
     } else {
       if (!playbackDone) return;
       pickedName = result.selectedName;
@@ -2858,7 +2905,7 @@ export default function ChoreChaosApp() {
     } else {
       finish(null);
     }
-  }, [wagerMode, wagerPhase, playbackDone, result, activeWager, seriesActive, seriesComplete, seriesConfig, seriesScores]);
+  }, [wagerMode, wagerPhase, playbackDone, result, activeWager, seriesActive, seriesComplete, seriesConfig, seriesScores, seriesTied]);
 
   // Deduct the wager and then proxy through to the normal startGame. Used
   // as a wrapper around the existing "AUTO" / specific-mode buttons in
@@ -2948,7 +2995,6 @@ export default function ChoreChaosApp() {
       reroll_dice: 1500,
       draw: 1500,
       drop_plinko: 400,
-      pass_bomb: 700,
       shield: 800,
       // Decision-only / multi-turn — fast & hidden
       choose_cards: 30,
@@ -2983,12 +3029,10 @@ export default function ChoreChaosApp() {
           case 'shield':
             handler({ action: a, playerName });
             break;
-          case 'pass_bomb': {
-            const targets = pendingAction.targets || [];
-            const target = targets.length ? targets[Math.floor(Math.random() * targets.length)] : null;
-            handler({ action: a, playerName, target });
+          case 'pass_bomb':
+            // Handled by the bomb-specific AI useEffect, which respects the
+            // 4-second per-pass timer and shows the suspense in the UI.
             break;
-          }
           case 'pick_stock': {
             const pool = pendingAction.stockPool || [];
             const taken = pendingAction.taken || {};
@@ -3225,7 +3269,14 @@ export default function ChoreChaosApp() {
     };
   }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone]);
 
-  // Interactive Bomb turn management
+  // Interactive Bomb — elimination format
+  //   Each round: bomb starts in a random alive player's hands. Holder has
+  //   4s to click someone to throw to; if they don't, the bomb explodes on
+  //   them. Independently, the round has a 5-30s total fuse — when it
+  //   reaches 0 the bomb explodes on whoever is currently holding it.
+  //   Eliminated player is removed; new round starts with remaining alive.
+  //   Last alive wins the game.
+  const PASS_TIMEOUT_MS = 4000;
   useEffect(() => {
     if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'bomb') return;
     if (playbackDone) {
@@ -3234,141 +3285,147 @@ export default function ChoreChaosApp() {
       return;
     }
 
-    // Initialize bomb state on first run
-    if (!interactiveBombState && playbackStep >= 0) {
-      const firstHolder = result.players[secureRandomInt(result.players.length)].name;
-      const state = {
+    // Initialize: first round
+    if (!interactiveBombState) {
+      const aliveNames = result.players.map(p => p.name);
+      const firstHolder = aliveNames[secureRandomInt(aliveNames.length)];
+      const now = Date.now();
+      const roundDurationMs = 5000 + secureRandomInt(25001); // 5-30s
+      setInteractiveBombState({
+        alive: aliveNames,
+        eliminated: [],
         holder: firstHolder,
-        previousHolder: null,
-        tickNumber: 0,
-        sequence: [firstHolder],
-        phase: 'waiting',
-      };
-      setInteractiveBombState(state);
-      return; // Let the next render pick up the new state
-    }
-
-    if (!interactiveBombState || interactiveBombState.phase !== 'waiting') return;
-
-    const { holder, previousHolder, tickNumber, sequence } = interactiveBombState;
-    const totalTicks = result.totalTicks;
-    const tickTimings = result.tickTimings;
-
-    // Check if bomb should detonate
-    if (tickNumber >= totalTicks - 1) {
-      const selectedName = holder;
-      // Build final result
-      const timesHeld = {};
-      result.players.forEach(p => { timesHeld[p.name] = 0; });
-      sequence.forEach(n => { timesHeld[n] = (timesHeld[n] || 0) + 1; });
-
-      const headline = pickRandomMessage(
-        result.selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
-        selectedName,
-        result.selectionGoal === "winner" ? "win" : "lose"
-      );
-
-      const finalPlayers = result.players.map(p => ({
-        ...p,
-        selected: p.name === selectedName,
-        timesHeld: timesHeld[p.name] || 0,
-        headline: p.name === selectedName ? "BOOM!" : "Survived",
-        subline: `Held the bomb ${timesHeld[p.name] || 0} time${(timesHeld[p.name] || 0) !== 1 ? 's' : ''}`,
-        chips: p.name === selectedName ? ["💥", `Held ${timesHeld[p.name] || 0}x`] : ["Safe", `Held ${timesHeld[p.name] || 0}x`],
-      }));
-      const sorted = [...finalPlayers].sort((a, b) => a.timesHeld - b.timesHeld);
-      sorted.forEach((p, i) => { p.rank = i + 1; });
-      // Apply ranks back
-      finalPlayers.forEach(p => {
-        const s = sorted.find(x => x.name === p.name);
-        if (s) p.rank = s.rank;
+        holderStartedAt: now,
+        roundStartedAt: now,
+        roundDurationMs,
+        round: 1,
+        phase: 'playing',
       });
-
-      // Update result object in place
-      result.selectedName = selectedName;
-      result.headline = headline;
-      result.summary = `The bomb went off in ${selectedName}'s hands.`;
-      result.sequence = sequence;
-      result.players = finalPlayers;
-      result.isTie = false;
-
-      setInteractiveBombState(prev => ({ ...prev, phase: 'detonated' }));
-
-      broadcastEvent({ type: 'bomb_detonated', holder: selectedName, finalResult: result });
-
-      // Trigger completion
-      setPlaybackDone(true);
-      setPlaybackStep(2);
-      setPendingAction(null);
-      currentActionHandler.current = null;
-
-      // Record to leaderboard
-      pushHistory(result);
       return;
     }
 
-    // Normal tick: prompt current holder to pass
-    const targets = result.players
-      .map(p => p.name)
-      .filter(n => n !== holder && (previousHolder === null || n !== previousHolder || result.players.length <= 2));
+    const state = interactiveBombState;
+    if (state.phase === 'gameOver') return;
 
-    const timeoutMs = tickTimings[tickNumber] || 500;
+    // Process an explosion: eliminate the holder, then either start the
+    // next round or end the game.
+    if (state.phase === 'exploded') {
+      const eliminatedNow = state.holder;
+      const newAlive = state.alive.filter(n => n !== eliminatedNow);
+      const newEliminated = [...state.eliminated, eliminatedNow];
 
-    broadcastEvent({
-      type: 'turn_prompt',
-      playerName: holder,
-      action: 'pass_bomb',
-      targets,
-      timeoutMs,
-    });
+      if (newAlive.length <= 1) {
+        const winner = newAlive[0] || eliminatedNow;
+        const finalPlayers = result.players.map(p => {
+          const isWinner = p.name === winner;
+          const elimIdx = newEliminated.indexOf(p.name);
+          const elimRound = elimIdx >= 0 ? elimIdx + 1 : null;
+          return {
+            ...p,
+            selected: isWinner,
+            headline: isWinner ? 'LAST ALIVE' : 'BOOM',
+            subline: isWinner ? `Survived ${newEliminated.length} round${newEliminated.length === 1 ? '' : 's'}` : `Out round ${elimRound}`,
+            chips: isWinner ? ['🏆 Survivor'] : [`Round ${elimRound}`],
+          };
+        });
+        result.selectedName = winner;
+        result.headline = pickRandomMessage(WIN_MESSAGES, winner, 'win');
+        result.summary = `${winner} survived ${newEliminated.length} round${newEliminated.length === 1 ? '' : 's'} of bomb passing.`;
+        result.players = finalPlayers;
+        result.isTie = false;
 
-    broadcastEvent({
-      type: 'bomb_state',
-      holder,
-      tickNumber,
-      totalTicks,
-      timeoutMs,
-    });
+        setInteractiveBombState({
+          ...state,
+          alive: newAlive,
+          eliminated: newEliminated,
+          phase: 'gameOver',
+          winner,
+        });
+        setPlaybackDone(true);
+        setPlaybackStep(2);
+        setPendingAction(null);
+        currentActionHandler.current = null;
+        pushHistory(result);
+        broadcastEvent({ type: 'bomb_game_over', winner, finalResult: result });
+        return;
+      }
+
+      // Next round
+      const newHolder = newAlive[secureRandomInt(newAlive.length)];
+      const now = Date.now();
+      const roundDurationMs = 5000 + secureRandomInt(25001);
+      setInteractiveBombState({
+        alive: newAlive,
+        eliminated: newEliminated,
+        holder: newHolder,
+        holderStartedAt: now,
+        roundStartedAt: now,
+        roundDurationMs,
+        round: state.round + 1,
+        phase: 'playing',
+      });
+      broadcastEvent({ type: 'bomb_round_start', round: state.round + 1, alive: newAlive, eliminated: newEliminated, holder: newHolder });
+      return;
+    }
+
+    if (state.phase !== 'playing') return;
+
+    const { holder, alive, holderStartedAt, roundStartedAt, roundDurationMs } = state;
+    const targets = alive.filter(n => n !== holder);
+
+    const now = Date.now();
+    const passDeadline = holderStartedAt + PASS_TIMEOUT_MS;
+    const roundDeadline = roundStartedAt + roundDurationMs;
+    const explodeAt = Math.min(passDeadline, roundDeadline);
+    const explodeInMs = Math.max(0, explodeAt - now);
 
     setPendingAction({
       type: 'turn',
       playerName: holder,
       action: 'pass_bomb',
       targets,
-      deadline: Date.now() + timeoutMs,
-      tickNumber,
-      totalTicks,
+      deadline: explodeAt,
+      round: state.round,
+      alive,
+      eliminated: state.eliminated,
     });
 
     currentActionHandler.current = (payload) => {
       if (payload.action !== 'pass_bomb' || payload.playerName !== holder) return;
       const target = targets.includes(payload.target) ? payload.target : targets[secureRandomInt(targets.length)];
-
-      setInteractiveBombState(prev => ({
+      if (!target) return;
+      setInteractiveBombState((prev) => ({
+        ...prev,
         holder: target,
-        previousHolder: holder,
-        tickNumber: prev.tickNumber + 1,
-        sequence: [...prev.sequence, target],
-        phase: 'waiting',
+        holderStartedAt: Date.now(),
       }));
+      broadcastEvent({ type: 'bomb_pass', from: holder, to: target });
     };
 
-    // Timeout: auto-pass
     const timer = setTimeout(() => {
-      const target = targets[secureRandomInt(targets.length)];
-      setInteractiveBombState(prev => ({
-        holder: target,
-        previousHolder: holder,
-        tickNumber: prev.tickNumber + 1,
-        sequence: [...prev.sequence, target],
-        phase: 'waiting',
-      }));
-    }, timeoutMs);
+      // Explosion — could be pass-timeout (on current holder) or round-timeout.
+      setInteractiveBombState((prev) => prev ? { ...prev, phase: 'exploded' } : prev);
+    }, explodeInMs);
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, interactiveBombState]);
+    return () => clearTimeout(timer);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackDone, interactiveBombState]);
+
+  // Wager mode: AI players auto-pass within 1-3s when they're holding the bomb.
+  useEffect(() => {
+    if (!wagerMode) return;
+    if (!interactiveBombState || interactiveBombState.phase !== 'playing') return;
+    if (interactiveBombState.holder === wagerPilotName) return; // human's turn
+    const targets = (interactiveBombState.alive || []).filter(n => n !== interactiveBombState.holder);
+    if (!targets.length) return;
+    const delay = 1000 + secureRandomInt(2000);
+    const timer = setTimeout(() => {
+      const handler = currentActionHandler.current;
+      if (!handler) return;
+      const target = targets[secureRandomInt(targets.length)];
+      handler({ action: 'pass_bomb', playerName: interactiveBombState.holder, target });
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [wagerMode, wagerPilotName, interactiveBombState]);
 
   // Interactive Rocket eject management
   useEffect(() => {
