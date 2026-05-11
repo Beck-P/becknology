@@ -2972,7 +2972,7 @@ export default function ChoreChaosApp() {
       } catch (e) {
         console.warn('[wager] AI auto-play handler failed:', a, e);
       }
-    }, 900 + Math.floor(Math.random() * 600)); // 0.9-1.5s for visual rhythm
+    }, 30); // near-instant — AI turns happen invisibly to the player
 
     return () => clearTimeout(id);
   }, [wagerMode, wagerPilotName, pendingAction]);
@@ -3034,12 +3034,18 @@ export default function ChoreChaosApp() {
 
   useEffect(() => { window.__interactiveMode = interactiveMode || localInteractiveMode; }, [interactiveMode, localInteractiveMode]);
 
-  // In local interactive mode, track playerName to whoever's turn it is
+  // In local interactive mode, track playerName to whoever's turn it is.
+  // In wager mode the player is always the pilot — never rotate to an AI,
+  // so the UI doesn't flip to "pass the device" for AI turns.
   useEffect(() => {
+    if (wagerMode) {
+      setPlayerName(wagerPilotName);
+      return;
+    }
     if (localInteractiveMode && pendingAction?.playerName) {
       setPlayerName(pendingAction.playerName);
     }
-  }, [localInteractiveMode, pendingAction?.playerName]);
+  }, [wagerMode, wagerPilotName, localInteractiveMode, pendingAction?.playerName]);
 
   // Reset handoff when pending action changes to a new player
   useEffect(() => {
@@ -5545,9 +5551,11 @@ export default function ChoreChaosApp() {
               <button onClick={leaveRoom} className="mt-6 font-mono text-xs text-slate-500 hover:text-slate-300 transition">
                 ← Leave room
               </button>
-              <React.Suspense fallback={null}>
-                <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
-              </React.Suspense>
+              {(wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName) ? null : (
+                <React.Suspense fallback={null}>
+                  <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
+                </React.Suspense>
+              )}
             </>
           )}
         </div>
@@ -5645,7 +5653,7 @@ export default function ChoreChaosApp() {
               </div>
             </div>
           </div>
-          {pendingAction?.action !== 'vote_game' ? (
+          {pendingAction?.action !== 'vote_game' && !(wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName) ? (
             <React.Suspense fallback={null}>
               <PlayerActionBar pendingAction={pendingAction} onAction={sendPlayerAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
             </React.Suspense>
@@ -6415,7 +6423,7 @@ export default function ChoreChaosApp() {
                             </div>
                           );
                         })()
-                      ) : localInteractiveMode && isPrivateAction(pendingAction.action) && !handoffReady ? (
+                      ) : localInteractiveMode && isPrivateAction(pendingAction.action) && !handoffReady && !(wagerMode && pendingAction.playerName !== wagerPilotName) ? (
                         <div className="rounded-2xl border border-indigo-500/20 bg-[#0a0a1a] p-8 text-center">
                           <div className="pixel-font text-[9px] text-slate-500 uppercase tracking-widest mb-4">Pass the device</div>
                           <div className="pixel-font text-xl text-indigo-300 mb-6" style={{ textShadow: '0 0 10px rgba(99,102,241,0.5)' }}>
@@ -6430,9 +6438,11 @@ export default function ChoreChaosApp() {
                           </button>
                         </div>
                       ) : (
-                        <React.Suspense fallback={null}>
-                          <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
-                        </React.Suspense>
+                        (wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName) ? null : (
+                          <React.Suspense fallback={null}>
+                            <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
+                          </React.Suspense>
+                        )
                       )}
                     </div>
                   ) : null}
