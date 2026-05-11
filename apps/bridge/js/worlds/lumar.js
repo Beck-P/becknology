@@ -53,6 +53,101 @@
     ctx.fillRect(x, y + 4*u, ts, u);
   }
 
+  // Black cliff — dark basalt face, impassable. Layered jagged silhouettes
+  // suggest a vertical rockface even though we're top-down. Deterministic
+  // 1u speckles + a few catch-light sparkles so the cliff doesn't read flat.
+  function drawBlackCliff(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    var seed = (col * 23 + row * 41) % 100;
+    var DEEP = '#06080c';
+    var STONE = '#0e1218';
+    var STONE_HI = '#1a2030';
+    var FISSURE = '#020308';
+    var SPARK = '#3a4858';
+    // Base slab — almost black
+    ctx.fillStyle = DEEP;
+    ctx.fillRect(x, y, ts, ts);
+    // Lighter top edge (catches moonlight)
+    ctx.fillStyle = STONE;
+    ctx.fillRect(x, y, ts, 5*u);
+    // 1u top highlight ridge
+    ctx.fillStyle = STONE_HI;
+    ctx.fillRect(x, y, ts, u);
+    // Jagged silhouette break — 2u stepped notch in the top edge per seed
+    if (seed < 30) {
+      ctx.fillStyle = DEEP;
+      ctx.fillRect(x + 3*u, y, 4*u, 2*u);
+    } else if (seed < 55) {
+      ctx.fillStyle = DEEP;
+      ctx.fillRect(x + 9*u, y, 3*u, 2*u);
+    }
+    // Vertical fissures — 1u dark cracks running down
+    ctx.fillStyle = FISSURE;
+    var off1 = (row % 2 === 0) ? 5 : 9;
+    var off2 = (row % 2 === 0) ? 12 : 2;
+    ctx.fillRect(x + off1*u, y + 5*u, u, 11*u);
+    ctx.fillRect(x + off2*u, y + 7*u, u, 9*u);
+    // 1u rough chunks (deterministic pebble pattern)
+    ctx.fillStyle = STONE;
+    if (seed > 20) ctx.fillRect(x + 2*u, y + 9*u, 2*u, u);
+    if (seed > 45) ctx.fillRect(x + 7*u, y + 12*u, 2*u, u);
+    if (seed > 65) ctx.fillRect(x + 11*u, y + 6*u, 2*u, u);
+    if (seed > 80) ctx.fillRect(x + 4*u, y + 14*u, u, u);
+    // Catch-light sparkles — animated faintly like wet stone reflecting moonlight
+    var sparkle = (Math.sin(time / 1600 + col * 1.3 + row * 0.7) + 1) * 0.5;
+    ctx.globalAlpha = 0.15 + sparkle * 0.18;
+    ctx.fillStyle = SPARK;
+    if (seed % 7 === 0) ctx.fillRect(x + 8*u, y + 3*u, u, u);
+    if (seed % 11 === 0) ctx.fillRect(x + 13*u, y + 11*u, u, u);
+    ctx.globalAlpha = 1;
+  }
+
+  // Stone steps / trail tile — walkable cobblestone path with a slight
+  // worn look. Used for the cliff trail in the harbor.
+  function drawCliffTrail(ctx, x, y, ts, time, col, row) {
+    time = time || 0; col = col || 0; row = row || 0;
+    var u = ts / 16;
+    var seed = (col * 19 + row * 31) % 100;
+    var STONE = '#3a3640';
+    var STONE_LT = '#4a4852';
+    var STONE_DK = '#2a2630';
+    var MOSS = '#2a4830';
+    var GRIT = '#1a1820';
+    // Base stone
+    ctx.fillStyle = STONE;
+    ctx.fillRect(x, y, ts, ts);
+    // Stepped paver pattern — irregular slabs
+    ctx.fillStyle = STONE_LT;
+    if (row % 2 === 0) {
+      ctx.fillRect(x, y, 8*u, 7*u);
+      ctx.fillRect(x + 8*u, y + 7*u, 8*u, 9*u);
+    } else {
+      ctx.fillRect(x + 8*u, y, 8*u, 7*u);
+      ctx.fillRect(x, y + 7*u, 8*u, 9*u);
+    }
+    // Dark mortar lines between slabs (1u grout)
+    ctx.fillStyle = STONE_DK;
+    ctx.fillRect(x + 7*u, y, u, ts);
+    ctx.fillRect(x, y + 6*u, ts, u);
+    // Edge wear — 1u dark on the cliff side
+    ctx.fillStyle = STONE_DK;
+    ctx.fillRect(x, y + ts - u, ts, u);
+    // Moss tuft on a corner (occasional)
+    if (seed < 18) {
+      ctx.fillStyle = MOSS;
+      ctx.fillRect(x + 2*u, y + 2*u, u, 2*u);
+      ctx.fillRect(x + u, y + 3*u, u, u);
+    } else if (seed > 70 && seed < 88) {
+      ctx.fillStyle = MOSS;
+      ctx.fillRect(x + 11*u, y + 12*u, 2*u, u);
+    }
+    // 1u grit speckles
+    ctx.fillStyle = GRIT;
+    if (seed % 13 === 0) ctx.fillRect(x + 4*u, y + 10*u, u, u);
+    if (seed % 17 === 0) ctx.fillRect(x + 12*u, y + 4*u, u, u);
+  }
+
   // Saltstone floor — strict pixel art. Flat slab with hard 1u highlight,
   // 1u shadow grouting, and small variation per tile via seed.
   function drawSaltstoneFloor(ctx, x, y, ts, time, col, row) {
@@ -2132,7 +2227,9 @@
     43: drawApothecaryPng,
     44: drawBakeryPng,
     45: drawFishmongerStallPng,
-    46: drawShipDockPng
+    46: drawShipDockPng,
+    47: drawBlackCliff,
+    48: drawCliffTrail
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);

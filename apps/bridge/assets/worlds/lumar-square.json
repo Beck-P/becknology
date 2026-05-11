@@ -1,0 +1,178 @@
+{
+  "name": "Lumar Market Square",
+  "width": 26,
+  "height": 18,
+  "tileSize": 16,
+  "tileset": "lumar",
+  "spawns": {
+    "player": [13, 16]
+  },
+  "tileColors": {
+    "0": null,
+    "1": "#2a2a3e",
+    "12": "#384848",
+    "25": "#3a3030",
+    "28": "#3a3848",
+    "30": "#3a607a",
+    "31": "#3a2410",
+    "35": "#1a1818",
+    "38": "#3a3030",
+    "39": "#3a2410",
+    "40": "#5a3a1a",
+    "42": "#3a2410",
+    "43": "#2a3548",
+    "44": "#a04030",
+    "45": "#2a4828",
+    "48": "#3a3640"
+  },
+  "tileNames": {
+    "0": "void",
+    "1": "saltstone_wall",
+    "12": "guard",
+    "25": "npc",
+    "28": "cobblestone",
+    "30": "fountain",
+    "31": "bulletin_board",
+    "35": "captain_statue",
+    "38": "lantern_post",
+    "39": "tavern_png",
+    "40": "inn_png",
+    "42": "smithy_png",
+    "43": "apothecary_png",
+    "44": "bakery_png",
+    "45": "fishmonger_stall_png",
+    "48": "cliff_trail"
+  },
+  "tiles": [
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,39, 0, 0,28,28,40, 0, 0, 0,28,28,44, 0,28,28,43, 0,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,38,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,30,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,42, 0,28,28,28,28,28,28,28,28,28,28,28,28,28,28,45, 0,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,25,28,28,28,28,28,28,28,28,25,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,38,28,28,28,28,28,28,28,28,28,31,28,28,28,28,28,28,28,28,38,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,48,48,28,28,28,28,28,28,28,28,28,28,28],
+    [28,28,28,28,28,28,28,28,28,28,28,28,28,48,48,28,28,28,28,28,28,28,28,28,28,28]
+  ],
+  "collisions": [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0],
+    [0,0,0,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+  ],
+  "tileGlow": {
+    "30": { "color": [120, 200, 220], "radius": 1.2, "alpha": 0.22 },
+    "38": { "color": [255, 200, 100], "radius": 1.0, "alpha": 0.18 },
+    "39": { "color": [255, 220, 120], "radius": 1.4, "alpha": 0.24 },
+    "40": { "color": [255, 220, 120], "radius": 1.4, "alpha": 0.24 },
+    "42": { "color": [255, 120, 60],  "radius": 1.4, "alpha": 0.28 },
+    "43": { "color": [200, 160, 220], "radius": 1.2, "alpha": 0.18 },
+    "44": { "color": [255, 220, 140], "radius": 1.4, "alpha": 0.22 },
+    "45": { "color": [140, 200, 220], "radius": 1.0, "alpha": 0.14 }
+  },
+  "ambientGlow": {
+    "color": [200, 180, 140],
+    "alpha": 0.07,
+    "radius": 0.7
+  },
+  "shipExit": false,
+  "interactions": [
+    {
+      "x": 13, "y": 17, "type": "leave_world",
+      "leaveTo": "lumar",
+      "leaveSpawn": [7, 2],
+      "label": "HARBOR",
+      "prompt": "PRESS E TO DESCEND TO HARBOR"
+    },
+    {
+      "x": 14, "y": 17, "type": "leave_world",
+      "leaveTo": "lumar",
+      "leaveSpawn": [7, 2],
+      "label": "HARBOR",
+      "prompt": "PRESS E TO DESCEND TO HARBOR"
+    },
+    {
+      "x": 5, "y": 4, "type": "dialog",
+      "label": "TAVERN",
+      "prompt": "PRESS E TO PEEK",
+      "dialog": "DIGGEN'S TAVERN.\\nA WARM YELLOW GLOW\\nLEAKS FROM EVERY\\nWINDOW. SOMEONE'S\\nSINGING INSIDE."
+    },
+    {
+      "x": 11, "y": 4, "type": "dialog",
+      "label": "INN",
+      "prompt": "PRESS E TO PEEK",
+      "dialog": "THE BLUE LANTERN INN.\\nROOMS FOR THE NIGHT,\\nFIVE BRASS A HEAD."
+    },
+    {
+      "x": 15, "y": 4, "type": "dialog",
+      "label": "BAKERY",
+      "prompt": "PRESS E TO PEEK",
+      "dialog": "WARM YEAST AND BURNT\\nSUGAR ON THE AIR.\\n\\nA LOAF SIGN SWAYS\\nABOVE THE DOOR."
+    },
+    {
+      "x": 19, "y": 4, "type": "dialog",
+      "label": "APOTHECARY",
+      "prompt": "PRESS E TO PEEK",
+      "dialog": "DRIED HERBS HANG IN\\nBUNDLES UNDER THE EAVES.\\n\\nJARS IN THE WINDOW GLOW\\nIN COLOURS YOU CANNOT\\nNAME."
+    },
+    {
+      "x": 3, "y": 9, "type": "dialog",
+      "label": "SMITHY",
+      "prompt": "PRESS E TO PEEK",
+      "dialog": "THE FORGE GLOWS ORANGE.\\n\\nA HAMMER RINGS ON IRON\\nINSIDE, STEADY AS A\\nMETRONOME."
+    },
+    {
+      "x": 19, "y": 9, "type": "dialog",
+      "label": "FISHMONGER",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "BARRELS OF THE\\nMORNING'S CATCH —\\nSILVER AND STILL DAMP.\\n\\nTHE GULLS WATCH\\nFROM THE AWNING."
+    },
+    {
+      "x": 11, "y": 8, "type": "dialog",
+      "label": "FOUNTAIN",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "WATER ARCS UP FROM\\nTHREE BRASS SPOUTS.\\nCOINS GLIMMER AT\\nTHE BOTTOM.\\n\\nSOMEONE'S WISH."
+    },
+    {
+      "x": 12, "y": 13, "type": "dialog",
+      "label": "BULLETIN BOARD",
+      "prompt": "PRESS E TO READ",
+      "dialog": "WANTED: DOCK HAND.\\nROOM AND BOARD.\\nSEE THE HARBORMASTER.\\n\\nLOST: A LANTERN\\nWITH BRASS FITTINGS.\\nFAMILY HEIRLOOM."
+    },
+    {
+      "x": 7, "y": 11, "type": "dialog",
+      "label": "PASSERBY",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "\"NEW IN PORT, EH?\\nTHE TRAIL DOWN TO\\nTHE HARBOR'S SAFE.\\nDON'T LEAN ON THE\\nCLIFF RAIL THOUGH —\\nIT'S OLD.\""
+    },
+    {
+      "x": 16, "y": 11, "type": "dialog",
+      "label": "MERCHANT",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "\"NOTHING TO BUY HERE,\\nFRIEND. I JUST LIKE\\nTHE FOUNTAIN.\""
+    }
+  ]
+}
