@@ -1729,10 +1729,10 @@
     var spoutX = spriteX + spriteW * 0.5;
     // Water emerges from the top of the figurine spout, not the
     // pedestal — start the drops up where the PNG arcs actually begin.
-    var spoutY = spriteY + spriteH * 0.22;
-    var basinY = spriteY + spriteH * 0.53;
-    var landingReach = spriteW * 0.22; // final x distance from center
-    var bulgeReach = spriteW * 0.06;   // extra x at the arc's mid-fall peak
+    var spoutY = spriteY + spriteH * 0.15;
+    var basinY = spriteY + spriteH * 0.60;
+    var landingReach = spriteW * 0.25; // final x distance from center
+    var bulgeReach = spriteW * 0.10;   // extra x at the arc's mid-fall peak
     var seed = (col || 0) * 0.31 + (row || 0) * 0.17;
 
     // Mint / teal palette sampled from the PNG's painted arcs.
