@@ -1729,9 +1729,9 @@
     var spoutX = spriteX + spriteW * 0.5;
     // Water emerges from the top of the figurine spout, not the
     // pedestal — start the drops up where the PNG arcs actually begin.
-    var spoutY = spriteY + spriteH * 0.15;
-    var basinY = spriteY + spriteH * 0.60;
-    var landingReach = spriteW * 0.25; // final x distance from center
+    var spoutY = spriteY + spriteH * 0.24;
+    var basinY = spriteY + spriteH * 0.51;
+    var landingReach = spriteW * 0.18; // final x distance from center
     var bulgeReach = spriteW * 0.10;   // extra x at the arc's mid-fall peak
     var seed = (col || 0) * 0.31 + (row || 0) * 0.17;
 
@@ -2211,11 +2211,6 @@
     var SH   = '#181820';
     var MID  = '#2a2a30';
     var HI   = '#3e3e44';
-
-    // Paint the floor underneath first — rubble is a pile on top of the
-    // surrounding saltstone, not a void cell, so the surrounding pattern
-    // must continue beneath it.
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
 
     // Mound of broken chunks across the bottom 5u
     ctx.fillStyle = DARK; ctx.fillRect(x + 2*u, y + 11*u, 12*u, 5*u);
