@@ -46,9 +46,15 @@ var BridgeInteractions = (function () {
     var promptEl = document.getElementById('interact-prompt');
     if (found && !character.isMoving()) {
       currentInteraction = found;
+      // Hostiles don't get a press-E prompt — they're a threat, not an
+      // invitation. F / right-click / click-at-distance still attack.
       if (promptEl) {
-        promptEl.textContent = found.prompt || 'PRESS E';
-        promptEl.classList.add('visible');
+        if (found.type === 'hostile') {
+          promptEl.classList.remove('visible');
+        } else {
+          promptEl.textContent = found.prompt || 'PRESS E';
+          promptEl.classList.add('visible');
+        }
       }
     } else {
       currentInteraction = null;
@@ -140,15 +146,12 @@ var BridgeInteractions = (function () {
     if (!world.collisions[ny] || world.collisions[ny][nx] !== 0) return false;
     var key = nx + ',' + ny;
     if (occupied[key]) return false;
-    var tileId = hostile.tileId || 60;             // the statue's tile id
-    var fillTile = (typeof hostile._origTile === 'number') ? hostile._origTile : 2;
-    // Restore what was under the hostile, then move onto the new cell.
-    world.tiles[hostile.y][hostile.x] = fillTile;
+    // Hostiles are entity-overlays — we only flip collision so the player
+    // can't walk through them. world.tiles is left alone so movement
+    // doesn't leave a trail of restored cells behind.
     world.collisions[hostile.y][hostile.x] = 0;
     delete occupied[hostile.x + ',' + hostile.y];
-    hostile._origTile = world.tiles[ny][nx];
     hostile.x = nx; hostile.y = ny;
-    world.tiles[ny][nx] = tileId;
     world.collisions[ny][nx] = 1;
     occupied[key] = true;
     return true;

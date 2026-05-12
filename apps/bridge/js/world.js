@@ -536,6 +536,9 @@ var BridgeWorld = (function () {
 
       for (var i = 0; i < world.interactions.length; i++) {
         var inter = world.interactions[i];
+        // Hostiles read as threats, not "press E to interact" prompts —
+        // skip the green focus box for them so they stay menacing.
+        if (inter.type === 'hostile') continue;
         if (inter.x === checkX && inter.y === checkY && !BridgeCharacter.isMoving()) {
           var hx = Math.floor(offX + inter.x * ts);
           var hy = Math.floor(offY + inter.y * ts);

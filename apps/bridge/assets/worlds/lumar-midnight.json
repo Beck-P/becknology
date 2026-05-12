@@ -187,7 +187,7 @@
       16,
       16,
       21,
-      60,
+      2,
       2,
       2,
       2,
@@ -230,7 +230,7 @@
       2,
       2,
       2,
-      60,
+      2,
       21,
       16,
       16,
@@ -241,7 +241,7 @@
       16,
       16,
       21,
-      60,
+      2,
       2,
       2,
       2,
@@ -746,7 +746,7 @@
       "type": "dialog",
       "label": "MOORED BOAT",
       "prompt": "PRESS E TO LOOK",
-      "dialog": "AN EMPTY ROWBOAT.\\n\\nTHE MOORING ROPE LOOPS\\nINTO THE WATER \u2014\\nBUT GOES NOWHERE."
+      "dialog": "AN EMPTY ROWBOAT.\\n\\nTHE MOORING ROPE LOOPS\\nINTO THE WATER —\\nBUT GOES NOWHERE."
     },
     {
       "x": 4,

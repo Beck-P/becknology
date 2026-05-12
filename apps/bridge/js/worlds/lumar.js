@@ -2275,4 +2275,18 @@
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);
 
+  // Hostile-entity overlay: stone sentinels render at their current
+  // pathfinding position instead of being baked into world.tiles, so
+  // moving them doesn't leave a trail of restored cells behind.
+  BridgeWorld.registerOverlay('lumar', function (ctx, world, offX, offY, ts, time) {
+    if (!world || !world.interactions) return;
+    for (var i = 0; i < world.interactions.length; i++) {
+      var h = world.interactions[i];
+      if (h.type !== 'hostile') continue;
+      var drawer = (h.tileId === 60 || !h.tileId) ? drawStoneStatue : null;
+      if (!drawer) continue;
+      drawer(ctx, offX + h.x * ts, offY + h.y * ts, ts, time, h.x, h.y);
+    }
+  });
+
 })();
