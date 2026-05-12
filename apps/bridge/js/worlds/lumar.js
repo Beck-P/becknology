@@ -1728,8 +1728,8 @@
     var spriteH = 3 * ts;
     var spoutX = spriteX + spriteW * 0.5;
     var spoutY = spriteY + spriteH * 0.33;
-    var basinY = spriteY + spriteH * 0.51;
-    var arcReach = spriteW * 0.29; // horizontal distance to each landing point
+    var basinY = spriteY + spriteH * 0.50;
+    var arcReach = spriteW * 0.17; // horizontal distance to each landing point
     var seed = (col || 0) * 0.31 + (row || 0) * 0.17;
 
     // Mint / teal palette sampled from the PNG's painted arcs.
@@ -1737,18 +1737,19 @@
     var ARC_MID = 'rgba(176, 216, 192, ';  // mid water
     var ARC_LO = 'rgba(144, 200, 168, ';   // deep water
 
-    // Two arcs (left, right) — droplets in staggered phases along each
-    // arc path. Path: x curves outward via sin, y falls via t².
+    // Two arcs (left, right) — many droplets packed tight so the eye
+    // reads them as a continuous flowing stream instead of discrete
+    // drops. Path: x curves outward via sin, y falls via t².
     var sides = [-1, 1];
     for (var a = 0; a < 2; a++) {
       var sign = sides[a];
-      for (var i = 0; i < 5; i++) {
-        var phase = (time / 260) + i * 0.18 + a * 0.07 + seed;
+      for (var i = 0; i < 10; i++) {
+        var phase = (time / 280) + i * 0.09 + a * 0.045 + seed;
         var t = phase - Math.floor(phase);
         var dropX = spoutX + sign * arcReach * Math.sin(t * Math.PI / 2);
         var dropY = spoutY + (basinY - spoutY) * t * t;
-        var alpha = (0.95 - i * 0.16).toFixed(2);
-        var color = i === 0 ? ARC_HI : i < 3 ? ARC_MID : ARC_LO;
+        var color = i === 0 ? ARC_HI : i < 4 ? ARC_MID : ARC_LO;
+        var alpha = (0.95 - i * 0.07).toFixed(2);
         ctx.fillStyle = color + alpha + ')';
         ctx.fillRect(Math.floor(dropX), Math.floor(dropY), u, u);
       }
