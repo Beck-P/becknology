@@ -1727,9 +1727,12 @@
     var spriteW = 3 * ts;
     var spriteH = 3 * ts;
     var spoutX = spriteX + spriteW * 0.5;
-    var spoutY = spriteY + spriteH * 0.33;
-    var basinY = spriteY + spriteH * 0.50;
-    var arcReach = spriteW * 0.17; // horizontal distance to each landing point
+    // Water emerges from the top of the figurine spout, not the
+    // pedestal — start the drops up where the PNG arcs actually begin.
+    var spoutY = spriteY + spriteH * 0.22;
+    var basinY = spriteY + spriteH * 0.53;
+    var landingReach = spriteW * 0.22; // final x distance from center
+    var bulgeReach = spriteW * 0.06;   // extra x at the arc's mid-fall peak
     var seed = (col || 0) * 0.31 + (row || 0) * 0.17;
 
     // Mint / teal palette sampled from the PNG's painted arcs.
@@ -1739,16 +1742,17 @@
 
     // Two arcs (left, right) — many droplets packed tight so the eye
     // reads them as a continuous flowing stream instead of discrete
-    // drops. Linear x + t² y traces a tight projectile parabola that
-    // hugs the PNG's painted arcs without bulging outward. Each droplet
-    // is 2u wide so the stream reads thick.
+    // drops. Path = linear x (lands at landingReach) + sin(πt) bulge
+    // (peaks outward at mid-fall) + t² y, matching the PNG's painted
+    // arcs that bulge out then curve slightly back in to land. Each
+    // droplet is 2u wide so the stream reads thick.
     var sides = [-1, 1];
     for (var a = 0; a < 2; a++) {
       var sign = sides[a];
       for (var i = 0; i < 10; i++) {
         var phase = (time / 280) + i * 0.09 + a * 0.045 + seed;
         var t = phase - Math.floor(phase);
-        var dropX = spoutX + sign * arcReach * t;
+        var dropX = spoutX + sign * (landingReach * t + bulgeReach * Math.sin(t * Math.PI));
         var dropY = spoutY + (basinY - spoutY) * t * t;
         var color = i === 0 ? ARC_HI : i < 4 ? ARC_MID : ARC_LO;
         var alpha = (0.95 - i * 0.07).toFixed(2);
@@ -1761,7 +1765,7 @@
     var splashFrame = Math.floor(time / 130) % 4;
     for (var sp = 0; sp < 2; sp++) {
       if (((splashFrame + sp) % 4) < 2) {
-        var sx = spoutX + sides[sp] * arcReach;
+        var sx = spoutX + sides[sp] * landingReach;
         ctx.fillStyle = ARC_HI + '0.85)';
         ctx.fillRect(Math.floor(sx - u), Math.floor(basinY), u, u);
         ctx.fillRect(Math.floor(sx + u), Math.floor(basinY), u, u);
