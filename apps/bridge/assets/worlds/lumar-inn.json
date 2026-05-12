@@ -1,0 +1,80 @@
+{
+  "name": "Blue Lantern Inn",
+  "width": 14,
+  "height": 11,
+  "tileSize": 16,
+  "tileset": "lumar-inn",
+  "spawns": {"player": [7, 8]},
+  "tileColors": {
+    "0": null,
+    "1": "#3a2410",
+    "2": "#3a2410",
+    "3": "#3a2410",
+    "4": "#5a3030",
+    "5": "#3a2410",
+    "6": "#a04040",
+    "7": "#3a4858",
+    "8": "#3a2410",
+    "9": "#181a40",
+    "10": "#3a2410",
+    "11": "#3a4858"
+  },
+  "tileNames": {
+    "0": "void", "1": "wall", "2": "floor", "3": "counter", "4": "fireplace",
+    "5": "table", "6": "innkeeper", "7": "patron", "8": "stairs",
+    "9": "window", "10": "door", "11": "coat_rack"
+  },
+  "tiles": [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 9, 1, 1, 8, 8, 1, 1, 4, 4, 1, 1, 9, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 3, 3, 3, 3, 6, 3, 3, 2, 2, 2, 2,11, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 2, 5, 2, 2, 2, 7, 2, 2, 7, 2, 5, 2, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 9, 1, 1, 1, 1,10,10, 1, 1, 1, 1, 9, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ],
+  "collisions": [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,0,0,0,0,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,1,0,0,0,1,0,0,1,0,1,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,0,0,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+  ],
+  "tileGlow": {
+    "4": {"color": [255, 140, 60], "radius": 1.6, "alpha": 0.32},
+    "9": {"color": [255, 220, 120], "radius": 1.0, "alpha": 0.18},
+    "3": {"color": [255, 200, 100], "radius": 0.6, "alpha": 0.12}
+  },
+  "ambientGlow": {"color": [255, 200, 140], "alpha": 0.08, "radius": 0.7},
+  "shipExit": false,
+  "interactions": [
+    {"x": 6, "y": 9, "type": "leave_world", "leaveTo": "lumar-square", "leaveSpawn": [11, 5], "label": "STREET", "prompt": "LEAVE INN"},
+    {"x": 7, "y": 9, "type": "leave_world", "leaveTo": "lumar-square", "leaveSpawn": [11, 5], "label": "STREET", "prompt": "LEAVE INN"},
+    {"x": 5, "y": 4, "type": "dialog", "label": "INNKEEPER", "prompt": "PRESS E TO TALK",
+     "dialog": "\"WELCOME TO THE BLUE\\nLANTERN. A ROOM IS\\nFIVE BRASS, INCLUDES\\nBREAKFAST.\\n\\nWE'RE FULL TONIGHT,\\nTHOUGH. ALWAYS ARE.\""},
+    {"x": 4, "y": 2, "type": "dialog", "label": "STAIRS", "prompt": "PRESS E TO LOOK",
+     "dialog": "STEEP WOODEN STAIRS\\nLEADING UP TO THE\\nGUEST ROOMS.\\n\\nTHE THIRD STEP CREAKS\\nNO MATTER WHO STANDS\\nON IT."},
+    {"x": 8, "y": 2, "type": "dialog", "label": "FIREPLACE", "prompt": "PRESS E TO LOOK",
+     "dialog": "A WIDE STONE FIREPLACE.\\nTHE LOGS BURN STEADY.\\n\\nSOMEONE ALWAYS TENDS\\nIT — NEVER GOES OUT."},
+    {"x": 2, "y": 6, "type": "dialog", "label": "TABLE", "prompt": "PRESS E TO LOOK",
+     "dialog": "A HALF-EATEN MEAL.\\nROAST POTATOES,\\nA WEDGE OF CHEESE,\\nA HEEL OF BREAD.\\n\\nSTILL WARM."},
+    {"x": 6, "y": 6, "type": "dialog", "label": "PATRON", "prompt": "PRESS E TO TALK",
+     "dialog": "\"YOU JUST OFF THE\\nMERIDIAN? SAW HER\\nDOCK AT SUNSET.\\n\\nGOOD CAPTAIN. FAIR\\nFARES. ASK FOR THE\\nUPPER BERTH.\""},
+    {"x": 9, "y": 6, "type": "dialog", "label": "PATRON", "prompt": "PRESS E TO TALK",
+     "dialog": "THEY DON'T LOOK UP\\nFROM THEIR MUG.\\n\\n\"THE WALLS THIN HERE.\\nDON'T SAY ANYTHING\\nYOU DON'T WANT\\nREPEATED.\""},
+    {"x": 12, "y": 4, "type": "dialog", "label": "COAT RACK", "prompt": "PRESS E TO LOOK",
+     "dialog": "A HEAVY GREY OILSKIN\\nHANGS HERE. STILL\\nDAMP AROUND THE\\nSHOULDERS.\\n\\nWHOEVER WORE IT\\nCAME IN FROM RAIN."},
+    {"x": 1, "y": 2, "type": "dialog", "label": "WINDOW", "prompt": "PRESS E TO LOOK",
+     "dialog": "THE SQUARE OUTSIDE\\nIS QUIETER NOW.\\nA LANTERN POST\\nFLICKERS."}
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "name": "Lumar Bakery",
+  "width": 14,
+  "height": 11,
+  "tileSize": 16,
+  "tileset": "lumar-bakery",
+  "spawns": {"player": [7, 8]},
+  "tileColors": {
+    "0": null, "1": "#e8d8b0", "2": "#5a3018", "3": "#a04030",
+    "4": "#3a2410", "5": "#3a2410", "6": "#f8f0d0", "7": "#e0d0a0",
+    "8": "#5a3a1a", "9": "#181a40", "10": "#3a2410"
+  },
+  "tileNames": {
+    "0": "void", "1": "wall", "2": "floor", "3": "oven", "4": "display_counter",
+    "5": "dough_table", "6": "baker", "7": "flour_sack", "8": "bread_basket",
+    "9": "window", "10": "door"
+  },
+  "tiles": [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 8, 1, 1, 3, 3, 3, 3, 3, 1, 1, 1, 8, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 7, 2, 1],
+    [1, 2, 2, 2, 2, 2, 2, 6, 2, 2, 2, 2, 2, 1],
+    [1, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 9, 1, 1, 1, 1,10,10, 1, 1, 1, 1, 9, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ],
+  "collisions": [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,0,1,0,1],
+    [1,0,0,0,0,0,0,1,0,0,0,0,0,1],
+    [1,0,0,1,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,0,0,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+  ],
+  "tileGlow": {
+    "3": {"color": [255, 140, 60], "radius": 1.8, "alpha": 0.35},
+    "9": {"color": [255, 220, 120], "radius": 1.0, "alpha": 0.18},
+    "4": {"color": [255, 200, 100], "radius": 0.8, "alpha": 0.14}
+  },
+  "ambientGlow": {"color": [255, 180, 100], "alpha": 0.08, "radius": 0.7},
+  "shipExit": false,
+  "interactions": [
+    {"x": 6, "y": 9, "type": "leave_world", "leaveTo": "lumar-square", "leaveSpawn": [15, 5], "label": "STREET", "prompt": "LEAVE BAKERY"},
+    {"x": 7, "y": 9, "type": "leave_world", "leaveTo": "lumar-square", "leaveSpawn": [15, 5], "label": "STREET", "prompt": "LEAVE BAKERY"},
+    {"x": 7, "y": 5, "type": "dialog", "label": "BAKER", "prompt": "PRESS E TO TALK",
+     "dialog": "\"FRESH BATCH IN THE\\nOVEN. SHOULD BE OUT\\nIN A QUARTER-HOUR.\\n\\nGIVE THE DARK RYE A\\nCHANCE — IT'S BETTER\\nTHAN IT LOOKS.\""},
+    {"x": 4, "y": 2, "type": "dialog", "label": "OVEN", "prompt": "PRESS E TO LOOK",
+     "dialog": "A WIDE BRICK OVEN.\\nGOLDEN LOAVES INSIDE,\\nSWELLING AND TURNING\\nBROWN.\\n\\nTHE HEAT BURNS YOUR\\nFACE EVEN FROM HERE."},
+    {"x": 2, "y": 4, "type": "dialog", "label": "DISPLAY", "prompt": "PRESS E TO LOOK",
+     "dialog": "ROWS OF BREAD: WHITE\\nLOAVES, RYE, A FEW\\nDARK ROUNDS WITH SEEDS\\nON TOP.\\n\\nA PRICE BOARD LISTS\\nIT ALL IN BRASS COINS."},
+    {"x": 3, "y": 6, "type": "dialog", "label": "DOUGH TABLE", "prompt": "PRESS E TO LOOK",
+     "dialog": "A FLOURED WOOD\\nWORKTOP. A LUMP OF\\nPALE DOUGH SITS\\nWAITING.\\n\\nFINGERPRINTS PRESSED\\nINTO THE EDGE."},
+    {"x": 11, "y": 4, "type": "dialog", "label": "FLOUR SACK", "prompt": "PRESS E TO LOOK",
+     "dialog": "TWO SACKS OF FLOUR\\nLEAN AGAINST EACH\\nOTHER, TIED AT THE\\nTOP WITH ROPE.\\n\\nONE HAS A SMALL TEAR\\n— FLOUR TRAILS ACROSS\\nTHE FLOOR."},
+    {"x": 1, "y": 2, "type": "dialog", "label": "BREAD BASKET", "prompt": "PRESS E TO LOOK",
+     "dialog": "A WICKER BASKET\\nHANGING FROM A ROPE.\\n\\nGOLDEN-BROWN LOAVES\\nINSIDE, STILL WARM\\nFROM THE OVEN."}
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "name": "Lumar Apothecary",
+  "width": 14,
+  "height": 11,
+  "tileSize": 16,
+  "tileset": "lumar-apothecary",
+  "spawns": {"player": [7, 8]},
+  "tileColors": {
+    "0": null, "1": "#2a1a20", "2": "#1a0e14", "3": "#1a1820",
+    "4": "#3a2410", "5": "#3a2410", "6": "#2a1830", "7": "#5a3060",
+    "8": "#e0d8b0", "9": "#181a40", "10": "#2a1830"
+  },
+  "tileNames": {
+    "0": "void", "1": "wall", "2": "floor", "3": "cauldron",
+    "4": "jar_shelf", "5": "workbench", "6": "witch",
+    "7": "hanging_herbs", "8": "candle", "9": "window", "10": "door"
+  },
+  "tiles": [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 4, 4, 4, 1, 7, 7, 7, 7, 1, 4, 4, 4, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 2, 3, 3, 3, 2, 2, 6, 2, 2, 5, 5, 5, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 8, 1],
+    [1, 9, 1, 1, 1, 1,10,10, 1, 1, 1, 1, 9, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  ],
+  "collisions": [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,1,1,1,0,0,1,0,0,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,0,0,0,0,0,0,0,0,0,0,1,1],
+    [1,1,1,1,1,1,0,0,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+  ],
+  "tileGlow": {
+    "3": {"color": [120, 232, 100], "radius": 1.6, "alpha": 0.32},
+    "4": {"color": [232, 100, 220], "radius": 1.2, "alpha": 0.22},
+    "8": {"color": [255, 220, 140], "radius": 1.0, "alpha": 0.22}
+  },
+  "ambientGlow": {"color": [140, 200, 160], "alpha": 0.06, "radius": 0.7},
+  "shipExit": false,
+  "interactions": [
+    {"x": 6, "y": 9, "type": "leave_world", "leaveTo": "lumar-square", "leaveSpawn": [19, 5], "label": "STREET", "prompt": "LEAVE APOTHECARY"},
+    {"x": 7, "y": 9, "type": "leave_world", "leaveTo": "lumar-square", "leaveSpawn": [19, 5], "label": "STREET", "prompt": "LEAVE APOTHECARY"},
+    {"x": 7, "y": 5, "type": "dialog", "label": "WITCH", "prompt": "PRESS E TO TALK",
+     "dialog": "SHE STIRS WITHOUT\\nLOOKING UP.\\n\\n\"NIGHTSHADE FOR\\nSLEEP. WILLOW FOR\\nPAIN. SEA-MOSS IF\\nYOU'RE SEASICK.\\n\\nDON'T MIX THEM.\""},
+    {"x": 2, "y": 5, "type": "dialog", "label": "CAULDRON", "prompt": "PRESS E TO LOOK",
+     "dialog": "A WIDE CAST-IRON\\nPOT BUBBLING WITH\\nSOMETHING GREEN.\\n\\nIT SMELLS LIKE MOSS\\nAND BLACK PEPPER\\nAND SOMETHING ELSE\\nYOU CAN'T NAME."},
+    {"x": 11, "y": 5, "type": "dialog", "label": "WORKBENCH", "prompt": "PRESS E TO LOOK",
+     "dialog": "A MORTAR-AND-PESTLE,\\nA STAINED RECIPE BOOK\\nOPEN TO A PAGE OF\\nDIAGRAMS.\\n\\nYOU READ ONE WORD:\\nRESTRAINT. IN UNDERLINE."},
+    {"x": 2, "y": 2, "type": "dialog", "label": "JAR SHELF", "prompt": "PRESS E TO LOOK",
+     "dialog": "ROWS OF SMALL JARS,\\nEACH WITH A HAND-\\nWRITTEN LABEL.\\n\\nMOST ARE IN A SCRIPT\\nYOU CAN ALMOST READ —\\nLIKE A LANGUAGE YOU\\nUSED TO KNOW."},
+    {"x": 11, "y": 2, "type": "dialog", "label": "JAR SHELF", "prompt": "PRESS E TO LOOK",
+     "dialog": "MORE JARS. ONE LABEL\\nIS LEGIBLE: \"NEVER\\nOPEN.\"\\n\\nTHE LID IS WAX-SEALED\\nAND CRACKED."},
+    {"x": 6, "y": 2, "type": "dialog", "label": "HANGING HERBS", "prompt": "PRESS E TO LOOK",
+     "dialog": "BUNDLES OF DRIED\\nHERBS HANG FROM\\nA CEILING BEAM.\\n\\nLAVENDER, SAGE,\\nWORMWOOD, AND ONE\\nYOU CAN'T IDENTIFY."},
+    {"x": 1, "y": 8, "type": "dialog", "label": "CANDLE", "prompt": "PRESS E TO LOOK",
+     "dialog": "A SINGLE BEESWAX\\nCANDLE BURNS ON A\\nSTONE ALTAR.\\n\\nIT NEVER SEEMS TO\\nGROW SHORTER."},
+    {"x": 12, "y": 8, "type": "dialog", "label": "CANDLE", "prompt": "PRESS E TO LOOK",
+     "dialog": "ANOTHER CANDLE,\\nIDENTICAL TO THE\\nFIRST.\\n\\nTWIN ALTARS."}
+  ]
+}

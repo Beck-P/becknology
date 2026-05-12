@@ -411,9 +411,13 @@
       "x": 7,
       "y": 10,
       "type": "leave_world",
-      "leaveTo": "lumar",
+      "leaveTo": "lumar-square",
       "label": "DOOR",
-      "prompt": "LEAVE TAVERN"
+      "prompt": "LEAVE TAVERN",
+      "leaveSpawn": [
+        5,
+        5
+      ]
     },
     {
       "x": 3,
