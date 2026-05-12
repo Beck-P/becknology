@@ -891,10 +891,17 @@
   }
 
   function drawLighthousePng(ctx, x, y, ts, time, col, row) {
-    drawBuildingSprite(ctx, x, y, ts, 'lighthouse', 3, 7, 1);
     var areaW = ts * 3, areaH = ts * 7;
     var destX = x - 1 * ts;
     var destY = y + ts - areaH;
+    // Pre-fill the footprint with the cliff-trail base colour so the sea
+    // background can't leak through the PNG's transparent base pixels —
+    // the rocky base of the lighthouse renders with thin transparent
+    // gaps that would otherwise show emerald sea right under the
+    // lighthouse door.
+    ctx.fillStyle = '#3a3640';
+    ctx.fillRect(destX, destY, areaW, areaH);
+    drawBuildingSprite(ctx, x, y, ts, 'lighthouse', 3, 7, 1);
     // Lamp pulse — single big warm glow at the top of the lighthouse
     var pulse = 0.6 + Math.sin(time / 700) * 0.25;
     ctx.globalCompositeOperation = 'screen';
