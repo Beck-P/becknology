@@ -120,20 +120,24 @@ var BridgeInteractions = (function () {
       var dx = px - hh.x, dy = py - hh.y;
       var manhattan = Math.abs(dx) + Math.abs(dy);
       if (manhattan <= 1) continue;                // already adjacent — bite, don't walk
-      if (manhattan > (hh.aggroRange || 6)) continue; // out of aggro range — idle
+      if (manhattan > (hh.aggroRange || 30)) continue; // out of aggro range — idle
       var cd = hh.moveCooldown || 800;
       if (hh._lastMove && (now - hh._lastMove) < cd) continue;
 
-      // Try larger axis first.
-      var stepX, stepY;
-      if (Math.abs(dx) >= Math.abs(dy)) { stepX = sign(dx); stepY = 0; }
-      else                              { stepX = 0;       stepY = sign(dy); }
-      if (!tryStep(world, hh, stepX, stepY, occupied)) {
-        // Fall back to the perpendicular axis.
-        if (stepX !== 0) { stepX = 0; stepY = sign(dy); }
-        else             { stepX = sign(dx); stepY = 0; }
-        if (stepX === 0 && stepY === 0) continue;
-        tryStep(world, hh, stepX, stepY, occupied);
+      // Greedy: try the larger-delta axis first, then perpendicular,
+      // then either remaining cardinal direction so an obstacle on a
+      // straight line doesn't freeze the chase.
+      var primaryX = sign(dx), primaryY = sign(dy);
+      var attempts;
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        attempts = [[primaryX, 0], [0, primaryY], [0, 1], [0, -1], [-primaryX, 0]];
+      } else {
+        attempts = [[0, primaryY], [primaryX, 0], [1, 0], [-1, 0], [0, -primaryY]];
+      }
+      for (var a = 0; a < attempts.length; a++) {
+        var sx = attempts[a][0], sy = attempts[a][1];
+        if (sx === 0 && sy === 0) continue;
+        if (tryStep(world, hh, sx, sy, occupied)) break;
       }
       hh._lastMove = now; // cooldown regardless of success — keeps the cadence steady
     }
@@ -705,9 +709,9 @@ var BridgeInteractions = (function () {
   // from the world's interaction list, and reward the player.
   function killHostile(world, target) {
     if (!world || !target) return;
-    if (world.tiles[target.y] && typeof target.x === 'number') {
-      world.tiles[target.y][target.x] = target.deadTile || 61;
-    }
+    // No rubble tile — the hostile is an entity-overlay, so we just
+    // clear the collision it was blocking and drop the interaction.
+    // The cell underneath was untouched, so it reads as plain floor.
     if (world.collisions[target.y] && typeof target.x === 'number') {
       world.collisions[target.y][target.x] = 0;
     }
