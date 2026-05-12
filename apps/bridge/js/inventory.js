@@ -36,8 +36,18 @@ var BridgeInventory = (function () {
     slots: new Array(MAX_SLOTS).fill(null),  // [{id,count}|null] * MAX_SLOTS
     selected: 0,
     hp: 100, maxHP: 100,
-    energy: 100, maxEnergy: 100
+    energy: 100, maxEnergy: 100,
+    starterGiven: false
   };
+
+  // Items handed out the very first time a pilot opens the inventory.
+  // Future loads check state.starterGiven so we don't keep refilling after
+  // the player uses things up.
+  var STARTER_KIT = [
+    { id: 'bread',       count: 3 },
+    { id: 'mug_of_ale',  count: 2 },
+    { id: 'iron_dagger', count: 1 }
+  ];
 
   var panel = null;
   var slotsRow = null;
@@ -81,6 +91,7 @@ var BridgeInventory = (function () {
           state.maxHP     = (typeof parsed.maxHP === 'number') ? parsed.maxHP : state.maxHP;
           state.energy    = (typeof parsed.energy === 'number') ? parsed.energy : state.energy;
           state.maxEnergy = (typeof parsed.maxEnergy === 'number') ? parsed.maxEnergy : state.maxEnergy;
+          state.starterGiven = !!parsed.starterGiven;
           return;
         }
       }
@@ -95,6 +106,8 @@ var BridgeInventory = (function () {
             if (!BridgeItems.get(id)) return;
             state.slots[idx++] = { id: id, count: parsedLegacy.items[id] };
           });
+          // Migrated saves count as having had a starter kit equivalent.
+          state.starterGiven = true;
         }
         if (typeof parsedLegacy.hp === 'number') state.hp = parsedLegacy.hp;
         if (typeof parsedLegacy.maxHP === 'number') state.maxHP = parsedLegacy.maxHP;
@@ -638,11 +651,22 @@ var BridgeInventory = (function () {
     }
   }, true);
 
+  // Drop the starter kit into empty slots. Safe to call manually from
+  // the console to recover from a wiped or first-run inventory.
+  function giveStarter() {
+    for (var i = 0; i < STARTER_KIT.length; i++) {
+      addItem(STARTER_KIT[i].id, STARTER_KIT[i].count);
+    }
+    state.starterGiven = true;
+    save(); refresh();
+  }
+
   // ---- Public API -----------------------------------------------------
   function init() {
     if (inited) return;
     inited = true;
     load();
+    if (!state.starterGiven) giveStarter();
     buildPanel();
     refresh();
   }
@@ -656,7 +680,8 @@ var BridgeInventory = (function () {
     getSelectedSlot: getSelectedSlot, getSelectedItemId: getSelectedItemId,
     getStats: getStats, restoreHP: restoreHP, restoreEnergy: restoreEnergy,
     restoreAll: restoreAll, takeDamage: takeDamage,
-    openMenu: openMenu, closeMenu: closeMenu, toggleMenu: toggleMenu, isMenuOpen: isMenuOpen
+    openMenu: openMenu, closeMenu: closeMenu, toggleMenu: toggleMenu, isMenuOpen: isMenuOpen,
+    giveStarter: giveStarter
   };
   return api;
 })();
