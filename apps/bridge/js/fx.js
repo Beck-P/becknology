@@ -18,7 +18,7 @@ var BridgeFX = (function () {
       type: 'slash',
       x: x, y: y, facing: facing || 'down',
       startTime: performance.now(),
-      duration: 220
+      duration: 360
     });
   }
 
@@ -27,7 +27,7 @@ var BridgeFX = (function () {
       type: 'hit_flash',
       x: x, y: y,
       startTime: performance.now(),
-      duration: 180
+      duration: 320
     });
   }
 
@@ -54,31 +54,39 @@ var BridgeFX = (function () {
       fx.facing === 'down'  ? Math.PI / 2 :
       fx.facing === 'left'  ? Math.PI :
                               -Math.PI / 2;
-    var radius = ts * 0.75;
-    var halfSpan = Math.PI / 3;          // 60° arc total
-    var trailCount = 5;
-    var trailGap = 0.10;                  // each trail dot lags by 10% of duration
+    var radius = ts * 1.05;              // outside the player tile so the swing reads cleanly
+    var halfSpan = Math.PI / 2.4;        // 75° each side, 150° arc
+    var trailCount = 7;
+    var trailGap = 0.07;                  // tighter trail so it reads as a single sweep
 
+    // Trail behind the leading edge — warm white, shrinks down the chain
     for (var i = 0; i < trailCount; i++) {
       var segProgress = progress - i * trailGap;
       if (segProgress < 0 || segProgress > 1) continue;
       var angle = faceAngle - halfSpan + segProgress * 2 * halfSpan;
       var px = cx + Math.cos(angle) * radius;
       var py = cy + Math.sin(angle) * radius;
-      var alpha = (1 - segProgress) * (i === 0 ? 1.0 : 0.7);
-      var size = Math.max(2, ts * (0.22 - i * 0.025));
-      ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
+      var alpha = (1 - segProgress) * (i === 0 ? 1.0 : 0.85 - i * 0.08);
+      var size = Math.max(3, ts * (0.34 - i * 0.035));
+      ctx.fillStyle = 'rgba(255,250,220,' + alpha.toFixed(2) + ')';
       ctx.fillRect(Math.floor(px - size / 2), Math.floor(py - size / 2), Math.ceil(size), Math.ceil(size));
     }
-    // Leading-edge highlight (the "tip" of the swing)
+    // Leading-edge tip — bright core + cyan halo so it pops on any background
     if (progress < 1) {
       var tipAngle = faceAngle - halfSpan + progress * 2 * halfSpan;
       var tx = cx + Math.cos(tipAngle) * radius;
       var ty = cy + Math.sin(tipAngle) * radius;
       var tipAlpha = 1 - progress;
-      var tipSize = Math.max(3, ts * 0.30);
-      ctx.fillStyle = 'rgba(255,240,200,' + tipAlpha.toFixed(2) + ')';
-      ctx.fillRect(Math.floor(tx - tipSize / 2), Math.floor(ty - tipSize / 2), Math.ceil(tipSize), Math.ceil(tipSize));
+      // Cyan halo (slightly larger)
+      var haloSize = Math.max(5, ts * 0.55);
+      ctx.fillStyle = 'rgba(120,220,255,' + (tipAlpha * 0.55).toFixed(2) + ')';
+      ctx.fillRect(Math.floor(tx - haloSize / 2), Math.floor(ty - haloSize / 2),
+                   Math.ceil(haloSize), Math.ceil(haloSize));
+      // Bright white core
+      var tipSize = Math.max(4, ts * 0.42);
+      ctx.fillStyle = 'rgba(255,255,255,' + tipAlpha.toFixed(2) + ')';
+      ctx.fillRect(Math.floor(tx - tipSize / 2), Math.floor(ty - tipSize / 2),
+                   Math.ceil(tipSize), Math.ceil(tipSize));
     }
   }
 
@@ -86,14 +94,19 @@ var BridgeFX = (function () {
     var cx = offX + (fx.x + 0.5) * ts;
     var cy = offY + (fx.y + 0.5) * ts;
     var alpha = 1 - progress;
-    // Outer warm halo
-    var outerSize = ts * (0.85 + 0.15 * progress);
-    ctx.fillStyle = 'rgba(255,200,100,' + (alpha * 0.4).toFixed(2) + ')';
+    // Outer red halo — bigger and brighter so the impact reads
+    var outerSize = ts * (1.0 + 0.3 * progress);
+    ctx.fillStyle = 'rgba(255,120,60,' + (alpha * 0.55).toFixed(2) + ')';
     ctx.fillRect(Math.floor(cx - outerSize / 2), Math.floor(cy - outerSize / 2),
                  Math.ceil(outerSize), Math.ceil(outerSize));
+    // Mid warm band
+    var midSize = ts * (0.75 - 0.10 * progress);
+    ctx.fillStyle = 'rgba(255,200,120,' + (alpha * 0.7).toFixed(2) + ')';
+    ctx.fillRect(Math.floor(cx - midSize / 2), Math.floor(cy - midSize / 2),
+                 Math.ceil(midSize), Math.ceil(midSize));
     // Inner bright core
-    var innerSize = ts * (0.55 - 0.15 * progress);
-    ctx.fillStyle = 'rgba(255,250,220,' + (alpha * 0.85).toFixed(2) + ')';
+    var innerSize = ts * (0.45 - 0.18 * progress);
+    ctx.fillStyle = 'rgba(255,255,240,' + (alpha * 0.95).toFixed(2) + ')';
     ctx.fillRect(Math.floor(cx - innerSize / 2), Math.floor(cy - innerSize / 2),
                  Math.ceil(innerSize), Math.ceil(innerSize));
   }
