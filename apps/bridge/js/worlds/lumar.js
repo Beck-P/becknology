@@ -2212,6 +2212,11 @@
     var MID  = '#2a2a30';
     var HI   = '#3e3e44';
 
+    // Paint the floor underneath first — rubble is a pile on top of the
+    // surrounding saltstone, not a void cell, so the surrounding pattern
+    // must continue beneath it.
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+
     // Mound of broken chunks across the bottom 5u
     ctx.fillStyle = DARK; ctx.fillRect(x + 2*u, y + 11*u, 12*u, 5*u);
     ctx.fillStyle = MID;  ctx.fillRect(x + 3*u, y + 11*u, 10*u, 4*u);
