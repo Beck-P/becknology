@@ -209,15 +209,16 @@
     }
   }
 
-  // ---- Captain's chair (PNG, 2 wide × 2 tall, anchor offset 0) ----
-  // Anchored on the existing single tile-7 cell at col 9 row 8; the PNG
-  // extends up one row and one column to the right so the headrest reads
-  // tall against the holo-pedestal behind it.
-  BridgeSprites.load('captain-chair', '/bridge/assets/props/captain-chair.png', 40);
+  // ---- Captain's workstation (PNG, 3 wide × 2 tall, anchor offset 1) ----
+  // Curved desk wrapping a high-backed chair viewed from behind. Anchor
+  // stays at col 9 row 8 to preserve the interaction; sprite spans cols
+  // 8-10 directly under the holo-pedestal.
+  BridgeSprites.load('captain-workstation', '/bridge/assets/props/captain-workstation.png', 72);
   function drawCaptainChair(ctx, x, y, ts, time, col, row) {
+    drawFloorBase(ctx, x - ts, y, ts, time, col - 1, row, false);
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
     drawFloorBase(ctx, x + ts, y, ts, time, col + 1, row, false);
-    BridgeSprites.draw(ctx, x, y, ts, 'captain-chair', 2, 2, 0);
+    BridgeSprites.draw(ctx, x, y, ts, 'captain-workstation', 3, 2, 1);
   }
 
   // ---- Wall-mounted console (wall stations along sides) ----
