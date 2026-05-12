@@ -1,8 +1,13 @@
 /**
- * BridgeControls — Keyboard + mobile d-pad input.
+ * BridgeControls — Keyboard + mouse + mobile d-pad input.
  *
  * Tracks which directions are held and whether the action button is pressed.
  * Other modules poll getDir() and consumeAction() each frame.
+ *
+ * Inventory hotkeys (Stardew-style):
+ *   1-0 jump to slot · [ ] cycle · F use selected
+ *   left-click on world  = interact (E)
+ *   right-click on world = use selected (F)
  */
 var BridgeControls = (function () {
   var keys = { up: false, down: false, left: false, right: false };
@@ -30,6 +35,27 @@ var BridgeControls = (function () {
       case 'ArrowLeft': case 'a': case 'A': keys.left = true; e.preventDefault(); break;
       case 'ArrowRight': case 'd': case 'D': keys.right = true; e.preventDefault(); break;
       case 'Enter': case ' ': case 'e': case 'E': actionPressed = true; e.preventDefault(); break;
+      case 'f': case 'F':
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
+        e.preventDefault();
+        break;
+      case '[':
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.cycleSlot(-1);
+        e.preventDefault();
+        break;
+      case ']':
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.cycleSlot(1);
+        e.preventDefault();
+        break;
+      case '1': case '2': case '3': case '4': case '5':
+      case '6': case '7': case '8': case '9':
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.selectSlot(parseInt(e.key, 10) - 1);
+        e.preventDefault();
+        break;
+      case '0':
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.selectSlot(9);
+        e.preventDefault();
+        break;
     }
   });
 
@@ -41,6 +67,24 @@ var BridgeControls = (function () {
       case 'ArrowRight': case 'd': case 'D': keys.right = false; break;
     }
   });
+
+  // Mouse / trackpad on the world canvas. Left-click = interact (same as E);
+  // right-click (two-finger tap on a Mac trackpad) = use selected item.
+  function bindCanvasMouse() {
+    var canvas = document.getElementById('bridge-canvas');
+    if (!canvas) return;
+    canvas.addEventListener('mousedown', function (e) {
+      if (!enabled) return;
+      if (e.button === 0) {
+        actionPressed = true;
+        e.preventDefault();
+      } else if (e.button === 2) {
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
+        e.preventDefault();
+      }
+    });
+    canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
 
   // D-pad (mobile)
   function bindDpad() {
@@ -78,11 +122,12 @@ var BridgeControls = (function () {
     }
   }
 
-  // Bind d-pad on DOM ready
+  // Bind d-pad + canvas mouse on DOM ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindDpad);
+    document.addEventListener('DOMContentLoaded', function () { bindDpad(); bindCanvasMouse(); });
   } else {
     bindDpad();
+    bindCanvasMouse();
   }
 
   /** Returns { dx, dy } for the currently held direction, or { dx:0, dy:0 }. */
