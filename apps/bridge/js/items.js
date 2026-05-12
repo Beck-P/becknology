@@ -176,7 +176,8 @@ var BridgeItems = (function () {
   // Weapon onUse — look for a hostile interaction at the tile the player
   // is facing and deal `damage` to it. If the hostile reaches 0 HP, run
   // BridgeInteractions.killHostile to drop loot and clear the tile.
-  // Returns false so the weapon itself doesn't get consumed.
+  // Returns false so the weapon itself doesn't get consumed. The swing
+  // arc plays even on a whiff so the player gets feedback every press.
   function weaponUse(inv) {
     if (typeof BridgeWorld === 'undefined' || typeof BridgeCharacter === 'undefined') return false;
     if (typeof BridgeInteractions === 'undefined') return false;
@@ -184,6 +185,9 @@ var BridgeItems = (function () {
     if (!world) return false;
     var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
     var facing = BridgeCharacter.getFacing();
+    // Always play the swing arc — this is the per-press visual feedback.
+    if (typeof BridgeFX !== 'undefined') BridgeFX.spawnSlash(px, py, facing);
+
     var dx = facing === 'right' ? 1 : facing === 'left' ? -1 : 0;
     var dy = facing === 'down' ? 1 : facing === 'up' ? -1 : 0;
     var tx = px + dx, ty = py + dy;
@@ -197,6 +201,8 @@ var BridgeItems = (function () {
     if (!target) return false;
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
     target._hp -= this.damage || 1;
+    // Hit-flash on the target so the connection reads even at a glance.
+    if (typeof BridgeFX !== 'undefined') BridgeFX.spawnHitFlash(target.x, target.y);
     if (target._hp <= 0) {
       BridgeInteractions.killHostile(world, target);
     }

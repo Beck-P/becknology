@@ -647,6 +647,12 @@ var BridgeWorld = (function () {
     // Pass 3: Character (on top of glow)
     BridgeCharacter.draw(ctx, camera.x, camera.y, tileSize, scale);
 
+    // Pass 3.5: Transient effects (swing arcs, hit flashes, damage numbers).
+    // Drawn after the character so a swing sweeps in front of the pilot.
+    if (typeof BridgeFX !== 'undefined' && BridgeFX.draw) {
+      BridgeFX.draw(ctx, offX, offY, ts, now);
+    }
+
     // Pass 4: Edge vignette — soften abrupt black map edges so out-of-bounds
     // areas read as a fade rather than a sharp render boundary.
     var vignetteW = Math.min(120, w * 0.12);
