@@ -1,10 +1,10 @@
 /**
- * BridgeInventory — personal inventory + currency + HP/energy.
+ * BridgeInventory — personal inventory + HP/energy.
  *
- * Persistent local state (localStorage), independent of the server-side
- * coin balance handled by BridgeProgression. Renders a bottom-of-screen
- * panel showing brass count, item slots with icons + counts, and
- * HP / energy bars.
+ * Items and stats persist in localStorage. Currency is the server-side
+ * coin balance handled by BridgeProgression (top-right CoinHUD) — this
+ * module does NOT track currency. The bottom panel shows item slots and
+ * HP/energy bars; the coin HUD lives above it on the right edge.
  *
  *   BridgeInventory.init()
  *   BridgeInventory.show() / .hide()        // toggle bottom panel
@@ -12,7 +12,6 @@
  *   BridgeInventory.removeItem(id, n=1)
  *   BridgeInventory.getCount(id) → number
  *   BridgeInventory.useItem(id)             // apply onUse, decrement count
- *   BridgeInventory.addBrass(n) / .spendBrass(n) → bool / .getBrass()
  *   BridgeInventory.restoreHP(n) / .restoreEnergy(n)
  *   BridgeInventory.getStats() → { hp, maxHP, energy, maxEnergy }
  *
@@ -25,7 +24,6 @@ var BridgeInventory = (function () {
   var ICON_SIZE = 32;          // canvas-rendered icon size
 
   var state = {
-    brass: 20,
     items: {},                 // { item_id: count }
     hp: 100, maxHP: 100,
     energy: 100, maxEnergy: 100
@@ -33,7 +31,6 @@ var BridgeInventory = (function () {
 
   var panel = null;
   var slotsRow = null;
-  var brassEl = null;
   var hpFillEl = null, hpTextEl = null;
   var enFillEl = null, enTextEl = null;
   var inited = false;
@@ -50,8 +47,6 @@ var BridgeInventory = (function () {
       if (!raw) return;
       var parsed = JSON.parse(raw);
       if (typeof parsed === 'object' && parsed) {
-        // Defensive merge — older saves may lack new fields.
-        state.brass     = (typeof parsed.brass === 'number') ? parsed.brass : state.brass;
         state.items     = (typeof parsed.items === 'object' && parsed.items) ? parsed.items : {};
         state.hp        = (typeof parsed.hp === 'number') ? parsed.hp : state.hp;
         state.maxHP     = (typeof parsed.maxHP === 'number') ? parsed.maxHP : state.maxHP;
@@ -86,14 +81,6 @@ var BridgeInventory = (function () {
     var consumed = item.onUse(api);
     if (consumed) removeItem(id, 1);
     return true;
-  }
-
-  // ---- Currency -------------------------------------------------------
-  function getBrass() { return state.brass; }
-  function addBrass(n) { state.brass += (n || 0); save(); refresh(); }
-  function spendBrass(n) {
-    if (state.brass < n) return false;
-    state.brass -= n; save(); refresh(); return true;
   }
 
   // ---- Stats ----------------------------------------------------------
@@ -132,23 +119,10 @@ var BridgeInventory = (function () {
       'font-family:"Courier New",Consolas,monospace;color:#e0d8c0;font-size:12px;' +
       'letter-spacing:1.5px;';
 
-    // Brass display
-    var brassWrap = document.createElement('div');
-    brassWrap.style.cssText = 'display:flex;align-items:center;gap:8px;padding-right:14px;border-right:1px solid rgba(255,200,100,0.18);';
-    var brassIcon = document.createElement('canvas');
-    brassIcon.width = brassIcon.height = 28;
-    brassIcon.style.cssText = 'image-rendering:pixelated;width:28px;height:28px;';
-    drawCoin(brassIcon.getContext('2d'), 0, 0, 28);
-    brassEl = document.createElement('span');
-    brassEl.style.cssText = 'color:#ffe080;font-size:14px;font-weight:bold;min-width:32px;text-align:right;';
-    brassWrap.appendChild(brassIcon);
-    brassWrap.appendChild(brassEl);
-    panel.appendChild(brassWrap);
-
     // Item slots row
     slotsRow = document.createElement('div');
     slotsRow.id = 'inv-slots';
-    slotsRow.style.cssText = 'display:flex;gap:4px;align-items:center;';
+    slotsRow.style.cssText = 'display:flex;gap:4px;align-items:center;padding-right:14px;border-right:1px solid rgba(255,200,100,0.18);';
     panel.appendChild(slotsRow);
 
     // Stats: HP + Energy
@@ -187,31 +161,8 @@ var BridgeInventory = (function () {
     document.body.appendChild(panel);
   }
 
-  // Draw a brass coin icon
-  function drawCoin(ctx, x, y, s) {
-    var u = s / 16;
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(x, y, s, s);
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 4*u, y + 3*u, 8*u, 10*u);
-    ctx.fillStyle = '#a08040';
-    ctx.fillRect(x + 4*u, y + 4*u, 8*u, 8*u);
-    ctx.fillStyle = '#e0c060';
-    ctx.fillRect(x + 4*u, y + 4*u, 8*u, 2*u);
-    ctx.fillStyle = '#fff0c0';
-    ctx.fillRect(x + 5*u, y + 4*u, 2*u, u);
-    // "B"
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 7*u, y + 7*u, u, 4*u);
-    ctx.fillRect(x + 8*u, y + 7*u, u, u);
-    ctx.fillRect(x + 8*u, y + 9*u, u, u);
-    ctx.fillRect(x + 8*u, y + 10*u, u, u);
-  }
-
   function refresh() {
     if (!panel) return;
-    // Brass
-    brassEl.textContent = String(state.brass);
     // Slots — render an icon for each item in inventory
     slotsRow.innerHTML = '';
     var ids = Object.keys(state.items);
@@ -277,7 +228,6 @@ var BridgeInventory = (function () {
     show: show, hide: hide, refresh: refresh,
     addItem: addItem, removeItem: removeItem, getCount: getCount, getAll: getAll,
     useItem: useItem,
-    getBrass: getBrass, addBrass: addBrass, spendBrass: spendBrass,
     getStats: getStats, restoreHP: restoreHP, restoreEnergy: restoreEnergy,
     restoreAll: restoreAll, takeDamage: takeDamage
   };

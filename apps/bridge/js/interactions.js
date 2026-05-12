@@ -132,14 +132,14 @@ var BridgeInteractions = (function () {
         break;
 
       case 'vendor':
-        // Adventure-shop dialog — distinct from the decor 'shop' / 'catalog'
-        // which uses BridgeCatalog. This one buys BridgeItems (food, potions,
-        // tools) with brass tracked locally by BridgeInventory.
+        // Adventure-shop dialog — buys BridgeItems (food, potions, tools)
+        // with server-side coins via BridgeProgression. Distinct from the
+        // decor 'shop' / 'catalog' path which uses BridgeCatalog.
         showVendorDialog(inter);
         break;
 
       case 'rest':
-        // Inn-style rest: spend brass, restore HP + energy to max.
+        // Inn-style rest: spend coins via BridgeProgression, restore HP + energy.
         showRestDialog(inter);
         break;
 
@@ -290,12 +290,16 @@ var BridgeInteractions = (function () {
     if (dialogEl) dialogEl.remove();
   }
 
-  // Vendor / shop dialog — buy BridgeItems with brass tracked by BridgeInventory.
+  // Vendor / shop dialog — buy BridgeItems with server-side coins via BridgeProgression.
   // inter.items: [{ id, price }, ...]
   // inter.label: shop name displayed at the top
   function showVendorDialog(inter) {
     if (typeof BridgeInventory === 'undefined' || typeof BridgeItems === 'undefined') {
       showDialog(inter.label || 'SHOP', 'NO INVENTORY SYSTEM\\nAVAILABLE.');
+      return;
+    }
+    if (typeof BridgeProgression === 'undefined') {
+      showDialog(inter.label || 'SHOP', 'CURRENCY SYSTEM\\nUNAVAILABLE.');
       return;
     }
     dialogVisible = true;
@@ -314,17 +318,20 @@ var BridgeInteractions = (function () {
 
     var html = '<h3 style="font-size:13px;letter-spacing:3px;color:#e0c060;margin:0 0 6px;text-align:center;">' +
                (inter.label || 'SHOP') + '</h3>' +
-               '<div id="vendor-brass" style="font-size:11px;letter-spacing:2px;color:#a08040;text-align:center;margin-bottom:14px;"></div>' +
+               '<div id="vendor-balance" style="font-size:11px;letter-spacing:2px;color:#a08040;text-align:center;margin-bottom:14px;">COINS: ...</div>' +
                '<div id="vendor-items" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>' +
                '<p style="font-size:10px;color:#555;letter-spacing:2px;text-align:center;cursor:pointer;" id="vendor-close">[ ESC OR E TO CLOSE ]</p>';
     dialogEl.innerHTML = html;
     overlay.appendChild(dialogEl);
 
-    var brassLabel = document.getElementById('vendor-brass');
+    var balanceLabel = document.getElementById('vendor-balance');
     var listEl = document.getElementById('vendor-items');
+    var currentBalance = 0;
+    var unsubCoin = null;
 
-    function updateBrass() {
-      brassLabel.textContent = 'BRASS: ' + BridgeInventory.getBrass();
+    function updateBalance(n) {
+      currentBalance = (typeof n === 'number') ? n : currentBalance;
+      balanceLabel.textContent = 'COINS: ' + currentBalance;
     }
     function renderItems() {
       listEl.innerHTML = '';
@@ -334,43 +341,56 @@ var BridgeInteractions = (function () {
         var row = document.createElement('div');
         row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 8px;' +
           'background:rgba(0,0,0,0.4);border:1px solid #2a2a3e;';
-        // Icon
         var cnv = document.createElement('canvas');
         cnv.width = cnv.height = 28;
         cnv.style.cssText = 'image-rendering:pixelated;width:28px;height:28px;flex:0 0 28px;';
         item.draw(cnv.getContext('2d'), 0, 0, 28);
         row.appendChild(cnv);
-        // Name + desc
         var info = document.createElement('div');
         info.style.cssText = 'flex:1;min-width:0;';
         info.innerHTML = '<div style="font-size:11px;color:#e0d8c0;letter-spacing:1px;">' + item.name.toUpperCase() + '</div>' +
                          '<div style="font-size:9px;color:#888;line-height:1.4;">' + item.desc + '</div>';
         row.appendChild(info);
-        // Price + Buy button
-        var canAfford = BridgeInventory.getBrass() >= entry.price;
+        var canAfford = currentBalance >= entry.price;
         var buyBtn = document.createElement('button');
         buyBtn.style.cssText = 'flex:0 0 auto;padding:6px 10px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
           'background:' + (canAfford ? '#3a2a10' : '#1a1a26') + ';color:' + (canAfford ? '#ffe080' : '#555') + ';' +
           'border:1px solid ' + (canAfford ? '#a08040' : '#2a2a3e') + ';cursor:' + (canAfford ? 'pointer' : 'not-allowed') + ';';
-        buyBtn.textContent = entry.price + 'B  BUY';
+        buyBtn.textContent = entry.price + '  BUY';
         buyBtn.disabled = !canAfford;
         buyBtn.addEventListener('click', function () {
-          if (BridgeInventory.spendBrass(entry.price)) {
-            BridgeInventory.addItem(entry.id, 1);
-            updateBrass(); renderItems();
-          }
+          if (buyBtn.disabled) return;
+          buyBtn.disabled = true;
+          buyBtn.textContent = '...';
+          BridgeProgression.wagerCoins(entry.price, 'vendor:' + entry.id).then(function (res) {
+            if (res && res.ok) {
+              BridgeInventory.addItem(entry.id, 1);
+              updateBalance(res.balance);
+            }
+            renderItems();
+          });
         });
         row.appendChild(buyBtn);
         listEl.appendChild(row);
       });
     }
-    updateBrass(); renderItems();
+
+    // Initial balance fetch + subscribe for live updates (e.g. CoinHUD ticker)
+    BridgeProgression.getBalance().then(function (b) {
+      updateBalance(b == null ? 0 : b);
+      renderItems();
+    });
+    unsubCoin = BridgeProgression.onCoinChange(function (e) {
+      updateBalance(e.balance);
+      renderItems();
+    });
 
     document.getElementById('vendor-close').addEventListener('click', closeVendor);
     function closeVendor() {
       var el = document.getElementById('world-dialog');
       if (el) el.remove();
       dialogVisible = false;
+      if (typeof unsubCoin === 'function') unsubCoin();
       if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
       document.removeEventListener('keydown', onKey);
     }
@@ -382,17 +402,15 @@ var BridgeInteractions = (function () {
     document.addEventListener('keydown', onKey);
   }
 
-  // Rest at the inn: confirm, deduct brass, restore HP + energy to max.
+  // Rest at the inn: confirm, deduct coins, restore HP + energy to max.
   function showRestDialog(inter) {
-    if (typeof BridgeInventory === 'undefined') return;
+    if (typeof BridgeInventory === 'undefined' || typeof BridgeProgression === 'undefined') return;
     dialogVisible = true;
     if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
     var promptEl = document.getElementById('interact-prompt');
     if (promptEl) promptEl.classList.remove('visible');
 
     var cost = inter.cost || 5;
-    var brass = BridgeInventory.getBrass();
-    var canRest = brass >= cost;
 
     var overlay = document.getElementById('world-overlay');
     var dialogEl = document.createElement('div');
@@ -407,15 +425,31 @@ var BridgeInteractions = (function () {
       '<h3 style="font-size:13px;letter-spacing:3px;color:#e0c060;margin:0 0 12px;">' + (inter.label || 'REST') + '</h3>' +
       '<p style="font-size:11px;color:#a8a08c;line-height:1.5;margin-bottom:8px;">' +
         'A WARM ROOM, A FRESH PILLOW.<br>RESTORES HP AND ENERGY.</p>' +
-      '<p style="font-size:11px;color:#a08040;margin-bottom:14px;">COST: ' + cost + ' BRASS &middot; YOU HAVE: ' + brass + '</p>' +
-      '<button id="rest-yes" style="padding:8px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
-        'background:' + (canRest ? '#3a2a10' : '#1a1a26') + ';color:' + (canRest ? '#ffe080' : '#555') + ';' +
-        'border:1px solid ' + (canRest ? '#a08040' : '#2a2a3e') + ';margin-right:8px;cursor:' + (canRest ? 'pointer' : 'not-allowed') + ';">' +
-        (canRest ? 'REST' : 'NOT ENOUGH BRASS') + '</button>' +
+      '<p id="rest-cost" style="font-size:11px;color:#a08040;margin-bottom:14px;">COST: ' + cost + ' COINS &middot; YOU HAVE: ...</p>' +
+      '<button id="rest-yes" disabled style="padding:8px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
+        'background:#1a1a26;color:#555;border:1px solid #2a2a3e;margin-right:8px;cursor:not-allowed;">CHECKING...</button>' +
       '<button id="rest-no" style="padding:8px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
         'background:#1a1a26;color:#888;border:1px solid #2a2a3e;cursor:pointer;">CANCEL</button>';
 
     overlay.appendChild(dialogEl);
+
+    var costEl = document.getElementById('rest-cost');
+    var yesBtn = document.getElementById('rest-yes');
+
+    function setAffordState(balance) {
+      var canRest = balance >= cost;
+      costEl.textContent = 'COST: ' + cost + ' COINS · YOU HAVE: ' + balance;
+      yesBtn.disabled = !canRest;
+      yesBtn.textContent = canRest ? 'REST' : 'NOT ENOUGH COINS';
+      yesBtn.style.background = canRest ? '#3a2a10' : '#1a1a26';
+      yesBtn.style.color = canRest ? '#ffe080' : '#555';
+      yesBtn.style.borderColor = canRest ? '#a08040' : '#2a2a3e';
+      yesBtn.style.cursor = canRest ? 'pointer' : 'not-allowed';
+    }
+
+    BridgeProgression.getBalance().then(function (b) {
+      setAffordState(b == null ? 0 : b);
+    });
 
     function close() {
       var el = document.getElementById('world-dialog');
@@ -427,11 +461,21 @@ var BridgeInteractions = (function () {
     function onKey(e) { if (e.key === 'Escape' || e.key === 'e' || e.key === 'E') { e.preventDefault(); close(); } }
     document.addEventListener('keydown', onKey);
     document.getElementById('rest-no').addEventListener('click', close);
-    document.getElementById('rest-yes').addEventListener('click', function () {
-      if (!canRest) return;
-      BridgeInventory.spendBrass(cost);
-      BridgeInventory.restoreAll();
-      close();
+    yesBtn.addEventListener('click', function () {
+      if (yesBtn.disabled) return;
+      yesBtn.disabled = true;
+      yesBtn.textContent = '...';
+      BridgeProgression.wagerCoins(cost, 'rest:inn').then(function (res) {
+        if (res && res.ok) {
+          BridgeInventory.restoreAll();
+          close();
+        } else {
+          // Refresh state in case server says insufficient
+          BridgeProgression.getBalance().then(function (b) {
+            setAffordState(b == null ? 0 : b);
+          });
+        }
+      });
     });
   }
 
