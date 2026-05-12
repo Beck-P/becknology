@@ -33,9 +33,14 @@ var BridgeFX = (function () {
 
   function clear() { effects.length = 0; }
 
-  function draw(ctx, offX, offY, ts, time) {
+  function draw(ctx, offX, offY, ts /*, time — ignored, see note */) {
+    // We deliberately ignore the time argument from the caller. world.js
+    // passes Date.now() (epoch ms) but spawnSlash records performance.now()
+    // (ms since page load). Mixing the two made every effect look ~50 years
+    // old and expire on the same frame it was spawned. Always read our own
+    // performance.now() so the time base is consistent with the spawn calls.
     if (effects.length === 0) return;
-    var now = (typeof time === 'number') ? time : performance.now();
+    var now = performance.now();
     for (var i = effects.length - 1; i >= 0; i--) {
       var fx = effects[i];
       var elapsed = now - fx.startTime;
