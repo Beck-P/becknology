@@ -131,6 +131,18 @@ var BridgeInteractions = (function () {
         if (typeof BridgeStatsPanel !== 'undefined') BridgeStatsPanel.show();
         break;
 
+      case 'vendor':
+        // Adventure-shop dialog — distinct from the decor 'shop' / 'catalog'
+        // which uses BridgeCatalog. This one buys BridgeItems (food, potions,
+        // tools) with brass tracked locally by BridgeInventory.
+        showVendorDialog(inter);
+        break;
+
+      case 'rest':
+        // Inn-style rest: spend brass, restore HP + energy to max.
+        showRestDialog(inter);
+        break;
+
       case 'warp_map':
         // Save the player's bridge-room position so closing the warp map
         // returns them right back to the hologram (not the door spawn).
@@ -276,6 +288,151 @@ var BridgeInteractions = (function () {
     dialogVisible = false;
     var dialogEl = document.getElementById('world-dialog');
     if (dialogEl) dialogEl.remove();
+  }
+
+  // Vendor / shop dialog — buy BridgeItems with brass tracked by BridgeInventory.
+  // inter.items: [{ id, price }, ...]
+  // inter.label: shop name displayed at the top
+  function showVendorDialog(inter) {
+    if (typeof BridgeInventory === 'undefined' || typeof BridgeItems === 'undefined') {
+      showDialog(inter.label || 'SHOP', 'NO INVENTORY SYSTEM\\nAVAILABLE.');
+      return;
+    }
+    dialogVisible = true;
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
+    var promptEl = document.getElementById('interact-prompt');
+    if (promptEl) promptEl.classList.remove('visible');
+
+    var overlay = document.getElementById('world-overlay');
+    var dialogEl = document.createElement('div');
+    dialogEl.id = 'world-dialog';
+    dialogEl.style.cssText =
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+      'background:rgba(10,10,20,0.96);border:1px solid #3a3a4e;border-radius:4px;' +
+      'padding:20px 24px;width:380px;max-width:90vw;z-index:30;' +
+      'font-family:"Courier New",Consolas,monospace;color:#e0d8c0;';
+
+    var html = '<h3 style="font-size:13px;letter-spacing:3px;color:#e0c060;margin:0 0 6px;text-align:center;">' +
+               (inter.label || 'SHOP') + '</h3>' +
+               '<div id="vendor-brass" style="font-size:11px;letter-spacing:2px;color:#a08040;text-align:center;margin-bottom:14px;"></div>' +
+               '<div id="vendor-items" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>' +
+               '<p style="font-size:10px;color:#555;letter-spacing:2px;text-align:center;cursor:pointer;" id="vendor-close">[ ESC OR E TO CLOSE ]</p>';
+    dialogEl.innerHTML = html;
+    overlay.appendChild(dialogEl);
+
+    var brassLabel = document.getElementById('vendor-brass');
+    var listEl = document.getElementById('vendor-items');
+
+    function updateBrass() {
+      brassLabel.textContent = 'BRASS: ' + BridgeInventory.getBrass();
+    }
+    function renderItems() {
+      listEl.innerHTML = '';
+      (inter.items || []).forEach(function (entry) {
+        var item = BridgeItems.get(entry.id);
+        if (!item) return;
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 8px;' +
+          'background:rgba(0,0,0,0.4);border:1px solid #2a2a3e;';
+        // Icon
+        var cnv = document.createElement('canvas');
+        cnv.width = cnv.height = 28;
+        cnv.style.cssText = 'image-rendering:pixelated;width:28px;height:28px;flex:0 0 28px;';
+        item.draw(cnv.getContext('2d'), 0, 0, 28);
+        row.appendChild(cnv);
+        // Name + desc
+        var info = document.createElement('div');
+        info.style.cssText = 'flex:1;min-width:0;';
+        info.innerHTML = '<div style="font-size:11px;color:#e0d8c0;letter-spacing:1px;">' + item.name.toUpperCase() + '</div>' +
+                         '<div style="font-size:9px;color:#888;line-height:1.4;">' + item.desc + '</div>';
+        row.appendChild(info);
+        // Price + Buy button
+        var canAfford = BridgeInventory.getBrass() >= entry.price;
+        var buyBtn = document.createElement('button');
+        buyBtn.style.cssText = 'flex:0 0 auto;padding:6px 10px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
+          'background:' + (canAfford ? '#3a2a10' : '#1a1a26') + ';color:' + (canAfford ? '#ffe080' : '#555') + ';' +
+          'border:1px solid ' + (canAfford ? '#a08040' : '#2a2a3e') + ';cursor:' + (canAfford ? 'pointer' : 'not-allowed') + ';';
+        buyBtn.textContent = entry.price + 'B  BUY';
+        buyBtn.disabled = !canAfford;
+        buyBtn.addEventListener('click', function () {
+          if (BridgeInventory.spendBrass(entry.price)) {
+            BridgeInventory.addItem(entry.id, 1);
+            updateBrass(); renderItems();
+          }
+        });
+        row.appendChild(buyBtn);
+        listEl.appendChild(row);
+      });
+    }
+    updateBrass(); renderItems();
+
+    document.getElementById('vendor-close').addEventListener('click', closeVendor);
+    function closeVendor() {
+      var el = document.getElementById('world-dialog');
+      if (el) el.remove();
+      dialogVisible = false;
+      if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape' || e.key === 'e' || e.key === 'E') {
+        e.preventDefault(); closeVendor();
+      }
+    }
+    document.addEventListener('keydown', onKey);
+  }
+
+  // Rest at the inn: confirm, deduct brass, restore HP + energy to max.
+  function showRestDialog(inter) {
+    if (typeof BridgeInventory === 'undefined') return;
+    dialogVisible = true;
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
+    var promptEl = document.getElementById('interact-prompt');
+    if (promptEl) promptEl.classList.remove('visible');
+
+    var cost = inter.cost || 5;
+    var brass = BridgeInventory.getBrass();
+    var canRest = brass >= cost;
+
+    var overlay = document.getElementById('world-overlay');
+    var dialogEl = document.createElement('div');
+    dialogEl.id = 'world-dialog';
+    dialogEl.style.cssText =
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
+      'background:rgba(10,10,20,0.96);border:1px solid #3a3a4e;border-radius:4px;' +
+      'padding:20px 28px;max-width:340px;z-index:30;' +
+      'font-family:"Courier New",Consolas,monospace;color:#e0d8c0;text-align:center;';
+
+    dialogEl.innerHTML =
+      '<h3 style="font-size:13px;letter-spacing:3px;color:#e0c060;margin:0 0 12px;">' + (inter.label || 'REST') + '</h3>' +
+      '<p style="font-size:11px;color:#a8a08c;line-height:1.5;margin-bottom:8px;">' +
+        'A WARM ROOM, A FRESH PILLOW.<br>RESTORES HP AND ENERGY.</p>' +
+      '<p style="font-size:11px;color:#a08040;margin-bottom:14px;">COST: ' + cost + ' BRASS &middot; YOU HAVE: ' + brass + '</p>' +
+      '<button id="rest-yes" style="padding:8px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
+        'background:' + (canRest ? '#3a2a10' : '#1a1a26') + ';color:' + (canRest ? '#ffe080' : '#555') + ';' +
+        'border:1px solid ' + (canRest ? '#a08040' : '#2a2a3e') + ';margin-right:8px;cursor:' + (canRest ? 'pointer' : 'not-allowed') + ';">' +
+        (canRest ? 'REST' : 'NOT ENOUGH BRASS') + '</button>' +
+      '<button id="rest-no" style="padding:8px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
+        'background:#1a1a26;color:#888;border:1px solid #2a2a3e;cursor:pointer;">CANCEL</button>';
+
+    overlay.appendChild(dialogEl);
+
+    function close() {
+      var el = document.getElementById('world-dialog');
+      if (el) el.remove();
+      dialogVisible = false;
+      if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape' || e.key === 'e' || e.key === 'E') { e.preventDefault(); close(); } }
+    document.addEventListener('keydown', onKey);
+    document.getElementById('rest-no').addEventListener('click', close);
+    document.getElementById('rest-yes').addEventListener('click', function () {
+      if (!canRest) return;
+      BridgeInventory.spendBrass(cost);
+      BridgeInventory.restoreAll();
+      close();
+    });
   }
 
   function showPasswordDialog(inter) {

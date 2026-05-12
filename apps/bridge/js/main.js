@@ -15,6 +15,7 @@ var Bridge = (function () {
 
     BridgeStarfield.init(canvas);
     if (typeof BridgeCoinHUD !== 'undefined') BridgeCoinHUD.init();
+    if (typeof BridgeInventory !== 'undefined') BridgeInventory.init();
     BridgeState.onChange(onStateChange);
 
     // Check if returning from an app with a saved world position
@@ -84,6 +85,13 @@ var Bridge = (function () {
     for (var i = 0; i < overlays.length; i++) {
       overlays[i].style.display = 'none';
       overlays[i].classList.remove('active');
+    }
+
+    // Inventory panel: visible whenever the player is in a world; hidden
+    // during pre-pilot states (intro/identity) and pure-canvas modes.
+    if (typeof BridgeInventory !== 'undefined') {
+      if (newState === 'world') BridgeInventory.show();
+      else BridgeInventory.hide();
     }
 
     // Module calls guarded — they're created incrementally across tasks

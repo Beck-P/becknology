@@ -1230,10 +1230,19 @@
     {
       "x": 19,
       "y": 9,
-      "type": "dialog",
+      "type": "vendor",
       "label": "FISHMONGER",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "BARRELS OF THE\\nMORNING'S CATCH \u2014\\nSILVER AND STILL DAMP.\\n\\nTHE GULLS WATCH\\nFROM THE AWNING."
+      "prompt": "PRESS E TO BUY",
+      "items": [
+        {
+          "id": "fresh_fish",
+          "price": 3
+        },
+        {
+          "id": "sea_biscuit",
+          "price": 2
+        }
+      ]
     },
     {
       "x": 11,

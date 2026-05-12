@@ -422,10 +422,19 @@
     {
       "x": 3,
       "y": 3,
-      "type": "dialog",
-      "label": "BARKEEP",
-      "prompt": "PRESS E TO TALK",
-      "dialog": "WELCOME TO DIGGEN'S, PILOT.\\n\\nFIRST DRINK'S ON ME.\\nWHAT WORLDS HAVE YOU SEEN?"
+      "type": "vendor",
+      "label": "TAVERN",
+      "prompt": "PRESS E TO BUY",
+      "items": [
+        {
+          "id": "mug_of_ale",
+          "price": 2
+        },
+        {
+          "id": "bowl_of_stew",
+          "price": 4
+        }
+      ]
     },
     {
       "x": 11,
