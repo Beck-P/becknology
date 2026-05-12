@@ -38,7 +38,8 @@
     "24": "#1a1e20",
     "25": "#252a28",
     "38": "#3a3a3a",
-    "51": "#1a1430"
+    "51": "#1a1430",
+    "60": "#2a2a30"
   },
   "tileNames": {
     "0": "void",
@@ -67,7 +68,8 @@
     "24": "wanted_poster",
     "25": "npc",
     "38": "lantern_post",
-    "51": "sorceress_tower_png"
+    "51": "sorceress_tower_png",
+    "60": "stone_statue"
   },
   "tiles": [
     [
@@ -183,7 +185,7 @@
       16,
       16,
       21,
-      2,
+      60,
       2,
       2,
       1,
@@ -226,7 +228,7 @@
       2,
       2,
       2,
-      2,
+      60,
       21,
       16,
       16,
@@ -237,7 +239,7 @@
       16,
       16,
       21,
-      2,
+      60,
       2,
       2,
       2,
@@ -473,26 +475,8 @@
       1,
       1,
       1,
-      0,
-      0,
-      0,
-      1,
       1,
       0,
-      0,
-      0,
-      1,
-      1,
-      1,
-      1
-    ],
-    [
-      1,
-      1,
-      1,
-      1,
-      0,
-      1,
       0,
       1,
       1,
@@ -510,10 +494,10 @@
       1,
       1,
       0,
-      0,
       1,
       0,
-      0,
+      1,
+      1,
       0,
       0,
       0,
@@ -528,6 +512,24 @@
       1,
       1,
       0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
       0,
       0,
       0,
@@ -742,7 +744,31 @@
       "type": "dialog",
       "label": "MOORED BOAT",
       "prompt": "PRESS E TO LOOK",
-      "dialog": "AN EMPTY ROWBOAT.\\n\\nTHE MOORING ROPE LOOPS\\nINTO THE WATER \u2014\\nBUT GOES NOWHERE."
+      "dialog": "AN EMPTY ROWBOAT.\\n\\nTHE MOORING ROPE LOOPS\\nINTO THE WATER —\\nBUT GOES NOWHERE."
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "type": "hostile",
+      "label": "STONE SENTINEL",
+      "prompt": "BACK AWAY!",
+      "damage": 5
+    },
+    {
+      "x": 11,
+      "y": 8,
+      "type": "hostile",
+      "label": "STONE SENTINEL",
+      "prompt": "BACK AWAY!",
+      "damage": 5
+    },
+    {
+      "x": 4,
+      "y": 9,
+      "type": "hostile",
+      "label": "STONE SENTINEL",
+      "prompt": "BACK AWAY!",
+      "damage": 5
     }
   ],
   "moonColor": [

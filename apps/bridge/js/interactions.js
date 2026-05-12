@@ -59,6 +59,25 @@ var BridgeInteractions = (function () {
     if (currentInteraction && controls.consumeAction()) {
       executeInteraction(currentInteraction);
     }
+
+    // Hostile tiles drain HP while the player stands adjacent and faces
+    // them (or stands on the same tile). Paused when a dialog or the
+    // inventory menu is open. _lastHit lives on the interaction object —
+    // it resets when the world reloads, which is fine.
+    if (currentInteraction && currentInteraction.type === 'hostile' && !character.isMoving()) {
+      var menuOpen = (typeof BridgeInventory !== 'undefined') &&
+                     BridgeInventory.isMenuOpen && BridgeInventory.isMenuOpen();
+      if (!menuOpen) {
+        var now = performance.now();
+        var cooldown = currentInteraction.attackCooldown || 1200;
+        if (!currentInteraction._lastHit || (now - currentInteraction._lastHit) > cooldown) {
+          currentInteraction._lastHit = now;
+          if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
+            BridgeInventory.takeDamage(currentInteraction.damage || 5);
+          }
+        }
+      }
+    }
   }
 
   function executeInteraction(inter) {
@@ -141,6 +160,13 @@ var BridgeInteractions = (function () {
       case 'rest':
         // Inn-style rest: spend coins via BridgeProgression, restore HP + energy.
         showRestDialog(inter);
+        break;
+
+      case 'hostile':
+        // Stub: you can't strike back yet. The statue keeps draining
+        // until you walk away. Real combat lands in a follow-up.
+        showDialog(inter.label || 'HOSTILE',
+          'STONE THAT REMEMBERS\\nHOW TO HURT.\\n\\nFISTS WON\\u2019T DENT IT.\\n\\nBACK AWAY.');
         break;
 
       case 'warp_map':

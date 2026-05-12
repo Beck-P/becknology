@@ -2086,6 +2086,47 @@
     BridgeSprites.draw(ctx, x, y, ts, 'sorceress-tower', 3, 5, 1);
   }
 
+  // Hostile stone statue — squat humanoid carving with faintly glowing
+  // amethyst eyes. Sits on a 2u plinth. Designed to read as Midnight Isle
+  // sentinel: grim grey saltstone + a single magenta highlight.
+  function drawStoneStatue(ctx, x, y, ts, time, col, row) {
+    var u = ts / 16;
+    var DARK = '#08080a';
+    var SH   = '#181820';
+    var MID  = '#2a2a30';
+    var HI   = '#3e3e44';
+    var EYE  = '#c060e0';
+    var EYE_HI = '#ffa0ff';
+
+    // Plinth (bottom 3u)
+    ctx.fillStyle = DARK; ctx.fillRect(x + 2*u, y + 12*u, 12*u, 4*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 3*u, y + 12*u, 10*u, 3*u);
+    ctx.fillStyle = HI;   ctx.fillRect(x + 3*u, y + 12*u, 10*u, 1*u);
+    ctx.fillStyle = SH;   ctx.fillRect(x + 3*u, y + 15*u, 10*u, 1*u);
+
+    // Torso (6u wide × 4u tall)
+    ctx.fillStyle = DARK; ctx.fillRect(x + 4*u, y + 7*u, 8*u, 6*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 5*u, y + 7*u, 6*u, 5*u);
+    ctx.fillStyle = HI;   ctx.fillRect(x + 5*u, y + 7*u, 6*u, 1*u);
+    ctx.fillStyle = SH;   ctx.fillRect(x + 5*u, y + 11*u, 6*u, 1*u);
+
+    // Head (4u wide × 3u tall)
+    ctx.fillStyle = DARK; ctx.fillRect(x + 5*u, y + 3*u, 6*u, 4*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 6*u, y + 3*u, 4*u, 4*u);
+    ctx.fillStyle = HI;   ctx.fillRect(x + 6*u, y + 3*u, 4*u, 1*u);
+
+    // Eyes — faint pulse driven by time
+    var pulse = 0.65 + 0.35 * Math.sin((time || 0) / 320);
+    ctx.fillStyle = EYE;
+    ctx.fillRect(x + 6*u, y + 5*u, 1*u, 1*u);
+    ctx.fillRect(x + 9*u, y + 5*u, 1*u, 1*u);
+    ctx.fillStyle = EYE_HI;
+    ctx.globalAlpha = pulse;
+    ctx.fillRect(x + 6*u, y + 5*u, 1*u, 1*u);
+    ctx.fillRect(x + 9*u, y + 5*u, 1*u, 1*u);
+    ctx.globalAlpha = 1;
+  }
+
   BridgeWorld.registerTileset('lumar', {
     1: drawSaltstoneWall,
     2: drawSaltstoneFloor,
@@ -2136,7 +2177,8 @@
     48: drawCliffTrail,
     49: drawMarketCartPng,
     50: drawCratesBarrelsPng,
-    51: drawSorceressTowerPng
+    51: drawSorceressTowerPng,
+    60: drawStoneStatue
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);
