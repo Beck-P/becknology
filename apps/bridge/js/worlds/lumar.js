@@ -1706,20 +1706,26 @@
   // Bell tower — strict pixel art. Stepped pyramid roof, stone base with
   // arched bell housing, swinging bell. Whole-u rects only.
   // Bell tower — 2 wide × 4 tall, anchor at column index 0 (left).
+  // Paint cobblestone across the bottom-row footprint so the void cell to
+  // the right of the anchor (set in lumar-square.json to prevent overpaint)
+  // doesn't show the background color.
   function drawBellTower(ctx, x, y, ts, time, col, row) {
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawCobblestone(ctx, x, y, ts, time, col, row);
+    drawCobblestone(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'bell-tower', 2, 4, 0);
   }
 
   // Town fountain — 3 wide × 3 tall, anchor at column index 1 (center).
   function drawFountain(ctx, x, y, ts, time, col, row) {
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawCobblestone(ctx, x, y, ts, time, col, row);
+    drawCobblestone(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'fountain', 3, 3, 1);
   }
 
   // Bulletin board — 2 wide × 3 tall, anchor at column index 0 (left).
   function drawBulletinBoard(ctx, x, y, ts, time, col, row) {
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawCobblestone(ctx, x, y, ts, time, col, row);
+    drawCobblestone(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'bulletin-board', 2, 3, 0);
   }
 
@@ -2061,12 +2067,14 @@
   // Market cart — 3 wide × 2 tall, anchor at column index 1 (center).
   function drawMarketCartPng(ctx, x, y, ts, time, col, row) {
     drawCobblestone(ctx, x, y, ts, time, col, row);
+    drawCobblestone(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'market-cart', 3, 2, 1);
   }
 
   // Crates + barrels — 2 wide × 2 tall, anchor at column index 0 (left).
   function drawCratesBarrelsPng(ctx, x, y, ts, time, col, row) {
     drawCobblestone(ctx, x, y, ts, time, col, row);
+    drawCobblestone(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'crates-barrels', 2, 2, 0);
   }
 
@@ -2074,6 +2082,7 @@
   // Used in lumar-midnight where the saltstone-shore platform meets the sea.
   function drawSorceressTowerPng(ctx, x, y, ts, time, col, row) {
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawSaltstoneFloor(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'sorceress-tower', 3, 5, 1);
   }
 

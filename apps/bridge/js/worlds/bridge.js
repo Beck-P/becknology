@@ -216,6 +216,7 @@
   BridgeSprites.load('captain-chair', '/bridge/assets/props/captain-chair.png', 40);
   function drawCaptainChair(ctx, x, y, ts, time, col, row) {
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
+    drawFloorBase(ctx, x + ts, y, ts, time, col + 1, row, false);
     BridgeSprites.draw(ctx, x, y, ts, 'captain-chair', 2, 2, 0);
   }
 

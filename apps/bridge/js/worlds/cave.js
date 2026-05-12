@@ -123,6 +123,7 @@
   BridgeSprites.load('dragon', '/bridge/assets/creatures/dragon.png', 96);
   function drawDragon(ctx, x, y, ts, time, col, row) {
     drawCaveFloor(ctx, x, y, ts, time, col, row);
+    drawCaveFloor(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'dragon', 3, 2, 1);
   }
 
