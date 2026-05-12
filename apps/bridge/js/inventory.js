@@ -46,6 +46,12 @@ var BridgeInventory = (function () {
   var enFillEl = null, enTextEl = null;
   var inited = false;
 
+  var menu = null;                 // modal overlay element
+  var menuSlotEls = [];            // 10 DOM nodes inside the modal grid
+  var menuDetailEl = null;
+  var menuStatsEl = null;
+  var menuOpen = false;
+
   // ---- Persistence ----------------------------------------------------
   function normalizeSlots(arr) {
     var out = new Array(MAX_SLOTS).fill(null);
@@ -356,10 +362,281 @@ var BridgeInventory = (function () {
     enFillEl.style.width = enPct + '%';
     hpTextEl.textContent = state.hp + '/' + state.maxHP;
     enTextEl.textContent = state.energy + '/' + state.maxEnergy;
+    if (menuOpen) refreshMenu();
   }
 
   function show() { if (panel) panel.style.display = 'flex'; refresh(); }
-  function hide() { if (panel) panel.style.display = 'none'; }
+  function hide() { if (panel) panel.style.display = 'none'; closeMenu(); }
+
+  // ---- Inventory Menu (full modal) ------------------------------------
+  function buildMenu() {
+    if (menu) return;
+    menu = document.createElement('div');
+    menu.id = 'inventory-menu';
+    menu.style.cssText =
+      'position:fixed;inset:0;z-index:200;display:none;' +
+      'background:rgba(4,8,14,0.78);' +
+      'align-items:center;justify-content:center;' +
+      'font-family:"Courier New",Consolas,monospace;color:#e0d8c0;';
+
+    var card = document.createElement('div');
+    card.style.cssText =
+      'width:min(720px,94vw);max-height:88vh;overflow:hidden;' +
+      'display:flex;flex-direction:column;' +
+      'background:linear-gradient(180deg,rgba(20,18,14,0.96),rgba(10,8,6,0.96));' +
+      'border:1px solid rgba(255,200,100,0.45);border-radius:8px;' +
+      'box-shadow:0 0 32px rgba(255,200,100,0.18),inset 0 0 16px rgba(255,200,100,0.04);';
+
+    // Header
+    var head = document.createElement('div');
+    head.style.cssText =
+      'padding:14px 22px;border-bottom:1px solid rgba(255,200,100,0.20);' +
+      'display:flex;justify-content:space-between;align-items:center;';
+    head.innerHTML =
+      '<div>' +
+        '<div style="font-size:10px;letter-spacing:5px;color:rgba(255,200,100,0.7);">PILOT GEAR</div>' +
+        '<div style="font-size:18px;letter-spacing:3px;color:#ffe080;margin-top:4px;">INVENTORY</div>' +
+      '</div>' +
+      '<div style="font-size:10px;color:#888;letter-spacing:2px;">[I] OR [ESC] TO CLOSE</div>';
+    card.appendChild(head);
+
+    // Body: grid on the left, detail on the right
+    var body = document.createElement('div');
+    body.style.cssText = 'display:flex;gap:18px;padding:18px 22px;';
+
+    // Grid (2 rows × 5 cols)
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(5,56px);grid-template-rows:repeat(2,56px);gap:6px;flex:0 0 auto;';
+    menuSlotEls = [];
+    for (var i = 0; i < MAX_SLOTS; i++) {
+      var s = buildMenuSlotEl(i);
+      menuSlotEls.push(s);
+      grid.appendChild(s);
+    }
+    body.appendChild(grid);
+
+    // Detail panel
+    menuDetailEl = document.createElement('div');
+    menuDetailEl.style.cssText = 'flex:1;min-width:0;padding:8px 4px;';
+    body.appendChild(menuDetailEl);
+
+    card.appendChild(body);
+
+    // Stats footer
+    menuStatsEl = document.createElement('div');
+    menuStatsEl.style.cssText =
+      'padding:12px 22px;border-top:1px solid rgba(255,200,100,0.20);' +
+      'font-size:11px;letter-spacing:2px;color:#a8a08c;' +
+      'display:flex;justify-content:space-between;align-items:center;';
+    card.appendChild(menuStatsEl);
+
+    menu.appendChild(card);
+    document.body.appendChild(menu);
+
+    // Clicking the dim backdrop closes; clicks on the card don't
+    menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); });
+  }
+
+  function buildMenuSlotEl(i) {
+    var slot = document.createElement('div');
+    slot.dataset.idx = i;
+    slot.style.cssText =
+      'position:relative;width:56px;height:56px;' +
+      'background:rgba(0,0,0,0.5);border:1px solid rgba(255,200,100,0.20);' +
+      'cursor:pointer;transition:border-color 0.15s ease,box-shadow 0.15s ease;';
+    var num = document.createElement('span');
+    num.textContent = (i === 9) ? '0' : String(i + 1);
+    num.style.cssText =
+      'position:absolute;top:2px;left:4px;font-size:10px;' +
+      'color:rgba(255,200,100,0.55);pointer-events:none;';
+    slot.appendChild(num);
+    var cnv = document.createElement('canvas');
+    cnv.className = 'menu-icon';
+    cnv.width = 44; cnv.height = 44;
+    cnv.style.cssText = 'image-rendering:pixelated;width:44px;height:44px;display:block;margin:6px auto 0;';
+    slot.appendChild(cnv);
+    var cnt = document.createElement('span');
+    cnt.className = 'menu-count';
+    cnt.style.cssText =
+      'position:absolute;bottom:2px;right:5px;font-size:12px;color:#fff;' +
+      'text-shadow:1px 1px 0 #000;font-weight:bold;display:none;';
+    slot.appendChild(cnt);
+    slot.addEventListener('click', function () { selectSlot(i); });
+    return slot;
+  }
+
+  function refreshMenuSlot(i) {
+    var slot = menuSlotEls[i];
+    if (!slot) return;
+    var s = state.slots[i];
+    var isSelected = (i === state.selected);
+    if (isSelected) {
+      slot.style.borderColor = '#ffe080';
+      slot.style.boxShadow = '0 0 10px rgba(255,224,128,0.5),inset 0 0 8px rgba(255,224,128,0.10)';
+    } else {
+      slot.style.borderColor = s ? 'rgba(255,200,100,0.35)' : 'rgba(255,200,100,0.15)';
+      slot.style.boxShadow = '';
+    }
+    var cnv = slot.querySelector('.menu-icon');
+    var cnt = slot.querySelector('.menu-count');
+    var ctx = cnv.getContext('2d');
+    ctx.clearRect(0, 0, 44, 44);
+    if (s) {
+      var item = BridgeItems.get(s.id);
+      if (item) item.draw(ctx, 0, 0, 44);
+      if (s.count > 1) { cnt.textContent = String(s.count); cnt.style.display = ''; }
+      else cnt.style.display = 'none';
+    } else {
+      cnt.style.display = 'none';
+    }
+  }
+
+  function refreshMenuDetail() {
+    if (!menuDetailEl) return;
+    var s = state.slots[state.selected];
+    if (!s) {
+      menuDetailEl.innerHTML =
+        '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#5a5040;font-style:italic;letter-spacing:2px;">EMPTY SLOT</div>';
+      return;
+    }
+    var item = BridgeItems.get(s.id);
+    if (!item) {
+      menuDetailEl.innerHTML = '<div style="color:#888;">UNKNOWN ITEM</div>';
+      return;
+    }
+    var typeColor = (BridgeItems.typeColor ? BridgeItems.typeColor(item.type) : '#888');
+    var effects = (BridgeItems.effectsText ? BridgeItems.effectsText(item) : '');
+    var usable = (typeof item.onUse === 'function');
+
+    menuDetailEl.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;';
+
+    // Top row: big icon + name/type
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;gap:14px;align-items:center;';
+    var bigCnvWrap = document.createElement('div');
+    bigCnvWrap.style.cssText =
+      'width:80px;height:80px;flex:0 0 80px;background:rgba(0,0,0,0.5);' +
+      'border:1px solid rgba(255,200,100,0.35);display:flex;align-items:center;justify-content:center;';
+    var bigCnv = document.createElement('canvas');
+    bigCnv.width = 64; bigCnv.height = 64;
+    bigCnv.style.cssText = 'image-rendering:pixelated;width:64px;height:64px;';
+    item.draw(bigCnv.getContext('2d'), 0, 0, 64);
+    bigCnvWrap.appendChild(bigCnv);
+    top.appendChild(bigCnvWrap);
+
+    var nameWrap = document.createElement('div');
+    nameWrap.style.cssText = 'flex:1;min-width:0;';
+    var nameEl = document.createElement('div');
+    nameEl.style.cssText = 'font-size:16px;letter-spacing:2px;color:#ffe080;';
+    nameEl.textContent = item.name.toUpperCase();
+    var typeEl = document.createElement('div');
+    typeEl.style.cssText =
+      'display:inline-block;margin-top:6px;padding:2px 8px;font-size:10px;letter-spacing:2px;' +
+      'background:rgba(0,0,0,0.4);border:1px solid ' + typeColor + ';color:' + typeColor + ';';
+    typeEl.textContent = (item.type || 'ITEM').toUpperCase();
+    nameWrap.appendChild(nameEl);
+    nameWrap.appendChild(typeEl);
+    if (s.count > 1) {
+      var countEl = document.createElement('span');
+      countEl.style.cssText = 'margin-left:10px;font-size:11px;letter-spacing:1px;color:#a8a08c;';
+      countEl.textContent = '×' + s.count;
+      typeEl.parentNode.appendChild(countEl);
+    }
+    top.appendChild(nameWrap);
+    wrap.appendChild(top);
+
+    // Description
+    var descEl = document.createElement('div');
+    descEl.style.cssText = 'font-size:11px;line-height:1.6;color:#c8c0a8;letter-spacing:1px;';
+    descEl.textContent = item.desc;
+    wrap.appendChild(descEl);
+
+    // Effects line
+    if (effects) {
+      var fxEl = document.createElement('div');
+      fxEl.style.cssText = 'font-size:11px;letter-spacing:2px;color:#80e0a0;';
+      fxEl.textContent = effects;
+      wrap.appendChild(fxEl);
+    }
+
+    // Use hint
+    var hintEl = document.createElement('div');
+    hintEl.style.cssText =
+      'margin-top:4px;padding:6px 10px;font-size:10px;letter-spacing:2px;' +
+      'background:rgba(0,0,0,0.4);border:1px solid ' + (usable ? 'rgba(255,224,128,0.4)' : 'rgba(255,255,255,0.1)') + ';' +
+      'color:' + (usable ? '#ffe080' : '#5a5040') + ';';
+    hintEl.textContent = usable
+      ? '[F] OR RIGHT-CLICK TO USE'
+      : (item.type === 'weapon' ? 'WEAPON · NO COMBAT YET' : 'NO USE AVAILABLE HERE');
+    wrap.appendChild(hintEl);
+
+    menuDetailEl.appendChild(wrap);
+  }
+
+  function refreshMenuStats() {
+    if (!menuStatsEl) return;
+    menuStatsEl.innerHTML =
+      '<span>HP <span style="color:#ffb0b0;">' + state.hp + '/' + state.maxHP + '</span>' +
+      '  ·  EN <span style="color:#ffe0a0;">' + state.energy + '/' + state.maxEnergy + '</span></span>' +
+      '<span style="color:#666;">CLICK A SLOT · 1-0 JUMP · [ ] CYCLE · F USE</span>';
+  }
+
+  function refreshMenu() {
+    if (!menu) return;
+    for (var i = 0; i < MAX_SLOTS; i++) refreshMenuSlot(i);
+    refreshMenuDetail();
+    refreshMenuStats();
+  }
+
+  function openMenu() {
+    if (menuOpen) return;
+    if (typeof BridgeState !== 'undefined' && BridgeState.getState() !== 'world') return;
+    buildMenu();
+    menu.style.display = 'flex';
+    menuOpen = true;
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
+    refreshMenu();
+  }
+  function closeMenu() {
+    if (!menuOpen) return;
+    menuOpen = false;
+    if (menu) menu.style.display = 'none';
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+  }
+  function toggleMenu() { menuOpen ? closeMenu() : openMenu(); }
+  function isMenuOpen() { return menuOpen; }
+
+  // Menu-only keyboard listener — fires regardless of BridgeControls
+  // because we disable controls while the menu is open. Registered in
+  // the capture phase so we beat world.js's global Esc-to-leave handler
+  // and can swallow it via stopImmediatePropagation when the menu owns
+  // the key.
+  document.addEventListener('keydown', function (e) {
+    if (!menuOpen) return;
+    var handled = true;
+    switch (e.key) {
+      case 'Escape': case 'i': case 'I':
+        closeMenu(); break;
+      case '[':
+        cycleSlot(-1); break;
+      case ']':
+        cycleSlot(1); break;
+      case 'f': case 'F':
+        useSelected(); break;
+      case '1': case '2': case '3': case '4': case '5':
+      case '6': case '7': case '8': case '9':
+        selectSlot(parseInt(e.key, 10) - 1); break;
+      case '0':
+        selectSlot(9); break;
+      default: handled = false;
+    }
+    if (handled) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
 
   // ---- Public API -----------------------------------------------------
   function init() {
@@ -378,7 +655,8 @@ var BridgeInventory = (function () {
     selectSlot: selectSlot, cycleSlot: cycleSlot,
     getSelectedSlot: getSelectedSlot, getSelectedItemId: getSelectedItemId,
     getStats: getStats, restoreHP: restoreHP, restoreEnergy: restoreEnergy,
-    restoreAll: restoreAll, takeDamage: takeDamage
+    restoreAll: restoreAll, takeDamage: takeDamage,
+    openMenu: openMenu, closeMenu: closeMenu, toggleMenu: toggleMenu, isMenuOpen: isMenuOpen
   };
   return api;
 })();

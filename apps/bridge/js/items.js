@@ -163,53 +163,88 @@ var BridgeItems = (function () {
     ctx.fillRect(x + 4*u, y + 13*u, 8*u, u);
   }
 
+  // ---- Shared onUse for any item whose effects field is HP/energy. The
+  // function uses `this` to read effects so each entry shares the same
+  // reference — keep behavior and the inventory-detail display in sync.
+  function consumableUse(inv) {
+    if (!this.effects) return false;
+    if (this.effects.hp)     inv.restoreHP(this.effects.hp);
+    if (this.effects.energy) inv.restoreEnergy(this.effects.energy);
+    return true;
+  }
+
+  // ---- Display helpers ------------------------------------------------
+  // Short effects line for the inventory detail panel.
+  function effectsText(item) {
+    if (!item || !item.effects) return '';
+    var parts = [];
+    if (item.effects.hp)     parts.push('+' + item.effects.hp + ' HP');
+    if (item.effects.energy) parts.push('+' + item.effects.energy + ' EN');
+    return parts.join(' · ');
+  }
+
+  // Color for the type badge in the inventory detail panel.
+  function typeColor(type) {
+    switch (type) {
+      case 'food':   return '#d8a050';
+      case 'drink':  return '#a06830';
+      case 'potion': return '#c83040';
+      case 'weapon': return '#a04040';
+      case 'tool':   return '#a0a8b0';
+      case 'key':    return '#e0c060';
+      default:       return '#888';
+    }
+  }
+
   // ---- Item registry --------------------------------------------------
-  // type drives panel grouping + use behavior.
+  // type drives display + grouping.
+  // effects is the source of truth for what an item does — both the
+  // consumableUse callback and the inventory detail panel read from it.
 
   var ITEMS = {
     bread: {
-      id: 'bread', name: 'Loaf of Bread', desc: 'Fresh from the bakery. Restores some HP and energy.',
+      id: 'bread', name: 'Loaf of Bread', desc: 'Fresh from the bakery. Soft crust, warm inside.',
       type: 'food', stackable: true, draw: loaf,
-      onUse: function (inv) { inv.restoreHP(10); inv.restoreEnergy(5); return true; }
+      effects: { hp: 10, energy: 5 }, onUse: consumableUse
     },
     sweet_roll: {
       id: 'sweet_roll', name: 'Sweet Roll', desc: 'Cinnamon and honey glaze. Better than bread.',
       type: 'food', stackable: true, draw: sweetRoll,
-      onUse: function (inv) { inv.restoreHP(15); inv.restoreEnergy(10); return true; }
+      effects: { hp: 15, energy: 10 }, onUse: consumableUse
     },
     sea_biscuit: {
       id: 'sea_biscuit', name: 'Sea Biscuit', desc: 'Hard, dry, lasts forever. Sailor staple.',
       type: 'food', stackable: true, draw: seaBiscuit,
-      onUse: function (inv) { inv.restoreHP(5); return true; }
+      effects: { hp: 5 }, onUse: consumableUse
     },
     health_draught: {
-      id: 'health_draught', name: 'Health Draught', desc: 'A red potion. Restores a lot of HP.',
+      id: 'health_draught', name: 'Health Draught', desc: 'A red potion. Tastes of iron and brambles.',
       type: 'potion', stackable: true, draw: healthDraught,
-      onUse: function (inv) { inv.restoreHP(50); return true; }
+      effects: { hp: 50 }, onUse: consumableUse
     },
     antidote: {
       id: 'antidote', name: 'Antidote', desc: 'A green potion. Cures poison and a little HP.',
       type: 'potion', stackable: true, draw: antidote,
-      onUse: function (inv) { inv.restoreHP(10); return true; }
+      effects: { hp: 10 }, onUse: consumableUse
     },
     mug_of_ale: {
       id: 'mug_of_ale', name: 'Mug of Ale', desc: 'Cold, foamy, dockside brew. Energy boost.',
       type: 'drink', stackable: true, draw: mug,
-      onUse: function (inv) { inv.restoreEnergy(20); return true; }
+      effects: { energy: 20 }, onUse: consumableUse
     },
     bowl_of_stew: {
       id: 'bowl_of_stew', name: 'Bowl of Stew', desc: 'Hot stew with bread. The tavern\'s specialty.',
       type: 'food', stackable: true, draw: stewBowl,
-      onUse: function (inv) { inv.restoreHP(15); inv.restoreEnergy(25); return true; }
+      effects: { hp: 15, energy: 25 }, onUse: consumableUse
     },
     fresh_fish: {
       id: 'fresh_fish', name: 'Fresh Fish', desc: 'Caught this morning. Smells like the sea.',
       type: 'food', stackable: true, draw: fish,
-      onUse: function (inv) { inv.restoreHP(10); inv.restoreEnergy(10); return true; }
+      effects: { hp: 10, energy: 10 }, onUse: consumableUse
     },
     iron_dagger: {
       id: 'iron_dagger', name: 'Iron Dagger', desc: 'Plain iron blade with leather grip. Sturdy.',
-      type: 'tool', stackable: false, draw: dagger
+      type: 'weapon', stackable: false, draw: dagger
     },
     lockpick: {
       id: 'lockpick', name: 'Lockpick', desc: 'A thin steel pick and tension wrench. Single-use.',
@@ -220,5 +255,5 @@ var BridgeItems = (function () {
   function get(id) { return ITEMS[id] || null; }
   function all() { return ITEMS; }
 
-  return { get: get, all: all };
+  return { get: get, all: all, effectsText: effectsText, typeColor: typeColor };
 })();
