@@ -72,14 +72,42 @@ var BridgeControls = (function () {
     }
   });
 
-  // Mouse / trackpad on the world canvas. Left-click = interact (same as E);
-  // right-click (two-finger tap on a Mac trackpad) = use selected item.
+  // Mouse / trackpad on the world canvas. Left-click on a nearby
+  // interaction acts on it (Stardew-style click-at-distance, capped at
+  // ~4 tiles). Falls back to "as if E was pressed" if nothing's clicked.
+  // Right-click (two-finger tap on a Mac trackpad) uses the selected
+  // inventory item.
   function bindCanvasMouse() {
     var canvas = document.getElementById('bridge-canvas');
     if (!canvas) return;
+
+    function clickedTile(e) {
+      if (typeof BridgeWorld === 'undefined') return null;
+      var rect = canvas.getBoundingClientRect();
+      var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
+      var cam = BridgeWorld.getCamera();
+      if (!cam || !ts) return null;
+      var w = rect.width, h = rect.height;
+      var sx = e.clientX - rect.left;
+      var sy = e.clientY - rect.top;
+      var offX = w / 2 - cam.x * ts;
+      var offY = h / 2 - cam.y * ts;
+      return { x: Math.floor((sx - offX) / ts), y: Math.floor((sy - offY) / ts) };
+    }
+
     canvas.addEventListener('mousedown', function (e) {
       if (!enabled) return;
       if (e.button === 0) {
+        var t = clickedTile(e);
+        if (t && typeof BridgeInteractions !== 'undefined' && BridgeInteractions.tryClickAt) {
+          if (BridgeInteractions.tryClickAt(t.x, t.y)) {
+            e.preventDefault();
+            return;
+          }
+        }
+        // No click-at-distance match — fall back to "as if E was pressed"
+        // (the world.update loop will trigger if the player is adjacent
+        // to something).
         actionPressed = true;
         e.preventDefault();
       } else if (e.button === 2) {

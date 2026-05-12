@@ -173,13 +173,48 @@ var BridgeItems = (function () {
     return true;
   }
 
+  // Weapon onUse — look for a hostile interaction at the tile the player
+  // is facing and deal `damage` to it. If the hostile reaches 0 HP, run
+  // BridgeInteractions.killHostile to drop loot and clear the tile.
+  // Returns false so the weapon itself doesn't get consumed.
+  function weaponUse(inv) {
+    if (typeof BridgeWorld === 'undefined' || typeof BridgeCharacter === 'undefined') return false;
+    if (typeof BridgeInteractions === 'undefined') return false;
+    var world = BridgeWorld.getWorld();
+    if (!world) return false;
+    var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
+    var facing = BridgeCharacter.getFacing();
+    var dx = facing === 'right' ? 1 : facing === 'left' ? -1 : 0;
+    var dy = facing === 'down' ? 1 : facing === 'up' ? -1 : 0;
+    var tx = px + dx, ty = py + dy;
+    var target = null;
+    for (var i = 0; i < world.interactions.length; i++) {
+      var inter = world.interactions[i];
+      if (inter.x === tx && inter.y === ty && inter.type === 'hostile') {
+        target = inter; break;
+      }
+    }
+    if (!target) return false;
+    if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
+    target._hp -= this.damage || 1;
+    if (target._hp <= 0) {
+      BridgeInteractions.killHostile(world, target);
+    }
+    return false; // weapons are not consumed
+  }
+
   // ---- Display helpers ------------------------------------------------
   // Short effects line for the inventory detail panel.
   function effectsText(item) {
-    if (!item || !item.effects) return '';
+    if (!item) return '';
     var parts = [];
-    if (item.effects.hp)     parts.push('+' + item.effects.hp + ' HP');
-    if (item.effects.energy) parts.push('+' + item.effects.energy + ' EN');
+    if (item.effects) {
+      if (item.effects.hp)     parts.push('+' + item.effects.hp + ' HP');
+      if (item.effects.energy) parts.push('+' + item.effects.energy + ' EN');
+    }
+    if (typeof item.damage === 'number') {
+      parts.push(item.damage + ' DMG');
+    }
     return parts.join(' · ');
   }
 
@@ -244,7 +279,8 @@ var BridgeItems = (function () {
     },
     iron_dagger: {
       id: 'iron_dagger', name: 'Iron Dagger', desc: 'Plain iron blade with leather grip. Sturdy.',
-      type: 'weapon', stackable: false, draw: dagger
+      type: 'weapon', stackable: false, draw: dagger,
+      damage: 25, onUse: weaponUse
     },
     lockpick: {
       id: 'lockpick', name: 'Lockpick', desc: 'A thin steel pick and tension wrench. Single-use.',

@@ -39,7 +39,8 @@
     "25": "#252a28",
     "38": "#3a3a3a",
     "51": "#1a1430",
-    "60": "#2a2a30"
+    "60": "#2a2a30",
+    "61": "#1a1a20"
   },
   "tileNames": {
     "0": "void",
@@ -69,7 +70,8 @@
     "25": "npc",
     "38": "lantern_post",
     "51": "sorceress_tower_png",
-    "60": "stone_statue"
+    "60": "stone_statue",
+    "61": "stone_rubble"
   },
   "tiles": [
     [
@@ -752,7 +754,9 @@
       "type": "hostile",
       "label": "STONE SENTINEL",
       "prompt": "BACK AWAY!",
-      "damage": 5
+      "damage": 5,
+      "maxHP": 50,
+      "reward": 15
     },
     {
       "x": 11,
@@ -760,7 +764,9 @@
       "type": "hostile",
       "label": "STONE SENTINEL",
       "prompt": "BACK AWAY!",
-      "damage": 5
+      "damage": 5,
+      "maxHP": 50,
+      "reward": 15
     },
     {
       "x": 4,
@@ -768,7 +774,9 @@
       "type": "hostile",
       "label": "STONE SENTINEL",
       "prompt": "BACK AWAY!",
-      "damage": 5
+      "damage": 5,
+      "maxHP": 50,
+      "reward": 15
     }
   ],
   "moonColor": [

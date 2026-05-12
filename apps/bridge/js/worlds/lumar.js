@@ -2195,6 +2195,28 @@
     ctx.globalAlpha = 1;
   }
 
+  // Shattered statue — what remains after the player kills a sentinel.
+  // A low pile of broken stone fragments; walkable (collisions cleared
+  // by killHostile). No glow.
+  function drawStoneRubble(ctx, x, y, ts, time, col, row) {
+    var u = ts / 16;
+    var DARK = '#08080a';
+    var SH   = '#181820';
+    var MID  = '#2a2a30';
+    var HI   = '#3e3e44';
+
+    // Mound of broken chunks across the bottom 5u
+    ctx.fillStyle = DARK; ctx.fillRect(x + 2*u, y + 11*u, 12*u, 5*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 3*u, y + 11*u, 10*u, 4*u);
+    ctx.fillStyle = HI;   ctx.fillRect(x + 3*u, y + 11*u, 10*u, 1*u);
+
+    // Scattered chunks above the base
+    ctx.fillStyle = DARK; ctx.fillRect(x + 5*u, y + 9*u,  3*u, 2*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 5*u, y + 9*u,  3*u, 1*u);
+    ctx.fillStyle = DARK; ctx.fillRect(x + 9*u, y + 10*u, 3*u, 1*u);
+    ctx.fillStyle = SH;   ctx.fillRect(x + 9*u, y + 10*u, 3*u, 1*u);
+  }
+
   BridgeWorld.registerTileset('lumar', {
     1: drawSaltstoneWall,
     2: drawSaltstoneFloor,
@@ -2246,7 +2268,8 @@
     49: drawMarketCartPng,
     50: drawCratesBarrelsPng,
     51: drawSorceressTowerPng,
-    60: drawStoneStatue
+    60: drawStoneStatue,
+    61: drawStoneRubble
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);

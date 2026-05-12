@@ -581,5 +581,65 @@ var BridgeInteractions = (function () {
     document.addEventListener('keydown', handleKey);
   }
 
-  return { update: update };
+  // Click-to-interact for mouse / trackpad. Given a clicked world tile,
+  // find an interaction at that tile and run it if the player is close
+  // enough. Returns true if the click was handled.
+  function tryClickAt(tx, ty) {
+    if (typeof BridgeWorld === 'undefined') return false;
+    var world = BridgeWorld.getWorld();
+    if (!world || !world.interactions) return false;
+    if (dialogVisible) return false;
+    var inter = null;
+    for (var i = 0; i < world.interactions.length; i++) {
+      if (world.interactions[i].x === tx && world.interactions[i].y === ty) {
+        inter = world.interactions[i]; break;
+      }
+    }
+    if (!inter) return false;
+    var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
+    var dist = Math.max(Math.abs(tx - px), Math.abs(ty - py));
+    if (dist > 4) return false; // too far — same as if you weren't there
+    // Hostile tiles: clicking is an attack, not the stub dialog. Route
+    // through useSelected so the equipped weapon (if any) handles it.
+    if (inter.type === 'hostile') {
+      faceTowards(px, py, tx, ty);
+      if (typeof BridgeInventory !== 'undefined' && BridgeInventory.useSelected) {
+        BridgeInventory.useSelected();
+      }
+      return true;
+    }
+    // For everything else, turn to face the target then run the interaction.
+    faceTowards(px, py, tx, ty);
+    executeInteraction(inter);
+    return true;
+  }
+
+  function faceTowards(px, py, tx, ty) {
+    if (typeof BridgeCharacter === 'undefined' || !BridgeCharacter.setFacing) return;
+    var dx = tx - px, dy = ty - py;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      BridgeCharacter.setFacing(dx > 0 ? 'right' : 'left');
+    } else {
+      BridgeCharacter.setFacing(dy > 0 ? 'down' : 'up');
+    }
+  }
+
+  // Kill a hostile interaction: replace its tile with rubble, drop it
+  // from the world's interaction list, and reward the player.
+  function killHostile(world, target) {
+    if (!world || !target) return;
+    if (world.tiles[target.y] && typeof target.x === 'number') {
+      world.tiles[target.y][target.x] = target.deadTile || 61;
+    }
+    if (world.collisions[target.y] && typeof target.x === 'number') {
+      world.collisions[target.y][target.x] = 0;
+    }
+    var idx = world.interactions.indexOf(target);
+    if (idx >= 0) world.interactions.splice(idx, 1);
+    if (typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) {
+      BridgeProgression.awardCoins(target.reward || 10, 'kill:' + (target.label || 'hostile'));
+    }
+  }
+
+  return { update: update, tryClickAt: tryClickAt, killHostile: killHostile };
 })();

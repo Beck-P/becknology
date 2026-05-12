@@ -771,7 +771,7 @@
         200,
         100
       ],
-      "radius": 1.0,
+      "radius": 1,
       "alpha": 0.18
     },
     "38": {
@@ -780,7 +780,7 @@
         200,
         100
       ],
-      "radius": 1.0,
+      "radius": 1,
       "alpha": 0.18
     },
     "41": {
@@ -789,7 +789,7 @@
         220,
         120
       ],
-      "radius": 2.0,
+      "radius": 2,
       "alpha": 0.32
     },
     "46": {
@@ -845,10 +845,30 @@
       "prompt": "PRESS E TO BOARD",
       "dialog": "THE MERIDIAN. THREE MASTS,\\nEMERALD SAILS FURLED.\\n\\nWHERE TO, CAPTAIN?",
       "options": [
-        { "label": "MIDNIGHT ISLE",  "action": "sail_to", "destination": "lumar-midnight",  "destinationName": "Midnight Isle" },
-        { "label": "ROSE COVE",      "action": "sail_to", "destination": "lumar-rose",      "destinationName": "Rose Cove" },
-        { "label": "SAPPHIRE PORT",  "action": "sail_to", "destination": "lumar-sapphire",  "destinationName": "Sapphire Port" },
-        { "label": "CRIMSON REACH",  "action": "sail_to", "destination": "lumar-crimson",   "destinationName": "Crimson Reach" }
+        {
+          "label": "MIDNIGHT ISLE",
+          "action": "sail_to",
+          "destination": "lumar-midnight",
+          "destinationName": "Midnight Isle"
+        },
+        {
+          "label": "ROSE COVE",
+          "action": "sail_to",
+          "destination": "lumar-rose",
+          "destinationName": "Rose Cove"
+        },
+        {
+          "label": "SAPPHIRE PORT",
+          "action": "sail_to",
+          "destination": "lumar-sapphire",
+          "destinationName": "Sapphire Port"
+        },
+        {
+          "label": "CRIMSON REACH",
+          "action": "sail_to",
+          "destination": "lumar-crimson",
+          "destinationName": "Crimson Reach"
+        }
       ]
     },
     {
@@ -858,6 +878,74 @@
       "label": "LIGHTHOUSE",
       "prompt": "PRESS E TO LOOK",
       "dialog": "THE LUMAR LIGHTHOUSE.\\nIT BURNS THROUGH ANY\\nSTORM. ITS LIGHT IS\\nVISIBLE FOR FIFTY\\nLEAGUES."
+    },
+    {
+      "x": 7,
+      "y": 15,
+      "type": "menu",
+      "label": "BOARD GALLEON",
+      "prompt": "PRESS E TO SET SAIL",
+      "dialog": "THE MERIDIAN. THREE MASTS,\\nEMERALD SAILS FURLED.\\n\\nWHERE TO, CAPTAIN?",
+      "options": [
+        {
+          "label": "MIDNIGHT ISLE",
+          "action": "sail_to",
+          "destination": "lumar-midnight",
+          "destinationName": "Midnight Isle"
+        },
+        {
+          "label": "ROSE COVE",
+          "action": "sail_to",
+          "destination": "lumar-rose",
+          "destinationName": "Rose Cove"
+        },
+        {
+          "label": "SAPPHIRE PORT",
+          "action": "sail_to",
+          "destination": "lumar-sapphire",
+          "destinationName": "Sapphire Port"
+        },
+        {
+          "label": "CRIMSON REACH",
+          "action": "sail_to",
+          "destination": "lumar-crimson",
+          "destinationName": "Crimson Reach"
+        }
+      ]
+    },
+    {
+      "x": 8,
+      "y": 15,
+      "type": "menu",
+      "label": "BOARD GALLEON",
+      "prompt": "PRESS E TO SET SAIL",
+      "dialog": "THE MERIDIAN. THREE MASTS,\\nEMERALD SAILS FURLED.\\n\\nWHERE TO, CAPTAIN?",
+      "options": [
+        {
+          "label": "MIDNIGHT ISLE",
+          "action": "sail_to",
+          "destination": "lumar-midnight",
+          "destinationName": "Midnight Isle"
+        },
+        {
+          "label": "ROSE COVE",
+          "action": "sail_to",
+          "destination": "lumar-rose",
+          "destinationName": "Rose Cove"
+        },
+        {
+          "label": "SAPPHIRE PORT",
+          "action": "sail_to",
+          "destination": "lumar-sapphire",
+          "destinationName": "Sapphire Port"
+        },
+        {
+          "label": "CRIMSON REACH",
+          "action": "sail_to",
+          "destination": "lumar-crimson",
+          "destinationName": "Crimson Reach"
+        }
+      ]
     }
   ]
 }
