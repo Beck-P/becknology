@@ -2,7 +2,8 @@
   "buildCommand": "bash build.sh",
   "outputDirectory": "public",
   "rewrites": [
-    { "source": "/", "destination": "/apps/hub/index.html" },
+    { "source": "/", "destination": "/apps/bridge/index.html" },
+    { "source": "/hub", "destination": "/apps/hub/index.html" },
     { "source": "/runouts", "destination": "/runouts/index.html" },
     { "source": "/runouts/(.*)", "destination": "/runouts/$1" },
     { "source": "/cipher-room", "destination": "/apps/cipher-room/index.html" },
