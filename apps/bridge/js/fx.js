@@ -49,59 +49,54 @@ var BridgeFX = (function () {
   function drawSlash(ctx, offX, offY, ts, fx, progress) {
     var cx = offX + (fx.x + 0.5) * ts;
     var cy = offY + (fx.y + 0.5) * ts;
-    var faceAngle =
-      fx.facing === 'right' ? 0 :
-      fx.facing === 'down'  ? Math.PI / 2 :
-      fx.facing === 'left'  ? Math.PI :
-                              -Math.PI / 2;
-    var radius = ts * 0.95;
-    var halfSpan = Math.PI / 2.2;        // ~82° each side, ~164° total arc
+    var dxDir =
+      fx.facing === 'right' ? 1 :
+      fx.facing === 'left'  ? -1 : 0;
+    var dyDir =
+      fx.facing === 'down'  ? 1 :
+      fx.facing === 'up'    ? -1 : 0;
 
-    // The visible portion of the arc sweeps from the start to the end
-    // angle over the duration: the head leads, the tail follows so the
-    // crescent grows then shrinks.
-    var headT = Math.min(1, progress * 1.5);
-    var tailT = Math.max(0, progress * 1.5 - 0.55);
-    var startA = faceAngle - halfSpan + tailT * 2 * halfSpan;
-    var endA   = faceAngle - halfSpan + headT * 2 * halfSpan;
-    if (endA <= startA) return;
+    // A short, fast thrust — extend out over the first half, retract over the
+    // second half. Reads as "the dagger lunges forward" which is what a
+    // dagger actually does. Big, bright, hard to miss.
+    var reach = (progress < 0.5) ? (progress / 0.5) : (1 - (progress - 0.5) / 0.5);
+    reach = Math.max(0, Math.min(1, reach));
+    var fade = Math.min(1, reach * 1.6);
 
-    // Fade in fast, fade out a bit slower
-    var fade = (progress < 0.15) ? (progress / 0.15) : (1 - (progress - 0.15) / 0.85);
-    fade = Math.max(0, Math.min(1, fade));
+    // The thrust line — from the player's edge out toward the target
+    var distance = ts * (0.35 + reach * 0.95);
+    var tx = cx + dxDir * distance;
+    var ty = cy + dyDir * distance;
 
-    // Outer cyan halo — wider, low alpha
-    ctx.strokeStyle = 'rgba(120,220,255,' + (fade * 0.45).toFixed(2) + ')';
-    ctx.lineWidth = Math.max(4, ts * 0.32);
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, startA, endA);
-    ctx.stroke();
-
-    // Mid warm band
-    ctx.strokeStyle = 'rgba(255,230,180,' + (fade * 0.75).toFixed(2) + ')';
-    ctx.lineWidth = Math.max(3, ts * 0.20);
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, startA, endA);
-    ctx.stroke();
-
+    // Wide bright streak in the facing direction
+    var thickness = Math.max(4, ts * 0.32);
+    var streakLen = ts * (0.5 + reach * 0.4);
+    // Outer cyan halo
+    ctx.fillStyle = 'rgba(120,220,255,' + (fade * 0.55).toFixed(2) + ')';
+    fillCenteredRect(ctx, tx, ty, dxDir, dyDir, streakLen + thickness * 0.5, thickness + 4);
+    // Warm mid band
+    ctx.fillStyle = 'rgba(255,230,150,' + (fade * 0.85).toFixed(2) + ')';
+    fillCenteredRect(ctx, tx, ty, dxDir, dyDir, streakLen, thickness);
     // Bright white core
-    ctx.strokeStyle = 'rgba(255,255,255,' + fade.toFixed(2) + ')';
-    ctx.lineWidth = Math.max(2, ts * 0.10);
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, startA, endA);
-    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,' + fade.toFixed(2) + ')';
+    fillCenteredRect(ctx, tx, ty, dxDir, dyDir, streakLen, Math.max(2, thickness * 0.45));
 
-    // Leading-edge tip — a brighter dot at the end of the arc
-    if (progress < 1) {
-      var tx = cx + Math.cos(endA) * radius;
-      var ty = cy + Math.sin(endA) * radius;
-      var tipSize = Math.max(5, ts * 0.45);
-      ctx.fillStyle = 'rgba(255,255,255,' + fade.toFixed(2) + ')';
-      ctx.beginPath();
-      ctx.arc(tx, ty, tipSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // Tip dot — chunky bright square at the very tip of the thrust
+    var tipX = cx + dxDir * (distance + streakLen / 2);
+    var tipY = cy + dyDir * (distance + streakLen / 2);
+    var tipSize = Math.max(6, ts * 0.4);
+    ctx.fillStyle = 'rgba(255,255,255,' + fade.toFixed(2) + ')';
+    ctx.fillRect(Math.floor(tipX - tipSize / 2), Math.floor(tipY - tipSize / 2),
+                 Math.ceil(tipSize), Math.ceil(tipSize));
+  }
+
+  // Draws a rect of `length` × `width` centered at (cx, cy), oriented
+  // along the (dx, dy) cardinal axis. If pointing horizontally, length
+  // is the x-axis dimension; if vertical, length is the y-axis.
+  function fillCenteredRect(ctx, cx, cy, dx, dy, length, width) {
+    var w = (dx !== 0) ? length : width;
+    var h = (dy !== 0) ? length : width;
+    ctx.fillRect(Math.floor(cx - w / 2), Math.floor(cy - h / 2), Math.ceil(w), Math.ceil(h));
   }
 
   function drawHitFlash(ctx, offX, offY, ts, fx, progress) {
