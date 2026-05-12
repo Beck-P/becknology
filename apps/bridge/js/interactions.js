@@ -78,6 +78,80 @@ var BridgeInteractions = (function () {
         }
       }
     }
+
+    // Hostiles pathfind toward the player on their own cadence.
+    updateHostiles(world, character);
+  }
+
+  // Walk each hostile one tile toward the player (greedy on the larger
+  // axis, fall back to the other axis if blocked). Updates the world's
+  // tile + collision grids so the engine renders/blocks at the new spot.
+  // Pauses while a dialog / inventory menu is open or the player is
+  // dead, so the player isn't ground down while reading text.
+  function updateHostiles(world, character) {
+    if (!world || !world.interactions || !character) return;
+    var menuOpen = (typeof BridgeInventory !== 'undefined') &&
+                   BridgeInventory.isMenuOpen && BridgeInventory.isMenuOpen();
+    if (dialogVisible || menuOpen) return;
+    if (typeof BridgeInventory !== 'undefined' && BridgeInventory.getStats) {
+      var stats = BridgeInventory.getStats();
+      if (stats && stats.hp <= 0) return;
+    }
+
+    var px = character.getX(), py = character.getY();
+    var now = performance.now();
+    // Build occupancy map so two hostiles can't step onto the same cell.
+    var occupied = {};
+    occupied[px + ',' + py] = true;
+    for (var i = 0; i < world.interactions.length; i++) {
+      var h = world.interactions[i];
+      if (h.type === 'hostile') occupied[h.x + ',' + h.y] = true;
+    }
+
+    for (var j = 0; j < world.interactions.length; j++) {
+      var hh = world.interactions[j];
+      if (hh.type !== 'hostile') continue;
+      var dx = px - hh.x, dy = py - hh.y;
+      var manhattan = Math.abs(dx) + Math.abs(dy);
+      if (manhattan <= 1) continue;                // already adjacent — bite, don't walk
+      if (manhattan > (hh.aggroRange || 6)) continue; // out of aggro range — idle
+      var cd = hh.moveCooldown || 800;
+      if (hh._lastMove && (now - hh._lastMove) < cd) continue;
+
+      // Try larger axis first.
+      var stepX, stepY;
+      if (Math.abs(dx) >= Math.abs(dy)) { stepX = sign(dx); stepY = 0; }
+      else                              { stepX = 0;       stepY = sign(dy); }
+      if (!tryStep(world, hh, stepX, stepY, occupied)) {
+        // Fall back to the perpendicular axis.
+        if (stepX !== 0) { stepX = 0; stepY = sign(dy); }
+        else             { stepX = sign(dx); stepY = 0; }
+        if (stepX === 0 && stepY === 0) continue;
+        tryStep(world, hh, stepX, stepY, occupied);
+      }
+      hh._lastMove = now; // cooldown regardless of success — keeps the cadence steady
+    }
+  }
+
+  function sign(n) { return n > 0 ? 1 : n < 0 ? -1 : 0; }
+
+  function tryStep(world, hostile, stepX, stepY, occupied) {
+    var nx = hostile.x + stepX, ny = hostile.y + stepY;
+    if (!world.collisions[ny] || world.collisions[ny][nx] !== 0) return false;
+    var key = nx + ',' + ny;
+    if (occupied[key]) return false;
+    var tileId = hostile.tileId || 60;             // the statue's tile id
+    var fillTile = (typeof hostile._origTile === 'number') ? hostile._origTile : 2;
+    // Restore what was under the hostile, then move onto the new cell.
+    world.tiles[hostile.y][hostile.x] = fillTile;
+    world.collisions[hostile.y][hostile.x] = 0;
+    delete occupied[hostile.x + ',' + hostile.y];
+    hostile._origTile = world.tiles[ny][nx];
+    hostile.x = nx; hostile.y = ny;
+    world.tiles[ny][nx] = tileId;
+    world.collisions[ny][nx] = 1;
+    occupied[key] = true;
+    return true;
   }
 
   function executeInteraction(inter) {
