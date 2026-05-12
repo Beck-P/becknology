@@ -404,6 +404,58 @@
     }
   }
 
+  // ---- Inventory (hotbar slots, selection, HP/energy) ----------------
+  // Single row per pilot in public.pilot_inventory.
+  function getInventory() {
+    return resolvePilot().then(function (pilot) {
+      if (!pilot) return null;
+      var client = getClient();
+      if (!client) return null;
+      return client.from('pilot_inventory')
+        .select('slots, selected_slot, hp, max_hp, energy, max_energy, updated_at')
+        .eq('pilot_id', pilot.id)
+        .maybeSingle()
+        .then(function (res) {
+          if (res.error) {
+            console.warn('[progression] getInventory failed:', res.error);
+            return null;
+          }
+          return res.data || null;
+        });
+    });
+  }
+
+  // Upsert the entire row. `state` should have:
+  //   slots (Array length 10 of {id,count}|null), selected, hp, maxHP, energy, maxEnergy
+  // Caller is expected to debounce — every keystroke shouldn't write.
+  function saveInventory(state) {
+    if (!state) return Promise.resolve(null);
+    return resolvePilot().then(function (pilot) {
+      if (!pilot) return null;
+      var client = getClient();
+      if (!client) return null;
+      var row = {
+        pilot_id:      pilot.id,
+        slots:         Array.isArray(state.slots) ? state.slots : [],
+        selected_slot: (typeof state.selected === 'number') ? state.selected : 0,
+        hp:            (typeof state.hp === 'number') ? state.hp : 100,
+        max_hp:        (typeof state.maxHP === 'number') ? state.maxHP : 100,
+        energy:        (typeof state.energy === 'number') ? state.energy : 100,
+        max_energy:    (typeof state.maxEnergy === 'number') ? state.maxEnergy : 100,
+        updated_at:    new Date().toISOString()
+      };
+      return client.from('pilot_inventory')
+        .upsert(row, { onConflict: 'pilot_id' })
+        .then(function (res) {
+          if (res.error) {
+            console.warn('[progression] saveInventory failed:', res.error);
+            return null;
+          }
+          return true;
+        });
+    });
+  }
+
   // ---- Milestone helpers ----
   // Award the "Cabinet Crusher" trophy iff all 5 played_* keys are present.
   // Idempotent — safe to call after every arcade-game gameOver.
@@ -442,6 +494,8 @@
     onCoinChange: onCoinChange,
     onTrophyEarned: onTrophyEarned,
     onLockerChange: onLockerChange,
+    getInventory: getInventory,
+    saveInventory: saveInventory,
     maybeAwardCabinetCrusher: maybeAwardCabinetCrusher,
     maybeAwardWayfarer: maybeAwardWayfarer
   };

@@ -36,18 +36,8 @@ var BridgeInventory = (function () {
     slots: new Array(MAX_SLOTS).fill(null),  // [{id,count}|null] * MAX_SLOTS
     selected: 0,
     hp: 100, maxHP: 100,
-    energy: 100, maxEnergy: 100,
-    starterGiven: false
+    energy: 100, maxEnergy: 100
   };
-
-  // Items handed out the very first time a pilot opens the inventory.
-  // Future loads check state.starterGiven so we don't keep refilling after
-  // the player uses things up.
-  var STARTER_KIT = [
-    { id: 'bread',       count: 3 },
-    { id: 'mug_of_ale',  count: 2 },
-    { id: 'iron_dagger', count: 1 }
-  ];
 
   var panel = null;
   var slotsRow = null;
@@ -74,10 +64,13 @@ var BridgeInventory = (function () {
     }
     return out;
   }
+  // localStorage is the offline cache + the source of truth before the
+  // first Supabase pull lands. Supabase wins once we've heard from it.
   function save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) { /* quota / private mode — silent */ }
+    scheduleRemoteSave();
   }
   function load() {
     try {
@@ -85,13 +78,7 @@ var BridgeInventory = (function () {
       if (raw) {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
-          state.slots    = normalizeSlots(parsed.slots);
-          state.selected = (typeof parsed.selected === 'number' && parsed.selected >= 0 && parsed.selected < MAX_SLOTS) ? parsed.selected : 0;
-          state.hp        = (typeof parsed.hp === 'number') ? parsed.hp : state.hp;
-          state.maxHP     = (typeof parsed.maxHP === 'number') ? parsed.maxHP : state.maxHP;
-          state.energy    = (typeof parsed.energy === 'number') ? parsed.energy : state.energy;
-          state.maxEnergy = (typeof parsed.maxEnergy === 'number') ? parsed.maxEnergy : state.maxEnergy;
-          state.starterGiven = !!parsed.starterGiven;
+          applyState(parsed);
           return;
         }
       }
@@ -106,17 +93,64 @@ var BridgeInventory = (function () {
             if (!BridgeItems.get(id)) return;
             state.slots[idx++] = { id: id, count: parsedLegacy.items[id] };
           });
-          // Migrated saves count as having had a starter kit equivalent.
-          state.starterGiven = true;
         }
         if (typeof parsedLegacy.hp === 'number') state.hp = parsedLegacy.hp;
         if (typeof parsedLegacy.maxHP === 'number') state.maxHP = parsedLegacy.maxHP;
         if (typeof parsedLegacy.energy === 'number') state.energy = parsedLegacy.energy;
         if (typeof parsedLegacy.maxEnergy === 'number') state.maxEnergy = parsedLegacy.maxEnergy;
-        save();
-        try { localStorage.removeItem(LEGACY_KEY); } catch (e) {}
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          localStorage.removeItem(LEGACY_KEY);
+        } catch (e) {}
       }
     } catch (e) { /* corrupt save — ignore */ }
+  }
+
+  // Apply a state-shaped object (either localStorage or the Supabase row
+  // shape from BridgeProgression.getInventory) into our `state`.
+  function applyState(parsed) {
+    state.slots    = normalizeSlots(parsed.slots);
+    var sel = (typeof parsed.selected === 'number') ? parsed.selected
+            : (typeof parsed.selected_slot === 'number') ? parsed.selected_slot
+            : 0;
+    state.selected = (sel >= 0 && sel < MAX_SLOTS) ? sel : 0;
+    state.hp        = (typeof parsed.hp === 'number') ? parsed.hp : state.hp;
+    state.maxHP     = (typeof parsed.maxHP === 'number') ? parsed.maxHP
+                    : (typeof parsed.max_hp === 'number') ? parsed.max_hp : state.maxHP;
+    state.energy    = (typeof parsed.energy === 'number') ? parsed.energy : state.energy;
+    state.maxEnergy = (typeof parsed.maxEnergy === 'number') ? parsed.maxEnergy
+                    : (typeof parsed.max_energy === 'number') ? parsed.max_energy : state.maxEnergy;
+  }
+
+  // Pull from Supabase if a pilot is signed in. Server state wins over
+  // localStorage (the cache may be stale from a different browser). On
+  // first-ever load for a new pilot the row doesn't exist yet — we keep
+  // the local defaults and push them up on the next save.
+  function loadRemote() {
+    if (typeof BridgeProgression === 'undefined' || !BridgeProgression.getInventory) {
+      return Promise.resolve(false);
+    }
+    return BridgeProgression.getInventory().then(function (row) {
+      if (!row) return false;
+      applyState(row);
+      // Mirror into localStorage so offline reloads see the same state.
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+      refresh();
+      return true;
+    }).catch(function () { return false; });
+  }
+
+  // Debounced upsert to Supabase. Local writes happen synchronously via
+  // `save()`; the remote write trails by ~500ms so a flurry of changes
+  // (buying 5 items in a vendor) becomes one round-trip.
+  var saveTimer = null;
+  function scheduleRemoteSave() {
+    if (typeof BridgeProgression === 'undefined' || !BridgeProgression.saveInventory) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      saveTimer = null;
+      BridgeProgression.saveInventory(state);
+    }, 500);
   }
 
   // ---- Slot ops -------------------------------------------------------
@@ -651,24 +685,23 @@ var BridgeInventory = (function () {
     }
   }, true);
 
-  // Drop the starter kit into empty slots. Safe to call manually from
-  // the console to recover from a wiped or first-run inventory.
-  function giveStarter() {
-    for (var i = 0; i < STARTER_KIT.length; i++) {
-      addItem(STARTER_KIT[i].id, STARTER_KIT[i].count);
-    }
-    state.starterGiven = true;
-    save(); refresh();
-  }
-
   // ---- Public API -----------------------------------------------------
   function init() {
     if (inited) return;
     inited = true;
-    load();
-    if (!state.starterGiven) giveStarter();
+    load();             // localStorage cache first — instant render
     buildPanel();
     refresh();
+    loadRemote();       // then overlay Supabase state when it lands
+
+    // When the player switches pilot (sign-in, identity change), pull
+    // that pilot's inventory. State.onChange fires for every transition;
+    // we just retry the remote pull and the no-pilot case bails.
+    if (typeof BridgeState !== 'undefined' && BridgeState.onChange) {
+      BridgeState.onChange(function (newState) {
+        if (newState === 'world') loadRemote();
+      });
+    }
   }
 
   var api = {
@@ -681,7 +714,7 @@ var BridgeInventory = (function () {
     getStats: getStats, restoreHP: restoreHP, restoreEnergy: restoreEnergy,
     restoreAll: restoreAll, takeDamage: takeDamage,
     openMenu: openMenu, closeMenu: closeMenu, toggleMenu: toggleMenu, isMenuOpen: isMenuOpen,
-    giveStarter: giveStarter
+    loadRemote: loadRemote
   };
   return api;
 })();
