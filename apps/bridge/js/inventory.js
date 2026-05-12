@@ -133,6 +133,16 @@ var BridgeInventory = (function () {
     return BridgeProgression.getInventory().then(function (row) {
       if (!row) return false;
       applyState(row);
+      // Auto-revive: if the saved state has us dead, treat the world
+      // load as a respawn rather than leaving the player permanently
+      // stuck (hostile pathfinding pauses at hp = 0, so a dead pilot
+      // would re-enter to a frozen world). Real death mechanics can
+      // replace this later (lose coins, drop items, etc.).
+      if (state.hp <= 0) {
+        state.hp = state.maxHP;
+        state.energy = Math.max(state.energy, Math.floor(state.maxEnergy / 2));
+        scheduleRemoteSave();
+      }
       // Mirror into localStorage so offline reloads see the same state.
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
       refresh();
