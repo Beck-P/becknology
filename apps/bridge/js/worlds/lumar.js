@@ -1715,11 +1715,74 @@
     BridgeSprites.draw(ctx, x, y, ts, 'bell-tower', 2, 4, 0);
   }
 
+  // Spray overlay for the fountain PNG. Three parabolic water arcs from
+  // the spout, 1-pixel splash dots at the water line, and a slow
+  // expanding ripple ring on the basin surface. Sprite-local landmarks
+  // (spout ~30% down center, water line ~62% down) are hardcoded to
+  // match the generated PNG composition.
+  function drawFountainSpray(ctx, x, y, ts, time, col, row) {
+    var u = ts / 16;
+    var spriteX = x - ts;
+    var spriteY = y - 2 * ts;
+    var spriteW = 3 * ts;
+    var spriteH = 3 * ts;
+    var spoutX = spriteX + spriteW * 0.5;
+    var spoutY = spriteY + spriteH * 0.30;
+    var basinY = spriteY + spriteH * 0.62;
+    var seed = (col || 0) * 0.31 + (row || 0) * 0.17;
+
+    // Three falling streams in staggered phases.
+    for (var s = 0; s < 3; s++) {
+      var spread = (s - 1) * 4 * u;
+      var phase = (time / 220) + s * 0.33 + seed;
+      var t = phase - Math.floor(phase);
+      for (var i = 0; i < 4; i++) {
+        var ti = t - i * 0.10;
+        if (ti < 0 || ti > 1) continue;
+        var dropX = spoutX + spread * ti;
+        var dropY = spoutY + (basinY - spoutY) * ti * ti;
+        var alpha = (0.85 - i * 0.18).toFixed(2);
+        ctx.fillStyle = i === 0
+          ? 'rgba(220, 240, 232, ' + alpha + ')'
+          : 'rgba(160, 210, 200, ' + alpha + ')';
+        ctx.fillRect(Math.floor(dropX), Math.floor(dropY), u, u);
+      }
+    }
+
+    // Splash dots flickering at the water line under each stream.
+    var splashFrame = Math.floor(time / 110) % 4;
+    var offsets = [-8 * u, 0, 8 * u];
+    for (var sp = 0; sp < 3; sp++) {
+      if (((splashFrame + sp) % 4) < 2) {
+        var sx = spoutX + offsets[sp];
+        ctx.fillStyle = 'rgba(220, 240, 232, 0.85)';
+        ctx.fillRect(Math.floor(sx), Math.floor(basinY), u, u);
+        ctx.fillStyle = 'rgba(160, 210, 200, 0.55)';
+        ctx.fillRect(Math.floor(sx - u), Math.floor(basinY + u), u, u);
+        ctx.fillRect(Math.floor(sx + u), Math.floor(basinY + u), u, u);
+      }
+    }
+
+    // Slow expanding ripple cross on the basin surface.
+    var ringPhase = (time / 1100) - Math.floor(time / 1100);
+    var ringRadius = ringPhase * 8 * u;
+    var ringAlpha = 0.45 * (1 - ringPhase);
+    if (ringAlpha > 0.05) {
+      var cx = spoutX, cy = basinY + 2 * u;
+      ctx.fillStyle = 'rgba(180, 230, 200, ' + ringAlpha.toFixed(2) + ')';
+      ctx.fillRect(Math.floor(cx - ringRadius), Math.floor(cy), u, u);
+      ctx.fillRect(Math.floor(cx + ringRadius), Math.floor(cy), u, u);
+      ctx.fillRect(Math.floor(cx), Math.floor(cy - ringRadius * 0.5), u, u);
+      ctx.fillRect(Math.floor(cx), Math.floor(cy + ringRadius * 0.5), u, u);
+    }
+  }
+
   // Town fountain — 3 wide × 3 tall, anchor at column index 1 (center).
   function drawFountain(ctx, x, y, ts, time, col, row) {
     drawCobblestone(ctx, x, y, ts, time, col, row);
     drawCobblestone(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'fountain', 3, 3, 1);
+    drawFountainSpray(ctx, x, y, ts, time, col, row);
   }
 
   // Bulletin board — 2 wide × 3 tall, anchor at column index 0 (left).
