@@ -985,6 +985,10 @@
     else if (zoneName === 'Sapphire Port') seaDrawer = drawSapphireSea;
     else if (zoneName === 'Rose Cove') seaDrawer = drawRoseSea;
     else if (zoneName === 'Midnight Isle') seaDrawer = drawMidnightSea;
+    // The Market Square is inland — paint the off-map background as cobble
+    // instead of sea so void footprint margins on the buildings don't leak
+    // emerald green between them.
+    else if (zoneName === 'Lumar Market Square') seaDrawer = drawCobblestone;
 
     // Use the engine's camera + scale so off-map sea tiles align with the
     // in-map sea tiles seeded by the same (col, row).
