@@ -209,43 +209,14 @@
     }
   }
 
-  // ---- Captain's chair (single tile at col 9 row 8, faces forward/up) ----
+  // ---- Captain's chair (PNG, 2 wide × 2 tall, anchor offset 0) ----
+  // Anchored on the existing single tile-7 cell at col 9 row 8; the PNG
+  // extends up one row and one column to the right so the headrest reads
+  // tall against the holo-pedestal behind it.
+  BridgeSprites.load('captain-chair', '/bridge/assets/props/captain-chair.png', 40);
   function drawCaptainChair(ctx, x, y, ts, time, col, row) {
-    var u = ts / 16;
     drawFloorBase(ctx, x, y, ts, time, col, row, false);
-
-    // Tall back (top half) — viewed from behind, so it's a tall solid block
-    ctx.fillStyle = PAL.chairMid;
-    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(2 * u), Math.floor(10 * u), Math.floor(8 * u));
-    ctx.fillStyle = PAL.chairHi;
-    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(2 * u), Math.floor(10 * u), Math.max(1, u));
-
-    // Chair top headrest curve hint
-    ctx.fillStyle = PAL.chairDeep;
-    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(2 * u), Math.max(1, u), Math.floor(8 * u));
-    ctx.fillRect(x + Math.floor(12 * u), y + Math.floor(2 * u), Math.max(1, u), Math.floor(8 * u));
-
-    // Brass trim accent (vertical center stripe, suggests captain's piping)
-    ctx.fillStyle = PAL.chairTrim;
-    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(3 * u), Math.floor(2 * u), Math.floor(6 * u));
-    ctx.fillStyle = PAL.brassHi;
-    ctx.fillRect(x + Math.floor(7 * u), y + Math.floor(3 * u), Math.max(1, Math.floor(u * 0.7)), Math.floor(6 * u));
-
-    // Seat (lower portion — viewed top-down, looks like a darker rectangle)
-    ctx.fillStyle = PAL.chairDeep;
-    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(10 * u), Math.floor(12 * u), Math.floor(4 * u));
-    // Seat cushion
-    ctx.fillStyle = PAL.chairMid;
-    ctx.fillRect(x + Math.floor(3 * u), y + Math.floor(10 * u), Math.floor(10 * u), Math.floor(3 * u));
-
-    // Armrests (small bumps either side)
-    ctx.fillStyle = PAL.chairHi;
-    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(11 * u), Math.floor(2 * u), Math.floor(3 * u));
-    ctx.fillRect(x + Math.floor(12 * u), y + Math.floor(11 * u), Math.floor(2 * u), Math.floor(3 * u));
-
-    // Base shadow under chair
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.fillRect(x + Math.floor(2 * u), y + Math.floor(14 * u), Math.floor(12 * u), Math.max(1, Math.floor(u * 0.7)));
+    BridgeSprites.draw(ctx, x, y, ts, 'captain-chair', 2, 2, 0);
   }
 
   // ---- Wall-mounted console (wall stations along sides) ----

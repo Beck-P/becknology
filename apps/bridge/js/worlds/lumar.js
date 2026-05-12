@@ -627,6 +627,14 @@
   loadBuildingSprite('bakery', '/bridge/assets/buildings/bakery.png', 64);
   loadBuildingSprite('fishmonger-stall', '/bridge/assets/buildings/fishmonger-stall.png', 64);
   loadBuildingSprite('ship-dock', '/bridge/assets/buildings/ship-dock.png', 140);
+  // Square props + the second tower batch — share the same loader via the
+  // BridgeSprites global so cave + bridge worlds can reuse the cache too.
+  BridgeSprites.load('bell-tower', '/bridge/assets/buildings/bell-tower.png', 48);
+  BridgeSprites.load('sorceress-tower', '/bridge/assets/buildings/sorceress-tower.png', 60);
+  BridgeSprites.load('fountain', '/bridge/assets/props/fountain.png', 60);
+  BridgeSprites.load('bulletin-board', '/bridge/assets/props/bulletin-board.png', 42);
+  BridgeSprites.load('market-cart', '/bridge/assets/props/market-cart.png', 60);
+  BridgeSprites.load('crates-barrels', '/bridge/assets/props/crates-barrels.png', 40);
 
   // tilesW/tilesH = footprint in tiles. anchorOffsetX = which column within
   // the sprite the anchor tile sits at, measured from the LEFT edge (0-based).
@@ -1697,165 +1705,22 @@
 
   // Bell tower — strict pixel art. Stepped pyramid roof, stone base with
   // arched bell housing, swinging bell. Whole-u rects only.
+  // Bell tower — 2 wide × 4 tall, anchor at column index 0 (left).
   function drawBellTower(ctx, x, y, ts, time, col, row) {
-    time = time || 0; col = col || 0; row = row || 0;
-    var u = ts / 16;
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
-    var DARK = '#0a0c0d';
-    var STONE = '#1a1e20';
-    var STONE_MD = '#252a28';
-    var STONE_HI = '#3a4848';
-    var WOOD = '#3a2410';
-    var WOOD_HI = '#5a3a1a';
-    var BRASS = '#a08040';
-    var BRASS_HI = '#e0c060';
-    // Tower base outline (10u × 10u)
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x + 3*u, y + 5*u, 10*u, 10*u);
-    // Body
-    ctx.fillStyle = STONE;
-    ctx.fillRect(x + 4*u, y + 5*u, 8*u, 10*u);
-    // 1u top highlight
-    ctx.fillStyle = STONE_HI;
-    ctx.fillRect(x + 4*u, y + 5*u, 8*u, u);
-    // 1u brick course mid-band
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x + 4*u, y + 9*u, 8*u, u);
-    // Wooden bell housing (8u × 3u)
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x + 4*u, y + 2*u, 8*u, 3*u);
-    ctx.fillStyle = WOOD;
-    ctx.fillRect(x + 4*u, y + 2*u, 8*u, 2*u);
-    ctx.fillStyle = WOOD_HI;
-    ctx.fillRect(x + 4*u, y + 2*u, 8*u, u);
-    // Roof — stepped pyramid (whole-u)
-    ctx.fillStyle = WOOD;
-    ctx.fillRect(x + 7*u, y, 2*u, u);
-    ctx.fillRect(x + 6*u, y + u, 4*u, u);
-    ctx.fillRect(x + 5*u, y + 2*u, 6*u, u);
-    // Swinging bell (3u × 3u with 1u offset)
-    var swing = Math.sin(time / 600);
-    var bellOff = swing > 0.3 ? u : (swing < -0.3 ? -u : 0);
-    var bx = x + 7*u + bellOff;
-    ctx.fillStyle = '#0e0a04';
-    ctx.fillRect(bx, y + 6*u, 3*u, 3*u);    // outline
-    ctx.fillStyle = BRASS;
-    ctx.fillRect(bx, y + 6*u, 3*u, 3*u);
-    ctx.fillStyle = BRASS_HI;
-    ctx.fillRect(bx, y + 6*u, u, 3*u);      // 1u left highlight
-    ctx.fillStyle = '#604020';
-    ctx.fillRect(bx + u, y + 9*u, u, u);    // clapper
-    // Doorway (3u × 4u)
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x + 7*u, y + 11*u, 2*u, 4*u);
-    // Arched window slit (1u × 2u)
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x + 7*u, y + 9*u + u, 2*u, u);
+    BridgeSprites.draw(ctx, x, y, ts, 'bell-tower', 2, 4, 0);
   }
 
-  // Town fountain / well — strict pixel art at 16-px-per-tile density.
-  // Whole-u rectangles only. Stardew-style chunky basin + hard outline.
+  // Town fountain — 3 wide × 3 tall, anchor at column index 1 (center).
   function drawFountain(ctx, x, y, ts, time, col, row) {
-    time = time || 0; col = col || 0; row = row || 0;
-    var u = ts / 16;
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
-    // Stone basin — square shape made of pixel rectangles, with hard outline
-    var BASIN_DARK = '#15101a';
-    var BASIN_MID = '#3a4848';
-    var BASIN_HI = '#5a6868';
-    var WATER = '#3a6850';
-    var WATER_HI = '#5a8a60';
-    // Outer outline (1u dark)
-    ctx.fillStyle = BASIN_DARK;
-    ctx.fillRect(x + 2*u, y + 7*u, 12*u, 8*u);
-    // Stone rim (top + bottom + sides, 1u thick)
-    ctx.fillStyle = BASIN_MID;
-    ctx.fillRect(x + 3*u, y + 8*u, 10*u, 6*u);
-    // Top edge highlight
-    ctx.fillStyle = BASIN_HI;
-    ctx.fillRect(x + 3*u, y + 8*u, 10*u, u);
-    // Bottom edge shadow
-    ctx.fillStyle = BASIN_DARK;
-    ctx.fillRect(x + 3*u, y + 13*u, 10*u, u);
-    // Inner water
-    ctx.fillStyle = WATER;
-    ctx.fillRect(x + 4*u, y + 9*u, 8*u, 4*u);
-    // Water highlight (animated band)
-    var ripple = Math.floor(Math.sin(time / 600 + col + row) + 1);
-    ctx.fillStyle = WATER_HI;
-    ctx.fillRect(x + 4*u, y + (10 + ripple)*u, 8*u, u);
-    // Center stone pillar (the fountain spout) — 2u wide, 5u tall
-    ctx.fillStyle = BASIN_MID;
-    ctx.fillRect(x + 7*u, y + 3*u, 2*u, 5*u);
-    ctx.fillStyle = BASIN_HI;
-    ctx.fillRect(x + 7*u, y + 3*u, u, 5*u);
-    ctx.fillStyle = BASIN_DARK;
-    ctx.fillRect(x + 7*u, y + 3*u, 2*u, u);
-    // Top spout cap
-    ctx.fillStyle = BASIN_HI;
-    ctx.fillRect(x + 6*u, y + 2*u, 4*u, u);
-    ctx.fillStyle = BASIN_DARK;
-    ctx.fillRect(x + 6*u, y + 3*u, 4*u, u);
-    // Spray — 3 frame animation cycle, hard pixels
-    var sprayFrame = Math.floor(time / 200) % 3;
-    ctx.fillStyle = '#a0d0c0';
-    if (sprayFrame === 0) {
-      ctx.fillRect(x + 7*u, y + u, 2*u, u);
-    } else if (sprayFrame === 1) {
-      ctx.fillRect(x + 6*u, y + u, u, u);
-      ctx.fillRect(x + 9*u, y + u, u, u);
-      ctx.fillRect(x + 7*u, y, 2*u, u);
-    } else {
-      ctx.fillRect(x + 5*u, y + u, u, u);
-      ctx.fillRect(x + 10*u, y + u, u, u);
-      ctx.fillRect(x + 7*u, y + u, 2*u, u);
-    }
+    BridgeSprites.draw(ctx, x, y, ts, 'fountain', 3, 3, 1);
   }
 
-  // Bulletin board — strict pixel art. Whole-u rects, dark outline, simple
-  // notice rectangles with 1u text lines.
+  // Bulletin board — 2 wide × 3 tall, anchor at column index 0 (left).
   function drawBulletinBoard(ctx, x, y, ts, time, col, row) {
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
-    var u = ts / 16;
-    var WOOD_DARK = '#2a1808';
-    var WOOD_MID = '#5a3a1a';
-    var WOOD_HI = '#7a4e22';
-    // Posts (2 of them, 1u wide, 5u tall) — frame the board
-    ctx.fillStyle = WOOD_DARK;
-    ctx.fillRect(x + 4*u, y + 9*u, u, 5*u);
-    ctx.fillRect(x + 11*u, y + 9*u, u, 5*u);
-    // Board background — 10u × 8u with hard outline
-    ctx.fillStyle = WOOD_DARK;
-    ctx.fillRect(x + 3*u, y + u, 10*u, 8*u);          // outline
-    ctx.fillStyle = WOOD_MID;
-    ctx.fillRect(x + 4*u, y + 2*u, 8*u, 6*u);         // body
-    // Top edge highlight (1u)
-    ctx.fillStyle = WOOD_HI;
-    ctx.fillRect(x + 4*u, y + 2*u, 8*u, u);
-    // Roof above the board
-    ctx.fillStyle = WOOD_DARK;
-    ctx.fillRect(x + 2*u, y, 12*u, u);
-    ctx.fillStyle = WOOD_MID;
-    ctx.fillRect(x + 3*u, y + u, 10*u, u);
-    // Three pinned notices — flat colored rectangles with 1u text lines
-    ctx.fillStyle = '#d8c8a0';                         // beige
-    ctx.fillRect(x + 5*u, y + 3*u, 3*u, 2*u);
-    ctx.fillStyle = '#5a4a30';
-    ctx.fillRect(x + 5*u, y + 3*u, 3*u, u);            // header
-    ctx.fillStyle = '#e8d8a8';                         // off-white
-    ctx.fillRect(x + 8*u, y + 3*u, 3*u, 2*u);
-    ctx.fillStyle = '#5a4a30';
-    ctx.fillRect(x + 8*u, y + 4*u, 3*u, u);            // text line
-    ctx.fillStyle = '#a8d8a8';                         // green WANTED poster
-    ctx.fillRect(x + 5*u, y + 5*u, 6*u, 3*u);
-    ctx.fillStyle = '#3a4a30';
-    ctx.fillRect(x + 5*u, y + 5*u, 6*u, u);            // header
-    ctx.fillRect(x + 6*u, y + 7*u, 4*u, u);            // text line
-    // Pin tacks (1u red squares)
-    ctx.fillStyle = '#a02020';
-    ctx.fillRect(x + 5*u, y + 3*u, u, u);
-    ctx.fillRect(x + 8*u, y + 3*u, u, u);
-    ctx.fillRect(x + 5*u, y + 5*u, u, u);
+    BridgeSprites.draw(ctx, x, y, ts, 'bulletin-board', 2, 3, 0);
   }
 
   // Fishing net hung to dry — strict pixel art. 1u-wide wooden frame poles,
@@ -2193,6 +2058,25 @@
     ctx.globalAlpha = 1;
   }
 
+  // Market cart — 3 wide × 2 tall, anchor at column index 1 (center).
+  function drawMarketCartPng(ctx, x, y, ts, time, col, row) {
+    drawCobblestone(ctx, x, y, ts, time, col, row);
+    BridgeSprites.draw(ctx, x, y, ts, 'market-cart', 3, 2, 1);
+  }
+
+  // Crates + barrels — 2 wide × 2 tall, anchor at column index 0 (left).
+  function drawCratesBarrelsPng(ctx, x, y, ts, time, col, row) {
+    drawCobblestone(ctx, x, y, ts, time, col, row);
+    BridgeSprites.draw(ctx, x, y, ts, 'crates-barrels', 2, 2, 0);
+  }
+
+  // Sorceress's tower — 3 wide × 5 tall, anchor at column index 1 (center).
+  // Used in lumar-midnight where the saltstone-shore platform meets the sea.
+  function drawSorceressTowerPng(ctx, x, y, ts, time, col, row) {
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    BridgeSprites.draw(ctx, x, y, ts, 'sorceress-tower', 3, 5, 1);
+  }
+
   BridgeWorld.registerTileset('lumar', {
     1: drawSaltstoneWall,
     2: drawSaltstoneFloor,
@@ -2240,7 +2124,10 @@
     45: drawFishmongerStallPng,
     46: drawShipDockPng,
     47: drawBlackCliff,
-    48: drawCliffTrail
+    48: drawCliffTrail,
+    49: drawMarketCartPng,
+    50: drawCratesBarrelsPng,
+    51: drawSorceressTowerPng
   });
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);

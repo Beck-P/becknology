@@ -118,82 +118,12 @@
 
   // Dragon — strict pixel art. Stepped silhouette across 3-tile horizontal
   // span. Whole-u rects only.
+  // Dragon — 3 wide × 2 tall, anchor at column index 1 (middle of the
+  // existing 3-wide hoard nook). PNG, loaded once on first tile draw.
+  BridgeSprites.load('dragon', '/bridge/assets/creatures/dragon.png', 96);
   function drawDragon(ctx, x, y, ts, time, col, row) {
-    time = time || 0; col = col || 0; row = row || 0;
     drawCaveFloor(ctx, x, y, ts, time, col, row);
-    var u = ts / 16;
-    var areaW = ts * 3;
-    var areaH = ts * 2;
-    var DARK = '#2a0808';
-    var BODY_DK = '#501810';
-    var BODY = '#702018';
-    var BODY_HI = '#902820';
-    var SPINE = '#3a1010';
-    var EYE = '#ffe080';
-    var bob = Math.sin(time / 1200) > 0 ? 0 : -u;
-    // Body outline (24u × 6u)
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x, y + 6*u + bob, areaW, 6*u);
-    ctx.fillStyle = BODY;
-    ctx.fillRect(x, y + 6*u + bob, areaW, 5*u);
-    ctx.fillStyle = BODY_HI;
-    ctx.fillRect(x, y + 6*u + bob, areaW, u);   // 1u top highlight
-    ctx.fillStyle = BODY_DK;
-    ctx.fillRect(x, y + 10*u + bob, areaW, u);  // belly shadow
-    // Head (8u × 8u)
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x, y + 4*u + bob, ts, 8*u);
-    ctx.fillStyle = BODY;
-    ctx.fillRect(x, y + 4*u + bob, ts, 7*u);
-    ctx.fillStyle = BODY_HI;
-    ctx.fillRect(x, y + 4*u + bob, ts, u);
-    // Snout (4u × 4u extending left)
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x - 2*u, y + 7*u + bob, 4*u, 4*u);
-    ctx.fillStyle = BODY_HI;
-    ctx.fillRect(x - 2*u, y + 7*u + bob, 4*u, u);
-    // Eye (2u with halo)
-    var eye = 0.7 + Math.sin(time / 400) * 0.3;
-    ctx.globalAlpha = eye;
-    ctx.fillStyle = EYE;
-    ctx.fillRect(x + 4*u, y + 6*u + bob, u, u);
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = eye * 0.5;
-    var glow = ctx.createRadialGradient(x + 4*u, y + 6*u + bob, 0, x + 4*u, y + 6*u + bob, 3*u);
-    glow.addColorStop(0, 'rgba(255, 200, 60, 0.7)');
-    glow.addColorStop(1, 'transparent');
-    ctx.fillStyle = glow;
-    ctx.fillRect(x, y, areaW, areaH);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-    // Horns (1u × 3u stepped)
-    ctx.fillStyle = SPINE;
-    ctx.fillRect(x + 3*u, y + 2*u + bob, u, 3*u);
-    ctx.fillRect(x + 4*u, y + 3*u + bob, u, 2*u);
-    ctx.fillRect(x + 6*u, y + 2*u + bob, u, 3*u);
-    ctx.fillRect(x + 7*u, y + 3*u + bob, u, 2*u);
-    // Tail (4u × 4u extending right)
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x + areaW - 4*u, y + 7*u + bob, 4*u, 4*u);
-    ctx.fillStyle = BODY;
-    ctx.fillRect(x + areaW - 4*u, y + 7*u + bob, 4*u, 3*u);
-    // Tail tip
-    ctx.fillStyle = DARK;
-    ctx.fillRect(x + areaW - u, y + 8*u + bob, 3*u, 2*u);
-    ctx.fillStyle = BODY;
-    ctx.fillRect(x + areaW - u, y + 8*u + bob, 3*u, u);
-    // Spines along back (1u verticals)
-    ctx.fillStyle = SPINE;
-    for (var sp = 0; sp < 6; sp++) {
-      ctx.fillRect(x + (4 + sp * 4)*u, y + 5*u + bob, u, 2*u);
-    }
-    // Wing (stepped polygon, whole-u)
-    ctx.fillStyle = '#5a1810';
-    ctx.fillRect(x + 10*u, y + 6*u + bob, 8*u, 4*u);
-    ctx.fillRect(x + 12*u, y + 5*u + bob, 6*u, 5*u);
-    ctx.fillStyle = '#3a1008';
-    ctx.fillRect(x + 12*u, y + 5*u + bob, 6*u, u);
+    BridgeSprites.draw(ctx, x, y, ts, 'dragon', 3, 2, 1);
   }
 
   // Cave entrance — strict pixel art. Stepped arch back to the surface
