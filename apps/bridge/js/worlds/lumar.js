@@ -1732,7 +1732,7 @@
     var spoutY = spriteY + spriteH * 0.24;
     var basinY = spriteY + spriteH * 0.51;
     var landingReach = spriteW * 0.18; // final x distance from center
-    var bulgeReach = spriteW * 0.10;   // extra x at the arc's mid-fall peak
+    var bulgeReach = 0;                // 0 = almost straight down; raise for more outward arc
     var seed = (col || 0) * 0.31 + (row || 0) * 0.17;
 
     // Mint / teal palette sampled from the PNG's painted arcs.
