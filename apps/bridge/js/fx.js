@@ -54,39 +54,53 @@ var BridgeFX = (function () {
       fx.facing === 'down'  ? Math.PI / 2 :
       fx.facing === 'left'  ? Math.PI :
                               -Math.PI / 2;
-    var radius = ts * 1.05;              // outside the player tile so the swing reads cleanly
-    var halfSpan = Math.PI / 2.4;        // 75° each side, 150° arc
-    var trailCount = 7;
-    var trailGap = 0.07;                  // tighter trail so it reads as a single sweep
+    var radius = ts * 0.95;
+    var halfSpan = Math.PI / 2.2;        // ~82° each side, ~164° total arc
 
-    // Trail behind the leading edge — warm white, shrinks down the chain
-    for (var i = 0; i < trailCount; i++) {
-      var segProgress = progress - i * trailGap;
-      if (segProgress < 0 || segProgress > 1) continue;
-      var angle = faceAngle - halfSpan + segProgress * 2 * halfSpan;
-      var px = cx + Math.cos(angle) * radius;
-      var py = cy + Math.sin(angle) * radius;
-      var alpha = (1 - segProgress) * (i === 0 ? 1.0 : 0.85 - i * 0.08);
-      var size = Math.max(3, ts * (0.34 - i * 0.035));
-      ctx.fillStyle = 'rgba(255,250,220,' + alpha.toFixed(2) + ')';
-      ctx.fillRect(Math.floor(px - size / 2), Math.floor(py - size / 2), Math.ceil(size), Math.ceil(size));
-    }
-    // Leading-edge tip — bright core + cyan halo so it pops on any background
+    // The visible portion of the arc sweeps from the start to the end
+    // angle over the duration: the head leads, the tail follows so the
+    // crescent grows then shrinks.
+    var headT = Math.min(1, progress * 1.5);
+    var tailT = Math.max(0, progress * 1.5 - 0.55);
+    var startA = faceAngle - halfSpan + tailT * 2 * halfSpan;
+    var endA   = faceAngle - halfSpan + headT * 2 * halfSpan;
+    if (endA <= startA) return;
+
+    // Fade in fast, fade out a bit slower
+    var fade = (progress < 0.15) ? (progress / 0.15) : (1 - (progress - 0.15) / 0.85);
+    fade = Math.max(0, Math.min(1, fade));
+
+    // Outer cyan halo — wider, low alpha
+    ctx.strokeStyle = 'rgba(120,220,255,' + (fade * 0.45).toFixed(2) + ')';
+    ctx.lineWidth = Math.max(4, ts * 0.32);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, startA, endA);
+    ctx.stroke();
+
+    // Mid warm band
+    ctx.strokeStyle = 'rgba(255,230,180,' + (fade * 0.75).toFixed(2) + ')';
+    ctx.lineWidth = Math.max(3, ts * 0.20);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, startA, endA);
+    ctx.stroke();
+
+    // Bright white core
+    ctx.strokeStyle = 'rgba(255,255,255,' + fade.toFixed(2) + ')';
+    ctx.lineWidth = Math.max(2, ts * 0.10);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, startA, endA);
+    ctx.stroke();
+
+    // Leading-edge tip — a brighter dot at the end of the arc
     if (progress < 1) {
-      var tipAngle = faceAngle - halfSpan + progress * 2 * halfSpan;
-      var tx = cx + Math.cos(tipAngle) * radius;
-      var ty = cy + Math.sin(tipAngle) * radius;
-      var tipAlpha = 1 - progress;
-      // Cyan halo (slightly larger)
-      var haloSize = Math.max(5, ts * 0.55);
-      ctx.fillStyle = 'rgba(120,220,255,' + (tipAlpha * 0.55).toFixed(2) + ')';
-      ctx.fillRect(Math.floor(tx - haloSize / 2), Math.floor(ty - haloSize / 2),
-                   Math.ceil(haloSize), Math.ceil(haloSize));
-      // Bright white core
-      var tipSize = Math.max(4, ts * 0.42);
-      ctx.fillStyle = 'rgba(255,255,255,' + tipAlpha.toFixed(2) + ')';
-      ctx.fillRect(Math.floor(tx - tipSize / 2), Math.floor(ty - tipSize / 2),
-                   Math.ceil(tipSize), Math.ceil(tipSize));
+      var tx = cx + Math.cos(endA) * radius;
+      var ty = cy + Math.sin(endA) * radius;
+      var tipSize = Math.max(5, ts * 0.45);
+      ctx.fillStyle = 'rgba(255,255,255,' + fade.toFixed(2) + ')';
+      ctx.beginPath();
+      ctx.arc(tx, ty, tipSize / 2, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
