@@ -1739,19 +1739,21 @@
 
     // Two arcs (left, right) — many droplets packed tight so the eye
     // reads them as a continuous flowing stream instead of discrete
-    // drops. Path: x curves outward via sin, y falls via t².
+    // drops. Linear x + t² y traces a tight projectile parabola that
+    // hugs the PNG's painted arcs without bulging outward. Each droplet
+    // is 2u wide so the stream reads thick.
     var sides = [-1, 1];
     for (var a = 0; a < 2; a++) {
       var sign = sides[a];
       for (var i = 0; i < 10; i++) {
         var phase = (time / 280) + i * 0.09 + a * 0.045 + seed;
         var t = phase - Math.floor(phase);
-        var dropX = spoutX + sign * arcReach * Math.sin(t * Math.PI / 2);
+        var dropX = spoutX + sign * arcReach * t;
         var dropY = spoutY + (basinY - spoutY) * t * t;
         var color = i === 0 ? ARC_HI : i < 4 ? ARC_MID : ARC_LO;
         var alpha = (0.95 - i * 0.07).toFixed(2);
         ctx.fillStyle = color + alpha + ')';
-        ctx.fillRect(Math.floor(dropX), Math.floor(dropY), u, u);
+        ctx.fillRect(Math.floor(dropX) - u, Math.floor(dropY), 2 * u, u);
       }
     }
 
