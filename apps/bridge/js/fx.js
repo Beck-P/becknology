@@ -31,6 +31,28 @@ var BridgeFX = (function () {
     });
   }
 
+  // Enemy-strike streak: dark red line from one tile to another, used by
+  // hostiles when they commit to an attack on a locked target tile.
+  function spawnStrike(fromX, fromY, toX, toY) {
+    effects.push({
+      type: 'strike',
+      fromX: fromX, fromY: fromY,
+      toX: toX, toY: toY,
+      startTime: performance.now(),
+      duration: 240
+    });
+  }
+
+  // Damage flash on the player's tile when an enemy lands a hit.
+  function spawnDamageFlash(x, y) {
+    effects.push({
+      type: 'damage_flash',
+      x: x, y: y,
+      startTime: performance.now(),
+      duration: 300
+    });
+  }
+
   function clear() { effects.length = 0; }
 
   function draw(ctx, offX, offY, ts /*, time — ignored, see note */) {
@@ -46,8 +68,10 @@ var BridgeFX = (function () {
       var elapsed = now - fx.startTime;
       if (elapsed >= fx.duration) { effects.splice(i, 1); continue; }
       var progress = elapsed / fx.duration;
-      if (fx.type === 'slash')      drawSlash(ctx, offX, offY, ts, fx, progress);
-      else if (fx.type === 'hit_flash') drawHitFlash(ctx, offX, offY, ts, fx, progress);
+      if (fx.type === 'slash')             drawSlash(ctx, offX, offY, ts, fx, progress);
+      else if (fx.type === 'hit_flash')    drawHitFlash(ctx, offX, offY, ts, fx, progress);
+      else if (fx.type === 'strike')       drawStrike(ctx, offX, offY, ts, fx, progress);
+      else if (fx.type === 'damage_flash') drawDamageFlash(ctx, offX, offY, ts, fx, progress);
     }
   }
 
@@ -125,9 +149,63 @@ var BridgeFX = (function () {
                  Math.ceil(innerSize), Math.ceil(innerSize));
   }
 
+  // Enemy strike: a dark red line that extends from the statue's tile to
+  // the target tile over the first half, then snaps back over the second.
+  function drawStrike(ctx, offX, offY, ts, fx, progress) {
+    var fcx = offX + (fx.fromX + 0.5) * ts;
+    var fcy = offY + (fx.fromY + 0.5) * ts;
+    var tcx = offX + (fx.toX + 0.5) * ts;
+    var tcy = offY + (fx.toY + 0.5) * ts;
+    var reach = (progress < 0.5) ? (progress * 2) : 1;
+    var fade = (progress < 0.5) ? 1 : (1 - (progress - 0.5) * 2);
+
+    var tipX = fcx + (tcx - fcx) * reach;
+    var tipY = fcy + (tcy - fcy) * reach;
+
+    ctx.lineCap = 'round';
+    // Dark outer band
+    ctx.strokeStyle = 'rgba(80,10,20,' + (fade * 0.85).toFixed(2) + ')';
+    ctx.lineWidth = Math.max(4, ts * 0.26);
+    ctx.beginPath(); ctx.moveTo(fcx, fcy); ctx.lineTo(tipX, tipY); ctx.stroke();
+    // Crimson mid
+    ctx.strokeStyle = 'rgba(200,40,60,' + (fade * 0.9).toFixed(2) + ')';
+    ctx.lineWidth = Math.max(3, ts * 0.15);
+    ctx.beginPath(); ctx.moveTo(fcx, fcy); ctx.lineTo(tipX, tipY); ctx.stroke();
+    // Hot core
+    ctx.strokeStyle = 'rgba(255,180,200,' + fade.toFixed(2) + ')';
+    ctx.lineWidth = Math.max(2, ts * 0.07);
+    ctx.beginPath(); ctx.moveTo(fcx, fcy); ctx.lineTo(tipX, tipY); ctx.stroke();
+
+    // Tip puck at the leading edge
+    var tipSize = Math.max(6, ts * 0.35);
+    ctx.fillStyle = 'rgba(255,200,220,' + fade.toFixed(2) + ')';
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, tipSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Player damage flash: red pulse on the player's tile when a strike lands.
+  function drawDamageFlash(ctx, offX, offY, ts, fx, progress) {
+    var cx = offX + (fx.x + 0.5) * ts;
+    var cy = offY + (fx.y + 0.5) * ts;
+    var alpha = 1 - progress;
+    // Outer dim red, grows slightly
+    var outerSize = ts * (1.05 + 0.25 * progress);
+    ctx.fillStyle = 'rgba(180,20,30,' + (alpha * 0.55).toFixed(2) + ')';
+    ctx.fillRect(Math.floor(cx - outerSize / 2), Math.floor(cy - outerSize / 2),
+                 Math.ceil(outerSize), Math.ceil(outerSize));
+    // Inner bright red
+    var innerSize = ts * (0.7 - 0.2 * progress);
+    ctx.fillStyle = 'rgba(255,80,60,' + (alpha * 0.85).toFixed(2) + ')';
+    ctx.fillRect(Math.floor(cx - innerSize / 2), Math.floor(cy - innerSize / 2),
+                 Math.ceil(innerSize), Math.ceil(innerSize));
+  }
+
   return {
     spawnSlash: spawnSlash,
     spawnHitFlash: spawnHitFlash,
+    spawnStrike: spawnStrike,
+    spawnDamageFlash: spawnDamageFlash,
     clear: clear,
     draw: draw
   };

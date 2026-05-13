@@ -1732,7 +1732,7 @@
     var spoutY = spriteY + spriteH * 0.24;
     var basinY = spriteY + spriteH * 0.51;
     var landingReach = spriteW * 0.18; // final x distance from center
-    var bulgeReach = 0;                // 0 = almost straight down; raise for more outward arc
+    var bulgeReach = spriteW * 0.10;   // extra x at the arc's mid-fall peak
     var seed = (col || 0) * 0.31 + (row || 0) * 0.17;
 
     // Mint / teal palette sampled from the PNG's painted arcs.
@@ -2164,14 +2164,23 @@
   // Hostile stone statue — squat humanoid carving with faintly glowing
   // amethyst eyes. Sits on a 2u plinth. Designed to read as Midnight Isle
   // sentinel: grim grey saltstone + a single magenta highlight.
-  function drawStoneStatue(ctx, x, y, ts, time, col, row) {
+  function drawStoneStatue(ctx, x, y, ts, time, col, row, hostile) {
     var u = ts / 16;
     var DARK = '#08080a';
     var SH   = '#181820';
     var MID  = '#2a2a30';
     var HI   = '#3e3e44';
-    var EYE  = '#c060e0';
-    var EYE_HI = '#ffa0ff';
+
+    // Telegraph wind-up: eyes flare to a hot pink-white and the body
+    // visibly tenses (slight lift) so the player can read the incoming
+    // attack and step aside. Falls back to the idle magenta pulse.
+    var winding = !!(hostile && hostile._attackPhase === 'winding');
+    var striking = !!(hostile && hostile._attackPhase === 'striking');
+    var windT = 0;
+    if (winding) {
+      var since = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - (hostile._attackStart || 0);
+      windT = Math.min(1, since / (hostile.windupMs || 500));
+    }
 
     // Plinth (bottom 3u)
     ctx.fillStyle = DARK; ctx.fillRect(x + 2*u, y + 12*u, 12*u, 4*u);
@@ -2179,27 +2188,44 @@
     ctx.fillStyle = HI;   ctx.fillRect(x + 3*u, y + 12*u, 10*u, 1*u);
     ctx.fillStyle = SH;   ctx.fillRect(x + 3*u, y + 15*u, 10*u, 1*u);
 
+    // The body lifts a tiny amount as it tenses for the strike, then
+    // snaps forward during the actual strike phase.
+    var bodyShift = 0;
+    if (winding) bodyShift = -windT * u;
+    else if (striking) bodyShift = u;
+
     // Torso (6u wide × 4u tall)
-    ctx.fillStyle = DARK; ctx.fillRect(x + 4*u, y + 7*u, 8*u, 6*u);
-    ctx.fillStyle = MID;  ctx.fillRect(x + 5*u, y + 7*u, 6*u, 5*u);
-    ctx.fillStyle = HI;   ctx.fillRect(x + 5*u, y + 7*u, 6*u, 1*u);
-    ctx.fillStyle = SH;   ctx.fillRect(x + 5*u, y + 11*u, 6*u, 1*u);
+    ctx.fillStyle = DARK; ctx.fillRect(x + 4*u, y + 7*u + bodyShift, 8*u, 6*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 5*u, y + 7*u + bodyShift, 6*u, 5*u);
+    ctx.fillStyle = HI;   ctx.fillRect(x + 5*u, y + 7*u + bodyShift, 6*u, 1*u);
+    ctx.fillStyle = SH;   ctx.fillRect(x + 5*u, y + 11*u + bodyShift, 6*u, 1*u);
 
     // Head (4u wide × 3u tall)
-    ctx.fillStyle = DARK; ctx.fillRect(x + 5*u, y + 3*u, 6*u, 4*u);
-    ctx.fillStyle = MID;  ctx.fillRect(x + 6*u, y + 3*u, 4*u, 4*u);
-    ctx.fillStyle = HI;   ctx.fillRect(x + 6*u, y + 3*u, 4*u, 1*u);
+    ctx.fillStyle = DARK; ctx.fillRect(x + 5*u, y + 3*u + bodyShift, 6*u, 4*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 6*u, y + 3*u + bodyShift, 4*u, 4*u);
+    ctx.fillStyle = HI;   ctx.fillRect(x + 6*u, y + 3*u + bodyShift, 4*u, 1*u);
 
-    // Eyes — faint pulse driven by time
-    var pulse = 0.65 + 0.35 * Math.sin((time || 0) / 320);
-    ctx.fillStyle = EYE;
-    ctx.fillRect(x + 6*u, y + 5*u, 1*u, 1*u);
-    ctx.fillRect(x + 9*u, y + 5*u, 1*u, 1*u);
-    ctx.fillStyle = EYE_HI;
-    ctx.globalAlpha = pulse;
-    ctx.fillRect(x + 6*u, y + 5*u, 1*u, 1*u);
-    ctx.fillRect(x + 9*u, y + 5*u, 1*u, 1*u);
-    ctx.globalAlpha = 1;
+    // Eyes — idle: faint magenta pulse. Wind-up: bigger, hotter, pink-white.
+    var eyeY = y + 5*u + bodyShift;
+    if (winding || striking) {
+      var hot = winding ? (0.6 + windT * 0.4) : 1.0;
+      ctx.fillStyle = 'rgba(255,180,220,' + hot.toFixed(2) + ')';
+      ctx.fillRect(x + 6*u - 1, eyeY - 1, 2*u + 2, 2*u + 2);
+      ctx.fillRect(x + 9*u - 1, eyeY - 1, 2*u + 2, 2*u + 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x + 6*u, eyeY, 1*u, 1*u);
+      ctx.fillRect(x + 9*u, eyeY, 1*u, 1*u);
+    } else {
+      var pulse = 0.65 + 0.35 * Math.sin((time || 0) / 320);
+      ctx.fillStyle = '#c060e0';
+      ctx.fillRect(x + 6*u, eyeY, 1*u, 1*u);
+      ctx.fillRect(x + 9*u, eyeY, 1*u, 1*u);
+      ctx.fillStyle = '#ffa0ff';
+      ctx.globalAlpha = pulse;
+      ctx.fillRect(x + 6*u, eyeY, 1*u, 1*u);
+      ctx.fillRect(x + 9*u, eyeY, 1*u, 1*u);
+      ctx.globalAlpha = 1;
+    }
   }
 
   // Shattered statue — what remains after the player kills a sentinel.
@@ -2291,7 +2317,9 @@
       if (h.type !== 'hostile') continue;
       var drawer = (h.tileId === 60 || !h.tileId) ? drawStoneStatue : null;
       if (!drawer) continue;
-      drawer(ctx, offX + h.x * ts, offY + h.y * ts, ts, time, h.x, h.y);
+      // Pass the hostile object so the drawer can read attack state
+      // (eyes flare during wind-up, body lunges during the strike).
+      drawer(ctx, offX + h.x * ts, offY + h.y * ts, ts, time, h.x, h.y, h);
     }
   });
 

@@ -66,26 +66,11 @@ var BridgeInteractions = (function () {
       executeInteraction(currentInteraction);
     }
 
-    // Hostile tiles drain HP while the player stands adjacent and faces
-    // them (or stands on the same tile). Paused when a dialog or the
-    // inventory menu is open. _lastHit lives on the interaction object —
-    // it resets when the world reloads, which is fine.
-    if (currentInteraction && currentInteraction.type === 'hostile' && !character.isMoving()) {
-      var menuOpen = (typeof BridgeInventory !== 'undefined') &&
-                     BridgeInventory.isMenuOpen && BridgeInventory.isMenuOpen();
-      if (!menuOpen) {
-        var now = performance.now();
-        var cooldown = currentInteraction.attackCooldown || 1200;
-        if (!currentInteraction._lastHit || (now - currentInteraction._lastHit) > cooldown) {
-          currentInteraction._lastHit = now;
-          if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
-            BridgeInventory.takeDamage(currentInteraction.damage || 5);
-          }
-        }
-      }
-    }
-
-    // Hostiles pathfind toward the player on their own cadence.
+    // Hostiles run an attack state machine each frame: idle → winding
+    // (telegraph) → striking (visual streak fires at the locked target
+    // tile) → recovering. Damage only lands if the player is still on
+    // the target tile at impact, so a wind-up gives the player time to
+    // step away. Movement (pathfinding) only happens in the idle phase.
     updateHostiles(world, character);
   }
 
@@ -119,27 +104,86 @@ var BridgeInteractions = (function () {
       if (hh.type !== 'hostile') continue;
       var dx = px - hh.x, dy = py - hh.y;
       var manhattan = Math.abs(dx) + Math.abs(dy);
-      if (manhattan <= 1) continue;                // already adjacent — bite, don't walk
-      if (manhattan > (hh.aggroRange || 30)) continue; // out of aggro range — idle
+
+      // Run the attack state machine first. While the statue is in
+      // anything but 'idle' it stays planted (no pathing), and damage
+      // only lands on impact if the player is still on the target tile.
+      updateHostileAttack(hh, character, now, manhattan);
+
+      if (hh._attackPhase && hh._attackPhase !== 'idle') continue;
+      if (manhattan <= 1) continue;                // adjacent — let the next attack cycle fire
+      if (manhattan > (hh.aggroRange || 6)) continue; // out of aggro range — idle
       var cd = hh.moveCooldown || 800;
       if (hh._lastMove && (now - hh._lastMove) < cd) continue;
 
-      // Greedy: try the larger-delta axis first, then perpendicular,
-      // then either remaining cardinal direction so an obstacle on a
-      // straight line doesn't freeze the chase.
-      var primaryX = sign(dx), primaryY = sign(dy);
-      var attempts;
-      if (Math.abs(dx) >= Math.abs(dy)) {
-        attempts = [[primaryX, 0], [0, primaryY], [0, 1], [0, -1], [-primaryX, 0]];
-      } else {
-        attempts = [[0, primaryY], [primaryX, 0], [1, 0], [-1, 0], [0, -primaryY]];
-      }
-      for (var a = 0; a < attempts.length; a++) {
-        var sx = attempts[a][0], sy = attempts[a][1];
-        if (sx === 0 && sy === 0) continue;
-        if (tryStep(world, hh, sx, sy, occupied)) break;
+      // Try larger axis first.
+      var stepX, stepY;
+      if (Math.abs(dx) >= Math.abs(dy)) { stepX = sign(dx); stepY = 0; }
+      else                              { stepX = 0;       stepY = sign(dy); }
+      if (!tryStep(world, hh, stepX, stepY, occupied)) {
+        // Fall back to the perpendicular axis.
+        if (stepX !== 0) { stepX = 0; stepY = sign(dy); }
+        else             { stepX = sign(dx); stepY = 0; }
+        if (stepX === 0 && stepY === 0) continue;
+        tryStep(world, hh, stepX, stepY, occupied);
       }
       hh._lastMove = now; // cooldown regardless of success — keeps the cadence steady
+    }
+  }
+
+  // Per-hostile attack state machine. Phases:
+  //   idle:       not attacking. Becomes 'winding' when player is in range
+  //               (Manhattan distance <= 1).
+  //   winding:    telegraph — eyes glow, no movement. Lasts windupMs (500).
+  //               Strike target locks in at winding-start.
+  //   striking:   the visible strike streak fires from the statue to the
+  //               locked tile. Lasts strikeMs (200). Damage resolves at end.
+  //   recovering: post-strike cooldown. No attack/move. Lasts recoverMs (700).
+  function updateHostileAttack(hostile, character, now, manhattan) {
+    var phase = hostile._attackPhase || 'idle';
+    var elapsed = now - (hostile._attackStart || 0);
+    var WIND     = hostile.windupMs  || 500;
+    var STRIKE   = hostile.strikeMs  || 200;
+    var RECOVER  = hostile.recoverMs || 700;
+
+    if (phase === 'idle') {
+      if (manhattan === 1) {
+        hostile._attackPhase = 'winding';
+        hostile._attackStart = now;
+        hostile._attackTarget = { x: character.getX(), y: character.getY() };
+      }
+      return;
+    }
+    if (phase === 'winding') {
+      if (elapsed < WIND) return;
+      hostile._attackPhase = 'striking';
+      hostile._attackStart = now;
+      if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnStrike) {
+        BridgeFX.spawnStrike(hostile.x, hostile.y, hostile._attackTarget.x, hostile._attackTarget.y);
+      }
+      return;
+    }
+    if (phase === 'striking') {
+      if (elapsed < STRIKE) return;
+      // Resolve hit: damage only if the player stayed on the target tile.
+      var t = hostile._attackTarget;
+      var px = character.getX(), py = character.getY();
+      if (t && px === t.x && py === t.y) {
+        if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
+          BridgeInventory.takeDamage(hostile.damage || 5);
+        }
+        if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnDamageFlash) {
+          BridgeFX.spawnDamageFlash(px, py);
+        }
+      }
+      hostile._attackPhase = 'recovering';
+      hostile._attackStart = now;
+      return;
+    }
+    if (phase === 'recovering') {
+      if (elapsed < RECOVER) return;
+      hostile._attackPhase = 'idle';
+      hostile._attackTarget = null;
     }
   }
 
@@ -709,9 +753,9 @@ var BridgeInteractions = (function () {
   // from the world's interaction list, and reward the player.
   function killHostile(world, target) {
     if (!world || !target) return;
-    // No rubble tile — the hostile is an entity-overlay, so we just
-    // clear the collision it was blocking and drop the interaction.
-    // The cell underneath was untouched, so it reads as plain floor.
+    if (world.tiles[target.y] && typeof target.x === 'number') {
+      world.tiles[target.y][target.x] = target.deadTile || 61;
+    }
     if (world.collisions[target.y] && typeof target.x === 'number') {
       world.collisions[target.y][target.x] = 0;
     }
