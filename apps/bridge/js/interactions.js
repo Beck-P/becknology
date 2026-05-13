@@ -113,7 +113,7 @@ var BridgeInteractions = (function () {
       if (hh._attackPhase && hh._attackPhase !== 'idle') continue;
       if (manhattan <= 1) continue;                // adjacent — let the next attack cycle fire
       if (manhattan > (hh.aggroRange || 6)) continue; // out of aggro range — idle
-      var cd = hh.moveCooldown || 800;
+      var cd = hh.moveCooldown || 1500;            // slower stalk so the player has thinking time
       if (hh._lastMove && (now - hh._lastMove) < cd) continue;
 
       // Try larger axis first.

@@ -85,36 +85,43 @@ var BridgeFX = (function () {
       fx.facing === 'down'  ? 1 :
       fx.facing === 'up'    ? -1 : 0;
 
-    // A short, fast thrust — extend out over the first half, retract over the
-    // second half. Reads as "the dagger lunges forward" which is what a
-    // dagger actually does. Big, bright, hard to miss.
-    var reach = (progress < 0.5) ? (progress / 0.5) : (1 - (progress - 0.5) / 0.5);
+    // A short, sharp thrust — extends out, then snaps back. The blade
+    // is small steel, not a glowing beam: outline + steel body + 1px
+    // highlight, with a tapered tip pixel ahead of the body.
+    var reach = (progress < 0.4) ? (progress / 0.4) : (1 - (progress - 0.4) / 0.6);
     reach = Math.max(0, Math.min(1, reach));
-    var fade = Math.min(1, reach * 1.6);
+    var fade = Math.min(1, reach * 1.4);
 
-    // The thrust line — from the player's edge out toward the target
-    var distance = ts * (0.35 + reach * 0.95);
+    // Position the blade just outside the player tile, extending outward
+    // by `reach` worth of distance.
+    var distance = ts * (0.30 + reach * 0.55);     // 0.30 to 0.85 tile out
     var tx = cx + dxDir * distance;
     var ty = cy + dyDir * distance;
 
-    // Wide bright streak in the facing direction
-    var thickness = Math.max(4, ts * 0.32);
-    var streakLen = ts * (0.5 + reach * 0.4);
-    // Outer cyan halo
-    ctx.fillStyle = 'rgba(120,220,255,' + (fade * 0.55).toFixed(2) + ')';
-    fillCenteredRect(ctx, tx, ty, dxDir, dyDir, streakLen + thickness * 0.5, thickness + 4);
-    // Warm mid band
-    ctx.fillStyle = 'rgba(255,230,150,' + (fade * 0.85).toFixed(2) + ')';
-    fillCenteredRect(ctx, tx, ty, dxDir, dyDir, streakLen, thickness);
-    // Bright white core
-    ctx.fillStyle = 'rgba(255,255,255,' + fade.toFixed(2) + ')';
-    fillCenteredRect(ctx, tx, ty, dxDir, dyDir, streakLen, Math.max(2, thickness * 0.45));
+    var bladeLen = ts * (0.22 + reach * 0.18);     // ~10-19px
+    var bladeThick = Math.max(2, ts * 0.10);       // ~4-5px
 
-    // Tip dot — chunky bright square at the very tip of the thrust
-    var tipX = cx + dxDir * (distance + streakLen / 2);
-    var tipY = cy + dyDir * (distance + streakLen / 2);
-    var tipSize = Math.max(6, ts * 0.4);
-    ctx.fillStyle = 'rgba(255,255,255,' + fade.toFixed(2) + ')';
+    // Dark steel outline (1px wider on each side)
+    ctx.fillStyle = 'rgba(10,12,18,' + fade.toFixed(2) + ')';
+    fillCenteredRect(ctx, tx, ty, dxDir, dyDir, bladeLen + 2, bladeThick + 2);
+    // Steel body
+    ctx.fillStyle = 'rgba(150,160,172,' + fade.toFixed(2) + ')';
+    fillCenteredRect(ctx, tx, ty, dxDir, dyDir, bladeLen, bladeThick);
+    // 1px bright steel highlight along the upper edge of the blade
+    ctx.fillStyle = 'rgba(220,228,240,' + fade.toFixed(2) + ')';
+    var hlW = (dxDir !== 0) ? bladeLen - 2 : Math.max(1, bladeThick * 0.45);
+    var hlH = (dyDir !== 0) ? bladeLen - 2 : Math.max(1, bladeThick * 0.45);
+    ctx.fillRect(
+      Math.floor(tx - hlW / 2),
+      Math.floor(ty - hlH / 2),
+      Math.ceil(hlW), Math.ceil(hlH)
+    );
+
+    // Tapered tip — one bright pixel ahead of the blade
+    var tipX = cx + dxDir * (distance + bladeLen / 2);
+    var tipY = cy + dyDir * (distance + bladeLen / 2);
+    var tipSize = Math.max(2, ts * 0.07);
+    ctx.fillStyle = 'rgba(240,245,255,' + fade.toFixed(2) + ')';
     ctx.fillRect(Math.floor(tipX - tipSize / 2), Math.floor(tipY - tipSize / 2),
                  Math.ceil(tipSize), Math.ceil(tipSize));
   }

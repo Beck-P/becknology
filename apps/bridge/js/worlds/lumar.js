@@ -2238,16 +2238,23 @@
     var MID  = '#2a2a30';
     var HI   = '#3e3e44';
 
-    // Mound of broken chunks across the bottom 5u
-    ctx.fillStyle = DARK; ctx.fillRect(x + 2*u, y + 11*u, 12*u, 5*u);
-    ctx.fillStyle = MID;  ctx.fillRect(x + 3*u, y + 11*u, 10*u, 4*u);
-    ctx.fillStyle = HI;   ctx.fillRect(x + 3*u, y + 11*u, 10*u, 1*u);
+    // Saltstone floor base — rubble is a small pile sitting on top of
+    // the existing floor, not a void cell. The surrounding pattern must
+    // read through so adjacent tiles look continuous.
+    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
 
-    // Scattered chunks above the base
-    ctx.fillStyle = DARK; ctx.fillRect(x + 5*u, y + 9*u,  3*u, 2*u);
-    ctx.fillStyle = MID;  ctx.fillRect(x + 5*u, y + 9*u,  3*u, 1*u);
-    ctx.fillStyle = DARK; ctx.fillRect(x + 9*u, y + 10*u, 3*u, 1*u);
-    ctx.fillStyle = SH;   ctx.fillRect(x + 9*u, y + 10*u, 3*u, 1*u);
+    // Small stepped pile sitting in the lower-middle of the tile.
+    // Saltstone is visible on all four sides.
+    ctx.fillStyle = DARK; ctx.fillRect(x + 4*u, y + 12*u, 8*u, 3*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 5*u, y + 12*u, 6*u, 2*u);
+    ctx.fillStyle = HI;   ctx.fillRect(x + 5*u, y + 12*u, 6*u, 1*u);
+    ctx.fillStyle = SH;   ctx.fillRect(x + 5*u, y + 14*u, 6*u, 1*u);
+
+    // Two small broken chunks resting on top of the pile.
+    ctx.fillStyle = DARK; ctx.fillRect(x + 6*u, y + 10*u, 2*u, 2*u);
+    ctx.fillStyle = MID;  ctx.fillRect(x + 6*u, y + 10*u, 2*u, 1*u);
+    ctx.fillStyle = DARK; ctx.fillRect(x + 9*u, y + 11*u, 2*u, 1*u);
+    ctx.fillStyle = SH;   ctx.fillRect(x + 9*u, y + 11*u, 2*u, 1*u);
   }
 
   BridgeWorld.registerTileset('lumar', {
