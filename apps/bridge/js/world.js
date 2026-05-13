@@ -7,6 +7,7 @@
  */
 var BridgeWorld = (function () {
   var world = null;
+  var currentWorldId = null;
   var camera = { x: 0, y: 0 };
   var tileSize = 16;
   var scale = 3;
@@ -241,6 +242,7 @@ var BridgeWorld = (function () {
     xhr.onload = function () {
       if (xhr.status === 200) {
         world = JSON.parse(xhr.responseText);
+        currentWorldId = worldId;
         tileSize = world.tileSize || 16;
         callback(world);
       }
@@ -386,8 +388,43 @@ var BridgeWorld = (function () {
     if (!active) return;
     BridgeControls.disable();
 
-    // Show sailing overlay
+    var fromId = (world && world.tileset) ? null : null;
+    // Resolve the source world id from the current world's loaded source.
+    // We stash it during load() in `currentWorldId`; fall back to tileset.
+    fromId = currentWorldId || (world && world.tileset);
+
+    var canUseMap = (typeof BridgeSailAnim !== 'undefined') &&
+                    BridgeSailAnim.isKnown(fromId) &&
+                    BridgeSailAnim.isKnown(destination);
+
     var sailOverlay = document.getElementById('landing-overlay');
+
+    // Path 1 — rich map animation when both endpoints are registered.
+    if (canUseMap) {
+      // Start loading the destination world in parallel with the anim.
+      var loaded = false;
+      load(destination, function () { loaded = true; });
+      BridgeSailAnim.play(fromId, destination).then(function () {
+        // If the world load is still pending (slow network), poll briefly.
+        var startPoll = Date.now();
+        (function waitLoad() {
+          if (loaded || Date.now() - startPoll > 2000) {
+            if (overlay) {
+              overlay.style.display = 'none';
+              overlay.classList.remove('active');
+            }
+            show();
+            BridgeControls.enable();
+          } else {
+            setTimeout(waitLoad, 60);
+          }
+        })();
+      });
+      return;
+    }
+
+    // Path 2 — legacy plain overlay for unmapped destinations (Dragon's
+    // Cave etc. that aren't on the archipelago map).
     sailOverlay.style.display = 'flex';
     sailOverlay.style.flexDirection = 'column';
     sailOverlay.style.alignItems = 'center';
@@ -397,7 +434,6 @@ var BridgeWorld = (function () {
     sailOverlay.style.background = 'rgba(0, 0, 0, 0.85)';
     sailOverlay.style.transition = 'opacity 1s';
 
-    // Sailing animation — a small ship glyph drifting across with wake
     sailOverlay.innerHTML =
       '<div class="sail-anim" style="position:relative;width:280px;height:32px;margin-bottom:18px;overflow:hidden;">' +
         '<div class="sail-ship" style="position:absolute;top:8px;left:-40px;font-family:\'Courier New\',monospace;font-size:18px;color:#cfcfd8;letter-spacing:2px;animation:sail-glide 2.6s ease-in forwards;">⛵</div>' +
@@ -407,15 +443,12 @@ var BridgeWorld = (function () {
       '<div class="landing-text">SAILING...</div>' +
       '<div class="landing-subtitle" style="margin-top:12px;">' + (destinationName || destination).toUpperCase() + '</div>';
 
-    // Load the destination zone
     load(destination, function () {
-      // After 2s, fade out and show new zone
       setTimeout(function () {
         sailOverlay.style.opacity = '0';
         setTimeout(function () {
           sailOverlay.style.display = 'none';
           sailOverlay.classList.remove('active');
-          // Re-show world with new zone data
           if (overlay) {
             overlay.style.display = 'none';
             overlay.classList.remove('active');
