@@ -40,7 +40,8 @@
     "30": "#3a4848",
     "32": "#5a3a1a",
     "33": "#3a2410",
-    "38": "#3a3a3a"
+    "38": "#3a3a3a",
+    "46": "#3a2410"
   },
   "tileNames": {
     "0": "void",
@@ -71,7 +72,8 @@
     "30": "fountain",
     "32": "fishing_net",
     "33": "crab_trap",
-    "38": "lantern_post"
+    "38": "lantern_post",
+    "46": "ship_dock_png"
   },
   "tiles": [
     [
@@ -298,7 +300,7 @@
       14,
       14,
       14,
-      10,
+      46,
       14,
       14,
       14,
@@ -658,7 +660,7 @@
       "type": "dialog",
       "label": "BLUE FLAME LANTERN",
       "prompt": "PRESS E TO EXAMINE",
-      "dialog": "THIS LANTERN BURNS BLUE.\\n\\nA SAILOR'S TRICK FOR\\nSAPPHIRE WATERS \u2014 BLUE\\nFLAME IS HARDER TO SEE\\nFROM AFAR."
+      "dialog": "THIS LANTERN BURNS BLUE.\\n\\nA SAILOR'S TRICK FOR\\nSAPPHIRE WATERS — BLUE\\nFLAME IS HARDER TO SEE\\nFROM AFAR."
     },
     {
       "x": 6,
@@ -682,7 +684,7 @@
       "type": "dialog",
       "label": "TRADER'S NOTE",
       "prompt": "PRESS E TO READ",
-      "dialog": "PINNED PAPER:\\n\\n\"IF YOU FIND THE BLUE\\nGLASS \u2014 IT'S MINE.\\n\u2014 ZEPHYR T.\""
+      "dialog": "PINNED PAPER:\\n\\n\"IF YOU FIND THE BLUE\\nGLASS — IT'S MINE.\\n— ZEPHYR T.\""
     }
   ],
   "moonColor": [

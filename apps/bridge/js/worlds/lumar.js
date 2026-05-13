@@ -956,52 +956,12 @@
   }
   loadShipSprite();
 
-  // Single-tile docked boat — moored at each island's port so the
-  // return-to-Diggen's interaction reads as "step onto the boat to
-  // sail." Hull + mast + furled sail + a warm bow-lantern pulse.
-  function drawShipBody(ctx, x, y, ts, time, col, row) {
-    var u = ts / 16;
-    var t = time || 0;
-
-    // Water shadow under the hull
-    ctx.fillStyle = 'rgba(0,0,0,0.30)';
-    ctx.fillRect(x + 1*u, y + 13*u, 14*u, 1*u);
-
-    // Hull — dark outline, wood body, deck stripe
-    ctx.fillStyle = '#1a1008';
-    ctx.fillRect(x + 1*u,  y + 9*u, 14*u, 4*u);
-    ctx.fillRect(x + 0,    y + 10*u, 1*u, 2*u);
-    ctx.fillRect(x + 15*u, y + 10*u, 1*u, 2*u);
-    ctx.fillStyle = '#5a3a1a';
-    ctx.fillRect(x + 2*u, y + 9*u, 12*u, 3*u);
-    ctx.fillStyle = '#7a4e22';
-    ctx.fillRect(x + 2*u, y + 9*u, 12*u, 1*u);
-    // Hull plank seams
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 4*u,  y + 11*u, 1*u, 1*u);
-    ctx.fillRect(x + 8*u,  y + 11*u, 1*u, 1*u);
-    ctx.fillRect(x + 12*u, y + 11*u, 1*u, 1*u);
-
-    // Mast — vertical wood pole rising from the deck
-    ctx.fillStyle = '#3a2410';
-    ctx.fillRect(x + 7*u, y + 2*u, 2*u, 7*u);
-    // Crossbeam
-    ctx.fillRect(x + 4*u, y + 4*u, 8*u, 1*u);
-
-    // Furled sail — slightly off-white, hangs from the crossbeam
-    ctx.fillStyle = '#d8d8c0';
-    ctx.fillRect(x + 5*u, y + 4*u, 6*u, 4*u);
-    ctx.fillStyle = '#f0f0e0';
-    ctx.fillRect(x + 5*u, y + 4*u, 6*u, 1*u);   // highlight along top fold
-    ctx.fillStyle = '#a8a890';
-    ctx.fillRect(x + 5*u, y + 7*u, 6*u, 1*u);   // shadow along bottom
-
-    // Bow lantern — small warm pulse so the boat reads at night
-    var pulse = 0.65 + 0.30 * Math.sin(t / 320 + (col || 0));
-    ctx.fillStyle = 'rgba(255,200,100,' + pulse.toFixed(2) + ')';
-    ctx.fillRect(x + 13*u, y + 8*u, 1*u, 1*u);
-    ctx.fillStyle = '#ffe080';
-    ctx.fillRect(x + 13*u, y + 8*u, 1*u, 1*u);
+  // Legacy procedural ship_body tile — kept for safety, but the
+  // islands now use the ship_dock_png tile (id 46) instead so they
+  // share the same PNG galleon as Diggen's Point.
+  function drawShipBody(ctx, x, y, ts) {
+    ctx.fillStyle = '#0e2018';
+    ctx.fillRect(x, y, ts, ts);
   }
 
   function drawShipCockpit(ctx, x, y, ts) {

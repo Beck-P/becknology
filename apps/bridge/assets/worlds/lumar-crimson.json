@@ -41,7 +41,8 @@
     "30": "#3a4848",
     "32": "#5a3a1a",
     "33": "#3a2410",
-    "38": "#3a3a3a"
+    "38": "#3a3a3a",
+    "46": "#3a2410"
   },
   "tileNames": {
     "0": "void",
@@ -73,7 +74,8 @@
     "30": "fountain",
     "32": "fishing_net",
     "33": "crab_trap",
-    "38": "lantern_post"
+    "38": "lantern_post",
+    "46": "ship_dock_png"
   },
   "tiles": [
     [
@@ -301,7 +303,7 @@
       13,
       13,
       13,
-      10,
+      46,
       13,
       13,
       13,
@@ -644,7 +646,7 @@
       "type": "dialog",
       "label": "WARNING",
       "prompt": "PRESS E TO READ",
-      "dialog": "WEATHERED SIGN:\\n\\n\"BEYOND THIS POINT \u2014\\nDRAGON'S CAVE.\\nENTER WITH RESPECT.\""
+      "dialog": "WEATHERED SIGN:\\n\\n\"BEYOND THIS POINT —\\nDRAGON'S CAVE.\\nENTER WITH RESPECT.\""
     },
     {
       "x": 5,
@@ -660,7 +662,7 @@
       "type": "dialog",
       "label": "CHARCOAL MARK",
       "prompt": "PRESS E TO READ",
-      "dialog": "CHARCOAL ON STONE:\\n\\n\"DOWN THE STAIRS, BEAR\\nLEFT, MIND THE LAVA.\\n\u2014 H.M.\""
+      "dialog": "CHARCOAL ON STONE:\\n\\n\"DOWN THE STAIRS, BEAR\\nLEFT, MIND THE LAVA.\\n— H.M.\""
     },
     {
       "x": 4,
