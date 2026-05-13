@@ -764,6 +764,21 @@ var BridgeInteractions = (function () {
     if (typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) {
       BridgeProgression.awardCoins(target.reward || 10, 'kill:' + (target.label || 'hostile'));
     }
+    // Loot drops — bounce a small handful of items at the death tile.
+    // The drop table lives on the interaction (drops: [{id, min, max}]),
+    // defaulting to 2-3 stone_shards for any hostile that didn't specify.
+    if (typeof BridgeLoot !== 'undefined' && BridgeLoot.spawn) {
+      var table = Array.isArray(target.drops) ? target.drops : [{ id: 'stone_shard', min: 2, max: 3 }];
+      for (var i = 0; i < table.length; i++) {
+        var row = table[i];
+        if (!row || !row.id) continue;
+        if (typeof row.chance === 'number' && Math.random() > row.chance) continue;
+        var min = (typeof row.min === 'number') ? row.min : 1;
+        var max = (typeof row.max === 'number') ? row.max : min;
+        var n = Math.floor(min + Math.random() * (max - min + 1));
+        for (var j = 0; j < n; j++) BridgeLoot.spawn(target.x, target.y, row.id, 1);
+      }
+    }
   }
 
   return { update: update, tryClickAt: tryClickAt, killHostile: killHostile };

@@ -146,6 +146,37 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#a08040'; ctx.fillRect(x + 6*u, y + 14*u, 4*u, u);
   }
 
+  function stoneShard(ctx, x, y, s) {
+    var u = s / 16;
+    // Jagged dark crystal — matches the sentinel palette (stone + amethyst).
+    var DARK = '#08080a';
+    var SH   = '#181820';
+    var MID  = '#2a2a30';
+    var HI   = '#3e3e44';
+    var GLEAM = '#c060e0';
+    // Outline silhouette (rough diamond, biased asymmetric)
+    ctx.fillStyle = DARK;
+    ctx.fillRect(x + 7*u,  y + 2*u, 2*u, 1*u);
+    ctx.fillRect(x + 6*u,  y + 3*u, 4*u, 1*u);
+    ctx.fillRect(x + 5*u,  y + 4*u, 7*u, 6*u);
+    ctx.fillRect(x + 6*u,  y + 10*u, 5*u, 2*u);
+    ctx.fillRect(x + 7*u,  y + 12*u, 3*u, 1*u);
+    // Body
+    ctx.fillStyle = MID;
+    ctx.fillRect(x + 6*u,  y + 4*u, 5*u, 5*u);
+    ctx.fillRect(x + 7*u,  y + 9*u, 3*u, 2*u);
+    // Top-left highlight (light catches there)
+    ctx.fillStyle = HI;
+    ctx.fillRect(x + 6*u,  y + 4*u, 3*u, 1*u);
+    ctx.fillRect(x + 6*u,  y + 5*u, 1*u, 3*u);
+    // Bottom shadow band
+    ctx.fillStyle = SH;
+    ctx.fillRect(x + 7*u,  y + 10*u, 3*u, 1*u);
+    // Amethyst gleam in the center — the "you killed a sentinel" memento
+    ctx.fillStyle = GLEAM;
+    ctx.fillRect(x + 8*u,  y + 6*u, 1*u, 2*u);
+  }
+
   function lockpick(ctx, x, y, s) {
     var u = s / 16;
     // L-shaped lockpick
@@ -291,6 +322,11 @@ var BridgeItems = (function () {
     lockpick: {
       id: 'lockpick', name: 'Lockpick', desc: 'A thin steel pick and tension wrench. Single-use.',
       type: 'tool', stackable: true, draw: lockpick
+    },
+    stone_shard: {
+      id: 'stone_shard', name: 'Stone Shard',
+      desc: 'A jagged fragment from a fallen sentinel. Amethyst still glints in the break.',
+      type: 'material', stackable: true, draw: stoneShard
     }
   };
 

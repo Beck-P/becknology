@@ -244,6 +244,9 @@ var BridgeWorld = (function () {
         world = JSON.parse(xhr.responseText);
         currentWorldId = worldId;
         tileSize = world.tileSize || 16;
+        // Drops are scoped to the current world — abandoning a zone wipes
+        // whatever you left on the ground, same as Stardew leaving a day.
+        if (typeof BridgeLoot !== 'undefined' && BridgeLoot.clear) BridgeLoot.clear();
         callback(world);
       }
     };
@@ -472,6 +475,12 @@ var BridgeWorld = (function () {
     // Update character animation
     BridgeCharacter.update();
 
+    // Loot drops — animate the bounce/bob and auto-pick when the player
+    // walks over a settled drop.
+    if (typeof BridgeLoot !== 'undefined' && BridgeLoot.update) {
+      BridgeLoot.update(BridgeCharacter.getX(), BridgeCharacter.getY());
+    }
+
     if (world.fixedCamera) {
       // Fixed camera: center on map
       camera.x = world.width / 2;
@@ -675,6 +684,12 @@ var BridgeWorld = (function () {
     var overlayFn = OVERLAYS[world.tileset];
     if (overlayFn) {
       overlayFn(ctx, world, offX, offY, ts, now);
+    }
+
+    // Pass 2.95: Loot drops — bounce, bob, sparkle. Drawn under the
+    // character so the pilot can stand visually in front of pickups.
+    if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) {
+      BridgeLoot.draw(ctx, offX, offY, ts);
     }
 
     // Pass 3: Character (on top of glow)
