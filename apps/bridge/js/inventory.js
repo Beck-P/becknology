@@ -280,7 +280,8 @@ var BridgeInventory = (function () {
       'border-radius:10px;' +
       'box-shadow:0 0 16px rgba(0,0,0,0.5),inset 0 0 8px rgba(255,200,100,0.05);' +
       'font-family:"Courier New",Consolas,monospace;color:#e0d8c0;font-size:12px;' +
-      'letter-spacing:1.5px;';
+      'letter-spacing:1.5px;' +
+      'opacity:1;transition:opacity 0.20s ease;';
 
     // Item slots row (10 fixed slots)
     slotsRow = document.createElement('div');
@@ -424,6 +425,30 @@ var BridgeInventory = (function () {
 
   function show() { if (panel) panel.style.display = 'flex'; refresh(); }
   function hide() { if (panel) panel.style.display = 'none'; closeMenu(); }
+
+  // Auto-fade the hotbar when the pilot is in the lower band of the
+  // viewport (Stardew's trick) — otherwise the panel covers doors,
+  // dock-edge content, and boats. Called from the world loop each
+  // frame; uses the smooth render position so the fade tracks motion.
+  var fadeState = 'full';
+  function tick() {
+    if (!panel || panel.style.display === 'none') return;
+    if (typeof BridgeWorld === 'undefined' || typeof BridgeCharacter === 'undefined') return;
+    var cam = BridgeWorld.getCamera();
+    if (!cam) return;
+    var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
+    var h = window.innerHeight;
+    var pos = BridgeCharacter.getRenderPos ? BridgeCharacter.getRenderPos() : { x: BridgeCharacter.getX(), y: BridgeCharacter.getY() };
+    var offY = h / 2 - cam.y * ts;
+    var screenY = offY + (pos.y + 0.5) * ts;
+    // Anything in the bottom 30% of the viewport gets the dim treatment.
+    var near = screenY > h * 0.70;
+    var want = near ? 'dim' : 'full';
+    if (want !== fadeState) {
+      fadeState = want;
+      panel.style.opacity = (want === 'dim') ? '0.30' : '1';
+    }
+  }
 
   // ---- Inventory Menu (full modal) ------------------------------------
   function buildMenu() {
@@ -724,6 +749,7 @@ var BridgeInventory = (function () {
     getStats: getStats, restoreHP: restoreHP, restoreEnergy: restoreEnergy,
     restoreAll: restoreAll, takeDamage: takeDamage,
     openMenu: openMenu, closeMenu: closeMenu, toggleMenu: toggleMenu, isMenuOpen: isMenuOpen,
+    tick: tick,
     loadRemote: loadRemote
   };
   return api;

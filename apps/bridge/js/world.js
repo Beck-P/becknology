@@ -481,6 +481,12 @@ var BridgeWorld = (function () {
       BridgeLoot.update(BridgeCharacter.getX(), BridgeCharacter.getY());
     }
 
+    // Auto-fade the hotbar when the pilot is near the bottom of the
+    // viewport, so it doesn't cover doors / boat decks / etc.
+    if (typeof BridgeInventory !== 'undefined' && BridgeInventory.tick) {
+      BridgeInventory.tick();
+    }
+
     if (world.fixedCamera) {
       // Fixed camera: center on map
       camera.x = world.width / 2;
