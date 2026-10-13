@@ -2278,11 +2278,11 @@
     ctx.globalAlpha = 1;
 
     // ---- Camera setup (used for parallax of every sky element below) ----
-    var camera = BridgeWorld.getCamera();
-    var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
-    var camOffX = camera.x * ts;
-    var worldOriginX = w / 2 - camera.x * ts;
-    var worldOriginY = h / 2 - camera.y * ts;
+    var v = BridgeWorld.getView();
+    var ts = v.ts;
+    var camOffX = w / 2 - v.offX;
+    var worldOriginX = v.offX;
+    var worldOriginY = v.offY;
 
     // ---- Moon ----
     // Anchored to a fixed world tile so it tracks with the world instead of
@@ -2339,7 +2339,7 @@
     // start around row 4 (top wall) and extend down. We want the skyline
     // baseline to sit just above row 4 in pixel coords.
     var topWallRow = 4;
-    var topWallY = h / 2 - camera.y * ts + topWallRow * ts;
+    var topWallY = worldOriginY + topWallRow * ts;
 
     // Far skyline (deeper, slower parallax). Track BOTH a continuous shift
     // (sub-slot drift) AND an integer slot offset so the silhouette pattern

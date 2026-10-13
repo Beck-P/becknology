@@ -994,10 +994,10 @@
 
     // Use the engine's camera + scale so off-map sea tiles align with the
     // in-map sea tiles seeded by the same (col, row).
-    var camera = BridgeWorld.getCamera();
-    var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
-    var offX = w / 2 - camera.x * ts;
-    var offY = h / 2 - camera.y * ts;
+    var v = BridgeWorld.getView();
+    var ts = v.ts;
+    var offX = v.offX;
+    var offY = v.offY;
 
     var startCol = Math.floor(-offX / ts) - 1;
     var endCol = Math.ceil((w - offX) / ts) + 1;
@@ -1006,6 +1006,8 @@
 
     for (var r = startRow; r < endRow; r++) {
       for (var c = startCol; c < endCol; c++) {
+        // In-map tiles that fully cover their cell hide this anyway.
+        if (BridgeWorld.isOpaqueCell(c, r)) continue;
         var tx = Math.floor(offX + c * ts);
         var ty = Math.floor(offY + r * ts);
         seaDrawer(ctx, tx, ty, ts, time, c, r);

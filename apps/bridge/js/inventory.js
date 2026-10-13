@@ -434,12 +434,12 @@ var BridgeInventory = (function () {
   function tick() {
     if (!panel || panel.style.display === 'none') return;
     if (typeof BridgeWorld === 'undefined' || typeof BridgeCharacter === 'undefined') return;
-    var cam = BridgeWorld.getCamera();
-    if (!cam) return;
-    var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
+    var v = BridgeWorld.getScreenView();
+    if (!v || !v.ts) return;
+    var ts = v.ts;
     var h = window.innerHeight;
     var pos = BridgeCharacter.getRenderPos ? BridgeCharacter.getRenderPos() : { x: BridgeCharacter.getX(), y: BridgeCharacter.getY() };
-    var offY = h / 2 - cam.y * ts;
+    var offY = v.offY;
     var screenY = offY + (pos.y + 0.5) * ts;
     // Anything in the bottom 30% of the viewport gets the dim treatment.
     var near = screenY > h * 0.70;

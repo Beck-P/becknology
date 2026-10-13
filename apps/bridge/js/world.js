@@ -10,9 +10,24 @@ var BridgeWorld = (function () {
   var currentWorldId = null;
   var camera = { x: 0, y: 0 };
   var tileSize = 16;
-  var scale = 3;
+  var scale = 3;            // legacy: CSS px per world unit (tileSize) on screen
   var active = false;
   var overlay = null;
+
+  // ---- Native pixel grid ----
+  // The world is painted into a small offscreen canvas at NATIVE_TS pixels
+  // per tile, then blown up to the screen by a whole number (`zoom` device
+  // pixels per native pixel). Every sprite, tile, light and particle lands
+  // on the same pixel grid, so nothing renders at a mismatched pixel size.
+  var NATIVE_TS = 32;
+  var zoom = 2;
+  var buf = document.createElement('canvas');
+  var bctx = buf.getContext('2d');
+  // Native-space view of the frame being drawn ({offX, offY, ts, w, h}),
+  // and the same view mapped to CSS pixels on screen.
+  var view = { offX: 0, offY: 0, ts: NATIVE_TS, w: 0, h: 0 };
+  var screenView = { offX: 0, offY: 0, ts: 64 };
+  var lastUpdate = 0;
 
   // ---- Ambient Particles ----
   var particles = [];
@@ -191,14 +206,15 @@ var BridgeWorld = (function () {
     };
   }
 
-  function updateParticles() {
+  // f = elapsed time in 60 Hz frames, so motion is the same at any refresh rate.
+  function updateParticles(f) {
     if (!world || !world.tileGlow || particles.length === 0) return;
     var glowTiles = [];
     for (var i = 0; i < particles.length; i++) {
       var p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life += 0.008;
+      p.x += p.vx * f;
+      p.y += p.vy * f;
+      p.life += 0.008 * f;
       var dx = p.x - p.srcX;
       var dy = p.y - p.srcY;
       if (p.life >= p.maxLife || (dx*dx + dy*dy) > 9) {
@@ -233,6 +249,141 @@ var BridgeWorld = (function () {
       ctx.fillStyle = 'rgba(' + p.r + ',' + p.g + ',' + p.b + ',' + alpha.toFixed(2) + ')';
       ctx.fillRect(sx, sy, Math.max(1, ts * 0.06), Math.max(1, ts * 0.06));
     }
+  }
+
+  // ---- Static tile cache ----
+  // Most tiles never change, so they're painted once into a world-sized
+  // canvas. Tiles that animate (their pixels differ across sample times) or
+  // that paint outside their own cell (multi-tile sprites) are still drawn
+  // every frame, in the original row-major order. A few cached rows are
+  // re-rendered each frame in rotation so state-driven drawers (owned decor,
+  // etc.) never go stale for more than a fraction of a second.
+  var CACHE_MX = 5, CACHE_MY = 8;   // overflow margins (tiles) for scratch/cache
+  var tileClass = {};               // worldId -> { tileId: { dyn, over } }
+  var tcache = { canvas: null, ctx: null, rows: 0, cursor: 0, snap: null, perFrame: [] };
+  var scratch = null;
+
+  function sameTiles(a, b) {
+    if (!a || !b || a.length !== b.length) return false;
+    for (var r = 0; r < a.length; r++) {
+      var ra = a[r], rb = b[r];
+      for (var c = 0; c < ra.length; c++) if (ra[c] !== rb[c]) return false;
+    }
+    return true;
+  }
+
+  function classifyTiles() {
+    var tileset = TILESETS[world.tileset] || {};
+    var known = tileClass[currentWorldId] || (tileClass[currentWorldId] = {});
+    var ts = NATIVE_TS;
+    var sw = (CACHE_MX * 2 + 1) * ts, sh = (CACHE_MY + 2) * ts;
+    var cx0 = CACHE_MX * ts, cy0 = CACHE_MY * ts;
+    if (!scratch) {
+      scratch = document.createElement('canvas');
+    }
+    scratch.width = sw; scratch.height = sh;
+    var sctx = scratch.getContext('2d', { willReadFrequently: true });
+    sctx.imageSmoothingEnabled = false;
+    var T = [0, 1000, 2600, 4100, 7300];
+    for (var row = 0; row < world.height; row++) {
+      for (var col = 0; col < world.width; col++) {
+        var id = world.tiles[row][col];
+        if (!id || known[id]) continue;
+        var fn = tileset[id];
+        if (!fn) { known[id] = { dyn: false, over: false, opaque: false }; continue; }
+        var first = null, dyn = false, over = false, opaque = true;
+        try {
+          for (var k = 0; k < T.length && !dyn; k++) {
+            sctx.setTransform(1, 0, 0, 1, 0, 0);
+            sctx.globalAlpha = 1;
+            sctx.globalCompositeOperation = 'source-over';
+            sctx.clearRect(0, 0, sw, sh);
+            fn(sctx, cx0, cy0, ts, T[k], col, row);
+            var px = new Uint32Array(sctx.getImageData(0, 0, sw, sh).data.buffer);
+            if (!first) {
+              first = px;
+              for (var i = 0; i < px.length; i++) {
+                var x = i % sw, y = (i / sw) | 0;
+                var inCell = x >= cx0 && x < cx0 + ts && y >= cy0 && y < cy0 + ts;
+                if (inCell) {
+                  if ((px[i] >>> 24) !== 255) opaque = false;
+                } else if (px[i]) {
+                  over = true;
+                }
+              }
+            } else {
+              for (var j = 0; j < px.length; j++) {
+                if (px[j] !== first[j]) { dyn = true; break; }
+              }
+            }
+          }
+        } catch (e) {
+          dyn = true;   // anything odd: just draw it live
+          opaque = false;
+        }
+        known[id] = { dyn: dyn, over: over, opaque: opaque };
+      }
+    }
+    return known;
+  }
+
+  function cacheRow(row, cls, now) {
+    var tileset = TILESETS[world.tileset] || {};
+    var ts = NATIVE_TS;
+    var c = tcache.ctx;
+    var y = (CACHE_MY + row) * ts;
+    c.clearRect(0, y, tcache.canvas.width, ts);
+    for (var col = 0; col < world.width; col++) {
+      var id = world.tiles[row][col];
+      if (!id) continue;
+      var k = cls[id];
+      if (k && (k.dyn || k.over)) continue;
+      var x = (CACHE_MX + col) * ts;
+      var fn = tileset[id];
+      if (fn) {
+        fn(c, x, y, ts, now, col, row);
+      } else {
+        var color = world.tileColors && world.tileColors[String(id)];
+        if (color) { c.fillStyle = color; c.fillRect(x, y, ts, ts); }
+      }
+      c.globalAlpha = 1;
+      c.globalCompositeOperation = 'source-over';
+    }
+  }
+
+  function buildTileCache() {
+    if (!world || world.tileCache === false) { tcache.canvas = null; return; }
+    var cls = classifyTiles();
+    var ts = NATIVE_TS;
+    if (!tcache.canvas) {
+      tcache.canvas = document.createElement('canvas');
+    }
+    tcache.canvas.width = (world.width + CACHE_MX * 2) * ts;
+    tcache.canvas.height = (world.height + CACHE_MY + 1) * ts;
+    tcache.ctx = tcache.canvas.getContext('2d');
+    tcache.ctx.imageSmoothingEnabled = false;
+    tcache.rows = world.height;
+    tcache.cursor = 0;
+    tcache.snap = world.tiles.map(function (r) { return r.slice(); });
+    var now = Date.now();
+    for (var row = 0; row < world.height; row++) cacheRow(row, cls, now);
+  }
+
+  // True when the in-map tile at (col,row) fully covers its cell, so a
+  // background never needs to paint under it.
+  function isOpaqueCell(col, row) {
+    if (!world || row < 0 || col < 0 || row >= world.height || col >= world.width) return false;
+    var id = world.tiles[row][col];
+    if (!id) return false;
+    var cls = tileClass[currentWorldId];
+    var k = cls && cls[id];
+    return !!(k && k.opaque);
+  }
+
+  // Exposed so code that changes what a static tile looks like (decor
+  // purchases, etc.) can force an immediate refresh.
+  function invalidateTiles() {
+    if (world) buildTileCache();
   }
 
   function load(worldId, callback) {
@@ -300,6 +451,7 @@ var BridgeWorld = (function () {
     camera.y = sy;
     BridgeCharacter.init(sx, sy);
     initParticles();
+    buildTileCache();
 
     // Enable controls
     BridgeControls.enable();
@@ -315,9 +467,12 @@ var BridgeWorld = (function () {
   }
 
   function recalcScale() {
-    // Aim for ~18-22 tiles visible horizontally
-    var targetTilesX = 20;
-    scale = Math.max(2, Math.floor(window.innerWidth / (tileSize * targetTilesX)));
+    // Aim for ~20 tiles across, with tiles between 32 and 96 CSS px, then
+    // snap to a whole number of device pixels per native pixel.
+    var dpr = window.devicePixelRatio || 1;
+    var cssTile = Math.max(32, Math.min(96, window.innerWidth / 20));
+    zoom = Math.max(1, Math.round(cssTile * dpr / NATIVE_TS));
+    scale = (NATIVE_TS * zoom / dpr) / tileSize;
   }
 
   function leave() {
@@ -466,6 +621,12 @@ var BridgeWorld = (function () {
   function update() {
     if (!active || !world) return;
 
+    // Real elapsed time (seconds), clamped so a backgrounded tab doesn't
+    // teleport everything on return.
+    var nowT = performance.now();
+    var dt = lastUpdate ? Math.min(0.05, (nowT - lastUpdate) / 1000) : 1 / 60;
+    lastUpdate = nowT;
+
     // Poll controls → move character
     var dir = BridgeControls.getDir();
     if (dir.dx !== 0 || dir.dy !== 0) {
@@ -473,7 +634,7 @@ var BridgeWorld = (function () {
     }
 
     // Update character animation
-    BridgeCharacter.update();
+    BridgeCharacter.update(dt);
 
     // Loot drops — animate the bounce/bob and auto-pick when the player
     // walks over a settled drop.
@@ -493,9 +654,12 @@ var BridgeWorld = (function () {
       camera.y = world.height / 2;
     } else {
       // Smooth camera follow
+      // Exponential follow — same feel as the old 10%-per-frame lerp at
+      // 60 Hz, but frame-rate independent.
       var pos = BridgeCharacter.getRenderPos();
-      camera.x += (pos.x - camera.x) * 0.1;
-      camera.y += (pos.y - camera.y) * 0.1;
+      var follow = 1 - Math.exp(-dt * 6.3);
+      camera.x += (pos.x - camera.x) * follow;
+      camera.y += (pos.y - camera.y) * follow;
 
       // Clamp camera to map edges. When the map is smaller than the viewport
       // (interiors, etc.), the normal min/max clamp inverts and pins the camera
@@ -519,29 +683,74 @@ var BridgeWorld = (function () {
       BridgeInteractions.update(world, BridgeCharacter, BridgeControls);
     }
 
-    updateParticles();
+    updateParticles(dt * 60);
   }
 
   function draw(ctx, w, h) {
     if (!active || !world) return;
 
-    var ts = tileSize * scale;
-    var tileset = TILESETS[world.tileset] || {};
-    var now = Date.now();
+    var dpr = window.devicePixelRatio || 1;
+    var dw = Math.round(w * dpr);
+    var dh = Math.round(h * dpr);
 
-    // Viewport offset (camera centered on screen)
-    var offX = w / 2 - camera.x * ts;
-    var offY = h / 2 - camera.y * ts;
+    // ---- Native buffer (1 native px of margin each side for the
+    // sub-pixel camera shift) ----
+    var nw = Math.ceil(dw / zoom) + 2;
+    var nh = Math.ceil(dh / zoom) + 2;
+    if (buf.width !== nw || buf.height !== nh) {
+      buf.width = nw;
+      buf.height = nh;
+    }
+    bctx.setTransform(1, 0, 0, 1, 0, 0);
+    bctx.globalCompositeOperation = 'source-over';
+    bctx.globalAlpha = 1;
+    bctx.imageSmoothingEnabled = false;
+    bctx.clearRect(0, 0, nw, nh);
+
+    var ts = NATIVE_TS;
+    var now = Date.now();
+    // Snap the world to whole native pixels; the leftover fraction slides
+    // the finished frame on screen so the camera still glides smoothly.
+    var offXf = nw / 2 - camera.x * ts;
+    var offYf = nh / 2 - camera.y * ts;
+    var offX = Math.floor(offXf);
+    var offY = Math.floor(offYf);
+    view.offX = offX; view.offY = offY; view.ts = ts; view.w = nw; view.h = nh;
+
+    drawWorldLayer(bctx, nw, nh, offX, offY, ts, now);
+
+    // ---- Blit: integer upscale onto the device-pixel canvas ----
+    var blitX = Math.round(dw / 2 - (nw * zoom) / 2 + (offXf - offX) * zoom);
+    var blitY = Math.round(dh / 2 - (nh * zoom) / 2 + (offYf - offY) * zoom);
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(buf, blitX, blitY, nw * zoom, nh * zoom);
+    ctx.restore();
+
+    // ---- Screen-space pass (CSS px): text, markers, vignette ----
+    var sts = ts * zoom / dpr;
+    var soffX = (blitX + offX * zoom) / dpr;
+    var soffY = (blitY + offY * zoom) / dpr;
+    screenView.offX = soffX; screenView.offY = soffY; screenView.ts = sts;
+    drawScreenLayer(ctx, w, h, soffX, soffY, sts, now);
+  }
+
+  // Everything that lives in the world: tiles, glow, entities, character,
+  // effects. Drawn at native resolution.
+  function drawWorldLayer(ctx, w, h, offX, offY, ts, now) {
+    var tileset = TILESETS[world.tileset] || {};
+    var lit = !!(world.lighting && typeof BridgeLighting !== 'undefined');
 
     // Determine visible tile range. Padded by TILE_PAD so multi-tile PNG
     // buildings whose anchor cell is just off-screen still get a draw call —
     // their footprint extends from the anchor by up to anchorOffsetX/Y, so
     // without padding the whole building pops in/out as the anchor crosses
-    // the viewport edge. 5 tiles covers every building width currently in
-    // the world (the arcade is 5w × 4h with anchorOffsetX=4).
-    var TILE_PAD = 5;
+    // the viewport edge. 7 tiles covers the tallest sprite (the 7-tall
+    // lighthouse) and the widest (the 7-wide ship dock).
+    var TILE_PAD = 7;
     var startCol = Math.max(0, Math.floor(-offX / ts) - TILE_PAD);
-    var startRow = Math.max(0, Math.floor(-offY / ts) - TILE_PAD);
+    var startRow = Math.max(0, Math.floor(-offY / ts) - 1);
     var endCol = Math.min(world.width, Math.ceil((w - offX) / ts) + TILE_PAD);
     var endRow = Math.min(world.height, Math.ceil((h - offY) / ts) + TILE_PAD);
 
@@ -551,24 +760,43 @@ var BridgeWorld = (function () {
       bgFn(ctx, w, h, now);
     }
 
-    // Pass 1: Draw tiles
+    // Pass 1: Draw tiles — static ones come from the cache, the rest live.
+    var cls = null;
+    if (tcache.canvas) {
+      cls = tileClass[currentWorldId];
+      if (!sameTiles(world.tiles, tcache.snap)) {
+        buildTileCache();
+        cls = tileClass[currentWorldId];
+      } else {
+        var perFrame = Math.max(1, Math.ceil(tcache.rows / 12));
+        for (var rr = 0; rr < perFrame; rr++) {
+          cacheRow(tcache.cursor, cls, now);
+          tcache.cursor = (tcache.cursor + 1) % tcache.rows;
+        }
+      }
+      ctx.drawImage(tcache.canvas, offX - CACHE_MX * ts, offY - CACHE_MY * ts);
+    }
     for (var row = startRow; row < endRow; row++) {
       for (var col = startCol; col < endCol; col++) {
         var tileId = world.tiles[row][col];
         if (tileId === 0) continue;
+        if (cls) {
+          var kc = cls[tileId];
+          if (kc && !kc.dyn && !kc.over) continue;
+        }
 
-        var tx = Math.floor(offX + col * ts);
-        var ty = Math.floor(offY + row * ts);
+        var tx = offX + col * ts;
+        var ty = offY + row * ts;
         var drawFn = tileset[tileId];
 
         if (drawFn) {
-          drawFn(ctx, tx, ty, Math.ceil(ts), now, col, row);
+          drawFn(ctx, tx, ty, ts, now, col, row);
         } else {
           // Fallback to flat color
-          var color = world.tileColors[String(tileId)];
+          var color = world.tileColors && world.tileColors[String(tileId)];
           if (color) {
             ctx.fillStyle = color;
-            ctx.fillRect(tx, ty, Math.ceil(ts), Math.ceil(ts));
+            ctx.fillRect(tx, ty, ts, ts);
           }
         }
       }
@@ -588,50 +816,82 @@ var BridgeWorld = (function () {
         // skip the green focus box for them so they stay menacing.
         if (inter.type === 'hostile') continue;
         if (inter.x === checkX && inter.y === checkY && !BridgeCharacter.isMoving()) {
-          var hx = Math.floor(offX + inter.x * ts);
-          var hy = Math.floor(offY + inter.y * ts);
+          var hx = offX + inter.x * ts;
+          var hy = offY + inter.y * ts;
           var hPulse = 0.3 + Math.sin(now / 400) * 0.2;
           ctx.strokeStyle = 'rgba(40, 220, 80, ' + hPulse.toFixed(2) + ')';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(hx + 1, hy + 1, Math.ceil(ts) - 2, Math.ceil(ts) - 2);
+          ctx.lineWidth = 1;
+          ctx.strokeRect(hx + 0.5, hy + 0.5, ts - 1, ts - 1);
         }
       }
     }
 
-    // Pass 2: Glow (data-driven from world JSON)
-    if (world.tileGlow) {
-      ctx.globalCompositeOperation = 'screen';
+    // Pass 2: Glow (data-driven from world JSON). Lit worlds draw it after
+    // the lighting pass instead, as bloom on top of the darkened scene.
+    if (!lit) drawGlowPass(ctx, w, h, offX, offY, ts, startCol, startRow, endCol, endRow);
 
-      for (var row = startRow; row < endRow; row++) {
-        for (var col = startCol; col < endCol; col++) {
-          var tileId = world.tiles[row][col];
-          var glow = world.tileGlow[String(tileId)];
-          if (!glow) continue;
-
-          var cx = offX + (col + 0.5) * ts;
-          var cy = offY + (row + 0.5) * ts;
-          var radius = ts * glow.radius;
-          drawGlow(ctx, cx, cy, radius, glow.color[0], glow.color[1], glow.color[2], glow.alpha);
-        }
-      }
-
-      // Ambient glow
-      if (world.ambientGlow) {
-        var ag = world.ambientGlow;
-        var acx = w / 2;
-        var acy = h / 2;
-        var ar = w * ag.radius;
-        drawGlow(ctx, acx, acy, ar, ag.color[0], ag.color[1], ag.color[2], ag.alpha);
-      }
-
-      // Ambient particles
-      drawParticles(ctx, offX, offY, ts);
-
-      ctx.globalCompositeOperation = 'source-over';
+    // Pass 2.9: Per-tileset overlay (drone, viewport content, NPCs, etc.)
+    var overlayFn = OVERLAYS[world.tileset];
+    if (overlayFn) {
+      overlayFn(ctx, world, offX, offY, ts, now);
     }
 
-    // Pass 2.7: Exit beacons — pulsing arrow over every leave_world tile so
-    // the way back to the ship is impossible to miss.
+    // Pass 2.95: Loot drops — bounce, bob, sparkle. Drawn under the
+    // character so the pilot can stand visually in front of pickups.
+    if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) {
+      BridgeLoot.draw(ctx, offX, offY, ts);
+    }
+
+    // Pass 3: Character (on top of glow)
+    BridgeCharacter.draw(ctx, offX, offY, ts);
+
+    // Pass 3.2: Lighting — darken to the world's ambient light, let light
+    // sources punch through, then bloom the glows on top.
+    if (lit) {
+      BridgeLighting.apply(ctx, world, offX, offY, ts, w, h, now);
+      drawGlowPass(ctx, w, h, offX, offY, ts, startCol, startRow, endCol, endRow);
+    }
+
+    // Pass 3.5: Transient effects (swing arcs, hit flashes, damage numbers).
+    // Drawn after the character so a swing sweeps in front of the pilot.
+    if (typeof BridgeFX !== 'undefined' && BridgeFX.draw) {
+      BridgeFX.draw(ctx, offX, offY, ts, now);
+    }
+  }
+
+  function drawGlowPass(ctx, w, h, offX, offY, ts, startCol, startRow, endCol, endRow) {
+    if (!world.tileGlow) return;
+    ctx.globalCompositeOperation = 'screen';
+
+    for (var row = startRow; row < endRow; row++) {
+      for (var col = startCol; col < endCol; col++) {
+        var tileId = world.tiles[row][col];
+        var glow = world.tileGlow[String(tileId)];
+        if (!glow) continue;
+
+        var cx = offX + (col + 0.5) * ts;
+        var cy = offY + (row + 0.5) * ts;
+        var radius = ts * glow.radius;
+        drawGlow(ctx, cx, cy, radius, glow.color[0], glow.color[1], glow.color[2], glow.alpha);
+      }
+    }
+
+    // Ambient glow
+    if (world.ambientGlow) {
+      var ag = world.ambientGlow;
+      drawGlow(ctx, w / 2, h / 2, w * ag.radius, ag.color[0], ag.color[1], ag.color[2], ag.alpha);
+    }
+
+    // Ambient particles
+    drawParticles(ctx, offX, offY, ts);
+
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // UI that should stay crisp at screen resolution. CSS-pixel coordinates.
+  function drawScreenLayer(ctx, w, h, offX, offY, ts, now) {
+    // Exit beacons — pulsing arrow over every leave_world tile so the way
+    // back to the ship is impossible to miss.
     if (world.interactions) {
       var beat = (Math.sin(now / 350) + 1) * 0.5; // 0..1
       for (var bi = 0; bi < world.interactions.length; bi++) {
@@ -670,12 +930,8 @@ var BridgeWorld = (function () {
         ctx.fillText(bint.label || 'EXIT', arrowCx, floatY - ts * 0.05);
         ctx.textAlign = 'start';
       }
-    }
 
-    // Pass 2.8: Game markers — gold banner over each app-interaction cluster.
-    // Drawn before the character so the player can stand visually in front of
-    // the marker when adjacent to a cabinet.
-    if (world.interactions) {
+      // Game markers — gold banner over each app-interaction cluster.
       var appClusters = findAppClusters(world.interactions);
       var gameBeat = (Math.sin(now / 600) + 1) * 0.5;
       for (var ci = 0; ci < appClusters.length; ci++) {
@@ -686,28 +942,7 @@ var BridgeWorld = (function () {
       }
     }
 
-    // Pass 2.9: Per-tileset overlay (drone, viewport content, NPCs, etc.)
-    var overlayFn = OVERLAYS[world.tileset];
-    if (overlayFn) {
-      overlayFn(ctx, world, offX, offY, ts, now);
-    }
-
-    // Pass 2.95: Loot drops — bounce, bob, sparkle. Drawn under the
-    // character so the pilot can stand visually in front of pickups.
-    if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) {
-      BridgeLoot.draw(ctx, offX, offY, ts);
-    }
-
-    // Pass 3: Character (on top of glow)
-    BridgeCharacter.draw(ctx, camera.x, camera.y, tileSize, scale);
-
-    // Pass 3.5: Transient effects (swing arcs, hit flashes, damage numbers).
-    // Drawn after the character so a swing sweeps in front of the pilot.
-    if (typeof BridgeFX !== 'undefined' && BridgeFX.draw) {
-      BridgeFX.draw(ctx, offX, offY, ts, now);
-    }
-
-    // Pass 4: Edge vignette — soften abrupt black map edges so out-of-bounds
+    // Edge vignette — soften abrupt black map edges so out-of-bounds
     // areas read as a fade rather than a sharp render boundary.
     var vignetteW = Math.min(120, w * 0.12);
     var grad = ctx.createLinearGradient(0, 0, vignetteW, 0);
@@ -747,6 +982,15 @@ var BridgeWorld = (function () {
     registerOverlay: registerOverlay,
     getCamera: function () { return camera; },
     getScale: function () { return scale; },
-    getTileSize: function () { return tileSize; }
+    getTileSize: function () { return tileSize; },
+    // Native-space view of the frame being drawn — use inside tileset
+    // backgrounds/overlays instead of getScale()/getCamera().
+    getView: function () { return view; },
+    // The same view in CSS pixels on screen — for mouse picking and DOM.
+    getScreenView: function () { return screenView; },
+    getZoom: function () { return zoom; },
+    invalidateTiles: invalidateTiles,
+    isOpaqueCell: isOpaqueCell,
+    NATIVE_TS: NATIVE_TS
   };
 })();

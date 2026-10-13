@@ -18,7 +18,8 @@ var BridgeCharacter = (function () {
     walking: false,
     animFrame: 0,     // 0-3: cycle is 0→1→0→2 (stand/left/stand/right)
     animTimer: 0,
-    moveSpeed: 0.10,
+    moveSpeed: 6,     // tiles per second
+    stride: 0,        // tiles walked, drives the walk cycle
   };
 
   var SUIT_COLORS = {
@@ -87,24 +88,24 @@ var BridgeCharacter = (function () {
     return true;
   }
 
-  /** Update movement interpolation. Call each frame. */
-  function update() {
+  /** Update movement interpolation. Call each frame with elapsed seconds. */
+  function update(dt) {
+    if (dt === undefined) dt = 1 / 60;
     if (player.moveProgress < 1) {
-      player.moveProgress += player.moveSpeed;
+      var step = player.moveSpeed * dt;
+      player.moveProgress += step;
+      player.stride += step;
       if (player.moveProgress >= 1) {
         player.moveProgress = 1;
         player.x = player.targetX;
         player.y = player.targetY;
         player.walking = false;
       }
-      // Walk animation
-      player.animTimer++;
-      if (player.animTimer > 8) {
-        player.animTimer = 0;
-        player.animFrame = (player.animFrame + 1) % 4;
-      }
+      // Walk animation — a full 4-step cycle every 1.5 tiles walked
+      player.animFrame = Math.floor(player.stride / 0.375) % 4;
     } else {
       player.animFrame = 0;
+      player.stride = 0;
     }
   }
 
@@ -123,13 +124,11 @@ var BridgeCharacter = (function () {
     return 2;
   }
 
-  /** Draw the character — ¾ view procedural sprite with walk animation. */
-  function draw(ctx, camX, camY, tileSize, scale) {
+  /** Draw the character at native resolution. offX/offY = world origin, ts = native tile px. */
+  function draw(ctx, offX, offY, ts) {
     var pos = getRenderPos();
-    var dpr = window.devicePixelRatio || 1;
-    var sx = (pos.x - camX) * tileSize * scale + ctx.canvas.width / (2 * dpr);
-    var sy = (pos.y - camY) * tileSize * scale + ctx.canvas.height / (2 * dpr);
-    var ts = tileSize * scale;
+    var sx = Math.round(offX + pos.x * ts);
+    var sy = Math.round(offY + pos.y * ts);
 
     var pilot = BridgeState.getPilot();
     var colors = SUIT_COLORS[(pilot && pilot.suit_color) || 'purple'];
@@ -149,7 +148,7 @@ var BridgeCharacter = (function () {
 
     var wf = getWalkFrame();
     // Body bob: shift up 1 unit on step frames, idle breathing when standing
-    var bob = player.walking ? ((wf !== 0) ? -u : 0) : Math.sin(Date.now() / 800) * u * 0.5;
+    var bob = player.walking ? ((wf !== 0) ? -u : 0) : Math.round(Math.sin(Date.now() / 800) * 0.5) * u;
 
     if (player.facing === 'down') {
       // Helmet (player marker — sets player apart from NPCs)

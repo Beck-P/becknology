@@ -84,14 +84,14 @@ var BridgeControls = (function () {
     function clickedTile(e) {
       if (typeof BridgeWorld === 'undefined') return null;
       var rect = canvas.getBoundingClientRect();
-      var ts = BridgeWorld.getTileSize() * BridgeWorld.getScale();
-      var cam = BridgeWorld.getCamera();
-      if (!cam || !ts) return null;
-      var w = rect.width, h = rect.height;
+      // On-screen (CSS px) placement of the last rendered frame.
+      var v = BridgeWorld.getScreenView();
+      var ts = v && v.ts;
+      if (!ts) return null;
       var sx = e.clientX - rect.left;
       var sy = e.clientY - rect.top;
-      var offX = w / 2 - cam.x * ts;
-      var offY = h / 2 - cam.y * ts;
+      var offX = v.offX;
+      var offY = v.offY;
       return { x: Math.floor((sx - offX) / ts), y: Math.floor((sy - offY) / ts) };
     }
 
