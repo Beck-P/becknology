@@ -16,6 +16,8 @@ The current art style is a **high-oblique elevated front-facing RPG building vie
 - **Don't use these prompts for other apps.** They are tuned to the bridge's specific art and palette.
 - **Match procedural and PNG style.** Procedural canvas drawing in `js/worlds/*.js` should look like it came from the same art family — see `CLAUDE.md` "Procedural drawing rules" section.
 - **Don't paint detail inside windows / lantern flames / dragon eye** — those are animation hooks; leave a flat shape.
+- **Everything lands on one 32 px-per-tile grid.** Convert new PNGs with `tools/bridge-art/native_sprites.py` (never load full-size PNGs at runtime); characters come from the Blender pipeline in `tools/bridge-art/`. See `CLAUDE.md` → "Rendering pipeline" and "Engine integration".
+- **Lighting is per world** — a `lighting` block in the world JSON (see `js/lighting.js`).
 
 ## Working on the bridge
 

@@ -4,21 +4,30 @@ This file is the single source of truth for the **bridge app's** visual style �
 
 > **Agents (Claude Code, Codex, etc.):** copy/paste prompts live in `apps/bridge/PNG-PROMPTS.md`. The full master prompt is also embedded in this file under "PNG generation rules" so either is a valid source.
 
-<!-- Last reviewed: 2026-05-07 -->
+<!-- Last reviewed: 2026-10-14 -->
 
 ## North star
-**Cozy 2D farming RPG (Stardew Valley / Harvest Moon / Rune Factory).** Specifically: high-oblique elevated front-facing building sprites that drop onto a top-down tile map (full facade visible AND most/all of the roof plane visible from above), 16-pixel-per-tile pixel art, hand-drawn character with a 4-frame walk cycle per direction, static buildings with frame-based animated overlays (smoke, water, doors, fire). We are intentionally hybrid — we use both AI-generated PNG sprites and procedural canvas drawing. The job of this doc is to make those two paths produce the same look.
+**Cast n Chill meets Stardew Valley.** A cozy 2D world that feels alive: Stardew's readable top-down map and high-oblique building sprites (full facade visible AND most/all of the roof plane visible from above), with Cast n Chill's richer detail, mood lighting and constant small motion (smoke, flicker, water, breathing idles). We are intentionally hybrid — AI-painted PNGs, Blender-rendered sprites and procedural canvas drawing all meet on **one native pixel grid**, under one lighting model. The job of this doc is to keep those paths looking like one game.
+
+## Rendering pipeline (js/world.js)
+
+1. Each frame the world is painted into a small offscreen canvas at **32 native px per tile**, then scaled to the screen by a **whole number** of device pixels (`zoom`). Never draw world art straight to the screen — everything lands on the same pixel grid this way.
+2. The camera snaps the world to whole native pixels; the leftover fraction shifts the finished frame, so scrolling stays smooth.
+3. Draw order: background → tiles (static ones from a cache) → glow → tileset overlay → loot → **pilot** → tall sprites whose base is below the pilot (so the pilot can walk behind buildings) → lighting → effects → screen-space UI (exit beacons, game markers, vignette — crisp text at CSS resolution).
+4. Static tiles are detected automatically at world load (drawn at several sample times; tiles whose pixels change, or that paint outside their cell, stay live) and cached. A few cached rows are refreshed every frame, so state-driven drawers still update. Call `BridgeWorld.invalidateTiles()` after changing what a static tile looks like.
+5. Movement, camera and animation run on real elapsed time (`dt`), never frame counts.
+6. Inside a background or overlay drawer, use `BridgeWorld.getView()` (`{offX, offY, ts, w, h}` in native px) — not `getScale()`/`getCamera()`, which describe the screen. For mouse picking / DOM placement use `BridgeWorld.getScreenView()` (CSS px).
 
 ## Resolution & scale
 
 | Concept | Value |
 |---|---|
-| Base tile (logical) | 16 × 16 "art units" |
-| Render scale | 3× (each tile = 48 × 48 screen px) |
-| Procedural unit `u` | `tileSize / 16` = 3 screen px |
-| PNG source density | 16 px per tile (so a 4-tile-wide building PNG is 64 px wide native) |
-| PNG base after chunkify | 16-24 px per tile (set per-sprite via `loadBuildingSprite(key, path, chunkWidth)`) |
-| All scaling | nearest-neighbor only — `imageSmoothingEnabled = false` |
+| Native tile | 32 × 32 px (`ts` passed to every drawer) |
+| World data tile | `tileSize: 16` in world JSON is a logical unit — don't change it |
+| Procedural unit `u` | `ts / 16` = 2 native px (procedural art is still authored on a 16-unit grid) |
+| Sprite density | 32 native px per tile — 1 native px of detail |
+| Screen zoom | whole number of device px per native px, chosen so ~20 tiles fit across |
+| All scaling | nearest-neighbor only — `imageSmoothingEnabled = false` (except the light map, which is soft on purpose) |
 
 ## Procedural drawing rules — match the PNG style
 
@@ -79,7 +88,7 @@ The procedural drawers in `js/worlds/*.js` should look like they were drawn at 1
 | Wide creature (dragon) | 4w × 3h | 1024 × 768 |
 | Hero sign / billboard | 4w × 2h | 1024 × 512 |
 
-PNGs should be square or larger than needed — we crop visually via the anchor system. **Native resolution is high (700-1200px) on purpose** — we let the chunkify pass downsample to ~16-24 px per tile. Don't ask DALL-E for "low res pixel art at 64px"; it doesn't render small images well. Generate big, downsample in code.
+Keep the subject's real proportions — the sprite is no longer stretched to fill its footprint, so a square image of a 4-wide building comes out 4 tiles tall. **Native resolution is high (700-1200px) on purpose** — `tools/bridge-art/native_sprites.py` downsamples to 32 px per tile. Don't ask an image model for "low res pixel art at 64px"; it doesn't render small images well. Generate big, convert with the tool.
 
 **Animation hooks.** When generating PNGs, design them so we can layer animation on top:
 - **Chimney**: leave clear sky directly above the chimney top — no overhang or roof piece extending up there. Smoke needs vertical room.
@@ -156,40 +165,49 @@ own cozy identity. Animations on top: viewport stars + occasional planet/ship
 events, cyan strip pulse, desk lamp dust motes, coffee-mug steam, cockpit-door
 LED blink, and the drone-pet's idle wander + bob + LED.
 
-## NPC sprite sheets — future spec
+## Character sprite sheets
 
-When we add NPC walking animation, this is the format to use:
+Every walking character (the pilot now, NPCs next) uses this format:
 
 | Spec | Value |
 |---|---|
-| Frame size | 16 × 32 px (head + body) |
-| Frames per direction | 4 (idle, step1, idle, step2 — creates a 1-2-1-3 cycle) |
-| Direction order | down, right, up, left |
-| Sheet layout | 4 cols × 4 rows = 64 × 128 native, 16 frames total |
-| Animation tick | ~120 ms per frame |
+| Frame size | 32 × 48 native px (1 tile wide, 1.5 tall), feet 3 px above the bottom |
+| Rows (direction order) | down, right, up, left |
+| Columns | idle 0-3, then walk 0-7 — 12 × 4 = 384 × 192 px per sheet |
+| Idle | ~340 ms per frame, sequence 0-1-2-1 |
+| Walk | frame chosen from distance walked (8 frames per 2.4 tiles), not time |
 
-The character at `js/character.js` is currently drawn procedurally. When we ship sprite sheets, the procedural drawer becomes a fallback and the sprite-sheet path is preferred.
+The pilot uses this path (see "Characters — the Blender pipeline" below); the procedural drawer in `js/character.js` is only a fallback. NPCs are still procedural 16-unit tiles and should move to the same pipeline next.
 
 ## Engine integration
 
-### Adding a new PNG building
-1. Drop the PNG in `apps/bridge/assets/buildings/{name}.png`
-2. In `js/worlds/lumar.js` (or whichever world's tileset), add a `loadBuildingSprite('{name}', '/bridge/assets/buildings/{name}.png', chunkWidth)` call near the top.
-3. Add a drawer function that calls `drawBuildingSprite(ctx, x, y, ts, '{name}', tilesW, tilesH, anchorOffsetX)`.
-4. Optionally layer animation: `drawChimneySmoke(ctx, ...)`, `drawWindowFlicker(ctx, ...)` — call after drawing the sprite.
-5. Register the drawer in `BridgeWorld.registerTileset(...)` with a unique tile id.
-6. In the world's JSON, set the anchor tile id at the building's bottom-center, and set the tiles in the building's footprint to `0` (void) with `collisions = 1` (blocked) so the player can't walk through.
+### Adding a new PNG building / prop
+1. Drop the painted PNG in `apps/bridge/assets/buildings/{name}.png` (or `props/`, `creatures/`).
+2. Add it to `MANIFEST` in `tools/bridge-art/native_sprites.py` with its footprint width in tiles (and `True` for the matte flood if it has a dark background instead of white).
+3. Run `python3 tools/bridge-art/native_sprites.py {name}` — it writes `assets/native/{name}.png` at exactly 32 px per tile (aspect kept, halo stripped, palette-aware downscale) and updates `assets/native/manifest.js`.
+4. Draw it from a tile drawer with `BridgeSprites.draw(ctx, x, y, ts, '{name}', tilesW, tilesH, anchorOffsetX)` (or the world's `drawBuildingSprite`). It sits on the anchor tile's bottom edge, centred on the footprint, over a soft contact shadow.
+5. Position overlays (smoke, window glow, spray) as fractions of `BridgeSprites.area(...)` — the rect the art actually occupies — never of the raw footprint.
+6. In the world JSON, put the drawer's tile id on the anchor (bottom-centre) tile, set the footprint tiles to `0` (void) with `collisions = 1`.
 
-### `chunkWidth` per asset
-Tune until the building's pixel density matches the procedural drawers around it. For 4-tile-wide buildings, start at 96. Lower = chunkier. Don't go below 64 for buildings or details disappear.
+### Characters — the Blender pipeline
+The pilot is a cel-shaded 3D model rendered straight to 32 × 48 native frames:
 
-### The PNG halo cleanup
-`loadBuildingSprite` post-processes alpha to strip DALL-E's cream halo. Three rules in priority:
-1. Pure white pixels (max channel >230, low saturation) → fully transparent.
-2. Partially-transparent + bright + low-saturation pixels → fully transparent.
-3. Cream/off-white interior pixels (max >215, low sat, total brightness >620) → fully transparent.
+```
+python3 -m venv BVENV && BVENV/bin/pip install bpy==5.2.2   # Python 3.13
+BVENV/bin/python tools/bridge-art/pilot.py /tmp/pilot-frames
+python3 tools/bridge-art/sprites_post.py pilot /tmp/pilot-frames
+```
 
-If a new PNG comes in with a colored background instead of white, this cleanup won't catch it — we'll need to extend the rules.
+- Shading happens in the shader: N·L against a fixed key light (high, upper-left), three flat tone bands per material, no lamps, one sample, no filtering, no dithering — every pixel is a palette colour.
+- `sprites_post.py` draws line work where one body part overlaps another (from id + depth passes) and the outer outline, then packs one sheet per colour variant into `assets/characters/`.
+- Sheet layout: rows down/right/up/left; columns idle 0-3, walk 0-7. Frames are 32 × 48, feet 3 px above the bottom.
+- New characters (NPCs, creatures) should follow the same camera, light direction, ramp positions and outline rules so they match the pilot.
+
+### Lighting
+A world opts in with a `lighting` block in its JSON (see the header of `js/lighting.js` for every field): an `ambient` colour, `fromGlow` (reuse the world's `tileGlow` tiles as lights, with `skip` for things like glowing sea), `tileLights` (a light on every tile of a type — lanterns, fireplaces, lava), hand-placed `lights`, a faint `pilot` light and `bloom`. Keep lights where the art shows a source, warm for fire and lamps, coloured for magic and neon. Lighting is subtle on the ship and stations and moody at night in Lumar.
+
+### Ground under objects
+Lumar object tiles (NPCs, lanterns, crates, stalls) paint the world's ground under themselves via `drawGround()`. A world chooses it with `"groundTile"` in its JSON (e.g. `28` cobblestone in the Market Square). New object drawers should call `drawGround`, not a specific floor.
 
 ## Don't
 
@@ -197,6 +215,9 @@ If a new PNG comes in with a colored background instead of white, this cleanup w
 - Don't generate PNGs at 64×64 native — image models render small badly. Generate 700-1200px and let chunkify handle resolution.
 - Don't paint window interiors in PNGs. Yellow rectangle only — we overlay glow.
 - Don't use sub-tile detail in procedural drawers. Whole `u` units only for foreground subjects.
+- Don't load or stretch full-size PNGs at runtime — convert them to native sprites with the tool.
+- Don't count frames for timing — use elapsed time.
+- Don't draw text into the world buffer; text belongs in the screen-space layer.
 - Don't introduce a new color palette without adding it to this doc first.
 - Don't mix view angles in the same world — every building must use the same high-oblique camera.
 - Don't generate art with these prompts for any other Becknology app (aether-seas, cipher-room, etc.). These rules apply to the **bridge app only**.
