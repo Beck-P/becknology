@@ -54,7 +54,11 @@
         },
         "text": "The dragon's egg glows faintly. Something inside is listening."
       }
-    ]
+    ],
+    "letter": {
+      "from": "regular",
+      "text": "Heard you went down into the dragon's cave and came back up. Nobody does that.\n\nSo it was one of yours, all those years back. E.B. sat at my table every night for a season and never once said what they were listening for. I'm glad somebody finally went looking.\n\nThe painting stays on the wall. Drink's on me when you're next in.\n\nBram"
+    }
   },
   "heron": {
     "title": "The Heron's Cargo",
@@ -103,7 +107,11 @@
         },
         "text": "The Crimson Watcher keeps the camp's fire and tells you to keep away from the cave."
       }
-    ]
+    ],
+    "letter": {
+      "from": "corra",
+      "text": "The tide turned last night and the pirates went out to the Heron with their ropes and their lamps, and came back with nothing but wet boots. You'd been there first. I watched it all from the fire.\n\nH.M. would have liked you, I think. Mind the reef.\n\nCorra"
+    }
   },
   "signal": {
     "title": "Forty-Seven Point Three",
@@ -160,7 +168,11 @@
         },
         "text": "A maintenance drone on the bench, tuned to 47.3 MHz."
       }
-    ]
+    ],
+    "letter": {
+      "from": "marshal",
+      "text": "Skyport 7 to the Wayfarer.\n\nThat station you've been poking round, Enigma: we logged a crew list for it, years back. One name never came off the board. Sounds like you found out why.\n\nPad seven's yours whenever you want it. No landing fee.\n\nRuiz"
+    }
   },
   "brink": {
     "title": "Echoes at the Brink",
@@ -225,7 +237,11 @@
         },
         "text": "A rockfall stopped mid-air. If you watch long enough, one stone moves."
       }
-    ]
+    ],
+    "letter": {
+      "from": "stranger",
+      "text": "You went to the edge and it showed you yourself. They all say it shows them the universe. It doesn't. It shows them where they've been, and most people haven't been anywhere.\n\nYou have. Keep going.\n\nThe back corner, as ever"
+    }
   },
   "null": {
     "title": "NULL",
@@ -274,7 +290,11 @@
         },
         "text": "Club Void. A slot in the door opens, two eyes, and closes again."
       }
-    ]
+    ],
+    "letter": {
+      "from": "pip",
+      "text": "ok so you know about us now. dont tell joro. the gate stays chained, thats the rule, but if you ever need something run anywhere in the district, you know who to ask. tokens up front.\n\nP\n\n(this is a NULL letter. burn it)"
+    }
   },
   "crystals": {
     "title": "Four Colours",
@@ -323,7 +343,11 @@
         },
         "text": "On Midnight Isle, stone sentinels guard the way to the sorceress's tower."
       }
-    ]
+    ],
+    "letter": {
+      "from": "ilsa",
+      "text": "Four colours, as I thought - and the Midnight stones guarding a fourth that nobody has ever drawn.\n\nI've added all of them to the chart, with your name in the corner where the cartographer usually signs. It's only fair. Come by the house and see it: the ink's barely dry.\n\nIlsa Venn"
+    }
   },
   "wren": {
     "title": "The Wren",
@@ -380,7 +404,11 @@
         },
         "text": "The Wren itself, past the altar at the very edge, frozen mid-fall. Its running lights are on."
       }
-    ]
+    ],
+    "letter": {
+      "from": "okafor",
+      "text": "Seventy-two cycles I listened to that loop, and you went and found them in a week.\n\nI keep thinking of the Wren out there, nose over the edge, still falling. Still calling. At least now I know the call's not for help. It's just them saying where they are.\n\nThe tomatoes say hello.\n\nDami Okafor"
+    }
   },
   "listeners": {
     "title": "The Listeners",
@@ -437,6 +465,10 @@
         },
         "text": "Morwen has the monks' book. She knows what's on the last page."
       }
-    ]
+    ],
+    "letter": {
+      "from": "morwen",
+      "text": "The book is open on my table to its last page, and I find I can't close it. The Wren, and then your skiff, written in a hand three hundred years dead.\n\nThe monks heard you coming before you were built. I don't know what that means yet. When I do, you'll have a letter.\n\nMorwen"
+    }
   }
 }

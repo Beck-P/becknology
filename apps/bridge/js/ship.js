@@ -256,7 +256,7 @@ var BridgeShip = (function () {
     BridgeOrbit.setLocation(dest.id);
     var loc = BridgeOrbit.getLocation();
     BridgeWorld.load('bridge', function () {
-      BridgeState.transition('world', { worldId: 'bridge', spawn: { x: 9, y: 9 } });
+      BridgeState.transition('world', { worldId: 'bridge', spawn: { x: 10, y: 10 } });
       showArrival(loc);
     });
   }

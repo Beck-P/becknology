@@ -311,7 +311,10 @@ var BridgeInteractions = (function () {
   }
 
   function executeInteraction(inter) {
-    if (typeof BridgeQuests !== 'undefined') BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter);
+    if (typeof BridgeQuests !== 'undefined') {
+      BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter);
+      if (inter.home) BridgeQuests.onInteract(inter.home.world, { label: inter.home.label });   // crew aboard (js/crew.js)
+    }
     var person = (inter.type === 'dialog' || inter.type === 'random_dialog') && typeof BridgePeople !== 'undefined' &&
       BridgePeople.find(BridgeWorld.getWorldId(), inter.label);
     if (person) { showConversation(person, inter); return; }
@@ -420,6 +423,11 @@ var BridgeInteractions = (function () {
 
       case 'bay_view':
         showDialog(inter.label, typeof BridgeShip !== 'undefined' ? BridgeShip.bayText() : '');
+        break;
+
+      case 'deck':
+        // the bridge's stations: chart desk, wireless, letters, gauges, scope, decor slots (js/worlds/bridge.js)
+        if (typeof BridgeDeck !== 'undefined') BridgeDeck.use(inter);
         break;
 
       case 'warp_map':

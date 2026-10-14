@@ -207,6 +207,7 @@ var BridgeLocker = (function () {
         if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
           BridgeQuarters.refreshDecor();
         }
+        if (typeof BridgeDeck !== 'undefined' && BridgeDeck.refreshDecor) BridgeDeck.refreshDecor();
       } else {
         setFeedback('STORE FAILED', '#e88860');
       }
@@ -226,6 +227,7 @@ var BridgeLocker = (function () {
         if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
           BridgeQuarters.refreshDecor();
         }
+        if (typeof BridgeDeck !== 'undefined' && BridgeDeck.refreshDecor) BridgeDeck.refreshDecor();
       } else {
         setFeedback('PLACE FAILED', '#e88860');
       }

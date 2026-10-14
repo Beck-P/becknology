@@ -14,6 +14,10 @@
  * (docs/supabase/2026-10-14-pilot-bonds.sql), follow the pilot account.
  * Without the server (no API key, offline) free talk is hidden and the
  * authored topics work as before.
+ *
+ * Letters arrive at the rack on the bridge: a thank-you from someone whose
+ * quest you finished, and (with the server) a note now and then from people
+ * who are fond of you, written from what they remember.
  */
 var BridgeTalk = (function () {
   var KEY = 'bridge_bonds';
@@ -136,6 +140,73 @@ var BridgeTalk = (function () {
     }
   }
 
+  // ---- letters (the rack on the bridge) ------------------------------------------------------------
+  // Someone whose quest you finished writes to thank you (quests.json `letter`,
+  // no server needed); and once the server is on, people who are fond of you
+  // write now and then about what they remember and what they've heard.
+  var LKEY = 'bridge_letters';
+  var mail = [];
+  try { mail = JSON.parse(localStorage.getItem(LKEY) || '[]') || []; } catch (e) { mail = []; }
+  function saveMail() { try { localStorage.setItem(LKEY, JSON.stringify(mail.slice(-40))); } catch (e) { /* private mode */ } }
+
+  function personName(id) {
+    var all = typeof BridgePeople !== 'undefined' ? BridgePeople.all() : {};
+    return all[id] ? all[id].name : id;
+  }
+
+  function deliver(key, from, text) {
+    if (!text || mail.some(function (m) { return m.key === key; })) return null;
+    var m = { key: key, from: from, name: personName(from), text: text, at: Date.now(), read: false };
+    mail.push(m);
+    saveMail();
+    return m;
+  }
+
+  function letters() { return mail.slice().sort(function (a, b) { return b.at - a.at; }); }
+  function unread() { return mail.filter(function (m) { return !m.read; }).length; }
+  function markRead(key) {
+    mail.forEach(function (m) { if (m.key === key) m.read = true; });
+    saveMail();
+  }
+
+  // Fetch whatever has arrived: resolves to the letters that are new.
+  function checkMail() {
+    var got = [];
+    if (typeof BridgeQuests !== 'undefined' && BridgeQuests.finished && BridgeQuests.def) {
+      BridgeQuests.finished().forEach(function (q) {
+        var d = BridgeQuests.def(q.id);
+        var m = d && d.letter && deliver('quest:' + q.id, d.letter.from, d.letter.text);
+        if (m) got.push(m);
+      });
+    }
+    if (!enabled) return Promise.resolve(got);
+    // one written letter per check, three a day at most, from whoever likes you best and hasn't written lately
+    var day = new Date().toDateString();
+    var today = mail.filter(function (m) { return m.key.indexOf('ai:') === 0 && new Date(m.at).toDateString() === day; }).length;
+    if (today >= 3) return Promise.resolve(got);
+    var now = Date.now(), pick = null;
+    Object.keys(bonds).forEach(function (id) {
+      var b = bonds[id];
+      if (!b.met || !b.talks || b.feeling < 3) return;
+      if (now - Math.max(b.letterAt || 0, b.last || 0) < 8 * 3600 * 1000) return;
+      if (!pick || b.feeling > bonds[pick].feeling) pick = id;
+    });
+    if (!pick) return Promise.resolve(got);
+    var b = bond(pick), c = context(pick);
+    b.letterAt = now;
+    touch(pick);
+    return post({
+      mode: 'letter', person: pick,
+      pilot: typeof BridgeState !== 'undefined' && BridgeState.getPilot && BridgeState.getPilot() ? BridgeState.getPilot().name : '',
+      bond: { feeling: b.feeling, mood: b.mood, memories: b.memories, summary: b.summary, met: b.met },
+      clues: c.clues, news: c.news, flags: c.flags, place: 'the Wayfarer'
+    }).then(function (d) {
+      var m = d && d.letter && deliver('ai:' + pick + ':' + now, pick, d.letter);
+      if (m) got.push(m);
+      return got;
+    });
+  }
+
   // ---- the pilot account (pilot_bonds) ------------------------------------------------------------------
   function db() {
     return typeof BridgeProgression !== 'undefined' && BridgeProgression.client ? BridgeProgression.client() : null;
@@ -182,6 +253,10 @@ var BridgeTalk = (function () {
     feelingLabel: function (id) { return feelingLabel(bond(id).feeling); },
     greet: greet,
     say: say,
-    end: end
+    end: end,
+    letters: letters,
+    unread: unread,
+    markRead: markRead,
+    checkMail: checkMail
   };
 })();

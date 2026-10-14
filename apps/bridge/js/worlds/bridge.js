@@ -1,22 +1,18 @@
 /**
- * The Bridge — your ship's command deck, with a holographic warp map.
+ * The Bridge — the Wayfarer's captain's deck (pre-rendered: scenes/bridge.py).
  *
- * Walkable command-room replacement for the old first-person cockpit.
- * Players spawn here from the intro, walk to the central holo-pedestal,
- * press E to open the warp map (existing starmap UI), and jump to worlds.
- * A door at the south wall leads to Quarters.
- *
- * Major elements:
- *   - Polished metal floor + dark navy walls (cooler than Quarters' wood)
- *   - Big front-facing viewport across the top wall (animated stars +
- *     occasional planet/ship events) — this IS the ship's windshield
- *   - Central holographic star map: rotating sphere of star points with
- *     coloured planet markers (Arcadia/Lumar/Singularity/Enigma) and
- *     connection lines, projected from a glowing pedestal
- *   - Captain's chair behind the holo, facing forward
- *   - Side console banks (stub interactions for stats/comms/engineering/sensors)
- *   - Door south to Quarters
- *   - Welcome toast on entry
+ * Wood and brass under a stern gallery of arched windows that look out on
+ * wherever the ship is parked (BridgeOrbit, drawn behind the render). The
+ * helm stands under the gallery; the chart table in the middle carries the
+ * holographic star map (drawn live, depth-tested — the world JSON's `holo`
+ * says where), and both open the nav chart. Around the room, stations are
+ * `deck` interactions handled here (BridgeDeck): the navigator's chart desk
+ * (the journal), the wireless and the scope (what's out the window), the
+ * aether gauges, the letter rack (letters from people you've helped or
+ * befriended, js/talk.js) and the decor slots — plants, lamps, a rug, a
+ * curio, a flag — shown as scene layers when owned. Hired crew stand at
+ * their posts (crewPosts, js/crew.js). Doors: the quarters south, the
+ * hangar west.
  *
  * Registers itself with BridgeWorld on load.
  */
@@ -573,13 +569,21 @@
 
   // Player-proximity boost (0..1) — how close the player is to the pedestal.
   // Drives the "wakes up" effect when you walk over.
+  // Where the projection stands: the world JSON's `holo` block (the chart
+  // table's centre column, the screen row its top starts at, the foot row it
+  // is depth-tested at).
+  function holo() {
+    var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld();
+    return (w && w.holo) || { x: 9.5, top: 2.4, footRow: 6.9 };
+  }
+
   function getProxBoost() {
     if (typeof BridgeCharacter === 'undefined') return 0;
     var px = BridgeCharacter.getX();
     var py = BridgeCharacter.getY();
-    // Pedestal center is approx (9, 6.5)
-    var dx = px - 9;
-    var dy = py - 6.5;
+    var H = holo();
+    var dx = px - (H.x - 0.5);
+    var dy = py - (H.footRow - 0.4);
     var d = Math.sqrt(dx * dx + dy * dy);
     if (d > 4) return 0;
     return Math.max(0, 1 - d / 4);
@@ -592,8 +596,9 @@
     // Pedestal is at cols 8-10 row 6 with the emitter at the top of those tiles.
     // Centering at row 4.8 keeps the projection visually anchored to the
     // emitter without bleeding into the viewport.
-    var cx = offX + 9.5 * ts;
-    var cy = offY + 4.8 * ts;
+    var H = holo();
+    var cx = offX + H.x * ts;
+    var cy = offY + (H.top + 2.4) * ts;
     var radiusPx = 1.7 * ts;     // visual sphere radius
     var rotY = time / 3500;      // spin slowly
 
@@ -606,7 +611,7 @@
     // Rising column from pedestal — narrow cyan beam connecting the
     // emitter (row ~6.2) to the hologram base.
     var colTop = cy + radiusPx * 0.55;
-    var colBot = offY + 6.2 * ts;
+    var colBot = offY + (H.footRow - 0.7) * ts;
     if (colBot > colTop) {
       var colGrad = ctx.createLinearGradient(cx, colTop, cx, colBot);
       colGrad.addColorStop(0, 'rgba(64, 200, 216, 0)');
@@ -815,13 +820,14 @@
       drawViewportOverlay(ctx, world, offX, offY, ts, time);
     },
     items: function (world, offX, offY, ts, time, sc) {
+      var H = holo();
       var w = Math.ceil(4.4 * ts), h = Math.ceil(4.4 * ts);
-      var dx = Math.round(offX + 9.5 * ts - w / 2), dy = Math.round(offY + 2.4 * ts);
+      var dx = Math.round(offX + H.x * ts - w / 2), dy = Math.round(offY + H.top * ts);
       if (!holoCanvas) holoCanvas = document.createElement('canvas');
       holoCanvas.width = w;
       holoCanvas.height = h;
       drawHologram(holoCanvas.getContext('2d'), offX - dx, offY - dy, ts, time);
-      var footRow = 6.9;
+      var footRow = H.footRow;
       return [{ footRow: footRow, draw: function (ctx) {
         BridgeScene.drawOccluded(ctx, sc, holoCanvas, 0, 0, w, h, dx, dy, footRow, offX, offY, null, null, 'lighter');
       } }];
@@ -857,6 +863,187 @@
     setTimeout(function () {
       showWelcomeToast(firstTime, name);
     }, 350);
+
+    // the deck as you've made it, and whatever the post has brought
+    refreshDecor();
+    if (typeof BridgeTalk !== 'undefined' && BridgeTalk.checkMail) {
+      BridgeTalk.checkMail().then(function (got) {
+        applyLayers();
+        if (got && got.length && typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) {
+          setTimeout(function () {
+            BridgeQuests.toast('Letter', got.length > 1 ? got.length + ' letters at the rack' : 'From ' + got[0].name,
+                               'Waiting in the letter rack', false);
+          }, 2600);
+        }
+      });
+    }
   });
+
+  // ============================================================
+  //  THE DECK'S STATIONS — 'deck' interactions (js/interactions.js)
+  // ============================================================
+
+  var DECOR_SLOTS = ['deck_plant', 'deck_lamp', 'deck_rug', 'deck_curio', 'deck_flag'];
+  var owned = {};
+
+  function refreshDecor() {
+    if (typeof BridgeProgression === 'undefined' || !BridgeProgression.getDecor) { applyLayers(); return; }
+    BridgeProgression.getDecor().then(function (d) { owned = d || {}; applyLayers(); }, applyLayers);
+  }
+
+  // owned decor in its slots, envelopes in the rack while letters wait
+  function applyLayers() {
+    if (typeof BridgeScene === 'undefined') return;
+    var m = {};
+    DECOR_SLOTS.forEach(function (slot) { m[slot] = owned[slot] || null; });
+    m.mail = typeof BridgeTalk !== 'undefined' && BridgeTalk.letters && BridgeTalk.letters().length ? 'on' : null;
+    BridgeScene.setLayers('bridge', m);
+  }
+
+  function here() { return typeof BridgeOrbit !== 'undefined' ? BridgeOrbit.getLocation() : 'deep-space'; }
+  function hired(id) { return typeof BridgeCrew !== 'undefined' && BridgeCrew.isHired(id); }
+  function questDone(id) {
+    var p = typeof BridgeQuests !== 'undefined' && BridgeQuests.progress ? BridgeQuests.progress(id) : null;
+    return !!(p && p.done);
+  }
+
+  var COMMS = {
+    lumar: "LUMAR HARBOUR WATCH, FAINT THROUGH THE SPORES: 'FISHING BAND OFF DIGGEN'S POINT, MIND THE REEF ON CRIMSON. " +
+           "AND WHOEVER KEEPS RINGING THE ROSE COVE WINDMILL AT NIGHT - STOP IT.'",
+    arcadia: "SKYPORT 7 TRAFFIC, BORED: 'HOLDING PATTERN THREE, CLEARED FOR PAD SEVEN.'\n\nUNDER IT, ON A BAND NOBODY SHOULD " +
+             "USE, SOMEONE TAPS OUT FOUR LETTERS OVER AND OVER: N - U - L - L.",
+    enigma: "47.3 MHZ. THE LOOP: A VOICE SLOWED TO A GROAN, READING OUT SHIP NAMES ONE BY ONE.",
+    singularity: "EVERY BAND CARRIES THE SAME THING: YOUR OWN VOICE, A FEW SECONDS AHEAD OF YOU.",
+    'deep-space': "STATIC. THE LONG, EMPTY HISS OF NOTHING NEARBY."
+  };
+  var SCOPE = {
+    lumar: "LUMAR: ONE OCEAN UNDER CLOUD, GREEN AND GLOWING ON THE NIGHT SIDE. A HARBOUR, FOUR ISLANDS.\n\nLIFE SIGNS: " +
+           "PLENTY. ONE OF THEM VERY LARGE, AND VERY WARM, UNDER A HILL ON CRIMSON REACH.",
+    arcadia: "ARCADIA: A CITY THE SIZE OF A PLANET. TWELVE MILLION SIGNALS, MOST OF THEM ADVERTISING.",
+    enigma: "ENIGMA STATION: RELAY DECK DARK, DOCKING BAY 3 OPEN TO SPACE, THE RINGED GIANT BEYOND.",
+    singularity: "THE SINGULARITY: THE SCOPE READS THE EDGE FINE. THE TIMESTAMPS ON THE READINGS ARE ALL FROM TOMORROW.",
+    'deep-space': "NOTHING FOR A LONG WAY IN ANY DIRECTION. THE SCOPE HUMS TO ITSELF."
+  };
+  var EMPTY = {
+    deck_plant: "AN EMPTY BRASS-BANDED PLANTER, SOIL AND ALL. THE SHIP'S CHANDLER SELLS PLANTS - OR FIND ONE ON YOUR TRAVELS.",
+    deck_lamp: "A BRASS PLATE ON THE DECK, MADE FOR A LAMP TO STAND ON. NOTHING STANDS ON IT.",
+    deck_curio: "A BARE PLINTH. IT WANTS SOMETHING TO SHOW OFF.",
+    deck_flag: "A FLAG SOCKET, EMPTY. THE WAYFARER FLIES NO COLOURS - YET."
+  };
+
+  function commsText() {
+    var loc = here(), t = COMMS[loc] || COMMS['deep-space'];
+    if (loc === 'enigma' && questDone('wren')) t = "47.3 MHZ IS QUIET NOW. JUST THE STATION'S OWN SLOW HUM.";
+    if (hired('traveller')) t += "\n\nA NOTE IN ANSEL'S HAND IS TUCKED UNDER THE KEY: 'LAMP OIL UP TWO ON SAPPHIRE. SELLING.'";
+    return t;
+  }
+
+  function engineeringText() {
+    if (hired('okafor')) {
+      return "THE AETHER COLUMN BURNS A STEADY VIOLET. OKAFOR HAS RE-SEATED EVERY VALVE AND CHALKED NEW REDLINES ON THE GAUGES." +
+             "\n\nYOUR BUSINESSES HOLD TWICE THE TAKINGS BETWEEN COLLECTIONS.";
+    }
+    return "THREE GAUGES: PRESSURE, AETHER, HULL. TWO NEEDLES SIT IN THE GREEN. THE THIRD TWITCHES NEAR THE RED, AND NOBODY " +
+           "ABOARD KNOWS WHY.\n\nAN ENGINEER WOULD.";
+  }
+
+  function scopeText() {
+    var loc = here(), t = SCOPE[loc] || SCOPE['deep-space'];
+    if (loc === 'enigma') t += hired('okafor') ? "\n\nHYDROPONICS: NO ONE. ITS KEEPER IS ABOARD THE WAYFARER." : "\n\nHYDROPONICS: ONE WARM BODY.";
+    return t;
+  }
+
+  function decorText(slot) {
+    var key = owned[slot];
+    if (!key) return EMPTY[slot] || '';
+    var item = typeof BridgeCatalog !== 'undefined' && BridgeCatalog.getItemByKey ? BridgeCatalog.getItemByKey(key) : null;
+    return (item ? item.name.toUpperCase() : 'YOURS') + (item && item.blurb ? '.\n\n' + item.blurb.toUpperCase() : '.') +
+           "\n\nSWAP IT FROM THE STORAGE LOCKER IN YOUR QUARTERS.";
+  }
+
+  function use(inter) {
+    var say = function (t) { BridgeInteractions.say(inter.label, t, inter); };
+    switch (inter.action) {
+      case 'journal': if (typeof BridgeQuests !== 'undefined') BridgeQuests.open(); break;
+      case 'letters': openLetters(); break;
+      case 'comms': say(commsText()); break;
+      case 'engineering': say(engineeringText()); break;
+      case 'sensors': say(scopeText()); break;
+      case 'decor': say(decorText(inter.slot)); break;
+    }
+  }
+
+  // ---- the letter rack -------------------------------------------------------------------------------
+  var rackEl = null;
+  function esc(t) { return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function ago(t) {
+    var m = Math.round((Date.now() - t) / 60000);
+    if (m < 2) return 'just now';
+    if (m < 60) return m + ' minutes ago';
+    var h = Math.round(m / 60);
+    if (h < 24) return h + (h === 1 ? ' hour ago' : ' hours ago');
+    var d = Math.round(h / 24);
+    return d + (d === 1 ? ' day ago' : ' days ago');
+  }
+
+  function renderLetters(openKey) {
+    var list = typeof BridgeTalk !== 'undefined' && BridgeTalk.letters ? BridgeTalk.letters() : [];
+    var cur = openKey && list.filter(function (m) { return m.key === openKey; })[0];
+    var html = '<div class="lr-head"><span class="lr-title">' + (cur ? esc(cur.name) : 'Letters') + '</span>' +
+      '<button class="qj-close lr-close" aria-label="Close"><span class="ip-key">Esc</span></button></div>';
+    if (cur) {
+      if (!cur.read && BridgeTalk.markRead) BridgeTalk.markRead(cur.key);
+      html += '<div class="lr-letter"><div class="lr-when">' + ago(cur.at) + '</div>' +
+        cur.text.split(/\n+/).map(function (para) { return '<p>' + esc(para) + '</p>'; }).join('') + '</div>' +
+        '<button class="lr-back">&#8249; All letters</button>';
+    } else if (!list.length) {
+      html += '<div class="lr-empty">The rack is empty. People you help - and people who get fond of you - write to the ship.</div>';
+    } else {
+      html += '<ul class="lr-list">' + list.map(function (m) {
+        return '<li><button class="lr-item' + (m.read ? '' : ' unread') + '" data-key="' + esc(m.key) + '">' +
+          '<span class="lr-from">' + esc(m.name) + '</span><span class="lr-ago">' + ago(m.at) + '</span>' +
+          '<span class="lr-first">' + esc(m.text.split(/\n/)[0].slice(0, 70)) + '&hellip;</span></button></li>';
+      }).join('') + '</ul>';
+    }
+    rackEl.innerHTML = '<div class="lr-panel">' + html + '</div>';
+    rackEl.querySelector('.lr-close').addEventListener('click', closeLetters);
+    var back = rackEl.querySelector('.lr-back');
+    if (back) back.addEventListener('click', function () { renderLetters(null); });
+    Array.prototype.forEach.call(rackEl.querySelectorAll('.lr-item'), function (b) {
+      b.addEventListener('click', function () { renderLetters(b.getAttribute('data-key')); });
+    });
+    rackEl.setAttribute('data-open', cur ? cur.key : '');
+  }
+
+  function openLetters() {
+    if (!rackEl) {
+      rackEl = document.createElement('div');
+      rackEl.id = 'letter-rack';
+      rackEl.addEventListener('click', function (e) { if (e.target === rackEl) closeLetters(); });
+      document.body.appendChild(rackEl);
+    }
+    var list = typeof BridgeTalk !== 'undefined' && BridgeTalk.letters ? BridgeTalk.letters() : [];
+    var first = list.filter(function (m) { return !m.read; })[0];
+    renderLetters(first && list.length === 1 ? first.key : null);
+    rackEl.classList.add('visible');
+    if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
+    document.addEventListener('keydown', lettersKey, true);
+  }
+
+  function closeLetters() {
+    if (!rackEl || !rackEl.classList.contains('visible')) return;
+    rackEl.classList.remove('visible');
+    document.removeEventListener('keydown', lettersKey, true);
+    if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+  }
+
+  function lettersKey(e) {
+    if (e.key !== 'Escape' && e.key !== 'e' && e.key !== 'E') return;
+    e.preventDefault(); e.stopPropagation();
+    if (e.key === 'Escape' && rackEl.getAttribute('data-open')) renderLetters(null);
+    else closeLetters();
+  }
+
+  window.BridgeDeck = { use: use, refreshDecor: refreshDecor };
 
 })();

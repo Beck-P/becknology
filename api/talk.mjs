@@ -2,7 +2,7 @@
  * /api/talk — the Bridge's characters, voiced by Claude Haiku 5.5.
  *
  * GET  → { enabled }  (whether a key is configured; the game hides free talk without one)
- * POST → { mode: 'greet' | 'talk' | 'fold', person, say?, history?, bond?, clues?, news?, flags?, place? }
+ * POST → { mode: 'greet' | 'talk' | 'fold' | 'letter', person, say?, history?, bond?, clues?, news?, flags?, place? }
  *
  * The prompt is built here, never sent by the browser: who the character is
  * (apps/bridge/assets/people.json, plus the fuller sheets in api/_personas.json,
@@ -11,7 +11,8 @@
  * last talked, and how the character feels about the pilot. Secrets only go
  * into the prompt once the character trusts the pilot enough to tell them.
  *
- * The reply is JSON: { reply, feeling (-2..2), mood, remember, action }.
+ * The reply is JSON: { reply, feeling (-2..2), mood, remember, action }; a
+ * letter (someone who likes the pilot writing to the ship) is { letter }.
  * The browser keeps the relationship (js/talk.js) and sends it back each time.
  */
 import Anthropic from '@anthropic-ai/sdk';
@@ -46,6 +47,12 @@ Also return:
 - remember: one short line, from your point of view, about the pilot if something worth remembering happened (a promise, a kindness, an insult, something they told you); otherwise an empty string.
 - action: "join_crew" only if the pilot asks you to join their crew and you would consider it; "trade" only if the pilot wants to buy from or sell to you and you trade; otherwise "none".`;
 
+const LETTER_RULES = `How to write as this character:
+- Write only as them, in their voice: a short letter of 40 to 90 words, plain prose, no stage directions, no emoji.
+- You know only what your sheet says, plus what the pilot has told you and the news you've heard. Never invent places, people, items or quest answers that aren't in your sheet.
+- Keep your secrets unless they're listed as things you're ready to share.
+- Let how you feel about the pilot colour how warm or guarded the letter is.`;
+
 const REPLY_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -58,6 +65,15 @@ const REPLY_SCHEMA = {
     action: { type: 'string', enum: ['none', 'join_crew', 'trade'] },
   },
 };
+const LETTER_SCHEMA = {
+  type: 'object',
+  properties: {
+    letter: { type: 'string', description: 'The letter: 40 to 90 words of plain prose in sentence case, signed with your name on its own last line.' },
+  },
+  required: ['letter'],
+  additionalProperties: false,
+};
+
 const FOLD_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -170,6 +186,7 @@ function situation(body, mode) {
   }
   lines.push('');
   if (mode === 'greet') lines.push('The pilot has just walked up to you. Greet them in a line or two, the way you would given how you feel and what you remember or have heard.');
+  else if (mode === 'letter') lines.push("The pilot is away on their ship. Write them a short letter, sent up to the Wayfarer, in your own voice: about something you remember of them, word you've heard of what they've done, or what's going on with you and your place. Plain prose in sentence case (not capitals), no 'Dear' header, nothing they couldn't know; sign it with your name on the last line.");
   else lines.push(`The pilot says: ${str(body.say, 240)}`);
   return lines.join('\n');
 }
@@ -207,7 +224,7 @@ export function createHandler(getClient) {
     if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = null; } }
     if (!body || typeof body !== 'object') { res.status(400).json({ error: 'body' }); return; }
     const id = str(body.person, 40);
-    const mode = ['greet', 'talk', 'fold'].includes(body.mode) ? body.mode : 'talk';
+    const mode = ['greet', 'talk', 'fold', 'letter'].includes(body.mode) ? body.mode : 'talk';
     if (!PEOPLE[id]) { res.status(400).json({ error: 'person' }); return; }
     if (mode === 'talk' && !str(body.say, 240)) { res.status(400).json({ error: 'say' }); return; }
 
@@ -228,21 +245,26 @@ export function createHandler(getClient) {
 
       const feeling = clamp(body.bond && body.bond.feeling, -10, 10);
       const flags = list(body.flags, 40, 60);
+      const letter = mode === 'letter';
       const msg = await client.messages.create({
         model: MODEL,
         max_tokens: 1024,
-        output_config: { effort: 'low', format: { type: 'json_schema', schema: REPLY_SCHEMA } },
+        output_config: { effort: 'low', format: { type: 'json_schema', schema: letter ? LETTER_SCHEMA : REPLY_SCHEMA } },
         system: [
-          { type: 'text', text: `${WORLD}\n\n${RULES}` },
+          { type: 'text', text: `${WORLD}\n\n${letter ? LETTER_RULES : RULES}` },
           { type: 'text', text: sheet(id, feeling, flags) },
         ],
         messages: [{ role: 'user', content: situation(body, mode) }],
       });
       if (msg.stop_reason === 'refusal') {
-        res.status(200).json({ reply: '...', feeling: 0, mood: '', remember: '', action: 'none' });
+        res.status(200).json(letter ? { letter: '' } : { reply: '...', feeling: 0, mood: '', remember: '', action: 'none' });
         return;
       }
       const out = JSON.parse(textOf(msg) || '{}');
+      if (letter) {
+        res.status(200).json({ letter: typeof out.letter === 'string' ? out.letter.replace(/\r/g, '').trim().slice(0, 900) : '' });
+        return;
+      }
       res.status(200).json({
         reply: str(out.reply, 600) || '...',
         feeling: clamp(out.feeling, -2, 2),

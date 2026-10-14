@@ -69,14 +69,14 @@ var BridgeQuests = (function () {
   }
 
   // ---- the toast ---------------------------------------------------------------------------
-  function toast(kicker, title, sub) {
+  function toast(kicker, title, sub, hint) {
     if (!toastEl) {
       toastEl = document.createElement('div');
       toastEl.className = 'quest-toast';
       document.body.appendChild(toastEl);
     }
     toastEl.innerHTML = '<div class="qt-kicker">' + esc(kicker) + '</div><div class="qt-title">' + esc(title) + '</div>' +
-      (sub ? '<div class="qt-sub">' + esc(sub) + '</div>' : '') + '<div class="qt-hint"><span class="ip-key">J</span> Journal</div>';
+      (sub ? '<div class="qt-sub">' + esc(sub) + '</div>' : '') + (hint === false ? '' : '<div class="qt-hint"><span class="ip-key">J</span> Journal</div>');
     toastEl.classList.remove('visible');
     void toastEl.offsetWidth;
     toastEl.classList.add('visible');
@@ -197,7 +197,7 @@ var BridgeQuests = (function () {
   }
 
   return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary,
-           found: found, finished: finished,
+           found: found, finished: finished, def: function (id) { return defs ? defs[id] || null : null; },
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            reset: function () { state = {}; save(); } };
 })();

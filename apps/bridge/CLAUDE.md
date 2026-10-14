@@ -132,20 +132,18 @@ Each world has its own constrained palette. Both PNG prompts and procedural draw
 - Warning: `#e84040` `#e8c040`
 - Server LEDs: `#40e080` `#e06040` `#40a8e0`
 
-### Bridge — ship command deck (the navigation hub)
-- Walls (dark navy steel): `#0a1018` `#1a2028` `#2a3038` `#3a4048`
-- Floor (polished metal panel): `#1a2030` `#2a3040` `#3a4050` (alt `#252e40`, grain `#0a0e18`)
-- Cyan strip light: `#40c8d8` `#80e0e8` (subtle pulse alpha)
-- Brass trim: `#a08040` `#e0c060`
-- Hologram cyan: `#40c8d8` `#80e0e8` `#c0f0f8` + purple highlight `#8060c0` `#c0a0f0`
-- Captain's chair (dark leather): `#0a0808` `#1a1410` `#2a1c14` (brass piping `#a08040`)
-- Console panels: dark metal `#0a1018` `#1a2028` + LED accents (cyan `#40c8d8`, yellow `#ffe080`, red `#e84040`)
-- Viewport (deep space): `#050510` + procedural stars/planets/ships
+### Bridge — the captain's deck (the navigation hub)
+- Walls (panelled wood): `#24160c` `#3e2614` `#55361c` `#6e4828`
+- Deck (scrubbed planks): `#6a4422` with trenails, a brass inlay round the helm
+- Brass: `#d0a048` `#a08040`; oxblood leather `#6a2a22`; parchment `#d8c8a0`, ink `#3a2a1a`
+- Glows: chart-table cyan `#40c8d8`, wireless amber `#ffb050`, aether violet `#9a7aff`, scope green `#30a060`
+- Gallery (deep space): HOLDOUT — the planet the ship is parked over, drawn live
 
-The Bridge is cooler and more techy than Quarters. Where Quarters is cozy
-warmth, Bridge is alert calm. The hologram in the center is the room's
-hero — a rotating sphere of star points and coloured planet markers,
-projected from a glowing pedestal. Walking close brightens it.
+The bridge is a sky-galleon's great cabin: five arched windows in a stern
+gallery, ship's lanterns hanging from the header, the helm under the
+windows (wheel, binnacle, engine telegraph), the round chart table in the
+middle with the hologram rising off it, the captain's wingback behind it.
+Warm lamplight against the cool starlight from the gallery.
 
 ### Quarters — pilot ship interior (cozy + sci-fi)
 - Walls (warm dark metal): `#1a1410` `#2a2018` `#3a2820` `#4a3a30`
@@ -267,7 +265,14 @@ Each Lumar island is a whole place to walk (≈56 × 40 tiles), built with `tool
 - **Server:** `api/talk.mjs` (Vercel function, Claude Haiku 5.5 at low effort, JSON replies). It builds every prompt itself — the browser never sends one — from `assets/people.json`, `assets/quests.json`, `assets/businesses.json` and `api/_personas.json`, the fuller character sheets (voice, story, what they know, secrets gated by trust, wants, how they see the others, story beats tied to quests or crew). Sheets live under `api/` so their secrets are never served to the page. Anyone without a sheet is voiced from their authored lines. GET `/api/talk` says whether it's on (`ANTHROPIC_API_KEY` set); without it the game hides free talk and the authored topics work as before.
 - **Client:** `js/talk.js` (BridgeTalk) keeps a bond per person — `feeling` −10…10 (Cold / Wary / Neutral / Friendly / Warm / Trusts you), `mood`, up to 12 `memories` (older ones folded into a `summary` by the model), `met`, `last` — in localStorage and, once `docs/supabase/2026-10-14-pilot-bonds.sql` is applied, the pilot account. Each request sends the bond, found clue ids (so characters can't spoil quests), news since you last spoke (quests finished, crew hired, businesses bought) and flags for story beats.
 - **In conversation** (`showConversation`): a text box under the topics (T or / to focus), your last line above theirs, how they feel beside their role; someone you've met greets you from memory (the authored line if the server is slow). Replies can nudge the crew or trade topic. Feeling ≤ −3 and they won't join your crew; ≥ 5 and they pay a tenth more for what you sell.
+- **Letters:** mode `letter` writes a short signed letter in the character's voice from the same bond and news; the rack on the bridge holds them (see *The captain's deck*).
 - **Adding a sheet:** a new key in `api/_personas.json` matching the person's id in `people.json`; keep facts consistent with the quests, and gate anything that would spoil one behind `trust`.
+
+### The captain's deck (the bridge)
+`scenes/bridge.py` + `tools/bridge-art/assets_deck.py`. Stations are `deck` interactions handled by `BridgeDeck` in `js/worlds/bridge.js` (`action`): the chart desk opens the journal, the wireless and the scope say what's out the window (`BridgeOrbit.getLocation()`), the aether gauges know whether you have an engineer, the letter rack opens your letters. The helm and the chart table open the nav chart; the hologram stands where the world JSON's `holo` says.
+- **Decor:** five slots (`deck_plant`, `deck_lamp`, `deck_rug`, `deck_curio`, `deck_flag`), three pieces each, all built from `assets_deck.DECOR` as variants; bought from the Ship's Chandler on the bridge, the Lumar dockside merchant or ArcadiaMart (`js/catalog.js`, which previews them from their own layer renders) and swapped from the quarters' locker. A slot is a decor `slot_key` like the quarters' ones.
+- **Crew aboard:** once hired, a crew member leaves where you found them and stands at their post (`crewPosts` in `bridge.json`: Bram at the chart desk, Okafor at the gauges, Ansel at the wireless, Corra by the ledger, Pip on the sea chest) — `BridgeCrew.decorate`. Talking to them aboard still counts for quests that send you to them (`home`).
+- **Letters:** `BridgeTalk.checkMail()` runs when you come onto the bridge. A finished quest's `letter` in `quests.json` (from, text) arrives as a thank-you; with the AI server on, someone who's fond of you (feeling ≥ 3, talked at least once, not in the last 8 hours) writes now and then (`api/talk.mjs` mode `letter`), three a day at most. Envelopes show in the rack (the `mail` layer) while you have letters.
 
 ### Gathering, crew, businesses, the open sea
 - **Forage** (`assets/forage.json`, `js/forage.js`): spots per world id, added to the world's interactions as it loads (re-renders can't lose them). A ready spot glints; gathering bounces its items out as loot (`BridgeLoot`); it grows back after `regrow` minutes. Items (crystals of four colours, sea glass, silver nails) live in `js/items.js`.

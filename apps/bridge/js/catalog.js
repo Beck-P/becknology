@@ -38,8 +38,27 @@ var BridgeCatalog = (function () {
     cosmic_soda:    { slot: 'shelf', name: 'Cosmic Soda',    price: 90,  preview: previewCosmicSoda },
     neon_cactus:    { slot: 'plant', name: 'Neon Cactus',    price: 150, preview: previewNeonCactus },
     arcade_marquee: { slot: 'poster',name: 'Arcade Marquee', price: 220, preview: previewArcadeMarquee },
-    retro_crt:      { slot: 'tank',  name: 'Retro CRT',      price: 450, preview: previewRetroCRT }
+    retro_crt:      { slot: 'tank',  name: 'Retro CRT',      price: 450, preview: previewRetroCRT },
+    // The bridge (captain's deck) — previews are cut from the deck's own render
+    compass_rug:    { slot: 'deck_rug',   name: 'Compass Rug',      price: 180, blurb: 'Navy wool, a gold compass rose under the chart table.' },
+    crimson_rug:    { slot: 'deck_rug',   name: 'Crimson Rug',      price: 220, blurb: 'Off a pirate captain\'s floor, by way of a Crimson Reach card game.' },
+    woven_mat:      { slot: 'deck_rug',   name: 'Seagrass Mat',     price: 90,  blurb: 'Woven on Sapphire Port from the grass that grows by the quay.' },
+    lemon_tree:     { slot: 'deck_plant', name: 'Lemon Tree',       price: 160, blurb: 'Fruits once a voyage. Nobody knows where it gets the sun.' },
+    spore_fern:     { slot: 'deck_plant', name: 'Spore Fern',       price: 120, blurb: 'A Lumar fern. Its spores glow when the ship is quiet.' },
+    station_vine:   { slot: 'deck_plant', name: 'Station Vine',     price: 240, blurb: 'A cutting from Enigma\'s hydroponics, under its own grow light.' },
+    ship_lantern:   { slot: 'deck_lamp',  name: 'Ship\'s Lantern',  price: 140, blurb: 'Brass and glass on a stand. Warm as a harbour.' },
+    crystal_brazier:{ slot: 'deck_lamp',  name: 'Crystal Brazier',  price: 260, blurb: 'Rose Cove crystals in a brass bowl, giving off their own light.' },
+    neon_tube:      { slot: 'deck_lamp',  name: 'Neon Tube',        price: 160, blurb: 'Arcadia pink. Hums faintly.' },
+    globe:          { slot: 'deck_curio', name: 'Old Globe',        price: 260, blurb: 'A globe of some world nobody aboard can name.' },
+    ship_bottle:    { slot: 'deck_curio', name: 'Ship in a Bottle', price: 220, blurb: 'A tiny galleon under full sail. It looks a lot like yours.' },
+    orrery:         { slot: 'deck_curio', name: 'Brass Orrery',     price: 480, blurb: 'Three worlds round a lit sun, turning when no one watches.' },
+    wayfarer_flag:  { slot: 'deck_flag',  name: 'Wayfarer Colours', price: 120, blurb: 'Indigo, with the ship\'s mark in gold.' },
+    pirate_flag:    { slot: 'deck_flag',  name: 'Black Flag',       price: 150, blurb: 'The Crimson pirates swear it was a gift.' },
+    neon_banner:    { slot: 'deck_flag',  name: 'Neon Banner',      price: 200, blurb: 'Arcadian street signage, rescued from a skip.' }
   };
+  Object.keys(ITEMS).forEach(function (k) {
+    if (!ITEMS[k].preview && /^deck_/.test(ITEMS[k].slot)) ITEMS[k].preview = previewDeck(ITEMS[k].slot, k);
+  });
 
   var SHOPS = {
     quarters_catalog: {
@@ -50,12 +69,18 @@ var BridgeCatalog = (function () {
     lumar_dockside: {
       title: "DOCKSIDE MERCHANT",
       subtitle: 'CURIOS FROM THE TIDE',
-      items: ['driftwood_lamp', 'glass_float', 'kelp_canister', 'brass_compass']
+      items: ['driftwood_lamp', 'glass_float', 'kelp_canister', 'brass_compass', 'spore_fern', 'woven_mat', 'crystal_brazier',
+              'ship_bottle', 'crimson_rug', 'pirate_flag']
     },
     arcadia_mart: {
       title: 'ARCADIAMART CASHIER',
       subtitle: 'NEON & NOSTALGIA',
-      items: ['cosmic_soda', 'neon_cactus', 'arcade_marquee', 'retro_crt']
+      items: ['cosmic_soda', 'neon_cactus', 'arcade_marquee', 'retro_crt', 'neon_tube', 'neon_banner']
+    },
+    wayfarer_chandler: {
+      title: "SHIP'S CHANDLER",
+      subtitle: 'FITTINGS FOR THE DECK',
+      items: ['compass_rug', 'ship_lantern', 'lemon_tree', 'station_vine', 'globe', 'orrery', 'wayfarer_flag']
     }
   };
 
@@ -277,6 +302,7 @@ var BridgeCatalog = (function () {
         if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
           BridgeQuarters.refreshDecor();
         }
+        if (typeof BridgeDeck !== 'undefined' && BridgeDeck.refreshDecor) BridgeDeck.refreshDecor();
         BridgeProgression.recordAchievement('settled_in', 50, { first: item.key });
       } else if (res.reason === 'insufficient') {
         setFeedback('NOT ENOUGH COINS', '#e88860');
@@ -384,6 +410,7 @@ var BridgeCatalog = (function () {
         if (typeof BridgeQuarters !== 'undefined' && BridgeQuarters.refreshDecor) {
           BridgeQuarters.refreshDecor();
         }
+        if (typeof BridgeDeck !== 'undefined' && BridgeDeck.refreshDecor) BridgeDeck.refreshDecor();
       } else if (res && res.reason === 'not_owned') {
         setFeedback('YOU DON\'T OWN THAT', '#e88860');
         refreshView();
@@ -394,6 +421,42 @@ var BridgeCatalog = (function () {
   }
 
   // ---- Preview painters ----
+  // Deck decor is previewed from its own render (assets/scenes/bridge/layers):
+  // cut out, brightened out of the room's dim light, fitted to the card.
+  var deckArt = {};
+  function previewDeck(slot, key) {
+    var url = '/bridge/assets/scenes/bridge/layers/' + slot + '/' + key + '/full.png';
+    var img = new Image();
+    img.onload = function () {
+      var c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      var cx = c.getContext('2d');
+      cx.drawImage(img, 0, 0);
+      try {
+        var d = cx.getImageData(0, 0, c.width, c.height), px = d.data, hi = 1;
+        for (var i = 0; i < px.length; i += 4) if (px[i + 3]) hi = Math.max(hi, px[i], px[i + 1], px[i + 2]);
+        var g = Math.min(4, 230 / hi);
+        for (var j = 0; j < px.length; j += 4) { px[j] *= g; px[j + 1] *= g; px[j + 2] *= g; }
+        cx.putImageData(d, 0, 0);
+      } catch (e) { /* tainted: keep it as rendered */ }
+      deckArt[key] = c;
+    };
+    img.src = url;
+    return function (ctx) {
+      var c = deckArt[key], W = ctx.canvas.width;
+      if (!c) {
+        ctx.fillStyle = 'rgba(208,160,72,0.35)';
+        ctx.fillRect(W * 0.3, W * 0.3, W * 0.4, W * 0.4);
+        return;
+      }
+      var s = Math.min((W - 6) / c.width, (W - 6) / c.height);
+      if (s >= 1) s = Math.floor(s);
+      var w = Math.round(c.width * s), h = Math.round(c.height * s);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(c, Math.round((W - w) / 2), Math.round(W - 3 - h), w, h);
+    };
+  }
+
   function paintPreviews(container, items) {
     var canvases = container.querySelectorAll('canvas.catalog-preview');
     for (var i = 0; i < canvases.length; i++) {

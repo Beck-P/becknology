@@ -464,8 +464,8 @@
       "type": "enter_world",
       "target": "bridge",
       "spawn": [
-        2,
-        7
+        1,
+        9
       ],
       "prompt": "PRESS E TO ENTER",
       "x": 7,
@@ -476,8 +476,8 @@
       "type": "enter_world",
       "target": "bridge",
       "spawn": [
-        2,
-        7
+        1,
+        9
       ],
       "prompt": "PRESS E TO ENTER",
       "x": 8,

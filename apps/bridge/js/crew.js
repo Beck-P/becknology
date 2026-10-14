@@ -8,7 +8,8 @@
  * trader sends home a cut whenever you make port, an engineer keeps your
  * businesses running twice as long between collections. A crew block with
  * `after` (a quest id) answers with `notYet` until that quest is complete.
- * The journal lists them.
+ * The journal lists them. Once hired they live aboard: each stands at their
+ * post on the bridge (decorate) instead of where you found them.
  */
 var BridgeCrew = (function () {
   var KEY = 'bridge_crew';
@@ -70,6 +71,41 @@ var BridgeCrew = (function () {
     BridgeState.onChange(function (s, prev, ctx) { if (s === 'world' && ctx && ctx.worldId) onArrive(ctx.worldId); });
   }
 
-  return { has: has, hire: hire, isHired: isHired, list: list,
+  // Hired hands leave their old spot and stand at a post on the bridge (the
+  // world JSON's `crewPosts`: tile, facing, pose). Talking to them aboard
+  // still counts for any quest that sends you to them at home (`home`).
+  function decorate(worldId, data) {
+    if (typeof BridgePeople === 'undefined') return;
+    var all = BridgePeople.all();
+    Object.keys(hired).forEach(function (id) {
+      var p = all[id];
+      if (!p || !p.crew || !p.sheet) return;
+      var home = p.at.filter(function (e) { return e.world !== 'bridge'; })[0];
+      if (data.crewPosts) {
+        var post = data.crewPosts[id];
+        if (!post) return;
+        var label = p.name.toUpperCase();
+        data.interactions.push({ x: post.x, y: post.y, type: 'dialog', label: label, prompt: 'PRESS E TO TALK', dialog: '', home: home });
+        if (data.scene) {
+          (data.scene.actors = data.scene.actors || []).push({ sheet: p.sheet, x: post.x, y: post.y, facing: post.facing || 'down', pose: post.pose });
+        }
+        if (data.collisions && data.collisions[post.y]) data.collisions[post.y][post.x] = 1;
+        if (!p.at.some(function (e) { return e.world === worldId && e.label === label; })) p.at.push({ world: worldId, label: label });
+        return;
+      }
+      p.at.forEach(function (e) {
+        if (e.world !== worldId) return;
+        var spots = data.interactions.filter(function (it) { return it.label === e.label; });
+        data.interactions = data.interactions.filter(function (it) { return it.label !== e.label; });
+        if (data.scene && data.scene.actors) {
+          data.scene.actors = data.scene.actors.filter(function (a) {
+            return !(a.sheet === p.sheet && spots.some(function (it) { return it.x === a.x && it.y === a.y; }));
+          });
+        }
+      });
+    });
+  }
+
+  return { has: has, hire: hire, isHired: isHired, list: list, decorate: decorate,
            hiredAt: function (id) { return hired[id] ? hired[id].at : 0; } };
 })();

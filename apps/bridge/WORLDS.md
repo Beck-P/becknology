@@ -143,8 +143,10 @@ stars streaking, a tunnel of light, dropping out over the new world.
    Arcadia's Skywalk level and back alleys behind the chained gate; more
    of Enigma (✓ hydroponics, where Okafor lives; the ring corridor, crew
    quarters). ✓ The Wren, frozen mid-fall off the Brink, ends Okafor's quest.
-4. ✓ Nav chart and hyperspace jump. Next: Bridge as a captain's deck; the
-   game room.
+4. ✓ Nav chart and hyperspace jump. ✓ The bridge as a captain's deck: the
+   helm, the chart table, the navigator's desk, the wireless and a letter
+   rack (letters from people you've helped or befriended), hired crew at
+   their posts, decor slots. Next: the game room.
 5. ◐ Purpose: ✓ quests and a journal, ✓ a cast with backstories to talk
    to. Next: loot and collectibles worth carrying, jobs that pay, the
    codex; mini-games woven in.
