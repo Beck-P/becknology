@@ -440,5 +440,62 @@
         "a": "LIFT'S ON THE FAR SIDE. TAKES YOU DOWN TO THE SKYWALK, THEN IT'S THE DISTRICT. MIND YOUR TOKENS DOWN THERE."
       }
     ]
+  },
+  "joro": {
+    "name": "Joro",
+    "role": "Joro's Pawnshop",
+    "sheet": "npc-pawnbroker",
+    "at": [
+      {
+        "world": "junk-pawn-shop",
+        "label": "PAWNBROKER"
+      }
+    ],
+    "greet": "GOT SOMETHING TO UNLOAD? OR JUST BROWSING? DON'T TOUCH THE CLOCK. THE CLOCK BITES.",
+    "again": "BACK AGAIN. WHAT'VE YOU DRAGGED IN THIS TIME?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "THIRTY YEARS BUYING WHAT PEOPLE DON'T WANT AND SELLING IT TO PEOPLE WHO DIDN'T KNOW THEY WANTED IT. I TAKE APART POCKET WATCHES TO RELAX. I PUT THEM BACK TOGETHER WHEN I'M ANGRY."
+      },
+      {
+        "q": "The safe",
+        "a": "THAT SAFE CAME OUT OF A SHIP THAT FELL OUT OF ORBIT. NOBODY'S OPENED IT. NOBODY'S ASKED ME TO. IF YOU EVER FIND A COMBINATION WRITTEN ON SOMETHING STRANGE, BRING IT HERE FIRST."
+      },
+      {
+        "q": "Sell what you've found",
+        "a": "OFF-WORLD CRYSTALS? SALVAGE? I'LL TAKE IT ALL. I WON'T PAY LIKE THE LUMAR TRADERS, BUT I'M HERE AND THEY'RE NOT.",
+        "sell": [
+          {
+            "id": "midnight_crystal",
+            "price": 22
+          },
+          {
+            "id": "sapphire_crystal",
+            "price": 15
+          },
+          {
+            "id": "crimson_crystal",
+            "price": 13
+          },
+          {
+            "id": "roseite",
+            "price": 9
+          },
+          {
+            "id": "stone_shard",
+            "price": 6
+          },
+          {
+            "id": "silver_nail",
+            "price": 5
+          },
+          {
+            "id": "sea_glass",
+            "price": 3
+          }
+        ]
+      }
+    ]
   }
 }
