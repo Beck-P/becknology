@@ -3505,6 +3505,14 @@
       "dialog": "A SERVER RACK BOLTED TO A PIECE OF HULL. ITS LIGHTS BLINK IN A PATTERN.\n\nIT'S THE SAME PATTERN ENIGMA STATION WAS TRANSMITTING."
     },
     {
+      "x": 38,
+      "y": 4,
+      "type": "dialog",
+      "label": "THE WREN",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "A CREW SKIFF HANGS NOSE-FIRST OFF THE BRINK, FROZEN MID-FALL, ITS EXHAUST STILL STREAMING BEHIND IT. THE NAME ON ITS FLANK: WREN. ITS RUNNING LIGHTS ARE ON.\n\nA VOICE FROM THE COCKPIT, VERY SLOW, EVERY WORD TAKING A BREATH: \"WE... CAN... SEE... THE EDGE.\""
+    },
+    {
       "x": 36,
       "y": 12,
       "type": "dialog",
@@ -3541,6 +3549,11 @@
     "brink": [
       41.5,
       6.5
+    ],
+    "wren": [
+      44.8,
+      2.4,
+      1.0999999999999999
     ]
   },
   "view": [
