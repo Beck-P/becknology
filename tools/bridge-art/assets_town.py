@@ -644,11 +644,12 @@ def _hull(k, x0, x1, rc, beam, zt, zb, shape, col, part, n=24):
 
 
 def galleon(k, x0, x1, rc, beam=1.6, hull='#3a2410', wale='#8a6a30', paint='#2a5446', sail='#d8ccb0', flag='#2e8a5a',
-            masts=1.0, sails='furled', waterline=True):
+            masts=1.0, sails='furled', waterline=True, wreck=False):
     """Lumar's trading galleon berthed broadside to the camera: lofted hull
     with a gilded wale and gunports, a stern castle with lit windows, three
     masts with sails furled on their yards, rigging, bowsprit, lanterns.
-    Stern at x0, bow at x1."""
+    Stern at x0, bow at x1. wreck=True: masts snapped off, one yard and a
+    rag of sail hanging, holes stove in the side, no lights."""
     L = x1 - x0
     shape = lambda t: (0.84 + 0.16 * min(1.0, t / 0.25)) if t < 0.6 else math.sqrt(max(0.0, 1 - ((t - 0.6) / 0.4) ** 2))
     zt = lambda t: 1.0 + 0.3 * max(0.0, t - 0.8) / 0.2
@@ -710,7 +711,18 @@ def galleon(k, x0, x1, rc, beam=1.6, hull='#3a2410', wale='#8a6a30', paint='#2a5
     k.box(x0 + 0.04, rc + hw(0.05) * 0.85 - 0.04, 1.85, cx1, rc + hw(0.05) * 0.85, 1.89, WOOD_DD, 'ship_rail')
     for i in range(3):
         wx = x0 + 0.3 + i * (cx1 - x0 - 0.4) / 2
-        window(k, wx, rc + hw(0.05) * 0.85, 0.95, w=0.24, h=0.3, shutters=None)
+        if wreck:
+            k.box(wx - 0.12, rc + hw(0.05) * 0.85, 0.8, wx + 0.12, rc + hw(0.05) * 0.85 + 0.02, 1.1, '#0a0604', 'dead_window')
+        else:
+            window(k, wx, rc + hw(0.05) * 0.85, 0.95, w=0.24, h=0.3, shutters=None)
+    if wreck:                          # holes stove in below the wale, planks sprung round them
+        for (t, w, h) in ((0.36, 0.5, 0.3), (0.58, 0.32, 0.22), (0.8, 0.26, 0.2)):
+            x = x0 + t * L
+            k.box(x - w / 2, rc + hw(t) * 0.99, 0.12, x + w / 2, rc + hw(t) + 0.04, 0.12 + h, '#0a0604', 'hull_hole')
+            for j in range(3):
+                a = (j - 1) * 0.5
+                k.tube((x + (j - 1) * w * 0.35, rc + hw(t) + 0.03, 0.12 + h), (x + (j - 1) * w * 0.4 + a * 0.1, rc + hw(t) + 0.12, 0.12 + h + 0.12),
+                       0.02, shade(hull, 1.2), 'sprung_plank', verts=4)
     k.box(cx1 - 0.3, rc - 0.2, zd, cx1 + 0.02, rc + 0.2, 1.3, WOOD_DD, 'castle_door')
     # forecastle
     fx0 = x0 + L * 0.74
@@ -739,6 +751,22 @@ def galleon(k, x0, x1, rc, beam=1.6, hull='#3a2410', wale='#8a6a30', paint='#2a5
 
     # masts, furled sails on yards running along the keel so they read side-on
     tops = []
+    if wreck:                          # stumps snapped off at a slant, a yard and a rag of sail hanging from the main
+        for (t, h) in ((0.32, 1.6 * masts), (0.54, 2.9 * masts), (0.76, 0.9 * masts)):
+            mx = x0 + t * L
+            k.cyl(mx, rc, zd, zd + h, 0.065, (WOOD_D, 0.12), 'mast', verts=10)
+            k.cone(mx, rc, zd + h, zd + h + 0.22, 0.065, 0.012, (shade(WOOD_D, 1.2), 0.12), 'mast_break', verts=6)
+        mx = x0 + 0.54 * L
+        top = (mx - 0.9, rc + 0.1, zd + 2.6 * masts)
+        bot = (mx + 0.8, rc + 0.25, zd + 1.3 * masts)
+        k.tube(top, bot, 0.03, WOOD_DD, 'yard', verts=6)
+        k.poly([top, (top[0] + 0.3, top[1] + 0.05, top[2] - 0.9), (bot[0] - 0.4, bot[1] + 0.05, bot[2] - 0.5), bot],
+               (sail, 0.1), 'sail_rag')
+        k.tube((mx, rc, zd + 2.9 * masts), (x0 + 0.2, rc + 0.4, 1.7), 0.012, '#2a2018', 'rigging', verts=4)
+        k.tube((mx, rc, zd + 2.9 * masts), (x1 - 0.3, rc - 0.3, 0.9), 0.012, '#2a2018', 'rigging', verts=4)
+        for c in range(int(x0), int(math.ceil(x1))):
+            k.solid(c, int(rc - beam / 2 + 0.2), c + 1, int(rc + beam / 2) + 1)
+        return
     for (t, h) in ((0.32, 4.5 * masts), (0.54, 5.1 * masts), (0.76, 4.2 * masts)):
         mx = x0 + t * L
         k.cyl(mx, rc, zd, zd + h, 0.065, (WOOD_D, 0.12), 'mast', verts=10)

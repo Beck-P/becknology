@@ -324,5 +324,62 @@
         "text": "On Midnight Isle, stone sentinels guard the way to the sorceress's tower."
       }
     ]
+  },
+  "wren": {
+    "title": "The Wren",
+    "where": "Enigma Station",
+    "reward": 200,
+    "start": "Okafor has been listening to the same distress loop for seventy-two cycles. It's getting clearer.",
+    "done": "The Wren was waved off at Arcadia and spent its last burn going toward the dark. It reached the Brink and is still there, nose-first over the edge, falling so slowly it looks still. The loop Okafor hears is its call, slowed by the hole, only now climbing out.",
+    "clues": [
+      {
+        "id": "okafor",
+        "on": {
+          "world": "enigma-hydro",
+          "label": "OKAFOR"
+        },
+        "text": "Dami Okafor, the engineer who stayed, in a garden off the relay deck."
+      },
+      {
+        "id": "radio",
+        "on": {
+          "world": "enigma-hydro",
+          "label": "RADIO RIG"
+        },
+        "text": "The radio: \"Wren to Enigma. We can see the edge. We are not afraid.\""
+      },
+      {
+        "id": "photos",
+        "on": {
+          "world": "enigma-hydro",
+          "label": "PHOTO BOARD"
+        },
+        "text": "Five crew in flight jackets in front of a skiff called Wren. Okafor in the corner of every photo."
+      },
+      {
+        "id": "marshal",
+        "on": {
+          "world": "arcadia-skypad",
+          "label": "MARSHAL"
+        },
+        "text": "Marshal Ruiz waved the Wren off Skyport 7 in a storm. It turned toward the dark side."
+      },
+      {
+        "id": "echo",
+        "on": {
+          "world": "singularity",
+          "label": "STATION ECHO"
+        },
+        "text": "At the Brink, a piece of Enigma's hull, its lights blinking the station's pattern."
+      },
+      {
+        "id": "wreck",
+        "on": {
+          "world": "singularity",
+          "label": "THE WREN"
+        },
+        "text": "The Wren itself, past the altar at the very edge, frozen mid-fall. Its running lights are on."
+      }
+    ]
   }
 }

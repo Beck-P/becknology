@@ -10,6 +10,7 @@ Bay 3, where the skiff docks (enigma_dock.py). Space (the world's own
 animated backdrop) shows through the viewports, the floor windows and
 everywhere outside the hull.
 """
+import json
 import math
 import os
 import sys
@@ -27,8 +28,10 @@ k = Kit(20, 16, margin_top=1.0, margin_bottom=0.5, margin_x=1.0, seed=161)
 
 HOLES = [(6, 13, 7, 14), (13, 13, 14, 14)]
 T.station_floor(k, 3, 4, 17, 14, holes=HOLES)
-T.station_room(k, 3, 4, 17, 14, H, windows=[(6.6, 8.4, 0.9, 2.3, True), (11.6, 13.4, 0.9, 2.3, False)], airlock=(4.0, 6.0))
+T.station_room(k, 3, 4, 17, 14, H, windows=[(6.6, 8.4, 0.9, 2.3, True), (11.6, 13.4, 0.9, 2.3, False)], airlock=(4.0, 6.0),
+               east=(8.2, 10.2))                             # through to hydroponics
 T.docking_tube(k, -1.0, 2.4, 4.05, 5.95)          # the tube out to Docking Bay 3
+T.docking_tube(k, 17.65, 21.0, 8.25, 10.15)       # and the passage through to hydroponics
 
 # ---- back wall ------------------------------------------------------------------------------
 T.wall_screen(k, 5.0, 4.0, broken=True)
@@ -66,8 +69,14 @@ for (x, r) in ((6.0, 5.8), (13.0, 5.8), (9.5, 9.6), (5.0, 12.8), (14.5, 12.8)):
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.35}}, light_samples=128,
          world_light=('#16283a', 0.6))
 
-apply_world(WORLD, k, (3, 4, 16, 13), doors=[(2, 4), (2, 5)], scene_id='enigma', moves={
+w0 = json.load(open(WORLD))
+if not any(i.get('label') == 'HYDROPONICS' for i in w0['interactions']):
+    for y in (8, 9):
+        w0['interactions'].append({'x': 16, 'y': y, 'type': 'enter_world', 'target': 'enigma-hydro', 'spawn': [2, 9],
+                                   'label': 'HYDROPONICS', 'prompt': 'PRESS E TO GO THROUGH'})
+    open(WORLD, 'w').write(json.dumps(w0, indent=2) + '\n')
+apply_world(WORLD, k, (3, 4, 16, 13), doors=[(2, 4), (2, 5), (17, 8), (17, 9)], scene_id='enigma', moves={
     'CIPHER TERMINAL': (3, 7), 'SIGNAL RELAY': (16, 7), 'DOCKING BAY 3': [(2, 4), (2, 5)], 'ANTENNA ARRAY': (9, 8),
-    'VIEWPORT': [(7, 3), (12, 3), (6, 13), (13, 13)], 'DATA CORE': [(9, 11), (10, 11)]},
+    'VIEWPORT': [(7, 3), (12, 3), (6, 13), (13, 13)], 'DATA CORE': [(9, 11), (10, 11)], 'HYDROPONICS': [(17, 8), (17, 9)]},
     scene_extra={'backdrop': True, 'flicker': {'mode': 'pulse'}})
 print('enigma done')

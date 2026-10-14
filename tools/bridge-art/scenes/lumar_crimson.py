@@ -80,14 +80,13 @@ def material(x, r):
         return 'path'
     if p < 0.62 and I.n2(x, r, 2.2, 5) > 0:
         return 'path_edge'
-    ash = I.smooth(16.5, 11.5, r) * I.smooth(9.0, 4.0, abs(x - CAVE[0]))
-    if ash + 0.25 * I.n2(x, r, 0.9, 7) > 0.45:
+    wob = 0.35 * I.n2(x, r, 0.5, 7) + 0.15 * I.n2(x, r, 1.7, 17)
+    if math.hypot((x - CAVE[0]) / 7.5, (r - 11.0) / 4.2) + wob < 1.0:
         return 'ash'
-    sand = I.smooth(29.5, 33.5, r) * I.smooth(10.5, 7.5, abs(x - 29.5))
-    if sand + 0.2 * I.n2(x, r, 1.1, 8) > 0.5:
+    if math.hypot((x - 29.5) / 9.0, (r - 33.0) / 3.6) + wob < 1.0:
         return 'sand'
     m = I.n2(x, r, 0.35, 11) + 0.4 * I.n2(x, r, 1.4, 12)
-    if 11 < x < 19 and 15 < r < 26:
+    if math.hypot((x - 14.0) / 5.5, (r - 21.5) / 6.0) + wob < 1.0:
         return 'crystal_moss' if m > -0.25 else 'moor'
     if x > 38:
         return 'needles' if m > -0.2 else 'moor_dark'
@@ -98,9 +97,9 @@ ALB = {'path': ('#6a5448', 0.3), 'path_edge': ('#5a4038', 0.3), 'ash': ('#2e2626
        'moor': ('#5a2a28', 0.3), 'moor_dark': ('#46221f', 0.3), 'grass': ('#3a3a28', 0.3),
        'crystal_moss': ('#5a2438', 0.3), 'needles': ('#3a2420', 0.3)}
 I.ground(k, walk, material, ALB)
-height = I.ridge(k, RIDGE, top=3.0, slope=1.15, seed=6, notches=[(28.6, 7.6, 31.4, 10.05)])
+height = I.ridge(k, RIDGE, top=3.0, slope=1.15, seed=6, notches=[(28.6, 7.6, 31.4, 10.05)], foot=0.7, ground=(material, ALB))
 
-terrain = C.coast(k, land, palette='crimson', grass='#4a2826', rock='#3a3034', seed=21, beachiness=-0.15,
+terrain = C.coast(k, land, ground=(material, ALB), palette='crimson', grass='#4a2826', rock='#3a3034', seed=21, beachiness=-0.15,
                   beach_bias=lambda x, r: 0.9 * I.smooth(28.0, 34.0, r) * I.smooth(11.0, 6.0, abs(x - 29.5)) - 0.3 * I.smooth(14.0, 8.0, r),
                   keep_clear=[(PX - 0.4, pier_top - 0.4, PX + 1.4, SHIP_R + 0.2),
                               (PX + 0.5 - 0.45 * SL - 0.8, SHIP_R - 0.2, PX + 0.5 + 0.55 * SL + 1.8, SHIP_R + 1.9),
@@ -122,9 +121,9 @@ I.campfire(k, *CAMP)
 I.log_seat(k, CAMP[0] - 0.7, CAMP[0] + 0.7, CAMP[1] + 0.85)
 k.solid(CAMP[0] - 0.7, CAMP[1] + 0.6, CAMP[0] + 0.7, CAMP[1] + 1.1)
 k.solid(31, 28, 32, 29)                               # where the Crimson Watcher stands
-I.tent(k, 34.6, 28.0, col='#7a2a26')
-I.tent(k, 35.4, 30.6, w=1.4, col='#5a3a30')
-I.tent(k, 24.6, 28.6, w=1.5, col='#6a2a36')
+I.tent(k, 34.4, 27.9, col='#7a2a26')
+I.tent(k, 36.0, 30.4, w=1.2, col='#5a3a30')
+I.tent(k, 24.8, 28.4, w=1.3, col='#6a2a36')
 I.flagpole(k, 36.8, 32.2)
 for (x, r) in ((25.4, 31.0), (26.0, 31.4), (25.7, 30.5)):
     A.barrel(k, x, r, h=0.7, radius=0.26)
@@ -193,7 +192,7 @@ for (x, r, s) in ((13.5, 18.0, 1.0), (15.8, 17.4, 0.8), (12.2, 20.5, 1.2), (16.6
     W.shore_crystals(k, x, r, col=CRYSTAL, s=s, energy=10)
 n0, l0 = len(k.parts), len(k.lights)
 W.galleon(k, 2.0, 9.2, 31.6, beam=1.5, masts=0.85, waterline=False, hull='#2e1e14', paint='#4a1a1e', sail='#8a7a68',
-          flag='#3a1a1a')
+          flag='#3a1a1a', wreck=True)
 C.sink(k, n0, C.WZ - 0.32, l0)
 I.tilt(k, n0, (5.6, 31.6, C.WZ - 0.3), roll=-16, pitch=7, lights_since=l0)
 for (x, r) in ((4.0, 30.2), (7.5, 30.6), (9.6, 31.8), (2.6, 32.6)):
@@ -233,7 +232,7 @@ I.pebbles(k, walk, '#4a4044', per_cell=0.25, avoid=busy)
 k.area_light(28.0, 18.0, 16.0, '#8090c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))       # moonlight
 k.point_light(29.0, 24.0, 4.0, '#ffd8b0', 60, radius=1.5)
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=128,
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
          world_light=('#3a2430', 0.75))
 
 # ---- the world ----------------------------------------------------------------------------------------------------------

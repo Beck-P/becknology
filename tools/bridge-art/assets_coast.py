@@ -84,7 +84,7 @@ class Terrain:
 
 
 def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=0.0, seed=3,
-          bounds=None, rocks=1.0, keep_clear=(), reach=(0.25, 1.0), beach_bias=None, sheer=()):
+          bounds=None, rocks=1.0, keep_clear=(), reach=(0.25, 1.0), beach_bias=None, sheer=(), ground=None):
     """land: walkable cells (c, r) — the coast never bites into them; it
     wanders `reach` = (base, swing) tiles out from them (cells beyond, such
     as a rocky rim, are the coast's to shape — build no ground there).
@@ -94,7 +94,10 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
     a ship's hull). beach_bias(x, r): added to the sand-or-rock choice there
     (sand by the harbour's beach, rock under its cliffs). sheer: rects
     where the land stops at a built wall (a quay) and the water is deep
-    right up to it. Returns a Terrain (heights for placing things)."""
+    right up to it. ground: (material, albedo) of the island's own surface
+    (assets_isle.ground) — the lip then carries it on instead of one grass
+    colour, so the land's edge is the coast's wandering outline, not the
+    tile grid. Returns a Terrain (heights for placing things)."""
     P = PALETTES[palette]
     land = list(land)
     if bounds is None:
@@ -126,6 +129,8 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
             b = _smooth(-0.15, 0.35, _n(x, r, 0.22, seed + 1) + beachiness + (beach_bias(x, r) if beach_bias else 0))
             B[j, i] = b
             z = _profile(d, b)
+            if ground and d <= 0:
+                z = -0.004                     # flush with assets_isle.ground: no seam along the tile edges
             if d > 0.5:                                                     # ripples and hollows on the bed
                 z += 0.05 * _n(x, r, 2.4, seed + 2) + 0.12 * _n(x, r, 0.6, seed + 3) * min(1.0, d - 0.5)
             if D[j, i] > 0 and any(a <= x <= c and b <= r <= e for (a, b, c, e) in sheer):
@@ -137,7 +142,14 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
 
     def band(z, b, x, r, d):
         if z > -0.06:      # grass runs on from the island; sand starts a ragged way out
-            return 'lip_sand' if b > 0.6 and d > 0.25 + 0.35 * (0.5 + 0.5 * _n(x, r, 1.1, seed + 6)) else 'lip_grass'
+            if b > 0.6 and d > 0.25 + 0.35 * (0.5 + 0.5 * _n(x, r, 1.1, seed + 6)):
+                return 'lip_sand'
+            if ground:     # the island's own ground, dithered at band edges like assets_isle.ground
+                h1 = math.sin(x * 103.9 + r * 626.1) * 43758.5453
+                h2 = math.sin(x * 314.8 + r * 89.1) * 24634.6345
+                cx, cr = x + STEP / 2, r + STEP / 2
+                return 'g:' + ground[0](cx + 0.09 * (2 * (h1 - math.floor(h1)) - 1), cr + 0.09 * (2 * (h2 - math.floor(h2)) - 1))
+            return 'lip_grass'
         if z > WZ + 0.05:
             return 'bank_sand' if b > 0.5 else 'bank_rock'
         if z > WZ - 0.1:
@@ -160,6 +172,8 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
         'shelf_sand': (shade(P['sand'], 0.85), 0.25), 'shelf': (P['bed'], 0.3), 'weed': (P['weed'], 0.35),
         'deep': (shade(P['bed'], 0.7), 0.3),
     }
+    if ground:
+        ALB.update({'g:' + key: alb for key, alb in ground[1].items()})
     for key, faces in bands.items():
         bm = bmesh.new()
         vmap = {}

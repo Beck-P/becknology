@@ -226,7 +226,7 @@
       2,
       2,
       2,
-      1,
+      3,
       1,
       1
     ],
@@ -248,7 +248,7 @@
       2,
       2,
       2,
-      1,
+      3,
       1,
       1
     ],
@@ -580,7 +580,7 @@
       0,
       0,
       0,
-      1,
+      0,
       1,
       1
     ],
@@ -602,7 +602,7 @@
       0,
       0,
       0,
-      1,
+      0,
       1,
       1
     ],
@@ -835,6 +835,30 @@
       "label": "DATA CORE",
       "prompt": "PRESS E TO ACCESS",
       "dialog": "CORRUPTED LOG ENTRY 4472:\\n\\n\"THE CIPHER MACHINE KEEPS\\nGENERATING DISPATCHES.\\nWHO IS IT SENDING TO?\\n\\nI DON'T THINK IT KNOWS.\""
+    },
+    {
+      "x": 17,
+      "y": 8,
+      "type": "enter_world",
+      "target": "enigma-hydro",
+      "spawn": [
+        2,
+        9
+      ],
+      "label": "HYDROPONICS",
+      "prompt": "PRESS E TO GO THROUGH"
+    },
+    {
+      "x": 17,
+      "y": 9,
+      "type": "enter_world",
+      "target": "enigma-hydro",
+      "spawn": [
+        2,
+        9
+      ],
+      "label": "HYDROPONICS",
+      "prompt": "PRESS E TO GO THROUGH"
     }
   ],
   "shipExit": true,

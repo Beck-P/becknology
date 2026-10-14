@@ -32,6 +32,7 @@ import assets_lumar as A               # noqa: E402
 import assets_cyber as Y               # noqa: E402
 import assets_ship as P                # noqa: E402
 import assets_signs as SG              # noqa: E402
+import assets_isle as I                # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -40,6 +41,7 @@ COLS, ROWS = 48, 34
 HOLE = (56.0, -14.0)                      # where the hole is, for things pulled toward it
 PAD = (8.0, 25.0)
 ALTAR = (41.5, 6.5)
+WREN = (43.4, 3.0, -0.8)                  # the Enigma crew's skiff, off the brink past the altar
 k = Kit(COLS, ROWS, margin_top=2.0, margin_bottom=3.0, margin_x=1.0, seed=181)
 rng = random.Random(181)
 
@@ -243,6 +245,30 @@ for i in range(30):                                          # the frozen avalan
     V.float_rock(k, x, r, rng.uniform(0.8, 3.4), rng.uniform(0.1, 0.35), rng)
 V.altar(k, ALTAR[0], ALTAR[1])
 
+# ---- the Wren: the Enigma crew's skiff, past the altar at the very edge, frozen mid-fall toward the hole --------
+# Built level with its tail at WX (exhaust and the flakes it shed trailing behind), then turned as one: bow swung
+# toward the hole and raised, the whole thing hanging below the brink.
+wr = random.Random(4402)
+WX, WR, WZ = WREN
+since, lsince = len(k.parts), len(k.lights)
+P.shuttle(k, WX, WR, length=2.8, ramp=False, landed=False, hull='#8a98a8', trim='#c06a30')
+for (dx, col) in ((2.5, '#ff4030'), (0.4, '#40e080')):            # running lights, still on after seventy cycles
+    k.point_light(WX + dx, WR + 0.2, 1.0, col, 5, radius=0.05, group='flicker')
+k.box(WX + 0.9, WR - 0.02, 1.1, WX + 0.94, WR + 0.02, 1.7, '#5a6470', 'wren_whip')            # the radio mast
+k.sphere(WX + 0.92, WR, 1.72, 0.04, 0.04, '#300808', 'wren_beacon', emit=('#ff5040', 1.0), segs=6)
+for side in (-0.4, 0.4):                                          # the exhaust, frozen where it streamed out
+    k.tube((WX + 0.05, WR + side, 0.84), (WX - 3.2, WR + side * 1.8, 0.2), 0.11, '#160a2a', 'frozen_plume',
+           emit=('#a070ff', 0.35), rb=0.01, verts=8)
+for i in range(16):                                               # flakes of hull, time motes, hanging in its wake
+    t = wr.uniform(0.1, 1.0)
+    x, r, z = WX - 3.4 * t, WR + wr.uniform(-0.7, 0.7) * (0.4 + t), 0.84 - 0.6 * t + wr.uniform(-0.35, 0.35)
+    if i % 3:
+        k.box(x - 0.08, r - 0.05, z, x + 0.08, r + 0.05, z + 0.03, ('#8a98a8', 0.1), 'wren_flake')
+    else:
+        k.box(x - 0.02, r - 0.02, z, x + 0.02, r + 0.02, z + 0.03, '#1a0c30', 'time_mote', emit=(V.AMBER, 0.7))
+I.pose(k, since, (WX + 1.4, WR, 0.84), yaw=32, roll=10, pitch=-16, dz=WZ, lights_since=lsince)
+k.point_light(WX + 1.4, WR + 1.0, 0.4 + WZ, '#8090c0', 25, radius=0.6)
+
 # ---- drifting rock out in the void, some pulled thin ---------------------------------------------------------
 for _ in range(60):
     x, r = rng.uniform(-1, COLS + 1), rng.uniform(-2.5, ROWS + 3)
@@ -300,6 +326,10 @@ w['interactions'] = [
            'IT HUMS. NO POWER CABLE.\n\nA CAN DROPS: "NEO COLA - BEST BEFORE CYCLE 2189". IT IS ICE COLD.'),
     dialog(6, 13, 'STATION ECHO', 'PRESS E TO LOOK',
            "A SERVER RACK BOLTED TO A PIECE OF HULL. ITS LIGHTS BLINK IN A PATTERN.\n\nIT'S THE SAME PATTERN ENIGMA STATION WAS TRANSMITTING."),
+    dialog(38, 4, 'THE WREN', 'PRESS E TO LOOK',
+           'A CREW SKIFF HANGS NOSE-FIRST OFF THE BRINK, FROZEN MID-FALL, ITS EXHAUST STILL STREAMING BEHIND IT. '
+           'THE NAME ON ITS FLANK: WREN. ITS RUNNING LIGHTS ARE ON.\n\nA VOICE FROM THE COCKPIT, VERY SLOW, '
+           'EVERY WORD TAKING A BREATH: "WE... CAN... SEE... THE EDGE."'),
     dialog(36, 12, 'FROZEN FALL', 'PRESS E TO LOOK',
            'A ROCKFALL, STOPPED. STONES HANG IN THE AIR WHERE THEY WERE FALLING.\n\nIF YOU WATCH LONG ENOUGH, ONE OF THEM MOVES.'),
 ]
@@ -314,7 +344,7 @@ for r in range(ROWS):                                         # only the plain i
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
 w['shuttle'] = {'spawn': SPAWN}
-w['horizon'] = {'hole': list(HOLE), 'brink': list(ALTAR)}
+w['horizon'] = {'hole': list(HOLE), 'brink': list(ALTAR), 'wren': [WREN[0] + 1.4, WREN[1] - 0.6, WREN[2] + 1.9]}
 w.pop('hole', None)
 w['view'] = [-1.0, -1.5, COLS + 1.0, ROWS + 2.0]
 w.pop('fixedCamera', None)

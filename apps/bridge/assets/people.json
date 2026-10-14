@@ -525,5 +525,49 @@
         ]
       }
     ]
+  },
+  "okafor": {
+    "name": "Dami Okafor",
+    "role": "Station engineer, Enigma",
+    "sheet": "npc-okafor",
+    "at": [
+      {
+        "world": "enigma-hydro",
+        "label": "OKAFOR"
+      }
+    ],
+    "greet": "YOU CAME IN THROUGH BAY 3? THEN YOU SAW MY BEDROLL. AND MY SUIT. AND THE DRONE. I KNEW SOMEONE WOULD PIECE IT TOGETHER EVENTUALLY.\n\nI'M OKAFOR. I STAYED.",
+    "again": "SIT. THE LOOP COMES ROUND AGAIN IN FOUR MINUTES. IT ALWAYS DOES.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "ENGINEER, THIRD SHIFT, ENIGMA RELAY. WHEN COMMAND WENT QUIET THE OTHERS TOOK THE LAST SHUTTLE OUT. I HAD A TUG HALF-REBUILT AND A RADIO THAT WOULDN'T STOP TALKING. SO I STAYED. THAT WAS SEVENTY-TWO CYCLES AGO."
+      },
+      {
+        "q": "The Wren",
+        "a": "OUR SKIFF. FIVE CREW. THEY WENT FOR HELP WHEN THE RELAY DIED - ARCADIA FIRST. SOMEONE ON A ROOF WAVED THEM OFF IN A STORM. THEY HAD FUEL FOR ONE MORE BURN, AND THEY SPENT IT GOING THE OTHER WAY. TOWARDS THE DARK."
+      },
+      {
+        "q": "The signal",
+        "a": "FORTY-SEVEN POINT THREE. IT'S THE WREN'S DISTRESS LOOP. EXCEPT THE WREN WENT DOWN SEVENTY CYCLES AGO, AND THE LOOP KEEPS GETTING CLEARER. LIKE IT'S STILL ON ITS WAY HERE. LIKE IT'S CLIMBING OUT OF SOMETHING."
+      },
+      {
+        "q": "The garden",
+        "a": "LETTUCE, TOMATOES, AND SOMETHING I BRED FROM LUMAR SPORES THAT GLOWS WHEN YOU TALK TO IT. I TALK TO IT A LOT. THE FISH ARE CALLED ADA, BIX, CORA, DELL AND EZE. AFTER THE CREW. DON'T EAT THEM."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "IF YOU'RE GOING TO THE BRINK - THE THING ON THE OTHER SIDE OF THE DARK - LOOK FOR A PIECE OF THIS STATION. IT GOT THERE BEFORE US. EVERYTHING DOES."
+      }
+    ],
+    "crew": {
+      "role": "Engineer",
+      "wage": 260,
+      "perk": "engineer",
+      "after": "wren",
+      "notYet": "LEAVE? WHILE THE LOOP'S STILL PLAYING? NOT UNTIL I KNOW WHERE THEY ENDED UP. FIND THE WREN - OR WHAT'S LEFT OF IT - AND ASK ME AGAIN.",
+      "pitch": "YOU FOUND THEM. AT THE EDGE. THEN THERE'S NOTHING TO WAIT FOR. I CAN FIX ANYTHING THAT HUMS, AND MOST THINGS THAT DON'T. TAKE ME WITH YOU - AND THE FISH.",
+      "perkText": "Okafor keeps everything you own running: your businesses hold twice as many hours of takings before they stop."
+    }
   }
 }

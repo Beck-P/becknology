@@ -95,7 +95,7 @@ def _mesh(k, faces_by_key, verts_fn, albedo, part_prefix):
         k._finish(o, albedo[key], part_prefix + '_' + key)
 
 
-def ground(k, cells, material, albedo, step=0.25, bump=0.012, seed=7, height=None):
+def ground(k, cells, material, albedo, step=0.125, bump=0.012, seed=7, height=None, dither=0.09):
     """One continuous walking surface over `cells`, quads banded by
     material(x, r) -> key into albedo {key: (colour, rough)}. height(x, r)
     sculpts it (pools dug below the waterline fill with the sea's water)."""
@@ -105,7 +105,11 @@ def ground(k, cells, material, albedo, step=0.25, bump=0.012, seed=7, height=Non
         for j in range(n):
             for i in range(n):
                 x, y = c + (i + 0.5) * step, r + (j + 0.5) * step
-                key = material(x, y)
+                # sample the material a jittered hair away: edges between bands break up into a
+                # dithered fringe instead of a staircase
+                h1 = math.sin((c * n + i) * 12.9898 + (r * n + j) * 78.233) * 43758.5453
+                h2 = math.sin((c * n + i) * 39.346 + (r * n + j) * 11.135) * 24634.6345
+                key = material(x + dither * (2 * (h1 - math.floor(h1)) - 1), y + dither * (2 * (h2 - math.floor(h2)) - 1))
                 a = (c * n + i, r * n + j)
                 faces.setdefault(key, []).append((a, (a[0] + 1, a[1]), (a[0] + 1, a[1] + 1), (a[0], a[1] + 1)))
 
@@ -116,10 +120,13 @@ def ground(k, cells, material, albedo, step=0.25, bump=0.012, seed=7, height=Non
 
 
 def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e', '#352a2e', '#5a4642'),
-          moss='#5a2a2a', notches=(), step=0.2):
+          moss='#5a2a2a', notches=(), step=0.125, foot=0.0, ground=None):
     """A rock massif over `cells`: rising `slope` tiles in from its edge to
     about `top`, cliffs banded in strata, a mossy crown. notches: rects
     (x0, r0, x1, r1) kept at ground level (a cave mouth cut into the face).
+    foot: how far (tiles) the cliff's foot wanders in from the cells' edge,
+    so it doesn't run along the tile grid; ground: (material, albedo) of
+    the land round it (assets_isle.ground) for the flat strip that leaves.
     Returns height(x, r)."""
     cellset = set(cells)
 
@@ -141,7 +148,11 @@ def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e
         if any(a <= x <= c and b <= r <= d for (a, b, c, d) in notches):
             return 0.0
         d = inside_dist(x, r)
-        h = top * (1 + 0.28 * n2(x, r, 0.35, seed)) * smooth(0.0, slope, d + 0.12 * n2(x, r, 1.7, seed + 1))
+        if foot:      # pulled in by a wandering amount, never pushed out past the cells' edge
+            d = d - foot * (0.55 + 0.45 * n2(x, r, 0.55, seed + 7)) + 0.1 * n2(x, r, 1.7, seed + 1) - 0.1
+        else:
+            d = d + 0.12 * n2(x, r, 1.7, seed + 1)
+        h = top * (1 + 0.28 * n2(x, r, 0.35, seed)) * smooth(0.0, slope, d)
         return h + 0.12 * n2(x, r, 2.3, seed + 2) * smooth(0.1, slope, d)
 
     n = int(round(1 / step))
@@ -160,8 +171,10 @@ def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e
                 zs = [hv(p) for p in q]
                 zc = sum(zs) / 4
                 steep = (max(zs) - min(zs)) / step
-                if steep > 1.2:
-                    key = 'cliff%d' % (int(zc * 3.2 + 0.6 * n2(c + i * step, zc, 0.8, seed)) % 3)
+                if ground and max(zs) < 0.05:
+                    key = 'g:' + ground[0](c + (i + 0.5) * step, r + (j + 0.5) * step)
+                elif steep > 1.2:   # strata: long gently wavy beds, not bricks
+                    key = 'cliff%d' % (int(zc * 2.6 + 0.5 * n2(c + i * step, r + j * step, 0.22, seed)) % 3)
                 elif zc > top * 0.55:
                     key = 'crown' if n2(c + i * step, r + j * step, 0.9, seed + 4) > -0.2 else 'cliff0'
                 else:
@@ -169,7 +182,9 @@ def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e
                 faces.setdefault(key, []).append(q)
     alb = {'cliff0': (strata[0], 0.25), 'cliff1': (strata[1], 0.25), 'cliff2': (strata[2], 0.25),
            'crown': (moss, 0.3), 'scree': (rock, 0.3)}
-    _mesh(k, faces, lambda p: (p[0] * step, p[1] * step, hv(p)), alb, 'ridge')
+    if ground:
+        alb.update({'g:' + key: a for key, a in ground[1].items()})
+    _mesh(k, faces, lambda p: (p[0] * step, p[1] * step, hv(p) - (0.004 if hv(p) < 0.05 else 0.0)), alb, 'ridge')
     return height
 
 
@@ -276,22 +291,30 @@ def ruined_tower(k, cx, cr, rad=1.3, h=3.2, tone='#5a5054', seed=3):
     k.cyl(cx, cr, -0.01, 0.01, rad - 0.15, ('#3a3236', 0.3), 'tower_floor', verts=20, ry=(rad - 0.15) * 0.9)
 
 
-def tent(k, cx, cr, w=1.6, d=1.4, h=1.15, col='#7a2a26', trim='#d8c8a0'):
-    """A ridge tent, its open flap toward the camera, a lamp glowing inside."""
+def tent(k, cx, cr, w=1.3, d=1.6, h=1.15, col='#7a2a26', trim='#d8c8a0'):
+    """A ridge tent seen end-on: its ridge runs toward the camera, the front
+    a triangle with the flap tied back on a lamp-lit inside; poles, guy ropes."""
     x0, x1 = cx - w / 2, cx + w / 2
     r0, r1 = cr - d / 2, cr + d / 2
-    for s in (-1, 1):
-        k.poly([(x0 + 0.05, cr, h), (x1 - 0.05, cr, h), (x1, cr + s * d / 2, 0.0), (x0, cr + s * d / 2, 0.0)], (col, 0.3), 'tent')
-    k.poly([(x0, r0, 0.0), (x0, r1, 0.0), (x0 + 0.05, cr, h)], (shade(col, 0.8), 0.3), 'tent')
-    k.poly([(x1, r0, 0.0), (x1, r1, 0.0), (x1 - 0.05, cr, h)], (shade(col, 0.8), 0.3), 'tent_end')
-    k.poly([(x1 + 0.01, cr + 0.05, 0.0), (x1 + 0.01, r1 - 0.05, 0.0), (x1 + 0.01, cr + 0.02, h * 0.9)], '#1a0c08', 'tent_door',
-           emit=('#ffb050', 0.35))
-    k.tube((x0 - 0.1, cr, h + 0.15), (x1 + 0.1, cr, h + 0.15), 0.025, A.WOOD_D, 'tent_pole', verts=5)
-    for x in (x0 - 0.05, x1 + 0.05):
-        k.tube((x, cr, 0.0), (x, cr, h + 0.2), 0.025, A.WOOD_D, 'tent_pole', verts=5)
-    k.bar(x0 + 0.1, r1 - 0.06, x1 - 0.1, r1 - 0.06, 0.0, 0.06, 0.03, trim, 'tent_trim')
-    k.point_light(x1 + 0.4, cr + 0.3, 0.5, '#ffb050', 5, radius=0.1, group='flicker')
-    k.solid(x0 - 0.1, r0, x1 + 0.1, r1)
+    for s_ in (-1, 1):                                       # the two pitched sides
+        k.poly([(cx, r0, h), (cx, r1, h), (cx + s_ * w / 2, r1, 0.0), (cx + s_ * w / 2, r0, 0.0)],
+               (shade(col, 1.0 if s_ < 0 else 0.82), 0.3), 'tent')
+    k.poly([(x0, r0, 0.0), (x1, r0, 0.0), (cx, r0, h)], (shade(col, 0.7), 0.3), 'tent_back')
+    # the front: two flaps tied back either side of a glowing doorway
+    k.poly([(cx - w * 0.22, r1 + 0.005, 0.0), (cx + w * 0.22, r1 + 0.005, 0.0), (cx, r1 + 0.005, h * 0.82)], '#1a0c08', 'tent_door',
+           emit=('#ffb050', 0.55))
+    for s_ in (-1, 1):
+        k.poly([(cx + s_ * w / 2, r1, 0.0), (cx + s_ * w * 0.22, r1 + 0.01, 0.0), (cx, r1, h)], (shade(col, 0.9), 0.3), 'tent_flap')
+        k.poly([(cx + s_ * w * 0.22, r1 + 0.01, 0.0), (cx + s_ * w * 0.34, r1 + 0.06, 0.05), (cx + s_ * 0.03, r1 + 0.02, h * 0.7)],
+               (shade(col, 1.15), 0.3), 'tent_flap_tied')
+    k.tube((cx, r0 - 0.1, h + 0.02), (cx, r1 + 0.1, h + 0.02), 0.025, A.WOOD_D, 'tent_pole', verts=5)
+    for r in (r0 - 0.08, r1 + 0.08):
+        k.tube((cx, r, 0.0), (cx, r, h + 0.15), 0.025, A.WOOD_D, 'tent_pole', verts=5)
+    for (sx, rr) in ((-1, r1), (1, r1), (-1, r0), (1, r0)):    # guy ropes to pegs
+        k.tube((cx, rr, h), (cx + sx * (w / 2 + 0.45), rr + (0.25 if rr == r1 else -0.25), 0.0), 0.008, trim, 'guy_rope', verts=3)
+    k.bar(x0 + 0.05, r1 - 0.02, x1 - 0.05, r1 - 0.02, 0.0, 0.05, 0.03, trim, 'tent_trim')
+    k.point_light(cx, r1 + 0.35, 0.45, '#ffb050', 6, radius=0.1, group='flicker')
+    k.solid(x0 - 0.15, r0 - 0.1, x1 + 0.15, r1 + 0.05)
 
 
 def campfire(k, cx, cr, energy=60):
@@ -395,6 +418,22 @@ def tilt(k, since, pivot, roll=0.0, pitch=0.0, lights_since=None):
     P = Vector((px, -pr * S, pz))
     R = (Matrix.Rotation(math.radians(roll), 4, 'X') @ Matrix.Rotation(math.radians(pitch), 4, 'Y'))
     M = Matrix.Translation(P) @ R @ Matrix.Translation(-P)
+    for p in k.parts[since:]:
+        p['obj'].matrix_world = M @ p['obj'].matrix_world
+    for L in k.lights[(len(k.lights) if lights_since is None else lights_since):]:
+        L['obj'].matrix_world = M @ L['obj'].matrix_world
+
+
+def pose(k, since, pivot, yaw=0.0, roll=0.0, pitch=0.0, dz=0.0, lights_since=None):
+    """tilt() with a heading: turn everything built since len(k.parts) ==
+    since by yaw degrees about pivot (positive swings the bow north), lean
+    and dip it, then raise it by dz."""
+    bpy.context.view_layer.update()
+    px, pr, pz = pivot
+    P = Vector((px, -pr * S, pz))
+    R = (Matrix.Rotation(math.radians(yaw), 4, 'Z') @ Matrix.Rotation(math.radians(roll), 4, 'X')
+         @ Matrix.Rotation(math.radians(pitch), 4, 'Y'))
+    M = Matrix.Translation(P + Vector((0, 0, dz))) @ R @ Matrix.Translation(-P)
     for p in k.parts[since:]:
         p['obj'].matrix_world = M @ p['obj'].matrix_world
     for L in k.lights[(len(k.lights) if lights_since is None else lights_since):]:

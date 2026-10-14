@@ -140,7 +140,8 @@ stars streaking, a tunnel of light, dropping out over the new world.
    ◐ Bigger worlds: the four Lumar islands rebuilt as whole islands
    (Crimson Reach, Rose Cove, Sapphire Port, Midnight Isle). Next:
    Arcadia's Skywalk level and back alleys behind the chained gate; more
-   of Enigma (the ring corridor, hydroponics, quarters where Okafor sleeps).
+   of Enigma (✓ hydroponics, where Okafor lives; the ring corridor, crew
+   quarters). ✓ The Wren, frozen mid-fall off the Brink, ends Okafor's quest.
 4. ✓ Nav chart and hyperspace jump. Next: Bridge as a captain's deck; the
    game room.
 5. ◐ Purpose: ✓ quests and a journal, ✓ a cast with backstories to talk

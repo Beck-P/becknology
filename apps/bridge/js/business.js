@@ -29,9 +29,11 @@ var BridgeBusiness = (function () {
     return m * (s.manager ? 1.5 : 1);
   }
   function perHour(id) { return Math.round(defs[id].rate * mult(id)); }
+  // an engineer on the crew keeps everything running: twice the hours before takings stop piling up
+  function cap(id) { return defs[id].cap * (typeof BridgeCrew !== 'undefined' && BridgeCrew.has('engineer') ? 2 : 1); }
   function pending(id) {
     if (!owned(id)) return 0;
-    var hours = Math.min(defs[id].cap, (Date.now() - state[id].last) / 3600000);
+    var hours = Math.min(cap(id), (Date.now() - state[id].last) / 3600000);
     return Math.floor(defs[id].rate * mult(id) * hours);
   }
   function nextUpgrade(id) { var s = state[id] || {}; return defs[id].upgrades[s.level || 0] || null; }
@@ -100,7 +102,7 @@ var BridgeBusiness = (function () {
     });
   }
 
-  return { find: find, owned: owned, pending: pending, perHour: perHour, nextUpgrade: nextUpgrade, buy: buy,
+  return { find: find, owned: owned, pending: pending, cap: cap, perHour: perHour, nextUpgrade: nextUpgrade, buy: buy,
            upgrade: upgrade, collect: collect, freeCrew: freeCrew, assign: assign, summary: summary,
            state: function (id) { return state[id] || null; } };
 })();

@@ -553,6 +553,34 @@
 
   BridgeWorld.registerBackground('singularity', drawVoidBackground);
 
+  // The Wren, frozen off the brink, is still calling: its masthead light breathes, slowed by
+  // the hole, and every few seconds a ring of signal leaves it, crawling outward. `wren` is
+  // [x, row, z] of the masthead in tiles; rings are 1-px dots on an ellipse (no smoothing).
+  function drawWrenCall(ctx, p, offX, offY, ts, now) {
+    var x = Math.round(offX + p[0] * ts), y = Math.round(offY + (p[1] - p[2] * 0.7071) * ts);
+    var blink = Math.pow(0.5 + 0.5 * Math.sin(now / 900), 3);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = 'rgba(255,80,60,' + (0.25 + 0.75 * blink).toFixed(3) + ')';
+    ctx.fillRect(x - 1, y - 1, 2, 2);
+    ctx.fillStyle = 'rgba(255,90,70,' + (0.18 * blink).toFixed(3) + ')';
+    ctx.fillRect(x - 3, y - 3, 6, 6);
+    var period = 4200;
+    for (var k = 0; k < 2; k++) {
+      var t = ((now + k * period / 2) % period) / period;          // two rings, half a period apart
+      var R = 2 + t * ts * 3.2, a = (1 - t) * (1 - t) * 0.5;
+      if (a < 0.02) continue;
+      ctx.fillStyle = 'rgba(255,140,110,' + a.toFixed(3) + ')';
+      var n = Math.max(12, Math.round(R * 1.6));
+      for (var i = 0; i < n; i++) {
+        if ((i + k) % 3 === 2) continue;                            // a broken ring, like a weak signal
+        var th = i / n * Math.PI * 2;
+        ctx.fillRect(Math.round(x + Math.cos(th) * R), Math.round(y + Math.sin(th) * R * 0.55), 1, 1);
+      }
+    }
+    ctx.restore();
+  }
+
   // at the Brink the world itself bends, and the pilot leaves echoes
   BridgeWorld.registerSceneHooks('singularity', {
     items: function (world, offX, offY, ts, now, sc) {
@@ -561,6 +589,7 @@
     over: function (ctx, world, offX, offY, ts, now) {
       if (!world.horizon || typeof BridgeHorizon === 'undefined') return;
       var w = ctx.canvas.width, h = ctx.canvas.height;
+      if (world.horizon.wren) drawWrenCall(ctx, world.horizon.wren, offX, offY, ts, now);
       BridgeHorizon.drift(ctx, w, h, now, BridgeHorizon.place(world, BridgeWorld.getView(), w, h));
     },
     post: function (ctx, buf, w, h, offX, offY, ts, now) {

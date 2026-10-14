@@ -59,7 +59,7 @@ var BridgeInteractions = (function () {
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
-                      'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck',
+                      'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters' };
 
   function titleCase(t) {
@@ -653,7 +653,7 @@ var BridgeInteractions = (function () {
     if (!own) {
       lines = '<div class="wd-text">' + esc(reflow(biz.pitch)) + '</div>' +
         '<div class="wd-sell"><div class="wd-sell-row"><span>Takings</span><span>' + biz.rate + ' coins an hour</span></div>' +
-        '<div class="wd-sell-row"><span>Holds up to</span><span>' + biz.cap + ' hours</span></div></div>';
+        '<div class="wd-sell-row"><span>Holds up to</span><span>' + B.cap(id) + ' hours</span></div></div>';
       acts.push({ label: 'Buy it for ' + biz.price + ' coins', act: 'buy' });
     } else {
       var st = B.state(id), up = B.nextUpgrade(id), mgr = st.manager && BridgePeople.all()[st.manager];
@@ -791,9 +791,12 @@ var BridgeInteractions = (function () {
     var dialogEl = dialogShell('talk wd-convo');
     var topics = person.topics.slice();
     if (person.crew && typeof BridgeCrew !== 'undefined') {
+      var after = person.crew.after && typeof BridgeQuests !== 'undefined' ? BridgeQuests.progress(person.crew.after) : null;
       topics.push(BridgeCrew.isHired(person.id)
         ? { q: 'About the work', a: person.crew.perkText.toUpperCase() }
-        : { q: 'Join my crew?', a: person.crew.pitch + '\n\n' + person.crew.wage + ' COINS UP FRONT, AS ' + person.crew.role.toUpperCase() + '.', hire: true });
+        : after && !after.done
+          ? { q: 'Join my crew?', a: person.crew.notYet }          // not until a quest of theirs is settled
+          : { q: 'Join my crew?', a: person.crew.pitch + '\n\n' + person.crew.wage + ' COINS UP FRONT, AS ' + person.crew.role.toUpperCase() + '.', hire: true });
     }
     person = Object.create(person);
     person.topics = topics;

@@ -72,7 +72,7 @@ def station_floor(k, x0, r0, x1, r1, holes=(), tones=ST_FLOOR):
         k.bar(hx0 + 0.1, hr0 + 0.2, hx1 - 0.2, hr1 - 0.1, -0.01, 0.0, 0.012, '#80a0b0', 'glass_crack')
 
 
-def station_room(k, x0, r0, x1, r1, wall_h, door=None, windows=(), airlock=None):
+def station_room(k, x0, r0, x1, r1, wall_h, door=None, windows=(), airlock=None, east=None):
     """Back wall (with holdout viewports), side walls (left one with an
     airlock gap), low front wall."""
     centre = None
@@ -93,7 +93,15 @@ def station_room(k, x0, r0, x1, r1, wall_h, door=None, windows=(), airlock=None)
     for (a, b) in ((r0 - 0.5, gap[0]), (gap[1], r1)) if airlock else ((r0 - 0.5, r1),):
         if b - a > 0.05:
             P.ship_side_wall(k, x0 - 0.6, x0, a, b, wall_h, pal=ST_WALL)
-    P.ship_side_wall(k, x1, x1 + 0.6, r0 - 0.5, r1, wall_h, pal=ST_WALL)
+    for (a, b) in ((r0 - 0.5, east[0]), (east[1], r1)) if east else ((r0 - 0.5, r1),):
+        if b - a > 0.05:
+            P.ship_side_wall(k, x1, x1 + 0.6, a, b, wall_h, pal=ST_WALL)
+    if east:      # a doorway through the east wall: a frame, a lit threshold
+        for rr in (east[0] - 0.2, east[1]):
+            k.box(x1 - 0.1, rr, 0, x1 + 0.7, rr + 0.2, wall_h, (ST_WALL[3], 0.06), 'door_frame')
+        k.box(x1 - 0.1, east[0] - 0.2, wall_h - 0.4, x1 + 0.7, east[1] + 0.2, wall_h, (ST_WALL[3], 0.06), 'door_frame')
+        k.box(x1, east[0], -0.01, x1 + 0.6, east[1], 0.02, '#1e2830', 'threshold')
+        k.box(x1 + 0.05, east[0] + 0.05, 1.3, x1 + 0.09, east[1] - 0.05, 1.36, '#082010', 'door_led', emit=(LED_G, 0.9))
     for (a, b) in ((x0 - 0.6, door[0]), (door[1], x1 + 0.6)) if door else ((x0 - 0.6, x1 + 0.6),):
         k.box(a, r1, 0, b, r1 + 0.6, 0.35, (ST_WALL[1], 0.06), 'front_wall')
         k.box(a, r1, 0.35, b, r1 + 0.6, 0.4, ST_WALL[0], 'wall_cap')

@@ -5,7 +5,10 @@
  * up front in coins. Each hand brings a perk the rest of the game asks
  * about with has(perk): a navigator speeds the galleon at the helm, a
  * quartermaster gets better prices, a runner finds more when foraging, a
- * trader sends home a cut whenever you make port. The journal lists them.
+ * trader sends home a cut whenever you make port, an engineer keeps your
+ * businesses running twice as long between collections. A crew block with
+ * `after` (a quest id) answers with `notYet` until that quest is complete.
+ * The journal lists them.
  */
 var BridgeCrew = (function () {
   var KEY = 'bridge_crew';
