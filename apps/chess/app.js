@@ -67,6 +67,10 @@ const els = {
   wcRevNext: document.getElementById("wc-rev-next"),
   wcRevLast: document.getElementById("wc-rev-last"),
   wcRevExit: document.getElementById("wc-rev-exit"),
+  wcTheaterBtn: document.getElementById("wc-theater-btn"),
+  wcStageCamBtn: document.getElementById("wc-stage-cam-btn"),
+  wcStageUndoBtn: document.getElementById("wc-stage-undo-btn"),
+  wcStageReviewBtn: document.getElementById("wc-stage-review-btn"),
   promoModal: document.getElementById("promo-modal"),
 
   // Opening Trainer elements
@@ -85,6 +89,10 @@ let wizardGame = null;
 let pendingPromoCallback = null;
 let currentReviewPly = 0;
 let lastWizardState = null;
+let isTheaterMode = false;
+let userExitedTheater = false;
+const CAM_CYCLE = ["white", "cinematic", "top", "black"];
+let camCycleIdx = 0;
 
 let chess = new Chess();
 let board = null;
@@ -105,6 +113,9 @@ function setupTabs() {
 
 function switchTab(tab) {
   const isWizard = tab === "wizard";
+  if (!isWizard && isTheaterMode) {
+    setTheaterMode(false);
+  }
   els.tabWizard.classList.toggle("active", isWizard);
   els.tabWizard.setAttribute("aria-selected", String(isWizard));
   els.tabTrainer.classList.toggle("active", !isWizard);
@@ -131,12 +142,37 @@ function switchTab(tab) {
   }
 }
 
+function setTheaterMode(enabled, manual = false) {
+  isTheaterMode = Boolean(enabled);
+  if (manual && !isTheaterMode) {
+    userExitedTheater = true;
+  } else if (manual && isTheaterMode) {
+    userExitedTheater = false;
+  }
+  document.body.classList.toggle("wizard-theater", isTheaterMode);
+  if (!isTheaterMode) {
+    document.body.classList.remove("theater-drawer-open");
+  }
+  if (els.wcTheaterBtn) {
+    els.wcTheaterBtn.textContent = isTheaterMode ? "⤢ Half Screen (Esc)" : "⛶ Full Screen";
+  }
+  if (wizardGame) {
+    requestAnimationFrame(() => wizardGame.onResize());
+    setTimeout(() => wizardGame.onResize(), 260);
+  }
+}
+
 // ---------- Wizard Chess 3D Setup ----------
 
 function initWizardChess() {
   wizardGame = new WizardChess3D(els.wizardStage, {
     onStateChange: renderWizardState,
     onEvalUpdate: updateEvalBar,
+    onBattleStart: () => {
+      if (!isTheaterMode && !userExitedTheater) {
+        setTheaterMode(true);
+      }
+    },
     onDuelBanner: (text) => {
       if (!els.wcDuelBanner) return;
       if (text) {
@@ -161,7 +197,7 @@ function initWizardChess() {
     const isAI = els.wcMode.value === "ai";
     els.wcDiffGroup.style.display = isAI ? "flex" : "none";
     els.wcSideGroup.style.display = isAI ? "flex" : "none";
-    startNewWizardGame();
+    startNewWizardGame(false);
   });
 
   // Difficulty change
@@ -175,18 +211,48 @@ function initWizardChess() {
       document.querySelectorAll(".pill-btn[data-side]").forEach((b) =>
         b.classList.toggle("active", b === btn)
       );
-      startNewWizardGame();
+      startNewWizardGame(false);
     });
   });
 
   // New game, Undo & Game Review
-  els.wcNewBtn.addEventListener("click", startNewWizardGame);
+  els.wcNewBtn.addEventListener("click", () => {
+    userExitedTheater = false;
+    startNewWizardGame(true);
+  });
   els.wcUndoBtn.addEventListener("click", () => {
     closeReviewPanel();
     wizardGame.undoLastRound();
   });
   if (els.wcReviewBtn) {
     els.wcReviewBtn.addEventListener("click", startGameReview);
+  }
+
+  // Floating Stage HUD buttons
+  if (els.wcTheaterBtn) {
+    els.wcTheaterBtn.addEventListener("click", () => {
+      setTheaterMode(!isTheaterMode, true);
+    });
+  }
+  if (els.wcStageCamBtn) {
+    els.wcStageCamBtn.addEventListener("click", () => {
+      camCycleIdx = (camCycleIdx + 1) % CAM_CYCLE.length;
+      wizardGame.setCameraPreset(CAM_CYCLE[camCycleIdx]);
+    });
+  }
+  if (els.wcStageUndoBtn) {
+    els.wcStageUndoBtn.addEventListener("click", () => {
+      closeReviewPanel();
+      wizardGame.undoLastRound();
+    });
+  }
+  if (els.wcStageReviewBtn) {
+    els.wcStageReviewBtn.addEventListener("click", () => {
+      if (isTheaterMode) {
+        document.body.classList.add("theater-drawer-open");
+      }
+      startGameReview();
+    });
   }
 
   // Review transport buttons
@@ -211,8 +277,13 @@ function initWizardChess() {
     });
   }
 
-  // Keyboard Left/Right arrows while in Review Mode
+  // Keyboard shortcuts: Esc exits Full Screen Theater Mode, Left/Right steps through Review
   window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isTheaterMode) {
+      e.preventDefault();
+      setTheaterMode(false, true);
+      return;
+    }
     if (!wizardGame || !wizardGame.reviewMode) return;
     if (e.key === "ArrowLeft") {
       e.preventDefault();
@@ -273,8 +344,11 @@ function updateEvalBar(whiteCp, whiteMate) {
   }
 }
 
-function startNewWizardGame() {
+function startNewWizardGame(autoExpand = false) {
   closeReviewPanel();
+  if (autoExpand) {
+    setTheaterMode(true);
+  }
   const activeSideBtn = document.querySelector(".pill-btn[data-side].active");
   const playerColor = activeSideBtn ? activeSideBtn.dataset.side : "w";
   wizardGame.newGame({
@@ -286,6 +360,9 @@ function startNewWizardGame() {
 
 async function startGameReview() {
   if (!wizardGame || wizardGame.timeline.length <= 1) return;
+  if (isTheaterMode) {
+    document.body.classList.add("theater-drawer-open");
+  }
   els.wcReviewBtn.disabled = true;
   els.wcReviewBtn.textContent = "🔮 Analyzing...";
   els.wcReviewPanel.hidden = false;
@@ -363,6 +440,7 @@ function closeReviewPanel() {
   if (!els.wcReviewPanel) return;
   els.wcReviewPanel.hidden = true;
   els.wcReviewPill.hidden = true;
+  document.body.classList.remove("theater-drawer-open");
   if (wizardGame && wizardGame.reviewMode) {
     wizardGame.exitReviewMode();
     if (lastWizardState) {

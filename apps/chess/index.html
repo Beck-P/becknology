@@ -61,12 +61,12 @@
         <div class="field-group" id="wc-difficulty-group">
           <label class="field-label" for="wc-difficulty">Stockfish Rank (ELO)</label>
           <select id="wc-difficulty" class="wc-select">
-            <option value="1">I · Novice (~800 ELO · +25🪙)</option>
-            <option value="2">II · Apprentice (~1100 ELO · +40🪙)</option>
-            <option value="3" selected>III · Battlemage (~1450 ELO · +60🪙)</option>
-            <option value="4">IV · Archmage (~1800 ELO · +85🪙)</option>
-            <option value="5">V · Grandmaster (~2200 ELO · +120🪙)</option>
-            <option value="6">VI · Supreme Oracle (2600+ ELO · +175🪙)</option>
+            <option value="1">I · Novice (~800 ELO · +50🪙)</option>
+            <option value="2">II · Apprentice (~1100 ELO · +150🪙)</option>
+            <option value="3" selected>III · Battlemage (~1450 ELO · +400🪙)</option>
+            <option value="4">IV · Archmage (~1800 ELO · +1,000🪙)</option>
+            <option value="5">V · Grandmaster (~2200 ELO · +2,500🪙)</option>
+            <option value="6">VI · Supreme Oracle (2600+ ELO · +5,000🪙)</option>
           </select>
         </div>
 
@@ -106,12 +106,28 @@
       </aside>
 
       <section class="wizard-stage-area">
-        <div class="wizard-stage-frame">
+        <div class="wizard-stage-frame" id="wizard-stage-frame">
           <!-- Live Stockfish Evaluation Bar -->
           <div class="eval-bar-wrap" id="wc-eval-wrap" title="Stockfish Position Evaluation">
             <div class="eval-bar-black" id="wc-eval-black"></div>
             <div class="eval-bar-white" id="wc-eval-white" style="height: 50%;"></div>
             <span class="eval-score" id="wc-eval-score">0.0</span>
+          </div>
+
+          <!-- Floating Stage Controls (Full Screen / Half Screen / Quick Actions) -->
+          <div class="stage-hud-bar">
+            <button type="button" class="stage-hud-btn" id="wc-stage-cam-btn" title="Cycle Camera Angle">
+              🎥 Angle
+            </button>
+            <button type="button" class="stage-hud-btn" id="wc-stage-undo-btn" title="Undo Last Round">
+              ↩ Undo
+            </button>
+            <button type="button" class="stage-hud-btn" id="wc-stage-review-btn" title="Game Review &amp; Eval">
+              🔮 Review
+            </button>
+            <button type="button" class="stage-hud-btn primary-hud-btn" id="wc-theater-btn" title="Toggle Full Screen / Half Screen (Esc)">
+              ⛶ Full Screen
+            </button>
           </div>
 
           <div id="wizard-stage" class="wizard-stage"></div>
@@ -193,7 +209,7 @@
         </div>
 
         <div class="stats">
-          Blender 3D Sculpted · Stockfish Engine · <span class="stat-num">+2🪙</span> / Shatter
+          Spoils: <span class="stat-num">+3–50🪙</span> / Shatter · <span class="stat-num">+50–5,000🪙</span> Victory
         </div>
       </aside>
     </div>

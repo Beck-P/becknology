@@ -21,12 +21,12 @@ const SQUARE_SIZE = 1.15;
 const BOARD_OFFSET = (7 * SQUARE_SIZE) / 2;
 
 export const DIFFICULTY_TIERS = {
-  1: { name: "Novice", elo: 800, skill: 0, depth: 2, movetime: 180, noise: 95, reward: 25 },
-  2: { name: "Apprentice", elo: 1100, skill: 3, depth: 4, movetime: 280, noise: 40, reward: 40 },
-  3: { name: "Battlemage", elo: 1450, skill: 7, depth: 7, movetime: 420, noise: 12, reward: 60 },
-  4: { name: "Archmage", elo: 1800, skill: 12, depth: 10, movetime: 650, noise: 0, reward: 85 },
-  5: { name: "Grandmaster", elo: 2200, skill: 16, depth: 13, movetime: 900, noise: 0, reward: 120 },
-  6: { name: "Supreme Oracle", elo: 2600, skill: 20, depth: 16, movetime: 1250, noise: 0, reward: 175 }
+  1: { name: "Novice", elo: 800, skill: 0, depth: 2, movetime: 180, noise: 95, reward: 50, capReward: 3 },
+  2: { name: "Apprentice", elo: 1100, skill: 3, depth: 4, movetime: 280, noise: 40, reward: 150, capReward: 5 },
+  3: { name: "Battlemage", elo: 1450, skill: 7, depth: 7, movetime: 420, noise: 12, reward: 400, capReward: 8 },
+  4: { name: "Archmage", elo: 1800, skill: 12, depth: 10, movetime: 650, noise: 0, reward: 1000, capReward: 15 },
+  5: { name: "Grandmaster", elo: 2200, skill: 16, depth: 13, movetime: 900, noise: 0, reward: 2500, capReward: 25 },
+  6: { name: "Supreme Oracle", elo: 2600, skill: 20, depth: 16, movetime: 1250, noise: 0, reward: 5000, capReward: 50 }
 };
 
 // Piece values & piece-square positional tables (used for fast local eval & fallback)
@@ -1061,6 +1061,7 @@ export class WizardChess3D {
     if (this.selectedSquare) {
       const matchingMoves = this.legalMovesForSelected.filter((m) => m.to === sq);
       if (matchingMoves.length > 0) {
+        if (this.callbacks.onBattleStart) this.callbacks.onBattleStart();
         const isPromotion = matchingMoves.some((m) => m.flags.includes("p"));
         if (isPromotion && this.callbacks.onPromotionPrompt) {
           this.callbacks.onPromotionPrompt((promoPiece) => {
@@ -1078,6 +1079,7 @@ export class WizardChess3D {
 
     const pieceOnSq = this.chess.get(sq);
     if (pieceOnSq && pieceOnSq.color === this.chess.turn()) {
+      if (this.callbacks.onBattleStart) this.callbacks.onBattleStart();
       this.selectedSquare = sq;
       this.legalMovesForSelected = this.chess.moves({ square: sq, verbose: true });
       this.showMarkersForSquare(sq);
@@ -1118,9 +1120,14 @@ export class WizardChess3D {
     if (victimMesh && attackerMesh) {
       await this.playBattleCaptureSequence(attackerMesh, victimMesh, fromSq, toSq, victimSq, result);
       this.capturedCounts[result.color].push(result.captured);
-      if (typeof BridgeProgression !== "undefined") {
-        BridgeProgression.awardCoins(2, "wizard_chess_capture", {
-          captured: result.captured
+      if (
+        typeof BridgeProgression !== "undefined" &&
+        (this.mode === "2p" || result.color === this.playerColor)
+      ) {
+        const tier = DIFFICULTY_TIERS[this.aiDifficulty] || DIFFICULTY_TIERS[3];
+        BridgeProgression.awardCoins(tier.capReward || 5, "wizard_chess_capture", {
+          captured: result.captured,
+          difficulty: this.aiDifficulty
         });
       }
     } else if (attackerMesh) {
