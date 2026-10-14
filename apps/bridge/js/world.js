@@ -352,7 +352,7 @@ var BridgeWorld = (function () {
   }
 
   function buildTileCache() {
-    if (!world || world.tileCache === false) { tcache.canvas = null; return; }
+    if (!world || world.tileCache === false || world.scene) { tcache.canvas = null; return; }
     var cls = classifyTiles();
     var ts = NATIVE_TS;
     if (!tcache.canvas) {
@@ -403,13 +403,19 @@ var BridgeWorld = (function () {
     xhr.open('GET', '/bridge/assets/worlds/' + worldId + '.json?v=' + Date.now());
     xhr.onload = function () {
       if (xhr.status === 200) {
-        world = JSON.parse(xhr.responseText);
-        currentWorldId = worldId;
-        tileSize = world.tileSize || 16;
-        // Drops are scoped to the current world — abandoning a zone wipes
-        // whatever you left on the ground, same as Stardew leaving a day.
-        if (typeof BridgeLoot !== 'undefined' && BridgeLoot.clear) BridgeLoot.clear();
-        callback(world);
+        var data = JSON.parse(xhr.responseText);
+        var finish = function () {
+          world = data;
+          currentWorldId = worldId;
+          tileSize = world.tileSize || 16;
+          // Drops are scoped to the current world — abandoning a zone wipes
+          // whatever you left on the ground, same as Stardew leaving a day.
+          if (typeof BridgeLoot !== 'undefined' && BridgeLoot.clear) BridgeLoot.clear();
+          callback(world);
+        };
+        // Pre-rendered scenes load their art before the world appears
+        if (data.scene && typeof BridgeScene !== 'undefined') BridgeScene.load(data.scene.id, finish);
+        else finish();
       }
     };
     xhr.send();
@@ -749,7 +755,45 @@ var BridgeWorld = (function () {
 
   // Everything that lives in the world: tiles, glow, entities, character,
   // effects. Drawn at native resolution.
+  // Pre-rendered scene: the Blender render replaces tiles; everyone who
+  // moves is depth-tested against it and drawn in foot-row order.
+  function drawSceneLayer(ctx, sc, offX, offY, ts, now) {
+    BridgeScene.drawBackground(ctx, sc, world, offX, offY, now);
+    drawInteractHighlight(ctx, offX, offY, ts, now);
+    if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) BridgeLoot.draw(ctx, offX, offY, ts);
+    var items = BridgeScene.actorDrawList(sc, world, offX, offY, ts, now);
+    items.push(BridgeCharacter.sceneItem(offX, offY, ts, sc, world, now));
+    items.sort(function (a, b) { return a.footRow - b.footRow; });
+    for (var i = 0; i < items.length; i++) items[i].draw(ctx);
+    if (typeof BridgeFX !== 'undefined' && BridgeFX.draw) BridgeFX.draw(ctx, offX, offY, ts, now);
+  }
+
+  function drawInteractHighlight(ctx, offX, offY, ts, now) {
+    if (!world.interactions) return;
+    var px = BridgeCharacter.getX();
+    var py = BridgeCharacter.getY();
+    var facing = BridgeCharacter.getFacing();
+    var checkX = px + (facing === 'right' ? 1 : facing === 'left' ? -1 : 0);
+    var checkY = py + (facing === 'down' ? 1 : facing === 'up' ? -1 : 0);
+    for (var i = 0; i < world.interactions.length; i++) {
+      var inter = world.interactions[i];
+      // Hostiles read as threats, not "press E to interact" prompts —
+      // skip the green focus box for them so they stay menacing.
+      if (inter.type === 'hostile') continue;
+      if (inter.x === checkX && inter.y === checkY && !BridgeCharacter.isMoving()) {
+        var hx = offX + inter.x * ts;
+        var hy = offY + inter.y * ts;
+        var hPulse = 0.3 + Math.sin(now / 400) * 0.2;
+        ctx.strokeStyle = 'rgba(40, 220, 80, ' + hPulse.toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(hx + 0.5, hy + 0.5, ts - 1, ts - 1);
+      }
+    }
+  }
+
   function drawWorldLayer(ctx, w, h, offX, offY, ts, now) {
+    var sc = world.scene && typeof BridgeScene !== 'undefined' && BridgeScene.get(world.scene.id);
+    if (sc) { drawSceneLayer(ctx, sc, offX, offY, ts, now); return; }
     var tileset = TILESETS[world.tileset] || {};
     var lit = !!(world.lighting && typeof BridgeLighting !== 'undefined');
 
@@ -822,28 +866,7 @@ var BridgeWorld = (function () {
     }
 
     // Pass 1.5: Interactive tile highlights
-    if (world.interactions) {
-      var px = BridgeCharacter.getX();
-      var py = BridgeCharacter.getY();
-      var facing = BridgeCharacter.getFacing();
-      var checkX = px + (facing === 'right' ? 1 : facing === 'left' ? -1 : 0);
-      var checkY = py + (facing === 'down' ? 1 : facing === 'up' ? -1 : 0);
-
-      for (var i = 0; i < world.interactions.length; i++) {
-        var inter = world.interactions[i];
-        // Hostiles read as threats, not "press E to interact" prompts —
-        // skip the green focus box for them so they stay menacing.
-        if (inter.type === 'hostile') continue;
-        if (inter.x === checkX && inter.y === checkY && !BridgeCharacter.isMoving()) {
-          var hx = offX + inter.x * ts;
-          var hy = offY + inter.y * ts;
-          var hPulse = 0.3 + Math.sin(now / 400) * 0.2;
-          ctx.strokeStyle = 'rgba(40, 220, 80, ' + hPulse.toFixed(2) + ')';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(hx + 0.5, hy + 0.5, ts - 1, ts - 1);
-        }
-      }
-    }
+    drawInteractHighlight(ctx, offX, offY, ts, now);
 
     // Pass 2: Glow (data-driven from world JSON). Lit worlds draw it after
     // the lighting pass instead, as bloom on top of the darkened scene.

@@ -35,25 +35,11 @@
     "1": "wall",
     "2": "floor",
     "3": "door",
-    "4": "bar_counter",
-    "5": "stool",
-    "6": "table",
-    "7": "fireplace",
-    "8": "bartender",
-    "9": "shelf",
-    "10": "window",
-    "11": "piano",
-    "12": "dart_board",
-    "13": "stove",
-    "14": "patron",
-    "15": "barrel",
-    "16": "coat_rack",
-    "17": "painting"
+    "4": "furniture"
   },
   "tiles": [
     [
       0,
-      0,
       1,
       1,
       1,
@@ -64,21 +50,22 @@
       1,
       1,
       1,
-      0,
+      1,
+      1,
       0
     ],
     [
       0,
       1,
       1,
-      9,
-      17,
-      9,
       1,
-      9,
       1,
-      10,
-      12,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
       1,
       1,
       0
@@ -87,62 +74,30 @@
       0,
       1,
       4,
-      13,
       4,
       4,
       4,
       4,
       4,
       2,
-      2,
-      2,
+      4,
+      4,
+      4,
       1,
       0
     ],
     [
       0,
       1,
-      2,
-      8,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      7,
-      1,
-      0
-    ],
-    [
-      0,
-      1,
-      2,
-      11,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
       2,
       2,
       2,
-      2,
-      2,
-      2,
-      2,
-      2,
-      1,
-      0
-    ],
-    [
-      0,
-      1,
-      5,
-      2,
-      6,
-      14,
-      5,
-      2,
-      6,
-      2,
-      15,
       2,
       1,
       0
@@ -166,16 +121,32 @@
     [
       0,
       1,
-      5,
+      4,
       2,
-      6,
-      14,
-      5,
       2,
-      6,
       2,
-      5,
       2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      1,
+      0
+    ],
+    [
+      0,
+      1,
+      4,
+      2,
+      4,
+      4,
+      4,
+      2,
+      4,
+      4,
+      4,
+      4,
       1,
       0
     ],
@@ -204,16 +175,32 @@
       2,
       2,
       2,
+      4,
+      4,
+      4,
       2,
-      2,
-      2,
-      16,
       1,
       0
     ],
     [
       0,
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      1,
+      0
+    ],
+    [
       0,
+      1,
       1,
       1,
       1,
@@ -224,7 +211,7 @@
       1,
       1,
       1,
-      0,
+      1,
       0
     ]
   ],
@@ -270,25 +257,9 @@
       1,
       1,
       1,
-      1,
-      0,
-      0,
       0,
       1,
-      1
-    ],
-    [
       1,
-      1,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
       1,
       1,
       1
@@ -296,31 +267,15 @@
     [
       1,
       1,
-      0,
       1,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
       1,
-      1
-    ],
-    [
+      1,
       1,
       1,
       1,
       0,
-      1,
-      1,
-      1,
       0,
-      1,
       0,
-      1,
       0,
       1,
       1
@@ -346,14 +301,30 @@
       1,
       1,
       0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1
+    ],
+    [
       1,
       1,
       1,
       0,
       1,
-      0,
+      1,
       1,
       0,
+      1,
+      1,
+      1,
+      1,
       1,
       1
     ],
@@ -369,6 +340,22 @@
       0,
       0,
       0,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
       0,
       1,
       1
@@ -420,7 +407,7 @@
       ]
     },
     {
-      "x": 3,
+      "x": 4,
       "y": 3,
       "type": "vendor",
       "label": "TAVERN",
@@ -437,31 +424,31 @@
       ]
     },
     {
-      "x": 11,
-      "y": 3,
+      "x": 10,
+      "y": 2,
       "type": "dialog",
       "label": "FIREPLACE",
       "prompt": "PRESS E TO WARM UP",
       "dialog": "THE FIRE CRACKLES.\\n\\nWARMTH SEEPS INTO YOUR BONES.\\nFOR A MOMENT, YOU FEEL HOME."
     },
     {
-      "x": 3,
-      "y": 4,
+      "x": 2,
+      "y": 5,
       "type": "dialog",
       "label": "PIANO",
       "prompt": "PRESS E TO PLAY",
       "dialog": "YOU TAP A FEW KEYS.\\n\\nA SAILOR'S TUNE DRIFTS\\nTHROUGH THE TAVERN.\\nSOMEONE HUMS ALONG."
     },
     {
-      "x": 10,
-      "y": 1,
+      "x": 11,
+      "y": 2,
       "type": "dialog",
       "label": "DART BOARD",
       "prompt": "PRESS E TO PLAY",
       "dialog": "BULLSEYE!\\n\\n...IS WHAT YOU'D SAY IF\\nYOUR DART HADN'T LANDED\\nIN THE WALL TO THE LEFT."
     },
     {
-      "x": 4,
+      "x": 2,
       "y": 3,
       "type": "dialog",
       "label": "STOVE",
@@ -469,23 +456,23 @@
       "dialog": "SOMETHING SAVORY SIMMERS.\\n\\nFISH STEW, MAYBE.\\nA SPRINKLE OF SPORE-SALT\\nSITS NEXT TO THE POT."
     },
     {
-      "x": 5,
-      "y": 5,
+      "x": 6,
+      "y": 6,
       "type": "dialog",
       "label": "REGULAR",
       "prompt": "PRESS E TO TALK",
       "dialog": "\"YOU NEW HERE?\\n\\nSTICK AROUND. THE BAND\\nSTARTS IN A FEW CYCLES.\\nIT'S USUALLY GOOD.\""
     },
     {
-      "x": 5,
-      "y": 7,
+      "x": 8,
+      "y": 6,
       "type": "dialog",
       "label": "MERCHANT",
       "prompt": "PRESS E TO TALK",
       "dialog": "\"BOUGHT A WHOLE CRATE\\nOF SILVER NAILS LAST CYCLE.\\nHAULED IT FROM CRIMSON REACH.\\n\\nAND NOBODY WANTS THEM.\""
     },
     {
-      "x": 10,
+      "x": 11,
       "y": 5,
       "type": "dialog",
       "label": "BEER BARREL",
@@ -501,7 +488,7 @@
       "dialog": "A WORN PIRATE'S HAT\\nAND A LONG COAT.\\n\\nSOMEBODY'S BEEN HERE\\nA WHILE."
     },
     {
-      "x": 4,
+      "x": 9,
       "y": 2,
       "type": "dialog",
       "label": "PAINTING",
@@ -509,73 +496,33 @@
       "dialog": "AN OLD OIL PAINTING:\\n\\nA SHIP UNDER A FULL\\nGREEN MOON, SAILING\\nINTO STILLER WATERS.\\n\\nSIGNED: 'E.B.'"
     }
   ],
-  "lighting": {
-    "ambient": [
-      128,
-      110,
-      114
-    ],
-    "tileLights": {
-      "7": {
-        "r": 3.4,
-        "color": [
-          255,
-          140,
-          60
-        ],
-        "i": 0.95,
-        "flicker": 0.2,
-        "dx": -0.6
+  "scene": {
+    "id": "lumar-tavern",
+    "flicker": {
+      "from": "dim",
+      "to": "full"
+    },
+    "actors": [
+      {
+        "sheet": "npc-bartender",
+        "x": 4,
+        "y": 2,
+        "facing": "down"
       },
-      "13": {
-        "r": 2.6,
-        "color": [
-          255,
-          150,
-          80
-        ],
-        "i": 0.6,
-        "flicker": 0.15
+      {
+        "sheet": "npc-regular",
+        "x": 6,
+        "y": 6,
+        "facing": "left",
+        "pose": "sit"
       },
-      "10": {
-        "r": 2.2,
-        "color": [
-          150,
-          170,
-          230
-        ],
-        "i": 0.35
-      },
-      "6": {
-        "r": 1.8,
-        "color": [
-          255,
-          196,
-          120
-        ],
-        "i": 0.28,
-        "flicker": 0.12
-      },
-      "4": {
-        "r": 1.6,
-        "color": [
-          255,
-          190,
-          110
-        ],
-        "i": 0.3,
-        "flicker": 0.08
+      {
+        "sheet": "npc-merchant",
+        "x": 8,
+        "y": 6,
+        "facing": "right",
+        "pose": "sit"
       }
-    },
-    "pilot": {
-      "r": 2.4,
-      "color": [
-        150,
-        140,
-        150
-      ],
-      "i": 0.2
-    },
-    "bloom": 0.3
+    ]
   }
 }

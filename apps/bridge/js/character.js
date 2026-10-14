@@ -165,6 +165,33 @@ var BridgeCharacter = (function () {
       Math.round(cx - FRAME_W * k / 2), Math.round(sy + ts - FRAME_H * k), FRAME_W * k, FRAME_H * k);
   }
 
+  /**
+   * In a pre-rendered scene: returns { footRow, draw(ctx) } so the world can
+   * sort the pilot among NPCs, drawn depth-tested and lit by the room.
+   */
+  function sceneItem(offX, offY, ts, sc, world, now) {
+    var pilot = BridgeState.getPilot();
+    var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
+    var sheet = getSheet(suit);
+    var pos = getRenderPos();
+    var footRow = pos.y + 1 - 3 / 32;
+    return {
+      footRow: footRow,
+      draw: function (ctx) {
+        if (!sheet.ready) return;
+        var col = player.moveProgress < 1
+          ? 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8
+          : IDLE_SEQ[Math.floor(Date.now() / 340) % IDLE_SEQ.length];
+        var row = DIR_ROW[player.facing] || 0;
+        var cx = Math.round(offX + (pos.x + 0.5) * ts);
+        var footY = Math.round(offY + footRow * ts);
+        BridgeScene.drawOccluded(ctx, sc, sheet.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H,
+          cx - FRAME_W / 2, footY - (FRAME_H - 3), footRow, offX, offY,
+          BridgeScene.tintAt(sc, world, pos.x, pos.y, now), { x: cx, y: footY, rx: 9, ry: 3 });
+      }
+    };
+  }
+
   /** Draw the character at native resolution. offX/offY = world origin, ts = native tile px. */
   function draw(ctx, offX, offY, ts) {
     var pos = getRenderPos();
@@ -312,6 +339,7 @@ var BridgeCharacter = (function () {
     getRenderPos: getRenderPos,
     tryMove: tryMove,
     update: update,
-    draw: draw
+    draw: draw,
+    sceneItem: sceneItem
   };
 })();

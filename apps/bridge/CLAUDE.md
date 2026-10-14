@@ -7,7 +7,7 @@ This file is the single source of truth for the **bridge app's** visual style �
 <!-- Last reviewed: 2026-10-14 -->
 
 ## North star
-**Cast n Chill meets Stardew Valley.** A cozy 2D world that feels alive: Stardew's readable top-down map and high-oblique building sprites (full facade visible AND most/all of the roof plane visible from above), with Cast n Chill's richer detail, mood lighting and constant small motion (smoke, flicker, water, breathing idles). We are intentionally hybrid — AI-painted PNGs, Blender-rendered sprites and procedural canvas drawing all meet on **one native pixel grid**, under one lighting model. The job of this doc is to keep those paths looking like one game.
+**Cast n Chill meets Stardew Valley.** A cozy 2D world that feels alive — very slightly pixelated, painterly light, rich small detail: Stardew's readable top-down map and high-oblique building sprites (full facade visible AND most/all of the roof plane visible from above), with Cast n Chill's richer detail, mood lighting and constant small motion (smoke, flicker, water, breathing idles). We are intentionally hybrid — AI-painted PNGs, Blender-rendered sprites and procedural canvas drawing all meet on **one native pixel grid**, under one lighting model. The job of this doc is to keep those paths looking like one game.
 
 ## Rendering pipeline (js/world.js)
 
@@ -190,18 +190,35 @@ The pilot uses this path (see "Characters — the Blender pipeline" below); the 
 6. In the world JSON, put the drawer's tile id on the anchor (bottom-centre) tile, set the footprint tiles to `0` (void) with `collisions = 1`.
 
 ### Characters — the Blender pipeline
-The pilot is a cel-shaded 3D model rendered straight to 32 × 48 native frames:
+Every character (the pilot, NPCs) is a cel-shaded 3D model rendered straight to 32 × 48 native frames by `tools/bridge-art/characters.py`, using the same 45° camera and tile units as the pre-rendered scenes (so a seated NPC sits at exactly stool height):
 
 ```
 python3 -m venv BVENV && BVENV/bin/pip install bpy==5.2.2   # Python 3.13
-BVENV/bin/python tools/bridge-art/pilot.py /tmp/pilot-frames
-python3 tools/bridge-art/sprites_post.py pilot /tmp/pilot-frames
+BVENV/bin/python tools/bridge-art/characters.py /tmp/chars/pilot pilot
+python3 tools/bridge-art/sprites_post.py pilot /tmp/chars/pilot
+BVENV/bin/python tools/bridge-art/characters.py /tmp/chars/npc-bartender npc-bartender
+python3 tools/bridge-art/sprites_post.py npc /tmp/chars/npc-bartender
 ```
 
 - Shading happens in the shader: N·L against a fixed key light (high, upper-left), three flat tone bands per material, no lamps, one sample, no filtering, no dithering — every pixel is a palette colour.
 - `sprites_post.py` draws line work where one body part overlaps another (from id + depth passes) and the outer outline, then packs one sheet per colour variant into `assets/characters/`.
-- Sheet layout: rows down/right/up/left; columns idle 0-3, walk 0-7. Frames are 32 × 48, feet 3 px above the bottom.
-- New characters (NPCs, creatures) should follow the same camera, light direction, ramp positions and outline rules so they match the pilot.
+- Sheet layout: rows down/right/up/left; columns idle 0-3, walk 0-7. Frames are 32 × 48 and the floor point under the character (feet, or seat for sitting poses) is pixel (16, 45).
+- New NPCs are a `NPCS` entry in `characters.py` (skin, shirt, hair, hat, beard, apron, vest, pose).
+
+### Pre-rendered Blender scenes (the target for every world)
+Rooms and areas are being rebuilt as Blender scenes. A scene is a script in `tools/bridge-art/scenes/` that places parts from an asset kit (`assets_lumar.py` — floors, walls, furniture, fireplaces, lights) on the world's own tile grid, renders it, and rewrites the world JSON to match what was built (collisions from the placed objects, interactions moved onto their objects, NPC actors, the `scene` reference).
+
+```
+BVENV/bin/python tools/bridge-art/scenes/lumar_tavern.py /tmp/tavern
+python3 tools/bridge-art/scene_post.py /tmp/tavern apps/bridge/assets/scenes/lumar-tavern
+```
+
+- **Camera:** orthographic, 45° elevation; the world is stretched along rows by 1/sin 45° so every floor tile lands on an exact 32 × 32 px cell — the render lines up with the game grid.
+- **Light is real:** Cycles renders lamps, fire and moonlight with cast shadows. `scene_post.py` shades it Cast n Chill-style: a smooth tone curve quantized into many small steps with 4 × 4 ordered dithering, colour of the light kept, soft lines (a deeper shade of the surface) where one part sits in front of another.
+- **Firelight flickers:** each scene renders two light states (`full`, `dim`); the engine cross-fades them.
+- **Depth, not layers:** `depth.png` stores per-pixel depth; `js/scene.js` depth-tests every character against it (a character is an upright billboard at its foot row), so walking behind tables, counters and stools is always right — no hand-sorted layers.
+- **Characters pick up the room's light** from a per-tile light grid the render bakes (`tileLight` in `scene.json`).
+- NPCs are `actors` in the world JSON's `scene` block (sheet, tile, facing, `pose: "sit"`), drawn with idle animation.
 
 ### Lighting
 A world opts in with a `lighting` block in its JSON (see the header of `js/lighting.js` for every field): an `ambient` colour, `fromGlow` (reuse the world's `tileGlow` tiles as lights, with `skip` for things like glowing sea), `tileLights` (a light on every tile of a type — lanterns, fireplaces, lava), hand-placed `lights`, a faint `pilot` light and `bloom`. Keep lights where the art shows a source, warm for fire and lamps, coloured for magic and neon. Lighting is subtle on the ship and stations and moody at night in Lumar.

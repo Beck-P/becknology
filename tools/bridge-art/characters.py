@@ -1,0 +1,382 @@
+"""Model characters in Blender and render native sprite frames.
+
+  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot
+  BVENV/bin/python tools/bridge-art/characters.py OUTDIR npc-bartender
+  python3 tools/bridge-art/sprites_post.py pilot OUTDIR/pilot
+  python3 tools/bridge-art/sprites_post.py npc OUTDIR/npc-bartender
+
+Characters use the scene camera (45° orthographic, 32 px per tile) and tile
+units, so they sit at true stool height and match the pre-rendered rooms.
+Frames are 32 × 48; the floor point under the character (its feet, or the
+seat centre for sitting poses) lands on pixel (16, 45).
+
+Shading is done in the shader: N·L against a fixed key light (high,
+upper-left), three flat tone bands per material, no lamps, one sample, no
+filtering or dithering. Passes: color_<variant>/, id/, depth/ — see
+sprites_post.py for line work and packing.
+"""
+import math
+import os
+import sys
+
+import bpy
+from mathutils import Vector
+
+OUT, WHO = sys.argv[1], sys.argv[2]
+W, H = 32, 48
+ORIGIN_PX = (16, 45)
+ELEV = math.radians(45)
+UNIT = 0.055        # model units → tiles (the pilot is ~31 units ≈ 1.7 tiles)
+
+SUITS = {
+    'purple': ('#6048a0', '#a078dc', '#c0a8ee'),
+    'cyan':   ('#388890', '#5cc8d0', '#8ce0e8'),
+    'red':    ('#903838', '#d06060', '#e89090'),
+    'green':  ('#387838', '#60b060', '#90d090'),
+    'gold':   ('#887028', '#c8a840', '#e0c870'),
+    'white':  ('#909090', '#d0d0d0', '#f0f0f0'),
+}
+FIXED = {
+    'helmet': ('#8c8ca8', '#d4d4e4', '#f6f6ff'),
+    'visor':  ('#1c5a70', '#3aa8c0', '#8ee4f0'),
+    'boot':   ('#141420', '#262636', '#3a3a50'),
+    'pack':   ('#2c2c3c', '#4a4a5e', '#6c6c84'),
+    'brass':  ('#7a5a20', '#c8a040', '#f0d070'),
+    'glint':  ('#ffffff', '#ffffff', '#ffffff'),
+    'ledc':   ('#80f0ff', '#80f0ff', '#80f0ff'),
+    'ledy':   ('#ffe080', '#ffe080', '#ffe080'),
+    'ledoff': ('#3a3a48', '#3a3a48', '#3a3a48'),
+    'skin':   ('#9a6a4e', '#d8a07a', '#f0c49c'),
+    'skin2':  ('#7a4e36', '#b0784e', '#cc9468'),
+    'eye':    ('#120c0a', '#120c0a', '#2a1a14'),
+    'white':  ('#9a968c', '#e4e0d4', '#fbf8f0'),
+    'leather': ('#3a2416', '#5e3a22', '#7e5232'),
+    'pants':  ('#24202a', '#3e3646', '#5a5064'),
+}
+NPCS = {
+    # tone keys: shirt, sleeve, pants, hair, apron?, hat?
+    'npc-bartender': dict(skin='skin', shirt=('#8a8478', '#d8d2c4', '#f2ede2'), apron=('#4a2e1a', '#7a5032', '#9a6a44'),
+                          hair=('#2a1a10', '#4a2e1a', '#6a4428'), bald=True, mustache=True, pose='stand'),
+    'npc-regular':   dict(skin='skin2', shirt=('#1e4a5a', '#2e7088', '#4a94ac'), hair=('#2a1a10', '#4a2e1a', '#6a4428'),
+                          beanie=('#6a1e1e', '#a83232', '#c85050'), beard=True, pose='sit'),
+    'npc-merchant':  dict(skin='skin', shirt=('#2e4a2e', '#4a7244', '#6a9460'), vest=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#6a6a70', '#a0a0a8', '#c8c8d0'), cap=('#3a2a1a', '#5e4228', '#7e5a38'), beard=True, pose='sit'),
+}
+LIGHT_DIR = Vector((-0.5, -0.35, 0.8)).normalized()
+
+
+def hexc(h):
+    h = h.lstrip('#')
+    return [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+
+
+def lin(c):
+    return tuple(v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in c) + (1.0,)
+
+
+def mix(a, b, t):
+    ca, cb = hexc(a), hexc(b)
+    return '#' + ''.join('%02x' % round(255 * (ca[i] * (1 - t) + cb[i] * t)) for i in range(3))
+
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+scene = bpy.context.scene
+scene.world = bpy.data.worlds.new('w')
+
+
+def emission_mat(name, setup):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = nt.nodes.new('ShaderNodeOutputMaterial')
+    em = nt.nodes.new('ShaderNodeEmission')
+    nt.links.new(em.outputs['Emission'], out.inputs['Surface'])
+    setup(nt, em)
+    return m
+
+
+def cel_mat(name, tones):
+    def setup(nt, em):
+        geo = nt.nodes.new('ShaderNodeNewGeometry')
+        dot = nt.nodes.new('ShaderNodeVectorMath')
+        dot.operation = 'DOT_PRODUCT'
+        dot.inputs[1].default_value = LIGHT_DIR
+        mr = nt.nodes.new('ShaderNodeMapRange')
+        mr.inputs['From Min'].default_value = -1.0
+        ramp = nt.nodes.new('ShaderNodeValToRGB')
+        ramp.color_ramp.interpolation = 'CONSTANT'
+        e = ramp.color_ramp.elements
+        e[0].position, e[0].color = 0.0, lin(hexc(tones[0]))
+        e[1].position, e[1].color = 0.56, lin(hexc(tones[1]))
+        e3 = e.new(0.83)
+        e3.color = lin(hexc(tones[2]))
+        nt.links.new(geo.outputs['Normal'], dot.inputs[0])
+        nt.links.new(dot.outputs['Value'], mr.inputs['Value'])
+        nt.links.new(mr.outputs['Result'], ramp.inputs['Fac'])
+        nt.links.new(ramp.outputs['Color'], em.inputs['Color'])
+    return emission_mat(name, setup)
+
+
+def flat_mat(name, rgb):
+    def setup(nt, em):
+        em.inputs['Color'].default_value = (rgb[0], rgb[1], rgb[2], 1.0)
+    return emission_mat(name, setup)
+
+
+def depth_mat():
+    def setup(nt, em):
+        cam = nt.nodes.new('ShaderNodeCameraData')
+        div = nt.nodes.new('ShaderNodeMath')
+        div.operation = 'DIVIDE'
+        div.inputs[1].default_value = 200.0
+        nt.links.new(cam.outputs['View Z Depth'], div.inputs[0])
+        nt.links.new(div.outputs['Value'], em.inputs['Color'])
+    return emission_mat('depth', setup)
+
+
+DEPTH = depth_mat()
+PARTS = []          # (obj, tone_key, part_id)
+PIDS = {}
+
+
+def pid(name):
+    if name not in PIDS:
+        PIDS[name] = len(PIDS) + 1
+    return PIDS[name]
+
+
+def pivot(name, loc, parent=None):
+    e = bpy.data.objects.new(name, None)
+    scene.collection.objects.link(e)
+    e.location = loc
+    if parent:
+        e.parent = parent
+    return e
+
+
+def add(prim, name, loc, scale, tone, part, parent, bevel=0.0, rot=(0, 0, 0), **kw):
+    getattr(bpy.ops.mesh, 'primitive_' + prim + '_add')(location=(0, 0, 0), **kw)
+    o = bpy.context.active_object
+    o.name = name
+    o.scale = scale
+    o.rotation_euler = rot
+    bpy.ops.object.transform_apply(scale=True, rotation=True)
+    o.location = loc
+    if bevel:
+        m = o.modifiers.new('bev', 'BEVEL')
+        m.width = bevel
+        m.segments = 3
+    for p in o.data.polygons:
+        p.use_smooth = True
+    o.parent = parent
+    o.data.materials.append(DEPTH)
+    PARTS.append((o, tone, pid(part)))
+    return o
+
+
+# ---- skeleton (model units; root scaled to tiles) ---------------------------
+root = pivot('root', (0, 0, 0))
+root.scale = (UNIT, UNIT, UNIT)
+body = pivot('body', (0, 0, 0), root)
+hips, knees, shoulders = {}, {}, {}
+
+
+def legs(tone_leg, tone_boot, thigh_tone=None):
+    for side, sx in (('L', -2.1), ('R', 2.1)):
+        hip = pivot('hip' + side, (sx, 0, 9.2), body)
+        hips[side] = hip
+        add('cube', 'thigh' + side, (0, 0, -2.0), (1.45, 1.6, 2.2), thigh_tone or tone_leg, 'leg' + side, hip, bevel=0.5)
+        knee = pivot('knee' + side, (0, 0, -4.2), hip)
+        knees[side] = knee
+        add('cube', 'shin' + side, (0, 0, -1.6), (1.35, 1.5, 1.8), tone_leg, 'leg' + side, knee, bevel=0.5)
+        add('cube', 'boot' + side, (0, -0.6, -3.2), (1.75, 2.5, 1.45), tone_boot, 'boot' + side, knee, bevel=0.6)
+
+
+def arms(tone_arm, tone_hand):
+    for side, sx in (('L', -5.3), ('R', 5.3)):
+        sh = pivot('sh' + side, (sx, 0, 16.0), body)
+        shoulders[side] = sh
+        add('cube', 'arm' + side, (0, 0, -2.9), (1.25, 1.4, 3.1), tone_arm, 'arm' + side, sh, bevel=0.5)
+        add('cube', 'hand' + side, (0, 0, -6.3), (1.3, 1.45, 1.15), tone_hand, 'arm' + side, sh, bevel=0.5)
+
+
+head = None
+tip = None
+
+
+def build_pilot():
+    global head, tip
+    legs('suit', 'boot')
+    for side in 'LR':
+        add('cube', 'knee' + side, (0, -1.5, 0.2), (1.2, 0.35, 0.9), 'suitdk', 'leg' + side, knees[side], bevel=0.2)
+    add('cube', 'torso', (0, 0, 13.2), (4.3, 3.1, 4.3), 'suit', 'torso', body, bevel=1.4)
+    add('cube', 'belt', (0, 0, 9.7), (4.45, 3.25, 0.65), 'suitdk', 'torso', body, bevel=0.3)
+    add('cube', 'buckle', (0, -3.25, 9.7), (0.85, 0.3, 0.55), 'brass', 'torso', body)
+    add('cube', 'chest', (0, -3.05, 13.6), (2.1, 0.35, 1.5), 'suitdk', 'torso', body, bevel=0.2)
+    add('cube', 'ledC', (-0.8, -3.4, 13.9), (0.45, 0.2, 0.45), 'ledc', 'torso', body)
+    add('cube', 'ledY', (0.8, -3.4, 13.9), (0.45, 0.2, 0.45), 'ledy', 'torso', body)
+    add('cube', 'pack', (0, 3.5, 13.4), (3.4, 1.5, 3.7), 'pack', 'pack', body, bevel=0.7)
+    add('cylinder', 'tank', (2.2, 4.6, 13.6), (0.9, 0.9, 3.0), 'brass', 'pack', body, vertices=10)
+    add('cube', 'packLight', (-1.6, 4.9, 16.2), (0.5, 0.3, 0.5), 'ledc', 'pack', body)
+    arms('arm', 'suitdk')
+    for side in 'LR':
+        add('uv_sphere', 'pad' + side, (0, 0, 0.2), (1.9, 1.9, 1.5), 'suitdk', 'arm' + side, shoulders[side], segments=12, ring_count=8)
+    head = pivot('head', (0, 0, 18.6), body)
+    add('torus', 'collar', (0, 0, 0.5), (1, 1, 1), 'suitdk', 'collar', head,
+        major_radius=3.6, minor_radius=0.9, major_segments=20, minor_segments=8)
+    add('uv_sphere', 'helmet', (0, 0, 5.0), (5.8, 5.5, 5.3), 'helmet', 'helmet', head, segments=28, ring_count=14)
+    add('uv_sphere', 'visor', (0, -3.7, 4.6), (4.2, 3.1, 2.7), 'visor', 'visor', head, segments=24, ring_count=12)
+    add('cube', 'glint', (-1.9, -6.55, 5.7), (0.55, 0.2, 0.5), 'glint', 'visor', head)
+    add('cylinder', 'antenna', (3.0, 0.6, 10.6), (0.3, 0.3, 1.9), 'pack', 'helmet', head, vertices=8)
+    tip = add('uv_sphere', 'antennaTip', (3.0, 0.6, 12.6), (0.85, 0.85, 0.85), 'ledy', 'helmet', head, segments=8, ring_count=6)
+
+
+def build_human(spec):
+    global head
+    legs('pants', 'leather')
+    add('cube', 'torso', (0, 0, 13.0), (4.0, 2.9, 4.2), 'shirt', 'torso', body, bevel=1.3)
+    add('cube', 'belt', (0, 0, 9.6), (4.1, 3.0, 0.6), 'leather', 'torso', body, bevel=0.3)
+    if 'apron' in spec:
+        add('cube', 'apron', (0, -2.95, 9.6), (3.4, 0.35, 4.2), 'apron', 'torso', body, bevel=0.2)
+    if 'vest' in spec:
+        add('cube', 'vestL', (-2.4, -2.1, 13.4), (1.5, 1.0, 3.8), 'vest', 'torso', body, bevel=0.3)
+        add('cube', 'vestR', (2.4, -2.1, 13.4), (1.5, 1.0, 3.8), 'vest', 'torso', body, bevel=0.3)
+    arms('shirt', 'skin')
+    head = pivot('head', (0, 0, 17.4), body)
+    add('cylinder', 'neck', (0, 0, 0.6), (1.6, 1.6, 1.2), 'skin', 'neck', head, vertices=10)
+    add('uv_sphere', 'face', (0, 0, 5.2), (5.0, 4.8, 5.0), 'skin', 'head', head, segments=24, ring_count=12)
+    for sx in (-1.8, 1.8):
+        add('cube', 'eye', (sx, -4.6, 5.9), (0.7, 0.7, 1.0), 'eye', 'eyes', head)
+    add('cube', 'nose', (0, -4.9, 4.4), (0.55, 0.6, 0.6), 'skin', 'head', head, bevel=0.2)
+    if not spec.get('bald'):
+        add('uv_sphere', 'hair', (0, 0.5, 6.4), (5.3, 5.0, 4.3), 'hair', 'hair', head, segments=20, ring_count=10)
+    else:
+        for sx in (-4.6, 4.6):
+            add('uv_sphere', 'hairside', (sx, 0.6, 4.6), (1.0, 2.6, 1.8), 'hair', 'hair', head, segments=10, ring_count=6)
+    if spec.get('mustache'):
+        add('cube', 'mustache', (0, -4.75, 3.4), (2.2, 0.5, 0.5), 'hair', 'beard', head, bevel=0.2)
+    if spec.get('beard'):
+        add('uv_sphere', 'beard', (0, -3.4, 2.4), (3.6, 2.0, 2.5), 'hair', 'beard', head, segments=14, ring_count=8)
+    if 'beanie' in spec:
+        add('uv_sphere', 'beanie', (0, 0.3, 7.6), (5.3, 5.1, 3.6), 'beanie', 'hat', head, segments=20, ring_count=10)
+        add('torus', 'beanie_rim', (0, 0.2, 6.9), (1, 1, 0.7), 'beanie', 'hat', head,
+            major_radius=4.9, minor_radius=0.8, major_segments=20, minor_segments=6)
+    if 'cap' in spec:
+        add('cylinder', 'cap', (0, 0.3, 9.0), (5.4, 5.2, 1.4), 'cap', 'hat', head, vertices=20)
+        add('cube', 'brim', (0, -4.6, 8.1), (3.4, 2.2, 0.35), 'cap', 'hat', head, bevel=0.3)
+
+
+if WHO == 'pilot':
+    build_pilot()
+    VARIANTS = {s: {'suit': SUITS[s], 'suitdk': (mix(SUITS[s][0], '#000000', 0.25), SUITS[s][0], mix(SUITS[s][0], SUITS[s][1], 0.5)),
+                    'arm': (mix(SUITS[s][0], '#000000', 0.12), mix(SUITS[s][1], SUITS[s][0], 0.3), mix(SUITS[s][2], SUITS[s][1], 0.35))}
+                for s in SUITS}
+    POSE = 'stand'
+else:
+    spec = NPCS[WHO]
+    build_human(spec)
+    tones = {'shirt': spec['shirt'], 'pants': FIXED['pants'], 'hair': spec['hair'], 'skin': FIXED[spec['skin']]}
+    for key in ('apron', 'vest', 'beanie', 'cap'):
+        if key in spec:
+            tones[key] = spec[key]
+    VARIANTS = {WHO.replace('npc-', ''): tones}
+    POSE = spec['pose']
+
+# ---- camera: scene angle, origin pinned to ORIGIN_PX ----------------------------
+cd = bpy.data.cameras.new('cam')
+cd.type = 'ORTHO'
+cd.ortho_scale = max(W, H) / 32
+cam = bpy.data.objects.new('cam', cd)
+scene.collection.objects.link(cam)
+f = Vector((0, math.cos(ELEV), -math.sin(ELEV)))
+up = Vector((0, math.sin(ELEV), math.cos(ELEV)))
+# frame centre is (W/2, H/2); origin pixel sits below/left of it
+dx = (W / 2 - ORIGIN_PX[0]) / 32
+dy = (ORIGIN_PX[1] - H / 2) / 32          # tiles the centre is above the origin
+center = Vector((dx, 0, 0)) + up * dy
+cam.location = center - f * 50
+cam.rotation_euler = (math.pi / 2 - ELEV, 0, 0)
+scene.camera = cam
+
+scene.render.engine = 'CYCLES'
+scene.cycles.samples = 1
+scene.cycles.use_denoising = False
+scene.cycles.filter_width = 0.01
+scene.cycles.device = 'CPU'
+scene.render.resolution_x = W
+scene.render.resolution_y = H
+scene.render.film_transparent = True
+scene.render.dither_intensity = 0.0
+scene.render.image_settings.file_format = 'PNG'
+scene.view_settings.view_transform = 'Standard'
+
+# ---- poses -------------------------------------------------------------------------
+DIRS = {'down': 0, 'right': 90, 'up': 180, 'left': -90}
+STRIDE, ARM = math.radians(34), math.radians(30)
+SEAT = 0.48 / UNIT          # stool height in model units
+FRAMES = []
+for i in range(4):
+    FRAMES.append(('idle', i, 0.0, [0, 0.4, 0.8, 0.4][i], i != 2))
+for i in range(8):
+    ph = 2 * math.pi * i / 8
+    FRAMES.append(('walk', i, math.sin(ph), -0.9 * abs(math.sin(ph)) + 0.45, True))
+
+
+def pose(swing, lift, frame):
+    if POSE == 'sit':
+        # thighs forward onto the seat, shins down; small breathing + sway
+        for side in 'LR':
+            hips[side].rotation_euler = (math.radians(-88), 0, 0)
+            knees[side].rotation_euler = (math.radians(92), 0, 0)
+        shoulders['L'].rotation_euler = (math.radians(-28), 0, math.radians(-8))
+        shoulders['R'].rotation_euler = (math.radians(-20 - 6 * (frame % 2)), 0, math.radians(8))
+        body.location = (0, 0, SEAT - 9.2 + lift * 0.6)
+        if head:
+            head.rotation_euler = (0, 0, math.radians([0, 4, 0, -4][frame % 4]))
+        return
+    hips['L'].rotation_euler = (STRIDE * swing, 0, 0)
+    hips['R'].rotation_euler = (-STRIDE * swing, 0, 0)
+    for side in 'LR':
+        knees[side].rotation_euler = (max(0.0, -STRIDE * swing * (1 if side == 'L' else -1)) * 0.6, 0, 0)
+    shoulders['L'].rotation_euler = (-ARM * swing, 0, 0)
+    shoulders['R'].rotation_euler = (ARM * swing, 0, 0)
+    body.location = (0, 0, lift)
+
+
+ID_MATS = {p: flat_mat('id%d' % p, (((p * 37) % 251) / 255, ((p * 91) % 251) / 255, ((p * 53) % 251) / 255)) for p in PIDS.values()}
+COLOR = {}
+for v, tones in VARIANTS.items():
+    for _, tone, _ in PARTS:
+        if (v, tone) not in COLOR:
+            COLOR[(v, tone)] = cel_mat(v + tone, tones.get(tone) or FIXED[tone])
+TIP_OFF = cel_mat('tipoff', FIXED['ledoff'])
+
+
+def set_pass(kind, variant=None):
+    for o, tone, p in PARTS:
+        o.data.materials[0] = DEPTH if kind == 'depth' else ID_MATS[p] if kind == 'id' else COLOR[(variant, tone)]
+
+
+def render(path, sixteen=False):
+    scene.render.image_settings.color_mode = 'BW' if sixteen else 'RGBA'
+    scene.render.image_settings.color_depth = '16' if sixteen else '8'
+    scene.render.filepath = path
+    bpy.ops.render.render(write_still=True)
+
+
+for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
+    os.makedirs(os.path.join(OUT, kind), exist_ok=True)
+for dname, yaw in DIRS.items():
+    root.rotation_euler = (0, 0, math.radians(yaw))
+    for anim, i, swing, lift, tip_on in FRAMES:
+        pose(swing, lift, i)
+        tag = f'{dname}_{anim}{i}.png'
+        set_pass('id'); render(os.path.join(OUT, 'id', tag))
+        set_pass('depth'); render(os.path.join(OUT, 'depth', tag), sixteen=True)
+        for v in VARIANTS:
+            set_pass('color', v)
+            if tip is not None and not tip_on:
+                tip.data.materials[0] = TIP_OFF
+            render(os.path.join(OUT, 'color_' + v, tag))
+print('rendered', WHO, len(FRAMES) * len(DIRS), 'frames x', len(VARIANTS))
