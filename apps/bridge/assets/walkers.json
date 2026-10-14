@@ -8,5 +8,9 @@
   "lumar-square": [
     { "sheet": "npc-townsman", "path": [[0, 17], [25, 17]], "speed": 1.0, "pause": 4000, "rest": "up" },
     { "sheet": "npc-waiting", "path": [[5, 12], [11, 12]], "speed": 0.7, "pause": 6000, "rest": "down" }
+  ],
+  "lumar-midnight": [
+    { "sheet": "npc-scholar", "path": [[24, 34], [24, 13]], "speed": 0.6, "pause": 6000, "rest": "up" },
+    { "sheet": "npc-quiet", "path": [[5, 29], [11, 29]], "speed": 0.5, "pause": 7000, "rest": "up" }
   ]
 }

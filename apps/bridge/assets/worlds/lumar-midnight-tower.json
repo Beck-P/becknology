@@ -409,7 +409,11 @@
       "type": "leave_world",
       "leaveTo": "lumar-midnight",
       "label": "DOOR",
-      "prompt": "LEAVE TOWER"
+      "prompt": "LEAVE TOWER",
+      "leaveSpawn": [
+        24,
+        12
+      ]
     },
     {
       "x": 5,

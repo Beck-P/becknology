@@ -668,7 +668,7 @@ def headstone(k, cx, cr, tone='#5a5868', lean=0.0, kind=0):
         k.box(cx - 0.18, cr - 0.04, 0.45, cx + 0.18, cr + 0.04, 0.53, (tone, 0.2), 'grave_cross')
     else:
         k.cone(cx, cr, 0.0, 0.8, 0.14, 0.03, (shade(tone, 0.9), 0.2), 'grave_obelisk', verts=4)
-    k.solid(cx - 0.25, cr - 0.25, cx + 0.25, cr + 0.25)
+    k.solid(cx - 0.05, cr - 0.05, cx + 0.05, cr + 0.05)       # just the stone's own tile: you can walk between the rows
 
 
 def mausoleum(k, x0, x1, r_back, r_front, tone='#5a5868', glow='#a080ff'):
