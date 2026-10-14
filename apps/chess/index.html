@@ -78,6 +78,17 @@
           </div>
         </div>
 
+        <div class="field-group">
+          <label class="field-label" for="wc-theme">Sculpt &amp; Board Theme</label>
+          <select id="wc-theme" class="wc-select">
+            <option value="classic" selected>Carved Alabaster &amp; Obsidian</option>
+            <option value="marble">Carrara &amp; Nero Marble</option>
+            <option value="staunton">Ancient Ivory &amp; Ebony Wood</option>
+            <option value="iron">Forged Silver &amp; Blackened Iron</option>
+            <option value="sanctum">Moonstone &amp; Shadow Onyx</option>
+          </select>
+        </div>
+
         <div class="controls" style="margin-top: 6px;">
           <button type="button" id="wc-new-btn" class="primary-action-btn">New Battle</button>
           <button type="button" id="wc-undo-btn">Undo</button>
@@ -116,6 +127,9 @@
 
           <!-- Floating Stage Controls (Full Screen / Half Screen / Quick Actions) -->
           <div class="stage-hud-bar">
+            <button type="button" class="stage-hud-btn" id="wc-stage-theme-btn" title="Cycle Sculpt &amp; Board Theme">
+              🎨 Style
+            </button>
             <button type="button" class="stage-hud-btn" id="wc-stage-cam-btn" title="Cycle Camera Angle">
               🎥 Angle
             </button>

@@ -68,9 +68,11 @@ const els = {
   wcRevLast: document.getElementById("wc-rev-last"),
   wcRevExit: document.getElementById("wc-rev-exit"),
   wcTheaterBtn: document.getElementById("wc-theater-btn"),
+  wcStageThemeBtn: document.getElementById("wc-stage-theme-btn"),
   wcStageCamBtn: document.getElementById("wc-stage-cam-btn"),
   wcStageUndoBtn: document.getElementById("wc-stage-undo-btn"),
   wcStageReviewBtn: document.getElementById("wc-stage-review-btn"),
+  wcTheme: document.getElementById("wc-theme"),
   promoModal: document.getElementById("promo-modal"),
 
   // Opening Trainer elements
@@ -93,6 +95,8 @@ let isTheaterMode = false;
 let userExitedTheater = false;
 const CAM_CYCLE = ["white", "cinematic", "top", "black"];
 let camCycleIdx = 0;
+const THEME_CYCLE = ["classic", "marble", "staunton", "iron", "sanctum"];
+let themeCycleIdx = 0;
 
 let chess = new Chess();
 let board = null;
@@ -205,6 +209,19 @@ function initWizardChess() {
     wizardGame.aiDifficulty = Number(els.wcDifficulty.value);
   });
 
+  // Theme / Sculpt Style change
+  if (els.wcTheme) {
+    els.wcTheme.addEventListener("change", () => {
+      const val = els.wcTheme.value;
+      themeCycleIdx = Math.max(0, THEME_CYCLE.indexOf(val));
+      const t = wizardGame.setTheme(val);
+      if (t && els.wcStageThemeBtn) {
+        els.wcStageThemeBtn.textContent = `🎨 ${t.whiteLabel}`;
+        els.wcStageThemeBtn.title = `Theme: ${t.name} (Click to cycle)`;
+      }
+    });
+  }
+
   // Side selection pills
   document.querySelectorAll(".pill-btn[data-side]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -232,6 +249,18 @@ function initWizardChess() {
   if (els.wcTheaterBtn) {
     els.wcTheaterBtn.addEventListener("click", () => {
       setTheaterMode(!isTheaterMode, true);
+    });
+  }
+  if (els.wcStageThemeBtn) {
+    els.wcStageThemeBtn.addEventListener("click", () => {
+      themeCycleIdx = (themeCycleIdx + 1) % THEME_CYCLE.length;
+      const nextId = THEME_CYCLE[themeCycleIdx];
+      if (els.wcTheme) els.wcTheme.value = nextId;
+      const t = wizardGame.setTheme(nextId);
+      if (t) {
+        els.wcStageThemeBtn.textContent = `🎨 ${t.whiteLabel}`;
+        els.wcStageThemeBtn.title = `Theme: ${t.name} (Click to cycle)`;
+      }
     });
   }
   if (els.wcStageCamBtn) {

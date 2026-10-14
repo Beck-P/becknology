@@ -29,6 +29,149 @@ export const DIFFICULTY_TIERS = {
   6: { name: "Supreme Oracle", elo: 2600, skill: 20, depth: 16, movetime: 1250, noise: 0, reward: 5000, capReward: 50 }
 };
 
+export const WIZARD_THEMES = {
+  classic: {
+    id: "classic",
+    name: "Carved Alabaster & Obsidian",
+    whiteLabel: "Alabaster",
+    blackLabel: "Obsidian",
+    wStone: { color: 0xf4efe6, roughness: 0.34, metalness: 0.08, bumpScale: 0.022 },
+    wCloth: { color: 0xe6dfd2, roughness: 0.42, metalness: 0.06, bumpScale: 0.018 },
+    wTrim:  { color: 0xdcd3c2, roughness: 0.28, metalness: 0.28 },
+    wMetal: { color: 0xe2e4e8, roughness: 0.24, metalness: 0.55 },
+    wGem:   { color: 0xfff6e0, emissive: 0xd8b878, emissiveIntensity: 0.85 },
+    bStone: { color: 0x1b1a1f, roughness: 0.30, metalness: 0.22, bumpScale: 0.026 },
+    bCloth: { color: 0x26242b, roughness: 0.38, metalness: 0.18, bumpScale: 0.020 },
+    bTrim:  { color: 0x35323c, roughness: 0.26, metalness: 0.42 },
+    bMetal: { color: 0x3f3d48, roughness: 0.22, metalness: 0.65 },
+    bGem:   { color: 0xff9858, emissive: 0xc84818, emissiveIntensity: 0.95 },
+    lightSq: { color: 0xc9a679, roughness: 0.52, metalness: 0.06 },
+    darkSq:  { color: 0x3b261c, roughness: 0.46, metalness: 0.10 },
+    frame:   { color: 0x22120b, roughness: 0.58, metalness: 0.15 },
+    bezel:   { color: 0x9e7038, roughness: 0.32, metalness: 0.72 },
+    fog: 0x120906,
+    ambientColor: 0x664c3a,
+    keyColor: 0xffebd2,
+    rimColor: 0x8cb0ff,
+    brazierFlame: 0xffaa44,
+    brazierLight: 0xff8c38,
+    spellW: 0xffe8b8,
+    spellB: 0xff7840
+  },
+  marble: {
+    id: "marble",
+    name: "Carrara & Nero Marble",
+    whiteLabel: "Carrara",
+    blackLabel: "Nero Marble",
+    wStone: { color: 0xf7f8fa, roughness: 0.18, metalness: 0.06, bumpScale: 0.016 },
+    wCloth: { color: 0xe8ecf2, roughness: 0.24, metalness: 0.08, bumpScale: 0.014 },
+    wTrim:  { color: 0xdce2ec, roughness: 0.20, metalness: 0.35 },
+    wMetal: { color: 0xeef2f7, roughness: 0.16, metalness: 0.72 },
+    wGem:   { color: 0xffffff, emissive: 0xa8c8ff, emissiveIntensity: 0.75 },
+    bStone: { color: 0x111318, roughness: 0.16, metalness: 0.25, bumpScale: 0.020 },
+    bCloth: { color: 0x1c2028, roughness: 0.22, metalness: 0.22, bumpScale: 0.016 },
+    bTrim:  { color: 0x2b313d, roughness: 0.20, metalness: 0.48 },
+    bMetal: { color: 0x38404f, roughness: 0.18, metalness: 0.75 },
+    bGem:   { color: 0xd0dcff, emissive: 0x5870a8, emissiveIntensity: 0.80 },
+    lightSq: { color: 0xe2e6ec, roughness: 0.24, metalness: 0.08 },
+    darkSq:  { color: 0x222630, roughness: 0.22, metalness: 0.16 },
+    frame:   { color: 0x14171d, roughness: 0.35, metalness: 0.25 },
+    bezel:   { color: 0x9aa4b4, roughness: 0.24, metalness: 0.82 },
+    fog: 0x0c0f14,
+    ambientColor: 0x586478,
+    keyColor: 0xf4f7ff,
+    rimColor: 0x98bfff,
+    brazierFlame: 0xc8e0ff,
+    brazierLight: 0x88b8ff,
+    spellW: 0xd8ecff,
+    spellB: 0x7898d8
+  },
+  staunton: {
+    id: "staunton",
+    name: "Ancient Ivory & Ebony Wood",
+    whiteLabel: "Boxwood Ivory",
+    blackLabel: "Ebony",
+    wStone: { color: 0xebd9b7, roughness: 0.38, metalness: 0.05, bumpScale: 0.024 },
+    wCloth: { color: 0xdec69c, roughness: 0.44, metalness: 0.06, bumpScale: 0.020 },
+    wTrim:  { color: 0xcfb280, roughness: 0.32, metalness: 0.32 },
+    wMetal: { color: 0xd8c49e, roughness: 0.28, metalness: 0.48 },
+    wGem:   { color: 0xfff0c8, emissive: 0xc89840, emissiveIntensity: 0.65 },
+    bStone: { color: 0x22140d, roughness: 0.34, metalness: 0.12, bumpScale: 0.028 },
+    bCloth: { color: 0x311d13, roughness: 0.40, metalness: 0.12, bumpScale: 0.022 },
+    bTrim:  { color: 0x482d1e, roughness: 0.30, metalness: 0.35 },
+    bMetal: { color: 0x583a28, roughness: 0.26, metalness: 0.52 },
+    bGem:   { color: 0xffb068, emissive: 0xa85018, emissiveIntensity: 0.75 },
+    lightSq: { color: 0xd8b888, roughness: 0.46, metalness: 0.05 },
+    darkSq:  { color: 0x4a2514, roughness: 0.42, metalness: 0.08 },
+    frame:   { color: 0x2b1309, roughness: 0.50, metalness: 0.12 },
+    bezel:   { color: 0xb8863c, roughness: 0.30, metalness: 0.78 },
+    fog: 0x140a05,
+    ambientColor: 0x6a4830,
+    keyColor: 0xffe4bc,
+    rimColor: 0xd8a878,
+    brazierFlame: 0xffb448,
+    brazierLight: 0xff9234,
+    spellW: 0xffe098,
+    spellB: 0xd86828
+  },
+  iron: {
+    id: "iron",
+    name: "Forged Silver & Blackened Iron",
+    whiteLabel: "Silver Pewter",
+    blackLabel: "Forged Iron",
+    wStone: { color: 0xdadfe6, roughness: 0.24, metalness: 0.74, bumpScale: 0.025 },
+    wCloth: { color: 0xc4cbd4, roughness: 0.30, metalness: 0.68, bumpScale: 0.020 },
+    wTrim:  { color: 0xe6ebf2, roughness: 0.18, metalness: 0.86 },
+    wMetal: { color: 0xf0f4fa, roughness: 0.14, metalness: 0.92 },
+    wGem:   { color: 0xffffff, emissive: 0xc8dcff, emissiveIntensity: 0.90 },
+    bStone: { color: 0x1b1e24, roughness: 0.26, metalness: 0.72, bumpScale: 0.028 },
+    bCloth: { color: 0x262a32, roughness: 0.32, metalness: 0.65, bumpScale: 0.022 },
+    bTrim:  { color: 0x363c48, roughness: 0.22, metalness: 0.82 },
+    bMetal: { color: 0x464e5c, roughness: 0.18, metalness: 0.88 },
+    bGem:   { color: 0xff7848, emissive: 0xd83810, emissiveIntensity: 1.05 },
+    lightSq: { color: 0x9aa2ae, roughness: 0.38, metalness: 0.35 },
+    darkSq:  { color: 0x242830, roughness: 0.34, metalness: 0.45 },
+    frame:   { color: 0x14161b, roughness: 0.42, metalness: 0.55 },
+    bezel:   { color: 0x788292, roughness: 0.25, metalness: 0.85 },
+    fog: 0x0d0f13,
+    ambientColor: 0x545c6c,
+    keyColor: 0xfff0dc,
+    rimColor: 0x78a8ff,
+    brazierFlame: 0xff8830,
+    brazierLight: 0xff6818,
+    spellW: 0xdce8ff,
+    spellB: 0xff5828
+  },
+  sanctum: {
+    id: "sanctum",
+    name: "Moonstone & Shadow Onyx",
+    whiteLabel: "Moonstone",
+    blackLabel: "Shadow Onyx",
+    wStone: { color: 0xedf4fc, roughness: 0.22, metalness: 0.12, bumpScale: 0.018 },
+    wCloth: { color: 0xd8e5f4, roughness: 0.28, metalness: 0.14, bumpScale: 0.015 },
+    wTrim:  { color: 0xcce0f5, roughness: 0.20, metalness: 0.42 },
+    wMetal: { color: 0xe6f0fa, roughness: 0.16, metalness: 0.76 },
+    wGem:   { color: 0xd8f4ff, emissive: 0x58c8ff, emissiveIntensity: 1.25 },
+    bStone: { color: 0x14111e, roughness: 0.22, metalness: 0.28, bumpScale: 0.022 },
+    bCloth: { color: 0x201b30, roughness: 0.28, metalness: 0.24, bumpScale: 0.018 },
+    bTrim:  { color: 0x302946, roughness: 0.22, metalness: 0.48 },
+    bMetal: { color: 0x3e3658, roughness: 0.18, metalness: 0.72 },
+    bGem:   { color: 0xd888ff, emissive: 0x9838ff, emissiveIntensity: 1.25 },
+    lightSq: { color: 0xb8c6d8, roughness: 0.36, metalness: 0.15 },
+    darkSq:  { color: 0x201c32, roughness: 0.32, metalness: 0.22 },
+    frame:   { color: 0x110e1c, roughness: 0.45, metalness: 0.28 },
+    bezel:   { color: 0x7c8ca8, roughness: 0.26, metalness: 0.80 },
+    fog: 0x090710,
+    ambientColor: 0x4c4868,
+    keyColor: 0xe6eeff,
+    rimColor: 0x9c78ff,
+    brazierFlame: 0x78c8ff,
+    brazierLight: 0x5898ff,
+    spellW: 0x78dcff,
+    spellB: 0xb858ff
+  }
+};
+
 // Piece values & piece-square positional tables (used for fast local eval & fallback)
 const PIECE_VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
@@ -379,9 +522,9 @@ class WizardAudio {
   }
 }
 
-// ---------- Procedural Stone Texture Generator ----------
+// ---------- Procedural Stone & Marble Vein Texture Generator ----------
 function createStoneTextures() {
-  const size = 256;
+  const size = 512;
   const bumpCanvas = document.createElement("canvas");
   bumpCanvas.width = size;
   bumpCanvas.height = size;
@@ -390,24 +533,26 @@ function createStoneTextures() {
   bctx.fillStyle = "#808080";
   bctx.fillRect(0, 0, size, size);
 
-  for (let i = 0; i < 3200; i++) {
+  // Fine stone pores & micro-chisel grain
+  for (let i = 0; i < 9500; i++) {
     const x = Math.random() * size;
     const y = Math.random() * size;
-    const r = 1 + Math.random() * 3.5;
-    const v = Math.floor(105 + (Math.random() - 0.5) * 90);
+    const r = 0.8 + Math.random() * 2.6;
+    const v = Math.floor(110 + (Math.random() - 0.5) * 76);
     bctx.fillStyle = `rgb(${v},${v},${v})`;
     bctx.fillRect(x, y, r, r);
   }
-  bctx.strokeStyle = "rgba(45,45,45,0.35)";
-  bctx.lineWidth = 1.2;
-  for (let c = 0; c < 18; c++) {
+  // Subtle natural marble veins & carved stone fissures
+  for (let c = 0; c < 36; c++) {
+    bctx.strokeStyle = c % 2 === 0 ? "rgba(42,42,42,0.32)" : "rgba(185,185,185,0.24)";
+    bctx.lineWidth = 0.8 + Math.random() * 1.1;
     bctx.beginPath();
     let cx = Math.random() * size;
     let cy = Math.random() * size;
     bctx.moveTo(cx, cy);
-    for (let s = 0; s < 5; s++) {
-      cx += (Math.random() - 0.5) * 28;
-      cy += (Math.random() - 0.5) * 28;
+    for (let s = 0; s < 7; s++) {
+      cx += (Math.random() - 0.5) * 38;
+      cy += (Math.random() - 0.5) * 38;
       bctx.lineTo(cx, cy);
     }
     bctx.stroke();
@@ -431,11 +576,10 @@ function createStoneTextures() {
   grad.addColorStop(1.0, "#0b0504");
   ectx.fillStyle = grad;
   ectx.fillRect(0, 0, 256, 128);
-  // Bright hearth specular hotspots for metallic armor & gold crowns
   [
-    [48, 56, 26, "rgba(255, 220, 150, 0.85)"],
-    [128, 42, 34, "rgba(255, 240, 200, 0.90)"],
-    [208, 58, 28, "rgba(255, 180, 95, 0.80)"]
+    [48, 56, 26, "rgba(255, 225, 175, 0.80)"],
+    [128, 42, 34, "rgba(255, 245, 225, 0.88)"],
+    [208, 58, 28, "rgba(235, 200, 145, 0.75)"]
   ].forEach(([hx, hy, hr, col]) => {
     const rg = ectx.createRadialGradient(hx, hy, 1, hx, hy, hr);
     rg.addColorStop(0, col);
@@ -481,6 +625,8 @@ export class WizardChess3D {
     this.mode = "ai"; // 'ai' | '2p'
     this.aiDifficulty = 3; // 1..6 (default 3 = Battlemage ~1450 ELO)
     this.playerColor = "w"; // 'w' | 'b'
+    this.themeId = "classic";
+    this.currentTheme = WIZARD_THEMES.classic;
     this.battleCamEnabled = true;
 
     this.selectedSquare = null;
@@ -525,6 +671,7 @@ export class WizardChess3D {
 
     this.initScene();
     this.buildBoard();
+    this.setTheme(this.themeId);
     this.syncPiecesFromBoard();
     this.loadBlenderPieces();
     this.bindEvents();
@@ -536,7 +683,7 @@ export class WizardChess3D {
     const h = this.container.clientHeight || 540;
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x120906, 0.028);
+    this.scene.fog = new THREE.FogExp2(0x120906, 0.026);
 
     this.camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
     this.camera.position.set(0, 8.6, 9.8);
@@ -547,7 +694,7 @@ export class WizardChess3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.24;
+    this.renderer.toneMappingExposure = 1.22;
 
     this.container.innerHTML = "";
     this.container.appendChild(this.renderer.domElement);
@@ -561,141 +708,102 @@ export class WizardChess3D {
     this.controls.maxPolarAngle = Math.PI * 0.46;
     this.controls.minPolarAngle = 0.15;
 
-    const ambient = new THREE.AmbientLight(0x5c402e, 1.55);
-    this.scene.add(ambient);
+    this.ambientLight = new THREE.AmbientLight(0x664c3a, 1.55);
+    this.scene.add(this.ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffe6c2, 2.15);
-    keyLight.position.set(5.5, 13.5, 6.5);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 2048;
-    keyLight.shadow.mapSize.height = 2048;
-    keyLight.shadow.camera.near = 2;
-    keyLight.shadow.camera.far = 28;
+    this.keyLight = new THREE.DirectionalLight(0xffebd2, 2.2);
+    this.keyLight.position.set(5.5, 13.5, 6.5);
+    this.keyLight.castShadow = true;
+    this.keyLight.shadow.mapSize.width = 2048;
+    this.keyLight.shadow.mapSize.height = 2048;
+    this.keyLight.shadow.camera.near = 2;
+    this.keyLight.shadow.camera.far = 28;
     const d = 6.8;
-    keyLight.shadow.camera.left = -d;
-    keyLight.shadow.camera.right = d;
-    keyLight.shadow.camera.top = d;
-    keyLight.shadow.camera.bottom = -d;
-    keyLight.shadow.bias = -0.0005;
-    this.scene.add(keyLight);
+    this.keyLight.shadow.camera.left = -d;
+    this.keyLight.shadow.camera.right = d;
+    this.keyLight.shadow.camera.top = d;
+    this.keyLight.shadow.camera.bottom = -d;
+    this.keyLight.shadow.bias = -0.0005;
+    this.scene.add(this.keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x78a4ff, 1.05);
-    rimLight.position.set(-7, 8, -8);
-    this.scene.add(rimLight);
+    this.rimLight = new THREE.DirectionalLight(0x8cb0ff, 1.15);
+    this.rimLight.position.set(-7, 8, -8);
+    this.scene.add(this.rimLight);
 
     const { bumpTex, envTex } = createStoneTextures();
+    this.bumpTex = bumpTex;
     this.scene.environment = envTex;
 
     this.materials = {
-      whitePiece: new THREE.MeshStandardMaterial({
-        color: 0xf3e8d2,
-        roughness: 0.36,
-        metalness: 0.1,
-        bumpMap: bumpTex,
-        bumpScale: 0.026
-      }),
-      whiteCloth: new THREE.MeshStandardMaterial({
-        color: 0x1e4ea8,
-        roughness: 0.58,
-        metalness: 0.12,
-        bumpMap: bumpTex,
-        bumpScale: 0.015
-      }),
-      whiteAccent: new THREE.MeshStandardMaterial({
-        color: 0xf0b848,
-        roughness: 0.2,
-        metalness: 0.88
-      }),
-      whiteMetal: new THREE.MeshStandardMaterial({
-        color: 0xe6eef8,
-        roughness: 0.16,
-        metalness: 0.92
-      }),
-      whiteCore: new THREE.MeshStandardMaterial({
-        color: 0x58e4ff,
-        emissive: 0x18b8ff,
-        emissiveIntensity: 2.0,
-        roughness: 0.15
-      }),
-      blackPiece: new THREE.MeshStandardMaterial({
-        color: 0x1d1822,
-        roughness: 0.3,
-        metalness: 0.28,
-        bumpMap: bumpTex,
-        bumpScale: 0.032
-      }),
-      blackCloth: new THREE.MeshStandardMaterial({
-        color: 0x821628,
-        roughness: 0.55,
-        metalness: 0.15,
-        bumpMap: bumpTex,
-        bumpScale: 0.015
-      }),
-      blackAccent: new THREE.MeshStandardMaterial({
-        color: 0xd47e42,
-        roughness: 0.22,
-        metalness: 0.85
-      }),
-      blackMetal: new THREE.MeshStandardMaterial({
-        color: 0x4a4e5e,
-        roughness: 0.19,
-        metalness: 0.9
-      }),
-      blackCore: new THREE.MeshStandardMaterial({
-        color: 0xff6838,
-        emissive: 0xff3010,
-        emissiveIntensity: 2.1,
-        roughness: 0.15
-      }),
-      // Per-archetype signature emissive cores so classes are visually distinct at a glance
-      cores: {
-        w: {
-          p: new THREE.MeshStandardMaterial({ color: 0x68e4ff, emissive: 0x20a8ff, emissiveIntensity: 1.9 }),
-          r: new THREE.MeshStandardMaterial({ color: 0xffb848, emissive: 0xff7818, emissiveIntensity: 2.2 }),
-          n: new THREE.MeshStandardMaterial({ color: 0x48f5a8, emissive: 0x14d478, emissiveIntensity: 2.0 }),
-          b: new THREE.MeshStandardMaterial({ color: 0x70d8ff, emissive: 0x3898ff, emissiveIntensity: 2.3 }),
-          q: new THREE.MeshStandardMaterial({ color: 0xffe878, emissive: 0xffb824, emissiveIntensity: 2.4 }),
-          k: new THREE.MeshStandardMaterial({ color: 0xffdf68, emissive: 0xff9810, emissiveIntensity: 2.5 })
-        },
-        b: {
-          p: new THREE.MeshStandardMaterial({ color: 0xff6840, emissive: 0xff2810, emissiveIntensity: 1.9 }),
-          r: new THREE.MeshStandardMaterial({ color: 0xff5218, emissive: 0xe82000, emissiveIntensity: 2.3 }),
-          n: new THREE.MeshStandardMaterial({ color: 0xc868ff, emissive: 0x9828ff, emissiveIntensity: 2.1 }),
-          b: new THREE.MeshStandardMaterial({ color: 0xe068ff, emissive: 0xb424ff, emissiveIntensity: 2.3 }),
-          q: new THREE.MeshStandardMaterial({ color: 0xff4888, emissive: 0xff1458, emissiveIntensity: 2.4 }),
-          k: new THREE.MeshStandardMaterial({ color: 0xff3838, emissive: 0xff0818, emissiveIntensity: 2.5 })
-        }
-      },
-      lightSquare: new THREE.MeshStandardMaterial({
-        color: 0xc9a679,
-        roughness: 0.55,
-        metalness: 0.06,
-        bumpMap: bumpTex,
-        bumpScale: 0.02
-      }),
-      darkSquare: new THREE.MeshStandardMaterial({
-        color: 0x3b261c,
-        roughness: 0.48,
-        metalness: 0.1,
-        bumpMap: bumpTex,
-        bumpScale: 0.025
-      }),
-      boardFrame: new THREE.MeshStandardMaterial({
-        color: 0x22120b,
-        roughness: 0.6,
-        metalness: 0.15,
-        bumpMap: bumpTex,
-        bumpScale: 0.03
-      }),
-      brassTrim: new THREE.MeshStandardMaterial({
-        color: 0xb87d38,
-        roughness: 0.3,
-        metalness: 0.8
-      })
+      whitePiece: new THREE.MeshStandardMaterial({ bumpMap: bumpTex }),
+      whiteCloth: new THREE.MeshStandardMaterial({ bumpMap: bumpTex }),
+      whiteAccent: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.012 }),
+      whiteMetal: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.008 }),
+      whiteCore: new THREE.MeshStandardMaterial({ roughness: 0.2 }),
+      blackPiece: new THREE.MeshStandardMaterial({ bumpMap: bumpTex }),
+      blackCloth: new THREE.MeshStandardMaterial({ bumpMap: bumpTex }),
+      blackAccent: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.014 }),
+      blackMetal: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.01 }),
+      blackCore: new THREE.MeshStandardMaterial({ roughness: 0.2 }),
+      lightSquare: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.018 }),
+      darkSquare: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.022 }),
+      boardFrame: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.028 }),
+      brassTrim: new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 0.78 })
     };
 
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
+  }
+
+  setTheme(themeId) {
+    const t = WIZARD_THEMES[themeId] || WIZARD_THEMES.classic;
+    this.themeId = t.id;
+    this.currentTheme = t;
+
+    const applyStd = (mat, cfg) => {
+      if (!mat || !cfg) return;
+      mat.color.setHex(cfg.color);
+      if (cfg.roughness !== undefined) mat.roughness = cfg.roughness;
+      if (cfg.metalness !== undefined) mat.metalness = cfg.metalness;
+      if (cfg.bumpScale !== undefined) mat.bumpScale = cfg.bumpScale;
+      if (cfg.emissive !== undefined) mat.emissive.setHex(cfg.emissive);
+      if (cfg.emissiveIntensity !== undefined) mat.emissiveIntensity = cfg.emissiveIntensity;
+      mat.needsUpdate = true;
+    };
+
+    applyStd(this.materials.whitePiece, t.wStone);
+    applyStd(this.materials.whiteCloth, t.wCloth);
+    applyStd(this.materials.whiteAccent, t.wTrim);
+    applyStd(this.materials.whiteMetal, t.wMetal);
+    applyStd(this.materials.whiteCore, t.wGem);
+
+    applyStd(this.materials.blackPiece, t.bStone);
+    applyStd(this.materials.blackCloth, t.bCloth);
+    applyStd(this.materials.blackAccent, t.bTrim);
+    applyStd(this.materials.blackMetal, t.bMetal);
+    applyStd(this.materials.blackCore, t.bGem);
+
+    applyStd(this.materials.lightSquare, t.lightSq);
+    applyStd(this.materials.darkSquare, t.darkSq);
+    applyStd(this.materials.boardFrame, t.frame);
+    applyStd(this.materials.brassTrim, t.bezel);
+
+    if (this.scene && this.scene.fog) {
+      this.scene.fog.color.setHex(t.fog);
+    }
+    if (this.ambientLight) this.ambientLight.color.setHex(t.ambientColor);
+    if (this.keyLight) this.keyLight.color.setHex(t.keyColor);
+    if (this.rimLight) this.rimLight.color.setHex(t.rimColor);
+
+    for (const b of this.braziers) {
+      if (b.flame && b.flame.material) b.flame.material.color.setHex(t.brazierFlame);
+      if (b.light) b.light.color.setHex(t.brazierLight);
+    }
+
+    if (this.callbacks.onThemeChange) {
+      this.callbacks.onThemeChange(t);
+    }
+    return t;
   }
 
   loadBlenderPieces() {
@@ -819,11 +927,7 @@ export class WizardChess3D {
     const clothMat = isWhite ? this.materials.whiteCloth : this.materials.blackCloth;
     const accentMat = isWhite ? this.materials.whiteAccent : this.materials.blackAccent;
     const metalMat = isWhite ? this.materials.whiteMetal : this.materials.blackMetal;
-    const eyeMat =
-      (this.materials.cores &&
-        this.materials.cores[color] &&
-        this.materials.cores[color][type]) ||
-      (isWhite ? this.materials.whiteCore : this.materials.blackCore);
+    const eyeMat = isWhite ? this.materials.whiteCore : this.materials.blackCore;
 
     const template = this.blenderTemplates.get(type);
     if (template) {
@@ -852,28 +956,21 @@ export class WizardChess3D {
             node.receiveShadow = true;
             const matName = node.material ? node.material.name.toLowerCase() : "";
             const nodeName = node.name.toLowerCase();
-            if (matName.includes("gem") || nodeName.includes("gem") || n.includes("bishop_shield") || n.includes("queen_shield")) {
+            if (matName.includes("gem") || nodeName.includes("gem")) {
               node.material = eyeMat;
-            } else if (matName.includes("cloth") || nodeName.includes("cloth") || n === "bishop_body") {
+            } else if (matName.includes("cloth") || nodeName.includes("cloth")) {
               node.material = clothMat;
             } else if (
               matName.includes("metal") ||
               nodeName.includes("metal") ||
-              nodeName.includes("weapon") ||
-              n === "pawn_head" ||
-              n === "knight_head"
+              nodeName.includes("weapon")
             ) {
               node.material = metalMat;
             } else if (
               matName.includes("trim") ||
               nodeName.includes("trim") ||
               nodeName.includes("shield") ||
-              nodeName.includes("wings") ||
-              n === "rook_head" ||
-              n === "queen_head" ||
-              n === "king_head" ||
-              n === "bishop_weapon" ||
-              n === "queen_weapon"
+              nodeName.includes("wings")
             ) {
               node.material = accentMat;
             } else {
@@ -912,21 +1009,6 @@ export class WizardChess3D {
         } else {
           orient.add(child);
         }
-      }
-
-      // Add subtle class-specific glowing rune geometry at the base for instant visual recognition
-      if (type !== "p") {
-        const segMap = { r: 4, n: 3, b: 6, q: 8, k: 16 };
-        const radMap = { r: 0.44, n: 0.41, b: 0.4, q: 0.45, k: 0.48 };
-        const sigilGeo = new THREE.RingGeometry(
-          (radMap[type] || 0.42) - 0.045,
-          radMap[type] || 0.42,
-          segMap[type] || 12
-        );
-        const sigilMesh = new THREE.Mesh(sigilGeo, eyeMat);
-        sigilMesh.rotation.x = -Math.PI / 2;
-        sigilMesh.position.y = 0.015;
-        root.add(sigilMesh);
       }
 
       root.rotation.y = isWhite ? Math.PI : 0;
@@ -1395,7 +1477,9 @@ export class WizardChess3D {
       const defaultRotY = attacker.userData.color === "w" ? Math.PI : 0;
       const aType = attacker.userData.type;
       const isWhiteAttacker = attacker.userData.color === "w";
-      const spellColor = isWhiteAttacker ? 0x58d4ff : 0xff5a36;
+      const spellColor = isWhiteAttacker
+        ? (this.currentTheme?.spellW || 0xffe8b8)
+        : (this.currentTheme?.spellB || 0xff7840);
 
       const duelTitles = {
         p: "🛡️ VANGUARD SHIELD BASH & THRUST",
@@ -1839,7 +1923,9 @@ export class WizardChess3D {
 
     this.spawnSpellBurst(
       new THREE.Vector3(worldPos.x, worldPos.y + 0.55, worldPos.z),
-      attackerColor === "w" ? 0x58d4ff : 0xff5a36,
+      attackerColor === "w"
+        ? (this.currentTheme?.spellW || 0xffe8b8)
+        : (this.currentTheme?.spellB || 0xff7840),
       28
     );
   }
