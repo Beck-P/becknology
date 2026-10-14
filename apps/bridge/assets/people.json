@@ -714,5 +714,36 @@
         "a": "SOMEONE'S BURNING A LAMP ON MIDNIGHT. NORTH BY EAST, PAST THE ABBEY. READ THE LOG DOWNSTAIRS IF YOU WANT TO KNOW MORE - IT'LL TELL YOU MORE THAN I WILL."
       }
     ]
+  },
+  "sev": {
+    "name": "Sev Akana",
+    "role": "Owns Lucky 7, the pachinko parlour",
+    "sheet": "npc-sev",
+    "at": [
+      {
+        "world": "arcadia-lucky-7",
+        "label": "SEV"
+      }
+    ],
+    "greet": "BALLS IN, COINS OUT. FIVE TO THE COIN, NO HAGGLING. YOU'RE THE SKY-CAPTAIN EVERYONE'S TALKING ABOUT - FIRST TRAY'S ON THE HOUSE, ONCE A NIGHT.",
+    "again": "BACK AGAIN, PLAYER. THE MACHINES REMEMBER YOU. THEY DON'T CARE, BUT THEY REMEMBER.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "SEV AKANA. I PLAYED THESE TWENTY YEARS BEFORE I OWNED THEM. WON THE PLACE OFF THE LAST OWNER ON A SINGLE LUCKY 7. HE STILL COMES IN. TUESDAYS."
+      },
+      {
+        "q": "How to play",
+        "a": "TURN THE HANDLE TILL THE BALLS DROP BESIDE THE SCREEN, NOT ON IT. THE MIDDLE POCKET SPINS THE REELS. THREE ALIKE OPENS THE DOOR AT THE BOTTOM - THAT'S A FEVER. THREE SEVENS, TWO ROUNDS. THE TULIPS PAY A LITTLE."
+      },
+      {
+        "q": "The machines",
+        "a": "SIX BOARDS, EVERY ONE PINNED DIFFERENT. I DON'T TOUCH THE PINS - MOST PARLOURS DO. THAT'S WHY THE REGULARS COME HERE AND NOT THERE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "HALCYON WANTS MY SCREENS FOR ADS. I SAID MY SCREENS ARE FOR SEVENS. THEY SENT A LAWYER. HE PLAYED ONE TRAY AND LEFT HAPPY. STILL WAITING ON THE NEXT ONE."
+      }
+    ]
   }
 }

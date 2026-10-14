@@ -969,3 +969,105 @@ def street_railing(k, x0, x1, r, h=0.95):
     while x < x1:
         k.box(x - 0.03, r + 0.12, 0.25, x + 0.03, r + 0.18, h - 0.06, WALL[3], 'rail_post')
         x += 1.0
+
+
+# ---- pachinko parlour (Lucky 7) ----------------------------------------------------------------
+def pachinko_machine(k, cx, r0, bg='#183a78', accent='#40c8ff', w=0.86, lit=True):
+    """A pachinko machine with its back at r0 facing the room: a chrome
+    case, the glass over a lit pin board (pins, a little screen, the
+    tulips), a crest lamp on top, the ball tray and the handle below."""
+    x0, x1 = cx - w / 2, cx + w / 2
+    body = ('#2a2a36', 0.06)
+    k.box(x0, r0, 0.0, x1, r0 + 0.42, 0.62, body, 'pk_base', bevel=0.015)
+    k.box(x0, r0, 0.62, x1, r0 + 0.36, 1.92, body, 'pk_case', bevel=0.015)
+    for xx in (x0 - 0.005, x1 - 0.025):                       # chrome edges, lit trim
+        k.box(xx, r0 + 0.3, 0.64, xx + 0.03, r0 + 0.37, 1.9, ('#c8ccd8', 0.04), 'pk_chrome')
+        k.box(xx, r0 + 0.37, 0.7, xx + 0.03, r0 + 0.38, 1.84, shade(accent, 0.4), 'pk_trim', emit=(accent, 0.8 if lit else 0.0))
+    fz0, fz1 = 0.74, 1.76
+    k.box(x0 + 0.05, r0 + 0.36, fz0, x1 - 0.05, r0 + 0.365, fz1, shade(bg, 0.5), 'pk_board', emit=(bg, 0.55 if lit else 0.1))
+    # the pins, as a dotted field of lit brass
+    for i in range(7):
+        for j in range(5):
+            z = fz0 + 0.1 + i * 0.13
+            x = x0 + 0.13 + j * (w - 0.26) / 4 + (0.05 if i % 2 else 0)
+            if x < x1 - 0.1 and not (0.38 < (z - fz0) / (fz1 - fz0) < 0.72 and abs(x - cx) < 0.16):
+                k.box(x - 0.008, r0 + 0.366, z - 0.008, x + 0.008, r0 + 0.37, z + 0.008, '#f0d890', 'pk_pin', emit=('#f0d890', 0.5 if lit else 0.0))
+    sz = fz0 + (fz1 - fz0) * 0.55
+    k.box(cx - 0.15, r0 + 0.366, sz - 0.1, cx + 0.15, r0 + 0.375, sz + 0.12, '#080810', 'pk_screen_frame')
+    k.box(cx - 0.12, r0 + 0.375, sz - 0.07, cx + 0.12, r0 + 0.378, sz + 0.09, shade(accent, 0.3), 'pk_screen',
+          emit=(accent, 0.95 if lit else 0.05))
+    for dx in (-0.25, 0.25):                                   # tulips
+        k.box(cx + dx - 0.04, r0 + 0.366, fz0 + 0.18, cx + dx + 0.04, r0 + 0.375, fz0 + 0.24, '#300810', 'pk_tulip', emit=('#ff5050', 0.8 if lit else 0.0))
+    k.box(cx - 0.05, r0 + 0.366, fz0 + 0.33, cx + 0.05, r0 + 0.375, fz0 + 0.38, '#302008', 'pk_start', emit=('#ffd040', 0.9 if lit else 0.0))
+    for (a, b, c, d) in ((x0 + 0.04, fz0 - 0.03, x1 - 0.04, fz0), (x0 + 0.04, fz1, x1 - 0.04, fz1 + 0.03),
+                         (x0 + 0.04, fz0, x0 + 0.07, fz1), (x1 - 0.07, fz0, x1 - 0.04, fz1)):
+        k.box(a, r0 + 0.36, b, c, r0 + 0.39, d, ('#c8ccd8', 0.04), 'pk_glass_rim')
+    # crest lamp and nameplate
+    k.box(x0, r0 + 0.04, 1.92, x1, r0 + 0.36, 2.06, ('#1a1a24', 0.06), 'pk_crest', bevel=0.02)
+    k.box(x0 + 0.06, r0 + 0.36, 1.94, x1 - 0.06, r0 + 0.365, 2.04, shade(accent, 0.35), 'pk_nameplate', emit=(accent, 0.9 if lit else 0.0))
+    k.sphere(cx, r0 + 0.2, 2.13, 0.08, 0.08, shade(accent, 0.6), 'pk_lamp', emit=(accent, 1.0 if lit else 0.0), segs=8)
+    # the tray of balls, the handle
+    k.box(x0 + 0.04, r0 + 0.42, 0.5, x1 - 0.04, r0 + 0.62, 0.62, ('#c8ccd8', 0.04), 'pk_tray', bevel=0.02)
+    k.box(x0 + 0.08, r0 + 0.44, 0.6, x1 - 0.08, r0 + 0.6, 0.62, '#14141c', 'pk_tray_in')
+    for i in range(9):
+        k.sphere(x0 + 0.13 + i * (w - 0.3) / 8 + k.rng.uniform(-0.02, 0.02), r0 + 0.52 + k.rng.uniform(-0.04, 0.04), 0.635, 0.025, 0.025,
+                 '#e0e4f0', 'pk_ball', segs=6)
+    k.cyl_y(x1 - 0.14, r0 + 0.42, r0 + 0.52, 0.4, 0.06, 0.06, ('#3a3a48', 0.06), 'pk_handle', verts=10)
+    k.cyl_y(x1 - 0.14, r0 + 0.52, r0 + 0.55, 0.4, 0.07, 0.07, ('#c8ccd8', 0.04), 'pk_knob', verts=10)
+    if lit:
+        k.point_light(cx, r0 + 0.9, 1.3, accent, 4.0, radius=0.2, group='flicker')
+    k.solid(x0, r0, x1, r0 + 0.62)
+
+
+def prize_wall(k, x0, x1, r_face, top=2.1):
+    """Glass-fronted prize shelves: plush toys, boxed toys, cans, a gold 7."""
+    case = ('#2a1a24', 0.06)
+    k.box(x0, r_face, 0.0, x1, r_face + 0.05, top, case, 'prize_case')                  # an open-fronted case
+    for xx in (x0, x1 - 0.05):
+        k.box(xx, r_face, 0.0, xx + 0.05, r_face + 0.44, top, case, 'prize_case')
+    k.box(x0, r_face, top - 0.06, x1, r_face + 0.44, top, case, 'prize_case')
+    k.box(x0, r_face, 0.0, x1, r_face + 0.44, 0.1, case, 'prize_case')
+    cols = (PINK, YEL, CYAN, '#f09040', GREEN, PURP, '#f0f0f0')
+    for li, z in enumerate((0.55, 1.05, 1.55)):
+        k.box(x0 + 0.04, r_face + 0.02, z - 0.04, x1 - 0.04, r_face + 0.4, z, ('#c8a050', 0.06), 'prize_shelf')
+        x = x0 + 0.12
+        while x < x1 - 0.2:
+            kind = k.rng.choice(('plush', 'box', 'box', 'cans'))
+            c = k.rng.choice(cols)
+            if kind == 'plush':
+                k.sphere(x + 0.1, r_face + 0.24, z + 0.12, 0.12, 0.11, (c, 0.12), 'plush', segs=8)
+                k.sphere(x + 0.1, r_face + 0.26, z + 0.3, 0.08, 0.08, (c, 0.12), 'plush', segs=8)
+                for dx in (-0.05, 0.05):
+                    k.sphere(x + 0.1 + dx, r_face + 0.26, z + 0.38, 0.03, 0.03, (c, 0.12), 'plush_ear', segs=5)
+                x += 0.26
+            elif kind == 'box':
+                h = k.rng.uniform(0.18, 0.36)
+                k.box(x, r_face + 0.1, z, x + 0.2, r_face + 0.36, z + h, (c, 0.1), 'prize_box', bevel=0.01)
+                k.box(x + 0.04, r_face + 0.36, z + 0.05, x + 0.16, r_face + 0.362, z + h - 0.05, shade(c, 1.4), 'prize_window')
+                x += 0.24
+            else:
+                for i in range(3):
+                    k.cyl(x + 0.05 + i * 0.07, r_face + 0.25, z, z + 0.14, 0.03, c, 'can', verts=8)
+                x += 0.26
+    k.box(x0, r_face + 0.38, top - 0.12, x1, r_face + 0.42, top - 0.08, '#301008', 'prize_led', emit=(YEL, 0.8))
+    k.point_light((x0 + x1) / 2, r_face + 0.8, top - 0.3, '#ffe0a0', 14, radius=0.4)
+    k.solid(x0, r_face, x1, r_face + 0.45)
+
+
+def maneki_neko(k, cx, cr, s=1.0, col='#e8c040'):
+    """The lucky cat on its red plinth, one paw up."""
+    k.box(cx - 0.36 * s, cr - 0.32 * s, 0.0, cx + 0.36 * s, cr + 0.32 * s, 0.45, ('#8a1a1a', 0.08), 'neko_plinth', bevel=0.03)
+    k.box(cx - 0.38 * s, cr - 0.34 * s, 0.42, cx + 0.38 * s, cr + 0.34 * s, 0.47, ('#c8a050', 0.06), 'neko_plinth_cap')
+    z = 0.47
+    k.blob(cx, cr, z + 0.32 * s, 0.28 * s, 0.24 * s, 0.32 * s, (col, 0.1), 'neko_body', segs=12)
+    k.sphere(cx, cr + 0.04 * s, z + 0.78 * s, 0.24 * s, 0.24 * s, (col, 0.1), 'neko_head', segs=12)
+    for dx in (-0.14, 0.14):
+        k.cone(cx + dx * s, cr, z + 0.94 * s, z + 1.1 * s, 0.07 * s, 0.01, (col, 0.1), 'neko_ear', verts=6)
+        k.box(cx + dx * s * 0.6 - 0.03 * s, cr + 0.25 * s, z + 0.8 * s, cx + dx * s * 0.6 + 0.03 * s, cr + 0.27 * s, z + 0.82 * s, '#1a1a1a', 'neko_eye')
+    k.box(cx - 0.18 * s, cr + 0.2 * s, z + 0.5 * s, cx + 0.18 * s, cr + 0.24 * s, z + 0.56 * s, ('#c02020', 0.08), 'neko_collar')
+    k.sphere(cx, cr + 0.25 * s, z + 0.46 * s, 0.05 * s, 0.05 * s, '#ffe080', 'neko_bell', emit=('#ffd040', 0.4), segs=6)
+    k.tube((cx + 0.2 * s, cr + 0.08 * s, z + 0.55 * s), (cx + 0.3 * s, cr + 0.12 * s, z + 1.0 * s), 0.07 * s, (col, 0.1), 'neko_paw', verts=8)
+    k.sphere(cx + 0.3 * s, cr + 0.12 * s, z + 1.04 * s, 0.08 * s, 0.08 * s, '#f0f0f0', 'neko_pad', segs=8)
+    k.box(cx - 0.1 * s, cr + 0.22 * s, z + 0.18 * s, cx + 0.1 * s, cr + 0.25 * s, z + 0.32 * s, ('#f0e0b0', 0.05), 'neko_coin')
+    k.point_light(cx, cr + 0.8, 1.6, '#ffd070', 10, radius=0.3)
+    k.solid(cx - 0.4 * s, cr - 0.35 * s, cx + 0.4 * s, cr + 0.35 * s)

@@ -1,0 +1,584 @@
+{
+  "name": "Lucky 7",
+  "width": 14,
+  "height": 11,
+  "tileSize": 16,
+  "tileset": "arcadia-lucky-7",
+  "spawns": {
+    "player": [
+      7,
+      8
+    ]
+  },
+  "shipExit": false,
+  "interactions": [
+    {
+      "x": 6,
+      "y": 9,
+      "type": "leave_world",
+      "label": "STREET",
+      "prompt": "RETURN TO STREET",
+      "leaveTo": "arcadia-street",
+      "leaveSpawn": [
+        25,
+        8
+      ]
+    },
+    {
+      "x": 7,
+      "y": 9,
+      "type": "leave_world",
+      "label": "STREET",
+      "prompt": "RETURN TO STREET",
+      "leaveTo": "arcadia-street",
+      "leaveSpawn": [
+        25,
+        8
+      ]
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "type": "pachinko",
+      "machine": "seven-seas",
+      "label": "SEVEN SEAS",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 3,
+      "y": 2,
+      "type": "pachinko",
+      "machine": "star-idol",
+      "label": "STAR IDOL",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 4,
+      "y": 2,
+      "type": "pachinko",
+      "machine": "lucky-cat",
+      "label": "LUCKY CAT",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "type": "pachinko",
+      "machine": "oni-gate",
+      "label": "ONI GATE",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 7,
+      "y": 2,
+      "type": "pachinko",
+      "machine": "seven-seas",
+      "label": "SEVEN SEAS",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 1,
+      "y": 5,
+      "type": "pachinko",
+      "machine": "lucky-cat",
+      "label": "LUCKY CAT",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 2,
+      "y": 5,
+      "type": "pachinko",
+      "machine": "oni-gate",
+      "label": "ONI GATE",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "type": "pachinko",
+      "machine": "seven-seas",
+      "label": "SEVEN SEAS",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 4,
+      "y": 5,
+      "type": "pachinko",
+      "machine": "star-idol",
+      "label": "STAR IDOL",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "type": "pachinko",
+      "machine": "neon-dragon",
+      "label": "NEON DRAGON",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
+      "x": 2,
+      "y": 3,
+      "type": "dialog",
+      "label": "REGULAR",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "LONG TEAL HAIR, A PURPLE JACKET, BOTH HANDS ON THE HANDLE.\n\n\"DON'T TALK TO ME. I'M ON A REACH.\"\n\nTHE SCREEN SAYS OTHERWISE."
+    },
+    {
+      "x": 5,
+      "y": 3,
+      "type": "dialog",
+      "label": "REGULAR",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "A MOHAWK, A RED VEST, AND A TOWER OF BALL BOXES STACKED BESIDE THE STOOL, TALLER THAN ITS OWNER.\n\n\"STAR IDOL'S LOOSE TONIGHT. DON'T TELL ANYONE.\""
+    },
+    {
+      "x": 9,
+      "y": 3,
+      "type": "pachinko_prizes",
+      "label": "PRIZE COUNTER",
+      "prompt": "PRESS E TO CASH IN"
+    },
+    {
+      "x": 12,
+      "y": 3,
+      "type": "pachinko_prizes",
+      "label": "PRIZE COUNTER",
+      "prompt": "PRESS E TO CASH IN"
+    },
+    {
+      "x": 10,
+      "y": 2,
+      "type": "dialog",
+      "label": "SEV",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "\"BALLS IN, COINS OUT. FIVE TO THE COIN, NO HAGGLING, NO CREDIT.\""
+    },
+    {
+      "x": 11,
+      "y": 6,
+      "type": "dialog",
+      "label": "LUCKY CAT",
+      "prompt": "PRESS E TO RUB",
+      "dialog": "A GOLDEN CAT ON A RED PLINTH, ONE PAW RAISED, A COIN IN ITS LAP. THE PAW IS WORN BRIGHT FROM RUBBING.\n\nYOU RUB IT. NOTHING HAPPENS. THEN, FROM THE BACK ROW, A JACKPOT BELL."
+    },
+    {
+      "x": 9,
+      "y": 5,
+      "type": "dialog",
+      "label": "BALL KIOSK",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "A DISPENSER THAT TAKES COINS AND RATTLES OUT BALLS INTO A TRAY.\n\nTHE MACHINES SELL TRAYS TOO - IT'S THE SAME PRICE, IT JUST FEELS MORE OFFICIAL HERE."
+    },
+    {
+      "x": 10,
+      "y": 8,
+      "type": "dialog",
+      "label": "BENCH",
+      "prompt": "PRESS E TO SIT",
+      "dialog": "A BENCH BY THE DOOR FOR SITTING OUT A BAD RUN.\n\nSOMEONE HAS SCRATCHED INTO IT: 'THE BALLS DON'T KNOW YOU.'"
+    },
+    {
+      "x": 12,
+      "y": 4,
+      "type": "dialog",
+      "label": "VENDING MACHINE",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "CANNED COFFEE, HOT. CANNED COFFEE, COLD. CANNED COFFEE, LUKEWARM (DISCOUNTED)."
+    }
+  ],
+  "designTiles": null,
+  "designTileNames": null,
+  "collisions": [
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  ],
+  "tiles": [
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      1
+    ],
+    [
+      1,
+      2,
+      4,
+      2,
+      2,
+      4,
+      2,
+      2,
+      4,
+      4,
+      4,
+      4,
+      4,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      1
+    ],
+    [
+      1,
+      4,
+      4,
+      4,
+      4,
+      4,
+      2,
+      2,
+      4,
+      4,
+      2,
+      2,
+      4,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      4,
+      4,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      4,
+      4,
+      4,
+      2,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  ],
+  "tileNames": {
+    "0": "void",
+    "1": "wall",
+    "2": "floor",
+    "3": "door",
+    "4": "furniture"
+  },
+  "scene": {
+    "id": "arcadia-lucky-7",
+    "flicker": {
+      "from": "dim",
+      "to": "full"
+    },
+    "actors": [
+      {
+        "sheet": "npc-sev",
+        "x": 10,
+        "y": 2,
+        "facing": "down"
+      },
+      {
+        "sheet": "npc-patron-a",
+        "x": 2,
+        "y": 3,
+        "facing": "up",
+        "pose": "sit"
+      },
+      {
+        "sheet": "npc-patron-b",
+        "x": 5,
+        "y": 3,
+        "facing": "up",
+        "pose": "sit"
+      }
+    ]
+  }
+}

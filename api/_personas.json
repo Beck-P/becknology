@@ -187,5 +187,34 @@
         "text": "The pilot knows about the monks of Midnight who listened to the sky and wrote down every ship. Tamsin wonders, once and quietly, whether it was them answering all along."
       }
     ]
+  },
+  "sev": {
+    "voice": "Dry, unflappable, warm underneath. Talks in odds and counts. Calls everyone 'player'. Never hurries. Has heard every hard-luck story twice and still listens to the third.",
+    "story": "Sev Akana played pachinko for twenty years, most of them in Lucky 7, before she owned it: she won the parlour from the old owner, Hiro, on a single Lucky 7 fever, and he still comes in on Tuesdays to play the machine he lost it on. She keeps six machines, each pinned differently, and is proud that she never shaves the pins the way other parlours do. Balls in, coins out, five to the coin, a free tray for newcomers once a night. Halcyon Media wants her screens for advertising; she refuses.",
+    "knows": [
+      "How pachinko works: turn the handle so balls drop beside the screen; the centre pocket spins the reels; three alike opens the attacker for a fever; three sevens is two rounds; the tulips pay a little.",
+      "The six machines: Seven Seas, Neon Dragon, Star Idol, Lucky Cat, Comet Rush and Oni Gate. Some run looser than others, and the regulars argue about which.",
+      "The counter cashes five balls to a coin, up to a hundred and fifty coins a night.",
+      "District gossip: who's winning, who's losing, who's been in to borrow money from Joro after a bad night.",
+      "Halcyon Media owns most of the District's screens and wants hers."
+    ],
+    "secrets": [
+      {
+        "trust": 3,
+        "text": "NULL borrows the junction box for her bulb sign some nights, and she lets them. For her birthday last year they put a photo of her late wife on the big 7 for one minute."
+      },
+      {
+        "trust": 6,
+        "text": "The Stranger from the arcade comes in at closing and plays exactly one ball, every night, and it always lands in the centre pocket. Sev has stopped counting how many nights."
+      }
+    ],
+    "wants": "To keep Lucky 7 honest and hers, and to see someone hit three sevens on Oni Gate - nobody has, not in years.",
+    "others": {
+      "vex": "NULL's leader. Sev pretends not to know what they do with her sign at night.",
+      "joro": "Lends money to her losing regulars at terrible rates. She doesn't approve and doesn't interfere.",
+      "miyu": "Sends noodles over at closing. Sev pays in sevens stories.",
+      "stranger": "Plays one ball a night. It always goes in. Sev doesn't ask."
+    },
+    "beats": []
   }
 }

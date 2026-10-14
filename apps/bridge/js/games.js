@@ -3,7 +3,7 @@
  * the Wayfarer where they end up (worlds/gameroom.json, scenes/gameroom.py).
  *
  * Playing a game anywhere (an arcade cabinet, the chess table, a terminal on
- * Enigma, the canvas at the Brink, NULL's rig) marks it found; its slot in
+ * Enigma, the canvas at the Brink, NULL's rig, Lucky 7's pachinko) marks it found; its slot in
  * the game room swaps its dust sheet for the real thing (scene layers
  * `g_<game>`: `on` / `off`) and you can play it from there. The score board
  * says what you've found and hints at what's still out there.
@@ -21,7 +21,8 @@ var BridgeGames = (function () {
     'cipher-room':     { title: 'Cipher',       url: '/cipher-room',     kind: 'app',     where: "Enigma's relay deck",    hint: 'A terminal on a dead station that keeps making codes' },
     'typist':          { title: 'Signal Relay', url: '/typist',          kind: 'app',     where: "Enigma's relay deck",    hint: 'A relay on a dead station, still taking messages' },
     'genart':          { title: 'The Canvas',   url: '/genart',          kind: 'app',     where: 'the Brink',              hint: 'Something that paints itself at the edge of everything' },
-    'splice':          { title: 'Splice',                                kind: 'splice',  where: "NULL's den, in Arcadia", hint: 'A rig in a shipping container, behind a chained gate' }
+    'splice':          { title: 'Splice',                                kind: 'splice',  where: "NULL's den, in Arcadia", hint: 'A rig in a shipping container, behind a chained gate' },
+    'pachinko':        { title: 'Pachinko',                              kind: 'pachinko', where: 'Lucky 7, in Arcadia',   hint: 'A roar of ball bearings behind a bulb sign' }
   };
   var found = {};
   try { found = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { found = {}; }
@@ -30,6 +31,7 @@ var BridgeGames = (function () {
   function keyOf(inter) {
     if (!inter) return null;
     if (inter.type === 'splice') return 'splice';
+    if (inter.type === 'pachinko') return 'pachinko';
     if ((inter.type === 'cabinet' || inter.type === 'app') && inter.target) {
       var k = String(inter.target).replace(/^\/+|\/+$/g, '');
       return GAMES[k] ? k : null;
@@ -57,6 +59,7 @@ var BridgeGames = (function () {
   function play(k) {
     var g = GAMES[k];
     if (g.kind === 'splice') { if (typeof BridgeSplice !== 'undefined') BridgeSplice.open(); return; }
+    if (g.kind === 'pachinko') { if (typeof BridgePachinko !== 'undefined') BridgePachinko.open({ machine: 'lucky-cat' }); return; }
     BridgeInteractions.execute({ type: g.kind, target: g.url, label: g.title.toUpperCase(), gameKey: k });
   }
 

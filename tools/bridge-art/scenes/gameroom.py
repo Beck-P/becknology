@@ -6,7 +6,7 @@ east door).
 
 Every game found out in the worlds lands here: six arcade cabinets along
 the back wall, NULL's rig, the chess table, Enigma's two terminals, the
-canvas that paints itself at the Brink. Each slot is a variant pair —
+canvas that paints itself at the Brink, a pachinko machine from Lucky 7. Each slot is a variant pair —
 `g_<game>`: `on` (the game itself) or `off` (a dust sheet over its shape,
 a tag saying where it's from) — and js/games.js picks which by what the
 pilot has played. The score board on the wall is always there.
@@ -108,6 +108,11 @@ with k.variant('g_genart', 'on'):
 with k.variant('g_genart', 'off'):
     sheet(8.6, 9.3, 0.9, 0.5, 1.75)
 k.solid(8.2, 9.0, 9.0, 9.7)
+with k.variant('g_pachinko', 'on'):
+    Y.pachinko_machine(k, 16.0, 5.0, '#6a2c0c', '#ffc030')
+with k.variant('g_pachinko', 'off'):
+    sheet(16.0, 5.3, 0.9, 0.62, 2.15)
+k.solid(15.55, 5.0, 16.45, 5.62)
 
 # ---- light -----------------------------------------------------------------------------------------
 k.point_light(4.5, 7.0, 2.6, '#ffc890', 60, radius=0.6)
@@ -125,7 +130,7 @@ w.update({'name': 'Game Room', 'width': COLS, 'height': ROWS, 'tileSize': 16, 't
 
 TITLES = {'runouts': 'RUNOUTS', 'asteroids': 'ASTEROIDS', 'helicopter': 'HELICOPTER', 'breakout': 'BREAKOUT',
           'space-invaders': 'INVADERS', 'missile-command': 'MISSILE CMD', 'splice': 'SPLICE', 'chess': 'CHESS',
-          'cipher-room': 'CIPHER', 'typist': 'SIGNAL RELAY', 'genart': 'THE CANVAS'}
+          'cipher-room': 'CIPHER', 'typist': 'SIGNAL RELAY', 'genart': 'THE CANVAS', 'pachinko': 'PACHINKO'}
 
 
 def slot(x, y, key):
@@ -138,7 +143,7 @@ w['interactions'] = [
     {'x': 0, 'y': 8, 'type': 'enter_world', 'target': 'bridge', 'spawn': [19, 8], 'label': 'BRIDGE', 'prompt': 'ENTER BRIDGE',
      'noBeacon': True},
 ] + [slot(int(cx), 4, key) for key, art, cx, col in CABS] + [
-    slot(13, 4, 'splice'), slot(4, 8, 'chess'), slot(11, 8, 'cipher-room'), slot(14, 8, 'typist'), slot(8, 9, 'genart'),
+    slot(13, 4, 'splice'), slot(4, 8, 'chess'), slot(11, 8, 'cipher-room'), slot(14, 8, 'typist'), slot(8, 9, 'genart'), slot(16, 5, 'pachinko'),
     {'x': 15, 'y': 4, 'type': 'game_scores', 'label': 'SCORE BOARD', 'prompt': 'PRESS E TO READ'},
     {'x': 16, 'y': 4, 'type': 'game_scores', 'label': 'SCORE BOARD', 'prompt': 'PRESS E TO READ'},
 ]

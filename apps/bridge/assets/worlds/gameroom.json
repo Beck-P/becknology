@@ -129,6 +129,14 @@
       "prompt": "PRESS E TO PLAY"
     },
     {
+      "x": 16,
+      "y": 5,
+      "type": "game_slot",
+      "game": "pachinko",
+      "label": "PACHINKO",
+      "prompt": "PRESS E TO PLAY"
+    },
+    {
       "x": 15,
       "y": 4,
       "type": "game_scores",
@@ -262,8 +270,8 @@
       0,
       0,
       0,
-      0,
-      0,
+      1,
+      1,
       1
     ],
     [
@@ -504,8 +512,8 @@
       2,
       2,
       2,
-      2,
-      2,
+      4,
+      4,
       1
     ],
     [
