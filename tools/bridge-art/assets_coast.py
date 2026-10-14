@@ -84,7 +84,7 @@ class Terrain:
 
 
 def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=0.0, seed=3,
-          bounds=None, rocks=1.0, keep_clear=(), reach=(0.25, 1.0), beach_bias=None):
+          bounds=None, rocks=1.0, keep_clear=(), reach=(0.25, 1.0), beach_bias=None, sheer=()):
     """land: walkable cells (c, r) — the coast never bites into them; it
     wanders `reach` = (base, swing) tiles out from them (cells beyond, such
     as a rocky rim, are the coast's to shape — build no ground there).
@@ -92,8 +92,9 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
     render). beachiness shifts the coast from rock (−) toward sand (+).
     keep_clear: rects (x0, r0, x1, r1) where no rocks or kelp go (piers,
     a ship's hull). beach_bias(x, r): added to the sand-or-rock choice there
-    (sand by the harbour's beach, rock under its cliffs). Returns a Terrain
-    (heights for placing things)."""
+    (sand by the harbour's beach, rock under its cliffs). sheer: rects
+    where the land stops at a built wall (a quay) and the water is deep
+    right up to it. Returns a Terrain (heights for placing things)."""
     P = PALETTES[palette]
     land = list(land)
     if bounds is None:
@@ -127,6 +128,8 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
             z = _profile(d, b)
             if d > 0.5:                                                     # ripples and hollows on the bed
                 z += 0.05 * _n(x, r, 2.4, seed + 2) + 0.12 * _n(x, r, 0.6, seed + 3) * min(1.0, d - 0.5)
+            if D[j, i] > 0 and any(a <= x <= c and b <= r <= e for (a, b, c, e) in sheer):
+                z = min(z, WZ - 0.85)
             H[j, i] = z
 
     # faces by material band

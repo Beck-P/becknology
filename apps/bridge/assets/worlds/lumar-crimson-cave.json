@@ -524,7 +524,11 @@
       "type": "leave_world",
       "leaveTo": "lumar-crimson",
       "label": "ENTRANCE",
-      "prompt": "RETURN TO SHIP"
+      "prompt": "PRESS E TO CLIMB OUT",
+      "leaveSpawn": [
+        30,
+        10
+      ]
     },
     {
       "x": 14,
