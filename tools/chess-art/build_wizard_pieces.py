@@ -822,6 +822,11 @@ def build_lumar_set(x_off=3.0):
     bm_trim = bmesh.new()
     for sx in (-1, 1):
         add_cone(bm_trim, 0.16, 0.03, 0.28, segments=8, center=(sx * 0.28, 0, 1.14), rot_euler=(0.1, sx * 0.95, 0))
+    # Ship's Helm Wheel Halo behind the Lumar Sea-Monarch's shoulders!
+    add_torus_ring(bm_trim, 0.36, 0.025, seg_major=16, seg_minor=6, center=(0, -0.16, 1.18), rot_euler=(math.pi / 2, 0, 0))
+    for spk in range(8):
+        ang = (spk / 8.0) * math.tau
+        add_cone(bm_trim, 0.022, 0.012, 0.44, segments=6, center=(math.sin(ang) * 0.22, -0.16, 1.18 + math.cos(ang) * 0.22), rot_euler=(0, ang, 0))
     finalize_mesh("lumar_king_trim", bm_trim, MAT_TRIM, root)
 
     bm_head = bmesh.new()
@@ -892,33 +897,36 @@ def build_arcadia_set(x_off=6.0):
     add_cone(bm_sh, 0.24, 0.24, 0.04, segments=6, center=(0, 0.04, 0), rot_euler=(math.pi / 2, 0, 0.3))
     finalize_mesh("arcadia_pawn_shield", bm_sh, MAT_TRIM, root, location=(-0.19, 0.17, 0.43), smooth=False)
 
-    # 2. ARCADIA ROOK — Heavy Arcade Mecha-Bastion with Twin Shoulder Railguns!
+    # 2. ARCADIA ROOK — Retro Arcade Cabinet Mecha-Bastion with Twin Shoulder Railguns!
     root = bpy.data.objects.new("piece_arcadia_rook", None)
     root.location = (x_off, 0, 0)
     scene.collection.objects.link(root)
     build_pedestal(root, "arcadia_rook", radius_scale=1.08, height_scale=1.02, segments=8, motif="cyber")
 
     bm_body = bmesh.new()
-    # Heavy angular tank-tread / mech legs + wide armored chest block
+    # Heavy angular tank-tread / mech legs + Upright Arcade Cabinet Torso!
     for sx in (-1, 1):
         add_box(bm_body, (0.18, 0.34, 0.24), center=(sx * 0.17, 0, 0.26))
-    add_box(bm_body, (0.52, 0.42, 0.48), center=(0, 0, 0.62))
+    add_box(bm_body, (0.52, 0.42, 0.52), center=(0, 0, 0.64))
+    # Protruding Arcade Control Deck shelf on front of chest!
+    add_box(bm_body, (0.48, 0.16, 0.10), center=(0, 0.24, 0.50), rot_euler=(0.25, 0, 0))
     finalize_mesh("arcadia_rook_body", bm_body, MAT_STONE, root, smooth=False)
 
     bm_cloth = bmesh.new()
-    # Twin Shoulder-Mounted Railgun Pods!
+    # Twin Shoulder-Mounted Railgun Pods + Arcade Joysticks on Chest Deck!
     for sx in (-1, 1):
-        add_box(bm_cloth, (0.16, 0.32, 0.18), center=(sx * 0.24, -0.02, 0.94))
-        add_cone(bm_cloth, 0.04, 0.04, 0.38, segments=6, center=(sx * 0.24, 0.24, 0.96), rot_euler=(-math.pi / 2, 0, 0))
+        add_box(bm_cloth, (0.16, 0.32, 0.18), center=(sx * 0.24, -0.02, 0.96))
+        add_cone(bm_cloth, 0.04, 0.04, 0.38, segments=6, center=(sx * 0.24, 0.24, 0.98), rot_euler=(-math.pi / 2, 0, 0))
+        add_icosphere(bm_cloth, 0.035, subdivisions=1, center=(sx * 0.12, 0.28, 0.58))
     finalize_mesh("arcadia_rook_cloth", bm_cloth, MAT_CLOTH, root, smooth=False)
 
     bm_head = bmesh.new()
-    add_box(bm_head, (0.32, 0.28, 0.18), center=(0, 0.04, 0.06))
-    head_obj = finalize_mesh("arcadia_rook_head", bm_head, MAT_TRIM, root, location=(0, 0, 0.90), smooth=False)
+    add_box(bm_head, (0.38, 0.30, 0.20), center=(0, 0.05, 0.08))
+    head_obj = finalize_mesh("arcadia_rook_head", bm_head, MAT_TRIM, root, location=(0, 0, 0.92), smooth=False)
 
     bm_gem = bmesh.new()
-    add_box(bm_gem, (0.26, 0.05, 0.08), center=(0, 0.17, 0.06))
-    add_box(bm_gem, (0.24, 0.04, 0.18), center=(0, 0.21, -0.26))
+    add_box(bm_gem, (0.32, 0.05, 0.10), center=(0, 0.19, 0.08))  # glowing top marquee
+    add_box(bm_gem, (0.36, 0.05, 0.24), center=(0, 0.21, -0.22), rot_euler=(-0.18, 0, 0))  # glowing CRT arcade screen!
     finalize_mesh("arcadia_rook_gem", bm_gem, MAT_GEM, head_obj, smooth=False)
 
     bm_weap = bmesh.new()
@@ -1551,11 +1559,25 @@ def build_singularity_set(x_off=12.0):
     finalize_mesh("singularity_king_shield", bm_sh, MAT_TRIM, root, location=(-0.29, 0.16, 0.78), smooth=False)
 
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from build_world_dioramas import build_all_world_dioramas
+
 build_classic_set(0.0)
 build_lumar_set(0.0)
 build_arcadia_set(0.0)
 build_enigma_set(0.0)
 build_singularity_set(0.0)
+
+build_all_world_dioramas(
+    scene,
+    {
+        "add_box": add_box,
+        "add_cone": add_cone,
+        "add_icosphere": add_icosphere,
+        "add_torus_ring": add_torus_ring,
+        "finalize_mesh": finalize_mesh,
+    },
+)
 
 os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
 bpy.ops.export_scene.gltf(
@@ -1564,4 +1586,4 @@ bpy.ops.export_scene.gltf(
     export_yup=True,
     export_apply=True,
 )
-print(f"Exported 5 World Chess Sets (30 unique 3D models) to {out_path}")
+print(f"Exported 5 World Chess Sets (30 unique 3D models) + 5 Blender 3D World Dioramas to {out_path}")
