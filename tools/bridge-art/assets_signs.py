@@ -117,3 +117,52 @@ def blade(k, text, fontname, x, r_face, z, h, col='#5cc8d0', bg='#0c0818', w=0.4
         o = _text_obj(ch, fontname, gs, extrude=0.004)
         _place(k, o, x, rf + 0.1, gz, shade(col, 0.5), 'blade_glyph', emit=(col, 0.95))
     k.point_light(x, rf + 0.5, z + h / 2, col, 6, radius=0.2, group='flicker')
+
+
+# ---- neon icons (tubes on the wall plane; (x, z) points) ------------------------------------
+def _tubes(k, pts, r_face, col, tube=0.022, closed=False):
+    seq = list(pts) + ([pts[0]] if closed else [])
+    for (a, b), (c, d) in zip(seq, seq[1:]):
+        k.tube((a, r_face + 0.06, b), (c, r_face + 0.06, d), tube, shade(col, 0.5), 'neon_icon', emit=(col, 0.95), verts=6)
+
+
+def _arc(cx, cz, rx, rz, a0, a1, n=12):
+    import math
+    return [(cx + math.cos(a0 + (a1 - a0) * i / n) * rx, cz + math.sin(a0 + (a1 - a0) * i / n) * rz) for i in range(n + 1)]
+
+
+def icon_bowl(k, cx, r_face, z, s=0.5, col='#f078a8', steam='#e0e0f0'):
+    import math
+    _tubes(k, _arc(cx, z + s * 0.55, s * 0.55, s * 0.5, math.pi, 2 * math.pi), r_face, col)
+    _tubes(k, [(cx - s * 0.6, z + s * 0.55), (cx + s * 0.6, z + s * 0.55)], r_face, col)
+    _tubes(k, [(cx + s * 0.1, z + s * 0.7), (cx + s * 0.75, z + s * 1.2)], r_face, '#e8c040')
+    _tubes(k, [(cx + s * 0.25, z + s * 0.68), (cx + s * 0.85, z + s * 1.08)], r_face, '#e8c040')
+    for dx in (-0.25, 0.0, 0.25):                     # steam
+        _tubes(k, [(cx + s * dx, z + s * 0.75), (cx + s * (dx + 0.08), z + s * 0.95), (cx + s * dx, z + s * 1.15)], r_face, steam,
+               tube=0.014)
+    k.point_light(cx, r_face + 0.4, z + s * 0.6, col, 6, radius=0.2, group='flicker')
+
+
+def icon_ring(k, cx, r_face, z, s=0.45, col='#e8c040', gem='#80e0ff'):
+    import math
+    _tubes(k, _arc(cx, z + s * 0.45, s * 0.45, s * 0.45, 0, 2 * math.pi, n=18), r_face, col)
+    _tubes(k, [(cx - s * 0.22, z + s * 0.95), (cx, z + s * 1.2), (cx + s * 0.22, z + s * 0.95), (cx, z + s * 0.85)], r_face, gem,
+           closed=True)
+    k.point_light(cx, r_face + 0.4, z + s * 0.6, col, 5, radius=0.2, group='flicker')
+
+
+def icon_joystick(k, cx, r_face, z, s=0.5, col='#5cc8d0', ball='#f078a8'):
+    import math
+    _tubes(k, [(cx - s * 0.5, z), (cx + s * 0.5, z), (cx + s * 0.4, z + s * 0.3), (cx - s * 0.4, z + s * 0.3)], r_face, col,
+           closed=True)
+    _tubes(k, [(cx, z + s * 0.3), (cx - s * 0.1, z + s * 0.85)], r_face, col)
+    _tubes(k, _arc(cx - s * 0.12, z + s * 0.98, s * 0.16, s * 0.16, 0, 2 * math.pi, n=10), r_face, ball)
+    _tubes(k, [(cx + s * 0.25, z + s * 0.38), (cx + s * 0.3, z + s * 0.42)], r_face, ball, tube=0.03)
+    k.point_light(cx, r_face + 0.4, z + s * 0.5, col, 5, radius=0.2, group='flicker')
+
+
+def icon_wrench(k, cx, r_face, z, s=0.5, col='#40e080'):
+    import math
+    _tubes(k, [(cx - s * 0.35, z), (cx + s * 0.25, z + s * 0.6)], r_face, col, tube=0.03)
+    _tubes(k, _arc(cx + s * 0.38, z + s * 0.73, s * 0.2, s * 0.2, -2.4, 2.0, n=10), r_face, col)
+    k.point_light(cx, r_face + 0.4, z + s * 0.4, col, 4, radius=0.2, group='flicker')

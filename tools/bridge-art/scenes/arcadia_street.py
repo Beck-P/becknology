@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world  # noqa: E402
 import assets_cyber as Y               # noqa: E402
 import assets_district as D            # noqa: E402
+import assets_signs as S               # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -46,64 +47,94 @@ for x in range(0, COLS, 3):                                    # kerb lights by 
     k.box(x + 1.4, 13.82, 0.0, x + 1.6, 13.9, 0.01, '#0c2a30', 'kerb_light', emit=(Y.CYAN, 0.8))
 
 # ---- the frontages ---------------------------------------------------------------------------------
-front(0.0, 3.2, floors=2, kind='shutter', name='PAWN', name_col=Y.YEL, trim=Y.YEL, door_x=1.5, glow='#6a4418',
-      roof=('tank', 'antenna'), wall='#3a2e2a', clad='brick', side='right')
-D.graffiti(k, 2.2, 3.1, RF + 0.02, 1.5, 2.2, Y.PINK)
-front(3.2, 7.2, floors=3, kind='glass', name='MART', name_col=Y.CYAN, trim=Y.CYAN, door_x=4.5, glow='#5a7a9a',
-      awning=('#40c8d8', 'metal'), escape=(5.7, 7.0), roof=('dish', 'vent'), wall='#2a3040', clad='tile',
-      window_neon=Y.CYAN)
-front(7.2, 11.0, floors=2, kind='glass', name='NOODLES', name_col=Y.PINK, trim=Y.PINK, door_x=8.5, glow='#8a3020',
-      awning=('#a02a2a', 'fabric'), blade=Y.PINK, balcony_at=(9.2, 10.8), roof=('vent', 'tank'), wall='#3a2228',
-      clad='brick', window_neon=Y.PINK)
-for x in (7.5, 10.7):
+# every shop its own sign: real typefaces (assets_signs), neon outlines, channel letters, lightboxes,
+# vertical glyph signs and neon icons — the first floor above each shop is given over to its sign
+G = 1.35
+SZ = G + 0.12                                                   # sign baseline
+
+
+def fit(text, font, max_w, size):
+    w = S.width(text, font, size)
+    return size * min(1.0, max_w / w)
+
+
+front(0.0, 3.2, floors=2, kind='shutter', trim=Y.YEL, door_x=1.5, glow='#6a4418', sign_floor=True,
+      roof=('tank', 'antenna'), wall='#3a2e2a', clad='brick')
+S.letters(k, 'PAWN', 'Bungee', 1.25, RF, SZ + 0.1, size=fit('PAWN', 'Bungee', 2.0, 0.62), col=Y.YEL)
+S.icon_ring(k, 2.75, RF, SZ + 0.12, s=0.42)
+S.blade(k, '質屋', 'DelaGothicOne', 3.0, RF, 0.5, 1.6, col='#ffd040', w=0.42)
+front(3.2, 7.2, floors=3, kind='glass', trim=Y.CYAN, door_x=4.5, glow='#5a7a9a', sign_floor=True,
+      awning=('#40c8d8', 'metal'), escape=(5.7, 7.0), roof=('dish', 'vent'), wall='#2a3040', clad='tile', window_neon=Y.CYAN)
+S.lightbox(k, 'ARCADIA MART', 'RussoOne', 5.2, RF, SZ + 0.05, 3.6, 0.5, bg='#e8f4ff', ink='#1a3a8a', glow='#a0d0ff')
+S.neon(k, '24H', 'ZenDots', 6.5, RF, SZ + 0.72, size=0.3, col=Y.CYAN)
+front(7.2, 11.0, floors=2, kind='glass', trim=Y.PINK, door_x=8.5, glow='#8a3020', sign_floor=True,
+      awning=('#a02a2a', 'fabric'), balcony_at=(9.2, 10.8), roof=('vent', 'tank'), wall='#3a2228', clad='brick', window_neon=Y.PINK)
+S.neon(k, 'Noodles', 'Pacifico', 8.7, RF, SZ + 0.42, size=fit('Noodles', 'Pacifico', 2.7, 0.75), col=Y.PINK, tube=0.02)
+S.icon_bowl(k, 10.45, RF, SZ + 0.4, s=0.45)
+S.blade(k, 'ラーメン', 'DelaGothicOne', 7.35, RF, 0.45, 2.0, col='#ff5050', w=0.44)
+for x in (7.9, 10.5):
     Y.paper_lantern(k, x, RF + 0.3, 0.95, s=0.42, top=1.25)
 # the arcade: three storeys, a marquee of bulbs round the big sign, a billboard on top
-AH = front(11.0, 16.0, floors=3, kind='glass', name=None, door_x=13.0, door_w=1.6, glow='#6a2aa0', trim=Y.PURP,
+AH = front(11.0, 16.0, floors=3, kind='glass', door_x=13.0, door_w=1.6, glow='#6a2aa0', trim=Y.PURP,
            roof=('vent',), ad=(11.6, 15.4, 1.3, 1), wall='#241c40', clad='metal', sign_floor=True, window_neon=Y.PURP)
-Y.neon_text(k, 'ARCADE', 13.5, RF + 0.05, 1.62, h=0.5, col=Y.PINK, energy=16)
+k.box(11.15, RF, 1.38, 15.85, RF + 0.04, 2.42, '#0c0818', 'marquee_board')
+S.neon(k, 'ARCADE', 'Audiowide', 13.5, RF + 0.04, SZ + 0.2, size=fit('ARCADE', 'Audiowide', 3.9, 0.7), col=Y.CYAN, tube=0.02)
+S.letters(k, 'PLAY ALL NIGHT', 'ZenDots', 13.5, RF + 0.04, SZ + 0.03, size=0.13, col=Y.PINK)
+S.icon_joystick(k, 15.45, RF + 0.04, SZ + 0.25, s=0.42)
+S.blade(k, 'ゲーム', 'DelaGothicOne', 11.0, RF, 2.6, 1.4, col='#ff70c0', w=0.42)
 bulbs = []
 for i in range(23):                                            # the marquee's chasing bulbs
     t = i / 22
-    bulbs.append((11.25 + t * 4.5, 1.5))
-    bulbs.append((11.25 + t * 4.5, 2.3))
+    bulbs.append((11.25 + t * 4.5, 1.42))
+    bulbs.append((11.25 + t * 4.5, 2.38))
 for x, z in bulbs:
     k.sphere(x, RF + 0.07, z, 0.035, 0.035, '#fff0c0', 'marquee_bulb', emit=('#ffe090', 1.0), segs=5)
     st.bulbs.append([round(x, 3), round(RF + 0.07 - z * D.C45, 3)])
-Y.neon_text(k, 'PLAY ALL NIGHT', 13.5, RF + 0.04, 2.55, h=0.2, col=Y.CYAN, board=False, energy=6)
-front(16.0, 18.2, floors=2, kind='garage', name='TECH', name_col=Y.CYAN, trim=Y.GREEN, door_x=16.5, door_w=0.6,
+front(16.0, 18.2, floors=2, kind='garage', trim=Y.GREEN, door_x=16.5, door_w=0.6, sign_floor=True,
       glow='#2a7a4a', roof=('antenna',), wall='#283028', clad='metal')
-front(18.2, 21.2, floors=3, kind='clinic', name='CLINIC', name_col=Y.CYAN_L, trim=Y.CYAN, door_x=19.5, glow='#3a8a9a',
+S.lightbox(k, 'TECH', 'ZenDots', 16.85, RF, SZ + 0.08, 1.5, 0.48, bg='#2a9a5a', ink='#06140a', glow='#40e080')
+S.icon_wrench(k, 17.85, RF, SZ + 0.1, s=0.4)
+front(18.2, 21.2, floors=3, kind='clinic', trim=Y.CYAN, door_x=19.5, glow='#3a8a9a', sign_floor=True,
       roof=('dish',), wall='#4a5464', clad='tile')
-k.box(20.55, RF + 0.02, 2.0, 20.95, RF + 0.05, 2.4, '#e0f0f4', 'cross', emit=(Y.CYAN_L, 0.6))
-k.box(20.68, RF + 0.05, 1.9, 20.82, RF + 0.07, 2.5, '#40c8d8', 'cross', emit=(Y.CYAN, 0.9))
-k.box(20.45, RF + 0.05, 2.13, 21.05, RF + 0.07, 2.27, '#40c8d8', 'cross', emit=(Y.CYAN, 0.9))
+S.letters(k, 'CLINIC', 'RussoOne', 19.4, RF, SZ + 0.15, size=fit('CLINIC', 'RussoOne', 2.0, 0.5), col='#d0f8ff')
+k.box(20.55, RF + 0.02, 1.5, 20.95, RF + 0.05, 2.1, '#e0f0f4', 'cross', emit=(Y.CYAN_L, 0.6))
+k.box(20.68, RF + 0.05, 1.45, 20.82, RF + 0.07, 2.15, '#40c8d8', 'cross', emit=(Y.CYAN, 0.9))
+k.box(20.4, RF + 0.05, 1.73, 21.1, RF + 0.07, 1.87, '#40c8d8', 'cross', emit=(Y.CYAN, 0.9))
 front(21.2, 23.6, floors=1, kind='garage', door_x=21.8, door_w=0.5, glow='#18283a', trim=Y.CYAN, roof=('vent',),
       r=RF - 0.6, wall='#24242e')
+S.neon(k, 'HOVER', 'Audiowide', 22.4, RF - 0.6, 1.0, size=0.26, col=Y.CYAN)
 Y.hover_bike(k, 22.5, RF - 0.05)
-front(23.6, 26.4, floors=2, kind='glass', name='LUCKY', name_col=Y.YEL, trim=Y.YEL, door_x=25.2, glow='#8a6a10',
-      blade=Y.YEL, roof=('tank',), wall='#3a2a22', clad='brick', window_neon=Y.YEL)
+front(23.6, 26.4, floors=2, kind='glass', trim=Y.YEL, door_x=25.2, glow='#8a6a10', sign_floor=True,
+      roof=('tank',), wall='#3a2a22', clad='brick', window_neon=Y.YEL)
+S.neon(k, 'LUCKY 7', 'Righteous', 25.0, RF, SZ + 0.25, size=fit('LUCKY 7', 'Righteous', 2.5, 0.6), col=Y.YEL, tube=0.02)
+S.blade(k, 'パチンコ', 'DelaGothicOne', 26.25, RF, 1.7, 1.9, col='#ffb040', w=0.4)
 Y.token_kiosk(k, 24.1, RF + 0.4)
 front(26.4, 29.6, floors=2, kind='stall', door_x=29.1, door_w=0.5, glow='#7a3a20', trim=Y.RED, roof=('vent', 'dish'),
-      r=RF - 0.6, wall='#2e1e22')
+      r=RF - 0.6, wall='#2e1e22', sign_floor=True)
+S.lightbox(k, 'ラーメン', 'DelaGothicOne', 27.7, RF - 0.6, 2.55, 2.2, 0.5, bg='#f4e4c8', ink='#b01818', glow='#ffd8a0')
 Y.ramen_stand(k, 26.7, 28.7, RF - 0.45, RF)
 # the Skywalk lift: a slim tower with a glass lift shaft up its face
 SH = front(29.6, 32.6, floors=3, kind='glass', door_x=31.1, door_w=0.9, glow='#2a8aa0', trim=Y.CYAN, roof=('antenna',),
            ad=(29.9, 32.3, 1.1, 5), wall='#1e2a40', clad='metal')
 k.box(30.65, RF + 0.02, 0.1, 31.55, RF + 0.12, SH, '#0c1a22', 'lift_shaft', emit=('#1a4a5a', 0.5))
 k.box(30.7, RF + 0.12, 2.1, 31.5, RF + 0.16, 2.9, '#2a3a44', 'lift_car', emit=(Y.CYAN_L, 0.4))
-Y.neon_text(k, 'SKYWALK', 31.1, RF + 0.16, 1.45, h=0.22, col=Y.CYAN_L, board=False, energy=6)
+S.letters(k, 'SKYWALK', 'Audiowide', 31.1, RF + 0.16, 1.42, size=0.2, col=Y.CYAN_L)
 # the alley gate: an arch through to the back streets, chained shut
 front(32.6, 34.8, floors=2, kind='club', door_x=33.7, door_w=1.1, glow='#100a18', trim=Y.MAG, roof=('tank',),
       wall='#2a242e', clad='brick')
 k.boxes([(x, RF + 0.04, 0.05, x + 0.04, RF + 0.08, 1.15) for x in [33.2 + i * 0.12 for i in range(9)]], '#4a4a52', 'gate_bars')
 k.tube((33.2, RF + 0.1, 0.6), (34.2, RF + 0.1, 0.7), 0.025, '#8a8a90', 'chain', verts=4)
-D.graffiti(k, 32.7, 34.7, RF + 0.03, 1.4, 2.3, Y.GREEN)
-front(34.8, 38.8, floors=3, kind='glass', name='HOTEL', name_col=Y.PURP, trim=Y.PURP, door_x=36.6, glow='#3a5a9a',
+S.letters(k, 'NULL', 'Bungee', 33.7, RF + 0.02, 1.6, size=0.36, col=Y.GREEN, energy=3)
+front(34.8, 38.8, floors=3, kind='glass', trim=Y.PURP, door_x=36.6, glow='#3a5a9a', sign_floor=True,
       awning=('#7080e8', 'metal'), balcony_at=(37.0, 38.6), escape=(35.0, 36.0), roof=('dish', 'tank'), wall='#2c2840',
       clad='tile', window_neon=Y.PURP)
-front(38.8, 44.0, floors=2, kind='club', name='VOID', name_col=Y.MAG, trim=Y.MAG, door_x=41.5, glow='#b020b0',
-      blade=Y.PINK, roof=('vent', 'antenna'), ad=(39.4, 43.4, 1.0, 2), wall='#1e1626', clad='metal', side='left')
-D.poster_wall(k, 39.0, 40.8, RF + 0.02, 0.3, 1.1)
+S.neon(k, 'hotel', 'Righteous', 36.5, RF, SZ + 0.2, size=0.62, col='#b090ff', tube=0.02)
+S.lightbox(k, 'CAPSULE', 'RussoOne', 38.2, RF, SZ + 0.25, 1.0, 0.3, bg='#c0b0ff', ink='#1a0a40', glow='#a080ff')
+front(38.8, 44.0, floors=2, kind='club', trim=Y.MAG, door_x=41.5, glow='#b020b0', sign_floor=True,
+      roof=('vent', 'antenna'), ad=(39.4, 43.4, 1.0, 2), wall='#1e1626', clad='metal')
+S.letters(k, 'VOID', 'Monoton', 41.4, RF, SZ + 0.05, size=fit('VOID', 'Monoton', 3.2, 0.8), col='#e050e0')
+S.blade(k, 'クラブ', 'DelaGothicOne', 38.95, RF, 0.5, 1.6, col='#ff60d0', w=0.4)
+D.poster_wall(k, 39.2, 40.8, RF + 0.02, 0.3, 1.1)
 D.poster_wall(k, 42.3, 43.8, RF + 0.02, 0.3, 1.1)
 
 # ---- overhead: cables and string lights, up under the eaves and across the lane ----------------------
@@ -197,8 +228,7 @@ w['interactions'] = [
            'THROUGH THE FROSTED GLASS:\n\nSTERILE LIGHT, CHROME LIMBS,\nAND QUIET MACHINES WAITING\nBEHIND A SEALED DOOR.'),
     dialog(25, 7, 'LUCKY 7', 'PRESS E TO PEEK',
            'A ROAR OF BALL BEARINGS.\n\nROWS OF PACHINKO MACHINES,\nA HAZE OF SMOKE, NOBODY\nLOOKS UP FROM THEIR GAME.'),
-    dialog(31, 7, 'SKYWALK LIFT', 'PRESS E TO CALL',
-           'THE LIFT CHIMES SOMEWHERE\nHIGH ABOVE.\n\nA SCREEN: "SKYWALK LEVEL -\nSERVICE IN PROGRESS."'),
+    enter(31, 7, 'arcadia-skypad', 'SKYWALK LIFT', 'PRESS E TO RIDE UP', spawn=(19, 5)),
     dialog(33, 7, 'ALLEY GATE', 'PRESS E TO LOOK',
            'A GATE CHAINED SHUT.\n\nBEYOND IT THE BACK STREETS\nRUN DARK AND WET. SOMEONE\nSPRAYED "NULL" ON THE BARS.'),
     dialog(36, 7, 'CAPSULE HOTEL', 'PRESS E TO PEEK',
@@ -214,7 +244,7 @@ open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 
 for (c, r) in ((10, 10), (5, 10)):                            # NPCs
     k.solid(c, r, c + 1, r + 1)
-for (c, r) in ((17, 11), (18, 10), (18, 11), (21, 11), (31, 11), (32, 11), (32, 10), (39, 11), (14, 9)):   # behind parasols, trees
+for (c, r) in ((17, 11), (18, 10), (18, 11), (21, 11), (31, 11), (32, 11), (32, 10), (39, 11), (14, 9), (7, 11)):   # behind parasols, trees
     k.solid(c, r, c + 1, r + 1)
 apply_world(WORLD, k, (0, 8, COLS - 1, 13), scene_id='arcadia-street',
             actors=[{'sheet': 'npc-shopper', 'x': 10, 'y': 10, 'facing': 'down'},

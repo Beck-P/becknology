@@ -31,54 +31,11 @@
     }
   }
 
-  // ---- the hole (js/blackhole.js) for the rendered Singularity ----
-  // world JSON "hole": {col, row, parallax} — where it hangs over the planes
-  var skyStars = null;
-  function drawHoleSky(ctx, w, h, time, H) {
-    var v = BridgeWorld.getView();
-    var p = H.parallax != null ? H.parallax : 0.3;
-    var cx = Math.round(w / 2 + (v.offX + (H.col != null ? H.col : 20) * v.ts - w / 2) * p);
-    var cy = Math.round(h / 2 + (v.offY + (H.row != null ? H.row : 3) * v.ts - h / 2) * p);
-    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h));
-    g.addColorStop(0, '#120a24');
-    g.addColorStop(0.5, '#08061a');
-    g.addColorStop(1, '#030308');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-    // faint nebula wisps swirling toward the hole
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (var i = 0; i < 5; i++) {
-      var a = i * 1.26 + time / 40000;
-      var rr = 160 + i * 40;
-      var nx = cx + Math.cos(a) * rr, ny = cy + Math.sin(a) * rr * 0.5;
-      var ng = ctx.createRadialGradient(nx, ny, 0, nx, ny, 140);
-      ng.addColorStop(0, i % 2 ? 'rgba(120,50,160,0.10)' : 'rgba(200,90,60,0.07)');
-      ng.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = ng;
-      ctx.fillRect(nx - 140, ny - 140, 280, 280);
-    }
-    ctx.restore();
-    // a fixed field of stars, drifting slowly with the camera
-    if (!skyStars) {
-      skyStars = [];
-      for (var k = 0; k < 260; k++) skyStars.push([Math.random() * 1400, Math.random() * 900, Math.random()]);
-    }
-    for (var j = 0; j < skyStars.length; j++) {
-      var st = skyStars[j];
-      var sx = ((st[0] + v.offX * 0.08) % 1400 + 1400) % 1400, sy = ((st[1] + v.offY * 0.08) % 900 + 900) % 900;
-      if (sx > w || sy > h) continue;
-      var tw = 0.35 + 0.4 * st[2] + 0.2 * Math.sin(time / 700 + j);
-      ctx.fillStyle = 'rgba(220,210,255,' + tw.toFixed(2) + ')';
-      ctx.fillRect(Math.round(sx), Math.round(sy), st[2] > 0.92 ? 2 : 1, 1);
-    }
-    BridgeBlackHole.draw(ctx, cx, cy, time);
-  }
-
   function drawVoidBackground(ctx, w, h, time) {
     var world = BridgeWorld.getWorld();
-    if (world && world.scene && world.hole && typeof BridgeBlackHole !== 'undefined') {
-      drawHoleSky(ctx, w, h, time, world.hole || {});
+    // the rendered Brink: you're at the edge of the hole (js/horizon.js)
+    if (world && world.scene && world.horizon && typeof BridgeHorizon !== 'undefined') {
+      BridgeHorizon.sky(ctx, w, h, time, BridgeHorizon.place(world, BridgeWorld.getView(), w, h));
       return;
     }
     initVoid();
@@ -595,5 +552,17 @@
   // The engine calls this before tiles if it exists
 
   BridgeWorld.registerBackground('singularity', drawVoidBackground);
+
+  // at the Brink the world itself bends, and the pilot leaves echoes
+  BridgeWorld.registerSceneHooks('singularity', {
+    items: function (world, offX, offY, ts, now, sc) {
+      return world.horizon && typeof BridgeHorizon !== 'undefined' ? BridgeHorizon.echoes(world, offX, offY, ts, now, sc) : [];
+    },
+    post: function (ctx, buf, w, h, offX, offY, ts, now) {
+      var world = BridgeWorld.getWorld();
+      if (!world.horizon || typeof BridgeHorizon === 'undefined') return;
+      BridgeHorizon.post(ctx, buf, w, h, now, BridgeHorizon.place(world, BridgeWorld.getView(), w, h));
+    }
+  });
 
 })();

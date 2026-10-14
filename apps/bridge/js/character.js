@@ -196,6 +196,21 @@ var BridgeCharacter = (function () {
     };
   }
 
+  /** The pilot's sprite right now: sheet image, frame rect and position (for echoes). */
+  function frame() {
+    if (hidden) return null;
+    var pilot = BridgeState.getPilot();
+    var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
+    var sheet = getSheet(suit);
+    if (!sheet.ready) return null;
+    var col = player.moveProgress < 1
+      ? 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8
+      : IDLE_SEQ[Math.floor(Date.now() / 340) % IDLE_SEQ.length];
+    var pos = getRenderPos();
+    return { img: sheet.img, sx: col * FRAME_W, sy: (DIR_ROW[player.facing] || 0) * FRAME_H, w: FRAME_W, h: FRAME_H,
+             x: pos.x, y: pos.y, footRow: pos.y + 1 - 3 / 32 };
+  }
+
   /** Draw the character at native resolution. offX/offY = world origin, ts = native tile px. */
   function draw(ctx, offX, offY, ts) {
     if (hidden) return;
@@ -342,6 +357,7 @@ var BridgeCharacter = (function () {
     setFacing: setFacing,
     isMoving: isMoving,
     getRenderPos: getRenderPos,
+    frame: frame,
     tryMove: tryMove,
     update: update,
     draw: draw,

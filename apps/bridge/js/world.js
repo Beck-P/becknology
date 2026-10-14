@@ -765,6 +765,9 @@ var BridgeWorld = (function () {
     view.offX = offX; view.offY = offY; view.ts = ts; view.w = nw; view.h = nh;
 
     drawWorldLayer(bctx, nw, nh, offX, offY, ts, now);
+    // a world can rework its finished frame (the Singularity warps it)
+    var post = world.scene && SCENE_HOOKS[world.tileset] && SCENE_HOOKS[world.tileset].post;
+    if (post) post(bctx, buf, nw, nh, offX, offY, ts, now);
 
     // ---- Blit: integer upscale onto the device-pixel canvas ----
     var blitX = Math.round(dw / 2 - (nw * zoom) / 2 + (offXf - offX) * zoom);
