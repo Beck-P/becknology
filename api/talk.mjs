@@ -1,7 +1,8 @@
 /**
  * /api/talk — the Bridge's characters, voiced by Claude Haiku 5.5.
  *
- * GET  → { enabled }  (whether a key is configured; the game hides free talk without one)
+ * GET  → { enabled, env }  (whether a key is configured — the game hides free talk without one —
+ *                          and which Vercel environment answered)
  * POST → { mode: 'greet' | 'talk' | 'fold' | 'letter', person, say?, history?, bond?, clues?, news?, flags?, place? }
  *
  * The prompt is built here, never sent by the browser: who the character is
@@ -212,7 +213,10 @@ export function createHandler(getClient) {
   return async function handler(req, res) {
     const client = getClient();
     if (req.method === 'GET') {
-      res.status(200).json({ enabled: !!client });
+      // never cached, and says which Vercel environment answered (production / preview) so a
+      // missing key is easy to place; never anything about the key itself
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json({ enabled: !!client, env: process.env.VERCEL_ENV || 'local' });
       return;
     }
     if (req.method !== 'POST') { res.status(405).json({ error: 'method' }); return; }
