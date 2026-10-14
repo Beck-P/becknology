@@ -16,5 +16,10 @@
   "lumar-crimson": [
     { "sheet": "npc-traveler", "path": [[28, 30], [28, 24], [29, 19]], "speed": 0.9, "pause": 5000, "rest": "up" },
     { "sheet": "npc-watcher", "path": [[22, 21], [17, 21], [12, 22]], "speed": 0.7, "pause": 6000, "rest": "left" }
+  ],
+  "lumar-sapphire": [
+    { "sheet": "npc-townsman", "path": [[11, 23], [43, 23]], "speed": 1.0, "pause": 4000, "rest": "up" },
+    { "sheet": "npc-shopper", "path": [[23, 20], [35, 20]], "speed": 0.8, "pause": 5000, "rest": "up" },
+    { "sheet": "npc-fishmonger", "path": [[46, 22], [51, 22]], "speed": 0.7, "pause": 6000, "rest": "down" }
   ]
 }
