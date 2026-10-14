@@ -107,9 +107,11 @@ var BridgeSea = (function () {
 
   // where the two wave layers sit for screen x = 0, y = 0 (the sea is
   // anchored to the world, so it scrolls with the camera)
+  var camOverride = null;      // drawSeaAt: a camera of the caller's own (the voyage)
   function drift(now) {
-    var v = BridgeWorld.getView();
-    var camX = -v.offX, camY = -v.offY;
+    var camX, camY;
+    if (camOverride) { camX = camOverride[0]; camY = camOverride[1]; }
+    else { var v = BridgeWorld.getView(); camX = -v.offX; camY = -v.offY; }
     return { ax: camX + now * 0.006, ay: camY + now * 0.002, bx: camX - now * 0.004 + 37, by: camY + now * 0.0035 + 19,
              camX: camX, camY: camY };
   }
@@ -341,5 +343,11 @@ var BridgeSea = (function () {
     ctx.drawImage(S.canvas, Math.round(offX - sc.meta.originX), Math.round(offY - sc.meta.originY));
   }
 
-  return { drawSea: drawSea, drawWater: drawWater, palettes: PALETTES };
+  /** The open sea seen from a camera at (camX, camY) in the caller's own space (the voyage). */
+  function drawSeaAt(ctx, w, h, now, palette, camX, camY) {
+    camOverride = [camX, camY];
+    try { drawSea(ctx, w, h, now, palette); } finally { camOverride = null; }
+  }
+
+  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, palettes: PALETTES };
 })();

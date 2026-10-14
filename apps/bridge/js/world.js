@@ -399,6 +399,7 @@ var BridgeWorld = (function () {
       if (xhr.status === 200) {
         var data = JSON.parse(xhr.responseText);
         if (typeof BridgeForage !== 'undefined') BridgeForage.decorate(worldId, data);
+        if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         var finish = function () {
           world = data;
           currentWorldId = worldId;

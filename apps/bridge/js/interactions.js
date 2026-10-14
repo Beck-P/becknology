@@ -499,6 +499,9 @@ var BridgeInteractions = (function () {
     function handleMenuOption(opt) {
       cleanup();
       switch (opt.action) {
+        case 'voyage':
+          if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.start(BridgeWorld.getWorldId());
+          break;
         case 'sail_to':
           BridgeWorld.sailTo(opt.destination, opt.destinationName || opt.label);
           break;
