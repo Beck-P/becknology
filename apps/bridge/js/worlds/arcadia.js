@@ -148,6 +148,8 @@
   }
 
   function loadBuildingSprite(key, path, chunkWidth) {
+    // Native (32px/tile) version wins — see tools/bridge-art/native_sprites.py
+    if (BridgeSprites.hasNative(key)) return BridgeSprites.loadNative(key);
     if (spriteCache[key]) return spriteCache[key];
     var entry = { canvas: null, ready: false };
     spriteCache[key] = entry;
@@ -206,6 +208,7 @@
   loadBuildingSprite('junk-pawn-shop', '/bridge/assets/buildings/junk-pawn-shop.png', 96);
 
   function drawBuildingSprite(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX) {
+    if (BridgeSprites.drawNative(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX)) return;
     var s = spriteCache[key];
     if (!s || !s.ready) return;
     var areaW = ts * tilesW;
@@ -276,7 +279,7 @@
     for (var s = 0; s < 6; s++) {
       var sx = x - 2*u + (s % 3) * 3*u;
       var phase = Math.floor(t / 160 + s * 5) % 16;
-      var sy = y - 3*ts + 4*u - phase * u;
+      var sy = BridgeSprites.area('neon-ramen-stand', x, y, ts, 3, 3, 1).y - ts + 4*u - phase * u;
       ctx.globalAlpha = Math.max(0, 0.55 - phase * 0.04 - (s >= 3 ? 0.1 : 0));
       ctx.fillStyle = s % 2 === 0 ? '#e8e8f0' : '#c8c8d8';
       var puff = (phase < 4) ? 1 : 2;
@@ -355,7 +358,9 @@
   function drawChromeClinicPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'chrome-clinic', 4, 4, 1);
     var pulse = 0.62 + Math.sin((time || 0) / 720 + (col || 0)) * 0.16;
-    drawSpriteGlow(ctx, x + ts * 0.65, y - ts * 1.55, ts * 2.1, 'rgba(128,224,232,0.72)', pulse * 0.3);
+    // Cross sign sits ~55% up the clinic art
+    var spr = BridgeSprites.area('chrome-clinic', x, y, ts, 4, 4, 1);
+    drawSpriteGlow(ctx, x + ts * 0.65, spr.y + spr.h * 0.45, ts * 2.1, 'rgba(128,224,232,0.72)', pulse * 0.3);
     drawGroundLight(ctx, x + ts * 0.65, y + ts * 0.95, ts * 2.4, ts * 0.9, 'rgba(128,224,232,0.5)', 0.25 * pulse);
   }
 

@@ -367,6 +367,17 @@ var BridgeWorld = (function () {
     tcache.snap = world.tiles.map(function (r) { return r.slice(); });
     var now = Date.now();
     for (var row = 0; row < world.height; row++) cacheRow(row, cls, now);
+
+    // Sprites still downloading draw nothing yet, which would misclassify
+    // them as empty static tiles — redo the classification once they land.
+    if (typeof BridgeSprites !== 'undefined' && BridgeSprites.pendingCount() > 0) {
+      var wid = currentWorldId;
+      BridgeSprites.whenReady(function () {
+        if (currentWorldId !== wid || !world) return;
+        delete tileClass[wid];
+        buildTileCache();
+      });
+    }
   }
 
   // True when the in-map tile at (col,row) fully covers its cell, so a

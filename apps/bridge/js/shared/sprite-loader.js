@@ -1,23 +1,130 @@
 /**
  * Shared PNG sprite loader for bridge worlds.
  *
- * Multi-tile pixel-art building sprites: load the PNG, strip the
- * cream/white halo most image generators leave around the subject,
- * chunkify down to a low-res base so the result reads as the same
- * pixel density as the procedural drawers, then draw it anchored at a
- * specific tile within its footprint.
+ * Native sprites (preferred): tools/bridge-art/native_sprites.py converts the
+ * big painted PNGs into sprites at exactly their on-grid size (32 native px
+ * per tile, aspect kept) and lists them in assets/native/manifest.js. Those
+ * draw 1:1 into the world's native buffer, bottom-aligned on the anchor tile
+ * and centred on the footprint, over a soft contact shadow.
  *
- * Sized once at load via chunkWidth — each pixel of the chunked source
- * becomes ~3 screen pixels at our 3× render scale.
+ * Legacy path: a PNG with no native version is loaded full-size, stripped
+ * of the cream/white halo image generators leave, chunkified, and stretched
+ * across its footprint.
  */
 (function () {
+  var NATIVE_TS = 32;
+  var NATIVE = window.BridgeNativeSprites || {};
   var spriteCache = {};
+  var nativeCache = {};
+
+  // ---- Load tracking, so the world can rebuild its tile cache once art
+  // that arrived late is ready ----
+  var pending = 0;
+  var readyCallbacks = [];
+  function track(img) {
+    pending++;
+    function done() {
+      pending--;
+      if (pending === 0) {
+        var cbs = readyCallbacks;
+        readyCallbacks = [];
+        for (var i = 0; i < cbs.length; i++) cbs[i]();
+      }
+    }
+    img.addEventListener('load', done);
+    img.addEventListener('error', done);
+  }
+  function whenReady(cb) {
+    if (pending === 0) cb();
+    else readyCallbacks.push(cb);
+  }
+
+  function hasNative(key) { return !!NATIVE[key]; }
+
+  function loadNative(key) {
+    if (nativeCache[key]) return nativeCache[key];
+    var entry = { img: null, ready: false };
+    nativeCache[key] = entry;
+    var img = new Image();
+    track(img);
+    img.onload = function () { entry.img = img; entry.ready = true; };
+    img.src = '/bridge/assets/native/' + key + '.png';
+    return entry;
+  }
+
+  // Soft ambient-occlusion pool where a sprite meets the ground.
+  function drawContactShadow(ctx, cx, baseY, footW, ts) {
+    var r = footW * 0.55;
+    ctx.save();
+    ctx.translate(cx, baseY - ts * 0.1);
+    ctx.scale(1, 0.3);
+    var g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    g.addColorStop(0, 'rgba(0, 0, 0, 0.42)');
+    g.addColorStop(0.65, 'rgba(0, 0, 0, 0.22)');
+    g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(-r, -r, r * 2, r * 2);
+    ctx.restore();
+  }
+
+  // The rectangle a sprite's whole image occupies when drawn at an anchor
+  // tile: centred on the footprint, with the art's lowest row resting on
+  // the anchor tile's bottom edge. Overlays (smoke, window glow, spray)
+  // position themselves as fractions of this rect, so they stay glued to
+  // the art whatever its size. Legacy sprites fill the footprint.
+  function area(key, x, y, ts, tilesW, tilesH, anchorOffsetX) {
+    var left = x - anchorOffsetX * ts;
+    var footW = tilesW * ts;
+    var meta = NATIVE[key];
+    if (!meta) return { x: left, y: y + ts - tilesH * ts, w: footW, h: tilesH * ts };
+    var k = ts / NATIVE_TS;
+    var dw = meta.w * k;
+    var dh = meta.h * k;
+    return {
+      x: Math.round(left + (footW - dw) / 2),
+      y: Math.round(y + ts - dh + (meta.padB || 0) * k),
+      w: dw,
+      h: dh
+    };
+  }
+
+  // Draw a native sprite. Returns false when `key` has no native version so
+  // callers can fall back to their legacy path.
+  // opts.shadow === false skips the contact shadow.
+  function drawNative(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX, opts) {
+    var meta = NATIVE[key];
+    if (!meta) return false;
+    var e = loadNative(key);
+    if (!e.ready) return true;
+    var r = area(key, x, y, ts, tilesW, tilesH, anchorOffsetX);
+    if (!opts || opts.shadow !== false) {
+      var left = x - anchorOffsetX * ts;
+      drawContactShadow(ctx, left + tilesW * ts / 2, y + ts, Math.min(tilesW * ts, r.w), ts);
+    }
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(e.img, r.x, r.y, r.w, r.h);
+    return true;
+  }
+
+  // Native sprite centred in an arbitrary box (used for the docked ship).
+  function drawNativeCentered(ctx, key, cx, cy, ts) {
+    var meta = NATIVE[key];
+    if (!meta) return false;
+    var e = loadNative(key);
+    if (!e.ready) return true;
+    var k = ts / NATIVE_TS;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(e.img, Math.round(cx - meta.w * k / 2), Math.round(cy - meta.h * k / 2), meta.w * k, meta.h * k);
+    return true;
+  }
 
   function load(key, path, chunkWidth) {
+    if (NATIVE[key]) return loadNative(key);
     if (spriteCache[key]) return spriteCache[key];
     var entry = { canvas: null, ready: false };
     spriteCache[key] = entry;
     var img = new Image();
+    track(img);
     img.onload = function () {
       var src = document.createElement('canvas');
       src.width = img.width;
@@ -56,7 +163,8 @@
     return entry;
   }
 
-  function draw(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX) {
+  function draw(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX, opts) {
+    if (drawNative(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX, opts)) return;
     var s = spriteCache[key];
     if (!s || !s.ready) return;
     var areaW = ts * tilesW;
@@ -67,5 +175,16 @@
     ctx.drawImage(s.canvas, destX, destY, areaW, areaH);
   }
 
-  window.BridgeSprites = { load: load, draw: draw };
+  window.BridgeSprites = {
+    load: load,
+    draw: draw,
+    hasNative: hasNative,
+    loadNative: loadNative,
+    drawNative: drawNative,
+    drawNativeCentered: drawNativeCentered,
+    area: area,
+    drawContactShadow: drawContactShadow,
+    whenReady: whenReady,
+    pendingCount: function () { return pending; }
+  };
 })();

@@ -551,6 +551,8 @@
   // becomes ~3 screen pixels at our render scale, matching our procedural
   // art's "u = ts/16" pixel chunkiness. Lower = blockier. Tune per-sprite.
   function loadBuildingSprite(key, path, chunkWidth) {
+    // Native (32px/tile) version wins — see tools/bridge-art/native_sprites.py
+    if (BridgeSprites.hasNative(key)) return BridgeSprites.loadNative(key);
     if (spriteCache[key]) return spriteCache[key];
     var entry = { canvas: null, ready: false };
     spriteCache[key] = entry;
@@ -641,6 +643,7 @@
   // Sprite renders so that its bottom edge aligns with the anchor tile's
   // bottom edge.
   function drawBuildingSprite(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX) {
+    if (BridgeSprites.drawNative(ctx, x, y, ts, key, tilesW, tilesH, anchorOffsetX)) return;
     var s = spriteCache[key];
     if (!s || !s.ready) {
       // Subtle placeholder while loading — empty
@@ -690,9 +693,10 @@
   function drawTavernPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'tavern', 4, 5, 1);
     // Building footprint in screen pixels
-    var areaW = ts * 4, areaH = ts * 5;
-    var destX = x - 1 * ts;
-    var destY = y + ts - areaH;
+    var spr = BridgeSprites.area('tavern', x, y, ts, 4, 5, 1);
+    var areaW = spr.w, areaH = spr.h;
+    var destX = spr.x;
+    var destY = spr.y;
     // Window flicker — warm yellow
     drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row, 'rgba(255, 220, 120, 1)');
     // Chimney smoke — chimney is at upper-right of the tavern PNG (~80% across, ~10% down)
@@ -703,9 +707,10 @@
 
   function drawInnPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'inn', 5, 5, 2);
-    var areaW = ts * 5, areaH = ts * 5;
-    var destX = x - 2 * ts;
-    var destY = y + ts - areaH;
+    var spr = BridgeSprites.area('inn', x, y, ts, 5, 5, 2);
+    var areaW = spr.w, areaH = spr.h;
+    var destX = spr.x;
+    var destY = spr.y;
     drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row + 11, 'rgba(255, 220, 140, 1)');
     // Inn chimney is at upper-right, slightly less far right
     var chimneyX = destX + areaW * 0.74;
@@ -717,9 +722,10 @@
   // through the open front + chimney smoke + warm ground-light pool.
   function drawSmithyPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'smithy', 3, 4, 1);
-    var areaW = ts * 3, areaH = ts * 4;
-    var destX = x - 1 * ts;
-    var destY = y + ts - areaH;
+    var spr = BridgeSprites.area('smithy', x, y, ts, 3, 4, 1);
+    var areaW = spr.w, areaH = spr.h;
+    var destX = spr.x;
+    var destY = spr.y;
     // Forge flicker — the open front is centred low on the facade.
     var t = time || 0;
     var pulse = 0.7 + Math.sin(t / 220 + (col || 0)) * 0.15 + Math.sin(t / 90) * 0.1;
@@ -766,9 +772,10 @@
   // + lantern flicker.
   function drawApothecaryPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'apothecary', 3, 4, 1);
-    var areaW = ts * 3, areaH = ts * 4;
-    var destX = x - 1 * ts;
-    var destY = y + ts - areaH;
+    var spr = BridgeSprites.area('apothecary', x, y, ts, 3, 4, 1);
+    var areaW = spr.w, areaH = spr.h;
+    var destX = spr.x;
+    var destY = spr.y;
     var t = time || 0;
     // Window glow cycles colour (jars catching candlelight)
     var phase = (t / 4200 + (col || 0) * 0.3) % 3;
@@ -807,9 +814,10 @@
   // lantern flicker + warm ground pool.
   function drawBakeryPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'bakery', 3, 4, 1);
-    var areaW = ts * 3, areaH = ts * 4;
-    var destX = x - 1 * ts;
-    var destY = y + ts - areaH;
+    var spr = BridgeSprites.area('bakery', x, y, ts, 3, 4, 1);
+    var areaW = spr.w, areaH = spr.h;
+    var destX = spr.x;
+    var destY = spr.y;
     drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row + 23, 'rgba(255, 220, 120, 1)');
     // Lantern above the door — upper-mid front
     var t = time || 0;
@@ -845,9 +853,10 @@
   // awning sway every few frames (the awning is the upper "roof" plane).
   function drawFishmongerStallPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'fishmonger-stall', 3, 3, 1);
-    var areaW = ts * 3, areaH = ts * 3;
-    var destX = x - 1 * ts;
-    var destY = y + ts - areaH;
+    var spr = BridgeSprites.area('fishmonger-stall', x, y, ts, 3, 3, 1);
+    var areaW = spr.w, areaH = spr.h;
+    var destX = spr.x;
+    var destY = spr.y;
     var t = time || 0;
     // Salty cool-cyan halo around the stall
     ctx.save();
@@ -867,9 +876,10 @@
   // halo under the hull.
   function drawShipDockPng(ctx, x, y, ts, time, col, row) {
     drawBuildingSprite(ctx, x, y, ts, 'ship-dock', 7, 4, 3);
-    var areaW = ts * 7, areaH = ts * 4;
-    var destX = x - 3 * ts;
-    var destY = y + ts - areaH;
+    var spr = BridgeSprites.area('ship-dock', x, y, ts, 7, 4, 3);
+    var areaW = spr.w, areaH = spr.h;
+    var destX = spr.x;
+    var destY = spr.y;
     var t = time || 0;
     // Captain's cabin window — upper-left of the ship's body
     drawWindowFlicker(ctx, destX, destY, areaW, areaH, time, col + row + 91, 'rgba(255, 220, 140, 1)');
@@ -899,16 +909,17 @@
   }
 
   function drawLighthousePng(ctx, x, y, ts, time, col, row) {
-    var areaW = ts * 3, areaH = ts * 7;
-    var destX = x - 1 * ts;
-    var destY = y + ts - areaH;
+    var spr = BridgeSprites.area('lighthouse', x, y, ts, 3, 7, 1);
+    var areaW = spr.w, areaH = spr.h;
+    var destX = spr.x;
+    var destY = spr.y;
     // Pre-fill the footprint with the cliff-trail base colour so the sea
     // background can't leak through the PNG's transparent base pixels —
     // the rocky base of the lighthouse renders with thin transparent
     // gaps that would otherwise show emerald sea right under the
     // lighthouse door.
     ctx.fillStyle = '#3a3640';
-    ctx.fillRect(destX, destY, areaW, areaH);
+    ctx.fillRect(x - ts, y + ts - 7 * ts, 3 * ts, 7 * ts);
     drawBuildingSprite(ctx, x, y, ts, 'lighthouse', 3, 7, 1);
     // Lamp pulse — single big warm glow at the top of the lighthouse
     var pulse = 0.6 + Math.sin(time / 700) * 0.25;
@@ -926,35 +937,6 @@
     ctx.globalAlpha = 1;
   }
 
-  // ---- Ship (reuse docked ship PNG) ----
-
-  var shipCanvas = null;
-
-  function loadShipSprite() {
-    var img = new Image();
-    img.onload = function () {
-      shipCanvas = document.createElement('canvas');
-      shipCanvas.width = img.width;
-      shipCanvas.height = img.height;
-      var sctx = shipCanvas.getContext('2d');
-      sctx.drawImage(img, 0, 0);
-      var data = sctx.getImageData(0, 0, shipCanvas.width, shipCanvas.height);
-      var px = data.data;
-      for (var i = 0; i < px.length; i += 4) {
-        var r = px[i], g = px[i + 1], b = px[i + 2];
-        if (r > 240 && g > 240 && b > 240) {
-          px[i + 3] = 0;
-        } else if (r > 200 && g > 200 && b > 200) {
-          var avg = (r + g + b) / 3;
-          var fade = Math.max(0, Math.min(255, Math.round((255 - avg) * (255 / 55))));
-          px[i + 3] = Math.min(px[i + 3], fade);
-        }
-      }
-      sctx.putImageData(data, 0, 0);
-    };
-    img.src = '/bridge/assets/ship-docked.png';
-  }
-  loadShipSprite();
 
   // Legacy procedural ship_body tile — kept for safety, but the
   // islands now use the ship_dock_png tile (id 46) instead so they
@@ -1711,10 +1693,11 @@
   // Sprite-local landmarks tuned to the generated PNG composition.
   function drawFountainSpray(ctx, x, y, ts, time, col, row) {
     var u = ts / 16;
-    var spriteX = x - ts;
-    var spriteY = y - 2 * ts;
-    var spriteW = 3 * ts;
-    var spriteH = 3 * ts;
+    var spr = BridgeSprites.area('fountain', x, y, ts, 3, 3, 1);
+    var spriteX = spr.x;
+    var spriteY = spr.y;
+    var spriteW = spr.w;
+    var spriteH = spr.h;
     var spoutX = spriteX + spriteW * 0.5;
     // Water emerges from the top of the figurine spout, not the
     // pedestal — start the drops up where the PNG arcs actually begin.

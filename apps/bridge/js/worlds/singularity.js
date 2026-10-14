@@ -468,6 +468,7 @@
   var shipCanvas = null;
 
   function loadShipSprite() {
+    if (BridgeSprites.hasNative('ship-docked')) { BridgeSprites.loadNative('ship-docked'); return; }
     var img = new Image();
     img.onload = function () {
       shipCanvas = document.createElement('canvas');
@@ -500,6 +501,9 @@
     ctx.fillRect(x, y, ts, ts);
 
     // Anchor tile draws the full ship spanning 3x3 tiles
+    if (col === 1 && row === 3) {
+      if (BridgeSprites.drawNativeCentered(ctx, 'ship-docked', x + ts * 1.5, y + ts * 1.5, ts)) return;
+    }
     if (col === 1 && row === 3 && shipCanvas) {
       var areaW = ts * 3;
       var areaH = ts * 3;
