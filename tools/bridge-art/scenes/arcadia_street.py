@@ -63,20 +63,24 @@ front(0.0, 3.2, floors=2, kind='shutter', trim=Y.YEL, door_x=1.5, glow='#6a4418'
 S.letters(k, 'PAWN', 'Bungee', 1.25, RF, SZ + 0.1, size=fit('PAWN', 'Bungee', 2.0, 0.62), col=Y.YEL)
 S.icon_ring(k, 2.75, RF, SZ + 0.12, s=0.42)
 S.blade(k, '質屋', 'DelaGothicOne', 3.0, RF, 0.5, 1.6, col='#ffd040', w=0.42)
+D.razor_wire(k, 0.1, 3.1, RF - 0.06, G + 1.15 + 0.14)
 front(3.2, 7.2, floors=3, kind='glass', trim=Y.CYAN, door_x=4.5, glow='#5a7a9a', sign_floor=True,
       awning=('#40c8d8', 'metal'), escape=(5.7, 7.0), roof=('dish', 'vent'), wall='#2a3040', clad='tile', window_neon=Y.CYAN)
 S.lightbox(k, 'ARCADIA MART', 'RussoOne', 5.2, RF, SZ + 0.05, 3.6, 0.5, bg='#e8f4ff', ink='#1a3a8a', glow='#a0d0ff')
 S.neon(k, '24H', 'ZenDots', 6.5, RF, SZ + 0.72, size=0.3, col=Y.CYAN)
 front(7.2, 11.0, floors=2, kind='glass', trim=Y.PINK, door_x=8.5, glow='#8a3020', sign_floor=True,
-      awning=('#a02a2a', 'fabric'), balcony_at=(9.2, 10.8), roof=('vent', 'tank'), wall='#3a2228', clad='brick', window_neon=Y.PINK)
-S.neon(k, 'Noodles', 'Pacifico', 8.7, RF, SZ + 0.42, size=fit('Noodles', 'Pacifico', 2.7, 0.75), col=Y.PINK, tube=0.02)
-S.icon_bowl(k, 10.45, RF, SZ + 0.4, s=0.45)
+      balcony_at=(9.2, 10.8), roof=('vent', 'tank'), wall='#3a2228', clad='brick', window_neon=Y.PINK)
+D.timber_front(k, 7.2, 11.0, RF, G)
+S.letters(k, 'NOODLES', 'RubikMonoOne', 8.75, RF, G + 0.55, size=fit('NOODLES', 'RubikMonoOne', 2.6, 0.42), col='#ff6aa0')
+S.icon_bowl(k, 10.45, RF, G + 0.5, s=0.45)
 S.blade(k, 'ラーメン', 'DelaGothicOne', 7.35, RF, 0.45, 2.0, col='#ff5050', w=0.44)
-for x in (7.9, 10.5):
-    Y.paper_lantern(k, x, RF + 0.3, 0.95, s=0.42, top=1.25)
+for (x, z) in ((7.6, 1.0), (8.0, 0.85), (9.95, 0.95), (10.35, 0.8), (10.75, 1.0)):
+    Y.paper_lantern(k, x, RF + 0.5, z, s=0.32, top=1.35)
 # the arcade: three storeys, a marquee of bulbs round the big sign, a billboard on top
 AH = front(11.0, 16.0, floors=3, kind='glass', door_x=13.0, door_w=1.6, glow='#6a2aa0', trim=Y.PURP,
-           roof=('vent',), ad=(11.6, 15.4, 1.3, 1), wall='#241c40', clad='metal', sign_floor=True, window_neon=Y.PURP)
+           roof=('vent',), ad=(11.6, 15.4, 1.3, 1), wall='#241c40', clad='metal', sign_floor=True, windows=False)
+D.arcade_canopy(k, st, 12.1, 13.9, RF, G - 0.06)
+D.portholes(k, 11.3, 15.7, RF, G + 1.15 + 0.55, col=Y.PINK, n=5)
 k.box(11.15, RF, 1.38, 15.85, RF + 0.04, 2.42, '#0c0818', 'marquee_board')
 S.neon(k, 'ARCADE', 'Audiowide', 13.5, RF + 0.04, SZ + 0.2, size=fit('ARCADE', 'Audiowide', 3.9, 0.7), col=Y.CYAN, tube=0.02)
 S.letters(k, 'PLAY ALL NIGHT', 'ZenDots', 13.5, RF + 0.04, SZ + 0.03, size=0.13, col=Y.PINK)
@@ -106,8 +110,9 @@ S.neon(k, 'HOVER', 'Audiowide', 22.4, RF - 0.6, 1.0, size=0.26, col=Y.CYAN)
 Y.hover_bike(k, 22.5, RF - 0.05)
 front(23.6, 26.4, floors=2, kind='glass', trim=Y.YEL, door_x=25.2, glow='#8a6a10', sign_floor=True,
       roof=('tank',), wall='#3a2a22', clad='brick', window_neon=Y.YEL)
-S.neon(k, 'LUCKY 7', 'Righteous', 25.0, RF, SZ + 0.25, size=fit('LUCKY 7', 'Righteous', 2.5, 0.6), col=Y.YEL, tube=0.02)
-S.blade(k, 'パチンコ', 'DelaGothicOne', 26.25, RF, 1.7, 1.9, col='#ffb040', w=0.4)
+S.letters(k, 'LUCKY', 'Righteous', 24.75, RF, SZ + 0.3, size=fit('LUCKY', 'Righteous', 1.55, 0.5), col=Y.YEL)
+D.bulb_seven(k, st, 25.95, RF, SZ + 0.05, h=0.85)
+S.blade(k, 'パチンコ', 'DelaGothicOne', 23.8, RF, 1.6, 1.9, col='#ffb040', w=0.4)
 Y.token_kiosk(k, 24.1, RF + 0.4)
 front(26.4, 29.6, floors=2, kind='stall', door_x=29.1, door_w=0.5, glow='#7a3a20', trim=Y.RED, roof=('vent', 'dish'),
       r=RF - 0.6, wall='#2e1e22', sign_floor=True)
@@ -126,13 +131,16 @@ k.boxes([(x, RF + 0.04, 0.05, x + 0.04, RF + 0.08, 1.15) for x in [33.2 + i * 0.
 k.tube((33.2, RF + 0.1, 0.6), (34.2, RF + 0.1, 0.7), 0.025, '#8a8a90', 'chain', verts=4)
 S.letters(k, 'NULL', 'Bungee', 33.7, RF + 0.02, 1.6, size=0.36, col=Y.GREEN, energy=3)
 front(34.8, 38.8, floors=3, kind='glass', trim=Y.PURP, door_x=36.6, glow='#3a5a9a', sign_floor=True,
-      awning=('#7080e8', 'metal'), balcony_at=(37.0, 38.6), escape=(35.0, 36.0), roof=('dish', 'tank'), wall='#2c2840',
-      clad='tile', window_neon=Y.PURP)
-S.neon(k, 'hotel', 'Righteous', 36.5, RF, SZ + 0.2, size=0.62, col='#b090ff', tube=0.02)
-S.lightbox(k, 'CAPSULE', 'RussoOne', 38.2, RF, SZ + 0.25, 1.0, 0.3, bg='#c0b0ff', ink='#1a0a40', glow='#a080ff')
+      awning=('#7080e8', 'metal'), roof=('dish', 'tank'), wall='#2c2840', clad='tile', windows=False)
+D.capsule_wall(k, 35.0, 38.6, RF, G + 0.82, G + 2 * 1.15 - 0.05)
+S.letters(k, 'HOTEL', 'Righteous', 36.4, RF, SZ + 0.08, size=0.42, col='#c8b0ff')
+S.lightbox(k, 'CAPSULE', 'RussoOne', 38.15, RF, SZ + 0.12, 1.0, 0.3, bg='#c0b0ff', ink='#1a0a40', glow='#a080ff')
 front(38.8, 44.0, floors=2, kind='club', trim=Y.MAG, door_x=41.5, glow='#b020b0', sign_floor=True,
       roof=('vent', 'antenna'), ad=(39.4, 43.4, 1.0, 2), wall='#1e1626', clad='metal')
-S.letters(k, 'VOID', 'Monoton', 41.4, RF, SZ + 0.05, size=fit('VOID', 'Monoton', 3.2, 0.8), col='#e050e0')
+D.monolith(k, 38.8, 44.0, RF, G + 0.02, G + 1.15 + 0.1)
+S.letters(k, 'VOID', 'Monoton', 40.9, RF + 0.1, SZ + 0.05, size=fit('VOID', 'Monoton', 2.6, 0.8), col='#e050e0')
+D.velvet_rope(k, 39.6, 41.0, RF + 0.5)
+k.solid(39.5, 8.0, 41.0, 8.9)
 S.blade(k, 'クラブ', 'DelaGothicOne', 38.95, RF, 0.5, 1.6, col='#ff60d0', w=0.4)
 D.poster_wall(k, 39.2, 40.8, RF + 0.02, 0.3, 1.1)
 D.poster_wall(k, 42.3, 43.8, RF + 0.02, 0.3, 1.1)

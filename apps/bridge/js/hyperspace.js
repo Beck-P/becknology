@@ -12,6 +12,15 @@ var BridgeHyperspace = (function () {
     // world overlay system when state changes — no manual hide needed here)
     BridgeStarmap.hide();
 
+    // The Wayfarer's jump, as a cutscene (from where it was parked to the new world)
+    if (world.hasOverworld && typeof BridgeShip !== 'undefined' && typeof BridgeCine !== 'undefined' && BridgeCine.jump) {
+      var from = context.from || 'deep-space';
+      BridgeCine.jump(from, world.loc || world.id, { hold: 600 }).then(function () {
+        BridgeShip.arriveInOrbit(world);
+      });
+      return;
+    }
+
     // Streak mode
     BridgeStarfield.setMode('streak');
 

@@ -972,10 +972,125 @@ var BridgeCine = (function () {
     });
   }
 
+  // ---- the jump: the drive spooling, stars stretching, a tunnel of light, dropping out ------------
+  function jumpShots(from, to) {
+    var shots = [];
+    function shipAt(b, W, H, now, dx, shake) {
+      var m = meta.mothership;
+      var x = Math.round(W * 0.5 - m.w * 0.5 + dx + (shake ? (hash(Math.floor(now / 30)) - 0.5) * shake : 0));
+      var y = Math.round(H * 0.5 - m.h * 0.55 + (shake ? (hash(Math.floor(now / 30) + 7) - 0.5) * shake : 0));
+      return [x, y, m];
+    }
+    function engines(b, p, now, len, col) {
+      for (var i = 0; i < 2; i++) {
+        var a = p[2].anchors['exhaust_' + i];
+        if (a) flame(b, p[0] + a[0], p[1] + a[1], len + i * 3, -1, 0, now + i * 50, col || AETHER, 5);
+      }
+    }
+    // 1 · in orbit where we are: the sails brighten, the drive spools, stars begin to stretch
+    shots.push({ dur: 1500, draw: function (b, W, H, t, now) {
+      spaceShot(b, W, H, now, from);
+      var p = shipAt(b, W, H, now, -t * 10, t * 2);
+      b.save();
+      b.globalCompositeOperation = 'lighter';
+      for (var i = 0; i < 70; i++) {                       // stars smearing into lines as the drive takes hold
+        var sx = hash(i) * W, sy = hash(i * 3) * H, L = t * t * 40 * (0.3 + hash(i * 5));
+        b.fillStyle = 'rgba(200,220,255,' + (0.25 + 0.5 * t).toFixed(2) + ')';
+        b.fillRect(Math.round(sx - L), Math.round(sy), Math.max(1, Math.round(L)), 1);
+      }
+      var gx = p[0] + p[2].w * 0.05, gy = p[1] + p[2].h * 0.45;
+      var g = b.createRadialGradient(gx, gy, 0, gx, gy, 30 + t * 40);
+      g.addColorStop(0, 'rgba(200,190,255,' + (0.3 + t * 0.6).toFixed(2) + ')');
+      g.addColorStop(1, 'rgba(120,100,255,0)');
+      b.fillStyle = g;
+      b.fillRect(gx - 80, gy - 80, 160, 160);
+      b.restore();
+      engines(b, p, now, 14 + t * 30);
+      sprite(b, 'mothership', p[0], p[1]);
+    } });
+    // 2 · the leap: everything streaks past, a blinding bloom
+    shots.push({ dur: 700, draw: function (b, W, H, t, now) {
+      b.fillStyle = '#04030c';
+      b.fillRect(0, 0, W, H);
+      b.save();
+      b.globalCompositeOperation = 'lighter';
+      for (var i = 0; i < 160; i++) {
+        var sy = hash(i * 3) * H, L = 40 + t * 260 * (0.4 + hash(i * 5));
+        var sx = ((hash(i) * (W + L) - now * 1.2) % (W + L) + W + L) % (W + L) - L;
+        var c = ['200,220,255', '170,140,255', '120,230,240'][i % 3];
+        b.fillStyle = 'rgba(' + c + ',0.7)';
+        b.fillRect(Math.round(sx), Math.round(sy), Math.round(L), 1);
+      }
+      b.restore();
+      var p = shipAt(b, W, H, now, t * 30, 3);
+      engines(b, p, now, 50);
+      sprite(b, 'mothership', p[0], p[1]);
+      b.fillStyle = 'rgba(255,255,255,' + Math.max(0, (t - 0.6) / 0.4).toFixed(2) + ')';
+      b.fillRect(0, 0, W, H);
+    } });
+    // 3 · the tunnel: rings of light rushing out from the vanishing point
+    shots.push({ dur: 1400, draw: function (b, W, H, t, now) {
+      b.fillStyle = '#05030e';
+      b.fillRect(0, 0, W, H);
+      var cx = W * 0.5 + Math.sin(now / 300) * 6, cy = H * 0.5 + Math.cos(now / 410) * 4;
+      b.save();
+      b.globalCompositeOperation = 'lighter';
+      for (var i = 0; i < 22; i++) {
+        var f = ((now / 900) + i / 22) % 1;                 // each ring grows from the centre outward
+        var R = Math.pow(f, 2.2) * Math.max(W, H) * 0.9;
+        var col = ['150,120,255', '90,220,240', '255,190,120', '200,140,255'][i % 4];
+        b.strokeStyle = 'rgba(' + col + ',' + (0.5 * (1 - f) + 0.1).toFixed(2) + ')';
+        b.lineWidth = 1 + f * 4;
+        b.beginPath();
+        b.ellipse(cx, cy, R, R * 0.62, Math.sin(now / 1500) * 0.2, 0, Math.PI * 2);
+        b.stroke();
+      }
+      for (var s = 0; s < 90; s++) {                        // streaks flying out of the tunnel
+        var a = hash(s) * 6.283, sp = ((now / 600) + hash(s * 3)) % 1;
+        var r0 = Math.pow(sp, 2) * W * 0.7, r1 = r0 + 6 + sp * 30;
+        b.strokeStyle = 'rgba(220,230,255,' + (0.6 * sp).toFixed(2) + ')';
+        b.lineWidth = 1;
+        b.beginPath();
+        b.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0 * 0.62);
+        b.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1 * 0.62);
+        b.stroke();
+      }
+      var g = b.createRadialGradient(cx, cy, 0, cx, cy, 60);
+      g.addColorStop(0, 'rgba(255,255,255,0.9)');
+      g.addColorStop(1, 'rgba(160,140,255,0)');
+      b.fillStyle = g;
+      b.fillRect(cx - 60, cy - 60, 120, 120);
+      b.restore();
+      var m = meta.mothership, sc = 0.5;                    // the ship, small, riding the tunnel
+      b.drawImage(imgs.mothership, Math.round(cx - m.w * sc / 2), Math.round(cy + 20 - m.h * sc / 2), Math.round(m.w * sc), Math.round(m.h * sc));
+    } });
+    // 4 · dropping out over the new world, the drive cooling
+    shots.push({ dur: 1700, draw: function (b, W, H, t, now) {
+      spaceShot(b, W, H, now, to);
+      var u = easeOut(t);
+      b.save();
+      b.globalCompositeOperation = 'lighter';
+      for (var i = 0; i < 60; i++) {                        // the last streaks shrinking back into stars
+        var L = (1 - u) * 120 * (0.3 + hash(i * 5));
+        b.fillStyle = 'rgba(200,220,255,' + (0.6 * (1 - u)).toFixed(2) + ')';
+        b.fillRect(Math.round(hash(i) * W - L), Math.round(hash(i * 3) * H), Math.max(1, Math.round(L)), 1);
+      }
+      b.restore();
+      var p = shipAt(b, W, H, now, (1 - u) * -W * 0.6, (1 - u) * 3);
+      engines(b, p, now, 10 + (1 - u) * 30);
+      sprite(b, 'mothership', p[0], p[1]);
+      b.fillStyle = 'rgba(255,255,255,' + Math.max(0, 1 - t * 5).toFixed(2) + ')';
+      b.fillRect(0, 0, W, H);
+    } });
+    return shots;
+  }
+
+  function jump(from, to, opts) { return play(function () { return jumpShots(from, to); }, opts); }
+
   function launch(loc, opts) { return play(function () { return launchShots(loc); }, opts); }
   function ascend(loc, opts) { return play(function () { return ascendShots(loc); }, opts); }
 
   function has(name) { return !!(meta && meta[name] && imgs[name]); }
 
-  return { launch: launch, ascend: ascend, sail: sail, load: load, has: has };
+  return { launch: launch, ascend: ascend, sail: sail, jump: jump, load: load, has: has };
 })();

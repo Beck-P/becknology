@@ -162,7 +162,8 @@ def altar(k, cx, cr, col=GLOW):
 
 
 # ---- the shattered plain: one continuous broken landmass ------------------------------------------
-def plain(k, land, cols, rows, seed=5, step=0.125, plate=3.4, fissure=0.07, tones=None, glow=GLOW, bounds=None):
+def plain(k, land, cols, rows, seed=5, step=0.125, plate=3.4, fissure=0.05, tones=None, glow=GLOW, bounds=None,
+          rift_frac=0.45, rift_w=0.9, keep=None):
     """A continuous plain cracked into plates: land(x, r) -> bool says where
     there is ground. Plates (jittered Voronoi cells about `plate` tiles
     across) each get their own stone tone; the cracks between them glow
@@ -174,7 +175,7 @@ def plain(k, land, cols, rows, seed=5, step=0.125, plate=3.4, fissure=0.07, tone
     import bpy
     from scenekit import S as RS
     rng = __import__('random').Random(seed)
-    tones = tones or ['#3a3048', '#342a44', '#40344e', '#2e2640', '#463a52']
+    tones = tones or ['#6a5a7a', '#5e5072', '#76648a', '#56486a', '#806e92']
     x0, x1, r0, r1 = bounds or (-1.0, cols + 1.0, -2.0, rows + 1.0)
     nx = int(round((x1 - x0) / step))
     nr = int(round((r1 - r0) / step))
@@ -195,14 +196,24 @@ def plain(k, land, cols, rows, seed=5, step=0.125, plate=3.4, fissure=0.07, tone
     d1 = np.full(X.shape, 1e9)
     d2 = np.full(X.shape, 1e9)
     pid = np.zeros(X.shape, int)
+    pid2 = np.zeros(X.shape, int)
     for i, (sx, sr) in enumerate(seeds):
-        warp = 0.0
         d = np.hypot(X - sx, R - sr)
         closer = d < d1
-        d2 = np.where(closer, d1, np.minimum(d2, d))
+        second = (~closer) & (d < d2)
+        pid2 = np.where(closer, pid, np.where(second, i, pid2))
+        d2 = np.where(closer, d1, np.where(second, d, d2))
         pid = np.where(closer, i, pid)
         d1 = np.where(closer, d, d1)
     crack = (d2 - d1) < fissure * 2
+    # rifts: some plates have drifted apart, open void between them (the sky shows through)
+    lo, hi = np.minimum(pid, pid2), np.maximum(pid, pid2)
+    pair = np.vectorize(lambda a, b: (math.sin(a * 91.7 + b * 13.3) * 43758.5453) % 1.0)(lo, hi)
+    rift = (pair < rift_frac) & ((d2 - d1) < rift_w)
+    if keep is not None:
+        K = np.vectorize(lambda a, b: 1 if keep(a, b) else 0)(X, R).astype(bool)
+        rift &= ~K
+    L = L & ~rift
     top = L & ~crack
     glowc = L & crack
     # land edge distance (in raster cells) for the rim and walkability
@@ -256,14 +267,15 @@ def plain(k, land, cols, rows, seed=5, step=0.125, plate=3.4, fissure=0.07, tone
         if rng.random() < 0.18:
             k.cone(x, r, -rng.uniform(1.5, 3.2), -0.3, 0.03, rng.uniform(0.2, 0.4), (STONE[1], 0.2), 'plain_spike', verts=5)
     # walkable cells: on land, clear of the edge
+    def on(x, r):
+        i = int((x - x0) / step)
+        j = int((r - r0) / step)
+        return 0 <= i < nx and 0 <= j < nr and bool(L[j, i])
     walk = set()
     for c in range(cols):
         for r in range(rows):
-            ok = True
-            for (dx, dr) in ((0.5, 0.5), (0.15, 0.15), (0.85, 0.15), (0.15, 0.85), (0.85, 0.85)):
-                if not land(c + dx, r + dr):
-                    ok = False
-                    break
-            if ok and all(land(c + 0.5 + ex, r + 0.5 + er) for (ex, er) in ((-0.6, 0), (0.6, 0), (0, -0.6), (0, 0.6))):
+            pts = [(c + dx, r + dr) for (dx, dr) in ((0.5, 0.5), (0.15, 0.15), (0.85, 0.15), (0.15, 0.85), (0.85, 0.85))]
+            pts += [(c + 0.5 + ex, r + 0.5 + er) for (ex, er) in ((-0.45, 0), (0.45, 0), (0, -0.45), (0, 0.45))]
+            if all(on(x, r) for (x, r) in pts):
                 walk.add((c, r))
     return walk, (lambda x, r: pz[int(pid[min(nr - 1, max(0, int((r - r0) / step))), min(nx - 1, max(0, int((x - x0) / step)))])])

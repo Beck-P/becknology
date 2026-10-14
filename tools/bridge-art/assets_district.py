@@ -211,7 +211,7 @@ def dish(k, cx, cr, z):
 def frontage(k, st, x0, x1, r_front, floors=2, floor_h=1.15, wall=None, trim=Y.PINK, kind='glass', name=None,
              name_col=Y.PINK, door_x=None, glow='#3a2a60', awning=None, blade=None, escape=False, balcony_at=None,
              roof=('tank',), ad=None, depth=1.4, rng=None, door_w=0.8, clad=None, window_neon=None, sign_floor=False,
-             side=None):
+             side=None, windows=True):
     """A District building. kind: 'glass' (big display windows), 'shutter'
     (roller shutters half down over barred glass), 'garage' (a roll-up door
     open on a lit workshop), 'clinic' (frosted panels, white trim), 'club'
@@ -303,7 +303,7 @@ def frontage(k, st, x0, x1, r_front, floors=2, floor_h=1.15, wall=None, trim=Y.P
         k.point_light(bx + 0.4, r_front + 0.4, G + 1.0, blade, 6, radius=0.2, group='flicker')
     # ---- upper storeys ----------------------------------------------------------------------
     cladding(k, x0, x1, r_front, G, H, wall, clad or rng.choice(('plain', 'tile', 'brick', 'metal')), rng)
-    for f in range(1, floors):
+    for f in range(1, floors if windows else 1):
         z = G + (f - 1) * floor_h + 0.25
         h = floor_h * 0.55
         if f == 1 and (name or sign_floor):
@@ -415,3 +415,116 @@ def food_cart(k, cx, cr, col='#e8c040'):
     Y.paper_lantern(k, cx - 0.55, cr + 0.38, 1.25, s=0.4, top=1.55)
     k.tube((cx - 0.55, cr + 0.38, 1.55), (cx - 0.55, cr + 0.38, 0.96), 0.02, '#2a2a30', 'lantern_pole', verts=4)
     k.solid(cx - 0.75, cr - 0.4, cx + 0.75, cr + 0.4)
+
+
+# ---- bespoke pieces: what makes each frontage its own ------------------------------------------
+def arcade_canopy(k, st, x0, x1, r_front, z, col=Y.PINK, out=0.85):
+    """A curved marquee canopy over the doors, bulbs along its lip."""
+    rings = []
+    for x in (x0, x1):
+        rings.append([(x, r_front + out * math.sin(a), z + 0.45 * math.cos(a)) for a in [i * (math.pi / 2) / 8 for i in range(9)]])
+    k.loft(rings, ('#2a1c40', 0.08), 'canopy', closed=False)
+    k.box(x0, r_front + out - 0.03, z - 0.06, x1, r_front + out + 0.03, z, shade(col, 0.45), 'canopy_neon', emit=(col, 0.9))
+    n = int((x1 - x0) / 0.22)
+    for i in range(n + 1):
+        x = x0 + i * (x1 - x0) / n
+        k.sphere(x, r_front + out + 0.04, z - 0.1, 0.035, 0.035, '#fff0c0', 'canopy_bulb', emit=('#ffe090', 1.0), segs=5)
+        st.bulbs.append([round(x, 3), round(r_front + out + 0.04 - (z - 0.1) * C45, 3)])
+    k.point_light((x0 + x1) / 2, r_front + out + 0.4, z - 0.3, '#ffd0a0', 18, radius=0.5, group='flicker')
+
+
+def portholes(k, x0, x1, r_front, z, col=Y.CYAN, n=4, rad=0.24):
+    for i in range(n):
+        cx = x0 + (i + 0.5) * (x1 - x0) / n
+        k.cyl_y(cx, r_front, r_front + 0.04, z, rad, rad, '#0c1020', 'porthole', verts=16)
+        k.cyl_y(cx, r_front + 0.04, r_front + 0.05, z, rad * 0.82, rad * 0.82, shade('#a0c0ff', 0.6), 'porthole_glass',
+                emit=(k.rng.choice(('#a0c0ff', '#ff90c0', '#ffd890')), 0.75), verts=16)
+        pts = [(cx + math.cos(a) * rad, r_front + 0.06, z + math.sin(a) * rad) for a in [j * math.pi / 8 for j in range(17)]]
+        for p, q in zip(pts, pts[1:]):
+            k.tube(p, q, 0.018, shade(col, 0.5), 'porthole_neon', emit=(col, 0.9), verts=4)
+
+
+def timber_front(k, x0, x1, r_front, G, wood='#5a3a22', tile='#2a2a34'):
+    """A noodle bar's front: dark timber boards over the shop storey and a
+    tiled eave sloping out above the door, lanterns hung under it."""
+    boards = [(x, r_front, 0.0, x + 0.16, r_front + 0.04, G - 0.08) for x in [x0 + 0.05 + i * 0.2 for i in range(int((x1 - x0) / 0.2))]
+              if not (x0 + 0.9 < x < x1 - 0.9)]
+    if boards:
+        k.boxes(boards, (wood, 0.12), 'timber_board')
+    k.poly([(x0 - 0.1, r_front, G + 0.42), (x1 + 0.1, r_front, G + 0.42), (x1 + 0.1, r_front + 0.7, G + 0.08),
+            (x0 - 0.1, r_front + 0.7, G + 0.08)], (tile, 0.12), 'eave')
+    ridges = [(x, r_front, G + 0.08, x + 0.05, r_front + 0.7, G + 0.44) for x in [x0 - 0.05 + i * 0.25 for i in range(int((x1 - x0 + 0.2) / 0.25))]]
+    for (a, b, c, d, e, f) in ridges:
+        k.bar(a, b, a, e, c + 0.34, c + 0.4, 0.05, shade(tile, 1.3), 'eave_ridge')
+    k.box(x0 - 0.1, r_front + 0.66, G + 0.0, x1 + 0.1, r_front + 0.72, G + 0.1, '#1a1014', 'eave_edge')
+
+
+def razor_wire(k, x0, x1, r, z):
+    """Coils of wire along a parapet."""
+    pts = []
+    n = int((x1 - x0) / 0.04)
+    for i in range(n + 1):
+        t = i * 0.04
+        a = t / 0.12 * 2 * math.pi
+        pts.append((x0 + t, r + 0.1 * math.sin(a), z + 0.1 + 0.1 * math.cos(a)))
+    for p, q in zip(pts, pts[1:]):
+        k.tube(p, q, 0.008, '#8a8a92', 'razor_wire', verts=3)
+
+
+def bulb_seven(k, st, cx, r_face, z0, h=1.0, col='#ffe090'):
+    """A giant 7 traced in bulbs, the pachinko parlour's beacon."""
+    w = h * 0.6
+    path = [(cx - w / 2, z0 + h), (cx + w / 2, z0 + h), (cx - w * 0.1, z0)]
+    pts = []
+    for (a, b), (c, d) in zip(path, path[1:]):
+        L = math.hypot(c - a, d - b)
+        n = max(2, int(L / 0.09))
+        pts += [(a + (c - a) * i / n, b + (d - b) * i / n) for i in range(n)]
+    pts.append(path[-1])
+    k.box(cx - w / 2 - 0.12, r_face, z0 - 0.12, cx + w / 2 + 0.12, r_face + 0.04, z0 + h + 0.12, '#3a0c10', 'seven_board')
+    for (x, z) in pts:
+        k.sphere(x, r_face + 0.07, z, 0.04, 0.04, '#fff0c0', 'seven_bulb', emit=(col, 1.0), segs=5)
+        st.bulbs.append([round(x, 3), round(r_face + 0.07 - z * C45, 3)])
+    k.point_light(cx, r_face + 0.5, z0 + h / 2, col, 14, radius=0.4, group='flicker')
+
+
+def capsule_wall(k, x0, x1, r_front, z0, z1, rng=None):
+    """Rows of capsule pods stacked up a hotel's face, some lit, some curtained."""
+    rng = rng or k.rng
+    rows = int((z1 - z0) / 0.5)
+    cols = int((x1 - x0) / 0.62)
+    for j in range(rows):
+        for i in range(cols):
+            cx = x0 + (i + 0.5) * (x1 - x0) / cols
+            cz = z0 + 0.06 + j * 0.5
+            k.box(cx - 0.26, r_front, cz, cx + 0.26, r_front + 0.06, cz + 0.38, '#14101e', 'pod_frame')
+            on = rng.random() < 0.6
+            col = rng.choice(('#ffd890', '#a0c0ff', '#ffa0d0', '#c0a0ff'))
+            k.box(cx - 0.22, r_front + 0.06, cz + 0.04, cx + 0.22, r_front + 0.065, cz + 0.34, shade(col, 0.55) if on else '#1a1828',
+                  'pod_window', emit=(col, 0.7) if on else None)
+            k.cyl_y(cx - 0.22, r_front + 0.06, r_front + 0.065, cz + 0.19, 0.15, 0.15, shade(col, 0.55) if on else '#1a1828',
+                    'pod_end', emit=(col, 0.7) if on else None, verts=10)
+            k.cyl_y(cx + 0.22, r_front + 0.06, r_front + 0.065, cz + 0.19, 0.15, 0.15, shade(col, 0.55) if on else '#1a1828',
+                    'pod_end', emit=(col, 0.7) if on else None, verts=10)
+            if on and rng.random() < 0.35:
+                k.box(cx - 0.22, r_front + 0.066, cz + 0.18, cx + 0.22, r_front + 0.07, cz + 0.34, '#2a2038', 'pod_curtain')
+
+
+def monolith(k, x0, x1, r_front, z0, z1, slit=Y.MAG):
+    """Club Void: a black glossy slab over the facade, one slit of light."""
+    k.box(x0 + 0.05, r_front, z0, x1 - 0.05, r_front + 0.1, z1, ('#08060c', 0.04), 'monolith')
+    cx = (x0 + x1) / 2 + 0.6
+    k.box(cx - 0.035, r_front + 0.1, z0 + 0.15, cx + 0.035, r_front + 0.11, z1 - 0.15, shade(slit, 0.5), 'slit', emit=(slit, 1.0))
+    k.point_light(cx, r_front + 0.4, (z0 + z1) / 2, slit, 12, radius=0.1, group='flicker')
+
+
+def velvet_rope(k, x0, x1, r):
+    posts = [x0 + i * (x1 - x0) / 3 for i in range(4)]
+    for x in posts:
+        k.cyl(x, r, 0.0, 0.06, 0.1, '#a08040', 'rope_base', verts=10)
+        k.cyl(x, r, 0.06, 0.8, 0.025, ('#c8a050', 0.06), 'rope_post', verts=8)
+        k.sphere(x, r, 0.82, 0.04, 0.04, '#e0c060', 'rope_knob', segs=8)
+    for a, b in zip(posts, posts[1:]):
+        pts = [(a + (b - a) * t, r, 0.72 - 0.16 * 4 * t * (1 - t)) for t in [i / 8 for i in range(9)]]
+        for p, q in zip(pts, pts[1:]):
+            k.tube(p, q, 0.022, '#8a1020', 'velvet_rope', verts=6)

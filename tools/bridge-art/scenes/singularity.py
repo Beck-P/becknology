@@ -63,7 +63,56 @@ def land(x, r):
     return base > 0.42
 
 
-walk, zat = V.plain(k, land, COLS, ROWS, seed=7, bounds=(-1.5, COLS + 1.5, -3.0, ROWS + 1.0))
+def keep(x, r):
+    return any(math.hypot(x - p[0], r - p[1]) < rad for (p, rad) in KEEP)
+
+
+walk, zat = V.plain(k, land, COLS, ROWS, seed=7, bounds=(-1.5, COLS + 1.5, -3.0, ROWS + 1.0), keep=keep,
+                    plate=4.6, rift_frac=0.3, rift_w=0.8)
+
+# join every sizeable piece of the plain to the landing ring with light-bridges over the rifts
+SPAWN = [8, 27]
+
+
+def components(cells):
+    cells = set(cells)
+    comps = []
+    while cells:
+        start = cells.pop()
+        comp, stack = {start}, [start]
+        while stack:
+            c, r = stack.pop()
+            for n in ((c + 1, r), (c - 1, r), (c, r + 1), (c, r - 1)):
+                if n in cells:
+                    cells.discard(n)
+                    comp.add(n)
+                    stack.append(n)
+        comps.append(comp)
+    return comps
+
+
+for _ in range(12):
+    comps = components(walk)
+    main = next(c for c in comps if tuple(SPAWN) in c)
+    others = [c for c in comps if c is not main and len(c) >= 6]
+    if not others:
+        break
+    best = None
+    for comp in others:
+        for a in main:
+            for b in comp:
+                d = math.hypot(a[0] - b[0], a[1] - b[1])
+                if best is None or d < best[0]:
+                    best = (d, a, b, comp)
+    d, a, b, comp = best
+    if d > 6:
+        break
+    cells = V.bridge(k, (a[0] + 0.5, a[1] + 0.5), (b[0] + 0.5, b[1] + 0.5), col=rng.choice(('#80c0ff', '#c0a0ff', '#ffc080')))
+    walk |= cells
+comps = sorted(components(walk), key=len, reverse=True)
+print('pieces', [len(c) for c in comps][:8], 'spawn piece', len(next(c for c in comps if tuple(SPAWN) in c)))
+for r in range(ROWS):
+    print(''.join('#' if (c, r) in walk else '.' for c in range(COLS)))
 
 # ---- the landing ring: where ships have always set down ---------------------------------------------
 k.cyl(PAD[0], PAD[1], 0.0, 0.06, 2.6, (V.STONE[3], 0.14), 'landing_ring', verts=48)
@@ -206,17 +255,17 @@ for _ in range(60):
         V.float_rock(k, x, r, z, rng.uniform(0.15, 0.5), rng)
 
 # ---- light: the horizon's amber glare from the north-east, violet from the void below -------------------------
-k.area_light(48.0, -10.0, 8.0, '#ffb070', 3200, 22.0, rot=(math.radians(-55), math.radians(-30), 0))
-k.area_light(24.0, 24.0, -8.0, '#6040c0', 900, 50.0, rot=(math.radians(160), 0, 0))
-k.point_light(23.0, 17.0, 3.0, '#9070d0', 40, radius=1.0)
+k.area_light(40.0, -6.0, 14.0, '#ffb070', 16000, 40.0, rot=(math.radians(-50), math.radians(-25), 0))
+k.area_light(20.0, 20.0, 16.0, '#8a70c8', 6000, 50.0, rot=(math.radians(-20), 0, 0))
+k.area_light(24.0, 24.0, -8.0, '#6040c0', 1500, 50.0, rot=(math.radians(160), 0, 0))
+k.point_light(23.0, 17.0, 3.0, '#9070d0', 60, radius=1.0)
 
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.6}}, light_samples=96,
-         world_light=('#140c24', 0.45))
+         world_light=('#2a1c48', 0.9))
 
 # ---- the world -------------------------------------------------------------------------------------------------
 w = json.load(open(WORLD))
 w['width'], w['height'] = COLS, ROWS
-SPAWN = [8, 27]
 w['spawns'] = {'player': SPAWN}
 w.pop('designTiles', None)
 w.pop('designTileNames', None)

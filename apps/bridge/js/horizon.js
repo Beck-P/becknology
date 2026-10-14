@@ -179,15 +179,15 @@ var BridgeHorizon = (function () {
     // blue-shifted toward the hole, ember away from it; dark at the edges
     ctx.globalCompositeOperation = 'soft-light';
     var gr = ctx.createRadialGradient(P.hx, P.hy, P.R, P.hx, P.hy, P.R + Math.hypot(w, h));
-    gr.addColorStop(0, 'rgba(120,150,255,' + (0.55 * k).toFixed(2) + ')');
-    gr.addColorStop(0.45, 'rgba(160,110,220,0.25)');
-    gr.addColorStop(1, 'rgba(255,120,60,' + (0.35 * k).toFixed(2) + ')');
+    gr.addColorStop(0, 'rgba(130,160,255,' + (0.5 * k).toFixed(2) + ')');
+    gr.addColorStop(0.45, 'rgba(170,130,230,0.15)');
+    gr.addColorStop(1, 'rgba(255,140,80,' + (0.3 * k).toFixed(2) + ')');
     ctx.fillStyle = gr;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = 'source-over';
     var vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
     vg.addColorStop(0, 'rgba(0,0,0,0)');
-    vg.addColorStop(1, 'rgba(4,0,12,' + (0.35 + 0.25 * k).toFixed(2) + ')');
+    vg.addColorStop(1, 'rgba(4,0,12,' + (0.18 + 0.2 * k).toFixed(2) + ')');
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, w, h);
     ctx.restore();
