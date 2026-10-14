@@ -88,6 +88,10 @@ NPCS = {
                           hair=('#1a1410', '#2e2218', '#44342a'), cap=('#1a3a6a', '#2a5a9a', '#4a7ac0'), pose='stand'),
     'npc-potter':    dict(skin='skin', shirt=('#8a6a4a', '#b08a60', '#d0aa80'), apron=('#6a3a2a', '#9a5a40', '#b87a5a'),
                           hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bald=True, mustache=True, pose='stand'),
+    'npc-fisher-gran': dict(skin='skin', shirt=('#2a3a2e', '#3e5a44', '#5a7a60'), skirt=('#3a2a22', '#5a4032', '#7a5a46'),
+                            hair=('#8a8a90', '#c0c0c8', '#e2e2ea'), bun=True, pose='sit'),
+    'npc-scholar':   dict(skin='skin2', shirt=('#3a2a1e', '#5e4430', '#7e6046'), vest=('#1e2a3a', '#2e4058', '#465c78'),
+                          hair=('#c8c8d0', '#e0e0e8', '#f4f4fa'), long_hair=True, beard=True, pose='stand'),
     # Arcadia (neon city)
     'npc-stranger':  dict(skin='skin2', shirt=('#1e1430', '#32224e', '#4a3670'), hair=('#1a1418', '#2e2430', '#443a48'),
                           hood=('#1e1430', '#32224e', '#4a3670'), visor_band=True, pose='stand'),

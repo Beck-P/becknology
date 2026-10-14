@@ -562,11 +562,40 @@
     {
       "x": 7,
       "y": 12,
-      "type": "sail_to",
-      "destination": "lumar",
-      "destinationName": "Diggen's Point",
-      "label": "DIGGEN'S POINT",
-      "prompt": "SAIL TO DIGGEN'S POINT"
+      "type": "menu",
+      "label": "DOCK",
+      "prompt": "PRESS E TO SET SAIL",
+      "dialog": "THE GALLEON WILL TAKE YOU\\nTO ANY DOCK ON THE SEA.",
+      "options": [
+        {
+          "label": "DIGGEN'S POINT",
+          "action": "sail_to",
+          "destination": "lumar",
+          "destinationName": "Diggen's Point"
+        },
+        {
+          "label": "CRIMSON REACH",
+          "action": "sail_to",
+          "destination": "lumar-crimson",
+          "destinationName": "Crimson Reach"
+        },
+        {
+          "label": "ROSE COVE",
+          "action": "sail_to",
+          "destination": "lumar-rose",
+          "destinationName": "Rose Cove"
+        },
+        {
+          "label": "MIDNIGHT ISLE",
+          "action": "sail_to",
+          "destination": "lumar-midnight",
+          "destinationName": "Midnight Isle"
+        },
+        {
+          "label": "STAY ASHORE",
+          "action": "close"
+        }
+      ]
     },
     {
       "x": 6,
@@ -585,7 +614,7 @@
       "dialog": "THE ZEPHYR ISLANDS ARE\\nFAMOUS FOR POTTERY.\\n\\nWE FIRE THE KILNS WITH\\nSUNLIGHT SPORES. BURNS\\nHOTTER THAN ANYTHING.\\n\\nWANT TO SEE MY WORK?"
     },
     {
-      "x": 5,
+      "x": 6,
       "y": 4,
       "type": "dialog",
       "label": "STALL",

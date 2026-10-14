@@ -184,6 +184,11 @@ def hanging_sign(k, x, r_face, z, icon='mug', board='#5a3a1e'):
     elif icon == 'bed':
         k.box(ix, ir - 0.15, iz - 0.06, ix + 0.01, ir + 0.15, iz + 0.02, '#80a0e0', 'sign_icon')
         k.box(ix, ir - 0.15, iz + 0.02, ix + 0.01, ir - 0.06, iz + 0.1, '#e0e0e0', 'sign_icon')
+    elif icon == 'compass':        # the cartographer: a compass rose
+        k.cyl_x(ix, ix + 0.01, ir, iz, 0.13, 0.13, col, 'sign_icon', verts=14)
+        k.cyl_x(ix + 0.01, ix + 0.012, ir, iz, 0.09, 0.09, '#3a2416', 'sign_icon', verts=14)
+        k.box(ix + 0.012, ir - 0.015, iz - 0.17, ix + 0.02, ir + 0.015, iz + 0.17, col, 'sign_icon')
+        k.box(ix + 0.012, ir - 0.17, iz - 0.015, ix + 0.02, ir + 0.17, iz + 0.015, col, 'sign_icon')
     elif icon == 'fish':
         k.blob(ix, ir, iz, 0.01, 0.14, 0.06, '#90c0d0', 'sign_icon', segs=8)
         k.cone(ix, ir + 0.16, iz - 0.06, iz + 0.06, 0.01, 0.005, '#90c0d0', 'sign_icon', verts=3)
@@ -505,10 +510,11 @@ def flagstones(k, cells, tone, gap=0.03):
         r += h
 
 
-def island_ground(k, cells, tone='#5a6058', cliff=SALT[1], depth=0.9, grass='#34462e', rim=()):
+def island_ground(k, cells, tone='#5a6058', cliff=SALT[1], depth=0.9, grass='#34462e', rim=(), coast=False):
     """Island ground: flagstones in the middle, grass and moss toward the
     rocky rim (and under the rim boulders); rock faces drop into the sea
-    along the edges that face the camera, boulders along the rest."""
+    along the edges that face the camera, boulders along the rest — or,
+    with coast=True, nothing at the edges: assets_coast builds the shore."""
     cells = set(cells)
     rim = set(rim)
 
@@ -529,6 +535,8 @@ def island_ground(k, cells, tone='#5a6058', cliff=SALT[1], depth=0.9, grass='#34
         elif k.rng.random() < 0.35:     # moss creeping into the joints
             k.blob(c + k.rng.uniform(0.2, 0.8), r + k.rng.uniform(0.2, 0.8), 0.0, 0.16, 0.1, 0.02,
                    (shade(grass, 1.1), 0.2), 'moss', segs=8)
+        if coast:
+            continue
         if (c, r + 1) not in cells:      # south edge: a rock face into the water
             k.box(c, r + 0.92, -depth, c + 1, r + 1.05, -0.03, (cliff, 0.2), 'island_face')
             for i in range(2):
@@ -553,13 +561,13 @@ def border_rocks(k, cells, tone=SALT[2]):
         k.solid(c, r, c + 1, r + 1)
 
 
-def shore_crystals(k, cx, cr, col=('#6a1a2a', '#e04060'), s=1.0, energy=8):
+def shore_crystals(k, cx, cr, col=('#6a1a2a', '#e04060'), s=1.0, energy=8, z=0.0):
     """Spore crystals growing out of the rocks, glowing."""
     for (dx, dr, h, rad, lean) in ((0.0, 0.0, 0.8, 0.1, 0), (0.15, 0.08, 0.5, 0.07, 22), (-0.14, 0.1, 0.45, 0.07, -18),
                                    (0.05, -0.12, 0.35, 0.06, 8)):
-        top = (cx + dx + math.sin(math.radians(lean)) * h * s * 0.5, cr + dr, h * s)
-        k.tube((cx + dx, cr + dr, 0.0), top, rad * s, col[0], 'crystal', rb=0.004, emit=(col[1], 0.75), verts=6, smooth=False)
-    k.point_light(cx, cr + 0.3, 0.5 * s, col[1], energy, radius=0.12, group='flicker')
+        top = (cx + dx + math.sin(math.radians(lean)) * h * s * 0.5, cr + dr, z + h * s)
+        k.tube((cx + dx, cr + dr, z), top, rad * s, col[0], 'crystal', rb=0.004, emit=(col[1], 0.75), verts=6, smooth=False)
+    k.point_light(cx, cr + 0.3, z + 0.5 * s, col[1], energy, radius=0.12, group='flicker')
     k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
 
 
@@ -636,7 +644,7 @@ def _hull(k, x0, x1, rc, beam, zt, zb, shape, col, part, n=24):
 
 
 def galleon(k, x0, x1, rc, beam=1.6, hull='#3a2410', wale='#8a6a30', paint='#2a5446', sail='#d8ccb0', flag='#2e8a5a',
-            masts=1.0):
+            masts=1.0, sails='furled', waterline=True):
     """Lumar's trading galleon berthed broadside to the camera: lofted hull
     with a gilded wale and gunports, a stern castle with lit windows, three
     masts with sails furled on their yards, rigging, bowsprit, lanterns.
@@ -671,7 +679,8 @@ def galleon(k, x0, x1, rc, beam=1.6, hull='#3a2410', wale='#8a6a30', paint='#2a5
     k.loft(band, (paint, 0.12), 'ship_band')
     # the sea is the engine's backdrop: a holdout plane at the waterline hides
     # the hull below it, and a line of foam sits where it meets the water
-    k.box(x0 - 0.7, rc - beam / 2 - 0.05, -0.02, x1 + 1.7, rc + beam / 2 + 0.7, 0.0, 'HOLDOUT', 'waterline')
+    if waterline:
+        k.box(x0 - 0.7, rc - beam / 2 - 0.05, -0.02, x1 + 1.7, rc + beam / 2 + 0.7, 0.0, 'HOLDOUT', 'waterline')
     for i in range(22):
         ta, tb = i / 22, (i + 1) / 22
         k.tube((x0 + ta * L, rc + hw(ta) * 0.88 + 0.03, 0.02), (x0 + tb * L, rc + hw(tb) * 0.88 + 0.03, 0.02), 0.03,
@@ -737,9 +746,26 @@ def galleon(k, x0, x1, rc, beam=1.6, hull='#3a2410', wale='#8a6a30', paint='#2a5
         for (f, span) in ((0.45, 1.1), (0.8, 0.8)):
             z = zd + h * f
             k.cyl_x(mx - span, mx + span, rc, z, 0.03, 0.03, WOOD_DD, 'yard', verts=6)
-            k.cyl_x(mx - span * 0.92, mx + span * 0.92, rc + 0.02, z - 0.08, 0.1, 0.09, (sail, 0.1), 'furled_sail', verts=8)
-            for s in (-0.5, 0.0, 0.5):      # gaskets binding the furled sail
-                k.cyl_x(mx + s * span - 0.02, mx + s * span + 0.02, rc + 0.02, z - 0.08, 0.11, 0.1, WOOD_DD, 'gasket', verts=6)
+            if sails == 'set':            # sail set and drawing, bellied out toward the camera
+                z_bot = zd + h * (0.17 if f < 0.6 else 0.5)
+                rows = []
+                for j, ff in enumerate((0.0, 0.33, 0.66, 1.0)):
+                    zz = z - (z - z_bot) * ff
+                    bel = math.sin(math.pi * ff) * 0.26
+                    wid = span * (1 + 0.06 * ff)
+                    rows.append([(mx + wid * u, rc + 0.06 + bel * (1 - abs(u) * 0.6), zz) for u in (-1, -0.5, 0, 0.5, 1)])
+                k.loft([[rows[j][i] for j in range(4)] for i in range(5)], (sail, 0.1), 'sail_set')
+                for i in (1, 2, 3):
+                    k.tube(rows[0][i], rows[1][i], 0.008, shade(sail, 0.72), 'sail_seam', verts=3)
+                    k.tube(rows[1][i], rows[2][i], 0.008, shade(sail, 0.72), 'sail_seam', verts=3)
+                    k.tube(rows[2][i], rows[3][i], 0.008, shade(sail, 0.72), 'sail_seam', verts=3)
+                k.tube(rows[0][0], rows[3][0], 0.01, shade(sail, 0.7), 'sail_leech', verts=3)
+                k.tube(rows[0][4], rows[3][4], 0.01, shade(sail, 0.7), 'sail_leech', verts=3)
+                k.tube(rows[3][0], rows[3][4], 0.012, shade(sail, 0.75), 'sail_foot', verts=4)
+            else:
+                k.cyl_x(mx - span * 0.92, mx + span * 0.92, rc + 0.02, z - 0.08, 0.1, 0.09, (sail, 0.1), 'furled_sail', verts=8)
+                for s in (-0.5, 0.0, 0.5):      # gaskets binding the furled sail
+                    k.cyl_x(mx + s * span - 0.02, mx + s * span + 0.02, rc + 0.02, z - 0.08, 0.11, 0.1, WOOD_DD, 'gasket', verts=6)
         tops.append((mx, rc, zd + h))
         k.poly([(mx, rc, zd + h + 0.02), (mx, rc, zd + h - 0.3), (mx + 0.75, rc + 0.02, zd + h - 0.12)], (flag, 0.08), 'pennant')
     # rigging: shrouds down to both rails, stays fore and aft

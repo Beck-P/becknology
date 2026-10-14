@@ -976,6 +976,11 @@
   var bgInited = false;
   var bgId = null;
 
+  function seaPalette(zoneName) {
+    return { 'Crimson Reach': 'crimson', 'Sapphire Port': 'sapphire', 'Rose Cove': 'rose',
+             'Midnight Isle': 'midnight' }[zoneName] || 'emerald';
+  }
+
   function drawLumarBackground(ctx, w, h, time) {
     var worldData = BridgeWorld.getWorld();
 
@@ -995,6 +1000,14 @@
 
     // Use the engine's camera + scale so off-map sea tiles align with the
     // in-map sea tiles seeded by the same (col, row).
+    // Rendered worlds (islands in the sea) get the continuous sea: no tile
+    // grid, so it meets the render's own coastlines (foam drawn by the
+    // scene hook below) instead of square cells.
+    if (worldData && worldData.scene && seaDrawer !== drawCobblestone && typeof BridgeSea !== 'undefined') {
+      BridgeSea.drawSea(ctx, w, h, time, seaPalette(zoneName));
+      return;
+    }
+
     var v = BridgeWorld.getView();
     var ts = v.ts;
     var offX = v.offX;
@@ -2413,6 +2426,11 @@
   }
 
   BridgeWorld.registerSceneHooks('lumar', {
+    // the sea over the render's shallows, foam lapping at the waterline
+    ground: function (ctx, world, offX, offY, ts, time, sc) {
+      if (!sc || !world.scene.backdrop || world.name === 'Lumar Market Square' || typeof BridgeSea === 'undefined') return;
+      BridgeSea.drawWater(ctx, sc, offX, offY, time, seaPalette(world.name));
+    },
     items: sceneHostiles,
     over: function (ctx, world, offX, offY, ts, time) {
       var sc = world.scene || {};

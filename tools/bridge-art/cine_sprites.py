@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 from cinekit import CineKit       # noqa: E402
 import assets_ship as P           # noqa: E402
+import assets_town as W           # noqa: E402
 
 OUT = sys.argv[1]
 ONLY = set(sys.argv[2:])
@@ -22,12 +23,12 @@ def lights(k, key=3.2):
 
 
 def shuttle(name, deg):
-    k = CineKit((-1.3, 3.8, -1.6, 1.6, -0.6, 2.4), elev=10, ppt=24)
+    k = CineKit((-0.9, 4.0, -1.7, 1.7, -0.1, 2.2), elev=10, ppt=24)
     P.shuttle(k, 0.0, 0.0, landed=False, ramp=False)
-    for side, er in (('near', 0.55), ('far', -0.55)):
-        k.anchor('exhaust_' + side, -0.43, er, 0.62)
-    k.anchor('nose', 3.4, 0.0, 0.64)
-    k.anchor('belly', 1.7, 0.0, 0.3)
+    for side, er in (('near', 0.62), ('far', -0.62)):
+        k.anchor('exhaust_' + side, -0.56, er, 0.62)
+    k.anchor('nose', 3.78, 0.0, 0.76)
+    k.anchor('belly', 1.7, 0.0, 0.45)
     if deg:
         k.pitch(deg, (1.5, 0.0, 0.8))
     lights(k)
@@ -36,17 +37,28 @@ def shuttle(name, deg):
 
 def mothership():
     L = 18.0
-    k = CineKit((-2.0, 18.6, -3.4, 3.4, -0.3, 5.6), elev=12, ppt=16)
-    P.mothership(k, 0.0, 0.0, L=L)
-    for i, dz in enumerate((-0.75, 0.0, 0.75)):
-        k.anchor('exhaust_%d' % i, -1.25, 0.0, 2.0 + dz)
-    k.anchor('bay', 0.42 * L, 2.0, 1.55)
-    k.anchor('nose', L, 0.0, 1.8)
+    k = CineKit((-1.8, 20.8, -3.2, 3.2, -0.3, 9.2), elev=12, ppt=14)
+    bay = P.mothership(k, 0.0, 0.0, L=L)['bay']
+    for i, z in enumerate((2.95, 1.95)):
+        k.anchor('exhaust_%d' % i, -1.45, 0.0, z)
+    k.anchor('bay', *bay)
+    k.anchor('nose', L + 2.4, 0.0, 3.5)
     lights(k, 2.6)
-    k.render(os.path.join(OUT, 'mothership'), light_states={'full': {}}, light_samples=64, world_light=('#202838', 0.3))
+    k.render(os.path.join(OUT, 'mothership'), light_states={'full': {}}, light_samples=64, world_light=('#202838', 0.35))
+
+
+def galleon():
+    k = CineKit((-1.0, 11.2, -1.2, 1.2, -0.55, 6.6), elev=8, ppt=14)
+    W.galleon(k, 0.0, 9.0, 0.0, beam=1.6, sails='set', waterline=False)
+    k.anchor('waterline', 4.5, 0.8, 0.0)
+    k.anchor('bow', 9.1, 0.4, 0.05)
+    k.anchor('stern', 0.1, 0.4, 0.05)
+    lights(k, 2.4)
+    k.render(os.path.join(OUT, 'galleon'), light_states={'full': {}}, light_samples=64, world_light=('#283450', 0.45))
 
 
 JOBS = {
+    'galleon': galleon,
     'shuttle': lambda: shuttle('shuttle', 0),
     'shuttle-down': lambda: shuttle('shuttle-down', -16),
     'shuttle-up': lambda: shuttle('shuttle-up', 16),

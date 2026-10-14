@@ -68,7 +68,7 @@
       1,
       4,
       2,
-      4,
+      2,
       4,
       4,
       2,
@@ -85,8 +85,8 @@
       4,
       4,
       4,
-      2,
-      2,
+      4,
+      4,
       2,
       4,
       2,
@@ -246,7 +246,7 @@
       1,
       1,
       0,
-      1,
+      0,
       1,
       1,
       0,
@@ -263,8 +263,8 @@
       1,
       1,
       1,
-      0,
-      0,
+      1,
+      1,
       0,
       1,
       0,
@@ -422,14 +422,6 @@
       "cost": 5
     },
     {
-      "x": 4,
-      "y": 2,
-      "type": "dialog",
-      "label": "STAIRS",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "STEEP WOODEN STAIRS\\nLEADING UP TO THE\\nGUEST ROOMS.\\n\\nTHE THIRD STEP CREAKS\\nNO MATTER WHO STANDS\\nON IT."
-    },
-    {
       "x": 8,
       "y": 2,
       "type": "dialog",
@@ -476,6 +468,30 @@
       "label": "WINDOW",
       "prompt": "PRESS E TO LOOK",
       "dialog": "THE SQUARE OUTSIDE\\nIS QUIETER NOW.\\nA LANTERN POST\\nFLICKERS."
+    },
+    {
+      "x": 4,
+      "y": 3,
+      "type": "enter_world",
+      "target": "lumar-inn-upstairs",
+      "spawn": [
+        3,
+        4
+      ],
+      "label": "STAIRS",
+      "prompt": "PRESS E TO GO UP"
+    },
+    {
+      "x": 5,
+      "y": 3,
+      "type": "enter_world",
+      "target": "lumar-inn-upstairs",
+      "spawn": [
+        3,
+        4
+      ],
+      "label": "STAIRS",
+      "prompt": "PRESS E TO GO UP"
     }
   ],
   "scene": {

@@ -382,9 +382,9 @@ def stock_pot(k, cx, cr, z=0.95):
     k.point_light(cx, cr + 0.3, z + 0.1, '#4080ff', 2, radius=0.1, group='flicker')
 
 
-def paper_lantern(k, cx, cr, z, col='#e03030', s=1.0):
+def paper_lantern(k, cx, cr, z, col='#e03030', s=1.0, top=3.2):
     rx, rz = 0.26 * s, 0.34 * s
-    k.cyl(cx, cr, z + rz, 3.2, 0.01, '#1a1a1a', 'lantern_cord', verts=4)
+    k.cyl(cx, cr, z + rz, top, 0.01, '#1a1a1a', 'lantern_cord', verts=4)
     k.blob(cx, cr, z, rx, rx, rz, shade(col, 0.6), 'paper_lantern', emit=(col, 0.9), segs=16)
     for f in (-0.5, 0.0, 0.5):
         k.cyl(cx, cr, z + f * rz - 0.008, z + f * rz + 0.008, rx * (1 - f * f) ** 0.5 + 0.006, '#3a0a0a', 'lantern_rib', verts=16)

@@ -589,7 +589,10 @@ var BridgeWorld = (function () {
       // Start loading the destination world in parallel with the anim.
       var loaded = false;
       load(destination, function () { loaded = true; });
-      BridgeSailAnim.play(fromId, destination).then(function () {
+      var voyage = (typeof BridgeCine !== 'undefined')
+        ? BridgeCine.sail(fromId, destination, { hold: 500 })      // the galleon at sea
+        : BridgeSailAnim.play(fromId, destination);
+      voyage.then(function () {
         // If the world load is still pending (slow network), poll briefly.
         var startPoll = Date.now();
         (function waitLoad() {
@@ -675,7 +678,9 @@ var BridgeWorld = (function () {
       BridgeInventory.tick();
     }
 
-    if (world.fixedCamera) {
+    // (a world floating in a backdrop follows the player instead: its render
+    // with the sea or space round it is usually taller than the screen)
+    if (world.fixedCamera && !(world.scene && world.scene.backdrop)) {
       // Fixed camera: center on map
       camera.x = world.width / 2;
       camera.y = world.height / 2;
@@ -685,8 +690,10 @@ var BridgeWorld = (function () {
       // 60 Hz, but frame-rate independent.
       var pos = BridgeCharacter.getRenderPos();
       var follow = 1 - Math.exp(-dt * 6.3);
+      // cameraLead (tiles, world JSON): frame a little above or below the
+      // player — the District looks up so its skyline shows over the shops
       camera.x += (pos.x - camera.x) * follow;
-      camera.y += (pos.y - camera.y) * follow;
+      camera.y += (pos.y + (world.cameraLead || 0) - camera.y) * follow;
 
       // Clamp camera to map edges. When the map is smaller than the viewport
       // (interiors, etc.), the normal min/max clamp inverts and pins the camera
@@ -697,12 +704,25 @@ var BridgeWorld = (function () {
       var halfW = screenW / (2 * tileSize * scale);
       var halfH = screenH / (2 * tileSize * scale);
 
-      camera.x = world.width <= 2 * halfW
-        ? world.width / 2
-        : Math.max(halfW, Math.min(world.width - halfW, camera.x));
-      camera.y = world.height <= 2 * halfH
-        ? world.height / 2
-        : Math.max(halfH, Math.min(world.height - halfH, camera.y));
+      // A world floating in a backdrop (islands in the sea, stations in
+      // space) can show its whole render, margins included — the ship moored
+      // past the last row, the rocks round the rim — plus room under the
+      // hotbar.
+      var B = { x0: 0, x1: world.width, y0: 0, y1: world.height };
+      var bsc = world.scene && world.scene.backdrop && typeof BridgeScene !== 'undefined' && BridgeScene.get(world.scene.id);
+      if (world.view) {
+        B = { x0: world.view[0], y0: world.view[1], x1: world.view[2], y1: world.view[3] + 1.6 };
+      } else if (bsc && bsc.meta) {
+        var m = bsc.meta;
+        B = { x0: Math.min(0, -m.originX / 32), x1: Math.max(world.width, (m.width - m.originX) / 32),
+              y0: Math.min(0, -m.originY / 32), y1: Math.max(world.height, (m.height - m.originY) / 32) + 1.6 };
+      }
+      camera.x = B.x1 - B.x0 <= 2 * halfW
+        ? (B.x0 + B.x1) / 2
+        : Math.max(B.x0 + halfW, Math.min(B.x1 - halfW, camera.x));
+      camera.y = B.y1 - B.y0 <= 2 * halfH
+        ? (B.y0 + B.y1) / 2
+        : Math.max(B.y0 + halfH, Math.min(B.y1 - halfH, camera.y));
     }
 
     // Check interactions
@@ -774,6 +794,7 @@ var BridgeWorld = (function () {
     if (world.scene.backdrop && BACKGROUNDS[world.tileset]) BACKGROUNDS[world.tileset](ctx, w, h, now);
     if (hooks.behind) hooks.behind(ctx, world, offX, offY, ts, now);
     BridgeScene.drawBackground(ctx, sc, world, offX, offY, now);
+    if (hooks.ground) hooks.ground(ctx, world, offX, offY, ts, now, sc);
     drawInteractHighlight(ctx, offX, offY, ts, now);
     if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) BridgeLoot.draw(ctx, offX, offY, ts);
     var items = BridgeScene.actorDrawList(sc, world, offX, offY, ts, now);

@@ -96,6 +96,54 @@ def lines(img, ids, depth, alpha):
     return out
 
 
+SHORE_REACH = 14     # px of foam / lapping out from the waterline
+DEEP = 1.4          # tiles below the surface where the water turns opaque
+
+
+def shore(rd, od, meta, alpha):
+    """shore.png for a scene standing in the sea (scenekit water_z):
+      R  distance in px from the waterline (where geometry meets the
+         surface), 255 beyond SHORE_REACH — the engine's foam
+      G  depth under the surface, 1..255 (0: above water or empty)
+      B  255 where the render is empty (the open sea shows through)"""
+    hr = meta['heightRange']
+    wz = meta['waterZ']
+    h01 = load16(os.path.join(rd, 'height.png'))
+    if h01.ndim == 3:
+        h01 = h01[..., 0]
+    z = -hr + h01 * 2 * hr
+    under = alpha & (z < wz)
+    seed = alpha & (z >= wz) & (z < wz + 0.14)
+    water = under | ~alpha
+    dist = np.full(alpha.shape, 255, np.uint8)
+    dist[seed] = 0
+    front = seed.copy()
+    reached = seed.copy()
+    for d in range(1, SHORE_REACH + 1):
+        grow = np.zeros_like(front)
+        grow[1:, :] |= front[:-1, :]
+        grow[:-1, :] |= front[1:, :]
+        grow[:, 1:] |= front[:, :-1]
+        grow[:, :-1] |= front[:, 1:]
+        if d % 2 == 0:                       # alternate in diagonals: rounder rings
+            grow[1:, 1:] |= front[:-1, :-1]
+            grow[:-1, :-1] |= front[1:, 1:]
+            grow[1:, :-1] |= front[:-1, 1:]
+            grow[:-1, 1:] |= front[1:, :-1]
+        grow &= water & ~reached
+        dist[grow] = d
+        reached |= grow
+        front = grow
+    out = np.zeros(alpha.shape + (4,), np.uint8)
+    out[..., 0] = dist
+    depth = np.clip((wz - z) / DEEP, 0, 1)
+    out[..., 1] = np.where(under, 1 + np.round(depth * 254), 0).astype(np.uint8)
+    out[..., 2] = np.where(alpha, 0, 255)
+    out[..., 3] = 255
+    Image.fromarray(out, 'RGBA').save(os.path.join(od, 'shore.png'), optimize=True)
+    return {'z': wz, 'reach': SHORE_REACH}
+
+
 def main():
     rd, od = sys.argv[1], sys.argv[2]
     os.makedirs(od, exist_ok=True)
@@ -201,6 +249,8 @@ def main():
             grid.append(row)
         tiles[state] = grid
 
+    water = shore(rd, od, meta, alpha) if 'waterZ' in meta else None
+
     out = {
         'width': meta['width'], 'height': meta['height'],
         'originX': meta['originX'], 'originY': meta['originY'],
@@ -211,6 +261,8 @@ def main():
     }
     if layers:
         out['layers'] = layers
+    if water:
+        out['water'] = water
     json.dump(out, open(os.path.join(od, 'scene.json'), 'w'), separators=(',', ':'))
     print('wrote', od, out['width'], 'x', out['height'], 'depth', round(dmin, 2), round(dmax, 2))
 

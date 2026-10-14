@@ -9,7 +9,8 @@ A.room(k, 1, 2, 13, 9, H, door=(6.0, 8.0))
 # ---- front desk + stairs (left) ---------------------------------------------------
 A.trunk(k, 1.1, 2.15, w=0.8, d=0.5)
 A.key_board(k, 1.9, 2.0)
-A.stairs(k, 3.0, 5.4, 2.0)
+A.stairs_up(k, 4.05, 5.35, 2.0, H, n=5, run=0.3)      # up to the guest rooms
+k.solid(4, 2, 6, 4)
 A.ledger_desk(k, 1.0, 3.9, 4.15, 4.8)
 A.desk_lamp(k, 3.3, 4.35, 0.95)
 k.solid(1, 3, 4, 4)                       # behind the desk
@@ -57,7 +58,7 @@ for wx in (6.4, 11.8):
 
 render(k, sys.argv[1])
 apply_world(world_path('lumar-inn'), k, FLOOR, doors=DOORS, scene_id='lumar-inn', moves={
-    'STREET': DOORS, 'INNKEEPER': (2, 4), 'STAIRS': (4, 2), 'FIREPLACE': (8, 2), 'TABLE': (2, 6),
+    'STREET': DOORS, 'INNKEEPER': (2, 4), 'STAIRS': [(4, 3), (5, 3)], 'FIREPLACE': (8, 2), 'TABLE': (2, 6),
     'PATRON': [(6, 6), (9, 6)], 'COAT RACK': (12, 4), 'WINDOW': (11, 2)},
     actors=[{'sheet': 'npc-innkeeper', 'x': 2, 'y': 3, 'facing': 'down'},
             {'sheet': 'npc-traveler', 'x': 6, 'y': 6, 'facing': 'right', 'pose': 'sit'},

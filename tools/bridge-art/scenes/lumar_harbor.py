@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
 import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
+import assets_coast as C               # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -26,7 +27,11 @@ names = {int(k_): v for k_, v in w.get('designTileNames', w['tileNames']).items(
 T = w.get('designTiles', w['tiles'])
 COLS, ROWS = w['width'], w['height']
 
-k = Kit(COLS, ROWS, margin_top=1.5, margin_bottom=1.5, seed=211)
+# Diggen's Point is a headland: the cliffs run on past the map's sides and top
+# and curve away into the sea, so the render is wider than the map (the world
+# JSON's "view" keeps the camera inside it, off the render's cut edges)
+MX, MT = 3.0, 3.0
+k = Kit(COLS, ROWS, margin_top=MT, margin_bottom=1.5, margin_x=MX, seed=211)
 
 cliff, trail, shore, sea = set(), set(), set(), set()
 for r in range(ROWS):
@@ -40,6 +45,14 @@ for r in range(ROWS):
             shore.add((c, r))
         elif n == 'emerald_sea':
             sea.add((c, r))
+map_land = cliff | trail | shore
+# the land beyond the map: north all the way, west and east tapering away
+for r in range(-3, 0):
+    for c in range(-3, COLS + 3):
+        (trail if 6 <= c <= 7 else cliff).add((c, r))
+for c, last in ((-1, 13), (-2, 11), (-3, 8), (COLS, 14), (COLS + 1, 12), (COLS + 2, 9)):
+    for r in range(0, last + 1):
+        cliff.add((c, r))
 
 
 # ---- cliffs ----------------------------------------------------------------------------------
@@ -47,7 +60,7 @@ for r in range(ROWS):
 # per-cell boxes overlapping at the seams catch each other's shadows and show
 # the tile grid.
 H = 1.05
-for r in range(ROWS):
+for r in range(-3, ROWS):
     cs = sorted(c for (c, rr) in cliff if rr == r)
     runs = []
     for c in cs:
@@ -72,6 +85,15 @@ for (c, r) in cliff:
         for j in range(3):
             k.sphere(c + k.rng.uniform(0.2, 0.8), r + k.rng.uniform(0.2, 0.8), h + 0.03, 0.035, 0.03,
                      k.rng.choice(('#e0d8f0', '#e8c860', '#c070c0')), 'wildflower', segs=5)
+    for (dc, dr) in ((0, 1), (-1, 0), (1, 0)):              # rugged faces where the cliff drops to the sea
+        nb = (c + dc, r + dr)
+        if nb not in cliff and nb not in trail and nb not in shore:
+            for j in range(3):
+                s = k.rng.uniform(0.3, 0.55)
+                x = c + 0.5 + dc * 0.55 + (k.rng.uniform(-0.4, 0.4) if dc == 0 else k.rng.uniform(-0.1, 0.15) * dc)
+                rr = r + 0.5 + dr * 0.55 + (k.rng.uniform(-0.4, 0.4) if dr == 0 else k.rng.uniform(-0.1, 0.15) * dr)
+                k.rock(x, rr, k.rng.uniform(-0.25, H * 0.7), s, s * 0.85, s * 1.1, (W.SALT[k.rng.choice((1, 2, 2))], 0.22),
+                       part='cliff_rock')
     for (dc, dr) in ((0, 1), (-1, 0), (1, 0), (0, -1)):
         if (c + dc, r + dr) in trail or (c + dc, r + dr) in shore:
             for j in range(2):
@@ -80,7 +102,8 @@ for (c, r) in cliff:
                 rr = r + 0.5 + dr * 0.5 + (k.rng.uniform(-0.3, 0.3) if dr == 0 else 0)
                 k.rock(x, rr, h * k.rng.uniform(0.3, 0.7), s, s * 0.8, h * 0.45, (W.SALT[k.rng.choice((1, 2))], 0.22),
                        part='cliff_rock')
-    k.solid(c, r, c + 1, r + 1)
+    if 0 <= c < COLS and 0 <= r < ROWS:
+        k.solid(c, r, c + 1, r + 1)
 
 
 def clear_above(c, r, n=3):
@@ -90,20 +113,23 @@ def clear_above(c, r, n=3):
 
 spots = [(c, r) for (c, r) in sorted(cliff) if clear_above(c, r) and (c, r + 1) not in trail]
 k.rng.shuffle(spots)
-for (c, r) in spots[:12]:
+for (c, r) in spots[:24]:
     W.pine(k, c + k.rng.uniform(0.3, 0.7), r + k.rng.uniform(0.3, 0.7), h=k.rng.uniform(2.0, 2.8))
-for (c, r) in spots[12:30]:
+for (c, r) in spots[24:56]:
     W.bush(k, c + k.rng.uniform(0.3, 0.7), r + k.rng.uniform(0.3, 0.7), s=k.rng.uniform(0.22, 0.32),
            berries=k.rng.choice((None, None, '#c04050')))
 
 # ---- the trail -------------------------------------------------------------------------------------
 for (c, r) in trail:
+    if r < 0:
+        continue
     k.box(c, r, -0.3, c + 1, r + 1, -0.02, ('#4a4034', 0.3), 'trail')
     for j in range(3):
         s = k.rng.uniform(0.08, 0.18)
         k.cyl(c + k.rng.uniform(0.15, 0.85), r + k.rng.uniform(0.15, 0.85), -0.03, 0.005, s, (W.SALT[2], 0.15), 'trail_stone',
               ry=s * 0.8, verts=6)
-# steps up to the Market Square at the top of the trail
+# steps up to the Market Square at the top of the trail, the lane on north
+k.box(6.0, -MT, -0.6, 8.0, 0.0, 1.2, (shade(A.STONE, 0.95), 0.14), 'steps')
 for i in range(4):
     z = 0.3 * (i + 1)
     k.box(6.0, 2.0 - (i + 1) * 0.5, -0.1, 8.0, 2.0 - i * 0.5, z, (shade(A.STONE, 0.95 + 0.03 * i), 0.14), 'steps')
@@ -111,8 +137,6 @@ for i in range(4):
 # ---- the shore --------------------------------------------------------------------------------------------
 for (c, r) in shore:
     k.box(c, r, -0.4, c + 1, r + 1, -0.02, ('#8a7a5a', 0.25), 'sand')
-    if (c, r + 1) not in shore and (c, r + 1) not in trail:
-        k.box(c, r + 0.85, -0.5, c + 1, r + 1.02, -0.05, ('#6a5a40', 0.25), 'sand_edge')
 W.rock_shore(k, [(3.8, 13.4), (3.7, 14.3), (15.2, 13.5), (14.9, 14.6), (9.4, 14.9), (6.4, 14.8)])
 W.rowboat(k, 10.6, 12.6, 13.55)
 W.rowboat(k, 12.3, 14.2, 14.45, hull='#3a4a5a', oars=False)
@@ -128,10 +152,22 @@ k.solid(4, 13, 6, 14)
 W.dock(k, 7.0, 9.0, 13.6, 16.95, z=0.05)
 for (x, r) in ((7.1, 16.5), (8.9, 16.5)):
     W.silver_post(k, x, r)
-W.galleon(k, 4.2, 12.6, 17.8)
-k.poly([(7.75, 16.55, 0.06), (8.25, 16.55, 0.06), (8.25, 17.25, 1.0), (7.75, 17.25, 1.0)], (A.WOOD, 0.14), 'gangplank')
+n0, l0 = len(k.parts), len(k.lights)
+W.galleon(k, 4.2, 12.6, 17.8, waterline=False)
+C.sink(k, n0, C.WZ, l0)                    # riding in the water, the keel showing through
+DECK = 1.0 + C.WZ
+k.poly([(7.75, 16.55, 0.06), (8.25, 16.55, 0.06), (8.25, 17.25, DECK), (7.75, 17.25, DECK)], (A.WOOD, 0.14), 'gangplank')
 for xx in (7.75, 8.25):
-    k.tube((xx, 16.55, 0.35), (xx, 17.25, 1.3), 0.012, '#8a7a5a', 'gangplank_rope', verts=4)
+    k.tube((xx, 16.55, 0.35), (xx, 17.25, DECK + 0.3), 0.012, '#8a7a5a', 'gangplank_rope', verts=4)
+
+# ---- the coast: the beach shelving into the sea, the cliffs' feet in the water ------------------------------
+def beach_bias(x, r):
+    d = min(math.hypot(max(c - x, 0, x - c - 1), max(rr - r, 0, r - rr - 1)) for (c, rr) in shore)
+    return 1.2 if d < 1.2 else -0.5
+
+
+C.coast(k, cliff | trail | shore, palette='emerald', rock=W.SALT[2], seed=5, reach=(0.15, 0.7), beach_bias=beach_bias,
+        keep_clear=[(6.6, 13.4, 9.4, 17.0), (3.4, 16.6, 13.8, 19.4)])
 
 # ---- lighthouse ---------------------------------------------------------------------------------------------
 lx, lr = 13.5, 5.5
@@ -168,4 +204,7 @@ k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}},
 apply_world(WORLD, k, (0, 0, 15, 15), doors=[(7, 15), (8, 15), (7, 16), (8, 16)], scene_id='lumar', moves={
     'MARKET SQUARE': [(6, 0), (7, 0)], 'LIGHTHOUSE': (13, 5), 'BOARD GALLEON': [(7, 15), (8, 15)], 'GALLEON': (8, 17)},
     scene_extra={'backdrop': True})
+w = json.load(open(WORLD))
+w['view'] = [-1.6, -1.6, COLS + 1.6, ROWS + 1.6]       # camera bounds (tiles): inside the render's margins
+open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 print('harbor done')

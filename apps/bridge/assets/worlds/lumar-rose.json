@@ -560,11 +560,40 @@
     {
       "x": 7,
       "y": 12,
-      "type": "sail_to",
-      "destination": "lumar",
-      "destinationName": "Diggen's Point",
-      "label": "DIGGEN'S POINT",
-      "prompt": "SAIL TO DIGGEN'S POINT"
+      "type": "menu",
+      "label": "DOCK",
+      "prompt": "PRESS E TO SET SAIL",
+      "dialog": "THE GALLEON WILL TAKE YOU\\nTO ANY DOCK ON THE SEA.",
+      "options": [
+        {
+          "label": "DIGGEN'S POINT",
+          "action": "sail_to",
+          "destination": "lumar",
+          "destinationName": "Diggen's Point"
+        },
+        {
+          "label": "CRIMSON REACH",
+          "action": "sail_to",
+          "destination": "lumar-crimson",
+          "destinationName": "Crimson Reach"
+        },
+        {
+          "label": "SAPPHIRE PORT",
+          "action": "sail_to",
+          "destination": "lumar-sapphire",
+          "destinationName": "Sapphire Port"
+        },
+        {
+          "label": "MIDNIGHT ISLE",
+          "action": "sail_to",
+          "destination": "lumar-midnight",
+          "destinationName": "Midnight Isle"
+        },
+        {
+          "label": "STAY ASHORE",
+          "action": "close"
+        }
+      ]
     },
     {
       "x": 8,

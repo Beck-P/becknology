@@ -33,6 +33,7 @@ THETA = math.radians(45)
 S = 1 / math.sin(THETA)
 TS = 32
 LIGHT_EXPOSURE = -2.0   # stops; keep in sync with scene_post.LIGHT_GAIN
+HEIGHT_RANGE = 3.0      # the height pass maps z in [-3, 3] tiles to 0..1
 
 
 def _scale(x, y, z):
@@ -68,6 +69,7 @@ class Kit:
         self.variants = []    # swappable decor: {slot, key, parts, lights}
         self._var = None      # variant being built (see variant())
         self._active_var = None
+        self.water_z = None   # set (assets_coast) when the scene stands in the sea: renders the height pass
         self.scene.world = bpy.data.worlds.new('w')
 
     # ---- ids / materials -------------------------------------------------
@@ -142,6 +144,22 @@ class Kit:
     def box(self, x0, r0, z0, x1, r1, z1, albedo, part, emit=None, bevel=0.0):
         o = self._make('cube', _scale(x1 - x0, r1 - r0, z1 - z0), ((x0 + x1) / 2, (r0 + r1) / 2, (z0 + z1) / 2))
         return self._finish(o, albedo, part, emit, bevel)
+
+    def boxes(self, rects, albedo, part, emit=None):
+        """Many boxes as one object (x0, r0, z0, x1, r1, z1 each) — the lit
+        windows of a tower, rivets, a field of tiles: one part, one material."""
+        bm = bmesh.new()
+        for (x0, r0, z0, x1, r1, z1) in rects:
+            vs = [bm.verts.new((x, -r * S, z)) for z in (z0, z1) for r in (r0, r1) for x in (x0, x1)]
+            for f in ((0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)):
+                bm.faces.new([vs[i] for i in f])
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        me = bpy.data.meshes.new('boxes')
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new('boxes', me)
+        self.scene.collection.objects.link(o)
+        return self._finish(o, albedo, part, emit)
 
     def cyl(self, cx, cr, z0, z1, rx, albedo, part, emit=None, verts=16, ry=None, bevel=0.0):
         o = self._make('cyl', _scale(rx, ry if ry is not None else rx, z1 - z0), (cx, cr, (z0 + z1) / 2), verts=verts)
@@ -406,6 +424,19 @@ class Kit:
                         nt.links.new(mr.outputs['Result'], em.inputs['Color'])
                     cache['depth'] = self._emission_mat('depth', fn)
                 m = cache['depth']
+            elif kind == 'height':
+                if 'height' not in cache:
+                    def fn(nt, em):
+                        geo = nt.nodes.new('ShaderNodeNewGeometry')
+                        sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+                        mr = nt.nodes.new('ShaderNodeMapRange')
+                        mr.inputs['From Min'].default_value = -HEIGHT_RANGE
+                        mr.inputs['From Max'].default_value = HEIGHT_RANGE
+                        nt.links.new(geo.outputs['Position'], sep.inputs['Vector'])
+                        nt.links.new(sep.outputs['Z'], mr.inputs['Value'])
+                        nt.links.new(mr.outputs['Result'], em.inputs['Color'])
+                    cache['height'] = self._emission_mat('height', fn)
+                m = cache['height']
             o.data.materials[0] = m
             # glowing parts (lamp glass, flames) must not block their own light
             o.visible_shadow = not p['emit']
@@ -532,6 +563,8 @@ class Kit:
         self._assign('emission'); self._settings(1); self._render(os.path.join(out, 'emission.png'))
         self._assign('id'); self._settings(1); self._render(os.path.join(out, 'id.png'))
         self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(out, 'depth.png'))
+        if self.water_z is not None:
+            self._assign('height'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(out, 'height.png'))
         for name, state in light_states.items():
             self._assign('light', state); self._settings(light_samples, raw=True, sixteen=True)
             self._render(os.path.join(out, 'light_' + name + '.png'))
@@ -567,6 +600,9 @@ class Kit:
             'blocked': sorted([list(b) for b in self.blocked]),
             'variants': variants,
         }
+        if self.water_z is not None:
+            meta['waterZ'] = self.water_z
+            meta['heightRange'] = HEIGHT_RANGE
         json.dump(meta, open(os.path.join(out, 'render.json'), 'w'), indent=1)
         return meta
 

@@ -809,3 +809,149 @@ body::after {
 }
 .arrival-actions .arrival-stay { padding: 5px 13px; color: rgba(242, 238, 230, 0.7); }
 .arrival-actions button:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* ---- World dialogs ----
+   One shell (js/interactions.js dialogShell), dressed for the world:
+   parchment in Lumar, a neon terminal in Arcadia, a CRT on Enigma, violet
+   glass at the Singularity, a holo panel aboard the ship. Text types out;
+   NPCs show their face beside it. */
+.world-dialog {
+  position: fixed;
+  left: 50%; top: 58%;
+  transform: translate(-50%, -50%) scale(0.97);
+  opacity: 0;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 30;
+  width: min(440px, 92vw);
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 20px 12px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+  box-sizing: border-box;
+}
+.world-dialog.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.wd-body { flex: 1; min-width: 0; }
+.wd-title { font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.wd-text { font-size: 15px; line-height: 1.45; white-space: pre-wrap; min-height: 2.9em; }
+.world-dialog.typing .wd-text::after { content: '\2589'; margin-left: 2px; animation: wd-blink 0.7s steps(1) infinite; }
+@keyframes wd-blink { 50% { opacity: 0; } }
+.wd-sub { font-size: 12px; letter-spacing: 1px; margin: -2px 0 10px; opacity: 0.85; }
+.wd-hint { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; margin-top: 10px; opacity: 0.75; }
+.wd-hint .ip-key { min-width: 18px; height: 18px; font-size: 10px; }
+.wd-portrait { width: 72px; height: 72px; flex: 0 0 72px; image-rendering: pixelated; border-radius: 4px; }
+.wd-options { display: flex; flex-direction: column; gap: 5px; margin: 10px 0 2px; }
+.wd-opt, .wd-btn {
+  font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+  padding: 7px 12px; border-radius: 3px; border: 1px solid transparent;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.wd-opt::before { content: '\25B8'; display: inline-block; width: 14px; opacity: 0; }
+.wd-opt.active::before { opacity: 1; }
+.wd-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
+.wd-btn { text-align: center; }
+.wd-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+.wd-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; max-height: 50vh; overflow-y: auto; }
+.wd-item { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 3px; }
+.wd-item-icon { width: 28px; height: 28px; flex: 0 0 28px; image-rendering: pixelated; }
+.wd-item-info { flex: 1; min-width: 0; }
+.wd-item-name { font-size: 13px; }
+.wd-item-desc { font-size: 11px; line-height: 1.35; opacity: 0.75; }
+.wd-input {
+  width: 100%; box-sizing: border-box; margin: 4px 0 6px; padding: 8px 12px;
+  font: inherit; font-size: 16px; letter-spacing: 4px; text-align: center; text-transform: uppercase; outline: none;
+  border-radius: 3px;
+}
+.wd-error { font-size: 12px; min-height: 16px; color: #e06060; text-align: center; }
+
+/* Lumar: a parchment card, ink and a red rubric */
+.wd-parchment {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 250, 230, 0.55), transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(140, 100, 50, 0.22), transparent 55%),
+    #e6d6b2;
+  color: #3a2614;
+  border: 2px solid #5a3a1c;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 3px #e6d6b2, inset 0 0 0 4px #9a7444, inset 0 0 24px rgba(120, 80, 30, 0.35), 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+.wd-parchment .wd-title { color: #8a2a18; letter-spacing: 3px; }
+.wd-parchment .wd-title::before, .wd-parchment .wd-title::after { content: ' \2766 '; color: #9a7444; font-weight: 400; }
+.wd-parchment .wd-portrait { background: #cdb88c; box-shadow: inset 0 0 0 2px #9a7444; }
+.wd-parchment .ip-key { background: #f4ead2; color: #3a2614; border-color: #9a7444; box-shadow: 0 1px 0 #9a7444; }
+.wd-parchment .wd-opt, .wd-parchment .wd-btn { background: rgba(255, 248, 228, 0.5); color: #3a2614; border-color: rgba(120, 80, 40, 0.35); }
+.wd-parchment .wd-opt.active, .wd-parchment .wd-btn.primary { background: #8a2a18; color: #f4ead2; border-color: #5a1a0e; }
+.wd-parchment .wd-item { background: rgba(255, 248, 228, 0.45); }
+.wd-parchment .wd-input { background: #f4ead2; color: #3a2614; border: 1px solid #9a7444; }
+
+/* Arcadia: a neon terminal, glass and scanlines */
+.wd-neon {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 3px),
+    linear-gradient(160deg, rgba(40, 10, 60, 0.94), rgba(10, 6, 28, 0.96));
+  color: #f4e6ff;
+  border: 1px solid #f078a8;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(92, 200, 208, 0.25), 0 0 18px rgba(240, 120, 168, 0.45), inset 0 0 24px rgba(92, 200, 208, 0.12),
+              0 12px 32px rgba(0, 0, 0, 0.6);
+}
+.wd-neon .wd-title { color: #80e0e8; text-shadow: 0 0 6px rgba(92, 200, 208, 0.9); }
+.wd-neon .wd-text { text-shadow: 0 0 4px rgba(240, 120, 200, 0.35); }
+.wd-neon .wd-portrait { background: #1a0a2a; box-shadow: 0 0 0 1px #5cc8d0, 0 0 8px rgba(92, 200, 208, 0.5); }
+.wd-neon .wd-opt, .wd-neon .wd-btn { background: rgba(255, 255, 255, 0.04); color: #f4e6ff; border-color: rgba(240, 120, 168, 0.3); }
+.wd-neon .wd-opt.active, .wd-neon .wd-btn.primary { background: rgba(240, 120, 168, 0.22); border-color: #f078a8; color: #fff; box-shadow: 0 0 10px rgba(240, 120, 168, 0.4); }
+.wd-neon .wd-item { background: rgba(255, 255, 255, 0.04); }
+.wd-neon .wd-input { background: #0c0618; color: #80e0e8; border: 1px solid #5cc8d0; }
+
+/* aboard the ship: a holo panel with corner brackets */
+.wd-holo {
+  background: linear-gradient(180deg, rgba(14, 40, 52, 0.88), rgba(8, 20, 30, 0.92));
+  color: #d4f2f6;
+  border: 1px solid rgba(64, 200, 216, 0.45);
+  border-radius: 3px;
+  box-shadow: 0 0 16px rgba(64, 200, 216, 0.22), 0 12px 32px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+}
+.wd-holo::before, .wd-holo::after { content: ''; position: absolute; width: 12px; height: 12px; border: 2px solid #80e0e8; }
+.wd-holo::before { left: -3px; top: -3px; border-right: none; border-bottom: none; }
+.wd-holo::after { right: -3px; bottom: -3px; border-left: none; border-top: none; }
+.wd-holo .wd-title { color: #80e0e8; }
+.wd-holo .wd-portrait { background: rgba(64, 200, 216, 0.12); box-shadow: inset 0 0 0 1px rgba(64, 200, 216, 0.5); }
+.wd-holo .wd-opt, .wd-holo .wd-btn { background: rgba(64, 200, 216, 0.06); color: #d4f2f6; border-color: rgba(64, 200, 216, 0.25); }
+.wd-holo .wd-opt.active, .wd-holo .wd-btn.primary { background: rgba(64, 200, 216, 0.22); border-color: #40c8d8; }
+.wd-holo .wd-item { background: rgba(64, 200, 216, 0.06); }
+.wd-holo .wd-input { background: rgba(0, 0, 0, 0.35); color: #80e0e8; border: 1px solid rgba(64, 200, 216, 0.5); }
+
+/* Enigma: a green CRT */
+.wd-crt {
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.25) 0 1px, transparent 1px 3px), #04140c;
+  color: #60f0a0;
+  border: 1px solid #208a50;
+  border-radius: 6px;
+  box-shadow: inset 0 0 30px rgba(64, 224, 128, 0.18), 0 12px 32px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 0 5px rgba(64, 224, 128, 0.7);
+}
+.wd-crt .wd-title { color: #a8ffcc; }
+.wd-crt .wd-opt, .wd-crt .wd-btn { background: transparent; color: #60f0a0; border-color: rgba(64, 224, 128, 0.3); }
+.wd-crt .wd-opt.active, .wd-crt .wd-btn.primary { background: rgba(64, 224, 128, 0.18); border-color: #40e080; }
+.wd-crt .wd-input { background: #021008; color: #60f0a0; border: 1px solid #208a50; }
+
+/* the Singularity: violet glass and starlight */
+.wd-void {
+  background: radial-gradient(ellipse at 50% 0%, rgba(160, 128, 224, 0.28), transparent 70%), rgba(14, 8, 30, 0.93);
+  color: #e6defc;
+  border: 1px solid rgba(192, 160, 240, 0.55);
+  border-radius: 6px;
+  box-shadow: 0 0 24px rgba(160, 128, 224, 0.35), 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+.wd-void .wd-title { color: #d0c0ff; }
+.wd-void .wd-opt, .wd-void .wd-btn { background: rgba(160, 128, 224, 0.08); color: #e6defc; border-color: rgba(192, 160, 240, 0.25); }
+.wd-void .wd-opt.active, .wd-void .wd-btn.primary { background: rgba(160, 128, 224, 0.25); border-color: #c0a0f0; }
+.wd-void .wd-input { background: rgba(0, 0, 0, 0.35); color: #d0c0ff; border: 1px solid rgba(192, 160, 240, 0.5); }
+
+@media (max-width: 520px) {
+  .world-dialog { top: auto; bottom: 86px; transform: translate(-50%, 0) scale(0.97); }
+  .world-dialog.visible { transform: translate(-50%, 0) scale(1); }
+  .wd-portrait { width: 56px; height: 56px; flex-basis: 56px; }
+}
+.wd-menu .wd-text, .wd-shop .wd-text { min-height: 0; }

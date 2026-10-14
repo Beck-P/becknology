@@ -73,13 +73,14 @@ var BridgeOrbit = (function () {
   var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
   // ---- surface textures (equirectangular, made once) -------------------------
-  var TW = 256, TH = 128;
+  var TW = 512, TH = 256;
   var textures = {};
 
   function makeTexture(kind) {
     var col = new Uint8ClampedArray(TW * TH * 3);
     var cloud = new Float32Array(TW * TH);
     var glow = new Uint8ClampedArray(TW * TH * 3);     // night-side lights
+    var water = new Uint8Array(TW * TH);
     for (var j = 0; j < TH; j++) {
       var lat = (j / (TH - 1) - 0.5) * Math.PI;
       for (var i = 0; i < TW; i++) {
@@ -87,28 +88,30 @@ var BridgeOrbit = (function () {
         var px = Math.cos(lat) * Math.cos(lon), py = Math.sin(lat), pz = Math.cos(lat) * Math.sin(lon);
         var n = j * TW + i, c;
         if (kind === 'ocean') {
-          var h = fbm3(px * 2.6 + 3, py * 2.6, pz * 2.6, 11, 5);
+          var h = fbm3(px * 4.2 + 3, py * 4.2, pz * 4.2, 11, 5);
           if (h > 0.665) {        // scattered islands: sand rims, green hearts, a few harbour lights
-            c = h > 0.685 ? [58, 112, 70] : [196, 178, 118];
+            c = h > 0.675 ? (h > 0.71 ? [74, 120, 70] : [52, 104, 64]) : [196, 178, 118];
             if (hash3(i, j, 1, 4) < 0.05) { glow[n * 3] = 255; glow[n * 3 + 1] = 190; glow[n * 3 + 2] = 110; }
           } else {
             var d = Math.min(1, (0.665 - h) * 3.5);
-            c = [Math.round(30 - 18 * d), Math.round(128 - 70 * d), Math.round(124 - 44 * d)];
+            c = d < 0.12 ? [70, 190, 170] : [Math.round(30 - 18 * d), Math.round(128 - 70 * d), Math.round(124 - 44 * d)];
+            water[n] = 1;
           }
+          if (Math.abs(lat) > 1.22 + fbm3(px * 6, py * 6, pz * 6, 5, 2) * 0.2) { c = [214, 228, 232]; water[n] = 0; }
           cloud[n] = Math.max(0, fbm3(px * 3 + 9, py * 5, pz * 3, 31, 5) - 0.47) * 3.0;
         } else if (kind === 'city') {
           var hc = fbm3(px * 2 + 1, py * 2, pz * 2, 5, 5);
           var land = hc > 0.47;
           c = land ? [46, 40, 60] : [18, 24, 40];
-          if (land) {          // city lights: sparse points, thicker in the sprawl, mostly sodium-warm
-            var dens = fbm3(px * 7, py * 7, pz * 7, 77, 3);
-            var r0 = hash3(i, j, 3, 9);
-            if (dens > 0.5 && r0 < (dens - 0.5) * 2.2) {
-              var pick = hash3(i, j, 5, 2);
-              var pal = pick < 0.8 ? [255, 186, 104] : pick < 0.92 ? [96, 220, 255] : [255, 110, 200];
-              var kk = 0.55 + (dens - 0.5) * 2;
-              glow[n * 3] = pal[0] * kk; glow[n * 3 + 1] = pal[1] * kk; glow[n * 3 + 2] = pal[2] * kk;
-            }
+          if (!land) water[n] = 1;
+          if (land) {          // city lights: an amber haze where it's built up, points of light in it
+            var dens = fbm3(px * 6, py * 6, pz * 6, 77, 4);
+            var haze = Math.max(0, dens - 0.48) * 2.6;
+            var pt = hash3(i, j, 3, 9) < haze * 0.5 ? 1 : 0;
+            var neon = hash3(i, j, 5, 2) < 0.04;
+            glow[n * 3] = Math.min(255, 120 * haze + pt * (neon ? 90 : 160));
+            glow[n * 3 + 1] = Math.min(255, 70 * haze + pt * (neon ? 210 : 110));
+            glow[n * 3 + 2] = Math.min(255, 30 * haze + pt * (neon ? 255 : 50));
           }
           cloud[n] = Math.max(0, fbm3(px * 3, py * 6 + 4, pz * 3, 41, 4) - 0.6) * 2.0;
         } else if (kind === 'gas') {
@@ -123,7 +126,7 @@ var BridgeOrbit = (function () {
         col[n * 3] = c[0]; col[n * 3 + 1] = c[1]; col[n * 3 + 2] = c[2];
       }
     }
-    return { col: col, cloud: cloud, glow: glow };
+    return { col: col, cloud: cloud, glow: glow, water: water };
   }
 
   function texture(kind) {
@@ -141,6 +144,9 @@ var BridgeOrbit = (function () {
     if (discs[key]) return discs[key];
     var D = R * 2, n = D * D;
     var lon = new Float32Array(n), lat = new Float32Array(n), lit = new Float32Array(n), rim = new Float32Array(n);
+    var spec = new Float32Array(n);
+    var hx = sun[0], hy = sun[1], hz = sun[2] + 1, hl = Math.sqrt(hx * hx + hy * hy + hz * hz);
+    hx /= hl; hy /= hl; hz /= hl;
     var inside = new Uint8Array(n);
     for (var y = 0; y < D; y++) {
       for (var x = 0; x < D; x++) {
@@ -153,9 +159,10 @@ var BridgeOrbit = (function () {
         lon[k] = Math.atan2(nx, nz);
         lit[k] = nx * sun[0] + ny * sun[1] + nz * sun[2];
         rim[k] = Math.pow(1 - nz, 4);
+        spec[k] = Math.pow(Math.max(0, nx * hx + ny * hy + nz * hz), 70);
       }
     }
-    discs[key] = { R: R, D: D, lon: lon, lat: lat, lit: lit, rim: rim, inside: inside, cache: {} };
+    discs[key] = { R: R, D: D, lon: lon, lat: lat, lit: lit, rim: rim, spec: spec, inside: inside, cache: {} };
     return discs[key];
   }
 
@@ -188,15 +195,29 @@ var BridgeOrbit = (function () {
         var ti = Math.min(TH - 1, Math.floor((1 - v) * TH)) * TW + Math.floor(u * TW) % TW;
         var r = tex.col[ti * 3], gg = tex.col[ti * 3 + 1], b = tex.col[ti * 3 + 2];
         var cu = (g.lon[k] / (Math.PI * 2) + 0.5 + crot) % 1;
-        var ci = Math.min(TH - 1, Math.floor((1 - v) * TH)) * TW + Math.floor(cu * TW) % TW;
+        var crow = Math.min(TH - 1, Math.floor((1 - v) * TH)) * TW;
+        var ci = crow + Math.floor(cu * TW) % TW;
         var cl = Math.min(1, tex.cloud[ci]);
+        var sh = Math.min(1, tex.cloud[crow + Math.floor((cu + 0.006) * TW) % TW]);     // the cloud's shadow, offset
+        var dk = 1 - sh * 0.35;
+        r *= dk; gg *= dk; b *= dk;
         r += (235 - r) * cl; gg += (240 - gg) * cl; b += (245 - b) * cl;
         // light: smooth terminator quantized into small dithered steps
         var L = g.lit[k];
-        var lv = Math.max(0.06, Math.min(1, L * 1.25 + 0.18));
-        var q = lv * 6 + (BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.5);
-        lv = Math.max(0.05, Math.round(q) / 6);
+        var lv = Math.max(0.07, Math.min(1, L * 1.25 + 0.18));
+        var q = lv * 7 + (BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.5);
+        lv = Math.max(0.06, Math.round(q) / 7);
         r *= lv; gg *= lv; b *= lv;
+        // a warm band along the terminator, a cool blue night
+        var dusk = Math.max(0, 1 - Math.abs(L - 0.04) * 7);
+        r += dusk * 46; gg += dusk * 12; b -= dusk * 10;
+        var dark = Math.max(0, Math.min(1, (0.1 - L) * 5));
+        r += dark * 6; gg += dark * 10; b += dark * 22;
+        // the sun glinting off open water
+        if (tex.water[ti] && g.spec[k] > 0.02) {
+          var sp = g.spec[k] * (1 - cl);
+          r += 255 * sp; gg += 240 * sp; b += 210 * sp;
+        }
         // night lights where it's dark
         var night = Math.max(0, Math.min(1, (0.12 - L) * 6)) * (1 - cl * 0.8);
         if (night > 0) { r += tex.glow[ti * 3] * night; gg += tex.glow[ti * 3 + 1] * night; b += tex.glow[ti * 3 + 2] * night; }
@@ -209,6 +230,22 @@ var BridgeOrbit = (function () {
     c.ctx.putImageData(c.img, 0, 0);
     c.step = step;
     return c.canvas;
+  }
+
+  /** A planet with its atmosphere glowing past the limb. */
+  function drawPlanet(ctx, kind, cx, cy, R, now) {
+    var atmo = ATMO[kind];
+    if (atmo) {
+      var sun = SUN[kind] || SUN.ocean;
+      var hx = cx + sun[0] * R * 0.18, hy = cy + sun[1] * R * 0.18;
+      var g = ctx.createRadialGradient(hx, hy, R * 0.92, hx, hy, R * 1.14);
+      g.addColorStop(0, 'rgba(' + atmo[0] + ',' + atmo[1] + ',' + atmo[2] + ',0.42)');
+      g.addColorStop(0.45, 'rgba(' + atmo[0] + ',' + atmo[1] + ',' + atmo[2] + ',0.14)');
+      g.addColorStop(1, 'rgba(' + atmo[0] + ',' + atmo[1] + ',' + atmo[2] + ',0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx - R * 1.3, cy - R * 1.3, R * 2.6, R * 2.6);
+    }
+    ctx.drawImage(planetCanvas(kind, R, now), Math.round(cx - R), Math.round(cy - R));
   }
 
   // ---- stars ------------------------------------------------------------------
@@ -359,8 +396,7 @@ var BridgeOrbit = (function () {
     if (P.planet === 'ocean' || P.planet === 'city') {
       // a world below the window: the top third of it, its limb arcing across
       R = Math.round(Math.min(w * 0.32, h * 1.5));
-      var pc = planetCanvas(P.planet, R, now);
-      ctx.drawImage(pc, Math.round(x + w * 0.58 - R), Math.round(y + h * (opts.horizon || 0.14)));
+      drawPlanet(ctx, P.planet, x + w * 0.58, y + h * (opts.horizon || 0.14) + R, R, now);
       if (P.planet === 'ocean') {        // Lumar's moon
         var mr = Math.max(6, Math.round(h * 0.09));
         var mx = x + w * 0.16, my = y + h * 0.22;
@@ -373,7 +409,7 @@ var BridgeOrbit = (function () {
       R = Math.round(Math.min(w * 0.22, h * 0.42));
       var gx = x + w * 0.7, gy = y + h * 0.5;
       drawRing(ctx, gx, gy, R, false, 0.28);
-      ctx.drawImage(planetCanvas('gas', R, now), Math.round(gx - R), Math.round(gy - R));
+      drawPlanet(ctx, 'gas', gx, gy, R, now);
       drawRing(ctx, gx, gy, R, true, 0.28);
       drawStation(ctx, x + w * 0.28, y + h * 0.42 + Math.sin(now / 3000) * 2, Math.max(3, Math.round(h * 0.04)), now);
     } else if (P.planet === 'hole') {
@@ -386,5 +422,5 @@ var BridgeOrbit = (function () {
   function kindOf(id) { return (PLACES[id] || {}).planet || null; }
 
   return { draw: draw, getLocation: getLocation, setLocation: setLocation, placeName: placeName, kindOf: kindOf,
-           planet: planetCanvas, drawHole: drawHole, drawStation: drawStation, drawStars: drawStars };
+           planet: planetCanvas, drawPlanet: drawPlanet, drawHole: drawHole, drawStation: drawStation, drawStars: drawStars };
 })();

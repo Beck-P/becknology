@@ -40,8 +40,8 @@ def built(x0, r0, x1, r1):
 
 
 # ---- north side ---------------------------------------------------------------------------------
-smoke(W.house(k, 0.2, 3.1, 1.0, 4.6, wall_h=2.0, roof=W.ROOF_SLATE, wall='#b8a888', windows=[(0.9, 0.85), (2.4, 0.85)],
-        windows_up=[(1.65, 1.5)], chimney=0.8), 0.8)
+smoke(W.house(k, 0.2, 3.1, 1.0, 4.6, wall_h=2.0, roof=W.ROOF_SLATE, wall='#b8a888', door_x=1.65,
+        windows=[(0.75, 0.85), (2.55, 0.85)], windows_up=[(1.65, 1.5)], chimney=0.8), 0.8)
 built(0.2, 1.0, 3.1, 4.6)
 smoke(W.house(k, 3.4, 7.6, 1.0, 5.0, wall_h=2.3, rise=1.4, roof=W.ROOF_GREEN, door_x=5.5, windows=[(4.2, 0.9), (6.8, 0.9)],
         windows_up=[(4.2, 1.7), (5.5, 1.75), (6.8, 1.7)], chimney=4.1, sign=(7.45, 1.75, 'mug'), lanterns=(4.85, 6.15)), 4.1)
@@ -56,16 +56,17 @@ built(14.3, 1.6, 17.1, 5.0)
 W.house(k, 17.9, 21.1, 1.4, 5.0, wall_h=2.1, rise=1.2, roof=W.ROOF_PURPLE, wall='#5a5068', door_x=19.5,
         windows=[(18.6, 0.9), (20.4, 0.9)], windows_up=[(19.5, 1.6)], sign=(20.95, 1.6, 'bottle'), stone=True)
 built(17.9, 1.4, 21.1, 5.0)
-smoke(W.house(k, 21.6, 25.8, 0.8, 4.4, wall_h=2.0, roof=W.ROOF_GREEN, wall='#a89878', windows=[(22.5, 0.85), (24.9, 0.85)],
-        windows_up=[(23.7, 1.5)], chimney=25.1), 25.1)
+smoke(W.house(k, 21.6, 25.8, 0.8, 4.4, wall_h=2.0, roof=W.ROOF_GREEN, wall='#a89878', door_x=24.9,
+        windows=[(22.5, 0.85), (23.7, 0.85)], windows_up=[(23.7, 1.5)], chimney=22.3, sign=(25.65, 1.6, 'compass')), 22.3)
 built(21.6, 0.8, 25.8, 4.4)
 
 # ---- west: the smithy -------------------------------------------------------------------------------
-smoke(W.house(k, 1.0, 5.0, 6.6, 10.0, wall_h=2.1, rise=1.1, roof=W.ROOF_SLATE, wall='#6e675c', door_x=3.5,
+# (shallow, so its roof doesn't hide the lane to the cottage door behind it)
+smoke(W.house(k, 1.0, 5.0, 7.4, 10.0, wall_h=2.1, rise=1.0, roof=W.ROOF_SLATE, wall='#6e675c', door_x=3.5,
         windows=[(2.0, 0.9)], chimney=4.3, sign=(1.15, 1.6, 'anvil'), stone=True), 4.3)
-built(1.0, 6.6, 5.0, 10.0)
-A.anvil(k, 4.6, 10.6, glowing_blade=False)
-A.barrel(k, 1.5, 10.5, tone=A.WOOD_D)
+built(1.0, 7.4, 5.0, 10.0)
+A.anvil(k, 1.7, 10.6, glowing_blade=False)       # anvil and barrel flank the door, its front kept clear
+A.barrel(k, 4.6, 10.5, tone=A.WOOD_D)
 k.point_light(4.3, 10.0, 0.6, '#ff7a30', 10, radius=0.3, group='flicker')   # forge glow under the door
 
 # ---- east: bell tower, fishmonger -----------------------------------------------------------------------
@@ -80,7 +81,7 @@ W.fountain(k, 12.0, 8.55)
 built(11.0, 7.7, 13.0, 9.4)
 for (x, r) in ((9.5, 6.5), (2.5, 13.5), (21.5, 13.5), (16.5, 6.5)):
     W.lantern_post(k, x, r)
-W.cart(k, 6.4, 11.5)
+W.cart(k, 22.9, 11.6)                    # the handcart, parked by the fish stall
 for (x, r) in ((17.15, 11.05), (17.75, 11.15)):
     A.crate(k, x, r, s=0.55, tone=A.WOOD_L, contents='apples' if x < 17.5 else None)
 A.barrel(k, 18.55, 11.5)
@@ -90,7 +91,7 @@ W.bulletin_board(k, 13.0, 13.5)
 W.statue(k, 8.5, 14.5)
 k.solid(7, 11, 8, 12)                    # the passerby
 k.solid(16, 11, 17, 12)                  # the merchant
-W.planter(k, 3.5, 4.7, 5.6)
+W.planter(k, 12.3, 13.5, 5.6)
 W.planter(k, 9.3, 10.6, 5.6, flowers=('#e0e0f0', '#a0c0e0'))
 
 # ---- the trail down to the harbour --------------------------------------------------------------------
@@ -146,8 +147,11 @@ k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}},
 k.solid(0, 0, 26, 1)                    # the strip behind the houses
 k.solid(18, 8, 21, 9)                   # behind the fish stall
 k.solid(22, 5, 24, 6)                   # behind the bell tower
+k.solid(1, 6, 5, 7)                     # behind the smithy
+for (c, r) in ((0, 10), (0, 14), (1, 14), (5, 14), (20, 14), (24, 14), (12, 12), (13, 12)):
+    k.solid(c, r, c + 1, r + 1)         # under tree crowns / behind the bulletin board
 apply_world(WORLD, k, (0, 0, 25, 17), scene_id='lumar-square', moves={
-    'TAVERN': (5, 4), 'INN': (11, 4), 'BAKERY': (15, 4), 'APOTHECARY': (19, 4), 'SMITHY': (3, 9),
+    'COTTAGE': (1, 4), "CARTOGRAPHER'S HOUSE": (24, 4), 'TAVERN': (5, 4), 'INN': (11, 4), 'BAKERY': (15, 4), 'APOTHECARY': (19, 4), 'SMITHY': (3, 9),
     'FISHMONGER': [(19, 9), (21, 9)], 'FOUNTAIN': (11, 8), 'BULLETIN BOARD': (12, 13), 'PASSERBY': (7, 11), 'MERCHANT': (16, 11),
     'HARBOR': [(13, 17), (14, 17)]},
     actors=[{'sheet': 'npc-fishmonger', 'x': 21, 'y': 9, 'facing': 'left'},

@@ -563,11 +563,40 @@
     {
       "x": 8,
       "y": 12,
-      "type": "sail_to",
-      "destination": "lumar",
-      "destinationName": "Diggen's Point",
+      "type": "menu",
       "label": "DOCK",
-      "prompt": "SAIL BACK"
+      "prompt": "PRESS E TO SET SAIL",
+      "dialog": "THE GALLEON WILL TAKE YOU\\nTO ANY DOCK ON THE SEA.",
+      "options": [
+        {
+          "label": "DIGGEN'S POINT",
+          "action": "sail_to",
+          "destination": "lumar",
+          "destinationName": "Diggen's Point"
+        },
+        {
+          "label": "ROSE COVE",
+          "action": "sail_to",
+          "destination": "lumar-rose",
+          "destinationName": "Rose Cove"
+        },
+        {
+          "label": "SAPPHIRE PORT",
+          "action": "sail_to",
+          "destination": "lumar-sapphire",
+          "destinationName": "Sapphire Port"
+        },
+        {
+          "label": "MIDNIGHT ISLE",
+          "action": "sail_to",
+          "destination": "lumar-midnight",
+          "destinationName": "Midnight Isle"
+        },
+        {
+          "label": "STAY ASHORE",
+          "action": "close"
+        }
+      ]
     },
     {
       "x": 6,

@@ -148,9 +148,10 @@ var BridgeInteractions = (function () {
 
   function update(world, character, controls) {
     if (dialogVisible) {
-      // Dismiss dialog on action press
+      // Action: finish the line being typed, or dismiss
       if (controls.consumeAction()) {
-        hideDialog();
+        if (typing && !typing.done) typing.finish();
+        else hideDialog();
       }
       return;
     }
@@ -322,13 +323,13 @@ var BridgeInteractions = (function () {
         break;
 
       case 'dialog':
-        showDialog(inter.label, inter.dialog);
+        showDialog(inter.label, inter.dialog, inter);
         break;
 
       case 'random_dialog':
         var messages = inter.messages || [inter.dialog];
         var msg = messages[Math.floor(Math.random() * messages.length)];
-        showDialog(inter.label, msg);
+        showDialog(inter.label, msg, inter);
         break;
 
       case 'leave_world':
@@ -431,51 +432,31 @@ var BridgeInteractions = (function () {
     if (promptEl) promptEl.classList.remove('visible');
 
     var overlay = document.getElementById('world-overlay');
-    var dialogEl = document.createElement('div');
-    dialogEl.id = 'world-dialog';
-    dialogEl.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
-      'background:rgba(10,10,20,0.95);border:1px solid #2a2a3e;border-radius:4px;' +
-      'padding:24px 28px;min-width:280px;max-width:340px;z-index:30;' +
-      'font-family:"Courier New",Consolas,monospace;text-align:center;';
+    var dialogEl = dialogShell('menu');
 
-    var html = '<h3 style="font-size:13px;letter-spacing:3px;color:#40b060;margin-bottom:8px;">' +
-               inter.label + '</h3>';
-    if (inter.dialog) {
-      html += '<pre style="font-size:11px;color:#888;line-height:1.5;white-space:pre-wrap;margin-bottom:14px;">' +
-              inter.dialog.replace(/\\n/g, '\n') + '</pre>';
-    }
-    html += '<div id="menu-options" style="display:flex;flex-direction:column;gap:6px;margin:8px 0;">';
+    var html = '<div class="wd-body"><div class="wd-title">' + esc(inter.label) + '</div>';
+    if (inter.dialog) html += '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>';
+    html += '<div class="wd-options">';
     for (var i = 0; i < inter.options.length; i++) {
-      var opt = inter.options[i];
-      html += '<button data-opt="' + i + '" class="menu-opt" style="' +
-              'padding:8px 12px;background:rgba(40,40,60,0.6);' +
-              'border:1px solid #2a2a3e;color:#ddd;font-family:inherit;' +
-              'font-size:11px;letter-spacing:2px;cursor:pointer;text-align:left;' +
-              'transition:background 0.15s, border-color 0.15s;">' +
-              '&#9656; ' + opt.label + '</button>';
+      html += '<button data-opt="' + i + '" class="wd-opt' + (i === 0 ? ' active' : '') + '">' + esc(inter.options[i].label) + '</button>';
     }
-    html += '</div>';
-    html += '<p style="font-size:10px;color:#555;letter-spacing:2px;margin-top:6px;">CLICK · ESC TO CANCEL</p>';
+    html += '</div>' + hintHTML('Esc', 'Cancel') + '</div>';
 
     dialogEl.innerHTML = html;
     overlay.appendChild(dialogEl);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
 
-    // Hover styling
-    var btns = dialogEl.querySelectorAll('.menu-opt');
+    // pick with the mouse, or arrows / W S and E / Enter
+    var btns = dialogEl.querySelectorAll('.wd-opt');
+    var sel = 0;
+    function choose(n) {
+      sel = (n + btns.length) % btns.length;
+      for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', j === sel);
+    }
     for (var b = 0; b < btns.length; b++) {
       (function (btn, idx) {
-        btn.addEventListener('mouseenter', function () {
-          btn.style.background = 'rgba(64,160,104,0.25)';
-          btn.style.borderColor = '#40b060';
-        });
-        btn.addEventListener('mouseleave', function () {
-          btn.style.background = 'rgba(40,40,60,0.6)';
-          btn.style.borderColor = '#2a2a3e';
-        });
-        btn.addEventListener('click', function () {
-          handleMenuOption(inter.options[idx]);
-        });
+        btn.addEventListener('mouseenter', function () { choose(idx); });
+        btn.addEventListener('click', function () { handleMenuOption(inter.options[idx]); });
       })(btns[b], b);
     }
 
@@ -483,6 +464,12 @@ var BridgeInteractions = (function () {
       if (e.key === 'Escape') {
         e.preventDefault();
         cleanup();
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        e.preventDefault(); choose(sel + 1);
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault(); choose(sel - 1);
+      } else if (e.key === 'Enter' || e.key === 'e' || e.key === 'E') {
+        e.preventDefault(); handleMenuOption(inter.options[sel]);
       }
     }
     document.addEventListener('keydown', handleEsc);
@@ -521,33 +508,122 @@ var BridgeInteractions = (function () {
     }
   }
 
-  function showDialog(title, text) {
+  // ---- dialogs, styled for the world you're in ---------------------------------------------
+  // parchment in Lumar, a neon terminal in Arcadia, a CRT on Enigma, violet
+  // glass at the Singularity, a holo panel aboard the ship (css .wd-*)
+  function dialogTheme() {
+    var id = (BridgeWorld.getWorldId && BridgeWorld.getWorldId()) || '';
+    var w = BridgeWorld.getWorld();
+    var ts = (w && w.tileset) || '';
+    if (/^lumar/.test(id) || ts === 'lumar' || ts === 'tavern' || ts === 'cave' || ts === 'tower') return 'parchment';
+    if (ts === 'arcadia' || /^(arcadia|cyber|chrome|junk|tech)/.test(id)) return 'neon';
+    if (ts === 'enigma' || id === 'enigma') return 'crt';
+    if (ts === 'singularity' || id === 'singularity') return 'void';
+    return 'holo';
+  }
+
+  function dialogShell(kind) {
+    var el = document.createElement('div');
+    el.id = 'world-dialog';
+    el.className = 'world-dialog wd-' + dialogTheme() + (kind ? ' wd-' + kind : '');
+    return el;
+  }
+
+  function hintHTML(key, text) {
+    return '<div class="wd-hint"><span class="ip-key">' + key + '</span>' + text + '</div>';
+  }
+
+  // the face of whoever stands at the interaction's tile (a scene actor)
+  function portraitFor(inter) {
+    var w = BridgeWorld.getWorld();
+    if (!inter || !w || !w.scene || !w.scene.actors) return null;
+    for (var i = 0; i < w.scene.actors.length; i++) {
+      var a = w.scene.actors[i];
+      if (Math.abs(a.x - inter.x) <= 0 && Math.abs(a.y - inter.y) <= 0) return a.sheet;
+    }
+    return null;
+  }
+
+  function drawPortrait(canvas, sheet) {
+    var img = new Image();
+    img.onload = function () {
+      // idle frame, facing down: find the top of the head, frame head and shoulders
+      var t = document.createElement('canvas');
+      t.width = 32; t.height = 48;
+      var tc = t.getContext('2d');
+      tc.drawImage(img, 0, 0, 32, 48, 0, 0, 32, 48);
+      var a = tc.getImageData(0, 0, 32, 48).data, top = 0;
+      for (var y = 0; y < 48 && !top; y++) for (var x = 0; x < 32; x++) if (a[(y * 32 + x) * 4 + 3] > 0) { top = y; break; }
+      var c = canvas.getContext('2d');
+      c.imageSmoothingEnabled = false;
+      c.clearRect(0, 0, canvas.width, canvas.height);
+      c.drawImage(t, 5, Math.max(0, top - 2), 22, 22, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = '/bridge/assets/characters/' + sheet + '.png';
+  }
+
+  var typing = null;      // the line being typed out
+
+  // Dialog text was hard-wrapped for a narrow monospace box; join the lines
+  // of each paragraph so it wraps to the dialog (lists and labels stay put).
+  function reflow(t) {
+    return String(t || '').replace(/\\n/g, '\n').split(/\n\s*\n/).map(function (para) {
+      var lines = para.split('\n'), out = lines[0] || '';
+      for (var i = 1; i < lines.length; i++) {
+        var L = lines[i];
+        var keep = /^\s*[*\-\u2022>\[]/.test(L) || /[:\]]\s*$/.test(lines[i - 1]);
+        out += (keep ? '\n' : ' ') + L.trim();
+      }
+      return out;
+    }).join('\n\n');
+  }
+
+  function showDialog(title, text, inter) {
     dialogVisible = true;
     var promptEl = document.getElementById('interact-prompt');
     if (promptEl) promptEl.classList.remove('visible');
 
-    // Create dialog overlay
     var overlay = document.getElementById('world-overlay');
-    var dialogEl = document.createElement('div');
-    dialogEl.id = 'world-dialog';
-    dialogEl.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
-      'background:rgba(10,10,20,0.95);border:1px solid #2a2a3e;border-radius:4px;' +
-      'padding:24px 32px;max-width:320px;width:90%;z-index:30;' +
-      'font-family:"Courier New",Consolas,monospace;text-align:center;';
-
+    var sheet = portraitFor(inter);
+    var dialogEl = dialogShell(sheet ? 'talk' : null);
+    var body = reflow(text);
     dialogEl.innerHTML =
-      '<h3 style="font-size:13px;letter-spacing:3px;color:#40b060;margin-bottom:12px;">' + title + '</h3>' +
-      '<pre style="font-size:11px;color:#888;line-height:1.6;white-space:pre-wrap;margin-bottom:16px;">' +
-        text.replace(/\\n/g, '\n') +
-      '</pre>' +
-      '<p style="font-size:10px;color:#555;letter-spacing:2px;animation:blink 1.2s ease-in-out infinite;">PRESS E TO CLOSE</p>';
-
+      (sheet ? '<canvas class="wd-portrait" width="72" height="72"></canvas>' : '') +
+      '<div class="wd-body">' +
+        '<div class="wd-title">' + esc(title || '') + '</div>' +
+        '<div class="wd-text"></div>' +
+        hintHTML(TOUCH ? 'Tap' : 'E', '<span class="wd-hint-text">Close</span>') +
+      '</div>';
     overlay.appendChild(dialogEl);
+    if (sheet) drawPortrait(dialogEl.querySelector('.wd-portrait'), sheet);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
+
+    // type it out; E finishes the line, then closes
+    var out = dialogEl.querySelector('.wd-text');
+    var hint = dialogEl.querySelector('.wd-hint-text');
+    var i = 0;
+    hint.textContent = 'Skip';
+    dialogEl.classList.add('typing');
+    typing = { done: false, finish: function () {
+      clearInterval(typing.timer);
+      out.textContent = body;
+      typing.done = true;
+      hint.textContent = 'Close';
+      dialogEl.classList.remove('typing');
+    } };
+    typing.timer = setInterval(function () {
+      i = Math.min(body.length, i + 2);
+      out.textContent = body.slice(0, i);
+      if (i >= body.length) typing.finish();
+    }, 22);
+    dialogEl.addEventListener('click', function () {
+      if (typing && !typing.done) typing.finish(); else hideDialog();
+    });
   }
 
   function hideDialog() {
     dialogVisible = false;
+    if (typing) { clearInterval(typing.timer); typing = null; }
     var dialogEl = document.getElementById('world-dialog');
     if (dialogEl) dialogEl.remove();
   }
@@ -570,21 +646,15 @@ var BridgeInteractions = (function () {
     if (promptEl) promptEl.classList.remove('visible');
 
     var overlay = document.getElementById('world-overlay');
-    var dialogEl = document.createElement('div');
-    dialogEl.id = 'world-dialog';
-    dialogEl.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
-      'background:rgba(10,10,20,0.96);border:1px solid #3a3a4e;border-radius:4px;' +
-      'padding:20px 24px;width:380px;max-width:90vw;z-index:30;' +
-      'font-family:"Courier New",Consolas,monospace;color:#e0d8c0;';
+    var dialogEl = dialogShell('shop');
 
-    var html = '<h3 style="font-size:13px;letter-spacing:3px;color:#e0c060;margin:0 0 6px;text-align:center;">' +
-               (inter.label || 'SHOP') + '</h3>' +
-               '<div id="vendor-balance" style="font-size:11px;letter-spacing:2px;color:#a08040;text-align:center;margin-bottom:14px;">COINS: ...</div>' +
-               '<div id="vendor-items" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>' +
-               '<p style="font-size:10px;color:#555;letter-spacing:2px;text-align:center;cursor:pointer;" id="vendor-close">[ ESC OR E TO CLOSE ]</p>';
+    var html = '<div class="wd-body"><div class="wd-title">' + esc(inter.label || 'SHOP') + '</div>' +
+               '<div id="vendor-balance" class="wd-sub">Coins: ...</div>' +
+               '<div id="vendor-items" class="wd-items"></div>' +
+               '<div id="vendor-close">' + hintHTML('E', 'Close') + '</div></div>';
     dialogEl.innerHTML = html;
     overlay.appendChild(dialogEl);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
 
     var balanceLabel = document.getElementById('vendor-balance');
     var listEl = document.getElementById('vendor-items');
@@ -593,7 +663,7 @@ var BridgeInteractions = (function () {
 
     function updateBalance(n) {
       currentBalance = (typeof n === 'number') ? n : currentBalance;
-      balanceLabel.textContent = 'COINS: ' + currentBalance;
+      balanceLabel.textContent = 'Coins: ' + currentBalance;
     }
     function renderItems() {
       listEl.innerHTML = '';
@@ -601,24 +671,21 @@ var BridgeInteractions = (function () {
         var item = BridgeItems.get(entry.id);
         if (!item) return;
         var row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 8px;' +
-          'background:rgba(0,0,0,0.4);border:1px solid #2a2a3e;';
+        row.className = 'wd-item';
         var cnv = document.createElement('canvas');
         cnv.width = cnv.height = 28;
-        cnv.style.cssText = 'image-rendering:pixelated;width:28px;height:28px;flex:0 0 28px;';
+        cnv.className = 'wd-item-icon';
         item.draw(cnv.getContext('2d'), 0, 0, 28);
         row.appendChild(cnv);
         var info = document.createElement('div');
-        info.style.cssText = 'flex:1;min-width:0;';
-        info.innerHTML = '<div style="font-size:11px;color:#e0d8c0;letter-spacing:1px;">' + item.name.toUpperCase() + '</div>' +
-                         '<div style="font-size:9px;color:#888;line-height:1.4;">' + item.desc + '</div>';
+        info.className = 'wd-item-info';
+        info.innerHTML = '<div class="wd-item-name">' + esc(item.name) + '</div>' +
+                         '<div class="wd-item-desc">' + esc(item.desc) + '</div>';
         row.appendChild(info);
         var canAfford = currentBalance >= entry.price;
         var buyBtn = document.createElement('button');
-        buyBtn.style.cssText = 'flex:0 0 auto;padding:6px 10px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
-          'background:' + (canAfford ? '#3a2a10' : '#1a1a26') + ';color:' + (canAfford ? '#ffe080' : '#555') + ';' +
-          'border:1px solid ' + (canAfford ? '#a08040' : '#2a2a3e') + ';cursor:' + (canAfford ? 'pointer' : 'not-allowed') + ';';
-        buyBtn.textContent = entry.price + '  BUY';
+        buyBtn.className = 'wd-btn' + (canAfford ? ' primary' : '');
+        buyBtn.textContent = entry.price + ' · Buy';
         buyBtn.disabled = !canAfford;
         buyBtn.addEventListener('click', function () {
           if (buyBtn.disabled) return;
@@ -675,38 +742,27 @@ var BridgeInteractions = (function () {
     var cost = inter.cost || 5;
 
     var overlay = document.getElementById('world-overlay');
-    var dialogEl = document.createElement('div');
-    dialogEl.id = 'world-dialog';
-    dialogEl.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
-      'background:rgba(10,10,20,0.96);border:1px solid #3a3a4e;border-radius:4px;' +
-      'padding:20px 28px;max-width:340px;z-index:30;' +
-      'font-family:"Courier New",Consolas,monospace;color:#e0d8c0;text-align:center;';
+    var dialogEl = dialogShell('rest');
 
     dialogEl.innerHTML =
-      '<h3 style="font-size:13px;letter-spacing:3px;color:#e0c060;margin:0 0 12px;">' + (inter.label || 'REST') + '</h3>' +
-      '<p style="font-size:11px;color:#a8a08c;line-height:1.5;margin-bottom:8px;">' +
-        'A WARM ROOM, A FRESH PILLOW.<br>RESTORES HP AND ENERGY.</p>' +
-      '<p id="rest-cost" style="font-size:11px;color:#a08040;margin-bottom:14px;">COST: ' + cost + ' COINS &middot; YOU HAVE: ...</p>' +
-      '<button id="rest-yes" disabled style="padding:8px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
-        'background:#1a1a26;color:#555;border:1px solid #2a2a3e;margin-right:8px;cursor:not-allowed;">CHECKING...</button>' +
-      '<button id="rest-no" style="padding:8px 14px;font-family:inherit;font-size:11px;letter-spacing:1px;' +
-        'background:#1a1a26;color:#888;border:1px solid #2a2a3e;cursor:pointer;">CANCEL</button>';
+      '<div class="wd-body"><div class="wd-title">' + esc(inter.label || 'REST') + '</div>' +
+      '<div class="wd-text">A warm room, a fresh pillow.\nRestores HP and energy.</div>' +
+      '<div id="rest-cost" class="wd-sub">Cost: ' + cost + ' coins · you have: ...</div>' +
+      '<div class="wd-buttons"><button id="rest-yes" class="wd-btn" disabled>Checking...</button>' +
+      '<button id="rest-no" class="wd-btn">Cancel</button></div></div>';
 
     overlay.appendChild(dialogEl);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
 
     var costEl = document.getElementById('rest-cost');
     var yesBtn = document.getElementById('rest-yes');
 
     function setAffordState(balance) {
       var canRest = balance >= cost;
-      costEl.textContent = 'COST: ' + cost + ' COINS · YOU HAVE: ' + balance;
+      costEl.textContent = 'Cost: ' + cost + ' coins · you have: ' + balance;
       yesBtn.disabled = !canRest;
-      yesBtn.textContent = canRest ? 'REST' : 'NOT ENOUGH COINS';
-      yesBtn.style.background = canRest ? '#3a2a10' : '#1a1a26';
-      yesBtn.style.color = canRest ? '#ffe080' : '#555';
-      yesBtn.style.borderColor = canRest ? '#a08040' : '#2a2a3e';
-      yesBtn.style.cursor = canRest ? 'pointer' : 'not-allowed';
+      yesBtn.textContent = canRest ? 'Rest' : 'Not enough coins';
+      yesBtn.classList.toggle('primary', canRest);
     }
 
     BridgeProgression.getBalance().then(function (b) {
@@ -752,28 +808,17 @@ var BridgeInteractions = (function () {
     if (promptEl) promptEl.classList.remove('visible');
 
     var overlay = document.getElementById('world-overlay');
-    var dialogEl = document.createElement('div');
-    dialogEl.id = 'world-dialog';
-    dialogEl.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
-      'background:rgba(10,10,20,0.95);border:1px solid #2a2a3e;border-radius:4px;' +
-      'padding:24px 32px;max-width:320px;width:90%;z-index:30;' +
-      'font-family:"Courier New",Consolas,monospace;text-align:center;';
+    var dialogEl = dialogShell('password');
 
     dialogEl.innerHTML =
-      '<h3 style="font-size:13px;letter-spacing:3px;color:#40b060;margin-bottom:12px;">' + inter.label + '</h3>' +
-      '<pre style="font-size:11px;color:#888;line-height:1.6;white-space:pre-wrap;margin-bottom:16px;">' +
-        (inter.dialog || '').replace(/\\n/g, '\n') +
-      '</pre>' +
-      '<input id="pw-input" type="text" autocomplete="off" style="' +
-        'width:80%;padding:8px 12px;background:#111;border:1px solid #2a2a3e;' +
-        'color:#ddd;font-family:inherit;font-size:14px;letter-spacing:4px;' +
-        'text-align:center;text-transform:uppercase;outline:none;margin-bottom:12px;' +
-      '" placeholder="..." />' +
-      '<div id="pw-error" style="font-size:10px;color:#c44;min-height:16px;margin-bottom:8px;"></div>' +
-      '<p style="font-size:10px;color:#555;letter-spacing:2px;">PRESS ENTER TO SUBMIT &middot; ESC TO CANCEL</p>';
+      '<div class="wd-body"><div class="wd-title">' + esc(inter.label) + '</div>' +
+      '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>' +
+      '<input id="pw-input" class="wd-input" type="text" autocomplete="off" placeholder="..." />' +
+      '<div id="pw-error" class="wd-error"></div>' +
+      hintHTML('Enter', 'Submit · Esc to cancel') + '</div>';
 
     overlay.appendChild(dialogEl);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
 
     var input = document.getElementById('pw-input');
     setTimeout(function () { input.focus(); }, 50);
@@ -896,6 +941,6 @@ var BridgeInteractions = (function () {
   }
 
   return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, placePrompt: placePrompt, getTarget: getTarget,
-           say: showDialog,
+           say: showDialog, execute: executeInteraction,
            findTarget: findTarget, promptParts: promptParts };
 })();

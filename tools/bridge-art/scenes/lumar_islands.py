@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world  # noqa: E402
 import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
+import assets_coast as C               # noqa: E402
 
 OUT, ISLAND = sys.argv[1], sys.argv[2]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -54,21 +55,32 @@ if ISLAND == 'midnight':      # ground under the tower (its footprint spans the 
 dock_cells = [d for d in dock if d not in cells]
 land_dock = [d for d in dock if d in cells]
 
-W.island_ground(k, [c for c in cells if c not in land_dock], tone=GROUND, rim=rim + crystals)
-W.border_rocks(k, rim)
-for (c, r) in crystals:
-    k.rock(c + 0.5, r + 0.5, 0.0, 0.32, 0.26, 0.2, (W.SALT[2], 0.2), part='rim_rock')
-    W.shore_crystals(k, c + 0.5, r + 0.45, col=CRYSTAL, s=0.9)
+# the walkable heart gets flagstones and grass; the rocky rim round it is the
+# coast's: banks and beaches into the sea, rocks at the waterline, kelp below
+core = [c for c in cells if c not in rim and c not in crystals]
+W.island_ground(k, [c for c in core if c not in land_dock], tone=GROUND, rim=(), coast=True)
 dx = min(c for c, r in dock)
+ship_r = max(r for c, r in dock) + 1
+SL = 7.0     # the galleon lies broadside across the pier's end, the pier meeting it amidships
+terrain = C.coast(k, core + land_dock, palette=ISLAND, grass='#34462e', rock=W.SALT[2], seed=11 + len(ISLAND),
+                  keep_clear=[(dx - 0.4, min(r for c, r in dock) - 0.2, dx + 1.4, ship_r + 0.2),
+                              (dx + 0.5 - 0.45 * SL - 0.8, ship_r - 0.2, dx + 0.5 + 0.55 * SL + 1.8, ship_r + 1.9)])
+for (c, r) in rim:
+    k.solid(c, r, c + 1, r + 1)
+for (c, r) in crystals:                   # spore crystals on the rocks, some standing in the shallows
+    z = terrain.z(c + 0.5, r + 0.45)
+    k.rock(c + 0.5, r + 0.5, z, 0.34, 0.28, 0.24, (W.SALT[2], 0.2), part='rim_rock')
+    W.shore_crystals(k, c + 0.5, r + 0.45, col=CRYSTAL, s=0.9, z=z + 0.05)
 W.dock(k, dx + 0.05, dx + 0.95, min(r for c, r in dock), max(r for c, r in dock) + 1.0, z=0.02)
 for (c, r) in dock:
     if (c, r) in cells:
         k.box(c, r, -0.3, c + 1, r + 1, -0.06, '#14181a', 'ground_fill')
-ship_r = max(r for c, r in dock) + 1
-SL = 7.0     # the galleon lies broadside across the pier's end, the pier meeting it amidships
-W.galleon(k, dx + 0.5 - 0.45 * SL, dx + 0.5 + 0.55 * SL, ship_r + 0.75, beam=1.4, masts=0.8)
-k.poly([(dx + 0.3, ship_r - 0.3, 0.03), (dx + 0.7, ship_r - 0.3, 0.03), (dx + 0.7, ship_r + 0.25, 0.95),
-        (dx + 0.3, ship_r + 0.25, 0.95)], (A.WOOD, 0.14), 'gangplank')
+n0, l0 = len(k.parts), len(k.lights)
+W.galleon(k, dx + 0.5 - 0.45 * SL, dx + 0.5 + 0.55 * SL, ship_r + 0.75, beam=1.4, masts=0.8, waterline=False)
+C.sink(k, n0, C.WZ, l0)                    # riding in the water, its keel showing through the shallows
+DECK = 0.95 + C.WZ
+k.poly([(dx + 0.3, ship_r - 0.3, 0.03), (dx + 0.7, ship_r - 0.3, 0.03), (dx + 0.7, ship_r + 0.25, DECK),
+        (dx + 0.3, ship_r + 0.25, DECK)], (A.WOOD, 0.14), 'gangplank')
 for r in range(ROWS):
     for c in range(COLS):
         if names.get(T[r][c]) == 'silver_post':
@@ -117,7 +129,7 @@ elif ISLAND == 'sapphire':
     k.solid(6, 6, 7, 7)
     actors = [{'sheet': 'npc-trader', 'x': 6, 'y': 6, 'facing': 'down'},
               {'sheet': 'npc-potter', 'x': 9, 'y': 8, 'facing': 'down'}]
-    moves = {'STALL': [(5, 4), (9, 4)], 'DIGGEN\'S POINT': (7, 12), 'POTTER': (9, 8)}
+    moves = {'STALL': [(6, 4), (9, 4)], 'DIGGEN\'S POINT': (7, 12), 'POTTER': (9, 8)}
 elif ISLAND == 'midnight':
     # the sorceress's tower from outside: octagonal stone, conical roof, lit windows
     tx, tr = 8.5, 4.8

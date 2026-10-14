@@ -978,3 +978,206 @@ def desk_lamp(k, cx, cr, z, energy=4.0):
     k.cyl(cx, cr, z + 0.03, z + 0.2, 0.06, '#ffd890', 'lamp_glass', emit=('#ffcf80', 2.0), verts=10)
     k.cyl(cx, cr, z + 0.2, z + 0.24, 0.04, BRASS, 'lamp_cap', verts=8)
     k.point_light(cx, cr + 0.15, z + 0.35, '#ffc078', energy, radius=0.06, group='flicker')
+
+
+# ---- homes and upstairs ------------------------------------------------------------
+def stairs_up(k, x0, x1, r_wall, wall_h, n=5, rise=0.26, run=0.32, tone=WOOD):
+    """A flight climbing away from the camera to a lamplit doorway in the back
+    wall: treads with pale nosings, closed stringers both sides, a handrail
+    on turned posts down the open (right) side."""
+    for i in range(n):
+        z = (i + 1) * rise
+        rf = r_wall + (n - i) * run
+        k.box(x0, r_wall, 0, x1, rf, z, (shade(tone, 0.82), 0.1), 'stair_riser')
+        k.box(x0 + 0.04, rf - run + 0.02, z - 0.02, x1 - 0.04, rf, z + 0.015, (shade(tone, 1.08), 0.12), 'stair_tread')
+        k.box(x0 + 0.04, rf - 0.04, z - 0.02, x1 - 0.04, rf + 0.01, z + 0.02, shade(tone, 1.3), 'stair_nose')
+    top = n * rise
+    front = r_wall + n * run
+    for xx in (x0 - 0.08, x1):        # stringers rising with the steps
+        k.loft([[(xx, front + 0.02, 0.0), (xx, front + 0.02, rise + 0.12)],
+                [(xx, r_wall, 0.0), (xx, r_wall, top + 0.12)]], (WOOD_DD, 0.1), 'stair_string')
+        k.loft([[(xx + 0.08, front + 0.02, 0.0), (xx + 0.08, front + 0.02, rise + 0.12)],
+                [(xx + 0.08, r_wall, 0.0), (xx + 0.08, r_wall, top + 0.12)]], (WOOD_DD, 0.1), 'stair_string')
+    rx = x1 + 0.04
+    for i in range(0, n + 1, 2):
+        r = front - i * run
+        z = (min(i, n - 1) + 1) * rise if i < n else top
+        k.cyl(rx, r, z * 0 + (i * rise), (i * rise) + 0.85, 0.03, WOOD_DD, 'baluster', verts=6)
+    k.tube((rx, front, 0.85), (rx, r_wall, top + 0.85), 0.035, (WOOD, 0.1), 'handrail', verts=8)
+    k.cyl(rx, front, 0.0, 0.95, 0.05, (WOOD_D, 0.1), 'newel_post', verts=8)
+    k.sphere(rx, front, 0.98, 0.06, 0.06, WOOD, 'newel_cap', segs=8)
+    # the doorway at the top, warm with a lamp somewhere upstairs
+    k.box(x0 - 0.12, r_wall - 0.02, top, x1 + 0.12, r_wall + 0.06, min(wall_h, top + 1.45), WOOD_DD, 'upstairs_frame')
+    k.box(x0, r_wall + 0.06, top, x1, r_wall + 0.065, min(wall_h, top + 1.35), '#1a1008', 'upstairs_dark',
+          emit=('#ffb060', 0.12))
+    k.point_light((x0 + x1) / 2, r_wall + 0.4, top + 0.8, '#ffb060', 6, radius=0.2, group='flicker')
+
+
+def stairwell_down(k, x0, x1, r0, r1):
+    """Stairs going down through the floor: a dark well with a few steps
+    showing, a railing round the open sides."""
+    k.box(x0, r0, -0.6, x1, r1, -0.02, '#0c0806', 'stairwell')
+    steps = 4
+    for i in range(steps):
+        rr = r0 + (r1 - r0) * i / steps
+        k.box(x0 + 0.05, rr, -0.12 - i * 0.12, x1 - 0.05, rr + (r1 - r0) / steps, -0.06 - i * 0.12,
+              (shade(WOOD, 0.9 - 0.12 * i), 0.1), 'stair_tread')
+    for (a, b) in (((x0, r0), (x1, r0)), ((x1, r0), (x1, r1))):
+        k.bar(a[0], a[1], b[0], b[1], 0.82, 0.88, 0.06, (WOOD, 0.1), 'rail')
+        n = 4
+        for i in range(n + 1):
+            px = a[0] + (b[0] - a[0]) * i / n
+            pr = a[1] + (b[1] - a[1]) * i / n
+            k.cyl(px, pr, 0.0, 0.84, 0.025, WOOD_DD, 'baluster', verts=6)
+
+
+def bed(k, x0, x1, r0, r1, quilt='#3a5a8a', quilt2='#c8a050', posts=False):
+    """Wooden bed, head against the back wall: a pillow, a patchwork quilt."""
+    k.box(x0, r0, 0.0, x1, r1, 0.28, (WOOD_D, 0.1), 'bed_frame', bevel=0.02)
+    k.box(x0 + 0.04, r0 + 0.04, 0.28, x1 - 0.04, r1 - 0.04, 0.42, '#e8e0d0', 'mattress', bevel=0.03)
+    k.box(x0, r0 - 0.05, 0.0, x1, r0 + 0.08, 0.9, (WOOD_D, 0.1), 'headboard', bevel=0.02)
+    k.blob((x0 + x1) / 2, r0 + 0.3, 0.48, (x1 - x0) * 0.35, 0.16, 0.08, '#f0ead8', 'pillow', segs=10)
+    qr0 = r0 + 0.55
+    k.box(x0 + 0.02, qr0, 0.42, x1 - 0.02, r1 - 0.02, 0.47, (quilt, 0.12), 'quilt', bevel=0.02)
+    n = 3
+    for i in range(n):          # patchwork squares
+        for j in range(2):
+            if (i + j) % 2:
+                xa = x0 + 0.1 + i * (x1 - x0 - 0.2) / n
+                ra = qr0 + 0.08 + j * (r1 - qr0 - 0.16) / 2
+                k.box(xa, ra, 0.47, xa + (x1 - x0 - 0.2) / n - 0.04, ra + (r1 - qr0 - 0.16) / 2 - 0.04, 0.475, quilt2, 'quilt_patch')
+    k.box(x0 + 0.02, r1 - 0.06, 0.2, x1 - 0.02, r1 + 0.02, 0.47, (quilt, 0.12), 'quilt')
+    if posts:
+        for xx in (x0, x1 - 0.08):
+            k.box(xx, r0 - 0.05, 0, xx + 0.08, r0 + 0.04, 1.3, WOOD_DD, 'bed_post')
+            k.box(xx, r1 - 0.08, 0, xx + 0.08, r1, 0.75, WOOD_DD, 'bed_post')
+    k.solid(x0, r0, x1, r1)
+
+
+def wardrobe(k, x0, x1, r_face, d=0.55, h=1.75, tone=WOOD_D):
+    k.box(x0, r_face, 0.0, x1, r_face + d, h, (tone, 0.1), 'wardrobe', bevel=0.02)
+    k.box(x0 - 0.03, r_face - 0.02, h, x1 + 0.03, r_face + d + 0.03, h + 0.07, (shade(tone, 0.8), 0.1), 'wardrobe_top')
+    xm = (x0 + x1) / 2
+    for (a, b) in ((x0 + 0.05, xm - 0.02), (xm + 0.02, x1 - 0.05)):
+        k.box(a, r_face + d, 0.12, b, r_face + d + 0.02, h - 0.1, (shade(tone, 1.12), 0.1), 'wardrobe_door')
+        k.box(a + 0.06, r_face + d + 0.02, 0.3, b - 0.06, r_face + d + 0.03, h - 0.3, (shade(tone, 0.9), 0.1), 'wardrobe_panel')
+    for xx in (xm - 0.07, xm + 0.04):
+        k.sphere(xx, r_face + d + 0.04, h * 0.5, 0.025, 0.025, BRASS, 'knob', segs=6)
+    k.solid(x0, r_face, x1, r_face + d)
+
+
+def nightstand(k, cx, cr, candle_on=True):
+    k.box(cx - 0.22, cr - 0.2, 0.0, cx + 0.22, cr + 0.2, 0.5, (WOOD, 0.1), 'nightstand', bevel=0.02)
+    k.box(cx - 0.16, cr + 0.2, 0.22, cx + 0.16, cr + 0.21, 0.4, (shade(WOOD, 1.1), 0.1), 'drawer')
+    k.sphere(cx, cr + 0.22, 0.31, 0.02, 0.02, BRASS, 'knob', segs=6)
+    if candle_on:
+        candle(k, cx - 0.06, cr - 0.02, 0.5, energy=3.0)
+        k.box(cx + 0.02, cr - 0.08, 0.5, cx + 0.16, cr + 0.08, 0.56, '#5a2a1a', 'book')
+    k.solid(cx - 0.25, cr - 0.25, cx + 0.25, cr + 0.25)
+
+
+def washstand(k, cx, r_face):
+    k.box(cx - 0.3, r_face, 0.0, cx + 0.3, r_face + 0.4, 0.75, (WOOD, 0.1), 'washstand', bevel=0.02)
+    k.cyl(cx, r_face + 0.2, 0.75, 0.86, 0.2, '#d8d4c8', 'basin', verts=14)
+    k.cyl(cx, r_face + 0.2, 0.82, 0.84, 0.16, '#3a5a6a', 'basin_water', verts=14)
+    k.cyl(cx + 0.18, r_face + 0.15, 0.75, 1.0, 0.07, '#d8d4c8', 'jug', verts=10)
+    k.box(cx - 0.2, r_face - 0.02, 1.1, cx + 0.2, r_face + 0.02, 1.55, '#8a9aa8', 'mirror', emit=('#3a4a5a', 0.3))
+    k.box(cx - 0.24, r_face - 0.03, 1.06, cx + 0.24, r_face, 1.59, WOOD_DD, 'mirror_frame')
+    k.solid(cx - 0.3, r_face, cx + 0.3, r_face + 0.45)
+
+
+def rocking_chair(k, cx, cr, tone=WOOD):
+    for s in (-1, 1):
+        k.loft([[(cx + s * 0.24, cr - 0.38, 0.02), (cx + s * 0.24, cr - 0.38, 0.06)],
+                [(cx + s * 0.24, cr, 0.0), (cx + s * 0.24, cr, 0.04)],
+                [(cx + s * 0.24, cr + 0.38, 0.02), (cx + s * 0.24, cr + 0.38, 0.06)]], WOOD_DD, 'rocker')
+        k.box(cx + s * 0.24 - 0.03, cr - 0.25, 0.04, cx + s * 0.24 + 0.03, cr + 0.25, 0.42, (tone, 0.1), 'chair_side')
+    k.box(cx - 0.26, cr - 0.25, 0.38, cx + 0.26, cr + 0.25, 0.45, (tone, 0.1), 'chair_seat')
+    k.box(cx - 0.26, cr - 0.28, 0.45, cx + 0.26, cr - 0.2, 1.1, (tone, 0.1), 'chair_back')
+    for i in range(4):
+        xx = cx - 0.18 + i * 0.12
+        k.box(xx - 0.015, cr - 0.29, 0.5, xx + 0.015, cr - 0.27, 1.05, WOOD_DD, 'chair_spindle')
+    k.box(cx - 0.2, cr - 0.18, 0.45, cx + 0.2, cr + 0.2, 0.5, ('#7a2a2a', 0.1), 'cushion', bevel=0.02)
+    k.solid(cx - 0.3, cr - 0.4, cx + 0.3, cr + 0.4)
+
+
+def fishing_net(k, x0, x1, r_face, z0=1.2, z1=2.0, col='#8a7a5a'):
+    """A net hung to dry on the back wall: a diamond mesh sagging from three
+    pegs, cork floats along the top rope."""
+    w, h = x1 - x0, z1 - z0
+    def sag(x):
+        return 0.16 * math.sin(math.pi * (x - x0) / w)
+    n = int(w / 0.16)
+    for i in range(-3, n + 4):          # two sets of slanted strands make the diamonds
+        for d in (1, -1):
+            xa = x0 + i * w / n
+            xb = xa + d * h * 0.9
+            a = (max(x0, min(x1, xa)), r_face + 0.04, z1 - sag(max(x0, min(x1, xa))))
+            b = (max(x0, min(x1, xb)), r_face + 0.04, z0 - sag(max(x0, min(x1, xb))) * 0.6)
+            if abs(a[0] - b[0]) > 0.02:
+                k.tube(a, b, 0.007, col, 'net', verts=3)
+    k.tube((x0, r_face + 0.045, z1), (x1, r_face + 0.045, z1), 0.012, '#6a5a3a', 'net_rope', verts=4)
+    for i in range(5):
+        k.sphere(x0 + 0.1 + i * (w - 0.2) / 4, r_face + 0.06, z1 - 0.03, 0.045, 0.045, '#c87a3a', 'cork', segs=6)
+    for x in (x0, (x0 + x1) / 2, x1):
+        k.cyl_y(x, r_face, r_face + 0.1, z1 + 0.03, 0.03, 0.03, WOOD_DD, 'peg', verts=6)
+
+
+def scroll_rack(k, x0, x1, r_face, h=1.6, tone=WOOD_D):
+    """Pigeonholes full of rolled charts."""
+    k.box(x0, r_face, 0.0, x1, r_face + 0.42, h, (tone, 0.1), 'scroll_rack', bevel=0.02)
+    cols, rows = int((x1 - x0) / 0.24), 5
+    for i in range(cols):
+        for j in range(rows):
+            cx = x0 + 0.12 + i * (x1 - x0 - 0.12) / cols
+            cz = 0.2 + j * (h - 0.25) / rows
+            k.box(cx - 0.1, r_face + 0.42, cz - 0.1, cx + 0.1, r_face + 0.43, cz + 0.1, '#1a1008', 'cubby')
+            if k.rng.random() < 0.8:
+                k.cyl_y(cx, r_face + 0.3, r_face + 0.47, cz, 0.06, 0.06, k.rng.choice(('#e0d4b0', '#d0c098', '#c8b488')),
+                        'scroll', verts=8)
+    k.solid(x0, r_face, x1, r_face + 0.45)
+
+
+def book_stack(k, cx, cr, n=4):
+    z = 0.0
+    for i in range(n):
+        w, d, t = k.rng.uniform(0.28, 0.36), k.rng.uniform(0.2, 0.26), k.rng.uniform(0.05, 0.08)
+        a = k.rng.uniform(-0.04, 0.04)
+        k.box(cx - w / 2 + a, cr - d / 2, z, cx + w / 2 + a, cr + d / 2, z + t,
+              k.rng.choice(('#6a2a2a', '#2a4a6a', '#3a5a3a', '#6a5a2a', '#4a3a5a')), 'book')
+        z += t
+
+
+def map_desk(k, x0, x1, r_face, d=0.7, h=0.78):
+    """Writing desk heaped with charts, a quill and an open logbook."""
+    k.box(x0, r_face, h - 0.06, x1, r_face + d, h, (WOOD, 0.1), 'desk_top')
+    for xx in (x0 + 0.04, x1 - 0.1):
+        k.box(xx, r_face + 0.04, 0.0, xx + 0.06, r_face + d - 0.04, h - 0.06, WOOD_DD, 'desk_leg')
+    k.box(x0 + 0.08, r_face + d * 0.5, 0.2, x1 - 0.08, r_face + d - 0.04, 0.26, WOOD_D, 'desk_stretcher')
+    k.box(x0 + 0.15, r_face + 0.15, h, x0 + 0.85, r_face + 0.6, h + 0.006, '#d8c8a0', 'chart')
+    for i in range(3):
+        k.box(x0 + 0.22 + i * 0.18, r_face + 0.22 + (i % 2) * 0.12, h + 0.006, x0 + 0.34 + i * 0.18, r_face + 0.3 + (i % 2) * 0.12,
+              h + 0.008, '#4a6a8a', 'chart_ink')
+    k.box(x1 - 0.7, r_face + 0.2, h, x1 - 0.2, r_face + 0.55, h + 0.03, '#e8e0cc', 'logbook')
+    k.tube((x1 - 0.18, r_face + 0.3, h + 0.02), (x1 - 0.08, r_face + 0.42, h + 0.28), 0.012, '#e8e8f0', 'quill', verts=4)
+    k.cyl(x1 - 0.16, r_face + 0.3, h, h + 0.06, 0.04, '#1a1a2a', 'inkpot', verts=8)
+    k.solid(x0, r_face, x1, r_face + d)
+
+
+def globe(k, cx, cr):
+    k.cyl(cx, cr, 0.0, 0.05, 0.2, WOOD_D, 'globe_base', verts=12)
+    k.cyl(cx, cr, 0.05, 0.6, 0.03, WOOD_D, 'globe_stand', verts=6)
+    k.sphere(cx, cr, 0.85, 0.26, 0.26, ('#2a6a7a', 0.15), 'globe', segs=14)
+    for (dx, dz) in ((-0.1, 0.08), (0.08, -0.05), (0.02, 0.15)):
+        k.sphere(cx + dx, cr + 0.2, 0.85 + dz, 0.08, 0.06, '#c8b878', 'globe_land', segs=6)
+    k.tube((cx, cr, 0.55), (cx, cr, 1.15), 0.015, BRASS, 'globe_axis', verts=4)
+    k.solid(cx - 0.3, cr - 0.3, cx + 0.3, cr + 0.3)
+
+
+def cat(k, cx, cr, z=0.0, col='#3a3a42'):
+    """A cat curled asleep (on a rug, a bed, a windowsill)."""
+    k.blob(cx, cr, z + 0.09, 0.2, 0.15, 0.1, (col, 0.1), 'cat', segs=10)
+    k.blob(cx + 0.16, cr + 0.06, z + 0.12, 0.08, 0.07, 0.07, (col, 0.1), 'cat', segs=8)
+    for s in (-1, 1):
+        k.cone(cx + 0.17 + s * 0.04, cr + 0.06, z + 0.17, z + 0.23, 0.025, 0.004, col, 'cat_ear', verts=3)
+    k.tube((cx - 0.18, cr, z + 0.06), (cx + 0.05, cr + 0.16, z + 0.04), 0.03, col, 'cat_tail', verts=6)

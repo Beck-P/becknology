@@ -685,174 +685,276 @@ def _shuttle_ring(x, rc, hw, hh, zc, n=14):
     return ring
 
 
-def shuttle(k, x0, rc, length=3.4, ramp=True, landed=True, hull=HULL, stripe=STRIPE):
-    """The pilot's shuttle, parked broadside with its nose to the right: a
-    lofted hull, canopy, stubby swept wings with nav lights, twin engines,
-    three landing legs and (ramp=True) the side door open with its ramp down.
-    Returns its footprint (x0, r0, x1, r1)."""
+IVORY = '#e8dcc0'
+IVORY_D = '#b4a684'
+GOLD = '#c8a040'
+GOLD_D = '#8a6a28'
+RUNE = '#40e0d0'
+AETHER = '#8a7aff'
+INDIGO = '#22304a'
+INDIGO_D = '#161f33'
+
+
+def _ring(x, rc, hw, h_top, h_bot, zc, n=16, p=0.8):
+    """Hull section at x: a rounded top of height h_top over a deeper keel h_bot."""
+    ring = []
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        c, s_ = math.cos(a), math.sin(a)
+        hh = h_top if s_ >= 0 else h_bot
+        ring.append((x, rc + hw * math.copysign(abs(c) ** p, c), zc + hh * math.copysign(abs(s_) ** p, s_)))
+    return ring
+
+
+def _along(prof, t):
+    """Interpolate a hull profile [(t, ...)] at t."""
+    for a, b in zip(prof, prof[1:]):
+        if a[0] <= t <= b[0]:
+            f = (t - a[0]) / (b[0] - a[0])
+            return tuple(a[i] + (b[i] - a[i]) * f for i in range(1, len(a)))
+    return tuple(prof[-1][1:])
+
+
+def _trace(k, pts, rad, col, part, emit=None):
+    for a, b in zip(pts, pts[1:]):
+        k.tube(a, b, rad, col, part, emit=emit, verts=5)
+
+
+def shuttle(k, x0, rc, length=3.4, ramp=True, landed=True, hull=IVORY, trim=GOLD):
+    """The pilot's skiff, broadside with its nose to the right: an ivory
+    hull with gold filigree and a band of glowing runes, a needle nose and
+    bubble canopy, forward-swept crescent wings, two long nacelles with
+    aether rings, a swept dorsal fin, gold landing claws and (ramp=True)
+    the side hatch open with its ramp down. Returns its footprint."""
     L = length
-    # (t, half-beam, half-height, centre z) along the hull, tail → nose
-    prof = [(0.0, 0.5, 0.36, 0.78), (0.08, 0.64, 0.46, 0.8), (0.3, 0.72, 0.52, 0.82), (0.6, 0.7, 0.5, 0.8),
-            (0.78, 0.58, 0.42, 0.76), (0.9, 0.4, 0.3, 0.7), (0.97, 0.2, 0.16, 0.66), (1.0, 0.05, 0.05, 0.64)]
-    rings = [_shuttle_ring(x0 + t * L, rc, hw, hh, zc) for (t, hw, hh, zc) in prof]
-    k.loft(rings, (hull, 0.06), 'shuttle_hull', closed=True)
-    k.cyl_x(x0 - 0.04, x0 + 0.02, rc, 0.78, 0.5, 0.36, (HULL_D, 0.06), 'shuttle_tail', verts=16)
-    # teal stripe band along the flank facing the camera, and its twin behind
+    # (t, half-beam, top, keel, centre z) along the hull, tail → nose
+    prof = [(0.0, 0.34, 0.24, 0.28, 0.84), (0.1, 0.5, 0.32, 0.38, 0.86), (0.35, 0.56, 0.36, 0.42, 0.87),
+            (0.6, 0.47, 0.32, 0.36, 0.84), (0.78, 0.3, 0.24, 0.26, 0.8), (0.9, 0.16, 0.14, 0.14, 0.77),
+            (0.98, 0.05, 0.05, 0.05, 0.75), (1.0, 0.012, 0.012, 0.012, 0.75)]
+    k.loft([_ring(x0 + t * L, rc, hw, ht, hb, zc) for (t, hw, ht, hb, zc) in prof], (hull, 0.05), 'skiff_hull', closed=True)
+    k.cyl_x(x0 - 0.03, x0 + 0.02, rc, 0.84, 0.34, 0.27, (IVORY_D, 0.05), 'skiff_tail', verts=16)
+    k.tube((x0 + L, rc, 0.75), (x0 + L + 0.38, rc, 0.76), 0.022, trim, 'skiff_needle', rb=0.004, verts=6)
+    # gold filigree and the rune band, both flanks
     for side in (1, -1):
-        band = [[(x0 + t * L, rc + side * (hw * 1.01), zc - 0.06), (x0 + t * L, rc + side * (hw * 1.01), zc + 0.08)]
-                for (t, hw, hh, zc) in prof[1:6]]
-        k.loft(band, (stripe, 0.08), 'shuttle_stripe')
-    # canopy
-    k.blob(x0 + 0.79 * L, rc, 1.04, 0.56, 0.5, 0.28, '#0a1218', 'shuttle_canopy', emit=('#1a4250', 0.16), segs=18)
-    k.blob(x0 + 0.84 * L, rc + 0.18, 1.2, 0.18, 0.08, 0.05, '#4a8a98', 'shuttle_glint', emit=('#b0f0f8', 0.6), segs=10)
-    k.tube((x0 + 0.66 * L, rc - 0.36, 1.12), (x0 + 0.66 * L, rc + 0.36, 1.12), 0.03, HULL_D, 'shuttle_canopy_frame', verts=6)
-    # dorsal spine, hatches and vents break up the top
-    k.bar(x0 + 0.06 * L, rc, x0 + 0.6 * L, rc, 1.28, 1.36, 0.22, (HULL_D, 0.06), 'shuttle_spine')
-    k.bar(x0 + 0.08 * L, rc, x0 + 0.58 * L, rc, 1.36, 1.38, 0.08, stripe, 'shuttle_spine_trim')
-    for (t, dr) in ((0.18, -0.36), (0.18, 0.36), (0.44, -0.4), (0.44, 0.4)):
-        k.box(x0 + t * L - 0.13, rc + dr - 0.1, 1.24, x0 + t * L + 0.13, rc + dr + 0.1, 1.27, ('#b8b3a6', 0.06), 'shuttle_hatch')
-    for i in range(4):
-        vx = x0 + (0.28 + i * 0.035) * L
-        for dr in (-0.22, 0.22):
-            k.box(vx - 0.02, rc + dr - 0.08, 1.3, vx + 0.02, rc + dr + 0.08, 1.33, '#2a2c32', 'shuttle_vent')
-    # cabin windows and the side door on the near flank, just behind the cockpit
-    rf = rc + 0.71
-    for i in range(3):
-        wx = x0 + (0.33 + i * 0.08) * L
-        k.cyl_y(wx, rf - 0.02, rf + 0.03, 0.98, 0.07, 0.07, '#0e2a30', 'shuttle_port', emit=('#60d8e8', 0.7), verts=10)
-    dx0, dx1 = x0 + 0.6 * L, x0 + 0.72 * L
-    rf = rc + 0.66
+        lo, hi, runes = [], [], []
+        for i in range(19):
+            t = 0.04 + i * 0.86 / 18
+            hw, ht, hb, zc = _along(prof, t)
+            x = x0 + t * L
+            lo.append((x, rc + side * hw * 1.0, zc - 0.04))
+            hi.append((x, rc + side * hw * 0.84, zc + ht * 0.62))
+        _trace(k, lo, 0.018, trim, 'skiff_gold')
+        _trace(k, hi, 0.014, trim, 'skiff_gold')
+        t = 0.12
+        while t < 0.72:
+            hw, ht, hb, zc = _along(prof, t)
+            x, r = x0 + t * L, rc + side * hw * 0.97
+            z = zc + ht * 0.28
+            g = int(t * 97) % 3
+            if g == 0:
+                k.box(x - 0.04, r - 0.01, z - 0.03, x + 0.04, r + 0.01, z + 0.03, '#0a2a2a', 'skiff_rune', emit=(RUNE, 0.85))
+            elif g == 1:
+                k.box(x - 0.01, r - 0.01, z - 0.06, x + 0.01, r + 0.01, z + 0.06, '#0a2a2a', 'skiff_rune', emit=(RUNE, 0.85))
+            else:
+                k.sphere(x, r, z, 0.025, 0.025, '#0a2a2a', 'skiff_rune', emit=(RUNE, 0.85), segs=6)
+            t += 0.055
+    # bubble canopy with a gold spine over it
+    ct = 0.64
+    hw, ht, hb, zc = _along(prof, ct)
+    k.blob(x0 + ct * L, rc, zc + ht * 0.72, 0.46, 0.3, 0.2, '#0c1822', 'skiff_canopy', emit=('#1e4a5a', 0.18), segs=16)
+    k.blob(x0 + (ct + 0.04) * L, rc + 0.12, zc + ht * 0.95, 0.14, 0.06, 0.04, '#7ab0c0', 'skiff_glint', emit=('#c0f0ff', 0.6), segs=8)
+    _trace(k, [(x0 + (ct - 0.14) * L, rc, zc + ht * 0.8), (x0 + ct * L, rc, zc + ht + 0.06),
+               (x0 + (ct + 0.13) * L, rc, zc + ht * 0.5)], 0.022, trim, 'skiff_spine')
+    # crescent wings, swept forward, a gold leading edge and a glowing trailing edge
+    for side, nav in ((1, '#40e070'), (-1, '#e04040')):
+        secs = [(0.45, 0.25, 0.55, 0.72, 0.06), (1.0, 0.33, 0.58, 0.63, 0.045), (1.45, 0.47, 0.62, 0.68, 0.03)]
+        rings = []
+        for (rr, ta, tb, z, th) in secs:
+            rings.append([(x0 + ta * L, rc + side * rr, z), (x0 + tb * L, rc + side * rr, z),
+                          (x0 + tb * L, rc + side * rr, z + th), (x0 + ta * L, rc + side * rr, z + th)])
+        k.loft(rings, (hull, 0.05), 'skiff_wing', closed=True, smooth=False)
+        _trace(k, [(x0 + sb[2] * L, rc + side * sb[0], sb[3] + sb[4] / 2) for sb in secs], 0.022, trim, 'skiff_wing_edge')
+        _trace(k, [(x0 + sb[1] * L, rc + side * sb[0], sb[3] + sb[4] / 2) for sb in secs], 0.016, '#0a2a2a',
+               'skiff_wing_glow', emit=(RUNE, 0.7))
+        tip = (x0 + 0.55 * L, rc + side * 1.5, 0.7)
+        k.tube(tip, (tip[0] - 0.12, tip[1] + side * 0.05, 1.05), 0.03, trim, 'skiff_finlet', rb=0.01, verts=6)
+        k.sphere(tip[0] - 0.12, tip[1] + side * 0.05, 1.07, 0.05, 0.05, shade(nav, 0.5), 'skiff_navlight', emit=(nav, 1.0), segs=8)
+    # nacelles: long, tapering to gold cones forward, aether rings and a violet core aft
+    for side in (1, -1):
+        er = rc + side * 0.62
+        nz = 0.62
+        nac = [(-0.16, 0.12), (-0.1, 0.17), (0.12, 0.2), (0.4, 0.18), (0.52, 0.12), (0.6, 0.02)]
+        k.loft([[(x0 + t * L, er + rad * math.cos(2 * math.pi * i / 12), nz + rad * math.sin(2 * math.pi * i / 12)) for i in range(12)]
+                for (t, rad) in nac], (IVORY_D, 0.05), 'skiff_nacelle', closed=True)
+        k.tube((x0 + 0.5 * L, er, nz), (x0 + 0.62 * L, er, nz), 0.13, trim, 'skiff_cone', rb=0.01, verts=12)
+        for t in (-0.06, 0.02):
+            k.cyl_x(x0 + t * L - 0.03, x0 + t * L + 0.03, er, nz, 0.185, 0.185, '#0a2a2a', 'skiff_aether_ring', emit=(RUNE, 0.9), verts=14)
+        k.cyl_x(x0 + 0.22 * L - 0.04, x0 + 0.22 * L + 0.04, er, nz, 0.205, 0.205, trim, 'skiff_band', verts=14)
+        k.cyl_x(x0 - 0.16 * L - 0.02, x0 - 0.16 * L, er, nz, 0.1, 0.1, '#1a1440', 'skiff_core', emit=(AETHER, 1.0), verts=12)
+        k.bar(x0 + 0.1 * L, rc + side * 0.3, x0 + 0.1 * L, er, nz + 0.02, nz + 0.08, 0.16, (IVORY_D, 0.05), 'skiff_pylon')
+    # swept dorsal fin with a rune line
+    hw, ht, hb, zc = _along(prof, 0.18)
+    base = zc + ht * 0.9
+    fin = [[(x0 + 0.04 * L, rc - 0.03, base), (x0 + 0.32 * L, rc - 0.03, base), (x0 + 0.32 * L, rc + 0.03, base), (x0 + 0.04 * L, rc + 0.03, base)],
+           [(x0 - 0.04 * L, rc - 0.025, base + 0.42), (x0 + 0.16 * L, rc - 0.025, base + 0.42), (x0 + 0.16 * L, rc + 0.025, base + 0.42),
+            (x0 - 0.04 * L, rc + 0.025, base + 0.42)],
+           [(x0 - 0.1 * L, rc - 0.02, base + 0.7), (x0 - 0.02 * L, rc - 0.02, base + 0.7), (x0 - 0.02 * L, rc + 0.02, base + 0.7),
+            (x0 - 0.1 * L, rc + 0.02, base + 0.7)]]
+    k.loft(fin, (hull, 0.05), 'skiff_fin', closed=True, smooth=False)
+    _trace(k, [(x0 + 0.3 * L, rc + 0.035, base + 0.02), (x0 + 0.15 * L, rc + 0.03, base + 0.42), (x0 - 0.03 * L, rc + 0.025, base + 0.7)],
+           0.014, '#0a2a2a', 'skiff_fin_rune', emit=(RUNE, 0.85))
+    k.sphere(x0 - 0.06 * L, rc, base + 0.72, 0.04, 0.04, '#702020', 'skiff_beacon', emit=('#ff5040', 1.0), segs=8)
+    # the hatch behind the canopy (open, with its ramp) or closed
+    dx0, dx1 = x0 + 0.47 * L, x0 + 0.56 * L
+    hw, ht, hb, zc = _along(prof, 0.52)
+    rf = rc + hw * 0.92
     if ramp:
-        k.box(dx0, rf - 0.06, 0.34, dx1, rf + 0.02, 1.14, '#1a1c22', 'shuttle_doorway')
-        k.box(dx0 + 0.04, rf + 0.02, 0.4, dx1 - 0.04, rf + 0.025, 1.1, '#3a3020', 'shuttle_cabin', emit=('#ffcf80', 0.45))
-        k.poly([(dx0, rf + 0.02, 0.34), (dx1, rf + 0.02, 0.34), (dx1, rf + 0.75, 0.0), (dx0, rf + 0.75, 0.0)],
-               (HULL_D, 0.08), 'shuttle_ramp')
-        for xx in (dx0 + 0.03, dx1 - 0.03):
-            k.bar(xx, rf + 0.02, xx, rf + 0.75, 0.0, 0.05, 0.03, '#3a3a40', 'shuttle_ramp_rail')
-        k.point_light((dx0 + dx1) / 2, rf + 0.5, 0.7, '#ffcf80', 10, radius=0.2)
+        k.box(dx0, rf - 0.06, zc - 0.36, dx1, rf + 0.02, zc + 0.24, '#1a1410', 'skiff_doorway')
+        k.box(dx0 + 0.04, rf + 0.02, zc - 0.3, dx1 - 0.04, rf + 0.025, zc + 0.2, '#3a3020', 'skiff_cabin', emit=('#ffcf80', 0.45))
+        k.poly([(dx0, rf + 0.02, zc - 0.36), (dx1, rf + 0.02, zc - 0.36), (dx1, rf + 0.7, 0.0), (dx0, rf + 0.7, 0.0)],
+               (IVORY_D, 0.06), 'skiff_ramp')
+        for xx in (dx0 + 0.02, dx1 - 0.02):
+            k.bar(xx, rf + 0.02, xx, rf + 0.7, 0.0, 0.05, 0.025, trim, 'skiff_ramp_rail')
+        k.point_light((dx0 + dx1) / 2, rf + 0.45, 0.6, '#ffcf80', 10, radius=0.2)
     else:
-        k.box(dx0, rf - 0.02, 0.36, dx1, rf + 0.02, 1.12, (HULL_D, 0.06), 'shuttle_door')
-    # wings: swept, slightly thick, nav lights on the tips
-    for side, col in ((1, '#40e070'), (-1, '#e04040')):
-        root = [(x0 + 0.22 * L, rc + side * 0.6, 0.62), (x0 + 0.62 * L, rc + side * 0.6, 0.62),
-                (x0 + 0.62 * L, rc + side * 0.6, 0.72), (x0 + 0.22 * L, rc + side * 0.6, 0.72)]
-        tip = [(x0 + 0.12 * L, rc + side * 1.45, 0.5), (x0 + 0.3 * L, rc + side * 1.45, 0.5),
-               (x0 + 0.3 * L, rc + side * 1.45, 0.55), (x0 + 0.12 * L, rc + side * 1.45, 0.55)]
-        k.loft([root, tip], (hull, 0.06), 'shuttle_wing', closed=True, smooth=False)
-        k.bar(x0 + 0.13 * L, rc + side * 1.42, x0 + 0.29 * L, rc + side * 1.42, 0.55, 0.57, 0.04, stripe, 'shuttle_wing_trim')
-        k.sphere(x0 + 0.21 * L, rc + side * 1.47, 0.53, 0.05, 0.05, shade(col, 0.5), 'shuttle_navlight', emit=(col, 1.0), segs=8)
-    # twin engines on pylons at the tail, exhausts glowing faintly at idle
-    for side in (1, -1):
-        er = rc + side * 0.55
-        k.cyl_x(x0 - 0.35, x0 + 0.55, er, 0.62, 0.21, 0.21, (HULL_D, 0.06), 'shuttle_engine', verts=14)
-        k.cyl_x(x0 - 0.42, x0 - 0.35, er, 0.62, 0.16, 0.16, '#1a1c22', 'shuttle_nozzle', verts=14)
-        k.cyl_x(x0 - 0.43, x0 - 0.41, er, 0.62, 0.12, 0.12, '#1a3040', 'shuttle_exhaust', emit=('#60c8ff', 0.5), verts=12)
-        k.cyl_x(x0 + 0.1, x0 + 0.3, er, 0.62, 0.215, 0.215, stripe, 'shuttle_engine_band', verts=14)
-    # tail fin and antenna
-    k.loft([[(x0 + 0.02, rc - 0.04, 1.1), (x0 + 0.3, rc - 0.04, 1.1), (x0 + 0.3, rc + 0.04, 1.1), (x0 + 0.02, rc + 0.04, 1.1)],
-            [(x0 - 0.08, rc - 0.03, 1.55), (x0 + 0.06, rc - 0.03, 1.55), (x0 + 0.06, rc + 0.03, 1.55), (x0 - 0.08, rc + 0.03, 1.55)]],
-           (hull, 0.06), 'shuttle_fin', closed=True, smooth=False)
-    k.sphere(x0 - 0.01, rc, 1.57, 0.035, 0.035, '#702020', 'shuttle_beacon', emit=('#ff4040', 1.0), segs=8)
-    k.tube((x0 + 0.5 * L, rc, 1.3), (x0 + 0.5 * L, rc, 1.55), 0.012, '#3a3a40', 'shuttle_antenna', verts=4)
-    # landing legs
+        _trace(k, [(dx0, rf + 0.01, zc - 0.32), (dx0, rf + 0.01, zc + 0.2), (dx1, rf + 0.01, zc + 0.2), (dx1, rf + 0.01, zc - 0.32)],
+               0.01, trim, 'skiff_hatch_seam')
+    # gold landing claws
     if landed:
-        for (t, s) in ((0.2, 1), (0.2, -1), (0.85, 0)):
-            lx, lr = x0 + t * L, rc + s * 0.45
-            k.tube((lx, lr, 0.45), (lx + 0.05 * (1 if t > 0.5 else -1), lr + s * 0.12, 0.06), 0.035, '#4a4a52', 'shuttle_leg', verts=6)
-            k.cyl(lx + 0.05 * (1 if t > 0.5 else -1), lr + s * 0.12, 0.0, 0.06, 0.12, '#3a3a40', 'shuttle_pad', verts=10)
-    return (x0 - 0.45, rc - 1.5, x0 + L, rc + 1.5)
+        for (t, sd) in ((0.25, 1), (0.25, -1), (0.8, 0)):
+            hw, ht, hb, zc = _along(prof, t)
+            lx, lr = x0 + t * L, rc + sd * 0.28
+            foot = (lx + (0.06 if t > 0.5 else -0.06), lr + sd * 0.12, 0.03)
+            k.tube((lx, lr, zc - hb * 0.8), foot, 0.03, trim, 'skiff_leg', verts=6)
+            for a in (-0.5, 0.0, 0.5):
+                k.tube(foot, (foot[0] + math.cos(a) * 0.1, foot[1] + math.sin(a) * 0.08, 0.0), 0.015, GOLD_D, 'skiff_claw', verts=4)
+    return (x0 - 0.6, rc - 1.6, x0 + L + 0.4, rc + 1.6)
 
 
-# ---- the mothership (seen side-on in cutscenes) ----------------------------------------
-def mothership(k, x0, rc=0.0, L=18.0, hull=HULL, stripe=STRIPE):
-    """The pilot's home ship, nose to the right: a long lofted hull in the
-    shuttle's livery, the bridge deckhouse with its lit viewport band, the
-    hangar bay open and lit on the flank, rows of warm cabin windows, a
-    sensor dish and antenna mast, stub wings and three stacked engines."""
-    prof = [(0.0, 1.5, 1.15, 2.0), (0.06, 1.9, 1.45, 2.05), (0.3, 2.05, 1.55, 2.1), (0.62, 1.95, 1.45, 2.05),
-            (0.8, 1.6, 1.15, 1.95), (0.92, 1.0, 0.75, 1.85), (0.985, 0.4, 0.35, 1.8), (1.0, 0.12, 0.12, 1.8)]
-    rings = [_shuttle_ring(x0 + t * L, rc, hw, hh, zc, n=18) for (t, hw, hh, zc) in prof]
-    k.loft(rings, (hull, 0.06), 'ms_hull', closed=True)
-    k.cyl_x(x0 - 0.08, x0 + 0.02, rc, 2.0, 1.5, 1.15, (HULL_D, 0.06), 'ms_tail', verts=20)
-
-    def hw_at(t):
-        for a, b in zip(prof, prof[1:]):
-            if a[0] <= t <= b[0]:
-                f = (t - a[0]) / (b[0] - a[0])
-                return a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f
-        return prof[-1][1:]
-
-    # livery: a teal band and a darker belly band on the near flank
-    for (zo, zt, col) in ((0.15, 0.32, stripe), (-0.75, -0.45, HULL_D)):
-        band = []
-        for i in range(17):
-            t = 0.03 + i * 0.85 / 16
-            hw, hh, zc = hw_at(t)
-            band.append([(x0 + t * L, rc + hw * 0.99, zc + zo), (x0 + t * L, rc + hw * 0.99, zc + zt)])
-        k.loft(band, (col, 0.08), 'ms_band')
-    # a hairline of darker plating between the bands
-    band = []
-    for i in range(17):
-        t = 0.03 + i * 0.85 / 16
-        hw, hh, zc = hw_at(t)
-        band.append([(x0 + t * L, rc + hw * 0.995, zc - 0.14), (x0 + t * L, rc + hw * 0.995, zc - 0.1)])
-    k.loft(band, (shade(hull, 0.7), 0.06), 'ms_band')
-    # rows of cabin windows
-    for row, (z, t0, t1) in enumerate(((2.55, 0.1, 0.58), (1.6, 0.6, 0.78))):
-        t = t0
-        while t < t1:
-            hw, hh, zc = hw_at(t)
-            lit = k.rng.random() < 0.8
-            k.box(x0 + t * L - 0.09, rc + hw * 0.97, z - 0.07, x0 + t * L + 0.09, rc + hw + 0.02, z + 0.07,
-                  '#3a2a14' if lit else '#1a1c22', 'ms_window', emit=('#ffcf80', 0.9) if lit else None)
-            t += 0.022
-    # hangar bay, open and lit, a hazard-striped frame round it
-    bx0, bx1 = x0 + 0.34 * L, x0 + 0.5 * L
-    hw, hh, zc = hw_at(0.42)
-    bf = rc + hw * 0.98
-    k.box(bx0 - 0.12, bf - 0.05, 0.95, bx1 + 0.12, bf + 0.06, 2.15, '#2a2c32', 'ms_bay_frame')
-    k.box(bx0, bf + 0.06, 1.05, bx1, bf + 0.065, 2.05, '#1a1410', 'ms_bay', emit=('#7a5a38', 0.6))
-    for i in range(4):          # bay lights along the ceiling
-        k.box(bx0 + 0.2 + i * (bx1 - bx0 - 0.4) / 3 - 0.08, bf + 0.066, 1.9, bx0 + 0.2 + i * (bx1 - bx0 - 0.4) / 3 + 0.08,
-              bf + 0.07, 1.98, '#3a3020', 'ms_bay_light', emit=('#ffe0b0', 1.0))
-    for i in range(int((bx1 - bx0) / 0.3) + 1):
-        x = bx0 - 0.1 + i * 0.3
-        k.bar(x, bf + 0.065, min(x + 0.15, bx1 + 0.1), bf + 0.065, 0.97, 1.02, 0.01, LED_Y, 'ms_hazard', emit=(LED_Y, 0.5))
-    k.box(bx0 + 0.3, bf + 0.066, 1.1, bx0 + 1.2, bf + 0.07, 1.45, '#d8d0c0', 'ms_bay_shuttle')     # the shuttle inside
-    # bridge deckhouse with its viewport band
-    hw, hh, zc = hw_at(0.72)
-    top = zc + hh * 0.92
-    dx0, dx1 = x0 + 0.62 * L, x0 + 0.8 * L
-    k.loft([[(dx0, rc - 1.0, top - 0.2), (dx0, rc + 1.0, top - 0.2), (dx0, rc + 0.8, top + 0.95), (dx0, rc - 0.8, top + 0.95)],
-            [(dx1, rc - 0.8, top - 0.3), (dx1, rc + 0.8, top - 0.3), (dx1 - 0.6, rc + 0.6, top + 0.9), (dx1 - 0.6, rc - 0.6, top + 0.9)]],
-           (hull, 0.06), 'ms_deckhouse', closed=True, smooth=False)
-    k.box(dx0 + 0.3, rc + 0.82, top + 0.35, dx1 - 0.55, rc + 0.86, top + 0.62, '#0e2a30', 'ms_viewport', emit=(CYAN, 0.8))
-    k.box(dx0, rc - 0.95, top + 0.95, dx1 - 0.6, rc + 0.95, top + 1.02, (HULL_D, 0.06), 'ms_deckhouse_roof')
-    # dorsal spine, antenna mast and sensor dish
-    hw, hh, zc = hw_at(0.3)
-    k.bar(x0 + 0.1 * L, rc, x0 + 0.6 * L, rc, zc + hh * 0.9, zc + hh * 0.9 + 0.35, 0.6, (HULL_D, 0.06), 'ms_spine')
-    k.bar(x0 + 0.12 * L, rc, x0 + 0.58 * L, rc, zc + hh * 0.9 + 0.35, zc + hh * 0.9 + 0.4, 0.25, stripe, 'ms_spine_trim')
-    mx = x0 + 0.52 * L
-    k.tube((mx, rc, zc + hh), (mx, rc, zc + hh + 1.9), 0.05, '#4a4a52', 'ms_mast', verts=6)
-    for zz in (0.8, 1.3):
-        k.tube((mx - 0.35, rc, zc + hh + zz), (mx + 0.35, rc, zc + hh + zz), 0.025, '#4a4a52', 'ms_mast', verts=4)
-    k.sphere(mx, rc, zc + hh + 1.95, 0.06, 0.06, '#702020', 'ms_beacon', emit=('#ff4040', 1.0), segs=8)
-    dxs = x0 + 0.22 * L
-    k.tube((dxs, rc, zc + hh + 0.3), (dxs, rc, zc + hh + 0.9), 0.06, '#4a4a52', 'ms_dish_mount', verts=6)
-    k.blob(dxs + 0.15, rc, zc + hh + 1.25, 0.15, 0.6, 0.55, ('#b8b3a6', 0.06), 'ms_dish', rot=(0, 0, 0), segs=14)
-    k.tube((dxs + 0.15, rc, zc + hh + 1.25), (dxs + 0.75, rc, zc + hh + 1.3), 0.02, '#4a4a52', 'ms_dish_feed', verts=4)
-    # stub wings, angled down, with nav lights
-    for side, col in ((1, '#40e070'), (-1, '#e04040')):
-        root = [(x0 + 0.08 * L, rc + side * 1.6, 1.3), (x0 + 0.3 * L, rc + side * 1.6, 1.3),
-                (x0 + 0.3 * L, rc + side * 1.6, 1.5), (x0 + 0.08 * L, rc + side * 1.6, 1.5)]
-        tip = [(x0 + 0.02 * L, rc + side * 3.2, 0.7), (x0 + 0.14 * L, rc + side * 3.2, 0.7),
-               (x0 + 0.14 * L, rc + side * 3.2, 0.8), (x0 + 0.02 * L, rc + side * 3.2, 0.8)]
-        k.loft([root, tip], (hull, 0.06), 'ms_wing', closed=True, smooth=False)
-        k.sphere(x0 + 0.08 * L, rc + side * 3.25, 0.75, 0.08, 0.08, shade(col, 0.5), 'ms_navlight', emit=(col, 1.0), segs=8)
-    # engines: three stacked nozzles at the tail, glowing
-    for (dz, rr) in ((-0.75, 0.5), (0.0, 0.62), (0.75, 0.5)):
-        k.cyl_x(x0 - 1.1, x0 + 0.3, rc, 2.0 + dz, rr, rr, (HULL_D, 0.06), 'ms_engine', verts=18)
-        k.cyl_x(x0 - 1.25, x0 - 1.1, rc, 2.0 + dz, rr * 0.82, rr * 0.82, '#1a1c22', 'ms_nozzle', verts=18)
-        k.cyl_x(x0 - 1.26, x0 - 1.24, rc, 2.0 + dz, rr * 0.62, rr * 0.62, '#1a3040', 'ms_exhaust', emit=('#70d0ff', 0.9), verts=16)
-        k.cyl_x(x0 - 0.6, x0 - 0.45, rc, 2.0 + dz, rr * 1.02, rr * 1.02, stripe, 'ms_engine_band', verts=18)
-    k.sphere(x0 + L + 0.05, rc, 1.8, 0.07, 0.07, '#e8e8f0', 'ms_strobe', emit=('#ffffff', 1.0), segs=8)
+def mothership(k, x0, rc=0.0, L=18.0):
+    """The Wayfarer, the pilot's home ship — a sky-galleon: an indigo hull
+    with gold wales and rows of warm portholes, a rune band along the keel,
+    a tiered stern castle with the bridge windows, three gold masts carrying
+    glowing light-sails and a jib to the prow spire, a glowing keel fin, the
+    hangar bay open on the flank and ring thrusters astern. Nose to the right."""
+    prof = [(0.0, 1.5, 0.85, 1.25, 2.45), (0.08, 1.85, 0.95, 1.55, 2.5), (0.4, 1.95, 1.0, 1.75, 2.55),
+            (0.7, 1.75, 0.9, 1.55, 2.55), (0.86, 1.15, 0.7, 1.15, 2.6), (0.95, 0.55, 0.42, 0.65, 2.68), (1.0, 0.1, 0.1, 0.12, 2.78)]
+    k.loft([_ring(x0 + t * L, rc, hw, ht, hb, zc, n=20, p=0.7) for (t, hw, ht, hb, zc) in prof], (INDIGO, 0.08), 'wf_hull', closed=True)
+    k.cyl_x(x0 - 0.06, x0 + 0.02, rc, 2.45, 1.5, 1.05, (INDIGO_D, 0.06), 'wf_stern', verts=20)
+    # gold wales, ivory deck, portholes, the rune band
+    for (zf, rad) in ((0.55, 0.035), (-0.15, 0.045), (-0.75, 0.03)):
+        pts = []
+        for i in range(25):
+            t = 0.02 + i * 0.93 / 24
+            hw, ht, hb, zc = _along(prof, t)
+            hh = ht if zf >= 0 else hb
+            sv = abs(zf) ** 0.7
+            pts.append((x0 + t * L, rc + hw * (1 - sv * 0.12), zc + zf * hh))
+        _trace(k, pts, rad, GOLD, 'wf_wale')
+    deck = []
+    for i in range(13):
+        t = 0.03 + i * 0.85 / 12
+        hw, ht, hb, zc = _along(prof, t)
+        deck.append([(x0 + t * L, rc - hw * 0.7, zc + ht * 0.98), (x0 + t * L, rc + hw * 0.7, zc + ht * 0.98)])
+    k.loft(deck, (IVORY, 0.06), 'wf_deck')
+    t = 0.3
+    while t < 0.82:
+        hw, ht, hb, zc = _along(prof, t)
+        for zf in (0.2, -0.45):
+            hh = ht if zf >= 0 else hb
+            lit = k.rng.random() < 0.85
+            k.cyl_y(x0 + t * L, rc + hw * 0.95, rc + hw + 0.04, zc + zf * hh, 0.1, 0.1, '#3a2a14' if lit else '#10141c',
+                    'wf_porthole', emit=('#ffcf80', 0.9) if lit else None, verts=10)
+            k.cyl_y(x0 + t * L, rc + hw * 0.94, rc + hw + 0.03, zc + zf * hh, 0.13, 0.13, GOLD_D, 'wf_porthole_rim', verts=10)
+        t += 0.028
+    t = 0.08
+    while t < 0.85:
+        hw, ht, hb, zc = _along(prof, t)
+        x, z = x0 + t * L, zc - hb * 0.62
+        k.box(x - 0.08, rc + hw * 0.86, z - 0.05, x + 0.08, rc + hw * 0.88, z + 0.05, '#0a2a2a', 'wf_rune', emit=(RUNE, 0.85))
+        t += 0.03
+    # the glowing keel fin
+    hw, ht, hb, zc = _along(prof, 0.5)
+    kz = zc - hb * 0.95
+    k.loft([[(x0 + 0.25 * L, rc - 0.06, kz), (x0 + 0.72 * L, rc - 0.06, kz), (x0 + 0.72 * L, rc + 0.06, kz), (x0 + 0.25 * L, rc + 0.06, kz)],
+            [(x0 + 0.34 * L, rc - 0.04, kz - 0.9), (x0 + 0.56 * L, rc - 0.04, kz - 0.9), (x0 + 0.56 * L, rc + 0.04, kz - 0.9),
+             (x0 + 0.34 * L, rc + 0.04, kz - 0.9)]], (INDIGO_D, 0.06), 'wf_keel', closed=True, smooth=False)
+    _trace(k, [(x0 + 0.27 * L, rc + 0.07, kz - 0.05), (x0 + 0.35 * L, rc + 0.05, kz - 0.88), (x0 + 0.55 * L, rc + 0.05, kz - 0.88),
+               (x0 + 0.7 * L, rc + 0.07, kz - 0.05)], 0.03, '#0a2a2a', 'wf_keel_glow', emit=(RUNE, 0.9))
+    # stern castle: two tiers, the bridge windows on top, gold balconies
+    hw, ht, hb, zc = _along(prof, 0.12)
+    top = zc + ht
+    for (ta, tb, z0_, z1_, w_) in ((0.0, 0.24, top - 0.1, top + 0.9, 1.3), (0.02, 0.17, top + 0.9, top + 1.7, 1.0)):
+        k.box(x0 + ta * L, rc - w_, z0_, x0 + tb * L, rc + w_, z1_, (INDIGO, 0.08), 'wf_castle', bevel=0.04)
+        k.box(x0 + ta * L - 0.06, rc - w_ - 0.06, z1_, x0 + tb * L + 0.06, rc + w_ + 0.06, z1_ + 0.08, GOLD, 'wf_castle_trim')
+    for i in range(6):
+        wx = x0 + 0.03 * L + i * 0.35
+        k.box(wx, rc + 1.3, top + 0.25, wx + 0.26, rc + 1.34, top + 0.7, '#3a2a14', 'wf_cabin_window', emit=('#ffcf80', 0.9))
+    k.box(x0 + 0.04 * L, rc + 1.0, top + 1.05, x0 + 0.155 * L, rc + 1.04, top + 1.5, '#0e2a30', 'wf_bridge_window', emit=('#60e0f0', 0.9))
+    for i in range(9):
+        bx = x0 + 0.01 * L + i * 0.5
+        k.tube((bx, rc + 1.36, top + 0.9), (bx, rc + 1.36, top + 1.12), 0.015, GOLD, 'wf_rail', verts=4)
+    k.tube((x0 + 0.01 * L, rc + 1.36, top + 1.12), (x0 + 0.24 * L, rc + 1.36, top + 1.12), 0.02, GOLD, 'wf_rail', verts=4)
+    k.sphere(x0 - 0.2, rc + 0.8, top + 1.0, 0.12, 0.12, '#ffd080', 'wf_stern_lantern', emit=('#ffb050', 1.0), segs=10)
+    # masts with light-sails, and a jib out to the prow spire
+    tops = []
+    for (t, h, span) in ((0.36, 4.6, 1.5), (0.56, 5.2, 1.65), (0.75, 4.2, 1.3)):
+        hw, ht, hb, zc = _along(prof, t)
+        mx, mz = x0 + t * L, zc + ht
+        k.cyl(mx, rc, mz - 0.2, mz + h, 0.07, (GOLD, 0.08), 'wf_mast', verts=10)
+        k.sphere(mx, rc, mz + h + 0.08, 0.1, 0.1, '#0a2a2a', 'wf_mast_orb', emit=(RUNE, 1.0), segs=10)
+        tops.append((mx, rc, mz + h))
+        for (z_top, z_bot, w_) in ((mz + h * 0.95, mz + h * 0.55, span * 0.7), (mz + h * 0.52, mz + 0.5, span)):
+            k.cyl_x(mx - w_ - 0.1, mx + w_ + 0.1, rc, z_top, 0.04, 0.04, GOLD, 'wf_yard', verts=6)
+            rows = []
+            for j, f in enumerate((0.0, 0.33, 0.66, 1.0)):
+                z = z_top - (z_top - z_bot) * f
+                bil = math.sin(math.pi * f) * 0.35
+                rows.append([(mx + w_ * u, rc + 0.08 + bil * (1 - abs(u)), z - abs(u) * 0.08 * f) for u in (-1, -0.5, 0, 0.5, 1)])
+            # light fades down the sail: three bands, brightest under the yard
+            for j, glow in enumerate((0.42, 0.3, 0.2)):
+                band = [[rows[j][i], rows[j + 1][i]] for i in range(5)]
+                k.loft(band, '#0a2430', 'wf_sail', emit=('#4ad8d0', glow))
+            for i in (1, 3):
+                _trace(k, [rows[0][i], rows[1][i], rows[2][i], rows[3][i]], 0.012, GOLD_D, 'wf_batten')
+            _trace(k, [rows[3][0], rows[3][2], rows[3][4]], 0.02, GOLD, 'wf_sail_edge')
+            _trace(k, [rows[j][0] for j in range(4)], 0.016, GOLD, 'wf_sail_edge')
+            _trace(k, [rows[j][4] for j in range(4)], 0.016, GOLD, 'wf_sail_edge')
+    # prow spire with gold wings, and the jib of light
+    hw, ht, hb, zc = _along(prof, 1.0)
+    tip = (x0 + L + 2.4, rc, zc + 0.7)
+    k.tube((x0 + L - 0.3, rc, zc), tip, 0.14, GOLD, 'wf_spire', rb=0.01, verts=10)
+    for sd in (1, -1):
+        k.poly([(x0 + L + 0.2, rc + sd * 0.05, zc + 0.2), (x0 + L - 0.9, rc + sd * 0.7, zc + 1.0), (x0 + L - 0.2, rc + sd * 0.1, zc + 0.05)],
+               GOLD, 'wf_prow_wing')
+    fm = tops[-1]
+    k.poly([(fm[0] + 0.1, rc + 0.05, fm[2] - 0.2), (tip[0] - 0.3, rc + 0.05, tip[2] + 0.1), (fm[0] + 0.4, rc + 0.05, zc + ht + 0.4)],
+           '#0a2430', 'wf_jib', emit=('#4ad8d0', 0.28))
+    _trace(k, [(fm[0], rc, fm[2]), (tip[0], rc, tip[2])], 0.015, GOLD, 'wf_stay')
+    for a, b in zip(tops, tops[1:]):
+        _trace(k, [a, (b[0], b[1], b[2] * 0.6)], 0.012, GOLD_D, 'wf_stay')
+    # the hangar bay, open and lit, in a gold frame
+    hw, ht, hb, zc = _along(prof, 0.47)
+    bx0, bx1 = x0 + 0.4 * L, x0 + 0.54 * L
+    bf = rc + hw * 0.94
+    bz0, bz1 = zc - hb * 0.62, zc - hb * 0.05
+    k.box(bx0 - 0.12, bf - 0.05, bz0 - 0.1, bx1 + 0.12, bf + 0.08, bz1 + 0.1, GOLD, 'wf_bay_frame')
+    k.box(bx0, bf + 0.08, bz0, bx1, bf + 0.085, bz1, '#1a1410', 'wf_bay', emit=('#7a5a38', 0.6))
+    for i in range(4):
+        lx = bx0 + 0.2 + i * (bx1 - bx0 - 0.4) / 3
+        k.box(lx - 0.08, bf + 0.086, bz1 - 0.12, lx + 0.08, bf + 0.09, bz1 - 0.05, '#3a3020', 'wf_bay_light', emit=('#ffe0b0', 1.0))
+    # ring thrusters astern, stabiliser fins
+    for (dz, rr) in ((0.5, 0.55), (-0.5, 0.65)):
+        z = 2.45 + dz
+        k.cyl_x(x0 - 1.4, x0 + 0.2, rc, z, rr, rr, (INDIGO_D, 0.06), 'wf_thruster', verts=20)
+        for f in (0.25, 0.6):
+            xx = x0 - 1.4 + 1.6 * f
+            k.cyl_x(xx - 0.06, xx + 0.06, rc, z, rr * 1.04, rr * 1.04, '#0a2a2a', 'wf_thruster_ring', emit=(RUNE, 0.9), verts=20)
+        k.cyl_x(x0 - 1.45, x0 - 1.4, rc, z, rr * 0.7, rr * 0.7, '#1a1440', 'wf_thruster_core', emit=(AETHER, 1.0), verts=18)
+    for sd in (1, -1):
+        k.loft([[(x0 + 0.02 * L, rc + sd * 1.4, 1.3), (x0 + 0.2 * L, rc + sd * 1.4, 1.3), (x0 + 0.2 * L, rc + sd * 1.4, 1.45),
+                 (x0 + 0.02 * L, rc + sd * 1.4, 1.45)],
+                [(x0 - 0.06 * L, rc + sd * 2.8, 0.5), (x0 + 0.06 * L, rc + sd * 2.8, 0.5), (x0 + 0.06 * L, rc + sd * 2.8, 0.6),
+                 (x0 - 0.06 * L, rc + sd * 2.8, 0.6)]], (INDIGO, 0.08), 'wf_fin', closed=True, smooth=False)
+    k.sphere(x0 + L + 2.4, rc, zc + 0.7, 0.08, 0.08, '#e8e8f0', 'wf_strobe', emit=('#ffffff', 1.0), segs=8)
+    return {'bay': ((bx0 + bx1) / 2, bf + 0.1, (bz0 + bz1) / 2)}

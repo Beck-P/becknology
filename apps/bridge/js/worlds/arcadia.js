@@ -2259,6 +2259,13 @@
       return;
     }
 
+    // The rendered District: the Blender skyline (js/skyline.js) — towers in
+    // smog, holo-ads, traffic, the city under the railing
+    if (worldData && worldData.scene && worldData.scene.backdrop && typeof BridgeSkyline !== 'undefined') {
+      BridgeSkyline.draw(ctx, w, h, time, worldData.skyline || {});
+      return;
+    }
+
     ensureBgStars();
 
     // Deep night sky gradient — magenta-purple top, hot pink horizon haze.
@@ -2473,6 +2480,21 @@
   }
 
   BridgeWorld.registerBackground('arcadia', drawArcadiaBackground);
+
+  // rain over the rendered streets (worlds with a "skyline" block)
+  // the rendered street: ads on its billboards, the arcade's marquee chasing,
+  // steam from the grates and rain over everything (worlds with a "skyline")
+  BridgeWorld.registerSceneHooks('arcadia', {
+    ground: function (ctx, world, offX, offY, ts, time) {
+      if (!world.skyline || typeof BridgeSkyline === 'undefined') return;
+      BridgeSkyline.streetAds(ctx, world.scene, offX, offY, ts, time);
+    },
+    over: function (ctx, world, offX, offY, ts, time) {
+      if (!world.skyline || typeof BridgeSkyline === 'undefined') return;
+      BridgeSkyline.steam(ctx, world.scene, offX, offY, ts, time);
+      BridgeSkyline.rain(ctx, ctx.canvas.width, ctx.canvas.height, time, world.skyline.rain || {});
+    }
+  });
 
   BridgeWorld.registerTileset('arcadia', {
     1: drawWall,
