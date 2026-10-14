@@ -1031,7 +1031,7 @@ export class WizardChess3D {
       diorama.position.set(0, 0, 0);
       diorama.traverse((node) => {
         if (node.isMesh) {
-          node.castShadow = true;
+          node.castShadow = false;
           node.receiveShadow = true;
         }
         const n = (node.name || "").toLowerCase();
@@ -1060,28 +1060,30 @@ export class WizardChess3D {
             type: "floatBob",
             mesh: node,
             baseY: node.position.y,
-            speed: 0.0025,
+            speed: 0.0022,
             phase: (node.id || 1) * 0.9
           });
         }
       });
       this.worldSceneryGroup.add(diorama);
 
-      // Add dynamic corner & landmark PointLights to illuminate the Blender 3D World Diorama
+      // Balanced, subtle room lighting across all four sides of the diorama
       corners.forEach(([cx, cz], idx) => {
-        const light = new THREE.PointLight(theme.brazierLight, 1.45, 12.5, 1.5);
-        light.position.set(cx, 1.15, cz);
+        const light = new THREE.PointLight(theme.brazierLight, 0.95, 13.0, 1.5);
+        light.position.set(cx * 1.25, 1.35, cz * 1.25);
         this.worldSceneryGroup.add(light);
         this.braziers.push({ group: this.worldSceneryGroup, flame: null, light, phase: idx * 1.6 });
       });
 
-      const northVistaLight = new THREE.PointLight(theme.rimColor, 1.85, 16.0, 1.4);
-      northVistaLight.position.set(0, 3.2, -6.5);
+      const northVistaLight = new THREE.PointLight(theme.rimColor, 1.15, 16.0, 1.4);
+      northVistaLight.position.set(0, 2.8, -6.2);
       this.worldSceneryGroup.add(northVistaLight);
 
-      const eastLandmarkLight = new THREE.PointLight(theme.brazierFlame, 1.55, 14.0, 1.5);
-      eastLandmarkLight.position.set(6.5, 2.2, 0);
-      this.worldSceneryGroup.add(eastLandmarkLight);
+      for (const side of [-1, 1]) {
+        const sideFillLight = new THREE.PointLight(theme.brazierFlame, 0.85, 14.0, 1.5);
+        sideFillLight.position.set(side * 6.0, 2.2, -0.5);
+        this.worldSceneryGroup.add(sideFillLight);
+      }
       return;
     }
 
