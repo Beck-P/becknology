@@ -1,8 +1,9 @@
 /**
  * BridgeCharacter — Player character with grid-based movement.
  *
- * ¾ view procedural sprite with 3-frame walk cycle + body bob.
- * Suit color from pilot data. Swap draw() internals for PNG sprite sheet later.
+ * Sprite-sheet pilot rendered from a Blender model (tools/bridge-art/pilot.py):
+ * 4-frame idle + 8-frame walk in four directions, one sheet per suit colour.
+ * The old procedural ¾-view sprite remains as a fallback while sheets load.
  *
  * Usage:
  *   BridgeCharacter.init(spawnX, spawnY)
@@ -124,11 +125,60 @@ var BridgeCharacter = (function () {
     return 2;
   }
 
+  // ---- Sprite sheets (tools/bridge-art/pilot.py → sprites_post.py) ----
+  // One sheet per suit colour. Frames are 32×48 native px; rows are
+  // down/right/up/left, columns are idle 0-3 then walk 0-7.
+  var FRAME_W = 32, FRAME_H = 48;
+  var DIR_ROW = { down: 0, right: 1, up: 2, left: 3 };
+  var IDLE_SEQ = [0, 1, 2, 1];   // breathe; frame 2 also blinks the antenna
+  var WALK_CYCLE_TILES = 2.4;    // tiles per full 8-frame stride
+  var sheets = {};
+
+  function getSheet(suit) {
+    if (!sheets[suit]) {
+      var img = new Image();
+      sheets[suit] = { img: img, ready: false };
+      img.onload = function () { sheets[suit].ready = true; };
+      img.src = '/bridge/assets/characters/pilot-' + suit + '.png';
+    }
+    return sheets[suit];
+  }
+
+  function drawSprite(ctx, sheet, sx, sy, ts) {
+    var col;
+    if (player.moveProgress < 1) {
+      col = 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8;
+    } else {
+      col = IDLE_SEQ[Math.floor(Date.now() / 340) % IDLE_SEQ.length];
+    }
+    var row = DIR_ROW[player.facing] || 0;
+    var k = ts / 32;
+    var cx = sx + ts / 2;
+    var footY = sy + ts - 3 * k;
+    // Soft shadow pooled under the feet
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+    ctx.beginPath();
+    ctx.ellipse(cx, footY, 9 * k, 3 * k, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(sheet.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H,
+      Math.round(cx - FRAME_W * k / 2), Math.round(sy + ts - FRAME_H * k), FRAME_W * k, FRAME_H * k);
+  }
+
   /** Draw the character at native resolution. offX/offY = world origin, ts = native tile px. */
   function draw(ctx, offX, offY, ts) {
     var pos = getRenderPos();
     var sx = Math.round(offX + pos.x * ts);
     var sy = Math.round(offY + pos.y * ts);
+
+    var pilot = BridgeState.getPilot();
+    var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
+    var sheet = getSheet(suit);
+    if (sheet.ready) {
+      drawSprite(ctx, sheet, sx, sy, ts);
+      return;
+    }
+    // Procedural fallback while the sheet loads
 
     var pilot = BridgeState.getPilot();
     var colors = SUIT_COLORS[(pilot && pilot.suit_color) || 'purple'];

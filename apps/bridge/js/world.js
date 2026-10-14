@@ -787,6 +787,10 @@ var BridgeWorld = (function () {
       }
       ctx.drawImage(tcache.canvas, offX - CACHE_MX * ts, offY - CACHE_MY * ts);
     }
+    // Tall sprites (buildings, towers) whose base is below the pilot are
+    // held back and drawn after the pilot, so walking behind them works.
+    var pilotY = BridgeCharacter.getRenderPos().y;
+    var deferred = [];
     for (var row = startRow; row < endRow; row++) {
       for (var col = startCol; col < endCol; col++) {
         var tileId = world.tiles[row][col];
@@ -794,6 +798,10 @@ var BridgeWorld = (function () {
         if (cls) {
           var kc = cls[tileId];
           if (kc && !kc.dyn && !kc.over) continue;
+          if (kc && kc.over && row > pilotY) {
+            deferred.push(row, col, tileId);
+            continue;
+          }
         }
 
         var tx = offX + col * ts;
@@ -853,8 +861,12 @@ var BridgeWorld = (function () {
       BridgeLoot.draw(ctx, offX, offY, ts);
     }
 
-    // Pass 3: Character (on top of glow)
+    // Pass 3: Character (on top of glow), then anything standing in front
     BridgeCharacter.draw(ctx, offX, offY, ts);
+    for (var di = 0; di < deferred.length; di += 3) {
+      var dfn = tileset[deferred[di + 2]];
+      if (dfn) dfn(ctx, offX + deferred[di + 1] * ts, offY + deferred[di] * ts, ts, now, deferred[di + 1], deferred[di]);
+    }
 
     // Pass 3.2: Lighting — darken to the world's ambient light, let light
     // sources punch through, then bloom the glows on top.

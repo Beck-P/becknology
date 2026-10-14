@@ -913,13 +913,14 @@
     var areaW = spr.w, areaH = spr.h;
     var destX = spr.x;
     var destY = spr.y;
-    // Pre-fill the footprint with the cliff-trail base colour so the sea
-    // background can't leak through the PNG's transparent base pixels —
+    // Pre-fill under the base with cliff trail so the sea background can't
+    // leak through the PNG's transparent base pixels —
     // the rocky base of the lighthouse renders with thin transparent
     // gaps that would otherwise show emerald sea right under the
     // lighthouse door.
-    ctx.fillStyle = '#3a3640';
-    ctx.fillRect(x - ts, y + ts - 7 * ts, 3 * ts, 7 * ts);
+    // (Only the anchor cell can leak — the rest of the footprint sits on
+    // opaque cliff tiles — so paint just that cell with real trail.)
+    drawCliffTrail(ctx, x, y, ts, time, col, row);
     drawBuildingSprite(ctx, x, y, ts, 'lighthouse', 3, 7, 1);
     // Lamp pulse — single big warm glow at the top of the lighthouse
     var pulse = 0.6 + Math.sin(time / 700) * 0.25;
