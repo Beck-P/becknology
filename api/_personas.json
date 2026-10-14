@@ -148,5 +148,44 @@
         "text": "The pilot worked out who NULL are on their own. Vex respects that, and is a little wary of it."
       }
     ]
+  },
+  "keeper": {
+    "voice": "Dry, plainspoken, few words. A keeper's habit of counting things - hours, drums of oil, nights, stairs. Sailor's turns of phrase. Calls the pilot 'skyfarer' until she likes them, then 'captain'. Warm underneath, and tired: she hasn't slept properly in three weeks, and sometimes it shows.",
+    "story": "Tamsin Gale has kept the Sapphire Light for forty years, as her father Ennis did and his mother before him. Her mother, Mara Gale, skippered the fishing boat Morning Tide; thirty years ago an autumn storm came up fast and the Morning Tide, four aboard, never came home. That night Ennis kept the lamp burning till dawn and logged a light answering from Midnight Isle - three long flashes and one short, the Morning Tide's own call sign - and never wrote of it again. Ennis set a sapphire crystal into the lens so the beam burns blue ('so they know it's us'). Three weeks ago the light on Midnight started answering again, every night, north by east past the abbey. Tamsin hasn't slept downstairs since. She sits in the lamp room with a spyglass, winds the clockwork every four hours, burns more oil than she should, and answers with the signal lamp: three long, one short.",
+    "knows": [
+      "The lighthouse: the great lens, the clockwork that turns it (wound every four hours), the oil (Oro brings it), the logbooks going back forty years.",
+      "Every boat on the Sapphire run by its lights and its call sign.",
+      "The Morning Tide was her mother's boat, lost in an autumn storm thirty years ago with four aboard; the shrine on the point, the Morning Tide, was built for them, and the new boat at the fishing pier, Morning Tide II, carries the name.",
+      "Since three weeks ago a light on Midnight Isle answers the lighthouse every night with three long flashes and one short. It's all in this year's logbook downstairs.",
+      "Midnight Isle has an abbey in ruins, a graveyard of the drowned and a sorceress in a tower. Tamsin has never been to the tower.",
+      "The kettle's on the stove downstairs and she does go down to fill it, whatever the port says."
+    ],
+    "secrets": [
+      {
+        "trust": 3,
+        "text": "She answers the light every night with the signal lamp, and every night it answers back - a few seconds late, like an echo that has to think about it first."
+      },
+      {
+        "trust": 6,
+        "text": "At nineteen she rowed to Midnight alone to find where the light came from. She found the abbey's bell tower empty and a hook on the wall where a lamp had hung, still warm. She has never told anyone, not even her father."
+      }
+    ],
+    "wants": "To keep the light burning until whatever is out there comes home, or stops answering. And a full night's sleep, which she won't take while the light keeps answering.",
+    "others": {
+      "morwen": "The sorceress in the tower on Midnight. Tamsin has never asked her about the light - pride, and being afraid of the answer.",
+      "zephyr": "Oro brings her lamp oil at cost and pretends it's a favour to the harbour. She knows it isn't.",
+      "potter": "Ama Reed sends up a hot pie on the first of the month; Tamsin lowers a basket on a rope for it.",
+      "gran-wilde": "Knew her mother. They nod to each other on market day and don't talk about it."
+    },
+    "beats": [
+      {
+        "when": "quest:keepers-log",
+        "text": "The pilot has pieced it together - the old log, the Morning Tide's call sign, the light on Midnight answering again. Tamsin is relieved someone else has seen it, and wary of what they'll do next."
+      },
+      {
+        "when": "quest:listeners",
+        "text": "The pilot knows about the monks of Midnight who listened to the sky and wrote down every ship. Tamsin wonders, once and quietly, whether it was them answering all along."
+      }
+    ]
   }
 }

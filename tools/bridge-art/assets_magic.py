@@ -59,12 +59,31 @@ def masonry_wall(k, pa, pb, height, centre, thick=0.5, stone=STONE_P, course=0.3
         i += 1
 
 
+def _cut(rect, holes):
+    """rect minus every hole, as a few rects."""
+    out = [rect]
+    for (hx0, hr0, hx1, hr1) in holes:
+        nxt = []
+        for (a0, b0, a1, b1) in out:
+            if a1 <= hx0 or a0 >= hx1 or b1 <= hr0 or b0 >= hr1:
+                nxt.append((a0, b0, a1, b1))
+                continue
+            if b0 < hr0: nxt.append((a0, b0, a1, hr0))
+            if b1 > hr1: nxt.append((a0, hr1, a1, b1))
+            m0, m1 = max(b0, hr0), min(b1, hr1)
+            if a0 < hx0: nxt.append((a0, m0, hx0, m1))
+            if a1 > hx1: nxt.append((hx1, m0, a1, m1))
+        out = nxt
+    return [q for q in out if q[2] - q[0] > 0.01 and q[3] - q[1] > 0.01]
+
+
 def octagon_room(k, x0, r0, x1, r1, cut, wall_h, door=(5.0, 7.0), low=0.4, stone=STONE_P,
-                 floor_tone='#4a4458'):
+                 floor_tone='#4a4458', holes=()):
     """Octagonal tower room: floor x0..x1 × r0..r1 with `cut`-tile corners.
     Back walls full height, front walls low (cut away), doorway in the
-    front wall. Tiles outside the octagon are marked solid. Returns the
-    corner points."""
+    front wall. Tiles outside the octagon are marked solid. `holes`
+    (x0, r0, x1, r1) are left out of the flagstones (a stairwell down).
+    Returns the corner points."""
     centre = ((x0 + x1) / 2, (r0 + r1) / 2)
     P = [(x0 + cut, r0), (x1 - cut, r0), (x1, r0 + cut), (x1, r1 - cut),
          (x1 - cut, r1), (x0 + cut, r1), (x0, r1 - cut), (x0, r0 + cut)]
@@ -84,8 +103,9 @@ def octagon_room(k, x0, r0, x1, r1, cut, wall_h, door=(5.0, 7.0), low=0.4, stone
         x = xa
         while x < xb - 1e-6:
             w = min(xb - x, k.rng.choice([0.5, 0.75, 1.0]))
-            k.box(x + 0.03, r + 0.03, -0.04, x + w - 0.03, r + h - 0.03, 0.0,
-                  (shade(floor_tone, k.rng.uniform(0.85, 1.12)), 0.14), 'floor')
+            tone = (shade(floor_tone, k.rng.uniform(0.85, 1.12)), 0.14)
+            for (fa, ra, fb, rb) in _cut((x + 0.03, r + 0.03, x + w - 0.03, r + h - 0.03), holes):
+                k.box(fa, ra, -0.04, fb, rb, 0.0, tone, 'floor')
             x += w
         r += h
     # walls: back three + sides tall, front three low with the doorway

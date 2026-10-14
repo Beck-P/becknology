@@ -1,0 +1,498 @@
+{
+  "name": "The Lamp Room",
+  "width": 12,
+  "height": 13,
+  "tileSize": 16,
+  "tileset": "lumar-sapphire-lamproom",
+  "spawns": {
+    "player": [
+      5,
+      9
+    ]
+  },
+  "shipExit": false,
+  "interactions": [
+    {
+      "x": 3,
+      "y": 8,
+      "type": "leave_world",
+      "leaveTo": "lumar-sapphire-lighthouse",
+      "leaveSpawn": [
+        6,
+        4
+      ],
+      "label": "STAIRS DOWN",
+      "prompt": "PRESS E TO GO DOWN"
+    },
+    {
+      "x": 4,
+      "y": 8,
+      "type": "leave_world",
+      "leaveTo": "lumar-sapphire-lighthouse",
+      "leaveSpawn": [
+        6,
+        4
+      ],
+      "label": "STAIRS DOWN",
+      "prompt": "PRESS E TO GO DOWN"
+    },
+    {
+      "x": 8,
+      "y": 8,
+      "type": "dialog",
+      "label": "KEEPER",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "A WOMAN IN A NAVY JUMPER AND A YELLOW OILSKIN WAISTCOAT, GREY HAIR PINNED UP, A SPYGLASS IN HER LAP.\n\n\"MIND THE LENS. IT'S OLDER THAN BOTH OF US PUT TOGETHER.\""
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "type": "dialog",
+      "label": "THE LENS",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "THE GREAT LENS: RINGS OF GLASS STACKED ROUND A COLD BLUE LAMP, TURNING SO SLOWLY YOU ONLY SEE IT IF YOU LOOK AWAY.\n\nONE PANEL ISN'T GLASS. IT'S A CUT SAPPHIRE, THE SIZE OF YOUR HAND - THAT'S WHAT TURNS THE BEAM BLUE. SCRATCHED INTO THE BRASS BESIDE IT:\n'SO THEY KNOW IT'S US. - E.G.'"
+    },
+    {
+      "x": 8,
+      "y": 4,
+      "type": "dialog",
+      "label": "SIGNAL LAMP",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "A SHUTTERED SIGNAL LAMP ON A TRIPOD, AIMED THROUGH THE GLASS AT MIDNIGHT ISLE, NORTH BY EAST. THE LEVER IS WORN BRIGHT.\n\nA CARD TUCKED IN THE STAND: 'THREE LONG, ONE SHORT. MORNING TIDE, COMING HOME.'"
+    },
+    {
+      "x": 4,
+      "y": 2,
+      "type": "dialog",
+      "label": "CLOCKWORK",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "THE CLOCKWORK THAT TURNS THE LENS. A WEIGHT ON A CHAIN DROPS THROUGH THE FLOOR ALL NIGHT; SOMEBODY HAS TO WIND IT BACK UP EVERY FOUR HOURS.\n\nTALLY MARKS ON THE CASE. A LOT OF THEM, ALL RECENT."
+    },
+    {
+      "x": 7,
+      "y": 2,
+      "type": "dialog",
+      "label": "LENS BENCH",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "POLISHING CLOTHS, A CHAMOIS, AN OIL CAN, AND A SPARE PRISM IN A PADDED BOX.\n\nA NOTE: 'GLASS IS CLEAN WHEN YOU CAN'T SEE IT. - DAD'"
+    },
+    {
+      "x": 3,
+      "y": 3,
+      "type": "dialog",
+      "label": "WINDOW",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "THE WHOLE SEA, AND THE BEAM GOING OUT OVER IT. FAR OFF NORTH BY EAST, THE DARK HUMP OF MIDNIGHT ISLE.\n\nYOU WATCH FOR A WHILE. NOTHING. THEN, JUST AS YOU TURN AWAY - A LIGHT."
+    },
+    {
+      "x": 5,
+      "y": 11,
+      "type": "dialog",
+      "label": "GALLERY",
+      "prompt": "PRESS E TO STEP OUT",
+      "dialog": "YOU STEP OUT ONTO THE IRON GALLERY. THE WIND TAKES YOUR BREATH.\n\nBELOW, SAPPHIRE PORT: LANTERNS ON THE QUAY, SMOKE FROM THE KILN, THE GALLEON CREAKING AT HER BERTH. ABOVE, THE BEAM SWINGS ROUND OVER YOUR HEAD, BLUE AND HUGE."
+    },
+    {
+      "x": 6,
+      "y": 11,
+      "type": "dialog",
+      "label": "GALLERY",
+      "prompt": "PRESS E TO STEP OUT",
+      "dialog": "YOU STEP OUT ONTO THE IRON GALLERY. THE WIND TAKES YOUR BREATH.\n\nBELOW, SAPPHIRE PORT: LANTERNS ON THE QUAY, SMOKE FROM THE KILN, THE GALLEON CREAKING AT HER BERTH. ABOVE, THE BEAM SWINGS ROUND OVER YOUR HEAD, BLUE AND HUGE."
+    }
+  ],
+  "designTiles": null,
+  "designTileNames": null,
+  "collisions": [
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  ],
+  "tiles": [
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      2,
+      2,
+      2,
+      4,
+      4,
+      2,
+      4,
+      2,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      2,
+      2,
+      2,
+      4,
+      4,
+      2,
+      2,
+      2,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      2,
+      2,
+      2,
+      4,
+      4,
+      2,
+      2,
+      2,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      2,
+      4,
+      4,
+      2,
+      2,
+      2,
+      2,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      2,
+      4,
+      4,
+      2,
+      2,
+      2,
+      4,
+      2,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      2,
+      2,
+      2,
+      2,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  ],
+  "tileNames": {
+    "0": "void",
+    "1": "wall",
+    "2": "floor",
+    "3": "door",
+    "4": "furniture"
+  },
+  "scene": {
+    "id": "lumar-sapphire-lamproom",
+    "flicker": {
+      "from": "dim",
+      "to": "full",
+      "mode": "pulse"
+    },
+    "actors": [
+      {
+        "sheet": "npc-keeper",
+        "x": 8,
+        "y": 8,
+        "facing": "down",
+        "pose": "sit"
+      }
+    ]
+  }
+}

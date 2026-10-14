@@ -683,5 +683,36 @@
         "a": "HALCYON'S BEEN SENDING SUITS ROUND THE BACKS, ASKING ABOUT THE CONTAINER. NOBODY TELLS THEM ANYTHING. NOT EVEN THE CAT."
       }
     ]
+  },
+  "keeper": {
+    "name": "Tamsin Gale",
+    "role": "Keeper of the Sapphire Light",
+    "sheet": "npc-keeper",
+    "at": [
+      {
+        "world": "lumar-sapphire-lamproom",
+        "label": "KEEPER"
+      }
+    ],
+    "greet": "MIND THE LENS. IT'S OLDER THAN BOTH OF US PUT TOGETHER. YOU CLIMBED ALL THOSE STAIRS - SIT, IF YOU CAN FIND SOMEWHERE THAT ISN'T ME.",
+    "again": "BACK UP THE STAIRS? YOU'LL HAVE LEGS LIKE A KEEPER. THE KETTLE'S DOWNSTAIRS IF YOU WANT IT.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TAMSIN GALE. I KEEP THE LIGHT, LIKE MY DAD DID, AND HIS MOTHER BEFORE HIM. FORTY YEARS I'VE WOUND THAT CLOCK. IT HASN'T STOPPED ON MY WATCH, AND IT WON'T."
+      },
+      {
+        "q": "The light",
+        "a": "THE BLUE IS DAD'S DOING. HE SET A SAPPHIRE IN THE LENS THE YEAR I WAS BORN. EVERY SAILOR ON THIS SEA KNOWS A BLUE LIGHT IS SAPPHIRE - NO MISTAKING US FOR ANYWHERE ELSE."
+      },
+      {
+        "q": "The Morning Tide",
+        "a": "MY MOTHER'S BOAT. SHE WENT OUT AFTER SILVERFIN ONE AUTUMN AND THE STORM CAME UP FASTER THAN ANYONE SAID IT WOULD. FOUR ABOARD. THE NEW BOAT AT THE PIER HAS HER NAME AND A 'II' ON THE END, WHICH I'VE NEVER LIKED."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMEONE'S BURNING A LAMP ON MIDNIGHT. NORTH BY EAST, PAST THE ABBEY. READ THE LOG DOWNSTAIRS IF YOU WANT TO KNOW MORE - IT'LL TELL YOU MORE THAN I WILL."
+      }
+    ]
   }
 }

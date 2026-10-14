@@ -1,0 +1,521 @@
+{
+  "name": "The Sapphire Light",
+  "width": 12,
+  "height": 13,
+  "tileSize": 16,
+  "tileset": "lumar-sapphire-lighthouse",
+  "spawns": {
+    "player": [
+      6,
+      10
+    ]
+  },
+  "shipExit": false,
+  "interactions": [
+    {
+      "x": 5,
+      "y": 11,
+      "type": "leave_world",
+      "leaveTo": "lumar-sapphire",
+      "leaveSpawn": [
+        8,
+        17
+      ],
+      "label": "DOOR",
+      "prompt": "LEAVE LIGHTHOUSE"
+    },
+    {
+      "x": 6,
+      "y": 11,
+      "type": "leave_world",
+      "leaveTo": "lumar-sapphire",
+      "leaveSpawn": [
+        8,
+        17
+      ],
+      "label": "DOOR",
+      "prompt": "LEAVE LIGHTHOUSE"
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "type": "enter_world",
+      "target": "lumar-sapphire-lamproom",
+      "spawn": [
+        5,
+        8
+      ],
+      "label": "STAIRS UP",
+      "prompt": "PRESS E TO CLIMB"
+    },
+    {
+      "x": 7,
+      "y": 3,
+      "type": "enter_world",
+      "target": "lumar-sapphire-lamproom",
+      "spawn": [
+        5,
+        8
+      ],
+      "label": "STAIRS UP",
+      "prompt": "PRESS E TO CLIMB"
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "type": "dialog",
+      "label": "THE LOGBOOK",
+      "prompt": "PRESS E TO READ",
+      "dialog": "THIS YEAR'S LOG, OPEN UNDER THE LAMP. WIND, WEATHER, SHIPS PASSING, OIL BURNED - IN A SMALL, STEADY HAND.\n\nTHEN, EVERY NIGHT FOR THREE WEEKS, ONE MORE LINE:\n'LIGHT ANSWERED FROM MIDNIGHT, NORTH BY EAST. THREE LONG, ONE SHORT.'"
+    },
+    {
+      "x": 5,
+      "y": 2,
+      "type": "dialog",
+      "label": "OLD LOGS",
+      "prompt": "PRESS E TO READ",
+      "dialog": "FORTY YEARS OF LOGBOOKS, SPINES FADED TO THE SAME GREY-BLUE.\n\nONE IS MARKED WITH A RIBBON. AN OLDER HAND, THE NIGHT OF A GREAT STORM: 'MORNING TIDE NOT IN. LAMP KEPT ALL NIGHT. LIGHT ANSWERED FROM MIDNIGHT - THREE LONG, ONE SHORT.' THEN NOTHING ABOUT IT EVER AGAIN.\n\nSIGNED E. GALE."
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "type": "dialog",
+      "label": "KEEPER'S BED",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "MADE TIGHT AS A DRUM, A SAPPHIRE-AND-GOLD QUILT. NOBODY HAS SLEPT IN IT FOR WEEKS.\n\nA BOOK FACE DOWN ON THE PILLOW: 'SIGNALS AND CALLS OF THE LUMAR FLEET'."
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "type": "dialog",
+      "label": "SEA CHEST",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "PAINTED ON THE LID, NEARLY WORN AWAY: 'M. GALE - MORNING TIDE'.\n\nIT'S LOCKED."
+    },
+    {
+      "x": 8,
+      "y": 4,
+      "type": "dialog",
+      "label": "STOVE",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "AN IRON STOVE, BANKED LOW. THE KETTLE ON IT IS STILL WARM.\n\nSOMEBODY COMES DOWN TO FILL IT."
+    },
+    {
+      "x": 8,
+      "y": 6,
+      "type": "dialog",
+      "label": "OIL DRUMS",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "DRUMS OF LAMP OIL, STENCILLED 'SAPPHIRE LIGHT - KEEPER'S USE'. TWO ARE EMPTY.\n\nAT THIS RATE THE LAMP'S BURNING HOTTER THAN IT NEEDS TO."
+    },
+    {
+      "x": 3,
+      "y": 8,
+      "type": "dialog",
+      "label": "OILSKINS",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "A YELLOW OILSKIN AND SOU'WESTER ON A PEG. THE COAT IS DRY AND STIFF - NOT WORN SINCE THE LAST RAINS."
+    },
+    {
+      "x": 8,
+      "y": 9,
+      "type": "dialog",
+      "label": "CRATE",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "SPARE WICKS, A TIN OF BRASS POLISH, A DOZEN CANDLE ENDS, AND A SMALL BLUE CRYSTAL WRAPPED IN A CLOTH, LIKE SOMETHING PUT AWAY FOR LATER."
+    },
+    {
+      "x": 3,
+      "y": 3,
+      "type": "dialog",
+      "label": "WINDOW",
+      "prompt": "PRESS E TO LOOK",
+      "dialog": "THE NIGHT SEA, AND A WHITE MOON.\n\nTHE BEAM SWEEPS OVER THE WATER ABOVE YOU, BLUE, AND BLUE, AND BLUE."
+    }
+  ],
+  "designTiles": null,
+  "designTileNames": null,
+  "collisions": [
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  ],
+  "tiles": [
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      2,
+      2,
+      2,
+      4,
+      4,
+      2,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      2,
+      2,
+      2,
+      2,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      2,
+      2,
+      2,
+      4,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      2,
+      4,
+      2,
+      4,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      2,
+      4,
+      2,
+      2,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      2,
+      2,
+      2,
+      2,
+      2,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      4,
+      4,
+      2,
+      2,
+      2,
+      2,
+      4,
+      4,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      3,
+      3,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  ],
+  "tileNames": {
+    "0": "void",
+    "1": "wall",
+    "2": "floor",
+    "3": "door",
+    "4": "furniture"
+  },
+  "scene": {
+    "id": "lumar-sapphire-lighthouse",
+    "flicker": {
+      "from": "dim",
+      "to": "full"
+    },
+    "actors": []
+  }
+}

@@ -4724,12 +4724,24 @@
       "dialog": "THE ZEPHYR TRADING CO. WAREHOUSE. THE DOORS ARE BARRED; SOMETHING INSIDE TICKS LIKE A COOLING KILN.\n\nCHALKED ON THE DOOR: \"BLUE GLASS - ASK INSIDE\"."
     },
     {
-      "x": 8,
-      "y": 18,
+      "x": 9,
+      "y": 16,
       "type": "dialog",
       "label": "SAPPHIRE LIGHT",
       "prompt": "PRESS E TO LOOK",
-      "dialog": "THE LIGHTHOUSE ON THE WEST HILL, BANDED BLUE AND WHITE.\n\nITS BEAM BURNS BLUE: A SAILOR'S TRICK FOR SAPPHIRE WATERS. THE KEEPER HASN'T BEEN SEEN IN WEEKS, BUT THE LAMP NEVER GOES OUT."
+      "dialog": "THE LIGHTHOUSE ON THE WEST HILL, BANDED BLUE AND WHITE.\n\nITS BEAM BURNS BLUE: A SAILOR'S TRICK FOR SAPPHIRE WATERS. THE KEEPER HASN'T BEEN SEEN IN WEEKS, BUT THE LAMP NEVER GOES OUT.\n\nTHE DOOR AT ITS FOOT IS ON THE LATCH."
+    },
+    {
+      "x": 8,
+      "y": 16,
+      "type": "enter_world",
+      "target": "lumar-sapphire-lighthouse",
+      "spawn": [
+        6,
+        10
+      ],
+      "label": "LIGHTHOUSE",
+      "prompt": "PRESS E TO ENTER"
     },
     {
       "x": 47,

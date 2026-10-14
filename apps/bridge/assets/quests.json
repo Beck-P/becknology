@@ -523,5 +523,58 @@
       "from": "okafor",
       "text": "You went down to the ring. I haven't, not since. I couldn't make my feet do it.\n\nDell's letter - I knew he'd swapped for me. I didn't know he'd written it down. I'm going to finish it for him and send it to his sister. Mar should know he was laughing that morning.\n\nThank you for looking at their things like they mattered. They did.\n\nDami"
     }
+  },
+  "keepers-log": {
+    "title": "Three Long, One Short",
+    "where": "Sapphire Port, Lumar",
+    "reward": 140,
+    "start": "The Sapphire Light never goes out, but nobody in the port has seen its keeper in weeks.",
+    "done": "Thirty years ago the Morning Tide didn't come home, and a light on Midnight Isle answered the lighthouse with her call sign. Three weeks ago it started answering again. Tamsin Gale hasn't left the lamp since; she answers it every night, so whoever's out there knows where home is.",
+    "clues": [
+      {
+        "id": "logbook",
+        "on": {
+          "world": "lumar-sapphire-lighthouse",
+          "label": "THE LOGBOOK"
+        },
+        "text": "Three weeks of the same entry in the keeper's log: a light answering from Midnight, north by east. Three long, one short."
+      },
+      {
+        "id": "oldlogs",
+        "on": {
+          "world": "lumar-sapphire-lighthouse",
+          "label": "OLD LOGS"
+        },
+        "text": "Thirty years back, the night the Morning Tide was lost, the old keeper logged the same signal from Midnight - and never wrote of it again."
+      },
+      {
+        "id": "lens",
+        "on": {
+          "world": "lumar-sapphire-lamproom",
+          "label": "THE LENS"
+        },
+        "text": "A cut sapphire set in the lens turns the beam blue. Scratched beside it: 'So they know it's us.'"
+      },
+      {
+        "id": "signal",
+        "on": {
+          "world": "lumar-sapphire-lamproom",
+          "label": "SIGNAL LAMP"
+        },
+        "text": "Someone has been answering from up here, every night. Three long, one short: the Morning Tide's call."
+      },
+      {
+        "id": "keeper",
+        "on": {
+          "world": "lumar-sapphire-lamproom",
+          "label": "KEEPER"
+        },
+        "text": "Tamsin Gale keeps the light. Her mother skippered the Morning Tide."
+      }
+    ],
+    "letter": {
+      "from": "keeper",
+      "text": "The light answered again last night, and for the first time in three weeks I went to bed after. Slept till noon. The clock ran down, the lens stopped, and the sky didn't fall in.\n\nI wound it back up, mind.\n\nIf you're ever north by east of us after dark, flash three long and one short. I'll know it's you.\n\nTamsin Gale\nKeeper, the Sapphire Light"
+    }
   }
 }

@@ -48,7 +48,9 @@ harvesters, a dragon under the hill. Warm lamplight against cold blue.
 - **The four isles** — each its own small world with a purpose:
   Crimson (the dragon's cave, now a warren of chambers: hoard, nest, bone
   gallery, lava vents), Rose (the crystal harvesters' workshop and a grotto),
-  Sapphire (the floating market, traders who buy what you find), Midnight
+  Sapphire (the floating market, traders who buy what you find; ✓ the
+  lighthouse — the keeper's room and the lamp room, Tamsin Gale and the
+  light that answers from Midnight), Midnight
   (the sorceress's tower, floors that climb).
 - **Sailing** between every dock on the galleon at sea — and, longer
   term, **the open sea as a world**: take the helm and sail between the
