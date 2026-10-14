@@ -73,6 +73,16 @@ var BridgeShip = (function () {
 
   function ease(t) { return 1 - Math.pow(1 - t, 3); }
 
+  // between lifting off one pad and coming down on the next: a short fade to black
+  function fade(dark, ms) {
+    var el = document.getElementById('ship-fade');
+    if (!el) { el = document.createElement('div'); el.id = 'ship-fade'; document.body.appendChild(el); }
+    el.style.transitionDuration = ms + 'ms';
+    requestAnimationFrame(function () { el.classList.toggle('dark', dark); });
+    return new Promise(function (r) { setTimeout(r, ms + 40); });
+  }
+  function sound(name) { if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(name); }
+
   function drawWorld(ctx, world, offX, offY, ts, now) {
     if (!anim) return;
     var t = Math.min(1, (performance.now() - anim.start) / anim.dur);
@@ -197,8 +207,9 @@ var BridgeShip = (function () {
     busy = true;
     lockControls(true);
     BridgeCharacter.setHidden(true);
+    sound('lift');
     fly('lift', 1500, 90).then(function () {
-      return BridgeCine.launch(loc, { hold: 900 });
+      return fade(true, 450);
     }).then(function () {
       arrive(dest);
     });
@@ -211,12 +222,15 @@ var BridgeShip = (function () {
       if (pad) {
         BridgeCharacter.setHidden(true);
         lockControls(true);
+        fade(false, 450);
+        sound('land');
         fly('land', 2400, 150).then(function () {
           BridgeCharacter.setHidden(false);
           lockControls(false);
           busy = false;
         });
       } else {
+        fade(false, 450);
         busy = false;
       }
     });
@@ -233,14 +247,17 @@ var BridgeShip = (function () {
     lockControls(true);
     BridgeCharacter.setHidden(true);
     BridgeState.clearWorldPos();
+    if (w && w.shuttle) sound('lift');
     var first = (w && w.shuttle) ? fly('lift', 1800, 170) : Promise.resolve();
     first.then(function () {
-      return BridgeCine.ascend(loc, { hold: 900 });
+      return fade(true, 450);
     }).then(function () {
       BridgeWorld.load('hangar', function () {
         BridgeState.transition('world', { worldId: 'hangar', spawn: HANGAR_SPAWN });
         BridgeCharacter.setHidden(true);
         lockControls(true);
+        fade(false, 450);
+        sound('land');
         fly('land', 1400, 60).then(function () {
           BridgeCharacter.setHidden(false);
           BridgeCharacter.setFacing('down');

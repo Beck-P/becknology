@@ -502,6 +502,22 @@ var BridgeAudio = (function () {
     fever:   function (t) { for (var i = 0; i < 12; i++) voice(sfxBus, t + i * 0.07, 0.06, { type: 'square', freq: hz(72 + [0, 4, 7, 12][i % 4] + Math.floor(i / 4) * 2), gain: 0.04, a: 0.001, d: 0.06, s: 0.4, r: 0.04, cutoff: 5000, rev: 0.2 }); },
     success: function (t) { [72, 79, 84].forEach(function (m, i) { voice(sfxBus, t + i * 0.08, 0.1, { type: 'triangle', freq: hz(m), gain: 0.08, a: 0.002, d: 0.2, s: 0.3, r: 0.2, rev: 0.3 }); }); },
     fail:    function (t) { [64, 60, 55].forEach(function (m, i) { voice(sfxBus, t + i * 0.12, 0.12, { type: 'triangle', freq: hz(m), gain: 0.07, a: 0.004, d: 0.2, s: 0.3, r: 0.2 }); }); },
+    lift:    function (t) {                                // the skiff's lift jets spooling up and away
+      var src = ac.createBufferSource(); src.buffer = noiseBuf;
+      var f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+      f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(2400, t + 1.6);
+      var g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.9);
+      src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + 2);
+      voice(sfxBus, t, 1.4, { type: 'sawtooth', freq: 80, glide: 0.6, glideT: 1.2, gain: 0.04, a: 0.3, d: 0.5, s: 0.7, r: 0.5, cutoff: 500 });
+    },
+    land:    function (t) {                                // settling onto the pad
+      var src = ac.createBufferSource(); src.buffer = noiseBuf;
+      var f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+      f.frequency.setValueAtTime(2000, t); f.frequency.exponentialRampToValueAtTime(260, t + 2.2);
+      var g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.14, t + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
+      src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + 2.7);
+      noiseHit(sfxBus, t + 2.2, 0.3, { freq: 200, ftype: 'lowpass', gain: 0.18 });
+    },
     error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); }
   };
 

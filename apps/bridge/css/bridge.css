@@ -1101,6 +1101,10 @@ html.touch .sp-keys { display: none; }
   background: rgba(64, 224, 208, 0.1); border: 1px solid rgba(64, 224, 208, 0.6); color: #c8fcff;
 }
 
+/* the shuttle between pads (js/ship.js) */
+#ship-fade { position: fixed; inset: 0; z-index: 46; background: #02030a; opacity: 0; pointer-events: none; transition: opacity 450ms; }
+#ship-fade.dark { opacity: 1; }
+
 /* Sit, sleep, look out of the window (js/actions.js) */
 #act-pill {
   position: fixed; left: 50%; bottom: 104px; transform: translate(-50%, 8px); z-index: 30; max-width: min(520px, 90vw);
