@@ -55,12 +55,15 @@ var BridgeScene = (function () {
     if (scenes[id] && scenes[id].ready) { cb(scenes[id]); return; }
     var base = '/bridge/assets/scenes/' + id + '/';
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', base + 'scene.json');
+    xhr.open('GET', base + 'scene.json?v=' + Date.now());     // always fresh; images are keyed to it by rev
     xhr.onload = function () {
       if (xhr.status !== 200) { cb(null); return; }
       var meta = JSON.parse(xhr.responseText);
       var sc = { id: id, meta: meta, imgs: {}, depth: null, ready: false,
                  baseImgs: {}, baseDepth: null, layers: [] };
+      // images carry the scene's revision so a cached one never meets a newer layout
+      var q = '?v=' + (meta.rev || Date.now());
+      sc.q = q;
       var pending = meta.states.length + 1;
       function done() {
         if (--pending === 0) {
@@ -71,9 +74,9 @@ var BridgeScene = (function () {
         }
       }
       meta.states.forEach(function (s) {
-        loadImage(base + s + '.png', function (img) { sc.baseImgs[s] = img; sc.imgs[s] = img; done(); });
+        loadImage(base + s + '.png' + q, function (img) { sc.baseImgs[s] = img; sc.imgs[s] = img; done(); });
       });
-      loadImage(base + 'depth.png', function (img) {
+      loadImage(base + 'depth.png' + q, function (img) {
         if (img) sc.baseDepth = sc.depth = decodeDepth(img, meta);
         done();
       });
@@ -85,9 +88,9 @@ var BridgeScene = (function () {
           var dir = base + 'layers/' + slot + '/' + key + '/';
           pending += meta.states.length + 1;
           meta.states.forEach(function (s) {
-            loadImage(dir + s + '.png', function (img) { L.imgs[s] = img ? pixels(img) : null; done(); });
+            loadImage(dir + s + '.png' + q, function (img) { L.imgs[s] = img ? pixels(img) : null; done(); });
           });
-          loadImage(dir + 'depth.png', function (img) {
+          loadImage(dir + 'depth.png' + q, function (img) {
             if (img) L.depth = decodeDepth(img, meta);
             done();
           });

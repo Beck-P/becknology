@@ -19,14 +19,14 @@ var BridgeCine = (function () {
 
   function load() {
     if (ready) return ready;
-    ready = fetch('/bridge/assets/cine/cine.json').then(function (r) { return r.json(); }).then(function (m) {
+    ready = fetch('/bridge/assets/cine/cine.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (m) {
       meta = m;
       return Promise.all(Object.keys(m).map(function (name) {
         return new Promise(function (res) {
           var im = new Image();
           im.onload = function () { imgs[name] = im; res(); };
           im.onerror = function () { res(); };
-          im.src = '/bridge/assets/cine/' + name + '.png';
+          im.src = '/bridge/assets/cine/' + name + '.png?v=' + (m[name].rev || Date.now());
         });
       }));
     }).catch(function () { meta = {}; });

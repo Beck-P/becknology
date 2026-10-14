@@ -25,14 +25,14 @@ var BridgeSkyline = (function () {
     if (loading) return;
     loading = true;
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', BASE + 'cine.json');
+    xhr.open('GET', BASE + 'cine.json?v=' + Date.now());
     xhr.onload = function () {
       if (xhr.status !== 200) return;
       manifest = JSON.parse(xhr.responseText);
       Object.keys(manifest).forEach(function (n) {
         var im = new Image();
         im.onload = function () { imgs[n] = im; };
-        im.src = BASE + n + '.png';
+        im.src = BASE + n + '.png?v=' + (manifest[n].rev || Date.now());
       });
     };
     xhr.send();

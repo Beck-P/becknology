@@ -30,7 +30,9 @@ for name in sorted(os.listdir(rd)):
     x0, y0, x1, y1 = xs.min(), ys.min(), xs.max() + 1, ys.max() + 1
     im.crop((x0, y0, x1, y1)).save(os.path.join(od, name + '.png'), optimize=True)
     meta = json.load(open(os.path.join(src, 'render.json')))
+    import hashlib
     manifest[name] = {'w': int(x1 - x0), 'h': int(y1 - y0),
+                      'rev': hashlib.sha1(open(os.path.join(od, name + '.png'), 'rb').read()).hexdigest()[:10],
                       'anchors': {k: [round(v[0] - x0, 1), round(v[1] - y0, 1)] for k, v in meta.get('anchors', {}).items()}}
     print(name, manifest[name])
 open(manifest_path, 'w').write(json.dumps(manifest, indent=1) + '\n')

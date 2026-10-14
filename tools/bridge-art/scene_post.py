@@ -96,6 +96,19 @@ def lines(img, ids, depth, alpha):
     return out
 
 
+def revision(od):
+    """A fingerprint of a scene's images: the engine loads them with ?v=rev,
+    so a cached picture is never paired with a newer scene.json."""
+    import hashlib
+    h = hashlib.sha1()
+    for root, _, files in sorted(os.walk(od)):
+        for f in sorted(files):
+            if f.endswith('.png'):
+                h.update(f.encode())
+                h.update(open(os.path.join(root, f), 'rb').read())
+    return h.hexdigest()[:10]
+
+
 SHORE_REACH = 14     # px of foam / lapping out from the waterline
 DEEP = 1.4          # tiles below the surface where the water turns opaque
 
@@ -263,6 +276,7 @@ def main():
         out['layers'] = layers
     if water:
         out['water'] = water
+    out['rev'] = revision(od)
     json.dump(out, open(os.path.join(od, 'scene.json'), 'w'), separators=(',', ':'))
     print('wrote', od, out['width'], 'x', out['height'], 'depth', round(dmin, 2), round(dmax, 2))
 
