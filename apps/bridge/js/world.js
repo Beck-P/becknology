@@ -482,7 +482,7 @@ var BridgeWorld = (function () {
     // snap to a whole number of device pixels per native pixel.
     var dpr = window.devicePixelRatio || 1;
     var cssTile = Math.max(32, Math.min(96, window.innerWidth / 20));
-    zoom = Math.max(1, Math.round(cssTile * dpr / NATIVE_TS));
+    zoom = Math.max(1, Math.floor(cssTile * dpr / NATIVE_TS));
     scale = (NATIVE_TS * zoom / dpr) / tileSize;
   }
 
