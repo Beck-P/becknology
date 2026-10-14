@@ -110,6 +110,20 @@ class Kit:
         self.parts.append({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
         return o
 
+    def cyl_x(self, x0, x1, cr, cz, rr, rz, albedo, part, emit=None, verts=12):
+        """Cylinder lying along the columns axis (logs, rolling pins)."""
+        bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=1, depth=1, rotation=(0, math.pi / 2, 0))
+        o = bpy.context.active_object
+        bpy.ops.object.transform_apply(rotation=True)
+        o.scale = (x1 - x0, rr * S, rz)
+        bpy.ops.object.transform_apply(scale=True)
+        o.location = ((x0 + x1) / 2, -cr * S, cz)
+        for p in o.data.polygons:
+            p.use_smooth = abs(p.normal.x) < 0.5
+        o.data.materials.append(bpy.data.materials.new('tmp'))
+        self.parts.append({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
+        return o
+
     def sphere(self, cx, cr, cz, rx, rz, albedo, part, emit=None, ry=None, segs=16):
         bpy.ops.mesh.primitive_uv_sphere_add(segments=segs, ring_count=max(6, segs // 2), radius=1)
         o = bpy.context.active_object
@@ -366,3 +380,51 @@ class Kit:
         }
         json.dump(meta, open(os.path.join(out, 'render.json'), 'w'), indent=1)
         return meta
+
+
+def apply_world(path, kit, floor, doors=(), moves=None, actors=(), scene_id=None, extra_walkable=()):
+    """Rewrite a world JSON to match a built scene.
+
+    floor: (c0, r0, c1, r1) inclusive tile range of the room floor; tiles in it
+    are walkable unless an object marked them solid. doors / extra_walkable:
+    tiles that stay walkable outside the floor. moves: {label: (x, y) or
+    [(x, y), …]} — interactions keep their text and move onto their objects;
+    repeated labels take positions in order. actors: NPC sprites.
+    """
+    w = json.load(open(path))
+    cols, rows = w['width'], w['height']
+    c0, r0, c1, r1 = floor
+    walk_extra = set(map(tuple, doors)) | set(map(tuple, extra_walkable))
+    coll, tiles = [], []
+    for r in range(rows):
+        crow, trow = [], []
+        for c in range(cols):
+            on_floor = c0 <= c <= c1 and r0 <= r <= r1
+            if (c, r) in walk_extra:
+                crow.append(0); trow.append(3)
+            elif on_floor and (c, r) not in kit.blocked:
+                crow.append(0); trow.append(2)
+            elif on_floor:
+                crow.append(1); trow.append(4)
+            else:
+                crow.append(1); trow.append(1)
+        coll.append(crow)
+        tiles.append(trow)
+    w['collisions'] = coll
+    w['tiles'] = tiles
+    w['tileNames'] = {'0': 'void', '1': 'wall', '2': 'floor', '3': 'door', '4': 'furniture'}
+    seen = {}
+    for it in w.get('interactions', []):
+        lab = it.get('label')
+        if moves and lab in moves:
+            dest = moves[lab]
+            if isinstance(dest, list):
+                i = seen.get(lab, 0)
+                seen[lab] = i + 1
+                dest = dest[min(i, len(dest) - 1)]
+            it['x'], it['y'] = dest
+    for key in ('lighting', 'tileGlow', 'ambientGlow'):
+        w.pop(key, None)
+    w['scene'] = {'id': scene_id, 'flicker': {'from': 'dim', 'to': 'full'}, 'actors': list(actors)}
+    open(path, 'w').write(json.dumps(w, indent=2) + '\n')
+    return w

@@ -61,6 +61,18 @@ NPCS = {
                           beanie=('#6a1e1e', '#a83232', '#c85050'), beard=True, pose='sit'),
     'npc-merchant':  dict(skin='skin', shirt=('#2e4a2e', '#4a7244', '#6a9460'), vest=('#3a2416', '#5e3a22', '#7e5232'),
                           hair=('#6a6a70', '#a0a0a8', '#c8c8d0'), cap=('#3a2a1a', '#5e4228', '#7e5a38'), beard=True, pose='sit'),
+    'npc-innkeeper': dict(skin='skin', shirt=('#8a7a62', '#d0c0a0', '#ece0c4'), skirt=('#2a4a3a', '#3e6a52', '#5a8a6c'),
+                          apron=('#9a968c', '#e4e0d4', '#fbf8f0'), hair=('#6a2a14', '#9a4422', '#c06030'), bun=True, pose='stand'),
+    'npc-traveler':  dict(skin='skin2', shirt=('#3e444c', '#5e6872', '#828e9a'), hair=('#2a1a10', '#4a2e1a', '#6a4428'),
+                          hood=('#3e444c', '#5e6872', '#828e9a'), pose='sit'),
+    'npc-quiet':     dict(skin='skin', shirt=('#2e1e34', '#4a3050', '#664670'), hair=('#1a1418', '#2e2430', '#443a48'),
+                          hood=('#2e1e34', '#4a3050', '#664670'), pose='sit'),
+    'npc-baker':     dict(skin='skin', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), apron=('#9a968c', '#e4e0d4', '#fbf8f0'),
+                          hair=('#5a3a1a', '#8a5a2a', '#aa7a42'), chef=True, mustache=True, pose='stand'),
+    'npc-smith':     dict(skin='skin2', shirt=('#2a2a30', '#44444c', '#5e5e68'), sleeve='skin', apron=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), bald=True, beard=True, brawny=True, pose='stand'),
+    'npc-apothecary': dict(skin='skin', shirt=('#3a2450', '#5a3a78', '#7a5a9a'), skirt=('#3a2450', '#5a3a78', '#7a5a9a'),
+                           hair=('#8a8a98', '#c0c0cc', '#e2e2ec'), long_hair=True, pose='stand'),
 }
 LIGHT_DIR = Vector((-0.5, -0.35, 0.8)).normalized()
 
@@ -235,14 +247,18 @@ def build_pilot():
 def build_human(spec):
     global head
     legs('pants', 'leather')
-    add('cube', 'torso', (0, 0, 13.0), (4.0, 2.9, 4.2), 'shirt', 'torso', body, bevel=1.3)
-    add('cube', 'belt', (0, 0, 9.6), (4.1, 3.0, 0.6), 'leather', 'torso', body, bevel=0.3)
+    wide = 1.12 if spec.get('brawny') else 1.0
+    add('cube', 'torso', (0, 0, 13.0), (4.0 * wide, 2.9 * wide, 4.2), 'shirt', 'torso', body, bevel=1.3)
+    add('cube', 'belt', (0, 0, 9.6), (4.1 * wide, 3.0 * wide, 0.6), 'leather', 'torso', body, bevel=0.3)
+    if 'skirt' in spec:
+        add('cone', 'skirt', (0, 0, 5.2), (1, 0.9, 1), 'skirt', 'skirt', body,
+            vertices=16, radius1=4.9, radius2=3.6, depth=8.6)
     if 'apron' in spec:
         add('cube', 'apron', (0, -2.95, 9.6), (3.4, 0.35, 4.2), 'apron', 'torso', body, bevel=0.2)
     if 'vest' in spec:
         add('cube', 'vestL', (-2.4, -2.1, 13.4), (1.5, 1.0, 3.8), 'vest', 'torso', body, bevel=0.3)
         add('cube', 'vestR', (2.4, -2.1, 13.4), (1.5, 1.0, 3.8), 'vest', 'torso', body, bevel=0.3)
-    arms('shirt', 'skin')
+    arms('sleeve' if 'sleeve' in spec else 'shirt', 'skin')
     head = pivot('head', (0, 0, 17.4), body)
     add('cylinder', 'neck', (0, 0, 0.6), (1.6, 1.6, 1.2), 'skin', 'neck', head, vertices=10)
     add('uv_sphere', 'face', (0, 0, 5.2), (5.0, 4.8, 5.0), 'skin', 'head', head, segments=24, ring_count=12)
@@ -262,6 +278,16 @@ def build_human(spec):
         add('uv_sphere', 'beanie', (0, 0.3, 7.6), (5.3, 5.1, 3.6), 'beanie', 'hat', head, segments=20, ring_count=10)
         add('torus', 'beanie_rim', (0, 0.2, 6.9), (1, 1, 0.7), 'beanie', 'hat', head,
             major_radius=4.9, minor_radius=0.8, major_segments=20, minor_segments=6)
+    if spec.get('bun'):
+        add('uv_sphere', 'bun', (0, 3.6, 8.4), (2.2, 2.0, 2.0), 'hair', 'hair', head, segments=12, ring_count=8)
+    if spec.get('long_hair'):
+        add('cube', 'hair_back', (0, 3.2, 2.6), (4.2, 1.6, 4.2), 'hair', 'hair', head, bevel=1.0)
+    if 'hood' in spec:
+        add('uv_sphere', 'hood', (0, 1.2, 5.8), (5.7, 5.4, 5.6), 'hood', 'hood', head, segments=20, ring_count=10)
+        add('cone', 'hood_drape', (0, 1.6, 0.4), (1, 1, 1), 'hood', 'hood', head, vertices=14, radius1=5.0, radius2=3.2, depth=3.0)
+    if spec.get('chef'):
+        add('cylinder', 'chef_band', (0, 0.2, 9.0), (4.6, 4.4, 1.0), 'white', 'hat', head, vertices=18)
+        add('uv_sphere', 'chef_puff', (0, 0.2, 11.2), (5.0, 4.8, 2.6), 'white', 'hat', head, segments=16, ring_count=8)
     if 'cap' in spec:
         add('cylinder', 'cap', (0, 0.3, 9.0), (5.4, 5.2, 1.4), 'cap', 'hat', head, vertices=20)
         add('cube', 'brim', (0, -4.6, 8.1), (3.4, 2.2, 0.35), 'cap', 'hat', head, bevel=0.3)
@@ -277,7 +303,9 @@ else:
     spec = NPCS[WHO]
     build_human(spec)
     tones = {'shirt': spec['shirt'], 'pants': FIXED['pants'], 'hair': spec['hair'], 'skin': FIXED[spec['skin']]}
-    for key in ('apron', 'vest', 'beanie', 'cap'):
+    if 'sleeve' in spec:
+        tones['sleeve'] = FIXED[spec['sleeve']] if spec['sleeve'] in FIXED else FIXED[spec['skin']]
+    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood'):
         if key in spec:
             tones[key] = spec[key]
     VARIANTS = {WHO.replace('npc-', ''): tones}
