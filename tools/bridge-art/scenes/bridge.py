@@ -26,7 +26,16 @@ k = Kit(18, 12, margin_top=1.0, margin_bottom=0.5, seed=91)
 WIN = (1.7, 16.3, 0.75, 4.15)
 P.metal_floor(k, 1, 4, 17, 11)
 P.ship_back_wall(k, 0.5, 17.5, 4.0, H, win=WIN, mullions=(4.6, 7.4, 10.6, 13.4), pal=P.B_WALL, trim=P.CYAN)
-P.ship_side_wall(k, 0.4, 1.0, 3.5, 11.0, H, pal=P.B_WALL)
+# left wall: a door through to the hangar bay
+P.ship_side_wall(k, 0.4, 1.0, 3.5, 6.6, H, pal=P.B_WALL)
+P.ship_side_wall(k, 0.4, 1.0, 8.4, 11.0, H, pal=P.B_WALL)
+k.box(0.4, 6.6, 2.3, 1.0, 8.4, H, (P.B_WALL[1], 0.06), 'door_lintel')
+k.box(0.38, 6.6, H, 1.02, 8.4, H + 0.05, P.B_WALL[0], 'wall_cap')
+for rr in (6.6, 8.22):
+    k.box(0.4, rr, 0.0, 1.0, rr + 0.18, 2.3, (P.B_WALL[0], 0.05), 'door_post')
+    k.box(0.98, rr + 0.06, 0.4, 1.01, rr + 0.12, 2.1, '#103038', 'door_led', emit=(P.LED_Y, 0.85))
+k.box(0.4, 6.78, -0.01, 1.0, 8.22, 0.02, ('#2a3038', 0.08), 'threshold')
+P.hazard_stripes(k, 1.0, 1.5, 6.8, 8.2)
 P.ship_side_wall(k, 17.0, 17.6, 3.5, 11.0, H, pal=P.B_WALL)
 P.ship_front_wall(k, 0.4, 17.6, 11.0, door=(8.0, 10.0), pal=P.B_WALL)
 P.dashboard(k, 3.2, 14.8, 4.0)
@@ -62,7 +71,8 @@ k.point_light(9.0, 9.6, 2.6, '#c0d8ff', 35, radius=0.8)
 k.render(OUT, light_states={'full': {'pulse': 1.0}, 'dim': {'pulse': 0.55}}, light_samples=128,
          world_light=('#1a2238', 0.4))
 
-apply_world(WORLD, k, (1, 4, 16, 10), doors=[(8, 11), (9, 11)], scene_id='bridge', moves={
+apply_world(WORLD, k, (1, 4, 16, 10), doors=[(8, 11), (9, 11), (0, 7), (0, 8)], scene_id='bridge', moves={
+    'HANGAR': [(0, 7), (0, 8)],
     'WARP MAP': [(8, 6), (9, 6), (10, 6)], "CAPTAIN'S CHAIR": (9, 8),
     'STATS CONSOLE': [(1, 5), (2, 5)], 'COMMS CONSOLE': [(15, 5), (16, 5)],
     'ENGINEERING': [(1, 10), (2, 10)], 'SENSORS': [(15, 10), (16, 10)]},

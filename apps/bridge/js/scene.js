@@ -316,10 +316,37 @@ var BridgeScene = (function () {
     return list;
   }
 
+  // A decor layer's lit image as a canvas, with its box in scene pixels —
+  // for drawing a variant on its own (the shuttle lifting off its pad).
+  var layerCanvases = {};
+  function layerImage(id, slot, key, state) {
+    var sc = scenes[id];
+    if (!sc || !sc.ready) return null;
+    var L = sc.layers.filter(function (l) { return l.slot === slot && l.key === key; })[0];
+    if (!L) return null;
+    state = state || sc.meta.states[0];
+    var ck = id + '/' + slot + '/' + key + '/' + state;
+    if (!layerCanvases[ck] && L.imgs[state]) {
+      var c = document.createElement('canvas');
+      c.width = L.box.w; c.height = L.box.h;
+      var cx = c.getContext('2d');
+      var img = cx.createImageData(L.box.w, L.box.h);
+      img.data.set(L.imgs[state]);
+      for (var i = 0; i < L.depth.length; i++) if (L.depth[i] === Infinity) img.data[i * 4 + 3] = 0;
+      cx.putImageData(img, 0, 0);
+      layerCanvases[ck] = c;
+    }
+    return layerCanvases[ck] ? { canvas: layerCanvases[ck], box: L.box, meta: sc.meta } : null;
+  }
+
+  function getLayers(id) { return activeLayers[id] || {}; }
+
   return {
     load: load,
     get: get,
     setLayers: setLayers,
+    getLayers: getLayers,
+    layerImage: layerImage,
     drawBackground: drawBackground,
     drawOccluded: drawOccluded,
     tintAt: tintAt,

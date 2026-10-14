@@ -20,8 +20,10 @@ var BridgeHyperspace = (function () {
       flash(function () {
         BridgeStarfield.setMode('drift');
 
-        if (world.hasOverworld) {
-          // World has a walkable overworld — go through landing animation
+        if (world.hasOverworld && typeof BridgeShip !== 'undefined') {
+          // The mothership arrives in orbit; the shuttle takes you down
+          BridgeShip.arriveInOrbit(world);
+        } else if (world.hasOverworld) {
           BridgeState.transition('landing', { id: world.id, name: world.name });
         } else if (world.apps.length === 1) {
           // Single app — navigate directly

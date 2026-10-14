@@ -382,5 +382,9 @@ var BridgeOrbit = (function () {
     ctx.restore();
   }
 
-  return { draw: draw, getLocation: getLocation, setLocation: setLocation, placeName: placeName };
+  /** Which kind of world a place is ('ocean', 'city', 'gas', 'hole' or null for open space). */
+  function kindOf(id) { return (PLACES[id] || {}).planet || null; }
+
+  return { draw: draw, getLocation: getLocation, setLocation: setLocation, placeName: placeName, kindOf: kindOf,
+           planet: planetCanvas, drawHole: drawHole, drawStation: drawStation, drawStars: drawStars };
 })();

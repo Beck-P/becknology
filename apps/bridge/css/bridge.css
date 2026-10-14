@@ -775,3 +775,37 @@ body::after {
   /* Interaction prompt */
   .interact-prompt { font-size: 13px; }
 }
+
+/* ---- Arrival in orbit (js/ship.js) ---- */
+.arrival-card {
+  position: fixed;
+  left: 50%; top: 22%;
+  transform: translate(-50%, 8px);
+  padding: 16px 22px 14px;
+  min-width: 280px;
+  background: rgba(14, 12, 22, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+  color: #f2eee6;
+  text-align: center;
+  z-index: 40;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.arrival-card.visible { opacity: 1; transform: translate(-50%, 0); }
+.arrival-kicker { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #8fe3cf; }
+.arrival-place { font-size: 26px; margin: 4px 0 14px; color: #ffd98a; }
+.arrival-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.arrival-actions button {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: inherit; font-size: 14px; color: #f2eee6;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 5px 13px 5px 6px;
+  cursor: pointer;
+}
+.arrival-actions .arrival-stay { padding: 5px 13px; color: rgba(242, 238, 230, 0.7); }
+.arrival-actions button:hover { background: rgba(255, 255, 255, 0.12); }

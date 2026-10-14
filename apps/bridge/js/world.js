@@ -401,6 +401,11 @@ var BridgeWorld = (function () {
         var finish = function () {
           world = data;
           currentWorldId = worldId;
+          // scene.layers: the decor variants a world shows by default (the parked shuttle)
+          if (data.scene && data.scene.layers && typeof BridgeScene !== 'undefined') {
+            BridgeScene.setLayers(data.scene.id, data.scene.layers);
+          }
+          if (typeof BridgeCharacter !== 'undefined' && BridgeCharacter.setHidden) BridgeCharacter.setHidden(false);
           tileSize = world.tileSize || 16;
           // Drops are scoped to the current world — abandoning a zone wipes
           // whatever you left on the ground, same as Stardew leaving a day.
@@ -493,6 +498,11 @@ var BridgeWorld = (function () {
   }
 
   function leave() {
+    // Off the ship, the way home is the shuttle (js/ship.js)
+    if (typeof BridgeShip !== 'undefined' && !BridgeShip.isShipWorld(currentWorldId)) {
+      BridgeShip.returnToShip();
+      return;
+    }
     active = false;
     BridgeControls.disable();
     window.removeEventListener('resize', recalcScale);
@@ -771,6 +781,7 @@ var BridgeWorld = (function () {
     if (hooks.items) items = items.concat(hooks.items(world, offX, offY, ts, now, sc) || []);
     items.sort(function (a, b) { return a.footRow - b.footRow; });
     for (var i = 0; i < items.length; i++) items[i].draw(ctx);
+    if (typeof BridgeShip !== 'undefined') BridgeShip.drawWorld(ctx, world, offX, offY, ts, now, sc);
     if (hooks.over) hooks.over(ctx, world, offX, offY, ts, now);
     if (typeof BridgeFX !== 'undefined' && BridgeFX.draw) BridgeFX.draw(ctx, offX, offY, ts, now);
   }
@@ -996,6 +1007,7 @@ var BridgeWorld = (function () {
   return {
     load: load,
     getWorld: getWorld,
+    getWorldId: function () { return currentWorldId; },
     isActive: isActive,
     show: show,
     leave: leave,

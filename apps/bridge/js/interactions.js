@@ -25,6 +25,7 @@ var BridgeInteractions = (function () {
 
   function findTarget(world, character) {
     if (!world || !world.interactions) return null;
+    if (character.isHidden && character.isHidden()) return null;      // aboard the shuttle
     var px = character.getX(), py = character.getY();
     var fv = facingVec(character.getFacing());
     var best = null, bestScore = Infinity;
@@ -52,7 +53,7 @@ var BridgeInteractions = (function () {
   var promptState = { target: null, shown: null, html: '', x: -1, y: -1 };
   var TOUCH = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   var VERBS = {
-    enter_world: 'Enter', leave_world: 'Leave', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
+    enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
     menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look'
   };
@@ -394,6 +395,14 @@ var BridgeInteractions = (function () {
         // until you walk away. Real combat lands in a follow-up.
         showDialog(inter.label || 'HOSTILE',
           'STONE THAT REMEMBERS\\nHOW TO HURT.\\n\\nFISTS WON\\u2019T DENT IT.\\n\\nBACK AWAY.');
+        break;
+
+      case 'shuttle':
+        if (typeof BridgeShip !== 'undefined') BridgeShip.board();
+        break;
+
+      case 'bay_view':
+        showDialog(inter.label, typeof BridgeShip !== 'undefined' ? BridgeShip.bayText() : '');
         break;
 
       case 'warp_map':
@@ -887,5 +896,6 @@ var BridgeInteractions = (function () {
   }
 
   return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, placePrompt: placePrompt, getTarget: getTarget,
+           say: showDialog,
            findTarget: findTarget, promptParts: promptParts };
 })();

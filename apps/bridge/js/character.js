@@ -169,7 +169,11 @@ var BridgeCharacter = (function () {
    * In a pre-rendered scene: returns { footRow, draw(ctx) } so the world can
    * sort the pilot among NPCs, drawn depth-tested and lit by the room.
    */
+  var hidden = false;
+  function setHidden(h) { hidden = !!h; }
+
   function sceneItem(offX, offY, ts, sc, world, now) {
+    if (hidden) return { footRow: 0, draw: function () {} };
     var pilot = BridgeState.getPilot();
     var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
     var sheet = getSheet(suit);
@@ -194,6 +198,7 @@ var BridgeCharacter = (function () {
 
   /** Draw the character at native resolution. offX/offY = world origin, ts = native tile px. */
   function draw(ctx, offX, offY, ts) {
+    if (hidden) return;
     var pos = getRenderPos();
     var sx = Math.round(offX + pos.x * ts);
     var sy = Math.round(offY + pos.y * ts);
@@ -340,6 +345,8 @@ var BridgeCharacter = (function () {
     tryMove: tryMove,
     update: update,
     draw: draw,
-    sceneItem: sceneItem
+    sceneItem: sceneItem,
+    setHidden: setHidden,
+    isHidden: function () { return hidden; }
   };
 })();

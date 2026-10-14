@@ -583,7 +583,7 @@ def conduit(k, pts, w=0.16):
     """Armoured cable run along the deck."""
     for a, b in zip(pts, pts[1:]):
         k.bar(a[0], a[1], b[0], b[1], 0.0, 0.05, w, ('#1a2028', 0.06), 'conduit', bevel=0.015)
-        k.bar(a[0], a[1], b[0], b[1], 0.05, 0.056, 0.03, '#103038', 'conduit_led', emit=(CYAN, 0.5))
+        k.bar(a[0], a[1], b[0], b[1], 0.05, 0.056, 0.03, '#103038', 'conduit_led', emit=(CYAN, 0.25))
 
 
 def deck_ring(k, cx, cr, rad, col=CYAN, ticks=16):
@@ -761,3 +761,98 @@ def shuttle(k, x0, rc, length=3.4, ramp=True, landed=True, hull=HULL, stripe=STR
             k.tube((lx, lr, 0.45), (lx + 0.05 * (1 if t > 0.5 else -1), lr + s * 0.12, 0.06), 0.035, '#4a4a52', 'shuttle_leg', verts=6)
             k.cyl(lx + 0.05 * (1 if t > 0.5 else -1), lr + s * 0.12, 0.0, 0.06, 0.12, '#3a3a40', 'shuttle_pad', verts=10)
     return (x0 - 0.45, rc - 1.5, x0 + L, rc + 1.5)
+
+
+# ---- the mothership (seen side-on in cutscenes) ----------------------------------------
+def mothership(k, x0, rc=0.0, L=18.0, hull=HULL, stripe=STRIPE):
+    """The pilot's home ship, nose to the right: a long lofted hull in the
+    shuttle's livery, the bridge deckhouse with its lit viewport band, the
+    hangar bay open and lit on the flank, rows of warm cabin windows, a
+    sensor dish and antenna mast, stub wings and three stacked engines."""
+    prof = [(0.0, 1.5, 1.15, 2.0), (0.06, 1.9, 1.45, 2.05), (0.3, 2.05, 1.55, 2.1), (0.62, 1.95, 1.45, 2.05),
+            (0.8, 1.6, 1.15, 1.95), (0.92, 1.0, 0.75, 1.85), (0.985, 0.4, 0.35, 1.8), (1.0, 0.12, 0.12, 1.8)]
+    rings = [_shuttle_ring(x0 + t * L, rc, hw, hh, zc, n=18) for (t, hw, hh, zc) in prof]
+    k.loft(rings, (hull, 0.06), 'ms_hull', closed=True)
+    k.cyl_x(x0 - 0.08, x0 + 0.02, rc, 2.0, 1.5, 1.15, (HULL_D, 0.06), 'ms_tail', verts=20)
+
+    def hw_at(t):
+        for a, b in zip(prof, prof[1:]):
+            if a[0] <= t <= b[0]:
+                f = (t - a[0]) / (b[0] - a[0])
+                return a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f, a[3] + (b[3] - a[3]) * f
+        return prof[-1][1:]
+
+    # livery: a teal band and a darker belly band on the near flank
+    for (zo, zt, col) in ((0.15, 0.32, stripe), (-0.75, -0.45, HULL_D)):
+        band = []
+        for i in range(17):
+            t = 0.03 + i * 0.85 / 16
+            hw, hh, zc = hw_at(t)
+            band.append([(x0 + t * L, rc + hw * 0.99, zc + zo), (x0 + t * L, rc + hw * 0.99, zc + zt)])
+        k.loft(band, (col, 0.08), 'ms_band')
+    # a hairline of darker plating between the bands
+    band = []
+    for i in range(17):
+        t = 0.03 + i * 0.85 / 16
+        hw, hh, zc = hw_at(t)
+        band.append([(x0 + t * L, rc + hw * 0.995, zc - 0.14), (x0 + t * L, rc + hw * 0.995, zc - 0.1)])
+    k.loft(band, (shade(hull, 0.7), 0.06), 'ms_band')
+    # rows of cabin windows
+    for row, (z, t0, t1) in enumerate(((2.55, 0.1, 0.58), (1.6, 0.6, 0.78))):
+        t = t0
+        while t < t1:
+            hw, hh, zc = hw_at(t)
+            lit = k.rng.random() < 0.8
+            k.box(x0 + t * L - 0.09, rc + hw * 0.97, z - 0.07, x0 + t * L + 0.09, rc + hw + 0.02, z + 0.07,
+                  '#3a2a14' if lit else '#1a1c22', 'ms_window', emit=('#ffcf80', 0.9) if lit else None)
+            t += 0.022
+    # hangar bay, open and lit, a hazard-striped frame round it
+    bx0, bx1 = x0 + 0.34 * L, x0 + 0.5 * L
+    hw, hh, zc = hw_at(0.42)
+    bf = rc + hw * 0.98
+    k.box(bx0 - 0.12, bf - 0.05, 0.95, bx1 + 0.12, bf + 0.06, 2.15, '#2a2c32', 'ms_bay_frame')
+    k.box(bx0, bf + 0.06, 1.05, bx1, bf + 0.065, 2.05, '#1a1410', 'ms_bay', emit=('#7a5a38', 0.6))
+    for i in range(4):          # bay lights along the ceiling
+        k.box(bx0 + 0.2 + i * (bx1 - bx0 - 0.4) / 3 - 0.08, bf + 0.066, 1.9, bx0 + 0.2 + i * (bx1 - bx0 - 0.4) / 3 + 0.08,
+              bf + 0.07, 1.98, '#3a3020', 'ms_bay_light', emit=('#ffe0b0', 1.0))
+    for i in range(int((bx1 - bx0) / 0.3) + 1):
+        x = bx0 - 0.1 + i * 0.3
+        k.bar(x, bf + 0.065, min(x + 0.15, bx1 + 0.1), bf + 0.065, 0.97, 1.02, 0.01, LED_Y, 'ms_hazard', emit=(LED_Y, 0.5))
+    k.box(bx0 + 0.3, bf + 0.066, 1.1, bx0 + 1.2, bf + 0.07, 1.45, '#d8d0c0', 'ms_bay_shuttle')     # the shuttle inside
+    # bridge deckhouse with its viewport band
+    hw, hh, zc = hw_at(0.72)
+    top = zc + hh * 0.92
+    dx0, dx1 = x0 + 0.62 * L, x0 + 0.8 * L
+    k.loft([[(dx0, rc - 1.0, top - 0.2), (dx0, rc + 1.0, top - 0.2), (dx0, rc + 0.8, top + 0.95), (dx0, rc - 0.8, top + 0.95)],
+            [(dx1, rc - 0.8, top - 0.3), (dx1, rc + 0.8, top - 0.3), (dx1 - 0.6, rc + 0.6, top + 0.9), (dx1 - 0.6, rc - 0.6, top + 0.9)]],
+           (hull, 0.06), 'ms_deckhouse', closed=True, smooth=False)
+    k.box(dx0 + 0.3, rc + 0.82, top + 0.35, dx1 - 0.55, rc + 0.86, top + 0.62, '#0e2a30', 'ms_viewport', emit=(CYAN, 0.8))
+    k.box(dx0, rc - 0.95, top + 0.95, dx1 - 0.6, rc + 0.95, top + 1.02, (HULL_D, 0.06), 'ms_deckhouse_roof')
+    # dorsal spine, antenna mast and sensor dish
+    hw, hh, zc = hw_at(0.3)
+    k.bar(x0 + 0.1 * L, rc, x0 + 0.6 * L, rc, zc + hh * 0.9, zc + hh * 0.9 + 0.35, 0.6, (HULL_D, 0.06), 'ms_spine')
+    k.bar(x0 + 0.12 * L, rc, x0 + 0.58 * L, rc, zc + hh * 0.9 + 0.35, zc + hh * 0.9 + 0.4, 0.25, stripe, 'ms_spine_trim')
+    mx = x0 + 0.52 * L
+    k.tube((mx, rc, zc + hh), (mx, rc, zc + hh + 1.9), 0.05, '#4a4a52', 'ms_mast', verts=6)
+    for zz in (0.8, 1.3):
+        k.tube((mx - 0.35, rc, zc + hh + zz), (mx + 0.35, rc, zc + hh + zz), 0.025, '#4a4a52', 'ms_mast', verts=4)
+    k.sphere(mx, rc, zc + hh + 1.95, 0.06, 0.06, '#702020', 'ms_beacon', emit=('#ff4040', 1.0), segs=8)
+    dxs = x0 + 0.22 * L
+    k.tube((dxs, rc, zc + hh + 0.3), (dxs, rc, zc + hh + 0.9), 0.06, '#4a4a52', 'ms_dish_mount', verts=6)
+    k.blob(dxs + 0.15, rc, zc + hh + 1.25, 0.15, 0.6, 0.55, ('#b8b3a6', 0.06), 'ms_dish', rot=(0, 0, 0), segs=14)
+    k.tube((dxs + 0.15, rc, zc + hh + 1.25), (dxs + 0.75, rc, zc + hh + 1.3), 0.02, '#4a4a52', 'ms_dish_feed', verts=4)
+    # stub wings, angled down, with nav lights
+    for side, col in ((1, '#40e070'), (-1, '#e04040')):
+        root = [(x0 + 0.08 * L, rc + side * 1.6, 1.3), (x0 + 0.3 * L, rc + side * 1.6, 1.3),
+                (x0 + 0.3 * L, rc + side * 1.6, 1.5), (x0 + 0.08 * L, rc + side * 1.6, 1.5)]
+        tip = [(x0 + 0.02 * L, rc + side * 3.2, 0.7), (x0 + 0.14 * L, rc + side * 3.2, 0.7),
+               (x0 + 0.14 * L, rc + side * 3.2, 0.8), (x0 + 0.02 * L, rc + side * 3.2, 0.8)]
+        k.loft([root, tip], (hull, 0.06), 'ms_wing', closed=True, smooth=False)
+        k.sphere(x0 + 0.08 * L, rc + side * 3.25, 0.75, 0.08, 0.08, shade(col, 0.5), 'ms_navlight', emit=(col, 1.0), segs=8)
+    # engines: three stacked nozzles at the tail, glowing
+    for (dz, rr) in ((-0.75, 0.5), (0.0, 0.62), (0.75, 0.5)):
+        k.cyl_x(x0 - 1.1, x0 + 0.3, rc, 2.0 + dz, rr, rr, (HULL_D, 0.06), 'ms_engine', verts=18)
+        k.cyl_x(x0 - 1.25, x0 - 1.1, rc, 2.0 + dz, rr * 0.82, rr * 0.82, '#1a1c22', 'ms_nozzle', verts=18)
+        k.cyl_x(x0 - 1.26, x0 - 1.24, rc, 2.0 + dz, rr * 0.62, rr * 0.62, '#1a3040', 'ms_exhaust', emit=('#70d0ff', 0.9), verts=16)
+        k.cyl_x(x0 - 0.6, x0 - 0.45, rc, 2.0 + dz, rr * 1.02, rr * 1.02, stripe, 'ms_engine_band', verts=18)
+    k.sphere(x0 + L + 0.05, rc, 1.8, 0.07, 0.07, '#e8e8f0', 'ms_strobe', emit=('#ffffff', 1.0), segs=8)
