@@ -21,6 +21,7 @@ var BridgeWorld = (function () {
   // on the same pixel grid, so nothing renders at a mismatched pixel size.
   var NATIVE_TS = 32;
   var zoom = 2;
+  var hudPx = 0;      // touch: how much of the bottom of the screen the hotbar covers
   var buf = document.createElement('canvas');
   var bctx = buf.getContext('2d');
   // Native-space view of the frame being drawn ({offX, offY, ts, w, h}),
@@ -497,6 +498,19 @@ var BridgeWorld = (function () {
     var cssTile = Math.max(32, Math.min(96, window.innerWidth / 20));
     zoom = Math.max(1, Math.floor(cssTile * dpr / NATIVE_TS));
     scale = (NATIVE_TS * zoom / dpr) / tileSize;
+    measureHud();
+  }
+
+  function touchHud() {
+    if (!document.documentElement.classList.contains('touch')) return false;
+    var inv = document.getElementById('inventory-panel');
+    return !!(inv && inv.offsetHeight);
+  }
+
+  function measureHud() {
+    var inv = document.getElementById('inventory-panel');
+    hudPx = document.documentElement.classList.contains('touch') && inv && inv.offsetHeight
+      ? Math.max(0, window.innerHeight - inv.getBoundingClientRect().top) : 0;
   }
 
   function leave() {
@@ -680,9 +694,19 @@ var BridgeWorld = (function () {
       BridgeInventory.tick();
     }
 
+    // On a touch screen the hotbar sits over the bottom of the view: frame
+    // the world in the space above it (camera.y is that space's centre and
+    // the frame is drawn lifted by half the hotbar).
+    if (!hudPx && touchHud()) measureHud();     // the hotbar shows up after the world does
+    var hudT = hudPx / (tileSize * scale);
+    view.lift = hudT / 2;
+    var halfW = window.innerWidth / (2 * tileSize * scale);
+    var halfH = (window.innerHeight - hudPx) / (2 * tileSize * scale);
     // (a world floating in a backdrop follows the player instead: its render
-    // with the sea or space round it is usually taller than the screen)
-    if (world.fixedCamera && !(world.scene && world.scene.backdrop)) {
+    // with the sea or space round it is usually taller than the screen; so
+    // does a room too big for a phone held sideways)
+    if (world.fixedCamera && !(world.scene && world.scene.backdrop) &&
+        (!hudPx || (world.width <= 2 * halfW && world.height <= 2 * halfH))) {
       // Fixed camera: center on map
       camera.x = world.width / 2;
       camera.y = world.height / 2;
@@ -701,11 +725,6 @@ var BridgeWorld = (function () {
       // (interiors, etc.), the normal min/max clamp inverts and pins the camera
       // to a corner — instead, just center on the map so it sits in the middle
       // of the screen and the player walks around within the framed view.
-      var screenW = window.innerWidth;
-      var screenH = window.innerHeight;
-      var halfW = screenW / (2 * tileSize * scale);
-      var halfH = screenH / (2 * tileSize * scale);
-
       // A world floating in a backdrop (islands in the sea, stations in
       // space) can show its whole render, margins included — the ship moored
       // past the last row, the rocks round the rim — plus room under the
@@ -761,7 +780,7 @@ var BridgeWorld = (function () {
     // Snap the world to whole native pixels; the leftover fraction slides
     // the finished frame on screen so the camera still glides smoothly.
     var offXf = nw / 2 - camera.x * ts;
-    var offYf = nh / 2 - camera.y * ts;
+    var offYf = nh / 2 - (camera.y + (view.lift || 0)) * ts;
     var offX = Math.floor(offXf);
     var offY = Math.floor(offYf);
     view.offX = offX; view.offY = offY; view.ts = ts; view.w = nw; view.h = nh;
