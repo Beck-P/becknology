@@ -312,6 +312,9 @@ var BridgeInteractions = (function () {
 
   function executeInteraction(inter) {
     if (typeof BridgeQuests !== 'undefined') BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter);
+    var person = (inter.type === 'dialog' || inter.type === 'random_dialog') && typeof BridgePeople !== 'undefined' &&
+      BridgePeople.find(BridgeWorld.getWorldId(), inter.label);
+    if (person) { showConversation(person, inter); return; }
     switch (inter.type) {
       case 'app':
         // Save world position, then navigate to app
@@ -622,6 +625,85 @@ var BridgeInteractions = (function () {
     dialogEl.addEventListener('click', function () {
       if (typing && !typing.done) typing.finish(); else hideDialog();
     });
+  }
+
+  // A conversation with someone from the cast (js/people.js): a greeting,
+  // then topics to ask about; the answer types out above the choices.
+  function showConversation(person, inter) {
+    hideDialog();
+    dialogVisible = true;
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
+    var promptEl = document.getElementById('interact-prompt');
+    if (promptEl) promptEl.classList.remove('visible');
+    var overlay = document.getElementById('world-overlay');
+    var sheet = person.sheet || portraitFor(inter);
+    var dialogEl = dialogShell('talk wd-convo');
+    var opts = person.topics.map(function (t) { return t.q; }).concat(['Goodbye']);
+    dialogEl.innerHTML =
+      (sheet ? '<canvas class="wd-portrait" width="72" height="72"></canvas>' : '') +
+      '<div class="wd-body">' +
+        '<div class="wd-title">' + esc(person.name) + '</div>' +
+        '<div class="wd-role">' + esc(person.role || '') + '</div>' +
+        '<div class="wd-text"></div>' +
+        '<div class="wd-options">' + opts.map(function (q, i) {
+          return '<button data-opt="' + i + '" class="wd-opt' + (i === 0 ? ' active' : '') +
+            (i < person.topics.length && BridgePeople.asked(person.id, q) ? ' asked' : '') + '">' + esc(q) + '</button>';
+        }).join('') + '</div>' +
+        hintHTML('Esc', 'Leave') +
+      '</div>';
+    overlay.appendChild(dialogEl);
+    if (sheet) drawPortrait(dialogEl.querySelector('.wd-portrait'), sheet);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
+
+    var out = dialogEl.querySelector('.wd-text');
+    var btns = dialogEl.querySelectorAll('.wd-opt');
+    var sel = 0, line = null;
+    function say(text) {
+      if (line) clearInterval(line.timer);
+      var body = reflow(text), i = 0;
+      line = typing = { done: false, finish: function () { clearInterval(line.timer); out.textContent = body; line.done = true; } };
+      line.timer = setInterval(function () {
+        i = Math.min(body.length, i + 2);
+        out.textContent = body.slice(0, i);
+        if (i >= body.length) line.finish();
+      }, 22);
+    }
+    function choose(n) {
+      sel = (n + btns.length) % btns.length;
+      for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', j === sel);
+    }
+    function pick(n) {
+      if (n >= person.topics.length) { close(); return; }
+      var t = person.topics[n];
+      BridgePeople.ask(person.id, t.q);
+      btns[n].classList.add('asked');
+      say(t.a);
+    }
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      hideDialog();
+      if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+    }
+    function onKey(e) {
+      var k = e.key;
+      if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+      else if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); choose(sel + 1); }
+      else if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); choose(sel - 1); }
+      else if (k === 'Enter' || k === 'e' || k === 'E' || k === ' ') {
+        e.preventDefault(); e.stopPropagation();
+        if (line && !line.done) line.finish(); else pick(sel);
+      }
+    }
+    for (var b = 0; b < btns.length; b++) {
+      (function (btn, idx) {
+        btn.addEventListener('mouseenter', function () { choose(idx); });
+        btn.addEventListener('click', function (e) { e.stopPropagation(); pick(idx); });
+      })(btns[b], b);
+    }
+    document.addEventListener('keydown', onKey, true);
+    var first = !BridgePeople.met(person.id);
+    BridgePeople.meet(person.id);
+    say(first ? person.greet : (person.again || person.greet));
   }
 
   function hideDialog() {

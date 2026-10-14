@@ -1,0 +1,172 @@
+{
+  "gran-wilde": {
+    "name": "Gran Wilde", "role": "Fisher's widow, Market Square cottage", "sheet": "npc-fisher-gran",
+    "at": [{ "world": "lumar-cottage", "label": "GRAN WILDE" }],
+    "greet": "SIT, SIT. THE STEW'S NEARLY DONE. YOU'VE GOT THE LOOK OF SOMEONE WHO CAME DOWN OUT OF THE SKY.",
+    "again": "BACK FOR MORE STEW? THERE'S ALWAYS MORE STEW.",
+    "topics": [
+      { "q": "About you", "a": "FIFTY YEARS MENDING NETS IN THIS HOUSE. MY HUSBAND FISHED THE GREEN WATER TILL IT TOOK HIM, AND NOW MY BOY TAM DOES THE SAME, OUT PAST THE CRIMSON ISLE. HE'LL BE BACK WHEN THE BELL RINGS TWICE." },
+      { "q": "The sea", "a": "IT GLOWS BECAUSE OF THE SPORES. ON STILL NIGHTS IT SINGS, LOW, LIKE SOMEONE HUMMING IN THE NEXT ROOM. DON'T DRINK IT, AND DON'T LISTEN TOO HARD." },
+      { "q": "Heard anything?", "a": "TAM SAYS THE PIRATES ON CRIMSON ARE WAITING ON A LOW TIDE TO GET AT AN OLD WRECK. AND THAT SOMEONE WENT INTO THE DRAGON'S CAVE WITH A LANTERN AND A MAP, YEARS BACK, AND NEVER CAME OUT." }
+    ]
+  },
+  "corra": {
+    "name": "Corra Vane", "role": "The Crimson Watcher", "sheet": "npc-watcher",
+    "at": [{ "world": "lumar-crimson", "label": "CRIMSON WATCHER" }],
+    "greet": "YOU CAME BY THE GALLEON? SIT BY THE FIRE IF YOU LIKE. JUST DON'T GO UP THAT PATH WITHOUT TALKING TO ME FIRST.",
+    "again": "STILL HERE. STILL WATCHING THE PATH.",
+    "topics": [
+      { "q": "About you", "a": "I WAS QUARTERMASTER ON A SHIP THAT DOESN'T SAIL ANY MORE. THE CREW CAMPS HERE NOW. I KEEP THE FIRE, AND I KEEP PEOPLE OUT OF THE CAVE. MOSTLY THE SECOND ONE." },
+      { "q": "The dragon", "a": "SHE DOESN'T MIND VISITORS. SHE'S JUST NOT ALWAYS HUNGRY OR NOT. YOU CAN HEAR HER BREATHING THROUGH THE ROCK ON QUIET NIGHTS, SLOW, LIKE A TIDE." },
+      { "q": "H.M.?", "a": "HOLLIS MARR. CHARTED EVERY REEF ON THIS SEA AND SWORE THE HERON WENT DOWN WITH HER HOLD FULL. WENT LOOKING FOR A WAY IN THROUGH THE CAVES. THAT CHARCOAL BY THE MOUTH IS THE LAST OF HIM." }
+    ]
+  },
+  "ilsa": {
+    "name": "Ilsa Venn", "role": "Cartographer", "sheet": "npc-scholar",
+    "at": [{ "world": "lumar-house", "label": "CARTOGRAPHER" }],
+    "greet": "MIND THE GLOBE - IT'S OLDER THAN THE LIGHTHOUSE. ARE YOU HERE ABOUT A MAP OR ABOUT THE CAT?",
+    "again": "AH, YOU AGAIN. ANY NEW COASTLINES FOR ME?",
+    "topics": [
+      { "q": "About you", "a": "I DRAW THE SEA SO OTHER PEOPLE DON'T DROWN IN IT. FOUR ISLANDS, FOUR COLOURS OF CRYSTAL. I'VE MAPPED THREE." },
+      { "q": "Midnight Isle", "a": "NOBODY COMES BACK FROM MIDNIGHT WITH A STEADY ENOUGH HAND TO DRAW IT. THE STONE SENTINELS TURN TO WATCH YOU, THEY SAY. I'D GO MYSELF IF I WERE BRAVER." },
+      { "q": "Need anything?", "a": "IF YOU SAIL THE ISLANDS, LOOK AT THE CRYSTALS FOR ME. CRIMSON, ROSE, SAPPHIRE - AND WHATEVER MIDNIGHT GROWS. COME BACK AND TELL ME. THE CURRENTS CHANGED LAST SPRING; THE MAPS NEED IT." }
+    ]
+  },
+  "traveller": {
+    "name": "Ansel", "role": "A traveller at the inn", "sheet": "npc-traveler",
+    "at": [{ "world": "lumar-inn-upstairs", "label": "TRAVELLER" }],
+    "greet": "COULDN'T SLEEP EITHER? THE OTHER GUEST'S COMPASS KEEPS ME UP. IT TICKS WHEN IT SPINS.",
+    "again": "STILL AWAKE. STILL TICKING.",
+    "topics": [
+      { "q": "About you", "a": "I SELL LAMP OIL BETWEEN THE ISLANDS. I'M BOUND FOR SAPPHIRE AT FIRST LIGHT - THEY SAY THE TRADERS THERE BUY ANYTHING THAT GLOWS." },
+      { "q": "The other guest", "a": "NEVER SEEN THEM. THEIR PACK'S BEEN BY THAT BED SINCE BEFORE I CAME. THE INNKEEPER SAYS THE ROOM'S PAID UP A YEAR AHEAD, IN COINS NOBODY HERE RECOGNISES." },
+      { "q": "The guestbook", "a": "SOMEONE WROTE THAT THE DRAGON IS LISTENING. NO NAME. THE INK'S OLD BUT THE HAND'S STEADY. I'D SAY WHOEVER WROTE IT MEANT IT." }
+    ]
+  },
+  "morwen": {
+    "name": "Morwen", "role": "The Sorceress of Midnight", "sheet": "npc-sorceress",
+    "at": [{ "world": "lumar-midnight-tower", "label": "SORCERESS" }],
+    "greet": "WELCOME, TRAVELLER. THE STARS WHISPERED OF YOUR ARRIVAL. THEY DO THAT. IT'S RATHER RUDE OF THEM.",
+    "again": "YOU RETURN. THE WEAVE NOTICED.",
+    "topics": [
+      { "q": "About you", "a": "I KEEP THE TOWER, THE TELESCOPE AND THE CAT, IN THAT ORDER OF OBEDIENCE. I STUDY THE WEAVE - THE THREADS THAT RUN BETWEEN PLACES, AND THE ONES THAT RUN BETWEEN TIMES." },
+      { "q": "Your ship mark", "a": "I HAVE SEEN IT BEFORE. A PILOT CALLED E.B. CAME TO THIS TOWER WEARING IT, A LIFETIME AGO. SHE ASKED WHAT THE DRAGON WAS LISTENING FOR. I DIDN'T KNOW. I SEALED HER QUESTION IN A SCROLL." },
+      { "q": "The dark thing", "a": "THROUGH THE TELESCOPE: THREE MOONS, TWELVE STARS, AND SOMETHING DARK MOVING BETWEEN THEM. IT IS NOT A CLOUD. IT IS NOT A SHIP. IT IS GETTING CLOSER, SLOWLY, LIKE A THOUGHT YOU'RE AVOIDING." }
+    ]
+  },
+  "pell": {
+    "name": "Pell", "role": "Crystal harvester, Rose Cove", "sheet": "npc-harvester",
+    "at": [{ "world": "lumar-rose", "label": "CRYSTAL HARVESTER" }],
+    "greet": "CAREFUL WHERE YOU STEP - THOSE BEDS ARE SIX YEARS OF WORK. ROSEITE. THE MOST USEFUL SPORE ON THE SEAS.",
+    "again": "THE BEDS ARE HUMMING TODAY. TIDE'S COMING IN.",
+    "topics": [
+      { "q": "About you", "a": "I GROW ROSEITE. A DROP OF WATER AND IT GROWS INTO SOLID CRYSTAL - PERFECT FOR PATCHING HULLS. EVERY SHIP ON THIS SEA CARRIES A POUCH OF MINE." },
+      { "q": "The singing", "a": "THEY HUM WHEN THE TIDE COMES IN. ALL OF THEM, THE SAME NOTE. THE BIG ONES IN THE GLASSHOUSE HUM WHEN YOU SING NEAR THEM, AND THEN THEY DON'T STOP. HENCE THE SIGN." },
+      { "q": "The old mine", "a": "WE CLOSED IT WHEN THE SINGING DOWN THERE GOT LOUD ENOUGH TO HEAR AT THE BATHHOUSE. THE ORE IN THE LAST CART STILL GLOWS. NOBODY WANTS TO FETCH IT." }
+    ]
+  },
+  "zephyr": {
+    "name": "Oro", "role": "Zephyr trader, Sapphire Port", "sheet": "npc-trader",
+    "at": [{ "world": "lumar-sapphire", "label": "ZEPHYR TRADER" }],
+    "greet": "ZEPHYR SPORES! COMPRESSED AIR IN EVERY GRAIN. AND KEEP THAT WATER FLASK AWAY FROM MY STOCK, IF YOU LOVE YOUR EYEBROWS.",
+    "again": "BACK AGAIN? I KNEW YOU HAD THE LOOK OF A BUYER.",
+    "topics": [
+      { "q": "About you", "a": "I BUY WHAT GLOWS AND SELL WHAT BLOWS UP. CANNONS, FLARE GUNS, SAIL BOOST. THE HARBOUR PAYS FOR THE LAST ONE; THE PIRATES PAY FOR THE FIRST TWO." },
+      { "q": "Trade", "a": "ROSEITE FROM PELL, SAPPHIRE FROM THE REEF, CRIMSON WHEN SOMEONE'S BRAVE ENOUGH. MIDNIGHT CRYSTAL I'VE NEVER SEEN. NAME YOUR PRICE IF YOU EVER BRING ME SOME." },
+      { "q": "Heard anything?", "a": "A STRANGER PAID ME IN COINS FROM NOWHERE ON THIS SEA. SHIP MARK STAMPED ON THEM - LOOKED A BIT LIKE YOURS, NOW I THINK ABOUT IT." }
+    ]
+  },
+  "potter": {
+    "name": "Ama Reed", "role": "Potter, Sapphire Port", "sheet": "npc-potter",
+    "at": [{ "world": "lumar-sapphire", "label": "POTTER" }],
+    "greet": "CLAY ON EVERYTHING, SORRY. THE ZEPHYR ISLANDS ARE FAMOUS FOR POTTERY. WELL. I'M FAMOUS FOR POTTERY.",
+    "again": "COME TO WATCH THE WHEEL AGAIN?",
+    "topics": [
+      { "q": "About you", "a": "THREE GENERATIONS OF REEDS AT THIS WHEEL. WE FIRE THE KILNS WITH SUNLIGHT SPORES - BURN HOTTER THAN ANYTHING. MY GRANDFATHER LOST AN EYEBROW TO THEM. I'VE KEPT BOTH." },
+      { "q": "The blue glaze", "a": "GROUND SAPPHIRE, A PINCH OF SALT AND THE RIGHT NIGHT. IF THE SEA IS SINGING WHEN THE KILN OPENS, THE BLUE COMES OUT DEEPER. DON'T ASK ME WHY." }
+    ]
+  },
+  "regular": {
+    "name": "Bram", "role": "A tavern regular", "sheet": "npc-regular",
+    "at": [{ "world": "lumar-tavern", "label": "REGULAR" }],
+    "greet": "YOU NEW HERE? STICK AROUND. THE BAND STARTS IN A FEW CYCLES. IT'S USUALLY GOOD.",
+    "again": "BAND HASN'T STARTED YET. IT NEVER DOES.",
+    "topics": [
+      { "q": "About you", "a": "HARBOUR PILOT, RETIRED. I BROUGHT EVERY SHIP INTO DIGGEN'S POINT FOR THIRTY YEARS. NOW I BRING THIS CHAIR INTO THIS CORNER." },
+      { "q": "The painting", "a": "THE SHIP UNDER THE GREEN MOON? SIGNED E.B. SHE PAINTED IT RIGHT THERE BY THE FIRE, THEN SAILED OUT AND DIDN'T COME BACK. LEFT IT FOR HER TAB." }
+    ]
+  },
+  "merchant": {
+    "name": "Fenwick", "role": "A merchant with a problem", "sheet": "npc-merchant",
+    "at": [{ "world": "lumar-tavern", "label": "MERCHANT" }],
+    "greet": "BOUGHT A WHOLE CRATE OF SILVER NAILS LAST CYCLE. HAULED IT FROM CRIMSON REACH. AND NOBODY WANTS THEM.",
+    "again": "STILL GOT THE NAILS. STILL NO TAKERS.",
+    "topics": [
+      { "q": "About you", "a": "I BUY LOW AND SELL... I BUY LOW. THAT'S AS FAR AS I'VE GOT THIS YEAR." },
+      { "q": "Silver nails?", "a": "THE PIRATES ON CRIMSON WERE SELLING THEM BY THE CRATE. SALVAGE, THEY SAID. FROM A WRECK ON THE REEF. SILVER DOESN'T RUST, SO THEY'RE GOOD AS NEW - JUST, NOBODY BUILDS WITH SILVER." }
+    ]
+  },
+  "stranger": {
+    "name": "The Stranger", "role": "Arcadia Arcade, back corner", "sheet": "npc-stranger",
+    "at": [{ "world": "arcadia", "label": "STRANGER" }],
+    "greet": "FIRST TIME, HUH? DON'T LOOK AT ME. LOOK AT THE SCREEN. PEOPLE NOTICE WHO YOU LOOK AT.",
+    "again": "YOU AGAIN. SIT DOWN, PLAY SOMETHING.",
+    "topics": [
+      { "q": "About you", "a": "I PLAY RUNOUTS. I'M GOOD AT RUNOUTS. THAT'S ALL ANYONE IN HERE NEEDS TO KNOW ABOUT ME." },
+      { "q": "The broken cabinet", "a": "THE OLD OWNER LEFT SOMETHING INSIDE IT WHEN HE SOLD THE PLACE. THE KIDS WHO SPRAY NULL ON EVERYTHING KNOW WHAT. THEY CHECK IT EVERY NIGHT AT CLOSING." },
+      { "q": "NULL?", "a": "A CREW. NO LEADER ANYONE'S MET. THEY MEET WHERE THE MUSIC'S LOUDEST AND LIVE WHERE THE GATES ARE CHAINED. THAT'S ALL I'LL SAY IN HERE." }
+    ]
+  },
+  "pip": {
+    "name": "Pip", "role": "A kid on the District street", "sheet": "npc-pawn-customer",
+    "at": [{ "world": "arcadia-street", "label": "STREET KID" }],
+    "greet": "GOT ANY SPARE TOKENS? ...NO? THAT'S OK. NOBODY DOES.",
+    "again": "STILL NO TOKENS? STILL OK.",
+    "topics": [
+      { "q": "About you", "a": "I RUN STUFF. MESSAGES, MOSTLY. UP THE STREET, DOWN THE STREET, THROUGH THE GATE WHEN NOBODY'S LOOKING. YOU DIDN'T HEAR THAT LAST BIT." },
+      { "q": "The gate", "a": "IT'S CHAINED. EVERYONE KNOWS IT'S CHAINED. THAT'S WHAT MAKES IT A GOOD GATE." },
+      { "q": "Club Void", "a": "MEMBERS ONLY. YOU NEED TO KNOW THE WORD, AND THE WORD ISN'T 'PLEASE'. TRIED THAT." }
+    ]
+  },
+  "nakuri": {
+    "name": "Dr. Nakuri", "role": "Chrome Clinic", "sheet": "npc-doctor",
+    "at": [{ "world": "chrome-clinic", "label": "DOCTOR" }],
+    "greet": "FIRST CONSULTATION IS FREE. UPGRADES AREN'T. WHAT ARE YOU LOOKING TO INSTALL?",
+    "again": "BACK FOR THAT CONSULTATION?",
+    "topics": [
+      { "q": "About you", "a": "I TRAINED ON THE ORBITAL HOSPITALS BEFORE THEY FELL OUT OF THE SKY. NOW I FIX WHAT THE DISTRICT BREAKS. EYES, MOSTLY. EVERYONE WANTS BETTER EYES HERE, AND NOBODY LIKES WHAT THEY SEE WITH THEM." },
+      { "q": "Business", "a": "SLOW AT DAY, LOUD AT NIGHT. THE NULL KIDS COME IN WITH BURNS FROM SOMETHING BEHIND THE GATE - ELECTRICAL, OLD, POWERFUL. I PATCH THEM UP AND DON'T ASK. THEY PAY IN TOKENS." }
+    ]
+  },
+  "tinker": {
+    "name": "Tinker", "role": "Tinkers Tech", "sheet": "npc-technician",
+    "at": [{ "world": "tech-repair-shop", "label": "TECHNICIAN" }],
+    "greet": "WHATEVER IT IS, LEAVE IT IN THE DROP-OFF BIN. I'LL GET TO IT. EVENTUALLY.",
+    "again": "IT'S STILL IN THE BIN. I'M GETTING TO IT.",
+    "topics": [
+      { "q": "About you", "a": "I FIX DRONES, DECKS, CABINETS, FRIDGES THAT THINK THEY'RE DRONES. IF IT HAS A BOARD IN IT, I'VE HAD MY HANDS IN SOMETHING LIKE IT." },
+      { "q": "Odd jobs?", "a": "A STATION DRONE CAME THROUGH HERE ONCE - ENIGMA MAKE, OLD. IT WAS TUNED TO ONE FREQUENCY AND WOULDN'T LET GO OF IT. FORTY-SEVEN POINT THREE. I SOLD IT ON. I WISH I HADN'T." }
+    ]
+  },
+  "miyu": {
+    "name": "Chef Miyu", "role": "Miyu's Noodles", "sheet": "npc-noodle-chef",
+    "at": [{ "world": "cyber-noodle-bar", "label": "CHEF" }],
+    "greet": "WELCOME TO MIYU'S. PULL UP A STOOL. YOU LOOK LIKE YOU HAVEN'T EATEN SINCE ORBIT.",
+    "again": "SAME STOOL? SAME BOWL?",
+    "topics": [
+      { "q": "About you", "a": "TWENTY YEARS ON THIS CORNER. THE TOWERS WENT UP ROUND ME AND I KEPT BOILING NOODLES. THE BROTH IS SPORE-STOCK - LUMAR SPORES, SHIPPED IN SALT. DON'T TELL THE HEALTH BOARD." },
+      { "q": "Heard anything?", "a": "EVERYONE TALKS AT A NOODLE BAR. THE MARSHAL ON SKYPORT 7 SAYS A SKIFF CALLED THE WREN TRIED TO LAND ON HER ROOF, YEARS BACK, OUT OF FUEL, FROM ENIGMA. SHE WAVED IT OFF. SHE STILL THINKS ABOUT IT." }
+    ]
+  },
+  "marshal": {
+    "name": "Marshal Ruiz", "role": "Skyport 7", "sheet": null,
+    "at": [{ "world": "arcadia-skypad", "label": "MARSHAL" }],
+    "greet": "SKYPORT 7, PAD ONE. YOUR SKIFF IS LOGGED. NOBODY TOUCHES IT ON MY ROOF.",
+    "again": "SKIFF'S FINE. I CHECKED. TWICE.",
+    "topics": [
+      { "q": "About you", "a": "TWELVE YEARS ON THIS ROOF. I'VE LANDED EVERYTHING FROM DIPLOMATS TO A CRATE OF LIVE EELS. THE EELS WERE BETTER COMPANY." },
+      { "q": "The Wren", "a": "A SKIFF OUT OF ENIGMA STATION. CAME IN ON FUMES, NO CLEARANCE, IN A STORM. I WAVED HER OFF - RULES. SHE TURNED AWAY TOWARD THE DARK SIDE OF THE PLANET. NEVER LOGGED ANYWHERE ELSE. I STILL THINK ABOUT IT." },
+      { "q": "Getting down", "a": "LIFT'S ON THE FAR SIDE. TAKES YOU DOWN TO THE SKYWALK, THEN IT'S THE DISTRICT. MIND YOUR TOKENS DOWN THERE." }
+    ]
+  }
+}

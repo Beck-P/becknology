@@ -1063,3 +1063,10 @@ body::after {
 .qj-clues li.found::before { content: '\25C6'; position: absolute; left: 0; top: 4px; font-size: 9px; color: #e0c060; }
 .qj-clues li.missing { color: #7c725e; font-style: italic; }
 .qj-clues li.missing::before { content: '\25C7'; position: absolute; left: 0; top: 4px; font-size: 9px; color: #6a604e; }
+
+/* conversations with the cast: name, role, the answer above the choices */
+.wd-convo .wd-role { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.6; margin: -2px 0 8px; }
+.wd-convo .wd-text { min-height: 3.6em; }
+.wd-convo .wd-options { margin-top: 10px; }
+.wd-convo .wd-opt.asked { opacity: 0.55; }
+.wd-convo .wd-opt.asked.active { opacity: 1; }
