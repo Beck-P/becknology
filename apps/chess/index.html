@@ -45,22 +45,28 @@
     <!-- ===== VIEW 1: WIZARD CHESS 3D ===== -->
     <div class="wizard-layout" id="view-wizard">
       <aside class="wizard-sidebar">
-        <h2>Battle Setup</h2>
+        <div class="sidebar-header-row">
+          <h2>Battle Setup</h2>
+          <span class="engine-badge" id="wc-engine-badge" title="Chess Engine Status">⚡ Stockfish UCI</span>
+        </div>
 
         <div class="field-group">
           <label class="field-label" for="wc-mode">Mode</label>
           <select id="wc-mode" class="wc-select">
-            <option value="ai">vs. Arcane Automaton (AI)</option>
+            <option value="ai">vs. Stockfish Automaton (AI)</option>
             <option value="2p">Pass &amp; Play (2P Local)</option>
           </select>
         </div>
 
         <div class="field-group" id="wc-difficulty-group">
-          <label class="field-label" for="wc-difficulty">Automaton Rank</label>
+          <label class="field-label" for="wc-difficulty">Stockfish Rank (ELO)</label>
           <select id="wc-difficulty" class="wc-select">
-            <option value="1">I · Apprentice (+35 Coins)</option>
-            <option value="2" selected>II · Archmage (+60 Coins)</option>
-            <option value="3">III · Grand Oracle (+100 Coins)</option>
+            <option value="1">I · Novice (~800 ELO · +25🪙)</option>
+            <option value="2">II · Apprentice (~1100 ELO · +40🪙)</option>
+            <option value="3" selected>III · Battlemage (~1450 ELO · +60🪙)</option>
+            <option value="4">IV · Archmage (~1800 ELO · +85🪙)</option>
+            <option value="5">V · Grandmaster (~2200 ELO · +120🪙)</option>
+            <option value="6">VI · Supreme Oracle (2600+ ELO · +175🪙)</option>
           </select>
         </div>
 
@@ -77,7 +83,11 @@
           <button type="button" id="wc-undo-btn">Undo</button>
         </div>
 
-        <h2 style="margin-top: 18px;">Camera &amp; FX</h2>
+        <button type="button" id="wc-review-btn" class="review-trigger-btn" disabled>
+          🔮 Game Review &amp; Eval
+        </button>
+
+        <h2 style="margin-top: 16px;">Camera &amp; FX</h2>
         <div class="cam-grid">
           <button type="button" class="cam-btn" data-cam="white">White Side</button>
           <button type="button" class="cam-btn" data-cam="black">Black Side</button>
@@ -97,7 +107,19 @@
 
       <section class="wizard-stage-area">
         <div class="wizard-stage-frame">
+          <!-- Live Stockfish Evaluation Bar -->
+          <div class="eval-bar-wrap" id="wc-eval-wrap" title="Stockfish Position Evaluation">
+            <div class="eval-bar-black" id="wc-eval-black"></div>
+            <div class="eval-bar-white" id="wc-eval-white" style="height: 50%;"></div>
+            <span class="eval-score" id="wc-eval-score">0.0</span>
+          </div>
+
           <div id="wizard-stage" class="wizard-stage"></div>
+
+          <!-- Active Duel Banner Overlay -->
+          <div class="duel-banner" id="wc-duel-banner" hidden>
+            <span class="duel-banner-text" id="wc-duel-banner-text">⚔️ KNIGHT CAVALRY CHARGE</span>
+          </div>
 
           <!-- Pawn Promotion Modal -->
           <div class="promo-modal" id="promo-modal" hidden>
@@ -114,11 +136,46 @@
           </div>
         </div>
 
-        <div class="status" id="wizard-status">Ivory Legion to move. Click any statue to command.</div>
+        <div class="status" id="wizard-status">Ivory Legion to move. Click any Blender-sculpted statue to command.</div>
       </section>
 
       <aside class="line-panel wizard-chronicle">
-        <h2 class="opening-title">Battle Chronicle</h2>
+        <div class="chronicle-header-row">
+          <h2 class="opening-title">Battle Chronicle</h2>
+          <span class="review-mode-pill" id="wc-review-pill" hidden>REVIEW MODE</span>
+        </div>
+
+        <!-- Game Review Summary & Eval Chart (shown when Game Review is triggered) -->
+        <div class="review-panel" id="wc-review-panel" hidden>
+          <div class="accuracy-row">
+            <div class="acc-box acc-white">
+              <span class="acc-label">Ivory Accuracy</span>
+              <span class="acc-val" id="wc-acc-w">—%</span>
+            </div>
+            <div class="acc-box acc-black">
+              <span class="acc-label">Obsidian Accuracy</span>
+              <span class="acc-val" id="wc-acc-b">—%</span>
+            </div>
+          </div>
+
+          <div class="class-counts" id="wc-class-counts"></div>
+
+          <div class="eval-chart-wrap">
+            <canvas id="wc-eval-chart" width="240" height="64"></canvas>
+          </div>
+
+          <div class="coach-note" id="wc-coach-note">
+            Select any move below or use the transport keys to inspect Stockfish's best line on the 3D board.
+          </div>
+
+          <div class="review-transport">
+            <button type="button" id="wc-rev-first" title="Start of Game">|&lt;</button>
+            <button type="button" id="wc-rev-prev" title="Previous Move (Left Arrow)">&lt;</button>
+            <button type="button" id="wc-rev-next" title="Next Move (Right Arrow)">&gt;</button>
+            <button type="button" id="wc-rev-last" title="End of Game">&gt;|</button>
+            <button type="button" id="wc-rev-exit" class="rev-exit-btn" title="Exit Review">Live</button>
+          </div>
+        </div>
 
         <div class="captured-box">
           <div class="captured-row">
@@ -136,7 +193,7 @@
         </div>
 
         <div class="stats">
-          Spoils: <span class="stat-num">+2</span> Coins / Shatter · <span class="stat-num">+35–100</span> Victory
+          Blender 3D Sculpted · Stockfish Engine · <span class="stat-num">+2🪙</span> / Shatter
         </div>
       </aside>
     </div>
