@@ -55,7 +55,8 @@ var BridgeInteractions = (function () {
   var VERBS = {
     enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
-    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish'
+    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish',
+    pachinko: 'Play', pachinko_prizes: 'Cash in'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -122,6 +123,7 @@ var BridgeInteractions = (function () {
     var el = promptEl();
     if (!el) return;
     var t = dialogVisible ? null : promptState.target;
+    if (t && t.action === 'sit' && typeof BridgeCharacter !== 'undefined' && BridgeCharacter.isSeated && BridgeCharacter.isSeated()) t = null;
     if (!t || !view || !view.ts) {
       if (promptState.shown) { el.classList.remove('visible'); promptState.shown = null; }
       return;
@@ -321,6 +323,8 @@ var BridgeInteractions = (function () {
     if (person) { showConversation(person, inter); return; }
     var biz = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.find(BridgeWorld.getWorldId(), inter.label);
     if (biz) { showBusiness(biz, inter); return; }
+    // sit, sleep, look out of the window (js/actions.js) instead of a text box
+    if (inter.action && typeof BridgeActions !== 'undefined') { BridgeActions.run(inter); return; }
     switch (inter.type) {
       case 'app':
         // Save world position, then navigate to app
@@ -376,6 +380,14 @@ var BridgeInteractions = (function () {
 
       case 'splice':
         if (typeof BridgeSplice !== 'undefined') BridgeSplice.open();
+        break;
+
+      case 'pachinko':
+        if (typeof BridgePachinko !== 'undefined') BridgePachinko.open(inter);
+        break;
+
+      case 'pachinko_prizes':
+        if (typeof BridgePachinko !== 'undefined') BridgePachinko.prizes(inter);
         break;
 
       case 'fish':

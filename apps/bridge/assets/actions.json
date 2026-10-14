@@ -1,0 +1,423 @@
+{
+  "quarters": [
+    {
+      "label": "BED",
+      "action": "sleep"
+    }
+  ],
+  "bridge": [
+    {
+      "label": "CAPTAIN'S CHAIR",
+      "action": "sit",
+      "seat": [
+        10.5,
+        11.3
+      ],
+      "facing": "up",
+      "view": "orbit"
+    },
+    {
+      "label": "TELESCOPE",
+      "action": "view",
+      "view": "stars",
+      "prompt": "PRESS E TO LOOK THROUGH"
+    }
+  ],
+  "hangar": [
+    {
+      "label": "BAY DOORS",
+      "action": "view",
+      "view": "orbit"
+    }
+  ],
+  "lumar-inn": [
+    {
+      "label": "WINDOW",
+      "action": "sit",
+      "seat": [
+        12.0,
+        2.6
+      ],
+      "facing": "up",
+      "view": "sea",
+      "prompt": "PRESS E TO SIT IN THE WINDOW",
+      "roofs": true,
+      "caption": "THE WINDOW SEAT, CUSHIONED AND WARM FROM THE FIRE.\n\nPAST THE ROOFTOPS OF THE SQUARE: THE SEA, AND THE MOON LAID ACROSS IT. A LANTERN POST FLICKERS BELOW."
+    },
+    {
+      "label": "ARMCHAIR",
+      "x": 7,
+      "y": 3,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        7.5,
+        3.5
+      ],
+      "facing": "up",
+      "dialog": "A DEEP ARMCHAIR BY THE FIRE. THE WARMTH SOAKS INTO YOUR BONES, AND THE NOISE OF THE ROOM GOES SOFT."
+    },
+    {
+      "label": "ARMCHAIR",
+      "x": 10,
+      "y": 3,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        10.5,
+        3.5
+      ],
+      "facing": "up",
+      "dialog": "A DEEP ARMCHAIR BY THE FIRE. SOMEONE HAS LEFT A BOOK OF SEA SHANTIES ON THE ARM, OPEN AT A RUDE ONE."
+    }
+  ],
+  "lumar-inn-upstairs": [
+    {
+      "label": "YOUR BED",
+      "action": "sleep"
+    },
+    {
+      "label": "WINDOW",
+      "action": "view",
+      "view": "sea",
+      "roofs": true,
+      "beam": true
+    }
+  ],
+  "lumar-house": [
+    {
+      "label": "ARMCHAIR",
+      "x": 10,
+      "y": 7,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        10.2,
+        7.5
+      ],
+      "facing": "up",
+      "dialog": "THE CARTOGRAPHER'S READING CHAIR. THE CUSHION REMEMBERS THE SHAPE OF SOMEONE SMALLER THAN YOU."
+    },
+    {
+      "label": "TELESCOPE",
+      "action": "view",
+      "view": "stars",
+      "prompt": "PRESS E TO LOOK THROUGH"
+    }
+  ],
+  "lumar-tavern": [
+    {
+      "label": "STOOL",
+      "x": 4,
+      "y": 6,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        4.5,
+        6.5
+      ],
+      "facing": "up",
+      "dialog": "A STOOL AT THE BAR, WOBBLING ON ONE SHORT LEG. THE BARTENDER SLIDES A MUG YOUR WAY WITHOUT ASKING."
+    },
+    {
+      "label": "STOOL",
+      "x": 10,
+      "y": 6,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        10.5,
+        6.5
+      ],
+      "facing": "up",
+      "dialog": "A STOOL AT THE END OF THE BAR, NEAR THE FIRE. GOOD FOR LISTENING TO EVERYONE AT ONCE."
+    },
+    {
+      "label": "STOOL",
+      "x": 8,
+      "y": 8,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        8.5,
+        8.5
+      ],
+      "facing": "up",
+      "dialog": "A STOOL AT A TABLE CARVED WITH A HUNDRED INITIALS. ONE OF THEM IS A SHIP MARK."
+    },
+    {
+      "label": "STOOL",
+      "x": 10,
+      "y": 8,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        10.5,
+        8.5
+      ],
+      "facing": "up",
+      "dialog": "A STOOL AT A TABLE BY THE WALL. A GAME OF DICE WAS ABANDONED HERE MID-ROLL."
+    }
+  ],
+  "lumar-square": [
+    {
+      "label": "BENCH",
+      "x": 8,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        8.9,
+        10.85
+      ],
+      "facing": "down",
+      "dialog": "A BENCH BY THE FOUNTAIN. PIGEONS - OR SOMETHING LIKE PIGEONS - GATHER HOPEFULLY AT YOUR FEET."
+    },
+    {
+      "label": "BENCH",
+      "x": 14,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        14.9,
+        10.85
+      ],
+      "facing": "down",
+      "dialog": "A BENCH IN THE SQUARE. THE BELL TOWER CHIMES THE QUARTER HOUR, A LITTLE FLAT."
+    }
+  ],
+  "lumar-sapphire": [
+    {
+      "label": "LOOKOUT",
+      "action": "sit",
+      "seat": [
+        29.0,
+        10.25
+      ],
+      "facing": "up",
+      "view": "sea",
+      "prompt": "PRESS E TO SIT AND LOOK"
+    },
+    {
+      "label": "BENCH",
+      "x": 21,
+      "y": 20,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        21.8,
+        20.65
+      ],
+      "facing": "down",
+      "dialog": "A BENCH ON THE MARKET SQUARE. THE STALLHOLDERS CALL THEIR PRICES; NOBODY PAYS THEM."
+    },
+    {
+      "label": "BENCH",
+      "x": 37,
+      "y": 20,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        37.2,
+        20.65
+      ],
+      "facing": "down",
+      "dialog": "A BENCH BY THE SPICE STALL. YOUR EYES WATER PLEASANTLY."
+    }
+  ],
+  "lumar-sapphire-lighthouse": [
+    {
+      "label": "WINDOW",
+      "action": "view",
+      "view": "sea",
+      "beam": true
+    },
+    {
+      "label": "ROCKING CHAIR",
+      "x": 7,
+      "y": 5,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        7.95,
+        5.85
+      ],
+      "facing": "down",
+      "dialog": "TAMSIN'S ROCKING CHAIR BY THE STOVE. IT CREAKS ONCE, CONTENTEDLY, AND ROCKS YOU WITHOUT BEING ASKED."
+    }
+  ],
+  "lumar-sapphire-lamproom": [
+    {
+      "label": "WINDOW",
+      "action": "view",
+      "view": "sea",
+      "beam": true
+    },
+    {
+      "label": "GALLERY",
+      "action": "view",
+      "view": "sea",
+      "beam": true,
+      "prompt": "PRESS E TO STEP OUT"
+    }
+  ],
+  "enigma": [
+    {
+      "label": "VIEWPORT",
+      "action": "view",
+      "view": "giant"
+    }
+  ],
+  "enigma-ring": [
+    {
+      "label": "WINDOW BENCH",
+      "action": "sit",
+      "seat": [
+        13.05,
+        7.0
+      ],
+      "facing": "up",
+      "view": "giant"
+    }
+  ],
+  "enigma-hydro": [
+    {
+      "label": "HAMMOCK",
+      "action": "sleep",
+      "caption": "OKAFOR WAVES A HAND WITHOUT LOOKING UP. \"GO ON. I NEVER USE IT.\"\n\nTHE GROW LIGHTS DIM TO NIGHT CYCLE. THE PUMPS HUM YOU UNDER."
+    }
+  ],
+  "chrome-clinic": [
+    {
+      "label": "EXAM CHAIR",
+      "action": "sit",
+      "seat": [
+        3.5,
+        4.5
+      ],
+      "facing": "down"
+    },
+    {
+      "label": "RECOVERY BED",
+      "action": "sleep",
+      "caption": "THE BED HUMS. A SOFT VOICE COUNTS YOU DOWN FROM TEN.\n\nYOU DON'T REMEMBER SEVEN."
+    },
+    {
+      "label": "BENCH",
+      "x": 11,
+      "y": 8,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        11.95,
+        8.3
+      ],
+      "facing": "down",
+      "dialog": "THE WAITING BENCH. A SCREEN ABOVE IT SAYS 'NOW SERVING: 0'. IT HAS SAID THAT FOR A WHILE."
+    }
+  ],
+  "null-den": [
+    {
+      "label": "BEANBAG",
+      "action": "sit",
+      "seat": [
+        9.9,
+        6.3
+      ],
+      "facing": "down"
+    }
+  ],
+  "arcadia-lucky-7": [
+    {
+      "label": "BENCH",
+      "action": "sit",
+      "seat": [
+        10.5,
+        8.2
+      ],
+      "facing": "down"
+    }
+  ],
+  "arcadia-street": [
+    {
+      "label": "BENCH",
+      "x": 5,
+      "y": 12,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        5.1,
+        12.55
+      ],
+      "facing": "down",
+      "view": "skyline",
+      "dialog": "A BENCH AT THE RAILING. BELOW IT THE CITY GOES DOWN AND DOWN, LIGHTS ALL THE WAY."
+    },
+    {
+      "label": "BENCH",
+      "x": 27,
+      "y": 12,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        27.9,
+        12.55
+      ],
+      "facing": "down",
+      "view": "skyline",
+      "dialog": "A BENCH AT THE RAILING, WET WITH RAIN. A DELIVERY DRONE SITS AT THE OTHER END, RECHARGING."
+    }
+  ],
+  "arcadia-skypad": [
+    {
+      "label": "THE DROP",
+      "action": "view",
+      "view": "skyline",
+      "prompt": "PRESS E TO LOOK DOWN"
+    }
+  ],
+  "arcadia": [
+    {
+      "label": "BENCH",
+      "x": 1,
+      "y": 8,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        1.5,
+        8.4
+      ],
+      "facing": "down",
+      "dialog": "A BENCH FOR WAITING YOUR TURN. THE CABINETS BLEEP AT EACH OTHER IN THE DARK."
+    },
+    {
+      "label": "BENCH",
+      "x": 11,
+      "y": 8,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        11.5,
+        8.4
+      ],
+      "facing": "down",
+      "dialog": "A BENCH UNDER THE HIGH-SCORE BOARD. SOMEONE'S INITIALS ARE AT THE TOP OF EVERY LIST: 'NUL'."
+    }
+  ],
+  "tech-repair-shop": [
+    {
+      "label": "BENCH",
+      "x": 5,
+      "y": 7,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        5.4,
+        7.5
+      ],
+      "facing": "down",
+      "dialog": "A BENCH FOR CUSTOMERS. A JAR OF LOOSE SCREWS SITS ON IT, LABELLED 'FREE (PROBABLY)'."
+    }
+  ]
+}

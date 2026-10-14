@@ -403,6 +403,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
+        if (typeof BridgeActions !== 'undefined') BridgeActions.decorate(worldId, data);
         var finish = function () {
           world = data;
           currentWorldId = worldId;
@@ -1010,7 +1011,7 @@ var BridgeWorld = (function () {
     if (world.interactions) {
       var target = (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.getTarget) ? BridgeInteractions.getTarget() : null;
       var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
-      var kinds = [['game', { app: 1, cabinet: 1 }], ['exit', { leave_world: 1 }]];
+      var kinds = [['game', { app: 1, cabinet: 1, splice: 1, pachinko: 1 }], ['exit', { leave_world: 1 }]];
       for (var ki = 0; ki < kinds.length; ki++) {
         var clusters = findAppClusters(world.interactions, kinds[ki][1]);
         for (var ci = 0; ci < clusters.length; ci++) {

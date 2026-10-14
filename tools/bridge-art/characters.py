@@ -121,6 +121,8 @@ NPCS = {
     'npc-okafor':    dict(skin='skin3', shirt=('#2e4a52', '#46707a', '#6a98a2'), vest=('#8a4a1a', '#c87830', '#e8a050'),
                           hair=('#141010', '#241c1a', '#362a26'), goggles=True, pose='stand'),
     # The Backs, behind the District (arcadia-alley, null-den)
+    'npc-sev':       dict(skin='skin2', shirt=('#7a5010', '#b88020', '#e0b040'), hair=('#8a8a90', '#b8b8c0', '#dcdce4'),
+                          bun=True, visor_cap=True, pose='stand'),
     'npc-vex':       dict(skin='skin', shirt=('#141018', '#241c2c', '#3a2e44'), vest=('#5a1040', '#a01870', '#d83098'),
                           hair=('#1a6a70', '#30b0b8', '#60e0e8'), mohawk=True, bald=True, visor_band=True, pose='sit'),
     'npc-cook':      dict(skin='skin2', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), apron=('#5a5040', '#8a7a60', '#a89878'),
@@ -369,12 +371,12 @@ def build_human(spec):
             rot=(-0.4, 0, 0), vertices=16, radius1=4.3, radius2=0.5, depth=8.0)
 
 
-if WHO == 'pilot':
+if WHO in ('pilot', 'pilot-sit'):          # pilot-sit: the same suits, seated (chairs, benches, stools)
     build_pilot()
     VARIANTS = {s: {'suit': SUITS[s], 'suitdk': (mix(SUITS[s][0], '#000000', 0.25), SUITS[s][0], mix(SUITS[s][0], SUITS[s][1], 0.5)),
                     'arm': (mix(SUITS[s][0], '#000000', 0.12), mix(SUITS[s][1], SUITS[s][0], 0.3), mix(SUITS[s][2], SUITS[s][1], 0.35))}
                 for s in SUITS}
-    POSE = 'stand'
+    POSE = 'sit' if WHO == 'pilot-sit' else 'stand'
 else:
     spec = NPCS[WHO]
     build_human(spec)

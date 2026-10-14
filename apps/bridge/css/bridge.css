@@ -1086,6 +1086,94 @@ html.touch .sp-keys { display: none; }
   background: rgba(64, 224, 208, 0.1); border: 1px solid rgba(64, 224, 208, 0.6); color: #c8fcff;
 }
 
+/* Sit, sleep, look out of the window (js/actions.js) */
+#act-pill {
+  position: fixed; left: 50%; bottom: 104px; transform: translate(-50%, 8px); z-index: 30; max-width: min(520px, 90vw);
+  padding: 8px 14px; border-radius: 6px; background: rgba(8, 10, 20, 0.86); border: 1px solid rgba(160, 180, 220, 0.25);
+  color: #e0e4f0; font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 12px; line-height: 1.45; text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s;
+}
+#act-pill.visible { opacity: 1; transform: translate(-50%, 0); }
+#act-pill.quiet .ap-text { display: none; }
+#act-pill .ap-text { white-space: pre-line; margin-bottom: 4px; }
+#act-pill .ap-hint { font-size: 10px; color: #8a90a8; letter-spacing: 1px; text-transform: uppercase; }
+html.touch #act-pill { bottom: 150px; }
+html.touch #act-pill .ip-key { display: none; }
+#sleep-fade {
+  position: fixed; inset: 0; z-index: 45; background: #02030a; opacity: 0; transition: opacity 0.8s; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; color: #c8d0e8;
+}
+#sleep-fade.dark { opacity: 1; }
+#sleep-fade .sf-z { font-size: 34px; letter-spacing: 6px; color: #8a9ae0; animation: sf-bob 1.6s ease-in-out infinite; }
+#sleep-fade .sf-z span:nth-child(1) { font-size: 26px; opacity: 0.7; } #sleep-fade .sf-z span:nth-child(2) { font-size: 18px; opacity: 0.45; }
+#sleep-fade .sf-text { font-size: 13px; max-width: 420px; text-align: center; line-height: 1.5; white-space: pre-line; padding: 0 20px; }
+#sleep-fade.woke .sf-z { opacity: 0; transition: opacity 0.6s; }
+@keyframes sf-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+#view-panel {
+  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center; background: rgba(2, 3, 8, 0.72);
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+}
+#view-panel.visible { display: flex; }
+.vp-frame {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; border-radius: 6px; max-width: 96vw;
+  background: linear-gradient(180deg, #1e1810, #120e08); border: 2px solid #5a4024; box-shadow: inset 0 0 0 2px #2a1e10, 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+#view-panel.vp-skyline .vp-frame, #view-panel.vp-giant .vp-frame, #view-panel.vp-void .vp-frame {
+  background: linear-gradient(180deg, #161a26, #0c0e16); border-color: #3a4256; box-shadow: inset 0 0 0 2px #1e2230, 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+.vp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.vp-title { font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: #d8c8a0; }
+.vp-canvas { display: block; image-rendering: pixelated; border-radius: 3px; box-shadow: 0 0 0 2px #0a0806; }
+.vp-caption { font-size: 13px; line-height: 1.5; color: #e8dcc4; max-width: 640px; white-space: pre-line; }
+
+/* Pachinko — Lucky 7's machines and prize counter (js/pachinko.js) */
+#pachinko {
+  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  background: rgba(6, 2, 8, 0.72); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
+}
+#pachinko.visible { display: flex; }
+#pachinko .pk-counter, #pachinko.counter .pk-panel:not(.pk-counter) { display: none; }
+#pachinko.counter .pk-counter { display: flex; }
+.pk-panel {
+  max-width: 96vw; max-height: 96vh; overflow: auto; box-sizing: border-box; padding: 12px 14px; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(34, 14, 20, 0.98), rgba(14, 6, 10, 0.98)); color: #f0dcc8;
+  border: 1px solid #ffc030; box-shadow: 0 0 34px rgba(255, 192, 48, 0.16), 0 16px 40px rgba(0, 0, 0, 0.6);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.pk-head { display: flex; align-items: baseline; gap: 12px; }
+.pk-title { font-size: 14px; letter-spacing: 5px; text-transform: uppercase; color: #ffc030; text-shadow: 0 0 8px currentColor; }
+.pk-sub { flex: 1; font-size: 12px; color: #a08878; }
+.pk-play { display: flex; gap: 14px; align-items: flex-start; }
+.pk-board { display: block; image-rendering: pixelated; touch-action: none; cursor: pointer; border-radius: 4px; box-shadow: 0 0 0 2px #2a1a10, 0 0 0 4px #6a4a20; }
+.pk-side { display: flex; flex-direction: column; gap: 8px; width: 170px; }
+.pk-stat { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #a08878; }
+.pk-stat b { font-size: 18px; color: #fff0d0; font-weight: 600; letter-spacing: 0; }
+.pk-net.up { color: #80ffb0; } .pk-net.down { color: #ff9080; }
+.pk-handle { display: flex; flex-direction: column; gap: 4px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #a08878; }
+.pk-handle input { width: 100%; accent-color: #ffc030; }
+.pk-fire, .pk-btn {
+  font: inherit; font-size: 12px; letter-spacing: 1px; cursor: pointer; padding: 8px 10px; border-radius: 3px; touch-action: none;
+  background: rgba(255, 192, 48, 0.1); border: 1px solid rgba(255, 192, 48, 0.55); color: #ffe8b0;
+}
+.pk-fire { padding: 14px 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 2px; background: rgba(255, 96, 64, 0.16); border-color: rgba(255, 120, 80, 0.7); }
+.pk-btn:disabled { opacity: 0.4; cursor: default; }
+.pk-keys { font-size: 10px; color: #806858; }
+html.touch .pk-keys { display: none; }
+.pk-status { font-size: 13px; color: #ffe8c0; min-height: 18px; max-width: 400px; }
+.pk-count { display: flex; flex-direction: column; gap: 6px; min-width: 260px; }
+.pk-note { font-size: 12px; color: #c0a890; line-height: 1.4; }
+.pk-row { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 560px), (max-height: 520px) and (orientation: portrait) {
+  .pk-play { flex-direction: column; align-items: center; }
+  .pk-side { width: 100%; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .pk-panel { padding: 8px 10px; gap: 4px; }
+  .pk-side { width: 150px; gap: 5px; }
+  .pk-stat b { font-size: 15px; }
+}
+
 /* The letter rack on the bridge (js/worlds/bridge.js): letters on parchment */
 #letter-rack {
   position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;

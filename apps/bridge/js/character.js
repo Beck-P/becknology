@@ -40,7 +40,22 @@ var BridgeCharacter = (function () {
     player.moveProgress = 1;
     player.facing = 'down';
     player.walking = false;
+    seat = null;
   }
+
+  // ---- sitting (js/actions.js) --------------------------------------------------------------
+  // A seat is where the pilot is drawn while sitting — a chair's seat in tile
+  // units (the floor point under it), not a tile they stand on: their tile
+  // doesn't change, so getting up puts them back where they were.
+  var seat = null;
+  function sit(s) {
+    if (!s || player.moveProgress < 1) return false;
+    seat = { x: s.x, y: s.y, facing: s.facing || player.facing };
+    player.facing = seat.facing;
+    return true;
+  }
+  function stand() { seat = null; }
+  function isSeated() { return !!seat; }
 
   function getX() { return player.x; }
   function getY() { return player.y; }
@@ -54,6 +69,7 @@ var BridgeCharacter = (function () {
 
   /** Get the interpolated render position (smooth between tiles). */
   function getRenderPos() {
+    if (seat) return { x: seat.x - 0.5, y: seat.y - 1 + 3 / 32 };
     var p = Math.min(1, player.moveProgress);
     return {
       x: player.x + (player.targetX - player.x) * p,
@@ -63,6 +79,7 @@ var BridgeCharacter = (function () {
 
   /** Try to move in a direction. Returns true if movement started. */
   function tryMove(dx, dy, collisions, mapW, mapH) {
+    if (seat) { seat = null; return false; }              // moving gets you up first
     // Update facing regardless of whether we can move
     if (dx < 0) player.facing = 'left';
     else if (dx > 0) player.facing = 'right';
@@ -139,7 +156,7 @@ var BridgeCharacter = (function () {
       var img = new Image();
       sheets[suit] = { img: img, ready: false };
       img.onload = function () { sheets[suit].ready = true; };
-      img.src = '/bridge/assets/characters/pilot-' + suit + '.png';
+      img.src = '/bridge/assets/characters/pilot-' + suit + '.png';     // 'sit-<suit>' for the seated sheet
     }
     return sheets[suit];
   }
@@ -176,7 +193,7 @@ var BridgeCharacter = (function () {
     if (hidden) return { footRow: 0, draw: function () {} };
     var pilot = BridgeState.getPilot();
     var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
-    var sheet = getSheet(suit);
+    var sheet = getSheet((seat ? 'sit-' : '') + suit);
     var pos = getRenderPos();
     var footRow = pos.y + 1 - 3 / 32;
     return {
@@ -201,7 +218,7 @@ var BridgeCharacter = (function () {
     if (hidden) return null;
     var pilot = BridgeState.getPilot();
     var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
-    var sheet = getSheet(suit);
+    var sheet = getSheet((seat ? 'sit-' : '') + suit);
     if (!sheet.ready) return null;
     var col = player.moveProgress < 1
       ? 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8
@@ -220,7 +237,7 @@ var BridgeCharacter = (function () {
 
     var pilot = BridgeState.getPilot();
     var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
-    var sheet = getSheet(suit);
+    var sheet = getSheet((seat ? 'sit-' : '') + suit);
     if (sheet.ready) {
       drawSprite(ctx, sheet, sx, sy, ts);
       return;
@@ -351,6 +368,9 @@ var BridgeCharacter = (function () {
 
   return {
     init: init,
+    sit: sit,
+    stand: stand,
+    isSeated: isSeated,
     getX: getX,
     getY: getY,
     getFacing: getFacing,

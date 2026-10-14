@@ -76,7 +76,7 @@ stalls, a hum of music. Neon pink/cyan against deep violet.
   a back room tournament), the noodle bar (steam, a chef, regulars),
   the clinic (augment chair, holo-scans), the pawnshop (junk with stories),
   the repair shop (drones mid-surgery), the mart (late-night shoppers);
-  plus a rooftop bar, ✓ a back-alley hacker den (NULL's), an apartment you
+  plus a rooftop bar, ✓ a back-alley hacker den (NULL's), ✓ Lucky 7 (pachinko, the prize counter), an apartment you
   can rent.
 - **Purpose**: jobs from the street (deliveries, finding lost drones),
   credits, the arcade's tournament ladder, a hacker side-story.
@@ -131,6 +131,27 @@ stars streaking, a tunnel of light, dropping out over the new world.
 - Loot and collectibles worth picking up; reasons to come back.
 - Places within places: upstairs, back rooms, cellars, rooftops.
 - Every mini-game found in the world, then kept in the game room.
+
+## Next — Beck's list (Oct 14)
+- ✓ **Interactions that do something** (first pass: `js/actions.js`). Fewer plain text boxes: sit in chairs
+  and on benches (the pilot sits, the camera settles), sleep in beds (fade to
+  morning, rested), look out of windows (a view opens: the sea, the skyline,
+  the giant), lean on rails, warm up at fires, read what's written.
+- **Mining**: rocks and seams to break for rare materials (ores, crystal
+  geodes, salvage), tools to buy and upgrade, what you dig feeding crafting
+  and trade.
+- **A farming planet**, Stardew-style: a plot of your own to clear, till,
+  plant and water; crops by season; animals later.
+- **Combat and weapons**, made cooler: real weapons with their own feel,
+  enemies worth fighting, hits that land.
+- **Maps**: find or buy charts that reveal a world bit by bit; systems for
+  finding hidden things (a dowsing rod, a scanner, rumours).
+- **A mountain world**: a climbing mode (its own mechanic — holds, stamina,
+  routes) up to loot hidden at the top; a ski resort town on its slopes;
+  sections of the world to find.
+- **Places of your own**: buy apartments and houses on the planets, build
+  them out and decorate them; the same for the ship — edit it, make it
+  yours.
 
 ## Build order
 1. ✓ Lumar coasts and water; more homes and upstairs. ✓ Arcadia's skyline,
