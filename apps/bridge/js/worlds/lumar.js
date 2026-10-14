@@ -1115,12 +1115,21 @@
     ctx.globalAlpha = 1;
   }
 
+  // Floor painted under object tiles (NPCs, lanterns, crates…) so they sit
+  // on the same ground as their surroundings. Worlds pick it with
+  // "groundTile" in their JSON; saltstone otherwise.
+  function drawGround(ctx, x, y, ts, time, col, row) {
+    var w = BridgeWorld.getWorld();
+    var fn = (w && GROUND_DRAWERS[w.groundTile]) || drawSaltstoneFloor;
+    fn(ctx, x, y, ts, time || 0, col || 0, row || 0);
+  }
+
   // Crate — strict pixel art. 10u × 10u wooden box with 1u outline, 1u top
   // highlight, 1u right shadow column, hard plank seams + iron corners.
   function drawCrate(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawGround(ctx, x, y, ts, time, col, row);
     var DARK = '#1a0e08';
     var WOOD_SH = '#2a1808';
     var WOOD_MD = '#5a3e20';
@@ -1310,7 +1319,7 @@
   function drawMarketStall(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawGround(ctx, x, y, ts, time, col, row);
     var DARK = '#1a1010';
     var POST = '#3a2410';
     var POST_HI = '#5a3a1a';
@@ -1452,7 +1461,7 @@
   function drawNpc(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
     var u = ts / 16;
-    drawSaltstoneFloor(ctx, x, y, ts);
+    drawGround(ctx, x, y, ts, time, col, row);
     var DARK = '#1a1410';
     var SKIN = '#9a8068';
     var SKIN_SH = '#6a5040';
@@ -1885,7 +1894,7 @@
   // Captain statue — strict pixel art. Whole-u rects only, hard outline,
   // 3-tone shading (highlight / midtone / shadow + dark outline).
   function drawCaptainStatue(ctx, x, y, ts, time, col, row) {
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawGround(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
     var DARK = '#0e1212';
     var SH = '#2a3030';
@@ -1988,7 +1997,7 @@
   // Fish market stall — strict pixel art. Blue-striped awning, ice bed,
   // 3 fish in 1u-2u rectangles. Whole-u rects only.
   function drawFishMarket(ctx, x, y, ts, time, col, row) {
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawGround(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
     var DARK = '#0e1218';
     var POST = '#3a2410';
@@ -2062,7 +2071,7 @@
   // gradient allowed per spec — atmosphere/light overlay).
   function drawLanternPost(ctx, x, y, ts, time, col, row) {
     time = time || 0; col = col || 0; row = row || 0;
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawGround(ctx, x, y, ts, time, col, row);
     var u = ts / 16;
     var cx = x + 8*u;     // tile center X (whole-u)
     // Iron pole — 1u wide, 10u tall, with shadow side 1u and highlight side none
@@ -2214,7 +2223,7 @@
     // Saltstone floor base — rubble is a small pile sitting on top of
     // the existing floor, not a void cell. The surrounding pattern must
     // read through so adjacent tiles look continuous.
-    drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
+    drawGround(ctx, x, y, ts, time, col, row);
 
     // Small stepped pile sitting in the lower-middle of the tile.
     // Saltstone is visible on all four sides.
@@ -2229,6 +2238,13 @@
     ctx.fillStyle = DARK; ctx.fillRect(x + 9*u, y + 11*u, 2*u, 1*u);
     ctx.fillStyle = SH;   ctx.fillRect(x + 9*u, y + 11*u, 2*u, 1*u);
   }
+
+  var GROUND_DRAWERS = {
+    2: drawSaltstoneFloor,
+    3: drawDockPlanks,
+    28: drawCobblestone,
+    48: drawCliffTrail
+  };
 
   BridgeWorld.registerTileset('lumar', {
     1: drawSaltstoneWall,

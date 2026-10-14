@@ -679,5 +679,26 @@
       "prompt": "PRESS E TO READ",
       "dialog": "WELCOME TO ARCADIA\\nTHE FINEST ARCADE IN THE OUTER RIM\\n\\nEST. CYCLE 2184"
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      150,
+      132,
+      180
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }

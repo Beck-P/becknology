@@ -678,5 +678,26 @@
       "prompt": "ACCESS",
       "dialog": "SENSORS CONSOLE\\n\\nAmbient scan: 4 known systems.\\nDeeper sensors \u2014 coming soon."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      150,
+      160,
+      182
+    ],
+    "fromGlow": {
+      "gain": 1.3,
+      "radius": 1.8
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.2
+  }
 }

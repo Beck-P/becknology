@@ -512,5 +512,26 @@
       "prompt": "PRESS E TO LOOK",
       "dialog": "TWO SWORDS AND AN\\nAXE, FINISHED AND\\nLEANING IN A WOODEN\\nRACK.\\n\\nTHE HILTS ARE\\nLEATHER-WRAPPED AND\\nWORN SMOOTH."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      118,
+      104,
+      110
+    ],
+    "fromGlow": {
+      "gain": 2.2,
+      "radius": 2.2
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        150,
+        140,
+        150
+      ],
+      "i": 0.2
+    },
+    "bloom": 0.3
+  }
 }

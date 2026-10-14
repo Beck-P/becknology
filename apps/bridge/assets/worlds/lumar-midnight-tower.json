@@ -485,5 +485,82 @@
       "prompt": "PRESS E TO STUDY",
       "dialog": "A SUMMONING GLYPH.\\n\\nTHE TRIANGLE ROTATES.\\nA TINY CRYSTAL HOVERS\\nAT ITS CENTER, HUMMING."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      86,
+      76,
+      120
+    ],
+    "tileLights": {
+      "6": {
+        "r": 2.4,
+        "color": [
+          255,
+          180,
+          100
+        ],
+        "i": 0.75,
+        "flicker": 0.15
+      },
+      "4": {
+        "r": 3.0,
+        "color": [
+          190,
+          140,
+          255
+        ],
+        "i": 0.7,
+        "flicker": 0.05
+      },
+      "11": {
+        "r": 2.4,
+        "color": [
+          160,
+          255,
+          140
+        ],
+        "i": 0.6,
+        "flicker": 0.1
+      },
+      "14": {
+        "r": 2.6,
+        "color": [
+          200,
+          150,
+          255
+        ],
+        "i": 0.5,
+        "flicker": 0.05
+      },
+      "8": {
+        "r": 1.8,
+        "color": [
+          200,
+          150,
+          255
+        ],
+        "i": 0.4
+      },
+      "3": {
+        "r": 2.0,
+        "color": [
+          150,
+          170,
+          220
+        ],
+        "i": 0.4
+      }
+    },
+    "pilot": {
+      "r": 2.6,
+      "color": [
+        140,
+        160,
+        210
+      ],
+      "i": 0.28
+    },
+    "bloom": 0.3
+  }
 }

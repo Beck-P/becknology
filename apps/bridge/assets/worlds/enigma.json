@@ -881,5 +881,26 @@
       "dialog": "CORRUPTED LOG ENTRY 4472:\\n\\n\"THE CIPHER MACHINE KEEPS\\nGENERATING DISPATCHES.\\nWHO IS IT SENDING TO?\\n\\nI DON'T THINK IT KNOWS.\""
     }
   ],
-  "shipExit": true
+  "shipExit": true,
+  "lighting": {
+    "ambient": [
+      120,
+      136,
+      160
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }

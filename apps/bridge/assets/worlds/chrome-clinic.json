@@ -551,5 +551,26 @@
       "prompt": "PRESS E TO TALK",
       "dialog": "THE DRONE'S CYAN EYE\\nSWEEPS YOU.\\n\\n\"HELLO. PLEASE STATE\\nTHE NATURE OF YOUR\\nMEDICAL EMERGENCY.\"\\n\\nYOU DON'T HAVE ONE."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      150,
+      165,
+      180
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }

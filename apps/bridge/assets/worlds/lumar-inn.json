@@ -522,5 +522,26 @@
       "prompt": "PRESS E TO LOOK",
       "dialog": "THE SQUARE OUTSIDE\\nIS QUIETER NOW.\\nA LANTERN POST\\nFLICKERS."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      118,
+      104,
+      110
+    ],
+    "fromGlow": {
+      "gain": 2.2,
+      "radius": 2.2
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        150,
+        140,
+        150
+      ],
+      "i": 0.2
+    },
+    "bloom": 0.3
+  }
 }

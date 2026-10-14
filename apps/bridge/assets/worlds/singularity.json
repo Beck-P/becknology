@@ -626,5 +626,26 @@
       "dialog": "FAINT MARKINGS ON THE STONE...\\n\\n\"THE DEEPER YOU LOOK\\nTHE MORE IT LOOKS BACK\""
     }
   ],
-  "shipExit": true
+  "shipExit": true,
+  "lighting": {
+    "ambient": [
+      130,
+      120,
+      170
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }

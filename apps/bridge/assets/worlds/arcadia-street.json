@@ -1474,5 +1474,26 @@
       "label": "CHROME CLINIC",
       "prompt": "PRESS E TO ENTER"
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      150,
+      136,
+      190
+    ],
+    "fromGlow": {
+      "gain": 2.0,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.6,
+      "color": [
+        140,
+        160,
+        210
+      ],
+      "i": 0.28
+    },
+    "bloom": 0.25
+  }
 }

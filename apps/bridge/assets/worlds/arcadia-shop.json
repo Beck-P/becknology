@@ -536,5 +536,26 @@
       "prompt": "PRESS E TO USE",
       "dialog": "THE MACHINE FLASHES\\nA WELCOME MESSAGE.\\n\\n\"INSERT TOKEN.\"\\n\\nYOU DON'T HAVE A\\nTOKEN YET."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      150,
+      140,
+      175
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }

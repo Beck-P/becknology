@@ -550,5 +550,26 @@
       "prompt": "PRESS E TO LOOK",
       "dialog": "ROWS OF COLD DRINKS\\nIN COLORS YOU DIDN'T\\nKNOW LIQUIDS COULD BE.\\n\\nTHE GLASS IS COLD\\nAGAINST YOUR PALM."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      140,
+      120,
+      160
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }

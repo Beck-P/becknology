@@ -646,7 +646,7 @@
       "type": "dialog",
       "label": "WARNING",
       "prompt": "PRESS E TO READ",
-      "dialog": "WEATHERED SIGN:\\n\\n\"BEYOND THIS POINT —\\nDRAGON'S CAVE.\\nENTER WITH RESPECT.\""
+      "dialog": "WEATHERED SIGN:\\n\\n\"BEYOND THIS POINT \u2014\\nDRAGON'S CAVE.\\nENTER WITH RESPECT.\""
     },
     {
       "x": 5,
@@ -662,7 +662,7 @@
       "type": "dialog",
       "label": "CHARCOAL MARK",
       "prompt": "PRESS E TO READ",
-      "dialog": "CHARCOAL ON STONE:\\n\\n\"DOWN THE STAIRS, BEAR\\nLEFT, MIND THE LAVA.\\n— H.M.\""
+      "dialog": "CHARCOAL ON STONE:\\n\\n\"DOWN THE STAIRS, BEAR\\nLEFT, MIND THE LAVA.\\n\u2014 H.M.\""
     },
     {
       "x": 4,
@@ -678,5 +678,63 @@
     50,
     50
   ],
-  "shipExit": true
+  "shipExit": true,
+  "lighting": {
+    "ambient": [
+      150,
+      112,
+      124
+    ],
+    "fromGlow": {
+      "gain": 2.2,
+      "radius": 2.0,
+      "skip": [
+        13
+      ]
+    },
+    "tileLights": {
+      "38": {
+        "r": 3.2,
+        "color": [
+          255,
+          158,
+          72
+        ],
+        "i": 0.7,
+        "flicker": 0.1,
+        "dy": -0.2
+      },
+      "46": {
+        "r": 4.0,
+        "color": [
+          255,
+          190,
+          110
+        ],
+        "i": 0.5,
+        "flicker": 0.08,
+        "dy": -1.2
+      },
+      "9": {
+        "r": 3,
+        "color": [
+          110,
+          170,
+          255
+        ],
+        "i": 0.7,
+        "flicker": 0.08
+      }
+    },
+    "pilot": {
+      "r": 2.6,
+      "color": [
+        140,
+        160,
+        210
+      ],
+      "i": 0.28
+    },
+    "bloom": 0.3
+  }
 }

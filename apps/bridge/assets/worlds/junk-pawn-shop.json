@@ -543,5 +543,26 @@
       "prompt": "PRESS E TO TALK",
       "dialog": "\"...JORO ALWAYS\\nUNDERVALUES TECH.\\nDON'T LET HIM LOWBALL\\nYOU IF YOU SELL.\""
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      140,
+      120,
+      130
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }

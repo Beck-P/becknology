@@ -525,5 +525,26 @@
       "prompt": "PRESS E TO LOOK",
       "dialog": "A FAT CABLE COIL\\nHUNG ON A HOOK.\\nCOULD POWER A\\nSMALL DISTRICT.\\n\\nTHE PLUG END IS\\nFLECKED WITH RUST."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      140,
+      132,
+      150
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }

@@ -6,7 +6,10 @@
   "tileset": "quarters",
   "fixedCamera": true,
   "spawns": {
-    "player": [7, 10]
+    "player": [
+      7,
+      10
+    ]
   },
   "leaveLabel": "&#8592; BRIDGE",
   "leaveTo": "bridge",
@@ -50,62 +53,494 @@
     "19": "slot_shelf"
   },
   "tiles": [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
-    [1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
-    [1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1],
-    [1, 6, 6, 19, 8, 8, 8, 8, 8, 8, 2, 7, 7, 7, 2, 1],
-    [1, 6, 6, 3, 2, 2, 2, 2, 2, 2, 3, 7, 7, 7, 14, 1],
-    [1, 2, 3, 2, 17, 2, 2, 2, 2, 3, 2, 3, 2, 2, 3, 1],
-    [1, 3, 12, 2, 9, 9, 9, 2, 3, 2, 2, 2, 3, 2, 2, 1],
-    [1, 2, 2, 3, 9, 9, 9, 3, 2, 2, 3, 2, 2, 3, 2, 1],
-    [1, 3, 2, 2, 2, 3, 2, 2, 3, 15, 2, 3, 18, 2, 11, 1],
-    [1, 13, 3, 2, 3, 2, 2, 3, 2, 2, 3, 2, 2, 3, 2, 1],
-    [1, 1, 1, 1, 1, 1, 1, 10, 10, 1, 1, 1, 1, 1, 1, 1]
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      1
+    ],
+    [
+      1,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      1
+    ],
+    [
+      1,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      1
+    ],
+    [
+      1,
+      6,
+      6,
+      19,
+      8,
+      8,
+      8,
+      8,
+      8,
+      8,
+      2,
+      7,
+      7,
+      7,
+      2,
+      1
+    ],
+    [
+      1,
+      6,
+      6,
+      3,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      3,
+      7,
+      7,
+      7,
+      14,
+      1
+    ],
+    [
+      1,
+      2,
+      3,
+      2,
+      17,
+      2,
+      2,
+      2,
+      2,
+      3,
+      2,
+      3,
+      2,
+      2,
+      3,
+      1
+    ],
+    [
+      1,
+      3,
+      12,
+      2,
+      9,
+      9,
+      9,
+      2,
+      3,
+      2,
+      2,
+      2,
+      3,
+      2,
+      2,
+      1
+    ],
+    [
+      1,
+      2,
+      2,
+      3,
+      9,
+      9,
+      9,
+      3,
+      2,
+      2,
+      3,
+      2,
+      2,
+      3,
+      2,
+      1
+    ],
+    [
+      1,
+      3,
+      2,
+      2,
+      2,
+      3,
+      2,
+      2,
+      3,
+      15,
+      2,
+      3,
+      18,
+      2,
+      11,
+      1
+    ],
+    [
+      1,
+      13,
+      3,
+      2,
+      3,
+      2,
+      2,
+      3,
+      2,
+      2,
+      3,
+      2,
+      2,
+      3,
+      2,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      10,
+      10,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
   ],
   "collisions": [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-    [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1],
-    [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1]
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
   ],
   "tileGlow": {
     "4": {
-      "color": [64, 200, 216],
+      "color": [
+        64,
+        200,
+        216
+      ],
       "radius": 0.7,
       "alpha": 0.18
     },
     "11": {
-      "color": [120, 220, 240],
+      "color": [
+        120,
+        220,
+        240
+      ],
       "radius": 1.4,
       "alpha": 0.32
     },
     "13": {
-      "color": [255, 224, 128],
+      "color": [
+        255,
+        224,
+        128
+      ],
       "radius": 2.4,
       "alpha": 0.45
     },
     "10": {
-      "color": [80, 200, 120],
+      "color": [
+        80,
+        200,
+        120
+      ],
       "radius": 1.2,
       "alpha": 0.32
     },
     "18": {
-      "color": [120, 220, 240],
+      "color": [
+        120,
+        220,
+        240
+      ],
       "radius": 1.0,
-      "alpha": 0.20
+      "alpha": 0.2
     }
   },
   "ambientGlow": {
-    "color": [80, 60, 40],
+    "color": [
+      80,
+      60,
+      40
+    ],
     "alpha": 0.05,
     "radius": 0.5
   },
@@ -135,9 +570,9 @@
       "label": "BED",
       "prompt": "REST",
       "messages": [
-        "The bed looks comfortable.\\n\\nSleep — coming soon.",
-        "Rumpled sheets. The blanket is warm.\\n\\nSleep — coming soon.",
-        "Your bed. Familiar.\\n\\nSleep — coming soon."
+        "The bed looks comfortable.\\n\\nSleep \u2014 coming soon.",
+        "Rumpled sheets. The blanket is warm.\\n\\nSleep \u2014 coming soon.",
+        "Your bed. Familiar.\\n\\nSleep \u2014 coming soon."
       ]
     },
     {
@@ -147,8 +582,8 @@
       "label": "BED",
       "prompt": "REST",
       "messages": [
-        "The bed looks comfortable.\\n\\nSleep — coming soon.",
-        "Rumpled sheets. The blanket is warm.\\n\\nSleep — coming soon."
+        "The bed looks comfortable.\\n\\nSleep \u2014 coming soon.",
+        "Rumpled sheets. The blanket is warm.\\n\\nSleep \u2014 coming soon."
       ]
     },
     {
@@ -213,7 +648,7 @@
       "type": "dialog",
       "label": "LOG TERMINAL",
       "prompt": "READ",
-      "dialog": "LOG TERMINAL\\n\\n> Welcome aboard, Pilot.\\n> Make yourself at home.\\n> — SHIPYARD\\n\\nLogs offline."
+      "dialog": "LOG TERMINAL\\n\\n> Welcome aboard, Pilot.\\n> Make yourself at home.\\n> \u2014 SHIPYARD\\n\\nLogs offline."
     },
     {
       "x": 12,
@@ -221,7 +656,7 @@
       "type": "dialog",
       "label": "LOG TERMINAL",
       "prompt": "READ",
-      "dialog": "LOG TERMINAL\\n\\n> Welcome aboard, Pilot.\\n> Make yourself at home.\\n> — SHIPYARD\\n\\nLogs offline."
+      "dialog": "LOG TERMINAL\\n\\n> Welcome aboard, Pilot.\\n> Make yourself at home.\\n> \u2014 SHIPYARD\\n\\nLogs offline."
     },
     {
       "x": 13,
@@ -229,7 +664,7 @@
       "type": "dialog",
       "label": "LOG TERMINAL",
       "prompt": "READ",
-      "dialog": "LOG TERMINAL\\n\\n> Welcome aboard, Pilot.\\n> Make yourself at home.\\n> — SHIPYARD\\n\\nLogs offline."
+      "dialog": "LOG TERMINAL\\n\\n> Welcome aboard, Pilot.\\n> Make yourself at home.\\n> \u2014 SHIPYARD\\n\\nLogs offline."
     },
     {
       "x": 14,
@@ -259,7 +694,7 @@
       "type": "dialog",
       "label": "EMPTY FLOOR",
       "prompt": "EXAMINE",
-      "dialog": "Bare floor — a perfect spot for a lamp.\\n\\nThe catalog terminal sells decor."
+      "dialog": "Bare floor \u2014 a perfect spot for a lamp.\\n\\nThe catalog terminal sells decor."
     },
     {
       "x": 14,
@@ -267,7 +702,7 @@
       "type": "dialog",
       "label": "BARE WALL",
       "prompt": "EXAMINE",
-      "dialog": "Bare wall — could use a poster.\\n\\nThe catalog terminal sells decor."
+      "dialog": "Bare wall \u2014 could use a poster.\\n\\nThe catalog terminal sells decor."
     },
     {
       "x": 9,
@@ -285,5 +720,26 @@
       "prompt": "EXAMINE",
       "dialog": "A small wall-mounted shelf.\\n\\nThe Dockside Merchant in Lumar sells trinkets that fit here."
     }
-  ]
+  ],
+  "lighting": {
+    "ambient": [
+      160,
+      146,
+      150
+    ],
+    "fromGlow": {
+      "gain": 1.8,
+      "radius": 2.0
+    },
+    "pilot": {
+      "r": 2.4,
+      "color": [
+        130,
+        150,
+        190
+      ],
+      "i": 0.18
+    },
+    "bloom": 0.25
+  }
 }
