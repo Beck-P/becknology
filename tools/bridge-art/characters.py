@@ -73,6 +73,9 @@ NPCS = {
                           hair=('#1a1410', '#2e2218', '#44342a'), bald=True, beard=True, brawny=True, pose='stand'),
     'npc-apothecary': dict(skin='skin', shirt=('#3a2450', '#5a3a78', '#7a5a9a'), skirt=('#3a2450', '#5a3a78', '#7a5a9a'),
                            hair=('#8a8a98', '#c0c0cc', '#e2e2ec'), long_hair=True, pose='stand'),
+    'npc-sorceress': dict(skin='skin', shirt=('#1e1e48', '#2e3070', '#4a4c9a'), skirt=('#1e1e48', '#2e3070', '#4a4c9a'),
+                          hair=('#8a8a98', '#c8c8d4', '#ececf4'), long_hair=True,
+                          witch_hat=('#24163a', '#3e2a5e', '#5a4282'), pose='stand'),
 }
 LIGHT_DIR = Vector((-0.5, -0.35, 0.8)).normalized()
 
@@ -291,6 +294,11 @@ def build_human(spec):
     if 'cap' in spec:
         add('cylinder', 'cap', (0, 0.3, 9.0), (5.4, 5.2, 1.4), 'cap', 'hat', head, vertices=20)
         add('cube', 'brim', (0, -4.6, 8.1), (3.4, 2.2, 0.35), 'cap', 'hat', head, bevel=0.3)
+    if 'witch_hat' in spec:
+        add('cylinder', 'hat_brim', (0, 0.8, 9.2), (6.4, 6.0, 0.4), 'witch_hat', 'hat', head, rot=(-0.3, 0, 0), vertices=24)
+        add('cylinder', 'hat_band', (0, 1.0, 9.9), (4.4, 4.2, 0.8), 'leather', 'hat_band', head, rot=(-0.3, 0, 0), vertices=18)
+        add('cone', 'hat_cone', (0, 2.4, 13.4), (1, 1, 1), 'witch_hat', 'hat', head,
+            rot=(-0.4, 0, 0), vertices=16, radius1=4.3, radius2=0.5, depth=8.0)
 
 
 if WHO == 'pilot':
@@ -305,7 +313,7 @@ else:
     tones = {'shirt': spec['shirt'], 'pants': FIXED['pants'], 'hair': spec['hair'], 'skin': FIXED[spec['skin']]}
     if 'sleeve' in spec:
         tones['sleeve'] = FIXED[spec['sleeve']] if spec['sleeve'] in FIXED else FIXED[spec['skin']]
-    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood'):
+    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat'):
         if key in spec:
             tones[key] = spec[key]
     VARIANTS = {WHO.replace('npc-', ''): tones}

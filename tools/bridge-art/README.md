@@ -11,6 +11,8 @@ the art direction these follow.
 | `sprites_post.py` | Turns character frames into sprite sheets with line work and outlines (`apps/bridge/assets/characters/`). |
 | `scenekit.py` | Blender scene kit: tile-grid primitives, lights, and the render passes for pre-rendered scenes. |
 | `assets_lumar.py` | Lumar asset builders for scenes (floors, walls, furniture, fireplace, lamps…). |
+| `assets_magic.py` | Arcane builders: octagonal masonry rooms, angled windows, rose window, spell circle, crystal altar, candelabras, telescope, familiar. |
+| `assets_cave.py` | Cave builders: rock faces and floors, lava pools and fissures, stalagmites, mine timbers and rails, the dragon, the hoard. |
 | `scenes/*.py` | One script per pre-rendered world: builds, renders, and updates that world's JSON. |
 | `scene_post.py` | Turns scene passes into the dithered, lit render + packed depth + `scene.json` (`apps/bridge/assets/scenes/<id>/`). |
 

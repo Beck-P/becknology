@@ -24,12 +24,17 @@ import os
 import random
 
 import bpy
-from mathutils import Vector
+import bmesh  # noqa: E402  (bpy must be imported first)
+from mathutils import Euler, Matrix, Vector
 
 THETA = math.radians(45)
 S = 1 / math.sin(THETA)
 TS = 32
 LIGHT_EXPOSURE = -2.0   # stops; keep in sync with scene_post.LIGHT_GAIN
+
+
+def _scale(x, y, z):
+    return Matrix.Diagonal((x, y, z, 1.0))
 
 
 def hexc(h):
@@ -80,64 +85,120 @@ class Kit:
         return o
 
     # ---- primitives in tile space ---------------------------------------
+    # Meshes go straight into mesh data with bmesh: bpy.ops primitives get
+    # slower with every object already in the scene, bmesh doesn't. Each is
+    # a unit primitive transformed by M in unstretched tile space (rows run
+    # along -y), then stretched along rows by S and placed at (x, row, z).
+    def _make(self, kind, M, loc, verts=16, r1=1.0, r2=1.0, segs=16):
+        bm = bmesh.new()
+        if kind == 'cube':
+            bmesh.ops.create_cube(bm, size=1.0)
+        elif kind == 'sphere':
+            bmesh.ops.create_uvsphere(bm, u_segments=segs, v_segments=max(6, segs // 2), radius=1.0)
+        else:
+            bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=verts,
+                                  radius1=r1, radius2=max(1e-4, r2), depth=1.0)
+        bmesh.ops.transform(bm, matrix=M, verts=bm.verts)
+        for v in bm.verts:
+            v.co.y *= S
+        me = bpy.data.meshes.new(kind)
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new(kind, me)
+        self.scene.collection.objects.link(o)
+        o.location = (loc[0], -loc[1] * S, loc[2])
+        return o
+
     def box(self, x0, r0, z0, x1, r1, z1, albedo, part, emit=None, bevel=0.0):
-        bpy.ops.mesh.primitive_cube_add(size=1)
-        o = bpy.context.active_object
-        o.scale = (x1 - x0, (r1 - r0) * S, z1 - z0)
-        bpy.ops.object.transform_apply(scale=True)
-        o.location = ((x0 + x1) / 2, -(r0 + r1) / 2 * S, (z0 + z1) / 2)
+        o = self._make('cube', _scale(x1 - x0, r1 - r0, z1 - z0), ((x0 + x1) / 2, (r0 + r1) / 2, (z0 + z1) / 2))
         return self._finish(o, albedo, part, emit, bevel)
 
     def cyl(self, cx, cr, z0, z1, rx, albedo, part, emit=None, verts=16, ry=None, bevel=0.0):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=1, depth=1)
-        o = bpy.context.active_object
-        o.scale = (rx, (ry if ry is not None else rx) * S, z1 - z0)
-        bpy.ops.object.transform_apply(scale=True)
-        o.location = (cx, -cr * S, (z0 + z1) / 2)
+        o = self._make('cyl', _scale(rx, ry if ry is not None else rx, z1 - z0), (cx, cr, (z0 + z1) / 2), verts=verts)
         return self._finish(o, albedo, part, emit, bevel, smooth=True)
+
+    def _finish_axis(self, o, albedo, part, emit, axis):
+        for p in o.data.polygons:
+            p.use_smooth = abs(p.normal[axis]) < 0.5
+        o.data.materials.append(bpy.data.materials.new('tmp'))
+        self.parts.append({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
+        return o
 
     def cyl_y(self, cx, r0, r1, cz, rx, rz, albedo, part, emit=None, verts=16):
         """Cylinder lying along the rows axis (its round face toward the camera)."""
-        bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=1, depth=1, rotation=(math.pi / 2, 0, 0))
-        o = bpy.context.active_object
-        bpy.ops.object.transform_apply(rotation=True)
-        o.scale = (rx, (r1 - r0) * S, rz)
-        bpy.ops.object.transform_apply(scale=True)
-        o.location = (cx, -(r0 + r1) / 2 * S, cz)
-        for p in o.data.polygons:
-            p.use_smooth = abs(p.normal.y) < 0.5
-        o.data.materials.append(bpy.data.materials.new('tmp'))
-        self.parts.append({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
-        return o
+        M = _scale(rx, r1 - r0, rz) @ Matrix.Rotation(math.pi / 2, 4, 'X')
+        o = self._make('cyl', M, (cx, (r0 + r1) / 2, cz), verts=verts)
+        return self._finish_axis(o, albedo, part, emit, 1)
 
     def cyl_x(self, x0, x1, cr, cz, rr, rz, albedo, part, emit=None, verts=12):
         """Cylinder lying along the columns axis (logs, rolling pins)."""
-        bpy.ops.mesh.primitive_cylinder_add(vertices=verts, radius=1, depth=1, rotation=(0, math.pi / 2, 0))
-        o = bpy.context.active_object
-        bpy.ops.object.transform_apply(rotation=True)
-        o.scale = (x1 - x0, rr * S, rz)
-        bpy.ops.object.transform_apply(scale=True)
-        o.location = ((x0 + x1) / 2, -cr * S, cz)
-        for p in o.data.polygons:
-            p.use_smooth = abs(p.normal.x) < 0.5
-        o.data.materials.append(bpy.data.materials.new('tmp'))
-        self.parts.append({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
+        M = _scale(x1 - x0, rr, rz) @ Matrix.Rotation(math.pi / 2, 4, 'Y')
+        o = self._make('cyl', M, ((x0 + x1) / 2, cr, cz), verts=verts)
+        return self._finish_axis(o, albedo, part, emit, 0)
+
+    def bar(self, xa, ra, xb, rb, z0, z1, width, albedo, part, emit=None, bevel=0.0):
+        """Box running along the floor from (xa, ra) to (xb, rb) at any angle,
+        `width` thick — angled walls, rune strokes, planks."""
+        dx, dr = xb - xa, rb - ra
+        M = Matrix.Rotation(math.atan2(-dr, dx), 4, 'Z') @ _scale(math.hypot(dx, dr), width, z1 - z0)
+        o = self._make('cube', M, ((xa + xb) / 2, (ra + rb) / 2, (z0 + z1) / 2))
+        return self._finish(o, albedo, part, emit, bevel)
+
+    def tube(self, a, b, ra, albedo, part, emit=None, rb=None, verts=12, smooth=True):
+        """Cylinder (or cone, if rb is given) from point a to point b; points
+        are (x, row, z)."""
+        d = Vector((b[0] - a[0], -(b[1] - a[1]), b[2] - a[2]))
+        R = Vector((0, 0, 1)).rotation_difference(d.normalized()).to_matrix().to_4x4()
+        mid = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2)
+        if rb is None:
+            o = self._make('cyl', R @ _scale(ra, ra, d.length), mid, verts=verts)
+        else:
+            o = self._make('cone', R @ _scale(1, 1, d.length), mid, verts=verts, r1=ra, r2=rb)
+        return self._finish(o, albedo, part, emit, smooth=smooth)
+
+    def blob(self, cx, cr, cz, rx, ry, rz, albedo, part, emit=None, rot=(0, 0, 0), segs=16, smooth=True):
+        """Ellipsoid with radii along x / rows / z, rotated by `rot` degrees
+        (about x, rows, z) — heads, wings, boulders."""
+        R = Euler(tuple(math.radians(v) for v in (rot[0], -rot[1], -rot[2])), 'XYZ').to_matrix().to_4x4()
+        o = self._make('sphere', R @ _scale(rx, ry, rz), (cx, cr, cz), segs=segs)
+        o = self._finish(o, albedo, part, emit, smooth=smooth)
+        if smooth:
+            for p in o.data.polygons:
+                p.use_smooth = True
+        return o
+
+    def poly(self, pts, albedo, part, emit=None):
+        """Flat surface through points (x, row, z), fanned from the first —
+        wing membranes, sails, banners."""
+        bm = bmesh.new()
+        vs = [bm.verts.new((p[0], -p[1] * S, p[2])) for p in pts]
+        for i in range(1, len(vs) - 1):
+            bm.faces.new((vs[0], vs[i], vs[i + 1]))
+        me = bpy.data.meshes.new('poly')
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new('poly', me)
+        self.scene.collection.objects.link(o)
+        return self._finish(o, albedo, part, emit)
+
+    def rock(self, cx, cr, cz, rx, ry, rz, albedo, part='rock', seed=None, jitter=0.18, segs=10):
+        """Faceted boulder: a low-poly ellipsoid with its vertices pushed
+        around, flat shaded."""
+        rng = self.rng if seed is None else random.Random(seed)
+        o = self.blob(cx, cr, cz, rx, ry, rz, albedo, part, rot=(0, 0, rng.uniform(0, 360)), segs=segs, smooth=False)
+        for v in o.data.vertices:
+            f = 1 + rng.uniform(-jitter, jitter)
+            v.co.x *= f
+            v.co.y *= f
+            v.co.z *= 1 + rng.uniform(-jitter, jitter)
         return o
 
     def sphere(self, cx, cr, cz, rx, rz, albedo, part, emit=None, ry=None, segs=16):
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=segs, ring_count=max(6, segs // 2), radius=1)
-        o = bpy.context.active_object
-        o.scale = (rx, (ry if ry is not None else rx) * S, rz)
-        bpy.ops.object.transform_apply(scale=True)
-        o.location = (cx, -cr * S, cz)
+        o = self._make('sphere', _scale(rx, ry if ry is not None else rx, rz), (cx, cr, cz), segs=segs)
         return self._finish(o, albedo, part, emit, smooth=True)
 
     def cone(self, cx, cr, z0, z1, r0, r1, albedo, part, emit=None, verts=12):
-        bpy.ops.mesh.primitive_cone_add(vertices=verts, radius1=1, radius2=max(0.0001, r1 / r0), depth=1)
-        o = bpy.context.active_object
-        o.scale = (r0, r0 * S, z1 - z0)
-        bpy.ops.object.transform_apply(scale=True)
-        o.location = (cx, -cr * S, (z0 + z1) / 2)
+        o = self._make('cone', _scale(r0, r0, z1 - z0), (cx, cr, (z0 + z1) / 2), verts=verts, r1=1.0, r2=r1 / r0)
         return self._finish(o, albedo, part, emit, smooth=True)
 
     def point_light(self, x, r, z, color, energy, radius=0.15, group='static'):

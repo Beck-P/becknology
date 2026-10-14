@@ -206,7 +206,9 @@ python3 tools/bridge-art/sprites_post.py npc /tmp/chars/npc-bartender
 - New NPCs are a `NPCS` entry in `characters.py` (skin, shirt, hair, hat, beard, apron, vest, pose).
 
 ### Pre-rendered Blender scenes (the target for every world)
-Rooms and areas are being rebuilt as Blender scenes. A scene is a script in `tools/bridge-art/scenes/` that places parts from an asset kit (`assets_lumar.py` — floors, walls, furniture, fireplaces, lights) on the world's own tile grid, renders it, and rewrites the world JSON to match what was built (collisions from the placed objects, interactions moved onto their objects, NPC actors, the `scene` reference).
+Rooms and areas are being rebuilt as Blender scenes. A scene is a script in `tools/bridge-art/scenes/` that places parts from an asset kit on the world's own tile grid, renders it, and rewrites the world JSON to match what was built (`scenekit.apply_world`: collisions from the placed objects, interactions moved onto their objects, NPC actors, the `scene` reference). Kits: `assets_lumar.py` (Lumar rooms — floors, walls, furniture, shop fittings, fireplaces, lamps), `assets_magic.py` (octagonal masonry rooms, angled windows, spell circles, candelabras, telescope…), `assets_cave.py` (rock faces, cave floor, lava, the dragon, hoard).
+
+Done so far: the tavern, inn, bakery, smithy, apothecary, the sorceress's tower and the dragon's cave.
 
 ```
 BVENV/bin/python tools/bridge-art/scenes/lumar_tavern.py /tmp/tavern
@@ -219,6 +221,9 @@ python3 tools/bridge-art/scene_post.py /tmp/tavern apps/bridge/assets/scenes/lum
 - **Depth, not layers:** `depth.png` stores per-pixel depth; `js/scene.js` depth-tests every character against it (a character is an upright billboard at its foot row), so walking behind tables, counters and stools is always right — no hand-sorted layers.
 - **Characters pick up the room's light** from a per-tile light grid the render bakes (`tileLight` in `scene.json`).
 - NPCs are `actors` in the world JSON's `scene` block (sheet, tile, facing, `pose: "sit"`), drawn with idle animation.
+- **Scenekit primitives** (all in tile units — x, row, z): `box`, `cyl`, `cyl_x`, `cyl_y`, `sphere`, `cone`, plus oriented ones — `bar` (a box between two floor points, for angled walls and rune strokes), `tube` (cylinder/cone between two 3D points: limbs, telescopes, horns), `blob` (rotated ellipsoid), `rock` (faceted boulder) and `poly` (flat surface: wing membranes, sails). Meshes are built with bmesh, so a scene of a thousand-plus parts builds in seconds.
+- **Glows add on top of the lit colour.** Give a glowing part a dark albedo and an emission of strength ≤ 1 in a saturated colour; bright albedo + strong emission clips to white.
+- Mark tiles an object stands on with `k.solid(...)`, including tiles NPC actors stand on — `apply_world` only knows what you mark.
 
 ### Lighting
 A world opts in with a `lighting` block in its JSON (see the header of `js/lighting.js` for every field): an `ambient` colour, `fromGlow` (reuse the world's `tileGlow` tiles as lights, with `skip` for things like glowing sea), `tileLights` (a light on every tile of a type — lanterns, fireplaces, lava), hand-placed `lights`, a faint `pilot` light and `bloom`. Keep lights where the art shows a source, warm for fire and lamps, coloured for magic and neon. Lighting is subtle on the ship and stations and moody at night in Lumar.
