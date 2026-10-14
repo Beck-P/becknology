@@ -647,6 +647,115 @@ var BridgeCine = (function () {
       var x = W / 2 - s.w / 2, y = -s.h + easeOut(t) * (top - s.h * 0.85 + s.h);
       skiff(b, 'shuttle', x, y, now, 3, 0.5 + 0.5 * t);
     } };
+    if (loc === 'enigma') return { dur: 3000, draw: function (b, W, H, t, now) {
+      // in toward the dark station, the ringed giant behind it; into the lit mouth of Bay 3
+      b.fillStyle = '#02040a';
+      b.fillRect(0, 0, W, H);
+      richStars(b, W, H, now, -0.001, 23);
+      if (BridgeOrbit.drawGiant) BridgeOrbit.drawGiant(b, W * 0.78, H * 0.3, Math.round(H * 0.42), now, 0.3);
+      var z = 0.42 + easeIn(t) * 2.6, mx = W * 0.6, my = H * 0.55, U = W * 0.5 * z;
+      function px(u) { return Math.round(mx + u * U); }
+      function py(v) { return Math.round(my + v * U); }
+      // the hull: a long chamfered slab, lit along its top by the giant
+      b.fillStyle = '#141c26';
+      b.beginPath();
+      b.moveTo(px(-1.7), py(-0.22)); b.lineTo(px(-1.5), py(-0.36)); b.lineTo(px(1.5), py(-0.36)); b.lineTo(px(1.75), py(-0.2));
+      b.lineTo(px(1.75), py(0.26)); b.lineTo(px(1.5), py(0.4)); b.lineTo(px(-1.5), py(0.4)); b.lineTo(px(-1.7), py(0.26));
+      b.closePath(); b.fill();
+      b.fillStyle = '#2a3846';
+      b.fillRect(px(-1.5), py(-0.36), px(1.5) - px(-1.5), Math.max(1, Math.round(U * 0.025)));
+      b.fillStyle = '#0c1218';
+      b.fillRect(px(-1.7), py(0.18), px(1.75) - px(-1.7), py(0.4) - py(0.18));
+      // superstructure: stepped blocks on the spine, solar wings off both ends, a truss under the keel
+      [[-1.05, -0.42, 0.42, 0.08], [-0.95, -0.5, 0.2, 0.08], [0.35, -0.44, 0.5, 0.08], [0.45, -0.52, 0.22, 0.08],
+       [-0.25, 0.4, 0.5, 0.07]].forEach(function (m) {
+        b.fillStyle = '#18222c';
+        b.fillRect(px(m[0]), py(m[1]), px(m[0] + m[2]) - px(m[0]), py(m[1] + m[3]) - py(m[1]));
+        b.fillStyle = '#2e3c4a';
+        b.fillRect(px(m[0]), py(m[1]), px(m[0] + m[2]) - px(m[0]), 1);
+      });
+      [-1, 1].forEach(function (sd) {
+        var w0 = sd < 0 ? -2.75 : 1.85, w1 = sd < 0 ? -1.8 : 2.8;
+        b.fillStyle = '#2a3846';
+        b.fillRect(px(sd < 0 ? -1.85 : 1.75), py(-0.02), px(sd < 0 ? -1.7 : 1.9) - px(sd < 0 ? -1.85 : 1.75), Math.max(1, py(0.02) - py(-0.02)));
+        for (var pn = 0; pn < 2; pn++) {
+          var v0 = pn ? 0.04 : -0.22, v1 = pn ? 0.22 : -0.04;
+          b.fillStyle = '#121c34';
+          b.fillRect(px(w0), py(v0), px(w1) - px(w0), py(v1) - py(v0));
+          b.fillStyle = 'rgba(90,120,200,0.35)';
+          for (var gx = w0; gx < w1; gx += 0.12) b.fillRect(px(gx), py(v0), 1, py(v1) - py(v0));
+          b.fillRect(px(w0), Math.round((py(v0) + py(v1)) / 2), px(w1) - px(w0), 1);
+        }
+      });
+      b.strokeStyle = '#1e2832'; b.lineWidth = 1;
+      for (var tr = -1.4; tr < 1.4; tr += 0.14) {
+        b.beginPath(); b.moveTo(px(tr), py(0.4)); b.lineTo(px(tr + 0.07), py(0.5)); b.lineTo(px(tr + 0.14), py(0.4)); b.stroke();
+      }
+      b.fillStyle = '#1e2832';
+      b.fillRect(px(-1.4), py(0.5), px(1.4) - px(-1.4), 1);
+      for (var sx = -1.6; sx < 1.7; sx += 0.12) {                                  // panel seams
+        b.fillStyle = 'rgba(0,0,0,0.35)';
+        b.fillRect(px(sx), py(-0.34), 1, py(0.38) - py(-0.34));
+      }
+      for (var wi = 0; wi < 90; wi++) {                                            // a few windows still lit
+        var wu = -1.6 + hash(wi) * 3.3, wv = -0.28 + hash(wi * 3) * 0.4;
+        if (Math.abs(wu) < 0.3 && wv > -0.1) continue;
+        var on = hash(wi * 7) > 0.72 && !(hash(wi * 11) > 0.9 && Math.floor(now / 500 + wi) % 3 === 0);
+        b.fillStyle = on ? (hash(wi * 5) > 0.5 ? '#ffd890' : '#80e0e8') : '#1e2832';
+        b.fillRect(px(wu), py(wv), Math.max(1, Math.round(U * 0.018)), Math.max(1, Math.round(U * 0.01)));
+      }
+      b.strokeStyle = '#2a3846'; b.lineWidth = Math.max(1, Math.round(U * 0.008));     // the antenna mast and its dish
+      b.beginPath(); b.moveTo(px(1.05), py(-0.36)); b.lineTo(px(1.05), py(-0.75)); b.stroke();
+      b.beginPath(); b.ellipse(px(1.05), py(-0.62), U * 0.07, U * 0.025, -0.4, 0, Math.PI * 2); b.stroke();
+      if (Math.floor(now / 700) % 2) { b.fillStyle = '#ff5040'; b.fillRect(px(1.05) - 1, py(-0.76) - 1, 3, 3); }
+      for (var rl = 0; rl < 14; rl++) {                                             // running lights chasing along the edge
+        var lit = Math.floor(now / 120) % 14 === rl;
+        b.fillStyle = lit ? '#e0faff' : '#30505a';
+        b.fillRect(px(-1.5 + rl * 0.23), py(0.4) - 1, 2, 2);
+      }
+      // the mouth of Bay 3: the field glowing over the lit hangar
+      var m0 = px(-0.2), m1 = px(0.2), n0 = py(-0.06), n1 = py(0.15);
+      b.fillStyle = '#081820';
+      b.fillRect(m0, n0, m1 - m0, n1 - n0);
+      b.fillStyle = '#1a3440';
+      b.fillRect(m0, n1 - Math.round((n1 - n0) * 0.3), m1 - m0, Math.round((n1 - n0) * 0.3));
+      for (var cl = 0; cl < 6; cl++) {
+        b.fillStyle = Math.floor(now / 150 + cl) % 6 === 0 ? '#c0f8ff' : '#3a8a98';
+        b.fillRect(Math.round(m0 + (m1 - m0) * (0.2 + cl * 0.12)), n1 - Math.round((n1 - n0) * 0.2), 2, 1);
+      }
+      b.save();
+      b.globalCompositeOperation = 'lighter';
+      var fg = b.createLinearGradient(0, n0, 0, n1);
+      fg.addColorStop(0, 'rgba(90,208,232,0.25)'); fg.addColorStop(0.5, 'rgba(90,208,232,0.1)'); fg.addColorStop(1, 'rgba(120,230,255,0.4)');
+      b.fillStyle = fg;
+      b.fillRect(m0, n0, m1 - m0, n1 - n0);
+      for (var sl = 0; sl < 6; sl++) {
+        b.fillStyle = 'rgba(150,240,255,0.12)';
+        b.fillRect(m0, Math.round(n1 - ((now / 30 + sl * (n1 - n0) / 6) % (n1 - n0))), m1 - m0, 1);
+      }
+      var halo = b.createRadialGradient((m0 + m1) / 2, (n0 + n1) / 2, 0, (m0 + m1) / 2, (n0 + n1) / 2, (m1 - m0) * 0.9);
+      halo.addColorStop(0, 'rgba(90,208,232,0.18)'); halo.addColorStop(1, 'rgba(90,208,232,0)');
+      b.fillStyle = halo;
+      b.fillRect(m0 - (m1 - m0), n0 - (m1 - m0), (m1 - m0) * 3, (m1 - m0) * 3);
+      b.restore();
+      b.fillStyle = '#33475a';                                                     // the frame round the mouth
+      b.fillRect(m0 - 2, n0 - 2, m1 - m0 + 4, 2); b.fillRect(m0 - 2, n0, 2, n1 - n0); b.fillRect(m1, n0, 2, n1 - n0);
+      if (Math.floor(now / 450) % 2) { b.fillStyle = '#ff5040'; b.fillRect(m0 - 3, n0 - 3, 2, 2); b.fillRect(m1 + 1, n0 - 3, 2, 2); }
+      // the skiff: across and in, sliding into the mouth
+      var s = meta.shuttle, k1 = easeOut(Math.min(1, t * 1.1));
+      var x = -s.w + k1 * ((m0 + m1) / 2 - s.w * 0.5 + s.w), y = H * 0.8 - k1 * (H * 0.8 - (n0 + n1) / 2 + s.h * 0.55);
+      b.save();
+      b.globalAlpha = t > 0.82 ? Math.max(0, 1 - (t - 0.82) / 0.12) : 1;
+      skiff(b, 'shuttle', Math.round(x), Math.round(y), now, 4 + (1 - t) * 14, t > 0.55 ? 0.6 : 0);
+      b.restore();
+      if (t > 0.8) {                                                               // through the field: a wash of teal light
+        b.save();
+        b.globalCompositeOperation = 'lighter';
+        b.fillStyle = 'rgba(90,208,232,' + (Math.sin(Math.min(1, (t - 0.8) / 0.2) * Math.PI) * 0.45).toFixed(2) + ')';
+        b.fillRect(0, 0, W, H);
+        b.restore();
+      }
+    } };
     if (loc === 'singularity' && typeof BridgeHorizon !== 'undefined') return { dur: 2800, draw: function (b, W, H, t, now) {
       // the horizon swallowing the sky; down to the old landing ring, trailing echoes of itself
       var P = { hx: W * 1.0, hy: -H * (0.45 - t * 0.15), R: H * (0.75 + t * 0.35), k: 1 };

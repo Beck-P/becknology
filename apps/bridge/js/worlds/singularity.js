@@ -558,6 +558,11 @@
     items: function (world, offX, offY, ts, now, sc) {
       return world.horizon && typeof BridgeHorizon !== 'undefined' ? BridgeHorizon.echoes(world, offX, offY, ts, now, sc) : [];
     },
+    over: function (ctx, world, offX, offY, ts, now) {
+      if (!world.horizon || typeof BridgeHorizon === 'undefined') return;
+      var w = ctx.canvas.width, h = ctx.canvas.height;
+      BridgeHorizon.drift(ctx, w, h, now, BridgeHorizon.place(world, BridgeWorld.getView(), w, h));
+    },
     post: function (ctx, buf, w, h, offX, offY, ts, now) {
       var world = BridgeWorld.getWorld();
       if (!world.horizon || typeof BridgeHorizon === 'undefined') return;

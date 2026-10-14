@@ -39,6 +39,10 @@ var BridgeControls = (function () {
         if (typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
         e.preventDefault();
         break;
+      case 'j': case 'J':
+        if (typeof BridgeQuests !== 'undefined') BridgeQuests.toggle();
+        e.preventDefault();
+        break;
       case 'i': case 'I':
         if (typeof BridgeInventory !== 'undefined') BridgeInventory.toggleMenu();
         e.preventDefault();

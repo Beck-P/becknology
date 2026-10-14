@@ -1,0 +1,328 @@
+{
+  "ship-mark": {
+    "title": "The Ship Mark",
+    "where": "Lumar",
+    "reward": 150,
+    "start": "Someone who wore your ship's mark came to Lumar long before you did.",
+    "done": "A pilot of your line came here, met the dragon, and never left. Whatever they were listening for, the egg is listening for it too.",
+    "clues": [
+      {
+        "id": "bones",
+        "on": {
+          "world": "lumar-crimson-cave",
+          "label": "BONES"
+        },
+        "text": "A skeleton deep in the dragon's cave clutches a medal. The ship mark on it is yours."
+      },
+      {
+        "id": "scrolls",
+        "on": {
+          "world": "lumar-midnight-tower",
+          "label": "SCROLLS"
+        },
+        "text": "In the sorceress's tower, a scroll sealed in red wax. The seal bears the same ship mark."
+      },
+      {
+        "id": "painting",
+        "on": {
+          "world": "lumar-tavern",
+          "label": "PAINTING"
+        },
+        "text": "The tavern's oil painting: a ship under a full green moon, signed 'E.B.'"
+      },
+      {
+        "id": "compass",
+        "on": {
+          "world": "lumar-inn-upstairs",
+          "label": "THE OTHER BED"
+        },
+        "text": "A traveller's compass at the inn that never settles on north."
+      },
+      {
+        "id": "guestbook",
+        "on": {
+          "world": "lumar-inn-upstairs",
+          "label": "WRITING DESK"
+        },
+        "text": "The inn's guestbook, last entry, no name: 'The dragon is not asleep. It is listening.'"
+      },
+      {
+        "id": "egg",
+        "on": {
+          "world": "lumar-crimson-cave",
+          "label": "DRAGON'S EGG"
+        },
+        "text": "The dragon's egg glows faintly. Something inside is listening."
+      }
+    ]
+  },
+  "heron": {
+    "title": "The Heron's Cargo",
+    "where": "Crimson Reach, Lumar",
+    "reward": 120,
+    "start": "A galleon called the Heron broke her back on the Crimson reef. Somebody thinks her cargo is still aboard.",
+    "done": "H.M. charted the reef, hid the chart on the stack and went for the cargo through the dragon's caves. The pirates are waiting for the tide to do the same.",
+    "clues": [
+      {
+        "id": "chest",
+        "on": {
+          "world": "lumar-crimson",
+          "label": "SEA CHEST"
+        },
+        "text": "A chest under an X on the sea stack: a reef chart and a note. 'The Heron's cargo is still aboard. - H.M.'"
+      },
+      {
+        "id": "wreck",
+        "on": {
+          "world": "lumar-crimson",
+          "label": "GILDED HERON"
+        },
+        "text": "The Heron lies listing on the reef, her hold open to the sea."
+      },
+      {
+        "id": "tent",
+        "on": {
+          "world": "lumar-crimson",
+          "label": "TENT"
+        },
+        "text": "In the pirates' tent, the same reef chart, the wreck circled twice."
+      },
+      {
+        "id": "charcoal",
+        "on": {
+          "world": "lumar-crimson",
+          "label": "CHARCOAL MARK"
+        },
+        "text": "Charcoal by the cave mouth, signed H.M.: 'Down the stairs, bear left, mind the lava.'"
+      },
+      {
+        "id": "watcher",
+        "on": {
+          "world": "lumar-crimson",
+          "label": "CRIMSON WATCHER"
+        },
+        "text": "The Crimson Watcher keeps the camp's fire and tells you to keep away from the cave."
+      }
+    ]
+  },
+  "signal": {
+    "title": "Forty-Seven Point Three",
+    "where": "Enigma Station",
+    "reward": 150,
+    "start": "Enigma's antenna is still listening to something on 47.3 MHz.",
+    "done": "Okafor never left. The missing suit, the bedroll, the lantern, the drone tuned to the signal: someone is still aboard Enigma, answering it.",
+    "clues": [
+      {
+        "id": "antenna",
+        "on": {
+          "world": "enigma",
+          "label": "ANTENNA ARRAY"
+        },
+        "text": "The antenna array: signal detected on 47.3 MHz, source unknown, still listening."
+      },
+      {
+        "id": "core",
+        "on": {
+          "world": "enigma",
+          "label": "DATA CORE"
+        },
+        "text": "The data core's logs: contact with command lost 72 cycles ago. 'No one is coming.'"
+      },
+      {
+        "id": "log",
+        "on": {
+          "world": "enigma-dock",
+          "label": "BAY CONTROL"
+        },
+        "text": "The bay log: the skiff Wren left in 4402 and never returned. Okafor started repairs on the Kestrel."
+      },
+      {
+        "id": "suit",
+        "on": {
+          "world": "enigma-dock",
+          "label": "SUIT RACK"
+        },
+        "text": "Four hooks, three suits. The empty one is D. Okafor's."
+      },
+      {
+        "id": "bedroll",
+        "on": {
+          "world": "enigma-dock",
+          "label": "BEDROLL"
+        },
+        "text": "A bedroll in Docking Bay 3. The lantern beside it is still lit."
+      },
+      {
+        "id": "drone",
+        "on": {
+          "world": "enigma-dock",
+          "label": "DRONE"
+        },
+        "text": "A maintenance drone on the bench, tuned to 47.3 MHz."
+      }
+    ]
+  },
+  "brink": {
+    "title": "Echoes at the Brink",
+    "where": "The Singularity",
+    "reward": 150,
+    "start": "Time runs wrong at the Brink. Things that happened elsewhere happen here too.",
+    "done": "Every echo at the Brink is of somewhere you have been. The hole isn't remembering the universe. It's remembering you.",
+    "clues": [
+      {
+        "id": "sundial",
+        "on": {
+          "world": "singularity",
+          "label": "SUNDIAL"
+        },
+        "text": "A sundial with no sun, its shadow pointing at the hole and growing."
+      },
+      {
+        "id": "gate",
+        "on": {
+          "world": "singularity",
+          "label": "RING GATE"
+        },
+        "text": "A half-sunk ring of stone. Through it the stars are in the wrong places, and you can see your own back."
+      },
+      {
+        "id": "stair",
+        "on": {
+          "world": "singularity",
+          "label": "STAIR"
+        },
+        "text": "Steps that climb into nothing, the last few hanging loose and turning slowly."
+      },
+      {
+        "id": "lumar",
+        "on": {
+          "world": "singularity",
+          "label": "LUMAR ECHO"
+        },
+        "text": "An echo of Lumar: cobbles from a square you know, a lantern still burning, half a wall."
+      },
+      {
+        "id": "arcadia",
+        "on": {
+          "world": "singularity",
+          "label": "ARCADIA ECHO"
+        },
+        "text": "An echo of Arcadia: a slab of street still wet with rain that fell somewhere else."
+      },
+      {
+        "id": "station",
+        "on": {
+          "world": "singularity",
+          "label": "STATION ECHO"
+        },
+        "text": "An echo of a station: a server rack blinking the same pattern Enigma was transmitting."
+      },
+      {
+        "id": "fall",
+        "on": {
+          "world": "singularity",
+          "label": "FROZEN FALL"
+        },
+        "text": "A rockfall stopped mid-air. If you watch long enough, one stone moves."
+      }
+    ]
+  },
+  "null": {
+    "title": "NULL",
+    "where": "Arcadia",
+    "reward": 100,
+    "start": "Somebody has been spraying NULL around the District.",
+    "done": "NULL is a crew. The broken cabinet is their drop, the kid runs their messages, and Club Void is where they meet. The chained gate is where they live.",
+    "clues": [
+      {
+        "id": "gate",
+        "on": {
+          "world": "arcadia-street",
+          "label": "ALLEY GATE"
+        },
+        "text": "The alley gate, chained shut. Someone sprayed NULL on the bars."
+      },
+      {
+        "id": "cabinet",
+        "on": {
+          "world": "arcadia",
+          "label": "???"
+        },
+        "text": "A broken arcade cabinet flickers fragments of something hidden."
+      },
+      {
+        "id": "stranger",
+        "on": {
+          "world": "arcadia",
+          "label": "STRANGER"
+        },
+        "text": "A stranger in the arcade: the old owner left something inside that broken cabinet."
+      },
+      {
+        "id": "kid",
+        "on": {
+          "world": "arcadia-street",
+          "label": "STREET KID"
+        },
+        "text": "The street kid asks for tokens, and watches the gate."
+      },
+      {
+        "id": "void",
+        "on": {
+          "world": "arcadia-street",
+          "label": "CLUB VOID"
+        },
+        "text": "Club Void. A slot in the door opens, two eyes, and closes again."
+      }
+    ]
+  },
+  "crystals": {
+    "title": "Four Colours",
+    "where": "Lumar",
+    "reward": 120,
+    "start": "The cartographer says each of Lumar's four islands grows its own colour of crystal.",
+    "done": "Crimson, rose, sapphire, and whatever the stones on Midnight are guarding. The cartographer will want to hear it.",
+    "clues": [
+      {
+        "id": "cartographer",
+        "on": {
+          "world": "lumar-house",
+          "label": "CARTOGRAPHER"
+        },
+        "text": "The cartographer: four islands, four colours of crystal. Three mapped. Nobody maps Midnight."
+      },
+      {
+        "id": "crimson",
+        "on": {
+          "world": "lumar-crimson",
+          "label": "CRYSTAL FIELD"
+        },
+        "text": "Crimson crystals in a field above the reef, all leaning toward the ridge."
+      },
+      {
+        "id": "rose",
+        "on": {
+          "world": "lumar-rose",
+          "label": "ROSE CRYSTAL"
+        },
+        "text": "Rose crystals, harvested on Rose Cove."
+      },
+      {
+        "id": "sapphire",
+        "on": {
+          "world": "lumar-sapphire",
+          "label": "SAPPHIRE CRYSTAL"
+        },
+        "text": "Sapphire crystals, traded at Sapphire Port."
+      },
+      {
+        "id": "midnight",
+        "on": {
+          "world": "lumar-midnight",
+          "label": "STONE SENTINEL"
+        },
+        "text": "On Midnight Isle, stone sentinels guard the way to the sorceress's tower."
+      }
+    ]
+  }
+}

@@ -1000,3 +1000,66 @@ body::after {
   .nav-planet { width: 96px; height: 96px; }
   .nav-hint { display: none; }
 }
+
+/* ---- Quests: the Journal pill, toasts, the journal ----
+   Same glass as the world's other pills; the journal is a parchment-dark
+   page listing each quest begun, the clues found, and what's still out there. */
+#journal-pill {
+  position: fixed; top: 52px; left: 16px; z-index: 25;
+  display: none; align-items: center; gap: 7px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 14px; letter-spacing: 0.5px;
+  color: rgba(242, 238, 230, 0.9); background: rgba(14, 12, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 5px 13px 5px 5px;
+  cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+#journal-pill:hover { background: rgba(34, 30, 50, 0.9); border-color: rgba(255, 255, 255, 0.25); transform: translateY(-1px); }
+#journal-pill .ip-key { font-size: 10px; min-width: 22px; height: 18px; }
+#journal-pill.ping { animation: journal-ping 1.2s ease-out 2; }
+@keyframes journal-ping { 0% { box-shadow: 0 0 0 0 rgba(255, 217, 138, 0.7); } 100% { box-shadow: 0 0 0 12px rgba(255, 217, 138, 0); } }
+
+.quest-toast {
+  position: fixed; top: 58px; left: 50%; z-index: 30; min-width: 240px; max-width: min(440px, 90vw);
+  transform: translate(-50%, -8px); opacity: 0; pointer-events: none;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; text-align: center; font-variant-ligatures: none;
+  padding: 10px 18px 9px; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.94), rgba(18, 14, 10, 0.94));
+  border: 1px solid rgba(224, 192, 96, 0.55); box-shadow: 0 0 22px rgba(224, 160, 64, 0.2), 0 10px 26px rgba(0, 0, 0, 0.55);
+  transition: opacity 0.35s, transform 0.35s;
+}
+.quest-toast.visible { opacity: 1; transform: translate(-50%, 0); }
+.qt-kicker { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #e0c060; }
+.qt-title { font-size: 18px; letter-spacing: 1px; color: #f6eedc; margin: 2px 0 3px; }
+.qt-sub { font-size: 12px; line-height: 1.35; color: #c8bca4; }
+.qt-hint { font-size: 11px; color: #8a8070; margin-top: 6px; display: flex; gap: 6px; justify-content: center; align-items: center; }
+.qt-hint .ip-key { font-size: 9px; min-width: 16px; height: 15px; }
+
+#quest-journal {
+  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  background: rgba(4, 4, 10, 0.55); font-family: 'Pixelify Sans', 'Courier New', monospace;
+  font-variant-ligatures: none;
+}
+#quest-journal.visible { display: flex; }
+.qj-panel {
+  width: min(560px, 92vw); max-height: 82vh; overflow-y: auto; padding: 18px 22px 20px; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(34, 26, 18, 0.97), rgba(20, 16, 12, 0.97));
+  border: 1px solid rgba(224, 192, 96, 0.45); box-shadow: 0 0 30px rgba(224, 160, 64, 0.15), 0 16px 40px rgba(0, 0, 0, 0.6);
+  color: #e8dcc4;
+}
+.qj-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.qj-title { font-size: 13px; letter-spacing: 5px; text-transform: uppercase; color: #e0c060; }
+.qj-close { background: none; border: none; cursor: pointer; padding: 0; }
+.qj-empty { font-size: 14px; color: #a89c84; padding: 20px 0; text-align: center; }
+.qj-quest { border-top: 1px solid rgba(224, 192, 96, 0.18); padding: 12px 0 6px; }
+.qj-q-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.qj-q-title { font-size: 18px; color: #f6eedc; letter-spacing: 0.5px; }
+.qj-q-count { font-size: 12px; color: #e0c060; white-space: nowrap; }
+.qj-quest.done .qj-q-title { color: #b8ac94; }
+.qj-quest.done .qj-q-count { color: #7ac08a; }
+.qj-q-where { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8a7e68; margin-top: 1px; }
+.qj-q-text { font-size: 13px; line-height: 1.45; color: #d8ccb2; margin: 8px 0 6px; }
+.qj-clues { list-style: none; margin: 0; padding: 0; font-size: 13px; line-height: 1.4; }
+.qj-clues li { position: relative; padding: 3px 0 3px 16px; color: #c4b89e; }
+.qj-clues li.found::before { content: '\25C6'; position: absolute; left: 0; top: 4px; font-size: 9px; color: #e0c060; }
+.qj-clues li.missing { color: #7c725e; font-style: italic; }
+.qj-clues li.missing::before { content: '\25C7'; position: absolute; left: 0; top: 4px; font-size: 9px; color: #6a604e; }

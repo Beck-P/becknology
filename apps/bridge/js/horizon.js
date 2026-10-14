@@ -193,6 +193,59 @@ var BridgeHorizon = (function () {
     ctx.restore();
   }
 
+  // ---- things falling in: grit and shards stream toward the horizon, stretching as they go -----------
+  var motes = null;
+  function drift(ctx, w, h, now, P) {
+    if (!motes) {
+      motes = [];
+      for (var i = 0; i < 70; i++) motes.push({ seed: i, born: -hash(i * 7) * 9000, life: 5000 + hash(i * 3) * 5000 });
+    }
+    ctx.save();
+    // the disc's light wheeling over the plain, a slow sweep of amber like a lighthouse round the hole
+    ctx.globalCompositeOperation = 'lighter';
+    var a0 = Math.PI * 0.62 + Math.sin(now / 7000) * 0.5;
+    for (var b = 0; b < 2; b++) {
+      var a = a0 + b * 0.38, spread = 0.07 + b * 0.03;
+      var L = Math.hypot(w, h) + P.R * 2;
+      var g = ctx.createRadialGradient(P.hx, P.hy, P.R, P.hx, P.hy, L);
+      var al = (0.05 + 0.03 * Math.sin(now / 1300 + b)) * (0.6 + 0.4 * P.k);
+      g.addColorStop(0, 'rgba(255,190,120,' + (al * 1.6).toFixed(3) + ')');
+      g.addColorStop(0.5, 'rgba(255,150,90,' + al.toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(255,120,80,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(P.hx, P.hy);
+      ctx.lineTo(P.hx + Math.cos(a - spread) * L, P.hy + Math.sin(a - spread) * L);
+      ctx.lineTo(P.hx + Math.cos(a + spread) * L, P.hy + Math.sin(a + spread) * L);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // the motes: born anywhere on screen, accelerating in, drawn longer and redder the nearer they get
+    for (var m = 0; m < motes.length; m++) {
+      var o = motes[m];
+      var age = now - o.born;
+      if (age > o.life) { o.born = now; o.seed += 101; age = 0; o.life = 5000 + hash(o.seed * 3) * 5000; }
+      var t = age / o.life;
+      var sx = hash(o.seed * 11) * w * 1.2 - w * 0.1, sy = hash(o.seed * 13) * h * 1.2 - h * 0.1;
+      var e = t * t * t;
+      var x = sx + (P.hx - sx) * e, y = sy + (P.hy - sy) * e;
+      var dx = P.hx - x, dy = P.hy - y, d = Math.hypot(dx, dy) + 1e-3;
+      if (d < P.R * 1.02) continue;
+      var near = Math.max(0, 1 - (d - P.R) / (P.R * 1.6));
+      var len = 1 + near * near * 26 + t * 4;
+      var ux = dx / d, uy = dy / d;
+      var c = near > 0.6 ? '255,150,90' : near > 0.3 ? '255,210,170' : '220,210,255';
+      var al2 = Math.min(1, t * 4) * (0.35 + 0.5 * near) * (1 - Math.max(0, (t - 0.92) / 0.08));
+      ctx.strokeStyle = 'rgba(' + c + ',' + al2.toFixed(2) + ')';
+      ctx.lineWidth = hash(o.seed) > 0.85 ? 2 : 1;
+      ctx.beginPath();
+      ctx.moveTo(Math.round(x), Math.round(y));
+      ctx.lineTo(Math.round(x - ux * len), Math.round(y - uy * len));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // ---- echoes of the pilot, a moment behind --------------------------------------------------------
   var trail = [];
   function echoes(world, offX, offY, ts, now, sc) {
@@ -220,5 +273,5 @@ var BridgeHorizon = (function () {
     return out;
   }
 
-  return { place: place, sky: sky, post: post, echoes: echoes };
+  return { place: place, sky: sky, post: post, echoes: echoes, drift: drift };
 })();

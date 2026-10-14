@@ -59,7 +59,7 @@ var BridgeInteractions = (function () {
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
-                      'arcadia-skypad': 'Skyport 7',
+                      'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters' };
 
   function titleCase(t) {
@@ -311,6 +311,7 @@ var BridgeInteractions = (function () {
   }
 
   function executeInteraction(inter) {
+    if (typeof BridgeQuests !== 'undefined') BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter);
     switch (inter.type) {
       case 'app':
         // Save world position, then navigate to app
@@ -580,6 +581,7 @@ var BridgeInteractions = (function () {
   }
 
   function showDialog(title, text, inter) {
+    hideDialog();                      // one dialog at a time: drop any line still typing
     dialogVisible = true;
     var promptEl = document.getElementById('interact-prompt');
     if (promptEl) promptEl.classList.remove('visible');
@@ -605,17 +607,17 @@ var BridgeInteractions = (function () {
     var i = 0;
     hint.textContent = 'Skip';
     dialogEl.classList.add('typing');
-    typing = { done: false, finish: function () {
-      clearInterval(typing.timer);
+    var line = typing = { done: false, finish: function () {
+      clearInterval(line.timer);
       out.textContent = body;
-      typing.done = true;
+      line.done = true;
       hint.textContent = 'Close';
       dialogEl.classList.remove('typing');
     } };
-    typing.timer = setInterval(function () {
+    line.timer = setInterval(function () {
       i = Math.min(body.length, i + 2);
       out.textContent = body.slice(0, i);
-      if (i >= body.length) typing.finish();
+      if (i >= body.length) line.finish();
     }, 22);
     dialogEl.addEventListener('click', function () {
       if (typing && !typing.done) typing.finish(); else hideDialog();

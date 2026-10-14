@@ -418,9 +418,17 @@ var BridgeOrbit = (function () {
     ctx.restore();
   }
 
+  /** Enigma's ringed giant: back half of the rings, the planet, the near half. */
+  function drawGiant(ctx, cx, cy, R, now, tilt) {
+    drawRing(ctx, cx, cy, R, false, tilt || 0.28);
+    drawPlanet(ctx, 'gas', cx, cy, R, now);
+    drawRing(ctx, cx, cy, R, true, tilt || 0.28);
+  }
+
   /** Which kind of world a place is ('ocean', 'city', 'gas', 'hole' or null for open space). */
   function kindOf(id) { return (PLACES[id] || {}).planet || null; }
 
   return { draw: draw, getLocation: getLocation, setLocation: setLocation, placeName: placeName, kindOf: kindOf,
-           planet: planetCanvas, drawPlanet: drawPlanet, drawHole: drawHole, drawStation: drawStation, drawStars: drawStars };
+           planet: planetCanvas, drawPlanet: drawPlanet, drawHole: drawHole, drawStation: drawStation, drawStars: drawStars,
+           drawGiant: drawGiant };
 })();

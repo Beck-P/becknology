@@ -17,7 +17,7 @@
  */
 var BridgeShip = (function () {
   var SHIP = { bridge: 1, quarters: 1, hangar: 1 };
-  var LANDING = { lumar: 'lumar', arcadia: 'arcadia-skypad', enigma: 'enigma', singularity: 'singularity' };
+  var LANDING = { lumar: 'lumar', arcadia: 'arcadia-skypad', enigma: 'enigma-dock', singularity: 'singularity' };
   var HANGAR_SPAWN = { x: 8, y: 9 };
   var anim = null;      // the shuttle in the air in this world
   var busy = false;
@@ -28,7 +28,7 @@ var BridgeShip = (function () {
     if (!id) return null;
     if (/^lumar/.test(id)) return 'lumar';
     if (/^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair)/.test(id)) return 'arcadia';
-    if (id === 'enigma') return 'enigma';
+    if (/^enigma/.test(id)) return 'enigma';
     if (id === 'singularity') return 'singularity';
     return null;
   }
@@ -112,6 +112,27 @@ var BridgeShip = (function () {
       ctx.stroke();
       ctx.restore();
     }
+    if (style === 'enigma' && world.dock && world.dock.clamps && near > 0.35) {
+      // the cradle's clamps reach for the hull with magnetic tethers as it settles
+      var ts2 = ts || 32, hy = y - alt + b.h * 0.6;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      world.dock.clamps.forEach(function (c, i) {
+        var cx = offX + c[0] * ts2, cy = offY + c[1] * ts2;
+        var tx = gx + (c[0] * ts2 + offX < gx ? -1 : 1) * b.w * 0.3, ty = hy;
+        var fl = 0.5 + 0.5 * Math.sin(now / 40 + i * 2);
+        ctx.strokeStyle = 'rgba(120,230,255,' + (0.55 * (near - 0.35) / 0.65 * fl + 0.1).toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(Math.round(cx), Math.round(cy));
+        var mx = (cx + tx) / 2 + Math.sin(now / 30 + i) * 3, my = (cy + ty) / 2 + Math.cos(now / 26 + i) * 3;
+        ctx.quadraticCurveTo(mx, my, Math.round(tx), Math.round(ty));
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(200,250,255,' + (0.7 * fl).toFixed(2) + ')';
+        ctx.fillRect(Math.round(cx) - 1, Math.round(cy) - 1, 3, 3);
+      });
+      ctx.restore();
+    }
     if (style === 'singularity' && alt > 4) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
@@ -121,7 +142,8 @@ var BridgeShip = (function () {
       }
       ctx.restore();
     }
-    ctx.fillStyle = style === 'lumar' ? 'rgba(220,200,160,0.6)' : style === 'singularity' ? 'rgba(180,150,240,0.5)' : 'rgba(200,190,170,0.5)';
+    ctx.fillStyle = style === 'lumar' ? 'rgba(220,200,160,0.6)' : style === 'singularity' ? 'rgba(180,150,240,0.5)' :
+      style === 'enigma' ? 'rgba(160,230,255,0.7)' : 'rgba(200,190,170,0.5)';
     for (var i = anim.dust.length - 1; i >= 0; i--) {
       var d = anim.dust[i];
       d.x += d.vx; d.y += d.vy; d.life -= 0.03;

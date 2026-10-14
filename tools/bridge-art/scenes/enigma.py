@@ -5,9 +5,10 @@
 
 An abandoned relay station adrift: cracked viewports, server racks still
 blinking, the antenna array in the middle picking up 47.3 MHz, the data
-core, emergency lights, debris — and the pilot's ship docked at the
-airlock. Space (the world's own animated backdrop) shows through the
-viewports, the floor windows and everywhere outside the hull.
+core, emergency lights, debris — and the airlock tube out to Docking
+Bay 3, where the skiff docks (enigma_dock.py). Space (the world's own
+animated backdrop) shows through the viewports, the floor windows and
+everywhere outside the hull.
 """
 import math
 import os
@@ -27,8 +28,7 @@ k = Kit(20, 16, margin_top=1.0, margin_bottom=0.5, margin_x=1.0, seed=161)
 HOLES = [(6, 13, 7, 14), (13, 13, 14, 14)]
 T.station_floor(k, 3, 4, 17, 14, holes=HOLES)
 T.station_room(k, 3, 4, 17, 14, H, windows=[(6.6, 8.4, 0.9, 2.3, True), (11.6, 13.4, 0.9, 2.3, False)], airlock=(4.0, 6.0))
-T.docking_tube(k, 1.6, 2.4, 4.05, 5.95)
-T.docked_ship(k, 0.85, 3.9, z=0.3, length=3.2)
+T.docking_tube(k, -1.0, 2.4, 4.05, 5.95)          # the tube out to Docking Bay 3
 
 # ---- back wall ------------------------------------------------------------------------------
 T.wall_screen(k, 5.0, 4.0, broken=True)
@@ -67,7 +67,7 @@ k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.35}},
          world_light=('#16283a', 0.6))
 
 apply_world(WORLD, k, (3, 4, 16, 13), doors=[(2, 4), (2, 5)], scene_id='enigma', moves={
-    'CIPHER TERMINAL': (3, 7), 'SIGNAL RELAY': (16, 7), 'SHIP': [(2, 4), (2, 5)], 'ANTENNA ARRAY': (9, 8),
+    'CIPHER TERMINAL': (3, 7), 'SIGNAL RELAY': (16, 7), 'DOCKING BAY 3': [(2, 4), (2, 5)], 'ANTENNA ARRAY': (9, 8),
     'VIEWPORT': [(7, 3), (12, 3), (6, 13), (13, 13)], 'DATA CORE': [(9, 11), (10, 11)]},
     scene_extra={'backdrop': True, 'flicker': {'mode': 'pulse'}})
 print('enigma done')

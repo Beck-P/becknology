@@ -600,6 +600,15 @@
       }
     }
 
+    // Docking Bay 3 looks out on the ringed giant (parallax: it hangs far off)
+    var dw = BridgeWorld.getWorld();
+    if (dw && dw.dock && dw.dock.giant && typeof BridgeOrbit !== 'undefined' && BridgeOrbit.drawGiant) {
+      var v = BridgeWorld.getView(), g = dw.dock.giant;
+      var camCol = (w / 2 - v.offX) / v.ts, camRow = (h / 2 - v.offY) / v.ts;
+      BridgeOrbit.drawGiant(ctx, w / 2 + (g[0] - camCol) * v.ts * 0.35, h / 2 + (g[1] - camRow) * v.ts * 0.35,
+                            Math.round(g[2] * v.ts), time, 0.3);
+    }
+
     // Occasional shooting star
     if (!shootingStar && Math.random() < 0.001) {
       shootingStar = {
@@ -628,6 +637,127 @@
       if (ss.life > ss.maxLife) shootingStar = null;
     }
   }
+
+  // ---- Docking Bay 3: the containment field, the guide lights, things adrift ----
+  function hh(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+  function drawDockField(ctx, world, offX, offY, ts, now) {
+    var d = world.dock;
+    if (!d || !d.field) return;
+    var f = d.field;
+    var x0 = Math.round(offX + f[0] * ts), x1 = Math.round(offX + f[1] * ts);
+    var y0 = Math.round(offY + f[2] * ts), y1 = Math.round(offY + f[3] * ts);
+    var W = x1 - x0, H = y1 - y0;
+    if (W <= 0 || H <= 0) return;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    var g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, 'rgba(90,208,232,0.12)');
+    g.addColorStop(0.35, 'rgba(90,208,232,0.03)');
+    g.addColorStop(0.8, 'rgba(90,208,232,0.05)');
+    g.addColorStop(1, 'rgba(120,230,255,0.22)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x0, y0, W, H);
+    // scan lines climbing the sheet
+    for (var i = 0; i < 9; i++) {
+      var yy = y1 - ((now / 55 + i * H / 9) % H);
+      var a = 0.05 + 0.05 * Math.sin(now / 400 + i * 1.7);
+      ctx.fillStyle = 'rgba(150,240,255,' + a.toFixed(3) + ')';
+      ctx.fillRect(x0, Math.round(yy), W, 1);
+    }
+    // a slow standing wave: brighter columns that breathe
+    for (var c = 0; c < 14; c++) {
+      var cx = x0 + Math.round((c + 0.5) * W / 14 + Math.sin(now / 1300 + c) * 6);
+      var ca = 0.035 * (0.5 + 0.5 * Math.sin(now / 700 + c * 2.3));
+      ctx.fillStyle = 'rgba(120,230,255,' + ca.toFixed(3) + ')';
+      ctx.fillRect(cx - 2, y0, 4, H);
+    }
+    // hex-cell glints flaring and fading across the sheet
+    for (var j = 0; j < 46; j++) {
+      var cyc = now / 1700 + hh(j);
+      var n = Math.floor(cyc), ph = cyc - n;
+      var ga = Math.sin(ph * Math.PI);
+      var sx = x0 + Math.floor(hh(j * 3 + n * 17) * W), sy = y0 + Math.floor(hh(j * 7 + n * 31) * H);
+      ctx.fillStyle = 'rgba(190,250,255,' + (0.5 * ga).toFixed(2) + ')';
+      ctx.fillRect(sx, sy, 1, 1);
+      if (ga > 0.7) { ctx.fillRect(sx - 1, sy, 3, 1); ctx.fillRect(sx, sy - 1, 1, 3); }
+    }
+    // every few seconds a ripple runs across, as if something brushed it
+    var rp = (now % 6400) / 6400;
+    if (rp < 0.35) {
+      var rx = x0 + (rp / 0.35) * W, rg = ctx.createLinearGradient(rx - 40, 0, rx + 40, 0);
+      rg.addColorStop(0, 'rgba(120,230,255,0)');
+      rg.addColorStop(0.5, 'rgba(160,240,255,0.16)');
+      rg.addColorStop(1, 'rgba(120,230,255,0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(Math.round(rx - 40), y0, 80, H);
+    }
+    // the emitter line along the deck's edge
+    ctx.fillStyle = 'rgba(150,240,255,' + (0.35 + 0.15 * Math.sin(now / 300)).toFixed(2) + ')';
+    ctx.fillRect(x0, y1 - 1, W, 1);
+    ctx.restore();
+  }
+
+  function drawDockGuides(ctx, world, offX, offY, ts, now) {
+    var d = world.dock;
+    if (!d || !d.guides) return;
+    var per = Math.max(1, Math.floor(d.guides.length / 2));
+    var head = (now / 120) % (per + 6);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var i = 0; i < d.guides.length; i++) {
+      var k = i % per, dist = head - k;
+      var b = dist >= 0 && dist < 3 ? 1 - dist / 3 : 0;
+      var px = Math.round(offX + d.guides[i][0] * ts), py = Math.round(offY + d.guides[i][1] * ts);
+      ctx.fillStyle = 'rgba(90,208,232,' + (0.18 + 0.7 * b).toFixed(2) + ')';
+      ctx.fillRect(px - 1, py, 3, 1);
+      if (b > 0.3) {
+        ctx.fillStyle = 'rgba(140,230,255,' + (0.25 * b).toFixed(2) + ')';
+        ctx.fillRect(px - 4, py - 1, 9, 3);
+      }
+    }
+    ctx.restore();
+  }
+
+  // bolts, a glove, a cup and a strip of tape adrift near the field, where the gravity plating gives out
+  var DRIFT = [[4.5, 4.6, 0], [8.2, 4.4, 1], [11.6, 4.9, 2], [19.4, 4.5, 0], [22.8, 4.8, 3], [26.2, 4.5, 1]];
+  function drawDockDrift(ctx, world, offX, offY, ts, now) {
+    if (!world.dock) return;
+    for (var i = 0; i < DRIFT.length; i++) {
+      var p = DRIFT[i];
+      var bob = Math.sin(now / (1400 + i * 230) + i) * 0.35 + 0.9;
+      var px = Math.round(offX + (p[0] + Math.sin(now / 5000 + i) * 0.3) * ts);
+      var py = Math.round(offY + (p[1] - bob) * ts);
+      var sh = Math.round(offY + p[1] * ts);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(px - 2, sh, 5, 1);
+      var phase = Math.floor(now / 400 + i) % 4;
+      if (p[2] === 0) {          // a bolt, tumbling
+        ctx.fillStyle = '#8a98a8';
+        if (phase % 2) ctx.fillRect(px - 2, py, 5, 2); else ctx.fillRect(px, py - 2, 2, 5);
+        ctx.fillStyle = '#c8d4e0'; ctx.fillRect(px, py, 1, 1);
+      } else if (p[2] === 1) {   // a glove
+        ctx.fillStyle = '#d0c8b8'; ctx.fillRect(px - 2, py - 1, 4, 3);
+        ctx.fillRect(px - 2 + (phase % 2), py - 3, 1, 2); ctx.fillRect(px, py - 3, 1, 2);
+        ctx.fillStyle = '#c87830'; ctx.fillRect(px - 2, py + 2, 4, 1);
+      } else if (p[2] === 2) {   // a mug
+        ctx.fillStyle = '#e0e0e0'; ctx.fillRect(px - 2, py - 2, 4, 4);
+        ctx.fillStyle = '#a03030'; ctx.fillRect(px - 2, py - 1, 4, 1);
+        ctx.fillStyle = '#e0e0e0'; ctx.fillRect(px + 2, py - 1, 1, 2);
+      } else {                   // tape
+        ctx.fillStyle = '#d8b020';
+        for (var t = 0; t < 6; t++) ctx.fillRect(px - 3 + t, py + Math.round(Math.sin(now / 300 + t) * 1.2), 1, 1);
+      }
+    }
+  }
+
+  BridgeWorld.registerSceneHooks('enigma', {
+    ground: function (ctx, world, offX, offY, ts, now) {
+      drawDockField(ctx, world, offX, offY, ts, now);
+      drawDockGuides(ctx, world, offX, offY, ts, now);
+      drawDockDrift(ctx, world, offX, offY, ts, now);
+    }
+  });
 
   // ---- Register ----
 
