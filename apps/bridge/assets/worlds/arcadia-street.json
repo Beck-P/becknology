@@ -1718,10 +1718,14 @@
     {
       "x": 31,
       "y": 7,
-      "type": "dialog",
+      "type": "enter_world",
+      "target": "arcadia-skypad",
+      "spawn": [
+        19,
+        5
+      ],
       "label": "SKYWALK LIFT",
-      "prompt": "PRESS E TO CALL",
-      "dialog": "THE LIFT CHIMES SOMEWHERE\nHIGH ABOVE.\n\nA SCREEN: \"SKYWALK LEVEL -\nSERVICE IN PROGRESS.\""
+      "prompt": "PRESS E TO RIDE UP"
     },
     {
       "x": 33,

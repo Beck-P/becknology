@@ -478,7 +478,7 @@ var BridgeCine = (function () {
         b.restore();
       } });
       // 3 · down through the clouds, levelling out, the ground coming up
-      shots.push({ dur: 2300, draw: function (b, W, H, t, now) {
+      shots.push({ dur: 1700, draw: function (b, W, H, t, now) {
         gradient(b, W, H, [[0, sky.top], [0.6, sky.mid], [1, sky.low]]);
         skyGlow(b, W, H, sky, now);
         var groundTop = H - easeOut(Math.max(0, (t - 0.25) / 0.75)) * H * 0.45;
@@ -514,7 +514,174 @@ var BridgeCine = (function () {
         flame(b, x + s.anchors.exhaust_near[0], y + s.anchors.exhaust_near[1], 8, -1, 0, now + 21, BLUE, 2);
       } });
     }
+    var last = approachShot(loc);
+    if (last) shots.push(last);
     return shots;
+  }
+
+  // ---- the last approach, different on every world: ends where the skiff
+  // then appears on its landing site ---------------------------------------------------------
+  function skiff(b, name, x, y, now, thrust, down) {
+    var sp = meta[name];
+    var en = sp.anchors.exhaust_near, ef = sp.anchors.exhaust_far;
+    flame(b, x + ef[0], y + ef[1], thrust, -1, name === 'shuttle-up' ? 0.3 : 0, now, BLUE, 2);
+    if (down) {                                     // lift jets under the belly as it settles
+      var bl = sp.anchors.belly;
+      b.save();
+      b.globalCompositeOperation = 'lighter';
+      var g = b.createRadialGradient(x + bl[0], y + bl[1] + 2, 0, x + bl[0], y + bl[1] + 10, 22);
+      g.addColorStop(0, 'rgba(200,240,255,' + (0.8 * down).toFixed(2) + ')');
+      g.addColorStop(1, 'rgba(80,140,255,0)');
+      b.fillStyle = g;
+      b.fillRect(x + bl[0] - 24, y + bl[1] - 6, 48, 40);
+      b.restore();
+    }
+    sprite(b, name, x, y);
+    flame(b, x + en[0], y + en[1], thrust, -1, name === 'shuttle-up' ? 0.3 : 0, now + 19, BLUE, 2);
+  }
+
+  function approachShot(loc) {
+    if (loc === 'lumar') return { dur: 2600, draw: function (b, W, H, t, now) {
+      // low over the night sea toward Diggen's Point, the lighthouse sweeping; down onto the beach
+      var hz = Math.round(H * 0.6);
+      gradient(b, W, H, [[0, '#040814'], [0.55, '#0e2436'], [1, '#081a20']]);
+      richStars(b, W, hz, now, -0.001, 41);
+      b.fillStyle = '#e8ecf4';
+      b.beginPath(); b.arc(W * 0.2, H * 0.16, 8, 0, Math.PI * 2); b.fill();
+      // the headland: cliffs out of the sea, pines on top, the lighthouse
+      var cx0 = W * (0.62 - easeOut(t) * 0.12);
+      b.fillStyle = '#0c1416';
+      b.beginPath();
+      b.moveTo(cx0, hz + 4);
+      for (var i = 0; i <= 24; i++) {
+        var x = cx0 + i * (W * 0.5) / 24;
+        b.lineTo(x, hz - H * 0.17 - Math.sin(i * 1.7) * 4 - (i > 10 ? 6 : 0) - hash(i) * 5);
+      }
+      b.lineTo(W + 10, hz + 4);
+      b.closePath();
+      b.fill();
+      for (var p = 0; p < 9; p++) {                                       // pines
+        var px = cx0 + 14 + p * 22 + hash(p) * 10, ph = 8 + hash(p * 3) * 8, py = hz - H * 0.17 - 4;
+        b.beginPath(); b.moveTo(px, py - ph); b.lineTo(px - 4, py + 2); b.lineTo(px + 4, py + 2); b.closePath(); b.fill();
+      }
+      var lx = cx0 + W * 0.3, ly = hz - H * 0.17 - 26;
+      b.fillStyle = '#d8d0c0'; b.fillRect(lx - 3, ly, 6, 22);
+      b.fillStyle = '#a03028'; b.fillRect(lx - 3, ly + 6, 6, 4); b.fillRect(lx - 3, ly + 14, 6, 4);
+      b.fillStyle = '#fff0b0'; b.fillRect(lx - 2, ly - 4, 4, 4);
+      b.save();
+      b.globalCompositeOperation = 'lighter';
+      var ba = Math.sin(now / 900) * 1.2 + Math.PI;                      // the beam sweeping the sea
+      var bg = b.createLinearGradient(lx, ly - 2, lx + Math.cos(ba) * W, ly - 2 + Math.sin(ba) * W * 0.2);
+      bg.addColorStop(0, 'rgba(255,240,180,0.45)');
+      bg.addColorStop(1, 'rgba(255,240,180,0)');
+      b.fillStyle = bg;
+      b.beginPath(); b.moveTo(lx, ly - 2);
+      b.lineTo(lx + Math.cos(ba - 0.05) * W, ly - 2 + Math.sin(ba - 0.05) * W * 0.2);
+      b.lineTo(lx + Math.cos(ba + 0.05) * W, ly - 2 + Math.sin(ba + 0.05) * W * 0.2);
+      b.closePath(); b.fill();
+      b.restore();
+      // the sea, and the pale beach at the cliff's foot
+      waveBand(b, W, H, hz, 2, 30, 0.04, 0, '#123a3c', '#5aa0a0', now);
+      b.fillStyle = '#b8a888';
+      b.fillRect(Math.round(cx0 + W * 0.08), hz + 1, Math.round(W * 0.2), 4);
+      waveBand(b, W, H, hz + 10, 3, 24, 0.07, 1.3, '#0e3032', '#78c8c0', now);
+      waveBand(b, W, H, hz + 26, 4, 20, 0.12, 2.1, '#0a2628', '#90e0d0', now);
+      // the skiff: in fast and low, slowing, flaring down onto the sand
+      var s = meta.shuttle;
+      var x = -s.w + easeOut(t) * (cx0 + W * 0.12 + s.w), y = H * 0.36 + ease(t) * (hz - H * 0.36 - s.h * 0.75);
+      var name = t > 0.72 ? 'shuttle-up' : 'shuttle';
+      if (y + s.h > hz - 6) {                                            // spray off the water under it
+        b.fillStyle = 'rgba(220,250,240,0.7)';
+        for (var q = 0; q < 14; q++) b.fillRect(Math.round(x + hash(q + Math.floor(now / 60)) * s.w), Math.round(hz - hash(q * 3) * 8), 1, 1);
+      }
+      skiff(b, name, x, y, now, 4 + (1 - t) * 18, t > 0.7 ? (t - 0.7) / 0.3 : 0);
+    } };
+    if (loc === 'arcadia') return { dur: 2600, draw: function (b, W, H, t, now) {
+      // dropping between the towers, through the traffic lanes, onto the pad at Skyport 7
+      gradient(b, W, H, [[0, '#0a0418'], [0.5, '#2a0c3a'], [1, '#5a1850']]);
+      var drop = easeOut(t) * H * 1.1;
+      for (var L = 0; L < 3; L++) {                                      // towers, three depths, rising past
+        var par = 0.35 + L * 0.35, col = ['#1a1030', '#140c26', '#0c0818'][L];
+        for (var i = 0; i < 7; i++) {
+          var tw = 26 + hash(i * 5 + L) * 40, tx = ((hash(i * 7 + L * 3) * (W + 80)) | 0) - 40;
+          var ty = H * (0.15 + hash(i + L * 11) * 0.3) - drop * par;
+          b.fillStyle = col;
+          b.fillRect(tx, ty, tw, H * 2);
+          for (var wy = 0; wy < H * 2; wy += 6) for (var wx = 3; wx < tw - 3; wx += 5) {
+            if (hash(i * 131 + wx * 7 + wy * 13 + L) > 0.62) {
+              b.fillStyle = ['#ffd890', '#a0e0ff', '#ff90c0'][(wx + wy) % 3];
+              b.globalAlpha = 0.35 + L * 0.2;
+              b.fillRect(tx + wx, Math.round(ty + 4 + wy), 2, 2);
+            }
+          }
+          b.globalAlpha = 1;
+        }
+        for (var k = 0; k < 2; k++) {                                     // a traffic lane at this depth
+          var ly = H * (0.3 + k * 0.4 + L * 0.1) - drop * par;
+          for (var c = 0; c < 10; c++) {
+            var cx = ((hash(c + k * 20 + L * 40) * (W + 40) + now * (0.04 + L * 0.03) * (k ? -1 : 1)) % (W + 40) + W + 40) % (W + 40) - 20;
+            b.fillStyle = k ? 'rgba(255,90,110,0.9)' : 'rgba(230,240,255,0.9)';
+            b.fillRect(Math.round(cx), Math.round(ly), 3 + L, 1);
+          }
+        }
+      }
+      // rain
+      b.fillStyle = 'rgba(190,200,255,0.25)';
+      for (var r = 0; r < 60; r++) {
+        var rx = (hash(r) * W - now * 0.05) % W; if (rx < 0) rx += W;
+        var ry = (hash(r * 3) * H + now * 0.4) % H;
+        b.fillRect(Math.round(rx), Math.round(ry), 1, 4);
+      }
+      // the rooftop and its pad rising into view
+      var top = H - easeOut(Math.min(1, t * 1.15)) * H * 0.3;
+      b.fillStyle = '#1e1a2a'; b.fillRect(W * 0.18, top, W * 0.64, H);
+      b.fillStyle = '#34303e'; b.fillRect(W * 0.18, top, W * 0.64, 3);
+      b.fillStyle = '#e8e0c0'; b.fillRect(W * 0.46, top + 1, W * 0.08, 1);
+      for (var bk = 0; bk < 4; bk++) {
+        var on = Math.floor(now / 400 + bk) % 2;
+        var bx = W * (0.24 + bk * 0.17);
+        b.fillStyle = on ? '#ff5040' : '#601810'; b.fillRect(Math.round(bx), Math.round(top - 5), 2, 2);
+        if (on) { b.fillStyle = 'rgba(255,80,60,0.25)'; b.fillRect(Math.round(bx - 3), Math.round(top - 8), 8, 8); }
+      }
+      var s = meta.shuttle;
+      var x = W / 2 - s.w / 2, y = -s.h + easeOut(t) * (top - s.h * 0.85 + s.h);
+      skiff(b, 'shuttle', x, y, now, 3, 0.5 + 0.5 * t);
+    } };
+    if (loc === 'singularity' && typeof BridgeHorizon !== 'undefined') return { dur: 2800, draw: function (b, W, H, t, now) {
+      // the horizon swallowing the sky; down to the old landing ring, trailing echoes of itself
+      var P = { hx: W * 1.0, hy: -H * (0.45 - t * 0.15), R: H * (0.75 + t * 0.35), k: 1 };
+      BridgeHorizon.sky(b, W, H, now, P);
+      var top = H - easeOut(Math.min(1, t * 1.2)) * H * 0.32;
+      b.fillStyle = '#120c20';                                           // the plain's edge, glowing cracks
+      b.beginPath(); b.moveTo(0, H);
+      for (var i = 0; i <= 30; i++) b.lineTo(i * W / 30, top + Math.sin(i * 1.3) * 3 + hash(i) * 6);
+      b.lineTo(W, H); b.closePath(); b.fill();
+      b.strokeStyle = 'rgba(160,128,224,0.8)'; b.lineWidth = 1;
+      for (var c = 0; c < 6; c++) {
+        b.beginPath();
+        var cx = W * (0.1 + hash(c) * 0.8), cy = top + 6;
+        b.moveTo(cx, cy);
+        for (var j = 0; j < 5; j++) { cx += (hash(c * 7 + j) - 0.5) * 16; cy += 5; b.lineTo(cx, cy); }
+        b.stroke();
+      }
+      b.save();
+      b.globalCompositeOperation = 'lighter';
+      var rg = b.createRadialGradient(W * 0.42, top + 3, 0, W * 0.42, top + 3, 40);
+      rg.addColorStop(0, 'rgba(160,128,255,0.5)'); rg.addColorStop(1, 'rgba(160,128,255,0)');
+      b.fillStyle = rg; b.fillRect(W * 0.42 - 40, top - 37, 80, 80);
+      b.restore();
+      var s = meta['shuttle-down'];
+      function pos(tt) { return [W * 0.1 + easeOut(tt) * W * 0.25, -s.h + easeOut(tt) * (top - s.h * 0.8 + s.h)]; }
+      for (var e = 3; e >= 1; e--) {                                     // echoes of where it was
+        var pe = pos(Math.max(0, t - e * 0.07));
+        b.save(); b.globalAlpha = 0.22 / e; b.globalCompositeOperation = 'lighter';
+        sprite(b, 'shuttle-down', pe[0], pe[1]);
+        b.restore();
+      }
+      var p0 = pos(t);
+      skiff(b, t > 0.75 ? 'shuttle' : 'shuttle-down', p0[0], p0[1], now, 6, t > 0.6 ? (t - 0.6) / 0.4 : 0);
+    } };
+    return null;
   }
 
   function ascendShots(loc) {

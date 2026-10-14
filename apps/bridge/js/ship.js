@@ -17,7 +17,7 @@
  */
 var BridgeShip = (function () {
   var SHIP = { bridge: 1, quarters: 1, hangar: 1 };
-  var LANDING = { lumar: 'lumar', arcadia: 'arcadia-street', enigma: 'enigma', singularity: 'singularity' };
+  var LANDING = { lumar: 'lumar', arcadia: 'arcadia-skypad', enigma: 'enigma', singularity: 'singularity' };
   var HANGAR_SPAWN = { x: 8, y: 9 };
   var anim = null;      // the shuttle in the air in this world
   var busy = false;
@@ -99,7 +99,29 @@ var BridgeShip = (function () {
     if (near > 0.3 && Math.random() < 0.8) {
       anim.dust.push({ x: gx + (Math.random() - 0.5) * b.w * 0.4, y: gy, vx: (Math.random() - 0.5) * 3.2, vy: -Math.random() * 0.6, life: 1 });
     }
-    ctx.fillStyle = 'rgba(200,190,170,0.5)';
+    // each world touches down its own way: sand on Lumar's beach, the pad's
+    // ring pulsing on an Arcadia rooftop, echoes of the skiff at the Singularity
+    var style = (world && world.tileset) || '';
+    if (style === 'arcadia' && near > 0.1) {
+      var pulse = (performance.now() / 600) % 1;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(92,200,208,' + (0.6 * (1 - pulse) * near).toFixed(2) + ')';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(gx, gy, b.w * (0.3 + pulse * 0.5), b.h * (0.12 + pulse * 0.2), 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (style === 'singularity' && alt > 4) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (var e = 1; e <= 3; e++) {
+        ctx.globalAlpha = 0.18 / e;
+        ctx.drawImage(L.canvas, x + e * 2, y - alt - e * 9 * (anim.kind === 'land' ? 1 : -1));
+      }
+      ctx.restore();
+    }
+    ctx.fillStyle = style === 'lumar' ? 'rgba(220,200,160,0.6)' : style === 'singularity' ? 'rgba(180,150,240,0.5)' : 'rgba(200,190,170,0.5)';
     for (var i = anim.dust.length - 1; i >= 0; i--) {
       var d = anim.dust[i];
       d.x += d.vx; d.y += d.vy; d.life -= 0.03;

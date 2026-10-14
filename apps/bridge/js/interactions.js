@@ -59,6 +59,7 @@ var BridgeInteractions = (function () {
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
+                      'arcadia-skypad': 'Skyport 7',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters' };
 
   function titleCase(t) {

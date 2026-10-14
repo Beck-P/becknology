@@ -18,6 +18,7 @@ from scenekit import Kit, apply_world, shade  # noqa: E402
 import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
 import assets_coast as C               # noqa: E402
+import assets_ship as P                # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -138,14 +139,24 @@ for i in range(4):
 for (c, r) in shore:
     k.box(c, r, -0.4, c + 1, r + 1, -0.02, ('#8a7a5a', 0.25), 'sand')
 W.rock_shore(k, [(3.8, 13.4), (3.7, 14.3), (15.2, 13.5), (14.9, 14.6), (9.4, 14.9), (6.4, 14.8)])
-W.rowboat(k, 10.6, 12.6, 13.55)
-W.rowboat(k, 12.3, 14.2, 14.45, hull='#3a4a5a', oars=False)
+W.rowboat(k, 4.4, 6.4, 14.5, hull='#3a4a5a', oars=False)          # pulled up west of the pier
+# the skiff's landing place: the east beach, a ring of sea-glass stones and two lanterns on posts
+SKX, SKR = 12.4, 13.3
+for i in range(18):
+    a = i * math.pi / 9
+    x, r = SKX + math.cos(a) * 2.0, SKR + 0.2 + math.sin(a) * 1.1
+    if 9.4 < x < 15.0 and r < 14.6:
+        k.blob(x, r, 0.02, 0.09, 0.07, 0.05, '#9ad8c8', 'sea_glass', emit=('#60e0b0', 0.35), segs=6)
+for x in (10.2, 14.6):
+    W.lantern_post(k, x, 12.3, h=1.6, energy=22)
+with k.variant('shuttle', 'parked'):
+    P.shuttle(k, SKX - 1.7, SKR)
 A.crate(k, 4.3, 13.1, s=0.5)
 A.barrel(k, 5.2, 13.5, h=0.75, radius=0.28)
 for i in range(4):     # net drying over the rocks
     k.bar(9.6 + i * 0.12, 13.2, 10.1 + i * 0.12, 13.9, 0.05, 0.07, 0.015, '#8a7a5a', 'net')
-k.solid(11, 13, 13, 14)
-k.solid(12, 14, 14, 15)
+k.solid(4, 14, 7, 15)                    # the rowboat
+k.solid(SKX - 1.8, SKR - 0.9, SKX + 2.0, SKR + 0.9)       # the skiff
 k.solid(4, 13, 6, 14)
 
 # ---- pier + galleon ---------------------------------------------------------------------------------------
@@ -203,8 +214,11 @@ k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}},
 
 apply_world(WORLD, k, (0, 0, 15, 15), doors=[(7, 15), (8, 15), (7, 16), (8, 16)], scene_id='lumar', moves={
     'MARKET SQUARE': [(6, 0), (7, 0)], 'LIGHTHOUSE': (13, 5), 'BOARD GALLEON': [(7, 15), (8, 15)], 'GALLEON': (8, 17)},
-    scene_extra={'backdrop': True})
+    scene_extra={'backdrop': True, 'layers': {'shuttle': 'parked'}})
 w = json.load(open(WORLD))
 w['view'] = [-1.6, -1.6, COLS + 1.6, ROWS + 1.6]       # camera bounds (tiles): inside the render's margins
+w['shuttle'] = {'spawn': [12, 11]}                      # the skiff sets down on the east beach
+if not any(it.get('type') == 'shuttle' for it in w['interactions']):
+    w['interactions'].append({'x': 12, 'y': 12, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'})
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 print('harbor done')
