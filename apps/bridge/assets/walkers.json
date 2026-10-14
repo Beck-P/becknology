@@ -21,5 +21,11 @@
     { "sheet": "npc-townsman", "path": [[11, 23], [43, 23]], "speed": 1.0, "pause": 4000, "rest": "up" },
     { "sheet": "npc-shopper", "path": [[23, 20], [35, 20]], "speed": 0.8, "pause": 5000, "rest": "up" },
     { "sheet": "npc-fishmonger", "path": [[46, 22], [51, 22]], "speed": 0.7, "pause": 6000, "rest": "down" }
+  ],
+  "lumar-rose": [
+    { "sheet": "npc-harvester", "path": [[28, 13], [28, 6]], "speed": 0.7, "pause": 6000, "rest": "up" },
+    { "sheet": "npc-harvester", "path": [[21, 14], [27, 14]], "speed": 0.6, "pause": 7000, "rest": "up" },
+    { "sheet": "npc-traveler", "path": [[14, 12], [14, 17], [13, 21], [12, 24], [10, 29]], "speed": 0.9, "pause": 5000, "rest": "down" },
+    { "sheet": "npc-quiet", "path": [[37, 29], [42, 29]], "speed": 0.6, "pause": 6000, "rest": "up" }
   ]
 }

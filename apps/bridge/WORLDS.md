@@ -137,8 +137,9 @@ stars streaking, a tunnel of light, dropping out over the new world.
    sky, space warping round it, echoes, infalling grit, time stutters.
 3. ✓ Landing sites for every world (Lumar's beach, Skyport 7, Enigma's
    Docking Bay 3, the Brink's ring), each with its own approach.
-   ◐ Bigger worlds: the four Lumar islands rebuilt as whole islands
-   (Crimson Reach, Rose Cove, Sapphire Port, Midnight Isle). Next:
+   ✓ Bigger worlds: the four Lumar islands rebuilt as whole islands
+   (Crimson Reach, Rose Cove, Sapphire Port, Midnight Isle), with natural
+   coasts, people walking their paths, and quests threaded through them. Next:
    Arcadia's Skywalk level and back alleys behind the chained gate; more
    of Enigma (✓ hydroponics, where Okafor lives; the ring corridor, crew
    quarters). ✓ The Wren, frozen mid-fall off the Brink, ends Okafor's quest.
