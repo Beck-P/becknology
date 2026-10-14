@@ -2438,6 +2438,7 @@
         drawChimneySmoke(ctx, Math.round(offX + p[0] * ts), Math.round(offY + p[1] * ts), ts, time, i * 7 + 3);
       });
       if (sc.fountain) sceneFountain(ctx, sc.fountain, offX, offY, ts, time);
+      if (sc.steam && typeof BridgeSkyline !== 'undefined') BridgeSkyline.steam(ctx, sc, offX, offY, ts, time);   // hot springs
     }
   });
 
