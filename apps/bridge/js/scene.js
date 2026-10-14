@@ -292,8 +292,48 @@ var BridgeScene = (function () {
   }
 
   // NPCs placed by the world JSON: idle animation, depth-tested, lit.
+  // People going about their day (assets/walkers.json, by world id): each
+  // walks a route of tile points there and back, pausing at either end.
+  var walkers = {};
+  fetch('/bridge/assets/walkers.json?v=' + Date.now()).then(function (r) { return r.json(); })
+    .then(function (d) { walkers = d; }).catch(function () { walkers = {}; });
+
+  function walkerAt(wk, now, i) {
+    var P = wk.path, L = 0, seg = [];
+    for (var k = 0; k < P.length - 1; k++) { var d = Math.hypot(P[k + 1][0] - P[k][0], P[k + 1][1] - P[k][1]); seg.push(d); L += d; }
+    var travel = L / (wk.speed || 1.1) * 1000, pause = wk.pause || 2500, period = 2 * (travel + pause);
+    var t = (now + i * 7919) % period, fwd = t < travel + pause, tt = fwd ? t : t - travel - pause;
+    var moving = tt >= pause, s = moving ? (tt - pause) / travel * L : 0;
+    if (!fwd) s = L - s;
+    var acc = 0;
+    for (var j = 0; j < seg.length; j++) {
+      if (s <= acc + seg[j] || j === seg.length - 1) {
+        var f = seg[j] ? Math.min(1, (s - acc) / seg[j]) : 0;
+        var dx = (P[j + 1][0] - P[j][0]) * (fwd ? 1 : -1), dy = (P[j + 1][1] - P[j][1]) * (fwd ? 1 : -1);
+        var facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+        if (!moving) facing = wk.rest || 'down';
+        return { x: P[j][0] + (P[j + 1][0] - P[j][0]) * f, y: P[j][1] + (P[j + 1][1] - P[j][1]) * f, facing: facing,
+                 moving: moving, dist: (fwd ? s : L - s) };
+      }
+      acc += seg[j];
+    }
+    return { x: P[0][0], y: P[0][1], facing: 'down', moving: false, dist: 0 };
+  }
+
   function actorDrawList(sc, world, offX, offY, ts, now) {
     var list = [];
+    var wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId();
+    (walkers[wid] || []).forEach(function (wk, i) {
+      var sh = getSheet(wk.sheet);
+      if (!sh.ready) return;
+      var p = walkerAt(wk, now, i), footRow = p.y + 0.9;
+      list.push({ footRow: footRow, draw: function (ctx) {
+        var col = p.moving ? 4 + Math.floor(p.dist / 0.3) % 8 : IDLE_SEQ[Math.floor((now + i * 137) / 360) % IDLE_SEQ.length];
+        var cx = Math.round(offX + (p.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
+        drawOccluded(ctx, sc, sh.img, col * FRAME_W, (DIR_ROW[p.facing] || 0) * FRAME_H, FRAME_W, FRAME_H, cx - FRAME_W / 2,
+          footY - (FRAME_H - 3), footRow, offX, offY, tintAt(sc, world, Math.round(p.x), Math.round(p.y), now), { x: cx, y: footY, rx: 8, ry: 3 });
+      } });
+    });
     var actors = (world.scene && world.scene.actors) || [];
     for (var i = 0; i < actors.length; i++) {
       var a = actors[i];
