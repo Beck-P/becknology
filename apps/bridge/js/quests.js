@@ -165,7 +165,16 @@ var BridgeQuests = (function () {
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast,
+  /** Every quest with its state and the worlds its clues are in (for the nav chart). */
+  function summary() {
+    return Object.keys(defs || {}).map(function (id) {
+      var q = defs[id], p = progress(id);
+      return { id: id, title: q.title, started: !!state[id], done: p.done, found: p.found, total: p.total,
+               worlds: q.clues.map(function (c) { return c.on.world; }) };
+    });
+  }
+
+  return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary,
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            reset: function () { state = {}; save(); } };
 })();

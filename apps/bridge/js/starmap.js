@@ -33,7 +33,7 @@ var BridgeStarmap = (function () {
     {
       id: 'lumar', loc: 'lumar', name: 'LUMAR', kind: 'Ocean world · spore seas',
       blurb: 'Emerald seas that glow at night, saltstone islands, a harbour town under the lighthouse. Fishermen, crystal harvesters, a dragon under the hill.',
-      places: ['Diggen’s Point harbour', 'The Market Square', 'Four isles by galleon'],
+      places: ['Diggen’s Point harbour', 'The Market Square', 'Crimson Reach · Rose Cove', 'Sapphire Port · Midnight Isle', 'The open sea, at the helm'],
       apps: [{ name: 'Aether Seas', url: '/aether-seas' }],
       color: '#40c890', px: 0.22, py: 0.66, hasOverworld: true
     },
@@ -46,8 +46,8 @@ var BridgeStarmap = (function () {
     },
     {
       id: 'enigma', loc: 'enigma', name: 'ENIGMA STATION', kind: 'Listening post · ringed giant',
-      blurb: 'An abandoned intelligence outpost turning by a ringed gas giant. Terminals still flicker with encrypted transmissions.',
-      places: ['The listening rooms'],
+      blurb: 'An abandoned relay station turning by a ringed gas giant. Its antenna still listens to something on 47.3 MHz, and somebody is still aboard.',
+      places: ['Docking Bay 3', 'The relay deck'],
       apps: [{ name: 'Cipher Room', url: '/cipher-room' }, { name: 'Typist', url: '/typist' }],
       color: '#5cc8d0', px: 0.68, py: 0.26, hasOverworld: true
     },
@@ -97,6 +97,30 @@ var BridgeStarmap = (function () {
     select(selected);
   }
 
+  // what's waiting at a world: quests begun there and not finished, people there who'd join your crew
+  var LOC_RX = { lumar: /^lumar/, arcadia: /^(arcadia|cyber|chrome|junk|tech)/, enigma: /^enigma/, singularity: /^singularity/ };
+  function waiting(loc) {
+    var rx = LOC_RX[loc], out = [];
+    if (!rx) return '';
+    if (typeof BridgeQuests !== 'undefined' && BridgeQuests.summary) {
+      BridgeQuests.summary().forEach(function (q) {
+        if (q.started && !q.done && q.worlds.some(function (wid) { return rx.test(wid); })) out.push(q.title + ' · ' + q.found + '/' + q.total);
+      });
+    }
+    if (typeof BridgePeople !== 'undefined' && typeof BridgeCrew !== 'undefined') {
+      var all = BridgePeople.all();
+      Object.keys(all).forEach(function (id) {
+        var p = all[id];
+        if (p.crew && !BridgeCrew.isHired(id) && p.at.some(function (a) { return rx.test(a.world); }) && BridgePeople.met(id)) {
+          out.push(p.name + ' would sign on (' + p.crew.role + ')');
+        }
+      });
+    }
+    if (!out.length) return '';
+    return '<div class="nav-p-sub">Waiting for you</div><ul class="nav-p-list">' +
+      out.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
+  }
+
   function select(i) {
     selected = (i + WORLDS.length) % WORLDS.length;
     var w = WORLDS[selected];
@@ -112,6 +136,7 @@ var BridgeStarmap = (function () {
       '<div class="nav-p-blurb">' + esc(w.blurb) + '</div>' +
       '<div class="nav-p-sub">Known places</div>' +
       '<ul class="nav-p-list">' + w.places.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' +
+      waiting(w.loc) +
       (isHere ? '<div class="nav-p-here">The Wayfarer is in orbit here.</div>'
               : '<button class="nav-jump" id="nav-jump"><span class="nav-jump-fill"></span><span class="nav-jump-label">Hold to jump</span></button>');
     panelPlanet = panel.querySelector('.nav-planet');

@@ -528,3 +528,37 @@ def velvet_rope(k, x0, x1, r):
         pts = [(a + (b - a) * t, r, 0.72 - 0.16 * 4 * t * (1 - t)) for t in [i / 8 for i in range(9)]]
         for p, q in zip(pts, pts[1:]):
             k.tube(p, q, 0.022, '#8a1020', 'velvet_rope', verts=6)
+
+
+def facade_ad(k, st, x0, x1, r_face, z0, z1, kind=None):
+    """A big screen bolted to a facade, its picture left to the engine's
+    holo-ads: a heavy frame, a dark screen glowing faintly, mounting brackets."""
+    k.box(x0 - 0.08, r_face, z0 - 0.08, x1 + 0.08, r_face + 0.1, z1 + 0.08, '#0a0810', 'facade_ad_frame')
+    k.box(x0, r_face + 0.1, z0, x1, r_face + 0.11, z1, '#120830', 'facade_ad_screen', emit=('#3a1a70', 0.6))
+    for x in (x0 + 0.2, x1 - 0.2):
+        k.box(x - 0.04, r_face, z1 + 0.08, x + 0.04, r_face + 0.06, z1 + 0.3, '#2a2832', 'facade_ad_bracket')
+    k.point_light((x0 + x1) / 2, r_face + 0.6, (z0 + z1) / 2, '#a070ff', 16, radius=0.4, group='flicker')
+    st.ad_rect(x0, x1, r_face + 0.11, z0, z1, kind)
+
+
+def laundry(k, a, b, sag=0.18, rng=None, n=None):
+    """A washing line strung between two windows, clothes hung along it."""
+    rng = rng or k.rng
+    L = math.dist(a[:2], b[:2]) + abs(a[2] - b[2])
+    n = n or max(3, int(L / 0.35))
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        pts.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t - sag * math.sin(math.pi * t)))
+    for p, q in zip(pts, pts[1:]):
+        k.tube(p, q, 0.008, '#8a8a90', 'laundry_line', verts=3)
+    cols = ('#e84060', '#e8e0d0', '#40a0d8', '#e8c040', '#a060e0', '#e8e8f0', '#50b080')
+    for i in range(1, n):
+        if rng.random() < 0.25:
+            continue
+        x, r, z = pts[i]
+        w = rng.uniform(0.12, 0.22)
+        h = rng.uniform(0.18, 0.34)
+        col = rng.choice(cols)
+        k.poly([(x - w / 2, r + 0.01, z), (x + w / 2, r + 0.01, z), (x + w / 2, r + 0.03, z - h), (x - w / 2, r + 0.03, z - h)],
+               (col, 0.3), 'laundry')
