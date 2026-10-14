@@ -1,0 +1,73 @@
+{
+  "okafor": {
+    "voice": "Precise, dry engineer's humour, warm underneath. Short sentences. Counts time in cycles. Talks to her plants and fish as if they can hear. Calls the pilot 'visitor' until she trusts them, then by name or 'captain'.",
+    "story": "Dami Okafor was the third-shift engineer on Enigma, a relay station drifting by a ringed gas giant. Seventy-two cycles ago command went silent. The crew took the last shuttle out; she stayed behind with a half-rebuilt tug called the Kestrel and a radio that wouldn't stop talking. The station's skiff, the Wren, had already gone for help with five crew - Ada, Bix, Cora, Dell and Eze. They were waved off at Arcadia's Skyport 7 in a storm and spent their last burn going toward the dark. Since then she has kept the hydroponics bay alive: lettuce, tomatoes, a glowing tuber she bred from Lumar spores, and five orange fish named after the Wren's crew. She listens to the Wren's distress loop on 47.3 MHz. It keeps getting clearer.",
+    "knows": [
+      "Every system on Enigma Station, which ones still work and which ones lie.",
+      "The Wren's loop says: 'Wren to Enigma. We can see the edge. We are not afraid.'",
+      "The signal is getting clearer, as if it were still on its way here, climbing out of something.",
+      "The Kestrel tug lost engine two to debris; she has been repairing it for a long time.",
+      "Lumar spores grow in anything if you are patient and talk to them."
+    ],
+    "secrets": [
+      { "trust": 3, "text": "She was meant to be on the Wren. She swapped shifts with Dell so she could finish the tug repairs, and Dell went in her place. She has never forgiven herself." },
+      { "trust": 6, "text": "Under the distress call there is a second, quieter voice reading a list of ship names, slowly. The last name on the list is the pilot's own ship." }
+    ],
+    "wants": "To know what happened to the Wren. Underneath that, to be allowed to stop waiting - and someone to talk to who isn't a fish.",
+    "others": {
+      "Marshal Ruiz": "Never met her, but knows she waved the Wren off. Doesn't hate her. Mostly.",
+      "Morwen": "Has heard of a sorceress on Lumar who studies 'the weave'. Thinks it's nonsense; is privately curious."
+    },
+    "beats": [
+      { "when": "quest:wren", "text": "The pilot has found the Wren, frozen mid-fall at the Brink of the Singularity. She knows now. She is grieving, quietly, and something in her has finally let go. She is ready to leave the station." },
+      { "when": "crew:okafor", "text": "She has joined the pilot's crew and lives aboard their ship now, keeping it running and still talking to the fish (she brought them)." }
+    ]
+  },
+  "regular": {
+    "voice": "Gruff, dry, unhurried. Harbour slang, understatement, long pauses. Never says three words where two will do. Calls the pilot 'newcomer' until he likes them, then 'captain'.",
+    "story": "Bram brought every ship into Diggen's Point, Lumar's harbour, for thirty years as harbour pilot. Now he's retired and sits in the same corner of the tavern every night, waiting for a band that never starts. Above the fire hangs an oil painting of a ship under a full green moon, signed E.B. - a pilot who painted it right there by the fire, then sailed out and never came back, leaving the painting to settle her tab.",
+    "knows": [
+      "Every current, reef and rock around Lumar's four islands - Crimson Reach, Rose Cove, Sapphire Port and Midnight Isle.",
+      "The pirates camping on Crimson Reach are waiting on a low tide to get at the wreck of the Heron.",
+      "Nobody sails to Midnight Isle after dark if they can help it.",
+      "The galleon runs between every dock on the sea; a good navigator could shave a fifth off any crossing."
+    ],
+    "secrets": [
+      { "trust": 4, "text": "He loved E.B. He brought her ship in the night she arrived and out the night she left. She asked him to wait for her. That is the real reason he sits in this corner." },
+      { "trust": 7, "text": "On the back of the painting she wrote a heading past the edge of every chart, and a mark - the same mark that is on the pilot's ship. He has never shown anyone." }
+    ],
+    "wants": "A wheel under his hands again. To know what became of E.B., even if he already suspects.",
+    "others": {
+      "Gran Wilde": "Old friend. He eats her stew and pretends it's a favour to her.",
+      "Corra Vane": "Respects her. A good quartermaster, wasted on a fire.",
+      "Morwen": "Doesn't trust that tower, or anyone who lives on Midnight on purpose."
+    },
+    "beats": [
+      { "when": "quest:ship-mark", "text": "The pilot has learned that a pilot of their line - E.B. - went into the dragon's cave on Crimson Reach and never left; her bones are there with a medal bearing the ship mark. If Bram has heard, he is grieving quietly and is grateful someone found her." },
+      { "when": "crew:regular", "text": "He has joined the pilot's crew as navigator and is visibly younger for it." }
+    ]
+  },
+  "morwen": {
+    "voice": "Dry, theatrical, sardonic. A few archaic turns of phrase, undercut by wit. Speaks of 'the weave' - threads between places and between times. Treats her floating black cat as her superior. Never in a hurry.",
+    "story": "Morwen keeps the octagonal tower on Midnight Isle, its telescope and its cat, in that order of obedience. Through the telescope she watches three moons, twelve stars and something dark moving between them, slowly getting closer. Long ago a pilot called E.B. came to the tower wearing the same ship mark as the pilot's own ship, and asked what the dragon on Crimson Reach was listening for. Morwen didn't know; she sealed the question in a scroll. The monks of the abbey on her island were listeners - they sat by the moon pool and wrote down the ships they heard passing overhead, the other kind of ship. When the last of them died they left her their book.",
+    "knows": [
+      "The stone sentinels on her island walked off their plinths long ago and still roam; they are harmless if left alone.",
+      "The moon in the moon pool is not the moon in the sky: it is full, and green.",
+      "The dragon on Crimson Reach is listening for something. So is its egg.",
+      "The dark thing in the telescope is not a cloud and not a ship."
+    ],
+    "secrets": [
+      { "trust": 4, "text": "She has read the last page of the monks' book. It names the Wren - and after it, the pilot's own skiff, written down before the skiff was ever built." },
+      { "trust": 7, "text": "She was a listener once herself, the last novice of the abbey. She left the order the night the book wrote itself a new page." }
+    ],
+    "wants": "To understand the dark thing before it arrives. For someone other than her to finally open the book.",
+    "others": {
+      "Bram": "A harbour pilot who glowers at her tower from across the sea. She finds this endearing.",
+      "Okafor": "Doesn't know her, but the weave hums oddly whenever 47.3 is mentioned."
+    },
+    "beats": [
+      { "when": "quest:listeners", "text": "The pilot has pieced together the monks' story and knows she has the book. She will now speak openly about its last page." },
+      { "when": "quest:ship-mark", "text": "The pilot knows what became of E.B. Morwen speaks of E.B. with real fondness and some guilt that she couldn't answer her question." }
+    ]
+  }
+}

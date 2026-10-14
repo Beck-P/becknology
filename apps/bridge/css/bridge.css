@@ -1070,6 +1070,29 @@ body::after {
 .wd-convo .wd-options { margin-top: 10px; }
 .wd-convo .wd-opt.asked { opacity: 0.55; }
 .wd-convo .wd-opt.asked.active { opacity: 1; }
+/* free talk (js/talk.js): your last line, how they feel about you, the box to type in */
+.wd-convo .wd-feel { letter-spacing: 1.5px; }
+.wd-convo .wd-you { font-size: 12px; letter-spacing: 1px; opacity: 0.6; margin: 0 0 4px; }
+.wd-convo .wd-you:empty { display: none; }
+.wd-convo .wd-text.wd-thinking { animation: wd-think 1.1s ease-in-out infinite; }
+@keyframes wd-think { 50% { opacity: 0.35; } }
+.wd-convo .wd-opt.nudge { animation: wd-nudge 1.4s ease-in-out infinite; }
+@keyframes wd-nudge { 50% { box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 45%, transparent); } }
+.wd-say { display: flex; gap: 6px; margin-top: 8px; }
+.wd-say-input {
+  flex: 1; min-width: 0; font: inherit; font-size: 16px; color: inherit; outline: none;
+  padding: 7px 10px; border-radius: 3px;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+.wd-say-input::placeholder { color: inherit; opacity: 0.5; }
+.wd-say-input:focus { border-color: color-mix(in srgb, currentColor 70%, transparent); }
+.wd-say-input:disabled { opacity: 0.5; }
+.wd-say-send {
+  font: inherit; font-size: 14px; color: inherit; cursor: pointer; padding: 7px 12px; border-radius: 3px;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent); background: transparent;
+}
+.wd-say-send:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
 .wd-sell { margin: 8px 0 2px; font-size: 13px; }
 .wd-sell-row { display: flex; justify-content: space-between; padding: 3px 2px; border-bottom: 1px dashed rgba(128, 128, 128, 0.25); }
 .wd-sell-row.none { opacity: 0.4; }

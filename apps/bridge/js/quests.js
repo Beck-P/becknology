@@ -183,7 +183,21 @@ var BridgeQuests = (function () {
     });
   }
 
+  /** Every clue found, as 'quest/clue' with when; and every quest finished, with when. */
+  function found() {
+    var out = [];
+    Object.keys(state).forEach(function (id) {
+      Object.keys(state[id].clues || {}).forEach(function (c) { out.push({ id: id + '/' + c, at: state[id].clues[c] }); });
+    });
+    return out.sort(function (a, b) { return a.at - b.at; });
+  }
+  function finished() {
+    return Object.keys(state).filter(function (id) { return state[id].done; })
+      .map(function (id) { return { id: id, at: state[id].done }; });
+  }
+
   return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary,
+           found: found, finished: finished,
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            reset: function () { state = {}; save(); } };
 })();

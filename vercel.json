@@ -1,6 +1,12 @@
 {
   "buildCommand": "bash build.sh",
   "outputDirectory": "public",
+  "functions": {
+    "api/talk.mjs": {
+      "includeFiles": "{api/_personas.json,apps/bridge/assets/people.json,apps/bridge/assets/quests.json,apps/bridge/assets/businesses.json}",
+      "maxDuration": 20
+    }
+  },
   "rewrites": [
     { "source": "/", "destination": "/apps/bridge/index.html" },
     { "source": "/hub", "destination": "/apps/hub/index.html" },

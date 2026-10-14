@@ -70,5 +70,6 @@ var BridgeCrew = (function () {
     BridgeState.onChange(function (s, prev, ctx) { if (s === 'world' && ctx && ctx.worldId) onArrive(ctx.worldId); });
   }
 
-  return { has: has, hire: hire, isHired: isHired, list: list };
+  return { has: has, hire: hire, isHired: isHired, list: list,
+           hiredAt: function (id) { return hired[id] ? hired[id].at : 0; } };
 })();

@@ -480,6 +480,7 @@
   // ---- Export ----
   global.BridgeProgression = {
     getPilot: getPilot,
+    client: getClient,
     awardCoins: awardCoins,
     recordAchievement: recordAchievement,
     getBalance: getBalance,

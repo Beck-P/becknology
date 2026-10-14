@@ -36,7 +36,7 @@ becknology/
 ## Constraints
 - All apps share one Vercel project and one deploy
 - Apps should be self-contained static files (HTML/CSS/JS, CDN imports are fine)
-- No server-side rendering or build step
+- No server-side rendering or build step — one approved exception: `api/talk.mjs`, the Bridge's AI conversations (a Vercel function; needs `ANTHROPIC_API_KEY` in the Vercel project's environment variables, and is off without it)
 - Hub card links use relative paths (`/my-app`, not full URLs)
 - Each app folder is independent — different apps can use different libraries
 

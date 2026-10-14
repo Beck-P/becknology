@@ -789,6 +789,8 @@ var BridgeInteractions = (function () {
     var overlay = document.getElementById('world-overlay');
     var sheet = person.sheet || portraitFor(inter);
     var dialogEl = dialogShell('talk wd-convo');
+    var talk = typeof BridgeTalk !== 'undefined' && BridgeTalk.enabled();
+    var feel = typeof BridgeTalk !== 'undefined' ? BridgeTalk.feeling(person.id) : 0;
     var topics = person.topics.slice();
     if (person.crew && typeof BridgeCrew !== 'undefined') {
       var after = person.crew.after && typeof BridgeQuests !== 'undefined' ? BridgeQuests.progress(person.crew.after) : null;
@@ -796,7 +798,9 @@ var BridgeInteractions = (function () {
         ? { q: 'About the work', a: person.crew.perkText.toUpperCase() }
         : after && !after.done
           ? { q: 'Join my crew?', a: person.crew.notYet }          // not until a quest of theirs is settled
-          : { q: 'Join my crew?', a: person.crew.pitch + '\n\n' + person.crew.wage + ' COINS UP FRONT, AS ' + person.crew.role.toUpperCase() + '.', hire: true });
+          : feel <= -3
+            ? { q: 'Join my crew?', a: "NOT AFTER THE WAY YOU'VE TREATED ME." }
+            : { q: 'Join my crew?', a: person.crew.pitch + '\n\n' + person.crew.wage + ' COINS UP FRONT, AS ' + person.crew.role.toUpperCase() + '.', hire: true });
     }
     person = Object.create(person);
     person.topics = topics;
@@ -805,12 +809,15 @@ var BridgeInteractions = (function () {
       (sheet ? '<canvas class="wd-portrait" width="72" height="72"></canvas>' : '') +
       '<div class="wd-body">' +
         '<div class="wd-title">' + esc(person.name) + '</div>' +
-        '<div class="wd-role">' + esc(person.role || '') + '</div>' +
+        '<div class="wd-role">' + esc(person.role || '') + '<span class="wd-feel"></span></div>' +
+        '<div class="wd-you"></div>' +
         '<div class="wd-text"></div>' +
         '<div class="wd-options">' + opts.map(function (q, i) {
           return '<button data-opt="' + i + '" class="wd-opt' + (i === 0 ? ' active' : '') +
             (i < person.topics.length && BridgePeople.asked(person.id, q) ? ' asked' : '') + '">' + esc(q) + '</button>';
         }).join('') + '</div>' +
+        (talk ? '<form class="wd-say"><input class="wd-say-input" type="text" maxlength="200" autocomplete="off" ' +
+                'enterkeyhint="send" placeholder="Say something..."><button type="submit" class="wd-say-send">Say</button></form>' : '') +
         hintHTML('Esc', 'Leave') +
       '</div>';
     overlay.appendChild(dialogEl);
@@ -818,8 +825,48 @@ var BridgeInteractions = (function () {
     requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
 
     var out = dialogEl.querySelector('.wd-text');
+    var you = dialogEl.querySelector('.wd-you');
+    var feelEl = dialogEl.querySelector('.wd-feel');
+    var form = dialogEl.querySelector('.wd-say');
+    var input = form && form.querySelector('.wd-say-input');
     var btns = dialogEl.querySelectorAll('.wd-opt');
     var sel = 0, line = null, pitched = -1;
+    var history = [], waiting = false, closed = false;
+    function showFeel(force) {
+      if (feelEl && typeof BridgeTalk !== 'undefined' && (force || BridgeTalk.bond(person.id).met)) feelEl.textContent = ' \u00b7 ' + BridgeTalk.feelingLabel(person.id);
+    }
+    function heard(from, text) { history.push({ from: from, text: String(text).slice(0, 400) }); if (history.length > 16) history.shift(); }
+    // something they said that points at a topic (joining the crew, trading): light that button up
+    function nudge(test) {
+      for (var j = 0; j < person.topics.length; j++) {
+        if (test(person.topics[j])) { choose(j); btns[j].classList.add('nudge'); return; }
+      }
+    }
+    function speak(text) {
+      if (!input || waiting) return;
+      waiting = true;
+      input.disabled = true;
+      you.textContent = 'YOU: ' + text.toUpperCase();
+      if (line) clearInterval(line.timer);
+      line = null;
+      out.textContent = '...';
+      out.classList.add('wd-thinking');
+      var prior = history.slice();
+      heard('you', text);
+      BridgeTalk.say(Object.getPrototypeOf(person), text, prior).then(function (d) {
+        if (closed) return;
+        waiting = false;
+        input.disabled = false;
+        out.classList.remove('wd-thinking');
+        if (!d) { say("(THEY DON'T SEEM TO HEAR YOU. TRY AGAIN IN A MOMENT.)"); return; }
+        heard('them', d.reply);
+        say(d.reply.toUpperCase());
+        showFeel(true);
+        if (d.action === 'join_crew') nudge(function (t) { return t.hire || t.q === 'Join my crew?'; });
+        if (d.action === 'trade') nudge(function (t) { return t.sell; });
+        input.focus();
+      });
+    }
     function say(text) {
       if (line) clearInterval(line.timer);
       var body = reflow(text), i = 0;
@@ -839,6 +886,7 @@ var BridgeInteractions = (function () {
       var t = person.topics[n];
       if (t.sell) {
         var mult = typeof BridgeCrew !== 'undefined' && BridgeCrew.has('quartermaster') ? 1.2 : 1;
+        if (feel >= 5) mult *= 1.1;                                // friends get a better price
         close();
         showSellDialog({ label: person.name, dialog: t.a, buys: t.sell.map(function (b) { return { id: b.id, price: Math.round(b.price * mult) }; }) });
         return;
@@ -860,16 +908,27 @@ var BridgeInteractions = (function () {
       if (t.hire) { pitched = n; BridgePeople.ask(person.id, t.q); btns[n].classList.add('asked'); say(t.a + '\n\n(ASK AGAIN TO HIRE.)'); return; }
       BridgePeople.ask(person.id, t.q);
       btns[n].classList.add('asked');
+      btns[n].classList.remove('nudge');
+      heard('you', t.q);
+      heard('them', t.a);
+      you.textContent = '';
       say(t.a);
     }
     function close() {
+      closed = true;
       document.removeEventListener('keydown', onKey, true);
       hideDialog();
+      if (typeof BridgeTalk !== 'undefined') BridgeTalk.end(Object.getPrototypeOf(person));
       if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
     }
     function onKey(e) {
       var k = e.key;
+      if (input && e.target === input) {                       // typing: leave the keys to the text box
+        if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); input.blur(); }
+        return;
+      }
       if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+      else if (input && (k === 't' || k === 'T' || k === '/')) { e.preventDefault(); e.stopPropagation(); input.focus(); }
       else if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); choose(sel + 1); }
       else if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); choose(sel - 1); }
       else if (k === 'Enter' || k === 'e' || k === 'E' || k === ' ') {
@@ -883,10 +942,41 @@ var BridgeInteractions = (function () {
         btn.addEventListener('click', function (e) { e.stopPropagation(); pick(idx); });
       })(btns[b], b);
     }
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        speak(text);
+      });
+      form.addEventListener('click', function (e) { e.stopPropagation(); });
+    }
     document.addEventListener('keydown', onKey, true);
     var first = !BridgePeople.met(person.id);
     BridgePeople.meet(person.id);
-    say(first ? person.greet : (person.again || person.greet));
+    showFeel();
+    var opening = first ? person.greet : (person.again || person.greet);
+    if (talk && !first) {
+      // someone you've met greets you as they remember you (the written line if the server is slow)
+      out.textContent = '...';
+      out.classList.add('wd-thinking');
+      var settled = false;
+      var fallback = setTimeout(function () { if (!settled && !closed && !history.length) { settled = true; out.classList.remove('wd-thinking'); heard('them', opening); say(opening); } }, 6000);
+      BridgeTalk.greet(Object.getPrototypeOf(person)).then(function (d) {
+        if (settled || closed || history.length) return;         // they've already moved on
+        settled = true;
+        clearTimeout(fallback);
+        out.classList.remove('wd-thinking');
+        var g = d ? d.reply : opening;
+        heard('them', g);
+        say(d ? g.toUpperCase() : g);
+        showFeel();
+      });
+    } else {
+      heard('them', opening);
+      say(opening);
+    }
   }
 
   function hideDialog() {

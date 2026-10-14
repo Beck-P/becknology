@@ -1,5 +1,8 @@
 {
   "name": "beck-apps",
   "private": true,
-  "description": "Beck's personal apps monorepo"
+  "description": "Beck's personal apps monorepo",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0"
+  }
 }
