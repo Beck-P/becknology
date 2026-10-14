@@ -201,6 +201,17 @@ var BridgeItems = (function () {
     if (!this.effects) return false;
     if (this.effects.hp)     inv.restoreHP(this.effects.hp);
     if (this.effects.energy) inv.restoreEnergy(this.effects.energy);
+    if (typeof BridgeFX !== 'undefined' && typeof BridgeCharacter !== 'undefined') {
+      var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
+      if (this.effects.hp && BridgeFX.spawnFloatingText) {
+        BridgeFX.spawnFloatingText(px, py - 0.25, '+' + this.effects.hp + ' HP', '#68e890');
+      } else if (this.effects.energy && BridgeFX.spawnFloatingText) {
+        BridgeFX.spawnFloatingText(px, py - 0.25, '+' + this.effects.energy + ' EN', '#60c8ff');
+      }
+      if (BridgeFX.spawnSparks) {
+        BridgeFX.spawnSparks(px, py, this.effects.hp ? '#68e890' : '#60c8ff', 5);
+      }
+    }
     return true;
   }
 
@@ -231,10 +242,18 @@ var BridgeItems = (function () {
     }
     if (!target) return false;
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
-    target._hp -= this.damage || 1;
-    // Hit-flash on the target so the connection reads even at a glance.
-    if (typeof BridgeFX !== 'undefined') BridgeFX.spawnHitFlash(target.x, target.y);
+    var dmg = this.damage || 1;
+    target._hp -= dmg;
+    // Hit-flash, sparks, and floating damage number on the target.
+    if (typeof BridgeFX !== 'undefined') {
+      BridgeFX.spawnHitFlash(target.x, target.y);
+      if (BridgeFX.spawnSparks) BridgeFX.spawnSparks(target.x, target.y, '#c868f0', 7);
+      if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(target.x, target.y - 0.3, '-' + dmg, '#ffe080');
+    }
     if (target._hp <= 0) {
+      if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnSparks) {
+        BridgeFX.spawnSparks(target.x, target.y, '#ff90e8', 10);
+      }
       BridgeInteractions.killHostile(world, target);
     }
     return false; // weapons are not consumed

@@ -49,18 +49,49 @@ var BridgeFX = (function () {
       type: 'damage_flash',
       x: x, y: y,
       startTime: performance.now(),
-      duration: 300
+      duration: 320
+    });
+  }
+
+  // Rising pixel combat/pickup text (e.g. "-25", "+1 STONE SHARD").
+  function spawnFloatingText(x, y, text, color) {
+    effects.push({
+      type: 'floating_text',
+      x: x + (Math.random() - 0.5) * 0.22,
+      y: y,
+      text: String(text || ''),
+      color: color || '#ffe080',
+      startTime: performance.now(),
+      duration: 780
+    });
+  }
+
+  // Pixel particle burst for hits, kills, and loot pickups.
+  function spawnSparks(x, y, color, count) {
+    var n = count || 6;
+    var particles = [];
+    for (var i = 0; i < n; i++) {
+      var angle = (Math.PI * 2 * i) / n + (Math.random() - 0.5) * 0.55;
+      var speed = 0.35 + Math.random() * 0.55;
+      particles.push({
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 0.22,
+        size: (i % 2 === 0) ? 1.5 : 1.0
+      });
+    }
+    effects.push({
+      type: 'sparks',
+      x: x, y: y,
+      color: color || '#ffd870',
+      particles: particles,
+      startTime: performance.now(),
+      duration: 420
     });
   }
 
   function clear() { effects.length = 0; }
 
   function draw(ctx, offX, offY, ts /*, time — ignored, see note */) {
-    // We deliberately ignore the time argument from the caller. world.js
-    // passes Date.now() (epoch ms) but spawnSlash records performance.now()
-    // (ms since page load). Mixing the two made every effect look ~50 years
-    // old and expire on the same frame it was spawned. Always read our own
-    // performance.now() so the time base is consistent with the spawn calls.
     if (effects.length === 0) return;
     var now = performance.now();
     for (var i = effects.length - 1; i >= 0; i--) {
@@ -68,10 +99,23 @@ var BridgeFX = (function () {
       var elapsed = now - fx.startTime;
       if (elapsed >= fx.duration) { effects.splice(i, 1); continue; }
       var progress = elapsed / fx.duration;
-      if (fx.type === 'slash')             drawSlash(ctx, offX, offY, ts, fx, progress);
-      else if (fx.type === 'hit_flash')    drawHitFlash(ctx, offX, offY, ts, fx, progress);
-      else if (fx.type === 'strike')       drawStrike(ctx, offX, offY, ts, fx, progress);
-      else if (fx.type === 'damage_flash') drawDamageFlash(ctx, offX, offY, ts, fx, progress);
+      if (fx.type === 'slash')              drawSlash(ctx, offX, offY, ts, fx, progress);
+      else if (fx.type === 'hit_flash')     drawHitFlash(ctx, offX, offY, ts, fx, progress);
+      else if (fx.type === 'strike')        drawStrike(ctx, offX, offY, ts, fx, progress);
+      else if (fx.type === 'damage_flash')  drawDamageFlash(ctx, offX, offY, ts, fx, progress);
+      else if (fx.type === 'sparks')        drawSparks(ctx, offX, offY, ts, fx, progress);
+    }
+  }
+
+  function drawScreen(ctx, offX, offY, ts) {
+    if (effects.length === 0) return;
+    var now = performance.now();
+    for (var i = effects.length - 1; i >= 0; i--) {
+      var fx = effects[i];
+      if (fx.type !== 'floating_text') continue;
+      var elapsed = now - fx.startTime;
+      if (elapsed >= fx.duration) { effects.splice(i, 1); continue; }
+      drawFloatingText(ctx, offX, offY, ts, fx, elapsed / fx.duration);
     }
   }
 
@@ -97,6 +141,21 @@ var BridgeFX = (function () {
     var distance = ts * (0.30 + reach * 0.55);     // 0.30 to 0.85 tile out
     var tx = cx + dxDir * distance;
     var ty = cy + dyDir * distance;
+
+    // Sweeping steel crescent afterimage behind the thrust
+    var baseAngle =
+      fx.facing === 'right' ? 0 :
+      fx.facing === 'down'  ? Math.PI * 0.5 :
+      fx.facing === 'left'  ? Math.PI : -Math.PI * 0.5;
+    var sweepSpan = Math.PI * 0.52;
+    var sweepEnd = baseAngle - sweepSpan * 0.5 + sweepSpan * Math.min(1, progress * 1.45);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(200,225,255,' + (fade * 0.45).toFixed(2) + ')';
+    ctx.lineWidth = Math.max(2, ts * 0.08);
+    ctx.beginPath();
+    ctx.arc(cx, cy, distance * 0.92, sweepEnd - sweepSpan * 0.45, sweepEnd);
+    ctx.stroke();
+    ctx.restore();
 
     var bladeLen = ts * (0.22 + reach * 0.18);     // ~10-19px
     var bladeThick = Math.max(2, ts * 0.10);       // ~4-5px
@@ -191,7 +250,7 @@ var BridgeFX = (function () {
     ctx.fill();
   }
 
-  // Player damage flash: red pulse on the player's tile when a strike lands.
+  // Player damage flash: red pulse on the player's tile + subtle screen border pulse.
   function drawDamageFlash(ctx, offX, offY, ts, fx, progress) {
     var cx = offX + (fx.x + 0.5) * ts;
     var cy = offY + (fx.y + 0.5) * ts;
@@ -206,6 +265,59 @@ var BridgeFX = (function () {
     ctx.fillStyle = 'rgba(255,80,60,' + (alpha * 0.85).toFixed(2) + ')';
     ctx.fillRect(Math.floor(cx - innerSize / 2), Math.floor(cy - innerSize / 2),
                  Math.ceil(innerSize), Math.ceil(innerSize));
+
+    // Screen-edge crimson warning pulse
+    if (ctx.canvas) {
+      var cw = ctx.canvas.width, ch = ctx.canvas.height;
+      var border = Math.max(8, Math.floor(Math.min(cw, ch) * 0.025));
+      ctx.fillStyle = 'rgba(220,25,45,' + (alpha * 0.28).toFixed(2) + ')';
+      ctx.fillRect(0, 0, cw, border);
+      ctx.fillRect(0, ch - border, cw, border);
+      ctx.fillRect(0, border, border, ch - border * 2);
+      ctx.fillRect(cw - border, border, border, ch - border * 2);
+    }
+  }
+
+  function drawSparks(ctx, offX, offY, ts, fx, progress) {
+    var cx = offX + (fx.x + 0.5) * ts;
+    var cy = offY + (fx.y + 0.5) * ts;
+    var u = Math.max(2, Math.floor(ts / 16));
+    var alpha = Math.max(0, 1 - progress * 0.9);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    for (var i = 0; i < fx.particles.length; i++) {
+      var p = fx.particles[i];
+      var px = cx + p.vx * progress * ts;
+      var py = cy + (p.vy * progress + 0.45 * progress * progress) * ts;
+      var sz = Math.max(2, Math.round(u * p.size));
+      ctx.fillStyle = '#0a0a16';
+      ctx.fillRect(Math.floor(px - 1), Math.floor(py - 1), sz + 2, sz + 2);
+      ctx.fillStyle = fx.color;
+      ctx.fillRect(Math.floor(px), Math.floor(py), sz, sz);
+    }
+    ctx.restore();
+  }
+
+  function drawFloatingText(ctx, offX, offY, ts, fx, progress) {
+    var cx = offX + (fx.x + 0.5) * ts;
+    var lift = Math.pow(progress, 0.7) * ts * 0.75;
+    var cy = offY + (fx.y + 0.25) * ts - lift;
+    var alpha = progress < 0.65 ? 1 : (1 - (progress - 0.65) / 0.35);
+    var fontSize = Math.max(9, Math.round(ts * 0.22));
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, alpha);
+    ctx.font = 'bold ' + fontSize + 'px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // Crisp 1px pixel shadow outline
+    ctx.fillStyle = '#0a0a16';
+    ctx.fillText(fx.text, Math.floor(cx) - 1, Math.floor(cy));
+    ctx.fillText(fx.text, Math.floor(cx) + 1, Math.floor(cy));
+    ctx.fillText(fx.text, Math.floor(cx), Math.floor(cy) - 1);
+    ctx.fillText(fx.text, Math.floor(cx), Math.floor(cy) + 2);
+    ctx.fillStyle = fx.color;
+    ctx.fillText(fx.text, Math.floor(cx), Math.floor(cy));
+    ctx.restore();
   }
 
   return {
@@ -213,7 +325,10 @@ var BridgeFX = (function () {
     spawnHitFlash: spawnHitFlash,
     spawnStrike: spawnStrike,
     spawnDamageFlash: spawnDamageFlash,
+    spawnFloatingText: spawnFloatingText,
+    spawnSparks: spawnSparks,
     clear: clear,
-    draw: draw
+    draw: draw,
+    drawScreen: drawScreen
   };
 })();

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chess Opening Trainer · Becknology</title>
+  <title>Wizard Chess 3D & Opening Trainer · Becknology</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="/bridge/css/bridge-skin.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/bridge/js/shared/progression.js"></script>
-  <script src="/bridge/js/shared/bridge-skin.js" data-title="CHESS OPENINGS"></script>
+  <script src="/bridge/js/shared/bridge-skin.js" data-title="WIZARD CHESS"></script>
 </head>
 <body>
 
@@ -27,12 +27,122 @@
 
   <main class="library">
     <header class="header">
-      <a href="/" class="back-link">← back to hub</a>
-      <h1 class="title">Chess Opening Trainer</h1>
-      <p class="subtitle">Practice your prep by the fire.</p>
+      <div class="header-top">
+        <a href="/bridge/" class="back-link">← back to ship</a>
+        <div class="mode-tabs" role="tablist">
+          <button class="mode-tab active" id="tab-wizard" data-tab="wizard" role="tab" aria-selected="true">
+            ⚔️ Wizard Chess 3D
+          </button>
+          <button class="mode-tab" id="tab-trainer" data-tab="trainer" role="tab" aria-selected="false">
+            📖 Opening Trainer
+          </button>
+        </div>
+      </div>
+      <h1 class="title" id="page-title">Wizard Chess 3D</h1>
+      <p class="subtitle" id="page-subtitle">Carved stone and obsidian sentinels clash by hearthfire. Drag to orbit, click a piece to command.</p>
     </header>
 
-    <div class="layout">
+    <!-- ===== VIEW 1: WIZARD CHESS 3D ===== -->
+    <div class="wizard-layout" id="view-wizard">
+      <aside class="wizard-sidebar">
+        <h2>Battle Setup</h2>
+
+        <div class="field-group">
+          <label class="field-label" for="wc-mode">Mode</label>
+          <select id="wc-mode" class="wc-select">
+            <option value="ai">vs. Arcane Automaton (AI)</option>
+            <option value="2p">Pass &amp; Play (2P Local)</option>
+          </select>
+        </div>
+
+        <div class="field-group" id="wc-difficulty-group">
+          <label class="field-label" for="wc-difficulty">Automaton Rank</label>
+          <select id="wc-difficulty" class="wc-select">
+            <option value="1">I · Apprentice (+35 Coins)</option>
+            <option value="2" selected>II · Archmage (+60 Coins)</option>
+            <option value="3">III · Grand Oracle (+100 Coins)</option>
+          </select>
+        </div>
+
+        <div class="field-group" id="wc-side-group">
+          <label class="field-label">Your Legion</label>
+          <div class="pill-row">
+            <button type="button" class="pill-btn active" data-side="w">Ivory (White)</button>
+            <button type="button" class="pill-btn" data-side="b">Obsidian (Black)</button>
+          </div>
+        </div>
+
+        <div class="controls" style="margin-top: 6px;">
+          <button type="button" id="wc-new-btn" class="primary-action-btn">New Battle</button>
+          <button type="button" id="wc-undo-btn">Undo</button>
+        </div>
+
+        <h2 style="margin-top: 18px;">Camera &amp; FX</h2>
+        <div class="cam-grid">
+          <button type="button" class="cam-btn" data-cam="white">White Side</button>
+          <button type="button" class="cam-btn" data-cam="black">Black Side</button>
+          <button type="button" class="cam-btn" data-cam="cinematic">3/4 Angle</button>
+          <button type="button" class="cam-btn" data-cam="top">Overhead</button>
+        </div>
+
+        <div class="toggle-row">
+          <button type="button" id="wc-battlecam-btn" class="toggle-btn active">
+            Battle Cam: ON
+          </button>
+          <button type="button" id="wc-audio-btn" class="toggle-btn active">
+            SFX: ON
+          </button>
+        </div>
+      </aside>
+
+      <section class="wizard-stage-area">
+        <div class="wizard-stage-frame">
+          <div id="wizard-stage" class="wizard-stage"></div>
+
+          <!-- Pawn Promotion Modal -->
+          <div class="promo-modal" id="promo-modal" hidden>
+            <div class="promo-card">
+              <h3>Ascend Pawn</h3>
+              <p>Choose a sculpted form:</p>
+              <div class="promo-buttons">
+                <button type="button" data-promo="q">👑 Queen</button>
+                <button type="button" data-promo="r">🏰 Rook</button>
+                <button type="button" data-promo="b">🔮 Bishop</button>
+                <button type="button" data-promo="n">🐴 Knight</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status" id="wizard-status">Ivory Legion to move. Click any statue to command.</div>
+      </section>
+
+      <aside class="line-panel wizard-chronicle">
+        <h2 class="opening-title">Battle Chronicle</h2>
+
+        <div class="captured-box">
+          <div class="captured-row">
+            <span class="cap-label">Shattered by Ivory:</span>
+            <div class="cap-icons" id="cap-by-white">—</div>
+          </div>
+          <div class="captured-row">
+            <span class="cap-label">Shattered by Obsidian:</span>
+            <div class="cap-icons" id="cap-by-black">—</div>
+          </div>
+        </div>
+
+        <div class="move-list wizard-move-list" id="wizard-moves">
+          <span class="placeholder">No moves yet — advance a piece to begin the battle.</span>
+        </div>
+
+        <div class="stats">
+          Spoils: <span class="stat-num">+2</span> Coins / Shatter · <span class="stat-num">+35–100</span> Victory
+        </div>
+      </aside>
+    </div>
+
+    <!-- ===== VIEW 2: OPENING TRAINER ===== -->
+    <div class="layout" id="view-trainer" hidden>
 
       <aside class="opening-picker">
         <h2>Openings</h2>

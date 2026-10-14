@@ -5,8 +5,9 @@ import {
   COLOR,
   BORDER_TYPE
 } from "https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/src/Chessboard.js";
-import { Markers, MARKER_TYPE } from "https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/src/extensions/markers/Markers.js";
+import { Markers } from "https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/src/extensions/markers/Markers.js";
 import { OPENINGS } from "./openings.js";
+import { WizardChess3D } from "./wizard-chess.js";
 
 const ASSETS_URL = "https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/assets/";
 const STATS_KEY = "becknology-chess-stats-v1";
@@ -16,7 +17,41 @@ const MARKER_HINT = { class: "marker-square-hint", slice: "markerSquare" };
 const MARKER_LAST = { class: "marker-square", slice: "markerSquare" };
 const MARKER_ERROR = { class: "marker-frame-error", slice: "markerFrame" };
 
+const PIECE_GLYPHS = {
+  p: "♟",
+  n: "♞",
+  b: "♝",
+  r: "♜",
+  q: "♛",
+  k: "♚"
+};
+
 const els = {
+  // Mode tabs & views
+  tabWizard: document.getElementById("tab-wizard"),
+  tabTrainer: document.getElementById("tab-trainer"),
+  viewWizard: document.getElementById("view-wizard"),
+  viewTrainer: document.getElementById("view-trainer"),
+  pageTitle: document.getElementById("page-title"),
+  pageSubtitle: document.getElementById("page-subtitle"),
+
+  // Wizard Chess 3D elements
+  wizardStage: document.getElementById("wizard-stage"),
+  wizardStatus: document.getElementById("wizard-status"),
+  wizardMoves: document.getElementById("wizard-moves"),
+  capByWhite: document.getElementById("cap-by-white"),
+  capByBlack: document.getElementById("cap-by-black"),
+  wcMode: document.getElementById("wc-mode"),
+  wcDifficulty: document.getElementById("wc-difficulty"),
+  wcDiffGroup: document.getElementById("wc-difficulty-group"),
+  wcSideGroup: document.getElementById("wc-side-group"),
+  wcNewBtn: document.getElementById("wc-new-btn"),
+  wcUndoBtn: document.getElementById("wc-undo-btn"),
+  wcBattleCamBtn: document.getElementById("wc-battlecam-btn"),
+  wcAudioBtn: document.getElementById("wc-audio-btn"),
+  promoModal: document.getElementById("promo-modal"),
+
+  // Opening Trainer elements
   list: document.getElementById("opening-list"),
   status: document.getElementById("status"),
   title: document.getElementById("opening-title"),
@@ -28,8 +63,12 @@ const els = {
   board: document.getElementById("board")
 };
 
+let wizardGame = null;
+let pendingPromoCallback = null;
+
 let chess = new Chess();
 let board = null;
+let trainerInitialized = false;
 let current = null;       // current opening
 let moveIndex = 0;        // index into current.line of the next move to play
 let errorCount = 0;
@@ -37,9 +76,177 @@ let hintsUsed = 0;
 let busy = false;         // lock input during animations / computer moves
 const stats = loadStats();
 
-// ---------- init ----------
+// ---------- Mode Tabs ----------
 
-function init() {
+function setupTabs() {
+  els.tabWizard.addEventListener("click", () => switchTab("wizard"));
+  els.tabTrainer.addEventListener("click", () => switchTab("trainer"));
+}
+
+function switchTab(tab) {
+  const isWizard = tab === "wizard";
+  els.tabWizard.classList.toggle("active", isWizard);
+  els.tabWizard.setAttribute("aria-selected", String(isWizard));
+  els.tabTrainer.classList.toggle("active", !isWizard);
+  els.tabTrainer.setAttribute("aria-selected", String(!isWizard));
+
+  els.viewWizard.hidden = !isWizard;
+  els.viewTrainer.hidden = isWizard;
+
+  if (isWizard) {
+    els.pageTitle.textContent = "Wizard Chess 3D";
+    els.pageSubtitle.textContent =
+      "Carved stone and obsidian sentinels clash by hearthfire. Drag to orbit, click a piece to command.";
+    if (wizardGame) {
+      wizardGame.activeTab = true;
+      wizardGame.onResize();
+    }
+  } else {
+    els.pageTitle.textContent = "Chess Opening Trainer";
+    els.pageSubtitle.textContent = "Practice your prep by the fire.";
+    if (wizardGame) wizardGame.activeTab = false;
+    if (!trainerInitialized) {
+      initTrainer();
+    }
+  }
+}
+
+// ---------- Wizard Chess 3D Setup ----------
+
+function initWizardChess() {
+  wizardGame = new WizardChess3D(els.wizardStage, {
+    onStateChange: renderWizardState,
+    onPromotionPrompt: (cb) => {
+      pendingPromoCallback = cb;
+      els.promoModal.hidden = false;
+    }
+  });
+
+  // Mode change
+  els.wcMode.addEventListener("change", () => {
+    const isAI = els.wcMode.value === "ai";
+    els.wcDiffGroup.style.display = isAI ? "flex" : "none";
+    els.wcSideGroup.style.display = isAI ? "flex" : "none";
+    startNewWizardGame();
+  });
+
+  // Difficulty change
+  els.wcDifficulty.addEventListener("change", () => {
+    wizardGame.aiDifficulty = Number(els.wcDifficulty.value);
+  });
+
+  // Side selection pills
+  document.querySelectorAll(".pill-btn[data-side]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".pill-btn[data-side]").forEach((b) =>
+        b.classList.toggle("active", b === btn)
+      );
+      startNewWizardGame();
+    });
+  });
+
+  // New game & Undo
+  els.wcNewBtn.addEventListener("click", startNewWizardGame);
+  els.wcUndoBtn.addEventListener("click", () => wizardGame.undoLastRound());
+
+  // Camera presets
+  document.querySelectorAll(".cam-btn[data-cam]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      wizardGame.setCameraPreset(btn.dataset.cam);
+    });
+  });
+
+  // Battle Cam toggle
+  els.wcBattleCamBtn.addEventListener("click", () => {
+    wizardGame.battleCamEnabled = !wizardGame.battleCamEnabled;
+    els.wcBattleCamBtn.classList.toggle("active", wizardGame.battleCamEnabled);
+    els.wcBattleCamBtn.textContent = `Battle Cam: ${wizardGame.battleCamEnabled ? "ON" : "OFF"}`;
+  });
+
+  // Audio SFX toggle
+  els.wcAudioBtn.addEventListener("click", () => {
+    wizardGame.audio.muted = !wizardGame.audio.muted;
+    const on = !wizardGame.audio.muted;
+    els.wcAudioBtn.classList.toggle("active", on);
+    els.wcAudioBtn.textContent = `SFX: ${on ? "ON" : "OFF"}`;
+  });
+
+  // Promotion buttons
+  document.querySelectorAll(".promo-buttons button[data-promo]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const piece = btn.dataset.promo;
+      els.promoModal.hidden = true;
+      if (pendingPromoCallback) {
+        const fn = pendingPromoCallback;
+        pendingPromoCallback = null;
+        fn(piece);
+      }
+    });
+  });
+}
+
+function startNewWizardGame() {
+  const activeSideBtn = document.querySelector(".pill-btn[data-side].active");
+  const playerColor = activeSideBtn ? activeSideBtn.dataset.side : "w";
+  wizardGame.newGame({
+    mode: els.wcMode.value,
+    aiDifficulty: Number(els.wcDifficulty.value),
+    playerColor
+  });
+}
+
+function renderWizardState(state) {
+  // 1. Captured pieces display
+  const fmtCaps = (arr) =>
+    arr.length ? arr.map((p) => PIECE_GLYPHS[p] || p).join(" ") : "—";
+  els.capByWhite.textContent = fmtCaps(state.capturedCounts.w);
+  els.capByBlack.textContent = fmtCaps(state.capturedCounts.b);
+
+  // 2. Move history chronicle
+  if (!state.history || state.history.length === 0) {
+    els.wizardMoves.innerHTML = `<span class="placeholder">No moves yet — advance a piece to begin the battle.</span>`;
+  } else {
+    const html = [];
+    for (let i = 0; i < state.history.length; i++) {
+      if (i % 2 === 0) {
+        html.push(`<span class="move-num">${Math.floor(i / 2) + 1}.</span>`);
+      }
+      const mv = state.history[i];
+      const isCap = Boolean(mv.captured);
+      const cls = isCap ? "move played capture-move" : "move played";
+      const prefix = isCap ? "⚔" : "";
+      html.push(`<span class="${cls}">${prefix}${mv.san}</span>`);
+    }
+    els.wizardMoves.innerHTML = html.join("");
+    els.wizardMoves.scrollTop = els.wizardMoves.scrollHeight;
+  }
+
+  // 3. Status banner
+  const sideName = state.turn === "w" ? "Ivory Legion (White)" : "Obsidian Legion (Black)";
+  if (state.isCheckmate) {
+    const winner =
+      state.turn === "w" ? "Obsidian Legion (Black)" : "Ivory Legion (White)";
+    els.wizardStatus.textContent = `Checkmate! ${winner} triumphs on the stone battlefield!`;
+    els.wizardStatus.className = "status complete";
+  } else if (state.isDraw) {
+    els.wizardStatus.textContent = "Battle concluded in a stalemate / draw.";
+    els.wizardStatus.className = "status";
+  } else if (state.inCheck) {
+    els.wizardStatus.textContent = `Warning — ${sideName} is in CHECK!`;
+    els.wizardStatus.className = "status error";
+  } else if (state.lastMove && state.lastMove.captured) {
+    els.wizardStatus.textContent = `Shattered! ${sideName} to move.`;
+    els.wizardStatus.className = "status success";
+  } else {
+    els.wizardStatus.textContent = `${sideName} to move.`;
+    els.wizardStatus.className = "status";
+  }
+}
+
+// ---------- Opening Trainer Init ----------
+
+function initTrainer() {
+  trainerInitialized = true;
   board = new Chessboard(els.board, {
     position: chess.fen(),
     assetsUrl: ASSETS_URL,
@@ -369,5 +576,6 @@ function renderStats() {
 
 // ---------- go ----------
 
+setupTabs();
 renderMoveList();
-init();
+initWizardChess();
