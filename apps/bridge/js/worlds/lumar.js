@@ -2363,6 +2363,66 @@
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);
 
+  // ---- Pre-rendered Lumar scenes (square, harbour, islands) ----
+  // Stone sentinels are sorted with the characters; chimney smoke rises from
+  // the rendered chimneys (scene.smoke: [[x, screenRow], ...]); the fountain
+  // (scene.fountain: {x, r, spoutZ, basinZ}) arcs water into its basin.
+  function sceneHostiles(world, offX, offY, ts, time) {
+    var out = [];
+    (world.interactions || []).forEach(function (h) {
+      if (h.type !== 'hostile') return;
+      out.push({ footRow: h.y + 0.9, draw: function (ctx) {
+        var u = Math.max(2, Math.floor(ts / 16));
+        if (h._attackPhase === 'winding' && h._attackTarget) {
+          var tx = Math.floor(offX + h._attackTarget.x * ts), ty = Math.floor(offY + h._attackTarget.y * ts);
+          var since = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - (h._attackStart || 0);
+          var dangerAlpha = 0.28 + Math.min(1, since / (h.windupMs || 500)) * 0.45;
+          ctx.fillStyle = 'rgba(255, 45, 75, ' + (dangerAlpha * 0.35).toFixed(2) + ')';
+          ctx.fillRect(tx + 2 * u, ty + 2 * u, ts - 4 * u, ts - 4 * u);
+          ctx.strokeStyle = 'rgba(255, 70, 100, ' + dangerAlpha.toFixed(2) + ')';
+          ctx.lineWidth = Math.max(2, u);
+          ctx.strokeRect(tx + u, ty + u, ts - 2 * u, ts - 2 * u);
+        }
+        drawStoneStatue(ctx, offX + h.x * ts, offY + h.y * ts, ts, time, h.x, h.y, h);
+      } });
+    });
+    return out;
+  }
+
+  function sceneFountain(ctx, f, offX, offY, ts, time) {
+    var C = Math.SQRT1_2;
+    function px(x, r, z) { return [offX + x * ts, offY + (r - z * C) * ts]; }
+    for (var s = 0; s < 3; s++) {
+      var a = s * 2 * Math.PI / 3 + Math.PI / 2;
+      for (var i = 0; i < 9; i++) {
+        var t = ((time / 900) + i / 9 + s * 0.13) % 1;
+        var d = 0.32 + t * 0.42;
+        var z = f.spoutZ + 0.32 * Math.sin(Math.PI * t * 0.8) - t * t * (f.spoutZ - f.basinZ + 0.1);
+        var p = px(f.x + Math.cos(a) * d, f.r + Math.sin(a) * d * 0.8, z);
+        ctx.fillStyle = 'rgba(200, 236, 228, ' + (0.75 - t * 0.45).toFixed(2) + ')';
+        ctx.fillRect(Math.round(p[0]), Math.round(p[1]), 2, 2);
+      }
+      var land = px(f.x + Math.cos(a) * 0.74, f.r + Math.sin(a) * 0.59, f.basinZ);   // ripples
+      var rr = 2 + ((time / 120 + s * 3) % 4);
+      ctx.strokeStyle = 'rgba(200, 236, 228, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(Math.round(land[0]), Math.round(land[1]), rr, rr * 0.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  BridgeWorld.registerSceneHooks('lumar', {
+    items: sceneHostiles,
+    over: function (ctx, world, offX, offY, ts, time) {
+      var sc = world.scene || {};
+      (sc.smoke || []).forEach(function (p, i) {
+        drawChimneySmoke(ctx, Math.round(offX + p[0] * ts), Math.round(offY + p[1] * ts), ts, time, i * 7 + 3);
+      });
+      if (sc.fountain) sceneFountain(ctx, sc.fountain, offX, offY, ts, time);
+    }
+  });
+
   // Hostile-entity + atmospheric spore overlay for Lumar islands.
   BridgeWorld.registerOverlay('lumar', function (ctx, world, offX, offY, ts, time) {
     if (!world) return;

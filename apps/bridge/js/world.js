@@ -773,8 +773,11 @@ var BridgeWorld = (function () {
   // effects. Drawn at native resolution.
   // Pre-rendered scene: the Blender render replaces tiles; everyone who
   // moves is depth-tested against it and drawn in foot-row order.
-  function drawSceneLayer(ctx, sc, offX, offY, ts, now) {
+  function drawSceneLayer(ctx, sc, offX, offY, ts, now, w, h) {
     var hooks = SCENE_HOOKS[world.tileset] || {};
+    // scene.backdrop: the world's own animated background (space, void)
+    // shows wherever the render is empty
+    if (world.scene.backdrop && BACKGROUNDS[world.tileset]) BACKGROUNDS[world.tileset](ctx, w, h, now);
     if (hooks.behind) hooks.behind(ctx, world, offX, offY, ts, now);
     BridgeScene.drawBackground(ctx, sc, world, offX, offY, now);
     drawInteractHighlight(ctx, offX, offY, ts, now);
@@ -826,7 +829,7 @@ var BridgeWorld = (function () {
 
   function drawWorldLayer(ctx, w, h, offX, offY, ts, now) {
     var sc = world.scene && typeof BridgeScene !== 'undefined' && BridgeScene.get(world.scene.id);
-    if (sc) { drawSceneLayer(ctx, sc, offX, offY, ts, now); return; }
+    if (sc) { drawSceneLayer(ctx, sc, offX, offY, ts, now, w, h); return; }
     var tileset = TILESETS[world.tileset] || {};
     var lit = !!(world.lighting && typeof BridgeLighting !== 'undefined');
 

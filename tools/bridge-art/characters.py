@@ -73,6 +73,44 @@ NPCS = {
                           hair=('#1a1410', '#2e2218', '#44342a'), bald=True, beard=True, brawny=True, pose='stand'),
     'npc-apothecary': dict(skin='skin', shirt=('#3a2450', '#5a3a78', '#7a5a9a'), skirt=('#3a2450', '#5a3a78', '#7a5a9a'),
                            hair=('#8a8a98', '#c0c0cc', '#e2e2ec'), long_hair=True, pose='stand'),
+    # Lumar outdoors
+    'npc-fishmonger': dict(skin='skin2', shirt=('#3a4a5a', '#5a6a7a', '#7a8a9a'), apron=('#8a7a5a', '#b8a880', '#d8c8a0'),
+                           hair=('#5a3a1a', '#8a5a2a', '#aa7a42'), cap=('#2a3a4a', '#3a5068', '#5a7088'), beard=True, pose='stand'),
+    'npc-passerby':  dict(skin='skin', shirt=('#4a2a1a', '#7a4a2a', '#9a6a40'), hair=('#2a1a10', '#4a2e1a', '#6a4428'),
+                          hood=('#3e444c', '#5e6872', '#828e9a'), pose='stand'),
+    'npc-townsman':  dict(skin='skin', shirt=('#2e4a2e', '#4a7244', '#6a9460'), vest=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#6a6a70', '#a0a0a8', '#c8c8d0'), cap=('#3a2a1a', '#5e4228', '#7e5a38'), beard=True, pose='stand'),
+    'npc-watcher':   dict(skin='skin2', shirt=('#3a1418', '#6a2028', '#8a3038'), hair=('#1a1414', '#2e2224', '#443034'),
+                          hood=('#3a1418', '#6a2028', '#8a3038'), beard=True, pose='stand'),
+    'npc-harvester': dict(skin='skin', shirt=('#6a3a4a', '#9a5a6a', '#c07a8a'), apron=('#5a4a3a', '#8a7458', '#a89070'),
+                          hair=('#c06080', '#e080a0', '#f0a8c0'), bun=True, pose='stand'),
+    'npc-trader':    dict(skin='skin2', shirt=('#1a3a6a', '#2a5a9a', '#4a7ac0'), vest=('#c8b890', '#e0d4b0', '#f0e8d0'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), cap=('#1a3a6a', '#2a5a9a', '#4a7ac0'), pose='stand'),
+    'npc-potter':    dict(skin='skin', shirt=('#8a6a4a', '#b08a60', '#d0aa80'), apron=('#6a3a2a', '#9a5a40', '#b87a5a'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bald=True, mustache=True, pose='stand'),
+    # Arcadia (neon city)
+    'npc-stranger':  dict(skin='skin2', shirt=('#1e1430', '#32224e', '#4a3670'), hair=('#1a1418', '#2e2430', '#443a48'),
+                          hood=('#1e1430', '#32224e', '#4a3670'), visor_band=True, pose='stand'),
+    'npc-cashier':   dict(skin='skin', shirt=('#1a4a50', '#2a7a80', '#4aa8ae'), vest=('#3a1840', '#5a2a60', '#7a4080'),
+                          hair=('#5a1a4a', '#8a2a70', '#b04a90'), cap=('#e870c0', '#f078a8', '#f8a8c8'), pose='stand'),
+    'npc-shopper':   dict(skin='skin2', shirt=('#4a3a10', '#7a6020', '#a88a3a'), hair=('#1a1410', '#2e2218', '#44342a'),
+                          beanie=('#1a3a50', '#2a5a7a', '#4a80a0'), pose='stand'),
+    'npc-noodle-chef': dict(skin='skin', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), apron=('#4a1418', '#7a2028', '#a03038'),
+                            hair=('#1a1418', '#2e2430', '#443a48'), chef=True, pose='stand'),
+    'npc-patron-a':  dict(skin='skin', shirt=('#3a1840', '#5a2a60', '#7a4080'), hair=('#2a6a70', '#40a0a8', '#70d0d8'),
+                          long_hair=True, pose='sit'),
+    'npc-patron-b':  dict(skin='skin2', shirt=('#2a2a30', '#44444c', '#5e5e68'), vest=('#4a1a14', '#7a2a20', '#a04030'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), mohawk=True, bald=True, pose='sit'),
+    'npc-doctor':    dict(skin='skin', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), skirt=('#9a968c', '#e4e0d4', '#fbf8f0'),
+                          hair=('#1a1418', '#2e2430', '#443a48'), bun=True, mask=True, pose='stand'),
+    'npc-pawnbroker': dict(skin='skin2', shirt=('#3a3420', '#5a5030', '#7a7048'), vest=('#2a1a10', '#3e2a1a', '#5a4028'),
+                           hair=('#6a6a70', '#a0a0a8', '#c8c8d0'), bald=True, visor_cap=True, beard=True, pose='stand'),
+    'npc-pawn-customer': dict(skin='skin', shirt=('#1a3a2a', '#2a5a40', '#4a8060'), hair=('#7a5a1a', '#b08a2a', '#d0b050'),
+                              hood=('#1a3a2a', '#2a5a40', '#4a8060'), pose='stand'),
+    'npc-technician': dict(skin='skin', shirt=('#3a4a5a', '#5a6a7a', '#7a8a9a'), apron=('#3a3a40', '#5a5a62', '#7a7a84'),
+                           hair=('#c05020', '#e07030', '#f0a050'), goggles=True, bun=True, pose='stand'),
+    'npc-waiting':   dict(skin='skin2', shirt=('#4a2a50', '#6a4070', '#8a6090'), hair=('#1a1410', '#2e2218', '#44342a'),
+                          cap=('#2a2a30', '#44444c', '#5e5e68'), pose='sit'),
     'npc-sorceress': dict(skin='skin', shirt=('#1e1e48', '#2e3070', '#4a4c9a'), skirt=('#1e1e48', '#2e3070', '#4a4c9a'),
                           hair=('#8a8a98', '#c8c8d4', '#ececf4'), long_hair=True,
                           witch_hat=('#24163a', '#3e2a5e', '#5a4282'), pose='stand'),
@@ -294,6 +332,22 @@ def build_human(spec):
     if 'cap' in spec:
         add('cylinder', 'cap', (0, 0.3, 9.0), (5.4, 5.2, 1.4), 'cap', 'hat', head, vertices=20)
         add('cube', 'brim', (0, -4.6, 8.1), (3.4, 2.2, 0.35), 'cap', 'hat', head, bevel=0.3)
+    if spec.get('visor_band'):   # glowing cyber visor across the eyes
+        add('cube', 'visor_band', (0, -4.4, 5.9), (4.9, 0.9, 1.1), 'ledc', 'visor', head, bevel=0.3)
+    if spec.get('visor_cap'):    # green eyeshade
+        add('cube', 'eyeshade', (0, -3.8, 8.0), (4.8, 2.6, 0.35), 'visor', 'hat', head, rot=(0.25, 0, 0), bevel=0.2)
+        add('torus', 'eyeshade_band', (0, 0.0, 8.2), (1, 1, 0.5), 'visor', 'hat', head,
+            major_radius=4.8, minor_radius=0.5, major_segments=18, minor_segments=5)
+    if spec.get('goggles'):      # pushed up on the forehead
+        for sx in (-1.9, 1.9):
+            add('cylinder', 'goggle', (sx, -3.9, 8.3), (1.4, 1.4, 0.9), 'brass', 'goggles', head, rot=(1.2, 0, 0), vertices=12)
+            add('cylinder', 'goggle_lens', (sx, -4.5, 8.5), (1.0, 1.0, 0.3), 'ledc', 'goggle_lens', head, rot=(1.2, 0, 0), vertices=12)
+        add('torus', 'goggle_strap', (0, 0.0, 8.0), (1, 1, 0.6), 'leather', 'goggles', head,
+            major_radius=5.0, minor_radius=0.45, major_segments=18, minor_segments=5)
+    if spec.get('mask'):         # surgical mask
+        add('cube', 'mask', (0, -4.3, 3.4), (3.6, 1.0, 1.9), 'white', 'mask', head, bevel=0.5)
+    if spec.get('mohawk'):
+        add('cube', 'mohawk', (0, 0.6, 10.0), (0.9, 4.4, 2.2), 'hair', 'hair', head, bevel=0.4)
     if 'witch_hat' in spec:
         add('cylinder', 'hat_brim', (0, 0.8, 9.2), (6.4, 6.0, 0.4), 'witch_hat', 'hat', head, rot=(-0.3, 0, 0), vertices=24)
         add('cylinder', 'hat_band', (0, 1.0, 9.9), (4.4, 4.2, 0.8), 'leather', 'hat_band', head, rot=(-0.3, 0, 0), vertices=18)

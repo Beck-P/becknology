@@ -13,6 +13,8 @@ the art direction these follow.
 | `assets_lumar.py` | Lumar asset builders for scenes (floors, walls, furniture, fireplace, lamps…). |
 | `assets_magic.py` | Arcane builders: octagonal masonry rooms, angled windows, rose window, spell circle, crystal altar, candelabras, telescope, familiar. |
 | `assets_ship.py` | Ship builders: panelled walls with holdout viewports, LED strips, bunk, trophy cabinet, desk, consoles, holo pedestal, captain's chair, and the catalog decor / trophy models. |
+| `assets_cyber.py` | Arcadia builders: neon stroke-font signs, arcade cabinets with per-game screen art, vending machines, coolers, gondolas, noodle-bar kitchen, clinic equipment, pawn counter, repair benches. |
+| `assets_station.py` | Enigma Station + the Singularity: station shell with holdout viewports and floor windows, server racks, antenna array, data core, the docked ship, void platform, crystals, the black hole. |
 | `assets_cave.py` | Cave builders: rock faces and floors, lava pools and fissures, stalagmites, mine timbers and rails, the dragon, the hoard. |
 | `scenes/*.py` | One script per pre-rendered world: builds, renders, and updates that world's JSON. |
 | `scene_post.py` | Turns scene passes into the dithered, lit render + packed depth + `scene.json` (`apps/bridge/assets/scenes/<id>/`). |
