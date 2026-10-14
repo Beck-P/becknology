@@ -74,7 +74,8 @@ stalls, a hum of music. Neon pink/cyan against deep violet.
   a back room tournament), the noodle bar (steam, a chef, regulars),
   the clinic (augment chair, holo-scans), the pawnshop (junk with stories),
   the repair shop (drones mid-surgery), the mart (late-night shoppers);
-  plus a rooftop bar, a back-alley hacker den, an apartment you can rent.
+  plus a rooftop bar, ✓ a back-alley hacker den (NULL's), an apartment you
+  can rent.
 - **Purpose**: jobs from the street (deliveries, finding lost drones),
   credits, the arcade's tournament ladder, a hacker side-story.
 
@@ -140,7 +141,9 @@ stars streaking, a tunnel of light, dropping out over the new world.
    ✓ Bigger worlds: the four Lumar islands rebuilt as whole islands
    (Crimson Reach, Rose Cove, Sapphire Port, Midnight Isle), with natural
    coasts, people walking their paths, and quests threaded through them. Next:
-   Arcadia's Skywalk level and back alleys behind the chained gate; more
+   Arcadia's Skywalk level; ✓ the Backs behind the chained gate (the code
+   is on the bars) with NULL's den in a shipping container, Vex, and
+   Splice, the hacking job that pays; more
    of Enigma (✓ hydroponics, where Okafor lives; the ring corridor, crew
    quarters). ✓ The Wren, frozen mid-fall off the Brink, ends Okafor's quest.
 4. ✓ Nav chart and hyperspace jump. ✓ The bridge as a captain's deck: the

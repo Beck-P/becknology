@@ -1730,10 +1730,17 @@
     {
       "x": 33,
       "y": 7,
-      "type": "dialog",
+      "type": "password_gate",
       "label": "ALLEY GATE",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "A GATE CHAINED SHUT.\n\nBEYOND IT THE BACK STREETS\nRUN DARK AND WET. SOMEONE\nSPRAYED \"NULL\" ON THE BARS."
+      "prompt": "PRESS E TO OPEN",
+      "dialog": "A GATE CHAINED SHUT. BEYOND IT THE BACK STREETS RUN DARK AND WET.\n\nTHE PADLOCK HAS A KEYPAD: FOUR LETTERS. SOMEONE SPRAYED \"NULL\" ON THE BARS.",
+      "password": "NULL",
+      "targetWorld": "arcadia-alley",
+      "spawn": [
+        16,
+        12
+      ],
+      "failMessage": "THE KEYPAD BUZZES. NOT THAT."
     },
     {
       "x": 36,

@@ -247,8 +247,10 @@ w['interactions'] = [
     dialog(25, 7, 'LUCKY 7', 'PRESS E TO PEEK',
            'A ROAR OF BALL BEARINGS.\n\nROWS OF PACHINKO MACHINES,\nA HAZE OF SMOKE, NOBODY\nLOOKS UP FROM THEIR GAME.'),
     enter(31, 7, 'arcadia-skypad', 'SKYWALK LIFT', 'PRESS E TO RIDE UP', spawn=(19, 5)),
-    dialog(33, 7, 'ALLEY GATE', 'PRESS E TO LOOK',
-           'A GATE CHAINED SHUT.\n\nBEYOND IT THE BACK STREETS\nRUN DARK AND WET. SOMEONE\nSPRAYED "NULL" ON THE BARS.'),
+    {'x': 33, 'y': 7, 'type': 'password_gate', 'label': 'ALLEY GATE', 'prompt': 'PRESS E TO OPEN', 'password': 'NULL',
+     'targetWorld': 'arcadia-alley', 'spawn': [16, 12], 'failMessage': 'THE KEYPAD BUZZES. NOT THAT.',
+     'dialog': 'A GATE CHAINED SHUT. BEYOND IT THE BACK STREETS RUN DARK AND WET.\n\nTHE PADLOCK HAS A KEYPAD: FOUR '
+               'LETTERS. SOMEONE SPRAYED "NULL" ON THE BARS.'},   # the Backs (scenes/arcadia_alley.py)
     dialog(36, 7, 'CAPSULE HOTEL', 'PRESS E TO PEEK',
            'CAPSULE HOTEL, 24 HOURS.\n\nA SIGN BLINKS:\n"NO VACANCY. TRY TOMORROW."'),
     dialog(41, 7, 'CLUB VOID', 'PRESS E TO KNOCK',

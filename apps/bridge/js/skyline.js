@@ -221,6 +221,16 @@ var BridgeSkyline = (function () {
         var hue = bI / nb;
         px(ctx, x + bI * 4 + 1, y + h - bh, 3, bh, hue < 0.5 ? '#5cc8d0' : '#f078a8');
       }
+    } else if (kind === 'null') {          // NULL has the screen: their mark, glitching (js/splice.js jobs)
+      px(ctx, x, y, w, h, '#0c0410');
+      var R = Math.min(w, h) * 0.32 * (0.92 + 0.08 * Math.sin(t * 9));
+      ctx.strokeStyle = '#e040c0';
+      ctx.lineWidth = Math.max(2, Math.round(R * 0.22));
+      ctx.beginPath(); ctx.arc(Math.round(cx), Math.round(cy), R, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx - R * 1.15, cy + R * 1.15); ctx.lineTo(cx + R * 1.15, cy - R * 1.15); ctx.stroke();
+      for (var gl = 0; gl < 4; gl++) {
+        if (hash(Math.floor(t * 8) + gl * 5 + seed) > 0.6) px(ctx, x, y + hash(gl + Math.floor(t * 8)) * h, w, 1 + gl % 2, gl % 2 ? '#40e0d0' : '#60ff90');
+      }
     } else {                                // an eye with rings pulsing out
       px(ctx, x, y, w, h, '#06102a');
       for (var ri = 0; ri < 3; ri++) {
@@ -312,10 +322,14 @@ var BridgeSkyline = (function () {
 
   // ---- the street's own screens, bulbs and steam (scene.ads / bulbs / steam, in tiles) ----------
   function streetAds(ctx, sc, offX, offY, ts, now) {
+    // once you've done jobs for NULL, their mark takes a screen now and then (more often the more you've done)
+    var jobs = typeof BridgeSplice !== 'undefined' && BridgeSplice.level ? BridgeSplice.level() : 0;
     (sc.ads || []).forEach(function (a, i) {
       var x = Math.round(offX + a[0] * ts), y = Math.round(offY + a[1] * ts);
       var w = Math.round((a[2] - a[0]) * ts), h = Math.round((a[3] - a[1]) * ts);
-      ad(ctx, a[4] != null ? a[4] : i % 6, x, y, w, h, now + i * 1311, i * 7 + 3);
+      var kind = a[4] != null ? a[4] : i % 6;
+      if (jobs && hash(Math.floor(now / 7000) * 31 + i * 17) < Math.min(0.45, 0.07 * jobs)) kind = 'null';
+      ad(ctx, kind, x, y, w, h, now + i * 1311, i * 7 + 3);
     });
     // marquee bulbs chasing: every third one bright, stepping along
     var step = Math.floor(now / 160);

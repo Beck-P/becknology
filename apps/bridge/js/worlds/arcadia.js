@@ -2246,7 +2246,7 @@
 
   function drawArcadiaBackground(ctx, w, h, time) {
     var worldData = BridgeWorld.getWorld();
-    var isInterior = worldData && worldData.name === 'Arcadia Arcade';
+    var isInterior = worldData && (worldData.name === 'Arcadia Arcade' || worldData.interior);
 
     if (isInterior) {
       // Smooth cabinet-hall void color so void tiles fade out instead of

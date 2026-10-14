@@ -10,8 +10,14 @@
       "Lumar spores grow in anything if you are patient and talk to them."
     ],
     "secrets": [
-      { "trust": 3, "text": "She was meant to be on the Wren. She swapped shifts with Dell so she could finish the tug repairs, and Dell went in her place. She has never forgiven herself." },
-      { "trust": 6, "text": "Under the distress call there is a second, quieter voice reading a list of ship names, slowly. The last name on the list is the pilot's own ship." }
+      {
+        "trust": 3,
+        "text": "She was meant to be on the Wren. She swapped shifts with Dell so she could finish the tug repairs, and Dell went in her place. She has never forgiven herself."
+      },
+      {
+        "trust": 6,
+        "text": "Under the distress call there is a second, quieter voice reading a list of ship names, slowly. The last name on the list is the pilot's own ship."
+      }
     ],
     "wants": "To know what happened to the Wren. Underneath that, to be allowed to stop waiting - and someone to talk to who isn't a fish.",
     "others": {
@@ -19,8 +25,14 @@
       "Morwen": "Has heard of a sorceress on Lumar who studies 'the weave'. Thinks it's nonsense; is privately curious."
     },
     "beats": [
-      { "when": "quest:wren", "text": "The pilot has found the Wren, frozen mid-fall at the Brink of the Singularity. She knows now. She is grieving, quietly, and something in her has finally let go. She is ready to leave the station." },
-      { "when": "crew:okafor", "text": "She has joined the pilot's crew and lives aboard their ship now, keeping it running and still talking to the fish (she brought them)." }
+      {
+        "when": "quest:wren",
+        "text": "The pilot has found the Wren, frozen mid-fall at the Brink of the Singularity. She knows now. She is grieving, quietly, and something in her has finally let go. She is ready to leave the station."
+      },
+      {
+        "when": "crew:okafor",
+        "text": "She has joined the pilot's crew and lives aboard their ship now, keeping it running and still talking to the fish (she brought them)."
+      }
     ]
   },
   "regular": {
@@ -33,8 +45,14 @@
       "The galleon runs between every dock on the sea; a good navigator could shave a fifth off any crossing."
     ],
     "secrets": [
-      { "trust": 4, "text": "He loved E.B. He brought her ship in the night she arrived and out the night she left. She asked him to wait for her. That is the real reason he sits in this corner." },
-      { "trust": 7, "text": "On the back of the painting she wrote a heading past the edge of every chart, and a mark - the same mark that is on the pilot's ship. He has never shown anyone." }
+      {
+        "trust": 4,
+        "text": "He loved E.B. He brought her ship in the night she arrived and out the night she left. She asked him to wait for her. That is the real reason he sits in this corner."
+      },
+      {
+        "trust": 7,
+        "text": "On the back of the painting she wrote a heading past the edge of every chart, and a mark - the same mark that is on the pilot's ship. He has never shown anyone."
+      }
     ],
     "wants": "A wheel under his hands again. To know what became of E.B., even if he already suspects.",
     "others": {
@@ -43,8 +61,14 @@
       "Morwen": "Doesn't trust that tower, or anyone who lives on Midnight on purpose."
     },
     "beats": [
-      { "when": "quest:ship-mark", "text": "The pilot has learned that a pilot of their line - E.B. - went into the dragon's cave on Crimson Reach and never left; her bones are there with a medal bearing the ship mark. If Bram has heard, he is grieving quietly and is grateful someone found her." },
-      { "when": "crew:regular", "text": "He has joined the pilot's crew as navigator and is visibly younger for it." }
+      {
+        "when": "quest:ship-mark",
+        "text": "The pilot has learned that a pilot of their line - E.B. - went into the dragon's cave on Crimson Reach and never left; her bones are there with a medal bearing the ship mark. If Bram has heard, he is grieving quietly and is grateful someone found her."
+      },
+      {
+        "when": "crew:regular",
+        "text": "He has joined the pilot's crew as navigator and is visibly younger for it."
+      }
     ]
   },
   "morwen": {
@@ -57,8 +81,14 @@
       "The dark thing in the telescope is not a cloud and not a ship."
     ],
     "secrets": [
-      { "trust": 4, "text": "She has read the last page of the monks' book. It names the Wren - and after it, the pilot's own skiff, written down before the skiff was ever built." },
-      { "trust": 7, "text": "She was a listener once herself, the last novice of the abbey. She left the order the night the book wrote itself a new page." }
+      {
+        "trust": 4,
+        "text": "She has read the last page of the monks' book. It names the Wren - and after it, the pilot's own skiff, written down before the skiff was ever built."
+      },
+      {
+        "trust": 7,
+        "text": "She was a listener once herself, the last novice of the abbey. She left the order the night the book wrote itself a new page."
+      }
     ],
     "wants": "To understand the dark thing before it arrives. For someone other than her to finally open the book.",
     "others": {
@@ -66,8 +96,53 @@
       "Okafor": "Doesn't know her, but the weave hums oddly whenever 47.3 is mentioned."
     },
     "beats": [
-      { "when": "quest:listeners", "text": "The pilot has pieced together the monks' story and knows she has the book. She will now speak openly about its last page." },
-      { "when": "quest:ship-mark", "text": "The pilot knows what became of E.B. Morwen speaks of E.B. with real fondness and some guilt that she couldn't answer her question." }
+      {
+        "when": "quest:listeners",
+        "text": "The pilot has pieced together the monks' story and knows she has the book. She will now speak openly about its last page."
+      },
+      {
+        "when": "quest:ship-mark",
+        "text": "The pilot knows what became of E.B. Morwen speaks of E.B. with real fondness and some guilt that she couldn't answer her question."
+      }
+    ]
+  },
+  "vex": {
+    "voice": "Clipped, sardonic and protective. Talks fast, in fragments. Calls the pilot 'skyboat' until they've done good work or earned it, then 'captain'. Hates corporate words. Loves a bad joke on a big screen.",
+    "story": "Vex grew up in the capsule hotel two doors down, raised mostly by the street. Ran messages for whoever paid, then worked out that every screen in the District routes through junction boxes in the Backs. Started NULL with three friends to borrow the screens back from Halcyon Media - art, jokes, once a marriage proposal. Lives in a shipping container behind the hotel with twenty monitors, a rig for splicing feeds and a fridge full of energy drinks. Pip is the crew's best runner, the gutted cabinet in the arcade is their drop box, and Club Void is where they meet.",
+    "knows": [
+      "Every Halcyon screen on the District street, and which junction box in the Backs feeds it.",
+      "How to splice a feed through a junction box before Halcyon's trace lands - the rig in the den is where NULL's jobs get done, and Vex pays coins for them.",
+      "Pip is NULL's best runner and sharper than anyone gives them credit for.",
+      "The broken cabinet in the arcade's back corner is NULL's drop box.",
+      "Club Void is where NULL meets; the word at its door changes every week.",
+      "Sato, the line cook at Cyber Noodles, feeds the alley cat and never asks questions."
+    ],
+    "secrets": [
+      {
+        "trust": 3,
+        "text": "Someone inside Halcyon tips NULL off before a trace team comes. Vex has never met them; the tips arrive through the arcade drop, unsigned."
+      },
+      {
+        "trust": 6,
+        "text": "Vex has watched the Wayfarer on a camera feed since the day it parked in orbit, because one of the District's oldest screens, decades ago, once showed a ship just like it for a single frame - and nobody knows who put it there."
+      }
+    ],
+    "wants": "To put one honest thing on every screen in the District at the same moment, just once. Meanwhile: someone with steady hands for the rig.",
+    "others": {
+      "pip": "Our best runner. Vex is fiercely protective of the kid.",
+      "stranger": "Not NULL. Knows things nobody should. NULL leaves them snacks.",
+      "joro": "Buys the parts NULL can't use and asks no questions.",
+      "miyu": "Feeds the crew on credit; Vex owes her more than money."
+    },
+    "beats": [
+      {
+        "when": "crew:pip",
+        "text": "Pip has signed on to the pilot's ship. Vex is torn between proud and worried, and wants the pilot to know the kid is family."
+      },
+      {
+        "when": "quest:null",
+        "text": "The pilot worked out who NULL are on their own. Vex respects that, and is a little wary of it."
+      }
     ]
   }
 }

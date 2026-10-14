@@ -55,7 +55,7 @@ var BridgeInteractions = (function () {
   var VERBS = {
     enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
-    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell'
+    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -368,7 +368,13 @@ var BridgeInteractions = (function () {
         break;
 
       case 'password_gate':
-        showPasswordDialog(inter);
+        // a gate onto another world stays open once you've got the code
+        if (inter.targetWorld && gateOpen(inter)) BridgeWorld.enterWorld(inter.targetWorld, inter.spawn);
+        else showPasswordDialog(inter);
+        break;
+
+      case 'splice':
+        if (typeof BridgeSplice !== 'undefined') BridgeSplice.open();
         break;
 
       case 'sail_to':
@@ -1171,6 +1177,17 @@ var BridgeInteractions = (function () {
     });
   }
 
+  // gates you've opened (password_gate with a targetWorld), by world and label
+  function gateOpen(inter, set) {
+    var key = BridgeWorld.getWorldId() + ':' + inter.label, open = {};
+    try { open = JSON.parse(localStorage.getItem('bridge_gates') || '{}') || {}; } catch (e) { open = {}; }
+    if (set) {
+      open[key] = Date.now();
+      try { localStorage.setItem('bridge_gates', JSON.stringify(open)); } catch (e) { /* private mode */ }
+    }
+    return !!open[key];
+  }
+
   function showPasswordDialog(inter) {
     dialogVisible = true;
     // Disable game controls so the Enter key only reaches the password input,
@@ -1201,7 +1218,11 @@ var BridgeInteractions = (function () {
       if (e.key === 'Enter') {
         e.preventDefault();
         var val = input.value.trim();
-        if (val === inter.password) {
+        if (inter.targetWorld && val.toUpperCase() === String(inter.password).toUpperCase()) {
+          cleanup();
+          gateOpen(inter, true);
+          BridgeWorld.enterWorld(inter.targetWorld, inter.spawn);
+        } else if (val === inter.password) {
           // Correct — navigate to target
           cleanup();
           BridgeState.setWorldPos({

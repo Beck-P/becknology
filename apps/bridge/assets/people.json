@@ -573,5 +573,67 @@
       "pitch": "YOU FOUND THEM. AT THE EDGE. THEN THERE'S NOTHING TO WAIT FOR. I CAN FIX ANYTHING THAT HUMS, AND MOST THINGS THAT DON'T. TAKE ME WITH YOU - AND THE FISH.",
       "perkText": "Okafor keeps everything you own running: your businesses hold twice as many hours of takings before they stop."
     }
+  },
+  "vex": {
+    "name": "Vex",
+    "role": "Runs NULL, from a shipping container",
+    "sheet": "npc-vex",
+    "at": [
+      {
+        "world": "null-den",
+        "label": "VEX"
+      }
+    ],
+    "greet": "YOU GOT THROUGH THE GATE. EITHER PIP TALKS TOO MUCH OR YOU CAN READ. SIT. DON'T TOUCH THE RIG.",
+    "again": "SKYBOAT. BACK FOR WORK? THE RIG'S WARM.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "VEX. I RUN NULL, IF ANYONE RUNS NULL. WE'RE THE ONES WHO MAKE THE SCREENS SAY SOMETHING TRUE FOR A FEW SECONDS AT A TIME."
+      },
+      {
+        "q": "NULL",
+        "a": "HALCYON MEDIA OWNS EVERY SCREEN IN THE DISTRICT. EVERY ONE. WE BORROW THEM BACK. ART, MOSTLY. SOMETIMES A JOKE. ONCE, A MARRIAGE PROPOSAL. SHE SAID YES."
+      },
+      {
+        "q": "Work",
+        "a": "THE RIG. A FEED NEEDS ROUTING THROUGH A JUNCTION BOX BEFORE HALCYON'S TRACE FINDS THE TAP. TURN THE JUNCTIONS TILL IT FLOWS. STEADY HANDS? I PAY COINS - FIVE JOBS A NIGHT, BIGGER BOXES AS YOU GET GOOD."
+      },
+      {
+        "q": "The Stranger",
+        "a": "THE ONE IN THE ARCADE'S BACK CORNER? NOT ONE OF OURS. THEY JUST KNOW THINGS. WE LEAVE THEM SNACKS."
+      }
+    ]
+  },
+  "cook": {
+    "name": "Sato",
+    "role": "Line cook at Cyber Noodles, on his break",
+    "sheet": "npc-cook",
+    "at": [
+      {
+        "world": "arcadia-alley",
+        "label": "LINE COOK"
+      }
+    ],
+    "greet": "FIVE MINUTES. I GET FIVE MINUTES. YOU'RE IN THEM.",
+    "again": "STILL ON MY BREAK. STILL FIVE MINUTES.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "SATO. I DO THE BROTH AT MIYU'S. SIXTEEN HOURS ON THE POT, FIVE MINUTES OUT HERE WITH THE CAT."
+      },
+      {
+        "q": "The cat",
+        "a": "NOT MY CAT. I JUST FEED IT. IT'S NOBODY'S CAT. IT'S THE ALLEY'S CAT."
+      },
+      {
+        "q": "The container",
+        "a": "NULL. THEY'RE ALL RIGHT. PAY FOR NOODLES IN EXACT CHANGE AND NEVER TELL ME WHAT THEY'RE UP TO. BEST CUSTOMERS I'VE GOT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "HALCYON'S BEEN SENDING SUITS ROUND THE BACKS, ASKING ABOUT THE CONTAINER. NOBODY TELLS THEM ANYTHING. NOT EVEN THE CAT."
+      }
+    ]
   }
 }

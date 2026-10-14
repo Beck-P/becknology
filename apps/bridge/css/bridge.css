@@ -1040,6 +1040,34 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
 }
 .qj-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 
+/* Splice — NULL's jobs at the rig (js/splice.js) */
+#splice {
+  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  background: rgba(4, 2, 10, 0.7); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
+}
+#splice.visible { display: flex; }
+.sp-panel {
+  max-width: 96vw; max-height: 96vh; overflow: auto; box-sizing: border-box; padding: 14px 16px 14px; border-radius: 6px;
+  background: linear-gradient(180deg, rgba(20, 12, 34, 0.98), rgba(10, 6, 18, 0.98)); color: #d8d0f0;
+  border: 1px solid rgba(224, 64, 192, 0.5); box-shadow: 0 0 34px rgba(224, 64, 192, 0.18), 0 16px 40px rgba(0, 0, 0, 0.6);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.sp-head { align-self: stretch; display: flex; align-items: baseline; gap: 12px; }
+.sp-title { font-size: 14px; letter-spacing: 6px; text-transform: uppercase; color: #e040c0; text-shadow: 0 0 8px rgba(224, 64, 192, 0.6); }
+.sp-job { font-size: 12px; color: #8a80a8; flex: 1; }
+.sp-brief { align-self: stretch; font-size: 12px; color: #a89cc8; line-height: 1.4; max-width: 460px; }
+html.touch .sp-keys { display: none; }
+.sp-trace { align-self: stretch; display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #8a80a8; }
+.sp-bar { flex: 1; height: 6px; border-radius: 3px; background: #1e1630; overflow: hidden; }
+.sp-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #40e0d0, #6080ff); transition: background 0.3s; }
+.sp-fill.low { background: linear-gradient(90deg, #e84040, #e040c0); }
+.sp-grid { display: block; touch-action: manipulation; cursor: pointer; image-rendering: auto; }
+.sp-status { font-size: 13px; color: #c8f0e8; min-height: 18px; text-align: center; max-width: 460px; }
+.sp-again {
+  font: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; padding: 7px 18px; border-radius: 3px;
+  background: rgba(64, 224, 208, 0.1); border: 1px solid rgba(64, 224, 208, 0.6); color: #c8fcff;
+}
+
 /* The letter rack on the bridge (js/worlds/bridge.js): letters on parchment */
 #letter-rack {
   position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;

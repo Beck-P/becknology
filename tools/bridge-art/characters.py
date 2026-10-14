@@ -118,6 +118,11 @@ NPCS = {
                           cap=('#2a2a30', '#44444c', '#5e5e68'), pose='sit'),
     'npc-okafor':    dict(skin='skin3', shirt=('#2e4a52', '#46707a', '#6a98a2'), vest=('#8a4a1a', '#c87830', '#e8a050'),
                           hair=('#141010', '#241c1a', '#362a26'), goggles=True, pose='stand'),
+    # The Backs, behind the District (arcadia-alley, null-den)
+    'npc-vex':       dict(skin='skin', shirt=('#141018', '#241c2c', '#3a2e44'), vest=('#5a1040', '#a01870', '#d83098'),
+                          hair=('#1a6a70', '#30b0b8', '#60e0e8'), mohawk=True, bald=True, visor_band=True, pose='sit'),
+    'npc-cook':      dict(skin='skin2', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), apron=('#5a5040', '#8a7a60', '#a89878'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), beanie=('#2a2a30', '#44444c', '#5e5e68'), pose='sit'),
     'npc-sorceress': dict(skin='skin', shirt=('#1e1e48', '#2e3070', '#4a4c9a'), skirt=('#1e1e48', '#2e3070', '#4a4c9a'),
                           hair=('#8a8a98', '#c8c8d4', '#ececf4'), long_hair=True,
                           witch_hat=('#24163a', '#3e2a5e', '#5a4282'), pose='stand'),
