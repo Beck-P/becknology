@@ -87,6 +87,12 @@ var BridgeLoot = (function () {
         }
         if (dist < COLLECT_R) {
           BridgeInventory.addItem(d.itemId, 1);
+          if (typeof BridgeFX !== 'undefined') {
+            var collected = BridgeItems.get(d.itemId);
+            var label = collected ? ('+1 ' + collected.name.toUpperCase()) : '+1 ITEM';
+            if (BridgeFX.spawnSparks) BridgeFX.spawnSparks(d.x - 0.5, d.y - 0.5, '#ffe080', 5);
+            if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(d.x - 0.5, d.y - 0.55, label, '#ffe890');
+          }
           drops.splice(i, 1);
           continue;
         }
@@ -133,6 +139,19 @@ var BridgeLoot = (function () {
 
       // Item icon
       item.draw(ctx, iconX, iconY, iconSize);
+
+      // Orbiting pixel glint on settled drops
+      if (arcLift === 0) {
+        var glintPhase = ((now + d.seed * 3) % 900) / 900;
+        var gx = iconX + (glintPhase < 0.5 ? iconSize * 0.85 : iconSize * 0.15);
+        var gy = iconY + (glintPhase < 0.5 ? iconSize * 0.15 : iconSize * 0.80);
+        var glintAlpha = Math.sin(glintPhase * Math.PI) * 0.85;
+        if (glintAlpha > 0.2) {
+          var gu = Math.max(2, Math.floor(ts / 16));
+          ctx.fillStyle = 'rgba(255,248,200,' + glintAlpha.toFixed(2) + ')';
+          ctx.fillRect(Math.floor(gx), Math.floor(gy), gu, gu);
+        }
+      }
     }
   }
 

@@ -169,11 +169,14 @@ var BridgeInteractions = (function () {
       var t = hostile._attackTarget;
       var px = character.getX(), py = character.getY();
       if (t && px === t.x && py === t.y) {
+        var dmg = hostile.damage || 5;
         if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
-          BridgeInventory.takeDamage(hostile.damage || 5);
+          BridgeInventory.takeDamage(dmg);
         }
-        if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnDamageFlash) {
-          BridgeFX.spawnDamageFlash(px, py);
+        if (typeof BridgeFX !== 'undefined') {
+          if (BridgeFX.spawnDamageFlash) BridgeFX.spawnDamageFlash(px, py);
+          if (BridgeFX.spawnSparks) BridgeFX.spawnSparks(px, py, '#ff4050', 6);
+          if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(px, py - 0.3, '-' + dmg, '#ff5060');
         }
       }
       hostile._attackPhase = 'recovering';

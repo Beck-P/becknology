@@ -699,6 +699,29 @@
       // Bright pixel at center
       ctx.fillStyle = 'rgba(255, 255, 255, ' + (pa * 0.9).toFixed(2) + ')';
       ctx.fillRect(pp.sx - 1, pp.sy - 1, 2, 2);
+
+      // Floating holographic callout label when pilot approaches the pedestal
+      if (prox > 0.12 && pp.depth > 0.35) {
+        var lblAlpha = Math.min(0.92, prox * (0.45 + pp.depth * 0.55));
+        ctx.font = 'bold ' + Math.max(7, Math.floor(ts * 0.15)) + 'px "Courier New", monospace';
+        ctx.fillStyle = 'rgba(' + pp.color[0] + ',' + pp.color[1] + ',' + pp.color[2] + ',' + lblAlpha.toFixed(2) + ')';
+        ctx.fillText(pp.name, Math.floor(pp.sx + pr + 4), Math.floor(pp.sy + 3));
+      }
+    }
+
+    // Rotating azimuth compass ticks around the base of the hologram
+    var tickCount = 12;
+    for (var tc = 0; tc < tickCount; tc++) {
+      var tAng = rotY * -0.8 + (tc / tickCount) * Math.PI * 2;
+      var tx1 = cx + Math.cos(tAng) * radiusPx * 0.98;
+      var ty1 = cy + Math.sin(tAng) * radiusPx * 0.26;
+      var tx2 = cx + Math.cos(tAng) * radiusPx * 1.08;
+      var ty2 = cy + Math.sin(tAng) * radiusPx * 0.29;
+      ctx.strokeStyle = 'rgba(110, 230, 245, ' + ((0.22 + prox * 0.28) * pulse).toFixed(2) + ')';
+      ctx.beginPath();
+      ctx.moveTo(tx1, ty1);
+      ctx.lineTo(tx2, ty2);
+      ctx.stroke();
     }
 
     // Scan line sweeping vertically across the hologram

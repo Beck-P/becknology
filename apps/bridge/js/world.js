@@ -437,9 +437,14 @@ var BridgeWorld = (function () {
     // hatch even for worlds that have a ship-tile exit. Worlds can override
     // its label via `leaveLabel` (e.g. quarters → "← COCKPIT").
     var leaveLabel = world.leaveLabel || '&#9210; LEAVE WORLD';
+    var zoneTitle = world.name || (world.tileset ? world.tileset.toUpperCase() : 'SECTOR');
     overlay.innerHTML =
       '<div class="world-hud">' +
         '<a class="world-back" id="world-back" title="Esc">' + leaveLabel + '</a>' +
+        '<div class="world-location-badge" id="world-location-badge">' +
+          '<span class="world-location-dot"></span>' +
+          '<span class="world-location-text">' + zoneTitle + '</span>' +
+        '</div>' +
         '<div class="interact-prompt" id="interact-prompt"></div>' +
       '</div>';
 
@@ -781,12 +786,25 @@ var BridgeWorld = (function () {
       // skip the green focus box for them so they stay menacing.
       if (inter.type === 'hostile') continue;
       if (inter.x === checkX && inter.y === checkY && !BridgeCharacter.isMoving()) {
-        var hx = offX + inter.x * ts;
-        var hy = offY + inter.y * ts;
-        var hPulse = 0.3 + Math.sin(now / 400) * 0.2;
-        ctx.strokeStyle = 'rgba(40, 220, 80, ' + hPulse.toFixed(2) + ')';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(hx + 0.5, hy + 0.5, ts - 1, ts - 1);
+        var hx = Math.floor(offX + inter.x * ts);
+        var hy = Math.floor(offY + inter.y * ts);
+        var hPulse = 0.45 + Math.sin(now / 300) * 0.25;
+        var bLen = Math.max(4, Math.floor(ts * 0.22));
+        ctx.fillStyle = 'rgba(40, 220, 80, ' + (hPulse * 0.08).toFixed(2) + ')';
+        ctx.fillRect(hx + 2, hy + 2, ts - 4, ts - 4);
+        ctx.fillStyle = 'rgba(80, 255, 130, ' + hPulse.toFixed(2) + ')';
+        // Top-left bracket
+        ctx.fillRect(hx + 1, hy + 1, bLen, 1);
+        ctx.fillRect(hx + 1, hy + 1, 1, bLen);
+        // Top-right bracket
+        ctx.fillRect(hx + ts - 1 - bLen, hy + 1, bLen, 1);
+        ctx.fillRect(hx + ts - 2, hy + 1, 1, bLen);
+        // Bottom-left bracket
+        ctx.fillRect(hx + 1, hy + ts - 2, bLen, 1);
+        ctx.fillRect(hx + 1, hy + ts - 1 - bLen, 1, bLen);
+        // Bottom-right bracket
+        ctx.fillRect(hx + ts - 1 - bLen, hy + ts - 2, bLen, 1);
+        ctx.fillRect(hx + ts - 2, hy + ts - 1 - bLen, 1, bLen);
       }
     }
   }
@@ -936,6 +954,10 @@ var BridgeWorld = (function () {
 
   // UI that should stay crisp at screen resolution. CSS-pixel coordinates.
   function drawScreenLayer(ctx, w, h, offX, offY, ts, now) {
+    // Crisp floating combat numbers / pickup text in screen space
+    if (typeof BridgeFX !== 'undefined' && BridgeFX.drawScreen) {
+      BridgeFX.drawScreen(ctx, offX, offY, ts);
+    }
     // Exit beacons — pulsing arrow over every leave_world tile so the way
     // back to the ship is impossible to miss.
     if (world.interactions) {

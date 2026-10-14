@@ -925,9 +925,27 @@
     // Lamp pulse — single big warm glow at the top of the lighthouse
     var pulse = 0.6 + Math.sin(time / 700) * 0.25;
     ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = pulse * 0.55;
     var lampCx = destX + areaW * 0.5;
     var lampCy = destY + areaH * 0.10;
+
+    // Rotating lighthouse searchlight beam sweeping over the sea
+    var beamAngle = (time / 2400) % (Math.PI * 2);
+    var beamLen = ts * 6.5;
+    var spread = 0.24;
+    ctx.save();
+    var beamGrad = ctx.createRadialGradient(lampCx, lampCy, ts * 0.1, lampCx, lampCy, beamLen);
+    beamGrad.addColorStop(0, 'rgba(255, 235, 160, 0.42)');
+    beamGrad.addColorStop(0.45, 'rgba(255, 200, 100, 0.16)');
+    beamGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = beamGrad;
+    ctx.beginPath();
+    ctx.moveTo(lampCx, lampCy);
+    ctx.arc(lampCx, lampCy, beamLen, beamAngle - spread, beamAngle + spread);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    ctx.globalAlpha = pulse * 0.55;
     var grad = ctx.createRadialGradient(lampCx, lampCy, 0, lampCx, lampCy, areaW * 1.2);
     grad.addColorStop(0, 'rgba(255, 220, 120, 0.85)');
     grad.addColorStop(0.5, 'rgba(255, 180, 80, 0.35)');
@@ -2141,6 +2159,32 @@
     drawSaltstoneFloor(ctx, x, y, ts, time, col, row);
     drawSaltstoneFloor(ctx, x + ts, y, ts, time, col + 1, row);
     BridgeSprites.draw(ctx, x, y, ts, 'sorceress-tower', 3, 5, 1);
+
+    // Arcane amethyst spire aura + rising rune motes
+    var t = time || 0;
+    var spireCx = x + ts * 0.5;
+    var spireCy = y - ts * 3.1;
+    var pulse = 0.55 + Math.sin(t / 550) * 0.25;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    var grad = ctx.createRadialGradient(spireCx, spireCy, 0, spireCx, spireCy, ts * 2.4);
+    grad.addColorStop(0, 'rgba(210, 110, 255, ' + (0.45 * pulse).toFixed(2) + ')');
+    grad.addColorStop(0.5, 'rgba(140, 50, 220, ' + (0.20 * pulse).toFixed(2) + ')');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(spireCx - ts * 2.5, spireCy - ts * 2.5, ts * 5, ts * 5);
+
+    var u = Math.max(2, Math.floor(ts / 16));
+    for (var m = 0; m < 4; m++) {
+      var mPhase = ((t * 0.0005 + m * 0.25) % 1);
+      var mAngle = t * 0.0012 + m * 1.57;
+      var mx = spireCx + Math.cos(mAngle) * ts * (0.65 + mPhase * 0.55);
+      var my = y - ts * (0.8 + mPhase * 3.4);
+      var mAlpha = Math.sin(mPhase * Math.PI) * 0.75;
+      ctx.fillStyle = 'rgba(235, 165, 255, ' + mAlpha.toFixed(2) + ')';
+      ctx.fillRect(Math.floor(mx), Math.floor(my), u, u);
+    }
+    ctx.restore();
   }
 
   // Hostile stone statue — squat humanoid carving with faintly glowing
@@ -2207,6 +2251,22 @@
       ctx.fillRect(x + 6*u, eyeY, 1*u, 1*u);
       ctx.fillRect(x + 9*u, eyeY, 1*u, 1*u);
       ctx.globalAlpha = 1;
+    }
+
+    // Crisp pixel HP bar when damaged
+    var maxHp = hostile && (hostile.maxHP || 50);
+    if (hostile && typeof hostile._hp === 'number' && hostile._hp > 0 && hostile._hp < maxHp) {
+      var ratio = Math.max(0, Math.min(1, hostile._hp / maxHp));
+      var barW = 10 * u;
+      var barH = 2 * u;
+      var barX = Math.floor(x + 3 * u);
+      var barY = Math.floor(y + 0.5 * u);
+      ctx.fillStyle = '#08080e';
+      ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+      ctx.fillStyle = '#281428';
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = ratio > 0.45 ? '#d860f0' : '#ff4868';
+      ctx.fillRect(barX, barY, Math.max(u, Math.round(barW * ratio)), barH);
     }
   }
 
@@ -2303,19 +2363,33 @@
 
   BridgeWorld.registerBackground('lumar', drawLumarBackground);
 
-  // Hostile-entity overlay: stone sentinels render at their current
-  // pathfinding position instead of being baked into world.tiles, so
-  // moving them doesn't leave a trail of restored cells behind.
+  // Hostile-entity + atmospheric spore overlay for Lumar islands.
   BridgeWorld.registerOverlay('lumar', function (ctx, world, offX, offY, ts, time) {
-    if (!world || !world.interactions) return;
-    for (var i = 0; i < world.interactions.length; i++) {
-      var h = world.interactions[i];
-      if (h.type !== 'hostile') continue;
-      var drawer = (h.tileId === 60 || !h.tileId) ? drawStoneStatue : null;
-      if (!drawer) continue;
-      // Pass the hostile object so the drawer can read attack state
-      // (eyes flare during wind-up, body lunges during the strike).
-      drawer(ctx, offX + h.x * ts, offY + h.y * ts, ts, time, h.x, h.y, h);
+    if (!world) return;
+    var u = Math.max(2, Math.floor(ts / 16));
+
+    if (world.interactions) {
+      for (var i = 0; i < world.interactions.length; i++) {
+        var h = world.interactions[i];
+        if (h.type !== 'hostile') continue;
+
+        if (h._attackPhase === 'winding' && h._attackTarget) {
+          var tx = Math.floor(offX + h._attackTarget.x * ts);
+          var ty = Math.floor(offY + h._attackTarget.y * ts);
+          var since = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - (h._attackStart || 0);
+          var windT = Math.min(1, since / (h.windupMs || 500));
+          var dangerAlpha = 0.28 + windT * 0.45;
+          ctx.fillStyle = 'rgba(255, 45, 75, ' + (dangerAlpha * 0.35).toFixed(2) + ')';
+          ctx.fillRect(tx + 2 * u, ty + 2 * u, ts - 4 * u, ts - 4 * u);
+          ctx.strokeStyle = 'rgba(255, 70, 100, ' + dangerAlpha.toFixed(2) + ')';
+          ctx.lineWidth = Math.max(2, u);
+          ctx.strokeRect(tx + u, ty + u, ts - 2 * u, ts - 2 * u);
+        }
+
+        var drawer = (h.tileId === 60 || !h.tileId) ? drawStoneStatue : null;
+        if (!drawer) continue;
+        drawer(ctx, offX + h.x * ts, offY + h.y * ts, ts, time, h.x, h.y, h);
+      }
     }
   });
 
