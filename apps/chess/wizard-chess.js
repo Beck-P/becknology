@@ -417,7 +417,36 @@ function createStoneTextures() {
   bumpTex.wrapS = THREE.RepeatWrapping;
   bumpTex.wrapT = THREE.RepeatWrapping;
   bumpTex.repeat.set(2, 2);
-  return { bumpTex };
+
+  // Procedural equirectangular environment reflection map (hearthfire + vaulted library skylight)
+  const envCanvas = document.createElement("canvas");
+  envCanvas.width = 256;
+  envCanvas.height = 128;
+  const ectx = envCanvas.getContext("2d");
+  const grad = ectx.createLinearGradient(0, 0, 0, 128);
+  grad.addColorStop(0.0, "#1c2c4c");
+  grad.addColorStop(0.38, "#3a2418");
+  grad.addColorStop(0.52, "#d88a3c");
+  grad.addColorStop(0.75, "#26120b");
+  grad.addColorStop(1.0, "#0b0504");
+  ectx.fillStyle = grad;
+  ectx.fillRect(0, 0, 256, 128);
+  // Bright hearth specular hotspots for metallic armor & gold crowns
+  [
+    [48, 56, 26, "rgba(255, 220, 150, 0.85)"],
+    [128, 42, 34, "rgba(255, 240, 200, 0.90)"],
+    [208, 58, 28, "rgba(255, 180, 95, 0.80)"]
+  ].forEach(([hx, hy, hr, col]) => {
+    const rg = ectx.createRadialGradient(hx, hy, 1, hx, hy, hr);
+    rg.addColorStop(0, col);
+    rg.addColorStop(1, "rgba(0,0,0,0)");
+    ectx.fillStyle = rg;
+    ectx.fillRect(hx - hr, hy - hr, hr * 2, hr * 2);
+  });
+  const envTex = new THREE.CanvasTexture(envCanvas);
+  envTex.mapping = THREE.EquirectangularReflectionMapping;
+
+  return { bumpTex, envTex };
 }
 
 // ---------- Coordinate Helpers ----------
@@ -507,7 +536,7 @@ export class WizardChess3D {
     const h = this.container.clientHeight || 540;
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x120906, 0.032);
+    this.scene.fog = new THREE.FogExp2(0x120906, 0.028);
 
     this.camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
     this.camera.position.set(0, 8.6, 9.8);
@@ -518,7 +547,7 @@ export class WizardChess3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.18;
+    this.renderer.toneMappingExposure = 1.24;
 
     this.container.innerHTML = "";
     this.container.appendChild(this.renderer.domElement);
@@ -527,15 +556,15 @@ export class WizardChess3D {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.06;
     this.controls.target.set(0, 0.4, 0);
-    this.controls.minDistance = 4.5;
+    this.controls.minDistance = 4.2;
     this.controls.maxDistance = 18.5;
     this.controls.maxPolarAngle = Math.PI * 0.46;
     this.controls.minPolarAngle = 0.15;
 
-    const ambient = new THREE.AmbientLight(0x523828, 1.45);
+    const ambient = new THREE.AmbientLight(0x5c402e, 1.55);
     this.scene.add(ambient);
 
-    const keyLight = new THREE.DirectionalLight(0xffe2b8, 1.95);
+    const keyLight = new THREE.DirectionalLight(0xffe6c2, 2.15);
     keyLight.position.set(5.5, 13.5, 6.5);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 2048;
@@ -550,58 +579,93 @@ export class WizardChess3D {
     keyLight.shadow.bias = -0.0005;
     this.scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x7098e8, 0.85);
+    const rimLight = new THREE.DirectionalLight(0x78a4ff, 1.05);
     rimLight.position.set(-7, 8, -8);
     this.scene.add(rimLight);
 
-    const { bumpTex } = createStoneTextures();
+    const { bumpTex, envTex } = createStoneTextures();
+    this.scene.environment = envTex;
+
     this.materials = {
       whitePiece: new THREE.MeshStandardMaterial({
-        color: 0xede0c8,
-        roughness: 0.42,
-        metalness: 0.08,
+        color: 0xf3e8d2,
+        roughness: 0.36,
+        metalness: 0.1,
+        bumpMap: bumpTex,
+        bumpScale: 0.026
+      }),
+      whiteCloth: new THREE.MeshStandardMaterial({
+        color: 0x1e4ea8,
+        roughness: 0.58,
+        metalness: 0.12,
+        bumpMap: bumpTex,
+        bumpScale: 0.015
+      }),
+      whiteAccent: new THREE.MeshStandardMaterial({
+        color: 0xf0b848,
+        roughness: 0.2,
+        metalness: 0.88
+      }),
+      whiteMetal: new THREE.MeshStandardMaterial({
+        color: 0xe6eef8,
+        roughness: 0.16,
+        metalness: 0.92
+      }),
+      whiteCore: new THREE.MeshStandardMaterial({
+        color: 0x58e4ff,
+        emissive: 0x18b8ff,
+        emissiveIntensity: 2.0,
+        roughness: 0.15
+      }),
+      blackPiece: new THREE.MeshStandardMaterial({
+        color: 0x1d1822,
+        roughness: 0.3,
+        metalness: 0.28,
         bumpMap: bumpTex,
         bumpScale: 0.032
       }),
-      whiteAccent: new THREE.MeshStandardMaterial({
-        color: 0xdca34c,
-        roughness: 0.25,
-        metalness: 0.78
-      }),
-      whiteMetal: new THREE.MeshStandardMaterial({
-        color: 0xd8dee8,
-        roughness: 0.22,
-        metalness: 0.86
-      }),
-      whiteCore: new THREE.MeshStandardMaterial({
-        color: 0x68d8ff,
-        emissive: 0x28a8ff,
-        emissiveIntensity: 1.75,
-        roughness: 0.18
-      }),
-      blackPiece: new THREE.MeshStandardMaterial({
-        color: 0x241e26,
-        roughness: 0.34,
-        metalness: 0.24,
+      blackCloth: new THREE.MeshStandardMaterial({
+        color: 0x821628,
+        roughness: 0.55,
+        metalness: 0.15,
         bumpMap: bumpTex,
-        bumpScale: 0.038
+        bumpScale: 0.015
       }),
       blackAccent: new THREE.MeshStandardMaterial({
-        color: 0xa868d8,
-        roughness: 0.28,
-        metalness: 0.74
-      }),
-      blackMetal: new THREE.MeshStandardMaterial({
-        color: 0x564864,
-        roughness: 0.25,
+        color: 0xd47e42,
+        roughness: 0.22,
         metalness: 0.85
       }),
-      blackCore: new THREE.MeshStandardMaterial({
-        color: 0xff6e48,
-        emissive: 0xff3818,
-        emissiveIntensity: 1.85,
-        roughness: 0.18
+      blackMetal: new THREE.MeshStandardMaterial({
+        color: 0x4a4e5e,
+        roughness: 0.19,
+        metalness: 0.9
       }),
+      blackCore: new THREE.MeshStandardMaterial({
+        color: 0xff6838,
+        emissive: 0xff3010,
+        emissiveIntensity: 2.1,
+        roughness: 0.15
+      }),
+      // Per-archetype signature emissive cores so classes are visually distinct at a glance
+      cores: {
+        w: {
+          p: new THREE.MeshStandardMaterial({ color: 0x68e4ff, emissive: 0x20a8ff, emissiveIntensity: 1.9 }),
+          r: new THREE.MeshStandardMaterial({ color: 0xffb848, emissive: 0xff7818, emissiveIntensity: 2.2 }),
+          n: new THREE.MeshStandardMaterial({ color: 0x48f5a8, emissive: 0x14d478, emissiveIntensity: 2.0 }),
+          b: new THREE.MeshStandardMaterial({ color: 0x70d8ff, emissive: 0x3898ff, emissiveIntensity: 2.3 }),
+          q: new THREE.MeshStandardMaterial({ color: 0xffe878, emissive: 0xffb824, emissiveIntensity: 2.4 }),
+          k: new THREE.MeshStandardMaterial({ color: 0xffdf68, emissive: 0xff9810, emissiveIntensity: 2.5 })
+        },
+        b: {
+          p: new THREE.MeshStandardMaterial({ color: 0xff6840, emissive: 0xff2810, emissiveIntensity: 1.9 }),
+          r: new THREE.MeshStandardMaterial({ color: 0xff5218, emissive: 0xe82000, emissiveIntensity: 2.3 }),
+          n: new THREE.MeshStandardMaterial({ color: 0xc868ff, emissive: 0x9828ff, emissiveIntensity: 2.1 }),
+          b: new THREE.MeshStandardMaterial({ color: 0xe068ff, emissive: 0xb424ff, emissiveIntensity: 2.3 }),
+          q: new THREE.MeshStandardMaterial({ color: 0xff4888, emissive: 0xff1458, emissiveIntensity: 2.4 }),
+          k: new THREE.MeshStandardMaterial({ color: 0xff3838, emissive: 0xff0818, emissiveIntensity: 2.5 })
+        }
+      },
       lightSquare: new THREE.MeshStandardMaterial({
         color: 0xc9a679,
         roughness: 0.55,
@@ -752,9 +816,14 @@ export class WizardChess3D {
   buildWizardPieceMesh(type, color) {
     const isWhite = color === "w";
     const stoneMat = isWhite ? this.materials.whitePiece : this.materials.blackPiece;
+    const clothMat = isWhite ? this.materials.whiteCloth : this.materials.blackCloth;
     const accentMat = isWhite ? this.materials.whiteAccent : this.materials.blackAccent;
     const metalMat = isWhite ? this.materials.whiteMetal : this.materials.blackMetal;
-    const eyeMat = isWhite ? this.materials.whiteCore : this.materials.blackCore;
+    const eyeMat =
+      (this.materials.cores &&
+        this.materials.cores[color] &&
+        this.materials.cores[color][type]) ||
+      (isWhite ? this.materials.whiteCore : this.materials.blackCore);
 
     const template = this.blenderTemplates.get(type);
     if (template) {
@@ -769,23 +838,43 @@ export class WizardChess3D {
       let weaponPivot = null;
       let shieldPivot = null;
       let headPivot = null;
+      let wingsMesh = null;
+      let astrolabeMesh = null;
 
       const clone = template.clone(true);
       const children = [...clone.children];
 
       for (const child of children) {
         const n = child.name.toLowerCase();
-        // Assign team PBR materials to every mesh in the hierarchy
         child.traverse((node) => {
           if (node.isMesh) {
             node.castShadow = true;
             node.receiveShadow = true;
-            const matName = node.material ? node.material.name : "";
-            if (matName.includes("gem") || n.includes("gem")) {
+            const matName = node.material ? node.material.name.toLowerCase() : "";
+            const nodeName = node.name.toLowerCase();
+            if (matName.includes("gem") || nodeName.includes("gem") || n.includes("bishop_shield") || n.includes("queen_shield")) {
               node.material = eyeMat;
-            } else if (matName.includes("metal") || n.includes("weapon")) {
+            } else if (matName.includes("cloth") || nodeName.includes("cloth") || n === "bishop_body") {
+              node.material = clothMat;
+            } else if (
+              matName.includes("metal") ||
+              nodeName.includes("metal") ||
+              nodeName.includes("weapon") ||
+              n === "pawn_head" ||
+              n === "knight_head"
+            ) {
               node.material = metalMat;
-            } else if (matName.includes("trim") || n.includes("trim") || n.includes("shield")) {
+            } else if (
+              matName.includes("trim") ||
+              nodeName.includes("trim") ||
+              nodeName.includes("shield") ||
+              nodeName.includes("wings") ||
+              n === "rook_head" ||
+              n === "queen_head" ||
+              n === "king_head" ||
+              n === "bishop_weapon" ||
+              n === "queen_weapon"
+            ) {
               node.material = accentMat;
             } else {
               node.material = stoneMat;
@@ -794,7 +883,6 @@ export class WizardChess3D {
         });
 
         if (n.endsWith("_base") || n.endsWith("_base_trim")) {
-          // Base stays grounded on root (with matching Y rotation)
           child.rotation.y += Math.PI;
           root.add(child);
         } else if (n.endsWith("_weapon")) {
@@ -815,9 +903,30 @@ export class WizardChess3D {
           child.position.set(0, 0, 0);
           headPivot.add(child);
           orient.add(headPivot);
+        } else if (n.endsWith("_wings")) {
+          wingsMesh = child;
+          orient.add(child);
+        } else if (n === "bishop_trim") {
+          astrolabeMesh = child;
+          orient.add(child);
         } else {
           orient.add(child);
         }
+      }
+
+      // Add subtle class-specific glowing rune geometry at the base for instant visual recognition
+      if (type !== "p") {
+        const segMap = { r: 4, n: 3, b: 6, q: 8, k: 16 };
+        const radMap = { r: 0.44, n: 0.41, b: 0.4, q: 0.45, k: 0.48 };
+        const sigilGeo = new THREE.RingGeometry(
+          (radMap[type] || 0.42) - 0.045,
+          radMap[type] || 0.42,
+          segMap[type] || 12
+        );
+        const sigilMesh = new THREE.Mesh(sigilGeo, eyeMat);
+        sigilMesh.rotation.x = -Math.PI / 2;
+        sigilMesh.position.y = 0.015;
+        root.add(sigilMesh);
       }
 
       root.rotation.y = isWhite ? Math.PI : 0;
@@ -828,6 +937,8 @@ export class WizardChess3D {
         weaponPivot,
         shieldPivot,
         headPivot,
+        wingsMesh,
+        astrolabeMesh,
         seed: Math.random() * Math.PI * 2
       };
       return root;
@@ -2236,13 +2347,33 @@ export class WizardChess3D {
       b.flame.rotation.y += 0.04;
     }
 
-    // 2. Subtle breathing & head/weapon idle animation on Blender stone statues
+    // 2. Class-specific idle animations on Blender-sculpted warriors
     for (const [, piece] of this.pieceMeshes) {
       if (!this.animating && piece.userData.body) {
         const s = piece.userData.seed || 0;
-        piece.userData.body.position.y = Math.sin(now * 0.0028 + s) * 0.016;
+        const pType = piece.userData.type;
+        const hoverAmp = pType === "b" || pType === "q" ? 0.032 : 0.015;
+        piece.userData.body.position.y = Math.sin(now * 0.0028 + s) * hoverAmp;
+
         if (piece.userData.headPivot) {
-          piece.userData.headPivot.rotation.y = Math.sin(now * 0.0016 + s) * 0.06;
+          piece.userData.headPivot.rotation.y = Math.sin(now * 0.0016 + s) * 0.07;
+          if (pType === "n") {
+            // Warhorse proud head nod
+            piece.userData.headPivot.rotation.x = Math.sin(now * 0.0032 + s) * 0.06;
+          }
+        }
+        if (piece.userData.wingsMesh) {
+          // Queen Valkyrie wings gently unfurl & breathe
+          const ws = 1 + Math.sin(now * 0.0035 + s) * 0.055;
+          piece.userData.wingsMesh.scale.set(ws, 1, 1);
+        }
+        if (piece.userData.astrolabeMesh) {
+          // Bishop celestial astrolabe rings slowly precess
+          piece.userData.astrolabeMesh.rotation.z = Math.sin(now * 0.002 + s) * 0.14;
+        }
+        if ((pType === "q" || pType === "b") && piece.userData.shieldPivot) {
+          // Levitating spellbook / arcane orbs bob in left hand
+          piece.userData.shieldPivot.position.y += Math.sin(now * 0.0045 + s) * 0.0012;
         }
       }
     }
