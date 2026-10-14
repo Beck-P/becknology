@@ -44,6 +44,7 @@ becknology/
 - Repo: github.com/Beck-P/becknology
 - SSH alias: `github-personal` (Beck's personal GitHub account, separate from work)
 - Branch: main (push to deploy)
+- **Ship every change.** After each completed, verified change: commit, push, and merge into `main` so it deploys live — Beck's standing instruction, no need to ask. If you're working on a feature branch, push it and then bring `main` up to it (fast-forward when possible; otherwise merge `main` in first and resolve conflicts, then push to `main`).
 
 ## Cowork → Claude Code Handoff
 Same pattern as the Realzono repo: Cowork writes specs to `_claude_docs/`, Claude Code implements them.
