@@ -254,18 +254,58 @@ def plain(k, land, cols, rows, seed=5, step=0.125, plate=3.4, fissure=0.05, tone
     for t, col in enumerate(tones):
         build(top & (tone_of == t), lambda j, i: pz[pid[j, i]], (col, 0.22), 'plain_top')
     build(glowc, lambda j, i: -0.12, '#1a0a30', 'fissure', emit=(glow, 0.8))
-    # the edge: a lit lip, and rock hanging into the void below it
+    # the edge: each plate's broken side drops as a sheer face into the void — a pale lip, banded stone,
+    # here and there a vein of light in the strata — with rock hanging below it (never above the plain)
+    def depth(x, r):
+        return 0.9 + 0.55 * mnoise.noise(Vector((x * 0.6, r * 0.6, 3.3))) + 0.25 * mnoise.noise(Vector((x * 2.1, r * 2.1, 5.1)))
+
+    faces = {'lip': [], 'face_a': [], 'face_b': [], 'vein': []}
+    js, is_ = np.nonzero(L)
+    for j, i in zip(js, is_):
+        xa, xb = x0 + i * step, x0 + (i + 1) * step
+        ra, rb = r0 + j * step, r0 + (j + 1) * step
+        zt = pz[pid[j, i]]
+        sides = []
+        if j + 1 >= nr or not L[j + 1, i]:
+            sides.append(((xa, rb), (xb, rb), (0.0, 0.012)))
+        if i - 1 < 0 or not L[j, i - 1]:
+            sides.append(((xa, ra), (xa, rb), (-0.012, 0.0)))
+        if i + 1 >= nx or not L[j, i + 1]:
+            sides.append(((xb, ra), (xb, rb), (0.012, 0.0)))
+        for (p, q, o) in sides:
+            da, db = depth(*p), depth(*q)
+            faces['lip'].append((p, q, zt, zt, -0.1, -0.1))
+            band = 'face_a' if mnoise.noise(Vector((p[0] * 0.25, p[1] * 0.25, 8.8))) > 0 else 'face_b'
+            faces[band].append((p, q, -0.1, -0.1, -da, -db))
+            if mnoise.noise(Vector((p[0] * 0.3, p[1] * 0.3, 2.2))) > 0.25:
+                faces['vein'].append(((p[0] + o[0], p[1] + o[1]), (q[0] + o[0], q[1] + o[1]), -0.46, -0.46, -0.52, -0.52))
+    alb = {'lip': ('#8a7aa0', 0.2), 'face_a': (STONE[3], 0.22), 'face_b': (STONE[2], 0.22), 'vein': '#1a0a30'}
+    for key, quads in faces.items():
+        if not quads:
+            continue
+        bm = bmesh.new()
+        for (p, q, za, zb, zc, zd) in quads:
+            v = [bm.verts.new((p[0], -p[1] * RS, za)), bm.verts.new((q[0], -q[1] * RS, zb)),
+                 bm.verts.new((q[0], -q[1] * RS, zd)), bm.verts.new((p[0], -p[1] * RS, zc))]
+            bm.faces.new(v)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+        me = bpy.data.meshes.new('plain_' + key)
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new('plain_' + key, me)
+        k.scene.collection.objects.link(o)
+        k._finish(o, alb[key], 'plain_' + key, emit=(glow, 0.7) if key == 'vein' else None)
     bm_edge = edge & L
     js, is_ = np.nonzero(bm_edge)
     for n, (j, i) in enumerate(zip(js, is_)):
-        if n % 3:
+        if n % 5:
             continue
         x, r = X[j, i], R[j, i]
-        s = rng.uniform(0.18, 0.4)
-        k.rock(x, r, -0.25 - rng.uniform(0, 0.4), s, s * 0.9, rng.uniform(0.4, 1.0), (shade(STONE[1], rng.uniform(0.8, 1.2)), 0.2),
-               part='plain_under')
-        if rng.random() < 0.18:
-            k.cone(x, r, -rng.uniform(1.5, 3.2), -0.3, 0.03, rng.uniform(0.2, 0.4), (STONE[1], 0.2), 'plain_spike', verts=5)
+        d = depth(x, r)
+        s = rng.uniform(0.18, 0.42)
+        k.rock(x, r, -d - s * 0.5, s, s * 0.9, s * 0.8, (shade(STONE[2], rng.uniform(0.8, 1.15)), 0.2), part='plain_under')
+        if rng.random() < 0.2:
+            k.cone(x, r, -d - rng.uniform(1.2, 2.8), -d, 0.03, rng.uniform(0.15, 0.35), (STONE[2], 0.2), 'plain_spike', verts=5)
     # walkable cells: on land, clear of the edge
     def on(x, r):
         i = int((x - x0) / step)

@@ -43,7 +43,7 @@ ALTAR = (41.5, 6.5)
 k = Kit(COLS, ROWS, margin_top=2.0, margin_bottom=3.0, margin_x=1.0, seed=181)
 rng = random.Random(181)
 
-KEEP = [(PAD, 3.4), ((18.0, 20.5), 2.0), ((23.5, 15.5), 3.2), ((14.5, 9.5), 2.4), ((6.5, 14.5), 2.2), ((34.0, 25.0), 2.6),
+KEEP = [(PAD, 4.6), ((10.0, 18.5), 3.0), ((23.5, 15.5), 3.2), ((14.5, 9.5), 2.4), ((6.5, 14.5), 2.2), ((34.0, 25.0), 2.6),
         ((28.5, 21.5), 1.8), (ALTAR, 2.4), ((36.5, 11.5), 2.4)]
 
 
@@ -53,7 +53,7 @@ def land(x, r):
             return True
     n = noise.noise(Vector((x * 0.11, r * 0.11, 1.3)))
     m = noise.noise(Vector((x * 0.33, r * 0.33, 4.1)))
-    edge = min(x + 1.0, COLS + 1.0 - x, r + 3.0, ROWS + 0.2 - r)
+    edge = min(x + 1.0, COLS + 1.0 - x, r + 3.0, ROWS + 0.2 - r) + 2.2 * noise.noise(Vector((x * 0.09, r * 0.09, 6.6)))
     base = min(edge, 4.0) * 0.32 + n * 0.55 + m * 0.22
     ne = max(0.0, (x - COLS * 0.55) / (COLS * 0.45)) * max(0.0, (ROWS * 0.5 - r) / (ROWS * 0.5))
     base -= ne * 2.2                                            # breaking up toward the brink
@@ -123,7 +123,7 @@ for i in range(24):
           PAD[1] + math.sin(a) * 2.45 + 0.05, 0.08, '#140a28', 'ring_rune', emit=(V.GLOW, 0.8))
 for i in range(4):                                            # the old guide stones
     a = i * math.pi / 2 + math.pi / 4
-    x, r = PAD[0] + math.cos(a) * 3.0, PAD[1] + math.sin(a) * 3.0
+    x, r = PAD[0] + math.cos(a) * 3.4, PAD[1] + math.sin(a) * 3.4
     k.box(x - 0.15, r - 0.15, 0.0, x + 0.15, r + 0.15, 0.9, (V.STONE[3], 0.18), 'guide_stone', bevel=0.03)
     k.sphere(x, r, 1.0, 0.1, 0.1, '#ffb060', 'guide_light', emit=('#ffb060', 1.0), segs=8)
     k.point_light(x, r + 0.2, 1.0, '#ffb060', 8, radius=0.1, group='flicker')
@@ -180,7 +180,7 @@ k.solid(GX - 2.3, GR - 0.3, GX - 1.7, GR + 0.3)
 k.solid(GX + 1.7, GR - 0.3, GX + 2.3, GR + 0.3)
 
 # ---- the sundial whose shadow points at the hole, the inscribed stone -------------------------------------
-SX, SR = 18.0, 20.5
+SX, SR = 10.0, 18.5
 k.cyl(SX, SR, 0.0, 0.18, 1.2, (V.STONE[4], 0.14), 'dial', verts=32)
 for i in range(12):
     a = i * math.pi / 6
@@ -286,7 +286,7 @@ def dialog(x, y, label, prompt, text):
 w['interactions'] = [
     at(sing, int(ALTAR[0]), int(ALTAR[1])),
     {'x': int(PAD[0]), 'y': int(PAD[1]), 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'},
-    dialog(18, 20, 'SUNDIAL', 'PRESS E TO LOOK',
+    dialog(10, 20, 'SUNDIAL', 'PRESS E TO LOOK',
            "A SUNDIAL WITH NO SUN.\n\nITS SHADOW POINTS AT THE HOLE, AND IT'S LONGER THAN IT WAS A MOMENT AGO."),
     dialog(23, 15, 'RING GATE', 'PRESS E TO LOOK',
            'A RING OF STONE, HALF SUNK. THROUGH IT THE STARS ARE IN THE WRONG PLACES.\n\nYOU SEE YOUR OWN BACK, A LONG WAY OFF.'),
