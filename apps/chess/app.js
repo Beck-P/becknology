@@ -95,7 +95,7 @@ let isTheaterMode = false;
 let userExitedTheater = false;
 const CAM_CYCLE = ["white", "cinematic", "top", "black"];
 let camCycleIdx = 0;
-const THEME_CYCLE = ["classic", "marble", "staunton", "iron", "sanctum"];
+const THEME_CYCLE = ["classic", "lumar", "arcadia", "enigma", "singularity"];
 let themeCycleIdx = 0;
 
 let chess = new Chess();
