@@ -211,6 +211,29 @@ class Kit:
         self.scene.collection.objects.link(o)
         return self._finish(o, albedo, part, emit)
 
+    def loft(self, rings, albedo, part, emit=None, closed=False, smooth=True):
+        """Skin through cross-sections: each ring is a list of (x, row, z)
+        points, all rings the same length — hulls, curved roofs, sails.
+        `closed` joins each ring's last point back to its first; an open
+        ring gives an open shell (a hull you can see down into)."""
+        bm = bmesh.new()
+        vs = [[bm.verts.new((p[0], -p[1] * S, p[2])) for p in ring] for ring in rings]
+        n = len(vs[0])
+        for a, b in zip(vs, vs[1:]):
+            for i in range(n if closed else n - 1):
+                j = (i + 1) % n
+                bm.faces.new((a[i], a[j], b[j], b[i]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        me = bpy.data.meshes.new('loft')
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new('loft', me)
+        self.scene.collection.objects.link(o)
+        o = self._finish(o, albedo, part, emit)
+        for p in o.data.polygons:
+            p.use_smooth = smooth
+        return o
+
     def rock(self, cx, cr, cz, rx, ry, rz, albedo, part='rock', seed=None, jitter=0.18, segs=10):
         """Faceted boulder: a low-poly ellipsoid with its vertices pushed
         around, flat shaded."""
@@ -352,16 +375,19 @@ class Kit:
                 m = cache[key]
             elif kind == 'light':
                 if p['emit']:
-                    key = ('le', p['emit'][0])
+                    key = ('le', p['emit'][0], p['emit'][1] if len(p['emit']) > 1 else 1.0)
                     if key not in cache:
                         cache[key] = self._flat_emission(p['emit'][0], p['emit'][1] if len(p['emit']) > 1 else 1.0)
                     m = cache[key]
                 else:
                     m = self._white_diffuse()
             elif kind == 'emission':
-                key = ('e', p['emit'][0] if p['emit'] else None)
+                # the glow you see is the emission colour scaled by its strength
+                # (capped at 1; stronger only means more light cast on the room)
+                st = min(1.0, p['emit'][1] if p['emit'] and len(p['emit']) > 1 else 1.0)
+                key = ('e', p['emit'][0] if p['emit'] else None, st)
                 if key not in cache:
-                    cache[key] = self._flat_emission(p['emit'][0] if p['emit'] else '#000000')
+                    cache[key] = self._flat_emission(p['emit'][0] if p['emit'] else '#000000', st)
                 m = cache[key]
             elif kind == 'id':
                 pid = p['pid']
@@ -555,6 +581,11 @@ def apply_world(path, kit, floor, doors=(), moves=None, actors=(), scene_id=None
     repeated labels take positions in order. actors: NPC sprites.
     """
     w = json.load(open(path))
+    # keep the hand-made tile layout the first time, so scripts that build
+    # from it (islands, harbour) can be re-run on an already-converted world
+    if 'designTiles' not in w and 'scene' not in w:
+        w['designTiles'] = w.get('tiles')
+        w['designTileNames'] = w.get('tileNames')
     cols, rows = w['width'], w['height']
     c0, r0, c1, r1 = floor
     walk_extra = set(map(tuple, doors)) | set(map(tuple, extra_walkable))

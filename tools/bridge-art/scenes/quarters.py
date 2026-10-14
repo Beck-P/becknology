@@ -89,6 +89,7 @@ k.point_light(13.5, 8.6, 2.2, '#c0a0ff', 25, radius=0.4)
 k.render(OUT, light_states={'full': {'pulse': 1.0}, 'dim': {'pulse': 0.5}}, light_samples=128,
          world_light=('#2a2438', 0.4))
 
+k.solid(12, 8, 13, 9)                   # behind the storage locker
 apply_world(WORLD, k, (1, 3, 14, 10), doors=[(7, 11), (8, 11)], scene_id='quarters', moves={
     'BED': [(1, 5), (2, 5)], 'TROPHY SHELF': [(4, 3), (5, 3), (6, 3), (7, 3), (8, 3), (9, 3)],
     'CHESS TABLE': (4, 6), 'LOG TERMINAL': [(11, 3), (12, 3), (13, 3)], 'CATALOG TERMINAL': (14, 9),

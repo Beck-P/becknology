@@ -540,80 +540,113 @@ body::after {
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
-  background: rgba(14, 12, 24, 0.78);
-  border: 1px solid rgba(130, 175, 255, 0.32);
-  border-radius: 3px;
-  box-shadow: 0 0 16px rgba(80, 130, 240, 0.14), inset 0 0 8px rgba(130, 175, 255, 0.06);
-  font-family: 'Courier New', Consolas, monospace;
-  font-size: 11px;
-  font-weight: bold;
-  letter-spacing: 3px;
-  color: rgba(215, 230, 255, 0.88);
+  background: rgba(14, 12, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: rgba(242, 238, 230, 0.9);
   pointer-events: none;
-  z-index: 24;
-  white-space: nowrap;
+  z-index: 25;
 }
 
 .world-location-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #58d8ff;
-  box-shadow: 0 0 8px #58d8ff;
-  animation: blink 2.2s ease-in-out infinite;
+  background: #7fe0c8;
+  box-shadow: 0 0 8px #7fe0c8;
 }
 
 .world-back {
   position: fixed;
   top: 14px;
-  right: 16px;
-  font-family: 'Courier New', Consolas, monospace;
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: rgba(220, 220, 220, 0.85);
-  background: rgba(20, 14, 30, 0.78);
-  border: 1px solid rgba(160, 120, 220, 0.45);
-  border-radius: 3px;
-  padding: 7px 12px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  color: rgba(242, 238, 230, 0.9);
+  background: rgba(14, 12, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 5px 13px 5px 5px;
   cursor: pointer;
   z-index: 25;
   text-decoration: none;
   pointer-events: auto;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  box-shadow: 0 0 14px rgba(160, 120, 220, 0.18);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 .world-back:hover {
-  color: #fff;
-  background: rgba(60, 40, 100, 0.9);
-  border-color: rgba(200, 160, 255, 0.7);
+  background: rgba(34, 30, 50, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
 }
-.world-back::after {
-  content: '  Esc';
-  font-size: 9px;
-  letter-spacing: 1px;
-  opacity: 0.55;
-  margin-left: 6px;
-}
+.world-back .ip-key { font-size: 10px; min-width: 26px; height: 18px; }
 
-/* ---- Interaction Prompt ---- */
+/* ---- Interaction Prompt ----
+   A small glass pill that floats over whatever you're close to: a key cap,
+   the verb, the thing's name. Positioned every frame by BridgeInteractions;
+   tap or click it to act. */
 .interact-prompt {
   position: fixed;
-  bottom: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Courier New', Consolas, monospace;
-  font-size: clamp(11px, 1.4vw, 15px);
-  font-weight: bold;
-  letter-spacing: 3px;
-  color: rgba(40, 220, 80, 0.9);
-  text-shadow: 0 0 8px rgba(40, 220, 80, 0.4);
-  animation: blink 1.2s ease-in-out infinite;
+  left: 0; top: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px 4px 4px;
+  background: rgba(14, 12, 22, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1;
+  color: #f2eee6;
+  white-space: nowrap;
   pointer-events: none;
   z-index: 20;
-  display: none;
+  opacity: 0;
+  transition: opacity 0.14s ease-out;
+  will-change: transform, opacity;
+  -webkit-font-smoothing: antialiased;
 }
+.interact-prompt.visible { opacity: 1; pointer-events: auto; cursor: pointer; }
+.interact-prompt::after {          /* little tail pointing at the object */
+  content: '';
+  position: absolute;
+  left: 50%; bottom: -5px;
+  width: 8px; height: 8px;
+  margin-left: -4px;
+  background: rgba(14, 12, 22, 0.82);
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  transform: rotate(45deg);
+}
+.ip-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px; height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: linear-gradient(#f6f1e4, #d9d2c2);
+  box-shadow: 0 2px 0 #8d8676;
+  color: #1c1824;
+  font-weight: 600;
+  font-size: 12px;
+}
+.ip-verb { color: #ffd98a; font-weight: 600; letter-spacing: 0.3px; }
+.ip-label { color: rgba(242, 238, 230, 0.86); letter-spacing: 0.3px; }
 
-.interact-prompt.visible { display: block; }
+/* Quiet markers over games and exits (drawn on the canvas use the same
+   palette); kept here for the HUD's exit button. */
+
 
 /* ---- Landing Screen ---- */
 .landing-text {
@@ -740,5 +773,5 @@ body::after {
   .intro-prompt { bottom: 12%; font-size: 14px; }
 
   /* Interaction prompt */
-  .interact-prompt { bottom: 28%; font-size: 12px; }
+  .interact-prompt { font-size: 13px; }
 }

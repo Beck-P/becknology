@@ -8,6 +8,143 @@ var BridgeInteractions = (function () {
   var currentInteraction = null;
   var dialogVisible = false;
 
+  // ---- Targeting ------------------------------------------------------------
+  // Anything within REACH tiles (so the 8 tiles round you and the one you
+  // stand on) can be used; the one you face wins, then the nearest. An
+  // object two tiles ahead counts when a solid tile (a counter, a table)
+  // stands between you — shopkeepers behind their counters.
+  var REACH = 1.5;
+
+  function facingVec(f) {
+    return f === 'right' ? [1, 0] : f === 'left' ? [-1, 0] : f === 'down' ? [0, 1] : [0, -1];
+  }
+
+  function solidAt(world, x, y) {
+    return !world.collisions[y] || world.collisions[y][x] !== 0;
+  }
+
+  function findTarget(world, character) {
+    if (!world || !world.interactions) return null;
+    var px = character.getX(), py = character.getY();
+    var fv = facingVec(character.getFacing());
+    var best = null, bestScore = Infinity;
+    for (var i = 0; i < world.interactions.length; i++) {
+      var inter = world.interactions[i];
+      if (inter.type === 'hostile' || inter.hidden) continue;
+      var dx = inter.x - px, dy = inter.y - py;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      var dot = d > 0 ? (dx * fv[0] + dy * fv[1]) / d : 0;
+      var ok = d <= REACH;
+      if (ok && Math.abs(dx) === 1 && Math.abs(dy) === 1) {
+        // diagonal: not through a wall corner
+        ok = !solidAt(world, px + dx, py) || !solidAt(world, px, py + dy) || !solidAt(world, inter.x, inter.y);
+      }
+      if (!ok && d <= 2.01 && dot > 0.99) ok = solidAt(world, px + fv[0], py + fv[1]);
+      if (!ok) continue;
+      // standing on it counts, but something you face right next to you wins
+      var score = (d === 0 ? 0.55 : d) - 0.75 * dot;
+      if (score < bestScore) { bestScore = score; best = inter; }
+    }
+    return best;
+  }
+
+  // ---- The prompt pill --------------------------------------------------------
+  var promptState = { target: null, shown: null, html: '', x: -1, y: -1 };
+  var TOUCH = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  var VERBS = {
+    enter_world: 'Enter', leave_world: 'Leave', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
+    catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
+    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look'
+  };
+
+  var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
+                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters' };
+
+  function titleCase(t) {
+    return String(t || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z\u00e0-\u00ff])/g, function (m, a, b) {
+      return a + b.toUpperCase();
+    });
+  }
+
+  function esc(t) {
+    return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Verb + name from the interaction's data ("PRESS E TO TALK" → Talk).
+  function promptParts(inter) {
+    var p = String(inter.prompt || '').toUpperCase().trim();
+    var label = titleCase(inter.label || '');
+    var verb = VERBS[inter.type] || 'Use';
+    var m = p.match(/^PRESS E TO (.+)$/);
+    if (m) verb = titleCase(m[1]);
+    else if (/^RETURN TO /.test(p)) { verb = 'Back to'; label = titleCase(p.slice(10)); }
+    else if (/^SAIL /.test(p)) { verb = 'Set sail'; label = titleCase(inter.destinationName || p.replace(/^SAIL (TO |BACK)?/, '') || label); }
+    else if (p === 'ACCESS WARP MAP') { verb = 'Open'; label = 'Star map'; }
+    else if (p && p.length < 12 && !/PRESS/.test(p)) verb = titleCase(p);
+    if (inter.type === 'leave_world' && !/^RETURN/.test(p)) {
+      if (inter.leaveTo) {
+        verb = 'Out to';
+        label = PLACE_NAMES[inter.leaveTo] || titleCase(inter.leaveTo.replace(/^(lumar|arcadia)-/, '').replace(/-/g, ' '));
+      } else { verb = 'Return to'; label = 'ship'; }
+    }
+    if (inter.type === 'app' || inter.type === 'cabinet') verb = 'Play';
+    // "Open Locker" + "Storage Locker" → "Open" + "Storage Locker"
+    var vw = verb.split(' ');
+    if (vw.length > 2 || (vw.length > 1 && label.toLowerCase().indexOf(vw.slice(1).join(' ').toLowerCase()) >= 0)) verb = vw[0];
+    label = label.replace(/^Board /, '');
+    return { verb: verb, label: label };
+  }
+
+  // Talking heads sit higher than counters and doors.
+  function promptLift(inter) {
+    var p = String(inter.prompt || '').toUpperCase();
+    return /TALK/.test(p) ? 1.35 : 0.55;
+  }
+
+  function promptEl() {
+    var el = document.getElementById('interact-prompt');
+    if (el && !el.__bound) {
+      el.__bound = true;
+      el.addEventListener('mousedown', function (e) { e.stopPropagation(); });
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (currentInteraction && !dialogVisible) executeInteraction(currentInteraction);
+      });
+    }
+    return el;
+  }
+
+  // Called by the world renderer each frame with the on-screen view
+  // (CSS px): moves the pill over the current target and fades it.
+  function placePrompt(view) {
+    var el = promptEl();
+    if (!el) return;
+    var t = dialogVisible ? null : promptState.target;
+    if (!t || !view || !view.ts) {
+      if (promptState.shown) { el.classList.remove('visible'); promptState.shown = null; }
+      return;
+    }
+    if (promptState.shown !== t) {
+      var parts = promptParts(t);
+      var html = '<span class="ip-key">' + (TOUCH ? 'Tap' : 'E') + '</span><span class="ip-verb">' + esc(parts.verb) + '</span>' +
+                 (parts.label && parts.label.toLowerCase() !== parts.verb.toLowerCase() ? '<span class="ip-label">' + esc(parts.label) + '</span>' : '');
+      if (html !== promptState.html) { el.innerHTML = html; promptState.html = html; }
+      promptState.shown = t;
+      el.classList.add('visible');
+    }
+    var cx = view.offX + (t.x + 0.5) * view.ts;
+    var cy = view.offY + (t.y - promptLift(t)) * view.ts;
+    var w = el.offsetWidth || 120, h = el.offsetHeight || 28;
+    var x = Math.round(Math.max(8, Math.min(window.innerWidth - w - 8, cx - w / 2)));
+    var y = Math.round(Math.max(56, Math.min(window.innerHeight - h - 70, cy - h - 6)));
+    if (x !== promptState.x || y !== promptState.y) {
+      el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+      promptState.x = x; promptState.y = y;
+    }
+  }
+
+  function getTarget() { return dialogVisible ? null : promptState.target; }
+
   function update(world, character, controls) {
     if (dialogVisible) {
       // Dismiss dialog on action press
@@ -17,49 +154,11 @@ var BridgeInteractions = (function () {
       return;
     }
 
-    // Find interaction either at the tile the player is facing OR the tile
-    // they are standing on. The same-tile check lets walkable interactions
-    // (NPCs, dock tiles) trigger when you stop on top of them.
-    var px = character.getX();
-    var py = character.getY();
-    var facing = character.getFacing();
-
-    var checkX = px + (facing === 'right' ? 1 : facing === 'left' ? -1 : 0);
-    var checkY = py + (facing === 'down' ? 1 : facing === 'up' ? -1 : 0);
-
-    var found = null;
-    var sameTile = null;
-    for (var i = 0; i < world.interactions.length; i++) {
-      var inter = world.interactions[i];
-      if (inter.x === checkX && inter.y === checkY) {
-        found = inter;
-        break;
-      }
-      if (inter.x === px && inter.y === py) {
-        sameTile = inter;
-      }
-    }
-    // Prefer the tile in front of you, fall back to the one you're on.
-    if (!found) found = sameTile;
-
-    // Show/hide prompt
-    var promptEl = document.getElementById('interact-prompt');
-    if (found && !character.isMoving()) {
-      currentInteraction = found;
-      // Hostiles don't get a press-E prompt — they're a threat, not an
-      // invitation. F / right-click / click-at-distance still attack.
-      if (promptEl) {
-        if (found.type === 'hostile') {
-          promptEl.classList.remove('visible');
-        } else {
-          promptEl.textContent = found.prompt || 'PRESS E';
-          promptEl.classList.add('visible');
-        }
-      }
-    } else {
-      currentInteraction = null;
-      if (promptEl) promptEl.classList.remove('visible');
-    }
+    // Whatever's close: anything within reach, preferring what you face
+    // (see findTarget). No exact-tile standing required.
+    var found = findTarget(world, character);
+    currentInteraction = found;
+    promptState.target = found;
 
     // Handle action press
     if (currentInteraction && controls.consumeAction()) {
@@ -717,13 +816,16 @@ var BridgeInteractions = (function () {
     var world = BridgeWorld.getWorld();
     if (!world || !world.interactions) return false;
     if (dialogVisible) return false;
-    var inter = null;
+    // Objects stand up from their tile, so a click up to two tiles above
+    // one still lands on it; the exact tile wins, then the nearest below.
+    var inter = null, bestUp = 9;
     for (var i = 0; i < world.interactions.length; i++) {
-      if (world.interactions[i].x === tx && world.interactions[i].y === ty) {
-        inter = world.interactions[i]; break;
-      }
+      var it = world.interactions[i];
+      var up = it.y - ty;
+      if (it.x === tx && up >= 0 && up <= 2 && up < bestUp) { inter = it; bestUp = up; }
     }
     if (!inter) return false;
+    tx = inter.x; ty = inter.y;
     var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
     var dist = Math.max(Math.abs(tx - px), Math.abs(ty - py));
     if (dist > 4) return false; // too far — same as if you weren't there
@@ -784,5 +886,6 @@ var BridgeInteractions = (function () {
     }
   }
 
-  return { update: update, tryClickAt: tryClickAt, killHostile: killHostile };
+  return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, placePrompt: placePrompt, getTarget: getTarget,
+           findTarget: findTarget, promptParts: promptParts };
 })();

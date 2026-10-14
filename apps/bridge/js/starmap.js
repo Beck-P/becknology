@@ -163,6 +163,8 @@ var BridgeStarmap = (function () {
     }
 
     document.getElementById('jump-btn').addEventListener('click', function () {
+      // the mothership parks in orbit there: its windows show the place
+      if (typeof BridgeOrbit !== 'undefined') BridgeOrbit.setLocation(selected.id);
       BridgeState.transition('travel', { world: selected });
     });
   }

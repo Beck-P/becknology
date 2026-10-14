@@ -36,3 +36,9 @@ python3 tools/bridge-art/sprites_post.py npc /tmp/chars/npc-bartender
 /tmp/bvenv/bin/python tools/bridge-art/scenes/lumar_tavern.py /tmp/tavern
 python3 tools/bridge-art/scene_post.py /tmp/tavern apps/bridge/assets/scenes/lumar-tavern
 ```
+
+Every world is a pre-rendered scene now. After rendering, audit it: walkable
+tiles where the player would be hidden behind geometry, NPCs you can walk
+into, and interactions the proximity rules can never select
+(`python3 tools/bridge-art/audit_worlds.py [world ...]`). Block hidden tiles
+with `k.solid` in the scene script.

@@ -472,6 +472,12 @@
     var vpW = Math.ceil((c1 - c0) * ts);
     var vpH = Math.ceil((r1 - r0) * ts);
 
+    // The rendered room looks out on wherever the ship is parked.
+    if (sky && typeof BridgeOrbit !== 'undefined') {
+      BridgeOrbit.draw(ctx, vpX, vpY, vpW, vpH, time);
+      return;
+    }
+
     ctx.save();
     ctx.beginPath();
     ctx.rect(vpX, vpY, vpW, vpH);

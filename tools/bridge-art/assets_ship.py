@@ -667,3 +667,97 @@ def flight_kit(k, x, r):
         k.box(x + dx, r, 0.08, x + dx + 0.12, r + 0.1, 0.3, '#3a2414', 'boot', bevel=0.02)
     k.blob(x + 0.75, r + 0.12, 0.16, 0.38, 0.17, 0.16, ('#3a4a3a', 0.08), 'duffel', segs=12)
     k.tube((x + 0.5, r + 0.12, 0.3), (x + 1.0, r + 0.12, 0.3), 0.015, '#1a1a1a', 'duffel_strap', verts=4)
+
+
+# ---- the shuttle ------------------------------------------------------------------
+HULL = '#cfcabd'
+HULL_D = '#9a968c'
+STRIPE = '#2a8a8a'
+
+
+def _shuttle_ring(x, rc, hw, hh, zc, n=14):
+    """Squarish (superellipse) hull section at x."""
+    ring = []
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        c, s = math.cos(a), math.sin(a)
+        ring.append((x, rc + hw * math.copysign(abs(c) ** 0.6, c), zc + hh * math.copysign(abs(s) ** 0.6, s)))
+    return ring
+
+
+def shuttle(k, x0, rc, length=3.4, ramp=True, landed=True, hull=HULL, stripe=STRIPE):
+    """The pilot's shuttle, parked broadside with its nose to the right: a
+    lofted hull, canopy, stubby swept wings with nav lights, twin engines,
+    three landing legs and (ramp=True) the side door open with its ramp down.
+    Returns its footprint (x0, r0, x1, r1)."""
+    L = length
+    # (t, half-beam, half-height, centre z) along the hull, tail → nose
+    prof = [(0.0, 0.5, 0.36, 0.78), (0.08, 0.64, 0.46, 0.8), (0.3, 0.72, 0.52, 0.82), (0.6, 0.7, 0.5, 0.8),
+            (0.78, 0.58, 0.42, 0.76), (0.9, 0.4, 0.3, 0.7), (0.97, 0.2, 0.16, 0.66), (1.0, 0.05, 0.05, 0.64)]
+    rings = [_shuttle_ring(x0 + t * L, rc, hw, hh, zc) for (t, hw, hh, zc) in prof]
+    k.loft(rings, (hull, 0.06), 'shuttle_hull', closed=True)
+    k.cyl_x(x0 - 0.04, x0 + 0.02, rc, 0.78, 0.5, 0.36, (HULL_D, 0.06), 'shuttle_tail', verts=16)
+    # teal stripe band along the flank facing the camera, and its twin behind
+    for side in (1, -1):
+        band = [[(x0 + t * L, rc + side * (hw * 1.01), zc - 0.06), (x0 + t * L, rc + side * (hw * 1.01), zc + 0.08)]
+                for (t, hw, hh, zc) in prof[1:6]]
+        k.loft(band, (stripe, 0.08), 'shuttle_stripe')
+    # canopy
+    k.blob(x0 + 0.79 * L, rc, 1.04, 0.56, 0.5, 0.28, '#0a1218', 'shuttle_canopy', emit=('#1a4250', 0.16), segs=18)
+    k.blob(x0 + 0.84 * L, rc + 0.18, 1.2, 0.18, 0.08, 0.05, '#4a8a98', 'shuttle_glint', emit=('#b0f0f8', 0.6), segs=10)
+    k.tube((x0 + 0.66 * L, rc - 0.36, 1.12), (x0 + 0.66 * L, rc + 0.36, 1.12), 0.03, HULL_D, 'shuttle_canopy_frame', verts=6)
+    # dorsal spine, hatches and vents break up the top
+    k.bar(x0 + 0.06 * L, rc, x0 + 0.6 * L, rc, 1.28, 1.36, 0.22, (HULL_D, 0.06), 'shuttle_spine')
+    k.bar(x0 + 0.08 * L, rc, x0 + 0.58 * L, rc, 1.36, 1.38, 0.08, stripe, 'shuttle_spine_trim')
+    for (t, dr) in ((0.18, -0.36), (0.18, 0.36), (0.44, -0.4), (0.44, 0.4)):
+        k.box(x0 + t * L - 0.13, rc + dr - 0.1, 1.24, x0 + t * L + 0.13, rc + dr + 0.1, 1.27, ('#b8b3a6', 0.06), 'shuttle_hatch')
+    for i in range(4):
+        vx = x0 + (0.28 + i * 0.035) * L
+        for dr in (-0.22, 0.22):
+            k.box(vx - 0.02, rc + dr - 0.08, 1.3, vx + 0.02, rc + dr + 0.08, 1.33, '#2a2c32', 'shuttle_vent')
+    # cabin windows and the side door on the near flank, just behind the cockpit
+    rf = rc + 0.71
+    for i in range(3):
+        wx = x0 + (0.33 + i * 0.08) * L
+        k.cyl_y(wx, rf - 0.02, rf + 0.03, 0.98, 0.07, 0.07, '#0e2a30', 'shuttle_port', emit=('#60d8e8', 0.7), verts=10)
+    dx0, dx1 = x0 + 0.6 * L, x0 + 0.72 * L
+    rf = rc + 0.66
+    if ramp:
+        k.box(dx0, rf - 0.06, 0.34, dx1, rf + 0.02, 1.14, '#1a1c22', 'shuttle_doorway')
+        k.box(dx0 + 0.04, rf + 0.02, 0.4, dx1 - 0.04, rf + 0.025, 1.1, '#3a3020', 'shuttle_cabin', emit=('#ffcf80', 0.45))
+        k.poly([(dx0, rf + 0.02, 0.34), (dx1, rf + 0.02, 0.34), (dx1, rf + 0.75, 0.0), (dx0, rf + 0.75, 0.0)],
+               (HULL_D, 0.08), 'shuttle_ramp')
+        for xx in (dx0 + 0.03, dx1 - 0.03):
+            k.bar(xx, rf + 0.02, xx, rf + 0.75, 0.0, 0.05, 0.03, '#3a3a40', 'shuttle_ramp_rail')
+        k.point_light((dx0 + dx1) / 2, rf + 0.5, 0.7, '#ffcf80', 10, radius=0.2)
+    else:
+        k.box(dx0, rf - 0.02, 0.36, dx1, rf + 0.02, 1.12, (HULL_D, 0.06), 'shuttle_door')
+    # wings: swept, slightly thick, nav lights on the tips
+    for side, col in ((1, '#40e070'), (-1, '#e04040')):
+        root = [(x0 + 0.22 * L, rc + side * 0.6, 0.62), (x0 + 0.62 * L, rc + side * 0.6, 0.62),
+                (x0 + 0.62 * L, rc + side * 0.6, 0.72), (x0 + 0.22 * L, rc + side * 0.6, 0.72)]
+        tip = [(x0 + 0.12 * L, rc + side * 1.45, 0.5), (x0 + 0.3 * L, rc + side * 1.45, 0.5),
+               (x0 + 0.3 * L, rc + side * 1.45, 0.55), (x0 + 0.12 * L, rc + side * 1.45, 0.55)]
+        k.loft([root, tip], (hull, 0.06), 'shuttle_wing', closed=True, smooth=False)
+        k.bar(x0 + 0.13 * L, rc + side * 1.42, x0 + 0.29 * L, rc + side * 1.42, 0.55, 0.57, 0.04, stripe, 'shuttle_wing_trim')
+        k.sphere(x0 + 0.21 * L, rc + side * 1.47, 0.53, 0.05, 0.05, shade(col, 0.5), 'shuttle_navlight', emit=(col, 1.0), segs=8)
+    # twin engines on pylons at the tail, exhausts glowing faintly at idle
+    for side in (1, -1):
+        er = rc + side * 0.55
+        k.cyl_x(x0 - 0.35, x0 + 0.55, er, 0.62, 0.21, 0.21, (HULL_D, 0.06), 'shuttle_engine', verts=14)
+        k.cyl_x(x0 - 0.42, x0 - 0.35, er, 0.62, 0.16, 0.16, '#1a1c22', 'shuttle_nozzle', verts=14)
+        k.cyl_x(x0 - 0.43, x0 - 0.41, er, 0.62, 0.12, 0.12, '#1a3040', 'shuttle_exhaust', emit=('#60c8ff', 0.5), verts=12)
+        k.cyl_x(x0 + 0.1, x0 + 0.3, er, 0.62, 0.215, 0.215, stripe, 'shuttle_engine_band', verts=14)
+    # tail fin and antenna
+    k.loft([[(x0 + 0.02, rc - 0.04, 1.1), (x0 + 0.3, rc - 0.04, 1.1), (x0 + 0.3, rc + 0.04, 1.1), (x0 + 0.02, rc + 0.04, 1.1)],
+            [(x0 - 0.08, rc - 0.03, 1.55), (x0 + 0.06, rc - 0.03, 1.55), (x0 + 0.06, rc + 0.03, 1.55), (x0 - 0.08, rc + 0.03, 1.55)]],
+           (hull, 0.06), 'shuttle_fin', closed=True, smooth=False)
+    k.sphere(x0 - 0.01, rc, 1.57, 0.035, 0.035, '#702020', 'shuttle_beacon', emit=('#ff4040', 1.0), segs=8)
+    k.tube((x0 + 0.5 * L, rc, 1.3), (x0 + 0.5 * L, rc, 1.55), 0.012, '#3a3a40', 'shuttle_antenna', verts=4)
+    # landing legs
+    if landed:
+        for (t, s) in ((0.2, 1), (0.2, -1), (0.85, 0)):
+            lx, lr = x0 + t * L, rc + s * 0.45
+            k.tube((lx, lr, 0.45), (lx + 0.05 * (1 if t > 0.5 else -1), lr + s * 0.12, 0.06), 0.035, '#4a4a52', 'shuttle_leg', verts=6)
+            k.cyl(lx + 0.05 * (1 if t > 0.5 else -1), lr + s * 0.12, 0.0, 0.06, 0.12, '#3a3a40', 'shuttle_pad', verts=10)
+    return (x0 - 0.45, rc - 1.5, x0 + L, rc + 1.5)

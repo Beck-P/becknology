@@ -28,6 +28,8 @@ k.point_light(10.0, 7.6, 2.6, '#ffc890', 26, radius=0.8)
 k.point_light(3.0, 2.8, 2.4, '#ffd8a0', 20, radius=0.6)
 
 render(k, sys.argv[1], ambient=('#30262c', 0.5))
+k.solid(1, 3, 7, 4)                     # behind the counter is the pawnbroker's
+k.solid(12, 5, 13, 6)                   # the customer
 apply_world(world_path('junk-pawn-shop'), k, FLOOR, doors=DOORS, scene_id='junk-pawn-shop', moves={
     'PAWNBROKER': (3, 4), 'SAFE': (12, 3), 'CLOCK': (4, 2), 'JUNK PILE': [(1, 7), (12, 7)],
     'DISPLAY CASE': [(4, 6), (9, 6)], 'WALL SHELF': (2, 2), 'BROWSING CUSTOMER': (12, 5)},

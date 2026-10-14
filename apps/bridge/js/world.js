@@ -78,74 +78,16 @@ var BridgeWorld = (function () {
     ctx.fillRect(cx - radius, cy - radius, radius * 2, radius * 2);
   }
 
-  // Floating gold banner over an "app" interaction cluster — the universal
-  // "playable game" indicator. Visible from across the map so players can
-  // immediately tell which cabinets/terminals are games vs decoration.
-  function drawGameMarker(ctx, cx, topY, ts, label, beat) {
-    ctx.save();
-    // Halo pulsing under the cluster
-    ctx.globalCompositeOperation = 'screen';
-    var haloCy = topY + ts * 0.4;
-    var halo = ctx.createRadialGradient(cx, haloCy, 0, cx, haloCy, ts * 1.7);
-    halo.addColorStop(0, 'rgba(255, 200, 80, ' + (0.28 + beat * 0.25).toFixed(2) + ')');
-    halo.addColorStop(1, 'transparent');
-    ctx.fillStyle = halo;
-    ctx.fillRect(cx - ts * 1.7, topY - ts * 1.5, ts * 3.4, ts * 3.5);
-    ctx.globalCompositeOperation = 'source-over';
-
-    // Floating banner above the cluster — bob in sync with EXIT arrows
-    var floatY = topY - ts * 0.55 - beat * (ts * 0.15);
-    var fontSize = Math.max(10, Math.floor(ts * 0.22));
-    ctx.font = 'bold ' + fontSize + 'px "Courier New", Consolas, monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    var displayLabel = '▶ ' + label;
-    var labelW = ctx.measureText(displayLabel).width;
-    var bannerH = Math.max(18, Math.floor(ts * 0.36));
-    var padX = Math.max(10, Math.floor(ts * 0.18));
-    var bx = cx - labelW / 2 - padX;
-    var by = floatY - bannerH / 2;
-    var bw = labelW + padX * 2;
-
-    // Drop shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-    ctx.fillRect(bx + 2, by + 2, bw, bannerH);
-    // Banner background
-    ctx.fillStyle = 'rgba(28, 18, 6, 0.94)';
-    ctx.fillRect(bx, by, bw, bannerH);
-    // Top highlight stripe (gives the banner depth, suggests an arcade marquee)
-    ctx.fillStyle = 'rgba(255, 220, 140, 0.20)';
-    ctx.fillRect(bx, by, bw, Math.max(1, Math.floor(bannerH * 0.28)));
-    // Gold border, pulsing alpha
-    ctx.strokeStyle = 'rgba(255, 200, 80, ' + (0.65 + beat * 0.35).toFixed(2) + ')';
-    ctx.lineWidth = Math.max(1, Math.floor(ts / 24));
-    ctx.strokeRect(bx, by, bw, bannerH);
-    // Label text — shadow then fill for legibility on any background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    ctx.fillText(displayLabel, cx + 1, floatY + 1);
-    ctx.fillStyle = '#ffe890';
-    ctx.fillText(displayLabel, cx, floatY);
-    // Downward chevron pointing at the cluster
-    var triY = by + bannerH + 2;
-    var triSize = Math.max(5, Math.floor(ts * 0.13));
-    ctx.fillStyle = 'rgba(255, 200, 80, ' + (0.85 + beat * 0.15).toFixed(2) + ')';
-    ctx.beginPath();
-    ctx.moveTo(cx, triY + triSize);
-    ctx.lineTo(cx - triSize, triY);
-    ctx.lineTo(cx + triSize, triY);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Find connected-component clusters of "app" interactions sharing the same target.
+  // Find connected-component clusters of interactions of the given types
+  // (default: games) sharing the same target and label.
   // Two adjacent runouts cabinets become one cluster; two physically separate
   // RUNOUTS cabinets across the room stay as separate clusters.
-  function findAppClusters(interactions) {
+  function findAppClusters(interactions, types) {
+    types = types || { app: 1, cabinet: 1 };
     var byCoord = {};
     for (var i = 0; i < interactions.length; i++) {
       var inter = interactions[i];
-      if (inter.type !== 'app') continue;
+      if (!types[inter.type] || inter.noBeacon || inter.hidden) continue;
       byCoord[inter.x + ',' + inter.y] = inter;
     }
     var visited = {};
@@ -155,7 +97,7 @@ var BridgeWorld = (function () {
       var key = keys[k];
       if (visited[key]) continue;
       var seed = byCoord[key];
-      var cluster = { minX: seed.x, maxX: seed.x, minY: seed.y, maxY: seed.y, label: seed.label };
+      var cluster = { minX: seed.x, maxX: seed.x, minY: seed.y, maxY: seed.y, label: seed.label, members: [seed] };
       var queue = [[seed.x, seed.y]];
       visited[key] = true;
       while (queue.length) {
@@ -171,8 +113,9 @@ var BridgeWorld = (function () {
           var nkey = nx + ',' + ny;
           if (visited[nkey]) continue;
           var neighbor = byCoord[nkey];
-          if (neighbor && neighbor.target === seed.target) {
+          if (neighbor && neighbor.target === seed.target && neighbor.label === seed.label) {
             visited[nkey] = true;
+            cluster.members.push(neighbor);
             queue.push([nx, ny]);
           }
         }
@@ -180,6 +123,46 @@ var BridgeWorld = (function () {
       clusters.push(cluster);
     }
     return clusters;
+  }
+
+  // Which way an exit leads, from where it sits on the map.
+  function exitDir(cl) {
+    var cx = (cl.minX + cl.maxX + 1) / 2 / world.width - 0.5;
+    var cy = (cl.minY + cl.maxY + 1) / 2 / world.height - 0.5;
+    if (Math.abs(cy) >= Math.abs(cx)) return cy > 0 ? 'down' : 'up';
+    return cx > 0 ? 'right' : 'left';
+  }
+
+  // A small glass disc with a glyph, bobbing; brighter as you near it.
+  function drawBadge(ctx, cx, cy, kind, dir, dist, now) {
+    var a = Math.max(0.35, Math.min(0.95, 1.15 - dist * 0.09));
+    var bob = Math.sin(now / 520 + cx * 0.01) * 2;
+    var r = 9;
+    cy += bob;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(14, 12, 22, 0.82)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    var col = kind === 'game' ? '#ffd98a' : '#8fe3cf';
+    ctx.strokeStyle = col;
+    ctx.globalAlpha = a * 0.7;
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    if (kind === 'game') {
+      ctx.moveTo(cx - 2.5, cy - 4); ctx.lineTo(cx + 4, cy); ctx.lineTo(cx - 2.5, cy + 4);
+    } else {
+      var rot = { down: 0, left: Math.PI / 2, up: Math.PI, right: -Math.PI / 2 }[dir] || 0;
+      ctx.translate(cx, cy); ctx.rotate(rot);
+      ctx.moveTo(-4, -1.5); ctx.lineTo(0, 2.5); ctx.lineTo(4, -1.5); ctx.lineTo(4, -4); ctx.lineTo(0, 0); ctx.lineTo(-4, -4);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   }
 
   function initParticles() {
@@ -447,11 +430,12 @@ var BridgeWorld = (function () {
     // get stranded inside a world. The "LEAVE" link is the universal escape
     // hatch even for worlds that have a ship-tile exit. Worlds can override
     // its label via `leaveLabel` (e.g. quarters → "← COCKPIT").
-    var leaveLabel = world.leaveLabel || '&#9210; LEAVE WORLD';
+    var leaveLabel = world.leaveLabel ? world.leaveLabel.replace(/^(&#8592;|&larr;|←)\s*/, '') : 'Return to ship';
+    leaveLabel = leaveLabel.charAt(0) + leaveLabel.slice(1).toLowerCase();
     var zoneTitle = world.name || (world.tileset ? world.tileset.toUpperCase() : 'SECTOR');
     overlay.innerHTML =
       '<div class="world-hud">' +
-        '<a class="world-back" id="world-back" title="Esc">' + leaveLabel + '</a>' +
+        '<a class="world-back" id="world-back" title="Esc"><span class="ip-key">Esc</span><span>' + leaveLabel + '</span></a>' +
         '<div class="world-location-badge" id="world-location-badge">' +
           '<span class="world-location-dot"></span>' +
           '<span class="world-location-text">' + zoneTitle + '</span>' +
@@ -791,40 +775,26 @@ var BridgeWorld = (function () {
     if (typeof BridgeFX !== 'undefined' && BridgeFX.draw) BridgeFX.draw(ctx, offX, offY, ts, now);
   }
 
+  // A soft pool of light at the foot of whatever you can use right now —
+  // the prompt pill over it says what. (Hostiles get no invitation.)
   function drawInteractHighlight(ctx, offX, offY, ts, now) {
-    if (!world.interactions) return;
-    var px = BridgeCharacter.getX();
-    var py = BridgeCharacter.getY();
-    var facing = BridgeCharacter.getFacing();
-    var checkX = px + (facing === 'right' ? 1 : facing === 'left' ? -1 : 0);
-    var checkY = py + (facing === 'down' ? 1 : facing === 'up' ? -1 : 0);
-    for (var i = 0; i < world.interactions.length; i++) {
-      var inter = world.interactions[i];
-      // Hostiles read as threats, not "press E to interact" prompts —
-      // skip the green focus box for them so they stay menacing.
-      if (inter.type === 'hostile') continue;
-      if (inter.x === checkX && inter.y === checkY && !BridgeCharacter.isMoving()) {
-        var hx = Math.floor(offX + inter.x * ts);
-        var hy = Math.floor(offY + inter.y * ts);
-        var hPulse = 0.45 + Math.sin(now / 300) * 0.25;
-        var bLen = Math.max(4, Math.floor(ts * 0.22));
-        ctx.fillStyle = 'rgba(40, 220, 80, ' + (hPulse * 0.08).toFixed(2) + ')';
-        ctx.fillRect(hx + 2, hy + 2, ts - 4, ts - 4);
-        ctx.fillStyle = 'rgba(80, 255, 130, ' + hPulse.toFixed(2) + ')';
-        // Top-left bracket
-        ctx.fillRect(hx + 1, hy + 1, bLen, 1);
-        ctx.fillRect(hx + 1, hy + 1, 1, bLen);
-        // Top-right bracket
-        ctx.fillRect(hx + ts - 1 - bLen, hy + 1, bLen, 1);
-        ctx.fillRect(hx + ts - 2, hy + 1, 1, bLen);
-        // Bottom-left bracket
-        ctx.fillRect(hx + 1, hy + ts - 2, bLen, 1);
-        ctx.fillRect(hx + 1, hy + ts - 1 - bLen, 1, bLen);
-        // Bottom-right bracket
-        ctx.fillRect(hx + ts - 1 - bLen, hy + ts - 2, bLen, 1);
-        ctx.fillRect(hx + ts - 2, hy + ts - 1 - bLen, 1, bLen);
-      }
-    }
+    if (typeof BridgeInteractions === 'undefined' || !BridgeInteractions.getTarget) return;
+    var t = BridgeInteractions.getTarget();
+    if (!t) return;
+    var cx = offX + (t.x + 0.5) * ts;
+    var cy = offY + (t.y + 0.78) * ts;
+    var pulse = 0.75 + Math.sin(now / 420) * 0.25;
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.translate(cx, cy);
+    ctx.scale(1, 0.42);
+    var g = ctx.createRadialGradient(0, 0, 0, 0, 0, ts * 0.62);
+    g.addColorStop(0, 'rgba(255, 236, 190, ' + (0.26 * pulse).toFixed(3) + ')');
+    g.addColorStop(0.6, 'rgba(255, 220, 160, ' + (0.1 * pulse).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(255, 220, 160, 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(-ts, -ts, ts * 2, ts * 2);
+    ctx.restore();
   }
 
   function drawWorldLayer(ctx, w, h, offX, offY, ts, now) {
@@ -976,56 +946,26 @@ var BridgeWorld = (function () {
     if (typeof BridgeFX !== 'undefined' && BridgeFX.drawScreen) {
       BridgeFX.drawScreen(ctx, offX, offY, ts);
     }
-    // Exit beacons — pulsing arrow over every leave_world tile so the way
-    // back to the ship is impossible to miss.
+    // Quiet badges over games (gold ▶) and the ways out (teal chevron);
+    // the one you're next to gives way to the prompt pill.
     if (world.interactions) {
-      var beat = (Math.sin(now / 350) + 1) * 0.5; // 0..1
-      for (var bi = 0; bi < world.interactions.length; bi++) {
-        var bint = world.interactions[bi];
-        if (bint.type !== 'leave_world') continue;
-        if (bint.noBeacon) continue;
-        var bx = Math.floor(offX + bint.x * ts);
-        var by = Math.floor(offY + bint.y * ts);
-        // Soft halo
-        ctx.globalCompositeOperation = 'screen';
-        var bg = ctx.createRadialGradient(bx + ts/2, by + ts/2, 0, bx + ts/2, by + ts/2, ts * 1.4);
-        bg.addColorStop(0, 'rgba(120, 220, 255, ' + (0.35 + beat * 0.35).toFixed(2) + ')');
-        bg.addColorStop(1, 'transparent');
-        ctx.fillStyle = bg;
-        ctx.fillRect(bx - ts, by - ts, ts * 3, ts * 3);
-        ctx.globalCompositeOperation = 'source-over';
-        // Floating "↑ EXIT" arrow above the tile
-        var floatY = by - ts * 0.6 - beat * (ts * 0.18);
-        var arrowAlpha = 0.85 + beat * 0.15;
-        ctx.fillStyle = 'rgba(180, 235, 255, ' + arrowAlpha.toFixed(2) + ')';
-        var arrowW = ts * 0.5;
-        var arrowCx = bx + ts/2;
-        // Triangle head
-        ctx.beginPath();
-        ctx.moveTo(arrowCx, floatY);
-        ctx.lineTo(arrowCx - arrowW/2, floatY + arrowW * 0.6);
-        ctx.lineTo(arrowCx + arrowW/2, floatY + arrowW * 0.6);
-        ctx.closePath();
-        ctx.fill();
-        // Arrow stem
-        ctx.fillRect(arrowCx - arrowW * 0.18, floatY + arrowW * 0.55, arrowW * 0.36, arrowW * 0.55);
-        // Beacon label — uses the interaction's label, falling back to "EXIT"
-        ctx.font = 'bold ' + Math.max(8, Math.floor(ts * 0.18)) + 'px "Courier New", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(220, 245, 255, ' + arrowAlpha.toFixed(2) + ')';
-        ctx.fillText(bint.label || 'EXIT', arrowCx, floatY - ts * 0.05);
-        ctx.textAlign = 'start';
+      var target = (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.getTarget) ? BridgeInteractions.getTarget() : null;
+      var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
+      var kinds = [['game', { app: 1, cabinet: 1 }], ['exit', { leave_world: 1 }]];
+      for (var ki = 0; ki < kinds.length; ki++) {
+        var clusters = findAppClusters(world.interactions, kinds[ki][1]);
+        for (var ci = 0; ci < clusters.length; ci++) {
+          var cl = clusters[ci];
+          if (target && cl.members.indexOf(target) >= 0) continue;
+          var ccx = (cl.minX + cl.maxX + 1) / 2, ccy = (cl.minY + cl.maxY + 1) / 2;
+          var dist = Math.sqrt((ccx - px - 0.5) * (ccx - px - 0.5) + (ccy - py - 0.5) * (ccy - py - 0.5));
+          drawBadge(ctx, offX + ccx * ts, offY + (cl.minY - (kinds[ki][0] === 'game' ? 0.7 : 0.35)) * ts, kinds[ki][0],
+                    exitDir(cl), dist, now);
+        }
       }
-
-      // Game markers — gold banner over each app-interaction cluster.
-      var appClusters = findAppClusters(world.interactions);
-      var gameBeat = (Math.sin(now / 600) + 1) * 0.5;
-      for (var ci = 0; ci < appClusters.length; ci++) {
-        var cl = appClusters[ci];
-        var clusterCx = ((cl.minX + cl.maxX + 1) / 2) * ts + offX;
-        var clusterTopY = cl.minY * ts + offY;
-        drawGameMarker(ctx, clusterCx, clusterTopY, ts, cl.label, gameBeat);
-      }
+    }
+    if (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.placePrompt) {
+      BridgeInteractions.placePrompt(screenView);
     }
 
     // Edge vignette — soften abrupt black map edges so out-of-bounds

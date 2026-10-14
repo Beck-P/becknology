@@ -771,3 +771,201 @@ def curtain(k, x0, x1, r, h=1.9, col='#7a9ab8'):
         k.box(x, r - 0.04 + 0.04 * (i % 2), 0.15, x + 0.12, r + 0.04 * (i % 2), h, (shade(col, 0.92 + 0.1 * (i % 2)), 0.05), 'curtain')
         x += 0.12
         i += 1
+
+
+# ---- the street ---------------------------------------------------------------------------------------
+def storefront(k, x0, x1, r_front, floors=3, floor_h=1.25, wall='#2a2440', trim=PINK, name=None, name_col=PINK,
+               door_x=None, shop_glow='#3a2a60', blade=None, depth=2.5, roof_bits=True, awning=None, lit=0.6):
+    """A narrow neon-city building facing the camera: shop level with a big
+    lit window and door, upper floors of windows (some lit), AC units, a
+    neon name sign over the shop, an optional vertical blade sign."""
+    rb = r_front - depth
+    H = 0.2 + floors * floor_h
+    k.box(x0, rb, 0, x1, r_front, H, (wall, 0.1), 'building')
+    k.box(x0 - 0.04, rb - 0.04, H, x1 + 0.04, r_front + 0.04, H + 0.12, shade(wall, 0.7), 'parapet')
+    k.box(x0, r_front - 0.02, 0, x1, r_front + 0.06, 0.2, '#14101e', 'base_band')
+    # shop level
+    sw0, sw1 = x0 + 0.2, x1 - 0.2
+    dx = door_x if door_x is not None else (x0 + x1) / 2
+    k.box(sw0, r_front - 0.01, 0.2, sw1, r_front + 0.03, floor_h - 0.1, '#0c0818', 'shop_frame')
+    for (a, b) in ((sw0 + 0.06, dx - 0.42), (dx + 0.42, sw1 - 0.06)):
+        if b - a > 0.15:
+            k.box(a, r_front + 0.03, 0.3, b, r_front + 0.04, floor_h - 0.2, shade(shop_glow, 0.6), 'shop_window', emit=(shop_glow, 0.9))
+            # silhouettes of goods on shelves in the window
+            for i in range(int((b - a) / 0.22)):
+                k.box(a + 0.05 + i * 0.22, r_front + 0.04, 0.35, a + 0.17 + i * 0.22, r_front + 0.045, 0.35 + k.rng.uniform(0.12, 0.3),
+                      shade(shop_glow, 0.3), 'shop_goods')
+    k.box(dx - 0.36, r_front + 0.0, 0.2, dx + 0.36, r_front + 0.05, floor_h - 0.15, '#1a1428', 'shop_door')
+    k.box(dx - 0.3, r_front + 0.05, 0.25, dx + 0.3, r_front + 0.055, floor_h - 0.22, shade(shop_glow, 0.5), 'shop_door_glass',
+          emit=(shop_glow, 0.7))
+    k.box(sw0, r_front + 0.03, floor_h - 0.12, sw1, r_front + 0.06, floor_h - 0.08, shade(trim, 0.4), 'neon_trim', emit=(trim, 0.85))
+    k.point_light(dx, r_front + 0.6, 0.7, shop_glow, 10, radius=0.3, group='flicker')
+    if awning:
+        k.poly([(sw0 - 0.1, r_front + 0.65, floor_h - 0.05), (sw1 + 0.1, r_front + 0.65, floor_h - 0.05),
+                (sw1 + 0.1, r_front, floor_h + 0.25), (sw0 - 0.1, r_front, floor_h + 0.25)], (awning, 0.1), 'awning')
+    # upper floors
+    for f in range(1, floors):
+        z = 0.2 + f * floor_h
+        k.box(x0, r_front - 0.01, z - 0.05, x1, r_front + 0.04, z, shade(wall, 0.75), 'floor_band')
+        n = max(1, int((x1 - x0 - 0.3) / 0.75))
+        wxs = []
+        for i in range(n):
+            wx = x0 + 0.15 + (i + 0.5) * (x1 - x0 - 0.3) / n
+            wxs.append(wx)
+            on = k.rng.random() < lit
+            col = k.rng.choice(('#ffd890', '#a0e0ff', '#ff90c0', '#c0a0ff')) if on else '#101420'
+            k.box(wx - 0.24, r_front - 0.01, z + 0.25, wx + 0.24, r_front + 0.03, z + 0.85, '#0c0a14', 'window_frame')
+            k.box(wx - 0.2, r_front + 0.03, z + 0.29, wx + 0.2, r_front + 0.035, z + 0.81, shade(col, 0.6) if on else col, 'window',
+                  emit=(col, 0.7) if on else None)
+            if on and k.rng.random() < 0.4:   # a blind half drawn
+                k.box(wx - 0.2, r_front + 0.035, z + 0.55, wx + 0.2, r_front + 0.04, z + 0.81, '#2a2030', 'blind')
+        # an AC unit hung under one window's sill (not on the sign storey)
+        if (f > 1 or not (name or awning)) and k.rng.random() < 0.6:
+            ax = k.rng.choice(wxs)
+            k.box(ax - 0.17, r_front, z + 0.03, ax + 0.17, r_front + 0.2, z + 0.2, ('#7a7a84', 0.08), 'ac_unit')
+            k.cyl_y(ax - 0.05, r_front + 0.2, r_front + 0.21, z + 0.115, 0.06, 0.06, '#3a3a42', 'ac_fan', verts=10)
+    if name:
+        neon_text(k, name, (x0 + x1) / 2, r_front + 0.04, floor_h + 0.1, h=0.36, col=name_col, energy=8)
+    if blade:   # vertical blade sign sticking out from the facade corner
+        bx = x1 - 0.12
+        k.box(bx - 0.04, r_front, floor_h + 0.4, bx + 0.04, r_front + 0.55, floor_h + 0.4 + 1.6, '#0c0818', 'blade_sign')
+        k.box(bx + 0.04, r_front + 0.05, floor_h + 0.48, bx + 0.05, r_front + 0.5, floor_h + 0.32 + 1.6, shade(blade, 0.4),
+              'blade_neon', emit=(blade, 0.9))
+        k.point_light(bx + 0.4, r_front + 0.4, floor_h + 1.2, blade, 6, radius=0.2, group='flicker')
+    # roof: tar deck inside the parapet, vents, a skylight, sometimes a water tank and an antenna
+    k.box(x0 + 0.06, rb + 0.06, H, x1 - 0.06, r_front - 0.06, H + 0.03, ('#3a3446', 0.12), 'roof_deck')
+    k.box(x0 + 0.02, r_front - 0.05, H + 0.1, x1 - 0.02, r_front, H + 0.13, shade(trim, 0.35), 'roof_neon', emit=(trim, 0.6))
+    if roof_bits:
+        for i in range(k.rng.randint(1, 2)):
+            vx = k.rng.uniform(x0 + 0.3, x1 - 0.5)
+            k.box(vx, rb + 0.2, H + 0.03, vx + 0.3, rb + 0.5, H + 0.28, ('#5a5866', 0.08), 'roof_vent')
+            k.box(vx - 0.02, rb + 0.18, H + 0.28, vx + 0.32, rb + 0.52, H + 0.31, '#3a3844', 'roof_vent_cap')
+        if k.rng.random() < 0.5:
+            sx = k.rng.uniform(x0 + 0.4, x1 - 0.9)
+            k.box(sx, rb + 0.3, H + 0.03, sx + 0.5, r_front - 0.35, H + 0.09, '#141020', 'skylight',
+                  emit=(k.rng.choice(('#c080ff', '#80d0ff', '#ffb070')), 0.5))
+        if k.rng.random() < 0.5:
+            k.cyl(x0 + 0.45, rb + 0.45, H + 0.03, H + 0.6, 0.26, ('#5a5a62', 0.08), 'water_tank', verts=12)
+            k.cone(x0 + 0.45, rb + 0.45, H + 0.6, H + 0.75, 0.28, 0.02, '#4a4a52', 'water_tank_cap', verts=12)
+        k.tube((x1 - 0.4, rb + 0.4, H + 0.03), (x1 - 0.4, rb + 0.4, H + 1.3), 0.02, '#3a3a42', 'antenna', verts=4)
+        k.sphere(x1 - 0.4, rb + 0.4, H + 1.32, 0.04, 0.04, RED, 'antenna_light', emit=(RED, 1.0), segs=6)
+    k.solid(x0, rb, x1, r_front)
+    return H
+
+
+def street_lamp(k, cx, cr, col=CYAN):
+    """Twin-headed street lamp: a post with a neon strip, a crossbar and two
+    glowing pods hanging from it."""
+    k.cyl(cx, cr, 0, 0.12, 0.15, WALL[2], 'lamp_base', verts=8)
+    k.cyl(cx, cr, 0.12, 2.5, 0.045, WALL[3], 'lamp_post', verts=8)
+    k.box(cx - 0.03, cr + 0.04, 0.6, cx + 0.03, cr + 0.05, 2.1, shade(PINK, 0.4), 'lamp_strip', emit=(PINK, 0.7))
+    k.box(cx - 0.42, cr - 0.04, 2.48, cx + 0.42, cr + 0.04, 2.55, WALL[3], 'lamp_arm')
+    k.cone(cx, cr, 2.55, 2.68, 0.06, 0.02, WALL[3], 'lamp_finial', verts=6)
+    for s in (-1, 1):
+        hx = cx + s * 0.36
+        k.cyl(hx, cr, 2.38, 2.48, 0.11, WALL[3], 'lamp_hood', verts=10)
+        k.cyl(hx, cr, 2.16, 2.38, 0.08, shade(col, 0.5), 'lamp_head', emit=(col, 0.95), verts=10)
+    k.point_light(cx, cr + 0.3, 2.1, col, 45, radius=0.3, group='flicker')
+    k.solid(cx - 0.25, cr - 0.25, cx + 0.25, cr + 0.25)
+
+
+def puddle(k, cx, cr, rx, ry, tint=PINK):
+    """Rain puddle: dark water in a few overlapping lobes, faintly tinted by
+    the nearest sign, with one bright reflected streak."""
+    for i, (dx, dr, sx, sy) in enumerate(((0, 0, 1, 1), (rx * 0.5, ry * 0.35, 0.6, 0.7), (-rx * 0.45, -ry * 0.25, 0.55, 0.6))):
+        k.cyl(cx + dx, cr + dr, 0.0, 0.004 + i * 0.001, rx * sx, '#0c0816', 'puddle', emit=(tint, 0.16), verts=12, ry=ry * sy)
+    k.box(cx - rx * 0.45, cr - 0.015, 0.006, cx + rx * 0.25, cr + 0.015, 0.008, '#0c0816', 'puddle_glint', emit=(tint, 0.6))
+
+
+def manhole(k, cx, cr):
+    k.cyl(cx, cr, 0.0, 0.008, 0.3, ('#2a2638', 0.1), 'manhole', verts=16)
+    for i in range(3):
+        k.box(cx - 0.2, cr - 0.12 + i * 0.12 - 0.015, 0.008, cx + 0.2, cr - 0.12 + i * 0.12 + 0.015, 0.012, '#1a1626', 'manhole_grid')
+
+
+def street_planter(k, cx, cr, leaf='#2a5048', glow=CYAN):
+    """Concrete planter with a small tree strung with LEDs."""
+    k.box(cx - 0.4, cr - 0.4, 0, cx + 0.4, cr + 0.4, 0.45, (WALL[2], 0.06), 'planter')
+    k.box(cx - 0.4, cr + 0.39, 0.38, cx + 0.4, cr + 0.41, 0.41, shade(glow, 0.4), 'planter_led', emit=(glow, 0.7))
+    k.box(cx - 0.34, cr - 0.34, 0.4, cx + 0.34, cr + 0.34, 0.45, '#1a1210', 'soil')
+    k.cyl(cx, cr, 0.45, 1.3, 0.05, '#2a1c14', 'trunk', verts=6)
+    for (dx, dr, dz, s) in ((0, 0, 1.55, 0.42), (-0.2, 0.05, 1.35, 0.3), (0.22, 0.05, 1.4, 0.3)):
+        k.blob(cx + dx, cr + dr, dz, s, s * 0.9, s * 0.8, (leaf, 0.2), 'leaves', segs=10)
+    for i in range(8):
+        a = i * 0.8
+        k.sphere(cx + math.cos(a) * 0.36, cr + 0.24 + math.sin(a) * 0.1, 1.3 + (i % 3) * 0.12, 0.035, 0.035, glow, 'fairy_light',
+                 emit=(glow, 1.0), segs=5)
+    k.point_light(cx, cr + 0.5, 1.4, glow, 4, radius=0.2, group='flicker')
+    k.solid(cx - 0.45, cr - 0.45, cx + 0.45, cr + 0.45)
+
+
+def trash_can(k, cx, cr):
+    k.cyl(cx, cr, 0, 0.75, 0.24, ('#3a4a5a', 0.06), 'recycler', verts=12)
+    k.cyl(cx, cr, 0.75, 0.82, 0.26, '#2a3440', 'recycler_lid', verts=12)
+    k.box(cx - 0.12, cr + 0.22, 0.45, cx + 0.12, cr + 0.25, 0.6, '#0c2a30', 'recycler_screen', emit=(GREEN, 0.8))
+    k.solid(cx - 0.3, cr - 0.3, cx + 0.3, cr + 0.3)
+
+
+def holo_kiosk(k, cx, cr):
+    """Advertising kiosk: a pedestal projecting a rotating billboard (the
+    projection is a flat emissive card here)."""
+    k.cyl(cx, cr, 0, 0.9, 0.22, (WALL[2], 0.06), 'kiosk', verts=10)
+    k.cyl(cx, cr, 0.9, 0.98, 0.3, WALL[3], 'kiosk_top', verts=10)
+    k.box(cx - 0.55, cr - 0.01, 1.05, cx + 0.55, cr + 0.01, 1.85, '#100830', 'holo_card', emit=('#4a2a90', 0.7))
+    for i in range(3):
+        col = (PINK, CYAN_L, YEL)[i]
+        k.box(cx - 0.45, cr + 0.012, 1.65 - i * 0.2, cx + 0.45 - i * 0.15, cr + 0.016, 1.72 - i * 0.2, col, 'holo_text', emit=(col, 0.9))
+    k.point_light(cx, cr + 0.5, 1.4, '#a070ff', 10, radius=0.3, group='flicker')
+    k.solid(cx - 0.35, cr - 0.35, cx + 0.35, cr + 0.35)
+
+
+def hover_bike(k, cx, cr):
+    k.box(cx - 0.7, cr - 0.5, 0, cx + 0.7, cr + 0.5, 0.06, '#1a1a24', 'bike_pad')
+    k.box(cx - 0.68, cr + 0.48, 0.0, cx + 0.68, cr + 0.5, 0.05, shade(CYAN, 0.4), 'bike_pad_led', emit=(CYAN, 0.8))
+    k.blob(cx, cr, 0.45, 0.6, 0.22, 0.16, ('#c8203a', 0.06), 'bike_body', segs=16)
+    k.blob(cx + 0.25, cr, 0.6, 0.2, 0.14, 0.08, '#0c2a38', 'bike_screen', emit=(CYAN, 0.5), segs=10)
+    k.box(cx - 0.3, cr - 0.12, 0.55, cx + 0.05, cr + 0.12, 0.62, '#1a1a1a', 'bike_seat')
+    for s in (-0.45, 0.45):
+        k.cyl(cx + s, cr, 0.2, 0.28, 0.16, '#2a2a30', 'bike_pod', verts=12)
+        k.cyl(cx + s, cr, 0.18, 0.2, 0.13, shade(CYAN, 0.4), 'bike_glow', emit=(CYAN, 0.9), verts=12)
+    k.point_light(cx, cr + 0.2, 0.15, CYAN, 6, radius=0.2, group='flicker')
+    k.solid(cx - 0.7, cr - 0.5, cx + 0.7, cr + 0.5)
+
+
+def token_kiosk(k, cx, cr):
+    k.box(cx - 0.35, cr - 0.3, 0, cx + 0.35, cr + 0.3, 1.5, ('#c8a020', 0.08), 'token_kiosk', bevel=0.03)
+    k.box(cx - 0.25, cr + 0.3, 0.9, cx + 0.25, cr + 0.32, 1.35, '#0c1830', 'token_screen', emit=('#e8c040', 0.8))
+    k.cyl_y(cx, cr + 0.3, cr + 0.34, 0.6, 0.08, 0.08, '#2a2a30', 'token_slot', verts=10)
+    k.cyl_y(cx, cr + 0.3, cr + 0.36, 1.12, 0.07, 0.07, '#fff0a0', 'token_coin', emit=('#e8c040', 1.0), verts=12)
+    k.point_light(cx, cr + 0.6, 1.1, YEL, 8, radius=0.2, group='flicker')
+    k.solid(cx - 0.4, cr - 0.35, cx + 0.4, cr + 0.35)
+
+
+def ramen_stand(k, x0, x1, r0, r1):
+    """Open-air ramen stall: counter, stools, a striped noren and lanterns."""
+    k.box(x0, r0, 0, x1, r1, 0.95, ('#5a1418', 0.08), 'stand_counter', bevel=0.015)
+    k.box(x0 - 0.04, r0 - 0.04, 0.95, x1 + 0.04, r1 + 0.06, 1.02, (WOOD, 0.14), 'stand_top')
+    for xx in (x0, x1 - 0.1):
+        k.box(xx, r0 - 0.4, 0, xx + 0.1, r0 - 0.3, 2.3, WOOD_D, 'stand_post')
+    k.box(x0 - 0.1, r0 - 0.45, 2.3, x1 + 0.1, r1 + 0.05, 2.42, (WOOD_D, 0.12), 'stand_roof')
+    n = int((x1 - x0) / 0.32)
+    for i in range(n):   # noren curtain strips
+        xx = x0 + 0.04 + i * (x1 - x0 - 0.08) / n
+        k.box(xx, r1 + 0.02, 1.65, xx + (x1 - x0 - 0.08) / n - 0.03, r1 + 0.04, 2.3, ('#e8dcc0' if i % 2 else '#a02a2a', 0.06), 'noren')
+    for x in (x0 + 0.3, x1 - 0.3):
+        paper_lantern(k, x, r1 + 0.25, 1.85, s=0.65)
+    stock_pot(k, x0 + 0.5, r0 + 0.2, z=0.95)
+    for i in range(2):
+        bowl(k, x1 - 0.5 - i * 0.4, r0 + 0.3, 1.02)
+    k.solid(x0, r0 - 0.45, x1, r1)
+
+
+def street_railing(k, x0, x1, r, h=0.95):
+    """Waist-high railing at the walkway's edge, the city drop beyond."""
+    k.box(x0, r, 0, x1, r + 0.3, 0.25, (WALL[2], 0.06), 'curb')
+    k.box(x0, r + 0.1, h - 0.06, x1, r + 0.2, h, WALL[3], 'rail')
+    k.box(x0, r + 0.1, h - 0.1, x1, r + 0.2, h - 0.06, shade(CYAN, 0.4), 'rail_led', emit=(CYAN, 0.7))
+    x = x0 + 0.5
+    while x < x1:
+        k.box(x - 0.03, r + 0.12, 0.25, x + 0.03, r + 0.18, h - 0.06, WALL[3], 'rail_post')
+        x += 1.0

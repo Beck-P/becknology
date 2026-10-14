@@ -47,6 +47,9 @@ for (x, r, c) in ((3.5, 5.0, '#a060ff'), (10.5, 5.0, '#ff60c0'), (7.0, 7.5, '#60
     k.point_light(x, r, 2.6, c, 40, radius=0.6)
 
 render(k, sys.argv[1], ambient=('#241a40', 0.4))
+# the aisle tiles behind the cabinet rows: you'd vanish behind the cabinets
+for (x, y) in ((1, 3), (1, 5), (3, 3), (3, 5), (4, 5), (5, 3), (7, 3), (8, 5), (9, 3), (9, 5), (11, 3), (11, 5)):
+    k.solid(x, y, x + 1, y + 1)
 apply_world(world_path('arcadia'), k, FLOOR, doors=DOORS, scene_id='arcadia', moves={
     'HIGH SCORES': [(1, 2), (12, 2)], 'ARCADIA': (7, 2), 'VENDING MACHINE': (1, 4)},
     actors=[{'sheet': 'npc-stranger', 'x': 6, 'y': 6, 'facing': 'down'}])

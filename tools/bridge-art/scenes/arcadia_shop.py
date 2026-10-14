@@ -28,6 +28,9 @@ for (x, r) in ((3.5, 5.5), (10.5, 5.6), (7.0, 7.8)):
     k.point_light(x, r, 2.6, '#e8f0ff', 50, radius=0.8)
 
 render(k, sys.argv[1], ambient=('#3a3a50', 0.45))
+k.solid(7, 5, 8, 6)                     # the shopper
+k.solid(9, 6, 10, 7)                    # behind the counter, either side of the cashier
+k.solid(11, 6, 12, 7)
 apply_world(world_path('arcadia-shop'), k, FLOOR, doors=DOORS, scene_id='arcadia-shop', moves={
     'CASHIER': (10, 7), 'COOLER': (1, 2), 'WALL POSTER': (7, 2), 'BROWSING CUSTOMER': (7, 5),
     'SNACK SHELF': [(2, 4), (9, 4)], 'VENDING MACHINE': (12, 8)},
