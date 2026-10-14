@@ -91,7 +91,14 @@ var BridgeQuests = (function () {
     ids.sort(function (a, b) { return (!!state[a].done - !!state[b].done) || (state[b].started - state[a].started); });
     var html = '<div class="qj-head"><span class="qj-title">Journal</span><button class="qj-close" aria-label="Close">' +
       '<span class="ip-key">Esc</span></button></div>';
-    if (!ids.length) {
+    var crew = typeof BridgeCrew !== 'undefined' ? BridgeCrew.list() : [];
+    if (crew.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your crew</span>' +
+        '<span class="qj-q-count">' + crew.length + '</span></div><ul class="qj-clues">' +
+        crew.map(function (c) { return '<li class="found"><b>' + esc(c.name) + '</b>, ' + esc(c.role) + ' - ' + esc(c.perkText) + '</li>'; }).join('') +
+        '</ul></section>';
+    }
+    if (!ids.length && !crew.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {
@@ -158,7 +165,7 @@ var BridgeQuests = (function () {
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  return { onInteract: onInteract, open: open, close: close, toggle: toggle,
+  return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast,
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            reset: function () { state = {}; save(); } };
 })();

@@ -647,7 +647,9 @@ var BridgeInteractions = (function () {
     if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
     var overlay = document.getElementById('world-overlay');
     var dialogEl = dialogShell('shop');
+    var qm = inter.type === 'sell' && typeof BridgeCrew !== 'undefined' && BridgeCrew.has('quartermaster') ? 1.2 : 1;
     var rows = (inter.buys || []).map(function (b) {
+      b = { id: b.id, price: Math.round(b.price * qm) };
       var item = typeof BridgeItems !== 'undefined' && BridgeItems.get(b.id);
       var have = typeof BridgeInventory !== 'undefined' ? BridgeInventory.getCount(b.id) : 0;
       return { id: b.id, price: b.price, name: item ? item.name : b.id, have: have };
@@ -715,7 +717,15 @@ var BridgeInteractions = (function () {
     var overlay = document.getElementById('world-overlay');
     var sheet = person.sheet || portraitFor(inter);
     var dialogEl = dialogShell('talk wd-convo');
-    var opts = person.topics.map(function (t) { return t.q; }).concat(['Goodbye']);
+    var topics = person.topics.slice();
+    if (person.crew && typeof BridgeCrew !== 'undefined') {
+      topics.push(BridgeCrew.isHired(person.id)
+        ? { q: 'About the work', a: person.crew.perkText.toUpperCase() }
+        : { q: 'Join my crew?', a: person.crew.pitch + '\n\n' + person.crew.wage + ' COINS UP FRONT, AS ' + person.crew.role.toUpperCase() + '.', hire: true });
+    }
+    person = Object.create(person);
+    person.topics = topics;
+    var opts = topics.map(function (t) { return t.q; }).concat(['Goodbye']);
     dialogEl.innerHTML =
       (sheet ? '<canvas class="wd-portrait" width="72" height="72"></canvas>' : '') +
       '<div class="wd-body">' +
@@ -734,7 +744,7 @@ var BridgeInteractions = (function () {
 
     var out = dialogEl.querySelector('.wd-text');
     var btns = dialogEl.querySelectorAll('.wd-opt');
-    var sel = 0, line = null;
+    var sel = 0, line = null, pitched = -1;
     function say(text) {
       if (line) clearInterval(line.timer);
       var body = reflow(text), i = 0;
@@ -752,7 +762,27 @@ var BridgeInteractions = (function () {
     function pick(n) {
       if (n >= person.topics.length) { close(); return; }
       var t = person.topics[n];
-      if (t.sell) { close(); showSellDialog({ label: person.name, buys: t.sell, dialog: t.a }); return; }
+      if (t.sell) {
+        var mult = typeof BridgeCrew !== 'undefined' && BridgeCrew.has('quartermaster') ? 1.2 : 1;
+        close();
+        showSellDialog({ label: person.name, dialog: t.a, buys: t.sell.map(function (b) { return { id: b.id, price: Math.round(b.price * mult) }; }) });
+        return;
+      }
+      if (t.hire && pitched === n && line && line.done) {        // the pitch heard: asking again signs them on
+        out.textContent = 'SIGNING ON...';
+        BridgeCrew.hire(Object.getPrototypeOf(person)).then(function (res) {
+          if (res.ok) {
+            say('DONE. YOU WON\'T REGRET IT.');
+            btns[n].textContent = 'About the work';
+            person.topics[n] = { q: 'About the work', a: person.crew.perkText.toUpperCase() };
+            if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Crew', person.name + ' joins you', person.crew.role);
+          } else {
+            say(res.reason === 'insufficient_funds' || res.reason === 'insufficient' ? 'COME BACK WHEN YOU CAN PAY.' : 'NOT TODAY. (NO WAY TO PAY RIGHT NOW.)');
+          }
+        });
+        return;
+      }
+      if (t.hire) { pitched = n; BridgePeople.ask(person.id, t.q); btns[n].classList.add('asked'); say(t.a + '\n\n(ASK AGAIN TO HIRE.)'); return; }
       BridgePeople.ask(person.id, t.q);
       btns[n].classList.add('asked');
       say(t.a);

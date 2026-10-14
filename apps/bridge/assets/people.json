@@ -51,7 +51,14 @@
         "q": "H.M.?",
         "a": "HOLLIS MARR. CHARTED EVERY REEF ON THIS SEA AND SWORE THE HERON WENT DOWN WITH HER HOLD FULL. WENT LOOKING FOR A WAY IN THROUGH THE CAVES. THAT CHARCOAL BY THE MOUTH IS THE LAST OF HIM."
       }
-    ]
+    ],
+    "crew": {
+      "role": "Quartermaster",
+      "wage": 220,
+      "perk": "quartermaster",
+      "pitch": "THE FIRE CAN KEEP ITSELF. I KNOW WHAT EVERY CRYSTAL ON THIS SEA IS WORTH, AND WHO'S LYING ABOUT IT.",
+      "perkText": "Corra haggles for you: traders pay a fifth more for what you sell."
+    }
   },
   "ilsa": {
     "name": "Ilsa Venn",
@@ -105,7 +112,14 @@
         "q": "The guestbook",
         "a": "SOMEONE WROTE THAT THE DRAGON IS LISTENING. NO NAME. THE INK'S OLD BUT THE HAND'S STEADY. I'D SAY WHOEVER WROTE IT MEANT IT."
       }
-    ]
+    ],
+    "crew": {
+      "role": "Trader",
+      "wage": 120,
+      "perk": "trader",
+      "pitch": "BACK ME AND I'LL RUN LAMP OIL BETWEEN THE ISLANDS UNDER YOUR FLAG. YOU'LL SEE A CUT EVERY TIME YOU MAKE PORT.",
+      "perkText": "Ansel runs lamp oil under your flag: a share of the profit whenever you make port in Lumar (at most every ten minutes)."
+    }
   },
   "morwen": {
     "name": "Morwen",
@@ -266,7 +280,14 @@
         "q": "The painting",
         "a": "THE SHIP UNDER THE GREEN MOON? SIGNED E.B. SHE PAINTED IT RIGHT THERE BY THE FIRE, THEN SAILED OUT AND DIDN'T COME BACK. LEFT IT FOR HER TAB."
       }
-    ]
+    ],
+    "crew": {
+      "role": "Navigator",
+      "wage": 150,
+      "perk": "navigator",
+      "pitch": "THIRTY YEARS BRINGING SHIPS INTO DIGGEN'S POINT. GIVE ME A WHEEL AGAIN AND I'LL READ YOU EVERY CURRENT ON THIS SEA.",
+      "perkText": "Bram reads the currents: your galleon sails a fifth faster at the helm."
+    }
   },
   "merchant": {
     "name": "Fenwick",
@@ -343,7 +364,14 @@
         "q": "Club Void",
         "a": "MEMBERS ONLY. YOU NEED TO KNOW THE WORD, AND THE WORD ISN'T 'PLEASE'. TRIED THAT."
       }
-    ]
+    ],
+    "crew": {
+      "role": "Runner",
+      "wage": 60,
+      "perk": "runner",
+      "pitch": "I RUN STUFF, REMEMBER? I'M FAST, I'M SMALL, AND I FIND THINGS OTHER PEOPLE MISS. TOKENS UP FRONT.",
+      "perkText": "Pip has sharp eyes: you gather one more of everything you forage."
+    }
   },
   "nakuri": {
     "name": "Dr. Nakuri",

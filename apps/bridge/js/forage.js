@@ -34,6 +34,7 @@ var BridgeForage = (function () {
   function gather(inter) {
     if (!ready(inter)) return 'PICKED CLEAN FOR NOW.\n\nIT WILL GROW BACK.';
     var n = inter.min + Math.floor(Math.random() * (inter.max - inter.min + 1));
+    if (typeof BridgeCrew !== 'undefined' && BridgeCrew.has('runner')) n += 1;      // Pip finds more
     if (typeof BridgeLoot !== 'undefined') BridgeLoot.spawn(inter.x, inter.y, inter.item, n);
     picked[inter.forageId] = Date.now();
     try { localStorage.setItem(KEY, JSON.stringify(picked)); } catch (e) { /* private mode */ }

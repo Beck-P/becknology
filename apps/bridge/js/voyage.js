@@ -278,7 +278,8 @@ var BridgeVoyage = (function () {
     var turn = (keys.a || keys.arrowleft ? -1 : 0) + (keys.d || keys.arrowright ? 1 : 0);
     ship.a += turn * dt * 0.0011 * (0.35 + Math.min(1, ship.v / 50));
     var off = Math.cos(ship.a - wind.a);                      // 1 running before the wind, -1 into it
-    var target = ship.sail * 78 * (0.5 + 0.5 * Math.max(-0.4, off) + 0.15);
+    var nav = typeof BridgeCrew !== 'undefined' && BridgeCrew.has('navigator') ? 1.2 : 1;      // Bram reads the currents
+    var target = ship.sail * 78 * nav * (0.5 + 0.5 * Math.max(-0.4, off) + 0.15);
     ship.v += (target - ship.v) * Math.min(1, dt * 0.0012);
     var nx = ship.x + Math.cos(ship.a) * ship.v * dt / 1000, ny = ship.y + Math.sin(ship.a) * ship.v * dt / 1000;
     var bowX = nx + Math.cos(ship.a) * 20, bowY = ny + Math.sin(ship.a) * 20;
