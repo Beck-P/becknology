@@ -1,0 +1,33 @@
+{
+  "lumar-crimson": [
+    { "x": 13, "y": 18, "label": "CRIMSON CRYSTALS", "item": "crimson_crystal", "min": 1, "max": 2, "regrow": 30 },
+    { "x": 16, "y": 23, "label": "CRIMSON CRYSTALS", "item": "crimson_crystal", "min": 1, "max": 2, "regrow": 30 },
+    { "x": 9, "y": 19, "label": "CRIMSON CRYSTALS", "item": "crimson_crystal", "min": 1, "max": 2, "regrow": 30 },
+    { "x": 13, "y": 26, "label": "CRIMSON CRYSTALS", "item": "crimson_crystal", "min": 1, "max": 2, "regrow": 30 },
+    { "x": 24, "y": 33, "label": "SEA GLASS", "item": "sea_glass", "min": 1, "max": 3, "regrow": 20 },
+    { "x": 34, "y": 33, "label": "SEA GLASS", "item": "sea_glass", "min": 1, "max": 3, "regrow": 20 },
+    { "x": 9, "y": 27, "label": "SALVAGE", "item": "silver_nail", "min": 2, "max": 4, "regrow": 45 }
+  ],
+  "lumar-rose": [
+    { "x": 39, "y": 20, "label": "WILD ROSEITE", "item": "roseite", "min": 1, "max": 2, "regrow": 25 },
+    { "x": 7, "y": 17, "label": "WILD ROSEITE", "item": "roseite", "min": 1, "max": 2, "regrow": 25 },
+    { "x": 17, "y": 26, "label": "WILD ROSEITE", "item": "roseite", "min": 1, "max": 2, "regrow": 25 },
+    { "x": 47, "y": 28, "label": "WILD ROSEITE", "item": "roseite", "min": 1, "max": 2, "regrow": 25 },
+    { "x": 38, "y": 24, "label": "WILD ROSEITE", "item": "roseite", "min": 1, "max": 2, "regrow": 25 }
+  ],
+  "lumar-sapphire": [
+    { "x": 51, "y": 14, "label": "SAPPHIRE CRYSTALS", "item": "sapphire_crystal", "min": 1, "max": 1, "regrow": 40 },
+    { "x": 6, "y": 23, "label": "SAPPHIRE CRYSTALS", "item": "sapphire_crystal", "min": 1, "max": 1, "regrow": 40 },
+    { "x": 44, "y": 11, "label": "SAPPHIRE CRYSTALS", "item": "sapphire_crystal", "min": 1, "max": 1, "regrow": 40 },
+    { "x": 52, "y": 23, "label": "SAPPHIRE CRYSTALS", "item": "sapphire_crystal", "min": 1, "max": 1, "regrow": 40 }
+  ],
+  "lumar-midnight": [
+    { "x": 45, "y": 10, "label": "VIOLET CRYSTALS", "item": "midnight_crystal", "min": 1, "max": 1, "regrow": 60 },
+    { "x": 8, "y": 14, "label": "VIOLET CRYSTALS", "item": "midnight_crystal", "min": 1, "max": 1, "regrow": 60 },
+    { "x": 31, "y": 31, "label": "VIOLET CRYSTALS", "item": "midnight_crystal", "min": 1, "max": 1, "regrow": 60 },
+    { "x": 44, "y": 26, "label": "VIOLET CRYSTALS", "item": "midnight_crystal", "min": 1, "max": 1, "regrow": 60 }
+  ],
+  "lumar": [
+    { "x": 14, "y": 10, "label": "SEA GLASS", "item": "sea_glass", "min": 1, "max": 2, "regrow": 20 }
+  ]
+}

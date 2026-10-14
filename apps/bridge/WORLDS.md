@@ -130,12 +130,25 @@ stars streaking, a tunnel of light, dropping out over the new world.
 - Every mini-game found in the world, then kept in the game room.
 
 ## Build order
-1. ✓ Lumar coasts and water; more homes and upstairs. ✓ Arcadia's skyline
-   and District rebuild (iterating on the frontages).
-2. The Singularity's shattered planes and the black hole.
-3. Bigger worlds: Lumar's islands as places to explore; Arcadia's second
-   level (Skywalk), back alleys and more of the city.
-4. Nav map and hyperspace jump; Bridge as a captain's deck; the game room.
-5. Purpose: quests, loot, jobs, the codex; mini-games woven in.
-6. The empire: businesses, crew, NPC backstories; open-sea sailing;
-   then a conversation layer for NPCs.
+1. ✓ Lumar coasts and water; more homes and upstairs. ✓ Arcadia's skyline,
+   the District rebuilt with bespoke shopfronts and real-font signs,
+   Skyport 7 on the roof.
+2. ✓ The Singularity: a continuous plain at the Brink — the hole filling the
+   sky, space warping round it, echoes, infalling grit, time stutters.
+3. ✓ Landing sites for every world (Lumar's beach, Skyport 7, Enigma's
+   Docking Bay 3, the Brink's ring), each with its own approach.
+   ◐ Bigger worlds: the four Lumar islands rebuilt as whole islands
+   (Crimson Reach, Rose Cove, Sapphire Port, Midnight Isle). Next:
+   Arcadia's Skywalk level and back alleys behind the chained gate; more
+   of Enigma (the ring corridor, hydroponics, quarters where Okafor sleeps).
+4. ✓ Nav chart and hyperspace jump. Next: Bridge as a captain's deck; the
+   game room.
+5. ◐ Purpose: ✓ quests and a journal, ✓ a cast with backstories to talk
+   to. Next: loot and collectibles worth carrying, jobs that pay, the
+   codex; mini-games woven in.
+6. The empire: businesses, crew; **open-sea sailing** — a top-down sea
+   world where you take the galleon's helm between the islands (a Blender
+   top-down galleon in eight headings, the sea from js/sea.js, islands as
+   landmarks you dock at, other ships to hail: traders, patrols, pirates,
+   a ghost galleon); then the conversation layer for NPCs seeded from
+   people.json.

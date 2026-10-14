@@ -2439,8 +2439,67 @@
       });
       if (sc.fountain) sceneFountain(ctx, sc.fountain, offX, offY, ts, time);
       if (sc.steam && typeof BridgeSkyline !== 'undefined') BridgeSkyline.steam(ctx, sc, offX, offY, ts, time);   // hot springs
+      if (sc.beacon) sceneBeacon(ctx, sc.beacon, offX, offY, ts, time);
+      if (sc.mist) sceneMist(ctx, world, offX, offY, ts, time);
     }
   });
+
+  // A lighthouse lamp turning: two beams sweeping round it, flattened by the
+  // view, a halo on the lamp (scene.beacon = the lamp in screen tiles).
+  function sceneBeacon(ctx, b, offX, offY, ts, time) {
+    var lx = offX + b[0] * ts, ly = offY + b[1] * ts;
+    var a0 = time / 2400, L = ts * 26;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var k = 0; k < 2; k++) {
+      var a = a0 + k * Math.PI, sp = 0.09;
+      var face = 0.55 + 0.45 * Math.abs(Math.sin(a));            // brighter as it swings toward or away from you
+      var g = ctx.createRadialGradient(lx, ly, 0, lx, ly, L);
+      g.addColorStop(0, 'rgba(170,205,255,' + (0.32 * face).toFixed(3) + ')');
+      g.addColorStop(0.35, 'rgba(140,180,255,' + (0.12 * face).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(120,160,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(lx, ly);
+      ctx.lineTo(lx + Math.cos(a - sp) * L, ly + Math.sin(a - sp) * L * 0.55);
+      ctx.lineTo(lx + Math.cos(a + sp) * L, ly + Math.sin(a + sp) * L * 0.55);
+      ctx.closePath();
+      ctx.fill();
+    }
+    var h = ctx.createRadialGradient(lx, ly, 0, lx, ly, ts * 1.2);
+    h.addColorStop(0, 'rgba(210,230,255,0.55)');
+    h.addColorStop(1, 'rgba(160,200,255,0)');
+    ctx.fillStyle = h;
+    ctx.fillRect(lx - ts * 1.2, ly - ts * 1.2, ts * 2.4, ts * 2.4);
+    ctx.restore();
+  }
+
+  // Mist rolling over an island: big soft banks drifting slowly across it.
+  var mistPuff = null;
+  function sceneMist(ctx, world, offX, offY, ts, time) {
+    if (!mistPuff) {
+      mistPuff = document.createElement('canvas');
+      mistPuff.width = 128; mistPuff.height = 64;
+      var m = mistPuff.getContext('2d');
+      var g = m.createRadialGradient(64, 32, 0, 64, 32, 64);
+      g.addColorStop(0, 'rgba(180,170,220,0.5)');
+      g.addColorStop(0.5, 'rgba(160,150,210,0.22)');
+      g.addColorStop(1, 'rgba(150,140,200,0)');
+      m.fillStyle = g;
+      m.save(); m.scale(1, 0.5); m.fillRect(0, 0, 128, 128); m.restore();
+    }
+    var W = world.width || 40, H = world.height || 30;
+    ctx.save();
+    for (var i = 0; i < 16; i++) {
+      var sp = 0.00025 + (i % 5) * 0.00006;
+      var x = (((i * 7.3 + time * sp) % (W + 12)) + W + 12) % (W + 12) - 6;
+      var y = 3 + (i * 5.7) % (H - 4) + Math.sin(time / 9000 + i) * 0.6;
+      var s = (5 + (i % 4) * 1.6) * ts;
+      ctx.globalAlpha = 0.16 + 0.08 * Math.sin(time / 5000 + i * 1.7);
+      ctx.drawImage(mistPuff, Math.round(offX + x * ts - s / 2), Math.round(offY + y * ts - s / 4), Math.round(s), Math.round(s / 2));
+    }
+    ctx.restore();
+  }
 
   // Hostile-entity + atmospheric spore overlay for Lumar islands.
   BridgeWorld.registerOverlay('lumar', function (ctx, world, offX, offY, ts, time) {

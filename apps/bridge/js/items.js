@@ -287,6 +287,38 @@ var BridgeItems = (function () {
     }
   }
 
+  // A spore crystal: a tall shard and two small ones, in its island's colour.
+  function crystalIcon(dark, mid, hi) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      ctx.fillStyle = '#0a0810';
+      ctx.fillRect(x + 6*u, y + 2*u, 4*u, 12*u); ctx.fillRect(x + 3*u, y + 8*u, 3*u, 6*u); ctx.fillRect(x + 10*u, y + 7*u, 3*u, 7*u);
+      ctx.fillStyle = dark;
+      ctx.fillRect(x + 7*u, y + 3*u, 2*u, 10*u); ctx.fillRect(x + 4*u, y + 9*u, 2*u, 4*u); ctx.fillRect(x + 10*u, y + 8*u, 2*u, 5*u);
+      ctx.fillStyle = mid;
+      ctx.fillRect(x + 7*u, y + 4*u, 1*u, 8*u); ctx.fillRect(x + 4*u, y + 10*u, 1*u, 3*u); ctx.fillRect(x + 10*u, y + 9*u, 1*u, 3*u);
+      ctx.fillStyle = hi;
+      ctx.fillRect(x + 7*u, y + 3*u, 1*u, 2*u); ctx.fillRect(x + 4*u, y + 9*u, 1*u, 1*u);
+      ctx.fillStyle = '#2a2420';
+      ctx.fillRect(x + 3*u, y + 13*u, 10*u, 1*u);
+    };
+  }
+
+  function seaGlass(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0a1a14'; ctx.fillRect(x + 4*u, y + 5*u, 8*u, 7*u);
+    ctx.fillStyle = '#4aa880'; ctx.fillRect(x + 5*u, y + 6*u, 6*u, 5*u);
+    ctx.fillStyle = '#90e0b8'; ctx.fillRect(x + 6*u, y + 6*u, 3*u, 2*u);
+    ctx.fillStyle = '#2a7858'; ctx.fillRect(x + 9*u, y + 9*u, 2*u, 2*u);
+  }
+
+  function silverNail(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#1a1a20'; ctx.fillRect(x + 4*u, y + 3*u, 8*u, 3*u); ctx.fillRect(x + 7*u, y + 5*u, 2*u, 9*u);
+    ctx.fillStyle = '#c8ccd8'; ctx.fillRect(x + 5*u, y + 4*u, 6*u, 1*u); ctx.fillRect(x + 7*u, y + 6*u, 1*u, 7*u);
+    ctx.fillStyle = '#f0f4ff'; ctx.fillRect(x + 5*u, y + 4*u, 2*u, 1*u);
+  }
+
   // ---- Item registry --------------------------------------------------
   // type drives display + grouping.
   // effects is the source of truth for what an item does — both the
@@ -341,6 +373,30 @@ var BridgeItems = (function () {
     lockpick: {
       id: 'lockpick', name: 'Lockpick', desc: 'A thin steel pick and tension wrench. Single-use.',
       type: 'tool', stackable: true, draw: lockpick
+    },
+    crimson_crystal: {
+      id: 'crimson_crystal', name: 'Crimson Crystal', desc: 'Warm to the touch, humming. Grows on Crimson Reach, leaning toward the ridge.',
+      type: 'material', stackable: true, draw: crystalIcon('#6a1a2a', '#e04060', '#ffb0c0'), value: 18
+    },
+    roseite: {
+      id: 'roseite', name: 'Roseite', desc: 'Rose Cove crystal. A drop of water and it grows solid. Every hull carries some.',
+      type: 'material', stackable: true, draw: crystalIcon('#6a2a4a', '#f080b0', '#ffd0e8'), value: 12
+    },
+    sapphire_crystal: {
+      id: 'sapphire_crystal', name: 'Sapphire Crystal', desc: 'Deep blue, from Sapphire\'s shores. Traders pay well for clear ones.',
+      type: 'material', stackable: true, draw: crystalIcon('#1a2a6a', '#4080f0', '#b0d0ff'), value: 20
+    },
+    midnight_crystal: {
+      id: 'midnight_crystal', name: 'Midnight Crystal', desc: 'Violet, from Midnight Isle. Nobody on the sea has seen one for sale.',
+      type: 'material', stackable: true, draw: crystalIcon('#2a1a4a', '#a080ff', '#e0d0ff'), value: 30
+    },
+    sea_glass: {
+      id: 'sea_glass', name: 'Sea Glass', desc: 'Green glass worn smooth by the spore sea. It glows a little after dark.',
+      type: 'material', stackable: true, draw: seaGlass, value: 4
+    },
+    silver_nail: {
+      id: 'silver_nail', name: 'Silver Nail', desc: 'Salvage from the Heron. Silver doesn\'t rust - good as new, and nobody builds with silver.',
+      type: 'material', stackable: true, draw: silverNail, value: 6
     },
     stone_shard: {
       id: 'stone_shard', name: 'Stone Shard',

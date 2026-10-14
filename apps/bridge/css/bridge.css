@@ -1070,3 +1070,7 @@ body::after {
 .wd-convo .wd-options { margin-top: 10px; }
 .wd-convo .wd-opt.asked { opacity: 0.55; }
 .wd-convo .wd-opt.asked.active { opacity: 1; }
+.wd-sell { margin: 8px 0 2px; font-size: 13px; }
+.wd-sell-row { display: flex; justify-content: space-between; padding: 3px 2px; border-bottom: 1px dashed rgba(128, 128, 128, 0.25); }
+.wd-sell-row.none { opacity: 0.4; }
+.wd-opt[disabled] { opacity: 0.5; }

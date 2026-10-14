@@ -398,6 +398,7 @@ var BridgeWorld = (function () {
     xhr.onload = function () {
       if (xhr.status === 200) {
         var data = JSON.parse(xhr.responseText);
+        if (typeof BridgeForage !== 'undefined') BridgeForage.decorate(worldId, data);
         var finish = function () {
           world = data;
           currentWorldId = worldId;
@@ -799,6 +800,7 @@ var BridgeWorld = (function () {
     BridgeScene.drawBackground(ctx, sc, world, offX, offY, now);
     if (hooks.ground) hooks.ground(ctx, world, offX, offY, ts, now, sc);
     drawInteractHighlight(ctx, offX, offY, ts, now);
+    if (typeof BridgeForage !== 'undefined') BridgeForage.draw(ctx, world, offX, offY, ts, now);
     if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) BridgeLoot.draw(ctx, offX, offY, ts);
     var items = BridgeScene.actorDrawList(sc, world, offX, offY, ts, now);
     items.push(BridgeCharacter.sceneItem(offX, offY, ts, sc, world, now));

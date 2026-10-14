@@ -55,7 +55,7 @@ var BridgeInteractions = (function () {
   var VERBS = {
     enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
-    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look'
+    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -325,6 +325,15 @@ var BridgeInteractions = (function () {
           facing: BridgeCharacter.getFacing()
         });
         BridgeState.transition('redirect', { url: inter.target });
+        break;
+
+      case 'forage':
+        var bare = typeof BridgeForage !== 'undefined' ? BridgeForage.gather(inter) : 'NOTHING HERE.';
+        if (bare) showDialog(inter.label, bare, inter);
+        break;
+
+      case 'sell':
+        showSellDialog(inter);
         break;
 
       case 'dialog':
@@ -627,6 +636,71 @@ var BridgeInteractions = (function () {
     });
   }
 
+  // Selling what you've gathered to someone who buys it: what they'll take,
+  // how many you carry, and one button to sell the lot (coins via BridgeProgression).
+  function showSellDialog(inter) {
+    hideDialog();
+    dialogVisible = true;
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
+    var overlay = document.getElementById('world-overlay');
+    var dialogEl = dialogShell('shop');
+    var rows = (inter.buys || []).map(function (b) {
+      var item = typeof BridgeItems !== 'undefined' && BridgeItems.get(b.id);
+      var have = typeof BridgeInventory !== 'undefined' ? BridgeInventory.getCount(b.id) : 0;
+      return { id: b.id, price: b.price, name: item ? item.name : b.id, have: have };
+    });
+    var total = rows.reduce(function (a, r) { return a + r.have * r.price; }, 0);
+    dialogEl.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(inter.label) + '</div>' +
+      (inter.dialog ? '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>' : '') +
+      '<div class="wd-sell">' + rows.map(function (r) {
+        return '<div class="wd-sell-row' + (r.have ? '' : ' none') + '"><span>' + esc(r.name) + '</span><span>' +
+          r.have + ' &times; ' + r.price + '</span></div>';
+      }).join('') + '</div>' +
+      '<div class="wd-options"><button class="wd-opt active" data-act="sell"' + (total ? '' : ' disabled') + '>' +
+      (total ? 'Sell all for ' + total + ' coins' : 'Nothing they want') + '</button>' +
+      '<button class="wd-opt" data-act="close">Leave</button></div>' + hintHTML('Esc', 'Leave') + '</div>';
+    overlay.appendChild(dialogEl);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
+    var btns = dialogEl.querySelectorAll('.wd-opt'), sel = total ? 0 : 1;
+    function choose(n) { sel = (n + btns.length) % btns.length; for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', j === sel); }
+    choose(sel);
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      hideDialog();
+      if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+    }
+    function act(which) {
+      if (which !== 'sell' || !total) { close(); return; }
+      var paid = typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins
+        ? BridgeProgression.awardCoins(total, 'sell:' + (inter.label || 'trader')) : Promise.resolve(null);
+      close();
+      showDialog(inter.label, 'COUNTING IT OUT...', inter);
+      paid.then(function (bal) {           // the goods change hands only once the coins are in your purse
+        if (bal === null || bal === undefined) {
+          showDialog(inter.label, 'THE PURSE WON\'T OPEN - NO WAY TO PAY YOU RIGHT NOW.\n\nKEEP YOUR GOODS; COME BACK LATER.', inter);
+          return;
+        }
+        rows.forEach(function (r) { if (r.have) BridgeInventory.removeItem(r.id, r.have); });
+        showDialog(inter.label, 'SOLD, FOR ' + total + ' COINS.\n\nPLEASURE DOING BUSINESS.', inter);
+      }).catch(function () {
+        showDialog(inter.label, 'THE PURSE WON\'T OPEN - NO WAY TO PAY YOU RIGHT NOW.', inter);
+      });
+    }
+    function onKey(e) {
+      var k = e.key;
+      if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+      else if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); choose(sel + 1); }
+      else if (k === 'Enter' || k === 'e' || k === 'E' || k === ' ') { e.preventDefault(); e.stopPropagation(); act(btns[sel].getAttribute('data-act')); }
+    }
+    for (var b = 0; b < btns.length; b++) {
+      (function (btn, idx) {
+        btn.addEventListener('mouseenter', function () { choose(idx); });
+        btn.addEventListener('click', function (e) { e.stopPropagation(); act(btn.getAttribute('data-act')); });
+      })(btns[b], b);
+    }
+    document.addEventListener('keydown', onKey, true);
+  }
+
   // A conversation with someone from the cast (js/people.js): a greeting,
   // then topics to ask about; the answer types out above the choices.
   function showConversation(person, inter) {
@@ -675,6 +749,7 @@ var BridgeInteractions = (function () {
     function pick(n) {
       if (n >= person.topics.length) { close(); return; }
       var t = person.topics[n];
+      if (t.sell) { close(); showSellDialog({ label: person.name, buys: t.sell, dialog: t.a }); return; }
       BridgePeople.ask(person.id, t.q);
       btns[n].classList.add('asked');
       say(t.a);
