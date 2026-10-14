@@ -45,7 +45,7 @@ def _panel_seams(k, x0, x1, r_face, z0, z1, wall, step=0.75):
         k.boxes(seams, shade(wall, 0.7), 'panel_seam')
 
 
-def window_row(k, x0, x1, r_face, z, h=0.62, lit=0.6, rng=None, blinds=True, style='plain'):
+def window_row(k, x0, x1, r_face, z, h=0.62, lit=0.6, rng=None, blinds=True, style='plain', neon=None):
     """A storey's windows: frames, lit glass (warm, cool, pink), blinds,
     the odd silhouette or plant on a sill."""
     rng = rng or k.rng
@@ -59,6 +59,13 @@ def window_row(k, x0, x1, r_face, z, h=0.62, lit=0.6, rng=None, blinds=True, sty
         if rng.random() < lit:
             col = rng.choice(('#ffd890', '#ffc070', '#a0e0ff', '#ff90c0', '#c0a0ff'))
             lit_by.setdefault(col, []).append((cx - w / 2, r_face + 0.03, z, cx + w / 2, r_face + 0.035, z + h))
+            if neon and rng.random() < 0.45:      # a neon tube round the frame
+                t = 0.025
+                k.boxes([(cx - w / 2 - 0.07, r_face + 0.035, z - 0.07, cx + w / 2 + 0.07, r_face + 0.06, z - 0.07 + t),
+                         (cx - w / 2 - 0.07, r_face + 0.035, z + h + 0.07 - t, cx + w / 2 + 0.07, r_face + 0.06, z + h + 0.07),
+                         (cx - w / 2 - 0.07, r_face + 0.035, z - 0.07, cx - w / 2 - 0.07 + t, r_face + 0.06, z + h + 0.07),
+                         (cx + w / 2 + 0.07 - t, r_face + 0.035, z - 0.07, cx + w / 2 + 0.07, r_face + 0.06, z + h + 0.07)],
+                        shade(neon, 0.5), 'window_neon', emit=(neon, 0.9))
             if blinds and rng.random() < 0.5:     # blinds half down, slats
                 bz = z + h * rng.uniform(0.4, 0.75)
                 k.boxes([(cx - w / 2, r_face + 0.036, zz, cx + w / 2, r_face + 0.04, zz + 0.025)
@@ -75,6 +82,42 @@ def window_row(k, x0, x1, r_face, z, h=0.62, lit=0.6, rng=None, blinds=True, sty
         k.boxes(dark, '#121624', 'window_dark')
     for col, rects in lit_by.items():
         k.boxes(rects, shade(col, 0.55), 'window_lit', emit=(col, 0.75))
+
+
+def cladding(k, x0, x1, r_face, z0, z1, wall, style, rng):
+    """Facade finish above the shop: 'tile' (a fine grid), 'brick'
+    (running courses), 'metal' (ribbed panels with rivets), 'plain'."""
+    if style == 'tile':
+        lines = [(x0, r_face, z, x1, r_face + 0.008, z + 0.012) for z in [z0 + i * 0.2 for i in range(int((z1 - z0) / 0.2))]]
+        lines += [(x, r_face, z0, x + 0.012, r_face + 0.008, z1) for x in [x0 + i * 0.2 for i in range(1, int((x1 - x0) / 0.2))]]
+        k.boxes(lines, shade(wall, 0.75), 'tile_seam')
+    elif style == 'brick':
+        lines = []
+        for i in range(int((z1 - z0) / 0.12)):
+            z = z0 + i * 0.12
+            lines.append((x0, r_face, z, x1, r_face + 0.008, z + 0.015))
+            off = 0.0 if i % 2 else 0.14
+            lines += [(x, r_face, z, x + 0.015, r_face + 0.008, z + 0.12) for x in [x0 + off + j * 0.28 for j in range(int((x1 - x0) / 0.28))]]
+        k.boxes(lines, shade(wall, 0.7), 'brick_seam')
+    elif style == 'metal':
+        ribs = [(x, r_face, z0, x + 0.04, r_face + 0.03, z1) for x in [x0 + 0.1 + i * 0.3 for i in range(int((x1 - x0 - 0.1) / 0.3))]]
+        k.boxes(ribs, shade(wall, 1.25), 'metal_rib')
+        rivets = [(x, r_face + 0.03, z, x + 0.03, r_face + 0.045, z + 0.03) for x in [x0 + 0.25 + i * 0.3 for i in range(int((x1 - x0 - 0.3) / 0.3))]
+                  for z in (z0 + 0.06, z1 - 0.09)]
+        k.boxes(rivets, shade(wall, 1.6), 'rivet')
+
+
+def side_signs(k, x, r_face, z0, rng, cols=(Y.PINK, Y.CYAN, Y.YEL)):
+    """A stack of small lit signs down a facade's edge, glyphs on each."""
+    z = z0
+    for i in range(rng.randint(2, 3)):
+        h = rng.uniform(0.28, 0.42)
+        col = rng.choice(cols)
+        k.box(x - 0.2, r_face, z, x + 0.2, r_face + 0.06, z + h, shade(col, 0.35), 'side_sign', emit=(col, 0.7))
+        for j in range(rng.randint(1, 2)):
+            gz = z + h * (0.3 + 0.4 * j)
+            k.box(x - 0.12, r_face + 0.06, gz - 0.02, x + 0.12, r_face + 0.07, gz + 0.02, '#1a0c1a', 'sign_glyph')
+        z += h + 0.06
 
 
 def ac_unit(k, cx, r_face, z):
@@ -155,8 +198,9 @@ def billboard(k, st, x0, x1, r, z, h, kind=None):
 def water_tank(k, cx, cr, z):
     for (dx, dr) in ((-0.2, -0.2), (0.2, -0.2), (-0.2, 0.2), (0.2, 0.2)):
         k.box(cx + dx - 0.03, cr + dr - 0.03, z, cx + dx + 0.03, cr + dr + 0.03, z + 0.35, '#2a2832', 'tank_leg')
-    k.cyl(cx, cr, z + 0.35, z + 0.95, 0.3, ('#5a4a3a', 0.12), 'water_tank', verts=12)
-    k.cone(cx, cr, z + 0.95, z + 1.12, 0.32, 0.03, '#4a3a2e', 'tank_cap', verts=12)
+    k.cyl(cx, cr, z + 0.35, z + 0.85, 0.24, ('#34343e', 0.12), 'water_tank', verts=12)
+    k.cyl(cx, cr, z + 0.6, z + 0.63, 0.25, shade(Y.CYAN, 0.4), 'tank_band', emit=(Y.CYAN, 0.5), verts=12)
+    k.cone(cx, cr, z + 0.85, z + 1.0, 0.26, 0.03, '#2a2a32', 'tank_cap', verts=12)
 
 
 def dish(k, cx, cr, z):
@@ -166,7 +210,8 @@ def dish(k, cx, cr, z):
 
 def frontage(k, st, x0, x1, r_front, floors=2, floor_h=1.15, wall=None, trim=Y.PINK, kind='glass', name=None,
              name_col=Y.PINK, door_x=None, glow='#3a2a60', awning=None, blade=None, escape=False, balcony_at=None,
-             roof=('tank',), ad=None, depth=1.4, rng=None, door_w=0.8):
+             roof=('tank',), ad=None, depth=1.4, rng=None, door_w=0.8, clad=None, window_neon=None, sign_floor=False,
+             side=None):
     """A District building. kind: 'glass' (big display windows), 'shutter'
     (roller shutters half down over barred glass), 'garage' (a roll-up door
     open on a lit workshop), 'clinic' (frosted panels, white trim), 'club'
@@ -240,8 +285,12 @@ def frontage(k, st, x0, x1, r_front, floors=2, floor_h=1.15, wall=None, trim=Y.P
                        ((col if i % 2 == 0 else '#e8e0d0'), 0.1), 'awning')
             k.box(x0 + 0.1, r_front + 0.72, G - 0.22, x1 - 0.1, r_front + 0.76, G - 0.1, shade(col, 0.6), 'awning_valance')
     # ---- the sign stack -------------------------------------------------------------------
+    # the name sits clear of a fabric awning, and the first floor's windows clear of the name
+    sign_z = G + (0.38 if awning and awning[1] == 'fabric' else 0.1)
     if name:
-        Y.neon_text(k, name, (x0 + x1) / 2, r_front + 0.04, G + 0.08, h=0.34, col=name_col, energy=9)
+        Y.neon_text(k, name, (x0 + x1) / 2, r_front + 0.04, sign_z, h=0.34, col=name_col, energy=9)
+    if side:
+        side_signs(k, x0 + 0.25 if side == 'left' else x1 - 0.25, r_front + 0.05, G + 0.6, rng)
     if blade:
         bx = x1 - 0.12
         k.box(bx - 0.04, r_front, G + 0.2, bx + 0.04, r_front + 0.55, G + 0.2 + 1.5, '#0c0818', 'blade_sign')
@@ -253,9 +302,17 @@ def frontage(k, st, x0, x1, r_front, floors=2, floor_h=1.15, wall=None, trim=Y.P
                    '#0c0818', 'blade_glyph', verts=4)
         k.point_light(bx + 0.4, r_front + 0.4, G + 1.0, blade, 6, radius=0.2, group='flicker')
     # ---- upper storeys ----------------------------------------------------------------------
+    cladding(k, x0, x1, r_front, G, H, wall, clad or rng.choice(('plain', 'tile', 'brick', 'metal')), rng)
     for f in range(1, floors):
         z = G + (f - 1) * floor_h + 0.25
-        window_row(k, x0 + 0.2, x1 - 0.2, r_front, z, h=floor_h * 0.55, lit=rng.uniform(0.4, 0.75), rng=rng)
+        h = floor_h * 0.55
+        if f == 1 and (name or sign_floor):
+            if sign_floor:
+                continue
+            z = max(z, sign_z + 0.5)
+            h = min(h, G + floor_h - z - 0.1)
+        wx0, wx1 = (x0 + 0.2, x1 - 0.2) if not side else ((x0 + 0.55, x1 - 0.2) if side == 'left' else (x0 + 0.2, x1 - 0.55))
+        window_row(k, wx0, wx1, r_front, z, h=h, lit=rng.uniform(0.4, 0.75), rng=rng, neon=window_neon)
         if rng.random() < 0.55:
             ac_unit(k, rng.uniform(x0 + 0.4, x1 - 0.4), r_front, z - 0.2)
         if f < floors - 1:
@@ -346,10 +403,15 @@ def food_cart(k, cx, cr, col='#e8c040'):
     k.box(cx - 0.62, cr - 0.3, 0.96, cx - 0.1, cr + 0.1, 1.0, '#2a2a30', 'griddle')
     for i in range(4):
         k.tube((cx - 0.55 + i * 0.12, cr - 0.1, 1.02), (cx - 0.55 + i * 0.12, cr + 0.15, 1.04), 0.02, '#c87040', 'skewer', verts=4)
-    for x in (cx - 0.7, cx + 0.7):
-        k.tube((x, cr - 0.35, 0.9), (x, cr - 0.35, 2.0), 0.025, '#2a2a30', 'canopy_pole', verts=4)
-    k.box(cx - 0.85, cr - 0.6, 2.0, cx + 0.85, cr + 0.5, 2.06, (col, 0.1), 'canopy')
-    k.box(cx - 0.85, cr + 0.46, 1.9, cx + 0.85, cr + 0.5, 2.0, shade(col, 0.5), 'canopy_neon', emit=(col, 0.85))
-    Y.paper_lantern(k, cx - 0.5, cr + 0.4, 1.6, s=0.45, top=2.0)
-    Y.paper_lantern(k, cx + 0.5, cr + 0.4, 1.6, col='#e8a020', s=0.45, top=2.0)
+    k.tube((cx + 0.55, cr - 0.1, 0.96), (cx + 0.55, cr - 0.1, 2.0), 0.025, '#2a2a30', 'parasol_pole', verts=4)
+    for i in range(8):                                   # a striped parasol
+        a0, a1 = i * math.pi / 4, (i + 1) * math.pi / 4
+        k.poly([(cx + 0.55, cr - 0.1, 2.2), (cx + 0.55 + math.cos(a0) * 0.85, cr - 0.1 + math.sin(a0) * 0.85, 1.9),
+                (cx + 0.55 + math.cos(a1) * 0.85, cr - 0.1 + math.sin(a1) * 0.85, 1.9)],
+               ((col if i % 2 else '#e8e0d0'), 0.08), 'parasol')
+    pts = [(cx + 0.55 + math.cos(i * math.pi / 8) * 0.86, cr - 0.1 + math.sin(i * math.pi / 8) * 0.86, 1.89) for i in range(17)]
+    for a, b in zip(pts, pts[1:]):
+        k.tube(a, b, 0.015, shade(col, 0.5), 'parasol_neon', emit=(col, 0.85), verts=3)
+    Y.paper_lantern(k, cx - 0.55, cr + 0.38, 1.25, s=0.4, top=1.55)
+    k.tube((cx - 0.55, cr + 0.38, 1.55), (cx - 0.55, cr + 0.38, 0.96), 0.02, '#2a2a30', 'lantern_pole', verts=4)
     k.solid(cx - 0.75, cr - 0.4, cx + 0.75, cr + 0.4)

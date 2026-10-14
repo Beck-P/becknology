@@ -6,6 +6,18 @@ dense with things to look at, and give you a reason to be there** —
 somewhere to go, something to find, someone to talk to, a game folded into
 the place. Art rules live in `CLAUDE.md`; this file is the *what*.
 
+## Scale
+We're in space: a few places can be small (a cabin, a shop), but most
+worlds should make you go *whoa, this is a whole world*. Targets:
+- **Planet-level worlds** (Lumar's sea, Arcadia's city) are many connected
+  areas, each 40–80 tiles across, not one screen.
+- **An island is a place to explore**, not a dock: coves, a village, a
+  ridge, caves, ruins, a lighthouse — 40 × 30 tiles and up.
+- **Open, not corridors**: every edge leads somewhere; landmarks you can
+  see before you reach them; shortcuts you unlock.
+- **Each world feels different to be in** — its own way of moving
+  (sailing, transit and rooftops, zero-g), its own work, its own people.
+
 ## The Wayfarer (home)
 A sky-galleon of a starship: indigo hull, gold wales, light-sails, warm
 portholes. Home, not a cockpit.
@@ -38,7 +50,10 @@ harvesters, a dragon under the hill. Warm lamplight against cold blue.
   gallery, lava vents), Rose (the crystal harvesters' workshop and a grotto),
   Sapphire (the floating market, traders who buy what you find), Midnight
   (the sorceress's tower, floors that climb).
-- **Sailing** between every dock on the galleon at sea.
+- **Sailing** between every dock on the galleon at sea — and, longer
+  term, **the open sea as a world**: take the helm and sail between the
+  islands yourself, meet other ships (traders, patrols, pirates, a ghost
+  galleon), fish, salvage wrecks, find islands that aren't on the chart.
 - **Purpose**: crystals to harvest and sell, recipes for the apothecary,
   the cartographer's map to complete, the dragon's riddle; fishing (a
   mini-game) off the pier.
@@ -82,6 +97,30 @@ streaming in, space visibly bent.
 - **Purpose**: genart's generative pieces as "echoes" pulled from the hole;
   the place where the story's threads converge.
 
+## The nav map and the jump
+The star map should feel like a navigator's instrument: systems you've
+found, routes, what's waiting where (jobs, crew, rumours); clean to use
+(pick, see, confirm). The jump itself is a moment — the drive spooling,
+stars streaking, a tunnel of light, dropping out over the new world.
+
+## The long game: an empire
+- **Quests that feel like the place**: errands that turn into stories,
+  people who remember you, choices with consequences.
+- **Businesses**: buy or start one (a noodle stall in Arcadia, a fishing
+  boat or a salvage crew on Lumar, a trade run between systems), keep it
+  supplied, watch it grow.
+- **A crew**: meet people, hear their stories, hire them; send them on
+  jobs and runs; their skills and loyalty matter. Money goes into crew,
+  ships, businesses — an empire built across worlds.
+- **People with a life of their own**: every NPC has a backstory,
+  wants and a voice. Authored up front as data (generated offline, free
+  at runtime) so the scripted world is rich on its own; a "talk freely"
+  mode can sit on top later — either a small model in the browser
+  (WebGPU; a few hundred MB to download, weaker in character) or a tiny
+  serverless proxy to a cheap hosted model (a fraction of a cent per
+  exchange, needs a key kept server-side and per-player limits), always
+  falling back to scripted lines.
+
 ## Across every world
 - Interactions that do things: talk, buy, gather, unlock, remember.
 - Dialogs styled for their world (parchment in Lumar, neon terminal in
@@ -91,8 +130,12 @@ streaming in, space visibly bent.
 - Every mini-game found in the world, then kept in the game room.
 
 ## Build order
-1. Lumar coasts and water; the dragon's warren; more homes and upstairs.
-2. Arcadia rebuilt from this picture: skyline, two-level street, interiors.
-3. Bridge as a captain's deck with decor; the game room.
-4. The Singularity's shattered planes; Enigma's rings.
-5. Purpose: loot, jobs, the codex; mini-games woven in.
+1. ✓ Lumar coasts and water; more homes and upstairs. ✓ Arcadia's skyline
+   and District rebuild (iterating on the frontages).
+2. The Singularity's shattered planes and the black hole.
+3. Bigger worlds: Lumar's islands as places to explore; Arcadia's second
+   level (Skywalk), back alleys and more of the city.
+4. Nav map and hyperspace jump; Bridge as a captain's deck; the game room.
+5. Purpose: quests, loot, jobs, the codex; mini-games woven in.
+6. The empire: businesses, crew, NPC backstories; open-sea sailing;
+   then a conversation layer for NPCs.
