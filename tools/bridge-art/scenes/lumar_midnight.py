@@ -59,7 +59,23 @@ PATHS = [
     [(24.5, 26.0), (31.0, 25.5), (33.6, 24.8)],
     [(24.5, 16.0), (33.0, 15.0), (39.0, 18.0)],
 ]
-WAY = (22.4, 26.6)                     # the processional way's kerbs
+WAY = (22.4, 26.6)                     # the processional way's outer reach (trees and scatter keep off it)
+WAY_X = 24.5
+GRAVES = (11.0, 23.0, 6.0, 6.6)        # the graveyard: an irregular plot round this ellipse
+
+
+def way_hw(r):
+    """Half-width of the processional way at row r: it wanders, worn and overgrown at the edges."""
+    return 1.35 + 0.3 * I.n2(WAY_X, r, 0.45, 13)
+
+
+def on_way(x, r, pad=0.0):
+    return 12.0 < r < pier_top + 0.2 and abs(x - WAY_X) < way_hw(r) + pad
+
+
+def grave_d(x, r):
+    cx, cr, rx, ry = GRAVES
+    return math.hypot((x - cx) / rx, (r - cr) / ry) + 0.12 * I.n2(x, r, 0.7, 19)
 
 
 def pd(x, r):
@@ -74,18 +90,18 @@ def height(x, r):
 def material(x, r):
     if pool_d(x, r) < 1.3:
         return 'pool_bed' if pool_d(x, r) < 1.0 else 'stone'
-    if WAY[0] < x < WAY[1] and 12.0 < r < pier_top + 0.2:
-        return 'way' if (int(r * 2) + int(x * 2)) % 7 else 'way_dark'
+    if on_way(x, r, 0.15):              # moss between the paving stones (built below)
+        return 'way_moss'
     p = pd(x, r) + 0.15 * I.n2(x, r, 1.6, 3)
     if p < 0.42:
         return 'path'
-    if 5 < x < 17 and 16 < r < 30:
+    if grave_d(x, r) < 1.0:
         return 'grave' if I.n2(x, r, 0.8, 9) > -0.3 else 'moss'
     m = I.n2(x, r, 0.4, 11) + 0.4 * I.n2(x, r, 1.5, 12)
     return 'moor' if m > -0.2 else ('moss' if m > -0.55 else 'stone')
 
 
-ALB = {'way': ('#6a6478', 0.25), 'way_dark': ('#5a5468', 0.25), 'path': ('#5e5a6a', 0.3), 'grave': ('#2c3430', 0.3),
+ALB = {'way_moss': ('#2a302e', 0.3), 'path': ('#5e5a6a', 0.3), 'grave': ('#2c3430', 0.3),
        'moss': ('#2e3434', 0.3), 'moor': ('#3a3446', 0.3), 'stone': ('#4a4658', 0.25), 'pool_bed': ('#2a2438', 0.3)}
 I.ground(k, land, material, ALB, height=height)
 terrain = C.coast(k, land, ground=(material, ALB), palette='midnight', grass='#3a3446', rock='#3a3644', seed=51, beachiness=-0.3,
@@ -106,11 +122,19 @@ for x in (PX - 0.15, PX + 1.15):
 
 # ---- the processional way and the tower -----------------------------------------------------------------------------
 I.octagon_tower(k, *TOWER)
-for x in WAY:                                            # kerbstones along the way
-    r = 12.2
-    while r < pier_top - 0.3:
-        k.box(x - 0.08, r, 0.0, x + 0.08, r + 0.45, 0.08, ('#7a7488', 0.2), 'kerb')
-        r += 0.5
+r = 12.25                                               # the way: worn slabs in courses, some lifted, some gone
+while r < pier_top - 0.05:
+    h = min(k.rng.uniform(0.4, 0.62), pier_top - 0.05 - r)
+    hw = way_hw(r + h / 2)
+    x, xe = WAY_X - hw + k.rng.uniform(-0.12, 0.12), WAY_X + hw + k.rng.uniform(-0.12, 0.12)
+    while x < xe - 0.12:
+        x1 = min(x + k.rng.uniform(0.45, 0.95), xe)
+        edge = x - (WAY_X - hw) < 0.5 or xe - x1 < 0.5
+        if k.rng.random() > (0.3 if edge else 0.07):
+            k.box(x + 0.035, r + 0.035, -0.05, x1 - 0.035, r + h - 0.035, k.rng.uniform(-0.015, 0.03),
+                  (shade('#6a6478', k.rng.uniform(0.8, 1.12)), 0.2), 'way_stone', bevel=0.025)
+        x = x1
+    r += h
 STATUES = {(22, 17), (27, 23), (22, 26)}
 for i, r in enumerate((14.5, 17.5, 20.5, 23.5, 26.5)):
     if r > pier_top - 1:
@@ -121,16 +145,43 @@ for (x, r) in ((21.4, 12.6), (27.6, 12.6), (21.4, 29.0), (27.6, 29.0)):
     I.wisp_lantern(k, x, r)
 
 # ---- west: the graveyard of the drowned ------------------------------------------------------------------------
-for j, r in enumerate((19.6, 21.6, 24.0, 26.2)):
-    for i in range(5):
-        x = 6.6 + i * 1.6 + (0.5 if j % 2 else 0) + k.rng.uniform(-0.15, 0.15)
-        if (int(x), int(r)) in walk and pd(x, r) > 0.7:
-            I.headstone(k, x, r, lean=k.rng.uniform(-14, 14), kind=k.rng.choice((0, 0, 1, 2)))
+for j, r in enumerate((18.2, 20.0, 22.0, 24.0, 26.0, 27.9)):
+    for i in range(7):
+        x = 5.4 + i * 1.45 + (0.6 if j % 2 else 0) + k.rng.uniform(-0.3, 0.3)
+        rr = r + k.rng.uniform(-0.18, 0.18)
+        if (int(x), int(rr)) in walk and pd(x, rr) > 0.7 and grave_d(x, rr) < 0.88 and k.rng.random() > 0.15:
+            I.headstone(k, x, rr, lean=k.rng.uniform(-14, 14), kind=k.rng.choice((0, 0, 1, 2)))
+# an iron railing round the east side of the plot, rusted through in places, the gate hanging open on the path
+fence = []
+for i in range(46):
+    a = -1.35 + i * 2.7 / 45
+    cx, cr, rx, ry = GRAVES
+    x, r = cx + math.cos(a) * rx * 1.02, cr + math.sin(a) * ry * 1.02
+    if (int(x), int(r)) in land and pd(x, r) > 0.75 and k.rng.random() > 0.12:
+        fence.append((x, r))
+for (x, r), (x2, r2) in zip(fence, fence[1:]):
+    k.cyl(x, r, 0.0, 0.85, 0.025, '#2a2630', 'fence_post', verts=5)
+    k.cone(x, r, 0.85, 0.95, 0.03, 0.005, '#2a2630', 'fence_spike', verts=4)
+    if math.hypot(x2 - x, r2 - r) < 0.5:
+        for z in (0.25, 0.7):
+            k.tube((x, r, z), (x2, r2, z + k.rng.uniform(-0.03, 0.03)), 0.015, '#2a2630', 'fence_rail', verts=4)
+        k.solid(min(x, x2) - 0.05, min(r, r2) - 0.05, max(x, x2) + 0.05, max(r, r2) + 0.05)
 I.mausoleum(k, 7.0, 10.4, 15.6, 18.0)
-for x in (13.0, 14.6):                                     # the crooked gate
-    k.box(x - 0.08, 21.9, 0.0, x + 0.08, 22.1, 1.4, '#2a2630', 'gate_post')
-k.tube((13.0, 22.0, 1.2), (14.6, 22.0, 1.05), 0.02, '#2a2630', 'gate_bar', verts=4)
-k.tube((13.0, 22.0, 0.6), (14.6, 22.0, 0.75), 0.02, '#2a2630', 'gate_bar', verts=4)
+gap = [(GRAVES[0] + math.cos(a) * GRAVES[2] * 1.02, GRAVES[1] + math.sin(a) * GRAVES[3] * 1.02)
+       for a in (-1.35 + i * 2.7 / 45 for i in range(46))]
+gap = [p_ for p_ in gap if pd(*p_) <= 0.75]
+if gap:                                                    # the gate where the path goes in, one leaf hanging open
+    (gx0, gr0), (gx1, gr1) = gap[0], gap[-1]
+    for (x, r) in ((gx0, gr0 - 0.15), (gx1, gr1 + 0.15)):
+        k.box(x - 0.07, r - 0.07, 0.0, x + 0.07, r + 0.07, 1.25, '#2a2630', 'gate_post')
+        k.sphere(x, r, 1.3, 0.07, 0.07, '#2a2630', 'gate_finial', segs=6)
+    hx, hr = gx1, gr1 + 0.15                               # hinged on the south post, swung in toward the graves
+    ex, er = hx - 0.75, hr + 0.35
+    for z in (0.3, 0.75, 1.05):
+        k.tube((hx, hr, z), (ex, er, z - 0.08), 0.015, '#2a2630', 'gate_bar', verts=4)
+    for t in (0.0, 0.33, 0.66, 1.0):
+        x, r = hx + (ex - hx) * t, hr + (er - hr) * t
+        k.tube((x, r, 0.25 - 0.08 * t), (x, r, 1.1 - 0.08 * t), 0.012, '#2a2630', 'gate_bar', verts=4)
 for (x, r) in ((12.4, 19.0), (6.4, 28.4), (15.6, 27.0)):
     I.wisp_lantern(k, x, r)
 
@@ -154,7 +205,7 @@ for i in range(60):
     x, r = k.rng.uniform(4, 48), k.rng.uniform(6, 30)
     if (int(x), int(r)) not in walk or pd(x, r) < 1.2 or WAY[0] - 1 < x < WAY[1] + 1 or math.hypot(x - TOWER[0], r - TOWER[1]) < 3.5:
         continue
-    if 5 < x < 17 and 15 < r < 29 or pool_d(x, r) < 3.5 or (36 < x < 46 and 16 < r < 22):
+    if grave_d(x, r) < 1.15 or pool_d(x, r) < 3.5 or (36 < x < 46 and 16 < r < 22):
         continue
     if any(math.hypot(x - a, r - b) < 1.3 for (a, b) in trees):
         continue
@@ -165,7 +216,7 @@ for i in range(60):
         I.red_pine(k, x, r, h=k.rng.uniform(2.2, 3.0), tone='#2a2a40', trunk='#1a1820')
 
 # ---- scatter -------------------------------------------------------------------------------------------------------
-busy = lambda x, r: pd(x, r) < 0.6 or WAY[0] < x < WAY[1]
+busy = lambda x, r: pd(x, r) < 0.6 or on_way(x, r, 0.3)
 I.tufts(k, [c for c in walk if material(c[0] + 0.5, c[1] + 0.5) in ('moor', 'moss', 'grave')], '#3e4448', per_cell=1.0, avoid=busy)
 I.pebbles(k, walk, '#4a4658', per_cell=0.2, avoid=busy)
 for (x, r, s) in ((45.0, 10.0, 0.9), (8.0, 14.6, 0.8), (31.0, 31.0, 0.7), (44.0, 26.0, 0.8)):

@@ -30,16 +30,22 @@ k = Kit(COLS, ROWS, margin_top=1.5, margin_bottom=1.0, margin_x=0.5, seed=923)
 CRYSTAL = ('#6a2a4a', '#f080b0')
 
 # ---- shape: two arms round a cove ------------------------------------------------------------------------
-LOBES = [(28, 12.5, 21, 8), (12, 25, 8, 13), (44, 25, 8, 13)]
+LOBES = [(28, 13.5, 21, 9), (13, 25, 10.5, 13), (43, 25, 10.5, 13)]   # overlapping: cove() carves the bay
 land = I.mask(COLS, ROWS, LOBES, seed=7, amp=0.15)
-land = {(c, r) for (c, r) in land
-        if ((c + 0.5 - 28) / 7.2) ** 2 + ((r + 0.5 - 31) / 12) ** 2 + 0.15 * I.n2(c, r, 0.3, 4) > 1}
+def cove(x, r):
+    """< 1 inside the cove: a long bay with a crooked head and a side inlet, its shores ragged."""
+    main = math.hypot((x - 28.0 - 1.0 * I.n2(0.0, r, 0.18, 8)) / 9.6, (r - 30.5) / 12.0)
+    inlet = math.hypot((x - 21.2) / 2.6, (r - 25.5) / 1.7)
+    return min(main, inlet) + 0.32 * I.n2(x, r, 0.3, 4) + 0.1 * I.n2(x, r, 0.9, 6)
+
+
+land = {(c, r) for (c, r) in land if cove(c + 0.5, r + 0.5) > 1}
 land = I.flood(land, (28, 12))
 
 PX = 28
 pier_top = max(r for (c, r) in land if c == PX and r < 25) + 1
-PIER = [(PX, r) for r in range(pier_top, pier_top + 3)]
-SHIP_R = pier_top + 3
+PIER = [(PX, r) for r in range(pier_top, pier_top + 5)]
+SHIP_R = pier_top + 5
 SL = 6.5
 
 POOLS = [(42.0, 22.0, 1.5, 1.1), (46.2, 24.6, 1.2, 0.9), (41.6, 26.4, 1.1, 0.8)]
@@ -83,12 +89,12 @@ def material(x, r):
         return 'path'
     if p < 0.65 and I.n2(x, r, 2.0, 5) > 0:
         return 'path_edge'
-    if 18 < x < 38 and 5 < r < 13:
+    if math.hypot((x - 28.0) / 10.6, (r - 8.9) / 4.6) + 0.16 * I.n2(x, r, 0.6, 14) < 1:
         return 'terrace'
     if x > 37 and 17 < r < 30 and pool_d(x, r) < 4:
         return 'warm'
     m = I.n2(x, r, 0.4, 11) + 0.4 * I.n2(x, r, 1.5, 12)
-    if x < 20 and r > 14:
+    if x + 2.5 * I.n2(x, r, 0.15, 15) < 20 and r + 2.0 * I.n2(x, r, 0.2, 16) > 14:
         return 'meadow' if m > -0.3 else 'meadow_dark'
     return 'grass' if m > -0.2 else ('grass_dark' if m > -0.55 else 'stone')
 

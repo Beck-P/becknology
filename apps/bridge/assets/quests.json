@@ -381,5 +381,62 @@
         "text": "The Wren itself, past the altar at the very edge, frozen mid-fall. Its running lights are on."
       }
     ]
+  },
+  "listeners": {
+    "title": "The Listeners",
+    "where": "Midnight Isle, Lumar",
+    "reward": 150,
+    "start": "The monks of Midnight Isle kept a record of every ship that passed. The record is gone.",
+    "done": "The monks listened to the sky from the moon pool and wrote down the ships they heard overhead - starships, on a sea world. Morwen keeps their book. Its last page names the Wren, and after it a skiff that hadn't been built yet. Yours.",
+    "clues": [
+      {
+        "id": "abbey",
+        "on": {
+          "world": "lumar-midnight",
+          "label": "ABBEY RUINS"
+        },
+        "text": "The abbey ruins: the monks kept a record of every ship that passed. The book is gone."
+      },
+      {
+        "id": "tomb",
+        "on": {
+          "world": "lumar-midnight",
+          "label": "TOMB"
+        },
+        "text": "Carved over the tomb door, violet light inside: \"THEY LISTENED TOO.\""
+      },
+      {
+        "id": "pool",
+        "on": {
+          "world": "lumar-midnight",
+          "label": "MOON POOL"
+        },
+        "text": "In the moon pool, a full green moon that isn't in the sky."
+      },
+      {
+        "id": "grave",
+        "on": {
+          "world": "lumar-midnight",
+          "label": "GRAVEYARD"
+        },
+        "text": "The graveyard of the drowned. One stone is new and still blank."
+      },
+      {
+        "id": "telescope",
+        "on": {
+          "world": "lumar-midnight-tower",
+          "label": "TELESCOPE"
+        },
+        "text": "Through Morwen's telescope: something dark moving between the stars."
+      },
+      {
+        "id": "morwen",
+        "on": {
+          "world": "lumar-midnight-tower",
+          "label": "SORCERESS"
+        },
+        "text": "Morwen has the monks' book. She knows what's on the last page."
+      }
+    ]
   }
 }
