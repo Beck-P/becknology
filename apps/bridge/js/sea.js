@@ -209,7 +209,7 @@ var BridgeSea = (function () {
     return null;
   }
 
-  function animate(S, P, now) {
+  function animate(S, P, now, v) {
     var d = S.aimg.data;
     d.fill(0);
     var sh = P.shallow.split(',').map(Number), fo = P.foam.split(',').map(Number);
@@ -242,7 +242,9 @@ var BridgeSea = (function () {
         d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = Math.round(al * 255);
       }
     }
-    S.actx.putImageData(S.aimg, 0, 0);
+    // write back round the view only (with room for the camera to move until the next stamp)
+    var M = 96, x0 = Math.max(0, v[0] - M), y0 = Math.max(0, v[1] - M);
+    S.actx.putImageData(S.aimg, 0, 0, x0, y0, Math.min(S.W, v[0] + v[2] + M) - x0, Math.min(S.H, v[1] + v[3] + M) - y0);
   }
 
   function drawWater(ctx, sc, offX, offY, now, palette) {
@@ -251,24 +253,31 @@ var BridgeSea = (function () {
     if (!S) return;
     var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name];
     var bx = Math.round(offX - sc.meta.originX), by = Math.round(offY - sc.meta.originY);
+    // only the part on screen is rebuilt and drawn (an island's water is the size of its render)
+    var v = BridgeScene.visible(S.W, S.H, bx, by, ctx.canvas.width, ctx.canvas.height);
+    if (!v) return;
     // the moving sea, cut to the water's opacity
     var L = S.lctx;
+    L.save();
+    L.beginPath();
+    L.rect(v[0], v[1], v[2], v[3]);
+    L.clip();
     L.globalCompositeOperation = 'source-over';
-    L.clearRect(0, 0, S.W, S.H);
-    L.drawImage(S.mask, 0, 0);
+    L.clearRect(v[0], v[1], v[2], v[3]);
+    L.drawImage(S.mask, v[0], v[1], v[2], v[3], v[0], v[1], v[2], v[3]);
     // one fill per layer: a composite like source-in applies to the whole
-    // canvas on every draw, so the texture goes in as a pattern, not tiles
+    // clip on every draw, so the texture goes in as a pattern, not tiles
     var D = drift(now);
     L.globalCompositeOperation = 'source-in';
     fillPattern(L, texture(name, 1), S.W, S.H, D.ax + bx, D.ay + by, 1);
     L.globalCompositeOperation = 'source-atop';
     fillPattern(L, texture(name, 2), S.W, S.H, D.bx + bx, D.by + by, 0.45);
-    L.globalCompositeOperation = 'source-over';
-    ctx.drawImage(S.layer, bx, by);
+    L.restore();
+    ctx.drawImage(S.layer, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
     // ripples, shallows and foam
     var stamp = Math.floor(now / 70);
-    if (S.stamp !== stamp || S.palette !== name) { S.stamp = stamp; S.palette = name; animate(S, P, now); }
-    ctx.drawImage(S.anim, bx, by);
+    if (S.stamp !== stamp || S.palette !== name) { S.stamp = stamp; S.palette = name; animate(S, P, now, v); }
+    ctx.drawImage(S.anim, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
     glints(ctx, ctx.canvas.width, ctx.canvas.height, now, P, function (x, y) {
       var px = x - bx, py = y - by;
       if (px < 0 || py < 0 || px >= S.W || py >= S.H) return true;
@@ -340,7 +349,9 @@ var BridgeSea = (function () {
       }
       S.ctx.putImageData(S.img, 0, 0);
     }
-    ctx.drawImage(S.canvas, Math.round(offX - sc.meta.originX), Math.round(offY - sc.meta.originY));
+    var bx = Math.round(offX - sc.meta.originX), by = Math.round(offY - sc.meta.originY);
+    var v = BridgeScene.visible(S.W, S.H, bx, by, ctx.canvas.width, ctx.canvas.height);
+    if (v) ctx.drawImage(S.canvas, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
   }
 
   /** The open sea seen from a camera at (camX, camY) in the caller's own space (the voyage). */
@@ -349,5 +360,8 @@ var BridgeSea = (function () {
     try { drawSea(ctx, w, h, now, palette); } finally { camOverride = null; }
   }
 
-  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, palettes: PALETTES };
+  // drop an island's water canvases when its scene is let go (js/scene.js)
+  function forget(id) { delete shores[id]; delete bands[id]; }
+
+  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, palettes: PALETTES, forget: forget };
 })();

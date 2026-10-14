@@ -40,6 +40,8 @@ var BridgeScene = (function () {
 
   var scenes = {};
   var sheets = {};
+  var MAX_SCENES = 3;        // the place you're in and the last two: renders are big, and the browser
+                             // starts drawing images in tiles (some coming out blank) when memory runs short
   var tmp = document.createElement('canvas');
   var tctx = tmp.getContext('2d', { willReadFrequently: true });
 
@@ -51,8 +53,23 @@ var BridgeScene = (function () {
     return img;
   }
 
+  // Forget the least recently drawn scenes beyond MAX_SCENES (never `keep`), so travelling
+  // the worlds doesn't pile up decoded renders, depth maps and water canvases.
+  function evict(keep) {
+    var ids = Object.keys(scenes).filter(function (k) { return k !== keep && scenes[k].ready; });
+    if (ids.length < MAX_SCENES) return;
+    ids.sort(function (a, b) { return (scenes[a].used || 0) - (scenes[b].used || 0); });
+    ids.slice(0, ids.length - (MAX_SCENES - 1)).forEach(function (k) {
+      var sc = scenes[k];
+      for (var s in sc.baseImgs) if (sc.baseImgs[s] && 'src' in sc.baseImgs[s]) sc.baseImgs[s].src = '';
+      delete scenes[k];
+      Object.keys(layerCanvases).forEach(function (ck) { if (ck.indexOf(k + '/') === 0) delete layerCanvases[ck]; });
+      if (typeof BridgeSea !== 'undefined' && BridgeSea.forget) BridgeSea.forget(k);
+    });
+  }
+
   function load(id, cb) {
-    if (scenes[id] && scenes[id].ready) { cb(scenes[id]); return; }
+    if (scenes[id] && scenes[id].ready) { scenes[id].used = Date.now(); cb(scenes[id]); return; }
     var base = '/bridge/assets/scenes/' + id + '/';
     var xhr = new XMLHttpRequest();
     xhr.open('GET', base + 'scene.json?v=' + Date.now());     // always fresh; images are keyed to it by rev
@@ -68,7 +85,9 @@ var BridgeScene = (function () {
       function done() {
         if (--pending === 0) {
           sc.ready = true;
+          sc.used = Date.now();
           scenes[id] = sc;
+          evict(id);
           composite(sc);
           cb(sc);
         }
@@ -178,7 +197,12 @@ var BridgeScene = (function () {
     return out;
   }
 
-  function get(id) { return scenes[id] && scenes[id].ready ? scenes[id] : null; }
+  function get(id) {
+    var sc = scenes[id];
+    if (!sc || !sc.ready) return null;
+    sc.used = Date.now();
+    return sc;
+  }
 
   // Firelight: slow breathing plus a quick flutter, 0..1
   function flickerAt(t, mode) {
@@ -187,17 +211,30 @@ var BridgeScene = (function () {
     return Math.max(0, Math.min(1, v));
   }
 
+  // The part [sx, sy, w, h] of a W x H image placed at (x, y) that lands on a cw x ch canvas.
+  function visible(W, H, x, y, cw, ch) {
+    var x0 = Math.max(0, -x), y0 = Math.max(0, -y);
+    var x1 = Math.min(W, cw - x), y1 = Math.min(H, ch - y);
+    return x1 > x0 && y1 > y0 ? [x0, y0, x1 - x0, y1 - y0] : null;
+  }
+
+  // Only the part of the render on screen is drawn. Blending two whole large renders every
+  // frame made the browser draw them in 256-px tiles once GPU memory ran short, and now and
+  // then one tile came out blank: a dark rectangle over the room.
   function drawBackground(ctx, sc, world, offX, offY, now) {
     var m = sc.meta;
-    var x = offX - m.originX, y = offY - m.originY;
+    var x = Math.round(offX - m.originX), y = Math.round(offY - m.originY);
+    var v = visible(m.width, m.height, x, y, ctx.canvas.width, ctx.canvas.height);
+    if (!v) return;
+    function blit(img) { ctx.drawImage(img, v[0], v[1], v[2], v[3], x + v[0], y + v[1], v[2], v[3]); }
     var fl = world.scene && world.scene.flicker;
     if (fl && sc.imgs[fl.from] && sc.imgs[fl.to]) {
-      ctx.drawImage(sc.imgs[fl.from], x, y);
+      blit(sc.imgs[fl.from]);
       ctx.globalAlpha = flickerAt(now, fl.mode);
-      ctx.drawImage(sc.imgs[fl.to], x, y);
+      blit(sc.imgs[fl.to]);
       ctx.globalAlpha = 1;
     } else {
-      ctx.drawImage(sc.imgs[m.states[0]], x, y);
+      blit(sc.imgs[m.states[0]]);
     }
   }
 
@@ -394,6 +431,7 @@ var BridgeScene = (function () {
     drawOccluded: drawOccluded,
     tintAt: tintAt,
     actorDrawList: actorDrawList,
-    flickerAt: flickerAt
+    flickerAt: flickerAt,
+    visible: visible
   };
 })();
