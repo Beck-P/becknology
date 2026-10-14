@@ -1005,6 +1005,21 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
   cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
+#sound-pill {
+  position: fixed; top: 88px; left: 16px; z-index: 25;
+  display: none; align-items: center; gap: 7px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 13px; letter-spacing: 0.5px;
+  color: rgba(242, 238, 230, 0.85); background: rgba(14, 12, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 5px 13px 5px 5px;
+  cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+#sound-pill:hover { background: rgba(34, 30, 50, 0.9); border-color: rgba(255, 255, 255, 0.25); }
+#sound-pill .ip-key { font-size: 10px; min-width: 22px; height: 18px; }
+#sound-pill .sp-ico { color: #ffd98a; font-size: 14px; }
+#sound-pill.muted { color: rgba(242, 238, 230, 0.5); }
+#sound-pill.muted .sp-ico { color: #a08878; }
+html.touch #sound-pill { padding: 7px 14px; left: calc(12px + env(safe-area-inset-left)); top: calc(98px + env(safe-area-inset-top)); }
+html.touch #sound-pill .ip-key { display: none; }
 #journal-pill:hover { background: rgba(34, 30, 50, 0.9); border-color: rgba(255, 255, 255, 0.25); transform: translateY(-1px); }
 #journal-pill .ip-key { font-size: 10px; min-width: 22px; height: 18px; }
 #journal-pill.ping { animation: journal-ping 1.2s ease-out 2; }

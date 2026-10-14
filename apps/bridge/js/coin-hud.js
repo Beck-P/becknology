@@ -111,6 +111,7 @@ var BridgeCoinHUD = (function () {
   }
 
   // ---- Ticker animation: smooth count-up to the target ----
+  var primed = false;            // the first balance is the starting one, not a gain
   function setBalance(value, opts) {
     ensureHUD();
     if (!Number.isFinite(value)) value = 0;
@@ -118,6 +119,7 @@ var BridgeCoinHUD = (function () {
     var fromCurrent = displayValue;
 
     if (!animate) {
+      primed = true;
       displayValue = value;
       targetValue = value;
       numberEl.textContent = String(value);
@@ -125,6 +127,8 @@ var BridgeCoinHUD = (function () {
       return;
     }
 
+    if (primed && value > targetValue + 0.5 && typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('coin');
+    primed = true;
     targetValue = value;
     if (Math.abs(targetValue - displayValue) < 0.5) {
       displayValue = targetValue;

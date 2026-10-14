@@ -404,6 +404,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
         if (typeof BridgeActions !== 'undefined') BridgeActions.decorate(worldId, data);
+        if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);
         var finish = function () {
           world = data;
           currentWorldId = worldId;

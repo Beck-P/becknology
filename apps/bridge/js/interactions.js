@@ -313,6 +313,7 @@ var BridgeInteractions = (function () {
   }
 
   function executeInteraction(inter) {
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(/^(enter_world|leave_world|password_gate)$/.test(inter.type) ? 'door' : 'open');
     if (typeof BridgeGames !== 'undefined') BridgeGames.note(inter);      // a game played: it waits in the game room now
     if (typeof BridgeQuests !== 'undefined') {
       BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter);
@@ -1024,6 +1025,7 @@ var BridgeInteractions = (function () {
   }
 
   function hideDialog() {
+    if (dialogVisible) if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('close');
     dialogVisible = false;
     if (typing) { clearInterval(typing.timer); typing = null; }
     var dialogEl = document.getElementById('world-dialog');

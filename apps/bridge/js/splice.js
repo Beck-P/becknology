@@ -162,6 +162,7 @@ var BridgeSplice = (function () {
     if (!game || game.state !== 'play') return;
     var g = game.g, i = y * g.n + x;
     g.cells[i] = rot(g.cells[i]);
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('click');
     game.spin[i] = performance.now();
     game.cursor = [x, y];
     game.flow = flow(g);
@@ -193,6 +194,7 @@ var BridgeSplice = (function () {
 
   function win() {
     game.state = 'won';
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('success');
     var secs = Math.round((performance.now() - (game.ends - game.limit)) / 100) / 10;
     var n = game.g.n;
     if (!save.best[n] || secs < save.best[n]) save.best[n] = secs;
@@ -217,6 +219,7 @@ var BridgeSplice = (function () {
   }
 
   function lose() {
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('fail');
     game.state = 'lost';
     status('TRACE CAUGHT UP. Job blown - nobody got paid.');
     var again = el.querySelector('.sp-again');

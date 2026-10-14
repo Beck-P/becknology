@@ -54,13 +54,16 @@ var BridgeQuests = (function () {
         if (p.found === p.total && !s.done) {
           s.done = Date.now();
           toast('Quest complete', q.title, '+' + q.reward + ' coins');
+          if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('quest');
           if (typeof BridgeProgression !== 'undefined' && BridgeProgression.recordAchievement) {
             BridgeProgression.recordAchievement('quest_' + id, q.reward, { source: 'quest' });
           }
         } else if (fresh) {
           toast('New quest', q.title, q.start);
+          if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('clue');
         } else {
           toast('Clue found', q.title, p.found + ' of ' + p.total);
+          if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('clue');
         }
         save();
         if (journal && journal.classList.contains('visible')) render();

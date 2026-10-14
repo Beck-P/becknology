@@ -362,7 +362,8 @@ var BridgePachinko = (function () {
     ctx.drawImage(buf, 0, 0, cv.width, cv.height);
   }
 
-  function pop(cp, n) { game.pops.push({ x: cp.cx, y: cp.cy, n: n, t: performance.now() }); cp.flash = performance.now() + 250; }
+  function pop(cp, n) {
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('pocket'); game.pops.push({ x: cp.cx, y: cp.cy, n: n, t: performance.now() }); cp.flash = performance.now() + 250; }
 
   function onEvent(ev) {
     var g = game, now = performance.now();
@@ -424,6 +425,7 @@ var BridgePachinko = (function () {
     var g = game;
     g.fever = { seven: seven, round: 1, rounds: seven ? 2 : 1, got: 0, won: 0, until: now + FEVER_SECS * 1000 };
     g.bd.attacker.open = true;
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('fever');
     save.fevers++;
     if (seven) save.sevens++;
     dirty();
@@ -452,6 +454,7 @@ var BridgePachinko = (function () {
       save.balls--; g.net--; dirty();
       launch(g.bd, g.power);
       g.nextShot = now + 210;
+      if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('ball');
     }
     g.acc += dt;
     var ev = [];

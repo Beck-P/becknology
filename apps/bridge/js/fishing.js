@@ -80,6 +80,7 @@ var BridgeFishing = (function () {
 
   function set(phase, extra) {
     st.phase = phase; st.t0 = performance.now();
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx({ wait: 'splash', bite: 'plop', caught: 'catch', lost: 'fail' }[phase]);
     if (extra) Object.keys(extra).forEach(function (k) { st[k] = extra[k]; });
     var hint = { ready: 'Hold to cast', charge: 'Let go to cast', wait: 'Wait for a bite…', bite: 'Strike!', reel: 'Hold to lift, let go to drop - keep it in the zone',
                  caught: 'Again: hold to cast · Esc to stop', lost: 'Hold to cast again · Esc to stop' }[phase] || '';

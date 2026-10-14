@@ -84,6 +84,7 @@ var BridgeActions = (function () {
   function sit(inter) {
     var s = inter.seat || [inter.x + 0.5, inter.y + 0.6];
     if (!BridgeCharacter.sit({ x: s[0], y: s[1], facing: inter.facing || 'down' })) return;
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('sit');
     if (!pill) {
       pill = document.createElement('div');
       pill.id = 'act-pill';
@@ -110,6 +111,7 @@ var BridgeActions = (function () {
   function sleep(inter) {
     if (sleeping) return;
     sleeping = true;
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('sleep');
     var fade = document.createElement('div');
     fade.id = 'sleep-fade';
     fade.innerHTML = '<div class="sf-z">z<span>z</span><span>z</span></div><div class="sf-text"></div>';

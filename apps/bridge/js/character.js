@@ -118,6 +118,7 @@ var BridgeCharacter = (function () {
         player.x = player.targetX;
         player.y = player.targetY;
         player.walking = false;
+        if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('step');
       }
       // Walk animation — a full 4-step cycle every 1.5 tiles walked
       player.animFrame = Math.floor(player.stride / 0.375) % 4;

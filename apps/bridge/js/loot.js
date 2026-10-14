@@ -87,6 +87,7 @@ var BridgeLoot = (function () {
         }
         if (dist < COLLECT_R) {
           BridgeInventory.addItem(d.itemId, 1);
+          if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('pickup');
           if (typeof BridgeFX !== 'undefined') {
             var collected = BridgeItems.get(d.itemId);
             var label = collected ? ('+1 ' + collected.name.toUpperCase()) : '+1 ITEM';
