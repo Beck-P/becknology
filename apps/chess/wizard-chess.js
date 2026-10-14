@@ -33,152 +33,157 @@ export const WIZARD_THEMES = {
   classic: {
     id: "classic",
     pieceSet: "classic",
-    name: "Wizard's Tower · Gothic Hearthstone",
+    worldStyle: "hearth",
+    name: "Wizard's Tower · Sorceress & Dragon Sanctum",
     worldName: "Wizard's Tower",
     whiteLabel: "Alabaster & Gold",
-    blackLabel: "Obsidian & Ember",
+    blackLabel: "Tower Stone & Violet",
     wStone: { color: 0xf4eee2, roughness: 0.34, metalness: 0.08, bumpScale: 0.022 },
     wCloth: { color: 0xd9bf8c, roughness: 0.42, metalness: 0.18, bumpScale: 0.018 },
     wTrim:  { color: 0xe6b44c, roughness: 0.24, metalness: 0.72 },
     wMetal: { color: 0xe2e6ec, roughness: 0.20, metalness: 0.82 },
     wGem:   { color: 0xffe898, emissive: 0xd89828, emissiveIntensity: 1.15 },
-    bStone: { color: 0x1c1920, roughness: 0.30, metalness: 0.22, bumpScale: 0.026 },
-    bCloth: { color: 0x4c2420, roughness: 0.40, metalness: 0.20, bumpScale: 0.020 },
+    bStone: { color: 0x1a1430, roughness: 0.30, metalness: 0.22, bumpScale: 0.026 },
+    bCloth: { color: 0x3a1860, roughness: 0.38, metalness: 0.20, bumpScale: 0.020 },
     bTrim:  { color: 0xc86b36, roughness: 0.25, metalness: 0.72 },
-    bMetal: { color: 0x46424e, roughness: 0.20, metalness: 0.84 },
-    bGem:   { color: 0xff7838, emissive: 0xd83810, emissiveIntensity: 1.25 },
-    lightSq: { color: 0xc9a679, roughness: 0.52, metalness: 0.06 },
-    darkSq:  { color: 0x3b261c, roughness: 0.46, metalness: 0.10 },
-    frame:   { color: 0x22120b, roughness: 0.58, metalness: 0.15 },
-    bezel:   { color: 0xb8843c, roughness: 0.30, metalness: 0.76 },
-    fog: 0x120906,
-    ambientColor: 0x664c3a,
+    bMetal: { color: 0x3a3450, roughness: 0.20, metalness: 0.84 },
+    bGem:   { color: 0xa064f0, emissive: 0x8050d8, emissiveIntensity: 1.35 },
+    lightSq: { color: 0xc9b48e, roughness: 0.50, metalness: 0.06 },
+    darkSq:  { color: 0x2a2040, roughness: 0.44, metalness: 0.12 },
+    frame:   { color: 0x1a1430, roughness: 0.56, metalness: 0.15 },
+    bezel:   { color: 0xd0a048, roughness: 0.28, metalness: 0.76 },
+    fog: 0x0e0820,
+    ambientColor: 0x685478,
     keyColor: 0xffebd2,
-    rimColor: 0x8cb0ff,
-    brazierFlame: 0xffaa44,
-    brazierLight: 0xff8c38,
+    rimColor: 0x9870e8,
+    brazierFlame: 0xffb040,
+    brazierLight: 0xff9a40,
     spellW: 0xffd878,
-    spellB: 0xff6830
+    spellB: 0xa064f0
   },
   lumar: {
     id: "lumar",
     pieceSet: "lumar",
-    name: "Lumar · Abyssal Tides & Harbor",
+    worldStyle: "lumar",
+    name: "Lumar · Emerald Spore Sea & Harbor",
     worldName: "Lumar",
-    whiteLabel: "Seafoam Pearl",
-    blackLabel: "Abyssal Trench",
-    wStone: { color: 0xe8f7f5, roughness: 0.24, metalness: 0.12, bumpScale: 0.018 },
-    wCloth: { color: 0x74cfc4, roughness: 0.34, metalness: 0.18, bumpScale: 0.016 },
-    wTrim:  { color: 0x2ec4b6, roughness: 0.22, metalness: 0.58 },
-    wMetal: { color: 0xd4efec, roughness: 0.18, metalness: 0.78 },
-    wGem:   { color: 0x78fff0, emissive: 0x18d8c8, emissiveIntensity: 1.35 },
-    bStone: { color: 0x0d1b24, roughness: 0.26, metalness: 0.28, bumpScale: 0.022 },
-    bCloth: { color: 0x164e5b, roughness: 0.34, metalness: 0.24, bumpScale: 0.018 },
-    bTrim:  { color: 0x28a49e, roughness: 0.24, metalness: 0.62 },
-    bMetal: { color: 0x284250, roughness: 0.20, metalness: 0.78 },
-    bGem:   { color: 0x38f8d8, emissive: 0x00b8a8, emissiveIntensity: 1.40 },
-    lightSq: { color: 0x9cd6ce, roughness: 0.32, metalness: 0.12 },
-    darkSq:  { color: 0x122c38, roughness: 0.28, metalness: 0.22 },
-    frame:   { color: 0x091820, roughness: 0.42, metalness: 0.25 },
-    bezel:   { color: 0x389892, roughness: 0.26, metalness: 0.72 },
-    fog: 0x061118,
-    ambientColor: 0x3c6874,
-    keyColor: 0xd8f8ff,
-    rimColor: 0x38e8d8,
-    brazierFlame: 0x48ffe8,
-    brazierLight: 0x24d8c8,
-    spellW: 0x58fff0,
-    spellB: 0x18c8b8
+    whiteLabel: "Seafoam & Brass",
+    blackLabel: "Saltstone & Emerald",
+    wStone: { color: 0xe6f5ec, roughness: 0.26, metalness: 0.12, bumpScale: 0.018 },
+    wCloth: { color: 0x2a7050, roughness: 0.34, metalness: 0.18, bumpScale: 0.016 },
+    wTrim:  { color: 0xe0c060, roughness: 0.22, metalness: 0.72 },
+    wMetal: { color: 0xd8ebe2, roughness: 0.18, metalness: 0.78 },
+    wGem:   { color: 0xffe080, emissive: 0xd89830, emissiveIntensity: 1.35 },
+    bStone: { color: 0x1a1e20, roughness: 0.28, metalness: 0.26, bumpScale: 0.022 },
+    bCloth: { color: 0x5a3a1a, roughness: 0.38, metalness: 0.18, bumpScale: 0.018 },
+    bTrim:  { color: 0x58c890, roughness: 0.24, metalness: 0.58 },
+    bMetal: { color: 0x3a4848, roughness: 0.22, metalness: 0.78 },
+    bGem:   { color: 0x90e0a8, emissive: 0x2a9060, emissiveIntensity: 1.45 },
+    lightSq: { color: 0x8ab89e, roughness: 0.36, metalness: 0.10 },
+    darkSq:  { color: 0x1a4030, roughness: 0.30, metalness: 0.20 },
+    frame:   { color: 0x1a1e20, roughness: 0.48, metalness: 0.22 },
+    bezel:   { color: 0xa08040, roughness: 0.28, metalness: 0.74 },
+    fog: 0x0a1814,
+    ambientColor: 0x3a6858,
+    keyColor: 0xffe8b8,
+    rimColor: 0x58d898,
+    brazierFlame: 0xffe080,
+    brazierLight: 0xffc858,
+    spellW: 0xffe080,
+    spellB: 0x58e098
   },
   arcadia: {
     id: "arcadia",
     pieceSet: "arcadia",
-    name: "Arcadia · Neon Cyber-Arcade",
+    worldStyle: "arcadia",
+    name: "Arcadia · Neon Cyberpunk Arcade Plaza",
     worldName: "Arcadia",
-    whiteLabel: "Cyber Chrome",
-    blackLabel: "Synth Void",
-    wStone: { color: 0xecf3ff, roughness: 0.18, metalness: 0.48, bumpScale: 0.012 },
-    wCloth: { color: 0x4288f0, roughness: 0.26, metalness: 0.42, bumpScale: 0.010 },
-    wTrim:  { color: 0x00d8ff, roughness: 0.16, metalness: 0.82 },
+    whiteLabel: "Electric Cyan",
+    blackLabel: "Neon Magenta",
+    wStone: { color: 0xeaf4ff, roughness: 0.18, metalness: 0.48, bumpScale: 0.012 },
+    wCloth: { color: 0x3b68c8, roughness: 0.26, metalness: 0.42, bumpScale: 0.010 },
+    wTrim:  { color: 0x5cc8d0, roughness: 0.16, metalness: 0.82 },
     wMetal: { color: 0xdceaff, roughness: 0.14, metalness: 0.92 },
-    wGem:   { color: 0x68f8ff, emissive: 0x00d0ff, emissiveIntensity: 1.65 },
-    bStone: { color: 0x140e22, roughness: 0.20, metalness: 0.45, bumpScale: 0.014 },
-    bCloth: { color: 0x561c70, roughness: 0.28, metalness: 0.38, bumpScale: 0.012 },
-    bTrim:  { color: 0xff2898, roughness: 0.18, metalness: 0.80 },
-    bMetal: { color: 0x362652, roughness: 0.16, metalness: 0.88 },
-    bGem:   { color: 0xff58c8, emissive: 0xff1488, emissiveIntensity: 1.70 },
-    lightSq: { color: 0x262848, roughness: 0.20, metalness: 0.35 },
-    darkSq:  { color: 0x0e0b1c, roughness: 0.18, metalness: 0.45 },
-    frame:   { color: 0x090614, roughness: 0.25, metalness: 0.55 },
-    bezel:   { color: 0x00d0ff, roughness: 0.18, metalness: 0.88 },
-    fog: 0x090514,
-    ambientColor: 0x4a3878,
-    keyColor: 0xe6f0ff,
-    rimColor: 0xff2898,
-    brazierFlame: 0x00e4ff,
-    brazierLight: 0x00c8ff,
-    spellW: 0x00e8ff,
-    spellB: 0xff2898
+    wGem:   { color: 0x80e0e8, emissive: 0x00d8ff, emissiveIntensity: 1.65 },
+    bStone: { color: 0x1a1530, roughness: 0.20, metalness: 0.45, bumpScale: 0.014 },
+    bCloth: { color: 0x481a58, roughness: 0.28, metalness: 0.38, bumpScale: 0.012 },
+    bTrim:  { color: 0xe870c0, roughness: 0.18, metalness: 0.80 },
+    bMetal: { color: 0x2a2a3e, roughness: 0.16, metalness: 0.88 },
+    bGem:   { color: 0xf078a8, emissive: 0xff28a8, emissiveIntensity: 1.70 },
+    lightSq: { color: 0x3a3650, roughness: 0.22, metalness: 0.35 },
+    darkSq:  { color: 0x161228, roughness: 0.18, metalness: 0.45 },
+    frame:   { color: 0x080418, roughness: 0.25, metalness: 0.55 },
+    bezel:   { color: 0x5cc8d0, roughness: 0.18, metalness: 0.88 },
+    fog: 0x080418,
+    ambientColor: 0x523c84,
+    keyColor: 0xe8f2ff,
+    rimColor: 0xe870c0,
+    brazierFlame: 0x5cc8d0,
+    brazierLight: 0xe870c0,
+    spellW: 0x5cc8d0,
+    spellB: 0xe870c0
   },
   enigma: {
     id: "enigma",
     pieceSet: "enigma",
-    name: "Enigma Station · Orbital Outpost",
+    worldStyle: "enigma",
+    name: "Enigma Station · Deep-Space Outpost",
     worldName: "Enigma Station",
-    whiteLabel: "Orbital Titanium",
-    blackLabel: "Stealth Cipher",
-    wStone: { color: 0xe8edf2, roughness: 0.26, metalness: 0.58, bumpScale: 0.018 },
-    wCloth: { color: 0xc29854, roughness: 0.32, metalness: 0.48, bumpScale: 0.015 },
-    wTrim:  { color: 0xf4a828, roughness: 0.20, metalness: 0.82 },
-    wMetal: { color: 0xd8e0ea, roughness: 0.16, metalness: 0.90 },
-    wGem:   { color: 0xffd058, emissive: 0xf09810, emissiveIntensity: 1.45 },
-    bStone: { color: 0x151a1f, roughness: 0.26, metalness: 0.62, bumpScale: 0.020 },
-    bCloth: { color: 0x1c4636, roughness: 0.32, metalness: 0.45, bumpScale: 0.016 },
-    bTrim:  { color: 0x2ce080, roughness: 0.20, metalness: 0.78 },
-    bMetal: { color: 0x303b46, roughness: 0.18, metalness: 0.88 },
-    bGem:   { color: 0x58ff98, emissive: 0x18c860, emissiveIntensity: 1.50 },
-    lightSq: { color: 0x8e99a6, roughness: 0.34, metalness: 0.42 },
-    darkSq:  { color: 0x1c2229, roughness: 0.30, metalness: 0.52 },
-    frame:   { color: 0x101419, roughness: 0.38, metalness: 0.62 },
-    bezel:   { color: 0xd89628, roughness: 0.24, metalness: 0.84 },
-    fog: 0x0a0e12,
-    ambientColor: 0x4c5a68,
-    keyColor: 0xf2f6fa,
-    rimColor: 0x38e088,
-    brazierFlame: 0x38ff90,
-    brazierLight: 0x24d878,
-    spellW: 0xffb838,
-    spellB: 0x38ff90
+    whiteLabel: "Signal Cyan & Alloy",
+    blackLabel: "Mainframe Emerald",
+    wStone: { color: 0xe4eef4, roughness: 0.24, metalness: 0.58, bumpScale: 0.018 },
+    wCloth: { color: 0x2e6e88, roughness: 0.30, metalness: 0.48, bumpScale: 0.015 },
+    wTrim:  { color: 0x40c8d8, roughness: 0.20, metalness: 0.82 },
+    wMetal: { color: 0xd4e2ec, roughness: 0.16, metalness: 0.90 },
+    wGem:   { color: 0x80e0e8, emissive: 0x40c8d8, emissiveIntensity: 1.50 },
+    bStone: { color: 0x0e1820, roughness: 0.26, metalness: 0.62, bumpScale: 0.020 },
+    bCloth: { color: 0x1a3830, roughness: 0.32, metalness: 0.45, bumpScale: 0.016 },
+    bTrim:  { color: 0x40e080, roughness: 0.20, metalness: 0.78 },
+    bMetal: { color: 0x253540, roughness: 0.18, metalness: 0.88 },
+    bGem:   { color: 0x40e080, emissive: 0x20c860, emissiveIntensity: 1.55 },
+    lightSq: { color: 0x465a68, roughness: 0.32, metalness: 0.42 },
+    darkSq:  { color: 0x141d24, roughness: 0.28, metalness: 0.52 },
+    frame:   { color: 0x0e1820, roughness: 0.38, metalness: 0.62 },
+    bezel:   { color: 0x40c8d8, roughness: 0.24, metalness: 0.84 },
+    fog: 0x070c10,
+    ambientColor: 0x405868,
+    keyColor: 0xeaf6ff,
+    rimColor: 0x40e080,
+    brazierFlame: 0x40c8d8,
+    brazierLight: 0x40e080,
+    spellW: 0x40c8d8,
+    spellB: 0x40e080
   },
   singularity: {
     id: "singularity",
     pieceSet: "singularity",
-    name: "The Singularity · Event Horizon",
+    worldStyle: "singularity",
+    name: "The Singularity · Cosmic Event Horizon",
     worldName: "The Singularity",
-    whiteLabel: "Starlight Corona",
-    blackLabel: "Void Horizon",
-    wStone: { color: 0xf6f1e8, roughness: 0.20, metalness: 0.24, bumpScale: 0.016 },
-    wCloth: { color: 0xdcbc7c, roughness: 0.26, metalness: 0.38, bumpScale: 0.014 },
-    wTrim:  { color: 0xf8bc38, roughness: 0.16, metalness: 0.86 },
-    wMetal: { color: 0xefe8dc, roughness: 0.14, metalness: 0.88 },
-    wGem:   { color: 0xffe888, emissive: 0xffaa20, emissiveIntensity: 1.60 },
-    bStone: { color: 0x0f0b1a, roughness: 0.18, metalness: 0.38, bumpScale: 0.018 },
-    bCloth: { color: 0x3a1e62, roughness: 0.26, metalness: 0.35, bumpScale: 0.015 },
-    bTrim:  { color: 0x9e48ff, roughness: 0.18, metalness: 0.82 },
-    bMetal: { color: 0x2c2048, roughness: 0.16, metalness: 0.86 },
-    bGem:   { color: 0xd478ff, emissive: 0x9828ff, emissiveIntensity: 1.65 },
-    lightSq: { color: 0xc8bfe0, roughness: 0.26, metalness: 0.24 },
+    whiteLabel: "Starlight Photon",
+    blackLabel: "Void Crystal",
+    wStone: { color: 0xf4f0ff, roughness: 0.20, metalness: 0.24, bumpScale: 0.016 },
+    wCloth: { color: 0xb89ce8, roughness: 0.26, metalness: 0.38, bumpScale: 0.014 },
+    wTrim:  { color: 0xe8c068, roughness: 0.16, metalness: 0.86 },
+    wMetal: { color: 0xefe8ff, roughness: 0.14, metalness: 0.88 },
+    wGem:   { color: 0xffffff, emissive: 0xd0c0ff, emissiveIntensity: 1.65 },
+    bStone: { color: 0x0e0820, roughness: 0.18, metalness: 0.38, bumpScale: 0.018 },
+    bCloth: { color: 0x503090, roughness: 0.26, metalness: 0.35, bumpScale: 0.015 },
+    bTrim:  { color: 0xa080e0, roughness: 0.18, metalness: 0.82 },
+    bMetal: { color: 0x2a2040, roughness: 0.16, metalness: 0.86 },
+    bGem:   { color: 0xc0a0f0, emissive: 0x9058ff, emissiveIntensity: 1.70 },
+    lightSq: { color: 0x625088, roughness: 0.26, metalness: 0.24 },
     darkSq:  { color: 0x161029, roughness: 0.22, metalness: 0.35 },
-    frame:   { color: 0x090612, roughness: 0.30, metalness: 0.45 },
-    bezel:   { color: 0x9e48ff, roughness: 0.20, metalness: 0.86 },
-    fog: 0x07040e,
-    ambientColor: 0x4e3c6e,
-    keyColor: 0xfff2dc,
-    rimColor: 0xa858ff,
-    brazierFlame: 0xb868ff,
-    brazierLight: 0x9838ff,
-    spellW: 0xffc848,
-    spellB: 0xa848ff
+    frame:   { color: 0x080418, roughness: 0.30, metalness: 0.45 },
+    bezel:   { color: 0xa080e0, roughness: 0.20, metalness: 0.86 },
+    fog: 0x050510,
+    ambientColor: 0x523e78,
+    keyColor: 0xf5eeff,
+    rimColor: 0xa080e0,
+    brazierFlame: 0xd0c0ff,
+    brazierLight: 0xa080e0,
+    spellW: 0xd0c0ff,
+    spellB: 0x9058ff
   }
 };
 
@@ -661,6 +666,7 @@ export class WizardChess3D {
     this.pieceMeshes = new Map(); // square -> THREE.Group
     this.squareMeshes = new Map(); // square -> THREE.Mesh
     this.blenderTemplates = new Map(); // '<set>_<type>' -> THREE.Object3D
+    this.dioramaTemplates = new Map(); // '<world>' -> THREE.Object3D (Blender 3D World Dioramas)
     this.markerMeshes = [];
     this.reviewArrowMeshes = [];
     this.shards = []; // active rigid-body stone & armor fragments
@@ -706,10 +712,10 @@ export class WizardChess3D {
     const h = this.container.clientHeight || 540;
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x120906, 0.026);
+    this.scene.fog = new THREE.FogExp2(0x0e0820, 0.016);
 
-    this.camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
-    this.camera.position.set(0, 8.6, 9.8);
+    this.camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 140);
+    this.camera.position.set(0, 8.8, 10.2);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(w, h);
@@ -717,7 +723,7 @@ export class WizardChess3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.22;
+    this.renderer.toneMappingExposure = 1.24;
 
     this.container.innerHTML = "";
     this.container.appendChild(this.renderer.domElement);
@@ -727,21 +733,21 @@ export class WizardChess3D {
     this.controls.dampingFactor = 0.06;
     this.controls.target.set(0, 0.4, 0);
     this.controls.minDistance = 4.2;
-    this.controls.maxDistance = 18.5;
-    this.controls.maxPolarAngle = Math.PI * 0.46;
+    this.controls.maxDistance = 26.0;
+    this.controls.maxPolarAngle = Math.PI * 0.47;
     this.controls.minPolarAngle = 0.15;
 
-    this.ambientLight = new THREE.AmbientLight(0x664c3a, 1.55);
+    this.ambientLight = new THREE.AmbientLight(0x685478, 1.65);
     this.scene.add(this.ambientLight);
 
-    this.keyLight = new THREE.DirectionalLight(0xffebd2, 2.2);
-    this.keyLight.position.set(5.5, 13.5, 6.5);
+    this.keyLight = new THREE.DirectionalLight(0xffebd2, 2.25);
+    this.keyLight.position.set(6.5, 15.0, 7.5);
     this.keyLight.castShadow = true;
     this.keyLight.shadow.mapSize.width = 2048;
     this.keyLight.shadow.mapSize.height = 2048;
     this.keyLight.shadow.camera.near = 2;
-    this.keyLight.shadow.camera.far = 28;
-    const d = 6.8;
+    this.keyLight.shadow.camera.far = 36;
+    const d = 10.5;
     this.keyLight.shadow.camera.left = -d;
     this.keyLight.shadow.camera.right = d;
     this.keyLight.shadow.camera.top = d;
@@ -749,8 +755,8 @@ export class WizardChess3D {
     this.keyLight.shadow.bias = -0.0005;
     this.scene.add(this.keyLight);
 
-    this.rimLight = new THREE.DirectionalLight(0x8cb0ff, 1.15);
-    this.rimLight.position.set(-7, 8, -8);
+    this.rimLight = new THREE.DirectionalLight(0x9870e8, 1.25);
+    this.rimLight.position.set(-8, 9, -9);
     this.scene.add(this.rimLight);
 
     const { bumpTex, envTex } = createStoneTextures();
@@ -911,6 +917,13 @@ export class WizardChess3D {
           king: "k"
         };
         gltf.scene.traverse((obj) => {
+          const dioramaMatch = obj.name.match(
+            /^diorama_(classic|lumar|arcadia|enigma|singularity)$/
+          );
+          if (dioramaMatch) {
+            this.dioramaTemplates.set(dioramaMatch[1], obj);
+            return;
+          }
           const multiMatch = obj.name.match(
             /^piece_(classic|lumar|arcadia|enigma|singularity)_(pawn|rook|knight|bishop|queen|king)$/
           );
@@ -929,8 +942,15 @@ export class WizardChess3D {
             }
           }
         });
+        if (this.dioramaTemplates.size > 0 && this.currentTheme) {
+          this.rebuildWorldScenery(this.currentTheme);
+        }
         if (this.blenderTemplates.size > 0 && !this.animating) {
-          this.syncPiecesFromBoard();
+          if (this.reviewMode) {
+            this.viewReviewPly(this.currentReviewPly || 0);
+          } else {
+            this.syncPiecesFromBoard();
+          }
         }
       },
       undefined,
@@ -995,13 +1015,76 @@ export class WizardChess3D {
     this.worldAnimators = [];
 
     const totalSpan = SQUARE_SIZE * 8;
-    const cornerOffset = totalSpan / 2 + 0.48;
+    const cornerOffset = totalSpan / 2 + 0.65;
     const corners = [
       [-cornerOffset, -cornerOffset],
       [cornerOffset, -cornerOffset],
       [-cornerOffset, cornerOffset],
       [cornerOffset, cornerOffset]
     ];
+    const worldKey = theme.pieceSet || theme.id || "classic";
+    const dioramaTemplate = this.dioramaTemplates && this.dioramaTemplates.get(worldKey);
+
+    // If the full Blender 3D World Diorama (`diorama_<world>`) is loaded, mount & animate it!
+    if (dioramaTemplate) {
+      const diorama = dioramaTemplate.clone(true);
+      diorama.position.set(0, 0, 0);
+      diorama.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+        const n = (node.name || "").toLowerCase();
+        if (n.includes("_spin_slow")) {
+          this.worldAnimators.push({ type: "spinY", mesh: node, speed: 0.004 });
+        } else if (n.includes("_spin_rev")) {
+          this.worldAnimators.push({ type: "spinY", mesh: node, speed: -0.0032 });
+        } else if (n.includes("_beacon_sweep")) {
+          this.worldAnimators.push({ type: "spinY", mesh: node, speed: 0.015 });
+        } else if (n.includes("_water_wave")) {
+          this.worldAnimators.push({
+            type: "waveBob",
+            mesh: node,
+            baseY: node.position.y,
+            speed: 0.0022
+          });
+        } else if (n.includes("_radar_dish")) {
+          this.worldAnimators.push({
+            type: "radarSweep",
+            mesh: node,
+            baseAngle: node.rotation.y,
+            speed: 0.0018
+          });
+        } else if (n.includes("_bob")) {
+          this.worldAnimators.push({
+            type: "floatBob",
+            mesh: node,
+            baseY: node.position.y,
+            speed: 0.0025,
+            phase: (node.id || 1) * 0.9
+          });
+        }
+      });
+      this.worldSceneryGroup.add(diorama);
+
+      // Add dynamic corner & landmark PointLights to illuminate the Blender 3D World Diorama
+      corners.forEach(([cx, cz], idx) => {
+        const light = new THREE.PointLight(theme.brazierLight, 1.45, 12.5, 1.5);
+        light.position.set(cx, 1.15, cz);
+        this.worldSceneryGroup.add(light);
+        this.braziers.push({ group: this.worldSceneryGroup, flame: null, light, phase: idx * 1.6 });
+      });
+
+      const northVistaLight = new THREE.PointLight(theme.rimColor, 1.85, 16.0, 1.4);
+      northVistaLight.position.set(0, 3.2, -6.5);
+      this.worldSceneryGroup.add(northVistaLight);
+
+      const eastLandmarkLight = new THREE.PointLight(theme.brazierFlame, 1.55, 14.0, 1.5);
+      eastLandmarkLight.position.set(6.5, 2.2, 0);
+      this.worldSceneryGroup.add(eastLandmarkLight);
+      return;
+    }
+
     const style = theme.worldStyle || "hearth";
 
     const glowMat = new THREE.MeshBasicMaterial({
@@ -2928,6 +3011,8 @@ export class WizardChess3D {
         anim.mesh.rotation.z += 0.0012;
       } else if (anim.type === "radarSweep") {
         anim.mesh.rotation.y = anim.baseAngle + Math.sin(now * anim.speed) * 0.75;
+      } else if (anim.type === "floatBob") {
+        anim.mesh.position.y = anim.baseY + Math.sin(now * anim.speed + (anim.phase || 0)) * 0.055;
       }
     }
 
