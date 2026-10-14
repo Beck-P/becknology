@@ -204,7 +204,16 @@ var BridgeVoyage = (function () {
     shoals = []; flotsam = [];
     for (var i = 0; i < 9; i++) shoals.push({ x: 300 + hash(i * 3) * (CW - 600), y: 300 + hash(i * 5) * (CH - 600), left: 3 });
     for (var j = 0; j < 7; j++) flotsam.push({ x: 300 + hash(j * 7 + 1) * (CW - 600), y: 300 + hash(j * 11 + 2) * (CH - 600), got: false });
-    say('W raise sails · A/D steer · E act · Esc dock', 4000);
+    var touch = document.documentElement.classList.contains('touch');
+    if (touch) {        // the thumb stick and A drive the keys below; a button to go ashore
+      document.documentElement.classList.add('keys-mode');
+      var dock = document.createElement('button');
+      dock.id = 'voyage-dock';
+      dock.textContent = 'Go ashore';
+      dock.addEventListener('click', function (e) { e.preventDefault(); stop(nearestDock(1e9)); });
+      document.body.appendChild(dock);
+    }
+    say(touch ? 'Stick up: raise sails · left/right: steer · A: act' : 'W raise sails · A/D steer · E act · Esc dock', 4000);
     last = performance.now();
     raf = requestAnimationFrame(frame);
   }
@@ -224,6 +233,9 @@ var BridgeVoyage = (function () {
     if (!running) return;
     running = false;
     cancelAnimationFrame(raf);
+    document.documentElement.classList.remove('keys-mode');
+    var dock = document.getElementById('voyage-dock');
+    if (dock) dock.remove();
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKeyUp, true);
     window.removeEventListener('resize', resize);

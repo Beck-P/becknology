@@ -157,7 +157,8 @@ var BridgeIntro = (function () {
 
     overlay.innerHTML =
       '<pre class="intro-ascii" id="intro-logo" style="opacity:0">' + ASCII_LOGO + '</pre>' +
-      '<p class="intro-prompt" id="intro-prompt" style="opacity:0">CLICK TO BEGIN</p>';
+      '<p class="intro-prompt" id="intro-prompt" style="opacity:0">' +
+      (document.documentElement.classList.contains('touch') ? 'TAP TO BEGIN' : 'CLICK TO BEGIN') + '</p>';
 
     anim.t0 = performance.now();
     anim.active = true;

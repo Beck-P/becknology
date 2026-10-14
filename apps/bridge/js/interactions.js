@@ -548,6 +548,14 @@ var BridgeInteractions = (function () {
     return el;
   }
 
+  // On touch the hint is a close button: a tap does what its key does (Esc)
+  document.addEventListener('click', function (e) {
+    var h = e.target.closest && e.target.closest('.world-dialog .wd-hint');
+    if (!h) return;
+    e.preventDefault(); e.stopPropagation();
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+  }, true);
+
   function hintHTML(key, text) {
     return '<div class="wd-hint"><span class="ip-key">' + key + '</span>' + text + '</div>';
   }

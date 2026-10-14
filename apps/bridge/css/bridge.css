@@ -666,53 +666,48 @@ body::after {
   text-align: center;
 }
 
-/* ---- D-Pad ---- */
-.dpad {
+/* ---- Touch controls (js/controls.js): a thumb stick bottom-left, A bottom-right ----
+   Only on touch screens (html.touch, set in index.html), hidden while a dialog
+   or menu has the controls (html.controls-off), shown over the sea while
+   sailing (html.keys-mode). --hud-h keeps them clear of the hotbar. */
+.dpad { position: fixed; left: 0; right: 0; bottom: 0; height: 0; z-index: 50; }
+html:not(.touch) .dpad { display: none !important; }
+html.controls-off:not(.keys-mode) .dpad { visibility: hidden; }
+html.keys-mode .dpad { display: block !important; z-index: 70; }
+html.touch { --hud-h: 58px; }
+html.keys-mode { --hud-h: 96px; }                     /* clear of the voyage's compass and sail gauge */
+html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
+.stick {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
-  z-index: 50;
-  display: grid;
-  grid-template-areas:
-    ".    up    ."
-    "left .     right"
-    ".    down  .";
-  grid-template-columns: 44px 44px 44px;
-  grid-template-rows: 44px 44px 44px;
-  gap: 2px;
+  left: calc(18px + env(safe-area-inset-left));
+  bottom: calc(var(--hud-h) + 16px + env(safe-area-inset-bottom));
+  width: 116px; height: 116px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 18, 30, 0.3) 0 54%, rgba(16, 18, 30, 0.5) 56%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.4);
+  touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
 }
-
-.dpad-btn {
-  background: rgba(30, 30, 30, 0.6);
-  border: 1px solid #2a2a2a;
-  color: #444;
-  font-size: 14px;
-  border-radius: 4px;
-  cursor: default;
-  -webkit-tap-highlight-color: transparent;
+.stick.held { border-color: rgba(255, 255, 255, 0.32); }
+.stick-knob {
+  position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%;
+  background: rgba(242, 238, 230, 0.2); border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45); transition: transform 0.1s ease-out; pointer-events: none;
 }
-
-.dpad-up { grid-area: up; }
-.dpad-left { grid-area: left; }
-.dpad-right { grid-area: right; }
-.dpad-down { grid-area: down; }
-
-.dpad-btn:active {
-  background: rgba(60, 60, 80, 0.8);
-  color: #888;
-}
-
+.stick.held .stick-knob { transition: none; background: rgba(242, 238, 230, 0.34); }
 .dpad-action {
   position: fixed;
-  bottom: 52px;
-  right: 24px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  font-size: 16px;
-  background: rgba(30, 30, 30, 0.6);
-  border: 1px solid #2a2a2a;
-  color: #444;
+  right: calc(22px + env(safe-area-inset-right));
+  bottom: calc(var(--hud-h) + 40px + env(safe-area-inset-bottom));
+  width: 68px; height: 68px; border-radius: 50%;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 20px; color: rgba(242, 238, 230, 0.85);
+  background: rgba(16, 18, 30, 0.55); border: 1px solid rgba(255, 255, 255, 0.2);
+  touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+}
+.dpad-action.held { background: rgba(242, 238, 230, 0.26); }
+#voyage-dock {
+  position: fixed; top: calc(12px + env(safe-area-inset-top)); left: calc(12px + env(safe-area-inset-left)); z-index: 71;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 14px; color: rgba(242, 238, 230, 0.92);
+  background: rgba(14, 12, 22, 0.72); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px; padding: 8px 14px;
 }
 
 /* ---- Animations ---- */
@@ -727,9 +722,6 @@ body::after {
 }
 
 /* ---- Responsive ---- */
-@media (min-width: 769px) {
-  .dpad, .dpad-action { display: none !important; }
-}
 
 @media (max-width: 768px) {
   .starmap-info {
@@ -1098,3 +1090,72 @@ body::after {
 .wd-sell-row.none { opacity: 0.4; }
 .wd-opt[disabled] { opacity: 0.5; }
 .wd-note { margin-top: 6px; font-style: italic; opacity: 0.85; }
+
+/* ---- Touch screens: phone-sized HUD, dialogs that fit, the keyboard ----
+   html.touch is set in index.html; --vvh / --kb (js/controls.js) are the
+   height left and the keyboard's height when it's up. */
+html.touch body { touch-action: manipulation; }
+html.touch .world-back .ip-key, html.touch #journal-pill .ip-key { display: none; }
+html.touch .world-back { padding: 7px 14px 7px 12px; top: calc(12px + env(safe-area-inset-top)); left: calc(12px + env(safe-area-inset-left)); }
+html.touch .world-back::before { content: '\2039'; font-size: 22px; line-height: 14px; margin-top: -3px; }
+html.touch #journal-pill { padding: 7px 14px; left: calc(12px + env(safe-area-inset-left)); top: calc(54px + env(safe-area-inset-top)); }
+html.touch .world-location-badge { top: calc(12px + env(safe-area-inset-top)); }
+@media (max-width: 560px) {
+  html.touch .world-back > span:not(.ip-key) { display: none; }       /* just the chevron on a phone */
+  html.touch .world-location-badge { font-size: 12px; padding: 6px 12px; max-width: 54vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+html.touch #inventory-panel {
+  bottom: calc(6px + env(safe-area-inset-bottom)) !important; padding: 5px 8px !important; gap: 8px !important;
+  max-width: calc(100vw - 12px); box-sizing: border-box;
+}
+html.touch #inv-slots { gap: 2px !important; }
+html.touch #inv-slots > div { width: min(36px, calc((100vw - 44px) / 10)) !important; height: min(36px, calc((100vw - 44px) / 10)) !important; }
+@media (orientation: portrait) {
+  html.touch #inv-stats { display: none !important; }
+  html.touch #inv-slots { border-right: 0 !important; padding-right: 0 !important; }
+}
+html.touch .world-dialog {
+  max-height: calc(var(--vvh, 100vh) - 20px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+@media (orientation: portrait) {
+  html.touch .world-dialog {
+    top: auto; bottom: calc(var(--kb, 0px) + 10px + env(safe-area-inset-bottom));
+    width: calc(100vw - 20px); transform: translate(-50%, 10px); padding: 14px 14px 10px;
+  }
+  html.touch .world-dialog.visible { transform: translate(-50%, 0); }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  html.touch .world-dialog { width: min(600px, 94vw); padding: 10px 14px 8px; gap: 10px; }
+  html.touch .wd-portrait { width: 48px; height: 48px; flex-basis: 48px; }
+  html.touch .wd-convo .wd-options { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
+  html.touch .wd-opt { padding: 6px 10px; }
+}
+html.touch .wd-opt { min-height: 38px; }
+/* the key-cap hint becomes a tappable close button in the corner (js/interactions.js sends it as Esc) */
+html.touch .world-dialog { position: fixed; }
+html.touch .wd-hint {
+  position: absolute; top: 8px; right: 10px; margin: 0; opacity: 0.85; cursor: pointer;
+  font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+}
+html.touch .wd-hint .ip-key { display: none; }
+html.touch .wd-hint::after { content: ' \2715'; }
+html.touch.controls-off #inventory-panel { opacity: 0 !important; pointer-events: none; }   /* a dialog has the bottom of the screen */
+html.touch .nav-head .ip-key { display: none; }
+html.touch .nav-head::before { content: '\2039'; font-size: 22px; line-height: 14px; margin: -3px 2px 0 6px; }
+html.touch .nav-hint { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {   /* phone on its side: a slimmer chart panel that scrolls, jump button pinned */
+  html.touch .nav-panel {
+    top: 10px; bottom: 10px; right: 12px; width: min(330px, 44vw); transform: none; padding: 10px 14px;
+    display: flex; flex-direction: column; overflow-y: auto; box-sizing: border-box;
+  }
+  html.touch .nav-planet { width: 72px; height: 72px; }
+  html.touch .nav-panel > * { flex: 0 0 auto; }
+  html.touch.on-chart #coin-hud { display: none !important; }   /* the chart panel needs that corner */
+  html.touch .nav-jump {   /* opaque, with a short fade above, so the list scrolls under it cleanly */
+    position: sticky; bottom: 0; margin-top: 8px;
+    background: linear-gradient(rgba(64, 200, 216, 0.08), rgba(64, 200, 216, 0.08)), #0a1020;
+    box-shadow: 0 -10px 12px 2px #09101e, 0 11px 0 0 #0a1020;   /* the second covers the panel's bottom padding */
+  }
+}
+html.touch .qj-close .ip-key { font-size: 0; min-width: 26px; height: 22px; }
+html.touch .qj-close .ip-key::after { content: '\2715'; font-size: 13px; }

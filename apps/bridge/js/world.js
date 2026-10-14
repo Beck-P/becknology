@@ -480,9 +480,9 @@ var BridgeWorld = (function () {
     // Enable controls
     BridgeControls.enable();
 
-    // Show d-pad on mobile
-    if (window.innerWidth <= 768) {
-      document.getElementById('dpad').style.display = 'grid';
+    // Touch controls on touch screens (any size or orientation)
+    if (document.documentElement.classList.contains('touch')) {
+      document.getElementById('dpad').style.display = 'block';
     }
 
     // Calculate scale based on screen size

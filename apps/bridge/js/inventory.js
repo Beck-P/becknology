@@ -297,6 +297,7 @@ var BridgeInventory = (function () {
 
     // Stats: HP + Energy
     var statsWrap = document.createElement('div');
+    statsWrap.id = 'inv-stats';
     statsWrap.style.cssText = 'display:flex;flex-direction:column;gap:4px;padding-left:4px;min-width:140px;';
 
     var hpRow = document.createElement('div');

@@ -16,12 +16,14 @@ var BridgeControls = (function () {
 
   function enable() {
     enabled = true;
+    document.documentElement.classList.remove('controls-off');
     keys = { up: false, down: false, left: false, right: false };
     actionPressed = false;
   }
 
   function disable() {
     enabled = false;
+    document.documentElement.classList.add('controls-off');
     keys = { up: false, down: false, left: false, right: false };
     actionPressed = false;
   }
@@ -122,48 +124,115 @@ var BridgeControls = (function () {
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   }
 
-  // D-pad (mobile)
+  // Touch: a thumb stick (drag anywhere on it; four directions, like the
+  // keys) and the A button. While another mode owns the keyboard (sailing,
+  // html.keys-mode) the stick and A are sent as key presses instead, so that
+  // mode needs no touch code of its own.
+  var stick = { up: false, down: false, left: false, right: false };
+  var KEYNAME = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+  function keysMode() { return document.documentElement.classList.contains('keys-mode'); }
+  function sendKey(type, key) {
+    document.body.dispatchEvent(new KeyboardEvent(type, { key: key, bubbles: true, cancelable: true }));
+  }
+  function setStick(next) {
+    ['up', 'down', 'left', 'right'].forEach(function (d) {
+      if (next[d] === stick[d]) return;
+      stick[d] = next[d];
+      if (keysMode()) sendKey(next[d] ? 'keydown' : 'keyup', KEYNAME[d]);
+      else if (enabled) keys[d] = next[d];
+    });
+  }
+
   function bindDpad() {
     var dpad = document.getElementById('dpad');
     if (!dpad) return;
-
-    var map = {
-      'dpad-up': 'up', 'dpad-down': 'down',
-      'dpad-left': 'left', 'dpad-right': 'right'
-    };
-
-    var btns = dpad.querySelectorAll('.dpad-btn');
-    for (var i = 0; i < btns.length; i++) {
-      (function (btn) {
-        var dir = null;
-        for (var cls in map) {
-          if (btn.classList.contains(cls)) { dir = map[cls]; break; }
-        }
-        var isAction = btn.classList.contains('dpad-action');
-
-        btn.addEventListener('touchstart', function (e) {
-          e.preventDefault();
-          if (!enabled) return;
-          if (isAction) actionPressed = true;
-          else if (dir) keys[dir] = true;
-        });
-        btn.addEventListener('touchend', function (e) {
-          e.preventDefault();
-          if (dir) keys[dir] = false;
-        });
-        btn.addEventListener('touchcancel', function () {
-          if (dir) keys[dir] = false;
-        });
-      })(btns[i]);
+    var pad = dpad.querySelector('.stick'), knob = dpad.querySelector('.stick-knob'), act = dpad.querySelector('.dpad-action');
+    var touchId = null;
+    function find(list) {
+      for (var i = 0; i < list.length; i++) if (list[i].identifier === touchId) return list[i];
+      return null;
     }
+    function move(t) {
+      var r = pad.getBoundingClientRect(), R = r.width / 2;
+      var x = t.clientX - (r.left + R), y = t.clientY - (r.top + R), d = Math.hypot(x, y) || 1;
+      var k = Math.min(d, R * 0.6);
+      knob.style.transform = 'translate(' + (x / d * k).toFixed(1) + 'px,' + (y / d * k).toFixed(1) + 'px)';
+      var next = { up: false, down: false, left: false, right: false };
+      if (d > R * 0.22) {
+        if (Math.abs(x) > Math.abs(y)) next[x > 0 ? 'right' : 'left'] = true;
+        else next[y > 0 ? 'down' : 'up'] = true;
+      }
+      setStick(next);
+    }
+    function release() {
+      touchId = null;
+      knob.style.transform = '';
+      pad.classList.remove('held');
+      setStick({ up: false, down: false, left: false, right: false });
+    }
+    if (pad) {
+      pad.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        var t = e.changedTouches[0];
+        touchId = t.identifier;
+        pad.classList.add('held');
+        move(t);
+      }, { passive: false });
+      pad.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        var t = find(e.changedTouches);
+        if (t) move(t);
+      }, { passive: false });
+      pad.addEventListener('touchend', function (e) { if (find(e.changedTouches)) release(); });
+      pad.addEventListener('touchcancel', function (e) { if (find(e.changedTouches)) release(); });
+    }
+    if (act) {
+      act.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        act.classList.add('held');
+        if (keysMode()) sendKey('keydown', 'e');
+        else if (enabled) actionPressed = true;
+      }, { passive: false });
+      var up = function () { act.classList.remove('held'); if (keysMode()) sendKey('keyup', 'e'); };
+      act.addEventListener('touchend', up);
+      act.addEventListener('touchcancel', up);
+    }
+  }
+
+  // The stick belongs to walking around a world (sailing has keys-mode)
+  function trackState() {
+    if (typeof BridgeState === 'undefined' || !BridgeState.onChange) return;
+    var set = function (st) {
+      document.documentElement.classList.toggle('in-world', st === 'world');
+      document.documentElement.classList.toggle('on-chart', st === 'starmap');
+    };
+    BridgeState.onChange(set);
+    if (BridgeState.getState) set(BridgeState.getState());
+  }
+
+  // The visible height left when the on-screen keyboard is up (iOS keeps the
+  // layout viewport, so fixed panels are placed against this instead).
+  function trackViewport() {
+    var vv = window.visualViewport;
+    if (!vv) return;
+    var set = function () {
+      var root = document.documentElement.style;
+      root.setProperty('--vvh', vv.height + 'px');
+      root.setProperty('--kb', Math.max(0, window.innerHeight - vv.height - vv.offsetTop) + 'px');
+    };
+    vv.addEventListener('resize', set);
+    vv.addEventListener('scroll', set);
+    set();
   }
 
   // Bind d-pad + canvas mouse on DOM ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { bindDpad(); bindCanvasMouse(); });
+    document.addEventListener('DOMContentLoaded', function () { bindDpad(); bindCanvasMouse(); trackViewport(); trackState(); });
   } else {
     bindDpad();
     bindCanvasMouse();
+    trackViewport();
+    trackState();
   }
 
   /** Returns { dx, dy } for the currently held direction, or { dx:0, dy:0 }. */

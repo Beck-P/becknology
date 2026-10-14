@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <script>
+    // touch devices get the thumb stick, bigger targets and tap wording (css: html.touch)
+    if ((window.matchMedia && matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0)) {
+      document.documentElement.classList.add('touch');
+    }
+  </script>
   <meta name="mobile-web-app-capable" content="yes">
   <title>Bridge — Becknology</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -23,13 +29,10 @@
   <div id="world-overlay" class="overlay" style="display:none;"></div>
   <div id="landing-overlay" class="overlay" style="display:none;"></div>
 
-  <!-- Mobile d-pad -->
+  <!-- Touch controls: a thumb stick and the A button (js/controls.js) -->
   <div id="dpad" class="dpad" style="display:none;">
-    <button class="dpad-btn dpad-up">&#9650;</button>
-    <button class="dpad-btn dpad-left">&#9664;</button>
-    <button class="dpad-btn dpad-right">&#9654;</button>
-    <button class="dpad-btn dpad-down">&#9660;</button>
-    <button class="dpad-btn dpad-action">A</button>
+    <div class="stick" aria-label="Move"><div class="stick-knob"></div></div>
+    <button class="dpad-action" aria-label="Use">A</button>
   </div>
 
   <!-- Supabase CDN -->
