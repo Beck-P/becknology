@@ -57,6 +57,17 @@ var BridgeWorld = (function () {
     OVERLAYS[name] = drawFn;
   }
 
+  // Hooks for worlds drawn from a pre-rendered scene (see js/scene.js):
+  //   behind(ctx, world, offX, offY, ts, time)  — drawn before the render;
+  //       shows through its transparent holes (viewport windows)
+  //   items(world, offX, offY, ts, time, sc)    — returns [{footRow, draw(ctx)}]
+  //       sorted with the characters (moving things: drones, holograms)
+  //   over(ctx, world, offX, offY, ts, time)    — drawn on top (steam, sparks)
+  var SCENE_HOOKS = {};
+  function registerSceneHooks(name, hooks) {
+    SCENE_HOOKS[name] = hooks;
+  }
+
   // ---- Glow Helpers ----
 
   function drawGlow(ctx, cx, cy, radius, r, g, b, alpha) {
@@ -763,13 +774,17 @@ var BridgeWorld = (function () {
   // Pre-rendered scene: the Blender render replaces tiles; everyone who
   // moves is depth-tested against it and drawn in foot-row order.
   function drawSceneLayer(ctx, sc, offX, offY, ts, now) {
+    var hooks = SCENE_HOOKS[world.tileset] || {};
+    if (hooks.behind) hooks.behind(ctx, world, offX, offY, ts, now);
     BridgeScene.drawBackground(ctx, sc, world, offX, offY, now);
     drawInteractHighlight(ctx, offX, offY, ts, now);
     if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) BridgeLoot.draw(ctx, offX, offY, ts);
     var items = BridgeScene.actorDrawList(sc, world, offX, offY, ts, now);
     items.push(BridgeCharacter.sceneItem(offX, offY, ts, sc, world, now));
+    if (hooks.items) items = items.concat(hooks.items(world, offX, offY, ts, now, sc) || []);
     items.sort(function (a, b) { return a.footRow - b.footRow; });
     for (var i = 0; i < items.length; i++) items[i].draw(ctx);
+    if (hooks.over) hooks.over(ctx, world, offX, offY, ts, now);
     if (typeof BridgeFX !== 'undefined' && BridgeFX.draw) BridgeFX.draw(ctx, offX, offY, ts, now);
   }
 
@@ -1048,6 +1063,7 @@ var BridgeWorld = (function () {
     registerTileset: registerTileset,
     registerBackground: registerBackground,
     registerOverlay: registerOverlay,
+    registerSceneHooks: registerSceneHooks,
     getCamera: function () { return camera; },
     getScale: function () { return scale; },
     getTileSize: function () { return tileSize; },

@@ -19,9 +19,17 @@
  *   "scene": {
  *     "id": "lumar-tavern",
  *     "flicker": { "from": "dim", "to": "full" },   // cross-fade for firelight
+ *                                    // ("mode": "pulse" — slow LED breathing)
  *     "actors": [ { "sheet": "npc-bartender", "x": 4, "y": 2,
- *                   "facing": "down", "pose": "sit" } ]
+ *                   "facing": "down", "pose": "sit" } ],
+ *     "sky": [1, 0.6, 15, 3]          // optional: screen-tile rect behind the
+ *                                    // render's transparent holes (windows)
  *   }
+ *
+ * Swappable decor: scene.json "layers" lists variants rendered in the room's
+ * light (scenekit k.variant). setLayers(id, {slot: key|null}) composites the
+ * chosen ones into the scene image and depth, so characters are occluded by
+ * them like any other furniture.
  */
 var BridgeScene = (function () {
   var NATIVE_TS = 32;
@@ -51,25 +59,104 @@ var BridgeScene = (function () {
     xhr.onload = function () {
       if (xhr.status !== 200) { cb(null); return; }
       var meta = JSON.parse(xhr.responseText);
-      var sc = { id: id, meta: meta, imgs: {}, depth: null, ready: false };
+      var sc = { id: id, meta: meta, imgs: {}, depth: null, ready: false,
+                 baseImgs: {}, baseDepth: null, layers: [] };
       var pending = meta.states.length + 1;
       function done() {
         if (--pending === 0) {
           sc.ready = true;
           scenes[id] = sc;
+          composite(sc);
           cb(sc);
         }
       }
       meta.states.forEach(function (s) {
-        loadImage(base + s + '.png', function (img) { sc.imgs[s] = img; done(); });
+        loadImage(base + s + '.png', function (img) { sc.baseImgs[s] = img; sc.imgs[s] = img; done(); });
       });
       loadImage(base + 'depth.png', function (img) {
-        if (img) sc.depth = decodeDepth(img, meta);
+        if (img) sc.baseDepth = sc.depth = decodeDepth(img, meta);
         done();
+      });
+      // Decor variants: a lit image per state + depth for each
+      Object.keys(meta.layers || {}).forEach(function (slot) {
+        Object.keys(meta.layers[slot]).forEach(function (key) {
+          var L = { slot: slot, key: key, box: meta.layers[slot][key], imgs: {}, depth: null };
+          sc.layers.push(L);
+          var dir = base + 'layers/' + slot + '/' + key + '/';
+          pending += meta.states.length + 1;
+          meta.states.forEach(function (s) {
+            loadImage(dir + s + '.png', function (img) { L.imgs[s] = img ? pixels(img) : null; done(); });
+          });
+          loadImage(dir + 'depth.png', function (img) {
+            if (img) L.depth = decodeDepth(img, meta);
+            done();
+          });
+        });
       });
     };
     xhr.onerror = function () { cb(null); };
     xhr.send();
+  }
+
+  function pixels(img) {
+    var c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    var cx = c.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(img, 0, 0);
+    return cx.getImageData(0, 0, img.width, img.height).data;
+  }
+
+  // Which variant each slot shows, per scene id (set before or after load)
+  var activeLayers = {};
+
+  function setLayers(id, map) {
+    activeLayers[id] = map || {};
+    if (scenes[id] && scenes[id].ready) composite(scenes[id]);
+  }
+
+  // Bake the active variants into the scene's images and depth. Runs on load
+  // and when the owned decor changes — never per frame.
+  function composite(sc) {
+    var want = activeLayers[sc.id] || {};
+    var use = sc.layers.filter(function (L) { return want[L.slot] === L.key && L.depth; });
+    if (!use.length) {
+      sc.imgs = {};
+      for (var k in sc.baseImgs) sc.imgs[k] = sc.baseImgs[k];
+      sc.depth = sc.baseDepth;
+      return;
+    }
+    var m = sc.meta, W = m.width;
+    var depth = new Float32Array(sc.baseDepth);
+    var masks = use.map(function (L) {
+      var b = L.box, mask = new Uint8Array(b.w * b.h);
+      for (var j = 0; j < b.h; j++) {
+        for (var i = 0; i < b.w; i++) {
+          var li = j * b.w + i, d = L.depth[li];
+          if (d === Infinity) continue;
+          var gi = (b.y + j) * W + b.x + i;
+          if (d < depth[gi] + DEPTH_EPS) { mask[li] = 1; depth[gi] = d; }
+        }
+      }
+      return mask;
+    });
+    m.states.forEach(function (s) {
+      var c = document.createElement('canvas');
+      c.width = m.width; c.height = m.height;
+      var cx = c.getContext('2d');
+      cx.drawImage(sc.baseImgs[s], 0, 0);
+      use.forEach(function (L, n) {
+        var px = L.imgs[s];
+        if (!px) return;
+        var b = L.box, id = cx.getImageData(b.x, b.y, b.w, b.h), d = id.data, mask = masks[n];
+        for (var li = 0; li < mask.length; li++) {
+          if (!mask[li]) continue;
+          d[li * 4] = px[li * 4]; d[li * 4 + 1] = px[li * 4 + 1]; d[li * 4 + 2] = px[li * 4 + 2]; d[li * 4 + 3] = 255;
+        }
+        cx.putImageData(id, b.x, b.y);
+      });
+      sc.imgs[s] = c;
+    });
+    sc.depth = depth;
   }
 
   function decodeDepth(img, meta) {
@@ -91,7 +178,8 @@ var BridgeScene = (function () {
   function get(id) { return scenes[id] && scenes[id].ready ? scenes[id] : null; }
 
   // Firelight: slow breathing plus a quick flutter, 0..1
-  function flickerAt(t) {
+  function flickerAt(t, mode) {
+    if (mode === 'pulse') return 0.5 + 0.5 * Math.sin(t / 900);   // slow LED breathing
     var v = 0.62 + 0.22 * Math.sin(t / 430) + 0.12 * Math.sin(t / 97 + 1.3) + 0.06 * Math.sin(t / 31 + 4.1);
     return Math.max(0, Math.min(1, v));
   }
@@ -102,7 +190,7 @@ var BridgeScene = (function () {
     var fl = world.scene && world.scene.flicker;
     if (fl && sc.imgs[fl.from] && sc.imgs[fl.to]) {
       ctx.drawImage(sc.imgs[fl.from], x, y);
-      ctx.globalAlpha = flickerAt(now);
+      ctx.globalAlpha = flickerAt(now, fl.mode);
       ctx.drawImage(sc.imgs[fl.to], x, y);
       ctx.globalAlpha = 1;
     } else {
@@ -119,7 +207,7 @@ var BridgeScene = (function () {
     var fl = world.scene && world.scene.flicker;
     var a, b, f = 1;
     if (fl && m.tileLight[fl.from] && m.tileLight[fl.to]) {
-      a = m.tileLight[fl.from][r][c]; b = m.tileLight[fl.to][r][c]; f = flickerAt(now);
+      a = m.tileLight[fl.from][r][c]; b = m.tileLight[fl.to][r][c]; f = flickerAt(now, fl.mode);
     } else {
       a = b = m.tileLight[m.states[0]][r][c];
     }
@@ -132,7 +220,7 @@ var BridgeScene = (function () {
    * footRow: the row (tile units, fractional) where the figure meets the
    * floor; its feet are drawn at screen y = offY + footRow·ts.
    */
-  function drawOccluded(ctx, sc, img, sx, sy, sw, sh, dx, dy, footRow, offX, offY, tint, shadow) {
+  function drawOccluded(ctx, sc, img, sx, sy, sw, sh, dx, dy, footRow, offX, offY, tint, shadow, op) {
     if (tmp.width < sw || tmp.height < sh) { tmp.width = Math.max(tmp.width, sw); tmp.height = Math.max(tmp.height, sh); }
     tctx.setTransform(1, 0, 0, 1, 0, 0);
     tctx.globalCompositeOperation = 'source-over';
@@ -186,7 +274,9 @@ var BridgeScene = (function () {
       }
     }
     tctx.putImageData(data, 0, 0);
+    if (op) { ctx.save(); ctx.globalCompositeOperation = op; }
     ctx.drawImage(tmp, 0, 0, sw, sh, dx, dy, sw, sh);
+    if (op) ctx.restore();
   }
 
   function getSheet(name) {
@@ -229,6 +319,7 @@ var BridgeScene = (function () {
   return {
     load: load,
     get: get,
+    setLayers: setLayers,
     drawBackground: drawBackground,
     drawOccluded: drawOccluded,
     tintAt: tintAt,

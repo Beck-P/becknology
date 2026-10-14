@@ -462,15 +462,24 @@
   function drawViewportOverlay(ctx, world, offX, offY, ts, time) {
     if (!vpStars) initViewportStars();
 
-    var vpX = Math.floor(offX + VP_COL_MIN * ts);
-    var vpY = Math.floor(offY + VP_ROW_MIN * ts);
-    var vpW = Math.ceil((VP_COL_MAX - VP_COL_MIN) * ts);
-    var vpH = Math.ceil((VP_ROW_MAX - VP_ROW_MIN) * ts);
+    // From the scene's sky rect when the bridge is a pre-rendered scene
+    // (drawn behind it, showing through the viewport hole)
+    var sky = world && world.scene && world.scene.sky;
+    var c0 = sky ? sky[0] : VP_COL_MIN, r0 = sky ? sky[1] : VP_ROW_MIN;
+    var c1 = sky ? sky[2] : VP_COL_MAX, r1 = sky ? sky[3] : VP_ROW_MAX;
+    var vpX = Math.floor(offX + c0 * ts);
+    var vpY = Math.floor(offY + r0 * ts);
+    var vpW = Math.ceil((c1 - c0) * ts);
+    var vpH = Math.ceil((r1 - r0) * ts);
 
     ctx.save();
     ctx.beginPath();
     ctx.rect(vpX, vpY, vpW, vpH);
     ctx.clip();
+    if (sky) {
+      ctx.fillStyle = '#050510';
+      ctx.fillRect(vpX, vpY, vpW, vpH);
+    }
 
     // Slight blue-purple atmosphere
     var bgGrad = ctx.createLinearGradient(0, vpY, 0, vpY + vpH);
@@ -791,6 +800,27 @@
   });
 
   BridgeWorld.registerOverlay('bridge', bridgeOverlay);
+
+  // Pre-rendered bridge: the starfield shows through the viewport hole and
+  // the hologram is a depth-tested, screen-blended item over the pedestal.
+  var holoCanvas = null;
+  BridgeWorld.registerSceneHooks('bridge', {
+    behind: function (ctx, world, offX, offY, ts, time) {
+      drawViewportOverlay(ctx, world, offX, offY, ts, time);
+    },
+    items: function (world, offX, offY, ts, time, sc) {
+      var w = Math.ceil(4.4 * ts), h = Math.ceil(4.4 * ts);
+      var dx = Math.round(offX + 9.5 * ts - w / 2), dy = Math.round(offY + 2.4 * ts);
+      if (!holoCanvas) holoCanvas = document.createElement('canvas');
+      holoCanvas.width = w;
+      holoCanvas.height = h;
+      drawHologram(holoCanvas.getContext('2d'), offX - dx, offY - dy, ts, time);
+      var footRow = 6.9;
+      return [{ footRow: footRow, draw: function (ctx) {
+        BridgeScene.drawOccluded(ctx, sc, holoCanvas, 0, 0, w, h, dx, dy, footRow, offX, offY, null, null, 'lighter');
+      } }];
+    }
+  });
 
   // ---- Welcome listener ----
   // Track which world we were last in so we only fire on actual world changes,

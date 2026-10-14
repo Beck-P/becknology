@@ -120,16 +120,60 @@ def main():
         rgba[..., 3] = np.where(alpha, 255, 0)
         Image.fromarray(rgba, 'RGBA').save(os.path.join(od, state + '.png'), optimize=True)
 
-    # Packed depth
-    finite = depth[np.isfinite(depth)]
+    # Swappable decor variants (scenekit k.variant): each rendered alone in
+    # the room's light -> cropped lit image per state + depth
+    variants = []
+    for v in meta.get('variants', []):
+        vd = os.path.join(rd, v['dir'])
+        valb = load(os.path.join(vd, 'albedo.png'), 'RGBA')
+        vemi = load(os.path.join(vd, 'emission.png'), 'RGBA')
+        vids = load(os.path.join(vd, 'id.png'), 'RGB')
+        va = valb[..., 3] >= 128
+        bx0, by0, bx1, by1 = v['bbox']
+        box = np.zeros(va.shape, bool)
+        box[by0:by1, bx0:bx1] = True
+        va &= box
+        if not va.any():
+            continue
+        vdd = load16(os.path.join(vd, 'depth.png'))
+        if vdd.ndim == 3:
+            vdd = vdd[..., 0]
+        vdepth = np.where(va, meta['zmin'] + vdd * (meta['zmax'] - meta['zmin']) + meta['camDot'], np.inf)
+        ys, xs = np.nonzero(va)
+        x0, y0, x1, y1 = int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
+        imgs = {}
+        for state in meta['lightStates']:
+            light = load16(os.path.join(vd, 'light_' + state + '.png'))
+            img = lines(toon(valb, light, vemi), vids, vdepth, va)
+            rgba = np.zeros(valb.shape, np.uint8)
+            rgba[..., :3] = (img * 255 + 0.5).astype(np.uint8)
+            rgba[..., 3] = np.where(va, 255, 0)
+            imgs[state] = rgba[y0:y1, x0:x1]
+        variants.append((v, (x0, y0, x1, y1), imgs, vdepth[y0:y1, x0:x1]))
+
+    # Packed depth (one range for the base and every variant)
+    finite = [depth[np.isfinite(depth)]] + [vdp[np.isfinite(vdp)] for _, _, _, vdp in variants]
+    finite = np.concatenate(finite)
     dmin, dmax = float(finite.min()) - 0.01, float(finite.max()) + 0.01
-    q = np.where(np.isfinite(depth), (depth - dmin) / (dmax - dmin) * 65534, 65535)
-    q = np.clip(q + 0.5, 0, 65535).astype(np.uint32)
-    packed = np.zeros(albedo.shape, np.uint8)
-    packed[..., 0] = q >> 8
-    packed[..., 1] = q & 255
-    packed[..., 3] = 255
-    Image.fromarray(packed, 'RGBA').save(os.path.join(od, 'depth.png'), optimize=True)
+
+    def pack(dp):
+        q = np.where(np.isfinite(dp), (dp - dmin) / (dmax - dmin) * 65534, 65535)
+        q = np.clip(q + 0.5, 0, 65535).astype(np.uint32)
+        out = np.zeros(dp.shape + (4,), np.uint8)
+        out[..., 0] = q >> 8
+        out[..., 1] = q & 255
+        out[..., 3] = 255
+        return out
+    Image.fromarray(pack(depth), 'RGBA').save(os.path.join(od, 'depth.png'), optimize=True)
+
+    layers = {}
+    for v, (x0, y0, x1, y1), imgs, vdp in variants:
+        ld = os.path.join(od, 'layers', v['slot'], v['key'])
+        os.makedirs(ld, exist_ok=True)
+        for state, rgba in imgs.items():
+            Image.fromarray(rgba, 'RGBA').save(os.path.join(ld, state + '.png'), optimize=True)
+        Image.fromarray(pack(vdp), 'RGBA').save(os.path.join(ld, 'depth.png'), optimize=True)
+        layers.setdefault(v['slot'], {})[v['key']] = {'x': x0, 'y': y0, 'w': x1 - x0, 'h': y1 - y0}
 
     # Per-tile light on characters (probe plane at chest height)
     theta = math.radians(meta['theta'])
@@ -165,6 +209,8 @@ def main():
         'states': meta['lightStates'],
         'tileLight': tiles,
     }
+    if layers:
+        out['layers'] = layers
     json.dump(out, open(os.path.join(od, 'scene.json'), 'w'), separators=(',', ':'))
     print('wrote', od, out['width'], 'x', out['height'], 'depth', round(dmin, 2), round(dmax, 2))
 

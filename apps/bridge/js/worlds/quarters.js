@@ -809,7 +809,17 @@
   var ownedDecor = {};
   function refreshDecor() {
     if (typeof BridgeProgression === 'undefined') return;
-    BridgeProgression.getDecor().then(function (d) { ownedDecor = d || {}; });
+    BridgeProgression.getDecor().then(function (d) { ownedDecor = d || {}; applySceneLayers(); });
+  }
+
+  // Pre-rendered room (assets/scenes/quarters): owned decor and earned
+  // trophies are variants composited into the render.
+  function applySceneLayers() {
+    if (typeof BridgeScene === 'undefined') return;
+    var m = { plant: ownedDecor.plant || null, lamp: ownedDecor.lamp || null, poster: ownedDecor.poster || null,
+              tank: ownedDecor.tank || null, shelf: ownedDecor.shelf || null };
+    TROPHY_ORDER.forEach(function (key) { m['trophy_' + key] = earnedTrophies.has(key) ? 'on' : null; });
+    BridgeScene.setLayers('quarters', m);
   }
 
   function drawSlotPlant(ctx, x, y, ts, time, col, row) {
@@ -1469,17 +1479,25 @@
   function drawViewportOverlay(ctx, world, offX, offY, ts, time) {
     if (!vpStars) initViewportStars();
 
-    // Compute viewport rect in screen coords
-    var vpX = Math.floor(offX + VP_COL_MIN * ts);
-    var vpY = Math.floor(offY + VP_ROW_MIN * ts);
-    var vpW = Math.ceil((VP_COL_MAX - VP_COL_MIN) * ts);
-    var vpH = Math.ceil((VP_ROW_MAX - VP_ROW_MIN) * ts);
+    // Viewport rect in screen coords — from the scene's sky rect when the
+    // room is a pre-rendered scene (drawn behind it, through the window hole)
+    var sky = world && world.scene && world.scene.sky;
+    var c0 = sky ? sky[0] : VP_COL_MIN, r0 = sky ? sky[1] : VP_ROW_MIN;
+    var c1 = sky ? sky[2] : VP_COL_MAX, r1 = sky ? sky[3] : VP_ROW_MAX;
+    var vpX = Math.floor(offX + c0 * ts);
+    var vpY = Math.floor(offY + r0 * ts);
+    var vpW = Math.ceil((c1 - c0) * ts);
+    var vpH = Math.ceil((r1 - r0) * ts);
 
     ctx.save();
     // Clip to viewport rect — content stays inside the window
     ctx.beginPath();
     ctx.rect(vpX, vpY, vpW, vpH);
     ctx.clip();
+    if (sky) {
+      ctx.fillStyle = '#050510';
+      ctx.fillRect(vpX, vpY, vpW, vpH);
+    }
 
     // Subtle deep-space gradient (top slightly purple, bottom slightly black)
     var bgGrad = ctx.createLinearGradient(0, vpY, 0, vpY + vpH);
@@ -1629,14 +1647,14 @@
   // Hangouts in tile coordinates (where the drone idles).
   // Picks one at random, drifts there, idles, picks another.
   var DRONE_HANGOUTS = [
-    { x: 1.8, y: 4.5 },   // above the bed
-    { x: 6.5, y: 4.8 },   // above the trophy shelves
-    { x: 12.0, y: 4.8 },  // above the desk
-    { x: 7.5, y: 6.5 },   // center of room
-    { x: 6.0, y: 7.5 },   // above the rug
-    { x: 13.5, y: 9.0 },  // near the catalog terminal
-    { x: 9.0, y: 9.0 },   // above the nebula tank slot
-    { x: 4.0, y: 8.0 }    // near the plant slot
+    { x: 2.0, y: 4.6 },   // above the bed
+    { x: 6.5, y: 4.4 },   // by the trophy cabinet
+    { x: 12.4, y: 5.3 },  // by the desk
+    { x: 8.0, y: 6.5 },   // center of room
+    { x: 6.0, y: 8.0 },   // above the rug
+    { x: 13.6, y: 8.4 },  // near the catalog terminal
+    { x: 9.4, y: 8.4 },   // behind the tank stand
+    { x: 3.6, y: 8.3 }    // near the plant slot
   ];
 
   var drone = {
@@ -1787,8 +1805,20 @@
     }
   }
 
-  function drawSteam(ctx, offX, offY, ts, time) {
+  function drawSteam(ctx, offX, offY, ts, time, world) {
     var u = ts / 16;
+    var steamAt = world && world.scene && world.scene.steam;
+    if (steamAt) {   // the mug is in the render — just the steam rising off it
+      var sx0 = offX + steamAt[0] * ts - u, sy0 = offY + steamAt[1] * ts;
+      for (var si = 0; si < steamParticles.length; si++) {
+        var sp = steamParticles[si];
+        var sa = (1 - sp.life / sp.maxLife) * 0.45;
+        if (sa <= 0) continue;
+        ctx.fillStyle = 'rgba(220, 220, 240, ' + sa.toFixed(2) + ')';
+        ctx.fillRect(Math.round(sx0 + u + sp.x), Math.round(sy0 - sp.y * 0.4), Math.max(1, Math.floor(u * 0.6)), Math.max(1, Math.floor(u * 0.6)));
+      }
+      return;
+    }
     // Mug position: on the right end of the desk surface (col 13, row 5, top portion)
     var mugX = offX + 13.4 * ts;
     var mugY = offY + 5.1 * ts;
@@ -1890,6 +1920,33 @@
 
   BridgeWorld.registerOverlay('quarters', quartersOverlay);
 
+  // Pre-rendered room: the starfield shows through the viewport hole, the
+  // drone is depth-tested against the furniture, steam rises over the mug.
+  var droneCanvas = null;
+  BridgeWorld.registerSceneHooks('quarters', {
+    behind: function (ctx, world, offX, offY, ts, time) {
+      drawViewportOverlay(ctx, world, offX, offY, ts, time);
+    },
+    items: function (world, offX, offY, ts, time, sc) {
+      updateDrone(time, world);
+      var size = 2 * ts;
+      if (!droneCanvas) droneCanvas = document.createElement('canvas');
+      droneCanvas.width = size;
+      droneCanvas.height = size;
+      var dx = Math.round(offX + drone.x * ts - size / 2);
+      var dy = Math.round(offY + drone.y * ts - size / 2);
+      drawDrone(droneCanvas.getContext('2d'), offX - dx, offY - dy, ts, time);
+      var footRow = drone.y + 0.5;
+      return [{ footRow: footRow, draw: function (ctx) {
+        BridgeScene.drawOccluded(ctx, sc, droneCanvas, 0, 0, size, size, dx, dy, footRow, offX, offY, null, null);
+      } }];
+    },
+    over: function (ctx, world, offX, offY, ts, time) {
+      updateSteam(time);
+      drawSteam(ctx, offX, offY, ts, time, world);
+    }
+  });
+
   // ---- State listener: welcome toast on quarters entry ----
   // Track lastWorldId so we fire on real world changes (e.g. bridge→quarters,
   // not on re-renders that re-dispatch transition('world') with same worldId).
@@ -1913,6 +1970,7 @@
     if (typeof BridgeProgression !== 'undefined') {
       BridgeProgression.getAchievements().then(function (set) {
         earnedTrophies = set;
+        applySceneLayers();
       });
     }
 

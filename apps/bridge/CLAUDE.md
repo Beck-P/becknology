@@ -208,7 +208,7 @@ python3 tools/bridge-art/sprites_post.py npc /tmp/chars/npc-bartender
 ### Pre-rendered Blender scenes (the target for every world)
 Rooms and areas are being rebuilt as Blender scenes. A scene is a script in `tools/bridge-art/scenes/` that places parts from an asset kit on the world's own tile grid, renders it, and rewrites the world JSON to match what was built (`scenekit.apply_world`: collisions from the placed objects, interactions moved onto their objects, NPC actors, the `scene` reference). Kits: `assets_lumar.py` (Lumar rooms — floors, walls, furniture, shop fittings, fireplaces, lamps), `assets_magic.py` (octagonal masonry rooms, angled windows, spell circles, candelabras, telescope…), `assets_cave.py` (rock faces, cave floor, lava, the dragon, hoard).
 
-Done so far: the tavern, inn, bakery, smithy, apothecary, the sorceress's tower and the dragon's cave.
+Done so far: the tavern, inn, bakery, smithy, apothecary, the sorceress's tower, the dragon's cave, the pilot's quarters and the bridge (`assets_ship.py`).
 
 ```
 BVENV/bin/python tools/bridge-art/scenes/lumar_tavern.py /tmp/tavern
@@ -224,6 +224,10 @@ python3 tools/bridge-art/scene_post.py /tmp/tavern apps/bridge/assets/scenes/lum
 - **Scenekit primitives** (all in tile units — x, row, z): `box`, `cyl`, `cyl_x`, `cyl_y`, `sphere`, `cone`, plus oriented ones — `bar` (a box between two floor points, for angled walls and rune strokes), `tube` (cylinder/cone between two 3D points: limbs, telescopes, horns), `blob` (rotated ellipsoid), `rock` (faceted boulder) and `poly` (flat surface: wing membranes, sails). Meshes are built with bmesh, so a scene of a thousand-plus parts builds in seconds.
 - **Glows add on top of the lit colour.** Give a glowing part a dark albedo and an emission of strength ≤ 1 in a saturated colour; bright albedo + strong emission clips to white.
 - Mark tiles an object stands on with `k.solid(...)`, including tiles NPC actors stand on — `apply_world` only knows what you mark.
+- **Holes onto live art:** a part with albedo `'HOLDOUT'` renders transparent (viewports onto space). The world's `scene.sky` rect (screen tiles) tells the world script where to draw its animated sky; register it as the `behind` hook (below).
+- **Swappable decor:** parts built inside `with k.variant(slot, key):` are left out of the base render and rendered alone in the room's light; `scene_post.py` writes them to `layers/<slot>/<key>/`. The world script calls `BridgeScene.setLayers(sceneId, {slot: key|null})` and the engine composites the chosen variants into the scene image and depth (the quarters' catalog decor and trophies work this way).
+- **Live things in a scene world** register `BridgeWorld.registerSceneHooks(tileset, {behind, items, over})`: `behind` draws before the render (shows through holes), `items` returns `{footRow, draw}` entries sorted with the characters — draw them with `BridgeScene.drawOccluded(...)` so furniture hides them correctly (the drone, the hologram) — and `over` draws on top (steam).
+- Ship scenes use `flicker.mode: "pulse"` — a slow breathing cross-fade between the light states for LED strips, instead of firelight flicker.
 
 ### Lighting
 A world opts in with a `lighting` block in its JSON (see the header of `js/lighting.js` for every field): an `ambient` colour, `fromGlow` (reuse the world's `tileGlow` tiles as lights, with `skip` for things like glowing sea), `tileLights` (a light on every tile of a type — lanterns, fireplaces, lava), hand-placed `lights`, a faint `pilot` light and `bloom`. Keep lights where the art shows a source, warm for fire and lamps, coloured for magic and neon. Lighting is subtle on the ship and stations and moody at night in Lumar.

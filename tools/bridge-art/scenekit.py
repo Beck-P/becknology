@@ -18,6 +18,7 @@ scene_post.py turns them into the toon-shaded art + packed depth + meta.
 Run inside Blender's Python (bpy). Engine depth convention (also used by
 world.js): depth = -row * cot(THETA) - z * sin(THETA); larger = farther.
 """
+import contextlib
 import json
 import math
 import os
@@ -25,6 +26,7 @@ import random
 
 import bpy
 import bmesh  # noqa: E402  (bpy must be imported first)
+from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Euler, Matrix, Vector
 
 THETA = math.radians(45)
@@ -63,6 +65,9 @@ class Kit:
         self.pid_names = {}
         self.rng = random.Random(seed)
         self.blocked = set()  # (col,row) cells marked solid by placed objects
+        self.variants = []    # swappable decor: {slot, key, parts, lights}
+        self._var = None      # variant being built (see variant())
+        self._active_var = None
         self.scene.world = bpy.data.worlds.new('w')
 
     # ---- ids / materials -------------------------------------------------
@@ -81,8 +86,33 @@ class Kit:
             # round sides smooth, flat caps/tops flat
             p.use_smooth = smooth and abs(p.normal.z) < 0.5
         o.data.materials.append(bpy.data.materials.new('tmp'))
-        self.parts.append({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
+        self._add_part({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
         return o
+
+    def _add_part(self, d):
+        d['var'] = self._var
+        self.parts.append(d)
+        if self._var is not None:
+            self._var['parts'].append(d)
+
+    def _add_light(self, d):
+        d['var'] = self._var
+        self.lights.append(d)
+        if self._var is not None:
+            self._var['lights'].append(d)
+
+    @contextlib.contextmanager
+    def variant(self, slot, key):
+        """Parts and lights built inside `with k.variant(slot, key):` are
+        swappable decor: left out of the base render, then rendered on their
+        own in the room's light (room still casting shadows) so the engine
+        can composite whichever variant the player owns."""
+        self._var = {'slot': slot, 'key': key, 'parts': [], 'lights': []}
+        try:
+            yield
+        finally:
+            self.variants.append(self._var)
+            self._var = None
 
     # ---- primitives in tile space ---------------------------------------
     # Meshes go straight into mesh data with bmesh: bpy.ops primitives get
@@ -121,7 +151,7 @@ class Kit:
         for p in o.data.polygons:
             p.use_smooth = abs(p.normal[axis]) < 0.5
         o.data.materials.append(bpy.data.materials.new('tmp'))
-        self.parts.append({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
+        self._add_part({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
         return o
 
     def cyl_y(self, cx, r0, r1, cz, rx, rz, albedo, part, emit=None, verts=16):
@@ -209,7 +239,7 @@ class Kit:
         o = bpy.data.objects.new('L', ld)
         self.scene.collection.objects.link(o)
         o.location = (x, -r * S, z)
-        self.lights.append({'obj': o, 'energy': energy, 'group': group})
+        self._add_light({'obj': o, 'energy': energy, 'group': group})
         return o
 
     def area_light(self, x, r, z, color, energy, size, rot=(0, 0, 0), group='static'):
@@ -221,11 +251,14 @@ class Kit:
         self.scene.collection.objects.link(o)
         o.location = (x, -r * S, z)
         o.rotation_euler = rot
-        self.lights.append({'obj': o, 'energy': energy, 'group': group})
+        self._add_light({'obj': o, 'energy': energy, 'group': group})
         return o
 
     def solid(self, x0, r0, x1, r1):
-        """Mark tiles [x0,x1) × [r0,r1) as blocked for the collision map."""
+        """Mark tiles [x0,x1) × [r0,r1) as blocked for the collision map
+        (ignored inside a variant: decor doesn't change collisions)."""
+        if self._var is not None:
+            return
         for c in range(int(x0), int(math.ceil(x1))):
             for r in range(int(r0), int(math.ceil(r1))):
                 self.blocked.add((c, r))
@@ -289,10 +322,29 @@ class Kit:
             nt.links.new(ramp.outputs['Color'], em.inputs['Color'])
         return self._emission_mat('alb', fn)
 
+    def _holdout(self):
+        m = bpy.data.materials.get('holdout')
+        if m:
+            return m
+        m = bpy.data.materials.new('holdout')
+        m.use_nodes = True
+        nt = m.node_tree
+        nt.nodes.clear()
+        out = nt.nodes.new('ShaderNodeOutputMaterial')
+        h = nt.nodes.new('ShaderNodeHoldout')
+        nt.links.new(h.outputs['Holdout'], out.inputs['Surface'])
+        return m
+
     def _assign(self, kind, light_state=None):
         cache = {}
         for p in self.parts:
             o = p['obj']
+            o.hide_render = p['var'] is not None and p['var'] is not self._active_var
+            if p['albedo'] == 'HOLDOUT':
+                # a hole in the render (windows onto the engine's live sky)
+                o.data.materials[0] = self._holdout()
+                o.visible_shadow = False
+                continue
             if kind == 'albedo':
                 key = ('a', str(p['albedo']))
                 if key not in cache:
@@ -332,7 +384,7 @@ class Kit:
             # glowing parts (lamp glass, flames) must not block their own light
             o.visible_shadow = not p['emit']
         for L in self.lights:
-            L['obj'].hide_render = kind != 'light'
+            L['obj'].hide_render = kind != 'light' or (L['var'] is not None and L['var'] is not self._active_var)
             if kind == 'light' and light_state:
                 L['obj'].data.energy = L['energy'] * light_state.get(L['group'], 1.0)
 
@@ -391,6 +443,53 @@ class Kit:
         self.scene.render.filepath = path
         bpy.ops.render.render(write_still=True)
 
+    def _variant_bbox(self, v, margin=6):
+        bpy.context.view_layer.update()
+        cam = self.scene.camera
+        xs, ys = [], []
+        for p in v['parts']:
+            o = p['obj']
+            for c in o.bound_box:
+                co = world_to_camera_view(self.scene, cam, o.matrix_world @ Vector(c))
+                xs.append(co.x * self.resx)
+                ys.append((1 - co.y) * self.resy)
+        x0 = max(0, int(min(xs)) - margin)
+        y0 = max(0, int(min(ys)) - margin)
+        x1 = min(self.resx, int(math.ceil(max(xs))) + margin)
+        y1 = min(self.resy, int(math.ceil(max(ys))) + margin)
+        return [x0, y0, x1, y1]
+
+    def _render_variants(self, out, light_states, light_samples):
+        """Each variant alone, in the room's light: room parts stay in the
+        scene (shadows, bounce) but are invisible to the camera, and only the
+        variant's screen box is rendered."""
+        done = []
+        sc = self.scene
+        for v in self.variants:
+            bb = self._variant_bbox(v)
+            d = os.path.join(out, 'variants', v['slot'] + '__' + v['key'])
+            os.makedirs(d, exist_ok=True)
+            self._active_var = v
+            for p in self.parts:
+                p['obj'].visible_camera = p['var'] is v
+            sc.render.use_border = True
+            sc.render.use_crop_to_border = False
+            sc.render.border_min_x, sc.render.border_max_x = bb[0] / self.resx, bb[2] / self.resx
+            sc.render.border_min_y, sc.render.border_max_y = 1 - bb[3] / self.resy, 1 - bb[1] / self.resy
+            self._assign('albedo'); self._settings(1); self._render(os.path.join(d, 'albedo.png'))
+            self._assign('emission'); self._settings(1); self._render(os.path.join(d, 'emission.png'))
+            self._assign('id'); self._settings(1); self._render(os.path.join(d, 'id.png'))
+            self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(d, 'depth.png'))
+            for name, state in light_states.items():
+                self._assign('light', state); self._settings(light_samples, raw=True, sixteen=True)
+                self._render(os.path.join(d, 'light_' + name + '.png'))
+            done.append({'slot': v['slot'], 'key': v['key'], 'dir': os.path.relpath(d, out), 'bbox': bb})
+        self._active_var = None
+        sc.render.use_border = False
+        for p in self.parts:
+            p['obj'].visible_camera = True
+        return done
+
     def render(self, out, light_states=None, probe_z=0.9, light_samples=160, world_light=('#202838', 0.25)):
         """light_states: {'name': {group: multiplier}} — one light pass each."""
         os.makedirs(out, exist_ok=True)
@@ -429,6 +528,8 @@ class Kit:
         for p in self.parts:
             p['obj'].visible_camera = True
 
+        variants = self._render_variants(out, light_states, light_samples)
+
         meta = {
             'cols': self.cols, 'rows': self.rows,
             'width': self.resx, 'height': self.resy,
@@ -438,12 +539,13 @@ class Kit:
             'probeZ': probe_z,
             'lightStates': list(light_states),
             'blocked': sorted([list(b) for b in self.blocked]),
+            'variants': variants,
         }
         json.dump(meta, open(os.path.join(out, 'render.json'), 'w'), indent=1)
         return meta
 
 
-def apply_world(path, kit, floor, doors=(), moves=None, actors=(), scene_id=None, extra_walkable=()):
+def apply_world(path, kit, floor, doors=(), moves=None, actors=(), scene_id=None, extra_walkable=(), scene_extra=None):
     """Rewrite a world JSON to match a built scene.
 
     floor: (c0, r0, c1, r1) inclusive tile range of the room floor; tiles in it
@@ -487,5 +589,10 @@ def apply_world(path, kit, floor, doors=(), moves=None, actors=(), scene_id=None
     for key in ('lighting', 'tileGlow', 'ambientGlow'):
         w.pop(key, None)
     w['scene'] = {'id': scene_id, 'flicker': {'from': 'dim', 'to': 'full'}, 'actors': list(actors)}
+    for key, val in (scene_extra or {}).items():
+        if isinstance(val, dict) and isinstance(w['scene'].get(key), dict):
+            w['scene'][key].update(val)
+        else:
+            w['scene'][key] = val
     open(path, 'w').write(json.dumps(w, indent=2) + '\n')
     return w
