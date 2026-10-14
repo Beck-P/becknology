@@ -1,0 +1,60 @@
+{
+  "skewer-cart": {
+    "name": "The Skewer Cart", "world": "arcadia-street", "label": "SKEWER CART", "loc": "arcadia",
+    "price": 300, "rate": 40, "cap": 8,
+    "pitch": "THE OLD MAN WHO RUNS IT WANTS OUT. \"BUY THE CART, KEEP THE GRILL HOT, TAKE THE NIGHT TRADE.\"",
+    "upgrades": [
+      { "name": "A second grill", "cost": 250, "mult": 1.5 },
+      { "name": "A neon sign that says SKEWERS", "cost": 400, "mult": 1.4 }
+    ]
+  },
+  "soda-cart": {
+    "name": "The Soda Cart", "world": "arcadia-street", "label": "SODA CART", "loc": "arcadia",
+    "price": 200, "rate": 25, "cap": 8,
+    "pitch": "TWELVE FLAVOURS NOBODY CAN NAME. THE VENDOR'S SELLING UP TO CHASE A CAREER IN THE ARCADE.",
+    "upgrades": [
+      { "name": "A thirteenth flavour", "cost": 180, "mult": 1.5 }
+    ]
+  },
+  "crab-pots": {
+    "name": "Rose Cove Crab Pots", "world": "lumar-rose", "label": "CRAB POTS", "loc": "lumar",
+    "price": 150, "rate": 15, "cap": 12,
+    "pitch": "A LINE OF POTS ON THE COVE JETTY. PELL SAYS THE ROSEITE CRABS FETCH A GOOD PRICE IN SAPPHIRE, IF ANYONE BOTHERS TO HAUL THEM.",
+    "upgrades": [
+      { "name": "Twice as many pots", "cost": 160, "mult": 1.8 }
+    ]
+  },
+  "bathhouse": {
+    "name": "The Rose Bathhouse", "world": "lumar-rose", "label": "BATHHOUSE", "loc": "lumar",
+    "price": 600, "rate": 70, "cap": 10,
+    "pitch": "THE HARVESTERS RUN IT BETWEEN SHIFTS AND HATE IT. THEY'D SELL YOU THE LEASE IN A HEARTBEAT.",
+    "upgrades": [
+      { "name": "Paper lanterns all the way down the path", "cost": 300, "mult": 1.3 },
+      { "name": "A second pool, dug and lined", "cost": 700, "mult": 1.6 }
+    ]
+  },
+  "fish-stall": {
+    "name": "Sapphire Fish Stall", "world": "lumar-sapphire", "label": "FISH STALL", "loc": "lumar",
+    "price": 400, "rate": 50, "cap": 8,
+    "pitch": "THE STALL'S OWNER IS RETIRING TO THE ROSE BATHHOUSE. THE ICE, THE AWNING AND THE REGULARS COME WITH IT.",
+    "upgrades": [
+      { "name": "Your own fishing boat at the pier", "cost": 500, "mult": 1.7 }
+    ]
+  },
+  "spice-stall": {
+    "name": "Sapphire Spice Stall", "world": "lumar-sapphire", "label": "SPICE STALL", "loc": "lumar",
+    "price": 350, "rate": 40, "cap": 8,
+    "pitch": "SIX COLOURS OF SALT AND A SUGAR THAT GLOWS IN THE DARK. THE TRADER WANTS TO GO BACK TO SEA.",
+    "upgrades": [
+      { "name": "Spore-pepper from Crimson Reach", "cost": 300, "mult": 1.5 }
+    ]
+  },
+  "vending-machine": {
+    "name": "The Vending Machine at the Edge of the Universe", "world": "singularity", "label": "VENDING MACHINE", "loc": "singularity",
+    "price": 999, "rate": 5, "cap": 48,
+    "pitch": "IT HUMS. NO POWER CABLE. A STICKER ON THE SIDE: \"FRANCHISE AVAILABLE. ENQUIRE WITHIN.\" THERE IS NO WITHIN.",
+    "upgrades": [
+      { "name": "Restock with cans from a cycle that hasn't happened yet", "cost": 1500, "mult": 4 }
+    ]
+  }
+}

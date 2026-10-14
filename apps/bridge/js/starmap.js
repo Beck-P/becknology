@@ -116,6 +116,9 @@ var BridgeStarmap = (function () {
         }
       });
     }
+    if (typeof BridgeBusiness !== 'undefined') {
+      BridgeBusiness.summary().forEach(function (b) { if (b.loc === loc && b.pending > 0) out.push(b.name + ': ' + b.pending + ' coins to collect'); });
+    }
     if (!out.length) return '';
     return '<div class="nav-p-sub">Waiting for you</div><ul class="nav-p-list">' +
       out.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';

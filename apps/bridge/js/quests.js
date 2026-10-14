@@ -98,7 +98,16 @@ var BridgeQuests = (function () {
         crew.map(function (c) { return '<li class="found"><b>' + esc(c.name) + '</b>, ' + esc(c.role) + ' - ' + esc(c.perkText) + '</li>'; }).join('') +
         '</ul></section>';
     }
-    if (!ids.length && !crew.length) {
+    var biz = typeof BridgeBusiness !== 'undefined' ? BridgeBusiness.summary() : [];
+    if (biz.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your businesses</span>' +
+        '<span class="qj-q-count">' + biz.length + '</span></div><ul class="qj-clues">' +
+        biz.map(function (b) {
+          return '<li class="found"><b>' + esc(b.name) + '</b> - ' + b.perHour + ' coins an hour' + (b.manager ? ', run by ' + esc(b.manager) : '') +
+            (b.pending ? '. <b>' + b.pending + '</b> waiting to collect' : '') + '</li>';
+        }).join('') + '</ul></section>';
+    }
+    if (!ids.length && !crew.length && !biz.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {

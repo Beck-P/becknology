@@ -1074,3 +1074,4 @@ body::after {
 .wd-sell-row { display: flex; justify-content: space-between; padding: 3px 2px; border-bottom: 1px dashed rgba(128, 128, 128, 0.25); }
 .wd-sell-row.none { opacity: 0.4; }
 .wd-opt[disabled] { opacity: 0.5; }
+.wd-note { margin-top: 6px; font-style: italic; opacity: 0.85; }

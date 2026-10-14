@@ -315,6 +315,8 @@ var BridgeInteractions = (function () {
     var person = (inter.type === 'dialog' || inter.type === 'random_dialog') && typeof BridgePeople !== 'undefined' &&
       BridgePeople.find(BridgeWorld.getWorldId(), inter.label);
     if (person) { showConversation(person, inter); return; }
+    var biz = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.find(BridgeWorld.getWorldId(), inter.label);
+    if (biz) { showBusiness(biz, inter); return; }
     switch (inter.type) {
       case 'app':
         // Save world position, then navigate to app
@@ -637,6 +639,76 @@ var BridgeInteractions = (function () {
     dialogEl.addEventListener('click', function () {
       if (typing && !typing.done) typing.finish(); else hideDialog();
     });
+  }
+
+  // A business's ledger: buy it, or collect its takings, upgrade it, put crew in charge.
+  function showBusiness(biz, inter, note) {
+    hideDialog();
+    dialogVisible = true;
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
+    var overlay = document.getElementById('world-overlay');
+    var dialogEl = dialogShell('shop');
+    var B = BridgeBusiness, id = biz.id, own = B.owned(id), acts = [];
+    var lines = '';
+    if (!own) {
+      lines = '<div class="wd-text">' + esc(reflow(biz.pitch)) + '</div>' +
+        '<div class="wd-sell"><div class="wd-sell-row"><span>Takings</span><span>' + biz.rate + ' coins an hour</span></div>' +
+        '<div class="wd-sell-row"><span>Holds up to</span><span>' + biz.cap + ' hours</span></div></div>';
+      acts.push({ label: 'Buy it for ' + biz.price + ' coins', act: 'buy' });
+    } else {
+      var st = B.state(id), up = B.nextUpgrade(id), mgr = st.manager && BridgePeople.all()[st.manager];
+      lines = (inter.dialog ? '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>' : '') +
+        '<div class="wd-sell"><div class="wd-sell-row"><span>Yours since</span><span>' + new Date(st.owned).toLocaleDateString() + '</span></div>' +
+        '<div class="wd-sell-row"><span>Takings</span><span>' + B.perHour(id) + ' coins an hour</span></div>' +
+        '<div class="wd-sell-row"><span>Running it</span><span>' + (mgr ? esc(mgr.name) : 'Nobody (you)') + '</span></div>' +
+        '<div class="wd-sell-row"><span>Waiting to collect</span><span>' + B.pending(id) + ' coins</span></div></div>';
+      acts.push({ label: B.pending(id) ? 'Collect ' + B.pending(id) + ' coins' : 'Nothing to collect yet', act: 'collect', off: !B.pending(id) });
+      if (up) acts.push({ label: up.name + ' (' + up.cost + ')', act: 'upgrade' });
+      if (!st.manager) B.freeCrew().forEach(function (c) { acts.push({ label: 'Put ' + c.name + ' in charge', act: 'assign', who: c.id }); });
+    }
+    acts.push({ label: 'Leave', act: 'close' });
+    dialogEl.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(biz.name) + '</div>' + lines +
+      (note ? '<div class="wd-text wd-note">' + esc(note) + '</div>' : '') +
+      '<div class="wd-options">' + acts.map(function (a, i) {
+        return '<button class="wd-opt' + (i === 0 ? ' active' : '') + '"' + (a.off ? ' disabled' : '') + '>' + esc(a.label) + '</button>';
+      }).join('') + '</div>' + hintHTML('Esc', 'Leave') + '</div>';
+    overlay.appendChild(dialogEl);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
+    var btns = dialogEl.querySelectorAll('.wd-opt'), sel = 0, busy = false;
+    function choose(n) { sel = (n + btns.length) % btns.length; for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', j === sel); }
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      hideDialog();
+      if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+    }
+    function reopen(msg) { document.removeEventListener('keydown', onKey, true); showBusiness(biz, inter, msg); }
+    function fail(r) { return r && r.reason === 'offline' || !r ? 'NO WAY TO MOVE COINS RIGHT NOW.' : 'NOT ENOUGH COINS.'; }
+    function act(a) {
+      if (busy || a.off) return;
+      if (a.act === 'close') { close(); return; }
+      busy = true;
+      if (a.act === 'buy') B.buy(id).then(function (r) {
+        if (r.ok && typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Business', biz.name, 'Yours now');
+        reopen(r.ok ? 'IT\'S YOURS. COME BACK FOR THE TAKINGS.' : fail(r));
+      });
+      else if (a.act === 'collect') B.collect(id).then(function (r) { reopen(r.ok ? 'COLLECTED ' + r.amount + ' COINS.' : fail(r)); });
+      else if (a.act === 'upgrade') B.upgrade(id).then(function (r) { reopen(r.ok ? 'DONE. BUSINESS IS LOOKING UP.' : fail(r)); });
+      else if (a.act === 'assign') { B.assign(id, a.who); reopen('THEY\'LL KEEP IT RUNNING - AND RUNNING BETTER.'); }
+    }
+    function onKey(e) {
+      var k = e.key;
+      if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+      else if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); choose(sel + 1); }
+      else if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); choose(sel - 1); }
+      else if (k === 'Enter' || k === 'e' || k === 'E' || k === ' ') { e.preventDefault(); e.stopPropagation(); act(acts[sel]); }
+    }
+    for (var b = 0; b < btns.length; b++) {
+      (function (btn, idx) {
+        btn.addEventListener('mouseenter', function () { choose(idx); });
+        btn.addEventListener('click', function (e) { e.stopPropagation(); act(acts[idx]); });
+      })(btns[b], b);
+    }
+    document.addEventListener('keydown', onKey, true);
   }
 
   // Selling what you've gathered to someone who buys it: what they'll take,
