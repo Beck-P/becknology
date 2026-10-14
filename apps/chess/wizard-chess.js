@@ -1,19 +1,178 @@
 /**
- * Wizard Chess 3D — Battle Chess / Arcane Stone & Hearthfire Edition
+ * Wizard Chess 3D — Blender-Sculpted Battle Chess & Stockfish UCI Edition
  *
- * Procedurally sculpted & articulated 3D stone/obsidian chess statues,
- * choreographed melee & spell capture animations, rigid-body stone shatter
- * physics, dynamic hearthfire braziers, procedural Web Audio SFX, and a
- * minimax + alpha-beta + quiescence AI engine.
+ * - Loads Blender-sculpted 3D warrior statues (`/chess/assets/wizard-pieces.glb`)
+ *   with articulated `body`, `head`, `weapon`, `shield`, and `gem` sub-meshes.
+ * - Piece-specific choreographed combat duels (Pawn Shield-Bash & Thrust,
+ *   Knight Rearing Cavalry Leap, Rook Seismic Ground-Pound, Bishop Sky-Pillar
+ *   Smite, Queen Telekinetic Levitation & Vortex Crush, King Execution Cleave).
+ * - Real sub-mesh dismemberment (flying helmets, shields, swords) + rigid-body
+ *   stone shatter physics.
+ * - Real Stockfish UCI Web Worker engine with 6 ELO difficulty tiers, live
+ *   evaluation bar, and full Post-Game / Mid-Game Review Mode with 3D Best-Move
+ *   arrows, accuracy %, and move classifications.
  */
 import { Chess } from "https://cdn.jsdelivr.net/npm/chess.js@1.0.0-beta.6/+esm";
 import * as THREE from "https://esm.sh/three@0.160.0";
 import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js";
 
 const SQUARE_SIZE = 1.15;
 const BOARD_OFFSET = (7 * SQUARE_SIZE) / 2;
 
-// Piece values & piece-square positional tables (from White's perspective, rank 8 -> rank 1)
+export const DIFFICULTY_TIERS = {
+  1: { name: "Novice", elo: 800, skill: 0, depth: 2, movetime: 180, noise: 95, reward: 50, capReward: 3 },
+  2: { name: "Apprentice", elo: 1100, skill: 3, depth: 4, movetime: 280, noise: 40, reward: 150, capReward: 5 },
+  3: { name: "Battlemage", elo: 1450, skill: 7, depth: 7, movetime: 420, noise: 12, reward: 400, capReward: 8 },
+  4: { name: "Archmage", elo: 1800, skill: 12, depth: 10, movetime: 650, noise: 0, reward: 1000, capReward: 15 },
+  5: { name: "Grandmaster", elo: 2200, skill: 16, depth: 13, movetime: 900, noise: 0, reward: 2500, capReward: 25 },
+  6: { name: "Supreme Oracle", elo: 2600, skill: 20, depth: 16, movetime: 1250, noise: 0, reward: 5000, capReward: 50 }
+};
+
+export const WIZARD_THEMES = {
+  classic: {
+    id: "classic",
+    name: "Carved Alabaster & Obsidian",
+    whiteLabel: "Alabaster",
+    blackLabel: "Obsidian",
+    wStone: { color: 0xf4efe6, roughness: 0.34, metalness: 0.08, bumpScale: 0.022 },
+    wCloth: { color: 0xe6dfd2, roughness: 0.42, metalness: 0.06, bumpScale: 0.018 },
+    wTrim:  { color: 0xdcd3c2, roughness: 0.28, metalness: 0.28 },
+    wMetal: { color: 0xe2e4e8, roughness: 0.24, metalness: 0.55 },
+    wGem:   { color: 0xfff6e0, emissive: 0xd8b878, emissiveIntensity: 0.85 },
+    bStone: { color: 0x1b1a1f, roughness: 0.30, metalness: 0.22, bumpScale: 0.026 },
+    bCloth: { color: 0x26242b, roughness: 0.38, metalness: 0.18, bumpScale: 0.020 },
+    bTrim:  { color: 0x35323c, roughness: 0.26, metalness: 0.42 },
+    bMetal: { color: 0x3f3d48, roughness: 0.22, metalness: 0.65 },
+    bGem:   { color: 0xff9858, emissive: 0xc84818, emissiveIntensity: 0.95 },
+    lightSq: { color: 0xc9a679, roughness: 0.52, metalness: 0.06 },
+    darkSq:  { color: 0x3b261c, roughness: 0.46, metalness: 0.10 },
+    frame:   { color: 0x22120b, roughness: 0.58, metalness: 0.15 },
+    bezel:   { color: 0x9e7038, roughness: 0.32, metalness: 0.72 },
+    fog: 0x120906,
+    ambientColor: 0x664c3a,
+    keyColor: 0xffebd2,
+    rimColor: 0x8cb0ff,
+    brazierFlame: 0xffaa44,
+    brazierLight: 0xff8c38,
+    spellW: 0xffe8b8,
+    spellB: 0xff7840
+  },
+  marble: {
+    id: "marble",
+    name: "Carrara & Nero Marble",
+    whiteLabel: "Carrara",
+    blackLabel: "Nero Marble",
+    wStone: { color: 0xf7f8fa, roughness: 0.18, metalness: 0.06, bumpScale: 0.016 },
+    wCloth: { color: 0xe8ecf2, roughness: 0.24, metalness: 0.08, bumpScale: 0.014 },
+    wTrim:  { color: 0xdce2ec, roughness: 0.20, metalness: 0.35 },
+    wMetal: { color: 0xeef2f7, roughness: 0.16, metalness: 0.72 },
+    wGem:   { color: 0xffffff, emissive: 0xa8c8ff, emissiveIntensity: 0.75 },
+    bStone: { color: 0x111318, roughness: 0.16, metalness: 0.25, bumpScale: 0.020 },
+    bCloth: { color: 0x1c2028, roughness: 0.22, metalness: 0.22, bumpScale: 0.016 },
+    bTrim:  { color: 0x2b313d, roughness: 0.20, metalness: 0.48 },
+    bMetal: { color: 0x38404f, roughness: 0.18, metalness: 0.75 },
+    bGem:   { color: 0xd0dcff, emissive: 0x5870a8, emissiveIntensity: 0.80 },
+    lightSq: { color: 0xe2e6ec, roughness: 0.24, metalness: 0.08 },
+    darkSq:  { color: 0x222630, roughness: 0.22, metalness: 0.16 },
+    frame:   { color: 0x14171d, roughness: 0.35, metalness: 0.25 },
+    bezel:   { color: 0x9aa4b4, roughness: 0.24, metalness: 0.82 },
+    fog: 0x0c0f14,
+    ambientColor: 0x586478,
+    keyColor: 0xf4f7ff,
+    rimColor: 0x98bfff,
+    brazierFlame: 0xc8e0ff,
+    brazierLight: 0x88b8ff,
+    spellW: 0xd8ecff,
+    spellB: 0x7898d8
+  },
+  staunton: {
+    id: "staunton",
+    name: "Ancient Ivory & Ebony Wood",
+    whiteLabel: "Boxwood Ivory",
+    blackLabel: "Ebony",
+    wStone: { color: 0xebd9b7, roughness: 0.38, metalness: 0.05, bumpScale: 0.024 },
+    wCloth: { color: 0xdec69c, roughness: 0.44, metalness: 0.06, bumpScale: 0.020 },
+    wTrim:  { color: 0xcfb280, roughness: 0.32, metalness: 0.32 },
+    wMetal: { color: 0xd8c49e, roughness: 0.28, metalness: 0.48 },
+    wGem:   { color: 0xfff0c8, emissive: 0xc89840, emissiveIntensity: 0.65 },
+    bStone: { color: 0x22140d, roughness: 0.34, metalness: 0.12, bumpScale: 0.028 },
+    bCloth: { color: 0x311d13, roughness: 0.40, metalness: 0.12, bumpScale: 0.022 },
+    bTrim:  { color: 0x482d1e, roughness: 0.30, metalness: 0.35 },
+    bMetal: { color: 0x583a28, roughness: 0.26, metalness: 0.52 },
+    bGem:   { color: 0xffb068, emissive: 0xa85018, emissiveIntensity: 0.75 },
+    lightSq: { color: 0xd8b888, roughness: 0.46, metalness: 0.05 },
+    darkSq:  { color: 0x4a2514, roughness: 0.42, metalness: 0.08 },
+    frame:   { color: 0x2b1309, roughness: 0.50, metalness: 0.12 },
+    bezel:   { color: 0xb8863c, roughness: 0.30, metalness: 0.78 },
+    fog: 0x140a05,
+    ambientColor: 0x6a4830,
+    keyColor: 0xffe4bc,
+    rimColor: 0xd8a878,
+    brazierFlame: 0xffb448,
+    brazierLight: 0xff9234,
+    spellW: 0xffe098,
+    spellB: 0xd86828
+  },
+  iron: {
+    id: "iron",
+    name: "Forged Silver & Blackened Iron",
+    whiteLabel: "Silver Pewter",
+    blackLabel: "Forged Iron",
+    wStone: { color: 0xdadfe6, roughness: 0.24, metalness: 0.74, bumpScale: 0.025 },
+    wCloth: { color: 0xc4cbd4, roughness: 0.30, metalness: 0.68, bumpScale: 0.020 },
+    wTrim:  { color: 0xe6ebf2, roughness: 0.18, metalness: 0.86 },
+    wMetal: { color: 0xf0f4fa, roughness: 0.14, metalness: 0.92 },
+    wGem:   { color: 0xffffff, emissive: 0xc8dcff, emissiveIntensity: 0.90 },
+    bStone: { color: 0x1b1e24, roughness: 0.26, metalness: 0.72, bumpScale: 0.028 },
+    bCloth: { color: 0x262a32, roughness: 0.32, metalness: 0.65, bumpScale: 0.022 },
+    bTrim:  { color: 0x363c48, roughness: 0.22, metalness: 0.82 },
+    bMetal: { color: 0x464e5c, roughness: 0.18, metalness: 0.88 },
+    bGem:   { color: 0xff7848, emissive: 0xd83810, emissiveIntensity: 1.05 },
+    lightSq: { color: 0x9aa2ae, roughness: 0.38, metalness: 0.35 },
+    darkSq:  { color: 0x242830, roughness: 0.34, metalness: 0.45 },
+    frame:   { color: 0x14161b, roughness: 0.42, metalness: 0.55 },
+    bezel:   { color: 0x788292, roughness: 0.25, metalness: 0.85 },
+    fog: 0x0d0f13,
+    ambientColor: 0x545c6c,
+    keyColor: 0xfff0dc,
+    rimColor: 0x78a8ff,
+    brazierFlame: 0xff8830,
+    brazierLight: 0xff6818,
+    spellW: 0xdce8ff,
+    spellB: 0xff5828
+  },
+  sanctum: {
+    id: "sanctum",
+    name: "Moonstone & Shadow Onyx",
+    whiteLabel: "Moonstone",
+    blackLabel: "Shadow Onyx",
+    wStone: { color: 0xedf4fc, roughness: 0.22, metalness: 0.12, bumpScale: 0.018 },
+    wCloth: { color: 0xd8e5f4, roughness: 0.28, metalness: 0.14, bumpScale: 0.015 },
+    wTrim:  { color: 0xcce0f5, roughness: 0.20, metalness: 0.42 },
+    wMetal: { color: 0xe6f0fa, roughness: 0.16, metalness: 0.76 },
+    wGem:   { color: 0xd8f4ff, emissive: 0x58c8ff, emissiveIntensity: 1.25 },
+    bStone: { color: 0x14111e, roughness: 0.22, metalness: 0.28, bumpScale: 0.022 },
+    bCloth: { color: 0x201b30, roughness: 0.28, metalness: 0.24, bumpScale: 0.018 },
+    bTrim:  { color: 0x302946, roughness: 0.22, metalness: 0.48 },
+    bMetal: { color: 0x3e3658, roughness: 0.18, metalness: 0.72 },
+    bGem:   { color: 0xd888ff, emissive: 0x9838ff, emissiveIntensity: 1.25 },
+    lightSq: { color: 0xb8c6d8, roughness: 0.36, metalness: 0.15 },
+    darkSq:  { color: 0x201c32, roughness: 0.32, metalness: 0.22 },
+    frame:   { color: 0x110e1c, roughness: 0.45, metalness: 0.28 },
+    bezel:   { color: 0x7c8ca8, roughness: 0.26, metalness: 0.80 },
+    fog: 0x090710,
+    ambientColor: 0x4c4868,
+    keyColor: 0xe6eeff,
+    rimColor: 0x9c78ff,
+    brazierFlame: 0x78c8ff,
+    brazierLight: 0x5898ff,
+    spellW: 0x78dcff,
+    spellB: 0xb858ff
+  }
+};
+
+// Piece values & piece-square positional tables (used for fast local eval & fallback)
 const PIECE_VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
 
 const PST = {
@@ -79,15 +238,130 @@ const PST = {
   ]
 };
 
+// ---------- Stockfish UCI Web Worker Wrapper ----------
+class StockfishOracle {
+  constructor(onStatusChange) {
+    this.worker = null;
+    this.ready = false;
+    this.pendingResolve = null;
+    this.lastEvalCp = 0; // from side-to-move's perspective
+    this.lastMate = null;
+    this.lastPv = "";
+    this.onStatusChange = onStatusChange;
+    this.initWorker();
+  }
+
+  initWorker() {
+    try {
+      const workerBootstrap = `
+        var sfUrls = [
+          "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js",
+          "https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js"
+        ];
+        var loaded = false;
+        for (var i = 0; i < sfUrls.length; i++) {
+          try {
+            importScripts(sfUrls[i]);
+            loaded = true;
+            break;
+          } catch (e) {}
+        }
+      `;
+      const blob = new Blob([workerBootstrap], { type: "application/javascript" });
+      this.worker = new Worker(URL.createObjectURL(blob));
+
+      this.worker.onmessage = (e) => {
+        const line = typeof e.data === "string" ? e.data.trim() : "";
+        if (!line) return;
+
+        if (line === "uciok") {
+          this.ready = true;
+          this.worker.postMessage("isready");
+          if (this.onStatusChange) this.onStatusChange(true);
+        } else if (line.startsWith("info ") && line.includes(" score ")) {
+          const cpMatch = line.match(/score cp (-?\d+)/);
+          const mateMatch = line.match(/score mate (-?\d+)/);
+          const pvMatch = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+          if (cpMatch) {
+            this.lastEvalCp = parseInt(cpMatch[1], 10);
+            this.lastMate = null;
+          } else if (mateMatch) {
+            this.lastMate = parseInt(mateMatch[1], 10);
+            this.lastEvalCp = this.lastMate > 0 ? 9900 : -9900;
+          }
+          if (pvMatch) {
+            this.lastPv = pvMatch[1];
+          }
+        } else if (line.startsWith("bestmove ")) {
+          const parts = line.split(/\s+/);
+          const bestUci = parts[1];
+          if (this.pendingResolve) {
+            const res = this.pendingResolve;
+            this.pendingResolve = null;
+            res({
+              bestMoveUci: bestUci && bestUci !== "(none)" ? bestUci : null,
+              scoreCp: this.lastEvalCp,
+              mate: this.lastMate,
+              pv: this.lastPv || bestUci
+            });
+          }
+        }
+      };
+
+      this.worker.onerror = () => {
+        this.ready = false;
+        if (this.onStatusChange) this.onStatusChange(false);
+      };
+
+      this.worker.postMessage("uci");
+    } catch {
+      this.ready = false;
+      if (this.onStatusChange) this.onStatusChange(false);
+    }
+  }
+
+  queryPosition(fen, { skill = 20, depth = 12, movetime = 450 } = {}) {
+    if (!this.ready || !this.worker) {
+      return Promise.resolve(null);
+    }
+    return new Promise((resolve) => {
+      // Cancel any in-flight search
+      if (this.pendingResolve) {
+        this.worker.postMessage("stop");
+        this.pendingResolve(null);
+      }
+      this.lastEvalCp = 0;
+      this.lastMate = null;
+      this.lastPv = "";
+
+      const timeoutId = setTimeout(() => {
+        if (this.pendingResolve) {
+          this.pendingResolve = null;
+          resolve(null);
+        }
+      }, movetime + 1800);
+
+      this.pendingResolve = (result) => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      };
+
+      this.worker.postMessage(`setoption name Skill Level value ${skill}`);
+      this.worker.postMessage(`position fen ${fen}`);
+      this.worker.postMessage(`go depth ${depth} movetime ${movetime}`);
+    });
+  }
+}
+
 // ---------- Procedural Web Audio Synthesizer ----------
 class WizardAudio {
   constructor() {
     this.ctx = null;
-    this.muted = false;
+    this.enabled = true;
   }
 
-  ensure() {
-    if (this.muted) return null;
+  ensureCtx() {
+    if (!this.enabled) return null;
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) this.ctx = new AudioCtx();
@@ -99,11 +373,10 @@ class WizardAudio {
   }
 
   playSlide() {
-    const ctx = this.ensure();
+    const ctx = this.ensureCtx();
     if (!ctx) return;
     const now = ctx.currentTime;
-    // Filtered noise burst simulating heavy carved stone sliding on marble
-    const bufferSize = Math.floor(ctx.sampleRate * 0.34);
+    const bufferSize = Math.floor(ctx.sampleRate * 0.28);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
@@ -114,98 +387,114 @@ class WizardAudio {
 
     const filter = ctx.createBiquadFilter();
     filter.type = "bandpass";
-    filter.frequency.setValueAtTime(160, now);
-    filter.frequency.linearRampToValueAtTime(110, now + 0.32);
-    filter.Q.value = 2.4;
+    filter.frequency.setValueAtTime(140, now);
+    filter.frequency.linearRampToValueAtTime(95, now + 0.28);
+    filter.Q.value = 3.5;
 
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.34);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
 
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
     noise.start(now);
+  }
 
-    // Subtle low thud at arrival
+  playClash() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    // Metallic sword/shield clang
+    [820, 1340, 2120].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = i === 0 ? "triangle" : "sine";
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.72, now + 0.22);
+      gain.gain.setValueAtTime(0.14 / (i + 1), now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.23);
+    });
+  }
+
+  playWarhorseCharge() {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    // Deep hoof-beats + brazen horn swell
     const osc = ctx.createOscillator();
-    const tGain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(95, now + 0.25);
-    osc.frequency.exponentialRampToValueAtTime(38, now + 0.42);
-    tGain.gain.setValueAtTime(0.001, now);
-    tGain.gain.setValueAtTime(0.22, now + 0.25);
-    tGain.gain.exponentialRampToValueAtTime(0.001, now + 0.43);
-    osc.connect(tGain);
-    tGain.connect(ctx.destination);
-    osc.start(now + 0.25);
+    const gain = ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(146.8, now);
+    osc.frequency.linearRampToValueAtTime(220, now + 0.28);
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.14, now + 0.14);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
     osc.stop(now + 0.44);
   }
 
   playSpellCharge() {
-    const ctx = this.ensure();
+    const ctx = this.ensureCtx();
     if (!ctx) return;
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = "sawtooth";
-    osc2.type = "triangle";
+    osc.type = "sine";
     osc.frequency.setValueAtTime(220, now);
-    osc.frequency.exponentialRampToValueAtTime(660, now + 0.42);
-    osc2.frequency.setValueAtTime(330, now);
-    osc2.frequency.exponentialRampToValueAtTime(990, now + 0.42);
-    gain.gain.setValueAtTime(0.01, now);
-    gain.gain.linearRampToValueAtTime(0.14, now + 0.3);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.46);
+    osc.frequency.exponentialRampToValueAtTime(680, now + 0.35);
+    gain.gain.setValueAtTime(0.02, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.25);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
     osc.connect(gain);
-    osc2.connect(gain);
     gain.connect(ctx.destination);
     osc.start(now);
-    osc2.start(now);
-    osc.stop(now + 0.47);
-    osc2.stop(now + 0.47);
+    osc.stop(now + 0.39);
   }
 
   playShatter() {
-    const ctx = this.ensure();
+    const ctx = this.ensureCtx();
     if (!ctx) return;
     const now = ctx.currentTime;
 
-    // 1. Heavy stone impact boom
     const osc = ctx.createOscillator();
-    const boomGain = ctx.createGain();
+    const subGain = ctx.createGain();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(140, now);
-    osc.frequency.exponentialRampToValueAtTime(28, now + 0.45);
-    boomGain.gain.setValueAtTime(0.42, now);
-    boomGain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
-    osc.connect(boomGain);
-    boomGain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(135, now);
+    osc.frequency.exponentialRampToValueAtTime(32, now + 0.35);
+    subGain.gain.setValueAtTime(0.45, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+    osc.connect(subGain);
+    subGain.connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.5);
+    osc.stop(now + 0.37);
 
-    // 2. Crisp clattering stone shards (multiple staggered bursts)
-    for (let k = 0; k < 6; k++) {
-      const delay = k * 0.045 + Math.random() * 0.03;
-      const len = 0.09 + Math.random() * 0.08;
-      const bufSize = Math.floor(ctx.sampleRate * len);
-      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    for (let c = 0; c < 6; c++) {
+      const delay = c * 0.045 + Math.random() * 0.03;
+      const dur = 0.09 + Math.random() * 0.08;
+      const bufLen = Math.floor(ctx.sampleRate * dur);
+      const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
       const ch = buf.getChannelData(0);
-      for (let i = 0; i < bufSize; i++) {
-        ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 1.6);
+      for (let i = 0; i < bufLen; i++) {
+        ch[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufLen, 1.8);
       }
       const src = ctx.createBufferSource();
       src.buffer = buf;
 
       const bp = ctx.createBiquadFilter();
       bp.type = "bandpass";
-      bp.frequency.value = 500 + k * 240 + Math.random() * 300;
-      bp.Q.value = 3.0;
+      bp.frequency.value = 500 + Math.random() * 1600;
+      bp.Q.value = 2.0;
 
       const g = ctx.createGain();
-      g.gain.setValueAtTime(0.22 * Math.pow(0.78, k), now + delay);
-      g.gain.exponentialRampToValueAtTime(0.005, now + delay + len);
+      g.gain.setValueAtTime(0.24 * Math.pow(0.82, c), now + delay);
+      g.gain.exponentialRampToValueAtTime(0.005, now + delay + dur);
 
       src.connect(bp);
       bp.connect(g);
@@ -215,7 +504,7 @@ class WizardAudio {
   }
 
   playCheck() {
-    const ctx = this.ensure();
+    const ctx = this.ensureCtx();
     if (!ctx) return;
     const now = ctx.currentTime;
     [523.25, 659.25, 783.99].forEach((freq, idx) => {
@@ -233,9 +522,9 @@ class WizardAudio {
   }
 }
 
-// ---------- Procedural Stone Texture Generator ----------
+// ---------- Procedural Stone & Marble Vein Texture Generator ----------
 function createStoneTextures() {
-  const size = 256;
+  const size = 512;
   const bumpCanvas = document.createElement("canvas");
   bumpCanvas.width = size;
   bumpCanvas.height = size;
@@ -244,25 +533,26 @@ function createStoneTextures() {
   bctx.fillStyle = "#808080";
   bctx.fillRect(0, 0, size, size);
 
-  // Subtle carved stone grain + pitting + micro-fissures
-  for (let i = 0; i < 3200; i++) {
+  // Fine stone pores & micro-chisel grain
+  for (let i = 0; i < 9500; i++) {
     const x = Math.random() * size;
     const y = Math.random() * size;
-    const r = 1 + Math.random() * 3.5;
-    const v = Math.floor(105 + (Math.random() - 0.5) * 90);
+    const r = 0.8 + Math.random() * 2.6;
+    const v = Math.floor(110 + (Math.random() - 0.5) * 76);
     bctx.fillStyle = `rgb(${v},${v},${v})`;
     bctx.fillRect(x, y, r, r);
   }
-  bctx.strokeStyle = "rgba(45,45,45,0.35)";
-  bctx.lineWidth = 1.2;
-  for (let c = 0; c < 18; c++) {
+  // Subtle natural marble veins & carved stone fissures
+  for (let c = 0; c < 36; c++) {
+    bctx.strokeStyle = c % 2 === 0 ? "rgba(42,42,42,0.32)" : "rgba(185,185,185,0.24)";
+    bctx.lineWidth = 0.8 + Math.random() * 1.1;
     bctx.beginPath();
     let cx = Math.random() * size;
     let cy = Math.random() * size;
     bctx.moveTo(cx, cy);
-    for (let s = 0; s < 5; s++) {
-      cx += (Math.random() - 0.5) * 28;
-      cy += (Math.random() - 0.5) * 28;
+    for (let s = 0; s < 7; s++) {
+      cx += (Math.random() - 0.5) * 38;
+      cy += (Math.random() - 0.5) * 38;
       bctx.lineTo(cx, cy);
     }
     bctx.stroke();
@@ -272,7 +562,35 @@ function createStoneTextures() {
   bumpTex.wrapS = THREE.RepeatWrapping;
   bumpTex.wrapT = THREE.RepeatWrapping;
   bumpTex.repeat.set(2, 2);
-  return { bumpTex };
+
+  // Procedural equirectangular environment reflection map (hearthfire + vaulted library skylight)
+  const envCanvas = document.createElement("canvas");
+  envCanvas.width = 256;
+  envCanvas.height = 128;
+  const ectx = envCanvas.getContext("2d");
+  const grad = ectx.createLinearGradient(0, 0, 0, 128);
+  grad.addColorStop(0.0, "#1c2c4c");
+  grad.addColorStop(0.38, "#3a2418");
+  grad.addColorStop(0.52, "#d88a3c");
+  grad.addColorStop(0.75, "#26120b");
+  grad.addColorStop(1.0, "#0b0504");
+  ectx.fillStyle = grad;
+  ectx.fillRect(0, 0, 256, 128);
+  [
+    [48, 56, 26, "rgba(255, 225, 175, 0.80)"],
+    [128, 42, 34, "rgba(255, 245, 225, 0.88)"],
+    [208, 58, 28, "rgba(235, 200, 145, 0.75)"]
+  ].forEach(([hx, hy, hr, col]) => {
+    const rg = ectx.createRadialGradient(hx, hy, 1, hx, hy, hr);
+    rg.addColorStop(0, col);
+    rg.addColorStop(1, "rgba(0,0,0,0)");
+    ectx.fillStyle = rg;
+    ectx.fillRect(hx - hr, hy - hr, hr * 2, hr * 2);
+  });
+  const envTex = new THREE.CanvasTexture(envCanvas);
+  envTex.mapping = THREE.EquirectangularReflectionMapping;
+
+  return { bumpTex, envTex };
 }
 
 // ---------- Coordinate Helpers ----------
@@ -291,6 +609,11 @@ function coordsToSquare(file, rank) {
   return String.fromCharCode(97 + file) + (rank + 1);
 }
 
+// Convert centipawns to win probability (0..100) for CAPS-style accuracy calculation
+function cpToWinPercent(cp) {
+  return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
+}
+
 // ---------- Main WizardChess3D Controller ----------
 export class WizardChess3D {
   constructor(containerEl, callbacks = {}) {
@@ -300,30 +623,57 @@ export class WizardChess3D {
     this.audio = new WizardAudio();
 
     this.mode = "ai"; // 'ai' | '2p'
-    this.aiDifficulty = 2; // 1 = Apprentice, 2 = Archmage, 3 = Oracle
+    this.aiDifficulty = 3; // 1..6 (default 3 = Battlemage ~1450 ELO)
     this.playerColor = "w"; // 'w' | 'b'
+    this.themeId = "classic";
+    this.currentTheme = WIZARD_THEMES.classic;
     this.battleCamEnabled = true;
 
     this.selectedSquare = null;
     this.legalMovesForSelected = [];
     this.animating = false;
+    this.reviewMode = false;
     this.disposed = false;
     this.activeTab = true;
 
     this.pieceMeshes = new Map(); // square -> THREE.Group
     this.squareMeshes = new Map(); // square -> THREE.Mesh
+    this.blenderTemplates = new Map(); // 'p'|'r'|'n'|'b'|'q'|'k' -> THREE.Object3D
     this.markerMeshes = [];
-    this.shards = []; // active rigid-body stone fragments
-    this.particles = []; // active spell/dust particles
+    this.reviewArrowMeshes = [];
+    this.shards = []; // active rigid-body stone & armor fragments
+    this.particles = []; // active spell/dust/shockwave particles
     this.braziers = [];
     this.capturedCounts = { w: [], b: [] };
     this.cameraShake = 0;
     this.savedCameraState = null;
     this.cameraTween = null;
 
+    // Recorded timeline for Game Review (index 0 = initial position, 1..N = after each ply)
+    this.timeline = [
+      {
+        ply: 0,
+        fen: this.chess.fen(),
+        san: "Start",
+        uci: null,
+        color: null,
+        evalCpWhite: 20,
+        bestMoveUci: null,
+        classification: null
+      }
+    ];
+
+    this.stockfish = new StockfishOracle((isReady) => {
+      if (this.callbacks.onEngineStatus) {
+        this.callbacks.onEngineStatus(isReady);
+      }
+    });
+
     this.initScene();
     this.buildBoard();
+    this.setTheme(this.themeId);
     this.syncPiecesFromBoard();
+    this.loadBlenderPieces();
     this.bindEvents();
     this.animate();
   }
@@ -333,7 +683,7 @@ export class WizardChess3D {
     const h = this.container.clientHeight || 540;
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x120906, 0.032);
+    this.scene.fog = new THREE.FogExp2(0x120906, 0.026);
 
     this.camera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
     this.camera.position.set(0, 8.6, 9.8);
@@ -344,7 +694,7 @@ export class WizardChess3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.22;
 
     this.container.innerHTML = "";
     this.container.appendChild(this.renderer.domElement);
@@ -353,110 +703,142 @@ export class WizardChess3D {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.06;
     this.controls.target.set(0, 0.4, 0);
-    this.controls.minDistance = 4.8;
+    this.controls.minDistance = 4.2;
     this.controls.maxDistance = 18.5;
     this.controls.maxPolarAngle = Math.PI * 0.46;
     this.controls.minPolarAngle = 0.15;
 
-    // Warm library ambient + cool moon rim light + overhead key light
-    const ambient = new THREE.AmbientLight(0x4a3222, 1.35);
-    this.scene.add(ambient);
+    this.ambientLight = new THREE.AmbientLight(0x664c3a, 1.55);
+    this.scene.add(this.ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffdfb0, 1.85);
-    keyLight.position.set(5, 13, 6);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 2048;
-    keyLight.shadow.mapSize.height = 2048;
-    keyLight.shadow.camera.near = 2;
-    keyLight.shadow.camera.far = 28;
+    this.keyLight = new THREE.DirectionalLight(0xffebd2, 2.2);
+    this.keyLight.position.set(5.5, 13.5, 6.5);
+    this.keyLight.castShadow = true;
+    this.keyLight.shadow.mapSize.width = 2048;
+    this.keyLight.shadow.mapSize.height = 2048;
+    this.keyLight.shadow.camera.near = 2;
+    this.keyLight.shadow.camera.far = 28;
     const d = 6.8;
-    keyLight.shadow.camera.left = -d;
-    keyLight.shadow.camera.right = d;
-    keyLight.shadow.camera.top = d;
-    keyLight.shadow.camera.bottom = -d;
-    keyLight.shadow.bias = -0.0005;
-    this.scene.add(keyLight);
+    this.keyLight.shadow.camera.left = -d;
+    this.keyLight.shadow.camera.right = d;
+    this.keyLight.shadow.camera.top = d;
+    this.keyLight.shadow.camera.bottom = -d;
+    this.keyLight.shadow.bias = -0.0005;
+    this.scene.add(this.keyLight);
 
-    const rimLight = new THREE.DirectionalLight(0x6890d8, 0.75);
-    rimLight.position.set(-7, 8, -8);
-    this.scene.add(rimLight);
+    this.rimLight = new THREE.DirectionalLight(0x8cb0ff, 1.15);
+    this.rimLight.position.set(-7, 8, -8);
+    this.scene.add(this.rimLight);
 
-    // Shared materials
-    const { bumpTex } = createStoneTextures();
+    const { bumpTex, envTex } = createStoneTextures();
+    this.bumpTex = bumpTex;
+    this.scene.environment = envTex;
+
     this.materials = {
-      whitePiece: new THREE.MeshStandardMaterial({
-        color: 0xe8d8bc,
-        roughness: 0.46,
-        metalness: 0.08,
-        bumpMap: bumpTex,
-        bumpScale: 0.035
-      }),
-      whiteAccent: new THREE.MeshStandardMaterial({
-        color: 0xd49b4b,
-        roughness: 0.28,
-        metalness: 0.72
-      }),
-      whiteCore: new THREE.MeshStandardMaterial({
-        color: 0xffb85c,
-        emissive: 0xff8c24,
-        emissiveIntensity: 1.5,
-        roughness: 0.2
-      }),
-      blackPiece: new THREE.MeshStandardMaterial({
-        color: 0x262024,
-        roughness: 0.36,
-        metalness: 0.22,
-        bumpMap: bumpTex,
-        bumpScale: 0.04
-      }),
-      blackAccent: new THREE.MeshStandardMaterial({
-        color: 0x9b64c8,
-        roughness: 0.3,
-        metalness: 0.68
-      }),
-      blackCore: new THREE.MeshStandardMaterial({
-        color: 0xc864ff,
-        emissive: 0x9832e8,
-        emissiveIntensity: 1.6,
-        roughness: 0.2
-      }),
-      lightSquare: new THREE.MeshStandardMaterial({
-        color: 0xc9a679,
-        roughness: 0.55,
-        metalness: 0.06,
-        bumpMap: bumpTex,
-        bumpScale: 0.02
-      }),
-      darkSquare: new THREE.MeshStandardMaterial({
-        color: 0x3b261c,
-        roughness: 0.48,
-        metalness: 0.1,
-        bumpMap: bumpTex,
-        bumpScale: 0.025
-      }),
-      boardFrame: new THREE.MeshStandardMaterial({
-        color: 0x22120b,
-        roughness: 0.6,
-        metalness: 0.15,
-        bumpMap: bumpTex,
-        bumpScale: 0.03
-      }),
-      brassTrim: new THREE.MeshStandardMaterial({
-        color: 0xb87d38,
-        roughness: 0.3,
-        metalness: 0.8
-      })
+      whitePiece: new THREE.MeshStandardMaterial({ bumpMap: bumpTex }),
+      whiteCloth: new THREE.MeshStandardMaterial({ bumpMap: bumpTex }),
+      whiteAccent: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.012 }),
+      whiteMetal: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.008 }),
+      whiteCore: new THREE.MeshStandardMaterial({ roughness: 0.2 }),
+      blackPiece: new THREE.MeshStandardMaterial({ bumpMap: bumpTex }),
+      blackCloth: new THREE.MeshStandardMaterial({ bumpMap: bumpTex }),
+      blackAccent: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.014 }),
+      blackMetal: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.01 }),
+      blackCore: new THREE.MeshStandardMaterial({ roughness: 0.2 }),
+      lightSquare: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.018 }),
+      darkSquare: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.022 }),
+      boardFrame: new THREE.MeshStandardMaterial({ bumpMap: bumpTex, bumpScale: 0.028 }),
+      brassTrim: new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 0.78 })
     };
 
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
   }
 
+  setTheme(themeId) {
+    const t = WIZARD_THEMES[themeId] || WIZARD_THEMES.classic;
+    this.themeId = t.id;
+    this.currentTheme = t;
+
+    const applyStd = (mat, cfg) => {
+      if (!mat || !cfg) return;
+      mat.color.setHex(cfg.color);
+      if (cfg.roughness !== undefined) mat.roughness = cfg.roughness;
+      if (cfg.metalness !== undefined) mat.metalness = cfg.metalness;
+      if (cfg.bumpScale !== undefined) mat.bumpScale = cfg.bumpScale;
+      if (cfg.emissive !== undefined) mat.emissive.setHex(cfg.emissive);
+      if (cfg.emissiveIntensity !== undefined) mat.emissiveIntensity = cfg.emissiveIntensity;
+      mat.needsUpdate = true;
+    };
+
+    applyStd(this.materials.whitePiece, t.wStone);
+    applyStd(this.materials.whiteCloth, t.wCloth);
+    applyStd(this.materials.whiteAccent, t.wTrim);
+    applyStd(this.materials.whiteMetal, t.wMetal);
+    applyStd(this.materials.whiteCore, t.wGem);
+
+    applyStd(this.materials.blackPiece, t.bStone);
+    applyStd(this.materials.blackCloth, t.bCloth);
+    applyStd(this.materials.blackAccent, t.bTrim);
+    applyStd(this.materials.blackMetal, t.bMetal);
+    applyStd(this.materials.blackCore, t.bGem);
+
+    applyStd(this.materials.lightSquare, t.lightSq);
+    applyStd(this.materials.darkSquare, t.darkSq);
+    applyStd(this.materials.boardFrame, t.frame);
+    applyStd(this.materials.brassTrim, t.bezel);
+
+    if (this.scene && this.scene.fog) {
+      this.scene.fog.color.setHex(t.fog);
+    }
+    if (this.ambientLight) this.ambientLight.color.setHex(t.ambientColor);
+    if (this.keyLight) this.keyLight.color.setHex(t.keyColor);
+    if (this.rimLight) this.rimLight.color.setHex(t.rimColor);
+
+    for (const b of this.braziers) {
+      if (b.flame && b.flame.material) b.flame.material.color.setHex(t.brazierFlame);
+      if (b.light) b.light.color.setHex(t.brazierLight);
+    }
+
+    if (this.callbacks.onThemeChange) {
+      this.callbacks.onThemeChange(t);
+    }
+    return t;
+  }
+
+  loadBlenderPieces() {
+    const loader = new GLTFLoader();
+    loader.load(
+      "/chess/assets/wizard-pieces.glb",
+      (gltf) => {
+        const nameToType = {
+          piece_pawn: "p",
+          piece_rook: "r",
+          piece_knight: "n",
+          piece_bishop: "b",
+          piece_queen: "q",
+          piece_king: "k"
+        };
+        gltf.scene.traverse((obj) => {
+          if (nameToType[obj.name]) {
+            this.blenderTemplates.set(nameToType[obj.name], obj);
+          }
+        });
+        if (this.blenderTemplates.size > 0 && !this.animating) {
+          this.syncPiecesFromBoard();
+        }
+      },
+      undefined,
+      () => {
+        // Fallback procedural sculpts remain active if GLB fails to load
+      }
+    );
+  }
+
   buildBoard() {
     this.boardGroup = new THREE.Group();
     this.scene.add(this.boardGroup);
 
-    // Heavy carved stone pedestal / table slab
     const totalSpan = SQUARE_SIZE * 8;
     const frameGeo = new THREE.BoxGeometry(totalSpan + 1.35, 0.55, totalSpan + 1.35);
     const frameMesh = new THREE.Mesh(frameGeo, this.materials.boardFrame);
@@ -464,14 +846,12 @@ export class WizardChess3D {
     frameMesh.receiveShadow = true;
     this.boardGroup.add(frameMesh);
 
-    // Brass inner bezel
     const bezelGeo = new THREE.BoxGeometry(totalSpan + 0.28, 0.42, totalSpan + 0.28);
     const bezelMesh = new THREE.Mesh(bezelGeo, this.materials.brassTrim);
     bezelMesh.position.y = -0.22;
     bezelMesh.receiveShadow = true;
     this.boardGroup.add(bezelMesh);
 
-    // 64 beveled stone squares
     const sqGeo = new THREE.BoxGeometry(SQUARE_SIZE * 0.985, 0.16, SQUARE_SIZE * 0.985);
     for (let rank = 0; rank < 8; rank++) {
       for (let file = 0; file < 8; file++) {
@@ -490,7 +870,6 @@ export class WizardChess3D {
       }
     }
 
-    // 4 Corner Hearthfire Braziers with flickering PointLights
     const cornerOffset = totalSpan / 2 + 0.45;
     const corners = [
       [-cornerOffset, -cornerOffset],
@@ -517,7 +896,6 @@ export class WizardChess3D {
       bowl.position.y = 0.38;
       brazier.add(bowl);
 
-      // Flame core cone
       const flameMat = new THREE.MeshBasicMaterial({
         color: 0xffaa44,
         transparent: true,
@@ -535,313 +913,147 @@ export class WizardChess3D {
       this.braziers.push({ group: brazier, flame, light, phase: idx * 1.7 });
     });
 
-    // Selection & legal-move highlight group
     this.markerGroup = new THREE.Group();
     this.scene.add(this.markerGroup);
+
+    this.reviewArrowGroup = new THREE.Group();
+    this.scene.add(this.reviewArrowGroup);
   }
 
-  // ---------- Procedurally Sculpted & Articulated 3D Wizard Pieces ----------
+  // ---------- Build Piece from Blender GLB Archetype (or Procedural Fallback) ----------
   buildWizardPieceMesh(type, color) {
     const isWhite = color === "w";
     const stoneMat = isWhite ? this.materials.whitePiece : this.materials.blackPiece;
+    const clothMat = isWhite ? this.materials.whiteCloth : this.materials.blackCloth;
     const accentMat = isWhite ? this.materials.whiteAccent : this.materials.blackAccent;
+    const metalMat = isWhite ? this.materials.whiteMetal : this.materials.blackMetal;
     const eyeMat = isWhite ? this.materials.whiteCore : this.materials.blackCore;
 
-    const root = new THREE.Group();
-    const body = new THREE.Group(); // animated for bobbing/lunging/levitating
-    root.add(body);
+    const template = this.blenderTemplates.get(type);
+    if (template) {
+      const root = new THREE.Group();
+      const body = new THREE.Group();
+      // Rotate inner orient group by Math.PI so Blender's +Y forward (glTF -Z) aligns with +Z forward
+      const orient = new THREE.Group();
+      orient.rotation.y = Math.PI;
+      body.add(orient);
+      root.add(body);
 
-    // Common tiered carved stone pedestal base
-    const base1 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.12, 12), stoneMat);
-    base1.position.y = 0.06;
-    base1.castShadow = true;
-    base1.receiveShadow = true;
-    root.add(base1);
+      let weaponPivot = null;
+      let shieldPivot = null;
+      let headPivot = null;
+      let wingsMesh = null;
+      let astrolabeMesh = null;
 
-    const baseRing = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.42, 0.06, 12), accentMat);
-    baseRing.position.y = 0.15;
-    baseRing.castShadow = true;
-    root.add(baseRing);
+      const clone = template.clone(true);
+      const children = [...clone.children];
 
-    let weaponPivot = null;
+      for (const child of children) {
+        const n = child.name.toLowerCase();
+        child.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+            const matName = node.material ? node.material.name.toLowerCase() : "";
+            const nodeName = node.name.toLowerCase();
+            if (matName.includes("gem") || nodeName.includes("gem")) {
+              node.material = eyeMat;
+            } else if (matName.includes("cloth") || nodeName.includes("cloth")) {
+              node.material = clothMat;
+            } else if (
+              matName.includes("metal") ||
+              nodeName.includes("metal") ||
+              nodeName.includes("weapon")
+            ) {
+              node.material = metalMat;
+            } else if (
+              matName.includes("trim") ||
+              nodeName.includes("trim") ||
+              nodeName.includes("shield") ||
+              nodeName.includes("wings")
+            ) {
+              node.material = accentMat;
+            } else {
+              node.material = stoneMat;
+            }
+          }
+        });
 
-    if (type === "p") {
-      // PAWN: Armored Foot Sentinel with Shield & Sword
-      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.30, 0.48, 8), stoneMat);
-      torso.position.y = 0.42;
-      torso.castShadow = true;
-      body.add(torso);
-
-      const pauldron = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.14, 0.32), accentMat);
-      pauldron.position.y = 0.62;
-      pauldron.castShadow = true;
-      body.add(pauldron);
-
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.20, 10, 10), stoneMat);
-      head.position.y = 0.84;
-      head.castShadow = true;
-      body.add(head);
-
-      const crest = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 0.30), accentMat);
-      crest.position.set(0, 1.0, 0);
-      body.add(crest);
-
-      // Glowing visor eyes
-      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 0.06), eyeMat);
-      visor.position.set(0, 0.85, 0.18);
-      body.add(visor);
-
-      // Left shield
-      const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.18, 0.06, 6), accentMat);
-      shield.rotation.x = Math.PI / 2;
-      shield.rotation.z = 0.25;
-      shield.position.set(-0.26, 0.48, 0.16);
-      shield.castShadow = true;
-      body.add(shield);
-
-      // Right articulated sword arm
-      weaponPivot = new THREE.Group();
-      weaponPivot.position.set(0.28, 0.58, 0.05);
-      const hilt = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.06), accentMat);
-      hilt.position.set(0, 0.06, 0.12);
-      weaponPivot.add(hilt);
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.46, 0.09), stoneMat);
-      blade.position.set(0, 0.28, 0.12);
-      blade.rotation.x = 0.35;
-      blade.castShadow = true;
-      weaponPivot.add(blade);
-      body.add(weaponPivot);
-
-    } else if (type === "r") {
-      // ROOK: Hulking Crenellated Battlement Golem
-      const legs = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.42, 0.46), stoneMat);
-      legs.position.y = 0.38;
-      legs.castShadow = true;
-      body.add(legs);
-
-      const chest = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.52, 0.54), stoneMat);
-      chest.position.y = 0.82;
-      chest.castShadow = true;
-      body.add(chest);
-
-      const belt = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.09, 0.50), accentMat);
-      belt.position.y = 0.58;
-      body.add(belt);
-
-      // Fortress crown battlements + glowing furnace eyes
-      const head = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.30, 0.32, 8), stoneMat);
-      head.position.y = 1.22;
-      head.castShadow = true;
-      body.add(head);
-
-      for (let i = 0; i < 4; i++) {
-        const merlon = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.14), accentMat);
-        const ang = (i * Math.PI) / 2 + Math.PI / 4;
-        merlon.position.set(Math.cos(ang) * 0.22, 1.42, Math.sin(ang) * 0.22);
-        body.add(merlon);
+        if (n.endsWith("_base") || n.endsWith("_base_trim")) {
+          child.rotation.y += Math.PI;
+          root.add(child);
+        } else if (n.endsWith("_weapon")) {
+          weaponPivot = new THREE.Group();
+          weaponPivot.position.copy(child.position);
+          child.position.set(0, 0, 0);
+          weaponPivot.add(child);
+          orient.add(weaponPivot);
+        } else if (n.endsWith("_shield")) {
+          shieldPivot = new THREE.Group();
+          shieldPivot.position.copy(child.position);
+          child.position.set(0, 0, 0);
+          shieldPivot.add(child);
+          orient.add(shieldPivot);
+        } else if (n.endsWith("_head")) {
+          headPivot = new THREE.Group();
+          headPivot.position.copy(child.position);
+          child.position.set(0, 0, 0);
+          headPivot.add(child);
+          orient.add(headPivot);
+        } else if (n.endsWith("_wings")) {
+          wingsMesh = child;
+          orient.add(child);
+        } else if (n === "bishop_trim") {
+          astrolabeMesh = child;
+          orient.add(child);
+        } else {
+          orient.add(child);
+        }
       }
 
-      const eyes = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.06, 0.08), eyeMat);
-      eyes.position.set(0, 1.22, 0.28);
-      body.add(eyes);
-
-      // Articulated siege-ram fists
-      weaponPivot = new THREE.Group();
-      weaponPivot.position.set(0, 0.95, 0);
-      [-0.44, 0.44].forEach((ox) => {
-        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.52, 0.24), stoneMat);
-        arm.position.set(ox, -0.18, 0.12);
-        arm.castShadow = true;
-        const knuckle = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.28), accentMat);
-        knuckle.position.set(ox, -0.42, 0.16);
-        weaponPivot.add(arm);
-        weaponPivot.add(knuckle);
-      });
-      body.add(weaponPivot);
-
-    } else if (type === "n") {
-      // KNIGHT: Armored Warhorse & Lancer
-      const mountBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.36, 0.55, 8), stoneMat);
-      mountBase.position.y = 0.44;
-      mountBase.castShadow = true;
-      body.add(mountBase);
-
-      // Sculpted horse neck + snout + mane
-      const neck = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.62, 0.36), stoneMat);
-      neck.position.set(0, 0.88, 0.06);
-      neck.rotation.x = -0.28;
-      neck.castShadow = true;
-      body.add(neck);
-
-      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.42), stoneMat);
-      snout.position.set(0, 1.12, 0.26);
-      snout.rotation.x = 0.35;
-      snout.castShadow = true;
-      body.add(snout);
-
-      const chamfron = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.38), accentMat);
-      chamfron.position.set(0, 1.19, 0.25);
-      chamfron.rotation.x = 0.35;
-      body.add(chamfron);
-
-      // Glowing steed eyes
-      [-0.11, 0.11].forEach((ex) => {
-        const eye = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.05, 0.08), eyeMat);
-        eye.position.set(ex, 1.16, 0.18);
-        body.add(eye);
-      });
-
-      // Couched Lance weapon pivot
-      weaponPivot = new THREE.Group();
-      weaponPivot.position.set(0.26, 0.72, 0);
-      const lance = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.92, 6), accentMat);
-      lance.rotation.x = Math.PI / 2 - 0.25;
-      lance.position.set(0, 0.08, 0.32);
-      lance.castShadow = true;
-      weaponPivot.add(lance);
-      body.add(weaponPivot);
-
-    } else if (type === "b") {
-      // BISHOP: Arcane High Cleric with Mitre & Crystal Staff
-      const robe = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.92, 10), stoneMat);
-      robe.position.y = 0.62;
-      robe.castShadow = true;
-      body.add(robe);
-
-      const stole = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.76, 0.42), accentMat);
-      stole.position.set(0, 0.58, 0.04);
-      body.add(stole);
-
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 10, 10), stoneMat);
-      head.position.y = 1.14;
-      head.castShadow = true;
-      body.add(head);
-
-      const mitre = new THREE.Mesh(new THREE.ConeGeometry(0.21, 0.38, 6), accentMat);
-      mitre.position.y = 1.40;
-      mitre.castShadow = true;
-      body.add(mitre);
-
-      const eyes = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.06), eyeMat);
-      eyes.position.set(0, 1.14, 0.17);
-      body.add(eyes);
-
-      // Arcane Crozier Staff
-      weaponPivot = new THREE.Group();
-      weaponPivot.position.set(0.28, 0.72, 0.12);
-      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.035, 1.15, 6), accentMat);
-      shaft.position.y = 0.15;
-      shaft.castShadow = true;
-      weaponPivot.add(shaft);
-
-      const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), eyeMat);
-      orb.position.y = 0.78;
-      weaponPivot.add(orb);
-      body.add(weaponPivot);
-
-    } else if (type === "q") {
-      // QUEEN: Sorceress Empress with Crown, Winged Mantle & Arcane Scepter
-      const gown = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.39, 0.96, 12), stoneMat);
-      gown.position.y = 0.64;
-      gown.castShadow = true;
-      body.add(gown);
-
-      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.22, 0.22, 10), accentMat);
-      collar.position.y = 1.06;
-      collar.castShadow = true;
-      body.add(collar);
-
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.20, 12, 12), stoneMat);
-      head.position.y = 1.28;
-      head.castShadow = true;
-      body.add(head);
-
-      const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.17, 0.18, 8), accentMat);
-      crown.position.y = 1.46;
-      body.add(crown);
-
-      const crownGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.08, 0), eyeMat);
-      crownGem.position.set(0, 1.58, 0);
-      body.add(crownGem);
-
-      const eyes = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.06), eyeMat);
-      eyes.position.set(0, 1.28, 0.18);
-      body.add(eyes);
-
-      // Royal Scepter
-      weaponPivot = new THREE.Group();
-      weaponPivot.position.set(0.30, 0.85, 0.14);
-      const scepter = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 6), accentMat);
-      scepter.position.y = 0.12;
-      weaponPivot.add(scepter);
-      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.13, 0), eyeMat);
-      star.position.y = 0.72;
-      weaponPivot.add(star);
-      body.add(weaponPivot);
-
-    } else if (type === "k") {
-      // KING: High Sovereign with Great Mantle, Crown & Two-Handed Broadsword
-      const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.41, 1.05, 10), stoneMat);
-      robe.position.y = 0.68;
-      robe.castShadow = true;
-      body.add(robe);
-
-      const shoulders = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.22, 0.44), accentMat);
-      shoulders.position.y = 1.12;
-      shoulders.castShadow = true;
-      body.add(shoulders);
-
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.34, 0.32), stoneMat);
-      head.position.y = 1.38;
-      head.castShadow = true;
-      body.add(head);
-
-      const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.21, 0.18, 8), accentMat);
-      crown.position.y = 1.62;
-      body.add(crown);
-
-      // Royal Cross atop crown
-      const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.22, 0.07), accentMat);
-      crossV.position.y = 1.78;
-      const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.07, 0.07), accentMat);
-      crossH.position.y = 1.80;
-      body.add(crossV);
-      body.add(crossH);
-
-      const eyes = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.06), eyeMat);
-      eyes.position.set(0, 1.40, 0.15);
-      body.add(eyes);
-
-      // Broadsword held at the ready
-      weaponPivot = new THREE.Group();
-      weaponPivot.position.set(0, 1.02, 0.28);
-      const crossguard = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.06, 0.08), accentMat);
-      weaponPivot.add(crossguard);
-      const greatsword = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.78, 0.04), stoneMat);
-      greatsword.position.y = -0.40;
-      greatsword.castShadow = true;
-      weaponPivot.add(greatsword);
-      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0), eyeMat);
-      gem.position.z = 0.04;
-      weaponPivot.add(gem);
-      body.add(weaponPivot);
+      root.rotation.y = isWhite ? Math.PI : 0;
+      root.userData = {
+        type,
+        color,
+        body,
+        weaponPivot,
+        shieldPivot,
+        headPivot,
+        wingsMesh,
+        astrolabeMesh,
+        seed: Math.random() * Math.PI * 2
+      };
+      return root;
     }
 
-    // Face White pieces toward -Z (rank 8) and Black pieces toward +Z (rank 1)
+    // Procedural fallback while GLB loads
+    const root = new THREE.Group();
+    const body = new THREE.Group();
+    root.add(body);
+    const base1 = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.44, 0.14, 14), stoneMat);
+    base1.position.y = 0.07;
+    base1.castShadow = true;
+    root.add(base1);
+    const colMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, 0.75, 12), stoneMat);
+    colMesh.position.y = 0.5;
+    colMesh.castShadow = true;
+    body.add(colMesh);
+    const weaponPivot = new THREE.Group();
+    body.add(weaponPivot);
     root.rotation.y = isWhite ? Math.PI : 0;
     root.userData = {
       type,
       color,
       body,
       weaponPivot,
+      shieldPivot: null,
+      headPivot: null,
       seed: Math.random() * Math.PI * 2
     };
-
     return root;
   }
 
   syncPiecesFromBoard() {
-    // Clear existing piece meshes
     for (const [, mesh] of this.pieceMeshes) {
       this.scene.remove(mesh);
     }
@@ -870,12 +1082,80 @@ export class WizardChess3D {
     this.markerMeshes.length = 0;
   }
 
+  clearReviewArrows() {
+    for (const m of this.reviewArrowMeshes) {
+      this.reviewArrowGroup.remove(m);
+    }
+    this.reviewArrowMeshes.length = 0;
+  }
+
+  showReviewArrows(playedUci, bestUci, classification) {
+    this.clearReviewArrows();
+    if (bestUci && bestUci.length >= 4 && bestUci !== playedUci) {
+      const fromSq = bestUci.slice(0, 2);
+      const toSq = bestUci.slice(2, 4);
+      const arrow = this.createBoardArrow(fromSq, toSq, 0x38e878, 0.11);
+      this.reviewArrowGroup.add(arrow);
+      this.reviewArrowMeshes.push(arrow);
+    }
+    if (playedUci && playedUci.length >= 4) {
+      const fromSq = playedUci.slice(0, 2);
+      const toSq = playedUci.slice(2, 4);
+      const colorMap = {
+        brilliant: 0x26c6da,
+        best: 0x66bb6a,
+        good: 0x9ccc65,
+        inaccuracy: 0xffca28,
+        mistake: 0xff7043,
+        blunder: 0xef5350
+      };
+      const col = colorMap[classification] || 0xb388ff;
+      const arrow = this.createBoardArrow(fromSq, toSq, col, 0.06);
+      this.reviewArrowGroup.add(arrow);
+      this.reviewArrowMeshes.push(arrow);
+    }
+  }
+
+  createBoardArrow(fromSq, toSq, hexColor, yHeight = 0.08) {
+    const p0 = squareToWorld(fromSq);
+    const p1 = squareToWorld(toSq);
+    const group = new THREE.Group();
+
+    const dx = p1.x - p0.x;
+    const dz = p1.z - p0.z;
+    const totalLen = Math.hypot(dx, dz) || 0.01;
+    const headLen = Math.min(0.38, totalLen * 0.35);
+    const shaftLen = Math.max(0.05, totalLen - headLen);
+
+    const mat = new THREE.MeshBasicMaterial({
+      color: hexColor,
+      transparent: true,
+      opacity: 0.86,
+      side: THREE.DoubleSide
+    });
+
+    const shaftGeo = new THREE.BoxGeometry(0.14, 0.03, shaftLen);
+    shaftGeo.translate(0, 0, shaftLen / 2);
+    const shaft = new THREE.Mesh(shaftGeo, mat);
+
+    const headGeo = new THREE.ConeGeometry(0.26, headLen, 4);
+    headGeo.rotateY(Math.PI / 4);
+    headGeo.rotateX(Math.PI / 2);
+    headGeo.translate(0, 0, shaftLen + headLen / 2);
+    const head = new THREE.Mesh(headGeo, mat);
+
+    group.add(shaft);
+    group.add(head);
+    group.position.set(p0.x, yHeight, p0.z);
+    group.rotation.y = Math.atan2(dx, dz);
+    return group;
+  }
+
   showMarkersForSquare(sq) {
     this.clearMarkers();
     if (!sq) return;
 
     const originPos = squareToWorld(sq);
-    // Selection ring under active piece
     const selGeo = new THREE.RingGeometry(0.38, 0.48, 24);
     const selMat = new THREE.MeshBasicMaterial({
       color: 0xffd57a,
@@ -894,7 +1174,6 @@ export class WizardChess3D {
       const isCapture = mv.flags.includes("c") || mv.flags.includes("e");
 
       if (isCapture) {
-        // Crimson battle target ring around enemy piece
         const capGeo = new THREE.RingGeometry(0.39, 0.51, 6);
         const capMat = new THREE.MeshBasicMaterial({
           color: 0xff4d3d,
@@ -909,7 +1188,6 @@ export class WizardChess3D {
         this.markerGroup.add(capRing);
         this.markerMeshes.push(capRing);
       } else {
-        // Glowing arcane rune disc on legal empty square
         const dotGeo = new THREE.CircleGeometry(0.18, 16);
         const dotMat = new THREE.MeshBasicMaterial({
           color: 0x88d47e,
@@ -930,7 +1208,7 @@ export class WizardChess3D {
   // ---------- Input & Raycasting ----------
   bindEvents() {
     this.onPointerDown = (e) => {
-      if (this.animating || !this.activeTab) return;
+      if (this.animating || !this.activeTab || this.reviewMode) return;
       if (this.chess.isGameOver()) return;
       if (this.mode === "ai" && this.chess.turn() !== this.playerColor) return;
 
@@ -940,7 +1218,6 @@ export class WizardChess3D {
 
       this.raycaster.setFromCamera(this.mouse, this.camera);
 
-      // Check squares and pieces
       const squareObjs = Array.from(this.squareMeshes.values());
       const pieceObjs = Array.from(this.pieceMeshes.values());
       const hits = this.raycaster.intersectObjects([...pieceObjs, ...squareObjs], true);
@@ -974,11 +1251,10 @@ export class WizardChess3D {
   }
 
   handleSquareClick(sq) {
-    // 1. If a square is already selected and `sq` is one of its legal destinations, execute move
     if (this.selectedSquare) {
       const matchingMoves = this.legalMovesForSelected.filter((m) => m.to === sq);
       if (matchingMoves.length > 0) {
-        // Check if promotion move
+        if (this.callbacks.onBattleStart) this.callbacks.onBattleStart();
         const isPromotion = matchingMoves.some((m) => m.flags.includes("p"));
         if (isPromotion && this.callbacks.onPromotionPrompt) {
           this.callbacks.onPromotionPrompt((promoPiece) => {
@@ -994,9 +1270,9 @@ export class WizardChess3D {
       }
     }
 
-    // 2. Otherwise, check if the clicked square contains a friendly piece
     const pieceOnSq = this.chess.get(sq);
     if (pieceOnSq && pieceOnSq.color === this.chess.turn()) {
+      if (this.callbacks.onBattleStart) this.callbacks.onBattleStart();
       this.selectedSquare = sq;
       this.legalMovesForSelected = this.chess.moves({ square: sq, verbose: true });
       this.showMarkersForSquare(sq);
@@ -1007,23 +1283,22 @@ export class WizardChess3D {
     }
   }
 
-  // ---------- Choreographed Move + Battle Chess Capture Sequence ----------
+  // ---------- Choreographed Move + Piece-Specific Battle Chess Duels ----------
   async executeMove(moveObj) {
     this.animating = true;
     this.selectedSquare = null;
     this.legalMovesForSelected = [];
     this.clearMarkers();
+    this.clearReviewArrows();
 
     const fromSq = moveObj.from;
     const toSq = moveObj.to;
     const attackerMesh = this.pieceMeshes.get(fromSq);
 
-    // Determine captured square (handles en-passant where victim is on [toFile, fromRank])
     const isEnPassant = moveObj.flags.includes("e");
     const victimSq = isEnPassant ? toSq[0] + fromSq[1] : toSq;
     const victimMesh = moveObj.captured ? this.pieceMeshes.get(victimSq) : null;
 
-    // Commit move to chess.js state
     const result = this.chess.move({
       from: fromSq,
       to: toSq,
@@ -1038,16 +1313,21 @@ export class WizardChess3D {
     if (victimMesh && attackerMesh) {
       await this.playBattleCaptureSequence(attackerMesh, victimMesh, fromSq, toSq, victimSq, result);
       this.capturedCounts[result.color].push(result.captured);
-      if (typeof BridgeProgression !== "undefined") {
-        BridgeProgression.awardCoins(2, "wizard_chess_capture", {
-          captured: result.captured
+      if (
+        typeof BridgeProgression !== "undefined" &&
+        (this.mode === "2p" || result.color === this.playerColor)
+      ) {
+        const tier = DIFFICULTY_TIERS[this.aiDifficulty] || DIFFICULTY_TIERS[3];
+        BridgeProgression.awardCoins(tier.capReward || 5, "wizard_chess_capture", {
+          captured: result.captured,
+          difficulty: this.aiDifficulty
         });
       }
     } else if (attackerMesh) {
       await this.playSlideOrLeap(attackerMesh, fromSq, toSq, result.piece === "n");
     }
 
-    // Handle castling rook slide
+    // Castling rook slide
     if (result.flags.includes("k") || result.flags.includes("q")) {
       const rankChar = result.color === "w" ? "1" : "8";
       const rookFrom = (result.flags.includes("k") ? "h" : "a") + rankChar;
@@ -1061,7 +1341,6 @@ export class WizardChess3D {
       }
     }
 
-    // Update attacker mesh map & handle promotion sculpt swap
     if (attackerMesh) {
       this.pieceMeshes.delete(fromSq);
       if (result.flags.includes("p")) {
@@ -1083,6 +1362,22 @@ export class WizardChess3D {
       this.audio.playCheck();
     }
 
+    // Record ply in timeline and update live evaluation bar
+    const uci = result.from + result.to + (result.promotion || "");
+    const staticWhiteCp = this.evaluateBoard();
+    this.timeline.push({
+      ply: this.timeline.length,
+      fen: this.chess.fen(),
+      san: result.san,
+      uci,
+      color: result.color,
+      captured: result.captured || null,
+      evalCpWhite: staticWhiteCp,
+      bestMoveUci: null,
+      classification: null
+    });
+
+    this.updateLiveEvalAsync(this.timeline.length - 1);
     this.notifyStateChange(result);
 
     if (this.chess.isGameOver()) {
@@ -1091,11 +1386,34 @@ export class WizardChess3D {
       return;
     }
 
-    // Trigger AI reply if in AI mode and it's now AI's turn
     if (this.mode === "ai" && this.chess.turn() !== this.playerColor) {
-      setTimeout(() => this.playAIMove(), 260);
+      setTimeout(() => this.playAIMove(), 240);
     } else {
       this.animating = false;
+    }
+  }
+
+  async updateLiveEvalAsync(plyIndex) {
+    const entry = this.timeline[plyIndex];
+    if (!entry) return;
+    if (this.callbacks.onEvalUpdate) {
+      this.callbacks.onEvalUpdate(entry.evalCpWhite, null);
+    }
+    if (this.stockfish && this.stockfish.ready) {
+      const fenTurn = entry.fen.split(" ")[1];
+      const sf = await this.stockfish.queryPosition(entry.fen, {
+        skill: 20,
+        depth: 8,
+        movetime: 180
+      });
+      if (sf) {
+        const whiteCp = (fenTurn === "w" ? 1 : -1) * sf.scoreCp;
+        entry.evalCpWhite = whiteCp;
+        if (this.callbacks.onEvalUpdate && plyIndex === this.timeline.length - 1) {
+          const whiteMate = sf.mate !== null ? (fenTurn === "w" ? sf.mate : -sf.mate) : null;
+          this.callbacks.onEvalUpdate(whiteCp, whiteMate);
+        }
+      }
     }
   }
 
@@ -1103,16 +1421,19 @@ export class WizardChess3D {
     return new Promise((resolve) => {
       const start = squareToWorld(fromSq);
       const end = squareToWorld(toSq);
-      const duration = isJump ? 460 : 350;
+      const duration = isJump ? 520 : 350;
       const t0 = performance.now();
 
-      // Orient piece toward movement direction
       const dx = end.x - start.x;
       const dz = end.z - start.z;
       const targetRotY = Math.atan2(dx, dz);
       const defaultRotY = mesh.userData.color === "w" ? Math.PI : 0;
 
-      this.audio.playSlide();
+      if (isJump) {
+        this.audio.playWarhorseCharge();
+      } else {
+        this.audio.playSlide();
+      }
       this.spawnDustTrail(new THREE.Vector3(start.x, 0.05, start.z));
 
       const step = (now) => {
@@ -1120,13 +1441,17 @@ export class WizardChess3D {
         const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
         mesh.position.x = start.x + dx * ease;
         mesh.position.z = start.z + dz * ease;
-        mesh.position.y = isJump ? Math.sin(p * Math.PI) * 0.95 : 0;
+        mesh.position.y = isJump ? Math.sin(p * Math.PI) * 1.05 : 0;
+        if (isJump && mesh.userData.body) {
+          mesh.userData.body.rotation.x = Math.sin(p * Math.PI * 2) * -0.35;
+        }
         mesh.rotation.y = targetRotY;
 
         if (p < 1) {
           requestAnimationFrame(step);
         } else {
           mesh.position.set(end.x, 0, end.z);
+          if (mesh.userData.body) mesh.userData.body.rotation.set(0, 0, 0);
           mesh.rotation.y = defaultRotY;
           this.spawnDustTrail(new THREE.Vector3(end.x, 0.05, end.z));
           resolve();
@@ -1136,6 +1461,7 @@ export class WizardChess3D {
     });
   }
 
+  // ---------- 6 Piece-Specific Choreographed Duel Sequences ----------
   playBattleCaptureSequence(attacker, victim, fromSq, toSq, victimSq, moveResult) {
     return new Promise((resolve) => {
       const start = squareToWorld(fromSq);
@@ -1149,117 +1475,277 @@ export class WizardChess3D {
       const dirZ = dz / dist;
       const attackAngle = Math.atan2(dx, dz);
       const defaultRotY = attacker.userData.color === "w" ? Math.PI : 0;
+      const aType = attacker.userData.type;
+      const isWhiteAttacker = attacker.userData.color === "w";
+      const spellColor = isWhiteAttacker
+        ? (this.currentTheme?.spellW || 0xffe8b8)
+        : (this.currentTheme?.spellB || 0xff7840);
 
-      const isRangedCaster =
-        attacker.userData.type === "b" || attacker.userData.type === "q";
+      const duelTitles = {
+        p: "🛡️ VANGUARD SHIELD BASH & THRUST",
+        n: "🐴 DESTRIER CAVALRY LANCE CHARGE",
+        r: "🏰 COLOSSAL SEISMIC SIEGE SLAM",
+        b: "🔮 CELESTIAL RUNE PILLAR SMITE",
+        q: "👑 EMPRESS TELEKINETIC VORTEX CRUSH",
+        k: "⚔️ SOVEREIGN GREATSWORD EXECUTION"
+      };
+      if (this.callbacks.onDuelBanner) {
+        this.callbacks.onDuelBanner(duelTitles[aType] || "⚔️ ARCANE DUEL");
+      }
 
-      // Optional dynamic Battle Cam zoom toward the duel
       if (this.battleCamEnabled) {
         this.focusBattleCamera(
-          new THREE.Vector3((start.x + victimPos.x) * 0.5, 0.6, (start.z + victimPos.z) * 0.5)
+          new THREE.Vector3((start.x + victimPos.x) * 0.5, 0.65, (start.z + victimPos.z) * 0.5)
         );
       }
 
       attacker.rotation.y = attackAngle;
       victim.rotation.y = attackAngle + Math.PI;
 
-      // Stop 0.85 units short of victim for melee strike, or cast from mid-stride for casters
-      const stopDist = isRangedCaster ? Math.max(0, dist * 0.35) : Math.max(0, dist - 0.82);
+      const isRanged = aType === "b" || aType === "q";
+      const isKnight = aType === "n";
+      const stopDist = isRanged
+        ? Math.max(0, dist * 0.32)
+        : isKnight
+        ? Math.max(0, dist - 0.55)
+        : Math.max(0, dist - 0.84);
       const strikeX = start.x + dirX * stopDist;
       const strikeZ = start.z + dirZ * stopDist;
 
-      const approachMs = 340;
-      const windupMs = 260;
-      const strikeMs = 180;
+      const approachMs = isKnight ? 460 : 350;
+      const windupMs = 360;
+      const strikeMs = 240;
       const settleMs = 340;
       const totalMs = approachMs + windupMs + strikeMs + settleMs;
       const t0 = performance.now();
 
-      let beamMesh = null;
+      let fxMeshes = [];
+      let clashed = false;
       let shattered = false;
 
-      this.audio.playSlide();
-      if (isRangedCaster) {
-        setTimeout(() => this.audio.playSpellCharge(), approachMs * 0.6);
+      if (isKnight) {
+        this.audio.playWarhorseCharge();
+      } else {
+        this.audio.playSlide();
+      }
+      if (isRanged) {
+        setTimeout(() => this.audio.playSpellCharge(), approachMs * 0.5);
       }
 
       const tick = (now) => {
         const elapsed = now - t0;
 
         if (elapsed < approachMs) {
-          // Phase 1: Advance to strike position
+          // ===== PHASE 1: APPROACH / REARING LEAP =====
           const p = elapsed / approachMs;
           const ease = 1 - Math.pow(1 - p, 2);
-          attacker.position.x = start.x + (strikeX - start.x) * ease;
-          attacker.position.z = start.z + (strikeZ - start.z) * ease;
-          if (attacker.userData.type === "n") {
-            attacker.position.y = Math.sin(p * Math.PI) * 0.65;
-          } else if (isRangedCaster) {
-            attacker.position.y = ease * 0.28;
+
+          if (isKnight) {
+            // First 35% of approach: horse rears up on its hind legs at start square!
+            if (p < 0.35) {
+              const rp = p / 0.35;
+              attacker.userData.body.rotation.x = -rp * 0.58;
+              attacker.userData.body.position.y = rp * 0.25;
+            } else {
+              // Vaults through the air in a high cavalry arc!
+              const lp = (p - 0.35) / 0.65;
+              attacker.position.x = start.x + (strikeX - start.x) * lp;
+              attacker.position.z = start.z + (strikeZ - start.z) * lp;
+              attacker.position.y = Math.sin(lp * Math.PI) * 1.45;
+              attacker.userData.body.rotation.x = -0.58 + lp * 0.85;
+              if (attacker.userData.weaponPivot) {
+                attacker.userData.weaponPivot.rotation.x = lp * 0.45;
+              }
+            }
+          } else {
+            attacker.position.x = start.x + (strikeX - start.x) * ease;
+            attacker.position.z = start.z + (strikeZ - start.z) * ease;
+            if (aType === "r") {
+              // Heavy lumbering golem stomp
+              attacker.userData.body.rotation.z = Math.sin(p * Math.PI * 4) * 0.12;
+              attacker.position.y = Math.abs(Math.sin(p * Math.PI * 4)) * 0.08;
+            } else if (isRanged) {
+              attacker.position.y = ease * 0.32;
+            }
           }
         } else if (elapsed < approachMs + windupMs) {
-          // Phase 2: Wind up weapon or charge spell staff
+          // ===== PHASE 2: DUEL CLASH / SPELL SUMMONING / TELEKINESIS =====
           const p = (elapsed - approachMs) / windupMs;
-          if (attacker.userData.weaponPivot) {
-            attacker.userData.weaponPivot.rotation.x = -p * 1.15;
+
+          if (aType === "p") {
+            // Pawn Shield-Bash first, then cocks sword arm back!
+            if (p < 0.5) {
+              const sp = p * 2;
+              if (attacker.userData.shieldPivot) {
+                attacker.userData.shieldPivot.position.z = sp * 0.22;
+              }
+              if (!clashed && sp > 0.7) {
+                clashed = true;
+                this.audio.playClash();
+                this.spawnSpellBurst(
+                  new THREE.Vector3(victimPos.x - dirX * 0.3, 0.6, victimPos.z - dirZ * 0.3),
+                  0xffd57a,
+                  12
+                );
+              }
+              victim.userData.body.rotation.x = -sp * 0.28;
+            } else {
+              const wp = (p - 0.5) * 2;
+              if (attacker.userData.weaponPivot) {
+                attacker.userData.weaponPivot.rotation.x = -wp * 1.25;
+              }
+              victim.userData.body.rotation.x = -0.28 * (1 - wp);
+            }
+          } else if (aType === "r") {
+            // Rook raises both siege warhammer arms high overhead!
+            if (attacker.userData.weaponPivot) {
+              attacker.userData.weaponPivot.rotation.x = -p * 2.1;
+            }
+            if (attacker.userData.shieldPivot) {
+              attacker.userData.shieldPivot.rotation.x = -p * 2.1;
+            }
+            attacker.userData.body.position.y = p * 0.18;
+            victim.position.x = victimPos.x + (Math.random() - 0.5) * 0.06 * p;
+          } else if (aType === "n") {
+            // Knight lands from leap, couches lance for final impale
+            attacker.position.y = (1 - p) * 0.2;
+            attacker.userData.body.rotation.x = 0.25 * (1 - p);
+            if (attacker.userData.weaponPivot) {
+              attacker.userData.weaponPivot.rotation.x = -0.35 * p;
+            }
+          } else if (aType === "b") {
+            // Bishop summons spinning celestial rune circle under victim!
+            if (attacker.userData.weaponPivot) {
+              attacker.userData.weaponPivot.rotation.x = -p * 0.85;
+            }
+            if (fxMeshes.length === 0) {
+              const runeRing = this.createRuneCircle(victimPos.x, victimPos.z, spellColor);
+              this.scene.add(runeRing);
+              fxMeshes.push(runeRing);
+            }
+            fxMeshes[0].rotation.z += 0.14;
+            fxMeshes[0].scale.setScalar(0.5 + p * 0.7);
+            victim.position.x = victimPos.x + (Math.random() - 0.5) * 0.05 * p;
+          } else if (aType === "q") {
+            // Queen telekinetically levitates & spins the helpless victim in mid-air!
+            if (attacker.userData.weaponPivot) {
+              attacker.userData.weaponPivot.rotation.x = -p * 0.95;
+            }
+            if (fxMeshes.length === 0) {
+              const vortex = this.createRuneCircle(victimPos.x, victimPos.z, spellColor);
+              this.scene.add(vortex);
+              fxMeshes.push(vortex);
+            }
+            fxMeshes[0].position.y = p * 0.75;
+            fxMeshes[0].rotation.z += 0.22;
+            victim.position.y = p * 0.92;
+            victim.rotation.y += 0.28;
+            victim.userData.body.rotation.z = Math.sin(p * Math.PI * 4) * 0.22;
+          } else if (aType === "k") {
+            // King clashes against defender's parry, then raises broadsword overhead!
+            if (!clashed && p > 0.25) {
+              clashed = true;
+              this.audio.playClash();
+              this.spawnSpellBurst(
+                new THREE.Vector3(victimPos.x - dirX * 0.35, 0.75, victimPos.z - dirZ * 0.35),
+                0xffdfb0,
+                14
+              );
+            }
+            if (attacker.userData.weaponPivot) {
+              attacker.userData.weaponPivot.rotation.x = -p * 1.65;
+            }
+            if (victim.userData.weaponPivot) {
+              victim.userData.weaponPivot.rotation.x = -Math.sin(p * Math.PI) * 0.85;
+            }
           }
-          attacker.userData.body.position.y = p * 0.12;
-          // Victim trembles under imminent strike
-          victim.position.x = victimPos.x + (Math.random() - 0.5) * 0.04 * p;
-          victim.position.z = victimPos.z + (Math.random() - 0.5) * 0.04 * p;
         } else if (elapsed < approachMs + windupMs + strikeMs) {
-          // Phase 3: Cleave / Lunge / Arcane Beam Impact!
+          // ===== PHASE 3: FINISHER IMPACT & DISMEMBERMENT SHATTER =====
           const p = (elapsed - approachMs - windupMs) / strikeMs;
 
-          if (isRangedCaster) {
-            if (!beamMesh) {
-              beamMesh = this.createArcaneBeam(
-                new THREE.Vector3(strikeX, 1.1, strikeZ),
-                new THREE.Vector3(victimPos.x, 0.65, victimPos.z),
-                attacker.userData.color === "w" ? 0xffb84d : 0xc864ff
+          if (aType === "b") {
+            // Sky-pillar of celestial light strikes from the heavens!
+            if (fxMeshes.length === 1) {
+              const pillar = this.createSkyPillar(victimPos.x, victimPos.z, spellColor);
+              this.scene.add(pillar);
+              fxMeshes.push(pillar);
+            }
+          } else if (aType === "q") {
+            // Arcane beam + mid-air vortex implosion
+            if (fxMeshes.length === 1) {
+              const beam = this.createArcaneBeam(
+                new THREE.Vector3(strikeX, 1.15, strikeZ),
+                new THREE.Vector3(victimPos.x, 0.92, victimPos.z),
+                spellColor
               );
-              this.scene.add(beamMesh);
+              this.scene.add(beam);
+              fxMeshes.push(beam);
+            }
+          } else if (aType === "r") {
+            // Rook slams both siege hammers into the ground!
+            if (attacker.userData.weaponPivot) {
+              attacker.userData.weaponPivot.rotation.x = -2.1 + p * 3.1;
+            }
+            if (attacker.userData.shieldPivot) {
+              attacker.userData.shieldPivot.rotation.x = -2.1 + p * 3.1;
             }
           } else if (attacker.userData.weaponPivot) {
-            attacker.userData.weaponPivot.rotation.x = -1.15 + p * 2.35;
+            attacker.userData.weaponPivot.rotation.x = -1.25 + p * 2.55;
           }
 
-          if (p >= 0.45 && !shattered) {
+          if (p >= 0.38 && !shattered) {
             shattered = true;
+            const shatterHeight = aType === "q" ? 0.92 : 0;
+            const upBoost = aType === "r" ? 1.15 : aType === "n" ? 0.65 : 0.38;
+            if (aType === "r" || aType === "n" || aType === "k") {
+              this.spawnShockwaveRing(new THREE.Vector3(victimPos.x, 0.04, victimPos.z), spellColor);
+            }
             this.shatterVictimPiece(
               victim,
-              new THREE.Vector3(victimPos.x, 0, victimPos.z),
-              new THREE.Vector3(dirX, 0.35, dirZ),
+              new THREE.Vector3(victimPos.x, shatterHeight, victimPos.z),
+              new THREE.Vector3(dirX, upBoost, dirZ),
               attacker.userData.color
             );
             this.pieceMeshes.delete(victimSq);
             this.scene.remove(victim);
-            this.cameraShake = 0.26;
+            this.cameraShake = aType === "r" ? 0.38 : 0.28;
             this.audio.playShatter();
           }
         } else if (elapsed < totalMs) {
-          // Phase 4: Claim the conquered square
-          if (beamMesh) {
-            this.scene.remove(beamMesh);
-            beamMesh = null;
+          // ===== PHASE 4: CLAIM CONQUERED SQUARE =====
+          if (fxMeshes.length > 0) {
+            for (const m of fxMeshes) this.scene.remove(m);
+            fxMeshes = [];
           }
           const p = (elapsed - approachMs - windupMs - strikeMs) / settleMs;
           const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
           attacker.position.x = strikeX + (end.x - strikeX) * ease;
           attacker.position.z = strikeZ + (end.z - strikeZ) * ease;
-          attacker.position.y = isRangedCaster ? (1 - ease) * 0.28 : 0;
+          attacker.position.y = isRanged ? (1 - ease) * 0.32 : 0;
           attacker.userData.body.position.y = (1 - ease) * 0.12;
+          attacker.userData.body.rotation.set(0, 0, 0);
           if (attacker.userData.weaponPivot) {
-            attacker.userData.weaponPivot.rotation.x = (1 - ease) * 1.2;
+            attacker.userData.weaponPivot.rotation.x = (1 - ease) * 1.1;
+          }
+          if (attacker.userData.shieldPivot) {
+            attacker.userData.shieldPivot.rotation.x = (1 - ease) * 0.8;
+            attacker.userData.shieldPivot.position.z = 0;
           }
         } else {
-          if (beamMesh) this.scene.remove(beamMesh);
+          for (const m of fxMeshes) this.scene.remove(m);
           attacker.position.set(end.x, 0, end.z);
-          attacker.userData.body.position.y = 0;
+          attacker.userData.body.position.set(0, 0, 0);
+          attacker.userData.body.rotation.set(0, 0, 0);
           if (attacker.userData.weaponPivot) {
             attacker.userData.weaponPivot.rotation.set(0, 0, 0);
           }
+          if (attacker.userData.shieldPivot) {
+            attacker.userData.shieldPivot.rotation.set(0, 0, 0);
+          }
           attacker.rotation.y = defaultRotY;
+          if (this.callbacks.onDuelBanner) {
+            this.callbacks.onDuelBanner(null);
+          }
           if (this.battleCamEnabled) {
             this.restoreBattleCamera();
           }
@@ -1274,10 +1760,71 @@ export class WizardChess3D {
     });
   }
 
+  createRuneCircle(x, z, hexColor) {
+    const group = new THREE.Group();
+    const outer = new THREE.Mesh(
+      new THREE.RingGeometry(0.42, 0.52, 6),
+      new THREE.MeshBasicMaterial({
+        color: hexColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.9
+      })
+    );
+    const inner = new THREE.Mesh(
+      new THREE.RingGeometry(0.22, 0.28, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.85
+      })
+    );
+    group.add(outer);
+    group.add(inner);
+    group.rotation.x = -Math.PI / 2;
+    group.position.set(x, 0.04, z);
+    return group;
+  }
+
+  createSkyPillar(x, z, hexColor) {
+    const geo = new THREE.CylinderGeometry(0.28, 0.44, 6.5, 16);
+    geo.translate(0, 3.25, 0);
+    const mat = new THREE.MeshBasicMaterial({
+      color: hexColor,
+      transparent: true,
+      opacity: 0.85
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, 0, z);
+    return mesh;
+  }
+
+  spawnShockwaveRing(pos, hexColor) {
+    const geo = new THREE.RingGeometry(0.2, 0.36, 24);
+    const mat = new THREE.MeshBasicMaterial({
+      color: hexColor,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.92
+    });
+    const ring = new THREE.Mesh(geo, mat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.copy(pos);
+    this.scene.add(ring);
+    this.particles.push({
+      mesh: ring,
+      vel: new THREE.Vector3(0, 0, 0),
+      isShockwave: true,
+      age: 0,
+      maxAge: 0.48
+    });
+  }
+
   createArcaneBeam(fromVec, toVec, hexColor) {
     const dir = new THREE.Vector3().subVectors(toVec, fromVec);
     const len = dir.length();
-    const geo = new THREE.CylinderGeometry(0.06, 0.11, len, 8);
+    const geo = new THREE.CylinderGeometry(0.06, 0.12, len, 8);
     geo.translate(0, len / 2, 0);
     geo.rotateX(Math.PI / 2);
     const mat = new THREE.MeshBasicMaterial({
@@ -1291,13 +1838,46 @@ export class WizardChess3D {
     return mesh;
   }
 
-  // ---------- Rigid-Body Voronoi / Chunk Stone Shatter Physics ----------
+  // ---------- Dismemberment + Rigid-Body Stone Shatter Physics ----------
   shatterVictimPiece(victimMesh, worldPos, impactDir, attackerColor) {
     const isWhiteVictim = victimMesh.userData.color === "w";
     const stoneMat = isWhiteVictim ? this.materials.whitePiece : this.materials.blackPiece;
     const coreMat = isWhiteVictim ? this.materials.whiteCore : this.materials.blackCore;
 
-    const shardCount = 34;
+    // 1. Launch actual sculpted Blender sub-meshes (helmet/head, weapon, shield) as tumbling trophies!
+    const subPivots = [
+      victimMesh.userData.headPivot,
+      victimMesh.userData.weaponPivot,
+      victimMesh.userData.shieldPivot
+    ];
+    for (const piv of subPivots) {
+      if (!piv) continue;
+      const worldP = new THREE.Vector3();
+      piv.getWorldPosition(worldP);
+      const detached = piv.clone(true);
+      detached.position.copy(worldP);
+      this.scene.add(detached);
+      const speed = 2.6 + Math.random() * 2.8;
+      this.shards.push({
+        mesh: detached,
+        vel: new THREE.Vector3(
+          impactDir.x * speed + (Math.random() - 0.5) * 2.8,
+          2.8 + Math.random() * 3.2,
+          impactDir.z * speed + (Math.random() - 0.5) * 2.8
+        ),
+        angVel: new THREE.Vector3(
+          (Math.random() - 0.5) * 12,
+          (Math.random() - 0.5) * 12,
+          (Math.random() - 0.5) * 12
+        ),
+        halfH: 0.14,
+        age: 0,
+        maxAge: 4.2
+      });
+    }
+
+    // 2. Spawn 30 Voronoi stone & glowing rune shards
+    const shardCount = 30;
     for (let i = 0; i < shardCount; i++) {
       const size = 0.07 + Math.random() * 0.13;
       const geo =
@@ -1308,10 +1888,10 @@ export class WizardChess3D {
               size * (0.6 + Math.random() * 0.9),
               size * (0.7 + Math.random() * 0.8)
             );
-      const mat = i % 6 === 0 ? coreMat : stoneMat;
+      const mat = i % 5 === 0 ? coreMat : stoneMat;
       const shard = new THREE.Mesh(geo, mat);
 
-      const h = 0.12 + Math.random() * 1.1;
+      const h = worldPos.y + 0.12 + Math.random() * 1.05;
       const spreadX = (Math.random() - 0.5) * 0.45;
       const spreadZ = (Math.random() - 0.5) * 0.45;
       shard.position.set(worldPos.x + spreadX, h, worldPos.z + spreadZ);
@@ -1321,7 +1901,7 @@ export class WizardChess3D {
       const speed = 2.2 + Math.random() * 3.8;
       const vel = new THREE.Vector3(
         impactDir.x * speed * 0.85 + (Math.random() - 0.5) * 3.4,
-        2.0 + Math.random() * 3.8,
+        (impactDir.y || 0.35) * 3.5 + 1.6 + Math.random() * 3.4,
         impactDir.z * speed * 0.85 + (Math.random() - 0.5) * 3.4
       );
       const angVel = new THREE.Vector3(
@@ -1341,10 +1921,11 @@ export class WizardChess3D {
       });
     }
 
-    // Impact spell/ember burst
     this.spawnSpellBurst(
-      new THREE.Vector3(worldPos.x, 0.55, worldPos.z),
-      attackerColor === "w" ? 0xffb347 : 0xc864ff,
+      new THREE.Vector3(worldPos.x, worldPos.y + 0.55, worldPos.z),
+      attackerColor === "w"
+        ? (this.currentTheme?.spellW || 0xffe8b8)
+        : (this.currentTheme?.spellB || 0xff7840),
       28
     );
   }
@@ -1413,8 +1994,8 @@ export class WizardChess3D {
     const sideSign = this.playerColor === "w" ? 1 : -1;
     const desiredPos = new THREE.Vector3(
       targetCenter.x + 2.2,
-      4.2,
-      targetCenter.z + sideSign * 4.4
+      4.1,
+      targetCenter.z + sideSign * 4.3
     );
     this.cameraTween = {
       fromPos: this.camera.position.clone(),
@@ -1460,13 +2041,13 @@ export class WizardChess3D {
     };
   }
 
-  // ---------- Chess AI Engine (Minimax + Alpha-Beta + PST) ----------
-  playAIMove() {
-    if (this.chess.isGameOver()) {
+  // ---------- Stockfish + Fallback AI Move Selection ----------
+  async playAIMove() {
+    if (this.chess.isGameOver() || this.reviewMode) {
       this.animating = false;
       return;
     }
-    const move = this.chooseBestAIMove();
+    const move = await this.chooseBestAIMove();
     if (!move) {
       this.animating = false;
       return;
@@ -1474,33 +2055,33 @@ export class WizardChess3D {
     this.executeMove(move);
   }
 
-  chooseBestAIMove() {
+  async chooseBestAIMove() {
     const legal = this.chess.moves({ verbose: true });
     if (legal.length === 0) return null;
 
-    // Difficulty 1 (Apprentice): Depth 1 + tactical noise
-    if (this.aiDifficulty === 1) {
-      let best = legal[0];
-      let bestScore = -Infinity;
-      const aiTurn = this.chess.turn();
-      for (const mv of legal) {
-        this.chess.move(mv);
-        const s =
-          (aiTurn === "w" ? 1 : -1) * this.evaluateBoard() + (Math.random() - 0.5) * 110;
-        this.chess.undo();
-        if (s > bestScore) {
-          bestScore = s;
-          best = mv;
-        }
+    const tier = DIFFICULTY_TIERS[this.aiDifficulty] || DIFFICULTY_TIERS[3];
+
+    // 1. Try Stockfish UCI Worker first (for levels >= 2, or with noise on level 1)
+    if (this.stockfish && this.stockfish.ready && (this.aiDifficulty >= 2 || Math.random() > 0.45)) {
+      const sfRes = await this.stockfish.queryPosition(this.chess.fen(), {
+        skill: tier.skill,
+        depth: tier.depth,
+        movetime: tier.movetime
+      });
+      if (sfRes && sfRes.bestMoveUci) {
+        const from = sfRes.bestMoveUci.slice(0, 2);
+        const to = sfRes.bestMoveUci.slice(2, 4);
+        const promo = sfRes.bestMoveUci[4] || undefined;
+        const matched = legal.find(
+          (m) => m.from === from && m.to === to && (!promo || m.promotion === promo)
+        );
+        if (matched) return matched;
       }
-      return best;
     }
 
-    // Difficulty 2 (Archmage: depth 2) & Difficulty 3 (Oracle: depth 3 + capture ordering)
-    const depth = this.aiDifficulty === 3 ? 3 : 2;
+    // 2. Fallback local Alpha-Beta + PST search
+    const searchDepth = this.aiDifficulty <= 2 ? 1 : this.aiDifficulty <= 4 ? 2 : 3;
     const aiColor = this.chess.turn();
-
-    // Order captures and promotions first for faster alpha-beta pruning
     legal.sort((a, b) => (b.captured ? 10 : 0) - (a.captured ? 10 : 0));
 
     let bestMove = legal[0];
@@ -1510,10 +2091,9 @@ export class WizardChess3D {
 
     for (const mv of legal) {
       this.chess.move(mv);
-      const val = -this.negamax(depth - 1, -beta, -alpha, aiColor === "w" ? -1 : 1);
+      const val = -this.negamax(searchDepth - 1, -beta, -alpha, aiColor === "w" ? -1 : 1);
       this.chess.undo();
-      // Slight tie-breaker jitter so AI varies openings
-      const jittered = val + (Math.random() - 0.5) * 6;
+      const jittered = val + (Math.random() - 0.5) * (tier.noise || 8);
       if (jittered > bestVal) {
         bestVal = jittered;
         bestMove = mv;
@@ -1542,13 +2122,13 @@ export class WizardChess3D {
     return maxEval;
   }
 
-  evaluateBoard() {
-    if (this.chess.isCheckmate()) {
-      return this.chess.turn() === "w" ? -99999 : 99999;
+  evaluateBoard(chessInstance = this.chess) {
+    if (chessInstance.isCheckmate()) {
+      return chessInstance.turn() === "w" ? -9900 : 9900;
     }
-    if (this.chess.isDraw()) return 0;
+    if (chessInstance.isDraw()) return 0;
 
-    const board = this.chess.board();
+    const board = chessInstance.board();
     let score = 0;
     for (let r = 0; r < 8; r++) {
       for (let f = 0; f < 8; f++) {
@@ -1564,6 +2144,178 @@ export class WizardChess3D {
     return score;
   }
 
+  // ---------- Arcane Game Review Engine ----------
+  async analyzeGameHistory(onProgress) {
+    if (this.timeline.length <= 1) return null;
+
+    const tempChess = new Chess();
+    // Ensure every timeline node has a bestMove and evaluation
+    for (let i = 0; i < this.timeline.length; i++) {
+      const node = this.timeline[i];
+      if (onProgress) onProgress(i, this.timeline.length);
+
+      if (this.stockfish && this.stockfish.ready) {
+        const fenTurn = node.fen.split(" ")[1];
+        const sf = await this.stockfish.queryPosition(node.fen, {
+          skill: 20,
+          depth: 8,
+          movetime: 110
+        });
+        if (sf) {
+          node.evalCpWhite = (fenTurn === "w" ? 1 : -1) * sf.scoreCp;
+          node.bestMoveUci = sf.bestMoveUci;
+        }
+      } else {
+        tempChess.load(node.fen);
+        node.evalCpWhite = this.evaluateBoard(tempChess);
+        // Find 1-ply best move locally
+        const moves = tempChess.moves({ verbose: true });
+        let bestUci = null;
+        let bestScore = -Infinity;
+        const turnSign = tempChess.turn() === "w" ? 1 : -1;
+        for (const m of moves) {
+          tempChess.move(m);
+          const sc = turnSign * this.evaluateBoard(tempChess);
+          tempChess.undo();
+          if (sc > bestScore) {
+            bestScore = sc;
+            bestUci = m.from + m.to + (m.promotion || "");
+          }
+        }
+        node.bestMoveUci = bestUci;
+      }
+    }
+
+    // Classify each move (ply 1..N) by comparing pre-move eval & bestMove vs post-move eval
+    const counts = {
+      brilliant: 0,
+      best: 0,
+      good: 0,
+      inaccuracy: 0,
+      mistake: 0,
+      blunder: 0
+    };
+    const accSums = { w: [], b: [] };
+
+    for (let i = 1; i < this.timeline.length; i++) {
+      const prev = this.timeline[i - 1];
+      const curr = this.timeline[i];
+      const mover = curr.color; // 'w' or 'b'
+      const sign = mover === "w" ? 1 : -1;
+
+      const evalBefore = prev.evalCpWhite * sign;
+      const evalAfter = curr.evalCpWhite * sign;
+      const cpLoss = Math.max(0, evalBefore - evalAfter);
+
+      const winBefore = cpToWinPercent(evalBefore);
+      const winAfter = cpToWinPercent(evalAfter);
+      const winLoss = Math.max(0, winBefore - winAfter);
+      const moveAcc = Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * winLoss) - 3.1669));
+      accSums[mover].push(moveAcc);
+
+      curr.recommendedUci = prev.bestMoveUci;
+      curr.recommendedSan = this.uciToSan(prev.fen, prev.bestMoveUci);
+
+      if (curr.uci === prev.bestMoveUci && curr.captured && evalAfter > evalBefore + 120) {
+        curr.classification = "brilliant";
+        curr.badge = "!!";
+      } else if (curr.uci === prev.bestMoveUci || cpLoss <= 22) {
+        curr.classification = "best";
+        curr.badge = "★";
+      } else if (cpLoss <= 65) {
+        curr.classification = "good";
+        curr.badge = "✓";
+      } else if (cpLoss <= 135) {
+        curr.classification = "inaccuracy";
+        curr.badge = "?!";
+      } else if (cpLoss <= 260) {
+        curr.classification = "mistake";
+        curr.badge = "?";
+      } else {
+        curr.classification = "blunder";
+        curr.badge = "??";
+      }
+      counts[curr.classification]++;
+    }
+
+    const avg = (arr) =>
+      arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 100;
+
+    return {
+      whiteAccuracy: avg(accSums.w),
+      blackAccuracy: avg(accSums.b),
+      counts,
+      timeline: this.timeline
+    };
+  }
+
+  uciToSan(fen, uci) {
+    if (!uci || uci.length < 4) return null;
+    try {
+      const tmp = new Chess(fen);
+      const mv = tmp.move({
+        from: uci.slice(0, 2),
+        to: uci.slice(2, 4),
+        promotion: uci[4] || "q"
+      });
+      return mv ? mv.san : uci;
+    } catch {
+      return uci;
+    }
+  }
+
+  viewReviewPly(plyIndex) {
+    const idx = Math.max(0, Math.min(this.timeline.length - 1, plyIndex));
+    const entry = this.timeline[idx];
+    if (!entry) return null;
+
+    this.reviewMode = true;
+    this.selectedSquare = null;
+    this.clearMarkers();
+
+    const tempChess = new Chess(entry.fen);
+    for (const [, mesh] of this.pieceMeshes) {
+      this.scene.remove(mesh);
+    }
+    this.pieceMeshes.clear();
+
+    const boardState = tempChess.board();
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const cell = boardState[r][f];
+        if (!cell) continue;
+        const mesh = this.buildWizardPieceMesh(cell.type, cell.color);
+        const pos = squareToWorld(cell.square);
+        mesh.position.set(pos.x, 0, pos.z);
+        mesh.userData.square = cell.square;
+        this.scene.add(mesh);
+        this.pieceMeshes.set(cell.square, mesh);
+      }
+    }
+
+    if (idx > 0) {
+      this.showReviewArrows(entry.uci, entry.recommendedUci, entry.classification);
+    } else {
+      this.clearReviewArrows();
+    }
+
+    if (this.callbacks.onEvalUpdate) {
+      this.callbacks.onEvalUpdate(entry.evalCpWhite, null);
+    }
+
+    return entry;
+  }
+
+  exitReviewMode() {
+    this.reviewMode = false;
+    this.clearReviewArrows();
+    this.syncPiecesFromBoard();
+    const latest = this.timeline[this.timeline.length - 1];
+    if (latest && this.callbacks.onEvalUpdate) {
+      this.callbacks.onEvalUpdate(latest.evalCpWhite, null);
+    }
+  }
+
   // ---------- Game Controls & State Callbacks ----------
   newGame(options = {}) {
     if (options.mode) this.mode = options.mode;
@@ -1571,13 +2323,27 @@ export class WizardChess3D {
     if (options.playerColor) this.playerColor = options.playerColor;
 
     this.chess.reset();
+    this.reviewMode = false;
     this.selectedSquare = null;
     this.legalMovesForSelected = [];
     this.capturedCounts = { w: [], b: [] };
     this.animating = false;
     this.clearMarkers();
+    this.clearReviewArrows();
 
-    // Clear leftover shards
+    this.timeline = [
+      {
+        ply: 0,
+        fen: this.chess.fen(),
+        san: "Start",
+        uci: null,
+        color: null,
+        evalCpWhite: 20,
+        bestMoveUci: null,
+        classification: null
+      }
+    ];
+
     for (const s of this.shards) {
       this.scene.remove(s.mesh);
     }
@@ -1585,6 +2351,7 @@ export class WizardChess3D {
 
     this.syncPiecesFromBoard();
     this.setCameraPreset(this.playerColor === "w" ? "white" : "black");
+    if (this.callbacks.onEvalUpdate) this.callbacks.onEvalUpdate(20, null);
     this.notifyStateChange(null);
 
     if (this.mode === "ai" && this.playerColor === "b") {
@@ -1595,15 +2362,22 @@ export class WizardChess3D {
 
   undoLastRound() {
     if (this.animating) return;
+    this.reviewMode = false;
+    this.clearReviewArrows();
+
     if (this.mode === "ai") {
-      this.chess.undo();
-      this.chess.undo();
+      if (this.chess.undo()) this.timeline.pop();
+      if (this.chess.undo()) this.timeline.pop();
     } else {
-      this.chess.undo();
+      if (this.chess.undo()) this.timeline.pop();
     }
     this.selectedSquare = null;
     this.clearMarkers();
     this.syncPiecesFromBoard();
+    const latest = this.timeline[this.timeline.length - 1];
+    if (latest && this.callbacks.onEvalUpdate) {
+      this.callbacks.onEvalUpdate(latest.evalCpWhite, null);
+    }
     this.notifyStateChange(null);
   }
 
@@ -1617,6 +2391,7 @@ export class WizardChess3D {
         isDraw: this.chess.isDraw(),
         isGameOver: this.chess.isGameOver(),
         history: this.chess.history({ verbose: true }),
+        timeline: this.timeline,
         capturedCounts: this.capturedCounts,
         lastMove
       });
@@ -1628,9 +2403,8 @@ export class WizardChess3D {
       const winner = this.chess.turn() === "w" ? "b" : "w";
       const playerWon = this.mode === "2p" || winner === this.playerColor;
       if (playerWon && typeof BridgeProgression !== "undefined") {
-        const reward =
-          this.aiDifficulty === 3 ? 100 : this.aiDifficulty === 2 ? 60 : 35;
-        BridgeProgression.awardCoins(reward, "wizard_chess_victory", {
+        const tier = DIFFICULTY_TIERS[this.aiDifficulty] || DIFFICULTY_TIERS[3];
+        BridgeProgression.awardCoins(tier.reward, "wizard_chess_victory", {
           difficulty: this.aiDifficulty,
           mode: this.mode
         });
@@ -1659,11 +2433,34 @@ export class WizardChess3D {
       b.flame.rotation.y += 0.04;
     }
 
-    // 2. Subtle breathing idle animation on living stone statues
+    // 2. Class-specific idle animations on Blender-sculpted warriors
     for (const [, piece] of this.pieceMeshes) {
       if (!this.animating && piece.userData.body) {
         const s = piece.userData.seed || 0;
-        piece.userData.body.position.y = Math.sin(now * 0.0028 + s) * 0.018;
+        const pType = piece.userData.type;
+        const hoverAmp = pType === "b" || pType === "q" ? 0.032 : 0.015;
+        piece.userData.body.position.y = Math.sin(now * 0.0028 + s) * hoverAmp;
+
+        if (piece.userData.headPivot) {
+          piece.userData.headPivot.rotation.y = Math.sin(now * 0.0016 + s) * 0.07;
+          if (pType === "n") {
+            // Warhorse proud head nod
+            piece.userData.headPivot.rotation.x = Math.sin(now * 0.0032 + s) * 0.06;
+          }
+        }
+        if (piece.userData.wingsMesh) {
+          // Queen Valkyrie wings gently unfurl & breathe
+          const ws = 1 + Math.sin(now * 0.0035 + s) * 0.055;
+          piece.userData.wingsMesh.scale.set(ws, 1, 1);
+        }
+        if (piece.userData.astrolabeMesh) {
+          // Bishop celestial astrolabe rings slowly precess
+          piece.userData.astrolabeMesh.rotation.z = Math.sin(now * 0.002 + s) * 0.14;
+        }
+        if ((pType === "q" || pType === "b") && piece.userData.shieldPivot) {
+          // Levitating spellbook / arcane orbs bob in left hand
+          piece.userData.shieldPivot.position.y += Math.sin(now * 0.0045 + s) * 0.0012;
+        }
       }
     }
 
@@ -1676,7 +2473,7 @@ export class WizardChess3D {
       }
     }
 
-    // 4. Update rigid-body stone shatter fragments
+    // 4. Update rigid-body stone shatter & severed armor fragments
     for (let i = this.shards.length - 1; i >= 0; i--) {
       const sh = this.shards[i];
       sh.age += dt;
@@ -1685,14 +2482,12 @@ export class WizardChess3D {
         this.shards.splice(i, 1);
         continue;
       }
-      // Gravity
       sh.vel.y -= 11.5 * dt;
       sh.mesh.position.addScaledVector(sh.vel, dt);
       sh.mesh.rotation.x += sh.angVel.x * dt;
       sh.mesh.rotation.y += sh.angVel.y * dt;
       sh.mesh.rotation.z += sh.angVel.z * dt;
 
-      // Floor collision bounce on the marble board
       if (sh.mesh.position.y < sh.halfH) {
         sh.mesh.position.y = sh.halfH;
         sh.vel.y = Math.abs(sh.vel.y) * 0.36;
@@ -1701,13 +2496,12 @@ export class WizardChess3D {
         sh.angVel.multiplyScalar(0.68);
       }
 
-      // Sink gently into stone at end of life
       if (sh.age > sh.maxAge - 0.75) {
         sh.mesh.position.y -= dt * 0.25;
       }
     }
 
-    // 5. Update dust & spell particles
+    // 5. Update dust, spell, and shockwave particles
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const pt = this.particles[i];
       pt.age += dt;
@@ -1716,10 +2510,16 @@ export class WizardChess3D {
         this.particles.splice(i, 1);
         continue;
       }
-      pt.mesh.position.addScaledVector(pt.vel, dt);
-      pt.mesh.material.opacity = Math.max(0, 1 - pt.age / pt.maxAge);
-      pt.mesh.rotation.x += 0.08;
-      pt.mesh.rotation.y += 0.08;
+      if (pt.isShockwave) {
+        const s = 1 + (pt.age / pt.maxAge) * 5.2;
+        pt.mesh.scale.set(s, s, 1);
+        pt.mesh.material.opacity = Math.max(0, 0.9 * (1 - pt.age / pt.maxAge));
+      } else {
+        pt.mesh.position.addScaledVector(pt.vel, dt);
+        pt.mesh.material.opacity = Math.max(0, 1 - pt.age / pt.maxAge);
+        pt.mesh.rotation.x += 0.08;
+        pt.mesh.rotation.y += 0.08;
+      }
     }
 
     // 6. Camera tweening & impact shake
