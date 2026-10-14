@@ -600,10 +600,11 @@
       }
     }
 
-    // Docking Bay 3 looks out on the ringed giant (parallax: it hangs far off)
+    // Docking Bay 3 and the ring look out on the ringed giant (parallax: it hangs far off)
     var dw = BridgeWorld.getWorld();
-    if (dw && dw.dock && dw.dock.giant && typeof BridgeOrbit !== 'undefined' && BridgeOrbit.drawGiant) {
-      var v = BridgeWorld.getView(), g = dw.dock.giant;
+    var g = dw && ((dw.dock && dw.dock.giant) || dw.giant);
+    if (g && typeof BridgeOrbit !== 'undefined' && BridgeOrbit.drawGiant) {
+      var v = BridgeWorld.getView();
       var camCol = (w / 2 - v.offX) / v.ts, camRow = (h / 2 - v.offY) / v.ts;
       BridgeOrbit.drawGiant(ctx, w / 2 + (g[0] - camCol) * v.ts * 0.35, h / 2 + (g[1] - camRow) * v.ts * 0.35,
                             Math.round(g[2] * v.ts), time, 0.3);

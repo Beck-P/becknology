@@ -470,5 +470,58 @@
       "from": "morwen",
       "text": "The book is open on my table to its last page, and I find I can't close it. The Wren, and then your skiff, written in a hand three hundred years dead.\n\nThe monks heard you coming before you were built. I don't know what that means yet. When I do, you'll have a letter.\n\nMorwen"
     }
+  },
+  "keepsakes": {
+    "title": "Five Berths",
+    "where": "Enigma Station",
+    "reward": 120,
+    "start": "The Wren's crew left their berths in Enigma's ring exactly as they were the day they flew.",
+    "done": "A harmonica, a short deck of cards, a pressed flower, a letter nobody finished, a child's drawing. They all meant to come back. Okafor should know someone has seen them.",
+    "clues": [
+      {
+        "id": "ada",
+        "on": {
+          "world": "enigma-quarters",
+          "label": "ADA'S BERTH"
+        },
+        "text": "Ada's harmonica, worn bright where her thumbs went: 'For the long hauls.'"
+      },
+      {
+        "id": "bix",
+        "on": {
+          "world": "enigma-quarters",
+          "label": "BIX'S BERTH"
+        },
+        "text": "Bix's cards, fifty-one of them. The ace of hearts is missing: 'I'll win it back.'"
+      },
+      {
+        "id": "cora",
+        "on": {
+          "world": "enigma-quarters",
+          "label": "CORA'S BERTH"
+        },
+        "text": "Cora, the medic, kept a pressed Lumar spore-bloom. It still glows."
+      },
+      {
+        "id": "dell",
+        "on": {
+          "world": "enigma-quarters",
+          "label": "DELL'S BERTH"
+        },
+        "text": "Dell's unfinished letter: he swapped a shift so Dami could finish her tug."
+      },
+      {
+        "id": "eze",
+        "on": {
+          "world": "enigma-quarters",
+          "label": "EZE'S BERTH"
+        },
+        "text": "Eze, the youngest, flew the Wren. A drawing from home: 'Big sister Eze flies the Wren.'"
+      }
+    ],
+    "letter": {
+      "from": "okafor",
+      "text": "You went down to the ring. I haven't, not since. I couldn't make my feet do it.\n\nDell's letter - I knew he'd swapped for me. I didn't know he'd written it down. I'm going to finish it for him and send it to his sister. Mar should know he was laughing that morning.\n\nThank you for looking at their things like they mattered. They did.\n\nDami"
+    }
   }
 }

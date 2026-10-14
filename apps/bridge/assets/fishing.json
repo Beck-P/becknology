@@ -1,0 +1,88 @@
+{
+  "lumar": [
+    {
+      "x": 6,
+      "y": 16,
+      "pool": "harbour"
+    },
+    {
+      "x": 9,
+      "y": 16,
+      "pool": "harbour"
+    }
+  ],
+  "lumar-sapphire": [
+    {
+      "x": 27,
+      "y": 27,
+      "pool": "sapphire"
+    },
+    {
+      "x": 29,
+      "y": 27,
+      "pool": "sapphire"
+    },
+    {
+      "x": 28,
+      "y": 28,
+      "pool": "sapphire"
+    }
+  ],
+  "lumar-rose": [
+    {
+      "x": 27,
+      "y": 23,
+      "pool": "rose"
+    },
+    {
+      "x": 29,
+      "y": 23,
+      "pool": "rose"
+    },
+    {
+      "x": 28,
+      "y": 25,
+      "pool": "rose"
+    }
+  ],
+  "lumar-crimson": [
+    {
+      "x": 27,
+      "y": 37,
+      "pool": "crimson"
+    },
+    {
+      "x": 29,
+      "y": 37,
+      "pool": "crimson"
+    },
+    {
+      "x": 28,
+      "y": 38,
+      "pool": "crimson"
+    }
+  ],
+  "lumar-midnight": [
+    {
+      "x": 23,
+      "y": 38,
+      "pool": "midnight"
+    },
+    {
+      "x": 25,
+      "y": 38,
+      "pool": "midnight"
+    },
+    {
+      "x": 24,
+      "y": 39,
+      "pool": "midnight"
+    },
+    {
+      "x": 37,
+      "y": 26,
+      "pool": "moonpool",
+      "label": "THE MOON POOL"
+    }
+  ]
+}

@@ -77,8 +77,9 @@ def gallery_wall(k, x0, x1, r_face, height, win, lights=5):
     return mull
 
 
-def side_wall(k, x0, x1, r0, r1, height, door=None):
-    """Side wall seen end-on from the camera; door = (ra, rb) leaves a gap."""
+def side_wall(k, x0, x1, r0, r1, height, door=None, face=1):
+    """Side wall seen end-on from the camera; door = (ra, rb) leaves a gap;
+    face: which side the room is on (+1: the room is east of the wall)."""
     W = DECK_WALL
     spans = [(r0, r1)] if not door else [(r0, door[0]), (door[1], r1)]
     for a, b in spans:
@@ -91,7 +92,8 @@ def side_wall(k, x0, x1, r0, r1, height, door=None):
         k.box(x0 - 0.02, ra, height, x1 + 0.02, rb, height + 0.05, W[0], 'wall_cap')
         for rr in (ra, rb - 0.18):
             k.box(x0, rr, 0.0, x1, rr + 0.18, 2.3, (W[0], 0.05), 'door_post')
-            k.box(x1 - 0.02, rr + 0.06, 1.0, x1 + 0.01, rr + 0.12, 1.2, BRASS, 'door_plate')
+            px = x1 if face > 0 else x0
+            k.box(px - 0.02, rr + 0.06, 1.0, px + 0.01, rr + 0.12, 1.2, BRASS, 'door_plate')
         k.box(x0, ra + 0.18, -0.01, x1, rb - 0.18, 0.02, (BRASS_D, 0.06), 'threshold')
 
 

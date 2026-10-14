@@ -402,6 +402,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeForage !== 'undefined') BridgeForage.decorate(worldId, data);
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
+        if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
         var finish = function () {
           world = data;
           currentWorldId = worldId;

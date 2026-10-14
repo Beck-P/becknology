@@ -235,6 +235,54 @@
           {
             "id": "sea_glass",
             "price": 4
+          },
+          {
+            "id": "star_pearl",
+            "price": 80
+          },
+          {
+            "id": "moon_eel",
+            "price": 40
+          },
+          {
+            "id": "heron_coin",
+            "price": 25
+          },
+          {
+            "id": "sapphire_ray",
+            "price": 22
+          },
+          {
+            "id": "ember_snapper",
+            "price": 18
+          },
+          {
+            "id": "glowtail",
+            "price": 16
+          },
+          {
+            "id": "bluefin",
+            "price": 14
+          },
+          {
+            "id": "harbour_crab",
+            "price": 10
+          },
+          {
+            "id": "rose_shrimp",
+            "price": 8
+          },
+          {
+            "id": "silverfin",
+            "price": 6
+          },
+          {
+            "id": "spore_minnow",
+            "price": 4
+          },
+          {
+            "id": "old_boot",
+            "price": 1
           }
         ]
       }

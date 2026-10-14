@@ -12,7 +12,7 @@
  *   right-click   on world = use selected
  *
  *   BridgeInventory.init()
- *   BridgeInventory.addItem(id, n=1)           // stacks into existing slot, else fills empty
+ *   BridgeInventory.addItem(id, n=1)           // stacks into existing slot, else fills empty; false if full
  *   BridgeInventory.removeItem(id, n=1)
  *   BridgeInventory.getCount(id) → number
  *   BridgeInventory.selectSlot(i)              // 0..MAX_SLOTS-1
@@ -178,16 +178,17 @@ var BridgeInventory = (function () {
   function addItem(id, n) {
     n = (typeof n === 'number') ? n : 1;
     var item = BridgeItems.get(id);
-    if (!item) return;
+    if (!item) return false;
     var existing = (item.stackable !== false) ? findSlotById(id) : -1;
     if (existing >= 0) {
       state.slots[existing].count += n;
     } else {
       var empty = firstEmptySlot();
-      if (empty < 0) return;  // inventory full — silently drop
+      if (empty < 0) return false;  // inventory full — dropped (callers can say so)
       state.slots[empty] = { id: id, count: n };
     }
     save(); refresh();
+    return true;
   }
   function removeItem(id, n) {
     n = (typeof n === 'number') ? n : 1;

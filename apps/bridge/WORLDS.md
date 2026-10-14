@@ -55,8 +55,8 @@ harvesters, a dragon under the hill. Warm lamplight against cold blue.
   islands yourself, meet other ships (traders, patrols, pirates, a ghost
   galleon), fish, salvage wrecks, find islands that aren't on the chart.
 - **Purpose**: crystals to harvest and sell, recipes for the apothecary,
-  the cartographer's map to complete, the dragon's riddle; fishing (a
-  mini-game) off the pier.
+  the cartographer's map to complete, the dragon's riddle; ✓ fishing (a
+  mini-game) off every pier, and the moon pool.
 
 ## Arcadia — the neon megacity
 A cyberpunk night city stacked into the sky: rain-slick walkways, holo-ads
@@ -144,12 +144,13 @@ stars streaking, a tunnel of light, dropping out over the new world.
    Arcadia's Skywalk level; ✓ the Backs behind the chained gate (the code
    is on the bars) with NULL's den in a shipping container, Vex, and
    Splice, the hacking job that pays; more
-   of Enigma (✓ hydroponics, where Okafor lives; the ring corridor, crew
-   quarters). ✓ The Wren, frozen mid-fall off the Brink, ends Okafor's quest.
+   of Enigma (✓ hydroponics, where Okafor lives; ✓ the ring corridor and
+   ✓ the crew quarters, where the Wren's crew left their berths). ✓ The Wren, frozen mid-fall off the Brink, ends Okafor's quest.
 4. ✓ Nav chart and hyperspace jump. ✓ The bridge as a captain's deck: the
    helm, the chart table, the navigator's desk, the wireless and a letter
    rack (letters from people you've helped or befriended), hired crew at
-   their posts, decor slots. Next: the game room.
+   their posts, decor slots. ✓ The game room: every mini-game you find
+   ends up aboard.
 5. ◐ Purpose: ✓ quests and a journal, ✓ a cast with backstories to talk
    to. Next: loot and collectibles worth carrying, jobs that pay, the
    codex; mini-games woven in.

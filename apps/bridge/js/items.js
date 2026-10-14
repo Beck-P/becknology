@@ -319,6 +319,54 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#f0f4ff'; ctx.fillRect(x + 5*u, y + 4*u, 2*u, 1*u);
   }
 
+  // A fish in profile, in its own colours (the catch from js/fishing.js).
+  function fishIcon(body, belly, fin, glow) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      ctx.fillStyle = '#0a0810';
+      ctx.fillRect(x + 3*u, y + 5*u, 10*u, 6*u); ctx.fillRect(x + 1*u, y + 4*u, 3*u, 8*u);
+      ctx.fillStyle = body;
+      ctx.fillRect(x + 4*u, y + 6*u, 8*u, 4*u); ctx.fillRect(x + 5*u, y + 5*u, 6*u, 1*u); ctx.fillRect(x + 2*u, y + 5*u, 2*u, 6*u);
+      ctx.fillStyle = belly;
+      ctx.fillRect(x + 5*u, y + 8*u, 6*u, 2*u);
+      ctx.fillStyle = fin;
+      ctx.fillRect(x + 7*u, y + 4*u, 3*u, 1*u); ctx.fillRect(x + 7*u, y + 10*u, 2*u, 1*u);
+      ctx.fillStyle = '#f8f0d0'; ctx.fillRect(x + 10*u, y + 7*u, 1*u, 1*u);
+      if (glow) { ctx.fillStyle = glow; ctx.fillRect(x + 6*u, y + 6*u, 1*u, 1*u); ctx.fillRect(x + 8*u, y + 7*u, 1*u, 1*u); ctx.fillRect(x + 3*u, y + 7*u, 1*u, 1*u); }
+    };
+  }
+
+  function crabIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 4*u, y + 6*u, 8*u, 6*u); ctx.fillRect(x + 2*u, y + 4*u, 3*u, 3*u); ctx.fillRect(x + 11*u, y + 4*u, 3*u, 3*u);
+    ctx.fillStyle = '#c84a2a'; ctx.fillRect(x + 5*u, y + 7*u, 6*u, 4*u); ctx.fillRect(x + 3*u, y + 5*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 5*u, 1*u, 1*u);
+    ctx.fillStyle = '#e87a4a'; ctx.fillRect(x + 6*u, y + 7*u, 3*u, 1*u);
+    ctx.fillStyle = '#8a2a1a'; for (var i = 0; i < 3; i++) { ctx.fillRect(x + (4 + i*3)*u, y + 11*u, 1*u, 2*u); }
+  }
+
+  function bootIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 4*u, y + 2*u, 5*u, 11*u); ctx.fillRect(x + 4*u, y + 9*u, 9*u, 4*u);
+    ctx.fillStyle = '#5a3a22'; ctx.fillRect(x + 5*u, y + 3*u, 3*u, 9*u); ctx.fillRect(x + 5*u, y + 10*u, 7*u, 2*u);
+    ctx.fillStyle = '#3e6a4a'; ctx.fillRect(x + 6*u, y + 5*u, 1*u, 2*u); ctx.fillRect(x + 9*u, y + 10*u, 2*u, 1*u);
+  }
+
+  function coinIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 4*u, y + 4*u, 8*u, 8*u);
+    ctx.fillStyle = '#c8ccd8'; ctx.fillRect(x + 5*u, y + 5*u, 6*u, 6*u);
+    ctx.fillStyle = '#f0f4ff'; ctx.fillRect(x + 5*u, y + 5*u, 2*u, 2*u);
+    ctx.fillStyle = '#7a7e8a'; ctx.fillRect(x + 7*u, y + 7*u, 2*u, 2*u);
+  }
+
+  function pearlIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 5*u, y + 5*u, 6*u, 6*u);
+    ctx.fillStyle = '#e8e0ff'; ctx.fillRect(x + 6*u, y + 6*u, 4*u, 4*u);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 6*u, y + 6*u, 1*u, 1*u);
+    ctx.fillStyle = '#a080ff'; ctx.fillRect(x + 9*u, y + 9*u, 1*u, 1*u); ctx.fillRect(x + 3*u, y + 3*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 4*u, 1*u, 1*u);
+  }
+
   // ---- Item registry --------------------------------------------------
   // type drives display + grouping.
   // effects is the source of truth for what an item does — both the
@@ -398,6 +446,30 @@ var BridgeItems = (function () {
       id: 'silver_nail', name: 'Silver Nail', desc: 'Salvage from the Heron. Silver doesn\'t rust - good as new, and nobody builds with silver.',
       type: 'material', stackable: true, draw: silverNail, value: 6
     },
+    // the catch (js/fishing.js) — eat it, or sell it to a trader
+    silverfin:     { id: 'silverfin', name: 'Silverfin', desc: 'The commonest fish in the spore sea, and the best fried.', type: 'food', stackable: true,
+                     draw: fishIcon('#8a98a8', '#d0d8e0', '#5a6878'), effects: { hp: 8, energy: 8 }, onUse: consumableUse, value: 6 },
+    spore_minnow:  { id: 'spore_minnow', name: 'Spore Minnow', desc: 'Tiny, and glows after dark from the spores it eats.', type: 'food', stackable: true,
+                     draw: fishIcon('#3a6a5a', '#80c0a0', '#2a4a3a', '#60f0c0'), effects: { energy: 6 }, onUse: consumableUse, value: 4 },
+    harbour_crab:  { id: 'harbour_crab', name: 'Harbour Crab', desc: 'Grumpy, armoured and delicious.', type: 'food', stackable: true,
+                     draw: crabIcon, effects: { hp: 12 }, onUse: consumableUse, value: 10 },
+    rose_shrimp:   { id: 'rose_shrimp', name: 'Rose Shrimp', desc: 'Pink as the crystals they live among.', type: 'food', stackable: true,
+                     draw: fishIcon('#c06080', '#f0a0c0', '#8a3a5a'), effects: { hp: 6, energy: 10 }, onUse: consumableUse, value: 8 },
+    bluefin:       { id: 'bluefin', name: 'Sapphire Bluefin', desc: 'Fast and fighting. Sapphire Port cooks pay well for them.', type: 'food', stackable: true,
+                     draw: fishIcon('#2a5aa0', '#a0c0f0', '#1a3a70'), effects: { hp: 14, energy: 10 }, onUse: consumableUse, value: 14 },
+    glowtail:      { id: 'glowtail', name: 'Glowtail', desc: 'Its tail lights up when it is frightened. It is always frightened.', type: 'food', stackable: true,
+                     draw: fishIcon('#2a3a5a', '#6080a0', '#40e0d0', '#80fff0'), effects: { energy: 18 }, onUse: consumableUse, value: 16 },
+    ember_snapper: { id: 'ember_snapper', name: 'Ember Snapper', desc: 'From the warm water off Crimson Reach. Hot to the touch, somehow.', type: 'food', stackable: true,
+                     draw: fishIcon('#a03a20', '#f09060', '#6a1a10', '#ffb040'), effects: { hp: 18 }, onUse: consumableUse, value: 18 },
+    sapphire_ray:  { id: 'sapphire_ray', name: 'Sapphire Ray', desc: 'A ray with blue crystal along its spine. Traders argue over them.', type: 'material', stackable: true,
+                     draw: fishIcon('#1a2a5a', '#4060c0', '#80b0ff', '#c0e0ff'), value: 22 },
+    moon_eel:      { id: 'moon_eel', name: 'Moon Eel', desc: 'Only ever seen in Midnight\'s waters. Pale as moonlight, cold as it too.', type: 'material', stackable: true,
+                     draw: fishIcon('#c8c8e0', '#f0f0ff', '#8080b0', '#e0e0ff'), value: 40 },
+    old_boot:      { id: 'old_boot', name: 'Old Boot', desc: 'Somebody, somewhere, is walking funny.', type: 'material', stackable: true, draw: bootIcon, value: 1 },
+    heron_coin:    { id: 'heron_coin', name: 'Heron Coin', desc: 'Silver, from the Heron\'s lost cargo. The tide brings them in, one at a time.', type: 'material', stackable: true,
+                     draw: coinIcon, value: 25 },
+    star_pearl:    { id: 'star_pearl', name: 'Star Pearl', desc: 'From the moon pool. There are stars moving inside it.', type: 'material', stackable: true,
+                     draw: pearlIcon, value: 80 },
     stone_shard: {
       id: 'stone_shard', name: 'Stone Shard',
       desc: 'A jagged fragment from a fallen sentinel. Amethyst still glints in the break.',

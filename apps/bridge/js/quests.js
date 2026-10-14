@@ -107,7 +107,19 @@ var BridgeQuests = (function () {
             (b.pending ? '. <b>' + b.pending + '</b> waiting to collect' : '') + '</li>';
         }).join('') + '</ul></section>';
     }
-    if (!ids.length && !crew.length && !biz.length) {
+    var fished = typeof BridgeFishing !== 'undefined' ? BridgeFishing.journal() : { fish: [], bottles: [] };
+    if (fished.fish.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Fish</span>' +
+        '<span class="qj-q-count">' + fished.fish.length + ' kinds</span></div><ul class="qj-clues">' +
+        fished.fish.map(function (f) { return '<li class="found"><b>' + esc(f.name) + '</b> \u00d7' + f.n + (f.best ? ', biggest ' + f.best + ' cm' : '') + '</li>'; }).join('') +
+        '</ul></section>';
+    }
+    if (fished.bottles.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Messages in bottles</span>' +
+        '<span class="qj-q-count">' + fished.bottles.length + '</span></div><ul class="qj-clues">' +
+        fished.bottles.map(function (b) { return '<li class="found">' + esc(b) + '</li>'; }).join('') + '</ul></section>';
+    }
+    if (!ids.length && !crew.length && !biz.length && !fished.fish.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {

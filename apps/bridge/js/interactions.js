@@ -55,7 +55,7 @@ var BridgeInteractions = (function () {
   var VERBS = {
     enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
-    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in'
+    menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -311,6 +311,7 @@ var BridgeInteractions = (function () {
   }
 
   function executeInteraction(inter) {
+    if (typeof BridgeGames !== 'undefined') BridgeGames.note(inter);      // a game played: it waits in the game room now
     if (typeof BridgeQuests !== 'undefined') {
       BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter);
       if (inter.home) BridgeQuests.onInteract(inter.home.world, { label: inter.home.label });   // crew aboard (js/crew.js)
@@ -375,6 +376,15 @@ var BridgeInteractions = (function () {
 
       case 'splice':
         if (typeof BridgeSplice !== 'undefined') BridgeSplice.open();
+        break;
+
+      case 'fish':
+        if (typeof BridgeFishing !== 'undefined') BridgeFishing.open(inter);
+        break;
+
+      case 'game_slot':
+      case 'game_scores':
+        if (typeof BridgeGames !== 'undefined') BridgeGames.use(inter);
         break;
 
       case 'sail_to':

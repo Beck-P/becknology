@@ -32,6 +32,10 @@
       {
         "when": "crew:okafor",
         "text": "She has joined the pilot's crew and lives aboard their ship now, keeping it running and still talking to the fish (she brought them)."
+      },
+      {
+        "when": "quest:keepsakes",
+        "text": "The pilot has been to the crew quarters in the ring and seen the Wren crew's berths - Ada's harmonica, Bix's cards, Cora's flower, Dell's unfinished letter to his sister, Eze's drawing. Okafor hasn't been down there since; she is moved, and means to finish Dell's letter and send it."
       }
     ]
   },

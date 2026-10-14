@@ -35,7 +35,7 @@ WIN = (3.2, 17.8, 1.0, 3.9)
 D.deck_floor(k, 1, RF, 20, 13)
 MULL = D.gallery_wall(k, 0.5, 20.5, RF, H, WIN)
 D.side_wall(k, 0.4, 1.0, 3.5, 13.0, H, door=(9.0, 11.0))     # to the hangar
-D.side_wall(k, 20.0, 20.6, 3.5, 13.0, H)
+D.side_wall(k, 20.0, 20.6, 3.5, 13.0, H, door=(7.0, 9.0), face=-1)   # to the game room
 D.front_wall(k, 0.4, 20.6, 13.0, door=(9.0, 12.0))             # to the quarters
 D.helm_dais(k, 7.95, RF, 13.05, 6.95)
 D.compass_rose(k, 10.5, 6.4, 0.42, z=0.012)
@@ -65,13 +65,11 @@ D.chart_table(k, 10.5, 8.5)
 D.wingback(k, 10.5, 11.45)
 D.side_table_lamp(k, 11.5, 11.55)
 D.tripod_telescope(k, 6.5, 6.5)
-D.curio_cabinet(k, 19.0, 8.95)
+D.curio_cabinet(k, 19.0, 9.95)
 A.coat_rack(k, 1.5, 12.4)
-A.barrel(k, 18.5, 10.45, tone=A.WOOD_D)
+A.barrel(k, 18.3, 11.6, tone=A.WOOD_D)
 D.lectern(k, 16.5, 11.45)
 A.crate(k, 17.2, 11.15, s=0.6)
-D.coil_of_rope(k, 18.25, 11.6)
-k.solid(18.0, 11.3, 18.5, 11.9)
 CURIO_Z = D.plinth(k, 2.5, 11.5)
 D.sea_chest(k, 4.5, 11.5)
 D.flag_socket(k, 19.5, 11.5)
@@ -103,7 +101,7 @@ k.point_light(17.5, 10.6, 2.3, '#ffc890', 35, radius=0.5)
 k.render(OUT, light_states={'full': {'pulse': 1.0, 'flicker': 1.0}, 'dim': {'pulse': 0.6, 'flicker': 0.8}},
          light_samples=128, world_light=('#2a2438', 0.4))
 
-apply_world(WORLD, k, (1, 4, 19, 12), doors=[(9, 13), (10, 13), (11, 13), (0, 9), (0, 10)], scene_id='bridge',
+apply_world(WORLD, k, (1, 4, 19, 12), doors=[(9, 13), (10, 13), (11, 13), (0, 9), (0, 10), (20, 7), (20, 8)], scene_id='bridge',
             scene_extra={'flicker': {'mode': 'pulse'},
                          'sky': [WIN[0], round(RF - WIN[3] * C, 3), WIN[1], round(RF - WIN[2] * C, 3)]})
 print('bridge done')
