@@ -104,180 +104,11 @@ var BridgeCine = (function () {
   var BLUE = ['rgba(150,140,255,0.95)', 'rgba(70,220,210,0)'];
   var HOT = ['rgba(255,200,120,0.95)', 'rgba(255,90,40,0)'];
 
-  // Per-place skies for the descent and the climb.
-  var SKY = {
-    lumar: { top: '#050c1a', mid: '#12304a', low: '#2c5a6c', glow: [110, 210, 210], cloud: ['#7a92aa', '#4a5e76'],
-             moon: true,
-             cloudLit: '#b4c8da',
-             ground: 'sea' },
-    arcadia: { top: '#0a0514', mid: '#2a1240', low: '#8a2a6a', glow: [220, 100, 230], cloud: ['#5a3a6e', '#3a2450'],
-               cloudLit: '#a06090',
-               ground: 'city' }
-  };
-
-  function skyOf(loc) { return SKY[loc] || SKY.lumar; }
-
   function gradient(b, W, H, stops) {
     var g = b.createLinearGradient(0, 0, 0, H);
     for (var i = 0; i < stops.length; i++) g.addColorStop(stops[i][0], stops[i][1]);
     b.fillStyle = g;
     b.fillRect(0, 0, W, H);
-  }
-
-  // Cloud banks: flattened puffs in three tones (shadowed underside, body,
-  // moonlit top), plus thin wisps that sell the speed.
-  function clouds(b, W, H, offset, layer, sky) {
-    var n = layer === 0 ? 8 : 5;
-    var size = layer === 0 ? 14 : 30;
-    var span = H + size * 4;
-    var tones = [sky.cloud[1], sky.cloud[0], sky.cloudLit || sky.cloud[0]];
-    for (var i = 0; i < n; i++) {
-      var seed = i * 13 + layer * 101;
-      var cx = hash(seed) * (W + size * 3) - size * 1.5;
-      var cy = ((hash(seed + 1) * span + offset * (layer === 0 ? 0.6 : 1.4)) % span + span) % span - size * 2;
-      var puffs = 9 + Math.floor(hash(seed + 2) * 5);
-      for (var pass = 0; pass < 3; pass++) {
-        b.fillStyle = tones[pass];
-        for (var p = 0; p < puffs; p++) {
-          var px = cx + (hash(seed + p * 3) - 0.5) * size * 3.4;
-          var py = cy + (hash(seed + p * 5) - 0.5) * size * 0.5;
-          var r = size * (0.35 + hash(seed + p * 7) * 0.45) * (1 - Math.abs(px - cx) / (size * 3));
-          if (r < 2) continue;
-          var shrink = [1, 0.84, 0.5][pass], lift = [0.22, 0, -0.28][pass];
-          b.beginPath();
-          b.ellipse(Math.round(px - (pass === 2 ? r * 0.2 : 0)), Math.round(py + r * lift), Math.round(r * shrink * 1.25),
-                    Math.max(1, Math.round(r * shrink * 0.62)), 0, 0, Math.PI * 2);
-          b.fill();
-        }
-      }
-    }
-    if (layer === 1) {          // thin streamers of mist rushing past
-      b.fillStyle = tones[2];
-      for (var w = 0; w < 10; w++) {
-        var wx = hash(w * 17) * W;
-        var wy = ((hash(w * 19) * H + offset * 2.4) % H + H) % H;
-        b.globalAlpha = 0.18;
-        b.beginPath();
-        b.ellipse(Math.round(wx), Math.round(wy), 18 + hash(w * 23) * 30, 1.5, 0, 0, Math.PI * 2);
-        b.fill();
-        b.globalAlpha = 1;
-      }
-    }
-  }
-
-  // The ground rising into view under the clouds: the moonlit sea with its
-  // islands and the lighthouse sweeping, or the city — towers, lit windows,
-  // neon, streams of air traffic.
-  function ground(b, W, H, top, now, sky) {
-    if (top >= H) return;
-    var T = Math.round(top);
-    if (sky.ground === 'sea') {
-      var g = b.createLinearGradient(0, T, 0, H);
-      g.addColorStop(0, '#1a3a4a'); g.addColorStop(1, '#081822');
-      b.fillStyle = g;
-      b.fillRect(0, T, W, H - T);
-      b.fillStyle = 'rgba(180,220,230,0.35)';                    // the moon's path on the water
-      for (var m = 0; m < 26; m++) {
-        var my = T + hash(m * 5) * (H - T);
-        var mw = 2 + hash(m * 7) * 10 * (1 - (my - T) / (H - T) * 0.5);
-        b.fillRect(Math.round(W * 0.3 + (hash(m * 3) - 0.5) * 30 + Math.sin(now / 400 + m) * 3), Math.round(my), Math.round(mw), 1);
-      }
-      for (var i = 0; i < 70; i++) {                           // wave glints
-        var y = T + hash(i) * (H - T);
-        var x = (hash(i * 3) * W + now * 0.01 * (1 + hash(i * 5))) % W;
-        b.fillStyle = 'rgba(160,200,220,' + (0.15 + 0.25 * hash(i * 7)).toFixed(2) + ')';
-        b.fillRect(Math.round(x), Math.round(y), 2 + Math.round(hash(i * 9) * 4), 1);
-      }
-      for (var k = 0; k < 5; k++) {                            // islands, each with a light or two
-        var ix = hash(k * 11) * W, iy = T + 8 + hash(k * 13) * (H - T - 10);
-        var iw = 12 + hash(k * 17) * 22;
-        b.fillStyle = '#0e1e1a';
-        b.beginPath(); b.ellipse(Math.round(ix), Math.round(iy), iw, 3 + iw * 0.12, 0, 0, Math.PI * 2); b.fill();
-        b.fillStyle = '#5a5440';
-        b.beginPath(); b.ellipse(Math.round(ix), Math.round(iy), iw * 0.92, 2.5 + iw * 0.1, 0, 0, Math.PI * 2); b.fill();
-        b.fillStyle = '#1e3a2a';
-        b.beginPath(); b.ellipse(Math.round(ix), Math.round(iy) - 1, iw * 0.7, 2 + iw * 0.08, 0, Math.PI, Math.PI * 2); b.fill();
-        for (var tr = 0; tr < 4; tr++) {
-          b.fillStyle = '#16301e';
-          b.fillRect(Math.round(ix - iw * 0.5 + hash(k * 7 + tr) * iw), Math.round(iy) - 4, 2, 3);
-        }
-        b.fillStyle = 'rgba(255,200,120,0.95)';
-        b.fillRect(Math.round(ix - iw * 0.2), Math.round(iy) - 1, 1, 1);
-        if (k === 1) {                                          // the lighthouse beam
-          var a = now / 900;
-          b.save();
-          b.globalCompositeOperation = 'lighter';
-          b.fillStyle = 'rgba(255,240,180,0.18)';
-          b.beginPath();
-          b.moveTo(ix, iy - 4);
-          b.lineTo(ix + Math.cos(a) * 120, iy - 4 + Math.sin(a) * 18 - 6);
-          b.lineTo(ix + Math.cos(a + 0.12) * 120, iy - 4 + Math.sin(a + 0.12) * 18 + 6);
-          b.closePath(); b.fill();
-          b.restore();
-          b.fillStyle = '#fff4c0';
-          b.fillRect(Math.round(ix), Math.round(iy) - 5, 1, 2);
-        }
-      }
-    } else {
-      var cg = b.createLinearGradient(0, T, 0, H);
-      cg.addColorStop(0, '#2a1036'); cg.addColorStop(1, '#0a0612');
-      b.fillStyle = cg;
-      b.fillRect(0, T, W, H - T);
-      for (var j = 0; j < 46; j++) {                            // towers, near ones taller
-        var tx = hash(j * 3) * W, tw = 6 + hash(j * 5) * 14;
-        var th = 10 + hash(j * 7) * 40;
-        var ty = T + 6 + hash(j * 9) * (H - T) * 0.6;
-        b.fillStyle = '#120a1c';
-        b.fillRect(Math.round(tx), Math.round(ty - th), Math.round(tw), Math.round(th + H));
-        for (var wy = 0; wy < th; wy += 3) {
-          for (var wx = 1; wx < tw - 1; wx += 3) {
-            if (hash(j * 31 + wy * 7 + wx) > 0.72) {
-              b.fillStyle = hash(j + wy) > 0.85 ? 'rgba(96,220,255,0.85)' : 'rgba(255,190,110,0.8)';
-              b.fillRect(Math.round(tx + wx), Math.round(ty - th + wy), 1, 1);
-            }
-          }
-        }
-        if (hash(j * 13) > 0.7) {                                // a neon sign
-          b.fillStyle = hash(j * 17) > 0.5 ? 'rgba(255,90,200,0.9)' : 'rgba(80,230,255,0.9)';
-          b.fillRect(Math.round(tx + 1), Math.round(ty - th * 0.6), Math.max(2, Math.round(tw * 0.5)), 2);
-        }
-      }
-      for (var f = 0; f < 22; f++) {                             // air traffic streaming between the towers
-        var lane = T + 4 + (f % 4) * 9;
-        var fx = ((hash(f) * W + now * (0.03 + hash(f * 2) * 0.05) * (f % 2 ? 1 : -1)) % W + W) % W;
-        b.fillStyle = f % 2 ? 'rgba(255,240,200,0.9)' : 'rgba(255,80,80,0.9)';
-        b.fillRect(Math.round(fx), Math.round(lane), 2, 1);
-      }
-    }
-  }
-
-  function skyGlow(b, W, H, sky, now) {
-    b.save();
-    b.globalCompositeOperation = 'lighter';
-    if (sky.moon) {
-      var mx = W * 0.78, my = H * 0.16;
-      var g = b.createRadialGradient(mx, my, 0, mx, my, H * 0.4);
-      g.addColorStop(0, 'rgba(200,220,255,0.35)');
-      g.addColorStop(1, 'rgba(200,220,255,0)');
-      b.fillStyle = g;
-      b.fillRect(0, 0, W, H);
-      b.fillStyle = '#e8ecf4';
-      b.beginPath(); b.arc(mx, my, 7, 0, Math.PI * 2); b.fill();
-      b.globalCompositeOperation = 'source-over';
-      b.fillStyle = 'rgba(150,160,190,0.55)';
-      [[-2, -2, 2], [2, 1, 1.5], [-1, 3, 1], [3, -3, 1]].forEach(function (c) {
-        b.beginPath(); b.arc(mx + c[0], my + c[1], c[2], 0, Math.PI * 2); b.fill();
-      });
-      b.fillStyle = 'rgba(20,30,60,0.45)';
-      b.beginPath(); b.arc(mx + 3, my - 1, 7, -1.2, 1.9); b.fill();
-    } else {
-      var hg = b.createLinearGradient(0, H * 0.5, 0, H);
-      hg.addColorStop(0, 'rgba(255,80,200,0)');
-      hg.addColorStop(1, 'rgba(255,80,200,0.25)');
-      b.fillStyle = hg;
-      b.fillRect(0, 0, W, H);
-    }
-    b.restore();
   }
 
   function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
@@ -398,10 +229,8 @@ var BridgeCine = (function () {
 
   // ---- the shots -------------------------------------------------------------------
   function launchShots(loc) {
-    var sky = skyOf(loc);
-    var kind = BridgeOrbit.kindOf(loc);
     var shots = [];
-    // 1 · out of the hangar bay, away toward the world below
+    // out of the hangar bay, away toward the world below; then the world's own approach (approachShot)
     shots.push({ dur: 2600, draw: function (b, W, H, t, now) {
       spaceShot(b, W, H, now, loc);
       var p = msPos(W, H, now), m = p[2], bay = m.anchors.bay;
@@ -425,95 +254,6 @@ var BridgeCine = (function () {
         flame(b, x + en[0], y + en[1], len, -0.9, name === 'shuttle' ? 0 : -0.3, now + 17, BLUE, 2);
       }
     } });
-    if (kind === 'ocean' || kind === 'city') {
-      // 2 · entry: plasma round the nose, the sky thickening
-      shots.push({ dur: 1700, draw: function (b, W, H, t, now) {
-        var g = sky.glow;
-        gradient(b, W, H, [[0, '#020208'], [0.55, sky.top], [1, 'rgba(' + g[0] + ',' + g[1] + ',' + g[2] + ',1)']]);
-        richStars(b, W, H * 0.55, now, -0.002, 3);
-        var sd = meta['shuttle-down'];
-        var jx = (hash(Math.floor(now / 40)) - 0.5) * 2, jy = (hash(Math.floor(now / 40) + 9) - 0.5) * 2;
-        var x = W / 2 - sd.w / 2 + jx, y = H * 0.42 - sd.h / 2 + jy;
-        var heat = Math.sin(Math.PI * Math.min(1, t * 1.15));
-        b.save();
-        b.globalCompositeOperation = 'lighter';
-        for (var i = 0; i < 46; i++) {      // streaks of burning air, streaming up and back past the dive
-          var sx = ((hash(i) * W * 1.3 - now * 0.22) % (W * 1.3) + W * 1.3) % (W * 1.3) - W * 0.15;
-          var sy = ((hash(i * 3) * H - now * 0.4) % H + H) % H;
-          var len = 5 + Math.round(hash(i * 7) * 12);
-          b.fillStyle = 'rgba(255,' + (150 + Math.round(hash(i * 5) * 80)) + ',90,' + (0.4 * heat).toFixed(2) + ')';
-          for (var q = 0; q < len; q++) b.fillRect(Math.round(sx - q * 0.55), Math.round(sy - q), 1, 1);
-        }
-        var nose = sd.anchors.nose, belly = sd.anchors.belly;
-        var pg = b.createRadialGradient(x + belly[0], y + belly[1] + 4, 0, x + belly[0], y + belly[1] + 4, 46);
-        pg.addColorStop(0, 'rgba(255,240,200,' + (0.9 * heat).toFixed(2) + ')');
-        pg.addColorStop(0.35, 'rgba(255,140,60,' + (0.55 * heat).toFixed(2) + ')');
-        pg.addColorStop(1, 'rgba(255,60,120,0)');
-        b.fillStyle = pg;
-        b.fillRect(x - 40, y - 30, sd.w + 80, sd.h + 80);
-        b.restore();
-        sprite(b, 'shuttle-down', x, y);
-        b.save();
-        b.globalCompositeOperation = 'lighter';
-        b.fillStyle = 'rgba(255,150,80,' + (0.5 * heat).toFixed(2) + ')';
-        b.beginPath();
-        b.ellipse(x + nose[0] - 2, y + nose[1] + 2, 6, 4, 0.5, 0, Math.PI * 2);
-        b.fill();
-        b.save();                                    // the bow shock: a hot cap of light ahead of the nose
-        b.translate(x + nose[0] - 6, y + nose[1] + 4);
-        b.rotate(0.5);
-        b.scale(1, 0.5);
-        var bs = b.createRadialGradient(4, 0, 0, 4, 0, 26);
-        bs.addColorStop(0, 'rgba(255,250,230,' + (0.8 * heat).toFixed(2) + ')');
-        bs.addColorStop(0.4, 'rgba(255,170,90,' + (0.45 * heat).toFixed(2) + ')');
-        bs.addColorStop(1, 'rgba(255,90,60,0)');
-        b.fillStyle = bs;
-        b.fillRect(-30, -30, 60, 60);
-        b.restore();
-        for (var e = 0; e < 18; e++) {             // embers peeling off the hull
-          var et = ((now / 600) + e / 18) % 1;
-          b.fillStyle = 'rgba(255,' + (180 + Math.round(hash(e) * 60)) + ',100,' + ((1 - et) * heat).toFixed(2) + ')';
-          b.fillRect(Math.round(x + belly[0] - et * 60 - hash(e * 3) * 20), Math.round(y + belly[1] - et * 50 + hash(e * 5) * 10), 1, 1);
-        }
-        b.restore();
-      } });
-      // 3 · down through the clouds, levelling out, the ground coming up
-      shots.push({ dur: 1700, draw: function (b, W, H, t, now) {
-        gradient(b, W, H, [[0, sky.top], [0.6, sky.mid], [1, sky.low]]);
-        skyGlow(b, W, H, sky, now);
-        var groundTop = H - easeOut(Math.max(0, (t - 0.25) / 0.75)) * H * 0.45;
-        ground(b, W, H, groundTop, now, sky);
-        var speed = (1 - easeOut(t)) * 2.4 + 0.3;
-        var off = -now * 0.08 * speed;
-        b.globalAlpha = 0.5;
-        clouds(b, W, H, off * 0.35, 0, sky);
-        b.globalAlpha = 1;
-        clouds(b, W, H, off * 0.6 + 40, 0, sky);
-        var name = t < 0.5 ? 'shuttle-down' : 'shuttle';
-        var sp = meta[name];
-        var x = W / 2 - sp.w / 2, y = H * 0.4 - sp.h / 2 + Math.sin(now / 300);
-        var en = sp.anchors.exhaust_near, ef = sp.anchors.exhaust_far;
-        var thr = 4 + (t > 0.5 ? 10 : 2);
-        flame(b, x + ef[0], y + ef[1], thr, -1, name === 'shuttle' ? 0 : -0.3, now, BLUE, 2);
-        sprite(b, name, x, y);
-        flame(b, x + en[0], y + en[1], thr, -1, name === 'shuttle' ? 0 : -0.3, now + 21, BLUE, 2);
-        clouds(b, W, H, off * 1.2, 1, sky);
-      } });
-    } else {
-      // stations and the void: a straight approach, docking lights blinking
-      shots.push({ dur: 2600, draw: function (b, W, H, t, now) {
-        b.fillStyle = '#03030a';
-        b.fillRect(0, 0, W, H);
-        stars(b, W, H, now, -0.02, 0, 140, 11);
-        if (kind === 'hole') BridgeOrbit.drawHole(b, W * 0.62, H * 0.42, Math.round(H * (0.12 + t * 0.1)), now);
-        else BridgeOrbit.drawStation(b, W * 0.66, H * 0.42, Math.round(4 + t * 9), now);
-        var s = meta.shuttle;
-        var x = W * 0.18 + ease(t) * W * 0.22, y = H * 0.6 - ease(t) * H * 0.12;
-        flame(b, x + s.anchors.exhaust_far[0], y + s.anchors.exhaust_far[1], 8, -1, 0, now, BLUE, 2);
-        sprite(b, 'shuttle', x, y);
-        flame(b, x + s.anchors.exhaust_near[0], y + s.anchors.exhaust_near[1], 8, -1, 0, now + 21, BLUE, 2);
-      } });
-    }
     var last = approachShot(loc);
     if (last) shots.push(last);
     return shots;
@@ -794,38 +534,8 @@ var BridgeCine = (function () {
   }
 
   function ascendShots(loc) {
-    var sky = skyOf(loc);
-    var kind = BridgeOrbit.kindOf(loc);
     var shots = [];
-    if (kind === 'ocean' || kind === 'city') {
-      // 1 · climbing out through the clouds, the ground falling away
-      shots.push({ dur: 2000, draw: function (b, W, H, t, now) {
-        gradient(b, W, H, [[0, sky.top], [0.6, sky.mid], [1, sky.low]]);
-        skyGlow(b, W, H, sky, now);
-        ground(b, W, H, H * 0.58 + easeIn(t) * H * 0.5, now, sky);
-        var off = now * 0.08 * (0.6 + t * 2);
-        clouds(b, W, H, off * 0.6, 0, sky);
-        var su = meta['shuttle-up'];
-        var x = W / 2 - su.w / 2, y = H * 0.5 - su.h / 2 - easeIn(t) * H * 0.15;
-        var en = su.anchors.exhaust_near, ef = su.anchors.exhaust_far;
-        flame(b, x + ef[0], y + ef[1], 16 + t * 10, -0.85, 0.5, now, BLUE, 2);
-        sprite(b, 'shuttle-up', x, y);
-        flame(b, x + en[0], y + en[1], 16 + t * 10, -0.85, 0.5, now + 21, BLUE, 2);
-        clouds(b, W, H, off * 1.2, 1, sky);
-      } });
-      // 2 · out of the air: the glow sinking away, the stars coming out
-      shots.push({ dur: 1300, draw: function (b, W, H, t, now) {
-        var g = sky.glow, a = 1 - t;
-        gradient(b, W, H, [[0, '#020208'], [0.6, sky.top], [1, 'rgba(' + g[0] + ',' + g[1] + ',' + g[2] + ',' + a.toFixed(2) + ')']]);
-        stars(b, W, H, now, 0, 0.02 * (1 - t), Math.round(40 + t * 100), 5);
-        var su = meta['shuttle-up'];
-        var x = W / 2 - su.w / 2, y = H * 0.45 - su.h / 2;
-        flame(b, x + su.anchors.exhaust_far[0], y + su.anchors.exhaust_far[1], 22, -0.85, 0.5, now, BLUE, 2);
-        sprite(b, 'shuttle-up', x, y);
-        flame(b, x + su.anchors.exhaust_near[0], y + su.anchors.exhaust_near[1], 22, -0.85, 0.5, now + 21, BLUE, 2);
-      } });
-    }
-    // 3 · home: up from below and astern, overtaking along the hull, then
+    // home (the lift-off plays in the world): up from below and astern, overtaking along the hull, then
     // rising nose-first into the hangar bay
     shots.push({ dur: 3000, draw: function (b, W, H, t, now) {
       spaceShot(b, W, H, now, loc);
