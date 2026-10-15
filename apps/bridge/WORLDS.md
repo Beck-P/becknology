@@ -140,8 +140,11 @@ stars streaking, a tunnel of light, dropping out over the new world.
 - **Mining**: rocks and seams to break for rare materials (ores, crystal
   geodes, salvage), tools to buy and upgrade, what you dig feeding crafting
   and trade.
-- **A farming planet**, Stardew-style: a plot of your own to clear, till,
-  plant and water; crops by season; animals later.
+- ✓ **A farming planet**, Stardew-style (first pass: Verdance, `js/farm.js`): a
+  farmstead in a green meadow, a field to till, plant and water, six crops
+  growing in real time while watered, Hollin's seeds and Marlo's cart, the
+  pond to fish, the orchard and the skeps. Next: seasons, the barn's
+  animals, the farmhouse inside, sprinklers.
 - **Combat and weapons**, made cooler: real weapons with their own feel,
   enemies worth fighting, hits that land.
 - **Maps**: find or buy charts that reveal a world bit by bit; systems for

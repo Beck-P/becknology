@@ -8,7 +8,8 @@
  * until the line's full. Each spot draws from its island's pool: silverfin
  * everywhere, bluefin and rays off Sapphire, shrimp in Rose Cove, ember
  * snappers and coins from the Heron off Crimson, moon eels round Midnight —
- * and star pearls in the moon pool. Old boots. Messages in bottles.
+ * and star pearls in the moon pool; perch and the odd sun carp in the farm pond
+ * on Verdance. Old boots. Messages in bottles.
  *
  * What you've caught (how many, the biggest) and the messages you've read
  * are kept in localStorage (bridge_fish) and listed in the journal.
@@ -22,14 +23,15 @@ var BridgeFishing = (function () {
     rose:     [['silverfin', 30], ['rose_shrimp', 35], ['glowtail', 15], ['old_boot', 10], ['bottle', 10]],
     crimson:  [['ember_snapper', 35], ['silverfin', 25], ['heron_coin', 15], ['old_boot', 15], ['bottle', 10]],
     midnight: [['glowtail', 30], ['silverfin', 25], ['moon_eel', 20], ['old_boot', 10], ['bottle', 15]],
-    moonpool: [['moon_eel', 50], ['glowtail', 35], ['star_pearl', 15]]
+    moonpool: [['moon_eel', 50], ['glowtail', 35], ['star_pearl', 15]],
+    pond:     [['pond_perch', 60], ['sun_carp', 12], ['old_boot', 20], ['bottle', 8]]
   };
   // how each one fights on the line: speed it darts, how wild, the sizes it comes in (cm)
   var FIGHT = {
     silverfin: [0.8, 0.25, 18, 34], spore_minnow: [1.1, 0.4, 6, 12], harbour_crab: [0.5, 0.15, 10, 22],
     rose_shrimp: [1.0, 0.35, 8, 16], bluefin: [1.3, 0.45, 40, 90], glowtail: [1.2, 0.6, 20, 40],
     ember_snapper: [1.1, 0.4, 30, 60], sapphire_ray: [0.9, 0.3, 50, 110], moon_eel: [1.6, 0.7, 60, 140],
-    star_pearl: [1.8, 0.8, 1, 2], old_boot: [0.25, 0.0, 26, 31], heron_coin: [0.3, 0.05, 3, 4], bottle: [0.35, 0.05, 20, 30]
+    star_pearl: [1.8, 0.8, 1, 2], pond_perch: [0.7, 0.25, 12, 28], sun_carp: [1.2, 0.55, 30, 70], old_boot: [0.25, 0.0, 26, 31], heron_coin: [0.3, 0.05, 3, 4], bottle: [0.35, 0.05, 20, 30]
   };
   var BOTTLES = [
     "IF YOU FIND THIS, I AM STILL ON THE STACK OFF CRIMSON. BRING ROPE. - H.M.",
@@ -167,14 +169,23 @@ var BridgeFishing = (function () {
     var dpr = window.devicePixelRatio || 1;
     if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // the spore sea at night
+    // the spore sea at night - or, on Verdance, a farm pond in the afternoon sun, lily pads and glints
+    var pond = st.pool === 'pond';
     var g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#0c2a26'); g.addColorStop(1, '#06120f');
+    g.addColorStop(0, pond ? '#3a7a70' : '#0c2a26'); g.addColorStop(1, pond ? '#18403a' : '#06120f');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    if (pond) {
+      [[70, 40, 9], [210, 96, 12], [330, 30, 8], [400, 110, 10]].forEach(function (l, j) {
+        var lx = (l[0] + Math.sin(now / 2400 + j) * 3) % W;
+        ctx.fillStyle = '#2a6a2a'; ctx.beginPath(); ctx.ellipse(lx, l[1], l[2], l[2] * 0.55, 0, 0.3, Math.PI * 2 - 0.3); ctx.lineTo(lx, l[1]); ctx.fill();
+        ctx.fillStyle = '#4a9a3a'; ctx.fillRect(Math.round(lx - l[2] * 0.6), Math.round(l[1] - 1), Math.round(l[2] * 0.5), 1);
+        if (j === 1) { ctx.fillStyle = '#f0b0d0'; ctx.fillRect(Math.round(lx + 2), Math.round(l[1] - 3), 3, 3); }
+      });
+    }
     for (var i = 0; i < 26; i++) {
       var sx = (i * 73 + now * 0.006 * (1 + i % 3)) % W, sy = 20 + (i * 37) % (H - 30) + Math.sin(now / 900 + i) * 3;
-      ctx.fillStyle = 'rgba(96,240,192,' + (0.15 + 0.2 * Math.abs(Math.sin(now / 700 + i))).toFixed(2) + ')';
-      ctx.fillRect(Math.round(sx), Math.round(sy), 2, 2);
+      ctx.fillStyle = (pond ? 'rgba(255,250,220,' : 'rgba(96,240,192,') + (0.15 + 0.2 * Math.abs(Math.sin(now / 700 + i))).toFixed(2) + ')';
+      ctx.fillRect(Math.round(sx), Math.round(sy), 2, pond ? 1 : 2);
     }
     for (var w = 0; w < 5; w++) {
       ctx.fillStyle = 'rgba(160,230,210,0.08)';

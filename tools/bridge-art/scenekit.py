@@ -295,6 +295,19 @@ class Kit:
         self._add_light({'obj': o, 'energy': energy, 'group': group})
         return o
 
+    def sun(self, direction, color, strength, angle=4.0, group='static'):
+        """Directional light (the day worlds): direction is (x, row, z) the light travels along."""
+        ld = bpy.data.lights.new('sun', 'SUN')
+        ld.color = lin(hexc(color))[:3]
+        ld.energy = strength
+        ld.angle = math.radians(angle)
+        o = bpy.data.objects.new('sun', ld)
+        self.scene.collection.objects.link(o)
+        d = Vector((direction[0], -direction[1] * S, direction[2])).normalized()
+        o.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()
+        self._add_light({'obj': o, 'energy': strength, 'group': group})
+        return o
+
     def solid(self, x0, r0, x1, r1):
         """Mark tiles [x0,x1) × [r0,r1) as blocked for the collision map
         (ignored inside a variant: decor doesn't change collisions)."""

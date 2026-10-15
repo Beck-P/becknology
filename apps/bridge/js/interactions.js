@@ -58,13 +58,14 @@ var BridgeInteractions = (function () {
     menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish',
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
-    home_door: 'Enter', home_piece: 'Look'
+    home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
-                      'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port' };
+                      'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port',
+                      'verdance': 'the farm' };
 
   function titleCase(t) {
     return String(t || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z\u00e0-\u00ff])/g, function (m, a, b) {
@@ -316,7 +317,7 @@ var BridgeInteractions = (function () {
   }
 
   function executeInteraction(inter) {
-    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(/^(enter_world|leave_world|password_gate)$/.test(inter.type) ? 'door' : 'open');
+    if (typeof BridgeAudio !== 'undefined' && inter.type !== 'farm_plot') BridgeAudio.sfx(/^(enter_world|leave_world|password_gate)$/.test(inter.type) ? 'door' : 'open');   // the field makes its own sounds
     if (typeof BridgeGames !== 'undefined') BridgeGames.note(inter);      // a game played: it waits in the game room now
     if (typeof BridgeQuests !== 'undefined') {
       BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter);
@@ -362,6 +363,10 @@ var BridgeInteractions = (function () {
 
       case 'rock': case 'mine_down': case 'mine_up': case 'mine_lift': case 'mine_rack': case 'mine_slate':
         if (typeof BridgeMine !== 'undefined') BridgeMine.use(inter);         // the Rose Mine (js/mine.js)
+        break;
+
+      case 'farm_plot': case 'farm_tools': case 'farm_well':   // the field on Verdance (js/farm.js)
+        if (typeof BridgeFarm !== 'undefined') BridgeFarm.use(inter);
         break;
 
       case 'home_door': case 'home_piece':   // a home to buy or go into, furniture you use (js/home.js)
@@ -603,7 +608,7 @@ var BridgeInteractions = (function () {
 
   // ---- dialogs, styled for the world you're in ---------------------------------------------
   // parchment in Lumar, a neon terminal in Arcadia, a CRT on Enigma, violet
-  // glass at the Singularity, a holo panel aboard the ship (css .wd-*)
+  // glass at the Singularity, gingham on Verdance, a holo panel aboard the ship (css .wd-*)
   function dialogTheme() {
     var id = (BridgeWorld.getWorldId && BridgeWorld.getWorldId()) || '';
     var w = BridgeWorld.getWorld();
@@ -612,6 +617,7 @@ var BridgeInteractions = (function () {
     if (ts === 'arcadia' || /^(arcadia|cyber|chrome|junk|tech)/.test(id)) return 'neon';
     if (ts === 'enigma' || id === 'enigma') return 'crt';
     if (ts === 'singularity' || id === 'singularity') return 'void';
+    if (ts === 'verdance' || /^verdance/.test(id)) return 'meadow';
     return 'holo';
   }
 

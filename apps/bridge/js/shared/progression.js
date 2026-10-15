@@ -469,9 +469,9 @@
     });
   }
 
-  // Award the "Wayfarer" trophy iff visited all 4 hyperspace destinations.
+  // Award the "Wayfarer" trophy iff visited all 5 hyperspace destinations.
   function maybeAwardWayfarer() {
-    var keys = ['visited_arcadia', 'visited_lumar', 'visited_singularity', 'visited_enigma'];
+    var keys = ['visited_arcadia', 'visited_lumar', 'visited_singularity', 'visited_enigma', 'visited_verdance'];
     return getAchievements().then(function (set) {
       for (var i = 0; i < keys.length; i++) if (!set.has(keys[i])) return false;
       return recordAchievement('wayfarer', 75, { source: 'navigation' });

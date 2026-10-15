@@ -202,6 +202,9 @@ var BridgeAudio = (function () {
     enigma:   { bpm: 56, root: 43, mode: 'aeolian', chords: [0, 5, 0, 3], pad: 'drone', arp: { inst: 'bell', steps: [0], oct: 36, sparse: 0.5 },
                 lead: { inst: 'keys', oct: 12, density: 0.18 } },
     singularity: { bpm: 48, root: 36, mode: 'phrygian', chords: [0, 1], pad: 'drone', arp: { inst: 'bell', steps: [0, 8], oct: 36, sparse: 0.6 } },
+    verdance: { bpm: 92, root: 55, mode: 'ionian', chords: [0, 3, 4, 0, 5, 3, 1, 4], swing: 0.2, pad: 'warm',
+                arp: { inst: 'pluck', steps: [0, 3, 6, 8, 11, 14], oct: 12, pattern: [0, 1, 2, 1] }, bass: { inst: 'bass', steps: [0, 6, 8] },
+                lead: { inst: 'flute', oct: 24, density: 0.5 }, perc: [['shaker', [2, 6, 10, 14]]] },
     ship:     { bpm: 66, root: 53, mode: 'lydian', chords: [0, 1, 5, 4], pad: 'warm',
                 arp: { inst: 'box', steps: [0, 3, 6, 8, 11, 14], oct: 12 }, bass: { inst: 'bass', steps: [0], oct: -12 },
                 lead: { inst: 'box', oct: 24, density: 0.25 } }
@@ -218,6 +221,7 @@ var BridgeAudio = (function () {
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
     if (/^singularity/.test(id)) return { theme: 'singularity', amb: ['rumble'] };
+    if (/^verdance/.test(id)) return { theme: 'verdance', amb: ['breeze', 'birds'] };
     if (/cave/.test(id) || ts === 'cave') return { theme: 'cave', amb: ['drips', 'rumble'] };
     if (/tower/.test(id) || ts === 'tower') return { theme: 'tower', amb: ['wind'] };
     if (/lighthouse|lamproom/.test(id)) return { theme: 'lumar-in', amb: ['wind', 'searoom'] };
@@ -457,6 +461,23 @@ var BridgeAudio = (function () {
     rumble: function (out) {
       var n = loopNoise('lowpass', 90, 0.8, 0.3); var l = lfo(n.g.gain, 0.06, 0.12); n.g.connect(out);
       return [n.src, l];
+    },
+    breeze: function (out) {                                    // warm wind in long grass
+      var n = loopNoise('bandpass', 900, 0.6, 0.035); var l = lfo(n.g.gain, 0.07, 0.025), l2 = lfo(n.f.frequency, 0.05, 300); n.g.connect(out);
+      return [n.src, l, l2];
+    },
+    birds: function (out) {                                     // songbirds in the hedgerow, now and then a wood pigeon
+      ambTimers.push(setInterval(function () {
+        if (!ac) return;
+        var t = ac.currentTime, r = Math.random(), pan = Math.random() * 1.6 - 0.8;
+        if (r < 0.35) {
+          var f0 = 2600 + Math.random() * 1400, n = 2 + Math.floor(Math.random() * 4);
+          for (var i = 0; i < n; i++) voice(out, t + i * 0.11, 0.06, { type: 'sine', freq: f0 * (1 + (i % 2) * 0.18), glide: 1.25, glideT: 0.05, gain: 0.018, a: 0.004, d: 0.06, s: 0.2, r: 0.04, pan: pan, rev: 0.3 });
+        } else if (r < 0.45) {
+          [0, 0.45, 0.7].forEach(function (d, i) { voice(out, t + d, 0.22, { type: 'sine', freq: i === 1 ? 340 : 310, gain: 0.02, a: 0.06, d: 0.15, s: 0.5, r: 0.12, pan: pan, rev: 0.4 }); });
+        }
+      }, 1300));
+      return [];
     }
   };
 
@@ -518,6 +539,10 @@ var BridgeAudio = (function () {
       src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + 2.7);
       noiseHit(sfxBus, t + 2.2, 0.3, { freq: 200, ftype: 'lowpass', gain: 0.18 });
     },
+    till:    function (t) { noiseHit(sfxBus, t, 0.16, { freq: 380, ftype: 'lowpass', gain: 0.2 }); noiseHit(sfxBus, t + 0.05, 0.1, { freq: 1600, ftype: 'bandpass', q: 0.8, gain: 0.05 }); },
+    water:   function (t) { noiseHit(sfxBus, t, 0.45, { freq: 2600, ftype: 'bandpass', q: 0.6, gain: 0.08 }); noiseHit(sfxBus, t + 0.1, 0.35, { freq: 900, ftype: 'lowpass', gain: 0.06 }); },
+    sow:     function (t) { [0, 0.05, 0.1].forEach(function (d) { noiseHit(sfxBus, t + d, 0.03, { freq: 4000, ftype: 'highpass', gain: 0.04 }); }); voice(sfxBus, t + 0.12, 0.05, { type: 'triangle', freq: hz(79), gain: 0.04, a: 0.002, d: 0.08, s: 0, r: 0.05 }); },
+    harvest: function (t) { noiseHit(sfxBus, t, 0.12, { freq: 700, ftype: 'bandpass', q: 1, gain: 0.12 }); [72, 76, 79].forEach(function (m, i) { INST.pluck(sfxBus, t + 0.06 + i * 0.06, m, 0.2, 1.2); }); },
     pick:    function (t) {                                // a pickaxe on rock: a ring of iron and a crack of stone
       voice(sfxBus, t, 0.03, { type: 'square', freq: 1800 + Math.random() * 500, glide: 0.7, glideT: 0.06, gain: 0.05, a: 0.001, d: 0.06, s: 0, r: 0.05, cutoff: 6000, rev: 0.25 });
       noiseHit(sfxBus, t, 0.09, { freq: 2600, ftype: 'bandpass', q: 1.5, gain: 0.09, rev: 0.25 });

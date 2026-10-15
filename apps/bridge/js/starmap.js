@@ -57,6 +57,13 @@ var BridgeStarmap = (function () {
       places: ['The landing ring', 'The avenue of columns', 'The altar at the brink'],
       apps: [{ name: 'Genart', url: '/genart' }],
       color: '#b090f0', px: 0.6, py: 0.68, hasOverworld: true
+    },
+    {
+      id: 'verdance', loc: 'verdance', name: 'VERDANCE', kind: 'Garden world · two small moons',
+      blurb: 'Green country, quilted with fields. A farmstead at the landing pad with a plot going spare: seeds at the stall, water from the well, and whatever grows, Marlo buys.',
+      places: ['The farmstead', 'The pond and the orchard', 'Hollin\u2019s seed stall'],
+      apps: [],
+      color: '#90d070', px: 0.47, py: 0.5, hasOverworld: true
     }
   ];
 
@@ -98,7 +105,7 @@ var BridgeStarmap = (function () {
   }
 
   // what's waiting at a world: quests begun there and not finished, people there who'd join your crew
-  var LOC_RX = { lumar: /^lumar/, arcadia: /^(arcadia|cyber|chrome|junk|tech)/, enigma: /^enigma/, singularity: /^singularity/ };
+  var LOC_RX = { lumar: /^lumar/, arcadia: /^(arcadia|cyber|chrome|junk|tech)/, enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/ };
   function waiting(loc) {
     var rx = LOC_RX[loc], out = [];
     if (!rx) return '';

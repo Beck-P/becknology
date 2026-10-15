@@ -132,6 +132,10 @@ NPCS = {
     'npc-okafor':    dict(skin='skin3', shirt=('#2e4a52', '#46707a', '#6a98a2'), vest=('#8a4a1a', '#c87830', '#e8a050'),
                           hair=('#141010', '#241c1a', '#362a26'), goggles=True, pose='stand'),
     # The Backs, behind the District (arcadia-alley, null-den)
+    'npc-hollin':    dict(skin='skin', shirt=('#a89878', '#d0c4a4', '#ece2c8'), apron=('#2e5a2e', '#3e7a3e', '#5a9a50'),
+                          hair=('#5a3a20', '#7a5230', '#9a6a40'), beard=True, straw_hat=('#a8843a', '#d8b058', '#f0d080'), pose='stand'),
+    'npc-marlo':     dict(skin='skin2', shirt=('#6a2a22', '#9a3a2e', '#c05a40'), vest=('#3a3a22', '#5a5a34', '#7a7a48'),
+                          hair=('#1a1410', '#2e2418', '#443624'), mustache=True, cap=('#2a4a6a', '#3a6a9a', '#5a8ac0'), pose='stand'),
     'npc-sev':       dict(skin='skin2', shirt=('#7a5010', '#b88020', '#e0b040'), hair=('#8a8a90', '#b8b8c0', '#dcdce4'),
                           bun=True, visor_cap=True, pose='stand'),
     'npc-vex':       dict(skin='skin', shirt=('#141018', '#241c2c', '#3a2e44'), vest=('#5a1040', '#a01870', '#d83098'),
@@ -468,6 +472,10 @@ def build_human(spec):
         add('cube', 'mask', (0, -4.3, 3.4), (3.6, 1.0, 1.9), 'white', 'mask', head, bevel=0.5)
     if spec.get('mohawk'):
         add('cube', 'mohawk', (0, 0.6, 10.0), (0.9, 4.4, 2.2), 'hair', 'hair', head, bevel=0.4)
+    if 'straw_hat' in spec:      # a wide-brimmed straw hat with a band (Verdance)
+        add('cylinder', 'straw_brim', (0, 0.4, 8.7), (7.2, 6.9, 0.35), 'straw_hat', 'hat', head, vertices=24)
+        add('cylinder', 'straw_crown', (0, 0.4, 9.9), (4.5, 4.3, 1.5), 'straw_hat', 'hat', head, vertices=18)
+        add('cylinder', 'straw_band', (0, 0.4, 9.3), (4.6, 4.4, 0.45), 'leather', 'hat_band', head, vertices=18)
     if 'witch_hat' in spec:
         add('cylinder', 'hat_brim', (0, 0.8, 9.2), (6.4, 6.0, 0.4), 'witch_hat', 'hat', head, rot=(-0.3, 0, 0), vertices=24)
         add('cylinder', 'hat_band', (0, 1.0, 9.9), (4.4, 4.2, 0.8), 'leather', 'hat_band', head, rot=(-0.3, 0, 0), vertices=18)
@@ -488,7 +496,7 @@ else:
     tones = {'shirt': spec['shirt'], 'pants': FIXED['pants'], 'hair': spec['hair'], 'skin': FIXED[spec['skin']]}
     if 'sleeve' in spec:
         tones['sleeve'] = FIXED[spec['sleeve']] if spec['sleeve'] in FIXED else FIXED[spec['skin']]
-    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat'):
+    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat', 'straw_hat'):
         if key in spec:
             tones[key] = spec[key]
     VARIANTS = {WHO.replace('npc-', ''): tones}

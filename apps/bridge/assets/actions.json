@@ -419,5 +419,33 @@
       "facing": "down",
       "dialog": "A BENCH FOR CUSTOMERS. A JAR OF LOOSE SCREWS SITS ON IT, LABELLED 'FREE (PROBABLY)'."
     }
+  ],
+  "verdance": [
+    {
+      "label": "BENCH",
+      "x": 8,
+      "y": 8,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        7.85,
+        8.25
+      ],
+      "facing": "down",
+      "dialog": "YOUR PORCH BENCH. THE MILL TURNS, THE BEES WORK THE ORCHARD, AND FOR A WHILE NOTHING NEEDS DOING."
+    },
+    {
+      "label": "BENCH",
+      "x": 38,
+      "y": 26,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        38.6,
+        26.55
+      ],
+      "facing": "down",
+      "dialog": "HOLLIN'S BENCH, WORN SMOOTH. FROM HERE: THE POND, THE STALL, AND MARLO HAGGLING WITH A GOAT."
+    }
   ]
 }

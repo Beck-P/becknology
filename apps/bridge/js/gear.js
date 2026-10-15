@@ -119,6 +119,7 @@ var BridgeGear = (function () {
     if (/^lumar/.test(id) || ts === 'lumar' || ts === 'tavern') return 'parchment';
     if (ts === 'arcadia' || /^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return 'neon';
     if (ts === 'enigma' || /^enigma/.test(id)) return 'crt';
+    if (ts === 'verdance' || /^verdance/.test(id)) return 'meadow';
     return 'holo';
   }
   function pilotColour() {

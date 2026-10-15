@@ -327,7 +327,7 @@ def market_stall(k, x0, x1, r0, r1, awning=('#a03a2e', '#e8dcc0'), goods='fish')
             k.blob(x, (r0 + r1) / 2 + k.rng.uniform(-0.1, 0.1), 0.94, 0.14, 0.05, 0.035, col, 'fish', rot=(0, 0, k.rng.uniform(-20, 20)),
                    segs=8)
             x += 0.2
-    else:
+    elif goods:
         for i in range(int((x1 - x0) / 0.35)):
             cx = x0 + 0.2 + i * 0.35
             k.cyl(cx, (r0 + r1) / 2, 0.86, 0.96, 0.15, ('#a07040', 0.15), 'basket', verts=10)

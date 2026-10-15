@@ -11,7 +11,7 @@ var BridgeStatsPanel = (function () {
   var TROPHIES = [
     { key: 'first_light',     name: 'First Light',     desc: 'First game played anywhere.' },
     { key: 'cabinet_crusher', name: 'Cabinet Crusher', desc: 'Played all 5 arcade cabinets.' },
-    { key: 'wayfarer',        name: 'Wayfarer',        desc: 'Visited all 4 hyperspace destinations.' },
+    { key: 'wayfarer',        name: 'Wayfarer',        desc: 'Visited all 5 hyperspace destinations.' },
     { key: 'settled_in',      name: 'Settled In',      desc: 'Bought your first piece of decor.' },
     { key: 'bookworm',        name: 'Bookworm',        desc: 'Completed a chess opening.' }
   ];
@@ -66,7 +66,7 @@ var BridgeStatsPanel = (function () {
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;">' +
         statCard('COINS', '<span id="stats-coins">…</span>', '#ffe080') +
         statCard('TROPHIES', '<span id="stats-trophies">…</span> / ' + TROPHIES.length, '#ffe080') +
-        statCard('WORLDS VISITED', '<span id="stats-worlds">…</span> / 4', '#80e0e8') +
+        statCard('WORLDS VISITED', '<span id="stats-worlds">…</span> / 5', '#80e0e8') +
         statCard('DECOR OWNED', '<span id="stats-decor">…</span>', '#80e088') +
       '</div>' +
 
@@ -118,8 +118,8 @@ var BridgeStatsPanel = (function () {
       var trEl = document.getElementById('stats-trophies');
       if (trEl) trEl.textContent = earned;
 
-      // Worlds visited count (4 hyperspace destinations)
-      var worldKeys = ['visited_arcadia', 'visited_lumar', 'visited_singularity', 'visited_enigma'];
+      // Worlds visited count (5 hyperspace destinations)
+      var worldKeys = ['visited_arcadia', 'visited_lumar', 'visited_singularity', 'visited_enigma', 'visited_verdance'];
       var visited = worldKeys.filter(function (k) { return set.has(k); }).length;
       var wEl = document.getElementById('stats-worlds');
       if (wEl) wEl.textContent = visited;

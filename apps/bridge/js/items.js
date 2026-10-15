@@ -304,6 +304,7 @@ var BridgeItems = (function () {
       case 'tool':   return '#a0a8b0';
       case 'map':    return '#d6c49c';
       case 'key':    return '#e0c060';
+      case 'seed':   return '#90c060';
       default:       return '#888';
     }
   }
@@ -445,6 +446,92 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#f0f4ff'; ctx.fillRect(x + 5*u, y + 5*u, 2*u, 2*u);
     ctx.fillStyle = '#7a7e8a'; ctx.fillRect(x + 7*u, y + 7*u, 2*u, 2*u);
   }
+
+  // ---- the farm on Verdance (js/farm.js) ----------------------------------
+  function px(ctx, x, y, u, c, rects) {           // rects: [gx, gy, gw, gh] on a 16-grid
+    ctx.fillStyle = c;
+    for (var i = 0; i < rects.length; i++) ctx.fillRect(x + rects[i][0] * u, y + rects[i][1] * u, rects[i][2] * u, rects[i][3] * u);
+  }
+  function hoeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    for (var i = 0; i < 10; i++) px(ctx, x, y, u, i % 3 ? '#8a5a30' : '#6a4020', [[3 + i, 13 - i, 1, 1], [4 + i, 13 - i, 1, 1]]);
+    px(ctx, x, y, u, '#3a3a44', [[11, 1, 4, 2], [13, 3, 2, 3]]);
+    px(ctx, x, y, u, '#a8a8b8', [[11, 1, 3, 1], [13, 3, 1, 2]]);
+  }
+  function canIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a3a2a', [[3, 6, 8, 8], [11, 7, 3, 1], [13, 5, 2, 2]]);
+    px(ctx, x, y, u, '#3a8a5a', [[4, 7, 6, 6], [11, 8, 2, 1], [13, 6, 1, 1]]);
+    px(ctx, x, y, u, '#70c088', [[4, 7, 2, 4]]);
+    px(ctx, x, y, u, '#1a3a2a', [[5, 3, 4, 1], [4, 4, 1, 2], [9, 4, 1, 2]]);
+    px(ctx, x, y, u, '#80d0f0', [[14, 4, 1, 1], [15, 6, 1, 1]]);
+  }
+  var SEED_ART = {
+    turnip: function (ctx, x, y, u) { px(ctx, x, y, u, '#f0e8f0', [[6, 8, 4, 3]]); px(ctx, x, y, u, '#a050a0', [[6, 8, 4, 1]]); px(ctx, x, y, u, '#50a040', [[7, 6, 2, 2]]); },
+    carrot: function (ctx, x, y, u) { px(ctx, x, y, u, '#f08020', [[6, 7, 4, 2], [7, 9, 2, 2]]); px(ctx, x, y, u, '#50a040', [[7, 5, 2, 2]]); },
+    strawberry: function (ctx, x, y, u) { px(ctx, x, y, u, '#e03040', [[6, 7, 4, 3], [7, 10, 2, 1]]); px(ctx, x, y, u, '#50a040', [[7, 6, 2, 1]]); px(ctx, x, y, u, '#ffe080', [[7, 8, 1, 1]]); },
+    sunflower: function (ctx, x, y, u) { px(ctx, x, y, u, '#f0c020', [[6, 6, 4, 4]]); px(ctx, x, y, u, '#6a3a1a', [[7, 7, 2, 2]]); },
+    pumpkin: function (ctx, x, y, u) { px(ctx, x, y, u, '#e07020', [[5, 7, 6, 4]]); px(ctx, x, y, u, '#b05010', [[7, 7, 1, 4], [9, 7, 1, 4]]); px(ctx, x, y, u, '#50a040', [[8, 6, 1, 1]]); },
+    starfruit: function (ctx, x, y, u) { px(ctx, x, y, u, '#ffe040', [[7, 5, 2, 6], [5, 7, 6, 2], [6, 6, 4, 4]]); px(ctx, x, y, u, '#fff8b0', [[7, 7, 1, 1]]); }
+  };
+  function seedIcon(kind, paper) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#3a2a1a', [[3, 2, 10, 13]]);
+      px(ctx, x, y, u, paper, [[4, 3, 8, 11]]);
+      px(ctx, x, y, u, 'rgba(255,255,255,0.35)', [[4, 3, 8, 2]]);
+      SEED_ART[kind](ctx, x, y, u);
+      px(ctx, x, y, u, '#6a5a3a', [[5, 12, 1, 1], [7, 12, 1, 1], [9, 12, 1, 1]]);
+    };
+  }
+  var PRODUCE_ART = {
+    turnip: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#2a4a1a', [[5, 1, 2, 5], [9, 1, 2, 5], [7, 2, 2, 4]]); px(ctx, x, y, u, '#60b040', [[5, 2, 1, 3], [10, 2, 1, 3], [7, 3, 2, 3]]);
+      px(ctx, x, y, u, '#3a2030', [[3, 6, 10, 7], [6, 13, 4, 1]]); px(ctx, x, y, u, '#f4ecf4', [[4, 8, 8, 4], [7, 12, 2, 1]]);
+      px(ctx, x, y, u, '#b060b0', [[4, 6, 8, 2]]); px(ctx, x, y, u, '#ffffff', [[5, 9, 1, 2]]);
+    },
+    carrot: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#60b040', [[9, 1, 2, 4], [11, 2, 2, 3]]);
+      px(ctx, x, y, u, '#5a2a0a', [[4, 4, 8, 4], [3, 8, 7, 3], [2, 11, 5, 2], [1, 13, 3, 2]]);
+      px(ctx, x, y, u, '#f08020', [[5, 5, 6, 3], [4, 8, 5, 2], [3, 11, 3, 1], [2, 13, 1, 1]]);
+      px(ctx, x, y, u, '#c05a10', [[7, 6, 2, 1], [5, 9, 2, 1]]);
+    },
+    strawberry: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#4a0a14', [[3, 4, 10, 6], [4, 10, 8, 2], [6, 12, 4, 2]]);
+      px(ctx, x, y, u, '#e02a3a', [[4, 5, 8, 5], [5, 10, 6, 2], [7, 12, 2, 1]]);
+      px(ctx, x, y, u, '#ffd860', [[5, 6, 1, 1], [8, 7, 1, 1], [10, 6, 1, 1], [6, 9, 1, 1], [9, 10, 1, 1]]);
+      px(ctx, x, y, u, '#50a040', [[5, 3, 6, 2], [7, 1, 2, 2]]);
+    },
+    sunflower: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#3a6a20', [[7, 10, 2, 6]]);
+      px(ctx, x, y, u, '#a07010', [[3, 2, 10, 9]]);
+      px(ctx, x, y, u, '#f8c820', [[4, 2, 8, 9], [3, 4, 10, 5]]);
+      px(ctx, x, y, u, '#5a2a10', [[6, 4, 4, 5]]); px(ctx, x, y, u, '#8a4a1a', [[7, 5, 1, 1], [8, 7, 1, 1]]);
+    },
+    pumpkin: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#5a2a08', [[2, 5, 12, 9]]);
+      px(ctx, x, y, u, '#f08a20', [[3, 6, 10, 7]]);
+      px(ctx, x, y, u, '#c06010', [[5, 6, 1, 7], [8, 6, 1, 7], [11, 6, 1, 7]]);
+      px(ctx, x, y, u, '#ffb050', [[4, 7, 1, 3]]);
+      px(ctx, x, y, u, '#4a7a20', [[7, 3, 2, 3]]);
+    },
+    starfruit: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#8a6a00', [[7, 1, 2, 14], [1, 6, 14, 3], [3, 3, 10, 9], [4, 12, 3, 2], [9, 12, 3, 2]]);
+      px(ctx, x, y, u, '#ffe040', [[7, 2, 2, 12], [2, 7, 12, 1], [4, 4, 8, 7], [5, 11, 2, 2], [9, 11, 2, 2]]);
+      px(ctx, x, y, u, '#fff8b8', [[6, 5, 2, 2], [7, 2, 1, 2]]);
+    },
+    apple: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#4a0a10', [[3, 4, 10, 10]]); px(ctx, x, y, u, '#d02a30', [[4, 5, 8, 8]]);
+      px(ctx, x, y, u, '#ff8080', [[5, 6, 2, 2]]); px(ctx, x, y, u, '#5a3a1a', [[8, 2, 1, 3]]); px(ctx, x, y, u, '#50a040', [[9, 2, 3, 2]]);
+    },
+    honey: function (ctx, x, y, u) {
+      px(ctx, x, y, u, '#5a3a10', [[4, 2, 8, 3]]); px(ctx, x, y, u, '#c09060', [[4, 3, 8, 1]]);
+      px(ctx, x, y, u, '#4a2a08', [[3, 5, 10, 9]]); px(ctx, x, y, u, '#f0a820', [[4, 6, 8, 7]]);
+      px(ctx, x, y, u, '#ffe080', [[5, 7, 2, 4]]); px(ctx, x, y, u, '#f4ead2', [[6, 9, 4, 2]]);
+    }
+  };
+  function produceIcon(kind) { return function (ctx, x, y, s) { PRODUCE_ART[kind](ctx, x, y, s / 16); }; }
+  function farmUse() { if (typeof BridgeFarm !== 'undefined') BridgeFarm.useItem(this.id); return false; }
 
   function pearlIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -599,6 +686,43 @@ var BridgeItems = (function () {
                    stackable: false, draw: bladeIcon('#c8ccd8', '#8a5a30', true), damage: 40, arc: true, onUse: weaponUse },
     star_blade:  { id: 'star_blade', name: 'Star Blade', desc: 'Star iron, forged by Hob with a songstone set in the hilt. It hums when something is close.', type: 'weapon',
                    stackable: false, draw: bladeIcon('#3a3848', '#b080ff', true, '#ffe080'), damage: 80, arc: true, onUse: weaponUse },
+    // the farm on Verdance (js/farm.js): tools from the shed, seeds from Hollin, what grows sells to Marlo
+    hoe:           { id: 'hoe', name: 'Hoe', desc: 'From the tool shed on Verdance. Face bare earth in the field and use it to till a row.', type: 'tool',
+                     stackable: false, draw: hoeIcon, damage: 6, onUse: farmUse },
+    watering_can:  { id: 'watering_can', name: 'Watering Can', desc: 'Holds twenty waterings. Fill it at the well or the pond; a watered crop grows for twenty minutes.', type: 'tool',
+                     stackable: false, draw: canIcon, onUse: farmUse },
+    seed_turnip:   { id: 'seed_turnip', name: 'Turnip Seeds', desc: 'Quick and forgiving. Ready in three minutes of watered ground.', type: 'seed', stackable: true,
+                     draw: seedIcon('turnip', '#e8e0c8'), onUse: farmUse, value: 2 },
+    seed_carrot:   { id: 'seed_carrot', name: 'Carrot Seeds', desc: 'Ready in five watered minutes.', type: 'seed', stackable: true,
+                     draw: seedIcon('carrot', '#f0e0c0'), onUse: farmUse, value: 3 },
+    seed_strawberry: { id: 'seed_strawberry', name: 'Strawberry Seeds', desc: 'Eight watered minutes to the first berries, then more every four. The plant keeps.', type: 'seed', stackable: true,
+                     draw: seedIcon('strawberry', '#f8e0e0'), onUse: farmUse, value: 6 },
+    seed_sunflower: { id: 'seed_sunflower', name: 'Sunflower Seeds', desc: 'Grows taller than you in eight watered minutes. Each head gives back seed.', type: 'seed', stackable: true,
+                     draw: seedIcon('sunflower', '#f0f0d0'), onUse: farmUse, value: 5 },
+    seed_pumpkin:  { id: 'seed_pumpkin', name: 'Pumpkin Seeds', desc: 'Slow - twenty watered minutes - and worth it.', type: 'seed', stackable: true,
+                     draw: seedIcon('pumpkin', '#f0e0c8'), onUse: farmUse, value: 12 },
+    seed_starfruit: { id: 'seed_starfruit', name: 'Starfruit Seeds', desc: 'Hollin gets them from a man who gets them from a man. Forty watered minutes.', type: 'seed', stackable: true,
+                     draw: seedIcon('starfruit', '#e0e0f0'), onUse: farmUse, value: 30 },
+    turnip:        { id: 'turnip', name: 'Turnip', desc: 'Crisp, peppery, purple-shouldered. Marlo pays 12.', type: 'food', stackable: true,
+                     draw: produceIcon('turnip'), effects: { hp: 6, energy: 6 }, onUse: consumableUse, value: 12 },
+    carrot:        { id: 'carrot', name: 'Carrot', desc: 'Sweet and earthy. Marlo pays 20.', type: 'food', stackable: true,
+                     draw: produceIcon('carrot'), effects: { energy: 12 }, onUse: consumableUse, value: 20 },
+    strawberry:    { id: 'strawberry', name: 'Strawberry', desc: 'Warm from the sun. Marlo pays 14 - if any make it that far.', type: 'food', stackable: true,
+                     draw: produceIcon('strawberry'), effects: { hp: 4, energy: 8 }, onUse: consumableUse, value: 14 },
+    sunflower:     { id: 'sunflower', name: 'Sunflower', desc: 'A head as big as a plate. Marlo pays 32 for them.', type: 'material', stackable: true,
+                     draw: produceIcon('sunflower'), value: 32 },
+    pumpkin:       { id: 'pumpkin', name: 'Pumpkin', desc: 'Heavy, ribbed and glossy. Marlo pays 95.', type: 'food', stackable: true,
+                     draw: produceIcon('pumpkin'), effects: { hp: 20, energy: 20 }, onUse: consumableUse, value: 95 },
+    starfruit:     { id: 'starfruit', name: 'Starfruit', desc: 'It glows faintly in the dark and tastes like a sunny morning. Marlo pays 280.', type: 'food', stackable: true,
+                     draw: produceIcon('starfruit'), effects: { hp: 50, energy: 50 }, onUse: consumableUse, value: 280 },
+    apple:         { id: 'apple', name: 'Apple', desc: 'From the orchard on Verdance. Red on the sunny side.', type: 'food', stackable: true,
+                     draw: produceIcon('apple'), effects: { hp: 5, energy: 5 }, onUse: consumableUse, value: 5 },
+    honey:         { id: 'honey', name: 'Jar of Honey', desc: 'Wildflower honey from the skeps by the orchard.', type: 'food', stackable: true,
+                     draw: produceIcon('honey'), effects: { hp: 10, energy: 15 }, onUse: consumableUse, value: 25 },
+    pond_perch:    { id: 'pond_perch', name: 'Pond Perch', desc: 'Striped and spiny, from the farm pond. Good in a pan.', type: 'food', stackable: true,
+                     draw: fishIcon('#6a8a3a', '#c0d080', '#3a5a1a'), effects: { hp: 8, energy: 8 }, onUse: consumableUse, value: 7 },
+    sun_carp:      { id: 'sun_carp', name: 'Sun Carp', desc: 'A golden carp from the farm pond, scales like coins. Hollin swears there\'s only one.', type: 'material', stackable: true,
+                     draw: fishIcon('#d8a020', '#ffe080', '#a06010', '#fff0a0'), value: 45 },
     stone_shard: {
       id: 'stone_shard', name: 'Stone Shard',
       desc: 'A jagged fragment from a fallen sentinel. Amethyst still glints in the break.',

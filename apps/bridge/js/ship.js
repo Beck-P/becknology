@@ -17,7 +17,7 @@
  */
 var BridgeShip = (function () {
   var SHIP = { bridge: 1, quarters: 1, hangar: 1, gameroom: 1 };
-  var LANDING = { lumar: 'lumar', arcadia: 'arcadia-skypad', enigma: 'enigma-dock', singularity: 'singularity' };
+  var LANDING = { lumar: 'lumar', arcadia: 'arcadia-skypad', enigma: 'enigma-dock', singularity: 'singularity', verdance: 'verdance' };
   var HANGAR_SPAWN = { x: 8, y: 9 };
   var anim = null;      // the shuttle in the air in this world
   var busy = false;
@@ -30,6 +30,7 @@ var BridgeShip = (function () {
     if (/^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair)/.test(id)) return 'arcadia';
     if (/^enigma/.test(id)) return 'enigma';
     if (id === 'singularity') return 'singularity';
+    if (/^verdance/.test(id)) return 'verdance';
     return null;
   }
 
@@ -40,7 +41,8 @@ var BridgeShip = (function () {
       lumar: 'BEYOND THE FIELD: LUMAR.\\n\\nGREEN SEAS UNDER CLOUD,\\nISLANDS LIKE SCATTERED SALT.\\nTHE SHUTTLE IS FUELLED.',
       arcadia: 'BEYOND THE FIELD: ARCADIA.\\n\\nTHE NIGHT SIDE GLITTERS\\nEDGE TO EDGE WITH CITY.\\nTHE SHUTTLE IS FUELLED.',
       enigma: 'BEYOND THE FIELD:\\nENIGMA STATION, DARK,\\nTURNING SLOWLY BY ITS\\nRINGED GIANT.',
-      singularity: 'BEYOND THE FIELD:\\nTHE SINGULARITY.\\n\\nLIGHT BENDS ROUND IT\\nLIKE WATER ROUND A STONE.'
+      singularity: 'BEYOND THE FIELD:\\nTHE SINGULARITY.\\n\\nLIGHT BENDS ROUND IT\\nLIKE WATER ROUND A STONE.',
+      verdance: 'BEYOND THE FIELD: VERDANCE.\\n\\nGREEN COUNTRY UNDER\\nTWO SMALL MOONS.\\nTHE SHUTTLE IS FUELLED.'
     };
     return lines[BridgeOrbit.getLocation()] || lines['deep-space'];
   }
@@ -109,7 +111,7 @@ var BridgeShip = (function () {
     if (near > 0.3 && Math.random() < 0.8) {
       anim.dust.push({ x: gx + (Math.random() - 0.5) * b.w * 0.4, y: gy, vx: (Math.random() - 0.5) * 3.2, vy: -Math.random() * 0.6, life: 1 });
     }
-    // each world touches down its own way: sand on Lumar's beach, the pad's
+    // each world touches down its own way: sand on Lumar's beach, grass flattening on Verdance, the pad's
     // ring pulsing on an Arcadia rooftop, echoes of the skiff at the Singularity
     var style = (world && world.tileset) || '';
     if (style === 'arcadia' && near > 0.1) {
@@ -153,6 +155,7 @@ var BridgeShip = (function () {
       ctx.restore();
     }
     ctx.fillStyle = style === 'lumar' ? 'rgba(220,200,160,0.6)' : style === 'singularity' ? 'rgba(180,150,240,0.5)' :
+      style === 'verdance' ? 'rgba(150,200,90,0.6)' :
       style === 'enigma' ? 'rgba(160,230,255,0.7)' : 'rgba(200,190,170,0.5)';
     for (var i = anim.dust.length - 1; i >= 0; i--) {
       var d = anim.dust[i];

@@ -123,7 +123,18 @@ var BridgeQuests = (function () {
         '<span class="qj-q-count">' + fished.bottles.length + '</span></div><ul class="qj-clues">' +
         fished.bottles.map(function (b) { return '<li class="found">' + esc(b) + '</li>'; }).join('') + '</ul></section>';
     }
-    if (!ids.length && !crew.length && !biz.length && !fished.fish.length) {
+    var farm = typeof BridgeFarm !== 'undefined' ? BridgeFarm.journal() : { rows: [] };
+    if (farm.rows.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">The farm on Verdance</span>' +
+        '<span class="qj-q-count">' + farm.tilled + ' tilled</span></div><ul class="qj-clues">' +
+        farm.rows.map(function (r) {
+          var bits = [];
+          if (r.n) bits.push(r.n + ' in the ground' + (r.ripe ? ', <b>' + r.ripe + ' ready</b>' : '') + (r.dry ? ', ' + r.dry + ' thirsty' : ''));
+          if (r.picked) bits.push(r.picked + ' brought in');
+          return '<li class="found"><b>' + esc(r.name.charAt(0) + r.name.slice(1).toLowerCase()) + '</b> - ' + bits.join('; ') + '</li>';
+        }).join('') + '</ul></section>';
+    }
+    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {

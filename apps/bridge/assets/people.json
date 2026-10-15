@@ -844,5 +844,113 @@
         ]
       }
     ]
+  },
+  "hollin": {
+    "name": "Hollin Ashby",
+    "role": "Seedsman, the village corner on Verdance",
+    "sheet": "npc-hollin",
+    "at": [
+      {
+        "world": "verdance",
+        "label": "HOLLIN"
+      }
+    ],
+    "greet": "WELL NOW. A SHIP COMES DOWN ON THE OLD PAD AND OUT STEPS A FARMER. YOU'LL BE AFTER SEED, I EXPECT. AND THE FIELD - THE FIELD'S BEEN WAITING FOR SOMEBODY.",
+    "again": "BACK AGAIN. HOW'S THE GROUND TREATING YOU?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "FORTY YEARS SELLING SEED FROM THIS STALL. MY FATHER BEFORE ME. I KNOW WHAT GROWS HERE AND WHAT DOESN'T, AND I KNOW BETTER THAN TO PLANT STARFRUIT IN A DRY SPELL."
+      },
+      {
+        "q": "How do I farm?",
+        "a": "HOE'S IN THE TOOL SHED BY THE BARN, AND THE CAN. TILL A PATCH OF THE FIELD, PUT A SEED IN IT, WATER IT. WATERED GROUND GROWS FOR TWENTY MINUTES OR SO, THEN IT DRIES. KEEP IT WET AND IT'LL BE READY BEFORE YOU KNOW IT. THE WELL'S BY THE SCARECROW, THE POND'S NEARER THE YARD."
+      },
+      {
+        "q": "The farm",
+        "a": "OLD EDDA KEPT IT TILL HER KNEES WENT. SHE SAID WHOEVER CAME DOWN IN THE NEXT SHIP COULD HAVE IT, AND NOBODY ARGUES WITH EDDA. THE FARMHOUSE IS YOURS. THE DOOR STICKS."
+      },
+      {
+        "q": "What should I grow?",
+        "a": "TURNIPS TO LEARN ON - QUICK AND THEY DON'T SULK. STRAWBERRIES KEEP GIVING. PUMPKINS PAY. AND STARFRUIT... WELL. MARLO WILL PAY ANYTHING FOR STARFRUIT, IF YOU'VE THE PATIENCE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMEBODY'S GOAT IS LOOSE AGAIN. AND THE CROWS HAVE TAKEN AGAINST THE SCARECROW'S SHIRT. CAN'T SAY I BLAME THEM."
+      }
+    ]
+  },
+  "marlo": {
+    "name": "Marlo Fenn",
+    "role": "Produce buyer with a cart, Verdance",
+    "sheet": "npc-marlo",
+    "at": [
+      {
+        "world": "verdance",
+        "label": "MARLO"
+      }
+    ],
+    "greet": "FRESH FACE! FRESH ANYTHING? I BUY, I CART, I SELL IT ON IN TOWN. TURNIPS, PUMPKINS, HONEY, FISH OUT OF THE POND - IF IT GREW OR SWAM ON VERDANCE, I'LL TAKE IT.",
+    "again": "BACK! GOOD, GOOD. WHAT'VE YOU GOT?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "MARLO FENN, CART AND COMPANY. THE COMPANY IS THE CART. I DO THE ROUND OF THE FARMS EVERY DAY AND THE MARKET EVERY NIGHT, AND I SLEEP, OCCASIONALLY, ON THE TURNIPS."
+      },
+      {
+        "q": "Prices",
+        "a": "TURNIP 12, CARROT 20, STRAWBERRY 14, SUNFLOWER 32, PUMPKIN 95, AND STARFRUIT - 280, AND I'LL THANK YOU FOR IT. HONEY 25, APPLES 5, POND PERCH 7. A SUN CARP? FORTY-FIVE, AND A STORY TO GO WITH IT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE STARFRUIT MAN IS BACK IN TOWN, ASKING WHO'S GROWING. AND THERE'S A GOAT ON THE ROOF OF HOLLIN'S COTTAGE. DON'T TELL HOLLIN."
+      },
+      {
+        "q": "Sell what you've grown",
+        "a": "LET'S HAVE A LOOK, THEN. FAIR PRICES, PAID ON THE SPOT.",
+        "sell": [
+          {
+            "id": "starfruit",
+            "price": 280
+          },
+          {
+            "id": "pumpkin",
+            "price": 95
+          },
+          {
+            "id": "sunflower",
+            "price": 32
+          },
+          {
+            "id": "carrot",
+            "price": 20
+          },
+          {
+            "id": "strawberry",
+            "price": 14
+          },
+          {
+            "id": "turnip",
+            "price": 12
+          },
+          {
+            "id": "honey",
+            "price": 25
+          },
+          {
+            "id": "sun_carp",
+            "price": 45
+          },
+          {
+            "id": "pond_perch",
+            "price": 7
+          },
+          {
+            "id": "apple",
+            "price": 5
+          }
+        ]
+      }
+    ]
   }
 }

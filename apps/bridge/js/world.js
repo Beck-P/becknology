@@ -407,6 +407,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeGear !== 'undefined') BridgeGear.decorate(worldId, data);
         if (typeof BridgeMine !== 'undefined') BridgeMine.decorate(worldId, data);
+        if (typeof BridgeFarm !== 'undefined') BridgeFarm.decorate(worldId, data);
         if (typeof BridgeCombat !== 'undefined') BridgeCombat.decorate(worldId, data);
         if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
