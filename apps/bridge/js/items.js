@@ -537,6 +537,12 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#e8eef6', [[5, 5, 6, 8]]); px(ctx, x, y, u, '#c8d0dc', [[5, 11, 6, 2]]);
     px(ctx, x, y, u, '#5a8ac0', [[5, 7, 6, 2]]); px(ctx, x, y, u, '#9ab8d8', [[6, 3, 4, 1]]);
   }
+  function whistleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[2, 6, 9, 5], [10, 7, 4, 3], [4, 4, 2, 2]]);
+    px(ctx, x, y, u, '#c8a050', [[3, 7, 7, 3], [11, 8, 2, 1]]); px(ctx, x, y, u, '#f0d080', [[3, 7, 7, 1]]);
+    px(ctx, x, y, u, '#2a1a10', [[5, 8, 2, 1]]); px(ctx, x, y, u, '#d83a2e', [[4, 2, 1, 2], [5, 1, 3, 1]]);
+  }
   function fizzIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1a3a', [[4, 3, 8, 1], [4, 4, 1, 9], [11, 4, 1, 9], [5, 13, 6, 1]]);
@@ -834,6 +840,8 @@ var BridgeItems = (function () {
                      type: 'tool', stackable: false, draw: ringIcon, value: 120, onUse: charmUse },
     tide_charm:    { id: 'tide_charm', name: 'Tide Charm', desc: 'A green glass float in a net, a wave inside it. Carried, the sloop sails a little faster.',
                      type: 'tool', stackable: false, draw: tideIcon, value: 90, onUse: charmUse },
+    whistle:       { id: 'whistle', name: 'Whistle', desc: 'A brass whistle on a red cord. Use it to call your companion - the next one, or send them all home.', type: 'tool',
+                     stackable: false, draw: whistleIcon, value: 0, onUse: function () { if (typeof BridgePet !== 'undefined') BridgePet.whistle(); return false; } },
     // the farm's hens and cows (js/animals.js)
     egg:           { id: 'egg', name: 'Egg', desc: 'Brown, warm, from one of your hens. Marlo buys them; the noodle bar wants them soft-boiled.', type: 'food',
                      stackable: true, draw: eggIcon('#e8c89a', '#c8a070'), effects: { energy: 8 }, value: 4, onUse: consumableUse },

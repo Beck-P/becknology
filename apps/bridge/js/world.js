@@ -429,6 +429,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeSki !== 'undefined' && BridgeSki.decorate) BridgeSki.decorate(worldId, data);
         if (typeof BridgeDance !== 'undefined') BridgeDance.decorate(worldId, data);
         if (typeof BridgeAnimals !== 'undefined') BridgeAnimals.decorate(worldId, data);
+        if (typeof BridgePet !== 'undefined') BridgePet.decorate(worldId, data);
         if (typeof BridgeCombat !== 'undefined') BridgeCombat.decorate(worldId, data);
         if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);

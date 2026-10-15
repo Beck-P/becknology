@@ -21,6 +21,11 @@
         "a": "IT GLOWS BECAUSE OF THE SPORES. ON STILL NIGHTS IT SINGS, LOW, LIKE SOMEONE HUMMING IN THE NEXT ROOM. DON'T DRINK IT, AND DON'T LISTEN TOO HARD."
       },
       {
+        "q": "The kitten",
+        "a": "",
+        "pet": "cat"
+      },
+      {
         "q": "Heard anything?",
         "a": "TAM SAYS THE PIRATES ON CRIMSON ARE WAITING ON A LOW TIDE TO GET AT AN OLD WRECK. AND THAT SOMEONE WENT INTO THE DRAGON'S CAVE WITH A LANTERN AND A MAP, YEARS BACK, AND NEVER CAME OUT."
       }
@@ -482,6 +487,11 @@
       {
         "q": "Odd jobs?",
         "a": "A STATION DRONE CAME THROUGH HERE ONCE - ENIGMA MAKE, OLD. IT WAS TUNED TO ONE FREQUENCY AND WOULDN'T LET GO OF IT. FORTY-SEVEN POINT THREE. I SOLD IT ON. I WISH I HADN'T."
+      },
+      {
+        "q": "That drone",
+        "a": "",
+        "pet": "drone"
       }
     ]
   },
@@ -881,6 +891,11 @@
       {
         "q": "What should I grow?",
         "a": "TURNIPS TO LEARN ON - QUICK AND THEY DON'T SULK. STRAWBERRIES KEEP GIVING. PUMPKINS PAY. AND STARFRUIT... WELL. MARLO WILL PAY ANYTHING FOR STARFRUIT, IF YOU'VE THE PATIENCE."
+      },
+      {
+        "q": "The pups",
+        "a": "",
+        "pet": "dog"
       },
       {
         "q": "Heard anything?",
