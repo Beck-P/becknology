@@ -55,6 +55,7 @@ var Bridge = (function () {
   }
 
   function loop() {
+    if (typeof BridgeVoyage !== 'undefined' && BridgeVoyage.covers()) { requestAnimationFrame(loop); return; }
     var w = window.innerWidth;
     var h = window.innerHeight;
 
