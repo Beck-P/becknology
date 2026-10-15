@@ -195,7 +195,7 @@ w['interactions'] = [
     {'x': 11, 'y': 2, 'type': 'dialog', 'label': 'WINDOW', 'prompt': 'PRESS E TO LOOK',
      'dialog': 'THE CHAIRLIFT STOPPED FOR THE NIGHT, THE CHAIRS SWINGING EMPTY. A LAMP ON SOMEWHERE ON THE PISTES.'},
     {'x': 13, 'y': 2, 'type': 'lodge_board', 'label': 'THE BOARD', 'prompt': 'PRESS E TO READ'},
-    {'x': 15, 'y': 3, 'type': 'rest', 'label': 'ROOMS', 'prompt': 'PRESS E FOR A ROOM', 'cost': 15,
+    {'x': 15, 'y': 3, 'type': 'lodge_room', 'label': 'ROOMS', 'prompt': 'PRESS E FOR A ROOM', 'cost': 15,
      'dialog': 'A ROOM UNDER THE EAVES, A FEATHER BED, A JUG OF HOT WATER. 15 COINS AND METTE WAKES YOU WITH COFFEE.'},
     {'x': 9, 'y': 3, 'type': 'dialog', 'label': 'BARLEY', 'prompt': 'PRESS E TO PET',
      'dialog': 'BARLEY, THE LODGE\'S ST BERNARD, THUMPS HIS TAIL TWICE WITHOUT OPENING HIS EYES. THE LITTLE KEG ON HIS COLLAR SLOSHES. METTE SAYS IT\'S COCOA. IT IS NOT COCOA.'},

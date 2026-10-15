@@ -60,7 +60,7 @@ var BridgeInteractions = (function () {
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
     home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill',
     farm_house: 'Go in', farm_ledger: 'Read', farm_animal: 'Pet', companion: 'Pet', clinic: 'Sit', rummage: 'Rummage', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read', curio: 'Pick up',
-    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski', ski_here: 'Ski', expedition: 'Look', park_start: 'Drop in', park_tow: 'Ride', park_board: 'Read', club_door: 'Knock', dance: 'Dance', lodge_fire: 'Warm up', lodge_board: 'Read', dice: 'Play', fortune: 'Ask', busker: 'Listen'
+    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski', ski_here: 'Ski', expedition: 'Look', park_start: 'Drop in', park_tow: 'Ride', park_board: 'Read', club_door: 'Knock', dance: 'Dance', lodge_fire: 'Warm up', lodge_board: 'Read', dice: 'Play', lodge_room: 'Take a room', fortune: 'Ask', busker: 'Listen'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -389,7 +389,7 @@ var BridgeInteractions = (function () {
         if (typeof BridgeDance !== 'undefined') BridgeDance.use(inter);
         break;
 
-      case 'lodge_fire': case 'lodge_board': case 'dice':               // the Snowcap Lodge (js/lodge.js)
+      case 'lodge_fire': case 'lodge_board': case 'dice': case 'lodge_room':               // the Snowcap Lodge (js/lodge.js)
         if (typeof BridgeLodge !== 'undefined') BridgeLodge.use(inter);
         break;
 

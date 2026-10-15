@@ -49,6 +49,120 @@ var BridgeLodge = (function () {
     if (inter.type === 'lodge_fire') return fire();
     if (inter.type === 'lodge_board') return board();
     if (inter.type === 'dice') return table();
+    if (inter.type === 'lodge_room') return room(inter);
+  }
+
+  // ---- a room for the night: up the stair, through the lamplit door, and down again in the morning --------------------------
+  // The stair's treads (scenes/hoarfell_lodge.py, assets_lumar.stairs_up): five of them from row 3.95 back to the wall at
+  // 2.15, 0.3 high each. Climbing, the pilot is posed on the tread under them and lifted by its height (a height z shows
+  // z·cos 45° rows up the screen), so the stair in front still hides their boots.
+  var STAIR = { x: 15.8, front: 3.95, run: 0.36, rise: 0.3, n: 5 }, Z = Math.cos(Math.PI / 4) * 32, DIR = { down: 0, right: 1, up: 2, left: 3 };
+  var climbing = false;
+  function room(inter) {
+    var cost = inter.cost || 15;
+    BridgeInteractions.choose({
+      title: 'A room for the night',
+      text: 'METTE TAKES A KEY OFF THE BOARD. "UNDER THE EAVES, FEATHER BED, A JUG OF HOT WATER. ' + cost + ' COINS AND I WAKE YOU WITH COFFEE."',
+      rows: [{ label: 'Take the room', sub: 'sleep till morning: health and energy full', note: cost + ' coins', pick: function () {
+        BridgeProgression.wagerCoins(cost, 'rest:lodge').then(function (r) {
+          if (!r || !r.ok) return say('METTE', '"' + cost + ' COINS, LOVE. THE FEATHERS DON\'T PLUCK THEMSELVES."');
+          climb();
+        });
+      } }],
+      closeLabel: 'Not tonight'
+    });
+  }
+  // the way across the floor to the stair's foot: a search over the room's open tiles
+  function route(world, sx, sy, tx, ty) {
+    var W = world.width, H = world.height, prev = {}, q = [[sx, sy]], k0 = sx + ',' + sy;
+    prev[k0] = null;
+    while (q.length) {
+      var c = q.shift();
+      if (c[0] === tx && c[1] === ty) break;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) {
+        var nx = c[0] + d[0], ny = c[1] + d[1], kk = nx + ',' + ny;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H || kk in prev || world.collisions[ny][nx]) return;
+        prev[kk] = c; q.push([nx, ny]);
+      });
+    }
+    var out = [], at = tx + ',' + ty;
+    if (!(at in prev)) return [[sx, sy], [tx, ty]];
+    for (var p = [tx, ty]; p; p = prev[p[0] + ',' + p[1]]) out.unshift(p);
+    return out;
+  }
+  function climb() {
+    var world = BridgeWorld.getWorld();
+    if (!world || climbing) return;
+    climbing = true;
+    var foot = [15, 4], tiles = route(world, BridgeCharacter.getX(), BridgeCharacter.getY(), foot[0], foot[1]);
+    // waypoints as floor points (tile centre, feet at the tile's foot row), then up the treads
+    var pts = tiles.map(function (t) { return { x: t[0] + 0.5, y: t[1] + 1 - 3 / 32, z: 0 }; });
+    pts.push({ x: STAIR.x, y: STAIR.front + 0.25, z: 0 });
+    for (var i = 0; i < STAIR.n; i++) pts.push({ x: STAIR.x, y: STAIR.front - (i + 0.5) * STAIR.run, z: (i + 1) * STAIR.rise });
+    pts.push({ x: STAIR.x, y: STAIR.front - STAIR.n * STAIR.run + 0.05, z: STAIR.n * STAIR.rise });
+    walk(pts, 'up', function () {
+      BridgeCharacter.setHidden(true);
+      sleepThrough(function () {
+        // morning: down the stair and onto the floor at its foot
+        var down = pts.slice(-STAIR.n - 2).reverse();
+        BridgeCharacter.setHidden(false);
+        walk(down, 'down', function () {
+          BridgeCharacter.setPose(null);
+          BridgeCharacter.init(foot[0], foot[1]);
+          BridgeCharacter.setFacing('down');
+          climbing = false;
+        });
+      });
+    });
+  }
+  // walk the pilot along a polyline of floor points (with heights), posed, the camera following
+  function walk(pts, end, done) {
+    var seg = 0, t = 0, dist = 0, cur = { x: pts[0].x, y: pts[0].y, z: pts[0].z }, facing = end;
+    function pose() {
+      BridgeCharacter.setPose({ kind: 'walk', x: cur.x, y: cur.y, row: DIR[facing], col: 4 + Math.floor(dist / 0.3) % 8, flip: false, lift: cur.z * Z,
+                                light: cur.z ? [15, 4] : null });     // on the stair, the light at its foot
+    }
+    pose();
+    BridgeWorld.setMode({
+      solo: true,
+      focus: function () { return { x: cur.x - 0.5, y: cur.y - 1.2 - cur.z * 0.7 }; },
+      end: function () { BridgeCharacter.setPose(null); BridgeCharacter.setHidden(false); climbing = false; },
+      update: function (dt) {
+        var a = pts[seg], b = pts[seg + 1];
+        if (!b) { BridgeWorld.setMode(null); return done(); }
+        var L = Math.hypot(b.x - a.x, b.y - a.y) || 0.001, speed = a.z || b.z ? 1.7 : 2.6;
+        t = Math.min(1, t + dt * speed / L);
+        cur.x = a.x + (b.x - a.x) * t; cur.y = a.y + (b.y - a.y) * t; cur.z = a.z + (b.z - a.z) * t;
+        dist += dt * speed;
+        var dx = b.x - a.x, dy = b.y - a.y;
+        facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+        pose();
+        if (t >= 1) { seg++; t = 0; if (b.z !== a.z || b.z) sfx('step'); }
+      }
+    });
+  }
+  // the night: dark, the lodge going quiet, a cup of coffee in the morning
+  function sleepThrough(next) {
+    var fade = document.createElement('div');
+    fade.id = 'sleep-fade';
+    fade.innerHTML = '<div class="sf-z">z<span>z</span><span>z</span></div><div class="sf-text"></div>';
+    fade.querySelector('.sf-text').textContent = 'A feather bed under the eaves. Snow on the skylight. Somewhere below, Barley snores.';
+    document.body.appendChild(fade);
+    sfx('sleep');
+    if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
+    requestAnimationFrame(function () { fade.classList.add('dark'); });
+    setTimeout(function () {
+      if (typeof BridgeInventory !== 'undefined' && BridgeInventory.restoreAll) BridgeInventory.restoreAll();
+      if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(20);
+      fade.querySelector('.sf-text').textContent = 'Mette knocks with coffee. You wake rested: health and energy full, and warm through.';
+      fade.classList.add('woke');
+    }, 2800);
+    setTimeout(function () {
+      fade.classList.remove('dark');
+      if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+      next();
+    }, 4600);
+    setTimeout(function () { fade.remove(); }, 5600);
   }
 
   // ---- the fire and the board ----------------------------------------------------------------------------------------
@@ -334,5 +448,5 @@ var BridgeLodge = (function () {
     el.querySelector('.fd-controls').classList.toggle('off', !mineTurn);
   }
 
-  return { use: use, isOpen: function () { return !!g; }, _g: function () { return g; }, _chance: chance, _act: act };
+  return { use: use, isOpen: function () { return !!g || climbing; }, _g: function () { return g; }, _chance: chance, _act: act };
 })();

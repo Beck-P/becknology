@@ -62,9 +62,11 @@ var BridgeCharacter = (function () {
   // (x, y: the floor point under them, tile units, not whole tiles), which
   // sport sheet (characters.py pilot-ski / pilot-climb), the frame (row,
   // col), mirrored (flip: the sheets face right; left is the mirror) and how
-  // high off the ground (lift, native px; the shadow stays down). Their tile
+  // high off the ground (lift, native px; the shadow stays down; light: the tile whose light they take, when the
+  // floor under them is inside something, like a stair). Their tile
   // follows, so loot, interactions and the camera still work.
-  var SPORT = { ski: { w: 40, h: 56, ox: 20, oy: 45 }, climb: { w: 32, h: 64, ox: 16, oy: 61 } };
+  // walk: the ordinary sheet, posed — a mode walking the pilot off the grid, up a stair (js/lodge.js)
+  var SPORT = { ski: { w: 40, h: 56, ox: 20, oy: 45 }, climb: { w: 32, h: 64, ox: 16, oy: 61 }, walk: { w: 32, h: 48, ox: 16, oy: 45 } };
   var pose = null;
   function setPose(p) {
     pose = p || null;
@@ -181,7 +183,7 @@ var BridgeCharacter = (function () {
     var colour = (G && G.colour()) || (pilot && pilot.suit_color);
     if (!SUIT_COLORS[colour]) colour = 'purple';
     var style = G ? G.style() : 'flight';
-    var pre = sport ? sport + '-' : pose ? pose.kind + '-' : seat ? 'sit-' : '';
+    var pre = sport ? sport + '-' : pose && pose.kind !== 'walk' ? pose.kind + '-' : seat ? 'sit-' : '';
     return pre + (style && style !== 'flight' ? style + '-' : '') + colour;
   }
 
@@ -213,7 +215,7 @@ var BridgeCharacter = (function () {
   }
   /** A sport sheet ready to draw — the pilot's own suit, or any 'ski-coat-red' — or null while it loads. */
   function sportImage(key, flip) {
-    var kind = key.split('-')[0], m = SPORT[kind];
+    var kind = key.split('-')[0], m = SPORT[kind] || SPORT.walk;
     if (flip) return mirrored(key, m.w);
     var sh = getSheet(key);
     return sh.ready ? sh.img : null;
@@ -286,7 +288,7 @@ var BridgeCharacter = (function () {
           shadow = null;
         }
         BridgeScene.drawOccluded(ctx, sc, img, p.col * m.w, p.row * m.h, m.w, m.h,
-          cx - m.ox, footY - m.oy - lift, p.y, offX, offY, BridgeScene.tintAt(sc, world, p.x - 0.5, p.y - 1, now), shadow, null, true);
+          cx - m.ox, footY - m.oy - lift, p.y, offX, offY, BridgeScene.tintAt(sc, world, p.light ? p.light[0] : p.x - 0.5, p.light ? p.light[1] : p.y - 1, now), shadow, null, true);
       }
     };
   }

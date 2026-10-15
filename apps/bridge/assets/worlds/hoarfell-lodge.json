@@ -588,7 +588,7 @@
     {
       "x": 15,
       "y": 3,
-      "type": "rest",
+      "type": "lodge_room",
       "label": "ROOMS",
       "prompt": "PRESS E FOR A ROOM",
       "cost": 15,
