@@ -292,7 +292,9 @@ var BridgeScene = (function () {
     var m = sc.meta;
     var data = tctx.getImageData(0, 0, sw, sh);
     var d = data.data;
-    var left = offX - m.originX, top = offY - m.originY;
+    // the render is blitted at whole pixels (blit); index its depth the same way, or a scene whose origin
+    // isn't a whole pixel (a 1.2-tile margin: 38.4 px) reads depth from the wrong place
+    var left = Math.round(offX - m.originX), top = Math.round(offY - m.originY);
     var th = (m.theta || 45) * Math.PI / 180;
     var cot = Math.cos(th) / Math.sin(th), tan = Math.tan(th);
     var depth = sc.depth, W = m.width, H = m.height;
