@@ -387,10 +387,16 @@ var BridgeScene = (function () {
         draw: (function (a, sh, footRow) {
           return function (ctx) {
             var col = IDLE_SEQ[Math.floor((now + a.x * 137 + a.y * 71) / 360) % IDLE_SEQ.length];
-            var row = DIR_ROW[a.facing] || 0;
+            var row = DIR_ROW[a.facing] || 0, bob = 0;
+            if (a.dance) {                              // dancers (Club Void): turn on the beat, step, bounce
+              var b = typeof BridgeDance !== 'undefined' ? BridgeDance.beat() : now / 484, kk = Math.floor(b) + Math.round(a.x * 3 + a.y);
+              row = [0, 1, 0, 3, 2, 1, 0, 3][kk % 8];
+              col = 4 + (Math.floor(b * 2) + kk) % 8;
+              bob = Math.round(Math.max(0, Math.sin((b % 1) * Math.PI)) * 2);
+            }
             var cx = Math.round(offX + (a.x + 0.5) * ts);
             var footY = Math.round(offY + footRow * ts);
-            var dx = cx - FRAME_W / 2, dy = footY - (FRAME_H - 3);
+            var dx = cx - FRAME_W / 2, dy = footY - (FRAME_H - 3) - bob;
             drawOccluded(ctx, sc, sh.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy,
               footRow, offX, offY, tintAt(sc, world, a.x, a.y, now),
               a.pose === 'sit' ? null : { x: cx, y: footY, rx: 8, ry: 3 });

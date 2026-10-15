@@ -60,14 +60,14 @@ var BridgeInteractions = (function () {
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
     home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill',
     farm_house: 'Go in', farm_ledger: 'Read', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read', curio: 'Pick up',
-    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski', ski_here: 'Ski', expedition: 'Look', park_start: 'Drop in', park_tow: 'Ride', park_board: 'Read'
+    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski', ski_here: 'Ski', expedition: 'Look', park_start: 'Drop in', park_tow: 'Ride', park_board: 'Read', club_door: 'Knock', dance: 'Dance'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port',
-                      'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park' };
+                      'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void' };
 
   function titleCase(t) {
     return String(t || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z\u00e0-\u00ff])/g, function (m, a, b) {
@@ -371,6 +371,10 @@ var BridgeInteractions = (function () {
 
       case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start': case 'ski_gate': case 'ski_here': case 'park_start': case 'park_tow': case 'park_board':   // Hoarfell (js/worlds/hoarfell.js)
         if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.use(inter);
+        break;
+
+      case 'club_door': case 'dance':                                    // Club Void (js/dance.js)
+        if (typeof BridgeDance !== 'undefined') BridgeDance.use(inter);
         break;
 
       case 'expedition':                                                // past the Hoarspire (js/expedition.js)

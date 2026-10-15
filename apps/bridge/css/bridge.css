@@ -1633,3 +1633,38 @@ body:has(.sport-hud.on) #world-location-badge { opacity: 0; }
 .cine-title .ct-kind { font-size: 14px; letter-spacing: 3px; color: #d8d0f0; }
 .nav-stay { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: #a8c8d8; cursor: pointer; user-select: none; }
 .nav-stay input { accent-color: #5cc8d0; margin: 0; }
+
+/* ---- Club Void: the dance (js/dance.js) ---------------------------------------------------------------------- */
+#dance-hud {
+  position: fixed; z-index: 40; right: max(4vw, 16px); top: 50%; transform: translateY(-52%); display: none; flex-direction: column; align-items: center; gap: 6px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; color: #f4ecff; pointer-events: none;
+}
+#dance-hud.on { display: flex; }
+#dance-hud .dn-top {
+  display: flex; gap: 12px; align-items: baseline; padding: 5px 12px; border-radius: 4px; white-space: nowrap;
+  background: rgba(24, 10, 40, 0.86); border: 1px solid rgba(160, 128, 255, 0.7); box-shadow: 0 0 18px rgba(255, 90, 176, 0.25);
+}
+#dance-hud .dn-name { font-size: 11px; letter-spacing: 3px; font-weight: normal; color: #d8c8ff; }
+#dance-hud .dn-score { font-size: 18px; min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; text-shadow: 0 0 8px rgba(255, 90, 176, 0.7); }
+#dance-hud canvas {
+  width: 240px; height: 420px; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 4px;
+  border: 1px solid rgba(160, 128, 255, 0.55); box-shadow: 0 0 24px rgba(64, 200, 216, 0.18);
+}
+#dance-hud .dn-judge { height: 22px; font-size: 18px; letter-spacing: 4px; }
+#dance-hud .dn-judge.perfect { color: #ffe080; text-shadow: 0 0 10px rgba(255, 224, 128, 0.9); }
+#dance-hud .dn-judge.great { color: #7ae0ff; text-shadow: 0 0 8px rgba(64, 200, 216, 0.8); }
+#dance-hud .dn-judge.good { color: #b8f0a0; }
+#dance-hud .dn-judge.miss { color: #a090b8; }
+#dance-hud .dn-combo { height: 16px; font-size: 12px; letter-spacing: 3px; color: #ff9ad0; }
+#dance-hud .dn-pads { display: none; gap: 6px; pointer-events: auto; }
+#dance-hud .dn-pads button {
+  width: 54px; height: 54px; font-size: 22px; color: #fff; border-radius: 6px; border: 1px solid rgba(160, 128, 255, 0.7);
+  background: rgba(24, 10, 40, 0.86); touch-action: manipulation;
+}
+#dance-hud .dn-help { font-size: 10px; letter-spacing: 1px; color: rgba(244, 236, 255, 0.7); white-space: nowrap; }
+@media (hover: none), (pointer: coarse) {
+  #dance-hud { top: auto; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); transform: none; right: 50%; margin-right: -120px; }
+  #dance-hud canvas { width: 180px; height: 315px; }
+  #dance-hud .dn-pads { display: flex; }
+  #dance-hud .dn-help { display: none; }
+}

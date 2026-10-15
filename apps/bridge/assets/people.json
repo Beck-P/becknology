@@ -1261,5 +1261,59 @@
         "a": "LIV SAYS THERE'S A BOWL OFF THE BACK OF THE HOARSPIRE NOBODY'S SKIED IN YEARS. UNTRACKED, ALL THE WAY DOWN. I'D GO, BUT YSOLDE SAYS THE RIDGE BEFORE IT EATS PEOPLE, AND YSOLDE DOESN'T EXAGGERATE."
       }
     ]
+  },
+  "kiri": {
+    "name": "Kiri Vale",
+    "role": "DJ, Club Void",
+    "sheet": "npc-dj",
+    "at": [
+      {
+        "world": "arcadia-club",
+        "label": "KIRI"
+      }
+    ],
+    "greet": "YOU'RE STANDING STILL ON MY FLOOR. THAT'S THE ONE THING YOU'RE NOT ALLOWED TO DO HERE.",
+    "again": "BACK. GOOD. THE FLOOR MISSED YOU.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I PLAYED THE ARCADE'S SPEAKERS WHEN I WAS NINE - WIRED A CASSETTE INTO THE HELICOPTER CABINET. NULL GAVE ME THE KEYS TO THIS PLACE WHEN THE LAST OWNER WENT DARK. I DON'T ASK WHERE NULL GETS KEYS."
+      },
+      {
+        "q": "The dance floor",
+        "a": "THE TILES ARE WIRED TO MY KICK DRUM. EVERY ARROW YOU SEE IS A NOTE I'M PLAYING. EASY IS ON THE BEAT. CLUB IS EIGHTHS. VOID IS WHAT I PLAY AT THREE IN THE MORNING. NEW STEPS EVERY NIGHT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE CREW OF A SHIP CALLED THE WREN USED TO COME IN HERE BEFORE A LONG HAUL. FIVE OF THEM, ONE BOOTH, ONE ROUND, NEVER DANCED. THEY STOPPED COMING. SOMEONE SAID THEY WENT NORTH."
+      }
+    ]
+  },
+  "dez": {
+    "name": "Dez Okoro",
+    "role": "Behind the bar, Club Void",
+    "sheet": "npc-mixer",
+    "at": [
+      {
+        "world": "arcadia-club",
+        "label": "DEZ"
+      }
+    ],
+    "greet": "WHAT'LL IT BE? THE FIZZ GLOWS. THE ALE DOESN'T. BOTH WORK.",
+    "again": "THE USUAL?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TEN YEARS ON THIS SIDE OF THE BAR. I'VE SEEN EVERY KIND OF NIGHT. THE GOOD ONES ALL END THE SAME WAY - SOMEBODY DANCING WHO SWORE THEY NEVER WOULD."
+      },
+      {
+        "q": "Void Fizz?",
+        "a": "SODA, SOMETHING PURPLE, AND A DROP OF SOMETHING FROM THE CLINIC THAT MAKES IT GLOW. PERFECTLY SAFE. MOSTLY. IT'LL KEEP YOU ON YOUR FEET."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "JORO'S BEEN IN TWICE THIS WEEK ASKING IF ANYONE'S SEEN A BLUE CRYSTAL THE SIZE OF A FIST. SAYS IT'S FOR A CLIENT. JORO ALWAYS SAYS IT'S FOR A CLIENT."
+      }
+    ]
   }
 }

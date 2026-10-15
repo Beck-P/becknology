@@ -522,6 +522,13 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#8a9098', [[5, 3, 6, 1], [5, 13, 6, 1]]);
     px(ctx, x, y, u, '#ffd890', [[2, 7, 1, 1], [13, 6, 1, 1], [3, 11, 1, 1], [13, 11, 1, 1]]);
   }
+  function fizzIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a3a', [[4, 3, 8, 1], [4, 4, 1, 9], [11, 4, 1, 9], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#7a40e0', [[5, 6, 6, 7]]); px(ctx, x, y, u, '#c090ff', [[5, 6, 6, 1]]);
+    px(ctx, x, y, u, '#ffffff', [[6, 9, 1, 1], [9, 8, 1, 1], [8, 11, 1, 1], [7, 4, 1, 1]]);
+    px(ctx, x, y, u, '#40c8d8', [[10, 1, 1, 5]]);
+  }
   function charmUse() {
     var it = this;
     if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(it.name.toUpperCase(), it.desc.toUpperCase() + '\n\n(IT WORKS AS LONG AS YOU CARRY IT.)');
@@ -812,6 +819,9 @@ var BridgeItems = (function () {
                      type: 'tool', stackable: false, draw: ringIcon, value: 120, onUse: charmUse },
     tide_charm:    { id: 'tide_charm', name: 'Tide Charm', desc: 'A green glass float in a net, a wave inside it. Carried, the sloop sails a little faster.',
                      type: 'tool', stackable: false, draw: tideIcon, value: 90, onUse: charmUse },
+    // Club Void's bar (js/dance.js)
+    void_fizz:     { id: 'void_fizz', name: 'Void Fizz', desc: 'Purple, fizzing, faintly glowing under the lights. Tastes like a bassline. Energy.', type: 'drink',
+                     stackable: true, draw: fizzIcon, effects: { energy: 30 }, value: 4, onUse: consumableUse },
     // past the Hoarspire (js/expedition.js)
     probe:         { id: 'probe', name: 'Avalanche Probe', desc: 'A folding pole, three paces long. On the Last Ridge, F pushes it into the snow ahead of you: hollow, or solid.',
                      type: 'tool', stackable: false, draw: probeIcon, value: 20,

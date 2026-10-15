@@ -163,6 +163,11 @@ NPCS = {
     # Juno Pike, who built the Park below the pistes: a pink beanie, goggles up, a teal hoodie under a mustard shell
     'npc-juno':      dict(skin='skin2', shirt=('#1a5a6a', '#2a8a9a', '#4ab8c8'), vest=('#8a6a10', '#c89a20', '#f0c840'),
                           hair=('#1a1410', '#2e2218', '#44342a'), beanie=('#7a1a5a', '#b82a88', '#e85ab8'), goggles=True, pose='stand'),
+    # Club Void: Kiri Vale on the decks (silver hair, goggles up as headphones), Dez behind the bar
+    'npc-dj':        dict(skin='skin', shirt=('#141018', '#241c2c', '#3a2e44'), vest=('#10405a', '#1a6a8a', '#30a0c0'),
+                          hair=('#9a9aaa', '#c8c8d8', '#f0f0ff'), long_hair=True, goggles=True, pose='stand'),
+    'npc-mixer':     dict(skin='skin2', shirt=('#2a1030', '#4a1c50', '#6a2a70'), vest=('#141018', '#241c2c', '#3a2e44'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), bun=True, pose='stand'),
     'npc-sev':       dict(skin='skin2', shirt=('#7a5010', '#b88020', '#e0b040'), hair=('#8a8a90', '#b8b8c0', '#dcdce4'),
                           bun=True, visor_cap=True, pose='stand'),
     'npc-vex':       dict(skin='skin', shirt=('#141018', '#241c2c', '#3a2e44'), vest=('#5a1040', '#a01870', '#d83098'),

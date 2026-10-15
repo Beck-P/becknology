@@ -210,6 +210,11 @@ var BridgeAudio = (function () {
     verdance: { bpm: 92, root: 55, mode: 'ionian', chords: [0, 3, 4, 0, 5, 3, 1, 4], swing: 0.2, pad: 'warm',
                 arp: { inst: 'pluck', steps: [0, 3, 6, 8, 11, 14], oct: 12, pattern: [0, 1, 2, 1] }, bass: { inst: 'bass', steps: [0, 6, 8] },
                 lead: { inst: 'flute', oct: 24, density: 0.5 }, perc: [['shaker', [2, 6, 10, 14]]] },
+    // Club Void: four to the floor all the way through (drive), an off-beat bass, a bright arp
+    club:     { bpm: 124, root: 45, mode: 'aeolian', chords: [0, 5, 3, 6], pad: 'pad', drive: true,
+                arp: { inst: 'arp', steps: [0, 2, 4, 6, 8, 10, 12, 14], oct: 24, pattern: [0, 2, 1, 3] },
+                bass: { inst: 'sub', steps: [2, 6, 10, 14] }, lead: { inst: 'lead', oct: 24, density: 0.28 },
+                perc: [['kick', [0, 4, 8, 12]], ['snare', [4, 12]], ['hat', [2, 6, 10, 14]]] },
     ship:     { bpm: 66, root: 53, mode: 'lydian', chords: [0, 1, 5, 4], pad: 'warm',
                 arp: { inst: 'box', steps: [0, 3, 6, 8, 11, 14], oct: 12 }, bass: { inst: 'bass', steps: [0], oct: -12 },
                 lead: { inst: 'box', oct: 24, density: 0.25 } }
@@ -222,6 +227,7 @@ var BridgeAudio = (function () {
     var amb;
     if (/^(bridge|quarters|hangar|gameroom)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
     if (id === 'arcadia' || id === 'arcadia-lucky-7') return { theme: 'arcade', amb: ['crowd', 'bleeps'] };
+    if (id === 'arcadia-club') return { theme: 'club', amb: ['crowd'] };
     if (/^arcadia-(street|skypad|alley)$/.test(id)) return { theme: 'arcadia', amb: ['rain', 'city'] };
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
@@ -334,10 +340,10 @@ var BridgeAudio = (function () {
       if (a.chord) tones.slice(0, 3).forEach(function (m) { INST[a.inst](d, t, m + a.oct, s.spb * 3, 0.6); });
       else INST[a.inst](d, t, tones[pat[k % pat.length] % tones.length] + a.oct, s.spb * 2, section === 0 ? 0.7 : 1);
     }
-    if (th.bass && th.bass.steps.indexOf(st) >= 0 && (full || st === 0 || section === 3)) {
+    if (th.bass && th.bass.steps.indexOf(st) >= 0 && (full || st === 0 || section === 3 || th.drive)) {
       INST[th.bass.inst](d, t, tones[0] - 12 + (th.bass.oct || 0) + (st === 8 && s.r() < 0.3 ? 7 : 0), s.spb * 2, 1);
     }
-    if (th.perc && (full || section === 3)) th.perc.forEach(function (p) {
+    if (th.perc && (full || section === 3 || th.drive)) th.perc.forEach(function (p) {
       if (p[1].indexOf(st) >= 0) INST[p[0]](d, t, p[2] || 0, s.spb, section === 3 ? 0.7 : 1);
     });
     if (th.lead && full) {
@@ -664,7 +670,14 @@ var BridgeAudio = (function () {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initPill); else initPill();
 
-  return { setWorld: setWorld, sfx: sfx, cycle: cycle, mode: function () { return prefs.mode; },
+  // where the music is: the step it's on (16 to the bar, fractional), how long a step is, which song (js/dance.js keeps time by it)
+  function clock() {
+    if (!song || !ac || ac.state !== 'running') return null;
+    return { name: song.name, step: song.step - (song.next - ac.currentTime) / song.spb, spb: song.spb,
+             lat: (ac.outputLatency || 0) + (ac.baseLatency || 0), audible: prefs.mode === 'all' };
+  }
+
+  return { setWorld: setWorld, sfx: sfx, cycle: cycle, clock: clock, mode: function () { return prefs.mode; },
            _state: function () { return { ctx: ac && ac.state, song: song && song.name, amb: ambKey, place: place }; },
            _level: function () {                    // peak and rms of what's playing (tests)
              if (!meter) return null;
