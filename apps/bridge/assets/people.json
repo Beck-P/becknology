@@ -956,6 +956,22 @@
           {
             "id": "apple",
             "price": 5
+          },
+          {
+            "id": "egg",
+            "price": 10
+          },
+          {
+            "id": "large_egg",
+            "price": 18
+          },
+          {
+            "id": "golden_egg",
+            "price": 150
+          },
+          {
+            "id": "milk",
+            "price": 30
           }
         ]
       }

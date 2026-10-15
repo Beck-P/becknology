@@ -134,6 +134,8 @@ var BridgeQuests = (function () {
         led.push('<b>' + esc(stead.name) + '</b> - yours' + (stead.sprinklers ? ', ' + stead.sprinklers + ' sprinkler' + (stead.sprinklers > 1 ? 's' : '') : ''));
         if (stead.coins || stead.orders) led.push('Shipped ' + stead.coins + ' coins over ' + stead.rounds + ' of Marlo\'s rounds; ' + stead.orders + ' order' + (stead.orders === 1 ? '' : 's') + ' filled');
         if (stead.bin) led.push('In the bin for Marlo: ' + stead.bin + ' coins\' worth');
+        var herd = typeof BridgeAnimals !== 'undefined' ? BridgeAnimals.journal() : [];
+        if (herd.length) led.push('In the meadow: ' + herd.map(function (a) { return esc(a.name) + ' ' + '♥'.repeat(a.hearts) + (a.ready ? ' <b>(' + (a.kind === 'cow' ? 'milk' : 'an egg') + ' waiting)</b>' : ''); }).join(', '));
         if (stead.tam) led.push('Tam is watering for another ' + Math.max(1, Math.round((stead.tam - Date.now()) / 3600000)) + ' h');
         if (stead.odile) led.push('Odile is bringing it in for another ' + Math.max(1, Math.round((stead.odile - Date.now()) / 3600000)) + ' h');
       }

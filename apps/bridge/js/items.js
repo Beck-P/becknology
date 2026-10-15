@@ -522,6 +522,21 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#8a9098', [[5, 3, 6, 1], [5, 13, 6, 1]]);
     px(ctx, x, y, u, '#ffd890', [[2, 7, 1, 1], [13, 6, 1, 1], [3, 11, 1, 1], [13, 11, 1, 1]]);
   }
+  function eggIcon(c1, c2) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#2a1a10', [[6, 3, 4, 1], [5, 4, 1, 2], [10, 4, 1, 2], [4, 6, 1, 5], [11, 6, 1, 5], [5, 11, 1, 1], [10, 11, 1, 1], [6, 12, 4, 1]]);
+      px(ctx, x, y, u, c1, [[6, 4, 4, 8], [5, 6, 6, 5]]);
+      px(ctx, x, y, u, c2, [[8, 8, 3, 3], [6, 11, 4, 1]]);
+      px(ctx, x, y, u, '#ffffff', [[6, 5, 1, 2]]);
+    };
+  }
+  function milkIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[5, 2, 6, 2], [4, 4, 8, 10]]);
+    px(ctx, x, y, u, '#e8eef6', [[5, 5, 6, 8]]); px(ctx, x, y, u, '#c8d0dc', [[5, 11, 6, 2]]);
+    px(ctx, x, y, u, '#5a8ac0', [[5, 7, 6, 2]]); px(ctx, x, y, u, '#9ab8d8', [[6, 3, 4, 1]]);
+  }
   function fizzIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1a3a', [[4, 3, 8, 1], [4, 4, 1, 9], [11, 4, 1, 9], [5, 13, 6, 1]]);
@@ -819,6 +834,15 @@ var BridgeItems = (function () {
                      type: 'tool', stackable: false, draw: ringIcon, value: 120, onUse: charmUse },
     tide_charm:    { id: 'tide_charm', name: 'Tide Charm', desc: 'A green glass float in a net, a wave inside it. Carried, the sloop sails a little faster.',
                      type: 'tool', stackable: false, draw: tideIcon, value: 90, onUse: charmUse },
+    // the farm's hens and cows (js/animals.js)
+    egg:           { id: 'egg', name: 'Egg', desc: 'Brown, warm, from one of your hens. Marlo buys them; the noodle bar wants them soft-boiled.', type: 'food',
+                     stackable: true, draw: eggIcon('#e8c89a', '#c8a070'), effects: { energy: 8 }, value: 4, onUse: consumableUse },
+    large_egg:     { id: 'large_egg', name: 'Large Egg', desc: 'A big one, from a happy hen.', type: 'food',
+                     stackable: true, draw: eggIcon('#f4e0b8', '#d8b888'), effects: { energy: 14 }, value: 8, onUse: consumableUse },
+    golden_egg:    { id: 'golden_egg', name: 'Golden Egg', desc: 'Heavy, and gold all the way through the shell. Only the happiest hens. Marlo will pay a great deal for it.', type: 'material',
+                     stackable: true, draw: eggIcon('#f0c838', '#c8901a'), value: 60 },
+    milk:          { id: 'milk', name: 'Milk', desc: 'A pail of it, still warm. Energy, and Marlo buys it.', type: 'drink',
+                     stackable: true, draw: milkIcon, effects: { energy: 18 }, value: 12, onUse: consumableUse },
     // Club Void's bar (js/dance.js)
     void_fizz:     { id: 'void_fizz', name: 'Void Fizz', desc: 'Purple, fizzing, faintly glowing under the lights. Tastes like a bassline. Energy.', type: 'drink',
                      stackable: true, draw: fizzIcon, effects: { energy: 30 }, value: 4, onUse: consumableUse },

@@ -42,9 +42,12 @@ var BridgeHomestead = (function () {
     { who: 'morwen', item: 'starfruit', n: 2, x: 1.6, why: 'starfruit, "picked under a true sun"' },
     { who: 'potter', item: 'sunflower', n: 2, x: 1.5, why: 'sunflowers to paint' },
     { who: 'merchant', item: 'turnip', n: 12, x: 1.4, why: 'turnips by the crate for a ship\'s hold' },
-    { who: 'cook', item: 'carrot', n: 3, x: 1.6, why: 'carrots he can\'t get in the District' }
+    { who: 'cook', item: 'carrot', n: 3, x: 1.6, why: 'carrots he can\'t get in the District' },
+    { who: 'miyu', item: 'egg', n: 6, x: 1.6, why: 'eggs for the ramen, "soft, seven minutes"' },
+    { who: 'tove', item: 'milk', n: 2, x: 1.6, why: 'milk for the cocoa, "the real thing"' },
+    { who: 'regular', item: 'egg', n: 4, x: 1.5, why: 'eggs for the tavern\'s breakfast' }
   ];
-  var BASE = { starfruit: 280, pumpkin: 95, sunflower: 32, carrot: 20, strawberry: 14, turnip: 12, honey: 25, apple: 5 };
+  var BASE = { starfruit: 280, pumpkin: 95, sunflower: 32, carrot: 20, strawberry: 14, turnip: 12, honey: 25, apple: 5, egg: 10, milk: 30 };
 
   var s = load();
   var hands = {};                                          // live positions of hired hands in the field
@@ -203,11 +206,12 @@ var BridgeHomestead = (function () {
     if (!owned()) return say('BARN', 'HAY, HARNESS, A CAT ASLEEP IN A FEED SACK. EDDA\'S PADLOCK ON THE SEED BOX. NOT YOURS YET.');
     var carried = Object.keys(BridgeFarm.CROPS).map(function (c) { return 'seed_' + c; }).filter(function (id) { return count(id) > 0; });
     var boxed = Object.keys(s.seeds).filter(function (id) { return s.seeds[id] > 0; });
+    var animals = typeof BridgeAnimals !== 'undefined' ? [{ label: 'The animals', sub: 'hens and cows for the meadow', pick: function () { BridgeAnimals.barn(); } }] : [];
     choose({
       title: 'The seed box',
       text: 'WHAT ODILE REPLANTS WITH: WHEN SHE BRINGS A CROP IN, SHE PUTS THE SAME BACK IN THE GROUND IF THERE\'S SEED FOR IT HERE.' +
             (boxed.length ? '\n\nIN THE BOX: ' + boxed.map(function (id) { return s.seeds[id] + ' ' + nameOf(id).toUpperCase(); }).join(', ') + '.' : '\n\nTHE BOX IS EMPTY.'),
-      rows: carried.map(function (id) {
+      rows: animals.concat(carried.map(function (id) {
         return { label: 'Put in ' + nameOf(id), icon: id, sub: 'you have ' + count(id), pick: function () {
           var n = count(id); BridgeInventory.removeItem(id, n); s.seeds[id] = (s.seeds[id] || 0) + n; store(); sfx('sow'); seedBox();
         } };
@@ -217,7 +221,7 @@ var BridgeHomestead = (function () {
           if (BridgeInventory.addItem(id, n)) { delete s.seeds[id]; store(); sfx('pickup'); }
           seedBox();
         } };
-      }))
+      })))
     });
   }
   function takeSeed(crop) {
