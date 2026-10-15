@@ -613,6 +613,11 @@ var BridgeAudio = (function () {
     swish:   function (t) { noiseHit(sfxBus, t, 0.12, { freq: 3200, ftype: 'highpass', gain: 0.06 }); },
     hit:     function (t) { noiseHit(sfxBus, t, 0.14, { freq: 900, ftype: 'bandpass', q: 1.2, gain: 0.16, rev: 0.2 }); voice(sfxBus, t, 0.05, { type: 'square', freq: 160, glide: 0.5, glideT: 0.08, gain: 0.06, a: 0.001, d: 0.08, s: 0, r: 0.05, cutoff: 1200 }); },
     hurt:    function (t) { voice(sfxBus, t, 0.12, { type: 'sawtooth', freq: 220, glide: 0.5, glideT: 0.15, gain: 0.07, a: 0.002, d: 0.15, s: 0, r: 0.1, cutoff: 1400 }); },
+    thunder: function (t) {                                // far off, then rolling round the sky
+      noiseHit(sfxBus, t, 1.8, { freq: 140, ftype: 'lowpass', gain: 0.32, rev: 0.6 });
+      noiseHit(sfxBus, t + 0.12, 1.2, { freq: 80, ftype: 'lowpass', gain: 0.28, rev: 0.4 });
+      noiseHit(sfxBus, t + 0.5, 1.6, { freq: 110, ftype: 'lowpass', gain: 0.18, rev: 0.6 });
+    },
     dice:    function (t) {                                // dice rattled in a leather cup, then tipped out on wood
       for (var i = 0; i < 7; i++) noiseHit(sfxBus, t + i * 0.045 + Math.random() * 0.015, 0.03, { freq: 1800 + Math.random() * 1400, ftype: 'bandpass', q: 3, gain: 0.05 });
       for (var j = 0; j < 4; j++) noiseHit(sfxBus, t + 0.4 + j * 0.07, 0.04, { freq: 900 + Math.random() * 500, ftype: 'bandpass', q: 2.5, gain: 0.07, rev: 0.15 });

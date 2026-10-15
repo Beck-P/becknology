@@ -837,14 +837,13 @@ var BridgeVoyage = (function () {
     raf = requestAnimationFrame(frame);
   }
 
-  // every DOCK on the spore sea offers the helm, first in its menu
+  // every DOCK on the spore sea: go sailing, in the sloop moored there (js/sloop.js) — you choose the island at sea
   function decorate(worldId, data) {
     if (!ISLES[worldId]) return;
     setTimeout(function () { Object.keys(ISLES).forEach(loadIsle); }, 2500);      // ready before you reach the dock
     (data.interactions || []).forEach(function (it) {
-      if ((it.label === 'DOCK' || it.label === 'GALLEON') && it.type === 'menu' && it.options &&
-          !it.options.some(function (o) { return o.action === 'voyage'; })) {
-        it.options.unshift({ label: 'TAKE THE HELM', action: 'voyage' });
+      if ((it.label === 'DOCK' || it.label === 'GALLEON') && (it.type === 'menu' || it.type === 'go_sailing')) {
+        it.type = 'go_sailing'; it.prompt = 'PRESS E TO GO SAILING'; delete it.options;
       }
     });
   }

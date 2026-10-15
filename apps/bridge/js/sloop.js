@@ -40,6 +40,17 @@ var BridgeSloop = (function () {
   var wake = [], spray = [], gulls = [], fish = [], things = [], whale = null;
   var msg = null, msgAt = 0, prompt = null, menu = null, sheetImg = null, readyCount = 0, hold = 0;
   var seaWas = null, lastLuff = 0, lastBell = 0, auto = false, route = [], leg = 0;
+  var traffic = [], wisps = [], storm = null, told = {}, aim = null, committing = false, hinted = false, said = {}, castOut = null;
+  // each sea's character: how hard it blows, and what the sailors say of it
+  var BASE = { emerald: 0.92, sapphire: 0.95, rose: 0.82, crimson: 1.2, midnight: 0.62 };
+  var CALM = { emerald: true, sapphire: true, rose: true };
+  var LORE = {
+    emerald: 'The Emerald Sea - home water. Lanterns on every swell, and boats about their business.',
+    sapphire: 'The Sapphire Sea - the trade road. Sails all the way to the horizon.',
+    rose: 'The Rose Sea - warm water and pink spores. The windmill\'s chime carries for miles.',
+    crimson: 'The Crimson Sea. Squalls out of nowhere; the traders give it a wide berth. You\'re on your own out here.',
+    midnight: 'The Midnight Sea. Nobody sails here who doesn\'t have to. Watch for rocks in the mist - and don\'t follow the lights.'
+  };
 
   function hash(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
   function wrap(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
@@ -187,23 +198,81 @@ var BridgeSloop = (function () {
   }
 
   // ---- the strait between them -----------------------------------------------------------------------------------
-  function lay() {
-    // Out of one harbour mouth and into the other: each quay faces the sea one way (from the island's middle out
-    // past its berth), so the strait runs from A's mouth to B's, the islands set so that the line between the two
-    // berths is open water (no sailing round an island to find its quay).
-    A.ox = A.oy = 0; B.ox = B.oy = 0;
-    A.berth = berth(A); B.berth = berth(B);
-    A.chan = channel(A); B.chan = channel(B);                // each in the island's own tiles for now
-    var ea = A.chan[A.chan.length - 1], bl = B.chan[B.chan.length - 1], bb = B.berth.slice();
-    function unit(x, y) { var n = Math.hypot(x, y) || 1; return [x / n, y / n]; }
-    var outA = unit(ea[0] - A.cx, ea[1] - A.cy), outB = unit(bl[0] - B.cx, bl[1] - B.cy);
-    var P = isles(), bearing = Math.atan2((P[B.id].y - P[A.id].y) * 0.72, P[B.id].x - P[A.id].x);
-    var ideal, dx = outA[0] - outB[0], dy = outA[1] - outB[1];
-    if (Math.hypot(dx, dy) > 0.5) ideal = Math.atan2(dy, dx);
-    else {                                              // both quays face the same way: the islands lie side by side
-      var a0 = Math.atan2(outA[1], outA[0]), l = a0 + Math.PI / 2, r = a0 - Math.PI / 2;
-      ideal = Math.abs(wrap(l - bearing)) < Math.abs(wrap(r - bearing)) ? l : r;
+  function unit(x, y) { var n = Math.hypot(x, y) || 1; return [x / n, y / n]; }
+  // where an island keeps your sloop: its berth off the DOCK, lying bow-out along the way to open water. The world
+  // draws her there (drawMoored) and the passage starts from exactly there, so the boat at the pier is the one you sail.
+  function moorOf(I) {
+    I.ox = I.oy = 0;
+    I.berth = berth(I);
+    I.chan = channel(I);
+    I.exit = I.chan[I.chan.length - 1];
+    // made fast alongside the quay or the island's galleon (MOORINGS, picked against each render), else the
+    // nearest water a hull fits beside the pier
+    var M = MOORINGS[I.id];
+    if (M) { I.moor = [M[0], M[1]]; I.moorH = M[2]; return; }
+    I.moor = pierSide(I) || I.berth.slice();
+    var dx = I.berth[0] - I.moor[0], dr = I.berth[1] - I.moor[1];
+    I.moorH = Math.hypot(dx, dr) > 1.5 ? Math.atan2(dr, dx) : Math.atan2(I.dock[1] - I.cy, I.dock[0] - I.cx);
+  }
+  var MOORINGS = {
+    'lumar': [16.8, 16.9, 0], 'lumar-sapphire': [21.5, 25.9, Math.PI], 'lumar-rose': [29.5, 27.7, 0],
+    'lumar-crimson': [23.0, 39.0, Math.PI], 'lumar-midnight': [19.6, 38.2, Math.PI]
+  };
+  function afloat(I, x, r, rad) {                     // nothing standing out of the water here (shallows will do)
+    if (ground(I, x, r) === 1) return false;
+    for (var k = 0; k < 12; k++) { var a = k / 12 * Math.PI * 2; if (ground(I, x + Math.cos(a) * rad, r + Math.sin(a) * rad) === 1) return false; }
+    return true;
+  }
+  function pierSide(I) {
+    var ox = I.dock[0], oy = I.dock[1], out = Math.atan2(I.berth[1] - oy, I.berth[0] - ox), best = null, bd = 1e9;
+    for (var d = 1.0; d <= 6 && !best; d += 0.25) {
+      for (var k = 0; k < 48; k++) {
+        var a = k / 48 * Math.PI * 2, x = ox + Math.cos(a) * d, r = oy + Math.sin(a) * d;
+        if (!afloat(I, x, r, 0.6)) continue;
+        if (!afloat(I, x + Math.cos(out) * 1.2, r + Math.sin(out) * 1.2, 0.3) || !afloat(I, x - Math.cos(out) * 1.2, r - Math.sin(out) * 1.2, 0.3)) continue;
+        var score = d - 0.3 * Math.abs(Math.sin(a - out));
+        if (score < bd) { bd = score; best = [x, r]; }
+      }
     }
+    return best;
+  }
+  function buoys(I) {                                  // a red buoy to port and a green to starboard, coming in
+    var e = I.exit, p = I.chan[Math.max(0, I.chan.length - 2)], ax = e[0] - p[0], ar = e[1] - p[1], an = Math.hypot(ax, ar) || 1;
+    var inx = -ax / an, inr = -ar / an;
+    [[-1, 'buoy_red'], [1, 'buoy_green']].forEach(function (b) {
+      var x = e[0] - inr * 2.8 * b[0], r = e[1] + inx * 2.8 * b[0];
+      if (!groundAt(x, r) && clear(I, x, r, 0.6)) things.push({ kind: b[1], x: x, r: r, rad: 0.35, seed: things.length });
+    });
+  }
+  function homeGulls(I, g0) {
+    for (var g = g0; g < g0 + 3; g++) {
+      gulls.push({ home: I, x: I.dock[0] + I.ox, r: I.dock[1] + I.oy, z: 2 + hash(g) * 1.5,
+                   a: hash(g + 3) * 6.28, rad: 3 + hash(g + 5) * 5, sp: 0.5 + hash(g + 7) * 0.4, follow: false });
+    }
+  }
+  // the island you leave from: its berth and harbour channel, the wind, its buoys and gulls
+  function layA() {
+    moorOf(A);
+    route = [A.berth.slice()].concat(A.chan.slice(1));
+    leg = 0; mid = null; dir = null; B = null;
+    var out = unit(A.exit[0] - A.berth[0], A.exit[1] - A.berth[1]), course = Math.atan2(out[1], out[0]);
+    var seed = (A.id.length * 31 + Math.floor(Date.now() / 3.6e6)) % 997;
+    var side = hash(seed) < 0.5 ? -1 : 1;
+    wind = { from: course + side * (1.35 + hash(seed + 1) * 0.95), base: BASE[A.pal] || 0.92, s: 1, gust: 0, gustAt: 0, seed: seed };
+    things = []; traffic = []; wisps = []; gulls = [];
+    buoys(A);
+    homeGulls(A, 0);
+    gulls.push({ home: null, x: A.berth[0], r: A.berth[1], z: 2.4, a: 1, rad: 3, sp: 0.7, follow: true });
+    whale = { done: false };
+    storm = { flash: 0, nextFlash: 0, squallAt: 0, thunderAt: 0 };
+    if (CALM[A.pal]) for (var t = 0; t < 2; t++) spawnSail(A.exit[0] + (hash(seed + t * 5) - 0.5) * 30, A.exit[1] + (hash(seed + t * 5 + 1) - 0.5) * 30, seed + t);
+  }
+  // the island you've set a course for: placed ahead along the way you're steering, its mouth facing you over open
+  // water, and the crossing laid out between: rocks and a reef, a fisherman, things adrift, traffic, the sea's own perils
+  function placeB(J, P0, prefer) {
+    B = J; to = J.id;
+    moorOf(B);
+    var bl = B.exit, bb = B.berth.slice(), chan = B.chan.slice();
     function overlap() {
       var m = 14;
       return !(B.ox > A.w + m || B.ox + B.w < -m || B.oy > A.h + m || B.oy + B.h < -m);
@@ -216,35 +285,34 @@ var BridgeSloop = (function () {
       }
       return true;
     }
-    var done = false, D = 0, ang = ideal;
-    [0, 0.2, -0.2, 0.4, -0.4, 0.6, -0.6, 0.85, -0.85, 1.1, -1.1].some(function (da) {
-      return [96, 112, 130].some(function (d) {
-        ang = ideal + da; D = d;
-        B.ox = Math.round(ea[0] + Math.cos(ang) * d - bl[0]); B.oy = Math.round(ea[1] + Math.sin(ang) * d - bl[1]);
+    var done = false;
+    [0, 0.15, -0.15, 0.3, -0.3, 0.5, -0.5, 0.75, -0.75, 1.0, -1.0].some(function (da) {
+      return [72, 86, 100, 120].some(function (d) {
+        var ang = prefer + da;
+        B.ox = Math.round(P0[0] + Math.cos(ang) * d - bl[0]); B.oy = Math.round(P0[1] + Math.sin(ang) * d - bl[1]);
         if (overlap()) return false;
-        if (!lineClear(ea, [bl[0] + B.ox, bl[1] + B.oy])) return false;
+        if (!lineClear(P0, [bl[0] + B.ox, bl[1] + B.oy])) return false;
         done = true; return true;
       });
     });
-    if (!done) { B.ox = Math.round(ea[0] + Math.cos(ideal) * 130 - bl[0]); B.oy = Math.round(ea[1] + Math.sin(ideal) * 130 - bl[1]); }
+    if (!done) { B.ox = Math.round(P0[0] + Math.cos(prefer) * 120 - bl[0]); B.oy = Math.round(P0[1] + Math.sin(prefer) * 120 - bl[1]); }
     B.berth = [bb[0] + B.ox, bb[1] + B.oy];
-    B.chan = B.chan.map(function (p) { return [p[0] + B.ox, p[1] + B.oy]; });
-    A.exit = A.chan[A.chan.length - 1]; B.exit = B.chan[B.chan.length - 1];
-    // the course: out of A's harbour, across, into B's
-    route = A.chan.slice(1).concat(B.chan.slice().reverse());
+    B.moor = [B.moor[0] + B.ox, B.moor[1] + B.oy];
+    B.chan = chan.map(function (p) { return [p[0] + B.ox, p[1] + B.oy]; });
+    B.exit = B.chan[B.chan.length - 1];
+    route = [P0.slice()].concat(B.chan.slice().reverse(), [B.moor.slice()]);
     leg = 0;
-    dir = unit(B.exit[0] - A.exit[0], B.exit[1] - A.exit[1]);
-    mid = [(A.exit[0] + B.exit[0]) / 2, (A.exit[1] + B.exit[1]) / 2];
-    var course = Math.atan2(B.exit[1] - A.exit[1], B.exit[0] - A.exit[0]);
-    // the wind over one side: a reach there, mostly, though it veers
-    var seed = (A.id.length * 31 + B.id.length * 7 + Math.floor(Date.now() / 3.6e6)) % 997;
-    var side = hash(seed) < 0.5 ? -1 : 1;
-    wind = { from: course + side * (1.35 + hash(seed + 1) * 0.95), base: B.pal === 'crimson' ? 1.05 : B.pal === 'rose' ? 0.8 : 0.92,
-             s: 1, gust: 0, gustAt: 0, seed: seed };
-    // the things on the water, seeded by the route
-    things = [];
+    dir = unit(B.exit[0] - P0[0], B.exit[1] - P0[1]);
+    mid = [(P0[0] + B.exit[0]) / 2, (P0[1] + B.exit[1]) / 2];
+    crossing(P0);
+    buoys(B);
+    homeGulls(B, 3);
+    whale = { done: false };
+  }
+  function crossing(P0) {
+    var seed = wind.seed, course = Math.atan2(B.exit[1] - P0[1], B.exit[0] - P0[0]);
     var nx = -Math.sin(course), ny = Math.cos(course);
-    function along(t, off) { return [A.exit[0] + (B.exit[0] - A.exit[0]) * t + nx * off, A.exit[1] + (B.exit[1] - A.exit[1]) * t + ny * off]; }
+    function along(t, off) { return [P0[0] + (B.exit[0] - P0[0]) * t + nx * off, P0[1] + (B.exit[1] - P0[1]) * t + ny * off]; }
     function put(kind, t, off, extra) {
       var p = along(t, off);
       if (groundAt(p[0], p[1])) return;
@@ -252,34 +320,51 @@ var BridgeSloop = (function () {
       for (var k in extra) o[k] = extra[k];
       things.push(o);
     }
+    function palAt(t) { return t < 0.5 ? A.pal : B.pal; }
     // a reef across part of the middle, rocks round it
     var rt = 0.42 + hash(seed + 3) * 0.16, ro = (hash(seed + 4) - 0.5) * 6;
     put('reef', rt, ro, { rad: 1.2 }); put('rock_b', rt + 0.03, ro + 3.2, { rad: 0.8 }); put('rock_a', rt - 0.04, ro - 2.8, { rad: 0.7 });
     put('rock_c', 0.25 + hash(seed + 5) * 0.1, 9 * (hash(seed + 6) < 0.5 ? -1 : 1), { rad: 0.5 });
     put('rock_a', 0.7 + hash(seed + 7) * 0.1, -8 * (hash(seed + 8) < 0.5 ? -1 : 1), { rad: 0.7 });
-    put('dory', 0.32 + hash(seed + 9) * 0.1, 7 * (hash(seed + 10) < 0.5 ? -1 : 1), { rad: 0.9, h: 0 });
+    if (palAt(0.32) !== 'midnight' && palAt(0.32) !== 'crimson')     // nobody fishes the dangerous seas
+      put('dory', 0.32 + hash(seed + 9) * 0.1, 7 * (hash(seed + 10) < 0.5 ? -1 : 1), { rad: 0.9, h: 0 });
     put('crate', 0.38 + hash(seed + 11) * 0.08, (hash(seed + 12) - 0.5) * 5, { rad: 0.4, flot: true });
     put('barrel', 0.66 + hash(seed + 13) * 0.08, (hash(seed + 14) - 0.5) * 6, { rad: 0.4, flot: true });
-    // each harbour mouth: a red buoy to port and a green to starboard, coming in
-    [A, B].forEach(function (I) {
-      var e = I.exit, p = I.chan[Math.max(0, I.chan.length - 2)], ax = e[0] - p[0], ar = e[1] - p[1], an = Math.hypot(ax, ar) || 1;
-      var inx = -ax / an, inr = -ar / an;                               // the way in
-      [[-1, 'buoy_red'], [1, 'buoy_green']].forEach(function (b) {
-        var x = e[0] - inr * 2.8 * b[0], r = e[1] + inx * 2.8 * b[0];
-        if (!groundAt(x, r) && clear(I, x, r, 0.6)) things.push({ kind: b[1], x: x, r: r, rad: 0.35, seed: things.length });
-      });
+    // the Midnight Sea: rocks hidden in the mist, an old wreck, and lights that lead you onto them
+    [0.18, 0.62].forEach(function (t0, h) {
+      if (palAt(t0 + 0.1) !== 'midnight') return;
+      for (var i = 0; i < 6; i++) put(['rock_a', 'rock_b', 'rock_c'][i % 3], t0 + hash(seed + 40 + i + h * 9) * 0.25, (hash(seed + 50 + i + h * 9) - 0.5) * 8, { rad: 0.6 + (i % 3) * 0.15 });
+      put('wreck', t0 + 0.12, (hash(seed + 60 + h) - 0.5) * 10, { rad: 1.3 });
+      for (var w = 0; w < 4; w++) {
+        var p = along(t0 + hash(seed + 70 + w + h * 5) * 0.3, (hash(seed + 80 + w + h * 5) - 0.5) * 14);
+        wisps.push({ x: p[0], r: p[1], x0: p[0], r0: p[1], seed: seed + w * 7 + h * 3 });
+      }
     });
-    gulls = [];
-    for (var g = 0; g < 7; g++) {
-      var I = g < 3 ? A : g < 6 ? B : null;
-      gulls.push({ home: I, x: I ? I.dock[0] + I.ox : A.berth[0], r: I ? I.dock[1] + I.oy : A.berth[1], z: 2 + hash(g) * 1.5,
-                   a: hash(g + 3) * 6.28, rad: 3 + hash(g + 5) * 5, sp: 0.5 + hash(g + 7) * 0.4, follow: !I });
+    // traffic, on the seas people sail
+    for (var j = 0; j < 4; j++) {
+      var t = 0.15 + j * 0.22, p2 = along(t, (hash(seed + 90 + j) - 0.5) * 34);
+      if (CALM[palAt(t)]) spawnSail(p2[0], p2[1], seed + 90 + j);
     }
-    whale = { done: false };
   }
+  // another sloop going about its business: across your course or along it, under coloured sails
+  var CLOTH = [['#c89a50', '#a87a38', '#7a5a2a'], ['#b8503a', '#94402e', '#6a2c20'], ['#d6cfbf', '#b2ac9f', '#86828f'], ['#5a7aa0', '#46607e', '#34485e']];
+  function spawnSail(x, r, seed) {
+    if (groundAt(x, r)) return;
+    var h = hash(seed + 1) * Math.PI * 2;
+    traffic.push({ x: x, r: r, h: h, v: 1.5 + hash(seed + 2) * 1.2, sheet: 0.9, boom: 0.8, side: hash(seed + 3) < 0.5 ? -1 : 1, heel: 0.12,
+                   rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6, luff: false, cloth: CLOTH[Math.floor(hash(seed + 4) * CLOTH.length)], crew: true, seed: seed });
+  }
+  // the old two-island start (BridgeWorld.sailTo with a destination): the other island set where its quay faces ours
+  function lay() {
+    layA();
+    var P = isles(), bearing = Math.atan2((P[B0.id].y - P[A.id].y) * 0.72, P[B0.id].x - P[A.id].x);
+    placeB(B0, A.exit, bearing);
+  }
+  var B0 = null;
 
   /** Which sea a point lies in (the seam wanders), and how far past the seam (tiles, + toward B). */
   function seaSide(x, r) {
+    if (!B || !mid) return -1;                          // out of the harbour, before a course is set: all one sea
     var s = (x - mid[0]) * dir[0] + (r - mid[1]) * dir[1];
     var t = (x - mid[0]) * -dir[1] + (r - mid[1]) * dir[0];
     return s + (vnoise(t / 9 + 3.1) - 0.5) * 7 + (vnoise(t / 3.3) - 0.5) * 1.6;
@@ -287,9 +372,10 @@ var BridgeSloop = (function () {
 
   // ---- start and stop ---------------------------------------------------------------------------------------------
   function start(fromId, toId) {
-    if (running || !knows(fromId) || !knows(toId) || fromId === toId) return false;
-    running = true; from = fromId; to = toId; phase = 'load'; began = performance.now(); keys = {}; menu = null;
+    if (running || !knows(fromId) || (toId && (!knows(toId) || fromId === toId))) return false;
+    running = true; from = fromId; to = toId || null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
     wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = false;
+    aim = null; committing = false; hinted = false; said = {}; told = {}; B = null; B0 = null;
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     canvas = document.createElement('canvas');
     canvas.id = 'sloop-canvas';
@@ -312,29 +398,48 @@ var BridgeSloop = (function () {
       document.body.appendChild(b);
     }
     if (typeof BridgeAudio !== 'undefined' && BridgeAudio.setWorld) BridgeAudio.setWorld('lumar-passage');
-    var fail = function () { stop(to); };
+    var fail = function () { stop(from); };
+    function go() {
+      if (!A.sc) { fail(); return; }
+      if (B0) lay(); else layA();
+      boat = { x: A.moor[0], r: A.moor[1], h: A.moorH, v: 0, sheet: 1.45, boom: 0, side: wrap(wind.from - A.moorH) > 0 ? -1 : 1, heel: 0, rudder: 0,
+               bump: 0, hoist: 0, eff: 0, off: 0, luff: true, drift: [0, 0], empty: true };
+      castOut = unit(A.moor[0] - A.dock[0], A.moor[1] - A.dock[1]);
+      cam = null;
+      phase = 'cast'; phaseAt = performance.now();
+      canvas.style.opacity = '1';
+    }
     loadSheet(function (err) {
       if (err) { fail(); return; }
       loadIsland(fromId, function (I) {
         A = I;
-        loadIsland(toId, function (J) {
-          B = J;
-          if (!A.sc || !B.sc) { fail(); return; }
-          lay();
-          var h0 = Math.atan2(B.berth[1] - A.berth[1], B.berth[0] - A.berth[0]);
-          h0 = A.chan.length > 1 ? Math.atan2(A.chan[1][1] - A.berth[1], A.chan[1][0] - A.berth[0]) : h0;
-          boat = { x: A.berth[0], r: A.berth[1], h: h0, v: 0, sheet: 1.45, boom: 0, side: wrap(wind.from - h0) > 0 ? -1 : 1, heel: 0, rudder: 0,
-                   bump: 0, hoist: 0, eff: 0, off: 0, luff: true, drift: [0, 0] };
-          cam = null;
-          phase = 'cast'; phaseAt = performance.now();
-          canvas.style.opacity = '1';
-          say(touch() ? 'Stick: steer left and right, up to haul in, down to ease out' : '←/→ steer · ↑ haul the sheet in · ↓ ease it out · Esc for the menu', 5200);
-        });
+        if (!toId) { go(); return; }
+        loadIsland(toId, function (J) { if (!J.sc) { fail(); return; } B0 = J; go(); });
       });
     });
     last = performance.now();
     raf = requestAnimationFrame(frame);
     return true;
+  }
+  // you've steered for an island long enough: it's your course now, laid out ahead of you
+  function others() {
+    var P = isles();
+    return Object.keys(P).filter(function (id) { return id !== A.id; }).map(function (id) {
+      return { id: id, name: P[id].name, bearing: Math.atan2((P[id].y - P[A.id].y) * 0.72, P[id].x - P[A.id].x) };
+    });
+  }
+  function commit(id) {
+    if (B || committing) return;
+    committing = true;
+    var P = isles();
+    say('You set a course for ' + P[id].name + '.', 3200);
+    loadIsland(id, function (J) {
+      committing = false;
+      if (!running || B) return;
+      if (!J.sc) { say('The chart for ' + P[id].name + ' is missing. Try another course.', 3000); aim = null; return; }
+      placeB(J, [boat.x, boat.r], boat.h);
+      told[A.pal] = true;
+    });
   }
   function touch() { return document.documentElement.classList.contains('touch'); }
 
@@ -390,10 +495,12 @@ var BridgeSloop = (function () {
     var el = document.createElement('div');
     el.id = 'sloop-menu';
     el.className = 'sloop-menu';
-    var dn = B ? B.name : 'the other quay', fn = A ? A.name : 'the quay';
+    var fn = A ? A.name : 'the quay', opts = [['Keep sailing', closeMenu]];
+    if (B) opts.push(['Skip ahead to ' + B.name, function () { closeMenu(); stop(to); }]);
+    else if (A && !committing) others().forEach(function (o) { opts.push(['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]); });
+    opts.push(['Put back to ' + fn, function () { closeMenu(); stop(from); }]);
     el.innerHTML = '<div class="sloop-menu-title">At the tiller</div>';
-    [['Keep sailing', closeMenu], ['Skip ahead to ' + dn, function () { closeMenu(); stop(to); }],
-     ['Put back to ' + fn, function () { closeMenu(); stop(from); }]].forEach(function (o) {
+    opts.forEach(function (o) {
       var b = document.createElement('button'); b.type = 'button'; b.textContent = o[0];
       b.addEventListener('click', function (e) { e.preventDefault(); o[1](); });
       el.appendChild(b);
@@ -418,18 +525,34 @@ var BridgeSloop = (function () {
   function bestSheet(off) { return clamp(off - 0.42, 0.1, 1.45); }
 
   function update(dt, now) {
-    var t = now / 1000;
+    var t = now / 1000, here = seaHere();
+    wind.base += ((BASE[here] || 0.92) - wind.base) * Math.min(1, dt * 0.25);
+    if (here === 'crimson') {                                        // a squall: the wind jumps round, the rain comes on
+      if (!storm.squallAt) storm.squallAt = now + 9000;
+      if (now > storm.squallAt) {
+        storm.squallAt = now + 16000 + hash(Math.floor(now / 997)) * 14000;
+        wind.from += (hash(Math.floor(now / 991)) < 0.5 ? -1 : 1) * (0.6 + hash(Math.floor(now / 983)) * 0.5);
+        say('A squall! The wind jumps round - watch your sheet', 2600);
+      }
+      if (now > storm.nextFlash) { storm.flash = now; storm.nextFlash = now + 6000 + hash(Math.floor(now / 7)) * 9000; storm.thunderAt = now + 300 + hash(Math.floor(now / 11)) * 1400; }
+      if (storm.thunderAt && now > storm.thunderAt) { storm.thunderAt = 0; sfx('thunder'); }
+    }
     // the wind veers a little and blows in gusts you can see coming over the water
     var W0 = wind.from + 0.28 * (vnoise(t / 21 + wind.seed) - 0.5) + 0.12 * (vnoise(t / 7.3 + 9) - 0.5);
-    if (now > wind.gustAt) { wind.gustAt = now + 9000 + hash(Math.floor(now / 1000)) * 9000; wind.gust = 0.32; wind.gustT = now; }
+    if (now > wind.gustAt) {
+      var rough = here === 'crimson';
+      wind.gustAt = now + (rough ? 3500 + hash(Math.floor(now / 1000)) * 4000 : 9000 + hash(Math.floor(now / 1000)) * 9000);
+      wind.gust = rough ? 0.62 : 0.32; wind.gustT = now;
+    }
     var g = wind.gust * Math.max(0, Math.sin(clamp((now - (wind.gustT || 0)) / 4200, 0, 1) * Math.PI));
     wind.s = wind.base * (1 + g);
     wind.now = W0;
     var b = boat;
     // steering: a turn of speed from the rudder, a little even when stopped (you can scull her round)
+    var castT = phase === 'cast' ? now - phaseAt : 1e9;
     var steer = (down('arrowright', 'd') ? 1 : 0) - (down('arrowleft', 'a') ? 1 : 0);
     b.rudder += (steer - b.rudder) * Math.min(1, dt * 6);
-    if (phase === 'sail' || phase === 'cast') b.h = wrap(b.h + b.rudder * (0.4 + 0.95 * Math.min(1, b.v / 2.6)) * dt);
+    if (phase === 'sail' || castT > CAST.push) b.h = wrap(b.h + b.rudder * (0.4 + 0.95 * Math.min(1, b.v / 2.6)) * dt);
     var rel = wrap(W0 - b.h), off = Math.abs(rel);                   // where the wind comes from, off the bow
     var lee = rel > 0 ? -1 : 1;                                       // the boom swings to the other side
     // the sheet: by hand, or trimming itself
@@ -456,7 +579,7 @@ var BridgeSloop = (function () {
     b.luff = alpha < 0.13 && off > 0.25;
     b.stall = alpha > aopt + 0.35;
     b.eff = eff; b.off = off;
-    var hoisted = phase === 'cast' ? clamp((now - phaseAt) / 1600, 0, 1) : phase === 'moor' ? 1 - clamp((now - phaseAt) / 900, 0, 1) : 1;
+    var hoisted = phase === 'cast' ? clamp((castT - CAST.push) / (CAST.sail - CAST.push), 0, 1) : phase === 'moor' ? 1 - clamp((now - phaseAt) / 900, 0, 1) : 1;
     b.hoist = hoisted;
     var goal = VMAX * (typeof BridgeMagic !== 'undefined' && BridgeMagic.has('tide') ? 1.12 : 1) * wind.s * polar(off) * eff * hoisted;
     if (phase === 'moor') goal = 0;
@@ -466,7 +589,12 @@ var BridgeSloop = (function () {
     // leeway: pushed downwind a little, more when slow
     var dwx = Math.cos(W0 + Math.PI), dwr = Math.sin(W0 + Math.PI), lw = wind.s * 0.12 * (1 - Math.min(1, b.v / 3));
     var nx = b.x + (Math.cos(b.h) * b.v + dwx * lw) * dt, nr = b.r + (Math.sin(b.h) * b.v + dwr * lw) * dt;
-    if (phase === 'moor') { nx = b.x + (B.berth[0] - b.x) * Math.min(1, dt * 1.6); nr = b.r + (B.berth[1] - b.r) * Math.min(1, dt * 1.6); }
+    if (phase === 'moor') {                                          // coming alongside: she glides in and lies bow-out at the berth
+      nx = b.x + (B.moor[0] - b.x) * Math.min(1, dt * 1.6); nr = b.r + (B.moor[1] - b.r) * Math.min(1, dt * 1.6);
+      b.h = wrap(b.h + wrap(B.moorH - b.h) * Math.min(1, dt * 1.4));
+    }
+    if (castT < CAST.lines) { nx = A.moor[0]; nr = A.moor[1]; b.v = 0; }                  // made fast: she doesn't move
+    else if (castT < CAST.push) { nx = b.x + castOut[0] * 0.55 * dt; nr = b.r + castOut[1] * 0.55 * dt; }   // pushed off the pier
     // the hull against rock and shore (bow, stern, either side)
     var hitAt = null, c = Math.cos(b.h), s = Math.sin(b.h);
     [[1.25, 0], [-1.2, 0], [0.2, 0.45], [0.2, -0.45], [-0.7, 0.4], [-0.7, -0.4]].forEach(function (p) {
@@ -476,7 +604,14 @@ var BridgeSloop = (function () {
       else things.forEach(function (o) { if (!hitAt && !o.flot && o.rad && Math.hypot(px - o.x, pr - o.r) < o.rad) hitAt = [px, pr]; });
     });
     if (hitAt && phase !== 'moor') {
-      if (b.v > 0.6 && b.bump <= 0) { sfx('hit'); say(b.v > 2 ? 'Rocks! You scrape off with a groan of planks' : 'You bump and grind clear', 2200); burst(hitAt[0], hitAt[1], 10, 'spray'); }
+      if (b.v > 0.6 && b.bump <= 0) {
+        sfx('hit'); burst(hitAt[0], hitAt[1], 10, 'spray');
+        if (here === 'midnight' && b.v > 1.2 && typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
+          var st = BridgeInventory.getStats ? BridgeInventory.getStats() : null, hurt = st && st.hp != null ? Math.min(6, Math.max(0, st.hp - 10)) : 6;
+          if (hurt) BridgeInventory.takeDamage(hurt);                // bruised, never knocked out at sea
+          say('Rocks out of the mist! The hull splits a plank and you\'re thrown against the gunwale' + (hurt ? ' (-' + hurt + ' health)' : ''), 3200);
+        } else say(b.v > 2 ? 'Rocks! You scrape off with a groan of planks' : 'You bump and grind clear', 2200);
+      }
       // pushed off whatever she hit, so she slides clear instead of sticking
       var ax = b.x - hitAt[0], ar = b.r - hitAt[1], an = Math.hypot(ax, ar) || 1;
       b.x += ax / an * Math.min(0.12, 0.6 * dt + 0.02); b.r += ar / an * Math.min(0.12, 0.6 * dt + 0.02);
@@ -505,14 +640,28 @@ var BridgeSloop = (function () {
     // life
     life(dt, now);
     // where you are: the seas, the far quay
-    var side = seaSide(b.x, b.r) > 0 ? B : A;
-    if (seaWas && side !== seaWas && phase === 'sail') say('Over the seam into ' + seaName(side.pal) + ' — foam all round the bow', 3000);
-    seaWas = side;
+    if (phase === 'sail' && here !== seaWas) {
+      if (seaWas && !told[here]) say('Over the seam, foam all round the bow. ' + LORE[here], 6000);
+      else if (!told[here]) say(LORE[here], 5600);
+      told[here] = true;
+      seaWas = here;
+    }
+    if (!B && phase === 'sail' && !committing) {
+      var outside = Math.hypot(b.x - A.exit[0], b.r - A.exit[1]) < 6 || b.x < -4 || b.r < -4 || b.x > A.w + 4 || b.r > A.h + 4;
+      if (outside) {
+        if (!hinted && now - msgAt > -500) { hinted = true; say('Out of the harbour. Steer for an island - the compass shows where each one lies' + (touch() ? '' : ' (or Esc to name one)'), 5600); }
+        var best = null, bd = 0.42;
+        others().forEach(function (o) { var d = Math.abs(wrap(o.bearing - b.h)); if (d < bd) { bd = d; best = o; } });
+        if (best && aim && aim.id === best.id) aim.t += dt; else aim = best ? { id: best.id, t: 0 } : null;
+        if (aim && aim.t > 2.2 && b.v > 0.6) commit(aim.id);
+      }
+    }
     // the next leg of the course (the gold mark on the compass)
     while (leg < route.length - 1 && Math.hypot(b.x - route[leg][0], b.r - route[leg][1]) < 3.5) leg++;
     prompt = null;
     if (phase === 'sail') {
-      var dB = Math.hypot(b.x - B.berth[0], b.r - B.berth[1]), dA = Math.hypot(b.x - A.berth[0], b.r - A.berth[1]);
+      var dB = B ? Math.min(Math.hypot(b.x - B.berth[0], b.r - B.berth[1]), Math.hypot(b.x - B.moor[0], b.r - B.moor[1])) : 1e9;
+      var dA = Math.min(Math.hypot(b.x - A.berth[0], b.r - A.berth[1]), Math.hypot(b.x - A.moor[0], b.r - A.moor[1]));
       if (dB < 2.6) prompt = b.v < 2.8 ? { text: 'Come alongside — ' + B.name, act: function () { moor(); } }
                                        : { text: 'Too fast to tie up — ease out and round up', act: function () {} };
       else if (dA < 2.2 && now - began > 8000) prompt = { text: 'Put back in at ' + A.name, act: function () { stop(from); } };
@@ -524,16 +673,34 @@ var BridgeSloop = (function () {
         else if (o.kind === 'dory' && d < 4.2) prompt = { text: 'Hail the fisherman', act: function () { hail(o); } };
       });
     }
-    if (phase === 'cast' && now - phaseAt > 1600) { phase = 'sail'; say('You cast off from ' + A.name + ' for ' + B.name, 2600); }
-    if (phase === 'moor' && now - phaseAt > 1300 && !hold) { hold = 1; say('Made fast at ' + B.name, 1200); setTimeout(function () { hold = 0; stop(to); }, 500); }
+    if (phase === 'cast') {                                          // the cast-off, said as it happens
+      b.empty = castT < CAST.board;
+      if (!said.board) { said.board = 1; say('You step down into the sloop', 1500); sfx('step'); }
+      if (castT > CAST.board && !said.lines) { said.lines = 1; say('You slip the bow line, then the stern', 1400); sfx('click'); }
+      if (castT > CAST.lines && !said.push) { said.push = 1; say('A shove off the pier and she drifts clear', 1400); sfx('sit'); }
+      if (castT > CAST.push && !said.hoist) { said.hoist = 1; say('Hoist the main! Hand over hand, the sail climbs the mast', 1900); sfx('luff'); }
+      if (castT > CAST.sail) {
+        phase = 'sail';
+        say(touch() ? 'Stick: steer left and right, up to haul in, down to ease out' : '←/→ steer · ↑ haul the sheet in · ↓ ease it out · Esc for the menu', 5200);
+      }
+    }
+    if (phase === 'moor') {
+      var mt = now - phaseAt;
+      b.empty = mt > MOOR.off;
+      if (mt > MOOR.lines && !said.made) { said.made = 1; say('Made fast at ' + B.name + '. You throw the lines ashore', 1600); sfx('click'); }
+      if (mt > MOOR.done && !hold) { hold = 1; setTimeout(function () { hold = 0; stop(to); }, 300); }
+    }
   }
 
   function seaName(pal) { return { emerald: 'the Emerald Sea', crimson: 'the Crimson Sea', rose: 'the Rose Sea', sapphire: 'the Sapphire Sea', midnight: 'the Midnight Sea' }[pal] || 'open water'; }
 
+  var CAST = { board: 1400, lines: 2300, push: 3300, sail: 5000 };       // ms into the cast-off
+  var MOOR = { lines: 1300, off: 2000, done: 3200 };                       // ms into coming alongside
   function moor() {
     phase = 'moor'; phaseAt = performance.now();
     sfx('door');
   }
+  function seaHere() { return boat ? (seaSide(boat.x, boat.r) > 0 ? B : A).pal : A.pal; }
   function haul(o) {
     o.got = true;
     burst(o.x, o.r, 8, 'spray');
@@ -581,13 +748,31 @@ var BridgeSloop = (function () {
       if (f.t >= 1 && !f.splashed) { f.splashed = 1; burst(f.x1, f.r1, 3, 'spray'); }
       return f.t < 1.1;
     });
+    traffic.forEach(function (o, i) {
+      o.x += Math.cos(o.h) * o.v * dt; o.r += Math.sin(o.h) * o.v * dt;
+      var far = Math.hypot(o.x - b.x, o.r - b.r);
+      if (groundAt(o.x + Math.cos(o.h) * 3, o.r + Math.sin(o.h) * 3)) o.h = wrap(o.h + dt * 0.8);   // bearing away from land
+      if (far > 70) {                                                  // gone over the horizon: another comes up ahead
+        var a = b.h + (hash(i + Math.floor(now / 1000)) - 0.5) * 1.6, d = 34 + hash(i + 3) * 10;
+        var nx2 = b.x + Math.cos(a) * d, nr2 = b.r + Math.sin(a) * d;
+        if (CALM[(seaSide(nx2, nr2) > 0 ? B : A).pal] && !groundAt(nx2, nr2)) { o.x = nx2; o.r = nr2; o.h = a + Math.PI + (hash(i + 7) - 0.5) * 1.4; }
+      }
+      var rel = wrap(wind.now - o.h); o.side = rel > 0 ? -1 : 1; o.boom = clamp(Math.abs(rel) - 0.5, 0.15, 1.2);
+    });
+    wisps.forEach(function (w) {
+      var tt = now / 1000 + w.seed;
+      w.x = w.x0 + Math.sin(tt * 0.31) * 3 + Math.sin(tt * 0.83) * 0.8; w.r = w.r0 + Math.cos(tt * 0.27) * 2 + Math.sin(tt * 1.1) * 0.5;
+      if (!said.wisp && Math.hypot(w.x - b.x, w.r - b.r) < 9) { said.wisp = 1; say('Pale lights bob in the mist ahead, as if someone were waving a lantern. There\'s no one there.', 4600); }
+    });
+    if (seaHere() === 'midnight' && now > (storm.bellAt || 0)) { storm.bellAt = now + 14000 + hash(Math.floor(now / 13)) * 10000; if (storm.bellAt - 14000 > began + 4000) sfx('bell'); }
     things.forEach(function (o) {
       if (o.kind === 'dory') o.h += (wrap(wind.now - o.h)) * Math.min(1, dt * 0.3);    // at anchor, she lies head to wind
       if (o.kind.indexOf('buoy') === 0 && Math.hypot(b.x - o.x, b.r - o.r) < 6 && now - lastBell > 3800 + hash(o.seed) * 2000) { lastBell = now; sfx('bell'); }
     });
     // the whale: once, about halfway, off whichever beam is open water
-    var prog = ((b.x - A.berth[0]) * (B.berth[0] - A.berth[0]) + (b.r - A.berth[1]) * (B.berth[1] - A.berth[1])) /
+    var prog = !B ? 0 : ((b.x - A.berth[0]) * (B.berth[0] - A.berth[0]) + (b.r - A.berth[1]) * (B.berth[1] - A.berth[1])) /
                Math.max(1, Math.pow(Math.hypot(B.berth[0] - A.berth[0], B.berth[1] - A.berth[1]), 2));
+    if (seaHere() === 'midnight' || seaHere() === 'crimson') prog = 0;   // the whales keep to kinder water
     if (!whale.done && !whale.at && prog > 0.48 && phase === 'sail') {
       var c2 = Math.cos(b.h), s2 = Math.sin(b.h), sd = hash(wind.seed + 21) < 0.5 ? -1 : 1;
       whale.at = now; whale.x = b.x + c2 * 6 - s2 * sd * 4; whale.r = b.r + s2 * 6 + c2 * sd * 4; whale.h = b.h + 0.3 * sd;
@@ -608,6 +793,7 @@ var BridgeSloop = (function () {
   function sy(r, z) { return Math.round((r - (z || 0) * C45) * TS - cam.y); }
 
   function drawSeas(now) {
+    if (!B || !mid) { BridgeSea.drawSeaAt(bctx, W, H, now, A.pal, cam.x, cam.y); return; }
     var palA = A.pal, palB = B.pal;
     var cx = (cam.x + W / 2) / TS, cr = (cam.y + H / 2) / TS;
     var here = seaSide(cx, cr) > 0 ? palB : palA, there = here === palB ? palA : palB;
@@ -710,7 +896,8 @@ var BridgeSloop = (function () {
     bctx.fill();
   }
   // a sail: luff from tack to head, the leech from head to clew bellied out (and flogging when it luffs), shaded
-  function sail(P, tack, head, clew, lee, flog, now, tone) {
+  function sail(P, tack, head, clew, lee, flog, now, tone, cloth) {
+    cloth = cloth || CLOTH[2];
     var pts = [], n = 10;
     for (var i = 0; i <= n; i++) {                                   // luff, bottom to top
       var f = i / n;
@@ -725,7 +912,7 @@ var BridgeSloop = (function () {
       var h = k / n;
       pts.push(P(clew[0] + (tack[0] - clew[0]) * h, clew[1] + (tack[1] - clew[1]) * h + Math.sin(h * Math.PI) * 0.06 * lee, clew[2] + (tack[2] - clew[2]) * h, true));
     }
-    var lit = tone > 0.55, col = lit ? '#d6cfbf' : tone > 0.25 ? '#b2ac9f' : '#86828f';
+    var lit = tone > 0.55, col = lit ? cloth[0] : tone > 0.25 ? cloth[1] : cloth[2];
     poly(pts, col);
     // the belly: the half of the cloth curving away from the light, a tone down
     var belly = [];
@@ -735,7 +922,7 @@ var BridgeSloop = (function () {
       var luffP = pts[mj], leechP = pts[Math.min(pts.length - 1, n + (n - mj))];
       if (luffP && leechP) mids.push([luffP[0] + (leechP[0] - luffP[0]) * 0.45, luffP[1] + (leechP[1] - luffP[1]) * 0.45]);
     }
-    poly(belly.concat(mids.reverse()), lit ? '#bdb5a5' : '#9a9488');
+    poly(belly.concat(mids.reverse()), lit ? cloth[1] : cloth[2]);
     line(pts[n], pts[n + 1] || pts[n], 'rgba(255,250,235,0.35)');                       // a gleam along the head
     if (flog) {                                                      // a flogging sail: ripples of shadow running up it
       bctx.save(); bctx.beginPath();
@@ -760,8 +947,8 @@ var BridgeSloop = (function () {
     }
   }
 
-  function drawBoat(now) {
-    var b = boat, t = now / 1000;
+  function drawBoat(now, bb) {
+    var b = bb || boat, t = now / 1000;
     // riding the swell
     var ph = (b.x * Math.cos(wind.now) + b.r * Math.sin(wind.now)) * 0.9 - t * 1.6;
     var bob = Math.round(Math.sin(ph) * 1.2 + (b.bump > 0 ? Math.sin(t * 40) * 1.5 : 0));
@@ -798,7 +985,7 @@ var BridgeSloop = (function () {
     var jibTack = [1.25, 0, 0.45], jibHead = [MU + (1.25 - MU) * 0.12, 0, 0.45 + 1.95 * hoist];
     var ja = Math.min(boom * 0.85 + 0.1, 1.2), jibClew = [1.25 - Math.cos(ja) * 1.05, lee * Math.sin(ja) * 1.05, 0.55];
     var drawList = [
-      { row: pilotRow, draw: function () { drawPilot(seat, b, now); } },
+      { row: pilotRow, draw: function () { if (b.crew) drawCrew(seat, b, now); else if (!b.empty) drawPilot(seat, b, now); } },
       { row: mainRow, draw: function () {
         // the mast (heeling), shrouds, forestay, backstay
         var foot = P(MU, 0, 0.3, true), top = P(MU, 0, 3.0, true);
@@ -815,8 +1002,13 @@ var BridgeSloop = (function () {
         if (hoist > 0.05) {
           // the jib, then the main and its boom
           var tone = 0.5 + 0.5 * Math.cos(wrap(b.h + lee * boom - 2.3));
-          sail(P, jibTack, jibHead, jibClew, lee, b.luff, now + 200, tone);
-          sail(P, goose, head, clew, lee, b.luff, now, tone);
+          sail(P, jibTack, jibHead, jibClew, lee, b.luff, now + 200, tone, b.cloth);
+          sail(P, goose, head, clew, lee, b.luff, now, tone, b.cloth);
+        } else {                                                     // furled: the main bundled along the boom, ties round it
+          var cl = (b.cloth || CLOTH[2]);
+          line(P(goose[0], goose[1], goose[2] + 0.08, true), P(clew[0], clew[1], clew[2] + 0.08, true), cl[1], 3);
+          line(P(goose[0], goose[1], goose[2] + 0.12, true), P(clew[0], clew[1], clew[2] + 0.12, true), cl[0], 1);
+          for (var ti = 1; ti < 4; ti++) { var f = ti / 4, tp = P(goose[0] + (clew[0] - goose[0]) * f, goose[1] + (clew[1] - goose[1]) * f, 0.74, true); bctx.fillStyle = '#5a3a1a'; bctx.fillRect(Math.round(tp[0]), Math.round(tp[1]) - 1, 1, 3); }
         }
         line(P(goose[0], goose[1], goose[2], true), P(clew[0], clew[1], clew[2], true), '#4a3018', 2);
         line(P(clew[0], clew[1], clew[2], true), P(-1.0, 0, 0.4), 'rgba(200,190,170,0.6)');     // the mainsheet
@@ -833,6 +1025,23 @@ var BridgeSloop = (function () {
       var w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (j * j) / (ry * ry))));
       bctx.fillRect(Math.round(x - w), Math.round(y + j), w * 2, 1);
     }
+  }
+  // a sailor at another boat's tiller
+  var crewImg = null;
+  function drawCrew(seat, b, now) {
+    if (!crewImg) { crewImg = new Image(); crewImg.src = '/bridge/assets/characters/npc-regular.png'; }
+    if (!crewImg.complete || !crewImg.naturalWidth) return;
+    var a = ((b.h % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
+    bctx.drawImage(crewImg, [0, 1, 2, 1][Math.floor(now / 340 + b.seed) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 41, 32, 48);
+  }
+  // you on foot, stepping aboard or ashore (the walking sheet)
+  function drawWalker(x, r, toward, now) {
+    if (typeof BridgeCharacter === 'undefined' || !BridgeCharacter.sportImage) return;
+    var img = BridgeCharacter.sportImage(BridgeCharacter.sportKey(), false);
+    if (!img) return;
+    var a = Math.atan2(toward[1] - r, toward[0] - x), q = ((Math.round(a / (Math.PI / 2)) % 4) + 4) % 4;
+    var row = [1, 0, 3, 2][q], col = 4 + Math.floor(now / 90) % 8;
+    bctx.drawImage(img, col * 32, row * 48, 32, 48, sx(x) - 16, sy(r) - 45, 32, 48);
   }
   function drawPilot(seat, b, now) {
     if (typeof BridgeCharacter === 'undefined' || !BridgeCharacter.sportImage) return;
@@ -860,6 +1069,21 @@ var BridgeSloop = (function () {
       return;
     }
     if (o.flot && o.got) return;
+    if (o.kind === 'wreck') {
+      var hx = X, hy = Y;
+      poly([[hx - 30, hy - 2], [hx + 26, hy - 8], [hx + 34, hy + 2], [hx - 24, hy + 8]], '#1e1a22');
+      poly([[hx - 26, hy - 2], [hx + 24, hy - 7], [hx + 28, hy - 3], [hx - 22, hy + 2]], '#2e2630');
+      line([hx - 8, hy - 4], [hx - 18, hy - 46], '#2a2028', 2); line([hx + 12, hy - 6], [hx + 20, hy - 34], '#2a2028', 2);
+      line([hx - 18, hy - 46], [hx - 2, hy - 30], 'rgba(40,34,48,0.8)'); line([hx - 14, hy - 36], [hx - 30, hy - 30], '#2a2028');
+      poly([[hx - 15, hy - 40], [hx - 4, hy - 34], [hx - 12, hy - 26]], 'rgba(120,110,130,0.5)');      // a rag of sail
+      for (var i = 0; i < 26; i++) {
+        var a = i / 26 * Math.PI * 2, n = Math.sin(t * 2.3 + i * 1.7 + o.seed);
+        if (n < 0.2) continue;
+        bctx.fillStyle = 'rgba(' + P.foam + ',' + (0.25 + 0.35 * n).toFixed(2) + ')';
+        bctx.fillRect(Math.round(X + Math.cos(a) * 40), Math.round(Y + Math.sin(a) * 14), 2, 1);
+      }
+      return;
+    }
     var cc2 = cell(5, STATIC[o.kind]);
     bctx.drawImage(sheetImg, cc2[0], cc2[1], 128, 128, X - 64, Y - 83 + bob, 128, 128);
     // surf round the rocks, a ring of foam round things afloat
@@ -933,6 +1157,59 @@ var BridgeSloop = (function () {
     });
   }
 
+  function seatOf(b) {
+    var c = Math.cos(b.h), s = Math.sin(b.h), u = -0.82, v = -b.side * 0.22;
+    return [b.x + u * c - v * s, b.r + u * s + v * c];
+  }
+  // the bow and stern lines from her cleats to the pier, paying out as you slip them (k: how much is still ashore)
+  function moorLines(b, quay, k) {
+    if (!quay) return;
+    var c = Math.cos(b.h), s = Math.sin(b.h);
+    [1.15, -1.15].forEach(function (u) {
+      var a = [sx(b.x + u * c), sy(b.r + u * s, 0.45)], q = [sx(quay[0] + u * 0.5 * c), sy(quay[1] + u * 0.5 * s, 0.1)];
+      var e = [a[0] + (q[0] - a[0]) * clamp(k, 0, 1), a[1] + (q[1] - a[1]) * clamp(k, 0, 1)];
+      var sag = 5 * clamp(k, 0, 1);
+      for (var i = 0; i <= 12; i++) {
+        var f = i / 12, x = a[0] + (e[0] - a[0]) * f, y = a[1] + (e[1] - a[1]) * f + Math.sin(f * Math.PI) * sag;
+        bctx.fillStyle = '#c8b48a'; bctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+      }
+    });
+  }
+  // the Midnight Sea's lights: pale, bobbing, never quite where you're looking
+  function drawWisps(now) {
+    if (!wisps.length) return;
+    bctx.save(); bctx.globalCompositeOperation = 'lighter';
+    wisps.forEach(function (w, i) {
+      var X = sx(w.x), Y = sy(w.r, 1.1 + Math.sin(now / 700 + i) * 0.25);
+      if (X < -20 || Y < -20 || X > W + 20 || Y > H + 20) return;
+      var p = 0.6 + 0.4 * Math.sin(now / 340 + w.seed);
+      for (var g = 3; g >= 1; g--) { bctx.fillStyle = 'rgba(170,220,200,' + (0.05 * p * (4 - g)).toFixed(3) + ')'; disc(X, Y, g * 5, g * 5); }
+      bctx.fillStyle = 'rgba(230,255,240,' + (0.7 * p).toFixed(2) + ')'; bctx.fillRect(X - 1, Y - 1, 2, 2);
+      bctx.fillStyle = 'rgba(170,220,200,' + (0.12 * p).toFixed(2) + ')'; disc(X, sy(w.r), 6, 2);     // its light on the water
+    });
+    bctx.restore();
+  }
+  // the Crimson Sea's weather: rain driving across, the light dark, lightning; the Midnight Sea's thick mist
+  function drawWeather(now) {
+    var here = seaHere();
+    if (here === 'crimson') {
+      bctx.fillStyle = 'rgba(40,10,14,0.22)'; bctx.fillRect(0, 0, W, H);
+      var dw = wind.now + Math.PI, vx = Math.cos(dw) * 0.5, vy = 1;
+      bctx.fillStyle = 'rgba(220,200,210,0.45)';
+      for (var i = 0; i < 220; i++) {
+        var sp = 0.5 + (i % 5) * 0.08, y = ((i * 97.3 + now * sp) % (H + 30)) - 15, x = ((i * 53.7 + now * sp * vx) % (W + 30) + W + 30) % (W + 30) - 15;
+        bctx.fillRect(Math.round(x), Math.round(y), 1, 4 + (i % 3));
+      }
+      var fl = storm.flash ? Math.max(0, 1 - (now - storm.flash) / 380) : 0;
+      if (fl > 0) { bctx.fillStyle = 'rgba(255,240,255,' + (0.55 * fl * (Math.sin(now / 30) > -0.3 ? 1 : 0.4)).toFixed(2) + ')'; bctx.fillRect(0, 0, W, H); }
+    } else if (here === 'midnight') {
+      bctx.save(); bctx.globalCompositeOperation = 'source-over';
+      var g = bctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.12, W / 2, H / 2, Math.max(W, H) * 0.6);
+      g.addColorStop(0, 'rgba(70,64,110,0)'); g.addColorStop(1, 'rgba(46,42,80,0.62)');
+      bctx.fillStyle = g; bctx.fillRect(0, 0, W, H);
+      bctx.restore();
+    }
+  }
   function drawSky(now) {
     // gulls and their shadows, flying fish, spray
     var t = now / 1000;
@@ -988,9 +1265,28 @@ var BridgeSloop = (function () {
     drawWhale(now);
     var list = things.map(function (o) { return { row: o.r, draw: function () { drawThing(o, now); } }; });
     list.push({ row: b.r, draw: function () { drawBoat(now); } });
+    traffic.forEach(function (o) {
+      var X = sx(o.x), Y = sy(o.r);
+      if (X > -140 && X < W + 140 && Y > -160 && Y < H + 80) list.push({ row: o.r, draw: function () { drawBoat(now, o); } });
+    });
+    // stepping aboard and ashore: you on the pier, the boat's lines made fast to it
+    var castT = phase === 'cast' ? now - phaseAt : -1, moorT = phase === 'moor' ? now - phaseAt : -1;
+    var quay = phase === 'moor' ? B && [B.dock[0] + B.ox, B.dock[1] + B.oy] : [A.dock[0] + A.ox, A.dock[1] + A.oy];
+    var seat = seatOf(b);
+    if (castT >= 0 && castT < CAST.board) {
+      var f = clamp(castT / CAST.board, 0, 1), wx = quay[0] + (seat[0] - quay[0]) * f, wr = quay[1] + (seat[1] - quay[1]) * f;
+      list.push({ row: wr, draw: function () { drawWalker(wx, wr, seat, now); } });
+    }
+    if (moorT > MOOR.off && moorT < MOOR.done + 400 && quay) {
+      var g2 = clamp((moorT - MOOR.off) / (MOOR.done - MOOR.off), 0, 1), mx = seat[0] + (quay[0] - seat[0]) * g2, mr = seat[1] + (quay[1] - seat[1]) * g2;
+      list.push({ row: mr, draw: function () { drawWalker(mx, mr, quay, now); } });
+    }
     list.sort(function (p, q) { return p.row - q.row; });
     list.forEach(function (d) { d.draw(); });
+    if ((castT >= 0 && castT < CAST.lines) || moorT > MOOR.lines) moorLines(b, quay, castT >= 0 && castT > CAST.board ? 1 - (castT - CAST.board) / (CAST.lines - CAST.board) : 1);
+    drawWisps(now);
     drawSky(now);
+    drawWeather(now);
     // a soft vignette, darker at the top (the night sky's edge)
     var g = bctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
     g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(2,3,10,0.55)');
@@ -1016,9 +1312,19 @@ var BridgeSloop = (function () {
     ctx.fillStyle = 'rgba(160,220,255,0.95)';
     ctx.beginPath(); ctx.moveTo(cx - ax * R * 0.72, cy - ay * R * 0.72);
     ctx.lineTo(cx - ax * R * 0.45 + ay * px(6), cy - ay * R * 0.45 - ax * px(6)); ctx.lineTo(cx - ax * R * 0.45 - ay * px(6), cy - ay * R * 0.45 + ax * px(6)); ctx.fill();
-    var wp = route[Math.min(leg, route.length - 1)] || B.berth;
-    var bc = Math.atan2(wp[1] - b.r, wp[0] - b.x);                   // the next leg of the course, gold
-    ctx.fillStyle = '#ffd060'; ctx.beginPath(); ctx.arc(cx + Math.cos(bc) * R * 0.86, cy + Math.sin(bc) * R * 0.86 * C45, px(4), 0, Math.PI * 2); ctx.fill();
+    if (!B && phase !== 'cast') {                                    // where each island lies: steer for one to set a course
+      others().forEach(function (o) {
+        var on = aim && aim.id === o.id, mx = cx + Math.cos(o.bearing) * R * 0.86, my = cy + Math.sin(o.bearing) * R * 0.86 * C45;
+        ctx.fillStyle = on ? '#ffd060' : 'rgba(242,236,214,0.85)';
+        ctx.beginPath(); ctx.arc(mx, my, px(on ? 5 : 3.5), 0, Math.PI * 2); ctx.fill();
+        ctx.font = px(8) + 'px "Pixelify Sans", monospace'; ctx.fillStyle = on ? '#ffd060' : '#c8d0e0';
+        ctx.fillText(o.name.split(' ').map(function (w) { return w[0]; }).join(''), cx + Math.cos(o.bearing) * (R + px(12)), cy + Math.sin(o.bearing) * (R + px(12)) * C45);
+      });
+    } else {
+      var wp = route[Math.min(leg, route.length - 1)] || (B ? B.berth : A.exit);
+      var bc = Math.atan2(wp[1] - b.r, wp[0] - b.x);                 // the next leg of the course, gold
+      ctx.fillStyle = '#ffd060'; ctx.beginPath(); ctx.arc(cx + Math.cos(bc) * R * 0.86, cy + Math.sin(bc) * R * 0.86 * C45, px(4), 0, Math.PI * 2); ctx.fill();
+    }
     ctx.strokeStyle = '#f2ecd6'; ctx.lineWidth = px(2);                 // your bow
     ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(b.h) * R * 0.6, cy + Math.sin(b.h) * R * 0.6 * C45); ctx.stroke();
     ctx.font = px(9) + 'px "Pixelify Sans", monospace';
@@ -1039,17 +1345,23 @@ var BridgeSloop = (function () {
     ctx.textAlign = 'left'; ctx.fillStyle = '#c8d0e0';
     ctx.fillText(pos, tx0, ty0 - px(32));
     ctx.textAlign = 'right'; ctx.fillText((Math.max(0, b.v) * 2.1).toFixed(1) + ' KN', tx0 + tw, ty0 - px(32));
-    // the passage, top left: from, to, how far along
-    var prog = clamp(((b.x - A.berth[0]) * (B.berth[0] - A.berth[0]) + (b.r - A.berth[1]) * (B.berth[1] - A.berth[1])) /
-                     Math.pow(Math.hypot(B.berth[0] - A.berth[0], B.berth[1] - A.berth[1]), 2), 0, 1);
+    // the passage, top left: from, to, how far along (or, before a course: which island you're pointing at)
     var bx0 = px(20), by0 = px(18), bw = px(220);
     ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(bx0 - px(8), by0 - px(10), bw + px(16), px(40));
     ctx.font = px(10) + 'px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#c8d0e0';
     ctx.fillText(A.name.toUpperCase(), bx0, by0);
-    ctx.textAlign = 'right'; ctx.fillStyle = '#ffd060'; ctx.fillText(B.name.toUpperCase(), bx0 + bw, by0);
-    ctx.fillStyle = '#2a3040'; ctx.fillRect(bx0, by0 + px(10), bw, px(4));
-    ctx.fillStyle = '#ffd060'; ctx.fillRect(bx0, by0 + px(10), bw * prog, px(4));
-    ctx.fillStyle = '#f2ecd6'; ctx.fillRect(bx0 + bw * prog - px(2), by0 + px(8), px(4), px(8));
+    if (B) {
+      var prog = clamp(((b.x - A.berth[0]) * (B.berth[0] - A.berth[0]) + (b.r - A.berth[1]) * (B.berth[1] - A.berth[1])) /
+                       Math.pow(Math.hypot(B.berth[0] - A.berth[0], B.berth[1] - A.berth[1]), 2), 0, 1);
+      ctx.textAlign = 'right'; ctx.fillStyle = '#ffd060'; ctx.fillText(B.name.toUpperCase(), bx0 + bw, by0);
+      ctx.fillStyle = '#2a3040'; ctx.fillRect(bx0, by0 + px(10), bw, px(4));
+      ctx.fillStyle = '#ffd060'; ctx.fillRect(bx0, by0 + px(10), bw * prog, px(4));
+      ctx.fillStyle = '#f2ecd6'; ctx.fillRect(bx0 + bw * prog - px(2), by0 + px(8), px(4), px(8));
+    } else {
+      var aimName = aim ? isles()[aim.id].name.toUpperCase() : null;
+      ctx.textAlign = 'right'; ctx.fillStyle = aimName ? '#ffd060' : '#8a90a8';
+      ctx.fillText(committing ? 'SETTING A COURSE…' : aimName ? 'STEERING FOR ' + aimName : 'STEER FOR AN ISLAND', bx0 + bw, by0 + px(14));
+    }
     // a message, and what E does here
     ctx.textAlign = 'center';
     if (msg && now < msgAt) {
@@ -1097,11 +1409,42 @@ var BridgeSloop = (function () {
     hud(now);
   }
 
+  // ---- your sloop, made fast at the pier while you're ashore -------------------------------------------------------
+  // Drawn in the island itself (the lumar scene hooks), from the same sheet and at the same berth and heading the
+  // passage starts from: the boat you see at the pier is the one you step into.
+  var moored = {}, mooring = {};
+  function moorFor(id) {
+    if (moored[id] || mooring[id]) return moored[id] || null;
+    mooring[id] = true;
+    loadSheet(function (err) {
+      if (err) return;
+      loadIsland(id, function (I) { if (I.mask && I.sc) { moorOf(I); moored[id] = I; } });
+    });
+    return null;
+  }
+  function mooredItems(world, offX, offY, ts, now) {
+    if (running || typeof BridgeWorld === 'undefined') return [];
+    var id = BridgeWorld.getWorldId();
+    if (!knows(id)) return [];
+    var I = moorFor(id);
+    if (!I || !sheetImg) return [];
+    return [{ footRow: I.moor[1] + 0.6, draw: function (c) { drawMooredOn(c, I, offX, offY, now); } }];
+  }
+  function drawMooredOn(c, I, offX, offY, now) {
+    var keep = [bctx, cam, wind, A, B, mid, dir];
+    var mb = { x: I.moor[0], r: I.moor[1], h: I.moorH, v: 0, sheet: 1.45, boom: 0.06, side: 1, heel: 0, rudder: 0, bump: 0, hoist: 0,
+               eff: 0, off: 2, luff: false, empty: true };
+    bctx = c; cam = { x: -offX, y: -offY }; wind = { now: I.moorH + 2.2, s: 0.4 }; A = I; B = null; mid = null; dir = null;
+    try { drawBoat(now, mb); moorLines(mb, I.dock, 1); }
+    finally { bctx = keep[0]; cam = keep[1]; wind = keep[2]; A = keep[3]; B = keep[4]; mid = keep[5]; dir = keep[6]; }
+  }
+  if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('lumar', { items: mooredItems });
+
   return {
     start: start, stop: stop, knows: knows,
     isRunning: function () { return running; },
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },
-    _things: function () { return things; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }
+    _things: function () { return things; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }
   };
 })();
