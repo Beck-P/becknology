@@ -687,6 +687,19 @@ var BridgeItems = (function () {
       px(ctx, x, y, u, '#3a1a08', [[c[0], c[1], 3, 3]]); px(ctx, x, y, u, '#8a4a20', [[c[0], c[1], 2, 2]]);
     });
   }
+  function fondueIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1a20', [[3, 8, 10, 6], [2, 7, 12, 2], [7, 14, 2, 1]]); px(ctx, x, y, u, '#3a3a44', [[4, 9, 8, 4]]);
+    px(ctx, x, y, u, '#f0c860', [[3, 7, 10, 1]]); px(ctx, x, y, u, '#ffe8a0', [[5, 7, 3, 1]]);
+    px(ctx, x, y, u, '#8a8a94', [[10, 1, 1, 7]]); px(ctx, x, y, u, '#d8b070', [[9, 1, 3, 2]]);
+    px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[5, 3, 1, 3], [7, 2, 1, 3]]);
+  }
+  function ciderIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#4a2a10', [[4, 5, 7, 10], [11, 7, 2, 5]]); px(ctx, x, y, u, '#c87a20', [[5, 7, 5, 7]]);
+    px(ctx, x, y, u, '#f0a840', [[5, 7, 2, 4]]); px(ctx, x, y, u, '#8a4a20', [[8, 2, 1, 6]]);
+    px(ctx, x, y, u, '#e8d8b0', [[5, 6, 5, 1]]); px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[6, 1, 1, 3], [10, 2, 1, 2]]);
+  }
   function edelweissIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#3a6a3a', [[7, 9, 2, 6]]);
@@ -943,6 +956,12 @@ var BridgeItems = (function () {
                      onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(5); return consumableUse.call(this, inv); } },
     roast_chestnuts: { id: 'roast_chestnuts', name: 'Roast Chestnuts', desc: 'A paper twist of them, too hot to hold.', type: 'food', stackable: true,
                      draw: chestnutIcon, effects: { hp: 8, energy: 8 }, onUse: consumableUse, value: 2 },
+    fondue:        { id: 'fondue', name: 'Fondue', desc: 'Mette\'s pot of melted cheese and wine, bread to dip in it. Fills you up and keeps the cold off for ten minutes.', type: 'food',
+                     stackable: true, draw: fondueIcon, effects: { hp: 20, energy: 30 }, value: 6,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10); return consumableUse.call(this, inv); } },
+    mulled_cider:  { id: 'mulled_cider', name: 'Mulled Cider', desc: 'Hot apple cider with a cinnamon stick in it, and something else Mette won\'t name. Warm for eight minutes.', type: 'drink',
+                     stackable: true, draw: ciderIcon, effects: { energy: 25 }, value: 4,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(8); return consumableUse.call(this, inv); } },
     edelweiss:     { id: 'edelweiss', name: 'Edelweiss', desc: 'A woolly white star from the top of the Staircase. Ysolde says you have to climb for your own.', type: 'material',
                      stackable: true, draw: edelweissIcon, value: 30 },
     hoar_crystal:  { id: 'hoar_crystal', name: 'Hoar Crystal', desc: 'Frost that never melts, grown in the Hoarspire\'s rock. Cold enough to burn.', type: 'material',

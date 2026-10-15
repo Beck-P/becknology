@@ -182,8 +182,7 @@ w.update({'name': 'Fellhaven', 'width': COLS, 'height': ROWS, 'tileSize': 16, 't
           'shipExit': False, 'view': [0.0, -2.5, COLS, ROWS], 'cold': True, 'shuttle': {'spawn': [39, 25]}})
 w['interactions'] = [
     {'x': 39, 'y': 28, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'},
-    {'x': 19, 'y': 13, 'type': 'rest', 'label': 'SNOWCAP LODGE', 'prompt': 'PRESS E TO WARM UP', 'cost': 15,
-     'dialog': 'A FIRE THE SIZE OF A CART, DEEP CHAIRS, BOOTS STEAMING ON THE FENDER. A NIGHT BY IT IS 15 COINS.'},
+    {'x': 19, 'y': 13, 'type': 'enter_world', 'label': 'SNOWCAP LODGE', 'prompt': 'PRESS E TO GO IN', 'target': 'hoarfell-lodge', 'spawn': [8, 9]},
     {'x': 29, 'y': 13, 'type': 'vendor', 'label': 'SKI HIRE', 'prompt': 'PRESS E TO SHOP',
      'items': [{'id': 'skis', 'price': 120}, {'id': 'ski_goggles', 'price': 40}, {'id': 'hot_cocoa', 'price': 8}]},
     {'x': 32, 'y': 13, 'type': 'dialog', 'label': 'OUTERWEAR', 'prompt': 'PRESS E TO BROWSE', 'dialog': 'QUILTED SUITS ON A RAIL.'},

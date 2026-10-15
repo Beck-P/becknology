@@ -487,5 +487,39 @@
       "prompt": "PRESS E TO SIT",
       "dialog": "A BENCH BY THE POND, ITS SEAT SWEPT CLEAR. SOMEBODY'S ICE-FISHING LINE TWITCHES. THE CHAIRS CREAK UP THE MOUNTAIN, ONE BY ONE."
     }
+  ],
+  "hoarfell-lodge": [
+    {
+      "label": "ARMCHAIR",
+      "x": 7,
+      "y": 4,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        7.5,
+        4.4
+      ],
+      "facing": "up",
+      "dialog": "THE RED CHAIR BY THE FIRE, WITH METTE'S KNITTING ON THE ARM. YOUR BOOTS START TO STEAM. BARLEY SIGHS IN HIS SLEEP."
+    },
+    {
+      "label": "ARMCHAIR",
+      "x": 10,
+      "y": 4,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        10.5,
+        4.4
+      ],
+      "facing": "up",
+      "dialog": "THE GREEN CHAIR, SAGGED INTO THE SHAPE OF A HUNDRED TIRED SKIERS. THE FIRE POPS. NOBODY NEEDS YOU FOR A WHILE."
+    },
+    {
+      "label": "WINDOW",
+      "action": "view",
+      "view": "peaks",
+      "prompt": "PRESS E TO LOOK OUT"
+    }
   ]
 }

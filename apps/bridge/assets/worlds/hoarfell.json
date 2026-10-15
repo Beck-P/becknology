@@ -3303,11 +3303,14 @@
     {
       "x": 19,
       "y": 13,
-      "type": "rest",
+      "type": "enter_world",
       "label": "SNOWCAP LODGE",
-      "prompt": "PRESS E TO WARM UP",
-      "cost": 15,
-      "dialog": "A FIRE THE SIZE OF A CART, DEEP CHAIRS, BOOTS STEAMING ON THE FENDER. A NIGHT BY IT IS 15 COINS."
+      "prompt": "PRESS E TO GO IN",
+      "target": "hoarfell-lodge",
+      "spawn": [
+        8,
+        9
+      ]
     },
     {
       "x": 29,

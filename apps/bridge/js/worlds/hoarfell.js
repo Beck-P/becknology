@@ -205,7 +205,7 @@ var BridgeHoarfell = (function () {
       });
     }
     // falling snow: screen-space flakes, drifting with a little wind (thicker on the summit)
-    var n = world.hollow ? 0 : world.summit ? 110 : 70;          // no snow falls in the Hollow
+    var n = world.hollow || world.indoors ? 0 : world.summit ? 110 : 70;   // no snow falls in the Hollow or indoors
     for (var i = 0; i < n; i++) {
       var spd = 0.012 + (i % 5) * 0.004, wind = world.summit ? 0.03 : 0.008;
       var x = ((i * 97.13 + now * wind * (1 + (i % 3))) % (W + 20)) - 10 + Math.sin(now / 1100 + i) * 3;

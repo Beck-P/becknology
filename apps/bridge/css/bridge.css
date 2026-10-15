@@ -1678,3 +1678,50 @@ html.dancing #inventory-panel, html.dancing .dpad { display: none !important; }
   #dance-hud .dn-pads { display: flex; }
   #dance-hud .dn-help { display: none; }
 }
+
+/* ---- Fell Dice at the Snowcap Lodge (js/lodge.js) ------------------------------------------------------------------- */
+#fell-dice {
+  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  background: rgba(8, 10, 24, 0.55); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
+}
+#fell-dice.visible { display: flex; }
+.fd-panel { width: min(460px, 94vw); max-height: 96vh; overflow: auto; box-sizing: border-box; padding: 12px 16px 12px; display: flex; flex-direction: column; gap: 9px; }
+.fd-head { display: flex; align-items: baseline; gap: 12px; }
+.fd-title { font-size: 15px; letter-spacing: 5px; text-transform: uppercase; color: #fff; text-shadow: 0 0 8px rgba(168, 216, 240, 0.8); }
+.fd-pot { flex: 1; font-size: 12px; color: #ffd8a0; }
+.fd-rivals { display: flex; gap: 10px; }
+.fd-rival, .fd-you { flex: 1; display: flex; flex-direction: column; gap: 5px; padding: 6px 8px; border-radius: 5px;
+  background: rgba(184, 224, 248, 0.07); border: 1px solid rgba(184, 224, 248, 0.22); transition: border-color 0.2s, box-shadow 0.2s; }
+.fd-rival.turn, .fd-you.turn { border-color: #f0b0a0; box-shadow: 0 0 12px rgba(240, 176, 160, 0.35); }
+.fd-rival.out { opacity: 0.45; }
+.fd-who { font-size: 11px; letter-spacing: 1px; color: #b8e0f8; }
+.fd-dice { display: flex; gap: 5px; min-height: 28px; flex-wrap: wrap; }
+.fd-die { width: 28px; height: 28px; image-rendering: pixelated; image-rendering: crisp-edges; }
+.fd-die.hot { filter: drop-shadow(0 0 4px rgba(255, 200, 120, 0.9)); }
+.fd-you .fd-die { width: 36px; height: 36px; }
+.fd-bid { font-size: 13px; color: #eef4fc; text-align: center; padding: 4px; }
+.fd-bid b { color: #ffd8a0; letter-spacing: 1px; }
+.fd-log { min-height: 52px; font-size: 11px; line-height: 1.45; color: rgba(238, 244, 252, 0.6); }
+.fd-log .last { color: #eef4fc; }
+.fd-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+.fd-controls.off .fd-q, .fd-controls.off .fd-faces { opacity: 0.45; }
+.fd-controls button {
+  font: inherit; font-size: 13px; cursor: pointer; border-radius: 4px; padding: 5px 10px; touch-action: manipulation;
+  background: rgba(184, 224, 248, 0.08); color: #eef4fc; border: 1px solid rgba(184, 224, 248, 0.35);
+}
+.fd-controls button:disabled { opacity: 0.4; cursor: default; }
+.fd-q { display: flex; align-items: center; gap: 6px; }
+.fd-q b { min-width: 74px; text-align: center; font-size: 13px; letter-spacing: 1px; color: #fff; }
+.fd-faces { display: flex; gap: 4px; }
+.fd-faces button { padding: 2px; line-height: 0; }
+.fd-faces button .fd-die { width: 26px; height: 26px; }
+.fd-faces button.on { border-color: #f0b0a0; background: rgba(240, 176, 160, 0.25); }
+.fd-controls .fd-go { background: #f0b0a0; color: #1e2240; border-color: #ffd8c8; }
+.fd-controls .fd-liar { background: rgba(200, 60, 50, 0.3); border-color: #e87a6a; }
+.fd-controls .fd-next { background: #f0b0a0; color: #1e2240; border-color: #ffd8c8; }
+.fd-help { font-size: 10px; line-height: 1.4; color: rgba(238, 244, 252, 0.6); text-align: center; }
+html.touch .fd-keys { display: none; }
+@media (max-width: 480px) {
+  .fd-rival .fd-die { width: 22px; height: 22px; }
+  .fd-rival .fd-dice { gap: 3px; flex-wrap: nowrap; }
+}

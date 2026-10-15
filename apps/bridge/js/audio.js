@@ -237,6 +237,7 @@ var BridgeAudio = (function () {
     if (/^verdance/.test(id)) return { theme: 'verdance', amb: ['breeze', 'birds'] };
     if (id === 'hoarfell-summit' || id === 'hoarfell-ridge' || id === 'hoarfell-icestep') return { theme: 'summit', amb: ['gale'] };
     if (id === 'hoarfell-hollow') return { theme: 'summit', amb: ['drips', 'chimes'] };
+    if (id === 'hoarfell-lodge') return { theme: 'hoarfell', amb: ['fire', 'murmur'] };
     if (id === 'hoarfell-park') return { theme: 'arcade', amb: ['snowwind'] };
     if (/^hoarfell/.test(id)) return { theme: 'hoarfell', amb: ['snowwind', 'chimes'] };
     if (/cave/.test(id) || ts === 'cave') return { theme: 'cave', amb: ['drips', 'rumble'] };
@@ -609,6 +610,10 @@ var BridgeAudio = (function () {
     swish:   function (t) { noiseHit(sfxBus, t, 0.12, { freq: 3200, ftype: 'highpass', gain: 0.06 }); },
     hit:     function (t) { noiseHit(sfxBus, t, 0.14, { freq: 900, ftype: 'bandpass', q: 1.2, gain: 0.16, rev: 0.2 }); voice(sfxBus, t, 0.05, { type: 'square', freq: 160, glide: 0.5, glideT: 0.08, gain: 0.06, a: 0.001, d: 0.08, s: 0, r: 0.05, cutoff: 1200 }); },
     hurt:    function (t) { voice(sfxBus, t, 0.12, { type: 'sawtooth', freq: 220, glide: 0.5, glideT: 0.15, gain: 0.07, a: 0.002, d: 0.15, s: 0, r: 0.1, cutoff: 1400 }); },
+    dice:    function (t) {                                // dice rattled in a leather cup, then tipped out on wood
+      for (var i = 0; i < 7; i++) noiseHit(sfxBus, t + i * 0.045 + Math.random() * 0.015, 0.03, { freq: 1800 + Math.random() * 1400, ftype: 'bandpass', q: 3, gain: 0.05 });
+      for (var j = 0; j < 4; j++) noiseHit(sfxBus, t + 0.4 + j * 0.07, 0.04, { freq: 900 + Math.random() * 500, ftype: 'bandpass', q: 2.5, gain: 0.07, rev: 0.15 });
+    },
     crumble: function (t) {                                // the rock giving way
       noiseHit(sfxBus, t, 0.4, { freq: 500, ftype: 'lowpass', gain: 0.2, rev: 0.35 });
       for (var i = 0; i < 4; i++) noiseHit(sfxBus, t + 0.05 + i * 0.06, 0.06, { freq: 900 + Math.random() * 700, ftype: 'bandpass', q: 2, gain: 0.06 });

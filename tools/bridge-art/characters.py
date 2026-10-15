@@ -163,6 +163,13 @@ NPCS = {
     # Juno Pike, who built the Park below the pistes: a pink beanie, goggles up, a teal hoodie under a mustard shell
     'npc-juno':      dict(skin='skin2', shirt=('#1a5a6a', '#2a8a9a', '#4ab8c8'), vest=('#8a6a10', '#c89a20', '#f0c840'),
                           hair=('#1a1410', '#2e2218', '#44342a'), beanie=('#7a1a5a', '#b82a88', '#e85ab8'), goggles=True, pose='stand'),
+    # the Snowcap Lodge: Mette Rask keeps it (a cream knit, a green apron); Old Bryn and Sigrun play dice by the fire
+    'npc-mette':     dict(skin='skin3', shirt=('#a89a80', '#d8ccb0', '#f4ecd8'), apron=('#1a3a2a', '#2a5a40', '#3e7a58'),
+                          hair=('#7a7a80', '#a8a8b0', '#d0d0d8'), bun=True, pose='stand'),
+    'npc-bryn':      dict(skin='skin', shirt=('#7a5a10', '#a88020', '#d0a840'), beanie=('#5a1414', '#8a2020', '#b83a2a'),
+                          hair=('#9a9aa2', '#c8c8d0', '#ececf2'), beard=True, mustache=True, pose='sit'),
+    'npc-sigrun':    dict(skin='skin2', shirt=('#1a2a3a', '#2a4058', '#3e5a78'), vest=('#a04a10', '#e06a18', '#ff9a40'),
+                          hair=('#6a1a0a', '#a02a10', '#d04a20'), long_hair=True, pose='sit'),
     # Club Void: Kiri Vale on the decks (silver hair, goggles up as headphones), Dez behind the bar
     'npc-dj':        dict(skin='skin', shirt=('#141018', '#241c2c', '#3a2e44'), vest=('#10405a', '#1a6a8a', '#30a0c0'),
                           hair=('#9a9aaa', '#c8c8d8', '#f0f0ff'), long_hair=True, goggles=True, pose='stand'),

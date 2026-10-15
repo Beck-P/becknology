@@ -1376,5 +1376,98 @@
         "a": "JORO'S BEEN IN TWICE THIS WEEK ASKING IF ANYONE'S SEEN A BLUE CRYSTAL THE SIZE OF A FIST. SAYS IT'S FOR A CLIENT. JORO ALWAYS SAYS IT'S FOR A CLIENT."
       }
     ]
+  },
+  "mette": {
+    "name": "Mette Rask",
+    "role": "Keeps the Snowcap Lodge, Fellhaven",
+    "sheet": "npc-mette",
+    "at": [
+      {
+        "world": "hoarfell-lodge",
+        "label": "METTE"
+      }
+    ],
+    "greet": "BOOTS BY THE FIRE, COCOA'S ON. YOU LOOK FROZEN THROUGH. NEW, ARE YOU? EVERYONE'S NEW ONCE.",
+    "again": "YOUR CHAIR'S STILL WARM. BARLEY KEPT IT FOR YOU.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "THIRTY WINTERS BEHIND THIS BAR. I CAME UP FOR ONE SEASON TO SKI AND MARRIED THE LODGE INSTEAD. IT SNORES LESS THAN A HUSBAND AND IT KEEPS ME WARM."
+      },
+      {
+        "q": "The lodge",
+        "a": "ROOMS UP THE STAIR, FIFTEEN COINS AND I WAKE YOU WITH COFFEE. THE BOARD BY THE STAIR HAS EVERYONE'S TIMES ON IT - LIV'S, YSOLDE'S, YOURS IF YOU'VE GOT ANY. AND DON'T PLAY DICE WITH SIGRUN UNLESS YOU CAN AFFORD IT."
+      },
+      {
+        "q": "The menu",
+        "a": "COCOA FOR THE COLD, MULLED CIDER FOR THE SOUL, AND FONDUE IF YOU'VE BEEN OUT ON THE FACE ALL DAY. ALL OF IT KEEPS THE COLD OFF A WHILE. THE CHESTNUTS ARE FOR BARLEY BUT HE'LL SHARE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "OLD BRYN SAYS THERE'S A LIGHT PAST THE HOARSPIRE. HE'S SAID IT EVERY WINTER FOR FORTY YEARS. THE FUNNY THING IS, THIS YEAR YSOLDE'S STARTED SAYING IT TOO."
+      }
+    ]
+  },
+  "bryn": {
+    "name": "Old Bryn",
+    "role": "Retired guide, at the dice table",
+    "sheet": "npc-bryn",
+    "at": [
+      {
+        "world": "hoarfell-lodge",
+        "label": "OLD BRYN"
+      }
+    ],
+    "greet": "SIT, SIT. THE STOOL'S WARM. YOU'VE THE HANDS OF A CLIMBER, OR YOU WILL HAVE BY THE END OF THE WEEK.",
+    "again": "BACK FOR MORE PUNISHMENT? GOOD. THE DICE MISSED YOU.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "FIFTY YEARS GUIDING ON THESE HILLS. I TAUGHT YSOLDE TO TIE IN WHEN SHE WAS NINE, AND SHE'S BEEN TELLING ME I DO IT WRONG EVER SINCE. MY KNEES RETIRED BEFORE I DID."
+      },
+      {
+        "q": "Fell Dice",
+        "a": "FIVE DICE, A CUP, AND A STRAIGHT FACE. FLAKES ARE WILD. YOU BID HOW MANY OF A FACE ARE UNDER ALL THE CUPS - YOURS AND OURS. IF YOU THINK SOMEBODY'S LYING, CALL IT. I DON'T LIE OFTEN. SIGRUN LIES LIKE OTHER PEOPLE BREATHE."
+      },
+      {
+        "q": "Ivo Venn",
+        "a": "I WAS A BOY WHEN IVO WENT UP THE LAST TIME. HE PUT WANDS ACROSS THE CRACKS ON THE FAR SIDE SO HE COULD FIND HIS WAY HOME. HE NEVER CAME HOME. BUT HIS WANDS ARE STILL THERE, THEY SAY. FOLLOW THE ORANGE RAGS AND YOU WON'T FALL IN."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THERE'S A LIGHT PAST THE HOARSPIRE. NO, DON'T LAUGH. I'VE SEEN IT, ON THE CLEAREST NIGHTS, FROM THE SUMMIT BENCH. A LITTLE GOLD STAR WHERE THERE OUGHT TO BE NOTHING BUT ICE."
+      }
+    ]
+  },
+  "sigrun": {
+    "name": "Sigrun",
+    "role": "Keeps the chairlift running, plays dice",
+    "sheet": "npc-sigrun",
+    "at": [
+      {
+        "world": "hoarfell-lodge",
+        "label": "SIGRUN"
+      }
+    ],
+    "greet": "HE CHEATS. I CHEAT BETTER. YOU'RE WELCOME TO TRY, IF YOU'VE COINS.",
+    "again": "OH, IT'S YOU. SIT. I NEED THE MONEY.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I KEEP THE LIFT TURNING. EVERY BOLT ON EVERY PYLON, EVERY MORNING BEFORE ANSGAR LETS ANYONE ON. IF YOU'VE EVER SWUNG IN A CHAIR AND NOT FALLEN OFF THE MOUNTAIN, THAT WAS ME."
+      },
+      {
+        "q": "Fell Dice",
+        "a": "BRYN WILL TELL YOU I BLUFF. BRYN IS RIGHT. THE TRICK IS, SOMETIMES I DON'T. WATCH WHAT I BID WHEN I'VE GOT NOTHING TO LOSE - AND THEN DON'T TRUST THAT EITHER."
+      },
+      {
+        "q": "Liv",
+        "a": "LIV? SHE'S BEEN FASTEST DOWN THE COULOIR SINCE SHE WAS FOURTEEN. SHE PRETENDS SHE DOESN'T CHECK THE BOARD. SHE CHECKS THE BOARD EVERY NIGHT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "JUNO'S BUILT ANOTHER RAIL DOWN IN THE PARK. KINKED. NOBODY'S RIDDEN IT CLEAN BUT HER. AND SOMEBODY'S BEEN UP THE ICE STEP ON THE LAST RIDGE - THERE ARE FRESH AXE MARKS. NOT ME. I'M NOT MAD."
+      }
+    ]
   }
 }

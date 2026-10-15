@@ -57,7 +57,13 @@ var BridgeGifts = (function () {
     tam: { love: ['strawberry', 'mug_of_ale'], like: ['apple', 'bread', 'sweet_roll'], hate: ['old_boot'] },
     odile: { love: ['honey', 'sunflower'], like: ['turnip', 'bread', 'pumpkin'], hate: ['old_boot'] },
     juno: { love: ['summit_crystal', 'ski_goggles'], like: ['hot_cocoa', 'roast_chestnuts', 'strawberry'], hate: ['old_boot'],
-            loveLine: 'NO. WAY. THIS IS GOING ON THE RAIL. RIGHT AT THE KINK. EVERYONE WHO SLIDES IT WILL SEE IT AND NOT KNOW WHERE IT CAME FROM.' }
+            loveLine: 'NO. WAY. THIS IS GOING ON THE RAIL. RIGHT AT THE KINK. EVERYONE WHO SLIDES IT WILL SEE IT AND NOT KNOW WHERE IT CAME FROM.' },
+    mette: { love: ['honey', 'strawberry'], like: ['apple', 'milk', 'egg', 'edelweiss'], hate: ['old_boot', 'void_fizz'],
+             loveLine: 'OH, NOW. FOR THE KITCHEN? I\'LL MAKE SOMETHING WITH IT AND YOU\'LL HAVE THE FIRST OF IT, AND THAT\'S THAT.' },
+    bryn: { love: ['mulled_cider', 'edelweiss'], like: ['hot_cocoa', 'roast_chestnuts', 'fondue', 'pocket_watch'], hate: ['void_fizz'],
+            loveLine: 'WELL. I HAVEN\'T BEEN GIVEN ONE OF THESE SINCE I COULD STILL GET UP THE STAIRCASE FOR MY OWN. THANK YOU, CLIMBER.' },
+    sigrun: { love: ['silver_nail', 'pocket_watch'], like: ['mulled_cider', 'fondue', 'hoar_crystal'], hate: ['old_boot'],
+              loveLine: 'NOW THAT\'S PRETTY WORK. SOMEBODY MADE THIS TO LAST. I\'LL KEEP IT IN THE LIFT HUT WHERE BRYN CAN\'T WIN IT OFF ME.' }
   };
   var NOT = { key: 1, map: 1, seed: 1 };                  // things that aren't gifts
 
