@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Wizard Chess 3D & Opening Trainer · Becknology</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>
+    // Inside the Bridge's modal (an iframe) the Bridge draws the chrome: no back links here.
+    // Standalone, the shared skin bar (bridge-skin.js) carries the one back button.
+    (function () {
+      var root = document.documentElement, inFrame;
+      try { inFrame = window.self !== window.top; } catch (e) { inFrame = true; }
+      root.classList.add(inFrame ? 'in-frame' : 'standalone');
+      if (!inFrame) {
+        // bridge-skin.js builds its bar on DOMContentLoaded too; look once it has run.
+        // Without the bar, the page's own back link comes back.
+        document.addEventListener('DOMContentLoaded', function () {
+          setTimeout(function () {
+            if (!document.getElementById('bridge-skin-bar')) root.classList.add('no-skin-bar');
+          }, 0);
+        });
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -47,7 +65,7 @@
       <aside class="wizard-sidebar">
         <div class="sidebar-header-row">
           <h2>Battle Setup</h2>
-          <span class="engine-badge" id="wc-engine-badge" title="Chess Engine Status">⚡ Stockfish UCI</span>
+          <span class="engine-badge is-waking" id="wc-engine-badge" title="Chess Engine Status">⚡ Waking…</span>
         </div>
 
         <div class="field-group">
@@ -62,11 +80,11 @@
           <label class="field-label" for="wc-difficulty">Stockfish Rank (ELO)</label>
           <select id="wc-difficulty" class="wc-select">
             <option value="1">I · Novice (~800 ELO · +50🪙)</option>
-            <option value="2">II · Apprentice (~1100 ELO · +150🪙)</option>
-            <option value="3" selected>III · Battlemage (~1450 ELO · +400🪙)</option>
-            <option value="4">IV · Archmage (~1800 ELO · +1,000🪙)</option>
-            <option value="5">V · Grandmaster (~2200 ELO · +2,500🪙)</option>
-            <option value="6">VI · Supreme Oracle (2600+ ELO · +5,000🪙)</option>
+            <option value="2">II · Apprentice (~1100 ELO · +100🪙)</option>
+            <option value="3" selected>III · Battlemage (~1450 ELO · +200🪙)</option>
+            <option value="4">IV · Archmage (~1800 ELO · +350🪙)</option>
+            <option value="5">V · Grandmaster (~2200 ELO · +550🪙)</option>
+            <option value="6">VI · Supreme Oracle (2600+ ELO · +800🪙)</option>
           </select>
         </div>
 
@@ -82,6 +100,7 @@
           <label class="field-label" for="wc-theme">World Chess Set &amp; Realm</label>
           <select id="wc-theme" class="wc-select">
             <option value="classic" selected>🏰 Wizard's Tower — Gothic Hearthstone</option>
+            <option value="ship">⚓ The Wayfarer — Captain's Chart Table</option>
             <option value="lumar">🌊 Lumar — Abyssal Tides &amp; Kraken</option>
             <option value="arcadia">🕹️ Arcadia — Neon Synth-Mech Grid</option>
             <option value="enigma">🛰️ Enigma Station — Orbital Outpost</option>
@@ -145,6 +164,30 @@
           </div>
 
           <div id="wizard-stage" class="wizard-stage"></div>
+
+          <!-- Practice / no-reward note -->
+          <div class="reward-note" id="wc-reward-note" hidden></div>
+
+          <!-- Loading card (sculpt file + Stockfish), then Resume / New game for a saved battle -->
+          <div class="wc-stage-overlay" id="wc-stage-overlay">
+            <div class="wc-overlay-card">
+              <div class="wc-loading" id="wc-loading">
+                <div class="wc-spinner" aria-hidden="true"></div>
+                <div class="wc-loading-title" id="wc-loading-title">Loading Wizard Chess…</div>
+                <div class="wc-progress"><div class="wc-progress-bar" id="wc-progress-bar"></div></div>
+                <div class="wc-loading-detail" id="wc-loading-detail">Fetching the board, the pieces and the engine</div>
+                <div class="wc-loading-engine" id="wc-loading-engine">Stockfish is waking…</div>
+              </div>
+              <div class="wc-resume" id="wc-resume" hidden>
+                <div class="wc-resume-title">A battle is waiting</div>
+                <div class="wc-resume-detail" id="wc-resume-detail"></div>
+                <div class="wc-resume-actions">
+                  <button type="button" id="wc-resume-btn" class="wc-resume-primary">Resume</button>
+                  <button type="button" id="wc-resume-new-btn">New game</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <!-- Active Duel Banner Overlay -->
           <div class="duel-banner" id="wc-duel-banner" hidden>
@@ -222,8 +265,8 @@
           <span class="placeholder">No moves yet — advance a piece to begin the battle.</span>
         </div>
 
-        <div class="stats">
-          Spoils: <span class="stat-num">+3–50🪙</span> / Shatter · <span class="stat-num">+50–5,000🪙</span> Victory
+        <div class="stats" id="wc-spoils">
+          Spoils: <span class="stat-num">+3–10🪙</span> / Shatter · <span class="stat-num">+50–800🪙</span> Victory
         </div>
       </aside>
     </div>
@@ -257,6 +300,21 @@
     </div>
   </main>
 
-  <script type="module" src="/chess/app.js"></script>
+  <script>
+    // Boot watchdog: three.js and chess.js come from CDNs. If they never arrive the module
+    // can't run, so say so on the loading card instead of spinning forever.
+    window.__chessBootFailed = function () {
+      if (window.__wizardChessBooted) return;
+      var card = document.getElementById('wc-loading');
+      if (!card) return;
+      card.classList.add('is-error');
+      document.getElementById('wc-loading-title').textContent = "Wizard Chess couldn't load";
+      document.getElementById('wc-loading-detail').textContent =
+        "Its 3D library comes from a CDN that isn't answering. Check the connection and try again.";
+      document.getElementById('wc-loading-engine').textContent = '';
+    };
+    setTimeout(window.__chessBootFailed, 25000);
+  </script>
+  <script type="module" src="/chess/app.js" onerror="window.__chessBootFailed()"></script>
 </body>
 </html>

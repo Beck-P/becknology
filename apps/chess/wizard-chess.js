@@ -22,14 +22,133 @@ const BOARD_OFFSET = (7 * SQUARE_SIZE) / 2;
 
 export const DIFFICULTY_TIERS = {
   1: { name: "Novice", elo: 800, skill: 0, depth: 2, movetime: 180, noise: 95, reward: 50, capReward: 3 },
-  2: { name: "Apprentice", elo: 1100, skill: 3, depth: 4, movetime: 280, noise: 40, reward: 150, capReward: 5 },
-  3: { name: "Battlemage", elo: 1450, skill: 7, depth: 7, movetime: 420, noise: 12, reward: 400, capReward: 8 },
-  4: { name: "Archmage", elo: 1800, skill: 12, depth: 10, movetime: 650, noise: 0, reward: 1000, capReward: 15 },
-  5: { name: "Grandmaster", elo: 2200, skill: 16, depth: 13, movetime: 900, noise: 0, reward: 2500, capReward: 25 },
-  6: { name: "Supreme Oracle", elo: 2600, skill: 20, depth: 16, movetime: 1250, noise: 0, reward: 5000, capReward: 50 }
+  2: { name: "Apprentice", elo: 1100, skill: 3, depth: 4, movetime: 280, noise: 40, reward: 100, capReward: 4 },
+  3: { name: "Battlemage", elo: 1450, skill: 7, depth: 7, movetime: 420, noise: 12, reward: 200, capReward: 5 },
+  4: { name: "Archmage", elo: 1800, skill: 12, depth: 10, movetime: 650, noise: 0, reward: 350, capReward: 6 },
+  5: { name: "Grandmaster", elo: 2200, skill: 16, depth: 13, movetime: 900, noise: 0, reward: 550, capReward: 8 },
+  6: { name: "Supreme Oracle", elo: 2600, skill: 20, depth: 16, movetime: 1250, noise: 0, reward: 800, capReward: 10 }
 };
 
+// ---------- Chess coin rewards (Bridge progression) ----------
+// Only games against the AI pay, and only the player's own captures and wins.
+// Using Undo turns a game into practice: it pays nothing more. A win pays once
+// per game id. Capture coins stop at CAPTURE_COINS_PER_GAME a game, and every
+// chess payout (captures, wins, Opening Trainer lines) stops at
+// CHESS_DAILY_COIN_CAP a day, tallied in localStorage under bridge_chess_daily.
+export const CAPTURE_COINS_PER_GAME = 60;
+export const CHESS_DAILY_COIN_CAP = 400;
+const CHESS_DAILY_KEY = "bridge_chess_daily";
+const CHESS_WON_GAMES_KEY = "bridge_chess_won_games";
+
+function localDateStamp() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Today's chess tally: { date, coins, lines } (lines = trainer lines already paid today). */
+export function readChessDaily() {
+  let rec = null;
+  try {
+    rec = JSON.parse(localStorage.getItem(CHESS_DAILY_KEY) || "null");
+  } catch {
+    rec = null;
+  }
+  const date = localDateStamp();
+  if (!rec || typeof rec !== "object" || rec.date !== date) rec = { date, coins: 0, lines: [] };
+  if (!Number.isFinite(rec.coins) || rec.coins < 0) rec.coins = 0;
+  if (!Array.isArray(rec.lines)) rec.lines = [];
+  return rec;
+}
+
+/**
+ * Pays `amount` chess coins through BridgeProgression, clipped to what is left
+ * of today's allowance. `note(rec)` can add bookkeeping to the same write (the
+ * trainer marks its line). Returns the coins actually paid.
+ */
+export function payChessCoins(amount, reason, meta, note) {
+  if (typeof BridgeProgression === "undefined") return 0;
+  const rec = readChessDaily();
+  const pay = Math.max(0, Math.min(Math.floor(amount) || 0, CHESS_DAILY_COIN_CAP - rec.coins));
+  if (note) note(rec);
+  rec.coins += pay;
+  try {
+    localStorage.setItem(CHESS_DAILY_KEY, JSON.stringify(rec));
+  } catch {
+    // storage unavailable: the per-game caps still apply
+  }
+  if (pay > 0) {
+    try {
+      BridgeProgression.awardCoins(pay, reason, meta);
+    } catch {
+      // progression offline: the game plays on
+    }
+  }
+  return pay;
+}
+
+function readWonGames() {
+  try {
+    const list = JSON.parse(localStorage.getItem(CHESS_WON_GAMES_KEY) || "[]");
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Records a paid win; false if that game id was already paid (e.g. the same save resumed twice). */
+function claimWinForGame(gameId) {
+  const list = readWonGames();
+  if (list.includes(gameId)) return false;
+  list.push(gameId);
+  try {
+    localStorage.setItem(CHESS_WON_GAMES_KEY, JSON.stringify(list.slice(-50)));
+  } catch {
+    // storage unavailable: winPaid on the game still guards this session
+  }
+  return true;
+}
+
+function newGameId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export const WIZARD_THEMES = {
+  // The Wayfarer: the pilot's own ship. Boxwood and walnut pieces on the
+  // captain's chart table, brass trim, oxblood leather, lantern embers
+  // (the ship palette in apps/bridge/CLAUDE.md). No Blender diorama: the
+  // table is built procedurally (worldStyle "ship").
+  ship: {
+    id: "ship",
+    pieceSet: "classic",
+    worldStyle: "ship",
+    diorama: null,
+    name: "The Wayfarer · Captain's Chart Table",
+    worldName: "The Wayfarer",
+    whiteLabel: "Boxwood & Brass",
+    blackLabel: "Walnut & Oxblood",
+    wStone: { color: 0xe4d0a4, roughness: 0.42, metalness: 0.06, bumpScale: 0.016 },
+    wCloth: { color: 0xd8c8a0, roughness: 0.48, metalness: 0.08, bumpScale: 0.016 },
+    wTrim:  { color: 0xd0a048, roughness: 0.24, metalness: 0.78 },
+    wMetal: { color: 0xe0c890, roughness: 0.22, metalness: 0.80 },
+    wGem:   { color: 0xffe080, emissive: 0xffb050, emissiveIntensity: 1.25 },
+    bStone: { color: 0x3a2212, roughness: 0.36, metalness: 0.10, bumpScale: 0.020 },
+    bCloth: { color: 0x6a2a22, roughness: 0.44, metalness: 0.12, bumpScale: 0.018 },
+    bTrim:  { color: 0xa08040, roughness: 0.24, metalness: 0.76 },
+    bMetal: { color: 0x6e4828, roughness: 0.26, metalness: 0.70 },
+    bGem:   { color: 0xff9a50, emissive: 0xd8602a, emissiveIntensity: 1.35 },
+    lightSq: { color: 0xc8a068, roughness: 0.46, metalness: 0.05 },
+    darkSq:  { color: 0x55361c, roughness: 0.50, metalness: 0.06 },
+    frame:   { color: 0x24160c, roughness: 0.50, metalness: 0.10 },
+    bezel:   { color: 0xd0a048, roughness: 0.28, metalness: 0.78 },
+    fog: 0x140c06,
+    ambientColor: 0x6e4828,
+    keyColor: 0xffe2b8,
+    rimColor: 0xffb050,
+    brazierFlame: 0xffb050,
+    brazierLight: 0xff9a40,
+    spellW: 0xffd878,
+    spellB: 0xe0603a
+  },
   classic: {
     id: "classic",
     pieceSet: "classic",
@@ -292,6 +411,7 @@ class StockfishOracle {
             break;
           } catch (e) {}
         }
+        if (!loaded) postMessage("sf-unavailable");
       `;
       const blob = new Blob([workerBootstrap], { type: "application/javascript" });
       this.worker = new Worker(URL.createObjectURL(blob));
@@ -300,7 +420,11 @@ class StockfishOracle {
         const line = typeof e.data === "string" ? e.data.trim() : "";
         if (!line) return;
 
-        if (line === "uciok") {
+        if (line === "sf-unavailable") {
+          // Neither CDN answered: the local alpha-beta engine plays instead
+          this.ready = false;
+          if (this.onStatusChange) this.onStatusChange(false);
+        } else if (line === "uciok") {
           this.ready = true;
           this.worker.postMessage("isready");
           if (this.onStatusChange) this.onStatusChange(true);
@@ -642,7 +766,7 @@ function cpToWinPercent(cp) {
 
 // ---------- Main WizardChess3D Controller ----------
 export class WizardChess3D {
-  constructor(containerEl, callbacks = {}) {
+  constructor(containerEl, callbacks = {}, options = {}) {
     this.container = containerEl;
     this.callbacks = callbacks;
     this.chess = new Chess();
@@ -651,9 +775,11 @@ export class WizardChess3D {
     this.mode = "ai"; // 'ai' | '2p'
     this.aiDifficulty = 3; // 1..6 (default 3 = Battlemage ~1450 ELO)
     this.playerColor = "w"; // 'w' | 'b'
-    this.themeId = "classic";
+    this.themeId = WIZARD_THEMES[options.theme] ? options.theme : "classic";
     this.currentTheme = WIZARD_THEMES.classic;
     this.battleCamEnabled = true;
+    this.gameGen = 0; // bumped on new/resumed game so in-flight moves of the old game are dropped
+    this.reward = this.freshRewardState();
 
     this.selectedSquare = null;
     this.legalMovesForSelected = [];
@@ -892,7 +1018,7 @@ export class WizardChess3D {
       } else {
         this.syncPiecesFromBoard();
         if (this.selectedSquare) {
-          this.selectSquare(this.selectedSquare);
+          this.showMarkersForSquare(this.selectedSquare);
         }
       }
     }
@@ -905,59 +1031,75 @@ export class WizardChess3D {
 
   loadBlenderPieces() {
     const loader = new GLTFLoader();
+    const done = (ok) => {
+      if (this.callbacks.onAssetsReady) this.callbacks.onAssetsReady(ok);
+    };
     loader.load(
       "/chess/assets/wizard-pieces.glb",
       (gltf) => {
-        const nameToType = {
-          pawn: "p",
-          rook: "r",
-          knight: "n",
-          bishop: "b",
-          queen: "q",
-          king: "k"
-        };
-        gltf.scene.traverse((obj) => {
-          const dioramaMatch = obj.name.match(
-            /^diorama_(classic|lumar|arcadia|enigma|singularity)$/
-          );
-          if (dioramaMatch) {
-            this.dioramaTemplates.set(dioramaMatch[1], obj);
-            return;
-          }
-          const multiMatch = obj.name.match(
-            /^piece_(classic|lumar|arcadia|enigma|singularity)_(pawn|rook|knight|bishop|queen|king)$/
-          );
-          if (multiMatch) {
-            const setKey = multiMatch[1];
-            const typeCode = nameToType[multiMatch[2]];
-            this.blenderTemplates.set(`${setKey}_${typeCode}`, obj);
-            if (setKey === "classic") {
-              this.blenderTemplates.set(typeCode, obj);
-            }
-          } else {
-            const singleMatch = obj.name.match(/^piece_(pawn|rook|knight|bishop|queen|king)$/);
-            if (singleMatch) {
-              const typeCode = nameToType[singleMatch[1]];
-              this.blenderTemplates.set(typeCode, obj);
-            }
-          }
-        });
-        if (this.dioramaTemplates.size > 0 && this.currentTheme) {
-          this.rebuildWorldScenery(this.currentTheme);
-        }
-        if (this.blenderTemplates.size > 0 && !this.animating) {
-          if (this.reviewMode) {
-            this.viewReviewPly(this.currentReviewPly || 0);
-          } else {
-            this.syncPiecesFromBoard();
-          }
+        try {
+          this.mountBlenderPieces(gltf);
+        } finally {
+          done(this.blenderTemplates.size > 0);
         }
       },
-      undefined,
+      (evt) => {
+        if (this.callbacks.onAssetProgress && evt) {
+          this.callbacks.onAssetProgress(evt.loaded || 0, evt.lengthComputable ? evt.total : 0);
+        }
+      },
       () => {
         // Fallback procedural sculpts remain active if GLB fails to load
+        done(false);
       }
     );
+  }
+
+  mountBlenderPieces(gltf) {
+    const nameToType = {
+      pawn: "p",
+      rook: "r",
+      knight: "n",
+      bishop: "b",
+      queen: "q",
+      king: "k"
+    };
+    gltf.scene.traverse((obj) => {
+      const dioramaMatch = obj.name.match(
+        /^diorama_(classic|lumar|arcadia|enigma|singularity)$/
+      );
+      if (dioramaMatch) {
+        this.dioramaTemplates.set(dioramaMatch[1], obj);
+        return;
+      }
+      const multiMatch = obj.name.match(
+        /^piece_(classic|lumar|arcadia|enigma|singularity)_(pawn|rook|knight|bishop|queen|king)$/
+      );
+      if (multiMatch) {
+        const setKey = multiMatch[1];
+        const typeCode = nameToType[multiMatch[2]];
+        this.blenderTemplates.set(`${setKey}_${typeCode}`, obj);
+        if (setKey === "classic") {
+          this.blenderTemplates.set(typeCode, obj);
+        }
+      } else {
+        const singleMatch = obj.name.match(/^piece_(pawn|rook|knight|bishop|queen|king)$/);
+        if (singleMatch) {
+          const typeCode = nameToType[singleMatch[1]];
+          this.blenderTemplates.set(typeCode, obj);
+        }
+      }
+    });
+    if (this.dioramaTemplates.size > 0 && this.currentTheme) {
+      this.rebuildWorldScenery(this.currentTheme);
+    }
+    if (this.blenderTemplates.size > 0 && !this.animating) {
+      if (this.reviewMode) {
+        this.viewReviewPly(this.currentReviewPly || 0);
+      } else {
+        this.syncPiecesFromBoard();
+      }
+    }
   }
 
   buildBoard() {
@@ -1022,8 +1164,10 @@ export class WizardChess3D {
       [-cornerOffset, cornerOffset],
       [cornerOffset, cornerOffset]
     ];
-    const worldKey = theme.pieceSet || theme.id || "classic";
-    const dioramaTemplate = this.dioramaTemplates && this.dioramaTemplates.get(worldKey);
+    // A theme can opt out of the Blender diorama (diorama: null) and use its procedural world
+    const worldKey =
+      theme.diorama !== undefined ? theme.diorama : theme.pieceSet || theme.id || "classic";
+    const dioramaTemplate = worldKey && this.dioramaTemplates && this.dioramaTemplates.get(worldKey);
 
     // If the full Blender 3D World Diorama (`diorama_<world>`) is loaded, mount & animate it!
     if (dioramaTemplate) {
@@ -1101,7 +1245,116 @@ export class WizardChess3D {
       side: THREE.DoubleSide
     });
 
-    if (style === "hearth") {
+    if (style === "ship") {
+      // THE WAYFARER: the board stands on the captain's walnut chart table —
+      // brass edging and inlay, an oxblood leather blotter, a rolled parchment
+      // chart, and four brass ship's lanterns with ember flames at the corners.
+      const tableTop = -0.6;
+      const walnut = new THREE.MeshStandardMaterial({
+        color: 0x3e2614,
+        roughness: 0.46,
+        metalness: 0.08,
+        bumpMap: this.bumpTex,
+        bumpScale: 0.02
+      });
+      const leather = new THREE.MeshStandardMaterial({ color: 0x6a2a22, roughness: 0.72, metalness: 0.04 });
+      const parchment = new THREE.MeshStandardMaterial({ color: 0xd8c8a0, roughness: 0.8, metalness: 0 });
+      const glassMat = new THREE.MeshBasicMaterial({
+        color: theme.brazierLight,
+        transparent: true,
+        opacity: 0.22,
+        side: THREE.DoubleSide
+      });
+
+      const tableHalf = 7.3;
+      const table = new THREE.Mesh(new THREE.BoxGeometry(tableHalf * 2, 0.34, tableHalf * 2), walnut);
+      table.position.y = tableTop - 0.17;
+      table.receiveShadow = true;
+      this.worldSceneryGroup.add(table);
+
+      // Brass edging round the table and a brass inlay line inside it
+      for (const [half, w, h, y] of [
+        [tableHalf, 0.12, 0.38, tableTop - 0.17],
+        [6.85, 0.06, 0.012, tableTop + 0.006]
+      ]) {
+        for (const s of [-1, 1]) {
+          const alongX = new THREE.Mesh(new THREE.BoxGeometry(half * 2 + w, h, w), this.materials.brassTrim);
+          alongX.position.set(0, y, s * half);
+          this.worldSceneryGroup.add(alongX);
+          const alongZ = new THREE.Mesh(new THREE.BoxGeometry(w, h, half * 2 + w), this.materials.brassTrim);
+          alongZ.position.set(s * half, y, 0);
+          this.worldSceneryGroup.add(alongZ);
+        }
+      }
+
+      const blotter = new THREE.Mesh(
+        new THREE.BoxGeometry(totalSpan + 2.3, 0.03, totalSpan + 2.3),
+        leather
+      );
+      blotter.position.y = tableTop + 0.015;
+      blotter.receiveShadow = true;
+      this.worldSceneryGroup.add(blotter);
+
+      // A rolled chart and an inkwell beside the board
+      const chart = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 2.4, 18), parchment);
+      chart.rotation.x = Math.PI / 2;
+      chart.position.set(totalSpan / 2 + 1.55, tableTop + 0.13, 1.1);
+      chart.castShadow = true;
+      this.worldSceneryGroup.add(chart);
+      for (const end of [-1, 1]) {
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.06, 18), this.materials.brassTrim);
+        cap.rotation.x = Math.PI / 2;
+        cap.position.set(chart.position.x, chart.position.y, chart.position.z + end * 1.2);
+        this.worldSceneryGroup.add(cap);
+      }
+      const inkwell = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 0.24, 14), this.materials.boardFrame);
+      inkwell.position.set(totalSpan / 2 + 1.5, tableTop + 0.12, -1.3);
+      inkwell.castShadow = true;
+      this.worldSceneryGroup.add(inkwell);
+      const inkCap = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.07, 12), this.materials.brassTrim);
+      inkCap.position.set(inkwell.position.x, tableTop + 0.27, inkwell.position.z);
+      this.worldSceneryGroup.add(inkCap);
+
+      corners.forEach(([cx, cz], idx) => {
+        const lantern = new THREE.Group();
+        lantern.position.set(Math.sign(cx) * 6.3, tableTop, Math.sign(cz) * 6.3);
+
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.1, 12), this.materials.brassTrim);
+        base.position.y = 0.05;
+        base.castShadow = true;
+        lantern.add(base);
+
+        const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.44, 12, 1, true), glassMat);
+        glass.position.y = 0.32;
+        lantern.add(glass);
+
+        for (const [px, pz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.46, 0.04), this.materials.brassTrim);
+          post.position.set(px * 0.15, 0.32, pz * 0.15);
+          lantern.add(post);
+        }
+
+        const flame = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 8), glowMat.clone());
+        flame.position.y = 0.3;
+        lantern.add(flame);
+
+        const cap = new THREE.Mesh(new THREE.ConeGeometry(0.27, 0.22, 12), this.materials.brassTrim);
+        cap.position.y = 0.65;
+        cap.castShadow = true;
+        lantern.add(cap);
+
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.018, 6, 16), this.materials.brassTrim);
+        ring.position.y = 0.82;
+        lantern.add(ring);
+
+        const light = new THREE.PointLight(theme.brazierLight, 1.38, 9.5, 1.6);
+        light.position.set(0, 0.34, 0);
+        lantern.add(light);
+
+        this.worldSceneryGroup.add(lantern);
+        this.braziers.push({ group: lantern, flame, light, phase: idx * 1.7 });
+      });
+    } else if (style === "hearth") {
       // WIZARD'S TOWER: Gothic stone buttresses, inlaid brass sanctuary ring & 4 flickering hearth braziers
       const sanctumRing = new THREE.Mesh(
         new THREE.RingGeometry(totalSpan * 0.68, totalSpan * 0.72, 48),
@@ -1811,6 +2064,12 @@ export class WizardChess3D {
 
     this.renderer.domElement.addEventListener("pointerdown", this.onPointerDown);
     window.addEventListener("resize", this.onResize);
+    // The stage also changes size without a window resize (full screen's height transition,
+    // the Bridge's modal): follow the container itself
+    if (typeof ResizeObserver !== "undefined") {
+      this.resizeObserver = new ResizeObserver(() => this.onResize());
+      this.resizeObserver.observe(this.container);
+    }
   }
 
   handleSquareClick(sq) {
@@ -1862,11 +2121,17 @@ export class WizardChess3D {
     const victimSq = isEnPassant ? toSq[0] + fromSq[1] : toSq;
     const victimMesh = moveObj.captured ? this.pieceMeshes.get(victimSq) : null;
 
-    const result = this.chess.move({
-      from: fromSq,
-      to: toSq,
-      promotion: moveObj.promotion || "q"
-    });
+    const gen = this.gameGen;
+    let result = null;
+    try {
+      result = this.chess.move({
+        from: fromSq,
+        to: toSq,
+        promotion: moveObj.promotion || "q"
+      });
+    } catch {
+      result = null; // chess.js throws on an illegal (stale) move
+    }
 
     if (!result) {
       this.animating = false;
@@ -1875,19 +2140,12 @@ export class WizardChess3D {
 
     if (victimMesh && attackerMesh) {
       await this.playBattleCaptureSequence(attackerMesh, victimMesh, fromSq, toSq, victimSq, result);
+      if (gen !== this.gameGen) return; // a new or resumed game replaced this one mid-duel
       this.capturedCounts[result.color].push(result.captured);
-      if (
-        typeof BridgeProgression !== "undefined" &&
-        (this.mode === "2p" || result.color === this.playerColor)
-      ) {
-        const tier = DIFFICULTY_TIERS[this.aiDifficulty] || DIFFICULTY_TIERS[3];
-        BridgeProgression.awardCoins(tier.capReward || 5, "wizard_chess_capture", {
-          captured: result.captured,
-          difficulty: this.aiDifficulty
-        });
-      }
+      this.payCaptureReward(result);
     } else if (attackerMesh) {
       await this.playSlideOrLeap(attackerMesh, fromSq, toSq, result.piece === "n");
+      if (gen !== this.gameGen) return;
     }
 
     // Castling rook slide
@@ -1898,6 +2156,7 @@ export class WizardChess3D {
       const rookMesh = this.pieceMeshes.get(rookFrom);
       if (rookMesh) {
         await this.playSlideOrLeap(rookMesh, rookFrom, rookTo, false);
+        if (gen !== this.gameGen) return;
         this.pieceMeshes.delete(rookFrom);
         rookMesh.userData.square = rookTo;
         this.pieceMeshes.set(rookTo, rookMesh);
@@ -1950,10 +2209,72 @@ export class WizardChess3D {
     }
 
     if (this.mode === "ai" && this.chess.turn() !== this.playerColor) {
-      setTimeout(() => this.playAIMove(), 240);
+      setTimeout(() => this.playAIMove(gen), 240);
     } else {
       this.animating = false;
     }
+  }
+
+  // ---------- Coin rewards ----------
+  freshRewardState() {
+    return {
+      gameId: newGameId(),
+      practice: false, // Undo used: this game pays nothing more
+      captureCoins: 0, // capture coins paid this game (≤ CAPTURE_COINS_PER_GAME)
+      winPaid: false,
+      winCoins: 0,
+      tier: this.aiDifficulty // the easiest AI level played this game sets the rewards
+    };
+  }
+
+  payCaptureReward(result) {
+    const r = this.reward;
+    if (this.mode !== "ai" || r.practice || result.color !== this.playerColor) return;
+    const tier = DIFFICULTY_TIERS[r.tier] || DIFFICULTY_TIERS[3];
+    const want = Math.min(tier.capReward || 0, CAPTURE_COINS_PER_GAME - r.captureCoins);
+    if (want <= 0) return;
+    const paid = payChessCoins(want, "wizard_chess_capture", {
+      captured: result.captured,
+      difficulty: r.tier,
+      game: r.gameId
+    });
+    r.captureCoins += paid;
+    this.emitReward({ kind: "capture", coins: paid, wanted: want });
+  }
+
+  emitReward(evt) {
+    if (this.callbacks.onReward) this.callbacks.onReward(evt || {});
+  }
+
+  /** What this game can still pay, for the sidebar. */
+  getRewardInfo() {
+    const r = this.reward;
+    const tier = DIFFICULTY_TIERS[r.tier] || DIFFICULTY_TIERS[3];
+    const daily = readChessDaily();
+    return {
+      mode: this.mode,
+      practice: r.practice,
+      tierName: tier.name,
+      capReward: tier.capReward,
+      winReward: tier.reward,
+      captureCoins: r.captureCoins,
+      captureCap: CAPTURE_COINS_PER_GAME,
+      winPaid: r.winPaid,
+      winCoins: r.winCoins,
+      dailyCoins: daily.coins,
+      dailyCap: CHESS_DAILY_COIN_CAP
+    };
+  }
+
+  /** Changing the AI level mid-game: rewards follow the easiest level faced once the player has moved. */
+  setDifficulty(level) {
+    const n = DIFFICULTY_TIERS[level] ? Number(level) : 3;
+    this.aiDifficulty = n;
+    const playerMoved = this.chess
+      .history({ verbose: true })
+      .some((m) => m.color === this.playerColor);
+    this.reward.tier = playerMoved ? Math.min(this.reward.tier, n) : n;
+    this.emitReward({ kind: "tier" });
   }
 
   async updateLiveEvalAsync(plyIndex) {
@@ -2605,12 +2926,14 @@ export class WizardChess3D {
   }
 
   // ---------- Stockfish + Fallback AI Move Selection ----------
-  async playAIMove() {
+  async playAIMove(gen = this.gameGen) {
+    if (gen !== this.gameGen) return; // scheduled by a game that has since been replaced
     if (this.chess.isGameOver() || this.reviewMode) {
       this.animating = false;
       return;
     }
     const move = await this.chooseBestAIMove();
+    if (gen !== this.gameGen) return; // the game changed while the engine was thinking
     if (!move) {
       this.animating = false;
       return;
@@ -2878,22 +3201,43 @@ export class WizardChess3D {
     if (latest && this.callbacks.onEvalUpdate) {
       this.callbacks.onEvalUpdate(latest.evalCpWhite, null);
     }
+    this.resumeAIIfItsTurn();
+  }
+
+  // If it's the AI's move and nothing is already playing it, play it.
+  resumeAIIfItsTurn(delay = 450) {
+    if (this.mode !== "ai" || this.animating || this.reviewMode || this.chess.isGameOver()) return;
+    if (this.chess.turn() === this.playerColor) return;
+    this.animating = true;
+    const gen = this.gameGen;
+    setTimeout(() => this.playAIMove(gen), delay);
   }
 
   // ---------- Game Controls & State Callbacks ----------
+  // Shared by newGame / resumeGame: drop selection, markers, arrows and debris of the old game.
+  resetTransientState() {
+    this.gameGen++;
+    this.reviewMode = false;
+    this.selectedSquare = null;
+    this.legalMovesForSelected = [];
+    this.animating = false;
+    this.clearMarkers();
+    this.clearReviewArrows();
+    for (const s of this.shards) {
+      this.scene.remove(s.mesh);
+    }
+    this.shards.length = 0;
+  }
+
   newGame(options = {}) {
     if (options.mode) this.mode = options.mode;
     if (options.aiDifficulty) this.aiDifficulty = Number(options.aiDifficulty);
     if (options.playerColor) this.playerColor = options.playerColor;
 
+    this.resetTransientState();
     this.chess.reset();
-    this.reviewMode = false;
-    this.selectedSquare = null;
-    this.legalMovesForSelected = [];
     this.capturedCounts = { w: [], b: [] };
-    this.animating = false;
-    this.clearMarkers();
-    this.clearReviewArrows();
+    this.reward = this.freshRewardState();
 
     this.timeline = [
       {
@@ -2908,20 +3252,120 @@ export class WizardChess3D {
       }
     ];
 
-    for (const s of this.shards) {
-      this.scene.remove(s.mesh);
-    }
-    this.shards.length = 0;
-
     this.syncPiecesFromBoard();
     this.setCameraPreset(this.playerColor === "w" ? "white" : "black");
     if (this.callbacks.onEvalUpdate) this.callbacks.onEvalUpdate(20, null);
     this.notifyStateChange(null);
+    this.resumeAIIfItsTurn();
+  }
 
-    if (this.mode === "ai" && this.playerColor === "b") {
-      this.animating = true;
-      setTimeout(() => this.playAIMove(), 450);
+  /** A snapshot of the game for localStorage (see app.js saveWizardGame). */
+  exportState() {
+    return {
+      v: 1,
+      pgn: this.chess.pgn(),
+      fen: this.chess.fen(),
+      moves: this.chess.history().length,
+      over: this.chess.isGameOver(),
+      mode: this.mode,
+      aiDifficulty: this.aiDifficulty,
+      playerColor: this.playerColor,
+      themeId: this.themeId,
+      reward: { ...this.reward },
+      savedAt: Date.now()
+    };
+  }
+
+  /** Restores a snapshot from exportState(). Returns false if it can't be read. */
+  resumeGame(saved) {
+    if (!saved || (!saved.pgn && !saved.fen)) return false;
+    const probe = new Chess();
+    let ok = false;
+    if (saved.pgn) {
+      try {
+        probe.loadPgn(saved.pgn);
+        ok = !saved.fen || probe.fen() === saved.fen;
+      } catch {
+        ok = false;
+      }
     }
+    if (!ok && saved.fen) {
+      try {
+        probe.load(saved.fen); // position only: the move list is lost but the game goes on
+        ok = true;
+      } catch {
+        ok = false;
+      }
+    }
+    if (!ok) return false;
+
+    this.resetTransientState();
+    this.mode = saved.mode === "2p" ? "2p" : "ai";
+    this.aiDifficulty = DIFFICULTY_TIERS[saved.aiDifficulty] ? Number(saved.aiDifficulty) : 3;
+    this.playerColor = saved.playerColor === "b" ? "b" : "w";
+    this.chess = probe;
+
+    const r = saved.reward || {};
+    const fresh = this.freshRewardState();
+    this.reward = {
+      gameId: typeof r.gameId === "string" && r.gameId ? r.gameId : fresh.gameId,
+      practice: Boolean(r.practice),
+      captureCoins: Math.max(0, Math.min(CAPTURE_COINS_PER_GAME, Number(r.captureCoins) || 0)),
+      winPaid: Boolean(r.winPaid),
+      winCoins: Number(r.winCoins) || 0,
+      tier: DIFFICULTY_TIERS[r.tier] ? Number(r.tier) : this.aiDifficulty
+    };
+
+    this.rebuildTimelineFromHistory();
+    this.capturedCounts = this.capturedFromHistory();
+    this.syncPiecesFromBoard();
+    this.setCameraPreset(this.playerColor === "w" ? "white" : "black");
+    const latest = this.timeline[this.timeline.length - 1];
+    if (this.callbacks.onEvalUpdate) this.callbacks.onEvalUpdate(latest.evalCpWhite, null);
+    this.updateLiveEvalAsync(this.timeline.length - 1);
+    this.notifyStateChange(null);
+    this.resumeAIIfItsTurn();
+    return true;
+  }
+
+  rebuildTimelineFromHistory() {
+    const history = this.chess.history({ verbose: true });
+    const startFen = history.length ? null : this.chess.fen();
+    const temp = new Chess(startFen || undefined);
+    this.timeline = [
+      {
+        ply: 0,
+        fen: temp.fen(),
+        san: "Start",
+        uci: null,
+        color: null,
+        evalCpWhite: history.length ? 20 : this.evaluateBoard(temp),
+        bestMoveUci: null,
+        classification: null
+      }
+    ];
+    for (const mv of history) {
+      temp.move(mv.san);
+      this.timeline.push({
+        ply: this.timeline.length,
+        fen: temp.fen(),
+        san: mv.san,
+        uci: mv.from + mv.to + (mv.promotion || ""),
+        color: mv.color,
+        captured: mv.captured || null,
+        evalCpWhite: this.evaluateBoard(temp),
+        bestMoveUci: null,
+        classification: null
+      });
+    }
+  }
+
+  capturedFromHistory() {
+    const counts = { w: [], b: [] };
+    for (const mv of this.chess.history({ verbose: true })) {
+      if (mv.captured) counts[mv.color].push(mv.captured);
+    }
+    return counts;
   }
 
   undoLastRound() {
@@ -2929,12 +3373,27 @@ export class WizardChess3D {
     this.reviewMode = false;
     this.clearReviewArrows();
 
+    let undone = 0;
+    const popPly = () => {
+      if (!this.chess.undo()) return false;
+      this.timeline.pop();
+      undone++;
+      return true;
+    };
     if (this.mode === "ai") {
-      if (this.chess.undo()) this.timeline.pop();
-      if (this.chess.undo()) this.timeline.pop();
+      // Back to the player's previous turn: one ply if the player made the last
+      // move (e.g. delivered mate), two if the AI replied.
+      popPly();
+      while (this.chess.turn() !== this.playerColor && popPly()) {
+        // keep stepping back
+      }
     } else {
-      if (this.chess.undo()) this.timeline.pop();
+      popPly();
     }
+    // Undo makes this a practice game: no further capture or win rewards
+    if (undone > 0) this.reward.practice = true;
+
+    this.capturedCounts = this.capturedFromHistory();
     this.selectedSquare = null;
     this.clearMarkers();
     this.syncPiecesFromBoard();
@@ -2943,6 +3402,8 @@ export class WizardChess3D {
       this.callbacks.onEvalUpdate(latest.evalCpWhite, null);
     }
     this.notifyStateChange(null);
+    // Playing Black and stepped back to the start: the AI opens again
+    this.resumeAIIfItsTurn();
   }
 
   notifyStateChange(lastMove) {
@@ -2963,18 +3424,24 @@ export class WizardChess3D {
   }
 
   handleGameOver() {
-    if (this.chess.isCheckmate()) {
-      const winner = this.chess.turn() === "w" ? "b" : "w";
-      const playerWon = this.mode === "2p" || winner === this.playerColor;
-      if (playerWon && typeof BridgeProgression !== "undefined") {
-        const tier = DIFFICULTY_TIERS[this.aiDifficulty] || DIFFICULTY_TIERS[3];
-        BridgeProgression.awardCoins(tier.reward, "wizard_chess_victory", {
-          difficulty: this.aiDifficulty,
-          mode: this.mode
-        });
-        BridgeProgression.recordAchievement("first_light", 100, { game: "chess" });
-      }
+    if (!this.chess.isCheckmate()) return;
+    const winner = this.chess.turn() === "w" ? "b" : "w";
+    const r = this.reward;
+    // Pass & Play pays nothing, a practice (undo) game pays nothing, and a game id pays its win once
+    if (this.mode !== "ai" || winner !== this.playerColor || r.practice || r.winPaid) return;
+    r.winPaid = true;
+    if (typeof BridgeProgression === "undefined" || !claimWinForGame(r.gameId)) {
+      this.emitReward({ kind: "win", coins: 0 });
+      return;
     }
+    const tier = DIFFICULTY_TIERS[r.tier] || DIFFICULTY_TIERS[3];
+    r.winCoins = payChessCoins(tier.reward, "wizard_chess_victory", {
+      difficulty: r.tier,
+      mode: this.mode,
+      game: r.gameId
+    });
+    BridgeProgression.recordAchievement("first_light", 100, { game: "chess" });
+    this.emitReward({ kind: "win", coins: r.winCoins, wanted: tier.reward });
   }
 
   // ---------- Render Loop ----------

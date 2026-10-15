@@ -1146,9 +1146,14 @@ body {
   right: 18px;
   z-index: 9;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 6px;
+  max-width: calc(100% - 64px); /* clear of the eval bar on narrow stages: wrap, don't spill left */
 }
+
+.stage-hud-bar .stage-hud-btn { white-space: nowrap; }
 
 .stage-hud-btn {
   font-family: var(--mono);
@@ -1251,3 +1256,178 @@ body.wizard-theater.theater-drawer-open .wizard-chronicle {
   border: 1px solid rgba(255, 185, 95, 0.45);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85);
 }
+
+/* ===== Embedding: the Bridge's modal (iframe) vs a page of its own ===== */
+/* Standalone, the shared skin bar (44px, fixed) sits over the top of the page */
+html.standalone .library { padding-top: 66px; }
+@media (max-width: 760px) {
+  html.standalone .library { padding-top: 62px; }
+}
+
+/* One back link at most: in the modal the Bridge's Leave button does it, standalone the
+   skin bar's ← BRIDGE; the page's own link is only the fallback when the skin bar is missing */
+html.in-frame .back-link,
+html.standalone .back-link { display: none; }
+html.standalone.no-skin-bar .back-link { display: inline; }
+html.standalone.no-skin-bar .library { padding-top: 22px; }
+
+html.in-frame .library { padding-top: 16px; }
+html.in-frame body.wizard-theater .eval-bar-wrap { top: 18px; bottom: 18px; }
+html.in-frame body.wizard-theater .stage-hud-bar,
+html.in-frame body.wizard-theater .duel-banner { top: 16px; }
+html.in-frame body.wizard-theater.theater-drawer-open .wizard-chronicle { top: 62px; }
+
+/* ===== Practice / no-reward note on the stage ===== */
+.reward-note {
+  position: absolute;
+  left: 46px;
+  bottom: 18px;
+  z-index: 7;
+  max-width: calc(100% - 64px);
+  padding: 5px 12px;
+  border-radius: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--page-bright);
+  background: rgba(18, 8, 6, 0.82);
+  border: 1px solid rgba(200, 140, 80, 0.45);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.reward-note[hidden] { display: none !important; }
+body.wizard-theater .reward-note { left: 54px; bottom: 70px; }
+
+.engine-badge.is-waking {
+  background: rgba(200, 160, 72, 0.14);
+  border-color: rgba(208, 160, 72, 0.5);
+  color: #f0d090;
+}
+
+/* ===== Loading card + Resume / New game ===== */
+.wc-stage-overlay {
+  position: absolute;
+  inset: 10px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: radial-gradient(circle at 50% 45%, rgba(36, 22, 12, 0.62), rgba(10, 5, 3, 0.86));
+}
+.wc-stage-overlay[hidden] { display: none !important; }
+body.wizard-theater .wc-stage-overlay { inset: 0; border-radius: 0; }
+
+.wc-overlay-card {
+  width: min(360px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 24px;
+  border-radius: 8px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(62, 38, 20, 0.95), rgba(36, 22, 12, 0.96));
+  border: 1px solid rgba(208, 160, 72, 0.55);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 220, 160, 0.08);
+}
+
+.wc-loading,
+.wc-resume {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+.wc-loading[hidden],
+.wc-resume[hidden] { display: none !important; }
+.wc-loading:not([hidden]) + .wc-resume:not([hidden]) {
+  border-top: 1px solid rgba(208, 160, 72, 0.3);
+  padding-top: 14px;
+}
+
+.wc-spinner {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 3px solid rgba(208, 160, 72, 0.22);
+  border-top-color: #d0a048;
+  border-right-color: #ffb050;
+  animation: wc-spin 0.9s linear infinite;
+}
+@keyframes wc-spin { to { transform: rotate(360deg); } }
+
+.wc-loading-title,
+.wc-resume-title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--page-bright);
+}
+
+.wc-progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(20, 8, 10, 0.7);
+  border: 1px solid rgba(160, 128, 64, 0.4);
+}
+.wc-progress-bar {
+  width: 4%;
+  height: 100%;
+  background: linear-gradient(90deg, #a08040, #d0a048, #ffb050);
+  transition: width 0.25s ease;
+}
+.wc-loading.is-indeterminate .wc-progress-bar {
+  width: 35%;
+  animation: wc-sweep 1.3s ease-in-out infinite;
+}
+@keyframes wc-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(290%); }
+}
+
+.wc-loading-detail,
+.wc-loading-engine,
+.wc-resume-detail {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--page);
+  line-height: 1.5;
+}
+.wc-loading-engine { color: var(--leather); }
+
+.wc-loading.is-error .wc-spinner { animation: none; border-color: rgba(196, 69, 54, 0.6); }
+.wc-loading.is-error .wc-progress { display: none; }
+.wc-loading.is-error .wc-loading-title { color: #ff9a80; }
+
+.wc-resume-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+.wc-resume-actions button {
+  font-family: var(--serif);
+  font-size: 15px;
+  padding: 9px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--page-bright);
+  background: linear-gradient(180deg, var(--oak-light), var(--oak-mid));
+  border: 1px solid var(--oak-deep);
+  box-shadow: inset 0 1px 0 rgba(255, 200, 130, 0.15), 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+.wc-resume-actions button:hover {
+  color: var(--ember-bright);
+  border-color: var(--leather);
+}
+.wc-resume-actions .wc-resume-primary {
+  background: linear-gradient(180deg, #d0a048, #a08040);
+  border-color: #6e4828;
+  color: #24160c;
+  font-weight: 600;
+}
+.wc-resume-actions .wc-resume-primary:hover { color: #000; filter: brightness(1.08); }

@@ -7,10 +7,38 @@ import {
 } from "https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/src/Chessboard.js";
 import { Markers } from "https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/src/extensions/markers/Markers.js";
 import { OPENINGS } from "./openings.js";
-import { WizardChess3D } from "./wizard-chess.js";
+import {
+  WizardChess3D,
+  WIZARD_THEMES,
+  DIFFICULTY_TIERS,
+  readChessDaily,
+  payChessCoins
+} from "./wizard-chess.js";
+
+// The module graph loaded (three.js, chess.js): the boot watchdog in index.html can stand down
+window.__wizardChessBooted = true;
 
 const ASSETS_URL = "https://cdn.jsdelivr.net/npm/cm-chessboard@8.7.6/assets/";
 const STATS_KEY = "becknology-chess-stats-v1";
+// The Wizard Chess game in progress, so closing the Bridge's modal and coming back resumes it
+const SAVE_KEY = "becknology-chess-wizard-save-v1";
+
+const IN_FRAME = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+})();
+
+// ?theme= picks the board for where the game was opened (the Bridge opens /chess?theme=ship)
+const URL_THEME = (new URLSearchParams(window.location.search).get("theme") || "").toLowerCase();
+const LAUNCH_THEME = WIZARD_THEMES[URL_THEME] ? URL_THEME : "classic";
+
+const WIZARD_SUBTITLES = {
+  classic: "Carved stone and obsidian sentinels clash by hearthfire. Drag to orbit, click a piece to command.",
+  ship: "Boxwood and walnut on the captain's chart table, by lantern light. Drag to orbit, click a piece to command."
+};
 
 // custom marker types so we can recolor in CSS
 const MARKER_HINT = { class: "marker-square-hint", slice: "markerSquare" };
@@ -74,6 +102,18 @@ const els = {
   wcStageReviewBtn: document.getElementById("wc-stage-review-btn"),
   wcTheme: document.getElementById("wc-theme"),
   promoModal: document.getElementById("promo-modal"),
+  wcSpoils: document.getElementById("wc-spoils"),
+  wcRewardNote: document.getElementById("wc-reward-note"),
+  wcOverlay: document.getElementById("wc-stage-overlay"),
+  wcLoading: document.getElementById("wc-loading"),
+  wcLoadingTitle: document.getElementById("wc-loading-title"),
+  wcLoadingDetail: document.getElementById("wc-loading-detail"),
+  wcLoadingEngine: document.getElementById("wc-loading-engine"),
+  wcProgressBar: document.getElementById("wc-progress-bar"),
+  wcResume: document.getElementById("wc-resume"),
+  wcResumeDetail: document.getElementById("wc-resume-detail"),
+  wcResumeBtn: document.getElementById("wc-resume-btn"),
+  wcResumeNewBtn: document.getElementById("wc-resume-new-btn"),
 
   // Opening Trainer elements
   list: document.getElementById("opening-list"),
@@ -95,8 +135,10 @@ let isTheaterMode = false;
 let userExitedTheater = false;
 const CAM_CYCLE = ["white", "cinematic", "top", "black"];
 let camCycleIdx = 0;
-const THEME_CYCLE = ["classic", "lumar", "arcadia", "enigma", "singularity"];
-let themeCycleIdx = 0;
+const THEME_CYCLE = ["classic", "ship", "lumar", "arcadia", "enigma", "singularity"];
+let themeCycleIdx = Math.max(0, THEME_CYCLE.indexOf(LAUNCH_THEME));
+let assetsLoaded = false; // the sculpted pieces arrived (or we gave up waiting)
+let resumePending = null; // a saved game offered to the player, not yet resumed or dismissed
 
 let chess = new Chess();
 let board = null;
@@ -130,8 +172,7 @@ function switchTab(tab) {
 
   if (isWizard) {
     els.pageTitle.textContent = "Wizard Chess 3D";
-    els.pageSubtitle.textContent =
-      "Carved stone and obsidian sentinels clash by hearthfire. Drag to orbit, click a piece to command.";
+    els.pageSubtitle.textContent = wizardSubtitle();
     if (wizardGame) {
       wizardGame.activeTab = true;
       wizardGame.onResize();
@@ -154,6 +195,9 @@ function setTheaterMode(enabled, manual = false) {
     userExitedTheater = false;
   }
   document.body.classList.toggle("wizard-theater", isTheaterMode);
+  // Inside the Bridge's modal, Esc leaves full screen first; the next Esc closes the modal
+  // (progression.js asks the Bridge to close unless the page owns Esc)
+  if (IN_FRAME) window.__bridgeOwnsEsc = isTheaterMode;
   if (!isTheaterMode) {
     document.body.classList.remove("theater-drawer-open");
   }
@@ -171,6 +215,12 @@ function setTheaterMode(enabled, manual = false) {
 function initWizardChess() {
   wizardGame = new WizardChess3D(els.wizardStage, {
     onStateChange: renderWizardState,
+    onReward: () => {
+      renderRewardInfo();
+      saveWizardGame();
+    },
+    onAssetProgress: showAssetProgress,
+    onAssetsReady: finishAssetLoading,
     onEvalUpdate: updateEvalBar,
     onBattleStart: () => {
       if (!isTheaterMode && !userExitedTheater) {
@@ -186,14 +236,42 @@ function initWizardChess() {
         els.wcDuelBanner.hidden = true;
       }
     },
-    onEngineStatus: (isReady) => {
-      if (!els.wcEngineBadge) return;
-      els.wcEngineBadge.textContent = isReady ? "⚡ Stockfish UCI" : "⚡ Arcane Engine";
-    },
+    onEngineStatus: showEngineStatus,
     onPromotionPrompt: (cb) => {
       pendingPromoCallback = cb;
       els.promoModal.hidden = false;
     }
+  }, { theme: LAUNCH_THEME });
+  reflectTheme(wizardGame.currentTheme);
+  renderRewardInfo();
+  if (!assetsLoaded) {
+    // (clears the boot watchdog's error if the CDN was merely slow)
+    els.wcLoading.classList.remove("is-error");
+    els.wcLoadingTitle.textContent = "Summoning the pieces…";
+    els.wcLoadingDetail.textContent = "Fetching the sculpted statues (4 MB)";
+    if (engineState === null) els.wcLoadingEngine.textContent = "Stockfish is waking…";
+  }
+
+  // Don't leave the loading card up forever on a slow link: play with stand-in pieces
+  setTimeout(() => {
+    if (!assetsLoaded) finishAssetLoading(false, true);
+  }, 30000);
+  // Stockfish never answered either way: say the arcane engine is playing
+  setTimeout(() => {
+    if (engineState === null) showEngineStatus(false, true);
+  }, 20000);
+
+  // Offer the game left in progress (resume / new) while the pieces load
+  offerResume();
+  if (els.wcResumeBtn) els.wcResumeBtn.addEventListener("click", resumeSavedGame);
+  if (els.wcResumeNewBtn) {
+    els.wcResumeNewBtn.addEventListener("click", () => startNewWizardGame(false));
+  }
+
+  // Save on the way out too (closing the Bridge's modal unloads this page)
+  window.addEventListener("pagehide", saveWizardGame);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") saveWizardGame();
   });
 
   // Mode change
@@ -204,22 +282,15 @@ function initWizardChess() {
     startNewWizardGame(false);
   });
 
-  // Difficulty change
+  // Difficulty change (rewards follow the easiest level played this game)
   els.wcDifficulty.addEventListener("change", () => {
-    wizardGame.aiDifficulty = Number(els.wcDifficulty.value);
+    wizardGame.setDifficulty(Number(els.wcDifficulty.value));
+    saveWizardGame();
   });
 
   // Theme / Sculpt Style change
   if (els.wcTheme) {
-    els.wcTheme.addEventListener("change", () => {
-      const val = els.wcTheme.value;
-      themeCycleIdx = Math.max(0, THEME_CYCLE.indexOf(val));
-      const t = wizardGame.setTheme(val);
-      if (t && els.wcStageThemeBtn) {
-        els.wcStageThemeBtn.textContent = `🎨 ${t.whiteLabel}`;
-        els.wcStageThemeBtn.title = `Theme: ${t.name} (Click to cycle)`;
-      }
-    });
+    els.wcTheme.addEventListener("change", () => applyTheme(els.wcTheme.value));
   }
 
   // Side selection pills
@@ -253,14 +324,7 @@ function initWizardChess() {
   }
   if (els.wcStageThemeBtn) {
     els.wcStageThemeBtn.addEventListener("click", () => {
-      themeCycleIdx = (themeCycleIdx + 1) % THEME_CYCLE.length;
-      const nextId = THEME_CYCLE[themeCycleIdx];
-      if (els.wcTheme) els.wcTheme.value = nextId;
-      const t = wizardGame.setTheme(nextId);
-      if (t) {
-        els.wcStageThemeBtn.textContent = `🎨 ${t.whiteLabel}`;
-        els.wcStageThemeBtn.title = `Theme: ${t.name} (Click to cycle)`;
-      }
+      applyTheme(THEME_CYCLE[(themeCycleIdx + 1) % THEME_CYCLE.length]);
     });
   }
   if (els.wcStageCamBtn) {
@@ -359,6 +423,192 @@ function initWizardChess() {
   });
 }
 
+function applyTheme(id) {
+  const t = wizardGame.setTheme(id);
+  reflectTheme(t);
+  saveWizardGame();
+}
+
+// Sidebar select, the stage's Style button and the subtitle follow the board's theme
+function reflectTheme(t) {
+  if (!t) return;
+  themeCycleIdx = Math.max(0, THEME_CYCLE.indexOf(t.id));
+  if (els.wcTheme) els.wcTheme.value = t.id;
+  if (els.wcStageThemeBtn) {
+    els.wcStageThemeBtn.textContent = `🎨 ${t.whiteLabel}`;
+    els.wcStageThemeBtn.title = `Theme: ${t.name} (Click to cycle)`;
+  }
+  if (!els.viewWizard.hidden) els.pageSubtitle.textContent = wizardSubtitle();
+}
+
+function wizardSubtitle() {
+  const id = wizardGame ? wizardGame.themeId : LAUNCH_THEME;
+  return WIZARD_SUBTITLES[id] || WIZARD_SUBTITLES.classic;
+}
+
+// ---------- Loading card (the 4.3 MB sculpt file and Stockfish) ----------
+
+let engineState = null; // null = still waking, true = Stockfish, false = the local engine
+
+function showAssetProgress(loaded, total) {
+  if (assetsLoaded) return;
+  const mb = (n) => (n / 1048576).toFixed(1);
+  els.wcLoadingTitle.textContent = "Summoning the pieces…";
+  if (total > 0) {
+    const pct = Math.min(100, Math.round((loaded / total) * 100));
+    els.wcProgressBar.style.width = `${pct}%`;
+    els.wcLoadingDetail.textContent = `Carving the statues · ${mb(loaded)} of ${mb(total)} MB`;
+  } else {
+    els.wcLoading.classList.add("is-indeterminate");
+    els.wcLoadingDetail.textContent = `Carving the statues · ${mb(loaded)} MB`;
+  }
+}
+
+function finishAssetLoading(ok, timedOut = false) {
+  if (assetsLoaded) return;
+  assetsLoaded = true;
+  els.wcProgressBar.style.width = "100%";
+  els.wcLoading.hidden = true;
+  if (!ok) {
+    els.wizardStatus.textContent = timedOut
+      ? "The sculpted pieces are still on their way — playing with stand-ins until they arrive."
+      : "The sculpted pieces couldn't be loaded — playing with stand-in pieces.";
+  }
+  updateStageOverlay();
+}
+
+function showEngineStatus(isReady, timedOut = false) {
+  engineState = Boolean(isReady);
+  if (els.wcEngineBadge) {
+    els.wcEngineBadge.textContent = isReady ? "⚡ Stockfish UCI" : "⚡ Arcane Engine";
+    els.wcEngineBadge.classList.remove("is-waking");
+    els.wcEngineBadge.title = isReady
+      ? "Stockfish is playing"
+      : "Stockfish couldn't be reached — the built-in engine is playing";
+  }
+  if (els.wcLoadingEngine) {
+    els.wcLoadingEngine.textContent = isReady
+      ? "Stockfish is awake."
+      : timedOut
+        ? "Stockfish is slow to wake — the arcane engine plays meanwhile."
+        : "Stockfish is out of reach — the arcane engine will play.";
+  }
+}
+
+function updateStageOverlay() {
+  if (!els.wcOverlay) return;
+  els.wcResume.hidden = !resumePending;
+  els.wcOverlay.hidden = assetsLoaded && !resumePending;
+}
+
+// ---------- Save / resume the game in progress ----------
+
+function saveWizardGame() {
+  if (!wizardGame || resumePending) return; // don't overwrite a save the player hasn't answered
+  const st = wizardGame.exportState();
+  try {
+    if (st.moves === 0 || st.over) localStorage.removeItem(SAVE_KEY);
+    else localStorage.setItem(SAVE_KEY, JSON.stringify(st));
+  } catch {
+    // storage full or blocked: the game just won't resume
+  }
+}
+
+function loadSavedGame() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+    return s && s.v === 1 && s.moves > 0 && !s.over ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+function discardSavedGame() {
+  resumePending = null;
+  try {
+    localStorage.removeItem(SAVE_KEY);
+  } catch {
+    // nothing to discard
+  }
+  updateStageOverlay();
+}
+
+function offerResume() {
+  const saved = loadSavedGame();
+  if (!saved) return;
+  resumePending = saved;
+  const tier = DIFFICULTY_TIERS[saved.aiDifficulty] || DIFFICULTY_TIERS[3];
+  const who =
+    saved.mode === "2p"
+      ? "Pass & Play"
+      : `${saved.playerColor === "b" ? "Obsidian" : "Ivory"} vs ${tier.name}`;
+  const moveNo = Math.max(1, Math.ceil(saved.moves / 2));
+  const theme = WIZARD_THEMES[saved.themeId];
+  els.wcResumeDetail.textContent =
+    `${who} · move ${moveNo}` +
+    (theme ? ` · ${theme.worldName}` : "") +
+    (saved.reward && saved.reward.practice ? " · practice game" : "");
+  updateStageOverlay();
+}
+
+function resumeSavedGame() {
+  const saved = resumePending;
+  resumePending = null;
+  updateStageOverlay();
+  if (!saved) return;
+
+  // Put the sidebar back the way that game was set up
+  els.wcMode.value = saved.mode === "2p" ? "2p" : "ai";
+  const isAI = els.wcMode.value === "ai";
+  els.wcDiffGroup.style.display = isAI ? "flex" : "none";
+  els.wcSideGroup.style.display = isAI ? "flex" : "none";
+  if (DIFFICULTY_TIERS[saved.aiDifficulty]) els.wcDifficulty.value = String(saved.aiDifficulty);
+  const side = saved.playerColor === "b" ? "b" : "w";
+  document.querySelectorAll(".pill-btn[data-side]").forEach((b) =>
+    b.classList.toggle("active", b.dataset.side === side)
+  );
+  if (WIZARD_THEMES[saved.themeId] && saved.themeId !== wizardGame.themeId) {
+    reflectTheme(wizardGame.setTheme(saved.themeId));
+  }
+
+  closeReviewPanel();
+  if (!wizardGame.resumeGame(saved)) {
+    startNewWizardGame(false);
+    els.wizardStatus.textContent = "That saved battle couldn't be read — a fresh one is set up.";
+  }
+}
+
+// ---------- Rewards (see payChessCoins in wizard-chess.js) ----------
+
+function renderRewardInfo() {
+  if (!wizardGame || !els.wcSpoils) return;
+  const info = wizardGame.getRewardInfo();
+  const dailyFull = info.dailyCoins >= info.dailyCap;
+  const today = `Today <span class="stat-num">${info.dailyCoins}/${info.dailyCap}🪙</span>`;
+  let note = "";
+
+  if (info.mode !== "ai") {
+    els.wcSpoils.innerHTML = `Pass &amp; Play pays no coins · ${today}`;
+    note = "Pass & Play — practice, no rewards";
+  } else if (info.practice) {
+    els.wcSpoils.innerHTML = `Practice game — undo used, no rewards · ${today}`;
+    note = "Practice game — undo used, no rewards";
+  } else {
+    const win = info.winPaid
+      ? `Victory paid <span class="stat-num">+${info.winCoins}🪙</span>`
+      : `<span class="stat-num">+${info.winReward}🪙</span> checkmate vs ${info.tierName}`;
+    els.wcSpoils.innerHTML =
+      `Spoils: <span class="stat-num">+${info.capReward}🪙</span> / shatter ` +
+      `(${info.captureCoins}/${info.captureCap} this game) · ${win} · ${today}`;
+    if (dailyFull) note = "Daily chess coins reached — play on for glory";
+  }
+
+  if (els.wcRewardNote) {
+    els.wcRewardNote.textContent = note;
+    els.wcRewardNote.hidden = !note;
+  }
+}
+
 function updateEvalBar(whiteCp, whiteMate) {
   if (!els.wcEvalWhite || !els.wcEvalScore) return;
   const clamped = Math.max(-900, Math.min(900, whiteCp || 0));
@@ -374,6 +624,7 @@ function updateEvalBar(whiteCp, whiteMate) {
 }
 
 function startNewWizardGame(autoExpand = false) {
+  discardSavedGame(); // a new battle replaces the one left in progress
   closeReviewPanel();
   if (autoExpand) {
     setTheaterMode(true);
@@ -606,6 +857,8 @@ function renderWizardMovesList(history, activePly = -1) {
 
 function renderWizardState(state) {
   lastWizardState = state;
+  renderRewardInfo();
+  saveWizardGame();
   const fmtCaps = (arr) =>
     arr.length ? arr.map((p) => PIECE_GLYPHS[p] || p).join(" ") : "—";
   els.capByWhite.textContent = fmtCaps(state.capturedCounts.w);
@@ -852,12 +1105,13 @@ function isComplete() {
 function finishLine() {
   board.disableMoveInput();
   const clean = errorCount === 0 && hintsUsed === 0;
+  const coinNote = payLineReward(clean);
   if (clean) {
-    setStatus("Mastered. The fire crackles in approval.", "complete");
+    setStatus(`Mastered. The fire crackles in approval.${coinNote}`, "complete");
     stats[current.id] = { mastered: true, plays: (stats[current.id]?.plays || 0) + 1 };
   } else {
     setStatus(
-      `Line complete — ${errorCount} miss${errorCount === 1 ? "" : "es"}, ${hintsUsed} hint${hintsUsed === 1 ? "" : "s"}.`,
+      `Line complete — ${errorCount} miss${errorCount === 1 ? "" : "es"}, ${hintsUsed} hint${hintsUsed === 1 ? "" : "s"}.${coinNote}`,
       ""
     );
     stats[current.id] = {
@@ -872,17 +1126,25 @@ function finishLine() {
   document.querySelectorAll(".opening-item").forEach(b => {
     b.classList.toggle("active", b.dataset.id === current.id);
   });
+}
 
-  // ---- Bridge progression ----
-  if (typeof BridgeProgression !== "undefined") {
-    // Base: 10 coins per completed line, +15 if clean (no errors, no hints)
-    const coinsEarned = 10 + (clean ? 15 : 0);
-    BridgeProgression.awardCoins(coinsEarned, "chess_line", {
-      opening: current.id, clean, errors: errorCount, hints: hintsUsed
-    });
-    BridgeProgression.recordAchievement("first_light", 100, { game: "chess" });
-    BridgeProgression.recordAchievement("bookworm", 50, { opening: current.id });
-  }
+// ---- Bridge progression ----
+// 10 coins a completed line, +15 if clean (no errors, no hints) — paid the first
+// time each line is completed in a day, inside the daily chess allowance.
+// Returns a note for the status line.
+function payLineReward(clean) {
+  if (typeof BridgeProgression === "undefined") return "";
+  BridgeProgression.recordAchievement("first_light", 100, { game: "chess" });
+  BridgeProgression.recordAchievement("bookworm", 50, { opening: current.id });
+  if (readChessDaily().lines.includes(current.id)) return " (Already rewarded today.)";
+  const paid = payChessCoins(
+    10 + (clean ? 15 : 0),
+    "chess_line",
+    { opening: current.id, clean, errors: errorCount, hints: hintsUsed },
+    (rec) => rec.lines.push(current.id)
+  );
+  if (wizardGame) renderRewardInfo();
+  return paid > 0 ? ` +${paid}🪙` : " (Today's chess coins are all won.)";
 }
 
 function flashError(square, expectedSan) {
