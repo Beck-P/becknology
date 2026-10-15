@@ -233,6 +233,7 @@ var BridgeAudio = (function () {
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
     if (/^singularity/.test(id)) return { theme: 'singularity', amb: ['rumble'] };
     if (id === 'verdance-home') return { theme: 'verdance', amb: ['fire', 'birds'] };
+    if (id === 'verdance' && typeof BridgeWeather !== 'undefined' && BridgeWeather.rainDay()) return { theme: 'verdance', amb: ['rain', 'breeze'] };
     if (/^verdance/.test(id)) return { theme: 'verdance', amb: ['breeze', 'birds'] };
     if (id === 'hoarfell-summit' || id === 'hoarfell-ridge' || id === 'hoarfell-icestep') return { theme: 'summit', amb: ['gale'] };
     if (id === 'hoarfell-hollow') return { theme: 'summit', amb: ['drips', 'chimes'] };

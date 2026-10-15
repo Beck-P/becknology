@@ -105,6 +105,7 @@ var BridgeHomestead = (function () {
       var q = s.sprinklers[i].split(','), dx = Math.abs(+q[0] - x), dy = Math.abs(+q[1] - y);
       if (dx <= 1 && dy <= 1) return Infinity;
     }
+    if (typeof BridgeWeather !== 'undefined' && BridgeWeather.rainDay()) return BridgeWeather.endOfDay();   // rain waters everything till midnight
     return active('tam') ? s.hands.tam : 0;
   }
   function placeSprinkler(x, y) {
