@@ -1,3 +1,4 @@
+import { ModeCabinet, MODE_GROUPS } from "./PixelArt.jsx";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
@@ -6323,33 +6324,27 @@ export default function ChoreChaosApp() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-          <button
-            onClick={() => { setSelectedModeId("auto"); wagerStartGame(); }}
-            disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)}
-            className="arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1))", border: "2px solid rgba(99,102,241,0.4)", boxShadow: "0 0 20px rgba(99,102,241,0.15)" }}
-          >
-            <div className="coin-spin mb-3 text-4xl">🎲</div>
-            <div className="pixel-font text-[10px] text-indigo-300" style={{ textShadow: "0 0 10px rgba(129,140,248,0.5)" }}>RANDOM</div>
-            <div className="pixel-font mt-2 text-[7px] text-indigo-400/60">??? SURPRISE ???</div>
-          </button>
-
-          {MODE_META.map((mode) => (
-            <button
-              key={mode.id}
-              onClick={() => { setSelectedModeId(mode.id); wagerStartGame(mode.id); }}
-              disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)}
-              className={`arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40 ${mode.cardHint}`}
-              style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.04] to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-              <div className="relative">
-                <div className="mb-3 text-4xl transition-transform group-hover:scale-125" style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.2))" }}>{mode.icon}</div>
-                <div className="pixel-font text-[9px] leading-tight text-white">{mode.name}</div>
-                <div className="pixel-font mt-2 text-[6px] leading-relaxed text-slate-500">{mode.blurb}</div>
+        <div className="mb-8">
+          <div className="mode-cab-row">
+            <ModeCabinet id="random" name="RANDOM" blurb="The machine picks the game. ??? Surprise ???" featured
+              onClick={() => { setSelectedModeId("auto"); wagerStartGame(); }}
+              disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)} />
+          </div>
+          {MODE_GROUPS.map((group) => (
+            <div key={group.name}>
+              <div className="mode-group-label">{group.name}</div>
+              <div className="mode-cab-row">
+                {group.ids.map((id) => {
+                  const mode = MODE_META.find((m) => m.id === id);
+                  if (!mode) return null;
+                  return (
+                    <ModeCabinet key={id} id={id} name={mode.name} blurb={mode.blurb}
+                      onClick={() => { setSelectedModeId(mode.id); wagerStartGame(mode.id); }}
+                      disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)} />
+                  );
+                })}
               </div>
-            </button>
+            </div>
           ))}
         </div>
 

@@ -1487,3 +1487,52 @@
 
     /* Smooth scrolling in modal */
     .overflow-y-auto { -webkit-overflow-scrolling: touch; }
+
+/* ---- The game selector: a row of little arcade cabinets (src/PixelArt.jsx) ----
+   Each cabinet glows in its mode's colour (--acc): a marquee with the name, a CRT with
+   the pixel icon, a control panel with the blurb. Pixelify Sans, like the Bridge. */
+.mode-group-label { font-family: 'Pixelify Sans', 'Press Start 2P', monospace; font-size: 13px; letter-spacing: 4px; color: #8a84a8; margin: 18px 0 10px; display: flex; align-items: center; gap: 12px; }
+.mode-group-label::after { content: ''; flex: 1; height: 2px; background: repeating-linear-gradient(90deg, rgba(138,132,168,0.35) 0 4px, transparent 4px 8px); }
+.mode-cab-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.mode-cab {
+  --acc: #9a7aff;
+  position: relative; display: flex; flex-direction: column; align-items: stretch; text-align: center; padding: 0; cursor: pointer;
+  background: linear-gradient(180deg, #1c1630 0%, #120e22 100%);
+  border: 2px solid #2a2440; border-radius: 10px 10px 4px 4px;
+  box-shadow: 0 6px 0 #0a0814, 0 10px 18px rgba(0,0,0,0.45);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  font-family: 'Pixelify Sans', 'Press Start 2P', monospace; color: #f4f0ff;
+}
+.mode-cab:hover:not(:disabled), .mode-cab:focus-visible { transform: translateY(-4px); border-color: var(--acc); box-shadow: 0 10px 0 #0a0814, 0 0 22px color-mix(in srgb, var(--acc) 45%, transparent), 0 14px 22px rgba(0,0,0,0.5); outline: none; }
+.mode-cab:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 3px 0 #0a0814; }
+.mode-cab:disabled { cursor: not-allowed; opacity: 0.4; filter: grayscale(0.6); }
+.mode-cab-marquee {
+  display: block; padding: 7px 6px 6px; font-size: 14px; font-weight: 600; letter-spacing: 1px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: #fff; text-shadow: 0 0 8px var(--acc), 0 0 2px var(--acc);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--acc) 30%, #120e22), #120e22);
+  border-bottom: 2px solid color-mix(in srgb, var(--acc) 60%, #000); border-radius: 8px 8px 0 0;
+}
+.mode-cab-screen {
+  position: relative; display: flex; align-items: center; justify-content: center; height: 96px; margin: 8px 10px 0;
+  background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--acc) 22%, #05040a) 0%, #05040a 75%);
+  border: 3px solid #0a0814; border-radius: 10px / 14px; box-shadow: inset 0 0 18px rgba(0,0,0,0.9);
+  overflow: hidden;
+}
+.mode-cab-screen::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px); pointer-events: none; }
+.mode-cab-icon { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--acc) 70%, transparent)); transition: transform 0.15s; }
+.mode-cab:hover:not(:disabled) .mode-cab-icon { animation: mode-cab-bob 0.6s steps(2) infinite; }
+@keyframes mode-cab-bob { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
+.mode-cab-panel { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 8px 10px; margin-top: 8px; background: #0e0b1a; border-top: 2px solid #2a2440; border-radius: 0 0 2px 2px; flex: 1; }
+.mode-cab-btns { display: flex; gap: 8px; }
+.mode-cab-btns i { width: 9px; height: 9px; border-radius: 50%; background: var(--acc); box-shadow: inset 0 -2px 0 rgba(0,0,0,0.35), 0 0 6px color-mix(in srgb, var(--acc) 60%, transparent); }
+.mode-cab-btns i + i { background: #f4f0ff; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.35); }
+.mode-cab-blurb { font-size: 12px; line-height: 1.3; color: #a8a2c4; }
+.mode-cab-featured { border-color: color-mix(in srgb, var(--acc) 55%, #2a2440); }
+.mode-cab-featured .mode-cab-screen { height: 110px; }
+.mode-cab-featured .mode-cab-marquee { font-size: 15px; }
+@media (max-width: 520px) {
+  .mode-cab-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .mode-cab-screen { height: 92px; }
+  .mode-cab-marquee { font-size: 13px; }
+  .mode-cab-blurb { font-size: 11px; }
+}

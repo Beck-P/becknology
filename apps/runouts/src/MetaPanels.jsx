@@ -1,3 +1,4 @@
+import { PixelIcon } from "./PixelArt.jsx";
 import React, { useEffect, useState } from 'react';
 
 export function JoinScreen({ roomCode, names, joinedPlayers, onJoinAsPlayer, onJoinAsSpectator, onLeave }) {
@@ -121,7 +122,7 @@ export function VoteGrid({ votes, deadline, onVote, playerName, MODE_META }) {
               'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] hover:border-indigo-500/30'
             }`}
           >
-            <div className="text-2xl mb-1">{mode.icon}</div>
+            <div className="mb-1 flex justify-center"><PixelIcon id={mode.id} size={36} /></div>
             <div className="pixel-font text-[7px] text-white leading-tight">{mode.name}</div>
             {voteCounts[mode.id] ? <div className="absolute top-1 right-1 bg-indigo-500 text-white rounded-full w-4 h-4 flex items-center justify-center pixel-font text-[6px]">{voteCounts[mode.id]}</div> : null}
           </button>

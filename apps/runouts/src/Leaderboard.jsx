@@ -226,7 +226,7 @@ export default function Leaderboard({ games, loading, error }) {
     return (
       <div className="mb-6 pt-2">
         <div className="pixel-divider mb-5" />
-        <div className="pixel-font text-[8px] text-rose-400 text-center py-4">Failed to load leaderboard</div>
+        <div className="pixel-font text-[8px] text-slate-500 text-center py-4">LEADERBOARD OFFLINE - PLAY ON</div>
       </div>
     );
   }
