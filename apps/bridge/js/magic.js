@@ -178,12 +178,12 @@ var BridgeMagic = (function () {
     var now = performance.now();
     if (now - lastCast < 450) return;
     var inv = BridgeInventory;
-    if (inv.getStats && inv.getStats().energy < 3) { sfx('error'); return say('MOONLIT WAND', 'THE WAND IS COLD IN YOUR HAND. YOU\'RE TOO TIRED - EAT, OR REST.'); }
+    if (inv.getStats && inv.getStats().energy < 3) { sfx('error'); return say(item.bolt === 'wisp' ? 'WISPCALLER STAFF' : 'MOONLIT WAND', (item.bolt === 'wisp' ? 'THE WISP IN THE STAFF GUTTERS.' : 'THE WAND IS COLD IN YOUR HAND.') + ' YOU\'RE TOO TIRED - EAT, OR REST.'); }
     lastCast = now;
     if (inv.useEnergy) inv.useEnergy(3);
     var f = BridgeCharacter.getFacing(), dx = f === 'right' ? 1 : f === 'left' ? -1 : 0, dy = f === 'down' ? 1 : f === 'up' ? -1 : 0;
-    bolts.push({ x: BridgeCharacter.getX() + 0.5, y: BridgeCharacter.getY() + 0.3, dx: dx, dy: dy, d: 0, dmg: item.damage || 30, at: now, trail: [] });
-    sfx('swish');
+    bolts.push({ x: BridgeCharacter.getX() + 0.5, y: BridgeCharacter.getY() + 0.3, dx: dx, dy: dy, d: 0, dmg: item.damage || 30, at: now, trail: [], w: item, wisp: item.bolt === 'wisp' });
+    sfx(item.bolt === 'wisp' ? 'zap' : 'swish');
   }
   function stepBolts(dt) {
     var world = BridgeWorld.getWorld();
@@ -193,7 +193,10 @@ var BridgeMagic = (function () {
       b.trail.push([b.x, b.y]); if (b.trail.length > 8) b.trail.shift();
       if (!world) return false;
       var hit = world.interactions.filter(function (it) { return it.type === 'hostile' && Math.hypot(it.x + 0.5 - b.x, it.y + 0.5 - b.y) < 0.75; })[0];
-      if (hit) { if (BridgeItems.strike) BridgeItems.strike(world, hit, b.dmg); sfx('hit'); return false; }
+      if (hit) {
+        var dmg = typeof BridgeCombat !== 'undefined' && BridgeCombat.damageFor ? BridgeCombat.damageFor(b.w, hit) : b.dmg;
+        if (BridgeItems.strike) BridgeItems.strike(world, hit, dmg, b.w); sfx('hit'); return false;
+      }
       var tx = Math.floor(b.x), ty = Math.floor(b.y);
       if (world.collisions && world.collisions[ty] && world.collisions[ty][tx] && b.d > 1) return false;
       return b.d < 7;
@@ -211,12 +214,12 @@ var BridgeMagic = (function () {
     bolts.forEach(function (b) {
       b.trail.forEach(function (p, i) {
         var a = (i + 1) / b.trail.length;
-        ctx.fillStyle = 'rgba(170,190,255,' + (0.35 * a).toFixed(2) + ')';
+        ctx.fillStyle = (b.wisp ? 'rgba(190,140,255,' : 'rgba(170,190,255,') + (0.35 * a).toFixed(2) + ')';
         ctx.fillRect(Math.round(offX + p[0] * ts) - 2, Math.round(offY + p[1] * ts) - 2, 4, 4);
       });
       var X = Math.round(offX + b.x * ts), Y = Math.round(offY + b.y * ts);
-      ctx.fillStyle = 'rgba(200,215,255,0.5)'; ctx.fillRect(X - 5, Y - 5, 10, 10);
-      ctx.fillStyle = '#f4f6ff'; ctx.fillRect(X - 2, Y - 2, 4, 4);
+      ctx.fillStyle = b.wisp ? 'rgba(200,160,255,0.55)' : 'rgba(200,215,255,0.5)'; ctx.fillRect(X - 5, Y - 5, 10, 10);
+      ctx.fillStyle = b.wisp ? '#f0e4ff' : '#f4f6ff'; ctx.fillRect(X - 2, Y - 2, 4, 4);
     });
     // curios: a glint now and then where one lies, bright to the lantern
     var wid = BridgeWorld.getWorldId && BridgeWorld.getWorldId(), lamp = held('glimmer_lantern') || held('lantern_beyond');

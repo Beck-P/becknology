@@ -2383,7 +2383,7 @@
   function sceneHostiles(world, offX, offY, ts, time) {
     var out = [];
     (world.interactions || []).forEach(function (h) {
-      if (h.type !== 'hostile') return;
+      if (h.type !== 'hostile' || h.creature) return;          // a creature kind draws itself (js/combat.js)
       out.push({ footRow: h.y + 0.9, draw: function (ctx) {
         var u = Math.max(2, Math.floor(ts / 16));
         if (h._attackPhase === 'winding' && h._attackTarget) {
@@ -2509,7 +2509,7 @@
     if (world.interactions) {
       for (var i = 0; i < world.interactions.length; i++) {
         var h = world.interactions[i];
-        if (h.type !== 'hostile') continue;
+        if (h.type !== 'hostile' || h.creature) continue;
 
         if (h._attackPhase === 'winding' && h._attackTarget) {
           var tx = Math.floor(offX + h._attackTarget.x * ts);

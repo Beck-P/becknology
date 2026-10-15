@@ -227,7 +227,7 @@ var BridgeItems = (function () {
     var world = BridgeWorld.getWorld();
     if (!world) return false;
     var now = performance.now();
-    if (now - lastSwing < 260) return false;            // one swing at a time
+    if (now - lastSwing < (this.rate || 260)) return false;   // one swing at a time (a maul is slower, a glass dagger quicker)
     lastSwing = now;
     var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
     var facing = BridgeCharacter.getFacing();
@@ -240,25 +240,29 @@ var BridgeItems = (function () {
     // the tile you face; a wide blade (arc) cuts the tiles either side of it too
     var cells = [[tx, ty]];
     if (this.arc) cells.push([tx + dy, ty + dx], [tx - dy, ty - dx]);
+    for (var k = 2; k <= (this.reach || 1); k++) cells.push([px + dx * k, py + dy * k]);   // a pike reaches past the first tile
     var targets = world.interactions.filter(function (it) {
       return it.type === 'hostile' && cells.some(function (c) { return c[0] === it.x && c[1] === it.y; });
     });
     if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(targets.length ? 'hit' : 'swish');
     var self = this;
-    targets.forEach(function (t) { strike(world, t, self.damage || 1); });
+    targets.forEach(function (t) { strike(world, t, typeof BridgeCombat !== 'undefined' && BridgeCombat.damageFor ? BridgeCombat.damageFor(self, t) : self.damage || 1, self); });
     return false; // weapons are not consumed
   }
 
-  function strike(world, target, dmg) {
+  // w: what hit it (a weapon's traits: frost, burn, drain, heavy - js/combat.js onHit), or { dot: true } for a burn ticking
+  function strike(world, target, dmg, w) {
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
     target._hp -= dmg;
-    target._hitAt = performance.now();
+    var dot = w && w.dot;
+    if (!dot) target._hitAt = performance.now();
     // Hit-flash, sparks, and floating damage number on the target.
     if (typeof BridgeFX !== 'undefined') {
-      BridgeFX.spawnHitFlash(target.x, target.y);
-      if (BridgeFX.spawnSparks) BridgeFX.spawnSparks(target.x, target.y, '#c868f0', 7);
-      if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(target.x, target.y - 0.3, '-' + dmg, '#ffe080');
+      if (!dot) BridgeFX.spawnHitFlash(target.x, target.y);
+      if (BridgeFX.spawnSparks && !dot) BridgeFX.spawnSparks(target.x, target.y, w && w.burn ? '#ff9040' : w && w.frost ? '#a8e0ff' : w && w.holy ? '#fff0b0' : '#c868f0', w && w.heavy ? 12 : 7);
+      if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(target.x, target.y - 0.3, '-' + dmg, dot ? '#ff9040' : '#ffe080');
     }
+    if (typeof BridgeCombat !== 'undefined' && BridgeCombat.onHit && target.creature) BridgeCombat.onHit(world, target, w, dmg);
     if (target._hp <= 0) {
       if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnSparks) {
         BridgeFX.spawnSparks(target.x, target.y, '#ff90e8', 10);
@@ -290,6 +294,14 @@ var BridgeItems = (function () {
     }
     if (typeof item.damage === 'number') {
       parts.push(item.damage + ' DMG');
+      if (item.arc) parts.push('SWEEPS');
+      if (item.reach > 1) parts.push('REACH ' + item.reach);
+      if (item.heavy) parts.push('STAGGERS');
+      if (item.frost) parts.push('FROST');
+      if (item.burn) parts.push('BURNS');
+      if (item.holy) parts.push('HOLY');
+      if (item.drain) parts.push('DRAINS');
+      if (item.rate && item.rate < 260) parts.push('QUICK');
     }
     return parts.join(' · ');
   }
@@ -480,6 +492,52 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#6a4a2a', [[4, 11, 1, 1], [6, 9, 1, 1], [8, 7, 1, 1]]);
     px(ctx, x, y, u, '#d0d8ff', [[10, 3, 3, 3]]); px(ctx, x, y, u, '#ffffff', [[11, 4, 1, 1]]);
     px(ctx, x, y, u, '#a0b0ff', [[13, 2, 1, 1], [9, 2, 1, 1], [13, 6, 1, 1], [14, 4, 1, 1]]);
+  }
+  // the arms of the combat pass: a pike, a maul, a hatchet, a glass dagger, the wispcaller's staff
+  function pikeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0a0c', [[1, 13, 2, 2], [3, 11, 2, 2], [5, 9, 2, 2], [7, 7, 2, 2], [9, 5, 2, 2], [10, 1, 5, 5]]);
+    px(ctx, x, y, u, '#8a6a40', [[2, 13, 1, 1], [4, 11, 1, 1], [6, 9, 1, 1], [8, 7, 1, 1]]);
+    px(ctx, x, y, u, '#b8c0cc', [[11, 3, 2, 2], [12, 2, 2, 2], [10, 5, 1, 1]]); px(ctx, x, y, u, '#eef2f8', [[13, 2, 1, 1]]);
+  }
+  function maulIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0a0c', [[3, 12, 2, 3], [5, 10, 2, 2], [7, 8, 2, 2], [7, 2, 7, 6]]);
+    px(ctx, x, y, u, '#6a4a2a', [[4, 12, 1, 2], [6, 10, 1, 1], [8, 8, 1, 1]]);
+    px(ctx, x, y, u, '#6a6a74', [[8, 3, 5, 4]]); px(ctx, x, y, u, '#9a9aa8', [[8, 3, 5, 1]]); px(ctx, x, y, u, '#4a4a54', [[8, 6, 5, 1]]);
+  }
+  function hatchetIcon(edge, hi) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#0a0a0c', [[4, 12, 2, 3], [6, 10, 2, 2], [8, 8, 2, 2], [8, 3, 6, 6]]);
+      px(ctx, x, y, u, '#5a3a20', [[5, 12, 1, 2], [7, 10, 1, 1], [9, 8, 1, 1]]);
+      px(ctx, x, y, u, edge, [[9, 4, 4, 4]]); px(ctx, x, y, u, hi, [[12, 4, 1, 4]]);
+      px(ctx, x, y, u, hi, [[14, 2, 1, 1], [7, 3, 1, 1]]);
+    };
+  }
+  function glassDaggerIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0608', [[7, 1, 2, 10], [5, 10, 6, 1], [7, 11, 2, 4]]);
+    px(ctx, x, y, u, '#2a2a3a', [[7, 2, 2, 8]]); px(ctx, x, y, u, '#7060a0', [[7, 2, 1, 8]]); px(ctx, x, y, u, '#c8b8ff', [[7, 3, 1, 2]]);
+    px(ctx, x, y, u, '#5a5070', [[5, 10, 6, 1]]); px(ctx, x, y, u, '#3a2a40', [[7, 11, 2, 3]]); px(ctx, x, y, u, '#70fff0', [[7, 14, 2, 1]]);
+  }
+  function staffIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0610', [[2, 13, 2, 2], [4, 11, 2, 2], [6, 9, 2, 2], [8, 7, 2, 2], [9, 2, 5, 5]]);
+    px(ctx, x, y, u, '#2a1a30', [[3, 13, 1, 1], [5, 11, 1, 1], [7, 9, 1, 1]]);
+    px(ctx, x, y, u, '#9a70ff', [[10, 3, 3, 3]]); px(ctx, x, y, u, '#f0e8ff', [[11, 4, 1, 1]]);
+    px(ctx, x, y, u, '#c8a8ff', [[14, 2, 1, 1], [9, 1, 1, 1], [14, 6, 1, 1]]);
+  }
+  function emberIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1028', [[5, 5, 6, 7], [6, 4, 4, 9]]);
+    px(ctx, x, y, u, '#8a60e0', [[6, 6, 4, 5]]); px(ctx, x, y, u, '#d8c8ff', [[7, 7, 2, 2]]); px(ctx, x, y, u, '#c0a0ff', [[7, 2, 1, 2], [9, 3, 1, 1]]);
+  }
+  function shellKeyIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1210', [[3, 3, 6, 6], [8, 5, 6, 2], [11, 7, 1, 3], [13, 7, 1, 2]]);
+    px(ctx, x, y, u, '#5aa088', [[4, 4, 4, 4], [8, 5, 5, 1]]); px(ctx, x, y, u, '#9ad8c0', [[5, 4, 1, 3], [7, 4, 1, 3]]);
+    px(ctx, x, y, u, '#5aa088', [[11, 6, 1, 2], [13, 6, 1, 1]]);
   }
   function featherIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -859,6 +917,25 @@ var BridgeItems = (function () {
                    stackable: false, draw: pickaxeIcon('#3a3848', '#ffe080'), power: 3, damage: 20, onUse: pickUse },
     cutlass:     { id: 'cutlass', name: 'Cutlass', desc: 'A sailor\'s curved blade from the smithy on the square. Its sweep cuts the tiles either side too.', type: 'weapon',
                    stackable: false, draw: bladeIcon('#c8ccd8', '#8a5a30', true), damage: 40, arc: true, onUse: weaponUse },
+    boarding_pike: { id: 'boarding_pike', name: 'Boarding Pike', desc: 'Ash shaft, iron head, from the smithy on the square. Long enough to reach the second tile in front of you: hit them before they reach you.',
+                     type: 'weapon', stackable: false, draw: pikeIcon, damage: 34, reach: 2, value: 70, onUse: weaponUse },
+    war_maul:      { id: 'war_maul', name: 'War Maul', desc: 'A ship-breaker\'s hammer. Slow to swing; a hit staggers whatever is winding up to strike, and knocks it back a tile.',
+                     type: 'weapon', stackable: false, draw: maulIcon, damage: 58, heavy: true, rate: 650, value: 110, onUse: weaponUse },
+    rime_hatchet:  { id: 'rime_hatchet', name: 'Rime Hatchet', desc: 'From Morwen\'s case. Its edge is never above freezing: what it hits is rimed in frost and slowed for a few seconds.',
+                     type: 'weapon', stackable: false, draw: hatchetIcon('#a8d8ff', '#f0faff'), damage: 38, frost: true, value: 160, onUse: weaponUse },
+    emberbrand:    { id: 'emberbrand', name: 'Emberbrand', desc: 'From Morwen\'s case: a sword with a live coal in its heart, raised from a wreck off Crimson Reach. What it cuts keeps burning.',
+                     type: 'weapon', stackable: false, draw: bladeIcon('#e8a060', '#5a2a1a', false, '#ffd040'), damage: 44, burn: true, value: 180, onUse: weaponUse },
+    moonglass_sabre: { id: 'moonglass_sabre', name: 'Moonglass Sabre', desc: 'From Morwen\'s case. Pale glass, ground on Midnight under a full moon. Its sweep cuts either side, and it bites the restless dead half as deep again.',
+                     type: 'weapon', stackable: false, draw: bladeIcon('#d8e8ff', '#4a3a6a', true, '#ffffff'), damage: 50, arc: true, holy: true, value: 220, onUse: weaponUse },
+    veilpiercer:   { id: 'veilpiercer', name: 'Veilpiercer', desc: 'A narrow blade of black glass from the drowned tomb on Midnight. Quick in the hand - and what it draws out of them, it gives to you.',
+                     type: 'weapon', stackable: false, draw: glassDaggerIcon, damage: 32, rate: 170, drain: 0.25, value: 200, onUse: weaponUse },
+    wispcaller:    { id: 'wispcaller', name: 'Wispcaller Staff', desc: 'The Bell Warden\'s. Black wood, a wisp caught in its head. F throws the wisp seven tiles down the way you face; it burns the restless dead brighter. Each throw takes 3 energy.',
+                     type: 'weapon', stackable: false, draw: staffIcon, damage: 42, holy: true, bolt: 'wisp', value: 300,
+                     onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
+    wisp_ember:    { id: 'wisp_ember', name: 'Wisp Ember', desc: 'What\'s left of a will-o\'-wisp: a cold violet coal that won\'t go out. Morwen buys them.',
+                     type: 'material', stackable: true, draw: emberIcon, value: 15 },
+    tomb_key:      { id: 'tomb_key', name: 'Shell Key', desc: 'A key shaped like a cockle shell, green with the sea. A drowned thing in the graveyard on Midnight Isle was carrying it.',
+                     type: 'key', stackable: false, draw: shellKeyIcon },
     star_blade:  { id: 'star_blade', name: 'Star Blade', desc: 'Star iron, forged by Hob with a songstone set in the hilt. It hums when something is close.', type: 'weapon',
                    stackable: false, draw: bladeIcon('#3a3848', '#b080ff', true, '#ffe080'), damage: 80, arc: true, onUse: weaponUse },
     // the farm on Verdance (js/farm.js): tools from the shed, seeds from Hollin, what grows sells to Marlo

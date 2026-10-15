@@ -27,7 +27,7 @@ var BridgeCodex = (function () {
       ['arctic_char', 'Through the ice on Fellhaven\'s pond'], ['frostfin', 'Through the ice on Fellhaven\'s pond; rare']] },
     { id: 'stones', name: 'Crystals and ore', reward: 200, items: [
       ['crimson_crystal', 'In the rock on Crimson Reach'], ['roseite', 'Rose Cove\'s terraces, and the Rose Mine'], ['sapphire_crystal', 'The hills of Sapphire Port; the mine\'s middle floors'],
-      ['midnight_crystal', 'Among the ruins on Midnight Isle'], ['sea_glass', 'Washed up on Lumar\'s beaches'], ['iron_ore', 'The Rose Mine, from the first floor'],
+      ['midnight_crystal', 'Among the ruins on Midnight Isle'], ['wisp_ember', 'The will-o\'-wisps on Midnight Isle'], ['sea_glass', 'Washed up on Lumar\'s beaches'], ['iron_ore', 'The Rose Mine, from the first floor'],
       ['silver_ore', 'The Rose Mine, floor 4 and down'], ['moonstone', 'Geodes deep in the Rose Mine, floor 10 and down'], ['star_iron', 'The Rose Mine, floor 13 and down'],
       ['songstone', 'The Rose Mine\'s deepest floors'], ['hoar_crystal', 'In the rock of the Hoarspire\'s face'], ['summit_crystal', 'The top of the Hoarspire']] },
     { id: 'farm', name: 'From the farm', reward: 200, items: [
@@ -43,6 +43,9 @@ var BridgeCodex = (function () {
       ['silver_nail', 'Lying about on Crimson Reach'], ['heartsong', 'The heart of the great songstone, floor 20'], ['old_boot', 'Everywhere. Everyone has one.']] },
     { id: 'gear', name: 'Tools and weapons', reward: 150, items: [
       ['iron_dagger', 'The smithy on Lumar\'s square'], ['cutlass', 'The smithy on Lumar\'s square'], ['star_blade', 'Hob forges it, in the Rose Mine'],
+      ['boarding_pike', 'The smithy on Lumar\'s square'], ['war_maul', 'The smithy on Lumar\'s square'],
+      ['rime_hatchet', 'Morwen\'s case, in the tower on Midnight'], ['emberbrand', 'Morwen\'s case'], ['moonglass_sabre', 'Morwen\'s case'],
+      ['veilpiercer', 'Behind a locked grate on Midnight Isle'], ['wispcaller', 'Whatever guards the abbey on Midnight'],
       ['lockpick', 'The smithy on Lumar\'s square'], ['old_pickaxe', 'The rack in the Rose Mine\'s hall'], ['iron_pickaxe', 'Hob forges it'],
       ['star_pickaxe', 'Hob forges it, from star iron'], ['hoe', 'The tool shed on Verdance'], ['watering_can', 'The tool shed on Verdance'],
       ['sprinkler', 'Hollin\'s seed stall'], ['chalk', 'Ysolde\'s guide hut in Fellhaven'], ['climbing_rope', 'Ysolde\'s guide hut'],

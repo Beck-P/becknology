@@ -635,6 +635,15 @@ var BridgeAudio = (function () {
       voice(sfxBus, t + 0.18, 0.08, { type: 'sine', freq: 110, glide: 0.6, glideT: 0.12, gain: 0.12, a: 0.002, d: 0.15, s: 0, r: 0.1 });
     },
     bell:    function (t) { INST.bell(sfxBus, t, 79, 0.25, 2.2); INST.bell(sfxBus, t + 0.02, 91, 0.08, 1.6); },   // a buoy's bell over the water
+    slam:    function (t) {                                // stone fists on the ground
+      noiseHit(sfxBus, t, 0.35, { freq: 160, ftype: 'lowpass', gain: 0.34, rev: 0.4 });
+      voice(sfxBus, t, 0.1, { type: 'sine', freq: 70, glide: 0.5, glideT: 0.2, gain: 0.2, a: 0.002, d: 0.25, s: 0, r: 0.1 });
+      for (var i = 0; i < 3; i++) noiseHit(sfxBus, t + 0.04 + i * 0.05, 0.05, { freq: 700 + Math.random() * 600, ftype: 'bandpass', q: 2, gain: 0.05 });
+    },
+    toll:    function (t) { INST.bell(sfxBus, t, 43, 0.5, 2.6); INST.bell(sfxBus, t + 0.01, 55, 0.22, 2.0); INST.bell(sfxBus, t + 0.02, 62, 0.08, 1.4); },   // the warden's bell
+    zap:     function (t) { voice(sfxBus, t, 0.18, { type: 'triangle', freq: 1400, glide: 0.25, glideT: 0.18, gain: 0.07, a: 0.002, d: 0.18, s: 0, r: 0.06 }); noiseHit(sfxBus, t, 0.1, { freq: 5000, ftype: 'highpass', gain: 0.03 }); },
+    burn:    function (t) { noiseHit(sfxBus, t, 0.3, { freq: 1200, ftype: 'bandpass', q: 0.7, gain: 0.08 }); },
+    frost:   function (t) { [0, 0.04, 0.09].forEach(function (d, i) { voice(sfxBus, t + d, 0.05, { type: 'sine', freq: 2400 + i * 520, gain: 0.04, a: 0.001, d: 0.12, s: 0, r: 0.1 }); }); },
     error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); }
   };
 

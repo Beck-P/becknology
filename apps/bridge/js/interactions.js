@@ -60,7 +60,7 @@ var BridgeInteractions = (function () {
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
     home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill',
     farm_house: 'Go in', farm_ledger: 'Read', farm_animal: 'Pet', companion: 'Pet', clinic: 'Sit', rummage: 'Rummage', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read', curio: 'Pick up',
-    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski', ski_here: 'Ski', expedition: 'Look', park_start: 'Drop in', park_tow: 'Ride', park_board: 'Read', club_door: 'Knock', dance: 'Dance', lodge_fire: 'Warm up', lodge_board: 'Read', dice: 'Play', lodge_room: 'Take a room', fortune: 'Ask', busker: 'Listen', go_sailing: 'Go sailing'
+    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski', ski_here: 'Ski', expedition: 'Look', park_start: 'Drop in', park_tow: 'Ride', park_board: 'Read', club_door: 'Knock', dance: 'Dance', lodge_fire: 'Warm up', lodge_board: 'Read', dice: 'Play', lodge_room: 'Take a room', fortune: 'Ask', busker: 'Listen', go_sailing: 'Go sailing', midnight_tomb: 'Look'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -132,6 +132,7 @@ var BridgeInteractions = (function () {
     if (t && t.action === 'sit' && typeof BridgeCharacter !== 'undefined' && BridgeCharacter.isSeated && BridgeCharacter.isSeated()) t = null;
     var md = typeof BridgeWorld !== 'undefined' && BridgeWorld.getMode && BridgeWorld.getMode();
     if (md && md.solo) { t = null; promptState.target = null; }            // on skis or on the wall: nothing to press E at
+    if (typeof BridgeFishing !== 'undefined' && BridgeFishing.isOpen && BridgeFishing.isOpen()) t = null;   // a line in the water
     if (!t || !view || !view.ts) {
       if (promptState.shown) { el.classList.remove('visible'); promptState.shown = null; }
       return;
@@ -211,33 +212,46 @@ var BridgeInteractions = (function () {
       if (h.type === 'hostile') occupied[h.x + ',' + h.y] = true;
     }
 
-    for (var j = 0; j < world.interactions.length; j++) {
-      var hh = world.interactions[j];
+    var C = typeof BridgeCombat !== 'undefined' ? BridgeCombat : null;
+    var list = world.interactions.slice();            // a creature can die mid-loop (burning)
+    for (var j = 0; j < list.length; j++) {
+      var hh = list[j];
       if (hh.type !== 'hostile') continue;
+      var slow = C && C.tick ? C.tick(world, hh, now, character) : 1;   // frost slows, embers burn, the warden calls
+      if (world.interactions.indexOf(hh) < 0) continue;
       var dx = px - hh.x, dy = py - hh.y;
       var manhattan = Math.abs(dx) + Math.abs(dy);
 
       // Run the attack state machine first. While the statue is in
       // anything but 'idle' it stays planted (no pathing), and damage
       // only lands on impact if the player is still on the target tile.
-      updateHostileAttack(hh, character, now, manhattan);
+      updateHostileAttack(hh, character, now, manhattan, slow);
 
       if (hh._attackPhase && hh._attackPhase !== 'idle') continue;
-      if (manhattan <= 1) continue;                // adjacent — let the next attack cycle fire
       if (manhattan > (hh.aggroRange || 6)) continue; // out of aggro range — idle
-      var cd = hh.moveCooldown || 2200;            // slow stalk — about one tile every 2s
+      var cd = (hh.moveCooldown || 2200) * slow;   // slow stalk — about one tile every 2s
       if (hh._lastMove && (now - hh._lastMove) < cd) continue;
 
-      // Try larger axis first.
       var stepX, stepY;
+      if (hh.range) {
+        // a caster keeps its distance: back off when you're close, line up with you, close in when you're far
+        if (manhattan <= 1) { stepX = -sign(dx); stepY = -sign(dy); if (stepX && stepY) stepY = 0; }
+        else if (dx !== 0 && dy !== 0) { if (Math.abs(dx) <= Math.abs(dy)) { stepX = sign(dx); stepY = 0; } else { stepX = 0; stepY = sign(dy); } }
+        else if (manhattan > hh.range) { stepX = sign(dx); stepY = sign(dy); }
+        else continue;
+        if (!tryStep(world, hh, stepX, stepY, occupied) && manhattan <= 1) tryStep(world, hh, stepY, stepX, occupied);
+        hh._lastMove = now;
+        continue;
+      }
+      if (manhattan <= 1) continue;                // adjacent — let the next attack cycle fire
+
+      // Try larger axis first.
       if (Math.abs(dx) >= Math.abs(dy)) { stepX = sign(dx); stepY = 0; }
       else                              { stepX = 0;       stepY = sign(dy); }
       if (!tryStep(world, hh, stepX, stepY, occupied)) {
-        // Fall back to the perpendicular axis.
-        if (stepX !== 0) { stepX = 0; stepY = sign(dy); }
-        else             { stepX = sign(dx); stepY = 0; }
-        if (stepX === 0 && stepY === 0) continue;
-        tryStep(world, hh, stepX, stepY, occupied);
+        // Blocked: find the way round (a headstone, a plinth, another creature) rather than stand there
+        var way = pathStep(world, hh, px, py, occupied, (hh.aggroRange || 6) + 3);
+        if (way) tryStep(world, hh, way[0], way[1], occupied);
       }
       hh._lastMove = now; // cooldown regardless of success — keeps the cadence steady
     }
@@ -251,18 +265,25 @@ var BridgeInteractions = (function () {
   //   striking:   the visible strike streak fires from the statue to the
   //               locked tile. Lasts strikeMs (200). Damage resolves at end.
   //   recovering: post-strike cooldown. No attack/move. Lasts recoverMs (700).
-  function updateHostileAttack(hostile, character, now, manhattan) {
+  function updateHostileAttack(hostile, character, now, manhattan, slow) {
     var phase = hostile._attackPhase || 'idle';
     var elapsed = now - (hostile._attackStart || 0);
-    var WIND     = hostile.windupMs  || 500;
+    var WIND     = (hostile.windupMs  || 500) * (slow || 1);
     var STRIKE   = hostile.strikeMs  || 200;
-    var RECOVER  = hostile.recoverMs || 700;
+    var RECOVER  = (hostile.recoverMs || 700) * (slow || 1);
+    var C = typeof BridgeCombat !== 'undefined' ? BridgeCombat : null;
 
     if (phase === 'idle') {
-      if (manhattan === 1) {
+      // in reach: next to you; a caster down a straight line within its range; the warden two tiles out
+      var dx = character.getX() - hostile.x, dy = character.getY() - hostile.y;
+      var go = manhattan === 1 || (hostile.reach > 1 && manhattan <= hostile.reach && manhattan > 0) ||
+               (hostile.range && manhattan > 1 && manhattan <= hostile.range && (dx === 0 || dy === 0));
+      if (go) {
         hostile._attackPhase = 'winding';
         hostile._attackStart = now;
+        hostile._windFor = WIND;
         hostile._attackTarget = { x: character.getX(), y: character.getY() };
+        if (C && C.attackStart) C.attackStart(hostile, character);
       }
       return;
     }
@@ -270,18 +291,20 @@ var BridgeInteractions = (function () {
       if (elapsed < WIND) return;
       hostile._attackPhase = 'striking';
       hostile._attackStart = now;
-      if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnStrike) {
+      if (!(C && C.strikeFx && C.strikeFx(hostile, now)) && typeof BridgeFX !== 'undefined' && BridgeFX.spawnStrike) {
         BridgeFX.spawnStrike(hostile.x, hostile.y, hostile._attackTarget.x, hostile._attackTarget.y);
       }
       return;
     }
     if (phase === 'striking') {
       if (elapsed < STRIKE) return;
-      // Resolve hit: damage only if the player stayed on the target tile.
+      // Resolve hit: damage only if the player stayed on the target tile (or inside a slam, or on the warden's ring).
       var t = hostile._attackTarget;
       var px = character.getX(), py = character.getY();
-      if (t && px === t.x && py === t.y) {
-        var dmg = hostile.damage || 5;
+      var landed = t && (C && C.dangerAt && hostile.creature ? C.dangerAt(hostile, px, py) : px === t.x && py === t.y);
+      if (landed) {
+        var dmg = C && C.attackDamage && hostile.creature ? C.attackDamage(hostile) : hostile.damage || 5;
+        if (C && C.shake) C.shake(dmg >= 12 ? 4 : 2);
         if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
           BridgeInventory.takeDamage(dmg);
         }
@@ -303,6 +326,28 @@ var BridgeInteractions = (function () {
   }
 
   function sign(n) { return n > 0 ? 1 : n < 0 ? -1 : 0; }
+
+  // The first step of the shortest walk from a creature to any tile beside the player (a search kept within `lim`
+  // tiles of it), or null if there's no way through.
+  function pathStep(world, h, px, py, occupied, lim) {
+    var C = world.collisions, seen = {}, q = [[h.x, h.y, null]], head = 0;
+    seen[h.x + ',' + h.y] = true;
+    while (head < q.length && head < 900) {
+      var c = q[head++];
+      var D = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      for (var i = 0; i < 4; i++) {
+        var nx = c[0] + D[i][0], ny = c[1] + D[i][1], k = nx + ',' + ny;
+        if (seen[k] || Math.abs(nx - h.x) > lim || Math.abs(ny - h.y) > lim) continue;
+        seen[k] = true;
+        if (nx === px && ny === py) continue;
+        if (!C[ny] || C[ny][nx] !== 0 || occupied[k]) continue;
+        var first = c[2] || D[i];
+        if (Math.abs(nx - px) + Math.abs(ny - py) === 1) return first;
+        q.push([nx, ny, first]);
+      }
+    }
+    return null;
+  }
 
   function tryStep(world, hostile, stepX, stepY, occupied) {
     var nx = hostile.x + stepX, ny = hostile.y + stepY;
@@ -391,6 +436,10 @@ var BridgeInteractions = (function () {
 
       case 'lodge_fire': case 'lodge_board': case 'dice': case 'lodge_room':               // the Snowcap Lodge (js/lodge.js)
         if (typeof BridgeLodge !== 'undefined') BridgeLodge.use(inter);
+        break;
+
+      case 'midnight_tomb':                                             // the violet tomb on Midnight Isle (js/combat.js)
+        if (typeof BridgeCombat !== 'undefined') BridgeCombat.tomb(inter);
         break;
 
       case 'expedition':                                                // past the Hoarspire (js/expedition.js)
@@ -1601,6 +1650,7 @@ var BridgeInteractions = (function () {
     }
     var idx = world.interactions.indexOf(target);
     if (idx >= 0) world.interactions.splice(idx, 1);
+    if (typeof BridgeCombat !== 'undefined' && BridgeCombat.onKill) BridgeCombat.onKill(world, target);
     if (typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) {
       BridgeProgression.awardCoins(target.reward || 10, 'kill:' + (target.label || 'hostile'));
     }
