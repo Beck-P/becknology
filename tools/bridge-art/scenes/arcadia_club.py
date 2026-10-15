@@ -71,6 +71,8 @@ for (x, col) in ((1.9, Y.CYAN), (3.3, Y.YEL), (4.4, Y.PINK)):
 k.solid(1, 3, 5, 4)
 for x in (1.8, 3.0, 4.2):
     Y.neon_stool(k, x, 4.9, seat=Y.PINK_D)
+for x in range(1, 5):                                  # the stools block their own row only: the bar stays in reach from in front of them
+    k.blocked.discard((x, 5))
 
 # ---- the booths on the right ---------------------------------------------------------------------------------
 for r0 in (3.0, 6.4):
@@ -117,7 +119,7 @@ DANCERS = [('npc-patron-a', 7, 7, 'up'), ('npc-patron-b', 11, 6, 'left'), ('npc-
 for (sheet, x, y, f) in DANCERS:
     k.solid(x, y, x + 1, y + 1)
 k.solid(9, 3, 10, 4)
-k.solid(3, 3, 4, 4)
+k.solid(3, 2, 4, 4)
 apply_world(WORLD, k, FLOOR, doors=DOORS, scene_id=WID,
             actors=[{'sheet': 'npc-dj', 'x': 9, 'y': 3, 'facing': 'down'}, {'sheet': 'npc-mixer', 'x': 3, 'y': 2, 'facing': 'down'}] +
                    [{'sheet': s, 'x': x, 'y': y, 'facing': f, 'dance': True} for (s, x, y, f) in DANCERS])

@@ -210,6 +210,8 @@ w['interactions'] = [
 ]
 w['lift'] = {'lines': lines}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
+k.solid(9, 13, 10, 14)                                                          # Ysolde and Ansgar stand where they stand
+k.solid(43, 13, 44, 14)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
             actors=[{'sheet': 'npc-ysolde', 'x': 9, 'y': 13, 'facing': 'down'}, {'sheet': 'npc-ansgar', 'x': 43, 'y': 13, 'facing': 'left'},
                     {'sheet': 'npc-tove', 'x': 19, 'y': 19, 'facing': 'down'}],
