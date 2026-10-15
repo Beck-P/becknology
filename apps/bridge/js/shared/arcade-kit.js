@@ -12,7 +12,8 @@
  *   - the screens: a title (attract mode, best score, how to play), pause
  *     (P, or Esc, or leaving the tab), game over (score, best, coins; input
  *     locked for a moment so a held key can't skip it)
- *   - a 5×7 pixel font (api.text) and the world palettes (BridgeArcade.PAL)
+ *   - a 5×7 pixel font (api.text) and the palettes (BridgeArcade.PAL — each game its own world:
+ *     Breakout candy, Asteroids Enigma, Space Invaders Lumar, Missile Command the void, Helicopter Arcadia)
  *   - small synthesised sounds (api.beep / api.noise)
  *   - scores: best, plays and last run per game in localStorage
  *     `bridge_scores` (the Bridge reads it for the Arcade's high-score boards
@@ -57,7 +58,23 @@
     lumar:   { bg: '#0a1210', bg2: '#12201c', dark: '#1a1e20', mid: '#3a4848', wood: '#5a3a1a', wood2: '#7a4e22', sea: '#2a7050',
                foam: '#90e0a8', glow: '#ffe080', amber: '#c08840', brass: '#e0c060', white: '#f2ede2', grey: '#8a9a90', red: '#d06050' },
     ship:    { bg: '#0c0806', bg2: '#1a1208', dark: '#24160c', mid: '#3e2614', hi: '#6e4828', brass: '#d0a048', brass2: '#a08040',
-               leather: '#6a2a22', parch: '#d8c8a0', ink: '#3a2a1a', cyan: '#40c8d8', amber: '#ffb050', white: '#f2ece0', grey: '#9a8a78' }
+               leather: '#6a2a22', parch: '#d8c8a0', ink: '#3a2a1a', cyan: '#40c8d8', amber: '#ffb050', white: '#f2ece0', grey: '#9a8a78' },
+    // Breakout's own: a Lite-Brite board in a candy-shop cabinet
+    candy:   { bg: '#1a0f1f', bg2: '#2a1630', dark: '#3a2040', mid: '#4a2a50', hi: '#6a4070', pink: '#ff6ec1', mag: '#ff39c0',
+               orange: '#ff9354', yel: '#ffd64a', green: '#6ed46a', cyan: '#5dc0e0', cyan2: '#b3e5ff', purp: '#b78cff', red: '#ff3a55',
+               white: '#fff5fb', grey: '#c8a8c8', cream: '#fff0f6' },
+    // the Brink: the void round the Singularity
+    void:    { bg: '#050510', bg2: '#0c0a1e', dark: '#1a1430', mid: '#2a2040', hi: '#3e3060', core: '#d0c0ff', purp: '#a080e0',
+               crys: '#8060c0', crys2: '#c0a0f0', deep: '#503090', gold: '#f0d080', red: '#f06080', cyan: '#80e0f0', white: '#f4f0ff', grey: '#8a80a8' }
+  };
+  // what the title, pause and game-over panels are drawn in, per palette
+  var UI = {
+    arcadia: { accent: '#f078a8', title: '#80e0e8', shadow: '#a040c0', best: '#e8c040', coin: '#40e080', over: '#f078a8' },
+    enigma:  { accent: '#40c8d8', title: '#80e0e8', shadow: '#1a2530', best: '#e8c040', coin: '#40e080', over: '#e84040' },
+    lumar:   { accent: '#e0c060', title: '#ffe080', shadow: '#5a3a1a', best: '#e0c060', coin: '#90e0a8', over: '#d06050' },
+    ship:    { accent: '#d0a048', title: '#f2ece0', shadow: '#6a2a22', best: '#d0a048', coin: '#40c8d8', over: '#d0a048' },
+    candy:   { accent: '#ff6ec1', title: '#ffd64a', shadow: '#ff39c0', best: '#ffd64a', coin: '#6ed46a', over: '#ff6ec1' },
+    void:    { accent: '#a080e0', title: '#d0c0ff', shadow: '#503090', best: '#f0d080', coin: '#80e0f0', over: '#f06080' }
   };
 
   var DAILY_CAP = 150;
@@ -72,7 +89,7 @@
   function run(G) {
     global.__bridgeOwnsEsc = true;                 // progression.js leaves Esc to us
     var W = G.w, H = G.h;
-    var P = PAL[G.pal || 'arcadia'];
+    var P = PAL[G.pal || 'arcadia'], U = UI[G.pal || 'arcadia'] || UI.arcadia;
     document.documentElement.style.background = P.bg;
     document.body.style.cssText += ';margin:0;background:' + P.bg + ';overflow:hidden;height:100vh;display:flex;align-items:center;' +
       'justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;';
@@ -136,7 +153,7 @@
         var el = document.createElement('div');
         el.textContent = b.label;
         el.style.cssText = 'width:' + (b.wide ? 96 : 64) + 'px;height:64px;border-radius:14px;display:flex;align-items:center;justify-content:center;' +
-          'font:20px monospace;color:' + P.white + ';background:rgba(255,255,255,0.08);border:2px solid ' + (b.col || P.cyan) + ';' +
+          'font:20px monospace;color:' + P.white + ';background:rgba(255,255,255,0.08);border:2px solid ' + (b.col || U.accent) + ';' +
           'touch-action:none;user-select:none;-webkit-user-select:none;';
         var on = function (e) { e.preventDefault(); keyDown(b.key, false); el.style.background = 'rgba(255,255,255,0.22)'; wake(); };
         var off = function (e) { e.preventDefault(); keys[b.key] = false; el.style.background = 'rgba(255,255,255,0.08)'; };
@@ -325,7 +342,7 @@
     function panel(y0, h) {
       g.fillStyle = 'rgba(4,2,10,0.78)';
       g.fillRect(0, y0, W, h);
-      g.fillStyle = P.pink || P.cyan; g.fillRect(0, y0, W, 1); g.fillRect(0, y0 + h - 1, W, 1);
+      g.fillStyle = U.accent; g.fillRect(0, y0, W, 1); g.fillRect(0, y0 + h - 1, W, 1);
     }
     function blink(on) { return Math.floor(api.t * 2.5) % 2 === 0 || !on; }
     function overlay() {
@@ -333,12 +350,12 @@
       if (mode === 'title') {
         panel(Math.floor(H * 0.22), Math.floor(H * 0.56));
         var y = Math.floor(H * 0.22) + 10;
-        text(g, G.title, cx + 1, y + 1, P.mag || P.dark, big, 'center');
-        text(g, G.title, cx, y, P.cyan2 || P.white, big, 'center');
+        text(g, G.title, cx + 1, y + 1, U.shadow, big, 'center');
+        text(g, G.title, cx, y, U.title, big, 'center');
         y += 7 * big + 8;
         (G.help || []).forEach(function (l) { text(g, l, cx, y, P.grey, 1, 'center'); y += 10; });
         y += 4;
-        if (best) { text(g, 'BEST ' + best, cx, y, P.yel || P.brass, 1, 'center'); y += 12; }
+        if (best) { text(g, 'BEST ' + best, cx, y, U.best, 1, 'center'); y += 12; }
         if (blink(true)) text(g, touch ? 'TAP TO PLAY' : 'PRESS SPACE TO PLAY', cx, y, P.white, 1, 'center');
       } else if (mode === 'pause') {
         panel(Math.floor(H / 2) - 22, 44);
@@ -347,10 +364,10 @@
       } else if (mode === 'over' && result) {
         panel(Math.floor(H * 0.25), Math.floor(H * 0.5));
         var yy = Math.floor(H * 0.25) + 10;
-        text(g, 'GAME OVER', cx, yy, P.pink || P.red, big, 'center'); yy += 7 * big + 8;
+        text(g, 'GAME OVER', cx, yy, U.over, big, 'center'); yy += 7 * big + 8;
         text(g, 'SCORE ' + result.score, cx, yy, P.white, 1, 'center'); yy += 11;
-        text(g, result.newBest && result.score ? 'NEW BEST!' : 'BEST ' + result.best, cx, yy, P.yel || P.brass, 1, 'center'); yy += 11;
-        if (result.coins) { text(g, '+' + result.coins + ' COINS', cx, yy, P.green || P.glow, 1, 'center'); yy += 11; }
+        text(g, result.newBest && result.score ? 'NEW BEST!' : 'BEST ' + result.best, cx, yy, U.best, 1, 'center'); yy += 11;
+        if (result.coins) { text(g, '+' + result.coins + ' COINS', cx, yy, U.coin, 1, 'center'); yy += 11; }
         if (performance.now() > lockUntil && blink(true)) text(g, touch ? 'TAP TO PLAY AGAIN' : 'SPACE TO PLAY AGAIN', cx, yy + 4, P.white, 1, 'center');
       }
     }
@@ -373,5 +390,5 @@
     return api;
   }
 
-  global.BridgeArcade = { run: run, PAL: PAL, font: GLYPH, scores: scores };
+  global.BridgeArcade = { run: run, PAL: PAL, UI: UI, font: GLYPH, scores: scores };
 })(window);

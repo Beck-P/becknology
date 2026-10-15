@@ -12,148 +12,157 @@
 <body>
 <script>
 /**
- * Breakout — a cabinet in the Arcade, Arcadia (BridgeArcade kit,
- * apps/bridge/js/shared/arcade-kit.js). 240×300 native, portrait, neon over
- * the District's skyline: eight designed walls (the city's name, an invader,
- * a heart, a pyramid, a checkerboard, a diamond, the skyline, NULL's mark)
- * that loop round tougher and faster; bricks crack before they go, steel never
- * does; capsules to catch (Wide, Multi, Slow, Life, Zapper); a combo
- * multiplier for bricks broken between touches of the paddle. Coins for every
- * wall cleared and for the score at the end.
+ * Breakout — the candy cabinet (BridgeArcade kit, apps/bridge/js/shared/
+ * arcade-kit.js). 240×300 native, portrait: a Lite-Brite board in a candy
+ * shop — rainbow jelly bricks on a dark peg board between candy-stripe walls,
+ * a peppermint ball, a candy-cane paddle. Ten walls that start small (three
+ * short rows) and grow — a lollipop, a heart, a cupcake, a rainbow, an ice
+ * cream, a gumball machine, stripes, a checkerboard, a gingerbread castle —
+ * then loop round tougher and faster. Wrapped sweets take two hits, rock
+ * candy three, licorice never breaks; capsules to catch (Wide, Multi, Slow,
+ * Life, Zapper); a combo multiplier; and a sugar rush when only a few bricks
+ * are left, so the last ones never drag on. Coins for every wall cleared and
+ * for the score at the end.
  */
 (function () {
-  var W = 240, H = 300, P = BridgeArcade.PAL.arcadia;
+  var W = 240, H = 300, P = BridgeArcade.PAL.candy;
   var FX0 = 4, FX1 = W - 4, FY0 = 17;                 // inside the walls (the HUD sits above the top one)
   var BW = 13, BH = 7, CW = 14, CH = 8, COLS = 16;    // a brick, and its cell with 1px of mortar
   var GX = 8, GY = 33;                                // top-left of the brick grid
   var PY = 282, PH = 6, R = 2;                        // paddle top and height; half the 4×4 ball
-  var INK = '#0e0a1e';                                // outlines
+  var INK = '#12080f';                                // outlines
   var TOUCH = 'ontouchstart' in window || !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
 
-  // brick colours from the Arcadia neons: highlight, body, shadow, outline
+  // jelly colours: highlight, body, shadow, outline
   var RAMP = {
-    p: ['#f8b8d0', P.pink, '#b04878', '#3a1028'],
-    k: ['#f8b0e0', P.pink2, '#a84088', '#30102a'],
-    m: [P.pink2, P.mag, '#682890', '#24103a'],
-    c: ['#b8f4f8', P.cyan, '#2c8090', '#0c2838'],
-    u: ['#b0bcf8', P.purp, '#4450a8', '#161848'],
-    y: ['#f8e8a0', P.yel, '#a88020', '#382408'],
-    g: ['#a8f8c8', P.green, '#20985a', '#0a2c1c'],
-    r: ['#f8a0a0', P.red, '#a02838', '#380a14'],
-    w: ['#ffffff', '#d8d4ec', P.grey, P.mid],
-    '*': ['#ffffff', '#b8b4d0', '#6a6488', P.dark],   // chrome: three hits
-    '#': ['#6a6a88', P.hi, P.mid, INK]                // steel: never breaks
+    p: ['#ffd0ea', '#ff6ec1', '#c83a8c', '#4a1030'],
+    o: ['#ffd8b8', '#ff9354', '#c85a24', '#4a1a08'],
+    y: ['#fff4b8', '#ffd64a', '#c89a1a', '#4a3008'],
+    g: ['#ccf6c4', '#6ed46a', '#2e9a3a', '#0e3014'],
+    c: ['#d6f2ff', '#5dc0e0', '#2a80a8', '#0c2a3a'],
+    v: ['#ece0ff', '#b78cff', '#7a50c8', '#24104a'],
+    r: ['#ffc8d0', '#ff3a55', '#b81a34', '#40060e'],
+    w: ['#ffffff', '#fff0f6', '#e0b8d0', '#5a3a50'],                // icing
+    b: ['#d8a070', '#8a5430', '#5a3018', '#2a1408'],                // chocolate, wafer, gingerbread
+    '*': ['#ffffff', '#cde9ff', '#88b0d8', '#2a3a5a'],              // rock candy: three hits
+    '#': ['#5a4a5a', '#241a24', '#120c12', '#000000']               // licorice: never breaks
   };
 
-  // the walls. Lowercase is one hit, uppercase two, * chrome three, # steel; rows centre themselves
+  // The walls, smallest first. Lowercase is one hit, uppercase two (a wrapped sweet), * rock candy, # licorice.
+  // Rows centre themselves; odd and even rows sit half a brick apart where widths differ by one.
   var LEVELS = [
-    { name: 'ARCADIA', rows: [
-      'ppp.pp..ppp.ppp',
-      'p.p.p.p.p...p.p',
-      'kkk.kk..k...kkk',
-      'm.m.m.m.m...m.m',
-      'm.m.m.m.mmm.m.m',
+    { name: 'SWEET SHOP', rows: [
+      'pppoooyyyggg',
+      'cccvvvpppooo',
+      'yyygggcccvvv'] },
+    { name: 'LOLLIPOP', rows: [
+      '..ppp..',
+      '.pyyyp.',
+      'pyvvvyp',
+      'pyvYvyp',
+      'pyvvvyp',
+      '.pyyyp.',
+      '..ppp..',
+      '...w...',
+      '...w...'] },
+    { name: 'HEART', rows: [
+      '.rr...rr.',
+      'rRRr.rRRr',
+      'rRRRrRRRr',
+      'rRRRRRRRr',
+      '.rRRRRRr.',
+      '..rRRRr..',
+      '...rRr...',
+      '....r....'] },
+    { name: 'CUPCAKE', rows: [
+      '......r......',
+      '.....rrr.....',
+      '...wwwwwww...',
+      '..wwpwwwpww..',
+      '.wpwwwpwwwpw.',
+      'wwwwwwwwwwwww',
+      '.bBbBbBbBbBb.',
+      '..bBbBbBbBb..',
+      '...bbbbbbb...'] },
+    { name: 'RAINBOW', rows: [
+      '....rrrrrrr....',
+      '..rrooooooorr..',
+      '.rooyyyyyyyoor.',
+      'royygggggggyyor',
+      'roygcccccccgyor',
+      'roygcvvvvvcgyor',
+      'roygcv...vcgyor',
+      'WWWW.......WWWW'] },
+    { name: 'ICE CREAM', rows: [
+      '.....ppp.....',
+      '...ppPpPpp...',
+      '..pPppppPpp..',
+      '..gggggggggg.',
+      '.gGggrggGggg.',
+      '.yyyyyyyyyyy.',
+      '..bbbbbbbbb..',
+      '..bwbwbwbwb..',
+      '...bbbbbbb...',
+      '....bwbwb....',
+      '.....bbb.....',
+      '......b......'] },
+    { name: 'GUMBALL', rows: [
+      '....wwwwwww....',
+      '..wwrgcyvpowww.',
+      '.wcypogrvcypow.',
+      '.wgrvpycogrvyw.',
+      '.wpocyrgvpocgw.',
+      '..wwvgpyrcoww..',
+      '....wwwwwww....',
+      '.....rRRRr.....',
+      '....rr*#*rr....',
+      '....RRRRRRR....',
+      '...rrrrrrrrr...'] },
+    { name: 'STRIPES', rows: [
+      'pwpwpwpwpwpwpwpw',
+      'wPwPwPwPwPwPwPwP',
+      '################',
+      'cwcwcwcwcwcwcwcw',
+      'wCwCwCwCwCwCwCwC',
       '',
-      'cc..ccc.ccc',
-      'c.c..c..c.c',
-      'c.c..c..ccc',
-      'u.u..u..u.u',
-      'uu..uuu.u.u',
-      '',
-      'yyyyyyyyyyyyyyy'] },
-    { name: 'INVADER', rows: [                       // two rows of bricks to a sprite pixel, so it keeps its shape
-      '..g.....g..', '..g.....g..',
-      '...g...g...', '...g...g...',
-      '..GGGGGGG..', '..GGGGGGG..',
-      '.GGRGGGRGG.', '.GGRGGGRGG.',
-      'ggggggggggg', 'ggggggggggg',
-      'g.ggggggg.g', 'g.ggggggg.g',
-      'g.g.....g.g', 'g.g.....g.g',
-      '...gg.gg...', '...gg.gg...'] },
-    { name: 'HEART', rows: [                         // odd and even rows sit half a brick apart: smoother curves
-      'ppp..ppp',
-      'pwwp.pppp',
-      'pwRRppRRpp',
-      'ppRRRRRRpp',
-      'ppRRRRRpp',
-      'ppRRRRpp',
-      'ppRRRpp',
-      'ppRRpp',
-      'ppRpp',
-      'pppp',
-      'ppp',
-      'pp',
-      'p'] },
-    { name: 'PYRAMID', rows: [
-      '**',
-      'yyy',
-      'YyyY',
-      'ppppp',
-      'PppppP',
-      'pppcppp',
-      'KkkkkkkK',
-      'kkkkkkkkk',
-      'KkkkkkkkkK',
-      'mmmmmmmmmmm',
-      'Mmmmm..mmmmM',
-      'mmmmm...mmmmm'] },
-    { name: 'CHECKER', rows: [
-      'cucucucucucucucu',
-      'UcUcUcUcUcUcUcUc',
-      'cUcUcUcUcUcUcUcU',
+      'gwgwgwgwgwgwgwgw',
+      'wGwGwGwGwGwGwGwG',
+      '###.###..###.###',
+      'ywywywywywywywyw',
+      'wYwYwYwYwYwYwYwY'] },
+    { name: 'CHECKERS', rows: [
+      'b*b*b*b*b*b*b*b*',
+      'PbPbPbPbPbPbPbPb',
+      'bPbPbPbPbPbPbPbP',
+      'VbVbVbVbVbVbVbVb',
+      'bVbVbVbVbVbVbVbV',
       '',
       'y.y.y.y.y.y.y.y.',
-      '.y.y.y.y.y.y.y.y',
-      'k.k.k.k.k.k.k.k.',
-      '.k.k.k.k.k.k.k.k',
-      'w.w.w.w.w.w.w.w.'] },
-    { name: 'DIAMOND', rows: function () {
-      var rows = [], N = 6, ring = ['*', 'Y', 'K', 'k', 'm', 'u', 'c'];
-      for (var r = 0; r <= 2 * N; r++) {
-        var dy = Math.abs(r - N), w = 2 * (N - dy) + 1, s = '';
-        for (var i = 0; i < w; i++) {
-          var dx = Math.abs(i - (w - 1) / 2), d = dx + dy;
-          s += d === N && (dx === 0 || dy === 0) ? '#' : ring[d];   // steel on the four tips
-        }
-        rows.push(s);
-      }
-      return rows;
-    } },
-    { name: 'SKYLINE', rows: [
-      '........r.......',
-      '.r......u.......',
-      '.u.....UUU......',
-      'MMM....UyU....r.',
-      'MyM....UUU...CCC',
-      'MMM....UyU.kkCyC',
-      'MyM.gg.UUU.ykCCC',
-      'MMM.gy.UyU.kkCyC',
-      'MyM.gg.UUU.kyCCC',
-      'MMM.yg.UyU.kkCyC',
-      '###.##.###.#####'] },
-    { name: 'NULL', rows: [                          // their mark, sprayed on everything
-      '..k.......#.....',
-      '......MMMMR...u.',
-      '.u..MMM..RMM....',
-      '....MM...RMM..k.',
-      '.k..M...R..M....',
-      '....M...*..M....',
-      '....M..*...M.k..',
-      '..u.M..R...M....',
-      '....MMR...MM..u.',
-      '.k..MMR..MMM....',
-      '.....RMMMM....k.',
-      '.....#.m.m......',
-      '.......m.m......',
-      '.........m......'] }
+      '.o.o.o.o.o.o.o.o',
+      'c.c.c.c.c.c.c.c.',
+      '.g.g.g.g.g.g.g.g',
+      'p.p.p.p.p.p.p.p.'] },
+    { name: 'GINGERBREAD', rows: [
+      'r..r..r..r..r..r',
+      'b..b..b..b..b..b',
+      'bbbbbbbbbbbbbbbb',
+      'bwBbBwbBBbwBbBwb',
+      'bbbbbbbbbbbbbbbb',
+      'bb*bb.pppp.bb*bb',
+      'bbbbb.pyyp.bbbbb',
+      'BwbwB.pyyp.BwbwB',
+      'bbbbb.pyyp.bbbbb',
+      'bbbbb.pppp.bbbbb',
+      'w.w.w.w..w.w.w.w',
+      '##.##.#..#.##.##'] }
   ];
 
   // capsules: letter, colour, what the popup says
-  var POW = { W: { col: 'c', name: 'WIDE' }, M: { col: 'm', name: 'MULTI' }, S: { col: 'u', name: 'SLOW' },
+  var POW = { W: { col: 'c', name: 'WIDE' }, M: { col: 'p', name: 'MULTI' }, S: { col: 'v', name: 'SLOW' },
               L: { col: 'r', name: '+1 LIFE' }, Z: { col: 'y', name: 'ZAPPER' } };
 
   var bricks, balls, caps, bolts, bits, pops, sparks, pad, level, left, total, combo, levelName,
-      playT, idleT, wideT, slowT, laserT, laserCool, introT, clearT, deadT, launchLock, aim = 0, demoT = 0,
+      playT, idleT, wideT, slowT, laserT, laserCool, introT, clearT, deadT, launchLock, aim = 0, demoT = 0, rushShown = false, rushing = false,
       lastMode, steer = 'ptr', lastPX = null, lastPY = null, wasDown = false, pressOk = false, backdrop = null, lights = [];
 
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
@@ -204,8 +213,30 @@
     build(level, api.t);
     caps = []; bolts = [];
     combo = 0; playT = 0; idleT = 0; wideT = 0; slowT = 0; laserT = 0; laserCool = 0;
-    introT = 2.4; clearT = 0; deadT = 0;
+    introT = 2.4; clearT = 0; deadT = 0; rushShown = false; rushing = false;
     serve();
+  }
+
+  // the last few bricks: a sugar rush — they glow, and a ball on its way up bends toward the nearest
+  function sugarRush(api, dt) {
+    rushing = left > 0 && left <= Math.max(3, Math.ceil(total * 0.08));
+    if (!rushing) return;
+    if (!rushShown) { rushShown = true; pop('SUGAR RUSH!', W / 2, 168, P.pink, 1.6); notes(api, [784, 988, 1175, 1568], 55, 'triangle'); }
+    balls.forEach(function (b) {
+      if (b.stuck || b.vy >= 0) return;
+      var best = null, bd = 1e9;
+      bricks.forEach(function (br) {
+        if (br.steel) return;
+        var d = Math.abs(br.x + BW / 2 - b.x) + Math.abs(br.y + BH / 2 - b.y);
+        if (d < bd) { bd = d; best = br; }
+      });
+      if (!best) return;
+      var want = Math.atan2(best.y + BH / 2 - b.y, best.x + BW / 2 - b.x), cur = Math.atan2(b.vy, b.vx), d = want - cur;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      cur += clamp(d, -1.8 * dt, 1.8 * dt);
+      b.vx = Math.cos(cur); b.vy = Math.sin(cur);
+    });
   }
 
   function speedNow() {                              // px/s: faster each wall, faster as the wall thins, slower under SLOW
@@ -405,85 +436,90 @@
     demoT = 0.8;
   }
 
-  // ---- the backdrop: night over the District, painted once ------------------------------------------
+  // ---- the backdrop: a Lite-Brite board in the candy shop, painted once ----------------------------
   function rng(seed) { return function () { seed = seed * 16807 % 2147483647; return (seed - 1) / 2147483646; }; }
+  var PEGS = ['#ff6ec1', '#ff9354', '#ffd64a', '#6ed46a', '#5dc0e0', '#b78cff'];
   function paintBackdrop() {
     var c = document.createElement('canvas'); c.width = W; c.height = H;
-    var g = c.getContext('2d'), r = rng(11), x, y, i;
-    function dither(y0, h, a, b) { for (y = y0; y < y0 + h; y++) for (x = 0; x < W; x++) { g.fillStyle = (x + y) % 2 ? b : a; g.fillRect(x, y, 1, 1); } }
+    var g = c.getContext('2d'), r = rng(23), x, y, i;
     g.fillStyle = P.bg; g.fillRect(0, 0, W, H);
-    dither(196, 6, P.bg, P.bg2);
-    g.fillStyle = P.bg2; g.fillRect(0, 202, W, 40);
-    dither(242, 6, P.bg2, P.purp2);
-    g.fillStyle = P.purp2; g.fillRect(0, 248, W, H - 248);
-    for (i = 0; i < 46; i++) {                          // stars
-      var sy = 20 + Math.floor(r() * 176);
-      g.fillStyle = r() < 0.15 ? P.grey : r() < 0.5 ? P.hi : P.mid;
-      g.fillRect(4 + Math.floor(r() * (W - 8)), sy, 1, 1);
+    // the board's peg holes, a staggered grid
+    for (y = 20; y < H; y += 6) for (x = 6 + ((y / 6) % 2) * 3; x < W - 4; x += 6) { g.fillStyle = '#120a16'; g.fillRect(x, y, 1, 1); }
+    // pegs left lit in the holes: a few scattered, and a swirl of them low on the board
+    for (i = 0; i < 34; i++) {
+      var py = 20 + Math.floor(r() * 30) * 6, row = py / 6;
+      lights.push([6 + (row % 2) * 3 + Math.floor(r() * 37) * 6, py, PEGS[Math.floor(r() * PEGS.length)], r() * 6]);
     }
-    // far towers against the glow, their windows in a dim grid
-    x = 0;
-    while (x < W) {
-      var w = 10 + Math.floor(r() * 14), top = 214 + Math.floor(r() * 40);
-      g.fillStyle = P.dark; g.fillRect(x, top, w, H - top);
-      g.fillStyle = P.mid; g.fillRect(x, top, w, 1);
-      if (r() < 0.35) { var ax = x + Math.floor(w / 2); g.fillStyle = P.mid; g.fillRect(ax, top - 6, 1, 6); lights.push([ax, top - 7, P.red, r() * 6]); }
-      for (y = top + 3; y < H - 2; y += 3) for (i = x + 2; i < x + w - 2; i += 3) if (r() < 0.22) { g.fillStyle = r() < 0.75 ? P.purp2 : P.mag; g.fillRect(i, y, 1, 1); }
-      x += w + 1 + Math.floor(r() * 3);
+    for (i = 0; i < 40; i++) {
+      var a = i * 0.42, rad = 6 + i * 0.95;
+      lights.push([Math.round(W / 2 + Math.cos(a) * rad), Math.round(222 + Math.sin(a) * rad * 0.55), PEGS[i % PEGS.length], i * 0.3]);
     }
-    // near rooftops under the paddle, a few windows still lit
-    x = -4;
-    while (x < W) {
-      var nw = 16 + Math.floor(r() * 18), nt = 262 + Math.floor(r() * 22);
-      g.fillStyle = P.bg; g.fillRect(x, nt, nw, H - nt);
-      g.fillStyle = P.dark; g.fillRect(x, nt, nw, 1);
-      for (y = nt + 4; y < H - 2; y += 4) for (i = x + 3; i < x + nw - 3; i += 4) if (r() < 0.16) lights.push([i, y, r() < 0.7 ? P.yel : P.pink, r() * 6]);
-      x += nw + Math.floor(r() * 4);
+    // the shop counter under the paddle: a row of sweet jars
+    g.fillStyle = P.bg2; g.fillRect(0, 262, W, H - 262);
+    g.fillStyle = P.dark; g.fillRect(0, 262, W, 1);
+    for (x = 8; x < W - 16; x += 22 + Math.floor(r() * 6)) {
+      var jw = 14 + Math.floor(r() * 4), jh = 18 + Math.floor(r() * 8), jy = H - jh;
+      g.fillStyle = '#2e1c36'; g.fillRect(x, jy, jw, jh);                         // glass
+      g.fillStyle = '#5a3a60'; g.fillRect(x - 1, jy - 3, jw + 2, 3);                 // lid
+      g.fillStyle = '#7a5a80'; g.fillRect(x - 1, jy - 3, jw + 2, 1);
+      for (var k = 0; k < jw * 2; k++) {                                            // sweets inside, piled
+        var sx = x + 1 + Math.floor(r() * (jw - 2)), sy = jy + Math.floor(jh * 0.35) + Math.floor(r() * (jh * 0.6));
+        g.fillStyle = PEGS[Math.floor(r() * PEGS.length)]; g.globalAlpha = 0.55; g.fillRect(sx, sy, 2, 2); g.globalAlpha = 1;
+      }
+      g.fillStyle = 'rgba(255,255,255,0.18)'; g.fillRect(x + 2, jy + 2, 1, jh - 5);  // the glint on the glass
     }
-    // the HUD strip
+    // the HUD strip, a rainbow under it
     g.fillStyle = P.bg2; g.fillRect(0, 0, W, 13);
-    // the walls: metal pipes with a neon tube down each, bracketed every 24px
-    g.fillStyle = INK; g.fillRect(0, 13, W, 4); g.fillRect(0, 13, 4, H); g.fillRect(W - 4, 13, 4, H);
-    g.fillStyle = P.hi; g.fillRect(1, 14, W - 2, 1); g.fillRect(1, 14, 1, H); g.fillRect(W - 2, 14, 1, H);
-    g.fillStyle = P.pink; g.fillRect(2, 15, W - 4, 1);
-    g.fillStyle = P.cyan; g.fillRect(2, 16, 1, H); g.fillRect(W - 3, 16, 1, H);
-    g.fillStyle = P.mid; g.fillRect(4, 16, W - 8, 1); g.fillRect(3, 16, 1, H); g.fillRect(W - 4, 16, 1, H);
-    for (i = 28; i < W - 8; i += 24) { g.fillStyle = P.grey; g.fillRect(i, 13, 2, 4); g.fillStyle = INK; g.fillRect(i + 2, 13, 1, 4); }
-    for (y = 40; y < H; y += 24) { g.fillStyle = P.grey; g.fillRect(0, y, 4, 2); g.fillRect(W - 4, y, 4, 2); g.fillStyle = INK; g.fillRect(0, y + 2, 4, 1); g.fillRect(W - 4, y + 2, 4, 1); }
-    g.fillStyle = P.hi; g.fillRect(0, 13, 4, 4); g.fillRect(W - 4, 13, 4, 4);   // corner blocks
-    g.fillStyle = P.grey; g.fillRect(1, 14, 1, 1); g.fillRect(W - 2, 14, 1, 1);
+    for (x = 0; x < W; x++) { g.fillStyle = PEGS[Math.floor(x / (W / 6))]; g.fillRect(x, 12, 1, 1); }
+    // the walls: candy canes, striped on the slant, with a gloss down each
+    function cane(x0, y0, w, h, horiz) {
+      for (var yy = y0; yy < y0 + h; yy++) for (var xx = x0; xx < x0 + w; xx++) {
+        var band = Math.floor((xx + yy) / 3) % 2;
+        g.fillStyle = band ? '#e8304a' : '#fff0f4'; g.fillRect(xx, yy, 1, 1);
+      }
+      g.fillStyle = 'rgba(255,255,255,0.45)';
+      if (horiz) g.fillRect(x0, y0 + 1, w, 1); else g.fillRect(x0 + 1, y0, 1, h);
+      g.fillStyle = 'rgba(60,0,20,0.45)';
+      if (horiz) g.fillRect(x0, y0 + h - 1, w, 1); else g.fillRect(x0 + w - 1, y0, 1, h);
+    }
+    cane(0, 13, W, 4, true); cane(0, 13, 4, H - 13, false); cane(W - 4, 13, 4, H - 13, false);
+    g.fillStyle = INK; g.fillRect(4, 17, W - 8, 1); g.fillRect(4, 17, 1, H); g.fillRect(W - 5, 17, 1, H);
     return c;
   }
 
   // ---- drawing ------------------------------------------------------------------------------------
-  function drawBrick(g, br, t) {
+  function drawBrick(g, br, t, rush) {
     if (t < br.born) return;
     var x = br.x, y = br.y - Math.round(8 * Math.max(0, 1 - (t - br.born) / 0.15)), c = RAMP[br.key];
-    g.fillStyle = c[3];                                 // outline, corners cut
+    g.fillStyle = c[3];                                 // outline, round-cornered like a jelly
     g.fillRect(x + 1, y, BW - 2, 1); g.fillRect(x + 1, y + BH - 1, BW - 2, 1);
     g.fillRect(x, y + 1, 1, BH - 2); g.fillRect(x + BW - 1, y + 1, 1, BH - 2);
-    if (br.flash > 0) { g.fillStyle = P.white; g.fillRect(x + 1, y + 1, BW - 2, BH - 2); return; }
-    g.fillStyle = c[1]; g.fillRect(x + 1, y + 1, BW - 2, BH - 2);
-    g.fillStyle = c[0]; g.fillRect(x + 1, y + 1, BW - 3, 1); g.fillRect(x + 1, y + 2, 1, BH - 4);
-    g.fillStyle = c[2]; g.fillRect(x + 2, y + BH - 2, BW - 3, 1); g.fillRect(x + BW - 2, y + 1, 1, BH - 3);
-    if (br.steel) {                                      // rivets
-      g.fillStyle = P.grey; g.fillRect(x + 2, y + 2, 1, 1); g.fillRect(x + 10, y + 2, 1, 1); g.fillRect(x + 2, y + 4, 1, 1); g.fillRect(x + 10, y + 4, 1, 1);
-      g.fillStyle = c[2]; g.fillRect(x + 4, y + 3, 5, 1);
+    if (br.flash > 0 || (rush && !br.steel && Math.floor(t * 4) % 2)) { g.fillStyle = br.flash > 0 ? P.white : c[0]; g.fillRect(x + 1, y + 1, BW - 2, BH - 2); if (br.flash > 0) return; }
+    else { g.fillStyle = c[1]; g.fillRect(x + 1, y + 1, BW - 2, BH - 2); }
+    g.fillStyle = c[2]; g.fillRect(x + 2, y + BH - 2, BW - 4, 1); g.fillRect(x + BW - 2, y + 2, 1, BH - 4);
+    g.fillStyle = c[0]; g.fillRect(x + 2, y + 1, BW - 5, 1);
+    g.fillStyle = '#ffffff'; g.fillRect(x + 2, y + 2, 2, 1);                       // the shine
+    if (br.steel) {                                      // licorice: an allsort's stripe of sugar
+      g.fillStyle = '#ff9ccf'; g.fillRect(x + 1, y + 3, BW - 2, 1);
+      g.fillStyle = '#fff0f6'; g.fillRect(x + 1, y + 2, BW - 2, 1);
+      g.fillStyle = '#3a2a3a'; g.fillRect(x + 2, y + 1, 2, 1);
       return;
     }
-    if (br.key === '*') {                                // chrome: a glint across it
-      g.fillStyle = '#ffffff'; g.fillRect(x + 7, y + 2, 1, 1); g.fillRect(x + 6, y + 3, 1, 1); g.fillRect(x + 5, y + 4, 1, 1); g.fillRect(x + 9, y + 2, 1, 1); g.fillRect(x + 8, y + 3, 1, 1);
-    } else if (br.max > 1) {                             // tough bricks are bolted
-      g.fillStyle = c[2]; g.fillRect(x + 3, y + 3, 1, 1); g.fillRect(x + 9, y + 3, 1, 1);
-      g.fillStyle = c[0]; g.fillRect(x + 3, y + 2, 1, 1); g.fillRect(x + 9, y + 2, 1, 1);
+    if (br.key === '*') {                                // rock candy: facets catching the light
+      g.fillStyle = '#ffffff'; g.fillRect(x + 6, y + 2, 1, 1); g.fillRect(x + 5, y + 3, 1, 1); g.fillRect(x + 9, y + 3, 1, 1); g.fillRect(x + 8, y + 4, 1, 1);
+      g.fillStyle = c[2]; g.fillRect(x + 4, y + 4, 1, 1); g.fillRect(x + 7, y + 2, 1, 1); g.fillRect(x + 10, y + 5, 1, 1);
+    } else if (br.max > 1) {                             // a wrapped sweet: stripes, and twists at the ends
+      g.fillStyle = 'rgba(255,255,255,0.55)';
+      for (var k = 3; k < BW - 3; k += 3) { g.fillRect(x + k, y + 2, 1, 1); g.fillRect(x + k + 1, y + 3, 1, 1); g.fillRect(x + k + 2, y + 4, 1, 1); }
+      g.fillStyle = c[3]; g.fillRect(x + 1, y + 2, 1, 1); g.fillRect(x + 1, y + 4, 1, 1); g.fillRect(x + BW - 2, y + 2, 1, 1); g.fillRect(x + BW - 2, y + 4, 1, 1);
     }
     var stage = br.hp === br.max ? 0 : br.hp === 1 ? 2 : 1;
-    if (stage) {
+    if (stage) {                                         // cracked, then a bite out of it
       g.fillStyle = c[3];
       br.cracks[0].forEach(function (p) { g.fillRect(x + p[0], y + p[1], 1, 1); });
       if (stage > 1) {
         br.cracks[1].forEach(function (p) { g.fillRect(x + p[0], y + p[1], 1, 1); });
-        g.fillStyle = P.bg; g.fillRect(x + BW - 2, y, 2, 1); g.fillRect(x + BW - 1, y + 1, 1, 1);   // a chipped corner
+        g.fillStyle = P.bg; g.fillRect(x + BW - 3, y, 3, 2); g.fillRect(x + BW - 2, y + 2, 2, 1);
       }
     }
   }
@@ -504,43 +540,43 @@
     for (var ry = 0; ry < 7; ry++) for (var rx = 0; rx < 5; rx++) if (rows[ry] & (16 >> rx)) g.fillRect(x + 6 + rx, y + 1 + ry, 1, 1);
   }
 
-  function drawPaddle(g, t) {
+  function drawPaddle(g, t) {                        // a candy cane laid flat, glossy, with mint ends
     var w = Math.round(pad.w), x = Math.round(pad.x - pad.w / 2), y = PY;
-    var capCol = wideT > 0 && wideT < 2 && Math.floor(t * 8) % 2 ? P.white : P.cyan;
-    if (laserT > 0) {                                    // the Zapper's two barrels
+    var endCol = wideT > 0 && wideT < 2 && Math.floor(t * 8) % 2 ? P.white : '#7de0b0';
+    if (laserT > 0) {                                    // the Zapper's two sherbet barrels
       var blink = laserT < 2 && Math.floor(t * 8) % 2;
       [x + 1, x + w - 5].forEach(function (bx) {
         g.fillStyle = INK; g.fillRect(bx, y - 4, 4, 4);
         g.fillStyle = blink ? P.white : P.yel; g.fillRect(bx + 1, y - 4, 2, 4);
-        g.fillStyle = '#a88020'; g.fillRect(bx + 2, y - 3, 1, 3);
+        g.fillStyle = '#c89a1a'; g.fillRect(bx + 2, y - 3, 1, 3);
       });
     }
     g.fillStyle = INK;
     g.fillRect(x + 1, y, w - 2, 1); g.fillRect(x + 1, y + PH - 1, w - 2, 1);
     g.fillRect(x, y + 1, 1, PH - 2); g.fillRect(x + w - 1, y + 1, 1, PH - 2);
-    g.fillStyle = P.pink; g.fillRect(x + 1, y + 1, w - 2, PH - 2);
-    g.fillStyle = '#f8b8d0'; g.fillRect(x + 1, y + 1, w - 2, 1);
-    g.fillStyle = '#b04878'; g.fillRect(x + 1, y + PH - 2, w - 2, 1);
-    [x + 1, x + w - 5].forEach(function (cx) {          // cyan end caps
-      g.fillStyle = capCol; g.fillRect(cx, y + 1, 4, PH - 2);
-      g.fillStyle = capCol === P.white ? P.white : P.cyan2; g.fillRect(cx, y + 1, 4, 1);
-      g.fillStyle = '#2c8090'; g.fillRect(cx, y + PH - 2, 4, 1);
+    for (var i = 1; i < w - 1; i++) for (var j = 1; j < PH - 1; j++) {
+      g.fillStyle = Math.floor((i + j + Math.floor(t * 6)) / 3) % 2 ? '#e8304a' : '#fff0f4';
+      g.fillRect(x + i, y + j, 1, 1);
+    }
+    g.fillStyle = 'rgba(255,255,255,0.6)'; g.fillRect(x + 2, y + 1, w - 4, 1);
+    g.fillStyle = 'rgba(80,0,30,0.4)'; g.fillRect(x + 1, y + PH - 2, w - 2, 1);
+    [x + 1, x + w - 4].forEach(function (cx) {          // mint ends
+      g.fillStyle = endCol; g.fillRect(cx, y + 1, 3, PH - 2);
+      g.fillStyle = '#d0fff0'; g.fillRect(cx, y + 1, 3, 1);
     });
-    g.fillStyle = INK; g.fillRect(x + 5, y + 1, 1, PH - 2); g.fillRect(x + w - 6, y + 1, 1, PH - 2);
-    g.fillStyle = Math.floor(t * 2) % 2 ? P.yel : '#a88020';
-    g.fillRect(x + Math.floor(w / 2) - 1, y + 2, 2, 2);  // the running light
   }
 
-  function drawBall(g, b) {
-    var cols = [P.cyan, P.cyan, P.purp, P.purp, P.mid, P.mid];
+  var SPRINKLES = ['#ff6ec1', '#ffd64a', '#5dc0e0', '#6ed46a', '#b78cff', '#ff9354'];
+  function drawBall(g, b) {                          // a peppermint, trailing sprinkles
     for (var i = b.trail.length - 1; i >= 1; i--) {
       if (i % 2) continue;
-      var p = b.trail[i], s = i < 4 ? 2 : 1;
-      g.fillStyle = cols[i - 1]; g.fillRect(p[0] - 1, p[1] - 1, s, s);
+      var p = b.trail[i];
+      g.fillStyle = SPRINKLES[(i + Math.floor(p[0] / 3)) % SPRINKLES.length];
+      g.fillRect(p[0] - 1 + (i % 4 ? 1 : 0), p[1] - 1, i < 4 ? 2 : 1, 1);
     }
     var x = Math.round(b.x) - 2, y = Math.round(b.y) - 2;
-    g.fillStyle = P.white; g.fillRect(x + 1, y, 2, 1); g.fillRect(x, y + 1, 3, 1); g.fillRect(x, y + 2, 2, 1);
-    g.fillStyle = P.cyan2; g.fillRect(x + 3, y + 1, 1, 1); g.fillRect(x + 2, y + 2, 2, 1); g.fillRect(x + 1, y + 3, 2, 1);
+    g.fillStyle = '#fff5fb'; g.fillRect(x + 1, y, 2, 4); g.fillRect(x, y + 1, 4, 2);
+    g.fillStyle = '#e8304a'; g.fillRect(x + 1, y, 1, 1); g.fillRect(x + 3, y + 1, 1, 1); g.fillRect(x + 2, y + 3, 1, 1); g.fillRect(x, y + 2, 1, 1);
   }
 
   function say(g, api, s, x, y, col, scale) {
@@ -554,10 +590,9 @@
     if (mult() > 1) api.text(g, 'X' + mult(), 4 + s.length * 6 + 3, 3, P.yel);
     api.text(g, 'LV ' + level, W / 2, 3, P.grey, 1, 'center');
     var x = W - 11;
-    for (var i = 0; i < api.lives; i++, x -= 9) {        // spare paddles
-      g.fillStyle = P.pink; g.fillRect(x, 5, 7, 3);
-      g.fillStyle = '#f8b8d0'; g.fillRect(x + 1, 5, 5, 1);
-      g.fillStyle = P.cyan; g.fillRect(x, 5, 1, 3); g.fillRect(x + 6, 5, 1, 3);
+    for (var i = 0; i < api.lives; i++, x -= 9) {        // spare paddles: little candy canes
+      for (var k = 0; k < 7; k++) { g.fillStyle = k % 2 ? '#e8304a' : '#fff0f4'; g.fillRect(x + k, 5, 1, 3); }
+      g.fillStyle = '#7de0b0'; g.fillRect(x, 5, 1, 3); g.fillRect(x + 6, 5, 1, 3);
     }
     [['W', wideT], ['S', slowT], ['Z', laserT]].forEach(function (e) {   // what's running, blinking as it runs out
       if (e[1] <= 0) return;
@@ -568,8 +603,8 @@
 
   // ---- the game -----------------------------------------------------------------------------------
   var game = {
-    id: 'breakout', title: 'BREAKOUT', w: W, h: H, pal: 'arcadia',
-    help: ['MOUSE OR ARROWS MOVE THE PADDLE', 'SPACE OR CLICK LAUNCHES', 'CATCH THE CAPSULES: W M S L Z'],
+    id: 'breakout', title: 'BREAKOUT', w: W, h: H, pal: 'candy',
+    help: ['MOUSE OR ARROWS MOVE THE CANE', 'SPACE OR CLICK LAUNCHES', 'CATCH THE SWEETS: W M S L Z'],
     coins: { per: 50, best: 20 },
 
     start: function (api) {
@@ -626,6 +661,7 @@
         idleT = 0;
         balls.forEach(function (b) { if (!b.stuck) { var a = Math.atan2(b.vy, b.vx) + (Math.random() < 0.5 ? -0.2 : 0.2); b.vx = Math.cos(a); b.vy = Math.sin(a); } });
       }
+      if (!stuck) sugarRush(api, dt);
       balls.forEach(function (b) {
         if (b.stuck) { b.x = pad.x + b.dx; b.y = PY - R; return; }
         stepBall(api, b, sp, dt, false);
@@ -658,15 +694,18 @@
       if (!bricks) demoSetup(t);
       g.fillStyle = P.bg; g.fillRect(-4, -4, W + 8, H + 8);
       g.drawImage(backdrop, 0, 0);
-      lights.forEach(function (l, i) {                  // windows and aircraft lights, blinking slowly
-        if ((Math.floor(t / 2.5 + l[3]) + i) % 5) { g.fillStyle = l[2]; g.fillRect(l[0], l[1], 1, 1); }
+      lights.forEach(function (l, i) {                  // the board's lit pegs, glowing up and down
+        var on = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * 1.3 + l[3] * 2 + i));
+        g.globalAlpha = on * 0.35; g.fillStyle = l[2]; g.fillRect(l[0] - 1, l[1] - 1, 3, 3);
+        g.globalAlpha = on; g.fillRect(l[0], l[1], 1, 1);
+        g.globalAlpha = 1;
       });
       sparks.forEach(function (s) {                     // the neon tube flares where the ball hits a wall
         g.fillStyle = P.white;
         if (s.side === 't') g.fillRect(clamp(s.at - 4, 2, W - 11), 15, 9, 1);
         else g.fillRect(s.side === 'l' ? 2 : W - 3, clamp(s.at - 4, 16, H - 9), 1, 9);
       });
-      bricks.forEach(function (br) { drawBrick(g, br, t); });
+      bricks.forEach(function (br) { drawBrick(g, br, t, rushing && mode === 'play'); });
       caps.forEach(function (cp) { drawCap(g, cp, t); });
       bolts.forEach(function (o) {
         var x = Math.round(o.x), y = Math.round(o.y);
@@ -679,7 +718,7 @@
       if (mode !== 'title') {
         drawHud(g, api, t);
         if (clearT > 0) {
-          say(g, api, 'WALL CLEAR', W / 2, 186, P.cyan2, 2);
+          say(g, api, 'DELICIOUS!', W / 2, 186, P.yel, 2);
         } else if (balls.length && balls[0].stuck && api.lives > 0) {
           if (introT > 0) {
             say(g, api, 'LEVEL ' + level, W / 2, 180, P.cyan2, 2);
