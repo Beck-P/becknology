@@ -146,8 +146,10 @@ var BridgeFleet = (function () {
     var I = typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles;
     if (!I || !worldId) return worldId;
     if (I[worldId]) return worldId;
-    for (var id in I) if (worldId.indexOf(id + '-') === 0) return id;
-    return worldId;
+    if (worldId === 'lumar-home') return 'lumar-sapphire';                 // the White House is on Sapphire's square
+    var best = null;                                                        // a room on an island: the longest match wins
+    for (var id in I) if (worldId.indexOf(id + '-') === 0 && (!best || id.length > best.length)) best = id;
+    return best || worldId;
   }
   function sail(id) { if (get(id)) { st.sailing = id; store(); } }
   /** She's tied up at this island now (you sailed her here). */

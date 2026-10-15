@@ -80,7 +80,9 @@ var BridgeHarbour = (function () {
     }
     menu(worldId, intro);
   }
+  var registry = false;                                  // the ledger opened at the Harbour Office's Registry window: no book to go back to
   function menu(worldId, intro, note) {
+    registry = false;
     var P = portOf(worldId), Pd = PORTS[P], f = F(), here = f.here(worldId);
     var hurt = here.filter(function (s) { return f.repairCost(s) > 0; });
     var rows = [
@@ -119,7 +121,7 @@ var BridgeHarbour = (function () {
         return { label: (s.id === act.id ? '⚓ ' : '') + s.name, sub: f.line(s) + ' — ' + f.where(s), note: hereNow ? 'here' : 'away',
                  pick: function () { shipCard(worldId, s); } };
       }),
-      buttons: [{ label: 'Back', act: function () { back(worldId); } }],
+      buttons: registry ? [] : [{ label: 'Back', act: function () { back(worldId); } }],
       closeLabel: 'Done'
     });
   }
@@ -247,7 +249,7 @@ var BridgeHarbour = (function () {
   }
 
   // ---- hands ------------------------------------------------------------------------------------------------------
-  function hands(worldId, note) {
+  function hands(worldId, note, solo) {                 // solo: asked at the bosun's table, not from the harbour book
     var f = F(), recs = f.recruits(worldId), here = f.here(worldId);
     var room = here.some(function (s) { return f.crewOn(s.id).length < f.berths(s); });
     choose({
@@ -262,12 +264,12 @@ var BridgeHarbour = (function () {
                             buttons: [{ label: 'Sign them on (' + r.fee + ')', act: function () {
                               f.hire(r, worldId).then(function (res) {
                                 if (res.ok) { sfx('coin'); toast('Crew', r.name + ' signs on', R.name + ', aboard the ' + res.ship.name); }
-                                hands(worldId, res.ok ? r.name.toUpperCase() + ' GOES ABOARD THE ' + res.ship.name.toUpperCase() + '.' : why(res));
+                                hands(worldId, res.ok ? r.name.toUpperCase() + ' GOES ABOARD THE ' + res.ship.name.toUpperCase() + '.' : why(res), solo);
                               });
-                            } }, { label: 'Back', act: function () { hands(worldId); } }] });
+                            } }, { label: 'Back', act: function () { hands(worldId, null, solo); } }] });
                  } };
       }),
-      buttons: [{ label: 'Back', act: function () { menu(worldId); } }],
+      buttons: solo ? [] : [{ label: 'Back', act: function () { menu(worldId); } }],
       closeLabel: 'Done'
     });
   }
@@ -360,5 +362,7 @@ var BridgeHarbour = (function () {
              rows: rows, closeLabel: 'Done' });
   }
 
-  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs, exchange: exchange };
+  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs, exchange: exchange,
+           hands: function (worldId, note) { hands(worldId, note, true); },
+           registry: function (worldId) { registry = true; ledger(worldId); } };
 })();

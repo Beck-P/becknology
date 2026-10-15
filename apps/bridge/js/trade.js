@@ -251,6 +251,25 @@ var BridgeTrade = (function () {
     }
     return out;
   }
+  // the Exchange's charters (Crownhaven): three long hauls a day — one a cutter can carry, one for a brigantine, one only
+  // a galleon will take — any good to any port, a few days to do it, a fee that pays for the size. Delivered like any
+  // contract, at the far port's harbourmaster.
+  var CHARTER = [{ n: 24, spread: 14, k: 1.6, kk: 0.3 }, { n: 64, spread: 40, k: 1.45, kk: 0.25 }, { n: 150, spread: 90, k: 1.35, kk: 0.2 }];
+  function charters() {
+    var d = today(), out = [];
+    CHARTER.forEach(function (C, i) {
+      var h1 = hash(d + ':ex:c' + i), h2 = hash(d + ':ex:d' + i), h3 = hash(d + ':ex:n' + i);
+      var to = PORTS[Math.floor(h2 * PORTS.length)];
+      var wants = Object.keys(GOODS).filter(function (g) { return !GOODS[g].rare && !GOODS[g].item && (MARKET[to][g] || 1) >= 1.0; });
+      if (!wants.length) return;
+      var good = wants[Math.floor(h1 * wants.length)], n = C.n + Math.floor(h3 * C.spread);
+      var fee = Math.round(GOODS[good].base * n * (C.k + h1 * C.kk) / 10) * 10;
+      var id = d + ':exchange:' + i;
+      out.push({ id: id, from: 'lumar-crown', to: to, good: good, n: n, fee: fee, due: d + 3 + (h3 > 0.5 ? 1 : 0), charter: true,
+                 taken: !!st.taken.filter(function (c) { return c.id === id; })[0], done: !!st.done[id] });
+    });
+    return out;
+  }
   function mine() {                                      // contracts you've taken and not delivered, still in time
     var d = today();
     st.taken = st.taken.filter(function (c) { return !st.done[c.id] && c.due >= d; });
@@ -330,6 +349,6 @@ var BridgeTrade = (function () {
 
   return { GOODS: GOODS, HAUL: HAUL, MARKET: MARKET, PORTS: PORTS, isGood: isGood, name: name, per: per, port: port, price: price,
            stock: stock, supply: supply, crates: crates, capacity: capacity, room: room, fits: fits, load: load, unload: unload,
-           buy: buy, sell: sell, bestRun: bestRun, routes: routes, depth: depth, contracts: contracts, mine: mine, take: takeContract, deliver: deliver,
+           buy: buy, sell: sell, bestRun: bestRun, routes: routes, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver,
            _state: function () { return st; } };
 })();

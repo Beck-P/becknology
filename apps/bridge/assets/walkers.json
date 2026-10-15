@@ -56,5 +56,10 @@
   "lumar-tern": [
     { "sheet": "npc-sailor", "path": [[4, 14], [26, 14]], "speed": 0.8, "pause": 5000, "rest": "down" },
     { "sheet": "npc-dockhand", "path": [[3, 16], [13, 16]], "speed": 0.7, "pause": 6000, "rest": "down" }
+  ],
+  "lumar-crown-exchange": [
+    { "sheet": "npc-broker", "path": [[7, 3], [15, 3]], "speed": 0.7, "pause": 4000, "rest": "up" },
+    { "sheet": "npc-traveler", "path": [[8, 9], [8, 4]], "speed": 0.8, "pause": 5000, "rest": "right" },
+    { "sheet": "npc-broker", "path": [[13, 4], [13, 9]], "speed": 0.6, "pause": 6000, "rest": "left" }
   ]
 }

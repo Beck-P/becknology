@@ -1994,5 +1994,240 @@
         "a": "EVERY KNOCK COSTS. ROCKS, SQUALLS, PIRATE SHOT. ANY HARBOURMASTER CAN PATCH HER, AND IF YOU'VE A DOCK OF YOUR OWN, YOU CAN DO IT THERE."
       }
     ]
+  },
+  "hetty": {
+    "name": "Hetty Marsh",
+    "role": "Keeps the Crown & Anchor",
+    "sheet": "npc-hetty",
+    "at": [
+      {
+        "world": "lumar-crown-pub",
+        "label": "HETTY"
+      }
+    ],
+    "greet": "WHAT'LL IT BE, CAPTAIN? ALE'S COLD, STEW'S HOT, AND THE COMPANY'S NO WORSE THAN USUAL.",
+    "again": "BACK AGAIN? YOUR STOOL'S WHERE YOU LEFT IT.",
+    "topics": [
+      {
+        "q": "About the Crown & Anchor",
+        "a": "MY GRAN'S PUB, THEN MY MUM'S, NOW MINE. EVERY CREW THAT PUTS IN AT THE CAPITAL DRINKS HERE SOONER OR LATER. THE ANCHOR OVER THE FIRE'S FROM THE FIRST SHIP THE ROYAL YARD EVER BUILT. OR SO I TELL THEM."
+      },
+      {
+        "q": "The figurehead",
+        "a": "THE LANDLADY? OFF THE SOVEREIGN, THAT WENT DOWN OFF THE TEETH WITH THE CROWN'S PAYROLL. SHE WASHED UP ON THE QUAY ONE MORNING, CROWN AND ALL. NOBODY'S EVER SAID WHERE THE GOLD WENT."
+      },
+      {
+        "q": "Who's looking for work?",
+        "a": "ASK THE BOSUN BY THE DOOR. HE KEEPS THE LIST OF EVERY HAND IN PORT WHO WANTS A BERTH. SOBER ONES ARE MARKED WITH A STAR."
+      },
+      {
+        "q": "Rumours",
+        "a": "ANNIE SAYS THERE'S A SIXTH SEA PAST THE CRIMSON. JOSS SAYS ANNIE'S BEEN AT THE GROG. THE ONE WHO'S NEVER WRONG IS TAMSIN UP AT SAPPHIRE'S LIGHT - AND SHE'S BEEN SIGNALLING SOMETHING OUT TOWARD MIDNIGHT EVERY NIGHT FOR A MONTH."
+      }
+    ]
+  },
+  "annie": {
+    "name": "Salt Annie",
+    "role": "Sailor, forty years before the mast",
+    "sheet": "npc-annie",
+    "at": [
+      {
+        "world": "lumar-crown-pub",
+        "label": "SALT ANNIE"
+      }
+    ],
+    "greet": "SIT DOWN, CAPTAIN, BEFORE JOSS TAKES THE STOOL FOR HIS FEET. YOU PLAY BONES?",
+    "again": "AH, THE CAPTAIN. COME TO LOSE A LITTLE MORE?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "SAILED EVERY SEA THERE IS, AND ONE THERE ISN'T. BOSUN ON THE ASHGROVE TILL SHE WENT DOWN. NOW I PLAY BONES AND TELL LIES TO YOUNG CAPTAINS. THE LIES ARE FREE."
+      },
+      {
+        "q": "The sixth sea",
+        "a": "PAST THE CRIMSON, WHERE THE SQUALLS STOP ALL AT ONCE AND THE WATER GOES STILL AS A MIRROR. WE SAW IT ONE DAWN ON THE ASHGROVE. THE CAPTAIN TURNED HER ROUND AND NEVER SPOKE OF IT. NOBODY BELIEVES ME. GOOD."
+      },
+      {
+        "q": "Advice for a captain",
+        "a": "IN A CRIMSON SQUALL, EASE YOUR SHEET BEFORE IT HITS, NOT AFTER. IN THE MIDNIGHT, BUY THE FERRYMAN'S LANTERN AND DON'T ARGUE ABOUT THE PRICE. AND NEVER PLAY BONES WITH JOSS WHEN HE'S SMILING."
+      }
+    ]
+  },
+  "joss": {
+    "name": "Cutter Joss",
+    "role": "Sailor, once a pirate (he says)",
+    "sheet": "npc-joss",
+    "at": [
+      {
+        "world": "lumar-crown-pub",
+        "label": "CUTTER JOSS"
+      }
+    ],
+    "greet": "BONES IS HONEST. IT'S THE PLAYERS YOU WATCH.",
+    "again": "BACK FOR YOUR COINS? THEY'RE IN MY POCKET. COME AND GET THEM.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "SAILED WITH GARRO'S LOT ON THE CRIMSON, FIVE YEARS. RAN THE BOARDING PARTY. THEN I GOT OLD AND HONEST, IN THAT ORDER. MOSTLY HONEST."
+      },
+      {
+        "q": "Pirates",
+        "a": "THEY HAIL YOU FIRST, ALWAYS - NOBODY WANTS A FIGHT IF A PURSE WILL DO. PAY IF YOU'RE LIGHT. RUN IF YOU'RE QUICK. IF YOU FIGHT, KEEP THEM ON YOUR BEAM WHERE YOUR GUNS ARE, AND KEEP FIGHTERS ABOARD, OR THEY'LL BE ON YOUR DECK BEFORE YOUR SECOND BROADSIDE."
+      },
+      {
+        "q": "The gold tooth",
+        "a": "OFF THE SOVEREIGN'S PAYROLL. JOKING. PROBABLY."
+      }
+    ]
+  },
+  "bosun": {
+    "name": "Bosun Teague",
+    "role": "Keeps the list of hands in port",
+    "sheet": "npc-bosun",
+    "at": [
+      {
+        "world": "lumar-crown-pub",
+        "label": "BOSUN"
+      }
+    ],
+    "greet": "HANDS LOOKING FOR A BERTH, CAPTAIN. GOOD ONES GO QUICK.",
+    "again": "THE LIST CHANGES EVERY DAY. LOOK WHILE IT'S FRESH.",
+    "topics": [
+      {
+        "q": "Who's good?",
+        "a": "A GUNNER DOUBLES HOW FAST A GUN RELOADS. A NAVIGATOR GETS YOU THERE QUICKER. A RIGGER KEEPS YOUR CANVAS ON IN A BLOW. FIGHTERS FOR BOARDING, A PURSER FOR THE PRICES. AND DECKHANDS - EVERY SHIP NEEDS HER DECKHANDS."
+      },
+      {
+        "q": "About you",
+        "a": "THIRTY YEARS A BOSUN. MY KNEES GAVE UP BEFORE I DID. NOW I SIT HERE AND PUT GOOD HANDS ON GOOD SHIPS, AND THE CAPTAINS STAND ME A PINT."
+      }
+    ]
+  },
+  "registrar": {
+    "name": "Ambrose Vane",
+    "role": "Registrar of the Merchants' Exchange",
+    "sheet": "npc-registrar",
+    "at": [
+      {
+        "world": "lumar-crown-exchange",
+        "label": "REGISTRAR"
+      }
+    ],
+    "greet": "CHARTERS ARE FOR CAPTAINS WITH HOLDS, NOT POCKETS. WHAT ARE YOU SAILING?",
+    "again": "AH. THE CAPTAIN. THE CHARTER BOOK IS OPEN.",
+    "topics": [
+      {
+        "q": "What's a charter?",
+        "a": "A LONG HAUL. SO MANY CRATES OF A GOOD TO A PORT, BY A DAY. YOU FIND THE GOODS, YOU CARRY THEM, THE HARBOURMASTER THERE PAYS ON SIGHT. THE BIG ONES ONLY A GALLEON CAN TAKE, AND THEY PAY ACCORDINGLY."
+      },
+      {
+        "q": "About the Exchange",
+        "a": "EVERY PRICE ON THE FIVE SEAS IS SETTLED IN THIS HALL BEFORE NOON. THE BOARD IS CHALKED FRESH EVERY DAY. THE RING IS WHERE THE BROKERS SHOUT. I DO NOT SHOUT. I WRITE."
+      },
+      {
+        "q": "Advice",
+        "a": "BUY WHERE A THING IS MADE. SELL WHERE IT IS WANTED. DO NOT SELL A WHOLE HOLD OF ANYTHING IN ONE PORT - THE PRICE FALLS WITH EVERY CRATE. THE BOARD SHOWS THE DAY'S BEST RUNS, IF YOU CAN READ."
+      }
+    ]
+  },
+  "quill": {
+    "name": "Tobias Quill",
+    "role": "Clerk of the Exchange",
+    "sheet": "npc-clerk",
+    "at": [
+      {
+        "world": "lumar-crown-exchange",
+        "label": "CLERK"
+      }
+    ],
+    "greet": "SALT FISH UP TWO AT SAPPHIRE. GLASS DOWN AT ROSE. NOBODY WANTS RUM BUT EVERYBODY BUYS IT.",
+    "again": "THE NUMBERS HAVE MOVED SINCE YOU WERE LAST HERE. THEY ALWAYS DO.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I COPY THE PRICES FROM THE RING ONTO THE BOARD AND FROM THE BOARD INTO THE BOOK AND FROM THE BOOK INTO THE OTHER BOOK. ON SUNDAYS I DO SUMS FOR PLEASURE."
+      },
+      {
+        "q": "A tip?",
+        "a": "THE MOON SALT. NOBODY BUT THE FERRYMAN SELLS IT AND EVERYBODY WANTS IT. IF YOU CAN STAND THE MIDNIGHT SEA, IT'S THE BEST MONEY ON THE BOARD."
+      }
+    ]
+  },
+  "wynn": {
+    "name": "Wynn Abbot",
+    "role": "Registry clerk, Harbour Office",
+    "sheet": "npc-clerk",
+    "at": [
+      {
+        "world": "lumar-crown-office",
+        "label": "WYNN"
+      }
+    ],
+    "greet": "NAME OF VESSEL? TONNAGE? NEXT OF KIN?",
+    "again": "YOUR SHIPS ARE ALL IN THE BOOK, CAPTAIN. I CHECKED. TWICE.",
+    "topics": [
+      {
+        "q": "The registry",
+        "a": "EVERY KEEL ON THE FIVE SEAS IS ENTERED IN THE GREAT BOOK: HER NAME, HER MASTER, WHERE SHE LIES. YOURS TOO. ASK AT THE WINDOW AND I'LL READ YOU YOUR OWN."
+      },
+      {
+        "q": "The unclaimed cargo",
+        "a": "CRATES NOBODY CAME BACK FOR. THE HERON'S PICKLED EELS HAVE BEEN HERE NINE YEARS. I DO NOT OPEN THEM."
+      }
+    ]
+  },
+  "pim": {
+    "name": "Pim Sorrel",
+    "role": "Keeper of charts, Harbour Office",
+    "sheet": "npc-pim",
+    "at": [
+      {
+        "world": "lumar-crown-office",
+        "label": "PIM"
+      }
+    ],
+    "greet": "EVERY SOUNDING TAKEN BY SOMEBODY BRAVER THAN ME.",
+    "again": "MORE CHARTS? I LOVE A CAPTAIN WHO READS.",
+    "topics": [
+      {
+        "q": "Charts",
+        "a": "THE EMERALD YOU KNOW - EVERYONE DOES. THE OTHER FOUR I SELL BY THE SEA: EVERY ISLAND, EVERY HARBOUR MOUTH, EVERY ROCK WE KNOW OF. ONCE A SEA'S ON YOUR CHART YOU CAN SET A COURSE FOR ANYWHERE IN IT. THE CHART WINDOW, CAPTAIN."
+      },
+      {
+        "q": "Ilsa Venn",
+        "a": "ILSA? WE TRADE SOUNDINGS. SHE DRAWS PRETTIER COASTS; I DRAW MORE ACCURATE ROCKS. BETWEEN US NOBODY SHOULD EVER RUN AGROUND. THEY DO ANYWAY."
+      },
+      {
+        "q": "The globe",
+        "a": "THE OTHER SIDE SAYS UNSURVEYED. I WROTE THAT. ONE DAY SOMEBODY WILL MAKE ME CROSS IT OUT."
+      }
+    ]
+  },
+  "coralie": {
+    "name": "Mother Coralie",
+    "role": "Keeper of St Brendan's",
+    "sheet": "npc-coralie",
+    "at": [
+      {
+        "world": "lumar-crown-chapel",
+        "label": "MOTHER CORALIE"
+      }
+    ],
+    "greet": "SIT A WHILE IF YOU LIKE. THE SEA WILL STILL BE THERE.",
+    "again": "WELCOME BACK. YOU CAME HOME, THEN. I'M GLAD.",
+    "topics": [
+      {
+        "q": "The candles",
+        "a": "ONE FOR EVERY CREW STILL OUT. LIGHT ONE GOING OUT YOURSELF AND THE SEA REMEMBERS IT - THE SQUALLS AND THE ROCKS GO EASIER, AND THE PIRATES FIND SOMEBODY ELSE TO BOTHER. SO THE SAILORS SAY. I ONLY KEEP THE CANDLES."
+      },
+      {
+        "q": "The Wren",
+        "a": "SOMEONE WROTE 'NOT LOST. NOT YET.' UNDER HER NAME ON THE BOARD. I LEFT IT. IF THEY'RE OUT THERE, SOMEONE WILL FIND THEM, AND IT WON'T BE ME, SO I PRAY FOR WHOEVER IT IS."
+      },
+      {
+        "q": "The votive ship",
+        "a": "THE MERRY KESTREL'S CREW HUNG HER THERE, THE YEAR THEY CAME HOME AFTER EVERYONE HAD STOPPED LIGHTING CANDLES FOR THEM. SHE TURNS WHEN THE DOOR OPENS. LIKE SHE'S LOOKING FOR THE NEXT ONES."
+      }
+    ]
   }
 }

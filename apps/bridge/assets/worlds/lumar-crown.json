@@ -6107,10 +6107,14 @@
     {
       "x": 25,
       "y": 29,
-      "type": "dialog",
+      "type": "enter_world",
+      "target": "lumar-crown-office",
+      "spawn": [
+        7,
+        8
+      ],
       "label": "HARBOUR OFFICE",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "THE HARBOUR OFFICE OF CROWNHAVEN. A CLERK BEHIND EVERY WINDOW, A LEDGER FOR EVERY KEEL.\n\nTHE HARBOURMASTER WORKS ON THE QUAY, NOT IN HERE."
+      "prompt": "PRESS E TO GO IN"
     },
     {
       "x": 14,
@@ -6123,17 +6127,26 @@
     {
       "x": 40,
       "y": 29,
-      "type": "dialog",
+      "type": "enter_world",
+      "target": "lumar-crown-pub",
+      "spawn": [
+        8,
+        9
+      ],
       "label": "THE CROWN & ANCHOR",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "THE CROWN & ANCHOR. SINGING INSIDE, AND SOMEBODY WINNING AT DICE.\n\nA SLATE BY THE DOOR: \"HANDS WANTED - ASK THE HARBOURMASTER. NO PIRATES (AGAIN).\""
+      "prompt": "PRESS E TO GO IN"
     },
     {
       "x": 17,
-      "y": 19,
-      "type": "exchange",
+      "y": 18,
+      "type": "enter_world",
+      "target": "lumar-crown-exchange",
+      "spawn": [
+        10,
+        11
+      ],
       "label": "MERCHANTS' EXCHANGE",
-      "prompt": "PRESS E TO READ THE BOARD"
+      "prompt": "PRESS E TO GO IN"
     },
     {
       "x": 30,
@@ -6153,11 +6166,15 @@
     },
     {
       "x": 47,
-      "y": 19,
-      "type": "dialog",
+      "y": 18,
+      "type": "enter_world",
+      "target": "lumar-crown-chapel",
+      "spawn": [
+        7,
+        12
+      ],
       "label": "ST BRENDAN'S",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "ST BRENDAN'S, PATRON OF THOSE WHO SAIL. THE ROSE WINDOW GLOWS ALL NIGHT FOR SHIPS STILL OUT.\n\nINSIDE, CANDLES FOR THE MISSING, ROW ON ROW. ONE SAYS \"THE WREN\"."
+      "prompt": "PRESS E TO GO IN"
     },
     {
       "x": 32,

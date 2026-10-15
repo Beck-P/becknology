@@ -53,6 +53,7 @@ var BridgeSeaFight = (function () {
     var seas = [A.pal, B.pal], midnight = seas.indexOf('midnight') >= 0;
     var p = Math.max(CHANCE[A.pal] || 0.1, CHANCE[B.pal] || 0.1), rich = holdValue(B.id);
     if (!midnight) p = Math.min(0.85, p + Math.min(0.25, rich / 2500));
+    if (api.blessed && api.blessed()) p *= 0.5;                        // a candle at St Brendan's: they think twice
     if (api.rand() > p) return;
     var kind = midnight ? 'drowned' : seas.indexOf('crimson') >= 0 ? (api.rand() < 0.6 ? 'raider' : 'cutter') : (api.rand() < 0.15 ? 'raider' : 'cutter');
     // somewhere past halfway, off to one side of the line

@@ -363,17 +363,21 @@ def look(label, x, y, text, prompt='PRESS E TO LOOK'):
     return {'x': x, 'y': y, 'type': 'dialog', 'label': label, 'prompt': prompt, 'dialog': text}
 
 
+def door(label, x, y, target, spawn):                # into one of the capital's rooms (scenes/lumar_crown_*.py)
+    return {'x': x, 'y': y, 'type': 'enter_world', 'target': target, 'spawn': spawn, 'label': label, 'prompt': 'PRESS E TO GO IN'}
+
+
 w = {'name': 'Crownhaven', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'lumar', 'fixedCamera': True,
      'spawns': {'player': [PX, QUAY]}, 'moonColor': '#d8f0e0', 'shipExit': True,
      'tiles': [], 'collisions': [], 'tileNames': {}, 'interactions': [
          {'x': PX, 'y': QUAY + 2, 'type': 'go_sailing', 'label': 'DOCK', 'prompt': 'PRESS E TO GO SAILING'},
-         look('HARBOUR OFFICE', 25, 29, 'THE HARBOUR OFFICE OF CROWNHAVEN. A CLERK BEHIND EVERY WINDOW, A LEDGER FOR EVERY KEEL.\n\nTHE HARBOURMASTER WORKS ON THE QUAY, NOT IN HERE.'),
+         door('HARBOUR OFFICE', 25, 29, 'lumar-crown-office', [7, 8]),
          look('BONDED STORE', 14, 29, 'CROWN BONDED STORE. EVERY CRATE IN HERE HAS PAID ITS DUTY, OR IS WAITING TO.'),
-         look('THE CROWN & ANCHOR', 40, 29, 'THE CROWN & ANCHOR. SINGING INSIDE, AND SOMEBODY WINNING AT DICE.\n\nA SLATE BY THE DOOR: "HANDS WANTED - ASK THE HARBOURMASTER. NO PIRATES (AGAIN)."'),
-         {'x': 17, 'y': 19, 'type': 'exchange', 'label': "MERCHANTS' EXCHANGE", 'prompt': 'PRESS E TO READ THE BOARD'},
+         door('THE CROWN & ANCHOR', 40, 29, 'lumar-crown-pub', [8, 9]),
+         door("MERCHANTS' EXCHANGE", 17, 18, 'lumar-crown-exchange', [10, 11]),
          {'x': 30, 'y': 13, 'type': 'dialog', 'label': 'GUARD', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE GUARD LOOKS STRAIGHT AHEAD.'},
          {'x': 54, 'y': 24, 'type': 'dialog', 'label': 'SHIPWRIGHT', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE SHIPWRIGHT WIPES TAR FROM HER HANDS.'},
-         look("ST BRENDAN'S", 47, 19, "ST BRENDAN'S, PATRON OF THOSE WHO SAIL. THE ROSE WINDOW GLOWS ALL NIGHT FOR SHIPS STILL OUT.\n\nINSIDE, CANDLES FOR THE MISSING, ROW ON ROW. ONE SAYS \"THE WREN\"."),
+         door("ST BRENDAN'S", 47, 18, 'lumar-crown-chapel', [7, 12]),
          look('FOUNTAIN', 32, 20, 'THE CROWN FOUNTAIN. COINS AT THE BOTTOM FROM EVERY PORT ON THE SEA, AND A FEW FROM PLACES NOBODY HAS HEARD OF.'),
          look('STATUE', 32, 23, 'CAPTAIN MIRA LUMAR, WHO FIRST CHARTED THE FIVE SEAS. THE PLAQUE: "SHE FOUND THEM ALL, AND KEPT LOOKING."'),
          look('PALACE GATE', 32, 13, 'THE PALACE OF THE EMERALD CROWN. THE GATES ARE SHUT; THE GUARDS SAY THE QUEEN-REGENT SEES NOBODY WITHOUT A LETTER.\n\nONE OF THEM ADDS, QUIETLY: "UNLESS YOU OWN A FLEET."'),

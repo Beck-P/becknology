@@ -523,6 +523,9 @@ var BridgeInteractions = (function () {
         BridgeWorld.sailTo(inter.destination, inter.destinationName || inter.label);
         break;
 
+      case 'chapel_candle': case 'chapel_bell': case 'sea_chart': case 'charts': case 'registry': case 'hands': case 'charters':
+        if (typeof BridgeCrown !== 'undefined') BridgeCrown.use(inter);   // Crownhaven's rooms (js/crown.js)
+        break;
       case 'exchange':                                                   // the Merchants' Exchange board (js/harbour.js)
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.exchange();
         break;

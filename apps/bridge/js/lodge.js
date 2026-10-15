@@ -22,14 +22,35 @@
  */
 var BridgeLodge = (function () {
   var KEY = 'bridge_lodge', STAKES = [10, 25, 50], DICE = 5;
-  var RIVALS = [
-    { id: 'bryn', name: 'Old Bryn', call: 0.42, bluff: 0.08,
-      win: '"HAH! THE OLD MAN\'S STILL GOT IT." BRYN SWEEPS THE POT INTO HIS HAT.',
-      lose: 'BRYN LAUGHS UNTIL HE COUGHS. "WELL PLAYED. WELL PLAYED. NOW BUY ME A CIDER."' },
-    { id: 'sigrun', name: 'Sigrun', call: 0.3, bluff: 0.3,
-      win: 'SIGRUN STACKS THE COINS IN TOWERS OF TEN. "I TOLD YOU. I CHEAT BETTER."',
-      lose: 'SIGRUN STARES AT THE DICE AS IF THEY\'D LIED TO HER PERSONALLY. "AGAIN. TOMORROW."' }
-  ];
+  // the tables (an interaction's `table`): the lodge's Fell Dice with Bryn and Sigrun; Bones at the Crown & Anchor in
+  // Crownhaven with Salt Annie (reads the table, calls late) and Cutter Joss (bids big and means it half the time)
+  var TABLES = {
+    fell: { title: 'Fell Dice', where: 'at the lodge', theme: 'wd-frost',
+      intro: 'BRYN RATTLES A LEATHER CUP. "FIVE DICE EACH, FLAKES ARE WILD, BID HOW MANY OF A FACE ARE UNDER ALL THE CUPS. CALL A LIAR, LOSE A DIE IF YOU\'RE WRONG. LAST ONE WITH DICE TAKES THE POT."\n\nSIGRUN PUSHES THE STOOL OUT WITH HER BOOT. "WHAT\'S YOUR STAKE?"',
+      broke: 'SIGRUN LOOKS AT YOUR EMPTY HAND, THEN AT YOU. "COINS ON THE TABLE FIRST."',
+      leave: 'YOU PUSH YOUR STOOL BACK. "THE STAKE STAYS ON THE TABLE," SAYS SIGRUN, NOT UNKINDLY. BRYN IS ALREADY POURING IT INTO HIS HAT.',
+      rivals: [
+        { id: 'bryn', name: 'Old Bryn', call: 0.42, bluff: 0.08,
+          win: '"HAH! THE OLD MAN\'S STILL GOT IT." BRYN SWEEPS THE POT INTO HIS HAT.',
+          lose: 'BRYN LAUGHS UNTIL HE COUGHS. "WELL PLAYED. WELL PLAYED. NOW BUY ME A CIDER."' },
+        { id: 'sigrun', name: 'Sigrun', call: 0.3, bluff: 0.3,
+          win: 'SIGRUN STACKS THE COINS IN TOWERS OF TEN. "I TOLD YOU. I CHEAT BETTER."',
+          lose: 'SIGRUN STARES AT THE DICE AS IF THEY\'D LIED TO HER PERSONALLY. "AGAIN. TOMORROW."' }
+      ] },
+    anchor: { title: 'Bones', where: 'at the Crown & Anchor', theme: 'fd-anchor',
+      intro: 'SALT ANNIE TIPS FIVE BONE DICE INTO A CUP. "SAME AS EVERY PORT: BID HOW MANY OF A FACE ARE UNDER ALL THREE CUPS, ONES ARE WILD, CALL A LIAR AND SOMEBODY LOSES A DIE. LAST CUP STANDING TAKES THE POT."\n\nJOSS GRINS GOLD. "AND NO PEEKING. I\'LL KNOW."',
+      broke: 'JOSS TAPS THE TABLE. "COIN FIRST, CAPTAIN. THE BONES DON\'T ROLL ON CREDIT."',
+      leave: 'YOU STAND. "STAKE STAYS," SAYS ANNIE, ALREADY COUNTING IT. JOSS RAISES HIS MUG TO YOUR BACK.',
+      rivals: [
+        { id: 'annie', name: 'Salt Annie', call: 0.48, bluff: 0.12,
+          win: 'ANNIE SCOOPS THE POT INTO HER CAP. "FORTY YEARS AT SEA, LOVE. I CAN HEAR A LIE THROUGH A CUP."',
+          lose: 'ANNIE CLAPS YOU ON THE SHOULDER HARD ENOUGH TO HURT. "WELL BLOWN! YOU\'LL STAND THE NEXT ROUND, MIND."' },
+        { id: 'joss', name: 'Cutter Joss', call: 0.26, bluff: 0.36,
+          win: 'JOSS BITES A COIN WITH HIS GOLD TOOTH. "TOLD YOU. IT\'S THE PLAYERS YOU WATCH."',
+          lose: 'JOSS GLARES AT HIS DICE, THEN AT ANNIE, THEN AT YOU. "THAT\'S TWICE. NOBODY TAKES JOSS THREE TIMES."' }
+      ] }
+  };
+  var T = TABLES.fell, RIVALS = T.rivals;
   var WORDS = ['NO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'ELEVEN', 'TWELVE', 'THIRTEEN', 'FOURTEEN', 'FIFTEEN'];
   var st = load(), g = null, el = null, timer = 0;
 
@@ -48,7 +69,7 @@ var BridgeLodge = (function () {
   function use(inter) {
     if (inter.type === 'lodge_fire') return fire();
     if (inter.type === 'lodge_board') return board();
-    if (inter.type === 'dice') return table();
+    if (inter.type === 'dice') { T = TABLES[inter.table] || TABLES.fell; RIVALS = T.rivals; return table(); }
     if (inter.type === 'lodge_room') return room(inter);
   }
 
@@ -198,8 +219,8 @@ var BridgeLodge = (function () {
   // ---- Fell Dice --------------------------------------------------------------------------------------------------------
   function table() {
     BridgeInteractions.choose({
-      title: 'Fell Dice',
-      text: 'BRYN RATTLES A LEATHER CUP. "FIVE DICE EACH, FLAKES ARE WILD, BID HOW MANY OF A FACE ARE UNDER ALL THE CUPS. CALL A LIAR, LOSE A DIE IF YOU\'RE WRONG. LAST ONE WITH DICE TAKES THE POT."\n\nSIGRUN PUSHES THE STOOL OUT WITH HER BOOT. "WHAT\'S YOUR STAKE?"',
+      title: T.title,
+      text: T.intro,
       rows: STAKES.map(function (s) {
         return { label: s + ' coins', sub: 'the pot: ' + s * 3, note: s === 50 ? 'high table' : '', pick: function () { stake(s); } };
       }),
@@ -208,7 +229,7 @@ var BridgeLodge = (function () {
   }
   function stake(s) {
     BridgeProgression.wagerCoins(s, 'fell_dice').then(function (r) {
-      if (!r || !r.ok) return say('FELL DICE', 'SIGRUN LOOKS AT YOUR EMPTY HAND, THEN AT YOU. "COINS ON THE TABLE FIRST."');
+      if (!r || !r.ok) return say(T.title.toUpperCase(), T.broke);
       start(s);
     });
   }
@@ -219,7 +240,7 @@ var BridgeLodge = (function () {
     st.played++; store();
     if (st.nudged !== day() && typeof BridgeTalk !== 'undefined' && BridgeTalk.nudge) {
       st.nudged = day(); store();
-      RIVALS.forEach(function (r) { BridgeTalk.nudge(r.id, 0.5, 'sat down to Fell Dice with them at the lodge'); });
+      RIVALS.forEach(function (r) { BridgeTalk.nudge(r.id, 0.5, 'sat down to ' + T.title + ' with them ' + T.where); });
     }
     open();
     round(g.turn);
@@ -326,12 +347,12 @@ var BridgeLodge = (function () {
       }
       sfx('quest');
       var loser = RIVALS[Math.random() < 0.5 ? 0 : 1];
-      BridgeInteractions.choose({ title: 'Fell Dice', text: 'THE LAST CUP COMES UP AND THE POT IS YOURS: ' + r.pot + ' COINS.\n\n' + loser.lose,
+      BridgeInteractions.choose({ title: T.title, text: 'THE LAST CUP COMES UP AND THE POT IS YOURS: ' + r.pot + ' COINS.\n\n' + loser.lose,
         rows: [{ label: 'Another game', sub: 'same stake, ' + r.stake + ' coins', pick: function () { stake(r.stake); } }], closeLabel: 'Done' });
     } else {
       sfx('fail');
       var rv = RIVALS.filter(function (x) { return x.id === other.id; })[0];
-      BridgeInteractions.choose({ title: 'Fell Dice', text: 'YOUR LAST DIE GOES. YOU WATCH THE OTHER TWO PLAY IT OUT.\n\n' + rv.win,
+      BridgeInteractions.choose({ title: T.title, text: 'YOUR LAST DIE GOES. YOU WATCH THE OTHER TWO PLAY IT OUT.\n\n' + rv.win,
         rows: [{ label: 'Another game', sub: 'win it back · ' + r.stake + ' coins', pick: function () { stake(r.stake); } }], closeLabel: 'Done' });
     }
   }
@@ -380,6 +401,8 @@ var BridgeLodge = (function () {
         act(b.dataset.a);
       });
     }
+    el.querySelector('.fd-panel').className = 'fd-panel ' + T.theme;          // the lodge's frost, the pub's dark oak
+    el.querySelector('.fd-title').textContent = T.title;
     el.classList.add('visible');
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     document.addEventListener('keydown', onKey, true);
@@ -414,7 +437,7 @@ var BridgeLodge = (function () {
     el.classList.remove('visible');
     document.removeEventListener('keydown', onKey, true);
     if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
-    if (!quiet && was) say('FELL DICE', 'YOU PUSH YOUR STOOL BACK. "THE STAKE STAYS ON THE TABLE," SAYS SIGRUN, NOT UNKINDLY. BRYN IS ALREADY POURING IT INTO HIS HAT.');
+    if (!quiet && was) say(T.title.toUpperCase(), T.leave);
   }
   function paint() {
     if (!g || !el) return;

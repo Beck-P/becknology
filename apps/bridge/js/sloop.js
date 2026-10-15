@@ -508,7 +508,8 @@ var BridgeSloop = (function () {
   }
 
   // ---- start and stop ---------------------------------------------------------------------------------------------
-  var aboardStart = false, shipId = null, shipName = 'your sloop';
+  var aboardStart = false, shipId = null, shipName = 'your sloop', blessing = false;
+  function mercy() { return blessing ? 0.5 : 1; }                  // a candle lit at St Brendan's (js/crown.js): half the harm
   function start(fromId, toId, opts) {
     var charted = typeof BridgeChart !== 'undefined' ? BridgeChart.dest() : null;     // a course set on the chart ashore
     if (!toId && charted && charted !== fromId && knows(charted)) toId = charted;
@@ -519,6 +520,7 @@ var BridgeSloop = (function () {
     running = true; from = fromId; to = toId || null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
     wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = false;
     aim = null; committing = false; hinted = false; said = {}; told = {}; B = null; B0 = null; wrecking = false; shakeUntil = 0;
+    blessing = typeof BridgeCrown !== 'undefined' && BridgeCrown.takeBlessing();
     if (fight()) fight().reset(SEA);
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     canvas = document.createElement('canvas');
@@ -723,6 +725,7 @@ var BridgeSloop = (function () {
     wind: function () { return wind; }, polar: function (off, sp) { return polar(off, sp); }, ground: function (x, r) { return groundAt(x, r); },
     offshore: function (x, r) { return offshore(x, r); }, rand: Math.random, say: say, sfx: function (n) { sfx(n); }, ask: function (a, b, c, d) { ask(a, b, c, d); },
     hull: function () { var f = typeof BridgeFleet !== 'undefined' && BridgeFleet.get(shipId); return f ? f.hull : 1; },
+    blessed: function () { return blessing; },
     shake: function () { shakeUntil = performance.now() + 260; }, wreck: function (why) { wreck(why); },
     ctx: function () { return bctx; }, drawBoat: function (now, b) { drawBoat(now, b); }, sx: function (x) { return sx(x); }, sy: function (r, z) { return sy(r, z); }
   };
@@ -775,7 +778,7 @@ var BridgeSloop = (function () {
         // what it does to her depends on how much sail you're carrying when it hits: eased, she rides it out
         var press = phase === 'sail' ? clamp((boat.eff || 0) * (boat.hoist || 0), 0, 1) : 0;
         if (phase === 'sail') {
-          var dmg = (1.5 + 7.5 * press) * (SP.storm || 1), left = hullHit(dmg);
+          var dmg = (1.5 + 7.5 * press) * (SP.storm || 1) * mercy(), left = hullHit(dmg);
           say(press > 0.5 ? 'Knocked flat! Green water pours over the rail and the hull groans (' + Math.round(left * 100) + '%)' : 'The squall hits - you spill the wind and she rides it out', 3200);
           if (left <= 0) wreck('The squall rolls her over');
         } else say('A squall! The wind jumps round - watch your sheet', 2600);
@@ -783,7 +786,7 @@ var BridgeSloop = (function () {
       if (now > storm.nextFlash) {
         storm.flash = now; storm.nextFlash = now + 6000 + hash(Math.floor(now / 7)) * 9000; storm.thunderAt = now + 300 + hash(Math.floor(now / 11)) * 1400;
         if (phase === 'sail' && hash(Math.floor(now / 3)) < 0.1) {      // now and then the masthead takes it
-          storm.thunderAt = now + 60; var lh = hullHit(4 * (SP.storm || 1));
+          storm.thunderAt = now + 60; var lh = hullHit(4 * (SP.storm || 1) * mercy());
           say('Lightning strikes the masthead! Splinters everywhere (' + Math.round(lh * 100) + '%)', 3000);
           if (lh <= 0) wreck('Lightning splits her open');
         }
@@ -861,11 +864,11 @@ var BridgeSloop = (function () {
       if (b.v > 0.6 && b.bump <= 0) {
         sfx('hit'); burst(hitAt[0], hitAt[1], 10, 'spray');
         if (here === 'midnight' && b.v > 1.2) {                     // the Midnight rocks hole her
-          var hl = hullHit(Math.min(8, 2 + b.v * 1.5) * (SP.rocks || 1));
+          var hl = hullHit(Math.min(8, 2 + b.v * 1.5) * (SP.rocks || 1) * mercy());
           say('Rocks out of the mist! The hull splits a plank (' + Math.round(hl * 100) + '%)', 3200);
           if (hl <= 0) wreck('She tears her bottom out on the rocks');
         } else {
-          if (b.v > 2.4) hullHit(1.5 * (SP.rocks || 1));
+          if (b.v > 2.4) hullHit(1.5 * (SP.rocks || 1) * mercy());
           say(b.v > 2 ? 'Rocks! You scrape off with a groan of planks' : 'You bump and grind clear', 2200);
         }
       }

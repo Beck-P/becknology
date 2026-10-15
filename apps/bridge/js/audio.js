@@ -188,6 +188,8 @@ var BridgeAudio = (function () {
     tower:    { bpm: 60, root: 50, mode: 'phrygian', chords: [0, 1, 0, 6], pad: 'pad', arp: { inst: 'bell', steps: [0, 6, 12], oct: 24 },
                 lead: { inst: 'flute', oct: 24, density: 0.25 } },
     cave:     { bpm: 54, root: 38, mode: 'aeolian', chords: [0, 5, 0, 6], pad: 'drone', arp: { inst: 'bell', steps: [0, 10], oct: 24 } },
+    chapel:   { bpm: 50, root: 48, mode: 'ionian', chords: [0, 3, 5, 4, 0, 5, 3, 4], pad: 'organ',          // St Brendan's: a slow hymn on the organ
+                bass: { inst: 'bass', steps: [0] }, lead: { inst: 'flute', oct: 24, density: 0.12 } },
     arcadia:  { bpm: 96, root: 45, mode: 'aeolian', chords: [0, 5, 2, 6], pad: 'pad',
                 arp: { inst: 'arp', steps: [0, 2, 3, 5, 6, 8, 10, 11, 13, 14], oct: 24, pattern: [0, 1, 2, 3, 2, 1] },
                 bass: { inst: 'sub', steps: [0, 2, 4, 6, 8, 10, 12, 14] }, lead: { inst: 'lead', oct: 24, density: 0.3 },
@@ -248,6 +250,9 @@ var BridgeAudio = (function () {
     if (/tower/.test(id) || ts === 'tower') return { theme: 'tower', amb: ['wind'] };
     if (/lighthouse|lamproom/.test(id)) return { theme: 'lumar-in', amb: ['wind', 'searoom'] };
     if (id === 'lumar-passage') return { theme: 'lumar', amb: ['sea', 'wind', 'creak'] };          // under sail in the sloop
+    if (id === 'lumar-crown-chapel') return { theme: 'chapel', amb: ['wind'] };
+    if (id === 'lumar-crown-exchange') return { theme: 'lumar-in', amb: ['crowd', 'murmur'] };
+    if (id === 'lumar-crown-office') return { theme: 'lumar-in', amb: ['murmur'] };
     if (/^lumar/.test(id)) {
       var inside = w && w.scene && !w.scene.backdrop && !/^lumar(-square|-crimson|-rose|-sapphire|-midnight)?$/.test(id);
       if (inside) return { theme: 'lumar-in', amb: id === 'lumar-home' ? ['fire'] : ['fire', 'murmur'] };     // your own house is quiet
