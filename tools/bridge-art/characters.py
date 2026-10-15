@@ -145,6 +145,11 @@ NPCS = {
                           hair=('#8a3a10', '#b85a1a', '#d87a2a'), straw_hat=('#a8843a', '#d8b058', '#f0d080'), pose='stand'),
     'npc-odile':     dict(skin='skin2', shirt=('#5a6a4a', '#7a8a5a', '#9aaa7a'), apron=('#6a5a40', '#8a7a5a', '#aa9a78'),
                           hair=('#7a7a80', '#a8a8b0', '#d0d0d8'), bun=True, pose='stand'),
+    # the Peddler of oddments, who sets up in a different world each day: a battered indigo hat, a grey beard, a plum
+    # coat and a mustard waistcoat hung with charms
+    'npc-peddler':   dict(skin='skin3', shirt=('#3a1a3a', '#5a2a5a', '#7a4a7a'), vest=('#6a5010', '#9a7a20', '#c8a040'),
+                          hair=('#7a7a80', '#a8a8b0', '#d0d0d8'), long_hair=True, beard=True,
+                          witch_hat=('#22203a', '#363060', '#4e4888'), pose='stand'),
     # Hoarfell (the ski village)
     'npc-ysolde':    dict(skin='skin', shirt=('#8a2a14', '#c84a20', '#f07a40'), vest=('#24262e', '#383a46', '#50525e'),
                           hair=('#a8843a', '#d8b058', '#f0d080'), long_hair=True, beanie=('#1a5a5a', '#2a8080', '#4aa8a8'),
@@ -428,6 +433,50 @@ def build_runner():
     add('cylinder', 'highcollar', (0, 0, 1.2), (3.6, 3.4, 1.5), 'suitdk', 'collar', head, vertices=18)
 
 
+def build_mystic():
+    # the Starweave Robe: a long robe in the suit's colour to the ankles, gold stars stitched down the front, a sash,
+    # wide sleeves, and a hood fallen back behind the helmet
+    legs('suitdk', 'leather')
+    add('cube', 'torso', (0, 0, 13.2), (4.2, 3.1, 4.3), 'suit', 'torso', body, bevel=1.4)
+    add('cone', 'robe', (0, 0.2, 6.0), (1, 0.92, 1), 'suit', 'robe', body, vertices=20, radius1=5.5, radius2=4.3, depth=7.6)
+    add('cube', 'hemline', (0, -4.6, 2.6), (2.2, 0.3, 0.45), 'brass', 'robe', body)
+    add('cube', 'sash', (0, 0, 9.9), (4.45, 3.35, 0.75), 'brass', 'torso', body, bevel=0.3)
+    add('cube', 'sashtail', (1.6, -3.4, 8.2), (0.7, 0.3, 1.8), 'brass', 'torso', body, bevel=0.1)
+    for z, dy in ((15.2, 0), (13.4, 0), (11.6, 0), (7.6, -0.9), (5.4, -1.3), (3.4, -1.6)):
+        add('uv_sphere', 'star', (0, -3.35 + dy, z), (0.42, 0.22, 0.42), 'brass', 'stars', body, segments=6, ring_count=4)
+    add('cube', 'charm', (-1.9, -3.5, 9.0), (0.5, 0.25, 0.8), 'ledc', 'charm', body)
+    add('cube', 'pack', (0, 3.3, 13.8), (2.6, 1.1, 3.0), 'suitdk', 'pack', body, bevel=0.6)
+    arms('suit', 'leather')
+    for side in 'LR':
+        add('cone', 'sleeve' + side, (0, 0, -4.2), (1, 1, 1), 'suit', 'arm' + side, shoulders[side], vertices=12,
+            radius1=2.1, radius2=1.45, depth=2.6)
+        add('torus', 'cufftrim' + side, (0, 0, -5.4), (1, 1, 1), 'brass', 'arm' + side, shoulders[side],
+            major_radius=1.95, minor_radius=0.22, major_segments=12, minor_segments=4)
+    helmet()
+    add('uv_sphere', 'hood', (0, 3.0, 1.6), (4.0, 1.9, 3.0), 'suitdk', 'hood', head, segments=14, ring_count=8)
+
+
+def build_ranger():
+    # the Ranger's Cloak: a field cloak and mantle in the suit's colour over a leather jerkin, bracers, tall boots,
+    # a coil of rope at the hip and a bedroll on the pack — for the long walks out past the villages
+    legs('pants', 'leather')
+    add('cube', 'torso', (0, 0, 13.2), (4.2, 3.1, 4.3), 'leather', 'torso', body, bevel=1.4)
+    add('cube', 'jerkinlace', (0, -3.2, 13.4), (0.35, 0.2, 3.2), 'pants', 'torso', body)
+    add('cube', 'cloak', (0, 3.1, 11.3), (4.7, 0.7, 6.2), 'suit', 'cloak', body, bevel=0.5)
+    add('uv_sphere', 'mantle', (0, 0.5, 16.9), (5.0, 4.0, 1.7), 'suit', 'mantle', body, segments=16, ring_count=8)
+    add('cube', 'clasp', (0, -3.6, 16.6), (0.6, 0.3, 0.6), 'brass', 'mantle', body)
+    add('cube', 'belt', (0, 0, 9.7), (4.45, 3.25, 0.65), 'pants', 'torso', body, bevel=0.3)
+    add('torus', 'rope', (4.2, -0.6, 8.8), (1, 0.6, 1), 'fur', 'rope', body, rot=(0, math.pi / 2, 0),
+        major_radius=1.2, minor_radius=0.35, major_segments=12, minor_segments=5)
+    add('cube', 'pack', (0, 4.2, 13.4), (3.0, 1.3, 3.2), 'leather', 'pack', body, bevel=0.7)
+    add('cylinder', 'bedroll', (0, 4.3, 17.4), (1.1, 1.1, 3.3), 'suitdk', 'pack', body, rot=(0, math.pi / 2, 0), vertices=12)
+    arms('suit', 'leather')
+    for side in 'LR':
+        add('cube', 'bracer' + side, (0, 0, -4.5), (1.5, 1.65, 1.1), 'leather', 'arm' + side, shoulders[side], bevel=0.3)
+    helmet()
+    add('uv_sphere', 'hood', (0, 3.2, 1.2), (4.2, 1.8, 3.2), 'suit', 'hood', head, segments=14, ring_count=8)
+
+
 def build_human(spec):
     global head
     legs('pants', 'leather')
@@ -507,7 +556,8 @@ if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb][-<style>]: the su
     MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb') else 'stand'
     _rest = _parts[1:] if MODE != 'stand' else _parts
     STYLE = _rest[0] if _rest else 'flight'
-    {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner}[STYLE]()
+    {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner,
+     'mystic': build_mystic, 'ranger': build_ranger}[STYLE]()
     if MODE == 'climb':                # arms over the head need a taller frame
         W, H = 32, 64
         ORIGIN_PX = (16, 61)

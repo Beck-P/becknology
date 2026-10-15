@@ -147,6 +147,13 @@ var BridgeQuests = (function () {
           return '<li class="found"><b>' + esc(r.name.charAt(0) + r.name.slice(1).toLowerCase()) + '</b> - ' + bits.join('; ') + '</li>';
         }).join('') + '</ul></section>';
     }
+    var curios = typeof BridgeMagic !== 'undefined' ? BridgeMagic.journal() : [];
+    if (curios.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">The Lantern Beyond</span>' +
+        '<span class="qj-q-count">' + curios.length + ' of ' + BridgeMagic.total + ' curios</span></div><ul class="qj-clues">' +
+        curios.map(function (c) { return '<li class="found"><b>' + esc(c.name) + '</b> - ' + esc(c.lore) + '</li>'; }).join('') +
+        (curios.length < BridgeMagic.total ? '<li>The rest of the tale is out there. Wendel the Peddler sells rumours, and a lantern.</li>' : '') + '</ul></section>';
+    }
     var peaks = [];
     if (typeof BridgeClimb !== 'undefined') Object.keys(BridgeClimb.ROUTES).forEach(function (id) {
       var r = BridgeClimb.records(id);
@@ -161,7 +168,7 @@ var BridgeQuests = (function () {
         '<span class="qj-q-count">' + peaks.length + '</span></div><ul class="qj-clues">' +
         peaks.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
     }
-    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !peaks.length) {
+    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !curios.length && !peaks.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {

@@ -30,7 +30,11 @@ var BridgeGear = (function () {
     thermal: { name: 'Thermal Suit', price: 400, perk: { hp: 20, cold: true },
                blurb: 'Quilted and puffed, fur at the collar and boots. Made for somewhere colder than here.' },
     plate:   { name: 'Plated Suit', price: 600, perk: { hp: 50, speed: -0.05 },
-               blurb: 'Corp security plate, a cuirass and pauldrons over the suit. Heavy, and very hard to hurt.' }
+               blurb: 'Corp security plate, a cuirass and pauldrons over the suit. Heavy, and very hard to hurt.' },
+    mystic:  { name: 'Starweave Robe', price: 700, perk: { energy: 40 },
+               blurb: 'A long robe with gold stars stitched down the front and a hood thrown back. The Peddler swears it was a wizard\'s.' },
+    ranger:  { name: "Ranger's Cloak", price: 550, perk: { hp: 15, speed: 0.08 },
+               blurb: 'A field cloak and mantle over a leather jerkin, rope at the hip. For the long walks out past the villages.' }
   };
   var PACKS = {
     flight:     { name: 'Flight Pack', slots: 6, price: 0, blurb: 'The little pack on every flight suit.' },
@@ -44,7 +48,8 @@ var BridgeGear = (function () {
     cyber_gear:       { title: 'CYBER GEAR', goods: ['suit:runner', 'pack:expedition'] },
     joro:             { title: "JORO'S BACK ROOM", goods: ['suit:plate', 'pack:expedition'] },
     vex:              { title: "VEX'S STASH", goods: ['pack:voidweave'] },
-    alpine:           { title: 'ALPINE OUTFITTERS', goods: ['suit:thermal', 'pack:expedition'] }
+    alpine:           { title: 'ALPINE OUTFITTERS', goods: ['suit:thermal', 'pack:expedition'] },
+    peddler:          { title: 'THE PEDDLER\'S CLOTHES RAIL', goods: ['suit:mystic', 'suit:ranger'] }
   };
   // outfitters set up on world interactions as worlds load (so a re-render can't lose them)
   var PLACES = [
@@ -74,9 +79,9 @@ var BridgeGear = (function () {
   function style() { return state.style; }
   function colour() { return state.colour || null; }
   function perk() { return SUITS[state.style].perk; }
-  function speed() { return 1 + (perk().speed || 0); }
+  function speed() { return (1 + (perk().speed || 0)) * (typeof BridgeMagic !== 'undefined' ? BridgeMagic.speed() : 1); }
   function bonus() { return { hp: perk().hp || 0, energy: perk().energy || 0 }; }
-  function has(what) { return !!perk()[what]; }
+  function has(what) { return !!perk()[what] || (typeof BridgeMagic !== 'undefined' && BridgeMagic.has(what)); }
   function bestPack() {
     var best = 'flight';
     Object.keys(state.packs).forEach(function (k) { if (PACKS[k] && PACKS[k].slots > PACKS[best].slots) best = k; });

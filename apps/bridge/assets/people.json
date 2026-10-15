@@ -1165,5 +1165,57 @@
         "a": "PUMPKINS PAY, STRAWBERRIES KEEP GIVING, AND TOVE UP ON THE ICE WORLD WILL TAKE EVERY PUMPKIN YOU'VE GOT. WATCH THE ORDER BOARD."
       }
     ]
+  },
+  "peddler": {
+    "name": "Wendel Crane",
+    "role": "Peddler of oddments, never in one place two days running",
+    "sheet": "npc-peddler",
+    "at": [
+      {
+        "world": "lumar-square",
+        "label": "PEDDLER"
+      },
+      {
+        "world": "arcadia-street",
+        "label": "PEDDLER"
+      },
+      {
+        "world": "verdance",
+        "label": "PEDDLER"
+      },
+      {
+        "world": "hoarfell",
+        "label": "PEDDLER"
+      },
+      {
+        "world": "lumar-sapphire",
+        "label": "PEDDLER"
+      },
+      {
+        "world": "enigma-dock",
+        "label": "PEDDLER"
+      }
+    ],
+    "greet": "AH. A FACE THAT'S BEEN PLACES. WENDEL CRANE, PEDDLER OF ODDMENTS - CHARMS, CURIOS, THINGS THAT DO WHAT THEY OUGHTN'T. TOMORROW I'LL BE SOMEWHERE ELSE, SO LOOK NOW.",
+    "again": "STILL ALIVE, I SEE. GOOD. THE DEAD NEVER BUY ANYTHING.",
+    "topics": [
+      {
+        "q": "What have you got?",
+        "a": "LOOK WITH YOUR HANDS, PAY WITH YOUR COINS.",
+        "peddler": true
+      },
+      {
+        "q": "About you",
+        "a": "I'VE WALKED EVERY WORLD THE WAYFARER CAN REACH AND A FEW IT CAN'T. I SELL WHAT I FIND AND I FIND WHAT SELLS. THE HAT WAS A GIFT. THE BEARD WAS AN ACCIDENT."
+      },
+      {
+        "q": "The Lantern Beyond?",
+        "a": "SO YOU'VE HEARD THE WHISPERS. A LIGHT PAST THE HOARSPIRE, PAST THE LAST RIDGE WHERE THE WIND TURNS BACK. SAILORS SEE IT IN STARS, MINERS HEAR IT IN STONE, STATION CREWS SEW IT ON THEIR PATCHES. THE OLD THINGS PEOPLE LEFT BEHIND EACH KNOW A PIECE OF IT. FIND THEM - A LANTERN OF MINE HELPS - AND YOU'LL KNOW THE WHOLE. WHETHER YOU GO... WELL. THAT'S YOUR BUSINESS."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE SORCERESS ON MIDNIGHT IS BUYING STARFRUIT. THE PAWNBROKER IN THE DISTRICT IS BUYING ANYTHING THAT GLOWS. AND SOMETHING UP ON THE ICE WORLD HAS BEEN WALKING THE RIDGES AT NIGHT, LEAVING NO TRACKS."
+      }
+    ]
   }
 }

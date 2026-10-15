@@ -458,7 +458,7 @@ var BridgeSloop = (function () {
     b.eff = eff; b.off = off;
     var hoisted = phase === 'cast' ? clamp((now - phaseAt) / 1600, 0, 1) : phase === 'moor' ? 1 - clamp((now - phaseAt) / 900, 0, 1) : 1;
     b.hoist = hoisted;
-    var goal = VMAX * wind.s * polar(off) * eff * hoisted;
+    var goal = VMAX * (typeof BridgeMagic !== 'undefined' && BridgeMagic.has('tide') ? 1.12 : 1) * wind.s * polar(off) * eff * hoisted;
     if (phase === 'moor') goal = 0;
     b.v += (goal - b.v) * Math.min(1, dt * (goal > b.v ? 0.55 : 0.32));
     if (off < 0.7 && b.v < 0.4) b.v = Math.max(-0.25, b.v - dt * 0.15);           // in irons: she drifts back

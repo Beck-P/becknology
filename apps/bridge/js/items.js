@@ -473,6 +473,45 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#e0c060', [[5, 5, 6, 1]]);
     px(ctx, x, y, u, '#80d0f0', [[2, 3, 1, 1], [13, 3, 1, 1], [1, 6, 1, 1], [14, 6, 1, 1], [4, 1, 1, 1], [11, 1, 1, 1]]);
   }
+  // ---- the Peddler's magic things (js/magic.js) ----------------------------------------------------------------
+  function wandIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1028', [[3, 11, 2, 2], [5, 9, 2, 2], [7, 7, 2, 2], [9, 5, 2, 2]]);
+    px(ctx, x, y, u, '#6a4a2a', [[4, 11, 1, 1], [6, 9, 1, 1], [8, 7, 1, 1]]);
+    px(ctx, x, y, u, '#d0d8ff', [[10, 3, 3, 3]]); px(ctx, x, y, u, '#ffffff', [[11, 4, 1, 1]]);
+    px(ctx, x, y, u, '#a0b0ff', [[13, 2, 1, 1], [9, 2, 1, 1], [13, 6, 1, 1], [14, 4, 1, 1]]);
+  }
+  function featherIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a3a48', [[3, 13, 1, 1], [4, 12, 1, 1], [5, 11, 1, 1], [6, 10, 1, 1]]);
+    px(ctx, x, y, u, '#c8d0dc', [[6, 8, 2, 2], [7, 6, 3, 3], [9, 4, 3, 3], [11, 2, 2, 3]]);
+    px(ctx, x, y, u, '#f4f6fa', [[8, 6, 1, 2], [10, 4, 1, 2], [12, 2, 1, 2]]);
+    px(ctx, x, y, u, '#6a7a90', [[7, 9, 1, 1], [9, 7, 1, 1], [11, 5, 1, 1]]);
+  }
+  function ringIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a4a6a', [[5, 6, 6, 1], [4, 7, 1, 5], [11, 7, 1, 5], [5, 12, 6, 1]]);
+    px(ctx, x, y, u, '#a8d8f0', [[5, 7, 1, 1], [10, 7, 1, 1], [5, 11, 6, 1]]);
+    px(ctx, x, y, u, '#e8f8ff', [[6, 3, 4, 3]]); px(ctx, x, y, u, '#80c8f0', [[7, 4, 2, 1]]);
+  }
+  function tideIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[7, 2, 2, 3]]);
+    px(ctx, x, y, u, '#1a3a4a', [[4, 5, 8, 8], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#40a0b0', [[5, 6, 6, 6]]);
+    px(ctx, x, y, u, '#a0f0e0', [[5, 8, 2, 1], [7, 9, 2, 1], [9, 8, 2, 1]]);
+  }
+  function lanternIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[6, 1, 4, 1], [7, 2, 2, 1], [4, 3, 8, 1], [4, 13, 8, 1], [4, 4, 1, 9], [11, 4, 1, 9]]);
+    px(ctx, x, y, u, '#ffe8a0', [[5, 4, 6, 9]]); px(ctx, x, y, u, '#fff8e0', [[7, 6, 2, 4]]);
+    px(ctx, x, y, u, '#c8a050', [[5, 3, 6, 1], [5, 13, 6, 1]]);
+  }
+  function charmUse() {
+    var it = this;
+    if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(it.name.toUpperCase(), it.desc.toUpperCase() + '\n\n(IT WORKS AS LONG AS YOU CARRY IT.)');
+    return false;
+  }
   var SEED_ART = {
     turnip: function (ctx, x, y, u) { px(ctx, x, y, u, '#f0e8f0', [[6, 8, 4, 3]]); px(ctx, x, y, u, '#a050a0', [[6, 8, 4, 1]]); px(ctx, x, y, u, '#50a040', [[7, 6, 2, 2]]); },
     carrot: function (ctx, x, y, u) { px(ctx, x, y, u, '#f08020', [[6, 7, 4, 2], [7, 9, 2, 2]]); px(ctx, x, y, u, '#50a040', [[7, 5, 2, 2]]); },
@@ -746,6 +785,18 @@ var BridgeItems = (function () {
                      stackable: false, draw: hoeIcon, damage: 6, onUse: farmUse },
     watering_can:  { id: 'watering_can', name: 'Watering Can', desc: 'Holds twenty waterings. Fill it at the well or the pond; a watered crop grows for twenty minutes.', type: 'tool',
                      stackable: false, draw: canIcon, onUse: farmUse },
+    moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 3 energy.',
+                     type: 'weapon', stackable: false, draw: wandIcon, damage: 30, value: 200,
+                     onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
+    glimmer_lantern: { id: 'glimmer_lantern', name: 'Glimmer Lantern', desc: 'A lantern that burns brighter near hidden things. Hold it to see them; use it to ask which way is warmer.',
+                     type: 'tool', stackable: false, draw: lanternIcon, value: 80,
+                     onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.lantern(); return false; } },
+    heron_feather: { id: 'heron_feather', name: 'Heron Feather', desc: 'Grey and white, and lighter than it should be. Carried, you walk a little quicker.',
+                     type: 'tool', stackable: false, draw: featherIcon, value: 120, onUse: charmUse },
+    frost_ring:    { id: 'frost_ring', name: 'Ring of Hoarfrost', desc: 'Cold as a grave to the touch. Carried, the cold can\'t touch you.',
+                     type: 'tool', stackable: false, draw: ringIcon, value: 120, onUse: charmUse },
+    tide_charm:    { id: 'tide_charm', name: 'Tide Charm', desc: 'A green glass float in a net, a wave inside it. Carried, the sloop sails a little faster.',
+                     type: 'tool', stackable: false, draw: tideIcon, value: 90, onUse: charmUse },
     sprinkler:     { id: 'sprinkler', name: 'Sprinkler', desc: 'A brass sprinkler head on a pipe. Set it in your field and the ground round it - a tile every way - never dries.', type: 'tool',
                      stackable: true, draw: sprinklerIcon, onUse: farmUse, value: 60 },
     seed_turnip:   { id: 'seed_turnip', name: 'Turnip Seeds', desc: 'Quick and forgiving. Ready in three minutes of watered ground.', type: 'seed', stackable: true,
@@ -816,5 +867,5 @@ var BridgeItems = (function () {
   function get(id) { return ITEMS[id] || null; }
   function all() { return ITEMS; }
 
-  return { get: get, all: all, effectsText: effectsText, typeColor: typeColor };
+  return { get: get, all: all, effectsText: effectsText, typeColor: typeColor, strike: strike };
 })();

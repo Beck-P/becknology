@@ -59,7 +59,7 @@ var BridgeInteractions = (function () {
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
     home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill',
-    farm_house: 'Go in', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read',
+    farm_house: 'Go in', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read', curio: 'Pick up',
     climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski'
   };
 
@@ -371,6 +371,10 @@ var BridgeInteractions = (function () {
 
       case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start': case 'ski_gate':   // Hoarfell (js/worlds/hoarfell.js)
         if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.use(inter);
+        break;
+
+      case 'curio':                                                     // one of the old curios (js/magic.js)
+        if (typeof BridgeMagic !== 'undefined') BridgeMagic.use(inter);
         break;
 
       case 'farm_house': case 'farm_bin': case 'farm_barn': case 'farm_board':   // running the farm (js/homestead.js)
@@ -1117,6 +1121,11 @@ var BridgeInteractions = (function () {
       if (t.gift && typeof BridgeGifts !== 'undefined') {             // something from your pack, for them (js/gifts.js)
         close();
         BridgeGifts.open(Object.getPrototypeOf(person));
+        return;
+      }
+      if (t.peddler && typeof BridgeMagic !== 'undefined') {          // Wendel's wares (js/magic.js)
+        close();
+        BridgeMagic.shop();
         return;
       }
       if (t.hand && typeof BridgeHomestead !== 'undefined') {         // a farmhand on Verdance: hire them by the day
