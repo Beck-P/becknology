@@ -151,6 +151,30 @@ var BridgeQuests = (function () {
           return '<li class="found"><b>' + esc(r.name.charAt(0) + r.name.slice(1).toLowerCase()) + '</b> - ' + bits.join('; ') + '</li>';
         }).join('') + '</ul></section>';
     }
+    // your fleet on Lumar's seas: ships and where they lie, hands, cargo, contracts, the holm's voyages (js/fleet.js, trade.js, holm.js)
+    var fleetLines = [];
+    if (typeof BridgeFleet !== 'undefined') {
+      var FL = BridgeFleet, T2 = typeof BridgeTrade !== 'undefined' ? BridgeTrade : null, sail = FL.active().ship.id;
+      if (FL.all().length > 1 || FL.crew().length || (T2 && T2.mine().length)) {
+        FL.all().forEach(function (sh) {
+          var hold = Object.keys(sh.hold).map(function (id) { return sh.hold[id] + ' ' + (T2 ? T2.name(id) : id).toLowerCase(); });
+          fleetLines.push('<b>' + esc(sh.name) + '</b>' + (sh.id === sail ? ' ⚓' : '') + ' - ' + esc(FL.line(sh)) + ', ' +
+            (sh.away ? 'at sea, ' + Math.max(0, Math.ceil((sh.away.back - Date.now()) / 60000)) + ' min out' : esc(FL.where(sh))) + (hold.length ? '; carrying ' + esc(hold.join(', ')) : ''));
+        });
+        var ashore = FL.crew().filter(function (c) { return c.ship === 'holm'; }).length;
+        if (FL.crew().length) fleetLines.push(FL.crew().length + ' hand' + (FL.crew().length > 1 ? 's' : '') + ' signed on' + (ashore ? ', ' + ashore + ' ashore in the quarters' : ''));
+        if (T2) T2.mine().forEach(function (c) {
+          var I = typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles || {};
+          fleetLines.push('Contract: ' + c.n + ' ' + esc(T2.name(c.good).toLowerCase()) + ' to ' + esc(I[c.to] ? I[c.to].name : c.to) + ' for ' + c.fee + ' coins');
+        });
+      }
+    }
+    if (typeof BridgeHolm !== 'undefined' && BridgeHolm.owned()) fleetLines.push('<b>' + esc(BridgeHolm.name()) + '</b> is yours' + (BridgeHolm._state().chest ? ' - ' + BridgeHolm._state().chest + ' coins in its strongbox' : ''));
+    if (fleetLines.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your fleet</span>' +
+        '<span class="qj-q-count">' + (typeof BridgeFleet !== 'undefined' ? BridgeFleet.all().length : 1) + ' ships</span></div><ul class="qj-clues">' +
+        fleetLines.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
+    }
     var curios = typeof BridgeMagic !== 'undefined' ? BridgeMagic.journal() : [];
     if (curios.length) {
       html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">The Lantern Beyond</span>' +
@@ -178,7 +202,7 @@ var BridgeQuests = (function () {
         '<span class="qj-q-count">' + peaks.length + '</span></div><ul class="qj-clues">' +
         peaks.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
     }
-    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !curios.length && !peaks.length && !ridge.length) {
+    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !curios.length && !peaks.length && !ridge.length && !fleetLines.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {

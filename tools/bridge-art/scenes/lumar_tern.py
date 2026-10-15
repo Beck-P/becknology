@@ -76,11 +76,12 @@ def smoke(ridge, cx):
     SMOKE.append([round(cx - 0.12, 3), round(rm - 0.15 - (zr + 0.65) * C45, 3)])
 
 
-# the crescent of cottages round the cove
-for (x0, x1, r0, r1, roof, door, ch) in ((10.4, 13.6, 9.6, 12.4, '#2a4a6a', 12.0, 10.9), (14.2, 17.4, 8.8, 11.6, '#5a3a2a', 15.8, 16.9),
-                                          (21.6, 24.8, 8.8, 11.6, '#2a5a3e', 23.2, 22.1), (25.4, 28.6, 9.6, 12.4, '#2a4a6a', 27.0, 28.1)):
+# the cottages round the cove, each with room round it: a lane between every two, gardens in front
+for (x0, x1, r0, r1, roof, door, ch) in ((10.6, 13.6, 9.6, 12.2, '#2a4a6a', 12.1, 11.1), (24.6, 27.6, 9.0, 11.6, '#2a5a3e', 26.1, 25.1),
+                                          (22.8, 25.8, 4.4, 7.0, '#5a3a2a', 24.3, 25.3)):
     smoke(W.house(k, x0, x1, r0, r1, wall_h=1.8, rise=1.0, roof=roof, wall='#f0ece0', door_x=door,
                   windows=[(x0 + 0.7, 0.8), (x1 - 0.7, 0.8)], chimney=ch), ch)
+    W.planter(k, x0 + 0.15, x0 + 1.05, r1 + 0.25)
 # the Tern's Rest in the middle, a little taller, its sign
 smoke(W.house(k, 17.8, 21.2, 7.6, 11.6, wall_h=2.2, rise=1.2, roof='#6a3a28', wall='#e8dcc0', door_x=19.5,
               windows=[(18.5, 0.9), (20.5, 0.9)], windows_up=[(19.5, 1.7)], chimney=20.7, sign=(21.05, 1.7, 'mug'), lanterns=(19.0, 20.0)), 20.7)
@@ -107,14 +108,15 @@ for (x0, x1, r) in ((22.6, 25.0, 15.2), (13.4, 15.8, 15.2)):         # nets on p
         k.cyl(x, r, 0.0, 1.4, 0.04, ('#5a4a32', 0.2), 'net_pole', verts=5)
     k.poly([(x0, r, 1.35), (x1, r, 1.35), (x1, r + 0.05, 0.4), (x0, r + 0.05, 0.4)], ('#6a6a5a', 0.3), 'net')
     k.solid(x0 - 0.1, r - 0.15, x1 + 0.1, r + 0.2)
-W.market_stall(k, 15.6, 17.4, 12.6, 13.3, awning=('#2a5a8a', '#f0ece0'), goods='fish')
+W.market_stall(k, 27.2, 29.0, 16.0, 16.7, awning=('#2a5a8a', '#f0ece0'), goods='fish')      # on the green above the beach, clear of every door
+k.solid(29, 16, 30, 17)                           # Maud, beside her stall where you can see her
 for (x, r) in ((12.0, 13.6), (27.2, 13.6)):
     W.lantern_post(k, x, r, energy=20)
 for (x, r) in ((4.0, 15.4), (33.6, 16.0), (9.8, 7.6), (28.6, 7.2)):
     W.pine(k, x, r, h=2.2)
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
-W.bench(k, 21.4, 22.8, 13.6)
-k.solid(21.4, 13.4, 22.8, 13.9)
+W.bench(k, 20.2, 21.6, 6.9)                       # on the rise behind the inn, looking north
+k.solid(20.2, 6.7, 21.6, 7.2)
 
 busy = lambda x, r: pd(x, r) < 0.6
 I.tufts(k, [c for c in land if material(c[0] + 0.5, c[1] + 0.5) in ('grass', 'grass_dark')], '#4e6e44', per_cell=1.0, avoid=busy)
@@ -136,12 +138,12 @@ w = {'name': 'Tern Holm', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tilese
          look('CHAPEL', 7, 13, 'THE LITTLE CHAPEL ON THE HEAD. A LANTERN BURNS IN ITS TOWER ALL NIGHT SO THE BOATS CAN FIND THEIR WAY HOME.'),
          look('SMOKEHOUSE', 31, 12, 'THE SMOKEHOUSE. RACKS OF SILVERFIN GOING GOLD IN THE SMOKE. THE SMELL WILL BE ON YOU FOR DAYS.'),
          look('NETS', 14, 15, 'NETS DRYING ON THEIR POLES, MENDED A HUNDRED TIMES. EVERY KNOT IS SOMEBODY\'S.'),
-         {'x': 16, 'y': 13, 'type': 'dialog', 'label': 'FISH STALL', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE FISHWIFE WIPES HER HANDS.'},
+         {'x': 28, 'y': 16, 'type': 'dialog', 'label': 'FISH STALL', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE FISHWIFE WIPES HER HANDS.'},
          look('CRAB POTS', PX + 2, QUAY, 'CRAB POTS STACKED ON THE PIER. ONE OF THEM HAS A CRAB IN IT WHO DOES NOT LOOK HAPPY ABOUT ANY OF THIS.'),
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER, scene_id=WID,
-            actors=[{'sheet': 'npc-fishwife', 'x': 16, 'y': 12, 'facing': 'down'}],
+            actors=[{'sheet': 'npc-fishwife', 'x': 29, 'y': 16, 'facing': 'left'}],
             scene_extra={'backdrop': True, 'smoke': SMOKE})
 w = json.load(open(WORLD))
 for r in range(ROWS):

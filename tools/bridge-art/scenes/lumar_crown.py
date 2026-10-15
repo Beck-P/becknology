@@ -133,10 +133,10 @@ smoke(W.house(k, 37.4, 42.6, 25.0, 29.6, wall_h=2.7, rise=1.5, roof='#6a2a22', w
               windows=[(38.2, 0.95), (41.8, 0.95)], windows_up=[(38.2, 2.0), (40.0, 2.0), (41.8, 2.0)], chimney=38.0,
               sign=(42.45, 1.95, 'mug'), lanterns=(39.3, 40.7)), 38.0)
 V.board_sign(k, 'THE CROWN & ANCHOR', 'Rye-Regular', 40.0, 29.6, 2.4, size=0.22)
-W.bench(k, 37.8, 39.2, 30.4)
-W.bench(k, 40.8, 42.2, 30.4)
-k.solid(37.8, 30.2, 39.2, 30.7)
-k.solid(40.8, 30.2, 42.2, 30.7)
+W.bench(k, 37.4, 38.6, 30.4)                       # benches out front at the corners, the door clear between them
+W.bench(k, 41.4, 42.6, 30.4)
+k.solid(37.4, 30.2, 38.6, 30.7)
+k.solid(41.4, 30.2, 42.6, 30.7)
 smoke(W.house(k, 43.2, 46.8, 25.6, 29.6, wall_h=2.3, rise=1.2, roof=SLATE, wall='#c8c0b0', door_x=45.0,
               windows=[(43.9, 0.9), (46.1, 0.9)], windows_up=[(45.0, 1.7)], chimney=46.3), 46.3)
 W.house(k, 47.2, 50.4, 26.0, 29.6, wall_h=2.0, rise=1.0, roof=GREEN_ROOF, wall='#e8dcc8', door_x=48.8,
