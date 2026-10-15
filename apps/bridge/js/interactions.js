@@ -59,6 +59,7 @@ var BridgeInteractions = (function () {
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
     home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill',
+    farm_house: 'Go in', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read',
     climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski'
   };
 
@@ -370,6 +371,10 @@ var BridgeInteractions = (function () {
 
       case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start': case 'ski_gate':   // Hoarfell (js/worlds/hoarfell.js)
         if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.use(inter);
+        break;
+
+      case 'farm_house': case 'farm_bin': case 'farm_barn': case 'farm_board':   // running the farm (js/homestead.js)
+        if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.use(inter);
         break;
 
       case 'farm_plot': case 'farm_tools': case 'farm_well':   // the field on Verdance (js/farm.js)
@@ -919,6 +924,82 @@ var BridgeInteractions = (function () {
     document.addEventListener('keydown', onKey, true);
   }
 
+  // A chooser in the world's dialog style, for the systems that need one (the farm's bin, board and seed box,
+  // hiring a hand, giving a gift): spec = { title, text, rows: [{ label, note, icon: item id, disabled, pick }],
+  // input: { placeholder, value, submit }, buttons: [{ label, act, disabled }] }. Picking a row or a button closes
+  // the chooser unless its function returns false.
+  function showChooser(spec) {
+    hideDialog();
+    dialogVisible = true;
+    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
+    var overlay = document.getElementById('world-overlay');
+    var dialogEl = dialogShell('shop');
+    var rows = spec.rows || [], buttons = (spec.buttons || []).concat([{ label: spec.closeLabel || 'Leave', act: null }]);
+    dialogEl.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(spec.title || '') + '</div>' +
+      (spec.text ? '<div class="wd-text">' + esc(reflow(spec.text)) + '</div>' : '') +
+      (rows.length ? '<div class="wd-sell wd-sell-pick wd-chooser">' + rows.map(function (r, i) {
+        return '<div class="wd-sell-row pick' + (r.disabled ? ' none' : '') + '" data-r="' + i + '">' +
+          '<canvas class="sp-icon" width="24" height="24"></canvas><span class="sp-name">' + esc(r.label) + '</span>' +
+          '<span class="sp-have">' + esc(r.sub || '') + '</span><span class="sp-qty"></span>' +
+          '<span class="sp-price">' + esc(r.note || '') + '</span></div>';
+      }).join('') + '</div>' : '') +
+      (spec.input ? '<form class="wd-say wd-chooser-input"><input class="wd-say-input" type="text" maxlength="' + (spec.input.max || 24) +
+                    '" autocomplete="off" placeholder="' + esc(spec.input.placeholder || '') + '" value="' + esc(spec.input.value || '') + '">' +
+                    '<button type="submit" class="wd-say-send">' + esc(spec.input.button || 'OK') + '</button></form>' : '') +
+      '<div class="wd-options">' + buttons.map(function (b, i) {
+        return '<button class="wd-opt" data-b="' + i + '"' + (b.disabled ? ' disabled' : '') + '>' + esc(b.label) + '</button>';
+      }).join('') + '</div>' + hintHTML('Esc', 'Leave') + '</div>';
+    overlay.appendChild(dialogEl);
+    requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
+    dialogEl.querySelectorAll('.wd-sell-row.pick').forEach(function (rowEl) {
+      var r = rows[+rowEl.getAttribute('data-r')], cv = rowEl.querySelector('.sp-icon');
+      var item = r.icon && typeof BridgeItems !== 'undefined' && BridgeItems.get(r.icon);
+      if (item && item.draw) { var g = cv.getContext('2d'); g.imageSmoothingEnabled = false; item.draw(g, 0, 0, 24); }
+      else cv.style.visibility = 'hidden';
+    });
+    var rowEls = [].slice.call(dialogEl.querySelectorAll('.wd-sell-row.pick')).filter(function (e) { return !rows[+e.getAttribute('data-r')].disabled; });
+    var btnEls = [].slice.call(dialogEl.querySelectorAll('.wd-opt'));
+    var items = rowEls.concat(btnEls.filter(function (b) { return !b.disabled; })), sel = 0;
+    var form = dialogEl.querySelector('.wd-chooser-input'), input = form && form.querySelector('input');
+    function paint() { items.forEach(function (e, j) { e.classList.toggle('active', j === sel); }); }
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      hideDialog();
+      if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+    }
+    function run(fn) {
+      if (!fn) { close(); return; }
+      close();
+      fn();
+    }
+    function fire(el) {
+      if (!el) return;
+      if (el.hasAttribute('data-r')) { var r = rows[+el.getAttribute('data-r')]; if (!r.disabled) run(r.pick); }
+      else { var b = buttons[+el.getAttribute('data-b')]; if (!b.disabled) run(b.act); }
+    }
+    function onKey(e) {
+      if (input && document.activeElement === input) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } return; }
+      var k = e.key;
+      if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+      else if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); e.stopPropagation(); sel = (sel + 1) % items.length; paint(); }
+      else if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); e.stopPropagation(); sel = (sel - 1 + items.length) % items.length; paint(); }
+      else if (k === 'Enter' || k === 'e' || k === 'E' || k === ' ') { e.preventDefault(); e.stopPropagation(); fire(items[sel]); }
+    }
+    items.forEach(function (el, j) {
+      el.addEventListener('mouseenter', function () { sel = j; paint(); });
+      el.addEventListener('click', function (e) { e.stopPropagation(); fire(el); });
+    });
+    if (form) form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = input.value.trim();
+      close();
+      if (spec.input.submit) spec.input.submit(v);
+    });
+    paint();
+    document.addEventListener('keydown', onKey, true);
+    if (input) setTimeout(function () { input.focus(); input.select(); }, 60);
+  }
+
   // A conversation with someone from the cast (js/people.js): a greeting,
   // then topics to ask about; the answer types out above the choices.
   function showConversation(person, inter) {
@@ -943,6 +1024,7 @@ var BridgeInteractions = (function () {
             ? { q: 'Join my crew?', a: "NOT AFTER THE WAY YOU'VE TREATED ME." }
             : { q: 'Join my crew?', a: person.crew.pitch + '\n\n' + person.crew.wage + ' COINS UP FRONT, AS ' + person.crew.role.toUpperCase() + '.', hire: true });
     }
+    if (typeof BridgeGifts !== 'undefined' && BridgeGifts.can()) topics.push({ q: 'Give a gift', gift: true });
     person = Object.create(person);
     person.topics = topics;
     var opts = topics.map(function (t) { return t.q; }).concat(['Goodbye']);
@@ -1030,6 +1112,16 @@ var BridgeInteractions = (function () {
         if (feel >= 5) mult *= 1.1;                                // friends get a better price
         close();
         showSellDialog({ label: person.name, dialog: t.a, buys: t.sell.map(function (b) { return { id: b.id, price: Math.round(b.price * mult) }; }) });
+        return;
+      }
+      if (t.gift && typeof BridgeGifts !== 'undefined') {             // something from your pack, for them (js/gifts.js)
+        close();
+        BridgeGifts.open(Object.getPrototypeOf(person));
+        return;
+      }
+      if (t.hand && typeof BridgeHomestead !== 'undefined') {         // a farmhand on Verdance: hire them by the day
+        close();
+        BridgeHomestead.hire(t.hand);
         return;
       }
       if (t.treasure && typeof BridgeTreasure !== 'undefined') {      // Ilsa's treasure maps
@@ -1476,6 +1568,6 @@ var BridgeInteractions = (function () {
   }
 
   return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, placePrompt: placePrompt, getTarget: getTarget,
-           say: showDialog, execute: executeInteraction,
+           say: showDialog, execute: executeInteraction, choose: showChooser,
            findTarget: findTarget, promptParts: promptParts };
 })();

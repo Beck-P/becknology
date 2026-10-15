@@ -127,9 +127,19 @@ var BridgeQuests = (function () {
         fished.bottles.map(function (b) { return '<li class="found">' + esc(b) + '</li>'; }).join('') + '</ul></section>';
     }
     var farm = typeof BridgeFarm !== 'undefined' ? BridgeFarm.journal() : { rows: [] };
-    if (farm.rows.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">The farm on Verdance</span>' +
+    var stead = typeof BridgeHomestead !== 'undefined' ? BridgeHomestead.journal() : null;
+    if (farm.rows.length || (stead && stead.owned)) {
+      var led = [];
+      if (stead && stead.owned) {
+        led.push('<b>' + esc(stead.name) + '</b> - yours' + (stead.sprinklers ? ', ' + stead.sprinklers + ' sprinkler' + (stead.sprinklers > 1 ? 's' : '') : ''));
+        if (stead.coins || stead.orders) led.push('Shipped ' + stead.coins + ' coins over ' + stead.rounds + ' of Marlo\'s rounds; ' + stead.orders + ' order' + (stead.orders === 1 ? '' : 's') + ' filled');
+        if (stead.bin) led.push('In the bin for Marlo: ' + stead.bin + ' coins\' worth');
+        if (stead.tam) led.push('Tam is watering for another ' + Math.max(1, Math.round((stead.tam - Date.now()) / 3600000)) + ' h');
+        if (stead.odile) led.push('Odile is bringing it in for another ' + Math.max(1, Math.round((stead.odile - Date.now()) / 3600000)) + ' h');
+      }
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">' + esc(stead && stead.owned ? stead.name : 'The farm on Verdance') + '</span>' +
         '<span class="qj-q-count">' + farm.tilled + ' tilled</span></div><ul class="qj-clues">' +
+        led.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') +
         farm.rows.map(function (r) {
           var bits = [];
           if (r.n) bits.push(r.n + ' in the ground' + (r.ripe ? ', <b>' + r.ripe + ' ready</b>' : '') + (r.dry ? ', ' + r.dry + ' thirsty' : ''));
@@ -151,7 +161,7 @@ var BridgeQuests = (function () {
         '<span class="qj-q-count">' + peaks.length + '</span></div><ul class="qj-clues">' +
         peaks.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
     }
-    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !peaks.length) {
+    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !peaks.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {

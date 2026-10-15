@@ -140,6 +140,11 @@ NPCS = {
                           hair=('#5a3a20', '#7a5230', '#9a6a40'), beard=True, straw_hat=('#a8843a', '#d8b058', '#f0d080'), pose='stand'),
     'npc-marlo':     dict(skin='skin2', shirt=('#6a2a22', '#9a3a2e', '#c05a40'), vest=('#3a3a22', '#5a5a34', '#7a7a48'),
                           hair=('#1a1410', '#2e2418', '#443624'), mustache=True, cap=('#2a4a6a', '#3a6a9a', '#5a8ac0'), pose='stand'),
+    # the farm's hands (Verdance): Tam in a straw hat and a denim bib, Odile with her grey bun and a work apron
+    'npc-tam':       dict(skin='skin', shirt=('#8a3a2a', '#b85a3a', '#d87a50'), apron=('#2a3a5a', '#3a5a8a', '#5a7ab0'),
+                          hair=('#8a3a10', '#b85a1a', '#d87a2a'), straw_hat=('#a8843a', '#d8b058', '#f0d080'), pose='stand'),
+    'npc-odile':     dict(skin='skin2', shirt=('#5a6a4a', '#7a8a5a', '#9aaa7a'), apron=('#6a5a40', '#8a7a5a', '#aa9a78'),
+                          hair=('#7a7a80', '#a8a8b0', '#d0d0d8'), bun=True, pose='stand'),
     # Hoarfell (the ski village)
     'npc-ysolde':    dict(skin='skin', shirt=('#8a2a14', '#c84a20', '#f07a40'), vest=('#24262e', '#383a46', '#50525e'),
                           hair=('#a8843a', '#d8b058', '#f0d080'), long_hair=True, beanie=('#1a5a5a', '#2a8080', '#4aa8a8'),

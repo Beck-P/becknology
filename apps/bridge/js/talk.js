@@ -111,6 +111,15 @@ var BridgeTalk = (function () {
     sync.timer = setTimeout(push, 1500);
   }
 
+  /** Something you did changed how they feel (a gift, an order filled): nudge it, and let them remember why. */
+  function nudge(id, delta, memory) {
+    var b = bond(id);
+    b.feeling = Math.max(-10, Math.min(10, b.feeling + (delta || 0)));
+    if (memory) { b.memories.push(memory); if (b.memories.length > MAX_MEMORIES * 2) b.memories = b.memories.slice(-MAX_MEMORIES * 2); }
+    touch(id);
+    return b.feeling;
+  }
+
   // A greeting that remembers you (only once you've met; a first meeting keeps the authored line).
   function greet(person) {
     if (!enabled || !bond(person.id).met) return Promise.resolve(null);
@@ -251,6 +260,7 @@ var BridgeTalk = (function () {
     bond: bond,
     feeling: function (id) { return bond(id).feeling; },
     feelingLabel: function (id) { return feelingLabel(bond(id).feeling); },
+    nudge: nudge,
     greet: greet,
     say: say,
     end: end,

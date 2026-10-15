@@ -544,7 +544,7 @@ var BridgeSloop = (function () {
       BridgeProgression.awardCoins(n, 'sloop:flotsam');
       say('Inside the ' + o.kind + ': ' + n + ' coins in an oilskin purse', 3000);
     } else if (typeof BridgeInventory !== 'undefined' && BridgeInventory.addItem) {
-      var item = r < 0.75 ? 'sea_glass' : 'silver_nails';
+      var item = r < 0.75 ? 'sea_glass' : 'silver_nail';
       var ok = BridgeInventory.addItem(item, r < 0.75 ? 2 : 1);
       say(ok === false ? 'Your pack is full — you let it drift' : 'Inside the ' + o.kind + ': ' + (item === 'sea_glass' ? 'sea glass, wrapped in sailcloth' : 'a tin of silver nails'), 3000);
     }

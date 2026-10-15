@@ -868,7 +868,11 @@
       },
       {
         "q": "The farm",
-        "a": "OLD EDDA KEPT IT TILL HER KNEES WENT. SHE SAID WHOEVER CAME DOWN IN THE NEXT SHIP COULD HAVE IT, AND NOBODY ARGUES WITH EDDA. THE FARMHOUSE IS YOURS. THE DOOR STICKS."
+        "a": "OLD EDDA KEPT IT TILL HER KNEES WENT. SHE LEFT A NOTE ON THE FARMHOUSE DOOR: WORK THE KITCHEN GARDEN AT THE NEAR END FOR FREE, AND THE REST - FIELD, HOUSE AND ALL - IS 500 COINS, FOR HER KNEES. I HOLD THE DEED. THE DOOR STICKS."
+      },
+      {
+        "q": "Running the place",
+        "a": "ONCE IT'S YOURS? A SHIPPING BIN BY THE MAILBOX - MARLO EMPTIES IT ON HIS ROUND. ORDERS ON THE NOTICE BOARD FROM ALL OVER; THEY PAY BETTER. TAM AND ODILE WILL WORK FOR A WAGE IF YOU'VE MORE FIELD THAN HOURS. AND I SELL SPRINKLERS - SET ONE IN THE FIELD AND THE GROUND ROUND IT NEVER DRIES."
       },
       {
         "q": "What should I grow?",
@@ -1103,6 +1107,62 @@
       {
         "q": "Heard anything?",
         "a": "THE OLD LOT TALK ABOUT SKIING OFF THE BACK OF THE HOARSPIRE, WHERE THERE AREN'T ANY POLES. ANSGAR SAYS NOBODY WHO WENT LOOKING FOR WHAT'S OUT THERE CAME BACK THE SAME. HE ALSO SAYS THAT ABOUT THE COCOA."
+      }
+    ]
+  },
+  "tam": {
+    "name": "Tam Rook",
+    "role": "Farmhand for hire, Verdance",
+    "sheet": "npc-tam",
+    "at": [
+      {
+        "world": "verdance",
+        "label": "TAM"
+      }
+    ],
+    "greet": "ALL RIGHT? TAM ROOK. I DIG, I CARRY, I WATER. MOSTLY I WATER. IF YOU'VE GOT A FIELD AND NOT ENOUGH HOURS, I'M YOUR MAN.",
+    "again": "BOSS! THE ROWS ARE WET AND THE CROWS ARE SULKING.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "GREW UP ON THE NEXT FARM OVER, TILL THE WELL WENT SALT. NOW I WORK EVERYBODY ELSE'S. I DON'T MIND. GROUND'S GROUND."
+      },
+      {
+        "q": "Work for me?",
+        "a": "I KEEP EVERY ROW THAT'S GOT SOMETHING IN IT WATERED, ALL DAY, WHETHER YOU'RE HERE OR OFF IN YOUR SPACESHIP. FORTY A DAY.",
+        "hand": "tam"
+      },
+      {
+        "q": "Heard anything?",
+        "a": "MARLO SAYS THE STARFRUIT MAN PAYS DOUBLE IN THE DISTRICT. MARLO SAYS A LOT OF THINGS. ALSO HOLLIN'S GOAT ATE MY HAT."
+      }
+    ]
+  },
+  "odile": {
+    "name": "Odile Marsh",
+    "role": "Farmhand for hire, Verdance",
+    "sheet": "npc-odile",
+    "at": [
+      {
+        "world": "verdance",
+        "label": "ODILE"
+      }
+    ],
+    "greet": "ODILE MARSH. FORTY HARVESTS ON THIS VALLEY, AND MY BACK STILL BENDS. YOU'LL BE THE ONE WITH EDDA'S FIELD.",
+    "again": "STILL HERE. STILL BENDING.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I BROUGHT IN EDDA'S CROPS FOR TWENTY YEARS. WHEN HER KNEES WENT, SO DID THE WORK. I'D LIKE TO SEE THAT FIELD FULL AGAIN BEFORE MINE GO."
+      },
+      {
+        "q": "Work for me?",
+        "a": "I BRING IN WHAT'S RIPE - INTO YOUR SHIPPING BIN, FOR MARLO - AND PUT THE SAME BACK IN THE GROUND, IF YOU LEAVE SEED IN THE BOX IN THE BARN. SIXTY A DAY.",
+        "hand": "odile"
+      },
+      {
+        "q": "Heard anything?",
+        "a": "PUMPKINS PAY, STRAWBERRIES KEEP GIVING, AND TOVE UP ON THE ICE WORLD WILL TAKE EVERY PUMPKIN YOU'VE GOT. WATCH THE ORDER BOARD."
       }
     ]
   }

@@ -466,6 +466,13 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#1a3a2a', [[5, 3, 4, 1], [4, 4, 1, 2], [9, 4, 1, 2]]);
     px(ctx, x, y, u, '#80d0f0', [[14, 4, 1, 1], [15, 6, 1, 1]]);
   }
+  function sprinklerIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[7, 6, 2, 8], [4, 4, 8, 3], [5, 14, 6, 1]]);
+    px(ctx, x, y, u, '#a08040', [[7, 7, 1, 6], [6, 14, 4, 1]]);
+    px(ctx, x, y, u, '#e0c060', [[5, 5, 6, 1]]);
+    px(ctx, x, y, u, '#80d0f0', [[2, 3, 1, 1], [13, 3, 1, 1], [1, 6, 1, 1], [14, 6, 1, 1], [4, 1, 1, 1], [11, 1, 1, 1]]);
+  }
   var SEED_ART = {
     turnip: function (ctx, x, y, u) { px(ctx, x, y, u, '#f0e8f0', [[6, 8, 4, 3]]); px(ctx, x, y, u, '#a050a0', [[6, 8, 4, 1]]); px(ctx, x, y, u, '#50a040', [[7, 6, 2, 2]]); },
     carrot: function (ctx, x, y, u) { px(ctx, x, y, u, '#f08020', [[6, 7, 4, 2], [7, 9, 2, 2]]); px(ctx, x, y, u, '#50a040', [[7, 5, 2, 2]]); },
@@ -739,6 +746,8 @@ var BridgeItems = (function () {
                      stackable: false, draw: hoeIcon, damage: 6, onUse: farmUse },
     watering_can:  { id: 'watering_can', name: 'Watering Can', desc: 'Holds twenty waterings. Fill it at the well or the pond; a watered crop grows for twenty minutes.', type: 'tool',
                      stackable: false, draw: canIcon, onUse: farmUse },
+    sprinkler:     { id: 'sprinkler', name: 'Sprinkler', desc: 'A brass sprinkler head on a pipe. Set it in your field and the ground round it - a tile every way - never dries.', type: 'tool',
+                     stackable: true, draw: sprinklerIcon, onUse: farmUse, value: 60 },
     seed_turnip:   { id: 'seed_turnip', name: 'Turnip Seeds', desc: 'Quick and forgiving. Ready in three minutes of watered ground.', type: 'seed', stackable: true,
                      draw: seedIcon('turnip', '#e8e0c8'), onUse: farmUse, value: 2 },
     seed_carrot:   { id: 'seed_carrot', name: 'Carrot Seeds', desc: 'Ready in five watered minutes.', type: 'seed', stackable: true,

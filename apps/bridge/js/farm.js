@@ -67,14 +67,45 @@ var BridgeFarm = (function () {
   }
 
   // growth accrues only over the part of the time since we last looked that the ground was wet
-  function advance(t, now) {
+  function advance(t, now, k) {
     var c = t.crop;
     if (!c) return;
     var from = c.t || now, wetTo = t.wet || 0;
+    // a sprinkler beside it, or Tam on the payroll, keeps it watered (js/homestead.js)
+    var kept = k && typeof BridgeHomestead !== 'undefined' ? BridgeHomestead.keptWet(k, now) : 0;
+    if (kept) { wetTo = Math.max(wetTo, Math.min(now, kept)); if (kept > now) t.wet = Math.max(t.wet || 0, Math.min(kept, now + WET)); }
     if (wetTo > from) c.g = Math.min(c.need, c.g + Math.min(now, wetTo) - from);
+    if (c.g >= c.need && !c.ripeAt) c.ripeAt = now;
     c.t = now;
   }
-  function advanceAll(now) { for (var k in save.tiles) advance(save.tiles[k], now); }
+  function advanceAll(now) {
+    for (var k in save.tiles) advance(save.tiles[k], now, k);
+    // Odile brings in whatever's been ripe a while (she walks to the rest herself while you're watching)
+    if (typeof BridgeHomestead !== 'undefined' && BridgeHomestead.active('odile')) {
+      for (var j in save.tiles) {
+        var c = save.tiles[j].crop;
+        if (c && c.g >= c.need && now - (c.ripeAt || now) > 60000) pickFor(j);
+      }
+    }
+  }
+  /** A ripe crop brought in by a hand: into the shipping bin, and the same planted again if the seed box has it. */
+  function pickFor(k) {
+    var t = save.tiles[k];
+    if (!t || !t.crop || t.crop.g < t.crop.need) return;
+    var C = CROPS[t.crop.k];
+    C.out.forEach(function (o) {
+      var n = o[1] + Math.floor(Math.random() * (o[2] - o[1] + 1));
+      if (n > 0) BridgeHomestead.toBin(o[0], n);
+    });
+    save.picked[t.crop.k] = (save.picked[t.crop.k] || 0) + 1;
+    var kind = t.crop.k;
+    if (C.again) { t.crop.g = 0; t.crop.need = C.again * 60000; t.crop.again = true; t.crop.t = Date.now(); t.crop.ripeAt = 0; }
+    else if (BridgeHomestead.takeSeed(kind)) t.crop = { k: kind, g: 0, need: C.grow * 60000, t: Date.now() };
+    else delete t.crop;
+    store();
+    var xy = k.split(',');
+    burst(+xy[0], +xy[1], '#90d060', 5, 1);
+  }
   function wet(t, now) { return (t.wet || 0) > now; }
   function ripe(c) { return c.g >= c.need; }
   function stage(c) {
@@ -101,6 +132,11 @@ var BridgeFarm = (function () {
 
   // what pressing E on this tile would do
   function plan(x, y, now) {
+    var H = typeof BridgeHomestead !== 'undefined' ? BridgeHomestead : null;
+    if (H && H.sprinklerAt(key(x, y))) return { act: 'lift', verb: 'LIFT', label: 'SPRINKLER' };
+    if (H && !H.canWork(BridgeWorld.getWorld(), x) && !save.tiles[key(x, y)]) return { act: 'locked', verb: 'LOOK', label: 'EDDA\'S FIELD' };
+    if (H && has('sprinkler') && BridgeInventory.getSelectedItemId && BridgeInventory.getSelectedItemId() === 'sprinkler' && !(save.tiles[key(x, y)] || {}).crop)
+      return { act: 'sprinkle', verb: 'SET THE SPRINKLER', label: 'FIELD' };
     var t = save.tiles[key(x, y)];
     if (!t) return has('hoe') ? { act: 'till', verb: 'TILL', label: 'FIELD' } : { act: 'look', verb: 'LOOK', label: 'FIELD' };
     if (!t.crop) {
@@ -184,7 +220,7 @@ var BridgeFarm = (function () {
     [[x, y], [x + side[0], y + side[1]], [x - side[0], y - side[1]]].forEach(function (c) {
       var t = save.tiles[key(c[0], c[1])];
       if (!t || save.can <= 0 || !inPlot(world, c[0], c[1])) return;
-      advance(t, now);
+      advance(t, now, key(c[0], c[1]));
       t.wet = now + WET;
       if (t.crop) t.crop.t = now;
       save.can--; n++;
@@ -238,6 +274,9 @@ var BridgeFarm = (function () {
     else if (p.act === 'plant') plant(x, y, p.seed);
     else if (p.act === 'water') water(x, y, f);
     else if (p.act === 'harvest') harvest(x, y);
+    else if (p.act === 'lift') BridgeHomestead.liftSprinkler(x, y);
+    else if (p.act === 'sprinkle') BridgeHomestead.placeSprinkler(x, y);
+    else if (p.act === 'locked') say('EDDA\'S FIELD', 'THIS END OF THE FIELD IS STILL EDDA\'S. THE KITCHEN GARDEN - THE NEAR END, PAST THE TWINE - IS YOURS TO WORK; THE REST COMES WITH THE FARM. HER NOTE\'S ON THE FARMHOUSE DOOR.');
     else look(x, y);
   }
 
@@ -288,6 +327,12 @@ var BridgeFarm = (function () {
       if (!t) return till(x, y);
       return float(x, y, t.crop ? 'GROWING' : 'TILLED', '#f0e0a0');
     }
+    if (id === 'sprinkler') {
+      if (t && t.crop) return float(x, y, 'NOT ON A CROP', '#f0e0a0');
+      if (typeof BridgeHomestead !== 'undefined' && !BridgeHomestead.canWork(world, x)) return float(x, y, 'NOT YOUR FIELD YET', '#f0e0a0');
+      return BridgeHomestead.placeSprinkler(x, y);
+    }
+    if (typeof BridgeHomestead !== 'undefined' && !BridgeHomestead.canWork(world, x) && !t) return float(x, y, 'NOT YOUR FIELD YET', '#f0e0a0');
     if (/^seed_/.test(id)) {
       if (!t) return float(x, y, 'TILL IT FIRST', '#f0e0a0');
       if (t.crop) return float(x, y, 'ALREADY PLANTED', '#f0e0a0');
@@ -397,6 +442,17 @@ var BridgeFarm = (function () {
   }
 
   // ---- scene hooks ------------------------------------------------------------------------------------
+  function twine(ctx, world, offX, offY, ts) {
+    var p = plotOf(world), H = typeof BridgeHomestead !== 'undefined' ? BridgeHomestead : null;
+    if (!p || !H || H.owned()) return;
+    var x = Math.round(offX + H.starterEdge(world) * ts) - 1, u = ts / 16;
+    ctx.fillStyle = 'rgba(232,220,180,0.7)';
+    ctx.fillRect(x, Math.round(offY + p[1] * ts), 1, Math.round((p[3] - p[1] + 1) * ts));
+    for (var y = p[1]; y <= p[3] + 1; y += 2) {
+      ctx.fillStyle = '#3a2410'; ctx.fillRect(x - u, Math.round(offY + y * ts) - 4 * u, 2 * u, 5 * u);
+      ctx.fillStyle = '#7a5a38'; ctx.fillRect(x - u, Math.round(offY + y * ts) - 4 * u, u, 4 * u);
+    }
+  }
   function ground(ctx, world, offX, offY, ts) {
     if (!plotOf(world)) return;
     var now = Date.now();
@@ -405,12 +461,14 @@ var BridgeFarm = (function () {
       if (!inPlot(world, x, y)) continue;
       ctx.drawImage(soilTile(wet(save.tiles[k], now), (x * 7 + y * 3) % 3), Math.round(offX + x * ts), Math.round(offY + y * ts));
     }
+    twine(ctx, world, offX, offY, ts);
   }
 
   function items(world, offX, offY, ts, now) {
     if (!plotOf(world)) return [];
     sync(world, now);
-    var out = [];
+    var out = typeof BridgeHomestead !== 'undefined'
+      ? BridgeHomestead.items(world, offX, offY, ts, now, typeof BridgeScene !== 'undefined' && world.scene ? BridgeScene.get(world.scene.id) : null) : [];
     for (var k in save.tiles) {
       var t = save.tiles[k];
       if (!t.crop) continue;
@@ -469,6 +527,7 @@ var BridgeFarm = (function () {
       ctx.fillStyle = '#2a1a10'; ctx.fillRect(bx2, by2, 1, 2);
     });
     if (!plotOf(world)) return;
+    if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.over(ctx, world, offX, offY, ts, now);
     // a sparkle over anything ready to pick
     for (var k in save.tiles) {
       var tt = save.tiles[k];
@@ -517,6 +576,6 @@ var BridgeFarm = (function () {
     return { rows: rows, tilled: Object.keys(save.tiles).length, can: save.can };
   }
 
-  return { decorate: decorate, use: use, useItem: useItem, journal: journal, CROPS: CROPS,
+  return { decorate: decorate, use: use, useItem: useItem, journal: journal, CROPS: CROPS, pickFor: pickFor,
            _save: function () { return save; }, _plan: plan, _sprite: sprite };
 })();
