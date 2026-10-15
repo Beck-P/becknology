@@ -234,8 +234,8 @@ w['interactions'] = [
     enter(19, 7, 'chrome-clinic', 'CHROME CLINIC'),
     {'x': 0, 'y': 10, 'type': 'leave_world', 'label': 'SHIP', 'prompt': 'RETURN TO BRIDGE'},
     {'x': 43, 'y': 10, 'type': 'leave_world', 'label': 'SHIP', 'prompt': 'RETURN TO BRIDGE'},
-    keep('PASSERBY', 10, 10),
-    keep('STREET KID', 5, 10),
+    keep('PASSERBY', 10, 8),
+    keep('STREET KID', 6, 12),
     keep('TRASH CAN', 9, 12),
     keep('HOLO-BILLBOARD', 14, 10),
     keep('HOVER-BIKE DOCK', 22, 8),
@@ -261,13 +261,13 @@ w['interactions'] = [
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 
-for (c, r) in ((10, 10), (5, 10)):                            # NPCs
+for (c, r) in ((10, 8), (6, 12)):                             # NPCs: window-shopping, and sat on the kerb, out of the lane
     k.solid(c, r, c + 1, r + 1)
-for (c, r) in ((17, 11), (18, 10), (18, 11), (21, 11), (31, 11), (32, 11), (32, 10), (39, 11), (14, 9), (7, 11)):   # behind parasols, trees
+for (c, r) in ((17, 11), (18, 11), (21, 11), (31, 11), (32, 11), (39, 11), (14, 9), (7, 11)):   # behind parasols, trees
     k.solid(c, r, c + 1, r + 1)
 apply_world(WORLD, k, (0, 8, COLS - 1, 13), scene_id='arcadia-street',
-            actors=[{'sheet': 'npc-shopper', 'x': 10, 'y': 10, 'facing': 'down'},
-                    {'sheet': 'npc-pawn-customer', 'x': 5, 'y': 10, 'facing': 'right'}],
+            actors=[{'sheet': 'npc-shopper', 'x': 10, 'y': 8, 'facing': 'up'},
+                    {'sheet': 'npc-pawn-customer', 'x': 6, 'y': 12, 'facing': 'up'}],
             scene_extra={'backdrop': True, 'ads': st.ads, 'steam': st.steam, 'bulbs': st.bulbs})
 w = json.load(open(WORLD))
 w['view'] = [-0.5, -4.5, COLS + 0.5, ROWS + 0.4]

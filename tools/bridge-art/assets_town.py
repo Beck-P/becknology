@@ -561,14 +561,15 @@ def border_rocks(k, cells, tone=SALT[2]):
         k.solid(c, r, c + 1, r + 1)
 
 
-def shore_crystals(k, cx, cr, col=('#6a1a2a', '#e04060'), s=1.0, energy=8, z=0.0):
-    """Spore crystals growing out of the rocks, glowing."""
+def shore_crystals(k, cx, cr, col=('#6a1a2a', '#e04060'), s=1.0, energy=8, z=0.0, solid=True):
+    """Spore crystals growing out of the rocks, glowing. solid=False for a small clump you can walk past."""
     for (dx, dr, h, rad, lean) in ((0.0, 0.0, 0.8, 0.1, 0), (0.15, 0.08, 0.5, 0.07, 22), (-0.14, 0.1, 0.45, 0.07, -18),
                                    (0.05, -0.12, 0.35, 0.06, 8)):
         top = (cx + dx + math.sin(math.radians(lean)) * h * s * 0.5, cr + dr, z + h * s)
         k.tube((cx + dx, cr + dr, z), top, rad * s, col[0], 'crystal', rb=0.004, emit=(col[1], 0.75), verts=6, smooth=False)
     k.point_light(cx, cr + 0.3, z + 0.5 * s, col[1], energy, radius=0.12, group='flicker')
-    k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
+    if solid:
+        k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
 
 
 def silver_post(k, cx, cr):

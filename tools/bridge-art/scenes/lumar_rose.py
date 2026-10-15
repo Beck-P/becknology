@@ -161,8 +161,8 @@ for (cx, cr, rx, ry) in POOLS:
 I.bathhouse(k, 45.4, 48.6, 18.0, 20.0)
 MINE = (45.0, 31.0)
 I.mine_mouth(k, MINE[0], MINE[1])
-for (x, r) in ((39.0, 20.0), (48.6, 22.6), (38.8, 28.6)):
-    W.shore_crystals(k, x, r, col=CRYSTAL, s=0.8, energy=10)
+for (x, r) in ((39.0, 20.0), (48.6, 22.6), (38.8, 28.6)):        # between the pools: small, walk past them
+    W.shore_crystals(k, x, r, col=CRYSTAL, s=0.8, energy=10, solid=False)
 
 # ---- scatter -----------------------------------------------------------------------------------------------
 busy = lambda x, r: pd(x, r) < 0.6
@@ -170,7 +170,7 @@ I.tufts(k, [c for c in walk if material(c[0] + 0.5, c[1] + 0.5) in ('meadow', 'm
         '#4a6040', per_cell=1.0, avoid=busy)
 I.pebbles(k, walk, '#7a6e70', per_cell=0.2, avoid=busy)
 for (x, r) in ((7.4, 17.0), (17.2, 26.6), (35.0, 9.0), (21.4, 6.2), (47.6, 28.4), (38.8, 24.4)):
-    W.shore_crystals(k, x, r, col=CRYSTAL, s=k.rng.uniform(0.6, 1.0), energy=8)
+    W.shore_crystals(k, x, r, col=CRYSTAL, s=k.rng.uniform(0.6, 1.0), energy=8, solid=False)
 
 # ---- light -------------------------------------------------------------------------------------------------
 k.area_light(28.0, 18.0, 16.0, '#9a90c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))         # moonlight

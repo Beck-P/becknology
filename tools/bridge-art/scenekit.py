@@ -548,7 +548,11 @@ class Kit:
         return done
 
     def render(self, out, light_states=None, probe_z=0.9, light_samples=160, world_light=('#202838', 0.25)):
-        """light_states: {'name': {group: multiplier}} — one light pass each."""
+        """light_states: {'name': {group: multiplier}} — one light pass each.
+        SCENE_NORENDER=1 skips the render: a script re-run then only rewrites its world JSON
+        (collisions, interactions, actors) against the scene already in place."""
+        if os.environ.get('SCENE_NORENDER'):
+            return
         os.makedirs(out, exist_ok=True)
         light_states = light_states or {'full': {}}
         self._camera()

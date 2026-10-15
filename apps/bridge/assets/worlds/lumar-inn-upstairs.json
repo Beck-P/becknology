@@ -1,12 +1,12 @@
 {
-  "name": "The Blue Lantern \u2014 Upstairs",
+  "name": "The Blue Lantern — Upstairs",
   "width": 14,
   "height": 11,
   "tileSize": 16,
   "tileset": "lumar-inn-upstairs",
   "spawns": {
     "player": [
-      3,
+      2,
       4
     ]
   },
