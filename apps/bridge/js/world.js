@@ -422,6 +422,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.decorate(worldId, data);
         if (typeof BridgeHolm !== 'undefined') BridgeHolm.decorate(worldId, data);
+        if (typeof BridgeChart !== 'undefined') BridgeChart.decorate(worldId, data);
         if (typeof BridgeGear !== 'undefined') BridgeGear.decorate(worldId, data);
         if (typeof BridgeMine !== 'undefined') BridgeMine.decorate(worldId, data);
         if (typeof BridgeFarm !== 'undefined') BridgeFarm.decorate(worldId, data);

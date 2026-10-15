@@ -393,7 +393,7 @@ var BridgeSloop = (function () {
   }
   // the island you've set a course for: placed ahead along the way you're steering, its mouth facing you over open
   // water, and the crossing laid out between: rocks and a reef, a fisherman, things adrift, traffic, the sea's own perils
-  function placeB(J, P0, prefer) {
+  function placeB(J, P0, prefer, outFrom) {
     B = J; to = J.id;
     moorFor(J.id);                                   // her berth there, ready for when you climb out
     moorOf(B);
@@ -431,7 +431,13 @@ var BridgeSloop = (function () {
     B.fleet = fl.filter(function (e) { return e !== mine; }).map(function (e) { return lying(e, B.ox, B.oy); });
     B.chan = chan.map(function (p) { return [p[0] + B.ox, p[1] + B.oy]; });
     B.exit = B.chan[B.chan.length - 1];
-    route = [P0.slice()].concat(B.chan.slice().reverse(), [B.moor.slice()]);
+    var lead = [];
+    if (outFrom) {                                   // still in the harbour: the way out first, from the channel mark nearest you
+      var ch = [A.berth].concat(A.chan.slice(1, -1)), k0 = 0, kd = 1e9;
+      ch.forEach(function (p, i) { var d = Math.hypot(p[0] - outFrom[0], p[1] - outFrom[1]); if (d < kd) { kd = d; k0 = i; } });
+      lead = ch.slice(k0).map(function (p) { return p.slice(); });
+    }
+    route = lead.concat([P0.slice()], B.chan.slice().reverse(), [B.moor.slice()]);
     leg = 0;
     dir = unit(B.exit[0] - P0[0], B.exit[1] - P0[1]);
     mid = [(P0[0] + B.exit[0]) / 2, (P0[1] + B.exit[1]) / 2];
@@ -489,8 +495,7 @@ var BridgeSloop = (function () {
   // the old two-island start (BridgeWorld.sailTo with a destination): the other island set where its quay faces ours
   function lay() {
     layA();
-    var P = isles(), bearing = Math.atan2((P[B0.id].y - P[A.id].y) * 0.72, P[B0.id].x - P[A.id].x);
-    placeB(B0, A.exit, bearing);
+    placeB(B0, A.exit, bearingTo(B0.id), A.berth);
   }
   var B0 = null;
 
@@ -505,6 +510,8 @@ var BridgeSloop = (function () {
   // ---- start and stop ---------------------------------------------------------------------------------------------
   var aboardStart = false, shipId = null, shipName = 'your sloop';
   function start(fromId, toId, opts) {
+    var charted = typeof BridgeChart !== 'undefined' ? BridgeChart.dest() : null;     // a course set on the chart ashore
+    if (!toId && charted && charted !== fromId && knows(charted)) toId = charted;
     if (running || !knows(fromId) || (toId && (!knows(toId) || fromId === toId))) return false;
     aboardStart = !!(opts && opts.aboard);
     var act = typeof BridgeFleet !== 'undefined' ? BridgeFleet.active() : null;
@@ -533,6 +540,10 @@ var BridgeSloop = (function () {
       b.id = 'sloop-menu-btn'; b.type = 'button'; b.textContent = '⋯';
       b.addEventListener('click', function (e) { e.preventDefault(); openMenu(); });
       document.body.appendChild(b);
+      var cb = document.createElement('button');
+      cb.id = 'sloop-chart-btn'; cb.type = 'button'; cb.textContent = 'Chart';
+      cb.addEventListener('click', function (e) { e.preventDefault(); openChart(); });
+      document.body.appendChild(cb);
     }
     if (typeof BridgeAudio !== 'undefined' && BridgeAudio.setWorld) BridgeAudio.setWorld('lumar-passage');
     var fail = function () { stop(from); };
@@ -565,13 +576,41 @@ var BridgeSloop = (function () {
     return true;
   }
   // you've steered for an island long enough: it's your course now, laid out ahead of you
+  // the islands you could steer for: the ones on your chart (js/chart.js), or that you've been to
   function others() {
-    var P = isles();
-    return Object.keys(P).filter(function (id) { return id !== A.id; }).map(function (id) {
-      return { id: id, name: P[id].name, bearing: Math.atan2((P[id].y - P[A.id].y) * 0.72, P[id].x - P[A.id].x) };
+    var P = isles(), C = typeof BridgeChart !== 'undefined' ? BridgeChart : null;
+    return Object.keys(P).filter(function (id) { return id !== A.id && (!C || C.known(id)); }).map(function (id) {
+      return { id: id, name: P[id].name, bearing: bearingTo(id) };
     });
   }
-  function commit(id) {
+  function bearingTo(id) { var P = isles(); return Math.atan2((P[id].y - P[A.id].y) * 0.72, P[id].x - P[A.id].x); }
+  function outside() {
+    return Math.hypot(boat.x - A.exit[0], boat.r - A.exit[1]) < 6 || boat.x < -4 || boat.r < -4 || boat.x > A.w + 4 || boat.r > A.h + 4;
+  }
+  // a course from the chart: laid out the way the island really lies, from the harbour mouth if you're still inside
+  function canSetCourse() { return running && !!A && !!boat && !B && !committing && (phase === 'sail' || phase === 'cast') && !(fight() && fight().busy()); }
+  function setCourse(id) {
+    if (!canSetCourse() || id === A.id || !knows(id)) return false;
+    if (phase === 'sail' && outside()) commit(id, [boat.x, boat.r], bearingTo(id));
+    else commit(id, A.exit, bearingTo(id), [boat.x, boat.r]);
+    return true;
+  }
+  // where you are on the chart: your island ashore, or between the two by where you are on the water
+  function chartPos() {
+    if (!running || !A || !boat) return null;
+    var P = isles(), pa = P[A.id];
+    if (!pa) return null;
+    if (!B || !P[B.id]) {
+      var dx = (boat.x - A.cx) / 400, dy = (boat.r - A.cy) / 288, m = Math.hypot(dx, dy);
+      if (m > 0.1) { dx *= 0.1 / m; dy *= 0.1 / m; }
+      return { x: pa.x + dx, y: pa.y + dy };
+    }
+    var pb = P[B.id], cx = pb.x - pa.x, cy = (pb.y - pa.y) * 0.72, wx = B.cx + B.ox - A.cx, wy = B.cy + B.oy - A.cy;
+    var den = wx * wx + wy * wy || 1, qr = (cx * wx + cy * wy) / den, qi = (cy * wx - cx * wy) / den;   // chart = world × q
+    var px = boat.x - A.cx, py = boat.r - A.cy;
+    return { x: pa.x + qr * px - qi * py, y: pa.y + (qi * px + qr * py) / 0.72 };
+  }
+  function commit(id, P0, prefer, outFrom) {
     if (B || committing) return;
     committing = true;
     var P = isles();
@@ -580,7 +619,7 @@ var BridgeSloop = (function () {
       committing = false;
       if (!running || B) return;
       if (!J.sc) { say('The chart for ' + P[id].name + ' is missing. Try another course.', 3000); aim = null; return; }
-      placeB(J, [boat.x, boat.r], boat.h);
+      placeB(J, P0 || [boat.x, boat.r], prefer != null ? prefer : boat.h, outFrom);
       told[A.pal] = true;
     });
   }
@@ -591,7 +630,8 @@ var BridgeSloop = (function () {
     running = false;
     cancelAnimationFrame(raf);
     document.documentElement.classList.remove('keys-mode');
-    ['sloop-menu-btn', 'sloop-menu'].forEach(function (id) { var e = document.getElementById(id); if (e) e.remove(); });
+    if (chartOpen()) BridgeChart.close();
+    ['sloop-menu-btn', 'sloop-chart-btn', 'sloop-menu'].forEach(function (id) { var e = document.getElementById(id); if (e) e.remove(); });
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKeyUp, true);
     window.removeEventListener('resize', resize);
@@ -624,6 +664,7 @@ var BridgeSloop = (function () {
   var KEYS = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'e', ' ', 'enter', 'escape', 't'];
   function onKey(e) {
     var k = (e.key || '').toLowerCase();
+    if (chartOpen()) return;                                           // the chart has the keys while it's open
     if (KEYS.indexOf(k) < 0) return;
     e.preventDefault(); e.stopPropagation();
     if (menu) { if (k === 'escape' && !e.repeat) closeMenu(); return; }
@@ -633,12 +674,15 @@ var BridgeSloop = (function () {
     keys[k] = true;
   }
   function onKeyUp(e) { keys[(e.key || '').toLowerCase()] = false; }
+  function chartOpen() { return typeof BridgeChart !== 'undefined' && BridgeChart.isOpen(); }
+  function openChart() { if (typeof BridgeChart === 'undefined' || menu) return; keys = {}; BridgeChart.open(); }
   function onPointer() { if (prompt && phase === 'sail') prompt.act(); }
   function down(a, b) { return keys[a] || keys[b]; }
 
   function openMenu() {
     if (menu || !running) return;
     var fn = A ? A.name : 'the quay', opts = [['Keep sailing', closeMenu]], fight = typeof BridgeSeaFight !== 'undefined' && BridgeSeaFight.busy();
+    if (typeof BridgeChart !== 'undefined') opts.push(['Open the chart (C)', function () { closeMenu(); openChart(); }]);
     if (B && !fight) opts.push(['Skip ahead to ' + B.name, function () { closeMenu(); stop(to); }]);
     else if (!B && A && !committing) others().forEach(function (o) { opts.push(['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]); });
     if (!fight) opts.push(['Put back to ' + fn, function () { closeMenu(); stop(from); }]);
@@ -863,7 +907,7 @@ var BridgeSloop = (function () {
     if (!B && phase === 'sail' && !committing) {
       var outside = Math.hypot(b.x - A.exit[0], b.r - A.exit[1]) < 6 || b.x < -4 || b.r < -4 || b.x > A.w + 4 || b.r > A.h + 4;
       if (outside) {
-        if (!hinted && now - msgAt > -500) { hinted = true; say('Out of the harbour. Steer for an island - the compass shows where each one lies' + (touch() ? '' : ' (or Esc to name one)'), 5600); }
+        if (!hinted && now - msgAt > -500) { hinted = true; say('Out of the harbour. Steer for an island - the compass shows where each one on your chart lies' + (touch() ? ' (or open the Chart)' : ' (or C for the chart)'), 5600); }
         var best = null, bd = 0.42;
         others().forEach(function (o) { var d = Math.abs(wrap(o.bearing - b.h)); if (d < bd) { bd = d; best = o; } });
         if (best && aim && aim.id === best.id) aim.t += dt; else aim = best ? { id: best.id, t: 0 } : null;
@@ -1741,7 +1785,7 @@ var BridgeSloop = (function () {
       ctx.fillStyle = '#020308'; ctx.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
-    if (!menu) update(dt, now);
+    if (!menu && !chartOpen()) update(dt, now);
     bctx.setTransform(1, 0, 0, 1, 0, 0);
     bctx.imageSmoothingEnabled = false;
     draw(now);
@@ -1922,6 +1966,7 @@ var BridgeSloop = (function () {
     isRunning: function () { return running; },
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },
+    setCourse: setCourse, canSetCourse: canSetCourse, chartPos: chartPos, course: function () { return running && B ? B.id : null; },
     _things: function () { return things; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }
   };
 })();

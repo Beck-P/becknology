@@ -98,6 +98,11 @@
         "q": "Treasure maps",
         "a": "I COPY THE OLD ONES. THE LANDMARKS ARE TRUE; WHETHER ANYTHING'S STILL IN THE GROUND IS ANOTHER MATTER.",
         "treasure": "shop"
+      },
+      {
+        "q": "Sea charts",
+        "a": "EVERY SOUNDING, EVERY SHOAL, EVERY HARBOUR MOUTH. THE EMERALD YOU KNOW ALREADY - EVERYONE DOES. THE OTHERS I SELL BY THE SEA.",
+        "charts": true
       }
     ]
   },

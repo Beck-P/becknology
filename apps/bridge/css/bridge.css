@@ -1769,3 +1769,76 @@ html.touch .fd-keys { display: none; }
 .cx-detail b { color: #f6eedc; font-weight: normal; }
 .cx-detail em { color: #e0c060; font-style: normal; }
 html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }                      /* casting toward the bottom of the screen: out of the way */
+
+/* ---- The sea chart (js/chart.js) ----
+   A parchment chart in a dark wooden frame, the map a native canvas scaled by
+   a whole number; island and sea names are text laid over it. */
+#chart-pill {
+  position: fixed; top: 160px; left: 16px; z-index: 25;
+  display: none; align-items: center; gap: 7px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 13px; letter-spacing: 0.5px;
+  color: rgba(242, 238, 230, 0.9); background: rgba(14, 12, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 5px 13px 5px 5px;
+  cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+#chart-pill:hover { background: rgba(34, 30, 50, 0.9); border-color: rgba(255, 255, 255, 0.25); }
+#chart-pill .ip-key { font-size: 10px; min-width: 22px; height: 18px; }
+html.touch #chart-pill { padding: 7px 14px; left: calc(12px + env(safe-area-inset-left)); top: calc(186px + env(safe-area-inset-top)); }
+html.touch #chart-pill .ip-key { display: none; }
+#sloop-chart-btn {
+  position: fixed; top: calc(12px + env(safe-area-inset-top)); right: calc(64px + env(safe-area-inset-right)); z-index: 71;
+  height: 44px; padding: 0 16px; font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 15px; color: rgba(242, 238, 230, 0.92);
+  background: rgba(14, 12, 22, 0.72); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px;
+}
+#sea-chart {
+  position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
+  background: rgba(4, 6, 12, 0.62); opacity: 0; transition: opacity 0.25s;
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+}
+#sea-chart.open { opacity: 1; }
+#sea-chart .ch-frame {
+  position: relative; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto;
+  padding: 10px 12px 12px; border-radius: 6px;
+  background: linear-gradient(#3a2614, #2a1a0c); border: 2px solid #a08040;
+  box-shadow: 0 0 0 2px #1a1008, 0 22px 60px rgba(0, 0, 0, 0.7);
+  transform: translateY(10px) scale(0.98); transition: transform 0.25s;
+}
+#sea-chart.open .ch-frame { transform: none; }
+#sea-chart .ch-title { text-align: center; color: #e0c060; font-size: 17px; letter-spacing: 2px; margin: 0 0 8px; text-transform: uppercase; }
+#sea-chart .ch-map { position: relative; line-height: 0; margin: 0 auto; width: max-content; }
+#sea-chart .ch-map canvas { image-rendering: pixelated; display: block; cursor: pointer; }
+#sea-chart .ch-label {
+  position: absolute; transform: translate(-50%, 0); white-space: nowrap; cursor: pointer;
+  font-size: 12px; line-height: 1; color: #3a2614; letter-spacing: 0.5px;
+  padding: 2px 5px; border-radius: 3px; background: rgba(230, 214, 172, 0.72);
+}
+#sea-chart .ch-label:hover { background: rgba(246, 232, 190, 0.95); color: #1a1008; }
+#sea-chart .ch-sea-label {
+  position: absolute; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none;
+  font-size: 11px; line-height: 1; color: rgba(58, 38, 20, 0.78); letter-spacing: 2px; text-transform: uppercase; font-style: italic;
+}
+#sea-chart .ch-sea-label.dim { color: rgba(90, 70, 44, 0.5); }
+#sea-chart.small .ch-label { font-size: 9px; padding: 1px 3px; }
+#sea-chart.small .ch-sea-label { font-size: 8px; letter-spacing: 1px; }
+#sea-chart.small .ch-frame { padding: 8px; }
+#sea-chart.small .ch-title { font-size: 14px; margin-bottom: 6px; }
+#sea-chart.side .ch-body { display: flex; align-items: flex-start; gap: 12px; }
+#sea-chart.side .ch-info { margin-top: 0; width: 270px; flex: none; }
+#sea-chart .ch-info {
+  margin-top: 10px; padding: 9px 12px; border-radius: 4px; color: #3a2614;
+  background: #e6d6ac; border: 1px solid #8a6a3a; line-height: 1.35;
+}
+#sea-chart .ch-name { font-size: 16px; color: #1a1008; }
+#sea-chart .ch-sea { font-size: 11px; color: #7a5a30; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+#sea-chart .ch-notes { margin: 0 0 8px; padding-left: 16px; font-size: 13px; }
+#sea-chart .ch-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+#sea-chart .ch-btns button {
+  font-family: inherit; font-size: 13px; padding: 6px 12px; border-radius: 4px; cursor: pointer;
+  color: #3a2614; background: #d4c094; border: 1px solid #8a6a3a;
+}
+#sea-chart .ch-btns button.primary { color: #f6ecd0; background: #6a3a1e; border-color: #3a2010; }
+#sea-chart .ch-btns button:hover:not([disabled]) { filter: brightness(1.08); }
+#sea-chart .ch-btns button[disabled] { opacity: 0.55; cursor: default; }
+#sea-chart .ch-hint { margin-top: 8px; text-align: center; font-size: 11px; color: rgba(224, 192, 96, 0.75); letter-spacing: 0.5px; }
+#sea-chart .ch-hint .ip-key { font-size: 10px; min-width: 20px; height: 16px; }
+html.touch #sea-chart .ch-hint { display: none; }

@@ -1233,6 +1233,11 @@ var BridgeInteractions = (function () {
         BridgeTreasure.shop(person.name.split(' ')[0]);
         return;
       }
+      if (t.charts && typeof BridgeChart !== 'undefined') {           // Ilsa's sea charts (js/chart.js)
+        close();
+        BridgeChart.shop(BridgeWorld.getWorldId(), 'EVERY SOUNDING, EVERY SHOAL, EVERY HARBOUR MOUTH. ONCE A SEA\'S ON YOUR CHART YOU CAN SET A COURSE FOR ANY ISLAND IN IT.');
+        return;
+      }
       if (t.mine && typeof BridgeMine !== 'undefined') {              // Hob's forge: a better pickaxe
         close();
         BridgeMine.upgrade(person.name, t.mine);

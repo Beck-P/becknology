@@ -95,6 +95,10 @@ var BridgeHarbour = (function () {
     rows.push({ label: 'The hold', sub: 'your pack to her hold, and back', pick: function () { pickShip(worldId, 'Whose hold?', hold); } });
     rows.push({ label: 'Market', sub: 'buy and sell cargo', pick: function () { pickShip(worldId, 'Trade from which ship?', market); } });
     rows.push({ label: 'Contracts', sub: T() ? T().mine().length + ' taken' : '', pick: function () { contracts(worldId); } });
+    if (typeof BridgeChart !== 'undefined') {
+      var unc = ['sapphire', 'rose', 'crimson', 'midnight'].filter(function (s) { return !BridgeChart.charted(s); }).length;
+      rows.push({ label: 'Charts', sub: unc ? unc + ' sea' + (unc > 1 ? 's' : '') + ' still uncharted' : 'every sea charted', pick: function () { BridgeChart.shop(worldId, null, function () { menu(worldId); }); } });
+    }
     choose({ title: Pd.who + ', harbourmaster', text: note || intro || 'WHAT CAN I DO FOR YOU?', rows: rows, closeLabel: 'Done' });
   }
   function pickShip(worldId, title, then) {
