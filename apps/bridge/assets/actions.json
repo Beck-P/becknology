@@ -559,5 +559,13 @@
       "view": "skyline",
       "prompt": "PRESS E TO LOOK THROUGH"
     }
+  ],
+  "hoarfell-skihire": [
+    {
+      "label": "WINDOW",
+      "action": "view",
+      "view": "peaks",
+      "prompt": "PRESS E TO LOOK OUT"
+    }
   ]
 }

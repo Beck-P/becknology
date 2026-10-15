@@ -72,6 +72,8 @@ var BridgeSki = (function () {
     return d;
   }
   function store() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* private mode */ } }
+  function waxed() { return (save.wax || 0) > Date.now(); }
+  function wax(minutes) { save.wax = Date.now() + minutes * 60000; store(); }
   function sfx(n) { if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(n); }
   function has(id) { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount(id) > 0; }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
@@ -246,6 +248,7 @@ var BridgeSki = (function () {
     var grade = gradeAt(w, s.x, s.y);
     var acc = GRAV * grade * Math.cos(s.a);
     var kd = held.down ? TUCK : DRAG, fr = FRICTION;
+    if (waxed()) { kd *= 0.9; fr *= 0.8; }                   // fresh wax from Inge's bench
     if (zone === '~') { kd *= 2.6; fr += 1.6; }
     if (held.up) fr += PLOUGH;
     if (steer && s.v > 2) fr += rate * s.v * 0.1;
@@ -812,6 +815,7 @@ var BridgeSki = (function () {
     start: start, park: park, RUNS: RUNS, unlocked: unlocked, isOpen: function () { return !!s; },
     parkRecord: function () { return save.park; }, JUNO: JUNO, decorate: decorate,
     best: function (id) { return save.runs[id] && save.runs[id].best; },
+    wax: wax, waxed: waxed,
     beatLiv: function (id) { return !!save.rival[id]; },
     items: items, ground: ground, over: over,
     _s: function () { return s; }, _rival: rivalLine

@@ -60,8 +60,9 @@ var BridgeGear = (function () {
     { world: 'arcadia-street', label: 'CYBER GEAR', shop: 'cyber_gear', prompt: 'PRESS E TO BROWSE',
       intro: 'CHROME HEADPHONES, MOD KITS, WIRES IN A DOZEN COLOURS, AND A RACK OF RUNNER JACKETS HUMMING ON THEIR HANGERS.' },
     { world: 'bridge', label: 'COAT RACK', wardrobe: true, prompt: 'PRESS E TO CHANGE' },
-    { world: 'hoarfell', label: 'OUTERWEAR', shop: 'alpine', prompt: 'PRESS E TO BROWSE',
-      intro: 'A RAIL OF QUILTED SUITS BY THE SKI HIRE\'S DOOR, AND A HAND-LETTERED SIGN: "THE MOUNTAIN DOESN\'T CARE WHAT YOU WEAR. YOU WILL."' }
+    { world: 'hoarfell-skihire', label: 'OUTERWEAR', shop: 'alpine', prompt: 'PRESS E TO BROWSE',
+      intro: 'A RAIL OF QUILTED SUITS AT THE BACK OF THE SKI HIRE, AND A HAND-LETTERED SIGN: "THE MOUNTAIN DOESN\'T CARE WHAT YOU WEAR. YOU WILL."' },
+    { world: 'hoarfell-skihire', label: 'MIRROR', wardrobe: true, prompt: 'PRESS E TO CHANGE' }
   ];
 
   var state = load();

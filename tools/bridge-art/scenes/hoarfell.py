@@ -96,6 +96,7 @@ W.bulletin_board(k, 10.6, 10.4)
 k.solid(10, 10, 12, 11)
 N.woodpile(k, 1.0, 2.4, 11.2)
 N.sled(k, 9.6, 13.2)
+N.hanging_sign(k, 7.05, 11.98, 0.85, 'axe')                                     # GUIDES: an ice axe and a coil of rope
 
 # ---- the Snowcap Lodge --------------------------------------------------------------------------------------------------
 SMOKE = []
@@ -105,6 +106,7 @@ rm, zr = N.chalet(k, 14.0, 25.0, 9.4, 13.6, wall_h=2.7, rise=2.0, door_x=19.5, b
 SMOKE.append(screen(23.28, rm - 0.15, zr + 0.7))
 k.box(17.3, 13.6, 2.17, 21.7, 13.66, 2.55, (N.LOG_D, 0.1), 'sign_board')
 G.letters(k, 'Snowcap Lodge', 'Pacifico', 19.5, 13.66, 2.2, size=0.3, col='#ffd890', lit=True, energy=5)
+N.hanging_sign(k, 14.25, 13.58, 1.55, 'bed')
 
 # ---- the ski hire, its racks ---------------------------------------------------------------------------------------------
 rm2, zr2 = N.chalet(k, 28.0, 33.4, 10.4, 13.6, wall_h=2.1, rise=1.5, door_x=30.5, windows=[(29.0, 0.85), (32.2, 0.85)],
@@ -114,6 +116,7 @@ k.box(28.6, 13.6, 1.98, 32.8, 13.66, 2.08, (N.LOG_D, 0.1), 'sign_board')
 G.letters(k, 'SKI HIRE', 'Righteous', 30.7, 13.66, 1.72, size=0.24, col='#ff6a4a', lit=True, energy=4)
 N.ski_rack(k, 28.2, 29.8, 14.4)
 N.ski_rack(k, 31.3, 32.9, 14.4)
+N.hanging_sign(k, 33.2, 13.58, 1.05, 'skis')
 
 # ---- the street: lamps, a signpost, bunting -------------------------------------------------------------------------------
 for (x, r) in ((10.2, 14.4), (36.6, 14.4), (15.6, 17.0), (33.0, 17.0), (2.4, 17.0)):
@@ -123,6 +126,7 @@ W.bunting(k, (24.9, 13.75, 2.3), (28.1, 13.75, 2.1), sag=0.35)
 
 # ---- the cocoa hut, the pond, the snowman -------------------------------------------------------------------------------------
 N.cocoa_hut(k, 20.0, 22.6, 18.3, 19.4)
+N.hanging_sign(k, 22.45, 19.62, 1.3, 'mug')
 k.solid(19, 19, 20, 20)                                                         # Tove, beside her hut
 N.ice_pond(k, 10.8, 22.6, 4.4, 2.5)
 N.fishing_hole(k, 12.5, 22.6)
@@ -183,9 +187,7 @@ w.update({'name': 'Fellhaven', 'width': COLS, 'height': ROWS, 'tileSize': 16, 't
 w['interactions'] = [
     {'x': 39, 'y': 28, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'},
     {'x': 19, 'y': 13, 'type': 'enter_world', 'label': 'SNOWCAP LODGE', 'prompt': 'PRESS E TO GO IN', 'target': 'hoarfell-lodge', 'spawn': [8, 9]},
-    {'x': 29, 'y': 13, 'type': 'vendor', 'label': 'SKI HIRE', 'prompt': 'PRESS E TO SHOP',
-     'items': [{'id': 'skis', 'price': 120}, {'id': 'ski_goggles', 'price': 40}, {'id': 'hot_cocoa', 'price': 8}]},
-    {'x': 32, 'y': 13, 'type': 'dialog', 'label': 'OUTERWEAR', 'prompt': 'PRESS E TO BROWSE', 'dialog': 'QUILTED SUITS ON A RAIL.'},
+    {'x': 30, 'y': 13, 'type': 'enter_world', 'label': 'SKI HIRE', 'prompt': 'PRESS E TO GO IN', 'target': 'hoarfell-skihire', 'spawn': [7, 8]},
     {'x': 5, 'y': 11, 'type': 'vendor', 'label': "GUIDE'S HUT", 'prompt': 'PRESS E TO SHOP',
      'items': [{'id': 'chalk', 'price': 6}, {'id': 'climbing_rope', 'price': 60}, {'id': 'ice_axe', 'price': 180}]},
     {'x': 9, 'y': 13, 'type': 'dialog', 'label': 'YSOLDE', 'prompt': 'PRESS E TO TALK', 'dialog': 'YSOLDE LOOKS YOU UP AND DOWN.'},

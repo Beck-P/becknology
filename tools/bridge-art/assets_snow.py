@@ -353,3 +353,39 @@ def piste_tree(k, cx, cr, h=2.6, tone=PINE):
         rad = 0.6 * (1 - i * 0.26) * k.rng.uniform(0.9, 1.1)
         k.cone(cx, cr, z0, z0 + h * 0.42, rad, 0.02, (shade(tone, 1 + i * 0.08), 0.18), 'pine', verts=9)
         k.cone(cx, cr, z0 + h * 0.17, z0 + h * 0.38, rad * 0.62, 0.04, (ROOF_SNOW, 0.2), 'pine_snow', verts=9)
+
+
+def hanging_sign(k, x, r_face, z, icon, board='#5a3a1e', side=1):
+    """A painted shop sign hung from an iron bracket off a wall: a board on two
+    chains, its icon in paint on the face (`skis`, `axe` (ice axe and a coil of
+    rope), `mug`, `bed`). The bracket juts out toward the camera from r_face."""
+    r = r_face + 0.42
+    k.bar(x, r_face, x, r + 0.04, z + 0.52, z + 0.57, 0.06, IRON, 'sign_bracket')
+    k.tube((x, r_face, z + 0.3), (x, r_face + 0.3, z + 0.53), 0.018, IRON, 'sign_brace', verts=5)
+    for dx in (-0.2, 0.2):
+        k.cyl(x + dx, r, z + 0.42, z + 0.53, 0.012, IRON, 'sign_chain', verts=4)
+    k.box(x - 0.3, r - 0.03, z, x + 0.3, r + 0.03, z + 0.42, ('#2a1808', 0.1), 'sign_frame')
+    k.box(x - 0.26, r + 0.03, z + 0.04, x + 0.26, r + 0.035, z + 0.38, (board, 0.1), 'sign_board')
+    f = r + 0.04
+    if icon == 'skis':
+        k.tube((x - 0.17, f, z + 0.08), (x + 0.15, f, z + 0.34), 0.025, (RED, 0.1), 'sign_paint', verts=4)
+        k.tube((x + 0.17, f, z + 0.08), (x - 0.15, f, z + 0.34), 0.025, ('#2a6ac0', 0.1), 'sign_paint', verts=4)
+        k.box(x - 0.02, f - 0.005, z + 0.06, x + 0.02, f + 0.005, z + 0.36, ('#e8e8f0', 0.1), 'sign_paint')
+    elif icon == 'axe':
+        k.tube((x - 0.12, f, z + 0.07), (x - 0.02, f, z + 0.34), 0.018, ('#c8a060', 0.1), 'sign_paint', verts=4)
+        k.box(x - 0.13, f - 0.005, z + 0.31, x + 0.07, f + 0.005, z + 0.35, ('#c8ccd8', 0.1), 'sign_paint')
+        for i in range(10):                                            # the coil of rope
+            a = i * math.tau / 10
+            k.box(x + 0.13 + math.cos(a) * 0.08 - 0.02, f - 0.005, z + 0.2 + math.sin(a) * 0.08 - 0.02,
+                  x + 0.13 + math.cos(a) * 0.08 + 0.02, f + 0.005, z + 0.2 + math.sin(a) * 0.08 + 0.02, ('#e0b030', 0.1), 'sign_paint')
+    elif icon == 'mug':
+        k.box(x - 0.11, f - 0.005, z + 0.07, x + 0.07, f + 0.005, z + 0.25, ('#c83a2e', 0.1), 'sign_paint')
+        k.box(x + 0.07, f - 0.005, z + 0.11, x + 0.13, f + 0.005, z + 0.21, ('#c83a2e', 0.1), 'sign_paint')
+        k.box(x - 0.1, f - 0.004, z + 0.23, x + 0.06, f + 0.006, z + 0.25, ('#6a3a1a', 0.1), 'sign_paint')
+        for (dx, dz) in ((-0.05, 0.29), (0.02, 0.32), (-0.02, 0.35)):
+            k.box(x + dx, f - 0.005, z + dz, x + dx + 0.03, f + 0.005, z + dz + 0.03, ('#f4f0e8', 0.1), 'sign_paint')
+    elif icon == 'bed':
+        k.box(x - 0.18, f - 0.005, z + 0.1, x + 0.18, f + 0.005, z + 0.18, ('#e8e0c8', 0.1), 'sign_paint')
+        k.box(x - 0.18, f - 0.005, z + 0.1, x - 0.14, f + 0.005, z + 0.3, ('#8a5a30', 0.1), 'sign_paint')
+        k.box(x - 0.13, f - 0.005, z + 0.18, x - 0.04, f + 0.005, z + 0.24, ('#f4f0e8', 0.1), 'sign_paint')
+        k.box(x - 0.04, f - 0.005, z + 0.18, x + 0.18, f + 0.005, z + 0.22, ('#3a6ac0', 0.1), 'sign_paint')

@@ -240,6 +240,7 @@ var BridgeAudio = (function () {
     if (id === 'hoarfell-summit' || id === 'hoarfell-ridge' || id === 'hoarfell-icestep') return { theme: 'summit', amb: ['gale'] };
     if (id === 'hoarfell-hollow') return { theme: 'summit', amb: ['drips', 'chimes'] };
     if (id === 'hoarfell-lodge') return { theme: 'hoarfell', amb: ['fire', 'murmur'] };
+    if (id === 'hoarfell-skihire') return { theme: 'hoarfell', amb: ['fire', 'chimes'] };
     if (id === 'hoarfell-park') return { theme: 'arcade', amb: ['snowwind'] };
     if (/^hoarfell/.test(id)) return { theme: 'hoarfell', amb: ['snowwind', 'chimes'] };
     if (/cave/.test(id) || ts === 'cave') return { theme: 'cave', amb: ['drips', 'rumble'] };

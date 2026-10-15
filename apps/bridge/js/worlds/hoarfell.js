@@ -72,7 +72,8 @@ var BridgeHoarfell = (function () {
       case 'lift': return lift(inter);
       case 'ski_start': return skiMenu('START GATE', 'THREE BOARDS ON POSTS: GREEN, BLUE, BLACK. THE SNOW FALLS AWAY BELOW THE GATE INTO THE PISTES.');
       case 'ski_gate': return ski(inter.run);
-      case 'ski_here': return ski('free');                       // free skiing where you stand (the Last Ridge's bowl)
+      case 'ski_here': return ski('free');
+      case 'ski_wax': return waxBench();                       // free skiing where you stand (the Last Ridge's bowl)
       case 'park_start': return parkRun();
       case 'park_tow': return tow();
       case 'park_board': return parkBoard();
@@ -310,6 +311,27 @@ var BridgeHoarfell = (function () {
       items: function (world, offX, offY, ts, now) { return typeof BridgeSki !== 'undefined' ? BridgeSki.items(world, offX, offY, ts, now) : []; }
     });
     BridgeWorld.registerBackground('hoarfell', sky);
+  }
+
+  // Inge's waxing bench (the ski hire): a hot coat on the bases, runs quicker for twenty minutes (js/ski.js)
+  var WAX = 10;
+  function waxBench() {
+    var have = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount('skis') > 0;
+    if (!have) return say('WAX BENCH', 'INGE LOOKS AT YOUR EMPTY HANDS. "I CAN WAX THEM WHEN YOU HAVE THEM. THE COUNTER\'S RIGHT THERE."');
+    if (typeof BridgeSki !== 'undefined' && BridgeSki.waxed()) return say('WAX BENCH', 'YOUR BASES STILL SHINE FROM THE LAST COAT. "ANY MORE AND YOU\'LL BE SKIING ON NOTHING," SAYS INGE.');
+    BridgeInteractions.choose({
+      title: 'The wax bench',
+      text: 'INGE CLAMPS YOUR SKIS IN THE VICE, BASE UP, AND LETS THE IRON WARM. "A HOT COAT. YOU\'LL FEEL IT ON THE FLATS. ' + WAX + ' COINS."',
+      rows: [{ label: 'Wax them', sub: 'quicker runs for twenty minutes', note: WAX + ' coins', pick: function () {
+        BridgeProgression.wagerCoins(WAX, 'ski_wax').then(function (r) {
+          if (!r || !r.ok) return say('WAX BENCH', '"' + WAX + ' COINS. WAX ISN\'T FREE AND NEITHER AM I."');
+          if (typeof BridgeSki !== 'undefined') BridgeSki.wax(20);
+          sfx('swish');
+          say('WAX BENCH', 'THE IRON HISSES ALONG THE BASES, THE WAX MELTS AND SMELLS OF BERRIES. SHE SCRAPES IT BACK TO A SHINE. "THERE. NOW YOU\'RE QUICK."\n\nYOUR SKIS RUN QUICKER FOR TWENTY MINUTES.');
+        });
+      } }],
+      closeLabel: 'Not now'
+    });
   }
 
   // the same evening as a view, sitting on the summit bench (js/actions.js 'peaks')

@@ -645,7 +645,7 @@
       2,
       2,
       2,
-      2,
+      4,
       2,
       2,
       2,
@@ -679,7 +679,7 @@
       2,
       2,
       2,
-      2,
+      4,
       2,
       4
     ],
@@ -3313,33 +3313,16 @@
       ]
     },
     {
-      "x": 29,
+      "x": 30,
       "y": 13,
-      "type": "vendor",
+      "type": "enter_world",
       "label": "SKI HIRE",
-      "prompt": "PRESS E TO SHOP",
-      "items": [
-        {
-          "id": "skis",
-          "price": 120
-        },
-        {
-          "id": "ski_goggles",
-          "price": 40
-        },
-        {
-          "id": "hot_cocoa",
-          "price": 8
-        }
+      "prompt": "PRESS E TO GO IN",
+      "target": "hoarfell-skihire",
+      "spawn": [
+        7,
+        8
       ]
-    },
-    {
-      "x": 32,
-      "y": 13,
-      "type": "dialog",
-      "label": "OUTERWEAR",
-      "prompt": "PRESS E TO BROWSE",
-      "dialog": "QUILTED SUITS ON A RAIL."
     },
     {
       "x": 5,
