@@ -86,7 +86,7 @@ var BridgeSloop = (function () {
       return true;
     }
     ships.forEach(function (sh) {
-      var sp = F ? F.spec(sh.type) : SLOOP;
+      var sp = F ? (F.effective ? F.effective(sh) : F.spec(sh.type)) : SLOOP;
       if (sh.type === 'sloop') { out.unshift({ ship: sh, spec: sp, x: I.moor[0], r: I.moor[1], h: h, inner: [I.dock[0], I.dock[1]] }); return; }
       var out2 = (sp.beam - 1) / 2;                                 // her pier-side edge in line with the sloop's
       var bx = I.moor[0] + d[0] * out2, br = I.moor[1] + d[1] * out2, placed = null;
@@ -438,6 +438,7 @@ var BridgeSloop = (function () {
     buoys(B);
     homeGulls(B, 3);
     whale = { done: false };
+    if (fight()) setTimeout(function () { if (running && fight()) fight().plan(); }, 0);
   }
   function crossing(P0) {
     var seed = wind.seed, course = Math.atan2(B.exit[1] - P0[1], B.exit[0] - P0[0]);
@@ -509,7 +510,8 @@ var BridgeSloop = (function () {
     SP = act ? act.spec : SLOOP; shipId = act ? act.ship.id : null; shipName = act ? act.ship.name : 'your sloop';
     running = true; from = fromId; to = toId || null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
     wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = false;
-    aim = null; committing = false; hinted = false; said = {}; told = {}; B = null; B0 = null;
+    aim = null; committing = false; hinted = false; said = {}; told = {}; B = null; B0 = null; wrecking = false; shakeUntil = 0;
+    if (fight()) fight().reset(SEA);
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     canvas = document.createElement('canvas');
     canvas.id = 'sloop-canvas';
@@ -635,26 +637,67 @@ var BridgeSloop = (function () {
 
   function openMenu() {
     if (menu || !running) return;
+    var fn = A ? A.name : 'the quay', opts = [['Keep sailing', closeMenu]], fight = typeof BridgeSeaFight !== 'undefined' && BridgeSeaFight.busy();
+    if (B && !fight) opts.push(['Skip ahead to ' + B.name, function () { closeMenu(); stop(to); }]);
+    else if (!B && A && !committing) others().forEach(function (o) { opts.push(['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]); });
+    if (!fight) opts.push(['Put back to ' + fn, function () { closeMenu(); stop(from); }]);
+    ask('At the tiller', fight ? 'NOT WITH THEM ON YOUR HEELS.' : null, opts);
+  }
+  // a choice over the sea view (the sim waits while it's open); an option with no function is shown greyed out
+  var onMenuClose = null;
+  function ask(title, text, opts, onClose) {
+    if (menu) closeMenu();
     var el = document.createElement('div');
     el.id = 'sloop-menu';
     el.className = 'sloop-menu';
-    var fn = A ? A.name : 'the quay', opts = [['Keep sailing', closeMenu]];
-    if (B) opts.push(['Skip ahead to ' + B.name, function () { closeMenu(); stop(to); }]);
-    else if (A && !committing) others().forEach(function (o) { opts.push(['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]); });
-    opts.push(['Put back to ' + fn, function () { closeMenu(); stop(from); }]);
-    el.innerHTML = '<div class="sloop-menu-title">At the tiller</div>';
+    el.innerHTML = '<div class="sloop-menu-title"></div>' + (text ? '<div class="sloop-menu-text"></div>' : '');
+    el.querySelector('.sloop-menu-title').textContent = title;
+    if (text) el.querySelector('.sloop-menu-text').textContent = text;
     opts.forEach(function (o) {
       var b = document.createElement('button'); b.type = 'button'; b.textContent = o[0];
-      b.addEventListener('click', function (e) { e.preventDefault(); o[1](); });
+      if (!o[1]) b.disabled = true;
+      else b.addEventListener('click', function (e) { e.preventDefault(); onMenuClose = null; closeMenu(); if (o[1] !== closeMenu) o[1](); });
       el.appendChild(b);
     });
     document.body.appendChild(el);
-    menu = el;
-    var first = el.querySelector('button'); if (first) first.focus();
+    menu = el; onMenuClose = onClose || null;
+    var first = el.querySelector('button:not([disabled])'); if (first) first.focus();
   }
-  function closeMenu() { if (menu) menu.remove(); menu = null; keys = {}; }
+  function closeMenu() { if (menu) menu.remove(); menu = null; keys = {}; var f = onMenuClose; onMenuClose = null; if (f) f(); }
 
   function say(text, ms) { msg = text; msgAt = performance.now() + (ms || 3200); }
+  var shakeUntil = 0, wrecking = false;
+  // damage to the ship you're sailing (hull points); what's left of her, 0..1
+  function hullHit(pts) {
+    shakeUntil = performance.now() + 220;
+    return typeof BridgeFleet !== 'undefined' && shipId ? BridgeFleet.damage(shipId, pts) : 1;
+  }
+  // trouble at sea (js/seafight.js) sees the passage through this
+  var SEA = {
+    A: function () { return A; }, B: function () { return B; }, boat: function () { return boat; }, spec: function () { return SP; },
+    wind: function () { return wind; }, polar: function (off, sp) { return polar(off, sp); }, ground: function (x, r) { return groundAt(x, r); },
+    offshore: function (x, r) { return offshore(x, r); }, rand: Math.random, say: say, sfx: function (n) { sfx(n); }, ask: function (a, b, c, d) { ask(a, b, c, d); },
+    hull: function () { var f = typeof BridgeFleet !== 'undefined' && BridgeFleet.get(shipId); return f ? f.hull : 1; },
+    shake: function () { shakeUntil = performance.now() + 260; }, wreck: function (why) { wreck(why); },
+    ctx: function () { return bctx; }, drawBoat: function (now, b) { drawBoat(now, b); }, sx: function (x) { return sx(x); }, sy: function (r, z) { return sy(r, z); }
+  };
+  function fight() { return typeof BridgeSeaFight !== 'undefined' ? BridgeSeaFight : null; }
+  // she's gone: the salvors tow what's left into the nearer port, her hold lost
+  function wreck(why) {
+    if (wrecking || !running) return;
+    wrecking = true;
+    say(why + '. Salvors are coming...', 4000);
+    sfx('slam');
+    var near = !B ? A : Math.hypot(boat.x - (B.dock[0] + B.ox), boat.r - (B.dock[1] + B.oy)) < Math.hypot(boat.x - A.dock[0], boat.r - A.dock[1]) ? B : A;
+    setTimeout(function () {
+      if (typeof BridgeFleet !== 'undefined' && shipId) BridgeFleet.wreck(shipId, near.id);
+      var nm = shipName;
+      stop(near.id);
+      setTimeout(function () {
+        if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Wrecked', 'The ' + nm + ' was towed into ' + near.name, 'Her hold is lost. The harbourmaster can mend her');
+      }, 1400);
+    }, 2600);
+  }
 
   // ---- sailing ----------------------------------------------------------------------------------------------------
   // speed off the wind: nothing within 40° of it (in irons), best on a beam reach, a little less running
@@ -680,12 +723,26 @@ var BridgeSloop = (function () {
     wind.base += ((BASE[here] || 0.92) - wind.base) * Math.min(1, dt * 0.25);
     if (here === 'crimson') {                                        // a squall: the wind jumps round, the rain comes on
       if (!storm.squallAt) storm.squallAt = now + 9000;
+      if (!storm.warned && now > storm.squallAt - 2800 && phase === 'sail') { storm.warned = 1; say('A squall coming down on you - ease the sheet (↓) before it hits!', 2800); }
       if (now > storm.squallAt) {
-        storm.squallAt = now + 16000 + hash(Math.floor(now / 997)) * 14000;
+        storm.squallAt = now + 16000 + hash(Math.floor(now / 997)) * 14000; storm.warned = 0;
         wind.from += (hash(Math.floor(now / 991)) < 0.5 ? -1 : 1) * (0.6 + hash(Math.floor(now / 983)) * 0.5);
-        say('A squall! The wind jumps round - watch your sheet', 2600);
+        // what it does to her depends on how much sail you're carrying when it hits: eased, she rides it out
+        var press = phase === 'sail' ? clamp((boat.eff || 0) * (boat.hoist || 0), 0, 1) : 0;
+        if (phase === 'sail') {
+          var dmg = (1.5 + 7.5 * press) * (SP.storm || 1), left = hullHit(dmg);
+          say(press > 0.5 ? 'Knocked flat! Green water pours over the rail and the hull groans (' + Math.round(left * 100) + '%)' : 'The squall hits - you spill the wind and she rides it out', 3200);
+          if (left <= 0) wreck('The squall rolls her over');
+        } else say('A squall! The wind jumps round - watch your sheet', 2600);
       }
-      if (now > storm.nextFlash) { storm.flash = now; storm.nextFlash = now + 6000 + hash(Math.floor(now / 7)) * 9000; storm.thunderAt = now + 300 + hash(Math.floor(now / 11)) * 1400; }
+      if (now > storm.nextFlash) {
+        storm.flash = now; storm.nextFlash = now + 6000 + hash(Math.floor(now / 7)) * 9000; storm.thunderAt = now + 300 + hash(Math.floor(now / 11)) * 1400;
+        if (phase === 'sail' && hash(Math.floor(now / 3)) < 0.1) {      // now and then the masthead takes it
+          storm.thunderAt = now + 60; var lh = hullHit(4 * (SP.storm || 1));
+          say('Lightning strikes the masthead! Splinters everywhere (' + Math.round(lh * 100) + '%)', 3000);
+          if (lh <= 0) wreck('Lightning splits her open');
+        }
+      }
       if (storm.thunderAt && now > storm.thunderAt) { storm.thunderAt = 0; sfx('thunder'); }
     }
     // the wind veers a little and blows in gusts you can see coming over the water
@@ -758,11 +815,14 @@ var BridgeSloop = (function () {
     if (hitAt && phase !== 'moor') {
       if (b.v > 0.6 && b.bump <= 0) {
         sfx('hit'); burst(hitAt[0], hitAt[1], 10, 'spray');
-        if (here === 'midnight' && b.v > 1.2 && typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
-          var st = BridgeInventory.getStats ? BridgeInventory.getStats() : null, hurt = st && st.hp != null ? Math.min(6, Math.max(0, st.hp - 10)) : 6;
-          if (hurt) BridgeInventory.takeDamage(hurt);                // bruised, never knocked out at sea
-          say('Rocks out of the mist! The hull splits a plank and you\'re thrown against the gunwale' + (hurt ? ' (-' + hurt + ' health)' : ''), 3200);
-        } else say(b.v > 2 ? 'Rocks! You scrape off with a groan of planks' : 'You bump and grind clear', 2200);
+        if (here === 'midnight' && b.v > 1.2) {                     // the Midnight rocks hole her
+          var hl = hullHit(Math.min(8, 2 + b.v * 1.5) * (SP.rocks || 1));
+          say('Rocks out of the mist! The hull splits a plank (' + Math.round(hl * 100) + '%)', 3200);
+          if (hl <= 0) wreck('She tears her bottom out on the rocks');
+        } else {
+          if (b.v > 2.4) hullHit(1.5 * (SP.rocks || 1));
+          say(b.v > 2 ? 'Rocks! You scrape off with a groan of planks' : 'You bump and grind clear', 2200);
+        }
       }
       // pushed off whatever she hit, so she slides clear instead of sticking
       var ax = b.x - hitAt[0], ar = b.r - hitAt[1], an = Math.hypot(ax, ar) || 1;
@@ -789,8 +849,9 @@ var BridgeSloop = (function () {
     spray = spray.filter(function (p) { p.age += dt; p.x += p.vx * dt; p.r += p.vr * dt; p.z += p.vz * dt; p.vz -= 6 * dt; return p.z > -0.05 && p.age < 1.4; });
     // sounds: the sail flogging, a bell on a buoy
     if (b.luff && b.hoist > 0.5 && now - lastLuff > 650) { lastLuff = now; sfx('luff'); }
-    // life
+    // life, and trouble
     life(dt, now);
+    if (fight() && phase === 'sail') fight().update(dt, now);
     // where you are: the seas, the far quay
     if (phase === 'sail' && here !== seaWas) {
       if (seaWas && !told[here]) say('Over the seam, foam all round the bow. ' + LORE[here], 6000);
@@ -1120,10 +1181,10 @@ var BridgeSloop = (function () {
     var X = Math.round(b.x * TS - cam.x), Y = Math.round(b.r * TS - cam.y) + bob, H = HULLS[sp.sheet];
     if (H && H.img) {
       var cp = H.cell * 32;
-      bctx.drawImage(H.img, (hi % 8) * cp, Math.round(H.oy + Math.floor(hi / 8) * cp), cp, cp, X - cp / 2, Y - Math.round(H.cy * 32), cp, cp);
+      bctx.drawImage(tinted(H.img, b.tint), (hi % 8) * cp, Math.round(H.oy + Math.floor(hi / 8) * cp), cp, cp, X - cp / 2, Y - Math.round(H.cy * 32), cp, cp);
     } else {
       var cc = cell(Math.floor(hi / 8), hi % 8), sz = Math.round(128 * k);
-      bctx.drawImage(sheetImg, cc[0], cc[1], 128, 128, X - Math.round(64 * k), Y - Math.round(83 * k), sz, sz);
+      bctx.drawImage(tinted(sheetImg, b.tint), cc[0], cc[1], 128, 128, X - Math.round(64 * k), Y - Math.round(83 * k), sz, sz);
     }
     var Pal = BridgeSea.palettes[(seaSide(b.x, b.r) > 0 ? B : A).pal] || BridgeSea.palettes.emerald;
     var c = Math.cos(b.h), s = Math.sin(b.h), nf = Math.round(18 * k);
@@ -1160,6 +1221,13 @@ var BridgeSloop = (function () {
         if (m === tallest) {                                          // the pennant at the main truck, streaming downwind
           var dw = wind.now + Math.PI, fl = Math.sin(t * 14) * 0.1;
           poly([top, [top[0] + Math.cos(dw + fl) * 9 * Math.sqrt(k), top[1] + Math.sin(dw + fl) * 9 * C45 * Math.sqrt(k)], [top[0], top[1] + 3]], '#c83a2e');
+          if (sp.ward) {                                              // the moon lantern at the masthead
+            bctx.save(); bctx.globalCompositeOperation = 'lighter';
+            var pulse = 0.8 + 0.2 * Math.sin(t * 2.2);
+            for (var gl = 4; gl >= 1; gl--) { bctx.fillStyle = 'rgba(170,190,255,' + (0.05 * (5 - gl) * pulse).toFixed(3) + ')'; disc(top[0], top[1] + 4, gl * 4, gl * 4); }
+            bctx.restore();
+            bctx.fillStyle = '#e8f0ff'; bctx.fillRect(Math.round(top[0]) - 1, Math.round(top[1]) + 3, 3, 3);
+          }
         }
         if (m.square) squareMast(P, b, sp, m, mu, deck, lee, boom, hoist, tone, now);
         else foreAft(P, b, m, mu, deck, lee, boom, hoist, tone, now);
@@ -1183,6 +1251,17 @@ var BridgeSloop = (function () {
       line(tl, tr, '#5a3a1a', 1);
     }
   }
+  // a hull sheet washed with a colour (a pirate's tarred black, a drowned ship's pale green), made once and kept
+  var tints = [];
+  function tinted(img, tint) {
+    if (!tint || !img) return img;
+    for (var i = 0; i < tints.length; i++) if (tints[i].img === img && tints[i].tint === tint) return tints[i].c;
+    var c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    var x = c.getContext('2d'); x.drawImage(img, 0, 0);
+    x.globalCompositeOperation = 'source-atop'; x.fillStyle = tint; x.fillRect(0, 0, c.width, c.height);
+    tints.push({ img: img, tint: tint, c: c });
+    return c;
+  }
   // a fore-and-aft mast: the main on its boom (or bundled along it, furled), the mainsheet
   function foreAft(P, b, m, mu, deck, lee, boom, hoist, tone, now) {
     var goose = [mu, 0, deck], clew = [mu - Math.cos(boom) * m.boom, lee * Math.sin(boom) * m.boom, deck + 0.08];
@@ -1200,7 +1279,7 @@ var BridgeSloop = (function () {
   // a square-rigged mast: its yards braced round with the sheet (square across running, sharp up close-hauled), the
   // sails loosed down from them as she hoists, bellied out before the wind
   function squareMast(P, b, sp, m, mu, deck, lee, boom, hoist, tone, now) {
-    var phi = 0.62 + (Math.PI / 2 - 0.62) * clamp(boom / 1.3, 0, 1), cp = Math.cos(phi), spn = Math.sin(phi);
+    var phi = hoist < 0.05 ? Math.PI / 2 : 0.62 + (Math.PI / 2 - 0.62) * clamp(boom / 1.3, 0, 1), cp = Math.cos(phi), spn = Math.sin(phi);   // furled: squared away
     var cl = b.cloth || ['#e4dccb', '#c4bca9', '#948e82'];
     m.square.forEach(function (y) {
       var w = y[0], zt = deck + y[2], zb = deck + y[2] - (y[2] - y[1]) * hoist;
@@ -1471,9 +1550,10 @@ var BridgeSloop = (function () {
     var pal = (seaSide(boat.x, boat.r) > 0 ? B : A).pal;
     if (pal === 'midnight') {
       bctx.save(); bctx.globalCompositeOperation = 'screen';
+      var thin = SP.ward ? 0.015 : 0.035;                                // a moon lantern burns the mist thin
       for (var i = 0; i < 9; i++) {
         var mx = ((i * 97 + t * 6) % (W + 160)) - 80, my = (i * 53) % H;
-        for (var m = 3; m >= 1; m--) { bctx.fillStyle = 'rgba(90,84,140,0.035)'; disc(mx, my, 30 * m, 8 * m); }
+        for (var m = 3; m >= 1; m--) { bctx.fillStyle = 'rgba(90,84,140,' + thin + ')'; disc(mx, my, 30 * m, 8 * m); }
       }
       bctx.restore();
     }
@@ -1524,6 +1604,7 @@ var BridgeSloop = (function () {
       var g2 = clamp((moorT - MOOR.off) / (MOOR.done - MOOR.off), 0, 1), mx = seat[0] + (quay[0] - seat[0]) * g2, mr = seat[1] + (quay[1] - seat[1]) * g2;
       list.push({ row: mr, draw: function () { drawWalker(mx, mr, quay, now); } });
     }
+    if (fight()) list = list.concat(fight().items(now));
     list.sort(function (p, q) { return p.row - q.row; });
     list.forEach(function (d) { d.draw(); });
     if ((castT >= 0 && castT < CAST.lines) || moorT > MOOR.lines) moorLines(b, quay, castT >= 0 && castT > CAST.board ? 1 - (castT - CAST.board) / (CAST.lines - CAST.board) : 1);
@@ -1625,6 +1706,7 @@ var BridgeSloop = (function () {
       ctx.fillStyle = '#ffe080'; ctx.fillText(label, canvas.width / 2, y2);
     }
     ctx.restore();
+    if (fight()) fight().hud(ctx, s, canvas.width);
   }
   function wrapText(t, n) {
     var words = t.split(' '), out = [], cur = '';
@@ -1648,7 +1730,9 @@ var BridgeSloop = (function () {
     draw(now);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(buf, 0, 0, W * Z, H * Z);
+    var sk = now < shakeUntil ? Z * 2 : 0;                              // a hit shakes the world
+    if (sk) { ctx.fillStyle = '#020308'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    ctx.drawImage(buf, sk ? Math.round((Math.random() - 0.5) * sk * 2) : 0, sk ? Math.round((Math.random() - 0.5) * sk * 2) : 0, W * Z, H * Z);
     hud(now);
   }
 
@@ -1669,7 +1753,10 @@ var BridgeSloop = (function () {
   function fleetHere(I) {
     var F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null;
     var key = F ? F.here(I.id).map(function (s) { return s.id + ':' + s.type; }).join(',') : 'gull';
-    if (I.fleetKey !== key) { I.fleetKey = key; I.fleetList = fleetAt(I).map(function (e) { return lying(e, 0, 0); }); }
+    if (I.fleetKey !== key) {
+      I.fleetKey = key; I.fleetList = fleetAt(I).map(function (e) { return lying(e, 0, 0); });
+      I.fleetList.forEach(function (m) { loadHull(m.spec.sheet, function () {}); });   // each ship's own hull, not the sloop's stretched
+    }
     return I.fleetList;
   }
   // ---- going aboard in the world: down the pier, across the sloop if she's a bigger ship lying beyond her, aboard,
