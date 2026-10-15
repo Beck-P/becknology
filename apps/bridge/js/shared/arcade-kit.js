@@ -257,8 +257,13 @@
       var s = scores(), r = s[G.id] || {};
       r.plays = (r.plays || 0) + 1; s[G.id] = r; saveScores(s);
       if (r.plays === 1 && global.BridgeProgression) {
-        BridgeProgression.recordAchievement('first_light', 100, { game: G.id });
-        BridgeProgression.recordAchievement('played_' + G.id.replace(/-/g, '_'), 25, { game: G.id });
+        var BP = BridgeProgression, quiet = function () {};
+        try {
+          Promise.resolve(BP.recordAchievement('first_light', 100, { game: G.id })).catch(quiet);
+          Promise.resolve(BP.recordAchievement('played_' + G.id.replace(/-/g, '_'), 25, { game: G.id }))
+            .then(function () { return BP.maybeAwardCabinetCrusher && BP.maybeAwardCabinetCrusher(); })   // all five cabinets
+            .catch(quiet);
+        } catch (e) { /* offline */ }
       }
     }
     function pay(n, why) {
