@@ -232,6 +232,7 @@ var BridgeAudio = (function () {
     if (/cave/.test(id) || ts === 'cave') return { theme: 'cave', amb: ['drips', 'rumble'] };
     if (/tower/.test(id) || ts === 'tower') return { theme: 'tower', amb: ['wind'] };
     if (/lighthouse|lamproom/.test(id)) return { theme: 'lumar-in', amb: ['wind', 'searoom'] };
+    if (id === 'lumar-passage') return { theme: 'lumar', amb: ['sea', 'wind', 'creak'] };          // under sail in the sloop
     if (/^lumar/.test(id)) {
       var inside = w && w.scene && !w.scene.backdrop && !/^lumar(-square|-crimson|-rose|-sapphire|-midnight)?$/.test(id);
       if (inside) return { theme: 'lumar-in', amb: id === 'lumar-home' ? ['fire'] : ['fire', 'murmur'] };     // your own house is quiet
@@ -602,6 +603,15 @@ var BridgeAudio = (function () {
       noiseHit(sfxBus, t, 0.4, { freq: 500, ftype: 'lowpass', gain: 0.2, rev: 0.35 });
       for (var i = 0; i < 4; i++) noiseHit(sfxBus, t + 0.05 + i * 0.06, 0.06, { freq: 900 + Math.random() * 700, ftype: 'bandpass', q: 2, gain: 0.06 });
     },
+    luff:    function (t) {                                // a sail flogging: quick slaps of canvas
+      for (var i = 0; i < 3; i++) noiseHit(sfxBus, t + i * 0.07 + Math.random() * 0.03, 0.06, { freq: 900 + Math.random() * 500, ftype: 'bandpass', q: 1.4, gain: 0.05 });
+    },
+    gybe:    function (t) {                                // the boom slamming across: a whoosh and a thump of wood
+      noiseHit(sfxBus, t, 0.25, { freq: 2200, ftype: 'bandpass', q: 0.8, gain: 0.06 });
+      noiseHit(sfxBus, t + 0.18, 0.2, { freq: 260, ftype: 'lowpass', gain: 0.22, rev: 0.3 });
+      voice(sfxBus, t + 0.18, 0.08, { type: 'sine', freq: 110, glide: 0.6, glideT: 0.12, gain: 0.12, a: 0.002, d: 0.15, s: 0, r: 0.1 });
+    },
+    bell:    function (t) { INST.bell(sfxBus, t, 79, 0.25, 2.2); INST.bell(sfxBus, t + 0.02, 91, 0.08, 1.6); },   // a buoy's bell over the water
     error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); }
   };
 

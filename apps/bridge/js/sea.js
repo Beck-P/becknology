@@ -360,11 +360,17 @@ var BridgeSea = (function () {
     try { drawSea(ctx, w, h, now, palette); } finally { camOverride = null; }
   }
 
+  /** An island's water seen from a camera of the caller's own (the sloop's passage), so it meets that open sea. */
+  function drawWaterAt(ctx, sc, offX, offY, now, palette, camX, camY) {
+    camOverride = [camX, camY];
+    try { drawWater(ctx, sc, offX, offY, now, palette); } finally { camOverride = null; }
+  }
+
   // drop an island's water canvases when its scene is let go (js/scene.js)
   function forget(id) { delete shores[id]; delete bands[id]; }
 
   // after the canvas was lost: every texture and mask is made again as it's next needed
   function reset() { tex = {}; patterns = {}; shores = {}; bands = {}; }
 
-  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, palettes: PALETTES, forget: forget, reset: reset };
+  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset };
 })();

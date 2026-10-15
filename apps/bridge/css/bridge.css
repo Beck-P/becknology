@@ -722,6 +722,25 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
   background: rgba(14, 12, 22, 0.72); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px; padding: 8px 14px;
 }
 
+/* the sloop (js/sloop.js): a menu button on touch, and the menu at the tiller */
+#sloop-menu-btn {
+  position: fixed; top: calc(12px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right)); z-index: 71;
+  width: 44px; height: 44px; font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 20px; color: rgba(242, 238, 230, 0.92);
+  background: rgba(14, 12, 22, 0.72); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 999px;
+}
+.sloop-menu {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 72; width: min(320px, 88vw);
+  padding: 16px; display: flex; flex-direction: column; gap: 8px; border-radius: 10px;
+  background: rgba(10, 16, 28, 0.94); border: 2px solid rgba(160, 128, 64, 0.8); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+}
+.sloop-menu-title { color: #e0c060; font-size: 16px; text-align: center; letter-spacing: 0.08em; margin-bottom: 4px; }
+.sloop-menu button {
+  font: inherit; font-size: 15px; color: #f2ecd6; text-align: left; padding: 10px 12px; border-radius: 6px;
+  background: rgba(42, 84, 70, 0.35); border: 1px solid rgba(144, 224, 168, 0.25); cursor: pointer;
+}
+.sloop-menu button:hover, .sloop-menu button:focus-visible { background: rgba(42, 84, 70, 0.6); border-color: rgba(144, 224, 168, 0.6); outline: none; }
+
 /* ---- Animations ---- */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(10px); }

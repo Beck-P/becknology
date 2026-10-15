@@ -613,6 +613,12 @@ var BridgeWorld = (function () {
     // We stash it during load() in `currentWorldId`; fall back to tileset.
     fromId = currentWorldId || (world && world.tileset);
 
+    // Between Lumar's islands you sail the sloop yourself, at the world's own scale (js/sloop.js)
+    if (typeof BridgeSloop !== 'undefined' && BridgeSloop.knows(fromId) && BridgeSloop.knows(destination) &&
+        BridgeSloop.start(fromId, destination)) {
+      return;
+    }
+
     // Path 0 — between Lumar's islands the galleon sails the open sea itself,
     // seen from above, and docks at the destination (js/voyage.js).
     if (typeof BridgeVoyage !== 'undefined' && BridgeVoyage.knows(fromId) && BridgeVoyage.knows(destination)) {
