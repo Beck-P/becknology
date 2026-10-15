@@ -1156,6 +1156,23 @@ function pickRandomMessage(messages, name, lastIdxRef) {
   return messages[idx].replace(/\{name\}/g, name);
 }
 
+const COUNT_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+
+function countWord(count) {
+  return COUNT_WORDS[count] ?? String(count);
+}
+
+function suddenDeathNote(round) {
+  return ` Decided after ${round} round${round > 1 ? "s" : ""} of sudden death.`;
+}
+
+// Card draft hand size: as many as wanted, but never more than the deck can
+// deal alongside the 5-card board. Null when even keepCount won't fit.
+function draftHandSize(playerCount, wanted, keepCount) {
+  const perPlayer = Math.min(wanted, Math.floor((52 - 5) / Math.max(playerCount, 1)));
+  return perPlayer >= keepCount ? perPlayer : null;
+}
+
 function buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName) {
   const msg = selectionGoal === "winner"
     ? pickRandomMessage(WIN_MESSAGES, selectedName, "win")
@@ -1165,12 +1182,13 @@ function buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName) 
 
 function buildHoldemResult(names, taskLabel, selectionGoal) {
   const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+  const draftSize = draftHandSize(names.length, 4, 2); // 4 cards, keep 2 (fewer at big tables)
 
-  if (isInteractive) {
+  if (isInteractive && draftSize) {
     const deck = shuffle(createDeck());
     const draftHands = {};
     names.forEach(name => {
-      draftHands[name] = [deck.pop(), deck.pop(), deck.pop(), deck.pop()]; // 4 cards, keep 2
+      draftHands[name] = Array.from({ length: draftSize }, () => deck.pop());
     });
     const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
     const modeName = "Texas Hold'em";
@@ -1181,6 +1199,7 @@ function buildHoldemResult(names, taskLabel, selectionGoal) {
       selectionGoal,
       draftPhase: true,
       draftHands,
+      draftSize,
       keepCount: 2,
       board,
       headline: "Drafting cards...",
@@ -1257,12 +1276,15 @@ function buildHoldemResult(names, taskLabel, selectionGoal) {
 
 function buildPloResult(names, taskLabel, selectionGoal) {
   const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
+  // 6 cards, keep 4 — trimmed at big tables so the deck still covers the
+  // board (draftSize is null once even 4 each won't fit: no draft then).
+  const draftSize = draftHandSize(names.length, 6, 4);
 
-  if (isInteractive) {
+  if (isInteractive && draftSize) {
     const deck = shuffle(createDeck());
     const draftHands = {};
     names.forEach(name => {
-      draftHands[name] = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()]; // 6 cards, keep 4
+      draftHands[name] = Array.from({ length: draftSize }, () => deck.pop());
     });
     const board = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
     const modeName = "PLO";
@@ -1273,6 +1295,7 @@ function buildPloResult(names, taskLabel, selectionGoal) {
       selectionGoal,
       draftPhase: true,
       draftHands,
+      draftSize,
       keepCount: 4,
       board,
       headline: "Drafting cards...",
@@ -1658,6 +1681,9 @@ function buildBlackMarbleResult(names, taskLabel, selectionGoal) {
   const order = shuffle(names);
   const selectedName = order[bag.indexOf(targetMarble)];
   const modeName = choosingWinner ? "Gold Marble" : "Black Marble";
+  const safeCount = names.length - 1;
+  const safeCountWord = countWord(safeCount);
+  const safePlural = safeCount === 1 ? "" : "s";
 
   return {
     modeId: "black-marble",
@@ -1666,8 +1692,8 @@ function buildBlackMarbleResult(names, taskLabel, selectionGoal) {
     selectedName,
     headline: buildOutcomeHeadline(selectedName, taskLabel, selectionGoal, modeName),
     summary: choosingWinner
-      ? "One gold marble, three black marbles. Lucky draw picks the winner."
-      : "Three safe marbles. One black marble. Bad luck decides everything.",
+      ? `One gold marble, ${safeCountWord} black marble${safePlural}. Lucky draw picks the winner.`
+      : `${safeCountWord.charAt(0).toUpperCase()}${safeCountWord.slice(1)} safe marble${safePlural}. One black marble. Bad luck decides everything.`,
     players: order.map((name, index) => ({
       name,
       marble: bag[index],
@@ -1740,7 +1766,8 @@ function buildHorseRaceResult(names, taskLabel, selectionGoal) {
 
   if (isInteractive) {
     // Build race data but enter draft phase for lane picks
-    const LANE_NAMES = ['\uD83C\uDFC7 Lane 1', '\uD83C\uDFC7 Lane 2', '\uD83C\uDFC7 Lane 3', '\uD83C\uDFC7 Lane 4', '\uD83C\uDFC7 Lane 5', '\uD83C\uDFC7 Lane 6'].slice(0, Math.max(names.length, 3));
+    // One lane per rider (at least 3), so the last picker always has one left.
+    const LANE_NAMES = Array.from({ length: Math.max(names.length, 3) }, (_, i) => '\uD83C\uDFC7 Lane ' + (i + 1));
 
     const positions = Object.fromEntries(names.map((name) => [name, 0]));
     const turns = [];
@@ -1881,8 +1908,11 @@ function buildRocketResult(names, taskLabel, selectionGoal) {
     p.rank = players.length - i;
   });
 
+  // Winner: the longest flight. Loser: the first rocket to burn up.
+  const choosingWinner = selectionGoal === "winner";
   const survivor = sortedByTime[sortedByTime.length - 1];
-  const selected = survivor.name;
+  const picked = choosingWinner ? survivor : sortedByTime[0];
+  const selected = picked.name;
 
   let subline = `${formatFlightTime(survivor.crashTime)} flight time`;
   if (survivor.distance > 384000) subline += ' — past the Moon';
@@ -1901,15 +1931,19 @@ function buildRocketResult(names, taskLabel, selectionGoal) {
     selectedName: selected,
     isTie: false,
     headline,
-    summary: `All other rockets burned up. ${selected} made it to ${formatDistance(survivor.distance)}.`,
+    summary: choosingWinner
+      ? `All other rockets burned up. ${selected} made it to ${formatDistance(survivor.distance)}.`
+      : `${selected} burned up first, at ${formatDistance(picked.distance)}.`,
     players: players.map(p => ({
       name: p.name,
       selected: p.name === selected,
       crashTime: p.crashTime,
       distance: p.distance,
       distanceFormatted: formatDistance(p.distance),
-      headline: p.name === selected ? `Survived to ${formatDistance(p.distance)}` : `Crashed at ${formatDistance(p.distance)}`,
-      subline: p.name === selected ? subline : `${formatFlightTime(p.crashTime)} flight time`,
+      headline: p.name === survivor.name
+        ? `Survived to ${formatDistance(p.distance)}`
+        : `Crashed ${p.name === selected ? 'first ' : ''}at ${formatDistance(p.distance)}`,
+      subline: p.name === survivor.name ? subline : `${formatFlightTime(p.crashTime)} flight time`,
       rank: p.rank,
       chips: [formatDistance(p.distance)],
     })),
@@ -1958,6 +1992,39 @@ function buildSpaceInvadersResult(names, taskLabel, selectionGoal) {
   };
 }
 
+// Re-derive a Space Invaders result from its (possibly reshuffled)
+// elimination order, the same way buildSpaceInvadersResult does: whoever is
+// left out of the order is the last alien standing and gets picked.
+function applySpaceInvadersOrder(result) {
+  const names = result.players.map((p) => p.name);
+  const order = result.eliminationOrder;
+  const survivor = names.find((name) => !order.includes(name));
+  if (!survivor) return;
+  const choosingWinner = result.selectionGoal === "winner";
+
+  if (survivor !== result.selectedName) {
+    result.selectedName = survivor;
+    result.headline = pickRandomMessage(
+      choosingWinner ? WIN_MESSAGES : LOSE_MESSAGES,
+      survivor,
+      choosingWinner ? "win" : "lose"
+    );
+    result.summary = `The laser picked off aliens one by one. ${survivor} was the last alien standing.`;
+  }
+
+  result.players.forEach((p) => {
+    const elimIndex = order.indexOf(p.name);
+    const isSurvivor = p.name === survivor;
+    const destroyedAt = isSurvivor ? null : elimIndex + 1;
+    p.selected = isSurvivor;
+    p.destroyedAt = destroyedAt;
+    p.rank = isSurvivor ? 1 : names.length - elimIndex;
+    p.headline = isSurvivor ? "LAST ALIEN STANDING" : `Destroyed: Shot #${destroyedAt}`;
+    p.subline = isSurvivor ? "Survived the onslaught" : `Eliminated ${choosingWinner ? "early" : ""}`;
+    p.chips = isSurvivor ? ["Survivor"] : [`Shot #${destroyedAt}`];
+  });
+}
+
 function generateTickTimings(totalTicks) {
   const timings = [];
   const startInterval = 800;
@@ -1975,17 +2042,26 @@ function buildBombResult(names, taskLabel, selectionGoal) {
   const isInteractive = typeof window !== 'undefined' && window.__interactiveMode;
 
   // Interactive bomb is elimination-style: each round explodes on whoever
-  // holds it; last alive wins. The interactive useEffect drives all state.
+  // holds it. Picking a winner: last alive wins. Picking a loser: the first
+  // one it blows up on is picked. The interactive useEffect drives all state.
   if (isInteractive) {
+    const choosingWinner = selectionGoal === "winner";
     return {
       modeId: "bomb",
       modeName,
-      selectionGoal: "winner",
+      selectionGoal,
       selectedName: null,
       isTie: false,
-      headline: "Hot Potato — last alive wins",
-      summary: "Pass within 4 seconds or the bomb goes off in your hands. Last one standing wins.",
+      headline: choosingWinner ? "Hot Potato — last alive wins" : "Hot Potato — first one blown up loses",
+      summary: choosingWinner
+        ? "Pass within 4 seconds or the bomb goes off in your hands. Last one standing wins."
+        : "Pass within 4 seconds or the bomb goes off in your hands. Whoever it blows up on first is picked.",
       eliminationMode: true,
+      // No pre-rolled pass sequence: the live bomb state drives playback.
+      // Empty values keep any sequence-based renderer from tripping on it.
+      totalTicks: 0,
+      tickTimings: [],
+      sequence: [],
       players: names.map((name) => ({
         name,
         selected: false,
@@ -2189,6 +2265,67 @@ function buildBattleRoyaleResult(names, taskLabel, selectionGoal) {
   };
 }
 
+// After players move, re-run the zone eliminations from `fromPhase` onward
+// with the current positions (same farthest-from-the-next-zone rule as
+// buildBattleRoyaleResult), then re-derive the pick: the survivor when
+// picking a winner, the first one caught outside when picking a loser.
+function recomputeBattleRoyaleFrom(result, fromPhase) {
+  const names = result.players.map((p) => p.name);
+  const order = result.eliminationOrder.slice(0, fromPhase);
+  const alive = names.filter((name) => !order.includes(name));
+
+  for (let phase = fromPhase; phase < result.zones.length - 1 && alive.length > 1; phase += 1) {
+    const zone = result.zones[phase + 1];
+    let farthest = null;
+    let farthestDist = -1;
+    for (const name of alive) {
+      const pos = result.positions.find((p) => p.name === name);
+      const dx = pos.x - zone.cx;
+      const dy = pos.y - zone.cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > farthestDist) {
+        farthestDist = dist;
+        farthest = name;
+      }
+    }
+    alive.splice(alive.indexOf(farthest), 1);
+    order.push(farthest);
+  }
+
+  // Keep the same array (the playback holds onto it), just rewrite its tail.
+  result.eliminationOrder.splice(0, result.eliminationOrder.length, ...order);
+
+  const survivor = alive[0];
+  const choosingWinner = result.selectionGoal === "winner";
+  const selectedName = choosingWinner ? survivor : order[0];
+  if (selectedName !== result.selectedName) {
+    result.selectedName = selectedName;
+    result.headline = pickRandomMessage(
+      choosingWinner ? WIN_MESSAGES : LOSE_MESSAGES,
+      selectedName,
+      choosingWinner ? "win" : "lose"
+    );
+  }
+  result.summary = choosingWinner
+    ? `The zone closed in ${order.length} times. ${selectedName} was the last one standing.`
+    : `${selectedName} was the first one caught outside the zone.`;
+
+  result.players.forEach((p) => {
+    const pos = result.positions.find((entry) => entry.name === p.name);
+    const elimIndex = order.indexOf(p.name);
+    const isSurvivor = p.name === survivor;
+    if (pos) {
+      p.x = pos.x;
+      p.y = pos.y;
+    }
+    p.selected = p.name === selectedName;
+    p.rank = isSurvivor ? 1 : names.length - elimIndex;
+    p.headline = isSurvivor ? "VICTORY ROYALE" : `Eliminated: Phase ${elimIndex + 1}`;
+    p.subline = isSurvivor ? "Last one in the zone" : `Caught outside zone ${elimIndex + 1}`;
+    p.chips = isSurvivor ? ["Winner"] : [`Phase ${elimIndex + 1}`];
+  });
+}
+
 function buildStockMarketResult(names, taskLabel, selectionGoal) {
   const modeName = "Stock Market";
   const TICKERS = ["$DOGE","$MOON","$YOLO","$HODL","$FOMO","$STONK","$APE","$REKT","$PUMP","$CHAD","$COPE","$WAGMI","$TSLA","$GME","$NVDA","$PLTR","$COIN"];
@@ -2233,7 +2370,11 @@ function buildStockMarketResult(names, taskLabel, selectionGoal) {
       "Trust the process.",
     ];
 
-    const selectedTickers = shuffle(TICKER_POOL).slice(0, 8);
+    // At least 8 to choose from, and always a couple more than there are
+    // pickers (made-up tickers once the named ones run out).
+    const poolSize = Math.max(8, names.length + 2);
+    const extraTickers = Array.from({ length: Math.max(0, poolSize - TICKER_POOL.length) }, (_, i) => `$MEME${i + 1}`);
+    const selectedTickers = shuffle([...TICKER_POOL, ...extraTickers]).slice(0, poolSize);
 
     const stockPool = selectedTickers.map((ticker, i) => {
       const volatility = 0.03 + Math.random() * 0.05;
@@ -2374,12 +2515,30 @@ const HEAVY_LAZY_MODE_IDS = new Set([
   "stock-market",
 ]);
 
-function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotation = 0) {
+// Interactive modes whose built outcome can still change while it plays
+// (re-rolls, chosen drops, shields, moves, whips). Their result carries
+// `awaitingResolution` until the final outcome is settled at the end, so the
+// history entry and the wager payout use what actually happened.
+const INTERACTIVE_SETTLE_MODE_IDS = new Set([
+  "dice",
+  "plinko",
+  "space-invaders",
+  "battle-royale",
+  "horse-race",
+]);
+
+// Picking a loser: each round's winner is safe and drops out; whoever is
+// left without a win is the loser. Picking a winner: each round's loser is
+// eliminated; the last one standing is the winner.
+function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotation = 0, selectionGoal = "loser") {
   const mode = modeById(baseModeId);
+  const choosingWinner = selectionGoal === "winner";
+  const roundGoal = choosingWinner ? "loser" : "winner";
   let remainingNames = [...names];
   let localWheelRotation = currentWheelRotation;
   const rounds = [];
   const safeNames = [];
+  const eliminatedNames = [];
 
   // Tournament rounds are pre-resolved — disable interactive-mode build
   // branches (poker draft, lane pick, etc.) while we generate them, then
@@ -2388,7 +2547,7 @@ function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotati
   if (wasInteractive) window.__interactiveMode = false;
 
   while (remainingNames.length > 1) {
-    const roundResult = mode.run(remainingNames, "win immunity", "winner", localWheelRotation);
+    const roundResult = mode.run(remainingNames, choosingWinner ? "survive the round" : "win immunity", roundGoal, localWheelRotation);
     if (roundResult.modeId === "wheel") {
       localWheelRotation = roundResult.wheel.rotation;
     }
@@ -2396,26 +2555,38 @@ function buildTournamentOutcome(names, taskLabel, baseModeId, currentWheelRotati
       ...roundResult,
       roundLabel: `Round ${rounds.length + 1}`,
       remainingAtStart: [...remainingNames],
+      // What happens to this round's pick: "safe" (loser hunt) or "eliminated" (winner hunt)
+      roundOutcome: choosingWinner ? "eliminated" : "safe",
     });
-    safeNames.push(roundResult.selectedName);
+    // A tied round picks nobody; it's simply replayed with the same players.
+    if (roundResult.selectedName) {
+      (choosingWinner ? eliminatedNames : safeNames).push(roundResult.selectedName);
+    }
     remainingNames = remainingNames.filter((name) => name !== roundResult.selectedName);
   }
 
   if (wasInteractive) window.__interactiveMode = true;
 
-  const finalLoser = remainingNames[0];
-  const modeName = `${modeById(baseModeId)?.name ?? "Game"} Tournament`;
+  const finalName = remainingNames[0];
+  const modeName = `${MODE_META.find((meta) => meta.id === baseModeId)?.name ?? "Game"} Tournament`;
   return {
     modeId: baseModeId,
     modeName,
-    selectionGoal: "loser",
-    selectedName: finalLoser,
-    headline: pickRandomMessage(LOSE_MESSAGES, finalLoser, "lose"),
-    summary: `${finalLoser} was the only person who never won a round. Win once and you're safe.`,
+    selectionGoal: choosingWinner ? "winner" : "loser",
+    selectedName: finalName,
+    headline: choosingWinner
+      ? pickRandomMessage(WIN_MESSAGES, finalName, "win")
+      : pickRandomMessage(LOSE_MESSAGES, finalName, "lose"),
+    summary: choosingWinner
+      ? `${finalName} was the last one standing. Lose a round and you're out.`
+      : `${finalName} was the only person who never won a round. Win once and you're safe.`,
     isTournament: true,
     rounds,
     safeNames,
-    finalLoser,
+    eliminatedNames,
+    finalName,
+    finalLoser: choosingWinner ? null : finalName,
+    champion: choosingWinner ? finalName : null,
     wheelRotation: localWheelRotation,
   };
 }
@@ -2723,6 +2894,9 @@ export default function ChoreChaosApp() {
   }, []);
 
   const [result, setResult] = useState(null);
+  // Bumped when an interactive outcome is settled in place (result keeps its
+  // identity), so effects reading the final pick re-run.
+  const [resultVersion, setResultVersion] = useState(0);
   const [history, setHistory] = useState([]);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [playbackStep, setPlaybackStep] = useState(0);
@@ -2840,6 +3014,9 @@ export default function ChoreChaosApp() {
   useEffect(() => {
     if (!wagerMode || wagerPhase !== 'playing') return;
     if (!result) return;
+    // An interactive outcome that's still being settled (re-rolls, drops,
+    // shields...) isn't final yet; resultVersion re-runs this once it is.
+    if (result.awaitingResolution) return;
     const w = activeWager;
     if (!w) return;
 
@@ -2904,6 +3081,17 @@ export default function ChoreChaosApp() {
       });
       if (newBalance != null) setWagerBalance(newBalance);
       setWagerPhase('payout');
+      // Tell the cabinet the run is over (same shapes as the arcade kit).
+      let best = payout;
+      let newBest = false;
+      try {
+        const prevBest = parseInt(localStorage.getItem('runouts_wager_best') || '0', 10) || 0;
+        newBest = payout > prevBest;
+        best = Math.max(prevBest, payout);
+        localStorage.setItem('runouts_wager_best', String(best));
+      } catch (e) {}
+      postToBridge({ type: 'bridge-run-state', game: 'runouts', active: false, paused: false });
+      postToBridge({ type: 'bridge-run-ended', game: 'runouts', title: 'Runouts', label: 'Runouts', score: payout || 0, best, newBest, coins: payout || 0 });
     };
 
     if (payout > 0 && window.BridgeProgression && window.BridgeProgression.awardCoins) {
@@ -2912,7 +3100,7 @@ export default function ChoreChaosApp() {
     } else {
       finish(null);
     }
-  }, [wagerMode, wagerPhase, playbackDone, result, activeWager, seriesActive, seriesComplete, seriesConfig, seriesScores, seriesTied]);
+  }, [wagerMode, wagerPhase, playbackDone, result, resultVersion, activeWager, seriesActive, seriesComplete, seriesConfig, seriesScores, seriesTied]);
 
   // Deduct the wager and then proxy through to the normal startGame. Used
   // as a wrapper around the existing "AUTO" / specific-mode buttons in
@@ -2944,16 +3132,23 @@ export default function ChoreChaosApp() {
     return true;
   }, [wagerMode, activeWager, wagerAmount, wagerBalance, selectionGoal, wagerPilotName, names]);
 
+  // Always the latest render's startGame (function declarations hoist), so
+  // the memoised wrapper below never runs one with stale format/mode/stakes.
+  const startGameRef = useRef(null);
+  startGameRef.current = startGame;
+
   // Wrap startGame in wager mode — deduct first, then proceed.
   const wagerStartGame = useCallback(async (forcedModeId) => {
     if (!wagerMode) {
-      startGame(forcedModeId);
+      // Defer a tick so a mode pick made in the same click (RANDOM sets
+      // selectedModeId to "auto") has rendered before the game reads it.
+      setTimeout(() => startGameRef.current(forcedModeId || null), 0);
       return;
     }
     const ok = await beginWagerIfNeeded();
     if (!ok) return;
     // Allow state to flush before the game machinery reads names/format.
-    setTimeout(() => startGame(forcedModeId || null), 60);
+    setTimeout(() => startGameRef.current(forcedModeId || null), 60);
   }, [wagerMode, beginWagerIfNeeded]);
 
   // After payout, reset everything for a fresh wager. Clear series state
@@ -3001,6 +3196,13 @@ export default function ChoreChaosApp() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [wagerMode]);
+
+  // Inside the Bridge's cabinet: tell the parent page about runs and exits.
+  function postToBridge(message) {
+    try {
+      if (window.parent !== window) window.parent.postMessage(message, '*');
+    } catch (e) { /* parent gone */ }
+  }
 
   // Player asks to leave the modal from the wager UI — postMessage parent.
   const handleWagerLeave = useCallback(() => {
@@ -3205,7 +3407,8 @@ export default function ChoreChaosApp() {
     function handleRocketComplete() {
       if ((result?.modeId === 'rocket' || result?.modeId === 'bomb' || result?.modeId === 'stock-market') && !playbackDone) {
         // Interactive rocket: compute final result from eject decisions
-        if (result?.modeId === 'rocket' && (interactiveMode || localInteractiveMode) && Object.keys(interactiveRocketEjects).length > 0) {
+        // (even if nobody ejected — then everyone crashed).
+        if (result?.modeId === 'rocket' && !result.isTournament && (interactiveMode || localInteractiveMode)) {
           const formatDist = (d) => d >= 1000000 ? (d/1000000).toFixed(2) + 'M km' : Math.round(d).toLocaleString() + ' km';
 
           const finalPlayers = result.players.map(p => {
@@ -3226,7 +3429,10 @@ export default function ChoreChaosApp() {
             };
           });
 
-          finalPlayers.sort((a, b) => b.effectiveDistance - a.effectiveDistance);
+          // Banked distance first; among crashes (all banked 0) the longer
+          // flight ranks higher, so the loser is the first rocket to burn up,
+          // matching the non-interactive result.
+          finalPlayers.sort((a, b) => (b.effectiveDistance - a.effectiveDistance) || (b.distance - a.distance));
           finalPlayers.forEach((p, i) => { p.rank = i + 1; });
 
           const selected = result.selectionGoal === 'winner' ? finalPlayers[0] : finalPlayers[finalPlayers.length - 1];
@@ -3310,7 +3516,8 @@ export default function ChoreChaosApp() {
   //   them. Independently, the round has a 5-30s total fuse — when it
   //   reaches 0 the bomb explodes on whoever is currently holding it.
   //   Eliminated player is removed; new round starts with remaining alive.
-  //   Last alive wins the game.
+  //   Picking a winner: last alive wins. Picking a loser: the game ends at
+  //   the first explosion and that player is picked.
   const PASS_TIMEOUT_MS = 4000;
   useEffect(() => {
     if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'bomb') return;
@@ -3348,40 +3555,59 @@ export default function ChoreChaosApp() {
       const eliminatedNow = state.holder;
       const newAlive = state.alive.filter(n => n !== eliminatedNow);
       const newEliminated = [...state.eliminated, eliminatedNow];
+      const choosingWinner = result.selectionGoal === 'winner';
 
-      if (newAlive.length <= 1) {
-        const winner = newAlive[0] || eliminatedNow;
+      if (newAlive.length <= 1 || !choosingWinner) {
+        // Winner: the last one alive. Loser: the first one blown up.
+        const picked = choosingWinner ? (newAlive[0] || eliminatedNow) : eliminatedNow;
         const finalPlayers = result.players.map(p => {
-          const isWinner = p.name === winner;
+          const isPicked = p.name === picked;
           const elimIdx = newEliminated.indexOf(p.name);
           const elimRound = elimIdx >= 0 ? elimIdx + 1 : null;
+          if (!choosingWinner) {
+            return {
+              ...p,
+              selected: isPicked,
+              headline: isPicked ? 'BOOM' : 'SURVIVED',
+              subline: isPicked ? 'Blown up first' : 'Got rid of it in time',
+              chips: isPicked ? ['💥 Detonated'] : ['Alive'],
+            };
+          }
           return {
             ...p,
-            selected: isWinner,
-            headline: isWinner ? 'LAST ALIVE' : 'BOOM',
-            subline: isWinner ? `Survived ${newEliminated.length} round${newEliminated.length === 1 ? '' : 's'}` : `Out round ${elimRound}`,
-            chips: isWinner ? ['🏆 Survivor'] : [`Round ${elimRound}`],
+            selected: isPicked,
+            headline: isPicked ? 'LAST ALIVE' : 'BOOM',
+            subline: isPicked ? `Survived ${newEliminated.length} round${newEliminated.length === 1 ? '' : 's'}` : `Out round ${elimRound}`,
+            chips: isPicked ? ['🏆 Survivor'] : [`Round ${elimRound}`],
           };
         });
-        result.selectedName = winner;
-        result.headline = pickRandomMessage(WIN_MESSAGES, winner, 'win');
-        result.summary = `${winner} survived ${newEliminated.length} round${newEliminated.length === 1 ? '' : 's'} of bomb passing.`;
+        result.selectedName = picked;
+        result.headline = pickRandomMessage(
+          choosingWinner ? WIN_MESSAGES : LOSE_MESSAGES,
+          picked,
+          choosingWinner ? 'win' : 'lose'
+        );
+        result.summary = choosingWinner
+          ? `${picked} survived ${newEliminated.length} round${newEliminated.length === 1 ? '' : 's'} of bomb passing.`
+          : `The bomb went off in ${picked}'s hands first.`;
         result.players = finalPlayers;
         result.isTie = false;
 
-        setInteractiveBombState({
+        const gameOverState = {
           ...state,
           alive: newAlive,
           eliminated: newEliminated,
           phase: 'gameOver',
-          winner,
-        });
+          winner: choosingWinner ? picked : null,
+          picked,
+        };
+        setInteractiveBombState(gameOverState);
         setPlaybackDone(true);
         setPlaybackStep(2);
         setPendingAction(null);
         currentActionHandler.current = null;
         pushHistory(result);
-        broadcastEvent({ type: 'bomb_game_over', winner, finalResult: result });
+        broadcastEvent({ type: 'bomb_game_over', winner: gameOverState.winner, picked, finalResult: result, state: gameOverState });
         return;
       }
 
@@ -3413,6 +3639,9 @@ export default function ChoreChaosApp() {
     const roundDeadline = roundStartedAt + roundDurationMs;
     const explodeAt = Math.min(passDeadline, roundDeadline);
     const explodeInMs = Math.max(0, explodeAt - now);
+
+    // Room clients mirror the live bomb (who holds it, who's out) from this.
+    broadcastEvent({ type: 'bomb_state', state, explodeInMs });
 
     setPendingAction({
       type: 'turn',
@@ -3511,29 +3740,36 @@ export default function ChoreChaosApp() {
   }, [interactiveMode, localInteractiveMode, gameActive, result, playbackDone, interactiveRocketEjects]);
 
   // Wager mode: auto-eject AI rockets at a fraction of their crash time so
-  // the player isn't asked to hit the eject button on AI pilots.
+  // the player isn't asked to hit the eject button on AI pilots. Timed off
+  // the flight clock the playback publishes (window.__rocketElapsed, in sim
+  // seconds, 0 until LAUNCH), so waiting on the pad doesn't eject them early.
   useEffect(() => {
     if (!wagerMode) return;
     if (!gameActive || !result || result.modeId !== 'rocket' || result.isTournament) return;
     if (playbackDone) return;
 
-    const TIME_SCALE = 3; // mirrors HeavyModePlaybacks.RocketPlayback
-    const COUNTDOWN_BUFFER_MS = 3500; // 3s countdown + small buffer before flight
+    // Eject between 65% and 92% of their crash time (some bold, some cautious)
+    const plans = result.players
+      .filter((p) => p.name !== wagerPilotName) // human ejects themselves
+      .map((p) => ({ name: p.name, at: p.crashTime * (0.65 + Math.random() * 0.27) }));
+    const done = new Set();
 
-    const timers = [];
-    result.players.forEach((p) => {
-      if (p.name === wagerPilotName) return; // human ejects themselves
-      if (interactiveRocketEjects[p.name]) return; // already ejected
-      // Eject between 65% and 92% of their crash time (some bold, some cautious)
-      const fraction = 0.65 + Math.random() * 0.27;
-      const realDelayMs = COUNTDOWN_BUFFER_MS + (p.crashTime * fraction / TIME_SCALE) * 1000;
-      timers.push(setTimeout(() => {
+    const poll = setInterval(() => {
+      const elapsed = window.__rocketElapsed || 0;
+      if (elapsed <= 0) return; // still on the pad / counting down
+      const ejects = window.__interactiveRocketEjects || {};
+      plans.forEach((plan) => {
+        if (done.has(plan.name)) return;
+        if (ejects[plan.name]) { done.add(plan.name); return; } // already ejected
+        if (elapsed < plan.at) return;
+        done.add(plan.name);
         const handler = currentActionHandler.current;
-        if (handler) handler({ playerName: p.name, action: 'eject' });
-      }, realDelayMs));
-    });
+        if (handler) handler({ playerName: plan.name, action: 'eject' });
+      });
+      if (done.size >= plans.length) clearInterval(poll);
+    }, 50);
 
-    return () => timers.forEach((t) => clearTimeout(t));
+    return () => clearInterval(poll);
   }, [wagerMode, gameActive, result, playbackDone, wagerPilotName]);
 
   // Interactive Poker draft management
@@ -3878,6 +4114,7 @@ export default function ChoreChaosApp() {
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
+      if (!result.awaitingResolution) return; // already settled
       // Re-resolve the result based on potentially re-rolled dice
       const selGoal = result.selectionGoal;
       const choosingWinner = selGoal === 'winner';
@@ -3904,7 +4141,11 @@ export default function ChoreChaosApp() {
         p.selected = hasTie ? false : p.name === selectedName;
         p.tied = isTied;
       });
+      result.summary = hasTie
+        ? tiedNames.join(" and ") + " rolled the same total!"
+        : "Two dice each. " + (choosingWinner ? "Highest" : "Lowest") + " total gets selected.";
 
+      settleInteractiveOutcome(result);
       return;
     }
 
@@ -4108,6 +4349,7 @@ export default function ChoreChaosApp() {
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
+      if (!result.awaitingResolution) return; // already settled
       // Re-resolve winner based on updated scores
       const selGoal = result.selectionGoal;
       const resolution = resolveByGoal(result.players, (p) => [p.score], selGoal);
@@ -4129,6 +4371,12 @@ export default function ChoreChaosApp() {
         p.selected = hasTie ? false : p.name === selectedName;
         p.tied = hasTie && tiedNames.includes(p.name);
       });
+      const pickedPlayer = hasTie ? null : result.players.find(p => p.name === selectedName);
+      result.summary = hasTie
+        ? tiedNames.join(' and ') + ' both scored ' + resolution.tied[0].score + ' points.'
+        : selectedName + ' landed in the ' + pickedPlayer.score + '-point slot.';
+
+      settleInteractiveOutcome(result);
       return;
     }
 
@@ -4245,14 +4493,23 @@ export default function ChoreChaosApp() {
             tied: isTied,
           };
         });
-        setResult({
+        const raceOutcome = {
           ...result,
+          awaitingResolution: false,
           isTie: hasTie,
           tiedNames: hasTie ? tiedNames : undefined,
           selectedName,
           headline,
+          summary: hasTie
+            ? tiedNames.join(' and ') + ' finished in the same position!'
+            : 'Twelve random turns. Whoever finishes ' + (choosingWinner ? 'first' : 'last') + ' gets selected.'
+              + (result.suddenDeathRound > 0 ? suddenDeathNote(result.suddenDeathRound) : ''),
           players,
-        });
+        };
+        setResult(raceOutcome);
+        pushHistory(raceOutcome);
+        broadcastEvent({ type: 'step', step: getPlaybackConfig(raceOutcome).totalSteps, done: true, result: raceOutcome });
+        setResultVersion((v) => v + 1);
       }
       return;
     }
@@ -4322,12 +4579,15 @@ export default function ChoreChaosApp() {
         });
       };
 
+      // The race (and its whip prompt) only starts once every lane is picked.
+      return;
     }
 
     // Phase 2: Race with whip — step-based
     if (playbackDone) {
       setPendingAction(null);
       currentActionHandler.current = null;
+      if (!result.awaitingResolution) return; // already settled
       // Re-resolve winner from final positions (whips may have changed things)
       const selGoal = result.selectionGoal;
       const choosingWinner = selGoal === 'winner';
@@ -4355,6 +4615,11 @@ export default function ChoreChaosApp() {
         p.selected = hasTie ? false : p.name === selectedName;
         p.tied = isTied;
       });
+      result.summary = hasTie
+        ? tiedNames.join(' and ') + ' finished in the same position!'
+        : 'Twelve random turns. Whoever finishes ' + (choosingWinner ? 'first' : 'last') + ' gets selected.';
+
+      settleInteractiveOutcome(result);
       return;
     }
 
@@ -4414,12 +4679,17 @@ export default function ChoreChaosApp() {
         whipsRemaining: horseWhips[actor] - 1,
       });
     };
-  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase, wagerMode]);
+  }, [interactiveMode, localInteractiveMode, gameActive, result, playbackStep, playbackDone, horseLanePicks, result?.draftPhase, wagerMode, horseWhips]);
 
   // Interactive Space Invaders — shield reaction
   useEffect(() => {
     if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'space-invaders') return;
-    if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      settleInteractiveOutcome(result);
+      return;
+    }
 
     const elimIndex = playbackStep;
     if (elimIndex >= result.eliminationOrder.length) {
@@ -4447,7 +4717,13 @@ export default function ChoreChaosApp() {
       });
 
       currentActionHandler.current = (payload) => {
-        if (payload.action !== 'shield' || payload.playerName !== targetName) return;
+        if (payload.playerName !== targetName) return;
+        // Taking the hit: the shot lands as planned.
+        if (payload.action === 'decline_shield') {
+          advancePlayback();
+          return;
+        }
+        if (payload.action !== 'shield') return;
 
         setUsedShields(prev => ({ ...prev, [targetName]: true }));
 
@@ -4468,22 +4744,10 @@ export default function ChoreChaosApp() {
             result.eliminationOrder[elimIndex] = newTarget;
           }
 
-          // Update player data
-          result.players.forEach(p => {
-            const ei = result.eliminationOrder.indexOf(p.name);
-            const isSurvivor = ei === -1 || ei >= result.eliminationOrder.length;
-            if (isSurvivor) {
-              p.headline = "LAST ALIEN STANDING";
-              p.subline = "Survived the onslaught";
-              p.chips = ["Survivor"];
-              p.destroyedAt = null;
-            } else {
-              p.destroyedAt = ei + 1;
-              p.headline = 'Destroyed: Shot #' + (ei + 1);
-              p.subline = 'Eliminated';
-              p.chips = ['Shot #' + (ei + 1)];
-            }
-          });
+          // Re-derive survivor, pick, ranks and headline from the new order
+          // (the shot may have been redirected onto the planned survivor,
+          // making the shielded player the last alien standing).
+          applySpaceInvadersOrder(result);
 
           broadcastEvent({ type: 'shield_used', playerName: targetName, newTarget: newTarget });
         }
@@ -4511,7 +4775,12 @@ export default function ChoreChaosApp() {
   // Interactive Battle Royale — directional movement
   useEffect(() => {
     if (!(interactiveMode || localInteractiveMode) || !gameActive || !result || result.isTournament || result.modeId !== 'battle-royale') return;
-    if (playbackDone) { setPendingAction(null); currentActionHandler.current = null; return; }
+    if (playbackDone) {
+      setPendingAction(null);
+      currentActionHandler.current = null;
+      settleInteractiveOutcome(result);
+      return;
+    }
 
     const phase = playbackStep; // 0-indexed, each phase = one elimination
     if (phase >= result.zones.length - 1) {
@@ -4654,63 +4923,10 @@ export default function ChoreChaosApp() {
         }
       });
 
-      // Recalculate who's farthest from zone center
-      let farthest = null;
-      let farthestDist = -1;
-      for (const name of alive) {
-        const pos = result.positions.find(p => p.name === name);
-        const dx = pos.x - nextZone.cx;
-        const dy = pos.y - nextZone.cy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > farthestDist) {
-          farthestDist = dist;
-          farthest = name;
-        }
-      }
-
-      // Update elimination order for this phase
-      if (farthest) {
-        result.eliminationOrder[phase] = farthest;
-
-        // Update player data
-        result.players.forEach(p => {
-          const ei = result.eliminationOrder.indexOf(p.name);
-          const isEliminated = ei >= 0 && ei <= phase;
-          if (isEliminated) {
-            p.headline = 'Eliminated: Phase ' + (ei + 1);
-            p.subline = 'Caught outside zone ' + (ei + 1);
-            p.chips = ['Phase ' + (ei + 1)];
-            p.selected = false;
-            p.rank = result.players.length - ei;
-          }
-        });
-
-        // Check if only one remains
-        const remaining = alive.filter(n => n !== farthest);
-        if (remaining.length === 1) {
-          const survivor = remaining[0];
-          const selectedName = result.selectionGoal === 'winner' ? survivor : result.eliminationOrder[0];
-          result.selectedName = selectedName;
-          const sp = result.players.find(p => p.name === survivor);
-          if (sp) {
-            sp.headline = "VICTORY ROYALE";
-            sp.subline = "Last one in the zone";
-            sp.chips = ["Winner"];
-            sp.rank = 1;
-          }
-          result.players.forEach(p => {
-            p.selected = p.name === selectedName;
-          });
-          result.headline = pickRandomMessage(
-            result.selectionGoal === "winner" ? WIN_MESSAGES : LOSE_MESSAGES,
-            selectedName,
-            result.selectionGoal === "winner" ? "win" : "lose"
-          );
-          result.summary = result.selectionGoal === 'winner'
-            ? 'The zone closed in ' + (phase + 1) + ' times. ' + survivor + ' was the last one standing.'
-            : selectedName + ' was the first one caught outside the zone.';
-        }
-      }
+      // Re-run this phase's elimination and every later one from the new
+      // positions, so the rest of the order (and the pick) stays consistent
+      // even if the remaining phases are revealed all at once.
+      recomputeBattleRoyaleFrom(result, phase);
 
       advancePlayback();
     }
@@ -4737,8 +4953,14 @@ export default function ChoreChaosApp() {
       playerName = result.players[playerIndex]?.name;
       action = mode === 'rng' ? 'stop_number' : 'pull_slots';
     } else if (mode === 'wheel') {
-      // Single spin — first player gets the button
-      if (playbackStep >= 1) return;
+      // Single spin — first player gets the button. One press spins; once the
+      // 3.4s spin plays out the pick is revealed, no second press needed.
+      if (playbackStep >= 1) {
+        setPendingAction(null);
+        currentActionHandler.current = null;
+        const revealTimer = setTimeout(() => advancePlayback(), 3400);
+        return () => clearTimeout(revealTimer);
+      }
       playerName = result.players[0]?.name;
       action = 'spin_wheel';
     } else if (mode === 'coin-flips') {
@@ -4876,6 +5098,33 @@ export default function ChoreChaosApp() {
     recordGame(outcome).then(() => fetchLeaderboard());
   }
 
+  // Interactive play can still change some outcomes after they're built
+  // (INTERACTIVE_SETTLE_MODE_IDS). Flag those so history, the wager payout
+  // and the series tally wait for the final result. Returns true when the
+  // outcome records its own history once it completes, not at start.
+  function prepareInteractiveOutcome(outcome) {
+    if (!(interactiveMode || localInteractiveMode) || outcome.isTournament) return false;
+    if (INTERACTIVE_SETTLE_MODE_IDS.has(outcome.modeId)) {
+      outcome.awaitingResolution = true;
+      return true;
+    }
+    return outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || !!outcome.draftPhase;
+  }
+
+  // Called once an interactive outcome flagged above has been resolved in
+  // place: record it, send the final result to the room and bump
+  // resultVersion so effects reading the pick (wager payout, series) re-run.
+  function settleInteractiveOutcome(outcome) {
+    if (!outcome.awaitingResolution) return;
+    outcome.awaitingResolution = false;
+    if (outcome.suddenDeathRound > 0 && !outcome.isTie) {
+      outcome.summary = outcome.summary + suddenDeathNote(outcome.suddenDeathRound);
+    }
+    pushHistory(outcome);
+    broadcastEvent({ type: 'step', step: getPlaybackConfig(outcome).totalSteps, done: true, result: outcome });
+    setResultVersion((v) => v + 1);
+  }
+
   // ── Series helpers ──
   function resetSeriesState() {
     setSeriesActive(false);
@@ -4962,6 +5211,7 @@ export default function ChoreChaosApp() {
     };
     outcome.taskLabel = taskLabel.trim();
     outcome.isSeriesSuddenDeath = true;
+    prepareInteractiveOutcome(outcome);
     if (outcome.modeId === "wheel" && outcome.wheel) {
       setWheelRotation(outcome.wheel.rotation);
     }
@@ -4995,7 +5245,7 @@ export default function ChoreChaosApp() {
     const playerNames = forcedNames || activePlayerNames;
 
     if (!forcedNames && gameFormat === "tournament") {
-      return buildTournamentOutcome(activePlayerNames, taskLabel.trim() || "do the chores", resolvedModeId, wheelRotation);
+      return buildTournamentOutcome(activePlayerNames, taskLabel.trim() || "do the chores", resolvedModeId, wheelRotation, selectionGoal);
     }
 
     const mode = modeById(resolvedModeId);
@@ -5066,8 +5316,11 @@ export default function ChoreChaosApp() {
     setPlaybackStep(0);
     setPlaybackDone(false);
     setGameActive(true);
-    // Don't record interactive bomb/rocket/poker-draft/stock-draft/high-card-draft/horse-race-draft immediately — they record on completion
-    if (!((interactiveMode || localInteractiveMode) && (outcome.modeId === 'bomb' || outcome.modeId === 'rocket' || outcome.draftPhase))) {
+    if (wagerMode) postToBridge({ type: 'bridge-run-state', game: 'runouts', active: true, paused: false });
+    // Don't record interactive bomb/rocket/drafts or outcomes that interactive
+    // play can still change (re-rolls, drops, shields, moves, whips) yet —
+    // they record on completion with the final result.
+    if (!prepareInteractiveOutcome(outcome)) {
       pushHistory(outcome);
     }
     broadcastEvent({
@@ -5091,11 +5344,15 @@ export default function ChoreChaosApp() {
     if (outcome.modeId === "wheel" && outcome.wheel) {
       setWheelRotation(outcome.wheel.rotation);
     }
-    // If sudden death resolved (no tie), annotate the result
-    if (!outcome.isTie) {
+    const recordsOnCompletion = prepareInteractiveOutcome(outcome);
+    if (outcome.awaitingResolution) {
+      // Interactive play decides it; the note is added when it settles.
       outcome.suddenDeathRound = nextRound;
-      outcome.summary = outcome.summary + ` Decided after ${nextRound} round${nextRound > 1 ? "s" : ""} of sudden death.`;
-      pushHistory(outcome);
+    } else if (!outcome.isTie) {
+      // If sudden death resolved (no tie), annotate the result
+      outcome.suddenDeathRound = nextRound;
+      outcome.summary = outcome.summary + suddenDeathNote(nextRound);
+      if (!recordsOnCompletion) pushHistory(outcome);
     }
     setResult(outcome);
     setPlaybackStep(0);
@@ -5140,6 +5397,7 @@ export default function ChoreChaosApp() {
   // ── Series round completion tracking ──
   useEffect(() => {
     if (!seriesActive || !seriesConfig || !result || !playbackDone) return;
+    if (result.awaitingResolution) return; // interactive outcome not settled yet
     if (result.isTie) return; // Don't count ties — wait for sudden death
     if (!result.selectedName) return;
     // Prevent double-recording the same round
@@ -5178,7 +5436,7 @@ export default function ChoreChaosApp() {
     } else {
       broadcastEvent({ type: 'series_update', config: seriesConfig, scores: newScores, round: seriesRound, history: newHistory, complete: false });
     }
-  }, [seriesActive, playbackDone, result?.runId, seriesRound, seriesConfig, seriesHistory]);
+  }, [seriesActive, playbackDone, result?.runId, resultVersion, seriesRound, seriesConfig, seriesHistory]);
 
   // ── Vote for Next Game ────────────────────────────────────
 
@@ -5276,6 +5534,7 @@ export default function ChoreChaosApp() {
             result,
             step: playbackStep,
             done: playbackDone,
+            bombState: result.modeId === 'bomb' ? interactiveBombState : null,
           }
         : null,
       series: buildSeriesSnapshot(),
@@ -5437,6 +5696,7 @@ export default function ChoreChaosApp() {
               result: payload.currentGame.result,
               step: payload.currentGame.step || 0,
               done: !!payload.currentGame.done,
+              bombState: payload.currentGame.bombState || null,
             });
           }
           if (payload.series) setSpectatorSeries(payload.series);
@@ -5481,6 +5741,8 @@ export default function ChoreChaosApp() {
               deadline: Date.now() + deadlineMs,
               turnNumber: payload.turnNumber,
               totalDraws: payload.totalDraws,
+              totalTurns: payload.totalTurns,
+              whipsRemaining: payload.whipsRemaining,
               targets: payload.targets,
               tickNumber: payload.tickNumber,
               totalTicks: payload.totalTicks,
@@ -5488,7 +5750,33 @@ export default function ChoreChaosApp() {
           }
           break;
         case 'bomb_state':
-          // Update spectator state so they can see the bomb moving
+          // Mirror the host's live bomb so the playback can show it moving.
+          if (payload.state) {
+            setSpectatorState(prev => prev ? { ...prev, bombState: payload.state } : prev);
+            if (roomModeRef.current === 'player' && payload.state.phase === 'playing') {
+              const bomb = payload.state;
+              setPendingAction({
+                type: 'turn',
+                playerName: bomb.holder,
+                action: 'pass_bomb',
+                targets: (bomb.alive || []).filter(n => n !== bomb.holder),
+                round: bomb.round,
+                alive: bomb.alive,
+                eliminated: bomb.eliminated,
+                deadline: Date.now() + (payload.explodeInMs || 0),
+              });
+            }
+          }
+          break;
+        case 'bomb_game_over':
+          setSpectatorState(prev => prev ? {
+            ...prev,
+            result: payload.finalResult || prev.result,
+            bombState: payload.state || prev.bombState,
+            step: 2,
+            done: true,
+          } : prev);
+          if (roomModeRef.current === 'player') setPendingAction(null);
           break;
         case 'bomb_detonated':
           if (payload.finalResult) {
@@ -5782,7 +6070,7 @@ export default function ChoreChaosApp() {
                   done={specDone}
                 />
                 <div className="flex-1">
-                  <PlaybackStage result={specResult} step={specStep} done={specDone} />
+                  <PlaybackStage result={specResult} step={specStep} done={specDone} interactiveBombState={spectatorState.bombState || null} />
                 </div>
                 {specDone ? (
                   <div className="verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur border-slate-200 bg-white/85">
@@ -5908,7 +6196,7 @@ export default function ChoreChaosApp() {
                   done={specDone}
                 />
                 <div className="flex-1">
-                  <PlaybackStage result={specResult} step={specStep} done={specDone} />
+                  <PlaybackStage result={specResult} step={specStep} done={specDone} interactiveBombState={spectatorState.bombState || null} />
                 </div>
                 {specDone ? (
                   <div className="verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur border-slate-200 bg-white/85">
@@ -6138,8 +6426,12 @@ export default function ChoreChaosApp() {
 
   return (
     <div className="crt-vignette crt-global-scanlines crt-flicker relative app-screen overflow-hidden bg-[#0a0a1a] text-white">
-      {/* Return to Bridge */}
-      <a href="/bridge" className="fixed top-4 left-6 z-50 font-mono text-xs text-slate-600 no-underline transition-colors hover:text-purple-400/60">&larr; Return to Bridge</a>
+      {/* Return to Bridge — inside the Bridge's cabinet, ask it to close instead of loading the Bridge in the frame */}
+      {wagerMode ? (
+        <button type="button" onClick={() => postToBridge({ type: 'bridge-request-close', source: 'runouts-back' })} className="fixed top-4 left-6 z-50 font-mono text-xs text-slate-600 no-underline transition-colors hover:text-purple-400/60">&larr; Return to Bridge</button>
+      ) : (
+        <a href="/bridge" className="fixed top-4 left-6 z-50 font-mono text-xs text-slate-600 no-underline transition-colors hover:text-purple-400/60">&larr; Return to Bridge</a>
+      )}
       {/* Gradient orbs */}
       <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.2) 0%, transparent 50%), radial-gradient(ellipse at 20% 100%, rgba(236,72,153,0.12) 0%, transparent 40%), radial-gradient(ellipse at 80% 60%, rgba(34,211,238,0.08) 0%, transparent 35%)" }} />
       {/* Dot grid */}
@@ -6203,7 +6495,7 @@ export default function ChoreChaosApp() {
           </p>
           <div className="mx-auto mt-4 h-[2px] w-64 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
           <div className="mx-auto mt-1 h-[1px] w-48 bg-gradient-to-r from-transparent via-fuchsia-500/50 to-transparent" />
-          {deviceMode === 'local' ? (
+          {deviceMode === 'local' && !wagerMode ? (
             <button onClick={() => setDeviceMode('choose')} className="mt-4 font-mono text-xs text-slate-600 hover:text-slate-400 transition">
               {"\u2190"} Back to menu
             </button>
@@ -6718,6 +7010,10 @@ export default function ChoreChaosApp() {
                                 })}
                               </div>
                               <div className="pixel-font text-[7px] text-slate-600 mt-2 text-center">Tap to guarantee your horse advances</div>
+                              <button onClick={advancePlayback}
+                                className="mt-3 w-full py-3 rounded-xl bg-slate-800 text-white font-bold text-sm shadow-lg transition hover:scale-[1.02] active:scale-95">
+                                {pendingAction.turnNumber >= pendingAction.totalTurns ? 'Finish race' : 'Next turn'} {"\u25B6"}
+                              </button>
                             </div>
                           );
                         })()
@@ -6738,7 +7034,7 @@ export default function ChoreChaosApp() {
                       ) : (
                         (wagerMode && pendingAction && pendingAction.playerName !== wagerPilotName && WAGER_HIDE_BAR_ACTIONS.has(pendingAction.action)) ? null : (
                           <React.Suspense fallback={null}>
-                            <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
+                            <PlayerActionBar pendingAction={pendingAction} onAction={handleHostAction} onAdvance={interactiveMode && !wagerMode ? advancePlayback : undefined} playerName={playerName} rankLabel={rankLabel} SUIT_SYMBOLS={SUIT_SYMBOLS} />
                           </React.Suspense>
                         )
                       )}
