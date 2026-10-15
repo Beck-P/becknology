@@ -1207,6 +1207,11 @@ var BridgeInteractions = (function () {
         BridgeGifts.open(Object.getPrototypeOf(person));
         return;
       }
+      if (t.harbour && typeof BridgeHarbour !== 'undefined') {        // a harbourmaster's book: ships, yard, hands, hold, market
+        close();
+        BridgeHarbour.open(BridgeWorld.getWorldId(), t.a);
+        return;
+      }
       if (t.peddler && typeof BridgeMagic !== 'undefined') {          // Wendel's wares (js/magic.js)
         close();
         BridgeMagic.shop();

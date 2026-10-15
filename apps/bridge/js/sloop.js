@@ -1720,7 +1720,8 @@ var BridgeSloop = (function () {
           text: 'YOUR SHIPS TIED UP HERE. PICK THE ONE YOU\'LL TAKE OUT.',
           rows: here.map(function (sh) {
             var sp = F.spec(sh.type);
-            return { label: sh.name, sub: F.line ? F.line(sh) : sp.name, note: sh.id === F.active().ship.id ? 'last sailed' : '',
+            var short = F.effective ? F.effective(sh).short : 0;
+            return { label: sh.name, sub: F.line ? F.line(sh) : sp.name, note: short ? 'needs ' + short + ' hand' + (short > 1 ? 's' : '') : sh.id === F.active().ship.id ? 'last sailed' : '',
                      pick: function () { board(worldId, sh.id); } };
           }),
           closeLabel: 'Not now'
@@ -1728,6 +1729,17 @@ var BridgeSloop = (function () {
         return true;
       }
       shipId = shipId || (here.some(function (sh) { return sh.id === F.active().ship.id; }) ? F.active().ship.id : here[0].id);
+      var want = F.get(shipId), short = want && F.effective ? F.effective(want).short : 0;
+      if (short && typeof BridgeInteractions !== 'undefined' && BridgeInteractions.choose) {     // she can't be sailed alone
+        var gull = here.filter(function (sh) { return sh.type === 'sloop'; })[0];
+        BridgeInteractions.choose({
+          title: 'Short-handed',
+          text: 'THE ' + want.name.toUpperCase() + ' NEEDS ' + short + ' MORE HAND' + (short > 1 ? 'S' : '') + ' BEFORE SHE CAN SAIL. THE HARBOURMASTER WILL KNOW WHO\'S LOOKING FOR A BERTH.',
+          buttons: gull ? [{ label: 'Take the ' + gull.name + ' instead', act: function () { board(worldId, gull.id); } }] : [],
+          closeLabel: 'All right'
+        });
+        return true;
+      }
       F.sail(shipId);
     }
     if (!I || !world || !BridgeWorld.setMode || !BridgeCharacter.setPose) return start(worldId);

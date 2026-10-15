@@ -271,7 +271,7 @@ w['interactions'] = [
     look('WATERWHEEL', 2, 26, 'THE WHEEL CLACKS ROUND, SLOW AND STEADY, WATER POURING OFF EVERY PADDLE.'),
     look('SIGNPOST', 12, 24, 'MEADOW LANE, THIS WAY. THE MILL, THAT WAY. THE ALLOTMENTS, OVER THE BRIDGE.\n\nSOMEBODY HAS SCRATCHED UNDER "MEADOW LANE": "THE OLD FARM".', 'PRESS E TO READ'),
     look('ALLOTMENTS', 27, 29, 'CABBAGES, BEANS UP THEIR CANES, PUMPKINS GETTING IDEAS. A HAND-PAINTED SIGN: "NO GOATS".'),
-    look("NAN ASHBY'S", 16, 32, "NAN ASHBY'S COTTAGE. THE BEST APPLES IN THE VILLAGE, AND SHE KNOWS IT."),
+    look("NAN ASHBY'S", 14, 30, "NAN ASHBY'S COTTAGE. THE BEST APPLES IN THE VILLAGE, AND SHE KNOWS IT."),
     {'x': 6, 'y': 11, 'type': 'dialog', 'label': 'BRIDGET', 'prompt': 'PRESS E TO TALK', 'dialog': 'BRIDGET DUSTS THE FLOUR OFF HER HANDS.'},
     {'x': 24, 'y': 11, 'type': 'dialog', 'label': 'PERCY', 'prompt': 'PRESS E TO TALK', 'dialog': 'PERCY PENNYWORTH STRAIGHTENS HIS APRON.'},
     {'x': 33, 'y': 18, 'type': 'dialog', 'label': 'WAT', 'prompt': 'PRESS E TO TALK', 'dialog': 'WAT NODS, HAMMER IN HAND.'},
@@ -282,9 +282,12 @@ w['interactions'] = [
     {'x': 11, 'y': 33, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'target': 'verdance', 'spawn': [42, 21]},
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
+ACTORS = [{'sheet': 'npc-vbaker', 'x': 6, 'y': 11, 'facing': 'down'}, {'sheet': 'npc-vshop', 'x': 24, 'y': 11, 'facing': 'down'},
+          {'sheet': 'npc-vsmith', 'x': 33, 'y': 18, 'facing': 'down'}, {'sheet': 'npc-vmiller', 'x': 7, 'y': 24, 'facing': 'down'},
+          {'sheet': 'npc-vfolk-a', 'x': 23, 'y': 18, 'facing': 'down'}, {'sheet': 'npc-vinn', 'x': 15, 'y': 11, 'facing': 'down'}]
+for a in ACTORS:                                                 # the shopkeepers stand their ground
+    k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
-            actors=[{'sheet': 'npc-vbaker', 'x': 6, 'y': 11, 'facing': 'down'}, {'sheet': 'npc-vshop', 'x': 24, 'y': 11, 'facing': 'down'},
-                    {'sheet': 'npc-vsmith', 'x': 33, 'y': 18, 'facing': 'down'}, {'sheet': 'npc-vmiller', 'x': 7, 'y': 24, 'facing': 'down'},
-                    {'sheet': 'npc-vfolk-a', 'x': 23, 'y': 18, 'facing': 'down'}, {'sheet': 'npc-vinn', 'x': 15, 'y': 11, 'facing': 'down'}],
+            actors=ACTORS,
             scene_extra={'layers': {'shuttle': 'parked'}, 'smoke': SMOKE})
 print('village done')

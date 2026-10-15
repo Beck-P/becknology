@@ -184,6 +184,17 @@ NPCS = {
                           hair=('#2a1810', '#4a2a18', '#6a3e24'), beanie=('#4a1414', '#7a2020', '#a83232'), beard=True, brawny=True, pose='stand'),
     'npc-sailor':    dict(skin='skin', shirt=('#a89e8a', '#d8d0bc', '#f4ecd8'), vest=('#141c30', '#22304a', '#34466a'),
                           hair=('#5a3a1a', '#8a5a2a', '#aa7a42'), cap=('#141c30', '#22304a', '#34466a'), mustache=True, pose='stand'),
+    # Lumar's harbourmasters, one at the head of each island's pier (js/harbour.js)
+    'npc-hm-bess':   dict(skin='skin3', shirt=('#141c30', '#22304a', '#34466a'), skirt=('#141c30', '#22304a', '#34466a'),
+                          hair=('#5a4a3a', '#7a6a58', '#9a8a76'), bun=True, cap=('#141c30', '#22304a', '#34466a'), pose='stand'),
+    'npc-hm-aldous': dict(skin='skin', shirt=('#a89e8a', '#d8d0bc', '#f4ecd8'), vest=('#1a2a5a', '#2a4084', '#4060b0'),
+                          hair=('#6a6a70', '#a0a0a8', '#c8c8d0'), cap=('#1a2a5a', '#2a4084', '#4060b0'), beard=True, pose='stand'),
+    'npc-hm-mira':   dict(skin='skin2', shirt=('#7a3a5a', '#b05a84', '#e088b0'), skirt=('#4a2a4a', '#6a3a6a', '#8a5a8a'),
+                          hair=('#2a1a10', '#4a2e1a', '#6a4428'), long_hair=True, pose='stand'),
+    'npc-hm-garro':  dict(skin='skin2', shirt=('#5a1a14', '#8a2a20', '#b04030'), vest=('#141014', '#262026', '#3a323a'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), beanie=('#6a1414', '#9a2020', '#c03030'), beard=True, brawny=True, pose='stand'),
+    'npc-ferryman':  dict(skin='skin', shirt=('#1a1a24', '#2a2a3a', '#3e3e54'), skirt=('#1a1a24', '#2a2a3a', '#3e3e54'),
+                          hair=('#9a9aa0', '#c8c8d0', '#ececf2'), hood=('#1a1a24', '#2a2a3a', '#3e3e54'), beard=True, pose='stand'),
     # Verdance town: the baker, the smith, the miller, the shopkeeper, two villagers
     'npc-vbaker':    dict(skin='skin', shirt=('#8a4a5a', '#b8687a', '#e090a0'), apron=('#a8a49a', '#e4e0d4', '#fbf8f0'),
                           hair=('#6a2a14', '#9a4422', '#c06030'), chef=True, pose='stand'),

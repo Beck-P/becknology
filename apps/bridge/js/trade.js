@@ -1,0 +1,296 @@
+/**
+ * BridgeTrade — cargo and the markets of Lumar's ports.
+ *
+ * GOODS are cargo: they ride in a ship's hold (js/fleet.js, `ship.hold`, counted in crates), never in your pack. Each
+ * island makes some things cheaply and wants others dearly (`MARKET`: a multiplier on a good's base price per port —
+ * under 1 it's made here, over 1 it's wanted); prices drift day to day (seeded by the date) and fall at a port where
+ * you've just sold a lot of something (`glut`, which wears off over a few hours). What you dig, catch and gather can
+ * go in a hold too (`HAUL`: ore, gems, crystals, fish, pearls - several to a crate) and sells at any port's market, at
+ * that port's price for its kind.
+ *
+ * Rare cargo: moon salt (only the Ferryman on Midnight sells it, and he sells little) and anything from the deep mine.
+ *
+ * Contracts: each port posts two a day (seeded by the date): carry so many crates of a good to another port within a
+ * day or two for a fee well over the market's. Take one, load the goods (buy them or bring your own), sail, and hand
+ * them over at the far port's harbourmaster.
+ *
+ *   BridgeTrade.price(good, port, 'buy'|'sell')   .buy(ship, good, n, port)   .sell(ship, good, n, port)
+ *   .crates(ship) / .room(ship)   .load(ship, itemId, n) / .unload(ship, itemId, n)   (pack ↔ hold)
+ *   .contracts(port)   .take(contract)   .deliver(ship, port)   .mine()   (contracts you've taken)
+ */
+var BridgeTrade = (function () {
+  var KEY = 'bridge_trade';
+  var DAY = 86400000;
+
+  // ---- what's carried -------------------------------------------------------------------------------------------------
+  var GOODS = {
+    salt_fish:  { name: 'Salt Fish', base: 18, look: 'barrel', c: ['#6a4422', '#9a6a3a', '#c8c0a8'],
+                  desc: 'A barrel of Diggen\'s Point silverfin, packed in salt. Every galley on the five seas wants it.' },
+    lamp_oil:   { name: 'Spore-lamp Oil', base: 34, look: 'jar', c: ['#3a5a3a', '#90e0a8', '#e8ffe0'],
+                  desc: 'Pressed from the glowing spore-kelp off Diggen\'s Point. It burns green and lasts the night.' },
+    timber:     { name: 'Pine Timber', base: 26, look: 'logs', c: ['#5a3a1a', '#8a5a2a', '#c89a5a'],
+                  desc: 'Straight pine off the Point\'s hills. Shipwrights everywhere are short of it.' },
+    glassware:  { name: 'Sapphire Glass', base: 48, look: 'crate', c: ['#2a4a7a', '#5a8ac0', '#c0e0ff'],
+                  desc: 'Blue glass from the Sapphire kilns in straw: floats, lamps, bottles.' },
+    spore_silk: { name: 'Spore Silk', base: 82, look: 'bolt', c: ['#7a3a5a', '#d070a0', '#ffd0e8'],
+                  desc: 'Bolts of the shimmering cloth the Rose Cove weavers spin from crystal spores.' },
+    roseite:    { name: 'Roseite', base: 40, look: 'crate', c: ['#6a2a4a', '#e070a0', '#ffe0f0'], item: true,
+                  desc: 'Rose Cove\'s crystal, by the crate. A drop of water and it grows solid: every hull carries some.' },
+    ember_rum:  { name: 'Ember Rum', base: 56, look: 'barrel', c: ['#5a1a10', '#a03a20', '#e08040'],
+                  desc: 'Crimson Reach rum, aged in charred casks. It warms you through.' },
+    blackpowder:{ name: 'Black Powder', base: 64, look: 'keg', c: ['#2a2a30', '#4a4a52', '#c03028'],
+                  desc: 'Kegs of it, from the pirate camp\'s mill. Guns want it; harbourmasters don\'t.' },
+    moon_salt:  { name: 'Moon Salt', base: 220, look: 'jar', c: ['#3a3a6a', '#b0b0ff', '#ffffff'], rare: true,
+                  desc: 'Pale salt raked from the flats round Midnight\'s moon pool. It glows faintly, and alchemists pay anything for it.' }
+  };
+  // your own finds, several to a crate; `kind` picks the port's appetite for them
+  var HAUL = {
+    stone: { per: 10, kind: 'stone' }, iron_ore: { per: 5, kind: 'ore' }, silver_ore: { per: 5, kind: 'ore' }, star_iron: { per: 3, kind: 'ore' },
+    moonstone: { per: 4, kind: 'gem' }, songstone: { per: 3, kind: 'gem' }, spore_minnow: { per: 10, kind: 'fish' },
+    crimson_crystal: { per: 6, kind: 'crystal' }, sapphire_crystal: { per: 6, kind: 'crystal' }, midnight_crystal: { per: 6, kind: 'crystal' },
+    hoar_crystal: { per: 6, kind: 'crystal' }, sea_glass: { per: 8, kind: 'crystal' }, star_pearl: { per: 4, kind: 'gem' },
+    silverfin: { per: 6, kind: 'fish' }, bluefin: { per: 4, kind: 'fish' }, ember_snapper: { per: 4, kind: 'fish' }, moon_eel: { per: 3, kind: 'fish' },
+    sapphire_ray: { per: 4, kind: 'fish' }, rose_shrimp: { per: 8, kind: 'fish' }, harbour_crab: { per: 6, kind: 'fish' }, fresh_fish: { per: 6, kind: 'fish' }
+  };
+  // each port's appetite: < 1 made here (cheap), > 1 wanted here (dear). Your own haul by kind.
+  var MARKET = {
+    'lumar':          { salt_fish: 0.7, lamp_oil: 0.72, timber: 0.7, glassware: 1.15, spore_silk: 1.2, roseite: 1.1, ember_rum: 1.3, blackpowder: 1.1, moon_salt: 1.25,
+                        ore: 1.0, gem: 1.0, crystal: 0.9, fish: 0.8, stone: 0.8 },
+    'lumar-sapphire': { salt_fish: 1.15, lamp_oil: 1.2, timber: 1.35, glassware: 0.68, spore_silk: 1.4, roseite: 1.3, ember_rum: 1.25, blackpowder: 1.3, moon_salt: 1.5,
+                        ore: 1.25, gem: 1.3, crystal: 1.1, fish: 1.0, stone: 1.2 },
+    'lumar-rose':     { salt_fish: 1.3, lamp_oil: 1.1, timber: 1.3, glassware: 1.3, spore_silk: 0.66, roseite: 0.62, ember_rum: 1.1, blackpowder: 0.9, moon_salt: 1.3,
+                        ore: 1.1, gem: 0.9, crystal: 0.7, fish: 1.2, stone: 1.0 },
+    'lumar-crimson':  { salt_fish: 1.4, lamp_oil: 1.35, timber: 1.45, glassware: 1.35, spore_silk: 1.1, roseite: 1.2, ember_rum: 0.6, blackpowder: 0.62, moon_salt: 1.6,
+                        ore: 1.3, gem: 1.15, crystal: 1.0, fish: 1.3, stone: 1.1 },
+    'lumar-midnight': { salt_fish: 1.6, lamp_oil: 1.7, timber: 1.2, glassware: 1.0, spore_silk: 0.9, roseite: 1.0, ember_rum: 1.5, blackpowder: 0.8, moon_salt: 0.45,
+                        ore: 0.8, gem: 1.4, crystal: 1.3, fish: 0.7, stone: 0.6 }
+  };
+  // what each port's market actually stocks (you can sell anything anywhere; you can only buy what they have)
+  var STOCK = {
+    'lumar': ['salt_fish', 'lamp_oil', 'timber', 'glassware'],
+    'lumar-sapphire': ['glassware', 'salt_fish', 'ember_rum', 'spore_silk', 'timber'],
+    'lumar-rose': ['spore_silk', 'roseite', 'lamp_oil'],
+    'lumar-crimson': ['ember_rum', 'blackpowder', 'salt_fish'],
+    'lumar-midnight': ['moon_salt']
+  };
+  var SPREAD = 0.08;                                    // a market buys under its price and sells over it
+
+  var st = { glut: {}, taken: [], done: {} };
+  try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* fresh */ }
+  function store() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* private mode */ } }
+
+  function today() { return Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / DAY); }
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 100000) / 100000; }
+  function port(id) {                                    // a world in a port's island counts as the port
+    var P = typeof BridgeFleet !== 'undefined' ? BridgeFleet.islandOf(id) : id;
+    return MARKET[P] ? P : null;
+  }
+  function isGood(id) { return !!GOODS[id]; }
+  function name(id) { if (GOODS[id]) return GOODS[id].name; var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(id); return it ? it.name : id; }
+  function per(id) { return GOODS[id] ? 1 : HAUL[id] ? HAUL[id].per : 0; }
+  function base(id) {
+    if (GOODS[id]) return GOODS[id].base;
+    var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(id);
+    return it ? Math.max(1, it.value || 2) : 1;
+  }
+  function appetite(id, P) {
+    var M = MARKET[P] || {};
+    if (GOODS[id]) return M[id] || 1;
+    return HAUL[id] ? M[HAUL[id].kind] || 1 : 1;
+  }
+  function glutOf(id, P) {                               // how much you've sold here lately (halves every 2 hours)
+    var g = st.glut[P + ':' + id];
+    if (!g) return 0;
+    return g.n * Math.pow(0.5, (Date.now() - g.at) / 7200000);
+  }
+  /** The price of one unit of `id` at port P, to `buy` from it or to `sell` to it. */
+  function price(id, P, side) {
+    P = port(P);
+    if (!P) return 0;
+    var drift = 0.85 + 0.3 * hash(today() + ':' + P + ':' + id);
+    var g = glutOf(id, P), sag = 1 / (1 + g / (GOODS[id] ? 18 : 60));
+    var p = base(id) * appetite(id, P) * drift * sag;
+    var purser = typeof BridgeFleet !== 'undefined' && BridgeFleet.crewHas && BridgeFleet.crewHas('purser') ? 0.05 : 0;
+    p = side === 'buy' ? p * (1 + SPREAD - purser) : p * (1 - SPREAD + purser);
+    return Math.max(1, Math.round(p));
+  }
+  function stock(P) { P = port(P); return P ? (STOCK[P] || []).slice() : []; }
+  /** How much a port will sell you today (rare cargo is scarce). */
+  function supply(id, P) { return GOODS[id] && GOODS[id].rare ? 4 + Math.floor(hash(today() + ':' + P) * 4) - (st.bought && st.bought[today() + ':' + P + ':' + id] || 0) : 99; }
+
+  // ---- the hold ---------------------------------------------------------------------------------------------------
+  function crates(ship) {
+    var n = 0, h = ship && ship.hold || {};
+    for (var id in h) if (h[id] > 0) n += Math.ceil(h[id] / (per(id) || 1));
+    return n;
+  }
+  function capacity(ship) { return typeof BridgeFleet !== 'undefined' ? BridgeFleet.effective(ship).hold : 12; }
+  function room(ship) { return Math.max(0, capacity(ship) - crates(ship)); }
+  /** How many more units of `id` fit (filling the part-crate first). */
+  function fits(ship, id) {
+    var p = per(id) || 1, have = ship.hold[id] || 0, part = have % p ? p - have % p : 0;
+    return part + room(ship) * p;
+  }
+  function add(ship, id, n) { ship.hold[id] = (ship.hold[id] || 0) + n; if (typeof BridgeFleet !== 'undefined') BridgeFleet.save(); }
+  function take(ship, id, n) {
+    ship.hold[id] = (ship.hold[id] || 0) - n;
+    if (ship.hold[id] <= 0) delete ship.hold[id];
+    if (typeof BridgeFleet !== 'undefined') BridgeFleet.save();
+  }
+  /** Pack → hold. Resolves {ok, n}. */
+  function load(ship, id, n) {
+    if (!per(id) || typeof BridgeInventory === 'undefined') return { ok: false, reason: 'not_cargo' };
+    n = Math.min(n, BridgeInventory.getCount(id), fits(ship, id));
+    if (n <= 0) return { ok: false, reason: 'full' };
+    BridgeInventory.removeItem(id, n);
+    add(ship, id, n);
+    return { ok: true, n: n };
+  }
+  /** Hold → pack (your own finds only: trade goods stay in the hold). */
+  function unload(ship, id, n) {
+    if ((GOODS[id] && !GOODS[id].item) || typeof BridgeInventory === 'undefined') return { ok: false, reason: 'cargo' };
+    n = Math.min(n, ship.hold[id] || 0);
+    if (n <= 0 || !BridgeInventory.addItem(id, n)) return { ok: false, reason: 'pack' };
+    take(ship, id, n);
+    return { ok: true, n: n };
+  }
+
+  // ---- buying and selling -----------------------------------------------------------------------------------------
+  function pay(n, why) {
+    return typeof BridgeProgression !== 'undefined' && BridgeProgression.wagerCoins
+      ? BridgeProgression.wagerCoins(n, why) : Promise.resolve({ ok: false, reason: 'offline' });
+  }
+  function paid(n, why) {
+    return typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins
+      ? BridgeProgression.awardCoins(n, why).then(function (b) { return b != null; }) : Promise.resolve(false);
+  }
+  function buy(ship, id, n, P) {
+    P = port(P);
+    if (!P || stock(P).indexOf(id) < 0) return Promise.resolve({ ok: false, reason: 'not_here' });
+    n = Math.min(n, fits(ship, id), Math.max(0, supply(id, P)));
+    if (n <= 0) return Promise.resolve({ ok: false, reason: room(ship) ? 'sold_out' : 'full' });
+    var cost = price(id, P, 'buy') * n;
+    return pay(cost, 'cargo:' + id).then(function (r) {
+      if (!r || !r.ok) return { ok: false, reason: (r && r.reason) || 'coins' };
+      add(ship, id, n);
+      if (GOODS[id].rare) { st.bought = st.bought || {}; var k = today() + ':' + P + ':' + id; st.bought[k] = (st.bought[k] || 0) + n; store(); }
+      return { ok: true, n: n, cost: cost };
+    });
+  }
+  function sell(ship, id, n, P) {
+    P = port(P);
+    n = Math.min(n, ship.hold[id] || 0);
+    if (!P || n <= 0) return Promise.resolve({ ok: false, reason: 'none' });
+    var each = price(id, P, 'sell'), total = each * n;
+    take(ship, id, n);                                    // off the ship first; back on if the coins don't go through
+    return paid(total, 'cargo:' + id).then(function (ok) {
+      if (!ok) { add(ship, id, n); return { ok: false, reason: 'offline' }; }
+      var k = P + ':' + id, g = glutOf(id, P);
+      st.glut[k] = { n: g + n, at: Date.now() };
+      store();
+      return { ok: true, n: n, total: total };
+    });
+  }
+
+  // ---- contracts --------------------------------------------------------------------------------------------------
+  var PORTS = ['lumar', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight'];
+  function contracts(P) {
+    P = port(P);
+    if (!P) return [];
+    var d = today(), out = [];
+    for (var i = 0; i < 2; i++) {
+      var h1 = hash(d + ':' + P + ':c' + i), h2 = hash(d + ':' + P + ':d' + i), h3 = hash(d + ':' + P + ':n' + i);
+      var dests = PORTS.filter(function (q) { return q !== P; }), to = dests[Math.floor(h2 * dests.length)];
+      // a good the destination wants, that's to be had somewhere
+      var wants = Object.keys(GOODS).filter(function (g) { return !GOODS[g].rare && (MARKET[to][g] || 1) > 1.05; });
+      if (!wants.length) continue;
+      var good = wants[Math.floor(h1 * wants.length)], n = 4 + Math.floor(h3 * 8);
+      var fee = Math.round(GOODS[good].base * n * (1.9 + h1 * 0.8) / 10) * 10;
+      var id = d + ':' + P + ':' + i;
+      out.push({ id: id, from: P, to: to, good: good, n: n, fee: fee, due: (d + 1 + (h3 > 0.5 ? 1 : 0)), taken: !!st.taken.filter(function (c) { return c.id === id; })[0],
+                 done: !!st.done[id] });
+    }
+    return out;
+  }
+  function mine() {                                      // contracts you've taken and not delivered, still in time
+    var d = today();
+    st.taken = st.taken.filter(function (c) { return !st.done[c.id] && c.due >= d; });
+    return st.taken.slice();
+  }
+  function takeContract(c) { if (!mine().filter(function (x) { return x.id === c.id; })[0]) { st.taken.push(c); store(); } }
+  /** Hand over every contract due at this port that the ship has the goods for. Resolves [{contract, ok}] */
+  function deliver(ship, P) {
+    P = port(P);
+    var due = mine().filter(function (c) { return c.to === P && (ship.hold[c.good] || 0) >= c.n; });
+    return Promise.all(due.map(function (c) {
+      take(ship, c.good, c.n);
+      return paid(c.fee, 'contract:' + c.good).then(function (ok) {
+        if (!ok) { add(ship, c.good, c.n); return { contract: c, ok: false }; }
+        st.done[c.id] = Date.now(); store();
+        return { contract: c, ok: true };
+      });
+    }));
+  }
+
+  // ---- how cargo looks: an icon per good, in the items' 16-unit style --------------------------------------------
+  function px(ctx, x, y, u, c, rects) { ctx.fillStyle = c; rects.forEach(function (r) { ctx.fillRect(x + r[0] * u, y + r[1] * u, r[2] * u, r[3] * u); }); }
+  var LOOKS = {
+    barrel: function (ctx, x, y, u, c) {
+      px(ctx, x, y, u, '#1a1008', [[4, 2, 8, 13], [3, 4, 10, 9]]);
+      px(ctx, x, y, u, c[0], [[5, 3, 6, 11], [4, 5, 8, 7]]);
+      px(ctx, x, y, u, c[1], [[6, 3, 3, 11], [5, 5, 3, 7]]);
+      px(ctx, x, y, u, '#3a3a40', [[4, 5, 8, 1], [4, 11, 8, 1]]);
+      px(ctx, x, y, u, c[2], [[6, 2, 4, 1]]);
+    },
+    keg: function (ctx, x, y, u, c) {
+      LOOKS.barrel(ctx, x, y, u, [c[0], c[1], '#6a5a3a']);
+      px(ctx, x, y, u, c[2], [[7, 7, 2, 2]]);
+    },
+    jar: function (ctx, x, y, u, c) {
+      px(ctx, x, y, u, '#1a1008', [[6, 1, 4, 2], [4, 3, 8, 12], [3, 5, 10, 8]]);
+      px(ctx, x, y, u, '#6a4a2a', [[6, 2, 4, 1]]);
+      px(ctx, x, y, u, c[0], [[5, 4, 6, 10], [4, 6, 8, 6]]);
+      px(ctx, x, y, u, c[1], [[5, 6, 5, 6]]);
+      px(ctx, x, y, u, c[2], [[6, 7, 2, 2]]);
+    },
+    crate: function (ctx, x, y, u, c) {
+      px(ctx, x, y, u, '#1a1008', [[2, 4, 12, 11]]);
+      px(ctx, x, y, u, '#8a6034', [[3, 5, 10, 9]]);
+      px(ctx, x, y, u, '#5a3a1a', [[3, 9, 10, 1], [7, 5, 1, 9]]);
+      px(ctx, x, y, u, c[1], [[4, 2, 3, 3], [8, 1, 3, 4]]);
+      px(ctx, x, y, u, c[2], [[5, 2, 1, 1], [9, 1, 1, 2]]);
+      px(ctx, x, y, u, '#d8c890', [[4, 4, 8, 1]]);
+    },
+    bolt: function (ctx, x, y, u, c) {
+      px(ctx, x, y, u, '#1a1008', [[2, 5, 12, 8]]);
+      px(ctx, x, y, u, c[0], [[3, 6, 10, 6]]);
+      px(ctx, x, y, u, c[1], [[3, 6, 10, 3]]);
+      px(ctx, x, y, u, c[2], [[4, 7, 7, 1]]);
+      px(ctx, x, y, u, '#f0e0c0', [[12, 6, 2, 6]]);
+      px(ctx, x, y, u, c[0], [[12, 8, 1, 2]]);
+    },
+    logs: function (ctx, x, y, u, c) {
+      px(ctx, x, y, u, '#1a1008', [[1, 5, 14, 9]]);
+      [[2, 9], [7, 9], [4, 5], [10, 6]].forEach(function (p) {
+        px(ctx, x, y, u, c[0], [[p[0], p[1], 4, 4]]);
+        px(ctx, x, y, u, c[2], [[p[0] + 1, p[1] + 1, 2, 2]]);
+        px(ctx, x, y, u, c[1], [[p[0] + 1, p[1] + 1, 1, 1]]);
+      });
+    }
+  };
+  function icon(g) { return function (ctx, x, y, s) { LOOKS[g.look](ctx, x, y, s / 16, g.c); }; }
+  // cargo shows up wherever items are drawn (the market and hold panels use item icons)
+  if (typeof BridgeItems !== 'undefined' && BridgeItems.all) {
+    var IT = BridgeItems.all();
+    Object.keys(GOODS).forEach(function (id) {
+      var g = GOODS[id];
+      if (IT[id]) return;                                 // already an item (roseite): it keeps its own look
+      IT[id] = { id: id, name: g.name, desc: g.desc, type: 'cargo', stackable: true, draw: icon(g), value: 0 };
+    });
+  }
+
+  return { GOODS: GOODS, HAUL: HAUL, MARKET: MARKET, PORTS: PORTS, isGood: isGood, name: name, per: per, port: port, price: price,
+           stock: stock, supply: supply, crates: crates, capacity: capacity, room: room, fits: fits, load: load, unload: unload,
+           buy: buy, sell: sell, contracts: contracts, mine: mine, take: takeContract, deliver: deliver,
+           _state: function () { return st; } };
+})();

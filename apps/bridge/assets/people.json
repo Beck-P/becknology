@@ -1662,5 +1662,165 @@
         "a": "FIRST NIGHT OF AUTUMN, THE WHOLE VILLAGE IN HERE AND SPILLING OUT ONTO THE SQUARE. BRING SOMETHING YOU GREW. THE BEST PUMPKIN GETS HUNG OVER THE DOOR TILL IT FALLS ON SOMEBODY."
       }
     ]
+  },
+  "bess": {
+    "name": "Bess Tolliver",
+    "role": "Harbourmistress of Diggen's Point, and of Tolliver & Daughters' slip",
+    "sheet": "npc-hm-bess",
+    "at": [
+      {
+        "world": "lumar",
+        "label": "HARBOURMASTER"
+      }
+    ],
+    "greet": "TOLLIVER. I KEEP THE BOOK FOR EVERY KEEL THAT TIES UP HERE, AND MY GIRLS BUILD CUTTERS ON THE SLIP BEHIND THE FISH SHEDS. YOU'LL BE THE ONE WITH THE LITTLE GULL.",
+    "again": "BACK AGAIN. THE GULL'S WHERE YOU LEFT HER - SHE ALWAYS IS.",
+    "topics": [
+      {
+        "q": "The harbour book",
+        "a": "HERE. EVERYTHING OF YOURS THAT FLOATS, EVERYTHING I CAN SELL YOU THAT DOES, AND WHO'S LOOKING FOR A BERTH.",
+        "harbour": true
+      },
+      {
+        "q": "About the yard",
+        "a": "TOLLIVER & DAUGHTERS. THREE GIRLS, ONE SLIP, A CUTTER EVERY SIX WEEKS. A CUTTER'S THE QUICKEST THING ON THE EMERALD AND SHE'LL CARRY FORTY CRATES. ONE HAND TO SAIL HER - SIGN SOMEBODY ON."
+      },
+      {
+        "q": "Trade on the Emerald?",
+        "a": "SALT FISH, LAMP OIL AND PINE ARE CHEAP HERE - WE MAKE THEM. SAPPHIRE PAYS WELL FOR TIMBER, CRIMSON FOR ANYTHING THAT ISN'T RUM. BUY WHERE IT'S MADE, SELL WHERE IT'S WANTED. THE CONTRACTS PAY BEST OF ALL."
+      },
+      {
+        "q": "Pirates?",
+        "a": "NOT MANY ON THE EMERALD - THE SAPPHIRE GUARD SEES TO THAT. MORE ON THE OTHER SEAS, AND THE CRIMSON'S THICK WITH THEM. THEY'LL WANT YOUR CARGO. PAY THEM, FIGHT THEM OR RUN. A SLOOP WITH NO GUNS HAD BETTER RUN."
+      }
+    ]
+  },
+  "aldous": {
+    "name": "Aldous Penhallow",
+    "role": "Harbourmaster of Sapphire Port and master of the Great Yard",
+    "sheet": "npc-hm-aldous",
+    "at": [
+      {
+        "world": "lumar-sapphire",
+        "label": "HARBOURMASTER"
+      }
+    ],
+    "greet": "PENHALLOW, HARBOURMASTER. THE GREAT YARD IS MINE AS WELL - BRIGANTINES, AND WHEN SOMEBODY CAN AFFORD ONE, A GALLEON. SAPPHIRE PORT IS WHERE THE SEAS COME TO TRADE.",
+    "again": "AH. WELCOME BACK TO THE BUSIEST QUAY ON LUMAR.",
+    "topics": [
+      {
+        "q": "The harbour book",
+        "a": "THE BOOK. SHIPS, THE YARD, GUNS, HANDS, THE HOLD, THE MARKET. WE DO IT ALL HERE, AND WE DO IT PROPERLY.",
+        "harbour": true
+      },
+      {
+        "q": "About the Great Yard",
+        "a": "A BRIGANTINE TAKES THREE HANDS AND CARRIES A HUNDRED AND TWENTY CRATES - SHE'LL RIDE OUT A CRIMSON SQUALL THAT WOULD SINK YOUR SLOOP. THE GALLEON TAKES FIVE AND CARRIES A WAREHOUSE. NEITHER POINTS WELL. NOTHING THAT BIG DOES."
+      },
+      {
+        "q": "What sells here?",
+        "a": "OUR GLASS IS CHEAP - THE KILNS NEVER STOP. WE PAY DEARLY FOR TIMBER, SPORE SILK AND ROSEITE: EVERY HULL ON THE SLIP WANTS ROSEITE. AND MOON SALT... IF YOU CAN STOMACH THE MIDNIGHT SEA, BRING ME MOON SALT."
+      },
+      {
+        "q": "Guns?",
+        "a": "SWIVELS, LONG NINES, CARRONADES. A LONG NINE REACHES; A CARRONADE SMASHES BUT ONLY CLOSE. GUNS FIRE ABEAM - PUT THE ENEMY ON YOUR SIDE, NOT YOUR BOW. AND A GUN WITH A GUNNER ON IT FIRES TWICE AS OFTEN."
+      }
+    ]
+  },
+  "mira": {
+    "name": "Mira Quell",
+    "role": "Keeps Rose Cove's harbour book and weaves crystal sailcloth",
+    "sheet": "npc-hm-mira",
+    "at": [
+      {
+        "world": "lumar-rose",
+        "label": "HARBOURMASTER"
+      }
+    ],
+    "greet": "MIRA QUELL. I KEEP THE COVE'S BOOK, AND IN THE EVENINGS I WEAVE. SPORE SILK WITH CRYSTAL IN THE WARP - SAILS THAT SING WHEN THE WIND'S RIGHT.",
+    "again": "THE COVE'S GLAD OF YOU. SO AM I.",
+    "topics": [
+      {
+        "q": "The harbour book",
+        "a": "THE COVE'S BOOK. NO YARD HERE - BUT NOBODY ON FIVE SEAS MAKES SAILS LIKE OURS, OR GROWS ROSEITE ONTO A HULL.",
+        "harbour": true
+      },
+      {
+        "q": "Crystal sails?",
+        "a": "CRYSTAL-WEAVE SAILS. QUICKER ON EVERY POINT, AND SHE'LL POINT HIGHER INTO THE WIND THAN SHE HAS ANY RIGHT TO. A BIG SQUARE-RIGGER CAN'T POINT FOR WANT OF TRYING - THESE HELP."
+      },
+      {
+        "q": "Roseite sheathing?",
+        "a": "WE GROW IT ON. A DROP OF WATER AND ROSEITE GOES HARD AS GLASS, SO WE PAINT IT ON HER BILGES AND LET THE SEA DO THE REST. ROCKS AND REEFS DO HALF THE HARM. MIDNIGHT'S ROCKS ESPECIALLY."
+      },
+      {
+        "q": "What sells here?",
+        "a": "SILK AND ROSEITE ARE CHEAP - THEY'RE OURS. WE'RE SHORT OF SALT FISH, TIMBER AND GLASS. AND THE COVE'S NAVIGATORS READ THE SPORE CURRENTS LIKE PRINT: SIGN ONE ON."
+      }
+    ]
+  },
+  "garro": {
+    "name": "Garro",
+    "role": "Quartermaster of the pirate beach on Crimson Reach. One eye, no questions",
+    "sheet": "npc-hm-garro",
+    "at": [
+      {
+        "world": "lumar-crimson",
+        "label": "HARBOURMASTER"
+      }
+    ],
+    "greet": "GARRO. I RUN THIS BEACH FOR PEOPLE WHO DON'T LIKE THEIR NAMES IN BOOKS. I KEEP ONE ANYWAY. YOU WANT A SHIP THAT CAN OUTRUN ANYTHING, OR GUNS THAT CAN STOP IT - I'VE GOT BOTH.",
+    "again": "STILL AFLOAT. THE SQUALLS DIDN'T HAVE YOU, THEN.",
+    "topics": [
+      {
+        "q": "The harbour book",
+        "a": "MY BOOK. THE RAIDER ON THE SLIP, THE HEAVY GUNS, STORM RIGGING, AND PEOPLE WHO KNOW HOW TO FIGHT. NO QUESTIONS.",
+        "harbour": true
+      },
+      {
+        "q": "The raider?",
+        "a": "BLACK HULL, TWO MASTS, FOUR GUN PORTS. FASTEST THING ON THE FIVE SEAS. THREE HANDS TO SAIL HER. DON'T ASK WHO HAD HER BEFORE."
+      },
+      {
+        "q": "The storms?",
+        "a": "THE CRIMSON SEA DOESN'T NEED PIRATES TO KILL YOU. THE SQUALLS COME IN EVERY FEW MINUTES - LIGHTNING, GREEN WATER OVER THE RAIL. A SMALL BOAT GETS BEATEN TO KINDLING. STORM RIGGING, A BIG HULL, A GOOD RIGGER - OR STAY HOME."
+      },
+      {
+        "q": "Pirates?",
+        "a": "MY OLD FRIENDS. THEY'LL HAIL YOU: PAY AND THEY'LL LET YOU BY, MOSTLY. FIGHT AND THEY'LL TRY TO BOARD - HAVE FIGHTERS ABOARD. RUN, IF YOU'RE QUICKER THAN THEM. EMBER RUM AND BLACK POWDER ARE CHEAP HERE, BY THE WAY. EVERYTHING ELSE IS DEAR."
+      }
+    ]
+  },
+  "ferryman": {
+    "name": "The Ferryman",
+    "role": "Rows the dead no longer. Sells moon salt and moonglass to the living",
+    "sheet": "npc-ferryman",
+    "at": [
+      {
+        "world": "lumar-midnight",
+        "label": "HARBOURMASTER"
+      }
+    ],
+    "greet": "...YOU CAME BY SEA. FEW DO. I FERRIED THE DROWNED ACROSS THE MOON POOL FOR LONGER THAN THE ABBEY STOOD. NOW I KEEP THE PIER, AND SELL THE LIVING WHAT THEY CAME FOR.",
+    "again": "...THE MIST LET YOU THROUGH AGAIN.",
+    "topics": [
+      {
+        "q": "The harbour book",
+        "a": "MY LEDGER IS OLDER THAN MOST SHIPS. MOON SALT, MOONGLASS, AND THOSE OF THE DROWNED WHO WOULD SAIL AGAIN.",
+        "harbour": true
+      },
+      {
+        "q": "The Midnight Sea?",
+        "a": "THE ROCKS COME OUT OF THE MIST WITHOUT WARNING. AND THERE ARE THINGS IN THE WATER THAT WERE SAILORS ONCE. A MOON LANTERN AT YOUR MASTHEAD KEEPS THEM OFF AND SHOWS THE ROCKS. A MOONGLASS HARPOON SENDS THEM HOME."
+      },
+      {
+        "q": "Moon salt?",
+        "a": "RAKED FROM THE FLATS ROUND THE MOON POOL. IT GLOWS. ALCHEMISTS ON EVERY ISLAND WILL PAY YOU TEN TIMES WHAT I ASK - IF YOU LIVE TO SELL IT. I SELL A LITTLE EACH DAY. NO MORE."
+      },
+      {
+        "q": "The drowned who would sail?",
+        "a": "SOME OF THEM REMEMBER THE SEA FONDLY. THEY DON'T EAT, THEY DON'T SLEEP AND THEY DON'T FEAR BOARDERS. SIGN ONE ON, IF YOU CAN BEAR THE COLD OF THEM."
+      }
+    ]
   }
 }
