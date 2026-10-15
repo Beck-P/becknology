@@ -1725,3 +1725,36 @@ html.touch .fd-keys { display: none; }
   .fd-rival .fd-die { width: 22px; height: 22px; }
   .fd-rival .fd-dice { gap: 3px; flex-wrap: nowrap; }
 }
+
+/* ---- the Collection, in the journal (js/codex.js) ------------------------------------------------------------------ */
+.qj-tab {
+  margin-left: auto; margin-right: 12px; font: inherit; font-size: 12px; letter-spacing: 1px; cursor: pointer; padding: 4px 10px; border-radius: 999px;
+  color: #f6eedc; background: rgba(224, 192, 96, 0.12); border: 1px solid rgba(224, 192, 96, 0.5);
+}
+.qj-tab i, .cx-tab i { font-style: normal; color: #e0c060; margin-left: 3px; }
+.qj-tab:hover { background: rgba(224, 192, 96, 0.22); }
+.cx-total { margin-left: auto; margin-right: 12px; font-size: 12px; color: #e0c060; }
+.cx-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.cx-tab {
+  font: inherit; font-size: 11px; cursor: pointer; padding: 3px 8px; border-radius: 4px; color: #c4b89e;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(224, 192, 96, 0.2);
+}
+.cx-tab.on { color: #1e160c; background: #e0c060; border-color: #f0d890; }
+.cx-tab.on i { color: #5a3a10; }
+.cx-tab.full:not(.on) { border-color: rgba(122, 192, 138, 0.6); }
+.cx-set { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; border-top: 1px solid rgba(224, 192, 96, 0.18); padding-top: 10px; }
+.cx-name { font-size: 18px; color: #f6eedc; }
+.cx-reward { font-size: 12px; color: #a89c84; }
+.cx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; margin: 10px 0; }
+.cx-cell {
+  font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 3px 6px; border-radius: 5px;
+  background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(224, 192, 96, 0.12); color: #6a5e48;
+}
+.cx-cell canvas { width: 40px; height: 40px; image-rendering: pixelated; image-rendering: crisp-edges; opacity: 0.8; }
+.cx-cell span { font-size: 10px; line-height: 1.2; text-align: center; min-height: 24px; display: flex; align-items: center; }
+.cx-cell.found { background: rgba(224, 192, 96, 0.07); border-color: rgba(224, 192, 96, 0.3); color: #e8dcc4; }
+.cx-cell.found canvas { opacity: 1; }
+.cx-cell.sel { border-color: #e0c060; box-shadow: 0 0 10px rgba(224, 192, 96, 0.3); }
+.cx-detail { min-height: 38px; font-size: 12px; line-height: 1.45; color: #c4b89e; border-top: 1px solid rgba(224, 192, 96, 0.18); padding-top: 8px; }
+.cx-detail b { color: #f6eedc; font-weight: normal; }
+.cx-detail em { color: #e0c060; font-style: normal; }

@@ -313,7 +313,7 @@ var BridgeFishing = (function () {
   // for the journal: what you've caught, the messages you've read
   function journal() {
     return {
-      fish: Object.keys(log.caught).map(function (id) { return { name: name(id), n: log.caught[id].n, best: log.caught[id].best }; }),
+      fish: Object.keys(log.caught).map(function (id) { return { id: id, name: name(id), n: log.caught[id].n, best: log.caught[id].best }; }),
       bottles: log.bottles.map(function (i) { return BOTTLES[i]; })
     };
   }

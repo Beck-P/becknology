@@ -96,8 +96,9 @@ var BridgeQuests = (function () {
   function render() {
     var ids = Object.keys(defs || {}).filter(function (id) { return state[id]; });
     ids.sort(function (a, b) { return (!!state[a].done - !!state[b].done) || (state[b].started - state[a].started); });
-    var html = '<div class="qj-head"><span class="qj-title">Journal</span><button class="qj-close" aria-label="Close">' +
-      '<span class="ip-key">Esc</span></button></div>';
+    var html = '<div class="qj-head"><span class="qj-title">Journal</span>' +
+      (typeof BridgeCodex !== 'undefined' ? '<button class="qj-tab qj-codex">Collection <i>' + BridgeCodex.count() + '/' + BridgeCodex.total() + '</i></button>' : '') +
+      '<button class="qj-close" aria-label="Close"><span class="ip-key">Esc</span></button></div>';
     var crew = typeof BridgeCrew !== 'undefined' ? BridgeCrew.list() : [];
     if (crew.length) {
       html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your crew</span>' +
@@ -196,6 +197,17 @@ var BridgeQuests = (function () {
     });
     journal.innerHTML = '<div class="qj-panel">' + html + '</div>';
     journal.querySelector('.qj-close').addEventListener('click', close);
+    var cx = journal.querySelector('.qj-codex');
+    if (cx) cx.addEventListener('click', collection);
+    inCodex = false;
+  }
+  // the Collection (js/codex.js), in the journal's own panel; Esc comes back
+  var inCodex = false;
+  function collection() {
+    inCodex = true;
+    var panel = journal.querySelector('.qj-panel');
+    panel.classList.add('cx-panel');
+    BridgeCodex.render(panel, render);
   }
 
   function open() {
@@ -220,6 +232,7 @@ var BridgeQuests = (function () {
   }
 
   function onKey(e) {
+    if (e.key === 'Escape' && inCodex) { e.preventDefault(); e.stopPropagation(); render(); return; }
     if (e.key === 'Escape' || e.key === 'j' || e.key === 'J') { e.preventDefault(); e.stopPropagation(); close(); }
   }
 
