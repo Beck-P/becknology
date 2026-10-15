@@ -1536,3 +1536,19 @@
   .mode-cab-marquee { font-size: 13px; }
   .mode-cab-blurb { font-size: 11px; }
 }
+
+/* ---- the new game screens (src/arcade): a pixel canvas in a cabinet bezel ---------------------------------- */
+.arcade-screen-wrap { display: flex; justify-content: center; width: 100%; }
+.arcade-screen-wrap .arcade-bezel { position: relative; display: inline-block; padding: 8px; border-radius: 10px;
+  background: linear-gradient(180deg, #1a1530, #0c0818); box-shadow: 0 0 0 2px #2a2a3e, 0 0 0 3px #080418, 0 0 28px rgba(240,120,168,0.18), inset 0 0 18px rgba(0,0,0,0.8); }
+.arcade-screen { display: block; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 4px; background: #080418; }
+.arcade-scan { position: absolute; inset: 8px; border-radius: 4px; pointer-events: none;
+  background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.12) 2px 3px);
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.55); mix-blend-mode: multiply; }
+@media (max-width: 560px) { .arcade-screen-wrap .arcade-bezel { padding: 4px; border-radius: 6px; } .arcade-scan { inset: 4px; } }
+.arcade-screen-btn { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 3; cursor: pointer;
+  font-family: 'Pixelify Sans', 'Press Start 2P', monospace; font-size: 16px; letter-spacing: 3px; color: #0c0814;
+  padding: 10px 26px; border: 2px solid #0c0814; border-radius: 6px; background: #e8c040;
+  box-shadow: 0 4px 0 #8a6a10, 0 0 22px rgba(232,192,64,0.55); animation: arcade-btn 1.1s ease-in-out infinite; }
+.arcade-screen-btn:active { transform: translateX(-50%) translateY(3px); box-shadow: 0 1px 0 #8a6a10; }
+@keyframes arcade-btn { 50% { box-shadow: 0 4px 0 #8a6a10, 0 0 34px rgba(232,192,64,0.85); } }

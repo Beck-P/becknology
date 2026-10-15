@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import './index.css';
 import { getSingleTotalSteps, getPlaybackConfig, getPlaybackConfigDiagnostics } from './playbackConfig';
 import { WagerSetupBar, WagerRoster, WagerPayout, computePayout } from './Wager';
+import ArcadeScreen, { hasScreen } from './arcade/ArcadeScreen.jsx';
 
 let leaderboardModulePromise;
 let classicModePlaybacksPromise;
@@ -2650,6 +2651,14 @@ function PlaybackStage({ result, step, done, interactiveBombState }) {
   if (result.isTournament) {
     return renderStrategicPlayback(TournamentPlayback);
   }
+  // the new pixel screens in the Runout Room (./arcade), mode by mode as they're built
+  if (hasScreen(result.modeId, !!result.draftPhase)) {
+    return (
+      <ArcadeScreen result={result} step={step} done={done} totalSteps={getPlaybackConfig(result).totalSteps}
+                    names={typeof window !== "undefined" ? window.__runoutsNames : null} interactiveBombState={interactiveBombState}
+                    helpers={{ pickRandomMessage, WIN_MESSAGES, LOSE_MESSAGES }} />
+    );
+  }
   switch (result.modeId) {
     case "holdem":
       return renderStrategicPlayback(PokerPlayback);
@@ -3180,6 +3189,8 @@ export default function ChoreChaosApp() {
   }
 
   useEffect(() => { window.__interactiveMode = interactiveMode || localInteractiveMode; }, [interactiveMode, localInteractiveMode]);
+  // every player keeps one colour and one pilot across the games (./arcade): their place in the roster
+  useEffect(() => { window.__runoutsNames = (names || []).map((n) => String(n || "").trim()).filter(Boolean); }, [names]);
 
   // In local interactive mode, track playerName to whoever's turn it is.
   // In wager mode the player is always the pilot — never rotate to an AI,
@@ -3655,6 +3666,9 @@ export default function ChoreChaosApp() {
   useEffect(() => {
     window.__draftChoices = draftChoices;
   }, [draftChoices]);
+  // and the other drafts' picks, for the arcade screens' draft views
+  useEffect(() => { window.__highCardPicks = highCardDraftHands || {}; }, [highCardDraftHands]);
+  useEffect(() => { window.__horseLanePicks = horseLanePicks; }, [horseLanePicks]);
 
   // Interactive Stock Market draft management
   useEffect(() => {
