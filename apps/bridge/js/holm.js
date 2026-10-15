@@ -224,11 +224,17 @@ var BridgeHolm = (function () {
   // ---- the ledger: building, voyages, the strongbox ---------------------------------------------------------------
   var PORT_NAMES = function (id) { var I = isles(); return I && I[id] ? I[id].name : id; };
   function routes(room) { return T() ? T().routes(room) : []; }
+  function circuits(room) { return T() && T().circuits ? T().circuits(room) : []; }
+  function legs(r) { return r.legs || [r]; }
+  function risky(r) { return legs(r).some(function (l) { return DANGER[l.from] || DANGER[l.to]; }); }
+  function path(r) { return [r.from].concat(legs(r).map(function (l) { return l.to; })).map(PORT_NAMES).join(' → '); }
   var DANGER = { 'lumar-crimson': 0.35, 'lumar-midnight': 0.4, 'lumar-rose': 0.12, 'lumar-sapphire': 0.12 };
   function send(s, r) {
     var f = F(), sp = f.effective(s);
-    var mins = 14 + Math.round(r.crates / 12) + (DANGER[r.from] || DANGER[r.to] ? 6 : 0);
-    s.away = { from: r.from, to: r.to, good: r.good, goods: r.goods, crates: r.crates, profit: r.profit, back: Date.now() + mins * 60000, out: Date.now() };
+    var mins = legs(r).reduce(function (m, l) { return m + 14 + Math.round(l.crates / 12) + (DANGER[l.from] || DANGER[l.to] ? 6 : 0); }, 0);
+    if (r.circuit) mins = Math.round(mins * 0.85);       // no running home empty between legs
+    s.away = { from: r.from, to: r.to, good: r.good, goods: r.goods, crates: r.crates, profit: r.profit, back: Date.now() + mins * 60000, out: Date.now(),
+               legs: r.circuit ? legs(r).map(function (l) { return [l.from, l.to]; }) : null };
     s.at = 'away';
     f.save();
     st.log.unshift('The ' + s.name + ' sailed for ' + PORT_NAMES(r.from) + ' to load ' + (T() ? T().name(r.good) : r.good) + '.');
@@ -243,14 +249,16 @@ var BridgeHolm = (function () {
     var back = [];
     f.all().forEach(function (s) {
       if (!s.away || Date.now() < s.away.back) return;
-      var a = s.away, sp = f.effective(s), risk = Math.max(DANGER[a.from] || 0.05, DANGER[a.to] || 0.05);
+      var a = s.away, sp = f.effective(s), hops = a.legs || [[a.from, a.to]];
       var profit = Math.round((a.profit || 0) * 0.6 * (1 + (f.crewOn(s.id).some(function (c) { return c.role === 'navigator'; }) ? 0.15 : 0)));   // wages and wear
-      var story = 'a fair passage';
-      if (Math.random() < risk) {
+      var story = hops.length > 1 ? 'a fair circuit' : 'a fair passage';
+      hops.forEach(function (h) {                       // every leg rolls its own trouble
+        var risk = Math.max(DANGER[h[0]] || 0.05, DANGER[h[1]] || 0.05);
+        if (Math.random() >= risk) return;
         var teeth = (sp.guns.length * 2 + sp.fighters) / (4 + sp.guns.length * 2 + sp.fighters);
-        if (Math.random() < teeth) { story = 'pirates came at her and she beat them off'; profit += 80; s.hull = Math.max(0.3, s.hull - 0.2); }
-        else { story = 'pirates took a third of her cargo'; profit = Math.round(profit * 0.6); s.hull = Math.max(0.2, s.hull - 0.35); }
-      }
+        if (Math.random() < teeth) { story = 'pirates came at her off ' + PORT_NAMES(h[1]) + ' and she beat them off'; profit += 80; s.hull = Math.max(0.3, s.hull - 0.2); }
+        else { story = 'pirates took a third of her cargo off ' + PORT_NAMES(h[1]); profit = Math.round(profit * (hops.length > 1 ? 0.8 : 0.6)); s.hull = Math.max(0.2, s.hull - 0.35); }
+      });
       st.chest += Math.max(0, profit);
       st.log.unshift('The ' + s.name + ' came home from ' + PORT_NAMES(a.to) + ': ' + story + ', ' + profit + ' coins clear.');
       st.log = st.log.slice(0, 12);
@@ -292,18 +300,21 @@ var BridgeHolm = (function () {
     var rows = ships.map(function (s) {
       var sp = f.effective(s), ok = !sp.short && f.crewOn(s.id).length > 0;
       return { label: s.name, sub: f.line(s), note: ok ? 'send her' : 'needs hands', disabled: !ok, pick: function () {
-        var rs = routes(Math.round(f.effective(s).hold * 0.9));
-        choose({ title: 'Where to?', text: 'TODAY\'S BEST RUNS. SHE BUYS AT ONE END AND SELLS AT THE OTHER, AND COMES HOME WITH THE PROFIT.',
+        var room = Math.round(f.effective(s).hold * 0.9), rs = routes(room).slice(0, 4).concat(circuits(room));
+        choose({ title: 'Where to?', text: 'TODAY\'S BEST RUNS: SHE BUYS AT ONE END AND SELLS AT THE OTHER. OR A CIRCUIT: SHE TRADES HER WAY ROUND TWO OR THREE PORTS - MORE FOR A BIG HOLD, LONGER AT SEA.',
                  rows: rs.map(function (r) {
-                   return { label: PORT_NAMES(r.from) + ' → ' + PORT_NAMES(r.to), icon: r.good,
-                            sub: r.goods.map(function (g) { return g.n + ' ' + (t ? t.name(g.good) : g.good); }).join(', ') + ' · ~' + Math.round(r.profit * 0.6) + ' coins' +
-                                 (DANGER[r.from] || DANGER[r.to] ? ' · risky water' : ''),
+                   var mins = legs(r).reduce(function (m, l) { return m + 14 + Math.round(l.crates / 12) + (DANGER[l.from] || DANGER[l.to] ? 6 : 0); }, 0);
+                   if (r.circuit) mins = Math.round(mins * 0.85);
+                   return { label: (r.circuit ? 'Circuit: ' : '') + path(r), icon: r.good,
+                            sub: (r.circuit ? legs(r).length + ' legs' : r.goods.map(function (g) { return g.n + ' ' + (t ? t.name(g.good) : g.good); }).join(', ')) +
+                                 ' · ~' + Math.round(r.profit * 0.6) + ' coins · ' + mins + ' min' + (risky(r) ? ' · risky water' : ''),
                             pick: function () { var m = send(s, r); ledger('THE ' + s.name.toUpperCase() + ' SAILS ON THE TIDE. BACK IN ABOUT ' + m + ' MINUTES.'); } };
                  }), closeLabel: 'Back' });
       } };
     }).concat(away.map(function (s) {
       var m = Math.max(0, Math.ceil((s.away.back - Date.now()) / 60000));
-      return { label: s.name, sub: 'at sea: ' + PORT_NAMES(s.away.from) + ' → ' + PORT_NAMES(s.away.to), note: m ? 'back in ' + m + ' min' : 'due', disabled: true };
+      return { label: s.name, sub: 'at sea: ' + (s.away.legs ? [s.away.legs[0][0]].concat(s.away.legs.map(function (h) { return h[1]; })).map(PORT_NAMES).join(' → ') : PORT_NAMES(s.away.from) + ' → ' + PORT_NAMES(s.away.to)),
+               note: m ? 'back in ' + m + ' min' : 'due', disabled: true };
     }));
     choose({ title: 'Voyages', text: ships.length ? 'SHIPS BASED HERE WITH THEIR HANDS ABOARD CAN BE SENT OUT. (THE SLOOP STAYS WITH YOU.)' : 'NO SHIP OF YOURS IS TIED UP HERE. SAIL ONE IN AND LEAVE HER.',
              rows: rows, closeLabel: 'Back' });

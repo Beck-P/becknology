@@ -134,7 +134,7 @@ w = {'name': 'Tern Holm', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tilese
      'spawns': {'player': [PX, QUAY]}, 'moonColor': '#d8f0e0', 'shipExit': True,
      'tiles': [], 'collisions': [], 'tileNames': {}, 'interactions': [
          {'x': PX, 'y': QUAY + 2, 'type': 'go_sailing', 'label': 'DOCK', 'prompt': 'PRESS E TO GO SAILING'},
-         look("THE TERN'S REST", 19, 11, "THE TERN'S REST. FOUR TABLES, ONE FIRE, AND A STEW THAT'S BEEN ON THE GO SINCE BEFORE THE CAPITAL HAD A NAME."),
+         {'x': 19, 'y': 11, 'type': 'enter_world', 'target': 'lumar-tern-inn', 'spawn': [7, 8], 'label': "THE TERN'S REST", 'prompt': 'PRESS E TO GO IN'},
          look('CHAPEL', 7, 13, 'THE LITTLE CHAPEL ON THE HEAD. A LANTERN BURNS IN ITS TOWER ALL NIGHT SO THE BOATS CAN FIND THEIR WAY HOME.'),
          look('SMOKEHOUSE', 31, 12, 'THE SMOKEHOUSE. RACKS OF SILVERFIN GOING GOLD IN THE SMOKE. THE SMELL WILL BE ON YOU FOR DAYS.'),
          look('NETS', 14, 15, 'NETS DRYING ON THEIR POLES, MENDED A HUNDRED TIMES. EVERY KNOT IS SOMEBODY\'S.'),

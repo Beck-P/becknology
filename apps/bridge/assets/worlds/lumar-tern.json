@@ -2275,10 +2275,14 @@
     {
       "x": 19,
       "y": 11,
-      "type": "dialog",
+      "type": "enter_world",
+      "target": "lumar-tern-inn",
+      "spawn": [
+        7,
+        8
+      ],
       "label": "THE TERN'S REST",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "THE TERN'S REST. FOUR TABLES, ONE FIRE, AND A STEW THAT'S BEEN ON THE GO SINCE BEFORE THE CAPITAL HAD A NAME."
+      "prompt": "PRESS E TO GO IN"
     },
     {
       "x": 7,

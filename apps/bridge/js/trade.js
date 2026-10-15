@@ -216,21 +216,38 @@ var BridgeTrade = (function () {
 
   /** Today's best runs for a ship of `room` crates: from one port to another, up to three goods, each in the amount that
    *  moves the prices least (js/trade.js bestRun) - a big hold pays off on a route with several goods to carry. */
+  // one run from a to b: up to three goods made at a that b wants, sized so the hold pays best
+  function runAB(a, b, room) {
+    var runs = stock(a).filter(function (g) { return !GOODS[g].rare; }).map(function (g) { var r = bestRun(g, a, b, room); r.good = g; return r; })
+      .filter(function (r) { return r.profit > 0; }).sort(function (p, q) { return q.profit - p.profit; }).slice(0, 3);
+    var left = room, goods = [], profit = 0;
+    runs.forEach(function (r) { var n = Math.min(r.n, left); if (n < 2) return; var k = n / r.n; goods.push({ good: r.good, n: n }); profit += r.profit * k; left -= n; });
+    return goods.length ? { from: a, to: b, good: goods[0].good, goods: goods, crates: room - left, profit: Math.round(profit) } : null;
+  }
   function routes(room) {
-    var t = { PORTS: PORTS, stock: stock, GOODS: GOODS, bestRun: bestRun };
     var out = [];
-    t.PORTS.forEach(function (a) {
-      t.PORTS.forEach(function (b) {
-        if (a === b) return;
-        var runs = t.stock(a).filter(function (g) { return !t.GOODS[g].rare; }).map(function (g) { var r = t.bestRun(g, a, b, room); r.good = g; return r; })
-          .filter(function (r) { return r.profit > 0; }).sort(function (p, q) { return q.profit - p.profit; }).slice(0, 3);
-        var left = room, goods = [], profit = 0;
-        runs.forEach(function (r) { var n = Math.min(r.n, left); if (n < 2) return; var k = n / r.n; goods.push({ good: r.good, n: n }); profit += r.profit * k; left -= n; });
-        if (goods.length) out.push({ from: a, to: b, good: goods[0].good, goods: goods, crates: room - left, profit: Math.round(profit) });
-      });
-    });
+    PORTS.forEach(function (a) { PORTS.forEach(function (b) { if (a !== b) { var r = runAB(a, b, room); if (r) out.push(r); } }); });
     out.sort(function (p, q) { return q.profit - p.profit; });
     return out.slice(0, 5);
+  }
+  // a circuit: the best run, then the best run on from where she lands (not straight back), and a third if it pays —
+  // for a big hold one market can't take it all, so she trades her way round (js/holm.js sends ships on these)
+  function bestFrom(a, room, not) {
+    var best = null;
+    PORTS.forEach(function (b) { if (b === a || b === not) return; var r = runAB(a, b, room); if (r && (!best || r.profit > best.profit)) best = r; });
+    return best;
+  }
+  function circuits(room) {
+    var out = [];
+    routes(room).slice(0, 4).forEach(function (r1) {
+      var r2 = bestFrom(r1.to, room, r1.from);
+      if (!r2) return;
+      var r3 = bestFrom(r2.to, room, r2.from), legs = [r1, r2].concat(r3 && r3.profit > r1.profit * 0.25 ? [r3] : []);
+      out.push({ circuit: true, legs: legs, from: r1.from, to: legs[legs.length - 1].to, good: r1.good, goods: r1.goods,
+                 crates: legs.reduce(function (m, l) { return Math.max(m, l.crates); }, 0), profit: legs.reduce(function (n, l) { return n + l.profit; }, 0) });
+    });
+    out.sort(function (p, q) { return q.profit - p.profit; });
+    return out.slice(0, 3);
   }
   // ---- contracts --------------------------------------------------------------------------------------------------
   var PORTS = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight'];
@@ -351,6 +368,6 @@ var BridgeTrade = (function () {
 
   return { GOODS: GOODS, HAUL: HAUL, MARKET: MARKET, PORTS: PORTS, isGood: isGood, name: name, per: per, port: port, price: price,
            stock: stock, supply: supply, crates: crates, capacity: capacity, room: room, fits: fits, load: load, unload: unload,
-           buy: buy, sell: sell, bestRun: bestRun, routes: routes, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver,
+           buy: buy, sell: sell, bestRun: bestRun, routes: routes, circuits: circuits, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver,
            _state: function () { return st; } };
 })();

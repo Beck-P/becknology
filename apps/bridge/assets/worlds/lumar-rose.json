@@ -4997,11 +4997,15 @@
     },
     {
       "x": 42,
-      "y": 10,
-      "type": "dialog",
+      "y": 9,
+      "type": "enter_world",
+      "target": "lumar-rose-glasshouse",
+      "spawn": [
+        7,
+        9
+      ],
       "label": "GLASSHOUSE",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "INSIDE, ROSEITE GROWS AS TALL AS YOU ARE, PINK LIGHT FOGGING THE GLASS.\n\nA SLATE BY THE DOOR: \"DO NOT SING NEAR THE BIG ONES.\""
+      "prompt": "PRESS E TO GO IN"
     },
     {
       "x": 11,

@@ -2260,5 +2260,59 @@
         "a": "HER MAJESTY GIVES THEM TO CAPTAINS SHE TRUSTS, ONE AT A TIME. EACH ONE DONE IS A FAVOUR OWED - A WARRANT, A LETTER UNDER THE GREAT SEAL. THE ADMIRALTY TABLE SHOWS WHERE YOU STAND. BOW FIRST."
       }
     ]
+  },
+  "bryony": {
+    "name": "Bryony Kettle",
+    "role": "Keeps the Tern's Rest",
+    "sheet": "npc-bryony",
+    "at": [
+      {
+        "world": "lumar-tern-inn",
+        "label": "BRYONY"
+      }
+    ],
+    "greet": "SIT DOWN BEFORE YOU FALL DOWN. STEW'S ON. IT'S ALWAYS ON.",
+    "again": "BACK FOR SECONDS? EVERYONE COMES BACK FOR SECONDS.",
+    "topics": [
+      {
+        "q": "About the stew",
+        "a": "MY GREAT-GRAN STARTED IT THE WINTER THE CAPITAL WAS STILL A FISHING VILLAGE LIKE THIS ONE. NOBODY'S LET IT GO OUT SINCE. YOU ADD WHAT THE BOATS BRING IN. TODAY IT'S MOSTLY CRAB. TOMORROW, WHO KNOWS."
+      },
+      {
+        "q": "About Tern Holm",
+        "a": "FORTY SOULS, TWELVE BOATS, ONE CHAPEL, ONE INN. WE SELL THE CAPITAL ITS FISH AND THE CAPITAL SELLS US EVERYTHING ELSE. SALT FISH IS CHEAPER HERE THAN ANYWHERE ON THE SEAS - ASK OLD PELL ON THE PIER."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE FISHERMEN SAY THE TERNS STOPPED FLYING SOUTH-EAST LAST SPRING, TOWARD MIDNIGHT. BIRDS KNOW THINGS. AND SOMEBODY BOUGHT THE OLD HOLM OFF STARLING - OR WILL, IF THEY'VE ANY SENSE. LOVELY LITTLE COTTAGE ONCE."
+      }
+    ]
+  },
+  "liesl": {
+    "name": "Liesl Marrow",
+    "role": "Keeper of the Glasshouse, Rose Cove",
+    "sheet": "npc-liesl",
+    "at": [
+      {
+        "world": "lumar-rose-glasshouse",
+        "label": "LIESL"
+      }
+    ],
+    "greet": "MIND WHERE YOU STEP. THAT ONE'S THREE DAYS OLD.",
+    "again": "BACK TO SEE MY BABIES? THE BIG ONES HAVE BEEN GRUMPY ALL WEEK.",
+    "topics": [
+      {
+        "q": "Growing roseite",
+        "a": "A SEED-CRYSTAL THE SIZE OF A LENTIL, A BED OF GRIT, A DROP OF WATER A DAY. NO MORE. MORE AND IT GROWS INTO THE BED, THEN THE FLOOR, THEN THE FOUNDATIONS. THE RIPE ONES IN THE MIDDLE BEDS ARE READY TO PICK - HELP YOURSELF, THEY GROW BACK."
+      },
+      {
+        "q": "The big ones",
+        "a": "FORTY YEARS OLD, SOME OF THEM. THEY HUM WHEN THE TIDE COMES IN. SING NEAR THEM AND THEY SING BACK, AND THEN THEY DON'T STOP FOR A WEEK. HENCE THE SIGN. HENCE MY EARS."
+      },
+      {
+        "q": "Crystal sails?",
+        "a": "THE SAILMAKERS WEAVE SEED-CRYSTAL INTO THE CANVAS. LIGHTER, STIFFER, POINTS HIGHER INTO THE WIND. MIRA ON THE PIER FITS THEM. EXPENSIVE. WORTH IT, IF YOU SAIL TO WINDWARD MUCH, AND EVERYONE DOES IN THE END."
+      }
+    ]
   }
 }
