@@ -3,26 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Cipher Room &mdash; Dispatch</title>
+  <title>Intercept &mdash; Cipher Terminal</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>
+    // Inside the Bridge's terminal modal (an iframe) the Bridge provides the chrome.
+    (function () { var f; try { f = window.self !== window.top; } catch (e) { f = true; } if (f) document.documentElement.classList.add('in-frame'); })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/cipher-room/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/bridge/js/shared/progression.js"></script>
 </head>
-<body>
-  <a href="/cipher-room" class="hub-link">&larr; FIELD OFFICE</a>
+<body class="play">
+  <a href="/cipher-room" class="back-link">&larr; INTERCEPTS</a>
   <div id="app" class="page">
-    <div class="dispatch-header">
-      <div class="classification">TOP SECRET</div>
-      <div class="stamp">DECODE</div>
-      <h1 id="puzzle-title">FLASH CIPHER</h1>
-      <div class="subtitle" id="puzzle-subtitle">DAILY DISPATCH — MINI</div>
-      <div class="dispatch-info" id="dispatch-info">DISPATCH #001 — CAIRO STATION — 04 APR 2026</div>
-    </div>
+    <header class="dispatch-header">
+      <div class="kicker">ENIGMA RELAY <span class="sep">//</span> INTERCEPTS</div>
+      <h1 id="puzzle-title">FLASH INTERCEPT</h1>
+      <div class="subtitle" id="puzzle-subtitle">5&times;5 &middot; SHORT BURST</div>
+      <div class="dispatch-info" id="dispatch-info">INTERCEPT #--- &middot; TUNING&hellip;</div>
+    </header>
 
     <div class="op-clock">
-      OP CLOCK<br>
+      <span class="label">DECODE CLOCK</span>
       <span class="time" id="timer">00:00</span>
     </div>
 
@@ -30,17 +35,15 @@
 
     <div class="grid-container">
       <div id="grid" class="grid"></div>
-      <input type="text" id="hidden-input" class="hidden-input" autocomplete="off" autocapitalize="characters" autocorrect="off">
+      <input type="text" id="hidden-input" class="hidden-input" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" aria-label="Crossword letter input">
     </div>
 
     <div class="progress-bar">
-      <div class="label">DECRYPTION PROGRESS</div>
+      <div class="label">DECRYPTION</div>
       <div class="progress-track">
         <div class="progress-fill" id="progress-fill"></div>
       </div>
     </div>
-
-    <div class="divider"></div>
 
     <div class="clues-section" id="clues-section"></div>
   </div>
@@ -49,9 +52,8 @@
   <script src="/cipher-room/js/prng.js"></script>
   <script src="/cipher-room/js/storage.js"></script>
   <script src="/cipher-room/js/generator.js"></script>
-  <script src="/cipher-room/js/game.js"></script>
   <script src="/cipher-room/js/share.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/cipher-room/js/supabase.js"></script>
+  <script src="/cipher-room/js/game.js"></script>
 </body>
 </html>

@@ -3,83 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Cipher Room</title>
+  <title>Cipher Terminal &mdash; Enigma Relay</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>
+    // Inside the Bridge's terminal modal (an iframe) the Bridge provides the chrome.
+    (function () { var f; try { f = window.self !== window.top; } catch (e) { f = true; } if (f) document.documentElement.classList.add('in-frame'); })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/cipher-room/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/bridge/css/bridge-skin.css">
+  <link rel="stylesheet" href="/cipher-room/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/bridge/js/shared/progression.js"></script>
-  <script src="/bridge/js/shared/bridge-skin.js" data-title="CIPHER ROOM"></script>
+  <!-- the one back control: the Bridge bar's "BRIDGE" button, which hides itself inside the Bridge's modal -->
+  <script src="/bridge/js/shared/bridge-skin.js" data-title="CIPHER TERMINAL"></script>
 </head>
-<body>
-  <a href="/bridge" class="hub-link">&larr; RETURN TO BRIDGE</a>
+<body class="hub">
 
-  <!-- Registration overlay (shown if no agent in localStorage) -->
-  <div id="registration" class="registration" style="display:none;">
-    <div class="classification">AGENT REGISTRATION</div>
-    <h2 style="margin-top:16px;">THE CIPHER ROOM</h2>
-    <div class="subtitle" style="margin-bottom:24px;">ESTABLISH YOUR IDENTITY</div>
+  <!-- Only when no pilot is on file (someone visiting directly) -->
+  <section id="identify" class="identify" hidden>
+    <div class="kicker">RELAY ACCESS</div>
+    <h1>OPERATOR UNKNOWN</h1>
+    <p>No pilot on file. Give the relay a callsign for its rankings.</p>
+    <form id="identify-form" autocomplete="off">
+      <input type="text" id="codename-input" class="input-field" placeholder="CALLSIGN" maxlength="20" aria-label="Callsign">
+      <div id="identify-error" class="error-msg" hidden></div>
+      <button class="btn primary" type="submit">LOG IN</button>
+      <button class="btn ghost" type="button" id="identify-skip">DECODE UNLISTED</button>
+    </form>
+  </section>
 
-    <div id="reg-choice" class="reg-buttons">
-      <button class="btn primary" onclick="CipherHub.showNewAgent()">NEW AGENT</button>
-      <button class="btn" onclick="CipherHub.showReturning()">RETURNING AGENT</button>
-    </div>
+  <main id="hub" class="page" hidden>
+    <header class="dispatch-header">
+      <div class="kicker">ENIGMA STATION <span class="sep">//</span> RELAY DECK</div>
+      <h1>ENIGMA RELAY <span class="accent">&mdash;</span> INTERCEPTS</h1>
+      <div class="subtitle">OPERATOR <strong id="agent-name">--</strong> <span id="set-callsign" hidden>&middot; <button class="link-btn" type="button" id="set-callsign-btn">SET CALLSIGN</button></span></div>
+    </header>
 
-    <div id="reg-new" style="display:none;">
-      <p style="font-size:11px;color:#c8b88860;margin-bottom:12px;">Choose a codename, Agent.</p>
-      <input type="text" id="new-codename" class="input-field" placeholder="ENTER CODENAME" maxlength="20" autocomplete="off">
-      <div id="new-error" class="error-msg" style="display:none;"></div>
-      <button class="btn primary" onclick="CipherHub.registerNew()">REGISTER</button>
-      <button class="btn" onclick="CipherHub.showChoice()" style="margin-top:8px;">BACK</button>
-    </div>
-
-    <div id="reg-returning" style="display:none;">
-      <p style="font-size:11px;color:#c8b88860;margin-bottom:12px;">Enter your codename to resume your service record.</p>
-      <input type="text" id="return-codename" class="input-field" placeholder="ENTER CODENAME" maxlength="20" autocomplete="off">
-      <div id="return-error" class="error-msg" style="display:none;"></div>
-      <button class="btn primary" onclick="CipherHub.loginReturning()">CONFIRM IDENTITY</button>
-      <button class="btn" onclick="CipherHub.showChoice()" style="margin-top:8px;">BACK</button>
-    </div>
-  </div>
-
-  <!-- Main hub content (shown after registration) -->
-  <div id="hub" class="page" style="display:none;">
-    <div class="dispatch-header">
-      <div class="classification">TOP SECRET</div>
-      <h1>THE CIPHER ROOM</h1>
-      <div class="subtitle">FIELD OFFICE &mdash; <span id="agent-name">AGENT</span></div>
-    </div>
+    <section class="briefing">
+      <p>Command went quiet seventy-two cycles ago. The relay never noticed: it still catches traffic, scrambles it, and files it for an operator who isn't here.</p>
+      <p class="log">LOG 4472: "WHO IS IT SENDING TO? I DON'T THINK IT KNOWS."</p>
+    </section>
 
     <div class="streak">
       <span class="count" id="streak-count">0</span>
-      CONSECUTIVE DISPATCHES DECODED
+      CYCLES DECODED IN A ROW
     </div>
 
-    <div class="divider"></div>
-
-    <h2 style="text-align:center;margin-bottom:16px;font-size:10px;letter-spacing:3px;color:#c8b88850;">INCOMING DISPATCHES</h2>
+    <h2 class="section-label">TODAY'S INTERCEPTS</h2>
 
     <div class="dispatches">
-      <a href="/cipher-room/play.html?type=flash" class="dispatch-card" id="card-flash">
-        <div class="card-title">FLASH CIPHER</div>
-        <div class="card-subtitle">5&times;5 &mdash; QUICK DECODE</div>
-        <div class="card-status pending" id="status-flash">PENDING</div>
+      <a href="/cipher-room/play.html?type=flash" class="dispatch-card pending" id="card-flash">
+        <span class="led" aria-hidden="true"></span>
+        <div>
+          <div class="card-title">FLASH INTERCEPT</div>
+          <div class="card-subtitle">5&times;5 &middot; short burst</div>
+          <div class="card-status pending" id="status-flash">AWAITING DECODE</div>
+        </div>
+        <span class="card-pay" id="pay-flash" hidden>+20 COINS</span>
       </a>
-      <a href="/cipher-room/play.html?type=dossier" class="dispatch-card" id="card-dossier">
-        <div class="card-title">FULL DOSSIER</div>
-        <div class="card-subtitle">11&times;11 &mdash; DEEP COVER</div>
-        <div class="card-status pending" id="status-dossier">PENDING</div>
+      <a href="/cipher-room/play.html?type=dossier" class="dispatch-card pending" id="card-dossier">
+        <span class="led" aria-hidden="true"></span>
+        <div>
+          <div class="card-title">FULL DOSSIER</div>
+          <div class="card-subtitle">11&times;11 &middot; deep relay log</div>
+          <div class="card-status pending" id="status-dossier">AWAITING DECODE</div>
+        </div>
+        <span class="card-pay" id="pay-dossier" hidden>+60 COINS</span>
       </a>
     </div>
 
-    <div class="divider"></div>
-
     <!-- Service Record -->
-    <div class="service-record">
-      <h2 style="font-size:10px;letter-spacing:3px;color:#c8b88850;">SERVICE RECORD</h2>
+    <section class="service-record">
+      <h2>SERVICE RECORD</h2>
       <div class="stat-grid">
         <div class="stat-item">
           <span class="stat-value" id="stat-total">0</span>
@@ -87,22 +84,23 @@
         </div>
         <div class="stat-item">
           <span class="stat-value" id="stat-best-flash">--</span>
-          <span class="stat-label">Best Flash</span>
+          <span class="stat-label">Best flash</span>
         </div>
         <div class="stat-item">
           <span class="stat-value" id="stat-best-dossier">--</span>
-          <span class="stat-label">Best Dossier</span>
+          <span class="stat-label">Best dossier</span>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <script src="/cipher-room/js/storage.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/cipher-room/js/supabase.js"></script>
   <script>
     const CipherHub = (function () {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = CipherStorage.localDate();
+      const PAY = { flash: 20, dossier: 60 };
+      const UNLISTED_KEY = 'cipher_room_unlisted';
 
       function formatTime(seconds) {
         const m = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -110,98 +108,60 @@
         return `${m}:${s}`;
       }
 
+      function isUnlisted() { try { return localStorage.getItem(UNLISTED_KEY) === '1'; } catch { return false; } }
+
       function init() {
-        const agent = CipherStorage.getAgent();
-        if (agent) {
-          showHub(agent);
-        } else {
-          document.getElementById('registration').style.display = 'block';
-        }
+        const codename = CipherStorage.getCodename();
+        if (codename || isUnlisted()) showHub();
+        else showIdentify();
+
+        document.getElementById('identify-form').addEventListener('submit', onIdentify);
+        document.getElementById('identify-skip').addEventListener('click', () => {
+          try { localStorage.setItem(UNLISTED_KEY, '1'); } catch { /* storage blocked */ }
+          showHub();
+        });
+        document.getElementById('set-callsign-btn').addEventListener('click', showIdentify);
+
+        // Refresh statuses when coming back to this page (bfcache / modal history)
+        window.addEventListener('pageshow', (e) => { if (e.persisted && !document.getElementById('hub').hidden) showHub(); });
       }
 
-      function showChoice() {
-        document.getElementById('reg-choice').style.display = 'flex';
-        document.getElementById('reg-new').style.display = 'none';
-        document.getElementById('reg-returning').style.display = 'none';
+      function showIdentify() {
+        document.getElementById('hub').hidden = true;
+        document.getElementById('identify').hidden = false;
+        document.getElementById('codename-input').focus();
       }
 
-      function showNewAgent() {
-        document.getElementById('reg-choice').style.display = 'none';
-        document.getElementById('reg-new').style.display = 'block';
-        document.getElementById('new-codename').focus();
-      }
-
-      function showReturning() {
-        document.getElementById('reg-choice').style.display = 'none';
-        document.getElementById('reg-returning').style.display = 'block';
-        document.getElementById('return-codename').focus();
-      }
-
-      async function registerNew() {
-        const codename = document.getElementById('new-codename').value.trim();
-        const errorEl = document.getElementById('new-error');
-        errorEl.style.display = 'none';
-
-        if (!codename) {
-          errorEl.textContent = 'CODENAME REQUIRED';
-          errorEl.style.display = 'block';
+      function onIdentify(e) {
+        e.preventDefault();
+        const input = document.getElementById('codename-input');
+        const errorEl = document.getElementById('identify-error');
+        const codename = input.value.trim().toUpperCase();
+        errorEl.hidden = true;
+        if (codename.length < 2) {
+          errorEl.textContent = 'CALLSIGN NEEDS TWO CHARACTERS OR MORE';
+          errorEl.hidden = false;
           return;
         }
-
-        if (typeof CipherSupabase !== 'undefined') {
-          const result = await CipherSupabase.createAgent(codename);
-          if (result.error) {
-            errorEl.textContent = result.error;
-            errorEl.style.display = 'block';
-            return;
-          }
-          CipherStorage.setAgent({ id: result.id, codename: result.codename });
-        } else {
-          // Fallback: no Supabase, local only
-          CipherStorage.setAgent({ id: 'local-' + Date.now(), codename });
-        }
-
-        showHub(CipherStorage.getAgent());
+        CipherStorage.setAgent({ id: 'local-' + Date.now(), codename });
+        try { localStorage.removeItem(UNLISTED_KEY); } catch { /* storage blocked */ }
+        showHub();
       }
 
-      async function loginReturning() {
-        const codename = document.getElementById('return-codename').value.trim();
-        const errorEl = document.getElementById('return-error');
-        errorEl.style.display = 'none';
+      function showHub() {
+        const codename = CipherStorage.getCodename();
+        document.getElementById('identify').hidden = true;
+        document.getElementById('hub').hidden = false;
+        document.getElementById('agent-name').textContent = codename ? codename.toUpperCase() : 'UNLISTED';
+        // Only someone without a Bridge pilot picks a callsign here
+        document.getElementById('set-callsign').hidden = !!CipherStorage.getPilotName();
 
-        if (!codename) {
-          errorEl.textContent = 'CODENAME REQUIRED';
-          errorEl.style.display = 'block';
-          return;
-        }
+        // Leaderboard identity, resolved in the background from the codename
+        if (codename && typeof CipherSupabase !== 'undefined') CipherSupabase.ensureAgent().catch(() => {});
 
-        if (typeof CipherSupabase !== 'undefined') {
-          const result = await CipherSupabase.lookupAgent(codename);
-          if (result.error) {
-            errorEl.textContent = result.error;
-            errorEl.style.display = 'block';
-            return;
-          }
-          CipherStorage.setAgent({ id: result.id, codename: result.codename });
-        } else {
-          errorEl.textContent = 'SUPABASE UNAVAILABLE — CANNOT VERIFY IDENTITY';
-          errorEl.style.display = 'block';
-          return;
-        }
-
-        showHub(CipherStorage.getAgent());
-      }
-
-      function showHub(agent) {
-        document.getElementById('registration').style.display = 'none';
-        document.getElementById('hub').style.display = 'block';
-        document.getElementById('agent-name').textContent = agent.codename.toUpperCase();
-
-        // Update dispatch statuses
         updateStatus('flash');
         updateStatus('dossier');
 
-        // Update stats
         document.getElementById('streak-count').textContent = CipherStorage.getStreak();
         document.getElementById('stat-total').textContent = CipherStorage.getTotalCompleted();
 
@@ -214,21 +174,28 @@
       }
 
       function updateStatus(type) {
+        const card = document.getElementById(`card-${type}`);
         const statusEl = document.getElementById(`status-${type}`);
+        const payEl = document.getElementById(`pay-${type}`);
+        let state = 'pending';
         if (CipherStorage.isCompleted(today, type)) {
-          const time = CipherStorage.getCompletionTime(today, type);
-          statusEl.textContent = `DECODED — ${formatTime(time)}`;
-          statusEl.className = 'card-status decoded';
+          state = 'decoded';
+          statusEl.textContent = `DECODED IN ${formatTime(CipherStorage.getCompletionTime(today, type))}`;
         } else if (CipherStorage.loadGameState(today, type)) {
-          statusEl.textContent = 'IN PROGRESS';
-          statusEl.className = 'card-status in-progress';
+          state = 'in-progress';
+          const saved = CipherStorage.loadGameState(today, type);
+          statusEl.textContent = `IN PROGRESS · ${formatTime(Math.floor((saved.elapsedMs || 0) / 1000))}`;
         } else {
-          statusEl.textContent = 'PENDING';
-          statusEl.className = 'card-status pending';
+          statusEl.textContent = 'AWAITING DECODE';
         }
+        statusEl.className = 'card-status ' + state;
+        card.className = 'dispatch-card ' + state;
+        // Coins only reach a Bridge pilot
+        payEl.hidden = !CipherStorage.getPilotName();
+        payEl.textContent = state === 'decoded' ? 'CLEARED' : `+${PAY[type]} COINS`;
       }
 
-      return { init, showChoice, showNewAgent, showReturning, registerNew, loginReturning };
+      return { init };
     })();
 
     document.addEventListener('DOMContentLoaded', CipherHub.init);

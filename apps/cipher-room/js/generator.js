@@ -176,13 +176,12 @@ const CipherGenerator = (function () {
     return null;
   }
 
-  /** Station names for dispatch flavor. */
+  /** Where on Enigma's relay each intercept was caught (flavor only). */
   const STATIONS = [
-    'Cairo', 'Berlin', 'Vienna', 'Istanbul', 'Lisbon', 'Tangier',
-    'Casablanca', 'Zurich', 'Prague', 'Moscow', 'Havana', 'Manila',
-    'Saigon', 'Bogota', 'Marrakech', 'Budapest', 'Stockholm', 'Oslo',
-    'Athens', 'Nairobi', 'Lima', 'Santiago', 'Beirut', 'Tehran',
-    'Bucharest', 'Helsinki', 'Reykjavik', 'Montevideo', 'Hanoi', 'Algiers',
+    'Antenna Array', 'Ring Sector 4', 'Data Core', 'Bay Control', 'Docking Bay 3',
+    'Hydroponics', 'Kestrel Tug', 'Relay Mast', 'Deep Band', 'Command Channel',
+    'Nav Buoy 12', 'Crew Rota', 'Pressure Door 9', 'Ring Windows', 'Beacon Loop',
+    'Band 47.3', 'Skyport Relay', 'Cold Storage', 'Med Bay', 'Echo Band',
   ];
 
   /** Reference date for dispatch numbering. */
@@ -245,11 +244,11 @@ const CipherGenerator = (function () {
       return { word, row: slot.row, col: slot.col, direction: slot.direction, number: num, clue, cells: slot.cells };
     });
 
-    // Dispatch number (days since epoch)
+    // Intercept number (days since epoch; both dates parse as UTC midnight)
     const puzzleDate = new Date(dateStr);
     const dispatchNum = Math.floor((puzzleDate - EPOCH) / 86400000) + 1;
 
-    // Station name
+    // Relay source (kept last so it never shifts the puzzle's own rng draws)
     const station = STATIONS[Math.floor(rng() * STATIONS.length)];
 
     return {

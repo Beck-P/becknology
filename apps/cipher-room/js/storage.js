@@ -1,10 +1,37 @@
 /**
- * localStorage helpers for The Cipher Room.
- * Stores: agent info, game state, completion history, stats.
+ * localStorage helpers for the Enigma relay cipher terminal.
+ * Stores: the leaderboard identity, game state, completion history, stats.
+ * Dates are the player's LOCAL calendar day (YYYY-MM-DD), so the daily
+ * intercepts turn over at local midnight, not UTC.
  */
 
 const CipherStorage = (function () {
   const PREFIX = 'cipher_room_';
+
+  /** Local calendar date as YYYY-MM-DD (d defaults to now). */
+  function localDate(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  /** The day before a YYYY-MM-DD date, in local time. */
+  function previousDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return localDate(new Date(y, m - 1, d - 1));
+  }
+
+  /** The Bridge pilot's name (the codename everywhere on the station), or ''. */
+  function getPilotName() {
+    try { return (localStorage.getItem('bridge_pilot') || '').trim(); } catch { return ''; }
+  }
+
+  /** The codename to play under: the Bridge pilot, else a codename set here. */
+  function getCodename() {
+    const pilot = getPilotName();
+    if (pilot) return pilot;
+    const agent = get('agent');
+    return agent && agent.codename ? agent.codename : '';
+  }
 
   function get(key) {
     try {
@@ -44,7 +71,7 @@ const CipherStorage = (function () {
     completions.push({ date: dateStr, type, timeSeconds, completedAt: Date.now() });
     set('completions', completions);
     // Clear in-progress state
-    localStorage.removeItem(PREFIX + gameStateKey(dateStr, type));
+    try { localStorage.removeItem(PREFIX + gameStateKey(dateStr, type)); } catch { /* storage blocked */ }
   }
 
   function isCompleted(dateStr, type) {
@@ -64,32 +91,19 @@ const CipherStorage = (function () {
   }
 
   function getStreak() {
-    const completions = getCompletions().sort((a, b) => b.date.localeCompare(a.date));
+    const completions = getCompletions();
     if (completions.length === 0) return 0;
+    const days = new Set(completions.map(c => c.date));
 
-    // Count consecutive days with at least one completion
+    // Count consecutive local days with at least one completion.
+    // Today may still be undecoded: then the streak counts through yesterday.
+    const today = localDate();
+    let checkDate = days.has(today) ? today : previousDate(today);
     let streak = 0;
-    const today = new Date().toISOString().slice(0, 10);
-    let checkDate = today;
-
-    while (true) {
-      const hasCompletion = completions.some(c => c.date === checkDate);
-      if (!hasCompletion) {
-        // Allow today to be incomplete (streak counts through yesterday)
-        if (checkDate === today) {
-          const d = new Date(checkDate);
-          d.setDate(d.getDate() - 1);
-          checkDate = d.toISOString().slice(0, 10);
-          continue;
-        }
-        break;
-      }
+    while (days.has(checkDate)) {
       streak++;
-      const d = new Date(checkDate);
-      d.setDate(d.getDate() - 1);
-      checkDate = d.toISOString().slice(0, 10);
+      checkDate = previousDate(checkDate);
     }
-
     return streak;
   }
 
@@ -107,6 +121,7 @@ const CipherStorage = (function () {
   }
 
   return {
+    localDate, getPilotName, getCodename,
     getAgent, setAgent,
     saveGameState, loadGameState,
     saveCompletion, isCompleted, getCompletionTime,

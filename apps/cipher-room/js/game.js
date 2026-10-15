@@ -1,6 +1,7 @@
 /**
  * Game logic — grid rendering, input handling, timer, completion.
  * Depends on: prng.js, generator.js, storage.js, share.js, supabase.js
+ * Optional: /bridge/js/shared/progression.js (coins + trophies on a decode).
  */
 
 const CipherGame = (function () {
@@ -13,6 +14,17 @@ const CipherGame = (function () {
   let startTime = null;
   let elapsedMs = 0;
   let completed = false;
+
+  /** Coins for decoding today's intercept of each type (paid once a day each). */
+  const REWARD = { flash: 20, dossier: 60 };
+  const TYPE_NAME = { flash: 'FLASH INTERCEPT', dossier: 'FULL DOSSIER' };
+  const TYPE_SUB = { flash: '5\u00d75 \u00b7 SHORT BURST', dossier: '11\u00d711 \u00b7 DEEP RELAY LOG' };
+
+  const inFrame = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
+  function toBridge(msg) {
+    if (!inFrame) return;
+    try { window.parent.postMessage(msg, '*'); } catch (e) { /* bridge gone */ }
+  }
 
   /** Format milliseconds as MM:SS */
   function formatTime(ms) {
@@ -32,7 +44,7 @@ const CipherGame = (function () {
   /** Get puzzle type from URL params */
   function getPuzzleType() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('type') || 'flash';
+    return params.get('type') === 'dossier' ? 'dossier' : 'flash';
   }
 
   /** Render the grid */
@@ -92,7 +104,7 @@ const CipherGame = (function () {
     const downWords = puzzle.words.filter(w => w.direction === 'down').sort((a, b) => a.number - b.number);
 
     let html = '';
-    html += '<div class="clues-direction"><h3>&rarr; Across Signals</h3>';
+    html += '<div class="clues-direction"><h3>&rarr; Across</h3>';
     acrossWords.forEach(w => {
       html += `<div class="clue" data-number="${w.number}" data-direction="across">`;
       html += `<span class="clue-num">${w.number}.</span> ${w.clue.text}`;
@@ -100,7 +112,7 @@ const CipherGame = (function () {
     });
     html += '</div>';
 
-    html += '<div class="clues-direction"><h3>&darr; Down Signals</h3>';
+    html += '<div class="clues-direction"><h3>&darr; Down</h3>';
     downWords.forEach(w => {
       html += `<div class="clue" data-number="${w.number}" data-direction="down">`;
       html += `<span class="clue-num">${w.number}.</span> ${w.clue.text}`;
@@ -252,6 +264,7 @@ const CipherGame = (function () {
   function onKeyDown(e) {
     if (completed) return;
     if (activeRow < 0 || activeCol < 0) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return; // leave browser shortcuts alone
 
     const key = e.key;
 
@@ -364,6 +377,7 @@ const CipherGame = (function () {
 
   /** Save current state to localStorage */
   function saveState() {
+    if (!puzzle || !playerGrid || completed) return;
     if (typeof CipherStorage !== 'undefined') {
       CipherStorage.saveGameState(puzzle.dateStr, puzzle.type, playerGrid, elapsedMs);
     }
@@ -383,43 +397,82 @@ const CipherGame = (function () {
 
   /** Handle puzzle completion */
   function onComplete() {
+    stopTimer();
     completed = true;
-    clearInterval(timerInterval);
     const totalSeconds = Math.floor(elapsedMs / 1000);
+    const prevBest = typeof CipherStorage !== 'undefined' ? CipherStorage.getBestTime(puzzle.type) : null;
+    const isBest = prevBest !== null && totalSeconds < prevBest;
 
     // Save completion
     if (typeof CipherStorage !== 'undefined') {
       CipherStorage.saveCompletion(puzzle.dateStr, puzzle.type, totalSeconds);
     }
 
-    // Submit score to leaderboard
-    if (typeof CipherSupabase !== 'undefined') {
-      CipherSupabase.submitScore(puzzle.dateStr, puzzle.type, totalSeconds);
-    }
+    // Submit score to the relay rankings (the board waits for it)
+    const submitted = typeof CipherSupabase !== 'undefined'
+      ? CipherSupabase.submitScore(puzzle.dateStr, puzzle.type, totalSeconds).catch(() => {})
+      : null;
 
-    // Show completion overlay
-    showCompletion(totalSeconds);
+    showCompletion(totalSeconds, isBest, submitted);
+    payOut(totalSeconds, isBest);
   }
 
-  /** Show DISPATCH DECODED overlay */
-  function showCompletion(totalSeconds) {
+  /**
+   * Coins through the Bridge: once a day per intercept type (the achievement
+   * key carries the local date, so it is idempotent), plus the one-off
+   * 'played_cipher_room' trophy. Safe to call again for a solved puzzle.
+   */
+  function payOut(totalSeconds, isBest, quiet) {
+    const coins = REWARD[puzzle.type] || 20;
+    const line = quiet ? null : document.getElementById('reward-line');
+    const say = (t, cls) => { if (line) { line.textContent = t; line.className = 'reward-line' + (cls ? ' ' + cls : ''); } };
+    const report = (paid) => {
+      if (quiet) return;
+      const best = typeof CipherStorage !== 'undefined' ? CipherStorage.getBestTime(puzzle.type) : null;
+      toBridge({
+        type: 'bridge-run-ended', game: 'cipher-room', title: 'Cipher Terminal',
+        score: formatTime(totalSeconds * 1000), best: best !== null ? formatTime(best * 1000) : '--',
+        newBest: !!isBest, coins: paid,
+      });
+    };
+    report(0);
+
+    if (typeof BridgeProgression === 'undefined' || !CipherStorage.getPilotName()) {
+      say('NO PILOT ON FILE \u2014 BOARD THE BRIDGE TO GET PAID');
+      return;
+    }
+    if (!BridgeProgression.client()) {
+      say('RELAY OFFLINE \u2014 PAY NOT LOGGED');
+      return;
+    }
+    say('LOGGING PAY\u2026');
+    const key = 'cipher_' + puzzle.dateStr + '_' + puzzle.type;
+    BridgeProgression.recordAchievement(key, coins, { game: 'cipher-room', type: puzzle.type, seconds: totalSeconds })
+      .then((isNew) => {
+        if (isNew) { say('+' + coins + ' COINS', 'paid'); report(coins); }
+        else say('PAY FOR TODAY\u2019S ' + (puzzle.type === 'flash' ? 'FLASH' : 'DOSSIER') + ' ALREADY LOGGED');
+      })
+      .catch(() => say('RELAY OFFLINE \u2014 PAY NOT LOGGED'));
+    BridgeProgression.recordAchievement('played_cipher_room', 25, { game: 'cipher-room' }).catch(() => {});
+  }
+
+  /** Show the INTERCEPT DECODED overlay */
+  function showCompletion(totalSeconds, isBest, submitted) {
     const overlay = document.getElementById('completion-overlay');
     const timeStr = formatTime(totalSeconds * 1000);
-    const bestTime = typeof CipherStorage !== 'undefined'
-      ? CipherStorage.getBestTime(puzzle.type)
-      : null;
-    const isBest = bestTime !== null && totalSeconds <= bestTime;
 
     overlay.innerHTML = `
-      <div class="completion-card">
-        <div class="stamp-large">DISPATCH DECODED</div>
-        <div class="time-label">OP TIME</div>
+      <div class="completion-card" role="dialog" aria-label="Intercept decoded">
+        <div class="stamp-large">INTERCEPT DECODED</div>
+        <div class="time-label">DECODE TIME</div>
         <div class="time-result">${timeStr}</div>
         ${isBest ? '<div class="personal-best">NEW PERSONAL BEST</div>' : ''}
+        <div class="reward-line" id="reward-line"></div>
         <div id="leaderboard-container" class="leaderboard"></div>
         <div class="completion-actions">
-          <button class="btn primary" onclick="CipherGame.copyShare()">COPY TRANSMISSION</button>
-          <a href="/cipher-room" class="btn" style="text-decoration:none;text-align:center;">RETURN TO FIELD OFFICE</a>
+          <button class="btn primary" type="button" onclick="CipherGame.copyShare()">COPY TRANSMISSION</button>
+          <a href="/cipher-room" class="btn">BACK TO INTERCEPTS</a>
+          <button class="btn ghost" type="button" onclick="CipherGame.hideCompletion()">VIEW GRID</button>
         </div>
       </div>
     `;
@@ -427,8 +480,15 @@ const CipherGame = (function () {
 
     // Load leaderboard
     if (typeof CipherSupabase !== 'undefined') {
-      CipherSupabase.loadLeaderboard(puzzle.dateStr, puzzle.type, 'leaderboard-container');
+      CipherSupabase.loadLeaderboard(puzzle.dateStr, puzzle.type, 'leaderboard-container', submitted);
+    } else {
+      document.getElementById('leaderboard-container').innerHTML = '<p class="muted-note">RELAY RANKINGS OFFLINE</p>';
     }
+  }
+
+  function hideCompletion() {
+    const overlay = document.getElementById('completion-overlay');
+    if (overlay) overlay.style.display = 'none';
   }
 
   /** Copy share text */
@@ -439,25 +499,47 @@ const CipherGame = (function () {
     }
   }
 
-  /** Start the timer */
+  /** The decode clock: runs only while the page is visible. */
+  function tick() {
+    elapsedMs = Date.now() - startTime;
+    document.getElementById('timer').textContent = formatTime(elapsedMs);
+  }
+
   function startTimer() {
+    if (timerInterval || completed) return;
     startTime = Date.now() - elapsedMs;
-    timerInterval = setInterval(() => {
-      elapsedMs = Date.now() - startTime;
-      document.getElementById('timer').textContent = formatTime(elapsedMs);
-    }, 200);
+    timerInterval = setInterval(tick, 200);
+  }
+
+  function stopTimer() {
+    if (!timerInterval) return;
+    tick();
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  function onVisibility() {
+    if (!puzzle || completed) return;
+    if (document.hidden) {
+      stopTimer();
+      saveState();
+    } else {
+      startTimer();
+    }
   }
 
   /** Initialize the game */
   async function init() {
     const type = getPuzzleType();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = CipherStorage.localDate();
 
     // Update header
-    const typeName = type === 'flash' ? 'FLASH CIPHER' : 'FULL DOSSIER';
-    const subtitleText = type === 'flash' ? 'DAILY DISPATCH — MINI' : 'DAILY DISPATCH — FULL';
-    document.getElementById('puzzle-title').textContent = typeName;
-    document.getElementById('puzzle-subtitle').textContent = subtitleText;
+    document.getElementById('puzzle-title').textContent = TYPE_NAME[type];
+    document.getElementById('puzzle-subtitle').textContent = TYPE_SUB[type];
+    document.title = TYPE_NAME[type] + ' \u2014 Cipher Terminal';
+
+    // Resolve the leaderboard identity in the background (pilot name)
+    if (typeof CipherSupabase !== 'undefined') CipherSupabase.ensureAgent().catch(() => {});
 
     // Generate puzzle
     try {
@@ -465,20 +547,20 @@ const CipherGame = (function () {
     } catch (e) {
       console.error('Puzzle generation failed:', e);
       document.getElementById('app').innerHTML = `
-        <div style="text-align:center;margin-top:80px;">
-          <div class="classification">TRANSMISSION ERROR</div>
-          <h1 style="margin-top:16px;">DISPATCH UNAVAILABLE</h1>
-          <p class="subtitle" style="margin-top:8px;">Decoding failed. Try the other dispatch.</p>
-          <a href="/cipher-room" class="btn" style="display:inline-block;margin-top:24px;text-decoration:none;">RETURN TO FIELD OFFICE</a>
+        <div class="error-panel">
+          <div class="classification">CARRIER LOST</div>
+          <h1>INTERCEPT CORRUPTED</h1>
+          <p class="subtitle">The cipher engine dropped this packet. Try the other intercept.</p>
+          <a href="/cipher-room" class="btn">BACK TO INTERCEPTS</a>
         </div>
       `;
       return;
     }
 
-    // Update dispatch info
+    // Update intercept info
     const dispatchNum = String(puzzle.dispatchNum).padStart(3, '0');
     document.getElementById('dispatch-info').textContent =
-      `DISPATCH #${dispatchNum} — ${puzzle.station.toUpperCase()} STATION — ${formatDate(today)}`;
+      `INTERCEPT #${dispatchNum} \u00b7 ${puzzle.station.toUpperCase()} \u00b7 ${formatDate(today)}`;
 
     // Load saved state or create fresh grid
     const saved = typeof CipherStorage !== 'undefined'
@@ -500,9 +582,13 @@ const CipherGame = (function () {
       completed = true;
       renderGrid();
       renderClues();
-      document.getElementById('timer').textContent = formatTime(
-        CipherStorage.getCompletionTime(today, type) * 1000
-      );
+      const secs = CipherStorage.getCompletionTime(today, type);
+      document.getElementById('timer').textContent = formatTime(secs * 1000);
+      document.body.classList.add('solved');
+      document.getElementById('active-clue-bar').innerHTML =
+        '<span class="clue-dir">DECODED</span> Today\u2019s intercept is clear. A new one lands at midnight.';
+      // Idempotent: settles today's pay if it didn't reach the Bridge last time.
+      payOut(secs, false, true);
       return;
     }
 
@@ -530,11 +616,17 @@ const CipherGame = (function () {
     // Focus input on grid container click
     document.querySelector('.grid-container').addEventListener('click', focusInput);
 
+    // The clock stops while the tab (or the Bridge around us) is hidden
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', () => { if (!completed) { stopTimer(); saveState(); } });
+    window.addEventListener('pageshow', (e) => { if (e.persisted && !document.hidden) startTimer(); });
+    if (document.hidden) onVisibility();
+
     // Initial focus
     focusInput();
   }
 
-  return { init, copyShare };
+  return { init, copyShare, hideCompletion };
 })();
 
 // Auto-init when DOM is ready
