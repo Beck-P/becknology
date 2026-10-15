@@ -12,15 +12,18 @@
 <body>
 <script>
 /**
- * Asteroids — the cabinet by the Arcade's door in Arcadia (BridgeArcade kit,
- * apps/bridge/js/shared/arcade-kit.js). 320×240 native, neon on the night
- * over the District: rocks split in three sizes, a saucer from wave 2 that
- * shoots back, hyperspace that might not bring you back, an extra ship every
- * 10,000. Coins as you clear waves and for the score at the end.
+ * Asteroids — salvage in Enigma's ring belt (BridgeArcade kit,
+ * apps/bridge/js/shared/arcade-kit.js). 320×240 native, drawn as the salvage
+ * tug's scanner: the ringed giant filling a corner, the station blinking far
+ * off, scanlines over everything. Ring ice, rock with amber cores, and hull
+ * debris from the station with its warning stripes still on, all splitting in
+ * three sizes; a security drone from sector 2 that shoots back; a jump that
+ * might not bring you back; an extra tug every 10,000. Coins as you clear
+ * sectors and for the score at the end.
  */
 (function () {
-  var W = 320, H = 240, P = BridgeArcade.PAL.arcadia;
-  var ship, rocks, shots, ufoShots, ufo, bits, stars, city, wave, nextLife, waveTimer, deadT, respawnT, ufoT;
+  var W = 320, H = 240, P = BridgeArcade.PAL.enigma;
+  var ship, rocks, shots, ufoShots, ufo, bits, stars, backdrop, wave, nextLife, waveTimer, deadT, respawnT, ufoT;
 
   function wrap(o) { if (o.x < 0) o.x += W; if (o.x >= W) o.x -= W; if (o.y < 0) o.y += H; if (o.y >= H) o.y -= H; }
   function dist2(a, b) {                       // wrapped distance, so things near opposite edges still meet
@@ -30,11 +33,30 @@
   }
 
   var SIZES = [0, 5, 9, 16], POINTS = [0, 100, 50, 20], COLS = [0, P.yel, P.cyan2, P.cyan];
+  var KIND = { ice: { line: '#a8e8f0', fill: '#183a48' }, rock: { line: '#8aa0a0', fill: '#1e2a2e' }, junk: { line: '#c8d0d0', fill: '#2a3034' } };
   function rock(x, y, size, speed) {
     var n = 8 + Math.floor(Math.random() * 4), shape = [];
     for (var i = 0; i < n; i++) shape.push(SIZES[size] * (0.72 + Math.random() * 0.36));
     var a = Math.random() * Math.PI * 2, v = (speed || 1) * (18 + Math.random() * 22) * (4 - size) * 0.55;
-    return { x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: size, shape: shape, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 1.6 };
+    var kind = arguments[4] || (Math.random() < 0.25 ? 'junk' : Math.random() < 0.55 ? 'ice' : 'rock');
+    if (kind === 'junk') shape = shape.map(function (r, i) { return SIZES[size] * (i % 2 ? 0.95 : 0.7); }).slice(0, 4);   // a buckled hull plate
+    return { x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, size: size, shape: shape, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 1.6,
+             kind: kind, glint: Math.random() * 6 };
+  }
+  // a polygon filled a row at a time, crisp, no anti-aliasing
+  function fillPoly(g, pts, col) {
+    var y0 = 1e9, y1 = -1e9;
+    pts.forEach(function (p) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+    g.fillStyle = col;
+    for (var y = Math.ceil(y0); y <= Math.floor(y1); y++) {
+      var xs = [];
+      for (var i = 0; i < pts.length; i++) {
+        var a = pts[i], b = pts[(i + 1) % pts.length];
+        if ((a[1] <= y && b[1] > y) || (b[1] <= y && a[1] > y)) xs.push(a[0] + (y - a[1]) / (b[1] - a[1]) * (b[0] - a[0]));
+      }
+      xs.sort(function (m, n) { return m - n; });
+      for (var k = 0; k + 1 < xs.length; k += 2) g.fillRect(Math.round(xs[k]), y, Math.max(1, Math.round(xs[k + 1]) - Math.round(xs[k])), 1);
+    }
   }
   function burst(x, y, col, n, speed) {
     for (var i = 0; i < n; i++) {
@@ -43,18 +65,34 @@
     }
   }
 
+  // the scanner's view: stars, the ringed giant in the corner, the station far off — painted once
   function makeScenery() {
     stars = [];
-    for (var i = 0; i < 70; i++) stars.push({ x: Math.random() * W, y: Math.random() * H * 0.8, b: Math.random() });
-    city = [];
-    var x = 0;
-    while (x < W) {                                  // the District's towers along the bottom
-      var w = 10 + Math.floor(Math.random() * 18), h = 10 + Math.floor(Math.random() * 30);
-      var lit = [];
-      for (var wy = 3; wy < h - 2; wy += 4) for (var wx = 2; wx < w - 2; wx += 3) if (Math.random() < 0.3) lit.push([wx, wy, Math.random() < 0.7 ? P.yel : P.pink]);
-      city.push({ x: x, w: w, h: h, lit: lit });
-      x += w + Math.floor(Math.random() * 3);
+    for (var i = 0; i < 70; i++) stars.push({ x: Math.random() * W, y: Math.random() * H, b: Math.random() });
+    backdrop = document.createElement('canvas'); backdrop.width = W; backdrop.height = H;
+    var g = backdrop.getContext('2d'), cx = 262, cy = 236, R = 92, x, y;
+    var D = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+    var BANDS = ['#3a2a1e', '#5a4028', '#4a3424', '#6a5034', '#3e2e20', '#584030', '#2e2218'];
+    for (y = Math.max(0, cy - R); y < H; y++) for (x = cx - R; x < W && x <= cx + R; x++) {     // the giant, banded, its night side dithered away
+      var dx = x - cx, dy = y - cy;
+      if (dx * dx + dy * dy > R * R) continue;
+      var band = BANDS[Math.floor((dy + R + Math.sin(dx / 14) * 3) / 9) % BANDS.length];
+      var lit = 0.5 + 0.5 * (-dx / R * 0.7 - dy / R * 0.5);                                  // the sun from the upper left
+      if (lit * 16 < D[y & 3][x & 3] + 3) continue;
+      g.fillStyle = band; g.fillRect(x, y, 1, 1);
     }
+    for (var t = 0; t < Math.PI * 2; t += 0.004) {                                            // the rings, tilted, in front of the giant below and behind it above
+      [1.55, 1.7, 1.82].forEach(function (k, n) {
+        var rx = Math.cos(t) * R * k, ry = Math.sin(t) * R * k * 0.22, px = Math.round(cx + rx * 0.97 - ry * 0.35), py = Math.round(cy + ry + rx * 0.18);
+        if (px < 0 || px >= W || py < 0 || py >= H) return;
+        var behind = Math.sin(t) < 0 && (px - cx) * (px - cx) + (py - cy) * (py - cy) < R * R;
+        if (behind) return;
+        g.fillStyle = ['#8a7a5a', '#a89470', '#6a6048'][n]; g.globalAlpha = 0.55; g.fillRect(px, py, 1, 1); g.globalAlpha = 1;
+      });
+    }
+    // the station, far off: a hub and its ring, one light
+    g.fillStyle = '#38505e'; g.fillRect(52, 40, 5, 3); g.fillRect(54, 36, 1, 11);
+    g.fillStyle = '#253540'; g.fillRect(48, 41, 13, 1);
   }
 
   function newWave(api) {
@@ -75,8 +113,8 @@
   }
 
   function killShip(api) {
-    burst(ship.x, ship.y, P.pink, 26, 60);
-    api.shake(5); api.flash(P.pink);
+    burst(ship.x, ship.y, P.orange, 26, 60);
+    api.shake(5); api.flash(P.red);
     api.noise(0.7, 0.25, 900);
     api.lives--;
     ship = null;
@@ -85,11 +123,11 @@
   }
 
   var game = {
-    id: 'asteroids', title: 'ASTEROIDS', w: W, h: H, pal: 'arcadia',
-    help: ['LEFT RIGHT TO TURN - UP TO THRUST', 'SPACE FIRES - SHIFT HYPERSPACE'],
+    id: 'asteroids', title: 'ASTEROIDS', w: W, h: H, pal: 'enigma',
+    help: ['SALVAGE IN THE RING BELT', 'LEFT RIGHT TURN - UP THRUSTS', 'SPACE FIRES - SHIFT JUMPS'],
     coins: { per: 400, best: 20 },
     touch: [{ key: 'ArrowLeft', label: '<', side: 'left' }, { key: 'ArrowRight', label: '>', side: 'left' },
-            { key: 'Shift', label: 'H', side: 'right', col: P.purp }, { key: 'ArrowUp', label: '^', side: 'right', col: P.pink },
+            { key: 'Shift', label: 'H', side: 'right', col: P.blue }, { key: 'ArrowUp', label: '^', side: 'right', col: P.orange },
             { key: ' ', label: '*', side: 'right', col: P.yel }],
 
     start: function (api) {
@@ -115,7 +153,7 @@
         if (ship.thrust) {
           ship.vx += Math.cos(ship.a) * 150 * dt; ship.vy += Math.sin(ship.a) * 150 * dt;
           if (Math.random() < 0.6) bits.push({ x: ship.x - Math.cos(ship.a) * 6, y: ship.y - Math.sin(ship.a) * 6,
-            vx: -Math.cos(ship.a) * 40 + (Math.random() - 0.5) * 20, vy: -Math.sin(ship.a) * 40 + (Math.random() - 0.5) * 20, life: 0.25, col: P.cyan2 });
+            vx: -Math.cos(ship.a) * 40 + (Math.random() - 0.5) * 20, vy: -Math.sin(ship.a) * 40 + (Math.random() - 0.5) * 20, life: 0.25, col: P.orange });
         }
         var sp = Math.hypot(ship.vx, ship.vy), max = 180;
         if (sp > max) { ship.vx *= max / sp; ship.vy *= max / sp; }
@@ -130,11 +168,11 @@
           api.beep(880, 0.07, 'square', 0.04, 0.5);
         }
         if (api.pressed('Shift') || api.pressed('x') || api.pressed('X')) {            // hyperspace: a gamble
-          burst(ship.x, ship.y, P.purp, 10, 30);
+          burst(ship.x, ship.y, P.blue, 10, 30);
           ship.x = Math.random() * W; ship.y = Math.random() * H; ship.vx = ship.vy = 0;
           api.beep(200, 0.3, 'sawtooth', 0.05, 4);
           if (Math.random() < 0.05) { killShip(api); }
-          else burst(ship.x, ship.y, P.purp, 10, 30);
+          else burst(ship.x, ship.y, P.blue, 10, 30);
         }
       } else if (respawnT > 0) {
         respawnT -= dt;
@@ -156,7 +194,7 @@
           if (dist2(s, r) < SIZES[r.size] * SIZES[r.size]) { s.life = 0; hit.push(r); break; }
         }
         if (ufo && s.life > 0 && dist2(s, ufo) < 64) {
-          s.life = 0; api.score += 250; burst(ufo.x, ufo.y, P.green, 22, 60); api.beep(140, 0.4, 'sawtooth', 0.07, 0.4); ufo = null;
+          s.life = 0; api.score += 250; burst(ufo.x, ufo.y, P.red, 22, 60); api.beep(140, 0.4, 'sawtooth', 0.07, 0.4); ufo = null;
         }
       });
       hit.forEach(function (r) {
@@ -164,9 +202,9 @@
         if (i < 0) return;
         rocks.splice(i, 1);
         api.score += POINTS[r.size];
-        burst(r.x, r.y, COLS[r.size], 6 + r.size * 4, 50);
+        burst(r.x, r.y, r.kind === 'junk' ? P.orange : KIND[r.kind].line, 6 + r.size * 4, 50);
         api.noise(0.12 + r.size * 0.08, 0.12, 700 - r.size * 150);
-        if (r.size > 1) for (var k = 0; k < 2; k++) { var c = rock(r.x, r.y, r.size - 1, 1 + wave * 0.06); rocks.push(c); }
+        if (r.size > 1) for (var k = 0; k < 2; k++) { var c = rock(r.x, r.y, r.size - 1, 1 + wave * 0.06, r.kind); rocks.push(c); }
       });
       // the saucer
       ufoT -= dt;
@@ -214,49 +252,62 @@
         g.fillStyle = s.b > 0.8 ? P.cyan2 : s.b > 0.5 ? P.grey : P.mid;
         if (tw > 0.3) g.fillRect(Math.round(s.x), Math.round(s.y), 1, 1);
       });
-      // the city under the sky, lit windows blinking slowly
-      city.forEach(function (b) {
-        g.fillStyle = P.bg2; g.fillRect(b.x, H - b.h, b.w, b.h);
-        g.fillStyle = P.dark; g.fillRect(b.x, H - b.h, b.w, 1);
-        b.lit.forEach(function (l, i) { if ((Math.floor(api.t / 3) + i) % 7) { g.fillStyle = l[2]; g.fillRect(b.x + l[0], H - b.h + l[1], 1, 1); } });
-      });
-      // rocks
+      g.drawImage(backdrop, 0, 0);
+      if (Math.floor(api.t * 1.5) % 3 === 0) { g.fillStyle = P.red; g.fillRect(54, 35, 1, 1); }      // the station's light
+      // rocks: ring ice, rock with an amber core, hull plates with their warning stripes
       (rocks || []).forEach(function (r) {
         var pts = r.shape.map(function (rad, i) { var a = r.rot + i / r.shape.length * Math.PI * 2; return [r.x + Math.cos(a) * rad, r.y + Math.sin(a) * rad]; });
-        api.poly(g, pts, COLS[r.size]);
+        var K = KIND[r.kind] || KIND.rock;
+        fillPoly(g, pts, K.fill);
+        if (r.kind === 'junk') {                                              // stripes across the plate
+          var c = Math.cos(r.rot), sn = Math.sin(r.rot), L = SIZES[r.size] * 0.6;
+          for (var k = -2; k <= 2; k++) {
+            g.fillStyle = (k & 1) ? P.yel : '#202020';
+            for (var u = -L; u <= L; u += 1) g.fillRect(Math.round(r.x + c * u - sn * k * 2), Math.round(r.y + sn * u + c * k * 2), 1, 1);
+          }
+        } else if (r.kind === 'rock' && r.size > 1) {                         // the core glowing in a crack
+          g.fillStyle = Math.sin(api.t * 3 + r.glint) > 0 ? P.yel : P.orange;
+          g.fillRect(Math.round(r.x), Math.round(r.y), 2, 1);
+        } else if (r.kind === 'ice' && Math.sin(api.t * 2 + r.glint) > 0.85) { g.fillStyle = P.white; g.fillRect(Math.round(r.x - 2), Math.round(r.y - 2), 1, 1); }
+        api.poly(g, pts, r.kind === 'junk' ? '#c8d0d0' : r.size === 1 ? P.yel : K.line);
       });
-      // the saucer
+      // the security drone: a diamond hull, its red eye scanning
       if (ufo) {
-        var u = ufo;
-        api.poly(g, [[u.x - 8, u.y], [u.x - 4, u.y - 3], [u.x + 4, u.y - 3], [u.x + 8, u.y], [u.x + 4, u.y + 3], [u.x - 4, u.y + 3]], P.green);
-        api.line(g, u.x - 8, u.y, u.x + 8, u.y, P.green);
-        api.poly(g, [[u.x - 3, u.y - 3], [u.x - 2, u.y - 6], [u.x + 2, u.y - 6], [u.x + 3, u.y - 3]], P.green);
-        g.fillStyle = Math.floor(api.t * 8) % 2 ? P.yel : P.pink; g.fillRect(Math.round(u.x) - 1, Math.round(u.y) + 1, 2, 1);
+        var u = ufo, eye = Math.round(Math.sin(u.t * 3) * 3);
+        fillPoly(g, [[u.x - 9, u.y], [u.x, u.y - 5], [u.x + 9, u.y], [u.x, u.y + 5]], '#2a1a1e');
+        api.poly(g, [[u.x - 9, u.y], [u.x, u.y - 5], [u.x + 9, u.y], [u.x, u.y + 5]], '#e0a0a0');
+        g.fillStyle = P.red; g.fillRect(Math.round(u.x) - 1 + eye, Math.round(u.y) - 1, 3, 2);
+        g.fillStyle = '#ffd0d0'; g.fillRect(Math.round(u.x) + eye, Math.round(u.y) - 1, 1, 1);
       }
-      // shots
+      // shots: the tug's amber bolts, the drone's red
       g.fillStyle = P.yel;
       (shots || []).forEach(function (s) { g.fillRect(Math.round(s.x), Math.round(s.y), 2, 2); });
-      g.fillStyle = P.green;
+      g.fillStyle = P.red;
       (ufoShots || []).forEach(function (s) { g.fillRect(Math.round(s.x), Math.round(s.y), 2, 2); });
-      // debris
       (bits || []).forEach(function (b) { g.fillStyle = b.col; g.fillRect(Math.round(b.x), Math.round(b.y), 1, 1); });
-      // the ship
+      // the tug
       if (ship && mode !== 'title' && !(ship.inv > 0 && Math.floor(api.t * 10) % 2)) {
         var c = Math.cos(ship.a), s = Math.sin(ship.a);
         var pt = function (fx, fy) { return [ship.x + c * fx - s * fy, ship.y + s * fx + c * fy]; };
-        api.poly(g, [pt(8, 0), pt(-6, -5), pt(-3, 0), pt(-6, 5)], P.pink);
-        if (ship.thrust && Math.floor(api.t * 20) % 2) api.poly(g, [pt(-4, -2), pt(-9, 0), pt(-4, 2)], P.cyan2);
+        fillPoly(g, [pt(8, 0), pt(-6, -5), pt(-3, 0), pt(-6, 5)], '#3a2a10');
+        api.poly(g, [pt(8, 0), pt(-6, -5), pt(-3, 0), pt(-6, 5)], P.yel);
+        var cp = pt(2, 0); g.fillStyle = P.cyan2; g.fillRect(Math.round(cp[0]), Math.round(cp[1]), 1, 1);   // the cockpit
+        if (ship.thrust && Math.floor(api.t * 20) % 2) api.poly(g, [pt(-4, -2), pt(-9, 0), pt(-4, 2)], P.orange);
       }
-      // the HUD
+      // the scanner's HUD
       if (mode !== 'title') {
-        api.text(g, String(api.score), 6, 5, P.white, 1);
+        api.text(g, String(api.score), 6, 5, P.cyan2, 1);
         for (var i = 0; i < api.lives; i++) {
           var x = 8 + i * 9, y = 20;
-          api.poly(g, [[x, y - 4], [x + 3, y + 3], [x, y + 1], [x - 3, y + 3]], P.pink);
+          api.poly(g, [[x, y - 4], [x + 3, y + 3], [x, y + 1], [x - 3, y + 3]], P.yel);
         }
-        api.text(g, 'WAVE ' + wave, W - 6, 5, P.grey, 1, 'right');
-        if (waveTimer > 0 && Math.floor(api.t * 4) % 2) api.text(g, 'WAVE ' + wave, W / 2, H / 2 - 30, P.cyan2, 2, 'center');
+        api.text(g, 'SECTOR ' + wave, W - 6, 5, P.grey, 1, 'right');
+        if (waveTimer > 0 && Math.floor(api.t * 4) % 2) api.text(g, 'SECTOR ' + wave, W / 2, H / 2 - 30, P.cyan2, 2, 'center');
       }
+      // the screen itself: scanlines and a dark edge
+      g.fillStyle = 'rgba(0,8,12,0.22)';
+      for (var sy = 0; sy < H; sy += 2) g.fillRect(0, sy, W, 1);
+      g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(0, 0, W, 1); g.fillRect(0, H - 1, W, 1); g.fillRect(0, 0, 1, H); g.fillRect(W - 1, 0, 1, H);
     }
   };
 
