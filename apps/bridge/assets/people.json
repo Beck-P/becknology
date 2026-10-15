@@ -1692,6 +1692,10 @@
       {
         "q": "Pirates?",
         "a": "NOT MANY ON THE EMERALD - THE SAPPHIRE GUARD SEES TO THAT. MORE ON THE OTHER SEAS, AND THE CRIMSON'S THICK WITH THEM. THEY'LL WANT YOUR CARGO. PAY THEM, FIGHT THEM OR RUN. A SLOOP WITH NO GUNS HAD BETTER RUN."
+      },
+      {
+        "q": "Islands for sale?",
+        "a": "THERE'S STARLING HOLM, OUT PAST TERN HOLM ON THE WAY TO THE CAPITAL. A COTTAGE GONE TO RUIN, A JETTY, A WALLED GARDEN UNDER BRAMBLES. THE PRICE IS ON THE SIGN AT THE JETTY. MAKE IT A HOME PORT - YOUR SHIPS CAN TRADE FROM IT WHILE YOU'RE BUSY."
       }
     ]
   },
@@ -1820,6 +1824,119 @@
       {
         "q": "The drowned who would sail?",
         "a": "SOME OF THEM REMEMBER THE SEA FONDLY. THEY DON'T EAT, THEY DON'T SLEEP AND THEY DON'T FEAR BOARDERS. SIGN ONE ON, IF YOU CAN BEAR THE COLD OF THEM."
+      }
+    ]
+  },
+  "rowena": {
+    "name": "Rowena Ashgrove",
+    "role": "Harbourmistress of Crownhaven, keeper of the Crown's book of keels",
+    "sheet": "npc-hm-rowena",
+    "at": [
+      {
+        "world": "lumar-crown",
+        "label": "HARBOURMASTER"
+      }
+    ],
+    "greet": "ASHGROVE. EVERY SHIP THAT COMES INTO THE CAPITAL IS WRITTEN IN MY BOOK, AND THE ROYAL YARD BUILDS TO MY ORDERS. YOU WANT A GALLEON? THIS IS THE ONLY PLACE ON FIVE SEAS THAT CAN BUILD YOU ONE.",
+    "again": "BACK IN THE CAPITAL. THE BOOK'S OPEN.",
+    "topics": [
+      {
+        "q": "The harbour book",
+        "a": "THE CROWN'S BOOK. THE ROYAL YARD, GUNS, HANDS FROM EVERY SEA - THEY ALL COME TO THE CAPITAL - THE HOLD, THE MARKET, CONTRACTS.",
+        "harbour": true
+      },
+      {
+        "q": "The Royal Yard?",
+        "a": "CUTTERS, BRIGANTINES, AND THE GALLEON - THREE MASTS, THREE HUNDRED CRATES, FIVE GUNS, FIVE HANDS TO SAIL HER. SHE'LL TAKE A WHILE TO GET USED TO. EVERYONE SAYS SO."
+      },
+      {
+        "q": "What sells here?",
+        "a": "EVERYTHING SELLS IN THE CAPITAL, AND THE LUXURIES BEST OF ALL: SPORE SILK, ROSEITE, GEMS OUT OF THE ROSE MINE, AND MOON SALT IF YOU'RE BRAVE. THE EXCHANGE BOARD SAYS WHAT'S UP TODAY."
+      },
+      {
+        "q": "Islands for sale?",
+        "a": "FUNNY YOU SHOULD ASK. STARLING HOLM, SOUTH-EAST OF HERE - A LITTLE ISLAND WITH A JETTY AND A COTTAGE GONE TO RUIN. THE LAST OWNER WENT TO SEA AND DIDN'T COME BACK. THE SIGN ON THE JETTY HAS THE PRICE. BUILD IT UP AND IT'LL BE A HOME PORT FOR YOUR SHIPS."
+      }
+    ]
+  },
+  "maud": {
+    "name": "Maud Tull",
+    "role": "Fishwife of Tern Holm",
+    "sheet": "npc-fishwife",
+    "at": [
+      {
+        "world": "lumar-tern",
+        "label": "FISH STALL"
+      }
+    ],
+    "greet": "FRESH TODAY, ALL OF IT. WELL. MOST OF IT. WHAT'VE YOU CAUGHT? I'LL BUY IT IF IT'S GOOD.",
+    "again": "BACK FOR MORE? I'VE GOT CRAB.",
+    "topics": [
+      {
+        "q": "Sell her your catch",
+        "a": "LET'S SEE IT, THEN.",
+        "sell": [
+          {
+            "id": "silverfin",
+            "price": 14
+          },
+          {
+            "id": "harbour_crab",
+            "price": 18
+          },
+          {
+            "id": "bluefin",
+            "price": 26
+          },
+          {
+            "id": "rose_shrimp",
+            "price": 10
+          },
+          {
+            "id": "sapphire_ray",
+            "price": 30
+          },
+          {
+            "id": "spore_minnow",
+            "price": 6
+          }
+        ]
+      },
+      {
+        "q": "About Tern Holm",
+        "a": "MY HUSBAND FISHES, MY SONS FISH, MY DAUGHTER FISHES AND I SELL IT. IF YOU STAND STILL LONG ENOUGH I'LL SELL YOU TOO."
+      }
+    ]
+  },
+  "tern_pell": {
+    "name": "Old Pell",
+    "role": "Keeps Tern Holm's pier, and its stories",
+    "sheet": "npc-hm-pell",
+    "at": [
+      {
+        "world": "lumar-tern",
+        "label": "HARBOURMASTER"
+      }
+    ],
+    "greet": "PELL. I KEEP THE PIER. IT DOESN'T NEED MUCH KEEPING, BUT SOMEBODY HAS TO WATCH THE BOATS COME IN. YOU'LL WANT THE FISH, I EXPECT. EVERYBODY DOES.",
+    "again": "AYE. THE TERNS TOLD ME YOU WERE COMING.",
+    "topics": [
+      {
+        "q": "The harbour book",
+        "a": "MY BOOK'S A SHORT ONE. A SWIVEL GUN IF YOU WANT ONE, SALT FISH CHEAP AS ANYWHERE, AND LADS WHO CAN HAUL A ROPE.",
+        "harbour": true
+      },
+      {
+        "q": "Tern Holm?",
+        "a": "TWENTY HOUSES, FORTY BOATS, A THOUSAND TERNS. WE SALT THE FISH AND THE CAPITAL EATS IT. THAT'S TERN HOLM."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE PIRATES DON'T BOTHER US - NOTHING HERE BUT FISH. BUT A BOAT CAME IN LAST WEEK FROM THE MIDNIGHT SIDE WITH HER SAILS ALL FROSTED, IN SUMMER. NOBODY ABOARD WOULD SAY WHY."
+      },
+      {
+        "q": "The island over there?",
+        "a": "STARLING HOLM? NICE LITTLE PLACE ONCE. THE COTTAGE IS A SHELL NOW. SOMEBODY OUGHT TO TAKE IT ON."
       }
     ]
   }

@@ -320,7 +320,7 @@ smoke(W.house(k, 55.6, 59.2, 21.4, 24.4, wall_h=2.0, rise=1.0, roof=SLATE, wall=
               windows=[(56.4, 0.85), (58.4, 0.85)], chimney=58.8, stone=True), 58.8)
 V.board_sign(k, 'ROYAL YARD', 'IMFellEnglishSC-Regular', 57.4, 24.4, 2.05, size=0.24, board='#2a3a30')
 W.bulletin_board(k, 53.0, 24.2, w=1.2)
-k.solid(50.2, YARD_R - 1.8, 59.8, YARD_R + 1.6)
+k.solid(50.2, YARD_R - 1.4, 59.8, YARD_R + 1.6)              # (the row in front of the yard office stays open)
 
 # ---- the west point: the lighthouse, the old town's cottages, gardens ----------------------------------------------
 LH = (6.4, 25.2)

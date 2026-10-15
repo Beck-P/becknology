@@ -193,6 +193,10 @@ NPCS = {
                           hair=('#2a1a10', '#4a2e1a', '#6a4428'), long_hair=True, pose='stand'),
     'npc-hm-garro':  dict(skin='skin2', shirt=('#5a1a14', '#8a2a20', '#b04030'), vest=('#141014', '#262026', '#3a323a'),
                           hair=('#1a1410', '#2e2218', '#44342a'), beanie=('#6a1414', '#9a2020', '#c03030'), beard=True, brawny=True, pose='stand'),
+    'npc-hm-rowena': dict(skin='skin2', shirt=('#1a3a2a', '#2a5a40', '#3e7a58'), skirt=('#1a3a2a', '#2a5a40', '#3e7a58'),
+                          hair=('#6a2a14', '#9a4422', '#c06030'), bun=True, cap=('#1a3a2a', '#2a5a40', '#3e7a58'), pose='stand'),
+    'npc-hm-pell':   dict(skin='skin', shirt=('#3a4a5a', '#56687a', '#74889a'), vest=('#5a4a2a', '#7a6a3a', '#9a8a5a'),
+                          hair=('#9a9aa0', '#c8c8d0', '#ececf2'), beard=True, beanie=('#2a3a5a', '#3a5078', '#5a7098'), pose='stand'),
     'npc-ferryman':  dict(skin='skin', shirt=('#1a1a24', '#2a2a3a', '#3e3e54'), skirt=('#1a1a24', '#2a2a3a', '#3e3e54'),
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), hood=('#1a1a24', '#2a2a3a', '#3e3e54'), beard=True, pose='stand'),
     # Verdance town: the baker, the smith, the miller, the shopkeeper, two villagers

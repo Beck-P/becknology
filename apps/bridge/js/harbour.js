@@ -6,8 +6,8 @@
  * a person in assets/people.json (label HARBOURMASTER) whose `harbour` topic opens the book:
  *   - YOUR SHIPS: every ship you own, where she lies, her hull, hold, guns and hands; take one out, rename her, sell her
  *     to a yard;
- *   - THE YARD: the ships this port builds (each sea its own: cutters on Diggen's Point, brigantines and galleons at
- *     Sapphire's great yard, the raider from the pirate slip on Crimson Reach);
+ *   - THE YARD: the ships this port builds (each sea its own: cutters on Diggen's Point, brigantines at Sapphire's
+ *     great yard, everything up to a galleon at the Royal Yard in Crownhaven, the raider from Crimson's pirate slip);
  *   - FIT OUT: guns for her slots and fittings, each port its own (Crimson's heavy guns, Rose's crystal sails and
  *     roseite sheathing, the Ferryman's moonglass);
  *   - REPAIRS: patch her hull;
@@ -20,14 +20,18 @@ var BridgeHarbour = (function () {
   var PORTS = {
     'lumar':          { at: [9, 13], face: 'left', who: 'Bess Tolliver', sheet: 'npc-hm-bess', yard: ['cutter'],
                         guns: ['swivel', 'long_nine'], fits: ['sheathing', 'oak'] },
-    'lumar-sapphire': { at: [30, 24], face: 'left', who: 'Aldous Penhallow', sheet: 'npc-hm-aldous', yard: ['cutter', 'brigantine', 'galleon'],
+    'lumar-crown':    { at: [24, 32], face: 'left', who: 'Rowena Ashgrove', sheet: 'npc-hm-rowena', yard: ['cutter', 'brigantine', 'galleon'],
+                        guns: ['swivel', 'long_nine', 'carronade', 'chaser'], fits: ['sheathing', 'oak'] },
+    'lumar-tern':     { at: [18, 16], face: 'right', who: 'Old Pell', sheet: 'npc-hm-pell', yard: [], guns: ['swivel'], fits: [] },
+    'lumar-sapphire': { at: [30, 24], face: 'left', who: 'Aldous Penhallow', sheet: 'npc-hm-aldous', yard: ['cutter', 'brigantine'],
                         guns: ['swivel', 'long_nine', 'carronade'], fits: ['sheathing', 'oak'] },
     'lumar-rose':     { at: [30, 19], face: 'left', who: 'Mira Quell', sheet: 'npc-hm-mira', yard: [],
                         guns: [], fits: ['crystal_sails', 'roseite'] },
     'lumar-crimson':  { at: [31, 35], face: 'left', who: 'Garro', sheet: 'npc-hm-garro', yard: ['raider'],
                         guns: ['swivel', 'long_nine', 'carronade', 'chaser'], fits: ['storm_rig', 'oak'] },
     'lumar-midnight': { at: [26, 35], face: 'left', who: 'the Ferryman', sheet: 'npc-ferryman', yard: [],
-                        guns: ['moon_harpoon'], fits: ['moon_lantern'] }
+                        guns: ['moon_harpoon'], fits: ['moon_lantern'] },
+    'lumar-holm':     { at: null, own: true, who: 'Your own', yard: [], guns: [], fits: [] }      // your island: js/holm.js keeps its book
   };
   var LABEL = 'HARBOURMASTER';
 
@@ -48,7 +52,7 @@ var BridgeHarbour = (function () {
   // ---- in the world: the harbourmaster at the head of the pier ----------------------------------------------------
   function decorate(worldId, data) {
     var P = PORTS[worldId];
-    if (!P || !data) return;
+    if (!P || !P.at || !data) return;
     data.interactions = (data.interactions || []).filter(function (it) { return it.label !== LABEL; });
     data.interactions.push({ x: P.at[0], y: P.at[1], type: 'dialog', label: LABEL, prompt: 'PRESS E TO TALK', text: '...' });
     if (data.scene) {
@@ -111,10 +115,11 @@ var BridgeHarbour = (function () {
         return { label: (s.id === act.id ? '⚓ ' : '') + s.name, sub: f.line(s) + ' — ' + f.where(s), note: hereNow ? 'here' : 'away',
                  pick: function () { shipCard(worldId, s); } };
       }),
-      buttons: [{ label: 'Back', act: function () { menu(worldId); } }],
+      buttons: [{ label: 'Back', act: function () { back(worldId); } }],
       closeLabel: 'Done'
     });
   }
+  function back(worldId) { var P = PORTS[portOf(worldId)]; if (P && P.own && typeof BridgeHolm !== 'undefined') BridgeHolm.ledger(); else menu(worldId); }
   function shipCard(worldId, s, note) {
     var f = F(), sp = f.effective(s), base = f.spec(s.type), isle = f.islandOf(worldId), hereNow = s.type === 'sloop' || s.at === isle;
     var crew = f.crewOn(s.id), Pd = PORTS[portOf(worldId)];
@@ -234,7 +239,7 @@ var BridgeHarbour = (function () {
                return { label: s.name, sub: 'hull ' + Math.round(s.hull * 100) + '%', note: f.repairCost(s) + ' coins',
                         pick: function () { f.repair(s.id).then(function (r) { if (r.ok) sfx('coin'); repairs(worldId, r.ok ? s.name.toUpperCase() + ' IS SOUND AGAIN.' : why(r)); }); } };
              }),
-             buttons: [{ label: 'Back', act: function () { menu(worldId); } }], closeLabel: 'Done' });
+             buttons: [{ label: 'Back', act: function () { back(worldId); } }], closeLabel: 'Done' });
   }
 
   // ---- hands ------------------------------------------------------------------------------------------------------
@@ -295,17 +300,18 @@ var BridgeHarbour = (function () {
       return { label: t.name(id), icon: id, sub: (sells ? 'buy ' + t.price(id, P, 'buy') + ' · ' : '') + 'sell ' + t.price(id, P, 'sell') + (have ? ' · ' + have + ' aboard' : ''),
                note: have ? 'trade' : 'buy', pick: function () { deal(worldId, s, id); } };
     });
-    choose({ title: 'Market', text: note || 'PRICES EACH, TODAY. ' + t.room(s) + ' CRATES FREE IN THE ' + s.name.toUpperCase() + '.',
+    choose({ title: 'Market', text: note || 'PRICES EACH, TODAY - A BIG DEAL MOVES THEM. ' + t.room(s) + ' CRATES FREE IN THE ' + s.name.toUpperCase() + '.',
              rows: rows, buttons: [{ label: 'Back', act: function () { menu(worldId); } }], closeLabel: 'Done' });
   }
   function deal(worldId, s, id, note) {
     var t = T(), P = portOf(worldId), have = s.hold[id] || 0, sells = t.stock(P).indexOf(id) >= 0, buyP = t.price(id, P, 'buy'), sellP = t.price(id, P, 'sell');
     var can = sells ? Math.min(t.fits(s, id), Math.max(0, t.supply(id, P))) : 0, buttons = [];
+    var cost = function (n) { return t.price(id, P, 'buy', n) * n; }, take = function (n) { return t.price(id, P, 'sell', n) * n; };   // a big deal moves the price
     function go(fn) { return function () { fn().then(function (r) { if (r.ok) sfx('coin'); deal(worldId, s, id, r.ok ? (r.total ? 'SOLD ' + r.n + ' FOR ' + r.total + '.' : 'BOUGHT ' + r.n + ' FOR ' + r.cost + '.') : why(r)); }); }; }
-    if (sells) [1, 5, 20].forEach(function (n) { if (n <= can) buttons.push({ label: 'Buy ' + n + ' (' + buyP * n + ')', act: go(function () { return t.buy(s, id, n, P); }) }); });
-    if (sells && can > 0) buttons.push({ label: 'Fill her (' + can + ')', act: go(function () { return t.buy(s, id, can, P); }) });
-    if (have) buttons.push({ label: 'Sell all ' + have + ' (' + sellP * have + ')', act: go(function () { return t.sell(s, id, have, P); }) });
-    if (have > 5) buttons.push({ label: 'Sell 5 (' + sellP * 5 + ')', act: go(function () { return t.sell(s, id, 5, P); }) });
+    if (sells) [1, 5, 20].forEach(function (n) { if (n <= can) buttons.push({ label: 'Buy ' + n + ' (' + cost(n) + ')', act: go(function () { return t.buy(s, id, n, P); }) }); });
+    if (sells && can > 20) buttons.push({ label: 'Fill her: ' + can + ' (' + cost(can) + ')', act: go(function () { return t.buy(s, id, can, P); }) });
+    if (have > 5) buttons.push({ label: 'Sell 5 (' + take(5) + ')', act: go(function () { return t.sell(s, id, 5, P); }) });
+    if (have) buttons.push({ label: 'Sell all ' + have + ' (' + take(have) + ')', act: go(function () { return t.sell(s, id, have, P); }) });
     buttons.push({ label: 'Back', act: function () { market(worldId, s); } });
     var G = t.GOODS[id], it = typeof BridgeItems !== 'undefined' && BridgeItems.get(id);
     choose({ title: t.name(id), text: note || ((G ? G.desc : it ? it.desc : '') + '').toUpperCase(),
@@ -331,5 +337,5 @@ var BridgeHarbour = (function () {
              rows: rows, buttons: [{ label: 'Back', act: function () { menu(worldId); } }], closeLabel: 'Done' });
   }
 
-  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard };
+  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs };
 })();

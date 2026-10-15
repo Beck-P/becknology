@@ -63,7 +63,12 @@ var BridgeTrade = (function () {
     'lumar-crimson':  { salt_fish: 1.4, lamp_oil: 1.35, timber: 1.45, glassware: 1.35, spore_silk: 1.1, roseite: 1.2, ember_rum: 0.6, blackpowder: 0.62, moon_salt: 1.6,
                         ore: 1.3, gem: 1.15, crystal: 1.0, fish: 1.3, stone: 1.1 },
     'lumar-midnight': { salt_fish: 1.6, lamp_oil: 1.7, timber: 1.2, glassware: 1.0, spore_silk: 0.9, roseite: 1.0, ember_rum: 1.5, blackpowder: 0.8, moon_salt: 0.45,
-                        ore: 0.8, gem: 1.4, crystal: 1.3, fish: 0.7, stone: 0.6 }
+                        ore: 0.8, gem: 1.4, crystal: 1.3, fish: 0.7, stone: 0.6 },
+    // the capital buys everything, and pays best for the luxuries; Tern Holm lives on fish
+    'lumar-crown':    { salt_fish: 0.95, lamp_oil: 1.05, timber: 1.15, glassware: 1.05, spore_silk: 1.55, roseite: 1.35, ember_rum: 1.3, blackpowder: 1.2, moon_salt: 1.85,
+                        ore: 1.3, gem: 1.5, crystal: 1.2, fish: 1.1, stone: 1.3 },
+    'lumar-tern':     { salt_fish: 0.55, lamp_oil: 1.25, timber: 1.2, glassware: 1.2, spore_silk: 1.3, roseite: 1.1, ember_rum: 1.4, blackpowder: 1.0, moon_salt: 1.2,
+                        ore: 0.9, gem: 1.0, crystal: 1.0, fish: 0.6, stone: 0.9 }
   };
   // what each port's market actually stocks (you can sell anything anywhere; you can only buy what they have)
   var STOCK = {
@@ -71,7 +76,9 @@ var BridgeTrade = (function () {
     'lumar-sapphire': ['glassware', 'salt_fish', 'ember_rum', 'spore_silk', 'timber'],
     'lumar-rose': ['spore_silk', 'roseite', 'lamp_oil'],
     'lumar-crimson': ['ember_rum', 'blackpowder', 'salt_fish'],
-    'lumar-midnight': ['moon_salt']
+    'lumar-midnight': ['moon_salt'],
+    'lumar-crown': ['salt_fish', 'lamp_oil', 'timber', 'glassware', 'spore_silk', 'ember_rum'],
+    'lumar-tern': ['salt_fish', 'lamp_oil']
   };
   var SPREAD = 0.08;                                    // a market buys under its price and sells over it
 
@@ -103,13 +110,17 @@ var BridgeTrade = (function () {
     if (!g) return 0;
     return g.n * Math.pow(0.5, (Date.now() - g.at) / 7200000);
   }
-  /** The price of one unit of `id` at port P, to `buy` from it or to `sell` to it. */
-  function price(id, P, side) {
+  // how deep a market is: sell DEPTH units of a thing at once and the price has halved; buy them and it's doubled
+  function depth(id) { return GOODS[id] ? 90 : 160; }
+  /** The price each of `id` at port P, to `buy` from it or to `sell` to it — `n` at once (default 1): a big deal moves
+   *  the price against you, and a port where you've sold a lot lately pays less until it wears off. */
+  function price(id, P, side, n) {
     P = port(P);
     if (!P) return 0;
-    var drift = 0.85 + 0.3 * hash(today() + ':' + P + ':' + id);
-    var g = glutOf(id, P), sag = 1 / (1 + g / (GOODS[id] ? 18 : 60));
-    var p = base(id) * appetite(id, P) * drift * sag;
+    n = n || 1;
+    var drift = 0.85 + 0.3 * hash(today() + ':' + P + ':' + id), K = depth(id);
+    var press = side === 'buy' ? 1 + (n / 2) / K : 1 / (1 + (glutOf(id, P) + n / 2) / K);
+    var p = base(id) * appetite(id, P) * drift * press;
     var purser = typeof BridgeFleet !== 'undefined' && BridgeFleet.crewHas && BridgeFleet.crewHas('purser') ? 0.05 : 0;
     p = side === 'buy' ? p * (1 + SPREAD - purser) : p * (1 - SPREAD + purser);
     return Math.max(1, Math.round(p));
@@ -169,7 +180,7 @@ var BridgeTrade = (function () {
     if (!P || stock(P).indexOf(id) < 0) return Promise.resolve({ ok: false, reason: 'not_here' });
     n = Math.min(n, fits(ship, id), Math.max(0, supply(id, P)));
     if (n <= 0) return Promise.resolve({ ok: false, reason: room(ship) ? 'sold_out' : 'full' });
-    var cost = price(id, P, 'buy') * n;
+    var cost = price(id, P, 'buy', n) * n;
     return pay(cost, 'cargo:' + id).then(function (r) {
       if (!r || !r.ok) return { ok: false, reason: (r && r.reason) || 'coins' };
       add(ship, id, n);
@@ -181,7 +192,7 @@ var BridgeTrade = (function () {
     P = port(P);
     n = Math.min(n, ship.hold[id] || 0);
     if (!P || n <= 0) return Promise.resolve({ ok: false, reason: 'none' });
-    var each = price(id, P, 'sell'), total = each * n;
+    var each = price(id, P, 'sell', n), total = each * n;
     take(ship, id, n);                                    // off the ship first; back on if the coins don't go through
     return paid(total, 'cargo:' + id).then(function (ok) {
       if (!ok) { add(ship, id, n); return { ok: false, reason: 'offline' }; }
@@ -192,8 +203,18 @@ var BridgeTrade = (function () {
     });
   }
 
+  /** The best cargo of `id` to carry from port A to port B in `room` crates: {n, profit} (what moves the prices least). */
+  function bestRun(id, A, B, room) {
+    var best = { n: 0, profit: 0 };
+    for (var n = 2; n <= room; n += Math.max(1, Math.round(room / 40))) {
+      var pr = n * (price(id, B, 'sell', n) - price(id, A, 'buy', n));
+      if (pr > best.profit) best = { n: n, profit: pr };
+    }
+    return best;
+  }
+
   // ---- contracts --------------------------------------------------------------------------------------------------
-  var PORTS = ['lumar', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight'];
+  var PORTS = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight'];
   function contracts(P) {
     P = port(P);
     if (!P) return [];
@@ -291,6 +312,6 @@ var BridgeTrade = (function () {
 
   return { GOODS: GOODS, HAUL: HAUL, MARKET: MARKET, PORTS: PORTS, isGood: isGood, name: name, per: per, port: port, price: price,
            stock: stock, supply: supply, crates: crates, capacity: capacity, room: room, fits: fits, load: load, unload: unload,
-           buy: buy, sell: sell, contracts: contracts, mine: mine, take: takeContract, deliver: deliver,
+           buy: buy, sell: sell, bestRun: bestRun, depth: depth, contracts: contracts, mine: mine, take: takeContract, deliver: deliver,
            _state: function () { return st; } };
 })();

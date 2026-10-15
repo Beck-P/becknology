@@ -142,5 +142,53 @@
       "pool": "ice",
       "label": "ICE HOLE"
     }
+  ],
+  "lumar-crown": [
+    {
+      "x": 13,
+      "y": 37,
+      "pool": "harbour",
+      "label": "OFF THE JETTY"
+    },
+    {
+      "x": 15,
+      "y": 37,
+      "pool": "harbour",
+      "label": "OFF THE JETTY"
+    },
+    {
+      "x": 14,
+      "y": 40,
+      "pool": "harbour",
+      "label": "END OF THE JETTY"
+    }
+  ],
+  "lumar-tern": [
+    {
+      "x": 18,
+      "y": 20,
+      "pool": "harbour",
+      "label": "OFF THE PIER"
+    },
+    {
+      "x": 20,
+      "y": 20,
+      "pool": "harbour",
+      "label": "OFF THE PIER"
+    }
+  ],
+  "lumar-holm": [
+    {
+      "x": 20,
+      "y": 23,
+      "pool": "harbour",
+      "label": "OFF THE JETTY"
+    },
+    {
+      "x": 22,
+      "y": 23,
+      "pool": "harbour",
+      "label": "OFF THE JETTY"
+    }
   ]
 }

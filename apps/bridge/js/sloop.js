@@ -335,7 +335,8 @@ var BridgeSloop = (function () {
   // where your sloop lies tied up: broadside across the end of each island's pier, where you walk out to her
   var MOORINGS = {
     'lumar': [8.0, 17.75, 0], 'lumar-sapphire': [28.5, 28.75, 0], 'lumar-rose': [28.5, 25.75, 0],
-    'lumar-crimson': [28.5, 38.75, 0], 'lumar-midnight': [24.5, 39.75, 0]
+    'lumar-crimson': [28.5, 38.75, 0], 'lumar-midnight': [24.5, 39.75, 0],
+    'lumar-crown': [22.5, 37.75, 0], 'lumar-tern': [19.5, 21.75, 0], 'lumar-holm': [21.5, 25.75, 0]
   };
   function afloat(I, x, r, rad) {                     // nothing standing out of the water here (shallows will do)
     if (ground(I, x, r) === 1) return false;
@@ -1244,6 +1245,13 @@ var BridgeSloop = (function () {
              [tu - Math.cos(ja) * jl, lee * Math.sin(ja) * jl, bow - 0.07], lee, b.luff, now + 200 + ji * 70, tone, b.cloth);
       });
     } });
+    // your hands about the deck: one at each mast's foot, the rest forward (a big ship only - the sloop is just you)
+    var hands = b === boat && sp.L > 2.7 ? Math.min(sp.hands || 0, rg.masts.length + 2) : 0;
+    for (var hi2 = 0; hi2 < hands; hi2++) (function (i) {
+      var m = rg.masts[i], u = m ? -L2 + m.f * sp.L - 0.3 : L2 - 0.6 - (i - rg.masts.length) * 0.5, v = (i % 2 ? 0.55 : -0.55) * bw;
+      var fz = (m && m.z != null ? m.z : rg.deck - 0.25), pt = P(u, v, fz);
+      drawList.push({ row: pt[2], draw: function () { drawHand(pt, b, now, i); } });
+    })(hi2);
     drawList.sort(function (p, q) { return p.row - q.row; });
     drawList.forEach(function (d) { d.draw(); });
     if (!wheel) {                                                     // the tiller, pushed against the turn
@@ -1346,6 +1354,15 @@ var BridgeSloop = (function () {
     if (!crewImg.complete || !crewImg.naturalWidth) return;
     var a = ((b.h % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
     bctx.drawImage(crewImg, [0, 1, 2, 1][Math.floor(now / 340 + b.seed) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 41, 32, 48);
+  }
+  // one of your hands on deck, standing their watch (sailors and dockhands, by turns)
+  var handImgs = {};
+  function drawHand(pt, b, now, i) {
+    var sheet = ['npc-sailor', 'npc-dockhand'][i % 2], img = handImgs[sheet];
+    if (!img) { img = handImgs[sheet] = new Image(); img.src = '/bridge/assets/characters/' + sheet + '.png'; }
+    if (!img.complete || !img.naturalWidth) return;
+    var a = ((b.h + (i % 3 - 1) * 1.2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
+    bctx.drawImage(img, [0, 1, 2, 1][Math.floor(now / 380 + i * 1.7) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(pt[0]) - 16, Math.round(pt[1]) - 45, 32, 48);
   }
   // you on foot, stepping aboard or ashore (the walking sheet)
   function drawWalker(x, r, toward, now) {

@@ -57,7 +57,18 @@ var BridgeFarm = (function () {
     if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(x, y - 0.3, text, colour);
   }
   function has(id) { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount(id) > 0; }
-  function key(x, y) { return x + ',' + y; }
+  // a field tile's key: plain "x,y" on Verdance (as it always was), "<world>|x,y" anywhere else with a plot (the garden on
+  // your holm, js/holm.js), so each field keeps its own crops
+  function wid() { return typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : 'verdance'; }
+  function onVerdance() { return wid() === 'verdance'; }
+  function key(x, y) { var w = wid(); return (w && w !== 'verdance' ? w + '|' : '') + x + ',' + y; }
+  function xyOf(k) { var i = k.indexOf('|'); return (i >= 0 ? k.slice(i + 1) : k).split(','); }
+  function here(k) { var w = wid(); return w && w !== 'verdance' ? k.indexOf(w + '|') === 0 : k.indexOf('|') < 0; }
+  /** May you dig this tile? Verdance asks the homestead (Edda's field); the holm asks whether its garden's been cleared. */
+  function workable(world, x) {
+    if (!onVerdance()) return typeof BridgeHolm !== 'undefined' && BridgeHolm.canFarm();
+    return typeof BridgeHomestead === 'undefined' || BridgeHomestead.canWork(world, x);
+  }
 
   // ---- the field ------------------------------------------------------------------------------------
   function plotOf(world) { return world && world.farm && world.farm.plot; }
@@ -72,7 +83,7 @@ var BridgeFarm = (function () {
     if (!c) return;
     var from = c.t || now, wetTo = t.wet || 0;
     // a sprinkler beside it, or Tam on the payroll, keeps it watered (js/homestead.js)
-    var kept = k && typeof BridgeHomestead !== 'undefined' ? BridgeHomestead.keptWet(k, now) : 0;
+    var kept = k && k.indexOf('|') < 0 && typeof BridgeHomestead !== 'undefined' ? BridgeHomestead.keptWet(k, now) : 0;   // (Verdance's)
     if (kept) { wetTo = Math.max(wetTo, Math.min(now, kept)); if (kept > now) t.wet = Math.max(t.wet || 0, Math.min(kept, now + WET)); }
     var pace = typeof BridgeSeasons !== 'undefined' ? BridgeSeasons.growth(c.k) : 1;   // the season favours some crops; winter slows all
     if (wetTo > from) c.g = Math.min(c.need, c.g + (Math.min(now, wetTo) - from) * pace);
@@ -84,6 +95,7 @@ var BridgeFarm = (function () {
     // Odile brings in whatever's been ripe a while (she walks to the rest herself while you're watching)
     if (typeof BridgeHomestead !== 'undefined' && BridgeHomestead.active('odile')) {
       for (var j in save.tiles) {
+        if (j.indexOf('|') >= 0) continue;                         // she works Verdance's field, not your holm's garden
         var c = save.tiles[j].crop;
         if (c && c.g >= c.need && now - (c.ripeAt || now) > 60000) pickFor(j);
       }
@@ -104,8 +116,8 @@ var BridgeFarm = (function () {
     else if (BridgeHomestead.takeSeed(kind)) t.crop = { k: kind, g: 0, need: C.grow * 60000, t: Date.now() };
     else delete t.crop;
     store();
-    var xy = k.split(',');
-    burst(+xy[0], +xy[1], '#90d060', 5, 1);
+    var xy = xyOf(k);
+    if (here(k)) burst(+xy[0], +xy[1], '#90d060', 5, 1);
   }
   function wet(t, now) { return (t.wet || 0) > now; }
   function ripe(c) { return c.g >= c.need; }
@@ -133,9 +145,9 @@ var BridgeFarm = (function () {
 
   // what pressing E on this tile would do
   function plan(x, y, now) {
-    var H = typeof BridgeHomestead !== 'undefined' ? BridgeHomestead : null;
+    var H = typeof BridgeHomestead !== 'undefined' && onVerdance() ? BridgeHomestead : null;
     if (H && H.sprinklerAt(key(x, y))) return { act: 'lift', verb: 'LIFT', label: 'SPRINKLER' };
-    if (H && !H.canWork(BridgeWorld.getWorld(), x) && !save.tiles[key(x, y)]) return { act: 'locked', verb: 'LOOK', label: 'EDDA\'S FIELD' };
+    if (!workable(BridgeWorld.getWorld(), x) && !save.tiles[key(x, y)]) return { act: 'locked', verb: 'LOOK', label: H ? 'EDDA\'S FIELD' : 'THE GARDEN' };
     if (H && has('sprinkler') && BridgeInventory.getSelectedItemId && BridgeInventory.getSelectedItemId() === 'sprinkler' && !(save.tiles[key(x, y)] || {}).crop)
       return { act: 'sprinkle', verb: 'SET THE SPRINKLER', label: 'FIELD' };
     var t = save.tiles[key(x, y)];
@@ -321,7 +333,7 @@ var BridgeFarm = (function () {
       if (here && inPlot(world, x, y) && save.tiles[key(x, y)]) return water(x, y, f[2]);
       return float(BridgeCharacter.getX(), BridgeCharacter.getY(), 'CAN ' + save.can + '/' + CAN, '#80d0f0');
     }
-    if (!here) return say(BridgeItems.get(id).name.toUpperCase(), 'NOTHING TO DO WITH THAT HERE. IT\'S FOR THE FIELD ON VERDANCE.');
+    if (!here) return say(BridgeItems.get(id).name.toUpperCase(), 'NOTHING TO DO WITH THAT HERE. IT\'S FOR A FIELD - THE ONE ON VERDANCE, OR A GARDEN OF YOUR OWN.');
     if (!inPlot(world, x, y)) return float(BridgeCharacter.getX(), BridgeCharacter.getY(), 'FACE THE FIELD', '#f0e0a0');
     var t = save.tiles[key(x, y)];
     if (id === 'hoe') {
@@ -329,11 +341,12 @@ var BridgeFarm = (function () {
       return float(x, y, t.crop ? 'GROWING' : 'TILLED', '#f0e0a0');
     }
     if (id === 'sprinkler') {
+      if (!onVerdance()) return float(x, y, 'FOR VERDANCE\'S FIELD', '#f0e0a0');
       if (t && t.crop) return float(x, y, 'NOT ON A CROP', '#f0e0a0');
       if (typeof BridgeHomestead !== 'undefined' && !BridgeHomestead.canWork(world, x)) return float(x, y, 'NOT YOUR FIELD YET', '#f0e0a0');
       return BridgeHomestead.placeSprinkler(x, y);
     }
-    if (typeof BridgeHomestead !== 'undefined' && !BridgeHomestead.canWork(world, x) && !t) return float(x, y, 'NOT YOUR FIELD YET', '#f0e0a0');
+    if (!workable(world, x) && !t) return float(x, y, onVerdance() ? 'NOT YOUR FIELD YET' : 'CLEAR THE GARDEN FIRST', '#f0e0a0');
     if (/^seed_/.test(id)) {
       if (!t) return float(x, y, 'TILL IT FIRST', '#f0e0a0');
       if (t.crop) return float(x, y, 'ALREADY PLANTED', '#f0e0a0');
@@ -445,7 +458,7 @@ var BridgeFarm = (function () {
   // ---- scene hooks ------------------------------------------------------------------------------------
   function twine(ctx, world, offX, offY, ts) {
     var p = plotOf(world), H = typeof BridgeHomestead !== 'undefined' ? BridgeHomestead : null;
-    if (!p || !H || H.owned()) return;
+    if (!p || !H || H.owned() || !onVerdance()) return;
     var x = Math.round(offX + H.starterEdge(world) * ts) - 1, u = ts / 16;
     ctx.fillStyle = 'rgba(232,220,180,0.7)';
     ctx.fillRect(x, Math.round(offY + p[1] * ts), 1, Math.round((p[3] - p[1] + 1) * ts));
@@ -458,7 +471,8 @@ var BridgeFarm = (function () {
     if (!plotOf(world)) return;
     var now = Date.now();
     for (var k in save.tiles) {
-      var xy = k.split(','), x = +xy[0], y = +xy[1];
+      if (!here(k)) continue;
+      var xy = xyOf(k), x = +xy[0], y = +xy[1];
       if (!inPlot(world, x, y)) continue;
       ctx.drawImage(soilTile(wet(save.tiles[k], now), (x * 7 + y * 3) % 3), Math.round(offX + x * ts), Math.round(offY + y * ts));
     }
@@ -468,12 +482,12 @@ var BridgeFarm = (function () {
   function items(world, offX, offY, ts, now) {
     if (!plotOf(world)) return [];
     sync(world, now);
-    var out = typeof BridgeHomestead !== 'undefined'
+    var out = typeof BridgeHomestead !== 'undefined' && onVerdance()
       ? BridgeHomestead.items(world, offX, offY, ts, now, typeof BridgeScene !== 'undefined' && world.scene ? BridgeScene.get(world.scene.id) : null) : [];
     for (var k in save.tiles) {
       var t = save.tiles[k];
-      if (!t.crop) continue;
-      var xy = k.split(','), x = +xy[0], y = +xy[1];
+      if (!t.crop || !here(k)) continue;
+      var xy = xyOf(k), x = +xy[0], y = +xy[1];
       if (!inPlot(world, x, y)) continue;
       (function (img, dx, dy, foot) {
         out.push({ footRow: foot, draw: function (c) { c.drawImage(img, dx, dy); } });
@@ -530,11 +544,14 @@ var BridgeFarm = (function () {
     });
     if (!plotOf(world)) return;
     if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.over(ctx, world, offX, offY, ts, now);
-    // a sparkle over anything ready to pick
+    sparkles(ctx, offX, offY, ts, now);
+  }
+  // a sparkle over anything ready to pick (any field's: the holm's garden too)
+  function sparkles(ctx, offX, offY, ts, now) {
     for (var k in save.tiles) {
       var tt = save.tiles[k];
-      if (!tt.crop || !ripe(tt.crop)) continue;
-      var xy = k.split(','), px = +xy[0], py = +xy[1];
+      if (!tt.crop || !ripe(tt.crop) || !here(k)) continue;
+      var xy = xyOf(k), px = +xy[0], py = +xy[1];
       var ph = (now / 1300 + (px * 7 + py * 13) % 10 / 10) % 1, s = Math.max(0, Math.sin(ph * Math.PI * 2));
       if (tt.crop.k === 'starfruit') {                          // starfruit glows
         var gx = offX + (px + 0.5) * ts, gy = offY + (py + 0.2) * ts;
@@ -558,7 +575,12 @@ var BridgeFarm = (function () {
     bits = bits.filter(function (d) { return d.life > 0; });
   }
 
-  if (typeof BridgeWorld !== 'undefined') BridgeWorld.registerSceneHooks('verdance', { ground: ground, items: items, over: over });
+  if (typeof BridgeWorld !== 'undefined') {
+    BridgeWorld.registerSceneHooks('verdance', { ground: ground, items: items, over: over });
+    // a garden on a Lumar island (the holm): the field's ground, crops and sparkles, none of Verdance's weather
+    BridgeWorld.registerSceneHooks('lumar', { ground: ground, items: items,
+      over: function (ctx, world, offX, offY, ts, now) { if (plotOf(world)) sparkles(ctx, offX, offY, ts, now); } });
+  }
 
   // for the journal: what's in the ground, what's ready, what you've brought in
   function journal() {
