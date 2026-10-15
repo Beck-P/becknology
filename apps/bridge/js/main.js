@@ -12,6 +12,10 @@ var Bridge = (function () {
 
     resize();
     window.addEventListener('resize', resize);
+    // Short of graphics memory (a long session, many rooms, a 3D game in the cabinet) the browser can
+    // drop the canvas and hand it back blank, its scale reset: set it up again and redraw the caches
+    // that may have gone blank with it.
+    canvas.addEventListener('contextrestored', recover);
 
     BridgeStarfield.init(canvas);
     if (typeof BridgeCoinHUD !== 'undefined') BridgeCoinHUD.init();
@@ -47,11 +51,21 @@ var Bridge = (function () {
     requestAnimationFrame(loop);
   }
 
+  var sizedW = 0, sizedH = 0;
   function resize() {
     dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
+    sizedW = window.innerWidth; sizedH = window.innerHeight;
+    canvas.width = sizedW * dpr;
+    canvas.height = sizedH * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function recover() {
+    resize();
+    if (typeof BridgeWorld !== 'undefined' && BridgeWorld.invalidateTiles) BridgeWorld.invalidateTiles();
+    if (typeof BridgeScene !== 'undefined' && BridgeScene.restore) BridgeScene.restore();
+    if (typeof BridgeSea !== 'undefined' && BridgeSea.reset) BridgeSea.reset();
+    if (typeof BridgeOrbit !== 'undefined' && BridgeOrbit.reset) BridgeOrbit.reset();
   }
 
   function loop() {
@@ -59,6 +73,13 @@ var Bridge = (function () {
     var w = window.innerWidth;
     var h = window.innerHeight;
 
+    // The canvas's size and scale, made right every frame: a window moved to another screen changes
+    // its pixel density without a resize, and a canvas the browser restored comes back unscaled — which
+    // left this clear covering only the top-left quarter, and old frames showing round the rest.
+    if (w !== sizedW || h !== sizedH || (window.devicePixelRatio || 1) !== dpr) resize();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
     ctx.clearRect(0, 0, w, h);
 
     var state = BridgeState.getState();

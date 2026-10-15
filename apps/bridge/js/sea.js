@@ -363,5 +363,8 @@ var BridgeSea = (function () {
   // drop an island's water canvases when its scene is let go (js/scene.js)
   function forget(id) { delete shores[id]; delete bands[id]; }
 
-  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, palettes: PALETTES, forget: forget };
+  // after the canvas was lost: every texture and mask is made again as it's next needed
+  function reset() { tex = {}; patterns = {}; shores = {}; bands = {}; }
+
+  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, palettes: PALETTES, forget: forget, reset: reset };
 })();

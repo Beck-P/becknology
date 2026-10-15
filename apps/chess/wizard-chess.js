@@ -388,7 +388,9 @@ class StockfishOracle {
   constructor(onStatusChange) {
     this.worker = null;
     this.ready = false;
-    this.pendingResolve = null;
+    this.queue = [];
+    this.current = null;
+    this.orphans = 0;
     this.lastEvalCp = 0; // from side-to-move's perspective
     this.lastMate = null;
     this.lastPv = "";
@@ -445,21 +447,25 @@ class StockfishOracle {
         } else if (line.startsWith("bestmove ")) {
           const parts = line.split(/\s+/);
           const bestUci = parts[1];
-          if (this.pendingResolve) {
-            const res = this.pendingResolve;
-            this.pendingResolve = null;
-            res({
-              bestMoveUci: bestUci && bestUci !== "(none)" ? bestUci : null,
-              scoreCp: this.lastEvalCp,
-              mate: this.lastMate,
-              pv: this.lastPv || bestUci
-            });
-          }
+          this.answer({
+            bestMoveUci: bestUci && bestUci !== "(none)" ? bestUci : null,
+            scoreCp: this.lastEvalCp,
+            mate: this.lastMate,
+            pv: this.lastPv || bestUci
+          });
         }
       };
 
       this.worker.onerror = () => {
         this.ready = false;
+        // everything waiting on the worker gets an answer: none (the built-in engine takes over)
+        if (this.current) {
+          clearTimeout(this.current.timer);
+          this.current.resolve(null);
+          this.current = null;
+        }
+        this.queue.forEach((j) => j.resolve(null));
+        this.queue = [];
         if (this.onStatusChange) this.onStatusChange(false);
       };
 
@@ -470,36 +476,71 @@ class StockfishOracle {
     }
   }
 
-  queryPosition(fen, { skill = 20, depth = 12, movetime = 450 } = {}) {
+  // One search at a time. A new request never cancels the AI's move: it waits its turn. A live
+  // evaluation in progress is stopped early for anything newer (its answer still belongs to its own
+  // position), and evaluations still waiting are dropped for the latest. Each "bestmove" answers
+  // exactly the search that asked for it — a search given up on (no answer in time) has its late
+  // answer ignored — so a move found for one position can never be played in another.
+  queryPosition(fen, { skill = 20, depth = 12, movetime = 450, kind = "eval" } = {}) {
     if (!this.ready || !this.worker) {
       return Promise.resolve(null);
     }
     return new Promise((resolve) => {
-      // Cancel any in-flight search
-      if (this.pendingResolve) {
-        this.worker.postMessage("stop");
-        this.pendingResolve(null);
+      if (kind === "eval") {
+        this.queue = this.queue.filter((j) => {
+          if (j.kind !== "eval") return true;
+          j.resolve(null);
+          return false;
+        });
       }
-      this.lastEvalCp = 0;
-      this.lastMate = null;
-      this.lastPv = "";
-
-      const timeoutId = setTimeout(() => {
-        if (this.pendingResolve) {
-          this.pendingResolve = null;
-          resolve(null);
-        }
-      }, movetime + 1800);
-
-      this.pendingResolve = (result) => {
-        clearTimeout(timeoutId);
-        resolve(result);
-      };
-
-      this.worker.postMessage(`setoption name Skill Level value ${skill}`);
-      this.worker.postMessage(`position fen ${fen}`);
-      this.worker.postMessage(`go depth ${depth} movetime ${movetime}`);
+      this.queue.push({ fen, skill, depth, movetime, kind, resolve });
+      this.pump();
     });
+  }
+
+  pump() {
+    const cur = this.current;
+    if (cur) {
+      if (cur.kind !== "move" && !cur.stopping && this.queue.length) {
+        cur.stopping = true;
+        this.worker.postMessage("stop");
+      }
+      return;
+    }
+    const job = this.queue.shift();
+    if (!job) return;
+    this.current = job;
+    this.lastEvalCp = 0;
+    this.lastMate = null;
+    this.lastPv = "";
+    // no answer in time: stop it, and if even that goes unanswered, give up on it and move on
+    job.timer = setTimeout(() => {
+      if (this.current !== job) return;
+      this.worker.postMessage("stop");
+      job.timer = setTimeout(() => {
+        if (this.current !== job) return;
+        this.orphans++;
+        this.current = null;
+        job.resolve(null);
+        this.pump();
+      }, 1500);
+    }, job.movetime + 1800);
+    this.worker.postMessage(`setoption name Skill Level value ${job.skill}`);
+    this.worker.postMessage(`position fen ${job.fen}`);
+    this.worker.postMessage(`go depth ${job.depth} movetime ${job.movetime}`);
+  }
+
+  answer(result) {
+    if (this.orphans > 0) {
+      this.orphans--; // the late answer to a search already given up on
+      return;
+    }
+    const job = this.current;
+    if (!job) return;
+    clearTimeout(job.timer);
+    this.current = null;
+    job.resolve(result);
+    this.pump();
   }
 }
 
@@ -2105,6 +2146,11 @@ export class WizardChess3D {
     }
   }
 
+  // An animation's promise, or a timeout if it never finishes (a frame that threw, a tab put away)
+  settle(promise, ms) {
+    return Promise.race([promise, new Promise((resolve) => setTimeout(resolve, ms))]);
+  }
+
   // ---------- Choreographed Move + Piece-Specific Battle Chess Duels ----------
   async executeMove(moveObj) {
     this.animating = true;
@@ -2138,72 +2184,88 @@ export class WizardChess3D {
       return;
     }
 
-    if (victimMesh && attackerMesh) {
-      await this.playBattleCaptureSequence(attackerMesh, victimMesh, fromSq, toSq, victimSq, result);
-      if (gen !== this.gameGen) return; // a new or resumed game replaced this one mid-duel
-      this.capturedCounts[result.color].push(result.captured);
-      this.payCaptureReward(result);
-    } else if (attackerMesh) {
-      await this.playSlideOrLeap(attackerMesh, fromSq, toSq, result.piece === "n");
-      if (gen !== this.gameGen) return;
-    }
-
-    // Castling rook slide
-    if (result.flags.includes("k") || result.flags.includes("q")) {
-      const rankChar = result.color === "w" ? "1" : "8";
-      const rookFrom = (result.flags.includes("k") ? "h" : "a") + rankChar;
-      const rookTo = (result.flags.includes("k") ? "f" : "d") + rankChar;
-      const rookMesh = this.pieceMeshes.get(rookFrom);
-      if (rookMesh) {
-        await this.playSlideOrLeap(rookMesh, rookFrom, rookTo, false);
+    // The move is made; the rest is showing it. If any of that fails, the board is set straight
+    // from the game and play carries on — a broken animation must never leave the board waiting.
+    try {
+      if (victimMesh && attackerMesh) {
+        await this.settle(this.playBattleCaptureSequence(attackerMesh, victimMesh, fromSq, toSq, victimSq, result), 8000);
+        if (gen !== this.gameGen) return; // a new or resumed game replaced this one mid-duel
+        this.capturedCounts[result.color].push(result.captured);
+        this.payCaptureReward(result);
+      } else if (attackerMesh) {
+        await this.settle(this.playSlideOrLeap(attackerMesh, fromSq, toSq, result.piece === "n"), 3000);
         if (gen !== this.gameGen) return;
-        this.pieceMeshes.delete(rookFrom);
-        rookMesh.userData.square = rookTo;
-        this.pieceMeshes.set(rookTo, rookMesh);
       }
-    }
 
-    if (attackerMesh) {
-      this.pieceMeshes.delete(fromSq);
-      if (result.flags.includes("p")) {
-        this.scene.remove(attackerMesh);
-        const promotedMesh = this.buildWizardPieceMesh(result.promotion || "q", result.color);
-        const toWorld = squareToWorld(toSq);
-        promotedMesh.position.set(toWorld.x, 0, toWorld.z);
-        promotedMesh.userData.square = toSq;
-        this.scene.add(promotedMesh);
-        this.pieceMeshes.set(toSq, promotedMesh);
-        this.spawnSpellBurst(new THREE.Vector3(toWorld.x, 0.8, toWorld.z), 0xffd57a, 24);
-      } else {
-        attackerMesh.userData.square = toSq;
-        this.pieceMeshes.set(toSq, attackerMesh);
+      // Castling rook slide
+      if (result.flags.includes("k") || result.flags.includes("q")) {
+        const rankChar = result.color === "w" ? "1" : "8";
+        const rookFrom = (result.flags.includes("k") ? "h" : "a") + rankChar;
+        const rookTo = (result.flags.includes("k") ? "f" : "d") + rankChar;
+        const rookMesh = this.pieceMeshes.get(rookFrom);
+        if (rookMesh) {
+          await this.settle(this.playSlideOrLeap(rookMesh, rookFrom, rookTo, false), 3000);
+          if (gen !== this.gameGen) return;
+          this.pieceMeshes.delete(rookFrom);
+          rookMesh.userData.square = rookTo;
+          this.pieceMeshes.set(rookTo, rookMesh);
+        }
       }
+
+      if (attackerMesh) {
+        this.pieceMeshes.delete(fromSq);
+        if (result.flags.includes("p")) {
+          this.scene.remove(attackerMesh);
+          const promotedMesh = this.buildWizardPieceMesh(result.promotion || "q", result.color);
+          const toWorld = squareToWorld(toSq);
+          promotedMesh.position.set(toWorld.x, 0, toWorld.z);
+          promotedMesh.userData.square = toSq;
+          this.scene.add(promotedMesh);
+          this.pieceMeshes.set(toSq, promotedMesh);
+          this.spawnSpellBurst(new THREE.Vector3(toWorld.x, 0.8, toWorld.z), 0xffd57a, 24);
+        } else {
+          attackerMesh.userData.square = toSq;
+          this.pieceMeshes.set(toSq, attackerMesh);
+        }
+      }
+    } catch (err) {
+      console.warn("Wizard Chess: a move's animation failed; setting the board straight", err);
+      if (gen !== this.gameGen) return;
+      this.syncPiecesFromBoard();
     }
 
-    if (this.chess.inCheck()) {
-      this.audio.playCheck();
+    try {
+      if (this.chess.inCheck()) {
+        this.audio.playCheck();
+      }
+
+      // Record ply in timeline and update live evaluation bar
+      const uci = result.from + result.to + (result.promotion || "");
+      const staticWhiteCp = this.evaluateBoard();
+      this.timeline.push({
+        ply: this.timeline.length,
+        fen: this.chess.fen(),
+        san: result.san,
+        uci,
+        color: result.color,
+        captured: result.captured || null,
+        evalCpWhite: staticWhiteCp,
+        bestMoveUci: null,
+        classification: null
+      });
+
+      this.updateLiveEvalAsync(this.timeline.length - 1);
+      this.notifyStateChange(result);
+    } catch (err) {
+      console.warn("Wizard Chess: recording the move failed", err);
     }
-
-    // Record ply in timeline and update live evaluation bar
-    const uci = result.from + result.to + (result.promotion || "");
-    const staticWhiteCp = this.evaluateBoard();
-    this.timeline.push({
-      ply: this.timeline.length,
-      fen: this.chess.fen(),
-      san: result.san,
-      uci,
-      color: result.color,
-      captured: result.captured || null,
-      evalCpWhite: staticWhiteCp,
-      bestMoveUci: null,
-      classification: null
-    });
-
-    this.updateLiveEvalAsync(this.timeline.length - 1);
-    this.notifyStateChange(result);
 
     if (this.chess.isGameOver()) {
-      this.handleGameOver();
+      try {
+        this.handleGameOver();
+      } catch (err) {
+        console.warn("Wizard Chess: settling the game failed", err);
+      }
       this.animating = false;
       return;
     }
@@ -2932,8 +2994,17 @@ export class WizardChess3D {
       this.animating = false;
       return;
     }
-    const move = await this.chooseBestAIMove();
+    let move = null;
+    try {
+      move = await this.chooseBestAIMove();
+    } catch (err) {
+      console.warn("Wizard Chess: no engine move", err);
+    }
     if (gen !== this.gameGen) return; // the game changed while the engine was thinking
+    // whatever the engine said, play a move that's legal here and now (or the board would wait forever)
+    const legalNow = this.chess.moves({ verbose: true });
+    if (move) move = legalNow.find((m) => m.from === move.from && m.to === move.to && (m.promotion || "") === (move.promotion || "")) || null;
+    if (!move) move = legalNow[0] || null;
     if (!move) {
       this.animating = false;
       return;
@@ -2952,7 +3023,8 @@ export class WizardChess3D {
       const sfRes = await this.stockfish.queryPosition(this.chess.fen(), {
         skill: tier.skill,
         depth: tier.depth,
-        movetime: tier.movetime
+        movetime: tier.movetime,
+        kind: "move"
       });
       if (sfRes && sfRes.bestMoveUci) {
         const from = sfRes.bestMoveUci.slice(0, 2);
@@ -2965,47 +3037,89 @@ export class WizardChess3D {
       }
     }
 
-    // 2. Fallback local Alpha-Beta + PST search
-    const searchDepth = this.aiDifficulty <= 2 ? 1 : this.aiDifficulty <= 4 ? 2 : 3;
-    const aiColor = this.chess.turn();
-    legal.sort((a, b) => (b.captured ? 10 : 0) - (a.captured ? 10 : 0));
-
-    let bestMove = legal[0];
-    let bestVal = -Infinity;
-    let alpha = -Infinity;
-    const beta = Infinity;
-
-    for (const mv of legal) {
-      this.chess.move(mv);
-      const val = -this.negamax(searchDepth - 1, -beta, -alpha, aiColor === "w" ? -1 : 1);
-      this.chess.undo();
-      const jittered = val + (Math.random() - 0.5) * (tier.noise || 8);
-      if (jittered > bestVal) {
-        bestVal = jittered;
-        bestMove = mv;
-      }
-      if (val > alpha) alpha = val;
+    // 2. The built-in engine: alpha-beta over material and placement, on a scratch board, deepening
+    // until its time is up. It runs on the page's own thread (and inside the Bridge, on the Bridge's),
+    // so it gets a fixed budget rather than a fixed depth: it can be weaker, never frozen.
+    await new Promise((r) => setTimeout(r, 0));
+    const plan = this.aiDifficulty <= 1 ? [1, 120] : this.aiDifficulty <= 2 ? [2, 220] : this.aiDifficulty <= 4 ? [3, 420] : [4, 650];
+    try {
+      return this.searchLocal(legal, plan[0], plan[1], tier.noise || 8) || legal[0];
+    } catch (err) {
+      console.warn("Wizard Chess: the built-in engine stumbled, playing a simple move", err);
+      return legal.find((m) => m.captured) || legal[Math.floor(Math.random() * legal.length)];
     }
-    return bestMove;
   }
 
-  negamax(depth, alpha, beta, colorSign) {
-    if (depth === 0 || this.chess.isGameOver()) {
-      return colorSign * this.evaluateBoard();
+  searchLocal(legal, maxDepth, budgetMs, noise) {
+    const board = new Chess(this.chess.fen());
+    const deadline = performance.now() + budgetMs;
+    const order = (ms) => ms.sort((a, b) => (b.captured ? PIECE_VALUES[b.captured] - PIECE_VALUES[b.piece] / 10 : -1e4) -
+                                            (a.captured ? PIECE_VALUES[a.captured] - PIECE_VALUES[a.piece] / 10 : -1e4));
+    let moves = order(legal.slice());
+    let best = null;
+    const TIMEOUT = {};
+    let nodes = 0;
+    const negamax = (depth, alpha, beta) => {
+      if ((++nodes & 255) === 0 && performance.now() > deadline) throw TIMEOUT;
+      if (depth === 0) return (board.turn() === "w" ? 1 : -1) * this.scoreBoard(board);
+      const ms = board.moves({ verbose: true });
+      if (ms.length === 0) return board.inCheck() ? -99000 - depth : 0; // mated (sooner is worse), or stalemate
+      order(ms);
+      let max = -Infinity;
+      for (const mv of ms) {
+        board.move(mv);
+        const v = -negamax(depth - 1, -beta, -alpha);
+        board.undo();
+        if (v > max) max = v;
+        if (v > alpha) alpha = v;
+        if (alpha >= beta) break;
+      }
+      return max;
+    };
+    for (let depth = 1; depth <= maxDepth; depth++) {
+      const scored = [];
+      let alpha = -Infinity;
+      try {
+        for (const mv of moves) {
+          board.move(mv);
+          const v = -negamax(depth - 1, -Infinity, -alpha);
+          board.undo();
+          scored.push([mv, v]);
+          if (v > alpha) alpha = v;
+        }
+      } catch (e) {
+        if (e !== TIMEOUT) throw e;
+        break; // out of time: keep the last depth that finished
+      }
+      scored.sort((x, y) => y[1] - x[1]);
+      moves = scored.map((x) => x[0]); // the next depth looks at the best first
+      // a little noise among the near-best keeps the easy levels human
+      let pick = scored[0];
+      for (const sc of scored) {
+        if (sc[1] + (Math.random() - 0.5) * noise > pick[1] + (Math.random() - 0.5) * noise) pick = sc;
+      }
+      best = pick[0];
     }
-    const moves = this.chess.moves({ verbose: true });
-    moves.sort((a, b) => (b.captured ? 10 : 0) - (a.captured ? 10 : 0));
+    return best;
+  }
 
-    let maxEval = -Infinity;
-    for (const mv of moves) {
-      this.chess.move(mv);
-      const evaluation = -this.negamax(depth - 1, -beta, -alpha, -colorSign);
-      this.chess.undo();
-      if (evaluation > maxEval) maxEval = evaluation;
-      if (evaluation > alpha) alpha = evaluation;
-      if (alpha >= beta) break;
+  // Material and placement, white-positive: what the search scores its positions by (chess.js's
+  // isGameOver / isDraw replay the whole game looking for repetitions, far too slow to call per node)
+  scoreBoard(chessInstance) {
+    const board = chessInstance.board();
+    let score = 0;
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const piece = board[r][f];
+        if (!piece) continue;
+        const base = PIECE_VALUES[piece.type] || 0;
+        const sqIdx = piece.color === "w" ? r * 8 + f : (7 - r) * 8 + f;
+        const bonus = PST[piece.type] ? PST[piece.type][sqIdx] : 0;
+        if (piece.color === "w") score += base + bonus;
+        else score -= base + bonus;
+      }
     }
-    return maxEval;
+    return score;
   }
 
   evaluateBoard(chessInstance = this.chess) {
@@ -3045,13 +3159,15 @@ export class WizardChess3D {
         const sf = await this.stockfish.queryPosition(node.fen, {
           skill: 20,
           depth: 8,
-          movetime: 110
+          movetime: 110,
+          kind: "review"
         });
         if (sf) {
           node.evalCpWhite = (fenTurn === "w" ? 1 : -1) * sf.scoreCp;
           node.bestMoveUci = sf.bestMoveUci;
         }
       } else {
+        if (i % 4 === 0) await new Promise((r) => setTimeout(r, 0)); // let the page breathe through a long game
         tempChess.load(node.fen);
         node.evalCpWhite = this.evaluateBoard(tempChess);
         // Find 1-ply best move locally

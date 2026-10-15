@@ -431,6 +431,7 @@ var BridgeScene = (function () {
     layerImage: layerImage,
     drawBackground: drawBackground,
     drawOccluded: drawOccluded,
+    restore: function () { for (var k in scenes) if (scenes[k].ready) composite(scenes[k]); },   // after the canvas was lost
     tintAt: tintAt,
     actorDrawList: actorDrawList,
     flickerAt: flickerAt,
