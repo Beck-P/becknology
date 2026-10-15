@@ -81,7 +81,13 @@ var BridgeHolm = (function () {
                    warehouse: 'FOUR STAKES IN THE GRASS, AND A ROTTED SIGN: "STORE".',
                    quarters: 'STAKES MARKING OUT A PLOT. NOBODY BUILT ON IT.' }[a] || 'NOTHING HERE YET.', it.label);
     }
-    if (a === 'house') return built('house') ? cottage() : offer('house');
+    if (a === 'house') {                               // the rebuilt cottage is a home to walk into (scenes/lumar_holm_home.py)
+      if (!built('house')) return offer('house');
+      if (typeof BridgeWorld !== 'undefined' && BridgeWorld.enterWorld) return BridgeWorld.enterWorld('lumar-holm-home', [7, 8]);
+      return cottage();
+    }
+    if (a === 'ledger') return ledger();
+    if (a === 'rest') return rest();
     if (a === 'garden') return built('garden') ? garden() : offer('garden');
     if (a === 'warehouse') return built('warehouse') ? warehouse() : offer('warehouse');
     if (a === 'quarters') return built('quarters') ? quarters() : offer('quarters');

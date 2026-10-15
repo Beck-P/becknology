@@ -44,6 +44,8 @@ var BridgeHome = (function () {
                       bought: 'THE KEYCARD BLINKS GREEN. A BARE ROOM, A WINDOW FULL OF CITY, A CAPSULE IN THE WALL - YOURS. THE DESK THREW IN A STOOL AND A PLANT.' },
     // Edda's farmhouse on Verdance: it comes with the farm's deed (js/homestead.js), its door is the farm's own
     'verdance-home': { name: 'The Farmhouse', farm: true, theme: 'parchment', gift: ['rocking_chair', 'bed'], shop: 'HOLLIN\'S MAIL-ORDER' },
+    // the cottage on Starling Holm: yours once it's rebuilt (js/holm.js), its door the island's own
+    'lumar-holm-home': { name: 'The Cottage', holm: true, theme: 'parchment', gift: ['bed', 'armchair'], shop: 'WEXLEY & DAUGHTERS, JOINERS' },
     'quarters': { name: 'Your Quarters', ship: true, theme: 'holo', shop: "THE CHANDLER'S CATALOGUE" },
     'bridge': { name: 'The Bridge', ship: true, theme: 'holo', shop: "THE CHANDLER'S CATALOGUE" }
   };
@@ -89,6 +91,7 @@ var BridgeHome = (function () {
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function owns(id) {
     if (HOMES[id] && HOMES[id].farm) return typeof BridgeHomestead !== 'undefined' && BridgeHomestead.owned();
+    if (HOMES[id] && HOMES[id].holm) return typeof BridgeHolm !== 'undefined' && BridgeHolm.built('house');
     return !!(HOMES[id] && (HOMES[id].ship || save.owned[id]));
   }
   function layout(id) { return save.layout[id] || (save.layout[id] = []); }
@@ -171,7 +174,7 @@ var BridgeHome = (function () {
     whenReady(function () { if (cur && cur.data === data) apply(); });
     if (!HOMES[worldId].ship && owns(worldId) && !save.seen[worldId]) {
       save.seen[worldId] = Date.now();
-      if (HOMES[worldId].farm) (HOMES[worldId].gift || []).forEach(function (g) { save.have[g] = (save.have[g] || 0) + 1; });   // Edda left you a chair and a bed
+      if (HOMES[worldId].farm || HOMES[worldId].holm) (HOMES[worldId].gift || []).forEach(function (g) { save.have[g] = (save.have[g] || 0) + 1; });   // Edda (or the joiners) left you a start
       store();
       setTimeout(function () {
         if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Home', HOMES[worldId].name, 'Yours to furnish - press H', false);
