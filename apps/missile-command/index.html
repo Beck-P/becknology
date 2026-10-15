@@ -12,10 +12,12 @@
 <body>
 <script>
 /**
- * Missile Command — DEFENDING ARCADIA, the cabinet in the Arcade in Arcadia
- * (BridgeArcade kit, apps/bridge/js/shared/arcade-kit.js). 320×240 native:
- * the night over the District, six of its neon towers along the street and
- * three counter-battery silos between them, ten interceptors in each. The
+ * Missile Command — HOLD THE BRINK (BridgeArcade kit, apps/bridge/js/shared/
+ * arcade-kit.js). 320×240 native: the void round the Singularity, the black
+ * hole burning at the top of the sky in its accretion disk, crystal shards
+ * drifting, and on the last platform at the Brink six crystal spires and
+ * three lens batteries between them, ten interceptors in each. What falls
+ * are shards of the void. The
  * missiles come in salvos, more and faster every wave; MIRVs split from
  * wave 2, a corp gunship or a drone crosses from wave 3 dropping more. A
  * blast takes out whatever is inside it and that goes up too — chain
@@ -25,14 +27,17 @@
  * Coins for each wave survived and for the score at the end.
  */
 (function () {
-  var W = 320, H = 240, GY = 226, P = BridgeArcade.PAL.arcadia;
+  // the void's colours, under the names the drawing uses (BridgeArcade.PAL.void)
+  var V = BridgeArcade.PAL.void, W = 320, H = 240, GY = 226;
+  var P = { bg: V.bg, bg2: V.bg2, dark: V.dark, mid: V.mid, hi: V.hi, purp: V.purp, purp2: '#22163e', mag: V.deep, pink: '#f0a0e8',
+            pink2: V.crys2, cyan: V.cyan, cyan2: '#c8f4ff', yel: V.gold, green: '#a8f0c8', red: V.red, white: V.white, grey: V.grey };
   var BAT_X = [20, 160, 300], BAT_V = [170, 250, 170];   // the middle silo's interceptors are quicker
   var CITY_X = [59, 90, 121, 199, 230, 261];
   var BOOM = [P.white, P.yel, P.pink, P.cyan2, P.purp, P.green, P.pink2, P.cyan];
   var FIRE = [P.red, P.yel, P.white, P.pink2];
   var GROW = 0.42, HOLD = 0.3, FADE = 0.5;              // a blast's life: swell, hang, shrink
   var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-  var MOON = { x: 268, y: 34, r: 9 };
+  var MOON = { x: 252, y: 40, r: 9 };                   // the Singularity
 
   var A = null, live = false;                            // the kit's api; a real run, not the title's demo
   var cities = null, bats, foes, stubs, abms, blasts, fliers, bits, pops, chains, queue = [];
@@ -141,45 +146,48 @@
     band(70, 6, P.bg2, 9, 3, 0.017, 2.0);
     band(104, 7, P.purp2, 5, 3, 0.014, 1.3);
     band(130, 6, P.purp2, 7, 2, 0.021, 2.4);
-    // the moon in the smog: a dithered halo, a thin cloud across it
-    for (y = -13; y <= 13; y++) for (x = -13; x <= 13; x++) {
-      var dd = x * x + y * y;
-      if (dd > 100 && dd <= 169 && dith(MOON.x + x, MOON.y + y, 5)) { c.fillStyle = P.purp2; c.fillRect(MOON.x + x, MOON.y + y, 1, 1); }
+    // the Singularity: a wide dithered glow, the accretion disk on the tilt (gold to white near), the black core
+    for (y = -30; y <= 30; y++) for (x = -44; x <= 44; x++) {
+      var gd = Math.sqrt(x * x / 1.8 + y * y);
+      if (gd > 12 && gd < 30 && dith(MOON.x + x, MOON.y + y, Math.max(0, 9 - (gd - 12) / 2))) { c.fillStyle = gd < 18 ? V.deep : P.purp2; c.fillRect(MOON.x + x, MOON.y + y, 1, 1); }
     }
-    api.circle(c, MOON.x, MOON.y, MOON.r, P.grey, true);
-    api.circle(c, MOON.x - 1, MOON.y - 1, MOON.r - 2, P.white, true);
-    c.fillStyle = P.grey;
-    [[-5, -2, 2], [-3, 1, 1], [-6, 1, 1], [0, -5, 1], [-2, -4, 1]].forEach(function (k) { c.fillRect(MOON.x + k[0], MOON.y + k[1], k[2], 1); });
-    for (y = 3; y <= 5; y++) for (x = -MOON.r; x <= MOON.r; x++) {
-      if (x * x + y * y <= MOON.r * MOON.r && dith(MOON.x + x, MOON.y + y, y === 4 ? 7 : 2)) { c.fillStyle = P.grey; c.fillRect(MOON.x + x, MOON.y + y, 1, 1); }
-    }
-    // far mega-towers sinking into the smog
-    x = -3;
-    while (x < W) {
-      var w = 7 + Math.floor(r() * 13), h = 34 + Math.floor(r() * 44);
-      if (r() < 0.2) h += 26 + Math.floor(r() * 22);
-      c.fillStyle = P.dark;
-      c.fillRect(x, GY - h, w, h);
-      if (w > 9 && r() < 0.5) c.fillRect(x + 2, GY - h - 4, w - 4, 4);
-      if (h > 80) c.fillRect(x + Math.floor(w / 2), GY - h - 14, 1, 14);
-      for (var wy = GY - h + 3; wy < GY - 12; wy += 3) {
-        for (var wx = x + 2; wx < x + w - 2; wx += 2) {
-          if (r() < 0.08) { c.fillStyle = r() < 0.7 ? P.purp2 : P.mag; c.fillRect(wx, wy, 1, 1); }
-        }
+    for (var ang = 0; ang < Math.PI * 2; ang += 0.01) {
+      for (var rr = 11; rr <= 21; rr++) {
+        var ex = Math.round(MOON.x + Math.cos(ang) * rr * 1.6), ey = Math.round(MOON.y + Math.sin(ang) * rr * 0.42);
+        var heat = 1 - (rr - 11) / 10;
+        if (!dith(ex, ey, 4 + heat * 12)) continue;
+        c.fillStyle = heat > 0.8 ? V.white : heat > 0.5 ? V.gold : heat > 0.25 ? '#e08a50' : V.red; c.fillRect(ex, ey, 1, 1);
       }
-      x += w + Math.floor(r() * 7) - 1;
+    }
+    api.circle(c, MOON.x, MOON.y, MOON.r, '#000000', true);
+    api.circle(c, MOON.x, MOON.y, MOON.r + 1, V.gold, false);                           // the photon ring
+    for (x = -26; x <= 26; x++) {                                                        // the near side of the disk, across the core
+      var hy = Math.round(MOON.y + 2 + Math.abs(x) * 0.08);
+      if (Math.abs(x) < 34) { c.fillStyle = Math.abs(x) < 10 ? V.white : V.gold; c.fillRect(MOON.x + x, hy, 1, 1); }
+    }
+    // shards of the old world drifting: rock wedges with crystal growing on them, smaller and dimmer far off
+    for (i = 0; i < 9; i++) {
+      var sx = Math.floor(r() * W), sy = 90 + Math.floor(r() * 100), sw = 10 + Math.floor(r() * 22), sh = 6 + Math.floor(r() * 8), far = sy < 140;
+      for (y = 0; y < sh; y++) {
+        var half = Math.round(sw / 2 * (1 - y / sh));
+        c.fillStyle = y === 0 ? (far ? P.mid : P.hi) : far ? P.dark : P.mid; c.fillRect(sx - half, sy + y, half * 2, 1);
+      }
+      for (var k2 = 0; k2 < 3; k2++) {                                                // crystals on top
+        var cxx = sx - sw / 3 + Math.floor(r() * sw * 0.66), chh = 3 + Math.floor(r() * (far ? 5 : 9));
+        for (y = 0; y < chh; y++) { c.fillStyle = far ? V.deep : y < 2 ? V.crys2 : V.crys; c.fillRect(Math.round(cxx), sy - y, y < chh - 1 ? 2 : 1, 1); }
+      }
     }
     for (y = GY - 44; y < GY; y++) {
       var lv = (y - (GY - 44)) / 44 * 9;
       c.fillStyle = P.purp2;
       for (x = 0; x < W; x++) if (dith(x, y, lv)) c.fillRect(x, y, 1, 1);
     }
-    // the street
-    c.fillStyle = P.bg; c.fillRect(0, GY, W, H - GY);
-    c.fillStyle = P.mag; c.fillRect(0, GY, W, 1);
-    c.fillStyle = P.purp2; c.fillRect(0, GY + 1, W, 1);
-    c.fillStyle = P.dark;
-    for (x = 3; x < W; x += 12) c.fillRect(x, GY + 8, 6, 1);
+    // the platform's rim: worn stone, a line of runes still glowing in it
+    c.fillStyle = P.dark; c.fillRect(0, GY, W, H - GY);
+    c.fillStyle = V.crys2; c.fillRect(0, GY, W, 1);
+    c.fillStyle = P.mid; c.fillRect(0, GY + 1, W, 1);
+    c.fillStyle = V.deep;
+    for (x = 3; x < W; x += 9) { c.fillRect(x, GY + 6, 3, 1); c.fillRect(x + 1, GY + 5, 1, 3); }
 
     stars = [];
     for (i = 0; i < 70; i++) {
@@ -188,10 +196,10 @@
     }
     wisps = [];
     for (i = 0; i < 4; i++) wisps.push({ x: r() * W, y: 48 + Math.floor(r() * 70), w: 36 + Math.floor(r() * 40), v: 2 + r() * 3 });
-    traffic = [];
+    traffic = [];                                                                      // echoes drifting past, faint
     for (i = 0; i < 6; i++) {
       var right = i % 2 === 0;
-      traffic.push({ x: r() * W, y: [150, 158, 168][i % 3], v: (right ? 1 : -1) * (6 + r() * 9), col: right ? P.yel : P.red });
+      traffic.push({ x: r() * W, y: [150, 158, 168][i % 3], v: (right ? 1 : -1) * (6 + r() * 9), col: right ? V.crys2 : V.cyan });
     }
   }
 
@@ -217,7 +225,7 @@
     A.score += n;
     if (A.score >= nextCity) {
       nextCity += 10000; spare++;
-      pop('BONUS TOWER', W / 2, 30, P.green, 2.2);
+      pop('BONUS SPIRE', W / 2, 30, P.green, 2.2);
       tune([784, 988, 1175, 1568], 0.08, 'square', 0.045);
     }
   }
@@ -315,7 +323,7 @@
     for (var i = 0; i < 18; i++) debris(c.x + rnd(-8, 8), GY - rnd(2, 14), [P.pink, P.cyan, P.yel, P.mid][i % 4], 70);
     noise(1.1, 0.24, 520); beep(330, 0.8, 'sawtooth', 0.06, 0.2);
     A.shake(5); A.flash(P.red);
-    pop('TOWER LOST', c.x, GY - 36, P.red, 1.3);
+    pop('SPIRE LOST', c.x, GY - 36, P.red, 1.3);
   }
   function destroyBat(b) {
     b.alive = false; b.ammo = 0;
@@ -441,10 +449,10 @@
     tickT = 1;
     phase = 'intro'; phaseT = 2.4;
     intro = {
-      line: wave === 1 ? 'DEFEND ARCADIA' : wave === 2 ? 'MIRVS INBOUND - THEY SPLIT' : wave === 3 ? 'CORP GUNSHIP OVER THE DISTRICT' :
-            wave === 4 ? 'A DRONE IS DROPPING THEM' : wave % 5 === 0 ? 'THE DISTRICT HOLDS' : 'HOLD THE LINE',
-      sub: wave === 1 ? 'SAVE THE TOWERS' : 'BATTERIES REARMED',
-      extra: raised ? 'BONUS TOWER RAISED' : rebuilt ? 'TOWERS REBUILT' : ''
+      line: wave === 1 ? 'HOLD THE BRINK' : wave === 2 ? 'SPLITTERS - THEY BREAK APART' : wave === 3 ? 'A HUNTER CROSSES THE VOID' :
+            wave === 4 ? 'AN ECHO IS DROPPING THEM' : wave % 5 === 0 ? 'THE BRINK HOLDS' : 'HOLD THE LINE',
+      sub: wave === 1 ? 'SAVE THE SPIRES' : 'LENSES RECHARGED',
+      extra: raised ? 'BONUS SPIRE RAISED' : rebuilt ? 'SPIRES REGROWN' : ''
     };
     if (wave > 1) tune([440, 554, 659], 0.06, 'triangle', 0.04);
     if (raised || rebuilt) later(0.35, function () { tune([523, 659, 784, 1046, 1318], 0.07, 'square', 0.04); });
@@ -753,8 +761,8 @@
   }
 
   var game = {
-    id: 'missile-command', title: 'MISSILE COMMAND', w: W, h: H, pal: 'arcadia',
-    help: ['DEFEND ARCADIA - SAVE THE DISTRICT TOWERS', 'CLICK OR TAP THE SKY TO FIRE', 'ARROWS AIM - SPACE FIRES THE NEAREST', '1 2 3 OR A S D FIRE LEFT MIDDLE RIGHT'],
+    id: 'missile-command', title: 'MISSILE COMMAND', w: W, h: H, pal: 'void',
+    help: ['HOLD THE BRINK - SAVE THE CRYSTAL SPIRES', 'CLICK OR TAP THE SKY TO FIRE', 'ARROWS AIM - SPACE FIRES THE NEAREST', '1 2 3 OR A S D FIRE LEFT MIDDLE RIGHT'],
     coins: { per: 150, best: 20 },                     // a decent run (wave 9, ~11k) pays ~70 here plus ~50 in wave coins
 
     start: function (api) {
