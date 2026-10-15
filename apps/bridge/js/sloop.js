@@ -1268,7 +1268,9 @@ var BridgeSloop = (function () {
         line([foot[0] + 1, foot[1]], [top[0] + 1, top[1]], '#6a4a2a');
         if (m === tallest) {                                          // the pennant at the main truck, streaming downwind
           var dw = wind.now + Math.PI, fl = Math.sin(t * 14) * 0.1;
-          poly([top, [top[0] + Math.cos(dw + fl) * 9 * Math.sqrt(k), top[1] + Math.sin(dw + fl) * 9 * C45 * Math.sqrt(k)], [top[0], top[1] + 3]], '#c83a2e');
+          var royal = b.ship && typeof BridgeCrown !== 'undefined' && BridgeCrown.captain();              // the Crown's captain flies gold
+          poly([top, [top[0] + Math.cos(dw + fl) * 9 * Math.sqrt(k), top[1] + Math.sin(dw + fl) * 9 * C45 * Math.sqrt(k)], [top[0], top[1] + 3]], royal ? '#e0b040' : '#c83a2e');
+          if (royal) poly([top, [top[0] + Math.cos(dw + fl) * 5 * Math.sqrt(k), top[1] + Math.sin(dw + fl) * 5 * C45 * Math.sqrt(k)], [top[0], top[1] + 2]], '#2a7a4a');
           if (sp.ward) {                                              // the moon lantern at the masthead
             bctx.save(); bctx.globalCompositeOperation = 'lighter';
             var pulse = 0.8 + 0.2 * Math.sin(t * 2.2);

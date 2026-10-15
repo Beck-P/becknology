@@ -524,6 +524,7 @@ var BridgeInteractions = (function () {
         break;
 
       case 'chapel_candle': case 'chapel_bell': case 'sea_chart': case 'charts': case 'registry': case 'hands': case 'charters':
+      case 'palace_gate': case 'audience': case 'commissions':
         if (typeof BridgeCrown !== 'undefined') BridgeCrown.use(inter);   // Crownhaven's rooms (js/crown.js)
         break;
       case 'exchange':                                                   // the Merchants' Exchange board (js/harbour.js)

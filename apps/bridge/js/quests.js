@@ -165,10 +165,11 @@ var BridgeQuests = (function () {
         if (FL.crew().length) fleetLines.push(FL.crew().length + ' hand' + (FL.crew().length > 1 ? 's' : '') + ' signed on' + (ashore ? ', ' + ashore + ' ashore in the quarters' : ''));
         if (T2) T2.mine().forEach(function (c) {
           var I = typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles || {};
-          fleetLines.push('Contract: ' + c.n + ' ' + esc(T2.name(c.good).toLowerCase()) + ' to ' + esc(I[c.to] ? I[c.to].name : c.to) + ' for ' + c.fee + ' coins');
+          if (!c.royal) fleetLines.push((c.charter ? 'Charter: ' : 'Contract: ') + c.n + ' ' + esc(T2.name(c.good).toLowerCase()) + ' to ' + esc(I[c.to] ? I[c.to].name : c.to) + ' for ' + c.fee + ' coins');
         });
       }
     }
+    if (typeof BridgeCrown !== 'undefined' && BridgeCrown.journal()) fleetLines.push(BridgeCrown.journal());     // the Queen's commissions
     if (typeof BridgeHolm !== 'undefined' && BridgeHolm.owned()) fleetLines.push('<b>' + esc(BridgeHolm.name()) + '</b> is yours' + (BridgeHolm._state().chest ? ' - ' + BridgeHolm._state().chest + ' coins in its strongbox' : ''));
     if (fleetLines.length) {
       html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your fleet</span>' +

@@ -6195,10 +6195,9 @@
     {
       "x": 32,
       "y": 13,
-      "type": "dialog",
+      "type": "palace_gate",
       "label": "PALACE GATE",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "THE PALACE OF THE EMERALD CROWN. THE GATES ARE SHUT; THE GUARDS SAY THE QUEEN-REGENT SEES NOBODY WITHOUT A LETTER.\n\nONE OF THEM ADDS, QUIETLY: \"UNLESS YOU OWN A FLEET.\""
+      "prompt": "PRESS E TO ASK"
     },
     {
       "x": 57,

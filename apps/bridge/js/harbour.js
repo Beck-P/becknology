@@ -73,8 +73,9 @@ var BridgeHarbour = (function () {
       var ships = f.here(worldId);
       Promise.all(ships.map(function (s) { return t.deliver(s, P); })).then(function (res) {
         var done = [].concat.apply([], res).filter(function (r) { return r.ok; });
-        done.forEach(function (r) { toast('Contract', r.contract.n + ' × ' + t.name(r.contract.good) + ' delivered', '+' + r.contract.fee + ' coins'); sfx('coin'); });
-        menu(worldId, intro, done.length ? 'CONTRACT' + (done.length > 1 ? 'S' : '') + ' DELIVERED. THE FEE IS YOURS.' : null);
+        done.forEach(function (r) { toast('Contract', r.contract.n + ' × ' + t.name(r.contract.good) + ' delivered', r.contract.royal ? 'for the Queen-Regent - go to the palace' : '+' + r.contract.fee + ' coins'); sfx('coin'); });
+        var royal = done.some(function (r) { return r.contract.royal; });
+        menu(worldId, intro, done.length ? (royal ? 'THE QUEEN\'S MOON SALT, SAFE ASHORE. "SHE\'LL WANT TO THANK YOU HERSELF," SAYS ROWENA. "THE PALACE, CAPTAIN."' : 'CONTRACT' + (done.length > 1 ? 'S' : '') + ' DELIVERED. THE FEE IS YOURS.') : null);
       });
       return;
     }

@@ -214,7 +214,10 @@ var BridgeFleet = (function () {
     store();
     return s.hull;
   }
-  function repairCost(s) { return s.hull >= 0.999 ? 0 : Math.max(20, Math.round((1 - s.hull) * (spec(s.type).price || 160) * 0.22)); }
+  function repairCost(s) {                               // the Crown's captain pays the yards a quarter less
+    var royal = typeof BridgeCrown !== 'undefined' && BridgeCrown.captain() ? 0.75 : 1;
+    return s.hull >= 0.999 ? 0 : Math.max(20, Math.round((1 - s.hull) * (spec(s.type).price || 160) * 0.22 * royal));
+  }
   function repair(shipId) {
     var s = get(shipId), c = s && repairCost(s);
     if (!c) return Promise.resolve({ ok: false, reason: 'sound' });

@@ -414,9 +414,9 @@ var BridgeScene = (function () {
 
             var cx = Math.round(offX + (a.x + 0.5) * ts);
             var footY = Math.round(offY + footRow * ts);
-            var dx = cx - FRAME_W / 2, dy = footY - (FRAME_H - 3) - bob;
+            var dx = cx - FRAME_W / 2, dy = footY - (FRAME_H - 3) - bob - Math.round((a.lift || 0) * Math.SQRT1_2 * ts);   // a height z shows z·cos 45° up
             drawOccluded(ctx, sc, sh.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy,
-              footRow, offX, offY, tintAt(sc, world, a.x, a.y, now),
+              footRow, offX, offY, tintAt(sc, world, a.light ? a.light[0] : a.x, a.light ? a.light[1] : a.y, now),   // light: lit as if on another tile (a throne in its own shadow)
               a.pose === 'sit' ? null : { x: cx, y: footY, rx: 8, ry: 3 });
           };
         })(a, sh, footRow)

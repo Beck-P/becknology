@@ -215,6 +215,11 @@ NPCS = {
                           hair=('#2a1a10', '#4a2e1a', '#6a4428'), visor_cap=True, pose='stand'),
     'npc-pim':       dict(skin='skin3', shirt=('#4a3a2a', '#6a5640', '#8a7458'), vest=('#2a4a3a', '#3e6a52', '#5a8a6e'),
                           hair=('#1a1410', '#2e2218', '#44342a'), bun=True, pose='stand'),
+    'npc-queen':     dict(skin='skin2', shirt=('#1a3a2a', '#2a5a40', '#3e7a58'), skirt=('#1a3a2a', '#2a5a40', '#3e7a58'),
+                          vest=('#7a5a10', '#a88020', '#d0a840'), hair=('#1a1410', '#2e2218', '#44342a'), long_hair=True,
+                          crown=('#8a6a10', '#c89a20', '#f0d060'), pose='sit'),
+    'npc-steward':   dict(skin='skin', shirt=('#1a1a2a', '#2a2a40', '#3e3e5a'), vest=('#5a1a14', '#8a2a20', '#b83a2a'),
+                          hair=('#9a9aa0', '#c8c8d0', '#ececf2'), mustache=True, pose='stand'),
     'npc-broker':    dict(skin='skin3', shirt=('#4a1418', '#6a2028', '#8a3038'), vest=('#1a1a20', '#2a2a32', '#3e3e48'),
                           hair=('#1a1410', '#2e2218', '#44342a'), mustache=True, pose='stand'),
     'npc-coralie':   dict(skin='skin', shirt=('#1a3a5a', '#2a5a8a', '#4a7ab0'), skirt=('#1a3a5a', '#2a5a8a', '#4a7ab0'),
@@ -600,6 +605,12 @@ def build_human(spec):
         add('uv_sphere', 'beanie', (0, 0.3, 7.6), (5.3, 5.1, 3.6), 'beanie', 'hat', head, segments=20, ring_count=10)
         add('torus', 'beanie_rim', (0, 0.2, 6.9), (1, 1, 0.7), 'beanie', 'hat', head,
             major_radius=4.9, minor_radius=0.8, major_segments=20, minor_segments=6)
+    if 'crown' in spec:          # a gold circlet with five points (the Queen-Regent)
+        add('cylinder', 'crown', (0, 0.4, 9.6), (4.4, 4.2, 0.9), 'crown', 'hat', head, vertices=16)
+        for i in range(5):
+            ang = math.pi / 2 + (i - 2) * 0.62
+            add('cone', 'crownpt', (math.cos(ang) * 4.1, 0.4 - math.sin(ang) * 3.9, 11.2), (1, 1, 1), 'crown', 'hat', head,
+                vertices=6, radius1=0.9, radius2=0.0, depth=2.0)
     if spec.get('bun'):
         add('uv_sphere', 'bun', (0, 3.6, 8.4), (2.2, 2.0, 2.0), 'hair', 'hair', head, segments=12, ring_count=8)
     if spec.get('long_hair'):
@@ -663,7 +674,7 @@ else:
     tones = {'shirt': spec['shirt'], 'pants': FIXED['pants'], 'hair': spec['hair'], 'skin': FIXED[spec['skin']]}
     if 'sleeve' in spec:
         tones['sleeve'] = FIXED[spec['sleeve']] if spec['sleeve'] in FIXED else FIXED[spec['skin']]
-    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat', 'straw_hat'):
+    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat', 'straw_hat', 'crown'):
         if key in spec:
             tones[key] = spec[key]
     VARIANTS = {WHO.replace('npc-', ''): tones}

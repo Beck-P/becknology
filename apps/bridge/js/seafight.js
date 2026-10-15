@@ -218,12 +218,15 @@ var BridgeSeaFight = (function () {
     o.state = 'sink';
     api.sfx('slam');
     var K = o.K, coins = Math.round(K.loot[0] + Math.random() * (K.loot[1] - K.loot[0]));
+    var C = typeof BridgeCrown !== 'undefined' ? BridgeCrown : null;
+    if (C && !K.ghost && C.marque()) coins *= 2;                         // sailing under the Crown's letter of marque
+    if (C) C.noteWin(K);
     var s = ship(), T = typeof BridgeTrade !== 'undefined' ? BridgeTrade : null, got = 0, good = K.cargo[Math.floor(Math.random() * K.cargo.length)];
     if (s && T) { var n = Math.min(3 + Math.floor(Math.random() * 5), T.fits(s, good)); if (n > 0) { s.hold[good] = (s.hold[good] || 0) + n; got = n; F().save(); } }
     if (typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) BridgeProgression.awardCoins(coins, K.ghost ? 'sea:drowned' : 'sea:pirates');
     api.say((K.ghost ? 'The drowned ship comes apart into mist and green light. ' : 'She strikes her colours and goes down by the stern. ') + coins + ' coins' +
             (got ? ' and ' + got + ' ' + (T ? T.name(good) : good) + ' hauled aboard' : '') + '!', 5200);
-    if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('At sea', K.ghost ? 'A drowned ship sent home' : 'Pirates beaten', '+' + coins + ' coins');
+    if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('At sea', K.ghost ? 'A drowned ship sent home' : 'Pirates beaten', '+' + coins + ' coins' + (C && !K.ghost && C.marque() ? ' (the Crown\'s bounty, doubled)' : ''));
   }
   function board(o) {
     if (o.boarded) return;

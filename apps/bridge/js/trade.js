@@ -172,6 +172,7 @@ var BridgeTrade = (function () {
       ? BridgeProgression.wagerCoins(n, why) : Promise.resolve({ ok: false, reason: 'offline' });
   }
   function paid(n, why) {
+    if (!n) return Promise.resolve(true);                // the Queen's commission: paid at the palace, not here
     return typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins
       ? BridgeProgression.awardCoins(n, why).then(function (b) { return b != null; }) : Promise.resolve(false);
   }
@@ -263,7 +264,8 @@ var BridgeTrade = (function () {
       var wants = Object.keys(GOODS).filter(function (g) { return !GOODS[g].rare && !GOODS[g].item && (MARKET[to][g] || 1) >= 1.0; });
       if (!wants.length) return;
       var good = wants[Math.floor(h1 * wants.length)], n = C.n + Math.floor(h3 * C.spread);
-      var fee = Math.round(GOODS[good].base * n * (C.k + h1 * C.kk) / 10) * 10;
+      var warrant = typeof BridgeCrown !== 'undefined' && BridgeCrown.warrant() ? 1.2 : 1;   // the Queen's warrant
+      var fee = Math.round(GOODS[good].base * n * (C.k + h1 * C.kk) * warrant / 10) * 10;
       var id = d + ':exchange:' + i;
       out.push({ id: id, from: 'lumar-crown', to: to, good: good, n: n, fee: fee, due: d + 3 + (h3 > 0.5 ? 1 : 0), charter: true,
                  taken: !!st.taken.filter(function (c) { return c.id === id; })[0], done: !!st.done[id] });
