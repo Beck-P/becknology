@@ -1723,9 +1723,9 @@
       "x": 31,
       "y": 7,
       "type": "enter_world",
-      "target": "arcadia-skypad",
+      "target": "arcadia-skywalk",
       "spawn": [
-        19,
+        2,
         5
       ],
       "label": "SKYWALK LIFT",

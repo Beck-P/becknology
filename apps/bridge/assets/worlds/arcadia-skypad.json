@@ -866,10 +866,10 @@
       "x": 19,
       "y": 4,
       "type": "enter_world",
-      "target": "arcadia-street",
+      "target": "arcadia-skywalk",
       "spawn": [
-        31,
-        9
+        28,
+        5
       ],
       "label": "LIFT",
       "prompt": "PRESS E TO RIDE DOWN"
@@ -878,10 +878,10 @@
       "x": 20,
       "y": 4,
       "type": "enter_world",
-      "target": "arcadia-street",
+      "target": "arcadia-skywalk",
       "spawn": [
-        31,
-        9
+        28,
+        5
       ],
       "label": "LIFT",
       "prompt": "PRESS E TO RIDE DOWN"

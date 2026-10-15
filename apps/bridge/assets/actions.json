@@ -521,5 +521,43 @@
       "view": "peaks",
       "prompt": "PRESS E TO LOOK OUT"
     }
+  ],
+  "arcadia-skywalk": [
+    {
+      "label": "BENCH",
+      "x": 11,
+      "y": 4,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        11.5,
+        4.7
+      ],
+      "facing": "down",
+      "view": "skyline",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "A BENCH ON THE SKYWALK, STILL WET.\n\nTHE TOWERS GO UP INTO THE SMOG, THE ADS TALK TO NOBODY, AND THE TRAFFIC LANES SLIDE PAST BELOW YOUR FEET."
+    },
+    {
+      "label": "BENCH",
+      "x": 25,
+      "y": 4,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        25.2,
+        4.7
+      ],
+      "facing": "down",
+      "view": "skyline",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "B-SIDE PLAYS SOMETHING SLOW. THE RAIN KEEPS TIME ON THE GLASS."
+    },
+    {
+      "label": "VIEWER",
+      "action": "view",
+      "view": "skyline",
+      "prompt": "PRESS E TO LOOK THROUGH"
+    }
   ]
 }

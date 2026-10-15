@@ -168,8 +168,8 @@ stars streaking, a tunnel of light, dropping out over the new world.
    Docking Bay 3, the Brink's ring), each with its own approach.
    ✓ Bigger worlds: the four Lumar islands rebuilt as whole islands
    (Crimson Reach, Rose Cove, Sapphire Port, Midnight Isle), with natural
-   coasts, people walking their paths, and quests threaded through them. Next:
-   Arcadia's Skywalk level; ✓ the Backs behind the chained gate (the code
+   coasts, people walking their paths, and quests threaded through them. ✓ Arcadia's Skywalk
+   (a glass bridge between towers, ZOLTA.EXE and B-SIDE); ✓ the Backs behind the chained gate (the code
    is on the bars) with NULL's den in a shipping container, Vex, and
    Splice, the hacking job that pays; more
    of Enigma (✓ hydroponics, where Okafor lives; ✓ the ring corridor and

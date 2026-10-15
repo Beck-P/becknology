@@ -130,9 +130,9 @@ w = {'name': 'Skyport 7', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tilese
      'spawns': {'player': [12, 11]}, 'shipExit': False, 'tiles': [], 'collisions': [], 'tileNames': {},
      'interactions': [
          {'x': 12, 'y': 9, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'},
-         {'x': 19, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-street', 'spawn': [31, 9], 'label': 'LIFT',
+         {'x': 19, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-skywalk', 'spawn': [28, 5], 'label': 'LIFT',
           'prompt': 'PRESS E TO RIDE DOWN'},
-         {'x': 20, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-street', 'spawn': [31, 9], 'label': 'LIFT',
+         {'x': 20, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-skywalk', 'spawn': [28, 5], 'label': 'LIFT',
           'prompt': 'PRESS E TO RIDE DOWN'},
          {'x': 4, 'y': 4, 'type': 'dialog', 'label': 'MARSHAL', 'prompt': 'PRESS E TO TALK',
           'dialog': 'SKYPORT 7, PAD ONE.\n\nYOUR SKIFF IS LOGGED. NOBODY TOUCHES IT ON MY ROOF.\n\nLIFT\'S ON THE FAR SIDE - TAKES YOU DOWN TO THE SKYWALK.'},

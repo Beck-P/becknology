@@ -228,7 +228,7 @@ var BridgeAudio = (function () {
     if (/^(bridge|quarters|hangar|gameroom)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
     if (id === 'arcadia' || id === 'arcadia-lucky-7') return { theme: 'arcade', amb: ['crowd', 'bleeps'] };
     if (id === 'arcadia-club') return { theme: 'club', amb: ['crowd'] };
-    if (/^arcadia-(street|skypad|alley)$/.test(id)) return { theme: 'arcadia', amb: ['rain', 'city'] };
+    if (/^arcadia-(street|skypad|alley|skywalk)$/.test(id)) return { theme: 'arcadia', amb: ['rain', 'city'] };
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
     if (/^singularity/.test(id)) return { theme: 'singularity', amb: ['rumble'] };

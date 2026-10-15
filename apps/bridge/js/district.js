@@ -9,10 +9,33 @@
  * now and then, a gold pocket watch Joro will buy back). Miyu buys eggs and
  * vegetables from the farm at a kitchen's price (people.json).
  *
+ * On the Skywalk (arcadia-skywalk): ZOLTA.EXE's booth tells a fortune for
+ * ten coins (`FORTUNES`, true tips dressed up as prophecy), and B-SIDE the
+ * busker robot plays you something for a five-coin tip — the first tune of
+ * the day lifts your energy.
+ *
  *   BridgeDistrict.decorate(worldId, data) / .use(inter)
  */
 var BridgeDistrict = (function () {
-  var HEAL = 20, DIG = 20;
+  var HEAL = 20, DIG = 20, FORTUNE = 10, TIP = 5;
+  var FORTUNES = [
+    'A LIGHT BURNS PAST THE LAST RIDGE. A LANTERN THAT NEVER GOES OUT. THE WAY IS MARKED IN ORANGE RAGS.',
+    'THE OLD MAN AT THE DICE TABLE DOES NOT BLUFF. THE WOMAN WITH THE GREASE ON HER HANDS DOES.',
+    'THE PEDDLER MOVES WITH THE DAYS. ASK HIM WHAT HE HAS HEARD; HE HEARS A GREAT DEAL.',
+    'FLOOR TWENTY SINGS. GO DOWN WITH A GOOD PICK AND A FULL BELLY.',
+    'A PEARL SLEEPS IN THE MOON POOL. CAST LONG, AND BE PATIENT WITH WHAT FIGHTS.',
+    'ON THE FARM, THE HENS REMEMBER KINDNESS. A HAND ON THEM EACH DAY, AND GOLD FOLLOWS.',
+    'THE GIRL IN THE RED COAT CHECKS THE BOARD EVERY NIGHT. BEAT HER ONCE AND SHE WILL NEVER FORGET YOU.',
+    'WHAT THE JUNK MAN THROWS ON THE PILE, HE SOMETIMES WISHES HE HAD KEPT. A WATCH STOPPED AT TEN TO THREE.',
+    'THE SEA HAS FIVE COLOURS AND ONE MORE NOBODY TALKS ABOUT.',
+    'A BELL RINGS UNDER THE WATER OFF THE TEETH. SOMEONE IS STILL WAITING FOR AN ANSWER.',
+    'WHERE THE MAP SAYS X, DIG. THE INK DOES NOT LIE, BUT IT DOES NOT NAME THE ISLAND EITHER.',
+    'YOU WILL TAKE A LONG WAY ROUND TO SOMEWHERE SHORT. THIS IS GOOD. THE SHORT WAY IS BORING.',
+    'SOMEONE WHO WRITES TO YOU IS THINKING OF YOU NOW. THE LETTER RACK ON YOUR SHIP KNOWS.',
+    'THE KEEPER OF THE LIGHT SIGNALS THREE LONG AND ONE SHORT. NOBODY HAS ANSWERED IN YEARS.',
+    'A SMALL DOG WILL DIG UP A LARGE SURPRISE. FEED IT WELL.',
+    'THE STARS SAY NOTHING. ZOLTA SAYS: BUY THE FONDUE.'
+  ];
   var RUMMAGE = [
     [30, 'old_boot', 'AN OLD BOOT. OF COURSE IT IS.'],
     [18, 'silver_nail', 'A HANDFUL OF SILVER NAILS, STILL SHINY.'],
@@ -46,6 +69,44 @@ var BridgeDistrict = (function () {
   function use(inter) {
     if (inter.type === 'clinic') return clinic();
     if (inter.type === 'rummage') return rummage();
+    if (inter.type === 'fortune') return fortune();
+    if (inter.type === 'busker') return busker();
+  }
+
+  // ---- the Skywalk: a fortune, a tune --------------------------------------------------------------------------------
+  function fortune() {
+    BridgeInteractions.choose({
+      title: 'ZOLTA.EXE',
+      text: 'THE HOLOGRAPHIC HEAD IN THE GLASS OPENS ITS EYES. "ZOLTA SEES ALL. ZOLTA SEES YOUR POCKETS. ' + FORTUNE + ' COINS, TRAVELLER, AND THE MISTS WILL PART."',
+      rows: [{ label: 'Hear your fortune', sub: 'the mists, parting', note: FORTUNE + ' coins', pick: function () {
+        BridgeProgression.wagerCoins(FORTUNE, 'fortune').then(function (r) {
+          if (!r || !r.ok) return say('ZOLTA.EXE', '"THE MISTS ARE... EXPENSIVE. RETURN WHEN YOUR POCKETS ARE HEAVIER."');
+          sfx('clue');
+          var f = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+          say('ZOLTA.EXE', 'THE BULBS CHASE ROUND THE CABINET. A CARD SLIDES OUT OF THE SLOT, STILL WARM:\n\n"' + f + '"');
+        });
+      } }],
+      closeLabel: 'Walk on'
+    });
+  }
+  var played = 0;
+  function busker() {
+    BridgeInteractions.choose({
+      title: 'B-SIDE',
+      text: 'A BUSKER ROBOT ON A CRATE, A PINK KEYTAR SLUNG ACROSS ITS CHEST, A SPEAKER HUMMING BESIDE IT. ITS VISOR FLICKERS GREEN. "REQUESTS TAKEN. TIPS APPRECIATED. EXISTENTIAL DREAD EXTRA."',
+      rows: [{ label: 'Tip it', sub: 'and listen to a song', note: TIP + ' coins', pick: function () {
+        BridgeProgression.wagerCoins(TIP, 'busker').then(function (r) {
+          if (!r || !r.ok) return say('B-SIDE', '"NO COINS? NO WORRIES. I\'LL PLAY YOU THE QUIET ONE." IT PLAYS NOTHING, VERY BEAUTIFULLY.');
+          sfx('fever');
+          var lift = played !== Math.floor(Date.now() / 86400000);
+          played = Math.floor(Date.now() / 86400000);
+          if (lift && typeof BridgeInventory !== 'undefined') BridgeInventory.restoreEnergy(20);
+          say('B-SIDE', 'B-SIDE BOWS, ALL GEARS, AND PLAYS A FAST BRIGHT THING THAT CLIMBS AND CLIMBS. COMMUTERS SLOW DOWN. SOMEBODY CLAPS.' +
+              (lift ? '\n\nYOU WALK ON LIGHTER. (+20 ENERGY)' : ''));
+        });
+      } }],
+      closeLabel: 'Walk on'
+    });
   }
 
   function clinic() {
