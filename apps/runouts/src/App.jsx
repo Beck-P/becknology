@@ -3394,6 +3394,8 @@ export default function ChoreChaosApp() {
   useEffect(() => { window.__interactiveMode = interactiveMode || localInteractiveMode; }, [interactiveMode, localInteractiveMode]);
   // every player keeps one colour and one pilot across the games (./arcade): their place in the roster
   useEffect(() => { window.__runoutsNames = (names || []).map((n) => String(n || "").trim()).filter(Boolean); }, [names]);
+  // the game screen marks the pilot and the stake when this is a wagered run from the Bridge
+  useEffect(() => { window.__runoutsWager = wagerMode && activeWager ? { amount: activeWager.amount, pilot: activeWager.pilotName, goal: activeWager.goal } : null; }, [wagerMode, activeWager]);
 
   // In local interactive mode, track playerName to whoever's turn it is.
   // In wager mode the player is always the pilot — never rotate to an AI,

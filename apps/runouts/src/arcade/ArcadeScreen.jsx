@@ -40,6 +40,18 @@ function faceOff(ctx, s, a, b, ia, ib, stake) {
   }
 }
 
+/** The coins riding on a wagered run, top right under the progress pips. */
+function stakeBadge(ctx, wg, s) {
+  const amt = wg.amount > 0 ? wg.amount + " ON " + String(wg.pilot || "YOU").toUpperCase().slice(0, 8) : "PRACTICE RUN";
+  const w = amt.length * 6 + 22, x = W - w - 4, y = 18;
+  ctx.fillStyle = "rgba(8,4,24,0.88)"; ctx.fillRect(x, y, w, 13);
+  ctx.fillStyle = "#ffd060"; ctx.fillRect(x, y + 12, w, 1);
+  ctx.fillStyle = "#a07010"; ctx.fillRect(x + 4, y + 2, 9, 9);                 // the coin
+  ctx.fillStyle = "#ffd060"; ctx.fillRect(x + 5, y + 3, 7, 7);
+  ctx.fillStyle = "#fff0a0"; ctx.fillRect(x + 6, y + 4, 2, 2);
+  text(ctx, amt, x + 16, y + 3, s.done ? PAL.grey : "#ffe080");
+}
+
 export default function ArcadeScreen({ result, step, done, totalSteps, names, interactiveBombState, live, helpers }) {
   const wrap = useRef(null);
   const cv = useRef(null);
@@ -100,6 +112,9 @@ export default function ArcadeScreen({ result, step, done, totalSteps, names, in
       try { scr.draw(ctx, state); } catch (e) { if (!s.err) { s.err = 1; console.error("runouts screen", r.modeId, e); } }
       s.fx.update(dt);
       s.fx.draw(ctx);
+      // a wagered run: the stake in the corner, and which pilot is you
+      const wg = typeof window !== "undefined" ? window.__runoutsWager : null;
+      if (wg) stakeBadge(ctx, wg, state);
       // a duel opens on a face-off (once a game: not again when its draft turns into the game itself)
       const pl = r.players || [];
       const key = (r.runId || "") + "|" + pl.map((q) => q.name).join(",");
