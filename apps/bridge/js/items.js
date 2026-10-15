@@ -537,6 +537,31 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#e8eef6', [[5, 5, 6, 8]]); px(ctx, x, y, u, '#c8d0dc', [[5, 11, 6, 2]]);
     px(ctx, x, y, u, '#5a8ac0', [[5, 7, 6, 2]]); px(ctx, x, y, u, '#9ab8d8', [[6, 3, 4, 1]]);
   }
+  function bowlIcon(broth, top) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#2a1a10', [[2, 7, 12, 1], [2, 8, 1, 3], [13, 8, 1, 3], [3, 11, 10, 2], [5, 13, 6, 1]]);
+      px(ctx, x, y, u, '#e8e0d0', [[3, 8, 10, 3]]); px(ctx, x, y, u, '#c83a2e', [[3, 9, 10, 1]]);
+      px(ctx, x, y, u, broth, [[3, 6, 10, 2]]); px(ctx, x, y, u, top, [[5, 5, 2, 2], [9, 5, 3, 2]]);
+      px(ctx, x, y, u, '#f0e8c8', [[4, 6, 1, 1], [8, 6, 1, 1], [11, 7, 1, 1]]);
+      px(ctx, x, y, u, 'rgba(240,240,255,0.6)', [[6, 2, 1, 2], [9, 1, 1, 3]]);
+    };
+  }
+  function medkitIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[2, 4, 12, 10], [6, 2, 4, 2]]);
+    px(ctx, x, y, u, '#e8eef6', [[3, 5, 10, 8]]); px(ctx, x, y, u, '#c83a2e', [[7, 6, 2, 6], [5, 8, 6, 2]]);
+  }
+  function stimIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[6, 1, 4, 13]]); px(ctx, x, y, u, '#40c8d8', [[7, 4, 2, 8]]); px(ctx, x, y, u, '#c8ccd8', [[7, 2, 2, 2], [7, 12, 2, 1]]);
+    px(ctx, x, y, u, '#e8fcff', [[7, 5, 1, 3]]);
+  }
+  function watchIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[4, 4, 8, 9], [7, 1, 2, 3]]); px(ctx, x, y, u, '#e0b030', [[5, 5, 6, 7], [7, 2, 2, 2]]);
+    px(ctx, x, y, u, '#f4ecd8', [[6, 6, 4, 5]]); px(ctx, x, y, u, '#2a1a10', [[8, 7, 1, 2], [8, 9, 1, 1]]);
+  }
   function whistleIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1a10', [[2, 6, 9, 5], [10, 7, 4, 3], [4, 4, 2, 2]]);
@@ -842,6 +867,17 @@ var BridgeItems = (function () {
                      type: 'tool', stackable: false, draw: tideIcon, value: 90, onUse: charmUse },
     whistle:       { id: 'whistle', name: 'Whistle', desc: 'A brass whistle on a red cord. Use it to call your companion - the next one, or send them all home.', type: 'tool',
                      stackable: false, draw: whistleIcon, value: 0, onUse: function () { if (typeof BridgePet !== 'undefined') BridgePet.whistle(); return false; } },
+    // the District (js/district.js): Cyber Noodles, the Chrome Clinic, Joro's junk pile
+    spore_ramen:   { id: 'spore_ramen', name: 'Spore-Broth Ramen', desc: 'Miyu\'s house bowl: a broth that glows a little, noodles, an egg. Energy and health.', type: 'food',
+                     stackable: true, draw: bowlIcon('#c88a40', '#f0d860'), effects: { energy: 40, hp: 15 }, value: 5, onUse: consumableUse },
+    neon_udon:     { id: 'neon_udon', name: 'Neon Udon', desc: 'Thick noodles in a bright pink broth. Fast, filling, faintly electric.', type: 'food',
+                     stackable: true, draw: bowlIcon('#e070a8', '#80e0e8'), effects: { energy: 25 }, value: 3, onUse: consumableUse },
+    medkit:        { id: 'medkit', name: 'Med-Kit', desc: 'The Chrome Clinic\'s own: a stapler, a spray and a lot of confidence. Health.', type: 'food',
+                     stackable: true, draw: medkitIcon, effects: { hp: 60 }, value: 10, onUse: consumableUse },
+    stim_pack:     { id: 'stim_pack', name: 'Stim Pack', desc: 'One cyan shot of keep-going. Energy.', type: 'food',
+                     stackable: true, draw: stimIcon, effects: { energy: 50 }, value: 8, onUse: consumableUse },
+    pocket_watch:  { id: 'pocket_watch', name: 'Gold Pocket Watch', desc: 'Stopped at ten to three. Engraved: FOR THE LONG WAY ROUND. Joro will pay well for it.', type: 'material',
+                     stackable: true, draw: watchIcon, value: 60 },
     // the farm's hens and cows (js/animals.js)
     egg:           { id: 'egg', name: 'Egg', desc: 'Brown, warm, from one of your hens. Marlo buys them; the noodle bar wants them soft-boiled.', type: 'food',
                      stackable: true, draw: eggIcon('#e8c89a', '#c8a070'), effects: { energy: 8 }, value: 4, onUse: consumableUse },

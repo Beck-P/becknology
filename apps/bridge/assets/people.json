@@ -513,6 +513,32 @@
         "a": "TWENTY YEARS ON THIS CORNER. THE TOWERS WENT UP ROUND ME AND I KEPT BOILING NOODLES. THE BROTH IS SPORE-STOCK - LUMAR SPORES, SHIPPED IN SALT. DON'T TELL THE HEALTH BOARD."
       },
       {
+        "q": "Sell to the kitchen",
+        "a": "EGGS, REAL ONES? CARROTS THAT GREW IN DIRT? I'LL PAY BETTER THAN ANY CART ON THAT FARM PLANET - THE DISTRICT HASN'T SEEN A FRESH EGG IN YEARS.",
+        "sell": [
+          {
+            "id": "egg",
+            "price": 14
+          },
+          {
+            "id": "large_egg",
+            "price": 24
+          },
+          {
+            "id": "milk",
+            "price": 34
+          },
+          {
+            "id": "carrot",
+            "price": 26
+          },
+          {
+            "id": "turnip",
+            "price": 15
+          }
+        ]
+      },
+      {
         "q": "Heard anything?",
         "a": "EVERYONE TALKS AT A NOODLE BAR. THE MARSHAL ON SKYPORT 7 SAYS A SKIFF CALLED THE WREN TRIED TO LAND ON HER ROOF, YEARS BACK, OUT OF FUEL, FROM ENIGMA. SHE WAVED IT OFF. SHE STILL THINKS ABOUT IT."
       }
@@ -597,6 +623,10 @@
           {
             "id": "sea_glass",
             "price": 3
+          },
+          {
+            "id": "pocket_watch",
+            "price": 120
           }
         ]
       },

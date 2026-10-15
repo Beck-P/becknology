@@ -59,7 +59,7 @@ var BridgeInteractions = (function () {
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
     home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill',
-    farm_house: 'Go in', farm_ledger: 'Read', farm_animal: 'Pet', companion: 'Pet', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read', curio: 'Pick up',
+    farm_house: 'Go in', farm_ledger: 'Read', farm_animal: 'Pet', companion: 'Pet', clinic: 'Sit', rummage: 'Rummage', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read', curio: 'Pick up',
     climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski', ski_here: 'Ski', expedition: 'Look', park_start: 'Drop in', park_tow: 'Ride', park_board: 'Read', club_door: 'Knock', dance: 'Dance'
   };
 
@@ -371,6 +371,10 @@ var BridgeInteractions = (function () {
 
       case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start': case 'ski_gate': case 'ski_here': case 'park_start': case 'park_tow': case 'park_board':   // Hoarfell (js/worlds/hoarfell.js)
         if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.use(inter);
+        break;
+
+      case 'clinic': case 'rummage':                                    // the District's shops (js/district.js)
+        if (typeof BridgeDistrict !== 'undefined') BridgeDistrict.use(inter);
         break;
 
       case 'companion':                                                 // your pet, following you (js/pet.js)
