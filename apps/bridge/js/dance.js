@@ -149,6 +149,7 @@ var BridgeDance = (function () {
     BridgeWorld.setMode({ update: update, focus: function () { return { x: px - 0.5, y: py - 1.6 }; }, solo: true, end: function () { quit(true); } });
     ensureHud();
     hud.classList.add('on');
+    document.documentElement.classList.add('dancing');            // the hotbar and the stick step aside (touch)
     hud.querySelector('.dn-name').textContent = 'CLUB VOID · ' + LEVELS[id].name;
     document.addEventListener('keydown', onKey, true);
     sfx('open');
@@ -284,6 +285,7 @@ var BridgeDance = (function () {
     run = null;
     document.removeEventListener('keydown', onKey, true);
     if (hud) hud.classList.remove('on');
+    document.documentElement.classList.remove('dancing');
     if (BridgeWorld.getMode()) BridgeWorld.setMode(null);
     if (!quiet) say('DANCE FLOOR', 'YOU STEP OFF THE FLOOR, BREATHING HARD.');
   }

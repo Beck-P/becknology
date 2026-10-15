@@ -1635,8 +1635,9 @@ body:has(.sport-hud.on) #world-location-badge { opacity: 0; }
 .nav-stay input { accent-color: #5cc8d0; margin: 0; }
 
 /* ---- Club Void: the dance (js/dance.js) ---------------------------------------------------------------------- */
+html.dancing #inventory-panel, html.dancing .dpad { display: none !important; }
 #dance-hud {
-  position: fixed; z-index: 40; right: max(4vw, 16px); top: 50%; transform: translateY(-52%); display: none; flex-direction: column; align-items: center; gap: 6px;
+  position: fixed; z-index: 60; right: max(4vw, 16px); top: 50%; transform: translateY(-52%); display: none; flex-direction: column; align-items: center; gap: 6px;
   font-family: 'Pixelify Sans', 'Courier New', monospace; color: #f4ecff; pointer-events: none;
 }
 #dance-hud.on { display: flex; }
