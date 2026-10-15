@@ -234,8 +234,9 @@ var BridgeAudio = (function () {
     if (/^singularity/.test(id)) return { theme: 'singularity', amb: ['rumble'] };
     if (id === 'verdance-home') return { theme: 'verdance', amb: ['fire', 'birds'] };
     var winter = typeof BridgeSeasons !== 'undefined' && BridgeSeasons.quiet();
-    if (id === 'verdance' && typeof BridgeWeather !== 'undefined' && BridgeWeather.rainDay()) return { theme: 'verdance', amb: winter ? ['snowwind'] : ['rain', 'breeze'] };
-    if (id === 'verdance' && winter) return { theme: 'verdance', amb: ['breeze', 'chimes'] };
+    if (/^verdance(-village)?$/.test(id) && typeof BridgeWeather !== 'undefined' && BridgeWeather.rainDay()) return { theme: 'verdance', amb: winter ? ['snowwind'] : ['rain', 'breeze'] };
+    if (/^verdance(-village)?$/.test(id) && winter) return { theme: 'verdance', amb: ['breeze', 'chimes'] };
+    if (id === 'verdance-village') return { theme: 'verdance', amb: ['birds', 'breeze', 'chimes'] };
     if (/^verdance/.test(id)) return { theme: 'verdance', amb: ['breeze', 'birds'] };
     if (id === 'hoarfell-summit' || id === 'hoarfell-ridge' || id === 'hoarfell-icestep') return { theme: 'summit', amb: ['gale'] };
     if (id === 'hoarfell-hollow') return { theme: 'summit', amb: ['drips', 'chimes'] };

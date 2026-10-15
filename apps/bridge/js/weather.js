@@ -19,7 +19,7 @@ var BridgeWeather = (function () {
     return h - Math.floor(h) < 0.27;
   }
   function endOfDay() { var t = new Date(); t.setHours(24, 0, 0, 0); return t.getTime(); }
-  function raining(worldId) { return (worldId || (typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId())) === 'verdance' && rainDay(); }
+  function raining(worldId) { return /^verdance(-village)?$/.test(worldId || (typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId()) || '') && rainDay(); }
 
   function decorate(worldId) {
     if (worldId !== 'verdance' || !rainDay() || told === day()) return;

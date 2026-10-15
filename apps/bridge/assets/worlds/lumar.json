@@ -784,11 +784,11 @@
     },
     {
       "x": 8,
-      "y": 17,
+      "y": 16,
       "type": "menu",
-      "label": "GALLEON",
+      "label": "DOCK",
       "prompt": "PRESS E TO SET SAIL",
-      "dialog": "THE GALLEON WILL TAKE YOU\\nTO ANY DOCK ON THE SEA.",
+      "dialog": "YOUR SLOOP IS TIED UP AT THE END OF THE PIER.",
       "options": [
         {
           "label": "CRIMSON REACH",

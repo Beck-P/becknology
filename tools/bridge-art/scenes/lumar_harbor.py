@@ -5,7 +5,7 @@
 
 Black saltstone cliffs with a trail winding down from the Market Square
 steps to the shore, the lighthouse, lantern posts, boats pulled up on the
-sand, the pier and the galleon at berth. The emerald sea is the world's own
+sand, and the pier with your sloop tied up at its end. The emerald sea is the world's own
 animated backdrop.
 """
 import json
@@ -159,17 +159,11 @@ k.solid(4, 14, 7, 15)                    # the rowboat
 k.solid(SKX - 1.8, SKR - 0.9, SKX + 2.0, SKR + 0.9)       # the skiff
 k.solid(4, 13, 6, 14)
 
-# ---- pier + galleon ---------------------------------------------------------------------------------------
+# ---- the pier ---------------------------------------------------------------------------------------------
 W.dock(k, 7.0, 9.0, 13.6, 16.95, z=0.05)
 for (x, r) in ((7.1, 16.5), (8.9, 16.5)):
     W.silver_post(k, x, r)
-n0, l0 = len(k.parts), len(k.lights)
-W.galleon(k, 4.2, 12.6, 17.8, waterline=False)
-C.sink(k, n0, C.WZ, l0)                    # riding in the water, the keel showing through
-DECK = 1.0 + C.WZ
-k.poly([(7.75, 16.55, 0.06), (8.25, 16.55, 0.06), (8.25, 17.25, DECK), (7.75, 17.25, DECK)], (A.WOOD, 0.14), 'gangplank')
-for xx in (7.75, 8.25):
-    k.tube((xx, 16.55, 0.35), (xx, 17.25, DECK + 0.3), 0.012, '#8a7a5a', 'gangplank_rope', verts=4)
+# no galleon at the pier any more: your own sloop ties up at its end (js/sloop.js draws it, MOORINGS)
 
 # ---- the coast: the beach shelving into the sea, the cliffs' feet in the water ------------------------------
 def beach_bias(x, r):
@@ -213,10 +207,13 @@ k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}},
          world_light=('#2a3450', 0.7))
 
 apply_world(WORLD, k, (0, 0, 15, 15), doors=[(7, 15), (8, 15), (7, 16), (8, 16)], scene_id='lumar', moves={
-    'MARKET SQUARE': [(6, 0), (7, 0)], 'LIGHTHOUSE': (13, 5), 'BOARD GALLEON': [(7, 15), (8, 15)], 'GALLEON': (8, 17)},
+    'MARKET SQUARE': [(6, 0), (7, 0)], 'LIGHTHOUSE': (13, 5), 'BOARD GALLEON': [(7, 15), (8, 15)], 'GALLEON': (8, 16), 'DOCK': (8, 16)},
     scene_extra={'backdrop': True, 'layers': {'shuttle': 'parked'}})
 w = json.load(open(WORLD))
 w['view'] = [-1.6, -1.6, COLS + 1.6, ROWS + 1.6]       # camera bounds (tiles): inside the render's margins
+for it in w['interactions']:                            # the pier's end is the DOCK now: the sloop, not a galleon
+    if it.get('label') == 'GALLEON':
+        it.update({'label': 'DOCK', 'x': 8, 'y': 16, 'dialog': 'YOUR SLOOP IS TIED UP AT THE END OF THE PIER.'})
 w['shuttle'] = {'spawn': [12, 11]}                      # the skiff sets down on the east beach
 if not any(it.get('type') == 'shuttle' for it in w['interactions']):
     w['interactions'].append({'x': 12, 'y': 12, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'})

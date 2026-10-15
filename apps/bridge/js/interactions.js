@@ -524,7 +524,7 @@ var BridgeInteractions = (function () {
         break;
 
       case 'go_sailing':                                                 // your sloop at the pier (js/sloop.js)
-        if (!(typeof BridgeSloop !== 'undefined' && BridgeSloop.start(BridgeWorld.getWorldId())) && typeof BridgeVoyage !== 'undefined')
+        if (!(typeof BridgeSloop !== 'undefined' && (BridgeSloop.board || BridgeSloop.start)(BridgeWorld.getWorldId())) && typeof BridgeVoyage !== 'undefined')
           BridgeVoyage.start(BridgeWorld.getWorldId());
         break;
 

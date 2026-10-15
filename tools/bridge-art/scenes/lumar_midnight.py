@@ -39,6 +39,8 @@ PX = 24
 pier_top = max(r for (c, r) in land if c == PX) + 1
 PIER = [(PX, r) for r in range(pier_top, pier_top + 2)]
 SHIP_R = pier_top + 2
+FJ, FLEN = (30, 33), 6                     # the fishing jetty: east from the south shore, into the mist
+FJET = I.jetty_cells(FJ, FLEN, 'e')
 SL = 7.0
 TOWER = (24.5, 9.4)
 POOL = (36.5, 24.5, 2.2, 1.5)
@@ -106,19 +108,15 @@ ALB = {'way_moss': ('#2a302e', 0.3), 'path': ('#5e5a6a', 0.3), 'grave': ('#2c343
 I.ground(k, land, material, ALB, height=height)
 terrain = C.coast(k, land, ground=(material, ALB), palette='midnight', grass='#3a3446', rock='#3a3644', seed=51, beachiness=-0.3,
                   keep_clear=[(PX - 0.4, pier_top - 0.4, PX + 1.4, SHIP_R + 0.2),
-                              (PX + 0.5 - 0.45 * SL - 0.8, SHIP_R - 0.2, PX + 0.5 + 0.55 * SL + 1.8, SHIP_R + 1.9)])
+                              (PX + 0.5 - 0.45 * SL - 0.8, SHIP_R - 0.2, PX + 0.5 + 0.55 * SL + 1.8, SHIP_R + 1.9),
+                              (FJ[0] - 0.4, FJ[1] - 0.6, FJ[0] + FLEN + 1.4, FJ[1] + 1.6)])
 
-# ---- the pier and the galleon -----------------------------------------------------------------------------------
+# ---- the pier, your sloop's berth--------------------------------------------------------------------------------
 W.dock(k, PX + 0.05, PX + 0.95, pier_top - 0.4, SHIP_R + 0.0, z=0.02)
-n0, l0 = len(k.parts), len(k.lights)
-W.galleon(k, PX + 0.5 - 0.45 * SL, PX + 0.5 + 0.55 * SL, SHIP_R + 0.75, beam=1.4, masts=0.8, waterline=False,
-          paint='#2a2040', flag='#8060e0', sail='#a8a0b8')
-C.sink(k, n0, C.WZ, l0)
-DECK = 0.95 + C.WZ
-k.poly([(PX + 0.3, SHIP_R - 0.3, 0.03), (PX + 0.7, SHIP_R - 0.3, 0.03), (PX + 0.7, SHIP_R + 0.25, DECK),
-        (PX + 0.3, SHIP_R + 0.25, DECK)], (A.WOOD, 0.14), 'gangplank')
+# no galleon at the pier any more: your own sloop ties up at its end (js/sloop.js draws it, MOORINGS)
 for x in (PX - 0.15, PX + 1.15):
     W.silver_post(k, x, pier_top + 0.6)
+I.fishing_jetty(k, FJ, FLEN, 'e', lamp_energy=8, glow='#a080ff', tone='#5a4a52')
 
 # ---- the processional way and the tower -----------------------------------------------------------------------------
 I.octagon_tower(k, *TOWER)
@@ -266,12 +264,12 @@ w = {'name': 'Midnight Isle', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'ti
          look('WISP LANTERN', 22, 13, 'A VIOLET FLAME IN AN IRON CAGE. NOTHING FEEDS IT.\n\nWHEN YOU STEP AWAY IT LEANS AFTER YOU.'),
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER, scene_id='lumar-midnight',
+apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + FJET, scene_id='lumar-midnight',
             scene_extra={'backdrop': True, 'mist': True})
 w = json.load(open(WORLD))
 for r in range(ROWS):
     for c in range(COLS):
-        if (c, r) not in walk and (c, r) not in PIER:
+        if (c, r) not in walk and (c, r) not in PIER and (c, r) not in FJET:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
 w['view'] = [-0.5, -3.0, COLS + 0.5, ROWS + 1.0]

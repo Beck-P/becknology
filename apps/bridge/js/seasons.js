@@ -91,10 +91,11 @@ var BridgeSeasons = (function () {
     if (typeof BridgeScene === 'undefined' || !BridgeScene.setGrade) return;
     var s = current().id;
     BridgeScene.setGrade('verdance', s === 'summer' ? null : grade(s), s);
+    BridgeScene.setGrade('verdance-village', s === 'summer' ? null : grade(s), s);   // Brambleford turns with the farm
   }
 
   function decorate(worldId) {
-    if (worldId !== 'verdance') return;
+    if (!/^verdance(-village)?$/.test(worldId)) return;
     apply();
     var s = current();
     if (told === s.id) return;

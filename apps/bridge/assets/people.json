@@ -1500,5 +1500,167 @@
         "a": "SOMEBODY BOUGHT A PAIR OF TOURING SKINS LAST WEEK AND WOULDN'T SAY WHERE THEY WERE GOING. YSOLDE SAYS THERE'S ONLY ONE PLACE YOU NEED SKINS FOR. PAST THE HOARSPIRE."
       }
     ]
+  },
+  "bridget": {
+    "name": "Bridget Hale",
+    "role": "Bakes at the Crusty Loaf, Brambleford",
+    "sheet": "npc-vbaker",
+    "at": [
+      {
+        "world": "verdance-village",
+        "label": "BRIDGET"
+      }
+    ],
+    "greet": "YOU'RE THE ONE FROM THE SKIFF! COME IN, COME IN - WELL, YOU ARE IN. THE HONEY CAKES ARE STILL WARM. THEY'RE ALWAYS STILL WARM; THAT'S THE TRICK.",
+    "again": "BACK FOR MORE? I KNEW IT. NOBODY ONLY HAS ONE HONEY CAKE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I'VE BAKED FOR BRAMBLEFORD SINCE I COULD SEE OVER THE COUNTER. UP AT FOUR, OVEN LIT BY FIVE, LUDD'S FLOUR, NELL'S HONEY - WELL, NELL'S BEES' HONEY. THE PUMPKIN PIE IS MY MOTHER'S. DON'T ASK FOR THE RECIPE."
+      },
+      {
+        "q": "The village",
+        "a": "SIXTY-ONE OF US AND THE GOAT. EVERYONE KNOWS EVERYONE'S BUSINESS, WHICH SAVES TIME. THE HARVEST SUPPER'S AT THE HAYLOFT - BRING A DISH, OR BRING AN APPETITE AND SIT NEAR ME."
+      },
+      {
+        "q": "The old farm",
+        "a": "EDDA'S PLACE, DOWN MEADOW LANE. SHE KEPT IT LOVELY - BEES, HENS, THE LOT. IT'S SAT EMPTY TOO LONG. IF YOU'RE THINKING WHAT I THINK YOU'RE THINKING, HOLLIN LIVES NEXT DOOR TO IT. HE'LL TALK YOU THROUGH IT."
+      }
+    ]
+  },
+  "percy": {
+    "name": "Percy Pennyworth",
+    "role": "Keeps Pennyworth's, the general store",
+    "sheet": "npc-vshop",
+    "at": [
+      {
+        "world": "verdance-village",
+        "label": "PERCY"
+      }
+    ],
+    "greet": "GOOD AFTERNOON, GOOD AFTERNOON. PENNYWORTH'S: SEEDS, SUNDRIES, AND ANYTHING ELSE IF YOU GIVE ME A WEEK. MY GRANDFATHER'S SIGN, MY GRANDFATHER'S SCALES. MY PRICES, I'M AFRAID.",
+    "again": "AH, A REGULAR. I KEEP A LITTLE BOOK OF REGULARS. YOU ARE NOW IN IT.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "THREE GENERATIONS OF PENNYWORTHS BEHIND THIS COUNTER. I'M THE FIRST ONE WHO CAN WORK THE TILL WITHOUT KICKING IT."
+      },
+      {
+        "q": "Seeds",
+        "a": "TURNIPS IF YOU'RE IMPATIENT, PUMPKINS IF YOU'RE NOT, STARFRUIT IF YOU'RE RICH. EVERYTHING GROWS QUICKER IN ITS SEASON - THE CHAPEL CALENDAR SAYS WHICH."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE PEDDLER COMES THROUGH NOW AND THEN AND SETS UP ON THE SQUARE. SELLS THINGS THAT DO THINGS. I DON'T STOCK THINGS THAT DO THINGS. I STOCK THINGS."
+      }
+    ]
+  },
+  "wat": {
+    "name": "Wat Coldridge",
+    "role": "Farrier at the Anvil & Hoof",
+    "sheet": "npc-vsmith",
+    "at": [
+      {
+        "world": "verdance-village",
+        "label": "WAT"
+      }
+    ],
+    "greet": "MIND THE HEARTH. SHOES, HINGES, TOOLS - IF IT'S IRON I'LL MEND IT OR MAKE IT. HORSESHOES FOR LUCK, IF YOU'RE THAT SORT.",
+    "again": "STILL GOT ALL YOUR FINGERS? GOOD. KEEP IT THAT WAY.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "MY HANDS ARE MY FATHER'S HANDS. MY TEMPER IS MY MOTHER'S. THE FORGE HAS BEEN LIT ON THIS SPOT FOR A HUNDRED AND TWELVE YEARS, AND I'M NOT GOING TO BE THE ONE THAT LETS IT GO OUT."
+      },
+      {
+        "q": "The horseshoe",
+        "a": "HANG IT POINTS UP AND THE LUCK STAYS IN. CARRY IT AND THE FISH BITE SOONER - DON'T ASK ME WHY, ASK THE FISH. LUDD SWEARS BY HIS."
+      },
+      {
+        "q": "Iron",
+        "a": "BRING ME ORE FROM THAT MINE ON LUMAR AND I'LL TELL YOU IF IT'S ANY GOOD. MOSTLY IT ISN'T. NOW AND THEN IT SINGS."
+      }
+    ]
+  },
+  "ludd": {
+    "name": "Old Ludd",
+    "role": "The miller, Ludd's Mill",
+    "sheet": "npc-vmiller",
+    "at": [
+      {
+        "world": "verdance-village",
+        "label": "OLD LUDD"
+      }
+    ],
+    "greet": "EH? OH - THE SKY-FARMER. WELCOME, WELCOME. MIND THE SACKS. MIND THE WHEEL. MIND THE GOOSE, MOSTLY.",
+    "again": "BACK AGAIN. THE WHEEL'S STILL TURNING. IT ALWAYS IS. THAT'S THE POINT OF IT.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "SIXTY YEARS AT THIS MILL. I'VE HEARD THAT WHEEL GO ROUND MORE TIMES THAN THERE ARE STARS, AND I COULDN'T SLEEP WITHOUT IT NOW."
+      },
+      {
+        "q": "The old farm",
+        "a": "EDDA'S. SHE BROUGHT ME THE FIRST GRAIN EVERY YEAR AND I GROUND IT FOR NOTHING, FOR LUCK. SHE ALWAYS SAID SHE'D GO NORTH ONE DAY, OVER THE HILLS. SHE NEVER WENT. LEFT HER THIMBLE BY THE WINDMILL, THEY SAY."
+      },
+      {
+        "q": "The stream",
+        "a": "COMES DOWN FROM THE HILLS COLD AS A COIN. THERE'S PERCH IN THE FARM POND THAT CAME DOWN IT AS EGGS. DON'T TELL NELL I SAID SO, SHE THINKS THEY'RE HERS."
+      }
+    ]
+  },
+  "nell": {
+    "name": "Nell Ashby",
+    "role": "Keeps the flower stall on the square",
+    "sheet": "npc-vfolk-a",
+    "at": [
+      {
+        "world": "verdance-village",
+        "label": "NELL"
+      }
+    ],
+    "greet": "HELLO! A POSY? FOR SOMEONE SPECIAL, OR FOR YOU? BOTH ARE ALLOWED. NAN SAYS EVERYONE SHOULD HAVE FLOWERS AT LEAST ONCE A WEEK.",
+    "again": "YOU AGAIN! I'VE KEPT YOU THE BEST SUNFLOWER. DON'T TELL PERCY.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "NAN GROWS THEM OVER THE BRIDGE, I SELL THEM ON THE SQUARE, THE BEES DO MOST OF THE WORK. NAN'S COTTAGE IS THE ONE WITH THE APPLE TREES."
+      },
+      {
+        "q": "Gifts",
+        "a": "EVERYONE HAS SOMETHING THEY LOVE. BRIDGET LOVES HONEY. WAT PRETENDS HE DOESN'T LIKE FLOWERS BUT HE KEEPS THE LAST ONE I GAVE HIM IN A JAR ON THE ANVIL. LUDD LOVES A GOOD PUMPKIN."
+      },
+      {
+        "q": "The goat",
+        "a": "NOBODY KNOWS WHOSE IT IS. IT TURNS UP, EATS SOMETHING IMPORTANT, AND LEAVES. WE PUT UP NOTICES. IT EATS THE NOTICES."
+      }
+    ]
+  },
+  "mags": {
+    "name": "Mags Tolley",
+    "role": "Keeps the Hayloft, Brambleford",
+    "sheet": "npc-vinn",
+    "at": [
+      {
+        "world": "verdance-village",
+        "label": "MAGS"
+      }
+    ],
+    "greet": "WELL, LOOK WHAT THE SKY DRAGGED IN. COME IN OUT OF THE SUN. CIDER'S COLD, STEW'S HOT, AND THE GOSSIP'S FREE IF YOU SIT LONG ENOUGH.",
+    "again": "BACK AGAIN? YOUR STOOL'S STILL WARM. NOBODY ELSE WANTED IT - IT WOBBLES.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "THE HAYLOFT WAS MY DAD'S, AND HIS MUM'S BEFORE. THE THATCH IS OLDER THAN ALL OF US. ONCE A YEAR WE GET UP ON THE ROOF AND ARGUE ABOUT WHETHER IT NEEDS DOING. IT ALWAYS DOES."
+      },
+      {
+        "q": "Gossip",
+        "a": "PERCY'S SWEET ON BRIDGET AND THINKS NOBODY KNOWS. WAT KEEPS ONE OF NELL'S FLOWERS IN A JAR AND THINKS NOBODY KNOWS. EVERYBODY KNOWS EVERYTHING. THAT'S BRAMBLEFORD."
+      },
+      {
+        "q": "The harvest supper",
+        "a": "FIRST NIGHT OF AUTUMN, THE WHOLE VILLAGE IN HERE AND SPILLING OUT ONTO THE SQUARE. BRING SOMETHING YOU GREW. THE BEST PUMPKIN GETS HUNG OVER THE DOOR TILL IT FALLS ON SOMEBODY."
+      }
+    ]
   }
 }

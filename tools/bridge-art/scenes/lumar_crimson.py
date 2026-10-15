@@ -3,7 +3,7 @@
   BVENV/bin/python tools/bridge-art/scenes/lumar_crimson.py RENDER_DIR
   python3 tools/bridge-art/scene_post.py RENDER_DIR apps/bridge/assets/scenes/lumar-crimson
 
-A whole island to walk, not a dock: the galleon berths at a pier on the
+A whole island to walk, not a dock: your sloop ties up at a pier on the
 south cove, where pirates camp on the crimson sand round a fire. A path
 climbs north across a moor of red grass — past the Teeth, a ring of
 standing stones, and a ruined watchtower — to the Ashen Ridge and the mouth
@@ -51,11 +51,13 @@ walk = land - RIDGE
 CAVE = (30.0, 10.0)                                   # the mouth, in the ridge's face
 walk |= {(29, 9), (30, 9)}                            # the notch you step into
 
-# the pier: down from the south shore to the galleon
+# the pier: down from the south shore to where your sloop ties up
 PX = 28
 pier_top = max(r for (c, r) in land if c == PX) + 1
 PIER = [(PX, r) for r in range(pier_top, pier_top + 2)]
 SHIP_R = pier_top + 2
+FJ, FLEN = (36, 34), 6                     # the fishing jetty: east off the far end of the beach
+FJET = I.jetty_cells(FJ, FLEN, 'e')
 SL = 7.0
 
 # paths (polylines through tile coordinates)
@@ -103,18 +105,15 @@ terrain = C.coast(k, land, ground=(material, ALB), palette='crimson', grass='#4a
                   beach_bias=lambda x, r: 0.9 * I.smooth(28.0, 34.0, r) * I.smooth(11.0, 6.0, abs(x - 29.5)) - 0.3 * I.smooth(14.0, 8.0, r),
                   keep_clear=[(PX - 0.4, pier_top - 0.4, PX + 1.4, SHIP_R + 0.2),
                               (PX + 0.5 - 0.45 * SL - 0.8, SHIP_R - 0.2, PX + 0.5 + 0.55 * SL + 1.8, SHIP_R + 1.9),
-                              (44.0, 27.0, 50.2, 28.4), (1.0, 29.5, 10.0, 34.0)])
+                              (44.0, 27.0, 50.2, 28.4), (1.0, 29.5, 10.0, 34.0),
+                              (FJ[0] - 0.4, FJ[1] - 0.6, FJ[0] + FLEN + 1.4, FJ[1] + 1.6)])
 
-# ---- the pier and the galleon -----------------------------------------------------------------------------
+# ---- the pier, your sloop's berth--------------------------------------------------------------------------
 W.dock(k, PX + 0.05, PX + 0.95, pier_top - 0.4, SHIP_R + 0.0, z=0.02)
-n0, l0 = len(k.parts), len(k.lights)
-W.galleon(k, PX + 0.5 - 0.45 * SL, PX + 0.5 + 0.55 * SL, SHIP_R + 0.75, beam=1.4, masts=0.8, waterline=False)
-C.sink(k, n0, C.WZ, l0)
-DECK = 0.95 + C.WZ
-k.poly([(PX + 0.3, SHIP_R - 0.3, 0.03), (PX + 0.7, SHIP_R - 0.3, 0.03), (PX + 0.7, SHIP_R + 0.25, DECK),
-        (PX + 0.3, SHIP_R + 0.25, DECK)], (A.WOOD, 0.14), 'gangplank')
+# no galleon at the pier any more: your own sloop ties up at its end (js/sloop.js draws it, MOORINGS)
 for x in (PX - 0.15, PX + 1.15):
     W.silver_post(k, x, pier_top + 0.6)
+I.fishing_jetty(k, FJ, FLEN, 'e', glow='#ff7040')
 
 # ---- the camp on the cove ------------------------------------------------------------------------------------
 I.campfire(k, *CAMP)
@@ -278,12 +277,12 @@ w = {'name': 'Crimson Reach', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'ti
           'dialog': 'A CHEST UNDER AN X, SCRATCHED INTO THE ROCK.\n\nINSIDE: A CHART OF THE REEF, A COMPASS THAT POINTS AT THE RIDGE, AND A NOTE - "THE HERON\'S CARGO IS STILL ABOARD. - H.M."'},
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + BRIDGE_CELLS, scene_id='lumar-crimson',
+apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + BRIDGE_CELLS + FJET, scene_id='lumar-crimson',
             actors=[{'sheet': 'npc-watcher', 'x': 31, 'y': 28, 'facing': 'down'}], scene_extra={'backdrop': True})
 w = json.load(open(WORLD))
 for r in range(ROWS):                     # only the island is ground: no walking on the sea
     for c in range(COLS):
-        if (c, r) not in walk and (c, r) not in PIER and (c, r) not in BRIDGE_CELLS:
+        if (c, r) not in walk and (c, r) not in PIER and (c, r) not in BRIDGE_CELLS and (c, r) not in FJET:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
 w['view'] = [-0.5, -2.0, COLS + 0.5, ROWS + 1.0]

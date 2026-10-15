@@ -13,6 +13,16 @@
 var BridgeGifts = (function () {
   var KEY = 'bridge_gifts';
   var TASTES = {
+    bridget: { love: ['honey', 'strawberry', 'posy'], like: ['apple', 'pumpkin', 'egg', 'milk'], hate: ['old_boot', 'stone'],
+               loveLine: 'HONEY FROM YOUR OWN SKEPS? OH, THAT\'S GOING STRAIGHT IN THE CAKES. THE FIRST SLICE IS YOURS, AND I WON\'T HEAR OTHERWISE.' },
+    percy: { love: ['heron_coin', 'pocket_watch'], like: ['posy', 'sea_glass', 'starfruit'], hate: ['old_boot'],
+             loveLine: 'WELL, NOW. THAT\'S A COLLECTOR\'S PIECE. IT\'S GOING IN THE WINDOW - NOT FOR SALE. JUST TO LOOK AT.' },
+    wat: { love: ['iron_ore', 'star_iron', 'mug_of_ale'], like: ['silver_ore', 'ploughmans', 'apple'], hate: ['posy'],
+           loveLine: 'GOOD IRON. YOU CAN HEAR IT\'S GOOD - LISTEN. NO? WELL. I CAN. I\'LL MAKE SOMETHING FINE OF IT.' },
+    ludd: { love: ['pumpkin', 'honey_cake'], like: ['turnip', 'carrot', 'bread', 'apple'], hate: ['sea_glass'],
+            loveLine: 'A PUMPKIN LIKE THAT TAKES A SUMMER. YOU\'VE GOT THE KNACK. EDDA HAD IT TOO. IT SUITS THE FARM, HAVING SOMEONE WITH THE KNACK.' },
+    nell: { love: ['sunflower', 'posy', 'strawberry'], like: ['honey', 'apple', 'edelweiss'], hate: ['old_boot', 'stone_shard'],
+            loveLine: 'SUNFLOWERS! FROM YOUR OWN FIELD? THEY\'RE GOING IN THE MIDDLE OF THE STALL WHERE EVERYONE CAN SEE.' },
     'gran-wilde': { love: ['strawberry', 'honey', 'sweet_roll'], like: ['apple', 'silverfin', 'bread', 'sea_glass'], hate: ['old_boot'],
                     loveLine: 'OH, YOU DEAR. MY HUSBAND USED TO BRING ME THESE. SIT DOWN, I\'LL PUT THE KETTLE ON.' },
     corra: { love: ['crimson_crystal', 'ember_snapper'], like: ['iron_dagger', 'cutlass', 'mug_of_ale'], hate: ['sunflower', 'sweet_roll'],

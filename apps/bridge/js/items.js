@@ -539,6 +539,38 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#5aa088', [[4, 4, 4, 4], [8, 5, 5, 1]]); px(ctx, x, y, u, '#9ad8c0', [[5, 4, 1, 3], [7, 4, 1, 3]]);
     px(ctx, x, y, u, '#5aa088', [[11, 6, 1, 2], [13, 6, 1, 1]]);
   }
+  // Brambleford's: a pumpkin pie, a honey cake, a ploughman's, a posy, a horseshoe
+  function pieIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1608', [[2, 7, 12, 6], [3, 6, 10, 1]]);
+    px(ctx, x, y, u, '#d89a50', [[3, 8, 10, 4]]); px(ctx, x, y, u, '#e8783a', [[4, 7, 8, 2]]); px(ctx, x, y, u, '#f0a050', [[5, 7, 3, 1]]);
+    px(ctx, x, y, u, '#f4ecd8', [[7, 5, 2, 2]]); px(ctx, x, y, u, '#a86a30', [[3, 11, 10, 1]]);
+  }
+  function cakeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1608', [[3, 6, 10, 8]]);
+    px(ctx, x, y, u, '#d8a050', [[4, 8, 8, 5]]); px(ctx, x, y, u, '#f0c860', [[4, 7, 8, 2]]); px(ctx, x, y, u, '#ffe8a0', [[5, 7, 3, 1]]);
+    px(ctx, x, y, u, '#e8b040', [[6, 9, 1, 3], [9, 9, 1, 2]]); px(ctx, x, y, u, '#f4f0e0', [[7, 4, 2, 2]]);
+  }
+  function ploughmansIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1a1e', [[1, 9, 14, 5]]); px(ctx, x, y, u, '#e8e4dc', [[2, 10, 12, 3]]);
+    px(ctx, x, y, u, '#2a1608', [[3, 5, 6, 6]]); px(ctx, x, y, u, '#c8904a', [[4, 6, 4, 4]]); px(ctx, x, y, u, '#e0b070', [[4, 6, 2, 1]]);
+    px(ctx, x, y, u, '#2a2008', [[9, 7, 4, 4]]); px(ctx, x, y, u, '#f0d060', [[10, 8, 2, 2]]); px(ctx, x, y, u, '#c83a2a', [[12, 9, 2, 2]]);
+  }
+  function posyIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a5a20', [[7, 8, 2, 6], [5, 9, 1, 3], [10, 9, 1, 3]]);
+    px(ctx, x, y, u, '#f0b0c8', [[7, 13, 2, 1]]);
+    px(ctx, x, y, u, '#e05070', [[4, 4, 3, 3]]); px(ctx, x, y, u, '#f0d040', [[7, 3, 3, 3]]); px(ctx, x, y, u, '#a070e0', [[10, 5, 3, 3]]);
+    px(ctx, x, y, u, '#f4f4f4', [[6, 6, 2, 2], [9, 6, 2, 2]]);
+  }
+  function horseshoeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0a0c', [[3, 3, 3, 10], [10, 3, 3, 10], [4, 11, 8, 3]]);
+    px(ctx, x, y, u, '#9a9aa8', [[4, 4, 1, 8], [11, 4, 1, 8], [5, 12, 6, 1]]); px(ctx, x, y, u, '#d0d0e0', [[4, 4, 1, 3]]);
+    px(ctx, x, y, u, '#4a4a54', [[4, 6, 1, 1], [11, 6, 1, 1], [4, 9, 1, 1], [11, 9, 1, 1]]);
+  }
   function featherIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#3a3a48', [[3, 13, 1, 1], [4, 12, 1, 1], [5, 11, 1, 1], [6, 10, 1, 1]]);
@@ -932,6 +964,16 @@ var BridgeItems = (function () {
     wispcaller:    { id: 'wispcaller', name: 'Wispcaller Staff', desc: 'The Bell Warden\'s. Black wood, a wisp caught in its head. F throws the wisp seven tiles down the way you face; it burns the restless dead brighter. Each throw takes 3 energy.',
                      type: 'weapon', stackable: false, draw: staffIcon, damage: 42, holy: true, bolt: 'wisp', value: 300,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
+    honey_cake:    { id: 'honey_cake', name: 'Honey Cake', desc: 'From the Crusty Loaf in Brambleford. Sticky, golden, and gone too quickly.', type: 'food',
+                     stackable: true, draw: cakeIcon, effects: { hp: 15, energy: 20 }, value: 6, onUse: consumableUse },
+    pumpkin_pie:   { id: 'pumpkin_pie', name: 'Pumpkin Pie', desc: 'Bridget\'s, from the Crusty Loaf - spiced, with a pastry leaf on top. Enough to keep you going all afternoon.', type: 'food',
+                     stackable: true, draw: pieIcon, effects: { hp: 30, energy: 35 }, value: 9, onUse: consumableUse },
+    ploughmans:    { id: 'ploughmans', name: 'Ploughman\'s Lunch', desc: 'The Hayloft\'s: crusty bread, a wedge of cheese, a pickled onion, an apple. The farmers swear by it.', type: 'food',
+                     stackable: true, draw: ploughmansIcon, effects: { hp: 25, energy: 30 }, value: 7, onUse: consumableUse },
+    posy:          { id: 'posy', name: 'Posy', desc: 'A little bunch of flowers from Nell\'s stall on the square. Nobody minds being given one.', type: 'gift',
+                     stackable: true, draw: posyIcon, value: 4 },
+    lucky_horseshoe: { id: 'lucky_horseshoe', name: 'Lucky Horseshoe', desc: 'From Wat at the Anvil & Hoof, nail holes and all. Carried, the fish bite sooner.',
+                     type: 'tool', stackable: false, draw: horseshoeIcon, value: 30, onUse: charmUse },
     wisp_ember:    { id: 'wisp_ember', name: 'Wisp Ember', desc: 'What\'s left of a will-o\'-wisp: a cold violet coal that won\'t go out. Morwen buys them.',
                      type: 'material', stackable: true, draw: emberIcon, value: 15 },
     tomb_key:      { id: 'tomb_key', name: 'Shell Key', desc: 'A key shaped like a cockle shell, green with the sea. A drowned thing in the graveyard on Midnight Isle was carrying it.',

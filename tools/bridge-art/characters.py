@@ -197,6 +197,13 @@ NPCS = {
                           long_hair=True, straw_hat=('#a8843a', '#d8b058', '#f0d080'), pose='stand'),
     'npc-vfolk-b':   dict(skin='skin3', shirt=('#6a4a1a', '#9a6a2a', '#c08a3a'), vest=('#2a2a3a', '#3e3e54', '#545470'),
                           hair=('#1a1410', '#2e2218', '#44342a'), cap=('#3a2a1a', '#5e4228', '#7e5a38'), beard=True, pose='stand'),
+    # more of Brambleford: Mags who keeps the Hayloft, an old farmer in from the fields, the schoolmistress
+    'npc-vinn':      dict(skin='skin', shirt=('#5a1e24', '#8a3038', '#b04a52'), apron=('#a8a49a', '#e4e0d4', '#fbf8f0'),
+                          hair=('#6a2a14', '#9a4422', '#c06030'), bun=True, pose='stand'),
+    'npc-vfarmer':   dict(skin='skin2', shirt=('#2a3a5a', '#3e5680', '#5a78a8'), vest=('#4a3018', '#6a4828', '#8a6238'),
+                          hair=('#9a9aa0', '#c8c8d0', '#ececf2'), beard=True, straw_hat=('#a8843a', '#d8b058', '#f0d080'), pose='stand'),
+    'npc-vschool':   dict(skin='skin3', shirt=('#3a2a5a', '#54407e', '#7058a0'), hair=('#7a7a80', '#a8a8b0', '#d0d0d8'),
+                          bun=True, pose='stand'),
     # Arcadia: a courier in hi-vis neon, a street samurai with a mohawk and a mask
     'npc-courier':   dict(skin='skin2', shirt=('#6a7a10', '#a8c020', '#e0f040'), vest=('#101014', '#1e1e26', '#30303c'),
                           hair=('#1a1410', '#2e2218', '#44342a'), visor_band=True, pose='stand'),

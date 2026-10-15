@@ -50,13 +50,14 @@ var BridgeCodex = (function () {
       ['star_pickaxe', 'Hob forges it, from star iron'], ['hoe', 'The tool shed on Verdance'], ['watering_can', 'The tool shed on Verdance'],
       ['sprinkler', 'Hollin\'s seed stall'], ['chalk', 'Ysolde\'s guide hut in Fellhaven'], ['climbing_rope', 'Ysolde\'s guide hut'],
       ['ice_axe', 'Ysolde\'s guide hut'], ['skis', 'The ski hire in Fellhaven'], ['ski_goggles', 'The ski hire in Fellhaven'],
-      ['probe', 'Ysolde, once you\'ve seen the Last Ridge'], ['whistle', 'Comes with your first companion']] },
+      ['probe', 'Ysolde, once you\'ve seen the Last Ridge'], ['whistle', 'Comes with your first companion'], ['lucky_horseshoe', 'The Anvil & Hoof, in Brambleford']] },
     { id: 'food', name: 'Food and drink', reward: 120, items: [
       ['bread', 'The bakery on Lumar\'s square'], ['sweet_roll', 'The bakery, or Tove\'s cocoa hut'], ['sea_biscuit', 'The fishmonger, or the bakery'],
       ['fresh_fish', 'The fishmonger on Lumar\'s square'], ['mug_of_ale', 'The tavern, or a certain club'], ['bowl_of_stew', 'The tavern on Lumar\'s square'],
       ['health_draught', 'The apothecary'], ['antidote', 'The apothecary'], ['spore_ramen', 'Cyber Noodles, in the District'], ['neon_udon', 'Cyber Noodles'],
       ['medkit', 'The Chrome Clinic'], ['stim_pack', 'The Chrome Clinic'], ['void_fizz', 'The bar at Club Void'], ['hot_cocoa', 'Tove\'s cocoa hut in Fellhaven'],
-      ['roast_chestnuts', 'Tove\'s cocoa hut'], ['fondue', 'Mette\'s bar, at the Snowcap Lodge'], ['mulled_cider', 'Mette\'s bar, at the Snowcap Lodge']] },
+      ['roast_chestnuts', 'Tove\'s cocoa hut'], ['fondue', 'Mette\'s bar, at the Snowcap Lodge'], ['mulled_cider', 'Mette\'s bar, at the Snowcap Lodge'],
+      ['honey_cake', 'The Crusty Loaf, in Brambleford'], ['pumpkin_pie', 'The Crusty Loaf, in Brambleford'], ['ploughmans', 'The Hayloft, in Brambleford']] },
     { id: 'maps', name: 'Treasure maps', reward: 200, items: [
       ['tmap_lighthouse', 'Ilsa Venn, the cartographer'], ['tmap_windmill', 'Ilsa Venn, the cartographer'], ['tmap_memorial', 'Ilsa Venn, the cartographer'],
       ['tmap_beacon', 'Under rocks in the Rose Mine'], ['tmap_heron', 'At the end of another map'], ['tmap_watchtower', 'At the end of another map'],

@@ -1758,3 +1758,4 @@ html.touch .fd-keys { display: none; }
 .cx-detail { min-height: 38px; font-size: 12px; line-height: 1.45; color: #c4b89e; border-top: 1px solid rgba(224, 192, 96, 0.18); padding-top: 8px; }
 .cx-detail b { color: #f6eedc; font-weight: normal; }
 .cx-detail em { color: #e0c060; font-style: normal; }
+html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }                      /* casting toward the bottom of the screen: out of the way */

@@ -4,11 +4,11 @@
   python3 tools/bridge-art/scene_post.py RENDER_DIR apps/bridge/assets/scenes/verdance
 
 A garden world in a long golden afternoon: the farmhouse and its porch, the red
-barn and the tool shed, the windmill, the landing pad mown into the meadow with
-the skiff on it, the field — bare earth inside a split-rail fence, yours to till
+barn and the tool shed, the windmill, hay stacked in the top meadow, the field — bare earth inside a split-rail fence, yours to till
 and plant (js/farm.js draws what you grow) — the well, the pond with its jetty,
-the orchard and the beehives, and down the lane the village corner: Hollin's seed
-stall, Marlo's produce cart, the notice board, Hollin's cottage. Hedgerow and
+the orchard and the beehives, and down the lane the corner by Hollin's: his seed
+stall, Marlo's produce cart, the notice board, Hollin's cottage; Meadow Lane leaves east
+for Brambleford, the village where the shuttle lands (scenes/verdance_village.py). Hedgerow and
 trees all round. One sun, no flicker.
 """
 import json
@@ -42,7 +42,8 @@ F.dirt_path(k, 9.9, 10.6, 12.1, 11.9)                # down to the field gate
 F.dirt_path(k, 33.4, 10.6, 34.6, 19.4)               # south to the village (paths only touch: overlaps z-fight)
 F.dirt_path(k, 19.9, 10.6, 21.1, 16.4)               # past the scarecrow to the well
 F.dirt_path(k, 21.1, 15.2, 25.0, 16.4)
-F.dirt_path(k, 32.6, 19.4, 43.2, 27.6)               # the village yard
+F.dirt_path(k, 32.6, 19.4, 43.2, 27.6)               # the yard by Hollin's
+F.dirt_path(k, 43.2, 20.0, 44.6, 23.0)               # Meadow Lane, off east to Brambleford
 F.dirt_path(k, 27.4, 22.8, 32.6, 23.8)               # from the yard to the jetty
 F.earth(k, PLOT[0], PLOT[1], PLOT[2] + 1, PLOT[3] + 1)
 
@@ -73,21 +74,12 @@ k.solid(20, 5, 22, 8)
 I.windmill(k, 25.2, 5.4, h=3.6, rad=0.9, tone='#e8e0d0', roof='#a04a30', chimes=False)
 k.solid(24, 4, 27, 7)
 
-# ---- the landing pad, rolled gravel in the meadow with a painted ring, the skiff on it -------------------------------
-PX, PR = 34.0, 6.6
-k.cyl(PX, PR, -0.01, 0.014, 3.05, ('#b8ad94', 0.3), 'pad_gravel', verts=48)
-k.cyl(PX, PR, 0.0, 0.02, 2.6, ('#ece6d4', 0.25), 'pad_ring', verts=48)
-k.cyl(PX, PR, 0.0, 0.026, 2.42, ('#b0a58c', 0.3), 'pad_gravel', verts=48)
-for _ in range(90):
-    a, d = k.rng.uniform(0, math.tau), 2.4 * math.sqrt(k.rng.random())
-    k.rock(PX + math.cos(a) * d, PR + math.sin(a) * d, 0.02, 0.035, 0.03, 0.015, ('#8a8070', 0.3), part='pebble', segs=5)
-for i in range(28):
-    a = i * math.tau / 28
-    k.rock(PX + math.cos(a) * 3.2, PR + math.sin(a) * 3.2, 0.02, 0.1, 0.08, 0.06, ('#e8e4dc', 0.2), part='pad_stone', segs=6)
-with k.variant('shuttle', 'parked'):
-    P.shuttle(k, PX - 1.7, PR - 0.1)
-k.solid(PX - 1.8, PR - 1.1, PX + 2.0, PR + 0.9)
-F.windsock(k, 38.8, 3.4)
+# ---- the top meadow, where the hay's stacked (the shuttle sets down in Brambleford now, up the lane) ---------------------
+F.haybale(k, 32.4, 5.4)
+F.haybale(k, 33.6, 5.9)
+F.haybale(k, 35.6, 5.2, rolled=False)
+k.solid(31, 4, 37, 7)
+F.wildflowers(k, 29.0, 3.0, 42.0, 8.4, 70)
 
 # ---- the field: bare earth inside a split-rail fence, gates north and east ---------------------------------------
 F.fence(k, (2.5, 11.5), (9.6, 11.5))
@@ -162,14 +154,16 @@ k.sun((0.62, 0.42, -0.62), '#ffe2b0', 4.2, angle=3.0)
 k.render(OUT, light_states={'full': {}}, light_samples=96, world_light=('#a8c4e0', 0.85))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
+w.pop('shuttle', None)                                # no pad here: the shuttle lands in Brambleford, up Meadow Lane
 w.update({'name': 'Verdance', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'verdance',
-          'spawns': {'player': [34, 9]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
+          'spawns': {'player': [42, 21]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
           'shipExit': False, 'view': [0.0, -1.5, COLS, ROWS],
-          'farm': {'plot': list(FARM)}, 'shuttle': {'spawn': [34, 9]}})
+          'farm': {'plot': list(FARM)}})
 MAIL = ["A SEED CATALOGUE, DOG-EARED AT THE PUMPKINS.", "A POSTCARD FROM LUMAR: \"THE SEA GLOWS. WISH YOU WERE HERE.\" NO NAME.",
         "A BILL FOR ONE (1) SCARECROW HAT. PAID.", "NOTHING TODAY. A SNAIL HAS MOVED IN."]
 w['interactions'] = [
-    {'x': 34, 'y': 7, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'},
+    {'x': 43, 'y': 21, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO WALK TO BRAMBLEFORD', 'target': 'verdance-village', 'spawn': [10, 32]},
+    {'x': 43, 'y': 22, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO WALK TO BRAMBLEFORD', 'target': 'verdance-village', 'spawn': [11, 32]},
     {'x': 6, 'y': 7, 'type': 'dialog', 'label': 'FARMHOUSE', 'prompt': 'PRESS E TO LOOK',
      'dialog': 'YOUR FARMHOUSE. WHITEWASHED, A RED ROOF, SMOKE FROM THE CHIMNEY. THE DOOR STICKS IN SUMMER - HOLLIN SAYS IT ALWAYS HAS.'},
     {'x': 16, 'y': 7, 'type': 'dialog', 'label': 'BARN', 'prompt': 'PRESS E TO LOOK',
@@ -195,5 +189,5 @@ w['interactions'] = [
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
             actors=[{'sheet': 'npc-hollin', 'x': 38, 'y': 20, 'facing': 'down'}, {'sheet': 'npc-marlo', 'x': 37, 'y': 22, 'facing': 'down'}],
-            scene_extra={'layers': {'shuttle': 'parked'}, 'smoke': SMOKE})
+            scene_extra={'smoke': SMOKE})
 print('verdance done')

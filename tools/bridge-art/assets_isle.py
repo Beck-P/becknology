@@ -11,6 +11,7 @@ ruined watchtower, standing stones, twisted trees, a wreck on the reef, a
 rope bridge out to a sea stack, a cave mouth in the cliff.
 """
 import math
+import random
 
 import bmesh
 import bpy
@@ -746,3 +747,109 @@ def octagon_tower(k, tx, tr, R=1.6, h=4.6, wall='#4a4458', roof='#2a2040', orb='
     k.point_light(tx, tr + R + 1.5, h + 2.0, '#a080ff', 40, radius=0.3, group='flicker')
     k.point_light(tx, tr, h + 3.5, orb, 30, radius=0.2, group='flicker')
     k.solid(tx - R - 0.7, tr - R - 0.7, tx + R + 0.7, tr + R + 0.5)
+
+
+# ---- fishing jetties ---------------------------------------------------------------------------------------
+def fishing_jetty(k, a, length, d, z=0.02, head=1.4, lamp_energy=14, glow=None, tone=A.WOOD):
+    """A long plank jetty for fishing: from the shore cell a = (col, row), `length` cells out in direction d
+    ('s', 'e' or 'w'), a tile wide, ending in a wider head with a lantern on a post, a bench facing the water,
+    a bucket, two rods leaning on the rail and a coil of rope. Rope rails run down both sides, piles under
+    every plank run. Nothing is solid: the island script makes the cells walkable (jetty_cells)."""
+    c0, r0 = a
+    ex, er = {'s': (0, 1), 'e': (1, 0), 'w': (-1, 0)}[d]
+    rng = random.Random(c0 * 131 + r0)                # its own: the island's scatter after it stays where it was
+    # the run: planks across, two beams under, piles every 1.2 tiles
+    if d == 's':
+        x0, x1, y0, y1 = c0 + 0.08, c0 + 0.92, r0 - 0.2, r0 + length + 0.0
+    elif d == 'e':
+        x0, x1, y0, y1 = c0 - 0.2, c0 + length + 0.0, r0 + 0.12, r0 + 0.88
+    else:
+        x0, x1, y0, y1 = c0 + 1.2 - length, c0 + 1.2, r0 + 0.12, r0 + 0.88
+    along_r = d == 's'
+    t, end = (y0 if along_r else x0), (y1 if along_r else x1)
+    while t < end - 1e-6:
+        t1 = min(end, t + 0.28)
+        col = (shade(tone, rng.uniform(0.82, 1.1)), 0.16)
+        if along_r:
+            k.box(x0 + rng.uniform(-0.03, 0.03), t + 0.02, z - 0.06, x1 + rng.uniform(-0.03, 0.03), t1 - 0.02, z, col, 'jetty_plank')
+        else:
+            k.box(t + 0.02, y0 + rng.uniform(-0.03, 0.03), z - 0.06, t1 - 0.02, y1 + rng.uniform(-0.03, 0.03), z, col, 'jetty_plank')
+        t = t1
+    if along_r:
+        for xx in (x0, x1 - 0.08):
+            k.box(xx, y0, z - 0.2, xx + 0.08, y1, z - 0.06, A.WOOD_DD, 'jetty_beam')
+    else:
+        for yy in (y0, y1 - 0.08):
+            k.box(x0, yy, z - 0.2, x1, yy + 0.08, z - 0.06, A.WOOD_DD, 'jetty_beam')
+    # the head: a broader square deck at the far end
+    hx, hr = (c0 + 0.5 + ex * (length - 0.3), r0 + 0.5 + er * (length - 0.3))
+    hw = head / 2
+    hx0, hx1, hr0, hr1 = hx - hw, hx + hw, hr - hw, hr + hw
+    if d == 's':
+        hr0, hr1 = hr - 0.5, hr + head - 0.5
+    elif d == 'e':
+        hx0, hx1 = hx - 0.5, hx + head - 0.5
+    else:
+        hx0, hx1 = hx - head + 0.5, hx + 0.5
+    rr = hr0
+    while rr < hr1 - 1e-6:
+        r1 = min(hr1, rr + 0.28)
+        k.box(hx0, rr + 0.02, z - 0.05, hx1, r1 - 0.02, z + 0.01, (shade(tone, rng.uniform(0.82, 1.1)), 0.16), 'jetty_plank')
+        rr = r1
+    for (xx, yy) in ((hx0, hr0), (hx1 - 0.08, hr0), (hx0, hr1 - 0.08), (hx1 - 0.08, hr1 - 0.08)):
+        k.box(xx, yy, z - 0.22, xx + 0.08, yy + 0.08, z - 0.05, A.WOOD_DD, 'jetty_beam')
+    # piles: in pairs down the run, four under the head
+    piles = []
+    s = 0.6
+    while s < length - 0.6:
+        px, pr = c0 + 0.5 + ex * s, r0 + 0.5 + er * s
+        if along_r:
+            piles += [(c0 + 0.12, pr), (c0 + 0.88, pr)]
+        else:
+            piles += [(px, r0 + 0.16), (px, r0 + 0.84)]
+        s += 1.2
+    piles += [(hx0 + 0.06, hr0 + 0.06), (hx1 - 0.06, hr0 + 0.06), (hx0 + 0.06, hr1 - 0.06), (hx1 - 0.06, hr1 - 0.06)]
+    for (px, pr) in piles:
+        k.cyl(px, pr, -1.0, z + 0.32, 0.075, (A.WOOD_D, 0.14), 'pile', verts=8)
+        k.cyl(px, pr, z + 0.3, z + 0.34, 0.085, A.WOOD_DD, 'pile_cap', verts=8)
+    # rope rails along both sides of the run, sagging between the piles
+    side_a = [p for i, p in enumerate(piles[:-4]) if i % 2 == 0]
+    side_b = [p for i, p in enumerate(piles[:-4]) if i % 2 == 1]
+    for side in (side_a, side_b):
+        for p, q in zip(side, side[1:]):
+            m = ((p[0] + q[0]) / 2, (p[1] + q[1]) / 2)
+            k.tube((p[0], p[1], z + 0.3), (m[0], m[1], z + 0.2), 0.012, '#a08a60', 'jetty_rope', verts=4)
+            k.tube((m[0], m[1], z + 0.2), (q[0], q[1], z + 0.3), 0.012, '#a08a60', 'jetty_rope', verts=4)
+    # on the head: a lantern post at the outer corner, a bench, a bucket, rods, a coil of rope
+    ox, orr = (hx1 - 0.14, hr1 - 0.14) if d != 'w' else (hx0 + 0.14, hr1 - 0.14)
+    k.cyl(ox, orr, z, z + 1.5, 0.04, A.IRON, 'jetty_lamp_post', verts=6)
+    W.lantern(k, ox, orr, z + 1.12, z + 1.36, s=0.09, energy=lamp_energy)
+    if glow:
+        k.point_light(ox, orr + 0.2, z + 1.25, glow, lamp_energy * 0.5, radius=0.1, group='flicker')
+    if d == 's':
+        bx0, bx1, br = hx0 + 0.15, hx0 + 0.65, hr0 + 0.25
+    elif d == 'e':
+        bx0, bx1, br = hx0 + 0.2, hx0 + 0.75, hr0 + 0.2
+    else:
+        bx0, bx1, br = hx1 - 0.75, hx1 - 0.2, hr0 + 0.2
+    for xx in (bx0 + 0.04, bx1 - 0.08):
+        k.box(xx, br - 0.1, z, xx + 0.05, br + 0.1, z + 0.3, A.WOOD_DD, 'jetty_bench_leg')
+    k.box(bx0, br - 0.12, z + 0.3, bx1, br + 0.12, z + 0.36, (A.WOOD_L, 0.14), 'jetty_bench')
+    bkx, bkr = (hx0 + 0.3, hr1 - 0.3) if d != 'w' else (hx1 - 0.3, hr1 - 0.3)
+    k.cyl(bkx, bkr, z, z + 0.24, 0.11, ('#6a7480', 0.25), 'bucket', verts=10)
+    k.cyl(bkx, bkr, z + 0.2, z + 0.23, 0.095, '#28485a', 'bucket_water', verts=10)
+    k.tube((bkx - 0.1, bkr, z + 0.24), (bkx + 0.1, bkr, z + 0.24), 0.008, A.IRON, 'bucket_handle', verts=4)
+    for i, dd in enumerate((-0.12, 0.12)):
+        rx, rr0 = (hx0 + 0.1, hr0 + 0.55 + dd) if d != 'w' else (hx1 - 0.1, hr0 + 0.55 + dd)
+        k.tube((rx, rr0, z), (rx + (0.25 if d != 'w' else -0.25) * (1 if i else 0.6), rr0 - 0.5, z + 1.25), 0.014,
+               ('#6a4a2a', 0.2), 'fishing_rod', verts=5)
+    cx, cr = (hx1 - 0.35, hr0 + 0.3) if d != 'w' else (hx0 + 0.35, hr0 + 0.3)
+    for j in range(3):
+        k.cyl(cx, cr, z + j * 0.03, z + j * 0.03 + 0.03, 0.14 - j * 0.03, '#a08a60', 'rope_coil', verts=10)
+
+
+def jetty_cells(a, length, d):
+    """The walkable cells of a fishing_jetty: the run plus its head."""
+    c0, r0 = a
+    ex, er = {'s': (0, 1), 'e': (1, 0), 'w': (-1, 0)}[d]
+    return [(c0 + ex * i, r0 + er * i) for i in range(length + 1)]

@@ -13,70 +13,100 @@
   ],
   "lumar-sapphire": [
     {
-      "x": 27,
-      "y": 27,
-      "pool": "sapphire"
+      "x": 37,
+      "y": 30,
+      "pool": "sapphire",
+      "label": "OFF THE JETTY"
     },
     {
-      "x": 29,
-      "y": 27,
-      "pool": "sapphire"
+      "x": 39,
+      "y": 30,
+      "pool": "sapphire",
+      "label": "OFF THE JETTY"
     },
     {
-      "x": 28,
-      "y": 28,
-      "pool": "sapphire"
+      "x": 38,
+      "y": 32,
+      "pool": "sapphire",
+      "label": "END OF THE JETTY"
+    },
+    {
+      "x": 2,
+      "y": 21,
+      "pool": "sapphire",
+      "label": "OFF THE ROCKS"
     }
   ],
   "lumar-rose": [
     {
-      "x": 27,
-      "y": 23,
-      "pool": "rose"
+      "x": 23,
+      "y": 30,
+      "pool": "rose",
+      "label": "OFF THE JETTY"
     },
     {
-      "x": 29,
-      "y": 23,
-      "pool": "rose"
+      "x": 23,
+      "y": 32,
+      "pool": "rose",
+      "label": "OFF THE JETTY"
     },
     {
-      "x": 28,
-      "y": 25,
-      "pool": "rose"
+      "x": 25,
+      "y": 31,
+      "pool": "rose",
+      "label": "END OF THE JETTY"
+    },
+    {
+      "x": 14,
+      "y": 39,
+      "pool": "rose",
+      "label": "OFF THE POINT"
     }
   ],
   "lumar-crimson": [
     {
-      "x": 27,
-      "y": 37,
-      "pool": "crimson"
+      "x": 41,
+      "y": 33,
+      "pool": "crimson",
+      "label": "OFF THE JETTY"
     },
     {
-      "x": 29,
-      "y": 37,
-      "pool": "crimson"
+      "x": 41,
+      "y": 35,
+      "pool": "crimson",
+      "label": "OFF THE JETTY"
     },
     {
-      "x": 28,
-      "y": 38,
-      "pool": "crimson"
+      "x": 43,
+      "y": 34,
+      "pool": "crimson",
+      "label": "END OF THE JETTY"
+    },
+    {
+      "x": 6,
+      "y": 28,
+      "pool": "crimson",
+      "label": "BY THE WRECK"
     }
   ],
   "lumar-midnight": [
     {
-      "x": 23,
-      "y": 38,
-      "pool": "midnight"
+      "x": 35,
+      "y": 32,
+      "pool": "midnight",
+      "label": "OFF THE JETTY"
     },
     {
-      "x": 25,
-      "y": 38,
-      "pool": "midnight"
+      "x": 35,
+      "y": 34,
+      "pool": "midnight",
+      "label": "OFF THE JETTY"
     },
     {
-      "x": 24,
-      "y": 39,
-      "pool": "midnight"
+      "x": 37,
+      "y": 33,
+      "pool": "midnight",
+      "label": "END OF THE JETTY"
     },
     {
       "x": 37,

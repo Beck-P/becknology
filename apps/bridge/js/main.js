@@ -139,11 +139,12 @@ var Bridge = (function () {
         // Track wayfarer progress when player lands on a hyperspace destination.
         if (typeof BridgeProgression !== 'undefined' && context && context.worldId) {
           var destinations = { arcadia: 1, lumar: 1, singularity: 1, enigma: 1, 'arcadia-street': 1, verdance: 1, hoarfell: 1 };
-          if (destinations[context.worldId]) {
+          var landed = context.worldId === 'verdance-village' ? 'verdance' : context.worldId;   // Verdance's shuttle sets down in Brambleford
+          if (destinations[landed]) {
             if (typeof BridgeStarmap !== 'undefined' && BridgeStarmap.markVisited) {
-              BridgeStarmap.markVisited(context.worldId);
+              BridgeStarmap.markVisited(landed);
             }
-            BridgeProgression.recordAchievement('visited_' + context.worldId, 25, { source: 'hyperspace' })
+            BridgeProgression.recordAchievement('visited_' + landed, 25, { source: 'hyperspace' })
               .then(function () { BridgeProgression.maybeAwardWayfarer(); });
           }
         }

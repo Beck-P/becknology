@@ -3,7 +3,7 @@
   BVENV/bin/python tools/bridge-art/scenes/lumar_sapphire.py RENDER_DIR
   python3 tools/bridge-art/scene_post.py RENDER_DIR apps/bridge/assets/scenes/lumar-sapphire
 
-The busiest island on the sea: the galleon berths at the end of the quay,
+The busiest island on the sea: your sloop ties up at the end of the quay,
 fishing boats at the next pier along. Behind the quay a market square of
 striped stalls round a well, blue-roofed houses with smoking chimneys, the
 Zephyr trader's warehouse; up the west hill the Sapphire Light sweeps the
@@ -36,9 +36,10 @@ land = I.flood(land, (29, 17))
 QUAY = 24                                         # the quay's front row: everything south of it is the harbour
 land = {(c, r) for (c, r) in land if r <= QUAY or not (12 <= c <= 44)}
 
-PX, FX = 28, 38                                   # the galleon's pier, the fishing pier
+PX, FX = 28, 38                                   # the sloop's pier, the fishing pier
 PIER = [(PX, r) for r in range(QUAY + 1, QUAY + 4)]
-FPIER = [(FX, r) for r in range(QUAY + 1, QUAY + 3)]
+FLEN = 6                                          # the fishing pier: a long jetty with a head to fish from
+FPIER = I.jetty_cells((FX, QUAY + 1), FLEN, 's')
 SHIP_R = QUAY + 4
 SL = 7.0
 
@@ -67,7 +68,7 @@ I.ground(k, land - TOWN, material, ALB)
 terrain = C.coast(k, land, ground=(material, ALB), palette='sapphire', grass='#3a5040', rock='#4a5058', seed=41, beachiness=-0.1,
                   beach_bias=lambda x, r: 0.8 * I.smooth(46.0, 50.0, x) * I.smooth(20.0, 23.0, r),
                   keep_clear=[(11.5, QUAY + 0.6, 45.0, QUAY + 2.0),
-                              (PX - 0.4, QUAY, PX + 1.4, SHIP_R + 0.2), (FX - 1.5, QUAY, FX + 2.4, QUAY + 3.6),
+                              (PX - 0.4, QUAY, PX + 1.4, SHIP_R + 0.2), (FX - 1.5, QUAY, FX + 2.4, QUAY + 3.6), (FX - 0.6, QUAY, FX + 1.6, QUAY + FLEN + 2.4),
                               (PX + 0.5 - 0.45 * SL - 0.8, SHIP_R - 0.2, PX + 0.5 + 0.55 * SL + 1.8, SHIP_R + 1.9)],
                   sheer=[(11.9, QUAY + 0.9, 44.1, QUAY + 6.0)])
 
@@ -82,17 +83,11 @@ for x in (13.5, 17.0, 21.0, 24.5, 32.5, 35.5, 41.0):
     k.cyl(x, QUAY + 0.75, 0.35, 0.4, 0.15, '#2a2a30', 'bollard_cap', verts=10)
     k.solid(x - 0.2, QUAY + 0.55, x + 0.2, QUAY + 0.95)
 
-# ---- the piers, the galleon, the fishing boats -----------------------------------------------------------------
+# ---- the piers, the fishing boats -----------------------------------------------------------------
 W.dock(k, PX + 0.05, PX + 0.95, QUAY + 0.9, SHIP_R + 0.0, z=0.02)
-n0, l0 = len(k.parts), len(k.lights)
-W.galleon(k, PX + 0.5 - 0.45 * SL, PX + 0.5 + 0.55 * SL, SHIP_R + 0.75, beam=1.4, masts=0.8, waterline=False,
-          paint='#2a4a7a', flag='#4080f0')
-C.sink(k, n0, C.WZ, l0)
-DECK = 0.95 + C.WZ
-k.poly([(PX + 0.3, SHIP_R - 0.3, 0.03), (PX + 0.7, SHIP_R - 0.3, 0.03), (PX + 0.7, SHIP_R + 0.25, DECK),
-        (PX + 0.3, SHIP_R + 0.25, DECK)], (A.WOOD, 0.14), 'gangplank')
-W.dock(k, FX + 0.05, FX + 0.95, QUAY + 0.9, QUAY + 3.0, z=0.02)
-for (bx, sail) in ((FX - 0.9, '#e8e4dc'), (FX + 1.9, None)):
+# no galleon at the pier any more: your own sloop ties up at its end (js/sloop.js draws it, MOORINGS)
+I.fishing_jetty(k, (FX, QUAY + 1), FLEN, 's', glow='#80b0ff')
+for (bx, sail) in ((FX - 0.95, '#e8e4dc'), (FX + 1.95, None)):
     n0, l0 = len(k.parts), len(k.lights)
     W.boat(k, bx, QUAY + 2.2, length=2.4, sail=sail)
     C.sink(k, n0, C.WZ + 0.12, l0)

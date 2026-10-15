@@ -14,6 +14,13 @@
  *
  * What you've caught (how many, the biggest) and the messages you've read
  * are kept in localStorage (bridge_fish) and listed in the journal.
+ *
+ * It happens in the world too: you turn to the water, the rod swings back as
+ * you charge and the line arcs out; the bobber rides the swell where it lands,
+ * ticks on a nibble, goes under on a bite, is dragged about as you reel, and
+ * whatever you land comes flying in over the rail (the `items` hook on the
+ * lumar, verdance and hoarfell tilesets). The panel steps to the top of the
+ * screen when you're casting toward the bottom of it.
  */
 var BridgeFishing = (function () {
   var KEY = 'bridge_fish';
@@ -105,7 +112,8 @@ var BridgeFishing = (function () {
       var t = (performance.now() - st.t0) / 1200;
       var power = 1 - Math.abs((t % 2) - 1);              // the swing goes up and down; let go near the top
       log.casts += 1; store();
-      set('wait', { power: power, wait: 1500 + Math.random() * 3500, nibbles: [] });
+      var lucky = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('lucky_horseshoe') > 0;
+      set('wait', { power: power, wait: (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1), nibbles: [] });   // the horseshoe: they bite sooner
       var n = Math.floor(Math.random() * 3);
       for (var i = 0; i < n; i++) st.nibbles.push(400 + Math.random() * (st.wait - 600));
     }
@@ -291,7 +299,9 @@ var BridgeFishing = (function () {
     }
     st = { pool: (inter && inter.pool) || 'harbour' };
     held = false;
+    aimAt(inter);
     set('ready');
+    el.classList.toggle('fi-top', !!(cast && cast.dy > 0.35));
     el.classList.add('visible');
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     document.addEventListener('keydown', onKey, true);
@@ -306,8 +316,115 @@ var BridgeFishing = (function () {
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKey, true);
     cancelAnimationFrame(raf);
-    st = null;
+    st = null; cast = null;
     if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+  }
+
+  // ---- in the world: the rod, the line, the bobber out on the water -------------------------------------
+  var cast = null;
+  function aimAt(inter) {
+    cast = null;
+    if (typeof BridgeCharacter === 'undefined' || !inter) return;
+    var px = BridgeCharacter.getX(), py = BridgeCharacter.getY(), dx = inter.x - px, dy = inter.y - py;
+    if (!dx && !dy) {
+      var f = BridgeCharacter.getFacing();
+      dx = f === 'left' ? -1 : f === 'right' ? 1 : 0; dy = f === 'up' ? -1 : f === 'down' || !dx ? 1 : 0;
+    }
+    var n = Math.hypot(dx, dy); dx /= n; dy /= n;
+    var face = Math.abs(dx) > Math.abs(dy) + 0.01 ? (dx < 0 ? 'left' : 'right') : (dy < 0 ? 'up' : 'down');
+    BridgeCharacter.setFacing(face);
+    var pool = (inter.pool || 'harbour');
+    cast = { px: px + 0.5, py: py + 0.5, dx: dx, dy: dy, face: face, side: Math.random() - 0.5,
+             reach: pool === 'ice' ? [Math.hypot(inter.x - px, inter.y - py), 0] : pool === 'pond' ? [1.3, 1.3] : [1.7, 2.6],
+             wz: pool === 'ice' ? 0.05 : pool === 'pond' ? 0.14 : 0.24 };       // how far below the floor the surface lies (tiles)
+  }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function worldItems(world, offX, offY, ts, now) {
+    if (!st || !cast || typeof BridgeCharacter === 'undefined') return [];
+    var rp = BridgeCharacter.getRenderPos(), foot = rp.y + 1 - 3 / 32;
+    return [{ footRow: foot + (cast.face === 'up' ? -0.02 : 0.02), draw: function (c) { drawCast(c, offX, offY, ts, now, rp, foot); } }];
+  }
+  function drawCast(c, offX, offY, ts, now, rp, foot) {
+    var ph = st.phase, e = now - st.t0, k = cast, sx = k.face === 'left' ? -1 : k.face === 'right' ? 1 : 0;
+    var cx = Math.round(offX + (rp.x + 0.5) * ts), fy = Math.round(offY + foot * ts);
+    var hand = k.face === 'up' ? [cx - 5, fy - 21] : k.face === 'down' ? [cx + 6, fy - 17] : [cx + sx * 7, fy - 18];
+    // where the bobber lies: out along the cast, further for a strong one
+    var pw = st.power != null ? st.power : 0.5, d = k.reach[0] + k.reach[1] * pw;
+    var tx = k.px + k.dx * d - k.dy * k.side * 0.6, ty = k.py + k.dy * d + k.dx * k.side * 0.6;
+    var bx = offX + tx * ts, by = offY + (ty + k.wz) * ts + 4;
+    // the rod: out over the water, back over the shoulder as you charge, bent while you reel
+    var ox = k.dx * 15, oy = k.dy * 7;
+    var tip;
+    if (ph === 'charge') { var p = 1 - Math.abs(((e / 1200) % 2) - 1); tip = [hand[0] - k.dx * (4 + 8 * p), hand[1] - k.dy * 4 - 18 - 3 * p]; }
+    else if (ph === 'reel') { var w = Math.sin(now / 55) * 1.5; tip = [hand[0] + ox * 0.7 + w, hand[1] + oy * 0.7 - 9 + Math.abs(w)]; }
+    else if (ph === 'caught' || ph === 'lost') tip = [hand[0] + k.dx * 5, hand[1] - 20];
+    else tip = [hand[0] + ox, hand[1] + oy - 13];
+    c.save();
+    c.lineCap = 'round';
+    c.strokeStyle = '#4a2e14'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(hand[0], hand[1]); c.lineTo(tip[0], tip[1]); c.stroke();
+    c.strokeStyle = '#c89058'; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(hand[0], hand[1] - 1); c.lineTo(lerp(hand[0], tip[0], 0.85), lerp(hand[1], tip[1], 0.85) - 1); c.stroke();
+    c.fillStyle = '#c8c0b0'; c.fillRect(Math.round(hand[0] + (tip[0] - hand[0]) * 0.18) - 1, Math.round(hand[1] + (tip[1] - hand[1]) * 0.18) - 1, 2, 2);   // the reel
+    // the line and the bobber
+    var out = ph === 'wait' || ph === 'bite' || ph === 'reel';
+    if (out) {
+      var fly = ph === 'wait' ? Math.min(1, e / 520) : 1;
+      var qx = bx, qy = by, dip = 0, under = false;
+      if (ph === 'reel') {
+        var nearX = offX + (k.px + k.dx * 0.9) * ts, nearY = offY + (k.py + k.dy * 0.9 + k.wz) * ts + 4;
+        qx = lerp(bx, nearX, Math.min(0.85, st.progress * 0.9)) + Math.sin(now / 90) * 3 * (1 - st.progress);
+        qy = lerp(by, nearY, Math.min(0.85, st.progress * 0.9)) + Math.cos(now / 70) * 1.5;
+        under = true;
+      }
+      if (fly < 1) {                                                   // still in the air
+        qx = lerp(tip[0], bx, fly); qy = lerp(tip[1], by, fly) - Math.sin(Math.PI * fly) * 26;
+      }
+      if (ph === 'wait') st.nibbles.forEach(function (n) { if (e > n && e < n + 260) dip = 2; });
+      if (ph === 'bite') under = true;
+      var bob = fly < 1 || under ? 0 : Math.round(Math.sin(now / 420) * 0.8);
+      c.strokeStyle = 'rgba(232,232,214,0.75)'; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(tip[0], tip[1]);
+      var tight = ph === 'reel' || ph === 'bite';
+      c.quadraticCurveTo((tip[0] + qx) / 2, Math.max(tip[1], qy) + (tight ? 0 : 7), qx, qy + bob + dip);
+      c.stroke();
+      // rings on the water: the splash as it lands, a nibble, the thrash of a fish on the line
+      var ring = function (x, y, t, a) {
+        if (t < 0 || t > 1) return;
+        c.strokeStyle = 'rgba(220,240,235,' + (a * (1 - t)).toFixed(2) + ')';
+        c.beginPath(); c.ellipse(x, y + 1, 2 + t * 9, (2 + t * 9) * 0.38, 0, 0, Math.PI * 2); c.stroke();
+      };
+      if (fly >= 1) {
+        if (ph === 'wait') { ring(bx, by, (e - 520) / 700, 0.9); ring(bx, by, ((now % 2400) / 2400), 0.35); }
+        st.nibbles && ph === 'wait' && st.nibbles.forEach(function (n) { ring(bx, by, (e - n) / 500, 0.7); });
+        if (ph === 'bite') { ring(bx, by, (e % 300) / 300, 0.9); ring(bx, by, ((e + 150) % 300) / 300, 0.6); }
+        if (ph === 'reel') {
+          ring(qx, qy, (now % 380) / 380, 0.8);
+          c.fillStyle = 'rgba(240,250,250,0.85)';
+          for (var i = 0; i < 4; i++) { var a = now / 80 + i * 1.7; c.fillRect(Math.round(qx + Math.cos(a) * 4), Math.round(qy - 2 - Math.abs(Math.sin(a)) * 4), 1, 1); }
+        }
+      }
+      if (!under) {
+        c.fillStyle = '#f0ece0'; c.fillRect(Math.round(qx) - 1, Math.round(qy + bob + dip) - 4, 3, 2);
+        c.fillStyle = '#d83030'; c.fillRect(Math.round(qx) - 1, Math.round(qy + bob + dip) - 2, 3, 2);
+      } else if (ph === 'bite') {
+        c.fillStyle = '#ffe080'; c.font = 'bold 11px "Pixelify Sans", monospace'; c.textAlign = 'center';
+        c.fillText('!', cx, fy - 50 - Math.abs(Math.sin(e / 90)) * 3);
+      }
+    }
+    // the catch flies in over the rail
+    if (ph === 'caught' && e < 700 && st.result) {
+      var t = e / 700, fx = lerp(bx, hand[0], t), fyy = lerp(by, hand[1] - 4, t) - Math.sin(Math.PI * t) * 30;
+      c.strokeStyle = 'rgba(232,232,214,0.75)'; c.beginPath(); c.moveTo(tip[0], tip[1]); c.lineTo(fx, fyy - 4); c.stroke();
+      var it = st.result !== 'bottle' && typeof BridgeItems !== 'undefined' && BridgeItems.get(st.result);
+      if (it && it.draw) { c.save(); c.translate(Math.round(fx) - 6, Math.round(fyy) - 6); it.draw(c, 0, 0, 12); c.restore(); }
+      else { c.fillStyle = '#a8d8c0'; c.fillRect(Math.round(fx) - 2, Math.round(fyy) - 4, 4, 8); }
+      if (t < 0.25) { c.fillStyle = 'rgba(240,250,250,0.8)'; for (var j = 0; j < 6; j++) c.fillRect(Math.round(bx + Math.cos(j) * (4 + t * 30)), Math.round(by - t * 40 * Math.abs(Math.sin(j * 2))), 1, 1); }
+    }
+    c.restore();
+  }
+  if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) {
+    ['lumar', 'verdance', 'hoarfell'].forEach(function (t) { BridgeWorld.registerSceneHooks(t, { items: worldItems }); });
   }
 
   // for the journal: what you've caught, the messages you've read
@@ -318,5 +435,6 @@ var BridgeFishing = (function () {
     };
   }
 
-  return { decorate: decorate, open: open, close: close, journal: journal, _state: function () { return st; } };
+  return { decorate: decorate, open: open, close: close, journal: journal, _state: function () { return st; }, _cast: function () { return cast; },
+           isOpen: function () { return !!st; } };
 })();

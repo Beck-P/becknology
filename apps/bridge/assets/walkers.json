@@ -1,4 +1,9 @@
 {
+  "verdance-village": [
+    { "sheet": "npc-vfarmer", "path": [[2, 12], [29, 12]], "speed": 0.7, "pause": 5000, "rest": "down" },
+    { "sheet": "npc-vschool", "path": [[34, 19], [44, 19]], "speed": 0.8, "pause": 6000, "rest": "up" },
+    { "sheet": "npc-vfolk-b", "path": [[10, 15], [16, 15]], "speed": 0.9, "pause": 4500, "rest": "down" }
+  ],
   "hoarfell": [
     { "sheet": "npc-skier-a", "path": [[3, 15], [42, 15]], "speed": 1.1, "pause": 3500, "rest": "up" },
     { "sheet": "npc-skier-b", "path": [[30, 17], [17, 17]], "speed": 0.9, "pause": 5000, "rest": "down" }
@@ -13,6 +18,9 @@
     { "sheet": "npc-courier", "path": [[40, 13], [24, 13], [24, 13]], "speed": 0.9, "pause": 5000, "rest": "up" },
     { "sheet": "npc-shopper", "path": [[15, 9], [33, 9]], "speed": 1.0, "pause": 4000, "rest": "up" },
     { "sheet": "npc-samurai", "path": [[2, 9], [10, 9]], "speed": 0.8, "pause": 6000, "rest": "up" }
+  ],
+  "lumar": [
+    { "sheet": "npc-dockhand", "path": [[6, 9], [14, 9]], "speed": 0.8, "pause": 5000, "rest": "down" }
   ],
   "lumar-square": [
     { "sheet": "npc-townsman", "path": [[0, 17], [25, 17]], "speed": 1.0, "pause": 4000, "rest": "up" },

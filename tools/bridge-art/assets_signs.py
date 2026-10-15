@@ -22,7 +22,8 @@ _loaded = {}
 
 def font(name):
     if name not in _loaded:
-        _loaded[name] = bpy.data.fonts.load(os.path.join(FONTS, name + '-Regular.ttf'))
+        path = os.path.join(FONTS, name + '.ttf')                 # 'AlegreyaSC-Bold': a named weight
+        _loaded[name] = bpy.data.fonts.load(path if os.path.exists(path) else os.path.join(FONTS, name + '-Regular.ttf'))
     return _loaded[name]
 
 

@@ -24,7 +24,7 @@ var BridgeMagic = (function () {
   var PLACES = [
     { world: 'lumar-square', at: [11, 12], name: 'the Market Square on Lumar' },
     { world: 'arcadia-street', at: [18, 9], name: 'the District street in Arcadia' },
-    { world: 'verdance', at: [30, 7], name: 'the farm road on Verdance' },
+    { world: 'verdance-village', at: [19, 13], name: 'the square in Brambleford, on Verdance' },
     { world: 'hoarfell', at: [41, 21], name: 'Fellhaven, on Hoarfell' },
     { world: 'lumar-sapphire', at: [24, 22], name: 'the quay at Sapphire Port' },
     { world: 'enigma-dock', at: [11, 14], name: 'Docking Bay 3 on Enigma' }

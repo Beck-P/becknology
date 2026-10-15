@@ -3,7 +3,7 @@
   BVENV/bin/python tools/bridge-art/scenes/lumar_rose.py RENDER_DIR
   python3 tools/bridge-art/scene_post.py RENDER_DIR apps/bridge/assets/scenes/lumar-rose
 
-The island wraps round a sheltered cove: the galleon moors inside it at the
+The island wraps round a sheltered cove: your sloop ties up inside it at the
 end of a long pier. North, roseite crystals are grown on terraces like vines,
 the sprouter's workshop and a glasshouse glowing pink beside them. The west
 arm is a meadow of glowing roses round a windmill hung with shell chimes,
@@ -47,6 +47,8 @@ pier_top = max(r for (c, r) in land if c == PX and r < 25) + 1
 PIER = [(PX, r) for r in range(pier_top, pier_top + 5)]
 SHIP_R = pier_top + 5
 SL = 6.5
+FJ, FLEN = (18, 31), 6                     # the fishing jetty: east into the cove from the west arm
+FJET = I.jetty_cells(FJ, FLEN, 'e')
 
 POOLS = [(42.0, 22.0, 1.5, 1.1), (46.2, 24.6, 1.2, 0.9), (41.6, 26.4, 1.1, 0.8)]
 
@@ -107,17 +109,12 @@ I.ground(k, land, material, ALB, height=height)
 terrain = C.coast(k, land, ground=(material, ALB), palette='rose', grass='#40503a', rock='#5a5054', seed=31, beachiness=0.1,
                   beach_bias=lambda x, r: 0.8 * I.smooth(3.0, 0.0, abs(x - 28.0) - 6.5) * I.smooth(16.0, 20.0, r),
                   keep_clear=[(PX - 0.4, pier_top - 0.4, PX + 1.4, SHIP_R + 0.2),
-                              (PX + 0.5 - 0.45 * SL - 0.8, SHIP_R - 0.2, PX + 0.5 + 0.55 * SL + 1.8, SHIP_R + 1.9)])
+                              (PX + 0.5 - 0.45 * SL - 0.8, SHIP_R - 0.2, PX + 0.5 + 0.55 * SL + 1.8, SHIP_R + 1.9),
+                              (FJ[0] - 0.4, FJ[1] - 0.6, FJ[0] + FLEN + 1.4, FJ[1] + 1.6)])
 
-# ---- the pier into the cove and the galleon ----------------------------------------------------------------
+# ---- the pier into the cove, your sloop's berth-------------------------------------------------------------
 W.dock(k, PX + 0.05, PX + 0.95, pier_top - 0.4, SHIP_R + 0.0, z=0.02)
-n0, l0 = len(k.parts), len(k.lights)
-W.galleon(k, PX + 0.5 - 0.45 * SL, PX + 0.5 + 0.55 * SL, SHIP_R + 0.75, beam=1.4, masts=0.8, waterline=False,
-          paint='#5a2a40', flag='#c04070')
-C.sink(k, n0, C.WZ, l0)
-DECK = 0.95 + C.WZ
-k.poly([(PX + 0.3, SHIP_R - 0.3, 0.03), (PX + 0.7, SHIP_R - 0.3, 0.03), (PX + 0.7, SHIP_R + 0.25, DECK),
-        (PX + 0.3, SHIP_R + 0.25, DECK)], (A.WOOD, 0.14), 'gangplank')
+# no galleon at the pier any more: your own sloop ties up at its end (js/sloop.js draws it, MOORINGS)
 for x in (PX - 0.15, PX + 1.15):
     W.silver_post(k, x, pier_top + 0.6)
 
@@ -150,6 +147,7 @@ for i in range(5):
 JX = max(c for (c, r) in land if r == 26 and c < 26) + 1          # the west arm's cove shore
 W.dock(k, JX + 0.05, JX + 1.6, 25.6, 26.4, z=0.02)
 W.rowboat(k, JX + 1.7, JX + 3.5, 26.9)
+I.fishing_jetty(k, FJ, FLEN, 'e', glow='#ff80c0')
 I.crab_pots(k, JX - 0.9, 25.0)
 k.solid(JX - 1.0, 24.8, JX, 25.4)
 meadow = [c for c in walk if c[0] < 20 and c[1] > 14]
@@ -218,13 +216,13 @@ w = {'name': 'Rose Cove', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tilese
           'spawn': [8, 10]},                     # the Rose Mine (scenes/lumar_rose_mine.py, js/mine.js)
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + [(JX, 26)], scene_id='lumar-rose',
+apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + [(JX, 26)] + FJET, scene_id='lumar-rose',
             actors=[{'sheet': 'npc-harvester', 'x': 24, 'y': 12, 'facing': 'down'}],
             scene_extra={'backdrop': True, 'steam': [[cx, round(cr - 0.1, 2)] for (cx, cr, rx, ry) in POOLS]})
 w = json.load(open(WORLD))
 for r in range(ROWS):                     # only the island is ground: no walking on the sea or in the springs
     for c in range(COLS):
-        if (c, r) not in walk and (c, r) not in PIER and (c, r) != (JX, 26):
+        if (c, r) not in walk and (c, r) not in PIER and (c, r) != (JX, 26) and (c, r) not in FJET:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
 w['view'] = [-0.5, -1.5, COLS + 0.5, ROWS + 1.0]

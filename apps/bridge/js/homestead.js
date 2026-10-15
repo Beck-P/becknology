@@ -326,6 +326,7 @@ var BridgeHomestead = (function () {
   }
 
   // ---- in the world -----------------------------------------------------------------------------------------------
+  var stumbled = false;
   function decorate(worldId, data) {
     if (worldId !== 'verdance') return;
     (data.interactions || []).forEach(function (it) {
@@ -340,6 +341,10 @@ var BridgeHomestead = (function () {
     }
     placeHands(data);
     if (s.name) setTimeout(function () { toast(s.name, 'Verdance', owned() ? 'Your farm' : ''); }, 1200);
+    else if (!owned() && !stumbled) {                                  // down Meadow Lane from Brambleford, and there it is
+      stumbled = true;
+      setTimeout(function () { toast('An old farm', 'At the end of Meadow Lane - empty since Edda went', 'Hollin lives next door'); }, 1200);
+    }
     round();
   }
   // the hands: in the village waiting for work, or out in the field doing it
