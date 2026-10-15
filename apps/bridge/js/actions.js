@@ -273,37 +273,55 @@ var BridgeActions = (function () {
     raf = requestAnimationFrame(drawView);
   }
 
+  // Looking out is first person: the room leans in toward the window, then the view swivels in to fill
+  // the screen — framed by the window's mullions indoors, open air outside, an eyepiece at a telescope —
+  // with the caption along the bottom. Getting up turns you back the same way.
+  var leanT = 0, outT = 0;
   function openView(inter) {
     if (!panel) {
       panel = document.createElement('div');
       panel.id = 'view-panel';
-      panel.innerHTML = '<div class="vp-frame"><div class="vp-head"><span class="vp-title"></span>' +
-        '<button class="qj-close vp-close" aria-label="Close"><span class="ip-key">Esc</span></button></div>' +
-        '<canvas class="vp-canvas" width="' + VW + '" height="' + VH + '"></canvas><div class="vp-caption"></div></div>';
+      panel.innerHTML = '<canvas class="vp-canvas"></canvas><div class="vp-frame-fp"></div>' +
+        '<div class="vp-foot"><div class="vp-title"></div><div class="vp-caption"></div>' +
+        '<div class="vp-hint"><span class="ip-key">Esc</span> look away</div></div>';
       document.body.appendChild(panel);
       cv = panel.querySelector('.vp-canvas');
       ctx = cv.getContext('2d');
-      panel.addEventListener('click', function (e) { if (e.target === panel || e.target.closest('.vp-close')) closeView(); });
+      panel.addEventListener('click', function () { closeView(); });
     }
+    clearTimeout(outT); clearTimeout(leanT);
     kind = viewKind(inter);
     opts = { beam: !!inter.beam, roofs: !!inter.roofs };
-    var big = kind === 'skyline';
-    cv.width = big ? 480 : VW; cv.height = big ? 270 : VH;
-    panel.className = 'vp-' + kind;
-    panel.querySelector('.vp-title').textContent = inter.label;
+    // the canvas takes the screen's shape, so the view fills it without bars
+    var vw = window.innerWidth, vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    var base = kind === 'skyline' ? 270 : 180;
+    VH = base; VW = Math.max(Math.round(base * 0.9), Math.min(560, Math.round(base * vw / vh)));   // a phone held upright sees the middle of a squarer view
+    if (seaBuf && (seaBuf.width !== VW || seaBuf.height !== VH - Math.round(VH * 0.46))) seaBuf = null;
+    cv.width = VW; cv.height = VH;
+    var w = BridgeWorld.getWorld(), indoor = !!(w && w.scene && !w.scene.backdrop) && kind !== 'stars';
     var t = textOf(inter);
+    panel.querySelector('.vp-title').textContent = inter.label || '';
     panel.querySelector('.vp-caption').textContent = t;
     panel.querySelector('.vp-caption').style.display = t ? '' : 'none';
-    var vw = window.innerWidth, vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-    var cw = cv.width, ch = cv.height;
-    var s = Math.max(1, Math.min(Math.floor((vw - 40) / cw), Math.floor((vh - (t ? 200 : 110)) / ch)));
-    if (s < 2) s = Math.max(0.5, Math.min((vw - 30) / cw, (vh - (t ? 170 : 90)) / ch));
-    cv.style.width = Math.round(cw * s) + 'px'; cv.style.height = Math.round(ch * s) + 'px';
-    panel.classList.add('visible');
+    // which way you turn: toward the window's side of you
+    var sv = BridgeWorld.getScreenView(), side = 1;
+    if (sv && sv.ts) {
+      var wx = sv.offX + (inter.x + 0.5) * sv.ts, wy = sv.offY + (inter.y + 0.5) * sv.ts;
+      side = wx < vw / 2 ? -1 : 1;
+      var bc = document.getElementById('bridge-canvas');
+      if (bc) { bc.style.transformOrigin = Math.round(wx) + 'px ' + Math.round(wy) + 'px'; bc.classList.add('fp-lean'); }
+    }
+    panel.style.setProperty('--turn', (side * 58) + 'deg');
+    panel.className = 'vp-' + kind + (indoor ? ' vp-framed' : '');
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     document.addEventListener('keydown', onViewKey, true);
     cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(drawView);
+    leanT = setTimeout(function () {                  // the lean, then the swivel
+      panel.classList.add('visible');
+      void panel.offsetWidth;
+      panel.classList.add('fp-in');
+      raf = requestAnimationFrame(drawView);
+    }, 260);
   }
 
   function onViewKey(e) {
@@ -313,11 +331,17 @@ var BridgeActions = (function () {
   }
 
   function closeView() {
-    if (!panel || !panel.classList.contains('visible')) return;
-    panel.classList.remove('visible');
-    cancelAnimationFrame(raf);
+    if (!panel || !panel.classList.contains('visible') || panel.classList.contains('fp-out')) return;
     document.removeEventListener('keydown', onViewKey, true);
-    if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+    panel.classList.remove('fp-in');
+    panel.classList.add('fp-out');
+    var bc = document.getElementById('bridge-canvas');
+    if (bc) bc.classList.remove('fp-lean');
+    outT = setTimeout(function () {
+      panel.classList.remove('visible', 'fp-out');
+      cancelAnimationFrame(raf);
+      if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+    }, 420);
   }
 
   return { decorate: decorate, run: run, closeView: closeView, ready: function (cb) { load(cb); } };

@@ -1176,22 +1176,50 @@ html.touch #act-pill .ip-key { display: none; }
 #sleep-fade .sf-text { font-size: 13px; max-width: 420px; text-align: center; line-height: 1.5; white-space: pre-line; padding: 0 20px; }
 #sleep-fade.woke .sf-z { opacity: 0; transition: opacity 0.6s; }
 @keyframes sf-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+/* Looking out (js/actions.js): first person. The world leans in toward the window, then the
+   view swivels in from that side to fill the screen; getting up turns back. */
+#bridge-canvas { transition: transform 0.45s cubic-bezier(0.5, 0, 0.6, 1), filter 0.45s; }
+#bridge-canvas.fp-lean { transform: scale(1.9); filter: brightness(0.35) blur(1px); }
 #view-panel {
-  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center; background: rgba(2, 3, 8, 0.72);
-  font-family: 'Pixelify Sans', 'Courier New', monospace;
+  --turn: 58deg;
+  position: fixed; inset: 0; z-index: 65; display: none; background: #000; overflow: hidden; cursor: pointer;   /* over the hotbar (60) and coins (50) */
+  font-family: 'Pixelify Sans', 'Courier New', monospace; perspective: 900px;
 }
-#view-panel.visible { display: flex; }
-.vp-frame {
-  display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; border-radius: 6px; max-width: 96vw;
-  background: linear-gradient(180deg, #1e1810, #120e08); border: 2px solid #5a4024; box-shadow: inset 0 0 0 2px #2a1e10, 0 16px 40px rgba(0, 0, 0, 0.6);
+#view-panel.visible { display: block; }
+#view-panel .vp-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; display: block;
+  transform-origin: 50% 50%; opacity: 0; transform: rotateY(var(--turn)) scale(1.25);
 }
-#view-panel.vp-skyline .vp-frame, #view-panel.vp-giant .vp-frame, #view-panel.vp-void .vp-frame {
-  background: linear-gradient(180deg, #161a26, #0c0e16); border-color: #3a4256; box-shadow: inset 0 0 0 2px #1e2230, 0 16px 40px rgba(0, 0, 0, 0.6);
+#view-panel.fp-in .vp-canvas { animation: fp-swivel 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+#view-panel.fp-out .vp-canvas { animation: fp-swivel-back 0.42s cubic-bezier(0.6, 0, 0.8, 0.4) forwards; }
+@keyframes fp-swivel { from { opacity: 0; transform: rotateY(var(--turn)) scale(1.25); } 35% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes fp-swivel-back { from { opacity: 1; transform: none; } to { opacity: 0; transform: rotateY(var(--turn)) scale(1.2); } }
+/* indoors, the window's frame and mullions around the view */
+#view-panel .vp-frame-fp { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s 0.25s; }
+#view-panel.vp-framed .vp-frame-fp {
+  box-shadow: inset 0 0 0 clamp(14px, 3vw, 34px) #1a1008, inset 0 0 0 calc(clamp(14px, 3vw, 34px) + 4px) #3a2410, inset 0 0 90px rgba(0, 0, 0, 0.7);
+  background:
+    linear-gradient(90deg, transparent calc(50% - 5px), #1a1008 calc(50% - 5px), #3a2410 calc(50% - 2px), #1a1008 calc(50% + 5px), transparent calc(50% + 5px)),
+    linear-gradient(0deg, transparent calc(55% - 5px), #1a1008 calc(55% - 5px), #3a2410 calc(55% - 2px), #1a1008 calc(55% + 5px), transparent calc(55% + 5px));
 }
-.vp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.vp-title { font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: #d8c8a0; }
-.vp-canvas { display: block; image-rendering: pixelated; border-radius: 3px; box-shadow: 0 0 0 2px #0a0806; }
-.vp-caption { font-size: 13px; line-height: 1.5; color: #e8dcc4; max-width: 640px; white-space: pre-line; }
+#view-panel.vp-skyline.vp-framed .vp-frame-fp, #view-panel.vp-giant.vp-framed .vp-frame-fp, #view-panel.vp-orbit.vp-framed .vp-frame-fp, #view-panel.vp-void.vp-framed .vp-frame-fp {
+  box-shadow: inset 0 0 0 clamp(14px, 3vw, 34px) #0c0e16, inset 0 0 0 calc(clamp(14px, 3vw, 34px) + 3px) #3a4256, inset 0 0 90px rgba(0, 0, 0, 0.7);
+  background: linear-gradient(90deg, transparent calc(33% - 3px), #0c0e16 calc(33% - 3px), #3a4256 33%, #0c0e16 calc(33% + 3px), transparent calc(33% + 3px)),
+              linear-gradient(90deg, transparent calc(67% - 3px), #0c0e16 calc(67% - 3px), #3a4256 67%, #0c0e16 calc(67% + 3px), transparent calc(67% + 3px));
+}
+#view-panel:not(.vp-framed) .vp-frame-fp { box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.75); }
+#view-panel.fp-in .vp-frame-fp { opacity: 1; }
+#view-panel .vp-foot {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 24px calc(18px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.75)); opacity: 0; transition: opacity 0.4s 0.45s; pointer-events: none;
+}
+#view-panel.fp-in .vp-foot { opacity: 1; }
+#view-panel.fp-out .vp-foot { opacity: 0; transition-delay: 0s; transition-duration: 0.15s; }
+#view-panel .vp-title { font-size: 12px; letter-spacing: 5px; text-transform: uppercase; color: #d8c8a0; }
+#view-panel .vp-caption { font-size: 15px; line-height: 1.5; color: #f0e6d0; max-width: 680px; white-space: pre-line; text-shadow: 0 1px 2px #000; }
+#view-panel .vp-hint { font-size: 11px; color: rgba(240, 230, 210, 0.6); display: flex; align-items: center; gap: 6px; }
+html.touch #view-panel .vp-hint .ip-key { display: none; }
 
 /* Pachinko — Lucky 7's machines and prize counter (js/pachinko.js) */
 #pachinko {
