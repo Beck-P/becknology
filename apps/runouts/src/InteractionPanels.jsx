@@ -92,10 +92,19 @@ function CountdownTimer({ deadline }) {
   );
 }
 
-export function PlayerActionBar({ pendingAction, onAction, playerName, rankLabel, SUIT_SYMBOLS }) {
+// onAdvance (host only): moves playback on for prompts that otherwise wait on
+// someone else (whip window, a remote player's shield call), since the
+// desktop reveal buttons are hidden on phones.
+export function PlayerActionBar({ pendingAction, onAction, onAdvance, playerName, rankLabel, SUIT_SYMBOLS }) {
   if (!pendingAction) return null;
 
   const isMyTurn = pendingAction.playerName === playerName;
+  const advanceButton = onAdvance ? (
+    <button onClick={onAdvance}
+      className="mt-3 w-full py-3 rounded-xl bg-slate-800 text-white font-bold text-sm shadow-lg transition hover:scale-[1.02] active:scale-95">
+      Continue {"\u25B6"}
+    </button>
+  ) : null;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-2 pb-2 sm:px-4" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
@@ -347,6 +356,7 @@ export function PlayerActionBar({ pendingAction, onAction, playerName, rankLabel
                 <div className="text-center">
                   <div className="pixel-font text-[9px] text-slate-500">No whips remaining</div>
                   <div className="pixel-font text-[8px] text-slate-600 mt-1">Turn {pendingAction.turnNumber}/{pendingAction.totalTurns}</div>
+                  {advanceButton}
                 </div>
               );
             }
@@ -358,6 +368,7 @@ export function PlayerActionBar({ pendingAction, onAction, playerName, rankLabel
                   {"\uD83E\uDE7F"} WHIP! ({whips} left)
                 </button>
                 <div className="pixel-font text-[7px] text-slate-600 mt-1">Guarantee your horse advances this turn</div>
+                {advanceButton}
               </>
             );
           })()
@@ -370,9 +381,16 @@ export function PlayerActionBar({ pendingAction, onAction, playerName, rankLabel
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-lg shadow-lg shadow-blue-600/30 transition hover:scale-[1.02] active:scale-95 animate-pulse">
               {"\uD83D\uDEE1\uFE0F"} ACTIVATE SHIELD
             </button>
+            <button onClick={() => onAction({ action: 'decline_shield' })}
+              className="mt-2 w-full py-3 rounded-xl bg-white/5 border border-white/10 text-slate-300 font-bold text-sm transition hover:scale-[1.02] active:scale-95">
+              No shield — take the hit
+            </button>
           </>
         ) : pendingAction.action === 'shield' && !isMyTurn ? (
-          <div className="pixel-font text-[9px] text-red-400">{"\uD83D\uDD2B"} Targeting {pendingAction.playerName}...</div>
+          <>
+            <div className="pixel-font text-[9px] text-red-400">{"\uD83D\uDD2B"} Targeting {pendingAction.playerName}...</div>
+            {advanceButton}
+          </>
         ) : pendingAction.action === 'shield_unavailable' ? (
           <div className="pixel-font text-[9px] text-slate-500">{"\uD83D\uDD2B"} Firing at {pendingAction.playerName}... (shield used)</div>
         ) : pendingAction.action === 'move_direction' ? (
