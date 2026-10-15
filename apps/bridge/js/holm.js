@@ -217,25 +217,7 @@ var BridgeHolm = (function () {
 
   // ---- the ledger: building, voyages, the strongbox ---------------------------------------------------------------
   var PORT_NAMES = function (id) { var I = isles(); return I && I[id] ? I[id].name : id; };
-  /** Today's best runs for a ship of `room` crates: from one port to another, up to three goods, each in the amount that
-   *  moves the prices least (js/trade.js bestRun) - a big hold pays off on a route with several goods to carry. */
-  function routes(room) {
-    var t = T();
-    if (!t) return [];
-    var out = [];
-    t.PORTS.forEach(function (a) {
-      t.PORTS.forEach(function (b) {
-        if (a === b) return;
-        var runs = t.stock(a).filter(function (g) { return !t.GOODS[g].rare; }).map(function (g) { var r = t.bestRun(g, a, b, room); r.good = g; return r; })
-          .filter(function (r) { return r.profit > 0; }).sort(function (p, q) { return q.profit - p.profit; }).slice(0, 3);
-        var left = room, goods = [], profit = 0;
-        runs.forEach(function (r) { var n = Math.min(r.n, left); if (n < 2) return; var k = n / r.n; goods.push({ good: r.good, n: n }); profit += r.profit * k; left -= n; });
-        if (goods.length) out.push({ from: a, to: b, good: goods[0].good, goods: goods, crates: room - left, profit: Math.round(profit) });
-      });
-    });
-    out.sort(function (p, q) { return q.profit - p.profit; });
-    return out.slice(0, 5);
-  }
+  function routes(room) { return T() ? T().routes(room) : []; }
   var DANGER = { 'lumar-crimson': 0.35, 'lumar-midnight': 0.4, 'lumar-rose': 0.12, 'lumar-sapphire': 0.12 };
   function send(s, r) {
     var f = F(), sp = f.effective(s);

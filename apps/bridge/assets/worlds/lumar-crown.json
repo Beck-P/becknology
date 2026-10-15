@@ -903,11 +903,11 @@
       2,
       4,
       2,
+      4,
       2,
       2,
       2,
-      2,
-      2,
+      4,
       4,
       2,
       2,
@@ -1653,7 +1653,7 @@
       2,
       4,
       4,
-      2,
+      4,
       4,
       4,
       4,
@@ -2034,8 +2034,8 @@
       2,
       4,
       4,
-      4,
-      4,
+      2,
+      2,
       4,
       4,
       4,
@@ -3941,11 +3941,11 @@
       0,
       1,
       0,
+      1,
       0,
       0,
       0,
-      0,
-      0,
+      1,
       1,
       0,
       0,
@@ -4691,7 +4691,7 @@
       0,
       1,
       1,
-      0,
+      1,
       1,
       1,
       1,
@@ -5072,8 +5072,8 @@
       0,
       1,
       1,
-      1,
-      1,
+      0,
+      0,
       1,
       1,
       1,
@@ -6131,10 +6131,25 @@
     {
       "x": 17,
       "y": 19,
-      "type": "dialog",
+      "type": "exchange",
       "label": "MERCHANTS' EXCHANGE",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "THE MERCHANTS' EXCHANGE. UNDER THE CLOCK, TRADERS FROM ALL FIVE SEAS SHOUT PRICES AT EACH OTHER.\n\nTHE BOARD INSIDE: SPORE SILK UP, MOON SALT UP, NOBODY WANTS SALT FISH TODAY."
+      "prompt": "PRESS E TO READ THE BOARD"
+    },
+    {
+      "x": 30,
+      "y": 13,
+      "type": "dialog",
+      "label": "GUARD",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "THE GUARD LOOKS STRAIGHT AHEAD."
+    },
+    {
+      "x": 54,
+      "y": 24,
+      "type": "dialog",
+      "label": "SHIPWRIGHT",
+      "prompt": "PRESS E TO TALK",
+      "dialog": "THE SHIPWRIGHT WIPES TAR FROM HER HANDS."
     },
     {
       "x": 47,
@@ -6241,7 +6256,26 @@
       "from": "dim",
       "to": "full"
     },
-    "actors": [],
+    "actors": [
+      {
+        "sheet": "npc-watcher",
+        "x": 30,
+        "y": 13,
+        "facing": "down"
+      },
+      {
+        "sheet": "npc-watcher",
+        "x": 34,
+        "y": 13,
+        "facing": "down"
+      },
+      {
+        "sheet": "npc-smith",
+        "x": 54,
+        "y": 24,
+        "facing": "down"
+      }
+    ],
     "backdrop": true,
     "smoke": [
       [

@@ -337,5 +337,24 @@ var BridgeHarbour = (function () {
              rows: rows, buttons: [{ label: 'Back', act: function () { menu(worldId); } }], closeLabel: 'Done' });
   }
 
-  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs };
+  // ---- the Merchants' Exchange board (Crownhaven): every good, where it's cheap and where it's dear today --------------
+  function exchange(note) {
+    var t = T();
+    if (!t) return;
+    var isles = typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles || {};
+    var nm = function (id) { return isles[id] ? isles[id].name : id; };
+    var rows = Object.keys(t.GOODS).map(function (g) {
+      var sells = t.PORTS.filter(function (P) { return t.stock(P).indexOf(g) >= 0; });
+      var cheap = sells.map(function (P) { return [P, t.price(g, P, 'buy')]; }).sort(function (a, b) { return a[1] - b[1]; })[0];
+      var dear = t.PORTS.map(function (P) { return [P, t.price(g, P, 'sell')]; }).sort(function (a, b) { return b[1] - a[1]; })[0];
+      return { label: t.name(g), icon: g, sub: (cheap ? 'buy at ' + nm(cheap[0]) + ' ' + cheap[1] : 'not sold anywhere today') + ' · sell at ' + nm(dear[0]) + ' ' + dear[1],
+               note: cheap ? '+' + Math.max(0, dear[1] - cheap[1]) : '', disabled: true };
+    });
+    var best = t.routes(40).slice(0, 3);
+    choose({ title: "The Exchange board", text: note || ('TODAY\'S PRICES, CHALKED UP EVERY MORNING. BEST RUNS FOR A FORTY-CRATE HOLD: ' +
+             best.map(function (r) { return nm(r.from).toUpperCase() + ' TO ' + nm(r.to).toUpperCase() + ' (' + r.goods.map(function (g) { return t.name(g.good).toUpperCase(); }).join(' AND ') + ')'; }).join('; ') + '.'),
+             rows: rows, closeLabel: 'Done' });
+  }
+
+  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs, exchange: exchange };
 })();

@@ -112,7 +112,7 @@ var BridgeSeaFight = (function () {
       var ward = K.ghost && sp.ward;
       if (o.state === 'lurk') {                                       // drifting, waiting: close in once you're near
         speed = 0.35;
-        if (d < 18) {
+        if (d < (o.lost ? 9 : 18)) {
           if (K.ghost) { o.state = ward ? 'shy' : 'hunt'; api.say(ward ? 'A drowned ship slides out of the mist - and turns from your lantern\'s light' : 'Green lanterns in the mist. A drowned ship, and it\'s coming for you', 4200); api.sfx('bell'); }
           else { o.state = 'approach'; api.say('Sail on the ' + (wrap(Math.atan2(o.r - b.r, o.x - b.x) - b.h) > 0 ? 'starboard' : 'port') + ' bow. Black sails - pirates', 3600); }
         }
@@ -125,6 +125,7 @@ var BridgeSeaFight = (function () {
         if (d > keep + 2) { want = abeam; speed = 1; }
         else { var par = b.h + (wrap(abeam - b.h) > 0 ? 0.25 : -0.25) * (d < keep - 1.5 ? -1 : 1); want = par; speed = clamp(b.v / (K.spec.vmax || 4), 0.3, 1); }
         if (o.hp < o.max * 0.3 && !K.ghost) { o.state = 'leave'; api.say('They\'ve had enough - they bear away, burning', 3200); }
+        else if (K.ghost && d > 22) { o.state = 'lurk'; o.lost = true; api.say('The green lanterns fade into the mist behind you. You\'ve lost it - for now', 3600); }
         else if ((api.hull() < 0.35 || o.boardOk) && d < 2.2) board(o);
       }
       if (o.state === 'chase') {

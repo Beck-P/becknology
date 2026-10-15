@@ -370,7 +370,9 @@ w = {'name': 'Crownhaven', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tiles
          look('HARBOUR OFFICE', 25, 29, 'THE HARBOUR OFFICE OF CROWNHAVEN. A CLERK BEHIND EVERY WINDOW, A LEDGER FOR EVERY KEEL.\n\nTHE HARBOURMASTER WORKS ON THE QUAY, NOT IN HERE.'),
          look('BONDED STORE', 14, 29, 'CROWN BONDED STORE. EVERY CRATE IN HERE HAS PAID ITS DUTY, OR IS WAITING TO.'),
          look('THE CROWN & ANCHOR', 40, 29, 'THE CROWN & ANCHOR. SINGING INSIDE, AND SOMEBODY WINNING AT DICE.\n\nA SLATE BY THE DOOR: "HANDS WANTED - ASK THE HARBOURMASTER. NO PIRATES (AGAIN)."'),
-         look("MERCHANTS' EXCHANGE", 17, 19, "THE MERCHANTS' EXCHANGE. UNDER THE CLOCK, TRADERS FROM ALL FIVE SEAS SHOUT PRICES AT EACH OTHER.\n\nTHE BOARD INSIDE: SPORE SILK UP, MOON SALT UP, NOBODY WANTS SALT FISH TODAY."),
+         {'x': 17, 'y': 19, 'type': 'exchange', 'label': "MERCHANTS' EXCHANGE", 'prompt': 'PRESS E TO READ THE BOARD'},
+         {'x': 30, 'y': 13, 'type': 'dialog', 'label': 'GUARD', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE GUARD LOOKS STRAIGHT AHEAD.'},
+         {'x': 54, 'y': 24, 'type': 'dialog', 'label': 'SHIPWRIGHT', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE SHIPWRIGHT WIPES TAR FROM HER HANDS.'},
          look("ST BRENDAN'S", 47, 19, "ST BRENDAN'S, PATRON OF THOSE WHO SAIL. THE ROSE WINDOW GLOWS ALL NIGHT FOR SHIPS STILL OUT.\n\nINSIDE, CANDLES FOR THE MISSING, ROW ON ROW. ONE SAYS \"THE WREN\"."),
          look('FOUNTAIN', 32, 20, 'THE CROWN FOUNTAIN. COINS AT THE BOTTOM FROM EVERY PORT ON THE SEA, AND A FEW FROM PLACES NOBODY HAS HEARD OF.'),
          look('STATUE', 32, 23, 'CAPTAIN MIRA LUMAR, WHO FIRST CHARTED THE FIVE SEAS. THE PLAQUE: "SHE FOUND THEM ALL, AND KEPT LOOKING."'),
@@ -385,7 +387,11 @@ w = {'name': 'Crownhaven', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tiles
          look('FISHING JETTY', FX, QUAY + 1, 'THE FISHING JETTY. LANTERNS ALONG IT, AND A CHALKED SIGN: "NO FISHING FROM THE ROYAL PIER."'),
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + FPIER, scene_id=WID, actors=[],
+for (x, y) in ((30, 13), (34, 13), (54, 24)):                    # the guards at the palace gate, the shipwright at the yard
+    k.solid(x, y, x + 1, y + 1)
+apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + FPIER, scene_id=WID,
+            actors=[{'sheet': 'npc-watcher', 'x': 30, 'y': 13, 'facing': 'down'}, {'sheet': 'npc-watcher', 'x': 34, 'y': 13, 'facing': 'down'},
+                    {'sheet': 'npc-smith', 'x': 54, 'y': 24, 'facing': 'down'}],
             scene_extra={'backdrop': True, 'smoke': SMOKE, 'beacon': [LH[0], round(LH[1] - 5.6 * C45, 2)]})
 w = json.load(open(WORLD))
 for r in range(ROWS):

@@ -1939,5 +1939,55 @@
         "a": "STARLING HOLM? NICE LITTLE PLACE ONCE. THE COTTAGE IS A SHELL NOW. SOMEBODY OUGHT TO TAKE IT ON."
       }
     ]
+  },
+  "crown_guard": {
+    "name": "Sergeant Hale",
+    "role": "Guard at the palace gate, Crownhaven",
+    "sheet": "npc-watcher",
+    "at": [
+      {
+        "world": "lumar-crown",
+        "label": "GUARD"
+      }
+    ],
+    "greet": "MOVE ALONG. NOBODY GOES IN WITHOUT A LETTER FROM THE QUEEN-REGENT, AND SHE DOESN'T WRITE MANY.",
+    "again": "STILL HERE? THE GATE'S STILL SHUT.",
+    "topics": [
+      {
+        "q": "The Queen-Regent?",
+        "a": "SHE RULES FOR THE YOUNG KING TILL HE'S OF AGE. KEEPS THE SAPPHIRE GUARD ON THE EMERALD, WHICH IS WHY YOU DON'T SEE MANY PIRATES HERE. SEES MERCHANTS SOMETIMES. BIG ONES. WITH FLEETS."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "OFF THE RECORD? THERE'S TALK OF A SIXTH SEA, PAST THE MIDNIGHT. THE PALACE SENT A SHIP TO LOOK. IT HASN'T COME BACK. DON'T TELL ANYONE I SAID SO."
+      }
+    ]
+  },
+  "wright": {
+    "name": "Agnes Rook",
+    "role": "Master shipwright of the Royal Yard",
+    "sheet": "npc-smith",
+    "at": [
+      {
+        "world": "lumar-crown",
+        "label": "SHIPWRIGHT"
+      }
+    ],
+    "greet": "ROOK. I BUILD THE GALLEONS. THAT ONE ON THE STOCKS HAS TAKEN SEVEN MONTHS AND SHE'S NOT HALF DONE. YOU WANT ONE, THE HARBOURMISTRESS TAKES THE ORDERS.",
+    "again": "MIND THE TAR.",
+    "topics": [
+      {
+        "q": "How do the ships differ?",
+        "a": "A CUTTER'S A FORE-AND-AFTER: POINTS HIGH, TURNS QUICK. A BRIGANTINE'S SQUARE SAILS FORWARD - SHE RUNS BEAUTIFULLY BEFORE THE WIND AND HATES BEATING INTO IT. A GALLEON'S ALL SQUARE: SET HER ON A BROAD REACH AND STAY THERE. EASE THE SHEET AND THE YARDS SQUARE AWAY; HAUL IT AND THEY BRACE ROUND."
+      },
+      {
+        "q": "Guns?",
+        "a": "MORE PORTS, MORE GUNS. A CUTTER TAKES ONE, A GALLEON FIVE. GUNS FIRE ABEAM - SO SAIL ALONGSIDE, DON'T CHASE. AND PUT A GUNNER ON EACH, OR THEY'RE SLOW AS SUNDAY."
+      },
+      {
+        "q": "Upkeep?",
+        "a": "EVERY KNOCK COSTS. ROCKS, SQUALLS, PIRATE SHOT. ANY HARBOURMASTER CAN PATCH HER, AND IF YOU'VE A DOCK OF YOUR OWN, YOU CAN DO IT THERE."
+      }
+    ]
   }
 }
