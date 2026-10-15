@@ -155,8 +155,11 @@ var BridgeStarmap = (function () {
       '<ul class="nav-p-list">' + w.places.map(function (p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' +
       waiting(w.loc) +
       (isHere ? '<div class="nav-p-here">The Wayfarer is in orbit here.</div>'
-              : '<button class="nav-jump" id="nav-jump"><span class="nav-jump-fill"></span><span class="nav-jump-label">Hold to jump</span></button>');
+              : '<button class="nav-jump" id="nav-jump"><span class="nav-jump-fill"></span><span class="nav-jump-label">Hold to jump</span></button>' +
+                '<label class="nav-stay"><input type="checkbox" id="nav-stay"' + (stayAboard() ? ' checked' : '') + '> Stay aboard after the jump</label>');
     panelPlanet = panel.querySelector('.nav-planet');
+    var sb = document.getElementById('nav-stay');
+    if (sb) sb.addEventListener('change', function () { try { localStorage.setItem('bridge_stay_aboard', sb.checked ? '1' : ''); } catch (e) { /* private */ } });
     var jb = document.getElementById('nav-jump');
     if (jb) {
       jb.addEventListener('pointerdown', function (e) { e.preventDefault(); startCharge(); });
@@ -341,5 +344,8 @@ var BridgeStarmap = (function () {
     }
   }
 
-  return { show: show, draw: draw, hide: hide, markVisited: markVisited, getVisited: getVisited };
+  // after a jump: straight down in the shuttle (the default), or stay aboard on the bridge to look out at the world
+  function stayAboard() { try { return localStorage.getItem('bridge_stay_aboard') === '1'; } catch (e) { return false; } }
+
+  return { show: show, draw: draw, hide: hide, markVisited: markVisited, getVisited: getVisited, stayAboard: stayAboard };
 })();

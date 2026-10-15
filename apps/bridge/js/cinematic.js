@@ -387,9 +387,11 @@ var BridgeCine = (function () {
         canvas.style.display = 'block';
         var prompt = document.getElementById('interact-prompt');
         if (prompt) prompt.classList.remove('visible');
+        var title = opts && opts.name ? titleCard(opts) : null, shotNow = -1;
         function finish() {
           if (done) return;
           done = true;
+          if (title) title.remove();
           window.removeEventListener('keydown', onKey, true);
           canvas.removeEventListener('pointerdown', finish);
           resolve();
@@ -415,15 +417,21 @@ var BridgeCine = (function () {
           var acc = 0, i = 0;
           while (i < shots.length - 1 && el >= acc + shots[i].dur) { acc += shots[i].dur; i++; }
           var t = Math.min(1, (el - acc) / shots[i].dur);
+          if (i !== shotNow) {                                   // a new shot: its sound, the title card in or out
+            shotNow = i;
+            if (shots[i].sfx && typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(shots[i].sfx);
+            if (title) title.classList.toggle('on', !!shots[i].title);
+          }
           bctx.setTransform(1, 0, 0, 1, 0, 0);
           bctx.globalAlpha = 1;
           bctx.globalCompositeOperation = 'source-over';
           bctx.imageSmoothingEnabled = false;
           bctx.clearRect(0, 0, W, H);
           shots[i].draw(bctx, W, H, t, now);
-          // cuts dip through black; the very start and end fade too
-          var edge = Math.min(el - acc, acc + shots[i].dur - el);
-          var fade = Math.max(0, 1 - edge / 220);
+          // cuts dip through black (unless a shot cuts on a flash: dip false); the very start and end fade too
+          var inE = i === 0 || shots[i].dip !== false ? el - acc : 1e9;
+          var outE = i === shots.length - 1 || shots[i + 1].dip !== false ? acc + shots[i].dur - el : 1e9;
+          var fade = Math.max(0, 1 - Math.min(inE, outE) / 220);
           if (fade > 0) {
             bctx.fillStyle = 'rgba(0,0,0,' + fade.toFixed(2) + ')';
             bctx.fillRect(0, 0, W, H);
@@ -438,14 +446,100 @@ var BridgeCine = (function () {
     });
   }
 
-  // ---- the jump: the drive spooling, stars stretching, a tunnel of light, dropping out ------------
-  function jumpShots(from, to) {
+  // ---- the jump --------------------------------------------------------------------------------
+  // The drive spooling up round the hull, the leap (the ship stretching away into a flash), the aether
+  // tunnel seen from the bridge through the gallery's arched windows, dropping out over the new world,
+  // and the shuttle peeling off the bay for the planet. The first time at a world, a pause on it and its
+  // name before the shuttle goes. Cuts between these are flashes, not dips to black (`dip: false`).
+  var tunnelBuf = null, tunnelImg = null, tunnelGeo = null;
+  function tunnel(b, W, H, t, now, glow) {
+    var w = Math.ceil(W / 2), h = Math.ceil(H / 2);         // chunky: drawn at half size, scaled up
+    if (!tunnelBuf || tunnelBuf.width !== w || tunnelBuf.height !== h) {
+      tunnelBuf = document.createElement('canvas');
+      tunnelBuf.width = w; tunnelBuf.height = h;
+      tunnelImg = tunnelBuf.getContext('2d').createImageData(w, h);
+      tunnelGeo = { r: new Float32Array(w * h), a: new Float32Array(w * h) };
+    }
+    var cx = w / 2 + Math.sin(now / 520) * 3, cy = h / 2 + Math.cos(now / 690) * 2;
+    var d = tunnelImg.data, R = tunnelGeo.r, A = tunnelGeo.a;
+    for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+      var k = y * w + x, dx = x - cx, dy = (y - cy) * 1.35;
+      R[k] = Math.sqrt(dx * dx + dy * dy) + 0.001; A[k] = Math.atan2(dy, dx);
+    }
+    // the palette drifts violet → cyan → gold as you go
+    var P = [[160, 110, 255], [80, 230, 255], [255, 205, 120], [240, 140, 255]];
+    var ph = (t * 2.6) % 4, i0 = Math.floor(ph), f0 = ph - i0, c0 = P[i0], c1 = P[(i0 + 1) % 4];
+    var col = [c0[0] + (c1[0] - c0[0]) * f0, c0[1] + (c1[1] - c0[1]) * f0, c0[2] + (c1[2] - c0[2]) * f0];
+    var spd = now / 1000 * 3.2, twist = now / 1000 * 0.35;
+    var BY = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    for (var j = 0; j < w * h; j++) {
+      var r = R[j], z = 30 / r + spd;                         // depth down the tunnel
+      var turn = A[j] / 6.2832 + twist + z * 0.05;            // round it, a slow spiral
+      var rf = (z * 1.8) % 1, hoop = rf < 0.1 ? 1 : rf < 0.22 ? 0.4 : 0;        // bright hoops, a soft trailing edge
+      var sf = ((turn * 18) % 1 + 1) % 1, line = sf < 0.09 ? 0.55 : 0;           // light running along the walls
+      var spark = hash(Math.floor(turn * 60) * 13 + Math.floor(z * 3)) > 0.982 ? 1 : 0;
+      var base = 0.24 + 0.1 * Math.sin(z * 1.1 + turn * 18.85);
+      var near = Math.min(1, 34 / r);                          // walls dimmer close by, the far end bright
+      var v = (base + hoop * 0.75 + line * (0.6 - hoop * 0.3) + spark) * (0.45 + 0.55 * near);
+      var core = Math.max(0, 1 - r / (w * 0.07));
+      var x = j % w, y = (j / w) | 0;
+      var lv = Math.min(5, Math.floor(v * 5 + BY[(y & 3) * 4 + (x & 3)] / 16)) / 5;  // four or five steps, dithered
+      lv = Math.min(1, lv + core + glow);
+      var o = j * 4, hot = Math.max(0, lv - 0.75) * 4;
+      d[o] = Math.min(255, col[0] * lv + 255 * hot * 0.5);
+      d[o + 1] = Math.min(255, col[1] * lv + 255 * hot * 0.5);
+      d[o + 2] = Math.min(255, col[2] * lv + 255 * hot * 0.5);
+      d[o + 3] = 255;
+    }
+    tunnelBuf.getContext('2d').putImageData(tunnelImg, 0, 0);
+    b.imageSmoothingEnabled = false;
+    b.drawImage(tunnelBuf, 0, 0, W, H);
+    // streaks flying past, out of the light
+    b.save();
+    b.globalCompositeOperation = 'lighter';
+    for (var s = 0; s < 70; s++) {
+      var a = hash(s) * 6.2832, sp = ((now / 450) + hash(s * 3)) % 1;
+      var r0 = Math.pow(sp, 2.2) * W * 0.75, r1 = r0 + 4 + sp * sp * 50;
+      b.strokeStyle = 'rgba(235,240,255,' + (0.7 * sp).toFixed(2) + ')';
+      b.lineWidth = sp > 0.7 ? 2 : 1;
+      b.beginPath();
+      b.moveTo(W / 2 + Math.cos(a) * r0, H / 2 + Math.sin(a) * r0 * 0.74);
+      b.lineTo(W / 2 + Math.cos(a) * r1, H / 2 + Math.sin(a) * r1 * 0.74);
+      b.stroke();
+    }
+    b.restore();
+  }
+
+  // the bridge's gallery around the view: three arched windows in dark panelled wood, brass at the joins
+  function gallery(b, W, H, light) {
+    var wood = '#140a06', rim = 'rgba(208,160,72,' + (0.35 + 0.4 * light).toFixed(2) + ')';
+    b.fillStyle = wood;
+    b.fillRect(0, H - Math.round(H * 0.1), W, H);                     // the sill
+    b.fillRect(0, 0, W, Math.round(H * 0.06));
+    var panes = 3, mull = Math.round(W * 0.022), pw = (W - mull * (panes + 1)) / panes;
+    for (var i = 0; i <= panes; i++) b.fillRect(Math.round(i * (pw + mull)), 0, mull, H);
+    for (var p = 0; p < panes; p++) {                                  // the arches' shoulders
+      var x0 = mull + p * (pw + mull), top = H * 0.06;
+      for (var yy = 0; yy < H * 0.16; yy++) {
+        var t = 1 - yy / (H * 0.16), inset = Math.round(pw * 0.5 * (1 - Math.sqrt(1 - t * t)));
+        b.fillStyle = wood;
+        b.fillRect(Math.round(x0), Math.round(top + yy), inset, 1);
+        b.fillRect(Math.round(x0 + pw - inset), Math.round(top + yy), inset, 1);
+      }
+      b.fillStyle = rim;
+      b.fillRect(Math.round(x0), H - Math.round(H * 0.1), Math.round(pw), 1);
+    }
+    b.fillStyle = rim;
+    for (var m = 0; m <= panes; m++) b.fillRect(Math.round(m * (pw + mull) + mull / 2), Math.round(H * 0.3), 1, Math.round(H * 0.5));
+  }
+
+  function jumpShots(from, to, opts) {
+    opts = opts || {};
     var shots = [];
-    function shipAt(b, W, H, now, dx, shake) {
+    function shipAt(W, H, dx, dy, shake, now) {
       var m = meta.mothership;
-      var x = Math.round(W * 0.5 - m.w * 0.5 + dx + (shake ? (hash(Math.floor(now / 30)) - 0.5) * shake : 0));
-      var y = Math.round(H * 0.5 - m.h * 0.55 + (shake ? (hash(Math.floor(now / 30) + 7) - 0.5) * shake : 0));
-      return [x, y, m];
+      var j = shake ? (hash(Math.floor(now / 30)) - 0.5) * shake : 0, k = shake ? (hash(Math.floor(now / 30) + 7) - 0.5) * shake : 0;
+      return [Math.round(W * 0.5 - m.w * 0.5 + dx + j), Math.round(H * 0.5 - m.h * 0.55 + dy + k), m];
     }
     function engines(b, p, now, len, col) {
       for (var i = 0; i < 2; i++) {
@@ -453,105 +547,145 @@ var BridgeCine = (function () {
         if (a) flame(b, p[0] + a[0], p[1] + a[1], len + i * 3, -1, 0, now + i * 50, col || AETHER, 5);
       }
     }
-    // 1 · in orbit where we are: the sails brighten, the drive spools, stars begin to stretch
-    shots.push({ dur: 1500, draw: function (b, W, H, t, now) {
+    // 1 · the drive spooling: aether drawn in to the keel, rings of light forming round the hull, the stars starting to run
+    shots.push({ dur: 1300, sfx: 'warp', draw: function (b, W, H, t, now) {
       spaceShot(b, W, H, now, from);
-      var p = shipAt(b, W, H, now, -t * 10, t * 2);
+      var p = shipAt(W, H, -t * 14, 0, t * t * 3, now), m = p[2];
+      var cx = p[0] + m.w * 0.5, cy = p[1] + m.h * 0.62;
       b.save();
       b.globalCompositeOperation = 'lighter';
-      for (var i = 0; i < 70; i++) {                       // stars smearing into lines as the drive takes hold
-        var sx = hash(i) * W, sy = hash(i * 3) * H, L = t * t * 40 * (0.3 + hash(i * 5));
-        b.fillStyle = 'rgba(200,220,255,' + (0.25 + 0.5 * t).toFixed(2) + ')';
+      for (var i = 0; i < 80; i++) {                         // stars beginning to smear past
+        var sx = hash(i) * W, sy = hash(i * 3) * H, L = t * t * t * 70 * (0.3 + hash(i * 5));
+        b.fillStyle = 'rgba(200,220,255,' + (0.2 + 0.5 * t).toFixed(2) + ')';
         b.fillRect(Math.round(sx - L), Math.round(sy), Math.max(1, Math.round(L)), 1);
       }
-      var gx = p[0] + p[2].w * 0.05, gy = p[1] + p[2].h * 0.45;
-      var g = b.createRadialGradient(gx, gy, 0, gx, gy, 30 + t * 40);
-      g.addColorStop(0, 'rgba(200,190,255,' + (0.3 + t * 0.6).toFixed(2) + ')');
-      g.addColorStop(1, 'rgba(120,100,255,0)');
-      b.fillStyle = g;
-      b.fillRect(gx - 80, gy - 80, 160, 160);
+      for (var q = 0; q < 60; q++) {                         // motes of aether spiralling in to the keel
+        var ph = ((now / 900) + hash(q * 7)) % 1, ang = hash(q) * 6.2832 + ph * 3, rr = (1 - ph) * (60 + hash(q * 3) * 90);
+        b.fillStyle = 'rgba(' + (q % 2 ? '170,140,255' : '120,230,240') + ',' + (ph * 0.9).toFixed(2) + ')';
+        b.fillRect(Math.round(cx + Math.cos(ang) * rr * 1.6), Math.round(cy + Math.sin(ang) * rr * 0.5), 2, 1);
+      }
+      for (var r = 0; r < 4; r++) {                          // rings tightening round the hull
+        var f = ((t * 1.6) + r / 4) % 1, R = (1 - f) * m.w * 0.85 + 20;
+        b.strokeStyle = 'rgba(180,150,255,' + (t * 0.7 * f).toFixed(2) + ')';
+        b.lineWidth = 1 + f;
+        b.beginPath(); b.ellipse(cx, cy, R, R * 0.28, 0, 0, Math.PI * 2); b.stroke();
+      }
+      var g = b.createRadialGradient(cx - m.w * 0.3, cy, 0, cx - m.w * 0.3, cy, 40 + t * 70);
+      g.addColorStop(0, 'rgba(210,200,255,' + (0.25 + t * 0.6).toFixed(2) + ')'); g.addColorStop(1, 'rgba(120,100,255,0)');
+      b.fillStyle = g; b.fillRect(cx - m.w, cy - 120, m.w * 2, 240);
       b.restore();
-      engines(b, p, now, 14 + t * 30);
+      engines(b, p, now, 12 + t * 36);
       sprite(b, 'mothership', p[0], p[1]);
+      b.save(); b.globalCompositeOperation = 'lighter'; b.globalAlpha = t * 0.35;          // the hull itself starting to glow
+      sprite(b, 'mothership', p[0], p[1]); b.restore();
     } });
-    // 2 · the leap: everything streaks past, a blinding bloom
-    shots.push({ dur: 700, draw: function (b, W, H, t, now) {
-      b.fillStyle = '#04030c';
-      b.fillRect(0, 0, W, H);
+    // 2 · the leap: the ship stretching away into the distance, a shock ring where it was, a white-out
+    shots.push({ dur: 480, dip: false, sfx: 'leap', draw: function (b, W, H, t, now) {
+      spaceShot(b, W, H, now, from);
+      var m = meta.mothership, e = t * t;
+      var cx = W * 0.5 - 14, cy = H * 0.5;
       b.save();
       b.globalCompositeOperation = 'lighter';
       for (var i = 0; i < 160; i++) {
-        var sy = hash(i * 3) * H, L = 40 + t * 260 * (0.4 + hash(i * 5));
-        var sx = ((hash(i) * (W + L) - now * 1.2) % (W + L) + W + L) % (W + L) - L;
-        var c = ['200,220,255', '170,140,255', '120,230,240'][i % 3];
-        b.fillStyle = 'rgba(' + c + ',0.7)';
+        var sy = hash(i * 3) * H, L = 60 + e * 400 * (0.4 + hash(i * 5)), sx = hash(i) * W - L * 0.5;
+        b.fillStyle = 'rgba(' + ['200,220,255', '170,140,255', '120,230,240'][i % 3] + ',' + (0.5 + 0.3 * t).toFixed(2) + ')';
         b.fillRect(Math.round(sx), Math.round(sy), Math.round(L), 1);
       }
+      b.strokeStyle = 'rgba(200,180,255,' + (0.8 * (1 - t)).toFixed(2) + ')';
+      b.lineWidth = 2;
+      b.beginPath(); b.ellipse(cx, cy, 20 + t * W * 0.6, (20 + t * W * 0.6) * 0.3, 0, 0, Math.PI * 2); b.stroke();
+      var stretch = 1 + e * 7, x0 = cx - m.w * 0.5 + e * W * 0.9;
+      for (var gh = 3; gh >= 0; gh--) {                       // after-images along its path
+        b.globalAlpha = gh === 0 ? 1 : 0.25 / gh;
+        b.drawImage(imgs.mothership, Math.round(x0 - gh * 30 * e - m.w * (stretch - 1)), Math.round(cy - m.h * 0.55),
+                    Math.round(m.w * stretch), m.h);
+      }
       b.restore();
-      var p = shipAt(b, W, H, now, t * 30, 3);
-      engines(b, p, now, 50);
-      sprite(b, 'mothership', p[0], p[1]);
-      b.fillStyle = 'rgba(255,255,255,' + Math.max(0, (t - 0.6) / 0.4).toFixed(2) + ')';
+      b.fillStyle = 'rgba(255,255,255,' + Math.max(0, (t - 0.55) / 0.45).toFixed(2) + ')';
       b.fillRect(0, 0, W, H);
     } });
-    // 3 · the tunnel: rings of light rushing out from the vanishing point
-    shots.push({ dur: 1400, draw: function (b, W, H, t, now) {
-      b.fillStyle = '#05030e';
+    // 3 · the tunnel, from the bridge: through the gallery's windows, light rushing out of the vanishing point
+    shots.push({ dur: 1800, dip: false, draw: function (b, W, H, t, now) {
+      tunnel(b, W, H, t, now, Math.max(0, 1 - t * 4) * 0.6);
+      var g = b.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, H * 0.2);    // the core
+      g.addColorStop(0, 'rgba(255,255,255,0.9)'); g.addColorStop(0.35, 'rgba(230,220,255,0.25)'); g.addColorStop(1, 'rgba(200,180,255,0)');
+      b.save(); b.globalCompositeOperation = 'lighter'; b.fillStyle = g; b.fillRect(0, 0, W, H); b.restore();
+      gallery(b, W, H, 0.5 + 0.5 * Math.sin(now / 90));
+      b.fillStyle = 'rgba(255,255,255,' + Math.max(0, 1 - t * 6).toFixed(2) + ')';      // out of the white
       b.fillRect(0, 0, W, H);
-      var cx = W * 0.5 + Math.sin(now / 300) * 6, cy = H * 0.5 + Math.cos(now / 410) * 4;
-      b.save();
-      b.globalCompositeOperation = 'lighter';
-      for (var i = 0; i < 22; i++) {
-        var f = ((now / 900) + i / 22) % 1;                 // each ring grows from the centre outward
-        var R = Math.pow(f, 2.2) * Math.max(W, H) * 0.9;
-        var col = ['150,120,255', '90,220,240', '255,190,120', '200,140,255'][i % 4];
-        b.strokeStyle = 'rgba(' + col + ',' + (0.5 * (1 - f) + 0.1).toFixed(2) + ')';
-        b.lineWidth = 1 + f * 4;
-        b.beginPath();
-        b.ellipse(cx, cy, R, R * 0.62, Math.sin(now / 1500) * 0.2, 0, Math.PI * 2);
-        b.stroke();
-      }
-      for (var s = 0; s < 90; s++) {                        // streaks flying out of the tunnel
-        var a = hash(s) * 6.283, sp = ((now / 600) + hash(s * 3)) % 1;
-        var r0 = Math.pow(sp, 2) * W * 0.7, r1 = r0 + 6 + sp * 30;
-        b.strokeStyle = 'rgba(220,230,255,' + (0.6 * sp).toFixed(2) + ')';
-        b.lineWidth = 1;
-        b.beginPath();
-        b.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0 * 0.62);
-        b.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1 * 0.62);
-        b.stroke();
-      }
-      var g = b.createRadialGradient(cx, cy, 0, cx, cy, 60);
-      g.addColorStop(0, 'rgba(255,255,255,0.9)');
-      g.addColorStop(1, 'rgba(160,140,255,0)');
-      b.fillStyle = g;
-      b.fillRect(cx - 60, cy - 60, 120, 120);
-      b.restore();
-      var m = meta.mothership, sc = 0.5;                    // the ship, small, riding the tunnel
-      b.drawImage(imgs.mothership, Math.round(cx - m.w * sc / 2), Math.round(cy + 20 - m.h * sc / 2), Math.round(m.w * sc), Math.round(m.h * sc));
+      b.fillStyle = 'rgba(255,255,255,' + Math.max(0, (t - 0.82) / 0.18).toFixed(2) + ')';  // and into it again
+      b.fillRect(0, 0, W, H);
     } });
-    // 4 · dropping out over the new world, the drive cooling
-    shots.push({ dur: 1700, draw: function (b, W, H, t, now) {
+    // 4 · dropping out over the new world: the streaks snapping back into stars, a ripple in space, the ship braking in
+    shots.push({ dur: opts.first ? 1300 : 1000, dip: false, sfx: 'dropout', draw: function (b, W, H, t, now) {
       spaceShot(b, W, H, now, to);
       var u = easeOut(t);
       b.save();
       b.globalCompositeOperation = 'lighter';
-      for (var i = 0; i < 60; i++) {                        // the last streaks shrinking back into stars
-        var L = (1 - u) * 120 * (0.3 + hash(i * 5));
+      for (var i = 0; i < 70; i++) {
+        var L = (1 - u) * 160 * (0.3 + hash(i * 5));
         b.fillStyle = 'rgba(200,220,255,' + (0.6 * (1 - u)).toFixed(2) + ')';
         b.fillRect(Math.round(hash(i) * W - L), Math.round(hash(i * 3) * H), Math.max(1, Math.round(L)), 1);
       }
+      var R = u * W * 0.8;
+      b.strokeStyle = 'rgba(190,170,255,' + (0.6 * (1 - u)).toFixed(2) + ')';
+      b.lineWidth = 3 * (1 - u) + 1;
+      b.beginPath(); b.ellipse(W * 0.5, H * 0.5, R, R * 0.4, 0, 0, Math.PI * 2); b.stroke();
       b.restore();
-      var p = shipAt(b, W, H, now, (1 - u) * -W * 0.6, (1 - u) * 3);
-      engines(b, p, now, 10 + (1 - u) * 30);
+      var p = shipAt(W, H, (1 - u) * -W * 0.7, 0, (1 - u) * 4, now);
+      var nose = p[2].anchors.nose;
+      if (nose) flame(b, p[0] + nose[0], p[1] + nose[1], 8 + (1 - u) * 26, 1, 0, now, AETHER, 4);   // braking off the bow
+      engines(b, p, now, 6 + (1 - u) * 18);
       sprite(b, 'mothership', p[0], p[1]);
       b.fillStyle = 'rgba(255,255,255,' + Math.max(0, 1 - t * 5).toFixed(2) + ')';
+      b.fillRect(0, 0, W, H);
+    } });
+    // 5 · (the first time) a moment on the world itself, its name
+    if (opts.first) {
+      shots.push({ dur: 2400, dip: false, title: true, draw: function (b, W, H, t, now) {
+        spaceShot(b, W, H, now, to);
+        var p = shipAt(W, H, -t * 10, 0, 0, now);
+        engines(b, p, now, 6);
+        sprite(b, 'mothership', p[0], p[1]);
+      } });
+    }
+    // 6 · the shuttle drops out of the bay and dives for the planet, a streak of re-entry behind it
+    shots.push({ dur: 1100, dip: false, sfx: 'lift', draw: function (b, W, H, t, now) {
+      spaceShot(b, W, H, now, to);
+      var p = shipAt(W, H, -(opts.first ? 10 : 0) - t * 8, 0, 0, now), m = p[2];
+      engines(b, p, now, 6);
+      sprite(b, 'mothership', p[0], p[1]);
+      var bay = m.anchors.bay || [m.w * 0.5, m.h * 0.7], sm = meta['shuttle-down'];
+      var e = t * t, sc = 1 - e * 0.85;
+      var sx = p[0] + bay[0] + e * W * 0.25, sy = p[1] + bay[1] + e * H * 0.55;
+      if (t > 0.3) {
+        b.save(); b.globalCompositeOperation = 'lighter';
+        var g = b.createLinearGradient(sx, sy, sx - 40 * e, sy - 70 * e);
+        g.addColorStop(0, 'rgba(255,200,140,' + (0.8 * e).toFixed(2) + ')'); g.addColorStop(1, 'rgba(255,120,60,0)');
+        b.strokeStyle = g; b.lineWidth = 3 * sc + 1;
+        b.beginPath(); b.moveTo(sx, sy); b.lineTo(sx - 40 * e, sy - 70 * e); b.stroke();
+        b.restore();
+      }
+      if (sm && imgs['shuttle-down']) {
+        b.drawImage(imgs['shuttle-down'], Math.round(sx - sm.w * sc / 2), Math.round(sy - sm.h * sc / 2), Math.max(1, Math.round(sm.w * sc)), Math.max(1, Math.round(sm.h * sc)));
+      }
+      b.fillStyle = 'rgba(2,3,10,' + Math.max(0, (t - 0.75) / 0.25).toFixed(2) + ')';     // into the landing
       b.fillRect(0, 0, W, H);
     } });
     return shots;
   }
 
-  function jump(from, to, opts) { return play(function () { return jumpShots(from, to); }, opts); }
+  // the first time at a world: its name, crisp, over the shot (css .cine-title)
+  function titleCard(opts) {
+    var el = document.createElement('div');
+    el.className = 'cine-title';
+    el.innerHTML = '<div class="ct-kicker">' + (opts.first ? 'A new world' : 'Arriving') + '</div><div class="ct-name">' +
+      String(opts.name).replace(/</g, '') + '</div>' + (opts.kind ? '<div class="ct-kind">' + String(opts.kind).replace(/</g, '') + '</div>' : '');
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function jump(from, to, opts) { return play(function () { return jumpShots(from, to, opts); }, opts); }
 
 
   function has(name) { return !!(meta && meta[name] && imgs[name]); }

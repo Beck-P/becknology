@@ -274,6 +274,16 @@ var BridgeShip = (function () {
   }
 
   // ---- arriving in orbit after a jump ----------------------------------------------------------
+  /** Straight down after a jump: the screen is dark from the cutscene; touch down on the world's pad. */
+  function descend(world) {
+    BridgeOrbit.setLocation(world.id);
+    var dest = LANDING[BridgeOrbit.getLocation()];
+    if (!dest || busy) return arriveInOrbit(world);
+    busy = true;
+    lockControls(true);
+    fade(true, 0).then(function () { arrive(dest); });
+  }
+
   function arriveInOrbit(dest) {
     BridgeOrbit.setLocation(dest.id);
     var loc = BridgeOrbit.getLocation();
@@ -314,5 +324,5 @@ var BridgeShip = (function () {
   }
 
   return { isShipWorld: isShipWorld, locationOf: locationOf, board: board, launch: launch, returnToShip: returnToShip,
-           arriveInOrbit: arriveInOrbit, drawWorld: drawWorld, bayText: bayText, isBusy: function () { return busy; } };
+           arriveInOrbit: arriveInOrbit, descend: descend, drawWorld: drawWorld, bayText: bayText, isBusy: function () { return busy; } };
 })();

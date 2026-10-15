@@ -547,6 +547,30 @@ var BridgeAudio = (function () {
     fever:   function (t) { for (var i = 0; i < 12; i++) voice(sfxBus, t + i * 0.07, 0.06, { type: 'square', freq: hz(72 + [0, 4, 7, 12][i % 4] + Math.floor(i / 4) * 2), gain: 0.04, a: 0.001, d: 0.06, s: 0.4, r: 0.04, cutoff: 5000, rev: 0.2 }); },
     success: function (t) { [72, 79, 84].forEach(function (m, i) { voice(sfxBus, t + i * 0.08, 0.1, { type: 'triangle', freq: hz(m), gain: 0.08, a: 0.002, d: 0.2, s: 0.3, r: 0.2, rev: 0.3 }); }); },
     fail:    function (t) { [64, 60, 55].forEach(function (m, i) { voice(sfxBus, t + i * 0.12, 0.12, { type: 'triangle', freq: hz(m), gain: 0.07, a: 0.004, d: 0.2, s: 0.3, r: 0.2 }); }); },
+    warp:    function (t) {                                // the jump drive spooling: a rising hum, a swelling hiss
+      voice(sfxBus, t, 1.3, { type: 'sawtooth', freq: 55, glide: 4, glideT: 1.3, gain: 0.05, a: 0.4, d: 0.6, s: 0.8, r: 0.2, cutoff: 900, rev: 0.4 });
+      voice(sfxBus, t, 1.3, { type: 'sine', freq: hz(57), glide: 2, glideT: 1.3, gain: 0.06, a: 0.5, d: 0.5, s: 0.8, r: 0.2, rev: 0.5 });
+      var src = ac.createBufferSource(); src.buffer = noiseBuf;
+      var f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.4;
+      f.frequency.setValueAtTime(400, t); f.frequency.exponentialRampToValueAtTime(5000, t + 1.3);
+      var g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t + 1.25); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.5);
+      src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + 1.6);
+    },
+    leap:    function (t) {                                // the jump itself: a boom and a long rushing whoosh
+      noiseHit(sfxBus, t, 0.6, { freq: 160, ftype: 'lowpass', gain: 0.35, rev: 0.6 });
+      voice(sfxBus, t, 0.4, { type: 'sine', freq: 90, glide: 0.3, glideT: 0.5, gain: 0.2, a: 0.005, d: 0.5, s: 0, r: 0.3 });
+      var src = ac.createBufferSource(); src.buffer = noiseBuf;
+      var f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.9;
+      f.frequency.setValueAtTime(3000, t); f.frequency.exponentialRampToValueAtTime(600, t + 2.2);
+      var g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.14, t + 0.2); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.3);
+      src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + 2.4);
+      [60, 67, 72, 79].forEach(function (m, i) { INST.bell(sfxBus, t + 0.25 + i * 0.12, m, 0.4, 0.5); });
+    },
+    dropout: function (t) {                                // out of the jump: a soft thump, the drive winding down
+      noiseHit(sfxBus, t, 0.4, { freq: 220, ftype: 'lowpass', gain: 0.22, rev: 0.5 });
+      voice(sfxBus, t, 0.9, { type: 'sawtooth', freq: 220, glide: 0.25, glideT: 0.9, gain: 0.04, a: 0.01, d: 0.6, s: 0.3, r: 0.3, cutoff: 700 });
+      INST.bell(sfxBus, t + 0.15, 84, 0.6, 0.6); INST.bell(sfxBus, t + 0.3, 91, 0.6, 0.4);
+    },
     lift:    function (t) {                                // the skiff's lift jets spooling up and away
       var src = ac.createBufferSource(); src.buffer = noiseBuf;
       var f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;

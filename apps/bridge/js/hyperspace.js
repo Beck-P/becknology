@@ -12,11 +12,21 @@ var BridgeHyperspace = (function () {
     // world overlay system when state changes — no manual hide needed here)
     BridgeStarmap.hide();
 
-    // The Wayfarer's jump, as a cutscene (from where it was parked to the new world)
+    // The Wayfarer's jump, as a cutscene (from where it was parked to the new world), then straight down
+    // in the shuttle to the world's pad — the first time at a world, a moment on it and its name before
+    // the shuttle goes. The star map's "stay aboard" keeps you on the bridge instead (gaze out of the window).
     if (world.hasOverworld && typeof BridgeShip !== 'undefined' && typeof BridgeCine !== 'undefined' && BridgeCine.jump) {
       var from = context.from || 'deep-space';
-      BridgeCine.jump(from, world.loc || world.id, { hold: 600 }).then(function () {
-        BridgeShip.arriveInOrbit(world);
+      var first = !BridgeStarmap.getVisited()[world.id];
+      var stay = BridgeStarmap.stayAboard();
+      BridgeCine.jump(from, world.loc || world.id, { hold: 150, first: first, name: world.name, kind: world.kind }).then(function () {
+        BridgeStarmap.markVisited(world.id);
+        if (typeof BridgeProgression !== 'undefined') {
+          BridgeProgression.recordAchievement('visited_' + (world.loc || world.id), 25, { source: 'hyperspace' })
+            .then(function () { BridgeProgression.maybeAwardWayfarer(); });
+        }
+        if (stay) BridgeShip.arriveInOrbit(world);
+        else BridgeShip.descend(world);
       });
       return;
     }
