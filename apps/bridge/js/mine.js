@@ -250,6 +250,7 @@ var BridgeMine = (function () {
       if (typeof BridgeLoot !== 'undefined' && BridgeInventory.getCount('heartsong') === 0) BridgeLoot.spawn(r.x, r.y, 'heartsong', 1);
       say('THE GREAT SONGSTONE', 'THE STONE OPENS LIKE A HAND. INSIDE, A CRYSTAL THE SIZE OF A HEART, STILL SINGING - AND ALL AROUND YOU, FAINTLY, THE WHOLE MINE SINGS BACK.');
     }
+    if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.maybeFind(floor, r.x, r.y);     // now and then, an old map
     if (r.ladder) {
       r.kind = 'ladder'; r.spr = 'ladder';
       w.interactions.push({ x: r.x, y: r.y, type: 'mine_down', label: 'LADDER DOWN', prompt: 'PRESS E TO CLIMB DOWN' });

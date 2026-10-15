@@ -57,7 +57,7 @@ var BridgeInteractions = (function () {
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
     menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish',
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
-    rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read'
+    dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -354,6 +354,10 @@ var BridgeInteractions = (function () {
         showSellDialog(inter);
         break;
 
+      case 'dig':                   // a treasure map's spot (js/treasure.js)
+        if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.dig(inter);
+        break;
+
       case 'rock': case 'mine_down': case 'mine_up': case 'mine_lift': case 'mine_rack': case 'mine_slate':
         if (typeof BridgeMine !== 'undefined') BridgeMine.use(inter);         // the Rose Mine (js/mine.js)
         break;
@@ -574,6 +578,9 @@ var BridgeInteractions = (function () {
           break;
         case 'mine_floor':
           if (typeof BridgeMine !== 'undefined') BridgeMine.goFloor(opt.floor);
+          break;
+        case 'treasure_buy':
+          if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.buy(opt.map);
           break;
         case 'mine_upgrade':
           if (typeof BridgeMine !== 'undefined') BridgeMine.forge(opt.to);
@@ -997,6 +1004,11 @@ var BridgeInteractions = (function () {
         if (feel >= 5) mult *= 1.1;                                // friends get a better price
         close();
         showSellDialog({ label: person.name, dialog: t.a, buys: t.sell.map(function (b) { return { id: b.id, price: Math.round(b.price * mult) }; }) });
+        return;
+      }
+      if (t.treasure && typeof BridgeTreasure !== 'undefined') {      // Ilsa's treasure maps
+        close();
+        BridgeTreasure.shop(person.name.split(' ')[0]);
         return;
       }
       if (t.mine && typeof BridgeMine !== 'undefined') {              // Hob's forge: a better pickaxe

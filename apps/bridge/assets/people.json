@@ -84,6 +84,11 @@
       {
         "q": "Need anything?",
         "a": "IF YOU SAIL THE ISLANDS, LOOK AT THE CRYSTALS FOR ME. CRIMSON, ROSE, SAPPHIRE - AND WHATEVER MIDNIGHT GROWS. COME BACK AND TELL ME. THE CURRENTS CHANGED LAST SPRING; THE MAPS NEED IT."
+      },
+      {
+        "q": "Treasure maps",
+        "a": "I COPY THE OLD ONES. THE LANDMARKS ARE TRUE; WHETHER ANYTHING'S STILL IN THE GROUND IS ANOTHER MATTER.",
+        "treasure": "shop"
       }
     ]
   },

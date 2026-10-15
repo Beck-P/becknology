@@ -302,6 +302,7 @@ var BridgeItems = (function () {
       case 'potion': return '#c83040';
       case 'weapon': return '#a04040';
       case 'tool':   return '#a0a8b0';
+      case 'map':    return '#d6c49c';
       case 'key':    return '#e0c060';
       default:       return '#888';
     }
@@ -354,6 +355,17 @@ var BridgeItems = (function () {
       ctx.fillStyle = '#0a0a0c'; ctx.fillRect(x + 1*u, y + 11*u, 5*u, 3*u);
       ctx.fillStyle = hilt; ctx.fillRect(x + 2*u, y + 12*u, 3*u, 1*u); ctx.fillRect(x + 3*u, y + 11*u, 1*u, 3*u);
     };
+  }
+
+  function mapIcon(ctx, x, y, s) {                // a folded parchment with a red X
+    var u = s / 16;
+    ctx.fillStyle = '#2a1a0e'; ctx.fillRect(x + 2*u, y + 3*u, 12*u, 11*u);
+    ctx.fillStyle = '#d6c49c'; ctx.fillRect(x + 3*u, y + 4*u, 10*u, 9*u);
+    ctx.fillStyle = '#b8a47a'; ctx.fillRect(x + 6*u, y + 4*u, 1*u, 9*u); ctx.fillRect(x + 9*u, y + 4*u, 1*u, 9*u);
+    ctx.fillStyle = '#8a7048'; ctx.fillRect(x + 4*u, y + 6*u, 2*u, 1*u); ctx.fillRect(x + 4*u, y + 10*u, 3*u, 1*u); ctx.fillRect(x + 10*u, y + 11*u, 2*u, 1*u);
+    ctx.fillStyle = '#a01c14';
+    ctx.fillRect(x + 10*u, y + 6*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 6*u, 1*u, 1*u); ctx.fillRect(x + 11*u, y + 7*u, 1*u, 1*u);
+    ctx.fillRect(x + 10*u, y + 8*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 8*u, 1*u, 1*u);
   }
 
   function moonstoneIcon(ctx, x, y, s) {
@@ -545,6 +557,23 @@ var BridgeItems = (function () {
                      draw: coinIcon, value: 25 },
     star_pearl:    { id: 'star_pearl', name: 'Star Pearl', desc: 'From the moon pool. There are stars moving inside it.', type: 'material', stackable: true,
                      draw: pearlIcon, value: 80 },
+    // treasure maps (js/treasure.js)
+    tmap_lighthouse: { id: 'tmap_lighthouse', name: 'Map: Under the Old Light', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
+                stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('lighthouse'); return false; } },
+    tmap_windmill: { id: 'tmap_windmill', name: 'Map: The Singing Mill', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
+                stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('windmill'); return false; } },
+    tmap_beacon: { id: 'tmap_beacon', name: 'Map: The Blue Lamp', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
+                stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('beacon'); return false; } },
+    tmap_heron: { id: 'tmap_heron', name: 'Map: What the Heron Carried', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
+                stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('heron'); return false; } },
+    tmap_watchtower: { id: 'tmap_watchtower', name: 'Map: The Watch', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
+                stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('watchtower'); return false; } },
+    tmap_graves: { id: 'tmap_graves', name: 'Map: Among the Drowned', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
+                stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('graves'); return false; } },
+    tmap_memorial: { id: 'tmap_memorial', name: 'Map: For Those Who Mined', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
+                stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('memorial'); return false; } },
+    tmap_abbey: { id: 'tmap_abbey', name: 'Map: The Abbot\'s Tithe', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
+                stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('abbey'); return false; } },
     // the Rose Mine (js/mine.js)
     stone:       { id: 'stone', name: 'Stone', desc: 'Plain grey stone from the Rose Mine. Builders take it by the cartload.', type: 'material',
                    stackable: true, draw: rockIcon('#6a6066'), value: 1 },

@@ -1343,6 +1343,12 @@ html.touch .pk-keys { display: none; }
 
 /* the outfitter / wardrobe (js/gear.js) */
 #gear-dialog { width: min(640px, 94vw); z-index: 120; }
+/* a treasure map (js/treasure.js): the inked sketch on parchment */
+#treasure-map { width: min(560px, 94vw); z-index: 120; cursor: pointer; }
+.tmap-frame { margin: 8px auto; padding: 8px; background: #d6c49c; box-shadow: inset 0 0 0 2px #8a7048, inset 0 0 24px rgba(90, 60, 30, 0.45);
+  min-height: 120px; display: flex; align-items: center; justify-content: center; color: #6a5030; }
+.tmap-sketch { width: 100%; height: auto; image-rendering: pixelated; display: block; filter: contrast(1.05); }
+.tmap-hand { font-style: italic; text-align: center; }
 .wd-gear .gear-main { display: flex; gap: 16px; align-items: flex-start; margin: 8px 0; }
 .wd-gear .gear-preview { width: 96px; height: 144px; flex: 0 0 96px; image-rendering: pixelated;
   background: rgba(128, 128, 128, 0.12); border: 1px solid rgba(128, 128, 128, 0.35); border-radius: 4px; }
