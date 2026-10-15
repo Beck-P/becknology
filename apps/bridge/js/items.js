@@ -533,6 +533,54 @@ var BridgeItems = (function () {
   function produceIcon(kind) { return function (ctx, x, y, s) { PRODUCE_ART[kind](ctx, x, y, s / 16); }; }
   function farmUse() { if (typeof BridgeFarm !== 'undefined') BridgeFarm.useItem(this.id); return false; }
 
+  // ---- Hoarfell (js/climb.js, js/ski.js, js/worlds/hoarfell.js) ----------------------------------------
+  function chalkIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2a1a', [[4, 4, 8, 10]]); px(ctx, x, y, u, '#c83a2e', [[5, 5, 6, 8]]);
+    px(ctx, x, y, u, '#f4f4f8', [[5, 3, 6, 2], [6, 2, 4, 1]]); px(ctx, x, y, u, '#e8a030', [[5, 9, 6, 1]]);
+  }
+  function ropeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#5a3a1a', [[3, 4, 10, 9]]); px(ctx, x, y, u, '#e0b030', [[4, 5, 8, 7]]);
+    px(ctx, x, y, u, '#5a3a1a', [[6, 7, 4, 3]]); px(ctx, x, y, u, '#f0d060', [[4, 5, 3, 1], [9, 11, 3, 1]]);
+    px(ctx, x, y, u, '#e0b030', [[12, 10, 2, 4]]);
+  }
+  function axeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    for (var i = 0; i < 10; i++) px(ctx, x, y, u, '#3a8ae0', [[3 + i, 14 - i, 2, 1]]);
+    px(ctx, x, y, u, '#2a2c34', [[9, 1, 6, 2], [13, 3, 2, 2], [8, 3, 2, 1]]); px(ctx, x, y, u, '#c0c4cc', [[9, 1, 5, 1]]);
+  }
+  function skisIcon(ctx, x, y, s) {
+    var u = s / 16;
+    for (var i = 0; i < 12; i++) { px(ctx, x, y, u, '#c83a2e', [[2 + i, 13 - i, 2, 1]]); px(ctx, x, y, u, '#2a6ac0', [[5 + i, 14 - i, 2, 1]]); }
+    px(ctx, x, y, u, '#f4f4f8', [[13, 1, 2, 1]]);
+  }
+  function gogglesIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1a22', [[1, 7, 14, 2]]); px(ctx, x, y, u, '#1a1a22', [[3, 5, 10, 6]]);
+    px(ctx, x, y, u, '#e8a030', [[4, 6, 8, 4]]); px(ctx, x, y, u, '#ffe080', [[4, 6, 3, 1]]); px(ctx, x, y, u, '#c87020', [[7, 6, 2, 4]]);
+  }
+  function cocoaIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#4a1a14', [[3, 6, 9, 8], [12, 8, 2, 4]]); px(ctx, x, y, u, '#c83a2e', [[4, 7, 7, 6]]);
+    px(ctx, x, y, u, '#6a3a1a', [[4, 6, 7, 1]]); px(ctx, x, y, u, '#f4ece0', [[5, 5, 3, 1], [8, 5, 2, 1]]);
+    px(ctx, x, y, u, 'rgba(240,240,250,0.8)', [[6, 2, 1, 2], [8, 1, 1, 3]]);
+  }
+  function chestnutIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#d8c8a0', [[2, 9, 12, 5]]); px(ctx, x, y, u, '#8a6a3a', [[2, 13, 12, 1]]);
+    [[4, 7], [8, 6], [7, 9], [10, 9]].forEach(function (c) {
+      px(ctx, x, y, u, '#3a1a08', [[c[0], c[1], 3, 3]]); px(ctx, x, y, u, '#8a4a20', [[c[0], c[1], 2, 2]]);
+    });
+  }
+  function edelweissIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a6a3a', [[7, 9, 2, 6]]);
+    px(ctx, x, y, u, '#e8ecf0', [[7, 2, 2, 3], [7, 8, 2, 2], [3, 5, 3, 2], [10, 5, 3, 2], [4, 3, 2, 2], [10, 3, 2, 2], [4, 7, 2, 2], [10, 7, 2, 2]]);
+    px(ctx, x, y, u, '#e0c040', [[6, 5, 4, 3]]);
+  }
+  function hookFish(body, belly, fin, glow) { return fishIcon(body, belly, fin, glow); }
+
   function pearlIcon(ctx, x, y, s) {
     var u = s / 16;
     ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 5*u, y + 5*u, 6*u, 6*u);
@@ -719,6 +767,32 @@ var BridgeItems = (function () {
                      draw: produceIcon('apple'), effects: { hp: 5, energy: 5 }, onUse: consumableUse, value: 5 },
     honey:         { id: 'honey', name: 'Jar of Honey', desc: 'Wildflower honey from the skeps by the orchard.', type: 'food', stackable: true,
                      draw: produceIcon('honey'), effects: { hp: 10, energy: 15 }, onUse: consumableUse, value: 25 },
+    // Hoarfell: the guide hut, the ski hire, the cocoa hut, the cliffs, the ice hole
+    chalk:         { id: 'chalk', name: 'Chalk', desc: 'A bag of climbing chalk. On the wall, C dries your hands: +25 to your arms.', type: 'tool', stackable: true,
+                     draw: chalkIcon, value: 2 },
+    climbing_rope: { id: 'climbing_rope', name: 'Climbing Rope', desc: 'Sixty metres of dynamic rope. Tied in, a fall takes you back to the last ledge, not the bottom.',
+                     type: 'tool', stackable: false, draw: ropeIcon, value: 20 },
+    ice_axe:       { id: 'ice_axe', name: 'Ice Axe', desc: 'A curved pick for climbing ice - the Icefall needs one. Not bad in a fight, either.', type: 'tool',
+                     stackable: false, draw: axeIcon, damage: 18, onUse: weaponUse, value: 60 },
+    skis:          { id: 'skis', name: 'Skis', desc: 'Hired from Fellhaven, kept for good. Take the chairlift up and ski a run down.', type: 'tool',
+                     stackable: false, draw: skisIcon, value: 40 },
+    ski_goggles:   { id: 'ski_goggles', name: 'Ski Goggles', desc: 'Amber lenses. On the slopes they pick out the line to the next gate.', type: 'tool',
+                     stackable: false, draw: gogglesIcon, value: 12 },
+    hot_cocoa:     { id: 'hot_cocoa', name: 'Hot Cocoa', desc: 'Thick, sweet and scalding. Warms you through for five minutes, cold or no cold.', type: 'drink',
+                     stackable: true, draw: cocoaIcon, effects: { energy: 20 }, value: 3,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(5); return consumableUse.call(this, inv); } },
+    roast_chestnuts: { id: 'roast_chestnuts', name: 'Roast Chestnuts', desc: 'A paper twist of them, too hot to hold.', type: 'food', stackable: true,
+                     draw: chestnutIcon, effects: { hp: 8, energy: 8 }, onUse: consumableUse, value: 2 },
+    edelweiss:     { id: 'edelweiss', name: 'Edelweiss', desc: 'A woolly white star from the top of the Staircase. Ysolde says you have to climb for your own.', type: 'material',
+                     stackable: true, draw: edelweissIcon, value: 30 },
+    hoar_crystal:  { id: 'hoar_crystal', name: 'Hoar Crystal', desc: 'Frost that never melts, grown in the Hoarspire\'s rock. Cold enough to burn.', type: 'material',
+                     stackable: true, draw: crystalIcon('#1a3a6a', '#7ac8ff', '#e8f8ff'), value: 22 },
+    summit_crystal: { id: 'summit_crystal', name: 'Summit Crystal', desc: 'From the very top of the Hoarspire, where the wind never stops. It hums a single high note.',
+                     type: 'material', stackable: true, draw: crystalIcon('#3a2a6a', '#c0a8ff', '#ffffff'), value: 120 },
+    arctic_char:   { id: 'arctic_char', name: 'Arctic Char', desc: 'Pink-fleshed and speckled, through the ice on the village pond.', type: 'food', stackable: true,
+                     draw: hookFish('#5a6a7a', '#f0a0a0', '#3a4a5a'), effects: { hp: 10, energy: 10 }, onUse: consumableUse, value: 12 },
+    frostfin:      { id: 'frostfin', name: 'Frostfin', desc: 'A glassy little fish with fins like frost on a window. It glows under the ice.', type: 'material',
+                     stackable: true, draw: hookFish('#a0c8e8', '#e8f6ff', '#6a9ac8', '#c8f0ff'), value: 30 },
     pond_perch:    { id: 'pond_perch', name: 'Pond Perch', desc: 'Striped and spiny, from the farm pond. Good in a pan.', type: 'food', stackable: true,
                      draw: fishIcon('#6a8a3a', '#c0d080', '#3a5a1a'), effects: { hp: 8, energy: 8 }, onUse: consumableUse, value: 7 },
     sun_carp:      { id: 'sun_carp', name: 'Sun Carp', desc: 'A golden carp from the farm pond, scales like coins. Hollin swears there\'s only one.', type: 'material', stackable: true,

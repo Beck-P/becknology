@@ -64,6 +64,13 @@ var BridgeStarmap = (function () {
       places: ['The farmstead', 'The pond and the orchard', 'Hollin\u2019s seed stall'],
       apps: [],
       color: '#90d070', px: 0.47, py: 0.5, hasOverworld: true
+    },
+    {
+      id: 'hoarfell', loc: 'hoarfell', name: 'HOARFELL', kind: 'Ice world · the Hoarspire',
+      blurb: 'Snowfields and frozen seas under a low pink sun. Fellhaven, a ski village under the cliffs: three climbing routes up the Hoarspire, a chairlift, runs to ski back down.',
+      places: ['Fellhaven', 'The Staircase · the Icefall', 'The summit of the Hoarspire'],
+      apps: [],
+      color: '#a8d8f0', px: 0.13, py: 0.36, hasOverworld: true
     }
   ];
 
@@ -105,7 +112,7 @@ var BridgeStarmap = (function () {
   }
 
   // what's waiting at a world: quests begun there and not finished, people there who'd join your crew
-  var LOC_RX = { lumar: /^lumar/, arcadia: /^(arcadia|cyber|chrome|junk|tech)/, enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/ };
+  var LOC_RX = { lumar: /^lumar/, arcadia: /^(arcadia|cyber|chrome|junk|tech)/, enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/ };
   function waiting(loc) {
     var rx = LOC_RX[loc], out = [];
     if (!rx) return '';

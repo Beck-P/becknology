@@ -89,6 +89,9 @@ var BridgeQuests = (function () {
     toastTimer = setTimeout(function () { toastEl.classList.remove('visible'); }, 4200);
   }
 
+  function cap(t) { return String(t).toLowerCase().replace(/(^|\s)([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }); }
+  function clock(t) { var m = Math.floor(t / 60), sec = t - m * 60; return m + ':' + (sec < 10 ? '0' : '') + sec.toFixed(1); }
+
   // ---- the journal --------------------------------------------------------------------------
   function render() {
     var ids = Object.keys(defs || {}).filter(function (id) { return state[id]; });
@@ -134,7 +137,21 @@ var BridgeQuests = (function () {
           return '<li class="found"><b>' + esc(r.name.charAt(0) + r.name.slice(1).toLowerCase()) + '</b> - ' + bits.join('; ') + '</li>';
         }).join('') + '</ul></section>';
     }
-    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length) {
+    var peaks = [];
+    if (typeof BridgeClimb !== 'undefined') Object.keys(BridgeClimb.ROUTES).forEach(function (id) {
+      var r = BridgeClimb.records(id);
+      if (r && r.ascents) peaks.push('<b>' + esc(cap(BridgeClimb.ROUTES[id].name)) + '</b> (' + BridgeClimb.ROUTES[id].grade + ') - climbed ' + r.ascents + 'x, best ' + clock(r.best));
+    });
+    if (typeof BridgeSki !== 'undefined') Object.keys(BridgeSki.RUNS).forEach(function (id) {
+      var b = BridgeSki.best(id);
+      if (b) peaks.push('<b>' + esc(cap(BridgeSki.RUNS[id].name)) + '</b> (' + BridgeSki.RUNS[id].mark + ') - best run ' + clock(b));
+    });
+    if (peaks.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Hoarfell</span>' +
+        '<span class="qj-q-count">' + peaks.length + '</span></div><ul class="qj-clues">' +
+        peaks.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
+    }
+    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !peaks.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {

@@ -43,7 +43,8 @@ var BridgeGear = (function () {
     sapphire_imports: { title: 'RARE IMPORTS', goods: ['suit:thermal', 'pack:satchel'] },
     cyber_gear:       { title: 'CYBER GEAR', goods: ['suit:runner', 'pack:expedition'] },
     joro:             { title: "JORO'S BACK ROOM", goods: ['suit:plate', 'pack:expedition'] },
-    vex:              { title: "VEX'S STASH", goods: ['pack:voidweave'] }
+    vex:              { title: "VEX'S STASH", goods: ['pack:voidweave'] },
+    alpine:           { title: 'ALPINE OUTFITTERS', goods: ['suit:thermal', 'pack:expedition'] }
   };
   // outfitters set up on world interactions as worlds load (so a re-render can't lose them)
   var PLACES = [
@@ -53,7 +54,9 @@ var BridgeGear = (function () {
       intro: 'RARE IMPORTS. QUILTED SUITS FROM SOMEWHERE COLD, HUNG UP BESIDE THE ROPE. "QUALITY GUARANTEED. SURVIVAL NOT GUARANTEED."' },
     { world: 'arcadia-street', label: 'CYBER GEAR', shop: 'cyber_gear', prompt: 'PRESS E TO BROWSE',
       intro: 'CHROME HEADPHONES, MOD KITS, WIRES IN A DOZEN COLOURS, AND A RACK OF RUNNER JACKETS HUMMING ON THEIR HANGERS.' },
-    { world: 'bridge', label: 'COAT RACK', wardrobe: true, prompt: 'PRESS E TO CHANGE' }
+    { world: 'bridge', label: 'COAT RACK', wardrobe: true, prompt: 'PRESS E TO CHANGE' },
+    { world: 'hoarfell', label: 'OUTERWEAR', shop: 'alpine', prompt: 'PRESS E TO BROWSE',
+      intro: 'A RAIL OF QUILTED SUITS BY THE SKI HIRE\'S DOOR, AND A HAND-LETTERED SIGN: "THE MOUNTAIN DOESN\'T CARE WHAT YOU WEAR. YOU WILL."' }
   ];
 
   var state = load();
@@ -120,6 +123,7 @@ var BridgeGear = (function () {
     if (ts === 'arcadia' || /^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return 'neon';
     if (ts === 'enigma' || /^enigma/.test(id)) return 'crt';
     if (ts === 'verdance' || /^verdance/.test(id)) return 'meadow';
+    if (ts === 'hoarfell' || /^hoarfell/.test(id)) return 'frost';
     return 'holo';
   }
   function pilotColour() {

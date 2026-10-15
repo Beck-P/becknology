@@ -58,14 +58,15 @@ var BridgeInteractions = (function () {
     menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish',
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
-    home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill'
+    home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill',
+    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port',
-                      'verdance': 'the farm' };
+                      'verdance': 'the farm', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit' };
 
   function titleCase(t) {
     return String(t || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z\u00e0-\u00ff])/g, function (m, a, b) {
@@ -365,6 +366,10 @@ var BridgeInteractions = (function () {
         if (typeof BridgeMine !== 'undefined') BridgeMine.use(inter);         // the Rose Mine (js/mine.js)
         break;
 
+      case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start':   // Hoarfell (js/worlds/hoarfell.js)
+        if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.use(inter);
+        break;
+
       case 'farm_plot': case 'farm_tools': case 'farm_well':   // the field on Verdance (js/farm.js)
         if (typeof BridgeFarm !== 'undefined') BridgeFarm.use(inter);
         break;
@@ -599,6 +604,9 @@ var BridgeInteractions = (function () {
         case 'mine_upgrade':
           if (typeof BridgeMine !== 'undefined') BridgeMine.forge(opt.to);
           break;
+        case 'ski_run':
+          if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.ski(opt.run);
+          break;
         case 'close':
         default:
           break;
@@ -618,6 +626,7 @@ var BridgeInteractions = (function () {
     if (ts === 'enigma' || id === 'enigma') return 'crt';
     if (ts === 'singularity' || id === 'singularity') return 'void';
     if (ts === 'verdance' || /^verdance/.test(id)) return 'meadow';
+    if (ts === 'hoarfell' || /^hoarfell/.test(id)) return 'frost';
     return 'holo';
   }
 

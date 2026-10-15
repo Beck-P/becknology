@@ -145,6 +145,7 @@ var BridgeActions = (function () {
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return 'skyline';
     if (/^enigma/.test(id)) return 'giant';
     if (/^singularity/.test(id)) return 'void';
+    if (/^hoarfell/.test(id)) return 'peaks';
     return 'orbit';
   }
 
@@ -269,6 +270,7 @@ var BridgeActions = (function () {
     else if (kind === 'giant') drawGiant(ctx, now);
     else if (kind === 'void') drawVoid(ctx, now);
     else if (kind === 'stars') drawStarsView(ctx, now);
+    else if (kind === 'peaks' && typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.vista(ctx, VW, VH, now);
     else BridgeOrbit.draw(ctx, 0, 0, VW, VH, now, { horizon: 0.32 });
     raf = requestAnimationFrame(drawView);
   }

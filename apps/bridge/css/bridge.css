@@ -953,6 +953,25 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
 .wd-void .wd-opt.active, .wd-void .wd-btn.primary { background: rgba(160, 128, 224, 0.25); border-color: #c0a0f0; }
 .wd-void .wd-input { background: rgba(0, 0, 0, 0.35); color: #d0c0ff; border: 1px solid rgba(192, 160, 240, 0.5); }
 
+/* Hoarfell: frosted glass, ice-blue edges, a little rime in the corners */
+.wd-frost {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(255, 255, 255, 0.22), transparent 55%),
+    linear-gradient(180deg, rgba(44, 58, 96, 0.94), rgba(22, 28, 54, 0.96));
+  color: #eef4fc;
+  border: 1px solid #b8e0f8;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 2px rgba(184, 224, 248, 0.18), inset 0 0 30px rgba(184, 224, 248, 0.14), 0 0 22px rgba(160, 210, 240, 0.25),
+              0 12px 32px rgba(0, 0, 0, 0.6);
+}
+.wd-frost .wd-title { color: #ffffff; letter-spacing: 3px; text-shadow: 0 0 8px rgba(168, 216, 240, 0.8); }
+.wd-frost .wd-title::before, .wd-frost .wd-title::after { content: ' \2744 '; color: #a8d8f0; font-weight: 400; }
+.wd-frost .wd-portrait { background: rgba(168, 216, 240, 0.14); box-shadow: inset 0 0 0 1px rgba(184, 224, 248, 0.5); }
+.wd-frost .wd-opt, .wd-frost .wd-btn { background: rgba(184, 224, 248, 0.08); color: #eef4fc; border-color: rgba(184, 224, 248, 0.3); }
+.wd-frost .wd-opt.active, .wd-frost .wd-btn.primary { background: #f0b0a0; color: #1e2240; border-color: #ffd8c8; }
+.wd-frost .wd-item { background: rgba(184, 224, 248, 0.07); }
+.wd-frost .wd-input { background: rgba(0, 0, 0, 0.3); color: #eef4fc; border: 1px solid rgba(184, 224, 248, 0.5); }
+
 /* Verdance: cream linen in a gingham frame, a green ribbon for the title */
 .wd-meadow {
   background:
@@ -1543,3 +1562,45 @@ html.touch .wd-home .hm-keys { display: none; }
   .wd-home .hm-name { font-size: 9px; min-height: 0; }
   .wd-home .hm-msg { font-size: 10px; }
 }
+
+/* Climbing on Hoarfell (js/climb.js) and the ski runs (js/ski.js): a frosted panel over the world */
+#climb, #ski {
+  position: fixed; inset: 0; z-index: 66; display: none; align-items: center; justify-content: center;   /* over the hotbar (60): the climb has the screen */
+  background: rgba(10, 14, 30, 0.7); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
+}
+#climb.visible, #ski.visible { display: flex; }
+.cl-panel {
+  max-width: 96vw; max-height: 98vh; box-sizing: border-box; padding: 10px 12px; border-radius: 6px; color: #e8f0fa;
+  background: linear-gradient(180deg, rgba(30, 38, 66, 0.97), rgba(14, 18, 36, 0.98));
+  border: 1px solid #a8d8f0; box-shadow: 0 0 30px rgba(160, 216, 240, 0.18), 0 16px 40px rgba(0, 0, 0, 0.6);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.cl-head { display: flex; align-items: baseline; gap: 12px; }
+.cl-title { font-size: 14px; letter-spacing: 5px; color: #f0f6ff; text-shadow: 0 0 8px rgba(160, 216, 240, 0.7); }
+.cl-grade { font-size: 12px; color: #f0b0a0; letter-spacing: 2px; }
+.cl-time { flex: 1; text-align: right; font-size: 13px; color: #c8d8ea; font-variant-numeric: tabular-nums; }
+.cl-stage { position: relative; align-self: center; }
+.cl-wall { display: block; image-rendering: pixelated; touch-action: none; cursor: pointer; border-radius: 3px; }
+.cl-card {
+  position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  padding: 18px; text-align: center; background: rgba(12, 16, 34, 0.72); border-radius: 3px;
+}
+.cl-card p { margin: 0; max-width: 520px; font-size: 14px; line-height: 1.55; color: #e8f0fa; }
+.cl-card b { color: #fff; letter-spacing: 2px; }
+.cl-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.cl-btns button, .cl-chalk {
+  font: inherit; font-size: 13px; padding: 7px 14px; border-radius: 3px; cursor: pointer;
+  background: rgba(168, 216, 240, 0.1); color: #e8f0fa; border: 1px solid rgba(168, 216, 240, 0.35);
+}
+.cl-btns button.primary { background: #3a7ab8; border-color: #a8d8f0; color: #fff; }
+.cl-bar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #c8d8ea; }
+.cl-lbl { letter-spacing: 2px; text-transform: uppercase; }
+.cl-stam { flex: 1; max-width: 260px; height: 10px; border-radius: 2px; background: rgba(0, 0, 0, 0.45); box-shadow: inset 0 0 0 1px rgba(168, 216, 240, 0.3); overflow: hidden; }
+.cl-stam i { display: block; height: 100%; width: 100%; background: #7ad0f0; transition: background 0.3s; }
+.cl-alt { flex: 1; font-variant-numeric: tabular-nums; }
+.cl-chalk { padding: 4px 10px; font-size: 12px; }
+.cl-chalk b { color: #fff; margin-left: 4px; }
+.cl-msg { min-height: 18px; font-size: 13px; color: #fff; opacity: 0; transition: opacity 0.3s; }
+.cl-msg.on { opacity: 1; }
+.cl-hint { font-size: 11px; color: rgba(200, 216, 234, 0.7); }
+html.touch #climb .ip-key, html.touch #ski .ip-key { display: none; }

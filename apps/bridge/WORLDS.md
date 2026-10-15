@@ -149,9 +149,11 @@ stars streaking, a tunnel of light, dropping out over the new world.
   enemies worth fighting, hits that land.
 - **Maps**: find or buy charts that reveal a world bit by bit; systems for
   finding hidden things (a dowsing rod, a scanner, rumours).
-- **A mountain world**: a climbing mode (its own mechanic — holds, stamina,
-  routes) up to loot hidden at the top; a ski resort town on its slopes;
-  sections of the world to find.
+- ✓ **A mountain world** (first pass: Hoarfell, `js/climb.js`, `js/ski.js`): Fellhaven,
+  a ski village under the cliffs; a climbing mode (holds, stamina, cold, wind,
+  ropes and ledges) up three routes to the summit, crystals in the rock and a
+  register at the top; three ski runs down from the chairlift; the cold that a
+  Thermal Suit keeps out. Next: the lodge inside, more routes, a hidden valley.
 - **Places of your own**: buy apartments and houses on the planets, build
   them out and decorate them; the same for the ship — edit it, make it
   yours.

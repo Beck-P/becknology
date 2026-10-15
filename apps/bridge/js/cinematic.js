@@ -120,7 +120,7 @@ var BridgeCine = (function () {
   var nebCache = {};
   var NEB = { lumar: [[30, 110, 120], [40, 50, 120]], arcadia: [[140, 40, 150], [40, 30, 110]],
               enigma: [[40, 70, 140], [90, 40, 120]], singularity: [[150, 70, 40], [80, 30, 90]],
-              verdance: [[50, 120, 80], [110, 120, 50]],
+              verdance: [[50, 120, 80], [110, 120, 50]], hoarfell: [[90, 120, 190], [150, 90, 150]],
               'deep-space': [[90, 50, 160], [30, 110, 150]] };
   function nebula(loc, W, H) {
     var key = loc + W + 'x' + H;
@@ -193,7 +193,7 @@ var BridgeCine = (function () {
     b.drawImage(nebula(loc, W, H), 0, 0, W, H);
     richStars(b, W, H, now, -0.003, 7);
     var kind = BridgeOrbit.kindOf(loc);
-    if (kind === 'ocean' || kind === 'city' || kind === 'gas' || kind === 'garden') {
+    if (kind === 'ocean' || kind === 'city' || kind === 'gas' || kind === 'garden' || kind === 'ice') {
       var R = Math.round(H * 0.95);
       BridgeOrbit.drawPlanet(b, kind, W * 0.82, H * 0.62 + R, R, now);
     } else if (kind === 'hole') {

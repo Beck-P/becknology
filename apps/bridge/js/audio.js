@@ -202,6 +202,11 @@ var BridgeAudio = (function () {
     enigma:   { bpm: 56, root: 43, mode: 'aeolian', chords: [0, 5, 0, 3], pad: 'drone', arp: { inst: 'bell', steps: [0], oct: 36, sparse: 0.5 },
                 lead: { inst: 'keys', oct: 12, density: 0.18 } },
     singularity: { bpm: 48, root: 36, mode: 'phrygian', chords: [0, 1], pad: 'drone', arp: { inst: 'bell', steps: [0, 8], oct: 36, sparse: 0.6 } },
+    hoarfell: { bpm: 70, root: 52, mode: 'lydian', chords: [0, 1, 5, 4, 0, 3, 1, 4], pad: 'warm',
+                arp: { inst: 'bell', steps: [0, 3, 6, 10, 13], oct: 24, pattern: [0, 2, 1, 3] }, bass: { inst: 'bass', steps: [0, 8] },
+                lead: { inst: 'flute', oct: 24, density: 0.3 }, perc: [['shaker', [4, 12]]] },
+    summit:   { bpm: 54, root: 50, mode: 'lydian', chords: [0, 4, 1, 4], pad: 'pad', arp: { inst: 'bell', steps: [0, 8], oct: 36, sparse: 0.55 },
+                lead: { inst: 'flute', oct: 24, density: 0.18 } },
     verdance: { bpm: 92, root: 55, mode: 'ionian', chords: [0, 3, 4, 0, 5, 3, 1, 4], swing: 0.2, pad: 'warm',
                 arp: { inst: 'pluck', steps: [0, 3, 6, 8, 11, 14], oct: 12, pattern: [0, 1, 2, 1] }, bass: { inst: 'bass', steps: [0, 6, 8] },
                 lead: { inst: 'flute', oct: 24, density: 0.5 }, perc: [['shaker', [2, 6, 10, 14]]] },
@@ -222,6 +227,8 @@ var BridgeAudio = (function () {
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
     if (/^singularity/.test(id)) return { theme: 'singularity', amb: ['rumble'] };
     if (/^verdance/.test(id)) return { theme: 'verdance', amb: ['breeze', 'birds'] };
+    if (id === 'hoarfell-summit') return { theme: 'summit', amb: ['gale'] };
+    if (/^hoarfell/.test(id)) return { theme: 'hoarfell', amb: ['snowwind', 'chimes'] };
     if (/cave/.test(id) || ts === 'cave') return { theme: 'cave', amb: ['drips', 'rumble'] };
     if (/tower/.test(id) || ts === 'tower') return { theme: 'tower', amb: ['wind'] };
     if (/lighthouse|lamproom/.test(id)) return { theme: 'lumar-in', amb: ['wind', 'searoom'] };
@@ -465,6 +472,23 @@ var BridgeAudio = (function () {
     breeze: function (out) {                                    // warm wind in long grass
       var n = loopNoise('bandpass', 900, 0.6, 0.035); var l = lfo(n.g.gain, 0.07, 0.025), l2 = lfo(n.f.frequency, 0.05, 300); n.g.connect(out);
       return [n.src, l, l2];
+    },
+    snowwind: function (out) {                                  // soft wind over snow, a hiss of spindrift
+      var n = loopNoise('bandpass', 700, 0.7, 0.05); var l = lfo(n.g.gain, 0.06, 0.035), l2 = lfo(n.f.frequency, 0.04, 250); n.g.connect(out);
+      var h = loopNoise('highpass', 5000, 0.5, 0.012); var l3 = lfo(h.g.gain, 0.13, 0.01); h.g.connect(out);
+      return [n.src, h.src, l, l2, l3];
+    },
+    gale: function (out) {                                      // the summit: wind that never stops, gusting
+      var n = loopNoise('bandpass', 520, 1.1, 0.12); var l = lfo(n.g.gain, 0.09, 0.07), l2 = lfo(n.f.frequency, 0.07, 320); n.g.connect(out);
+      var w = loopNoise('highpass', 2600, 0.6, 0.03); var l3 = lfo(w.g.gain, 0.17, 0.02); w.g.connect(out);
+      return [n.src, w.src, l, l2, l3];
+    },
+    chimes: function (out) {                                    // the lift's bullwheel, a far-off bell on a chair
+      ambTimers.push(setInterval(function () {
+        if (!ac || Math.random() > 0.35) return;
+        INST.bell(out, ac.currentTime, 84 + [0, 4, 7, 11][Math.floor(Math.random() * 4)], 0.06, 0.6);
+      }, 2600));
+      return [];
     },
     birds: function (out) {                                     // songbirds in the hedgerow, now and then a wood pigeon
       ambTimers.push(setInterval(function () {

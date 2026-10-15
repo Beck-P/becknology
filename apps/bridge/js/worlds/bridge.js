@@ -565,7 +565,8 @@
     { name: 'LUMAR',       x: -0.45, y:  0.30, z:  0.35, color: [255, 224, 128] },
     { name: 'SINGULARITY', x:  0.20, y:  0.45, z:  0.50, color: [192, 144, 232] },
     { name: 'ENIGMA',      x: -0.30, y: -0.40, z: -0.45, color: [128, 224, 232] },
-    { name: 'VERDANCE',    x:  0.62, y:  0.10, z:  0.40, color: [144, 208, 112] }
+    { name: 'VERDANCE',    x:  0.62, y:  0.10, z:  0.40, color: [144, 208, 112] },
+    { name: 'HOARFELL',    x: -0.60, y: -0.05, z:  0.10, color: [168, 216, 240] }
   ];
 
   // Player-proximity boost (0..1) — how close the player is to the pedestal.
@@ -917,6 +918,7 @@
     singularity: "EVERY BAND CARRIES THE SAME THING: YOUR OWN VOICE, A FEW SECONDS AHEAD OF YOU.",
     verdance: "VERDANCE FARM RADIO, CRACKLING: 'TURNIPS STEADY, STRAWBERRIES UP, AND THE STARFRUIT MAN IS BACK AT MARLO'S. " +
               "RAIN TUESDAY. IT IS ALWAYS TUESDAY.'",
+    hoarfell: "FELLHAVEN LIFT CONTROL: 'CHAIRS RUNNING, WIND TWENTY KNOTS AT THE TOP, THE COULOIR IS OPEN AND ANSGAR SAYS DON'T.'",
     'deep-space': "STATIC. THE LONG, EMPTY HISS OF NOTHING NEARBY."
   };
   var SCOPE = {
@@ -927,6 +929,8 @@
     singularity: "THE SINGULARITY: THE SCOPE READS THE EDGE FINE. THE TIMESTAMPS ON THE READINGS ARE ALL FROM TOMORROW.",
     verdance: "VERDANCE: GREEN COUNTRY, FIELDS IN A QUILT, TWO SMALL MOONS. ONE FARMSTEAD BY THE LANDING PAD, ITS FIELD GOING SPARE." +
               "\n\nLIFE SIGNS: CROWS, BEES, ONE LOST GOAT.",
+    hoarfell: "HOARFELL: ICE TO BOTH POLES, ONE PEAK HIGHER THAN THE REST. A VILLAGE AT ITS FOOT, CHIMNEYS SMOKING, A CHAIRLIFT TURNING." +
+              "\n\nLIFE SIGNS: A FEW HUNDRED, MOSTLY ON SKIS.",
     'deep-space': "NOTHING FOR A LONG WAY IN ANY DIRECTION. THE SCOPE HUMS TO ITSELF."
   };
   var EMPTY = {

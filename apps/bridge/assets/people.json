@@ -952,5 +952,126 @@
         ]
       }
     ]
+  },
+  "ysolde": {
+    "name": "Ysolde Rann",
+    "role": "Mountain guide, Fellhaven",
+    "sheet": "npc-ysolde",
+    "at": [
+      {
+        "world": "hoarfell",
+        "label": "YSOLDE"
+      }
+    ],
+    "greet": "NEW BOOTS, NEW FACE. YOU'VE COME FOR THE HOARSPIRE - EVERYONE DOES. START ON THE STAIRCASE AND I'LL TELL YOU IF YOU'RE READY FOR THE REST.",
+    "again": "BACK FOR MORE ROCK? GOOD.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "BORN IN THAT HUT, CLIMBING BEFORE I COULD WALK - MY MOTHER SAYS I WENT UP THE WOODPILE BEFORE I WENT ACROSS THE FLOOR. I'VE BEEN UP THE HOARSPIRE FORTY-ONE TIMES. THE MOUNTAIN STILL SURPRISES ME."
+      },
+      {
+        "q": "How do I climb?",
+        "a": "HOLD TO HOLD. THE ONES IN REACH LIGHT UP - PICK ONE, REACH. LONG REACHES COST YOU, LITTLE CRIMPS COST YOU, HANGING ABOUT COSTS YOU. LEDGES ARE WHERE YOU REST. CHALK DRIES YOUR HANDS. AND CARRY A ROPE: WITH ONE, A FALL TAKES YOU BACK TO THE LAST LEDGE. WITHOUT ONE, ALL THE WAY DOWN."
+      },
+      {
+        "q": "The routes",
+        "a": "THE STAIRCASE IS BIG HOLDS AND A FIXED LINE - LEARN ON IT. THE ICEFALL IS ALL ICE, SO YOU'LL WANT AN AXE. THE HOARSPIRE IS THE REAL THING: SMALL HOLDS, LOOSE ROCK, AND A WIND THAT TRIES TO PEEL YOU OFF. HUG A JUG WHEN IT GUSTS."
+      },
+      {
+        "q": "The cold",
+        "a": "WITHOUT A PROPER SUIT IT EATS YOU SLOWLY. THE OUTFITTER BY THE SKI HIRE SELLS THERMALS. TOVE'S COCOA BUYS YOU FIVE MINUTES. NEITHER OF THOSE WILL SAVE YOU FROM BEING STUPID."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THERE ARE CRYSTALS IN THE HOARSPIRE'S ROCK THAT GLOW LIKE FROST. OFF THE LINE, MOSTLY - YOU HAVE TO GO OUT OF YOUR WAY. AND SOMEBODY LEFT A REGISTER AT THE TOP. SIGN IT. I'LL CHECK."
+      }
+    ]
+  },
+  "tove": {
+    "name": "Tove Lindqvar",
+    "role": "Keeps the cocoa hut, Fellhaven",
+    "sheet": "npc-tove",
+    "at": [
+      {
+        "world": "hoarfell",
+        "label": "TOVE"
+      }
+    ],
+    "greet": "YOU LOOK FROZEN. HERE - DON'T ARGUE, DRINK IT. FIRST ONE'S ON THE HOUSE AND EVERY ONE AFTER COSTS SIX.",
+    "again": "COCOA? OF COURSE COCOA.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I RAN THE LODGE KITCHEN FOR TWENTY YEARS, THEN I DECIDED I ONLY LIKED MAKING ONE THING. HERE I AM. THE SECRET IS A PINCH OF SALT AND NEVER TELLING ANYONE THE SECRET."
+      },
+      {
+        "q": "Fellhaven",
+        "a": "A LODGE, A LIFT, A HANDFUL OF CHALETS AND MORE SKIS THAN PEOPLE. IN THE EVENINGS THE SNOW GOES PINK AND EVERYBODY STOPS WHAT THEY'RE DOING TO LOOK. EVERY EVENING. YOU'D THINK WE'D BE USED TO IT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "ANSGAR SAYS THE COULOIR'S FAST THIS WEEK. ANSGAR SAYS THAT EVERY WEEK. AND THERE'S CHAR UNDER THE POND ICE THE SIZE OF YOUR ARM - BRING ME ONE AND I'LL SMOKE IT FOR YOU. WELL. I'LL BUY IT."
+      },
+      {
+        "q": "Sell what you've caught",
+        "a": "FISH FROM THE POND? I'LL TAKE THEM. CRYSTALS, NO - TAKE THOSE TO SOMEONE WHO KNOWS WHAT THEY'RE FOR.",
+        "sell": [
+          {
+            "id": "arctic_char",
+            "price": 12
+          },
+          {
+            "id": "frostfin",
+            "price": 30
+          },
+          {
+            "id": "edelweiss",
+            "price": 30
+          }
+        ]
+      }
+    ]
+  },
+  "ansgar": {
+    "name": "Ansgar Holm",
+    "role": "Runs the chairlift, Fellhaven",
+    "sheet": "npc-ansgar",
+    "at": [
+      {
+        "world": "hoarfell",
+        "label": "ANSGAR"
+      }
+    ],
+    "greet": "MM. LIFT'S RUNNING. YOU WANT THE TOP, OR YOU WANT TO SKI? EITHER WAY, KEEP YOUR SKIS UP ON THE CHAIR.",
+    "again": "MM.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "THIRTY YEARS ON THIS LIFT. I KNOW EVERY CHAIR BY ITS SQUEAK. NUMBER NINETEEN IS LUCKY. NUMBER TWENTY-THREE IS NOT."
+      },
+      {
+        "q": "The runs",
+        "a": "THE NURSERY SLOPE, FOR LEARNING. PINEWOOD, FOR SKIING. THE COULOIR, FOR SHOWING OFF AND BREAKING THINGS. YOU DON'T GO ON THE COULOIR TILL I'VE SEEN YOU COME DOWN PINEWOOD. ARROWS TURN YOU, DOWN TUCKS, UP SLOWS YOU. GO BETWEEN THE FLAGS."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMEBODY'S BEEN SIGNING THE SUMMIT REGISTER WHO NEVER TOOK THE LIFT. CLIMBED UP, I SUPPOSE. MM. GOOD FOR THEM."
+      },
+      {
+        "q": "Sell what you've found",
+        "a": "CRYSTALS? I KNOW A MAN WHO TUNES INSTRUMENTS WITH THEM. MM. I'LL PASS THEM ON.",
+        "sell": [
+          {
+            "id": "summit_crystal",
+            "price": 120
+          },
+          {
+            "id": "hoar_crystal",
+            "price": 22
+          }
+        ]
+      }
+    ]
   }
 }

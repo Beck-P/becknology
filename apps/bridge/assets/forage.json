@@ -38,5 +38,11 @@
     { "x": 39, "y": 15, "label": "APPLE TREE", "prompt": "PRESS E TO PICK", "item": "apple", "min": 2, "max": 3, "regrow": 20 },
     { "x": 42, "y": 15, "label": "APPLE TREE", "prompt": "PRESS E TO PICK", "item": "apple", "min": 2, "max": 3, "regrow": 20 },
     { "x": 42, "y": 18, "label": "BEEHIVES", "prompt": "PRESS E TO TAKE HONEY", "item": "honey", "min": 1, "max": 1, "regrow": 45 }
+  ],
+  "hoarfell": [
+    { "x": 14, "y": 7, "label": "HOAR CRYSTALS", "item": "hoar_crystal", "min": 1, "max": 1, "regrow": 40 },
+    { "x": 28, "y": 7, "label": "HOAR CRYSTALS", "item": "hoar_crystal", "min": 1, "max": 1, "regrow": 40 },
+    { "x": 38, "y": 7, "label": "HOAR CRYSTALS", "item": "hoar_crystal", "min": 1, "max": 1, "regrow": 40 },
+    { "x": 3, "y": 7, "label": "HOAR CRYSTALS", "item": "hoar_crystal", "min": 1, "max": 1, "regrow": 40 }
   ]
 }

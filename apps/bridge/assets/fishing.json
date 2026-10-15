@@ -104,5 +104,13 @@
       "pool": "pond",
       "label": "THE POND"
     }
+  ],
+  "hoarfell": [
+    {
+      "x": 12,
+      "y": 22,
+      "pool": "ice",
+      "label": "ICE HOLE"
+    }
   ]
 }

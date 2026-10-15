@@ -447,5 +447,45 @@
       "facing": "down",
       "dialog": "HOLLIN'S BENCH, WORN SMOOTH. FROM HERE: THE POND, THE STALL, AND MARLO HAGGLING WITH A GOAT."
     }
+  ],
+  "hoarfell-summit": [
+    {
+      "label": "BENCH",
+      "x": 15,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        15.0,
+        16.55
+      ],
+      "facing": "down",
+      "view": "peaks",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "THE BENCH AT THE TOP OF THE WORLD.\n\nTHE RANGE GOES ON PINK TO THE EDGE OF SIGHT, AND BELOW IT ALL, CLOUD - A WHOLE SEA OF IT, SLOW AS BREATHING."
+    },
+    {
+      "label": "OBSERVATORY",
+      "action": "view",
+      "view": "stars",
+      "prompt": "PRESS E TO LOOK THROUGH",
+      "caption": "THE OLD TELESCOPE STILL TURNS. UP HERE, ABOVE THE CLOUD, THE STARS DON'T EVEN TWINKLE."
+    }
+  ],
+  "hoarfell": [
+    {
+      "label": "BENCH",
+      "x": 3,
+      "y": 19,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        3.8,
+        19.55
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT",
+      "dialog": "A BENCH BY THE POND, ITS SEAT SWEPT CLEAR. SOMEBODY'S ICE-FISHING LINE TWITCHES. THE CHAIRS CREAK UP THE MOUNTAIN, ONE BY ONE."
+    }
   ]
 }

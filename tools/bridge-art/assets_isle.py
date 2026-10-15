@@ -120,14 +120,15 @@ def ground(k, cells, material, albedo, step=0.125, bump=0.012, seed=7, height=No
 
 
 def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e', '#352a2e', '#5a4642'),
-          moss='#5a2a2a', notches=(), step=0.125, foot=0.0, ground=None):
+          moss='#5a2a2a', notches=(), step=0.125, foot=0.0, ground=None, patchy=True):
     """A rock massif over `cells`: rising `slope` tiles in from its edge to
     about `top`, cliffs banded in strata, a mossy crown. notches: rects
     (x0, r0, x1, r1) kept at ground level (a cave mouth cut into the face).
     foot: how far (tiles) the cliff's foot wanders in from the cells' edge,
     so it doesn't run along the tile grid; ground: (material, albedo) of
     the land round it (assets_isle.ground) for the flat strip that leaves.
-    Returns height(x, r)."""
+    patchy=False keeps the crown one material (snow) instead of breaking it
+    with bare rock. Returns height(x, r)."""
     cellset = set(cells)
 
     def inside_dist(x, r):
@@ -176,7 +177,7 @@ def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e
                 elif steep > 1.2:   # strata: long gently wavy beds, not bricks
                     key = 'cliff%d' % (int(zc * 2.6 + 0.5 * n2(c + i * step, r + j * step, 0.22, seed)) % 3)
                 elif zc > top * 0.55:
-                    key = 'crown' if n2(c + i * step, r + j * step, 0.9, seed + 4) > -0.2 else 'cliff0'
+                    key = 'crown' if not patchy or n2(c + i * step, r + j * step, 0.9, seed + 4) > -0.2 else 'cliff0'
                 else:
                     key = 'scree'
                 faces.setdefault(key, []).append(q)
