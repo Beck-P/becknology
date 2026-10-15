@@ -394,6 +394,8 @@ var BridgeScene = (function () {
               col = 4 + (Math.floor(b * 2) + kk) % 8;
               bob = Math.round(Math.max(0, Math.sin((b % 1) * Math.PI)) * 2);
             }
+            if (a.hitT != null) bob = Math.round(Math.max(0, 1 - (performance.now() - a.hitT) / 220) * 3);   // a dance-off partner hops on each step
+
             var cx = Math.round(offX + (a.x + 0.5) * ts);
             var footY = Math.round(offY + footRow * ts);
             var dx = cx - FRAME_W / 2, dy = footY - (FRAME_H - 3) - bob;

@@ -1646,7 +1646,16 @@ html.dancing #inventory-panel, html.dancing .dpad { display: none !important; }
   background: rgba(24, 10, 40, 0.86); border: 1px solid rgba(160, 128, 255, 0.7); box-shadow: 0 0 18px rgba(255, 90, 176, 0.25);
 }
 #dance-hud .dn-name { font-size: 11px; letter-spacing: 3px; font-weight: normal; color: #d8c8ff; }
-#dance-hud .dn-score { font-size: 18px; min-width: 70px; text-align: right; font-variant-numeric: tabular-nums; text-shadow: 0 0 8px rgba(255, 90, 176, 0.7); }
+#dance-hud .dn-cols { display: flex; gap: 14px; align-items: flex-start; }
+#dance-hud .dn-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+#dance-hud .dn-head {
+  display: flex; gap: 10px; align-items: baseline; justify-content: space-between; align-self: stretch; padding: 3px 8px; border-radius: 4px;
+  background: rgba(24, 10, 40, 0.86); border: 1px solid rgba(160, 128, 255, 0.45);
+}
+#dance-hud .dn-who { font-size: 10px; letter-spacing: 2px; color: #b8a8e8; white-space: nowrap; }
+#dance-hud .dn-score { font-size: 18px; min-width: 60px; text-align: right; font-variant-numeric: tabular-nums; text-shadow: 0 0 8px rgba(255, 90, 176, 0.7); }
+#dance-hud.duo .dn-col:first-child .dn-score { text-shadow: 0 0 8px rgba(64, 200, 216, 0.8); }
+#dance-hud.duo canvas { width: 200px; height: 350px; }
 #dance-hud canvas {
   width: 240px; height: 420px; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 4px;
   border: 1px solid rgba(160, 128, 255, 0.55); box-shadow: 0 0 24px rgba(64, 200, 216, 0.18);
