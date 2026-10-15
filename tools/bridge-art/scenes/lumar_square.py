@@ -84,10 +84,9 @@ for (x, r) in ((9.5, 6.5), (2.5, 13.5), (21.5, 13.5), (16.5, 6.5)):
 W.cart(k, 22.9, 11.6)                    # the handcart, parked by the fish stall
 for (x, r) in ((17.15, 11.05), (17.75, 11.15)):
     A.crate(k, x, r, s=0.55, tone=A.WOOD_L, contents='apples' if x < 17.5 else None)
-A.barrel(k, 18.55, 11.5)
-A.barrel(k, 18.3, 12.1, h=0.7, radius=0.28)
-k.solid(17, 11, 19, 13)
-W.bulletin_board(k, 13.0, 13.5)
+A.barrel(k, 18.6, 11.35)                 # the merchant's stock in one row, the lane past it open
+k.solid(17, 11, 19, 12)
+W.bulletin_board(k, 18.0, 15.5)          # by the harbour steps, out of the way up to the fountain
 W.statue(k, 8.5, 14.5)
 k.solid(7, 11, 8, 12)                    # the passerby
 k.solid(16, 11, 17, 12)                  # the merchant
@@ -148,11 +147,11 @@ k.solid(0, 0, 26, 1)                    # the strip behind the houses
 k.solid(18, 8, 21, 9)                   # behind the fish stall
 k.solid(22, 5, 24, 6)                   # behind the bell tower
 k.solid(1, 6, 5, 7)                     # behind the smithy
-for (c, r) in ((0, 10), (0, 14), (1, 14), (5, 14), (20, 14), (24, 14), (12, 12), (13, 12)):
+for (c, r) in ((0, 10), (0, 14), (1, 14), (5, 14), (20, 14), (24, 14), (17, 14), (18, 14)):
     k.solid(c, r, c + 1, r + 1)         # under tree crowns / behind the bulletin board
 apply_world(WORLD, k, (0, 0, 25, 17), scene_id='lumar-square', moves={
     'COTTAGE': (1, 4), "CARTOGRAPHER'S HOUSE": (24, 4), 'TAVERN': (5, 4), 'INN': (11, 4), 'BAKERY': (15, 4), 'APOTHECARY': (19, 4), 'SMITHY': (3, 9),
-    'FISHMONGER': [(19, 9), (21, 9)], 'FOUNTAIN': (11, 8), 'BULLETIN BOARD': (12, 13), 'PASSERBY': (7, 11), 'MERCHANT': (16, 11),
+    'FISHMONGER': [(19, 9), (21, 9)], 'FOUNTAIN': (11, 8), 'BULLETIN BOARD': (17, 15), 'PASSERBY': (7, 11), 'MERCHANT': (16, 11),
     'HARBOR': [(13, 17), (14, 17)]},
     actors=[{'sheet': 'npc-fishmonger', 'x': 21, 'y': 9, 'facing': 'left'},
             {'sheet': 'npc-passerby', 'x': 7, 'y': 11, 'facing': 'left'},

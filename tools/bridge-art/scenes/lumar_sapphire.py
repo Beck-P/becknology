@@ -140,10 +140,10 @@ for (x, r) in ((18.0, 15.6), (27.0, 21.6), (32.0, 21.6), (40.4, 15.6), (14.5, 22
     W.lantern_post(k, x, r, energy=18)
     k.point_light(x + 0.3, r + 0.2, 1.9, '#4080ff', 10, radius=0.1, group='flicker')          # blue flame
 W.bunting(k, (18.0, 15.6, 2.0), (40.4, 15.6, 2.0), sag=0.5, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
-for (x, r) in ((15.0, 18.5), (42.5, 19.0), (26.2, 22.0)):
+for (x, r) in ((18.9, 16.75), (39.0, 16.75), (26.2, 22.0)):          # stock beside the stalls, the square left open
     A.crate(k, x, r, s=0.6, tone=A.WOOD_L)
-A.barrel(k, 16.0, 18.9, h=0.8, radius=0.3)
-A.barrel(k, 41.6, 19.3, h=0.8, radius=0.3)
+A.barrel(k, 22.5, 16.8, h=0.8, radius=0.3)                                  # in the gaps between the stalls
+A.barrel(k, 35.5, 16.8, h=0.8, radius=0.3)
 k.box(14.45, 16.45, 0.0, 14.55, 16.55, 1.3, A.WOOD_D, 'note_post')                           # the trader's note
 k.box(14.3, 16.55, 0.85, 14.7, 16.58, 1.25, '#e8dcc0', 'note')
 k.solid(14, 16, 15, 17)
@@ -172,7 +172,7 @@ for i in range(6):
     k.cyl(SHRINE[0] + math.cos(a) * 0.6, SHRINE[1] + 0.3 + math.sin(a) * 0.3, 0.0, 0.05, 0.05, '#e8dcc0', 'shell', verts=6)
 for (x, r, s) in ((51.0, 14.6, 0.9), (55.0, 18.4, 0.8), (6.0, 23.0, 0.8), (44.2, 11.0, 1.0), (10.8, 11.2, 0.9),
                   (52.6, 23.2, 0.7)):
-    W.shore_crystals(k, x, r, col=CRYSTAL, s=s, energy=10)
+    W.shore_crystals(k, x, r, col=CRYSTAL, s=s, energy=10, solid=s > 0.75)
 for (x, r) in ((49.8, 13.6), (53.2, 16.4), (44.8, 24.0)):
     W.tree(k, x, r, h=2.4, tone='#2e4a44')
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
