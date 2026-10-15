@@ -129,6 +129,8 @@ var BridgeInteractions = (function () {
     if (!el) return;
     var t = dialogVisible ? null : promptState.target;
     if (t && t.action === 'sit' && typeof BridgeCharacter !== 'undefined' && BridgeCharacter.isSeated && BridgeCharacter.isSeated()) t = null;
+    var md = typeof BridgeWorld !== 'undefined' && BridgeWorld.getMode && BridgeWorld.getMode();
+    if (md && md.solo) { t = null; promptState.target = null; }            // on skis or on the wall: nothing to press E at
     if (!t || !view || !view.ts) {
       if (promptState.shown) { el.classList.remove('visible'); promptState.shown = null; }
       return;
@@ -366,7 +368,7 @@ var BridgeInteractions = (function () {
         if (typeof BridgeMine !== 'undefined') BridgeMine.use(inter);         // the Rose Mine (js/mine.js)
         break;
 
-      case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start':   // Hoarfell (js/worlds/hoarfell.js)
+      case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start': case 'ski_gate':   // Hoarfell (js/worlds/hoarfell.js)
         if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.use(inter);
         break;
 
@@ -605,7 +607,7 @@ var BridgeInteractions = (function () {
           if (typeof BridgeMine !== 'undefined') BridgeMine.forge(opt.to);
           break;
         case 'ski_run':
-          if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.ski(opt.run);
+          if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.ski(opt.run, { rival: !!opt.rival });
           break;
         case 'close':
         default:
@@ -1038,6 +1040,11 @@ var BridgeInteractions = (function () {
       if (t.mine && typeof BridgeMine !== 'undefined') {              // Hob's forge: a better pickaxe
         close();
         BridgeMine.upgrade(person.name, t.mine);
+        return;
+      }
+      if (t.race && typeof BridgeHoarfell !== 'undefined') {          // Liv: race her down a run (js/ski.js)
+        close();
+        BridgeHoarfell.race(person.name.split(' ')[0]);
         return;
       }
       if (t.outfit && typeof BridgeGear !== 'undefined') {           // what they've got to wear or carry

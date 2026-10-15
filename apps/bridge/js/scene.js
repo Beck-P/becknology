@@ -260,7 +260,7 @@ var BridgeScene = (function () {
    * footRow: the row (tile units, fractional) where the figure meets the
    * floor; its feet are drawn at screen y = offY + footRow·ts.
    */
-  function drawOccluded(ctx, sc, img, sx, sy, sw, sh, dx, dy, footRow, offX, offY, tint, shadow, op) {
+  function drawOccluded(ctx, sc, img, sx, sy, sw, sh, dx, dy, footRow, offX, offY, tint, shadow, op, xray) {
     if (tmp.width < sw || tmp.height < sh) { tmp.width = Math.max(tmp.width, sw); tmp.height = Math.max(tmp.height, sh); }
     tctx.setTransform(1, 0, 0, 1, 0, 0);
     tctx.globalCompositeOperation = 'source-over';
@@ -312,7 +312,10 @@ var BridgeScene = (function () {
         if (!d[k]) continue;
         var xx = dx + i - left;
         if (xx < 0 || xx >= W) continue;
-        if (depth[rowBase + xx] < cd - DEPTH_EPS) d[k] = 0;
+        if (depth[rowBase + xx] < cd - DEPTH_EPS) {
+          if (xray) { d[k - 3] = 214; d[k - 2] = 226; d[k - 1] = 255; d[k] = 92; }   // hidden: a pale silhouette, so you can see yourself in the trees
+          else d[k] = 0;
+        }
       }
     }
     tctx.putImageData(data, 0, 0);

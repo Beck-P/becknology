@@ -261,3 +261,95 @@ def woodpile(k, x0, x1, cr):
         z += 0.17
     k.box(x0 - 0.05, cr - 0.28, z, x1 + 0.05, cr + 0.28, z + 0.06, (ROOF_SNOW, 0.15), 'pile_snow')
     k.solid(x0, cr - 0.3, x1, cr + 0.3)
+
+
+# ---- the pistes (scenes/hoarfell_piste.py) -------------------------------------------------------------------
+RUN_COL = {'green': '#2a9a5a', 'blue': '#2a6ac0', 'black': '#1e1e26'}
+
+
+def piste_pole(k, cx, cr, col, h=1.0):
+    """An edge marker: a slim pole, the top third in the run's colour."""
+    k.cyl(cx, cr, 0, h * 0.66, 0.035, ('#e8e4dc', 0.1), 'piste_pole', verts=6)
+    k.cyl(cx, cr, h * 0.66, h, 0.04, (col, 0.1), 'piste_pole_top', verts=6)
+
+
+def trail_marker(k, cx, cr, kind, h=1.5):
+    """The run's sign on a post: a green circle, a blue square, a black diamond."""
+    col = RUN_COL[kind]
+    k.cyl(cx, cr, 0, h, 0.045, (LOG_D, 0.1), 'marker_post', verts=6)
+    z = h - 0.22
+    if kind == 'green':
+        k.cyl_y(cx, cr + 0.04, cr + 0.1, z, 0.26, 0.26, (col, 0.1), 'marker', verts=16)
+        k.cyl_y(cx, cr + 0.02, cr + 0.04, z, 0.31, 0.31, ('#f2f0ea', 0.1), 'marker_rim', verts=16)
+    elif kind == 'blue':
+        k.box(cx - 0.24, cr + 0.04, z - 0.24, cx + 0.24, cr + 0.1, z + 0.24, (col, 0.1), 'marker')
+        k.box(cx - 0.29, cr + 0.02, z - 0.29, cx + 0.29, cr + 0.04, z + 0.29, ('#f2f0ea', 0.1), 'marker_rim')
+    else:
+        for (dx, s) in ((-0.17, 0.2), (0.17, 0.2)):
+            k.poly([(cx + dx, cr + 0.1, z + s * 1.25), (cx + dx + s, cr + 0.1, z), (cx + dx, cr + 0.1, z - s * 1.25), (cx + dx - s, cr + 0.1, z)],
+                   (col, 0.1), 'marker')
+        k.box(cx - 0.44, cr + 0.02, z - 0.3, cx + 0.44, cr + 0.06, z + 0.3, ('#f2f0ea', 0.1), 'marker_rim')
+    k.cyl(cx, cr, h, h + 0.06, 0.07, (ROOF_SNOW, 0.1), 'post_snow', verts=8)
+
+
+def start_house(k, cx, r_front, kind, name):
+    """A run's start: a little timber hut, the start wand between two posts in
+    front of it, the run's name on a board over the gate."""
+    col = RUN_COL[kind]
+    x0, x1 = cx - 1.5, cx + 1.5
+    rm, zr = chalet(k, x0, x1, r_front - 1.5, r_front, wall_h=1.5, rise=0.9, door_x=None,
+                    windows=[(cx - 0.75, 0.75), (cx + 0.75, 0.75)])
+    gr = r_front + 1.3                                       # the start line
+    for s in (-1, 1):
+        k.box(cx + s * 0.9 - 0.06, gr - 0.06, 0, cx + s * 0.9 + 0.06, gr + 0.06, 1.65, (col, 0.1), 'gate_post')
+        k.box(cx + s * 0.9 - 0.1, gr - 0.1, 1.65, cx + s * 0.9 + 0.1, gr + 0.1, 1.72, (ROOF_SNOW, 0.1), 'gate_cap')
+    k.box(cx - 0.84, gr - 0.02, 0.42, cx + 0.84, gr + 0.02, 0.46, ('#e8c040', 0.1), 'start_wand')
+    k.box(cx - 1.0, gr - 0.03, 1.2, cx + 1.0, gr + 0.03, 1.6, (col, 0.1), 'start_board')
+    import assets_signs as G
+    G.letters(k, name, 'Righteous', cx, gr + 0.03, 1.27, size=0.22, col='#f4f0e6', lit=False)
+    k.box(cx - 1.2, gr + 0.05, -0.01, cx + 1.2, gr + 0.25, 0.012, ('#d83a2e', 0.1), 'start_line')
+    k.solid(cx + 0.7, gr - 0.3, cx + 1.1, gr + 0.3)
+    k.solid(cx - 1.1, gr - 0.3, cx - 0.7, gr + 0.3)
+    return gr
+
+
+def net_fence(k, a, b, h=0.8, col='#ff7a2a'):
+    """An orange safety net on poles."""
+    L = math.hypot(b[0] - a[0], b[1] - a[1])
+    n = max(1, int(L / 1.2))
+    for i in range(n + 1):
+        t = i / n
+        x, r = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+        k.cyl(x, r, 0, h + 0.08, 0.03, ('#3a3a42', 0.1), 'net_pole', verts=6)
+    for z in (h * 0.35, h * 0.7, h):
+        k.bar(a[0], a[1], b[0], b[1], z - 0.06, z, 0.03, (col, 0.15), 'net')
+    k.bar(a[0], a[1], b[0], b[1], 0.05, h, 0.012, (shade(col, 0.8), 0.2), 'net_mesh')
+
+
+def finish_arch(k, x0, x1, cr, h=2.6):
+    """The finish: two padded towers, a red banner across with FINISH on it."""
+    import assets_signs as G
+    for x in (x0, x1):
+        k.box(x - 0.35, cr - 0.35, 0, x + 0.35, cr + 0.35, h + 0.4, ('#d83a2e', 0.12), 'finish_tower', bevel=0.04)
+        k.box(x - 0.4, cr - 0.4, h + 0.4, x + 0.4, cr + 0.4, h + 0.5, (ROOF_SNOW, 0.1), 'tower_snow')
+        k.box(x - 0.3, cr + 0.35, 0.5, x + 0.3, cr + 0.37, 1.4, ('#f4f0e6', 0.1), 'tower_pad')
+        k.solid(x - 0.4, cr - 0.4, x + 0.4, cr + 0.4)
+    k.box(x0 + 0.35, cr - 0.04, h - 0.25, x1 - 0.35, cr + 0.04, h + 0.35, ('#c8302a', 0.12), 'finish_banner')
+    x = x0 + 0.5
+    i = 0
+    while x < x1 - 0.5:                                     # chequered strip along the bottom of the banner
+        k.box(x, cr + 0.04, h - 0.25, x + 0.2, cr + 0.06, h - 0.13, ('#f4f0e6' if i % 2 else '#1e1e26', 0.1), 'chequer')
+        x += 0.2
+        i += 1
+    G.letters(k, 'FINISH', 'Righteous', (x0 + x1) / 2, cr + 0.04, h - 0.06, size=0.36, col='#f4f0e6', lit=False)
+    k.box(x0, cr - 0.08, -0.01, x1, cr + 0.08, 0.012, ('#c8302a', 0.1), 'finish_line')
+
+
+def piste_tree(k, cx, cr, h=2.6, tone=PINE):
+    """A lighter fir for forests of hundreds: three snowy tiers."""
+    k.cyl(cx, cr, 0, h * 0.25, 0.07, (LOG_D, 0.12), 'trunk', verts=6)
+    for i in range(3):
+        z0 = h * (0.14 + i * 0.25)
+        rad = 0.6 * (1 - i * 0.26) * k.rng.uniform(0.9, 1.1)
+        k.cone(cx, cr, z0, z0 + h * 0.42, rad, 0.02, (shade(tone, 1 + i * 0.08), 0.18), 'pine', verts=9)
+        k.cone(cx, cr, z0 + h * 0.17, z0 + h * 0.38, rad * 0.62, 0.04, (ROOF_SNOW, 0.2), 'pine_snow', verts=9)

@@ -1073,5 +1073,37 @@
         ]
       }
     ]
+  },
+  "liv": {
+    "name": "Liv Sandvik",
+    "role": "Ski racer, the Hoarspire pistes",
+    "sheet": "npc-liv",
+    "at": [
+      {
+        "world": "hoarfell-piste",
+        "label": "LIV"
+      }
+    ],
+    "greet": "YOU'RE STANDING IN THE FINISH. EITHER YOU'RE TIMING ME OR YOU'RE RACING ME - AND YOU DON'T HAVE A STOPWATCH.",
+    "again": "BACK FOR ANOTHER BEATING?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "ANSGAR'S NIECE. I'VE HELD THE COULOIR RECORD SINCE I WAS SIXTEEN - IT'S IN RED INK IN THE TIMING HUT, GO AND LOOK. I TEACH THE NURSERY SLOPE IN THE MORNINGS SO I CAN RACE IN THE AFTERNOONS."
+      },
+      {
+        "q": "How do I ski fast?",
+        "a": "TUCK ON THE STRAIGHTS, DON'T SKID YOUR TURNS - EVERY TIME YOU THROW YOUR SKIS ACROSS, YOU'RE BRAKING. TAKE THE GATES CLOSE. AND IF YOU SPIN OFF A KICKER, LAND IT CLEAN OR DON'T BOTHER."
+      },
+      {
+        "q": "Race me",
+        "a": "",
+        "race": true
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE OLD LOT TALK ABOUT SKIING OFF THE BACK OF THE HOARSPIRE, WHERE THERE AREN'T ANY POLES. ANSGAR SAYS NOBODY WHO WENT LOOKING FOR WHAT'S OUT THERE CAME BACK THE SAME. HE ALSO SAYS THAT ABOUT THE COCOA."
+      }
+    ]
   }
 }

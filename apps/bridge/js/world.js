@@ -24,6 +24,9 @@ var BridgeWorld = (function () {
   var hudPx = 0;      // touch: how much of the bottom of the screen the hotbar covers
   var reservePx = 0;  // a panel docked at the bottom (the furnishing tray) — frame the world above it
   var focus = null;   // a point (tiles) the camera follows instead of the pilot (the furnishing cursor)
+  // a mode that moves the pilot itself instead of the grid steps (skiing, js/ski.js):
+  // { update(dt, world), focus() -> {x, y} | null, solo: true to keep interactions quiet }
+  var mode = null;
   var buf = document.createElement('canvas');
   var bctx = buf.getContext('2d');
   // Native-space view of the frame being drawn ({offX, offY, ts, w, h}),
@@ -397,6 +400,7 @@ var BridgeWorld = (function () {
   }
 
   function load(worldId, callback) {
+    if (mode) { var m = mode; mode = null; if (m.end) m.end(); }     // leaving ends a ski run
     var xhr = new XMLHttpRequest();
     // Cache-bust so JSON edits land without a hard reload (cheap — JSONs are tiny).
     xhr.open('GET', '/bridge/assets/worlds/' + worldId + '.json?v=' + Date.now());
@@ -558,7 +562,7 @@ var BridgeWorld = (function () {
 
   // Step into another world (a building interior, a parent area on exit).
   // Quick fade-to-black, swap world JSON, fade back in.
-  function enterWorld(worldId, spawn) {
+  function enterWorld(worldId, spawn, then) {
     if (!worldId) return;
     BridgeControls.disable();
 
@@ -594,6 +598,7 @@ var BridgeWorld = (function () {
           fade.style.display = 'none';
           fade.classList.remove('active');
           BridgeControls.enable();
+          if (then) then();
         }, 300);
       });
     }, 230);
@@ -694,10 +699,14 @@ var BridgeWorld = (function () {
     var dt = lastUpdate ? Math.min(0.05, (nowT - lastUpdate) / 1000) : 1 / 60;
     lastUpdate = nowT;
 
-    // Poll controls → move character
-    var dir = BridgeControls.getDir();
-    if (dir.dx !== 0 || dir.dy !== 0) {
-      BridgeCharacter.tryMove(dir.dx, dir.dy, world.collisions, world.width, world.height);
+    // Poll controls → move character (or let a mode move them)
+    if (mode) {
+      mode.update(dt, world);
+    } else {
+      var dir = BridgeControls.getDir();
+      if (dir.dx !== 0 || dir.dy !== 0) {
+        BridgeCharacter.tryMove(dir.dx, dir.dy, world.collisions, world.width, world.height);
+      }
     }
 
     // Update character animation
@@ -736,7 +745,7 @@ var BridgeWorld = (function () {
       // Smooth camera follow
       // Exponential follow — same feel as the old 10%-per-frame lerp at
       // 60 Hz, but frame-rate independent.
-      var pos = focus || BridgeCharacter.getRenderPos();
+      var pos = focus || (mode && mode.focus && mode.focus()) || BridgeCharacter.getRenderPos();
       var follow = 1 - Math.exp(-dt * 6.3);
       // cameraLead (tiles, world JSON): frame a little above or below the
       // player — the District looks up so its skyline shows over the shops
@@ -769,7 +778,7 @@ var BridgeWorld = (function () {
     }
 
     // Check interactions
-    if (typeof BridgeInteractions !== 'undefined') {
+    if (typeof BridgeInteractions !== 'undefined' && !(mode && mode.solo)) {
       BridgeInteractions.update(world, BridgeCharacter, BridgeControls);
     }
 
@@ -1093,6 +1102,8 @@ var BridgeWorld = (function () {
     registerSceneHooks: registerSceneHooks,
     reserveBottom: function (px) { reservePx = px || 0; },
     setFocus: function (p) { focus = p || null; },
+    setMode: function (m) { mode = m || null; },
+    getMode: function () { return mode; },
     getCamera: function () { return camera; },
     getScale: function () { return scale; },
     getTileSize: function () { return tileSize; },

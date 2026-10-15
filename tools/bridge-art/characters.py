@@ -4,6 +4,8 @@
   BVENV/bin/python tools/bridge-art/characters.py OUTDIR npc-bartender
   BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-coat      # a suit style (coat, plate,
   BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-sit-coat  # thermal, runner), standing / seated
+  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-ski-coat  # on skis (Hoarfell's slopes)
+  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-climb-coat  # climbing, 32 × 64 frames
   python3 tools/bridge-art/sprites_post.py pilot OUTDIR/pilot             # -> pilot-<colour>.png
   python3 tools/bridge-art/sprites_post.py pilot-coat OUTDIR              # -> pilot-coat-<colour>.png
   python3 tools/bridge-art/sprites_post.py npc OUTDIR/npc-bartender
@@ -60,6 +62,8 @@ FIXED = {
     'steeldk': ('#22262e', '#3a404c', '#5a6272'),
     'fur':    ('#a89a88', '#e2d8c8', '#fbf6ec'),
     'sneaker': ('#8a8a96', '#dcdce6', '#ffffff'),
+    'ski':    ('#6a1812', '#c83a2e', '#f07a60'),
+    'pole':   ('#1e1e26', '#4a4a56', '#8a8a98'),
     'ledp':   ('#f078c8', '#f078c8', '#f078c8'),
 }
 NPCS = {
@@ -144,6 +148,8 @@ NPCS = {
                           hair=('#6a2a14', '#9a4020', '#c05a30'), bun=True, pose='stand'),
     'npc-ansgar':    dict(skin='skin3', shirt=('#1a2a4a', '#2a4070', '#4a64a0'), hood=('#1a2a4a', '#2a4070', '#4a64a0'),
                           hair=('#6a6a70', '#9a9aa2', '#c4c4cc'), beard=True, mustache=True, pose='stand'),
+    'npc-liv':       dict(skin='skin', shirt=('#8a1a1a', '#c82a2a', '#f04a3a'), vest=('#1a1a22', '#2a2a36', '#3e3e4e'),
+                          hair=('#c8a050', '#e8c870', '#f8e8a0'), long_hair=True, goggles=True, pose='stand'),
     'npc-sev':       dict(skin='skin2', shirt=('#7a5010', '#b88020', '#e0b040'), hair=('#8a8a90', '#b8b8c0', '#dcdce4'),
                           bun=True, visor_cap=True, pose='stand'),
     'npc-vex':       dict(skin='skin', shirt=('#141018', '#241c2c', '#3a2e44'), vest=('#5a1040', '#a01870', '#d83098'),
@@ -491,13 +497,22 @@ def build_human(spec):
             rot=(-0.4, 0, 0), vertices=16, radius1=4.3, radius2=0.5, depth=8.0)
 
 
-if WHO.startswith('pilot'):          # pilot[-sit][-<style>]: the suits, standing or seated (chairs, benches, stools)
-    STYLE = WHO.split('-')[-1] if WHO not in ('pilot', 'pilot-sit') else 'flight'
+if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb][-<style>]: the suits, standing, seated, on skis, climbing
+    _parts = WHO.split('-')[1:]
+    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb') else 'stand'
+    _rest = _parts[1:] if MODE != 'stand' else _parts
+    STYLE = _rest[0] if _rest else 'flight'
     {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner}[STYLE]()
+    if MODE == 'climb':                # arms over the head need a taller frame
+        W, H = 32, 64
+        ORIGIN_PX = (16, 61)
+    elif MODE == 'ski':                # and ski tips pointing at you need room below the feet, a carve room to lean
+        W, H = 40, 56
+        ORIGIN_PX = (20, 45)
     VARIANTS = {s: {'suit': SUITS[s], 'suitdk': (mix(SUITS[s][0], '#000000', 0.25), SUITS[s][0], mix(SUITS[s][0], SUITS[s][1], 0.5)),
                     'arm': (mix(SUITS[s][0], '#000000', 0.12), mix(SUITS[s][1], SUITS[s][0], 0.3), mix(SUITS[s][2], SUITS[s][1], 0.35))}
                 for s in SUITS}
-    POSE = 'sit' if WHO.startswith('pilot-sit') else 'stand'
+    POSE = MODE
 else:
     spec = NPCS[WHO]
     build_human(spec)
@@ -509,6 +524,19 @@ else:
             tones[key] = spec[key]
     VARIANTS = {WHO.replace('npc-', ''): tones}
     POSE = spec['pose']
+
+# ---- skis and poles (pilot-ski-*): skis on the root so they stay on the snow however the legs bend ----
+skis, poles = {}, {}
+if WHO.startswith('pilot') and POSE == 'ski':
+    for side, sx in (('L', -2.0), ('R', 2.0)):
+        sp = pivot('ski' + side, (sx, 0, 0), root)
+        skis[side] = sp
+        add('cube', 'skiBoard' + side, (0, -1.0, 0.3), (0.85, 7.0, 0.3), 'ski', 'ski' + side, sp, bevel=0.15)
+        add('cube', 'skiTip' + side, (0, -8.2, 0.9), (0.85, 0.9, 0.3), 'ski', 'ski' + side, sp, rot=(-0.6, 0, 0), bevel=0.15)
+        add('cube', 'binding' + side, (0, -0.6, 0.8), (1.0, 1.4, 0.35), 'pole', 'ski' + side, sp)
+        poles[side] = add('cylinder', 'pole' + side, (0, 1.2, -11.0), (0.32, 0.32, 5.2), 'pole', 'pole' + side, shoulders[side],
+                          rot=(0.22, 0, 0), vertices=6)
+        add('cylinder', 'basket' + side, (0, 2.3, -15.8), (1.0, 1.0, 0.15), 'pole', 'pole' + side, shoulders[side], vertices=8)
 
 # ---- camera: scene angle, origin pinned to ORIGIN_PX ----------------------------
 cd = bpy.data.cameras.new('cam')
@@ -594,6 +622,167 @@ def render(path, sixteen=False):
 
 for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
     os.makedirs(os.path.join(OUT, kind), exist_ok=True)
+
+
+# ---- sport poses: skiing and climbing --------------------------------------------------------------
+# Same sheet layout as walking (rows down/right/up/left × columns idle0-3, walk0-7) so sprites_post packs them,
+# but the cells mean other things — see SKI_ROWS / CLIMB_ROWS and js/ski.js, js/climb.js.
+COLNAMES = [f'idle{i}' for i in range(4)] + [f'walk{i}' for i in range(8)]
+
+
+def rest_pose():
+    for side in 'LR':
+        hips[side].rotation_euler = (0, 0, 0)
+        knees[side].rotation_euler = (0, 0, 0)
+        shoulders[side].rotation_euler = (0, 0, 0)
+        if side in skis:
+            skis[side].rotation_euler = (0, 0, 0)
+            skis[side].location.z = 0
+    body.location = (0, 0, 0)
+    body.rotation_euler = (0, 0, 0)
+    if head:
+        head.rotation_euler = (0, 0, 0)
+
+
+def crouch(h, k, lift=0.0):
+    """Bend at hips and knees (degrees) and drop the body so the boots stay on the skis."""
+    for side in 'LR':
+        hips[side].rotation_euler = (math.radians(-h), 0, 0)
+        knees[side].rotation_euler = (math.radians(k), 0, 0)
+    drop = 9.2 - 4.2 * math.cos(math.radians(h)) - 4.0 * math.cos(math.radians(k - h))
+    body.location = (0, 0, -drop + lift)
+
+
+def arms_to(lx, rx, lz=0.0, rz=0.0):
+    shoulders['L'].rotation_euler = (math.radians(lx), 0, math.radians(lz))
+    shoulders['R'].rotation_euler = (math.radians(rx), 0, math.radians(rz))
+
+
+def ski_glide(bob):
+    def f():
+        crouch(28, 48, bob * 0.35)
+        arms_to(-34, -34, -8, 8)
+    return f
+
+
+def ski_frame(fn, roll=0.0, yaw=0.0):
+    return {'fn': fn, 'roll': roll, 'yaw': yaw}
+
+
+def tuck():
+    crouch(58, 100)
+    arms_to(-72, -72, -4, 4)
+
+
+def carve():
+    crouch(34, 58)
+    arms_to(-40, -28, -14, 14)
+
+
+def plough():
+    crouch(18, 32)
+    arms_to(-26, -26, -12, 12)
+    skis['L'].rotation_euler = (0, 0, math.radians(-14))
+    skis['R'].rotation_euler = (0, 0, math.radians(14))
+
+
+def air():
+    crouch(55, 90, 3.0)
+    for side in 'LR':
+        skis[side].location.z = 2.2
+    arms_to(-40, -40, -45, 45)
+
+
+def pole_push():
+    crouch(22, 40)
+    arms_to(28, 28, -6, 6)
+
+
+def crash(v):
+    def f():
+        for side in 'LR':
+            hips[side].rotation_euler = (math.radians(-82), 0, math.radians(8 if side == 'L' else -8))
+            knees[side].rotation_euler = (math.radians(40 + 10 * v), 0, 0)
+        body.location = (0, 0, -7.6)
+        arms_to(38, 30 + 8 * v, -30, 30)
+        skis['L'].rotation_euler = (0, 0, math.radians(28 + 6 * v))
+        skis['R'].rotation_euler = (0, 0, math.radians(-38))
+        skis['R'].location.z = 0.4
+    return f
+
+
+SKI_ROWS = []
+if POSE == 'ski':
+    run = [ski_frame(ski_glide(b)) for b in (0, 1, 2, 1)] + [ski_frame(tuck), ski_frame(tuck),
+           ski_frame(carve, roll=-13), ski_frame(carve, roll=13), ski_frame(plough), ski_frame(air),
+           ski_frame(pole_push), ski_frame(pole_push)]
+    # rows: straight down the fall line, a traverse across it, the diagonal between; the last row is the
+    # spin off a jump (eight headings, airborne) and sitting in the snow after a fall
+    SKI_ROWS = [('down', 0, run), ('right', 90, run), ('up', 45, run),
+                ('left', 0, [ski_frame(air, yaw=a) for a in range(0, 360, 45)] + [ski_frame(crash(v), yaw=25) for v in range(4)])]
+
+
+def hang(lx_, rx_, lspread=-10, rspread=10, lhip=40, lknee=70, rhip=10, rknee=20, lift=0.0):
+    def f():
+        arms_to(-lx_, -rx_, lspread, rspread)
+        hips['L'].rotation_euler = (math.radians(-lhip), 0, 0)
+        knees['L'].rotation_euler = (math.radians(lknee), 0, 0)
+        hips['R'].rotation_euler = (math.radians(-rhip), 0, 0)
+        knees['R'].rotation_euler = (math.radians(rknee), 0, 0)
+        body.location = (0, 0, lift)
+    return f
+
+
+def stand_ledge():
+    arms_to(-12, -12, -4, 4)
+
+
+def falling():
+    arms_to(-130, -130, -60, 60)
+    for side in 'LR':
+        hips[side].rotation_euler = (math.radians(-30), 0, 0)
+        knees[side].rotation_euler = (math.radians(55), 0, 0)
+
+
+CLIMB_ROWS = []
+if POSE == 'climb':
+    # (arms spread wide of the helmet, or they vanish behind it seen from behind)
+    climb = [{'fn': hang(160, 160, -30, 30, 40 + 6 * b, 70, 10, 20, 0.3 * b)} for b in (0, 1, 2, 1)] + [
+        {'fn': hang(172, 140, -24, 34, 20, 30, 50, 85)},       # reaching up with the left hand
+        {'fn': hang(140, 172, -34, 24, 50, 85, 20, 30)},       # reaching up with the right
+        {'fn': hang(145, 145, -36, 36, 70, 100, 30, 50, 2.5)}, # pulling up
+        {'fn': hang(115, 115, -40, 40, 85, 110, 15, 25, 3.5)}, # mantling onto a ledge
+        {'fn': stand_ledge}, {'fn': falling},
+        {'fn': hang(160, -25, -30, 6, 30, 60, 10, 20)},        # one hand down, chalking up
+        {'fn': hang(165, 10, -30, 10, 20, 40, 40, 70)}]        # shaking out an arm
+    CLIMB_ROWS = [('up', 180, climb)]
+
+
+def render_cell(dname, col, yaw, spec):
+    rest_pose()
+    spec['fn']()
+    root.rotation_euler = (0, math.radians(spec.get('roll', 0.0)), math.radians(yaw + spec.get('yaw', 0.0)))
+    tag = f'{dname}_{COLNAMES[col]}.png'
+    set_pass('id'); render(os.path.join(OUT, 'id', tag))
+    set_pass('depth'); render(os.path.join(OUT, 'depth', tag), sixteen=True)
+    for v in VARIANTS:
+        set_pass('color', v)
+        render(os.path.join(OUT, 'color_' + v, tag))
+    return tag
+
+
+if POSE in ('ski', 'climb'):
+    import shutil
+    for dname, yaw, specs in (SKI_ROWS if POSE == 'ski' else CLIMB_ROWS):
+        for col, spec in enumerate(specs):
+            tag = render_cell(dname, col, yaw, spec)
+            if POSE == 'climb':                 # one view of a climber (from behind); the other rows copy it
+                for other in ('down', 'right', 'left'):
+                    for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
+                        shutil.copy(os.path.join(OUT, kind, tag), os.path.join(OUT, kind, tag.replace(dname + '_', other + '_')))
+    print('rendered', WHO, POSE, 'x', len(VARIANTS))
+    sys.exit(0)
+
 for dname, yaw in DIRS.items():
     root.rotation_euler = (0, 0, math.radians(yaw))
     for anim, i, swing, lift, tip_on in FRAMES:

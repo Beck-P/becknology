@@ -1,481 +1,630 @@
 /**
- * BridgeSki — downhill on Hoarfell: three runs from the top of the chairlift
- * down to Fellhaven.
+ * BridgeSki — skiing on Hoarfell, in the world, at the world's own scale.
  *
- * Top-down, the slope scrolling up past you in a native buffer (320 × 200,
- * scaled by a whole number). ←/→ turn your skis (seven headings, straight
- * down to nearly across), ↓ tucks (faster), ↑ snowploughs (slower), Space
- * off a jump does a trick. Pass between each pair of flags — a missed gate
- * costs three seconds; hit a tree or a rock and you go down in a burst of
- * snow (two seconds to get up); moguls shake your speed off; ice won't let
- * you turn. Ski goggles show the line to the next gate. Touch: hold the left
- * or right of the slope to turn, the bottom to tuck.
+ * The pistes are a world (`hoarfell-piste`, scenes/hoarfell_piste.py): three
+ * runs from start huts along the crest down to one finish. On skis the pilot
+ * is no longer stepping tile to tile — this module is the world's mode
+ * (BridgeWorld.setMode) and poses the pilot (BridgeCharacter.setPose) with
+ * the ski sheets (characters.py pilot-ski): a heading you steer (←/→, any
+ * angle from straight down the fall line to right across it), speed from the
+ * slope under you (`ski.grade`, a digit a tile), tuck (↓) to go faster,
+ * snowplough (↑) to slow, turn across the hill to stop. Space/E pushes off
+ * with the poles; off a kicker it spins you (land it straight or go down).
+ * Powder off the piste bogs you down, moguls shake you, ice won't turn.
+ * Trees, rocks and walls put you in the snow (you get up beside them).
+ * The camera runs ahead of you down the hill.
  *
- * Runs (fixed, so you can learn them): the Nursery Slope (green), Pinewood
- * (blue) and the Couloir (black — Ansgar lets you on once you've finished
- * Pinewood). Best times in localStorage bridge_ski; a finish pays coins, the
- * first well, then once a day each.
+ * Races: a run's start hut (or the lift) puts you in the gate; 3-2-1 and the
+ * clock runs to the finish arch; pass between each pair of flags (a miss is
+ * +3 s, a landed spin -1 s). Your best run is kept as a ghost and skis beside
+ * you next time; Liv (people.json) races you as a rival — her line is the
+ * same physics skied by a careful hand (`rivalLine`). Free skiing: no clock,
+ * no gates, anywhere on the mountain; stop and press E to take your skis off.
  *
- *   BridgeSki.start(runId)    // the lift (js/worlds/hoarfell.js) or the summit's start gate
- *   BridgeSki.RUNS
+ * Kept in localStorage bridge_ski: per run {runs, best, paid, firstPaid, ghost}, rival wins.
+ *
+ *   BridgeSki.start(runId | null, {rival: true})   // null: free skiing (from where you are, or the top)
+ *   BridgeSki.RUNS, .best(id), .unlocked(id), .isOpen()
+ *   BridgeSki.items / ground / over    // the hoarfell tileset's scene hooks call these (js/worlds/hoarfell.js)
  */
 var BridgeSki = (function () {
-  var KEY = 'bridge_ski';
-  var BW = 320, BH = 200;
+  var KEY = 'bridge_ski', WORLD = 'hoarfell-piste';
   var RUNS = {
-    nursery:  { name: 'THE NURSERY SLOPE', colour: '#3aa060', mark: 'green', length: 2200, seed: 5, width: 230, trees: 0.5, rocks: 0.1,
-                moguls: 0.3, ice: 0, gates: 9, gateW: 54, jumps: 1, grav: 120, first: 40, again: 10 },
-    pinewood: { name: 'PINEWOOD', colour: '#3a7ae0', mark: 'blue', length: 3400, seed: 17, width: 210, trees: 1.3, rocks: 0.3,
-                moguls: 0.6, ice: 0.15, gates: 14, gateW: 44, jumps: 2, grav: 140, first: 90, again: 20 },
-    couloir:  { name: 'THE COULOIR', colour: '#2a2a34', mark: 'black', length: 4400, seed: 29, width: 150, trees: 1.0, rocks: 0.9,
-                moguls: 0.5, ice: 0.4, gates: 18, gateW: 36, jumps: 3, grav: 170, needs: 'pinewood', first: 200, again: 40 }
+    nursery:  { name: 'THE NURSERY SLOPE', mark: 'green', colour: '#2a9a5a', first: 40, again: 10, pace: 0.85, beat: 60 },
+    pinewood: { name: 'PINEWOOD', mark: 'blue', colour: '#2a6ac0', first: 90, again: 20, pace: 0.9, beat: 120 },
+    couloir:  { name: 'THE COULOIR', mark: 'black', colour: '#1e1e26', needs: 'pinewood', first: 200, again: 40, pace: 0.95, beat: 250 }
   };
-  var HEAD = [-1.2, -0.85, -0.45, 0, 0.45, 0.85, 1.2];              // the seven headings (radians off straight down)
-  var SUIT = { purple: '#8a64d0', cyan: '#40c8d8', gold: '#e0b040', green: '#4aa860', red: '#d04a40', white: '#e8e8f0' };
+  // physics (tiles, seconds): pull down the fall line per grade step, drag, friction, steering
+  var GRAV = 1.45, DRAG = 0.1, TUCK = 0.066, FRICTION = 0.55, PLOUGH = 6.5, TURN = 2.5, VMAX = 15, GZ = 13, AMAX = 1.45;
+  var C45 = Math.SQRT1_2;
+  var LEAN_R = 7, LEAN_L = 6;          // the carve frames leaning to the sheet's right / left
+  var RIVAL_SHEET = 'ski-coat-red';
 
   var save = load();
-  var el = null, cv = null, ctx = null, raf = 0, last = 0, g = null, keys = {}, touch = null;
+  var s = null;                         // the run in progress
+  var trail = [], spray = [], trailWorld = null;
+  var hud = null;
 
-  function load() { try { return JSON.parse(localStorage.getItem(KEY) || 'null') || { runs: {} }; } catch (e) { return { runs: {} }; } }
+  function load() {
+    var d;
+    try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { d = null; }
+    d = d || { runs: {} };
+    d.runs = d.runs || {};
+    if (d.v !== 2) {                   // the old panel game's times don't compare with the mountain's
+      Object.keys(d.runs).forEach(function (id) { var r = d.runs[id]; r.firstPaid = !!(r.best || r.runs); r.best = 0; delete r.ghost; });
+      d.v = 2;
+    }
+    d.rival = d.rival || {};
+    return d;
+  }
   function store() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* private mode */ } }
   function sfx(n) { if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(n); }
   function has(id) { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount(id) > 0; }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function day() { return Math.floor(Date.now() / 86400000); }
-  function rngFor(seed) {
-    return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-  }
-  function fmt(t) { var m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); }
-  function unlocked(id) { var n = RUNS[id].needs; return !n || !!(save.runs[n] && save.runs[n].best); }
+  function fmt(t) { var m = Math.floor(t / 60), x = t - m * 60; return m + ':' + (x < 10 ? '0' : '') + x.toFixed(1); }
+  function unlocked(id) { var n = RUNS[id] && RUNS[id].needs; return !n || !!(save.runs[n] && save.runs[n].best); }
+  function rec(id) { return save.runs[id] || (save.runs[id] = { runs: 0, best: 0, paid: 0 }); }
 
-  // ---- the course -------------------------------------------------------------------------------------------
-  // the piste wanders: centre(y) is where its middle is at distance y down the run
-  function build(id) {
-    var D = RUNS[id], rnd = rngFor(D.seed * 977 + 3), L = D.length;
-    var ph = [rnd() * 6, rnd() * 6, rnd() * 6];
-    function centre(y) { return 160 + 50 * Math.sin(y / 420 + ph[0]) + 22 * Math.sin(y / 170 + ph[1]) + 10 * Math.sin(y / 70 + ph[2]); }
-    var things = [];
-    function free(x, y, r) { return things.every(function (t) { return Math.hypot(t.x - x, t.y - y) > r + t.r; }); }
-    // gates down the middle, alternating red and blue, set a little either side of the line
-    var gates = [];
-    for (var i = 0; i < D.gates; i++) {
-      var gy = 240 + (L - 420) * (i + 0.5) / D.gates, gx = centre(gy) + (i % 2 ? 1 : -1) * 18 * rnd();
-      gates.push({ x: gx, y: gy, w: D.gateW, col: i % 2 ? '#2a6ae0' : '#d83a2e', passed: false, missed: false });
-      things.push({ x: gx - D.gateW / 2, y: gy, r: 4, kind: 'pole' }, { x: gx + D.gateW / 2, y: gy, r: 4, kind: 'pole' });
-    }
-    for (var j = 0; j < D.jumps; j++) {
-      var jy = 500 + (L - 900) * (j + 0.5) / D.jumps + 60, jx = centre(jy) + (rnd() - 0.5) * 30;
-      things.push({ x: jx, y: jy, r: 14, kind: 'jump' });
-    }
-    var area = L / 100;
-    function scatter(kind, per, r, spread) {
-      for (var n = 0; n < per * area; n++) {
-        var y = 160 + rnd() * (L - 260), side = spread ? (rnd() - 0.5) * spread : (rnd() < 0.5 ? -1 : 1) * (D.width / 2 - 8 + rnd() * 50);
-        var x = centre(y) + side;
-        if (free(x, y, r + 6)) things.push({ x: x, y: y, r: r, kind: kind, v: Math.floor(rnd() * 3) });
+  // ---- the mountain (the world JSON's ski block) --------------------------------------------------------------
+  function data() { var w = BridgeWorld.getWorld(); return w && w.ski ? w : null; }
+  function gradeAt(w, x, y) {
+    var row = w.ski.grade[Math.floor(y)];
+    return row ? +row.charAt(clamp(Math.floor(x), 0, w.width - 1)) || 0 : 0;
+  }
+  function zoneAt(w, x, y) {
+    var row = w.ski.zone[Math.floor(y)];
+    return row ? row.charAt(clamp(Math.floor(x), 0, w.width - 1)) : '.';
+  }
+  // the height of a kicker under (x, y) (tiles): a ramp rising south to its lip
+  function rampAt(w, x, y) {
+    var z = 0;
+    w.ski.jumps.forEach(function (j) {
+      var u = (y - (j[1] - j[3])) / j[3], v = Math.abs(x - j[0]) / (j[2] / 2);
+      if (u >= 0 && u <= 1 && v <= 1) z = Math.max(z, j[4] * Math.pow(u, 1.4) * (1 - Math.pow(v, 6)));
+    });
+    return z;
+  }
+  // obstacles bucketed by row, and the tiles they stand on (skiing ignores those tiles: the circle is fairer)
+  var index = null;
+  function indexFor(w) {
+    if (index && index.w === w) return index;
+    var rows = {}, tiles = {};
+    w.ski.obstacles.forEach(function (o) {
+      var r = Math.floor(o[1]);
+      (rows[r] = rows[r] || []).push(o);
+      tiles[Math.floor(o[0]) + ',' + r] = 1;
+    });
+    index = { w: w, rows: rows, tiles: tiles };
+    return index;
+  }
+  // what (x, y) runs into: an obstacle, a wall, or nothing
+  function hitAt(w, x, y) {
+    var ix = indexFor(w);
+    for (var r = Math.floor(y) - 1; r <= Math.floor(y) + 1; r++) {
+      var list = ix.rows[r];
+      if (!list) continue;
+      for (var i = 0; i < list.length; i++) {
+        var o = list[i];
+        if (Math.hypot(o[0] - x, (o[1] - y) * 1.15) < o[2] + 0.18) return o[3];
       }
     }
-    scatter('tree', D.trees * 1.4, 6, D.width * 0.9);        // in the piste
-    scatter('tree', 3.0, 6, 0);                               // its edges
-    scatter('rock', D.rocks, 5, D.width * 0.9);
-    scatter('mogul', D.moguls * 2, 5, D.width * 0.8);
-    scatter('ice', D.ice, 14, D.width * 0.7);
-    things.sort(function (a, b) { return a.y - b.y; });
-    return { centre: centre, gates: gates, things: things, length: L };
+    var tx = Math.floor(x), ty = Math.floor(y);
+    if (tx < 0 || ty < 0 || tx >= w.width || ty >= w.height) return 'edge';
+    if (w.collisions[ty][tx] === 1 && !ix.tiles[tx + ',' + ty]) return 'wall';
+    return null;
   }
 
-  // ---- a run --------------------------------------------------------------------------------------------------
+  // ---- starting ------------------------------------------------------------------------------------------------
   function start(id, opts) {
-    var D = RUNS[id];
-    if (!D) return;
-    ensure();
-    var c = build(id);
-    opts = opts || (g && g.opts) || {};
-    g = { id: id, D: D, c: c, opts: opts, finished: false, x: c.centre(80), y: 80, h: 3, v: 30, t: 0, pen: 0, phase: 'ready', down: 0, air: 0, trick: 0, tricks: 0,
-          missed: 0, passed: 0, trail: [], spray: [], cam: 0, nextGate: 0, hits: 0 };
-    el.querySelector('.cl-title').textContent = D.name;
-    el.querySelector('.cl-grade').textContent = D.mark.toUpperCase() + ' RUN';
-    var best = save.runs[id] && save.runs[id].best;
-    card('<b>' + D.name + '</b><br>' + D.gates + ' gates, ' + (D.length / 40).toFixed(0) + ' m down to the lodge.' +
-         (best ? ' Your best: ' + fmt(best) + '.' : '') + '<br>← → turn · ↓ tuck · ↑ snowplough · Space off a jump: a trick',
-         [['Push off', go], ['Ride back down', close]]);
-    el.classList.add('visible');
-    fit();
-    if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
+    opts = opts || {};
+    if (id && !RUNS[id]) return;
+    var here = BridgeWorld.getWorldId() === WORLD;
+    if (!id && here) return begin(null, opts);
+    var w = here ? data() : null;
+    var at = id && w ? w.ski.runs[id].start : null;
+    // from elsewhere the world isn't loaded yet: land on its spawn for the run (the start hut's gate), then begin
+    BridgeWorld.enterWorld(WORLD, at ? [Math.floor(at[0]), Math.floor(at[1])] : (id ? START_TILE[id] : [23, 9]), function () { begin(id, opts); });
+  }
+  var START_TILE = { couloir: [9, 6], pinewood: [22, 6], nursery: [36, 6] };
+
+  function begin(id, opts) {
+    var w = data();
+    if (!w) return;
+    var R = id ? w.ski.runs[id] : null;
+    var px = R ? R.start[0] : BridgeCharacter.getX() + 0.5, py = R ? R.start[1] : BridgeCharacter.getY() + 0.9;
+    s = { id: id, x: px, y: py, a: 0, v: 0, z: 0, vz: 0, air: false, spin: 0, spinTo: 0, down: 0, crashFlip: false,
+          t: 0, pen: 0, phase: id ? 'count' : 'free', count: 3.4, gate: 0, passed: 0, missed: 0, tricks: 0, falls: 0,
+          push: 0, dist: 0, still: 0, airT: 0, recT: 0, rec: [], steer: 0, held: {}, final: 0 };
+    if (id) {
+      var r = rec(id);
+      s.ghost = r.ghost && r.ghost.length ? r.ghost : null;
+      if (opts.rival) { s.rival = rivalLine(w, id); s.rivalTime = s.rival.time; }
+    }
+    if (trailWorld !== w) { trail = []; trailWorld = w; }
+    BridgeWorld.setMode({ update: update, focus: focus, solo: true, end: function () { quit(true); } });
+    pose(performance.now());
+    ensureHud();
+    hud.classList.add('on');
+    hud.querySelector('.sk-mark').className = 'sk-mark ' + (id ? RUNS[id].mark : 'free');
+    hud.querySelector('.sk-name').textContent = id ? RUNS[id].name : 'FREE SKIING';
+    hud.querySelector('.sk-help').textContent = id
+      ? '← → steer · ↓ tuck · ↑ snowplough · Space push / spin in the air · Esc stop'
+      : '← → steer · ↓ tuck · ↑ snowplough · Space push / spin · stop and E: skis off';
     document.addEventListener('keydown', onKey, true);
-    document.addEventListener('keyup', onKeyUp, true);
-    window.addEventListener('resize', fit);
-    cancelAnimationFrame(raf);
-    last = performance.now();
-    raf = requestAnimationFrame(frame);
-  }
-  function go() { card(null); g.phase = 'run'; sfx('open'); }
-
-  function frame(now) {
-    if (!g) return;
-    var dt = Math.min(0.04, (now - last) / 1000);
-    last = now;
-    if (g.phase === 'run') update(dt, now);
-    draw(now);
-    hud();
-    raf = requestAnimationFrame(frame);
+    if (id) {
+      var best = rec(id).best;
+      say((s.rival ? 'LIV BESIDE YOU: ' + fmt(s.rivalTime) + ' TO BEAT. ' : '') + (best ? 'YOUR BEST ' + fmt(best) : R.gates.length + ' GATES'));
+    } else {
+      say('FREE SKIING. THE WHOLE MOUNTAIN.');
+    }
+    sfx('open');
   }
 
-  var turnHeld = 0;
-  function update(dt, now) {
-    var D = g.D;
-    g.t += dt;
-    var left = keys.ArrowLeft || keys.a || keys.A || (touch && touch.side < 0);
-    var right = keys.ArrowRight || keys.d || keys.D || (touch && touch.side > 0);
-    var tuck = keys.ArrowDown || keys.s || keys.S || (touch && touch.tuck);
-    var plough = keys.ArrowUp || keys.w || keys.W;
-    var onIce = g.c.things.some(function (t) { return t.kind === 'ice' && Math.abs(t.y - g.y) < t.r && Math.abs(t.x - g.x) < t.r * 1.6; });
-    if (g.down > 0) {                                             // down in the snow, getting up
-      g.down -= dt;
-      g.v = Math.max(0, g.v - 200 * dt);
-      if (g.down <= 0) {                                          // up again, beside what you hit
-        g.h = 3; g.v = 20;
-        var o = g.crashOn;
-        if (o) { g.x = clamp(o.x + (g.x < o.x ? -1 : 1) * (o.r + 7), 8, BW - 8); o.hit = true; g.crashOn = null; }
-      }
+  function onKey(e) {
+    if (!s) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); quit(false); }
+  }
+
+  // ---- each frame ------------------------------------------------------------------------------------------------
+  function update(dt) {
+    var w = data();
+    if (!s || !w) return;
+    var now = performance.now();
+    var held = BridgeControls.held(), act = BridgeControls.consumeAction();
+    s.held = held;
+    if (s.phase === 'count') {
+      var before = Math.ceil(s.count);
+      s.count -= dt;
+      if (Math.ceil(s.count) !== before && s.count > 0 && before <= 3) { sfx('blip'); bigText(String(Math.ceil(s.count))); }
+      if (s.count <= 0) { s.phase = 'run'; s.v = 2.6; s.push = 0.4; sfx('success'); bigText('GO'); }
+      pose(now);
+      hudTick();
       return;
     }
-    // turning: one heading step per press, or per 0.14 s held
-    turnHeld -= dt;
-    if (!onIce && g.air <= 0 && (left || right) && turnHeld <= 0) {
-      g.h = clamp(g.h + (left ? -1 : 1), 0, 6);
-      turnHeld = 0.14;
-      if (g.v > 60) spray(4);
+    if (s.phase === 'run') s.t += dt;
+    var steer = (held.right ? 1 : 0) - (held.left ? 1 : 0);
+    s.steer = steer;
+    var zone = zoneAt(w, s.x, s.y);
+
+    if (s.down > 0) {                                          // in the snow, getting up
+      s.down -= dt;
+      if (s.down <= 0) getUp(w);
+      record(dt);
+      pose(now);
+      hudTick();
+      return;
     }
-    if (!left && !right) turnHeld = 0;
-    var a = HEAD[g.h], down = Math.cos(a);
-    var acc = D.grav * down * (tuck ? 1.35 : 1) - (plough ? 220 : 0) - 0.012 * g.v * g.v - (Math.abs(a) > 1 ? 60 : 0);
-    if (g.air > 0) acc = D.grav * 0.6;
-    g.v = clamp(g.v + acc * dt, 0, tuck ? 260 : 220);
-    if (plough && g.v > 30) spray(1);
-    g.x = clamp(g.x + Math.sin(a) * g.v * dt, 8, BW - 8);
-    g.y += Math.max(0, down) * g.v * dt;
-    if (g.air > 0) {
-      g.air -= dt;
-      if (g.air <= 0) {
-        if (g.trick > 0 && g.trick < 0.95) { g.tricks++; g.pen -= 1.0; float('A spin off the jump! -1.0s'); sfx('success'); }
-        else if (g.trick >= 0.95) { crash('You land the trick... on your face.'); }
-        g.trick = 0;
-        sfx('sit');
+
+    // steering: any angle from straight down to right across; slower on ice, tucked, or nearly stopped
+    var rate = TURN * (zone === 'i' ? 0.3 : 1) * (held.down ? 0.65 : 1) * (s.v < 1.5 ? 0.85 : 1);
+    if (!s.air) s.a = clamp(s.a + steer * rate * dt, -AMAX, AMAX);
+
+    // poles: a push when you're slow, a spin in the air; stopped on a free ski, E takes your skis off
+    if (act) {
+      if (s.air) { s.spinTo += 360; sfx('swish'); }
+      else if (!s.id && s.still > 0.6) return takeOff();
+      else if (s.v < 4.5) { s.v += 2.4; s.push = 0.4; sfx('swish'); }
+    }
+    if (s.push > 0) s.push -= dt;
+
+    // speed: the slope pulls you down the fall line, drag and friction hold you back
+    var grade = gradeAt(w, s.x, s.y);
+    var acc = GRAV * grade * Math.cos(s.a);
+    var kd = held.down ? TUCK : DRAG, fr = FRICTION;
+    if (zone === '~') { kd *= 2.6; fr += 1.6; }
+    if (held.up) fr += PLOUGH;
+    if (steer && s.v > 2) fr += rate * s.v * 0.1;
+    if (s.phase === 'done') fr += 3;                           // through the finish: coast to a stop
+    if (s.air) { acc = 0; kd *= 0.4; fr = 0; }
+    s.v = clamp(s.v + (acc - kd * s.v * s.v - fr) * dt, 0, VMAX);
+    if (zone === 'm' && !s.air && s.v > 3 && Math.random() < dt * 4) { s.v *= 0.93; puff(3); sfx('step'); }
+
+    // move, and see what's in the way
+    var nx = s.x + Math.sin(s.a) * s.v * dt, ny = s.y + Math.cos(s.a) * s.v * dt;
+    var hit = hitAt(w, nx, ny);
+    if (hit === 'rock' && s.air && s.z > 0.4) hit = null;     // clear over a rock
+    if (hit) {
+      if (s.v > 2.6 && hit !== 'edge') return crash(w, hit);
+      s.v = 0;                                                  // too slow to hurt: just stop against it
+      nx = s.x; ny = s.y;
+    }
+    var moved = Math.hypot(nx - s.x, ny - s.y);
+    s.dist += moved;
+    var oy = s.y;
+    s.x = nx; s.y = ny;
+
+    // kickers: up the ramp, off the lip into the air
+    var gh = rampAt(w, s.x, s.y);
+    if (!s.air) {
+      var was = s.z;
+      if (was > 0.05 && gh < was - 0.04 && s.v > 3) {
+        var j = w.ski.jumps.filter(function (q) { return Math.abs(q[0] - s.x) < q[2] && Math.abs(q[1] - s.y) < 1.5; })[0] || [0, 0, 1, 2, 0.4];
+        s.air = true; s.vz = s.v * 1.4 * j[4] / j[3] + 1.6; s.airT = 0; s.spin = 0; s.spinTo = 0;
+        sfx('lift');
+      } else {
+        s.z = gh;
       }
     }
-    // the piste's edge: deep snow slows you hard
-    var off = Math.abs(g.x - g.c.centre(g.y)) - D.width / 2;
-    if (off > 0) g.v = Math.max(20, g.v - off * 4 * dt * 10);
-    // things in the way
-    var near = g.c.things;
-    for (var i = 0; i < near.length; i++) {
-      var t = near[i];
-      if (t.y < g.y - 20) continue;
-      if (t.y > g.y + 20) break;
-      var d = Math.hypot(t.x - g.x, (t.y - g.y) * 1.4);
-      if (g.air > 0 || t.hit) continue;
-      if ((t.kind === 'tree' || t.kind === 'rock' || t.kind === 'pole') && d < t.r + 3) { crash(t.kind === 'tree' ? 'Into a tree.' : t.kind === 'rock' ? 'A rock under the snow.' : 'You take out a gate pole.', t); break; }
-      if (t.kind === 'mogul' && d < t.r + 2 && !t.bumped) { t.bumped = true; g.v *= 0.82; spray(5); sfx('step'); }
-      if (t.kind === 'jump' && d < t.r && g.v > 50) { g.air = 0.45 + g.v / 400; g.trick = 0; sfx('lift'); spray(8); }
+    if (s.air) {
+      s.airT += dt;
+      s.vz -= GZ * dt;
+      s.z += s.vz * dt;
+      if (s.spin < s.spinTo) s.spin = Math.min(s.spinTo, s.spin + 760 * dt);
+      if (s.z <= gh) land(w);
     }
-    // gates: between the flags as you pass their row
-    var gt = g.c.gates[g.nextGate];
-    if (gt && g.y >= gt.y) {
-      if (Math.abs(g.x - gt.x) <= gt.w / 2) { gt.passed = true; g.passed++; sfx('blip'); }
-      else { gt.missed = true; g.missed++; g.pen += 3; float('Missed a gate: +3s'); sfx('error'); }
-      g.nextGate++;
+
+    // gates as you pass their row
+    if (s.phase === 'run') {
+      var gts = w.ski.runs[s.id].gates, g = gts[s.gate];
+      if (g && oy < g[1] && s.y >= g[1]) {
+        if (Math.abs(s.x - g[0]) <= g[2] / 2 + 0.15) { s.passed++; sfx('blip'); }
+        else { s.missed++; s.pen += 3; say('MISSED A GATE  +3s'); sfx('error'); }
+        s.gate++;
+      }
+      if (s.y >= w.ski.finish) finish(w);
     }
-    if (g.y >= g.c.length) finish();
-    // tracks
-    if (g.air <= 0 && (!g.trail.length || g.y - g.trail[g.trail.length - 1].y > 2)) {
-      g.trail.push({ x: g.x, y: g.y, h: g.h });
-      if (g.trail.length > 240) g.trail.shift();
+
+    // tracks, spray
+    if (!s.air && moved > 0) {
+      var last = trail[trail.length - 1];
+      if (!last || Math.hypot(last.x - s.x, last.y - s.y) > 0.12) {
+        trail.push({ x: s.x, y: s.y, a: s.a, p: held.up && s.v > 0.5, t: now });
+        if (trail.length > 1400) trail.splice(0, 200);
+      }
+      if ((steer && s.v > 6) || (held.up && s.v > 3)) puff(held.up ? 2 : 1);
     }
+
+    // stopped: free skiing ends at the bottom, a finished race ends in the run-out
+    s.still = s.v < 0.3 && !s.air ? s.still + dt : 0;
+    if (s.phase === 'done' && s.v < 0.5) return end(w);
+    if (s.phase === 'free' && s.still > 0.8 && s.y > w.ski.finish + 1) return takeOff();
+
+    record(dt);
+    pose(now);
+    hudTick();
   }
 
-  function crash(why, t) {
-    if (g.down > 0) return;
-    g.down = 1.6; g.hits++; g.crashOn = t || null;
-    g.v = 0; spray(18);
+  function land(w) {
+    s.air = false;
+    s.z = rampAt(w, s.x, s.y);
+    var rem = ((s.spin % 360) + 360) % 360;
+    if (rem > 55 && rem < 305) return crash(w, 'spin');
+    var n = Math.round(s.spin / 360);
+    if (n > 0) {
+      s.tricks += n;
+      if (s.phase === 'run') s.pen -= n;
+      say((n > 1 ? n * 360 : '360') + (s.phase === 'run' ? '!  -' + n + 's' : '!'));
+      sfx('success');
+    } else if (s.airT > 0.7) {
+      say('BIG AIR');
+    }
+    s.spin = 0; s.spinTo = 0;
+    s.v *= 0.93;
+    puff(8);
+    sfx('land');
+  }
+
+  var WHY = { tree: 'INTO A TREE.', rock: 'A ROCK UNDER THE SNOW.', pylon: 'YOU HUG A LIFT TOWER.', wall: 'INTO THE ROCK.', spin: 'YOU LAND IT SIDEWAYS.' };
+  function crash(w, what) {
+    s.down = 1.5; s.falls++;
+    s.air = false; s.z = 0; s.spin = 0; s.spinTo = 0;
+    s.crashFlip = s.a < 0;
+    s.v = 0;
+    puff(16);
     sfx('crumble');
-    float(why);
+    say(WHY[what] || 'DOWN YOU GO.');
+    pose(performance.now());
   }
-  function spray(n) {
-    for (var i = 0; i < n; i++) g.spray.push({ x: g.x + (Math.random() - 0.5) * 6, y: g.y + 4, vx: (Math.random() - 0.5) * 50, vy: -Math.random() * 30, life: 1 });
-  }
-  var msgTimer = 0;
-  function float(t) {                                             // a line under the slope: a missed gate, a trick, a tree
-    var m = el.querySelector('.cl-msg');
-    m.textContent = t;
-    m.classList.add('on');
-    clearTimeout(msgTimer);
-    msgTimer = setTimeout(function () { m.classList.remove('on'); }, 1600);
+  // up again beside what you hit, on clear snow, facing down the hill (toward the run's line)
+  function getUp(w) {
+    var cx = s.x;
+    if (s.id) {
+      var line = w.ski.runs[s.id].line;
+      cx = line.reduce(function (b, p) { return Math.abs(p[1] - s.y) < Math.abs(b[1] - s.y) ? p : b; })[0];
+    }
+    var toward = cx >= s.x ? 1 : -1, best = null;
+    for (var d = 0.4; d < 4 && !best; d += 0.3) {
+      [toward, -toward].forEach(function (sg) {
+        [0, -0.5, 0.5].forEach(function (dy) {
+          var x = s.x + sg * d, y = s.y + dy;
+          if (!best && !hitAt(w, x, y) && !hitAt(w, x, y + 0.6)) best = [x, y];
+        });
+      });
+    }
+    if (best) { s.x = best[0]; s.y = best[1]; }
+    s.a = 0; s.v = 0; s.down = 0;
   }
 
   function finish() {
-    g.phase = 'done';
-    g.finished = true;
-    var D = g.D, total = g.t + g.pen, rec = save.runs[g.id] || (save.runs[g.id] = { runs: 0, best: 0, paid: 0 });
-    var first = !rec.best, nb = !rec.best || total < rec.best;
-    rec.runs++;
-    if (nb) rec.best = total;
-    var pay = first ? D.first : rec.paid !== day() ? D.again : 0;
-    if (pay) rec.paid = day();
-    store();
+    s.phase = 'done';
+    s.final = Math.max(0, s.t + s.pen);
     sfx('quest');
-    if (pay && typeof BridgeProgression !== 'undefined') BridgeProgression.awardCoins(pay, 'ski:' + g.id);
-    if (first && typeof BridgeProgression !== 'undefined') BridgeProgression.recordAchievement('skied_' + g.id, 0, { source: 'ski' });
-    card('<b>FINISH.</b> ' + D.name + ' in <b>' + fmt(total) + '</b>' + (nb && !first ? ' - a new best!' : '') + '<br>' +
-         g.passed + ' of ' + D.gates + ' gates' + (g.missed ? ' (+' + g.missed * 3 + 's)' : '') + (g.tricks ? ', ' + g.tricks + ' trick' + (g.tricks > 1 ? 's' : '') + ' (-' + g.tricks + 's)' : '') +
-         (g.hits ? ', ' + g.hits + (g.hits > 1 ? ' falls' : ' fall') : ', clean') + '.' + (pay ? '<br>' + pay + ' coins.' : ''),
-         [['Again', function () { var o = g.opts; g.finished = false; start(g.id, o); go(); }], ['Down to the village', close]]);
+    bigText(fmt(s.final));
   }
 
-  // ---- drawing -------------------------------------------------------------------------------------------------
-  var snowTex = null;
-  function makeSnow() {
-    snowTex = document.createElement('canvas');
-    snowTex.width = 64; snowTex.height = 64;
-    var sx = snowTex.getContext('2d'), img = sx.createImageData(64, 64), d = img.data;
-    for (var y = 0; y < 64; y++) for (var x = 0; x < 64; x++) {
-      var n = Math.sin(x * 0.4 + Math.sin(y * 0.21) * 3) * 0.5 + Math.sin(y * 0.33 + x * 0.07) * 0.5;
-      var b = n > 0.55 ? 1 : n < -0.6 ? -1 : 0, o = (y * 64 + x) * 4;
-      var c = b > 0 ? [250, 252, 255] : b < 0 ? [214, 226, 242] : [236, 242, 250];
-      d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
+  // through the finish and stopped: the result, the pay, the ghost
+  function end(w) {
+    var id = s.id, D = RUNS[id], r = rec(id), total = s.final;
+    var first = !r.firstPaid, nb = !r.best || total < r.best;
+    r.runs = (r.runs || 0) + 1;
+    if (nb) { r.best = total; r.ghost = s.rec; }
+    var pay = first ? D.first : r.paid !== day() ? D.again : 0;
+    if (pay) { r.paid = day(); r.firstPaid = true; }
+    var won = !!s.rival && total < s.rivalTime, beatPay = 0;
+    if (won && !save.rival[id]) { save.rival[id] = 1; beatPay = D.beat; }
+    store();
+    if (typeof BridgeProgression !== 'undefined') {
+      if (pay) BridgeProgression.awardCoins(pay, 'ski:' + id);
+      if (beatPay) BridgeProgression.awardCoins(beatPay, 'ski_rival:' + id);
+      if (first) BridgeProgression.recordAchievement('skied_' + id, 0, { source: 'ski' });
+      if (won) BridgeProgression.recordAchievement('beat_liv_' + id, 0, { source: 'ski' });
     }
-    sx.putImageData(img, 0, 0);
+    var gates = w.ski.runs[id].gates.length;
+    var lines = [D.name + ' IN ' + fmt(total) + (nb && r.runs > 1 ? '  -  A NEW BEST!' : ''),
+                 s.passed + ' OF ' + gates + ' GATES' + (s.missed ? ' (+' + s.missed * 3 + 's)' : '') +
+                 (s.tricks ? ', ' + s.tricks + (s.tricks > 1 ? ' SPINS' : ' SPIN') + ' (-' + s.tricks + 's)' : '') +
+                 (s.falls ? ', ' + s.falls + (s.falls > 1 ? ' FALLS' : ' FALL') : ', CLEAN') + '.'];
+    if (s.rival) lines.push(won ? 'YOU BEAT LIV (' + fmt(s.rivalTime) + ')! SHE SHAKES HER HEAD AND LAUGHS.' + (beatPay ? ' ' + beatPay + ' COINS ON THE BET.' : '')
+                                : 'LIV TOOK IT IN ' + fmt(s.rivalTime) + '. "AGAIN?"');
+    if (pay) lines.push(pay + ' COINS.');
+    var again = !!s.rival;
+    quit(true);
+    BridgeInteractions.execute({ type: 'menu', label: 'FINISH', dialog: lines.join('\n\n'), options: [
+      { label: again ? 'Race Liv again' : 'Ride up and go again', action: 'ski_run', run: id, rival: again },
+      { label: 'Free ski from the top', action: 'ski_run', run: 'free' },
+      { label: 'Done for now', action: 'close' }
+    ] });
   }
 
-  function draw(now) {
-    if (!snowTex) makeSnow();
-    var cam = g.y - 60, D = g.D;
-    // snow, scrolling
-    var oy = Math.floor(cam % 64);
-    for (var ty = -oy - 64; ty < BH; ty += 64) for (var tx = 0; tx < BW; tx += 64) ctx.drawImage(snowTex, tx, ty);
-    var camX = 160;
-    // the piste's edges: deep untracked snow either side, a blue tinge
-    for (var r = 0; r < BH; r += 2) {
-      var wy = cam + r, cx = g.c.centre(wy) + camX - 160, hw = D.width / 2;
-      ctx.fillStyle = 'rgba(150,175,215,0.18)';
-      ctx.fillRect(0, r, Math.max(0, Math.round(cx - hw)), 2);
-      ctx.fillRect(Math.round(cx + hw), r, BW, 2);
-    }
-    // tracks
-    ctx.fillStyle = 'rgba(160,180,210,0.6)';
-    g.trail.forEach(function (p) {
-      var sy = Math.round(p.y - cam), a = HEAD[p.h], ox = Math.round(Math.cos(a) * 2);
-      if (sy < -2 || sy > BH) return;
-      ctx.fillRect(Math.round(p.x) - ox - 1, sy, 1, 1); ctx.fillRect(Math.round(p.x) + ox + 1, sy, 1, 1);
-    });
-    // the racing line to the next gate, with goggles
-    var gt = g.c.gates[g.nextGate];
-    if (gt && has('ski_goggles') && g.phase === 'run') {
-      ctx.fillStyle = 'rgba(255,210,80,0.55)';
-      for (var s = 1; s < 12; s++) {
-        var px = g.x + (gt.x - g.x) * s / 12, py = g.y + (gt.y - g.y) * s / 12;
-        if (s % 2) ctx.fillRect(Math.round(px), Math.round(py - cam), 2, 1);
-      }
-    }
-    // things, back to front
-    var list = g.c.things.filter(function (t) { return t.y > cam - 30 && t.y < cam + BH + 30; });
-    list.forEach(function (t) { if (t.kind === 'ice' || t.kind === 'mogul' || t.kind === 'jump') flat(t, cam); });
-    var skierDrawn = false;
-    list.forEach(function (t) {
-      if (t.kind === 'ice' || t.kind === 'mogul' || t.kind === 'jump') return;
-      if (!skierDrawn && t.y > g.y) { skier(now, cam); skierDrawn = true; }
-      upright(t, cam, now);
-    });
-    g.c.gates.forEach(function (gg) { flag(gg, cam, now); });
-    if (!skierDrawn) skier(now, cam);
-    // the finish: a banner, the lodge's roofs
-    var fy = Math.round(g.c.length - cam);
-    if (fy < BH + 40) {
-      var fx = g.c.centre(g.c.length);
-      ctx.fillStyle = '#2a2a34'; ctx.fillRect(Math.round(fx - 50), fy - 22, 2, 22); ctx.fillRect(Math.round(fx + 48), fy - 22, 2, 22);
-      ctx.fillStyle = '#d83a2e'; ctx.fillRect(Math.round(fx - 48), fy - 22, 96, 7);
-      ctx.fillStyle = '#fff';
-      for (var q = 0; q < 12; q++) ctx.fillRect(Math.round(fx - 44 + q * 8), fy - 20, 4, 3);
-      ctx.fillStyle = 'rgba(40,40,60,0.25)';
-      for (var q2 = 0; q2 < 24; q2++) ctx.fillRect(Math.round(fx - 48 + q2 * 4), fy, 2, 2);
-      for (var hcount = 0; hcount < 4; hcount++) chalet(Math.round(fx - 120 + hcount * 70), fy + 30 + (hcount % 2) * 10);
-    }
-    // spray
-    g.spray.forEach(function (p) {
-      p.x += p.vx * 0.016; p.y += p.vy * 0.016; p.vy += 2; p.life -= 0.03;
-      ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, p.life).toFixed(2) + ')';
-      ctx.fillRect(Math.round(p.x), Math.round(p.y - cam), 2, 2);
-    });
-    g.spray = g.spray.filter(function (p) { return p.life > 0; });
-    // falling snow
-    for (var f = 0; f < 50; f++) {
-      var fx2 = (f * 71 + now * (0.01 + (f % 3) * 0.006)) % BW, fy2 = (f * 37 + now * (0.03 + (f % 4) * 0.01)) % BH;
-      ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(Math.round(fx2), Math.round(fy2), 1, 1);
-    }
-  }
-
-  function flat(t, cam) {
-    var x = Math.round(t.x), y = Math.round(t.y - cam);
-    if (t.kind === 'ice') {
-      ctx.fillStyle = 'rgba(150,200,235,0.55)'; ctx.beginPath(); ctx.ellipse(x, y, t.r * 1.6, t.r, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(x - 6, y - 3, 5, 1); ctx.fillRect(x + 3, y + 2, 4, 1);
-    } else if (t.kind === 'mogul') {
-      ctx.fillStyle = '#c6d4ea'; ctx.fillRect(x - 5, y, 10, 3);
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 4, y - 2, 8, 3);
-    } else if (t.kind === 'jump') {
-      ctx.fillStyle = '#9ab4dc'; ctx.fillRect(x - 13, y + 2, 26, 4);
-      ctx.fillStyle = '#d8e6f8'; ctx.fillRect(x - 13, y - 6, 26, 8);
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 13, y - 6, 26, 2);
-      ctx.fillStyle = '#e8b030'; ctx.fillRect(x - 14, y - 7, 2, 2); ctx.fillRect(x + 12, y - 7, 2, 2);
-    }
-  }
-  function upright(t, cam, now) {
-    var x = Math.round(t.x), y = Math.round(t.y - cam);
-    if (t.kind === 'tree') {
-      ctx.fillStyle = 'rgba(70,90,140,0.25)'; ctx.fillRect(x - 2, y, 12, 3);
-      ctx.fillStyle = '#4a2e1a'; ctx.fillRect(x - 1, y - 3, 2, 4);
-      var tones = ['#1e3a30', '#2a4e3e', '#3a6450'];
-      for (var i = 0; i < 3; i++) {
-        var w = 11 - i * 3, yy = y - 4 - i * 5;
-        ctx.fillStyle = '#10221a'; ctx.fillRect(x - (w >> 1) - 1, yy - 4, w + 2, 6);
-        ctx.fillStyle = tones[(i + t.v) % 3]; ctx.fillRect(x - (w >> 1), yy - 4, w, 5);
-        ctx.fillStyle = '#f4f8fc'; ctx.fillRect(x - (w >> 1) + 1, yy - 4, w - 2, 1);
-      }
-      ctx.fillStyle = '#f4f8fc'; ctx.fillRect(x - 1, y - 21, 2, 2);
-    } else if (t.kind === 'rock') {
-      ctx.fillStyle = '#2a2c36'; ctx.fillRect(x - 5, y - 4, 10, 6);
-      ctx.fillStyle = '#5a6070'; ctx.fillRect(x - 4, y - 4, 8, 4);
-      ctx.fillStyle = '#f4f8fc'; ctx.fillRect(x - 4, y - 5, 7, 2);
-    }
-  }
-  function flag(gg, cam, now) {
-    var y = Math.round(gg.y - cam);
-    if (y < -20 || y > BH + 10) return;
-    [-1, 1].forEach(function (s) {
-      var x = Math.round(gg.x + s * gg.w / 2);
-      ctx.fillStyle = 'rgba(70,90,140,0.3)'; ctx.fillRect(x, y, 5, 1);
-      ctx.fillStyle = '#2a2a34'; ctx.fillRect(x, y - 14, 1, 14);
-      var wave = Math.round(Math.sin(now / 150 + gg.y) * 1);
-      ctx.fillStyle = gg.missed ? '#7a7a88' : gg.col;
-      ctx.fillRect(x + (s < 0 ? -6 : 1), y - 14 + wave, 6, 5);
-      if (gg.passed) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x + (s < 0 ? -4 : 3), y - 12 + wave, 2, 1); }
-    });
-  }
-  function chalet(x, y) {
-    ctx.fillStyle = '#5a3420'; ctx.fillRect(x, y, 34, 14);
-    ctx.fillStyle = '#ffd890'; ctx.fillRect(x + 5, y + 5, 4, 4); ctx.fillRect(x + 25, y + 5, 4, 4);
-    ctx.fillStyle = '#f4f6fa'; ctx.fillRect(x - 3, y - 8, 40, 8);
-    ctx.fillStyle = '#c8d4e6'; ctx.fillRect(x - 3, y - 1, 40, 1);
-  }
-
-  function skier(now, cam) {
-    var col = SUIT[(typeof BridgeGear !== 'undefined' && BridgeGear.colour()) || (BridgeState.getPilot() || {}).suit_color] || SUIT.purple;
-    var x = Math.round(g.x), y = Math.round(g.y - cam), a = HEAD[g.h];
-    var lift = g.air > 0 ? Math.round(Math.sin(Math.min(1, 1 - g.air / (0.45 + g.v / 400)) * Math.PI) * 8) : 0;
-    ctx.fillStyle = 'rgba(70,90,140,0.35)'; ctx.fillRect(x - 4, y + 2, 9, 2);              // shadow stays on the snow
-    y -= lift;
-    if (g.down > 0) {                                                                        // sprawled in the snow
-      ctx.fillStyle = col; ctx.fillRect(x - 5, y - 2, 10, 4);
-      ctx.fillStyle = '#e8c8a8'; ctx.fillRect(x + 5, y - 2, 3, 3);
-      ctx.fillStyle = '#2a2a34'; ctx.fillRect(x - 9, y + 3, 7, 1); ctx.fillRect(x + 2, y - 6, 1, 7);
-      return;
-    }
-    // skis along the heading
-    var sx = Math.sin(a), sy = Math.cos(a);
-    ctx.fillStyle = '#c83a2e';
-    for (var i = -6; i <= 6; i++) {
-      ctx.fillRect(Math.round(x - 2 + sx * i), Math.round(y + sy * i * 0.5 + 1), 1, 1);
-      ctx.fillRect(Math.round(x + 2 + sx * i), Math.round(y + sy * i * 0.5 + 1), 1, 1);
-    }
-    var tuck = keys.ArrowDown || keys.s || keys.S || (touch && touch.tuck);
-    var trickSpin = g.trick > 0 ? Math.round(Math.sin(g.trick * 12) * 3) : 0;
-    var bodyH = tuck ? 6 : 9;
-    ctx.fillStyle = '#14141c'; ctx.fillRect(x - 3 + trickSpin, y - bodyH - 1, 7, bodyH + 1);
-    ctx.fillStyle = col; ctx.fillRect(x - 2 + trickSpin, y - bodyH, 5, bodyH);
-    ctx.fillStyle = '#14141c'; ctx.fillRect(x - 2 + trickSpin, y - bodyH - 5, 5, 5);
-    ctx.fillStyle = col; ctx.fillRect(x - 1 + trickSpin, y - bodyH - 4, 3, 3);
-    ctx.fillStyle = '#ffd860'; ctx.fillRect(x - 1 + trickSpin, y - bodyH - 3, 3, 1);         // goggles
-    // poles
-    ctx.fillStyle = '#2a2a34';
-    ctx.fillRect(x - 5, y - bodyH + 2, 1, bodyH + 1); ctx.fillRect(x + 5, y - bodyH + 2, 1, bodyH + 1);
-    // scarf in the wind
-    ctx.fillStyle = '#c83a2e'; ctx.fillRect(x - 1 - Math.round(sx * 3), y - bodyH - 1 - Math.round(g.v / 60), 2, 2);
-  }
-
-  // ---- panel (shares the climbing panel's look) ------------------------------------------------------------------
-  function ensure() {
-    if (el) return;
-    el = document.createElement('div');
-    el.id = 'ski';
-    el.innerHTML = '<div class="cl-panel">' +
-      '<div class="cl-head"><span class="cl-title"></span><span class="cl-grade"></span><span class="cl-time"></span>' +
-      '<button class="qj-close sk-close" aria-label="Stop"><span class="ip-key">Esc</span></button></div>' +
-      '<div class="cl-stage"><canvas class="cl-wall"></canvas><div class="cl-card"></div></div>' +
-      '<div class="cl-bar"><span class="cl-lbl">Speed</span><span class="cl-stam"><i></i></span><span class="cl-alt"></span></div>' +
-      '<div class="cl-msg"></div><div class="cl-hint">← → turn · ↓ tuck · ↑ snowplough · Space off a jump · Esc stop</div></div>';
-    document.body.appendChild(el);
-    cv = el.querySelector('.cl-wall'); ctx = cv.getContext('2d');
-    cv.width = BW; cv.height = BH;
-    el.querySelector('.sk-close').addEventListener('click', close);
-    function pt(e) {
-      var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-      touch = { side: y > 0.75 ? 0 : x < 0.4 ? -1 : x > 0.6 ? 1 : 0, tuck: y > 0.75 };
-      if (g && g.air > 0 && g.trick === 0) g.trick = 0.01;
-    }
-    cv.addEventListener('pointerdown', function (e) { e.preventDefault(); pt(e); });
-    cv.addEventListener('pointermove', function (e) { if (touch) pt(e); });
-    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { cv.addEventListener(n, function () { touch = null; }); });
-  }
-  function fit() {
-    if (!el) return;
-    var vw = window.innerWidth, vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-    var s = Math.min((vw - 40) / BW, (vh - 170) / BH);
-    s = s >= 2 ? Math.floor(s) : Math.max(1, s);
-    cv.style.width = Math.round(BW * s) + 'px'; cv.style.height = Math.round(BH * s) + 'px';
-  }
-  function card(html, buttons) {
-    var c = el.querySelector('.cl-card');
-    if (!html) { c.style.display = 'none'; g.cardButtons = null; return; }
-    c.innerHTML = '<p>' + html + '</p><div class="cl-btns">' + buttons.map(function (b, i) { return '<button data-i="' + i + '"' + (i ? '' : ' class="primary"') + '>' + b[0] + '</button>'; }).join('') + '</div>';
-    c.style.display = 'flex';
-    c.querySelectorAll('button').forEach(function (bt) { bt.addEventListener('click', function () { buttons[+bt.getAttribute('data-i')][1](); }); });
-    g.cardButtons = buttons;
-  }
-  function hud() {
-    var pct = clamp(g.v / 260, 0, 1), st = el.querySelector('.cl-stam i');
-    st.style.width = Math.round(pct * 100) + '%';
-    st.style.background = pct > 0.8 ? '#f0b040' : '#7ad0f0';
-    el.querySelector('.cl-alt').textContent = Math.round(g.v / 4) + ' km/h · gate ' + Math.min(g.nextGate + 1, g.D.gates) + ' of ' + g.D.gates;
-    el.querySelector('.cl-time').textContent = g.phase === 'ready' ? '' : fmt(g.t + g.pen);
-  }
-  function close() {
-    if (!el || !el.classList.contains('visible')) return;
-    el.classList.remove('visible');
-    cancelAnimationFrame(raf);
+  // skis off: back to walking on the nearest clear tile
+  function takeOff() { say('SKIS OFF.'); sfx('pickup'); quit(true); }
+  function quit(quiet) {
+    if (!s) return;
+    var w = data(), x = s.x, y = s.y;
+    s = null;
     document.removeEventListener('keydown', onKey, true);
-    document.removeEventListener('keyup', onKeyUp, true);
-    window.removeEventListener('resize', fit);
-    var done = g && g.opts && g.opts.done, finished = !!(g && g.finished);
-    keys = {}; touch = null; g = null;
-    if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
-    if (done) done(finished);
-  }
-  function onKey(e) {
-    if (!g) return;
-    e.preventDefault(); e.stopPropagation();
-    if (e.key === 'Escape') return close();
-    if (g.phase !== 'run') {
-      if ((e.key === 'Enter' || e.key === ' ' || e.key === 'e' || e.key === 'E') && !e.repeat && g.cardButtons) g.cardButtons[0][1]();
-      return;
+    if (hud) hud.classList.remove('on');
+    if (BridgeWorld.getMode()) BridgeWorld.setMode(null);
+    BridgeCharacter.setPose(null);
+    if (w) {
+      var tx = Math.floor(x), ty = Math.floor(y), spot = null;
+      for (var d = 0; d < 6 && !spot; d++) {
+        for (var dy = -d; dy <= d && !spot; dy++) for (var dx = -d; dx <= d && !spot; dx++) {
+          var X = tx + dx, Y = ty + dy;
+          if (X >= 0 && Y >= 0 && X < w.width && Y < w.height && w.collisions[Y][X] === 0) spot = [X, Y];
+        }
+      }
+      if (spot) BridgeCharacter.init(spot[0], spot[1]);
+      BridgeCharacter.setFacing('down');
     }
-    keys[e.key] = true;
-    if (e.key === ' ' && g.air > 0 && g.trick === 0) g.trick = 0.01;
+    if (!quiet) say('YOU STOP AND STEP OUT OF YOUR SKIS.');
   }
-  function onKeyUp(e) { if (g) { e.preventDefault(); e.stopPropagation(); } keys[e.key] = false; }
 
-  // tricks spin while you're airborne; land before the spin's done
-  setInterval(function () { if (g && g.trick > 0 && g.air > 0) g.trick += 0.05; }, 40);
+  // ---- the camera runs ahead of you down the hill ------------------------------------------------------------------
+  function focus() {
+    if (!s) return null;
+    var lead = clamp(s.v * 0.32, 0, 4.2);
+    return { x: s.x - 0.5 + Math.sin(s.a) * lead, y: s.y - 1 + Math.cos(s.a) * lead + (s.phase === 'count' ? 2 : 1.2) };
+  }
 
-  return { start: start, close: close, RUNS: RUNS, unlocked: unlocked, best: function (id) { return save.runs[id] && save.runs[id].best; },
-           isOpen: function () { return !!g; }, _g: function () { return g; }, _keys: keys };
+  // ---- the pilot's frame -----------------------------------------------------------------------------------------------
+  // ski sheet: rows down (fall line) / right (across) / 45° / tricks; columns glide 0-3, tuck 4-5, carve 6-7,
+  // snowplough 8, air 9, poling 10-11; the tricks row is a spin (0-7) and a fall (8-11)
+  function frameFor(o, now) {
+    if (o.down > 0) return { row: 3, col: 8 + Math.min(3, Math.floor((1.5 - o.down) / 0.16)), flip: o.crashFlip };
+    if (o.air && (o.spin % 360) > 1) return { row: 3, col: Math.round((o.spin % 360) / 45) % 8, flip: o.a < 0 };
+    var A = Math.abs(o.a), row = A < 0.39 ? 0 : A < 1.18 ? 2 : 1, flip = o.a < -0.01, h = o.held || {}, col;
+    if (o.air) col = 9;
+    else if (o.push > 0) col = o.push > 0.2 ? 10 : 11;
+    else if (h.up && o.v > 0.5) col = 8;
+    else if (o.steer && o.v > 1.2) col = (o.steer > 0) !== flip ? LEAN_R : LEAN_L;
+    else if (h.down && o.v > 0.5) col = 4 + Math.floor(now / 260) % 2;
+    else col = o.v > 0.5 ? [0, 1, 2, 1][Math.floor(o.dist / 0.8) % 4] : [0, 1, 2, 1][Math.floor(now / 340) % 4];
+    return { row: row, col: col, flip: flip };
+  }
+  function pose(now) {
+    var f = frameFor(s, now), w = data();
+    var bob = w && zoneAt(w, s.x, s.y) === 'm' && !s.air ? Math.abs(Math.sin(s.dist * 4.2)) * 3 : 0;
+    BridgeCharacter.setPose({ kind: 'ski', x: s.x, y: s.y, row: f.row, col: f.col, flip: f.flip, lift: s.z * C45 * 32 + bob });
+  }
+
+  // ---- ghosts: your best run beside you, and Liv --------------------------------------------------------------------------
+  function record(dt) {
+    if (s.phase !== 'run') return;
+    s.recT += dt;
+    if (s.recT < 0.1 && s.rec.length) return;
+    s.recT = s.rec.length ? s.recT - 0.1 : 0;                  // a sample every 0.1 s on average: played back at exactly that
+    var f = frameFor(s, performance.now());
+    s.rec.push([Math.round(s.x * 20), Math.round(s.y * 20), Math.round(s.z * 40), f.row * 16 + f.col, f.flip ? 1 : 0]);
+  }
+  function sampleAt(line, t) {
+    var i = t / 0.1, a = Math.floor(i);
+    if (a >= line.length - 1) return line[line.length - 1];
+    var p = line[Math.max(0, a)], q = line[a + 1], f = i - a;
+    return [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f, p[2] + (q[2] - p[2]) * f, p[3], p[4]];
+  }
+
+  // Liv's line: the same physics, steered gate to gate by a careful hand (no tricks, no falls)
+  function rivalLine(w, id) {
+    var R = w.ski.runs[id], aims = R.gates.map(function (g) { return [g[0], g[1]]; });
+    aims.push([R.line[R.line.length - 1][0], w.ski.finish + 2]);
+    var o = { x: R.start[0], y: R.start[1], a: 0, v: 2.6, dist: 0, held: {}, steer: 0, push: 0, air: false, spin: 0, down: 0 };
+    var dt = 1 / 60, t = 0, k = 0, out = [], acc = 0, pace = RUNS[id].pace;
+    while (t < 150 && o.y < w.ski.finish) {
+      var aim = aims[k];
+      while (aim && aim[1] < o.y + 0.4) aim = aims[++k];
+      if (!aim) aim = [o.x, o.y + 5];
+      var want = clamp(Math.atan2(aim[0] - o.x, Math.max(0.5, aim[1] - o.y)), -1.3, 1.3), d = want - o.a;
+      o.steer = Math.abs(d) > 0.04 ? (d > 0 ? 1 : -1) : 0;
+      var zone = zoneAt(w, o.x, o.y);
+      o.held = { down: Math.abs(d) < 0.2 && aim[1] - o.y > 5, up: false };
+      var rate = TURN * (zone === 'i' ? 0.3 : 1) * (o.held.down ? 0.65 : 1);
+      o.a = clamp(o.a + clamp(d, -rate * dt, rate * dt), -AMAX, AMAX);
+      var kd = o.held.down ? TUCK : DRAG, fr = FRICTION;
+      if (zone === '~') { kd *= 2.6; fr += 1.6; }
+      if (o.steer && o.v > 2) fr += rate * o.v * 0.1;
+      o.v = clamp(o.v + (GRAV * pace * gradeAt(w, o.x, o.y) * Math.cos(o.a) - kd * o.v * o.v - fr) * dt, 0, VMAX);
+      o.x += Math.sin(o.a) * o.v * dt; o.y += Math.cos(o.a) * o.v * dt; o.dist += o.v * dt;
+      t += dt; acc += dt;
+      if (acc >= 0.1 - 1e-9 || !out.length) {
+        acc = out.length ? acc - 0.1 : 0;
+        var f = frameFor(o, t * 1000);
+        out.push([Math.round(o.x * 20), Math.round(o.y * 20), 0, f.row * 16 + f.col, f.flip ? 1 : 0]);
+      }
+    }
+    // she coasts on to a stop past the line
+    for (var e = 0; e < 14; e++) { o.v *= 0.8; o.y += o.v * 0.1; out.push([Math.round(o.x * 20), Math.round(o.y * 20), 0, 8, 0]); }
+    return { line: out, time: t };
+  }
+
+  // ---- drawing (the hoarfell tileset's scene hooks) --------------------------------------------------------------------------
+  // items: the gates, your ghost and Liv, sorted with everyone else by their foot row
+  function items(world, offX, offY, ts, now) {
+    if (!s || !s.id || !world.ski) return [];
+    var out = [], gts = world.ski.runs[s.id].gates;
+    gts.forEach(function (g, i) {
+      out.push({ footRow: g[1], draw: function (c) { gate(c, g, i, offX, offY, ts, now); } });
+    });
+    var t = s.phase === 'count' ? 0 : s.t;
+    if (s.ghost) out.push(skierItem(s.ghost, t, offX, offY, ts, null, 0.42));
+    if (s.rival) out.push(skierItem(s.rival.line, t, offX, offY, ts, RIVAL_SHEET, 1));
+    var g = gts[s.gate];
+    if (g && has('ski_goggles') && s.phase === 'run') {           // the goggles' line to the next gate
+      out.push({ footRow: s.y - 0.01, draw: function (c) {
+        c.fillStyle = 'rgba(255,210,80,0.6)';
+        for (var k = 2; k < 14; k += 2) {
+          var px = s.x + (g[0] - s.x) * k / 14, py = s.y + (g[1] - s.y) * k / 14;
+          c.fillRect(Math.round(offX + px * ts) - 1, Math.round(offY + py * ts), 2, 1);
+        }
+      } });
+    }
+    return out;
+  }
+  function skierItem(line, t, offX, offY, ts, sheet, alpha) {
+    var p = sampleAt(line, t), x = p[0] / 20, y = p[1] / 20, rc = p[3], flip = !!p[4];
+    return { footRow: y, draw: function (c) {
+      var img = BridgeCharacter.sportImage(sheet || BridgeCharacter.sportKey('ski'), flip);
+      if (!img) return;
+      var m = BridgeCharacter.SPORT.ski, cx = Math.round(offX + x * ts), fy = Math.round(offY + y * ts);
+      c.save();
+      c.globalAlpha = alpha * 0.8;
+      c.fillStyle = 'rgba(40,50,90,0.28)';
+      c.beginPath(); c.ellipse(cx, fy, 9, 3, 0, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = alpha;
+      c.drawImage(img, (rc % 16) * m.w, Math.floor(rc / 16) * m.h, m.w, m.h, cx - m.ox, fy - m.oy - Math.round(p[2] / 40 * C45 * 32), m.w, m.h);
+      c.restore();
+    } };
+  }
+  // a gate: two slim poles with flags, red and blue in turn; passed ones lie flat, the next one has a light over it
+  function gate(c, g, i, offX, offY, ts, now) {
+    var done = i < s.gate, next = i === s.gate && s.phase === 'run';
+    var red = i % 2 === 0, fl = red ? '#d83a2e' : '#2a6ae0', fd = red ? '#8a2018' : '#183a8a';
+    [-1, 1].forEach(function (sd) {
+      var x = Math.round(offX + (g[0] + sd * g[2] / 2) * ts), y = Math.round(offY + g[1] * ts);
+      var h = done ? 8 : 22, flap = Math.round(Math.sin(now / 160 + i * 1.7 + sd));
+      c.fillStyle = 'rgba(40,50,90,0.25)';
+      c.fillRect(x - 2, y, 5, 2);
+      c.fillStyle = '#1a1a24'; c.fillRect(x - 1, y - h - 1, 3, h + 1);
+      c.fillStyle = '#f2f0ea'; c.fillRect(x, y - h, 1, h);
+      if (!done) {
+        var fx = sd < 0 ? x + 1 : x - 7;
+        c.fillStyle = '#1a1a24'; c.fillRect(fx - 1, y - h - 1, 8, 9);
+        c.fillStyle = fl; c.fillRect(fx, y - h, 6, 7);
+        c.fillStyle = fd; c.fillRect(fx, y - h + 5, 6, 2);
+        c.fillStyle = '#f2f0ea'; c.fillRect(fx + 2 + flap, y - h + 2, 2, 2);
+      }
+      if (next) {
+        c.fillStyle = 'rgba(255,220,120,' + (0.45 + 0.3 * Math.sin(now / 200)).toFixed(2) + ')';
+        c.fillRect(x - 1, y - h - 5, 3, 2);
+      }
+    });
+  }
+
+  // ground: your tracks in the snow, under everyone
+  function ground(ctx, world, offX, offY, ts, now) {
+    if (!world.ski || trailWorld !== world || !trail.length) return;
+    var v = BridgeWorld.getView();
+    for (var i = 0; i < trail.length; i++) {
+      var p = trail[i], age = (now - p.t) / 1000;
+      if (age > 90) continue;
+      var x = offX + p.x * ts, y = offY + p.y * ts;
+      if (x < -8 || y < -8 || x > v.w + 8 || y > v.h + 8) continue;
+      var al = 0.42 * (age < 60 ? 1 : 1 - (age - 60) / 30);
+      ctx.fillStyle = 'rgba(120,140,196,' + al.toFixed(3) + ')';
+      var w = p.p ? 5 : 3, ca = Math.cos(p.a), sa = Math.sin(p.a);
+      ctx.fillRect(Math.round(x - ca * w), Math.round(y + sa * w * 0.5), 1, 1);
+      ctx.fillRect(Math.round(x + ca * w), Math.round(y - sa * w * 0.5), 1, 1);
+    }
+  }
+
+  // over: snow spray off the skis
+  function puff(n) {
+    if (!s) return;
+    for (var i = 0; i < n; i++) {
+      spray.push({ x: s.x + (Math.random() - 0.5) * 0.4, y: s.y, z: 2, vx: (Math.random() - 0.5) * 2.2 - Math.sin(s.a) * s.v * 0.15,
+                   vy: (Math.random() - 0.5) * 1.2, vz: 10 + Math.random() * 18, life: 0.5 + Math.random() * 0.4 });
+    }
+  }
+  var lastOver = 0;
+  function over(ctx, world, offX, offY, ts, now) {
+    if (!world.ski) return;
+    var dt = lastOver ? Math.min(0.05, (now - lastOver) / 1000) : 0;
+    lastOver = now;
+    spray = spray.filter(function (p) {
+      p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vz -= 60 * dt; p.z = Math.max(0, p.z + p.vz * dt);
+      if (p.life <= 0) return false;
+      ctx.fillStyle = p.life > 0.3 ? '#ffffff' : '#dce6f6';
+      ctx.fillRect(Math.round(offX + p.x * ts), Math.round(offY + p.y * ts - p.z), p.life > 0.45 ? 2 : 1, 1);
+      return true;
+    });
+  }
+
+  // ---- the HUD -------------------------------------------------------------------------------------------------------------
+  function ensureHud() {
+    if (hud) return;
+    hud = document.createElement('div');
+    hud.id = 'ski-hud';
+    hud.className = 'sport-hud';
+    hud.innerHTML = '<div class="sk-top"><i class="sk-mark"></i><b class="sk-name"></b><span class="sk-clock"></span><span class="sk-sub"></span></div>' +
+      '<div class="sk-big"></div><div class="sk-msg"></div><div class="sk-help"></div>';
+    document.body.appendChild(hud);
+  }
+  var msgT = 0, bigT = 0;
+  function say(t) {
+    ensureHud();
+    var m = hud.querySelector('.sk-msg');
+    m.textContent = t;
+    m.classList.add('on');
+    clearTimeout(msgT);
+    msgT = setTimeout(function () { m.classList.remove('on'); }, 1700);
+  }
+  function bigText(t) {
+    var b = hud.querySelector('.sk-big');
+    b.textContent = t;
+    b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+    clearTimeout(bigT);
+    bigT = setTimeout(function () { b.classList.remove('on'); }, 900);
+  }
+  function hudTick() {
+    if (!hud || !s) return;
+    var kmh = Math.round(s.v * 5.4), w = data(), sub = '';
+    hud.querySelector('.sk-clock').textContent = s.id ? fmt(s.phase === 'done' ? s.final : Math.max(0, s.t + s.pen)) : kmh + ' km/h';
+    if (s.id && w) {
+      var n = w.ski.runs[s.id].gates.length;
+      sub = kmh + ' km/h · gate ' + Math.min(s.gate + 1, n) + '/' + n;
+      if (s.rival && s.phase === 'run') sub += ' · Liv ' + (s.y >= sampleAt(s.rival.line, s.t)[1] / 20 ? 'behind' : 'ahead');
+    } else if (s.still > 0.6) {
+      sub = 'E: skis off';
+    }
+    hud.querySelector('.sk-sub').textContent = sub;
+  }
+
+  return {
+    start: start, RUNS: RUNS, unlocked: unlocked, isOpen: function () { return !!s; },
+    best: function (id) { return save.runs[id] && save.runs[id].best; },
+    beatLiv: function (id) { return !!save.rival[id]; },
+    items: items, ground: ground, over: over,
+    _s: function () { return s; }, _rival: rivalLine
+  };
 })();

@@ -57,6 +57,26 @@ var BridgeCharacter = (function () {
   function stand() { seat = null; }
   function isSeated() { return !!seat; }
 
+  // ---- a pose (js/ski.js) ------------------------------------------------------------------------
+  // A mode that moves the pilot itself (skiing) poses them: where they are
+  // (x, y: the floor point under them, tile units, not whole tiles), which
+  // sport sheet (characters.py pilot-ski / pilot-climb), the frame (row,
+  // col), mirrored (flip: the sheets face right; left is the mirror) and how
+  // high off the ground (lift, native px; the shadow stays down). Their tile
+  // follows, so loot, interactions and the camera still work.
+  var SPORT = { ski: { w: 40, h: 56, ox: 20, oy: 45 }, climb: { w: 32, h: 64, ox: 16, oy: 61 } };
+  var pose = null;
+  function setPose(p) {
+    pose = p || null;
+    if (!pose) return;
+    seat = null;
+    player.x = player.targetX = Math.floor(pose.x);
+    player.y = player.targetY = Math.floor(pose.y);
+    player.moveProgress = 1;
+    player.walking = false;
+  }
+  function getPose() { return pose; }
+
   function getX() { return player.x; }
   function getY() { return player.y; }
   function setFacing(dir) {
@@ -69,6 +89,7 @@ var BridgeCharacter = (function () {
 
   /** Get the interpolated render position (smooth between tiles). */
   function getRenderPos() {
+    if (pose) return { x: pose.x - 0.5, y: pose.y - 1 + 3 / 32 };
     if (seat) return { x: seat.x - 0.5, y: seat.y - 1 + 3 / 32 };
     var p = Math.min(1, player.moveProgress);
     return {
@@ -79,6 +100,7 @@ var BridgeCharacter = (function () {
 
   /** Try to move in a direction. Returns true if movement started. */
   function tryMove(dx, dy, collisions, mapW, mapH) {
+    if (pose) return false;
     if (seat) { seat = null; return false; }              // moving gets you up first
     // Update facing regardless of whether we can move
     if (dx < 0) player.facing = 'left';
@@ -153,13 +175,14 @@ var BridgeCharacter = (function () {
   var sheets = {};
 
   // the suit you're wearing (js/gear.js: style and colour), standing or seated
-  function sheetKey() {
+  function sheetKey(sport) {
     var pilot = BridgeState.getPilot();
     var G = typeof BridgeGear !== 'undefined' ? BridgeGear : null;
     var colour = (G && G.colour()) || (pilot && pilot.suit_color);
     if (!SUIT_COLORS[colour]) colour = 'purple';
     var style = G ? G.style() : 'flight';
-    return (seat ? 'sit-' : '') + (style && style !== 'flight' ? style + '-' : '') + colour;
+    var pre = sport ? sport + '-' : pose ? pose.kind + '-' : seat ? 'sit-' : '';
+    return pre + (style && style !== 'flight' ? style + '-' : '') + colour;
   }
 
   function getSheet(suit) {
@@ -170,6 +193,30 @@ var BridgeCharacter = (function () {
       img.src = '/bridge/assets/characters/pilot-' + suit + '.png';     // 'sit-<suit>' for the seated sheet
     }
     return sheets[suit];
+  }
+
+  // a sheet with every frame mirrored in place (a sport sheet faces right; left is its mirror)
+  function mirrored(key, fw) {
+    var base = getSheet(key);
+    if (!base.ready) return null;
+    if (!base.flip) {
+      var c = document.createElement('canvas');
+      c.width = base.img.width; c.height = base.img.height;
+      var x = c.getContext('2d');
+      for (var col = 0; col * fw < c.width; col++) {
+        x.setTransform(-1, 0, 0, 1, (col + 1) * fw + col * fw, 0);
+        x.drawImage(base.img, col * fw, 0, fw, c.height, col * fw, 0, fw, c.height);
+      }
+      base.flip = c;
+    }
+    return base.flip;
+  }
+  /** A sport sheet ready to draw — the pilot's own suit, or any 'ski-coat-red' — or null while it loads. */
+  function sportImage(key, flip) {
+    var kind = key.split('-')[0], m = SPORT[kind];
+    if (flip) return mirrored(key, m.w);
+    var sh = getSheet(key);
+    return sh.ready ? sh.img : null;
   }
 
   function drawSprite(ctx, sheet, sx, sy, ts) {
@@ -202,6 +249,7 @@ var BridgeCharacter = (function () {
 
   function sceneItem(offX, offY, ts, sc, world, now) {
     if (hidden) return { footRow: 0, draw: function () {} };
+    if (pose) return posedItem(offX, offY, ts, sc, world, now);
     var sheet = getSheet(sheetKey());
     var pos = getRenderPos();
     var footRow = pos.y + 1 - 3 / 32;
@@ -222,6 +270,27 @@ var BridgeCharacter = (function () {
     };
   }
 
+  function posedItem(offX, offY, ts, sc, world, now) {
+    var p = pose, m = SPORT[p.kind], img = sportImage(sheetKey(), p.flip);
+    return {
+      footRow: p.y,
+      draw: function (ctx) {
+        if (!img) return;
+        var cx = Math.round(offX + p.x * ts), footY = Math.round(offY + p.y * ts), lift = Math.round(p.lift || 0);
+        var shadow = { x: cx, y: footY, rx: p.kind === 'ski' ? 10 : 8, ry: 3 };
+        if (lift > 2) {      // in the air: the shadow stays on the snow, smaller the higher you are
+          ctx.fillStyle = 'rgba(40, 50, 90, 0.28)';
+          ctx.beginPath();
+          ctx.ellipse(cx, footY, Math.max(4, 10 - lift / 5), Math.max(2, 3 - lift / 20), 0, 0, Math.PI * 2);
+          ctx.fill();
+          shadow = null;
+        }
+        BridgeScene.drawOccluded(ctx, sc, img, p.col * m.w, p.row * m.h, m.w, m.h,
+          cx - m.ox, footY - m.oy - lift, p.y, offX, offY, BridgeScene.tintAt(sc, world, p.x - 0.5, p.y - 1, now), shadow, null, true);
+      }
+    };
+  }
+
   /** The pilot's sprite right now: sheet image, frame rect and position (for echoes). */
   function frame() {
     if (hidden) return null;
@@ -238,6 +307,12 @@ var BridgeCharacter = (function () {
   /** Draw the character at native resolution. offX/offY = world origin, ts = native tile px. */
   function draw(ctx, offX, offY, ts) {
     if (hidden) return;
+    if (pose) {                       // outside a scene (no depth to test against)
+      var pm = SPORT[pose.kind], pimg = sportImage(sheetKey(), pose.flip);
+      if (pimg) ctx.drawImage(pimg, pose.col * pm.w, pose.row * pm.h, pm.w, pm.h,
+        Math.round(offX + pose.x * ts) - pm.ox, Math.round(offY + pose.y * ts) - pm.oy - Math.round(pose.lift || 0), pm.w, pm.h);
+      return;
+    }
     var pos = getRenderPos();
     var sx = Math.round(offX + pos.x * ts);
     var sy = Math.round(offY + pos.y * ts);
@@ -375,6 +450,11 @@ var BridgeCharacter = (function () {
     init: init,
     sit: sit,
     stand: stand,
+    setPose: setPose,
+    getPose: getPose,
+    sportImage: sportImage,
+    sportKey: sheetKey,
+    SPORT: SPORT,
     isSeated: isSeated,
     getX: getX,
     getY: getY,

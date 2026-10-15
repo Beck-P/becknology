@@ -11,6 +11,7 @@
  */
 var BridgeControls = (function () {
   var keys = { up: false, down: false, left: false, right: false };
+  var taps = {};             // arrows pressed since the last consumeTaps() (a quick tap can start and end between frames)
   var actionPressed = false;
   var enabled = false;
 
@@ -18,6 +19,7 @@ var BridgeControls = (function () {
     enabled = true;
     document.documentElement.classList.remove('controls-off');
     keys = { up: false, down: false, left: false, right: false };
+    taps = {};
     actionPressed = false;
   }
 
@@ -32,10 +34,10 @@ var BridgeControls = (function () {
   document.addEventListener('keydown', function (e) {
     if (!enabled) return;
     switch (e.key) {
-      case 'ArrowUp': case 'w': case 'W': keys.up = true; e.preventDefault(); break;
-      case 'ArrowDown': case 's': case 'S': keys.down = true; e.preventDefault(); break;
-      case 'ArrowLeft': case 'a': case 'A': keys.left = true; e.preventDefault(); break;
-      case 'ArrowRight': case 'd': case 'D': keys.right = true; e.preventDefault(); break;
+      case 'ArrowUp': case 'w': case 'W': keys.up = true; if (!e.repeat) taps.up = true; e.preventDefault(); break;
+      case 'ArrowDown': case 's': case 'S': keys.down = true; if (!e.repeat) taps.down = true; e.preventDefault(); break;
+      case 'ArrowLeft': case 'a': case 'A': keys.left = true; if (!e.repeat) taps.left = true; e.preventDefault(); break;
+      case 'ArrowRight': case 'd': case 'D': keys.right = true; if (!e.repeat) taps.right = true; e.preventDefault(); break;
       case 'Enter': case ' ': case 'e': case 'E': actionPressed = true; e.preventDefault(); break;
       case 'f': case 'F':
         if (typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
@@ -139,7 +141,7 @@ var BridgeControls = (function () {
       if (next[d] === stick[d]) return;
       stick[d] = next[d];
       if (keysMode()) sendKey(next[d] ? 'keydown' : 'keyup', KEYNAME[d]);
-      else if (enabled) keys[d] = next[d];
+      else if (enabled) { keys[d] = next[d]; if (next[d]) taps[d] = true; }
     });
   }
 
@@ -267,10 +269,25 @@ var BridgeControls = (function () {
     return was;
   }
 
+  /** Arrows pressed since the last call (js/climb.js picks holds with taps). */
+  function consumeTaps() {
+    var t = enabled ? taps : {};
+    taps = {};
+    return t;
+  }
+
+  /** The arrow keys held right now (a mode that steers rather than steps: js/ski.js). */
+  function held() {
+    if (!enabled) return { up: false, down: false, left: false, right: false };
+    return { up: keys.up, down: keys.down, left: keys.left, right: keys.right };
+  }
+
   return {
     enable: enable,
     disable: disable,
     getDir: getDir,
+    held: held,
+    consumeTaps: consumeTaps,
     consumeAction: consumeAction
   };
 })();

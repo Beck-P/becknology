@@ -13,10 +13,13 @@
  * Scene hooks (the hoarfell tileset): falling snow, chimney smoke, the
  * chairlift's chairs going round (`scene.lift.lines`: the cable runs in
  * screen tiles), and on the summit (a backdrop world) the evening sky, the
- * far range and a sea of cloud below. Interactions: climb / climb_board /
- * climb_register (js/climb.js), lift and ski_start (js/ski.js).
+ * far range and a sea of cloud below (and behind the face, `hoarfell-face`).
+ * The pistes and the face hand their own drawing to js/ski.js and
+ * js/climb.js (gates, ghosts, tracks, spray; the holds in reach, the wind).
+ * Interactions: climb / climb_board / climb_register (js/climb.js), lift,
+ * ski_start and ski_gate (js/ski.js); Liv's race topic (`race`).
  *
- *   BridgeHoarfell.use(inter)    BridgeHoarfell.warm(minutes)    BridgeHoarfell.ski(runId)
+ *   BridgeHoarfell.use(inter)    BridgeHoarfell.warm(minutes)    BridgeHoarfell.ski(runId | 'free', {rival})    BridgeHoarfell.race()
  */
 var BridgeHoarfell = (function () {
   var KEY = 'bridge_hoarfell';
@@ -35,7 +38,7 @@ var BridgeHoarfell = (function () {
   function chilled(world, now) {
     if (!world || !world.cold || suited() || Date.now() < save.warm) { coldSince = 0; return 0; }
     if (typeof BridgeClimb !== 'undefined' && BridgeClimb.isOpen()) return 0;     // the climb has its own cold
-    if (typeof BridgeSki !== 'undefined' && BridgeSki.isOpen()) return 0;
+    if (typeof BridgeSki !== 'undefined' && BridgeSki.isOpen()) return 0;            // skiing keeps you warm
     if (!coldSince) { coldSince = now; lastChill = now; }
     if (!warned) {
       warned = true;
@@ -65,7 +68,8 @@ var BridgeHoarfell = (function () {
         return;
       case 'climb_register': return register();
       case 'lift': return lift(inter);
-      case 'ski_start': return skiMenu('START GATE', 'THREE BOARDS ON POSTS: GREEN, BLUE, BLACK. THE SNOW FALLS AWAY BELOW THE GATE INTO CLOUD.');
+      case 'ski_start': return skiMenu('START GATE', 'THREE BOARDS ON POSTS: GREEN, BLUE, BLACK. THE SNOW FALLS AWAY BELOW THE GATE INTO THE PISTES.');
+      case 'ski_gate': return ski(inter.run);
     }
   }
 
@@ -74,31 +78,44 @@ var BridgeHoarfell = (function () {
     return Object.keys(BridgeSki.RUNS).map(function (id) {
       var R = BridgeSki.RUNS[id], best = BridgeSki.best(id);
       var name = R.name.toLowerCase().replace(/(^|\s)([a-z])/g, function (m, sp, ch) { return sp + ch.toUpperCase(); });
-      return { label: 'Ski ' + name + ' (' + R.mark + ')' + (best ? ' - best ' + (Math.floor(best / 60) + ':' + ('0' + (best % 60).toFixed(1)).slice(-4)) : ''),
+      return { label: 'Race ' + name + ' (' + R.mark + ')' + (best ? ' - best ' + (Math.floor(best / 60) + ':' + ('0' + (best % 60).toFixed(1)).slice(-4)) : ''),
                action: 'ski_run', run: id };
-    });
+    }).concat([{ label: 'Free ski from the top', action: 'ski_run', run: 'free' }]);
   }
+  // the lift: Fellhaven's bottom station, the summit's top one, the pistes' own at the finish
   function lift(inter) {
-    var down = !!inter.down;
-    var opts = down ? [{ label: 'Ride down to Fellhaven', action: 'enter_world', target: 'hoarfell', spawn: [41, 14] }]
-                    : [{ label: 'Ride up to the summit', action: 'enter_world', target: 'hoarfell-summit', spawn: [20, 15] }];
+    var opts;
+    if (inter.down) opts = [{ label: 'Ride down to Fellhaven', action: 'enter_world', target: 'hoarfell', spawn: [41, 14] }];
+    else opts = [{ label: 'Ride up to the summit', action: 'enter_world', target: 'hoarfell-summit', spawn: [20, 15] }];
     opts = opts.concat(runOptions()).concat([{ label: 'Not now', action: 'close' }]);
     BridgeInteractions.execute({ type: 'menu', label: 'CHAIRLIFT', options: opts,
-      dialog: down ? 'THE TOP STATION. THE BULLWHEEL GRINDS ROUND; THE CHAIRS SWING IN OUT OF THE CLOUD.'
-                   : 'ANSGAR WAVES YOU ONTO THE LINE. "UP TOP YOU CAN WALK, LOOK, OR SKI DOWN. SKIS FROM THE HIRE SHOP."' });
+      dialog: inter.down ? 'THE TOP STATION. THE BULLWHEEL GRINDS ROUND; THE CHAIRS SWING IN OUT OF THE CLOUD.'
+            : inter.piste ? 'THE BOTTOM STATION BELOW THE FINISH. ANSGAR\'S CHAIRS COME ROUND EMPTY AND SWING ON UP THE EAST SIDE.'
+            : 'ANSGAR WAVES YOU ONTO THE LINE. "THE PISTES START UNDER THE SUMMIT. SKIS FROM THE HIRE SHOP."' });
   }
   function skiMenu(label, text) {
     BridgeInteractions.execute({ type: 'menu', label: label, dialog: text, options: runOptions().concat([{ label: 'Not now', action: 'close' }]) });
   }
-  // a run: skis needed, the black once you've done the blue; you end up at the bottom by the lift
-  function ski(run) {
+  // a run (or 'free'): skis needed, the black once you've done the blue — then onto the mountain (js/ski.js)
+  function ski(run, opts) {
     if (typeof BridgeSki === 'undefined') return;
-    if (!has('skis')) return say('ANSGAR', '"NOT IN THOSE BOOTS. THE HIRE SHOP ACROSS THE STREET HAS SKIS."');
+    if (!has('skis')) return say('ANSGAR', '"NOT IN THOSE BOOTS. THE HIRE SHOP IN THE VILLAGE HAS SKIS."');
+    if (run === 'free' || !run) return BridgeSki.start(null);
     if (!BridgeSki.unlocked(run)) return say('ANSGAR', '"THE COULOIR? NOT TILL I\'VE SEEN YOU COME DOWN PINEWOOD IN ONE PIECE."');
-    var from = BridgeWorld.getWorldId();
-    BridgeSki.start(run, { done: function (finished) {
-      if (finished && from !== 'hoarfell') BridgeWorld.enterWorld('hoarfell', [41, 15]);
-    } });
+    BridgeSki.start(run, opts);
+  }
+
+  // Liv at the finish: race her down any run you're allowed on
+  function race(who) {
+    if (typeof BridgeSki === 'undefined') return;
+    var opts = Object.keys(BridgeSki.RUNS).filter(function (id) { return BridgeSki.unlocked(id); }).map(function (id) {
+      var R = BridgeSki.RUNS[id];
+      return { label: 'Race her down ' + R.name.toLowerCase().replace(/(^|\s)([a-z])/g, function (m, sp, ch) { return sp + ch.toUpperCase(); }) +
+               (BridgeSki.beatLiv(id) ? ' (beaten)' : ' (' + R.beat + ' coins)'), action: 'ski_run', run: id, rival: true };
+    });
+    opts.push({ label: 'Not now', action: 'close' });
+    BridgeInteractions.execute({ type: 'menu', label: (who || 'LIV').toUpperCase(), options: opts,
+      dialog: '"SAME RULES AS THE RACES: EVERY GATE, CLOCK STARTS AT THE WAND. BEAT ME ONCE ON A RUN AND I PAY UP. I DON\'T FALL, AND I DON\'T WAIT."' });
   }
 
   function register() {
@@ -246,12 +263,20 @@ var BridgeHoarfell = (function () {
   }
 
   if (typeof BridgeWorld !== 'undefined') {
-    BridgeWorld.registerSceneHooks('hoarfell', { over: over });
+    BridgeWorld.registerSceneHooks('hoarfell', {
+      over: function (ctx, world, offX, offY, ts, now) {
+        over(ctx, world, offX, offY, ts, now);
+        if (typeof BridgeSki !== 'undefined') BridgeSki.over(ctx, world, offX, offY, ts, now);
+        if (typeof BridgeClimb !== 'undefined') BridgeClimb.over(ctx, world, offX, offY, ts, now);
+      },
+      ground: function (ctx, world, offX, offY, ts, now) { if (typeof BridgeSki !== 'undefined') BridgeSki.ground(ctx, world, offX, offY, ts, now); },
+      items: function (world, offX, offY, ts, now) { return typeof BridgeSki !== 'undefined' ? BridgeSki.items(world, offX, offY, ts, now) : []; }
+    });
     BridgeWorld.registerBackground('hoarfell', sky);
   }
 
   // the same evening as a view, sitting on the summit bench (js/actions.js 'peaks')
   function vista(ctx, w, h, now) { sky(ctx, w, h, now, true); }
 
-  return { use: use, warm: warm, ski: ski, vista: vista, isWarm: function () { return suited() || Date.now() < save.warm; } };
+  return { use: use, warm: warm, ski: ski, race: race, vista: vista, isWarm: function () { return suited() || Date.now() < save.warm; } };
 })();
