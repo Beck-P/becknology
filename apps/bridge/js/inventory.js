@@ -22,18 +22,27 @@
  *   BridgeInventory.restoreHP(n) / .restoreEnergy(n)
  *   BridgeInventory.getStats()
  *
+ * Behind the hotbar is the backpack: more slots, as many as the pack you
+ * carry holds (js/gear.js — the Flight Pack's 6 up to the Voidweave's 30).
+ * In the inventory screen click an item to pick it up and another slot to
+ * put it down (swapping, or stacking like with like). Suits add to max
+ * health and energy (BridgeGear.bonus()).
+ *
  * State lives under localStorage key 'bridge.inventory.v2'.
  */
 var BridgeInventory = (function () {
 
   var STORAGE_KEY = 'bridge.inventory.v2';
   var LEGACY_KEY  = 'bridge.inventory.v1';
-  var MAX_SLOTS = 10;
+  var MAX_SLOTS = 10;               // the hotbar
+  var TOTAL = 40;                   // hotbar + the biggest pack
+  var BASE_HP = 100, BASE_EN = 100;
+  function cap() { return Math.min(TOTAL, MAX_SLOTS + (typeof BridgeGear !== 'undefined' ? BridgeGear.packSlots() : 6)); }
   var SLOT_SIZE = 38;
   var ICON_SIZE = 30;
 
   var state = {
-    slots: new Array(MAX_SLOTS).fill(null),  // [{id,count}|null] * MAX_SLOTS
+    slots: new Array(TOTAL).fill(null),      // [{id,count}|null] * TOTAL: hotbar first, then the pack
     selected: 0,
     hp: 100, maxHP: 100,
     energy: 100, maxEnergy: 100
@@ -54,9 +63,9 @@ var BridgeInventory = (function () {
 
   // ---- Persistence ----------------------------------------------------
   function normalizeSlots(arr) {
-    var out = new Array(MAX_SLOTS).fill(null);
+    var out = new Array(TOTAL).fill(null);
     if (!Array.isArray(arr)) return out;
-    for (var i = 0; i < Math.min(arr.length, MAX_SLOTS); i++) {
+    for (var i = 0; i < Math.min(arr.length, TOTAL); i++) {
       var s = arr[i];
       if (s && typeof s.id === 'string' && typeof s.count === 'number' && s.count > 0) {
         if (BridgeItems.get(s.id)) out[i] = { id: s.id, count: s.count };
@@ -165,14 +174,20 @@ var BridgeInventory = (function () {
 
   // ---- Slot ops -------------------------------------------------------
   function findSlotById(id) {
-    for (var i = 0; i < MAX_SLOTS; i++) {
+    for (var i = 0; i < TOTAL; i++) {
       if (state.slots[i] && state.slots[i].id === id) return i;
     }
     return -1;
   }
   function firstEmptySlot() {
-    for (var i = 0; i < MAX_SLOTS; i++) if (!state.slots[i]) return i;
+    for (var i = 0, n = cap(); i < n; i++) if (!state.slots[i]) return i;
     return -1;
+  }
+  // max health and energy follow the suit you wear
+  function applyGear() {
+    var b = typeof BridgeGear !== 'undefined' ? BridgeGear.bonus() : { hp: 0, energy: 0 };
+    state.maxHP = BASE_HP + (b.hp || 0); state.maxEnergy = BASE_EN + (b.energy || 0);
+    state.hp = Math.min(state.hp, state.maxHP); state.energy = Math.min(state.energy, state.maxEnergy);
   }
 
   function addItem(id, n) {
@@ -192,23 +207,39 @@ var BridgeInventory = (function () {
   }
   function removeItem(id, n) {
     n = (typeof n === 'number') ? n : 1;
-    var i = findSlotById(id);
-    if (i < 0) return false;
-    state.slots[i].count = Math.max(0, state.slots[i].count - n);
-    if (state.slots[i].count === 0) state.slots[i] = null;
+    if (findSlotById(id) < 0) return false;
+    for (var i = TOTAL - 1; i >= 0 && n > 0; i--) {         // from the back of the pack first
+      var sl = state.slots[i];
+      if (!sl || sl.id !== id) continue;
+      var take = Math.min(n, sl.count);
+      sl.count -= take; n -= take;
+      if (sl.count === 0) state.slots[i] = null;
+    }
     save(); refresh();
     return true;
   }
   function getCount(id) {
-    var i = findSlotById(id);
-    return i < 0 ? 0 : state.slots[i].count;
+    var c = 0;
+    for (var i = 0; i < TOTAL; i++) if (state.slots[i] && state.slots[i].id === id) c += state.slots[i].count;
+    return c;
   }
   function getAll() {
     var out = {};
-    for (var i = 0; i < MAX_SLOTS; i++) {
-      if (state.slots[i]) out[state.slots[i].id] = state.slots[i].count;
+    for (var i = 0; i < TOTAL; i++) {
+      if (state.slots[i]) out[state.slots[i].id] = (out[state.slots[i].id] || 0) + state.slots[i].count;
     }
     return out;
+  }
+  // pick up from one slot, put down in another: swap, or stack like with like
+  function moveSlot(from, to) {
+    if (from === to || from < 0 || to < 0 || from >= cap() || to >= cap()) return;
+    var a = state.slots[from], b = state.slots[to];
+    if (a && b && a.id === b.id && (BridgeItems.get(a.id) || {}).stackable !== false) {
+      b.count += a.count; state.slots[from] = null;
+    } else {
+      state.slots[from] = b; state.slots[to] = a;
+    }
+    save(); refresh();
   }
 
   function selectSlot(i) {
@@ -414,6 +445,7 @@ var BridgeInventory = (function () {
   }
 
   function refresh() {
+    applyGear();
     if (!panel) return;
     for (var i = 0; i < MAX_SLOTS; i++) refreshSlotEl(i);
     var hpPct = Math.max(0, Math.min(100, (state.hp / state.maxHP) * 100));
@@ -481,27 +513,27 @@ var BridgeInventory = (function () {
         '<div style="font-size:10px;letter-spacing:5px;color:rgba(255,200,100,0.7);">PILOT GEAR</div>' +
         '<div style="font-size:18px;letter-spacing:3px;color:#ffe080;margin-top:4px;">INVENTORY</div>' +
       '</div>' +
-      '<div style="font-size:10px;color:#888;letter-spacing:2px;">[I] OR [ESC] TO CLOSE</div>';
+      '<div style="display:flex;gap:12px;align-items:center;">' +
+        '<button id="inv-outfit" style="font:inherit;font-size:11px;letter-spacing:2px;padding:6px 12px;cursor:pointer;' +
+          'background:rgba(255,200,100,0.12);color:#ffe080;border:1px solid rgba(255,200,100,0.45);">OUTFIT</button>' +
+        '<div class="inv-close-hint" style="font-size:10px;color:#888;letter-spacing:2px;">[I] OR [ESC] TO CLOSE</div>' +
+      '</div>';
     card.appendChild(head);
+    head.querySelector('#inv-outfit').addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeMenu();
+      if (typeof BridgeGear !== 'undefined') BridgeGear.open();
+    });
 
-    // Body: grid on the left, detail on the right
+    // Body: the hotbar and the pack, then the detail of the slot in hand
     var body = document.createElement('div');
-    body.style.cssText = 'display:flex;gap:18px;padding:18px 22px;';
-
-    // Grid (2 rows × 5 cols)
-    var grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(5,56px);grid-template-rows:repeat(2,56px);gap:6px;flex:0 0 auto;';
-    menuSlotEls = [];
-    for (var i = 0; i < MAX_SLOTS; i++) {
-      var s = buildMenuSlotEl(i);
-      menuSlotEls.push(s);
-      grid.appendChild(s);
-    }
-    body.appendChild(grid);
+    body.style.cssText = 'display:flex;flex-direction:column;gap:12px;padding:14px 22px;overflow-y:auto;';
+    menuGrid = document.createElement('div');
+    body.appendChild(menuGrid);
 
     // Detail panel
     menuDetailEl = document.createElement('div');
-    menuDetailEl.style.cssText = 'flex:1;min-width:0;padding:8px 4px;';
+    menuDetailEl.style.cssText = 'min-width:0;padding:4px 2px;';
     body.appendChild(menuDetailEl);
 
     card.appendChild(body);
@@ -521,15 +553,53 @@ var BridgeInventory = (function () {
     menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); });
   }
 
+  // the grid: a row for the hotbar, rows for the pack (rebuilt when the pack changes)
+  var menuGrid = null, menuCap = 0, held = -1, focus = -1;
+  function buildMenuGrid() {
+    var c = cap();
+    if (menuCap === c && menuSlotEls.length) return;
+    menuCap = c;
+    menuGrid.innerHTML = '';
+    menuSlotEls = [];
+    function label(t) {
+      var l = document.createElement('div');
+      l.style.cssText = 'font-size:10px;letter-spacing:3px;color:rgba(255,200,100,0.7);margin:2px 0 6px;';
+      l.textContent = t;
+      menuGrid.appendChild(l);
+    }
+    function grid(from, to) {
+      var g = document.createElement('div');
+      g.style.cssText = 'display:grid;grid-template-columns:repeat(10,minmax(0,52px));gap:5px;margin-bottom:10px;';
+      for (var i = from; i < to; i++) { var el = buildMenuSlotEl(i); menuSlotEls[i] = el; g.appendChild(el); }
+      menuGrid.appendChild(g);
+    }
+    label('HOTBAR');
+    grid(0, MAX_SLOTS);
+    label((typeof BridgeGear !== 'undefined' ? BridgeGear.packName().toUpperCase() : 'PACK') + ' \u00b7 ' + (c - MAX_SLOTS) + ' SLOTS');
+    grid(MAX_SLOTS, c);
+  }
+
+  function clickMenuSlot(i) {
+    if (held < 0) {
+      if (state.slots[i]) held = i;
+      focus = i;
+      if (i < MAX_SLOTS) selectSlot(i); else refreshMenu();
+      return;
+    }
+    if (i !== held) { moveSlot(held, i); focus = i; if (i < MAX_SLOTS) state.selected = i; }
+    held = -1;
+    refreshMenu();
+  }
+
   function buildMenuSlotEl(i) {
     var slot = document.createElement('div');
     slot.dataset.idx = i;
     slot.style.cssText =
-      'position:relative;width:56px;height:56px;' +
+      'position:relative;aspect-ratio:1;min-width:0;' +
       'background:rgba(0,0,0,0.5);border:1px solid rgba(255,200,100,0.20);' +
       'cursor:pointer;transition:border-color 0.15s ease,box-shadow 0.15s ease;';
     var num = document.createElement('span');
-    num.textContent = (i === 9) ? '0' : String(i + 1);
+    num.textContent = i >= MAX_SLOTS ? '' : (i === 9) ? '0' : String(i + 1);
     num.style.cssText =
       'position:absolute;top:2px;left:4px;font-size:10px;' +
       'color:rgba(255,200,100,0.55);pointer-events:none;';
@@ -537,7 +607,7 @@ var BridgeInventory = (function () {
     var cnv = document.createElement('canvas');
     cnv.className = 'menu-icon';
     cnv.width = 44; cnv.height = 44;
-    cnv.style.cssText = 'image-rendering:pixelated;width:44px;height:44px;display:block;margin:6px auto 0;';
+    cnv.style.cssText = 'image-rendering:pixelated;width:80%;height:80%;display:block;margin:10% auto 0;';
     slot.appendChild(cnv);
     var cnt = document.createElement('span');
     cnt.className = 'menu-count';
@@ -545,7 +615,7 @@ var BridgeInventory = (function () {
       'position:absolute;bottom:2px;right:5px;font-size:12px;color:#fff;' +
       'text-shadow:1px 1px 0 #000;font-weight:bold;display:none;';
     slot.appendChild(cnt);
-    slot.addEventListener('click', function () { selectSlot(i); });
+    slot.addEventListener('click', function (e) { e.stopPropagation(); clickMenuSlot(i); });
     return slot;
   }
 
@@ -554,8 +624,11 @@ var BridgeInventory = (function () {
     if (!slot) return;
     var s = state.slots[i];
     var isSelected = (i === state.selected);
-    if (isSelected) {
-      slot.style.borderColor = '#ffe080';
+    if (i === held) {
+      slot.style.borderColor = '#80e0ff';
+      slot.style.boxShadow = '0 0 12px rgba(128,224,255,0.7),inset 0 0 10px rgba(128,224,255,0.2)';
+    } else if (isSelected || i === focus) {
+      slot.style.borderColor = isSelected ? '#ffe080' : 'rgba(255,224,128,0.7)';
       slot.style.boxShadow = '0 0 10px rgba(255,224,128,0.5),inset 0 0 8px rgba(255,224,128,0.10)';
     } else {
       slot.style.borderColor = s ? 'rgba(255,200,100,0.35)' : 'rgba(255,200,100,0.15)';
@@ -577,7 +650,7 @@ var BridgeInventory = (function () {
 
   function refreshMenuDetail() {
     if (!menuDetailEl) return;
-    var s = state.slots[state.selected];
+    var s = state.slots[focus >= 0 ? focus : state.selected];
     if (!s) {
       menuDetailEl.innerHTML =
         '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#5a5040;font-style:italic;letter-spacing:2px;">EMPTY SLOT</div>';
@@ -651,7 +724,8 @@ var BridgeInventory = (function () {
       'margin-top:4px;padding:6px 10px;font-size:10px;letter-spacing:2px;' +
       'background:rgba(0,0,0,0.4);border:1px solid ' + (usable ? 'rgba(255,224,128,0.4)' : 'rgba(255,255,255,0.1)') + ';' +
       'color:' + (usable ? '#ffe080' : '#5a5040') + ';';
-    hintEl.textContent = usable
+    hintEl.textContent = held >= 0 ? 'CLICK ANOTHER SLOT TO PUT IT THERE · CLICK IT AGAIN TO KEEP IT'
+      : usable
       ? (item.type === 'weapon' ? '[F] OR RIGHT-CLICK TO STRIKE' : '[F] OR RIGHT-CLICK TO USE')
       : (item.type === 'weapon' ? 'WEAPON · NO COMBAT YET' : 'NO USE AVAILABLE HERE');
     wrap.appendChild(hintEl);
@@ -664,12 +738,13 @@ var BridgeInventory = (function () {
     menuStatsEl.innerHTML =
       '<span>HP <span style="color:#ffb0b0;">' + state.hp + '/' + state.maxHP + '</span>' +
       '  ·  EN <span style="color:#ffe0a0;">' + state.energy + '/' + state.maxEnergy + '</span></span>' +
-      '<span style="color:#666;">CLICK A SLOT · 1-0 JUMP · [ ] CYCLE · F USE</span>';
+      '<span style="color:#666;">CLICK AN ITEM TO PICK IT UP, A SLOT TO PUT IT DOWN · 1-0 · F USE</span>';
   }
 
   function refreshMenu() {
     if (!menu) return;
-    for (var i = 0; i < MAX_SLOTS; i++) refreshMenuSlot(i);
+    buildMenuGrid();
+    for (var i = 0; i < menuCap; i++) refreshMenuSlot(i);
     refreshMenuDetail();
     refreshMenuStats();
   }
@@ -680,6 +755,7 @@ var BridgeInventory = (function () {
     buildMenu();
     menu.style.display = 'flex';
     menuOpen = true;
+    held = -1; focus = -1;
     if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
     refreshMenu();
   }
@@ -701,7 +777,10 @@ var BridgeInventory = (function () {
     if (!menuOpen) return;
     var handled = true;
     switch (e.key) {
-      case 'Escape': case 'i': case 'I':
+      case 'Escape':
+        if (held >= 0) { held = -1; refreshMenu(); } else closeMenu();
+        break;
+      case 'i': case 'I':
         closeMenu(); break;
       case '[':
         cycleSlot(-1); break;
@@ -714,6 +793,8 @@ var BridgeInventory = (function () {
         selectSlot(parseInt(e.key, 10) - 1); break;
       case '0':
         selectSlot(9); break;
+      case 'o': case 'O':
+        closeMenu(); if (typeof BridgeGear !== 'undefined') BridgeGear.open(); break;
       default: handled = false;
     }
     if (handled) {

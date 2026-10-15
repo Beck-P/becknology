@@ -285,6 +285,11 @@
             "price": 1
           }
         ]
+      },
+      {
+        "q": "Cold-weather gear?",
+        "a": "QUILTED SUITS FROM UP NORTH - I'VE A STALL OF THEM BY THE ROPE. PELL SAYS YOU'LL WANT ONE WHERE THE AIR GETS THIN.",
+        "outfit": "sapphire_imports"
       }
     ]
   },
@@ -575,6 +580,11 @@
             "price": 3
           }
         ]
+      },
+      {
+        "q": "Anything to wear?",
+        "a": "CORP SECURITY PLATE, ONE CAREFUL OWNER. AND A FRAME PACK OFF A SURVEYOR WHO WON'T BE NEEDING IT. DON'T ASK HOW I GOT EITHER.",
+        "outfit": "joro"
       }
     ]
   },
@@ -650,6 +660,11 @@
       {
         "q": "The Stranger",
         "a": "THE ONE IN THE ARCADE'S BACK CORNER? NOT ONE OF OURS. THEY JUST KNOW THINGS. WE LEAVE THEM SNACKS."
+      },
+      {
+        "q": "Gear",
+        "a": "A RUCKSACK STITCHED FROM SOMETHING THAT ISN'T CLOTH. IT HOLDS MORE THAN IT SHOULD. NINE HUNDRED, AND YOU NEVER SAW IT HERE.",
+        "outfit": "vex"
       }
     ]
   },

@@ -2,7 +2,10 @@
 
   BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot
   BVENV/bin/python tools/bridge-art/characters.py OUTDIR npc-bartender
-  python3 tools/bridge-art/sprites_post.py pilot OUTDIR/pilot
+  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-coat      # a suit style (coat, plate,
+  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-sit-coat  # thermal, runner), standing / seated
+  python3 tools/bridge-art/sprites_post.py pilot OUTDIR/pilot             # -> pilot-<colour>.png
+  python3 tools/bridge-art/sprites_post.py pilot-coat OUTDIR              # -> pilot-coat-<colour>.png
   python3 tools/bridge-art/sprites_post.py npc OUTDIR/npc-bartender
 
 Characters use the scene camera (45° orthographic, 32 px per tile) and tile
@@ -53,6 +56,11 @@ FIXED = {
     'white':  ('#9a968c', '#e4e0d4', '#fbf8f0'),
     'leather': ('#3a2416', '#5e3a22', '#7e5232'),
     'pants':  ('#24202a', '#3e3646', '#5a5064'),
+    'steel':  ('#4a5060', '#8a94a8', '#c8d0e0'),
+    'steeldk': ('#22262e', '#3a404c', '#5a6272'),
+    'fur':    ('#a89a88', '#e2d8c8', '#fbf6ec'),
+    'sneaker': ('#8a8a96', '#dcdce6', '#ffffff'),
+    'ledp':   ('#f078c8', '#f078c8', '#f078c8'),
 }
 NPCS = {
     # tone keys: shirt, sleeve, pants, hair, apron?, hat?
@@ -291,14 +299,107 @@ def build_pilot():
     arms('arm', 'suitdk')
     for side in 'LR':
         add('uv_sphere', 'pad' + side, (0, 0, 0.2), (1.9, 1.9, 1.5), 'suitdk', 'arm' + side, shoulders[side], segments=12, ring_count=8)
+    helmet()
+
+
+def helmet(collar='suitdk', ruff=False):
+    global head, tip
     head = pivot('head', (0, 0, 18.6), body)
-    add('torus', 'collar', (0, 0, 0.5), (1, 1, 1), 'suitdk', 'collar', head,
-        major_radius=3.6, minor_radius=0.9, major_segments=20, minor_segments=8)
+    if ruff:
+        add('torus', 'ruff', (0, 0, 0.7), (1, 1, 1), 'fur', 'collar', head,
+            major_radius=3.9, minor_radius=1.5, major_segments=20, minor_segments=8)
+    else:
+        add('torus', 'collar', (0, 0, 0.5), (1, 1, 1), collar, 'collar', head,
+            major_radius=3.6, minor_radius=0.9, major_segments=20, minor_segments=8)
     add('uv_sphere', 'helmet', (0, 0, 5.0), (5.8, 5.5, 5.3), 'helmet', 'helmet', head, segments=28, ring_count=14)
     add('uv_sphere', 'visor', (0, -3.7, 4.6), (4.2, 3.1, 2.7), 'visor', 'visor', head, segments=24, ring_count=12)
     add('cube', 'glint', (-1.9, -6.55, 5.7), (0.55, 0.2, 0.5), 'glint', 'visor', head)
     add('cylinder', 'antenna', (3.0, 0.6, 10.6), (0.3, 0.3, 1.9), 'pack', 'helmet', head, vertices=8)
     tip = add('uv_sphere', 'antennaTip', (3.0, 0.6, 12.6), (0.85, 0.85, 0.85), 'ledy', 'helmet', head, segments=8, ring_count=6)
+
+
+def build_coat():
+    # the Voyager's Coat: a captain's long coat over the flight suit, gold epaulettes, a satchel on a strap
+    legs('pants', 'leather')
+    add('cube', 'torso', (0, 0, 13.2), (4.4, 3.2, 4.3), 'suit', 'torso', body, bevel=1.4)
+    add('cone', 'tails', (0, 0.25, 7.5), (1, 0.9, 1), 'suit', 'tails', body, vertices=18, radius1=5.0, radius2=4.45, depth=4.8)
+    add('cube', 'split', (0, -4.15, 7.3), (0.9, 0.45, 2.4), 'pants', 'split', body)        # the coat open below the belt
+    for sx, rz in ((-1.55, 0.32), (1.55, -0.32)):
+        add('cube', 'lapel', (sx, -3.28, 14.4), (0.95, 0.3, 2.7), 'suitdk', 'torso', body, rot=(0, rz, 0), bevel=0.2)
+    for z in (12.4, 10.9):
+        for sx in (-1.15, 1.15):
+            add('cube', 'button', (sx, -3.35, z), (0.4, 0.25, 0.4), 'brass', 'torso', body)
+    add('cube', 'belt', (0, 0, 9.7), (4.55, 3.35, 0.6), 'leather', 'torso', body, bevel=0.3)
+    add('cube', 'buckle', (0, -3.4, 9.7), (0.85, 0.3, 0.55), 'brass', 'torso', body)
+    add('cube', 'satchel', (4.2, -0.4, 8.6), (1.0, 2.1, 1.7), 'leather', 'satchel', body, bevel=0.4)
+    add('cube', 'pack', (0, 3.6, 13.6), (3.2, 1.4, 3.4), 'leather', 'pack', body, bevel=0.8)
+    add('cube', 'packflap', (0, 3.9, 16.4), (3.3, 1.5, 0.7), 'suitdk', 'pack', body, bevel=0.3)
+    arms('suit', 'leather')
+    for side in 'LR':
+        add('cube', 'cuff' + side, (0, 0, -5.1), (1.45, 1.6, 0.55), 'suitdk', 'arm' + side, shoulders[side], bevel=0.2)
+        add('cube', 'epaulette' + side, (0, 0, 0.8), (1.9, 1.75, 0.5), 'brass', 'arm' + side, shoulders[side], bevel=0.3)
+    helmet()
+
+
+def build_plate():
+    # the Plated Suit: steel cuirass and pauldrons over the suit's colour, greaves, gauntlets, a heavy pack
+    legs('steel', 'steeldk', thigh_tone='suit')
+    for side in 'LR':
+        add('uv_sphere', 'kneeguard' + side, (0, -1.5, 0.1), (1.5, 0.9, 1.4), 'steel', 'leg' + side, knees[side], segments=12, ring_count=8)
+    add('cube', 'torso', (0, 0, 13.2), (4.3, 3.1, 4.3), 'suit', 'torso', body, bevel=1.4)
+    add('cube', 'cuirass', (0, -0.15, 13.7), (4.6, 3.4, 3.4), 'steel', 'plate', body, bevel=1.3)
+    add('cube', 'tabard', (0, -3.6, 11.4), (1.3, 0.3, 3.4), 'suit', 'tabard', body, bevel=0.2)
+    add('cube', 'fauld', (0, 0, 9.4), (4.7, 3.5, 1.1), 'steeldk', 'torso', body, bevel=0.4)
+    add('cube', 'pack', (0, 3.8, 13.6), (3.8, 1.8, 4.2), 'steeldk', 'pack', body, bevel=0.8)
+    add('cylinder', 'tank', (2.5, 5.1, 13.8), (1.0, 1.0, 3.4), 'brass', 'pack', body, vertices=10)
+    add('cube', 'packLight', (-1.8, 5.5, 16.6), (0.5, 0.3, 0.5), 'ledc', 'pack', body)
+    arms('suit', 'steel')
+    for side in 'LR':
+        add('uv_sphere', 'pauldron' + side, (0, 0, 0.5), (2.5, 2.4, 1.9), 'steel', 'pauldron' + side, shoulders[side], segments=14, ring_count=8)
+        add('cube', 'bracer' + side, (0, 0, -4.6), (1.5, 1.65, 1.0), 'steeldk', 'arm' + side, shoulders[side], bevel=0.3)
+    helmet(collar='steeldk')
+
+
+def build_thermal():
+    # the Thermal Suit: quilted and puffed, a fur ruff, fur-topped snow boots, a sleeping roll on the pack
+    legs('suit', 'boot')
+    for side in 'LR':
+        add('torus', 'bootfur' + side, (0, -0.4, -2.0), (1, 1.15, 1), 'fur', 'boot' + side, knees[side],
+            major_radius=1.8, minor_radius=0.65, major_segments=14, minor_segments=6)
+        add('uv_sphere', 'puffleg' + side, (0, 0, -1.9), (1.8, 1.95, 2.4), 'suit', 'leg' + side, hips[side], segments=12, ring_count=8)
+    add('cube', 'torso', (0, 0, 13.0), (4.7, 3.5, 4.6), 'suit', 'torso', body, bevel=2.0)
+    for z in (10.6, 13.0, 15.4):
+        add('torus', 'quilt', (0, 0, z), (1, 0.76, 1), 'suitdk', 'torso', body,
+            major_radius=4.75, minor_radius=0.55, major_segments=24, minor_segments=6)
+    add('cube', 'pack', (0, 3.9, 13.4), (3.4, 1.5, 3.7), 'pack', 'pack', body, bevel=0.7)
+    add('cylinder', 'bedroll', (0, 4.0, 17.9), (1.2, 1.2, 3.5), 'suitdk', 'pack', body, rot=(0, math.pi / 2, 0), vertices=12)
+    add('cube', 'packLight', (-1.6, 5.3, 15.8), (0.5, 0.3, 0.5), 'ledy', 'pack', body)
+    arms('suit', 'suitdk')
+    for side in 'LR':
+        add('uv_sphere', 'puffarm' + side, (0, 0, -2.3), (1.75, 1.85, 2.7), 'suit', 'arm' + side, shoulders[side], segments=12, ring_count=8)
+        add('torus', 'mittfur' + side, (0, 0, -5.3), (1, 1, 1), 'fur', 'arm' + side, shoulders[side],
+            major_radius=1.45, minor_radius=0.5, major_segments=12, minor_segments=6)
+    helmet(ruff=True)
+
+
+def build_runner():
+    # the Neon Runner: an Arcadian street jacket open over a black tee, LED piping, a high collar, white kicks
+    legs('pants', 'sneaker')
+    for side, sx in (('L', -1.45), ('R', 1.45)):
+        add('cube', 'ledthigh' + side, (sx, 0, -2.0), (0.22, 0.4, 2.0), 'ledp', 'led', hips[side])
+        add('cube', 'ledshin' + side, (sx, 0, -1.4), (0.22, 0.4, 1.6), 'ledp', 'led', knees[side])
+    add('cube', 'torso', (0, 0, 13.2), (4.1, 3.0, 4.3), 'suit', 'torso', body, bevel=1.3)
+    add('cube', 'tee', (0, -2.95, 13.0), (1.15, 0.25, 3.9), 'pants', 'tee', body)
+    for sx in (-1.3, 1.3):
+        add('cube', 'piping', (sx, -3.1, 13.0), (0.22, 0.25, 3.9), 'ledc', 'led', body)
+    add('cube', 'hem', (0, 0, 9.3), (4.2, 3.1, 0.55), 'suitdk', 'torso', body, bevel=0.2)
+    add('cube', 'pack', (0, 3.25, 13.8), (2.5, 1.0, 3.0), 'pack', 'pack', body, bevel=0.6)
+    add('cube', 'packLight', (0, 4.3, 14.6), (1.6, 0.25, 0.3), 'ledp', 'pack', body)
+    arms('suit', 'pants')
+    for side, sx in (('L', -1.3), ('R', 1.3)):
+        add('cube', 'ledarm' + side, (sx, 0, -2.9), (0.2, 0.42, 2.7), 'ledc', 'led', shoulders[side])
+    helmet()
+    add('cylinder', 'highcollar', (0, 0, 1.2), (3.6, 3.4, 1.5), 'suitdk', 'collar', head, vertices=18)
 
 
 def build_human(spec):
@@ -371,12 +472,13 @@ def build_human(spec):
             rot=(-0.4, 0, 0), vertices=16, radius1=4.3, radius2=0.5, depth=8.0)
 
 
-if WHO in ('pilot', 'pilot-sit'):          # pilot-sit: the same suits, seated (chairs, benches, stools)
-    build_pilot()
+if WHO.startswith('pilot'):          # pilot[-sit][-<style>]: the suits, standing or seated (chairs, benches, stools)
+    STYLE = WHO.split('-')[-1] if WHO not in ('pilot', 'pilot-sit') else 'flight'
+    {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner}[STYLE]()
     VARIANTS = {s: {'suit': SUITS[s], 'suitdk': (mix(SUITS[s][0], '#000000', 0.25), SUITS[s][0], mix(SUITS[s][0], SUITS[s][1], 0.5)),
                     'arm': (mix(SUITS[s][0], '#000000', 0.12), mix(SUITS[s][1], SUITS[s][0], 0.3), mix(SUITS[s][2], SUITS[s][1], 0.35))}
                 for s in SUITS}
-    POSE = 'sit' if WHO == 'pilot-sit' else 'stand'
+    POSE = 'sit' if WHO.startswith('pilot-sit') else 'stand'
 else:
     spec = NPCS[WHO]
     build_human(spec)

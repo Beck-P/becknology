@@ -56,7 +56,7 @@ var BridgeInteractions = (function () {
     enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
     menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish',
-    pachinko: 'Play', pachinko_prizes: 'Cash in'
+    pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -351,6 +351,10 @@ var BridgeInteractions = (function () {
 
       case 'sell':
         showSellDialog(inter);
+        break;
+
+      case 'outfitter':             // suits and packs (js/gear.js); the bridge's coat rack is the wardrobe
+        if (typeof BridgeGear !== 'undefined') BridgeGear.open(inter.wardrobe ? {} : { shop: inter.shop, intro: inter.dialog });
         break;
 
       case 'dialog':
@@ -762,8 +766,10 @@ var BridgeInteractions = (function () {
     document.addEventListener('keydown', onKey, true);
   }
 
-  // Selling what you've gathered to someone who buys it: what they'll take,
-  // how many you carry, and one button to sell the lot (coins via BridgeProgression).
+  // Selling what you've gathered to someone who buys it: what they'll take and
+  // what you carry, a count to pick for each (none to start with, so nothing
+  // goes by accident), or everything at once. Coins via BridgeProgression; the
+  // goods leave your pack only once you're paid.
   function showSellDialog(inter) {
     hideDialog();
     dialogVisible = true;
@@ -772,35 +778,63 @@ var BridgeInteractions = (function () {
     var dialogEl = dialogShell('shop');
     var qm = inter.type === 'sell' && typeof BridgeCrew !== 'undefined' && BridgeCrew.has('quartermaster') ? 1.2 : 1;
     var rows = (inter.buys || []).map(function (b) {
-      b = { id: b.id, price: Math.round(b.price * qm) };
       var item = typeof BridgeItems !== 'undefined' && BridgeItems.get(b.id);
       var have = typeof BridgeInventory !== 'undefined' ? BridgeInventory.getCount(b.id) : 0;
-      return { id: b.id, price: b.price, name: item ? item.name : b.id, have: have };
+      return { id: b.id, price: Math.round(b.price * qm), name: item ? item.name : b.id, item: item, have: have, qty: 0 };
     });
-    var total = rows.reduce(function (a, r) { return a + r.have * r.price; }, 0);
+    rows.sort(function (a, b) { return (b.have ? 1 : 0) - (a.have ? 1 : 0); });
+    var everything = rows.reduce(function (a, r) { return a + r.have * r.price; }, 0);
     dialogEl.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(inter.label) + '</div>' +
       (inter.dialog ? '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>' : '') +
-      '<div class="wd-sell">' + rows.map(function (r) {
-        return '<div class="wd-sell-row' + (r.have ? '' : ' none') + '"><span>' + esc(r.name) + '</span><span>' +
-          r.have + ' &times; ' + r.price + '</span></div>';
+      '<div class="wd-sell wd-sell-pick">' + rows.map(function (r, i) {
+        return '<div class="wd-sell-row pick' + (r.have ? '' : ' none') + '" data-r="' + i + '">' +
+          '<canvas class="sp-icon" width="24" height="24"></canvas><span class="sp-name">' + esc(r.name) + '</span>' +
+          '<span class="sp-have">' + (r.have ? 'you have ' + r.have : 'none on you') + '</span>' +
+          (r.have ? '<span class="sp-qty"><button class="sp-b" data-d="-1">&minus;</button><b class="sp-n">0</b>' +
+                    '<button class="sp-b" data-d="1">+</button><button class="sp-b sp-all" data-d="all">all</button></span>' : '<span class="sp-qty"></span>') +
+          '<span class="sp-price">' + r.price + ' ea</span></div>';
       }).join('') + '</div>' +
-      '<div class="wd-options"><button class="wd-opt active" data-act="sell"' + (total ? '' : ' disabled') + '>' +
-      (total ? 'Sell all for ' + total + ' coins' : 'Nothing they want') + '</button>' +
+      '<div class="wd-options"><button class="wd-opt" data-act="sell" disabled>Pick what to sell</button>' +
+      '<button class="wd-opt" data-act="all"' + (everything ? '' : ' disabled') + '>' + (everything ? 'Sell everything they want: ' + everything + ' coins' : 'Nothing they want') + '</button>' +
       '<button class="wd-opt" data-act="close">Leave</button></div>' + hintHTML('Esc', 'Leave') + '</div>';
     overlay.appendChild(dialogEl);
     requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
-    var btns = dialogEl.querySelectorAll('.wd-opt'), sel = total ? 0 : 1;
-    function choose(n) { sel = (n + btns.length) % btns.length; for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', j === sel); }
-    choose(sel);
+    dialogEl.querySelectorAll('.wd-sell-row.pick').forEach(function (rowEl) {
+      var r = rows[+rowEl.getAttribute('data-r')], cv = rowEl.querySelector('.sp-icon');
+      if (r.item && r.item.draw) { var g = cv.getContext('2d'); g.imageSmoothingEnabled = false; r.item.draw(g, 0, 0, 24); }
+    });
+    // focus runs over the rows you can sell from, then the buttons
+    var rowEls = [].slice.call(dialogEl.querySelectorAll('.wd-sell-row.pick')).filter(function (e) { return rows[+e.getAttribute('data-r')].have; });
+    var btns = [].slice.call(dialogEl.querySelectorAll('.wd-opt'));
+    var items = rowEls.concat(btns), sel = rowEls.length ? 0 : btns.length - 1;
+    function total() { return rows.reduce(function (a, r) { return a + r.qty * r.price; }, 0); }
+    function count() { return rows.reduce(function (a, r) { return a + r.qty; }, 0); }
+    function paint() {
+      rowEls.forEach(function (e) { var r = rows[+e.getAttribute('data-r')]; e.querySelector('.sp-n').textContent = r.qty; e.classList.toggle('chosen', r.qty > 0); });
+      var t = total(), b = btns[0];
+      b.disabled = !t;
+      b.textContent = t ? 'Sell ' + count() + ' for ' + t + ' coins' : 'Pick what to sell';
+      items.forEach(function (e, j) { e.classList.toggle('active', j === sel); });
+    }
+    function choose(n) { sel = (n + items.length) % items.length; paint(); }
+    function adjust(r, d) {
+      r.qty = d === 'all' ? (r.qty === r.have ? 0 : r.have) : Math.max(0, Math.min(r.have, r.qty + d));
+      if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('blip');
+      paint();
+    }
+    paint();
     function close() {
       document.removeEventListener('keydown', onKey, true);
       hideDialog();
       if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
     }
     function act(which) {
-      if (which !== 'sell' || !total) { close(); return; }
+      if (which === 'all') rows.forEach(function (r) { r.qty = r.have; });
+      var t = total();
+      if (which === 'close' || !t) { close(); return; }
+      var sold = rows.filter(function (r) { return r.qty > 0; }).map(function (r) { return { id: r.id, n: r.qty, name: r.name }; });
       var paid = typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins
-        ? BridgeProgression.awardCoins(total, 'sell:' + (inter.label || 'trader')) : Promise.resolve(null);
+        ? BridgeProgression.awardCoins(t, 'sell:' + (inter.label || 'trader')) : Promise.resolve(null);
       close();
       showDialog(inter.label, 'COUNTING IT OUT...', inter);
       paid.then(function (bal) {           // the goods change hands only once the coins are in your purse
@@ -808,24 +842,36 @@ var BridgeInteractions = (function () {
           showDialog(inter.label, 'THE PURSE WON\'T OPEN - NO WAY TO PAY YOU RIGHT NOW.\n\nKEEP YOUR GOODS; COME BACK LATER.', inter);
           return;
         }
-        rows.forEach(function (r) { if (r.have) BridgeInventory.removeItem(r.id, r.have); });
-        showDialog(inter.label, 'SOLD, FOR ' + total + ' COINS.\n\nPLEASURE DOING BUSINESS.', inter);
+        sold.forEach(function (x) { BridgeInventory.removeItem(x.id, x.n); });
+        showDialog(inter.label, 'SOLD: ' + sold.map(function (x) { return x.n + ' ' + x.name.toUpperCase(); }).join(', ') +
+          ', FOR ' + t + ' COINS.\n\nPLEASURE DOING BUSINESS.', inter);
       }).catch(function () {
         showDialog(inter.label, 'THE PURSE WON\'T OPEN - NO WAY TO PAY YOU RIGHT NOW.', inter);
       });
     }
     function onKey(e) {
-      var k = e.key;
+      var k = e.key, cur = items[sel], onRow = sel < rowEls.length, r = onRow ? rows[+cur.getAttribute('data-r')] : null;
       if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
-      else if (k === 'ArrowDown' || k === 's' || k === 'S' || k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); choose(sel + 1); }
-      else if (k === 'Enter' || k === 'e' || k === 'E' || k === ' ') { e.preventDefault(); e.stopPropagation(); act(btns[sel].getAttribute('data-act')); }
+      else if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); e.stopPropagation(); choose(sel + 1); }
+      else if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); e.stopPropagation(); choose(sel - 1); }
+      else if (onRow && (k === 'ArrowRight' || k === 'd' || k === 'D' || k === '+' || k === '=')) { e.preventDefault(); e.stopPropagation(); adjust(r, 1); }
+      else if (onRow && (k === 'ArrowLeft' || k === 'a' || k === 'A' || k === '-')) { e.preventDefault(); e.stopPropagation(); adjust(r, -1); }
+      else if (k === 'Enter' || k === 'e' || k === 'E' || k === ' ') {
+        e.preventDefault(); e.stopPropagation();
+        if (onRow) adjust(r, 'all'); else if (!cur.disabled) act(cur.getAttribute('data-act'));
+      }
     }
-    for (var b = 0; b < btns.length; b++) {
-      (function (btn, idx) {
-        btn.addEventListener('mouseenter', function () { choose(idx); });
-        btn.addEventListener('click', function (e) { e.stopPropagation(); act(btn.getAttribute('data-act')); });
-      })(btns[b], b);
-    }
+    rowEls.forEach(function (rowEl, idx) {
+      var r = rows[+rowEl.getAttribute('data-r')];
+      rowEl.addEventListener('mouseenter', function () { choose(idx); });
+      rowEl.querySelectorAll('.sp-b').forEach(function (b) {
+        b.addEventListener('click', function (e) { e.stopPropagation(); var d = b.getAttribute('data-d'); adjust(r, d === 'all' ? 'all' : +d); });
+      });
+    });
+    btns.forEach(function (btn, idx) {
+      btn.addEventListener('mouseenter', function () { choose(rowEls.length + idx); });
+      btn.addEventListener('click', function (e) { e.stopPropagation(); if (!btn.disabled) act(btn.getAttribute('data-act')); });
+    });
     document.addEventListener('keydown', onKey, true);
   }
 
@@ -940,6 +986,11 @@ var BridgeInteractions = (function () {
         if (feel >= 5) mult *= 1.1;                                // friends get a better price
         close();
         showSellDialog({ label: person.name, dialog: t.a, buys: t.sell.map(function (b) { return { id: b.id, price: Math.round(b.price * mult) }; }) });
+        return;
+      }
+      if (t.outfit && typeof BridgeGear !== 'undefined') {           // what they've got to wear or carry
+        close();
+        BridgeGear.open({ shop: t.outfit, intro: t.a });
         return;
       }
       if (t.hire && pitched === n && line && line.done) {        // the pitch heard: asking again signs them on

@@ -110,7 +110,7 @@ var BridgeCharacter = (function () {
   function update(dt) {
     if (dt === undefined) dt = 1 / 60;
     if (player.moveProgress < 1) {
-      var step = player.moveSpeed * dt;
+      var step = player.moveSpeed * (typeof BridgeGear !== 'undefined' ? BridgeGear.speed() : 1) * dt;
       player.moveProgress += step;
       player.stride += step;
       if (player.moveProgress >= 1) {
@@ -152,6 +152,16 @@ var BridgeCharacter = (function () {
   var WALK_CYCLE_TILES = 2.4;    // tiles per full 8-frame stride
   var sheets = {};
 
+  // the suit you're wearing (js/gear.js: style and colour), standing or seated
+  function sheetKey() {
+    var pilot = BridgeState.getPilot();
+    var G = typeof BridgeGear !== 'undefined' ? BridgeGear : null;
+    var colour = (G && G.colour()) || (pilot && pilot.suit_color);
+    if (!SUIT_COLORS[colour]) colour = 'purple';
+    var style = G ? G.style() : 'flight';
+    return (seat ? 'sit-' : '') + (style && style !== 'flight' ? style + '-' : '') + colour;
+  }
+
   function getSheet(suit) {
     if (!sheets[suit]) {
       var img = new Image();
@@ -192,9 +202,7 @@ var BridgeCharacter = (function () {
 
   function sceneItem(offX, offY, ts, sc, world, now) {
     if (hidden) return { footRow: 0, draw: function () {} };
-    var pilot = BridgeState.getPilot();
-    var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
-    var sheet = getSheet((seat ? 'sit-' : '') + suit);
+    var sheet = getSheet(sheetKey());
     var pos = getRenderPos();
     var footRow = pos.y + 1 - 3 / 32;
     return {
@@ -217,9 +225,7 @@ var BridgeCharacter = (function () {
   /** The pilot's sprite right now: sheet image, frame rect and position (for echoes). */
   function frame() {
     if (hidden) return null;
-    var pilot = BridgeState.getPilot();
-    var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
-    var sheet = getSheet((seat ? 'sit-' : '') + suit);
+    var sheet = getSheet(sheetKey());
     if (!sheet.ready) return null;
     var col = player.moveProgress < 1
       ? 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8
@@ -236,9 +242,7 @@ var BridgeCharacter = (function () {
     var sx = Math.round(offX + pos.x * ts);
     var sy = Math.round(offY + pos.y * ts);
 
-    var pilot = BridgeState.getPilot();
-    var suit = (pilot && SUIT_COLORS[pilot.suit_color]) ? pilot.suit_color : 'purple';
-    var sheet = getSheet((seat ? 'sit-' : '') + suit);
+    var sheet = getSheet(sheetKey());
     if (sheet.ready) {
       drawSprite(ctx, sheet, sx, sy, ts);
       return;
