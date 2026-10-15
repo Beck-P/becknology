@@ -17,7 +17,7 @@ var BridgeGames = (function () {
     'breakout':        { title: 'Breakout',     url: '/breakout',        kind: 'cabinet', where: "the Arcade, in Arcadia", hint: 'A wall of bricks, a paddle, an arcade' },
     'space-invaders':  { title: 'Invaders',     url: '/space-invaders',  kind: 'cabinet', where: "the Arcade, in Arcadia", hint: 'Rows of them, coming down, in an arcade' },
     'missile-command': { title: 'Missile Cmd',  url: '/missile-command', kind: 'cabinet', where: "the Arcade, in Arcadia", hint: 'Cities to defend, in an arcade' },
-    'chess':           { title: 'Chess',        url: '/chess',           kind: 'app',     where: 'your quarters',          hint: 'A game left half-played, closer than you think' },
+    'chess':           { title: 'Chess',        url: '/chess?theme=ship',           kind: 'app',     where: 'your quarters',          hint: 'A game left half-played, closer than you think' },
     'cipher-room':     { title: 'Cipher',       url: '/cipher-room',     kind: 'app',     where: "Enigma's relay deck",    hint: 'A terminal on a dead station that keeps making codes' },
     'typist':          { title: 'Signal Relay', url: '/typist',          kind: 'app',     where: "Enigma's relay deck",    hint: 'A relay on a dead station, still taking messages' },
     'genart':          { title: 'The Canvas',   url: '/genart',          kind: 'app',     where: 'the Brink',              hint: 'Something that paints itself at the edge of everything' },
@@ -33,7 +33,7 @@ var BridgeGames = (function () {
     if (inter.type === 'splice') return 'splice';
     if (inter.type === 'pachinko') return 'pachinko';
     if ((inter.type === 'cabinet' || inter.type === 'app') && inter.target) {
-      var k = String(inter.target).replace(/^\/+|\/+$/g, '');
+      var k = String(inter.target).split('?')[0].replace(/^\/+|\/+$/g, '');
       return GAMES[k] ? k : null;
     }
     return null;
@@ -64,7 +64,7 @@ var BridgeGames = (function () {
   }
 
   function use(inter) {
-    if (inter.type === 'game_scores') { BridgeInteractions.say('SCORE BOARD', scores(), inter); return; }
+    if (inter.type === 'game_scores') { BridgeInteractions.say(inter.arcade ? 'HIGH SCORES' : 'SCORE BOARD', scores(inter), inter); return; }
     var k = inter.game, g = GAMES[k];
     if (!g) return;
     if (found[k]) { play(k); return; }
@@ -73,10 +73,25 @@ var BridgeGames = (function () {
       g.hint.toUpperCase() + '."', inter);
   }
 
-  function scores() {
+  // best scores, kept by the arcade kit (js/shared/arcade-kit.js) as you play
+  function bests() { try { return JSON.parse(localStorage.getItem('bridge_scores') || '{}') || {}; } catch (e) { return {}; } }
+  var CABINETS = ['asteroids', 'helicopter', 'breakout', 'space-invaders', 'missile-command'];
+
+  function scores(inter) {
+    var b = bests();
+    if (inter && inter.arcade) {                    // the Arcade's own boards: the five classics
+      var rows = CABINETS.map(function (k) {
+        var r = b[k] || {};
+        return GAMES[k].title.toUpperCase() + ' - ' + (r.best ? r.best : '---') + (r.plays ? '  (' + r.plays + (r.plays === 1 ? ' GAME)' : ' GAMES)') : '');
+      });
+      return 'YOUR BEST SCORES\n\n' + rows.join('\n') + '\n\nUNDER THE TAPE, THE OLD BOARD STILL SAYS: ACE - 9999.';
+    }
     var keys = Object.keys(GAMES), have = keys.filter(function (k) { return found[k]; });
     var lines = ['GAMES FOUND: ' + have.length + ' OF ' + keys.length + '.'];
     if (have.length) lines.push('', have.map(function (k) { return GAMES[k].title.toUpperCase() + ' (' + GAMES[k].where.toUpperCase() + ')'; }).join(' \u00b7 '));
+    var top = CABINETS.filter(function (k) { return b[k] && b[k].best; })
+      .map(function (k) { return GAMES[k].title.toUpperCase() + ' ' + b[k].best; });
+    if (top.length) lines.push('', 'BEST SCORES: ' + top.join(' \u00b7 ') + '.');
     var splice = (function () { try { return JSON.parse(localStorage.getItem('bridge_splice') || '{}'); } catch (e) { return {}; } })();
     var best = splice.best || {};
     var bs = Object.keys(best).sort().map(function (n) { return n + 'x' + n + ' IN ' + best[n] + 'S'; });

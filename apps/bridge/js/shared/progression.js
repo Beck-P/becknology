@@ -45,6 +45,7 @@
   if (inIframe) {
     window.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
+        if (window.__bridgeOwnsEsc) return;            // the arcade kit pauses first, then asks to leave
         postToParent({ type: 'bridge-request-close', source: 'iframe-esc' });
       }
     });

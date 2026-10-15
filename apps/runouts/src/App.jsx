@@ -2820,8 +2820,14 @@ export default function ChoreChaosApp() {
     setNames([pilot, ...fakes]);
     if (window.BridgeProgression && window.BridgeProgression.getBalance) {
       window.BridgeProgression.getBalance().then((b) => {
-        if (b != null) setWagerBalance(b);
+        if (b != null) {
+          setWagerBalance(b);
+          setWagerAmount((a) => Math.min(a, Math.max(0, b)));
+        }
       });
+    }
+    if (window.BridgeProgression && window.BridgeProgression.recordAchievement) {
+      window.BridgeProgression.recordAchievement('played_runouts', 25, { game: 'runouts' });
     }
   }, []);
 
@@ -2913,7 +2919,12 @@ export default function ChoreChaosApp() {
   const beginWagerIfNeeded = useCallback(async () => {
     if (!wagerMode) return true; // pass-through
     if (activeWager) return true; // already wagered (e.g. mid-series)
-    if (wagerAmount <= 0 || wagerAmount > wagerBalance) return false;
+    if (wagerAmount > wagerBalance) return false;
+    if (wagerAmount <= 0) {          // a practice run: no stake, nothing paid out
+      setActiveWager({ amount: 0, goal: selectionGoal, pilotName: wagerPilotName, fakeNames: names.slice(1) });
+      setWagerPhase('playing');
+      return true;
+    }
     if (!window.BridgeProgression || !window.BridgeProgression.wagerCoins) return false;
     const res = await window.BridgeProgression.wagerCoins(wagerAmount, 'runouts');
     if (!res || !res.ok) {
@@ -2966,6 +2977,29 @@ export default function ChoreChaosApp() {
       window.BridgeProgression.getBalance().then((b) => { if (b != null) setWagerBalance(b); });
     }
   }, []);
+
+  // In the Bridge's cabinet, Esc doesn't drop a live stake on the floor: the first press while a
+  // run is in play only warns (the cabinet shows "Esc again to leave"), the second leaves.
+  const wagerPhaseRef = useRef(wagerPhase);
+  wagerPhaseRef.current = wagerPhase;
+  useEffect(() => {
+    if (!wagerMode) return undefined;
+    window.__bridgeOwnsEsc = true;
+    let armed = false;
+    const post = (msg) => { try { window.parent.postMessage(msg, '*'); } catch (e) { /* gone */ } };
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      if (wagerPhaseRef.current === 'playing' && !armed) {
+        armed = true;
+        post({ type: 'bridge-run-state', game: 'runouts', active: true, paused: true });
+        setTimeout(() => { armed = false; }, 2600);
+        return;
+      }
+      post({ type: 'bridge-request-close', source: 'runouts-esc' });
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [wagerMode]);
 
   // Player asks to leave the modal from the wager UI — postMessage parent.
   const handleWagerLeave = useCallback(() => {
@@ -4802,6 +4836,7 @@ export default function ChoreChaosApp() {
   }
 
   async function recordGame(outcome) {
+    if (wagerMode) return; // the Bridge cabinet plays against made-up callsigns: keep them off the real board
     if (!_supabase || outcome.isTie || outcome.isTournament || !outcome.players) return;
     try {
       await _supabase.from('runouts_games').insert({
@@ -6291,7 +6326,7 @@ export default function ChoreChaosApp() {
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
           <button
             onClick={() => { setSelectedModeId("auto"); wagerStartGame(); }}
-            disabled={!canRun || (wagerMode && (wagerAmount <= 0 || wagerAmount > wagerBalance))}
+            disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)}
             className="arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40"
             style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1))", border: "2px solid rgba(99,102,241,0.4)", boxShadow: "0 0 20px rgba(99,102,241,0.15)" }}
           >
@@ -6304,7 +6339,7 @@ export default function ChoreChaosApp() {
             <button
               key={mode.id}
               onClick={() => { setSelectedModeId(mode.id); wagerStartGame(mode.id); }}
-              disabled={!canRun || (wagerMode && (wagerAmount <= 0 || wagerAmount > wagerBalance))}
+              disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)}
               className={`arcade-card group relative overflow-hidden p-5 text-center disabled:cursor-not-allowed disabled:opacity-40 ${mode.cardHint}`}
               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}
             >

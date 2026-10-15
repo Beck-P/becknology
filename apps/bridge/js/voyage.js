@@ -393,24 +393,75 @@ var BridgeVoyage = (function () {
   }
 
   // ---- drawing ----------------------------------------------------------------------------------------------------
-  function zonePal() {
-    var best = 'emerald', bd = 1e9, second = null, sd = 1e9;
+  // ---- the seas ------------------------------------------------------------------------------------
+  // Like the book's spore seas: each island lies in its own sea, and the seas
+  // meet at borders you can see. A point belongs to the nearest island's sea,
+  // measured from a position nudged by slow noise so the borders wander; each
+  // sea is drawn in its own colours and where two meet the spores churn into
+  // a seam of foam. Crossing one says which sea you're in.
+  var SEAS = { emerald: 'THE EMERALD SEA', crimson: 'THE CRIMSON SEA', rose: 'THE ROSE SEA', sapphire: 'THE SAPPHIRE SEA',
+               midnight: 'THE MIDNIGHT SEA' };
+  var CELL = 4, seaBufs = {}, maskCv = null, seaNow = null;
+  function seaAt(x, y) {
+    var wx = x + (vnoise(x / 700, y / 700) - 0.5) * 520 + (vnoise(x / 220 + 9, y / 220) - 0.5) * 170 + (vnoise(x / 60, y / 60 + 3) - 0.5) * 36;
+    var wy = y + (vnoise(x / 700 + 31, y / 700 + 17) - 0.5) * 520 + (vnoise(x / 220, y / 220 + 5) - 0.5) * 170 + (vnoise(x / 60 + 7, y / 60) - 0.5) * 36;
+    var best = 'emerald', bd = 1e18;
     for (var id in ISLES) {
-      var I = ISLES[id], d = Math.hypot(ship.x - I.x * CW, ship.y - I.y * CH);
-      if (d < bd) { second = best; sd = bd; best = I.pal; bd = d; } else if (d < sd) { second = I.pal; sd = d; }
+      var I = ISLES[id], dx = wx - I.x * CW, dy = (wy - I.y * CH) * 1.25, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = I.pal; }
     }
-    return { a: best, b: second, t: Math.max(0, Math.min(1, (bd / (bd + sd) - 0.3) / 0.2)) };
+    return best;
+  }
+
+  function drawSeas(now, camX, camY) {
+    var ox = Math.floor(camX / CELL) * CELL, oy = Math.floor(camY / CELL) * CELL;
+    var cols = Math.ceil(W / CELL) + 2, rows = Math.ceil(H / CELL) + 2, grid = new Array(cols * rows), count = {};
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      var p = seaAt(ox + c * CELL + CELL / 2, oy + r * CELL + CELL / 2);
+      grid[r * cols + c] = p; count[p] = (count[p] || 0) + 1;
+    }
+    var pals = Object.keys(count).sort(function (a, b) { return count[b] - count[a]; });
+    BridgeSea.drawSeaAt(bctx, W, H, now, pals[0], camX, camY);
+    if (!maskCv) { maskCv = document.createElement('canvas'); }
+    maskCv.width = W; maskCv.height = H;
+    var mx = maskCv.getContext('2d');
+    for (var k = 1; k < pals.length; k++) {
+      var pal = pals[k], buf2 = seaBufs[pal];
+      if (!buf2) { buf2 = seaBufs[pal] = document.createElement('canvas'); buf2.width = W; buf2.height = H; }
+      var bx = buf2.getContext('2d');
+      bx.globalCompositeOperation = 'source-over';
+      BridgeSea.drawSeaAt(bx, W, H, now, pal, camX, camY);
+      mx.clearRect(0, 0, W, H);
+      mx.fillStyle = '#fff';
+      for (var r2 = 0; r2 < rows; r2++) for (var c2 = 0; c2 < cols; c2++) {
+        if (grid[r2 * cols + c2] === pal) mx.fillRect(ox + c2 * CELL - camX, oy + r2 * CELL - camY, CELL, CELL);
+      }
+      bx.globalCompositeOperation = 'destination-in';
+      bx.drawImage(maskCv, 0, 0);
+      bx.globalCompositeOperation = 'source-over';
+      bctx.drawImage(buf2, 0, 0);
+    }
+    // the seams: spores churning where two seas meet
+    if (pals.length > 1) {
+      for (var r3 = 0; r3 < rows - 1; r3++) for (var c3 = 0; c3 < cols - 1; c3++) {
+        var here = grid[r3 * cols + c3];
+        if (here === grid[r3 * cols + c3 + 1] && here === grid[(r3 + 1) * cols + c3]) continue;
+        var sx = ox + c3 * CELL - camX + CELL / 2, sy = oy + r3 * CELL - camY + CELL / 2;
+        var h = hash((ox / CELL + c3) * 7.1 + (oy / CELL + r3) * 13.3);
+        var tw = Math.sin(now / 260 + h * 40);
+        bctx.fillStyle = tw > 0.4 ? 'rgba(240,255,250,0.85)' : 'rgba(200,240,230,0.35)';
+        bctx.fillRect(Math.round(sx + (h - 0.5) * 3), Math.round(sy + Math.sin(now / 500 + h * 9) * 1.5), tw > 0.8 ? 2 : 1, 1);
+      }
+    }
+    // which sea the ship is in
+    var mine = seaAt(ship.x, ship.y);
+    if (seaNow && mine !== seaNow) say('INTO ' + SEAS[mine], 2600);
+    seaNow = mine;
   }
 
   function draw(now) {
     var camX = Math.round(ship.x - W / 2), camY = Math.round(ship.y - H / 2);
-    var Zp = zonePal();
-    BridgeSea.drawSeaAt(bctx, W, H, now, Zp.a, camX, camY);
-    if (Zp.b && Zp.t > 0.02) {
-      bctx.save(); bctx.globalAlpha = Zp.t * 0.5;
-      BridgeSea.drawSeaAt(bctx, W, H, now, Zp.b, camX, camY);
-      bctx.restore();
-    }
+    drawSeas(now, camX, camY);
     // shoals: rings of bubbles; flotsam: a bobbing crate
     shoals.forEach(function (s, i) {
       if (!s.left) return;
@@ -575,5 +626,6 @@ var BridgeVoyage = (function () {
     });
   }
 
-  return { start: start, stop: stop, decorate: decorate, isRunning: function () { return running; } };
+  return { start: start, stop: stop, decorate: decorate, isRunning: function () { return running; },
+           _ship: function () { return ship; }, _seaAt: function (x, y) { return seaAt(x, y); } };
 })();

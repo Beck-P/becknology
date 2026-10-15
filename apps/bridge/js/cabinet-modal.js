@@ -20,28 +20,35 @@ var BridgeCabinetModal = (function () {
   var deltaPopEl = null;
   var open = false;
   var current = null;     // { url, title, gameKey }
+  var runActive = false;  // a game run in progress (bridge-run-state): Esc pauses it before leaving
+  var lastRun = null;     // the last finished run (bridge-run-ended), toasted on the way out
   var displayedBalance = 0;
   var targetBalance = 0;
   var animFrame = null;
   var lastFrameTs = 0;
+
+  function frameFor() {
+    var id = (typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId()) || '';
+    if (/^enigma/.test(id)) return 'enigma';
+    if (/^singularity/.test(id)) return 'void';
+    if (/^(bridge|quarters|hangar|gameroom)$/.test(id)) return 'ship';
+    if (/^lumar/.test(id)) return 'lumar';
+    return 'arcadia';
+  }
 
   function show(opts) {
     if (open) return;
     if (!opts || !opts.url) return;
     open = true;
     current = opts;
+    runActive = false;
+    lastRun = null;
 
     if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
 
     overlayEl = document.createElement('div');
     overlayEl.id = 'cabinet-modal-overlay';
-    overlayEl.style.cssText =
-      'position:fixed;inset:0;z-index:300;' +
-      'background:rgba(4,8,14,0.96);' +
-      'display:flex;flex-direction:column;' +
-      'font-family:"Courier New",Consolas,monospace;color:#e0e0e0;' +
-      'opacity:0;transition:opacity 0.18s ease;';
-
+    overlayEl.className = 'cm-' + frameFor();
     overlayEl.innerHTML = renderShellHTML();
     document.body.appendChild(overlayEl);
 
@@ -49,6 +56,7 @@ var BridgeCabinetModal = (function () {
     coinNumEl = document.getElementById('cabinet-modal-coins');
     titleEl   = document.getElementById('cabinet-modal-title');
     deltaPopEl = document.getElementById('cabinet-modal-delta-pop');
+    drawCoin(document.getElementById('cabinet-coin-icon'));
 
     // Seed coin HUD from current balance if we know it
     if (typeof BridgeProgression !== 'undefined') {
@@ -60,64 +68,41 @@ var BridgeCabinetModal = (function () {
       });
     }
 
-    // Fade in
-    requestAnimationFrame(function () { overlayEl.style.opacity = '1'; });
-
-    // Focus the iframe so keyboard events reach the game
+    requestAnimationFrame(function () { if (overlayEl) overlayEl.classList.add('visible'); });
     setTimeout(function () { if (iframeEl) try { iframeEl.focus(); } catch (e) {} }, 60);
-
-    // Listen for postMessages from the game
     window.addEventListener('message', onMessage);
-    // Also listen at the parent level — some games swallow Esc internally,
-    // but if the iframe never gets focus the parent will catch it.
     window.addEventListener('keydown', onParentKey, true);
-
-    // Close button
     document.getElementById('cabinet-leave-btn').addEventListener('click', hide);
+  }
+
+  // the coin: a little gold disc in pixels
+  function drawCoin(c) {
+    if (!c) return;
+    var g = c.getContext('2d');
+    var rows = ['..####..', '.#$$$$#.', '#$$##$$#', '#$#$$$$#', '#$#$$$$#', '#$$##$$#', '.#$$$$#.', '..####..'];
+    rows.forEach(function (r, y) {
+      for (var x = 0; x < 8; x++) {
+        var ch = r[x];
+        if (ch === '.') continue;
+        g.fillStyle = ch === '#' ? '#a07020' : '#ffd860';
+        g.fillRect(x * 2 + 2, y * 2 + 2, 2, 2);
+      }
+    });
   }
 
   function renderShellHTML() {
     var title = (current && current.title) ? current.title : 'GAME';
     return '' +
-      // Top bar with bridge chrome
-      '<div style="' +
-        'flex:none;padding:12px 18px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;' +
-        'background:linear-gradient(180deg,rgba(20,30,46,0.96),rgba(10,18,28,0.96));' +
-        'border-bottom:1px solid rgba(64,200,216,0.5);' +
-        'box-shadow:0 0 18px rgba(64,200,216,0.18);">' +
-        // Title
-        '<div style="display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:4px;color:#80e0e8;">' +
-          '<span style="font-size:10px;letter-spacing:5px;color:rgba(64,200,216,0.7);">CABINET</span>' +
-          '<span style="color:#888;">/</span>' +
-          '<span id="cabinet-modal-title">' + escapeHtml(title) + '</span>' +
-        '</div>' +
-        // Coin HUD
-        '<div style="display:flex;align-items:center;gap:8px;padding:4px 12px;' +
-                  'background:rgba(0,0,0,0.45);border:1px solid rgba(255,200,80,0.45);' +
-                  'border-radius:18px;font-size:13px;letter-spacing:2px;color:#ffe080;' +
-                  'box-shadow:0 0 12px rgba(255,200,80,0.18);position:relative;">' +
-          '<canvas width="20" height="20" id="cabinet-coin-icon" ' +
-            'style="width:20px;height:20px;display:block;"></canvas>' +
-          '<span id="cabinet-modal-coins" style="min-width:3ch;text-align:right;">0</span>' +
-          '<div id="cabinet-modal-delta-pop" style="' +
-            'position:absolute;top:-22px;right:8px;font-size:12px;letter-spacing:2px;color:#ffe080;' +
-            'opacity:0;transition:opacity 0.3s ease, transform 0.6s ease;pointer-events:none;"></div>' +
-        '</div>' +
-        // Leave button
-        '<div style="display:flex;justify-content:flex-end;">' +
-          '<button id="cabinet-leave-btn" style="' +
-            'padding:8px 16px;background:transparent;border:1px solid rgba(160,120,220,0.5);' +
-            'color:rgba(220,200,255,0.85);font-family:inherit;font-size:11px;letter-spacing:4px;' +
-            'border-radius:4px;cursor:pointer;transition:background 0.15s, color 0.15s, border-color 0.15s;">' +
-            '← LEAVE GAME · ESC' +
-          '</button>' +
-        '</div>' +
+      '<div class="cm-bar">' +
+        '<div class="cm-title"><span class="cm-kicker">' + ({ enigma: 'TERMINAL', ship: 'GAME ROOM', void: 'THE BRINK', lumar: 'GAME' }[frameFor()] || 'CABINET') +
+          '</span><span class="cm-sep">/</span><span id="cabinet-modal-title">' + escapeHtml(title) + '</span></div>' +
+        '<div class="cm-coins"><canvas width="20" height="20" id="cabinet-coin-icon"></canvas>' +
+          '<span id="cabinet-modal-coins">0</span><div id="cabinet-modal-delta-pop"></div></div>' +
+        '<div class="cm-right"><span class="cm-hint" id="cabinet-hint"></span>' +
+          '<button id="cabinet-leave-btn"><span class="ip-key">Esc</span> Leave</button></div>' +
       '</div>' +
-      // Iframe container
-      '<div style="flex:1;position:relative;overflow:hidden;background:#000;">' +
-        '<iframe id="cabinet-iframe" src="' + escapeAttr(current ? current.url : 'about:blank') + '" ' +
-          'allow="autoplay; gamepad" ' +
-          'style="position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;"></iframe>' +
+      '<div class="cm-screen">' +
+        '<iframe id="cabinet-iframe" src="' + escapeAttr(current ? current.url : 'about:blank') + '" allow="autoplay; gamepad; fullscreen"></iframe>' +
       '</div>';
   }
 
@@ -128,13 +113,18 @@ var BridgeCabinetModal = (function () {
     window.removeEventListener('keydown', onParentKey, true);
     cancelTicker();
     if (overlayEl) {
-      overlayEl.style.opacity = '0';
+      overlayEl.classList.remove('visible');
       var el = overlayEl;
       setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 200);
     }
     overlayEl = iframeEl = coinNumEl = titleEl = deltaPopEl = null;
     current = null;
     if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+    if (lastRun && typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) {
+      BridgeQuests.toast(lastRun.title || 'Game', 'Score ' + lastRun.score + (lastRun.newBest && lastRun.score ? ' - a new best!' : ''),
+        'Best ' + lastRun.best + (lastRun.coins ? ' \u00b7 +' + lastRun.coins + ' coins' : ''), false);
+    }
+    lastRun = null;
     // Refresh the bridge HUD to show the new balance
     if (typeof BridgeCoinHUD !== 'undefined' && BridgeCoinHUD.refresh) BridgeCoinHUD.refresh();
   }
@@ -142,11 +132,26 @@ var BridgeCabinetModal = (function () {
   function onParentKey(e) {
     if (!open) return;
     if (e.key === 'Escape') {
-      // Catch at parent — defensive in case iframe didn't postMessage.
+      // Catch at parent — defensive in case iframe didn't postMessage. A run in
+      // progress is paused first; Esc again leaves.
       e.preventDefault();
       e.stopPropagation();
+      if (runActive) {
+        runActive = false;
+        try { iframeEl.contentWindow.postMessage({ type: 'bridge-pause' }, '*'); } catch (err) { /* gone */ }
+        hint('Paused \u00b7 Esc again to leave');
+        return;
+      }
       hide();
     }
+  }
+
+  function hint(t) {
+    var el = document.getElementById('cabinet-hint');
+    if (!el) return;
+    el.textContent = t || '';
+    clearTimeout(hint.timer);
+    if (t) hint.timer = setTimeout(function () { if (el) el.textContent = ''; }, 2600);
   }
 
   function onMessage(e) {
@@ -175,6 +180,16 @@ var BridgeCabinetModal = (function () {
     }
     if (d.type === 'bridge-request-close') {
       hide();
+      return;
+    }
+    if (d.type === 'bridge-run-state') {
+      runActive = !!d.active && !d.paused;
+      if (d.paused) hint('Paused \u00b7 Esc again to leave');
+      return;
+    }
+    if (d.type === 'bridge-run-ended') {
+      lastRun = d;
+      runActive = false;
       return;
     }
   }

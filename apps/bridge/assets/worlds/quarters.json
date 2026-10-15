@@ -568,7 +568,7 @@
       "x": 4,
       "y": 6,
       "type": "app",
-      "target": "/chess",
+      "target": "/chess?theme=ship",
       "label": "CHESS TABLE",
       "prompt": "PLAY CHESS"
     },

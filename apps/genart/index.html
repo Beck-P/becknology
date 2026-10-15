@@ -43,20 +43,22 @@
       transition: color 0.2s;
     }
     .hub-link:hover { color: rgba(160, 120, 220, 0.6); }
+    .in-frame .hub-link { display: none; }
+    html:not(.in-frame) .seed-display { top: 54px; }
 
     .info {
       position: fixed;
       bottom: 1rem;
       left: 0; right: 0;
       text-align: center;
-      color: #2a2a2a;
+      color: #5a5068;
       font-size: 0.65rem;
       letter-spacing: 3px;
       z-index: 20;
       pointer-events: none;
       transition: color 0.3s;
     }
-    body:hover .info { color: #444; }
+    body:hover .info { color: #8a80a0; }
 
     .seed-display {
       position: fixed;
@@ -472,7 +474,7 @@
       attrC = srandRange(-2.5, 2.5);
       attrD = srandRange(-2.5, 2.5);
       attrX = 0.1; attrY = 0.1;
-      attrIterPerFrame = 50000;
+      attrIterPerFrame = (W * H < 500000) ? 18000 : 50000;      // lighter on phones
       symmetry = SYMM_NONE;
     }
 
@@ -658,7 +660,25 @@
       if (e.key === 's' || e.key === 'S') saveImage();
     });
 
-    window.addEventListener('resize', function() { generate(currentSeed); });
+    // only a real resize starts over — not a phone's address bar sliding in and out
+    var lastSize = [window.innerWidth, window.innerHeight], resizeTimer = 0;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        var w = window.innerWidth, h = window.innerHeight;
+        if (Math.abs(w - lastSize[0]) < 40 && Math.abs(h - lastSize[1]) < 160) return;
+        lastSize = [w, h];
+        generate(currentSeed);
+      }, 250);
+    });
+
+    // the Brink pays a little to anyone who stays and looks
+    var inFrame = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
+    if (inFrame) document.documentElement.classList.add('in-frame');
+    if (window.BridgeProgression) {
+      BridgeProgression.recordAchievement('played_genart', 25, { game: 'genart' });
+      setTimeout(function () { BridgeProgression.recordAchievement('gazed_into_the_void', 50, { game: 'genart' }); }, 30000);
+    }
 
     // Device tilt — tilting phone steers particles
     window.addEventListener('deviceorientation', function(e) {

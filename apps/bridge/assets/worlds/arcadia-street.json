@@ -1579,8 +1579,8 @@
       "type": "enter_world",
       "target": "arcadia",
       "spawn": [
-        7,
-        8
+        8,
+        9
       ],
       "label": "ARCADIA ARCADE",
       "prompt": "ENTER ARCADE"
@@ -1591,8 +1591,8 @@
       "type": "enter_world",
       "target": "arcadia",
       "spawn": [
-        7,
-        8
+        9,
+        9
       ],
       "label": "ARCADIA ARCADE",
       "prompt": "ENTER ARCADE"

@@ -328,6 +328,12 @@ var BridgeInteractions = (function () {
     if (inter.action && typeof BridgeActions !== 'undefined') { BridgeActions.run(inter); return; }
     switch (inter.type) {
       case 'app':
+        // the Bridge's own games open over the world, like the arcade cabinets (no reload)
+        if (/^\/(chess|cipher-room|typist|genart|runouts|asteroids|breakout|helicopter|missile-command|space-invaders)\b/.test(inter.target || '') &&
+            typeof BridgeCabinetModal !== 'undefined') {
+          BridgeCabinetModal.show({ url: inter.target, title: inter.label, gameKey: inter.gameKey });
+          break;
+        }
         // Save world position, then navigate to app
         BridgeState.setWorldPos({
           worldId: BridgeWorld.getWorld().tileset,
