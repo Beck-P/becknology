@@ -98,6 +98,6 @@ export default {
     text(ctx, s.done ? "THE RESULT IS IN" : call, W / 2, H - 13, PAL.white, { align: "center", max: 60 });
     hud(ctx, s, "THE DERBY", s.goal === "winner" ? "FIRST PAST THE POST WINS" : "LAST HORSE IS PICKED");
     if (s.done && !s.mem.end) { s.mem.end = 1; if (s.goal === "winner" && !r.isTie) s.fx.rain(60, [PAL.gold, PAL.pink, PAL.cyan]); }
-    verdict(ctx, s, { y: 150 });
+    verdict(ctx, s, { y: 98 });
   },
 };

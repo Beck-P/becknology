@@ -32,7 +32,8 @@ export default {
     // slot values under the board
     for (let q = 0; q < vals.length; q++) {
       const [x, y] = sc.px(a.cx + (q - a.rows / 2) * a.spacing, a.r, a.slotZ[0] - 0.05);
-      text(ctx, String(vals[q]), x, y + 2, vals[q] === 21 ? PAL.gold : PAL.white, { align: "center" });
+      // two-digit values don't fit side by side: every other one drops a line
+      text(ctx, String(vals[q]), x, y + 2 + (q % 2) * 8, vals[q] === 21 ? PAL.gold : PAL.white, { align: "center", shadow: PAL.ink });
     }
     const dropped = clamp(s.step, 0, n);
     const seats = row(n, a.cx - 2.4, a.cx + 2.4, 5.8).map((q) => ({ ...q, facing: "up" }));
@@ -64,6 +65,6 @@ export default {
     hud(ctx, s, "PLINKO", s.goal === "winner" ? "HIGHEST SLOT WINS" : "LOWEST SLOT IS PICKED");
     if (!s.done && active != null) text(ctx, list[active].name + (dropped > active ? "'S BALL IS DROPPING" : " TO DROP"), W / 2, H - 14, PAL.white, { align: "center", shadow: PAL.ink, max: 40 });
     if (s.done && !s.mem.end) { s.mem.end = 1; if (s.goal === "winner" && !r.isTie) s.fx.rain(60, [PAL.gold, PAL.pink, PAL.cyan]); }
-    verdict(ctx, s, { y: 186 });
+    verdict(ctx, s, { y: 222 });
   },
 };

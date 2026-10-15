@@ -360,7 +360,7 @@ export const bomb = {
         const left = Math.max(0, 4000 - (s.now - (B.holderStartedAt || s.now)));
         phaseTxt = (holder || "") + " HAS IT - " + (left / 1000).toFixed(1) + "S TO THROW";
       } else if (B.phase === "exploded") phaseTxt = "BOOM";
-      else if (B.phase === "gameOver") phaseTxt = (B.winner || "") + " IS THE LAST ONE STANDING";
+      else if (B.phase === "gameOver") phaseTxt = B.winner ? B.winner + " IS THE LAST ONE STANDING" : (B.picked || "") + " WAS HOLDING IT WHEN IT WENT";
       if (B.phase === "exploded" && m.boomRound !== B.round) {
         m.boomRound = B.round;
         const k = list.findIndex((p) => p.name === holder);
@@ -409,7 +409,7 @@ export const bomb = {
     out.forEach((nm) => { const q = list.findIndex((p) => p.name === nm); if (q >= 0) { const [x, y] = sc.px(ring[q].x, ring[q].r, 1.9); icon(ctx, "skull", x - 3, y - 6, 1); } });
     rect(ctx, 0, H - 20, W, 20, "rgba(8,4,24,0.86)"); rect(ctx, 0, H - 20, W, 1, PAL.pink);
     text(ctx, phaseTxt, W / 2, H - 13, PAL.white, { align: "center", max: 70 });
-    hud(ctx, { ...s, total: 1 }, "THE BOMB", B && B.alive ? "ROUND " + (B.round || 1) + " - " + (B.alive || []).length + " LEFT" : s.goal === "winner" ? "DON'T HOLD IT WHEN IT BLOWS" : "HOLD IT WHEN IT BLOWS AND YOU'RE PICKED");
+    hud(ctx, { ...s, total: 1 }, "THE BOMB", B && B.alive && B.phase !== "gameOver" ? (s.goal === "winner" ? "ROUND " + (B.round || 1) + " - " + (B.alive || []).length + " LEFT" : "FIRST TO BLOW IS PICKED") : s.goal === "winner" ? "DON'T HOLD IT WHEN IT BLOWS" : "HOLD IT WHEN IT BLOWS AND YOU'RE PICKED");
     endFx(s);
     verdict(ctx, s, { y: 40 });
   },

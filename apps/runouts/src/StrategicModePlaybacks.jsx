@@ -223,40 +223,47 @@ export function PokerPlayback({ result, step, done, omaha = false, Celebration, 
 }
 
 export function TournamentPlayback({ result, step, done, PlaybackStage, getTournamentProgress }) {
+  // Picking a loser: each round's winner is safe and drops out. Picking a winner: each round's loser is out.
   const progress = getTournamentProgress(result, step);
+  const hunt = result.selectionGoal === "winner";
+  const finalName = result.finalName || result.finalLoser || result.champion;
+  const verb = hunt ? "OUT" : "SAFE";
   const currentRound = result.rounds[Math.max(progress.roundIndex, 0)];
-  const safeSoFar = result.rounds.slice(0, progress.phase === "summary" ? progress.roundIndex + 1 : progress.roundIndex).map((round) => round.selectedName);
-  const remainingNow = progress.phase === "summary"
-    ? progress.roundIndex < result.rounds.length - 1
-      ? result.rounds[progress.roundIndex + 1].remainingAtStart
-      : [result.finalLoser]
-    : currentRound?.remainingAtStart ?? [];
+  const settled = result.rounds.slice(0, progress.phase === "summary" ? progress.roundIndex + 1 : progress.roundIndex);
+
+  const ladder = (
+    <div className="tourney-ladder">
+      {result.rounds.map((round, index) => {
+        const active = index === progress.roundIndex && !done;
+        const complete = done || index < progress.roundIndex || (index === progress.roundIndex && progress.phase === "summary");
+        return (
+          <div key={`${round.roundLabel}-${index}`} className={`tourney-rung ${active ? "is-active" : ""} ${complete ? (hunt ? "is-out" : "is-safe") : ""}`}>
+            <span className="tourney-rung-n">R{index + 1}</span>
+            <span className="tourney-rung-who">{complete ? (round.selectedName || "TIE") : active ? `${round.remainingAtStart.length} PLAYING` : "-"}</span>
+            {complete && round.selectedName ? <span className="tourney-rung-tag">{verb}</span> : null}
+          </div>
+        );
+      })}
+      <div className={`tourney-rung is-final ${done ? "is-done" : ""}`}>
+        <span className="tourney-rung-n">END</span>
+        <span className="tourney-rung-who">{done ? finalName : "?"}</span>
+        {done ? <span className="tourney-rung-tag">{hunt ? "CHAMPION" : "PICKED"}</span> : null}
+      </div>
+    </div>
+  );
 
   if (done) {
     return (
-      <div className="space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
-          <div className="bg-gradient-to-r from-slate-950 to-slate-800 px-6 py-6 text-white">
-            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">Tournament complete</div>
-            <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{result.headline}</div>
-            <div className="mt-3 max-w-2xl text-white/90">{result.summary}</div>
-          </div>
-          <div className="grid gap-4 p-6 md:grid-cols-2">
-            <div className="rounded-3xl border border-rose-300 bg-rose-50 p-5 shadow-sm">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-500">Final loser</div>
-              <div className="mt-2 text-3xl font-black text-slate-950">{result.finalLoser}</div>
-              <div className="mt-2 text-sm text-slate-600">The only player who never won a round.</div>
-            </div>
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Safe order</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {result.safeNames.map((name, index) => (
-                  <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
-                    Round {index + 1}: {name}
-                  </span>
-                ))}
-              </div>
-            </div>
+      <div className="tourney">
+        {ladder}
+        <div className={`tourney-card ${hunt ? "is-gold" : "is-red"}`}>
+          <div className="tourney-kicker">Tournament over</div>
+          <div className="tourney-big">{finalName}</div>
+          <div className="tourney-sub">{result.summary}</div>
+          <div className="tourney-chips">
+            {(hunt ? result.eliminatedNames : result.safeNames).map((name, index) => (
+              <span key={`${name}-${index}`} className={`tourney-chip ${hunt ? "is-out" : "is-safe"}`}>R{index + 1} {name} {verb}</span>
+            ))}
           </div>
         </div>
       </div>
@@ -264,85 +271,39 @@ export function TournamentPlayback({ result, step, done, PlaybackStage, getTourn
   }
 
   if (progress.phase === "summary") {
-    const roundWinner = result.rounds[progress.roundIndex].selectedName;
-    const nextPlayers = progress.roundIndex < result.rounds.length - 1 ? result.rounds[progress.roundIndex + 1].remainingAtStart : [result.finalLoser];
+    const pick = result.rounds[progress.roundIndex].selectedName;
+    const last = progress.roundIndex >= result.rounds.length - 1;
+    const next = last ? [finalName] : result.rounds[progress.roundIndex + 1].remainingAtStart;
     return (
-      <div className="space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/85 shadow-xl backdrop-blur">
-          <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-6 text-white">
-            <div className="text-sm font-semibold uppercase tracking-[0.25em] text-white/80">{result.rounds[progress.roundIndex].roundLabel} complete</div>
-            <div className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{roundWinner} is safe</div>
-            <div className="mt-3 max-w-2xl text-white/90">
-              {progress.roundIndex < result.rounds.length - 1 ? `Next round: ${nextPlayers.join(", ")}` : `${result.finalLoser} is the only person left without a win.`}
-            </div>
+      <div className="tourney">
+        {ladder}
+        <div className={`tourney-card ${hunt ? "is-red" : "is-green"}`}>
+          <div className="tourney-kicker">{result.rounds[progress.roundIndex].roundLabel} done</div>
+          <div className="tourney-big">{pick ? `${pick} is ${hunt ? "out" : "safe"}` : "A tie - go again"}</div>
+          <div className="tourney-sub">
+            {last
+              ? hunt ? `${finalName} is the last one standing.` : `${finalName} is the only one left without a win.`
+              : `Next round: ${next.join(", ")}`}
           </div>
-          <div className="grid gap-4 p-6 md:grid-cols-2">
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Safe so far</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {[...safeSoFar].map((name, index) => (
-                  <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
-                    {name}
-                  </span>
-                ))}
-              </div>
+          {settled.length ? (
+            <div className="tourney-chips">
+              {settled.filter((round) => round.selectedName).map((round, index) => (
+                <span key={`${round.selectedName}-${index}`} className={`tourney-chip ${hunt ? "is-out" : "is-safe"}`}>{round.selectedName} {verb}</span>
+              ))}
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Still in danger</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {nextPlayers.map((name) => (
-                  <span key={name} className="rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
+          ) : null}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Tournament status</div>
-          <div className="mt-2 text-2xl font-black text-slate-950">{currentRound.roundLabel}</div>
-          <div className="mt-2 text-slate-600">Win this round and you're safe. One person will be left at the end.</div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {safeSoFar.length ? safeSoFar.map((name, index) => (
-              <span key={`${name}-${index}`} className="rounded-full bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700">
-                Safe: {name}
-              </span>
-            )) : <span className="rounded-full bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">No one safe yet</span>}
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {remainingNow.map((name) => (
-              <span key={name} className="rounded-full bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700">
-                Playing: {name}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Rounds</div>
-          <div className="mt-3 space-y-2">
-            {result.rounds.map((round, index) => {
-              const active = index === progress.roundIndex;
-              const complete = index < progress.roundIndex || progress.phase === "summary";
-              return (
-                <div key={`${round.roundLabel}-${index}`} className={`rounded-2xl border px-4 py-3 ${active ? "border-sky-300 bg-sky-50" : complete ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}>
-                  <div className="text-sm font-semibold text-slate-900">{round.roundLabel}</div>
-                  <div className="text-sm text-slate-500">{complete ? `${round.selectedName} won immunity` : round.remainingAtStart.join(", ")}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+    <div className="tourney">
+      {ladder}
+      <div className="tourney-note">
+        {currentRound.roundLabel}: {hunt ? "lose this round and you're out" : "win this round and you're safe"} - {currentRound.remainingAtStart.join(", ")}
       </div>
       <PlaybackStage result={currentRound} step={progress.roundStep} done={progress.roundDone} />
     </div>
   );
 }
-
