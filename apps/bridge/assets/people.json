@@ -760,5 +760,75 @@
         "a": "HALCYON WANTS MY SCREENS FOR ADS. I SAID MY SCREENS ARE FOR SEVENS. THEY SENT A LAWYER. HE PLAYED ONE TRAY AND LEFT HAPPY. STILL WAITING ON THE NEXT ONE."
       }
     ]
+  },
+  "hob": {
+    "name": "Hob Dunmore",
+    "role": "The last miner in the Rose Mine",
+    "sheet": "npc-miner",
+    "at": [
+      {
+        "world": "lumar-rose-mine",
+        "label": "HOB"
+      }
+    ],
+    "greet": "ANOTHER ONE WANTING TO GO DOWN. SIT, IF YOU LIKE - THE ROCK ISN'T GOING ANYWHERE. TAKE A PICK OFF THE RACK; MIND YOUR HEAD ON THE FIFTH FLOOR.",
+    "again": "STILL IN ONE PIECE? GOOD. WHAT DID YOU BRING UP?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "HOB DUNMORE. FORTY YEARS IN THIS HILL. THE CREW WENT TO SAPPHIRE WHEN THEY SEALED THE DEEP FLOORS. I STAYED. SOMEBODY HAS TO LISTEN TO IT. PELL GROWS HER ROSEITE OUTSIDE NOW AND BRINGS ME SOUP."
+      },
+      {
+        "q": "The singing",
+        "a": "STARTED THE WINTER THEY OPENED FLOOR TWENTY. NOT A TUNE - MORE LIKE A NOTE HELD FOREVER. THE CREW WOULDN'T GO PAST FIFTEEN AFTER THAT. I'VE NEVER BEEN BRAVE ENOUGH TO GO AND SEE WHAT'S SINGING."
+      },
+      {
+        "q": "How it works",
+        "a": "FACE A ROCK AND SWING. PLAIN ROCK'S JUST STONE; THE RUST-RED'S IRON, THE PALE'S SILVER, AND THE ONES THAT GLOW ARE WHY ANYONE EVER DUG HERE. ONE ROCK ON EVERY FLOOR SITS ON THE LADDER DOWN. THE LIFT STOPS EVERY FIFTH FLOOR, ONCE YOU'VE BEEN."
+      },
+      {
+        "q": "A better pickaxe",
+        "a": "BRING ME THE ORE AND THE COIN AND I'LL PUT AN EDGE ON SOMETHING BETTER THAN THAT OLD THING.",
+        "mine": "upgrade"
+      },
+      {
+        "q": "Sell ore and stone",
+        "a": "I STILL SEND A CART TO SAPPHIRE EVERY MONTH. I'LL TAKE WHAT YOU DIG.",
+        "sell": [
+          {
+            "id": "stone",
+            "price": 1
+          },
+          {
+            "id": "iron_ore",
+            "price": 5
+          },
+          {
+            "id": "silver_ore",
+            "price": 9
+          },
+          {
+            "id": "roseite",
+            "price": 11
+          },
+          {
+            "id": "sapphire_crystal",
+            "price": 18
+          },
+          {
+            "id": "moonstone",
+            "price": 35
+          },
+          {
+            "id": "star_iron",
+            "price": 45
+          },
+          {
+            "id": "songstone",
+            "price": 70
+          }
+        ]
+      }
+    ]
   }
 }

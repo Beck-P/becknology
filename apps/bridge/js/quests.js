@@ -45,7 +45,8 @@ var BridgeQuests = (function () {
     Object.keys(defs).forEach(function (id) {
       var q = defs[id];
       q.clues.forEach(function (c) {
-        if (c.on.world !== worldId || c.on.label !== inter.label) return;
+        var wm = c.on.world;                      // 'lumar-rose-mine-*' matches any of the mine's floors
+        if (!(wm === worldId || (wm.slice(-1) === '*' && worldId.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;
         var s = state[id] || (state[id] = { clues: {}, started: Date.now() });
         if (s.clues[c.id]) return;
         var fresh = !Object.keys(s.clues).length;

@@ -402,6 +402,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeForage !== 'undefined') BridgeForage.decorate(worldId, data);
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeGear !== 'undefined') BridgeGear.decorate(worldId, data);
+        if (typeof BridgeMine !== 'undefined') BridgeMine.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
         if (typeof BridgeActions !== 'undefined') BridgeActions.decorate(worldId, data);

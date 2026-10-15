@@ -304,6 +304,48 @@ var BridgeItems = (function () {
     };
   }
 
+  // The Rose Mine (js/mine.js): stone, ore in its rock, gems, pickaxes.
+  function rockIcon(rock, fleck, hi) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      ctx.fillStyle = '#0c0a0a';
+      ctx.fillRect(x + 3*u, y + 6*u, 10*u, 7*u); ctx.fillRect(x + 5*u, y + 4*u, 6*u, 2*u);
+      ctx.fillStyle = rock;
+      ctx.fillRect(x + 4*u, y + 6*u, 8*u, 6*u); ctx.fillRect(x + 6*u, y + 5*u, 4*u, 1*u);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(x + 5*u, y + 6*u, 3*u, 1*u);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x + 4*u, y + 11*u, 8*u, 1*u);
+      if (fleck) {
+        ctx.fillStyle = fleck;
+        ctx.fillRect(x + 5*u, y + 8*u, 1*u, 1*u); ctx.fillRect(x + 8*u, y + 7*u, 2*u, 1*u); ctx.fillRect(x + 10*u, y + 10*u, 1*u, 1*u);
+        ctx.fillRect(x + 7*u, y + 10*u, 1*u, 1*u);
+      }
+      if (hi) { ctx.fillStyle = hi; ctx.fillRect(x + 8*u, y + 7*u, 1*u, 1*u); ctx.fillRect(x + 5*u, y + 8*u, 1*u, 1*u); }
+    };
+  }
+
+  function moonstoneIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0c0a14'; ctx.fillRect(x + 4*u, y + 4*u, 8*u, 9*u); ctx.fillRect(x + 3*u, y + 6*u, 10*u, 5*u);
+    ctx.fillStyle = '#a8a8c8'; ctx.fillRect(x + 4*u, y + 6*u, 8*u, 5*u); ctx.fillRect(x + 5*u, y + 5*u, 6*u, 7*u);
+    ctx.fillStyle = '#e8e8ff'; ctx.fillRect(x + 6*u, y + 6*u, 3*u, 2*u);
+    ctx.fillStyle = '#c8d0ff'; ctx.fillRect(x + 9*u, y + 9*u, 2*u, 2*u);
+  }
+
+  function pickaxeIcon(head, hi) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      ctx.fillStyle = '#1a1008';
+      for (var i = 0; i < 9; i++) ctx.fillRect(x + (4 + i)*u, y + (13 - i)*u, 2*u, 2*u);     // the haft, corner to corner
+      ctx.fillStyle = '#8a5a30';
+      for (var j = 0; j < 8; j++) ctx.fillRect(x + (5 + j)*u, y + (13 - j)*u, 1*u, 1*u);
+      ctx.fillStyle = '#0a0a0c';                                                              // the head across the top
+      ctx.fillRect(x + 6*u, y + 2*u, 9*u, 3*u); ctx.fillRect(x + 4*u, y + 4*u, 3*u, 3*u); ctx.fillRect(x + 13*u, y + 4*u, 2*u, 3*u);
+      ctx.fillStyle = head;
+      ctx.fillRect(x + 7*u, y + 3*u, 7*u, 1*u); ctx.fillRect(x + 5*u, y + 5*u, 2*u, 1*u); ctx.fillRect(x + 13*u, y + 4*u, 1*u, 2*u);
+      ctx.fillStyle = hi; ctx.fillRect(x + 8*u, y + 3*u, 3*u, 1*u);
+    };
+  }
+
   function seaGlass(ctx, x, y, s) {
     var u = s / 16;
     ctx.fillStyle = '#0a1a14'; ctx.fillRect(x + 4*u, y + 5*u, 8*u, 7*u);
@@ -470,6 +512,27 @@ var BridgeItems = (function () {
                      draw: coinIcon, value: 25 },
     star_pearl:    { id: 'star_pearl', name: 'Star Pearl', desc: 'From the moon pool. There are stars moving inside it.', type: 'material', stackable: true,
                      draw: pearlIcon, value: 80 },
+    // the Rose Mine (js/mine.js)
+    stone:       { id: 'stone', name: 'Stone', desc: 'Plain grey stone from the Rose Mine. Builders take it by the cartload.', type: 'material',
+                   stackable: true, draw: rockIcon('#6a6066'), value: 1 },
+    iron_ore:    { id: 'iron_ore', name: 'Iron Ore', desc: 'Rust-red rock heavy with iron. The smith on the square will want it.', type: 'material',
+                   stackable: true, draw: rockIcon('#6a4a3a', '#a04a20', '#3a3a44'), value: 5 },
+    silver_ore:  { id: 'silver_ore', name: 'Silver Ore', desc: 'Pale rock threaded with silver, from below the fourth floor.', type: 'material',
+                   stackable: true, draw: rockIcon('#7a7880', '#e0e8f0', '#ffffff'), value: 9 },
+    moonstone:   { id: 'moonstone', name: 'Moonstone', desc: 'Out of a geode deep in the mine. It holds a little light, like a cloudy moon.', type: 'material',
+                   stackable: true, draw: moonstoneIcon, value: 35 },
+    star_iron:   { id: 'star_iron', name: 'Star Iron', desc: 'Black ore full of tiny points of light. Nobody agrees how stars got into a mine.', type: 'material',
+                   stackable: true, draw: rockIcon('#2a2830', '#ffe080', '#ffffff'), value: 45 },
+    songstone:   { id: 'songstone', name: 'Songstone', desc: 'A violet crystal from the bottom of the Rose Mine. Hold it to your ear and it hums.', type: 'material',
+                   stackable: true, draw: crystalIcon('#3a1a6a', '#b080ff', '#f0e0ff'), value: 70 },
+    heartsong:   { id: 'heartsong', name: 'Heartsong', desc: 'The heart of the great songstone at the bottom of the mine. It is still singing.', type: 'key',
+                   stackable: false, draw: crystalIcon('#4a1a7a', '#d0a0ff', '#ffffff'), value: 0 },
+    old_pickaxe: { id: 'old_pickaxe', name: 'Old Pickaxe', desc: 'From the rack in the Rose Mine. Blunt, but it breaks rock. Face a rock and press E.', type: 'tool',
+                   stackable: false, draw: pickaxeIcon('#5a5a60', '#8a8a90'), power: 1 },
+    iron_pickaxe: { id: 'iron_pickaxe', name: 'Iron Pickaxe', desc: 'Forged on the square from your own ore. Twice the bite of the old one.', type: 'tool',
+                   stackable: false, draw: pickaxeIcon('#8a8a98', '#d0d0e0'), power: 2 },
+    star_pickaxe: { id: 'star_pickaxe', name: 'Star Pickaxe', desc: 'Star iron, edged by Hob Dunmore himself. Rock seems to want to break for it.', type: 'tool',
+                   stackable: false, draw: pickaxeIcon('#3a3848', '#ffe080'), power: 3 },
     stone_shard: {
       id: 'stone_shard', name: 'Stone Shard',
       desc: 'A jagged fragment from a fallen sentinel. Amethyst still glints in the break.',

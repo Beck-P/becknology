@@ -214,7 +214,8 @@ w = {'name': 'Rose Cove', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tilese
          look('CRAB POTS', JX - 1, 26, 'CRAB POTS, STILL WET. ONE HOLDS A CRAB THE COLOUR OF ROSEITE.\n\nIT HUMS.'),
          look('HOT SPRING', 42, 24, 'STEAMING WATER, PINK AT THE BOTTOM WHERE THE CRYSTALS GROW.\n\nIT SMELLS OF SALT AND IRON AND, FAINTLY, ROSES.'),
          look('BATHHOUSE', 47, 20, 'AN OPEN BATHHOUSE ON POSTS, TOWELS FOLDED ON A BENCH, TWO PAPER LANTERNS.\n\nA SIGN: "HARVESTERS FIRST. VISITORS AFTER DARK."'),
-         look('OLD MINE', 45, 32, 'THE ROSE MINE. THE TIMBERS ARE OLD BUT SOUND, AND A CART OF ORE STILL GLOWS ON THE RAILS.\n\nSOMEWHERE DEEP INSIDE, SOMETHING IS SINGING.'),
+         {'x': 45, 'y': 32, 'type': 'enter_world', 'label': 'OLD MINE', 'prompt': 'PRESS E TO GO IN', 'target': 'lumar-rose-mine',
+          'spawn': [8, 10]},                     # the Rose Mine (scenes/lumar_rose_mine.py, js/mine.js)
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + [(JX, 26)], scene_id='lumar-rose',

@@ -5046,10 +5046,14 @@
     {
       "x": 45,
       "y": 32,
-      "type": "dialog",
+      "type": "enter_world",
       "label": "OLD MINE",
-      "prompt": "PRESS E TO LOOK",
-      "dialog": "THE ROSE MINE. THE TIMBERS ARE OLD BUT SOUND, AND A CART OF ORE STILL GLOWS ON THE RAILS.\n\nSOMEWHERE DEEP INSIDE, SOMETHING IS SINGING."
+      "prompt": "PRESS E TO GO IN",
+      "target": "lumar-rose-mine",
+      "spawn": [
+        8,
+        10
+      ]
     }
   ],
   "designTiles": [],

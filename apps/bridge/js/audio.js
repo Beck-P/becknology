@@ -14,7 +14,7 @@
  * station hum, fire, a crowd, arcade bleeps, drips, the ship's creaks.
  *
  *   BridgeAudio.setWorld(id, world)   pick music + ambience for a world (world.js)
- *   BridgeAudio.sfx(name)             'blip', 'open', 'close', 'door', 'coin', 'clue', 'quest', 'pickup',
+ *   BridgeAudio.sfx(name)             'blip', 'open', 'close', 'door', 'coin', 'clue', 'quest', 'pickup', 'pick', 'crumble',
  *                                     'step', 'sit', 'sleep', 'splash', 'plop', 'catch', 'ball', 'pocket',
  *                                     'fever', 'click', 'success', 'fail', 'error'
  *
@@ -517,6 +517,14 @@ var BridgeAudio = (function () {
       var g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.14, t + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
       src.connect(f); f.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + 2.7);
       noiseHit(sfxBus, t + 2.2, 0.3, { freq: 200, ftype: 'lowpass', gain: 0.18 });
+    },
+    pick:    function (t) {                                // a pickaxe on rock: a ring of iron and a crack of stone
+      voice(sfxBus, t, 0.03, { type: 'square', freq: 1800 + Math.random() * 500, glide: 0.7, glideT: 0.06, gain: 0.05, a: 0.001, d: 0.06, s: 0, r: 0.05, cutoff: 6000, rev: 0.25 });
+      noiseHit(sfxBus, t, 0.09, { freq: 2600, ftype: 'bandpass', q: 1.5, gain: 0.09, rev: 0.25 });
+    },
+    crumble: function (t) {                                // the rock giving way
+      noiseHit(sfxBus, t, 0.4, { freq: 500, ftype: 'lowpass', gain: 0.2, rev: 0.35 });
+      for (var i = 0; i < 4; i++) noiseHit(sfxBus, t + 0.05 + i * 0.06, 0.06, { freq: 900 + Math.random() * 700, ftype: 'bandpass', q: 2, gain: 0.06 });
     },
     error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); }
   };

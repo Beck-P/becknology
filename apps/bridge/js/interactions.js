@@ -56,7 +56,8 @@ var BridgeInteractions = (function () {
     enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
     menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish',
-    pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse'
+    pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
+    rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
@@ -353,6 +354,10 @@ var BridgeInteractions = (function () {
         showSellDialog(inter);
         break;
 
+      case 'rock': case 'mine_down': case 'mine_up': case 'mine_lift': case 'mine_rack': case 'mine_slate':
+        if (typeof BridgeMine !== 'undefined') BridgeMine.use(inter);         // the Rose Mine (js/mine.js)
+        break;
+
       case 'outfitter':             // suits and packs (js/gear.js); the bridge's coat rack is the wardrobe
         if (typeof BridgeGear !== 'undefined') BridgeGear.open(inter.wardrobe ? {} : { shop: inter.shop, intro: inter.dialog });
         break;
@@ -566,6 +571,12 @@ var BridgeInteractions = (function () {
           } else {
             BridgeWorld.leave();
           }
+          break;
+        case 'mine_floor':
+          if (typeof BridgeMine !== 'undefined') BridgeMine.goFloor(opt.floor);
+          break;
+        case 'mine_upgrade':
+          if (typeof BridgeMine !== 'undefined') BridgeMine.forge(opt.to);
           break;
         case 'close':
         default:
@@ -986,6 +997,11 @@ var BridgeInteractions = (function () {
         if (feel >= 5) mult *= 1.1;                                // friends get a better price
         close();
         showSellDialog({ label: person.name, dialog: t.a, buys: t.sell.map(function (b) { return { id: b.id, price: Math.round(b.price * mult) }; }) });
+        return;
+      }
+      if (t.mine && typeof BridgeMine !== 'undefined') {              // Hob's forge: a better pickaxe
+        close();
+        BridgeMine.upgrade(person.name);
         return;
       }
       if (t.outfit && typeof BridgeGear !== 'undefined') {           // what they've got to wear or carry

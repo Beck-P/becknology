@@ -576,5 +576,50 @@
       "from": "keeper",
       "text": "The light answered again last night, and for the first time in three weeks I went to bed after. Slept till noon. The clock ran down, the lens stopped, and the sky didn't fall in.\n\nI wound it back up, mind.\n\nIf you're ever north by east of us after dark, flash three long and one short. I'll know it's you.\n\nTamsin Gale\nKeeper, the Sapphire Light"
     }
+  },
+  "singing-deep": {
+    "title": "The Singing Deep",
+    "where": "Rose Cove, Lumar",
+    "reward": 300,
+    "start": "Somewhere deep in the old Rose Mine, something is singing.",
+    "done": "Twenty floors down, under the cold and the blue stone, the great songstone sang its one long note. You broke it open and took its heart - and the whole mine sang back. Hob says it's the first time in forty years he's heard it change key.",
+    "clues": [
+      {
+        "id": "mouth",
+        "on": {
+          "world": "lumar-rose",
+          "label": "OLD MINE"
+        },
+        "text": "The Rose Mine. The timbers are old but sound, and from somewhere deep inside comes a sound like singing."
+      },
+      {
+        "id": "slate",
+        "on": {
+          "world": "lumar-rose-mine",
+          "label": "FOREMAN'S SLATE"
+        },
+        "text": "The foreman's slate counts down the floors: blue at five, cold at ten, 'don't linger' at fifteen - and a question mark at twenty."
+      },
+      {
+        "id": "hob",
+        "on": {
+          "world": "lumar-rose-mine",
+          "label": "HOB"
+        },
+        "text": "Hob Dunmore, the last miner, says the singing started the winter they opened floor twenty. Nobody has been down to see what it is."
+      },
+      {
+        "id": "heart",
+        "on": {
+          "world": "lumar-rose-mine-*",
+          "label": "THE GREAT SONGSTONE"
+        },
+        "text": "At the bottom of the mine, the great songstone - a crystal the size of a cart, singing one long note."
+      }
+    ],
+    "letter": {
+      "from": "Hob Dunmore",
+      "text": "IT'S QUIET DOWN THERE NOW, BUT NOT SILENT - MORE LIKE IT'S LISTENING. I WENT DOWN TO FIFTEEN YESTERDAY FOR THE FIRST TIME IN TWENTY YEARS. BRING ME SOME STAR IRON SOMETIME AND I'LL MAKE YOU SOMETHING WORTH CARRYING. - HOB"
+    }
   }
 }

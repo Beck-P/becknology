@@ -292,6 +292,10 @@ var BridgeInventory = (function () {
     state.hp = state.maxHP; state.energy = state.maxEnergy;
     save(); refresh();
   }
+  function useEnergy(n) {             // work costs energy (swinging a pickaxe)
+    state.energy = Math.max(0, state.energy - (n || 0));
+    save(); refresh();
+  }
   function takeDamage(n) {
     state.hp = Math.max(0, state.hp - (n || 0));
     save(); refresh();
@@ -830,7 +834,7 @@ var BridgeInventory = (function () {
     selectSlot: selectSlot, cycleSlot: cycleSlot,
     getSelectedSlot: getSelectedSlot, getSelectedItemId: getSelectedItemId,
     getStats: getStats, restoreHP: restoreHP, restoreEnergy: restoreEnergy,
-    restoreAll: restoreAll, takeDamage: takeDamage,
+    restoreAll: restoreAll, takeDamage: takeDamage, useEnergy: useEnergy,
     openMenu: openMenu, closeMenu: closeMenu, toggleMenu: toggleMenu, isMenuOpen: isMenuOpen,
     tick: tick,
     loadRemote: loadRemote
