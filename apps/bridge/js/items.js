@@ -507,6 +507,21 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#ffe8a0', [[5, 4, 6, 9]]); px(ctx, x, y, u, '#fff8e0', [[7, 6, 2, 4]]);
     px(ctx, x, y, u, '#c8a050', [[5, 3, 6, 1], [5, 13, 6, 1]]);
   }
+  function probeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a2e38', [[2, 13, 2, 1], [3, 12, 2, 1], [4, 11, 2, 1]]);
+    px(ctx, x, y, u, '#c8ccd8', [[6, 10, 1, 1], [7, 9, 1, 1], [8, 8, 1, 1], [9, 7, 1, 1], [10, 6, 1, 1], [11, 5, 1, 1], [12, 4, 1, 1], [13, 3, 1, 1]]);
+    px(ctx, x, y, u, '#e8602a', [[7, 10, 1, 1], [9, 8, 1, 1], [11, 6, 1, 1]]);
+    px(ctx, x, y, u, '#f4f6fa', [[14, 2, 1, 1]]);
+  }
+  function beyondIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#4a4e58', [[6, 1, 4, 1], [7, 2, 2, 1], [4, 3, 8, 1], [4, 13, 8, 1], [4, 4, 1, 9], [11, 4, 1, 9]]);
+    px(ctx, x, y, u, '#3a2a10', [[5, 4, 6, 9]]);
+    px(ctx, x, y, u, '#ffb850', [[6, 6, 4, 6]]); px(ctx, x, y, u, '#fff0c0', [[7, 7, 2, 4]]); px(ctx, x, y, u, '#ffffff', [[7, 8, 1, 2]]);
+    px(ctx, x, y, u, '#8a9098', [[5, 3, 6, 1], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#ffd890', [[2, 7, 1, 1], [13, 6, 1, 1], [3, 11, 1, 1], [13, 11, 1, 1]]);
+  }
   function charmUse() {
     var it = this;
     if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(it.name.toUpperCase(), it.desc.toUpperCase() + '\n\n(IT WORKS AS LONG AS YOU CARRY IT.)');
@@ -797,6 +812,13 @@ var BridgeItems = (function () {
                      type: 'tool', stackable: false, draw: ringIcon, value: 120, onUse: charmUse },
     tide_charm:    { id: 'tide_charm', name: 'Tide Charm', desc: 'A green glass float in a net, a wave inside it. Carried, the sloop sails a little faster.',
                      type: 'tool', stackable: false, draw: tideIcon, value: 90, onUse: charmUse },
+    // past the Hoarspire (js/expedition.js)
+    probe:         { id: 'probe', name: 'Avalanche Probe', desc: 'A folding pole, three paces long. On the Last Ridge, F pushes it into the snow ahead of you: hollow, or solid.',
+                     type: 'tool', stackable: false, draw: probeIcon, value: 20,
+                     onUse: function () { if (typeof BridgeExpedition !== 'undefined') BridgeExpedition.probe(); return false; } },
+    lantern_beyond: { id: 'lantern_beyond', name: 'The Lantern Beyond', desc: 'A tin lantern lit from the light past the last ridge. It never goes out. Carried, the cold can\'t touch you; held up, hidden things show in its light.',
+                     type: 'tool', stackable: false, draw: beyondIcon, value: 0,
+                     onUse: function () { if (typeof BridgeExpedition !== 'undefined') BridgeExpedition.beyond(); return false; } },
     sprinkler:     { id: 'sprinkler', name: 'Sprinkler', desc: 'A brass sprinkler head on a pipe. Set it in your field and the ground round it - a tile every way - never dries.', type: 'tool',
                      stackable: true, draw: sprinklerIcon, onUse: farmUse, value: 60 },
     seed_turnip:   { id: 'seed_turnip', name: 'Turnip Seeds', desc: 'Quick and forgiving. Ready in three minutes of watered ground.', type: 'seed', stackable: true,

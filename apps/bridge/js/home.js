@@ -42,6 +42,8 @@ var BridgeHome = (function () {
                       shop: 'ARCADIAMART LIVING',
                       pitch: 'CAPSULE HOTEL, 24 HOURS. "NO VACANCY" - BUT UNDER IT, SMALLER: "LONG-STAY FLOOR. ONE ROOM, ONE WINDOW, YOUR OWN CAPSULE. KEYCARD AT THE DESK."',
                       bought: 'THE KEYCARD BLINKS GREEN. A BARE ROOM, A WINDOW FULL OF CITY, A CAPSULE IN THE WALL - YOURS. THE DESK THREW IN A STOOL AND A PLANT.' },
+    // Edda's farmhouse on Verdance: it comes with the farm's deed (js/homestead.js), its door is the farm's own
+    'verdance-home': { name: 'The Farmhouse', farm: true, theme: 'parchment', gift: ['rocking_chair', 'bed'], shop: 'HOLLIN\'S MAIL-ORDER' },
     'quarters': { name: 'Your Quarters', ship: true, theme: 'holo', shop: "THE CHANDLER'S CATALOGUE" },
     'bridge': { name: 'The Bridge', ship: true, theme: 'holo', shop: "THE CHANDLER'S CATALOGUE" }
   };
@@ -85,7 +87,10 @@ var BridgeHome = (function () {
   function say(label, text) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(label, text); }
   function sfx(n) { if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(n); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function owns(id) { return !!(HOMES[id] && (HOMES[id].ship || save.owned[id])); }
+  function owns(id) {
+    if (HOMES[id] && HOMES[id].farm) return typeof BridgeHomestead !== 'undefined' && BridgeHomestead.owned();
+    return !!(HOMES[id] && (HOMES[id].ship || save.owned[id]));
+  }
   function layout(id) { return save.layout[id] || (save.layout[id] = []); }
   function placed(pid) {
     var n = 0;
@@ -165,7 +170,9 @@ var BridgeHome = (function () {
     cur = { id: worldId, data: data, base: data.collisions.map(function (r) { return r.slice(); }) };
     whenReady(function () { if (cur && cur.data === data) apply(); });
     if (!HOMES[worldId].ship && owns(worldId) && !save.seen[worldId]) {
-      save.seen[worldId] = Date.now(); store();
+      save.seen[worldId] = Date.now();
+      if (HOMES[worldId].farm) (HOMES[worldId].gift || []).forEach(function (g) { save.have[g] = (save.have[g] || 0) + 1; });   // Edda left you a chair and a bed
+      store();
       setTimeout(function () {
         if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Home', HOMES[worldId].name, 'Yours to furnish - press H', false);
       }, 900);

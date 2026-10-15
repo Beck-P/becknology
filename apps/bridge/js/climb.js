@@ -26,7 +26,7 @@
  * day), keeps your best time, and walks you out onto the summit. Saved in
  * localStorage bridge_climb.
  *
- *   BridgeClimb.start(routeId)       // a 'climb' interaction: Fellhaven's route feet, or the face's own
+ *   BridgeClimb.start(routeId, {rival: true})   // a 'climb' interaction (Fellhaven's route feet, the face's own); rival: race Ysolde
  *   BridgeClimb.board()              // the route board: grades, your ascents
  *   BridgeClimb.items / over         // the hoarfell tileset's scene hooks (js/worlds/hoarfell.js)
  */
@@ -39,7 +39,11 @@ var BridgeClimb = (function () {
     icefall:   { name: 'THE ICEFALL', grade: 'III', needs: 'ice_axe', first: 150, again: 30, gift: ['hoar_crystal', 3],
                  blurb: 'Up the frozen waterfall. You will want an ice axe.' },
     hoarspire: { name: 'THE HOARSPIRE', grade: 'V', wind: true, first: 400, again: 60, gift: ['summit_crystal', 1],
-                 blurb: 'The peak itself. Small holds, loose rock, and the wind.' }
+                 blurb: 'The peak itself. Small holds, loose rock, and the wind.' },
+    // past the Hoarspire (js/expedition.js): the band of seracs across the Last Ridge, climbed in its own world
+    icestep:   { name: 'THE ICE STEP', grade: 'IV', needs: 'ice_axe', first: 200, again: 0, world: 'hoarfell-icestep', foot: [12, 30], away: true,
+                 exit: { label: 'Haul over onto the high ridge', target: 'hoarfell-ridge', spawn: [14, 27] },
+                 blurb: 'A wall of seracs across the Last Ridge. All ice.' }
   };
   var KIND = {
     jug:     { cost: 0, hang: 1.0, name: 'a good jug' },
@@ -52,6 +56,10 @@ var BridgeClimb = (function () {
     top:     { cost: 3, hang: 0, name: 'the top' }
   };
 
+  // Ysolde races you up (her topic): her line is a careful hand's, hold to hold, this long between moves
+  var RIVAL = { staircase: 0.7, icefall: 0.95, hoarspire: 1.15 }, BEAT = { staircase: 80, icefall: 150, hoarspire: 300 };
+  var RIVAL_SHEET = 'climb-coat-red';
+
   var save = load();
   var g = null;                 // the climb in progress
   var hud = null;
@@ -61,6 +69,7 @@ var BridgeClimb = (function () {
     try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { d = null; }
     d = d || { routes: {} };
     d.routes = d.routes || {};
+    d.rival = d.rival || {};
     if (d.v !== 2) {               // the old panel's times don't compare with the face's
       Object.keys(d.routes).forEach(function (id) { d.routes[id].best = 0; });
       d.v = 2;
@@ -115,21 +124,63 @@ var BridgeClimb = (function () {
   }
 
   // ---- starting -----------------------------------------------------------------------------------------------
-  function start(rid) {
+  function start(rid, opts) {
     var D = ROUTES[rid];
     if (!D) return;
-    if (BridgeWorld.getWorldId() === WORLD) return begin(rid);
+    var where = D.world || WORLD;
+    if (BridgeWorld.getWorldId() === where) return begin(rid, opts);
     var x = { staircase: 7, icefall: 18, hoarspire: 28 }[rid] || 18;
-    BridgeWorld.enterWorld(WORLD, [x, 35], function () { begin(rid); });
+    BridgeWorld.enterWorld(where, D.foot || [x, 35], function () { begin(rid, opts); });
   }
 
-  function begin(rid) {
+  // Ysolde's line: from the foot, the highest good hold in reach each time (never loose rock), a breather on the ledges
+  function rivalLine(wall, rid) {
+    var at = wall.foot, hand = grip(at, at.x), t = 0, out = [{ t: 0, x: hand.x, z: hand.z, sy: hand.sy, kind: 'ledge', dur: 0 }];
+    var pace = RIVAL[rid] || 0.9, n = 0;
+    while (at.kind !== 'top' && n++ < 300) {
+      var stand = at.kind === 'ledge' || at.kind === 'top', from = stand ? { x: hand.x, z: hand.z + STAND_REACH } : hand;
+      var best = null, bs = -1e9;
+      wall.holds.forEach(function (h) {
+        if (h === at || h.kind === 'loose' || h.kind === 'crystal') return;
+        var p = grip(h, from.x), d = Math.hypot(p.x - from.x, p.z - from.z);
+        if (h.kind === 'top' && from.z < h.z - REACH) return;
+        if (d > REACH || p.z <= hand.z + 0.2) return;
+        var sc = p.z - hand.z - 0.3 * Math.abs(p.x - wall.foot.x) * 0.2 + (h.kind === 'jug' || h.kind === 'ledge' ? 0.4 : 0) + (h.kind === 'top' ? 99 : 0);
+        if (sc > bs) { bs = sc; best = { h: h, p: p, d: d }; }
+      });
+      if (!best) break;
+      var dur = (260 + best.d * 120) / 1000;
+      t += pace * (KIND[best.h.kind].cost > 2 ? 1.3 : 1) + dur;
+      out.push({ t: t, x: best.p.x, z: best.p.z, sy: best.p.sy, kind: best.h.kind, dur: dur });
+      if (best.h.kind === 'ledge') t += 1.6;
+      at = best.h; hand = best.p;
+    }
+    return at.kind === 'top' ? { line: out, time: t, done: false } : null;
+  }
+  // where she is at time t: hanging off a hold, or moving to the next
+  function rivalAt(R, t) {
+    var L = R.line, i = 0;
+    while (i < L.length - 1 && L[i + 1].t <= t) i++;
+    var a = L[i], b = L[i + 1];
+    if (!b) return { x: a.x, z: a.z, sy: a.sy, kind: a.kind, moving: 0 };
+    var k = (t - (b.t - b.dur)) / b.dur;
+    if (k <= 0) return { x: a.x, z: a.z, sy: a.sy, kind: a.kind, moving: 0 };
+    var e = k * k * (3 - 2 * k);
+    return { x: a.x + (b.x - a.x) * e, z: a.z + (b.z - a.z) * e, sy: a.sy + (b.sy - a.sy) * e, kind: a.kind, moving: k, dir: b.x < a.x ? -1 : 1 };
+  }
+
+  function begin(rid, opts) {
+    opts = opts || {};
     var w = data();
     if (!w) return;
     var wall = build(w, rid);
     g = { rid: rid, w: w, wall: wall, at: wall.foot, hand: grip(wall.foot, wall.foot.x), stam: 100, max: 100, t: 0, started: false,
           falls: 0, crystals: 0, phase: 'climb', anim: null, gust: null, nextGust: 6 + Math.random() * 3, crumble: null, slip: 0,
           lastCp: wall.foot, chalkT: 0, restT: 0, prev: {}, cands: [], sel: 0 };
+    if (opts.rival) {
+      g.rival = rivalLine(wall, rid);
+      if (g.rival) { g.phase = 'count'; g.count = 3.4; }
+    }
     refresh();
     BridgeWorld.setMode({ update: update, focus: focus, solo: true, end: function () { quit(true); } });
     ensureHud();
@@ -138,7 +189,8 @@ var BridgeClimb = (function () {
     document.addEventListener('keydown', onKey, true);
     var D = ROUTES[rid], best = save.routes[rid] && save.routes[rid].best;
     var rope = D.fixed ? 'A FIXED LINE ALL THE WAY.' : has('climbing_rope') ? 'YOU TIE IN TO YOUR ROPE.' : 'NO ROPE: A FALL TAKES YOU TO THE FOOT.';
-    say(rope + (D.needs && !has(D.needs) ? ' NO ICE AXE - THE ICE IS NO USE TO YOU.' : '') + (best ? '  BEST ' + fmt(best) : ''), 3200);
+    say(g.rival ? 'YSOLDE CHALKS UP BESIDE YOU. HER BEST LINE: ' + fmt(g.rival.time) + '. FIRST TO THE TOP.'
+                : rope + (D.needs && !has(D.needs) ? ' NO ICE AXE - THE ICE IS NO USE TO YOU.' : '') + (best ? '  BEST ' + fmt(best) : ''), 3200);
     pose(performance.now());
     sfx('open');
   }
@@ -154,6 +206,15 @@ var BridgeClimb = (function () {
     if (!g) return;
     var now = performance.now(), held = BridgeControls.held(), act = BridgeControls.consumeAction(), taps = BridgeControls.consumeTaps();
     var press = function (k) { return !!taps[k]; };
+    if (g.phase === 'count') {                                 // the race: 3-2-1, then both of you go
+      var before = Math.ceil(g.count);
+      g.count -= dt;
+      if (Math.ceil(g.count) !== before && g.count > 0 && before <= 3) { sfx('blip'); say(String(Math.ceil(g.count)), 800); }
+      if (g.count <= 0) { g.phase = 'climb'; g.started = true; sfx('success'); say('GO!', 900); }
+      pose(now); hudTick();
+      return;
+    }
+    if (g.rival && g.started && !g.rival.done && g.t >= g.rival.time) { g.rival.done = true; say('YSOLDE TOPS OUT. "TAKE YOUR TIME!"', 2200); sfx('bell'); }
     if (g.phase === 'fall') return falling(dt, now);
     if (g.phase === 'down') return lowering(dt, now);
     if (g.phase !== 'climb') return;
@@ -292,19 +353,26 @@ var BridgeClimb = (function () {
     if (pay && typeof BridgeProgression !== 'undefined') BridgeProgression.awardCoins(pay, 'climb:' + g.rid);
     if (first && D.gift && typeof BridgeInventory !== 'undefined') BridgeInventory.addItem(D.gift[0], D.gift[1]);
     if (first && typeof BridgeProgression !== 'undefined') BridgeProgression.recordAchievement('climbed_' + g.rid, 0, { source: 'climb' });
+    var raced = g.rival, won = raced && t < raced.time, beatPay = 0;
+    if (won && !save.rival[g.rid]) { save.rival[g.rid] = 1; beatPay = BEAT[g.rid] || 0; store(); }
+    if (beatPay && typeof BridgeProgression !== 'undefined') {
+      BridgeProgression.awardCoins(beatPay, 'climb_rival:' + g.rid);
+      BridgeProgression.recordAchievement('beat_ysolde_' + g.rid, 0, { source: 'climb' });
+    }
     var gift = first && D.gift && typeof BridgeItems !== 'undefined' ? BridgeItems.get(D.gift[0]) : null;
     var text = D.name + ' IN ' + fmt(t) + (newBest && !first ? ' - YOUR BEST YET' : '') + '.\n\n' +
       (g.falls ? g.falls + (g.falls === 1 ? ' FALL' : ' FALLS') + '. ' : 'NOT A SINGLE FALL. ') +
       (g.crystals ? g.crystals + ' HOAR CRYSTAL' + (g.crystals > 1 ? 'S' : '') + '. ' : '') +
       (pay ? pay + ' COINS' + (first ? ' FOR A FIRST ASCENT' : '') + '. ' : '') +
-      (gift ? '\n\nAND ' + (D.gift[1] > 1 ? D.gift[1] + ' ' : /^[aeiou]/i.test(gift.name) ? 'AN ' : 'A ') + gift.name.toUpperCase() + (D.gift[1] > 1 ? 'S' : '') + ', FROM THE TOP.' : '');
+      (gift ? '\n\nAND ' + (D.gift[1] > 1 ? D.gift[1] + ' ' : /^[aeiou]/i.test(gift.name) ? 'AN ' : 'A ') + gift.name.toUpperCase() + (D.gift[1] > 1 ? 'S' : '') + ', FROM THE TOP.' : '') +
+      (raced ? '\n\n' + (won ? 'YOU BEAT YSOLDE TO THE TOP (' + fmt(raced.time) + ')! SHE HAULS HERSELF OVER THE EDGE AND JUST LAUGHS.' + (beatPay ? ' ' + beatPay + ' COINS.' : '')
+                               : 'YSOLDE WAS UP IN ' + fmt(raced.time) + ', SITTING ON THE EDGE WITH HER FLASK. "NOT BAD. AGAIN?"') : '');
     var rid = g.rid;
     pose(performance.now());
     setTimeout(function () {
-      BridgeInteractions.execute({ type: 'menu', label: 'THE TOP', dialog: text, options: [
-        { label: 'Walk out onto the summit', action: 'enter_world', target: 'hoarfell-summit', spawn: { staircase: [6, 14], icefall: [12, 14], hoarspire: [19, 14] }[rid] || [12, 14] },
-        { label: 'Abseil back down', action: 'close' }
-      ] });
+      var out = ROUTES[rid].exit ? { label: ROUTES[rid].exit.label, action: 'enter_world', target: ROUTES[rid].exit.target, spawn: ROUTES[rid].exit.spawn }
+        : { label: 'Walk out onto the summit', action: 'enter_world', target: 'hoarfell-summit', spawn: { staircase: [6, 14], icefall: [12, 14], hoarspire: [19, 14] }[rid] || [12, 14] };
+      BridgeInteractions.execute({ type: 'menu', label: 'THE TOP', dialog: text, options: [out, { label: 'Abseil back down', action: 'close' }] });
       quit(true);
     }, 700);
   }
@@ -366,6 +434,7 @@ var BridgeClimb = (function () {
   function over(ctx, world, offX, offY, ts, now) {
     if (!world.climb) return;
     if (!g) return;
+    if (g.rival) drawRival(ctx, world, offX, offY, ts, now);
     g.wall.holds.forEach(function (h) {
       if (!h.taken && !h.broke) return;
       var x = Math.round(offX + h.x * ts), y = Math.round(offY + h.sy * ts);
@@ -400,6 +469,21 @@ var BridgeClimb = (function () {
     }
   }
 
+  // Ysolde, beside you on the same holds (just to their right), in her red coat
+  function drawRival(ctx, world, offX, offY, ts, now) {
+    var img = BridgeCharacter.sportImage(RIVAL_SHEET, false);
+    if (!img) return;
+    var m = BridgeCharacter.SPORT.climb, p = rivalAt(g.rival, g.started ? g.t : 0), footRow = world.climb.face + 0.25;
+    var stand = (p.kind === 'ledge' || p.kind === 'top') && !p.moving;
+    var lift = Math.max(0, (footRow - p.sy) * 32 - (stand ? 0 : HANDPX));
+    var col = p.moving ? (p.moving < 0.5 ? (p.dir < 0 ? 4 : 5) : 6) : stand ? 8 : [0, 1, 2, 1][Math.floor(now / 360) % 4];
+    if (g.rival.done && g.t >= g.rival.time) col = 8;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(img, col * m.w, 2 * m.h, m.w, m.h, Math.round(offX + (p.x + 0.45) * ts) - m.ox, Math.round(offY + footRow * ts) - m.oy - Math.round(lift), m.w, m.h);
+    ctx.restore();
+  }
+
   // ---- the HUD: the route, the clock, your arms ----------------------------------------------------------------------
   function ensureHud() {
     if (hud) return;
@@ -421,14 +505,16 @@ var BridgeClimb = (function () {
   }
   function hudTick() {
     if (!hud || !g) return;
-    hud.querySelector('.sk-clock').textContent = fmt(g.t);
+    var rv = '';
+    if (g.rival && g.started) { var rp = rivalAt(g.rival, g.t); rv = g.rival.done ? '  ·  YSOLDE: TOP' : rp.z > g.hand.z + 0.3 ? '  ·  YSOLDE AHEAD' : rp.z < g.hand.z - 0.3 ? '  ·  YSOLDE BEHIND' : '  ·  LEVEL'; }
+    hud.querySelector('.sk-clock').textContent = fmt(g.t) + rv;
     var pct = clamp(g.stam / g.max, 0, 1), bar = hud.querySelector('.cl-arms i');
     bar.style.width = Math.round(pct * 100) + '%';
     bar.style.background = pct < 0.25 ? '#e05a48' : pct < 0.5 ? '#f0b040' : '#7ad0f0';
   }
 
   function board() {
-    var lines = Object.keys(ROUTES).map(function (id) {
+    var lines = Object.keys(ROUTES).filter(function (id) { return !ROUTES[id].away || (save.routes[id] && save.routes[id].ascents); }).map(function (id) {
       var D = ROUTES[id], r = save.routes[id];
       return D.name + ' (' + D.grade + ') - ' + D.blurb.toUpperCase() + '\n   ' +
         (r && r.ascents ? 'YOU: ' + r.ascents + (r.ascents === 1 ? ' ASCENT' : ' ASCENTS') + (r.best ? ', BEST ' + fmt(r.best) : '') : 'NOT YET CLIMBED');
@@ -436,7 +522,8 @@ var BridgeClimb = (function () {
     if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say('ROUTE BOARD', 'CHALKED ON A SLATE UNDER A LITTLE ROOF:\n\n' + lines.join('\n\n'));
   }
 
-  return { start: start, board: board, ROUTES: ROUTES, isOpen: function () { return !!g; }, over: over,
+  return { start: start, board: board, ROUTES: ROUTES, isOpen: function () { return !!g; }, over: over, BEAT: BEAT,
+           beatYsolde: function (id) { return !!save.rival[id]; },
            records: function (id) { return save.routes[id] || null; },
            _g: function () { return g; }, _reach: function (i) { if (g) reach(g.cands[i == null ? g.sel : i]); } };
 })();

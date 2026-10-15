@@ -1595,6 +1595,7 @@ html.touch .wd-home .hm-keys { display: none; }
 .sport-hud .sk-mark.blue { background: #2a6ac0; box-shadow: 0 0 0 2px #f2f0ea; }
 .sport-hud .sk-mark.black { background: #1e1e26; transform: rotate(45deg) scale(0.85); box-shadow: 0 0 0 2px #f2f0ea; }
 .sport-hud .sk-mark.free { border-radius: 50%; background: #f0b0a0; box-shadow: 0 0 0 2px #f2f0ea; }
+.sport-hud .sk-mark.park { border-radius: 2px; background: linear-gradient(135deg, #ff5ab0 50%, #40c8d8 50%); box-shadow: 0 0 0 2px #f2f0ea; }
 .sport-hud .sk-name { font-size: 12px; letter-spacing: 3px; font-weight: normal; }
 .sport-hud .sk-clock { font-size: 18px; color: #fff; font-variant-numeric: tabular-nums; min-width: 64px; text-align: right; text-shadow: 0 0 8px rgba(184, 224, 248, 0.6); }
 .sport-hud .sk-sub { font-size: 11px; color: #b8e0f8; font-variant-numeric: tabular-nums; }

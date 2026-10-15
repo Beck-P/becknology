@@ -226,8 +226,11 @@ var BridgeAudio = (function () {
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
     if (/^singularity/.test(id)) return { theme: 'singularity', amb: ['rumble'] };
+    if (id === 'verdance-home') return { theme: 'verdance', amb: ['fire', 'birds'] };
     if (/^verdance/.test(id)) return { theme: 'verdance', amb: ['breeze', 'birds'] };
-    if (id === 'hoarfell-summit') return { theme: 'summit', amb: ['gale'] };
+    if (id === 'hoarfell-summit' || id === 'hoarfell-ridge' || id === 'hoarfell-icestep') return { theme: 'summit', amb: ['gale'] };
+    if (id === 'hoarfell-hollow') return { theme: 'summit', amb: ['drips', 'chimes'] };
+    if (id === 'hoarfell-park') return { theme: 'arcade', amb: ['snowwind'] };
     if (/^hoarfell/.test(id)) return { theme: 'hoarfell', amb: ['snowwind', 'chimes'] };
     if (/cave/.test(id) || ts === 'cave') return { theme: 'cave', amb: ['drips', 'rumble'] };
     if (/tower/.test(id) || ts === 'tower') return { theme: 'tower', amb: ['wind'] };

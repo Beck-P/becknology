@@ -59,15 +59,15 @@ var BridgeInteractions = (function () {
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
     dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
     home_door: 'Enter', home_piece: 'Look', farm_plot: 'Tend', farm_tools: 'Open', farm_well: 'Fill',
-    farm_house: 'Go in', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read', curio: 'Pick up',
-    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski'
+    farm_house: 'Go in', farm_ledger: 'Read', farm_bin: 'Ship', farm_barn: 'Open', farm_board: 'Read', curio: 'Pick up',
+    climb: 'Climb', climb_board: 'Read', climb_register: 'Sign', lift: 'Ride', ski_start: 'Ski', ski_here: 'Ski', expedition: 'Look', park_start: 'Drop in', park_tow: 'Ride', park_board: 'Read'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port',
-                      'verdance': 'the farm', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit' };
+                      'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park' };
 
   function titleCase(t) {
     return String(t || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z\u00e0-\u00ff])/g, function (m, a, b) {
@@ -369,15 +369,19 @@ var BridgeInteractions = (function () {
         if (typeof BridgeMine !== 'undefined') BridgeMine.use(inter);         // the Rose Mine (js/mine.js)
         break;
 
-      case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start': case 'ski_gate':   // Hoarfell (js/worlds/hoarfell.js)
+      case 'climb': case 'climb_board': case 'climb_register': case 'lift': case 'ski_start': case 'ski_gate': case 'ski_here': case 'park_start': case 'park_tow': case 'park_board':   // Hoarfell (js/worlds/hoarfell.js)
         if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.use(inter);
+        break;
+
+      case 'expedition':                                                // past the Hoarspire (js/expedition.js)
+        if (typeof BridgeExpedition !== 'undefined') BridgeExpedition.use(inter);
         break;
 
       case 'curio':                                                     // one of the old curios (js/magic.js)
         if (typeof BridgeMagic !== 'undefined') BridgeMagic.use(inter);
         break;
 
-      case 'farm_house': case 'farm_bin': case 'farm_barn': case 'farm_board':   // running the farm (js/homestead.js)
+      case 'farm_house': case 'farm_bin': case 'farm_barn': case 'farm_board': case 'farm_ledger':   // running the farm (js/homestead.js)
         if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.use(inter);
         break;
 
@@ -617,6 +621,12 @@ var BridgeInteractions = (function () {
           break;
         case 'ski_run':
           if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.ski(opt.run, { rival: !!opt.rival });
+          break;
+        case 'climb_race':
+          if (typeof BridgeClimb !== 'undefined') BridgeClimb.start(opt.route, { rival: true });
+          break;
+        case 'park_run':
+          if (typeof BridgeSki !== 'undefined') BridgeSki.park();
           break;
         case 'close':
         default:
@@ -1141,6 +1151,11 @@ var BridgeInteractions = (function () {
       if (t.mine && typeof BridgeMine !== 'undefined') {              // Hob's forge: a better pickaxe
         close();
         BridgeMine.upgrade(person.name, t.mine);
+        return;
+      }
+      if (t.climbrace && typeof BridgeHoarfell !== 'undefined') {     // Ysolde: race her up the face (js/climb.js)
+        close();
+        BridgeHoarfell.climbRace(person.name.split(' ')[0]);
         return;
       }
       if (t.race && typeof BridgeHoarfell !== 'undefined') {          // Liv: race her down a run (js/ski.js)

@@ -46,7 +46,9 @@ var BridgeHoarfell = (function () {
         BridgeQuests.toast('Bitter cold', 'The cold is sapping your strength', 'A Thermal Suit keeps it out; hot cocoa warms you');
       }
     }
-    if (now - lastChill > 12000 && typeof BridgeInventory !== 'undefined') {
+    // the Last Ridge is colder (`coldRate`), and colder again in a whiteout (js/expedition.js)
+    var rate = (world.coldRate || 1) * (typeof BridgeExpedition !== 'undefined' && BridgeExpedition.whiteout() > 0.5 ? 1.5 : 1);
+    if (now - lastChill > 12000 / rate && typeof BridgeInventory !== 'undefined') {
       lastChill = now;
       var st = BridgeInventory.getStats();
       if (st.energy > 0) BridgeInventory.useEnergy(2); else BridgeInventory.takeDamage(1);
@@ -70,6 +72,10 @@ var BridgeHoarfell = (function () {
       case 'lift': return lift(inter);
       case 'ski_start': return skiMenu('START GATE', 'THREE BOARDS ON POSTS: GREEN, BLUE, BLACK. THE SNOW FALLS AWAY BELOW THE GATE INTO THE PISTES.');
       case 'ski_gate': return ski(inter.run);
+      case 'ski_here': return ski('free');                       // free skiing where you stand (the Last Ridge's bowl)
+      case 'park_start': return parkRun();
+      case 'park_tow': return tow();
+      case 'park_board': return parkBoard();
     }
   }
 
@@ -103,6 +109,37 @@ var BridgeHoarfell = (function () {
     if (run === 'free' || !run) return BridgeSki.start(null);
     if (!BridgeSki.unlocked(run)) return say('ANSGAR', '"THE COULOIR? NOT TILL I\'VE SEEN YOU COME DOWN PINEWOOD IN ONE PIECE."');
     BridgeSki.start(run, opts);
+  }
+
+  // Ysolde at the guide hut: race her up a route on the face (js/climb.js)
+  function climbRace(who) {
+    if (typeof BridgeClimb === 'undefined') return;
+    var opts = ['staircase', 'icefall', 'hoarspire'].map(function (id) {
+      var R = BridgeClimb.ROUTES[id], name = R.name.toLowerCase().replace(/(^|\s)([a-z])/g, function (m, sp, ch) { return sp + ch.toUpperCase(); });
+      return { label: 'Race her up ' + name + (BridgeClimb.beatYsolde(id) ? ' (beaten)' : ' (' + BridgeClimb.BEAT[id] + ' coins)'), action: 'climb_race', route: id };
+    });
+    opts.push({ label: 'Not now', action: 'close' });
+    BridgeInteractions.execute({ type: 'menu', label: (who || 'YSOLDE').toUpperCase(), options: opts,
+      dialog: '"FIRST TO THE TOP. SAME WALL, SAME HOLDS - I\'LL TAKE THE RIGHT-HAND SIDE OF EACH ONE. YOU FALL, YOU LOSE TIME. I DON\'T FALL. BEAT ME ONCE ON A ROUTE AND I\'LL PAY FOR IT."' });
+  }
+
+  // the Park (js/ski.js): a scored run from the deck; the rope tow back up; the scoreboard
+  function parkRun() {
+    if (typeof BridgeSki === 'undefined') return;
+    if (!has('skis')) return say('JUNO', '"YOU CAN\'T SKI THE PARK IN BOOTS. THE HIRE SHOP IN THE VILLAGE HAS SKIS."');
+    BridgeSki.park();
+  }
+  function tow() {
+    sfx('lift');
+    BridgeCharacter.init(20, 7);
+    BridgeCharacter.setFacing('down');
+    say('ROPE TOW', 'YOU GRAB A HANDLE AND THE ROPE HAULS YOU UP THE EAST SIDE, PAST THE RAILS, TO THE DECK.');
+  }
+  function parkBoard() {
+    var R = typeof BridgeSki !== 'undefined' ? BridgeSki.parkRecord() : { best: 0, runs: 0 };
+    say('SCOREBOARD', 'AMBER DIGITS ON A BLACK BOARD, CHALK UNDERNEATH.\n\nJUNO PIKE ............ ' + BridgeSki.JUNO +
+        '\n' + (R.runs ? 'YOU ................... ' + R.best + ' (' + R.runs + (R.runs === 1 ? ' RUN)' : ' RUNS)') : 'YOU ................... -') +
+        '\n\nSPINS AND GRABS OFF THE KICKERS, SLIDES ON THE RAILS. LAND THEM CLOSE TOGETHER FOR A COMBO - EACH ONE ADDS TO THE MULTIPLIER. FALL AND THE COMBO\'S GONE.');
   }
 
   // Liv at the finish: race her down any run you're allowed on
@@ -168,7 +205,7 @@ var BridgeHoarfell = (function () {
       });
     }
     // falling snow: screen-space flakes, drifting with a little wind (thicker on the summit)
-    var n = world.summit ? 110 : 70;
+    var n = world.hollow ? 0 : world.summit ? 110 : 70;          // no snow falls in the Hollow
     for (var i = 0; i < n; i++) {
       var spd = 0.012 + (i % 5) * 0.004, wind = world.summit ? 0.03 : 0.008;
       var x = ((i * 97.13 + now * wind * (1 + (i % 3))) % (W + 20)) - 10 + Math.sin(now / 1100 + i) * 3;
@@ -278,5 +315,5 @@ var BridgeHoarfell = (function () {
   // the same evening as a view, sitting on the summit bench (js/actions.js 'peaks')
   function vista(ctx, w, h, now) { sky(ctx, w, h, now, true); }
 
-  return { use: use, warm: warm, ski: ski, race: race, vista: vista, isWarm: function () { return suited() || Date.now() < save.warm; } };
+  return { use: use, warm: warm, ski: ski, race: race, climbRace: climbRace, vista: vista, isWarm: function () { return suited() || Date.now() < save.warm; } };
 })();

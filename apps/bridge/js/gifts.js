@@ -55,7 +55,9 @@ var BridgeGifts = (function () {
     ansgar: { love: ['hot_cocoa', 'roast_chestnuts'], like: ['bread', 'arctic_char'], hate: ['strawberry'] },
     liv: { love: ['ski_goggles', 'edelweiss'], like: ['hot_cocoa', 'honey', 'apple'], hate: ['mug_of_ale'] },
     tam: { love: ['strawberry', 'mug_of_ale'], like: ['apple', 'bread', 'sweet_roll'], hate: ['old_boot'] },
-    odile: { love: ['honey', 'sunflower'], like: ['turnip', 'bread', 'pumpkin'], hate: ['old_boot'] }
+    odile: { love: ['honey', 'sunflower'], like: ['turnip', 'bread', 'pumpkin'], hate: ['old_boot'] },
+    juno: { love: ['summit_crystal', 'ski_goggles'], like: ['hot_cocoa', 'roast_chestnuts', 'strawberry'], hate: ['old_boot'],
+            loveLine: 'NO. WAY. THIS IS GOING ON THE RAIL. RIGHT AT THE KINK. EVERYONE WHO SLIDES IT WILL SEE IT AND NOT KNOW WHERE IT CAME FROM.' }
   };
   var NOT = { key: 1, map: 1, seed: 1 };                  // things that aren't gifts
 

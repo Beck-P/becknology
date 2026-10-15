@@ -272,14 +272,16 @@ var BridgeHomestead = (function () {
 
   // ---- the farmhouse ---------------------------------------------------------------------------------------------
   function house() {
-    if (!owned()) {
-      return choose({
-        title: 'Farmhouse',
-        text: 'A NOTE PINNED TO THE DOOR IN A BIG SLOPING HAND:\n\n"FOR WHOEVER COMES DOWN IN THE NEXT SHIP. WORK THE KITCHEN GARDEN - THE NEAR END OF THE FIELD - FOR FREE, AND WELCOME. THE REST, THE HOUSE AND ALL, IS ' +
-              DEED + ' COINS, PAID TO HOLLIN FOR MY KNEES. THE DOOR STICKS. - EDDA"',
-        buttons: [{ label: 'Buy the farm — ' + DEED + ' coins', act: buy }]
-      });
-    }
+    if (owned()) { sfx('door'); return BridgeWorld.enterWorld('verdance-home', [7, 8]); }   // inside: js/home.js, scenes/verdance_home.py
+    choose({
+      title: 'Farmhouse',
+      text: 'A NOTE PINNED TO THE DOOR IN A BIG SLOPING HAND:\n\n"FOR WHOEVER COMES DOWN IN THE NEXT SHIP. WORK THE KITCHEN GARDEN - THE NEAR END OF THE FIELD - FOR FREE, AND WELCOME. THE REST, THE HOUSE AND ALL, IS ' +
+            DEED + ' COINS, PAID TO HOLLIN FOR MY KNEES. THE DOOR STICKS. - EDDA"',
+      buttons: [{ label: 'Buy the farm — ' + DEED + ' coins', act: buy }]
+    });
+  }
+  // the ledger on Edda's kitchen table, inside
+  function ledgerTable() {
     var ledger = s.ledger;
     choose({
       title: farmName(),
@@ -465,6 +467,7 @@ var BridgeHomestead = (function () {
 
   function use(inter) {
     if (inter.type === 'farm_house') return house();
+    if (inter.type === 'farm_ledger') return ledgerTable();
     if (inter.type === 'farm_bin') return bin();
     if (inter.type === 'farm_barn') return seedBox();
     if (inter.type === 'farm_board') return board();

@@ -73,7 +73,18 @@ var BridgeWorld = (function () {
   // own (the furniture you place in a home or aboard, js/home.js).
   var SCENE_HOOKS = {};
   function registerSceneHooks(name, hooks) {
-    SCENE_HOOKS[name] = hooks;
+    var prev = SCENE_HOOKS[name];
+    if (!prev) { SCENE_HOOKS[name] = hooks; return; }
+    // several modules can hook the same tileset (or '*'): each part runs in the order they registered
+    var merged = {};
+    ['behind', 'ground', 'items', 'over', 'post'].forEach(function (k) {
+      var a = prev[k], b = hooks[k];
+      if (!a || !b) { if (a || b) merged[k] = a || b; return; }
+      merged[k] = k === 'items'
+        ? function () { return (a.apply(null, arguments) || []).concat(b.apply(null, arguments) || []); }
+        : function () { a.apply(null, arguments); b.apply(null, arguments); };
+    });
+    SCENE_HOOKS[name] = merged;
   }
 
   // ---- Glow Helpers ----
@@ -414,6 +425,8 @@ var BridgeWorld = (function () {
         if (typeof BridgeFarm !== 'undefined') BridgeFarm.decorate(worldId, data);
         if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.decorate(worldId, data);
         if (typeof BridgeMagic !== 'undefined') BridgeMagic.decorate(worldId, data);
+        if (typeof BridgeExpedition !== 'undefined') BridgeExpedition.decorate(worldId, data);
+        if (typeof BridgeSki !== 'undefined' && BridgeSki.decorate) BridgeSki.decorate(worldId, data);
         if (typeof BridgeCombat !== 'undefined') BridgeCombat.decorate(worldId, data);
         if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);

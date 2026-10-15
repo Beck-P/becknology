@@ -78,7 +78,7 @@ var BridgeMagic = (function () {
   // ---- passive charms ---------------------------------------------------------------------------------------------
   function speed() { return carried('heron_feather') ? 1.12 : 1; }
   function has(what) {
-    if (what === 'cold') return carried('frost_ring');
+    if (what === 'cold') return carried('frost_ring') || carried('lantern_beyond');
     if (what === 'tide') return carried('tide_charm');
     return false;
   }
@@ -219,7 +219,7 @@ var BridgeMagic = (function () {
       ctx.fillStyle = '#f4f6ff'; ctx.fillRect(X - 2, Y - 2, 4, 4);
     });
     // curios: a glint now and then where one lies, bright to the lantern
-    var wid = BridgeWorld.getWorldId && BridgeWorld.getWorldId(), lamp = held('glimmer_lantern');
+    var wid = BridgeWorld.getWorldId && BridgeWorld.getWorldId(), lamp = held('glimmer_lantern') || held('lantern_beyond');
     var px = typeof BridgeCharacter !== 'undefined' ? BridgeCharacter.getX() : 0, py = typeof BridgeCharacter !== 'undefined' ? BridgeCharacter.getY() : 0;
     CURIOS.forEach(function (c, i) {
       if (c.world !== wid || st.found[c.id]) return;

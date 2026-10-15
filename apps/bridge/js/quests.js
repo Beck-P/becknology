@@ -154,6 +154,12 @@ var BridgeQuests = (function () {
         curios.map(function (c) { return '<li class="found"><b>' + esc(c.name) + '</b> - ' + esc(c.lore) + '</li>'; }).join('') +
         (curios.length < BridgeMagic.total ? '<li>The rest of the tale is out there. Wendel the Peddler sells rumours, and a lantern.</li>' : '') + '</ul></section>';
     }
+    var ridge = typeof BridgeExpedition !== 'undefined' ? BridgeExpedition.journal() : [];
+    if (ridge.length) {
+      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">The Last Ridge</span>' +
+        '<span class="qj-q-count">past the Hoarspire</span></div><ul class="qj-clues">' +
+        ridge.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
+    }
     var peaks = [];
     if (typeof BridgeClimb !== 'undefined') Object.keys(BridgeClimb.ROUTES).forEach(function (id) {
       var r = BridgeClimb.records(id);
@@ -168,7 +174,7 @@ var BridgeQuests = (function () {
         '<span class="qj-q-count">' + peaks.length + '</span></div><ul class="qj-clues">' +
         peaks.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
     }
-    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !curios.length && !peaks.length) {
+    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !curios.length && !peaks.length && !ridge.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {
