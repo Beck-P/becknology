@@ -26,7 +26,7 @@
  *     id: 'asteroids', title: 'ASTEROIDS', w: 320, h: 240, pal: 'arcadia',
  *     help: ['ARROWS TURN AND THRUST', 'SPACE FIRES'],
  *     touch: [{ key: 'ArrowLeft', label: '<', side: 'left' }, ...],
- *     coins: { per: 60, best: 20 },            // end of run: score / per, +best on a new best
+ *     coins: { per: 60, best: 20 },            // end of run: score / per, +best for beating an old best
  *     start(api)  — a new run          update(api, dt)  — 60×/s while playing
  *     draw(g, api, mode)  — every frame ('title', 'play', 'pause', 'over')
  *     attract(api, dt)  — optional, steps the title screen's demo
@@ -87,8 +87,9 @@
     var pad = null;
     function fit() {
       var bw = window.innerWidth, bh = window.innerHeight - (touch && G.touch ? 96 : 0);
+      if (!inFrame && G.backLink !== false) bh -= 64;          // room for the back link above a centred screen
       var s = Math.min(bw / W, bh / H);
-      s = s >= 1 ? Math.floor(s) : s;
+      s = s >= 2 ? Math.floor(s) : s;                          // whole pixels when there's room; a phone gets all it can
       cv.style.width = Math.round(W * s) + 'px';
       cv.style.height = Math.round(H * s) + 'px';
       cv.style.marginBottom = touch && G.touch ? '96px' : '0';
@@ -282,12 +283,12 @@
     var result = null;
     function endRun() {
       var s = scores(), r = s[G.id] || {};
-      var newBest = api.score > (r.best || 0);
+      var had = r.best || 0, newBest = api.score > had;
       if (newBest) r.best = api.score;
       r.last = api.score; r.lastAt = Date.now(); s[G.id] = r; saveScores(s);
       best = r.best || 0;
       var c = G.coins || { per: 50, best: 20 };
-      var earned = pay(Math.floor(api.score / c.per) + (newBest && api.score > 0 ? c.best : 0), 'score');
+      var earned = pay(Math.floor(api.score / c.per) + (newBest && had > 0 ? c.best : 0), 'score');
       result = { score: api.score, best: best, newBest: newBest, coins: run$.paid };
       toParent({ type: 'bridge-run-ended', game: G.id, title: G.title, score: api.score, best: best, newBest: newBest, coins: run$.paid });
       lockUntil = performance.now() + 1100;
