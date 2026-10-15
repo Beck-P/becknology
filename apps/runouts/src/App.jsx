@@ -1,4 +1,3 @@
-import { ModeCabinet, MODE_GROUPS } from "./PixelArt.jsx";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
@@ -6,6 +5,8 @@ import './index.css';
 import { getSingleTotalSteps, getPlaybackConfig, getPlaybackConfigDiagnostics } from './playbackConfig';
 import { WagerSetupBar, WagerRoster, WagerPayout, computePayout } from './Wager';
 import ArcadeScreen, { hasScreen } from './arcade/ArcadeScreen.jsx';
+import ArcadeVerdict from "./arcade/Verdict.jsx";
+import RoomPicker from "./arcade/RoomPicker.jsx";
 
 let leaderboardModulePromise;
 let classicModePlaybacksPromise;
@@ -6077,16 +6078,20 @@ export default function ChoreChaosApp() {
 
             <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
               <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                {hasScreen(specResult.modeId, !!specResult.draftPhase) ? null : (
                 <RevealBanner
                   modeName={specResult.modeName}
                   step={specDone ? specConfig.totalSteps : specStep}
                   totalSteps={specConfig.totalSteps}
                   done={specDone}
                 />
+                )}
                 <div className="flex-1">
                   <PlaybackStage result={specResult} step={specStep} done={specDone} interactiveBombState={spectatorState.bombState || null} />
                 </div>
-                {specDone ? (
+                {specDone && !specResult.isTournament && hasScreen(specResult.modeId, false) ? (
+                  <ArcadeVerdict result={specResult} names={(specResult.players || []).map((p) => p.name)} />
+                ) : specDone ? (
                   <div className="verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur border-slate-200 bg-white/85">
                     {specResult.selectionGoal === "winner" ? <Celebration /> : <SadOverlay />}
                     <div className="relative z-10">
@@ -6203,16 +6208,20 @@ export default function ChoreChaosApp() {
 
             <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
               <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                {hasScreen(specResult.modeId, !!specResult.draftPhase) ? null : (
                 <RevealBanner
                   modeName={specResult.modeName}
                   step={specDone ? specConfig.totalSteps : specStep}
                   totalSteps={specConfig.totalSteps}
                   done={specDone}
                 />
+                )}
                 <div className="flex-1">
                   <PlaybackStage result={specResult} step={specStep} done={specDone} interactiveBombState={spectatorState.bombState || null} />
                 </div>
-                {specDone ? (
+                {specDone && !specResult.isTournament && hasScreen(specResult.modeId, false) ? (
+                  <ArcadeVerdict result={specResult} names={(specResult.players || []).map((p) => p.name)} />
+                ) : specDone ? (
                   <div className="verdict-card relative overflow-hidden rounded-[2rem] border p-6 text-center shadow-xl backdrop-blur border-slate-200 bg-white/85">
                     {specResult.selectionGoal === "winner" ? <Celebration /> : <SadOverlay />}
                     <div className="relative z-10">
@@ -6631,27 +6640,16 @@ export default function ChoreChaosApp() {
         </div>
 
         <div className="mb-8">
-          <div className="mode-cab-row">
-            <ModeCabinet id="random" name="RANDOM" blurb="The machine picks the game. ??? Surprise ???" featured
-              onClick={() => { setSelectedModeId("auto"); wagerStartGame(); }}
-              disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)} />
-          </div>
-          {MODE_GROUPS.map((group) => (
-            <div key={group.name}>
-              <div className="mode-group-label">{group.name}</div>
-              <div className="mode-cab-row">
-                {group.ids.map((id) => {
-                  const mode = MODE_META.find((m) => m.id === id);
-                  if (!mode) return null;
-                  return (
-                    <ModeCabinet key={id} id={id} name={mode.name} blurb={mode.blurb}
-                      onClick={() => { setSelectedModeId(mode.id); wagerStartGame(mode.id); }}
-                      disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)} />
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+          <RoomPicker
+            names={names}
+            modes={MODE_META}
+            disabled={!canRun || (wagerMode && wagerAmount > wagerBalance)}
+            disabledReason={!hasEnoughPlayers ? "Need at least 2 players" : !allFilled ? "Fill in all the names to play" : !namesAreUnique ? "Names must be unique" : wagerMode && wagerAmount > wagerBalance ? "Not enough coins for that wager" : null}
+            onPick={(id) => {
+              if (id === "auto") { setSelectedModeId("auto"); wagerStartGame(); return; }
+              setSelectedModeId(id); wagerStartGame(id);
+            }}
+          />
         </div>
 
         {result ? (
@@ -6933,12 +6931,15 @@ export default function ChoreChaosApp() {
 
               <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6 sm:py-6">
                 <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-6">
+                  {/* the game screens carry their own title and progress */}
+                  {hasScreen(result.modeId, !!result.draftPhase) ? null : (
                   <RevealBanner
                     modeName={suddenDeathRound > 0 ? `${result.modeName} \u2022 Sudden Death #${suddenDeathRound}` : result.modeName}
                     step={playbackDone ? currentConfig?.totalSteps ?? playbackStep : playbackStep}
                     totalSteps={currentConfig?.totalSteps ?? 1}
                     done={playbackDone}
                   />
+                  )}
 
                   <div className="flex-1">
                     <PlaybackStage result={result} step={playbackStep} done={playbackDone} interactiveBombState={interactiveBombState} />
@@ -7058,6 +7059,26 @@ export default function ChoreChaosApp() {
                   {playbackDone ? (() => {
                     const modeMeta = MODE_META.find(m => m.id === result.modeId);
                     const themedLabel = result.selectionGoal === "winner" ? modeMeta?.resultWin : modeMeta?.resultLose;
+                    // the game screens celebrate on the screen; under them goes a quiet board of how everyone did
+                    if (!result.isTournament && hasScreen(result.modeId, false)) {
+                      const series = seriesActive && seriesConfig;
+                      return (
+                        <ArcadeVerdict
+                          result={result}
+                          names={names}
+                          kicker={suddenDeathRound > 0 ? `Sudden death \u2022 Round ${suddenDeathRound}` : series ? `Series round ${seriesRound}` : null}
+                          note={result.isTie
+                            ? "Hit Sudden Death to settle it."
+                            : series
+                              ? seriesTied
+                                ? `Series tied! ${seriesTied.join(' and ')} are level at the top. Time for sudden death.`
+                                : seriesComplete
+                                  ? `Series complete! ${result.selectedName} clinched it.`
+                                  : `Round ${seriesRound} of ${seriesConfig.totalRounds} done. Next Round carries on the series.`
+                              : "Play again to run it back, or Exit to set up a new one."}
+                        />
+                      );
+                    }
 
                     if (result.isTie) {
                       return (
