@@ -74,7 +74,8 @@ var BridgeFarm = (function () {
     // a sprinkler beside it, or Tam on the payroll, keeps it watered (js/homestead.js)
     var kept = k && typeof BridgeHomestead !== 'undefined' ? BridgeHomestead.keptWet(k, now) : 0;
     if (kept) { wetTo = Math.max(wetTo, Math.min(now, kept)); if (kept > now) t.wet = Math.max(t.wet || 0, Math.min(kept, now + WET)); }
-    if (wetTo > from) c.g = Math.min(c.need, c.g + Math.min(now, wetTo) - from);
+    var pace = typeof BridgeSeasons !== 'undefined' ? BridgeSeasons.growth(c.k) : 1;   // the season favours some crops; winter slows all
+    if (wetTo > from) c.g = Math.min(c.need, c.g + (Math.min(now, wetTo) - from) * pace);
     if (c.g >= c.need && !c.ripeAt) c.ripeAt = now;
     c.t = now;
   }
@@ -510,15 +511,16 @@ var BridgeFarm = (function () {
       ctx.fillStyle = 'rgba(255,255,240,' + ((a - 0.6) * 2).toFixed(2) + ')';
       ctx.fillRect(Math.round(offX + (25.6 + (gl * 0.83) % 4.8) * ts), Math.round(offY + (18.3 + (gl * 0.61) % 2.2) * ts), 3, 1);
     }
+    var still = typeof BridgeSeasons !== 'undefined' && BridgeSeasons.quiet();   // nothing on the wing in winter
     // bees at the skeps
-    for (var b = 0; b < 7; b++) {
+    for (var b = 0; b < (still ? 0 : 7); b++) {
       var ba = now / (300 + b * 40) + b * 2.1, hx = b < 4 ? 41.4 : 42.4;
       var bx = offX + (hx + Math.cos(ba) * (0.4 + (b % 3) * 0.25)) * ts, by = offY + (18.0 + Math.sin(ba * 1.3) * 0.35 - 0.4) * ts;
       ctx.fillStyle = '#1a1408'; ctx.fillRect(Math.round(bx), Math.round(by), 2, 1);
       ctx.fillStyle = '#f0c030'; ctx.fillRect(Math.round(bx) + 1, Math.round(by), 1, 1);
     }
     // butterflies over the wildflowers
-    butterflies.forEach(function (bf, i) {
+    if (!still) butterflies.forEach(function (bf, i) {
       var t = now / 1000 + i * 3.3;
       var x = offX + (bf[0] + Math.sin(t * 0.31) * 2.2 + Math.sin(t * 0.9) * 0.4) * ts, y = offY + (bf[1] + Math.cos(t * 0.23) * 1.4 + Math.sin(t * 1.7) * 0.2) * ts;
       var wing = Math.sin(now / 70 + i) > 0 ? 2 : 1, bx2 = Math.round(x), by2 = Math.round(y);

@@ -137,6 +137,7 @@ var BridgeQuests = (function () {
         if (stead.bin) led.push('In the bin for Marlo: ' + stead.bin + ' coins\' worth');
         var herd = typeof BridgeAnimals !== 'undefined' ? BridgeAnimals.journal() : [];
         if (herd.length) led.push('In the meadow: ' + herd.map(function (a) { return esc(a.name) + ' ' + '♥'.repeat(a.hearts) + (a.ready ? ' <b>(' + (a.kind === 'cow' ? 'milk' : 'an egg') + ' waiting)</b>' : ''); }).join(', '));
+        if (typeof BridgeSeasons !== 'undefined') { var se = BridgeSeasons.now(), fv = BridgeSeasons.favours(); led.push('<b>' + se.name + '</b>, day ' + se.day + ' of 7' + (fv.length ? ' - ' + fv.join(', ') + ' grow quicker' : ' - everything grows slower till spring')); }
         if (stead.tam) led.push('Tam is watering for another ' + Math.max(1, Math.round((stead.tam - Date.now()) / 3600000)) + ' h');
         if (stead.odile) led.push('Odile is bringing it in for another ' + Math.max(1, Math.round((stead.odile - Date.now()) / 3600000)) + ' h');
       }

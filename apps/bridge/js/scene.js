@@ -136,19 +136,30 @@ var BridgeScene = (function () {
     if (scenes[id] && scenes[id].ready) composite(scenes[id]);
   }
 
+  // A colour grade baked into a scene's images (Verdance's seasons, js/seasons.js): fn(rgba, w, h) reworks
+  // the pixels in place. Like the layers, it runs on load and when it changes — never per frame.
+  var grades = {};
+  function setGrade(id, fn, key) {
+    var g = grades[id];
+    if (g && g.key === key && fn) return;
+    grades[id] = fn ? { fn: fn, key: key } : null;
+    if (scenes[id] && scenes[id].ready) composite(scenes[id]);
+  }
+
   // Bake the active variants into the scene's images and depth. Runs on load
   // and when the owned decor changes — never per frame.
   function composite(sc) {
     var want = activeLayers[sc.id] || {};
     var use = sc.layers.filter(function (L) { return want[L.slot] === L.key && L.depth; });
-    if (!use.length) {
+    var grade = grades[sc.id];
+    if (!use.length && !grade) {
       sc.imgs = {};
       for (var k in sc.baseImgs) sc.imgs[k] = sc.baseImgs[k];
       sc.depth = sc.baseDepth;
       return;
     }
     var m = sc.meta, W = m.width;
-    var depth = new Float32Array(sc.baseDepth);
+    var depth = use.length ? new Float32Array(sc.baseDepth) : sc.baseDepth;
     var masks = use.map(function (L) {
       var b = L.box, mask = new Uint8Array(b.w * b.h);
       for (var j = 0; j < b.h; j++) {
@@ -176,6 +187,11 @@ var BridgeScene = (function () {
         }
         cx.putImageData(id, b.x, b.y);
       });
+      if (grade) {
+        var all = cx.getImageData(0, 0, m.width, m.height);
+        grade.fn(all.data, m.width, m.height);
+        cx.putImageData(all, 0, 0);
+      }
       sc.imgs[s] = c;
     });
     sc.depth = depth;
@@ -438,6 +454,7 @@ var BridgeScene = (function () {
     load: load,
     get: get,
     setLayers: setLayers,
+    setGrade: setGrade,
     getLayers: getLayers,
     layerImage: layerImage,
     drawBackground: drawBackground,

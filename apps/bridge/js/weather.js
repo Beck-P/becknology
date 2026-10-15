@@ -25,7 +25,8 @@ var BridgeWeather = (function () {
     if (worldId !== 'verdance' || !rainDay() || told === day()) return;
     told = day();
     setTimeout(function () {
-      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Rain on Verdance', 'The field waters itself today', 'Leave the can in the shed');
+      var snow = typeof BridgeSeasons !== 'undefined' && BridgeSeasons.quiet();
+      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast(snow ? 'Snow on Verdance' : 'Rain on Verdance', snow ? 'The snowmelt waters the field today' : 'The field waters itself today', 'Leave the can in the shed');
     }, 2400);
   }
 
@@ -33,6 +34,7 @@ var BridgeWeather = (function () {
   function over(ctx, world, offX, offY, ts, now) {
     if (!raining()) return;
     var W = ctx.canvas.width, H = ctx.canvas.height;
+    if (typeof BridgeSeasons !== 'undefined' && BridgeSeasons.quiet()) return snow(ctx, W, H, now);
     ctx.fillStyle = 'rgba(36,52,78,0.2)';
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(190,210,235,0.5)';
@@ -47,6 +49,17 @@ var BridgeWeather = (function () {
       var ph = ((now / 600) + j * 0.137) % 1, rx = (j * 211.7 + Math.floor(now / 600 + j * 0.137) * 97) % W, ry = (j * 131.3 + Math.floor(now / 600 + j * 0.137) * 53) % H;
       var r = Math.round(1 + ph * 3);
       if (ph < 0.7) { ctx.fillRect(Math.round(rx) - r, Math.round(ry), r * 2 + 1, 1); }
+    }
+  }
+  // a winter's wet day: the light low and white, snow coming down thick and slow
+  function snow(ctx, W, H, now) {
+    ctx.fillStyle = 'rgba(200,210,230,0.16)';
+    ctx.fillRect(0, 0, W, H);
+    for (var i = 0; i < 190; i++) {
+      var sp = 0.02 + (i % 5) * 0.006;
+      var y = (i * 53.71 + now * sp) % (H + 10) - 5, x = ((i * 97.13 + now * 0.012 * (1 + (i % 3))) % (W + 20)) - 10 + Math.sin(now / 900 + i) * 4;
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.6 + (i % 4) * 0.1).toFixed(2) + ')';
+      ctx.fillRect(Math.round(x), Math.round(y), i % 5 === 0 ? 2 : 1, i % 5 === 0 ? 2 : 1);
     }
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('verdance', { over: over });
