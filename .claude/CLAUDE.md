@@ -44,6 +44,7 @@ becknology/
 - Repo: github.com/Beck-P/becknology
 - SSH alias: `github-personal` (Beck's personal GitHub account, separate from work)
 - Branch: main (push to deploy)
+- Vercel doesn't build `claude/*` branches (`git.deploymentEnabled` in `vercel.json`) — only `main` deploys, which keeps under the Hobby plan's daily build limit. If a deploy fails with "Deployment rate limited", the code is fine: the next push to `main` after the limit resets deploys everything.
 - **Ship every change.** After each completed, verified change: commit, push, and merge into `main` so it deploys live — Beck's standing instruction, no need to ask. If you're working on a feature branch, push it and then bring `main` up to it (fast-forward when possible; otherwise merge `main` in first and resolve conflicts, then push to `main`).
 
 ## Cowork → Claude Code Handoff

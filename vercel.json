@@ -1,5 +1,6 @@
 {
   "buildCommand": "bash build.sh",
+  "git": { "deploymentEnabled": { "claude/*": false } },
   "outputDirectory": "public",
   "functions": {
     "api/talk.mjs": {
