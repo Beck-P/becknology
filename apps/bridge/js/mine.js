@@ -133,6 +133,18 @@ var BridgeMine = (function () {
       var heart = rocks.reduce(function (a, r) { return Math.abs(r.x - spawn[0]) + Math.abs(r.y - spawn[1]) > Math.abs(a.x - spawn[0]) + Math.abs(a.y - spawn[1]) ? r : a; }, rocks[0]);
       if (heart) { heart.kind = 'heart'; heart.spr = 'heart'; heart.hp = heart.max = ROCKS.heart.hp; }
     }
+    // things that live down here: mites from floor 3, crabs from 8, shades from 14
+    if (typeof BridgeCombat !== 'undefined' && floor >= 3) {
+      var taken = {};
+      rocks.forEach(function (r) { taken[r.x + ',' + r.y] = 1; });
+      var spots = open.filter(function (c) { return !taken[c[0] + ',' + c[1]] && Math.abs(c[0] - spawn[0]) + Math.abs(c[1] - spawn[1]) >= 6; });
+      var n = floor < 8 ? 1 + (rnd() < 0.5 ? 1 : 0) : floor < 14 ? 2 + (rnd() < 0.5 ? 1 : 0) : 3 + (rnd() < 0.4 ? 1 : 0);
+      for (var s = 0; s < n && spots.length; s++) {
+        var at = spots.splice(Math.floor(rnd() * spots.length), 1)[0];
+        var pick = rnd(), kind = floor >= 14 ? (pick < 0.5 ? 'shade' : pick < 0.8 ? 'crab' : 'mite') : floor >= 8 ? (pick < 0.45 ? 'crab' : 'mite') : 'mite';
+        BridgeCombat.spawn(data, kind, at[0], at[1]);
+      }
+    }
     return rocks;
   }
 
@@ -250,8 +262,17 @@ var BridgeMine = (function () {
 
   // ---- Hob's forge: a better pickaxe for ore and coin ---------------------------------------------------
   var FORGE = { iron_pickaxe: { from: 'old_pickaxe', ore: 'iron_ore', n: 5, coins: 150, name: 'IRON PICKAXE' },
-                star_pickaxe: { from: 'iron_pickaxe', ore: 'star_iron', n: 3, coins: 400, name: 'STAR PICKAXE' } };
-  function upgrade(who) {
+                star_pickaxe: { from: 'iron_pickaxe', ore: 'star_iron', n: 3, coins: 400, name: 'STAR PICKAXE' },
+                star_blade: { from: null, ore: 'star_iron', n: 2, also: 'songstone', coins: 300, name: 'STAR BLADE' } };
+  function upgrade(who, what) {
+    if (what === 'blade') {
+      if (BridgeInventory.getCount('star_blade') > 0) return say(who.toUpperCase(), '"YOU\'VE GOT THE ONLY ONE I\'LL EVER MAKE. LOOK AFTER IT."');
+      var B = FORGE.star_blade;
+      return BridgeInteractions.execute({ type: 'menu', label: who.toUpperCase(),
+        dialog: '"A BLADE? FOR WHAT\'S DOWN THERE, YOU\'LL WANT ONE. 2 STAR IRON, A SONGSTONE FOR THE HILT, AND ' + B.coins + ' COINS." (YOU HAVE ' +
+                BridgeInventory.getCount('star_iron') + ' STAR IRON, ' + BridgeInventory.getCount('songstone') + ' SONGSTONE.)',
+        options: [{ label: 'MAKE IT', action: 'mine_upgrade', to: 'star_blade' }, { label: 'NOT NOW', action: 'close' }] });
+    }
     var has = function (id) { return BridgeInventory.getCount(id) > 0; };
     var to = has('star_pickaxe') ? null : has('iron_pickaxe') ? 'star_pickaxe' : 'iron_pickaxe';
     if (!to) return say(who.toUpperCase(), '"THAT\'S STAR IRON. THERE\'S NOTHING BETTER IN THIS HILL, AND I\'D KNOW."');
@@ -265,12 +286,14 @@ var BridgeMine = (function () {
     var F = FORGE[to];
     if (!F) return;
     if (BridgeInventory.getCount(F.ore) < F.n) return say('HOB', '"YOU\'RE SHORT ON ' + BridgeItems.get(F.ore).name.toUpperCase() + '. THE ROCK\'S DOWNSTAIRS."');
-    if (BridgeInventory.getCount(F.from) < 1) return say('HOB', '"BRING THE OLD ONE TOO - I NEED THE HANDLE."');
+    if (F.also && BridgeInventory.getCount(F.also) < 1) return say('HOB', '"NO SONGSTONE, NO HILT. THEY\'RE DOWN AT THE BOTTOM, WHERE IT SINGS."');
+    if (F.from && BridgeInventory.getCount(F.from) < 1) return say('HOB', '"BRING THE OLD ONE TOO - I NEED THE HANDLE."');
     say('HOB', 'HOB WEIGHS THE ORE IN HIS HAND...');
     BridgeProgression.wagerCoins(F.coins, 'mine:' + to).then(function (res) {
       if (!res || !res.ok) return say('HOB', res && (res.reason === 'insufficient' || res.reason === 'no_balance') ? '"COIN FIRST, FRIEND. ' + F.coins + '."' : '"CAN\'T TAKE YOUR COIN RIGHT NOW. COME BACK."');
       BridgeInventory.removeItem(F.ore, F.n);
-      BridgeInventory.removeItem(F.from, 1);
+      if (F.also) BridgeInventory.removeItem(F.also, 1);
+      if (F.from) BridgeInventory.removeItem(F.from, 1);
       BridgeInventory.addItem(to, 1);
       sfx('success');
       say('HOB', 'THE FORGE ROARS, THE HAMMER RINGS, AND HOB HANDS YOU A ' + F.name + ', STILL WARM. "MIND YOU DON\'T DIG STRAIGHT THROUGH THE FLOOR."');
@@ -279,8 +302,9 @@ var BridgeMine = (function () {
 
   // ---- drawing (scene hooks on the cave tileset; only worlds with a mine block) ---------------------------
   function items(world, offX, offY, ts, now, sc) {
-    if (!isFloor(world) || !meta || !sheet.complete) return [];
-    var out = [];
+    if (!isFloor(world)) return [];
+    var out = typeof BridgeCombat !== 'undefined' ? BridgeCombat.sceneItems(world, offX, offY, ts, now, sc) : [];
+    if (!meta || !sheet.complete) return out;
     rocks.forEach(function (r) {
       if (r.gone) return;
       var R = sprRect(r.spr);

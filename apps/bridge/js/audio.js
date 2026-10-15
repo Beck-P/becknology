@@ -522,6 +522,9 @@ var BridgeAudio = (function () {
       voice(sfxBus, t, 0.03, { type: 'square', freq: 1800 + Math.random() * 500, glide: 0.7, glideT: 0.06, gain: 0.05, a: 0.001, d: 0.06, s: 0, r: 0.05, cutoff: 6000, rev: 0.25 });
       noiseHit(sfxBus, t, 0.09, { freq: 2600, ftype: 'bandpass', q: 1.5, gain: 0.09, rev: 0.25 });
     },
+    swish:   function (t) { noiseHit(sfxBus, t, 0.12, { freq: 3200, ftype: 'highpass', gain: 0.06 }); },
+    hit:     function (t) { noiseHit(sfxBus, t, 0.14, { freq: 900, ftype: 'bandpass', q: 1.2, gain: 0.16, rev: 0.2 }); voice(sfxBus, t, 0.05, { type: 'square', freq: 160, glide: 0.5, glideT: 0.08, gain: 0.06, a: 0.001, d: 0.08, s: 0, r: 0.05, cutoff: 1200 }); },
+    hurt:    function (t) { voice(sfxBus, t, 0.12, { type: 'sawtooth', freq: 220, glide: 0.5, glideT: 0.15, gain: 0.07, a: 0.002, d: 0.15, s: 0, r: 0.1, cutoff: 1400 }); },
     crumble: function (t) {                                // the rock giving way
       noiseHit(sfxBus, t, 0.4, { freq: 500, ftype: 'lowpass', gain: 0.2, rev: 0.35 });
       for (var i = 0; i < 4; i++) noiseHit(sfxBus, t + 0.05 + i * 0.06, 0.06, { freq: 900 + Math.random() * 700, ftype: 'bandpass', q: 2, gain: 0.06 });

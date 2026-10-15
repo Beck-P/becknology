@@ -674,6 +674,7 @@ body::after {
 html:not(.touch) .dpad { display: none !important; }
 html.controls-off:not(.keys-mode) .dpad { visibility: hidden; }
 html.keys-mode .dpad { display: block !important; z-index: 70; }
+html.keys-mode .dpad-item { display: none; }
 html.touch { --hud-h: 58px; }
 html.keys-mode { --hud-h: 96px; }                     /* clear of the voyage's compass and sail gauge */
 html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
@@ -704,6 +705,17 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
   touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
 }
 .dpad-action.held { background: rgba(242, 238, 230, 0.26); }
+/* B: use the selected hotbar item — swing a blade, dig, eat */
+.dpad-item {
+  position: fixed;
+  right: calc(98px + env(safe-area-inset-right));
+  bottom: calc(var(--hud-h) + 20px + env(safe-area-inset-bottom));
+  width: 52px; height: 52px; border-radius: 50%;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 16px; color: rgba(242, 238, 230, 0.8);
+  background: rgba(16, 18, 30, 0.5); border: 1px solid rgba(255, 255, 255, 0.18);
+  touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+}
+.dpad-item.held { background: rgba(242, 238, 230, 0.26); }
 #voyage-dock {
   position: fixed; top: calc(12px + env(safe-area-inset-top)); left: calc(12px + env(safe-area-inset-left)); z-index: 71;
   font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 14px; color: rgba(242, 238, 230, 0.92);

@@ -186,6 +186,17 @@ var BridgeControls = (function () {
       pad.addEventListener('touchend', function (e) { if (find(e.changedTouches)) release(); });
       pad.addEventListener('touchcancel', function (e) { if (find(e.changedTouches)) release(); });
     }
+    var itemBtn = dpad.querySelector('.dpad-item');        // B: the selected hotbar item (swing, eat, dig)
+    if (itemBtn) {
+      itemBtn.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        itemBtn.classList.add('held');
+        if (!keysMode() && enabled && typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
+      }, { passive: false });
+      var upB = function () { itemBtn.classList.remove('held'); };
+      itemBtn.addEventListener('touchend', upB);
+      itemBtn.addEventListener('touchcancel', upB);
+    }
     if (act) {
       act.addEventListener('touchstart', function (e) {
         e.preventDefault();

@@ -1001,7 +1001,7 @@ var BridgeInteractions = (function () {
       }
       if (t.mine && typeof BridgeMine !== 'undefined') {              // Hob's forge: a better pickaxe
         close();
-        BridgeMine.upgrade(person.name);
+        BridgeMine.upgrade(person.name, t.mine);
         return;
       }
       if (t.outfit && typeof BridgeGear !== 'undefined') {           // what they've got to wear or carry

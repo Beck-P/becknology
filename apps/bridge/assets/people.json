@@ -792,6 +792,15 @@
         "mine": "upgrade"
       },
       {
+        "q": "A blade",
+        "a": "FOR WHAT'S DOWN THERE? AYE. STAR IRON AND A SONGSTONE, AND I'LL MAKE YOU SOMETHING THAT SINGS BACK.",
+        "mine": "blade"
+      },
+      {
+        "q": "What lives down there",
+        "a": "MITES FROM THE THIRD FLOOR - THEY'LL NIP. CRABS LOWER DOWN, WITH CRYSTAL ON THEIR BACKS. AND BELOW FOURTEEN, SHADES. WATCH FOR THE WIND-UP: STEP ASIDE WHEN THEY RISE, AND HIT THEM WHEN THEY'VE MISSED."
+      },
+      {
         "q": "Sell ore and stone",
         "a": "I STILL SEND A CART TO SAPPHIRE EVERY MONTH. I'LL TAKE WHAT YOU DIG.",
         "sell": [

@@ -299,6 +299,8 @@ var BridgeInventory = (function () {
   function takeDamage(n) {
     state.hp = Math.max(0, state.hp - (n || 0));
     save(); refresh();
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('hurt');
+    if (state.hp <= 0 && typeof BridgeCombat !== 'undefined') BridgeCombat.faint();     // black out, come round somewhere safe
   }
 
   // ---- UI -------------------------------------------------------------

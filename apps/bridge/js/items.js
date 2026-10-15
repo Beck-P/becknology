@@ -220,11 +220,15 @@ var BridgeItems = (function () {
   // BridgeInteractions.killHostile to drop loot and clear the tile.
   // Returns false so the weapon itself doesn't get consumed. The swing
   // arc plays even on a whiff so the player gets feedback every press.
+  var lastSwing = 0;
   function weaponUse(inv) {
     if (typeof BridgeWorld === 'undefined' || typeof BridgeCharacter === 'undefined') return false;
     if (typeof BridgeInteractions === 'undefined') return false;
     var world = BridgeWorld.getWorld();
     if (!world) return false;
+    var now = performance.now();
+    if (now - lastSwing < 260) return false;            // one swing at a time
+    lastSwing = now;
     var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
     var facing = BridgeCharacter.getFacing();
     // Always play the swing arc — this is the per-press visual feedback.
@@ -233,17 +237,22 @@ var BridgeItems = (function () {
     var dx = facing === 'right' ? 1 : facing === 'left' ? -1 : 0;
     var dy = facing === 'down' ? 1 : facing === 'up' ? -1 : 0;
     var tx = px + dx, ty = py + dy;
-    var target = null;
-    for (var i = 0; i < world.interactions.length; i++) {
-      var inter = world.interactions[i];
-      if (inter.x === tx && inter.y === ty && inter.type === 'hostile') {
-        target = inter; break;
-      }
-    }
-    if (!target) return false;
+    // the tile you face; a wide blade (arc) cuts the tiles either side of it too
+    var cells = [[tx, ty]];
+    if (this.arc) cells.push([tx + dy, ty + dx], [tx - dy, ty - dx]);
+    var targets = world.interactions.filter(function (it) {
+      return it.type === 'hostile' && cells.some(function (c) { return c[0] === it.x && c[1] === it.y; });
+    });
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(targets.length ? 'hit' : 'swish');
+    var self = this;
+    targets.forEach(function (t) { strike(world, t, self.damage || 1); });
+    return false; // weapons are not consumed
+  }
+
+  function strike(world, target, dmg) {
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
-    var dmg = this.damage || 1;
     target._hp -= dmg;
+    target._hitAt = performance.now();
     // Hit-flash, sparks, and floating damage number on the target.
     if (typeof BridgeFX !== 'undefined') {
       BridgeFX.spawnHitFlash(target.x, target.y);
@@ -256,7 +265,18 @@ var BridgeItems = (function () {
       }
       BridgeInteractions.killHostile(world, target);
     }
-    return false; // weapons are not consumed
+  }
+
+  // A pickaxe: break the rock you face (js/mine.js); with nothing to dig, it's a weapon of sorts.
+  function pickUse(inv) {
+    var world = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld();
+    if (world && typeof BridgeCharacter !== 'undefined' && typeof BridgeMine !== 'undefined') {
+      var f = BridgeCharacter.getFacing(), x = BridgeCharacter.getX() + (f === 'right' ? 1 : f === 'left' ? -1 : 0),
+          y = BridgeCharacter.getY() + (f === 'down' ? 1 : f === 'up' ? -1 : 0);
+      var rock = world.interactions.filter(function (it) { return it.type === 'rock' && it.x === x && it.y === y; })[0];
+      if (rock) { BridgeMine.use(rock); return false; }
+    }
+    return weaponUse.call(this, inv);
   }
 
   // ---- Display helpers ------------------------------------------------
@@ -320,6 +340,19 @@ var BridgeItems = (function () {
         ctx.fillRect(x + 7*u, y + 10*u, 1*u, 1*u);
       }
       if (hi) { ctx.fillStyle = hi; ctx.fillRect(x + 8*u, y + 7*u, 1*u, 1*u); ctx.fillRect(x + 5*u, y + 8*u, 1*u, 1*u); }
+    };
+  }
+
+  function bladeIcon(steel, hilt, curved, glint) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      ctx.fillStyle = '#0a0a0c';
+      for (var i = 0; i < 10; i++) ctx.fillRect(x + (3 + i)*u, y + (12 - i - (curved && i > 6 ? 1 : 0))*u, 2*u, 2*u);
+      ctx.fillStyle = steel;
+      for (var j = 0; j < 9; j++) ctx.fillRect(x + (4 + j)*u, y + (12 - j - (curved && j > 6 ? 1 : 0))*u, 1*u, 1*u);
+      if (glint) { ctx.fillStyle = glint; ctx.fillRect(x + 9*u, y + 5*u, 1*u, 1*u); ctx.fillRect(x + 11*u, y + 3*u, 1*u, 1*u); }
+      ctx.fillStyle = '#0a0a0c'; ctx.fillRect(x + 1*u, y + 11*u, 5*u, 3*u);
+      ctx.fillStyle = hilt; ctx.fillRect(x + 2*u, y + 12*u, 3*u, 1*u); ctx.fillRect(x + 3*u, y + 11*u, 1*u, 3*u);
     };
   }
 
@@ -528,11 +561,15 @@ var BridgeItems = (function () {
     heartsong:   { id: 'heartsong', name: 'Heartsong', desc: 'The heart of the great songstone at the bottom of the mine. It is still singing.', type: 'key',
                    stackable: false, draw: crystalIcon('#4a1a7a', '#d0a0ff', '#ffffff'), value: 0 },
     old_pickaxe: { id: 'old_pickaxe', name: 'Old Pickaxe', desc: 'From the rack in the Rose Mine. Blunt, but it breaks rock. Face a rock and press E.', type: 'tool',
-                   stackable: false, draw: pickaxeIcon('#5a5a60', '#8a8a90'), power: 1 },
+                   stackable: false, draw: pickaxeIcon('#5a5a60', '#8a8a90'), power: 1, damage: 8, onUse: pickUse },
     iron_pickaxe: { id: 'iron_pickaxe', name: 'Iron Pickaxe', desc: 'Forged on the square from your own ore. Twice the bite of the old one.', type: 'tool',
-                   stackable: false, draw: pickaxeIcon('#8a8a98', '#d0d0e0'), power: 2 },
+                   stackable: false, draw: pickaxeIcon('#8a8a98', '#d0d0e0'), power: 2, damage: 14, onUse: pickUse },
     star_pickaxe: { id: 'star_pickaxe', name: 'Star Pickaxe', desc: 'Star iron, edged by Hob Dunmore himself. Rock seems to want to break for it.', type: 'tool',
-                   stackable: false, draw: pickaxeIcon('#3a3848', '#ffe080'), power: 3 },
+                   stackable: false, draw: pickaxeIcon('#3a3848', '#ffe080'), power: 3, damage: 20, onUse: pickUse },
+    cutlass:     { id: 'cutlass', name: 'Cutlass', desc: 'A sailor\'s curved blade from the smithy on the square. Its sweep cuts the tiles either side too.', type: 'weapon',
+                   stackable: false, draw: bladeIcon('#c8ccd8', '#8a5a30', true), damage: 40, arc: true, onUse: weaponUse },
+    star_blade:  { id: 'star_blade', name: 'Star Blade', desc: 'Star iron, forged by Hob with a songstone set in the hilt. It hums when something is close.', type: 'weapon',
+                   stackable: false, draw: bladeIcon('#3a3848', '#b080ff', true, '#ffe080'), damage: 80, arc: true, onUse: weaponUse },
     stone_shard: {
       id: 'stone_shard', name: 'Stone Shard',
       desc: 'A jagged fragment from a fallen sentinel. Amethyst still glints in the break.',
