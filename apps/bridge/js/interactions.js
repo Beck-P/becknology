@@ -57,12 +57,14 @@ var BridgeInteractions = (function () {
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
     menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish',
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
-    dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read'
+    dig: 'Dig', rock: 'Mine', mine_down: 'Climb down', mine_up: 'Climb up', mine_lift: 'Ride', mine_rack: 'Look', mine_slate: 'Read',
+    home_door: 'Enter', home_piece: 'Look'
   };
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
-                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters' };
+                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
+                      'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port' };
 
   function titleCase(t) {
     return String(t || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z\u00e0-\u00ff])/g, function (m, a, b) {
@@ -362,6 +364,10 @@ var BridgeInteractions = (function () {
         if (typeof BridgeMine !== 'undefined') BridgeMine.use(inter);         // the Rose Mine (js/mine.js)
         break;
 
+      case 'home_door': case 'home_piece':   // a home to buy or go into, furniture you use (js/home.js)
+        if (typeof BridgeHome !== 'undefined') BridgeHome.use(inter);
+        break;
+
       case 'outfitter':             // suits and packs (js/gear.js); the bridge's coat rack is the wardrobe
         if (typeof BridgeGear !== 'undefined') BridgeGear.open(inter.wardrobe ? {} : { shop: inter.shop, intro: inter.dialog });
         break;
@@ -578,6 +584,9 @@ var BridgeInteractions = (function () {
           break;
         case 'mine_floor':
           if (typeof BridgeMine !== 'undefined') BridgeMine.goFloor(opt.floor);
+          break;
+        case 'home_buy':
+          if (typeof BridgeHome !== 'undefined') BridgeHome.buy(opt.home);
           break;
         case 'treasure_buy':
           if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.buy(opt.map);

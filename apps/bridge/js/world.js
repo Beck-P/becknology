@@ -22,6 +22,8 @@ var BridgeWorld = (function () {
   var NATIVE_TS = 32;
   var zoom = 2;
   var hudPx = 0;      // touch: how much of the bottom of the screen the hotbar covers
+  var reservePx = 0;  // a panel docked at the bottom (the furnishing tray) — frame the world above it
+  var focus = null;   // a point (tiles) the camera follows instead of the pilot (the furnishing cursor)
   var buf = document.createElement('canvas');
   var bctx = buf.getContext('2d');
   // Native-space view of the frame being drawn ({offX, offY, ts, w, h}),
@@ -64,6 +66,8 @@ var BridgeWorld = (function () {
   //   items(world, offX, offY, ts, time, sc)    — returns [{footRow, draw(ctx)}]
   //       sorted with the characters (moving things: drones, holograms)
   //   over(ctx, world, offX, offY, ts, time)    — drawn on top (steam, sparks)
+  // Hooks registered for '*' run in every scene world, after the tileset's
+  // own (the furniture you place in a home or aboard, js/home.js).
   var SCENE_HOOKS = {};
   function registerSceneHooks(name, hooks) {
     SCENE_HOOKS[name] = hooks;
@@ -408,6 +412,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
         if (typeof BridgeActions !== 'undefined') BridgeActions.decorate(worldId, data);
+        if (typeof BridgeHome !== 'undefined') BridgeHome.decorate(worldId, data);       // last: it keeps the rest clear
         if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);
         var finish = function () {
           world = data;
@@ -713,15 +718,16 @@ var BridgeWorld = (function () {
     // the world in the space above it (camera.y is that space's centre and
     // the frame is drawn lifted by half the hotbar).
     if (!hudPx && touchHud()) measureHud();     // the hotbar shows up after the world does
-    var hudT = hudPx / (tileSize * scale);
+    var bottomPx = Math.max(hudPx, reservePx);
+    var hudT = bottomPx / (tileSize * scale);
     view.lift = hudT / 2;
     var halfW = window.innerWidth / (2 * tileSize * scale);
-    var halfH = (window.innerHeight - hudPx) / (2 * tileSize * scale);
+    var halfH = (window.innerHeight - bottomPx) / (2 * tileSize * scale);
     // (a world floating in a backdrop follows the player instead: its render
     // with the sea or space round it is usually taller than the screen; so
     // does a room too big for a phone held sideways)
     if (world.fixedCamera && !(world.scene && world.scene.backdrop) &&
-        (!hudPx || (world.width <= 2 * halfW && world.height <= 2 * halfH))) {
+        (!bottomPx || (world.width <= 2 * halfW && world.height <= 2 * halfH))) {
       // Fixed camera: center on map
       camera.x = world.width / 2;
       camera.y = world.height / 2;
@@ -729,7 +735,7 @@ var BridgeWorld = (function () {
       // Smooth camera follow
       // Exponential follow — same feel as the old 10%-per-frame lerp at
       // 60 Hz, but frame-rate independent.
-      var pos = BridgeCharacter.getRenderPos();
+      var pos = focus || BridgeCharacter.getRenderPos();
       var follow = 1 - Math.exp(-dt * 6.3);
       // cameraLead (tiles, world JSON): frame a little above or below the
       // player — the District looks up so its skyline shows over the shops
@@ -827,23 +833,27 @@ var BridgeWorld = (function () {
   // Pre-rendered scene: the Blender render replaces tiles; everyone who
   // moves is depth-tested against it and drawn in foot-row order.
   function drawSceneLayer(ctx, sc, offX, offY, ts, now, w, h) {
-    var hooks = SCENE_HOOKS[world.tileset] || {};
+    var hooks = SCENE_HOOKS[world.tileset] || {}, all = SCENE_HOOKS['*'] || {};
     // scene.backdrop: the world's own animated background (space, void)
     // shows wherever the render is empty
     if (world.scene.backdrop && BACKGROUNDS[world.tileset]) BACKGROUNDS[world.tileset](ctx, w, h, now);
     if (hooks.behind) hooks.behind(ctx, world, offX, offY, ts, now);
+    if (all.behind) all.behind(ctx, world, offX, offY, ts, now);
     BridgeScene.drawBackground(ctx, sc, world, offX, offY, now);
     if (hooks.ground) hooks.ground(ctx, world, offX, offY, ts, now, sc);
+    if (all.ground) all.ground(ctx, world, offX, offY, ts, now, sc);
     drawInteractHighlight(ctx, offX, offY, ts, now);
     if (typeof BridgeForage !== 'undefined') BridgeForage.draw(ctx, world, offX, offY, ts, now);
     if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) BridgeLoot.draw(ctx, offX, offY, ts);
     var items = BridgeScene.actorDrawList(sc, world, offX, offY, ts, now);
     items.push(BridgeCharacter.sceneItem(offX, offY, ts, sc, world, now));
     if (hooks.items) items = items.concat(hooks.items(world, offX, offY, ts, now, sc) || []);
+    if (all.items) items = items.concat(all.items(world, offX, offY, ts, now, sc) || []);
     items.sort(function (a, b) { return a.footRow - b.footRow; });
     for (var i = 0; i < items.length; i++) items[i].draw(ctx);
     if (typeof BridgeShip !== 'undefined') BridgeShip.drawWorld(ctx, world, offX, offY, ts, now, sc);
     if (hooks.over) hooks.over(ctx, world, offX, offY, ts, now);
+    if (all.over) all.over(ctx, world, offX, offY, ts, now);
     if (typeof BridgeFX !== 'undefined' && BridgeFX.draw) BridgeFX.draw(ctx, offX, offY, ts, now);
   }
 
@@ -1080,6 +1090,8 @@ var BridgeWorld = (function () {
     registerBackground: registerBackground,
     registerOverlay: registerOverlay,
     registerSceneHooks: registerSceneHooks,
+    reserveBottom: function (px) { reservePx = px || 0; },
+    setFocus: function (p) { focus = p || null; },
     getCamera: function () { return camera; },
     getScale: function () { return scale; },
     getTileSize: function () { return tileSize; },

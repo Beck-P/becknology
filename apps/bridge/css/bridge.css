@@ -1439,3 +1439,59 @@ html.touch .nav-hint { display: none; }
 }
 html.touch .qj-close .ip-key { font-size: 0; min-width: 26px; height: 22px; }   /* the journal's and the letter rack's */
 html.touch .qj-close .ip-key::after { content: '\2715'; font-size: 13px; }
+
+/* ---- Homes: the Furnish pill and the furnishing tray (js/home.js) ----
+   The tray is a world-themed dialog (parchment in Lumar, neon in Arcadia,
+   holo aboard) docked at the bottom, so the room stays in view above it. */
+#home-pill {
+  position: fixed; top: 124px; left: 16px; z-index: 25;
+  display: none; align-items: center; gap: 7px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 13px; letter-spacing: 0.5px;
+  color: rgba(242, 238, 230, 0.9); background: rgba(14, 12, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 5px 13px 5px 5px;
+  cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+#home-pill:hover { background: rgba(34, 30, 50, 0.9); border-color: rgba(255, 255, 255, 0.25); }
+#home-pill .ip-key { font-size: 10px; min-width: 22px; height: 18px; }
+html.touch #home-pill { padding: 7px 14px; left: calc(12px + env(safe-area-inset-left)); top: calc(142px + env(safe-area-inset-top)); }
+html.touch #home-pill .ip-key { display: none; }
+html.home-editing .interact-prompt, html.home-editing #journal-pill, html.home-editing #sound-pill,
+html.home-editing #inventory-panel { display: none !important; }
+
+.world-dialog.wd-home { top: auto; bottom: calc(10px + env(safe-area-inset-bottom)); transform: translate(-50%, 0); width: min(760px, 96vw); padding: 10px 14px 8px; }
+.world-dialog.wd-home.visible { transform: translate(-50%, 0); }
+.wd-home .hm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.wd-home .hm-head .wd-title { margin: 0; font-size: 13px; }
+.wd-home .hm-tabs { display: flex; gap: 6px; }
+.wd-home .hm-tab { font: inherit; font-size: 11px; letter-spacing: 1.5px; padding: 3px 10px; cursor: pointer; border-radius: 3px;
+  background: transparent; color: inherit; border: 1px solid currentColor; opacity: 0.6; }
+.wd-home .hm-tab.on { opacity: 1; font-weight: 700; }
+.wd-home .hm-done { opacity: 0.9; }
+.wd-home .hm-cards { display: flex; gap: 6px; overflow-x: auto; padding: 8px 2px 6px; scrollbar-width: thin; }
+.wd-home .hm-card { flex: 0 0 74px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 3px 5px; cursor: pointer;
+  font: inherit; color: inherit; background: rgba(0, 0, 0, 0.12); border: 1px solid rgba(127, 127, 127, 0.35); border-radius: 3px; }
+.wd-home .hm-card.sel { outline: 2px solid currentColor; outline-offset: -2px; }
+.wd-home .hm-card.out { opacity: 0.45; }
+.wd-home .hm-pic canvas { width: 44px; height: 44px; image-rendering: pixelated; display: block; }
+.wd-home .hm-name { font-size: 10px; line-height: 1.1; text-align: center; letter-spacing: 0.5px; min-height: 2.2em; }
+.wd-home .hm-sub { font-size: 9px; letter-spacing: 1px; opacity: 0.75; }
+.wd-home .hm-empty { font-size: 12px; opacity: 0.75; padding: 14px 4px; }
+.wd-home .hm-msg { font-size: 12px; min-height: 1.3em; opacity: 0.9; }
+.wd-home .hm-keys { font-size: 10px; flex-wrap: wrap; row-gap: 3px; }
+.wd-parchment.wd-home .hm-card { background: rgba(255, 248, 228, 0.45); border-color: rgba(120, 80, 40, 0.35); }
+.wd-parchment.wd-home .hm-card.sel { outline-color: #8a2a18; }
+.wd-neon.wd-home .hm-card.sel { outline-color: #f078a8; box-shadow: 0 0 8px rgba(240, 120, 168, 0.5); }
+.wd-holo.wd-home .hm-card.sel { outline-color: #80e0e8; }
+html.touch .wd-home .hm-keys { display: none; }
+@media (max-width: 600px) {
+  .wd-home .hm-card { flex-basis: 64px; }
+  .wd-home .hm-pic canvas { width: 36px; height: 36px; }
+}
+@media (max-height: 500px) {                         /* a phone on its side: a slimmer tray */
+  .world-dialog.wd-home { padding: 6px 10px 5px; width: min(640px, 70vw); }
+  .wd-home .hm-cards { padding: 5px 2px 3px; }
+  .wd-home .hm-card { flex-basis: 58px; padding: 3px 2px; }
+  .wd-home .hm-pic canvas { width: 30px; height: 30px; }
+  .wd-home .hm-name { font-size: 9px; min-height: 0; }
+  .wd-home .hm-msg { font-size: 10px; }
+}
