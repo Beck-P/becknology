@@ -35,6 +35,7 @@ const st = p => p.evaluate(() => {
   console.log('aly chat:', JSON.stringify(await st(aly)));
   // Beck opens the box from the bar and types; the game's keys stay with the box
   await beck.click('.tc-pill'); await beck.waitForTimeout(300);
+  await beck.click('#tchat .tc-in');                    // on a phone the box doesn't pull the keyboard up by itself: tap the line
   console.log('focus in box', await beck.evaluate(() => document.activeElement && document.activeElement.className));
   await beck.keyboard.type('Hit me, dealer. Double down? q w e'); await beck.keyboard.press('Enter'); await beck.waitForTimeout(900);
   console.log('cabinet still open (typed q/w/e/space)', await beck.evaluate(() => BridgeCabinetModal.isOpen()));

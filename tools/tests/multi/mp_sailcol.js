@@ -31,6 +31,11 @@ const st = p => p.evaluate(() => { const b = BridgeSloop._boat(); return b ? Bri
   await beck.waitForTimeout(600);
   console.log('commit', await beck.evaluate(() => { BridgeSloop._commit('lumar-crimson'); return true; }));
   await beck.waitForTimeout(1500);
+  // islands load as they come over the horizon: run down the course until Crimson's harbour is known
+  for (let i = 0; i < 24 && !(await beck.evaluate(() => !!BridgeSloop._isles()[1])); i++) {
+    await beck.evaluate(() => { const [r] = BridgeSloop._route(), bt = BridgeSloop._boat(), q = r && r[r.length - 1]; if (q) { bt.x += (q[0] - bt.x) * 0.4; bt.r += (q[1] - bt.r) * 0.4; bt.v = 0; } });
+    await beck.waitForTimeout(700);
+  }
   const pals = p => p.evaluate(() => { const [A, B] = BridgeSloop._isles(); return (A && A.pal) + ' -> ' + (B ? B.id + ' ' + B.pal : 'NO B'); });
   console.log('beck', await pals(beck), '| aly', await pals(aly));
   await beck.evaluate(() => { const [A, B] = BridgeSloop._isles(), bt = BridgeSloop._boat(); bt.x = B.exit[0]; bt.r = B.exit[1]; bt.v = 0; });
