@@ -159,7 +159,6 @@ var BridgeTogether = (function () {
       var row = { g: k, title: stationTitle(k, it), d: d, opts: {} };
       if (k === 'dice') row.opts.table = it.table || 'fell';
       if (k === 'pachinko') row.opts.machine = it.machine || 'lucky-cat';
-      if (it.type === 'cabinet' || it.type === 'app') row.opts.url = it.target;
       if (seen[id]) out.splice(out.indexOf(seen[id]), 1);
       seen[id] = row; out.push(row);
     });
@@ -579,7 +578,7 @@ var BridgeTogether = (function () {
   var ADAPTERS = {
     cabinet: {
       start: function (s) {
-        var G = GAMES[s.g], url = (s.opts && s.opts.url && s.g !== 'chess' ? s.opts.url : G.url);
+        var G = GAMES[s.g], url = G.url;
         var cfg = { sid: s.sid, g: s.g, mode: s.mode, seed: s.seed, me: myName(), vs: s.peerName, host: s.host, side: s.host ? 'w' : 'b',
                     wager: s.wager, pot: s.pot, target: s.target };
         url += (url.indexOf('?') < 0 ? '?' : '&') + 'together=' + encodeURIComponent(JSON.stringify(cfg));

@@ -436,6 +436,8 @@
   <script src="/bridge/js/shared/progression.js"></script>
   <!-- the one back control: the Bridge bar's "BRIDGE" button, which hides itself inside the Bridge's modal -->
   <script src="/bridge/js/shared/bridge-skin.js" data-title="SIGNAL RELAY"></script>
+  <!-- another operator, from the Bridge (js/together.js): ?together=… -->
+  <script src="/bridge/js/shared/together-frame.js"></script>
 </head>
 <body>
 
@@ -501,6 +503,7 @@
           <div class="result-item"><div class="hud-label">RELAYED</div><div class="result-value" id="final-sentences">0</div><div class="result-unit">messages</div></div>
         </div>
 
+        <div class="pay-line" id="tg-line" hidden></div>
         <div class="pay-line" id="pay-line"></div>
         <p class="prompt blink locked" id="restart-prompt">PRESS ANY KEY TO CONTINUE</p>
       </section>
@@ -647,6 +650,13 @@
     var composing = false;
     var touchUI = window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
+    // Another operator (the Bridge's js/together.js, through together-frame.js): one window for both, opened at
+    // once after a 3-2-1, the same messages in the same order (the deck shuffled from the session's seed), their
+    // WPM beside yours as it goes. Your WPM at the end is your score; one run counts, then the relay's yours again.
+    var TF = window.BridgeTogetherFrame || null;
+    var tg = TF ? { live: false, done: false, cd: 0, rand: null, verdict: null, gone: false } : null;
+    var VS = TF ? String(TF.cfg.vs || 'THEM').toUpperCase() : '';
+
     // ---- DOM ----
     var boot = document.getElementById('boot');
     var consoleEl = document.getElementById('console');
@@ -697,8 +707,9 @@
     function nextTransmission() {
       if (!deck.length) {
         deck = TRANSMISSIONS.slice();
+        var R = tg && tg.live && tg.rand ? tg.rand : Math.random;      // the same order for both operators
         for (var i = deck.length - 1; i > 0; i--) {
-          var j = Math.floor(Math.random() * (i + 1));
+          var j = Math.floor(R() * (i + 1));
           var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
         }
       }
@@ -794,6 +805,7 @@
 
     function abortGame() {
       if (state !== 'playing') return;
+      if (tg && tg.live) { endGame(); return; }        // against someone: what you've keyed is your score
       stopRun();
       timerDisplay.classList.remove('warning');
       showReady();
@@ -824,6 +836,8 @@
 
       var rec = saveRun(wpm);
       document.getElementById('best-flag').hidden = !rec.newBest;
+      if (tg && tg.live) { tg.live = false; tg.done = true; TF.score(wpm, true, wpm + ' WPM'); }
+      else if (tg && tg.done) document.getElementById('tg-line').hidden = true;     // a run of your own after
 
       timerDisplay.classList.remove('warning');
       showScreen(resultsScreen);
@@ -831,6 +845,7 @@
       // input lock: the next keystroke of a fast typist mustn't dismiss this
       resultsLockUntil = Date.now() + RESULTS_LOCK_MS;
       restartPrompt.textContent = touchUI ? 'TAP TO CONTINUE' : 'PRESS ANY KEY TO CONTINUE';
+      if (tg && tg.done && !tg.verdict && !tg.gone) restartPrompt.textContent = 'WAITING FOR ' + VS + '…';
       restartPrompt.classList.add('locked');
       setTimeout(function () { if (state === 'results') restartPrompt.classList.remove('locked'); }, RESULTS_LOCK_MS);
 
@@ -886,9 +901,10 @@
       var secs = elapsedSeconds();
       // floor the clock at 2s so the first keystroke doesn't read as 300 wpm
       wpmDisplay.textContent = state === 'playing' ? computeWpm(Math.max(2, secs)) : 0;
+      if (tg && tg.live && state === 'playing') TF.score(computeWpm(Math.max(2, secs)), false, computeWpm(Math.max(2, secs)) + ' WPM');
       accDisplay.textContent = totalTyped ? Math.round(accuracyFraction() * 100) : 100;
       streakDisplay.textContent = currentStreak;
-      sentencesDone.textContent = 'RELAYED: ' + sentencesCompleted;
+      sentencesDone.textContent = 'RELAYED: ' + sentencesCompleted + (tg && tg.live ? ' · ' + VS + ' ' + (TF.peer.label || '0 WPM') : '');
       streakDisplay.classList.remove('hot', 'fire');
       if (currentStreak >= 40) streakDisplay.classList.add('fire');
       else if (currentStreak >= 15) streakDisplay.classList.add('hot');
@@ -948,6 +964,7 @@
       if (state === 'ready') {
         if (key === 'Escape') return;           // the Bridge closes the terminal
         e.preventDefault();
+        if (tg && !tg.done) return;             // together: the window opens for both at once
         startGame();
         return;
       }
@@ -955,7 +972,7 @@
       if (state === 'results') {
         if (key === 'Escape') return;
         e.preventDefault();
-        if (Date.now() < resultsLockUntil) return;
+        if (Date.now() < resultsLockUntil || (tg && tg.done && !tg.verdict && !tg.gone)) return;
         showReady();
         return;
       }
@@ -981,9 +998,9 @@
         } else if (v.length < lastInputValue.length) {
           backspace();
         }
-      } else if (state === 'ready' && v) {
+      } else if (state === 'ready' && v && !(tg && !tg.done)) {
         startGame();
-      } else if (state === 'results' && v && Date.now() >= resultsLockUntil) {
+      } else if (state === 'results' && v && Date.now() >= resultsLockUntil && !(tg && tg.done && !tg.verdict && !tg.gone)) {
         showReady();
       }
       if (!composing && (state !== 'playing' || v.length > 40)) { typeInput.value = ''; v = ''; }
@@ -993,9 +1010,9 @@
     // ---- Taps / clicks: start, continue, and keep the keyboard up ----
     document.addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('#bridge-skin-bar')) return;
-      if (state === 'ready') { focusInput(); startGame(); return; }
+      if (state === 'ready') { focusInput(); if (!(tg && !tg.done)) startGame(); return; }
       if (state === 'results') {
-        if (Date.now() < resultsLockUntil) return;
+        if (Date.now() < resultsLockUntil || (tg && tg.done && !tg.verdict && !tg.gone)) return;
         focusInput();
         showReady();
         return;
@@ -1047,6 +1064,43 @@
     state = 'boot';
     startBoot();
     requestAnimationFrame(drawScope);
+
+    // ---- Together ----
+    if (TF) {
+      var prompt0 = document.getElementById('start-prompt');
+      document.querySelector('#ready-screen .title-sub').textContent = (TF.cfg.mode === 'team' ? 'TWO OPERATORS · WITH ' : 'SIGNAL DUEL · VS ') + VS +
+        (TF.cfg.wager ? ' · ' + TF.cfg.wager + ' EACH' : '');
+      prompt0.textContent = 'WAITING FOR ' + VS + '’S TERMINAL…';
+      document.getElementById('esc-hint').textContent = 'ESC ENDS YOUR RUN';
+      if (TF.cfg.mode === 'team' && TF.cfg.target) document.getElementById('best-line').textContent = 'TOGETHER, KEY ' + TF.cfg.target + ' WPM BETWEEN YOU';
+      TF.on('start', function () {
+        if (tg.live || tg.done) return;
+        tg.cd = 3;
+        prompt0.textContent = 'UPLINK IN 3';
+        var t = setInterval(function () {
+          tg.cd--;
+          if (tg.cd > 0) { prompt0.textContent = 'UPLINK IN ' + tg.cd; playTone(600, 0.08, 0.03, 'square'); return; }
+          clearInterval(t);
+          if (state === 'boot') state = 'ready';
+          tg.live = true; tg.rand = TF.rng('deck');
+          startGame();
+        }, 1000);
+      });
+      TF.on('verdict', function (v) {
+        tg.verdict = v;
+        var line = document.getElementById('tg-line');
+        line.hidden = false;
+        line.textContent = String(v.head).toUpperCase() + (v.paid ? ' · +' + v.paid + ' COINS' : '');
+        line.className = 'pay-line' + (v.outcome === 'win' || v.outcome === 'made' ? ' paid' : '');
+        restartPrompt.textContent = touchUI ? 'TAP TO CONTINUE' : 'PRESS ANY KEY TO CONTINUE';
+      });
+      TF.on('gone', function () {
+        tg.gone = true;
+        if (!tg.live && !tg.done) { tg.done = true; prompt0.textContent = VS + ' LEFT · PRESS ANY KEY TO OPEN THE UPLINK'; }
+        else { var l = document.getElementById('tg-line'); l.hidden = false; l.textContent = VS + ' LEFT · YOUR STAKE IS BACK'; restartPrompt.textContent = 'PRESS ANY KEY TO CONTINUE'; }
+      });
+      TF.ready();
+    }
   </script>
 
 </body>
