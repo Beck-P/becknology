@@ -388,7 +388,7 @@ NPCS = {
                           hair=('#6a2a14', '#9a4422', '#c06030'), bun=True, tray=True, pose='stand'),
     'npc-server-b':  dict(skin='skin', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#0e0e14', '#1c1c26', '#30303e'),
                           bowtie=('#5a0a14', '#8a1420', '#b02030'), hair=('#c8a050', '#e8c870', '#f8e8a0'), tray=True, pose='stand'),
-    'npc-highroller': dict(skin='skin', shirt=('#a8a49a', '#e8e4d8', '#fcfaf2'), pants=('#a8a49a', '#e8e4d8', '#fcfaf2'),
+    'npc-highroller': dict(skin='skin', shirt=('#6a7490', '#aab6d4', '#dce4f6'), pants=('#6a7490', '#aab6d4', '#dce4f6'),   # an ice-blue suit (white read as skin under the warm light)
                           bib=('#0e0e14', '#1c1c26', '#30303e'), hair=('#141010', '#241c1a', '#362a26'), shades=True, pose='stand'),
     'npc-gambler-a': dict(skin='skin', shirt=('#7a5a10', '#c89a28', '#f0d060'), skirt=('#7a5a10', '#c89a28', '#f0d060'), gown=True,
                           sequin=True, sleeve='skin', hair=('#6a1a0a', '#a02a10', '#d04a20'), long_hair=True, pose='sit'),
