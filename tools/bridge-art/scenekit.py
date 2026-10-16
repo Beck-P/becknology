@@ -333,6 +333,17 @@ class Kit:
             for r in _cells(r0, r1):
                 self.blocked.add((c, r))
 
+    def solid_post(self, cx, cr):
+        """A thin post (a lamp, a flagpole) standing at (cx, cr): block the tiles where you'd stand on it — your feet
+        are at (c + 0.5, r + 0.9) on tile (c, r) — and no others. A post on the line between two tiles is in neither:
+        you walk past it on both sides."""
+        if self._var is not None:
+            return
+        for c in range(int(math.floor(cx)) - 1, int(math.floor(cx)) + 2):
+            for r in range(int(math.floor(cr)) - 2, int(math.floor(cr)) + 2):
+                if abs(cx - (c + 0.5)) < 0.4 and abs(cr - (r + 0.9)) < 0.45:
+                    self.blocked.add((c, r))
+
     # ---- materials per pass ---------------------------------------------
     def _emission_mat(self, name, color_fn):
         m = bpy.data.materials.new(name)

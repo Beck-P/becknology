@@ -247,7 +247,7 @@ def lantern_post(k, cx, cr, h=2.2, energy=40):
     lx = cx + 0.28
     k.cone(lx, cr, h - 0.2, h - 0.1, 0.03, 0.01, IRON, 'post_hook', verts=4)
     lantern(k, lx, cr, h - 0.5, h - 0.24, s=0.1, energy=energy)
-    k.solid(cx - 0.25, cr - 0.25, cx + 0.25, cr + 0.25)
+    k.solid_post(cx, cr)
 
 
 def fountain(k, cx, cr, rad=0.95):

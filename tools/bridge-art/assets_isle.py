@@ -342,7 +342,7 @@ def flagpole(k, cx, cr, h=3.2, col='#a02028'):
     k.poly([(cx, cr, h - 0.05), (cx + 0.95, cr + 0.02, h - 0.2), (cx + 0.8, cr + 0.03, h - 0.38), (cx + 0.9, cr + 0.03, h - 0.6),
             (cx, cr, h - 0.65)], (col, 0.3), 'flag')
     k.sphere(cx + 0.42, cr + 0.04, h - 0.33, 0.1, 0.1, '#e8dcc8', 'flag_skull', segs=8)
-    k.solid(cx - 0.2, cr - 0.2, cx + 0.2, cr + 0.2)
+    k.solid_post(cx, cr)
 
 
 def chest(k, cx, cr, glow='#ffd060'):
