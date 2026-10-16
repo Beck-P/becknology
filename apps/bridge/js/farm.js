@@ -600,6 +600,6 @@ var BridgeFarm = (function () {
     return { rows: rows, tilled: Object.keys(save.tiles).length, can: save.can };
   }
 
-  return { decorate: decorate, use: use, useItem: useItem, journal: journal, CROPS: CROPS, pickFor: pickFor,
+  return { reload: function () { save = load(); }, decorate: decorate, use: use, useItem: useItem, journal: journal, CROPS: CROPS, pickFor: pickFor,
            _save: function () { return save; }, _plan: plan, _sprite: sprite };
 })();

@@ -33,11 +33,14 @@ var BridgeCloud = (function () {
     for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (gameKey(k)) out.push(k); }
     return out.sort();
   }
-  function snapshot() { var d = {}; keys().forEach(function (k) { d[k] = localStorage.getItem(k); }); return d; }
+  // the raw browser storage: while you visit a partner's place js/partner.js shows its modules hers, never your save
+  function rget(k) { return window.__lsGet ? window.__lsGet(k) : localStorage.getItem(k); }
+  function rset(k, v) { return window.__lsSet ? window.__lsSet(k, v) : localStorage.setItem(k, v); }
+  function snapshot() { var d = {}; keys().forEach(function (k) { d[k] = rget(k); }); return d; }
   function apply(data) {
     try { localStorage.setItem('bridge_cloud_backup', JSON.stringify({ at: Date.now(), data: snapshot() })); } catch (e) { /* too big: so be it */ }
     keys().forEach(function (k) { if (!data || !(k in data)) localStorage.removeItem(k); });
-    Object.keys(data || {}).forEach(function (k) { if (gameKey(k) && typeof data[k] === 'string') { try { localStorage.setItem(k, data[k]); } catch (e) { /* full */ } } });
+    Object.keys(data || {}).forEach(function (k) { if (gameKey(k) && typeof data[k] === 'string') { try { rset(k, data[k]); } catch (e) { /* full */ } } });
   }
   function device() {
     var d = localStorage.getItem('bridge_device');

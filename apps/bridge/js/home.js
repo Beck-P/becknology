@@ -712,6 +712,6 @@ var BridgeHome = (function () {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  return { decorate: decorate, use: use, buy: buy, edit: edit, done: finish, owns: owns, editing: function () { return !!ed; },
+  return { decorate: decorate, use: use, buy: buy, edit: edit, done: finish, owns: owns, editing: function () { return !!ed; }, reload: function () { save = load(); },
            pieces: function () { return pieces; }, _save: function () { return save; }, _check: function (pid, x, y) { return check(pid, x, y); } };
 })();

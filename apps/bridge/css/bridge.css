@@ -1853,6 +1853,7 @@ html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }   
   border: 1px solid rgba(120, 220, 160, 0.35); border-radius: 999px; padding: 5px 13px 5px 10px; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }
 #mp-pill:hover { background: rgba(34, 30, 50, 0.9); }
 .mp-dot { width: 8px; height: 8px; border-radius: 50%; background: #60e090; box-shadow: 0 0 6px #60e090; flex: none; }
+.mp-dot.off { background: #6a6470; box-shadow: none; }
 .mp-where { color: rgba(242, 238, 230, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mp-more { color: #a0e0b0; }
 html.touch #mp-pill { padding: 7px 14px 7px 11px; left: calc(12px + env(safe-area-inset-left)); top: calc(230px + env(safe-area-inset-top)); }

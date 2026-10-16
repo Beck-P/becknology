@@ -320,6 +320,8 @@ var BridgeHolm = (function () {
              rows: rows, closeLabel: 'Back' });
   }
 
-  return { decorate: decorate, use: use, owned: owned, built: built, canFarm: canFarm, returns: returns, ledger: ledger,
+  return { reload: function () { st = { owned: false, name: 'Starling Holm', built: {}, store: {}, chest: 0, log: [] };
+                                try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* fresh */ } },
+           decorate: decorate, use: use, owned: owned, built: built, canFarm: canFarm, returns: returns, ledger: ledger,
            name: function () { return st.name; }, _state: function () { return st; } };
 })();

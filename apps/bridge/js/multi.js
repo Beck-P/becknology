@@ -233,12 +233,19 @@ var BridgeMulti = (function () {
     document.body.appendChild(pill);
     return pill;
   }
+  // partners who aren't on (js/partner.js sets `friends`): still on the pill, for their places and letters
+  function away() {
+    var n = N(), on = n ? n.peers().map(function (p) { return p.id; }) : [];
+    return (api.friends ? api.friends() : []).filter(function (f) { return on.indexOf(f.id) < 0; });
+  }
   function paintPill() {
-    var n = N(), list = n ? n.peers() : [], el = ensurePill(), show = inWorld() && list.length;
+    var n = N(), list = n ? n.peers() : [], off = away(), el = ensurePill(), show = inWorld() && (list.length || off.length);
     el.style.display = show ? 'flex' : 'none';
     if (!show) return;
-    var first = list[0], html = '<span class="mp-dot"></span><span class="mp-who">' + esc(cap(first.name)) + '</span>' +
-      '<span class="mp-where">' + esc(placeOf(first)) + '</span>' + (list.length > 1 ? '<span class="mp-more">+' + (list.length - 1) + '</span>' : '');
+    var first = list[0], html = first
+      ? '<span class="mp-dot"></span><span class="mp-who">' + esc(cap(first.name)) + '</span><span class="mp-where">' + esc(placeOf(first)) + '</span>' +
+        (list.length > 1 ? '<span class="mp-more">+' + (list.length - 1) + '</span>' : '')
+      : '<span class="mp-dot off"></span><span class="mp-who">' + esc(cap(off[0].name)) + '</span><span class="mp-where">offline</span>';
     if (el.getAttribute('data-html') !== html) { el.innerHTML = html; el.setAttribute('data-html', html); }
   }
   var panelExtras = [];                               // other modules: fn() -> [{label, act}] (letters, partner places)
@@ -247,14 +254,24 @@ var BridgeMulti = (function () {
     var n = N(), list = n ? n.peers() : [];
     var rows = list.map(function (p) {
       return { label: cap(p.name), sub: placeOf(p) + ' · ' + (DOING[p.act] || 'online'), note: others[p.id] ? 'here' : '', pick: function () { peerCard(p.id); return false; } };
-    });
+    }).concat(away().map(function (f) {
+      return { label: cap(f.name), sub: 'offline', note: '♥', pick: function () { peerCard(f.id); return false; } };
+    }));
     var buttons = [{ label: 'Wave', act: function () { emote('wave'); } }, { label: 'Say something', act: function () { sayBox(null); return false; } }];
     panelExtras.forEach(function (f) { try { buttons = buttons.concat(f() || []); } catch (e) { /* */ } });
-    choose({ title: 'Who\'s on', text: list.length ? null : 'NOBODY ELSE IS ON RIGHT NOW.', rows: rows, buttons: buttons, closeLabel: 'Done' });
+    choose({ title: 'Who\'s on', text: rows.length ? null : 'NOBODY ELSE IS ON RIGHT NOW.', rows: rows, buttons: buttons, closeLabel: 'Done' });
   }
   function peerCard(id) {
     var p = N() && N().peer(id);
-    if (!p) { panel(); return; }
+    if (!p) {                                         // a partner who's away: their places, a letter
+      var f = away().filter(function (x) { return x.id === id; })[0];
+      if (!f) { panel(); return; }
+      var bs = [];
+      extras.forEach(function (fn) { try { bs = bs.concat(fn(id, null, true) || []); } catch (e) { /* */ } });
+      bs.push({ label: 'Back', act: function () { panel(); return false; } });
+      choose({ title: cap(f.name), text: (cap(f.name) + ' isn\'t on right now.').toUpperCase(), buttons: bs, closeLabel: 'Done' });
+      return;
+    }
     var buttons = [], why = canGo(p);
     if (others[id]) buttons.push({ label: 'Walk over', act: function () { menu(id); return false; } });
     else buttons.push({ label: why ? 'Go to ' + cap(p.name) + ' (' + why + ')' : 'Go to ' + cap(p.name), disabled: !!why, act: function () { goTo(id); } });
@@ -300,9 +317,12 @@ var BridgeMulti = (function () {
     if (x == null || !w || !w.collisions) return null;
     var cx = Math.round(x), cy = Math.round(y + 0.2), best = null;
     for (var r = 1; r <= 4 && !best; r++) {
-      for (var dy = -r; dy <= r && !best; dy++) for (var dx = -r; dx <= r && !best; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-        var tx = cx + dx, ty = cy + dy;
+      var ring = [];
+      for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r) ring.push([dx, dy]);
+      // beside them first, then in front, then behind (where they'd hide you)
+      ring.sort(function (a, b) { var k = function (p) { return (p[1] === 0 ? 0 : p[1] > 0 ? 1 : 2) * 10 + Math.abs(p[0]); }; return k(a) - k(b); });
+      for (var i = 0; i < ring.length && !best; i++) {
+        var tx = cx + ring[i][0], ty = cy + ring[i][1];
         if (ty >= 0 && ty < w.height && tx >= 0 && tx < w.width && w.collisions[ty][tx] === 0) best = { x: tx, y: ty };
       }
     }
@@ -352,7 +372,8 @@ var BridgeMulti = (function () {
   wire();
   requestAnimationFrame(frame);
 
-  return { menu: menu, panel: panel, emote: emote, say: say, inst: inst, myInst: myInst, PERSONAL: PERSONAL, addMenu: addMenu, addPanel: addPanel,
+  var api = { menu: menu, panel: panel, emote: emote, say: say, inst: inst, myInst: myInst, PERSONAL: PERSONAL, addMenu: addMenu, addPanel: addPanel,
            guard: goGuard, travel: travel, visiting: function () { return visiting; }, setVisiting: function (id) { visiting = id || null; },
-           others: function () { return others; }, cap: cap, placeOf: placeOf };
+           others: function () { return others; }, cap: cap, placeOf: placeOf, friends: null };
+  return api;
 })();

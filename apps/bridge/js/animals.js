@@ -254,5 +254,5 @@ var BridgeAnimals = (function () {
     return st.herd.map(function (a) { return { name: a.name, kind: a.kind, hearts: a.hearts, ready: ready(a) }; });
   }
 
-  return { decorate: decorate, barn: barn, use: use, journal: journal, KINDS: KINDS, _st: function () { return st; } };
+  return { reload: function () { st = load(); live = {}; }, decorate: decorate, barn: barn, use: use, journal: journal, KINDS: KINDS, _st: function () { return st; } };
 })();
