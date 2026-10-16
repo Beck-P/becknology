@@ -37,13 +37,15 @@ HEIGHT_RANGE = 3.0      # the height pass maps z in [-3, 3] tiles to 0..1
 SOLID_COVER = 0.3       # Kit.solid: a footprint no longer than a tile blocks the cells it covers at least this much of
 
 
-def _cells(a0, a1):
-    """The cells k.solid blocks along one axis of a footprint [a0, a1)."""
+def _cells(a0, a1, feet=0.5):
+    """The cells k.solid blocks along one axis of a footprint [a0, a1). feet: where in its cell a standing character's
+    feet are along this axis (0.5 across, 0.9 down the rows) — a sliver too thin to cover any cell blocks the one whose
+    feet would be on it (a rail on the line between two rows blocks the row above)."""
     full = range(int(math.floor(a0)), int(math.ceil(a1)))
     if a1 - a0 > 1.05:
         return list(full)
     keep = [c for c in full if min(a1, c + 1) - max(a0, c) >= SOLID_COVER - 1e-9]
-    return keep or [int(math.floor((a0 + a1) / 2))]
+    return keep or [int(math.floor((a0 + a1) / 2 - feet + 0.5))]
 
 
 def _scale(x, y, z):
@@ -330,7 +332,7 @@ class Kit:
         if self._var is not None:
             return
         for c in _cells(x0, x1):
-            for r in _cells(r0, r1):
+            for r in _cells(r0, r1, feet=0.9):
                 self.blocked.add((c, r))
 
     def solid_post(self, cx, cr):
