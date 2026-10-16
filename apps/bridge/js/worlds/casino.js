@@ -16,9 +16,10 @@
  * On the District street the Royale's two searchlights sweep the sky (`royale.beams`) and its tall screens play the
  * house's own ads (js/skyline.js kind 'royale').
  *
- * The Crown Room's rope (`royale_vip`): opens for a pilot whose poker winnings (BridgeCasino.pokerWon(), from
- * js/casino.js) reach BridgeCasino.HIGH_ROLLER; otherwise Bruno says how far short you are. Without BridgeCasino
- * the rope stays shut.
+ * The Crown Room's rope (`royale_vip`): opens once Royale Link says the high-roller room is open
+ * (BridgeCasino.unlocked(), js/casino.js: poker winnings, BridgeCasino.pokerWon(), at BridgeCasino.HIGH_ROLLER);
+ * otherwise Bruno says how far short you are. Without BridgeCasino the rope stays shut. (The Crown Room's
+ * tables are `"stakes": "high"`, which open at high limits whoever sits down - this rope is what keeps them earned.)
  *
  *   BridgeRoyale.crashAt(now)   the crash round now: { m, crashed, t } (shared by every screen)
  *   BridgeRoyale.vipOpen()      may this pilot go up to the Crown Room?
@@ -522,12 +523,13 @@ var BridgeRoyale = (function () {
     var C = typeof BridgeCasino !== 'undefined' ? BridgeCasino : null;
     var need = C && C.HIGH_ROLLER != null ? C.HIGH_ROLLER : 1000;
     var won = C && typeof C.pokerWon === 'function' ? Number(C.pokerWon()) || 0 : null;
-    return { need: need, won: won };
+    var open = !!C && (typeof C.unlocked === 'function' ? !!C.unlocked() : won !== null && won >= need);
+    return { need: need, won: won, open: open };
   }
-  function vipOpen() { var v = vipNeed(); return v.won !== null && v.won >= v.need; }
+  function vipOpen() { return vipNeed().open; }
   function rope(inter) {
     var v = vipNeed();
-    if (v.won !== null && v.won >= v.need) {
+    if (v.open) {
       if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('door');
       BridgeInteractions.say('THE CROWN ROOM', 'BRUNO UNHOOKS THE VELVET ROPE BEFORE YOU REACH IT. "THE DUCHESS HAS BEEN ASKING AFTER YOU. UP YOU GO."');
       setTimeout(function () { BridgeWorld.enterWorld(inter.target || 'arcadia-casino-vip', inter.spawn || [10, 12]); }, 1200);
