@@ -126,7 +126,7 @@ var BridgeSloop = (function () {
   // cast off from, so every island lies at its true place: whichever are near you come up over the horizon (loaded
   // and placed at their real offsets), steer the wrong way and you miss them, keep on the right way and you arrive,
   // charted or not.
-  var K = 700, KY = K * 0.72;
+  var K = 600, KY = K * 0.72;
   var LOAD_R = 60, DROP_R = 110;                        // islands come up inside this many tiles of their land, go past this
   var EDGE = [0.03, 0.04, 0.97, 0.96];                  // the edge of the known seas (chart): the swell sets you back
   // each island's land and shallows round its map's centre, tiles [x0, x1, r0, r1] (measured from the renders'
