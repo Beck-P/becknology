@@ -443,6 +443,11 @@ A world opts in with a `lighting` block in its JSON (see the header of `js/light
 ### Ground under objects
 Lumar object tiles (NPCs, lanterns, crates, stalls) paint the world's ground under themselves via `drawGround()`. A world chooses it with `"groundTile"` in its JSON (e.g. `28` cobblestone in the Market Square). New object drawers should call `drawGround`, not a specific floor.
 
+## Multiplayer (playing together)
+Beck and Alyssa play the same game at the same time: their own progress, the same worlds. Built on the Supabase project the game already uses — `docs/supabase/2026-10-16-multiplayer.sql` (run once) adds the tables; seeing each other needs none (Realtime). Everything degrades to single-player in the browser when the tables or the connection aren't there. Ownership is **separate but open to each other**: each keeps their own homes, farm, island and fleet; partners can visit and help in each other's anytime.
+
+- **Cloud save** (`js/cloud.js`, BridgeCloud; table `pilot_saves`): every `bridge_*` localStorage key (all but `SKIP`: who's signed in, sound, screen state, the sync's bookkeeping; the hotbar has its own `pilot_inventory` row) as one jsonb document per pilot with a save counter `rev`. On sign-in (it wraps `BridgeState.setPilot`) the row is fetched: newer than this device's last sync → written into localStorage and the page reloads once (guarded by `sessionStorage.bridge_cloud_reload`); otherwise this device pushes. Pushes every 10 s when something changed and when the tab hides. The browser remembers whose game it holds (`bridge_owner`): signing in as someone else on the same browser saves the last pilot's changes to their row, clears the game (hotbar and world position too) and brings yours. A device's first sync with progress of its own keeps whichever game is bigger; anything replaced is kept locally in `bridge_cloud_backup`. `BridgeCloud.peek(id)` / `.write(id, key, value)` read and write another pilot's save (visiting a partner's places). Local testing: the scratch `fakesupa.py` / `fakesupa.js` stand in for Supabase (a tiny table store and a Realtime relay) — the real project isn't reachable from the build container.
+
 ## Don't
 
 - Don't ask the image model for "isometric," "diagonal rotation," "realistic perspective," "side view," or "pure top-down roof-only view." High-oblique elevated front-facing only.

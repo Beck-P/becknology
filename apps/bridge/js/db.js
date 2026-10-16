@@ -71,6 +71,7 @@ var BridgeDB = (function () {
   }
 
   return {
+    client: function () { return client; },       // the shared Supabase client (js/cloud.js, js/net.js)
     createPilot: createPilot,
     lookupPilot: lookupPilot,
     updateLastSeen: updateLastSeen
