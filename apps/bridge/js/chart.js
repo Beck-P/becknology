@@ -432,9 +432,7 @@ var BridgeChart = (function () {
     document.addEventListener('keydown', function (e) {
       if ((e.key === 'c' || e.key === 'C') && !e.repeat && !el && available() && !e.defaultPrevented) {
         var t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
-        if (document.querySelector('.world-dialog.visible, #sloop-menu, #quest-journal.visible, #treasure-map, #fishing.visible')) return;
-        var inv = document.getElementById('inventory-menu');
-        if (inv && getComputedStyle(inv).display !== 'none') return;
+        if (document.querySelector('.world-dialog.visible, #sloop-menu, #game-menu.open, #treasure-map, #fishing.visible')) return;   // (the menu's Map tab opens it itself)
         if (!sailing() && BridgeWorld.getMode && BridgeWorld.getMode()) return;          // skiing, climbing, boarding...
         e.preventDefault(); open();
       }
@@ -442,6 +440,6 @@ var BridgeChart = (function () {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  return { known: known, charted: charted, dest: dest, setDest: setDest, decorate: decorate, shop: shop, open: open, close: close, toggle: toggle,
+  return { known: known, charted: charted, dest: dest, setDest: setDest, decorate: decorate, shop: shop, open: open, close: close, toggle: toggle, islandOf: islandOf,
            isOpen: function () { return !!el; }, SEA: SEA, _state: function () { return st; } };
 })();

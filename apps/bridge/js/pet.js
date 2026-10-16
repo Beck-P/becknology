@@ -61,7 +61,7 @@ var BridgePet = (function () {
           st.pets[kind] = { kind: kind, name: v, since: Date.now(), pats: 0 };
           var first = !st.whistle;
           st.active = kind; st.whistle = true; store();
-          if (first && typeof BridgeInventory !== 'undefined') BridgeInventory.addItem('whistle', 1);
+          if (first && typeof BridgeInventory !== 'undefined') BridgeInventory.give('whistle', 1);
           me = null;
           sfx('quest');
           toast('A new friend', v, 'Follows you everywhere' + (first ? ' · the whistle calls them' : ''));

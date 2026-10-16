@@ -67,8 +67,12 @@ var BridgeHome = (function () {
     lemon_tree: { type: 'home_piece', label: 'LEMON TREE', prompt: 'PRESS E TO LOOK' },
     orrery: { type: 'home_piece', label: 'ORRERY', prompt: 'PRESS E TO LOOK' },
     nebula_tank: { type: 'home_piece', label: 'NEBULA TANK', prompt: 'PRESS E TO LOOK' },
-    trunk: { type: 'home_piece', label: 'OLD TRUNK', prompt: 'PRESS E TO OPEN' }
+    // chests keep things (js/storage.js opens them in the menu's Backpack; what's inside rides on the layout entry, `items`)
+    crate: { type: 'chest', label: 'CRATE', prompt: 'PRESS E TO OPEN' },
+    trunk: { type: 'chest', label: 'OLD TRUNK', prompt: 'PRESS E TO OPEN' },
+    strongbox: { type: 'chest', label: 'STRONGBOX', prompt: 'PRESS E TO OPEN' }
   };
+  function full(q) { return !!(q && q.items && q.items.some(function (s) { return s && s.count > 0; })); }
   var BOOKS = ['"THE SPORE SEAS, A NATURAL HISTORY" - THE PAGE ON MIDNIGHT IS MISSING.',
                '"KNOTS FOR THE NERVOUS SAILOR." SOMEONE HAS PRACTISED THE NOOSE.',
                '"WHAT THE LIGHTHOUSE SAW," A NOVEL. THE KEEPER DID IT.',
@@ -252,8 +256,6 @@ var BridgeHome = (function () {
       case 'desk':                                            // your journal, written up at your own desk
         if (typeof BridgeQuests !== 'undefined' && BridgeQuests.open) return BridgeQuests.open();
         return say('DESK', 'A GOOD DESK. NOTHING TO WRITE YET.');
-      case 'trunk':
-        return say('OLD TRUNK', 'BLANKETS, A SPYGLASS WITH NO LENS, AND A LETTER YOU WROTE AND NEVER SENT. YOU CLOSE IT AGAIN.');
     }
     return say((P.name || 'IT').toUpperCase(), 'IT LOOKS GOOD THERE.');
   }
@@ -382,7 +384,7 @@ var BridgeHome = (function () {
   }
   function finish() {
     if (!ed) return;
-    if (ed.held && ed.held.from) { layout(cur.id).push({ id: ed.held.id, x: ed.held.from.x, y: ed.held.from.y }); apply(); }
+    if (ed.held && ed.held.from) { layout(cur.id).push(entry(ed.held, ed.held.from.x, ed.held.from.y)); apply(); }
     store();
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('pointermove', onMove, true);
@@ -469,7 +471,7 @@ var BridgeHome = (function () {
     if (ed.held) {
       var why = check(ed.held.id, ed.cx, ed.cy);
       if (why) return note(why, true);
-      layout(cur.id).push({ id: ed.held.id, x: ed.cx, y: ed.cy });
+      layout(cur.id).push(entry(ed.held, ed.cx, ed.cy));
       var id = ed.held.id, fresh = !ed.held.from;
       ed.held = null;
       apply(); store(); sfx('pickup');
@@ -484,7 +486,7 @@ var BridgeHome = (function () {
     if (q) {
       var L = layout(cur.id);
       L.splice(L.indexOf(q), 1);
-      ed.held = { id: q.id, from: { x: q.x, y: q.y } };
+      ed.held = { id: q.id, from: { x: q.x, y: q.y }, items: q.items };          // a chest takes its things with it
       apply(); sfx('pickup');
       return note('');
     }
@@ -494,13 +496,20 @@ var BridgeHome = (function () {
   }
   function putAway() {
     if (!ed) return;
+    if (ed.held && full(ed.held)) return note('EMPTY IT FIRST: PUT IT DOWN, OPEN IT AND TAKE WHAT\'S INSIDE.', true);
     if (ed.held) { ed.held = null; store(); sfx('close'); return note('PUT AWAY. IT\'S IN YOUR TRAY WHEN YOU WANT IT.'); }
     var q = under(ed.cx, ed.cy);
     if (!q) return note('NOTHING THERE TO PUT AWAY.', true);
+    if (full(q)) return note('EMPTY IT FIRST: OPEN IT AND TAKE WHAT\'S INSIDE.', true);
     var L = layout(cur.id);
     L.splice(L.indexOf(q), 1);
     apply(); store(); sfx('close');
     note('PUT AWAY.');
+  }
+  function entry(held, x, y) {     // a layout entry for the piece in hand (a chest keeps what's in it)
+    var e = { id: held.id, x: x, y: y };
+    if (held.items) e.items = held.items;
+    return e;
   }
   function under(x, y) {          // the piece on a tile; furniture before the rug it stands on
     var L = layout(cur.id), hit = null;
@@ -511,6 +520,18 @@ var BridgeHome = (function () {
       hit = hit || L[i];
     }
     return hit;
+  }
+
+  // buy a piece from elsewhere (the Ship's Chandler, js/storage.js): it goes in your tray, to put down with H
+  function buyPiece(pid) {
+    var P = byId[pid];
+    if (!P || typeof BridgeProgression === 'undefined' || !BridgeProgression.wagerCoins) return Promise.resolve({ ok: false, reason: 'closed' });
+    return BridgeProgression.wagerCoins(P.price, 'furniture:' + pid).then(function (res) {
+      if (!res || !res.ok) return { ok: false, reason: res && (res.reason === 'insufficient' || res.reason === 'no_balance') ? 'insufficient' : 'failed' };
+      save.have[pid] = (save.have[pid] || 0) + 1;
+      store();
+      return { ok: true };
+    }).catch(function () { return { ok: false, reason: 'failed' }; });
   }
 
   function shopBuy(p) {
@@ -713,5 +734,6 @@ var BridgeHome = (function () {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
   return { decorate: decorate, use: use, buy: buy, edit: edit, done: finish, owns: owns, editing: function () { return !!ed; }, reload: function () { save = load(); },
-           pieces: function () { return pieces; }, _save: function () { return save; }, _check: function (pid, x, y) { return check(pid, x, y); } };
+           pieces: function () { return pieces; }, piece: function (id) { return byId[id] || null; }, spare: spare, buyPiece: buyPiece, persist: store,
+           HOMES: HOMES, _save: function () { return save; }, _check: function (pid, x, y) { return check(pid, x, y); } };
 })();

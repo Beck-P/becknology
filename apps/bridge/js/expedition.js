@@ -174,7 +174,7 @@ var BridgeExpedition = (function () {
   function camp() {
     if (!st.camp) {
       st.camp = true; store();
-      if (typeof BridgeInventory !== 'undefined') BridgeInventory.addItem('summit_crystal', 2);
+      if (typeof BridgeInventory !== 'undefined') BridgeInventory.give('summit_crystal', 2);
       if (typeof BridgeProgression !== 'undefined') BridgeProgression.awardCoins(80, 'expedition:camp');
       sfx('clue');
       toast('The old camp', 'Two summit crystals, 80 coins', 'And a last page');

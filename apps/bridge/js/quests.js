@@ -10,8 +10,11 @@
  * when it only counts once those are found. Progress is kept in localStorage.
  *
  * UI: a toast under the place label when something is found, and the
- * journal (J, or the Journal pill) listing every quest begun, its clues
- * found and how many are still missing.
+ * journal — the game menu's Journal tab (J, or the Menu pill; js/menu.js):
+ * Next up (what to do now: the quests under way and where their missing
+ * clues are, takings, the farm, who here you haven't met, the ways on you
+ * haven't taken), every quest begun with its clues found, the log, and the
+ * rest of what's yours (crew, businesses, the farm, the fleet...).
  *
  * The log (localStorage bridge_log): what you've done, newest first, at the
  * top of the journal. Every toast lands in it (they all say "J Journal", so
@@ -22,7 +25,7 @@ var BridgeQuests = (function () {
   var KEY = 'bridge_quests';
   var defs = null;
   var state = {};
-  var journal = null, toastEl = null, toastTimer = null, pill = null;
+  var toastEl = null, toastTimer = null, pill = null;
 
   function load() {
     try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
@@ -74,7 +77,7 @@ var BridgeQuests = (function () {
           if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('clue');
         }
         save();
-        if (journal && journal.classList.contains('visible')) render();
+        if (shown()) render();
       });
     });
   }
@@ -83,7 +86,7 @@ var BridgeQuests = (function () {
   // ---- the log ----------------------------------------------------------------------------------
   var LOG_KEY = 'bridge_log', LOG_MAX = 250, logged = [], logAll = false;
   try { logged = JSON.parse(localStorage.getItem(LOG_KEY) || '[]') || []; } catch (e) { logged = []; }
-  var QUIET = { 'Course set': 1, 'Whiteout': 1, 'Online': 1 };                   // hints of the moment, not things you did
+  var QUIET = { 'Course set': 1, 'Whiteout': 1, 'Online': 1, 'Made room': 1 };                   // hints of the moment, not things you did
   function note(kicker, title, sub) {
     if (QUIET[kicker]) return;
     var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld && BridgeWorld.getWorld(), last = logged[0];
@@ -91,7 +94,7 @@ var BridgeQuests = (function () {
     logged.unshift({ at: Date.now(), k: kicker, t: title, s: sub || '', w: (w && w.name) || '' });
     if (logged.length > LOG_MAX) logged.length = LOG_MAX;
     try { localStorage.setItem(LOG_KEY, JSON.stringify(logged)); } catch (e) { /* private mode: this session only */ }
-    if (journal && journal.classList.contains('visible') && !inCodex) render();
+    if (shown()) render();
   }
   function ago(t) {
     var m = Math.round((Date.now() - t) / 60000);
@@ -127,54 +130,133 @@ var BridgeQuests = (function () {
   function cap(t) { return String(t).toLowerCase().replace(/(^|\s)([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }); }
   function clock(t) { var m = Math.floor(t / 60), sec = t - m * 60; return m + ':' + (sec < 10 ? '0' : '') + sec.toFixed(1); }
 
-  // ---- the journal --------------------------------------------------------------------------
-  function render() {
+  // ---- the journal: a page of the game menu (js/menu.js) ----------------------------------------------------------
+  // Two columns on a wide screen: what to do next and your quests on the left, the log and everything else of yours
+  // on the right. (Fish and the Collection have tabs of their own.)
+  function li(t, cls) { return '<li' + (cls ? ' class="' + cls + '"' : '') + '>' + t + '</li>'; }
+  function section(title, count, body, cls) {
+    return '<section class="jn-sec' + (cls ? ' ' + cls : '') + '"><div class="jn-sec-head"><span class="jn-sec-title">' + esc(title) + '</span>' +
+      (count !== '' && count != null ? '<span class="jn-count">' + count + '</span>' : '') + '</div>' + body + '</section>';
+  }
+  function M() { return typeof BridgeMap !== 'undefined' ? BridgeMap : null; }
+  function placeOf(w) { var m = M(); return m && m.placeName ? m.placeName(w) : cap(String(w).replace(/-/g, ' ')); }
+  function beenTo(w) { var m = M(); return w.slice(-1) === '*' ? Object.keys(seen).some(function (k) { return k.indexOf(w.slice(0, -1)) === 0; }) : m && m.visited ? m.visited(w) : !!seen[w]; }
+  // where a quest's missing clues are: the places you know by name, the rest as somewhere on an island or a world
+  function whereNext(id) {
+    var q = defs[id], s = state[id] || { clues: {} }, by = {}, order = [];
+    q.clues.forEach(function (c) {
+      if (s.clues[c.id]) return;
+      var w = c.on.world.slice(-1) === '*' ? c.on.world.slice(0, -2) : c.on.world;
+      if (!by[w]) { by[w] = 0; order.push(w); }
+      by[w]++;
+    });
+    return order.map(function (w) {
+      var m = M(), known = beenTo(w), name = known ? placeOf(w) : (m && m.regionOf ? 'somewhere on ' + m.regionOf(w) + ' you haven\'t been' : 'somewhere you haven\'t been');
+      return { world: w, known: known, text: name + (by[w] > 1 ? ' (' + by[w] + ')' : '') };
+    });
+  }
+
+  // what to do next: active quests first, then things waiting for you, then where to look round here
+  function nextUp() {
+    var out = [], wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : '', m = M();
+    var active = Object.keys(defs || {}).filter(function (id) { return state[id] && !state[id].done; })
+      .sort(function (a, b) { return lastFound(b) - lastFound(a); });
+    active.slice(0, 3).forEach(function (id) {
+      var p = progress(id), w = whereNext(id)[0];
+      out.push({ tag: 'Quest', title: defs[id].title + ' · ' + p.found + '/' + p.total, text: w ? 'Next, look ' + (w.known ? 'in ' : '') + w.text + '.' : '', world: w && w.known ? w.world : null });
+    });
+    if (typeof BridgeBusiness !== 'undefined') BridgeBusiness.summary().forEach(function (b) {
+      if (b.pending > 0) out.push({ tag: 'Takings', title: b.pending + ' coins waiting', text: 'at ' + b.name + '.' });
+    });
+    if (typeof BridgeFarm !== 'undefined' && BridgeFarm.journal) {
+      var ripe = BridgeFarm.journal().rows.reduce(function (a, r) { return a + (r.ripe || 0); }, 0);
+      if (ripe) out.push({ tag: 'Farm', title: ripe + ' ready to pick', text: 'in your field on Verdance.', world: 'verdance' });
+    }
+    if (typeof BridgeInventory !== 'undefined' && BridgeInventory.freeSlots && BridgeInventory.freeSlots() === 0) {
+      out.push({ tag: 'Pack', title: 'Your pack is full', text: 'Sell to a trader, or leave things in a chest: the sea chest on the bridge, the locker in your quarters.' });
+    }
+    // round here: people you haven't met, doors to places you haven't been
+    if (wid && typeof BridgePeople !== 'undefined') {
+      var all = BridgePeople.all(), unmet = Object.keys(all).filter(function (pid) {
+        return !BridgePeople.met(pid) && all[pid].at.some(function (a) { return a.world === wid; });
+      }).length;
+      if (unmet) out.push({ tag: 'Here', title: unmet === 1 ? 'Someone here you haven\'t met' : unmet + ' people here you haven\'t met',
+                            text: 'Walk up and talk (' + (document.documentElement.classList.contains('touch') ? 'A' : 'E') + '). Their rumours start quests.' });
+    }
+    if (m && m.newDoors) {
+      var nd = m.newDoors(wid);
+      if (nd) out.push({ tag: 'Explore', title: nd === 1 ? 'A way on from here you haven\'t taken' : nd + ' ways on from here you haven\'t taken', text: 'They\'re the ? marks on your map' + (document.documentElement.classList.contains('touch') ? '.' : ' (N).'), world: wid, tab: true });
+    }
+    if (m && m.unseenSystems) {
+      var us = m.unseenSystems();
+      if (us && out.length < 5) out.push({ tag: 'Voyage', title: us + (us === 1 ? ' world' : ' worlds') + ' you\'ve never set foot on', text: 'The helm on the Wayfarer\'s bridge jumps the ship. The shuttle takes you down.' });
+    }
+    if (logged.length < 6) {
+      var tch = document.documentElement.classList.contains('touch');
+      out.push({ tag: 'Tip', title: 'Look at everything', text: (tch ? 'Tap A' : 'Press E') + ' beside people, doors and things to talk, go in and use them. The menu (' + (tch ? 'the Menu button' : 'Tab') + ') has your backpack, the map and this journal.' });
+    }
+    return out.slice(0, 6);
+  }
+  function lastFound(id) { var s = state[id], t = s.started || 0; Object.keys(s.clues || {}).forEach(function (c) { t = Math.max(t, s.clues[c]); }); return t; }
+
+  function render(el) {
+    page = el || page;
+    if (!page) return;
     var ids = Object.keys(defs || {}).filter(function (id) { return state[id]; });
-    ids.sort(function (a, b) { return (!!state[a].done - !!state[b].done) || (state[b].started - state[a].started); });
-    var html = '<div class="qj-head"><span class="qj-title">Journal</span>' +
-      (typeof BridgeCodex !== 'undefined' ? '<button class="qj-tab qj-codex">Collection <i>' + BridgeCodex.count() + '/' + BridgeCodex.total() + '</i></button>' : '') +
-      '<button class="qj-close" aria-label="Close"><span class="ip-key">Esc</span></button></div>';
+    ids.sort(function (a, b) { return (!!state[a].done - !!state[b].done) || (lastFound(b) - lastFound(a)); });
+    var left = '', right = '';
+    // what to do next
+    var nx = nextUp();
+    left += section('Next up', '', nx.length ? '<ul class="jn-next">' + nx.map(function (n, i) {
+      return '<li><span class="jn-tag">' + esc(n.tag) + '</span><div><b>' + esc(n.title) + '</b>' + (n.text ? '<span>' + esc(n.text) + '</span>' : '') + '</div>' +
+        (n.world ? '<button type="button" class="gm-btn gm-btn-sm jn-go" data-w="' + esc(n.world) + '">Map</button>' : '') + '</li>';
+    }).join('') + '</ul>' : '<div class="jn-empty">All caught up. Go somewhere you haven\'t been.</div>', 'jn-first');
+    // quests: the ones under way, then the finished ones folded up
+    var going = ids.filter(function (id) { return !state[id].done; }), done = ids.filter(function (id) { return state[id].done; });
+    var qh = going.map(function (id) {
+      var q = defs[id], s = state[id], p = progress(id), nxt = whereNext(id);
+      return '<article class="jn-quest"><div class="jn-q-head"><span class="jn-q-title">' + esc(q.title) + '</span><span class="jn-count">' + p.found + ' / ' + p.total + '</span></div>' +
+        '<div class="jn-bar"><i style="width:' + Math.round(p.found / p.total * 100) + '%"></i></div>' +
+        '<div class="jn-q-where">' + esc(q.where) + '</div><p class="jn-q-text">' + esc(q.start) + '</p><ul class="jn-clues">' +
+        q.clues.filter(function (c) { return s.clues[c.id]; }).map(function (c) { return li(esc(c.text), 'found'); }).join('') +
+        (nxt.length ? li('Still to find: ' + nxt.map(function (w) { return esc(w.text); }).join(' · '), 'missing') : '') + '</ul></article>';
+    }).join('');
+    if (done.length) {
+      qh += '<details class="jn-done"' + (going.length ? '' : ' open') + '><summary>Finished · ' + done.length + '</summary>' + done.map(function (id) {
+        var q = defs[id];
+        return '<article class="jn-quest done"><div class="jn-q-head"><span class="jn-q-title">' + esc(q.title) + '</span><span class="jn-count">+' + q.reward + '</span></div>' +
+          '<p class="jn-q-text">' + esc(q.done) + '</p></article>';
+      }).join('') + '</details>';
+    }
+    left += section('Quests', ids.length ? going.length + ' under way' : '', qh || '<div class="jn-empty">None yet. People\'s rumours, odd things lying about and the notes on boards start them.</div>');
+    // the log
     if (logged.length) {
-      var shown = logAll ? logged : logged.slice(0, 8);
-      html += '<section class="qj-quest qj-crew qj-log"><div class="qj-q-head"><span class="qj-q-title">Your log</span>' +
-        '<span class="qj-q-count">' + logged.length + (logged.length >= LOG_MAX ? '+' : '') + '</span></div><ul class="qj-clues">' +
-        shown.map(function (e) {
-          return '<li class="found"><b>' + esc(e.k) + '</b> · ' + esc(e.t) + (e.s ? ' — ' + esc(e.s) : '') +
-            '<span class="qj-log-when">' + (e.w && cap(e.w) !== e.t ? esc(cap(e.w)) + ' · ' : '') + ago(e.at) + '</span></li>';
-        }).join('') + '</ul>' +
-        (logged.length > 8 ? '<button class="qj-tab qj-log-more">' + (logAll ? 'Show less' : 'Show all ' + logged.length) + '</button>' : '') + '</section>';
+      var shown = logAll ? logged : logged.slice(0, 10);
+      right += section('Your log', logged.length + (logged.length >= LOG_MAX ? '+' : ''), '<ul class="jn-log">' + shown.map(function (e) {
+        return '<li><b>' + esc(e.k) + '</b> · ' + esc(e.t) + (e.s ? ' — ' + esc(e.s) : '') +
+          '<span class="jn-when">' + (e.w && cap(e.w) !== e.t ? esc(cap(e.w)) + ' · ' : '') + ago(e.at) + '</span></li>';
+      }).join('') + '</ul>' + (logged.length > 10 ? '<button type="button" class="gm-btn gm-btn-sm jn-more">' + (logAll ? 'Show less' : 'Show all ' + logged.length) + '</button>' : ''));
     }
+    right += others();
+    if (!right) right = section('Your log', '', '<div class="jn-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>');
+    page.innerHTML = '<div class="jn"><div class="jn-col">' + left + '</div><div class="jn-col">' + right + '</div></div>';
+    page.querySelectorAll('.jn-go').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.stopPropagation(); if (typeof BridgeMenu !== 'undefined') BridgeMenu.show('map', { world: b.getAttribute('data-w') }); });
+    });
+    var more = page.querySelector('.jn-more');
+    if (more) more.addEventListener('click', function (e) { e.stopPropagation(); logAll = !logAll; render(); });
+  }
+
+  // everything else that's yours: crew, businesses, the farm, your fleet, the curios, the mountain
+  function others() {
+    var html = '';
     var crew = typeof BridgeCrew !== 'undefined' ? BridgeCrew.list() : [];
-    if (crew.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your crew</span>' +
-        '<span class="qj-q-count">' + crew.length + '</span></div><ul class="qj-clues">' +
-        crew.map(function (c) { return '<li class="found"><b>' + esc(c.name) + '</b>, ' + esc(c.role) + ' - ' + esc(c.perkText) + '</li>'; }).join('') +
-        '</ul></section>';
-    }
+    if (crew.length) html += section('Your crew', crew.length, '<ul class="jn-list">' +
+      crew.map(function (c) { return li('<b>' + esc(c.name) + '</b>, ' + esc(c.role) + ' - ' + esc(c.perkText)); }).join('') + '</ul>');
     var biz = typeof BridgeBusiness !== 'undefined' ? BridgeBusiness.summary() : [];
-    if (biz.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your businesses</span>' +
-        '<span class="qj-q-count">' + biz.length + '</span></div><ul class="qj-clues">' +
-        biz.map(function (b) {
-          return '<li class="found"><b>' + esc(b.name) + '</b> - ' + b.perHour + ' coins an hour' + (b.manager ? ', run by ' + esc(b.manager) : '') +
-            (b.pending ? '. <b>' + b.pending + '</b> waiting to collect' : '') + '</li>';
-        }).join('') + '</ul></section>';
-    }
-    var fished = typeof BridgeFishing !== 'undefined' ? BridgeFishing.journal() : { fish: [], bottles: [] };
-    if (fished.fish.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Fish</span>' +
-        '<span class="qj-q-count">' + fished.fish.length + ' kinds</span></div><ul class="qj-clues">' +
-        fished.fish.slice().sort(function (a, b) { return (b.tier || 0) - (a.tier || 0); }).map(function (f) {
-          var T = f.tier && typeof BridgeFishArt !== 'undefined' ? BridgeFishArt.TIERS[f.tier] : null;   // the rare ones first, in their colour
-          return '<li class="found"><b' + (T ? ' style="color:' + T.col + '"' : '') + '>' + esc(f.name) + '</b>' + (T ? ' <i>' + T.name.toLowerCase() + '</i>' : '') + ' \u00d7' + f.n + (f.best ? ', biggest ' + f.best + ' cm' : '') + '</li>';
-        }).join('') +
-        '</ul></section>';
-    }
-    if (fished.bottles.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Messages in bottles</span>' +
-        '<span class="qj-q-count">' + fished.bottles.length + '</span></div><ul class="qj-clues">' +
-        fished.bottles.map(function (b) { return '<li class="found">' + esc(b) + '</li>'; }).join('') + '</ul></section>';
-    }
+    if (biz.length) html += section('Your businesses', biz.length, '<ul class="jn-list">' + biz.map(function (b) {
+      return li('<b>' + esc(b.name) + '</b> - ' + b.perHour + ' coins an hour' + (b.manager ? ', run by ' + esc(b.manager) : '') + (b.pending ? '. <b>' + b.pending + '</b> waiting to collect' : ''));
+    }).join('') + '</ul>');
     var farm = typeof BridgeFarm !== 'undefined' ? BridgeFarm.journal() : { rows: [] };
     var stead = typeof BridgeHomestead !== 'undefined' ? BridgeHomestead.journal() : null;
     if (farm.rows.length || (stead && stead.owned)) {
@@ -189,15 +271,14 @@ var BridgeQuests = (function () {
         if (stead.tam) led.push('Tam is watering for another ' + Math.max(1, Math.round((stead.tam - Date.now()) / 3600000)) + ' h');
         if (stead.odile) led.push('Odile is bringing it in for another ' + Math.max(1, Math.round((stead.odile - Date.now()) / 3600000)) + ' h');
       }
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">' + esc(stead && stead.owned ? stead.name : 'The farm on Verdance') + '</span>' +
-        '<span class="qj-q-count">' + farm.tilled + ' tilled</span></div><ul class="qj-clues">' +
-        led.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') +
+      html += section(stead && stead.owned ? stead.name : 'The farm on Verdance', farm.tilled + ' tilled', '<ul class="jn-list">' +
+        led.map(function (l) { return li(l); }).join('') +
         farm.rows.map(function (r) {
           var bits = [];
           if (r.n) bits.push(r.n + ' in the ground' + (r.ripe ? ', <b>' + r.ripe + ' ready</b>' : '') + (r.dry ? ', ' + r.dry + ' thirsty' : ''));
           if (r.picked) bits.push(r.picked + ' brought in');
-          return '<li class="found"><b>' + esc(r.name.charAt(0) + r.name.slice(1).toLowerCase()) + '</b> - ' + bits.join('; ') + '</li>';
-        }).join('') + '</ul></section>';
+          return li('<b>' + esc(r.name.charAt(0) + r.name.slice(1).toLowerCase()) + '</b> - ' + bits.join('; '));
+        }).join('') + '</ul>');
     }
     // your fleet on Lumar's seas: ships and where they lie, hands, cargo, contracts, the holm's voyages (js/fleet.js, trade.js, holm.js)
     var fleetLines = [];
@@ -219,24 +300,13 @@ var BridgeQuests = (function () {
     }
     if (typeof BridgeCrown !== 'undefined' && BridgeCrown.journal()) fleetLines.push(BridgeCrown.journal());     // the Queen's commissions
     if (typeof BridgeHolm !== 'undefined' && BridgeHolm.owned()) fleetLines.push('<b>' + esc(BridgeHolm.name()) + '</b> is yours' + (BridgeHolm._state().chest ? ' - ' + BridgeHolm._state().chest + ' coins in its strongbox' : ''));
-    if (fleetLines.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your fleet</span>' +
-        '<span class="qj-q-count">' + (typeof BridgeFleet !== 'undefined' ? BridgeFleet.all().length : 1) + ' ships</span></div><ul class="qj-clues">' +
-        fleetLines.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
-    }
+    if (fleetLines.length) html += section('Your fleet', (typeof BridgeFleet !== 'undefined' ? BridgeFleet.all().length : 1) + ' ships', '<ul class="jn-list">' + fleetLines.map(function (l) { return li(l); }).join('') + '</ul>');
     var curios = typeof BridgeMagic !== 'undefined' ? BridgeMagic.journal() : [];
-    if (curios.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">The Lantern Beyond</span>' +
-        '<span class="qj-q-count">' + curios.length + ' of ' + BridgeMagic.total + ' curios</span></div><ul class="qj-clues">' +
-        curios.map(function (c) { return '<li class="found"><b>' + esc(c.name) + '</b> - ' + esc(c.lore) + '</li>'; }).join('') +
-        (curios.length < BridgeMagic.total ? '<li>The rest of the tale is out there. Wendel the Peddler sells rumours, and a lantern.</li>' : '') + '</ul></section>';
-    }
+    if (curios.length) html += section('The Lantern Beyond', curios.length + ' of ' + BridgeMagic.total + ' curios', '<ul class="jn-list">' +
+      curios.map(function (c) { return li('<b>' + esc(c.name) + '</b> - ' + esc(c.lore)); }).join('') +
+      (curios.length < BridgeMagic.total ? li('The rest of the tale is out there. Wendel the Peddler sells rumours, and a lantern.', 'missing') : '') + '</ul>');
     var ridge = typeof BridgeExpedition !== 'undefined' ? BridgeExpedition.journal() : [];
-    if (ridge.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">The Last Ridge</span>' +
-        '<span class="qj-q-count">past the Hoarspire</span></div><ul class="qj-clues">' +
-        ridge.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
-    }
+    if (ridge.length) html += section('The Last Ridge', 'past the Hoarspire', '<ul class="jn-list">' + ridge.map(function (l) { return li(l); }).join('') + '</ul>');
     var peaks = [];
     if (typeof BridgeClimb !== 'undefined') Object.keys(BridgeClimb.ROUTES).forEach(function (id) {
       var r = BridgeClimb.records(id);
@@ -246,86 +316,32 @@ var BridgeQuests = (function () {
       var b = BridgeSki.best(id);
       if (b) peaks.push('<b>' + esc(cap(BridgeSki.RUNS[id].name)) + '</b> (' + BridgeSki.RUNS[id].mark + ') - best run ' + clock(b));
     });
-    if (peaks.length) {
-      html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Hoarfell</span>' +
-        '<span class="qj-q-count">' + peaks.length + '</span></div><ul class="qj-clues">' +
-        peaks.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
-    }
-    if (!logged.length && !ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !curios.length && !peaks.length && !ridge.length && !fleetLines.length) {
-      html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
-    }
-    ids.forEach(function (id) {
-      var q = defs[id], s = state[id], p = progress(id);
-      html += '<section class="qj-quest' + (p.done ? ' done' : '') + '">' +
-        '<div class="qj-q-head"><span class="qj-q-title">' + esc(q.title) + '</span>' +
-        '<span class="qj-q-count">' + (p.done ? 'Complete' : p.found + ' / ' + p.total) + '</span></div>' +
-        '<div class="qj-q-where">' + esc(q.where) + '</div>' +
-        '<p class="qj-q-text">' + esc(p.done ? q.done : q.start) + '</p><ul class="qj-clues">';
-      q.clues.forEach(function (c) {
-        if (s.clues[c.id]) html += '<li class="found">' + esc(c.text) + '</li>';
-      });
-      if (!p.done && p.found < p.total) {
-        html += '<li class="missing">' + (p.total - p.found) + ' more to find</li>';
-      }
-      html += '</ul></section>';
-    });
-    journal.innerHTML = '<div class="qj-panel">' + html + '</div>';
-    journal.querySelector('.qj-close').addEventListener('click', close);
-    var cx = journal.querySelector('.qj-codex');
-    if (cx) cx.addEventListener('click', collection);
-    var more = journal.querySelector('.qj-log-more');
-    if (more) more.addEventListener('click', function () { logAll = !logAll; render(); });
-    inCodex = false;
-  }
-  // the Collection (js/codex.js), in the journal's own panel; Esc comes back
-  var inCodex = false;
-  function collection() {
-    inCodex = true;
-    var panel = journal.querySelector('.qj-panel');
-    panel.classList.add('cx-panel');
-    BridgeCodex.render(panel, render);
+    if (peaks.length) html += section('Hoarfell', peaks.length, '<ul class="jn-list">' + peaks.map(function (l) { return li(l); }).join('') + '</ul>');
+    return html;
   }
 
-  function open() {
-    if (!defs) return;
-    if (!journal) {
-      journal = document.createElement('div');
-      journal.id = 'quest-journal';
-      journal.addEventListener('click', function (e) { if (e.target === journal) close(); });
-      document.body.appendChild(journal);
-    }
-    render();
-    journal.classList.add('visible');
-    if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
-    document.addEventListener('keydown', onKey, true);
+  var page = null;
+  if (typeof BridgeMenu !== 'undefined') {
+    BridgeMenu.page('journal', { render: function (el) { render(el); }, leave: function () { page = null; } });
   }
+  function shown() { return !!page && typeof BridgeMenu !== 'undefined' && BridgeMenu.current() === 'journal'; }
+  function open() { if (typeof BridgeMenu !== 'undefined') BridgeMenu.open('journal'); }
+  function close() { if (shown()) BridgeMenu.close(); }
+  function toggle() { if (typeof BridgeMenu !== 'undefined') BridgeMenu.toggle('journal'); }
 
-  function close() {
-    if (!journal || !journal.classList.contains('visible')) return;
-    journal.classList.remove('visible');
-    document.removeEventListener('keydown', onKey, true);
-    if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
-  }
-
-  function onKey(e) {
-    if (e.key === 'Escape' && inCodex) { e.preventDefault(); e.stopPropagation(); render(); return; }
-    if (e.key === 'Escape' || e.key === 'j' || e.key === 'J') { e.preventDefault(); e.stopPropagation(); close(); }
-  }
-
-  function toggle() {
-    if (journal && journal.classList.contains('visible')) close(); else open();
-  }
-
-  // ---- the Journal pill, shown while you're in a world -----------------------------------------
+  // ---- the Menu pill, shown while you're in a world (it opens the game menu; it was the Journal pill) ---------------
   function init() {
     load();
     pill = document.createElement('button');
     pill.id = 'journal-pill';
-    pill.innerHTML = '<span class="ip-key">J</span> Journal';
-    pill.addEventListener('click', toggle);
+    pill.type = 'button';
+    pill.innerHTML = '<span class="ip-key">Tab</span><span class="jp-ico" aria-hidden="true"></span>Menu';
+    pill.title = 'Backpack (I), map (N), journal (J)';
+    if (typeof BridgeMenu !== 'undefined' && BridgeMenu.icon) pill.querySelector('.jp-ico').appendChild(BridgeMenu.icon('backpack', 2));
+    pill.addEventListener('click', function () { if (typeof BridgeMenu !== 'undefined') BridgeMenu.toggle(); });
     document.body.appendChild(pill);
     if (typeof BridgeState !== 'undefined') {
-      BridgeState.onChange(function (s) { pill.style.display = s === 'world' ? 'flex' : 'none'; if (s !== 'world') close(); });
+      BridgeState.onChange(function (s) { pill.style.display = s === 'world' ? 'flex' : 'none'; if (s !== 'world' && typeof BridgeMenu !== 'undefined') BridgeMenu.close(); });
       pill.style.display = BridgeState.getState && BridgeState.getState() === 'world' ? 'flex' : 'none';
     }
   }
@@ -355,6 +371,7 @@ var BridgeQuests = (function () {
   }
 
   return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary, note: note, arrived: arrived,
+           visited: function () { return seen; }, whereNext: function (id) { return defs && defs[id] ? whereNext(id) : []; }, render: function () { if (shown()) render(); },
            log: function () { return logged.slice(); },
            found: found, finished: finished, def: function (id) { return defs ? defs[id] || null : null; },
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },

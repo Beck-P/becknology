@@ -395,6 +395,17 @@
    "walk": false,
    "x": 24,
    "y": 15
+  },
+  {
+   "id": "strongbox",
+   "name": "Captain's Strongbox",
+   "price": 280,
+   "w": 1,
+   "d": 1,
+   "tall": 1.2,
+   "walk": false,
+   "x": 9,
+   "y": 7
   }
  ]
 }
