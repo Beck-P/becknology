@@ -11,6 +11,11 @@
  * UI: a toast under the place label when something is found, and the
  * journal (J, or the Journal pill) listing every quest begun, its clues
  * found and how many are still missing.
+ *
+ * The log (localStorage bridge_log): what you've done, newest first, at the
+ * top of the journal. Every toast lands in it (they all say "J Journal", so
+ * the journal has to have it), and so do the first time you set foot in each
+ * place (js/world.js) and the first time you meet each person (js/people.js).
  */
 var BridgeQuests = (function () {
   var KEY = 'bridge_quests';
@@ -73,7 +78,35 @@ var BridgeQuests = (function () {
   }
 
   // ---- the toast ---------------------------------------------------------------------------
+  // ---- the log ----------------------------------------------------------------------------------
+  var LOG_KEY = 'bridge_log', LOG_MAX = 250, logged = [], logAll = false;
+  try { logged = JSON.parse(localStorage.getItem(LOG_KEY) || '[]') || []; } catch (e) { logged = []; }
+  var QUIET = { 'Course set': 1, 'Whiteout': 1 };                   // hints of the moment, not things you did
+  function note(kicker, title, sub) {
+    if (QUIET[kicker]) return;
+    var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld && BridgeWorld.getWorld(), last = logged[0];
+    if (last && last.k === kicker && last.t === title && last.s === (sub || '') && Date.now() - last.at < 10000) return;
+    logged.unshift({ at: Date.now(), k: kicker, t: title, s: sub || '', w: (w && w.name) || '' });
+    if (logged.length > LOG_MAX) logged.length = LOG_MAX;
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(logged)); } catch (e) { /* private mode: this session only */ }
+    if (journal && journal.classList.contains('visible') && !inCodex) render();
+  }
+  function ago(t) {
+    var m = Math.round((Date.now() - t) / 60000);
+    return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago';
+  }
+  // the first time you set foot somewhere (js/world.js calls this as each world finishes loading)
+  var seen = {};
+  try { seen = JSON.parse(localStorage.getItem('bridge_log_seen') || '{}') || {}; } catch (e) { seen = {}; }
+  function arrived(worldId, name) {
+    if (!worldId || seen[worldId]) return;
+    seen[worldId] = Date.now();
+    try { localStorage.setItem('bridge_log_seen', JSON.stringify(seen)); } catch (e) { /* private mode */ }
+    if (name) setTimeout(function () { note('Arrived', cap(name), ''); }, 50);   // (after the world is current)
+  }
+
   function toast(kicker, title, sub, hint) {
+    note(kicker, title, sub);
     if (!toastEl) {
       toastEl = document.createElement('div');
       toastEl.className = 'quest-toast';
@@ -99,6 +132,16 @@ var BridgeQuests = (function () {
     var html = '<div class="qj-head"><span class="qj-title">Journal</span>' +
       (typeof BridgeCodex !== 'undefined' ? '<button class="qj-tab qj-codex">Collection <i>' + BridgeCodex.count() + '/' + BridgeCodex.total() + '</i></button>' : '') +
       '<button class="qj-close" aria-label="Close"><span class="ip-key">Esc</span></button></div>';
+    if (logged.length) {
+      var shown = logAll ? logged : logged.slice(0, 8);
+      html += '<section class="qj-quest qj-crew qj-log"><div class="qj-q-head"><span class="qj-q-title">Your log</span>' +
+        '<span class="qj-q-count">' + logged.length + (logged.length >= LOG_MAX ? '+' : '') + '</span></div><ul class="qj-clues">' +
+        shown.map(function (e) {
+          return '<li class="found"><b>' + esc(e.k) + '</b> · ' + esc(e.t) + (e.s ? ' — ' + esc(e.s) : '') +
+            '<span class="qj-log-when">' + (e.w && cap(e.w) !== e.t ? esc(cap(e.w)) + ' · ' : '') + ago(e.at) + '</span></li>';
+        }).join('') + '</ul>' +
+        (logged.length > 8 ? '<button class="qj-tab qj-log-more">' + (logAll ? 'Show less' : 'Show all ' + logged.length) + '</button>' : '') + '</section>';
+    }
     var crew = typeof BridgeCrew !== 'undefined' ? BridgeCrew.list() : [];
     if (crew.length) {
       html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Your crew</span>' +
@@ -206,7 +249,7 @@ var BridgeQuests = (function () {
         '<span class="qj-q-count">' + peaks.length + '</span></div><ul class="qj-clues">' +
         peaks.map(function (l) { return '<li class="found">' + l + '</li>'; }).join('') + '</ul></section>';
     }
-    if (!ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !curios.length && !peaks.length && !ridge.length && !fleetLines.length) {
+    if (!logged.length && !ids.length && !crew.length && !biz.length && !fished.fish.length && !farm.rows.length && !(stead && stead.owned) && !curios.length && !peaks.length && !ridge.length && !fleetLines.length) {
       html += '<div class="qj-empty">Nothing yet. Talk to people, look at things, go where the paths go.</div>';
     }
     ids.forEach(function (id) {
@@ -228,6 +271,8 @@ var BridgeQuests = (function () {
     journal.querySelector('.qj-close').addEventListener('click', close);
     var cx = journal.querySelector('.qj-codex');
     if (cx) cx.addEventListener('click', collection);
+    var more = journal.querySelector('.qj-log-more');
+    if (more) more.addEventListener('click', function () { logAll = !logAll; render(); });
     inCodex = false;
   }
   // the Collection (js/codex.js), in the journal's own panel; Esc comes back
@@ -307,7 +352,8 @@ var BridgeQuests = (function () {
       .map(function (id) { return { id: id, at: state[id].done }; });
   }
 
-  return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary,
+  return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary, note: note, arrived: arrived,
+           log: function () { return logged.slice(); },
            found: found, finished: finished, def: function (id) { return defs ? defs[id] || null : null; },
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            reset: function () { state = {}; save(); } };

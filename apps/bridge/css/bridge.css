@@ -1126,6 +1126,8 @@ html.touch #sound-pill .ip-key { display: none; }
   color: #e8dcc4;
 }
 .qj-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.qj-log-when { display: block; font-size: 11px; color: #8a8070; margin-top: 1px; }                    /* the log: where and when */
+.qj-log-more { margin: 6px 0 0 0; }
 
 /* Fishing off the piers (js/fishing.js): a strip of night sea under the pier */
 #fishing {

@@ -455,6 +455,7 @@ var BridgeWorld = (function () {
           // Drops are scoped to the current world — abandoning a zone wipes
           // whatever you left on the ground, same as Stardew leaving a day.
           if (typeof BridgeLoot !== 'undefined' && BridgeLoot.clear) BridgeLoot.clear();
+          if (typeof BridgeQuests !== 'undefined' && BridgeQuests.arrived) BridgeQuests.arrived(worldId, data.name);   // the log: somewhere new
           callback(world);
         };
         // Pre-rendered scenes load their art before the world appears

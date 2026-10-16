@@ -34,7 +34,12 @@ var BridgePeople = (function () {
   }
 
   function met(id) { return !!(memory[id] && memory[id].met); }
-  function meet(id) { (memory[id] = memory[id] || { asked: {} }).met = Date.now(); save(); }
+  function meet(id) {
+    var first = !met(id);
+    (memory[id] = memory[id] || { asked: {} }).met = Date.now(); save();
+    var p = cast && cast[id];                                       // the journal's log: someone new
+    if (first && p && typeof BridgeQuests !== 'undefined' && BridgeQuests.note) BridgeQuests.note('Met', p.name, p.role || '');
+  }
   function asked(id, q) { return !!(memory[id] && memory[id].asked && memory[id].asked[q]); }
   function ask(id, q) { var m = memory[id] = memory[id] || { asked: {} }; m.asked = m.asked || {}; m.asked[q] = Date.now(); save(); }
 
