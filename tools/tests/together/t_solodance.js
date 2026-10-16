@@ -1,0 +1,20 @@
+const T = require(__dirname + '/tg_lib.js');
+(async () => {
+  const b = await T.chromium.launch({ executablePath: require(__dirname + '/../chrome.js') });
+  await T.reset();
+  const p = await T.player(b, T.S, T.BECK);
+  const errs = []; p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::/.test(m.text())) errs.push(m.text()); });
+  await T.enter(p, 'arcadia-club', { x: 8, y: 4 });
+  await p.evaluate(() => BridgeDance.use({ type: 'dance' })); await p.waitForTimeout(300);
+  await T.click(p, /^Dance-off/); await p.waitForTimeout(3000);
+  console.log('dance-off players:', await p.evaluate(() => BridgeDance._run().players.map(x => x.name)), 'partner actor:', await p.evaluate(() => !!BridgeDance._run().partner));
+  await p.screenshot({ path: T.S + '/shots/solo_danceoff.png' });
+  await p.keyboard.press('Escape'); await p.waitForTimeout(500);
+  await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+  await p.evaluate(() => BridgeDance.use({ type: 'dance' })); await p.waitForTimeout(300);
+  await T.click(p, /^EASY/); await p.waitForTimeout(2000);
+  console.log('solo players:', await p.evaluate(() => BridgeDance._run().players.map(x => x.name)), 'hud net?', await p.evaluate(() => document.getElementById('dance-hud').classList.contains('net')));
+  await p.keyboard.press('Escape'); await p.waitForTimeout(300);
+  console.log('errors', errs);
+  await b.close();
+})();

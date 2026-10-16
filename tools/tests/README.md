@@ -1,0 +1,49 @@
+# Browser tests
+
+Headless-Chromium tests for the Bridge and Royale Link, driven by Playwright. They're how changes get checked
+before they ship: every world loading, two pilots playing together over a stand-in for Supabase, every game
+played together, the Neon Royale's tables, combat.
+
+```sh
+node tools/tests/run.js                 # everything (~40 min)
+node tools/tests/run.js world royale    # just those suites
+```
+
+`run.js` starts what it needs if it isn't already running: `serve.py` (the repo on :8766 with `vercel.json`'s
+rewrites, `/runouts` from `apps/runouts/dist`) and `fakesupa.py` (:8767). It fetches the chess CDN modules into
+`npm/` the first time (`npm.sh`), and stops the servers it started when it's done.
+
+## What you need
+
+- Node with Playwright (`npm i -g playwright`); `run.js` adds `npm root -g` to `NODE_PATH`.
+- Chromium: `$CHROME`, else the one pre-installed in Claude Code's cloud containers (`chrome.js`), else Playwright's.
+- Python 3 for the two servers.
+- For `royale`: Royale Link built (`cd apps/runouts && npm install && npm run build`).
+
+## Suites
+
+| suite | what it checks |
+|---|---|
+| `world` | `errs.js`: every world in `apps/bridge/assets/worlds` loads with no page errors, console errors or missing files. `actors.js`: who's drawn where in each. `landings.js`: the pad you land on in each place. `arrive.js`: sailing into a harbour. |
+| `multi` | two pilots (Beck and Alyssa) on the fake Supabase: seeing each other, walking, presence and away, gifts and trades, partners, shared clues, fighting together, health, sailing together, boats at sea, the players pill at sea, a sea fight together. |
+| `together` | every game played together (js/together.js): cabinets, helicopter, Fell Dice and Bones, chess, the dance floor, pachinko, Splice, the cipher room, the typist; the edges (a "not now", a watcher, a partner vanishing, someone elsewhere coming over); the games alone; table chat (desktop and phone). |
+| `royale` | every Neon Royale table opens its Royale Link game; coins staked and paid through the Bridge (Esc mid-round, a page closed with chips out); typing an exact hold'em bet (desktop and phone). |
+| `combat` | every weapon's swings land and do what they say (`hits.js`); a fight, blacking out and waking; a sea fight. |
+
+## Reading the results
+
+Each test prints what it saw. `run.js` marks a test **FAIL** when it crashes or times out, or reports a page error,
+a console error or a non-zero error count, and shows the lines that matter under each one. The rest is read by eye:
+the lines say things like `coins after 525 475` or `aly heard: …`, and screenshots land in `shots/` and
+`<suite>/shots/` (git-ignored). Run one test on its own with `NODE_PATH=$(npm root -g) node tools/tests/<suite>/<file>.js`
+(the multi tests take this folder as their first argument; servers must be up).
+
+Known: `mp_seafight`'s swivel damage is random, so its numbers vary run to run.
+
+## Pieces
+
+- `serve.py`, `fakesupa.py` — the servers. `fakesupa.js` — a fake supabase-js injected into the page, talking to
+  `fakesupa.py` (tables and a Realtime relay; it can fail tracks, drop presence and kill the channel to test
+  reconnects — see the Bridge's CLAUDE.md, *The wire*).
+- `mp_lib.js` — a signed-in pilot in a page (`player`), into a world (`enter`), a fresh fake Supabase (`reset`).
+- `together/tg_lib.js` — two pilots side by side, the dialog helpers, the CDN stand-ins.

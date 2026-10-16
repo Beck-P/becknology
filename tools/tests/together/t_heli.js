@@ -1,0 +1,53 @@
+// Helicopter together: a duel (same cave? ghost?) or tandem (relaunch beside your partner)
+const T = require(__dirname + '/tg_lib.js');
+const mode = process.argv[2] || 'Tandem';
+const pilot = f => f.evaluate(() => {                       // the demo pilot flies for you (holding Space when it wants to climb)
+  window.__auto = setInterval(() => {
+    const s = BridgeArcade.game._sim.state(); if (!s || s.crashed) return;
+    const up = BridgeArcade.game._sim.autopilot();
+    window.dispatchEvent(new KeyboardEvent(up ? 'keydown' : 'keyup', { key: ' ' }));
+  }, 16);
+});
+const stop = f => f.evaluate(() => { clearInterval(window.__auto); window.dispatchEvent(new KeyboardEvent('keyup', { key: ' ' })); });
+(async () => {
+  const b = await T.chromium.launch({ executablePath: require(__dirname + '/../chrome.js') });
+  const { beck, aly } = await T.two(b, 'arcadia', { x: 5, y: 4 }, { x: 7, y: 4 });
+  await beck.evaluate(id => BridgeTogether.pick(id), T.AID); await beck.waitForTimeout(300);
+  await T.click(beck, /^Helicopter/); await beck.waitForTimeout(300);
+  console.log('modes:', await T.dlg(beck));
+  await T.click(beck, new RegExp('^' + mode)); await beck.waitForTimeout(300);
+  console.log('stakes:', await T.dlg(beck));
+  await T.click(beck, /^25 coins each/); await beck.waitForTimeout(1200);
+  console.log('aly asked:', await T.dlg(aly));
+  await T.click(aly, /^Play$/);
+  await beck.waitForTimeout(2500);
+  const fb = T.frame(beck), fa = T.frame(aly);
+  await fa.waitForFunction(() => window.BridgeArcade && BridgeArcade.game);
+  await fb.waitForFunction(() => window.BridgeArcade && BridgeArcade.game);
+  await pilot(fa);
+  if (mode === 'Score duel') await pilot(fb);
+  await beck.waitForTimeout(1200);
+  await beck.screenshot({ path: T.S + '/shots/heli_title_' + mode + '.png' });
+  await beck.waitForTimeout(3500);
+  console.log('modes', await fb.evaluate(() => BridgeArcade.api.mode()), await fa.evaluate(() => BridgeArcade.api.mode()));
+  const cave = f => f.evaluate(() => { const s = BridgeArcade.game._sim.state(); return Array.from(s.top.slice(300, 700)).join(',') + '|' + s.pillars.map(p => p.x + ':' + p.y0).join(','); });
+  const ca = await cave(fa), cb = await cave(fb);
+  console.log('same cave:', ca === cb, ca.slice(0, 60));
+  await beck.waitForTimeout(3500);
+  await beck.screenshot({ path: T.S + '/shots/heli_play_beck_' + mode + '.png' });
+  await aly.screenshot({ path: T.S + '/shots/heli_play_aly_' + mode + '.png' });
+  const st = f => f.evaluate(() => { const s = BridgeArcade.game._sim.state(); return { dist: Math.round(s.dist), crashed: s.crashed, relaunches: s.relaunches, score: BridgeArcade.api.score, mode: BridgeArcade.api.mode() }; });
+  console.log('beck', await st(fb), 'aly', await st(fa));
+  await beck.waitForTimeout(4000);
+  console.log('beck', await st(fb), 'aly', await st(fa));
+  await beck.screenshot({ path: T.S + '/shots/heli_relaunch_' + mode + '.png' });
+  await stop(fa); await stop(fb);
+  await beck.waitForTimeout(9000);
+  console.log('beck', await st(fb), 'aly', await st(fa));
+  await beck.screenshot({ path: T.S + '/shots/heli_over_beck_' + mode + '.png' });
+  await aly.screenshot({ path: T.S + '/shots/heli_over_aly_' + mode + '.png' });
+  console.log('sess', await T.sess(beck), await T.sess(aly));
+  console.log('coins', await T.coins(beck), await T.coins(aly));
+  console.log('errors:', T.errs.length);
+  await b.close();
+})();

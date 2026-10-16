@@ -47,6 +47,9 @@ becknology/
 - Vercel doesn't build `claude/*` branches (`git.deploymentEnabled` in `vercel.json`) — only `main` deploys, which keeps under the Hobby plan's daily build limit. If a deploy fails with "Deployment rate limited", the code is fine: the next push to `main` after the limit resets deploys everything.
 - **Ship every change.** After each completed, verified change: commit, push, and merge into `main` so it deploys live — Beck's standing instruction, no need to ask. If you're working on a feature branch, push it and then bring `main` up to it (fast-forward when possible; otherwise merge `main` in first and resolve conflicts, then push to `main`).
 
+## Testing
+`node tools/tests/run.js [world|multi|together|royale|combat]` — headless-Chromium tests for the Bridge and Royale Link (every world loading, two pilots playing together over a stand-in Supabase, every game together, the casino, combat). It starts its own local servers. See `tools/tests/README.md`. Run the suites a change touches before shipping it; add a test there when you build something new.
+
 ## Cowork → Claude Code Handoff
 Same pattern as the Realzono repo: Cowork writes specs to `_claude_docs/`, Claude Code implements them.
 - `spec-*.md` — Feature specs ready to implement
