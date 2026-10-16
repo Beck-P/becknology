@@ -884,6 +884,15 @@ var BridgeInteractions = (function () {
     dialogEl.addEventListener('click', function () {
       if (typing && !typing.done) typing.finish(); else hideDialog();
     });
+    // Esc puts it away too (it didn't: the dialog stayed up, and the next E only closed it, which read as E ignored)
+    function onEsc(e) {
+      if (!document.body.contains(dialogEl)) { document.removeEventListener('keydown', onEsc, true); return; }
+      if (e.key !== 'Escape') return;
+      e.preventDefault(); e.stopPropagation();
+      document.removeEventListener('keydown', onEsc, true);
+      hideDialog();
+    }
+    document.addEventListener('keydown', onEsc, true);
   }
 
   // A business's ledger: buy it, or collect its takings, upgrade it, put crew in charge.
