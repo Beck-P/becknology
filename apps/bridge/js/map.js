@@ -106,7 +106,7 @@ var BridgeMap = (function () {
                sell: 'buys', exchange: 'prices across the seas', charters: 'charters', registry: 'ships\' registry', charts: 'sea charts', sea_chart: 'the sea chart',
                rest: 'a bed for the night', lodge_room: 'a room for the night', clinic: 'patches you up', rummage: 'rummage for things', hands: 'hands for your ships',
                commissions: 'the Crown\'s commissions', pachinko_prizes: 'cash in balls', audience: 'an audience' };
-  var GAME = { cabinet: 1, game_slot: 1, app: 1, pachinko: 1, dance: 1, splice: 1, dice: 1, fortune: 1, busker: 1, game_scores: 1, park_tow: 1, ski_gate: 1, ski_here: 1 };
+  var GAME = { cabinet: 1, game_slot: 1, app: 1, pachinko: 1, casino: 1, dance: 1, splice: 1, dice: 1, fortune: 1, busker: 1, game_scores: 1, park_tow: 1, ski_gate: 1, ski_here: 1 };
   var USE = { farm_well: 'fills a watering can', farm_tools: 'tools', farm_bin: 'the shipping bin', farm_barn: 'the barn', farm_board: 'orders', farm_ledger: 'the farm\'s books',
               mine_rack: 'pickaxes', mine_slate: 'your deepest floor', lodge_fire: 'warm up', lodge_board: 'the board', climb_board: 'the routes', climb_register: 'the summit register',
               park_board: 'scores', ski_wax: 'wax your skis', stats_panel: 'the ship\'s logs', locker: 'your decor', catalog: 'decor' };

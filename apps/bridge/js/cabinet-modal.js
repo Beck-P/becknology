@@ -15,6 +15,11 @@
  * (setVersus), and the game's `bridge-together-*` messages (js/shared/together-frame.js) go to BridgeTogether,
  * which talks back through post(msg). Closing the cabinet tells it (frameClosed): a run cut short counts as it
  * stood, a game of chess is given up.
+ *
+ * The Neon Royale's games (Royale Link, /runouts — js/casino.js): show({ frame: 'casino', kicker }) or any /runouts
+ * URL gets the casino frame (gold on velvet), its `bridge-casino-*` messages (stakes, payouts, what's on the table)
+ * go to BridgeCasino, which moves the bar's coins with coins(balance, delta), and closing it tells BridgeCasino
+ * (frameClosed) so whatever's still on the table comes back.
  */
 var BridgeCabinetModal = (function () {
 
@@ -33,7 +38,10 @@ var BridgeCabinetModal = (function () {
   var animFrame = null;
   var lastFrameTs = 0;
 
+  function isCasino(o) { return !!o && (o.frame === 'casino' || /^\/runouts(\/|\?|$)/.test(o.url || '')); }
+
   function frameFor() {
+    if (isCasino(current)) return 'casino';
     var id = (typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId()) || '';
     if (/^enigma/.test(id)) return 'enigma';
     if (/^singularity/.test(id)) return 'void';
@@ -100,7 +108,7 @@ var BridgeCabinetModal = (function () {
     var title = (current && current.title) ? current.title : 'GAME';
     return '' +
       '<div class="cm-bar">' +
-        '<div class="cm-title"><span class="cm-kicker">' + ({ enigma: 'TERMINAL', ship: 'GAME ROOM', void: 'THE BRINK', lumar: 'GAME' }[frameFor()] || 'CABINET') +
+        '<div class="cm-title"><span class="cm-kicker">' + escapeHtml((current && current.kicker) || { enigma: 'TERMINAL', ship: 'GAME ROOM', void: 'THE BRINK', lumar: 'GAME', casino: 'NEON ROYALE' }[frameFor()] || 'CABINET') +
           '</span><span class="cm-sep">/</span><span id="cabinet-modal-title">' + escapeHtml(title) + '</span></div>' +
         '<div class="cm-mid"><div class="cm-coins"><canvas width="20" height="20" id="cabinet-coin-icon"></canvas>' +
           '<span id="cabinet-modal-coins">0</span><div id="cabinet-modal-delta-pop"></div></div>' +
@@ -135,7 +143,15 @@ var BridgeCabinetModal = (function () {
     lastRun = null;
     // Refresh the bridge HUD to show the new balance
     if (typeof BridgeCoinHUD !== 'undefined' && BridgeCoinHUD.refresh) BridgeCoinHUD.refresh();
+    if (isCasino(was) && typeof BridgeCasino !== 'undefined' && BridgeCasino.frameClosed) BridgeCasino.frameClosed();
     if (was && was.together && typeof BridgeTogether !== 'undefined' && BridgeTogether.frameClosed) BridgeTogether.frameClosed();
+  }
+
+  // the casino's chips are the pilot's coins: the bar follows each stake and payout (js/casino.js)
+  function coins(balance, delta) {
+    if (!open) return;
+    if (typeof balance === 'number') { targetBalance = balance; startTicker(); }
+    if (typeof delta === 'number' && delta > 0) showDeltaPop('+' + delta);
   }
 
   // playing together: the strip in the bar, and messages into the game
@@ -179,6 +195,10 @@ var BridgeCabinetModal = (function () {
     if (!d.type.indexOf || d.type.indexOf('bridge-') !== 0) return;
     if (d.type.indexOf('bridge-together-') === 0) {
       if (current && current.together && typeof BridgeTogether !== 'undefined') BridgeTogether.fromFrame(d);
+      return;
+    }
+    if (d.type.indexOf('bridge-casino-') === 0) {
+      if (isCasino(current) && typeof BridgeCasino !== 'undefined' && e.source === (iframeEl && iframeEl.contentWindow)) BridgeCasino.fromFrame(d);
       return;
     }
 
@@ -270,5 +290,5 @@ var BridgeCabinetModal = (function () {
   }
   function escapeAttr(s) { return escapeHtml(s); }
 
-  return { show: show, hide: hide, isOpen: function () { return open; }, setVersus: setVersus, post: post };
+  return { show: show, hide: hide, isOpen: function () { return open; }, setVersus: setVersus, post: post, coins: coins };
 })();
