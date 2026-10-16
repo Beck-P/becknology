@@ -1139,7 +1139,8 @@
         "sheet": "npc-registrar",
         "x": 2,
         "y": 3,
-        "facing": "down"
+        "facing": "down",
+        "lift": 0.65
       },
       {
         "sheet": "npc-clerk",

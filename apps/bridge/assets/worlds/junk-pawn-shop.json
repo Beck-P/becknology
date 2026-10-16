@@ -499,7 +499,8 @@
         "sheet": "npc-pawnbroker",
         "x": 3,
         "y": 3,
-        "facing": "down"
+        "facing": "down",
+        "lift": 0.25
       },
       {
         "sheet": "npc-pawn-customer",

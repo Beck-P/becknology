@@ -33,6 +33,6 @@ k.solid(12, 5, 13, 6)                   # the customer
 apply_world(world_path('junk-pawn-shop'), k, FLOOR, doors=DOORS, scene_id='junk-pawn-shop', moves={
     'PAWNBROKER': (3, 4), 'SAFE': (12, 3), 'CLOCK': (4, 2), 'JUNK PILE': [(1, 7), (12, 7)],
     'DISPLAY CASE': [(4, 6), (9, 6)], 'WALL SHELF': (2, 2), 'BROWSING CUSTOMER': (12, 5)},
-    actors=[{'sheet': 'npc-pawnbroker', 'x': 3, 'y': 3, 'facing': 'down'},
+    actors=[{'sheet': 'npc-pawnbroker', 'x': 3, 'y': 3, 'facing': 'down', 'lift': 0.25},   # on a step behind the counter
             {'sheet': 'npc-pawn-customer', 'x': 12, 'y': 5, 'facing': 'left'}])
 print('pawn done')
