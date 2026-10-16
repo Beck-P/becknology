@@ -64,7 +64,7 @@ FIXED = {
     'skin':   ('#9a6a4e', '#d8a07a', '#f0c49c'),
     'skin2':  ('#7a4e36', '#b0784e', '#cc9468'),
     'skin3':  ('#3e2418', '#6a3e28', '#8a563a'),
-    'skin0':  ('#b48468', '#ecc0a0', '#fcdcc4'),     # very fair (Queen Alyssa)
+    'skin0':  ('#b48468', '#ecc0a0', '#fcdcc4'),     # very fair (Queen Alyssara)
     'eye':    ('#120c0a', '#120c0a', '#2a1a14'),
     'white':  ('#9a968c', '#e4e0d4', '#fbf8f0'),
     'leather': ('#3a2416', '#5e3a22', '#7e5232'),
@@ -263,7 +263,7 @@ NPCS = {
                           vest=('#7a5a10', '#a88020', '#d0a840'), hair=('#1a1410', '#2e2218', '#44342a'), long_hair=True,
                           crown=('#8a6a10', '#c89a20', '#f0d060'), pose='sit'),
     # Sylvara, the elven wood (see the Sylvara section of apps/bridge/CLAUDE.md): every elf has the long ears, long hair and
-    # an outfit of their own out of the elves' options — Queen Alyssa on her throne and Beckolas, her first sword, first
+    # an outfit of their own out of the elves' options — Queen Alyssara on her throne and Beckolas, her first sword, first
     'npc-alyssa':    dict(skin='skin0', shirt=('#3e7a56', '#6aae84', '#a8e2bc'), skirt=('#3e7a56', '#6aae84', '#a8e2bc'),
                           trim=('#9a7618', '#d8ac30', '#fae27a'), belt=('#9a7618', '#d8ac30', '#fae27a'),
                           hair=('#a8843a', '#d8b058', '#f0d080'), long_hair='flowing', elf_ears=True,

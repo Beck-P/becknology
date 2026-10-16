@@ -419,13 +419,14 @@ var BridgeMulti = (function () {
     var on0 = BridgeQuests.onInteract;
     BridgeQuests.onInteract = function (worldId, inter) {
       var before = BridgeQuests.found().length;
-      on0.apply(this, arguments);
-      if (sharing || !inter || BridgeQuests.found().length === before || typeof BridgeCharacter === 'undefined') return;
+      var hits = on0.apply(this, arguments);                       // the clues found just now (a clue's `say` is shown from them)
+      if (sharing || !inter || BridgeQuests.found().length === before || typeof BridgeCharacter === 'undefined') return hits;
       var here = myInst(), rp = BridgeCharacter.getRenderPos(), n = N();
       Object.keys(others).forEach(function (id) {
         var a = others[id];
         if (n && Math.hypot(a.x - rp.x, a.y - rp.y) <= 6) n.send('clue', { w: worldId, label: inter.label, i: here }, id);
       });
+      return hits;
     };
     BridgeQuests.__shared = true;
   }

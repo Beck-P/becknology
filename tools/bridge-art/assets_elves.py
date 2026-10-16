@@ -3,6 +3,7 @@ leaf lanterns, the Moonwell, ferns and glowing mushrooms, and the elven fittings
 Tile units: x = column, r = row (toward the camera), z = height. See scenes/sylvara.py and scenes/sylvara_hall.py.
 """
 import math
+import random
 
 from scenekit import shade
 
@@ -277,6 +278,60 @@ def willow(k, cx, cr, h=3.4, toward=1.0):
         k.tube((x0, r0, h * 0.85), (x0 + math.cos(a) * 0.15, r0 + math.sin(a) * 0.12, z1), 0.09,
                (shade('#7aa850', k.rng.uniform(0.75, 1.15)), 0.35), 'frond', rb=0.03, verts=4)
     k.solid(cx - 0.3, cr - 0.3, cx + 0.3, cr + 0.3)
+
+
+def willow_keepsake(k, cx, cr, h=3.4, toward=1.0):
+    """What's left in the willow once the first sword has said it (the quest under-the-willow): Sefa's ribbons, green
+    silk and gold like Beckolas's favour, swagged round the willow's curtain of fronds in two garlands, ribbon tails
+    streaming down from each knot, and Faelan's leaf lanterns hung from the knots. Its own dice (0403), so the rest of
+    the glade renders exactly as before. Returns each lantern in screen tiles (x, r - z·cos45), for its glow."""
+    rng = random.Random(403)
+    tx = cx + 0.5 * toward                                                # the crown's centre, as willow() builds it
+    C45 = math.cos(math.pi / 4)
+    lit = []
+
+    def ribbon(pts, col, w=0.05):                                         # a flat strip along a line of points, facing up
+        for (xa, ra, za), (xb, rb, zb) in zip(pts, pts[1:]):
+            dx, dr = xb - xa, rb - ra
+            L = math.hypot(dx, dr) or 1.0
+            nx, nr = -dr / L * w, dx / L * w
+            if L < 0.02:                                                  # hanging straight down: face the camera
+                nx, nr = w, 0.0
+            k.poly([(xa - nx, ra - nr, za), (xa + nx, ra + nr, za), (xb + nx, rb + nr, zb), (xb - nx, rb - nr, zb)], col, 'keepsake_ribbon',
+                   emit=SHEEN.get(col))
+
+    def ring(a, rad):                                                     # a point round the curtain (rows foreshortened like the fronds)
+        return tx + math.cos(a) * rad, cr + math.sin(a) * rad * 0.8
+
+    GREEN, GOLDR = ('#3e9a4a', 0.35), ('#f0c860', 0.25)
+    SHEEN = {GOLDR: ('#a89040', 0.3), GREEN: ('#2a6a30', 0.3)}          # the silk catching the lanterns' light, even in shade
+    # two garlands round the front and sides of the curtain (the back is under the crown anyway), swagged between knots
+    for (rad, z, n, col, a0, a1) in ((1.75, 1.95, 7, GOLDR, -0.25, math.pi + 0.25), (1.85, 1.35, 6, GREEN, -0.1, math.pi + 0.1)):
+        knots = [a0 + (a1 - a0) * j / n for j in range(n + 1)]
+        for j in range(n):
+            pts = []
+            for t in [q / 8 for q in range(9)]:
+                a = knots[j] + (knots[j + 1] - knots[j]) * t
+                x, r = ring(a, rad)
+                pts.append((x, r, z - 0.32 * math.sin(math.pi * t)))      # the swag sags between knots
+            ribbon(pts, col, 0.055)
+        for j, a in enumerate(knots):
+            x, r = ring(a, rad + 0.02)
+            k.blob(x, r, z, 0.08, 0.06, 0.06, GOLDR, 'keepsake_knot', emit=SHEEN[GOLDR], segs=6)
+            tail = GREEN if col is GOLDR else GOLDR                       # ribbon tails from each knot, the other colour
+            ph = rng.uniform(0, math.tau)
+            ribbon([(x + math.sin(ph + q) * 0.05, r + 0.04, z - 0.1 - q * 0.16) for q in range(5)], tail, 0.04)
+            if col is GOLDR and 0 < j < n:                                # a lantern hung under each inner knot of the high garland
+                lz = z - 0.55
+                k.cyl(x, r, lz + 0.12, z, 0.006, (GOLD, 0.25), 'keepsake_chain', verts=4)
+                k.sphere(x, r, lz, 0.1, 0.12, ('#6a4416', 0.3), 'keepsake_lantern', emit=('#ffb040', 1.0), segs=10)
+                for q in range(5):
+                    b = q / 5 * math.tau
+                    k.blob(x + math.cos(b) * 0.075, r + math.sin(b) * 0.06, lz, 0.045, 0.03, 0.11, (LEAF_L, 0.3), 'lantern_leaf', segs=6)
+                k.cyl(x, r, lz + 0.11, lz + 0.14, 0.04, (GOLD, 0.25), 'lantern_cap', verts=8)
+                k.point_light(x, r + 0.15, lz, '#ffc070', 3.0, radius=0.1)
+                lit.append([round(x, 3), round(r - lz * C45, 3)])
+    return lit
 
 
 def herb_stall(k, x0, x1, cr):

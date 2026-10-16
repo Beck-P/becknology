@@ -74,7 +74,7 @@ var BridgeStarmap = (function () {
     },
     {
       id: 'sylvara', loc: 'sylvara', name: 'SYLVARA', kind: 'Forest world \u00b7 the wood elves',
-      blurb: 'One forest from pole to pole, trees wider than houses. Elderglade, the wood elves\u2019 capital, where Queen Alyssa holds court inside the Great Tree with Beckolas, her first sword, at her side.',
+      blurb: 'One forest from pole to pole, trees wider than houses. Elderglade, the wood elves\u2019 capital, where Queen Alyssara holds court inside the Great Tree with Beckolas, her first sword, at her side.',
       places: ['Elderglade', 'The Heartwood Hall', 'The Moonwell'],
       apps: [],
       color: '#7ac070', px: 0.5, py: 0.16, hasOverworld: true

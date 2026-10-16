@@ -7,7 +7,10 @@
  * completes it and pays its reward (BridgeProgression.recordAchievement,
  * once per pilot). Order doesn't matter — you piece it together however
  * you wander — unless a clue says `after: <clue id>` (or a list of them),
- * when it only counts once those are found. Progress is kept in localStorage.
+ * when it only counts once those are found. A quest with `needs: <quest id>`
+ * doesn't begin until that quest is done (a sequel). A clue with `say` has
+ * its moment shown in place of the thing's usual words as it's found
+ * (js/interactions.js). Progress is kept in localStorage.
  *
  * UI: a toast under the place label when something is found, and the
  * journal — the game menu's Journal tab (J, or the Menu pill; js/menu.js):
@@ -50,9 +53,11 @@ var BridgeQuests = (function () {
 
   // ---- finding clues ----------------------------------------------------------------------
   function onInteract(worldId, inter) {
-    if (!defs || !inter) return;
+    var hits = [];                                 // the clues found just now (js/interactions.js shows a clue's `say`)
+    if (!defs || !inter) return hits;
     Object.keys(defs).forEach(function (id) {
       var q = defs[id];
+      if (q.needs && !(state[q.needs] && state[q.needs].done)) return;   // a sequel waits for the quest before it
       q.clues.forEach(function (c) {
         var wm = c.on.world;                      // 'lumar-rose-mine-*' matches any of the mine's floors
         if (!(wm === worldId || (wm.slice(-1) === '*' && worldId.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;
@@ -61,6 +66,7 @@ var BridgeQuests = (function () {
         if (s.clues[c.id]) return;
         var fresh = !Object.keys(s.clues).length;
         s.clues[c.id] = Date.now();
+        hits.push(c);
         var p = progress(id);
         if (p.found === p.total && !s.done) {
           s.done = Date.now();
@@ -80,6 +86,13 @@ var BridgeQuests = (function () {
         if (shown()) render();
       });
     });
+    return hits;
+  }
+
+  // 'quest' — is it done; 'quest/clue' — has that clue been found (people's topics use this: `when`, `until`)
+  function has(key) {
+    var k = String(key).split('/'), s = state[k[0]];
+    return !!(s && (k[1] ? s.clues && s.clues[k[1]] : s.done));
   }
 
   // ---- the toast ---------------------------------------------------------------------------
@@ -373,7 +386,7 @@ var BridgeQuests = (function () {
   return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary, note: note, arrived: arrived,
            visited: function () { return seen; }, whereNext: function (id) { return defs && defs[id] ? whereNext(id) : []; }, render: function () { if (shown()) render(); },
            log: function () { return logged.slice(); },
-           found: found, finished: finished, def: function (id) { return defs ? defs[id] || null : null; },
+           found: found, finished: finished, has: has, def: function (id) { return defs ? defs[id] || null : null; },
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            reset: function () { state = {}; save(); } };
 })();

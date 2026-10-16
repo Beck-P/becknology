@@ -402,13 +402,17 @@ var BridgeInteractions = (function () {
   function executeInteraction(inter) {
     if (typeof BridgeAudio !== 'undefined' && inter.type !== 'farm_plot') BridgeAudio.sfx(/^(enter_world|leave_world|password_gate)$/.test(inter.type) ? 'door' : 'open');   // the field makes its own sounds
     if (typeof BridgeGames !== 'undefined') BridgeGames.note(inter);      // a game played: it waits in the game room now
+    var hits = [];
     if (typeof BridgeQuests !== 'undefined') {
-      BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter);
+      hits = BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter) || [];
       if (inter.home) BridgeQuests.onInteract(inter.home.world, { label: inter.home.label });   // crew aboard (js/crew.js)
     }
     var person = (inter.type === 'dialog' || inter.type === 'random_dialog') && typeof BridgePeople !== 'undefined' &&
       BridgePeople.find(BridgeWorld.getWorldId(), inter.label);
     if (person) { showConversation(person, inter); return; }
+    // a clue with its own moment (quests.json `say`): that, in place of the thing's usual words
+    var moment = hits.filter(function (c) { return c.say; })[0];
+    if (moment && (inter.type === 'dialog' || inter.type === 'random_dialog')) { showDialog(inter.label, moment.say, inter); return; }
     var biz = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.find(BridgeWorld.getWorldId(), inter.label);
     if (biz) { showBusiness(biz, inter); return; }
     // sit, sleep, look out of the window (js/actions.js) instead of a text box
@@ -1165,7 +1169,14 @@ var BridgeInteractions = (function () {
     var dialogEl = dialogShell('talk wd-convo');
     var talk = typeof BridgeTalk !== 'undefined' && BridgeTalk.enabled();
     var feel = typeof BridgeTalk !== 'undefined' ? BridgeTalk.feeling(person.id) : 0;
-    var topics = person.topics.slice();
+    // topics that wait on a quest (`when: 'quest/clue'` or `'quest'`) or go once it's moved on (`until`);
+    // the ones a quest has just opened come first, lit up
+    var Q = typeof BridgeQuests !== 'undefined' && BridgeQuests.has ? BridgeQuests.has : function () { return false; };
+    var topics = person.topics.filter(function (t) {
+      return (!t.when || [].concat(t.when).every(Q)) && (!t.until || ![].concat(t.until).some(Q));
+    });
+    var fresh = topics.filter(function (t) { return t.when && !BridgePeople.asked(person.id, t.q); });
+    topics = fresh.concat(topics.filter(function (t) { return fresh.indexOf(t) < 0; }));
     if (person.crew && typeof BridgeCrew !== 'undefined') {
       var after = person.crew.after && typeof BridgeQuests !== 'undefined' ? BridgeQuests.progress(person.crew.after) : null;
       topics.push(BridgeCrew.isHired(person.id)
@@ -1189,7 +1200,8 @@ var BridgeInteractions = (function () {
         '<div class="wd-text"></div>' +
         '<div class="wd-options">' + opts.map(function (q, i) {
           return '<button data-opt="' + i + '" class="wd-opt' + (i === 0 ? ' active' : '') +
-            (i < person.topics.length && BridgePeople.asked(person.id, q) ? ' asked' : '') + '">' + esc(q) + '</button>';
+            (i < person.topics.length && BridgePeople.asked(person.id, q) ? ' asked' : '') +
+            (i < fresh.length ? ' nudge' : '') + '">' + esc(q) + '</button>';
         }).join('') + '</div>' +
         (talk ? '<form class="wd-say"><input class="wd-say-input" type="text" maxlength="200" autocomplete="off" ' +
                 'enterkeyhint="send" placeholder="Say something..."><button type="submit" class="wd-say-send">Say</button></form>' : '') +
