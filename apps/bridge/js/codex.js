@@ -8,9 +8,12 @@
  * what's in it the first time you open the game counts quietly. A new find
  * gets a toast; a finished set pays its reward once (`codex_<set>`).
  *
- * Opened from the journal's Collection tab: a page per set, a grid of
+ * The game menu's Collection tab (js/menu.js): a page per set, a grid of
  * icons — found ones in colour with their names, the rest as dark
- * silhouettes with a hint where to look (tap or hover one for it).
+ * silhouettes with a hint where to look (tap or hover one for it). And the
+ * Fish tab: every fish there is, drawn by BridgeFishArt — the ones you've
+ * caught with how many and the biggest, the rest as shadows with where to
+ * look — and the messages from the bottles you've fished up.
  *
  * localStorage bridge_codex: {found: {id: time}, paid: {set: time}}.
  *   BridgeCodex.count() / .total() / .render(el, back) / .note(id)
@@ -132,38 +135,48 @@ var BridgeCodex = (function () {
     setInterval(function () { scan(false); }, 4000);
   }
 
-  // ---- the page ----------------------------------------------------------------------------------------------------------
-  function icon(id, found, size) {
+  // ---- the pages: the Collection and the Fish (tabs of the game menu, js/menu.js) ------------------------------------
+  // the item's icon; not found yet, its silhouette in `shade`
+  function icon(id, found, size, shade) {
     var c = document.createElement('canvas');
     c.width = size; c.height = size;
     var it = item(id), x = c.getContext('2d');
     if (!it || !it.draw) return c;
+    x.imageSmoothingEnabled = false;
     it.draw(x, 0, 0, size);
-    if (!found) {                                                    // the silhouette: its shape in shadow
-      x.globalCompositeOperation = 'source-in';
-      x.fillStyle = '#4e4232'; x.fillRect(0, 0, size, size);
-    }
+    if (!found) silhouette(x, size, size, shade);
     return c;
+  }
+  function silhouette(x, w, h, shade) {
+    x.globalCompositeOperation = 'source-in';
+    x.fillStyle = shade || '#4e4232'; x.fillRect(0, 0, w, h);
+    x.globalCompositeOperation = 'source-over';
+  }
+  function shadeOf(el) {
+    var v = el && getComputedStyle(el).getPropertyValue('--gm-shade');
+    return (v && v.trim()) || '#4e4232';
   }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); }
   var tab = 'fish';
+  // back: a button back to wherever it was opened from (none inside the game menu, which has its own tabs)
   function render(el, back) {
     var s = SETS.filter(function (x) { return x.id === tab; })[0] || SETS[0];
-    var html = '<div class="qj-head"><span class="qj-title">Collection</span><span class="cx-total">' + count() + ' of ' + total() + '</span>' +
-      '<button class="qj-close" aria-label="Back"><span class="ip-key">Esc</span></button></div>' +
+    var html = '<div class="cx"><div class="gm-head"><span class="gm-title">Collection</span><span class="gm-sub">' + count() + ' of ' + total() + ' found</span>' +
+      (back ? '<button class="qj-close" aria-label="Back"><span class="ip-key">Esc</span></button>' : '') + '</div>' +
       '<div class="cx-tabs">' + SETS.map(function (x) {
         var n = have(x), full = n === x.items.length;
-        return '<button class="cx-tab' + (x.id === s.id ? ' on' : '') + (full ? ' full' : '') + '" data-set="' + x.id + '">' + esc(x.name) + ' <i>' + n + '/' + x.items.length + '</i></button>';
+        return '<button type="button" class="cx-tab' + (x.id === s.id ? ' on' : '') + (full ? ' full' : '') + '" data-set="' + x.id + '">' + esc(x.name) + ' <i>' + n + '/' + x.items.length + '</i></button>';
       }).join('') + '</div>' +
       '<div class="cx-set"><span class="cx-name">' + esc(s.name) + '</span><span class="cx-reward">' +
         (st.paid[s.id] ? 'Complete · ' + s.reward + ' coins paid' : 'Find them all: ' + s.reward + ' coins') + '</span></div>' +
-      '<div class="cx-grid"></div><div class="cx-detail">Tap one to see where it\'s found.</div>';
+      '<div class="cx-grid"></div><div class="cx-detail">' + (document.documentElement.classList.contains('touch') ? 'Tap' : 'Point at') + ' one to see where it\'s found.</div></div>';
     el.innerHTML = html;
-    var grid = el.querySelector('.cx-grid'), detail = el.querySelector('.cx-detail');
+    var grid = el.querySelector('.cx-grid'), detail = el.querySelector('.cx-detail'), shade = shadeOf(el);
     s.items.forEach(function (x) {
       var id = x[0], found = !!st.found[id], it = item(id), cell = document.createElement('button');
+      cell.type = 'button';
       cell.className = 'cx-cell' + (found ? ' found' : '');
-      cell.appendChild(icon(id, found, 32));
+      cell.appendChild(icon(id, found, 32, shade));
       var nm = document.createElement('span');
       nm.textContent = found && it ? it.name : '?';
       cell.appendChild(nm);
@@ -178,13 +191,92 @@ var BridgeCodex = (function () {
       cell.addEventListener('click', show);
       grid.appendChild(cell);
     });
-    el.querySelectorAll('.cx-tab').forEach(function (b) { b.addEventListener('click', function () { tab = b.dataset.set; render(el, back); }); });
-    el.querySelector('.qj-close').addEventListener('click', back);
+    el.querySelectorAll('.cx-tab').forEach(function (b) { b.addEventListener('click', function (e) { e.stopPropagation(); tab = b.dataset.set; render(el, back); }); });
+    var bk = el.querySelector('.qj-close');
+    if (bk) bk.addEventListener('click', back);
+  }
+
+  // ---- the Fish page: every fish there is, caught ones drawn, the rest as shadows with a hint -------------------------
+  var fishSel = null;
+  function fishArt(id, w, h, scale, caught, shade) {
+    var art = typeof BridgeFishArt !== 'undefined' ? BridgeFishArt.canvas(id, w, h, scale) : null, cv = document.createElement('canvas');
+    cv.width = w * scale; cv.height = h * scale;
+    var g = cv.getContext('2d');
+    g.imageSmoothingEnabled = false;
+    if (art) g.drawImage(art, 0, 0);
+    else { var it = item(id), s = h * scale; if (it && it.draw) it.draw(g, Math.round((w * scale - s) / 2), 0, s); }   // crabs and pearls: their icon
+    if (!caught) silhouette(g, cv.width, cv.height, shade);
+    return cv;
+  }
+  function renderFish(el) {
+    var log = typeof BridgeFishing !== 'undefined' && BridgeFishing.journal ? BridgeFishing.journal() : { fish: [], bottles: [] };
+    var got = {};
+    log.fish.forEach(function (f) { got[f.id] = f; });
+    var groups = SETS.filter(function (x) { return x.id === 'fish' || x.id === 'legends'; });
+    var all = [], n = 0;
+    groups.forEach(function (g) { g.items.forEach(function (x) { all.push(x); if (got[x[0]]) n++; }); });
+    el.innerHTML = '<div class="fb"><div class="gm-head"><span class="gm-title">Fish</span><span class="gm-sub">' + n + ' of ' + all.length + ' kinds caught' +
+      (log.bottles.length ? ' · ' + log.bottles.length + ' message' + (log.bottles.length > 1 ? 's' : '') + ' in bottles' : '') + '</span></div>' +
+      '<div class="fb-body"><div class="fb-list"></div><aside class="fb-detail"></aside></div></div>';
+    var list = el.querySelector('.fb-list'), detail = el.querySelector('.fb-detail'), shade = shadeOf(el);
+    var T = typeof BridgeFishArt !== 'undefined' ? BridgeFishArt : null;
+    function show(x, card) {
+      var id = x[0], f = got[id], it = item(id), tier = T ? T.tier(id) : 0, R = T ? T.TIERS[tier] : null;
+      fishSel = id;
+      list.querySelectorAll('.fb-card.sel').forEach(function (c) { c.classList.remove('sel'); });
+      if (card) card.classList.add('sel');
+      detail.innerHTML = '<div class="fb-d-art"></div><div class="fb-d-name">' + (f && it ? esc(it.name) : 'Not caught yet') + '</div>' +
+        (R && (f || tier >= 2) ? '<div class="fb-d-tier" style="color:' + R.col + '">' + R.name + '</div>' : '') +
+        (f ? '<div class="fb-d-stats"><span><b>' + f.n + '</b> caught</span>' + (f.best ? '<span>biggest <b>' + f.best + ' cm</b></span>' : '') +
+             (it && it.value ? '<span>worth <b>' + it.value + '</b></span>' : '') + '</div>' +
+             (it && it.desc ? '<p class="fb-d-desc">' + esc(it.desc) + '</p>' : '') : '') +
+        '<div class="fb-d-where"><span>' + (f ? 'Where' : 'Where to look') + '</span>' + esc(x[1]) + '.</div>';
+      detail.querySelector('.fb-d-art').appendChild(fishArt(id, 48, 24, 4, !!f, shade));
+    }
+    var pick = null;
+    groups.forEach(function (g) {
+      var head = document.createElement('div');
+      head.className = 'fb-group';
+      var c = g.items.filter(function (x) { return got[x[0]]; }).length;
+      head.innerHTML = '<span>' + esc(g.id === 'fish' ? 'Off the piers, the ponds and the boat' : g.name + ', one in each sea') + '</span><i>' + c + '/' + g.items.length + '</i>';
+      list.appendChild(head);
+      var grid = document.createElement('div');
+      grid.className = 'fb-grid';
+      g.items.forEach(function (x) {
+        var id = x[0], f = got[id], it = item(id), tier = T ? T.tier(id) : 0, card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'fb-card t' + tier + (f ? ' caught' : '');
+        if (T && (f || tier >= 2)) card.style.setProperty('--tier', T.TIERS[tier].col);
+        card.appendChild(fishArt(id, 32, 16, 2, !!f, shade));
+        var nm = document.createElement('span');
+        nm.className = 'fb-name';
+        nm.textContent = f && it ? it.name : '?';
+        card.appendChild(nm);
+        if (f) { var k = document.createElement('span'); k.className = 'fb-n'; k.textContent = '×' + f.n; card.appendChild(k); }
+        card.addEventListener('mouseenter', function () { show(x, card); });
+        card.addEventListener('click', function (e) { e.stopPropagation(); show(x, card); });
+        grid.appendChild(card);
+        if (fishSel === id || (!pick && !fishSel && f)) pick = [x, card];
+      });
+      list.appendChild(grid);
+    });
+    if (log.bottles.length) {
+      var b = document.createElement('details');
+      b.className = 'fb-bottles';
+      b.innerHTML = '<summary>Messages in bottles · ' + log.bottles.length + '</summary><ul>' + log.bottles.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
+      list.appendChild(b);
+    }
+    if (!pick) pick = [all[0], list.querySelector('.fb-card')];
+    show(pick[0], pick[1]);
+  }
+  if (typeof BridgeMenu !== 'undefined') {
+    BridgeMenu.page('collection', { render: function (el) { render(el, null); } });
+    BridgeMenu.page('fish', { render: function (el) { renderFish(el); } });
   }
 
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 0); });
     else setTimeout(init, 0);
   }
-  return { SETS: SETS, count: count, total: total, render: render, note: note, init: init, _st: function () { return st; } };
+  return { SETS: SETS, count: count, total: total, render: render, renderFish: renderFish, note: note, init: init, _st: function () { return st; } };
 })();

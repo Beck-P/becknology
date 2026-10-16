@@ -55,11 +55,10 @@ var BridgeInventory = (function () {
   var enFillEl = null, enTextEl = null;
   var inited = false;
 
-  var menu = null;                 // modal overlay element
-  var menuSlotEls = [];            // 10 DOM nodes inside the modal grid
+  var menuSlotEls = [];            // the Backpack page's slots (the game menu, js/menu.js)
   var menuDetailEl = null;
   var menuStatsEl = null;
-  var menuOpen = false;
+  var menuOpen = false;            // the Backpack page is showing
 
   // ---- Persistence ----------------------------------------------------
   function normalizeSlots(arr) {
@@ -490,105 +489,95 @@ var BridgeInventory = (function () {
     }
   }
 
-  // ---- Inventory Menu (full modal) ------------------------------------
-  function buildMenu() {
-    if (menu) return;
-    menu = document.createElement('div');
-    menu.id = 'inventory-menu';
-    menu.style.cssText =
-      'position:fixed;inset:0;z-index:200;display:none;' +
-      'background:rgba(4,8,14,0.78);' +
-      'align-items:center;justify-content:center;' +
-      'font-family:"Courier New",Consolas,monospace;color:#e0d8c0;';
+  // ---- The Backpack: a page of the game menu (js/menu.js) ----------------
+  // The hotbar and the pack as a grid, the item in hand described beside
+  // them, health and energy, the wardrobe. Click an item to pick it up and a
+  // slot to put it down (swapping, or stacking like with like). With a chest
+  // open (js/storage.js) its slots sit above yours and a click moves a whole
+  // stack across (shift-click or right-click: just one).
+  var root = null, chest = null, menuGrid = null, chestGrid = null, menuCap = 0, held = -1, focus = -1, focusChest = -1;
+  var chestSlotEls = [];
 
-    var card = document.createElement('div');
-    card.style.cssText =
-      'width:min(720px,94vw);max-height:88vh;overflow:hidden;' +
-      'display:flex;flex-direction:column;' +
-      'background:linear-gradient(180deg,rgba(20,18,14,0.96),rgba(10,8,6,0.96));' +
-      'border:1px solid rgba(255,200,100,0.45);border-radius:8px;' +
-      'box-shadow:0 0 32px rgba(255,200,100,0.18),inset 0 0 16px rgba(255,200,100,0.04);';
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
-    // Header
-    var head = document.createElement('div');
-    head.style.cssText =
-      'padding:14px 22px;border-bottom:1px solid rgba(255,200,100,0.20);' +
-      'display:flex;justify-content:space-between;align-items:center;';
-    head.innerHTML =
-      '<div>' +
-        '<div style="font-size:10px;letter-spacing:5px;color:rgba(255,200,100,0.7);">PILOT GEAR</div>' +
-        '<div style="font-size:18px;letter-spacing:3px;color:#ffe080;margin-top:4px;">INVENTORY</div>' +
+  function mount(el, opts) {
+    opts = opts || {};
+    menuOpen = true;
+    chest = opts.chest || null;
+    held = -1; focus = -1; focusChest = -1; menuCap = 0; menuSlotEls = []; chestSlotEls = [];
+    root = document.createElement('div');
+    root.className = 'bp' + (chest ? ' bp-with-chest' : '');
+    root.innerHTML =
+      '<div class="bp-main">' +
+        (chest ? '<section class="bp-chest"><div class="bp-head"><span class="bp-title"></span><span class="bp-sub"></span></div>' +
+                 '<div class="bp-grid bp-chest-grid"></div>' +
+                 '<div class="bp-chest-btns"><button type="button" class="gm-btn" data-c="store">Store your pack</button>' +
+                 '<button type="button" class="gm-btn" data-c="stack">Add to stacks</button>' +
+                 '<button type="button" class="gm-btn" data-c="take">Take all</button>' +
+                 (chest.extra ? '<button type="button" class="gm-btn" data-c="extra">' + esc(chest.extra.label) + '</button>' : '') + '</div></section>' : '') +
+        '<section class="bp-mine"><div class="bp-slots"></div><div class="bp-next"></div></section>' +
       '</div>' +
-      '<div style="display:flex;gap:12px;align-items:center;">' +
-        '<button id="inv-outfit" style="font:inherit;font-size:11px;letter-spacing:2px;padding:6px 12px;cursor:pointer;' +
-          'background:rgba(255,200,100,0.12);color:#ffe080;border:1px solid rgba(255,200,100,0.45);">OUTFIT</button>' +
-        '<div class="inv-close-hint" style="font-size:10px;color:#888;letter-spacing:2px;">[I] OR [ESC] TO CLOSE</div>' +
-      '</div>';
-    card.appendChild(head);
-    head.querySelector('#inv-outfit').addEventListener('click', function (e) {
-      e.stopPropagation();
-      closeMenu();
-      if (typeof BridgeGear !== 'undefined') BridgeGear.open();
+      '<aside class="bp-side"><div class="bp-detail"></div><div class="bp-stats"></div>' +
+        '<div class="bp-actions"><button type="button" class="gm-btn" data-a="outfit"><span class="ip-key">O</span>Wardrobe</button></div>' +
+        '<div class="bp-help"></div></aside>';
+    el.appendChild(root);
+    menuGrid = root.querySelector('.bp-slots');
+    chestGrid = root.querySelector('.bp-chest-grid');
+    menuDetailEl = root.querySelector('.bp-detail');
+    menuStatsEl = root.querySelector('.bp-stats');
+    root.querySelector('[data-a="outfit"]').addEventListener('click', function (e) { e.stopPropagation(); outfit(); });
+    root.querySelectorAll('[data-c]').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var c = b.getAttribute('data-c');
+        if (c === 'store') storeAll(false); else if (c === 'stack') storeAll(true); else if (c === 'take') takeAll();
+        else if (c === 'extra' && chest.extra) chest.extra.act();
+      });
     });
-
-    // Body: the hotbar and the pack, then the detail of the slot in hand
-    var body = document.createElement('div');
-    body.style.cssText = 'display:flex;flex-direction:column;gap:12px;padding:14px 22px;overflow-y:auto;';
-    menuGrid = document.createElement('div');
-    body.appendChild(menuGrid);
-
-    // Detail panel
-    menuDetailEl = document.createElement('div');
-    menuDetailEl.style.cssText = 'min-width:0;padding:4px 2px;';
-    body.appendChild(menuDetailEl);
-
-    card.appendChild(body);
-
-    // Stats footer
-    menuStatsEl = document.createElement('div');
-    menuStatsEl.style.cssText =
-      'padding:12px 22px;border-top:1px solid rgba(255,200,100,0.20);' +
-      'font-size:11px;letter-spacing:2px;color:#a8a08c;' +
-      'display:flex;justify-content:space-between;align-items:center;';
-    card.appendChild(menuStatsEl);
-
-    menu.appendChild(card);
-    document.body.appendChild(menu);
-
-    // Clicking the dim backdrop closes; clicks on the card don't
-    menu.addEventListener('click', function (e) { if (e.target === menu) closeMenu(); });
+    if (chest) buildChestGrid();
+    refreshMenu();
+  }
+  function unmount() { menuOpen = false; root = null; chest = null; menuGrid = null; chestGrid = null; menuSlotEls = []; chestSlotEls = []; held = -1; }
+  function outfit() {
+    if (typeof BridgeMenu !== 'undefined') BridgeMenu.close();
+    if (typeof BridgeGear !== 'undefined') BridgeGear.open();
   }
 
   // the grid: a row for the hotbar, rows for the pack (rebuilt when the pack changes)
-  var menuGrid = null, menuCap = 0, held = -1, focus = -1;
   function buildMenuGrid() {
     var c = cap();
     if (menuCap === c && menuSlotEls.length) return;
     menuCap = c;
     menuGrid.innerHTML = '';
     menuSlotEls = [];
-    function label(t) {
+    function label(t, sub) {
       var l = document.createElement('div');
-      l.style.cssText = 'font-size:10px;letter-spacing:3px;color:rgba(255,200,100,0.7);margin:2px 0 6px;';
-      l.textContent = t;
+      l.className = 'bp-head';
+      l.innerHTML = '<span class="bp-title">' + esc(t) + '</span>' + (sub ? '<span class="bp-sub">' + esc(sub) + '</span>' : '');
       menuGrid.appendChild(l);
     }
     function grid(from, to) {
       var g = document.createElement('div');
-      g.style.cssText = 'display:grid;grid-template-columns:repeat(10,minmax(0,52px));gap:5px;margin-bottom:10px;';
-      for (var i = from; i < to; i++) { var el = buildMenuSlotEl(i); menuSlotEls[i] = el; g.appendChild(el); }
+      g.className = 'bp-grid';
+      for (var i = from; i < to; i++) { var el = buildMenuSlotEl(i, false); menuSlotEls[i] = el; g.appendChild(el); }
       menuGrid.appendChild(g);
     }
-    label('HOTBAR');
+    label('Hotbar', '1-0 to pick · F to use');
     grid(0, MAX_SLOTS);
-    label((typeof BridgeGear !== 'undefined' ? BridgeGear.packName().toUpperCase() : 'PACK') + ' \u00b7 ' + (c - MAX_SLOTS) + ' SLOTS');
+    label(typeof BridgeGear !== 'undefined' ? BridgeGear.packName() : 'Pack', (c - MAX_SLOTS) + ' slots');
     grid(MAX_SLOTS, c);
   }
+  function buildChestGrid() {
+    chestGrid.innerHTML = '';
+    chestSlotEls = [];
+    for (var j = 0; j < chest.size; j++) { var el = buildMenuSlotEl(j, true); chestSlotEls[j] = el; chestGrid.appendChild(el); }
+  }
 
-  function clickMenuSlot(i) {
+  function clickMenuSlot(i, one) {
+    if (chest) { storeSlot(i, one); return; }
     if (held < 0) {
       if (state.slots[i]) held = i;
-      focus = i;
+      focus = i; focusChest = -1;
       if (i < MAX_SLOTS) selectSlot(i); else refreshMenu();
       return;
     }
@@ -597,217 +586,239 @@ var BridgeInventory = (function () {
     refreshMenu();
   }
 
-  function buildMenuSlotEl(i) {
-    var slot = document.createElement('div');
-    slot.dataset.idx = i;
-    slot.style.cssText =
-      'position:relative;aspect-ratio:1;min-width:0;' +
-      'background:rgba(0,0,0,0.5);border:1px solid rgba(255,200,100,0.20);' +
-      'cursor:pointer;transition:border-color 0.15s ease,box-shadow 0.15s ease;';
-    var num = document.createElement('span');
-    num.textContent = i >= MAX_SLOTS ? '' : (i === 9) ? '0' : String(i + 1);
-    num.style.cssText =
-      'position:absolute;top:2px;left:4px;font-size:10px;' +
-      'color:rgba(255,200,100,0.55);pointer-events:none;';
-    slot.appendChild(num);
+  function buildMenuSlotEl(i, inChest) {
+    var slot = document.createElement('button');
+    slot.type = 'button';
+    slot.className = 'bp-slot' + (inChest ? ' bp-cslot' : '');
+    if (!inChest && i < MAX_SLOTS) {
+      var num = document.createElement('span');
+      num.className = 'bp-num';
+      num.textContent = (i === 9) ? '0' : String(i + 1);
+      slot.appendChild(num);
+    }
     var cnv = document.createElement('canvas');
-    cnv.className = 'menu-icon';
-    cnv.width = 44; cnv.height = 44;
-    cnv.style.cssText = 'image-rendering:pixelated;width:80%;height:80%;display:block;margin:10% auto 0;';
+    cnv.className = 'bp-icon';
+    cnv.width = 32; cnv.height = 32;
     slot.appendChild(cnv);
     var cnt = document.createElement('span');
-    cnt.className = 'menu-count';
-    cnt.style.cssText =
-      'position:absolute;bottom:2px;right:5px;font-size:12px;color:#fff;' +
-      'text-shadow:1px 1px 0 #000;font-weight:bold;display:none;';
+    cnt.className = 'bp-count';
     slot.appendChild(cnt);
-    slot.addEventListener('click', function (e) { e.stopPropagation(); clickMenuSlot(i); });
+    function act(e, one) {
+      e.preventDefault(); e.stopPropagation();
+      if (inChest) takeSlot(i, one); else clickMenuSlot(i, one);
+    }
+    slot.addEventListener('click', function (e) { act(e, e.shiftKey); });
+    slot.addEventListener('contextmenu', function (e) { if (chest) act(e, true); else e.preventDefault(); });
+    slot.addEventListener('mouseenter', function () {
+      if (held >= 0) return;
+      if (inChest) { focusChest = i; focus = -1; } else { focus = i; focusChest = -1; }
+      refreshMenuDetail();
+    });
     return slot;
   }
 
-  function refreshMenuSlot(i) {
-    var slot = menuSlotEls[i];
+  function paintSlot(slot, s, cls) {
     if (!slot) return;
-    var s = state.slots[i];
-    var isSelected = (i === state.selected);
-    if (i === held) {
-      slot.style.borderColor = '#80e0ff';
-      slot.style.boxShadow = '0 0 12px rgba(128,224,255,0.7),inset 0 0 10px rgba(128,224,255,0.2)';
-    } else if (isSelected || i === focus) {
-      slot.style.borderColor = isSelected ? '#ffe080' : 'rgba(255,224,128,0.7)';
-      slot.style.boxShadow = '0 0 10px rgba(255,224,128,0.5),inset 0 0 8px rgba(255,224,128,0.10)';
-    } else {
-      slot.style.borderColor = s ? 'rgba(255,200,100,0.35)' : 'rgba(255,200,100,0.15)';
-      slot.style.boxShadow = '';
-    }
-    var cnv = slot.querySelector('.menu-icon');
-    var cnt = slot.querySelector('.menu-count');
+    slot.className = 'bp-slot' + (cls || '') + (s ? '' : ' empty');
+    var cnv = slot.querySelector('.bp-icon'), cnt = slot.querySelector('.bp-count');
     var ctx = cnv.getContext('2d');
-    ctx.clearRect(0, 0, 44, 44);
-    if (s) {
-      var item = BridgeItems.get(s.id);
-      if (item) item.draw(ctx, 0, 0, 44);
-      if (s.count > 1) { cnt.textContent = String(s.count); cnt.style.display = ''; }
-      else cnt.style.display = 'none';
-    } else {
-      cnt.style.display = 'none';
-    }
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, 32, 32);
+    var item = s && BridgeItems.get(s.id);
+    if (item) item.draw(ctx, 0, 0, 32);
+    slot.title = item ? item.name : '';
+    cnt.textContent = s && s.count > 1 ? String(s.count) : '';
+  }
+  function refreshMenuSlot(i) {
+    var cls = (i === held ? ' held' : '') + (i === state.selected ? ' sel' : '') + (i === focus && held < 0 ? ' focus' : '');
+    paintSlot(menuSlotEls[i], state.slots[i], cls);
   }
 
+  // what the item in hand (or under the pointer) is, does, and is worth
   function refreshMenuDetail() {
     if (!menuDetailEl) return;
-    var s = state.slots[focus >= 0 ? focus : state.selected];
-    if (!s) {
-      menuDetailEl.innerHTML =
-        '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#5a5040;font-style:italic;letter-spacing:2px;">EMPTY SLOT</div>';
-      return;
-    }
-    var item = BridgeItems.get(s.id);
+    var s = focusChest >= 0 && chest ? chest.slots[focusChest] : state.slots[held >= 0 ? held : focus >= 0 ? focus : state.selected];
+    var item = s && BridgeItems.get(s.id);
     if (!item) {
-      menuDetailEl.innerHTML = '<div style="color:#888;">UNKNOWN ITEM</div>';
+      var tch = document.documentElement.classList.contains('touch');
+      menuDetailEl.innerHTML = '<div class="bp-d-empty">' + (chest ? (tch ? 'Tap a stack to move it across, into the chest or out of it.' : 'Click a stack to move it across. Shift-click (or right-click) moves just one.')
+                                                                    : (tch ? 'Tap something to see what it is.' : 'Point at something to see what it is.')) + '</div>';
       return;
     }
-    var typeColor = (BridgeItems.typeColor ? BridgeItems.typeColor(item.type) : '#888');
-    var effects = (BridgeItems.effectsText ? BridgeItems.effectsText(item) : '');
-    var usable = (typeof item.onUse === 'function');
-
-    menuDetailEl.innerHTML = '';
-    var wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;';
-
-    // Top row: big icon + name/type
-    var top = document.createElement('div');
-    top.style.cssText = 'display:flex;gap:14px;align-items:center;';
-    var bigCnvWrap = document.createElement('div');
-    bigCnvWrap.style.cssText =
-      'width:80px;height:80px;flex:0 0 80px;background:rgba(0,0,0,0.5);' +
-      'border:1px solid rgba(255,200,100,0.35);display:flex;align-items:center;justify-content:center;';
-    var bigCnv = document.createElement('canvas');
-    bigCnv.width = 64; bigCnv.height = 64;
-    bigCnv.style.cssText = 'image-rendering:pixelated;width:64px;height:64px;';
-    item.draw(bigCnv.getContext('2d'), 0, 0, 64);
-    bigCnvWrap.appendChild(bigCnv);
-    top.appendChild(bigCnvWrap);
-
-    var nameWrap = document.createElement('div');
-    nameWrap.style.cssText = 'flex:1;min-width:0;';
-    var nameEl = document.createElement('div');
-    nameEl.style.cssText = 'font-size:16px;letter-spacing:2px;color:#ffe080;';
-    nameEl.textContent = item.name.toUpperCase();
-    var typeEl = document.createElement('div');
-    typeEl.style.cssText =
-      'display:inline-block;margin-top:6px;padding:2px 8px;font-size:10px;letter-spacing:2px;' +
-      'background:rgba(0,0,0,0.4);border:1px solid ' + typeColor + ';color:' + typeColor + ';';
-    typeEl.textContent = (item.type || 'ITEM').toUpperCase();
-    nameWrap.appendChild(nameEl);
-    nameWrap.appendChild(typeEl);
-    if (s.count > 1) {
-      var countEl = document.createElement('span');
-      countEl.style.cssText = 'margin-left:10px;font-size:11px;letter-spacing:1px;color:#a8a08c;';
-      countEl.textContent = '×' + s.count;
-      typeEl.parentNode.appendChild(countEl);
-    }
-    top.appendChild(nameWrap);
-    wrap.appendChild(top);
-
-    // Description
-    var descEl = document.createElement('div');
-    descEl.style.cssText = 'font-size:11px;line-height:1.6;color:#c8c0a8;letter-spacing:1px;';
-    descEl.textContent = item.desc;
-    wrap.appendChild(descEl);
-
-    // Effects line
-    if (effects) {
-      var fxEl = document.createElement('div');
-      fxEl.style.cssText = 'font-size:11px;letter-spacing:2px;color:#80e0a0;';
-      fxEl.textContent = effects;
-      wrap.appendChild(fxEl);
-    }
-
-    // Use hint
-    var hintEl = document.createElement('div');
-    hintEl.style.cssText =
-      'margin-top:4px;padding:6px 10px;font-size:10px;letter-spacing:2px;' +
-      'background:rgba(0,0,0,0.4);border:1px solid ' + (usable ? 'rgba(255,224,128,0.4)' : 'rgba(255,255,255,0.1)') + ';' +
-      'color:' + (usable ? '#ffe080' : '#5a5040') + ';';
-    hintEl.textContent = held >= 0 ? 'CLICK ANOTHER SLOT TO PUT IT THERE · CLICK IT AGAIN TO KEEP IT'
-      : usable
-      ? (item.type === 'weapon' ? '[F] OR RIGHT-CLICK TO STRIKE' : '[F] OR RIGHT-CLICK TO USE')
-      : (item.type === 'weapon' ? 'WEAPON · NO COMBAT YET' : 'NO USE AVAILABLE HERE');
-    wrap.appendChild(hintEl);
-
-    menuDetailEl.appendChild(wrap);
+    var typeColor = BridgeItems.typeColor ? BridgeItems.typeColor(item.type) : '#888';
+    var effects = BridgeItems.effectsText ? BridgeItems.effectsText(item) : '';
+    var usable = typeof item.onUse === 'function';
+    var worth = typeof BridgeStorage !== 'undefined' && BridgeStorage.worthLine ? BridgeStorage.worthLine(s.id) : '';
+    menuDetailEl.innerHTML =
+      '<div class="bp-d-top"><canvas class="bp-d-icon" width="64" height="64"></canvas><div class="bp-d-id">' +
+        '<div class="bp-d-name">' + esc(item.name) + '</div>' +
+        '<span class="bp-d-type" style="--tc:' + typeColor + '">' + esc(item.type || 'item') + '</span>' + (s.count > 1 ? '<span class="bp-d-n">×' + s.count + '</span>' : '') +
+      '</div></div>' +
+      '<div class="bp-d-desc">' + esc(item.desc || '') + '</div>' +
+      (effects ? '<div class="bp-d-fx">' + esc(effects) + '</div>' : '') +
+      (worth ? '<div class="bp-d-worth">' + worth + '</div>' : '') +
+      '<div class="bp-d-hint">' + esc(held >= 0 ? 'Click another slot to put it there, or this one to keep it here.'
+        : chest ? (focusChest >= 0 ? 'Click to take it. Shift-click takes one.' : 'Click to store it. Shift-click stores one.').replace(/Click/g, document.documentElement.classList.contains('touch') ? 'Tap' : 'Click').replace(/ Shift-click (takes|stores) one\./, document.documentElement.classList.contains('touch') ? '' : ' Shift-click $1 one.')
+        : usable ? (item.type === 'weapon' ? 'F or right-click in the world to strike' : 'F (or B on touch) to use it from the hotbar')
+        : 'Nothing to use it for here') + '</div>';
+    var g = menuDetailEl.querySelector('.bp-d-icon').getContext('2d');
+    g.imageSmoothingEnabled = false;
+    item.draw(g, 0, 0, 64);
   }
 
   function refreshMenuStats() {
     if (!menuStatsEl) return;
+    var hp = Math.max(0, Math.min(100, state.hp / state.maxHP * 100)), en = Math.max(0, Math.min(100, state.energy / state.maxEnergy * 100));
     menuStatsEl.innerHTML =
-      '<span>HP <span style="color:#ffb0b0;">' + state.hp + '/' + state.maxHP + '</span>' +
-      '  ·  EN <span style="color:#ffe0a0;">' + state.energy + '/' + state.maxEnergy + '</span></span>' +
-      '<span style="color:#666;">CLICK AN ITEM TO PICK IT UP, A SLOT TO PUT IT DOWN · 1-0 · F USE</span>';
+      '<div class="bp-bar hp"><span>Health</span><i><b style="width:' + hp + '%"></b></i><em>' + state.hp + '/' + state.maxHP + '</em></div>' +
+      '<div class="bp-bar en"><span>Energy</span><i><b style="width:' + en + '%"></b></i><em>' + state.energy + '/' + state.maxEnergy + '</em></div>';
+    var help = root && root.querySelector('.bp-help');
+    if (help) help.textContent = chest ? 'What you leave in a chest stays there, wherever you go - come back for it.'
+                                       : document.documentElement.classList.contains('touch') ? 'Tap an item to pick it up, then a slot to put it down.'
+                                       : 'Click an item to pick it up, a slot to put it down. 1-0 picks a hotbar slot, F uses it.';
+  }
+
+  // the next pack up, and where to buy it (js/storage.js knows the outfitters)
+  function refreshNext() {
+    var box = root && root.querySelector('.bp-next');
+    if (!box) return;
+    var n = typeof BridgeStorage !== 'undefined' && BridgeStorage.nextPack ? BridgeStorage.nextPack() : null;
+    box.innerHTML = n ? '<b>A bigger pack:</b> the ' + esc(n.name) + ', ' + n.slots + ' slots, ' + n.price + ' coins' + (n.where ? ' · ' + esc(n.where) : '')
+                      : '<b>The biggest pack there is.</b> Chests at home and aboard hold the rest.';
+  }
+
+  function refreshChest() {
+    if (!chest || !chestGrid) return;
+    var used = 0;
+    for (var j = 0; j < chest.size; j++) {
+      if (chest.slots[j]) used++;
+      paintSlot(chestSlotEls[j], chest.slots[j], ' bp-cslot' + (j === focusChest ? ' focus' : ''));
+    }
+    var head = root.querySelector('.bp-chest .bp-head');
+    head.querySelector('.bp-title').textContent = chest.name;
+    head.querySelector('.bp-sub').textContent = used + ' of ' + chest.size + ' slots used' + (chest.where ? ' · ' + chest.where : '');
   }
 
   function refreshMenu() {
-    if (!menu) return;
+    if (!root) return;
     buildMenuGrid();
     for (var i = 0; i < menuCap; i++) refreshMenuSlot(i);
+    refreshChest();
     refreshMenuDetail();
     refreshMenuStats();
+    refreshNext();
   }
 
-  function openMenu() {
-    if (menuOpen) return;
-    if (typeof BridgeState !== 'undefined' && BridgeState.getState() !== 'world') return;
-    buildMenu();
-    menu.style.display = 'flex';
-    menuOpen = true;
-    held = -1; focus = -1;
-    if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
-    refreshMenu();
+  // ---- chests: moving things in and out ------------------------------------
+  function stackable(id) { return (BridgeItems.get(id) || {}).stackable !== false; }
+  // put n of id into a slot array: onto a stack of the same, else the first empty slot; how many went in
+  function putInto(arr, size, id, n, from) {
+    var put = 0;
+    if (stackable(id)) {
+      for (var i = from || 0; i < size; i++) if (arr[i] && arr[i].id === id) { arr[i].count += n; return n; }
+      for (var j = from || 0; j < size; j++) if (!arr[j]) { arr[j] = { id: id, count: n }; return n; }
+      return 0;
+    }
+    for (var k = from || 0; k < size && put < n; k++) if (!arr[k]) { arr[k] = { id: id, count: 1 }; put++; }
+    return put;
+  }
+  function moved(sound) {
+    save();
+    if (chest && chest.save) chest.save();
+    refresh();
+    if (sound && typeof BridgeAudio !== 'undefined' && BridgeAudio.sfx) BridgeAudio.sfx('pickup');
+  }
+  function storeSlot(i, one) {
+    var s = state.slots[i];
+    if (!s || !chest) return 0;
+    var n = one ? 1 : s.count, put = putInto(chest.slots, chest.size, s.id, n);
+    if (!put) { flashChestFull(); return 0; }
+    s.count -= put;
+    if (s.count <= 0) state.slots[i] = null;
+    focus = i; focusChest = -1;
+    moved(true);
+    return put;
+  }
+  function takeSlot(j, one) {
+    var s = chest && chest.slots[j];
+    if (!s) return 0;
+    var n = one ? 1 : s.count, put = putInto(state.slots, cap(), s.id, n);
+    if (!put) { flashPackFull(); return 0; }
+    s.count -= put;
+    if (s.count <= 0) chest.slots[j] = null;
+    focusChest = j; focus = -1;
+    moved(true);
+    return put;
+  }
+  // store everything in the pack (not the hotbar) - or, `stacks`, only what the chest already has some of (hotbar too)
+  function storeAll(stacks) {
+    if (!chest) return;
+    var n = 0, full = false;
+    for (var i = stacks ? 0 : MAX_SLOTS; i < cap(); i++) {
+      var s = state.slots[i];
+      if (!s) continue;
+      if (stacks && !chest.slots.some(function (c) { return c && c.id === s.id; })) continue;
+      var put = putInto(chest.slots, chest.size, s.id, s.count);
+      if (!put) { full = true; continue; }
+      s.count -= put; n += put;
+      if (s.count <= 0) state.slots[i] = null;
+    }
+    if (full) flashChestFull();
+    if (n) moved(true); else refresh();
+  }
+  function takeAll() {
+    if (!chest) return;
+    var n = 0, full = false;
+    for (var j = 0; j < chest.size; j++) {
+      var s = chest.slots[j];
+      if (!s) continue;
+      var put = putInto(state.slots, cap(), s.id, s.count);
+      if (!put) { full = true; continue; }
+      s.count -= put; n += put;
+      if (s.count <= 0) chest.slots[j] = null;
+    }
+    if (full) flashPackFull();
+    if (n) moved(true); else refresh();
+  }
+  function flash(cls) {
+    if (!root) return;
+    root.classList.remove(cls); void root.offsetWidth; root.classList.add(cls);
+    if (typeof BridgeAudio !== 'undefined' && BridgeAudio.sfx) BridgeAudio.sfx('error');
+  }
+  function flashChestFull() { flash('bp-chest-full'); }
+  function flashPackFull() { flash('bp-pack-full'); }
+
+  // keys while the Backpack is the menu's page (js/menu.js hands them over first)
+  function menuKey(e) {
+    switch (e.key) {
+      case 'Escape': if (held >= 0) { held = -1; refreshMenu(); return true; } return false;
+      case '[': cycleSlot(-1); return true;
+      case ']': cycleSlot(1); return true;
+      case 'f': case 'F': useSelected(); return true;
+      case 'o': case 'O': outfit(); return true;
+      case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+        selectSlot(parseInt(e.key, 10) - 1); return true;
+      case '0': selectSlot(9); return true;
+    }
+    return false;
+  }
+
+  if (typeof BridgeMenu !== 'undefined') {
+    BridgeMenu.page('backpack', {
+      render: function (el, opts) { mount(el, opts); },
+      leave: function () { if (chest && chest.close) chest.close(); unmount(); },
+      key: menuKey
+    });
+  }
+
+  function openMenu(opts) {
+    if (typeof BridgeMenu !== 'undefined') BridgeMenu.open('backpack', opts);
   }
   function closeMenu() {
-    if (!menuOpen) return;
-    menuOpen = false;
-    if (menu) menu.style.display = 'none';
-    if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
+    if (typeof BridgeMenu !== 'undefined' && BridgeMenu.isOpen()) BridgeMenu.close();
   }
-  function toggleMenu() { menuOpen ? closeMenu() : openMenu(); }
-  function isMenuOpen() { return menuOpen; }
-
-  // Menu-only keyboard listener — fires regardless of BridgeControls
-  // because we disable controls while the menu is open. Registered in
-  // the capture phase so we beat world.js's global Esc-to-leave handler
-  // and can swallow it via stopImmediatePropagation when the menu owns
-  // the key.
-  document.addEventListener('keydown', function (e) {
-    if (!menuOpen) return;
-    var handled = true;
-    switch (e.key) {
-      case 'Escape':
-        if (held >= 0) { held = -1; refreshMenu(); } else closeMenu();
-        break;
-      case 'i': case 'I':
-        closeMenu(); break;
-      case '[':
-        cycleSlot(-1); break;
-      case ']':
-        cycleSlot(1); break;
-      case 'f': case 'F':
-        useSelected(); break;
-      case '1': case '2': case '3': case '4': case '5':
-      case '6': case '7': case '8': case '9':
-        selectSlot(parseInt(e.key, 10) - 1); break;
-      case '0':
-        selectSlot(9); break;
-      case 'o': case 'O':
-        closeMenu(); if (typeof BridgeGear !== 'undefined') BridgeGear.open(); break;
-      default: handled = false;
-    }
-    if (handled) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    }
-  }, true);
+  function toggleMenu() { if (typeof BridgeMenu !== 'undefined') BridgeMenu.toggle('backpack'); }
+  function isMenuOpen() { return typeof BridgeMenu !== 'undefined' && BridgeMenu.isOpen(); }
 
   // ---- Public API -----------------------------------------------------
   function init() {
@@ -839,6 +850,7 @@ var BridgeInventory = (function () {
     getStats: getStats, restoreHP: restoreHP, restoreEnergy: restoreEnergy,
     restoreAll: restoreAll, takeDamage: takeDamage, useEnergy: useEnergy,
     openMenu: openMenu, closeMenu: closeMenu, toggleMenu: toggleMenu, isMenuOpen: isMenuOpen,
+    storeAll: storeAll, takeAll: takeAll, putInto: putInto,
     tick: tick,
     loadRemote: loadRemote
   };
