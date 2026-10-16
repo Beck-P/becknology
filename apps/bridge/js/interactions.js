@@ -1573,6 +1573,15 @@ var BridgeInteractions = (function () {
       if (e.key === 'Enter') {
         e.preventDefault();
         var val = input.value.trim();
+        if (inter.passwordHash) {
+          // only a hash of the password is kept (the repo is public): hash what was typed and compare
+          if (!window.crypto || !crypto.subtle) return;
+          crypto.subtle.digest('SHA-256', new TextEncoder().encode(val)).then(function (buf) {
+            var hex = Array.prototype.map.call(new Uint8Array(buf), function (v) { return ('0' + v.toString(16)).slice(-2); }).join('');
+            if (hex === inter.passwordHash) { cleanup(); go(); } else denied();
+          });
+          return;
+        }
         if (inter.targetWorld && val.toUpperCase() === String(inter.password).toUpperCase()) {
           cleanup();
           gateOpen(inter, true);
@@ -1580,24 +1589,31 @@ var BridgeInteractions = (function () {
         } else if (val === inter.password) {
           // Correct — navigate to target
           cleanup();
-          BridgeState.setWorldPos({
-            worldId: BridgeWorld.getWorld().tileset,
-            x: BridgeCharacter.getX(),
-            y: BridgeCharacter.getY(),
-            facing: BridgeCharacter.getFacing()
-          });
-          BridgeState.transition('redirect', { url: inter.target });
+          go();
         } else {
-          // Wrong password
-          var err = document.getElementById('pw-error');
-          if (err) err.textContent = inter.failMessage || 'ACCESS DENIED.';
-          input.value = '';
-          input.focus();
+          denied();
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
         cleanup();
       }
+    }
+
+    function go() {
+      BridgeState.setWorldPos({
+        worldId: BridgeWorld.getWorld().tileset,
+        x: BridgeCharacter.getX(),
+        y: BridgeCharacter.getY(),
+        facing: BridgeCharacter.getFacing()
+      });
+      BridgeState.transition('redirect', { url: inter.target });
+    }
+
+    function denied() {
+      var err = document.getElementById('pw-error');
+      if (err) err.textContent = inter.failMessage || 'ACCESS DENIED.';
+      input.value = '';
+      input.focus();
     }
 
     function cleanup() {
