@@ -401,7 +401,23 @@ var BridgeInventory = (function () {
     slot.appendChild(cnt);
     // Click selects the slot
     slot.addEventListener('click', function () { selectSlot(i); });
+    // a weapon's stats on hover (js/arms.js)
+    slot.addEventListener('mouseenter', function () { hoverTip(slot, i); });
+    slot.addEventListener('mouseleave', function () { hoverTip(null); });
     return slot;
+  }
+
+  var tipEl = null;
+  function hoverTip(slot, i) {
+    var s = slot && state.slots[i], item = s && BridgeItems.get(s.id);
+    var html = item && typeof BridgeArms !== 'undefined' && BridgeArms.stats(item) ? BridgeArms.card(item, {}) : '';
+    if (!html) { if (tipEl) tipEl.style.display = 'none'; return; }
+    if (!tipEl) { tipEl = document.createElement('div'); tipEl.id = 'ws-tip'; document.body.appendChild(tipEl); }
+    tipEl.innerHTML = '<div class="ws-name">' + esc(item.name) + '</div>' + html;
+    tipEl.style.display = 'block';
+    var r = slot.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    tipEl.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + 'px';
+    tipEl.style.top = Math.max(6, r.top - h - 8) + 'px';
   }
 
   function refreshSlotEl(i) {
@@ -425,7 +441,7 @@ var BridgeInventory = (function () {
       var item = BridgeItems.get(s.id);
       if (item) {
         item.draw(ctx, 0, 0, ICON_SIZE);
-        slot.title = item.name + ' — ' + item.desc;
+        slot.title = typeof BridgeArms !== 'undefined' && BridgeArms.stats(item) ? '' : item.name + ' — ' + item.desc;   // a weapon has its own card
       }
       if (s.count > 1) { cnt.textContent = String(s.count); cnt.style.display = ''; }
       else cnt.style.display = 'none';
@@ -677,6 +693,7 @@ var BridgeInventory = (function () {
     }
     var typeColor = BridgeItems.typeColor ? BridgeItems.typeColor(item.type) : '#888';
     var effects = BridgeItems.effectsText ? BridgeItems.effectsText(item) : '';
+    var arms = typeof BridgeArms !== 'undefined' && BridgeArms.stats(item) ? BridgeArms.card(item, { compare: !inChest }) : '';   // a weapon: its stats
     var usable = typeof item.onUse === 'function';
     var worth = S() && S().worthLine ? S().worthLine(s.id) : '';
     var buyer = !inChest && S() && S().buyerHere ? S().buyerHere() : null, price = buyer ? S().priceAt(buyer, s.id) : 0;
@@ -696,7 +713,7 @@ var BridgeInventory = (function () {
         '<span class="bp-d-type" style="--tc:' + typeColor + '">' + esc(item.type || 'item') + '</span>' + (s.count > 1 ? '<span class="bp-d-n">×' + s.count + '</span>' : '') +
       '</div></div>' +
       '<div class="bp-d-desc">' + esc(item.desc || '') + '</div>' +
-      (effects ? '<div class="bp-d-fx">' + esc(effects) + '</div>' : '') +
+      (arms || (effects ? '<div class="bp-d-fx">' + esc(effects) + '</div>' : '')) +
       (worth ? '<div class="bp-d-worth">' + worth + '</div>' : '') +
       (buyer ? '<div class="bp-d-worth bp-d-buyer">' + (price ? esc(buyer.label) + ' pays <b>' + price + '</b> here.' : esc(buyer.label) + ' doesn\'t buy these.') + '</div>' : '') +
       (acts.length ? '<div class="bp-d-acts">' + acts.map(function (a) {
@@ -706,7 +723,9 @@ var BridgeInventory = (function () {
       '<div class="bp-d-hint">' + esc(held >= 0 ? (isTouch() ? 'Tap' : 'Click') + ' another slot to put it there, or this one to keep it here.'
         : offerNow ? 'This goes to make room - drop it, throw it away or send it to the ship.'
         : chest ? (focusChest >= 0 ? (isTouch() ? 'Tap to take it.' : 'Click to take it. Shift-click takes one.') : (isTouch() ? 'Tap to store it.' : 'Click to store it. Shift-click stores one.'))
-        : usable ? (item.type === 'weapon' ? 'F or right-click in the world to strike' : (isTouch() ? 'B' : 'F') + ' uses it from the hotbar')
+        : usable ? (item.type === 'weapon' ? (isTouch() ? 'B to strike - hold it after a swing to charge; ROLL to dodge'
+                                                         : 'F or right-click to strike - hold it after a swing to charge. Shift to roll')
+                   : (isTouch() ? 'B' : 'F') + ' uses it from the hotbar')
         : (isTouch() ? 'Drag it, or tap it then a slot, to move it.' : 'Drag it, or click it then a slot, to move it.')) + '</div>';
     var g = menuDetailEl.querySelector('.bp-d-icon').getContext('2d');
     g.imageSmoothingEnabled = false;

@@ -267,8 +267,10 @@ var BridgeCombat = (function () {
         var g = c.getContext('2d');
         g.clearRect(0, 0, S, S);
         drawCreature(g, h, S / 2, S - ts * 0.15, ts, now);
-        // what's on it: struck (a white flash), frozen (rimed blue), burning (embers lifting off)
-        var hit = h._hitAt && now - h._hitAt < 110, frozen = h._frostUntil > now, burning = h._burnUntil > now;
+        // what's on it: struck (a white flash), frozen (rimed blue), burning (embers lifting off) — on the clock the
+        // hits keep (performance.now), not the world's
+        var pn = performance.now(), held = h._stopUntil > pn;
+        var hit = h._hitAt && (pn - h._hitAt < 110 || held), frozen = h._frostUntil > pn, burning = h._burnUntil > pn;
         if (hit || frozen) {
           g.save(); g.globalCompositeOperation = 'source-atop';
           g.fillStyle = hit ? 'rgba(255,255,255,0.8)' : 'rgba(150,205,255,0.38)'; g.fillRect(0, 0, S, S);
@@ -283,6 +285,9 @@ var BridgeCombat = (function () {
           }
         }
         var dx = Math.round(offX + (h._rx + 0.5) * ts - S / 2), dy = Math.round(offY + (h._ry + 1) * ts - S + ts * 0.15 - ts * 0.1);
+        if (held) dx += Math.floor(pn / 28) % 2 ? 1 : -1;               // frozen by the blow, shuddering (js/arms.js)
+        var rk = h._recoil ? (pn - h._recoil.at) / 160 : 1;            // and knocked back a few pixels by it
+        if (rk < 1) { dx += Math.round(h._recoil.dx * 4 * (1 - rk)); dy += Math.round(h._recoil.dy * 3 * (1 - rk)); }
         if (sc && typeof BridgeScene !== 'undefined') BridgeScene.drawOccluded(ctx, sc, c, 0, 0, S, S, dx, dy, footRow, offX, offY, null, null);
         else ctx.drawImage(c, dx, dy);
       } });
@@ -447,20 +452,24 @@ var BridgeCombat = (function () {
     var from = w.from || (typeof BridgeCharacter !== 'undefined' ? { x: BridgeCharacter.getX(), y: BridgeCharacter.getY() } : null);
     if (w.heavy) {
       if (h._attackPhase === 'winding') { h._attackPhase = 'recovering'; h._attackStart = now; h._attackTarget = null; }
-      if (!h.boss) push(world, h, 1, from);
       if (!w.remote) shake(2);
     }
+    // knocked back: a heavy weapon a tile, a finisher or a charged blow (js/arms.js `push`) as far as it says
+    var knock = Math.max(w.heavy ? 1 : 0, +w.push || 0);
+    if (knock && !h.boss) push(world, h, knock, from);
     if (h.blink && Math.random() < h.blink) blink(world, h, from);
   }
   function push(world, h, n, from) {
     if (!from) return;
     var sx = Math.sign(h.x - from.x), sy = Math.sign(h.y - from.y);
     if (Math.abs(h.x - from.x) >= Math.abs(h.y - from.y)) sy = 0; else sx = 0;
-    var nx = h.x + sx * n, ny = h.y + sy * n;
-    if (!world.collisions[ny] || world.collisions[ny][nx] !== 0) return;
-    if (world.interactions.some(function (o) { return o !== h && o.x === nx && o.y === ny && o.type === 'hostile'; })) return;
-    world.collisions[h.y][h.x] = 0; h.x = nx; h.y = ny; world.collisions[ny][nx] = 1;
-    h._lastMove = performance.now();
+    for (var i = 0; i < n; i++) {                                  // a tile at a time, stopping at whatever's in the way
+      var nx = h.x + sx, ny = h.y + sy;
+      if (!world.collisions[ny] || world.collisions[ny][nx] !== 0) return;
+      if (world.interactions.some(function (o) { return o !== h && o.x === nx && o.y === ny && o.type === 'hostile'; })) return;
+      world.collisions[h.y][h.x] = 0; h.x = nx; h.y = ny; world.collisions[ny][nx] = 1;
+      h._lastMove = performance.now();
+    }
   }
   function blink(world, h, from) {
     var px = from ? from.x : BridgeCharacter.getX(), py = from ? from.y : BridgeCharacter.getY(), opts = [];
@@ -586,7 +595,7 @@ var BridgeCombat = (function () {
     if (worldId !== 'lumar-smithy') return;
     (data.interactions || []).forEach(function (it) {
       if (it.type === 'vendor' && it.label === 'SMITHY' && it.items) {
-        [['cutlass', 90], ['boarding_pike', 160], ['war_maul', 240]].forEach(function (w) {
+        [['cutlass', 90], ['twin_fangs', 200], ['boarding_pike', 160], ['war_maul', 240], ['tidebreaker', 480]].forEach(function (w) {
           if (!it.items.some(function (x) { return x.id === w[0]; })) it.items.push({ id: w[0], price: w[1] });
         });
       }

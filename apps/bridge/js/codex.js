@@ -56,6 +56,7 @@ var BridgeCodex = (function () {
     { id: 'gear', name: 'Tools and weapons', reward: 150, items: [
       ['iron_dagger', 'The smithy on Lumar\'s square'], ['cutlass', 'The smithy on Lumar\'s square'], ['star_blade', 'Hob forges it, in the Rose Mine'],
       ['boarding_pike', 'The smithy on Lumar\'s square'], ['war_maul', 'The smithy on Lumar\'s square'],
+      ['twin_fangs', 'The smithy on Lumar\'s square'], ['tidebreaker', 'The smithy on Lumar\'s square'],
       ['rime_hatchet', 'Morwen\'s case, in the tower on Midnight'], ['emberbrand', 'Morwen\'s case'], ['moonglass_sabre', 'Morwen\'s case'],
       ['veilpiercer', 'Behind a locked grate on Midnight Isle'], ['wispcaller', 'Whatever guards the abbey on Midnight'],
       ['lockpick', 'The smithy on Lumar\'s square'], ['old_pickaxe', 'The rack in the Rose Mine\'s hall'], ['iron_pickaxe', 'Hob forges it'],
@@ -184,7 +185,8 @@ var BridgeCodex = (function () {
         grid.querySelectorAll('.cx-cell.sel').forEach(function (c) { c.classList.remove('sel'); });
         cell.classList.add('sel');
         var rar = typeof BridgeFishArt !== 'undefined' && BridgeFishArt.has(id) ? BridgeFishArt.TIERS[BridgeFishArt.tier(id)] : null;
-        detail.innerHTML = found && it ? '<b>' + esc(it.name) + '</b>' + (rar ? ' <span style="color:' + rar.col + '">' + rar.name + '</span>' : '') + ' — ' + esc(it.desc || '') + ' <em>' + esc(x[1]) + '.</em>'
+        detail.innerHTML = found && it ? '<b>' + esc(it.name) + '</b>' + (rar ? ' <span style="color:' + rar.col + '">' + rar.name + '</span>' : '') + ' — ' + esc(it.desc || '') + ' <em>' + esc(x[1]) + '.</em>' +
+          (typeof BridgeArms !== 'undefined' && BridgeArms.stats(it) ? BridgeArms.card(it, {}) : '')
                                        : '<b>Not found yet.</b> <em>' + esc(x[1]) + '.</em>';
       };
       cell.addEventListener('mouseenter', show);

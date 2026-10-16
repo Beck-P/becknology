@@ -88,11 +88,15 @@ var BridgeCharacter = (function () {
     }
   }
   function getFacing() { return player.facing; }
-  function isMoving() { return player.moveProgress < 1; }
+  function isMoving() { return player.moveProgress < 1 || !!rolling; }
 
   /** Get the interpolated render position (smooth between tiles). */
   function getRenderPos() {
     if (pose) return { x: pose.x - 0.5, y: pose.y - 1 + 3 / 32 };
+    if (rolling) {                                  // the dodge roll: quick off the mark, easing in to where it stops
+      var rk = Math.min(1, (performance.now() - rolling.t0) / rolling.dur), e = 1 - Math.pow(1 - rk, 2);
+      return { x: rolling.fx + (rolling.tx - rolling.fx) * e, y: rolling.fy + (rolling.ty - rolling.fy) * e };
+    }
     if (seat) return { x: seat.x - 0.5, y: seat.y - 1 + 3 / 32 };
     var p = Math.min(1, player.moveProgress);
     return {
@@ -101,10 +105,30 @@ var BridgeCharacter = (function () {
     };
   }
 
+  // ---- the dodge roll (js/arms.js): from where you are to n tiles on (they've been checked clear), dur ms ----
+  var rolling = null;
+  function roll(dx, dy, n, dur) {
+    if (pose || seat) return false;
+    var from = getRenderPos(), sx = Math.round(from.x), sy = Math.round(from.y);
+    rolling = { fx: from.x, fy: from.y, tx: sx + dx * n, ty: sy + dy * n, t0: performance.now(), dur: dur };
+    player.x = player.targetX = sx; player.y = player.targetY = sy;
+    player.moveProgress = 1; player.walking = false;
+    player.facing = dx > 0 ? 'right' : dx < 0 ? 'left' : dy > 0 ? 'down' : 'up';
+    return true;
+  }
+  function isRolling() { return !!rolling; }
+
   /** Try to move in a direction. Returns true if movement started. */
   function tryMove(dx, dy, collisions, mapW, mapH) {
     if (pose) return false;
+    if (rolling) return false;
     if (seat) { seat = null; return false; }              // moving gets you up first
+    var A = typeof BridgeArms !== 'undefined' ? BridgeArms : null;
+    if (A && A.busy()) {                                  // a swing holds you through its landing; a charge lets you turn
+      if (A.charging()) { player.facing = dx < 0 ? 'left' : dx > 0 ? 'right' : dy < 0 ? 'up' : 'down'; return false; }
+      if (A.rooted()) return false;
+      A.cancel();                                         // moving cuts the recovery short
+    }
     // Update facing regardless of whether we can move
     if (dx < 0) player.facing = 'left';
     else if (dx > 0) player.facing = 'right';
@@ -134,6 +158,11 @@ var BridgeCharacter = (function () {
   /** Update movement interpolation. Call each frame with elapsed seconds. */
   function update(dt) {
     if (dt === undefined) dt = 1 / 60;
+    if (rolling && performance.now() - rolling.t0 >= rolling.dur) {
+      player.x = player.targetX = rolling.tx; player.y = player.targetY = rolling.ty;
+      rolling = null;
+    }
+    if (typeof BridgeArms !== 'undefined') BridgeArms.update();
     if (player.moveProgress < 1) {
       var step = player.moveSpeed * (typeof BridgeGear !== 'undefined' ? BridgeGear.speed() : 1) * dt;
       player.moveProgress += step;
@@ -202,7 +231,7 @@ var BridgeCharacter = (function () {
     if (!sheets[key]) {
       var at = key.indexOf('@'), base = at < 0 ? key : key.slice(0, at);
       var parts = base.split('-'), colour = parts.pop();
-      var mode = parts[0] === 'sit' || parts[0] === 'ski' || parts[0] === 'climb' ? parts.shift() : '';
+      var mode = parts[0] === 'sit' || parts[0] === 'ski' || parts[0] === 'climb' || parts[0] === 'attack' ? parts.shift() : '';
       var look = at < 0 ? BridgeLook.clean(null) : BridgeLook.parse(key.slice(at + 1));
       sheets[key] = BridgeLook.sheet(mode, parts[0] || 'flight', colour, look);
     }
@@ -267,6 +296,13 @@ var BridgeCharacter = (function () {
     var sheet = liveSheet(sheetKey());
     var pos = getRenderPos();
     var footRow = pos.y + 1 - 3 / 32;
+    var fit = fightLook();
+    if (fit) {
+      return { footRow: footRow, draw: function (ctx) {
+        drawFighter(ctx, { sc: sc, world: world, offX: offX, offY: offY, ts: ts, now: now, key: baseKey(), sheet: sheet, x: pos.x, y: pos.y,
+                           facing: player.facing, walking: player.moveProgress < 1, stride: player.stride, fight: fit.fight, held: fit.held });
+      } };
+    }
     return {
       footRow: footRow,
       draw: function (ctx) {
@@ -282,6 +318,67 @@ var BridgeCharacter = (function () {
           BridgeScene.tintAt(sc, world, pos.x, pos.y, now), { x: cx, y: footY, rx: 9, ry: 3 }, null, 'auto');
       }
     };
+  }
+
+  // ---- fighting (js/arms.js): an attack frame, or the walk frame, with the weapon in hand ---------------------------
+  // The attack sheet (pilot-attack-…, 80 × 92 frames, attacks.json) and the weapon's own frame for the same pose
+  // (assets/characters/weapons/<id>, cut where the body hides it) are put together and drawn as one, depth-tested
+  // and lit like any character. o: { sc, world, offX, offY, ts, now (the world's clock, for the light), key (the
+  // sheet key with no mode: '<style>-<colour>@<look>'), sheet (that walk sheet), x, y (render position), facing,
+  // walking, stride, fight (a BridgeArms state, yours or someone's), held (the weapon id carried) }. Others' pilots
+  // (js/multi.js) draw through this too.
+  var fcan = null;
+  function fightLook() {
+    var A = typeof BridgeArms !== 'undefined' ? BridgeArms : null;
+    if (!A || seat || pose) return null;
+    var f = A.state(), h = A.held();
+    return f || h ? { fight: f, held: h } : null;
+  }
+  function baseKey() { return sheetKey(); }
+  function drawFighter(ctx, o) {
+    var A = BridgeArms, L = A.layout(), t = performance.now();
+    var p = o.fight ? A.pose(o.fight, t) : null;
+    var at = o.key.indexOf('@'), look = at < 0 ? BridgeLook.clean(null) : BridgeLook.parse(o.key.slice(at + 1));
+    var build = look.body === 'b' ? 'b' : 'a', dir = p ? p.facing : o.facing, row = DIR_ROW[dir] || 0;
+    var img = null, sx, sy, fw, fh, ox, oy, frame, weapon = null;
+    if (p && L) {
+      var ash = getSheet('attack-' + o.key), ci = L.cols.indexOf(p.col);
+      if (ash.ready && ci >= 0) {
+        img = ash.img; fw = L.frame[0]; fh = L.frame[1]; ox = L.origin[0]; oy = L.origin[1];
+        sx = ci * fw; sy = row * fh; frame = p.col; weapon = p.weapon;
+      }
+    }
+    if (!img) {                                        // walking or standing (or the attack sheet still loading)
+      var sh = o.sheet && o.sheet.ready ? o.sheet : null;
+      if (!sh) return;
+      var col = o.walking ? 4 + Math.floor(o.stride / (WALK_CYCLE_TILES / 8)) % 8 : IDLE_SEQ[Math.floor(Date.now() / 340) % IDLE_SEQ.length];
+      img = sh.img; fw = FRAME_W; fh = FRAME_H; ox = 16; oy = 45; sx = col * FRAME_W; sy = row * FRAME_H;
+      frame = col >= 4 ? 'walk' + (col - 4) : 'idle' + col;
+      weapon = p && p.col.indexOf('roll-') === 0 ? null : o.held;
+    }
+    var c = weapon ? A.cell(weapon, build, dir, frame) : null;
+    var x0 = -ox, y0 = -oy, x1 = fw - ox, y1 = fh - oy;
+    if (c) { x0 = Math.min(x0, c.r[4]); y0 = Math.min(y0, c.r[5]); x1 = Math.max(x1, c.r[4] + c.r[2]); y1 = Math.max(y1, c.r[5] + c.r[3]); }
+    var W = x1 - x0, H = y1 - y0;
+    if (!fcan) fcan = document.createElement('canvas');
+    if (fcan.width < W || fcan.height < H) { fcan.width = Math.max(fcan.width, W); fcan.height = Math.max(fcan.height, H); }
+    var g = fcan.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, W, H);
+    g.imageSmoothingEnabled = false;
+    g.drawImage(img, sx, sy, fw, fh, -ox - x0, -oy - y0, fw, fh);
+    if (c) g.drawImage(c.img, c.r[0], c.r[1], c.r[2], c.r[3], c.r[4] - x0, c.r[5] - y0, c.r[2], c.r[3]);
+    var cx = Math.round(o.offX + (o.x + 0.5) * o.ts) + (p && p.shake || 0), footRow = o.y + 1 - 3 / 32, footY = Math.round(o.offY + footRow * o.ts);
+    var shadow = { x: cx, y: footY, rx: 9, ry: 3 };
+    if (o.sc) {
+      BridgeScene.drawOccluded(ctx, o.sc, fcan, 0, 0, W, H, cx + x0, footY + y0, footRow, o.offX, o.offY,
+        BridgeScene.tintAt(o.sc, o.world, o.x, o.y, o.now), shadow, null, 'auto', true);
+    } else {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.beginPath(); ctx.ellipse(cx, footY, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(fcan, 0, 0, W, H, cx + x0, footY + y0, W, H);
+    }
   }
 
   function posedItem(offX, offY, ts, sc, world, now) {
@@ -332,6 +429,12 @@ var BridgeCharacter = (function () {
     var sy = Math.round(offY + pos.y * ts);
 
     var sheet = liveSheet(sheetKey());
+    var fit = sheet.ready && fightLook();
+    if (fit) {
+      drawFighter(ctx, { sc: null, offX: offX, offY: offY, ts: ts, now: Date.now(), key: baseKey(), sheet: sheet, x: pos.x, y: pos.y, facing: player.facing,
+                         walking: player.moveProgress < 1, stride: player.stride, fight: fit.fight, held: fit.held });
+      return;
+    }
     if (sheet.ready) {
       drawSprite(ctx, sheet, sx, sy, ts);
       return;
@@ -481,6 +584,10 @@ var BridgeCharacter = (function () {
     update: update,
     draw: draw,
     sceneItem: sceneItem,
+    roll: roll,
+    isRolling: isRolling,
+    drawFighter: drawFighter,
+    sheet: getSheet,
     setHidden: setHidden,
     isHidden: function () { return hidden; }
   };

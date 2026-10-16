@@ -1232,16 +1232,24 @@ def build_human(spec):
         head.scale = (1.14,) * 3
 
 
-if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb][-<style>]-<a|b>: one suit on one body, every head
+if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb|-attack|-weapons][-<style>]-<a|b>: one suit on one body, every head
     _parts = WHO.split('-')[1:]
     BODY = _parts.pop() if _parts and _parts[-1] in ('a', 'b') else 'a'
-    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb') else 'stand'
+    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb', 'attack', 'weapons') else 'stand'
     _rest = _parts[1:] if MODE != 'stand' else _parts
     STYLE = _rest[0] if _rest else 'flight'
     {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner,
      'mystic': build_mystic, 'ranger': build_ranger}[STYLE]()
     if BODY == 'b':
         body_b()
+    if MODE in ('attack', 'weapons'):  # fighting (attacks.py, attack_rig.py): a waist to turn at, a grip, the weapons
+        import attack_rig
+        import attacks
+        import weapon_sprites
+        W, H = attacks.FRAME if MODE == 'attack' else attacks.WEAPON_FRAME
+        ORIGIN_PX = attacks.ORIGIN if MODE == 'attack' else attacks.WEAPON_ORIGIN
+        RIG = attack_rig.rig(globals(), list(weapon_sprites.WEAPONS) if MODE == 'weapons' else
+                             [w for w in os.environ.get('ATTACK_WEAPON', '').split(',') if w])   # a weapon in hand: a quick look
     if MODE == 'climb':                # arms over the head need a taller frame
         W, H = 32, 64
         ORIGIN_PX = (16, 61)
@@ -1519,6 +1527,8 @@ def render_cell(base, dname, col, yaw, spec):
 
 def render_all(base):
     """Every frame of this character (as it's shown right now) into base/{id,depth,color_<variant>}/."""
+    if POSE == 'attack':
+        return attack_rig.render_sheet(RIG, base, VARIANTS)
     for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
         os.makedirs(os.path.join(base, kind), exist_ok=True)
     if POSE in ('ski', 'climb'):
@@ -1548,7 +1558,10 @@ def render_all(base):
                 render(os.path.join(base, 'color_' + v, tag))
 
 
-if WHO.startswith('pilot'):
+if WHO.startswith('pilot') and POSE == 'weapons':   # every weapon in the hand of a bare-headed pilot (held out)
+    set_head(['face', 'hair-short'])
+    attack_rig.render_weapons(RIG, OUT)
+elif WHO.startswith('pilot'):
     only = sys.argv[3].split(',') if len(sys.argv) > 3 else None     # just these heads (for a quick look)
     for name, groups in HEADS:
         if only and name not in only:

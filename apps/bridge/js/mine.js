@@ -267,10 +267,18 @@ var BridgeMine = (function () {
     if (!P) { sfx('error'); return say(inter.label, 'YOU NEED A PICKAXE. THERE\'S A RACK OF OLD ONES UP IN THE HALL.'); }
     var st = BridgeInventory.getStats();
     if (st.energy < P[2]) { sfx('error'); return say(inter.label, 'TOO TIRED TO SWING. EAT SOMETHING, OR GO UP AND REST.'); }
+    // the pick goes up and comes down (js/arms.js): the rock takes it on the landing frame, twice over when charged
+    var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
+    if (Math.abs(r.x - px) + Math.abs(r.y - py) === 1) BridgeCharacter.setFacing(r.x > px ? 'right' : r.x < px ? 'left' : r.y > py ? 'down' : 'up');
+    if (typeof BridgeArms !== 'undefined' && BridgeArms.swing({ id: P[0], cls: 'pick', onHit: function (mult) { strikeRock(inter, r, P, mult || 1); return true; } })) return;
     if (performance.now() - (swing ? swing.t : 0) < 260) return;
-    BridgeInventory.useEnergy(P[2]);
     swing = { t: performance.now(), x: r.x, y: r.y };
-    r.hp -= P[1]; r.hit = performance.now();
+    strikeRock(inter, r, P, 1);
+  }
+  function strikeRock(inter, r, P, mult) {
+    if (!r || r.hp <= 0 || BridgeInventory.getStats().energy < P[2]) return;
+    BridgeInventory.useEnergy(P[2]);
+    r.hp -= Math.round(P[1] * mult); r.hit = performance.now();
     tell('rk', { x: r.x, y: r.y, hp: r.hp });
     sfx('pick');
     for (var i = 0; i < 6; i++) dust.push({ x: r.x + 0.5, y: r.y + 0.7, vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 1.5 - 0.3, life: 1,
@@ -312,7 +320,7 @@ var BridgeMine = (function () {
     if (what === 'blade') {
       if (BridgeInventory.getCount('star_blade') > 0) return say(who.toUpperCase(), '"YOU\'VE GOT THE ONLY ONE I\'LL EVER MAKE. LOOK AFTER IT."');
       var B = FORGE.star_blade;
-      return BridgeInteractions.execute({ type: 'menu', label: who.toUpperCase(),
+      return BridgeInteractions.execute({ type: 'menu', label: who.toUpperCase(), item: 'star_blade',
         dialog: '"A BLADE? FOR WHAT\'S DOWN THERE, YOU\'LL WANT ONE. 2 STAR IRON, A SONGSTONE FOR THE HILT, AND ' + B.coins + ' COINS." (YOU HAVE ' +
                 BridgeInventory.getCount('star_iron') + ' STAR IRON, ' + BridgeInventory.getCount('songstone') + ' SONGSTONE.)',
         options: [{ label: 'MAKE IT', action: 'mine_upgrade', to: 'star_blade' }, { label: 'NOT NOW', action: 'close' }] });
@@ -321,7 +329,7 @@ var BridgeMine = (function () {
     var to = has('star_pickaxe') ? null : has('iron_pickaxe') ? 'star_pickaxe' : 'iron_pickaxe';
     if (!to) return say(who.toUpperCase(), '"THAT\'S STAR IRON. THERE\'S NOTHING BETTER IN THIS HILL, AND I\'D KNOW."');
     var F = FORGE[to], ore = BridgeItems.get(F.ore).name.toUpperCase();
-    BridgeInteractions.execute({ type: 'menu', label: who.toUpperCase(),
+    BridgeInteractions.execute({ type: 'menu', label: who.toUpperCase(), item: to,
       dialog: '"' + F.name + '. ' + F.n + ' ' + ore + ' AND ' + F.coins + ' COINS, AND YOUR OLD ONE FOR THE HANDLE." (YOU HAVE ' +
               BridgeInventory.getCount(F.ore) + ' ' + ore + '.)',
       options: [{ label: 'MAKE IT', action: 'mine_upgrade', to: to }, { label: 'NOT NOW', action: 'close' }] });

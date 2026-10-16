@@ -205,11 +205,18 @@ var BridgeFarm = (function () {
   function till(x, y) {
     if (save.tiles[key(x, y)]) return;
     if (tired(2, x, y)) return;
-    BridgeInventory.useEnergy(2);
-    save.tiles[key(x, y)] = { wet: 0 };
-    store();
-    sfx('till');
-    burst(x, y, '#6a4428', 7, 1.4);
+    var dig = function () {
+      if (save.tiles[key(x, y)] || tired(2, x, y)) return false;
+      BridgeInventory.useEnergy(2);
+      save.tiles[key(x, y)] = { wet: 0 };
+      store();
+      sfx('till');
+      burst(x, y, '#6a4428', 7, 1.4);
+      return false;
+    };
+    // the hoe goes up and comes down (js/arms.js): the earth turns on the landing frame
+    if (has('hoe') && typeof BridgeArms !== 'undefined' && BridgeArms.swing({ id: 'hoe', cls: 'pick', onHit: dig })) return;
+    dig();
   }
 
   function plant(x, y, k) {
