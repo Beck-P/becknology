@@ -32,12 +32,12 @@
 var BridgeHome = (function () {
   var KEY = 'bridge_homes';
   var HOMES = {
-    'lumar-home': { name: 'The White House', price: 1500, theme: 'parchment', gift: ['rocking_chair', 'potted_plant'],
+    'lumar-home': { name: 'The White House', price: 6000, theme: 'parchment', gift: ['rocking_chair', 'potted_plant'],
                     door: { world: 'lumar-sapphire', x: 38, y: 13, label: 'WHITE HOUSE', spawn: [8, 9] },
                     shop: 'WEXLEY & DAUGHTERS, JOINERS',
                     pitch: 'A WHITEWASHED HOUSE ON THE SQUARE, BLUE SHUTTERS, A CHIMNEY THAT DRAWS. A CARD IN THE WINDOW: "TO LET, FOR GOOD. ONE ROOM, ONE HEARTH, A VIEW OF THE LIGHT. ENQUIRE WITHIN - THE KEY IS UNDER THE POT."',
                     bought: 'THE KEY TURNS. IT\'S EMPTY, SWEPT, AND YOURS - AND THE LANDLADY HAS LEFT YOU A ROCKING CHAIR AND A PLANT, "TO START YOU OFF".' },
-    'arcadia-home': { name: 'Capsule Apartment', price: 600, theme: 'neon', gift: ['neon_stool', 'houseplant'],
+    'arcadia-home': { name: 'Capsule Apartment', price: 3000, theme: 'neon', gift: ['neon_stool', 'houseplant'],
                       door: { world: 'arcadia-street', x: 36, y: 7, label: 'CAPSULE HOTEL', spawn: [6, 8] },
                       shop: 'ARCADIAMART LIVING',
                       pitch: 'CAPSULE HOTEL, 24 HOURS. "NO VACANCY" - BUT UNDER IT, SMALLER: "LONG-STAY FLOOR. ONE ROOM, ONE WINDOW, YOUR OWN CAPSULE. KEYCARD AT THE DESK."',

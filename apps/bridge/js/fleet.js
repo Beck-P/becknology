@@ -31,16 +31,16 @@ var BridgeFleet = (function () {
     sloop:      { name: 'Sloop', price: 0, L: 2.6, beam: 1.0, vmax: 4.4, turn: 1.0, accel: 1.0, nogo: 0.7, hold: 12, fish: 8, hull: 40, slots: 0, crew: 0,
                   storm: 1.0, rocks: 1.0, sheet: 'sloop',
                   blurb: 'Your first boat. Light on her feet and quick to turn, with room for a few crates.' },
-    cutter:     { name: 'Cutter', price: 1400, L: 3.4, beam: 1.25, vmax: 5.0, turn: 0.9, accel: 0.85, nogo: 0.72, hold: 40, fish: 16, hull: 70, slots: 1, crew: 1,
+    cutter:     { name: 'Cutter', price: 3000, L: 3.4, beam: 1.25, vmax: 5.0, turn: 0.9, accel: 0.85, nogo: 0.72, hold: 40, fish: 16, hull: 70, slots: 1, crew: 1,
                   storm: 0.8, rocks: 0.8, sheet: 'cutter',
                   blurb: 'A bigger single-master with two headsails: the quickest thing on the Emerald, a hold for real cargo and a mount for one gun.' },
-    brigantine: { name: 'Brigantine', price: 4200, L: 5.0, beam: 1.6, vmax: 4.6, turn: 0.62, accel: 0.6, nogo: 0.86, hold: 120, fish: 30, hull: 150, slots: 3, crew: 3,
+    brigantine: { name: 'Brigantine', price: 15000, L: 5.0, beam: 1.6, vmax: 4.6, turn: 0.62, accel: 0.6, nogo: 0.86, hold: 120, fish: 30, hull: 150, slots: 3, crew: 3,
                   storm: 0.35, rocks: 0.55, sheet: 'brigantine',
                   blurb: 'Square sails forward, a big main aft. Slower through a turn and no good close to the wind, but she shrugs off a Crimson squall and carries a proper cargo.' },
-    galleon:    { name: 'Galleon', price: 11000, L: 7.0, beam: 2.2, vmax: 4.2, turn: 0.42, accel: 0.4, nogo: 1.0, hold: 300, fish: 50, hull: 280, slots: 5, crew: 5,
+    galleon:    { name: 'Galleon', price: 60000, L: 7.0, beam: 2.2, vmax: 4.2, turn: 0.42, accel: 0.4, nogo: 1.0, hold: 300, fish: 50, hull: 280, slots: 5, crew: 5,
                   storm: 0.15, rocks: 0.3, sheet: 'galleon',
                   blurb: 'Three masts of square sail and a hold like a warehouse. She sails like a cathedral, and nothing on the Midnight Sea frightens her hull.' },
-    raider:     { name: 'Raider', price: 6500, L: 4.4, beam: 1.3, vmax: 5.6, turn: 0.85, accel: 0.8, nogo: 0.74, hold: 50, fish: 12, hull: 110, slots: 4, crew: 3,
+    raider:     { name: 'Raider', price: 22000, L: 4.4, beam: 1.3, vmax: 5.6, turn: 0.85, accel: 0.8, nogo: 0.74, hold: 50, fish: 12, hull: 110, slots: 4, crew: 3,
                   storm: 0.5, rocks: 0.7, sheet: 'raider',
                   blurb: 'A black-hulled Crimson schooner, no questions asked. The fastest hull on the five seas, and teeth to match.' }
   };
@@ -168,14 +168,16 @@ var BridgeFleet = (function () {
       if (!r || !r.ok) return { ok: false, reason: (r && r.reason) || 'coins' };
       var names = NAMES[type] || ['Venture'], taken = st.ships.map(function (s) { return s.name; });
       var name = names.filter(function (n) { return taken.indexOf(n) < 0; })[0] || sp.name + ' ' + (st.n + 1);
-      var s = { id: type + (++st.n), type: type, name: name, at: islandOf(worldId), hull: 1, hold: {}, guns: [], fits: [], bought: Date.now() };
+      var s = { id: type + (++st.n), type: type, name: name, at: islandOf(worldId), hull: 1, hold: {}, guns: [], fits: [], bought: Date.now(), paid: sp.price };
       st.ships.push(s);
       store();
       return { ok: true, ship: s };
     });
   }
-  /** What a yard gives for her: half her price, less for a battered hull. */
-  function value(s) { return Math.round(spec(s.type).price * 0.5 * (0.5 + 0.5 * s.hull)); }
+  /** What a yard gives for her: half what you paid, less for a battered hull (ships bought before the October 2026
+   *  prices went up are worth half their old price, not the new one). */
+  var OLD_PRICE = { cutter: 1400, brigantine: 4200, galleon: 11000, raider: 6500 };
+  function value(s) { var paid = s.paid || OLD_PRICE[s.type] || spec(s.type).price; return Math.round(Math.min(paid, spec(s.type).price) * 0.5 * (0.5 + 0.5 * s.hull)); }
   /** Sell a ship back to a yard (her hold must be empty; her crew move to the sloop's... or ashore). */
   function sellShip(id) {
     var s = get(id);

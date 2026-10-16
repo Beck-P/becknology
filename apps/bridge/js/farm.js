@@ -9,11 +9,11 @@
  * the well or the pond; a watering wets the tile you face and the one either
  * side), HARVEST what's ripe. The tools work from the hotbar too (F).
  *
- * Crops grow in real time, but only while their ground is wet: a watering
- * keeps a tile wet for twenty minutes, then it dries and the crop waits.
- * Turnips take three watered minutes, carrots five, strawberries and
- * sunflowers eight (strawberries crop again every four), pumpkins twenty,
- * starfruit forty. Marlo buys the lot. The field is kept in localStorage
+ * Crops grow on Verdance's clock, but only while their ground is wet: a
+ * watering keeps a tile wet to the end of the Verdance day (six real hours a
+ * day; two hours at the least), then it dries and the crop waits. Turnips take
+ * a watered day, carrots two, strawberries and sunflowers three (strawberries
+ * crop again every two), pumpkins six, starfruit twelve. Marlo buys the lot. The field is kept in localStorage
  * (bridge_farm), so what you planted is still growing when you come back.
  *
  * Also the Verdance tileset's scene hooks: tilled earth (ground), the crops
@@ -27,16 +27,26 @@
  */
 var BridgeFarm = (function () {
   var KEY = 'bridge_farm';
-  var WET = 20 * 60000;              // how long a watering lasts
+  // Crops grow on Verdance's clock (js/clock.js: a day is 6 real hours) — `days` of wet ground — and a watering keeps
+  // the ground wet to the end of the Verdance day it's given on (two hours at the least): water in the morning and
+  // it grows all day. (They used to take minutes, and a field of strawberries paid more than everything else together.)
   var CAN = 20;                      // waterings in a full can
   var CROPS = {
-    turnip:     { name: 'TURNIP', grow: 3, out: [['turnip', 1, 1]] },
-    carrot:     { name: 'CARROT', grow: 5, out: [['carrot', 1, 1]] },
-    strawberry: { name: 'STRAWBERRY', grow: 8, again: 4, out: [['strawberry', 2, 3]] },
-    sunflower:  { name: 'SUNFLOWER', grow: 8, out: [['sunflower', 1, 1], ['seed_sunflower', 1, 2]] },
-    pumpkin:    { name: 'PUMPKIN', grow: 20, out: [['pumpkin', 1, 1]] },
-    starfruit:  { name: 'STARFRUIT', grow: 40, out: [['starfruit', 1, 1]] }
+    turnip:     { name: 'TURNIP', days: 1, out: [['turnip', 1, 1]] },
+    carrot:     { name: 'CARROT', days: 2, out: [['carrot', 1, 1]] },
+    strawberry: { name: 'STRAWBERRY', days: 3, again: 2, out: [['strawberry', 2, 3]] },
+    sunflower:  { name: 'SUNFLOWER', days: 3, out: [['sunflower', 1, 1], ['seed_sunflower', 1, 2]] },
+    pumpkin:    { name: 'PUMPKIN', days: 6, out: [['pumpkin', 1, 1]] },
+    starfruit:  { name: 'STARFRUIT', days: 12, out: [['starfruit', 1, 1]] }
   };
+  function vday() { return typeof BridgeClock !== 'undefined' ? BridgeClock.dayLen('verdance') : 6 * 3600000; }
+  function growMs(days) { return days * vday(); }
+  /** Until when a watering given now keeps the ground wet: the end of this Verdance day, or two hours. */
+  function wetUntil(now) {
+    var T = typeof BridgeClock !== 'undefined' ? BridgeClock.time('verdance') : null;
+    return now + Math.max(2 * 3600000, T ? T.len - T.t : 6 * 3600000);
+  }
+  var WET = 2 * 3600000;             // the least a watering (or a hand's) wet lasts
   var ORDER = ['turnip', 'carrot', 'strawberry', 'sunflower', 'pumpkin', 'starfruit'];
 
   var save = load();
@@ -112,8 +122,8 @@ var BridgeFarm = (function () {
     });
     save.picked[t.crop.k] = (save.picked[t.crop.k] || 0) + 1;
     var kind = t.crop.k;
-    if (C.again) { t.crop.g = 0; t.crop.need = C.again * 60000; t.crop.again = true; t.crop.t = Date.now(); t.crop.ripeAt = 0; }
-    else if (BridgeHomestead.takeSeed(kind)) t.crop = { k: kind, g: 0, need: C.grow * 60000, t: Date.now() };
+    if (C.again) { t.crop.g = 0; t.crop.need = growMs(C.again); t.crop.again = true; t.crop.t = Date.now(); t.crop.ripeAt = 0; }
+    else if (BridgeHomestead.takeSeed(kind)) t.crop = { k: kind, g: 0, need: growMs(C.days), t: Date.now() };
     else delete t.crop;
     store();
     var xy = xyOf(k);
@@ -223,7 +233,7 @@ var BridgeFarm = (function () {
     var t = save.tiles[key(x, y)];
     if (!t || t.crop || !CROPS[k] || !has('seed_' + k)) return false;
     BridgeInventory.removeItem('seed_' + k, 1);
-    t.crop = { k: k, g: 0, need: CROPS[k].grow * 60000, t: Date.now() };
+    t.crop = { k: k, g: 0, need: growMs(CROPS[k].days), t: Date.now() };
     store();
     sfx('sow');
     burst(x, y, '#c8a070', 3, 0.6);
@@ -241,7 +251,7 @@ var BridgeFarm = (function () {
       var t = save.tiles[key(c[0], c[1])];
       if (!t || save.can <= 0 || !inPlot(world, c[0], c[1])) return;
       advance(t, now, key(c[0], c[1]));
-      t.wet = now + WET;
+      t.wet = wetUntil(now);
       if (t.crop) t.crop.t = now;
       save.can--; n++;
       burst(c[0], c[1], '#9ad8f8', 5, 0.9);
@@ -261,14 +271,20 @@ var BridgeFarm = (function () {
       if (n > 0 && typeof BridgeLoot !== 'undefined') BridgeLoot.spawn(x, y, o[0], n);
     });
     save.picked[t.crop.k] = (save.picked[t.crop.k] || 0) + 1;
-    if (C.again) { t.crop.g = 0; t.crop.need = C.again * 60000; t.crop.again = true; t.crop.t = Date.now(); }
+    if (C.again) { t.crop.g = 0; t.crop.need = growMs(C.again); t.crop.again = true; t.crop.t = Date.now(); }
     else delete t.crop;
     store();
     sfx('harvest');
     burst(x, y, '#90d060', 6, 1.2);
   }
 
-  function minutes(ms) { var m = Math.ceil(ms / 60000); return m <= 1 ? 'A MINUTE OR SO' : m + ' MINUTES'; }
+  function minutes(ms) {
+    var m = Math.ceil(ms / 60000);
+    if (m <= 1) return 'A MINUTE OR SO';
+    if (m < 90) return m + ' MINUTES';
+    var h = Math.round(m / 30) / 2;
+    return h >= 24 ? (Math.round(h / 12) / 2) + ' DAYS' : h + ' HOURS';
+  }
 
   function look(x, y) {
     var t = save.tiles[key(x, y)], now = Date.now();

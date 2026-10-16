@@ -192,6 +192,14 @@ var BridgeTrade = (function () {
       return { ok: true, n: n, cost: cost };
     });
   }
+  /** A sale made out of sight (a ship sent on a voyage from the holm): the market there feels it like any other. */
+  function noteSold(id, P, n) {
+    P = port(P);
+    if (!P || !(n > 0)) return;
+    var k = P + ':' + id;
+    st.glut[k] = { n: glutOf(id, P) + n, at: Date.now() };
+    store();
+  }
   function sell(ship, id, n, P) {
     P = port(P);
     n = Math.min(n, ship.hold[id] || 0);
@@ -301,7 +309,7 @@ var BridgeTrade = (function () {
       var wants = Object.keys(GOODS).filter(function (g) { return !GOODS[g].rare && (MARKET[to][g] || 1) > 1.05; });
       if (!wants.length) continue;
       var good = wants[Math.floor(h1 * wants.length)], n = 4 + Math.floor(h3 * 8);
-      var fee = Math.round(GOODS[good].base * n * (1.9 + h1 * 0.8) / 10) * 10;
+      var fee = Math.round(GOODS[good].base * n * (1.5 + h1 * 0.5) / 10) * 10;   // you buy the goods: this is the premium on top
       var id = d + ':' + P + ':' + i;
       out.push({ id: id, from: P, to: to, good: good, n: n, fee: fee, due: (d + 1 + (h3 > 0.5 ? 1 : 0)), taken: !!st.taken.filter(function (c) { return c.id === id; })[0],
                  done: !!st.done[id] });
@@ -408,6 +416,6 @@ var BridgeTrade = (function () {
   return { GOODS: GOODS, HAUL: HAUL, MARKET: MARKET, PORTS: PORTS, isGood: isGood, name: name, per: per, port: port, price: price,
            catchValue: catchValue, sellCatch: sellCatch, carryCatch: carryCatch, catchList: catchList,
            stock: stock, supply: supply, crates: crates, capacity: capacity, room: room, fits: fits, load: load, unload: unload,
-           buy: buy, sell: sell, bestRun: bestRun, routes: routes, circuits: circuits, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver,
+           buy: buy, sell: sell, noteSold: noteSold, bestRun: bestRun, routes: routes, circuits: circuits, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver,
            _state: function () { return st; } };
 })();

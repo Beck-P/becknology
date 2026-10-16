@@ -201,9 +201,14 @@ var BridgeClock = (function () {
     var at = hour * HOUR, d = at - T.t;
     return d >= 0 ? d : d + T.len;
   }
+  /** At a given real moment (ms since 1970), not now: ET wall-clock ms, hours into a planet's day, Arcadia's crowd —
+   *  for anything that works out what happened while you were away (js/business.js). */
+  function etAt(ms) { return ms + etOffset(ms); }
+  function hoursAt(planet, ms) { var len = dayLen(planet); if (!len) return null; var into = ((etAt(ms) % DAY) + DAY) % DAY; return (into % len) / HOUR; }
+  function bustleAt(ms) { var d = new Date(etAt(ms)); return bustleH(d.getUTCHours() + d.getUTCMinutes() / 60); }
   /** Arcadia's crowd: 1 at its busiest (8pm–1am ET), easing off through the small hours, quiet by day. */
-  function bustle() {
-    var p = etParts(), h = p.h + p.m / 60;
+  function bustle() { var p = etParts(); return bustleH(p.h + p.m / 60); }
+  function bustleH(h) {
     if (h >= 20 || h < 1) return 1;
     if (h < 5) return 1 - (h - 1) / 4 * 0.75;
     if (h < 17) return 0.25;
@@ -220,7 +225,7 @@ var BridgeClock = (function () {
   })();
 
   return {
-    PLANETS: PLANETS, sky: sky, weights: weights, planet: planetOf, outdoor: outdoor, time: time, season: season, daylight: daylight, moon: moon,
+    PLANETS: PLANETS, sky: sky, weights: weights, etAt: etAt, hoursAt: hoursAt, bustleAt: bustleAt, planet: planetOf, outdoor: outdoor, time: time, season: season, daylight: daylight, moon: moon,
     etNow: etNow, etParts: etParts, now: realNow, fmtHours: fmtHours, until: until, dayLen: dayLen, bustle: bustle,
     _at: setAt
   };

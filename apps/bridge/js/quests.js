@@ -268,7 +268,7 @@ var BridgeQuests = (function () {
       crew.map(function (c) { return li('<b>' + esc(c.name) + '</b>, ' + esc(c.role) + ' - ' + esc(c.perkText)); }).join('') + '</ul>');
     var biz = typeof BridgeBusiness !== 'undefined' ? BridgeBusiness.summary() : [];
     if (biz.length) html += section('Your businesses', biz.length, '<ul class="jn-list">' + biz.map(function (b) {
-      return li('<b>' + esc(b.name) + '</b> - ' + b.perHour + ' coins an hour' + (b.manager ? ', run by ' + esc(b.manager) : '') + (b.pending ? '. <b>' + b.pending + '</b> waiting to collect' : ''));
+      return li('<b>' + esc(b.name) + '</b> - ' + (b.status.running ? b.perHour + ' coins an open hour' : 'shut, nobody working it') + (b.manager ? ', run by ' + esc(b.manager) : '') + (b.pending ? '. <b>' + b.pending + '</b> waiting to collect' : ''));
     }).join('') + '</ul>');
     var farm = typeof BridgeFarm !== 'undefined' ? BridgeFarm.journal() : { rows: [] };
     var stead = typeof BridgeHomestead !== 'undefined' ? BridgeHomestead.journal() : null;

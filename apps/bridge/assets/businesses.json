@@ -1,60 +1,190 @@
 {
-  "skewer-cart": {
-    "name": "The Skewer Cart", "world": "arcadia-street", "label": "SKEWER CART", "loc": "arcadia",
-    "price": 300, "rate": 40, "cap": 8,
-    "pitch": "THE OLD MAN WHO RUNS IT WANTS OUT. \"BUY THE CART, KEEP THE GRILL HOT, TAKE THE NIGHT TRADE.\"",
+  "crab-pots": {
+    "name": "Rose Cove Crab Pots", "world": "lumar-rose", "label": "CRAB POTS", "loc": "lumar",
+    "kind": "stall", "trade": "fish", "hours": ["dawn", "sunset"], "price": 400, "rate": 20, "cap": 12,
+    "pitch": "A LINE OF POTS ON THE COVE JETTY. PELL SAYS THE ROSEITE CRABS FETCH A GOOD PRICE IN SAPPHIRE, IF ANYONE BOTHERS TO HAUL THEM.",
     "upgrades": [
-      { "name": "A second grill", "cost": 250, "mult": 1.5 },
-      { "name": "A neon sign that says SKEWERS", "cost": 400, "mult": 1.4 }
+      { "name": "Twice as many pots", "cost": 500, "mult": 1.6 }
     ]
   },
   "soda-cart": {
     "name": "The Soda Cart", "world": "arcadia-street", "label": "SODA CART", "loc": "arcadia",
-    "price": 200, "rate": 25, "cap": 8,
+    "kind": "stall", "trade": "drink", "hours": "crowd", "price": 800, "rate": 28, "cap": 8,
     "pitch": "TWELVE FLAVOURS NOBODY CAN NAME. THE VENDOR'S SELLING UP TO CHASE A CAREER IN THE ARCADE.",
     "upgrades": [
-      { "name": "A thirteenth flavour", "cost": 180, "mult": 1.5 }
-    ]
-  },
-  "crab-pots": {
-    "name": "Rose Cove Crab Pots", "world": "lumar-rose", "label": "CRAB POTS", "loc": "lumar",
-    "price": 150, "rate": 15, "cap": 12,
-    "pitch": "A LINE OF POTS ON THE COVE JETTY. PELL SAYS THE ROSEITE CRABS FETCH A GOOD PRICE IN SAPPHIRE, IF ANYONE BOTHERS TO HAUL THEM.",
-    "upgrades": [
-      { "name": "Twice as many pots", "cost": 160, "mult": 1.8 }
-    ]
-  },
-  "bathhouse": {
-    "name": "The Rose Bathhouse", "world": "lumar-rose", "label": "BATHHOUSE", "loc": "lumar",
-    "price": 600, "rate": 70, "cap": 10,
-    "pitch": "THE HARVESTERS RUN IT BETWEEN SHIFTS AND HATE IT. THEY'D SELL YOU THE LEASE IN A HEARTBEAT.",
-    "upgrades": [
-      { "name": "Paper lanterns all the way down the path", "cost": 300, "mult": 1.3 },
-      { "name": "A second pool, dug and lined", "cost": 700, "mult": 1.6 }
-    ]
-  },
-  "fish-stall": {
-    "name": "Sapphire Fish Stall", "world": "lumar-sapphire", "label": "FISH STALL", "loc": "lumar",
-    "price": 400, "rate": 50, "cap": 8,
-    "pitch": "THE STALL'S OWNER IS RETIRING TO THE ROSE BATHHOUSE. THE ICE, THE AWNING AND THE REGULARS COME WITH IT.",
-    "upgrades": [
-      { "name": "Your own fishing boat at the pier", "cost": 500, "mult": 1.7 }
-    ]
-  },
-  "spice-stall": {
-    "name": "Sapphire Spice Stall", "world": "lumar-sapphire", "label": "SPICE STALL", "loc": "lumar",
-    "price": 350, "rate": 40, "cap": 8,
-    "pitch": "SIX COLOURS OF SALT AND A SUGAR THAT GLOWS IN THE DARK. THE TRADER WANTS TO GO BACK TO SEA.",
-    "upgrades": [
-      { "name": "Spore-pepper from Crimson Reach", "cost": 300, "mult": 1.5 }
+      { "name": "A thirteenth flavour", "cost": 600, "mult": 1.4 }
     ]
   },
   "vending-machine": {
     "name": "The Vending Machine at the Edge of the Universe", "world": "singularity", "label": "VENDING MACHINE", "loc": "singularity",
-    "price": 999, "rate": 5, "cap": 48,
+    "kind": "stall", "trade": "odd", "hours": "always", "price": 999, "rate": 8, "cap": 48,
     "pitch": "IT HUMS. NO POWER CABLE. A STICKER ON THE SIDE: \"FRANCHISE AVAILABLE. ENQUIRE WITHIN.\" THERE IS NO WITHIN.",
     "upgrades": [
       { "name": "Restock with cans from a cycle that hasn't happened yet", "cost": 1500, "mult": 4 }
+    ]
+  },
+  "skewer-cart": {
+    "name": "The Skewer Cart", "world": "arcadia-street", "label": "SKEWER CART", "loc": "arcadia",
+    "kind": "stall", "trade": "food", "hours": "crowd", "price": 1200, "rate": 45, "cap": 8,
+    "pitch": "THE OLD MAN WHO RUNS IT WANTS OUT. \"BUY THE CART, KEEP THE GRILL HOT, TAKE THE NIGHT TRADE.\"",
+    "upgrades": [
+      { "name": "A second grill", "cost": 900, "mult": 1.4 },
+      { "name": "A neon sign that says SKEWERS", "cost": 1500, "mult": 1.3 }
+    ]
+  },
+  "spice-stall": {
+    "name": "Sapphire Spice Stall", "world": "lumar-sapphire", "label": "SPICE STALL", "loc": "lumar",
+    "kind": "stall", "trade": "goods", "hours": ["sunrise", "sunset"], "price": 1300, "rate": 60, "cap": 8,
+    "pitch": "SIX COLOURS OF SALT AND A SUGAR THAT GLOWS IN THE DARK. THE TRADER WANTS TO GO BACK TO SEA.",
+    "upgrades": [
+      { "name": "Spore-pepper from Crimson Reach", "cost": 1000, "mult": 1.4 }
+    ]
+  },
+  "fish-stall": {
+    "name": "Sapphire Fish Stall", "world": "lumar-sapphire", "label": "FISH STALL", "loc": "lumar",
+    "kind": "stall", "trade": "fish", "hours": ["dawn", "afternoon"], "price": 1500, "rate": 75, "cap": 8,
+    "pitch": "THE STALL'S OWNER IS RETIRING TO THE ROSE BATHHOUSE. THE ICE, THE AWNING AND THE REGULARS COME WITH IT.",
+    "upgrades": [
+      { "name": "Your own fishing boat at the pier", "cost": 1500, "mult": 1.5 }
+    ]
+  },
+  "bathhouse": {
+    "name": "The Rose Bathhouse", "world": "lumar-rose", "label": "BATHHOUSE", "loc": "lumar",
+    "kind": "shop", "trade": "fun", "hours": ["afternoon", "small"], "price": 2000, "rate": 90, "cap": 10,
+    "pitch": "THE HARVESTERS RUN IT BETWEEN SHIFTS AND HATE IT. THEY'D SELL YOU THE LEASE IN A HEARTBEAT.",
+    "upgrades": [
+      { "name": "Paper lanterns all the way down the path", "cost": 1200, "mult": 1.3 },
+      { "name": "A second pool, dug and lined", "cost": 3000, "mult": 1.5 }
+    ]
+  },
+
+  "herb-stall": {
+    "name": "Mirelle's Glow Stall", "world": "sylvara", "owner": "elf_herbalist", "loc": "sylvara",
+    "kind": "shop", "trade": "goods", "hours": ["sunset", "dawn"], "price": 8000, "rate": 180, "cap": 10,
+    "pitch": "\"THE GLOW MARKET OPENS WHEN THE SUN GOES. I WOULD RATHER BE IN THE WOOD THAN BEHIND A TABLE OF MOONCAPS. TAKE THE STALL; FIND SOMEONE WHO KEEPS ELF HOURS.\"",
+    "upgrades": [
+      { "name": "Lanterns of bottled starlight", "cost": 5000, "mult": 1.3 },
+      { "name": "Moonwell water, sold by the vial", "cost": 9000, "mult": 1.35 }
+    ]
+  },
+  "crusty-loaf": {
+    "name": "The Crusty Loaf", "world": "verdance-village", "owner": "bridget", "loc": "verdance",
+    "kind": "shop", "trade": "food", "hours": ["dawn", "afternoon"], "price": 9000, "rate": 260, "cap": 10,
+    "pitch": "\"I'LL BAKE TILL THEY CARRY ME OUT, LOVE, BUT THE BOOKS, THE COUNTER AND THE FLOUR BILLS? HAVE THEM. YOU'LL WANT SOMEONE ON THE COUNTER BY DAWN.\"",
+    "upgrades": [
+      { "name": "A second oven", "cost": 6000, "mult": 1.3 },
+      { "name": "Honey cakes by the crate to the Hayloft", "cost": 9000, "mult": 1.3 }
+    ]
+  },
+  "pennyworths": {
+    "name": "Pennyworth's", "world": "verdance-village", "owner": "percy", "loc": "verdance",
+    "kind": "shop", "trade": "goods", "hours": ["sunrise", "sunset"], "price": 11000, "rate": 220, "cap": 10,
+    "pitch": "\"FORTY YEARS OF STRING, SEED AND SENSIBLE BOOTS. I'D SELL THE LEASE AND STAY ON AS THE NAME OVER THE DOOR. THE TILL'S YOURS TO MIND.\"",
+    "upgrades": [
+      { "name": "A cart round the farms", "cost": 7000, "mult": 1.3 },
+      { "name": "Catalogue goods off the mail ship", "cost": 12000, "mult": 1.35 }
+    ]
+  },
+  "ski-hire": {
+    "name": "Fellhaven Ski Hire", "world": "hoarfell-skihire", "owner": "inge", "loc": "hoarfell",
+    "kind": "shop", "trade": "gear", "hours": ["sunrise", "evening"], "price": 14000, "rate": 300, "cap": 10,
+    "pitch": "\"I'D RATHER WAX THAN COUNT. BUY THE HIRE, I'LL KEEP THE SKIS SHARP. YOU'LL NEED A HAND ON THE COUNTER FROM FIRST LIFT TO LAST.\"",
+    "upgrades": [
+      { "name": "Racing skis for hire", "cost": 9000, "mult": 1.3 },
+      { "name": "Floodlit night runs", "cost": 15000, "mult": 1.35 }
+    ]
+  },
+  "noodle-bar": {
+    "name": "Miyu's Noodles", "world": "cyber-noodle-bar", "owner": "miyu", "loc": "arcadia",
+    "kind": "shop", "trade": "food", "hours": "crowd", "price": 16000, "rate": 320, "cap": 10,
+    "pitch": "\"I COOK. I DO NOT DO RENT, TAX OR THE NIGHT SHIFT. YOU BUY IN, YOU WORRY ABOUT THE COUNTER, I WORRY ABOUT THE BROTH. DEAL?\"",
+    "upgrades": [
+      { "name": "Six more stools at the counter", "cost": 10000, "mult": 1.3 },
+      { "name": "A delivery drone with a hot box", "cost": 18000, "mult": 1.35 }
+    ]
+  },
+
+  "hayloft": {
+    "name": "The Hayloft", "world": "verdance-village", "owner": "mags", "loc": "verdance",
+    "kind": "venue", "trade": "drink", "hours": ["noon", "small"], "price": 45000, "rate": 450, "cap": 10,
+    "pitch": "\"THE CIDER POURS ITSELF, THE FIDDLER DOESN'T. A PLACE LIKE THIS NEEDS A PROPER MANAGER, NOT A LAD ON A STOOL. FIND ONE AND IT'S YOURS.\"",
+    "upgrades": [
+      { "name": "A barn dance every rest-day", "cost": 25000, "mult": 1.3 },
+      { "name": "The cider press brought indoors", "cost": 40000, "mult": 1.3 }
+    ]
+  },
+  "terns-rest": {
+    "name": "The Tern's Rest", "world": "lumar-tern-inn", "owner": "bryony", "loc": "lumar",
+    "kind": "venue", "trade": "food", "hours": ["morning", "late"], "price": 50000, "rate": 480, "cap": 10,
+    "pitch": "\"ROOMS, STEW AND EVERY SAILOR ON THE TERN PASSAGE. IT'S TOO MUCH FOR ONE PAIR OF HANDS. BRING A MANAGER WHO CAN KEEP A LEDGER AND I'LL STICK TO THE POT.\"",
+    "upgrades": [
+      { "name": "Four more rooms over the stable", "cost": 30000, "mult": 1.3 },
+      { "name": "Your own fishing smack for the stew", "cost": 45000, "mult": 1.3 }
+    ]
+  },
+  "crown-anchor": {
+    "name": "The Crown & Anchor", "world": "lumar-crown-pub", "owner": "hetty", "loc": "lumar",
+    "kind": "venue", "trade": "drink", "hours": ["noon", "small"], "price": 70000, "rate": 650, "cap": 10,
+    "pitch": "\"BEST HOUSE IN CROWNHAVEN, AND I'M TIRED. THE FIGUREHEAD STAYS. THE REGULARS STAY. YOU PUT A MANAGER BEHIND THE BAR WHO CAN HANDLE A NAVY CREW ON PAY NIGHT.\"",
+    "upgrades": [
+      { "name": "A cellar of Crimson spore-ale", "cost": 40000, "mult": 1.3 },
+      { "name": "Music every night from the Exchange quartet", "cost": 60000, "mult": 1.3 }
+    ]
+  },
+  "snowcap-lodge": {
+    "name": "The Snowcap Lodge", "world": "hoarfell-lodge", "owner": "mette", "loc": "hoarfell",
+    "kind": "venue", "trade": "food", "hours": "always", "price": 80000, "rate": 420, "cap": 10,
+    "pitch": "\"THE FIRE NEVER GOES OUT AND NEITHER DO I. TIME SOMEONE ELSE WATCHED THE NIGHT DESK. A MANAGER, MIND, NOT A SKI BUM.\"",
+    "upgrades": [
+      { "name": "A sauna by the stream", "cost": 45000, "mult": 1.3 },
+      { "name": "The summit hut, open for overnights", "cost": 70000, "mult": 1.3 }
+    ]
+  },
+  "club-void": {
+    "name": "Club Void", "world": "arcadia-club", "owner": "kiri", "loc": "arcadia",
+    "kind": "venue", "trade": "fun", "hours": "crowd", "price": 90000, "rate": 900, "cap": 10,
+    "pitch": "\"THE OWNER SKIPPED TOWN AND LEFT ME THE KEYS. I PLAY RECORDS, I DON'T DO DOORS, LICENCES OR BAR STOCK. YOU WANT IT, IT NEEDS A MANAGER WHO CAN SAY NO TO A CORP KID.\"",
+    "upgrades": [
+      { "name": "A sound system that rattles teeth", "cost": 50000, "mult": 1.3 },
+      { "name": "A VIP mezzanine", "cost": 80000, "mult": 1.3 }
+    ]
+  },
+
+  "royale-table": {
+    "name": "A Table at the Neon Royale", "world": "arcadia-casino", "owner": "lou", "loc": "arcadia",
+    "kind": "enterprise", "trade": "fun", "hours": "crowd", "price": 250000, "rate": 2600, "cap": 8,
+    "pitch": "\"THE DUCHESS LEASES A TABLE CONCESSION NOW AND THEN. YOU RUN THE TABLE, YOU TAKE THE EDGE. YOU'LL WANT A FLOOR MANAGER, AND A DEALER WHO DOESN'T BLINK.\"",
+    "upgrades": [
+      { "name": "Raise the table limits", "cost": 120000, "mult": 1.3 },
+      { "name": "A second table", "cost": 200000, "mult": 1.4 }
+    ]
+  },
+  "trading-house": {
+    "name": "A Trading House in Crownhaven", "world": "lumar-crown-exchange", "owner": "registrar", "loc": "lumar",
+    "kind": "enterprise", "trade": "trade", "hours": ["sunrise", "sunset"], "price": 300000, "rate": 2400, "cap": 8,
+    "pitch": "\"A SEAT ON THE EXCHANGE AND A HOUSE ON THE QUAY. CARGO IN, CARGO OUT, A CUT OF EVERYTHING. THE CHARTER REQUIRES A RESIDENT MANAGER; A GOOD BROKER PAYS THEIR OWN WAGE.\"",
+    "upgrades": [
+      { "name": "A warehouse on the quay", "cost": 150000, "mult": 1.3 },
+      { "name": "A standing contract with the Crown", "cost": 250000, "mult": 1.35 }
+    ]
+  },
+  "royal-yard": {
+    "name": "A Share in the Royal Yard", "world": "lumar-crown", "owner": "wright", "loc": "lumar",
+    "kind": "enterprise", "trade": "craft", "hours": ["sunrise", "sunset"], "price": 400000, "rate": 3000, "cap": 8,
+    "pitch": "\"THE CROWN WANTS A PARTNER IN THE YARD. BUY IN AND YOU TAKE A CUT OF EVERY HULL THAT LEAVES THE SLIP. PUT A YARD MANAGER IN, AND A MASTER WRIGHT IF YOU CAN FIND ONE.\"",
+    "upgrades": [
+      { "name": "A second slipway", "cost": 200000, "mult": 1.3 },
+      { "name": "The Crown's galleon contract", "cost": 350000, "mult": 1.35 }
+    ]
+  },
+
+  "high-roller": {
+    "name": "The High-Roller Room", "world": "arcadia-casino-vip", "owner": "duchess", "loc": "arcadia",
+    "kind": "legacy", "trade": "fun", "hours": "crowd", "price": 2000000, "rate": 12000, "cap": 6,
+    "pitch": "\"EVERYTHING IN THIS ROOM IS FOR SALE, DARLING, INCLUDING THE ROOM. THE HOUSE EDGE ON EVERY WHALE THAT WALKS IN. TWO MILLION, AND A MANAGER I APPROVE OF.\"",
+    "upgrades": [
+      { "name": "A private lift from the skywalk", "cost": 600000, "mult": 1.25 },
+      { "name": "Halcyon's old table, restored", "cost": 1000000, "mult": 1.3 }
     ]
   }
 }

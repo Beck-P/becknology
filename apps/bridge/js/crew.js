@@ -2,7 +2,8 @@
  * BridgeCrew — the people you've hired (crew blocks in assets/people.json).
  *
  * Hire someone from their conversation ("Join my crew?"); the wage is paid
- * up front in coins. Each hand brings a perk the rest of the game asks
+ * up front in coins, then a third of it every day (js/business.js keeps the
+ * payroll; a crew member who's gone a payday unpaid won't work their perk). Each hand brings a perk the rest of the game asks
  * about with has(perk): a navigator speeds the galleon at the helm, a
  * quartermaster gets better prices, a runner finds more when foraging, a
  * trader sends home a cut whenever you make port, an engineer keeps your
@@ -21,7 +22,8 @@ var BridgeCrew = (function () {
   function has(perk) {
     if (typeof BridgePeople === 'undefined') return false;
     var all = BridgePeople.all();
-    for (var id in hired) if (all[id] && all[id].crew && all[id].crew.perk === perk) return true;
+    var owed = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.unpaid ? BridgeBusiness.unpaid : function () { return false; };
+    for (var id in hired) if (all[id] && all[id].crew && all[id].crew.perk === perk && !owed(id)) return true;   // unpaid, they down tools
     return false;
   }
 

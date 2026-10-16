@@ -226,17 +226,17 @@ var BridgeSloop = (function () {
     if (!own) BridgeScene.load(id, function (sc) { I.sc = sc; done(); });
     fetch('/bridge/assets/scenes/' + id + '/scene.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (meta) {
       if (own === true) {
-        var q = '?v=' + (meta.rev || ''), st = meta.states[0], pic = new Image(), im = {};
+        var q = '?v=' + (meta.rev || ''), st = meta.states[0], pic = new Image(), imgs = {};
         var cy = meta.cycle, more = cy ? [cy.day, cy.dusk].filter(function (x) { return x && x !== st; }) : [];
         n++;
-        I.sc = { id: id, meta: meta, imgs: im, baseImgs: im, q: q, own: true };
-        pic.onload = function () { im[st] = pic; done(); };
+        I.sc = { id: id, meta: meta, imgs: imgs, baseImgs: imgs, q: q, own: true };
+        pic.onload = function () { imgs[st] = pic; done(); };
         pic.onerror = function () { I.sc = null; done(); };
         pic.src = '/bridge/assets/scenes/' + id + '/' + st + '.png' + q;
         more.forEach(function (name) {                    // the island by day and at dusk (js/scene.js blends them)
           n++;
           var p2 = new Image();
-          p2.onload = function () { im[name] = p2; done(); };
+          p2.onload = function () { imgs[name] = p2; done(); };
           p2.onerror = function () { done(); };
           p2.src = '/bridge/assets/scenes/' + id + '/' + name + '.png' + q;
         });

@@ -900,30 +900,66 @@ var BridgeInteractions = (function () {
     document.addEventListener('keydown', onEsc, true);
   }
 
-  // A business's ledger: buy it, or collect its takings, upgrade it, put crew in charge.
-  function showBusiness(biz, inter, note) {
+  // A business's books (js/business.js): buy it; or see when it opens, who works it and what it's made, hire (a hand,
+  // a manager, a specialist), move someone to another of yours or let them go, collect what a hand's holding, upgrade
+  // it, put crew in charge. `view`: { v: 'main' | 'hire' | 'person', who }.
+  var KIND_NAME = { stall: 'A stall', shop: 'A shop', venue: 'A venue', enterprise: 'An enterprise', legacy: 'A legacy' };
+  var TIER_DOES = { hand: 'keeps it open; you collect', manager: 'runs it, banks the takings to you, half as much again',
+                    specialist: 'lifts it 60% in their own trade' };
+  function showBusiness(biz, inter, note, view) {
     hideDialog();
     dialogVisible = true;
     if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
     var overlay = document.getElementById('world-overlay');
     var dialogEl = dialogShell('shop');
-    var B = BridgeBusiness, id = biz.id, own = B.owned(id), acts = [];
-    var lines = '';
-    if (!own) {
-      lines = '<div class="wd-text">' + esc(reflow(biz.pitch)) + '</div>' +
-        '<div class="wd-sell"><div class="wd-sell-row"><span>Takings</span><span>' + biz.rate + ' coins an hour</span></div>' +
-        '<div class="wd-sell-row"><span>Holds up to</span><span>' + B.cap(id) + ' hours</span></div></div>';
-      acts.push({ label: 'Buy it for ' + biz.price + ' coins', act: 'buy' });
+    var B = BridgeBusiness, id = biz.id, own = B.owned(id), acts = [], lines = '';
+    view = own ? view || { v: 'main' } : { v: 'buy' };
+    function row(k, v) { return '<div class="wd-sell-row"><span>' + esc(k) + '</span><span>' + esc(v) + '</span></div>'; }
+    var st = B.status(id), slots = B.SLOTS[biz.kind] || 1;
+    var open = B.openNow(id) ? 'open now' : 'shut now';
+    if (view.v === 'buy') {
+      lines = '<div class="wd-text">' + esc(reflow(biz.pitch)) + '</div><div class="wd-sell">' +
+        row(KIND_NAME[biz.kind] || 'A business', 'room for ' + slots + (slots > 1 ? ' staff' : ' on staff')) +
+        row('Hours', st.hours + ' (' + open + ')') +
+        row('Takings', biz.rate + ' coins an open hour, with a hand on') +
+        row('To open', st.needsManager ? 'it needs a manager' : 'a hand keeps it open; a manager runs it') + '</div>';
+      acts.push({ label: 'Buy it for ' + biz.price.toLocaleString() + ' coins', act: 'buy' });
+    } else if (view.v === 'hire') {
+      var cands = B.candidates(id);
+      lines = '<div class="wd-text">' + esc(cands.length ? "WHO'S LOOKING FOR WORK TODAY (NEW FACES TOMORROW). THE FIRST DAY'S WAGE IS PAID UP FRONT, THEN ONE EVERY DAY." : 'NOBODY ELSE IS LOOKING TODAY. TRY TOMORROW.') + '</div>' +
+        '<div class="wd-sell">' + cands.map(function (c) {
+          return row(c.name + ', ' + c.title.toLowerCase(), (TIER_DOES[c.tier] || '') + (c.skill > 1.08 ? ' · sharp' : c.skill < 0.95 ? ' · green' : ''));
+        }).join('') + '</div>';
+      cands.forEach(function (c) { acts.push({ label: 'Hire ' + c.name + ' (' + c.title.toLowerCase() + ', ' + c.wage.toLocaleString() + ' a day)', act: 'hire', cand: c }); });
+      acts.push({ label: 'Back', act: 'back' });
+    } else if (view.v === 'person') {
+      var p = B.staff().filter(function (x) { return x.id === view.who; })[0];
+      if (!p) { showBusiness(biz, inter, note); return; }
+      var days = Math.max(0, Math.floor((Date.now() - p.hired) / 86400000));
+      lines = '<div class="wd-sell">' + row('Role', p.title + (p.trade ? ' (' + p.trade + ')' : '')) + row('Wage', p.wage.toLocaleString() + ' coins a day') +
+        row('With you', days ? days + (days === 1 ? ' day' : ' days') : 'since today') +
+        (p.arrives && p.arrives > Date.now() ? row('On the way', 'starts in about ' + Math.ceil((p.arrives - Date.now()) / 3600000) + 'h') : '') +
+        (p.owe > 0 ? row('Owed', Math.ceil(p.owe).toLocaleString() + ' coins') : '') + '</div>';
+      B.summary().forEach(function (o) { if (o.id !== id && B.room(o.id)) acts.push({ label: 'Send to ' + o.name, act: 'move', who: p.id, to: o.id }); });
+      acts.push({ label: 'Let ' + p.name + ' go', act: 'dismiss', who: p.id });
+      acts.push({ label: 'Back', act: 'back' });
     } else {
-      var st = B.state(id), up = B.nextUpgrade(id), mgr = st.manager && BridgePeople.all()[st.manager];
-      lines = (inter.dialog ? '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>' : '') +
-        '<div class="wd-sell"><div class="wd-sell-row"><span>Yours since</span><span>' + new Date(st.owned).toLocaleDateString() + '</span></div>' +
-        '<div class="wd-sell-row"><span>Takings</span><span>' + B.perHour(id) + ' coins an hour</span></div>' +
-        '<div class="wd-sell-row"><span>Running it</span><span>' + (mgr ? esc(mgr.name) : 'Nobody (you)') + '</span></div>' +
-        '<div class="wd-sell-row"><span>Waiting to collect</span><span>' + B.pending(id) + ' coins</span></div></div>';
-      acts.push({ label: B.pending(id) ? 'Collect ' + B.pending(id) + ' coins' : 'Nothing to collect yet', act: 'collect', off: !B.pending(id) });
-      if (up) acts.push({ label: up.name + ' (' + up.cost + ')', act: 'upgrade' });
-      if (!st.manager) B.freeCrew().forEach(function (c) { acts.push({ label: 'Put ' + c.name + ' in charge', act: 'assign', who: c.id }); });
+      var bs = B.state(id), up = B.nextUpgrade(id), mgr = bs.manager && BridgePeople.all()[bs.manager];
+      var working = st.staff.map(function (x) { return x.name + ' (' + x.title.toLowerCase() + ')'; });
+      if (mgr) working.unshift(mgr.name + ' (crew)');
+      var why = !st.running ? (st.needsManager ? 'shut: it needs a manager' : 'shut: nobody working it') : B.perHour(id).toLocaleString() + ' coins an open hour';
+      lines = (inter && inter.dialog ? '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>' : '') +
+        '<div class="wd-sell">' + row('Hours', st.hours + ' (' + open + ')') + row('Takings', why) +
+        row('Staff', working.length ? working.join(', ') : 'nobody yet') +
+        (st.wages ? row('Wages', st.wages.toLocaleString() + ' coins a day') : '') +
+        row('Made today', st.today.toLocaleString() + ' coins') +
+        (st.banks ? row('Banked to you', st.banked.toLocaleString() + ' coins so far') : row('Waiting to collect', B.pending(id).toLocaleString() + ' coins')) + '</div>';
+      if (!st.banks || B.pending(id)) acts.push({ label: B.pending(id) ? 'Collect ' + B.pending(id).toLocaleString() + ' coins' : 'Nothing to collect yet', act: 'collect', off: !B.pending(id) });
+      if (B.room(id)) acts.push({ label: 'Hire someone (' + st.staff.length + ' of ' + slots + ')', act: 'hireview' });
+      st.staff.forEach(function (x) { acts.push({ label: x.name + ': move or let go', act: 'person', who: x.id }); });
+      if (up) acts.push({ label: up.name + ' (' + up.cost.toLocaleString() + ')', act: 'upgrade' });
+      if (mgr) acts.push({ label: 'Send ' + mgr.name + ' back to the ship', act: 'assign', who: null });
+      else B.freeCrew().forEach(function (c) { acts.push({ label: 'Put ' + c.name + ' in charge', act: 'assign', who: c.id }); });
     }
     acts.push({ label: 'Leave', act: 'close' });
     dialogEl.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(biz.name) + '</div>' + lines +
@@ -940,19 +976,30 @@ var BridgeInteractions = (function () {
       hideDialog();
       if (typeof BridgeControls !== 'undefined' && BridgeControls.enable) BridgeControls.enable();
     }
-    function reopen(msg) { document.removeEventListener('keydown', onKey, true); showBusiness(biz, inter, msg); }
-    function fail(r) { return r && r.reason === 'offline' || !r ? 'NO WAY TO MOVE COINS RIGHT NOW.' : 'NOT ENOUGH COINS.'; }
+    function reopen(msg, v) { document.removeEventListener('keydown', onKey, true); showBusiness(biz, inter, msg, v); }
+    function fail(r) { return !r || r.reason === 'offline' || r.reason === 'error' || r.reason === 'no_pilot' || r.reason === 'no_client' ? 'NO WAY TO MOVE COINS RIGHT NOW.' : r.reason === 'full' ? 'NO ROOM FOR ANYONE ELSE THERE.' : 'NOT ENOUGH COINS.'; }
     function act(a) {
       if (busy || a.off) return;
       if (a.act === 'close') { close(); return; }
+      if (a.act === 'back') { reopen(null); return; }
+      if (a.act === 'hireview') { reopen(null, { v: 'hire' }); return; }
+      if (a.act === 'person') { reopen(null, { v: 'person', who: a.who }); return; }
       busy = true;
       if (a.act === 'buy') B.buy(id).then(function (r) {
         if (r.ok && typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Business', biz.name, 'Yours now');
-        reopen(r.ok ? 'IT\'S YOURS. COME BACK FOR THE TAKINGS.' : fail(r));
+        reopen(r.ok ? (st.needsManager ? "IT'S YOURS. IT WON'T OPEN WITHOUT A MANAGER: HIRE ONE." : "IT'S YOURS. HIRE A HAND TO KEEP IT OPEN.") : fail(r));
       });
-      else if (a.act === 'collect') B.collect(id).then(function (r) { reopen(r.ok ? 'COLLECTED ' + r.amount + ' COINS.' : fail(r)); });
+      else if (a.act === 'hire') B.hire(id, a.cand).then(function (r) {
+        reopen(r.ok ? a.cand.name.toUpperCase() + ' STARTS NOW.' : fail(r));
+      });
+      else if (a.act === 'move') {
+        var m = B.move(a.who, a.to);
+        reopen(m.ok ? (m.same ? 'ON THEIR WAY. THEY START WITHIN THE HOUR.' : 'ON THEIR WAY. ANOTHER WORLD: THEY START TOMORROW.') : 'NO ROOM THERE.');
+      }
+      else if (a.act === 'dismiss') { B.dismiss(a.who); reopen('THEY PACK UP AND GO.'); }
+      else if (a.act === 'collect') B.collect(id).then(function (r) { reopen(r.ok ? 'COLLECTED ' + r.amount.toLocaleString() + ' COINS.' : fail(r)); });
       else if (a.act === 'upgrade') B.upgrade(id).then(function (r) { reopen(r.ok ? 'DONE. BUSINESS IS LOOKING UP.' : fail(r)); });
-      else if (a.act === 'assign') { B.assign(id, a.who); reopen('THEY\'LL KEEP IT RUNNING - AND RUNNING BETTER.'); }
+      else if (a.act === 'assign') { B.assign(id, a.who); reopen(a.who ? "THEY'LL RUN IT AS WELL AS ANY MANAGER." : 'BACK TO THE SHIP THEY GO.'); }
     }
     function onKey(e) {
       var k = e.key;
@@ -1188,6 +1235,8 @@ var BridgeInteractions = (function () {
             ? { q: 'Join my crew?', a: "NOT AFTER THE WAY YOU'VE TREATED ME." }
             : { q: 'Join my crew?', a: person.crew.pitch + '\n\n' + person.crew.wage + ' COINS UP FRONT, AS ' + person.crew.role.toUpperCase() + '.', hire: true });
     }
+    var trade = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.ofOwner ? BridgeBusiness.ofOwner(person.id) : null;
+    if (trade) topics.push({ q: BridgeBusiness.owned(trade.id) ? "How's business?" : 'Would you sell up?', business: trade.id });
     if (typeof BridgeGifts !== 'undefined' && BridgeGifts.can()) topics.push({ q: 'Give a gift', gift: true });
     person = Object.create(person);
     person.topics = topics;
@@ -1277,6 +1326,11 @@ var BridgeInteractions = (function () {
         if (feel >= 5) mult *= 1.1;                                // friends get a better price
         close();
         showSellDialog({ label: person.name, dialog: t.a, buys: t.sell.map(function (b) { return { id: b.id, price: Math.round(b.price * mult) }; }) });
+        return;
+      }
+      if (t.business && typeof BridgeBusiness !== 'undefined' && BridgeBusiness.get(t.business)) {   // their business, for sale or yours
+        close();
+        showBusiness(BridgeBusiness.get(t.business), null);
         return;
       }
       if (t.gift && typeof BridgeGifts !== 'undefined') {             // something from your pack, for them (js/gifts.js)

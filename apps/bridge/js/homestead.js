@@ -2,7 +2,7 @@
  * BridgeHomestead — making the farm on Verdance yours, and running it.
  *
  * You start with Edda's kitchen garden: the first few columns of the field are yours to work, alone, with the
- * tools from the shed. The farmhouse door has her note — the deed is 500 coins — and once you've bought it the
+ * tools from the shed. The farmhouse door has her note — the deed is 1,500 coins — and once you've bought it the
  * whole field is yours, the farmhouse (rest by the stove, give the place a name, read the ledger) and the rest:
  *
  *   - the SHIPPING BIN by the mailbox: put in anything Marlo buys; he comes round every twenty minutes, empties it
@@ -19,7 +19,7 @@
  */
 var BridgeHomestead = (function () {
   var KEY = 'bridge_homestead';
-  var DEED = 500, STARTER = 5, DAY = 24 * 3600 * 1000, ROUND = 20 * 60000;
+  var DEED = 1500, STARTER = 5, DAY = 24 * 3600 * 1000, ROUND = 20 * 60000;
   var BIN = [9, 8];                                       // by the mailbox
   var HANDS = {
     tam:   { name: 'Tam Rook', sheet: 'npc-tam', job: 'water', wage: 40, idle: [31, 24], label: 'TAM',
@@ -59,7 +59,7 @@ var BridgeHomestead = (function () {
     d = d || {};
     return { owned: d.owned || 0, name: d.name || '', sprinklers: d.sprinklers || [], hands: d.hands || {}, bin: d.bin || {},
              seeds: d.seeds || {}, round: d.round || 0, ledger: d.ledger || { coins: 0, rounds: 0, orders: 0, shipped: {} },
-             orders: d.orders || { day: '', done: [] } };
+             orders: d.orders || { day: '', done: [] }, glut: d.glut || { day: '', n: {} } };
   }
   function store() { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ } }
   function say(title, text) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(title, text); }
@@ -160,7 +160,17 @@ var BridgeHomestead = (function () {
   function hours(ms) { var h = Math.round(ms / 3600000); return h >= 24 ? Math.round(h / 24) + (h >= 36 ? ' DAYS' : ' DAY') : h <= 1 ? 'HOUR OR SO' : h + ' HOURS'; }
 
   // ---- the shipping bin and Marlo's round ------------------------------------------------------------------------
-  function binWorth() { var P = prices(), t = 0; for (var k in s.bin) t += (P[k] || 0) * s.bin[k]; return t; }
+  // a glut: the first GLUT of a kind in a real day fetch Marlo's full price, then every one after a little less (2%
+  // each), never under half — a field of one crop doesn't buy the world any more
+  var GLUT = 24;
+  function today() { return typeof BridgeClock !== 'undefined' ? Math.floor(BridgeClock.etNow() / 86400000) + '' : new Date().toDateString(); }
+  function glutN(id) { if (s.glut.day !== today()) s.glut = { day: today(), n: {} }; return s.glut.n[id] || 0; }
+  function worthOf(id, n, P) {
+    var base = (P || prices())[id] || 0, had = glutN(id), t = 0;
+    for (var i = 0; i < n; i++) t += base * Math.max(0.5, 1 - Math.max(0, had + i + 1 - GLUT) * 0.02);
+    return Math.round(t);
+  }
+  function binWorth() { var P = prices(), t = 0; for (var k in s.bin) t += worthOf(k, s.bin[k], P); return t; }
   function binList() { return Object.keys(s.bin).filter(function (k) { return s.bin[k] > 0; }).map(function (k) { return s.bin[k] + ' ' + nameOf(k).toUpperCase(); }).join(', '); }
   function toBin(id, n) { if (n > 0) { s.bin[id] = (s.bin[id] || 0) + n; if (!s.round) s.round = Date.now() + ROUND; store(); } }
   function bin() {
@@ -171,7 +181,7 @@ var BridgeHomestead = (function () {
     choose({
       title: 'Shipping bin',
       text: (inside ? 'IN THE BIN: ' + inside + ' - WORTH ' + binWorth() + ' COINS. MARLO COMES ROUND IN ' + mins(wait) + '.'
-                    : 'EMPTY. PUT IN WHAT YOU WANT MARLO TO TAKE; HE COMES ROUND EVERY TWENTY MINUTES AND PAYS WHAT HE PAYS AT THE CART.'),
+                    : 'EMPTY. PUT IN WHAT YOU WANT MARLO TO TAKE; HE COMES ROUND EVERY TWENTY MINUTES AND PAYS WHAT HE PAYS AT THE CART - LESS FOR EACH ONE PAST TWO DOZEN OF A KIND IN A DAY.'),
       rows: have.map(function (k) {
         return { label: nameOf(k), icon: k, sub: 'you have ' + count(k), note: P[k] + ' ea',
                  pick: function () { var n = count(k); BridgeInventory.removeItem(k, n); toBin(k, n); sfx('pickup'); bin(); } };
@@ -193,7 +203,7 @@ var BridgeHomestead = (function () {
     pay(total, 'farm:ship').then(function (bal) {
       paying = false;
       if (bal === null || bal === undefined) { s.round = now + 5 * 60000; store(); return; }    // try again on the next pass
-      for (var k in s.bin) s.ledger.shipped[k] = (s.ledger.shipped[k] || 0) + s.bin[k];
+      for (var k in s.bin) { s.ledger.shipped[k] = (s.ledger.shipped[k] || 0) + s.bin[k]; glutN(k); s.glut.n[k] = (s.glut.n[k] || 0) + s.bin[k]; }
       s.ledger.coins += total; s.ledger.rounds++;
       s.bin = {}; s.round = 0; store();
       toast('Marlo\'s round', '+' + total + ' coins', list.toLowerCase());

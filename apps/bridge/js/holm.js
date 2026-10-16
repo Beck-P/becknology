@@ -16,13 +16,13 @@
  */
 var BridgeHolm = (function () {
   var KEY = 'bridge_holm', WID = 'lumar-holm';
-  var DEED = 2500;
+  var DEED = 25000;
   var BUILD = {
-    house:     { name: 'The cottage', price: 1800, what: 'ROOFED, GLAZED AND A FIRE IN THE GRATE. A BED, A TABLE, YOUR LEDGER.' },
-    dock:      { name: 'The dock', price: 1500, what: 'NEW PLANKING ON THE JETTY, THE QUAY RE-SET, LAMPS AND A CRANE. YOUR SHIPS CAN BE BASED HERE AND SENT OUT TRADING.' },
-    garden:    { name: 'The garden', price: 300, what: 'THE BRAMBLES GRUBBED OUT, THE GROUND DUG OVER. A FIELD OF YOUR OWN WITHIN THE OLD WALL.' },
-    warehouse: { name: 'A warehouse', price: 1200, what: 'TIMBER, ON STONE FOOTINGS. CARGO KEPT ASHORE BETWEEN SHIPS - AS MUCH AS YOU LIKE.' },
-    quarters:  { name: 'Quarters for your hands', price: 900, what: 'A BUNKHOUSE. YOUR HANDS CAN LIVE ASHORE BETWEEN VOYAGES, EIGHT OF THEM.' }
+    house:     { name: 'The cottage', price: 6000, what: 'ROOFED, GLAZED AND A FIRE IN THE GRATE. A BED, A TABLE, YOUR LEDGER.' },
+    dock:      { name: 'The dock', price: 8000, what: 'NEW PLANKING ON THE JETTY, THE QUAY RE-SET, LAMPS AND A CRANE. YOUR SHIPS CAN BE BASED HERE AND SENT OUT TRADING.' },
+    garden:    { name: 'The garden', price: 1000, what: 'THE BRAMBLES GRUBBED OUT, THE GROUND DUG OVER. A FIELD OF YOUR OWN WITHIN THE OLD WALL.' },
+    warehouse: { name: 'A warehouse', price: 6000, what: 'TIMBER, ON STONE FOOTINGS. CARGO KEPT ASHORE BETWEEN SHIPS - AS MUCH AS YOU LIKE.' },
+    quarters:  { name: 'Quarters for your hands', price: 4000, what: 'A BUNKHOUSE. YOUR HANDS CAN LIVE ASHORE BETWEEN VOYAGES, EIGHT OF THEM.' }
   };
   var QUARTERS = 8;
 
@@ -229,10 +229,17 @@ var BridgeHolm = (function () {
   function risky(r) { return legs(r).some(function (l) { return DANGER[l.from] || DANGER[l.to]; }); }
   function path(r) { return [r.from].concat(legs(r).map(function (l) { return l.to; })).map(PORT_NAMES).join(' → '); }
   var DANGER = { 'lumar-crimson': 0.35, 'lumar-midnight': 0.4, 'lumar-rose': 0.12, 'lumar-sapphire': 0.12 };
+  // how long she's away: a leg is the better part of an hour and a half at sea, more for a big cargo or bad water
+  // (voyages took minutes, and every ship could run the day's best route over and over)
+  var VOYAGE = 6;
+  function voyageMins(r) {
+    var mins = legs(r).reduce(function (m, l) { return m + 14 + Math.round(l.crates / 12) + (DANGER[l.from] || DANGER[l.to] ? 6 : 0); }, 0) * VOYAGE;
+    return r.circuit ? Math.round(mins * 0.85) : mins;   // no running home empty between legs
+  }
+  function hm(mins) { return mins < 90 ? mins + ' MINUTES' : (Math.round(mins / 30) / 2) + ' HOURS'; }
   function send(s, r) {
     var f = F(), sp = f.effective(s);
-    var mins = legs(r).reduce(function (m, l) { return m + 14 + Math.round(l.crates / 12) + (DANGER[l.from] || DANGER[l.to] ? 6 : 0); }, 0);
-    if (r.circuit) mins = Math.round(mins * 0.85);       // no running home empty between legs
+    var mins = voyageMins(r);
     s.away = { from: r.from, to: r.to, good: r.good, goods: r.goods, crates: r.crates, profit: r.profit, back: Date.now() + mins * 60000, out: Date.now(),
                legs: r.circuit ? legs(r).map(function (l) { return [l.from, l.to]; }) : null };
     s.at = 'away';
@@ -260,6 +267,9 @@ var BridgeHolm = (function () {
         else { story = 'pirates took a third of her cargo off ' + PORT_NAMES(h[1]); profit = Math.round(profit * (hops.length > 1 ? 0.8 : 0.6)); s.hull = Math.max(0.2, s.hull - 0.35); }
       });
       st.chest += Math.max(0, profit);
+      if (T() && T().noteSold) (a.legs || [[a.from, a.to]]).forEach(function (h, i) {     // her cargo sold: those markets feel it
+        T().noteSold(i === 0 && a.goods && a.goods.length ? a.goods[0].good : a.good, h[1], Math.round((a.crates || 0) / (a.legs ? a.legs.length : 1)));
+      });
       st.log.unshift('The ' + s.name + ' came home from ' + PORT_NAMES(a.to) + ': ' + story + ', ' + profit + ' coins clear.');
       st.log = st.log.slice(0, 12);
       delete s.away; s.at = WID;
@@ -303,18 +313,17 @@ var BridgeHolm = (function () {
         var room = Math.round(f.effective(s).hold * 0.9), rs = routes(room).slice(0, 4).concat(circuits(room));
         choose({ title: 'Where to?', text: 'TODAY\'S BEST RUNS: SHE BUYS AT ONE END AND SELLS AT THE OTHER. OR A CIRCUIT: SHE TRADES HER WAY ROUND TWO OR THREE PORTS - MORE FOR A BIG HOLD, LONGER AT SEA.',
                  rows: rs.map(function (r) {
-                   var mins = legs(r).reduce(function (m, l) { return m + 14 + Math.round(l.crates / 12) + (DANGER[l.from] || DANGER[l.to] ? 6 : 0); }, 0);
-                   if (r.circuit) mins = Math.round(mins * 0.85);
+                   var mins = voyageMins(r);
                    return { label: (r.circuit ? 'Circuit: ' : '') + path(r), icon: r.good,
                             sub: (r.circuit ? legs(r).length + ' legs' : r.goods.map(function (g) { return g.n + ' ' + (t ? t.name(g.good) : g.good); }).join(', ')) +
-                                 ' · ~' + Math.round(r.profit * 0.6) + ' coins · ' + mins + ' min' + (risky(r) ? ' · risky water' : ''),
-                            pick: function () { var m = send(s, r); ledger('THE ' + s.name.toUpperCase() + ' SAILS ON THE TIDE. BACK IN ABOUT ' + m + ' MINUTES.'); } };
+                                 ' · ~' + Math.round(r.profit * 0.6) + ' coins · ' + hm(mins).toLowerCase() + (risky(r) ? ' · risky water' : ''),
+                            pick: function () { var m = send(s, r); ledger('THE ' + s.name.toUpperCase() + ' SAILS ON THE TIDE. BACK IN ABOUT ' + hm(m) + '.'); } };
                  }), closeLabel: 'Back' });
       } };
     }).concat(away.map(function (s) {
       var m = Math.max(0, Math.ceil((s.away.back - Date.now()) / 60000));
       return { label: s.name, sub: 'at sea: ' + (s.away.legs ? [s.away.legs[0][0]].concat(s.away.legs.map(function (h) { return h[1]; })).map(PORT_NAMES).join(' → ') : PORT_NAMES(s.away.from) + ' → ' + PORT_NAMES(s.away.to)),
-               note: m ? 'back in ' + m + ' min' : 'due', disabled: true };
+               note: m ? 'back in ' + hm(m).toLowerCase() : 'due', disabled: true };
     }));
     choose({ title: 'Voyages', text: ships.length ? 'SHIPS BASED HERE WITH THEIR HANDS ABOARD CAN BE SENT OUT. (THE SLOOP STAYS WITH YOU.)' : 'NO SHIP OF YOURS IS TIED UP HERE. SAIL ONE IN AND LEAVE HER.',
              rows: rows, closeLabel: 'Back' });

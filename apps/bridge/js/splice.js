@@ -202,7 +202,7 @@ var BridgeSplice = (function () {
     el.querySelector('.sp-again').style.display = 'none';
   }
 
-  function pay() { return 30 + save.level * 10; }
+  function pay() { return Math.min(160, 30 + save.level * 10); }       // tops out once the boards do (it rose without end)
 
   function status(t) { el.querySelector('.sp-status').textContent = t; }
 
