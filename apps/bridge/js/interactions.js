@@ -379,6 +379,7 @@ var BridgeInteractions = (function () {
     if (biz) { showBusiness(biz, inter); return; }
     // sit, sleep, look out of the window (js/actions.js) instead of a text box
     if (inter.action && typeof BridgeActions !== 'undefined') { BridgeActions.run(inter); return; }
+    if (OWN[inter.type]) { OWN[inter.type](inter); return; }        // a type some module handles itself (register)
     switch (inter.type) {
       case 'app':
         // the Bridge's own games open over the world, like the arcade cabinets (no reload)
@@ -1711,7 +1712,12 @@ var BridgeInteractions = (function () {
     }
   }
 
-  return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, placePrompt: placePrompt, getTarget: getTarget,
+  // BridgeInteractions.register('chest', fn(inter)) — a module brings its own interaction type, no case needed here
+  // (verb: the prompt's word, as VERBS above)
+  var OWN = {};
+  function register(type, fn, verb) { OWN[type] = fn; if (verb) VERBS[type] = verb; }
+
+  return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, register: register, placePrompt: placePrompt, getTarget: getTarget,
            say: showDialog, execute: executeInteraction, choose: showChooser,
            findTarget: findTarget, promptParts: promptParts };
 })();

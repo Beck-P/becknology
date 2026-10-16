@@ -77,6 +77,7 @@ var BridgeActions = (function () {
     if (inter.action === 'sit') sit(inter);
     else if (inter.action === 'sleep') sleep(inter);
     else if (inter.action === 'view') openView(inter);
+    else if (inter.type === 'deck' && typeof BridgeDeck !== 'undefined') BridgeDeck.use(inter);   // the bridge's stations: not ours
   }
 
   // ---- sitting -----------------------------------------------------------------------------------
