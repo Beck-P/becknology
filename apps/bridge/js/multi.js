@@ -63,7 +63,9 @@ var BridgeMulti = (function () {
       var to = BridgeSloop.course(), I = typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles || {};
       sea = to && I[to] ? I[to].name : null;
     }
-    n.set({ key: suitKey(), world: worldId(), inst: myInst(), place: inWorld() && w ? cap(w.name) : '', act: act, sea: sea, visiting: visiting || null });
+    var st = typeof BridgeInventory !== 'undefined' && BridgeInventory.getStats ? BridgeInventory.getStats() : null;
+    n.set({ key: suitKey(), world: worldId(), inst: myInst(), place: inWorld() && w ? cap(w.name) : '', act: act, sea: sea, visiting: visiting || null,
+            hp: st && st.maxHP ? Math.round(st.hp / st.maxHP * 100) : 100 });
   }
 
   // ---- other pilots, here --------------------------------------------------------------------------------------------
@@ -175,6 +177,7 @@ var BridgeMulti = (function () {
       if (show && bel.getAttribute('data-at') !== String(b.at)) { bel.innerHTML = b.html; bel.setAttribute('data-at', String(b.at)); }
       t.classList.toggle('talking', !!show);
       t.classList.toggle('down', id !== 'self' && !!(api.isDown && api.isDown(id)));
+      if (id !== 'self') health(t, id);
       var tg = typeof BridgeInteractions !== 'undefined' && BridgeInteractions.getTarget && BridgeInteractions.getTarget();
       t.classList.toggle('targeted', !!(tg && tg.type === 'player' && tg.pid === id));   // the prompt says their name already
       if (id === 'self' && !show) { t.style.display = 'none'; return; }
@@ -184,6 +187,16 @@ var BridgeMulti = (function () {
     };
     Object.keys(others).forEach(function (id) { var a = others[id]; place(id, a.x, a.y, a.name); });
     if (typeof BridgeCharacter !== 'undefined') { var rp = BridgeCharacter.getRenderPos(); place('self', rp.x, rp.y, ''); }
+  }
+
+  // their health under their name, while they're hurt (presence `hp`, a percentage, sent as it changes)
+  function health(t, id) {
+    var p = N() && N().peer(id), hp = p && typeof p.hp === 'number' ? p.hp : 100, bar = t.querySelector('.mp-hp');
+    if (hp >= 100) { if (bar) bar.style.display = 'none'; return; }
+    if (!bar) { bar = document.createElement('div'); bar.className = 'mp-hp'; bar.innerHTML = '<i></i>'; t.appendChild(bar); }
+    bar.style.display = '';
+    var fill = bar.firstChild, w = Math.max(0, Math.min(100, hp)) + '%';
+    if (fill.style.width !== w) { fill.style.width = w; fill.className = hp < 34 ? 'low' : ''; }
   }
 
   // ---- emotes and saying something ----------------------------------------------------------------------------------
