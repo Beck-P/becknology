@@ -1,8 +1,9 @@
 /**
  * BridgeCharacter — Player character with grid-based movement.
  *
- * Sprite-sheet pilot rendered from a Blender model (tools/bridge-art/pilot.py):
- * 4-frame idle + 8-frame walk in four directions, one sheet per suit colour.
+ * Sprite-sheet pilot rendered from a Blender model (tools/bridge-art/characters.py):
+ * 4-frame idle + 8-frame walk in four directions, one sheet per suit, build and head, recoloured
+ * for the suit colour, skin and hair by js/look.js.
  * The old procedural ¾-view sprite remains as a fallback while sheets load.
  *
  * Usage:
@@ -167,8 +168,8 @@ var BridgeCharacter = (function () {
     return 2;
   }
 
-  // ---- Sprite sheets (tools/bridge-art/pilot.py → sprites_post.py) ----
-  // One sheet per suit colour. Frames are 32×48 native px; rows are
+  // ---- Sprite sheets (tools/bridge-art/pilots.sh → assets/characters/pilots/) ----
+  // Frames are 32×48 native px; rows are
   // down/right/up/left, columns are idle 0-3 then walk 0-7.
   var FRAME_W = 32, FRAME_H = 48;
   var DIR_ROW = { down: 0, right: 1, up: 2, left: 3 };
@@ -176,7 +177,9 @@ var BridgeCharacter = (function () {
   var WALK_CYCLE_TILES = 2.4;    // tiles per full 8-frame stride
   var sheets = {};
 
-  // the suit you're wearing (js/gear.js: style and colour), standing or seated
+  // The sheet for what you're wearing (js/gear.js: style and colour) and how you look (js/look.js), standing,
+  // seated or in a sport pose. A key reads '[sit-|ski-|climb-][<style>-]<colour>@<look code>'; a key with no
+  // look (a rival's 'ski-coat-red') is drawn with the default look.
   function sheetKey(sport) {
     var pilot = BridgeState.getPilot();
     var G = typeof BridgeGear !== 'undefined' ? BridgeGear : null;
@@ -184,17 +187,26 @@ var BridgeCharacter = (function () {
     if (!SUIT_COLORS[colour]) colour = 'purple';
     var style = G ? G.style() : 'flight';
     var pre = sport ? sport + '-' : pose && pose.kind !== 'walk' ? pose.kind + '-' : seat ? 'sit-' : '';
-    return pre + (style && style !== 'flight' ? style + '-' : '') + colour;
+    return pre + (style && style !== 'flight' ? style + '-' : '') + colour + '@' + BridgeLook.code(BridgeLook.get());
   }
 
-  function getSheet(suit) {
-    if (!sheets[suit]) {
-      var img = new Image();
-      sheets[suit] = { img: img, ready: false };
-      img.onload = function () { sheets[suit].ready = true; };
-      img.src = '/bridge/assets/characters/pilot-' + suit + '.png';     // 'sit-<suit>' for the seated sheet
+  // the sheet to draw now: while a new one loads (you've just changed suit or look) keep the last good one
+  var lastGood = null;
+  function liveSheet(key) {
+    var sh = getSheet(key);
+    if (sh.ready) { lastGood = sh; return sh; }
+    return lastGood || sh;
+  }
+
+  function getSheet(key) {
+    if (!sheets[key]) {
+      var at = key.indexOf('@'), base = at < 0 ? key : key.slice(0, at);
+      var parts = base.split('-'), colour = parts.pop();
+      var mode = parts[0] === 'sit' || parts[0] === 'ski' || parts[0] === 'climb' ? parts.shift() : '';
+      var look = at < 0 ? BridgeLook.clean(null) : BridgeLook.parse(key.slice(at + 1));
+      sheets[key] = BridgeLook.sheet(mode, parts[0] || 'flight', colour, look);
     }
-    return sheets[suit];
+    return sheets[key];
   }
 
   // a sheet with every frame mirrored in place (a sport sheet faces right; left is its mirror)
@@ -252,7 +264,7 @@ var BridgeCharacter = (function () {
   function sceneItem(offX, offY, ts, sc, world, now) {
     if (hidden) return { footRow: 0, draw: function () {} };
     if (pose) return posedItem(offX, offY, ts, sc, world, now);
-    var sheet = getSheet(sheetKey());
+    var sheet = liveSheet(sheetKey());
     var pos = getRenderPos();
     var footRow = pos.y + 1 - 3 / 32;
     return {
@@ -296,7 +308,7 @@ var BridgeCharacter = (function () {
   /** The pilot's sprite right now: sheet image, frame rect and position (for echoes). */
   function frame() {
     if (hidden) return null;
-    var sheet = getSheet(sheetKey());
+    var sheet = liveSheet(sheetKey());
     if (!sheet.ready) return null;
     var col = player.moveProgress < 1
       ? 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8
@@ -319,7 +331,7 @@ var BridgeCharacter = (function () {
     var sx = Math.round(offX + pos.x * ts);
     var sy = Math.round(offY + pos.y * ts);
 
-    var sheet = getSheet(sheetKey());
+    var sheet = liveSheet(sheetKey());
     if (sheet.ready) {
       drawSprite(ctx, sheet, sx, sy, ts);
       return;

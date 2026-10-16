@@ -58,7 +58,7 @@ var BridgeClimb = (function () {
 
   // Ysolde races you up (her topic): her line is a careful hand's, hold to hold, this long between moves
   var RIVAL = { staircase: 0.7, icefall: 0.95, hoarspire: 1.15 }, BEAT = { staircase: 80, icefall: 150, hoarspire: 300 };
-  var RIVAL_SHEET = 'climb-coat-red';
+  var RIVAL_SHEET = 'climb-coat-red@b.long.0.0.fair.blonde';       // Ysolde, in a red coat (js/look.js codes)
 
   var save = load();
   var g = null;                 // the climb in progress

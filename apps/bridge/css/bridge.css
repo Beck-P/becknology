@@ -1894,3 +1894,32 @@ html.touch #chart-pill .ip-key { display: none; }
 #sea-chart .ch-hint { margin-top: 8px; text-align: center; font-size: 11px; color: rgba(224, 192, 96, 0.75); letter-spacing: 0.5px; }
 #sea-chart .ch-hint .ip-key { font-size: 10px; min-width: 20px; height: 16px; }
 html.touch #sea-chart .ch-hint { display: none; }
+
+/* how the pilot looks (js/look.js): the new-pilot screen and the wardrobe's Change look */
+.look-editor { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.look-row { display: grid; grid-template-columns: 7.5em 1fr; align-items: center; gap: 2px 8px; padding: 3px 6px;
+  border-radius: 3px; font-size: 11px; letter-spacing: 1px; }
+.look-row.active { outline: 1px solid currentColor; outline-offset: -1px; }
+.look-row.muted { opacity: 0.45; }
+.look-label { opacity: 0.75; text-align: left; }
+.look-row .look-step { display: inline-block; width: 22px; height: 22px; padding: 0; background: transparent;
+  border: 1px solid currentColor; color: inherit; font: inherit; font-size: 10px; cursor: pointer; border-radius: 3px; opacity: 0.8; }
+.look-row .look-step:hover { opacity: 1; }
+.look-row:not(:has(.look-swatches)) { grid-template-columns: 7.5em 22px 1fr 22px; }
+.look-value { text-align: center; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+.look-swatches { display: flex; flex-wrap: wrap; gap: 5px; }
+.look-swatch { width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.45); cursor: pointer; }
+.look-swatch.on { border-color: #fff; box-shadow: 0 0 0 2px currentColor; }
+.wd-gear .gear-look { display: none; }
+.wd-gear.gear-looking .gear-look { display: block; flex: 1; min-width: 0; }
+.wd-gear.gear-looking .gear-list, .wd-gear.gear-looking .gear-colours { display: none; }
+.identity-panel.identity-wide { max-width: 520px; }
+.identity-look { display: flex; gap: 16px; align-items: flex-start; margin: 8px 0; color: #aaa; }
+.identity-look canvas { width: 96px; height: 144px; flex: 0 0 96px; image-rendering: pixelated;
+  background: radial-gradient(circle at 50% 70%, rgba(160, 120, 220, 0.12), transparent 70%); }
+.identity-look .look-editor { flex: 1; }
+@media (max-width: 520px) {
+  .identity-look { flex-direction: column; align-items: center; }
+  .identity-look .look-editor { width: 100%; }
+  .identity-panel.identity-wide { padding: 24px 14px; }
+}

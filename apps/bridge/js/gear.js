@@ -2,9 +2,9 @@
  * BridgeGear — what the pilot wears and carries.
  *
  * Suits are Blender models (tools/bridge-art/characters.py pilot-<style>),
- * each rendered in the six suit colours, standing and seated:
- * pilot-<style>-<colour>.png / pilot-sit-<style>-<colour>.png (the Flight Suit
- * is plain pilot-<colour>.png). A suit carries a perk — more health, more
+ * rendered standing, seated, skiing and climbing on both builds with every
+ * head (assets/characters/pilots/, see js/look.js, which recolours them for
+ * the suit colour, skin and hair). A suit carries a perk — more health, more
  * energy, a quicker step, warmth. The colour is yours to change any time.
  * Backpacks add rows to the inventory (js/inventory.js asks packSlots()).
  *
@@ -12,7 +12,9 @@
  * Sapphire, Cyber Gear on the District street, Joro's back room, Vex's
  * stash. A person's conversation topic with `outfit: <shop>` opens one too.
  * The wardrobe (the coat rack on the bridge, or OUTFIT in the inventory)
- * changes what you wear. Saved in localStorage `bridge_gear`.
+ * changes what you wear, and its Change look button how you look (js/look.js:
+ * build, hair, beard, helmet, skin, hair colour; free). Saved in localStorage
+ * `bridge_gear`.
  *
  *   BridgeGear.open()                         // the wardrobe
  *   BridgeGear.open({ shop: 'cyber_gear' })   // an outfitter
@@ -116,12 +118,7 @@ var BridgeGear = (function () {
 
   // ---- the outfitter / wardrobe ---------------------------------------------------------------------
   var el = null, rows = [], sel = 0, pick = null, previewStyle = null, previewColour = null, raf = 0, keyFn = null, busy = false, note = '';
-  var sheets = {};
-  function sheet(styleKey, col) {
-    var name = 'pilot-' + (styleKey === 'flight' ? '' : styleKey + '-') + col;
-    if (!sheets[name]) { var im = new Image(); im.src = '/bridge/assets/characters/' + name + '.png'; sheets[name] = im; }
-    return sheets[name];
-  }
+  var looking = null;     // the look editor (js/look.js) while the wardrobe is on Change look
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function theme() {
     var id = (BridgeWorld.getWorldId && BridgeWorld.getWorldId()) || '', w = BridgeWorld.getWorld(), ts = (w && w.tileset) || '';
@@ -145,6 +142,7 @@ var BridgeGear = (function () {
     rows = shop ? shop.goods.map(function (g) { var p = g.split(':'); return { kind: p[0], key: p[1] }; })
                 : Object.keys(SUITS).filter(function (k) { return state.suits[k]; }).map(function (k) { return { kind: 'suit', key: k }; });
     sel = 0;
+    looking = null;
     for (var i = 0; i < rows.length; i++) if (rows[i].kind === 'suit' && rows[i].key === state.style && !shop) sel = i;
     previewColour = pilotColour();
     note = '';
@@ -154,7 +152,7 @@ var BridgeGear = (function () {
     el.className = 'world-dialog wd-' + theme() + ' wd-gear';
     el.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(shop ? shop.title : 'WARDROBE') + '</div>' +
       (opts.intro ? '<div class="wd-text">' + esc(opts.intro) + '</div>' : '') +
-      '<div class="gear-main"><canvas class="gear-preview" width="96" height="144"></canvas><div class="gear-list"></div></div>' +
+      '<div class="gear-main"><canvas class="gear-preview" width="96" height="144"></canvas><div class="gear-list"></div><div class="gear-look"></div></div>' +
       '<div class="gear-colours">' + COLOURS.map(function (c) {
         return '<button class="gear-swatch" data-col="' + c[0] + '" title="' + c[0] + '" style="background:' + c[1] + '"></button>';
       }).join('') + '<span class="gear-colname"></span></div>' +
@@ -172,6 +170,10 @@ var BridgeGear = (function () {
       var mine = { Escape: 1, ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1, Enter: 1, e: 1, E: 1, w: 1, W: 1, s: 1, S: 1, a: 1, A: 1, d: 1, D: 1, ' ': 1 };
       if (!mine[k]) return;
       e.preventDefault(); e.stopPropagation();
+      if (looking) {                    // the look editor has the arrows; Esc, Enter or E go back to the suits
+        if (!looking.key(k)) lookMode(false);
+        return;
+      }
       if (k === 'Escape') close();
       else if (k === 'ArrowUp' || k === 'w' || k === 'W') choose(sel - 1);
       else if (k === 'ArrowDown' || k === 's' || k === 'S') choose(sel + 1);
@@ -182,12 +184,14 @@ var BridgeGear = (function () {
     document.addEventListener('keydown', keyFn, true);
     if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('open');
     render();
+    if (opts.look && !shop) lookMode(true);
     var t0 = performance.now();
     (function tick(now) { if (!el) return; drawPreview(now - t0); raf = requestAnimationFrame(tick); })(t0);
   }
 
   function close() {
     if (!el) return;
+    looking = null;
     cancelAnimationFrame(raf);
     document.removeEventListener('keydown', keyFn, true);
     el.remove(); el = null;
@@ -208,8 +212,31 @@ var BridgeGear = (function () {
     render();
   }
 
+  // the wardrobe's Change look: the suit list and colours give way to the look editor (changes are free and
+  // saved as you make them); Done goes back
+  function lookMode(on) {
+    if (!el) return;
+    var box = el.querySelector('.gear-look');
+    looking = on ? BridgeLook.editor(box, { look: BridgeLook.get(), onChange: function (l) { BridgeLook.set(l); } }) : null;
+    if (!on) box.innerHTML = '';
+    el.classList.toggle('gear-looking', !!on);
+    note = on ? 'HOW YOU LOOK. IT COSTS NOTHING TO CHANGE.' : '';
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('blip');
+    render();
+  }
+
   function render() {
     if (!el) return;
+    if (looking) {
+      el.querySelector('.gear-note').textContent = note;
+      el.querySelector('.gear-stats').innerHTML = '';
+      var la = el.querySelector('.gear-actions');
+      la.innerHTML = '<button class="wd-opt active" data-a="done">Done</button>';
+      la.querySelector('.wd-opt').addEventListener('click', function (e) { e.stopPropagation(); lookMode(false); });
+      el.querySelector('.wd-hint').innerHTML = '<span class="ip-key">Esc</span>Back';
+      return;
+    }
+    el.querySelector('.wd-hint').innerHTML = '<span class="ip-key">Esc</span>Leave';
     var list = el.querySelector('.gear-list'), r = rows[sel];
     list.innerHTML = rows.map(function (row, i) {
       var I = info(row), tag;
@@ -237,9 +264,15 @@ var BridgeGear = (function () {
     else if (!owned(r)) label = 'Buy for ' + info(r).price + ' coins';
     else if (r.kind === 'suit') label = state.style === r.key ? 'Wearing it' : 'Wear it';
     else label = 'Already yours';
-    acts.innerHTML = (label ? '<button class="wd-opt active" data-a="go">' + label + '</button>' : '') + '<button class="wd-opt" data-a="leave">Leave</button>';
+    acts.innerHTML = (label ? '<button class="wd-opt active" data-a="go">' + label + '</button>' : '') +
+      (el._shop ? '' : '<button class="wd-opt" data-a="look">Change look</button>') +
+      '<button class="wd-opt" data-a="leave">Leave</button>';
     acts.querySelectorAll('.wd-opt').forEach(function (b) {
-      b.addEventListener('click', function (e) { e.stopPropagation(); if (b.getAttribute('data-a') === 'leave') close(); else act(0); });
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var a = b.getAttribute('data-a');
+        if (a === 'leave') close(); else if (a === 'look') lookMode(true); else act(0);
+      });
     });
   }
 
@@ -273,20 +306,11 @@ var BridgeGear = (function () {
     }).catch(function () { busy = false; note = 'THE SALE WON\'T GO THROUGH RIGHT NOW.'; render(); });
   }
 
-  // the pilot turning on the spot and walking in place, in the chosen suit and colour
+  // the pilot turning on the spot and walking in place, in the chosen suit and colour, looking as you look
   function drawPreview(t) {
     var c = el && el.querySelector('.gear-preview');
     if (!c) return;
-    var g = c.getContext('2d');
-    g.clearRect(0, 0, c.width, c.height);
-    var im = sheet(previewStyle || state.style, previewColour);
-    if (!im.complete || !im.naturalWidth) return;
-    var dir = [0, 1, 2, 3][Math.floor(t / 1600) % 4], walking = Math.floor(t / 800) % 2;
-    var col = walking ? 4 + Math.floor(t / 110) % 8 : [0, 1, 2, 1][Math.floor(t / 340) % 4];
-    g.imageSmoothingEnabled = false;
-    g.fillStyle = 'rgba(0,0,0,0.25)';
-    g.beginPath(); g.ellipse(48, 135, 27, 8, 0, 0, Math.PI * 2); g.fill();
-    g.drawImage(im, col * 32, dir * 48, 32, 48, 0, 0, 96, 144);
+    BridgeLook.drawPreview(c, t, looking ? state.style : previewStyle || state.style, previewColour, BridgeLook.get());
   }
 
   return { open: open, close: close, decorate: decorate, isOpen: function () { return !!el; },

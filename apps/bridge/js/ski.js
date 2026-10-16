@@ -47,7 +47,7 @@ var BridgeSki = (function () {
   var GRAV = 1.45, DRAG = 0.1, TUCK = 0.066, FRICTION = 0.55, PLOUGH = 6.5, TURN = 2.5, VMAX = 15, GZ = 13, AMAX = 1.45;
   var C45 = Math.SQRT1_2;
   var LEAN_R = 7, LEAN_L = 6;          // the carve frames leaning to the sheet's right / left
-  var RIVAL_SHEET = 'ski-coat-red';
+  var RIVAL_SHEET = 'ski-coat-red@b.ponytail.0.0.fair.blonde';    // Liv: her red coat, her ponytail (js/look.js codes)
   var PARK = 'hoarfell-park', JUNO = 7500;
   var RAIL_NAME = { box: 'BOX SLIDE', rail: 'RAIL SLIDE', down: 'DOWN RAIL', kink: 'KINKED RAIL' };
   var RAIL_MULT = { box: 0.8, rail: 1, down: 1.2, kink: 1.5 };
