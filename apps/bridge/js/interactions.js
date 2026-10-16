@@ -329,6 +329,11 @@ var BridgeInteractions = (function () {
       var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
       var st = typeof BridgeInventory !== 'undefined' && BridgeInventory.getStats ? BridgeInventory.getStats() : null;
       var landed = t && !(st && st.hp <= 0) && (C && C.dangerAt && hostile.creature ? C.dangerAt(hostile, px, py) : px === t.x && py === t.y);
+      if (landed && typeof BridgeArms !== 'undefined' && BridgeArms.dodging()) {     // mid-roll: it goes through you (js/arms.js)
+        landed = false;
+        if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(px, py - 0.3, 'DODGED', '#c8f0ff');
+        if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('dodge');
+      }
       if (landed) {
         var dmg = C && C.attackDamage && hostile.creature ? C.attackDamage(hostile) : hostile.damage || 5;
         if (C && C.shake) C.shake(dmg >= 12 ? 4 : 2);
@@ -655,6 +660,7 @@ var BridgeInteractions = (function () {
 
     var html = '<div class="wd-body"><div class="wd-title">' + esc(inter.label) + '</div>';
     if (inter.dialog) html += '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>';
+    if (inter.item && typeof BridgeItems !== 'undefined') html += weaponCard(BridgeItems.get(inter.item), { compare: true, title: true });   // what's being made
     html += '<div class="wd-options">';
     for (var i = 0; i < inter.options.length; i++) {
       html += '<button data-opt="' + i + '" class="wd-opt' + (i === 0 ? ' active' : '') + '">' + esc(inter.options[i].label) + '</button>';
@@ -1058,7 +1064,8 @@ var BridgeInteractions = (function () {
   }
 
   // A chooser in the world's dialog style, for the systems that need one (the farm's bin, board and seed box,
-  // hiring a hand, giving a gift): spec = { title, text, rows: [{ label, note, icon: item id, disabled, pick }],
+  // hiring a hand, giving a gift): spec = { title, text, rows: [{ label, note, icon: item id, stats: a weapon's id
+  // (its stats card under the row), disabled, pick }],
   // input: { placeholder, value, submit }, buttons: [{ label, act, disabled }] }. Picking a row or a button closes
   // the chooser unless its function returns false.
   function showChooser(spec) {
@@ -1074,7 +1081,8 @@ var BridgeInteractions = (function () {
         return '<div class="wd-sell-row pick' + (r.disabled ? ' none' : '') + '" data-r="' + i + '">' +
           '<canvas class="sp-icon" width="24" height="24"></canvas><span class="sp-name">' + esc(r.label) + '</span>' +
           '<span class="sp-have">' + esc(r.sub || '') + '</span><span class="sp-qty"></span>' +
-          '<span class="sp-price">' + esc(r.note || '') + '</span></div>';
+          '<span class="sp-price">' + esc(r.note || '') + '</span>' +
+          (r.stats && typeof BridgeItems !== 'undefined' ? weaponCard(BridgeItems.get(r.stats), { compare: true, compact: true }) : '') + '</div>';
       }).join('') + '</div>' : '') +
       (spec.input ? '<form class="wd-say wd-chooser-input"><input class="wd-say-input" type="text" maxlength="' + (spec.input.max || 24) +
                     '" autocomplete="off" placeholder="' + esc(spec.input.placeholder || '') + '" value="' + esc(spec.input.value || '') + '">' +
@@ -1398,6 +1406,11 @@ var BridgeInteractions = (function () {
     if (dialogEl) dialogEl.remove();
   }
 
+  // what a weapon does, in numbers and plain words, styled by the dialog it's in (js/arms.js BridgeArms.card)
+  function weaponCard(item, opts) {
+    return item && typeof BridgeArms !== 'undefined' && BridgeArms.stats(item) ? BridgeArms.card(item, opts) : '';
+  }
+
   // Vendor / shop dialog — buy BridgeItems with server-side coins via BridgeProgression.
   // inter.items: [{ id, price }, ...]
   // inter.label: shop name displayed at the top
@@ -1450,7 +1463,8 @@ var BridgeInteractions = (function () {
         var info = document.createElement('div');
         info.className = 'wd-item-info';
         info.innerHTML = '<div class="wd-item-name">' + esc(item.name) + '</div>' +
-                         '<div class="wd-item-desc">' + esc(item.desc) + '</div>';
+                         '<div class="wd-item-desc">' + esc(item.desc) + '</div>' +
+                         weaponCard(item, { compare: true, compact: true });
         row.appendChild(info);
         var canAfford = currentBalance >= entry.price;
         var buyBtn = document.createElement('button');

@@ -14,6 +14,7 @@ Frames are packed into one sheet per colour variant:
 written to apps/bridge/assets/characters/<name>-<variant>.png
 """
 import glob
+import json
 import os
 import sys
 
@@ -70,17 +71,20 @@ def main():
     outdir = sys.argv[3] if len(sys.argv) > 3 else OUTDIR
     os.makedirs(outdir, exist_ok=True)
     variants = sorted(os.path.basename(p)[len('color_'):] for p in glob.glob(os.path.join(frames, 'color_*')))
+    cols = COLS
+    if os.path.exists(os.path.join(frames, 'cols.json')):        # a sheet of its own columns (attacks.py)
+        cols = json.load(open(os.path.join(frames, 'cols.json')))
     for v in variants:
         sheet = None
         for r, d in enumerate(DIRS):
-            for col, f in enumerate(COLS):
+            for col, f in enumerate(cols):
                 tag = f'{d}_{f}.png'
                 img = process(os.path.join(frames, 'color_' + v, tag),
                               os.path.join(frames, 'id', tag),
                               os.path.join(frames, 'depth', tag))
                 fh, fw = img.shape[:2]
                 if sheet is None:
-                    sheet = np.zeros((fh * len(DIRS), fw * len(COLS), 4), np.uint8)
+                    sheet = np.zeros((fh * len(DIRS), fw * len(cols), 4), np.uint8)
                 sheet[r * fh:(r + 1) * fh, col * fw:(col + 1) * fw] = img
         path = os.path.join(outdir, f'{name}.png' if v == 'key' else f'{name}-{v}.png')   # key: the pilot (js/look.js recolours it)
         Image.fromarray(sheet, 'RGBA').save(path, optimize=True)

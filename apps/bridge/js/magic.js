@@ -107,7 +107,8 @@ var BridgeMagic = (function () {
     var G = typeof BridgeGear !== 'undefined' ? BridgeGear : null;
     var rows = WARES.map(function (w) {
       var it = BridgeItems.get(w.id), have = carried(w.id);
-      return { label: it.name, icon: w.id, sub: have ? 'you have one' : it.desc, note: have ? 'owned' : w.price + ' coins', disabled: have,
+      return { label: it.name, icon: w.id, stats: typeof it.damage === 'number' ? w.id : null, sub: have ? 'you have one' : it.desc,
+               note: have ? 'owned' : w.price + ' coins', disabled: have,
                pick: function () { buy(w); } };
     });
     if (G) rows.push({ label: 'The clothes rail', sub: 'a starweave robe and a ranger\'s cloak', note: 'look', pick: function () {
@@ -173,17 +174,29 @@ var BridgeMagic = (function () {
   }
 
   // ---- the wand -------------------------------------------------------------------------------------------------
+  // The staff or wand is raised and thrust out (js/arms.js, the cast swing); the bolt leaves on the thrust. Charged
+  // (F held), it's twice as strong, bigger, and goes on through whatever it meets.
   var lastCast = 0;
   function cast(item) {
+    var inv = BridgeInventory;
+    var tired = function () { return inv.getStats && inv.getStats().energy < 3; };
+    if (tired()) { sfx('error'); return say(item.bolt === 'wisp' ? 'WISPCALLER STAFF' : 'MOONLIT WAND', (item.bolt === 'wisp' ? 'THE WISP IN THE STAFF GUTTERS.' : 'THE WAND IS COLD IN YOUR HAND.') + ' YOU\'RE TOO TIRED - EAT, OR REST.'); }
+    var fire = function (mult, charged) {
+      if (tired()) { sfx('error'); return false; }
+      if (inv.useEnergy) inv.useEnergy(3);
+      var f = BridgeCharacter.getFacing(), dx = f === 'right' ? 1 : f === 'left' ? -1 : 0, dy = f === 'down' ? 1 : f === 'up' ? -1 : 0;
+      var w = item;
+      if (charged) { w = Object.create(item); w.damage = Math.round((item.damage || 30) * (mult || 2)); w.charged = true; }
+      bolts.push({ x: BridgeCharacter.getX() + 0.5, y: BridgeCharacter.getY() + 0.3, dx: dx, dy: dy, d: 0, dmg: w.damage || 30, at: performance.now(), trail: [],
+                   w: w, wisp: item.bolt === 'wisp', big: !!charged, struck: [] });
+      sfx(item.bolt === 'wisp' ? 'zap' : 'swish');
+      return false;
+    };
+    if (typeof BridgeArms !== 'undefined' && BridgeArms.swing({ item: item, cls: 'cast', onHit: fire })) return;
     var now = performance.now();
     if (now - lastCast < 450) return;
-    var inv = BridgeInventory;
-    if (inv.getStats && inv.getStats().energy < 3) { sfx('error'); return say(item.bolt === 'wisp' ? 'WISPCALLER STAFF' : 'MOONLIT WAND', (item.bolt === 'wisp' ? 'THE WISP IN THE STAFF GUTTERS.' : 'THE WAND IS COLD IN YOUR HAND.') + ' YOU\'RE TOO TIRED - EAT, OR REST.'); }
     lastCast = now;
-    if (inv.useEnergy) inv.useEnergy(3);
-    var f = BridgeCharacter.getFacing(), dx = f === 'right' ? 1 : f === 'left' ? -1 : 0, dy = f === 'down' ? 1 : f === 'up' ? -1 : 0;
-    bolts.push({ x: BridgeCharacter.getX() + 0.5, y: BridgeCharacter.getY() + 0.3, dx: dx, dy: dy, d: 0, dmg: item.damage || 30, at: now, trail: [], w: item, wisp: item.bolt === 'wisp' });
-    sfx(item.bolt === 'wisp' ? 'zap' : 'swish');
+    fire(1, false);
   }
   function stepBolts(dt) {
     var world = BridgeWorld.getWorld();
@@ -192,10 +205,13 @@ var BridgeMagic = (function () {
       b.x += b.dx * step; b.y += b.dy * step; b.d += step;
       b.trail.push([b.x, b.y]); if (b.trail.length > 8) b.trail.shift();
       if (!world) return false;
-      var hit = world.interactions.filter(function (it) { return it.type === 'hostile' && Math.hypot(it.x + 0.5 - b.x, it.y + 0.5 - b.y) < 0.75; })[0];
+      var hit = world.interactions.filter(function (it) { return it.type === 'hostile' && b.struck.indexOf(it) < 0 && Math.hypot(it.x + 0.5 - b.x, it.y + 0.5 - b.y) < (b.big ? 0.95 : 0.75); })[0];
       if (hit) {
         var dmg = typeof BridgeCombat !== 'undefined' && BridgeCombat.damageFor ? BridgeCombat.damageFor(b.w, hit) : b.dmg;
-        if (BridgeItems.strike) BridgeItems.strike(world, hit, dmg, b.w); sfx('hit'); return false;
+        b.struck.push(hit);
+        if (BridgeItems.strike) BridgeItems.strike(world, hit, dmg, b.w);
+        sfx('impact_cast');
+        if (!b.big) return false;                                 // a charged bolt goes on through
       }
       var tx = Math.floor(b.x), ty = Math.floor(b.y);
       if (world.collisions && world.collisions[ty] && world.collisions[ty][tx] && b.d > 1) return false;
@@ -217,9 +233,9 @@ var BridgeMagic = (function () {
         ctx.fillStyle = (b.wisp ? 'rgba(190,140,255,' : 'rgba(170,190,255,') + (0.35 * a).toFixed(2) + ')';
         ctx.fillRect(Math.round(offX + p[0] * ts) - 2, Math.round(offY + p[1] * ts) - 2, 4, 4);
       });
-      var X = Math.round(offX + b.x * ts), Y = Math.round(offY + b.y * ts);
-      ctx.fillStyle = b.wisp ? 'rgba(200,160,255,0.55)' : 'rgba(200,215,255,0.5)'; ctx.fillRect(X - 5, Y - 5, 10, 10);
-      ctx.fillStyle = b.wisp ? '#f0e4ff' : '#f4f6ff'; ctx.fillRect(X - 2, Y - 2, 4, 4);
+      var X = Math.round(offX + b.x * ts), Y = Math.round(offY + b.y * ts), R = b.big ? 8 : 5, r = b.big ? 3 : 2;
+      ctx.fillStyle = b.wisp ? 'rgba(200,160,255,0.55)' : 'rgba(200,215,255,0.5)'; ctx.fillRect(X - R, Y - R, R * 2, R * 2);
+      ctx.fillStyle = b.wisp ? '#f0e4ff' : '#f4f6ff'; ctx.fillRect(X - r, Y - r, r * 2, r * 2);
     });
     // curios: a glint now and then where one lies, bright to the lantern
     var wid = BridgeWorld.getWorldId && BridgeWorld.getWorldId(), lamp = held('glimmer_lantern') || held('lantern_beyond');
