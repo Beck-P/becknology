@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Turn Blender sprite renders (see pilot.py) into game sprite sheets.
 
-  python3 tools/bridge-art/sprites_post.py pilot /tmp/pilot-frames
+  python3 tools/bridge-art/sprites_post.py pilot /tmp/pilot-frames [OUTDIR]
 
 For every frame:
   • line work — a pixel becomes a darker line when a neighbouring pixel
@@ -67,7 +67,8 @@ def process(color_path, id_path, depth_path):
 
 def main():
     name, frames = sys.argv[1], sys.argv[2]
-    os.makedirs(OUTDIR, exist_ok=True)
+    outdir = sys.argv[3] if len(sys.argv) > 3 else OUTDIR
+    os.makedirs(outdir, exist_ok=True)
     variants = sorted(os.path.basename(p)[len('color_'):] for p in glob.glob(os.path.join(frames, 'color_*')))
     for v in variants:
         sheet = None
@@ -81,7 +82,7 @@ def main():
                 if sheet is None:
                     sheet = np.zeros((fh * len(DIRS), fw * len(COLS), 4), np.uint8)
                 sheet[r * fh:(r + 1) * fh, col * fw:(col + 1) * fw] = img
-        path = os.path.join(OUTDIR, f'{name}-{v}.png')
+        path = os.path.join(outdir, f'{name}.png' if v == 'key' else f'{name}-{v}.png')   # key: the pilot (js/look.js recolours it)
         Image.fromarray(sheet, 'RGBA').save(path, optimize=True)
         print(path, sheet.shape[1], 'x', sheet.shape[0])
 

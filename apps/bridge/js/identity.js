@@ -15,6 +15,8 @@ var BridgeIdentity = (function () {
     { name: 'white',  hex: '#d0d0d0' }
   ];
   var selectedColor = 'purple';
+  var newLook = null;        // the look being made on the new-pilot form (js/look.js), saved on REGISTER
+  var previewRaf = 0;
 
   function show() {
     overlay = document.getElementById('identity-overlay');
@@ -25,7 +27,10 @@ var BridgeIdentity = (function () {
     showChoice();
   }
 
+  function stopPreview() { cancelAnimationFrame(previewRaf); previewRaf = 0; }
+
   function showChoice() {
+    stopPreview();
     overlay.innerHTML =
       '<div class="identity-panel">' +
         '<h2>PILOT IDENTITY</h2>' +
@@ -47,11 +52,14 @@ var BridgeIdentity = (function () {
         'style="background:' + c.hex + ';"></div>';
     }
 
+    // a new pilot starts bare-headed so you can see the face you're making
+    newLook = BridgeLook.clean({ helmet: false });
     overlay.innerHTML =
-      '<div class="identity-panel">' +
+      '<div class="identity-panel identity-wide">' +
         '<h2>NEW PILOT</h2>' +
         '<input type="text" class="identity-input" id="pilot-name" ' +
           'placeholder="ENTER CALLSIGN" maxlength="16" autocomplete="off">' +
+        '<div class="identity-look"><canvas id="pilot-preview" width="96" height="144"></canvas><div id="pilot-look"></div></div>' +
         '<p style="font-size:10px;color:#555;margin:8px 0 4px;letter-spacing:1px;">SUIT COLOR</p>' +
         '<div class="identity-colors">' + swatches + '</div>' +
         '<div class="identity-error" id="id-error"></div>' +
@@ -60,6 +68,15 @@ var BridgeIdentity = (function () {
       '</div>';
 
     document.getElementById('pilot-name').focus();
+
+    BridgeLook.editor(document.getElementById('pilot-look'), { look: newLook, onChange: function (l) { newLook = l; } });
+    var preview = document.getElementById('pilot-preview'), t0 = performance.now();
+    stopPreview();
+    (function tick(now) {
+      if (!preview.isConnected) { previewRaf = 0; return; }
+      BridgeLook.drawPreview(preview, now - t0, 'flight', selectedColor, newLook);
+      previewRaf = requestAnimationFrame(tick);
+    })(t0);
 
     var swatchEls = overlay.querySelectorAll('.color-swatch');
     for (var i = 0; i < swatchEls.length; i++) {
@@ -79,6 +96,7 @@ var BridgeIdentity = (function () {
   }
 
   function showReturningForm() {
+    stopPreview();
     overlay.innerHTML =
       '<div class="identity-panel">' +
         '<h2>RETURNING PILOT</h2>' +
@@ -122,6 +140,8 @@ var BridgeIdentity = (function () {
     }
 
     BridgeState.setPilot(result);
+    if (newLook) BridgeLook.set(newLook);
+    stopPreview();
     BridgeWorld.load('bridge', function () {
       BridgeState.transition('world', { worldId: 'bridge' });
     });
@@ -153,6 +173,7 @@ var BridgeIdentity = (function () {
   }
 
   function hide() {
+    stopPreview();
     if (overlay) {
       overlay.style.display = 'none';
       overlay.classList.remove('active');

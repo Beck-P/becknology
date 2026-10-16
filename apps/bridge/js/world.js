@@ -419,6 +419,7 @@ var BridgeWorld = (function () {
       if (xhr.status === 200) {
         var data = JSON.parse(xhr.responseText);
         if (typeof BridgeForage !== 'undefined') BridgeForage.decorate(worldId, data);
+        if (typeof BridgeBottle !== 'undefined') BridgeBottle.decorate(worldId, data);
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.decorate(worldId, data);
         if (typeof BridgeHolm !== 'undefined') BridgeHolm.decorate(worldId, data);

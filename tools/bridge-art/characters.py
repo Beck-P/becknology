@@ -1,14 +1,13 @@
 """Model characters in Blender and render native sprite frames.
 
-  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot
   BVENV/bin/python tools/bridge-art/characters.py OUTDIR npc-bartender
-  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-coat      # a suit style (coat, plate,
-  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-sit-coat  # thermal, runner), standing / seated
-  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-ski-coat  # on skis (Hoarfell's slopes)
-  BVENV/bin/python tools/bridge-art/characters.py OUTDIR pilot-climb-coat  # climbing, 32 × 64 frames
-  python3 tools/bridge-art/sprites_post.py pilot OUTDIR/pilot             # -> pilot-<colour>.png
-  python3 tools/bridge-art/sprites_post.py pilot-coat OUTDIR              # -> pilot-coat-<colour>.png
   python3 tools/bridge-art/sprites_post.py npc OUTDIR/npc-bartender
+
+The pilot is customisable (js/look.js): pilot[-sit|-ski|-climb][-<style>]-<body a|b>
+renders one suit on one body with every head (each hairstyle, with and without a
+beard, and the helmet) into OUTDIR/<head>/. Suit, skin and hair are drawn in KEY
+colours that the game swaps for the player's picks, so no colour is baked in.
+tools/bridge-art/pilots.sh renders and packs the lot into assets/characters/pilots/.
 
 Characters use the scene camera (45° orthographic, 32 px per tile) and tile
 units, so they sit at true stool height and match the pre-rendered rooms.
@@ -41,6 +40,17 @@ SUITS = {
     'gold':   ('#887028', '#c8a840', '#e0c870'),
     'white':  ('#909090', '#d0d0d0', '#f0f0f0'),
 }
+# The pilot's recolourable tones are rendered in these exact key colours (dark, mid, light);
+# js/look.js swaps them, and the darkened line-work copies of them, for the player's picks.
+# Keep in step with KEYS in js/look.js.
+KEYS = {
+    'suit':   ('#200070', '#3000b0', '#4000f0'),
+    'suitdk': ('#100038', '#180058', '#200078'),
+    'arm':    ('#003870', '#0050b0', '#0068f0'),
+    'skin':   ('#700020', '#b00030', '#f00040'),
+    'hair':   ('#007020', '#00b030', '#00f040'),
+}
+HAIRSTYLES = ['short', 'bald', 'long', 'bun', 'ponytail', 'curly', 'mohawk']
 FIXED = {
     'helmet': ('#8c8ca8', '#d4d4e4', '#f6f6ff'),
     'visor':  ('#1c5a70', '#3aa8c0', '#8ee4f0'),
@@ -394,6 +404,7 @@ hips, knees, shoulders = {}, {}, {}
 
 
 def legs(tone_leg, tone_boot, thigh_tone=None):
+    THIGH_TONE[0] = thigh_tone or tone_leg
     for side, sx in (('L', -2.1), ('R', 2.1)):
         hip = pivot('hip' + side, (sx, 0, 9.2), body)
         hips[side] = hip
@@ -436,6 +447,20 @@ def build_pilot():
     helmet()
 
 
+GROUPS = {}        # pilot head parts by group ('helmet', 'face', 'hair-<style>', 'beard'); see set_head()
+
+
+def grouped(name):
+    """Collect every part add()-ed inside the with-block under GROUPS[name]."""
+    class G:
+        def __enter__(self):
+            self.start = len(PARTS)
+
+        def __exit__(self, *a):
+            GROUPS.setdefault(name, []).extend(o for o, _, _ in PARTS[self.start:])
+    return G()
+
+
 def helmet(collar='suitdk', ruff=False):
     global head, tip
     head = pivot('head', (0, 0, 18.6), body)
@@ -445,11 +470,94 @@ def helmet(collar='suitdk', ruff=False):
     else:
         add('torus', 'collar', (0, 0, 0.5), (1, 1, 1), collar, 'collar', head,
             major_radius=3.6, minor_radius=0.9, major_segments=20, minor_segments=8)
-    add('uv_sphere', 'helmet', (0, 0, 5.0), (5.8, 5.5, 5.3), 'helmet', 'helmet', head, segments=28, ring_count=14)
-    add('uv_sphere', 'visor', (0, -3.7, 4.6), (4.2, 3.1, 2.7), 'visor', 'visor', head, segments=24, ring_count=12)
-    add('cube', 'glint', (-1.9, -6.55, 5.7), (0.55, 0.2, 0.5), 'glint', 'visor', head)
-    add('cylinder', 'antenna', (3.0, 0.6, 10.6), (0.3, 0.3, 1.9), 'pack', 'helmet', head, vertices=8)
-    tip = add('uv_sphere', 'antennaTip', (3.0, 0.6, 12.6), (0.85, 0.85, 0.85), 'ledy', 'helmet', head, segments=8, ring_count=6)
+    with grouped('helmet'):
+        add('uv_sphere', 'helmet', (0, 0, 5.0), (5.8, 5.5, 5.3), 'helmet', 'helmet', head, segments=28, ring_count=14)
+        add('uv_sphere', 'visor', (0, -3.7, 4.6), (4.2, 3.1, 2.7), 'visor', 'visor', head, segments=24, ring_count=12)
+        add('cube', 'glint', (-1.9, -6.55, 5.7), (0.55, 0.2, 0.5), 'glint', 'visor', head)
+        add('cylinder', 'antenna', (3.0, 0.6, 10.6), (0.3, 0.3, 1.9), 'pack', 'helmet', head, vertices=8)
+        tip = add('uv_sphere', 'antennaTip', (3.0, 0.6, 12.6), (0.85, 0.85, 0.85), 'ledy', 'helmet', head, segments=8, ring_count=6)
+    bare_head()
+
+
+def bare_head():
+    """The pilot without the helmet: a face (same build as the NPCs'), every hairstyle and a beard, each in its
+    own group so set_head() can show one combination per render."""
+    with grouped('face'):
+        add('cylinder', 'neck', (0, 0, 0.6), (1.6, 1.6, 1.2), 'skin', 'neck', head, vertices=10)
+        add('uv_sphere', 'face', (0, 0, 5.2), (5.0, 4.8, 5.0), 'skin', 'head', head, segments=24, ring_count=12)
+        for sx in (-1.8, 1.8):
+            add('cube', 'eye', (sx, -4.6, 5.9), (0.7, 0.7, 1.0), 'eye', 'eyes', head)
+        add('cube', 'nose', (0, -4.9, 4.4), (0.55, 0.6, 0.6), 'skin', 'head', head, bevel=0.2)
+
+    def cap():                  # the NPCs' short hair: a cap of hair over the crown, ears showing
+        add('uv_sphere', 'hair', (0, 0.5, 6.4), (5.3, 5.0, 4.3), 'hair', 'hair', head, segments=20, ring_count=10)
+
+    with grouped('hair-short'):
+        cap()
+    with grouped('hair-bald'):  # shaved on top, a little left over the ears
+        for sx in (-4.6, 4.6):
+            add('uv_sphere', 'hairside', (sx, 0.6, 4.6), (1.0, 2.6, 1.8), 'hair', 'hair', head, segments=10, ring_count=6)
+    with grouped('hair-long'):  # past the shoulders, framing the face
+        cap()
+        add('cube', 'hair_back', (0, 3.0, 3.0), (4.6, 1.9, 4.6), 'hair', 'hair', head, bevel=1.2)
+        for sx in (-4.4, 4.4):
+            add('cube', 'hair_lock', (sx, 0.4, 3.4), (1.0, 2.8, 3.6), 'hair', 'hair', head, bevel=0.6)
+    with grouped('hair-bun'):
+        cap()
+        add('uv_sphere', 'bun', (0, 3.6, 8.4), (2.2, 2.0, 2.0), 'hair', 'hair', head, segments=12, ring_count=8)
+    with grouped('hair-ponytail'):
+        cap()
+        add('uv_sphere', 'tie', (0, 4.6, 6.6), (1.1, 1.0, 1.1), 'hair', 'hair', head, segments=10, ring_count=6)
+        add('uv_sphere', 'tail', (0, 5.6, 3.6), (1.4, 1.3, 3.4), 'hair', 'hair', head, rot=(0.35, 0, 0), segments=12, ring_count=8)
+    with grouped('hair-curly'):  # a big round cloud of curls
+        add('uv_sphere', 'curls', (0, 0.9, 6.8), (6.4, 6.0, 5.2), 'hair', 'hair', head, segments=20, ring_count=10)
+        for ang in range(0, 360, 45):
+            a = math.radians(ang)
+            add('uv_sphere', 'curl', (math.cos(a) * 5.6, 0.9 + math.sin(a) * 5.2, 8.6), (1.6, 1.6, 1.6), 'hair', 'hair', head,
+                segments=8, ring_count=6)
+    with grouped('hair-mohawk'):
+        for sx in (-4.6, 4.6):
+            add('uv_sphere', 'hairside', (sx, 0.6, 4.6), (1.0, 2.6, 1.8), 'hair', 'hair', head, segments=10, ring_count=6)
+        add('cube', 'mohawk', (0, 0.8, 9.8), (0.9, 3.8, 1.9), 'hair', 'hair', head, bevel=0.6)
+    with grouped('beard'):
+        add('uv_sphere', 'beard', (0, -3.4, 2.4), (3.6, 2.0, 2.5), 'hair', 'beard', head, segments=14, ring_count=8)
+        add('cube', 'mustache', (0, -4.75, 3.4), (2.2, 0.5, 0.5), 'hair', 'beard', head, bevel=0.2)
+
+
+# every head a pilot can have: (name, groups shown)
+HEADS = [('helmet', ['helmet'])]
+for _h in HAIRSTYLES:
+    HEADS.append((_h, ['face', 'hair-' + _h]))
+    HEADS.append((_h + '-beard', ['face', 'hair-' + _h, 'beard']))
+
+
+def set_head(groups):
+    for g, objs in GROUPS.items():
+        for o in objs:
+            o.hide_render = g not in groups
+
+
+def body_b():
+    """Body type B: narrower through the shoulders and chest, fuller at the hips — applied to any suit after it's
+    built, so every suit gets it. (Body A is the suit as modelled.)"""
+    for sh in shoulders.values():
+        sh.location.x *= 0.8
+        sh.scale = (0.85, 0.9, 1.0)          # slimmer arms and shoulder pads
+    for h in hips.values():
+        h.location.x *= 1.1
+    for o, _, _ in PARTS:
+        if o.parent is not body:
+            continue
+        if o.location.z > 11.0:
+            o.scale.x *= 0.8
+        elif o.location.z > 6.0:
+            o.scale.x *= 1.08
+    for side, hp in hips.items():
+        add('uv_sphere', 'hipcurve' + side, (0, 0.2, -0.6), (2.0, 1.9, 1.8), THIGH_TONE[0], 'leg' + side, hp,
+            segments=12, ring_count=8)
+
+
+THIGH_TONE = ['suit']
 
 
 def build_coat():
@@ -660,22 +768,23 @@ def build_human(spec):
             rot=(-0.4, 0, 0), vertices=16, radius1=4.3, radius2=0.5, depth=8.0)
 
 
-if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb][-<style>]: the suits, standing, seated, on skis, climbing
+if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb][-<style>]-<a|b>: one suit on one body, every head
     _parts = WHO.split('-')[1:]
+    BODY = _parts.pop() if _parts and _parts[-1] in ('a', 'b') else 'a'
     MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb') else 'stand'
     _rest = _parts[1:] if MODE != 'stand' else _parts
     STYLE = _rest[0] if _rest else 'flight'
     {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner,
      'mystic': build_mystic, 'ranger': build_ranger}[STYLE]()
+    if BODY == 'b':
+        body_b()
     if MODE == 'climb':                # arms over the head need a taller frame
         W, H = 32, 64
         ORIGIN_PX = (16, 61)
     elif MODE == 'ski':                # and ski tips pointing at you need room below the feet, a carve room to lean
         W, H = 40, 56
         ORIGIN_PX = (20, 45)
-    VARIANTS = {s: {'suit': SUITS[s], 'suitdk': (mix(SUITS[s][0], '#000000', 0.25), SUITS[s][0], mix(SUITS[s][0], SUITS[s][1], 0.5)),
-                    'arm': (mix(SUITS[s][0], '#000000', 0.12), mix(SUITS[s][1], SUITS[s][0], 0.3), mix(SUITS[s][2], SUITS[s][1], 0.35))}
-                for s in SUITS}
+    VARIANTS = {'key': dict(KEYS)}
     POSE = MODE
 else:
     spec = NPCS[WHO]
@@ -784,8 +893,6 @@ def render(path, sixteen=False):
     bpy.ops.render.render(write_still=True)
 
 
-for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
-    os.makedirs(os.path.join(OUT, kind), exist_ok=True)
 
 
 # ---- sport poses: skiing and climbing --------------------------------------------------------------
@@ -922,41 +1029,56 @@ if POSE == 'climb':
     CLIMB_ROWS = [('up', 180, climb)]
 
 
-def render_cell(dname, col, yaw, spec):
+def render_cell(base, dname, col, yaw, spec):
     rest_pose()
     spec['fn']()
     root.rotation_euler = (0, math.radians(spec.get('roll', 0.0)), math.radians(yaw + spec.get('yaw', 0.0)))
     tag = f'{dname}_{COLNAMES[col]}.png'
-    set_pass('id'); render(os.path.join(OUT, 'id', tag))
-    set_pass('depth'); render(os.path.join(OUT, 'depth', tag), sixteen=True)
+    set_pass('id'); render(os.path.join(base, 'id', tag))
+    set_pass('depth'); render(os.path.join(base, 'depth', tag), sixteen=True)
     for v in VARIANTS:
         set_pass('color', v)
-        render(os.path.join(OUT, 'color_' + v, tag))
+        render(os.path.join(base, 'color_' + v, tag))
     return tag
 
 
-if POSE in ('ski', 'climb'):
-    import shutil
-    for dname, yaw, specs in (SKI_ROWS if POSE == 'ski' else CLIMB_ROWS):
-        for col, spec in enumerate(specs):
-            tag = render_cell(dname, col, yaw, spec)
-            if POSE == 'climb':                 # one view of a climber (from behind); the other rows copy it
-                for other in ('down', 'right', 'left'):
-                    for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
-                        shutil.copy(os.path.join(OUT, kind, tag), os.path.join(OUT, kind, tag.replace(dname + '_', other + '_')))
-    print('rendered', WHO, POSE, 'x', len(VARIANTS))
-    sys.exit(0)
+def render_all(base):
+    """Every frame of this character (as it's shown right now) into base/{id,depth,color_<variant>}/."""
+    for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
+        os.makedirs(os.path.join(base, kind), exist_ok=True)
+    if POSE in ('ski', 'climb'):
+        import shutil
+        for dname, yaw, specs in (SKI_ROWS if POSE == 'ski' else CLIMB_ROWS):
+            for col, spec in enumerate(specs):
+                tag = render_cell(base, dname, col, yaw, spec)
+                if POSE == 'climb':                 # one view of a climber (from behind); the other rows copy it
+                    for other in ('down', 'right', 'left'):
+                        for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
+                            shutil.copy(os.path.join(base, kind, tag), os.path.join(base, kind, tag.replace(dname + '_', other + '_')))
+        return
+    rest_pose()
+    for dname, yaw in DIRS.items():
+        root.rotation_euler = (0, 0, math.radians(yaw))
+        for anim, i, swing, lift, tip_on in FRAMES:
+            pose(swing, lift, i)
+            tag = f'{dname}_{anim}{i}.png'
+            set_pass('id'); render(os.path.join(base, 'id', tag))
+            set_pass('depth'); render(os.path.join(base, 'depth', tag), sixteen=True)
+            for v in VARIANTS:
+                set_pass('color', v)
+                if tip is not None and not tip_on:
+                    tip.data.materials[0] = TIP_OFF
+                render(os.path.join(base, 'color_' + v, tag))
 
-for dname, yaw in DIRS.items():
-    root.rotation_euler = (0, 0, math.radians(yaw))
-    for anim, i, swing, lift, tip_on in FRAMES:
-        pose(swing, lift, i)
-        tag = f'{dname}_{anim}{i}.png'
-        set_pass('id'); render(os.path.join(OUT, 'id', tag))
-        set_pass('depth'); render(os.path.join(OUT, 'depth', tag), sixteen=True)
-        for v in VARIANTS:
-            set_pass('color', v)
-            if tip is not None and not tip_on:
-                tip.data.materials[0] = TIP_OFF
-            render(os.path.join(OUT, 'color_' + v, tag))
-print('rendered', WHO, len(FRAMES) * len(DIRS), 'frames x', len(VARIANTS))
+
+if WHO.startswith('pilot'):
+    only = sys.argv[3].split(',') if len(sys.argv) > 3 else None     # just these heads (for a quick look)
+    for name, groups in HEADS:
+        if only and name not in only:
+            continue
+        set_head(groups)
+        render_all(os.path.join(OUT, name))
+    print('rendered', WHO, 'heads x', len(HEADS))
+else:
+    render_all(OUT)
+    print('rendered', WHO)

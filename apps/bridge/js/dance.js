@@ -160,6 +160,7 @@ var BridgeDance = (function () {
             players: duo ? [player('PLAYER ONE · WASD', WASD, copy()), player('PLAYER TWO · ARROWS', ARROWS, copy())] : [player('', both, copy())] };
     if (duo) {                                                     // player two dances beside you, in a runner suit of another colour
       var mine = (typeof BridgeGear !== 'undefined' && BridgeGear.colour && BridgeGear.colour()) || 'purple';
+      // (the two old helmeted runner sheets, pilot-runner-red / -cyan, are kept in assets/characters for this)
       run.partner = { sheet: 'pilot-runner-' + (mine === 'cyan' ? 'red' : 'cyan'), x: px + 1, y: py, facing: 'down', hitT: 0 };
       (run.acts = w.scene.actors).push(run.partner);
     }
