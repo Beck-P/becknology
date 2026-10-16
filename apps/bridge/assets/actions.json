@@ -567,5 +567,168 @@
       "view": "peaks",
       "prompt": "PRESS E TO LOOK OUT"
     }
+  ],
+  "arcadia-casino-dining": [
+    {
+      "label": "TABLE FOR TWO",
+      "x": 11,
+      "y": 5,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        11.5,
+        5.55
+      ],
+      "facing": "right",
+      "view": "skyline",
+      "dialog": "A TABLE FOR TWO BY THE WINDOW, A CANDLE, A WHITE CLOTH. TWO HUNDRED FLOORS DOWN, THE CITY GOES ON FOR EVER."
+    },
+    {
+      "label": "TABLE FOR TWO",
+      "x": 15,
+      "y": 5,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        15.5,
+        5.55
+      ],
+      "facing": "right",
+      "view": "skyline",
+      "dialog": "A TABLE FOR TWO BY THE WINDOW, A CANDLE, A WHITE CLOTH. TWO HUNDRED FLOORS DOWN, THE CITY GOES ON FOR EVER."
+    },
+    {
+      "label": "TABLE FOR TWO",
+      "x": 17,
+      "y": 5,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        17.5,
+        5.55
+      ],
+      "facing": "left",
+      "view": "skyline",
+      "dialog": "A TABLE FOR TWO BY THE WINDOW, A CANDLE, A WHITE CLOTH. TWO HUNDRED FLOORS DOWN, THE CITY GOES ON FOR EVER."
+    },
+    {
+      "label": "TABLE FOR TWO",
+      "x": 7,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        7.5,
+        9.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE FOR TWO UNDER THE CHANDELIERS. LAURENT WILL BRING THE MENU IF YOU ASK AT THE PODIUM."
+    },
+    {
+      "label": "TABLE FOR TWO",
+      "x": 9,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        9.5,
+        9.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE FOR TWO UNDER THE CHANDELIERS. LAURENT WILL BRING THE MENU IF YOU ASK AT THE PODIUM."
+    },
+    {
+      "label": "TABLE FOR TWO",
+      "x": 11,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        11.5,
+        9.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE FOR TWO UNDER THE CHANDELIERS. LAURENT WILL BRING THE MENU IF YOU ASK AT THE PODIUM."
+    },
+    {
+      "label": "TABLE FOR TWO",
+      "x": 13,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        13.5,
+        9.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE FOR TWO UNDER THE CHANDELIERS. LAURENT WILL BRING THE MENU IF YOU ASK AT THE PODIUM."
+    }
+  ],
+  "arcadia-casino": [
+    {
+      "label": "LOUNGE CHAIR",
+      "x": 35,
+      "y": 8,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        35.5,
+        8.55
+      ],
+      "facing": "up",
+      "dialog": "A VELVET TUB CHAIR IN FRONT OF THE STAGE. LADY VELVET LEANS ON THE PIANO AND SINGS ABOUT A LUCKY STREAK THAT RAN OUT."
+    },
+    {
+      "label": "LOUNGE CHAIR",
+      "x": 38,
+      "y": 8,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        38.5,
+        8.55
+      ],
+      "facing": "up",
+      "dialog": "A VELVET TUB CHAIR IN FRONT OF THE STAGE. LADY VELVET LEANS ON THE PIANO AND SINGS ABOUT A LUCKY STREAK THAT RAN OUT."
+    },
+    {
+      "label": "LOUNGE CHAIR",
+      "x": 41,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        41.5,
+        9.55
+      ],
+      "facing": "up",
+      "dialog": "A VELVET TUB CHAIR IN FRONT OF THE STAGE. LADY VELVET LEANS ON THE PIANO AND SINGS ABOUT A LUCKY STREAK THAT RAN OUT."
+    }
+  ],
+  "arcadia-casino-vip": [
+    {
+      "label": "THE SOFA",
+      "x": 14,
+      "y": 11,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        14.5,
+        11.55
+      ],
+      "facing": "up",
+      "view": "skyline",
+      "dialog": "A LONG SOFA IN CRIMSON VELVET, FACING THE TABLES AND THE WHOLE CITY BEYOND THEM."
+    },
+    {
+      "label": "THE WINDOW",
+      "x": 7,
+      "y": 3,
+      "add": true,
+      "action": "view",
+      "view": "skyline",
+      "prompt": "PRESS E TO LOOK OUT",
+      "dialog": "THE CROWN ROOM'S WINDOW: THE WHOLE OF ARCADIA, TOWER AFTER TOWER, THE TRAFFIC LANES LIKE STRINGS OF PEARLS."
+    }
   ]
 }

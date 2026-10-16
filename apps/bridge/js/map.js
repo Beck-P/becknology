@@ -100,12 +100,16 @@ var BridgeMap = (function () {
   }
 
   var DOOR = { enter_world: 1, leave_world: 1, password_gate: 1, home_door: 1, club_door: 1, farm_house: 1, palace_gate: 1, lift: 1, mine_lift: 1,
-               mine_up: 1, mine_down: 1, climb: 1, ski_start: 1, park_start: 1 };
+               mine_up: 1, mine_down: 1, climb: 1, ski_start: 1, park_start: 1, royale_vip: 1 };
   var SHOP = { vendor: 'sells', shop: 'fittings and decor', catalog: 'decor', outfitter: 'clothes and packs', trader: 'buys anything', chandler: 'fittings, chests, packs - and buys anything',
                sell: 'buys', exchange: 'prices across the seas', charters: 'charters', registry: 'ships\' registry', charts: 'sea charts', sea_chart: 'the sea chart',
                rest: 'a bed for the night', lodge_room: 'a room for the night', clinic: 'patches you up', rummage: 'rummage for things', hands: 'hands for your ships',
                commissions: 'the Crown\'s commissions', pachinko_prizes: 'cash in balls', audience: 'an audience' };
-  var GAME = { cabinet: 1, game_slot: 1, app: 1, pachinko: 1, dance: 1, splice: 1, dice: 1, fortune: 1, busker: 1, game_scores: 1, park_tow: 1, ski_gate: 1, ski_here: 1 };
+  var GAME = { cabinet: 1, game_slot: 1, app: 1, pachinko: 1, dance: 1, splice: 1, dice: 1, fortune: 1, busker: 1, game_scores: 1, park_tow: 1, ski_gate: 1, ski_here: 1,
+               casino: 1 };
+  // the Neon Royale's stations (`casino` interactions; js/casino.js runs them): what each kind of table is on the map
+  var CASINO = { blackjack: 'a blackjack table', roulette: 'a roulette wheel', craps: 'a craps table', poker: 'a poker table', slots: 'a slot machine',
+                 derby: 'the race book', crash: 'crash', lobby: 'Royale Link: your casino account', runouts: 'Runouts' };
   var USE = { farm_well: 'fills a watering can', farm_tools: 'tools', farm_bin: 'the shipping bin', farm_barn: 'the barn', farm_board: 'orders', farm_ledger: 'the farm\'s books',
               mine_rack: 'pickaxes', mine_slate: 'your deepest floor', lodge_fire: 'warm up', lodge_board: 'the board', climb_board: 'the routes', climb_register: 'the summit register',
               park_board: 'scores', ski_wax: 'wax your skis', stats_panel: 'the ship\'s logs', locker: 'your decor', catalog: 'decor' };
@@ -167,6 +171,12 @@ var BridgeMap = (function () {
     if (t === 'forage') {
       var rd = typeof BridgeForage !== 'undefined' && BridgeForage.ready ? BridgeForage.ready(it) : true;
       return { cat: 'forage', name: title(label), sub: rd ? 'Ready to gather' : 'Growing back' };
+    }
+    if (t === 'casino') {
+      var csub = CASINO[it.game] || 'a game';
+      if (it.game === 'runouts' && !it.mode) csub = 'every Runouts game';
+      if (it.stakes === 'high') csub += ', high stakes';
+      return { cat: 'game', name: title(label), sub: csub.charAt(0).toUpperCase() + csub.slice(1) };
     }
     if (GAME[t]) return { cat: 'game', name: title(label), sub: t === 'dance' ? 'the dance floor' : t === 'splice' ? 'jobs' : 'a game' };
     if (SHOP[t]) {

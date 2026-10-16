@@ -37,6 +37,7 @@ EXTRA = [
     ('verdance', 'verdance-home', ['FARMHOUSE'], 'door'),                     # js/homestead.js
     ('lumar-holm', 'lumar-holm-home', ['THE COTTAGE'], 'door'),               # js/holm.js
     ('arcadia-street', 'arcadia-club', ['CLUB VOID'], 'door'),                # js/dance.js
+    ('arcadia-casino', 'arcadia-casino-vip', ['THE CROWN ROOM'], 'door'),     # js/worlds/casino.js: the rope opens for poker winners
     ('lumar-crown', 'lumar-crown-palace', ['PALACE GATE'], 'door'),           # js/crown.js
     ('lumar-rose-mine', 'lumar-rose-mine-a', ['THE LIFT'], 'lift'),           # js/mine.js: the floors below
     ('lumar-rose-mine-a', 'lumar-rose-mine', ['LADDER UP'], 'lift'),

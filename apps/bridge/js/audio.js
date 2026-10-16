@@ -8,7 +8,8 @@
  * for the city) through a shared reverb and echo. Every eight bars the band
  * thins or fills so it breathes. Themes by place: Lumar outdoors (folk, the
  * sea), Lumar indoors (warm, by the fire), Arcadia's streets (synthwave in
- * the rain), its arcades (chiptune), its back rooms (lo-fi), Enigma (drones
+ * the rain), its arcades (chiptune), its back rooms (lo-fi), the Neon Royale (smoky lounge jazz:
+ * a walking bass, brushes, a sax; the slot floor's chimes and payouts), Enigma (drones
  * and sonar), the Singularity (deep, glassy), the Wayfarer (a music box over
  * warm pads), caves and towers. Ambience runs under it: sea, rain, wind,
  * station hum, fire, a crowd, arcade bleeps, drips, the ship's creaks.
@@ -167,7 +168,21 @@ var BridgeAudio = (function () {
     hat:   function (d, t, m, dur, v) { noiseHit(d, t, 0.04, { freq: 8000, gain: 0.04 * v }); },
     shaker:function (d, t, m, dur, v) { noiseHit(d, t, 0.07, { freq: 5000, ftype: 'bandpass', q: 1.2, gain: 0.03 * v }); },
     tom:   function (d, t, m, dur, v) { voice(d, t, 0.02, { type: 'sine', freq: 120, glide: 1.6, glideT: 0.1, gain: 0.13 * v, a: 0.002, d: 0.25, s: 0, r: 0.2, rev: 0.2 }); },
-    chipdrum: function (d, t, m, dur, v) { noiseHit(d, t, m ? 0.09 : 0.03, { freq: m ? 2500 : 9000, ftype: m ? 'bandpass' : 'highpass', gain: 0.05 * v }); }
+    chipdrum: function (d, t, m, dur, v) { noiseHit(d, t, m ? 0.09 : 0.03, { freq: m ? 2500 : 9000, ftype: m ? 'bandpass' : 'highpass', gain: 0.05 * v }); },
+    // the Neon Royale's lounge band: a breathy synth sax, an upright bass walking, brushes and a ride cymbal
+    sax:   function (d, t, m, dur, v) {
+      voice(d, t, dur, { type: 'sawtooth', freq: hz(m), unison: [-4, 4], gain: 0.045 * v, a: 0.05, d: 0.25, s: 0.7, r: 0.22, cutoff: 1500, q: 1.4, vib: [5.2, 11], glide: 0.97, glideT: 0.05, rev: 0.5, dly: 0.18 });
+      noiseHit(d, t, Math.min(0.25, dur), { freq: 1800, ftype: 'bandpass', q: 3, gain: 0.012 * v });
+    },
+    upright: function (d, t, m, dur, v) {
+      voice(d, t, dur * 0.85, { type: 'triangle', freq: hz(m), gain: 0.18 * v, a: 0.006, d: 0.35, s: 0.35, r: 0.12, cutoff: 600 });
+      voice(d, t, 0.03, { type: 'sine', freq: hz(m) * 2, gain: 0.04 * v, a: 0.002, d: 0.06, s: 0, r: 0.05 });
+    },
+    brush: function (d, t, m, dur, v) { noiseHit(d, t, 0.22, { freq: 3200, ftype: 'bandpass', q: 0.6, gain: 0.035 * v, rev: 0.2 }); },
+    ride:  function (d, t, m, dur, v) {
+      noiseHit(d, t, 0.35, { freq: 7000, ftype: 'highpass', gain: 0.022 * v, rev: 0.25 });
+      voice(d, t, 0.02, { type: 'sine', freq: 5200, gain: 0.006 * v, a: 0.001, d: 0.4, s: 0, r: 0.3 });
+    }
   };
 
   var MODES = { ionian: [0, 2, 4, 5, 7, 9, 11], dorian: [0, 2, 3, 5, 7, 9, 10], aeolian: [0, 2, 3, 5, 7, 8, 10],
@@ -221,6 +236,11 @@ var BridgeAudio = (function () {
                 arp: { inst: 'arp', steps: [0, 2, 4, 6, 8, 10, 12, 14], oct: 24, pattern: [0, 2, 1, 3] },
                 bass: { inst: 'sub', steps: [2, 6, 10, 14] }, lead: { inst: 'lead', oct: 24, density: 0.28 },
                 perc: [['kick', [0, 4, 8, 12]], ['snare', [4, 12]], ['hat', [2, 6, 10, 14]]] },
+    // the Neon Royale: smoky synth-jazz in the lounge — ii-V-I-vi, keys comping off the beat, the bass walking,
+    // brushes and the ride, a sax taking the tune
+    casino:   { bpm: 92, root: 50, mode: 'ionian', chords: [1, 4, 0, 5, 1, 4, 0, 0], swing: 0.2, pad: 'warm',
+                arp: { inst: 'keys', steps: [3, 10], oct: 12, chord: true }, bass: { inst: 'upright', steps: [0, 4, 8, 12], walk: true },
+                lead: { inst: 'sax', oct: 12, density: 0.38 }, perc: [['ride', [0, 4, 7, 8, 12, 15]], ['brush', [4, 12]]] },
     ship:     { bpm: 66, root: 53, mode: 'lydian', chords: [0, 1, 5, 4], pad: 'warm',
                 arp: { inst: 'box', steps: [0, 3, 6, 8, 11, 14], oct: 12 }, bass: { inst: 'bass', steps: [0], oct: -12 },
                 lead: { inst: 'box', oct: 24, density: 0.25 } }
@@ -234,6 +254,9 @@ var BridgeAudio = (function () {
     if (/^(bridge|quarters|hangar|gameroom)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
     if (id === 'arcadia' || id === 'arcadia-lucky-7') return { theme: 'arcade', amb: ['crowd', 'bleeps'] };
     if (id === 'arcadia-club') return { theme: 'club', amb: ['crowd'] };
+    if (id === 'arcadia-casino') return { theme: 'casino', amb: ['crowd', 'slots'] };            // the Neon Royale's floor
+    if (id === 'arcadia-casino-cards') return { theme: 'casino', amb: ['murmur', 'chips'] };
+    if (/^arcadia-casino-(dining|vip)$/.test(id)) return { theme: 'casino', amb: ['murmur'] };
     if (/^arcadia-(street|skypad|alley|skywalk)$/.test(id)) return { theme: 'arcadia', amb: ['rain', 'city'] };
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
@@ -357,7 +380,13 @@ var BridgeAudio = (function () {
       if (a.chord) tones.slice(0, 3).forEach(function (m) { INST[a.inst](d, t, m + a.oct, s.spb * 3, 0.6); });
       else INST[a.inst](d, t, tones[pat[k % pat.length] % tones.length] + a.oct, s.spb * 2, section === 0 ? 0.7 : 1);
     }
-    if (th.bass && th.bass.steps.indexOf(st) >= 0 && (full || st === 0 || section === 3 || th.drive)) {
+    if (th.bass && th.bass.walk && th.bass.steps.indexOf(st) >= 0) {
+      // a walking line: the root on the one, chord tones in between, a half step into the next bar's root
+      var nextRoot = chordTones(th, th.chords[(bar + 1) % th.chords.length])[0], beat = th.bass.steps.indexOf(st);
+      var wn = beat === 0 ? tones[0] : beat === 3 ? nextRoot + (s.r() < 0.5 ? -1 : 1) : tones[s.r() < 0.5 ? 1 : 2];
+      while (wn - tones[0] > 7) wn -= 12;
+      INST[th.bass.inst](d, t, wn - 12 + (th.bass.oct || 0), s.spb * 4, section === 0 ? 0.8 : 1);
+    } else if (th.bass && th.bass.steps.indexOf(st) >= 0 && (full || st === 0 || section === 3 || th.drive)) {
       INST[th.bass.inst](d, t, tones[0] - 12 + (th.bass.oct || 0) + (st === 8 && s.r() < 0.3 ? 7 : 0), s.spb * 2, 1);
     }
     if (th.perc && (full || section === 3 || th.drive)) th.perc.forEach(function (p) {
@@ -515,6 +544,32 @@ var BridgeAudio = (function () {
         if (!ac || Math.random() > 0.35) return;
         INST.bell(out, ac.currentTime, 84 + [0, 4, 7, 11][Math.floor(Math.random() * 4)], 0.06, 0.6);
       }, 2600));
+      return [];
+    },
+    slots: function (out) {                                     // the slot floor: chimes, a payout jingle now and then, coins
+      ambTimers.push(setInterval(function () {
+        if (!ac) return;
+        var t = ac.currentTime, r = Math.random(), pan = Math.random() * 1.6 - 0.8;
+        if (r < 0.45) {                                         // a machine's little chime
+          var base = 79 + [0, 2, 4, 7][Math.floor(Math.random() * 4)];
+          [0, 4, 7].forEach(function (iv, i) { voice(out, t + i * 0.07, 0.05, { type: 'sine', freq: hz(base + iv), gain: 0.014, a: 0.002, d: 0.3, s: 0, r: 0.3, pan: pan, rev: 0.4 }); });
+        } else if (r < 0.55) {                                  // somebody's won: a run up and a rattle of coins
+          [0, 2, 4, 5, 7, 9, 11, 12].forEach(function (iv, i) { voice(out, t + i * 0.06, 0.05, { type: 'square', freq: hz(76 + iv), gain: 0.008, a: 0.002, d: 0.08, s: 0.2, r: 0.05, cutoff: 3000, pan: pan }); });
+          for (var c = 0; c < 10; c++) noiseHit(out, t + 0.5 + c * 0.05 + Math.random() * 0.03, 0.03, { freq: 4500 + Math.random() * 2500, ftype: 'bandpass', q: 6, gain: 0.025 });
+        } else if (r < 0.75) {                                  // reels clicking to a stop
+          for (var k = 0; k < 3; k++) noiseHit(out, t + k * 0.18, 0.02, { freq: 2200, ftype: 'bandpass', q: 3, gain: 0.02 });
+        }
+      }, 700));
+      var hum = loopNoise('bandpass', 1100, 2.0, 0.012); hum.g.connect(out);
+      return [hum.src];
+    },
+    chips: function (out) {                                     // a card room: chips clacked in stacks, cards riffled
+      ambTimers.push(setInterval(function () {
+        if (!ac || Math.random() > 0.55) return;
+        var t = ac.currentTime, n = 2 + Math.floor(Math.random() * 5);
+        for (var c = 0; c < n; c++) noiseHit(out, t + c * (0.04 + Math.random() * 0.03), 0.015, { freq: 3000 + Math.random() * 1500, ftype: 'bandpass', q: 5, gain: 0.03 });
+        if (Math.random() < 0.2) for (var r2 = 0; r2 < 14; r2++) noiseHit(out, t + 0.6 + r2 * 0.018, 0.01, { freq: 6000, ftype: 'highpass', gain: 0.012 });
+      }, 1100));
       return [];
     },
     birds: function (out) {                                     // songbirds in the hedgerow, now and then a wood pigeon

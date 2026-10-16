@@ -14,10 +14,28 @@
     { "sheet": "npc-courier", "path": [[14, 8], [16, 8], [16, 9]], "speed": 0.7, "pause": 7000, "rest": "down" }
   ],
   "arcadia-street": [
-    { "sheet": "npc-passerby", "path": [[1, 13], [42, 13]], "speed": 1.2, "pause": 3000, "rest": "up" },
+    { "sheet": "npc-passerby", "path": [[1, 13], [57, 13]], "speed": 1.2, "pause": 3000, "rest": "up" },
     { "sheet": "npc-courier", "path": [[40, 13], [24, 13], [24, 13]], "speed": 0.9, "pause": 5000, "rest": "up" },
     { "sheet": "npc-shopper", "path": [[15, 9], [33, 9]], "speed": 1.0, "pause": 4000, "rest": "up" },
-    { "sheet": "npc-samurai", "path": [[2, 9], [10, 9]], "speed": 0.8, "pause": 6000, "rest": "up" }
+    { "sheet": "npc-samurai", "path": [[2, 9], [10, 9]], "speed": 0.8, "pause": 6000, "rest": "up" },
+    { "sheet": "npc-highroller", "path": [[51, 12], [51, 9]], "speed": 0.6, "pause": 7000, "rest": "up" }
+  ],
+  "arcadia-casino": [
+    { "sheet": "npc-server", "path": [[11, 10], [33, 10]], "speed": 0.9, "pause": 4000, "rest": "up" },
+    { "sheet": "npc-server-b", "path": [[12, 15], [33, 15], [33, 10]], "speed": 0.8, "pause": 5000, "rest": "left" },
+    { "sheet": "npc-highroller", "path": [[22, 24], [22, 20], [18, 20], [18, 5]], "speed": 0.7, "pause": 6000, "rest": "up" },
+    { "sheet": "npc-passerby", "path": [[11, 5], [11, 26]], "speed": 1.0, "pause": 3000, "rest": "left" },
+    { "sheet": "npc-server", "path": [[34, 6], [34, 16], [42, 16]], "speed": 0.8, "pause": 4500, "rest": "up" }
+  ],
+  "arcadia-casino-cards": [
+    { "sheet": "npc-server-b", "path": [[1, 8], [15, 8]], "speed": 0.8, "pause": 5000, "rest": "up" },
+    { "sheet": "npc-shopper", "path": [[17, 9], [32, 9]], "speed": 0.9, "pause": 4000, "rest": "up" }
+  ],
+  "arcadia-casino-dining": [
+    { "sheet": "npc-server-b", "path": [[4, 7], [18, 7]], "speed": 0.7, "pause": 5000, "rest": "down" }
+  ],
+  "arcadia-casino-vip": [
+    { "sheet": "npc-server", "path": [[2, 9], [19, 9]], "speed": 0.7, "pause": 5000, "rest": "up" }
   ],
   "lumar": [
     { "sheet": "npc-dockhand", "path": [[6, 9], [14, 9]], "speed": 0.8, "pause": 5000, "rest": "down" }

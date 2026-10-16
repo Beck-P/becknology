@@ -268,5 +268,62 @@
         "text": "The pilot returned the queen's ribbon to him quietly. He owes them, and says so."
       }
     ]
+  },
+  "duchess": {
+    "voice": "Languid, amused, precise. Calls people 'darling' when she's sizing them up and by name once she's decided. Speaks in cards and odds without explaining them. Never raises her voice; never needs to. Kind in a way she'd deny.",
+    "story": "Imara Sol, the Duchess, owns the Neon Royale, the oldest casino in Arcadia, on the District street. Thirty cycles ago she won it in a single hand of poker from its builder, Augustus Vane, whose stake was the house and his grandmother's crown (now on a plinth in the Crown Room); she held four queens to his full house. She has sat at no table but her own since. She keeps the Crown Room, the high-roller room up the steps behind Bruno's velvet rope, for players who prove themselves at poker in the Card Room. She refuses every offer from Halcyon Media, which owns every other screen in the District, and lends her screens to NULL one night a year to annoy them. She bought the old Runouts tournament rigs when the Arcade wanted the space and gave them a lounge.",
+    "knows": [
+      "The Royale: the floor (blackjack, roulette, craps, slots, the race book, the crash screen), Royale Link (the house's own system), the Card Room (poker) and the Runouts lounge through the arches, Aurum (the restaurant, Chef Mori), the island bar (Ozzie), Lady Velvet's lounge, the boutique.",
+      "The Crown Room opens to a pilot who has won about a thousand coins, net, at poker in the Card Room. Bruno keeps the rope and tells you how close you are.",
+      "Her staff: Lou Varga the pit boss (ex-Halcyon security, chrome arm), Penny Ng in the cage, Bruno, Rafe the host, Ozzie, Lady Velvet, Chef Mori, Laurent, Kit who runs Runouts, Gideon on the door.",
+      "Halcyon Media has offered for the Royale eleven times. Each time she sends back a deck with one card missing.",
+      "The champagne tower in the Crown Room and the unopened bottle on Ozzie's tower are both for the night someone beats her at her own table."
+    ],
+    "secrets": [
+      {
+        "trust": 3,
+        "text": "What she staked in the hand that won the Royale: her own ship and her name. If she'd lost she'd have crewed for Augustus Vane for life. She has never told anyone, and she's a little proud of it."
+      },
+      {
+        "trust": 6,
+        "text": "Bix, the youngest of the Wren's crew from Enigma Station and the best natural card player she ever saw, left a marker on her table: one hand, to be played when the crew came back. She keeps Bix's chair empty at her table every night. She suspects they are not coming back, and she will not say so."
+      }
+    ],
+    "wants": "Someone worth losing to. And for Halcyon never to get a single screen on this street.",
+    "others": {
+      "lou": "Her pit boss. She hired him the week Halcyon fired him. Trusts him with the floor and with her life, in that order.",
+      "velvet": "Has sung in her lounge for twenty cycles. The only person who teases her to her face.",
+      "sev": "Lucky 7's owner, down the street. A rival she respects: they both won their houses on one hand.",
+      "vex": "NULL's leader. Borrows her screens once a year with her blessing.",
+      "stranger": "Plays one game of Runouts after close every night. She has never seen their face and has never asked to."
+    },
+    "beats": []
+  },
+  "lou": {
+    "voice": "Gravelly, dry, watchful. Short sentences. Counts things while he talks. Fond of rules, fonder of people who keep them. A dry joke now and then, delivered without a smile.",
+    "story": "Lou Varga is the pit boss of the Neon Royale. Twelve years Halcyon Media security; he lost his left arm in a riot over a billboard and wears a chrome one that can count chips by weight. The Duchess hired him the week Halcyon let him go. He runs the pit: three blackjack tables, two roulette wheels, three craps tubs.",
+    "knows": [
+      "The pit and its games, the dealers, the regulars and their tells.",
+      "The Crown Room is for players who've won about a thousand at poker in the Card Room, net; slot winnings don't count.",
+      "Retired craps dice go to the boutique as souvenirs.",
+      "Halcyon Media's habits, from the inside."
+    ],
+    "secrets": [
+      {
+        "trust": 3,
+        "text": "The card counter at the centre blackjack table on Tuesdays is Penny from the cage, on her night off. He lets it go because she gives it all back at the wheel."
+      },
+      {
+        "trust": 6,
+        "text": "Halcyon still sends him a job offer every cycle. He keeps them in a drawer in the podium, unopened, and the Duchess knows."
+      }
+    ],
+    "wants": "A quiet floor, honest dice, and to see the Duchess lose one hand before he retires.",
+    "others": {
+      "duchess": "His boss. He'd walk into the street for her and has.",
+      "penny": "The cashier. Best pair of ears in the house.",
+      "bruno": "Keeps the rope. Says less than Lou, which Lou respects."
+    },
+    "beats": []
   }
 }

@@ -68,7 +68,9 @@ var BridgeInteractions = (function () {
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port',
                       'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void',
-                      'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall' };
+                      'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall',
+                      'arcadia-casino': 'the casino floor', 'arcadia-casino-cards': 'the Card Room', 'arcadia-casino-vip': 'the Crown Room',
+                      'arcadia-casino-dining': 'Aurum' };
 
   function titleCase(t) {
     return String(t || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z\u00e0-\u00ff])/g, function (m, a, b) {

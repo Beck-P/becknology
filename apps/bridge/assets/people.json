@@ -2549,5 +2549,375 @@
         "a": "UP THE PATH TO THE GREAT TREE. THE QUEEN HOLDS COURT INSIDE. KNEEL, BE HONEST, AND DON'T MAKE ANY SUDDEN MOVES NEAR BECKOLAS."
       }
     ]
+  },
+  "gideon": {
+    "name": "Gideon",
+    "role": "Doorman, the Neon Royale",
+    "sheet": "npc-doorman",
+    "at": [
+      {
+        "world": "arcadia-street",
+        "label": "GIDEON"
+      }
+    ],
+    "greet": "EVENING. WELCOME TO THE NEON ROYALE. NO WEAPONS, NO DRONES, NO SULKING. THE REVOLVING DOORS TURN BOTH WAYS, BUT MOST PEOPLE ONLY NOTICE ONE.",
+    "again": "BACK FOR MORE? THE DOORS REMEMBER YOU. SO DO I.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TWENTY YEARS ON THIS CARPET. I'VE OPENED THE DOOR FOR ADMIRALS, POP STARS, TWO PRESIDENTS AND A DOG THAT WON A HUNDRED THOUSAND ON ROULETTE. THE DOG TIPPED BEST."
+      },
+      {
+        "q": "The Royale",
+        "a": "OLDEST HOUSE IN ARCADIA. THE TOWERS WENT UP ROUND IT. TABLES ON THE FLOOR, THE CARD ROOM AND THE OLD RUNOUTS GAMES THROUGH THE ARCHES, AURUM FOR DINNER, AND UP THE STEPS THE CROWN ROOM - IF THE DUCHESS WANTS YOU THERE."
+      },
+      {
+        "q": "The limo",
+        "a": "THE DUCHESS'S. IT WAITS PAST THE RAILING ALL NIGHT IN CASE SOMEBODY WINS BIG ENOUGH TO NEED A RIDE HOME. NOBODY'S USED IT THIS CYCLE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "HALCYON SENT A MAN TO BUY THE PLACE AGAIN. HE LOST HIS EXPENSE ACCOUNT AT CRAPS AND LEFT BY THE STAFF DOOR. THE DUCHESS HAD HIS COAT SENT ON."
+      }
+    ]
+  },
+  "rafe": {
+    "name": "Rafe Okonjo",
+    "role": "Host, the Neon Royale",
+    "sheet": "npc-host",
+    "at": [
+      {
+        "world": "arcadia-casino",
+        "label": "RAFE"
+      }
+    ],
+    "greet": "WELCOME TO THE ROYALE. YOU LOOK LIKE SOMEONE WHO'S COME A LONG WAY TO LOSE A LITTLE MONEY ELEGANTLY. LET ME SHOW YOU WHERE.",
+    "again": "WELCOME BACK. THE HOUSE MISSED YOU. THE HOUSE ALWAYS MISSES YOU.",
+    "topics": [
+      {
+        "q": "Show me round",
+        "a": "THE PIT'S IN THE MIDDLE: BLACKJACK AT THE TOP, THE WHEELS, CRAPS ALONG THE BOTTOM. SLOTS DOWN BOTH SIDES - THE ONES WINKING AT YOU ARE OPEN. THE RACE BOOK AND THE CRASH SCREEN ON THE BACK WALL, ROYALE LINK HERE IN THE FOYER, THE CAGE FOR CHIPS. POKER'S IN THE CARD ROOM, THE OLD RUNOUTS GAMES NEXT DOOR. AURUM'S BY THE BAR."
+      },
+      {
+        "q": "Royale Link",
+        "a": "THE HOUSE'S OWN SYSTEM. EVERY TABLE, EVERY MACHINE, EVERY BET YOU'VE MADE, ON ONE ACCOUNT. THE TERMINALS IN THE FOYER, OR THE CAGE WINDOWS. THE ONE IN YOUR SHIP'S QUARTERS TALKS TO IT TOO."
+      },
+      {
+        "q": "The Crown Room",
+        "a": "UP THE STEPS BEHIND THE ROPE. THE DUCHESS'S OWN TABLES, HIGHER STAKES. IT ISN'T FOR SALE - BRUNO LETS IN THE PEOPLE THE CARD ROOM HAS TALKED ABOUT. WIN AT POKER AND THEY'LL TALK ABOUT YOU."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE STRANGER FROM THE ARCADE PLAYS IN OUR RUNOUTS LOUNGE AFTER CLOSE. ONE GAME, EVERY NIGHT. NEVER LOSES, NEVER CASHES OUT. KIT SAYS THE MACHINE REMEMBERS THEIR SCORE AND NOBODY ELSE'S."
+      }
+    ]
+  },
+  "penny": {
+    "name": "Penny Ng",
+    "role": "Cashier, the Royale's cage",
+    "sheet": "npc-royale-cashier",
+    "at": [
+      {
+        "world": "arcadia-casino",
+        "label": "PENNY"
+      }
+    ],
+    "greet": "CAGE IS OPEN. CHIPS, ACCOUNTS, MARKERS - NOT MARKERS. NOBODY GETS MARKERS ANY MORE.",
+    "again": "BACK AT THE BARS. COUNT IT IN FRONT OF ME, PLEASE. HOUSE RULES.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "PENNY. NINE YEARS IN THE CAGE. I CAN TELL A HOLO-CHIP FROM A REAL ONE BY THE SOUND IT MAKES ON THE COUNTER. THE COUNTERFEITERS HATE ME. THEY'RE ALWAYS VERY POLITE ABOUT IT."
+      },
+      {
+        "q": "The cage",
+        "a": "THE WINDOWS EITHER SIDE OF ME TALK TO ROYALE LINK - YOUR ACCOUNT, YOUR CHIPS, WHAT YOU'VE WON AND WHAT WE'D RATHER NOT MENTION. THE VAULT BEHIND ME CAME OUT OF AN ORBITAL BANK. IT STILL THINKS IT'S IN ORBIT."
+      },
+      {
+        "q": "Markers?",
+        "a": "AN IOU. THE HOUSE STOPPED TAKING THEM WHEN I WAS NEW. THE DUCHESS KEPT ONE, THOUGH. FRAMED, IN THE CROWN ROOM, I'M TOLD. SHE WON'T SAY WHOSE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE DUCHESS TIPS IN GOLD CHIPS. THE BOUTIQUE SELLS THEM TOO, IF YOU WANT TO MAKE SOMEONE'S NIGHT. HALF THE STAFF HAVE ONE FRAMED. THE OTHER HALF HAVE SPENT THEIRS."
+      }
+    ]
+  },
+  "lou": {
+    "name": "Lou Varga",
+    "role": "Pit boss, the Neon Royale",
+    "sheet": "npc-pitboss",
+    "at": [
+      {
+        "world": "arcadia-casino",
+        "label": "LOU"
+      }
+    ],
+    "greet": "YOU'RE NEW. I KNOW EVERY FACE ON THIS FLOOR AND NOW I KNOW YOURS. PLAY NICE, TIP THE DEALERS, AND WE'LL GET ALONG FINE.",
+    "again": "I SAW YOUR LAST HAND. NOT BAD. NOT GOOD. NOT BAD.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TWELVE YEARS HALCYON SECURITY. LOST THE ARM IN A RIOT OVER A BILLBOARD. THE DUCHESS HIRED ME THE NEXT WEEK - SAID SHE WANTED SOMEONE WHO KNEW EXACTLY HOW MUCH A SCREEN IS WORTH. THE ARM'S BETTER THAN THE OLD ONE. IT CAN COUNT CHIPS BY WEIGHT."
+      },
+      {
+        "q": "The pit",
+        "a": "THREE BLACKJACK TABLES, TWO WHEELS, THREE CRAPS TUBS. BLACKJACK TWO DEALS THE FASTEST. THE LEFT WHEEL RUNS A LITTLE WARM, OR SO THE REGULARS SAY. I SAY WHEELS DON'T HAVE MOODS. THE DICE GO TO THE BOUTIQUE WHEN THEY RETIRE."
+      },
+      {
+        "q": "The Crown Room",
+        "a": "BRUNO'S ROPE. THE DUCHESS ONLY ASKS UP PEOPLE WHO'VE PROVED THEMSELVES AT THE CARD TABLES - WIN A THOUSAND AT POKER, NET, AND YOUR NAME REACHES HER. CHIPS FROM THE SLOTS DON'T COUNT. SHE SAYS MACHINES DON'T TELL HER ANYTHING ABOUT A PERSON."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMEONE COUNTS CARDS AT THE CENTRE TABLE ON TUESDAYS. SITS, LOSES SMALL FOR AN HOUR, THEN BETS LIKE THE SHOE OWES THEM. I LET THEM. IT'S GOOD FOR THE ROOM, A LITTLE SUSPENSE."
+      }
+    ]
+  },
+  "bruno": {
+    "name": "Bruno",
+    "role": "Keeps the rope to the Crown Room",
+    "sheet": "npc-doorman",
+    "at": [
+      {
+        "world": "arcadia-casino",
+        "label": "BRUNO"
+      }
+    ],
+    "greet": "GOOD EVENING. THE CROWN ROOM IS BY INVITATION. THE INVITATION IS POKER.",
+    "again": "STILL BY INVITATION.",
+    "topics": [
+      {
+        "q": "How do I get in?",
+        "a": "WIN AT THE CARD ROOM'S TABLES. A THOUSAND, NET, AND THE DUCHESS WILL ASK FOR YOU HERSELF. TRY THE ROPE WHEN YOU THINK YOU'RE THERE - I'LL TELL YOU HOW CLOSE YOU ARE."
+      },
+      {
+        "q": "What's up there?",
+        "a": "HER TABLE, HIGH LIMITS ON BLACKJACK AND THE WHEEL, A WINDOW ON THE WHOLE CITY, AND A TOWER OF CHAMPAGNE NOBODY'S ALLOWED TO DRINK. YET."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "A PILOT IN A ROBE OF STARS WENT UP LAST CYCLE AND CAME DOWN WITH THE DUCHESS'S RESPECT AND NOTHING ELSE. SHE SAID IT WAS THE BEST NIGHT SHE'D HAD IN YEARS."
+      }
+    ]
+  },
+  "ozzie": {
+    "name": "Ozzie Blue",
+    "role": "Bartender, the Royale's island bar",
+    "sheet": "npc-royale-bartender",
+    "at": [
+      {
+        "world": "arcadia-casino",
+        "label": "OZZIE"
+      }
+    ],
+    "greet": "WHAT'LL IT BE? THE GOLD RUSH IS THE HOUSE'S OWN. THE MARTINI IS MINE.",
+    "again": "SAME AGAIN? I REMEMBER. I ALWAYS REMEMBER.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "OZZIE. I STIR, NEVER SHAKE - SHAKING BRUISES THE GIN AND THE CUSTOMER. I TRAINED UNDER DEZ BEFORE SHE WENT TO CLUB VOID. WE STILL ARGUE ABOUT ICE."
+      },
+      {
+        "q": "The bar",
+        "a": "AN ISLAND, SO NOBODY'S BACK IS TO THE ROOM. THE TOWER IN THE MIDDLE HOLDS FOUR HUNDRED BOTTLES AND ONE THAT'S NEVER BEEN OPENED: THE DUCHESS'S, FOR THE NIGHT SOMEONE BEATS HER AT HER OWN TABLE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "LADY VELVET SANG AT THE VOID BEFORE IT WAS THE VOID - BACK WHEN IT WAS A SUPPER CLUB. KIRI'S MOTHER RAN THE DOOR. NOBODY TALKS ABOUT WHY IT CLOSED."
+      }
+    ]
+  },
+  "velvet": {
+    "name": "Lady Velvet",
+    "role": "Sings at the Royale's lounge",
+    "sheet": "npc-singer",
+    "at": [
+      {
+        "world": "arcadia-casino",
+        "label": "VELVET"
+      }
+    ],
+    "greet": "OH, A NEW FACE IN THE FRONT ROW. SIT, DARLING. THE NEXT ONE'S SAD - THE GOOD ONES ALWAYS ARE.",
+    "again": "YOU CAME BACK. EVERYONE COMES BACK FOR THE SECOND SET.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "VELVET MOREAU. LADY IS A COURTESY. I'VE SUNG IN EVERY ROOM IN ARCADIA THAT HAD A PIANO AND SOME THAT HAD TO BORROW ONE. THE ROYALE'S THE LAST ONE THAT PAYS IN CHAMPAGNE AND MEANS IT."
+      },
+      {
+        "q": "The songs",
+        "a": "OLD LOUNGE NUMBERS, MOSTLY. AND ONE OF MINE ABOUT FIVE FRIENDS AT ONE BOOTH, ONE ROUND, NEVER DANCED, WHO WENT OUT NORTH ON A LITTLE SHIP AND NEVER CAME BACK. PEOPLE THINK I MADE IT UP. I DIDN'T."
+      },
+      {
+        "q": "The Duchess",
+        "a": "SHE WON THIS HOUSE IN ONE HAND OF CARDS BEFORE I COULD SING. THE CROWN ON THE PLINTH UPSTAIRS WAS THE OTHER MAN'S STAKE. NOBODY KNOWS WHAT SHE PUT UP. I'VE ASKED. SHE LAUGHS."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "HALCYON WANTS THE ROYALE'S SCREENS LIKE THEY WANT EVERYONE'S. THE DUCHESS LETS NULL BORROW THEM ONE NIGHT A YEAR INSTEAD, JUST TO WATCH HALCYON'S FACE. LAST YEAR IT WAS A POEM."
+      }
+    ]
+  },
+  "mimi": {
+    "name": "Mimi",
+    "role": "The Royale's boutique",
+    "sheet": "npc-boutique",
+    "at": [
+      {
+        "world": "arcadia-casino",
+        "label": "MIMI"
+      }
+    ],
+    "greet": "WELCOME TO THE BOUTIQUE! SNOW GLOBES, GOLD CHIPS, THE HOUSE'S RETIRED DICE. EVERYTHING HERE IS LUCKY, LEGALLY SPEAKING.",
+    "again": "BACK FOR ANOTHER SOUVENIR? THE GLOBES ARE SELLING LIKE CHIPS.",
+    "topics": [
+      {
+        "q": "What sells?",
+        "a": "GOLD CHIPS FOR GIFTS - PEOPLE LOVE BEING HANDED ONE. THE SNOW GLOBE, BECAUSE IT'S THE ROYALE AND IT SNOWS GOLD. THE DICE ARE REAL: LOU SENDS THEM UP WHEN THEY'VE ROLLED A HUNDRED THOUSAND TIMES."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE PRIZE CAR'S NEVER BEEN WON. THREE CROWNS ON ANY MACHINE AND IT'S YOURS. I DUST IT EVERY MORNING. I'VE NAMED IT. DON'T TELL LOU."
+      }
+    ]
+  },
+  "kit": {
+    "name": "Kit Calloway",
+    "role": "Runs the Royale's Runouts lounge",
+    "sheet": "npc-runouts-host",
+    "at": [
+      {
+        "world": "arcadia-casino-cards",
+        "label": "KIT"
+      }
+    ],
+    "greet": "WELCOME TO RUNOUTS! EVERY GAME THE OLD ARCADE EVER RAN, ONE CABINET EACH, HOOKED INTO THE HOUSE. PICK ONE, OR LET THE DESK PICK FOR YOU.",
+    "again": "BACK FOR ANOTHER RUN? THE BOARDS RESET AT MIDNIGHT. THE LEGENDS DON'T.",
+    "topics": [
+      {
+        "q": "How does it work?",
+        "a": "EACH CABINET IS ONE RUNOUTS GAME - HOLD'EM, THE WHEEL, PLINKO, THE ROCKET, ALL OF THEM. THE DESK OPENS THE WHOLE LOT: ROOMS, STAKES, THE LOT. IT'S ALL ON ROYALE LINK, SO YOUR CHIPS FOLLOW YOU."
+      },
+      {
+        "q": "Why here?",
+        "a": "THE DUCHESS BOUGHT THE OLD TOURNAMENT RIGS WHEN THE ARCADE WANTED THE FLOOR SPACE. SAID A GAME THAT MANY PEOPLE LOVED DESERVED A ROOF WITH A CHANDELIER ON IT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE STRANGER. COMES IN AFTER CLOSE, SITS AT THE HOLD'EM CABINET, PLAYS ONE HAND. THE CABINET KEEPS THEIR SCORE IN A SLOT NOBODY ELSE CAN WRITE TO. I'VE TRIED. IT JUST SAYS: YOU'RE NOT THEM."
+      }
+    ]
+  },
+  "laurent": {
+    "name": "Laurent",
+    "role": "Maitre d', Aurum",
+    "sheet": "npc-waiter",
+    "at": [
+      {
+        "world": "arcadia-casino-dining",
+        "label": "LAURENT"
+      }
+    ],
+    "greet": "GOOD EVENING. A TABLE BY THE WINDOW? THE CITY IS PARTICULARLY BEAUTIFUL TONIGHT. IT ALWAYS IS. I INSIST ON IT.",
+    "again": "WELCOME BACK TO AURUM. YOUR TABLE IS WHEREVER YOU SIT.",
+    "topics": [
+      {
+        "q": "The menu",
+        "a": "THE WAGYU ROYALE, IF YOU'RE HUNGRY. THE SUSHI IF YOU'RE NOT. THE RISOTTO IS SHAVED WITH GLOW-TRUFFLE FROM THE LUMAR CAVES - IT GLOWS, A LITTLE. AND THE SOUFFLE, ALWAYS THE SOUFFLE. ORDER AT THE PODIUM; THE CHEF SENDS IT OUT."
+      },
+      {
+        "q": "Aurum",
+        "a": "AURUM IS GOLD, IN THE OLD TONGUE. THE DUCHESS NAMED IT. THE WINDOW WAS HER IDEA TOO: SHE WANTED PEOPLE TO EAT LOOKING DOWN AT THE CITY THAT TRIED TO BUY HER HOUSE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "CHEF MORI WILL PAY ANYTHING FOR REAL PRODUCE. STARFRUIT, PUMPKIN, HONEY FROM AN ACTUAL BEE. IF YOU KNOW A FARM UNDER A SUN, BRING HIM SOMETHING."
+      }
+    ]
+  },
+  "mori": {
+    "name": "Chef Aurelio Mori",
+    "role": "Chef, Aurum",
+    "sheet": "npc-royale-chef",
+    "at": [
+      {
+        "world": "arcadia-casino-dining",
+        "label": "CHEF MORI"
+      }
+    ],
+    "greet": "YOU'RE IN MY KITCHEN'S EYELINE. THAT MEANS YOU'RE A GUEST. GUESTS EAT. SIT.",
+    "again": "AH. THE ONE WHO EATS PROPERLY. GOOD.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I COOKED FOR THE ORBITAL HOTELS UNTIL THEY FELL. NOW I COOK FOR PEOPLE WHO'VE JUST WON SOMETHING, WHICH IS WORSE: THEY CAN'T TASTE ANYTHING, THEY'RE TOO HAPPY. THE LOSERS - THE LOSERS ARE MY PEOPLE."
+      },
+      {
+        "q": "Sell to the kitchen",
+        "a": "REAL FOOD? GROWN UNDER A REAL SUN? SHOW ME. I PAY BETTER THAN ANY CART OR NOODLE BAR IN THE DISTRICT - AURUM CAN AFFORD IT, AND SO CAN THE PEOPLE WHO EAT HERE.",
+        "sell": [
+          {
+            "id": "starfruit",
+            "price": 330
+          },
+          {
+            "id": "pumpkin",
+            "price": 115
+          },
+          {
+            "id": "honey",
+            "price": 34
+          },
+          {
+            "id": "strawberry",
+            "price": 19
+          },
+          {
+            "id": "bluefin",
+            "price": 30
+          },
+          {
+            "id": "sun_carp",
+            "price": 60
+          }
+        ]
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE DUCHESS EATS AT TWO IN THE MORNING, ALWAYS THE SAME: TOAST, NO BUTTER, AND A GLASS OF THE CHAMPAGNE SHE WON'T LET ANYONE ELSE TOUCH. SHE SAYS IT'S SUPERSTITION. IT'S MEMORY."
+      }
+    ]
+  },
+  "duchess": {
+    "name": "The Duchess",
+    "role": "Owns the Neon Royale",
+    "sheet": "npc-duchess",
+    "at": [
+      {
+        "world": "arcadia-casino-vip",
+        "label": "THE DUCHESS"
+      }
+    ],
+    "greet": "SO THE CARD ROOM WASN'T EXAGGERATING. SIT. NOT THAT CHAIR - THAT ONE. I LIKE TO SEE A NEW PLAYER'S HANDS.",
+    "again": "BACK AT MY TABLE. GOOD. I WAS BEGINNING TO BE BORED.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "IMARA SOL, IF YOU MUST. EVERYONE CALLS ME THE DUCHESS AND I'VE STOPPED CORRECTING THEM - IT SAVES TIME. I WON THIS HOUSE IN ONE HAND OF CARDS, THIRTY CYCLES AGO, AND I'VE NEVER SAT AT ANY TABLE BUT MY OWN SINCE."
+      },
+      {
+        "q": "The crown",
+        "a": "THE OTHER MAN'S STAKE: HIS GRANDMOTHER'S CROWN, AND HIS HOUSE. HE HAD A FULL HOUSE. I HAD FOUR QUEENS. WHAT I PUT UP IS MY BUSINESS, DARLING. ASK ME AGAIN WHEN I LIKE YOU MORE."
+      },
+      {
+        "q": "Halcyon",
+        "a": "THEY OWN EVERY SCREEN IN THE DISTRICT BUT MINE. THEY'VE OFFERED FOR THE ROYALE ELEVEN TIMES. EACH TIME I SEND BACK A DECK OF CARDS WITH ONE MISSING. THEY'VE NEVER WORKED OUT WHICH."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "A SKIFF CREW FROM THE STATION USED TO PLAY HERE BEFORE THEIR LONG HAULS. THE YOUNGEST, A CARDSHARP CALLED BIX, LEFT A MARKER ON MY TABLE - ONE HAND, TO BE PLAYED WHEN THEY CAME BACK. I'VE KEPT THE CHAIR. I'M PATIENT."
+      }
+    ]
   }
 }
