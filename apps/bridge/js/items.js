@@ -251,7 +251,10 @@ var BridgeItems = (function () {
   }
 
   // w: what hit it (a weapon's traits: frost, burn, drain, heavy - js/combat.js onHit), or { dot: true } for a burn ticking
+  // When you're fighting beside someone and their game runs this creature (js/fight.js), the hit shows here at once and
+  // goes to them to settle; w.remote is such a hit arriving from them (w.by: who, w.from: where they stood).
   function strike(world, target, dmg, w) {
+    var F = typeof BridgeFight !== 'undefined' ? BridgeFight : null, follow = F && !(w && w.remote) && F.follower(target);
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
     target._hp -= dmg;
     var dot = w && w.dot;
@@ -262,12 +265,17 @@ var BridgeItems = (function () {
       if (BridgeFX.spawnSparks && !dot) BridgeFX.spawnSparks(target.x, target.y, w && w.burn ? '#ff9040' : w && w.frost ? '#a8e0ff' : w && w.holy ? '#fff0b0' : '#c868f0', w && w.heavy ? 12 : 7);
       if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(target.x, target.y - 0.3, '-' + dmg, dot ? '#ff9040' : '#ffe080');
     }
-    if (typeof BridgeCombat !== 'undefined' && BridgeCombat.onHit && target.creature) BridgeCombat.onHit(world, target, w, dmg);
+    if (follow) F.sendHit(target, dmg, w);
+    else {
+      var winding = target._attackPhase === 'winding';
+      if (typeof BridgeCombat !== 'undefined' && BridgeCombat.onHit && target.creature) BridgeCombat.onHit(world, target, w, dmg);
+      if (F) F.struck(target, winding);
+    }
     if (target._hp <= 0) {
       if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnSparks) {
         BridgeFX.spawnSparks(target.x, target.y, '#ff90e8', 10);
       }
-      BridgeInteractions.killHostile(world, target);
+      BridgeInteractions.killHostile(world, target, w && w.remote ? { quiet: !F.near(target), by: w.by } : null);
     }
   }
 

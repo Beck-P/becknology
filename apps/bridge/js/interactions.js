@@ -196,17 +196,27 @@ var BridgeInteractions = (function () {
     if (!world || !world.interactions || !character) return;
     var menuOpen = (typeof BridgeInventory !== 'undefined') &&
                    BridgeInventory.isMenuOpen && BridgeInventory.isMenuOpen();
-    if (dialogVisible || menuOpen) return;
+    var busy = dialogVisible || menuOpen, out = false;
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.getStats) {
       var stats = BridgeInventory.getStats();
-      if (stats && stats.hp <= 0) return;
+      out = !!(stats && stats.hp <= 0);
     }
-
-    var px = character.getX(), py = character.getY();
+    // Someone else here (js/fight.js): the creatures are shared. One of you runs them; the others play out the
+    // strikes they're sent and take whatever lands on them. Nobody's reading pauses the fight for the others.
+    var F = typeof BridgeFight !== 'undefined' && BridgeFight.shared() ? BridgeFight : null;
+    if (!F && (busy || out)) return;
     var now = performance.now();
-    // Build occupancy map so two hostiles can't step onto the same cell.
+    if (F && !F.host()) {
+      world.interactions.slice().forEach(function (h) {
+        if (h.type === 'hostile' && h._attackPhase && h._attackPhase !== 'idle') updateHostileAttack(h, null, now, 0, 1);
+      });
+      return;
+    }
+    var targets = F ? F.targets(character, busy || out) : [character];
+
+    // Build occupancy map so two hostiles can't step onto the same cell (nor onto anyone standing there).
     var occupied = {};
-    occupied[px + ',' + py] = true;
+    targets.forEach(function (t) { occupied[t.getX() + ',' + t.getY()] = true; });
     for (var i = 0; i < world.interactions.length; i++) {
       var h = world.interactions[i];
       if (h.type === 'hostile') occupied[h.x + ',' + h.y] = true;
@@ -217,15 +227,18 @@ var BridgeInteractions = (function () {
     for (var j = 0; j < list.length; j++) {
       var hh = list[j];
       if (hh.type !== 'hostile') continue;
-      var slow = C && C.tick ? C.tick(world, hh, now, character) : 1;   // frost slows, embers burn, the warden calls
+      var tgt = nearestTarget(targets, hh);           // whoever's closest (you, or whoever you're fighting beside)
+      var slow = C && C.tick ? C.tick(world, hh, now, tgt) : 1;   // frost slows, embers burn, the warden calls
       if (world.interactions.indexOf(hh) < 0) continue;
+      if (!tgt) { if (hh._attackPhase && hh._attackPhase !== 'idle') updateHostileAttack(hh, null, now, 0, slow); continue; }
+      var px = tgt.getX(), py = tgt.getY();
       var dx = px - hh.x, dy = py - hh.y;
       var manhattan = Math.abs(dx) + Math.abs(dy);
 
       // Run the attack state machine first. While the statue is in
       // anything but 'idle' it stays planted (no pathing), and damage
       // only lands on impact if the player is still on the target tile.
-      updateHostileAttack(hh, character, now, manhattan, slow);
+      updateHostileAttack(hh, tgt, now, manhattan, slow);
 
       if (hh._attackPhase && hh._attackPhase !== 'idle') continue;
       if (manhattan > (hh.aggroRange || 6)) continue; // out of aggro range — idle
@@ -256,6 +269,14 @@ var BridgeInteractions = (function () {
       hh._lastMove = now; // cooldown regardless of success — keeps the cadence steady
     }
   }
+  function nearestTarget(targets, h) {
+    var best = null, bd = 1e9;
+    for (var i = 0; i < targets.length; i++) {
+      var d = Math.abs(targets[i].getX() - h.x) + Math.abs(targets[i].getY() - h.y);
+      if (d < bd) { bd = d; best = targets[i]; }
+    }
+    return best;
+  }
 
   // Per-hostile attack state machine. Phases:
   //   idle:       not attacking. Becomes 'winding' when player is in range
@@ -265,25 +286,29 @@ var BridgeInteractions = (function () {
   //   striking:   the visible strike streak fires from the statue to the
   //               locked tile. Lasts strikeMs (200). Damage resolves at end.
   //   recovering: post-strike cooldown. No attack/move. Lasts recoverMs (700).
-  function updateHostileAttack(hostile, character, now, manhattan, slow) {
+  // `target` is who it goes for (you, or someone fighting beside you — js/fight.js); null while it only plays out a
+  // strike someone else's game started. Whether a strike lands is always checked against you, here.
+  function updateHostileAttack(hostile, target, now, manhattan, slow) {
     var phase = hostile._attackPhase || 'idle';
     var elapsed = now - (hostile._attackStart || 0);
-    var WIND     = (hostile.windupMs  || 500) * (slow || 1);
+    var WIND     = target ? (hostile.windupMs || 500) * (slow || 1) : hostile._windFor || hostile.windupMs || 500;
     var STRIKE   = hostile.strikeMs  || 200;
     var RECOVER  = (hostile.recoverMs || 700) * (slow || 1);
     var C = typeof BridgeCombat !== 'undefined' ? BridgeCombat : null;
 
     if (phase === 'idle') {
+      if (!target) return;
       // in reach: next to you; a caster down a straight line within its range; the warden two tiles out
-      var dx = character.getX() - hostile.x, dy = character.getY() - hostile.y;
+      var dx = target.getX() - hostile.x, dy = target.getY() - hostile.y;
       var go = manhattan === 1 || (hostile.reach > 1 && manhattan <= hostile.reach && manhattan > 0) ||
                (hostile.range && manhattan > 1 && manhattan <= hostile.range && (dx === 0 || dy === 0));
       if (go) {
         hostile._attackPhase = 'winding';
         hostile._attackStart = now;
         hostile._windFor = WIND;
-        hostile._attackTarget = { x: character.getX(), y: character.getY() };
-        if (C && C.attackStart) C.attackStart(hostile, character);
+        hostile._attackTarget = { x: target.getX(), y: target.getY() };
+        if (C && C.attackStart) C.attackStart(hostile, target);
+        if (typeof BridgeFight !== 'undefined') BridgeFight.wound(hostile);
       }
       return;
     }
@@ -300,8 +325,9 @@ var BridgeInteractions = (function () {
       if (elapsed < STRIKE) return;
       // Resolve hit: damage only if the player stayed on the target tile (or inside a slam, or on the warden's ring).
       var t = hostile._attackTarget;
-      var px = character.getX(), py = character.getY();
-      var landed = t && (C && C.dangerAt && hostile.creature ? C.dangerAt(hostile, px, py) : px === t.x && py === t.y);
+      var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
+      var st = typeof BridgeInventory !== 'undefined' && BridgeInventory.getStats ? BridgeInventory.getStats() : null;
+      var landed = t && !(st && st.hp <= 0) && (C && C.dangerAt && hostile.creature ? C.dangerAt(hostile, px, py) : px === t.x && py === t.y);
       if (landed) {
         var dmg = C && C.attackDamage && hostile.creature ? C.attackDamage(hostile) : hostile.damage || 5;
         if (C && C.shake) C.shake(dmg >= 12 ? 4 : 2);
@@ -379,6 +405,7 @@ var BridgeInteractions = (function () {
     if (biz) { showBusiness(biz, inter); return; }
     // sit, sleep, look out of the window (js/actions.js) instead of a text box
     if (inter.action && typeof BridgeActions !== 'undefined') { BridgeActions.run(inter); return; }
+    if (OWN[inter.type]) { OWN[inter.type](inter); return; }        // a type some module handles itself (register)
     switch (inter.type) {
       case 'app':
         // the Bridge's own games open over the world, like the arcade cabinets (no reload)
@@ -1680,7 +1707,8 @@ var BridgeInteractions = (function () {
 
   // Kill a hostile interaction: replace its tile with rubble, drop it
   // from the world's interaction list, and reward the player.
-  function killHostile(world, target) {
+  // opts.quiet: just take it away (it fell to someone else, out of sight) — no coins, no loot.
+  function killHostile(world, target, opts) {
     if (!world || !target) return;
     if (world.tiles[target.y] && typeof target.x === 'number') {
       world.tiles[target.y][target.x] = target.deadTile || 61;
@@ -1690,6 +1718,8 @@ var BridgeInteractions = (function () {
     }
     var idx = world.interactions.indexOf(target);
     if (idx >= 0) world.interactions.splice(idx, 1);
+    if (typeof BridgeFight !== 'undefined') BridgeFight.died(world, target, opts);
+    if (opts && opts.quiet) return;
     if (typeof BridgeCombat !== 'undefined' && BridgeCombat.onKill) BridgeCombat.onKill(world, target);
     if (typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) {
       BridgeProgression.awardCoins(target.reward || 10, 'kill:' + (target.label || 'hostile'));
@@ -1711,7 +1741,12 @@ var BridgeInteractions = (function () {
     }
   }
 
-  return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, placePrompt: placePrompt, getTarget: getTarget,
+  // BridgeInteractions.register('chest', fn(inter)) — a module brings its own interaction type, no case needed here
+  // (verb: the prompt's word, as VERBS above)
+  var OWN = {};
+  function register(type, fn, verb) { OWN[type] = fn; if (verb) VERBS[type] = verb; }
+
+  return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, register: register, placePrompt: placePrompt, getTarget: getTarget,
            say: showDialog, execute: executeInteraction, choose: showChooser,
            findTarget: findTarget, promptParts: promptParts };
 })();

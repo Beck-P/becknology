@@ -22,6 +22,9 @@ var BridgeNet = (function () {
   var TOPIC = 'bridge-lobby', GRACE = 20000, HB = 8000, RETRACK = 25000;
   var ch = null, me = null, up = false, meta = {}, metaT = 0, sentMeta = '', trackAt = 0, trackTimer = 0, handlers = {};
   var pres = {}, heard = {}, peers = {}, builtAt = 0, hiddenAt = 0, hbAt = 0;
+  var TAB = Math.random().toString(36).slice(2, 8);         // this page: one pilot may have two open
+  // which of two metas says where someone really is: the tab in front, then the newest
+  function better(a, b) { if (!b) return true; if (!!a.away !== !!b.away) return !a.away; return (a.t || 0) >= (b.t || 0); }
 
   function client() { return typeof BridgeDB !== 'undefined' && BridgeDB.client ? BridgeDB.client() : null; }
   function emit(e, a, b) { (handlers[e] || []).forEach(function (f) { try { f(a, b); } catch (err) { console.warn('[net] ' + e + ':', err); } }); }
@@ -43,9 +46,9 @@ var BridgeNet = (function () {
       ch.on('broadcast', { event: 'm' }, function (msg) {
         var p = msg && msg.payload;
         if (!p || !me || p.from === me.id || (p.to && p.to !== me.id)) return;
-        var h = heard[p.from] || (heard[p.from] = { at: 0, meta: null });
+        var h = heard[p.from] || (heard[p.from] = { at: 0, tabs: {} });
         h.at = Date.now();
-        if (p.e === '_hb') { if (p.d && (!h.meta || (p.d.t || 0) >= (h.meta.t || 0))) h.meta = p.d; merge(); return; }
+        if (p.e === '_hb') { if (p.d) h.tabs[p.d.tab || '_'] = { meta: p.d, at: h.at }; merge(); return; }
         if (!peers[p.from]) merge();
         emit(p.e, p.d, p.from);
       });
@@ -65,9 +68,7 @@ var BridgeNet = (function () {
     Object.keys(st).forEach(function (k) {
       if (k === me.id) return;
       var best = null;
-      (st[k] || []).forEach(function (m) {
-        if (!best || (!!best.away > !!m.away) || (!!best.away === !!m.away && (m.t || 0) >= (best.t || 0))) best = m;
-      });
+      (st[k] || []).forEach(function (m) { if (better(m, best)) best = m; });
       if (best) next[k] = best;
     });
     pres = next;
@@ -80,8 +81,12 @@ var BridgeNet = (function () {
     Object.keys(heard).forEach(function (k) {
       var h = heard[k];
       if (now - h.at > GRACE) return;
-      if (!next[k]) next[k] = h.meta || { id: k, name: (peers[k] && peers[k].name) || 'Someone' };
-      else if (h.meta && (h.meta.t || 0) > (next[k].t || 0)) next[k] = h.meta;
+      Object.keys(h.tabs).forEach(function (tb) {
+        var e = h.tabs[tb];
+        if (now - e.at > GRACE) { delete h.tabs[tb]; return; }
+        if (!next[k] || better(e.meta, next[k])) next[k] = e.meta;
+      });
+      if (!next[k]) next[k] = { id: k, name: (peers[k] && peers[k].name) || 'Someone' };
     });
     var joined = Object.keys(next).filter(function (k) { return !peers[k]; }), left = Object.keys(peers).filter(function (k) { return !next[k]; });
     var was = peers;
@@ -99,7 +104,7 @@ var BridgeNet = (function () {
     if (changed) metaT = Date.now();
     track(false);
   }
-  function body() { return Object.assign({ id: me.id, name: me.name }, meta, { away: !!document.hidden, t: metaT }); }
+  function body() { return Object.assign({ id: me.id, name: me.name }, meta, { away: !!document.hidden, t: metaT, tab: TAB }); }
   function track(now) {
     if (!up || !ch || !me) return;
     var json = JSON.stringify(body());
@@ -162,5 +167,5 @@ var BridgeNet = (function () {
 
   return { set: set, send: send, on: on, connect: connect, peers: list, peer: function (id) { return peers[id] ? Object.assign({}, peers[id], { id: id }) : null; },
            me: function () { return me; }, online: function () { return up; },
-           debug: function () { return { up: up, state: ch && ch.state, presence: Object.keys(pres), heard: Object.keys(heard).map(function (k) { return k + ' ' + Math.round((Date.now() - heard[k].at) / 1000) + 's'; }), peers: list() }; } };
+           debug: function () { return { up: up, state: ch && ch.state, presence: Object.keys(pres), heard: Object.keys(heard).map(function (k) { return k + ' ' + Math.round((Date.now() - heard[k].at) / 1000) + 's ' + Object.keys(heard[k].tabs).length + ' tab(s)'; }), peers: list() }; } };
 })();

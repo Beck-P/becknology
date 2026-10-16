@@ -81,8 +81,13 @@ var BridgeMine = (function () {
   // ---- floors ------------------------------------------------------------------------------------
   function isFloor(data) { return !!(data && data.mine && data.mine.layout); }
 
+  // the dig: every trip down is a fresh floor (`visits` seeds it). Climb down together and you share it — the one who
+  // goes first tells whoever's on the floor with them (`delve`), and following them down uses their seed, so the
+  // rocks, the ladder and the creatures are the same for both; rocks broken by either break for both (`rk`).
+  var nextVisits = null;
+  function party() { return floor + '.' + visits; }
   function generate(data) {
-    visits++;
+    if (nextVisits != null) { visits = nextVisits; nextVisits = null; } else visits++;
     var rnd = rngFor(floor * 7919 + day() * 31 + visits * 104729 + 17);      // a fresh floor every time you climb down
     var C = data.collisions, W = data.width, H = data.height;
     var up = data.mine.up, spawn = data.spawns.player;
@@ -168,6 +173,7 @@ var BridgeMine = (function () {
     });
     data.name = 'Rose Mine · Floor ' + floor;
     data.mine.floor = floor;
+    [1500, 4000].forEach(function (t) { setTimeout(function () { tell('rk?', {}); }, t); });   // anyone down here already: what have they broken?
     if (floor > save.deepest) save.deepest = floor;
     if (floor % 5 === 0 && save.lift.indexOf(floor) < 0) {
       save.lift.push(floor);
@@ -185,12 +191,46 @@ var BridgeMine = (function () {
     return null;
   }
 
-  function goFloor(n) {
-    floor = Math.max(1, Math.min(DEEPEST, n));
+  // v: following someone down — their dig's seed
+  function goFloor(n, v) {
+    var to = Math.max(1, Math.min(DEEPEST, n)), seed = v != null ? v : visits + 1 + Math.floor(Math.random() * 1000);
+    if (v == null) tell('delve', { f: to, v: seed });
+    floor = to; nextVisits = seed;
     var layout = 'abc'[(floor * 7 + Math.floor(floor / 3)) % 3];
     var target = 'lumar-rose-mine-' + layout;
     sfx('door');
     BridgeWorld.enterWorld(target, null);
+  }
+  // ---- together ------------------------------------------------------------------------------------------------------
+  function tell(e, d) {
+    if (typeof BridgeNet === 'undefined' || typeof BridgeMulti === 'undefined' || typeof BridgeFight === 'undefined' || !BridgeFight.shared()) return;
+    BridgeNet.send(e, Object.assign({ i: BridgeMulti.myInst() }, d));
+  }
+  function mine_here(d) { return d && typeof BridgeMulti !== 'undefined' && d.i === BridgeMulti.myInst(); }
+  function rockAt(x, y) { for (var i = 0; i < rocks.length; i++) if (rocks[i].x === x && rocks[i].y === y && rocks[i].hp > 0) return rocks[i]; return null; }
+  function interFor(w, r) { for (var i = 0; i < w.interactions.length; i++) if (w.interactions[i]._rock === r) return w.interactions[i]; return null; }
+  // someone else's pick: the rock takes the blow here too; broken, it's gone (the spoils were theirs) — the ladder shows
+  function struckThere(x, y, hp) {
+    var r = rockAt(x, y), w = BridgeWorld.getWorld();
+    if (!r || !w || !isFloor(w) || hp >= r.hp) return;
+    r.hp = hp; r.hit = performance.now();
+    for (var i = 0; i < 4; i++) dust.push({ x: r.x + 0.5, y: r.y + 0.7, vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 1.5 - 0.3, life: 1, c: '#8a8080' });
+    if (r.hp <= 0) broken(w, interFor(w, r), r, false);
+  }
+  if (typeof BridgeNet !== 'undefined') {
+    BridgeNet.on('delve', function (d, from) {
+      if (!mine_here(d)) return;
+      var p = BridgeNet.peer(from), who = p ? p.name : 'SOMEONE';
+      BridgeInteractions.choose({ title: 'Down the ladder', text: (who + ' climbs down to floor ' + d.f + '.').toUpperCase(),
+        buttons: [{ label: 'Follow them down', act: function () { goFloor(d.f, d.v); } }], closeLabel: 'Stay here' });
+    });
+    BridgeNet.on('rk', function (d) { if (mine_here(d)) struckThere(d.x, d.y, d.hp); });
+    BridgeNet.on('rk?', function (d, from) {
+      if (!mine_here(d)) return;
+      var hurt = rocks.filter(function (r) { return r.hp < r.max; }).map(function (r) { return [r.x, r.y, r.hp]; });
+      if (hurt.length) BridgeNet.send('rks', { i: d.i, l: hurt }, from);
+    });
+    BridgeNet.on('rks', function (d) { if (mine_here(d) && Array.isArray(d.l)) d.l.forEach(function (q) { struckThere(q[0], q[1], q[2]); }); });
   }
 
   function use(inter) {
@@ -231,17 +271,20 @@ var BridgeMine = (function () {
     BridgeInventory.useEnergy(P[2]);
     swing = { t: performance.now(), x: r.x, y: r.y };
     r.hp -= P[1]; r.hit = performance.now();
+    tell('rk', { x: r.x, y: r.y, hp: r.hp });
     sfx('pick');
     for (var i = 0; i < 6; i++) dust.push({ x: r.x + 0.5, y: r.y + 0.7, vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 1.5 - 0.3, life: 1,
                                             c: r.kind === 'stone' ? '#8a8080' : ROCK_GLOW[r.kind] || '#a09090' });
     if (r.hp > 0) return;
-    // broken
+    broken(BridgeWorld.getWorld(), inter, r, true);
+  }
+  // yours: the drops are yours; someone else's: it's just gone (but the great songstone sings for everyone there)
+  function broken(w, inter, r, yours) {
     sfx('crumble');
-    var w = BridgeWorld.getWorld();
     w.collisions[r.y][r.x] = 0;
-    var ix = w.interactions.indexOf(inter);
+    var ix = inter ? w.interactions.indexOf(inter) : -1;
     if (ix >= 0) w.interactions.splice(ix, 1);
-    ROCKS[r.kind].drops.forEach(function (d) {
+    if (yours) ROCKS[r.kind].drops.forEach(function (d) {
       if (Math.random() > d[3]) return;
       var n = d[1] + Math.floor(Math.random() * (d[2] - d[1] + 1));
       if (n > 0 && typeof BridgeLoot !== 'undefined') BridgeLoot.spawn(r.x, r.y, d[0], n);
@@ -250,7 +293,7 @@ var BridgeMine = (function () {
       if (typeof BridgeLoot !== 'undefined' && BridgeInventory.getCount('heartsong') === 0) BridgeLoot.spawn(r.x, r.y, 'heartsong', 1);
       say('THE GREAT SONGSTONE', 'THE STONE OPENS LIKE A HAND. INSIDE, A CRYSTAL THE SIZE OF A HEART, STILL SINGING - AND ALL AROUND YOU, FAINTLY, THE WHOLE MINE SINGS BACK.');
     }
-    if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.maybeFind(floor, r.x, r.y);     // now and then, an old map
+    if (yours && typeof BridgeTreasure !== 'undefined') BridgeTreasure.maybeFind(floor, r.x, r.y);     // now and then, an old map
     if (r.ladder) {
       r.kind = 'ladder'; r.spr = 'ladder';
       w.interactions.push({ x: r.x, y: r.y, type: 'mine_down', label: 'LADDER DOWN', prompt: 'PRESS E TO CLIMB DOWN' });
@@ -384,6 +427,6 @@ var BridgeMine = (function () {
   // the cave tileset's scene hooks; they draw only in worlds with a mine block (not the dragon's cave)
   if (typeof BridgeWorld !== 'undefined') BridgeWorld.registerSceneHooks('cave', { items: items, over: over });
 
-  return { decorate: decorate, use: use, goFloor: goFloor, upgrade: upgrade, forge: forge, floor: function () { return floor; }, deepest: function () { return save.deepest; },
+  return { decorate: decorate, use: use, goFloor: goFloor, party: party, upgrade: upgrade, forge: forge, floor: function () { return floor; }, deepest: function () { return save.deepest; },
            _rocks: function () { return rocks; } };
 })();

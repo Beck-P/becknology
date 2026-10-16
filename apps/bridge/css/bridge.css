@@ -1852,6 +1852,18 @@ html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }   
 .mp-heart { color: #e0405a; font-size: 20px; }
 .mp-tag.targeted .mp-name { visibility: hidden; }
 @keyframes mp-pop { from { transform: scale(0.4); opacity: 0; } }
+/* fighting together (js/fight.js): a partner who's down, and your own banner while you are */
+.mp-tag.down .mp-name { color: #ffd0c8; border-color: rgba(255, 110, 90, 0.75); background: rgba(70, 14, 14, 0.8); animation: mp-down 0.9s ease-in-out infinite alternate; }
+.mp-tag.down .mp-name::after { content: ' · DOWN'; color: #ff8a70; }
+@keyframes mp-down { from { box-shadow: 0 0 0 rgba(255, 90, 70, 0); } to { box-shadow: 0 0 10px rgba(255, 90, 70, 0.7); } }
+#down-banner { position: fixed; left: 50%; top: 30%; transform: translateX(-50%); z-index: 140; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 14px 22px 12px; background: rgba(20, 6, 8, 0.82); border: 1px solid rgba(255, 110, 90, 0.5); border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  font-family: 'Pixelify Sans', 'Courier New', monospace; color: #f2e6e0; text-align: center; pointer-events: auto; max-width: calc(100vw - 32px); }
+#down-banner .db-title { font-size: 20px; letter-spacing: 3px; color: #ff8a70; }
+#down-banner .db-sub { font-size: 13px; opacity: 0.9; }
+#down-banner .db-out { margin-top: 4px; font: inherit; font-size: 12px; color: #d8c8c0; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px; padding: 3px 12px; cursor: pointer; }
+#down-banner .db-out:hover { background: rgba(255, 255, 255, 0.14); }
 #mp-pill { position: fixed; top: 196px; left: 16px; z-index: 25; display: none; align-items: center; gap: 7px; max-width: min(320px, 70vw);
   font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 13px; color: rgba(242, 238, 230, 0.92); background: rgba(14, 12, 22, 0.72);
   border: 1px solid rgba(120, 220, 160, 0.35); border-radius: 999px; padding: 5px 13px 5px 10px; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }

@@ -65,6 +65,9 @@ var BridgeCombat = (function () {
               moveCooldown: C.move, aggroRange: C.aggro, windupMs: C.windup, strikeMs: C.strike || 180, recoverMs: C.recover || 650,
               range: C.range || 0, reach: C.reach || 1, blink: C.blink || 0, boss: !!C.boss,
               reward: C.reward, drops: C.drops, _rx: x, _ry: y, seed: Math.random() * 100 };
+    // its name on the wire (js/fight.js): kind and where it first stood, the same in everyone's copy of the place
+    h.fid = kind + '@' + x + ',' + y;
+    for (var n = 2; world.interactions.some(function (o) { return o.fid === h.fid; }); n++) h.fid = kind + '@' + x + ',' + y + '#' + n;
     world.interactions.push(h);
     world.collisions[y][x] = 1;
     return h;
@@ -370,7 +373,9 @@ var BridgeCombat = (function () {
     }
     var boss = (world.interactions || []).filter(function (h) { return h.type === 'hostile' && h.boss && (h._engaged || h._hp < h.maxHP); })[0];
     if (boss) {
-      var W = ctx.canvas.width, bw = Math.min(320, W - 40), bx = Math.round((W - bw) / 2), by = 34, f = Math.max(0, boss._hp / boss.maxHP);
+      // under the place name at the top of the screen (62 CSS px down, whatever the zoom)
+      var sv = BridgeWorld.getScreenView ? BridgeWorld.getScreenView() : null, zk = sv && sv.ts ? sv.ts / ts : 1;
+      var W = ctx.canvas.width, bw = Math.min(320, W - 40), bx = Math.round((W - bw) / 2), by = Math.round(66 / zk) + 8, f = Math.max(0, boss._hp / boss.maxHP);
       ctx.fillStyle = 'rgba(8,6,10,0.8)'; ctx.fillRect(bx - 3, by - 3, bw + 6, 12);
       ctx.fillStyle = '#3a1a1a'; ctx.fillRect(bx, by, bw, 6);
       ctx.fillStyle = f > 0.33 ? '#d8a040' : '#e85030'; ctx.fillRect(bx, by, Math.round(bw * f), 6);
@@ -394,15 +399,24 @@ var BridgeCombat = (function () {
     }
     if (h.creature === 'warden' && player) {
       var d = Math.abs(player.getX() - h.x) + Math.abs(player.getY() - h.y);
-      if (!h._engaged && d <= h.aggroRange) {
-        h._engaged = true; sfx('toll');
-        if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('The Bell Warden', 'It turns from the arches, and the bell where its head should be begins to sway', 'Close in, or keep clear of the ring');
-      }
+      if (!h._engaged && d <= h.aggroRange) engage(h, typeof BridgeFight !== 'undefined' ? BridgeFight.company() : 1);
       var f = h._hp / h.maxHP;
       if (f < 0.66 && !h._called1) { h._called1 = true; call(world, h); }
       if (f < 0.33 && !h._called2) { h._called2 = true; call(world, h); h.windupMs = Math.round(h.windupMs * 0.8); h.moveCooldown = Math.round(h.moveCooldown * 0.8); }
     }
     return h._frostUntil > now ? 1.7 : 1;
+  }
+  // the warden wakes: with company (others fighting beside you, js/fight.js) it's tougher — half again for each
+  function engage(h, company) {
+    if (h._engaged) return;
+    h._engaged = true; sfx('toll');
+    if (company > 1 && !h._rallied) {
+      h._rallied = true;
+      var k = 1 + 0.6 * (company - 1);
+      h._hp = Math.round(h._hp * k); h.maxHP = Math.round(h.maxHP * k);
+    }
+    if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('The Bell Warden', 'It turns from the arches, and the bell where its head should be begins to sway',
+      company > 1 ? 'It rings louder for the two of you' : 'Close in, or keep clear of the ring');
   }
   function call(world, h) {                                        // the bell calls wisps out of the dark
     sfx('toll'); shake(3);
@@ -424,31 +438,32 @@ var BridgeCombat = (function () {
     if (!w || w.dot) return;
     if (w.frost) { h._frostUntil = now + 3200; sfx('frost'); }
     if (w.burn) { h._burnUntil = now + 3200; h._burnTick = now; sfx('burn'); }
-    if (w.drain && typeof BridgeInventory !== 'undefined') {
+    if (w.drain && !w.remote && typeof BridgeInventory !== 'undefined') {
       var back = Math.max(1, Math.round(dmg * w.drain));
       BridgeInventory.restoreHP(back);
       if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(BridgeCharacter.getX(), BridgeCharacter.getY() - 0.4, '+' + back, '#80f0a0');
     }
     if (h._hp <= 0) return;
+    var from = w.from || (typeof BridgeCharacter !== 'undefined' ? { x: BridgeCharacter.getX(), y: BridgeCharacter.getY() } : null);
     if (w.heavy) {
       if (h._attackPhase === 'winding') { h._attackPhase = 'recovering'; h._attackStart = now; h._attackTarget = null; }
-      if (!h.boss) push(world, h, 1);
-      shake(2);
+      if (!h.boss) push(world, h, 1, from);
+      if (!w.remote) shake(2);
     }
-    if (h.blink && Math.random() < h.blink) blink(world, h);
+    if (h.blink && Math.random() < h.blink) blink(world, h, from);
   }
-  function push(world, h, n) {
-    if (typeof BridgeCharacter === 'undefined') return;
-    var sx = Math.sign(h.x - BridgeCharacter.getX()), sy = Math.sign(h.y - BridgeCharacter.getY());
-    if (Math.abs(h.x - BridgeCharacter.getX()) >= Math.abs(h.y - BridgeCharacter.getY())) sy = 0; else sx = 0;
+  function push(world, h, n, from) {
+    if (!from) return;
+    var sx = Math.sign(h.x - from.x), sy = Math.sign(h.y - from.y);
+    if (Math.abs(h.x - from.x) >= Math.abs(h.y - from.y)) sy = 0; else sx = 0;
     var nx = h.x + sx * n, ny = h.y + sy * n;
     if (!world.collisions[ny] || world.collisions[ny][nx] !== 0) return;
     if (world.interactions.some(function (o) { return o !== h && o.x === nx && o.y === ny && o.type === 'hostile'; })) return;
     world.collisions[h.y][h.x] = 0; h.x = nx; h.y = ny; world.collisions[ny][nx] = 1;
     h._lastMove = performance.now();
   }
-  function blink(world, h) {
-    var px = BridgeCharacter.getX(), py = BridgeCharacter.getY(), opts = [];
+  function blink(world, h, from) {
+    var px = from ? from.x : BridgeCharacter.getX(), py = from ? from.y : BridgeCharacter.getY(), opts = [];
     for (var x = -3; x <= 3; x++) for (var y = -3; y <= 3; y++) {
       var nx = h.x + x, ny = h.y + y, d = Math.abs(nx - px) + Math.abs(ny - py);
       if (d >= 2 && d <= 3 && world.collisions[ny] && world.collisions[ny][nx] === 0) opts.push([nx, ny]);
@@ -580,5 +595,5 @@ var BridgeCombat = (function () {
 
   return { CREATURES: CREATURES, spawn: spawn, drawCreature: drawCreature, sceneItems: sceneItems, faint: faint, decorate: decorate,
            tick: tick, attackStart: attackStart, dangerAt: dangerAt, dangerCells: dangerCells, attackDamage: attackDamage, strikeFx: strikeFx,
-           onHit: onHit, onKill: onKill, damageFor: damageFor, shake: shake, tomb: tomb, _save: function () { return save; } };
+           onHit: onHit, onKill: onKill, damageFor: damageFor, shake: shake, tomb: tomb, engage: engage, _save: function () { return save; } };
 })();

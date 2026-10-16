@@ -25,6 +25,7 @@ var BridgeMulti = (function () {
   function worldId() { return inWorld() ? BridgeWorld.getWorldId() : null; }
   function inst(wid, owner) {
     if (!wid) return null;
+    if (/^lumar-rose-mine-[abc]$/.test(wid) && typeof BridgeMine !== 'undefined' && BridgeMine.party) return wid + '#' + BridgeMine.party();
     if (!PERSONAL[wid]) return wid;
     var m = me();
     return wid + '@' + (owner || visiting || (m && m.id) || '');
@@ -141,6 +142,7 @@ var BridgeMulti = (function () {
       for (var i = 0; i < w.interactions.length; i++) if (w.interactions[i].type === 'player' && w.interactions[i].pid === id) { it = w.interactions[i]; break; }
       if (!it) { it = { type: 'player', pid: id, label: String(a.name).toUpperCase(), prompt: 'PRESS E TO MEET' }; w.interactions.push(it); }
       it.x = Math.round(a.x); it.y = Math.round(a.y + 0.2); it.label = String(a.name).toUpperCase();
+      it.prompt = (api.promptFor && api.promptFor(id)) || 'PRESS E TO MEET';      // someone down: help them up (js/fight.js)
     });
   }
 
@@ -172,6 +174,7 @@ var BridgeMulti = (function () {
       var show = b && now < b.until;
       if (show && bel.getAttribute('data-at') !== String(b.at)) { bel.innerHTML = b.html; bel.setAttribute('data-at', String(b.at)); }
       t.classList.toggle('talking', !!show);
+      t.classList.toggle('down', id !== 'self' && !!(api.isDown && api.isDown(id)));
       var tg = typeof BridgeInteractions !== 'undefined' && BridgeInteractions.getTarget && BridgeInteractions.getTarget();
       t.classList.toggle('targeted', !!(tg && tg.type === 'player' && tg.pid === id));   // the prompt says their name already
       if (id === 'self' && !show) { t.style.display = 'none'; return; }
@@ -211,6 +214,7 @@ var BridgeMulti = (function () {
   var extras = [];                                    // other modules add their buttons: fn(id, peer) -> [{label, act}] (give, trade, partners)
   function addMenu(fn) { extras.push(fn); }
   function menu(id) {
+    if (api.direct && api.direct(id)) return;            // a module acts on them straight away (js/fight.js: help them up)
     var p = N() && N().peer(id), name = p ? p.name : (others[id] && others[id].name) || 'Them';
     var buttons = [
       { label: 'Wave', act: function () { emote('wave'); } },
@@ -303,6 +307,8 @@ var BridgeMulti = (function () {
     setTimeout(function () { if (asking && asking.id === id) { var q = n.peer(id); asking = null; if (q && q.world) travel({ world: q.world, inst: q.inst, x: null, y: null, owner: q.inst && q.inst.split('@')[1] }); } }, 2500);
   }
   function travel(at) {
+    var dig = /#(\d+)\.(\d+)$/.exec(at.inst || '');            // down the mine: their floor, their dig (js/mine.js)
+    if (dig && typeof BridgeMine !== 'undefined') { BridgeMine.goFloor(+dig[1], +dig[2]); return; }
     var owner = at.inst && at.inst.indexOf('@') > 0 ? at.inst.split('@')[1] : null, m = me();
     var go = function () {
       BridgeWorld.load(at.world, function (w) {
@@ -404,6 +410,7 @@ var BridgeMulti = (function () {
 
   var api = { menu: menu, panel: panel, emote: emote, say: say, inst: inst, myInst: myInst, PERSONAL: PERSONAL, addMenu: addMenu, addPanel: addPanel,
            guard: goGuard, travel: travel, visiting: function () { return visiting; }, setVisiting: function (id) { visiting = id || null; },
-           others: function () { return others; }, cap: cap, placeOf: placeOf, friends: null };
+           others: function () { return others; }, cap: cap, placeOf: placeOf, friends: null,
+           promptFor: null, direct: null, isDown: null };   // js/fight.js: a downed partner's prompt, helping them up
   return api;
 })();
