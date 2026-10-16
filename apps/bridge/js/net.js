@@ -23,6 +23,12 @@ var BridgeNet = (function () {
   var ch = null, me = null, up = false, meta = {}, metaT = 0, sentMeta = '', trackAt = 0, trackTimer = 0, handlers = {};
   var pres = {}, heard = {}, peers = {}, builtAt = 0, hiddenAt = 0, hbAt = 0;
   var TAB = Math.random().toString(36).slice(2, 8);         // this page: one pilot may have two open
+  // a budget: Supabase counts every message against the project, and a burst over its limit drops messages or the
+  // channel itself (you'd vanish for the other player until it's rebuilt). Frequent state (positions, a fight's or a
+  // game's running state) waits its turn when we're over ~12 a second and only the latest of each goes; everything
+  // else (a hit, a trade, a final score) always goes.
+  var LOW = { pos: 1, sea: 1, helm: 1, fs: 1, sf: 1, 'g-score': 1 }, BUDGET = 12, sends = [], later = {}, laterT = 0;
+  var stats = { sent: 0, deferred: 0, rebuilds: 0, status: [], system: [] };
   // which of two metas says where someone really is: the tab in front, then the newest
   function better(a, b) { if (!b) return true; if (!!a.away !== !!b.away) return !a.away; return (a.t || 0) >= (b.t || 0); }
 
@@ -39,6 +45,7 @@ var BridgeNet = (function () {
   function build() {
     var c = client();
     if (ch && c && c.removeChannel) { try { c.removeChannel(ch); } catch (e) { /* */ } }
+    if (ch) stats.rebuilds++;
     ch = null; up = false; builtAt = Date.now();
     if (!c || !c.channel || !me) return;
     try {
@@ -53,7 +60,10 @@ var BridgeNet = (function () {
         emit(p.e, p.d, p.from);
       });
       ch.on('presence', { event: 'sync' }, function () { if (ch === mine) sync(); });
-      ch.subscribe(function (status) {
+      try { ch.on('system', {}, function (m) { stats.system.push([Date.now(), m && (m.message || m.status || JSON.stringify(m).slice(0, 120))]); if (stats.system.length > 10) stats.system.shift(); }); } catch (e) { /* */ }
+      ch.subscribe(function (status, err) {
+        stats.status.push([Date.now(), status + (err ? ' ' + (err.message || err) : '')]); if (stats.status.length > 10) stats.status.shift();
+        if (status !== 'SUBSCRIBED') console.warn('[net] channel', status, err || '');
         if (ch !== mine) return;
         if (status === 'SUBSCRIBED') { up = true; sentMeta = ''; track(true); beat(); emit('up'); }
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') up = false;
@@ -132,11 +142,33 @@ var BridgeNet = (function () {
 
   function send(e, d, to) {
     if (!up || !ch || !me) return false;
+    var now = Date.now();
+    while (sends.length && now - sends[0] > 1000) sends.shift();
+    if (LOW[e] && !(d && d.done) && sends.length >= BUDGET) {          // over budget: keep the latest, send it shortly
+      later[e + '|' + (to || '')] = [e, d, to]; stats.deferred++;
+      if (!laterT) laterT = setTimeout(flush, 150);
+      return true;
+    }
+    delete later[e + '|' + (to || '')];
+    sends.push(now); stats.sent++;
     try {
       var r = ch.send({ type: 'broadcast', event: 'm', payload: { e: e, d: d, from: me.id, to: to || null } });
       if (r && r.then) r.then(null, function () { /* the watchdog sees to a dead channel */ });
     } catch (err) { return false; }
     return true;
+  }
+  function flush() {
+    laterT = 0;
+    var k = Object.keys(later);
+    if (!k.length) return;
+    var now = Date.now();
+    while (sends.length && now - sends[0] > 1000) sends.shift();
+    k.slice(0, Math.max(1, BUDGET - sends.length)).forEach(function (key) {
+      var m = later[key]; delete later[key];
+      sends.push(Date.now()); stats.sent++;
+      try { ch && ch.send({ type: 'broadcast', event: 'm', payload: { e: m[0], d: m[1], from: me.id, to: m[2] || null } }); } catch (err) { /* */ }
+    });
+    if (Object.keys(later).length) laterT = setTimeout(flush, 150);
   }
   function on(e, f) { (handlers[e] = handlers[e] || []).push(f); }
 
@@ -167,5 +199,5 @@ var BridgeNet = (function () {
 
   return { set: set, send: send, on: on, connect: connect, peers: list, peer: function (id) { return peers[id] ? Object.assign({}, peers[id], { id: id }) : null; },
            me: function () { return me; }, online: function () { return up; },
-           debug: function () { return { up: up, state: ch && ch.state, presence: Object.keys(pres), heard: Object.keys(heard).map(function (k) { return k + ' ' + Math.round((Date.now() - heard[k].at) / 1000) + 's ' + Object.keys(heard[k].tabs).length + ' tab(s)'; }), peers: list() }; } };
+           debug: function () { return { up: up, state: ch && ch.state, stats: stats, presence: Object.keys(pres), heard: Object.keys(heard).map(function (k) { return k + ' ' + Math.round((Date.now() - heard[k].at) / 1000) + 's ' + Object.keys(heard[k].tabs).length + ' tab(s)'; }), peers: list() }; } };
 })();

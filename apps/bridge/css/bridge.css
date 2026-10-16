@@ -1873,6 +1873,8 @@ html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }   
 /* fighting together (js/fight.js): a partner who's down, and your own banner while you are */
 .mp-tag.down .mp-name { color: #ffd0c8; border-color: rgba(255, 110, 90, 0.75); background: rgba(70, 14, 14, 0.8); animation: mp-down 0.9s ease-in-out infinite alternate; }
 .mp-tag.down .mp-name::after { content: ' · DOWN'; color: #ff8a70; }
+.mp-tag.away .mp-name { opacity: 0.6; }
+.mp-tag.away:not(.down) .mp-name::after { content: ' · away'; color: #a8b0c0; }
 @keyframes mp-down { from { box-shadow: 0 0 0 rgba(255, 90, 70, 0); } to { box-shadow: 0 0 10px rgba(255, 90, 70, 0.7); } }
 .mp-hp { width: 46px; height: 5px; background: rgba(20, 8, 10, 0.75); border: 1px solid rgba(0, 0, 0, 0.6); border-radius: 3px; overflow: hidden; }
 .mp-hp i { display: block; height: 100%; background: #e04a4a; transition: width 0.3s; }

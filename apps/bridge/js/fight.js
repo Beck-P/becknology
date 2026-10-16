@@ -113,7 +113,7 @@ var BridgeFight = (function () {
     });
   }
   function sendSnap(now) {
-    if (now - snapAt < 100) return;
+    if (now - snapAt < 150) return;
     var s = snapshot(now), json = JSON.stringify(s);
     if (!wantSnap && json === snapJson && now - snapAt < 2000) return;
     if (!wantSnap && !s.length && snapJson === '[]') return;

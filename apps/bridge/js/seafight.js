@@ -268,7 +268,7 @@ var BridgeSeaFight = (function () {
   // the captain, each frame of the fight (from update): the state, ten times a second, while there's anything to tell
   function broadcast(now) {
     var c = crew(), n = N();
-    if (!c || !n || now - sentAt < 100) return;
+    if (!c || !n || now - sentAt < 150) return;
     if (!foes.length && !out.length && !(mir0 && mir0.length)) return;
     sentAt = now;
     var f = F(), sh = ship();

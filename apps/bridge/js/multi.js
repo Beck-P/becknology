@@ -82,13 +82,14 @@ var BridgeMulti = (function () {
     a.tx = d.x; a.ty = d.y; a.f = d.f || 'down'; a.k = d.k || 'purple'; a.mv = !!d.mv; a.seen = performance.now(); a.metaT = p ? p.t : null;
     if (a.fresh) { a.x = d.x; a.y = d.y; a.fresh = false; }
   }
-  // gone: nothing from them for 9 s, or they say they're somewhere else — at once if they've said so since their last
-  // step here, else (presence lagging behind their own position messages, which are tagged with this place) after 3 s
+  // gone: they say they're somewhere else — at once if they've said so since their last step here, else (presence
+  // lagging behind their own position messages, which are tagged with this place) after 3 s — or they've gone offline.
+  // Someone whose tab is in the background sends no steps, but is still here: they stay where they last stood (`away`).
   function prune(now) {
     var here = myInst(), n = N();
     Object.keys(others).forEach(function (id) {
       var a = others[id], p = n && n.peer(id), elsewhere = !p || p.inst !== here;     // no place at all: out at sea
-      if (!here || now - a.seen > 9000 || (elsewhere && (now - a.seen > 3000 || (p && p.t !== a.metaT)))) drop(id);
+      if (!here || (!p && now - a.seen > 9000) || (elsewhere && (now - a.seen > 3000 || (p && p.t !== a.metaT)))) drop(id);
     });
   }
   function drop(id) {
@@ -107,7 +108,7 @@ var BridgeMulti = (function () {
     var rp = BridgeCharacter.getRenderPos(), body = { i: here, x: Math.round(rp.x * 100) / 100, y: Math.round(rp.y * 100) / 100, f: BridgeCharacter.getFacing(),
       k: String(BridgeCharacter.sportKey()).replace(/^(ski|climb)-/, ''), mv: !!(BridgeCharacter.isMoving && BridgeCharacter.isMoving()) };
     var json = JSON.stringify(body);
-    if ((json !== sentJson && now - sentAt > 100) || now - sentAt > 2000) { n.send('pos', body); sentJson = json; sentAt = now; }
+    if ((json !== sentJson && now - sentAt > 140) || now - sentAt > 2000) { n.send('pos', body); sentJson = json; sentAt = now; }
   }
 
   function step(dt) {
@@ -179,6 +180,8 @@ var BridgeMulti = (function () {
       if (show && bel.getAttribute('data-at') !== String(b.at)) { bel.innerHTML = b.html; bel.setAttribute('data-at', String(b.at)); }
       t.classList.toggle('talking', !!show);
       t.classList.toggle('down', id !== 'self' && !!(api.isDown && api.isDown(id)));
+      var pp = id !== 'self' && N() && N().peer(id);
+      t.classList.toggle('away', !!(pp && pp.away));                // their game's in the background
       if (id !== 'self') health(t, id);
       var tg = typeof BridgeInteractions !== 'undefined' && BridgeInteractions.getTarget && BridgeInteractions.getTarget();
       t.classList.toggle('targeted', !!(tg && tg.type === 'player' && tg.pid === id));   // the prompt says their name already
