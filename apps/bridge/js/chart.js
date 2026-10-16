@@ -58,6 +58,7 @@ var BridgeChart = (function () {
   }
   function seaOf(id) { var I = isles()[id]; return I ? I.pal : null; }
   function charted(sea) { return !!st.seas[sea]; }
+  function cap(t) { return String(t || '').charAt(0).toUpperCase() + String(t || '').slice(1); }
   function known(id) { return !!isles()[id] && (charted(seaOf(id)) || !!st.visited[id]); }
   function dest() { return st.dest && isles()[st.dest] ? st.dest : null; }
   function course() {                                       // where you're bound: at sea, the passage's course; ashore, the one you set
@@ -74,10 +75,18 @@ var BridgeChart = (function () {
   function available() { return sailing() || !!here(); }
   function name(id) { var I = isles()[id]; return I ? I.name : id; }
 
-  /** A world loaded: if it's on an island, you've been there. */
+  /** A world loaded: if it's on an island, you've been there. An island you stumbled on without its sea's chart stays
+   *  off your chart (`found`, not `visited`): buy the chart to keep it on your map and compass. */
   function decorate(worldId, data) {
     var id = islandOf(worldId);
-    if (id && !st.visited[id]) { st.visited[id] = 1; store(); }
+    if (id && !st.visited[id] && charted(seaOf(id))) { st.visited[id] = 1; store(); }
+    else if (id && !st.visited[id] && !(st.found = st.found || {})[id]) {
+      st.found[id] = Date.now(); store();
+      setTimeout(function () {
+        if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast)
+          BridgeQuests.toast('Not on your chart', name(id), 'You found it without a chart. Buy the ' + cap(seaOf(id)) + ' Sea\'s chart from a harbourmaster to keep it on your map');
+      }, 3000);
+    }
     if (id && st.dest === id) { st.dest = null; store(); }               // you're here: the course is run
     if (pill) pill.style.display = id ? 'flex' : 'none';
     if (data) retitle(data.interactions);

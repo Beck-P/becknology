@@ -139,7 +139,11 @@ var BridgeSloop = (function () {
   var boat = null, wind = null, cam = null, keys = {}, phase = 'load', phaseAt = 0;
   var wake = [], spray = [], gulls = [], fish = [], things = [], whale = null;
   var msg = null, msgAt = 0, prompt = null, menu = null, sheetImg = null, readyCount = 0, hold = 0;
-  var seaWas = null, lastLuff = 0, lastBell = 0, auto = false, route = [], leg = 0;
+  var seaWas = null, lastLuff = 0, lastBell = 0, auto = true, route = [], leg = 0, ironsT = 0, held = null;
+  // the sail trims itself (the easy way, and the default); T to trim by hand, remembered
+  function autoPref(set) {
+    try { if (set != null) localStorage.setItem('bridge_sail_hand', set ? '0' : '1'); return localStorage.getItem('bridge_sail_hand') !== '1'; } catch (e) { return true; }
+  }
   var traffic = [], wisps = [], storm = null, told = {}, aim = null, committing = false, hinted = false, said = {}, castOut = null;
   // each sea's character: how hard it blows, and what the sailors say of it
   var BASE = { emerald: 0.92, sapphire: 0.95, rose: 0.82, crimson: 1.2, midnight: 0.62 };
@@ -528,7 +532,7 @@ var BridgeSloop = (function () {
       shipId = null; shipName = captainOf.shipName || 'their boat'; act = null; aboardStart = true;
     }
     running = true; from = fromId; to = toId || null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
-    wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = false;
+    wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = autoPref(); ironsT = 0; held = null;
     aim = null; committing = false; hinted = false; said = {}; told = {}; B = null; B0 = null; wrecking = false; shakeUntil = 0;
     blessing = typeof BridgeCrown !== 'undefined' && BridgeCrown.takeBlessing();
     if (fight()) fight().reset(SEA);
@@ -626,16 +630,18 @@ var BridgeSloop = (function () {
     var px = boat.x - A.cx, py = boat.r - A.cy;
     return { x: pa.x + qr * px - qi * py, y: pa.y + (qi * px + qr * py) / 0.72 };
   }
-  function commit(id, P0, prefer, outFrom) {
+  function commit(id, P0, prefer, outFrom, uncharted) {
     if (B || committing) return;
     committing = true;
     var P = isles();
-    say('You set a course for ' + P[id].name + '.', 3200);
+    say(uncharted ? 'Land ho! Something on the horizon - an island you\'ve no chart for. You make for it.' : 'You set a course for ' + P[id].name + '.', uncharted ? 4200 : 3200);
+    if (uncharted) sfx('bell');
     loadIsland(id, function (J) {
       committing = false;
       if (!running || B) return;
       if (!J.sc) { say('The chart for ' + P[id].name + ' is missing. Try another course.', 3000); aim = null; return; }
       placeB(J, P0 || [boat.x, boat.r], prefer != null ? prefer : boat.h, outFrom);
+      B.uncharted = !!uncharted;
       told[A.pal] = true;
     });
   }
@@ -687,7 +693,7 @@ var BridgeSloop = (function () {
   }
 
   // ---- input ------------------------------------------------------------------------------------------------------
-  var KEYS = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'e', ' ', 'enter', 'escape', 't'];
+  var KEYS = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'e', ' ', 'enter', 'escape', 't', 'h'];
   function onKey(e) {
     var k = (e.key || '').toLowerCase();
     if (chartOpen() || fishingOpen()) return;                          // the chart (or the rod) has the keys while it's open
@@ -704,7 +710,8 @@ var BridgeSloop = (function () {
     }
     if (k === 'escape' && !e.repeat) { openMenu(); return; }
     if ((k === 'e' || k === ' ' || k === 'enter') && !e.repeat && prompt && phase === 'sail') prompt.act();
-    if (k === 't' && !e.repeat) { auto = !auto; say(auto ? 'The sheet trims itself — you steer' : 'Trimming by hand again', 2400); }
+    if (k === 'h' && !e.repeat) { howTo(); return; }
+    if (k === 't' && !e.repeat && !captainOf) { auto = !auto; autoPref(auto); say(auto ? 'The sail trims itself - you steer. ↑/↓ raise and lower it' : 'Trimming by hand: ↑ hauls the sheet in, ↓ eases it out', 3200); }
     keys[k] = true;
   }
   function onKeyUp(e) { keys[(e.key || '').toLowerCase()] = false; }
@@ -723,7 +730,8 @@ var BridgeSloop = (function () {
     }
     var fn = A ? A.name : 'the quay', opts = [['Keep sailing', closeMenu]], fight = typeof BridgeSeaFight !== 'undefined' && BridgeSeaFight.busy();
     if (typeof BridgeChart !== 'undefined') opts.push(['Open the chart (C)', function () { closeMenu(); openChart(); }]);
-    if (B && !fight) opts.push(['Skip ahead to ' + B.name, function () { closeMenu(); landThen(to, function () { stop(to); }); }]);
+    opts.push(['How to sail (H)', function () { closeMenu(); howTo(); }]);
+    if (B && !fight) opts.push(['Skip ahead to ' + (B.uncharted ? 'the uncharted island' : B.name), function () { closeMenu(); landThen(to, function () { stop(to); }); }]);
     else if (!B && A && !committing) others().forEach(function (o) { opts.push(['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]); });
     if (!fight) opts.push(['Put back to ' + fn, function () { closeMenu(); landThen(from, function () { stop(from); }); }]);
     ask('At the tiller', fight ? 'NOT WITH THEM ON YOUR HEELS.' : null, opts);
@@ -809,12 +817,12 @@ var BridgeSloop = (function () {
     wind.base += ((BASE[here] || 0.92) - wind.base) * Math.min(1, dt * 0.25);
     if (here === 'crimson') {                                        // a squall: the wind jumps round, the rain comes on
       if (!storm.squallAt) storm.squallAt = now + 9000;
-      if (!storm.warned && now > storm.squallAt - 2800 && phase === 'sail') { storm.warned = 1; say('A squall coming down on you - ease the sheet (↓) before it hits!', 2800); }
+      if (!storm.warned && now > storm.squallAt - 2800 && phase === 'sail') { storm.warned = 1; say(auto ? 'A squall coming down on you - lower the sail (↓) before it hits!' : 'A squall coming down on you - ease the sheet (↓) before it hits!', 2800); }
       if (now > storm.squallAt) {
         storm.squallAt = now + 16000 + hash(Math.floor(now / 997)) * 14000; storm.warned = 0;
         wind.from += (hash(Math.floor(now / 991)) < 0.5 ? -1 : 1) * (0.6 + hash(Math.floor(now / 983)) * 0.5);
         // what it does to her depends on how much sail you're carrying when it hits: eased, she rides it out
-        var press = phase === 'sail' ? clamp((boat.eff || 0) * (boat.hoist || 0), 0, 1) : 0;
+        var press = phase === 'sail' ? clamp((boat.eff || 0) * (boat.hoist || 0) * (boat.reef == null ? 1 : boat.reef), 0, 1) : 0;
         if (phase === 'sail') {
           var dmg = (1.5 + 7.5 * press) * (SP.storm || 1) * mercy(), left = hullHit(dmg);
           say(press > 0.5 ? 'Knocked flat! Green water pours over the rail and the hull groans (' + Math.round(left * 100) + '%)' : 'The squall hits - you spill the wind and she rides it out', 3200);
@@ -852,8 +860,16 @@ var BridgeSloop = (function () {
     var lee = rel > 0 ? -1 : 1;                                       // the boom swings to the other side
     // the sheet: by hand, or trimming itself
     var trim = (down('arrowdown', 's') ? 1 : 0) - (down('arrowup', 'w') ? 1 : 0);
-    if (auto) b.sheet += (bestSheet(off) - b.sheet) * Math.min(1, dt * 2.2);
-    else b.sheet = clamp(b.sheet + trim * 0.9 * dt, 0.1, 1.45);
+    if (b.reef == null) b.reef = 1;
+    if (auto) {                                                       // the sheet looks after itself; ↑/↓ raise and lower the sail
+      b.sheet += (bestSheet(off) - b.sheet) * Math.min(1, dt * 2.2);
+      b.reef = clamp(b.reef - trim * 0.7 * dt, 0, 1);
+    } else b.sheet = clamp(b.sheet + trim * 0.9 * dt, 0.1, 1.45);
+    // stuck head to wind with the sail up and nobody steering: her bow falls off on its own, the way a boat does
+    if (phase === 'sail' && off < (SP.nogo || 0.7) && !steer && b.reef > 0.3) {
+      ironsT += dt;
+      if (ironsT > 1.6) b.h = wrap(b.h - (rel > 0 ? 1 : -1) * 0.4 * dt);
+    } else ironsT = 0;
     // coming about or gybing: the boom crosses
     if (lee !== b.side) {
       if (b.hoist < 0.9) { /* still hoisting: the boom just falls to the lee side */ }
@@ -875,8 +891,8 @@ var BridgeSloop = (function () {
     b.stall = alpha > aopt + 0.35;
     b.eff = eff; b.off = off;
     var hoisted = phase === 'cast' ? clamp((castT - CAST.push) / (CAST.sail - CAST.push), 0, 1) : phase === 'moor' ? 1 - clamp((now - phaseAt) / 900, 0, 1) : 1;
-    b.hoist = hoisted;
-    var goal = (SP.vmax || VMAX) * (typeof BridgeMagic !== 'undefined' && BridgeMagic.has('tide') ? 1.12 : 1) * wind.s * polar(off) * eff * hoisted;
+    b.hoist = hoisted * (phase === 'sail' ? 0.12 + 0.88 * b.reef : 1);                // lowered, she carries a scrap of it
+    var goal = (SP.vmax || VMAX) * (typeof BridgeMagic !== 'undefined' && BridgeMagic.has('tide') ? 1.12 : 1) * wind.s * polar(off) * eff * hoisted * (phase === 'sail' ? b.reef : 1);
     if (phase === 'moor') goal = 0;
     b.v += (goal - b.v) * Math.min(1, dt * (goal > b.v ? 0.55 : 0.32) * (SP.accel || 1));
     if (off < (SP.nogo || 0.7) && b.v < 0.4) b.v = Math.max(-0.25, b.v - dt * 0.15);   // in irons: she drifts back
@@ -949,11 +965,24 @@ var BridgeSloop = (function () {
     if (!B && phase === 'sail' && !committing) {
       var outside = Math.hypot(b.x - A.exit[0], b.r - A.exit[1]) < 6 || b.x < -4 || b.r < -4 || b.x > A.w + 4 || b.r > A.h + 4;
       if (outside) {
-        if (!hinted && now - msgAt > -500) { hinted = true; say('Out of the harbour. Steer for an island - the compass shows where each one on your chart lies' + (touch() ? ' (or open the Chart)' : ' (or C for the chart)'), 5600); }
+        if (!hinted && now - msgAt > -500) { hinted = true; say('Out of the harbour. Steer for a dot on the compass rim - each is an island on your chart' + (touch() ? ' (or open the Chart)' : ' (or C for the chart)') + '. Or just sail on and see what you find', 6400); }
         var best = null, bd = 0.42;
         others().forEach(function (o) { var d = Math.abs(wrap(o.bearing - b.h)); if (d < bd) { bd = d; best = o; } });
         if (best && aim && aim.id === best.id) aim.t += dt; else aim = best ? { id: best.id, t: 0 } : null;
         if (aim && aim.t > 2.2 && b.v > 0.6) commit(aim.id);
+        // nothing charted that way: sail on, and the sea gives up whatever's out there, charted or not (the longer you
+        // hold a heading, the wider the net) - an island you've no chart for comes up as just that
+        if (!best && b.v > 0.6) {
+          if (!held || Math.abs(wrap(b.h - held.h)) > 0.6) held = { h: b.h, t: 0 };
+          held.t += dt;
+          var tol = 0.45 + Math.min(2.7, held.t / 14), find = null, fd = tol;          // in time, any heading finds land
+          Object.keys(isles()).forEach(function (id) {
+            if (id === A.id) return;
+            var d = Math.abs(wrap(bearingTo(id) - held.h));
+            if (d < fd) { fd = d; find = id; }
+          });
+          if (find && held.t > 7) { var unc = !(typeof BridgeChart === 'undefined' || BridgeChart.known(find)); held = null; commit(find, null, null, null, unc); }
+        } else held = null;
       }
     }
     // the next leg of the course (the gold mark on the compass)
@@ -962,14 +991,13 @@ var BridgeSloop = (function () {
     if (phase === 'sail') {
       var dB = B ? Math.min(Math.hypot(b.x - B.berth[0], b.r - B.berth[1]), Math.hypot(b.x - B.moor[0], b.r - B.moor[1])) : 1e9;
       var dA = Math.min(Math.hypot(b.x - A.berth[0], b.r - A.berth[1]), Math.hypot(b.x - A.moor[0], b.r - A.moor[1]));
-      if (dB < 2.6) prompt = b.v < 2.8 ? { text: 'Come alongside — ' + B.name, act: function () { moor(); } }
-                                       : { text: 'Too fast to tie up — ease out and round up', act: function () {} };
+      if (dB < 3.4) prompt = { text: B.uncharted ? 'Come alongside' : 'Come alongside — ' + B.name, act: function () { moor(); } };        // she drops her sail as she comes in
       else if (dA < 2.2 && now - began > 8000) prompt = { text: 'Put back in at ' + A.name, act: function () { landThen(from, function () { stop(from, true); }); } };
       things.forEach(function (o) {
         if (prompt) return;
         var d = Math.hypot(b.x - o.x, b.r - o.r);
-        if (o.flot && !o.got && d < 1.9) prompt = b.v < 2.4 ? { text: 'Haul the ' + o.kind + ' aboard', act: function () { haul(o); } }
-                                                         : { text: 'Slow down to grab the ' + o.kind, act: function () {} };
+        if (o.flot && !o.got && d < 2.4) prompt = b.v < 3.6 ? { text: 'Haul the ' + o.kind + ' aboard', act: function () { haul(o); } }
+                                                         : { text: 'Lower the sail (↓) to grab the ' + o.kind, act: function () {} };
         else if (o.kind === 'dory' && d < 4.2) prompt = { text: 'Hail the fisherman', act: function () { hail(o); } };
       });
       // stopped out on the water (rounded up into the wind, say): a line over the side
@@ -977,7 +1005,7 @@ var BridgeSloop = (function () {
         prompt = { text: 'Cast a line', act: fishHere };
       if (!said.fish && b.v > 1.4 && now - began > 40000 && now - msgAt > 2500 && !seaFishTold()) {
         said.fish = 1; seaFishTold(true);
-        say('Fish bite out here too: round up into the wind till she stops, then cast a line', 5200);
+        say(auto ? 'Fish bite out here too: lower the sail (↓) till she stops, then cast a line' : 'Fish bite out here too: round up into the wind till she stops, then cast a line', 5200);
       }
     }
     if (phase === 'cast') {                                          // the cast-off, said as it happens
@@ -988,7 +1016,9 @@ var BridgeSloop = (function () {
       if (castT > CAST.push && !said.hoist) { said.hoist = 1; say('Hoist the main! Hand over hand, the sail climbs the mast', 1900); sfx('luff'); }
       if (castT > CAST.sail) {
         phase = 'sail';
-        say(touch() ? 'Stick: steer left and right, up to haul in, down to ease out' : '←/→ steer · ↑ haul the sheet in · ↓ ease it out · Esc for the menu', 5200);
+        if (auto) say(touch() ? 'Stick: left and right to steer, down to lower the sail and slow, up to raise it' : '←/→ steer · ↓ lower the sail · ↑ raise it · C the chart · H how to sail · Esc the menu', 5600);
+        else say(touch() ? 'Stick: steer left and right, up to haul in, down to ease out' : '←/→ steer · ↑ haul the sheet in · ↓ ease it out · H how to sail · Esc for the menu', 5200);
+        if (!taught()) setTimeout(function () { if (running && !menu) { taught(true); howTo(); } }, 900);
       }
     }
     if (phase === 'moor') {
@@ -1002,6 +1032,34 @@ var BridgeSloop = (function () {
         landThen(to, function () { setTimeout(function () { hold = 0; stop(to, true); }, 300); });
       }
     }
+  }
+
+  // ---- how to sail: the card on your first passage, and from the menu or H any time ------------------------------------
+  function taught(set) { try { if (set) localStorage.setItem('bridge_sail_taught', '1'); return localStorage.getItem('bridge_sail_taught') === '1'; } catch (e) { return true; } }
+  function howTo() {
+    if (!running) return;
+    if (menu) closeMenu();
+    var t = touch(), el = document.createElement('div');
+    el.id = 'sloop-menu'; el.className = 'sloop-menu sloop-help';
+    var steps = [
+      ['Steer', t ? 'Push the stick left and right.' : '← and → (or A and D) turn her. The white line on the compass is where your bow points.'],
+      ['The wind', 'The blue arrow on the compass is the wind. She can\'t sail straight into it - that\'s the red wedge. Sail across it or along with it; wind from the side is fastest.'],
+      ['Speed', captainOf ? 'You\'re crew: the captain sails her. Fish over the side when she\'s stopped.'
+        : auto ? (t ? 'Pull the stick down to lower the sail and slow down - all the way down to stop. Push it up to raise it again.' : '↓ lowers the sail to slow down - all the way down to stop. ↑ raises it. The sail trims itself (T if you\'d rather trim the sheet by hand).')
+        : '↑ hauls the sheet in, ↓ eases it out: keep the marker on the green. (T lets the sail trim itself.)'],
+      ['Islands', 'Turn till a dot on the compass rim lines up with your bow and hold it: that\'s your course. Or open the chart (' + (t ? 'Chart' : 'C') + ') and pick one. Sail on into water you have no chart for and you may stumble on land.'],
+      ['Arriving', 'Follow the gold dot into the harbour and ' + (t ? 'tap' : 'press E') + ' to come alongside.'],
+      ['Stuck?', 'Facing into the wind she stops, and her bow slowly falls away. The menu (' + (t ? '⋯' : 'Esc') + ') can skip ahead or put back to port any time.']
+    ];
+    el.innerHTML = '<div class="sloop-menu-title">How to sail</div><ol class="sh-steps">' + steps.map(function (r) {
+      return '<li><b>' + r[0] + '</b> ' + r[1] + '</li>';
+    }).join('') + '</ol>';
+    var bt = document.createElement('button'); bt.type = 'button'; bt.textContent = 'Got it';
+    bt.addEventListener('click', function (e) { e.preventDefault(); onMenuClose = null; closeMenu(); });
+    el.appendChild(bt);
+    document.body.appendChild(el);
+    menu = el; onMenuClose = null; keys = {};
+    bt.focus();
   }
 
   // ---- sailing together -----------------------------------------------------------------------------------------------
@@ -1949,7 +2007,10 @@ var BridgeSloop = (function () {
     ctx.strokeStyle = 'rgba(208,180,110,0.75)'; ctx.lineWidth = px(1.5); ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
     ctx.font = px(10) + 'px "Pixelify Sans", monospace'; ctx.textAlign = 'center';
     ctx.fillStyle = '#e0c060'; ctx.fillText('N', cx, cy - R + px(9));
-    var wf = wind.now;                                                  // an arrow blowing downwind
+    var wf = wind.now, ng = SP.nogo || 0.7;                             // the no-go wedge: you can't sail into the wind
+    ctx.fillStyle = 'rgba(255,90,80,0.22)'; ctx.beginPath(); ctx.moveTo(cx, cy);
+    for (var wa = -ng; wa <= ng + 0.001; wa += ng / 8) ctx.lineTo(cx + Math.cos(wf + wa) * R * 0.95, cy + Math.sin(wf + wa) * R * 0.95 * C45);
+    ctx.closePath(); ctx.fill();
     ctx.strokeStyle = 'rgba(160,220,255,0.95)'; ctx.lineWidth = px(2);
     var ax = Math.cos(wf), ay = Math.sin(wf) * C45;
     ctx.beginPath(); ctx.moveTo(cx + ax * R * 0.8, cy + ay * R * 0.8); ctx.lineTo(cx - ax * R * 0.55, cy - ay * R * 0.55); ctx.stroke();
@@ -1974,19 +2035,33 @@ var BridgeSloop = (function () {
     ctx.font = px(9) + 'px "Pixelify Sans", monospace';
     ctx.fillStyle = 'rgba(200,220,240,0.9)'; ctx.fillText('WIND', cx, cy + R + px(10));
     // the trim: where the sheet is, where it should be, and what the sail is doing
-    var tw = px(170), th = px(10), tx0 = canvas.width - tw - px(24), ty0 = canvas.height - px(52);
-    ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(tx0 - px(10), ty0 - px(46), tw + px(20), px(80));
+    var tw = px(230), th = px(10), tx0 = canvas.width - tw - px(24), ty0 = canvas.height - px(58);
+    ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(tx0 - px(10), ty0 - px(46), tw + px(20), px(92));
     ctx.fillStyle = '#2a3040'; ctx.fillRect(tx0, ty0, tw, th);
-    var best = bestSheet(b.off), sx0 = (best - 0.1) / 1.35;
-    ctx.fillStyle = 'rgba(96,208,128,0.55)'; ctx.fillRect(tx0 + Math.max(0, sx0 - 0.08) * tw, ty0, 0.16 * tw, th);
-    ctx.fillStyle = '#f2ecd6'; ctx.fillRect(tx0 + (b.sheet - 0.1) / 1.35 * tw - px(2), ty0 - px(3), px(4), th + px(6));
-    ctx.textAlign = 'left'; ctx.fillStyle = '#8a90a8'; ctx.fillText('IN', tx0, ty0 + th + px(10));
-    ctx.textAlign = 'right'; ctx.fillText('OUT', tx0 + tw, ty0 + th + px(10));
-    var state = captainOf ? ['CREWING — ' + cap(captainOf.name).toUpperCase() + ' HAS THE HELM', '#a0d0e0'] : fishingOpen() ? ['LYING STILL — A LINE OVER THE SIDE', '#a0d0e0'] : b.off < 0.7 ? ['IN IRONS — BEAR AWAY', '#ff9080'] : b.luff ? ['LUFFING — HAUL IN', '#ffd060'] : b.stall ? ['STALLED — EASE OUT', '#ffb070'] : ['DRAWING', '#80e0a0'];
+    if (auto || captainOf) {                                          // the sail: how much of it is up (↑/↓)
+      var rf = b.reef == null ? 1 : b.reef;
+      ctx.fillStyle = 'rgba(96,208,128,0.6)'; ctx.fillRect(tx0, ty0, rf * tw, th);
+      ctx.textAlign = 'left'; ctx.fillStyle = '#8a90a8'; ctx.fillText(touch() ? 'SAIL DOWN' : '↓ SAIL DOWN', tx0, ty0 + th + px(10));
+      ctx.textAlign = 'right'; ctx.fillText(touch() ? 'SAIL UP' : 'SAIL UP ↑', tx0 + tw, ty0 + th + px(10));
+    } else {
+      var best = bestSheet(b.off), sx0 = (best - 0.1) / 1.35;
+      ctx.fillStyle = 'rgba(96,208,128,0.55)'; ctx.fillRect(tx0 + Math.max(0, sx0 - 0.08) * tw, ty0, 0.16 * tw, th);
+      ctx.fillStyle = '#f2ecd6'; ctx.fillRect(tx0 + (b.sheet - 0.1) / 1.35 * tw - px(2), ty0 - px(3), px(4), th + px(6));
+      ctx.textAlign = 'left'; ctx.fillStyle = '#8a90a8'; ctx.fillText('↑ SHEET IN', tx0, ty0 + th + px(10));
+      ctx.textAlign = 'right'; ctx.fillText('OUT ↓', tx0 + tw, ty0 + th + px(10));
+    }
+    var rf2 = b.reef == null ? 1 : b.reef;
+    var state = captainOf ? ['CREWING — ' + cap(captainOf.name).toUpperCase() + ' HAS THE HELM', '#a0d0e0']
+      : fishingOpen() ? ['LYING STILL — A LINE OVER THE SIDE', '#a0d0e0']
+      : b.off < (SP.nogo || 0.7) ? ['INTO THE WIND — TURN AWAY (← →)', '#ff9080']
+      : auto && rf2 < 0.15 ? ['SAIL DOWN — ↑ TO RAISE IT', '#a0d0e0']
+      : b.luff ? ['SAIL FLAPPING — HAUL IN (↑)', '#ffd060'] : b.stall ? ['SAIL TOO TIGHT — EASE OUT (↓)', '#ffb070'] : ['SAILING WELL', '#80e0a0'];
     ctx.textAlign = 'left'; ctx.fillStyle = state[1]; ctx.font = px(10) + 'px "Pixelify Sans", monospace';
-    ctx.fillText(state[0] + (auto ? ' · AUTO (T)' : ''), tx0, ty0 - px(14));
-    var pos = b.off < 0.7 ? 'HEAD TO WIND' : b.off < 1.15 ? 'CLOSE-HAULED' : b.off < 1.9 ? 'BEAM REACH' : b.off < 2.65 ? 'BROAD REACH' : 'RUNNING';
-    ctx.textAlign = 'left'; ctx.fillStyle = '#c8d0e0';
+    ctx.fillText(state[0], tx0, ty0 - px(14));
+    if (!captainOf && !touch()) { ctx.font = px(8) + 'px "Pixelify Sans", monospace'; ctx.fillStyle = '#6a7088'; ctx.textAlign = 'left';
+      ctx.fillText(auto ? 'T: TRIM THE SHEET BY HAND · H: HOW TO SAIL' : 'T: LET THE SAIL TRIM ITSELF · H: HOW TO SAIL', tx0, ty0 + th + px(22)); }
+    var pos = b.off < 0.7 ? 'INTO THE WIND' : b.off < 1.15 ? 'CLOSE TO THE WIND' : b.off < 1.9 ? 'WIND FROM THE SIDE' : b.off < 2.65 ? 'WIND BEHIND YOU' : 'WIND DEAD BEHIND';
+    ctx.textAlign = 'left'; ctx.fillStyle = '#c8d0e0'; ctx.font = px(10) + 'px "Pixelify Sans", monospace';
     ctx.fillText(pos, tx0, ty0 - px(32));
     ctx.textAlign = 'right'; ctx.fillText((Math.max(0, b.v) * 2.1).toFixed(1) + ' KN', tx0 + tw, ty0 - px(32));
     // the fish hold, under the passage panel (once there's something in it, or a line's out)
@@ -2005,7 +2080,7 @@ var BridgeSloop = (function () {
     if (B) {
       var prog = clamp(((b.x - A.berth[0]) * (B.berth[0] - A.berth[0]) + (b.r - A.berth[1]) * (B.berth[1] - A.berth[1])) /
                        Math.pow(Math.hypot(B.berth[0] - A.berth[0], B.berth[1] - A.berth[1]), 2), 0, 1);
-      ctx.textAlign = 'right'; ctx.fillStyle = '#ffd060'; ctx.fillText(B.name.toUpperCase(), bx0 + bw, by0);
+      ctx.textAlign = 'right'; ctx.fillStyle = '#ffd060'; ctx.fillText(B.uncharted ? 'UNCHARTED ISLAND' : B.name.toUpperCase(), bx0 + bw, by0);
       ctx.fillStyle = '#2a3040'; ctx.fillRect(bx0, by0 + px(10), bw, px(4));
       ctx.fillStyle = '#ffd060'; ctx.fillRect(bx0, by0 + px(10), bw * prog, px(4));
       ctx.fillStyle = '#f2ecd6'; ctx.fillRect(bx0 + bw * prog - px(2), by0 + px(8), px(4), px(8));
