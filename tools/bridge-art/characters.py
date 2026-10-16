@@ -264,10 +264,11 @@ NPCS = {
                           crown=('#8a6a10', '#c89a20', '#f0d060'), pose='sit'),
     # Sylvara, the elven wood (see the Sylvara section of apps/bridge/CLAUDE.md): every elf has the long ears, long hair and
     # an outfit of their own out of the elves' options — Queen Alyssa on her throne and Beckolas, her first sword, first
-    'npc-alyssa':    dict(skin='skin0', shirt=('#2a5a2a', '#3e7a38', '#5a9a4a'), skirt=('#2a5a2a', '#3e7a38', '#5a9a4a'),
-                          trim=('#8a6a10', '#c89a20', '#f0d060'), belt=('#8a6a10', '#c89a20', '#f0d060'),
+    'npc-alyssa':    dict(skin='skin0', shirt=('#3e7a56', '#6aae84', '#a8e2bc'), skirt=('#3e7a56', '#6aae84', '#a8e2bc'),
+                          trim=('#9a7618', '#d8ac30', '#fae27a'), belt=('#9a7618', '#d8ac30', '#fae27a'),
                           hair=('#a8843a', '#d8b058', '#f0d080'), long_hair='flowing', elf_ears=True,
-                          circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#0a6a3a', '#18b060', '#80f0b0'), gown=True,
+                          circlet=('#9a7618', '#d8ac30', '#fae27a'), gem=('#0a6a3a', '#18b060', '#80f0b0'), gown='court',
+                          veil=('#c8b888', '#ece0b8', '#fff8e0'),
                           bell_sleeves=True, neckline=True, girdle=True, shoes=('#8a6a10', '#c89a20', '#f0d060'), pose='sit'),
     'npc-beckolas':  dict(skin='skin', shirt=('#2e4a22', '#4a6a30', '#6a8a44'), armour=('#3a5a26', '#5a7a34', '#7e9a4a'),
                           cuirass=('#3a5a26', '#5a7a34', '#7e9a4a'), tunic=('#2e4a22', '#4a6a30', '#6a8a44'),
@@ -275,7 +276,7 @@ NPCS = {
                           hair=('#a8843a', '#d8b058', '#f0d080'), ponytail=True, temple_braids=True, elf_ears=True, sword=True, bow=True,
                           scabbard=('#5a3a1a', '#8a5a2a', '#b07a3a'), bowwood=('#6a4a20', '#a07a38', '#d0a858'), fletch=('#c8c0b0', '#ece4d4', '#ffffff'),
                           bracers=('#3a2a20', '#5a4232', '#7a5c44'), tall_boots=True, shoes=('#3a2a20', '#5a4232', '#7a5c44'),
-                          eye=('#1a3a6a', '#2a5aa0', '#4a80c8'), pose='stand'),
+                          eye=('#1a3a6a', '#2a5aa0', '#4a80c8'), leaf_light=('#6a8a2a', '#9ab840', '#c8de68'), pose='stand'),
     # Aerin keeps the landing ring: hood up, the ears through it, a leaf-cut cloak, the longbow in hand
     'npc-elf-warden': dict(skin='skin', shirt=('#4a3020', '#6e4a30', '#8e6a48'), tunic=('#2a3e20', '#3e5a30', '#567a40'),
                            leaf_hood=('#1e3a22', '#2e5430', '#466e42'), cloak=('#1a321e', '#2a4a2c', '#3e6440'), leaf_cloak=True,
@@ -589,7 +590,7 @@ def leaf_ring(name, centre, radius, z, n, length, width, tone, part, parent, out
               part, parent, flat=(1.0, flat))
 
 
-def drape(name, tone, part, parent, z_top, z_bot, r_top, r_bot, a0, a1, n, y0=0.9, thick=0.5, leaves=1.7):
+def drape(name, tone, part, parent, z_top, z_bot, r_top, r_bot, a0, a1, n, y0=0.9, thick=0.5, leaves=1.7, leaf2=None):
     """A cloak hung behind the body: n panels round an arc (angle from straight behind), flaring to the hem, the hem
     cut into leaf points."""
     da = (a1 - a0) / n
@@ -604,13 +605,14 @@ def drape(name, tone, part, parent, z_top, z_bot, r_top, r_bot, a0, a1, n, y0=0.
         if leaves:
             rb = r_bot + 0.1
             spike(name, (rb * math.sin(am), y0 + rb * math.cos(am), z_bot + 0.4), (0.3 * math.sin(am), 0.3 * math.cos(am), -1.0),
-                  leaves * (1.0 if i % 2 == 0 else 0.75), w * 0.55, tone, part, parent, flat=(1.0, 0.3))
+                  leaves * (1.0 if i % 2 == 0 else 0.75), w * 0.55, (leaf2 if leaf2 and i % 2 else tone), part, parent, flat=(1.0, 0.3))
 
 
-def leaf_mantle(tone, part, z=16.4, rx=5.3, ry=3.9, n=12, length=1.9):
+def leaf_mantle(tone, part, z=16.4, rx=5.3, ry=3.9, n=12, length=1.9, leaf2=None):
     """A short cape over the shoulders, its edge cut into leaves (the cloaks' top, the weaver's shawl)."""
     add('uv_sphere', 'mantle', (0, 0.3, z), (rx, ry, 1.7), tone, part, body, segments=18, ring_count=8)
-    leaf_ring('mantle_leaf', (0, 0.3), rx * 0.92, z - 0.8, n, length, 2.2, tone, part, body, out=0.45, scale_y=ry / rx)
+    leaf_ring('mantle_leaf', (0, 0.3), rx * 0.92, z - 0.8, n, length, 2.2, tone, part, body, out=0.45, scale_y=ry / rx,
+              tones=[tone, leaf2] if leaf2 else None)
 
 
 # ---- skeleton (model units; root scaled to tiles) ---------------------------
@@ -927,6 +929,25 @@ def build_human(spec):
         if 'trim' in spec:       # a band of embroidery round the hem
             add('torus', 'hem', (0, 0, 1.2), (1, 0.9, 1), 'trim', 'skirt', body,
                 major_radius=4.75, minor_radius=0.45, major_segments=20, minor_segments=5)
+    if spec.get('gown') == 'court':   # a court gown: a gold panel down the front, a double gold hem, gold leaves worked into the skirt
+        add('cube', 'gown_panel', (0, -3.95, 6.4), (1.1, 0.25, 3.6), gold, 'gown_panel', body, rot=(-0.15, 0, 0))
+        add('torus', 'hem2', (0, 0, 2.3), (1, 0.9, 1), gold, 'skirt', body, major_radius=4.55, minor_radius=0.3, major_segments=20, minor_segments=5)
+        for i in range(10):
+            a = math.radians(30 + i * 12)
+            z = 3.0 + (i * 1.9) % 5.0
+            rad = 4.9 - (z - 0.9) / 8.6 * 1.3 + 0.12
+            spike('gown_leaf', (math.cos(a) * rad, -math.sin(a) * rad * 0.9, z), (0, -0.2, 1.0), 1.1, 0.45, gold, 'gown_leaf', body,
+                  flat=(1.0, 0.35))
+        if 'veil' in spec:     # a sheer mantle from the shoulders to the floor behind, pale gold
+            drape('veil', 'veil', 'veil', body, 16.8, 0.6, 4.2, 6.6, -math.radians(75), math.radians(75), 9, y0=1.3, thick=0.3, leaves=0)
+        if spec.get('pose') == 'sit':   # seated, the skirt falls over the lap and down to the floor: one sweep of cloth, not two legs
+            for side, sx in (('L', -1), ('R', 1)):
+                add('cube', 'lap' + side, (2.1 * -sx * 0.5, 0, -2.2), (2.7, 2.0, 2.6), 'skirt', 'lap', hips[side], bevel=0.8)
+                add('cone', 'fall' + side, (2.1 * -sx * 0.5, -0.5, -2.6), (1, 0.75, 1), 'skirt', 'fall', knees[side],
+                    vertices=14, radius1=3.6, radius2=2.4, depth=5.6)
+                add('torus', 'fall_hem' + side, (2.1 * -sx * 0.5, -0.5, -5.2), (1, 0.75, 1), gold, 'fall', knees[side],
+                    major_radius=3.5, minor_radius=0.35, major_segments=16, minor_segments=4)
+                add('cube', 'fall_panel' + side, (2.1 * -sx * 0.5 + 0.0, -3.1, -2.4), (0.9, 0.2, 2.6), gold, 'fall_panel', knees[side])
     if spec.get('neckline'):     # a gold V down the bodice from the shoulders, a stone where it meets
         for sg in (-1, 1):
             add('cube', 'neckline', (1.15 * sg, -3.0, 15.2), (0.34, 0.26, 1.9), gold, 'neckline', body, rot=(0, 0.6 * sg, 0))
@@ -944,9 +965,10 @@ def build_human(spec):
                       'leaf_apron' if (i + row) % 2 == 0 else 'leaf2', 'apron%d' % row, body, flat=(1.0, 0.4))
     if 'cuirass' in spec:       # a breastplate of leaf scales over the tunic, a gold leaf on the chest
         add('cube', 'cuirass', (0, -0.15, 13.4), (4.3, 3.2, 3.4), 'cuirass', 'cuirass', body, bevel=1.2)
-        for z, n in ((15.2, 3), (13.4, 4), (11.6, 3)):
+        for row, (z, n) in enumerate(((15.2, 3), (13.4, 4), (11.6, 3))):
             for i in range(n):
-                spike('scale', ((i - (n - 1) / 2) * 1.9, -3.2, z + 0.7), (0, -0.25, -1.0), 1.6, 0.95, 'cuirass', 'scales', body,
+                lt = 'leaf_light' if 'leaf_light' in spec and (i + row) % 2 else 'cuirass'
+                spike('scale', ((i - (n - 1) / 2) * 1.9, -3.2, z + 0.7), (0, -0.25, -1.0), 1.6, 0.95, lt, 'scales%d' % ((i + row) % 2), body,
                       flat=(1.0, 0.35))
         spike('chest_leaf', (0, -3.5, 12.6), (0, -0.2, 1.0), 2.6, 0.75, gold, 'emblem', body, flat=(1.0, 0.35))
     if 'sash' in spec:           # a sash from one shoulder to the other hip, knotted, the ends hanging
@@ -956,9 +978,10 @@ def build_human(spec):
         for dx, L in ((-0.3, 3.4), (0.5, 2.6)):
             spike('sash_end', (2.9 + dx, -3.1, 9.0), (0.1 * dx, -0.15, -1.0), L, 0.55, 'sash', 'sash_end', body, flat=(1.0, 0.4), r2=0.3)
     if 'cloak' in spec and spec.get('leaf_cloak'):   # a long cloak to the calves, flared, its hem and mantle cut into leaves
+        L2 = 'leaf_light' if 'leaf_light' in spec else None    # every other leaf in a brighter green, so the leaves read
         drape('cloak', 'cloak', 'cloak', body, 16.6, 2.6, 4.5, 6.4, -math.radians(82), math.radians(82), 9,
-              y0=1.1 if 'cuirass' not in spec else 1.4)
-        leaf_mantle('cloak', 'mantle')
+              y0=1.1 if 'cuirass' not in spec else 1.4, leaf2=L2)
+        leaf_mantle('cloak', 'mantle', leaf2=L2)
         spike('cloak_clasp', (0, -3.6, 16.0), (0, -0.2, 1.0), 1.6, 0.7, gold, 'clasp', body, flat=(1.0, 0.4))
     elif 'cloak' in spec:        # hangs from the shoulders down the back
         add('cube', 'cloak', (0, 3.2, 10.6), (4.6, 0.6, 6.6), 'cloak', 'cloak', body, bevel=0.4)
@@ -1047,12 +1070,17 @@ def build_human(spec):
             add('uv_sphere', 'pauldron' + side, (0, 0, 0.4), (2.0, 1.9, 1.3), 'armour', 'pauldron' + side, shoulders[side],
                 segments=12, ring_count=8)
             for k_, fy in enumerate((-0.55, 0.0, 0.55)):
-                spike('pauldron_leaf' + side, (-0.6 * sg, fy * 0.6, 1.4 - 0.15 * k_), (0.75 * sg, fy, -0.55), 3.4, 1.35, 'armour',
+                lt = 'leaf_light' if 'leaf_light' in spec and k_ % 2 == 0 else 'armour'
+                spike('pauldron_leaf' + side, (-0.6 * sg, fy * 0.6, 1.4 - 0.15 * k_), (0.75 * sg, fy, -0.55), 3.4, 1.35, lt,
                       'pleaf%s%d' % (side, k_), shoulders[side], flat=(1.0, 0.4))
     if 'bracers' in spec:        # bracers on the forearms, a leaf point over the back of each hand
         for side in 'LR':
             add('cube', 'bracer' + side, (0, 0, -4.7), (1.5, 1.65, 1.15), 'bracers', 'bracer' + side, shoulders[side], bevel=0.3)
             spike('bracer_tip' + side, (0, -0.2, -5.6), (0, -0.35, -1.0), 1.2, 0.8, 'bracers', 'bracer' + side, shoulders[side], flat=(1.0, 0.5))
+    if spec.get('gown') == 'court':   # gold filigree at the shoulders
+        for side in 'LR':
+            add('uv_sphere', 'shoulder_gold' + side, (0, 0, 0.9), (1.5, 1.4, 0.55), gold, 'shoulder_gold' + side, shoulders[side],
+                segments=10, ring_count=6)
     if spec.get('bell_sleeves'): # long sleeves flaring wide at the wrist, a gold band at the cuff, a fall of cloth behind
         for side in 'LR':
             add('cone', 'sleeve' + side, (0, 0, -4.6), (1, 1, 1), 'shirt', 'sleeve' + side, shoulders[side], vertices=12,
@@ -1152,9 +1180,10 @@ def build_human(spec):
         pts = [(3.9 * math.sin(a), 0.9 - 3.75 * math.cos(a), 9.3) for a in [math.tau * i / 14 for i in range(15)]]
         chain('crownbraid', pts, 15, 0.7, 0.7, 'hair', 'braidcrown', head, wiggle=0.2, side=(0, 0, 1))
     if spec.get('elf_ears'):     # long, pointed, swept up and back past the hair: they have to read at 32 x 48
-        L = 5.4 if spec['elf_ears'] is True else float(spec['elf_ears'])
+        # shorter and slimmer than they were, and swept up and back close to the head: an elf's ear, not a horn
+        L = 4.8 if spec['elf_ears'] is True else float(spec['elf_ears']) * 0.88
         for sg in (-1, 1):
-            EARS[sg] = spike('ear', (4.3 * sg, 0.7, 5.3), (0.74 * sg, 0.42, 0.56), L, 1.25, 'skin', 'ears', head, flat=(0.5, 1.0))
+            EARS[sg] = spike('ear', (4.7 * sg, 0.9, 5.6), (0.62 * sg, 0.38, 0.72), L, 0.9, 'skin', 'ears', head, flat=(0.45, 1.0))
     if 'circlet' in spec:        # a fine gold band round the brow; a tall leaf at the front holding the stone, leaves at the temples
         add('torus', 'circlet', (0, 0.3, 7.6), (1, 0.98, 0.6), 'circlet', 'hat', head,
             major_radius=5.15, minor_radius=0.32, major_segments=24, minor_segments=5)
@@ -1268,7 +1297,7 @@ else:
     if 'sleeve' in spec:
         tones['sleeve'] = FIXED[spec['sleeve']] if spec['sleeve'] in FIXED else FIXED[spec['skin']]
     for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat', 'straw_hat', 'crown',
-                'belt', 'trim', 'cloak', 'armour', 'circlet', 'eye', 'shoes', 'gem', 'scabbard', 'bowwood', 'fletch',
+                'belt', 'trim', 'cloak', 'armour', 'circlet', 'eye', 'shoes', 'gem', 'scabbard', 'bowwood', 'fletch', 'veil', 'leaf_light',
                 # the elves' (see the Sylvara section of apps/bridge/CLAUDE.md)
                 'tunic', 'sash', 'bracers', 'cuirass', 'leaf_apron', 'leaf2', 'shawl', 'leaf_hood', 'cowl', 'bard_cap', 'feather',
                 'flower_crown', 'flower', 'flower2', 'braid_tie', 'quiver', 'satchel', 'herb', 'basket', 'lute', 'staff', 'lampglow',
