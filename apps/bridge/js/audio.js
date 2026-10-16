@@ -209,6 +209,10 @@ var BridgeAudio = (function () {
                 lead: { inst: 'flute', oct: 24, density: 0.3 }, perc: [['shaker', [4, 12]]] },
     summit:   { bpm: 54, root: 50, mode: 'lydian', chords: [0, 4, 1, 4], pad: 'pad', arp: { inst: 'bell', steps: [0, 8], oct: 36, sparse: 0.55 },
                 lead: { inst: 'flute', oct: 24, density: 0.18 } },
+    // Sylvara: a slow harp over a warm pad, flute answering, lydian and a little wistful
+    sylvara:  { bpm: 66, root: 50, mode: 'lydian', chords: [0, 4, 5, 3, 0, 1, 5, 4], pad: 'warm',
+                arp: { inst: 'pluck', steps: [0, 2, 4, 6, 8, 10, 12, 14], oct: 12, pattern: [0, 1, 2, 3, 2, 1] },
+                bass: { inst: 'bass', steps: [0, 8] }, lead: { inst: 'flute', oct: 24, density: 0.32 } },
     verdance: { bpm: 92, root: 55, mode: 'ionian', chords: [0, 3, 4, 0, 5, 3, 1, 4], swing: 0.2, pad: 'warm',
                 arp: { inst: 'pluck', steps: [0, 3, 6, 8, 11, 14], oct: 12, pattern: [0, 1, 2, 1] }, bass: { inst: 'bass', steps: [0, 6, 8] },
                 lead: { inst: 'flute', oct: 24, density: 0.5 }, perc: [['shaker', [2, 6, 10, 14]]] },
@@ -246,6 +250,8 @@ var BridgeAudio = (function () {
     if (id === 'hoarfell-skihire') return { theme: 'hoarfell', amb: ['fire', 'chimes'] };
     if (id === 'hoarfell-park') return { theme: 'arcade', amb: ['snowwind'] };
     if (/^hoarfell/.test(id)) return { theme: 'hoarfell', amb: ['snowwind', 'chimes'] };
+    if (id === 'sylvara-hall') return { theme: 'sylvara', amb: ['murmur', 'chimes'] };
+    if (/^sylvara/.test(id)) return { theme: 'sylvara', amb: ['breeze', 'birds', 'chimes'] };
     if (/cave/.test(id) || ts === 'cave') return { theme: 'cave', amb: ['drips', 'rumble'] };
     if (/tower/.test(id) || ts === 'tower') return { theme: 'tower', amb: ['wind'] };
     if (/lighthouse|lamproom/.test(id)) return { theme: 'lumar-in', amb: ['wind', 'searoom'] };

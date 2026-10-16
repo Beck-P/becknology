@@ -6,7 +6,8 @@
  * interaction finds the clue: the first clue starts the quest, the last
  * completes it and pays its reward (BridgeProgression.recordAchievement,
  * once per pilot). Order doesn't matter — you piece it together however
- * you wander. Progress is kept in localStorage.
+ * you wander — unless a clue says `after: <clue id>` (or a list of them),
+ * when it only counts once those are found. Progress is kept in localStorage.
  *
  * UI: a toast under the place label when something is found, and the
  * journal — the game menu's Journal tab (J, or the Menu pill; js/menu.js):
@@ -55,6 +56,7 @@ var BridgeQuests = (function () {
       q.clues.forEach(function (c) {
         var wm = c.on.world;                      // 'lumar-rose-mine-*' matches any of the mine's floors
         if (!(wm === worldId || (wm.slice(-1) === '*' && worldId.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;
+        if (c.after && ![].concat(c.after).every(function (a) { return state[id] && state[id].clues[a]; })) return;   // only once those are found
         var s = state[id] || (state[id] = { clues: {}, started: Date.now() });
         if (s.clues[c.id]) return;
         var fresh = !Object.keys(s.clues).length;

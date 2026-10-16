@@ -5,7 +5,7 @@
  * board (the bridge viewport, the hangar's bay door, the quarters) draws
  * the same view through BridgeOrbit.draw(ctx, x, y, w, h, now).
  *
- *   BridgeOrbit.getLocation()        'deep-space' | 'lumar' | 'arcadia' | 'enigma' | 'singularity' | 'verdance' | 'hoarfell'
+ *   BridgeOrbit.getLocation()        'deep-space' | 'lumar' | 'arcadia' | 'enigma' | 'singularity' | 'verdance' | 'hoarfell' | 'sylvara'
  *   BridgeOrbit.setLocation(id)      after a jump (persisted)
  *   BridgeOrbit.placeName(id)        display name
  *
@@ -26,7 +26,8 @@ var BridgeOrbit = (function () {
     enigma: { name: 'Enigma Station', planet: 'gas' },
     singularity: { name: 'The Singularity', planet: 'hole' },
     verdance: { name: 'Verdance', planet: 'garden' },
-    hoarfell: { name: 'Hoarfell', planet: 'ice' }
+    hoarfell: { name: 'Hoarfell', planet: 'ice' },
+    sylvara: { name: 'Sylvara', planet: 'forest' }
   };
 
   function getLocation() {
@@ -141,6 +142,19 @@ var BridgeOrbit = (function () {
           else c = hi > 0.6 ? [244, 248, 252] : [222, 232, 244];
           if (hi > 0.45 && spine > 0.07 && hash3(i, j, 8, 3) < 0.012) { glow[n * 3] = 255; glow[n * 3 + 1] = 210; glow[n * 3 + 2] = 150; }
           cloud[n] = Math.max(0, fbm3(px * 3 + 7, py * 5, pz * 3, 71, 5) - 0.46) * 2.4;
+        } else if (kind === 'forest') {
+          // Sylvara: one forest from pole to pole — deep green canopy, darker old wood, silver rivers, gold elf-lights
+          var hf = fbm3(px * 2.4 + 3, py * 2.4, pz * 2.4, 83, 5);
+          var river = Math.abs(fbm3(px * 3.4, py * 3.4 + 5, pz * 3.4, 89, 4) - 0.5);
+          if (hf < 0.36) { c = [44, 92, 96]; water[n] = 1; }                          // lakes, dark and still
+          else if (river < 0.005 && hf > 0.42) { c = [110, 160, 160]; water[n] = 1; }  // a few rivers threading the wood
+          else {
+            var canopy = fbm3(px * 9, py * 9, pz * 9, 97, 3);
+            c = hf > 0.62 ? [28, 64, 34] : canopy > 0.55 ? [64, 112, 50] : [44, 88, 42];
+            if (canopy > 0.68) c = [104, 140, 64];                                    // golden-green crowns catching the sun
+          }
+          if (hf > 0.5 && river > 0.04 && hash3(i, j, 9, 5) < 0.01) { glow[n * 3] = 255; glow[n * 3 + 1] = 214; glow[n * 3 + 2] = 130; }
+          cloud[n] = Math.max(0, fbm3(px * 4 + 3, py * 3, pz * 4, 101, 5) - 0.55) * 2.2;  // thin mist over the wood
         } else if (kind === 'gas') {
           var t = fbm3(px * 1.5, py * 6, pz * 1.5, 23, 4);
           var b = Math.sin((py + (t - 0.5) * 0.35) * 22) * 0.5 + 0.5;
@@ -162,7 +176,7 @@ var BridgeOrbit = (function () {
   }
 
   // ---- planet disc ----------------------------------------------------------
-  var ATMO = { ocean: [110, 220, 230], city: [210, 110, 240], gas: [240, 210, 170], garden: [170, 230, 160], ice: [190, 220, 255] };
+  var ATMO = { ocean: [110, 220, 230], city: [210, 110, 240], gas: [240, 210, 170], garden: [170, 230, 160], ice: [190, 220, 255], forest: [180, 230, 170] };
   var discs = {};
 
   // Per-pixel geometry for a disc of radius R, made once per size.
@@ -195,12 +209,12 @@ var BridgeOrbit = (function () {
 
   // Where each world's sun sits: Lumar mostly in daylight; Arcadia seen
   // from its night side, a thin crescent of day on the right, cities lit.
-  var SUN = { ocean: [-0.62, -0.38, 0.69], city: [0.86, -0.36, -0.36], gas: [-0.7, -0.3, 0.65], garden: [-0.5, -0.45, 0.74], ice: [-0.8, -0.2, 0.56] };
+  var SUN = { ocean: [-0.62, -0.38, 0.69], city: [0.86, -0.36, -0.36], gas: [-0.7, -0.3, 0.65], garden: [-0.5, -0.45, 0.74], ice: [-0.8, -0.2, 0.56], forest: [-0.75, -0.3, 0.58] };
 
   function planetCanvas(kind, R, now) {
     var sun = SUN[kind] || SUN.ocean;
     var g = discGeom(R, sun);
-    var spin = { ocean: 1 / 160000, city: 1 / 220000, gas: 1 / 90000, garden: 1 / 180000, ice: 1 / 200000 }[kind] || 0;
+    var spin = { ocean: 1 / 160000, city: 1 / 220000, gas: 1 / 90000, garden: 1 / 180000, ice: 1 / 200000, forest: 1 / 190000 }[kind] || 0;
     var step = Math.floor(now / 250);
     var c = g.cache[kind];
     if (c && c.step === step) return c.canvas;
@@ -417,12 +431,13 @@ var BridgeOrbit = (function () {
       enigma: [[0.5, 0.3, 0.6, 50, 70, 130, 0.18]],
       singularity: [[0.5, 0.5, 0.7, 160, 70, 40, 0.2]],
       verdance: [[0.25, 0.25, 0.55, 60, 130, 90, 0.16]],
-      hoarfell: [[0.7, 0.3, 0.6, 80, 110, 180, 0.2]]
+      hoarfell: [[0.7, 0.3, 0.6, 80, 110, 180, 0.2]],
+      sylvara: [[0.3, 0.3, 0.6, 70, 140, 90, 0.18], [0.75, 0.2, 0.4, 170, 150, 70, 0.12]]
     }[loc] || [];
     nebula(ctx, x, y, w, h, neb);
     drawStars(ctx, x, y, w, h, now, loc.length * 7 + 1, 1 / 900000);
     var R;
-    if (P.planet === 'ocean' || P.planet === 'city' || P.planet === 'garden' || P.planet === 'ice') {
+    if (P.planet === 'ocean' || P.planet === 'city' || P.planet === 'garden' || P.planet === 'ice' || P.planet === 'forest') {
       // a world below the window: the top third of it, its limb arcing across
       R = Math.round(Math.min(w * 0.32, h * 1.5));
       drawPlanet(ctx, P.planet, x + w * 0.58, y + h * (opts.horizon || 0.14) + R, R, now);
@@ -432,6 +447,12 @@ var BridgeOrbit = (function () {
           ctx.fillStyle = m[3]; ctx.beginPath(); ctx.arc(cx0, cy0, r0, 0, Math.PI * 2); ctx.fill();
           ctx.fillStyle = 'rgba(4,4,12,0.6)'; ctx.beginPath(); ctx.arc(cx0 + r0 * 0.5, cy0, r0, 0, Math.PI * 2); ctx.fill();
         });
+      }
+      if (P.planet === 'forest') {       // Sylvara's moon, silver-green, the one the Moonwell keeps
+        var fr = Math.max(5, Math.round(h * 0.08)), fx = x + w * 0.2, fy = y + h * 0.18;
+        ctx.fillStyle = 'rgba(168,224,216,0.18)'; ctx.beginPath(); ctx.arc(fx, fy, fr * 1.8, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#d8ece4'; ctx.beginPath(); ctx.arc(fx, fy, fr, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(4,4,12,0.45)'; ctx.beginPath(); ctx.arc(fx - fr * 0.45, fy, fr, 0, Math.PI * 2); ctx.fill();
       }
       if (P.planet === 'ocean') {        // Lumar's moon
         var mr = Math.max(6, Math.round(h * 0.09));
@@ -461,7 +482,7 @@ var BridgeOrbit = (function () {
     drawRing(ctx, cx, cy, R, true, tilt || 0.28);
   }
 
-  /** Which kind of world a place is ('ocean', 'city', 'gas', 'garden', 'ice', 'hole' or null for open space). */
+  /** Which kind of world a place is ('ocean', 'city', 'gas', 'garden', 'ice', 'forest', 'hole' or null for open space). */
   function kindOf(id) { return (PLACES[id] || {}).planet || null; }
 
   return { draw: draw, getLocation: getLocation, setLocation: setLocation, placeName: placeName, kindOf: kindOf,

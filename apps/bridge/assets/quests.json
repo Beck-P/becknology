@@ -621,5 +621,65 @@
       "from": "Hob Dunmore",
       "text": "IT'S QUIET DOWN THERE NOW, BUT NOT SILENT - MORE LIKE IT'S LISTENING. I WENT DOWN TO FIFTEEN YESTERDAY FOR THE FIRST TIME IN TWENTY YEARS. BRING ME SOME STAR IRON SOMETIME AND I'LL MAKE YOU SOMETHING WORTH CARRYING. - HOB"
     }
+  },
+  "queens-favour": {
+    "title": "The Queen's Favour",
+    "where": "Sylvara",
+    "reward": 300,
+    "start": "Queen Alyssa asked you, quietly, to find the ribbon Beckolas lost from his sword.",
+    "done": "The queen's favour is back on her first sword's hilt. Beckolas owes you one, and he is the sort to remember it.",
+    "clues": [
+      {
+        "id": "charge",
+        "on": {
+          "world": "sylvara-hall",
+          "label": "QUEEN ALYSSA"
+        },
+        "text": "The queen tied a ribbon to Beckolas's sword, green silk worked with gold leaves. He's lost it and is too proud to tell her. She knows anyway."
+      },
+      {
+        "id": "song",
+        "after": "charge",
+        "on": {
+          "world": "sylvara",
+          "label": "BARD"
+        },
+        "text": "The bard is already writing a song about it: the first sword at the Moonwell, a gust of wind, a ribbon gone up into the willow."
+      },
+      {
+        "id": "dawn",
+        "after": "charge",
+        "on": {
+          "world": "sylvara",
+          "label": "HERBALIST"
+        },
+        "text": "At dawn the herbalist saw Beckolas climbing the willow by the Moonwell in full armour, and climbing down again with nothing."
+      },
+      {
+        "id": "ribbon",
+        "after": [
+          "song",
+          "dawn"
+        ],
+        "on": {
+          "world": "sylvara",
+          "label": "WILLOW"
+        },
+        "text": "With what the bard and the herbalist told you, you know where to look: high in the willow over the Moonwell, caught on a frond, a ribbon of green silk with gold leaves. You climb up and free it."
+      },
+      {
+        "id": "return",
+        "after": "ribbon",
+        "on": {
+          "world": "sylvara-hall",
+          "label": "BECKOLAS"
+        },
+        "text": "You hand Beckolas the ribbon. He ties it back on his sword without a word, then bows to you, very low. On the throne, the queen pretends not to notice, and smiles."
+      }
+    ],
+    "letter": {
+      "from": "beckolas",
+      "text": "Traveller.\n\nI am not good at letters. The queen says that is obvious and to write it anyway.\n\nThank you for the ribbon. You could have told the whole glade. You told no one, and you gave it to me to give back. That was kind, and I don't forget kindness.\n\nIf you are ever in Elderglade and in trouble, say my name. Loudly. I will come.\n\nBeckolas, first sword of the queen"
+    }
   }
 }

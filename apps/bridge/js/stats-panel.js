@@ -119,7 +119,7 @@ var BridgeStatsPanel = (function () {
       if (trEl) trEl.textContent = earned;
 
       // Worlds visited count (6 hyperspace destinations)
-      var worldKeys = ['visited_arcadia', 'visited_lumar', 'visited_singularity', 'visited_enigma', 'visited_verdance', 'visited_hoarfell'];
+      var worldKeys = ['visited_arcadia', 'visited_lumar', 'visited_singularity', 'visited_enigma', 'visited_verdance', 'visited_hoarfell', 'visited_sylvara'];
       var visited = worldKeys.filter(function (k) { return set.has(k); }).length;
       var wEl = document.getElementById('stats-worlds');
       if (wEl) wEl.textContent = visited;
