@@ -2,10 +2,9 @@
  * BridgeSloop — sail yourself from one Lumar island to the next, in a small boat, at the world's own scale.
  *
  * You cast off from the island's quay in the sloop (a Blender sheet, js/../assets/scenes/sloop: the hull at 32
- * headings) and sail the strait to the other island's quay. The islands are their own scene renders at full size,
- * with their own water (BridgeSea.drawWaterAt), so you sail away from the place you were standing and come in to
- * the place you'll step onto; between them the spore sea, in each island's colour, with a seam of foam where the
- * two seas meet.
+ * headings) onto one sea laid out like the chart: every island at its true place (its own scene render at full size,
+ * with its own water, BridgeSea.drawWaterAt, coming up over the horizon as you near it), the water the colour of
+ * whichever of the five spore seas you're in, with a seam of foam where they meet. Sail anywhere; arrive anywhere.
  *
  * Sailing is the real thing, simply: the wind comes over one side (the pennant at the masthead shows where), you
  * steer with the tiller (←/→) and trim the sheet (↑ haul in, ↓ ease out). Too far out and the sail luffs and you
@@ -157,13 +156,13 @@ var BridgeSloop = (function () {
   var boat = null, wind = null, cam = null, keys = {}, phase = 'load', phaseAt = 0;
   var wake = [], spray = [], gulls = [], fish = [], things = [], whale = null;
   var msg = null, msgAt = 0, prompt = null, menu = null, sheetImg = null, readyCount = 0, hold = 0;
-  var seaWas = null, lastLuff = 0, lastBell = 0, auto = true, route = [], leg = 0, ironsT = 0, routeLen = 1;
+  var seaWas = null, lastLuff = 0, lastBell = 0, auto = true, route = [], leg = 0, ironsT = 0;
   // the sail trims itself (the easy way, and the default); T to trim by hand, remembered
   function autoPref(set) {
     try { if (set != null) localStorage.setItem('bridge_sail_hand', set ? '0' : '1'); return localStorage.getItem('bridge_sail_hand') !== '1'; } catch (e) { return true; }
   }
   var traffic = [], wisps = [], storm = null, told = {}, aim = null, hinted = false, said = {}, castOut = null;
-  var cells = {}, gotKeys = {}, cellsAt = 0, replanAt = 0, openT = 0, troubleAt = 0, edgeTold = false, seaSeen = { at: 0, pal: null };
+  var cells = {}, gotKeys = {}, cellsAt = 0, replanAt = 0, courseSailed = 0, openT = 0, troubleAt = 0, edgeTold = false, seaSeen = { at: 0, pal: null };
   // each sea's character: how hard it blows, and what the sailors say of it
   var BASE = { emerald: 0.92, sapphire: 0.95, rose: 0.82, crimson: 1.2, midnight: 0.62 };
   var CALM = { emerald: true, sapphire: true, rose: true };
@@ -477,15 +476,15 @@ var BridgeSloop = (function () {
     buoys(I);
     homeGulls(I);
     cellsAt = 0;                                     // what's adrift comes up again, minus anything on its shore
-    if (I.id === course) { B = I; replan(true); }
+    if (I.id === course) { B = I; replan(); }          // now its harbour's known: in by its channel
   }
 
   // ---- a course: the gold mark leads out of the harbour you're in, round anything in the way, in to her berth -------------
   function commit(id, quiet) {
     if (!running || !isles()[id]) return false;
-    course = id; to = id; aim = null; B = isl[id] || null;
+    course = id; to = id; aim = null; B = isl[id] || null; courseSailed = 0;
     if (!quiet) say('You set a course for ' + isles()[id].name + '.', 3200);
-    replan(true);
+    replan();
     if (crewOf && net()) net().send('course', { id: id }, crewOf.id);
     return true;
   }
@@ -513,7 +512,7 @@ var BridgeSloop = (function () {
     var w = [best.sh.x + ux / n * (best.sh.a + best.m) * 1.3, best.sh.r + ur / n * (best.sh.b + best.m) * 1.3];
     return detour(p, w, depth + 1).concat(detour(w, q, depth + 1));
   }
-  function replan(fresh) {
+  function replan() {
     if (!course || !boat) { route = []; leg = 0; return; }
     var pts = [], p0 = [boat.x, boat.r], inI = null;
     for (var id in isl) if (id !== course && isl[id].chan && inHarbour(isl[id], boat.x, boat.r, 0)) inI = isl[id];
@@ -524,11 +523,25 @@ var BridgeSloop = (function () {
       p0 = inI.exit;
     }
     var c = centreOf(course), goal = B ? B.exit : [c.x, c.r];
+    if (B && inHarbour(B, boat.x, boat.r, 2)) {                // already in her harbour: on in by its channel from where you are
+      var inn = B.chan.slice().reverse().concat([B.moor.slice()]), j0 = 0, jd = 1e9;
+      inn.forEach(function (p, i) { var d = Math.hypot(p[0] - boat.x, p[1] - boat.r); if (d < jd) { jd = d; j0 = i; } });
+      route = inn.slice(j0).map(function (p) { return p.slice(); }); leg = 0;
+      while (leg < route.length - 1 && Math.hypot(boat.x - route[leg][0], boat.r - route[leg][1]) < 3.5) leg++;
+      return;
+    }
     pts = pts.concat(detour(p0, goal, 0));
     if (B) pts = pts.concat(B.chan.slice(0, -1).reverse(), [B.moor.slice()]);
     route = pts; leg = 0;
     while (leg < route.length - 1 && Math.hypot(boat.x - route[leg][0], boat.r - route[leg][1]) < 3.5) leg++;
-    if (fresh) routeLen = Math.max(1, togo());
+  }
+  // how far you are off the leg you're on (from the last mark to the next), to know when you've strayed from it
+  function offCourse() {
+    var q = route[leg];
+    if (!q) return 0;
+    var p = leg > 0 ? route[leg - 1] : q, dx = q[0] - p[0], dr = q[1] - p[1], L = dx * dx + dr * dr;
+    var t = L ? clamp(((boat.x - p[0]) * dx + (boat.r - p[1]) * dr) / L, 0, 1) : 0;
+    return Math.hypot(boat.x - (p[0] + dx * t), boat.r - (p[1] + dr * t));
   }
   function togo() {                                  // how far still to sail along the course
     var L = 0, p = [boat.x, boat.r];
@@ -686,7 +699,7 @@ var BridgeSloop = (function () {
       shipId = null; shipName = captainOf.shipName || 'their boat'; act = null; aboardStart = true;
     }
     running = true; from = fromId; to = null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
-    wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = autoPref(); ironsT = 0;
+    wake = []; spray = []; fish = []; msg = null; msgQ = []; prompt = null; readyCount = 0; seaWas = null; auto = autoPref(); ironsT = 0;
     aim = null; hinted = false; said = {}; told = {}; B = null; wrecking = false; shakeUntil = 0;
     isl = {}; islLoading = {}; shapes = {}; wcells = {}; sky = { squall: 0, fog: 0, systems: [] }; course = null; dockAt = null; pa = null; hereAt = null; voyN++;
     seaSeen = { at: 0, pal: null };
@@ -825,7 +838,7 @@ var BridgeSloop = (function () {
   var KEYS = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'e', ' ', 'enter', 'escape', 't', 'h'];
   function onKey(e) {
     var k = (e.key || '').toLowerCase();
-    if (chartOpen() || fishingOpen()) return;                          // the chart (or the rod) has the keys while it's open
+    if (chartOpen() || fishingOpen() || overlayOpen()) return;         // the chart, the rod, a dialog or the game menu has the keys while it's open
     if (KEYS.indexOf(k) < 0) return;
     e.preventDefault(); e.stopPropagation();
     if (menu) {
@@ -846,6 +859,10 @@ var BridgeSloop = (function () {
   function onKeyUp(e) { keys[(e.key || '').toLowerCase()] = false; }
   function chartOpen() { return typeof BridgeChart !== 'undefined' && BridgeChart.isOpen(); }
   function fishingOpen() { return typeof BridgeFishing !== 'undefined' && BridgeFishing.isOpen(); }
+  // a world dialog (the players panel, a chat) or the game menu opened over the sea: its keys are its own
+  function overlayOpen() {
+    return !!document.querySelector('.world-dialog.visible') || (typeof BridgeMenu !== 'undefined' && !!BridgeMenu.isOpen && !!BridgeMenu.isOpen());
+  }
   function openChart() { if (typeof BridgeChart === 'undefined' || menu) return; keys = {}; BridgeChart.open(); }
   function onPointer() { if (prompt && phase === 'sail' && !fishingOpen()) prompt.act(); }
   function down(a, b) { return keys[a] || keys[b]; }
@@ -893,7 +910,17 @@ var BridgeSloop = (function () {
   }
   function closeMenu() { if (menu) menu.remove(); menu = null; keys = {}; var f = onMenuClose; onMenuClose = null; if (f) f(); }
 
-  function say(text, ms) { msg = text; msgAt = performance.now() + (ms || 3200); }
+  // a line on the screen; one that comes while another's only just up waits its turn (a few at most), so a front or a squall
+  // said in the same breath as something else is still read
+  var msgQ = [], msgFrom = 0;
+  function say(text, ms) {
+    var now = performance.now();
+    if (msg && text !== msg && now < msgAt && now - msgFrom < 1500) {
+      if (msgQ.length < 3 && msgQ.every(function (q) { return q[0] !== text; })) msgQ.push([text, ms]);
+      return;
+    }
+    msg = text; msgAt = now + (ms || 3200); msgFrom = now;
+  }
   var shakeUntil = 0, wrecking = false;
   // damage to the ship you're sailing (hull points); what's left of her, 0..1
   function hullHit(pts) {
@@ -1198,6 +1225,7 @@ var BridgeSloop = (function () {
       b.v = Math.min(b.v * 0.25, 0.3);
       b.bump = 0.4;
     } else {
+      if (course && phase === 'sail') courseSailed += Math.hypot(nx - b.x, nr - b.r);
       b.x = nx; b.r = nr;
       if (groundAt(b.x, b.r) === 2 && b.v > 0.8) { b.v *= 1 - dt * 1.8; if (Math.random() < dt * 2) say('The keel touches the shallows', 1400); }
     }
@@ -1237,7 +1265,7 @@ var BridgeSloop = (function () {
         if (aim && aim.t > 2.2 && b.v > 0.6) commit(aim.id);
       }
     }
-    if (course && now - replanAt > 2000) { replanAt = now; replan(false); }        // the gold mark from wherever you've got to
+    if (course && now - replanAt > 2000) { replanAt = now; if (offCourse() > 24) replan(); }   // strayed well off it: the gold mark from wherever you've got to
     // the next leg of the course (the gold mark on the compass)
     while (leg < route.length - 1 && Math.hypot(b.x - route[leg][0], b.r - route[leg][1]) < 3.5) leg++;
     prompt = null;
@@ -1307,7 +1335,8 @@ var BridgeSloop = (function () {
       ['Speed', captainOf ? 'You\'re crew: the captain sails her. Fish over the side when she\'s stopped.'
         : auto ? (t ? 'Pull the stick down to lower the sail and slow down - all the way down to stop. Push it up to raise it again.' : '↓ lowers the sail to slow down - all the way down to stop. ↑ raises it. The sail trims itself (T if you\'d rather trim the sheet by hand).')
         : '↑ hauls the sheet in, ↓ eases it out: keep the marker on the green. (T lets the sail trim itself.)'],
-      ['Islands', 'Turn till a dot on the compass rim lines up with your bow and hold it: that\'s your course. Or open the chart (' + (t ? 'Chart' : 'C') + ') and pick one. Sail on into water you have no chart for and you may stumble on land.'],
+      ['Islands', 'Every island lies where the chart shows it. Turn till a dot on the compass rim lines up with your bow and hold it: that\'s your course, and the gold dot leads you there. Or open the chart (' + (t ? 'Chart' : 'C') + ') and pick one. Islands you have no chart for aren\'t on the compass - sail their way and you\'ll find them.'],
+      ['Weather', 'Watch the water: dark ripples are gusts coming, a grey curtain is a rain squall, a pale bank is fog. Sail into them or round them. The wind shifts now and then - you\'ll hear it coming.'],
       ['Arriving', 'Follow the gold dot into the harbour and ' + (t ? 'tap' : 'press E') + ' to come alongside.'],
       ['Stuck?', 'Facing into the wind she stops, and her bow slowly falls away. The menu (' + (t ? '⋯' : 'Esc') + ') can skip ahead or put back to port any time.']
     ];
@@ -1361,6 +1390,12 @@ var BridgeSloop = (function () {
     windAt(b.x, b.r, T);
     if (phase === 'sail') windNews(T);
     if (phase === 'sail' && offshore(b.x, b.r)) openT += dt;
+    if (course) {                                                     // their course, on your compass too: the mark moves on as she does
+      if (b.lastX != null && phase === 'sail') courseSailed += Math.min(2, Math.hypot(b.x - b.lastX, b.r - b.lastR));
+      if (now - replanAt > 2000) { replanAt = now; if (offCourse() > 24) replan(); }
+      while (leg < route.length - 1 && Math.hypot(b.x - route[leg][0], b.r - route[leg][1]) < 3.5) leg++;
+    }
+    b.lastX = b.x; b.lastR = b.r;
     life(dt, now);
     crossing(seaHere(), now);
     if (phase === 'sail') landHo();
@@ -2445,7 +2480,7 @@ var BridgeSloop = (function () {
     ctx.fillText(A.name.toUpperCase(), bx0, by0);
     var unk = unchartedNear();
     if (course) {
-      var prog = clamp(1 - togo() / routeLen, 0, 1);
+      var prog = clamp(courseSailed / Math.max(1, courseSailed + togo()), 0, 1);
       ctx.textAlign = 'right'; ctx.fillStyle = '#ffd060'; ctx.fillText(isles()[course].name.toUpperCase(), bx0 + bw, by0);
       ctx.fillStyle = '#2a3040'; ctx.fillRect(bx0, by0 + px(10), bw, px(4));
       ctx.fillStyle = '#ffd060'; ctx.fillRect(bx0, by0 + px(10), bw * prog, px(4));
@@ -2458,6 +2493,7 @@ var BridgeSloop = (function () {
     if (course && unk) { ctx.textAlign = 'right'; ctx.fillStyle = '#c8d0e0'; ctx.fillText('UNCHARTED ISLAND NEAR', bx0 + bw, by0 + px(26)); }
     // a message, and what E does here
     ctx.textAlign = 'center';
+    if (msgQ.length && (!(msg && now < msgAt) || now - msgFrom > 2400)) { var nq = msgQ.shift(); msg = nq[0]; msgAt = now + (nq[1] || 3200); msgFrom = now; }   // the next waiting line: each gets a fair look
     if (msg && now < msgAt) {
       ctx.font = px(13) + 'px "Pixelify Sans", monospace';
       var lines = wrapText(msg, Math.floor(canvas.width / px(8.2)));
