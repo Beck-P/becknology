@@ -138,7 +138,7 @@ var Bridge = (function () {
         if (typeof BridgeWorld !== 'undefined') BridgeWorld.show(context && context.spawn);
         // Track wayfarer progress when player lands on a hyperspace destination.
         if (typeof BridgeProgression !== 'undefined' && context && context.worldId) {
-          var destinations = { arcadia: 1, lumar: 1, singularity: 1, enigma: 1, 'arcadia-street': 1, verdance: 1, hoarfell: 1 };
+          var destinations = { arcadia: 1, lumar: 1, singularity: 1, enigma: 1, 'arcadia-street': 1, verdance: 1, hoarfell: 1, sylvara: 1 };
           var landed = context.worldId === 'verdance-village' ? 'verdance' : context.worldId;   // Verdance's shuttle sets down in Brambleford
           if (destinations[landed]) {
             if (typeof BridgeStarmap !== 'undefined' && BridgeStarmap.markVisited) {

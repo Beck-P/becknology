@@ -2414,5 +2414,140 @@
         "a": "THE SAILMAKERS WEAVE SEED-CRYSTAL INTO THE CANVAS. LIGHTER, STIFFER, POINTS HIGHER INTO THE WIND. MIRA ON THE PIER FITS THEM. EXPENSIVE. WORTH IT, IF YOU SAIL TO WINDWARD MUCH, AND EVERYONE DOES IN THE END."
       }
     ]
+  },
+  "alyssa": {
+    "name": "Queen Alyssa",
+    "role": "Queen of the wood elves, Elderglade",
+    "sheet": "npc-alyssa",
+    "at": [
+      {
+        "world": "sylvara-hall",
+        "label": "QUEEN ALYSSA"
+      }
+    ],
+    "greet": "RISE, TRAVELLER FROM THE STARS. THE WOOD TOLD ME YOU WERE COMING. IT TELLS ME MOST THINGS, EVENTUALLY. WELCOME TO ELDERGLADE.",
+    "again": "AH, OUR TRAVELLER AGAIN. THE TREE LIKES YOU, I THINK. SO DO I.",
+    "topics": [
+      {
+        "q": "Your Majesty",
+        "a": "I HAVE KEPT THIS WOOD SINCE THE OLD QUEEN WENT INTO THE WEST. THE ELVES ASK ME FOR JUDGEMENTS, THE TREES ASK ME FOR NOTHING, AND BECKOLAS ASKS ME TO PLEASE STOP WALKING IN THE WOOD WITHOUT HIM. ALL THREE ARE RIGHT, IN THEIR WAY."
+      },
+      {
+        "q": "Beckolas",
+        "a": "MY FIRST SWORD. HE SWORE HIS OATH AT THE MOONWELL WITH HALF THE WOOD WATCHING, AND HE HAS NOT BEEN MORE THAN A STEP FROM MY RIGHT HAND SINCE. HE THINKS I DON'T NOTICE HOW OFTEN HE LOOKS OVER AT ME. I NOTICE."
+      },
+      {
+        "q": "Can I serve you?",
+        "a": "THERE IS ONE THING, AND QUIETLY. I TIED A RIBBON TO BECKOLAS'S SWORD, GREEN SILK WITH GOLD LEAVES, A FAVOUR TO CARRY. HE HAS LOST IT, AND HE IS TOO PROUD TO TELL ME. FIND IT FOR ME? AND LET HIM BE THE ONE TO GIVE IT BACK. ASK AROUND THE GLADE. ELVES GOSSIP LIKE LEAVES."
+      },
+      {
+        "q": "Elderglade",
+        "a": "THE GREAT TREE, THE MOONWELL, AND EVERY ROOF IN THE GLADE GROWN, NOT BUILT. WALK IT AT DUSK, WHEN THE LANTERNS ARE LIT. THAT IS WHEN IT IS MOST ITSELF."
+      }
+    ]
+  },
+  "beckolas": {
+    "name": "Beckolas",
+    "role": "First sword of the queen",
+    "sheet": "npc-beckolas",
+    "at": [
+      {
+        "world": "sylvara-hall",
+        "label": "BECKOLAS"
+      }
+    ],
+    "greet": "STATE YOUR BUSINESS WITH THE QUEEN. SLOWLY. ...YOU HAVE AN HONEST FACE. FINE. I'M STILL WATCHING YOU.",
+    "again": "TRAVELLER. THE QUEEN IS WELL. I CHECKED. TWICE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I SWORE MY SWORD TO QUEEN ALYSSA AT THE MOONWELL, AND I MEANT EVERY WORD. WHERE SHE WALKS, I WALK. WHERE SHE SITS, I STAND. IT IS THE BEST WORK THERE IS."
+      },
+      {
+        "q": "The queen",
+        "a": "SHE IS WISER THAN THE TREE AND KINDER THAN SHE LETS ANYONE SEE. AND SHE LAUGHS AT MY JOKES, WHICH, I AM TOLD, IS RARE."
+      },
+      {
+        "q": "Your sword",
+        "a": "...IT IS A GOOD SWORD. THERE IS NOTHING MISSING FROM IT. WHY DO YOU ASK. WHO HAVE YOU BEEN TALKING TO."
+      }
+    ]
+  },
+  "elf_bard": {
+    "name": "Thaelin",
+    "role": "Bard of Elderglade",
+    "sheet": "npc-elf-bard",
+    "at": [
+      {
+        "world": "sylvara",
+        "label": "BARD"
+      }
+    ],
+    "greet": "A NEW FACE! SIT, SIT. I NEED SOMEONE WHO HASN'T HEARD THE SONG ABOUT THE QUEEN AND THE FIRST SWORD. EVERYONE HERE HAS HEARD IT. SEVERAL TIMES.",
+    "again": "BACK FOR ANOTHER VERSE?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I PLAY FOR THE GLADE AND THE GLADE PUTS UP WITH ME. MY HARP WAS STRUNG WITH HAIR FROM A UNICORN'S TAIL, OR A VERY PATIENT HORSE. I'VE NEVER ASKED."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "I'M WRITING A NEW ONE: THE FIRST SWORD AT THE MOONWELL, A GUST OF WIND, AND A RIBBON GONE UP INTO THE WILLOW. BECKOLAS HAS ASKED ME, VERY POLITELY, WITH HIS HAND ON HIS SWORD, NOT TO SING IT."
+      },
+      {
+        "q": "The queen",
+        "a": "SHE CAME TO THE THRONE YOUNG AND THE OLD ELVES DOUBTED HER. ONE WINTER LATER THEY'D HAVE FOLLOWED HER INTO THE SEA. IT'S IN THE SONG. THE LONG VERSION."
+      }
+    ]
+  },
+  "elf_herbalist": {
+    "name": "Mirelle",
+    "role": "Herbalist, Elderglade",
+    "sheet": "npc-elf-herbalist",
+    "at": [
+      {
+        "world": "sylvara",
+        "label": "HERBALIST"
+      }
+    ],
+    "greet": "MIND THE THYME, IT BRUISES. YOU'RE THE ONE FROM THE STARS? YOU LOOK TIRED. EVERYONE FROM THE STARS LOOKS TIRED.",
+    "again": "STILL STANDING? GOOD. DRINK SOMETHING GREEN.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I'VE KEPT THIS STALL FOR FOUR HUNDRED YEARS. I GREW MY HAIR WHITE ON PURPOSE. IT MAKES PEOPLE LISTEN."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "AT DAWN I SAW THE FIRST SWORD BY THE MOONWELL, CLIMBING THE WILLOW IN FULL ARMOUR, VERY QUIETLY. THEN CLIMBING DOWN AGAIN WITH NOTHING, VERY QUIETLY. I DIDN'T ASK. I DID WATCH."
+      },
+      {
+        "q": "The Moonwell",
+        "a": "IT SHOWS YOU WHAT YOU'D CROSS THE SEAS FOR. MOST PEOPLE LOOK ONCE AND GO HOME A LITTLE DIFFERENT."
+      }
+    ]
+  },
+  "elf_warden": {
+    "name": "Aerin",
+    "role": "Warden of the landing ring",
+    "sheet": "npc-elf-warden",
+    "at": [
+      {
+        "world": "sylvara",
+        "label": "WARDEN"
+      }
+    ],
+    "greet": "WELCOME TO SYLVARA, SKY-TRAVELLER. YOUR SHIP WILL BE SAFE ON THE RING. THE TREES WILL NOT TOUCH IT. PROBABLY.",
+    "again": "THE RING HOLDS. YOUR SHIP IS WELL.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I KEEP THE RING FOR THOSE WHO COME DOWN FROM THE STARS. YOU ARE THE FIRST IN A LONG WHILE WHO DIDN'T LAND ON A TREE."
+      },
+      {
+        "q": "Where should I go?",
+        "a": "UP THE PATH TO THE GREAT TREE. THE QUEEN HOLDS COURT INSIDE. KNEEL, BE HONEST, AND DON'T MAKE ANY SUDDEN MOVES NEAR BECKOLAS."
+      }
+    ]
   }
 }

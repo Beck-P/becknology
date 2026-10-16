@@ -67,7 +67,8 @@ var BridgeInteractions = (function () {
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port',
-                      'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void' };
+                      'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void',
+                      'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall' };
 
   function titleCase(t) {
     return String(t || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z\u00e0-\u00ff])/g, function (m, a, b) {
@@ -763,6 +764,7 @@ var BridgeInteractions = (function () {
     if (ts === 'singularity' || id === 'singularity') return 'void';
     if (ts === 'verdance' || /^verdance/.test(id)) return 'meadow';
     if (ts === 'hoarfell' || /^hoarfell/.test(id)) return 'frost';
+    if (ts === 'sylvara' || /^sylvara/.test(id)) return 'sylvan';
     return 'holo';
   }
 

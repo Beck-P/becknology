@@ -127,6 +127,7 @@ var BridgeGear = (function () {
     if (ts === 'enigma' || /^enigma/.test(id)) return 'crt';
     if (ts === 'verdance' || /^verdance/.test(id)) return 'meadow';
     if (ts === 'hoarfell' || /^hoarfell/.test(id)) return 'frost';
+    if (ts === 'sylvara' || /^sylvara/.test(id)) return 'sylvan';
     return 'holo';
   }
   function pilotColour() {
