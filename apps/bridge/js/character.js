@@ -372,7 +372,7 @@ var BridgeCharacter = (function () {
     var shadow = { x: cx, y: footY, rx: 9, ry: 3 };
     if (o.sc) {
       BridgeScene.drawOccluded(ctx, o.sc, fcan, 0, 0, W, H, cx + x0, footY + y0, footRow, o.offX, o.offY,
-        BridgeScene.tintAt(o.sc, o.world, o.x, o.y, o.now), shadow, null, false, true);
+        BridgeScene.tintAt(o.sc, o.world, o.x, o.y, o.now), shadow, null, 'auto', true);
     } else {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
       ctx.beginPath(); ctx.ellipse(cx, footY, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
