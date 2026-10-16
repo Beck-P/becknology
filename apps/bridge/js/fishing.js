@@ -103,8 +103,29 @@ var BridgeFishing = (function () {
   }
 
   // ---- the panel -----------------------------------------------------------------------------------
-  var el = null, cv = null, ctx = null, raf = 0, st = null, held = false;
-  var W = 420, H = 150;
+  // A little pixel scene of the water, side on: the pier (or the boat's rail, or the ice) at the left, your rod over
+  // it, the bobber out on the surface, the hook below it, and fish shadows going about their business — one of them
+  // comes for your hook before it bites (a bigger shadow for a rarer fish). Drawn at NW × NH native pixels and shown
+  // at a whole multiple, like the world. The water takes the colour of the sea you're fishing.
+  var el = null, cv = null, ctx = null, raf = 0, st = null, held = false, keyDown = false;
+  var NW = 210, NH = 76, SURF = 26;                              // native size; the water's surface row
+  var PERFECT_CAST = 0.88;                                       // let go above this on the swing: a perfect cast
+  var buf = null, bctx = null, bgKey = '', bg = null;
+
+  var WATER = {                                                  // the water by where you are: four depths, the surface, glints
+    emerald:  { w: ['#1a5a48', '#12443a', '#0a2c26', '#041612'], s: '#4ab08a', g: '#78f4c8' },
+    sapphire: { w: ['#1a3a6a', '#132c54', '#0b1c3a', '#050e20'], s: '#4a7ad0', g: '#9ad0ff' },
+    rose:     { w: ['#5a2a5a', '#46204a', '#2e1434', '#18081c'], s: '#b06ab0', g: '#ffb0ec' },
+    crimson:  { w: ['#5a1a1e', '#461418', '#2e0c10', '#160406'], s: '#b04a3a', g: '#ffb488' },
+    midnight: { w: ['#262850', '#1c1c3e', '#12122c', '#08081a'], s: '#6060b0', g: '#c8c0ff' },
+    moonpool: { w: ['#2e3e62', '#223252', '#16223c', '#0a1222'], s: '#a8b8e8', g: '#f4f4ff' },
+    pond:     { w: ['#3a7a70', '#2e655c', '#22504a', '#183a34'], s: '#8ad0c0', g: '#fffbe0', day: true },
+    ice:      { w: ['#1e4a6a', '#163a58', '#0e2a44', '#081a2e'], s: '#a8d4ea', g: '#e8f8ff', ice: true }
+  };
+  var POOL_SEA = { harbour: 'emerald', sea_emerald: 'emerald', sapphire: 'sapphire', sea_sapphire: 'sapphire', rose: 'rose', sea_rose: 'rose',
+                   crimson: 'crimson', sea_crimson: 'crimson', midnight: 'midnight', sea_midnight: 'midnight', moonpool: 'moonpool', pond: 'pond', ice: 'ice' };
+  function look() { return WATER[POOL_SEA[st.pool] || 'emerald']; }
+  var TIER_COL = ['#e8e0c0', '#80c8ff', '#d8a0ff', '#ffd060'];
 
   function name(id) {
     if (id === 'bottle') return 'Message in a bottle';
@@ -122,25 +143,35 @@ var BridgeFishing = (function () {
     for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) return list[i][0]; }
     return list[0][0];
   }
+  function sfx(n) { if (n && typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(n); }
+  function touch() { return document.documentElement.classList.contains('touch'); }
 
   function set(phase, extra) {
     st.phase = phase; st.t0 = performance.now();
-    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx({ wait: 'splash', bite: 'plop', caught: 'catch', lost: 'fail' }[phase]);
+    sfx({ wait: 'splash', bite: 'plop', caught: 'catch', lost: 'fail' }[phase]);
     if (extra) Object.keys(extra).forEach(function (k) { st[k] = extra[k]; });
-    var big = st.catchId ? tierOf(st.catchId) : 0;
-    var hint = { ready: 'Hold to cast', charge: 'Let go to cast', wait: 'Wait for a bite…',
-                 bite: big >= 3 ? 'STRIKE! It\'s enormous!' : big >= 2 ? 'Strike! Something big!' : 'Strike!',
-                 reel: big >= 3 ? 'Hold on - it\'s a monster! Keep it in the zone' : 'Hold to lift, let go to drop - keep it in the zone',
-                 caught: 'Again: hold to cast · Esc to stop', lost: 'Hold to cast again · Esc to stop' }[phase] || '';
+    var big = st.catchId && phase !== 'wait' ? tierOf(st.catchId) : 0, k = touch() ? '' : 'Space ';
+    var hint = { ready: touch() ? 'Hold to cast · let go in the gold' : 'Hold Space to cast · let go in the gold', charge: 'Let go…',
+                 wait: 'Wait for a bite - don\'t strike early', bite: big >= 3 ? 'STRIKE! It\'s enormous!' : big >= 2 ? 'Strike! Something big!' : 'Strike!',
+                 reel: big >= 3 ? 'A monster - hold ' + k + 'to lift the bar, keep the fish in it' : 'Hold ' + k + 'to lift the bar · keep the fish in it',
+                 caught: (touch() ? 'Hold' : 'Hold Space') + ' to cast again · Esc to stop', lost: (touch() ? 'Hold' : 'Hold Space') + ' to cast again · Esc to stop' }[phase] || '';
     el.querySelector('.fi-hint').textContent = hint;
+  }
+  // a word that pops up over the water: PERFECT CAST, TREASURE, TOO SOON…
+  function pop(text, kind) {
+    var p = document.createElement('div');
+    p.className = 'fi-pop' + (kind ? ' fi-pop-' + kind : '');
+    p.textContent = text;
+    el.appendChild(p);
+    setTimeout(function () { p.remove(); }, 1300);
   }
 
   function press() {
     held = true;
-    if (!st) return;
-    if (st.phase === 'ready' || st.phase === 'caught' || st.phase === 'lost') set('charge');
+    if (!st || card) return;
+    if (st.phase === 'ready' || ((st.phase === 'caught' || st.phase === 'lost') && performance.now() > (st.calm || 0))) set('charge');
     else if (st.phase === 'bite') hook();
-    else if (st.phase === 'wait') { set('lost', { msg: 'Too soon - you pulled it out of the water.' }); }
+    else if (st.phase === 'wait' && performance.now() - st.t0 > 500) { pop('TOO SOON', 'bad'); set('lost', { msg: 'Too soon - you pulled it out of the water.', snap: false }); }
   }
 
   function release() {
@@ -148,17 +179,44 @@ var BridgeFishing = (function () {
     if (st && st.phase === 'charge') {
       var t = (performance.now() - st.t0) / 1200;
       var power = 1 - Math.abs((t % 2) - 1);              // the swing goes up and down; let go near the top
+      var perfect = power >= PERFECT_CAST;
+      if (perfect) { power = 1; pop('PERFECT CAST!', 'good'); sfx('blip'); }
       log.casts += 1; store();
+      if (fishes[0]) { fishes[0].s = 3 + Math.floor(Math.random() * 3); fishes[0].x = Math.random() < 0.5 ? -10 : NW + 10; }   // a new one to come for it
       var lucky = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('lucky_horseshoe') > 0;
-      set('wait', { power: power, wait: (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1), nibbles: [], catchId: null });   // the horseshoe: they bite sooner
+      var wait = (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1) * (perfect ? 0.8 : 1);   // the horseshoe: they bite sooner
+      // what takes the hook is decided as it lands (so its shadow can come for it, bigger for a rarer fish)
+      set('wait', { power: power, perfect: perfect, wait: wait, nibbles: [], catchId: pick(st.pool, power), treasure: null, snap: false, hooked: false });
       var n = Math.floor(Math.random() * 3);
-      for (var i = 0; i < n; i++) st.nibbles.push(400 + Math.random() * (st.wait - 600));
+      for (var i = 0; i < n; i++) st.nibbles.push(500 + Math.random() * (st.wait - 900));
     }
   }
 
   function hook() {
     var id = st.catchId || pick(st.pool, st.power), f = FIGHT[id] || FIGHT.silverfin, F = FIGHTS[tierOf(id)];
-    set('reel', { catchId: id, fight: f, tune: F, zoneH: F.zone, zone: 0.1, zv: 0, fish: 0.5, ft: 0.5, progress: F.start, last: performance.now() });
+    var fast = performance.now() - st.t0 < st.window * 0.45;      // struck the instant it went under: a perfect hook
+    if (fast) { pop('PERFECT HOOK!', 'good'); sfx('blip'); }
+    // now and then something else is down there too: a chest, drifting in the reel - hold the bar on it to bring it up
+    var lucky = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('lucky_horseshoe') > 0;
+    var chest = Math.random() < 0.1 + 0.1 * (st.power || 0) + (lucky ? 0.05 : 0) ? { at: 1200 + Math.random() * 2200, y: 0.15 + Math.random() * 0.65, got: 0, done: false, shown: false } : null;
+    set('reel', { catchId: id, fight: f, tune: F, zoneH: F.zone, zone: 0.1, zv: 0, fish: 0.5, ft: 0.5, progress: Math.min(0.6, F.start + (fast ? 0.12 : 0)),
+                  last: performance.now(), treasure: chest, hooked: true, out: 0 });
+  }
+
+  // what a chest holds: coins mostly, sea glass, silver from the Heron, now and then a pearl
+  function openChest() {
+    var r = Math.random(), it = null, n = 1, coins = 0;
+    if (r < 0.4) coins = 20 + Math.floor(Math.random() * 41);
+    else if (r < 0.65) { it = 'sea_glass'; n = 1 + Math.floor(Math.random() * 3); }
+    else if (r < 0.8) { it = 'silver_nail'; n = 1 + Math.floor(Math.random() * 2); }
+    else if (r < 0.93) it = 'heron_coin';
+    else it = 'star_pearl';
+    if (it && typeof BridgeInventory !== 'undefined' && BridgeInventory.addItem(it, n) === false) {   // no room: what it's worth instead
+      var v = (BridgeItems.get(it) || {}).value || 10;
+      coins = v * n; it = null;
+    }
+    if (coins && typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) BridgeProgression.awardCoins(coins, 'fishing:treasure');
+    return it ? n + ' × ' + name(it) : coins + ' coins';
   }
 
   function land() {
@@ -187,13 +245,17 @@ var BridgeFishing = (function () {
       }
       msg = (junk ? '' : size + ' cm' + (best && c.n > 1 ? ' - your biggest yet! ' : '. ')) + where + '.';
     }
+    var chest = st.treasure && st.treasure.done ? openChest() : null;
     store();
-    set('caught', { result: id, msg: msg });
-    reveal({ id: id, tier: tier, size: junk ? 0 : size, best: best && !first, first: first, where: where, quote: id === 'bottle' ? msg : null });
+    set('caught', { result: id, msg: msg, leapTier: tier });
+    reveal({ id: id, tier: tier, size: junk ? 0 : size, best: best && !first, first: first, where: where, quote: id === 'bottle' ? msg : null, chest: chest });
   }
 
   // ---- the catch, up on a card: the fish drawn big, its rarity, its size, NEW the first time -------------------------
-  var card = null, cardTimer = 0;
+  // It takes no notice of keys or taps for a while (longer for the rare ones), and pressing during that only makes it
+  // wait longer — someone still hammering the reel keeps it up until they stop; then a fresh press puts it away.
+  var card = null, cardTimer = 0, LOCK = [1400, 1700, 2300, 3000], STAY = [4200, 5000, 7000, 9500];
+  function hush(c) { c.lockUntil = Math.max(c.lockUntil, performance.now() + 600); c.armed = false; }   // a press too soon: wait on
   function reveal(o) {
     hideCard(true);
     var T = typeof BridgeFishArt !== 'undefined' ? BridgeFishArt.TIERS[o.tier] : { name: '', col: '#e8dcc4' };
@@ -204,9 +266,10 @@ var BridgeFishing = (function () {
     card.style.setProperty('--fr', T.col);
     card.style.setProperty('--fr-a', rgba(T.col, 0.35));
     card.innerHTML = '<div class="fr-burst"></div><div class="fr-card">' + (o.first ? '<div class="fr-new">NEW!</div>' : '') +
-      '<div class="fr-art"></div><div class="fr-tier"></div><div class="fr-name"></div><div class="fr-size"></div><div class="fr-where"></div></div>';
-    var art = card.querySelector('.fr-art'), cv = typeof BridgeFishArt !== 'undefined' && BridgeFishArt.canvas(o.id, 48, 24, 5);
-    if (cv) art.appendChild(cv);
+      '<div class="fr-art"></div><div class="fr-tier"></div><div class="fr-name"></div><div class="fr-size"></div><div class="fr-where"></div>' +
+      (o.chest ? '<div class="fr-chest"></div>' : '') + '<div class="fr-go"></div></div>';
+    var art = card.querySelector('.fr-art'), cv2 = typeof BridgeFishArt !== 'undefined' && BridgeFishArt.canvas(o.id, 48, 24, 5);
+    if (cv2) art.appendChild(cv2);
     else {                                                             // crabs, boots, coins, pearls, bottles: their own icon, big
       var ic = document.createElement('canvas'); ic.width = 96; ic.height = 96; ic.className = 'fr-icon';
       var ix = ic.getContext('2d'); ix.imageSmoothingEnabled = false;
@@ -219,6 +282,8 @@ var BridgeFishing = (function () {
     card.querySelector('.fr-size').textContent = o.quote || (o.size ? o.size + ' cm' + (o.best ? ' · your biggest yet!' : '') : '');
     var worth = it && it.value > 1 && o.id !== 'old_boot' && !/let it go/.test(o.where) ? 'worth about ' + it.value : '';
     card.querySelector('.fr-where').textContent = [o.where, worth].filter(Boolean).join(' · ');
+    if (o.chest) card.querySelector('.fr-chest').textContent = 'And a chest from the deep: ' + o.chest;
+    card.querySelector('.fr-go').textContent = touch() ? 'Tap to carry on' : 'Space · carry on';
     if (o.tier >= 2) {                                                 // sparks flying off it
       var fc = card.querySelector('.fr-card');
       for (var i = 0; i < (o.tier >= 3 ? 26 : 12); i++) {
@@ -231,31 +296,38 @@ var BridgeFishing = (function () {
       }
     }
     if (o.tier >= 3) { var fl = document.createElement('div'); fl.className = 'fr-flash'; card.appendChild(fl); }
-    card.addEventListener('pointerdown', function (e) { e.preventDefault(); e.stopPropagation(); hideCard(); });
+    var c0 = card;
+    c0.lockUntil = performance.now() + (LOCK[o.tier] || 900);
+    c0.armed = false;
+    card.addEventListener('pointerdown', function (e) { e.preventDefault(); e.stopPropagation(); if (c0.classList.contains('fr-ready')) hideCard(); else hush(c0); });
     document.body.appendChild(card);
-    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(o.tier >= 3 ? 'fanfare' : o.tier >= 2 ? 'rarecatch' : o.first ? 'success' : null);
+    sfx(o.tier >= 3 ? 'fanfare' : o.tier >= 2 ? 'rarecatch' : o.first ? 'success' : null);
+    if (o.chest) setTimeout(function () { sfx('coin'); }, 500);
     clearTimeout(cardTimer);
-    cardTimer = setTimeout(hideCard, [2400, 3000, 4600, 7000][o.tier] || 2400);
+    cardTimer = setTimeout(function () { if (card === c0 && !c0.classList.contains('fr-ready')) { cardTimer = setTimeout(hideCard, 1500); return; } hideCard(); }, STAY[o.tier] || 4200);
   }
   function hideCard(now) {
     clearTimeout(cardTimer);
     var c = card; card = null;
     if (!c) return;
+    if (st) st.calm = performance.now() + 300;                     // the next cast waits a moment, for a fresh press
     if (now) { c.remove(); return; }
     c.classList.add('fr-out');
     setTimeout(function () { c.remove(); }, 320);
   }
   function rgba(hex, a) { var p = parseInt(hex.slice(1), 16); return 'rgba(' + ((p >> 16) & 255) + ',' + ((p >> 8) & 255) + ',' + (p & 255) + ',' + a + ')'; }
 
+  // ---- each frame: the fight ----------------------------------------------------------------------------------------
+  var fishes = [];                                               // shadows going about their business under the water
   function frame(now) {
     if (!st) return;
     var dt = Math.min(0.05, (now - (st.lastFrame || now)) / 1000);
     st.lastFrame = now;
     var e = now - st.t0;
     if (st.phase === 'wait') {
-      if (e > st.wait) { var id = pick(st.pool, st.power); st.catchId = id; set('bite', { window: FIGHTS[tierOf(id)].strike }); }
+      if (e > st.wait) set('bite', { window: FIGHTS[tierOf(st.catchId)].strike });
     } else if (st.phase === 'bite') {
-      if (e > st.window) set('lost', { msg: 'It got away.' });
+      if (e > st.window) { pop('IT GOT AWAY', 'bad'); set('lost', { msg: 'Too slow - it spat the hook.', snap: false }); }
     } else if (st.phase === 'reel') {
       var f = st.fight;
       // the fish darts toward a target that keeps moving
@@ -269,94 +341,215 @@ var BridgeFishing = (function () {
       var Z = st.zoneH, T = st.tune;
       if (st.zone > 1 - Z) { st.zone = 1 - Z; st.zv = Math.min(0, -st.zv * 0.3); }
       var inside = st.fish >= st.zone && st.fish <= st.zone + Z;
+      st.inside = inside;
+      st.out = inside ? 0 : st.out + dt;
       st.progress += (inside ? T.gain : -0.2 * (0.6 + f[0] * 0.4) * T.drain) * dt;
+      if (inside && Math.random() < dt * 6) sfx('click');            // the reel ticking in
+      var tr = st.treasure;
+      if (tr && !tr.done && e > tr.at) {
+        if (!tr.shown) { tr.shown = true; pop('A CHEST!', 'gold'); }
+        if (tr.y >= st.zone && tr.y <= st.zone + Z) { tr.got += dt / 1.4; if (tr.got >= 1) { tr.done = true; pop('TREASURE!', 'gold'); sfx('coin'); } }
+      }
       if (st.progress >= 1) land();
-      else if (st.progress <= 0) set('lost', { msg: 'The line goes slack.' });
+      else if (st.progress <= 0) { pop('SNAP!', 'bad'); set('lost', { msg: 'The line snaps.', snap: true }); }
     }
+    if (card && !card.classList.contains('fr-ready') && now >= card.lockUntil) { card.classList.add('fr-ready'); if (!keyDown) card.armed = true; }
+    swim(dt, now);
     draw(now);
     raf = requestAnimationFrame(frame);
   }
+  function swim(dt, now) {
+    if (!fishes.length) for (var i = 0; i < 5; i++) fishes.push({ x: Math.random() * NW, y: SURF + 12 + Math.random() * (NH - SURF - 18), v: (Math.random() < 0.5 ? -1 : 1) * (4 + Math.random() * 6), s: 3 + Math.floor(Math.random() * 3) });
+    var hk = hookAt(now), taker = st.phase === 'wait' && now - st.t0 > st.wait - 1400 ? fishes[0] : null;
+    fishes.forEach(function (f, i) {
+      if (f === taker) {                                            // the one that wants your bait: it comes in, slows, noses it
+        var tx = hk.x - (f.v > 0 ? f.s + 3 : -(f.s + 3)), ty = hk.y + 1;
+        f.x += (tx - f.x) * Math.min(1, dt * 1.6); f.y += (ty - f.y) * Math.min(1, dt * 1.6);
+        f.s = 3 + tierOf(st.catchId) * 2;
+        f.v = (hk.x - f.x) >= 0 ? Math.abs(f.v) : -Math.abs(f.v);
+        return;
+      }
+      if (onLine() && i === 0) return;                                            // it's at your hook, or on your line
+      f.x += f.v * dt;
+      f.y += Math.sin(now / 900 + i * 2) * dt * 2;
+      if (f.x < -12) f.x = NW + 10; if (f.x > NW + 12) f.x = -10;
+    });
+  }
+  // where things are on the panel: the bobber (out along the cast, then reeled in), the hook below it
+  function bobberX() {
+    var bx = 64 + (st.power != null ? st.power : 0.5) * 104;
+    if (st.phase === 'reel') bx -= (bx - 46) * st.progress * 0.7;
+    return bx;
+  }
+  function onLine() { return st.phase === 'bite' || st.phase === 'reel' || st.phase === 'caught'; }
+  function hookAt(now) { var bx = bobberX(); return { x: bx, y: SURF + 14 + Math.round((st.power || 0.5) * 8) }; }
+
+  // ---- drawing (native pixels) ---------------------------------------------------------------------------------------
+  function P(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), w, h); }
+  function line(c, x0, y0, x1, y1, col) {                         // a one-pixel line, stepped
+    x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
+    var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, err = dx + dy;
+    c.fillStyle = col;
+    for (var n = 0; n < 400; n++) {
+      c.fillRect(x0, y0, 1, 1);
+      if (x0 === x1 && y0 === y1) break;
+      var e2 = 2 * err;
+      if (e2 >= dy) { err += dy; x0 += sx; }
+      if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+  }
+  function sag(c, x0, y0, x1, y1, drop, col) {                    // a line that hangs between two points
+    var px = x0, py = y0;
+    for (var i = 1; i <= 12; i++) {
+      var t = i / 12, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t + Math.sin(Math.PI * t) * drop;
+      line(c, px, py, x, y, col); px = x; py = y;
+    }
+  }
+  function dither(c, x, y, w, h, a, b2, k) {                       // two colours, ordered-dithered k (0..1) toward b2
+    var M = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    for (var yy = 0; yy < h; yy++) for (var xx = 0; xx < w; xx++) {
+      c.fillStyle = (M[(yy % 4) * 4 + (xx % 4)] + 0.5) / 16 < k ? b2 : a;
+      c.fillRect(x + xx, y + yy, 1, 1);
+    }
+  }
+  // the still part: sky, water by depth, the pier or the boat or the ice — made once per place
+  function background(L) {
+    var key = (POOL_SEA[st.pool] || 'emerald') + (st.boat ? 'b' : '');
+    if (bg && bgKey === key) return bg;
+    bgKey = key; bg = document.createElement('canvas'); bg.width = NW; bg.height = NH;
+    var c = bg.getContext('2d');
+    // above the water
+    if (L.ice) { P(c, 0, 0, NW, SURF, '#cfe4f2'); dither(c, 0, SURF - 6, NW, 6, '#cfe4f2', '#9cc0da', 0.5); P(c, 0, SURF - 1, NW, 1, '#7aa4c4'); }
+    else if (L.day) { P(c, 0, 0, NW, SURF, '#9ccfe6'); dither(c, 0, 10, NW, SURF - 10, '#9ccfe6', '#c6e6f0', 0.5); }
+    else { P(c, 0, 0, NW, SURF, '#070c16'); dither(c, 0, 12, NW, SURF - 12, '#070c16', '#0e1830', 0.5);
+      for (var s = 0; s < 22; s++) P(c, (s * 53 + 7) % NW, (s * 29) % (SURF - 6), 1, 1, s % 4 ? 'rgba(200,230,255,0.5)' : 'rgba(255,240,200,0.8)'); }
+    // the water, darkening with depth
+    var bands = L.w, h = NH - SURF, band = Math.ceil(h / 4);
+    for (var i = 0; i < 4; i++) {
+      var y0 = SURF + i * band, hh = Math.min(band, NH - y0);
+      P(c, 0, y0, NW, hh, bands[i]);
+      if (i < 3) dither(c, 0, y0 + hh - 3, NW, 3, bands[i], bands[i + 1], 0.5);
+    }
+    // the bed, far down: a few stones and weed
+    for (var k = 0; k < 9; k++) { var wx = (k * 37 + 11) % NW; P(c, wx, NH - 3, 4 + k % 3, 3, 'rgba(0,0,0,0.35)'); if (k % 2) for (var j = 0; j < 5; j++) P(c, wx + 1 + (j % 2), NH - 4 - j, 1, 1, 'rgba(40,90,60,0.6)'); }
+    // what you're standing on
+    if (st.boat) {                                                  // her rail and topsides, curving down into the water
+      for (var y = 10; y < SURF + 6; y++) { var hw = 16 - Math.round(Math.pow((y - 10) / (SURF - 4), 2) * 8); P(c, 0, y, hw, 1, y < 13 ? '#7a4e22' : (y % 4 ? '#4a2e14' : '#3a2410')); }
+      P(c, 0, 9, 17, 2, '#a07040');
+    } else if (L.ice) {                                             // the hole in the ice, and you on the lip of it
+      P(c, 0, SURF - 6, 30, 6, '#e8f4fc');
+    } else {                                                        // the pier: planks, posts down into the water
+      var wood = L.day ? ['#9a7a4e', '#7a5a38', '#5a3e22'] : ['#6a4422', '#4a2e14', '#2a1808'];
+      P(c, 0, 16, 34, 3, wood[0]); P(c, 0, 19, 34, 2, wood[1]); P(c, 0, 21, 34, 1, wood[2]);
+      [4, 18, 30].forEach(function (x) { P(c, x, 22, 3, NH - 22, wood[2]); P(c, x, 22, 1, NH - 22, wood[1]); });
+    }
+    return bg;
+  }
 
   function draw(now) {
-    var dpr = window.devicePixelRatio || 1;
-    if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // the spore sea at night - or, on Verdance, a farm pond in the afternoon sun, lily pads and glints
-    var pond = st.pool === 'pond', ice = st.pool === 'ice';
-    var g = ctx.createLinearGradient(0, 0, 0, H), deep = !!st.boat;              // from a boat: open water, dark and deep
-    g.addColorStop(0, ice ? '#1a3a5a' : pond ? '#3a7a70' : deep ? '#0a2a34' : '#0c2a26'); g.addColorStop(1, ice ? '#08182a' : pond ? '#18403a' : deep ? '#02080e' : '#06120f');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    if (pond) {
-      [[70, 40, 9], [210, 96, 12], [330, 30, 8], [400, 110, 10]].forEach(function (l, j) {
-        var lx = (l[0] + Math.sin(now / 2400 + j) * 3) % W;
-        ctx.fillStyle = '#2a6a2a'; ctx.beginPath(); ctx.ellipse(lx, l[1], l[2], l[2] * 0.55, 0, 0.3, Math.PI * 2 - 0.3); ctx.lineTo(lx, l[1]); ctx.fill();
-        ctx.fillStyle = '#4a9a3a'; ctx.fillRect(Math.round(lx - l[2] * 0.6), Math.round(l[1] - 1), Math.round(l[2] * 0.5), 1);
-        if (j === 1) { ctx.fillStyle = '#f0b0d0'; ctx.fillRect(Math.round(lx + 2), Math.round(l[1] - 3), 3, 3); }
-      });
+    var L = look();
+    if (!buf) { buf = document.createElement('canvas'); buf.width = NW; buf.height = NH; bctx = buf.getContext('2d'); }
+    var c = bctx, ph = st.phase, e = now - st.t0;
+    c.drawImage(background(L), 0, 0);
+    // light on the water: the surface line breaking up, glints, rays in the day
+    for (var x = 0; x < NW; x += 2) {
+      var w = Math.sin(x / 9 + now / 600) + Math.sin(x / 4 - now / 900) * 0.5;
+      P(c, x, SURF + (w > 0.9 ? -1 : 0), 2, 1, L.s);
     }
-    for (var i = 0; i < 26; i++) {
-      var sx = (i * 73 + now * 0.006 * (1 + i % 3)) % W, sy = 20 + (i * 37) % (H - 30) + Math.sin(now / 900 + i) * 3;
-      ctx.fillStyle = (ice ? 'rgba(190,230,255,' : pond ? 'rgba(255,250,220,' : 'rgba(96,240,192,') + (0.15 + 0.2 * Math.abs(Math.sin(now / 700 + i))).toFixed(2) + ')';
-      ctx.fillRect(Math.round(sx), Math.round(sy), 2, pond ? 1 : 2);
+    for (var g = 0; g < 10; g++) {
+      var gx = (g * 47 + now * 0.004 * (1 + g % 3)) % NW, gy = SURF + 2 + (g * 13) % 30, on = Math.sin(now / 500 + g * 1.7) > 0.4;
+      if (on) P(c, gx, gy, 1, 1, L.g);
     }
-    if (ice) {                                                   // under the ice: the hole's bright ring above, bubbles rising
-      ctx.fillStyle = 'rgba(200,235,255,0.18)'; ctx.fillRect(0, 0, W, 10);
-      ctx.fillStyle = 'rgba(230,245,255,0.5)'; ctx.fillRect(0, 9, W, 1);
-    }
-    for (var w = 0; w < 5; w++) {
-      ctx.fillStyle = 'rgba(160,230,210,0.08)';
-      ctx.fillRect(Math.round((w * 97 + now * 0.01) % W), 30 + w * 22, 40, 1);
-    }
-    var ph = st.phase, e = now - st.t0;
-    // the rod tip, top left, and where the bobber sits
-    var tipX = 26, tipY = 14;
-    var dist = st.power != null ? 120 + st.power * 190 : 0;
-    var bx = 60 + dist, by = 78;
+    if (L.day) for (var r2 = 0; r2 < 4; r2++) { c.fillStyle = 'rgba(255,250,220,0.06)'; c.beginPath(); var rx = 40 + r2 * 48 + Math.sin(now / 3000 + r2) * 6; c.moveTo(rx, SURF); c.lineTo(rx + 8, SURF); c.lineTo(rx + 26, NH); c.lineTo(rx + 14, NH); c.fill(); }
+    // the fish shadows
+    var hk = hookAt(now);
+    fishes.forEach(function (f, i) {
+      if (onLine() && i === 0) return;
+      shadow(c, f.x, f.y, f.s, f.v > 0 ? 1 : -1, 'rgba(0,0,0,0.42)');
+    });
+    // the rod: over your shoulder as you charge, out over the water, bent while you reel
+    var base = st.boat ? [10, 12] : L.ice ? [12, SURF - 7] : [12, 14], tip;
+    if (ph === 'charge') { var p = 1 - Math.abs(((e / 1200) % 2) - 1); tip = [base[0] - 4 - p * 6, base[1] - 10 - p * 3]; }
+    else if (ph === 'reel') { var bend = Math.sin(now / 50) * (st.inside ? 1 : 2); tip = [base[0] + 18, base[1] - 4 + st.progress * 2 + bend]; }
+    else tip = [base[0] + 20, base[1] - 10];
+    line(c, base[0], base[1], tip[0], tip[1], '#4a2e14'); line(c, base[0], base[1] - 1, (base[0] + tip[0]) / 2, (base[1] + tip[1]) / 2 - 1, '#c89058');
+    P(c, base[0] + (tip[0] - base[0]) * 0.2 - 1, base[1] + (tip[1] - base[1]) * 0.2 - 1, 2, 2, '#c8c0b0');
+    // the cast: the swing gauge, with the gold where a perfect cast lies
     if (ph === 'charge') {
-      var t = (e / 1200), p = 1 - Math.abs((t % 2) - 1);
-      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(14, H - 22, 160, 10);
-      ctx.fillStyle = p > 0.7 ? '#ffe080' : '#60f0c0'; ctx.fillRect(14, H - 22, Math.round(160 * p), 10);
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.strokeRect(14 + 112, H - 22, 48, 10);
+      var pw = 1 - Math.abs(((e / 1200) % 2) - 1), gx0 = 40, gy0 = 6, gw = 70;
+      P(c, gx0 - 1, gy0 - 1, gw + 2, 6, '#000');
+      P(c, gx0, gy0, gw, 4, '#1a1410');
+      P(c, gx0 + Math.round(gw * PERFECT_CAST), gy0, gw - Math.round(gw * PERFECT_CAST), 4, '#5a4a10');
+      P(c, gx0, gy0, Math.round(gw * pw), 4, pw >= PERFECT_CAST ? '#ffe070' : pw > 0.6 ? '#90e8a0' : '#60c0d0');
+      if (pw >= PERFECT_CAST && Math.floor(now / 80) % 2) P(c, gx0 + gw - 2, gy0 - 3, 3, 2, '#fff6c0');
     }
-    if (ph === 'wait' || ph === 'bite' || ph === 'reel') {
+    var out = ph === 'wait' || ph === 'bite' || ph === 'reel';
+    var bx = bobberX(), by = SURF;
+    if (out) {
+      var fly = ph === 'wait' ? Math.min(1, e / 450) : 1;
+      var qx = bx, qy = by - 2;
+      if (fly < 1) { qx = tip[0] + (bx - tip[0]) * fly; qy = tip[1] + (by - 2 - tip[1]) * fly - Math.sin(Math.PI * fly) * 16; }
       var dip = 0;
-      if (ph === 'wait') st.nibbles.forEach(function (n) { if (e > n && e < n + 260) dip = 3; });
-      if (ph === 'bite') dip = 7 + Math.sin(e / 40) * 2;
-      if (ph === 'reel') { bx = 60 + dist * (1 - st.progress * 0.6); dip = 4 + Math.sin(now / 60) * 3; }
-      if (ph === 'reel' || ph === 'bite') {                              // its shadow under the water: you can tell a big one
-        var tr0 = tierOf(st.catchId), sw = 7 + tr0 * 6, sh = 3 + tr0 * 2;
-        ctx.fillStyle = 'rgba(0,0,0,' + (0.25 + tr0 * 0.08).toFixed(2) + ')';
-        ctx.beginPath(); ctx.ellipse(bx + Math.sin(now / 160) * (4 + tr0 * 2), by + 16 + tr0 * 2, sw, sh, 0, 0, Math.PI * 2); ctx.fill();
-        if (tr0 >= 3) { ctx.fillStyle = 'rgba(255,208,96,' + (0.12 + 0.08 * Math.sin(now / 120)).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(bx, by + 16 + tr0 * 2, sw + 6, sh + 3, 0, 0, Math.PI * 2); ctx.fill(); }
+      if (ph === 'wait') st.nibbles.forEach(function (n) { if (e > n && e < n + 220) dip = 1; });
+      if (ph === 'bite') dip = 3;
+      if (ph === 'reel') { qx = bx + Math.sin(now / 70) * (st.inside ? 1 : 3); dip = 2; }
+      var bob = fly < 1 || dip ? 0 : Math.round(Math.sin(now / 420));
+      sag(c, tip[0], tip[1], qx, qy + bob + dip, ph === 'reel' || ph === 'bite' ? 1 : 6, ph === 'reel' && !st.inside ? '#ffb0a0' : 'rgba(232,232,214,0.9)');
+      if (fly >= 1) {
+        line(c, qx, by + 1, hk.x, hk.y, 'rgba(232,232,214,0.25)');             // the line below, down to the hook
+        if (ph !== 'reel') { P(c, hk.x - 1, hk.y, 2, 1, '#c8c8c0'); P(c, hk.x, hk.y + 1, 1, 1, '#c8c8c0'); P(c, hk.x - 1, hk.y - 1, 1, 1, '#e86060'); }
+        // rings: the splash as it lands, a nibble, a bite
+        var ring = function (t, a) {
+          if (t < 0 || t > 1) return;
+          var rw = Math.round(2 + t * 10);
+          c.fillStyle = 'rgba(230,245,240,' + (a * (1 - t)).toFixed(2) + ')';
+          c.fillRect(Math.round(qx - rw), by, rw * 2 + 1, 1);
+        };
+        if (ph === 'wait') { ring((e - 450) / 700, 0.9); st.nibbles.forEach(function (n) { ring((e - n) / 400, 0.7); }); }
+        if (ph === 'bite') { ring((e % 260) / 260, 0.9); ring(((e + 130) % 260) / 260, 0.6); }
       }
-      ctx.strokeStyle = 'rgba(230,230,210,0.7)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.quadraticCurveTo((tipX + bx) / 2, by - 10, bx, by + dip); ctx.stroke();
-      ctx.fillStyle = '#e8e8e0'; ctx.fillRect(bx - 3, by + dip - 6, 6, 4);
-      ctx.fillStyle = '#d83030'; ctx.fillRect(bx - 3, by + dip - 2, 6, 4);
-      ctx.strokeStyle = 'rgba(160,240,220,' + (0.5 - (now % 1200) / 2400).toFixed(2) + ')';
-      ctx.strokeRect(Math.round(bx - 8 - (now % 1200) / 60), by + 4, Math.round(16 + (now % 1200) / 30), 1);
+      // the bobber: red and white, riding the surface (under it, on a bite)
+      if (ph !== 'reel') { P(c, qx - 1, qy + bob + dip - 2, 3, 2, '#f0ece0'); P(c, qx - 1, qy + bob + dip, 3, 2, '#d83030'); }
       if (ph === 'bite') {
-        ctx.fillStyle = '#ffe080'; ctx.font = 'bold 22px "Pixelify Sans", monospace';
-        ctx.fillText('!', bx - 4, by - 14);
+        // the strike window, closing in round it, and the "!"
+        var k2 = Math.max(0, 1 - e / st.window), R = 3 + Math.round(k2 * 10);
+        c.fillStyle = k2 > 0.55 ? '#ffe070' : '#ff9060';
+        for (var a2 = 0; a2 < 24; a2++) { var an = a2 / 24 * Math.PI * 2; c.fillRect(Math.round(qx + Math.cos(an) * R), Math.round(by - 1 + Math.sin(an) * R * 0.5), 1, 1); }
+        var hop = Math.round(Math.abs(Math.sin(e / 70)) * 2);
+        P(c, qx - 1, by - 15 - hop, 3, 7, '#ffe070'); P(c, qx - 1, by - 6 - hop, 3, 2, '#ffe070'); P(c, qx + 2, by - 15 - hop, 1, 7, '#a07020');
+        shadow(c, hk.x + Math.sin(e / 40) * 2, hk.y + 1, 3 + tierOf(st.catchId) * 2, 1, 'rgba(0,0,0,0.6)');
+      }
+      if (ph === 'reel') {
+        // the fish on the line, thrashing below the bobber: out of the bar, it fights harder (and the line goes red)
+        var tr0 = tierOf(st.catchId), fx = qx + (st.fish - 0.5) * 26, fy = SURF + 6 + (1 - st.fish) * 14;
+        line(c, qx, by + 1, fx, fy, 'rgba(232,232,214,0.6)');
+        shadow(c, fx, fy, 3 + tr0 * 2, Math.sin(now / 90) > 0 ? 1 : -1, 'rgba(0,0,0,0.65)');
+        if (tr0 >= 3) { c.fillStyle = 'rgba(255,208,96,' + (0.2 + 0.15 * Math.sin(now / 100)).toFixed(2) + ')'; c.fillRect(Math.round(fx - 10), Math.round(fy - 3), 20, 6); }
+        if (!st.inside) for (var sp = 0; sp < 4; sp++) P(c, qx + Math.cos(now / 60 + sp * 1.6) * 5, by - 1 - Math.abs(Math.sin(now / 70 + sp)) * 4, 1, 1, '#f0faf8');
+        gauge(c, now);
       }
     }
-    ctx.strokeStyle = '#8a6a40'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(0, 40); ctx.lineTo(tipX, tipY); ctx.stroke();
-    if (ph === 'reel') {
-      // the reel: a tall bar on the right, the zone, the fish, the line filling
-      var rx = W - 46, ry = 10, rh = H - 20, rw = 18;
-      ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(rx - 4, ry - 4, rw + 26, rh + 8);
-      ctx.fillStyle = '#10302a'; ctx.fillRect(rx, ry, rw, rh);
-      var zy = ry + rh * (1 - st.zone - st.zoneH), tr = tierOf(st.catchId);
-      ctx.fillStyle = 'rgba(96,240,192,0.45)'; ctx.fillRect(rx, Math.round(zy), rw, Math.round(rh * st.zoneH));
-      var fy = ry + rh * (1 - st.fish);
-      ctx.fillStyle = ['#e8e0c0', '#80c8ff', '#d8a0ff', '#ffd060'][tr]; ctx.fillRect(rx + 4 - (tr >= 3 ? 2 : 0), Math.round(fy) - 3, rw - 8 + (tr >= 3 ? 4 : 0), 6);
-      ctx.fillStyle = '#1a1410'; ctx.fillRect(rx + rw + 6, ry, 8, rh);
-      ctx.fillStyle = st.progress > 0.66 ? '#80ffb0' : st.progress > 0.33 ? '#ffe080' : '#ff8060';
-      ctx.fillRect(rx + rw + 6, Math.round(ry + rh * (1 - st.progress)), 8, Math.round(rh * st.progress));
+    if (ph === 'caught' && e < 900 && st.result) {
+      // up it comes, out of the water in an arc and onto the boards
+      var t = e / 900, lx = bx + (16 - bx) * t, ly = SURF - Math.sin(Math.PI * t) * 22 - t * 6;
+      line(c, tip[0], tip[1], lx, ly - 2, 'rgba(232,232,214,0.9)');
+      fishSprite(c, lx, ly, TIER_COL[st.leapTier || 0], t * 9);
+      if (t < 0.3) for (var d = 0; d < 8; d++) P(c, bx + Math.cos(d) * (3 + t * 30), SURF - t * 30 * Math.abs(Math.sin(d * 2)), 1, 1, '#f0faf8');
     }
+    if (ph === 'lost' && e < 900) {
+      if (st.snap) {                                                // the line parts: two loose ends falling
+        var t3 = e / 900;
+        sag(c, tip[0], tip[1], tip[0] + 18, tip[1] + 6 + t3 * 14, 3, 'rgba(232,232,214,' + (1 - t3).toFixed(2) + ')');
+      }
+      shadow(c, bx + e / 18, SURF + 12 + e / 60, 3 + tierOf(st.catchId) * 2, 1, 'rgba(0,0,0,' + (0.6 * (1 - e / 900)).toFixed(2) + ')');
+    }
+    // onto the screen at a whole multiple, crisp
+    var dpr = window.devicePixelRatio || 1, cssW = cv.clientWidth || NW * 2, k = Math.max(1, Math.round(cssW * dpr / NW));
+    if (cv.width !== NW * k) { cv.width = NW * k; cv.height = NH * k; }
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(buf, 0, 0, NW * k, NH * k);
     var res = el.querySelector('.fi-result');
-    if (ph === 'caught' || ph === 'lost') {
+    if ((ph === 'caught' || ph === 'lost') && !card) {
       if (res.getAttribute('data-for') !== String(st.t0)) {
         res.setAttribute('data-for', String(st.t0));
         res.innerHTML = '';
@@ -375,14 +568,64 @@ var BridgeFishing = (function () {
       res.style.display = '';
     } else res.style.display = 'none';
   }
+  // a fish's shadow, s pixels long, facing d (1 right, -1 left)
+  function shadow(c, x, y, s, d, col) {
+    c.fillStyle = col;
+    x = Math.round(x); y = Math.round(y);
+    c.fillRect(x - s, y - 1, s * 2, 3); c.fillRect(x - s + 1, y - 2, s * 2 - 2, 1); c.fillRect(x - s + 1, y + 2, s * 2 - 2, 1);
+    var tx = d > 0 ? x - s - 2 : x + s; c.fillRect(tx, y - 2, 2, 1); c.fillRect(tx, y + 2, 2, 1); c.fillRect(d > 0 ? x - s - 1 : x + s, y - 1, 1, 3);
+  }
+  // a little fish in a colour (the reel's marker, and the catch leaping out)
+  function fishSprite(c, x, y, col, turn) {
+    x = Math.round(x); y = Math.round(y);
+    var d = Math.cos(turn || 0) >= 0 ? 1 : -1;
+    P(c, x - 4, y - 2, 8, 4, '#101010');
+    P(c, x - 3, y - 1, 6, 2, col);
+    P(c, d > 0 ? x - 6 : x + 4, y - 2, 2, 4, '#101010'); P(c, d > 0 ? x - 5 : x + 4, y - 1, 1, 2, col);
+    P(c, d > 0 ? x + 2 : x - 3, y - 1, 1, 1, '#101010');
+  }
+  // the reel: the bar you hold up (green, bright while the fish is in it), the fish, a chest if there is one, the line
+  function gauge(c, now) {
+    var gx = NW - 24, gy = 4, gw = 12, gh = NH - 8, tr = tierOf(st.catchId);
+    P(c, gx - 2, gy - 2, gw + 12, gh + 4, '#0a0806');
+    P(c, gx - 1, gy - 1, gw + 2, gh + 2, '#5a4422');
+    P(c, gx, gy, gw, gh, '#0e2420');
+    for (var y = gy + 4; y < gy + gh; y += 6) P(c, gx, y, gw, 1, 'rgba(255,255,255,0.04)');
+    var zh = Math.round(gh * st.zoneH), zy = Math.round(gy + gh * (1 - st.zone - st.zoneH));
+    P(c, gx, zy, gw, zh, st.inside ? 'rgba(110,250,190,0.55)' : 'rgba(96,200,160,0.32)');
+    P(c, gx, zy, gw, 1, '#c8ffe8'); P(c, gx, zy + zh - 1, gw, 1, '#c8ffe8');
+    var trs = st.treasure;
+    if (trs && trs.shown && !trs.done) {
+      var ty = Math.round(gy + gh * (1 - trs.y));
+      P(c, gx + 3, ty - 2, 6, 4, '#2a1808'); P(c, gx + 4, ty - 1, 4, 2, '#e0a030'); P(c, gx + 5, ty - 1, 2, 1, '#fff0a0');
+      P(c, gx + 1, ty + 3, gw - 2, 1, '#1a1410'); P(c, gx + 1, ty + 3, Math.round((gw - 2) * trs.got), 1, '#ffe070');
+    }
+    var fy = gy + gh * (1 - st.fish), jit = st.inside ? 0 : Math.round(Math.sin(now / 40) * 1);
+    fishSprite(c, gx + gw / 2 + jit, fy, TIER_COL[tr], Math.sin(now / 300));
+    // how much line you've got back
+    P(c, gx + gw + 3, gy, 4, gh, '#1a1410');
+    var ph2 = Math.round(gh * st.progress);
+    P(c, gx + gw + 3, gy + gh - ph2, 4, ph2, st.progress > 0.66 ? '#80ffb0' : st.progress > 0.33 ? '#ffe080' : '#ff8060');
+  }
 
   function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   function onKey(e) {
-    if (card && e.type === 'keydown' && ['Escape', 'e', 'E', ' ', 'Enter'].indexOf(e.key) >= 0) { e.preventDefault(); e.stopPropagation(); if (!e.repeat) hideCard(); return; }
-    if (card && e.type === 'keyup') { e.preventDefault(); e.stopPropagation(); return; }
+    var act = ['e', 'E', ' ', 'Enter'].indexOf(e.key) >= 0;
+    if (act) keyDown = e.type === 'keydown';
+    if (card) {
+      var ready = card.classList.contains('fr-ready');
+      if (e.key === 'Escape' && e.type === 'keydown') { e.preventDefault(); e.stopPropagation(); if (ready) hideCard(); return; }
+      if (act) {
+        e.preventDefault(); e.stopPropagation();
+        if (e.type === 'keyup') { if (ready) card.armed = true; held = false; return; }
+        if (e.repeat) return;
+        if (ready && card.armed) hideCard(); else hush(card);
+      }
+      return;
+    }
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
-    if (e.key === 'e' || e.key === 'E' || e.key === ' ' || e.key === 'Enter') {
+    if (act) {
       e.preventDefault(); e.stopPropagation();
       if (e.type === 'keydown' && !e.repeat) press();
       if (e.type === 'keyup') release();
@@ -399,7 +642,7 @@ var BridgeFishing = (function () {
       document.body.appendChild(el);
       cv = el.querySelector('.fi-water'); ctx = cv.getContext('2d');
       cv.style.width = '100%';
-      var down = function (e) { e.preventDefault(); if (card) { hideCard(); return; } press(); };
+      var down = function (e) { e.preventDefault(); if (card) { if (card.classList.contains('fr-ready')) hideCard(); else hush(card); return; } press(); };
       var up = function (e) { e.preventDefault(); release(); };
       cv.addEventListener('pointerdown', down);
       cv.addEventListener('pointerup', up);
@@ -408,7 +651,7 @@ var BridgeFishing = (function () {
       el.querySelector('.fi-close').addEventListener('click', close);
     }
     st = { pool: (inter && inter.pool) || 'harbour', boat: !!(inter && inter.boat), hold: inter && inter.hold || null };
-    held = false;
+    held = false; keyDown = false; fishes = []; bg = null;
     if (st.boat) cast = null; else aimAt(inter);           // from a boat, js/sloop.js draws the line off her side
     set('ready');
     el.classList.toggle('fi-top', !!(cast && cast.dy > 0.35) || st.boat);   // (from a boat the line goes out in front of her)

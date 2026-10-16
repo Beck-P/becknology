@@ -1187,7 +1187,17 @@ html.touch #fishing { bottom: calc(12px + env(safe-area-inset-bottom)); }   /* t
 .fi-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .fi-title { font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: #e0c060; }
 .fi-hint { flex: 1; font-size: 12px; color: #b8ac94; }
-.fi-water { display: block; border-radius: 3px; touch-action: none; cursor: pointer; image-rendering: pixelated; aspect-ratio: 420 / 150; }
+.fi-water { display: block; border-radius: 3px; touch-action: none; cursor: pointer; image-rendering: pixelated; aspect-ratio: 210 / 76; border: 1px solid rgba(0, 0, 0, 0.6); }
+#fishing .fi-pop { position: absolute; left: 0; right: 0; top: 44%; text-align: center; pointer-events: none; font-size: 18px; letter-spacing: 3px; color: #f6eedc;
+  text-shadow: 0 2px 0 #000, 0 0 10px rgba(0, 0, 0, 0.6); animation: fi-pop 1.25s ease-out forwards; }
+#fishing .fi-pop-good { color: #ffe070; }
+#fishing .fi-pop-gold { color: #ffd060; text-shadow: 0 2px 0 #000, 0 0 12px rgba(255, 190, 60, 0.7); }
+#fishing .fi-pop-bad { color: #ff9a80; }
+@keyframes fi-pop { 0% { transform: scale(0.6); opacity: 0; } 15% { transform: scale(1.12); opacity: 1; } 30% { transform: scale(1); } 100% { transform: translateY(-26px); opacity: 0; } }
+.fr-chest { font-size: 12px; color: #ffd060; margin-top: 6px; }
+.fr-go { font-size: 11px; letter-spacing: 2px; color: #8a8070; margin-top: 10px; opacity: 0; transition: opacity 0.3s; }
+#fish-reveal.fr-ready .fr-go { opacity: 1; animation: fr-blink 1.4s ease-in-out infinite; }
+@keyframes fr-blink { 50% { opacity: 0.45; } }
 .fi-result { display: flex; align-items: center; gap: 12px; margin-top: 8px; font-size: 13px; line-height: 1.4; color: #e8dcc4; }
 .fi-icon { width: 48px; height: 48px; image-rendering: pixelated; flex: none; }
 .fi-text b { color: #f6eedc; font-weight: 600; }
@@ -1871,6 +1881,10 @@ html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }   
   font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 13px; color: rgba(242, 238, 230, 0.92); background: rgba(14, 12, 22, 0.72);
   border: 1px solid rgba(120, 220, 160, 0.35); border-radius: 999px; padding: 5px 13px 5px 10px; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }
 #mp-pill:hover { background: rgba(34, 30, 50, 0.9); }
+/* out sailing (js/sloop.js covers the screen at z 60): who's on, their panel, letters and gifts, notes come up over it */
+html.at-sea #mp-pill { z-index: 73; top: calc(84px + env(safe-area-inset-top)); }
+html.at-sea .world-dialog { z-index: 74; }
+html.at-sea .quest-toast { z-index: 74; }
 .mp-dot { width: 8px; height: 8px; border-radius: 50%; background: #60e090; box-shadow: 0 0 6px #60e090; flex: none; }
 .mp-dot.off { background: #6a6470; box-shadow: none; }
 .mp-where { color: rgba(242, 238, 230, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

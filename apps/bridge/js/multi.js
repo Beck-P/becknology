@@ -30,7 +30,9 @@ var BridgeMulti = (function () {
     var m = me();
     return wid + '@' + (owner || visiting || (m && m.id) || '');
   }
-  function myInst() { return inst(worldId()); }
+  // out sailing you've left the island: nobody there should see you standing on the pier where you cast off
+  function sailing() { return (typeof BridgeSloop !== 'undefined' && BridgeSloop.isRunning && BridgeSloop.isRunning()) || (typeof BridgeVoyage !== 'undefined' && BridgeVoyage.covers && BridgeVoyage.covers()); }
+  function myInst() { return sailing() ? null : inst(worldId()); }
   function cap(t) { return String(t || '').toLowerCase().replace(/(^|\s|-)([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }); }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); }
   function suitKey() {
@@ -85,7 +87,7 @@ var BridgeMulti = (function () {
   function prune(now) {
     var here = myInst(), n = N();
     Object.keys(others).forEach(function (id) {
-      var a = others[id], p = n && n.peer(id), elsewhere = !p || (p.inst && p.inst !== here);
+      var a = others[id], p = n && n.peer(id), elsewhere = !p || p.inst !== here;     // no place at all: out at sea
       if (!here || now - a.seen > 9000 || (elsewhere && (now - a.seen > 3000 || (p && p.t !== a.metaT)))) drop(id);
     });
   }
@@ -259,6 +261,7 @@ var BridgeMulti = (function () {
   }
   function paintPill() {
     var n = N(), list = n ? n.peers() : [], off = away(), el = ensurePill(), show = inWorld() && (list.length || off.length);
+    document.documentElement.classList.toggle('at-sea', !!sailing());   // the pill, the panel and notes come up over the passage
     el.style.display = show ? 'flex' : 'none';
     if (!show) return;
     var first = list[0], html = first
