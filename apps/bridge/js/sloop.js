@@ -1099,7 +1099,7 @@ var BridgeSloop = (function () {
       if (!storm.squallAt) storm.squallAt = now + 9000;
       if (!storm.warned && now > storm.squallAt - 2800 && phase === 'sail') { storm.warned = 1; say(auto ? 'A squall coming down on you - lower the sail (↓) before it hits!' : 'A squall coming down on you - ease the sheet (↓) before it hits!', 2800); }
       if (now > storm.squallAt) {
-        storm.squallAt = now + 16000 + hash(Math.floor(now / 997)) * 14000; storm.warned = 0;
+        storm.squallAt = now + 24000 + hash(Math.floor(now / 997)) * 16000; storm.warned = 0;   // (spaced for the longer passages)
         wind.from += (hash(Math.floor(now / 991)) < 0.5 ? -1 : 1) * (0.6 + hash(Math.floor(now / 983)) * 0.5);
         // what it does to her depends on how much sail you're carrying when it hits: eased, she rides it out
         var press = phase === 'sail' ? clamp((boat.eff || 0) * (boat.hoist || 0) * (boat.reef == null ? 1 : boat.reef), 0, 1) : 0;
