@@ -1151,7 +1151,7 @@
       "type": "casino",
       "game": "poker",
       "table": "poker-1",
-      "label": "POKER",
+      "label": "TEXAS HOLD'EM",
       "prompt": "PRESS E TO PLAY"
     },
     {
@@ -1160,7 +1160,7 @@
       "type": "casino",
       "game": "poker",
       "table": "poker-2",
-      "label": "POKER",
+      "label": "TEXAS HOLD'EM",
       "prompt": "PRESS E TO PLAY"
     },
     {
@@ -1169,7 +1169,7 @@
       "type": "casino",
       "game": "poker",
       "table": "poker-3",
-      "label": "POKER",
+      "label": "TEXAS HOLD'EM",
       "prompt": "PRESS E TO PLAY"
     },
     {

@@ -248,7 +248,7 @@ w.update({'name': 'The Neon Royale', 'width': COLS, 'height': ROWS, 'tileSize': 
 inter = [
     {'x': x, 'y': y, 'type': 'leave_world', 'leaveTo': 'arcadia-street', 'leaveSpawn': [50, 9], 'label': 'THE STREET',
      'prompt': 'PRESS E TO GO OUT'} for (x, y) in DOORS]
-inter += [{'x': x, 'y': 3, 'type': 'enter_world', 'target': 'arcadia-casino-cards', 'spawn': [7, 13], 'label': 'THE CARD ROOM',
+inter += [{'x': x, 'y': 3, 'type': 'enter_world', 'target': 'arcadia-casino-cards', 'spawn': [7, 13], 'label': "THE CARD ROOM · TEXAS HOLD'EM",
            'prompt': 'PRESS E TO GO IN'} for x in (11, 12)]
 inter += [{'x': x, 'y': 3, 'type': 'enter_world', 'target': 'arcadia-casino-cards', 'spawn': [23, 13], 'label': 'RUNOUTS',
            'prompt': 'PRESS E TO GO IN'} for x in (32, 33)]

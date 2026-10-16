@@ -144,7 +144,7 @@ inter = [{'x': x, 'y': 14, 'type': 'leave_world', 'leaveTo': 'arcadia-casino', '
 inter += [{'x': x, 'y': 14, 'type': 'leave_world', 'leaveTo': 'arcadia-casino', 'leaveSpawn': [33, 4], 'label': 'THE CASINO FLOOR',
            'prompt': 'PRESS E TO GO BACK'} for x in (23, 24)]
 inter += [{'x': int(cx), 'y': int(cr + 0.875 - 0.5), 'type': 'casino', 'game': 'poker', 'table': 'poker-%d' % (i + 1),
-           'label': 'POKER', 'prompt': P} for i, (cx, cr) in enumerate(TABLES)]
+           'label': "TEXAS HOLD'EM", 'prompt': P} for i, (cx, cr) in enumerate(TABLES)]
 inter += [{'x': x, 'y': y, 'type': 'casino', 'game': 'runouts', 'mode': mode, 'table': 'runouts-' + mode, 'label': label, 'prompt': P}
           for (x, y, mode, label) in CAB]
 inter += [{'x': 25, 'y': 11, 'type': 'casino', 'game': 'runouts', 'table': 'runouts-hall', 'label': 'RUNOUTS', 'prompt': P},
