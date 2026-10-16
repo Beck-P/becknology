@@ -34,7 +34,7 @@ var BridgeChart = (function () {
   var st = { seas: { emerald: true }, visited: {}, dest: null };
   var fresh = true;
   try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) { st = Object.assign(st, saved); fresh = false; } } catch (e) { /* new */ }
-  st.seas = st.seas || { emerald: true }; st.seas.emerald = true; st.visited = st.visited || {};
+  st.seas = st.seas || { emerald: true }; st.seas.emerald = true; st.visited = st.visited || {}; st.sailed = st.sailed || {};
   function store() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* private mode */ } }
   // a captain who's sailed before this chart existed: the islands their saves mention count as visited
   if (fresh) {
@@ -47,6 +47,12 @@ var BridgeChart = (function () {
   }
 
   function isles() { return typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles || {}; }
+  // at sea: the sea your mark is in colours on the chart as you cross into it (open or not)
+  setInterval(function () {
+    if (!sailing() || !BridgeSloop.chartPos) return;
+    var p = BridgeSloop.chartPos(), sea = p && seaAt(mapX(p.x), mapY(p.y));
+    if (sea && !charted(sea) && !st.sailed[sea]) { st.sailed[sea] = Date.now(); store(); }
+  }, 1000);
   var INSIDE = { 'lumar-home': 'lumar-sapphire' };          // rooms whose ids don't start with their island's
   function islandOf(worldId) {
     var I = isles(), best = null;
@@ -204,7 +210,8 @@ var BridgeChart = (function () {
   }
   var base = null, baseKey = '';
   function drawBase() {                                    // the parchment and the seas, made once per set of charts
-    var key = Object.keys(st.seas).sort().join(',') + '|' + Object.keys(st.visited).sort().join(',') + '|' + Object.keys(st.found || {}).sort().join(',');
+    var key = Object.keys(st.seas).sort().join(',') + '|' + Object.keys(st.visited).sort().join(',') + '|' + Object.keys(st.found || {}).sort().join(',') +
+              '|' + Object.keys(st.sailed).sort().join(',');
     if (base && baseKey === key) return base;
     base = document.createElement('canvas'); base.width = NW; base.height = NH; baseKey = key;
     var g = base.getContext('2d'), img = g.createImageData(NW, NH), d = img.data;
@@ -213,9 +220,9 @@ var BridgeChart = (function () {
     for (var y2 = 0; y2 < NH; y2++) for (var x2 = 0; x2 < NW; x2++) {
       var i = y2 * NW + x2, s = regions[i], n = hash(x2 * 13 + y2 * 7919);
       var r = 216, gg = 200, b = 160;                                          // parchment
-      // a sea you've charted in full colour; one you've sailed into (an island visited or stumbled on) lightly — its
-      // islands stay off the chart until you buy it
-      if (charted(s) || Object.keys(st.visited).concat(Object.keys(st.found || {})).some(function (id) { return seaOf(id) === s; })) {
+      // a sea you've charted in full colour; one you've sailed into (your mark crossed into it, or an island in it
+      // visited or stumbled on) lightly — its islands stay off the chart until you buy it
+      if (charted(s) || st.sailed[s] || Object.keys(st.visited).concat(Object.keys(st.found || {})).some(function (id) { return seaOf(id) === s; })) {
         var T = TINT[s], k = charted(s) ? 0.42 : 0.3;
         r = r * (1 - k) + T[0] * k; gg = gg * (1 - k) + T[1] * k; b = b * (1 - k) + T[2] * k;
         if ((x2 * 3 + y2 * 7) % 23 === 0 && ((y2 >> 2) % 3 === 0)) { r -= 24; gg -= 22; b -= 18; }   // little waves
