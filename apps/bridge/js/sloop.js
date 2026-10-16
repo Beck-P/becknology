@@ -17,6 +17,7 @@
  */
 var BridgeSloop = (function () {
   var TS = 32, C45 = Math.SQRT1_2;
+  var SEATCAM = [0, 0];                           // tiles: the island camera's centre vs the disembark focus (measured)
   var SHEET = '/bridge/assets/scenes/sloop/';
   var VMAX = 4.4;                                       // tiles a second on a beam reach in a full breeze (the sloop's; each ship has her own)
   // the ship you're sailing (js/fleet.js spec): her size, speed, handling - and how her rig is drawn. RIGS place masts and headsails
@@ -2366,6 +2367,22 @@ var BridgeSloop = (function () {
     var qx = A.dock[0] + A.ox, qr = A.dock[1] + A.oy;
     var tx = (b.x + Math.cos(b.h) * lead + (qx - b.x) * 0.45 * back) * TS - W / 2;
     var ty = (b.r + Math.sin(b.h) * lead - 0.8 + (qr - b.r) * 0.45 * back) * TS - H / 2;
+    // coming alongside: settle where the island's camera will be (on you, at her seat - js/world.js snaps there as you
+    // climb out), so the sea fades into the island without a jump
+    if (phase === 'moor' && dockAt && !captainOf) {
+      if (dockAt._seatCam === undefined && moorFor(dockAt.id)) {        // (its berth loads as she comes in: till then, the boat)
+        try {
+          var MI = moorFor(dockAt.id), FL = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null, sid = FL ? FL.active().ship.id : 'gull';
+          var ml = fleetHere(MI), mm = ml.filter(function (e) { return e.ship === sid; })[0] || ml[0], st = seatOf(mm);
+          dockAt._seatCam = [st[0] - 0.5 + dockAt.ox + SEATCAM[0], st[1] + 0.25 - 1.2 + dockAt.oy + SEATCAM[1]];
+        } catch (e) { dockAt._seatCam = null; }
+      }
+      if (dockAt._seatCam) {
+        var mk = clamp((now - phaseAt) / 1400, 0, 1);
+        tx += (dockAt._seatCam[0] * TS - W / 2 - tx) * mk;
+        ty += (dockAt._seatCam[1] * TS - H / 2 - ty) * mk;
+      }
+    }
     if (!cam) cam = { x: tx, y: ty, fx: tx, fy: ty };
     var k = 1 - Math.exp(-(now - (cam.at || now)) / 1000 * 2.2);
     cam.at = now;
@@ -2725,6 +2742,9 @@ var BridgeSloop = (function () {
         if (w.step(dt)) w.pose(I);
       }
     });
+    // the island's camera starts on you in the boat, where the sea view left off (it panned down the pier from the
+    // quay's spawn as the sea faded out - a jump of a few tiles)
+    if (BridgeWorld.snapCamera) BridgeWorld.snapCamera();
   }
   function mooredItems(world, offX, offY, ts, now) {
     if (typeof BridgeWorld === 'undefined') return [];
@@ -2756,7 +2776,7 @@ var BridgeSloop = (function () {
     isRunning: function () { return running; },
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },
-    _loaded: function () { return isl; }, _snap: function () { cam = null; }, _cam: function () { return cam && { x: cam.x, y: cam.y, ox: A && A.ox, oy: A && A.oy }; }, _sky: function () { return sky; }, _systems: function (x, r, T) { return systemsNear(x, r, T); }, _front: function (T) { return frontAt(T); }, _toWorld: function (cx, cy) { return pa ? toWorld(cx, cy) : null; }, _sea: function (x, r) { return seaAtWorld(x, r); },
+    _loaded: function () { return isl; }, _snap: function () { cam = null; }, _cam: function () { return cam && { x: cam.x, y: cam.y, W: W, H: H, ox: A && A.ox, oy: A && A.oy, bx: B && B.ox, by: B && B.oy, seat: dockAt && dockAt._seatCam, phase: phase }; }, _sky: function () { return sky; }, _systems: function (x, r, T) { return systemsNear(x, r, T); }, _front: function (T) { return frontAt(T); }, _toWorld: function (cx, cy) { return pa ? toWorld(cx, cy) : null; }, _sea: function (x, r) { return seaAtWorld(x, r); },
     setCourse: setCourse, canSetCourse: canSetCourse, chartPos: chartPos, course: function () { return running ? course : null; },
     invite: invite, _crew: function () { return { crewOf: crewOf, captainOf: captainOf, mirror: mirror }; }, _seaPeers: function () { return seaPeers; },
     _things: function () { return things; }, _prompt: function () { return prompt; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }

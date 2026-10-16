@@ -33,6 +33,7 @@ var BridgeWorld = (function () {
   // and the same view mapped to CSS pixels on screen.
   var view = { offX: 0, offY: 0, ts: NATIVE_TS, w: 0, h: 0 };
   var screenView = { offX: 0, offY: 0, ts: 64 };
+  var snapCam = false;
   var lastUpdate = 0;
 
   // ---- Ambient Particles ----
@@ -778,7 +779,8 @@ var BridgeWorld = (function () {
       // Exponential follow — same feel as the old 10%-per-frame lerp at
       // 60 Hz, but frame-rate independent.
       var pos = focus || (mode && mode.focus && mode.focus()) || BridgeCharacter.getRenderPos();
-      var follow = 1 - Math.exp(-dt * 6.3);
+      var follow = snapCam ? 1 : 1 - Math.exp(-dt * 6.3);   // snapCamera(): straight there, once (arriving under a fade)
+      snapCam = false;
       // cameraLead (tiles, world JSON): frame a little above or below the
       // player — the District looks up so its skyline shows over the shops
       camera.x += (pos.x - camera.x) * follow;
@@ -1156,6 +1158,7 @@ var BridgeWorld = (function () {
     getView: function () { return view; },
     // The same view in CSS pixels on screen — for mouse picking and DOM.
     getScreenView: function () { return screenView; },
+    snapCamera: function () { snapCam = true; },
     getZoom: function () { return zoom; },
     invalidateTiles: invalidateTiles,
     isOpaqueCell: isOpaqueCell,
