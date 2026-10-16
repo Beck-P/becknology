@@ -703,6 +703,67 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#c8a050', [[3, 7, 7, 3], [11, 8, 2, 1]]); px(ctx, x, y, u, '#f0d080', [[3, 7, 7, 1]]);
     px(ctx, x, y, u, '#2a1a10', [[5, 8, 2, 1]]); px(ctx, x, y, u, '#d83a2e', [[4, 2, 1, 2], [5, 1, 3, 1]]);
   }
+  // ---- the Neon Royale (the casino in Arcadia): the bar, Aurum's kitchen, the boutique ----
+  function coupeIcon(drink) {                       // a cocktail coupe on a stem
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#2a1a3a', [[2, 3, 12, 1], [2, 4, 1, 2], [13, 4, 1, 2], [3, 6, 1, 1], [12, 6, 1, 1], [4, 7, 8, 1], [7, 8, 2, 4], [4, 12, 8, 1]]);
+      px(ctx, x, y, u, drink, [[3, 4, 10, 2], [4, 6, 8, 1]]); px(ctx, x, y, u, '#ffffff', [[4, 4, 2, 1]]);
+      px(ctx, x, y, u, '#d8d8e8', [[7, 8, 1, 4], [5, 12, 6, 1]]);
+    };
+  }
+  function martiniIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a3a', [[1, 2, 14, 1], [2, 3, 1, 1], [13, 3, 1, 1], [3, 4, 1, 1], [12, 4, 1, 1], [4, 5, 1, 1], [11, 5, 1, 1], [5, 6, 1, 1], [10, 6, 1, 1], [6, 7, 4, 1], [7, 8, 2, 5], [4, 13, 8, 1]]);
+    px(ctx, x, y, u, '#d8f0f0', [[2, 2, 12, 1], [3, 3, 10, 1], [4, 4, 8, 1], [5, 5, 6, 1], [6, 6, 4, 1]]);
+    px(ctx, x, y, u, '#5a9a3a', [[8, 3, 2, 2]]); px(ctx, x, y, u, '#c02020', [[8, 3, 1, 1]]); px(ctx, x, y, u, '#c8a040', [[7, 1, 1, 4]]);
+  }
+  function fluteIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a3a', [[5, 1, 1, 8], [10, 1, 1, 8], [6, 9, 4, 1], [7, 10, 2, 3], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#f0d070', [[6, 3, 4, 6]]); px(ctx, x, y, u, '#fff8d0', [[6, 2, 4, 1], [7, 5, 1, 1], [8, 7, 1, 1]]);
+  }
+  function steakIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[1, 8, 14, 1], [1, 9, 1, 2], [14, 9, 1, 2], [2, 11, 12, 1]]);
+    px(ctx, x, y, u, '#f0ece0', [[2, 9, 12, 2]]);
+    px(ctx, x, y, u, '#5a2414', [[4, 5, 8, 4]]); px(ctx, x, y, u, '#8a3a20', [[5, 5, 6, 2]]); px(ctx, x, y, u, '#3a160c', [[5, 6, 1, 1], [7, 6, 1, 1], [9, 6, 1, 1]]);
+    px(ctx, x, y, u, '#e8c040', [[11, 4, 2, 1]]); px(ctx, x, y, u, '#40a040', [[3, 7, 2, 1]]);
+  }
+  function sushiIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#141216', [[1, 10, 14, 2]]);
+    for (var i = 0; i < 3; i++) {
+      px(ctx, x, y, u, '#f4f0e8', [[2 + i * 4, 7, 3, 3]]); px(ctx, x, y, u, '#f07050', [[2 + i * 4, 6, 3, 1]]);
+      px(ctx, x, y, u, '#e8c040', [[3 + i * 4, 5, 1, 1]]);
+    }
+  }
+  function souffleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[3, 9, 10, 5]]); px(ctx, x, y, u, '#f4f0e8', [[4, 10, 8, 3]]);
+    px(ctx, x, y, u, '#c88a40', [[4, 5, 8, 4], [5, 4, 6, 1]]); px(ctx, x, y, u, '#e8b060', [[5, 5, 5, 2]]);
+    px(ctx, x, y, u, '#ffffff', [[6, 3, 1, 1], [9, 3, 1, 1], [8, 2, 1, 1]]);
+  }
+  function globeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a3a', [[5, 2, 6, 1], [3, 3, 2, 1], [11, 3, 2, 1], [2, 4, 1, 6], [13, 4, 1, 6], [3, 10, 10, 1], [3, 11, 10, 3]]);
+    px(ctx, x, y, u, '#a0d0f0', [[3, 4, 10, 6], [5, 3, 6, 1]]); px(ctx, x, y, u, '#c8a040', [[3, 11, 10, 3]]);
+    px(ctx, x, y, u, '#e8c040', [[6, 7, 4, 3], [6, 6, 1, 1], [8, 5, 1, 2], [9, 6, 1, 1]]);
+    px(ctx, x, y, u, '#ffffff', [[4, 5, 1, 1], [11, 4, 1, 1], [5, 8, 1, 1], [10, 8, 1, 1]]);
+  }
+  function chipIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[4, 2, 8, 1], [2, 4, 1, 8], [13, 4, 1, 8], [4, 13, 8, 1], [3, 3, 1, 1], [12, 3, 1, 1], [3, 12, 1, 1], [12, 12, 1, 1]]);
+    px(ctx, x, y, u, '#e8c040', [[4, 3, 8, 10], [3, 4, 10, 8]]); px(ctx, x, y, u, '#fff0a0', [[4, 4, 3, 1]]);
+    px(ctx, x, y, u, '#8a1020', [[7, 3, 2, 2], [7, 11, 2, 2], [3, 7, 2, 2], [11, 7, 2, 2]]);
+    px(ctx, x, y, u, '#8a6a10', [[6, 6, 4, 4]]); px(ctx, x, y, u, '#e8c040', [[7, 7, 2, 2]]);
+  }
+  function diceIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a10', [[1, 5, 8, 8], [8, 2, 7, 7]]);
+    px(ctx, x, y, u, '#f4f0e8', [[2, 6, 6, 6], [9, 3, 5, 5]]);
+    px(ctx, x, y, u, '#c01a24', [[3, 7, 1, 1], [6, 10, 1, 1], [4, 9, 1, 1], [11, 5, 1, 1], [10, 4, 1, 1], [12, 6, 1, 1]]);
+  }
   function fizzIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1a3a', [[4, 3, 8, 1], [4, 4, 1, 9], [11, 4, 1, 9], [5, 13, 6, 1]]);
@@ -1097,6 +1158,27 @@ var BridgeItems = (function () {
     // Club Void's bar (js/dance.js)
     void_fizz:     { id: 'void_fizz', name: 'Void Fizz', desc: 'Purple, fizzing, faintly glowing under the lights. Tastes like a bassline. Energy.', type: 'drink',
                      stackable: true, draw: fizzIcon, effects: { energy: 30 }, value: 4, onUse: consumableUse },
+    // the Neon Royale: its bar, Aurum (the restaurant), its boutique
+    gold_rush:     { id: 'gold_rush', name: 'Gold Rush', desc: 'The Royale\'s own: honey, lemon, rye and a flake of gold leaf, in a coupe. Energy.', type: 'drink',
+                     stackable: true, draw: coupeIcon('#e8b030'), effects: { energy: 35 }, value: 6, onUse: consumableUse },
+    royale_martini: { id: 'royale_martini', name: 'Royale Martini', desc: 'Very cold, very dry, an olive on a gold pick. Ozzie stirs it, never shakes. Energy and health.',
+                     type: 'drink', stackable: true, draw: martiniIcon, effects: { energy: 30, hp: 10 }, value: 9, onUse: consumableUse },
+    champagne:     { id: 'champagne', name: 'Champagne', desc: 'A flute of the house fizz from Aurum\'s cellar. Energy.', type: 'drink',
+                     stackable: true, draw: fluteIcon, effects: { energy: 40 }, value: 11, onUse: consumableUse },
+    wagyu_royale:  { id: 'wagyu_royale', name: 'Wagyu Royale', desc: 'Aurum\'s steak: vat-grown, flame-seared, gold-leaf butter melting on it. Fills you right up.',
+                     type: 'food', stackable: true, draw: steakIcon, effects: { hp: 70, energy: 60 }, value: 22, onUse: consumableUse },
+    gold_leaf_sushi: { id: 'gold_leaf_sushi', name: 'Gold-Leaf Sushi', desc: 'Three pieces of Lumar bluefin on rice, a fleck of gold on each. Health and energy.',
+                     type: 'food', stackable: true, draw: sushiIcon, effects: { hp: 40, energy: 40 }, value: 16, onUse: consumableUse },
+    spore_truffle_risotto: { id: 'spore_truffle_risotto', name: 'Spore-Truffle Risotto', desc: 'Creamy rice, shaved glow-truffle from the Lumar caves. Faintly luminous. Health.',
+                     type: 'food', stackable: true, draw: bowlIcon('#e8d8a0', '#a080e0'), effects: { hp: 50, energy: 20 }, value: 13, onUse: consumableUse },
+    souffle_royale: { id: 'souffle_royale', name: 'Souffle Royale', desc: 'Spore-chocolate, risen tall, gone in four spoonfuls. Energy.', type: 'food',
+                     stackable: true, draw: souffleIcon, effects: { energy: 45, hp: 5 }, value: 9, onUse: consumableUse },
+    royale_globe:  { id: 'royale_globe', name: 'Royale Snow Globe', desc: 'The Neon Royale in a glass dome: shake it and gold glitter falls on the crown. A souvenir.',
+                     type: 'material', stackable: true, draw: globeIcon, value: 18 },
+    gold_chip:     { id: 'gold_chip', name: 'Gold Chip', desc: 'A real gold chip from the Royale\'s boutique, the crown stamped on both faces. Too good to bet. A fine gift.',
+                     type: 'material', stackable: true, draw: chipIcon, value: 60 },
+    lucky_dice:    { id: 'lucky_dice', name: 'Lucky Dice', desc: 'A pair of the Royale\'s retired craps dice, drilled and sealed. They have seen a lot of sevens.',
+                     type: 'material', stackable: true, draw: diceIcon, value: 25 },
     // past the Hoarspire (js/expedition.js)
     probe:         { id: 'probe', name: 'Avalanche Probe', desc: 'A folding pole, three paces long. On the Last Ridge, F pushes it into the snow ahead of you: hollow, or solid.',
                      type: 'tool', stackable: false, draw: probeIcon, value: 20,

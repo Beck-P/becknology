@@ -221,6 +221,44 @@ var BridgeSkyline = (function () {
         var hue = bI / nb;
         px(ctx, x + bI * 4 + 1, y + h - bh, 3, bh, hue < 0.5 ? '#5cc8d0' : '#f078a8');
       }
+    } else if (kind === 'royale') {        // the Neon Royale's own screens: a gold crown, a fan of aces, chips raining, the wheel
+      px(ctx, x, y, w, h, '#1a0828');
+      var scene = Math.floor(t / 4) % 4, u = Math.max(1, Math.round(Math.min(w, h) / 22));
+      if (scene === 0) {
+        var gy = cy - 3 * u;
+        px(ctx, cx - 7 * u, gy + 4 * u, 15 * u, 4 * u, '#e8c040');
+        for (var pk = 0; pk < 5; pk++) px(ctx, cx - 7 * u + pk * 3.5 * u, gy - (pk % 2 ? 1 : 3) * u, 1.6 * u, (pk % 2 ? 5 : 7) * u, '#e8c040');
+        for (var gm = 0; gm < 3; gm++) px(ctx, cx - 4 * u + gm * 4 * u, gy + 5 * u, 2 * u, 2 * u, gm === 1 ? '#ff60d0' : '#5cc8ff');
+        for (var sp = 0; sp < 6; sp++) if (hash(sp + Math.floor(t * 3)) > 0.5) px(ctx, x + hash(sp * 7 + Math.floor(t * 3)) * w, y + hash(sp * 3 + Math.floor(t * 3)) * h, u, u, '#fff8c0');
+      } else if (scene === 1) {
+        for (var cd = 0; cd < 4; cd++) {
+          var fan = (cd - 1.5) * 4 * u * Math.min(1, (t % 4) * 1.5);
+          px(ctx, cx - 3 * u + fan, cy - 5 * u + Math.abs(cd - 1.5) * u, 6 * u, 9 * u, '#f4f0e8');
+          px(ctx, cx - u + fan, cy - u + Math.abs(cd - 1.5) * u, 2 * u, 2 * u, cd % 2 ? '#e02030' : '#141216');
+        }
+      } else if (scene === 2) {
+        var chipC = ['#e84040', '#40a0ff', '#40e080', '#e8c040', '#a060e0'];
+        for (var ch = 0; ch < 12; ch++) {
+          var fy = ((t * (18 + hash(ch) * 14) + hash(ch * 5) * h) % (h + 8)) - 4;
+          px(ctx, x + hash(ch * 3) * (w - 4 * u), y + fy, 4 * u, 2 * u, chipC[ch % 5]);
+        }
+      } else {
+        var R2 = Math.min(w, h) * 0.38;
+        for (var pk2 = 0; pk2 < 18; pk2++) {
+          var aa = pk2 / 18 * Math.PI * 2 + t * 2.2;
+          px(ctx, cx + Math.cos(aa) * R2 - u, cy + Math.sin(aa) * R2 - u, 2 * u, 2 * u, pk2 === 0 ? '#1a8a40' : pk2 % 2 ? '#b01a24' : '#141216');
+        }
+        px(ctx, cx - u, cy - u, 2 * u, 2 * u, '#e8c040');
+        px(ctx, cx + Math.cos(-t * 4) * R2 * 0.75, cy + Math.sin(-t * 4) * R2 * 0.75, u, u, '#ffffff');
+      }
+      ctx.strokeStyle = 'rgba(255,214,120,0.6)';                         // a gold bulb frame chasing round it
+      for (var bf = 0; bf < 16; bf++) {
+        if ((bf + Math.floor(t * 6)) % 3) continue;
+        var per = bf / 16, bx2, by2;
+        if (per < 0.25) { bx2 = x + per * 4 * w; by2 = y; } else if (per < 0.5) { bx2 = x + w - 1; by2 = y + (per - 0.25) * 4 * h; }
+        else if (per < 0.75) { bx2 = x + w - (per - 0.5) * 4 * w; by2 = y + h - 1; } else { bx2 = x; by2 = y + h - (per - 0.75) * 4 * h; }
+        px(ctx, bx2, by2, 1, 1, '#fff0c0');
+      }
     } else if (kind === 'null') {          // NULL has the screen: their mark, glitching (js/splice.js jobs)
       px(ctx, x, y, w, h, '#0c0410');
       var R = Math.min(w, h) * 0.32 * (0.92 + 0.08 * Math.sin(t * 9));
@@ -260,7 +298,9 @@ var BridgeSkyline = (function () {
       var A = a['ad' + i + '_a'], B = a['ad' + i + '_b'];
       var x = P.x + A[0], y = P.y + A[1], w = B[0] - A[0], h = B[1] - A[1];
       if (w > 4 && h > 4) {
-        ad(ctx, (i * 5 + 1) % 6, Math.round(x), Math.round(y), Math.round(w), Math.round(h), now + i * 777, i * 13);
+        // every third tower screen takes the Neon Royale's ad now and then (the casino on the District street)
+        var kind = i % 3 === 1 && Math.floor(now / 9000 + i) % 2 ? 'royale' : (i * 5 + 1) % 6;
+        ad(ctx, kind, Math.round(x), Math.round(y), Math.round(w), Math.round(h), now + i * 777, i * 13);
         // its light spilling round the screen
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
