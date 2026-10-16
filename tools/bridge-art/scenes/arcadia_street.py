@@ -7,14 +7,19 @@ A market lane on a terrace of the megacity, lined with low frontages so the
 skyline (js/skyline.js) towers over them and the city glitters under the
 railing: Joro's pawnshop, the Mart, Cyber Noodles, the Arcade, Tinker's
 garage, the Chrome clinic, the bike dock, the Lucky 7 pachinko parlour,
-the ramen stall, the Skywalk lift, the alley gate, the capsule hotel and
-Club Void. Cables and string lights overhead, fire escapes, balconies,
+the ramen stall, the Skywalk lift, the alley gate, the capsule hotel,
+Club Void and, at the east end, the Neon Royale — the casino, the grandest
+thing on the street (assets_casino.royale_facade: a gold-ribbed black tower
+in setbacks to a gold crown, a bulb-framed marquee over a portico of
+revolving doors, a red carpet between velvet ropes to a hover-limo waiting
+past the railing). Cables and string lights overhead, fire escapes, balconies,
 billboards on the roofs (the engine plays ads on them), steam from the
 grates, puddles, carts and clutter on the lane.
 """
 import json
 import math
 import os
+import random
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -22,11 +27,12 @@ from scenekit import Kit, apply_world  # noqa: E402
 import assets_cyber as Y               # noqa: E402
 import assets_district as D            # noqa: E402
 import assets_signs as S               # noqa: E402
+import assets_casino as CAS            # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 WORLD = os.path.join(ROOT, 'apps', 'bridge', 'assets', 'worlds', 'arcadia-street.json')
-COLS, ROWS = 44, 16
+COLS, ROWS = 60, 16
 RF = 8.0          # the frontages' faces; doors on row 7, the lane rows 8-13, the railing at 14
 
 k = Kit(COLS, ROWS, margin_top=2.0, margin_bottom=0.6, seed=227)
@@ -144,6 +150,19 @@ k.solid(39.5, 8.0, 41.0, 8.9)
 S.blade(k, 'クラブ', 'DelaGothicOne', 38.95, RF, 0.5, 1.6, col='#ff60d0', w=0.4)
 D.poster_wall(k, 39.2, 40.8, RF + 0.02, 0.3, 1.1)
 D.poster_wall(k, 42.3, 43.8, RF + 0.02, 0.3, 1.1)
+# the Neon Royale (the casino): its tower, portico and marquee; the red carpet to the kerb between velvet ropes, gold
+# palms, a hover-limo waiting past a gap in the railing; the valet's booth at the end of the street
+ROYALE_DOORS, _ = CAS.royale_facade(k, st, 44.3, 57.7, RF, rng=random.Random(1955))   # its own dice: the rest of the street renders as before
+CAS.runner(k, 49.6, RF, 52.4, 14.0)
+CAS.rope_line(k, (49.35, RF + 0.75), (49.35, 12.6))
+CAS.rope_line(k, (52.65, RF + 0.75), (52.65, 12.6))
+k.solid(49.0, 9.0, 49.7, 13.0)
+k.solid(52.3, 9.0, 53.0, 13.0)
+for x in (46.6, 55.4):
+    CAS.gold_palm(k, x, RF + 0.75)
+front(57.7, 60.5, floors=2, kind='garage', trim=Y.YEL, door_x=58.4, door_w=0.6, sign_floor=True, glow='#8a6a20',
+      roof=('antenna',), wall='#2a2418', clad='metal')
+S.lightbox(k, 'VALET', 'Limelight', 59.2, RF, SZ + 0.1, 1.6, 0.42, bg='#ffe090', ink='#4a0a14', glow='#ffd060')
 
 # ---- up the facades: the arcade's giant screen, laundry between windows, signs climbing the towers ------
 D.facade_ad(k, st, 11.5, 15.5, RF, G + 1.15 + 1.0, G + 4 * 1.15 - 0.25, 3)
@@ -176,6 +195,8 @@ Y.street_planter(k, 21.5, 12.55, leaf='#3a2a50', glow=Y.PINK)
 Y.metal_bench(k, 27.2, 28.6, 12.55)
 D.food_cart(k, 31.5, 12.4, col='#40c8d8')
 Y.street_planter(k, 39.5, 12.55, glow=Y.YEL)
+Y.street_lamp(k, 46.5, 12.7, col=Y.YEL)
+Y.street_lamp(k, 55.5, 12.7, col=Y.YEL)
 D.drone_parked(k, 41.8, 12.6)
 k.solid(41, 12, 43, 13)
 D.trash_pile(k, 32.95, 8.3)
@@ -187,14 +208,24 @@ Y.manhole(k, 16.5, 10.3)
 Y.manhole(k, 40.0, 10.4)
 for (x, r, rx, ry, c) in ((4.8, 11.0, 0.7, 0.35, Y.CYAN), (10.8, 10.2, 0.5, 0.25, Y.PINK), (19.2, 10.0, 0.8, 0.3, Y.PURP),
                           (24.6, 11.0, 0.6, 0.3, Y.YEL), (29.6, 10.6, 0.7, 0.28, '#ff5050'), (33.6, 10.4, 0.5, 0.25, Y.CYAN),
-                          (41.6, 11.2, 0.8, 0.3, Y.MAG), (1.4, 11.4, 0.4, 0.2, Y.YEL), (15.4, 13.2, 0.5, 0.2, Y.PINK)):
+                          (41.6, 11.2, 0.8, 0.3, Y.MAG), (1.4, 11.4, 0.4, 0.2, Y.YEL), (15.4, 13.2, 0.5, 0.2, Y.PINK),
+                          (47.6, 11.0, 0.7, 0.3, '#ffd060'), (56.2, 10.4, 0.6, 0.25, Y.PINK)):
     Y.puddle(k, x, r, rx, ry, tint=c)
-Y.street_railing(k, -0.5, COLS + 0.5, 14.0)
+Y.street_railing(k, -0.5, 49.6, 14.0)                        # a gap at the Royale's carpet: the limo dock
+Y.street_railing(k, 52.4, COLS + 0.5, 14.0)
+for x in (49.45, 52.4):
+    k.box(x, 14.0, 0.0, x + 0.15, 14.3, 1.25, (CAS.GOLD, 0.05), 'gate_post')
+    k.sphere(x + 0.075, 14.15, 1.32, 0.08, 0.08, '#fff0c0', 'gate_lamp', emit=('#ffe090', 1.0), segs=8)
+k.box(49.6, 14.0, 0.0, 52.4, 14.9, 0.06, (CAS.GOLD_D, 0.05), 'gangway')
+CAS.hover_limo(k, 51.0, 15.25, z=0.1, col='#0c0a10', trim=CAS.GOLD)
+k.point_light(51.0, 10.5, 3.0, '#ffc070', 60, radius=1.5, group='flicker')
+k.point_light(46.0, 11.0, 2.6, '#ff70c0', 24, radius=0.8, group='flicker')
+k.point_light(56.0, 11.0, 2.6, '#ffd060', 24, radius=0.8, group='flicker')
 
 # ---- light ---------------------------------------------------------------------------------------------
 for (x, c) in ((5.0, '#a060ff'), (13.0, '#ff60c0'), (21.0, '#60c0ff'), (29.0, '#ff8040'), (37.0, '#a060ff'), (42.0, '#ff40c0')):
     k.point_light(x, 10.5, 3.0, c, 40, radius=1.0)
-k.area_light(22.0, 6.0, 12.0, '#7058b8', 1100, 46.0, rot=(math.radians(-35), 0, 0))     # sky glow on the roofs
+k.area_light(COLS / 2, 6.0, 12.0, '#7058b8', 1100 * COLS / 44, COLS + 2.0, rot=(math.radians(-35), 0, 0))     # sky glow on the roofs
 
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.8}}, light_samples=128,
          world_light=('#241a40', 0.5))
@@ -233,7 +264,7 @@ w['interactions'] = [
     enter(16, 7, 'tech-repair-shop', 'TINKERS TECH'),
     enter(19, 7, 'chrome-clinic', 'CHROME CLINIC'),
     {'x': 0, 'y': 10, 'type': 'leave_world', 'label': 'SHIP', 'prompt': 'RETURN TO BRIDGE'},
-    {'x': 43, 'y': 10, 'type': 'leave_world', 'label': 'SHIP', 'prompt': 'RETURN TO BRIDGE'},
+    {'x': COLS - 1, 'y': 10, 'type': 'leave_world', 'label': 'SHIP', 'prompt': 'RETURN TO BRIDGE'},
     keep('PASSERBY', 10, 8),
     keep('STREET KID', 6, 12),
     keep('TRASH CAN', 9, 12),
@@ -258,20 +289,31 @@ w['interactions'] = [
            'SKEWERS HISS ON THE GRILL.\n\n"TWO CREDITS EACH, OR\nTHREE FOR A STORY."'),
     dialog(31, 12, 'SODA CART', 'PRESS E TO ORDER',
            'NEON SODA IN TWELVE\nFLAVOURS NOBODY CAN NAME.\n\nTHIS ONE TASTES BLUE.'),
+] + [enter(int(x) - (1 if x == int(x) and i == 1 else 0), 7, 'arcadia-casino', 'THE NEON ROYALE', 'PRESS E TO GO IN', spawn=(21, 26))
+     for i, x in enumerate(ROYALE_DOORS)] + [
+    enter(51, 7, 'arcadia-casino', 'THE NEON ROYALE', 'PRESS E TO GO IN', spawn=(22, 26)),
+    dialog(54, 8, 'GIDEON', 'PRESS E TO TALK', 'THE DOORMAN TOUCHES THE BRIM OF HIS CAP.'),
+    dialog(51, 13, 'THE LIMO', 'PRESS E TO LOOK',
+           'A HOVER-LIMOUSINE IDLES PAST THE RAILING, TWO HUNDRED FLOORS UP, ITS DOOR SWUNG OPEN OVER THE DROP. THE DRIVER '
+           'READS A PAPER. HE DOES NOT LOOK UP.\n\nWHOEVER IT IS WAITING FOR IS WINNING.'),
+    dialog(59, 7, 'VALET', 'PRESS E TO LOOK',
+           'THE ROYALE\'S VALET BOOTH. A BOARD OF KEYS, EVERY ONE ON A GOLD FOB. A SIGN: "WE PARK ANYTHING THAT FLIES."'),
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 
-for (c, r) in ((10, 8), (6, 12)):                             # NPCs: window-shopping, and sat on the kerb, out of the lane
+for (c, r) in ((10, 8), (6, 12), (54, 8)):                    # NPCs: window-shopping, sat on the kerb, the Royale's doorman
     k.solid(c, r, c + 1, r + 1)
 for (c, r) in ((17, 11), (18, 11), (21, 11), (31, 11), (32, 11), (39, 11), (14, 9), (7, 11)):   # behind parasols, trees
     k.solid(c, r, c + 1, r + 1)
 apply_world(WORLD, k, (0, 8, COLS - 1, 13), scene_id='arcadia-street',
             actors=[{'sheet': 'npc-shopper', 'x': 10, 'y': 8, 'facing': 'up'},
-                    {'sheet': 'npc-pawn-customer', 'x': 6, 'y': 12, 'facing': 'up'}],
+                    {'sheet': 'npc-pawn-customer', 'x': 6, 'y': 12, 'facing': 'up'},
+                    {'sheet': 'npc-doorman', 'x': 54, 'y': 8, 'facing': 'down'}],
             scene_extra={'backdrop': True, 'ads': st.ads, 'steam': st.steam, 'bulbs': st.bulbs})
 w = json.load(open(WORLD))
 w['view'] = [-0.5, -4.5, COLS + 0.5, ROWS + 0.4]
 w['cameraLead'] = -2.0
+w['royale'] = {'beams': [[47.4, 2.8], [54.6, 2.8]]}            # the Neon Royale's searchlights (js/worlds/casino.js)
 w['skyline'] = {'baseRow': 5.2, 'railRow': 14.3, 'centerCol': COLS / 2,
                 'rain': {'drops': 150, 'splash': [0, RF + 0.3, COLS, 13.8]}}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
