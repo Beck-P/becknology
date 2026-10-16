@@ -28,19 +28,19 @@
 var BridgeFleet = (function () {
   var KEY = 'bridge_fleet';
   var SHIPS = {
-    sloop:      { name: 'Sloop', price: 0, L: 2.6, beam: 1.0, vmax: 4.4, turn: 1.0, accel: 1.0, nogo: 0.7, hold: 12, hull: 40, slots: 0, crew: 0,
+    sloop:      { name: 'Sloop', price: 0, L: 2.6, beam: 1.0, vmax: 4.4, turn: 1.0, accel: 1.0, nogo: 0.7, hold: 12, fish: 8, hull: 40, slots: 0, crew: 0,
                   storm: 1.0, rocks: 1.0, sheet: 'sloop',
                   blurb: 'Your first boat. Light on her feet and quick to turn, with room for a few crates.' },
-    cutter:     { name: 'Cutter', price: 1400, L: 3.4, beam: 1.25, vmax: 5.0, turn: 0.9, accel: 0.85, nogo: 0.72, hold: 40, hull: 70, slots: 1, crew: 1,
+    cutter:     { name: 'Cutter', price: 1400, L: 3.4, beam: 1.25, vmax: 5.0, turn: 0.9, accel: 0.85, nogo: 0.72, hold: 40, fish: 16, hull: 70, slots: 1, crew: 1,
                   storm: 0.8, rocks: 0.8, sheet: 'cutter',
                   blurb: 'A bigger single-master with two headsails: the quickest thing on the Emerald, a hold for real cargo and a mount for one gun.' },
-    brigantine: { name: 'Brigantine', price: 4200, L: 5.0, beam: 1.6, vmax: 4.6, turn: 0.62, accel: 0.6, nogo: 0.86, hold: 120, hull: 150, slots: 3, crew: 3,
+    brigantine: { name: 'Brigantine', price: 4200, L: 5.0, beam: 1.6, vmax: 4.6, turn: 0.62, accel: 0.6, nogo: 0.86, hold: 120, fish: 30, hull: 150, slots: 3, crew: 3,
                   storm: 0.35, rocks: 0.55, sheet: 'brigantine',
                   blurb: 'Square sails forward, a big main aft. Slower through a turn and no good close to the wind, but she shrugs off a Crimson squall and carries a proper cargo.' },
-    galleon:    { name: 'Galleon', price: 11000, L: 7.0, beam: 2.2, vmax: 4.2, turn: 0.42, accel: 0.4, nogo: 1.0, hold: 300, hull: 280, slots: 5, crew: 5,
+    galleon:    { name: 'Galleon', price: 11000, L: 7.0, beam: 2.2, vmax: 4.2, turn: 0.42, accel: 0.4, nogo: 1.0, hold: 300, fish: 50, hull: 280, slots: 5, crew: 5,
                   storm: 0.15, rocks: 0.3, sheet: 'galleon',
                   blurb: 'Three masts of square sail and a hold like a warehouse. She sails like a cathedral, and nothing on the Midnight Sea frightens her hull.' },
-    raider:     { name: 'Raider', price: 6500, L: 4.4, beam: 1.3, vmax: 5.6, turn: 0.85, accel: 0.8, nogo: 0.74, hold: 50, hull: 110, slots: 4, crew: 3,
+    raider:     { name: 'Raider', price: 6500, L: 4.4, beam: 1.3, vmax: 5.6, turn: 0.85, accel: 0.8, nogo: 0.74, hold: 50, fish: 12, hull: 110, slots: 4, crew: 3,
                   storm: 0.5, rocks: 0.7, sheet: 'raider',
                   blurb: 'A black-hulled Crimson schooner, no questions asked. The fastest hull on the five seas, and teeth to match.' }
   };
@@ -231,9 +231,26 @@ var BridgeFleet = (function () {
   function wreck(shipId, worldId) {
     var s = get(shipId);
     if (!s) return;
-    s.hold = {}; s.hull = 0.15;
+    s.hold = {}; s.catch = {}; s.hull = 0.15;
     if (s.type !== 'sloop') s.at = islandOf(worldId);
     store();
+  }
+
+  // ---- the fish hold: what you catch at sea goes in it (js/fishing.js, through js/sloop.js), a few fish to a sloop and
+  // a whole catch to a galleon (`fish` in SHIPS), and comes ashore - sold on the quay or carried - at the next port
+  function fishCap(ship) { return spec(ship.type).fish || 8; }
+  function catchOf(ship) { return ship.catch || {}; }
+  function catchCount(ship) { var n = 0, c = ship.catch || {}; for (var k in c) n += c[k] || 0; return n; }
+  function stowFish(ship, id) {
+    if (catchCount(ship) >= fishCap(ship)) return false;
+    ship.catch = ship.catch || {}; ship.catch[id] = (ship.catch[id] || 0) + 1; store();
+    return true;
+  }
+  function takeFish(ship, id, n) {
+    var c = ship.catch || {};
+    n = Math.min(n, c[id] || 0);
+    if (n > 0) { c[id] -= n; if (!c[id]) delete c[id]; store(); }
+    return n;
   }
 
   // ---- crew ---------------------------------------------------------------------------------------------------------
@@ -293,6 +310,7 @@ var BridgeFleet = (function () {
            spec: spec, get: get, all: all, active: active, effective: effective, here: here, islandOf: islandOf, sail: sail, moored: moored,
            line: line, where: where, rename: rename, buy: buy, value: value, sellShip: sellShip, fit: fit, unmount: unmount,
            damage: damage, repairCost: repairCost, repair: repair, wreck: wreck,
+           fishCap: fishCap, catchOf: catchOf, catchCount: catchCount, stowFish: stowFish, takeFish: takeFish,
            recruits: recruits, hire: hire, assign: assign, dismiss: dismiss, crew: crew, crewOn: crewOn, crewHas: crewHas, berths: berths,
            save: store, _state: function () { return st; } };
 })();

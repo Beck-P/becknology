@@ -433,6 +433,10 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#ffe080'; ctx.fillRect(x + 11*u, y + 1*u, 2*u, 2*u);
     ctx.fillStyle = '#fff8d0'; ctx.fillRect(x + 11*u, y + 1*u, 1*u, 1*u);
   }
+  // a fish from its description in js/fishart.js (the rarer ones), drawn whatever size the slot is
+  function art(id) {
+    return function (ctx, x, y, s) { if (typeof BridgeFishArt !== 'undefined') BridgeFishArt.icon(id)(ctx, x, y, s); };
+  }
   function fishIcon(body, belly, fin, glow) {
     return function (ctx, x, y, s) {
       var u = s / 16;
@@ -914,13 +918,35 @@ var BridgeItems = (function () {
     ember_snapper: { id: 'ember_snapper', name: 'Ember Snapper', desc: 'From the warm water off Crimson Reach. Hot to the touch, somehow.', type: 'food', stackable: true,
                      draw: fishIcon('#a03a20', '#f09060', '#6a1a10', '#ffb040'), effects: { hp: 18 }, onUse: consumableUse, value: 18 },
     sapphire_ray:  { id: 'sapphire_ray', name: 'Sapphire Ray', desc: 'A ray with blue crystal along its spine. Traders argue over them.', type: 'material', stackable: true,
-                     draw: fishIcon('#1a2a5a', '#4060c0', '#80b0ff', '#c0e0ff'), value: 22 },
+                     draw: fishIcon('#1a2a5a', '#4060c0', '#80b0ff', '#c0e0ff'), value: 45 },
     moon_eel:      { id: 'moon_eel', name: 'Moon Eel', desc: 'Only ever seen in Midnight\'s waters. Pale as moonlight, cold as it too.', type: 'material', stackable: true,
-                     draw: fishIcon('#c8c8e0', '#f0f0ff', '#8080b0', '#e0e0ff'), value: 40 },
+                     draw: fishIcon('#c8c8e0', '#f0f0ff', '#8080b0', '#e0e0ff'), value: 60 },
     spore_tuna:    { id: 'spore_tuna', name: 'Spore Tuna', desc: 'Only out in open water, from a boat. Runs like a horse and feeds a crew.', type: 'food', stackable: true,
                      draw: fishIcon('#2a4a5a', '#9ab8c0', '#1a3040', '#60f0c0'), effects: { hp: 20, energy: 14 }, onUse: consumableUse, value: 30 },
     lantern_angler: { id: 'lantern_angler', name: 'Lantern Angler', desc: 'Comes up from the deep after a light on its own head. The Midnight Sea is full of them, they say.', type: 'material', stackable: true,
-                     draw: anglerIcon, value: 70 },
+                     draw: anglerIcon, value: 75 },
+    // the rare ones (js/fishart.js draws them; js/fishing.js says where they bite) - and one legend in each sea,
+    // only ever hooked from a boat out on open water
+    coral_dragonet: { id: 'coral_dragonet', name: 'Coral Dragonet', desc: 'A finger-long fish dressed for a festival - orange, gold and electric blue - with a sail it raises when it\'s cross. Rose Cove\'s rarest.', type: 'material', stackable: true,
+                     draw: art('coral_dragonet'), value: 70 },
+    cinder_grouper: { id: 'cinder_grouper', name: 'Cinder Grouper', desc: 'A heavy grouper from the hot water off Crimson, spotted with embers that never quite go out.', type: 'material', stackable: true,
+                     draw: art('cinder_grouper'), value: 85 },
+    starfin:       { id: 'starfin', name: 'Starfin', desc: 'Black as the Midnight sky and spotted with stars. Watch long enough and they move, slowly, across it.', type: 'material', stackable: true,
+                     draw: art('starfin'), value: 90 },
+    jade_marlin:   { id: 'jade_marlin', name: 'Jade Marlin', desc: 'A green marlin with a sail like a banner, out on the open Emerald Sea. It fights like a bad decision.', type: 'material', stackable: true,
+                     draw: art('jade_marlin'), value: 110 },
+    glass_swordfish: { id: 'glass_swordfish', name: 'Glass Swordfish', desc: 'You can see its heart beating through its sides. The Sapphire glassblowers say they learned from it.', type: 'material', stackable: true,
+                     draw: art('glass_swordfish'), value: 120 },
+    old_mossback:  { id: 'old_mossback', name: 'Old Mossback', desc: 'The grandfather grouper of the Emerald Sea, spore-moss glowing on his back. Older than the capital, the fishermen say. You\'re not sure he didn\'t let you win.', type: 'material', stackable: true,
+                     draw: art('old_mossback'), value: 420 },
+    dawnveil:      { id: 'dawnveil', name: 'Dawnveil', desc: 'A great rose-pink ray that flies under the surface at first light, trailing a veil of fins. The Rose Cove weavers have tried for a century to spin a cloth like it.', type: 'material', stackable: true,
+                     draw: art('dawnveil'), value: 460 },
+    emberjaw:      { id: 'emberjaw', name: 'Emberjaw', desc: 'A pike with a furnace for a mouth. The Crimson fishermen won\'t say its name aboard.', type: 'material', stackable: true,
+                     draw: art('emberjaw'), value: 480 },
+    crownfin:      { id: 'crownfin', name: 'Crownfin', desc: 'A sailfish crowned with living crystal. Sapphire sailors call it the Queen\'s Fish and touch their caps when one breaks the surface.', type: 'material', stackable: true,
+                     draw: art('crownfin'), value: 520 },
+    nightglass:    { id: 'nightglass', name: 'Nightglass Coelacanth', desc: 'A fish from before the seas had names, glassy and dark, its scales full of stars. It shouldn\'t exist. It looks at you like it knows that.', type: 'material', stackable: true,
+                     draw: art('nightglass'), value: 650 },
     old_boot:      { id: 'old_boot', name: 'Old Boot', desc: 'Somebody, somewhere, is walking funny.', type: 'material', stackable: true, draw: bootIcon, value: 1 },
     heron_coin:    { id: 'heron_coin', name: 'Heron Coin', desc: 'Silver, from the Heron\'s lost cargo. The tide brings them in, one at a time.', type: 'material', stackable: true,
                      draw: coinIcon, value: 25 },

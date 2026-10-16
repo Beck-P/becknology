@@ -260,12 +260,52 @@
             "price": 80
           },
           {
+            "id": "nightglass",
+            "price": 650
+          },
+          {
+            "id": "crownfin",
+            "price": 520
+          },
+          {
+            "id": "emberjaw",
+            "price": 480
+          },
+          {
+            "id": "dawnveil",
+            "price": 460
+          },
+          {
+            "id": "old_mossback",
+            "price": 420
+          },
+          {
+            "id": "glass_swordfish",
+            "price": 120
+          },
+          {
+            "id": "jade_marlin",
+            "price": 110
+          },
+          {
+            "id": "starfin",
+            "price": 90
+          },
+          {
+            "id": "cinder_grouper",
+            "price": 85
+          },
+          {
+            "id": "coral_dragonet",
+            "price": 70
+          },
+          {
             "id": "moon_eel",
-            "price": 40
+            "price": 60
           },
           {
             "id": "lantern_angler",
-            "price": 70
+            "price": 75
           },
           {
             "id": "spore_tuna",
@@ -277,7 +317,7 @@
           },
           {
             "id": "sapphire_ray",
-            "price": 22
+            "price": 45
           },
           {
             "id": "ember_snapper",
@@ -1907,7 +1947,7 @@
           },
           {
             "id": "sapphire_ray",
-            "price": 30
+            "price": 56
           },
           {
             "id": "spore_tuna",
@@ -1915,11 +1955,55 @@
           },
           {
             "id": "lantern_angler",
-            "price": 88
+            "price": 94
           },
           {
             "id": "spore_minnow",
             "price": 6
+          },
+          {
+            "id": "moon_eel",
+            "price": 75
+          },
+          {
+            "id": "coral_dragonet",
+            "price": 88
+          },
+          {
+            "id": "cinder_grouper",
+            "price": 106
+          },
+          {
+            "id": "starfin",
+            "price": 112
+          },
+          {
+            "id": "jade_marlin",
+            "price": 138
+          },
+          {
+            "id": "glass_swordfish",
+            "price": 150
+          },
+          {
+            "id": "old_mossback",
+            "price": 525
+          },
+          {
+            "id": "dawnveil",
+            "price": 575
+          },
+          {
+            "id": "emberjaw",
+            "price": 600
+          },
+          {
+            "id": "crownfin",
+            "price": 650
+          },
+          {
+            "id": "nightglass",
+            "price": 800
           }
         ]
       },

@@ -119,7 +119,10 @@ var BridgeQuests = (function () {
     if (fished.fish.length) {
       html += '<section class="qj-quest qj-crew"><div class="qj-q-head"><span class="qj-q-title">Fish</span>' +
         '<span class="qj-q-count">' + fished.fish.length + ' kinds</span></div><ul class="qj-clues">' +
-        fished.fish.map(function (f) { return '<li class="found"><b>' + esc(f.name) + '</b> \u00d7' + f.n + (f.best ? ', biggest ' + f.best + ' cm' : '') + '</li>'; }).join('') +
+        fished.fish.slice().sort(function (a, b) { return (b.tier || 0) - (a.tier || 0); }).map(function (f) {
+          var T = f.tier && typeof BridgeFishArt !== 'undefined' ? BridgeFishArt.TIERS[f.tier] : null;   // the rare ones first, in their colour
+          return '<li class="found"><b' + (T ? ' style="color:' + T.col + '"' : '') + '>' + esc(f.name) + '</b>' + (T ? ' <i>' + T.name.toLowerCase() + '</i>' : '') + ' \u00d7' + f.n + (f.best ? ', biggest ' + f.best + ' cm' : '') + '</li>';
+        }).join('') +
         '</ul></section>';
     }
     if (fished.bottles.length) {

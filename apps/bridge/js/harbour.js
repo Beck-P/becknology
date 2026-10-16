@@ -133,6 +133,8 @@ var BridgeHarbour = (function () {
     var rows = [
       { label: 'Hull', sub: Math.round(s.hull * 100) + '% of ' + sp.hull, note: f.repairCost(s) ? f.repairCost(s) + ' to mend' : 'sound', disabled: true },
       { label: 'Hold', sub: (T() ? T().crates(s) : 0) + ' of ' + sp.hold + ' crates', note: '', disabled: true },
+      { label: 'Fish hold', sub: f.catchCount(s) ? T().catchList(s) : 'empty', note: f.catchCount(s) + '/' + f.fishCap(s),
+        pick: hereNow && f.catchCount(s) ? function () { landCatch(worldId, s); } : null, disabled: !(hereNow && f.catchCount(s)) },
       { label: 'Guns', sub: s.guns.length ? s.guns.map(function (g) { return f.GUNS[g].name; }).join(', ') : 'none', note: s.guns.length + '/' + base.slots, disabled: true },
       { label: 'Fittings', sub: s.fits.length ? s.fits.map(function (g) { return f.FITS[g].name; }).join(', ') : 'none', disabled: true },
       { label: 'Hands', sub: crew.length ? crew.map(function (c) { return c.name + ' (' + f.ROLES[c.role].name.toLowerCase() + ')'; }).join(', ') : 'none',
@@ -144,6 +146,23 @@ var BridgeHarbour = (function () {
     if (hereNow && s.type !== 'sloop' && Pd.yard.length) buttons.push({ label: 'Sell (' + f.value(s) + ')', act: function () { sellShip(worldId, s); } });
     buttons.push({ label: 'Back', act: function () { ledger(worldId); } });
     choose({ title: s.name + ', ' + base.name.toLowerCase(), text: note || base.blurb.toUpperCase(), rows: rows, buttons: buttons, closeLabel: 'Done' });
+  }
+  // what she caught at sea, still aboard: sell it on the quay or carry it ashore
+  function landCatch(worldId, s) {
+    var t = T(), f = F(), v = t.catchValue(s, worldId);
+    choose({ title: 'The ' + s.name + '\'s catch', text: (t.catchList(s) + '.').toUpperCase() + ' THE QUAY HERE PAYS ' + v + ' FOR THE LOT.',
+             buttons: [
+               { label: 'Sell it on the quay (' + v + ')', act: function () {
+                 t.sellCatch(s, worldId).then(function (r) {
+                   if (!r.ok) { shipCard(worldId, s, why(r)); return; }
+                   toast('Catch sold', r.n + ' fish', '+' + r.total + ' coins'); sfx('coin'); shipCard(worldId, s, 'SOLD ON THE QUAY, EVERY FIN OF IT.');
+                 });
+               } },
+               { label: 'Carry it ashore', act: function () {
+                 var r = t.carryCatch(s); sfx('pickup');
+                 shipCard(worldId, s, r.left ? 'YOUR PACK TAKES ' + r.moved + '; THE REST STAYS ABOARD.' : 'INTO YOUR PACK, ALL ' + r.moved + '.');
+               } },
+               { label: 'Back', act: function () { shipCard(worldId, s); } }] });
   }
   function rename(worldId, s) {
     choose({ title: 'Rename her', text: 'WHAT\'LL YOU CALL HER?', input: { value: s.name, max: 24, button: 'Paint it on', placeholder: s.name,
@@ -181,7 +200,7 @@ var BridgeHarbour = (function () {
 
   // ---- the yard ---------------------------------------------------------------------------------------------------
   function stats(sp) {
-    return 'hold ' + sp.hold + ' · ' + (sp.slots ? sp.slots + ' gun' + (sp.slots > 1 ? 's' : '') : 'no guns') + ' · ' +
+    return 'hold ' + sp.hold + ' · fish ' + (sp.fish || 8) + ' · ' + (sp.slots ? sp.slots + ' gun' + (sp.slots > 1 ? 's' : '') : 'no guns') + ' · ' +
       (sp.crew ? sp.crew + ' hand' + (sp.crew > 1 ? 's' : '') : 'sails alone') + ' · ' + (sp.vmax >= 5 ? 'quick' : sp.vmax >= 4.5 ? 'steady' : 'stately');
   }
   function yard(worldId, note) {

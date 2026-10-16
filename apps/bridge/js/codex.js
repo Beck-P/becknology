@@ -1,8 +1,8 @@
 /**
  * BridgeCodex — the Collection: everything there is to find, set by set.
  *
- * Eight sets (`SETS`): fish, crystals and ore, the farm, magic things,
- * treasures, gear, food and drink, treasure maps. Anything that lands in
+ * Nine sets (`SETS`): fish, the sea legends, crystals and ore, the farm,
+ * magic things, treasures, gear, food and drink, treasure maps. Anything that lands in
  * your pack counts (BridgeInventory.addItem is wrapped, and the pack is
  * looked over every few seconds for anything that came in another way);
  * what's in it the first time you open the game counts quietly. A new find
@@ -19,13 +19,21 @@ var BridgeCodex = (function () {
   var KEY = 'bridge_codex';
   var PEDDLER = 'Wendel Crane, the Peddler, wherever he\'s set up today';
   var SETS = [
-    { id: 'fish', name: 'Fish', reward: 150, items: [
+    { id: 'fish', name: 'Fish', reward: 250, items: [
       ['silverfin', 'Off any pier in Lumar'], ['spore_minnow', 'Lumar Harbour, off the piers'], ['harbour_crab', 'Lumar Harbour, now and then'],
       ['rose_shrimp', 'The water round Rose Cove'], ['bluefin', 'Off Sapphire Port\'s quay'], ['glowtail', 'Sapphire, Rose and Midnight waters'],
       ['ember_snapper', 'The water off Crimson Reach'], ['sapphire_ray', 'Off Sapphire Port; cast long'], ['moon_eel', 'Round Midnight Isle, and its moon pool'],
       ['star_pearl', 'The moon pool on Midnight Isle'], ['pond_perch', 'The farm pond on Verdance'], ['sun_carp', 'The farm pond on Verdance; a fighter'],
       ['arctic_char', 'Through the ice on Fellhaven\'s pond'], ['frostfin', 'Through the ice on Fellhaven\'s pond; rare'],
-      ['spore_tuna', 'From a boat, out on the open sea'], ['lantern_angler', 'From a boat in deep water - the Midnight Sea most of all']] },
+      ['spore_tuna', 'From a boat, out on the open sea'], ['lantern_angler', 'From a boat in deep water - the Midnight Sea most of all'],
+      ['coral_dragonet', 'Off Rose Cove\'s piers, rarely; more often from a boat on the Rose Sea'], ['cinder_grouper', 'Off Crimson Reach, rarely; more often from a boat on the Crimson Sea'],
+      ['starfin', 'Round Midnight Isle, rarely; more often from a boat on the Midnight Sea'], ['jade_marlin', 'From a boat on the open Emerald Sea; cast long'],
+      ['glass_swordfish', 'From a boat on the Sapphire Sea; cast long']] },
+    // one legend in each sea, and only ever from a boat out on it
+    { id: 'legends', name: 'Sea legends', reward: 1500, items: [
+      ['old_mossback', 'The Emerald Sea, from a boat. Once in a long while'], ['crownfin', 'The Sapphire Sea, from a boat. Once in a long while'],
+      ['dawnveil', 'The Rose Sea, from a boat - at first light, they say'], ['emberjaw', 'The Crimson Sea, from a boat. Don\'t say its name aboard'],
+      ['nightglass', 'The Midnight Sea, from a boat, deep. Nobody has, that anyone remembers']] },
     { id: 'stones', name: 'Crystals and ore', reward: 200, items: [
       ['crimson_crystal', 'In the rock on Crimson Reach'], ['roseite', 'Rose Cove\'s terraces, and the Rose Mine'], ['sapphire_crystal', 'The hills of Sapphire Port; the mine\'s middle floors'],
       ['midnight_crystal', 'Among the ruins on Midnight Isle'], ['wisp_ember', 'The will-o\'-wisps on Midnight Isle'], ['sea_glass', 'Washed up on Lumar\'s beaches'], ['iron_ore', 'The Rose Mine, from the first floor'],
@@ -162,7 +170,8 @@ var BridgeCodex = (function () {
       var show = function () {
         grid.querySelectorAll('.cx-cell.sel').forEach(function (c) { c.classList.remove('sel'); });
         cell.classList.add('sel');
-        detail.innerHTML = found && it ? '<b>' + esc(it.name) + '</b> — ' + esc(it.desc || '') + ' <em>' + esc(x[1]) + '.</em>'
+        var rar = typeof BridgeFishArt !== 'undefined' && BridgeFishArt.has(id) ? BridgeFishArt.TIERS[BridgeFishArt.tier(id)] : null;
+        detail.innerHTML = found && it ? '<b>' + esc(it.name) + '</b>' + (rar ? ' <span style="color:' + rar.col + '">' + rar.name + '</span>' : '') + ' — ' + esc(it.desc || '') + ' <em>' + esc(x[1]) + '.</em>'
                                        : '<b>Not found yet.</b> <em>' + esc(x[1]) + '.</em>';
       };
       cell.addEventListener('mouseenter', show);

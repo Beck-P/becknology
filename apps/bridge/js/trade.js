@@ -50,7 +50,10 @@ var BridgeTrade = (function () {
     crimson_crystal: { per: 6, kind: 'crystal' }, sapphire_crystal: { per: 6, kind: 'crystal' }, midnight_crystal: { per: 6, kind: 'crystal' },
     hoar_crystal: { per: 6, kind: 'crystal' }, sea_glass: { per: 8, kind: 'crystal' }, star_pearl: { per: 4, kind: 'gem' },
     silverfin: { per: 6, kind: 'fish' }, bluefin: { per: 4, kind: 'fish' }, ember_snapper: { per: 4, kind: 'fish' }, moon_eel: { per: 3, kind: 'fish' },
-    sapphire_ray: { per: 4, kind: 'fish' }, spore_tuna: { per: 3, kind: 'fish' }, lantern_angler: { per: 3, kind: 'fish' }, rose_shrimp: { per: 8, kind: 'fish' }, harbour_crab: { per: 6, kind: 'fish' }, fresh_fish: { per: 6, kind: 'fish' }
+    sapphire_ray: { per: 4, kind: 'fish' }, spore_tuna: { per: 3, kind: 'fish' }, lantern_angler: { per: 3, kind: 'fish' }, rose_shrimp: { per: 8, kind: 'fish' }, harbour_crab: { per: 6, kind: 'fish' }, fresh_fish: { per: 6, kind: 'fish' },
+    glowtail: { per: 6, kind: 'fish' }, coral_dragonet: { per: 6, kind: 'fish' }, cinder_grouper: { per: 2, kind: 'fish' }, starfin: { per: 3, kind: 'fish' },
+    jade_marlin: { per: 1, kind: 'fish' }, glass_swordfish: { per: 1, kind: 'fish' }, old_mossback: { per: 1, kind: 'fish' }, dawnveil: { per: 1, kind: 'fish' },
+    emberjaw: { per: 1, kind: 'fish' }, crownfin: { per: 1, kind: 'fish' }, nightglass: { per: 1, kind: 'fish' }
   };
   // each port's appetite: < 1 made here (cheap), > 1 wanted here (dear). Your own haul by kind.
   var MARKET = {
@@ -249,6 +252,42 @@ var BridgeTrade = (function () {
     out.sort(function (p, q) { return q.profit - p.profit; });
     return out.slice(0, 3);
   }
+  // ---- the catch: a ship's fish hold (js/fleet.js), landed as she ties up (js/sloop.js) or from her card at the harbour --
+  /** What the fish in her hold would fetch on this port's quay, all at once. */
+  function catchValue(ship, P) {
+    P = port(P);
+    var c = BridgeFleet.catchOf(ship), t = 0;
+    if (P) Object.keys(c).forEach(function (id) { t += price(id, P, 'sell', c[id]) * c[id]; });
+    return t;
+  }
+  /** Sell the whole catch on the quay, at this port's price for fish (a glut here, like any sale). */
+  function sellCatch(ship, P) {
+    P = port(P);
+    var c = Object.assign({}, BridgeFleet.catchOf(ship)), ids = Object.keys(c), total = catchValue(ship, P), n = 0;
+    if (!P || !ids.length) return Promise.resolve({ ok: false, reason: 'none' });
+    ids.forEach(function (id) { n += BridgeFleet.takeFish(ship, id, c[id]); });   // off the boat first; back on if the coins don't go
+    return paid(total, 'catch').then(function (ok) {
+      if (!ok) { ids.forEach(function (id) { for (var i = 0; i < c[id]; i++) BridgeFleet.stowFish(ship, id); }); return { ok: false, reason: 'offline' }; }
+      ids.forEach(function (id) { var k = P + ':' + id; st.glut[k] = { n: glutOf(id, P) + c[id], at: Date.now() }; });
+      store();
+      return { ok: true, n: n, total: total };
+    });
+  }
+  /** Carry the catch ashore: into your pack, as much as there's room for (the rest stays aboard). */
+  function carryCatch(ship) {
+    var c = Object.assign({}, BridgeFleet.catchOf(ship)), moved = 0, left = 0;
+    Object.keys(c).forEach(function (id) {
+      if (typeof BridgeInventory !== 'undefined' && BridgeInventory.addItem(id, c[id]) !== false) moved += BridgeFleet.takeFish(ship, id, c[id]);
+      else left += c[id];
+    });
+    return { moved: moved, left: left };
+  }
+  /** "3 bluefin, a jade marlin" */
+  function catchList(ship) {
+    var c = BridgeFleet.catchOf(ship);
+    return Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).map(function (id) { return (c[id] > 1 ? c[id] + ' × ' : '') + name(id); }).join(', ');
+  }
+
   // ---- contracts --------------------------------------------------------------------------------------------------
   var PORTS = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight'];
   function contracts(P) {
@@ -367,6 +406,7 @@ var BridgeTrade = (function () {
   }
 
   return { GOODS: GOODS, HAUL: HAUL, MARKET: MARKET, PORTS: PORTS, isGood: isGood, name: name, per: per, port: port, price: price,
+           catchValue: catchValue, sellCatch: sellCatch, carryCatch: carryCatch, catchList: catchList,
            stock: stock, supply: supply, crates: crates, capacity: capacity, room: room, fits: fits, load: load, unload: unload,
            buy: buy, sell: sell, bestRun: bestRun, routes: routes, circuits: circuits, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver,
            _state: function () { return st; } };

@@ -563,6 +563,13 @@ var BridgeAudio = (function () {
     splash:  function (t) { noiseHit(sfxBus, t, 0.5, { freq: 1200, ftype: 'lowpass', gain: 0.18, rev: 0.3 }); },
     plop:    function (t) { voice(sfxBus, t, 0.05, { type: 'sine', freq: 300, glide: 2.4, glideT: 0.08, gain: 0.14, a: 0.002, d: 0.12, s: 0, r: 0.1, rev: 0.3 }); },
     catch:   function (t) { [67, 71, 74, 79].forEach(function (m, i) { INST.pluck(sfxBus, t + i * 0.07, m, 0.2, 1.4); }); },
+    rarecatch: function (t) { [67, 71, 74, 79, 83, 86].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.07, m, 0.3, 1.1); }); INST.warm(sfxBus, t + 0.1, 55, 1.2, 1.6); },
+    fanfare: function (t) {                              // a legend landed: brass-ish chords climbing, bells over the top
+      [[55, 59, 62], [57, 60, 64], [59, 62, 67], [60, 64, 67, 72]].forEach(function (ch, i) {
+        ch.forEach(function (m) { voice(sfxBus, t + i * 0.22, i === 3 ? 1.2 : 0.18, { type: 'sawtooth', freq: hz(m), gain: 0.03, a: 0.01, d: 0.3, s: 0.6, r: 0.5, cutoff: 2200, rev: 0.4 }); });
+      });
+      [79, 84, 88, 91, 96].forEach(function (m, i) { INST.bell(sfxBus, t + 0.7 + i * 0.09, m, 0.3, 1.0); });
+    },
     ball:    function (t) { voice(sfxBus, t, 0.01, { type: 'triangle', freq: 2400 + Math.random() * 1200, gain: 0.015, a: 0.001, d: 0.015, s: 0, r: 0.01 }); },
     pocket:  function (t) { voice(sfxBus, t, 0.08, { type: 'square', freq: hz(81), gain: 0.04, a: 0.001, d: 0.1, s: 0.2, r: 0.08, cutoff: 4000 }); voice(sfxBus, t + 0.06, 0.1, { type: 'square', freq: hz(88), gain: 0.04, a: 0.001, d: 0.12, s: 0.2, r: 0.1, cutoff: 4000 }); },
     fever:   function (t) { for (var i = 0; i < 12; i++) voice(sfxBus, t + i * 0.07, 0.06, { type: 'square', freq: hz(72 + [0, 4, 7, 12][i % 4] + Math.floor(i / 4) * 2), gain: 0.04, a: 0.001, d: 0.06, s: 0.4, r: 0.04, cutoff: 5000, rev: 0.2 }); },

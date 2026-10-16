@@ -678,7 +678,15 @@ var BridgeSloop = (function () {
     if (chartOpen() || fishingOpen()) return;                          // the chart (or the rod) has the keys while it's open
     if (KEYS.indexOf(k) < 0) return;
     e.preventDefault(); e.stopPropagation();
-    if (menu) { if (k === 'escape' && !e.repeat) closeMenu(); return; }
+    if (menu) {
+      if (k === 'escape' && !e.repeat) closeMenu();
+      else if ((k === 'enter' || k === ' ' || k === 'e') && !e.repeat) { var fb = document.activeElement; if (fb && menu.contains(fb) && fb.tagName === 'BUTTON') fb.click(); }
+      else if (k === 'arrowdown' || k === 'arrowup') {
+        var bs = [].slice.call(menu.querySelectorAll('button:not([disabled])')), bi = bs.indexOf(document.activeElement);
+        bi = (bi + (k === 'arrowdown' ? 1 : -1) + bs.length) % bs.length; if (bs[bi]) bs[bi].focus();
+      }
+      return;
+    }
     if (k === 'escape' && !e.repeat) { openMenu(); return; }
     if ((k === 'e' || k === ' ' || k === 'enter') && !e.repeat && prompt && phase === 'sail') prompt.act();
     if (k === 't' && !e.repeat) { auto = !auto; say(auto ? 'The sheet trims itself — you steer' : 'Trimming by hand again', 2400); }
@@ -695,9 +703,9 @@ var BridgeSloop = (function () {
     if (menu || !running) return;
     var fn = A ? A.name : 'the quay', opts = [['Keep sailing', closeMenu]], fight = typeof BridgeSeaFight !== 'undefined' && BridgeSeaFight.busy();
     if (typeof BridgeChart !== 'undefined') opts.push(['Open the chart (C)', function () { closeMenu(); openChart(); }]);
-    if (B && !fight) opts.push(['Skip ahead to ' + B.name, function () { closeMenu(); stop(to); }]);
+    if (B && !fight) opts.push(['Skip ahead to ' + B.name, function () { closeMenu(); landThen(to, function () { stop(to); }); }]);
     else if (!B && A && !committing) others().forEach(function (o) { opts.push(['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]); });
-    if (!fight) opts.push(['Put back to ' + fn, function () { closeMenu(); stop(from); }]);
+    if (!fight) opts.push(['Put back to ' + fn, function () { closeMenu(); landThen(from, function () { stop(from); }); }]);
     ask('At the tiller', fight ? 'NOT WITH THEM ON YOUR HEELS.' : null, opts);
   }
   // a choice over the sea view (the sim waits while it's open); an option with no function is shown greyed out
@@ -935,7 +943,7 @@ var BridgeSloop = (function () {
       var dA = Math.min(Math.hypot(b.x - A.berth[0], b.r - A.berth[1]), Math.hypot(b.x - A.moor[0], b.r - A.moor[1]));
       if (dB < 2.6) prompt = b.v < 2.8 ? { text: 'Come alongside — ' + B.name, act: function () { moor(); } }
                                        : { text: 'Too fast to tie up — ease out and round up', act: function () {} };
-      else if (dA < 2.2 && now - began > 8000) prompt = { text: 'Put back in at ' + A.name, act: function () { stop(from, true); } };
+      else if (dA < 2.2 && now - began > 8000) prompt = { text: 'Put back in at ' + A.name, act: function () { landThen(from, function () { stop(from, true); }); } };
       things.forEach(function (o) {
         if (prompt) return;
         var d = Math.hypot(b.x - o.x, b.r - o.r);
@@ -969,7 +977,7 @@ var BridgeSloop = (function () {
       if (mt > MOOR.done && !hold) {
         hold = 1;
         if (shipId && typeof BridgeFleet !== 'undefined') BridgeFleet.moored(shipId, to);   // she lies here now
-        setTimeout(function () { hold = 0; stop(to, true); }, 300);
+        landThen(to, function () { setTimeout(function () { hold = 0; stop(to, true); }, 300); });
       }
     }
   }
@@ -986,7 +994,28 @@ var BridgeSloop = (function () {
   var castSide = 0;
   function fishHere() {
     keys = {}; castSide = Math.random() - 0.5;
-    BridgeFishing.open({ pool: 'sea_' + seaHere(), boat: true });
+    var F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null, ship = F && shipId && F.get(shipId);
+    BridgeFishing.open({ pool: 'sea_' + seaHere(), boat: true, hold: ship ? {
+      room: function () { return F.catchCount(ship) < F.fishCap(ship); },
+      put: function (id) { return F.stowFish(ship, id); },
+      count: function () { return [F.catchCount(ship), F.fishCap(ship)]; } } : null });
+  }
+  function holdCount() {
+    var F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null, ship = F && shipId && F.get(shipId);
+    return ship ? [F.catchCount(ship), F.fishCap(ship)] : null;
+  }
+  // tying up with fish in her hold: sell them on the quay, carry them ashore, or leave them aboard for another port
+  function landThen(dest, fn) {
+    var F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null, T = typeof BridgeTrade !== 'undefined' ? BridgeTrade : null;
+    var ship = F && shipId && F.get(shipId), say2 = function (a, b, c) { if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast(a, b, c); };
+    if (!ship || !T || !F.catchCount(ship)) { fn(); return; }
+    var market = !!T.port(dest), v = market ? T.catchValue(ship, dest) : 0, opts = [];
+    if (market) opts.push(['Sell it on the quay — ' + v + ' coins', function () {
+      T.sellCatch(ship, dest).then(function (r) { if (r.ok) { sfx('coin'); say2('Catch sold', r.n + ' fish on the quay', '+' + r.total + ' coins'); } fn(); });
+    }]);
+    opts.push(['Carry it ashore', function () { var r = T.carryCatch(ship); sfx('pickup'); say2('Catch ashore', r.moved + ' fish into your pack', r.left ? r.left + ' still aboard' : ''); fn(); }]);
+    opts.push(['Leave it in the hold', fn]);
+    ask('Landing the catch', (T.catchList(ship) + ' in the fish hold.').toUpperCase(), opts, fn);
   }
   function seaFishTold(set) {
     try { if (set) localStorage.setItem('bridge_sea_fish', '1'); return localStorage.getItem('bridge_sea_fish') === '1'; } catch (e) { return true; }
@@ -1007,8 +1036,17 @@ var BridgeSloop = (function () {
       say(ok === false ? 'Your pack is full — you let it drift' : 'Inside the ' + o.kind + ': ' + (item === 'sea_glass' ? 'sea glass, wrapped in sailcloth' : 'a tin of silver nails'), 3000);
     }
   }
+  // what the fishermen say about the legend in the water they're fishing (one turn in three)
+  var LEGEND = {
+    emerald: 'Old Mossback took my best line off here last spring. Green moss glowing on his back like a town at night. Older than the capital, and he knows it.',
+    sapphire: 'Saw a Crownfin break the surface at dawn - crystal on its back like the Queen\'s own crown. Touched my cap. You do, for those.',
+    rose: 'Stay out till first light and watch for the Dawnveil. A great pink ray, flying under the water, fins trailing like a bride\'s.',
+    crimson: 'There\'s a pike out here with a mouth like a furnace. I won\'t say its name aboard. Cast long and keep your hands clear.',
+    midnight: 'Something old lives under the Midnight Sea. Glass and stars, my grandmother said. Nobody\'s landed one that anyone remembers.'
+  };
   function hail(o) {
-    var line = LINES[(o.seed + Math.floor(Date.now() / 60000)) % LINES.length];
+    var turn = o.seed + Math.floor(Date.now() / 60000), lg = LEGEND[seaHere()];
+    var line = lg && turn % 3 === 0 ? lg : LINES[turn % LINES.length];
     say('The fisherman lifts his lantern: "' + line + '"', 6500);
     sfx('blip');
   }
@@ -1769,6 +1807,14 @@ var BridgeSloop = (function () {
     ctx.textAlign = 'left'; ctx.fillStyle = '#c8d0e0';
     ctx.fillText(pos, tx0, ty0 - px(32));
     ctx.textAlign = 'right'; ctx.fillText((Math.max(0, b.v) * 2.1).toFixed(1) + ' KN', tx0 + tw, ty0 - px(32));
+    // the fish hold, under the passage panel (once there's something in it, or a line's out)
+    var fh = holdCount();
+    if (fh && (fh[0] || fishingOpen())) {
+      var hx = px(20), hy = px(18) + px(40), full = fh[0] >= fh[1];
+      ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(hx - px(8), hy - px(8), px(full ? 170 : 130), px(20));
+      ctx.font = px(10) + 'px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = full ? '#ff9080' : '#a0d0e0';
+      ctx.fillText('FISH HOLD ' + fh[0] + ' / ' + fh[1] + (full ? ' · FULL' : ''), hx, hy + px(2));
+    }
     // the passage, top left: from, to, how far along (or, before a course: which island you're pointing at)
     var bx0 = px(20), by0 = px(18), bw = px(220);
     ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(bx0 - px(8), by0 - px(10), bw + px(16), px(40));
@@ -1797,7 +1843,7 @@ var BridgeSloop = (function () {
         ctx.fillStyle = '#f2ecd6'; ctx.fillText(l, canvas.width / 2, y);
       });
     }
-    if (prompt && !fishingOpen()) {
+    if (prompt && !fishingOpen() && !menu) {
       ctx.font = px(13) + 'px "Pixelify Sans", monospace';
       var label = (touch() ? 'TAP' : 'E') + '  ' + prompt.text.toUpperCase(), w2 = ctx.measureText(label).width + px(28);
       var y2 = canvas.height - px(150);
