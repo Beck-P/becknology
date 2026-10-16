@@ -74,7 +74,7 @@ C.coast(k, land, ground=(material, ALB), palette='emerald', grass='#3e5e38', roc
         beach_bias=lambda x, r: 0.9 * I.smooth(QUAY - 2.0, QUAY + 0.5, r) * (1 - I.smooth(13.0, 15.0, x) * (1 - I.smooth(28.0, 30.0, x))),
         keep_clear=[(PX - 0.4, QUAY - 0.2, PX + 1.4, SHIP_R + 0.2), (PX - 14.0, SHIP_R - 0.6, PX + 16.0, SHIP_R + 3.0),
                     (14.0, QUAY + 0.6, 29.0, QUAY + 1.6)],
-        sheer=[(13.9, QUAY + 0.9, 29.1, QUAY + 4.0)])
+        sheer=[(13.9, QUAY + 0.9, 29.1, QUAY + 4.0, 1.6)])
 
 # ---- the old quay and jetty (always there; the dock variant rebuilds them) -----------------------------------------
 k.box(13.8, QUAY + 0.95, C.WZ - 0.6, 29.2, QUAY + 1.1, -0.05, ('#5e5a52', 0.25), 'old_quay')

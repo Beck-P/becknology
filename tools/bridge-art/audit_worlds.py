@@ -101,7 +101,7 @@ for wid, ws in sorted(WALKERS.items()):
             n = max(1, int(max(abs(bx - ax), abs(by - ay)) * 10))
             bad = {(round(ax + (bx - ax) * t / n), round(ay + (by - ay) * t / n)) for t in range(n + 1)}
             bad = sorted(c for c in bad if not walk(W[wid], *c))
-            if bad and wk.get('talk'):                     # (older routes cross the odd solid cell; a talking one stops on its route)
+            if bad:
                 issues.append((wid, 'walker %s crosses solid tiles %s' % (wk['sheet'], bad)))
 
 
