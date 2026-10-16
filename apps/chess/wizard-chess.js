@@ -813,7 +813,7 @@ export class WizardChess3D {
     this.chess = new Chess();
     this.audio = new WizardAudio();
 
-    this.mode = "ai"; // 'ai' | '2p'
+    this.mode = "ai"; // 'ai' | '2p' | 'net' (another pilot, over the wire: their moves come in by applyRemoteMove)
     this.aiDifficulty = 3; // 1..6 (default 3 = Battlemage ~1450 ELO)
     this.playerColor = "w"; // 'w' | 'b'
     this.themeId = WIZARD_THEMES[options.theme] ? options.theme : "classic";
@@ -2067,7 +2067,7 @@ export class WizardChess3D {
     this.onPointerDown = (e) => {
       if (this.animating || !this.activeTab || this.reviewMode) return;
       if (this.chess.isGameOver()) return;
-      if (this.mode === "ai" && this.chess.turn() !== this.playerColor) return;
+      if ((this.mode === "ai" || this.mode === "net") && this.chess.turn() !== this.playerColor) return;
 
       const rect = this.renderer.domElement.getBoundingClientRect();
       this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -2152,7 +2152,27 @@ export class WizardChess3D {
   }
 
   // ---------- Choreographed Move + Piece-Specific Battle Chess Duels ----------
-  async executeMove(moveObj) {
+  // A move from the other pilot (mode 'net'): queued while anything's still animating, then played like any other
+  applyRemoteMove(uci) {
+    if (!uci) return;
+    (this.netQueue = this.netQueue || []).push(String(uci));
+    this.pumpNet();
+  }
+
+  pumpNet() {
+    if (this.animating || this.reviewMode || !this.netQueue || !this.netQueue.length) return;
+    const uci = this.netQueue.shift();
+    const from = uci.slice(0, 2), to = uci.slice(2, 4), promo = uci[4];
+    const move = this.chess.moves({ verbose: true }).find((m) => m.from === from && m.to === to && (!promo || m.promotion === promo));
+    if (!move) {
+      console.warn("Wizard Chess: a move from the other board didn't fit this one", uci);
+      this.pumpNet();
+      return;
+    }
+    this.executeMove(move, true);
+  }
+
+  async executeMove(moveObj, remote = false) {
     this.animating = true;
     this.selectedSquare = null;
     this.legalMovesForSelected = [];
@@ -2182,6 +2202,15 @@ export class WizardChess3D {
     if (!result) {
       this.animating = false;
       return;
+    }
+
+    // Over the wire: tell the other board at once (the animation plays on both)
+    if (this.mode === "net" && !remote && this.callbacks.onNetMove) {
+      try {
+        this.callbacks.onNetMove(result.from + result.to + (result.promotion || ""));
+      } catch (err) {
+        console.warn("Wizard Chess: couldn't send the move", err);
+      }
     }
 
     // The move is made; the rest is showing it. If any of that fails, the board is set straight
@@ -2274,6 +2303,7 @@ export class WizardChess3D {
       setTimeout(() => this.playAIMove(gen), 240);
     } else {
       this.animating = false;
+      if (this.mode === "net") this.pumpNet();
     }
   }
 
@@ -3318,6 +3348,7 @@ export class WizardChess3D {
       this.callbacks.onEvalUpdate(latest.evalCpWhite, null);
     }
     this.resumeAIIfItsTurn();
+    if (this.mode === "net") this.pumpNet();
   }
 
   // If it's the AI's move and nothing is already playing it, play it.
@@ -3485,7 +3516,7 @@ export class WizardChess3D {
   }
 
   undoLastRound() {
-    if (this.animating) return;
+    if (this.animating || this.mode === "net") return; // a move sent to another pilot stays made
     this.reviewMode = false;
     this.clearReviewArrows();
 

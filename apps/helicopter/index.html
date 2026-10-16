@@ -7,6 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/bridge/js/shared/progression.js"></script>
+<script src="/bridge/js/shared/together-frame.js"></script>
 <script src="/bridge/js/shared/arcade-kit.js"></script>
 </head>
 <body>
@@ -25,6 +26,13 @@
  * limited by what the craft can follow and flattened under every pillar, so
  * there is always a way through (checked by `game._sim`: a bot that flies
  * the demo on the title screen, and a search over every reachable height).
+ *
+ * Played together (js/shared/together-frame.js), the cave comes from the
+ * session's seed (`cr`, its own random stream, so sparks and smoke never
+ * change it) and the two craft swap where they are a dozen times a second:
+ * in a score duel your rival flies beside you as a ghost; in tandem it's one
+ * cave for two — crash and you relaunch beside your partner while they're
+ * still flying, and the run's over when you're both down.
  */
 (function () {
   var W = 320, H = 180, P = BridgeArcade.PAL.arcadia;
@@ -48,6 +56,22 @@
   function gapAt(m) { return GAP0 - (GAP0 - GAP1) * k01(m, GAP_M); }
   function slopeMax(m) { return Math.min(0.22 + 0.28 * k01(m, 1000), 70 / speedAt(m)); }   // ≤ 70 px/s of climb to follow it
   function rnd(a, b) { return a + Math.random() * (b - a); }
+  // the cave's own randomness: the session's seed when played together, so both pilots fly the same cave
+  function cr() { return S && S.crand ? S.crand() : Math.random(); }
+  function crnd(a, b) { return a + cr() * (b - a); }
+  var TF = window.BridgeTogetherFrame || null, TANDEM = !!(TF && TF.cfg.mode === 'tandem');
+  function tlive() { return !!(TF && !TF.over && S && !S.demo && S.together); }
+  var mate = null;                                  // the other craft: where they are, as they last said
+  if (TF) TF.on('data', function (m) {
+    if (m.k === 'chip' && m.d && S && S.together) {   // tandem: a chip your partner took is gone for you too
+      S.chips = S.chips.filter(function (c) { return !(c.x === m.d.x && c.y === m.d.y); });
+      return;
+    }
+    if (m.k !== 'heli' || !m.d) return;
+    var d = m.d, t = performance.now();
+    if (!mate) mate = { scroll: d.s, y: d.y, ty: d.y, ts: d.s, tilt: 0 };
+    mate.ts = d.s; mate.ty = d.y; mate.tilt = d.t || 0; mate.crashed = !!d.c; mate.at = t; mate.speed = d.v || 0; mate.out = !!d.o;
+  });
 
   var FIRE = [P.white, P.yel, P.yel, P.pink, P.red, P.mag, P.purp2],
       SMOKE = [P.grey, P.hi, P.hi, P.mid, P.mid, P.bg2],
@@ -64,8 +88,10 @@
 
   function newWorld(demo) {
     var c = (TOP_MIN + BOT_MAX) / 2;
+    var together = !demo && !!TF && !TF.over;
     S = {
-      demo: demo, T: S ? S.T : 0, scroll: 0, speed: SPEED0, dist: 0,
+      demo: demo, T: S ? S.T : 0, scroll: 0, speed: SPEED0, dist: 0, together: together, crand: together ? TF.rng('cave') : null,
+      shield: 0, sendT: 0, relaunches: 0,
       y: c, vy: 0, tilt: 0,
       crashed: false, crashT: 0, overSent: false, cause: '', wreck: null, ring: null, blade: null,
       top: new Int16Array(RING), bot: new Int16Array(RING),
@@ -93,7 +119,7 @@
     var smax = slopeMax(m), ds = 0.004 + 0.004 * k01(m, 1200);
     var cMin = TOP_MIN + gap / 2, cMax = BOT_MAX - gap / 2, want = 0;
     if (!warm && !calm) {
-      if (Math.abs(G.target - G.c) < 2 || ++G.travel > 520) { G.target = rnd(cMin, cMax); G.travel = 0; }
+      if (Math.abs(G.target - G.c) < 2 || ++G.travel > 520) { G.target = crnd(cMin, cMax); G.travel = 0; }
       var d = G.target - G.c;                       // head for the target, easing off in time to level out there
       want = clamp((d < 0 ? -1 : 1) * Math.sqrt(2 * ds * Math.abs(d)) * 0.9, -smax, smax);
     }
@@ -106,14 +132,14 @@
     if (!warm && !calm) {
       if (G.notch) { if (G.notch.top) t += G.notch.d; else b -= G.notch.d; if (--G.notch.n <= 0) G.notch = null; }
       else if (--G.notchCd <= 0) {
-        G.notch = { top: Math.random() < 0.5, d: clamp(Math.round((gap - 46) / 4), 2, 6), n: 5 + Math.floor(Math.random() * 14) };
-        G.notchCd = 50 + Math.random() * 130;
+        G.notch = { top: cr() < 0.5, d: clamp(Math.round((gap - 46) / 4), 2, 6), n: 5 + Math.floor(cr() * 14) };
+        G.notchCd = 50 + cr() * 130;
       }
     } else G.notch = null;
 
     // pillars: decided 70 px ahead, so the cave can level out before one
     if (!warm && !G.pending && m >= PILLAR_M - 12 && x - G.lastPillar >= G.pillarGap) {
-      var pw = 8 + 2 * Math.floor(Math.random() * 3);
+      var pw = 8 + 2 * Math.floor(cr() * 3);
       G.pending = { x: x + 70, w: pw };
       G.calmTo = x + 70 + pw + 30;
       G.flatFrom = x + 40; G.flatTo = x + 70 + pw + 12; G.flatGap = Math.round(gapAt(m + 70 / PXM));
@@ -126,9 +152,9 @@
       if (G.trail > 0) {
         if (--G.trailCd <= 0) { addChip(x, clamp(G.c + G.trailOff, t + 7, b - 7)); G.trail--; G.trailCd = 14; }
       } else if (--G.chipCd <= 0) {
-        if (Math.random() < 0.25) { G.trail = 3 + Math.floor(Math.random() * 2); G.trailOff = rnd(-1, 1) * (gap / 2 - 14); G.trailCd = 0; }
-        else addChip(x, clamp(G.c + rnd(-1, 1) * (gap / 2 - 10), t + 7, b - 7));
-        G.chipCd = 160 + Math.random() * 160;
+        if (cr() < 0.25) { G.trail = 3 + Math.floor(cr() * 2); G.trailOff = crnd(-1, 1) * (gap / 2 - 14); G.trailCd = 0; }
+        else addChip(x, clamp(G.c + crnd(-1, 1) * (gap / 2 - 10), t + 7, b - 7));
+        G.chipCd = 160 + cr() * 160;
       }
     }
     S.top[x & MASK] = t; S.bot[x & MASK] = b;
@@ -136,27 +162,27 @@
   }
 
   function makePillar(x, w, t, b, m) {
-    var G = S.gen, gap = b - t, p = { x: x, w: w, kind: 'mid', y0: 0, y1: 0, ph: Math.random() * 6 };
+    var G = S.gen, gap = b - t, p = { x: x, w: w, kind: 'mid', y0: 0, y1: 0, ph: cr() * 6 };
     var ph = clamp(Math.round(gap * 0.24), 12, 26), room = gap - ph, a;
-    if (room >= PASS + 12 && Math.random() < 0.55) {               // floating in the middle: PASS one side, 12+ the other
-      a = Math.random() < 0.5 ? 12 + Math.floor(Math.random() * (room - PASS - 11)) : PASS + Math.floor(Math.random() * (room - PASS - 11));
+    if (room >= PASS + 12 && cr() < 0.55) {                        // floating in the middle: PASS one side, 12+ the other
+      a = cr() < 0.5 ? 12 + Math.floor(cr() * (room - PASS - 11)) : PASS + Math.floor(cr() * (room - PASS - 11));
       p.y0 = t + a; p.y1 = p.y0 + ph;
     } else {                                                        // hung from the ceiling or stood on the floor
       var pass = clamp(Math.round(gap * 0.55), PASS + 2, 50);
-      if (Math.random() < 0.5) { p.kind = 'up'; p.y0 = t - 6; p.y1 = b - pass; }
+      if (cr() < 0.5) { p.kind = 'up'; p.y0 = t - 6; p.y1 = b - pass; }
       else { p.kind = 'down'; p.y0 = t + pass; p.y1 = b + 6; }
     }
     S.pillars.push(p);
-    if (Math.random() < 0.5) {                                      // a chip in the way through
+    if (cr() < 0.5) {                                               // a chip in the way through
       var above = p.kind === 'up' ? false : p.kind === 'down' ? true : p.y0 - t >= b - p.y1;
       addChip(x + (w >> 1), above ? (t + p.y0) / 2 : (p.y1 + b) / 2);
     }
     G.lastPillar = x;
-    G.pillarGap = Math.round(440 - 210 * k01(m - PILLAR_M, 1200) + Math.random() * 140);
+    G.pillarGap = Math.round(440 - 210 * k01(m - PILLAR_M, 1200) + cr() * 140);
     G.pending = null;
   }
 
-  function addChip(x, y) { S.chips.push({ x: x, y: Math.round(y), ph: Math.random() * 6 }); }
+  function addChip(x, y) { S.chips.push({ x: x, y: Math.round(y), ph: cr() * 6 }); }
 
   // the craft's box: columns -6..6 round its centre, rows y-3..y+4 (the rotor tips may brush the neon)
   function collideAt(sx, y) {
@@ -207,7 +233,12 @@
       S.tilt += (clamp(-S.vy / 50, -2, 2) - S.tilt) * Math.min(1, dt * 10);
       emit(dt, climb);
       pickChips(api);
-      var why = collideAt(Math.floor(S.scroll), S.y);
+      if (S.shield > 0) {                           // just relaunched: a moment to find your feet (blinking, no crashing)
+        S.shield -= dt;
+        var cx0 = (Math.floor(S.scroll) + CRAFT_X) & MASK;
+        S.y = clamp(S.y, S.top[cx0] + 4, S.bot[cx0] - 5);
+      }
+      var why = S.shield > 0 ? '' : collideAt(Math.floor(S.scroll), S.y);
       if (why) crash(api, why);
       else milestones(api);
       if (live) {
@@ -217,9 +248,44 @@
       }
     } else {
       S.crashT += dt;
-      if (live && !S.overSent && S.crashT >= 1.1) { S.overSent = true; api.over(); }
+      if (live && TANDEM && tlive()) tandemDown(api);
+      else if (live && !S.overSent && S.crashT >= 1.1) { S.overSent = true; api.over(); }
     }
     stepAmbient(dt);
+    if (live && tlive()) share(dt);
+  }
+
+  // ---- together: where you are, out to the other craft; the tandem relaunch ----------------------------
+  function share(dt) {
+    if ((S.sendT -= dt) > 0) return;
+    S.sendT = 1 / 12;
+    TF.send('heli', { s: Math.round(S.scroll * 10) / 10, y: Math.round(S.y * 10) / 10, t: Math.round(S.tilt * 10) / 10, c: S.crashed ? 1 : 0, v: Math.round(S.speed), o: S.overSent ? 1 : 0 });
+  }
+  function mateFlying() { return !!(mate && !mate.crashed && !mate.out && performance.now() - mate.at < 2500 && !(TF.peer && TF.peer.done)); }
+  function tandemDown(api) {
+    if (S.overSent || S.crashT < 1.1) return;
+    if (!mateFlying()) {                           // both down (or they've gone): the run's over for you both
+      if (S.crashT >= 1.6) { S.overSent = true; share(1); api.over(); }
+      return;
+    }
+    if (S.crashT >= 2.6) relaunch(api);
+  }
+  function relaunch(api) {
+    var age = (performance.now() - mate.at) / 1000, to = mate.ts + (mate.speed || S.speed) * Math.min(age, 0.5);
+    S.scroll = Math.max(S.scroll, to);
+    S.dist = S.scroll / PXM;
+    S.speed = speedAt(S.dist);
+    generate();
+    var sx = Math.floor(S.scroll), cx = (sx + CRAFT_X) & MASK;
+    S.pillars = S.pillars.filter(function (p) { return p.x + p.w >= sx - 12; });
+    S.chips = S.chips.filter(function (c) { return c.x >= sx - 12; });
+    var mid = (S.top[cx] + S.bot[cx]) / 2;            // beside them, not on top of them: toward the middle of the gap
+    S.y = clamp(mate.ty + (mate.ty < mid ? 13 : -13), S.top[cx] + 6, S.bot[cx] - 7);
+    S.vy = 0; S.tilt = 0; S.crashed = false; S.crashT = 0; S.wreck = null; S.blade = null; S.ring = null; S.shield = 1.6;
+    S.relaunches++;
+    S.nextMile = Math.ceil(S.dist / 100) * 100; S.nextAward = Math.ceil(S.dist / AWARD_M) * AWARD_M;
+    pop('BACK IN BESIDE ' + String(TF.cfg.vs || '').toUpperCase(), W / 2, 52, P.cyan2, { screen: true, life: 1.4, vy: -6 });
+    api.beep(660, 0.1, 'triangle', 0.06); setTimeout(function () { api.beep(990, 0.16, 'triangle', 0.06); }, 90);
   }
 
   function emit(dt, climb) {
@@ -246,6 +312,7 @@
       if (Math.abs(c.x - cx) <= 8 && Math.abs(c.y - S.y) <= 7) {
         S.chips.splice(i, 1);
         S.got++;
+        if (TANDEM && tlive()) TF.send('chip', { x: c.x, y: c.y });
         for (var k = 0; k < 7; k++) { var a = Math.random() * Math.PI * 2; S.parts.push({ x: c.x, y: c.y, vx: Math.cos(a) * 50 + S.speed * 0.6, vy: Math.sin(a) * 50, life: 0.3, max: 0.3, ramp: SPARK }); }
         if (!S.demo) {
           pop('+' + CHIP_PTS, c.x, c.y - 10, P.yel);
@@ -734,6 +801,32 @@
     });
   }
 
+  // the other craft: a ghost of your rival in a duel, your partner in tandem (in the other neon, with their name)
+  function drawMate(g, api, sx, mode) {
+    if (!mate || !S || S.demo || !S.together || mode === 'title') return;
+    var t = performance.now(), age = Math.min(0.5, (t - mate.at) / 1000);
+    if (t - mate.at > 4000) return;
+    var want = mate.crashed ? mate.ts : mate.ts + (mate.speed || 0) * age;
+    mate.scroll += (want - mate.scroll) * 0.35; mate.y += (mate.ty - mate.y) * 0.4;
+    if (Math.abs(want - mate.scroll) > 120) mate.scroll = want;
+    var x = Math.round(CRAFT_X + mate.scroll - S.scroll), y = Math.round(mate.y), name = String(TF.cfg.vs || '').toUpperCase();
+    if (x < -10 || x > W + 10) {                    // off the screen: their name at the edge, pointing the way
+      var ey = clamp(y, 24, H - 12);
+      if (x < 0) label(g, api, '<' + name, 3, ey, mate.crashed ? P.grey : P.cyan2);
+      else label(g, api, name + '>', W - 3, ey, mate.crashed ? P.grey : P.cyan2, 'right');
+      return;
+    }
+    if (mate.crashed) { g.fillStyle = P.mid; g.fillRect(x - 3, y, 7, 2); label(g, api, name, x, y - 12, P.grey, 'center'); return; }
+    g.save();
+    if (!TANDEM) g.globalAlpha = 0.45;
+    var keep = [HELIC.b, HELIC.d, HELIC.f, HELIC.k];
+    HELIC.b = P.cyan; HELIC.d = P.purp; HELIC.f = P.cyan; HELIC.k = P.purp;
+    drawHeli(g, x, mate.y, mate.tilt, S.T + 0.37);
+    HELIC.b = keep[0]; HELIC.d = keep[1]; HELIC.f = keep[2]; HELIC.k = keep[3];
+    g.restore();
+    label(g, api, name, x, y - 13, TANDEM ? P.cyan2 : P.grey, 'center');
+  }
+
   function drawHud(g, api, mode) {
     label(g, api, Math.floor(S.dist) + 'M', 5, 4, P.white);
     chipIcon(g, 5, 14);
@@ -741,6 +834,12 @@
     label(g, api, 'SCORE ' + api.score, W - 5, 4, P.white, 'right');
     if (best.score) label(g, api, 'BEST ' + Math.max(best.score, api.score), W - 5, 14, P.grey, 'right');
     if (mode === 'over') label(g, api, Math.floor(S.dist) + 'M  +  ' + S.got + ' CHIPS', W / 2, 33, P.white, 'center');
+    if (TANDEM && S.together && mode === 'play') {
+      var nm = String(TF.cfg.vs || '').toUpperCase();
+      if (S.crashed && mateFlying()) label(g, api, 'RELAUNCHING BESIDE ' + nm + '...', W / 2, 26, Math.floor(S.T * 4) % 2 ? P.cyan2 : P.white, 'center');
+      else if (S.crashed) label(g, api, nm + ' IS DOWN TOO', W / 2, 26, P.pink, 'center');
+      else if (mate && mate.crashed && performance.now() - mate.at < 2500) label(g, api, nm + ' IS DOWN - KEEP FLYING!', W / 2, 26, P.yel, 'center');
+    }
   }
 
   // ---- the cabinet ------------------------------------------------------------------------------------
@@ -777,7 +876,8 @@
       drawMarks(g, api, sx);
       S.pillars.forEach(function (p) { drawPillar(g, p, sx); });
       drawChips(g, sx);
-      if (!S.crashed) drawHeli(g, CRAFT_X, S.y, S.tilt, S.T);
+      drawMate(g, api, sx, mode);
+      if (!S.crashed && !(S.shield > 0 && Math.floor(S.T * 12) % 2)) drawHeli(g, CRAFT_X, S.y, S.tilt, S.T);
       drawWreck(g, api, sx);
       drawParts(g, sx);
       drawPops(g, api, sx);

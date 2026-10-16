@@ -18,10 +18,18 @@
  * up to 150 coins a night. Tuned (in simulation, `_sim`) to give back about
  * 85% of what it takes, a fever every couple of hundred balls — fevers are
  * what you come for.
+ *
+ * Played together (js/together.js): each of you sits at the same machine with
+ * a match tray of MATCH balls from the house — your own box isn't touched —
+ * and what the board pays goes into a match cup instead of back into the tray.
+ * When your tray's fired and the board has settled (no balls, spins or fever
+ * left) the cup's your score: the most balls won takes the pot, or together
+ * you try to win back more than you fired between you. The other pilot's cup
+ * shows beside yours as it fills.
  */
 var BridgePachinko = (function () {
   var KEY = 'bridge_pachinko';
-  var HOUSE = 30, TRAY = 50, TRAY_COST = 10, PER_COIN = 5, CASH_CAP = 150;
+  var HOUSE = 30, TRAY = 50, TRAY_COST = 10, PER_COIN = 5, CASH_CAP = 150, MATCH = 50;
   var BW = 168, BH = 236;                     // the board, native px
   var CX = 84, CY = 92, R = 80, RI = 71;      // the arch, and the rail inside it
   var BR = 2.5, PR = 1.0;                     // ball and pin radii
@@ -383,7 +391,10 @@ var BridgePachinko = (function () {
     }
   }
 
-  function win(n) { save.balls += n; game.net += n; dirty(); }
+  function win(n) {
+    if (game.match) { game.match.won += n; game.net += n; tell(); return; }   // together: into the match cup
+    save.balls += n; game.net += n; dirty();
+  }
   var saveAt = 0;
   function dirty() { saveAt = performance.now() + 800; }
 
@@ -450,8 +461,9 @@ var BridgePachinko = (function () {
     if (!game) return;
     var g = game, dt = Math.min(0.05, (now - last) / 1000 || 0);
     last = now;
-    if (g.firing && now >= g.nextShot && save.balls > 0 && g.bd.balls.length < 24) {
-      save.balls--; g.net--; dirty();
+    var M = g.match && !g.match.over ? g.match : null;
+    if (g.firing && now >= g.nextShot && (M ? M.left > 0 : !g.match && save.balls > 0) && g.bd.balls.length < 24) {
+      if (M) { M.left--; M.fired++; tell(); } else { save.balls--; g.net--; dirty(); }
       launch(g.bd, g.power);
       g.nextShot = now + 210;
       if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('ball');
@@ -463,6 +475,7 @@ var BridgePachinko = (function () {
     if (g.fever && now > g.fever.until) endRound(now);
     tickReel(now);
     if (saveAt && now > saveAt) { saveAt = 0; store(); }
+    if (M && M.left === 0 && !g.bd.balls.length && !g.reel && !g.fever && !g.held) matchDone();
     draw(now);
     updateHud();
     raf = requestAnimationFrame(frame);
@@ -473,6 +486,7 @@ var BridgePachinko = (function () {
 
   function updateHud() {
     var g = game;
+    if (g.match) { matchHud(); return; }
     el.querySelector('.pk-balls').textContent = save.balls;
     var net = el.querySelector('.pk-net');
     net.textContent = (g.net >= 0 ? '+' : '') + g.net;
@@ -501,8 +515,10 @@ var BridgePachinko = (function () {
       '<div class="pk-play">' +
       '<canvas class="pk-board"></canvas>' +
       '<div class="pk-side">' +
-      '<div class="pk-stat"><span>Balls</span><b class="pk-balls">0</b></div>' +
-      '<div class="pk-stat"><span>This sitting</span><b class="pk-net">0</b></div>' +
+      '<div class="pk-stat"><span class="pk-balls-l">Balls</span><b class="pk-balls">0</b></div>' +
+      '<div class="pk-stat"><span class="pk-net-l">This sitting</span><b class="pk-net">0</b></div>' +
+      '<div class="pk-stat pk-them"><span class="pk-them-l"></span><b class="pk-them-n">0</b></div>' +
+      '<div class="pk-them-sub"></div>' +
       '<label class="pk-handle"><span>Handle</span><input type="range" min="0" max="100" value="55" class="pk-power"></label>' +
       '<button class="pk-fire">Hold to fire</button>' +
       '<div class="pk-keys">Hold Space · ←/→ the handle</div>' +
@@ -621,22 +637,27 @@ var BridgePachinko = (function () {
     document.addEventListener('keyup', onKeyUp, true);
   }
 
-  function open(inter) {
+  function open(inter, sess) {
     newDay();
+    if (game && game.match && !game.match.over && !sess) return;   // a match is on: it stays
     var key = (inter && inter.machine && MACHINES[inter.machine]) ? inter.machine : 'lucky-cat';
     var m = MACHINES[key];
     show('play');
     var bd = build(key);
     drawBackground(m, bd);
     game = { bd: bd, m: m, power: 0.55, firing: false, nextShot: 0, acc: 0, held: 0, reel: null, fever: null,
-             lastDigits: [7, 7, 7], pops: [], net: 0 };
+             lastDigits: [7, 7, 7], pops: [], net: 0,
+             match: sess ? { sess: sess, left: MATCH, fired: 0, won: 0, over: false, them: { won: 0, label: '' } } : null };
+    el.classList.toggle('match', !!sess);
     el.querySelector('.pk-power').value = 55;
     el.querySelector('.pk-title').textContent = m.title;
     el.querySelector('.pk-title').style.color = m.accent;
     el.querySelector('.pk-sub').textContent = 'Lucky 7';
     el.querySelector('.pk-panel').style.borderColor = m.accent;
     fit();
-    status(save.balls ? 'Turn the handle till they land in the middle. Hold to fire.'
+    if (sess) status((sess.mode === 'team' ? 'Beat the house with ' + sess.peerName + ': between you, win back more than the ' + MATCH * 2 + ' you fire.'
+                                         : 'Race the tray against ' + sess.peerName + ': ' + MATCH + ' match balls each, the most balls won takes it.') + ' Hold to fire.');
+    else status(save.balls ? 'Turn the handle till they land in the middle. Hold to fire.'
                       : (save.house ? 'Your box is empty. A tray is ' + TRAY_COST + ' coins.' : 'Your box is empty - the house gives you a tray tonight.'));
     cancelAnimationFrame(raf);
     last = performance.now();
@@ -644,6 +665,7 @@ var BridgePachinko = (function () {
   }
 
   function prizes() {
+    if (el) el.classList.remove('match');
     show('counter');
     game = null;
     el.querySelector('.pk-cstatus').textContent = '';
@@ -656,13 +678,58 @@ var BridgePachinko = (function () {
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKeyUp, true);
     cancelAnimationFrame(raf);
-    if (game && game.bd.balls.length) { save.balls += game.bd.balls.length; }    // balls in the air drop back in your cup
+    if (game && game.match) { if (!game.match.over) matchDone(true); }           // walking away from a match: the cup's your score
+    else if (game && game.bd.balls.length) { save.balls += game.bd.balls.length; }    // balls in the air drop back in your cup
     store();
     game = null;
     if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
   }
 
-  return { open: open, prizes: prizes, close: close, machines: function () { return MACHINES; },
+  // ---- a match with another pilot (js/together.js) ---------------------------------------------------------
+  var tellAt = 0;
+  function tell() {
+    var M = game && game.match;
+    if (!M || M.over || typeof BridgeTogether === 'undefined') return;
+    if (performance.now() - tellAt < 250) return;
+    tellAt = performance.now();
+    BridgeTogether.score(M.won, M.won + ' won · ' + M.left + ' left');
+  }
+  function matchDone(left) {
+    var M = game && game.match;
+    if (!M || M.over) return;
+    M.over = true;
+    if (!left) status('Your tray\'s empty: ' + M.won + ' balls won.' + (M.them.done ? '' : ' Waiting for ' + M.sess.peerName + '…'));
+    if (typeof BridgeTogether !== 'undefined') BridgeTogether.done(M.won, M.won + ' balls won' + (left ? ' (left early)' : ''));
+  }
+  function matchHud() {
+    var g = game, M = g.match;
+    el.querySelector('.pk-balls-l').textContent = 'Match tray';
+    el.querySelector('.pk-balls').textContent = M.left;
+    el.querySelector('.pk-net-l').textContent = 'Balls won';
+    var net = el.querySelector('.pk-net');
+    net.textContent = M.won;
+    net.className = 'pk-net ' + (M.won >= M.fired ? 'up' : 'down');
+    el.querySelector('.pk-them-l').textContent = M.sess.peerName;
+    el.querySelector('.pk-them-n').textContent = M.them.won;
+    el.querySelector('.pk-them-sub').textContent = M.them.label ? M.them.label + (M.them.done ? ' · done' : '') : '';
+  }
+  function together(s) { if (!game || !game.match || game.match.over) open({ machine: s.opts && s.opts.machine }, s); }
+  function peer(t) { if (game && game.match && t) { game.match.them = { won: t.s || 0, label: t.label || '', done: !!t.done }; } }
+  // the verdict: in the status line while you're still at the machine (else js/together.js says it)
+  function verdict(v) {
+    if (!el || !el.classList.contains('visible') || !game || !game.match) return false;
+    var M = game.match;
+    status(v.head + (v.paid ? ' · +' + v.paid + ' coins' : '') + '. You won ' + M.won + ' balls, ' + M.sess.peerName + ' ' + M.them.won + '.');
+    game.match.over = true;
+    return true;
+  }
+  function gone() {
+    if (!game || !game.match || game.match.over) return;
+    game.match.over = true;
+    status(game.match.sess.peerName + ' left the machines - your stake is back.');
+  }
+
+  return { open: open, prizes: prizes, close: close, machines: function () { return MACHINES; }, together: together, peer: peer, verdict: verdict, gone: gone,
            balls: function () { return save.balls; }, _sim: sim, _build: build, _spin: spinResult,
            _fever: function (seven) { if (game) startFever(performance.now(), !!seven); }, _game: function () { return game; } };
 })();

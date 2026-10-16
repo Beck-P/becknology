@@ -1215,6 +1215,7 @@ html.touch .sp-keys { display: none; }
 .sp-fill.low { background: linear-gradient(90deg, #e84040, #e040c0); }
 .sp-grid { display: block; touch-action: manipulation; cursor: pointer; image-rendering: auto; }
 .sp-status { font-size: 13px; color: #c8f0e8; min-height: 18px; text-align: center; max-width: 460px; }
+.sp-them { font-size: 12px; color: #ff9ad0; letter-spacing: 1px; min-height: 16px; text-align: center; }   /* the other pilot (js/together.js) */
 .sp-again {
   font: inherit; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; padding: 7px 18px; border-radius: 3px;
   background: rgba(64, 224, 208, 0.1); border: 1px solid rgba(64, 224, 208, 0.6); color: #c8fcff;
@@ -1351,6 +1352,12 @@ html.touch #view-panel .vp-hint .ip-key { display: none; }
 .pk-stat { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #a08878; }
 .pk-stat b { font-size: 18px; color: #fff0d0; font-weight: 600; letter-spacing: 0; }
 .pk-net.up { color: #80ffb0; } .pk-net.down { color: #ff9080; }
+/* a match with another pilot (js/together.js): their cup beside yours, no trays to buy */
+.pk-them, .pk-them-sub { display: none; }
+#pachinko.match .pk-them { display: flex; padding-top: 6px; border-top: 1px solid rgba(255, 192, 48, 0.25); }
+#pachinko.match .pk-them-sub { display: block; font-size: 10px; color: #a08878; margin-top: -6px; }
+#pachinko.match .pk-them b { color: #ffd890; }
+#pachinko.match .pk-house, #pachinko.match .pk-buy { display: none !important; }
 .pk-handle { display: flex; flex-direction: column; gap: 4px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #a08878; }
 .pk-handle input { width: 100%; accent-color: #ffc030; }
 .pk-fire, .pk-btn {
@@ -1751,6 +1758,7 @@ html.dancing #inventory-panel, html.dancing .dpad { display: none !important; }
   background: rgba(184, 224, 248, 0.07); border: 1px solid rgba(184, 224, 248, 0.22); transition: border-color 0.2s, box-shadow 0.2s; }
 .fd-rival.turn, .fd-you.turn { border-color: #f0b0a0; box-shadow: 0 0 12px rgba(240, 176, 160, 0.35); }
 .fd-rival.out { opacity: 0.45; }
+.fd-rival.human .fd-who::before { content: '♥ '; color: #f0a0b8; }   /* a real pilot at the table (js/together.js) */
 .fd-who { font-size: 11px; letter-spacing: 1px; color: #b8e0f8; }
 .fd-dice { display: flex; gap: 5px; min-height: 28px; flex-wrap: wrap; }
 .fd-die { width: 28px; height: 28px; image-rendering: pixelated; image-rendering: crisp-edges; }
@@ -1862,6 +1870,39 @@ html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }   
 .mp-more { color: #a0e0b0; }
 html.touch #mp-pill { padding: 7px 14px 7px 11px; left: calc(12px + env(safe-area-inset-left)); top: calc(230px + env(safe-area-inset-top)); }
 html.home-editing #mp-pill, html.home-editing #mp-layer { display: none !important; }
+/* playing games together (js/together.js): the two of you in the cabinet's bar, what others are playing over their heads */
+.cm-mid { display: flex; align-items: center; justify-content: center; gap: 12px; min-width: 0; }
+.cm-vs { display: flex; align-items: baseline; gap: 7px; padding: 3px 12px; border-radius: 999px; white-space: nowrap; font-size: 13px; color: #f0ecf8;
+  background: rgba(0, 0, 0, 0.45); border: 1px solid color-mix(in srgb, var(--cm-a) 60%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--cm-a) 25%, transparent); }
+.cm-vs:empty { display: none; }
+.cm-vs b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
+.cm-vs b.lead { color: var(--cm-b); text-shadow: 0 0 8px color-mix(in srgb, var(--cm-b) 60%, transparent); }
+.cm-vs-lab { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--cm-a); }
+.cm-vs-sep { color: #666; }
+.cm-vs-of, .cm-vs-sub { font-size: 11px; color: #b8b0c8; }
+.cm-vs-pot { font-size: 11px; color: #ffe080; padding-left: 6px; border-left: 1px solid rgba(255, 224, 128, 0.3); }
+.cm-vs-wait { font-size: 12px; color: #c8c0d8; animation: tg-blink 1.2s steps(2) infinite; }
+.cm-vs-head { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #ffb0a0; }
+.cm-vs-head.win, .cm-vs-head.made { color: #80ffb0; text-shadow: 0 0 8px rgba(128, 255, 176, 0.6); }
+.cm-vs-head.draw { color: #ffe080; }
+@keyframes tg-blink { 50% { opacity: 0.45; } }
+html.touch .cm-mid .cm-coins { display: none; }
+#tg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9; overflow: hidden; }   /* under the dialogs (#world-overlay is 10) */
+.tg-badge { position: absolute; left: 0; top: 0; will-change: transform; white-space: nowrap; font-family: 'Pixelify Sans', 'Courier New', monospace;
+  font-size: 11px; color: #ffe8b0; background: rgba(20, 12, 30, 0.78); border: 1px solid rgba(255, 200, 96, 0.45); border-radius: 6px; padding: 1px 7px 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
+.tg-badge i { font-style: normal; color: rgba(242, 238, 230, 0.75); }
+.tg-ico { color: #ffc060; margin-right: 4px; }
+#tg-watch { position: fixed; top: 236px; left: 16px; z-index: 25; display: none; flex-direction: column; gap: 2px; min-width: 170px; padding: 7px 26px 8px 11px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; color: #f2eee6; background: rgba(14, 12, 22, 0.82); border: 1px solid rgba(255, 200, 96, 0.4); border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4); }
+#tg-watch.on { display: flex; }
+.tg-wk { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #ffc060; }
+.tg-wt { font-size: 13px; }
+.tg-ws { font-size: 15px; color: #fff; font-variant-numeric: tabular-nums; }
+.tg-wx { position: absolute; top: 3px; right: 5px; font: inherit; font-size: 15px; line-height: 1; color: #c8c0d8; background: none; border: 0; cursor: pointer; pointer-events: auto; }
+html.touch #tg-watch { top: calc(270px + env(safe-area-inset-top)); left: calc(12px + env(safe-area-inset-left)); }
+html.home-editing #tg-layer { display: none !important; }
 /* the trade window (js/share.js) */
 #trade-panel { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(4, 3, 8, 0.55);
   font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none; }

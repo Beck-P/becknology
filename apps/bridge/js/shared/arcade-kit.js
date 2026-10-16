@@ -22,6 +22,14 @@
  *     DAILY_CAP a game a day; `played_<id>` and `first_light` trophies
  *   - inside the Bridge's cabinet (an iframe): Esc pauses a run and Esc
  *     again leaves; the run's result goes back to the Bridge for a toast
+ *   - playing together (js/shared/together-frame.js, loaded before this):
+ *     the title waits for the other pilot, counts 3-2-1 and starts both
+ *     runs at once with Math.random seeded the same (the same rocks, walls
+ *     and waves); the score goes out as it changes, the final one at game
+ *     over, and the game-over panel waits for theirs and shows the verdict.
+ *     One run counts; after that the cabinet plays on as normal. `api.together`
+ *     is the frame helper (null otherwise) for games with more to share
+ *     (Helicopter's tandem). Tandem never pauses (it's one cave for two).
  *
  *   BridgeArcade.run({
  *     id: 'asteroids', title: 'ASTEROIDS', w: 320, h: 240, pal: 'arcadia',
@@ -100,6 +108,17 @@
     var g = cv.getContext('2d');
     g.imageSmoothingEnabled = false;
 
+    // playing together (js/shared/together-frame.js): one run, started for both at once, seeded the same
+    var T = global.BridgeTogetherFrame || null;
+    var tg = T ? { cfg: T.cfg, cd: -1, live: false, done: false, verdict: null, gone: false, realRandom: null, escAt: -9 } : null;
+    var VS = tg ? String(tg.cfg.vs || 'THEM').toUpperCase() : '';
+    var noPause = !!(tg && tg.cfg.mode === 'tandem');
+    if (T) {
+      T.on('start', function () { if (tg && !tg.live && !tg.done && tg.cd < 0) { tg.cd = 3; audio(); beep(440, 0.12, 'square', 0.06); } });
+      T.on('verdict', function (d) { if (tg) tg.verdict = d; lockUntil = performance.now() + 900; });
+      T.on('gone', function () { if (tg) { tg.gone = true; if (!tg.live) tg.done = true; } });
+    }
+
     var touch = 'ontouchstart' in window || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
     var pad = null;
     function fit() {
@@ -124,15 +143,15 @@
     window.addEventListener('keydown', function (e) {
       var k = e.key;
       if (k === 'Escape') { e.preventDefault(); onEsc(); return; }
-      if (k === 'p' || k === 'P') { if (!e.repeat) togglePause(); return; }
+      if (k === 'p' || k === 'P') { if (!e.repeat && !noPause) togglePause(); return; }
       if (k === 'm' || k === 'M') { if (!e.repeat) muted = !muted; return; }
       if (/^(Arrow|Space| )/.test(k) || FIRE[k]) e.preventDefault();
       keyDown(k, e.repeat);
       if (!e.repeat && (FIRE[k] || k === ' ')) wake();
     });
     window.addEventListener('keyup', function (e) { keys[e.key] = false; });
-    window.addEventListener('blur', function () { keys = {}; if (mode === 'play') setMode('pause'); });
-    document.addEventListener('visibilitychange', function () { if (document.hidden && mode === 'play') setMode('pause'); });
+    window.addEventListener('blur', function () { keys = {}; if (mode === 'play' && !noPause) setMode('pause'); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden && mode === 'play' && !noPause) setMode('pause'); });
     function toNative(e) {
       var r = cv.getBoundingClientRect();
       ptr.x = (e.clientX - r.left) / r.width * W;
@@ -244,10 +263,12 @@
       pointer: ptr, text: text, beep: beep, noise: noise, line: line, poly: poly, circle: circle,
       award: function (n, why) { pay(n, why); },
       over: function () { if (mode === 'play') endRun(); },
+      together: T,
       shake: function (px) { shakePx = Math.max(shakePx, px); shakeT = 0.3; },
       flash: function (col) { flashCol = col || '#fff'; flashT = 0.12; },
       fire: function () { return !!(edges[' '] || edges.Enter || edges.z || edges.Z); }
     };
+    global.BridgeArcade.api = api; global.BridgeArcade.game = G;   // the running game (for the test scripts)
     var run$ = { paid: 0, startedAt: 0 };
     var best = (scores()[G.id] || {}).best || 0;
 
@@ -257,16 +278,30 @@
     }
     function wake() {
       audio();
+      if (tg && !tg.done && mode !== 'pause') return;   // together: the run starts for both at once (T 'start')
+      if (tg && tg.done && !tg.verdict && !tg.gone && mode === 'over') return;   // waiting for theirs
       if (mode === 'title' || (mode === 'over' && performance.now() > lockUntil)) startRun();
       else if (mode === 'pause') setMode('play');
     }
     function togglePause() { if (mode === 'play') setMode('pause'); else if (mode === 'pause') setMode('play'); }
     function onEsc() {
+      if (mode === 'play' && noPause) {                 // tandem: no pausing one cave for two; Esc twice leaves
+        if (api.t - tg.escAt < 2) toParent({ type: 'bridge-request-close', source: 'arcade' });
+        tg.escAt = api.t;
+        return;
+      }
       if (mode === 'play') { setMode('pause'); return; }
       if (inFrame) toParent({ type: 'bridge-request-close', source: 'arcade' });
       else if (mode === 'pause') setMode('play');
     }
     function startRun() {
+      if (tg && tg.done) tg.after = true;               // playing on after the together run: a normal game
+      if (tg && !tg.done && !tg.live) {                 // the together run: everyone's randomness from the shared seed
+        tg.live = true;
+        tg.realRandom = Math.random;
+        Math.random = T.rng('run');
+      }
+      api.rnd = Math.random;
       api.score = 0; api.level = 1; api.lives = 0;
       run$ = { paid: 0, startedAt: Date.now() };
       edges = {};
@@ -307,6 +342,11 @@
       var c = G.coins || { per: 50, best: 20 };
       var earned = pay(Math.floor(api.score / c.per) + (newBest && had > 0 ? c.best : 0), 'score');
       result = { score: api.score, best: best, newBest: newBest, coins: run$.paid };
+      if (tg && tg.live && !tg.done) {                  // the together run's over: our final score, the dice back to normal
+        tg.done = true; tg.live = false;
+        T.score(api.score, true);
+        if (tg.realRandom) { Math.random = tg.realRandom; api.rnd = Math.random; }
+      }
       toParent({ type: 'bridge-run-ended', game: G.id, title: G.title, score: api.score, best: best, newBest: newBest, coins: run$.paid });
       lockUntil = performance.now() + 1100;
       setMode('over');
@@ -321,6 +361,13 @@
       var dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       acc += dt;
+      if (tg && tg.cd > 0) {                            // together: 3-2-1, then both runs go
+        var was = Math.ceil(tg.cd);
+        tg.cd -= dt;
+        if (tg.cd <= 0) { tg.cd = 0; startRun(); beep(880, 0.25, 'square', 0.07); }
+        else if (Math.ceil(tg.cd) !== was) beep(440, 0.12, 'square', 0.06);
+      }
+      if (tg && tg.live && mode === 'play') T.score(api.score);
       while (acc >= STEP) {
         api.t += STEP;
         if (mode === 'play') G.update(api, STEP);
@@ -345,8 +392,53 @@
       g.fillStyle = U.accent; g.fillRect(0, y0, W, 1); g.fillRect(0, y0 + h - 1, W, 1);
     }
     function blink(on) { return Math.floor(api.t * 2.5) % 2 === 0 || !on; }
+    // the together panels: who you're playing, the countdown, the verdict
+    function togetherTitle(cx, big) {
+      var coop = tg.cfg.mode === 'team' || tg.cfg.mode === 'tandem';
+      panel(Math.floor(H * 0.22), Math.floor(H * 0.56));
+      var y = Math.floor(H * 0.22) + 10;
+      text(g, G.title, cx + 1, y + 1, U.shadow, big, 'center');
+      text(g, G.title, cx, y, U.title, big, 'center');
+      y += 7 * big + 8;
+      text(g, coop ? (tg.cfg.mode === 'tandem' ? 'TANDEM WITH ' : 'CO-OP WITH ') + VS : 'SCORE DUEL VS ' + VS, cx, y, U.accent, 1, 'center'); y += 11;
+      if (coop && tg.cfg.target > 1) { text(g, 'TOGETHER, BEAT ' + tg.cfg.target, cx, y, P.grey, 1, 'center'); y += 10; }
+      else if (!coop) { text(g, 'ONE RUN EACH, THE SAME ' + (G.id === 'breakout' ? 'WALLS' : G.id === 'helicopter' ? 'CAVE' : 'WAVES'), cx, y, P.grey, 1, 'center'); y += 10; }
+      if (tg.cfg.wager) { text(g, coop ? tg.cfg.wager + ' EACH ON IT' : 'POT ' + tg.cfg.pot, cx, y, U.best, 1, 'center'); y += 10; }
+      y += 6;
+      if (tg.cd > 0) text(g, String(Math.ceil(tg.cd)), cx, y - 2, P.white, big + 1, 'center');
+      else if (tg.gone) text(g, VS + ' LEFT', cx, y, U.over, 1, 'center');
+      else if (blink(true)) text(g, 'WAITING FOR ' + VS + '...', cx, y, P.white, 1, 'center');
+    }
+    // a line of the verdict, wrapped to the screen
+    function wrapText(s, max) {
+      var out = [], cur = '';
+      String(s).split(' ').forEach(function (w) { if ((cur + ' ' + w).trim().length > max && cur) { out.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); });
+      if (cur) out.push(cur);
+      return out;
+    }
+    function togetherOver(cx, big) {
+      var y0 = Math.floor(H * 0.25);
+      panel(y0, Math.min(H - y0 - 4, Math.floor(H * 0.62)));
+      var yy = y0 + 9, v = tg.verdict;
+      text(g, 'GAME OVER', cx, yy, U.over, big, 'center'); yy += 7 * big + 7;
+      text(g, 'YOU ' + result.score + (T.peer && (T.peer.s || T.peer.done) ? '  -  ' + VS + ' ' + (T.peer.label || T.peer.s) : ''), cx, yy, P.white, 1, 'center'); yy += 12;
+      if (v) {
+        var good = v.outcome === 'win' || v.outcome === 'made';
+        text(g, String(v.head).toUpperCase(), cx, yy, good ? U.coin : v.outcome === 'draw' ? U.best : U.over, W >= 300 ? 2 : 1, 'center'); yy += W >= 300 ? 18 : 11;
+        String(v.text || '').replace(/[·–—]/g, '-').split('\n').forEach(function (l) {
+          wrapText(l, Math.floor((W - 8) / 6)).forEach(function (w) { text(g, w, cx, yy, U.best, 1, 'center'); yy += 10; });
+        });
+        if (performance.now() > lockUntil && blink(true)) text(g, touch ? 'TAP TO PLAY ON' : 'SPACE TO PLAY ON', cx, yy + 3, P.grey, 1, 'center');
+      } else if (tg.gone) {
+        text(g, VS + ' LEFT - YOUR STAKE IS BACK', cx, yy, U.best, 1, 'center');
+      } else if (blink(true)) text(g, 'WAITING FOR ' + VS + '...', cx, yy, P.white, 1, 'center');
+    }
     function overlay() {
       var cx = Math.floor(W / 2), big = W >= 300 ? 3 : 2;
+      if (tg && !tg.after) {
+        if (mode === 'title' && !tg.done) { togetherTitle(cx, big); return; }
+        if (mode === 'over' && result && tg.done) { togetherOver(cx, big); return; }
+      }
       if (mode === 'title') {
         panel(Math.floor(H * 0.22), Math.floor(H * 0.56));
         var y = Math.floor(H * 0.22) + 10;
@@ -380,13 +472,14 @@
       document.body.appendChild(a);
     }
     window.addEventListener('message', function (e) {
-      if (e.data && e.data.type === 'bridge-pause' && mode === 'play') setMode('pause');
+      if (e.data && e.data.type === 'bridge-pause' && mode === 'play' && !noPause) setMode('pause');
     });
 
     fit();
     buildPad();
     requestAnimationFrame(frame);
     toParent({ type: 'bridge-iframe-ready' });
+    if (T) T.ready();
     return api;
   }
 

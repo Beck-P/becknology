@@ -14,6 +14,13 @@
  * Jobs get bigger as you clear them (5×5 up to 7×7) and pay coins, up to
  * five paid jobs a day; after that the rig still runs, for the practice.
  * Progress lives in localStorage (bridge_splice).
+ *
+ * With another pilot (js/together.js) the board comes from the session's seed,
+ * so you both get the same one. A race: 6×6, each on your own copy, first
+ * spliced takes it (your score is the time left on the trace), and the other's
+ * progress shows under the board. Four hands: 7×7, one board for two — every
+ * turn goes to the other's copy (`splice` messages; quarter turns add up the
+ * same in any order, so the copies agree) and their cursor shows on yours.
  */
 var BridgeSplice = (function () {
   var KEY = 'bridge_splice';
@@ -36,11 +43,12 @@ var BridgeSplice = (function () {
   }
 
   // ---- a puzzle --------------------------------------------------------------------------------
-  function generate(n) {
+  function generate(n, rnd) {
+    var R = rnd || Math.random;                    // a seeded one when two pilots need the same board
     var cells = [], i, x, y;
     for (i = 0; i < n * n; i++) cells.push(0);
     // randomized depth-first spanning tree
-    var seen = [], stack = [[Math.floor(Math.random() * n), Math.floor(Math.random() * n)]];
+    var seen = [], stack = [[Math.floor(R() * n), Math.floor(R() * n)]];
     seen[stack[0][1] * n + stack[0][0]] = true;
     while (stack.length) {
       var c = stack[stack.length - 1];
@@ -49,24 +57,24 @@ var BridgeSplice = (function () {
         return nx >= 0 && ny >= 0 && nx < n && ny < n && !seen[ny * n + nx];
       });
       if (!opts.length) { stack.pop(); continue; }
-      var d = opts[Math.floor(Math.random() * opts.length)];
+      var d = opts[Math.floor(R() * opts.length)];
       var nx = c[0] + d[1], ny = c[1] + d[2];
       cells[c[1] * n + c[0]] |= d[0];
       cells[ny * n + nx] |= d[3];
       seen[ny * n + nx] = true;
       stack.push([nx, ny]);
     }
-    var src = Math.floor(Math.random() * n), dst = Math.floor(Math.random() * n);
+    var src = Math.floor(R() * n), dst = Math.floor(R() * n);
     cells[src * n] |= W;
     cells[dst * n + n - 1] |= E;
     var solution = cells.slice();
     var turned = cells.map(function (m) {
-      var k = Math.floor(Math.random() * 4);
+      var k = Math.floor(R() * 4);
       for (var t = 0; t < k; t++) m = rot(m);
       return m;
     });
     var g = { n: n, cells: turned, solution: solution, src: src, dst: dst };
-    if (flow(g).done) return generate(n);          // never hand over a solved board
+    if (flow(g).done) return generate(n, rnd);     // never hand over a solved board
     return g;
   }
 
@@ -117,6 +125,10 @@ var BridgeSplice = (function () {
           ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 2;
           ctx.strokeRect(X + 3, Y + 3, cs - 6, cs - 6);
         }
+        if (game.net && game.net.cursor && game.net.cursor[0] === x && game.net.cursor[1] === y && now - game.net.cursorAt < 4000) {
+          ctx.strokeStyle = 'rgba(255,128,200,0.75)'; ctx.lineWidth = 2;    // where the other pilot's hands are
+          ctx.strokeRect(X + 5, Y + 5, cs - 10, cs - 10);
+        }
         var on = f.lit[i];
         var spin = game.spin[i] ? Math.max(0, 1 - (now - game.spin[i]) / 120) : 0;
         ctx.save();
@@ -158,14 +170,16 @@ var BridgeSplice = (function () {
   }
 
   // ---- play -----------------------------------------------------------------------------------------
-  function turn(x, y) {
+  function turn(x, y, theirs) {
     if (!game || game.state !== 'play') return;
     var g = game.g, i = y * g.n + x;
     g.cells[i] = rot(g.cells[i]);
     if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('click');
     game.spin[i] = performance.now();
-    game.cursor = [x, y];
+    if (theirs) { game.net.cursor = [x, y]; game.net.cursorAt = performance.now(); }
+    else game.cursor = [x, y];
     game.flow = flow(g);
+    if (game.net && !theirs) netTurned(i);
     if (game.flow.done) win();
   }
 
@@ -196,6 +210,7 @@ var BridgeSplice = (function () {
     game.state = 'won';
     if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('success');
     var secs = Math.round((performance.now() - (game.ends - game.limit)) / 100) / 10;
+    if (game.net) return netEnd(true, secs);
     var n = game.g.n;
     if (!save.best[n] || secs < save.best[n]) save.best[n] = secs;
     var coins = paidLeft() ? pay() : 0;
@@ -221,6 +236,7 @@ var BridgeSplice = (function () {
   function lose() {
     if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('fail');
     game.state = 'lost';
+    if (game.net) return netEnd(false);
     status('TRACE CAUGHT UP. Job blown - nobody got paid.');
     var again = el.querySelector('.sp-again');
     again.textContent = 'Try again';
@@ -232,9 +248,9 @@ var BridgeSplice = (function () {
     var k = e.key, c = game.cursor, n = game.g.n;
     var mv = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[k];
     if (k === 'Escape') { close(); }
-    else if (mv) { game.keys = true; game.cursor = [Math.max(0, Math.min(n - 1, c[0] + mv[0])), Math.max(0, Math.min(n - 1, c[1] + mv[1]))]; }
+    else if (mv) { game.keys = true; game.cursor = [Math.max(0, Math.min(n - 1, c[0] + mv[0])), Math.max(0, Math.min(n - 1, c[1] + mv[1]))]; if (game.net) netCursor(); }
     else if (k === 'e' || k === 'E' || k === ' ' || k === 'Enter') {
-      if (game.state === 'play') { game.keys = true; turn(c[0], c[1]); } else start();
+      if (game.state === 'play') { game.keys = true; turn(c[0], c[1]); } else if (!game.net) start();
     } else return;
     e.preventDefault(); e.stopPropagation();
   }
@@ -249,7 +265,7 @@ var BridgeSplice = (function () {
     turn(x, y);
   }
 
-  function open() {
+  function open(sess) {
     if (!el) {
       el = document.createElement('div');
       el.id = 'splice';
@@ -266,11 +282,12 @@ var BridgeSplice = (function () {
       ctx = cv.getContext('2d');
       cv.addEventListener('pointerdown', onPointer);
       el.querySelector('.sp-close').addEventListener('click', close);
-      el.querySelector('.sp-again').addEventListener('click', start);
+      el.querySelector('.sp-again').addEventListener('click', function () { if (game && game.net) close(); else start(); });
       el.addEventListener('click', function (e) { if (e.target === el) close(); });
     }
-    game = { bar: el.querySelector('.sp-fill') };
-    start();
+    game = { bar: el.querySelector('.sp-fill'), net: sess ? { sess: sess, them: { s: 0, label: '' }, cursor: null, cursorAt: 0 } : null };
+    el.classList.toggle('net', !!sess);
+    if (sess) netStart(); else start();
     el.classList.add('visible');
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     document.addEventListener('keydown', onKey, true);
@@ -283,10 +300,91 @@ var BridgeSplice = (function () {
     el.classList.remove('visible');
     document.removeEventListener('keydown', onKey, true);
     cancelAnimationFrame(raf);
+    if (game && game.net && game.state === 'play') { game.state = 'left'; report(0, 'left the rig'); }   // walking away: no splice from you
     game = null;
     if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
   }
 
-  return { open: open, close: close, level: function () { return save.level; },
-           _generate: generate, _flow: flow, _board: function () { return game && game.g; } };
+  // ---- with another pilot (js/together.js) -----------------------------------------------------------------
+  var wired = false;
+  function T() { return typeof BridgeTogether !== 'undefined' ? BridgeTogether : null; }
+  function seeded(seed) {
+    var s = seed | 0;
+    return function () {
+      s = (s + 0x6D2B79F5) | 0;
+      var t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hands() { return game && game.net && game.net.sess.mode === 'hands'; }
+  function netStart() {
+    var s = game.net.sess, n = hands() ? 7 : 6;
+    game.g = generate(n, seeded(s.seed));
+    game.flow = flow(game.g);
+    game.spin = [];
+    game.cursor = [0, game.g.src];
+    game.limit = (40 + (n - 5) * 18) * 1000;
+    game.ends = performance.now() + game.limit;
+    game.state = 'play';
+    game.cs = cellPx();
+    el.querySelector('.sp-job').textContent = (hands() ? 'Four hands with ' : 'Racing ') + s.peerName + ' · ' + n + '×' + n;
+    status(hands() ? 'One board, both of you on it. ' + s.peerName + '\'s hands show in pink.' : 'The same board for you both. First spliced takes it.');
+    el.querySelector('.sp-again').style.display = 'none';
+    netProgress();
+  }
+  function lit() { var c = 0; (game.flow.lit || []).forEach(function (v) { if (v) c++; }); return c; }
+  function netTurned(i) {
+    var t = T();
+    if (!t) return;
+    if (hands()) t.send('splice', { k: 't', i: i, x: game.cursor[0], y: game.cursor[1] });
+    else t.score(lit(), lit() + ' of ' + game.g.n * game.g.n + ' lit');
+  }
+  function netCursor() { var t = T(); if (t && hands()) t.send('splice', { k: 'c', x: game.cursor[0], y: game.cursor[1] }); }
+  function heard(d) {
+    if (!game || !game.net || !d || !hands()) return;
+    var n = game.g.n;
+    if (d.k === 't' && game.state === 'play' && d.i >= 0 && d.i < n * n) turn(d.i % n, Math.floor(d.i / n), true);
+    else if (d.k === 'c') { game.net.cursor = [d.x, d.y]; game.net.cursorAt = performance.now(); }
+  }
+  function report(s, label) { var t = T(); if (t) t.done(s, label); }
+  function netEnd(won, secs) {
+    var left = Math.max(0, Math.round(game.ends - performance.now()));
+    var again = el.querySelector('.sp-again');
+    again.textContent = 'Done'; again.style.display = '';
+    // (the status first: reporting may settle it at once, and the verdict then has the last word)
+    if (hands()) {
+      status(won ? 'SPLICED in ' + secs + 's — the two of you.' : 'TRACE CAUGHT UP. The job\'s blown for you both.');
+      report(won ? 1 : 0, won ? 'spliced in ' + secs + 's' : 'traced');
+    } else {
+      status(won ? 'SPLICED in ' + secs + 's.' + (game.net.them.done ? '' : ' Waiting to hear from ' + game.net.sess.peerName + '…') : 'TRACE CAUGHT UP.' + (game.net.them.done ? '' : ' Waiting for ' + game.net.sess.peerName + '…'));
+      report(won ? left : 0, won ? secs + 's' : 'traced');
+    }
+  }
+  function netProgress() {
+    var el2 = el && el.querySelector('.sp-them');
+    if (!el2) { el2 = document.createElement('div'); el2.className = 'sp-them'; el.querySelector('.sp-panel').insertBefore(el2, el.querySelector('.sp-status')); }
+    var t = game && game.net && game.net.them, s = game && game.net && game.net.sess;
+    el2.textContent = !t ? '' : hands() ? s.peerName + (t.done ? ' — ' + t.label : ' is on the board with you') : s.peerName + ': ' + (t.label || 'starting…') + (t.done ? ' · done' : '');
+  }
+  function together(s) {
+    if (!wired && T()) { T().on('splice', heard); wired = true; }
+    open(s);
+  }
+  function peer(t) { if (game && game.net && t) { game.net.them = { s: t.s, label: t.label || '', done: !!t.done }; netProgress(); } }
+  function verdict(v) {
+    if (!el || !el.classList.contains('visible') || !game || !game.net) return false;
+    status(v.head + (v.paid ? ' · +' + v.paid + ' coins' : '') + '.');
+    if (game.state === 'play') game.state = 'over';
+    return true;
+  }
+  function gone() {
+    if (!game || !game.net) return;
+    if (game.state === 'play') game.state = 'over';
+    status(game.net.sess.peerName + ' left the rig - your stake is back.');
+    var again = el.querySelector('.sp-again'); again.textContent = 'Done'; again.style.display = '';
+  }
+
+  return { open: open, close: close, level: function () { return save.level; }, together: together, peer: peer, verdict: verdict, gone: gone,
+           _generate: generate, _flow: flow, _board: function () { return game && game.g; }, _turn: function (x, y) { turn(x, y); } };
 })();
