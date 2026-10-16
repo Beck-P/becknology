@@ -121,7 +121,22 @@ var BridgeSloop = (function () {
     }
     return false;
   }
-  var GAP = 58;                                         // open water between the islands (tiles)
+  // ---- one sea, the chart's ----------------------------------------------------------------------------------------
+  // The chart (BridgeVoyage._isles: x, y in 0..1, what js/chart.js inks) is the geography. The water is the chart at a
+  // fixed scale - K tiles to a chart unit across, KY down (the chart's own 0.72 aspect) - laid out from the island you
+  // cast off from, so every island lies at its true place: whichever are near you come up over the horizon (loaded
+  // and placed at their real offsets), steer the wrong way and you miss them, keep on the right way and you arrive,
+  // charted or not.
+  var K = 700, KY = K * 0.72;
+  var LOAD_R = 60, DROP_R = 110;                        // islands come up inside this many tiles of their land, go past this
+  var EDGE = [0.03, 0.04, 0.97, 0.96];                  // the edge of the known seas (chart): the swell sets you back
+  // each island's land and shallows round its map's centre, tiles [x0, x1, r0, r1] (measured from the renders'
+  // shore.png): to steer round it and keep what's adrift off its coast before it's loaded
+  var EXT = {
+    'lumar': [-15.7, 16.1, -19.7, 7.1], 'lumar-crown': [-31.3, 32.4, -25.0, 17.5], 'lumar-tern': [-19.2, 19.3, -12.7, 9.5],
+    'lumar-holm': [-20.8, 20.5, -14.5, 9.3], 'lumar-sapphire': [-28.2, 29.0, -14.5, 13.5], 'lumar-rose': [-27.9, 27.7, -18.4, 21.0],
+    'lumar-crimson': [-26.4, 27.1, -19.2, 18.3], 'lumar-midnight': [-24.8, 24.3, -17.6, 18.1]
+  };
   var LINES = [                                         // what the fisherman says when you hail him
     "Wind's been backing all evening. Ease her out past the reef or she'll stall on you.",
     'They say the spore whales sing under Midnight when the sea goes still. Never heard it myself. Never not listened.',
@@ -135,16 +150,20 @@ var BridgeSloop = (function () {
 
   var running = false, canvas = null, ctx = null, buf = null, bctx = null, raf = 0, last = 0, began = 0;
   var Z = 2, W = 480, H = 300, dpr = 1;
-  var from = null, to = null, A = null, B = null, mid = null, dir = null;
+  var from = null, to = null, A = null, B = null;
+  // the islands up over the horizon (loaded, at their true places), the course (B once it's loaded), the island you're
+  // coming alongside, where on the chart the island you left lies (the frame's origin), and which passage this is
+  var isl = {}, islLoading = {}, course = null, dockAt = null, pa = null, voyN = 0, palOverride = null;
   var boat = null, wind = null, cam = null, keys = {}, phase = 'load', phaseAt = 0;
   var wake = [], spray = [], gulls = [], fish = [], things = [], whale = null;
   var msg = null, msgAt = 0, prompt = null, menu = null, sheetImg = null, readyCount = 0, hold = 0;
-  var seaWas = null, lastLuff = 0, lastBell = 0, auto = true, route = [], leg = 0, ironsT = 0, held = null;
+  var seaWas = null, lastLuff = 0, lastBell = 0, auto = true, route = [], leg = 0, ironsT = 0, routeLen = 1;
   // the sail trims itself (the easy way, and the default); T to trim by hand, remembered
   function autoPref(set) {
     try { if (set != null) localStorage.setItem('bridge_sail_hand', set ? '0' : '1'); return localStorage.getItem('bridge_sail_hand') !== '1'; } catch (e) { return true; }
   }
-  var traffic = [], wisps = [], storm = null, told = {}, aim = null, committing = false, hinted = false, said = {}, castOut = null;
+  var traffic = [], wisps = [], storm = null, told = {}, aim = null, hinted = false, said = {}, castOut = null;
+  var cells = {}, gotKeys = {}, cellsAt = 0, replanAt = 0, openT = 0, troubleAt = 0, edgeTold = false, seaSeen = { at: 0, pal: null };
   // each sea's character: how hard it blows, and what the sailors say of it
   var BASE = { emerald: 0.92, sapphire: 0.95, rose: 0.82, crimson: 1.2, midnight: 0.62 };
   var CALM = { emerald: true, sapphire: true, rose: true };
@@ -196,14 +215,23 @@ var BridgeSloop = (function () {
   var STATIC = { rock_a: 0, rock_b: 1, rock_c: 2, reef: 3, buoy_red: 4, buoy_green: 5, crate: 6, barrel: 7 };
 
   // ---- the islands: their renders, water and land at full size ---------------------------------------------------
-  function loadIsland(id, cb) {
+  // own: an island out at sea, its render loaded here (one light state, no depth) rather than through BridgeScene, whose
+  // few cached scenes are the worlds you walk in - the passage keeps only the islands near it and lets the rest go
+  function loadIsland(id, cb, own) {
     var I = { id: id, pal: isles()[id].pal, name: isles()[id].name, ox: 0, oy: 0 };
-    var n = 3;
+    var n = own ? 2 : 3;
     function done() { if (--n === 0) { measure(I); cb(I); } }
     fetch('/bridge/assets/worlds/' + id + '.json?v=' + Date.now()).then(function (r) { return r.json(); })
       .then(function (w) { I.world = w; done(); }).catch(function () { I.world = null; done(); });
-    BridgeScene.load(id, function (sc) { I.sc = sc; done(); });
+    if (!own) BridgeScene.load(id, function (sc) { I.sc = sc; done(); });
     fetch('/bridge/assets/scenes/' + id + '/scene.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (meta) {
+      if (own === true) {
+        var q = '?v=' + (meta.rev || ''), st = meta.states[0], pic = new Image();
+        n++;
+        pic.onload = function () { var im = {}; im[st] = pic; I.sc = { id: id, meta: meta, imgs: im, baseImgs: im, q: q, own: true }; done(); };
+        pic.onerror = function () { I.sc = null; done(); };
+        pic.src = '/bridge/assets/scenes/' + id + '/' + st + '.png' + q;
+      }
       var im = new Image();
       im.onload = function () {
         var c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
@@ -234,10 +262,23 @@ var BridgeSloop = (function () {
     }
     return v;
   }
-  function groundAt(x, r) { return Math.max(ground(A, x, r), ground(B, x, r)); }
+  function groundAt(x, r) {                     // over every island up over the horizon
+    var g = 0;
+    for (var id in isl) {
+      var I = isl[id], bx = I.box;
+      if (bx && (x < bx[0] || r < bx[1] || x > bx[2] || r > bx[3])) continue;
+      var v = ground(I, x, r);
+      if (v === 1) return 1;
+      if (v > g) g = v;
+    }
+    return g;
+  }
   // inside an island's own patch of sea (its render, and a margin): other boats keep out of the harbours
   function inHarbour(I, x, r, m) { return !!I && x > I.ox - m && r > I.oy - m && x < I.ox + I.w + m && r < I.oy + I.h + m; }
-  function offshore(x, r) { return !inHarbour(A, x, r, 3) && !inHarbour(B, x, r, 3) && !groundAt(x, r); }
+  function offshore(x, r) {
+    for (var id in isl) if (inHarbour(isl[id], x, r, 3)) return false;
+    return !groundAt(x, r);
+  }
   function clear(I, x, r, rad) {               // open water all round (x, r) out to rad
     if (ground(I, x, r)) return false;
     for (var k = 0; k < 16; k++) {
@@ -363,154 +404,267 @@ var BridgeSloop = (function () {
   function buoys(I) {                                  // a red buoy to port and a green to starboard, coming in
     var e = I.exit, p = I.chan[Math.max(0, I.chan.length - 2)], ax = e[0] - p[0], ar = e[1] - p[1], an = Math.hypot(ax, ar) || 1;
     var inx = -ax / an, inr = -ar / an;
+    I.buoys = [];
     [[-1, 'buoy_red'], [1, 'buoy_green']].forEach(function (b) {
       var x = e[0] - inr * 2.8 * b[0], r = e[1] + inx * 2.8 * b[0];
-      if (!groundAt(x, r) && clear(I, x, r, 0.6)) things.push({ kind: b[1], x: x, r: r, rad: 0.35, seed: things.length });
+      if (!groundAt(x, r) && clear(I, x, r, 0.6)) I.buoys.push({ kind: b[1], x: x, r: r, rad: 0.35, seed: I.id.length * 7 + b[0], pal: I.pal, key: I.id + ':' + b[1] });
     });
   }
-  function homeGulls(I, g0) {
+  function homeGulls(I) {
+    var g0 = gulls.length;
     for (var g = g0; g < g0 + 3; g++) {
       gulls.push({ home: I, x: I.dock[0] + I.ox, r: I.dock[1] + I.oy, z: 2 + hash(g) * 1.5,
                    a: hash(g + 3) * 6.28, rad: 3 + hash(g + 5) * 5, sp: 0.5 + hash(g + 7) * 0.4, follow: false });
     }
   }
-  // the island you leave from: its berth and harbour channel, the wind, its buoys and gulls
+
+  // ---- where things are: the chart, your water, and the fixed frame what's out there is seeded in --------------------
+  function toChart(x, r) { return { x: pa.x + (x - A.cx) / K, y: pa.y + (r - A.cy) / KY }; }
+  function toWorld(cx, cy) { return { x: A.cx + (cx - pa.x) * K, r: A.cy + (cy - pa.y) * KY }; }
+  function centreOf(id) { var p = isles()[id]; return toWorld(p.x, p.y); }       // an island's map centre on your water
+  function absOf(x, r) { return [x - A.cx + pa.x * K, r - A.cy + pa.y * KY]; }   // your water → the chart's own frame (tiles)
+  function fromAbs(X, Y) { return [X + A.cx - pa.x * K, Y + A.cy - pa.y * KY]; }
+  // an island's land as an ellipse on your water (from EXT: the same for everyone, loaded or not)
+  var shapes = {};
+  function shapeOf(id) {
+    if (shapes[id]) return shapes[id];
+    var c = centreOf(id), e = EXT[id] || [-25, 25, -20, 20];
+    return (shapes[id] = { x: c.x + (e[0] + e[1]) / 2, r: c.r + (e[2] + e[3]) / 2, a: (e[1] - e[0]) / 2, b: (e[3] - e[2]) / 2 });
+  }
+  function ellipseK(sh, x, r, m) { var dx = (x - sh.x) / (sh.a + m), dr = (r - sh.r) / (sh.b + m); return Math.sqrt(dx * dx + dr * dr); }   // < 1: inside it, grown by m
+  function charted(id) { return typeof BridgeChart === 'undefined' || BridgeChart.known(id); }
+
+  // ---- the islands round you: loaded as they come up over the horizon, each at its true place ------------------------
+  function ensureIslands() {
+    var P = isles(), n = voyN;
+    Object.keys(P).forEach(function (id) {
+      var far = ellipseK(shapeOf(id), boat.x, boat.r, DROP_R) > 1;
+      if (isl[id]) {                                                   // gone astern over the horizon: let it go
+        if (far && id !== A.id && isl[id] !== dockAt) {
+          delete isl[id];
+          if (B && B.id === id) B = null;
+          gulls = gulls.filter(function (g) { return !g.home || g.home.id !== id; });
+          if (typeof BridgeSea !== 'undefined' && BridgeSea.forget && (typeof BridgeWorld === 'undefined' || BridgeWorld.getWorldId() !== id)) BridgeSea.forget(id);
+          cellsAt = 0;
+        }
+        return;
+      }
+      if (islLoading[id] || ellipseK(shapeOf(id), boat.x, boat.r, LOAD_R) > 1) return;
+      islLoading[id] = true;
+      loadIsland(id, function (J) {
+        if (n !== voyN || !running) return;
+        delete islLoading[id];
+        if (!J.sc || !J.mask) { islLoading[id] = 'failed'; return; }    // (not tried again this passage)
+        if (!isl[id] && ellipseK(shapeOf(id), boat.x, boat.r, DROP_R) < 1) place(J);
+      }, true);
+    });
+  }
+  // an island laid on your water: its berth and harbour channel, the rest of your ships there, its buoys and gulls
+  function place(I) {
+    moorOf(I);                                       // in its own tiles
+    var act = !captainOf && typeof BridgeFleet !== 'undefined' ? BridgeFleet.active().ship : null;
+    var fl = fleetAt(I, act), mine = fl.filter(function (e) { return e.ship.id === shipId; })[0] || fl[0];
+    var c = centreOf(I.id), ox = I === A ? 0 : Math.round(c.x - I.cx), oy = I === A ? 0 : Math.round(c.r - I.cy);
+    function sh(p) { return [p[0] + ox, p[1] + oy]; }
+    I.ox = ox; I.oy = oy;
+    I.pier = sh(I.moor); I.moor = sh([mine.x, mine.r]); I.moorH = mine.h; I.inner = mine.inner && sh(mine.inner);
+    I.fleet = fl.filter(function (e) { return e !== mine; }).map(function (e) { return lying(e, ox, oy); });
+    I.berth = sh(I.berth); I.chan = I.chan.map(sh); I.exit = I.chan[I.chan.length - 1];
+    var m = I.meta;
+    I.box = [ox - m.originX / TS, oy - m.originY / TS, ox + (m.width - m.originX) / TS, oy + (m.height - m.originY) / TS];
+    I.uncharted = I !== A && !charted(I.id);
+    isl[I.id] = I;
+    buoys(I);
+    homeGulls(I);
+    cellsAt = 0;                                     // what's adrift comes up again, minus anything on its shore
+    if (I.id === course) { B = I; replan(true); }
+  }
+
+  // ---- a course: the gold mark leads out of the harbour you're in, round anything in the way, in to her berth -------------
+  function commit(id, quiet) {
+    if (!running || !isles()[id]) return false;
+    course = id; to = id; aim = null; B = isl[id] || null;
+    if (!quiet) say('You set a course for ' + isles()[id].name + '.', 3200);
+    replan(true);
+    if (crewOf && net()) net().send('course', { id: id }, crewOf.id);
+    return true;
+  }
+  // does p-q pass inside the ellipse sh grown by m? → the nearest point of it to the middle (in the ellipse's own units)
+  function hits(p, q, sh, m) {
+    var ax = (p[0] - sh.x) / (sh.a + m), ar = (p[1] - sh.r) / (sh.b + m), bx = (q[0] - sh.x) / (sh.a + m), br = (q[1] - sh.r) / (sh.b + m);
+    var dx = bx - ax, dr = br - ar, L = dx * dx + dr * dr, t = L ? clamp(-(ax * dx + ar * dr) / L, 0, 1) : 0;
+    var cx = ax + dx * t, cr = ar + dr * t;
+    return Math.hypot(cx, cr) < 1 ? { c: [cx, cr], t: t } : null;
+  }
+  // a straight run from p to q, bent round each island in the way (its nearer side, well clear)
+  function detour(p, q, depth) {
+    if (depth > 4) return [q];
+    var best = null;
+    Object.keys(isles()).forEach(function (id) {
+      var sh = shapeOf(id), m = 6;
+      if (ellipseK(sh, p[0], p[1], m) < 1 || ellipseK(sh, q[0], q[1], m) < 1) m = 1;          // leaving it or arriving: just its land
+      if (ellipseK(sh, p[0], p[1], m) < 1 || ellipseK(sh, q[0], q[1], m) < 1) return;
+      var h = hits(p, q, sh, m);
+      if (h && (!best || h.t < best.t)) best = { sh: sh, m: m, c: h.c, t: h.t };
+    });
+    if (!best) return [q];
+    var n = Math.hypot(best.c[0], best.c[1]), ux = best.c[0], ur = best.c[1];
+    if (n < 0.05) { ux = -(q[1] - p[1]); ur = q[0] - p[0]; n = Math.hypot(ux, ur) || 1; }       // straight through the middle: go either side
+    var w = [best.sh.x + ux / n * (best.sh.a + best.m) * 1.3, best.sh.r + ur / n * (best.sh.b + best.m) * 1.3];
+    return detour(p, w, depth + 1).concat(detour(w, q, depth + 1));
+  }
+  function replan(fresh) {
+    if (!course || !boat) { route = []; leg = 0; return; }
+    var pts = [], p0 = [boat.x, boat.r], inI = null;
+    for (var id in isl) if (id !== course && isl[id].chan && inHarbour(isl[id], boat.x, boat.r, 0)) inI = isl[id];
+    if (inI) {                                       // still in a harbour: out by its channel, from the mark nearest you
+      var ch = [inI.berth].concat(inI.chan.slice(1)), k0 = 0, kd = 1e9;
+      ch.forEach(function (p, i) { var d = Math.hypot(p[0] - boat.x, p[1] - boat.r); if (d < kd) { kd = d; k0 = i; } });
+      pts = ch.slice(k0).map(function (p) { return p.slice(); });
+      p0 = inI.exit;
+    }
+    var c = centreOf(course), goal = B ? B.exit : [c.x, c.r];
+    pts = pts.concat(detour(p0, goal, 0));
+    if (B) pts = pts.concat(B.chan.slice(0, -1).reverse(), [B.moor.slice()]);
+    route = pts; leg = 0;
+    while (leg < route.length - 1 && Math.hypot(boat.x - route[leg][0], boat.r - route[leg][1]) < 3.5) leg++;
+    if (fresh) routeLen = Math.max(1, togo());
+  }
+  function togo() {                                  // how far still to sail along the course
+    var L = 0, p = [boat.x, boat.r];
+    for (var i = leg; i < route.length; i++) { L += Math.hypot(route[i][0] - p[0], route[i][1] - p[1]); p = route[i]; }
+    return L;
+  }
+
+  // ---- the island you leave from: its berth and channel, the wind, the gulls ---------------------------------------
   function layA() {
-    moorOf(A);
-    route = [A.berth.slice()].concat(A.chan.slice(1));
-    leg = 0; mid = null; dir = null; B = null;
-    var out = unit(A.exit[0] - A.berth[0], A.exit[1] - A.berth[1]), course = Math.atan2(out[1], out[0]);
+    route = [A.berth.slice()].concat(A.chan.slice(1)); leg = 0; B = null;     // the way out of the harbour, gold, till there's a course
+    var out = unit(A.exit[0] - A.berth[0], A.exit[1] - A.berth[1]), course0 = Math.atan2(out[1], out[0]);
     var seed = (A.id.length * 31 + Math.floor(Date.now() / 3.6e6)) % 997;
     var side = hash(seed) < 0.5 ? -1 : 1;
-    wind = { from: course + side * (1.35 + hash(seed + 1) * 0.95), base: BASE[A.pal] || 0.92, s: 1, gust: 0, gustAt: 0, seed: seed };
-    things = []; traffic = []; wisps = []; gulls = [];
-    buoys(A);
-    homeGulls(A, 0);
+    wind = { from: course0 + side * (1.35 + hash(seed + 1) * 0.95), base: BASE[A.pal] || 0.92, s: 1, gust: 0, gustAt: 0, seed: seed };
+    things = []; traffic = []; wisps = []; gulls = []; cells = {}; gotKeys = {}; cellsAt = 0;
+    openT = 0; troubleAt = 25 + hash(seed + 3) * 30; edgeTold = false;
     gulls.push({ home: null, x: A.berth[0], r: A.berth[1], z: 2.4, a: 1, rad: 3, sp: 0.7, follow: true });
-    whale = { done: false };
+    whale = { done: false, after: 35 + hash(seed + 5) * 55 };
     storm = { flash: 0, nextFlash: 0, squallAt: 0, thunderAt: 0 };
-    if (CALM[A.pal]) for (var t = 0, got = 0; t < 12 && got < 2; t++) {           // two sails out beyond the harbour
-      var before = traffic.length;
-      spawnSail(A.exit[0] + (hash(seed + t * 5) - 0.5) * 44, A.exit[1] + (hash(seed + t * 5 + 1) - 0.5) * 44, seed + t);
-      got += traffic.length - before;
-    }
   }
-  // the island you've set a course for: placed ahead along the way you're steering, its mouth facing you over open
-  // water, and the crossing laid out between: rocks and a reef, a fisherman, things adrift, traffic, the sea's own perils
-  function placeB(J, P0, prefer, outFrom) {
-    B = J; to = J.id;
-    moorFor(J.id);                                   // her berth there, ready for when you climb out
-    moorOf(B);
-    // where she'll lie there, among whatever else of yours is already tied up at it
-    var act = typeof BridgeFleet !== 'undefined' ? BridgeFleet.active().ship : null;
-    var fl = fleetAt(B, act), mine = fl.filter(function (e) { return e.ship.id === shipId; })[0] || fl[0];
-    B.pier = B.moor.slice(); B.moor = [mine.x, mine.r]; B.moorH = mine.h;
-    var bl = B.exit, bb = B.berth.slice(), chan = B.chan.slice();
-    function overlap() {
-      var m = 14;
-      return !(B.ox > A.w + m || B.ox + B.w < -m || B.oy > A.h + m || B.oy + B.h < -m);
-    }
-    function lineClear(p, q) {
-      var n = Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / 0.7), ux = (q[0] - p[0]) / n, ur = (q[1] - p[1]) / n, nl = Math.hypot(ux, ur) || 1;
-      for (var i = 2; i <= n - 2; i++) {
-        var x = p[0] + ux * i, r = p[1] + ur * i;
-        for (var o = -1.4; o <= 1.4; o += 0.7) if (groundAt(x - ur / nl * o, r + ux / nl * o)) return false;
-      }
-      return true;
-    }
-    var done = false;
-    [0, 0.15, -0.15, 0.3, -0.3, 0.5, -0.5, 0.75, -0.75, 1.0, -1.0].some(function (da) {
-      return [72, 86, 100, 120].some(function (d) {
-        var ang = prefer + da;
-        B.ox = Math.round(P0[0] + Math.cos(ang) * d - bl[0]); B.oy = Math.round(P0[1] + Math.sin(ang) * d - bl[1]);
-        if (overlap()) return false;
-        if (!lineClear(P0, [bl[0] + B.ox, bl[1] + B.oy])) return false;
-        done = true; return true;
-      });
-    });
-    if (!done) { B.ox = Math.round(P0[0] + Math.cos(prefer) * 120 - bl[0]); B.oy = Math.round(P0[1] + Math.sin(prefer) * 120 - bl[1]); }
-    B.berth = [bb[0] + B.ox, bb[1] + B.oy];
-    B.moor = [B.moor[0] + B.ox, B.moor[1] + B.oy];
-    B.inner = mine.inner && [mine.inner[0] + B.ox, mine.inner[1] + B.oy];
-    B.fleet = fl.filter(function (e) { return e !== mine; }).map(function (e) { return lying(e, B.ox, B.oy); });
-    B.chan = chan.map(function (p) { return [p[0] + B.ox, p[1] + B.oy]; });
-    B.exit = B.chan[B.chan.length - 1];
-    var lead = [];
-    if (outFrom) {                                   // still in the harbour: the way out first, from the channel mark nearest you
-      var ch = [A.berth].concat(A.chan.slice(1, -1)), k0 = 0, kd = 1e9;
-      ch.forEach(function (p, i) { var d = Math.hypot(p[0] - outFrom[0], p[1] - outFrom[1]); if (d < kd) { kd = d; k0 = i; } });
-      lead = ch.slice(k0).map(function (p) { return p.slice(); });
-    }
-    route = lead.concat([P0.slice()], B.chan.slice().reverse(), [B.moor.slice()]);
-    leg = 0;
-    dir = unit(B.exit[0] - P0[0], B.exit[1] - P0[1]);
-    mid = [(P0[0] + B.exit[0]) / 2, (P0[1] + B.exit[1]) / 2];
-    crossing(P0);
-    buoys(B);
-    homeGulls(B, 3);
-    whale = { done: false };
-    if (fight() && !captainOf) setTimeout(function () { if (running && fight()) fight().plan(); }, 0);
-    if (crewOf && net()) net().send('course', { id: J.id, P0: P0, prefer: prefer, outFrom: outFrom || null }, crewOf.id);
-  }
-  function crossing(P0) {
-    var seed = wind.seed, course = Math.atan2(B.exit[1] - P0[1], B.exit[0] - P0[0]);
-    var nx = -Math.sin(course), ny = Math.cos(course);
-    function along(t, off) { return [P0[0] + (B.exit[0] - P0[0]) * t + nx * off, P0[1] + (B.exit[1] - P0[1]) * t + ny * off]; }
-    function put(kind, t, off, extra) {
-      var p = along(t, off);
-      if (groundAt(p[0], p[1])) return;
-      var o = { kind: kind, x: p[0], r: p[1], seed: things.length * 13 + seed };
-      for (var k in extra) o[k] = extra[k];
-      things.push(o);
-    }
-    function palAt(t) { return t < 0.5 ? A.pal : B.pal; }
-    // a reef across part of the middle, rocks round it
-    var rt = 0.42 + hash(seed + 3) * 0.16, ro = (hash(seed + 4) - 0.5) * 6;
-    put('reef', rt, ro, { rad: 1.2 }); put('rock_b', rt + 0.03, ro + 3.2, { rad: 0.8 }); put('rock_a', rt - 0.04, ro - 2.8, { rad: 0.7 });
-    put('rock_c', 0.25 + hash(seed + 5) * 0.1, 9 * (hash(seed + 6) < 0.5 ? -1 : 1), { rad: 0.5 });
-    put('rock_a', 0.7 + hash(seed + 7) * 0.1, -8 * (hash(seed + 8) < 0.5 ? -1 : 1), { rad: 0.7 });
-    if (palAt(0.32) !== 'midnight' && palAt(0.32) !== 'crimson')     // nobody fishes the dangerous seas
-      put('dory', 0.32 + hash(seed + 9) * 0.1, 7 * (hash(seed + 10) < 0.5 ? -1 : 1), { rad: 0.9, h: 0 });
-    put('crate', 0.38 + hash(seed + 11) * 0.08, (hash(seed + 12) - 0.5) * 5, { rad: 0.4, flot: true });
-    put('barrel', 0.66 + hash(seed + 13) * 0.08, (hash(seed + 14) - 0.5) * 6, { rad: 0.4, flot: true });
-    // the Midnight Sea: rocks hidden in the mist, an old wreck, and lights that lead you onto them
-    [0.18, 0.62].forEach(function (t0, h) {
-      if (palAt(t0 + 0.1) !== 'midnight') return;
-      for (var i = 0; i < 6; i++) put(['rock_a', 'rock_b', 'rock_c'][i % 3], t0 + hash(seed + 40 + i + h * 9) * 0.25, (hash(seed + 50 + i + h * 9) - 0.5) * 8, { rad: 0.6 + (i % 3) * 0.15 });
-      put('wreck', t0 + 0.12, (hash(seed + 60 + h) - 0.5) * 10, { rad: 1.3 });
-      for (var w = 0; w < 4; w++) {
-        var p = along(t0 + hash(seed + 70 + w + h * 5) * 0.3, (hash(seed + 80 + w + h * 5) - 0.5) * 14);
-        wisps.push({ x: p[0], r: p[1], x0: p[0], r0: p[1], seed: seed + w * 7 + h * 3 });
-      }
-    });
-    // traffic, on the seas people sail
-    for (var j = 0; j < 4; j++) {
-      var t = 0.15 + j * 0.22, p2 = along(t, (hash(seed + 90 + j) - 0.5) * 34);
-      if (CALM[palAt(t)]) spawnSail(p2[0], p2[1], seed + 90 + j);
-    }
-  }
-  // another sloop going about its business: across your course or along it, under coloured sails
-  var CLOTH = [['#c89a50', '#a87a38', '#7a5a2a'], ['#b8503a', '#94402e', '#6a2c20'], ['#d6cfbf', '#b2ac9f', '#86828f'], ['#5a7aa0', '#46607e', '#34485e']];
-  function spawnSail(x, r, seed) {
-    if (!offshore(x, r)) return;
-    var h = hash(seed + 1) * Math.PI * 2;
-    traffic.push({ x: x, r: r, h: h, v: 1.5 + hash(seed + 2) * 1.2, sheet: 0.9, boom: 0.8, side: hash(seed + 3) < 0.5 ? -1 : 1, heel: 0.12,
-                   rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6, luff: false, cloth: CLOTH[Math.floor(hash(seed + 4) * CLOTH.length)], crew: true, seed: seed });
-  }
-  // the old two-island start (BridgeWorld.sailTo with a destination): the other island set where its quay faces ours
-  function lay() {
-    layA();
-    placeB(B0, A.exit, bearingTo(B0.id), A.berth);
-  }
-  var B0 = null;
 
-  /** Which sea a point lies in (the seam wanders), and how far past the seam (tiles, + toward B). */
-  function seaSide(x, r) {
-    if (!B || !mid) return -1;                          // out of the harbour, before a course is set: all one sea
-    var s = (x - mid[0]) * dir[0] + (r - mid[1]) * dir[1];
-    var t = (x - mid[0]) * -dir[1] + (r - mid[1]) * dir[0];
-    return s + (vnoise(t / 9 + 3.1) - 0.5) * 7 + (vnoise(t / 3.3) - 0.5) * 1.6;
+  // ---- what's out on the water: seeded by where it lies, so it's the same every trip and for everyone aboard ------------
+  // The sea is cut into CELLW-tile squares of the chart's own frame; each, as you come near, is filled from its own seed and
+  // the sea it's in: rocks and now and then a reef, a fisherman at anchor, something adrift, sloops going about their
+  // business on the seas people sail; the Midnight Sea's wrecks and lights. Nothing within a few tiles of any island.
+  var CELLW = 34;
+  function nearLand(X, Y, m) {                       // (fixed frame) within m tiles of any island's land, loaded or not
+    var P = isles();
+    for (var id in P) {
+      var e = EXT[id] || [-25, 25, -20, 20], cx = P[id].x * K + (e[0] + e[1]) / 2, cr = P[id].y * KY + (e[2] + e[3]) / 2;
+      var dx = (X - cx) / ((e[1] - e[0]) / 2 + m), dr = (Y - cr) / ((e[3] - e[2]) / 2 + m);
+      if (dx * dx + dr * dr < 1) return true;
+    }
+    return false;
   }
+  var CLOTH = [['#c89a50', '#a87a38', '#7a5a2a'], ['#b8503a', '#94402e', '#6a2c20'], ['#d6cfbf', '#b2ac9f', '#86828f'], ['#5a7aa0', '#46607e', '#34485e']];
+  function genCell(i, j) {
+    var seed = i * 1013 + j * 7919 + 4099, out = { things: [], sails: [], wisps: [] }, n = 0;
+    function h(k) { return hash(seed * 0.7311 + k * 17.17); }
+    function at(u, v) { return [(i + u) * CELLW, (j + v) * CELLW]; }
+    var pal = seaAtChart((i + 0.5) * CELLW / K, (j + 0.5) * CELLW / KY);
+    function put(kind, X, Y, extra) {
+      if (nearLand(X, Y, 8)) return;
+      var w = fromAbs(X, Y);
+      if (groundAt(w[0], w[1])) return;
+      var o = { kind: kind, x: w[0], r: w[1], seed: seed + n * 13, key: i + ',' + j + ':' + (n++), pal: pal };
+      for (var k in extra) o[k] = extra[k];
+      out.things.push(o);
+    }
+    var calm = CALM[pal], night = pal === 'midnight', red = pal === 'crimson';
+    var nr = night ? 2 + Math.floor(h(1) * 4) : h(1) < (red ? 0.55 : 0.4) ? 1 + Math.floor(h(2) * 3) : 0, rc = at(0.15 + h(3) * 0.7, 0.15 + h(4) * 0.7);
+    for (var q = 0; q < nr; q++) put(['rock_a', 'rock_b', 'rock_c'][q % 3], rc[0] + (h(30 + q) - 0.5) * 9, rc[1] + (h(40 + q) - 0.5) * 7, { rad: 0.5 + (q % 3) * 0.15 });
+    if (h(5) < (red ? 0.2 : night ? 0.1 : 0.13)) {                   // a reef across the way, rocks either side
+      var rf = at(0.2 + h(6) * 0.6, 0.2 + h(7) * 0.6);
+      put('reef', rf[0], rf[1], { rad: 1.2 }); put('rock_b', rf[0] + 3.2, rf[1] + 0.8, { rad: 0.8 }); put('rock_a', rf[0] - 2.8, rf[1] - 0.6, { rad: 0.7 });
+    }
+    if (calm && h(8) < 0.11) {                                       // a fisherman at anchor (nobody fishes the dangerous seas)
+      var dp = at(0.2 + h(9) * 0.6, 0.2 + h(10) * 0.6);
+      if (!nearLand(dp[0], dp[1], 14)) put('dory', dp[0], dp[1], { rad: 0.9, h: h(11) * 6.28 });
+    }
+    if (h(12) < (night ? 0.18 : 0.33)) { var fp = at(0.1 + h(13) * 0.8, 0.1 + h(14) * 0.8); put(h(15) < 0.5 ? 'crate' : 'barrel', fp[0], fp[1], { rad: 0.4, flot: true }); }
+    if (night && h(16) < 0.16) { var wp = at(0.25 + h(17) * 0.5, 0.25 + h(18) * 0.5); put('wreck', wp[0], wp[1], { rad: 1.3 }); }
+    if (night && h(19) < 0.45) {                                     // lights that lead you onto the rocks
+      for (var k2 = 0; k2 < 2 + Math.floor(h(20) * 3); k2++) {
+        var lp = fromAbs((i + 0.2 + h(50 + k2) * 0.6) * CELLW, (j + 0.2 + h(60 + k2) * 0.6) * CELLW);
+        out.wisps.push({ x: lp[0], r: lp[1], x0: lp[0], r0: lp[1], seed: seed + k2 * 7 });
+      }
+    }
+    if (calm && h(21) < 0.3) {                                       // another sloop, going round her own long loop
+      var R = 14 + h(22) * 18, sc = at(0.5, 0.5), v = 1.5 + h(24) * 1.2;
+      if (!nearLand(sc[0], sc[1], R + 10)) {
+        var w0 = fromAbs(sc[0], sc[1]);
+        out.sails.push({ cx: w0[0], cr: w0[1], R: R, w: (h(23) < 0.5 ? -1 : 1) * v / R, a0: h(25) * 6.28, x: w0[0], r: w0[1], h: 0, v: v,
+                         sheet: 0.9, boom: 0.8, side: 1, heel: 0.12, rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6, luff: false,
+                         cloth: CLOTH[Math.floor(h(26) * CLOTH.length)], crew: true, seed: seed % 97 });
+      }
+    }
+    return out;
+  }
+  function updateCells(now) {
+    if (now - cellsAt < 400) return;
+    cellsAt = now;
+    var P = absOf(boat.x, boat.r), ci = Math.floor(P[0] / CELLW), cj = Math.floor(P[1] / CELLW), keep = {};
+    for (var di = -2; di <= 2; di++) for (var dj = -2; dj <= 2; dj++) {
+      var key = (ci + di) + ',' + (cj + dj);
+      keep[key] = 1;
+      if (!cells[key]) cells[key] = genCell(ci + di, cj + dj);
+    }
+    for (var k in cells) if (!keep[k]) delete cells[k];
+    var th = [], tr = [], wi = [];
+    for (var id in isl) th = th.concat(isl[id].buoys || []);
+    for (var k2 in cells) { th = th.concat(cells[k2].things); tr = tr.concat(cells[k2].sails); wi = wi.concat(cells[k2].wisps); }
+    th.forEach(function (o) { if (gotKeys[o.key]) o.got = true; });
+    things = th; traffic = tr; wisps = wi;
+  }
+
+  // ---- the seas: the chart's own regions, at full size -------------------------------------------------------------------
+  // Mirrors js/chart.js seaAt (the nearest island's sea, its borders nudged by noise, in the chart's 400 × 264 buffer) so
+  // the water you're on is the sea your mark is in on the chart. Near an island its own sea always wins - its render's
+  // water is its own - and a little wobble at your own scale gives the seam its ragged edge.
+  var CNW = 400, CNH = 264, CMX = 34, CMY = 30, CPX = (CNW - 2 * CMX) / K;
+  function vn2(x, y) {
+    var xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    function hh(a, b) { return hash(a * 57 + b * 131); }
+    return hh(xi, yi) * (1 - u) * (1 - v) + hh(xi + 1, yi) * u * (1 - v) + hh(xi, yi + 1) * (1 - u) * v + hh(xi + 1, yi + 1) * u * v;
+  }
+  // distance (chart px) from chart point (cx, cy) to each sea's nearest island; (x, r) on your water, for the islands' pull
+  function seaDists(cx, cy, x, r, D) {
+    var P = isles(), px = CMX + cx * (CNW - 2 * CMX), py = CMY + cy * (CNH - 2 * CMY);
+    var wx = px + (vn2(px / 26, py / 26) - 0.5) * 34 + (vn2(px / 9 + 9, py / 9) - 0.5) * 9;
+    var wy = py + (vn2(px / 26 + 31, py / 26 + 17) - 0.5) * 34 + (vn2(px / 9, py / 9 + 5) - 0.5) * 9;
+    for (var id in P) {
+      var I = P[id], dx = wx - (CMX + I.x * (CNW - 2 * CMX)), dy = (wy - (CMY + I.y * (CNH - 2 * CMY))) * 1.25, d = Math.sqrt(dx * dx + dy * dy);
+      if (x != null) {
+        var sh = shapeOf(id), out = (ellipseK(sh, x, r, 0) - 1) * (sh.a + sh.b) / 2;
+        if (out < 16) d -= (16 - out) * CPX * 1.8;
+      }
+      if (D[I.pal] == null || d < D[I.pal]) D[I.pal] = d;
+    }
+    return D;
+  }
+  function nearest(D) { var best = null; for (var p in D) if (best === null || D[p] < D[best]) best = p; return best || 'emerald'; }
+  function seaAtChart(cx, cy) { return nearest(seaDists(cx, cy, null, null, {})); }
+  function seaField(x, r, D) {                       // the seas' distances at (x, r) on your water
+    var wx = x + (vn2(x / 7, r / 7) - 0.5) * 3, wr = r + (vn2(x / 7 + 17, r / 7 + 5) - 0.5) * 3, c = toChart(wx, wr);
+    return seaDists(c.x, c.y, x, r, D);
+  }
+  function seaAtWorld(x, r) { return nearest(seaField(x, r, {})); }
+  var hereAt = null;
+  function seaHere() {
+    if (palOverride) return palOverride;
+    if (!boat || !pa) return A ? A.pal : 'emerald';
+    if (!hereAt || hereAt[0] !== boat.x || hereAt[1] !== boat.r) hereAt = [boat.x, boat.r, seaAtWorld(boat.x, boat.r)];
+    return hereAt[2];
+  }
+  function palAt(x, r) { return palOverride || (pa ? seaAtWorld(x, r) : A.pal); }
 
   // ---- start and stop ---------------------------------------------------------------------------------------------
   var aboardStart = false, shipId = null, shipName = 'your sloop', blessing = false;
@@ -520,8 +674,8 @@ var BridgeSloop = (function () {
   function mercy() { return blessing ? 0.5 : 1; }                  // a candle lit at St Brendan's (js/crown.js): half the harm
   function start(fromId, toId, opts) {
     var crewing = !!(opts && opts.crew);
-    var charted = !crewing && typeof BridgeChart !== 'undefined' ? BridgeChart.dest() : null;     // a course set on the chart ashore
-    if (!toId && charted && charted !== fromId && knows(charted)) toId = charted;
+    var plotted = !crewing && typeof BridgeChart !== 'undefined' ? BridgeChart.dest() : null;     // a course set on the chart ashore
+    if (!toId && plotted && plotted !== fromId && knows(plotted)) toId = plotted;
     if (running || (!crewing && (!knows(fromId) || (toId && (!knows(toId) || fromId === toId))))) return false;
     aboardStart = !!(opts && opts.aboard);
     crewOf = opts && opts.crewWith || null; captainOf = opts && opts.crew || null; mirror = null; seaPeers = {};
@@ -531,9 +685,11 @@ var BridgeSloop = (function () {
       SP = typeof BridgeFleet !== 'undefined' && captainOf.type ? BridgeFleet.spec(captainOf.type) : SLOOP;
       shipId = null; shipName = captainOf.shipName || 'their boat'; act = null; aboardStart = true;
     }
-    running = true; from = fromId; to = toId || null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
-    wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = autoPref(); ironsT = 0; held = null;
-    aim = null; committing = false; hinted = false; said = {}; told = {}; B = null; B0 = null; wrecking = false; shakeUntil = 0;
+    running = true; from = fromId; to = null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
+    wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = autoPref(); ironsT = 0;
+    aim = null; hinted = false; said = {}; told = {}; B = null; wrecking = false; shakeUntil = 0;
+    isl = {}; islLoading = {}; shapes = {}; wcells = {}; sky = { squall: 0, fog: 0, systems: [] }; course = null; dockAt = null; pa = null; hereAt = null; voyN++;
+    seaSeen = { at: 0, pal: null };
     blessing = typeof BridgeCrown !== 'undefined' && BridgeCrown.takeBlessing();
     if (fight()) fight().reset(SEA);
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
@@ -565,19 +721,20 @@ var BridgeSloop = (function () {
     var fail = function () { stop(from); };
     function go() {
       if (!running || !canvas) return;                               // put back before she was ready
-      if (!A.sc) { fail(); return; }
-      if (B0) lay(); else layA();
+      if (!A.sc || !A.mask || !isles()[A.id]) { fail(); return; }
+      pa = isles()[A.id];                                            // the frame: this island where the chart has it
+      place(A);                                                      // where she lies, among the rest of your ships
+      layA();
       if (captainOf && captainOf.wind) { wind.from = captainOf.wind.from; wind.seed = captainOf.wind.seed; }
-      if (crewOf && net()) net().send('sail-go', { from: from, to: B0 ? B0.id : null, wind: { from: wind.from, seed: wind.seed }, type: act && act.ship ? act.ship.type : 'sloop',
+      if (crewOf && net()) net().send('sail-go', { from: from, to: toId || null, wind: { from: wind.from, seed: wind.seed }, type: act && act.ship ? act.ship.type : 'sloop',
                                                   shipName: shipName, suit: suitOf() }, crewOf.id);
-      var fl = fleetAt(A, act && act.ship), mine = fl.filter(function (e) { return e.ship.id === shipId; })[0] || fl[0];
-      A.pier = A.moor.slice();
-      A.moor = [mine.x, mine.r]; A.moorH = mine.h; A.inner = mine.inner;          // where she lies, among the rest of your ships
-      A.fleet = fl.filter(function (e) { return e !== mine; }).map(function (e) { return lying(e, 0, 0); });
       boat = { x: A.moor[0], r: A.moor[1], h: A.moorH, v: 0, sheet: 1.45, boom: 0, side: wrap(wind.from - A.moorH) > 0 ? -1 : 1, heel: 0, rudder: 0,
                bump: 0, hoist: 0, eff: 0, off: 0, luff: true, drift: [0, 0], empty: true, spec: SP, ship: shipId };
       castOut = unit(A.moor[0] - A.dock[0], A.moor[1] - A.dock[1]);
       cam = null;
+      if (toId) commit(toId, true);                                  // a course set before you cast off: the gold mark from the start
+      ensureIslands();
+      updateCells(performance.now() + 1e6);
       phase = 'cast'; phaseAt = performance.now();
       if (aboardStart) { phaseAt -= CAST.board; said.board = 1; boat.empty = false; }   // you walked aboard in the world: already sat
       canvas.style.opacity = '1';
@@ -585,65 +742,33 @@ var BridgeSloop = (function () {
     loadSheet(function (err) {
       if (err) { fail(); return; }
       loadHull(SP.sheet, function () {});
-      loadIsland(fromId, function (I) {
-        A = I;
-        if (!toId) { go(); return; }
-        loadIsland(toId, function (J) { if (!J.sc) { fail(); return; } B0 = J; go(); });
-      });
+      loadIsland(fromId, function (I) { A = I; go(); });
     });
     last = performance.now();
     raf = requestAnimationFrame(frame);
     return true;
   }
-  // you've steered for an island long enough: it's your course now, laid out ahead of you
-  // the islands you could steer for: the ones on your chart (js/chart.js), or that you've been to
+  // the islands you could steer for: the ones on your chart (js/chart.js), or that you've been to - and the one you left,
+  // once you're well away from it
   function others() {
-    var P = isles(), C = typeof BridgeChart !== 'undefined' ? BridgeChart : null;
-    return Object.keys(P).filter(function (id) { return id !== A.id && (!C || C.known(id)); }).map(function (id) {
+    var P = isles(), far = ellipseK(shapeOf(A.id), boat.x, boat.r, 40) > 1;
+    return Object.keys(P).filter(function (id) { return charted(id) && (id !== A.id || far); }).map(function (id) {
       return { id: id, name: P[id].name, bearing: bearingTo(id) };
     });
   }
-  function bearingTo(id) { var P = isles(); return Math.atan2((P[id].y - P[A.id].y) * 0.72, P[id].x - P[A.id].x); }
-  function outside() {
-    return Math.hypot(boat.x - A.exit[0], boat.r - A.exit[1]) < 6 || boat.x < -4 || boat.r < -4 || boat.x > A.w + 4 || boat.r > A.h + 4;
-  }
-  // a course from the chart: laid out the way the island really lies, from the harbour mouth if you're still inside
-  function canSetCourse() { return running && !captainOf && !!A && !!boat && !B && !committing && (phase === 'sail' || phase === 'cast') && !(fight() && fight().busy()); }
+  function bearingTo(id) { var c = centreOf(id); return Math.atan2(c.r - boat.r, c.x - boat.x); }
+  // a course from the chart (or the menu): the gold mark the way the island really lies, out of the harbour first
+  function canSetCourse() { return running && !captainOf && !!A && !!boat && !!pa && (phase === 'sail' || phase === 'cast') && !(fight() && fight().busy()); }
   function setCourse(id) {
-    if (!canSetCourse() || id === A.id || !knows(id)) return false;
-    if (phase === 'sail' && outside()) commit(id, [boat.x, boat.r], bearingTo(id));
-    else commit(id, A.exit, bearingTo(id), [boat.x, boat.r]);
-    return true;
+    if (!canSetCourse() || !knows(id) || id === course) return false;
+    if (id === A.id && ellipseK(shapeOf(A.id), boat.x, boat.r, 40) < 1) return false;
+    return commit(id);
   }
-  // where you are on the chart: your island ashore, or between the two by where you are on the water
+  // where you are on the chart: your water at the chart's own scale, from wherever you've sailed
   function chartPos() {
-    if (!running || !A || !boat) return null;
-    var P = isles(), pa = P[A.id];
-    if (!pa) return null;
-    if (!B || !P[B.id]) {
-      var dx = (boat.x - A.cx) / 400, dy = (boat.r - A.cy) / 288, m = Math.hypot(dx, dy);
-      if (m > 0.1) { dx *= 0.1 / m; dy *= 0.1 / m; }
-      return { x: pa.x + dx, y: pa.y + dy };
-    }
-    var pb = P[B.id], cx = pb.x - pa.x, cy = (pb.y - pa.y) * 0.72, wx = B.cx + B.ox - A.cx, wy = B.cy + B.oy - A.cy;
-    var den = wx * wx + wy * wy || 1, qr = (cx * wx + cy * wy) / den, qi = (cy * wx - cx * wy) / den;   // chart = world × q
-    var px = boat.x - A.cx, py = boat.r - A.cy;
-    return { x: pa.x + qr * px - qi * py, y: pa.y + (qi * px + qr * py) / 0.72 };
-  }
-  function commit(id, P0, prefer, outFrom, uncharted) {
-    if (B || committing) return;
-    committing = true;
-    var P = isles();
-    say(uncharted ? 'Land ho! Something on the horizon - an island you\'ve no chart for. You make for it.' : 'You set a course for ' + P[id].name + '.', uncharted ? 4200 : 3200);
-    if (uncharted) sfx('bell');
-    loadIsland(id, function (J) {
-      committing = false;
-      if (!running || B) return;
-      if (!J.sc) { say('The chart for ' + P[id].name + ' is missing. Try another course.', 3000); aim = null; return; }
-      placeB(J, P0 || [boat.x, boat.r], prefer != null ? prefer : boat.h, outFrom);
-      B.uncharted = !!uncharted;
-      told[A.pal] = true;
-    });
+    if (!running || !A || !boat || !pa) return null;
+    var c = toChart(boat.x, boat.r);
+    return { x: clamp(c.x, 0, 1), y: clamp(c.y, 0, 1) };
   }
   function touch() { return document.documentElement.classList.contains('touch'); }
 
@@ -662,6 +787,10 @@ var BridgeSloop = (function () {
     window.removeEventListener('resize', resize);
     var target = dest || from, cv = canvas;
     canvas = null;
+    Object.keys(isl).forEach(function (id) {                         // let the islands out at sea go (the one you're landing on keeps its water)
+      if (id !== target && id !== from && typeof BridgeSea !== 'undefined' && BridgeSea.forget) BridgeSea.forget(id);
+    });
+    isl = {}; B = null;
     // The sea view stays up, on its last frame, while the island you're making for loads underneath: fading it first
     // showed the island you'd left (still the world under the passage) for a moment before the new one came in.
     BridgeWorld.load(target, function () {
@@ -731,8 +860,14 @@ var BridgeSloop = (function () {
     var fn = A ? A.name : 'the quay', opts = [['Keep sailing', closeMenu]], fight = typeof BridgeSeaFight !== 'undefined' && BridgeSeaFight.busy();
     if (typeof BridgeChart !== 'undefined') opts.push(['Open the chart (C)', function () { closeMenu(); openChart(); }]);
     opts.push(['How to sail (H)', function () { closeMenu(); howTo(); }]);
-    if (B && !fight) opts.push(['Skip ahead to ' + (B.uncharted ? 'the uncharted island' : B.name), function () { closeMenu(); landThen(to, function () { stop(to); }); }]);
-    else if (!B && A && !committing) others().forEach(function (o) { opts.push(['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]); });
+    var dest = course;
+    if (dest && !fight) opts.push(['Skip ahead to ' + isles()[dest].name, function () { closeMenu(); landThen(dest, function () { stop(dest); }); }]);
+    if (dest && !fight) opts.push(['Change course', function () {
+      closeMenu();
+      ask('Change course', null, others().filter(function (o) { return o.id !== dest; }).map(function (o) { return ['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]; })
+        .concat([['Keep this course', closeMenu]]));
+    }]);
+    else if (!dest && A && boat) others().forEach(function (o) { opts.push(['Set a course for ' + o.name, function () { closeMenu(); commit(o.id); }]); });
     if (!fight) opts.push(['Put back to ' + fn, function () { closeMenu(); landThen(from, function () { stop(from); }); }]);
     ask('At the tiller', fight ? 'NOT WITH THEM ON YOUR HEELS.' : null, opts);
   }
@@ -766,8 +901,20 @@ var BridgeSloop = (function () {
     return typeof BridgeFleet !== 'undefined' && shipId ? BridgeFleet.damage(shipId, pts) : 1;
   }
   // trouble at sea (js/seafight.js) sees the passage through this
+  // the stretch of sea ahead, as the fight sees it: the sea you're in (its odds), a mark well ahead on your heading (where
+  // they lie in wait), and the port whose prices your hold is reckoned at (where you're bound, or the nearest)
+  function stretch() {
+    if (!boat || !pa) return A;
+    var P = isles(), id = course, bd = 1e18, c = toChart(boat.x, boat.r);
+    if (!id || id === 'lumar-holm') for (var k in P) {             // (the holm has no market)
+      if (k === 'lumar-holm') continue;
+      var d = Math.pow(P[k].x - c.x, 2) + Math.pow((P[k].y - c.y) * 0.72, 2);
+      if (d < bd) { bd = d; id = k; }
+    }
+    return { id: id, pal: seaHere(), exit: [boat.x + Math.cos(boat.h) * 70, boat.r + Math.sin(boat.h) * 70] };
+  }
   var SEA = {
-    A: function () { return A; }, B: function () { return B; }, boat: function () { return boat; }, spec: function () { return SP; },
+    A: function () { return stretch(); }, B: function () { return stretch(); }, boat: function () { return boat; }, spec: function () { return SP; },
     wind: function () { return wind; }, polar: function (off, sp) { return polar(off, sp); }, ground: function (x, r) { return groundAt(x, r); },
     offshore: function (x, r) { return offshore(x, r); }, rand: Math.random, say: say, sfx: function (n) { sfx(n); }, ask: function (a, b, c, d) { ask(a, b, c, d); },
     hull: function () { var f = typeof BridgeFleet !== 'undefined' && BridgeFleet.get(shipId); return f ? f.hull : 1; },
@@ -782,7 +929,12 @@ var BridgeSloop = (function () {
     wrecking = true;
     say(why + '. Salvors are coming...', 4000);
     sfx('slam');
-    var near = !B ? A : Math.hypot(boat.x - (B.dock[0] + B.ox), boat.r - (B.dock[1] + B.oy)) < Math.hypot(boat.x - A.dock[0], boat.r - A.dock[1]) ? B : A;
+    var P = isles(), near = { id: A.id, name: A.name }, nd = 1e18;            // the nearest port with a harbourmaster to mend her
+    Object.keys(P).forEach(function (id) {
+      if (id === 'lumar-holm') return;
+      var c = centreOf(id), d = Math.hypot(c.x - boat.x, c.r - boat.r);
+      if (d < nd) { nd = d; near = { id: id, name: P[id].name }; }
+    });
     setTimeout(function () {
       if (typeof BridgeFleet !== 'undefined' && shipId) BridgeFleet.wreck(shipId, near.id);
       var nm = shipName;
@@ -812,6 +964,107 @@ var BridgeSloop = (function () {
   }
   function bestSheet(off) { return clamp(off - 0.42, 0.1, 1.45); }
 
+  // ---- the wind and the weather: alive, and the same for everyone out there ------------------------------------------------
+  // All of it is worked out from the passage's wind seed, where you are and the clock (Date.now, so captain and crew see
+  // the same - the crew also gets the wind at the boat in the helm messages): the wind's own slow veering and backing; a
+  // front now and then that swings it 40-90° over half a minute, fresher behind it (said a little before it comes); lulls
+  // where it all but dies; islands that shadow it in their lee and bend it round their shores; and weather systems that
+  // drift across the sea - rain squalls (a grey curtain on the water, gusty and shifting inside) and fog banks (thickest on
+  // the Midnight Sea) - that you can see coming and sail into or round. The Crimson's squalls and Midnight's mist are the
+  // strong versions of the same.
+  var FRONT = 95, LULL = 70, WCELL = 120, wcells = {};
+  function smooth01(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+  function slotDir(k) { return (hash(wind.seed * 1.37 + k * 3.11) - 0.5) * 1.8; }            // where the wind sits between fronts
+  function frontAt(T) {
+    var k = Math.floor(T / FRONT), u = T - k * FRONT, a = slotDir(k - 1), c = slotDir(k), jump = Math.abs(c - a);
+    return { d: a + (c - a) * smooth01(u / 30), s: 1 + (jump > 0.8 ? 0.2 * Math.sin(smooth01((u - 20) / 45) * Math.PI) : 0) };
+  }
+  function lullAt(T) {
+    var k = Math.floor(T / LULL), u = T - k * LULL;
+    if (hash(wind.seed * 0.91 + k * 7.7) > 0.2) return 1;
+    return 1 - 0.8 * Math.sin(smooth01((u - 12) / 28) * Math.PI);
+  }
+  var POINTS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+  function pointOf(a) { return POINTS[((Math.round(wrap(a) / (Math.PI / 4)) % 8) + 8) % 8]; }
+  // the weather systems in a WCELL square of the chart's own frame: at most one, born, drifting and dying away on its own clock
+  function genWeather(i, j) {
+    var seed = i * 7349 + j * 1931 + 77;
+    function h(k) { return hash(seed * 0.4127 + k * 11.3); }
+    var pal = seaAtChart((i + 0.5) * WCELL / K, (j + 0.5) * WCELL / KY);
+    var kind = h(1) < (pal === 'crimson' ? 0.6 : pal === 'midnight' ? 0.12 : 0.24) ? 'squall' : h(2) < (pal === 'midnight' ? 0.7 : pal === 'crimson' ? 0.05 : 0.16) ? 'fog' : null;
+    if (!kind) return 0;
+    var a = h(5) * 6.28, sp = 0.05 + h(6) * 0.06, L = 420 + h(3) * 300, rx = kind === 'squall' ? 12 + h(9) * 14 : 18 + h(9) * 22;
+    return { kind: kind, c0: [(i + 0.2 + h(7) * 0.6) * WCELL, (j + 0.2 + h(8) * 0.6) * WCELL], v: [Math.cos(a) * sp, Math.sin(a) * sp], L: L, ph: h(4) * L,
+             rx: rx, ry: rx * (0.6 + h(10) * 0.25), seed: seed % 1000, thick: pal === 'midnight' ? 1 : 0.6, id: i + ',' + j };
+  }
+  function systemsNear(x, r, T) {
+    var P = absOf(x, r), ci = Math.floor(P[0] / WCELL), cj = Math.floor(P[1] / WCELL), out = [];
+    for (var di = -1; di <= 1; di++) for (var dj = -1; dj <= 1; dj++) {
+      var key = (ci + di) + ',' + (cj + dj);
+      if (!(key in wcells)) wcells[key] = genWeather(ci + di, cj + dj);
+      var c = wcells[key];
+      if (!c) continue;
+      var age = (T + c.ph) % c.L, k = smooth01(age / 60) * smooth01((c.L - age) / 60);
+      if (k <= 0.01) continue;
+      var w = fromAbs(c.c0[0] + c.v[0] * (age - c.L / 2), c.c0[1] + c.v[1] * (age - c.L / 2));
+      out.push({ kind: c.kind, x: w[0], r: w[1], rx: c.rx, ry: c.ry, k: k, seed: c.seed, thick: c.thick, id: c.id });
+    }
+    return out;
+  }
+  function insideOf(s, x, r) { var e = Math.hypot((x - s.x) / s.rx, (r - s.r) / s.ry); return smooth01((1 - e) / 0.35) * s.k; }
+  // the islands' effect on it: shadowed in their lee, bent along their shores where it blows onto them
+  function islandWind(x, r, from) {
+    var tx = Math.cos(from + Math.PI), tr = Math.sin(from + Math.PI), out = { s: 1, d: 0 };
+    Object.keys(isles()).forEach(function (id) {
+      var sh = shapeOf(id), k = ellipseK(sh, x, r, 0);
+      if (k > 2.4) return;
+      for (var d = 2; d < 36; d += 3) if (ellipseK(sh, x - tx * d, r - tr * d, 0) < 1) { out.s = Math.min(out.s, 0.35 + 0.65 * d / 36); break; }
+      var nx = (x - sh.x) / (sh.a * sh.a), nr = (r - sh.r) / (sh.b * sh.b), nn = Math.hypot(nx, nr) || 1, into = (tx * nx + tr * nr) / nn;
+      if (into < 0) {
+        var w = clamp((2.4 - k) / 1.3, 0, 1), ux = tx - nx / nn * into * w, ur = tr - nr / nn * into * w;
+        out.d += wrap(Math.atan2(ur, ux) - Math.atan2(tr, tx));
+      }
+    });
+    return out;
+  }
+  // the wind where you are: its swing off the passage's direction, and how hard it blows (× the sea's own), plus what you're in
+  var sky = { squall: 0, fog: 0, systems: [] };
+  function windAt(x, r, T) {
+    var f = frontAt(T), d = f.d + 0.3 * (vnoise(T / 47 + wind.seed) - 0.5), s = f.s * lullAt(T);
+    var iw = islandWind(x, r, wind.from + d);
+    d += iw.d; s *= iw.s;
+    var sq = 0, fg = 0, sys = systemsNear(x, r, T);
+    sys.forEach(function (o) {
+      var q = insideOf(o, x, r);
+      if (q <= 0) return;
+      if (o.kind === 'squall') { sq = Math.max(sq, q); d += q * (0.55 * Math.sin(T * 0.33 + o.seed) + 0.2 * Math.sin(T * 1.3 + o.seed * 2)); s *= 1 + 0.2 * q; }
+      else { fg = Math.max(fg, q * o.thick); s *= 1 - 0.3 * q; }
+    });
+    sky = { squall: sq, fog: fg, systems: sys };
+    return { d: d, s: clamp(s, 0.15, 1.3) };
+  }
+  // what's coming, said before it comes: a front, a lull, a squall or a fog bank ahead
+  function windNews(T) {
+    var k = Math.floor(T / FRONT), next = (k + 1) * FRONT - T;
+    if (next < 14 && said.front !== k + 1) {
+      said.front = k + 1;
+      var dd = slotDir(k + 1) - slotDir(k), to2 = pointOf(wind.from + slotDir(k + 1));
+      if (Math.abs(dd) > 0.6) say((dd > 0 ? 'The wind\'s veering - it\'ll come round to the ' : 'The wind\'s backing - it\'ll come round to the ') + to2 + '. Mind your sail', 4600);
+    }
+    var kl = Math.floor(T / LULL);
+    if (lullAt(T) < 0.6 && said.lull !== kl) { said.lull = kl; say('The wind falls away to a whisper. The sail hangs. Wait for it - it\'ll fill in again', 4200); }
+    sky.systems.forEach(function (o) {
+      var q = insideOf(o, boat.x, boat.r), ahead = Math.hypot(boat.x + Math.cos(boat.h) * 14 - o.x, boat.r + Math.sin(boat.h) * 14 - o.r) < Math.max(o.rx, o.ry);
+      if (q > 0.25 && !said['in:' + o.id]) {
+        said['in:' + o.id] = said['ahead:' + o.id] = 1;
+        say(o.kind === 'squall' ? 'Rain hammers down - a squall, the wind gusting and swinging every way. Ease her through it' : seaHere() === 'midnight' ? 'The fog closes round you, thick as wool. You can barely see the bow' : 'A fog bank swallows you. Sound carries strangely; the sea goes quiet', 4200);
+      } else if (q <= 0 && ahead && !said['ahead:' + o.id] && o.k > 0.5) {
+        said['ahead:' + o.id] = 1;
+        say(o.kind === 'squall' ? 'A grey curtain of rain on the water ahead - a squall. Sail into it or round it' : 'A fog bank lies across the water ahead', 3600);
+      }
+    });
+  }
+
   function update(dt, now) {
     var t = now / 1000, here = seaHere();
     wind.base += ((BASE[here] || 0.92) - wind.base) * Math.min(1, dt * 0.25);
@@ -838,16 +1091,18 @@ var BridgeSloop = (function () {
         }
       }
       if (storm.thunderAt && now > storm.thunderAt) { storm.thunderAt = 0; sfx('thunder'); }
-    }
+    } else if (storm.squallAt && now > storm.squallAt) storm.squallAt = 0;      // out of it: the next squall comes a while after you're back in
     // the wind veers a little and blows in gusts you can see coming over the water
-    var W0 = wind.from + 0.28 * (vnoise(t / 21 + wind.seed) - 0.5) + 0.12 * (vnoise(t / 7.3 + 9) - 0.5);
+    var T = Date.now() / 1000, wa = windAt(boat.x, boat.r, T);
+    var W0 = wind.from + wa.d + 0.12 * (vnoise(t / 7.3 + 9) - 0.5);
+    if (phase === 'sail') windNews(T);
     if (now > wind.gustAt) {
-      var rough = here === 'crimson';
+      var rough = here === 'crimson' || sky.squall > 0.3;
       wind.gustAt = now + (rough ? 3500 + hash(Math.floor(now / 1000)) * 4000 : 9000 + hash(Math.floor(now / 1000)) * 9000);
-      wind.gust = rough ? 0.62 : 0.32; wind.gustT = now;
+      wind.gust = here === 'crimson' ? 0.62 : rough ? 0.45 : 0.32; wind.gustT = now;
     }
     var g = wind.gust * Math.max(0, Math.sin(clamp((now - (wind.gustT || 0)) / 4200, 0, 1) * Math.PI));
-    wind.s = wind.base * (1 + g);
+    wind.s = wind.base * (1 + g) * wa.s;
     wind.now = W0;
     var b = boat;
     if (captainOf) { crewUpdate(b, dt, now, t); return; }
@@ -901,8 +1156,18 @@ var BridgeSloop = (function () {
     var dwx = Math.cos(W0 + Math.PI), dwr = Math.sin(W0 + Math.PI), lw = wind.s * 0.12 * (1 - Math.min(1, b.v / 3));
     var nx = b.x + (Math.cos(b.h) * b.v + dwx * lw) * dt, nr = b.r + (Math.sin(b.h) * b.v + dwr * lw) * dt;
     if (phase === 'moor') {                                          // coming alongside: she glides in and lies bow-out at the berth
-      nx = b.x + (B.moor[0] - b.x) * Math.min(1, dt * 1.6); nr = b.r + (B.moor[1] - b.r) * Math.min(1, dt * 1.6);
-      b.h = wrap(b.h + wrap(B.moorH - b.h) * Math.min(1, dt * 1.4));
+      nx = b.x + (dockAt.moor[0] - b.x) * Math.min(1, dt * 1.6); nr = b.r + (dockAt.moor[1] - b.r) * Math.min(1, dt * 1.6);
+      b.h = wrap(b.h + wrap(dockAt.moorH - b.h) * Math.min(1, dt * 1.4));
+    }
+    // the edge of the known seas: the swell runs high and confused and the current sets you back toward the islands
+    if (phase === 'sail') {
+      var ec = toChart(nx, nr), px2 = ec.x < EDGE[0] ? EDGE[0] - ec.x : ec.x > EDGE[2] ? EDGE[2] - ec.x : 0, py2 = ec.y < EDGE[1] ? EDGE[1] - ec.y : ec.y > EDGE[3] ? EDGE[3] - ec.y : 0;
+      if (px2 || py2) {
+        var deep = Math.hypot(px2 * K, py2 * KY), pk = Math.min(1, deep / 10);
+        nx += Math.sign(px2) * (1.2 + 3.2 * pk) * dt; nr += Math.sign(py2) * (1.2 + 3.2 * pk) * dt;
+        if (deep > 16) { nx += px2 * K * (1 - 16 / deep) * Math.min(1, dt * 4); nr += py2 * KY * (1 - 16 / deep) * Math.min(1, dt * 4); }
+        if (!edgeTold) { edgeTold = true; say('The swell runs high and confused out here - the edge of the known seas. The current sets you back toward the islands.', 5600); }
+      }
     }
     if (castT < CAST.lines) { nx = A.moor[0]; nr = A.moor[1]; b.v = 0; }                  // made fast: she doesn't move
     else if (castT < CAST.push) { nx = b.x + castOut[0] * 0.55 * dt; nr = b.r + castOut[1] * 0.55 * dt; }   // pushed off the pier
@@ -955,44 +1220,39 @@ var BridgeSloop = (function () {
     // life, and trouble
     life(dt, now);
     if (fight() && phase === 'sail') fight().update(dt, now);
-    // where you are: the seas, the far quay
-    if (phase === 'sail' && here !== seaWas) {
-      if (seaWas && !told[here]) say('Over the seam, foam all round the bow. ' + LORE[here], 6000);
-      else if (!told[here]) say(LORE[here], 5600);
-      told[here] = true;
-      seaWas = here;
-    }
-    if (!B && phase === 'sail' && !committing) {
-      var outside = Math.hypot(b.x - A.exit[0], b.r - A.exit[1]) < 6 || b.x < -4 || b.r < -4 || b.x > A.w + 4 || b.r > A.h + 4;
-      if (outside) {
-        if (!hinted && now - msgAt > -500) { hinted = true; say('Out of the harbour. Steer for a dot on the compass rim - each is an island on your chart' + (touch() ? ' (or open the Chart)' : ' (or C for the chart)') + '. Or just sail on and see what you find', 6400); }
+    // the islands coming up over the horizon, what's adrift round you, trouble in open water
+    ensureIslands();
+    updateCells(now);
+    if (phase === 'sail' && offshore(b.x, b.r)) openT += dt;
+    if (fight() && phase === 'sail' && openT > troubleAt) { troubleAt = openT + 150; fight().plan(); }
+    // where you are: the sea you're on (said as you cross into one), land coming up
+    crossing(here, now);
+    if (phase === 'sail') landHo();
+    if (!course && phase === 'sail') {                               // steer for a dot on the compass and hold it: your course
+      if (ellipseK(shapeOf(A.id), b.x, b.r, 4) > 1 || Math.hypot(b.x - A.exit[0], b.r - A.exit[1]) < 6) {
+        if (!hinted && now - msgAt > -500) { hinted = true; say('Out of the harbour. Steer for a dot on the compass rim - each is an island on your chart' + (touch() ? ' (or open the Chart)' : ' (or C for the chart)') + '. Or sail on into open water and see what you find', 6400); }
         var best = null, bd = 0.42;
         others().forEach(function (o) { var d = Math.abs(wrap(o.bearing - b.h)); if (d < bd) { bd = d; best = o; } });
         if (best && aim && aim.id === best.id) aim.t += dt; else aim = best ? { id: best.id, t: 0 } : null;
         if (aim && aim.t > 2.2 && b.v > 0.6) commit(aim.id);
-        // nothing charted that way: sail on, and the sea gives up whatever's out there, charted or not (the longer you
-        // hold a heading, the wider the net) - an island you've no chart for comes up as just that
-        if (!best && b.v > 0.6) {
-          if (!held || Math.abs(wrap(b.h - held.h)) > 0.6) held = { h: b.h, t: 0 };
-          held.t += dt;
-          var tol = 0.45 + Math.min(2.7, held.t / 14), find = null, fd = tol;          // in time, any heading finds land
-          Object.keys(isles()).forEach(function (id) {
-            if (id === A.id) return;
-            var d = Math.abs(wrap(bearingTo(id) - held.h));
-            if (d < fd) { fd = d; find = id; }
-          });
-          if (find && held.t > 7) { var unc = !(typeof BridgeChart === 'undefined' || BridgeChart.known(find)); held = null; commit(find, null, null, null, unc); }
-        } else held = null;
       }
     }
+    if (course && now - replanAt > 2000) { replanAt = now; replan(false); }        // the gold mark from wherever you've got to
     // the next leg of the course (the gold mark on the compass)
     while (leg < route.length - 1 && Math.hypot(b.x - route[leg][0], b.r - route[leg][1]) < 3.5) leg++;
     prompt = null;
     if (phase === 'sail') {
-      var dB = B ? Math.min(Math.hypot(b.x - B.berth[0], b.r - B.berth[1]), Math.hypot(b.x - B.moor[0], b.r - B.moor[1])) : 1e9;
-      var dA = Math.min(Math.hypot(b.x - A.berth[0], b.r - A.berth[1]), Math.hypot(b.x - A.moor[0], b.r - A.moor[1]));
-      if (dB < 3.4) prompt = { text: B.uncharted ? 'Come alongside' : 'Come alongside — ' + B.name, act: function () { moor(); } };        // she drops her sail as she comes in
-      else if (dA < 2.2 && now - began > 8000) prompt = { text: 'Put back in at ' + A.name, act: function () { landThen(from, function () { stop(from, true); }); } };
+      // alongside any island's quay you've come to - the one you set a course for or not - or back at your own
+      var dock = null, dd = 1e9;
+      for (var id in isl) {
+        var I = isl[id];
+        if (!I.moor) continue;
+        var d = Math.min(Math.hypot(b.x - I.berth[0], b.r - I.berth[1]), Math.hypot(b.x - I.moor[0], b.r - I.moor[1]));
+        if (d < dd) { dd = d; dock = I; }
+      }
+      var there = dock;
+      if (there === A) { if (dd < 2.2 && now - began > 8000) prompt = { text: 'Put back in at ' + A.name, act: function () { landThen(from, function () { stop(from, true); }); } }; }
+      else if (there && dd < 3.4) prompt = { text: there.uncharted ? 'Come alongside' : 'Come alongside — ' + there.name, act: function () { moor(there); } };   // she drops her sail as she comes in
       things.forEach(function (o) {
         if (prompt) return;
         var d = Math.hypot(b.x - o.x, b.r - o.r);
@@ -1025,7 +1285,7 @@ var BridgeSloop = (function () {
       var mt = now - phaseAt;
       b.empty = mt > MOOR.off;
       if (crewOf && net()) net().send('helm', helmState(now), crewOf.id);
-      if (mt > MOOR.lines && !said.made) { said.made = 1; say('Made fast at ' + B.name + '. You throw the lines ashore', 1600); sfx('click'); }
+      if (mt > MOOR.lines && !said.made) { said.made = 1; say(dockAt.uncharted ? 'Made fast. You throw the lines ashore' : 'Made fast at ' + dockAt.name + '. You throw the lines ashore', 1600); sfx('click'); }
       if (mt > MOOR.done && !hold && !captainOf) {
         hold = 1;
         if (shipId && typeof BridgeFleet !== 'undefined') BridgeFleet.moored(shipId, to);   // she lies here now
@@ -1067,7 +1327,8 @@ var BridgeSloop = (function () {
   function helmState(now) {
     var b = boat;
     return { x: b.x, r: b.r, h: b.h, v: b.v, sheet: b.sheet, boom: b.boom, side: b.side, heel: b.heel, hoist: b.hoist, rudder: b.rudder,
-             luff: b.luff, stall: b.stall, eff: b.eff, off: b.off, bump: b.bump, empty: !!b.empty, ph: phase, pt: now - phaseAt, wn: wind.now, ws: wind.s };
+             luff: b.luff, stall: b.stall, eff: b.eff, off: b.off, bump: b.bump, empty: !!b.empty, ph: phase, pt: now - phaseAt, wn: wind.now, ws: wind.s,
+             dk: dockAt ? dockAt.id : null };
   }
   // aboard their boat: she goes where their helm takes her; the sea, the islands and what's adrift are the same as theirs
   function crewUpdate(b, dt, now, t) {
@@ -1080,6 +1341,7 @@ var BridgeSloop = (function () {
       b.side = m.side; b.luff = m.luff; b.stall = m.stall; b.bump = m.bump || 0;
       wind.now = m.wn; wind.s = m.ws;
       if (m.ph && m.ph !== phase) { phase = m.ph; phaseAt = now - (m.pt || 0); }
+      if (m.dk && isl[m.dk]) dockAt = isl[m.dk];
     }
     b.empty = false;
     var c = Math.cos(b.h), s = Math.sin(b.h);
@@ -1093,15 +1355,21 @@ var BridgeSloop = (function () {
     }
     wake = wake.filter(function (w) { w.age += dt; w.x += w.vx * dt; w.r += w.vr * dt; return w.age < 2.6; });
     spray = spray.filter(function (p) { p.age += dt; p.x += p.vx * dt; p.r += p.vr * dt; p.z += p.vz * dt; p.vz -= 6 * dt; return p.z > -0.05 && p.age < 1.4; });
+    ensureIslands();                                                 // the same sea as theirs: islands, what's adrift, the seams
+    updateCells(now);
+    var T = Date.now() / 1000;                                        // and the same sky (the wind at the boat comes in their helm)
+    windAt(b.x, b.r, T);
+    if (phase === 'sail') windNews(T);
+    if (phase === 'sail' && offshore(b.x, b.r)) openT += dt;
     life(dt, now);
-    var here = seaHere();
-    if (phase === 'sail' && here !== seaWas) { if (!told[here]) say(LORE[here], 5600); told[here] = true; seaWas = here; }
+    crossing(seaHere(), now);
+    if (phase === 'sail') landHo();
     if (phase === 'cast' && !said.crew) { said.crew = 1; say('You\'re aboard the ' + shipName + ' - ' + cap(captainOf.name) + ' has the helm', 3200); }
     prompt = null;
     if (phase === 'sail' && Math.abs(b.v) < 0.6 && now - began > 6000 && typeof BridgeFishing !== 'undefined') prompt = { text: 'Cast a line', act: fishHere };
     if (mirror && now - mirror.at > 12000 && !said.lost) {          // the captain's gone quiet: back to port
       said.lost = 1; say('No word from the helm - you put back in', 2400);
-      setTimeout(function () { stop(B && to ? to : from, true); }, 2600);
+      setTimeout(function () { stop(course || from, true); }, 2600);
     }
   }
   function cap(n) { return String(n || '').toLowerCase().replace(/(^|\s)([a-z])/g, function (m, a, c) { return a + c.toUpperCase(); }); }
@@ -1109,11 +1377,15 @@ var BridgeSloop = (function () {
     var n = typeof BridgeNet !== 'undefined' ? BridgeNet : null;
     if (!n) return;
     n.on('helm', function (d, from) { if (running && captainOf && captainOf.id === from && d) { d.at = performance.now(); mirror = d; } });
-    n.on('course', function (d, from) {
-      if (!running || !captainOf || captainOf.id !== from || !d || B) return;
-      loadIsland(d.id, function (J) { if (running && J.sc && !B) { placeB(J, d.P0, d.prefer, d.outFrom); to = J.id; } });
+    n.on('course', function (d, from) {                              // the captain's set a course: the same mark on your compass
+      if (!running || !captainOf || captainOf.id !== from || !d || !isles()[d.id] || !boat || !pa) return;
+      commit(d.id, true);
     });
-    n.on('haul', function (d, from) { var o = captainOf && captainOf.id === from && things[d && d.i]; if (o) { o.got = true; burst(o.x, o.r, 8, 'spray'); } });
+    n.on('haul', function (d, from) {
+      if (!running || !captainOf || captainOf.id !== from || !d || !d.key) return;
+      gotKeys[d.key] = 1;
+      things.forEach(function (o) { if (o.key === d.key && !o.got) { o.got = true; burst(o.x, o.r, 8, 'spray'); } });
+    });
     n.on('sail-end', function (d, from) {
       if (!running || !captainOf || captainOf.id !== from) return;
       say(d.landed ? 'Made fast. You climb out onto the quay' : 'You go ashore', 1600);
@@ -1121,7 +1393,7 @@ var BridgeSloop = (function () {
       setTimeout(function () { stop(dest, !!d.landed); }, 900);
     });
     n.on('leave', function (p, id) {
-      if (running && captainOf && captainOf.id === id) { say(cap(captainOf.name) + ' has gone - you bring her in yourself', 2400); setTimeout(function () { stop(B && to ? to : from, true); }, 2600); }
+      if (running && captainOf && captainOf.id === id) { say(cap(captainOf.name) + ' has gone - you bring her in yourself', 2400); setTimeout(function () { stop(course || from, true); }, 2600); }
       if (crewOf && crewOf.id === id) { say(cap(crewOf.name) + ' has gone ashore', 2200); crewOf = null; }
       delete seaPeers[id];
     });
@@ -1135,24 +1407,14 @@ var BridgeSloop = (function () {
       o.spec = typeof BridgeFleet !== 'undefined' && d.type ? BridgeFleet.spec(d.type) : SLOOP; o.at = performance.now();
     });
   }
-  // the chart's frame and back: where you are among the islands (chartPos), and a chart point on your water
-  function chartFrame() {
-    var P = isles(), pa = P[A.id];
-    if (!pa) return null;
-    if (!B || !P[B.id]) return { pa: pa, scale: true, qr: 1, qi: 0 };
-    var pb = P[B.id], cx = pb.x - pa.x, cy = (pb.y - pa.y) * 0.72, wx = B.cx + B.ox - A.cx, wy = B.cy + B.oy - A.cy;
-    var den = wx * wx + wy * wy || 1;
-    return { pa: pa, qr: (cx * wx + cy * wy) / den, qi: (cy * wx - cx * wy) / den };
-  }
+  // a chart point on your water (chartPos the other way): the chart is the world at a fixed scale, the same for everyone,
+  // so another boat's chart position is simply where she is on yours (and headings need no turning)
   function fromChart(cx, cy, hc) {
-    var F = chartFrame();
-    if (!F) return null;
-    var dx = cx - F.pa.x, dy = cy - F.pa.y;
-    if (F.scale) { if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) return null; return { x: A.cx + dx * 400, r: A.cy + dy * 288, h: hc }; }
-    var ex = dx, ey = dy * 0.72, m2 = F.qr * F.qr + F.qi * F.qi || 1;                  // world = (chart - pa) / q
-    return { x: A.cx + (ex * F.qr + ey * F.qi) / m2, r: A.cy + (ey * F.qr - ex * F.qi) / m2, h: hc - Math.atan2(F.qi, F.qr) };
+    if (!running || !A || !pa) return null;
+    var w = toWorld(cx, cy);
+    return { x: w.x, r: w.r, h: hc };
   }
-  function chartHeading() { var F = chartFrame(); return F ? boat.h + Math.atan2(F.qi, F.qr) : boat.h; }
+  function chartHeading() { return boat.h; }
   // each frame: the helm to your crew; where you are to anyone else at sea
   function broadcast(now) {
     var n = net();
@@ -1216,9 +1478,36 @@ var BridgeSloop = (function () {
 
   var CAST = { board: 1400, lines: 2300, push: 3300, sail: 5000 };       // ms into the cast-off
   var MOOR = { lines: 1300, off: 2000, done: 3200 };                       // ms into coming alongside
-  function moor() {
+  function moor(I) {
+    moorFor(I.id);                                   // her berth there, ready for when you climb out (the world draws her)
+    dockAt = I; B = I; course = to = I.id;
     phase = 'moor'; phaseAt = performance.now();
     sfx('door');
+  }
+  // over a seam into another sea: its story, once a passage (it has to stick a moment - the seam wanders)
+  function crossing(here, now) {
+    if (phase !== 'sail' || here === seaWas) { seaSeen.pal = null; return; }
+    if (seaSeen.pal !== here) { seaSeen = { pal: here, at: now }; return; }
+    if (now - seaSeen.at < 1200) return;
+    if (seaWas && !told[here]) say('Over the seam, foam all round the bow. ' + LORE[here], 6000);
+    else if (!told[here]) say(LORE[here], 5600);
+    told[here] = true;
+    seaWas = here;
+  }
+  // an island coming up over the horizon: one you've no chart for is just land, and stays nameless till you tie up
+  function landHo() {
+    for (var id in isl) {
+      var I = isl[id];
+      if (I === A || said['ho:' + id] || ellipseK(shapeOf(id), boat.x, boat.r, 34) > 1) continue;
+      said['ho:' + id] = 1;
+      if (I.uncharted) { say('Land ho! An island on the horizon - one you\'ve no chart for.', 4600); sfx('bell'); }
+      else if (id !== course) say(I.name + ' comes up over the horizon.', 3200);
+    }
+  }
+  // the uncharted island you're closest to, if you're near enough to see it (the panel says so)
+  function unchartedNear() {
+    for (var id in isl) if (isl[id].uncharted && ellipseK(shapeOf(id), boat.x, boat.r, 40) < 1) return isl[id];
+    return null;
   }
   // fishing over the side (js/fishing.js runs the rod; drawRod below draws the line off her rail)
   var castSide = 0;
@@ -1250,10 +1539,10 @@ var BridgeSloop = (function () {
   function seaFishTold(set) {
     try { if (set) localStorage.setItem('bridge_sea_fish', '1'); return localStorage.getItem('bridge_sea_fish') === '1'; } catch (e) { return true; }
   }
-  function seaHere() { return boat ? (seaSide(boat.x, boat.r) > 0 ? B : A).pal : A.pal; }
   function haul(o) {
     o.got = true;
-    if (crewOf && net()) net().send('haul', { i: things.indexOf(o) }, crewOf.id);
+    gotKeys[o.key] = 1;
+    if (crewOf && net()) net().send('haul', { key: o.key }, crewOf.id);
     burst(o.x, o.r, 8, 'spray');
     sfx('pickup');
     var r = hash(o.seed + Date.now() % 97);
@@ -1308,16 +1597,12 @@ var BridgeSloop = (function () {
       if (f.t >= 1 && !f.splashed) { f.splashed = 1; burst(f.x1, f.r1, 3, 'spray'); }
       return f.t < 1.1;
     });
-    traffic.forEach(function (o, i) {
-      o.x += Math.cos(o.h) * o.v * dt; o.r += Math.sin(o.h) * o.v * dt;
-      var far = Math.hypot(o.x - b.x, o.r - b.r);
-      if (!offshore(o.x + Math.cos(o.h) * 4, o.r + Math.sin(o.h) * 4)) o.h = wrap(o.h + dt * 1.2);   // bearing away from land and harbours
-      if (far < 5) o.h = wrap(o.h + dt * 0.9 * (wrap(Math.atan2(o.r - b.r, o.x - b.x) - o.h) > 0 ? 1 : -1));   // and from you
-      if (far > 70) {                                                  // gone over the horizon: another comes up ahead
-        var a = b.h + (hash(i + Math.floor(now / 1000)) - 0.5) * 1.6, d = 34 + hash(i + 3) * 10;
-        var nx2 = b.x + Math.cos(a) * d, nr2 = b.r + Math.sin(a) * d;
-        if (CALM[(seaSide(nx2, nr2) > 0 ? B : A).pal] && offshore(nx2, nr2)) { o.x = nx2; o.r = nr2; o.h = a + Math.PI + (hash(i + 7) - 0.5) * 1.4; }
-      }
+    var ts = Date.now() / 1000;                                       // other sloops on their loops: where they are is when it is,
+    traffic.forEach(function (o) {                                   // so everyone sees them in the same place
+      var a = o.a0 + o.w * ts, sg = o.w > 0 ? 1 : -1, x = o.cx + Math.cos(a) * o.R, r = o.cr + Math.sin(a) * o.R * 0.8;
+      var d = Math.hypot(x - b.x, r - b.r);
+      if (d < 4.5) { x += (x - b.x) / (d || 1) * (4.5 - d); r += (r - b.r) / (d || 1) * (4.5 - d); }   // and they keep clear of you
+      o.x = x; o.r = r; o.h = Math.atan2(Math.cos(a) * 0.8 * sg, -Math.sin(a) * sg);
       var rel = wrap(wind.now - o.h); o.side = rel > 0 ? -1 : 1; o.boom = clamp(Math.abs(rel) - 0.5, 0.15, 1.2);
     });
     wisps.forEach(function (w) {
@@ -1330,11 +1615,8 @@ var BridgeSloop = (function () {
       if (o.kind === 'dory') o.h += (wrap(wind.now - o.h)) * Math.min(1, dt * 0.3);    // at anchor, she lies head to wind
       if (o.kind.indexOf('buoy') === 0 && Math.hypot(b.x - o.x, b.r - o.r) < 6 && now - lastBell > 3800 + hash(o.seed) * 2000) { lastBell = now; sfx('bell'); }
     });
-    // the whale: once, about halfway, off whichever beam is open water
-    var prog = !B ? 0 : ((b.x - A.berth[0]) * (B.berth[0] - A.berth[0]) + (b.r - A.berth[1]) * (B.berth[1] - A.berth[1])) /
-               Math.max(1, Math.pow(Math.hypot(B.berth[0] - A.berth[0], B.berth[1] - A.berth[1]), 2));
-    if (seaHere() === 'midnight' || seaHere() === 'crimson') prog = 0;   // the whales keep to kinder water
-    if (!whale.done && !whale.at && prog > 0.48 && phase === 'sail') {
+    // the whale: once a passage, well out in open water, off whichever beam is clear (the whales keep to kinder water)
+    if (!whale.done && !whale.at && openT > whale.after && CALM[seaHere()] && phase === 'sail') {
       var c2 = Math.cos(b.h), s2 = Math.sin(b.h), sd = hash(wind.seed + 21) < 0.5 ? -1 : 1;
       whale.at = now; whale.x = b.x + c2 * 6 - s2 * sd * 4; whale.r = b.r + s2 * 6 + c2 * sd * 4; whale.h = b.h + 0.3 * sd;
       if (groundAt(whale.x, whale.r)) { whale.done = true; whale.at = 0; }
@@ -1353,44 +1635,61 @@ var BridgeSloop = (function () {
   function sx(x) { return Math.round(x * TS - cam.x); }
   function sy(r, z) { return Math.round((r - (z || 0) * C45) * TS - cam.y); }
 
+  // The sea under the camera: the chart's regions (seaField) sampled on a grid of SEAG px, the sea most of the screen
+  // is in drawn whole, each other sea over it clipped to its region (marching squares, so the seam runs smooth between
+  // the samples), and churning foam all along the seams where they meet.
+  var SEAG = 16;
   function drawSeas(now) {
-    if (!B || !mid) { BridgeSea.drawSeaAt(bctx, W, H, now, A.pal, cam.x, cam.y); return; }
-    var palA = A.pal, palB = B.pal;
-    var cx = (cam.x + W / 2) / TS, cr = (cam.y + H / 2) / TS;
-    var here = seaSide(cx, cr) > 0 ? palB : palA, there = here === palB ? palA : palB;
-    BridgeSea.drawSeaAt(bctx, W, H, now, here, cam.x, cam.y);
-    // the other sea past the seam, if it's on screen
-    var pts = [], nx = -dir[1], ny = dir[0];
-    var span = (W + H) / TS;
-    for (var i = -40; i <= 40; i++) {
-      var t = i / 40 * span, x = mid[0] + nx * t, r = mid[1] + ny * t;
-      var s = -((vnoise(t / 9 + 3.1) - 0.5) * 7 + (vnoise(t / 3.3) - 0.5) * 1.6);
-      pts.push([x + dir[0] * s, r + dir[1] * s]);
+    var G = SEAG, gx0 = Math.floor(cam.x / G) - 1, gy0 = Math.floor(cam.y / G) - 1;
+    var nx = Math.ceil(W / G) + 3, ny = Math.ceil(H / G) + 3, Dn = new Array(nx * ny), count = {};
+    for (var j = 0; j < ny; j++) for (var i = 0; i < nx; i++) {
+      var D = seaField((gx0 + i) * G / TS, (gy0 + j) * G / TS, {}), best = nearest(D);
+      Dn[j * nx + i] = D; count[best] = (count[best] || 0) + 1;
     }
-    var far = here === palA ? 1 : -1;
-    bctx.save();
-    bctx.beginPath();
-    pts.forEach(function (p, k) { var X = p[0] * TS - cam.x, Y = p[1] * TS - cam.y; if (k) bctx.lineTo(X, Y); else bctx.moveTo(X, Y); });
-    var e1 = pts[pts.length - 1], e0 = pts[0], R = span * 2;
-    bctx.lineTo((e1[0] + dir[0] * R * far) * TS - cam.x, (e1[1] + dir[1] * R * far) * TS - cam.y);
-    bctx.lineTo((e0[0] + dir[0] * R * far) * TS - cam.x, (e0[1] + dir[1] * R * far) * TS - cam.y);
-    bctx.closePath();
-    bctx.clip();
-    BridgeSea.drawSeaAt(bctx, W, H, now, there, cam.x, cam.y);
-    bctx.restore();
-    // the seam: churning foam where the seas meet
-    var P = BridgeSea.palettes[palB] || BridgeSea.palettes.emerald, Q = BridgeSea.palettes[palA] || P;
-    for (var k = 0; k < pts.length - 1; k++) {
-      var a = pts[k], b = pts[k + 1];
-      for (var j = 0; j < 12; j++) {
-        var f = j / 12, x = a[0] + (b[0] - a[0]) * f, r = a[1] + (b[1] - a[1]) * f;
-        var X = Math.round(x * TS - cam.x), Y = Math.round(r * TS - cam.y);
-        if (X < -4 || Y < -4 || X > W + 4 || Y > H + 4) continue;
-        var id = k * 12 + j, w = Math.sin(now / 300 + id * 1.7);
-        var off = Math.round(Math.sin(now / 700 + id) * 3);
-        bctx.fillStyle = 'rgba(' + (w > 0 ? P.foam : Q.foam) + ',' + (0.35 + 0.35 * Math.abs(w)).toFixed(2) + ')';
-        bctx.fillRect(X + off, Y - off, w > 0.6 ? 3 : 2, 1);
+    var pals = Object.keys(count).sort(function (p, q) { return count[q] - count[p]; });
+    BridgeSea.drawSeaAt(bctx, W, H, now, pals[0], cam.x, cam.y);
+    for (var q = 1; q < pals.length; q++) {
+      var pal = pals[q], F = new Array(nx * ny), segs = [];
+      for (var k = 0; k < F.length; k++) {                         // < 0 inside this sea: how much nearer it is than the next
+        var Dk = Dn[k], o = 1e9;
+        for (var p in Dk) if (p !== pal && Dk[p] < o) o = Dk[p];
+        F[k] = Dk[pal] - o;
       }
+      bctx.save();
+      bctx.beginPath();
+      for (var cj = 0; cj < ny - 1; cj++) for (var ci = 0; ci < nx - 1; ci++) {
+        var ks = [cj * nx + ci, cj * nx + ci + 1, (cj + 1) * nx + ci + 1, (cj + 1) * nx + ci], v = [F[ks[0]], F[ks[1]], F[ks[2]], F[ks[3]]];
+        if (v[0] >= 0 && v[1] >= 0 && v[2] >= 0 && v[3] >= 0) continue;
+        var X0 = (gx0 + ci) * G - cam.x, Y0 = (gy0 + cj) * G - cam.y, cs = [[X0, Y0], [X0 + G, Y0], [X0 + G, Y0 + G], [X0, Y0 + G]];
+        var poly = [], cut = [];
+        for (var c = 0; c < 4; c++) {
+          var c2 = (c + 1) % 4;
+          if (v[c] < 0) poly.push(cs[c]);
+          if ((v[c] < 0) !== (v[c2] < 0)) {
+            var tt = v[c] / (v[c] - v[c2]), pt = [cs[c][0] + (cs[c2][0] - cs[c][0]) * tt, cs[c][1] + (cs[c2][1] - cs[c][1]) * tt];
+            poly.push(pt); cut.push(pt);
+          }
+        }
+        poly.forEach(function (pt, m) { if (m) bctx.lineTo(pt[0], pt[1]); else bctx.moveTo(pt[0], pt[1]); });
+        bctx.closePath();
+        if (cut.length >= 2) segs.push([cut[0], cut[1]]);
+        if (cut.length === 4) segs.push([cut[2], cut[3]]);
+      }
+      bctx.clip();
+      BridgeSea.drawSeaAt(bctx, W, H, now, pal, cam.x, cam.y);
+      bctx.restore();
+      // the seam: churning foam where the seas meet, in both seas' foam
+      var Pf = BridgeSea.palettes[pal] || BridgeSea.palettes.emerald, Qf = BridgeSea.palettes[pals[0]] || Pf;
+      segs.forEach(function (sg) {
+        var L = Math.hypot(sg[1][0] - sg[0][0], sg[1][1] - sg[0][1]), n = Math.max(1, Math.round(L / 2.2));
+        for (var m = 0; m < n; m++) {
+          var f = (m + 0.5) / n, X = sg[0][0] + (sg[1][0] - sg[0][0]) * f, Y = sg[0][1] + (sg[1][1] - sg[0][1]) * f;
+          var id = Math.round((X + cam.x) * 0.37 + (Y + cam.y) * 1.13), w = Math.sin(now / 300 + id * 1.7);
+          var off = Math.round(Math.sin(now / 700 + id) * 3);
+          bctx.fillStyle = 'rgba(' + (w > 0 ? Pf.foam : Qf.foam) + ',' + (0.35 + 0.35 * Math.abs(w)).toFixed(2) + ')';
+          bctx.fillRect(Math.round(X) + off, Math.round(Y) - off, w > 0.6 ? 3 : 2, 1);
+        }
+      });
     }
   }
 
@@ -1421,7 +1720,7 @@ var BridgeSloop = (function () {
   }
 
   function drawWake(now) {
-    var P = BridgeSea.palettes[(seaSide(boat.x, boat.r) > 0 ? B : A).pal] || BridgeSea.palettes.emerald;
+    var P = BridgeSea.palettes[seaHere()] || BridgeSea.palettes.emerald;
     wake.forEach(function (w) {
       var a = 1 - w.age / 2.6, X = sx(w.x), Y = sy(w.r);
       if (X < 0 || Y < 0 || X >= W || Y >= H) return;
@@ -1529,7 +1828,7 @@ var BridgeSloop = (function () {
       var cc = cell(Math.floor(hi / 8), hi % 8), sz = Math.round(128 * k);
       bctx.drawImage(tinted(sheetImg, b.tint), cc[0], cc[1], 128, 128, X - Math.round(64 * k), Y - Math.round(83 * k), sz, sz);
     }
-    var Pal = BridgeSea.palettes[(seaSide(b.x, b.r) > 0 ? B : A).pal] || BridgeSea.palettes.emerald;
+    var Pal = BridgeSea.palettes[b === boat ? seaHere() : palAt(b.x, b.r)] || BridgeSea.palettes.emerald;
     var c = Math.cos(b.h), s = Math.sin(b.h), nf = Math.round(18 * k);
     for (var i = 0; i < nf; i++) {                                    // the water lapping round her
       var u = -L2 + sp.L * (i / (nf - 1)), w = bw * Math.sin(Math.PI * Math.min(1, 0.22 + 0.86 * (i / (nf - 1)))) + 0.05;
@@ -1745,7 +2044,7 @@ var BridgeSloop = (function () {
     var t = now / 1000, X = sx(o.x), Y = sy(o.r);
     if (X < -80 || Y < -100 || X > W + 80 || Y > H + 60) return;
     var bob = o.kind === 'reef' || o.kind.indexOf('rock') === 0 ? 0 : Math.round(Math.sin(t * 1.7 + o.seed) * 1.2);
-    var P = BridgeSea.palettes[(seaSide(o.x, o.r) > 0 ? B : A).pal] || BridgeSea.palettes.emerald;
+    var P = BridgeSea.palettes[o.pal || palAt(o.x, o.r)] || BridgeSea.palettes.emerald;
     if (o.kind === 'dory') {
       var hi = ((Math.round(o.h / (Math.PI * 2) * 8) % 8) + 8) % 8, cc = cell(4, hi);
       bctx.drawImage(sheetImg, cc[0], cc[1], 128, 128, X - 64, Y - 83 + bob, 128, 128);
@@ -1793,7 +2092,7 @@ var BridgeSloop = (function () {
   function drawWhale(now) {
     if (!whale || !whale.at) return;
     var wt = (now - whale.at) / 1000, X = sx(whale.x), Y = sy(whale.r);
-    var P = BridgeSea.palettes[(seaSide(whale.x, whale.r) > 0 ? B : A).pal] || BridgeSea.palettes.emerald;
+    var P = BridgeSea.palettes[whale.pal || (whale.pal = palAt(whale.x, whale.r))] || BridgeSea.palettes.emerald;
     var c = Math.cos(whale.h), s = Math.sin(whale.h), len = 5.2 * TS;
     var rise = clamp(wt / 2.4, 0, 1), sink = clamp((wt - 7.2) / 2.6, 0, 1), up = rise * (1 - sink);
     // the shape under the water: its glow, its spore lights
@@ -1877,9 +2176,74 @@ var BridgeSloop = (function () {
     });
     bctx.restore();
   }
-  // the Crimson Sea's weather: rain driving across, the light dark, lightning; the Midnight Sea's thick mist
+  // the weather systems as you see them coming: a squall's dark, rough water under its grey curtain of rain; a fog bank's
+  // pale bank of mist lying on the sea (drawn on the water, under everything; the rain and the mist themselves over it)
+  function sysOnScreen(o, m) {
+    var X = sx(o.x), Y = sy(o.r), rx = (o.rx + m) * TS, ry = (o.ry + m) * TS;
+    return X + rx > -40 && X - rx < W + 40 && Y + ry > -80 && Y - ry < H + 40;
+  }
+  function drawWeatherWater(now) {
+    sky.systems.forEach(function (o) {
+      if (!sysOnScreen(o, 2)) return;
+      var X = sx(o.x), Y = sy(o.r), t = now / 1000;
+      bctx.save();
+      if (o.kind === 'squall') {
+        for (var m = 0; m < 5; m++) { bctx.fillStyle = 'rgba(14,16,26,' + (0.07 * o.k).toFixed(3) + ')'; disc(X, Y, o.rx * TS * (1 - m * 0.16), o.ry * TS * (1 - m * 0.16)); }
+        bctx.fillStyle = 'rgba(200,210,225,' + (0.35 * o.k).toFixed(2) + ')';               // white caps whipped up under it
+        for (var i = 0; i < 70; i++) {
+          var a = hash(i + o.seed) * 6.28, d = Math.sqrt(hash(i * 3 + o.seed)), on = Math.sin(t * 3 + i * 1.9) > 0.55;
+          if (on) bctx.fillRect(Math.round(X + Math.cos(a) * d * o.rx * TS * 0.9), Math.round(Y + Math.sin(a) * d * o.ry * TS * 0.9), 2, 1);
+        }
+      } else {
+        for (var m2 = 0; m2 < 5; m2++) { bctx.fillStyle = 'rgba(132,138,160,' + (0.07 * o.k * (o.thick + 0.4)).toFixed(3) + ')'; disc(X, Y, o.rx * TS * (1 - m2 * 0.17), o.ry * TS * (1 - m2 * 0.17)); }
+      }
+      bctx.restore();
+    });
+  }
+  function drawWeatherAir(now) {
+    var t = now / 1000;
+    sky.systems.forEach(function (o) {
+      if (!sysOnScreen(o, 2)) return;
+      var X = sx(o.x), Y = sy(o.r), rx = o.rx * TS, ry = o.ry * TS;
+      bctx.save();
+      if (o.kind === 'squall') {                                      // the curtain: rain falling out of it in grey streaks
+        var dw = (wind.now || 0) + Math.PI, lean = Math.cos(dw) * 0.35;
+        bctx.fillStyle = 'rgba(96,102,118,' + (0.14 * o.k).toFixed(3) + ')'; disc(X, Y - 18, rx * 0.95, ry * 0.95);
+        bctx.fillStyle = 'rgba(205,210,225,' + (0.32 * o.k).toFixed(2) + ')';
+        var n = Math.round(o.rx * o.ry * 1.1);
+        for (var i = 0; i < n; i++) {
+          var a = hash(i * 1.7 + o.seed) * 6.28, d = Math.sqrt(hash(i * 2.3 + o.seed + 5)), fall = ((t * 1.6 + hash(i + o.seed * 3)) % 1);
+          var px = X + Math.cos(a) * d * rx, py = Y + Math.sin(a) * d * ry, h2 = 28;
+          bctx.fillRect(Math.round(px + lean * fall * h2), Math.round(py - h2 + fall * h2), 1, 4 + (i % 3));
+        }
+      } else {                                                        // the fog: slow banks of mist rolling over the water
+        bctx.globalCompositeOperation = 'screen';
+        for (var j = 0; j < 7; j++) {
+          var ax = X + (hash(j + o.seed) - 0.5) * rx * 1.3 + Math.sin(t * 0.13 + j) * 14, ay = Y + (hash(j * 5 + o.seed) - 0.5) * ry * 1.2 - 10;
+          for (var m = 3; m >= 1; m--) { bctx.fillStyle = 'rgba(150,154,176,' + (0.05 * o.k * (o.thick + 0.4)).toFixed(3) + ')'; disc(ax, ay, rx * 0.22 * m, ry * 0.12 * m); }
+        }
+      }
+      bctx.restore();
+    });
+  }
+  // inside the weather, and the seas' own: rain driving across (a squall, or always on the Crimson), the light dark,
+  // lightning; fog thick round the boat (a fog bank, or the Midnight Sea's mist)
   function drawWeather(now) {
-    var here = seaHere();
+    var here = seaHere(), rain = here === 'crimson' ? 1 : sky.squall;
+    if (rain > 0.02 && here !== 'crimson') {
+      bctx.fillStyle = 'rgba(16,18,28,' + (0.2 * rain).toFixed(3) + ')'; bctx.fillRect(0, 0, W, H);
+      var dw0 = wind.now + Math.PI, vx0 = Math.cos(dw0) * 0.5;
+      bctx.fillStyle = 'rgba(210,215,228,' + (0.45 * rain).toFixed(2) + ')';
+      for (var i0 = 0; i0 < Math.round(220 * rain); i0++) {
+        var sp0 = 0.5 + (i0 % 5) * 0.08, y0 = ((i0 * 97.3 + now * sp0) % (H + 30)) - 15, x0 = ((i0 * 53.7 + now * sp0 * vx0) % (W + 30) + W + 30) % (W + 30) - 15;
+        bctx.fillRect(Math.round(x0), Math.round(y0), 1, 4 + (i0 % 3));
+      }
+    }
+    if (sky.fog > 0.02) {
+      var gf = bctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * (0.3 - 0.2 * sky.fog), W / 2, H / 2, Math.max(W, H) * 0.55);
+      gf.addColorStop(0, 'rgba(120,124,150,' + (0.12 * sky.fog).toFixed(3) + ')'); gf.addColorStop(1, 'rgba(120,124,150,' + (0.7 * sky.fog).toFixed(3) + ')');
+      bctx.fillStyle = gf; bctx.fillRect(0, 0, W, H);
+    }
     if (here === 'crimson') {
       bctx.fillStyle = 'rgba(40,10,14,0.22)'; bctx.fillRect(0, 0, W, H);
       var dw = wind.now + Math.PI, vx = Math.cos(dw) * 0.5, vy = 1;
@@ -1900,7 +2264,7 @@ var BridgeSloop = (function () {
   }
   function drawSky(now) {
     // gulls and their shadows, flying fish, spray
-    var t = now / 1000;
+    var t = now / 1000, here = seaHere();
     gulls.forEach(function (g) {
       var X = sx(g.px), Ys = sy(g.pr), Y = sy(g.pr, g.z);
       if (X < -8 || X > W + 8 || Y < -8 || Ys > H + 8) return;
@@ -1916,12 +2280,12 @@ var BridgeSloop = (function () {
       bctx.fillStyle = 'rgba(0,0,0,0.2)'; bctx.fillRect(sx(x), sy(r), 3, 1);
     });
     spray.forEach(function (p) {
-      var P = BridgeSea.palettes[(seaSide(p.x, p.r) > 0 ? B : A).pal] || BridgeSea.palettes.emerald;
+      var P = BridgeSea.palettes[here] || BridgeSea.palettes.emerald;
       bctx.fillStyle = 'rgba(' + P.foam + ',' + (0.8 * (1 - p.age / 1.4)).toFixed(2) + ')';
       bctx.fillRect(sx(p.x), sy(p.r, p.z), 1, 1);
     });
     // mist over the Midnight Sea
-    var pal = (seaSide(boat.x, boat.r) > 0 ? B : A).pal;
+    var pal = here;
     if (pal === 'midnight') {
       bctx.save(); bctx.globalCompositeOperation = 'screen';
       var thin = SP.ward ? 0.015 : 0.035;                                // a moon lantern burns the mist thin
@@ -1948,8 +2312,9 @@ var BridgeSloop = (function () {
     cam.fx += (tx - cam.fx) * k; cam.fy += (ty - cam.fy) * k;
     cam.x = Math.round(cam.fx); cam.y = Math.round(cam.fy);
     drawSeas(now);
+    drawWeatherWater(now);
     drawGusts(now);
-    drawIsland(A, now); drawIsland(B, now);
+    for (var iid in isl) drawIsland(isl[iid], now);
     drawWake(now);
     drawWhale(now);
     var list = things.map(function (o) { return { row: o.r, draw: function () { drawThing(o, now); } }; });
@@ -1964,10 +2329,10 @@ var BridgeSloop = (function () {
     });
     // stepping aboard and ashore: you on the pier, the boat's lines made fast to it
     var castT = phase === 'cast' ? now - phaseAt : -1, moorT = phase === 'moor' ? now - phaseAt : -1;
-    var quay = phase === 'moor' ? B && (B.inner || [B.dock[0] + B.ox, B.dock[1] + B.oy]) : (A.inner || [A.dock[0] + A.ox, A.dock[1] + A.oy]);
+    var quay = phase === 'moor' ? dockAt && (dockAt.inner || [dockAt.dock[0] + dockAt.ox, dockAt.dock[1] + dockAt.oy]) : (A.inner || [A.dock[0] + A.ox, A.dock[1] + A.oy]);
     var seat = seatOf(b);
-    [A, B].forEach(function (I) {                                      // the rest of your ships, tied up where you left them
-      (I && I.fleet || []).forEach(function (m) {
+    Object.keys(isl).forEach(function (iid) {                         // the rest of your ships, tied up where you left them
+      (isl[iid].fleet || []).forEach(function (m) {
         var X = sx(m.x), Y = sy(m.r);
         if (X < -260 || X > W + 260 || Y < -260 || Y > H + 120) return;
         m.heel = Math.sin(now / 1300 + m.x) * 0.035;
@@ -1986,6 +2351,7 @@ var BridgeSloop = (function () {
     list.sort(function (p, q) { return p.row - q.row; });
     list.forEach(function (d) { d.draw(); });
     if ((castT >= 0 && castT < CAST.lines) || moorT > MOOR.lines) moorLines(b, quay, castT >= 0 && castT > CAST.board ? 1 - (castT - CAST.board) / (CAST.lines - CAST.board) : 1);
+    drawWeatherAir(now);
     drawWisps(now);
     drawSky(now);
     drawWeather(now);
@@ -2017,7 +2383,7 @@ var BridgeSloop = (function () {
     ctx.fillStyle = 'rgba(160,220,255,0.95)';
     ctx.beginPath(); ctx.moveTo(cx - ax * R * 0.72, cy - ay * R * 0.72);
     ctx.lineTo(cx - ax * R * 0.45 + ay * px(6), cy - ay * R * 0.45 - ax * px(6)); ctx.lineTo(cx - ax * R * 0.45 - ay * px(6), cy - ay * R * 0.45 + ax * px(6)); ctx.fill();
-    if (!B && phase !== 'cast') {                                    // where each island lies: steer for one to set a course
+    if (!course && phase !== 'cast') {                               // where each island on your chart lies: steer for one
       others().forEach(function (o) {
         var on = aim && aim.id === o.id, mx = cx + Math.cos(o.bearing) * R * 0.86, my = cy + Math.sin(o.bearing) * R * 0.86 * C45;
         ctx.fillStyle = on ? '#ffd060' : 'rgba(242,236,214,0.85)';
@@ -2026,7 +2392,7 @@ var BridgeSloop = (function () {
         ctx.fillText(o.name.split(' ').map(function (w) { return w[0]; }).join(''), cx + Math.cos(o.bearing) * (R + px(12)), cy + Math.sin(o.bearing) * (R + px(12)) * C45);
       });
     } else {
-      var wp = route[Math.min(leg, route.length - 1)] || (B ? B.berth : A.exit);
+      var wp = route[Math.min(leg, route.length - 1)] || (course ? (function () { var c = centreOf(course); return [c.x, c.r]; })() : A.exit);
       var bc = Math.atan2(wp[1] - b.r, wp[0] - b.x);                 // the next leg of the course, gold
       ctx.fillStyle = '#ffd060'; ctx.beginPath(); ctx.arc(cx + Math.cos(bc) * R * 0.86, cy + Math.sin(bc) * R * 0.86 * C45, px(4), 0, Math.PI * 2); ctx.fill();
     }
@@ -2077,18 +2443,19 @@ var BridgeSloop = (function () {
     ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(bx0 - px(8), by0 - px(10), bw + px(16), px(40));
     ctx.font = px(10) + 'px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#c8d0e0';
     ctx.fillText(A.name.toUpperCase(), bx0, by0);
-    if (B) {
-      var prog = clamp(((b.x - A.berth[0]) * (B.berth[0] - A.berth[0]) + (b.r - A.berth[1]) * (B.berth[1] - A.berth[1])) /
-                       Math.pow(Math.hypot(B.berth[0] - A.berth[0], B.berth[1] - A.berth[1]), 2), 0, 1);
-      ctx.textAlign = 'right'; ctx.fillStyle = '#ffd060'; ctx.fillText(B.uncharted ? 'UNCHARTED ISLAND' : B.name.toUpperCase(), bx0 + bw, by0);
+    var unk = unchartedNear();
+    if (course) {
+      var prog = clamp(1 - togo() / routeLen, 0, 1);
+      ctx.textAlign = 'right'; ctx.fillStyle = '#ffd060'; ctx.fillText(isles()[course].name.toUpperCase(), bx0 + bw, by0);
       ctx.fillStyle = '#2a3040'; ctx.fillRect(bx0, by0 + px(10), bw, px(4));
       ctx.fillStyle = '#ffd060'; ctx.fillRect(bx0, by0 + px(10), bw * prog, px(4));
       ctx.fillStyle = '#f2ecd6'; ctx.fillRect(bx0 + bw * prog - px(2), by0 + px(8), px(4), px(8));
     } else {
       var aimName = aim ? isles()[aim.id].name.toUpperCase() : null;
-      ctx.textAlign = 'right'; ctx.fillStyle = aimName ? '#ffd060' : '#8a90a8';
-      ctx.fillText(committing ? 'SETTING A COURSE…' : aimName ? 'STEERING FOR ' + aimName : 'STEER FOR AN ISLAND', bx0 + bw, by0 + px(14));
+      ctx.textAlign = 'right'; ctx.fillStyle = aimName || unk ? '#ffd060' : '#8a90a8';
+      ctx.fillText(unk ? 'UNCHARTED ISLAND' : aimName ? 'STEERING FOR ' + aimName : 'STEER FOR AN ISLAND', bx0 + bw, by0 + px(14));
     }
+    if (course && unk) { ctx.textAlign = 'right'; ctx.fillStyle = '#c8d0e0'; ctx.fillText('UNCHARTED ISLAND NEAR', bx0 + bw, by0 + px(26)); }
     // a message, and what E does here
     ctx.textAlign = 'center';
     if (msg && now < msgAt) {
@@ -2159,7 +2526,7 @@ var BridgeSloop = (function () {
     mooring[id] = true;
     loadSheet(function (err) {
       if (err) return;
-      loadIsland(id, function (I) { if (I.mask && I.sc) { moorOf(I); moored[id] = I; } });
+      loadIsland(id, function (I) { if (I.mask) { moorOf(I); moored[id] = I; } }, 'mask');     // (its shore is all she needs)
     });
     return null;
   }
@@ -2304,13 +2671,13 @@ var BridgeSloop = (function () {
     });
   }
   function drawMooredOn(c, I, m, offX, offY, now) {
-    var keep = [bctx, cam, wind, A, B, mid, dir];
+    var keep = [bctx, cam, wind, A, B, palOverride];
     var on = !!(aboard && aboard.at && aboard.id === I.id && aboard.ship === m.ship), k = on ? (now - aboard.at) / 1000 : 0;
     m.heel = Math.sin(now / 1300 + m.x) * 0.035 / Math.sqrt(m.spec.L / 2.6) + (on ? Math.sin(k * 9) * 0.12 * Math.exp(-k * 2.5) * 2.6 / m.spec.L : 0);   // riding the swell
     m.empty = !on;
-    bctx = c; cam = { x: -offX, y: -offY }; wind = { now: I.moorH + 2.2, s: 0.4 }; A = I; B = null; mid = null; dir = null;
+    bctx = c; cam = { x: -offX, y: -offY }; wind = { now: I.moorH + 2.2, s: 0.4 }; A = I; B = null; palOverride = I.pal;
     try { drawBoat(now, m); moorLines(m, m.inner || I.dock, 1); }
-    finally { bctx = keep[0]; cam = keep[1]; wind = keep[2]; A = keep[3]; B = keep[4]; mid = keep[5]; dir = keep[6]; }
+    finally { bctx = keep[0]; cam = keep[1]; wind = keep[2]; A = keep[3]; B = keep[4]; palOverride = keep[5]; }
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('lumar', { items: mooredItems });
 
@@ -2319,7 +2686,8 @@ var BridgeSloop = (function () {
     isRunning: function () { return running; },
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },
-    setCourse: setCourse, canSetCourse: canSetCourse, chartPos: chartPos, course: function () { return running && B ? B.id : null; },
+    _loaded: function () { return isl; }, _snap: function () { cam = null; }, _sky: function () { return sky; }, _systems: function (x, r, T) { return systemsNear(x, r, T); }, _front: function (T) { return frontAt(T); }, _toWorld: function (cx, cy) { return pa ? toWorld(cx, cy) : null; }, _sea: function (x, r) { return seaAtWorld(x, r); },
+    setCourse: setCourse, canSetCourse: canSetCourse, chartPos: chartPos, course: function () { return running ? course : null; },
     invite: invite, _crew: function () { return { crewOf: crewOf, captainOf: captainOf, mirror: mirror }; }, _seaPeers: function () { return seaPeers; },
     _things: function () { return things; }, _prompt: function () { return prompt; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }
   };
