@@ -147,6 +147,7 @@ var BridgeActions = (function () {
     if (/^enigma/.test(id)) return 'giant';
     if (/^singularity/.test(id)) return 'void';
     if (/^hoarfell/.test(id)) return 'peaks';
+    if (/^sylvara/.test(id)) return 'orbit';
     return 'orbit';
   }
 

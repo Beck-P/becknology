@@ -71,6 +71,13 @@ var BridgeStarmap = (function () {
       places: ['Fellhaven', 'The Staircase · the Icefall', 'The summit of the Hoarspire'],
       apps: [],
       color: '#a8d8f0', px: 0.13, py: 0.36, hasOverworld: true
+    },
+    {
+      id: 'sylvara', loc: 'sylvara', name: 'SYLVARA', kind: 'Forest world \u00b7 the wood elves',
+      blurb: 'One forest from pole to pole, trees wider than houses. Elderglade, the wood elves\u2019 capital, where Queen Alyssa holds court inside the Great Tree with Beckolas, her first sword, at her side.',
+      places: ['Elderglade', 'The Heartwood Hall', 'The Moonwell'],
+      apps: [],
+      color: '#7ac070', px: 0.5, py: 0.16, hasOverworld: true
     }
   ];
 
@@ -112,7 +119,7 @@ var BridgeStarmap = (function () {
   }
 
   // what's waiting at a world: quests begun there and not finished, people there who'd join your crew
-  var LOC_RX = { lumar: /^lumar/, arcadia: /^(arcadia|cyber|chrome|junk|tech)/, enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/ };
+  var LOC_RX = { lumar: /^lumar/, arcadia: /^(arcadia|cyber|chrome|junk|tech)/, enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/, sylvara: /^sylvara/ };
   function waiting(loc) {
     var rx = LOC_RX[loc], out = [];
     if (!rx) return '';

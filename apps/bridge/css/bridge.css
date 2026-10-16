@@ -2013,6 +2013,26 @@ html.touch #sea-chart .ch-hint { display: none; }
   .identity-panel.identity-wide { padding: 24px 14px; }
 }
 
+/* Sylvara: dark green velvet edged in gold, a gold leaf either side of the title */
+.wd-sylvan {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(240, 208, 96, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(26, 52, 34, 0.95), rgba(14, 30, 20, 0.97));
+  color: #eef0dc;
+  border: 1px solid #d0a040;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 3px rgba(14, 30, 20, 0.9), inset 0 0 0 4px rgba(208, 160, 64, 0.45), inset 0 0 28px rgba(120, 180, 90, 0.12),
+              0 0 22px rgba(208, 160, 64, 0.18), 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+.wd-sylvan .wd-title { color: #f0d070; letter-spacing: 3px; text-shadow: 0 0 8px rgba(240, 208, 112, 0.45); }
+.wd-sylvan .wd-title::before, .wd-sylvan .wd-title::after { content: ' \2766 '; color: #8ac070; font-weight: 400; }
+.wd-sylvan .wd-portrait { background: rgba(120, 180, 90, 0.14); box-shadow: inset 0 0 0 1px rgba(208, 160, 64, 0.6); }
+.wd-sylvan .ip-key { background: #1e3a26; color: #f0d070; border-color: #d0a040; box-shadow: 0 1px 0 #8a6a20; }
+.wd-sylvan .wd-opt, .wd-sylvan .wd-btn { background: rgba(240, 208, 112, 0.06); color: #eef0dc; border-color: rgba(208, 160, 64, 0.35); }
+.wd-sylvan .wd-opt.active, .wd-sylvan .wd-btn.primary { background: #c8a040; color: #14261a; border-color: #f0d070; }
+.wd-sylvan .wd-item { background: rgba(240, 208, 112, 0.06); }
+.wd-sylvan .wd-input { background: rgba(0, 0, 0, 0.3); color: #eef0dc; border: 1px solid rgba(208, 160, 64, 0.5); }
+
 /* ---- The game menu (js/menu.js): Backpack, Map, Journal, Fish, Collection ----------------------------------------
    One window, folder tabs across its top (Stardew's), dressed like the world's dialogs: parchment in Lumar, neon in
    Arcadia, holo aboard, a CRT on Enigma, violet glass at the Singularity, frost on Hoarfell, linen on Verdance. Every

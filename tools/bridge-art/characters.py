@@ -64,6 +64,7 @@ FIXED = {
     'skin':   ('#9a6a4e', '#d8a07a', '#f0c49c'),
     'skin2':  ('#7a4e36', '#b0784e', '#cc9468'),
     'skin3':  ('#3e2418', '#6a3e28', '#8a563a'),
+    'skin0':  ('#b48468', '#ecc0a0', '#fcdcc4'),     # very fair (Queen Alyssa)
     'eye':    ('#120c0a', '#120c0a', '#2a1a14'),
     'white':  ('#9a968c', '#e4e0d4', '#fbf8f0'),
     'leather': ('#3a2416', '#5e3a22', '#7e5232'),
@@ -237,6 +238,23 @@ NPCS = {
     'npc-queen':     dict(skin='skin2', shirt=('#1a3a2a', '#2a5a40', '#3e7a58'), skirt=('#1a3a2a', '#2a5a40', '#3e7a58'),
                           vest=('#7a5a10', '#a88020', '#d0a840'), hair=('#1a1410', '#2e2218', '#44342a'), long_hair=True,
                           crown=('#8a6a10', '#c89a20', '#f0d060'), pose='sit'),
+    # Sylvara, the elven wood: Queen Alyssa of the wood elves on her throne, and Beckolas, her first sword
+    'npc-alyssa':    dict(skin='skin0', shirt=('#2a5a2a', '#3e7a38', '#5a9a4a'), skirt=('#2a5a2a', '#3e7a38', '#5a9a4a'),
+                          trim=('#8a6a10', '#c89a20', '#f0d060'), belt=('#8a6a10', '#c89a20', '#f0d060'),
+                          hair=('#a8843a', '#d8b058', '#f0d080'), long_hair='flowing', elf_ears=True,
+                          circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#0a6a3a', '#18b060', '#80f0b0'), gown=True, shoes=('#8a6a10', '#c89a20', '#f0d060'), pose='sit'),
+    'npc-beckolas':  dict(skin='skin', shirt=('#2e4a22', '#4a6a30', '#6a8a44'), armour=('#3a5a26', '#5a7a34', '#7e9a4a'),
+                          cloak=('#1e3a1e', '#2e5a2e', '#447a3e'), trim=('#7a5a20', '#c8a040', '#f0d070'),
+                          hair=('#a8843a', '#d8b058', '#f0d080'), ponytail=True, elf_ears=True, sword=True, bow=True,
+                          scabbard=('#5a3a1a', '#8a5a2a', '#b07a3a'), bowwood=('#6a4a20', '#a07a38', '#d0a858'), fletch=('#c8c0b0', '#ece4d4', '#ffffff'),
+                          eye=('#1a3a6a', '#2a5aa0', '#4a80c8'), pose='stand'),
+    'npc-elf-warden': dict(skin='skin', shirt=('#3a4a2a', '#56683a', '#748a50'), cloak=('#2a3a22', '#3e5430', '#566e42'),
+                           hair=('#5a3a1a', '#8a5a2a', '#aa7a42'), long_hair=True, elf_ears=True, pose='stand'),
+    'npc-elf-bard':  dict(skin='skin2', shirt=('#5a2a4a', '#7a3e66', '#9a5a84'), vest=('#7a5a20', '#a88030', '#c8a048'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), ponytail=True, elf_ears=True, pose='sit'),
+    'npc-elf-herbalist': dict(skin='skin3', shirt=('#4a5a3a', '#6a7a52', '#8a9a6e'), skirt=('#4a3a2a', '#6a5640', '#8a7458'),
+                              apron=('#8a7a5a', '#b8a880', '#d8c8a0'), hair=('#c8c8d0', '#e0e0e8', '#f4f4fa'), long_hair=True,
+                              elf_ears=True, pose='stand'),
     'npc-steward':   dict(skin='skin', shirt=('#1a1a2a', '#2a2a40', '#3e3e5a'), vest=('#5a1a14', '#8a2a20', '#b83a2a'),
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), mustache=True, pose='stand'),
     'npc-broker':    dict(skin='skin3', shirt=('#4a1418', '#6a2028', '#8a3038'), vest=('#1a1a20', '#2a2a32', '#3e3e48'),
@@ -690,19 +708,56 @@ def build_ranger():
 
 def build_human(spec):
     global head
-    legs('pants', 'leather')
+    legs('pants', 'shoes' if 'shoes' in spec else 'leather')
     wide = 1.12 if spec.get('brawny') else 1.0
     add('cube', 'torso', (0, 0, 13.0), (4.0 * wide, 2.9 * wide, 4.2), 'shirt', 'torso', body, bevel=1.3)
-    add('cube', 'belt', (0, 0, 9.6), (4.1 * wide, 3.0 * wide, 0.6), 'leather', 'torso', body, bevel=0.3)
+    add('cube', 'belt', (0, 0, 9.6), (4.1 * wide, 3.0 * wide, 0.6), 'belt' if 'belt' in spec else 'leather', 'torso', body, bevel=0.3)
     if 'skirt' in spec:
         add('cone', 'skirt', (0, 0, 5.2), (1, 0.9, 1), 'skirt', 'skirt', body,
             vertices=16, radius1=4.9, radius2=3.6, depth=8.6)
+        if 'trim' in spec:       # a band of embroidery round the hem
+            add('torus', 'hem', (0, 0, 1.2), (1, 0.9, 1), 'trim', 'skirt', body,
+                major_radius=4.75, minor_radius=0.45, major_segments=20, minor_segments=5)
+    if 'cloak' in spec:          # hangs from the shoulders down the back
+        add('cube', 'cloak', (0, 3.2, 10.6), (4.6, 0.6, 6.6), 'cloak', 'cloak', body, bevel=0.4)
+        add('cube', 'cloak_clasp', (0, -2.9, 16.3), (0.6, 0.3, 0.6), 'trim' if 'trim' in spec else 'brass', 'torso', body)
+    if spec.get('sword'):        # a long sheathed sword at the left hip, out from the body so it reads, hilt forward
+        add('cube', 'scabbard', (-5.6, 0.9, 6.0), (0.6, 0.9, 4.6), 'scabbard', 'sword', body, rot=(-0.4, 0, 0.12), bevel=0.2)
+        add('cube', 'chape', (-5.4, 2.6, 1.9), (0.7, 1.0, 0.6), 'brass', 'sword', body, rot=(-0.4, 0, 0.12))
+        add('cube', 'crossguard', (-6.0, -1.0, 10.4), (0.6, 2.0, 0.45), 'brass', 'sword', body)
+        add('cube', 'grip', (-6.0, -1.6, 11.8), (0.45, 0.45, 1.3), 'leather', 'sword', body, rot=(-0.4, 0, 0))
+        add('uv_sphere', 'pommel', (-6.0, -2.1, 13.2), (0.7, 0.7, 0.7), 'brass', 'sword', body, segments=8, ring_count=6)
+    if spec.get('bow'):          # a longbow slung across the back, a quiver of arrows over the right shoulder
+        tilt = math.radians(35)
+        prev = None
+        for i in range(11):
+            t = -1 + 2 * i / 10
+            u, v = t * 9.0, 2.2 * (1 - t * t)                  # along the bow, and the curve out from the back
+            p = (math.cos(tilt) * u, 4.2 + v, 12.0 + math.sin(tilt) * u)
+            if prev:
+                d = [p[j] - prev[j] for j in range(3)]
+                L = math.sqrt(sum(c * c for c in d))
+                mid = tuple((p[j] + prev[j]) / 2 for j in range(3))
+                add('cube', 'bow', mid, (0.38, 0.38, L / 2 + 0.1), 'bowwood', 'bow', body,
+                    rot=(-math.atan2(d[1], math.hypot(d[0], d[2])), math.atan2(d[0], d[2]), 0))
+            prev = p
+        a, b = (math.cos(tilt) * -9.0, 4.2, 12.0 + math.sin(tilt) * -9.0), (math.cos(tilt) * 9.0, 4.2, 12.0 + math.sin(tilt) * 9.0)
+        d = [b[j] - a[j] for j in range(3)]
+        add('cube', 'bowstring', tuple((a[j] + b[j]) / 2 for j in range(3)), (0.12, 0.12, 9.2), 'white', 'bowstring', body,
+            rot=(0, math.atan2(d[0], d[2]), 0))
+        add('cylinder', 'quiver', (2.6, 3.6, 14.0), (1.1, 1.1, 3.6), 'leather', 'quiver', body, rot=(0, -0.35, 0), vertices=10)
+        for k_, dx in enumerate((-0.5, 0.2, 0.8)):
+            add('cube', 'fletching', (3.9 + dx, 3.6 + 0.3 * k_, 18.0), (0.25, 0.6, 1.0), 'fletch', 'arrows', body, rot=(0, -0.35, 0))
     if 'apron' in spec:
         add('cube', 'apron', (0, -2.95, 9.6), (3.4, 0.35, 4.2), 'apron', 'torso', body, bevel=0.2)
     if 'vest' in spec:
         add('cube', 'vestL', (-2.4, -2.1, 13.4), (1.5, 1.0, 3.8), 'vest', 'torso', body, bevel=0.3)
         add('cube', 'vestR', (2.4, -2.1, 13.4), (1.5, 1.0, 3.8), 'vest', 'torso', body, bevel=0.3)
     arms('sleeve' if 'sleeve' in spec else 'shirt', 'skin')
+    if 'armour' in spec:         # leaf-shaped pauldrons over the shoulders
+        for side in 'LR':
+            add('uv_sphere', 'pauldron' + side, (0, 0, 0.4), (2.2, 2.1, 1.4), 'armour', 'pauldron' + side, shoulders[side],
+                segments=12, ring_count=8)
     head = pivot('head', (0, 0, 17.4), body)
     add('cylinder', 'neck', (0, 0, 0.6), (1.6, 1.6, 1.2), 'skin', 'neck', head, vertices=10)
     add('uv_sphere', 'face', (0, 0, 5.2), (5.0, 4.8, 5.0), 'skin', 'head', head, segments=24, ring_count=12)
@@ -732,6 +787,23 @@ def build_human(spec):
         add('uv_sphere', 'bun', (0, 3.6, 8.4), (2.2, 2.0, 2.0), 'hair', 'hair', head, segments=12, ring_count=8)
     if spec.get('long_hair'):
         add('cube', 'hair_back', (0, 3.2, 2.6), (4.2, 1.6, 4.2), 'hair', 'hair', head, bevel=1.0)
+        if spec.get('long_hair') == 'flowing':   # longer, past the shoulders, with locks framing the face
+            add('cube', 'hair_fall', (0, 3.4, -1.2), (3.8, 1.3, 3.4), 'hair', 'hair', head, bevel=1.0)
+            for sx in (-4.4, 4.4):
+                add('cube', 'hair_lock', (sx, 0.4, 3.4), (1.0, 2.8, 3.6), 'hair', 'hair', head, bevel=0.6)
+    if spec.get('ponytail'):
+        add('uv_sphere', 'tie', (0, 4.6, 6.6), (1.1, 1.0, 1.1), 'hair', 'hair', head, segments=10, ring_count=6)
+        add('uv_sphere', 'tail', (0, 5.6, 3.6), (1.4, 1.3, 3.4), 'hair', 'hair', head, rot=(0.35, 0, 0), segments=12, ring_count=8)
+    if spec.get('elf_ears'):     # long, pointed, swept back
+        for sx, sgn in ((-4.8, -1), (4.8, 1)):
+            add('cone', 'ear', (sx + 0.9 * sgn, 0.9, 6.4), (1, 1, 1), 'skin', 'ears', head, rot=(0.5, sgn * -1.1, 0),
+                vertices=6, radius1=0.9, radius2=0.0, depth=3.4)
+    if 'circlet' in spec:        # a fine band round the brow, a leaf at the front
+        add('torus', 'circlet', (0, 0.3, 7.6), (1, 0.98, 0.6), 'circlet', 'hat', head,
+            major_radius=5.15, minor_radius=0.32, major_segments=24, minor_segments=5)
+        add('uv_sphere', 'circlet_leaf', (0, -4.9, 8.0), (0.9, 0.35, 1.2), 'circlet', 'hat', head, segments=8, ring_count=6)
+        if 'gem' in spec:        # a stone set in the leaf
+            add('uv_sphere', 'circlet_gem', (0, -5.3, 8.0), (0.65, 0.4, 0.75), 'gem', 'gem', head, segments=8, ring_count=6)
     if 'hood' in spec:
         add('uv_sphere', 'hood', (0, 1.2, 5.8), (5.7, 5.4, 5.6), 'hood', 'hood', head, segments=20, ring_count=10)
         add('cone', 'hood_drape', (0, 1.6, 0.4), (1, 1, 1), 'hood', 'hood', head, vertices=14, radius1=5.0, radius2=3.2, depth=3.0)
@@ -790,9 +862,12 @@ else:
     spec = NPCS[WHO]
     build_human(spec)
     tones = {'shirt': spec['shirt'], 'pants': FIXED['pants'], 'hair': spec['hair'], 'skin': FIXED[spec['skin']]}
+    if spec.get('gown'):         # a floor-length gown: what shows of the legs is gown too
+        tones['pants'] = spec['skirt']
     if 'sleeve' in spec:
         tones['sleeve'] = FIXED[spec['sleeve']] if spec['sleeve'] in FIXED else FIXED[spec['skin']]
-    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat', 'straw_hat', 'crown'):
+    for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat', 'straw_hat', 'crown',
+                'belt', 'trim', 'cloak', 'armour', 'circlet', 'eye', 'shoes', 'gem', 'scabbard', 'bowwood', 'fletch'):
         if key in spec:
             tones[key] = spec[key]
     VARIANTS = {WHO.replace('npc-', ''): tones}

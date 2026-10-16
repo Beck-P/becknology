@@ -17,7 +17,7 @@
  */
 var BridgeShip = (function () {
   var SHIP = { bridge: 1, quarters: 1, hangar: 1, gameroom: 1 };
-  var LANDING = { lumar: 'lumar', arcadia: 'arcadia-skypad', enigma: 'enigma-dock', singularity: 'singularity', verdance: 'verdance-village', hoarfell: 'hoarfell' };   // Verdance: Brambleford's green, the farm's up the lane
+  var LANDING = { lumar: 'lumar', arcadia: 'arcadia-skypad', enigma: 'enigma-dock', singularity: 'singularity', verdance: 'verdance-village', hoarfell: 'hoarfell', sylvara: 'sylvara' };   // Verdance: Brambleford's green, the farm's up the lane
   var HANGAR_SPAWN = { x: 8, y: 9 };
   var anim = null;      // the shuttle in the air in this world
   var busy = false;
@@ -32,6 +32,7 @@ var BridgeShip = (function () {
     if (id === 'singularity') return 'singularity';
     if (/^verdance/.test(id)) return 'verdance';
     if (/^hoarfell/.test(id)) return 'hoarfell';
+    if (/^sylvara/.test(id)) return 'sylvara';
     return null;
   }
 
@@ -44,7 +45,8 @@ var BridgeShip = (function () {
       enigma: 'BEYOND THE FIELD:\\nENIGMA STATION, DARK,\\nTURNING SLOWLY BY ITS\\nRINGED GIANT.',
       singularity: 'BEYOND THE FIELD:\\nTHE SINGULARITY.\\n\\nLIGHT BENDS ROUND IT\\nLIKE WATER ROUND A STONE.',
       verdance: 'BEYOND THE FIELD: VERDANCE.\\n\\nGREEN COUNTRY UNDER\\nTWO SMALL MOONS.\\nTHE SHUTTLE IS FUELLED.',
-      hoarfell: 'BEYOND THE FIELD: HOARFELL.\\n\\nWHITE TO THE POLES,\\nONE PEAK HIGHER THAN THE REST.\\nTHE SHUTTLE IS FUELLED.'
+      hoarfell: 'BEYOND THE FIELD: HOARFELL.\\n\\nWHITE TO THE POLES,\\nONE PEAK HIGHER THAN THE REST.\\nTHE SHUTTLE IS FUELLED.',
+      sylvara: 'BEYOND THE FIELD: SYLVARA.\\n\\nONE FOREST, POLE TO POLE.\\nGOLD LIGHTS IN THE OLD WOOD.\\nTHE SHUTTLE IS FUELLED.'
     };
     return lines[BridgeOrbit.getLocation()] || lines['deep-space'];
   }
@@ -157,7 +159,7 @@ var BridgeShip = (function () {
       ctx.restore();
     }
     ctx.fillStyle = style === 'lumar' ? 'rgba(220,200,160,0.6)' : style === 'singularity' ? 'rgba(180,150,240,0.5)' :
-      style === 'verdance' ? 'rgba(150,200,90,0.6)' : style === 'hoarfell' ? 'rgba(250,252,255,0.85)' :
+      style === 'verdance' ? 'rgba(150,200,90,0.6)' : style === 'hoarfell' ? 'rgba(250,252,255,0.85)' : style === 'sylvara' ? 'rgba(170,220,150,0.6)' :
       style === 'enigma' ? 'rgba(160,230,255,0.7)' : 'rgba(200,190,170,0.5)';
     for (var i = anim.dust.length - 1; i >= 0; i--) {
       var d = anim.dust[i];

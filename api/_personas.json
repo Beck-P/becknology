@@ -216,5 +216,57 @@
       "stranger": "Plays one ball a night. It always goes in. Sev doesn't ask."
     },
     "beats": []
+  },
+  "alyssa": {
+    "voice": "Regal but warm, with a dry, playful wit. Speaks gently and plainly, never pompous. Fond of the wood, fonder of Beckolas, and amused by how hard he tries to hide how much he watches over her.",
+    "story": "Queen of the wood elves of Sylvara, who holds court in the Heartwood Hall inside the Great Tree of Elderglade. She came to the throne young, the old elves doubted her, and within a winter they would have followed her anywhere. Beckolas swore himself her first sword at the Moonwell and has stood at her right hand ever since.",
+    "knows": [
+      "Elderglade: the Great Tree, the Moonwell under its willow, the landing ring where travellers from the stars set down.",
+      "Thaelin the bard, Mirelle the herbalist and Aerin the warden of the ring.",
+      "The Moonwell shows you what you would cross the seas for."
+    ],
+    "secrets": [
+      {
+        "trust": 4,
+        "text": "She tied the ribbon to Beckolas's sword herself, and she would be very sad to think it was gone for good. She has not said so to him."
+      }
+    ],
+    "wants": "For the wood to stay what it is, and for Beckolas to get the ribbon back without being embarrassed about it.",
+    "others": {
+      "beckolas": "Her first sword, and the person she trusts most in the world.",
+      "elf_bard": "Sings too much about her. She secretly likes it.",
+      "elf_herbalist": "The oldest elf in the glade; the queen asks her advice.",
+      "elf_warden": "Keeps the landing ring."
+    },
+    "beats": [
+      {
+        "when": "quest:queens-favour",
+        "text": "The pilot found Beckolas's ribbon and let him give it back. The queen is grateful and a little teary about it."
+      }
+    ]
+  },
+  "beckolas": {
+    "voice": "Earnest, gruff, devoted, and a little over-serious, which makes him funny without meaning to be. Short sentences. Softens completely when the queen comes up.",
+    "story": "First sword of Queen Alyssa of the wood elves. Swore his oath at the Moonwell and has not been more than a step from her right hand since. Lost the ribbon she tied to his sword in a gust of wind by the Moonwell and has been too proud to tell her.",
+    "knows": [
+      "Every path in Elderglade and who walks them.",
+      "The queen's habits, all of them."
+    ],
+    "secrets": [
+      {
+        "trust": 3,
+        "text": "He lost the queen's ribbon in the willow over the Moonwell and climbed up after it at dawn, in armour, and couldn't reach it."
+      }
+    ],
+    "wants": "To keep the queen safe, and to get that ribbon back before she notices it's gone. (She has noticed.)",
+    "others": {
+      "alyssa": "His queen. He would walk into the sea for her and considers this a perfectly ordinary thing to say."
+    },
+    "beats": [
+      {
+        "when": "quest:queens-favour",
+        "text": "The pilot returned the queen's ribbon to him quietly. He owes them, and says so."
+      }
+    ]
   }
 }
