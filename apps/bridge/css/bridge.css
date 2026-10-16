@@ -2156,6 +2156,33 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .bp-bar em { font-style: normal; text-align: right; color: var(--gm-ink); }
 .bp-help { font-size: 11px; line-height: 1.4; color: var(--gm-dim); }
 
+/* managing the pack: the item's actions, sorting, dragging, and making room for something new */
+.bp-d-acts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.bp-d-acts .gm-btn { padding: 4px 9px; }
+.gm-btn.bp-danger, .gm-btn.bp-danger:hover { color: #fff; background: var(--gm-bad); border-color: var(--gm-bad); }
+.bp-note { font-size: 12px; line-height: 1.4; color: var(--gm-good); margin-top: 8px; }
+.bp-d-buyer { color: var(--gm-ink); }
+.bp-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -4px 0 12px; max-width: 560px; }
+.bp-tools-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gm-dim); margin-right: 2px; }
+.bp-slot { touch-action: manipulation; }
+.bp-slot.over { border-color: var(--gm-accent); box-shadow: 0 0 0 2px var(--gm-accent); }
+.bp-dragging .bp-slot { cursor: grabbing; }
+.bp-ghost { position: fixed; left: 0; top: 0; z-index: 90; width: 44px; height: 44px; pointer-events: none; image-rendering: pixelated;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5)); }
+.bp-slot.swap { border-color: var(--gm-bad); box-shadow: 0 0 0 1px var(--gm-bad), 0 0 10px color-mix(in srgb, var(--gm-bad) 50%, transparent); }
+.bp-offer { padding: 12px 14px; margin-bottom: 14px; border-radius: 6px; max-width: 584px; background: var(--gm-hi); border: 2px solid var(--gm-accent);
+  animation: bp-offer-in 0.25s ease-out; }
+@keyframes bp-offer-in { from { transform: translateY(-6px); opacity: 0; } }
+.bp-offer-top { display: flex; gap: 12px; align-items: center; }
+.bp-offer-icon { width: 56px; height: 56px; padding: 4px; image-rendering: pixelated; border-radius: 4px; background: var(--gm-cell); border: 1px solid var(--gm-cell-line); flex: none; }
+.bp-offer-kick { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--gm-title); }
+.bp-offer-name { font-size: 18px; color: var(--gm-ink); line-height: 1.2; }
+.bp-offer-sub { font-size: 12px; line-height: 1.4; color: var(--gm-dim); margin-top: 2px; }
+.bp-offer-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.bp-offer-btns .gm-btn[disabled] { opacity: 0.45; cursor: default; }
+.bp-offer-btns .bp-leave { margin-left: auto; }
+.bp-offering .bp-tools, .bp-offering .bp-next { display: none; }
+
 /* ---- Journal (js/quests.js) ---- */
 .jn { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
 .jn-sec { margin-bottom: 16px; }

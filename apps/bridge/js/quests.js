@@ -9,8 +9,11 @@
  * you wander. Progress is kept in localStorage.
  *
  * UI: a toast under the place label when something is found, and the
- * journal (J, or the Journal pill) listing every quest begun, its clues
- * found and how many are still missing.
+ * journal — the game menu's Journal tab (J, or the Menu pill; js/menu.js):
+ * Next up (what to do now: the quests under way and where their missing
+ * clues are, takings, the farm, who here you haven't met, the ways on you
+ * haven't taken), every quest begun with its clues found, the log, and the
+ * rest of what's yours (crew, businesses, the farm, the fleet...).
  *
  * The log (localStorage bridge_log): what you've done, newest first, at the
  * top of the journal. Every toast lands in it (they all say "J Journal", so
@@ -81,7 +84,7 @@ var BridgeQuests = (function () {
   // ---- the log ----------------------------------------------------------------------------------
   var LOG_KEY = 'bridge_log', LOG_MAX = 250, logged = [], logAll = false;
   try { logged = JSON.parse(localStorage.getItem(LOG_KEY) || '[]') || []; } catch (e) { logged = []; }
-  var QUIET = { 'Course set': 1, 'Whiteout': 1, 'Online': 1 };                   // hints of the moment, not things you did
+  var QUIET = { 'Course set': 1, 'Whiteout': 1, 'Online': 1, 'Made room': 1 };                   // hints of the moment, not things you did
   function note(kicker, title, sub) {
     if (QUIET[kicker]) return;
     var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld && BridgeWorld.getWorld(), last = logged[0];

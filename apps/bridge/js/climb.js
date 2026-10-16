@@ -279,7 +279,7 @@ var BridgeClimb = (function () {
     if (h.kind === 'crystal') {
       h.taken = true;
       g.crystals++;
-      if (typeof BridgeInventory !== 'undefined') BridgeInventory.addItem('hoar_crystal', 1);
+      if (typeof BridgeInventory !== 'undefined') BridgeInventory.give('hoar_crystal', 1);
       sfx('pickup');
       say('A HOAR CRYSTAL, PRISED OUT OF THE ROCK.');
     }
@@ -351,7 +351,7 @@ var BridgeClimb = (function () {
     g.phase = 'top';
     sfx('quest');
     if (pay && typeof BridgeProgression !== 'undefined') BridgeProgression.awardCoins(pay, 'climb:' + g.rid);
-    if (first && D.gift && typeof BridgeInventory !== 'undefined') BridgeInventory.addItem(D.gift[0], D.gift[1]);
+    if (first && D.gift && typeof BridgeInventory !== 'undefined') BridgeInventory.give(D.gift[0], D.gift[1]);
     if (first && typeof BridgeProgression !== 'undefined') BridgeProgression.recordAchievement('climbed_' + g.rid, 0, { source: 'climb' });
     var raced = g.rival, won = raced && t < raced.time, beatPay = 0;
     if (won && !save.rival[g.rid]) { save.rival[g.rid] = 1; beatPay = BEAT[g.rid] || 0; store(); }

@@ -1,7 +1,7 @@
 /**
  * BridgeLoot — Stardew-style loot drops with pop, bob, and magnet pickup.
  *
- *   BridgeLoot.spawn(tileX, tileY, itemId, count?)   // drop n copies
+ *   BridgeLoot.spawn(tileX, tileY, itemId, count?, {dropped}?)   // drop n copies (dropped: put down from the pack)
  *   BridgeLoot.update(playerX, playerY)              // call each frame
  *   BridgeLoot.draw(ctx, offX, offY, ts)             // render layer
  *   BridgeLoot.clear()                                // wipe on world load
@@ -14,7 +14,10 @@
  *
  * Pickup:
  *   distance < MAGNET_R    → ease item toward the player ("magnet pull").
- *   distance < COLLECT_R   → add to BridgeInventory, remove the drop.
+ *   distance < COLLECT_R   → add to BridgeInventory, remove the drop. With the
+ *     pack full it stays on the ground and BridgeInventory.offer asks what to
+ *     let go for it; something you dropped yourself (or turned down) waits
+ *     till you've stepped away (HOLD_R) before it can be picked up again.
  *
  * Drops live in tile coordinates with sub-tile offsets so the bounce
  * arc lands cleanly. World units only — no DOM, no localStorage. Drops
@@ -34,8 +37,12 @@ var BridgeLoot = (function () {
 
   var drops = [];
 
-  function spawn(tileX, tileY, itemId, count) {
+  var HOLD_R = 1.8;          // a dropped thing waits on the ground till you're this far off, then it can be picked up again
+
+  // opts.dropped: you put it down yourself (from the pack), so it isn't snatched straight back up
+  function spawn(tileX, tileY, itemId, count, opts) {
     if (!BridgeItems.get(itemId)) return;
+    var hold = !!(opts && opts.dropped);
     var n = (typeof count === 'number') ? count : 1;
     var now = performance.now();
     for (var i = 0; i < n; i++) {
@@ -52,7 +59,8 @@ var BridgeLoot = (function () {
         y: tileY + 0.5,
         startTime: now,
         popMs: POP_MS,
-        seed: Math.random() * 1000
+        seed: Math.random() * 1000,
+        hold: hold
       });
     }
   }
@@ -81,25 +89,37 @@ var BridgeLoot = (function () {
         var dx = playerX + 0.5 - d.x;
         var dy = playerY + 0.5 - d.y;
         var dist = Math.sqrt(dx * dx + dy * dy);
+        if (d.hold) { if (dist > HOLD_R) d.hold = false; else continue; }
         if (dist < MAGNET_R) {
           d.x += dx * MAGNET_SPEED;
           d.y += dy * MAGNET_SPEED;
         }
         if (dist < COLLECT_R) {
-          BridgeInventory.addItem(d.itemId, 1);
-          if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('pickup');
-          if (typeof BridgeFX !== 'undefined') {
-            var collected = BridgeItems.get(d.itemId);
-            var label = collected ? ('+1 ' + collected.name.toUpperCase()) : '+1 ITEM';
-            if (BridgeFX.spawnSparks) BridgeFX.spawnSparks(d.x - 0.5, d.y - 0.5, '#ffe080', 5);
-            if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(d.x - 0.5, d.y - 0.55, label, '#ffe890');
+          if (!BridgeInventory.addItem(d.itemId, 1)) {          // the pack's full: it stays on the ground, and you're asked what to let go for it
+            d.hold = true;
+            if (BridgeInventory.offer && !(BridgeInventory.offering && BridgeInventory.offering())) {
+              BridgeInventory.offer(d.itemId, 1, { title: 'Your pack is full', onTake: taken(d) });
+            }
+            continue;
           }
+          picked(d);
           drops.splice(i, 1);
           continue;
         }
       }
     }
   }
+
+  function picked(d) {
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('pickup');
+    if (typeof BridgeFX !== 'undefined') {
+      var collected = BridgeItems.get(d.itemId);
+      var label = collected ? ('+1 ' + collected.name.toUpperCase()) : '+1 ITEM';
+      if (BridgeFX.spawnSparks) BridgeFX.spawnSparks(d.x - 0.5, d.y - 0.5, '#ffe080', 5);
+      if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(d.x - 0.5, d.y - 0.55, label, '#ffe890');
+    }
+  }
+  function taken(d) { return function () { var k = drops.indexOf(d); if (k >= 0) { drops.splice(k, 1); picked(d); } }; }
 
   function draw(ctx, offX, offY, ts) {
     if (drops.length === 0) return;

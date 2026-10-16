@@ -106,6 +106,8 @@ var BridgeMenu = (function () {
 
   function open(tab, opts) {
     if (typeof BridgeState !== 'undefined' && BridgeState.getState && BridgeState.getState() !== 'world') return;
+    if (typeof BridgeSloop !== 'undefined' && BridgeSloop.isRunning && BridgeSloop.isRunning()) return;      // at the helm: the sea chart (C) is the map out there
+    if (typeof BridgeVoyage !== 'undefined' && BridgeVoyage.covers && BridgeVoyage.covers()) return;
     tab = tab || last || 'journal';
     if (!el) build();
     var fresh = !isOpen();

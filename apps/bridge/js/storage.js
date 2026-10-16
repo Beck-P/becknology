@@ -136,9 +136,31 @@ var BridgeStorage = (function () {
     var it = item(id);
     if (!it || !(it.value > 0)) return '';
     var b = buyersOf()[id], tr = Math.max(1, Math.round(it.value * 0.7));
-    return 'Worth <b>' + it.value + '</b> coins' + (b ? ' · <b>' + esc(b.who) + '</b> pays ' + b.price + (PLACE[b.world] ? ' (' + esc(PLACE[b.world]) + ')' : '') : '') +
+    return 'Worth <b>' + it.value + '</b> coin' + (it.value === 1 ? '' : 's') + (b ? ' · <b>' + esc(b.who) + '</b> pays ' + b.price + (PLACE[b.world] ? ' (' + esc(PLACE[b.world]) + ')' : '') : '') +
       ' · any trader ' + tr + ', the Chandler aboard ' + Math.max(1, Math.round(it.value * SHIP_RATE));
   }
+
+  // who'll buy from you where you stand (the Backpack's quick sell): a trader or the Chandler takes anything with a
+  // value at their rate; a specialist (a person with a `sell` topic) only what they buy, at their price
+  function buyerHere() {
+    var t = typeof BridgeInteractions !== 'undefined' && BridgeInteractions.getTarget ? BridgeInteractions.getTarget() : null;
+    if (!t) return null;
+    var qm = typeof BridgeCrew !== 'undefined' && BridgeCrew.has && BridgeCrew.has('quartermaster') ? 1.2 : 1;
+    if (t.type === 'trader') return { label: title(t.label), rate: t.rate * qm };
+    if (t.type === 'chandler') return { label: 'The quartermaster\'s hatch', rate: SHIP_RATE * qm };
+    var p = (t.type === 'dialog' || t.type === 'random_dialog') && typeof BridgePeople !== 'undefined' && BridgePeople.find(BridgeWorld.getWorldId(), t.label);
+    if (!p) return null;
+    var prices = {}, any = false;
+    (p.topics || []).forEach(function (tp) { (tp.sell || []).forEach(function (s) { prices[s.id] = Math.round(s.price * qm); any = true; }); });
+    return any ? { label: p.name, prices: prices } : null;
+  }
+  function priceAt(b, id) {
+    if (!b) return 0;
+    if (b.prices) return b.prices[id] || 0;
+    var it = item(id);
+    return it && it.value > 0 ? Math.max(1, Math.round(it.value * b.rate)) : 0;
+  }
+  function title(t) { return String(t || '').toLowerCase().replace(/(^|[\s'])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }).replace(/'S\b/g, '\'s'); }
 
   // ---- packs -----------------------------------------------------------------------------------------------------
   function nextPack() {
@@ -230,6 +252,6 @@ var BridgeStorage = (function () {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  return { open: open, chest: chest, count: count, sell: sell, worthLine: worthLine, nextPack: nextPack, decorate: decorate,
+  return { open: open, chest: chest, count: count, sell: sell, worthLine: worthLine, nextPack: nextPack, decorate: decorate, buyerHere: buyerHere, priceAt: priceAt,
            CHESTS: CHESTS, FIXED: FIXED, TRADERS: TRADERS, _state: function () { return st; } };
 })();
