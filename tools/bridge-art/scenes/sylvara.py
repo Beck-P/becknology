@@ -10,7 +10,7 @@ doors in their trunks where elves live. A mossy flagstone path winds down from t
 stone seat and the herbalist's stall to the landing ring in the south-east, where the shuttle sets down among ferns
 and glowing mushrooms. West, under a willow, the Moonwell: a round pool of pale silver-green light.
 
-Queen Alyssa of the wood elves holds court in the Heartwood Hall (scenes/sylvara_hall.py), Beckolas her first sword
+Queen Alyssara of the wood elves holds court in the Heartwood Hall (scenes/sylvara_hall.py), Beckolas her first sword
 at her side.
 """
 import json
@@ -72,6 +72,8 @@ E.treehouse_door(k, 33.0, 4.4, 1.5, col='#5a3e2a')
 MW = (9.0, 19.0)
 E.moonwell(k, MW[0], MW[1], rad=1.3)
 E.willow(k, 7.0, 16.4, h=3.4, toward=1.0)
+with k.variant('willow', 'lit'):                                     # up for good once Beckolas has said it (js/worlds/sylvara.js)
+    KEEPSAKE = E.willow_keepsake(k, 7.0, 16.4, h=3.4, toward=1.0)
 for (x, r) in ((5.4, 20.6), (12.4, 17.2), (12.6, 21.2), (6.0, 22.0)):
     E.mushrooms(k, x, r, n=5)
 E.flowers(k, 4.0, 15.0, 14.0, 23.5, 70, cols=('#f0f0f0', '#c8a8f0', '#a8e0d8'))
@@ -192,5 +194,5 @@ apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
             actors=[{'sheet': 'npc-elf-bard', 'x': BS[0] - 0.5, 'y': BS[1] - 0.35, 'facing': 'down', 'pose': 'sit'},
                     {'sheet': 'npc-elf-herbalist', 'x': HB[0], 'y': HB[1], 'facing': 'down', 'light': [HB[0], HB[1] + 1]},   # by the lantern
                     {'sheet': 'npc-elf-warden', 'x': 34, 'y': 24, 'facing': 'left', 'light': [34, 25]}],   # (a post's shadow falls on her own tile)
-            scene_extra={'layers': {'shuttle': 'parked'}})
+            scene_extra={'layers': {'shuttle': 'parked'}, 'keepsake': KEEPSAKE})
 print('sylvara done')

@@ -4,6 +4,11 @@
  * Outdoors (Elderglade, dusk): fireflies drifting and blinking in the wood, a few gold leaves falling through the
  * slanting light, motes rising off the Moonwell. In the Heartwood Hall: dust turning slowly in the light from the
  * round window. All in world space (so they scroll with the scene), on whole native pixels.
+ *
+ * The willow keepsake: once the first sword has said it (quests.json `under-the-willow`), Faelan's lanterns and
+ * Sefa's ribbons stay up in the willow over the Moonwell for good — the scene's `willow: lit` layer
+ * (scenes/sylvara.py, `E.willow_keepsake`), switched on as the glade loads (`decorate`) or the moment it happens,
+ * each lantern breathing a little warm light (`scene.keepsake`, screen tiles). The willow's words follow the story.
  */
 var BridgeSylvara = (function () {
   // a cheap, stable hash: the same firefly is always in the same part of the wood
@@ -62,9 +67,50 @@ var BridgeSylvara = (function () {
     }
   }
 
+  // ---- the willow keepsake ------------------------------------------------------------------------------------------------
+  function wed() { return typeof BridgeQuests !== 'undefined' && BridgeQuests.has && BridgeQuests.has('under-the-willow'); }
+  function willowWords(data) {
+    var q = typeof BridgeQuests !== 'undefined' && BridgeQuests.has ? BridgeQuests.has : function () { return false; };
+    (data.interactions || []).forEach(function (it) {
+      if (it.label !== 'WILLOW') return;
+      it.dialog = wed()
+        ? "THE WILLOW OVER THE MOONWELL, HUNG WITH FAELAN'S LEAF LANTERNS AND SEFA'S RIBBONS OF GREEN SILK AND GOLD. THE ELVES SAY IT'S WHERE THE FIRST SWORD FINALLY SAID IT. PIP SAYS SHE SAW."
+        : q('queens-favour/ribbon')
+          ? 'A WILLOW BENDING OVER THE MOONWELL, ITS FRONDS TRAILING IN THE WATER. NOTHING CAUGHT IN IT NOW.'
+          : it.dialog;
+    });
+  }
+  function decorate(worldId, data) {                 // js/world.js, as each world loads
+    if (worldId !== 'sylvara' || !data) return;
+    willowWords(data);
+    if (data.scene && wed()) { data.scene.layers = data.scene.layers || {}; data.scene.layers.willow = 'lit'; }
+  }
+  var lit = false;
+  function keepsake(ctx, world, offX, offY, ts, now) {
+    var on = wed(), sid = world.scene && world.scene.id;
+    if (on && !lit && sid && typeof BridgeScene !== 'undefined') {          // it just happened: up they go, there and then
+      var map = {}, cur = BridgeScene.getLayers(sid);
+      for (var k in cur) map[k] = cur[k];
+      if (map.willow !== 'lit') { map.willow = 'lit'; BridgeScene.setLayers(sid, map); }
+      willowWords(world);
+    }
+    lit = on;
+    if (!on) return;
+    (world.scene.keepsake || []).forEach(function (p, i) {                // each lantern breathing a little warm light
+      var a = 0.5 + 0.5 * Math.sin(now / (900 + h(i, 31) * 700) + i * 1.9);
+      var sx = Math.round(offX + p[0] * ts), sy = Math.round(offY + p[1] * ts);
+      ctx.fillStyle = 'rgba(255,216,144,' + (0.07 + 0.07 * a).toFixed(3) + ')';
+      ctx.fillRect(sx - 4, sy - 3, 9, 7);
+      ctx.fillRect(sx - 2, sy - 5, 5, 11);
+      ctx.fillStyle = 'rgba(255,232,180,' + (0.12 + 0.12 * a).toFixed(3) + ')';
+      ctx.fillRect(sx - 1, sy - 1, 3, 3);
+    });
+  }
+
   function over(ctx, world, offX, offY, ts, now) {
     var id = (BridgeWorld.getWorldId && BridgeWorld.getWorldId()) || '';
     if (id === 'sylvara') {
+      keepsake(ctx, world, offX, offY, ts, now);
       fireflies(ctx, world, offX, offY, ts, now);
       motes(ctx, offX, offY, ts, now, 9.0, 19.0, 1.2, 16);
       leaves(ctx, world, offX, offY, ts, now);
@@ -76,5 +122,5 @@ var BridgeSylvara = (function () {
 
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('sylvara', { over: over });
 
-  return { over: over };
+  return { over: over, decorate: decorate };
 })();

@@ -242,12 +242,20 @@
       {
         "when": "quest:queens-favour",
         "text": "The pilot found Beckolas's ribbon and let him give it back. The queen is grateful and a little teary about it."
+      },
+      {
+        "when": "clue:under-the-willow/start",
+        "text": "You have told the pilot that you love Beckolas and asked them, gently, to find out whether he feels the same."
+      },
+      {
+        "when": "quest:under-the-willow",
+        "text": "At dusk under the willow by the Moonwell, Beckolas finally told you he loves you, holding a moonflower that opened in his hand. You said 'Finally' and kissed him. The pilot arranged it all; you are very fond of them for it."
       }
     ]
   },
   "beckolas": {
     "voice": "Earnest, gruff, devoted, and a little over-serious, which makes him funny without meaning to be. Short sentences. Softens completely when the queen comes up.",
-    "story": "First sword of Queen Alyssa of the wood elves. Swore his oath at the Moonwell and has not been more than a step from her right hand since. Lost the ribbon she tied to his sword in a gust of wind by the Moonwell and has been too proud to tell her.",
+    "story": "First sword of Queen Alyssara of the wood elves. Swore his oath at the Moonwell and has not been more than a step from her right hand since. Lost the ribbon she tied to his sword in a gust of wind by the Moonwell and has been too proud to tell her.",
     "knows": [
       "Every path in Elderglade and who walks them.",
       "The queen's habits, all of them."
@@ -266,6 +274,14 @@
       {
         "when": "quest:queens-favour",
         "text": "The pilot returned the queen's ribbon to him quietly. He owes them, and says so."
+      },
+      {
+        "when": "clue:under-the-willow/ask",
+        "text": "The pilot knows you love the queen; you admitted it to them (and about the letter you ate). You are mortified and hopeful in roughly equal measure."
+      },
+      {
+        "when": "quest:under-the-willow",
+        "text": "At dusk under the willow you finally told the queen you love her, all in one breath, and the moonflower opened in your hand. She said 'Finally.' You are still a little stunned, and you owe the pilot more than you can say."
       }
     ]
   },

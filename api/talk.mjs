@@ -114,7 +114,7 @@ function sheet(id, feeling, flags) {
     const others = Object.entries(s.others || {});
     if (others.length) {
       lines.push('', 'People you know:');
-      others.forEach(([who, how]) => lines.push(`- ${who}: ${how}`));
+      others.forEach(([who, how]) => lines.push(`- ${(PEOPLE[who] && PEOPLE[who].name) || who}: ${how}`));   // by name, never the id (the id 'alyssa' read as the pilot)
     }
     const beats = (s.beats || []).filter((b) => flags.includes(b.when));
     if (beats.length) {
@@ -248,7 +248,8 @@ export function createHandler(getClient) {
       }
 
       const feeling = clamp(body.bond && body.bond.feeling, -10, 10);
-      const flags = list(body.flags, 40, 60);
+      // story beats key off finished quests (quest:<id>) and clues found along the way (clue:<quest>/<clue>)
+      const flags = list(body.flags, 40, 60).concat(list(body.clues, 30, 60).map((c) => `clue:${c}`));
       const letter = mode === 'letter';
       const msg = await client.messages.create({
         model: MODEL,
