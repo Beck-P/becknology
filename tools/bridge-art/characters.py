@@ -76,6 +76,14 @@ FIXED = {
     'ski':    ('#6a1812', '#c83a2e', '#f07a60'),
     'pole':   ('#1e1e26', '#4a4a56', '#8a8a98'),
     'ledp':   ('#f078c8', '#f078c8', '#f078c8'),
+    # the Neon Royale's dress code (bow ties, shades, white gloves, sequins, a tray of drinks)
+    'bowtie': ('#0a0a0e', '#18181e', '#2e2e3a'),
+    'shades': ('#06060a', '#14141c', '#5a5a78'),
+    'bib':    ('#9a968c', '#e4e0d4', '#fbf8f0'),
+    'glove':  ('#9a968c', '#e4e0d4', '#fbf8f0'),
+    'sequin': ('#c8a040', '#fff0b0', '#ffffff'),
+    'glassA': ('#a06010', '#e8b030', '#fff0a0'),
+    'glassB': ('#a02040', '#e04070', '#ff90b0'),
 }
 NPCS = {
     # tone keys: shirt, sleeve, pants, hair, apron?, hat?
@@ -300,6 +308,68 @@ NPCS = {
     'npc-sorceress': dict(skin='skin', shirt=('#1e1e48', '#2e3070', '#4a4c9a'), skirt=('#1e1e48', '#2e3070', '#4a4c9a'),
                           hair=('#8a8a98', '#c8c8d4', '#ececf4'), long_hair=True,
                           witch_hat=('#24163a', '#3e2a5e', '#5a4282'), pose='stand'),
+    # The Neon Royale (the casino): dealers in white shirts, oxblood waistcoats and bow ties; a croupier; the craps
+    # crew (a stickman in an eyeshade, a boxman sat in his suit); the pit boss in shades with an earpiece and a chrome
+    # arm; the cashier; the bartender in a white mess jacket; Lady Velvet in red sequins; the pianist; Gideon the
+    # doorman in his greatcoat; cocktail servers with trays; a high roller in a white suit; gamblers sat at the tables;
+    # the restaurant's chef and waiter; the VIP host; the Runouts attendant; the Duchess herself.
+    'npc-dealer':    dict(skin='skin', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#3a0a14', '#62121f', '#8a1e2e'),
+                          bowtie=('#0a0a0e', '#18181e', '#2e2e3a'), hair=('#1a1410', '#2e2218', '#44342a'), pose='stand'),
+    'npc-dealer-b':  dict(skin='skin3', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#3a0a14', '#62121f', '#8a1e2e'),
+                          bowtie=('#0a0a0e', '#18181e', '#2e2e3a'), hair=('#141010', '#241c1a', '#362a26'), bun=True, pose='stand'),
+    'npc-dealer-c':  dict(skin='skin2', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#3a0a14', '#62121f', '#8a1e2e'),
+                          bowtie=('#0a0a0e', '#18181e', '#2e2e3a'), hair=('#6a2a14', '#9a4422', '#c06030'), long_hair=True, pose='stand'),
+    'npc-croupier':  dict(skin='skin', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#2a1e08', '#4a3612', '#6a5020'),
+                          bowtie=('#5a0a14', '#8a1420', '#b02030'), hair=('#141010', '#241c1a', '#362a26'), mustache=True, pose='stand'),
+    'npc-stickman':  dict(skin='skin2', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#3a0a14', '#62121f', '#8a1e2e'),
+                          bowtie=('#0a0a0e', '#18181e', '#2e2e3a'), hair=('#1a1410', '#2e2218', '#44342a'), visor_cap=True, pose='stand'),
+    'npc-boxman':    dict(skin='skin', shirt=('#14141c', '#24242e', '#383846'), bib=True, bowtie=('#0a0a0e', '#18181e', '#2e2e3a'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bald=True, mustache=True, pose='sit'),
+    'npc-pitboss':   dict(skin='skin2', shirt=('#16161e', '#282832', '#3e3e4c'), bib=('#5a0a14', '#8a1420', '#b02030'),
+                          hair=('#5a5a60', '#8a8a92', '#b4b4bc'), beard=True, brawny=True, shades=True, earpiece=True,
+                          chrome_arm=True, pose='stand'),
+    'npc-royale-cashier': dict(skin='skin0', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#0a2a20', '#124232', '#1e6048'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), bun=True, visor_cap=True, pose='stand'),
+    'npc-royale-bartender': dict(skin='skin3', shirt=('#a8a49a', '#e8e4d8', '#fcfaf2'), bowtie=('#0a0a0e', '#18181e', '#2e2e3a'),
+                          hair=('#141010', '#241c1a', '#362a26'), mustache=True, pose='stand'),
+    'npc-singer':    dict(skin='skin2', shirt=('#5a0614', '#a01428', '#e03048'), skirt=('#5a0614', '#a01428', '#e03048'), gown=True,
+                          sequin=True, sleeve='skin2', gloves=('#0a0a0e', '#1c1c24', '#34343e'),
+                          hair=('#a8a090', '#e0d8c8', '#fff8e8'), long_hair='flowing', pose='stand'),
+    'npc-pianist':   dict(skin='skin3', shirt=('#0e0e14', '#1c1c26', '#30303e'), bib=True, bowtie=('#0a0a0e', '#18181e', '#2e2e3a'),
+                          hair=('#141010', '#241c1a', '#362a26'), ponytail=True, pose='sit'),
+    'npc-doorman':   dict(skin='skin3', shirt=('#4a0612', '#7a0e1e', '#a81a2e'), coat=('#4a0612', '#7a0e1e', '#a81a2e'),
+                          cap=('#4a0612', '#7a0e1e', '#a81a2e'), gloves=True, hair=('#141010', '#241c1a', '#362a26'),
+                          mustache=True, brawny=True, shades=True, pose='stand'),
+    'npc-server':    dict(skin='skin2', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), skirt=('#0e0e14', '#1c1c26', '#30303e'),
+                          waistcoat=('#0e0e14', '#1c1c26', '#30303e'), bowtie=('#5a0a14', '#8a1420', '#b02030'),
+                          hair=('#6a2a14', '#9a4422', '#c06030'), bun=True, tray=True, pose='stand'),
+    'npc-server-b':  dict(skin='skin', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#0e0e14', '#1c1c26', '#30303e'),
+                          bowtie=('#5a0a14', '#8a1420', '#b02030'), hair=('#c8a050', '#e8c870', '#f8e8a0'), tray=True, pose='stand'),
+    'npc-highroller': dict(skin='skin', shirt=('#a8a49a', '#e8e4d8', '#fcfaf2'), pants=('#a8a49a', '#e8e4d8', '#fcfaf2'),
+                          bib=('#0e0e14', '#1c1c26', '#30303e'), hair=('#141010', '#241c1a', '#362a26'), shades=True, pose='stand'),
+    'npc-gambler-a': dict(skin='skin', shirt=('#7a5a10', '#c89a28', '#f0d060'), skirt=('#7a5a10', '#c89a28', '#f0d060'), gown=True,
+                          sequin=True, sleeve='skin', hair=('#6a1a0a', '#a02a10', '#d04a20'), long_hair=True, pose='sit'),
+    'npc-gambler-b': dict(skin='skin2', shirt=('#141c30', '#22304a', '#34466a'), bib=True, bowtie=('#5a0a14', '#8a1420', '#b02030'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), mustache=True, shades=True, pose='sit'),
+    'npc-gambler-c': dict(skin='skin3', shirt=('#1a0a24', '#2e1440', '#4a2060'), vest=('#10405a', '#1a6a8a', '#30a0c0'),
+                          hair=('#c06080', '#e080a0', '#f0a8c0'), bun=True, visor_band=True, pose='sit'),
+    'npc-gambler-d': dict(skin='skin0', shirt=('#0e0e14', '#1c1c26', '#30303e'), bib=True, bowtie=('#0a0a0e', '#18181e', '#2e2e3a'),
+                          hair=('#c8a050', '#e8c870', '#f8e8a0'), chrome_arm=True, pose='sit'),
+    'npc-royale-chef': dict(skin='skin', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), apron=('#9a968c', '#e4e0d4', '#fbf8f0'),
+                          hair=('#6a6a70', '#a0a0a8', '#c8c8d0'), chef=True, mustache=True, pose='stand'),
+    'npc-waiter':    dict(skin='skin2', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), waistcoat=('#0e0e14', '#1c1c26', '#30303e'),
+                          apron=('#0e0e14', '#1c1c26', '#30303e'), bowtie=('#0a0a0e', '#18181e', '#2e2e3a'),
+                          hair=('#141010', '#241c1a', '#362a26'), pose='stand'),
+    'npc-host':      dict(skin='skin3', shirt=('#2a2010', '#4a3a18', '#6a5424'), bib=True, bowtie=('#7a5a10', '#c89a28', '#f0d060'),
+                          hair=('#141010', '#241c1a', '#362a26'), earpiece=True, pose='stand'),
+    'npc-boutique':  dict(skin='skin2', shirt=('#4a3a10', '#7a6020', '#a88a30'), bowtie=('#5a0a14', '#8a1420', '#b02030'),
+                          hair=('#5a1a4a', '#8a2a70', '#b04a90'), bun=True, earpiece=True, pose='stand'),
+    'npc-runouts-host': dict(skin='skin', shirt=('#141018', '#241c2c', '#3a2e44'), vest=('#5a1040', '#c01880', '#f040a8'),
+                          hair=('#1a6a70', '#30b0b8', '#60e0e8'), bun=True, visor_band=True, pose='stand'),
+    'npc-duchess':   dict(skin='skin2', shirt=('#1a0a24', '#34164a', '#52246e'), skirt=('#1a0a24', '#34164a', '#52246e'), gown=True,
+                          trim=('#7a5a10', '#c89a28', '#f0d060'), stole=('#a89a88', '#e2d8c8', '#fbf6ec'), sleeve='skin2',
+                          circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#6a0a3a', '#c0186a', '#ff70b0'),
+                          hair=('#9a9aa0', '#c8c8d0', '#ececf2'), long_hair='flowing', pose='sit'),
 }
 LIGHT_DIR = Vector((-0.5, -0.35, 0.8)).normalized()
 
@@ -753,7 +823,45 @@ def build_human(spec):
     if 'vest' in spec:
         add('cube', 'vestL', (-2.4, -2.1, 13.4), (1.5, 1.0, 3.8), 'vest', 'torso', body, bevel=0.3)
         add('cube', 'vestR', (2.4, -2.1, 13.4), (1.5, 1.0, 3.8), 'vest', 'torso', body, bevel=0.3)
-    arms('sleeve' if 'sleeve' in spec else 'shirt', 'skin')
+    # ---- the Neon Royale's staff and guests ----
+    if 'waistcoat' in spec:      # a closed waistcoat over the shirt, three brass buttons
+        add('cube', 'waistcoat', (0, -2.55, 12.3), (3.9 * wide, 0.75, 3.4), 'waistcoat', 'waistcoat', body, bevel=0.3)
+        for bz in (10.4, 11.9, 13.4):
+            add('uv_sphere', 'button', (0, -3.32, bz), (0.42, 0.3, 0.42), 'brass', 'buttons', body, segments=6, ring_count=4)
+    if spec.get('bib'):          # a shirt front showing down a jacket (a dinner suit)
+        add('cube', 'bib', (0, -2.95, 14.0), (1.35, 0.32, 2.8), 'bib', 'bib', body, bevel=0.2)
+    if 'coat' in spec:           # a doorman's greatcoat: skirts to the knee, two rows of gold buttons
+        add('cone', 'coat_skirt', (0, 0, 7.0), (1, 0.92, 1), 'coat', 'coat', body, vertices=16, radius1=4.75, radius2=4.15, depth=5.4)
+        for bz in (10.2, 12.0, 13.8):
+            for bx in (-1.4, 1.4):
+                add('uv_sphere', 'button', (bx, -3.05, bz), (0.45, 0.35, 0.45), 'brass', 'buttons', body, segments=6, ring_count=4)
+    if spec.get('sequin'):       # sequins scattered over the front of a dress, catching the light
+        for i in range(18):
+            a = math.radians(25 + (i * 137.5) % 130)                # round the front half
+            z = 1.6 + (i * 0.61) % 1.0 * 14.0
+            if z < 9.4:                                              # the skirt: a cone, 4.9 at the hem to 3.6 at the waist
+                rad = 4.9 - (z - 0.9) / 8.6 * 1.3 + 0.15
+                p = (math.cos(a) * rad, -math.sin(a) * rad * 0.9, z)
+            else:                                                    # the bodice
+                p = (math.cos(a) * 4.0 * 0.9, -3.0, z)
+            add('cube', 'sequin', p, (0.3, 0.3, 0.3), 'sequin', 'sequins', body)
+    if 'bowtie' in spec:
+        add('cube', 'bowtie', (0, -3.15, 16.5), (1.25, 0.4, 0.5), 'bowtie', 'bowtie', body, bevel=0.15)
+    if 'stole' in spec:          # a fur stole round the shoulders
+        add('torus', 'stole', (0, 0.2, 16.4), (1, 0.82, 0.75), 'stole', 'stole', body,
+            major_radius=4.7, minor_radius=1.4, major_segments=16, minor_segments=6)
+    if spec.get('tray'):         # a cocktail tray held up at the shoulder, two drinks on it
+        add('cylinder', 'tray', (6.4, -1.4, 17.8), (2.9, 2.9, 0.28), 'steel', 'tray', body, vertices=16)
+        for (gx, gy, tone) in ((5.5, -2.3, 'glassA'), (7.2, -0.9, 'glassB'), (6.6, -2.4, 'glassA')):
+            add('cylinder', 'glass', (gx, gy, 18.9), (0.6, 0.6, 1.0), tone, 'drinks', body, vertices=8)
+    arms('sleeve' if 'sleeve' in spec else 'shirt', 'glove' if 'gloves' in spec else 'skin')
+    if spec.get('chrome_arm'):   # a cyber arm: the left one is polished chrome
+        for i, (o, tone, p) in enumerate(PARTS):
+            if o.name.startswith(('armL', 'handL')):
+                PARTS[i] = (o, 'steel', p)
+    if 'coat' in spec:           # gold epaulettes on the greatcoat
+        for side in 'LR':
+            add('cube', 'epaulette' + side, (0, 0, 0.5), (1.7, 1.7, 0.45), 'brass', 'epaulette' + side, shoulders[side], bevel=0.2)
     if 'armour' in spec:         # leaf-shaped pauldrons over the shoulders
         for side in 'LR':
             add('uv_sphere', 'pauldron' + side, (0, 0, 0.4), (2.2, 2.1, 1.4), 'armour', 'pauldron' + side, shoulders[side],
@@ -813,6 +921,10 @@ def build_human(spec):
     if 'cap' in spec:
         add('cylinder', 'cap', (0, 0.3, 9.0), (5.4, 5.2, 1.4), 'cap', 'hat', head, vertices=20)
         add('cube', 'brim', (0, -4.6, 8.1), (3.4, 2.2, 0.35), 'cap', 'hat', head, bevel=0.3)
+    if spec.get('shades'):       # dark glasses
+        add('cube', 'shades', (0, -4.55, 5.95), (4.5, 0.75, 0.95), 'shades', 'shades', head, bevel=0.3)
+    if spec.get('earpiece'):     # security earpiece, a lit bead
+        add('uv_sphere', 'earpiece', (4.95, -0.3, 5.0), (0.65, 0.65, 0.65), 'ledc', 'earpiece', head, segments=6, ring_count=4)
     if spec.get('visor_band'):   # glowing cyber visor across the eyes
         add('cube', 'visor_band', (0, -4.4, 5.9), (4.9, 0.9, 1.1), 'ledc', 'visor', head, bevel=0.3)
     if spec.get('visor_cap'):    # green eyeshade
@@ -867,9 +979,13 @@ else:
     if 'sleeve' in spec:
         tones['sleeve'] = FIXED[spec['sleeve']] if spec['sleeve'] in FIXED else FIXED[spec['skin']]
     for key in ('apron', 'vest', 'beanie', 'cap', 'skirt', 'hood', 'witch_hat', 'straw_hat', 'crown',
-                'belt', 'trim', 'cloak', 'armour', 'circlet', 'eye', 'shoes', 'gem', 'scabbard', 'bowwood', 'fletch'):
+                'belt', 'trim', 'cloak', 'armour', 'circlet', 'eye', 'shoes', 'gem', 'scabbard', 'bowwood', 'fletch',
+                'waistcoat', 'coat', 'bowtie', 'stole', 'pants'):
         if key in spec:
             tones[key] = spec[key]
+    for key, tone in (('bib', 'bib'), ('gloves', 'glove'), ('sequin', 'sequin')):   # True: the stock colour; a tuple: its own
+        if isinstance(spec.get(key), tuple):
+            tones[tone] = spec[key]
     VARIANTS = {WHO.replace('npc-', ''): tones}
     POSE = spec['pose']
 

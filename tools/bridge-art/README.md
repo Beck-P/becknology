@@ -16,6 +16,7 @@ the art direction these follow.
 | `assets_ship.py` | Ship builders: panelled walls with holdout viewports, LED strips, bunk, trophy cabinet, desk, consoles, holo pedestal, captain's chair, and the catalog decor / trophy models. |
 | `assets_cyber.py` | Arcadia builders: neon stroke-font signs, arcade cabinets with per-game screen art, vending machines, coolers, gondolas, noodle-bar kitchen, clinic equipment, pawn counter, repair benches. |
 | `assets_station.py` | Enigma Station + the Singularity: station shell with holdout viewports and floor windows, server racks, antenna array, data core, the docked ship, void platform, crystals, the black hole. |
+| `assets_casino.py` | The Neon Royale (Arcadia's casino): Art Deco walls, carpet and marble, chandeliers, blackjack / roulette / craps / poker tables, slot banks, video walls, the cage, the island bar, the stage, Runouts cabinets, the restaurant's fittings, and the street frontage. Reports the live parts (wheels, screens, slot chases) for `js/worlds/casino.js`. |
 | `assets_cave.py` | Cave builders: rock faces and floors, lava pools and fissures, stalagmites, mine timbers and rails, the dragon, the hoard. |
 | `scenes/*.py` | One script per pre-rendered world: builds, renders, and updates that world's JSON. |
 | `scene_post.py` | Turns scene passes into the dithered, lit render + packed depth + `scene.json` (`apps/bridge/assets/scenes/<id>/`). |
