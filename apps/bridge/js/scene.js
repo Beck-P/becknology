@@ -364,15 +364,53 @@ var BridgeScene = (function () {
   // NPCs placed by the world JSON: idle animation, depth-tested, lit.
   // People going about their day (assets/walkers.json, by world id): each
   // walks a route of tile points there and back, pausing at either end.
-  var walkers = {};
+  // One with `talk` (the label people.json knows them by) can be talked to:
+  // it carries a dialog interaction along with it, and stops and turns to
+  // you while you're beside it (its clock held, so it walks on from there).
+  var walkers = {}, held = {};
   fetch('/bridge/assets/walkers.json?v=' + Date.now()).then(function (r) { return r.json(); })
     .then(function (d) { walkers = d; }).catch(function () { walkers = {}; });
+
+  function talkInteraction(wk, key, x, y) {
+    return { x: x, y: y, type: 'dialog', label: wk.talk, prompt: 'PRESS E TO TALK', dialog: wk.say || '', walker: key };
+  }
+  function walkerPos(wk, i, now, wid) {
+    var key = wid + '#' + i, h = held[key] || (held[key] = { shift: 0, at: null });
+    var p = walkerAt(wk, (h.at != null ? h.at : now) - h.shift, i);
+    if (!wk.talk || typeof BridgeCharacter === 'undefined' || !BridgeCharacter.getX) return p;
+    var dx = BridgeCharacter.getX() - p.x, dy = BridgeCharacter.getY() - p.y, near = Math.abs(dx) < 1.6 && Math.abs(dy) < 1.6;
+    if (near && h.at == null) h.at = now;
+    else if (!near && h.at != null) { h.shift += now - h.at; h.at = null; }
+    if (h.at != null) {
+      p.moving = false;
+      p.facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    }
+    return p;
+  }
+  // the interactions of the talking walkers in a world: carried along with them (live), or where their routes start
+  // (anywhere else: the map's markers)
+  function syncWalkers(world, wid, now) {
+    var list = walkers[wid];
+    if (!list || !world || !world.interactions) return;
+    list.forEach(function (wk, i) {
+      if (!wk.talk) return;
+      var key = wid + '#' + i, it = null;
+      for (var j = 0; j < world.interactions.length; j++) if (world.interactions[j].walker === key) { it = world.interactions[j]; break; }
+      var p = walkerPos(wk, i, now, wid);
+      if (!it) world.interactions.push(it = talkInteraction(wk, key, 0, 0));
+      it.x = Math.round(p.x); it.y = Math.round(p.y);
+    });
+  }
+  function walkerInteractions(wid) {
+    return (walkers[wid] || []).map(function (wk, i) { return wk.talk ? talkInteraction(wk, wid + '#' + i, Math.round(wk.path[0][0]), Math.round(wk.path[0][1])) : null; })
+      .filter(Boolean);
+  }
 
   function walkerAt(wk, now, i) {
     var P = wk.path, L = 0, seg = [];
     for (var k = 0; k < P.length - 1; k++) { var d = Math.hypot(P[k + 1][0] - P[k][0], P[k + 1][1] - P[k][1]); seg.push(d); L += d; }
     var travel = L / (wk.speed || 1.1) * 1000, pause = wk.pause || 2500, period = 2 * (travel + pause);
-    var t = (now + i * 7919) % period, fwd = t < travel + pause, tt = fwd ? t : t - travel - pause;
+    var t = ((now + i * 7919) % period + period) % period, fwd = t < travel + pause, tt = fwd ? t : t - travel - pause;
     var moving = tt >= pause, s = moving ? (tt - pause) / travel * L : 0;
     if (!fwd) s = L - s;
     var acc = 0;
@@ -393,10 +431,11 @@ var BridgeScene = (function () {
   function actorDrawList(sc, world, offX, offY, ts, now) {
     var list = [];
     var wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId();
+    syncWalkers(world, wid, now);
     (walkers[wid] || []).forEach(function (wk, i) {
       var sh = getSheet(wk.sheet);
       if (!sh.ready) return;
-      var p = walkerAt(wk, now, i), footRow = p.y + 0.9;
+      var p = walkerPos(wk, i, now, wid), footRow = p.y + 0.9;
       list.push({ footRow: footRow, draw: function (ctx) {
         var col = p.moving ? 4 + Math.floor(p.dist / 0.3) % 8 : IDLE_SEQ[Math.floor((now + i * 137) / 360) % IDLE_SEQ.length];
         var cx = Math.round(offX + (p.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
@@ -474,6 +513,7 @@ var BridgeScene = (function () {
     restore: function () { for (var k in scenes) if (scenes[k].ready) composite(scenes[k]); },   // after the canvas was lost
     tintAt: tintAt,
     actorDrawList: actorDrawList,
+    walkerInteractions: walkerInteractions,
     flickerAt: flickerAt,
     visible: visible
   };

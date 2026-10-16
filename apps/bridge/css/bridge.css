@@ -2205,6 +2205,17 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
   --gm-glow: inset 0 0 0 1px #8ab060, inset 0 0 24px rgba(120, 150, 70, 0.2);
 }
 #game-menu.gm-meadow .gm-page, #game-menu.gm-meadow .gm-foot { background: transparent; }
+#game-menu.gm-sylvan {
+  --gm-bg: #1a3422; --gm-ink: #eef0dc; --gm-dim: #a8b890; --gm-title: #f0d070; --gm-accent: #d0a040; --gm-line: rgba(208, 160, 64, 0.3);
+  --gm-frame: #d0a040; --gm-cell: rgba(120, 180, 90, 0.08); --gm-cell-line: rgba(208, 160, 64, 0.3); --gm-sel: #f0d070; --gm-hi: rgba(240, 208, 112, 0.06);
+  --gm-tab: #12261a; --gm-tab-ink: #a8b890; --gm-btn: rgba(240, 208, 112, 0.08); --gm-btn-ink: #eef0dc; --gm-on: #c8a040; --gm-on-ink: #14261a;
+  --gm-inset: #0a160e; --gm-shade: #3e5a30;
+  --gm-card-bg: radial-gradient(ellipse at 50% 0%, rgba(240, 208, 96, 0.14), transparent 60%), linear-gradient(180deg, rgba(26, 52, 34, 0.97), rgba(14, 30, 20, 0.98));
+  --gm-glow: inset 0 0 0 3px rgba(14, 30, 20, 0.9), inset 0 0 0 4px rgba(208, 160, 64, 0.45), inset 0 0 28px rgba(120, 180, 90, 0.12), 0 0 22px rgba(208, 160, 64, 0.18);
+}
+#game-menu.gm-sylvan .gm-page, #game-menu.gm-sylvan .gm-foot { background: transparent; }
+#game-menu.gm-sylvan .gm-title { text-shadow: 0 0 8px rgba(240, 208, 112, 0.45); }
+#game-menu.gm-sylvan .ip-key { background: #1e3a26; color: #f0d070; border-color: #d0a040; box-shadow: 0 1px 0 #8a6a20; }
 #game-menu.gm-meadow .gm-card { border-width: 6px; border-image: repeating-linear-gradient(45deg, #6aa04a 0 4px, #f2ecd6 4px 8px, #9ac070 8px 12px, #f2ecd6 12px 16px) 6; }
 
 /* ---- Backpack (js/inventory.js) ---- */

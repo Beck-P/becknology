@@ -806,12 +806,14 @@ var BridgeInteractions = (function () {
       t.width = 32; t.height = 48;
       var tc = t.getContext('2d');
       tc.drawImage(img, 0, 0, 32, 48, 0, 0, 32, 48);
-      var a = tc.getImageData(0, 0, 32, 48).data, top = 0;
+      var a = tc.getImageData(0, 0, 32, 48).data, top = 0, l = 32, r = -1;
       for (var y = 0; y < 48 && !top; y++) for (var x = 0; x < 32; x++) if (a[(y * 32 + x) * 4 + 3] > 0) { top = y; break; }
+      for (var y2 = top; y2 < Math.min(48, top + 14); y2++) for (var x2 = 0; x2 < 32; x2++) if (a[(y2 * 32 + x2) * 4 + 3] > 0) { l = Math.min(l, x2); r = Math.max(r, x2); }
+      var size = Math.max(22, Math.min(28, 2 * Math.max(16 - l, r + 1 - 16)));      // wide enough for an elf's ears or a hat's brim
       var c = canvas.getContext('2d');
       c.imageSmoothingEnabled = false;
       c.clearRect(0, 0, canvas.width, canvas.height);
-      c.drawImage(t, 5, Math.max(0, top - 2), 22, 22, 0, 0, canvas.width, canvas.height);
+      c.drawImage(t, 16 - size / 2, Math.max(0, top - 2), size, size, 0, 0, canvas.width, canvas.height);
     };
     img.src = '/bridge/assets/characters/' + sheet + '.png';
   }

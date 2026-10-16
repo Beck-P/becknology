@@ -91,6 +91,7 @@ k.solid(26, 15, 27, 16)
 
 # ---- the herbalist's stall (east) -------------------------------------------------------------------------------------
 E.herb_stall(k, 31.2, 34.0, 11.4)
+HB = (34, 11)                                                        # Mirelle stands at its east end (behind it the awning hid her)
 E.lantern_post(k, 35.0, 12.4)
 
 # ---- the landing ring: mossy stone, glowing runes, ferns round it -------------------------------------------------------
@@ -178,17 +179,18 @@ w['interactions'] = [
     {'x': 6, 'y': 17, 'type': 'dialog', 'label': 'WILLOW', 'prompt': 'PRESS E TO LOOK',
      'dialog': 'A WILLOW BENDING OVER THE MOONWELL, ITS FRONDS TRAILING IN THE WATER. SOMETHING IS CAUGHT HIGH IN THEM.'},
     {'x': int(BS[0]), 'y': int(BS[1]), 'type': 'dialog', 'label': 'BARD', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE BARD PLAYS ON.'},
-    {'x': 32, 'y': 10, 'type': 'dialog', 'label': 'HERBALIST', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE HERBALIST NODS, HANDS FULL OF THYME.'},
+    {'x': HB[0], 'y': HB[1], 'type': 'dialog', 'label': 'HERBALIST', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE HERBALIST NODS, HANDS FULL OF THYME.'},
     {'x': 34, 'y': 24, 'type': 'dialog', 'label': 'WARDEN', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE WARDEN WATCHES YOU.'},
     {'x': 26, 'y': 15, 'type': 'dialog', 'label': 'WAYSTONE', 'prompt': 'PRESS E TO READ',
      'dialog': 'A WAYSTONE CARVED WITH LEAVES. NORTH: THE GREAT TREE, AND THE QUEEN. WEST: THE MOONWELL. SOUTH: THE RING, FOR THOSE WHO COME FROM THE STARS.'},
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-for (x, y) in ((32, 10), (34, 24)):                                 # the herbalist behind her stall, the warden by the ring
+for (x, y) in (HB, (34, 24)):                                       # the herbalist at the end of her stall, the warden by the ring
     k.solid(x, y, x + 1, y + 1)
+k.solid(31, 10, 34, 11)                                             # behind the stall: the awning would hide you there
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
             actors=[{'sheet': 'npc-elf-bard', 'x': BS[0] - 0.5, 'y': BS[1] - 0.35, 'facing': 'down', 'pose': 'sit'},
-                    {'sheet': 'npc-elf-herbalist', 'x': 32, 'y': 10, 'facing': 'down'},
-                    {'sheet': 'npc-elf-warden', 'x': 34, 'y': 24, 'facing': 'left'}],
+                    {'sheet': 'npc-elf-herbalist', 'x': HB[0], 'y': HB[1], 'facing': 'down', 'light': [HB[0], HB[1] + 1]},   # by the lantern
+                    {'sheet': 'npc-elf-warden', 'x': 34, 'y': 24, 'facing': 'left', 'light': [34, 25]}],   # (a post's shadow falls on her own tile)
             scene_extra={'layers': {'shuttle': 'parked'}})
 print('sylvara done')
