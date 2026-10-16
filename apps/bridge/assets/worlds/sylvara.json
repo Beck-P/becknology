@@ -523,9 +523,9 @@
       2,
       2,
       2,
-      2,
       4,
-      2,
+      4,
+      4,
       2,
       2,
       2,
@@ -574,7 +574,7 @@
       4,
       4,
       4,
-      2,
+      4,
       2,
       2,
       4,
@@ -2157,9 +2157,9 @@
       0,
       0,
       0,
-      0,
       1,
-      0,
+      1,
+      1,
       0,
       0,
       0,
@@ -2208,7 +2208,7 @@
       1,
       1,
       1,
-      0,
+      1,
       0,
       0,
       1,
@@ -3364,8 +3364,8 @@
       "dialog": "THE BARD PLAYS ON."
     },
     {
-      "x": 32,
-      "y": 10,
+      "x": 34,
+      "y": 11,
       "type": "dialog",
       "label": "HERBALIST",
       "prompt": "PRESS E TO TALK",
@@ -5046,15 +5046,23 @@
       },
       {
         "sheet": "npc-elf-herbalist",
-        "x": 32,
-        "y": 10,
-        "facing": "down"
+        "x": 34,
+        "y": 11,
+        "facing": "down",
+        "light": [
+          34,
+          12
+        ]
       },
       {
         "sheet": "npc-elf-warden",
         "x": 34,
         "y": 24,
-        "facing": "left"
+        "facing": "left",
+        "light": [
+          34,
+          25
+        ]
       }
     ],
     "layers": {

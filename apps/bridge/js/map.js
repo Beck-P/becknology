@@ -248,6 +248,7 @@ var BridgeMap = (function () {
         if (typeof BridgeForage !== 'undefined') BridgeForage.decorate(wid, d);
         if (typeof BridgeGear !== 'undefined') BridgeGear.decorate(wid, d);
         if (typeof BridgeStorage !== 'undefined') BridgeStorage.decorate(wid, d);
+        if (typeof BridgeScene !== 'undefined' && BridgeScene.walkerInteractions) d.interactions = d.interactions.concat(BridgeScene.walkerInteractions(wid));   // people out walking
       } catch (e) { /* the map does without */ }
       cb(d, false);
     }).catch(function () { cb(null, false); });
