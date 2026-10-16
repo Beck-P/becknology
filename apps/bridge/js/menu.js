@@ -40,6 +40,7 @@ var BridgeMenu = (function () {
     if (ts === 'singularity' || id === 'singularity') return 'void';
     if (ts === 'verdance' || /^verdance/.test(id)) return 'meadow';
     if (ts === 'hoarfell' || /^hoarfell/.test(id)) return 'frost';
+    if (ts === 'sylvara' || /^sylvara/.test(id)) return 'sylvan';
     return 'holo';
   }
 

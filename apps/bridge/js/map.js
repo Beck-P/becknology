@@ -23,10 +23,11 @@
 var BridgeMap = (function () {
   var atlas = null, waiting = [];
   var KINDS = { ship: 'Your ship, the Wayfarer', lumar: 'Ocean world · the spore seas', arcadia: 'City world · the night side lit', enigma: 'Listening post · a ringed giant',
-                singularity: 'Black hole · the Brink', verdance: 'Garden world · two small moons', hoarfell: 'Ice world · the Hoarspire' };
-  var PLANET = { lumar: 'lumar', arcadia: 'arcadia', enigma: 'enigma', singularity: 'singularity', verdance: 'verdance', hoarfell: 'hoarfell' };
+                singularity: 'Black hole · the Brink', verdance: 'Garden world · two small moons', hoarfell: 'Ice world · the Hoarspire',
+                sylvara: 'Forest world · the wood elves' };
+  var PLANET = { lumar: 'lumar', arcadia: 'arcadia', enigma: 'enigma', singularity: 'singularity', verdance: 'verdance', hoarfell: 'hoarfell', sylvara: 'sylvara' };
   var SYS_RX = { ship: /^(bridge|quarters|hangar|gameroom)$/, lumar: /^lumar/, arcadia: /^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair|null-den)/,
-                 enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/ };
+                 enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/, sylvara: /^sylvara/ };
   var MERGE = { 'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a' };
 
   fetch('/bridge/assets/atlas.json?v=' + Date.now()).then(function (r) { return r.json(); })
@@ -188,9 +189,10 @@ var BridgeMap = (function () {
       if (typeof it.x !== 'number') return;
       var m = classify(it, wid, clues);
       if (!m) return;
-      var same = out.filter(function (o) { return o.cat === m.cat && o.name === m.name && o.target === m.target && Math.abs(o.x - it.x) <= 2 && Math.abs(o.y - it.y) <= 2; })[0];
+      var same = out.filter(function (o) { return o.cat === m.cat && o.name === m.name && o.target === m.target && Math.abs(o.x - it.x) <= 2 && Math.abs(o.y - it.y) <= 2 &&
+                                                   (m.cat !== 'person' || o.lab === it.label); })[0];   // two people you haven't met are two "Someone"s
       if (same) { same.n++; same.sx += it.x; same.sy += it.y; same.x = same.sx / same.n; same.y = same.sy / same.n; return; }
-      m.x = m.sx = it.x; m.y = m.sy = it.y; m.n = 1;
+      m.x = m.sx = it.x; m.y = m.sy = it.y; m.n = 1; m.lab = it.label;
       out.push(m);
     });
     return out;
@@ -347,7 +349,8 @@ var BridgeMap = (function () {
       var m = thumb.meta, k = thumb.c.width / m.width;                // thumb px per render px
       var sx = (C.x0 * 32 + m.originX) * k, sy = (C.y0 * 32 + m.originY) * k, sw = tw * 32 * k, sh = th * 32 * k;
       g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-      if (!/^(verdance|hoarfell)/.test(data.tileset || '') && 'filter' in g) g.filter = 'brightness(1.32) saturate(1.08)';   // night worlds, lifted a little to read
+      var lift = mapLift(data);
+      if (lift && 'filter' in g) g.filter = lift;
       g.drawImage(thumb.c, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
       g.filter = 'none';
     } else {                                                          // no render: the floor plan from the collision grid
@@ -396,7 +399,14 @@ var BridgeMap = (function () {
     if (/^lumar|tavern|cave|tower/.test(ts) && data.scene && data.scene.backdrop) return '#0d2a26';      // the night sea round an island
     if (ts === 'verdance') return '#3e6a32';
     if (ts === 'hoarfell') return '#c8d2e4';
+    if (ts === 'sylvara') return data.indoors ? '#3a2a20' : '#3e5a30';                                    // bark in the hall, moss in the glade
     return '#0b0a12';
+  }
+  function mapLift(data) {                                          // night worlds lifted a little to read; dusk a touch; day not at all
+    var ts = data.tileset || '';
+    if (/^(verdance|hoarfell)/.test(ts)) return null;
+    if (ts === 'sylvara') return 'brightness(1.16) saturate(1.04)';
+    return 'brightness(1.32) saturate(1.08)';
   }
   // the legend: what kinds are here, how many; pick one to see only those
   function legend(body) {

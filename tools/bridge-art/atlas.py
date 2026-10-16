@@ -25,6 +25,7 @@ SYSTEMS = [
     ('singularity', 'The Singularity', 'singularity', r'^singularity'),
     ('verdance', 'Verdance', 'verdance-village', r'^verdance'),
     ('hoarfell', 'Hoarfell', 'hoarfell', r'^hoarfell'),
+    ('sylvara', 'Sylvara', 'sylvara', r'^sylvara'),
 ]
 # Lumar's islands (js/voyage.js ISLES), each its own tree from its pier; rooms whose ids don't start with their island's
 ISLES = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-holm', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight']
