@@ -2400,7 +2400,17 @@ html.touch #journal-pill .jp-ico canvas { width: 20px; height: 20px; }
   .mp-seg button { max-width: 150px; }
 }
 @media (max-width: 700px) and (orientation: landscape), (max-height: 520px) and (orientation: landscape) {
+  .gm-tab { flex-direction: row; gap: 6px; height: 40px; }
+  .gm-tab.on { height: 44px; }
+  .gm-tab canvas { width: 24px; height: 24px; }
+  .gm-x { width: 34px; height: 34px; margin-bottom: 4px; }
   .mp-here { grid-template-columns: minmax(0, 1fr) 220px; }
-  .mp-mapbox { height: calc(100dvh - 150px); }
+  .mp-mapbox { height: calc(100dvh - 130px); }
+  .bp { grid-template-columns: minmax(0, 1fr) 240px; }
+  .bp-grid { max-width: 440px; }
+  .jn { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .fb-body { display: grid; grid-template-columns: minmax(0, 1fr) 220px; }
+  .fb-detail { display: block; text-align: center; }
+  .fb-d-art canvas { width: 160px; }
 }
 @media (prefers-reduced-motion: reduce) { .mp-pin.mp-you::after { animation: none; } #game-menu .gm-card { transition: none; } }
