@@ -53,7 +53,7 @@ var BridgeInteractions = (function () {
   var promptState = { target: null, shown: null, html: '', x: -1, y: -1 };
   var TOUCH = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   var VERBS = {
-    enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
+    enter_world: 'Enter', leave_world: 'Leave', shuttle: 'Board', player: 'Meet', bay_view: 'Look', app: 'Play', cabinet: 'Play', vendor: 'Shop', shop: 'Browse',
     catalog: 'Browse', rest: 'Rest', locker: 'Open', stats_panel: 'View', warp_map: 'Open', sail_to: 'Set sail',
     menu: 'Open', password_gate: 'Enter', dialog: 'Look', random_dialog: 'Look', forage: 'Gather', sell: 'Sell', splice: 'Jack in', game_slot: 'Play', game_scores: 'Read', fish: 'Fish',
     pachinko: 'Play', pachinko_prizes: 'Cash in', outfitter: 'Browse',
@@ -512,6 +512,10 @@ var BridgeInteractions = (function () {
 
       case 'fish':
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.open(inter);
+        break;
+
+      case 'player':                                                  // another pilot, playing alongside you (js/multi.js)
+        if (typeof BridgeMulti !== 'undefined') BridgeMulti.menu(inter.pid);
         break;
 
       case 'game_slot':

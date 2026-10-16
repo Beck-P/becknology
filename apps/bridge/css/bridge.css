@@ -1834,6 +1834,29 @@ html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }   
   cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 #chart-pill:hover { background: rgba(34, 30, 50, 0.9); border-color: rgba(255, 255, 255, 0.25); }
+/* playing together (js/multi.js): names and bubbles over other pilots, the players pill */
+#mp-layer { position: fixed; inset: 0; pointer-events: none; z-index: 22; overflow: hidden; }
+.mp-tag { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; will-change: transform;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; }
+.mp-name { font-size: 12px; letter-spacing: 0.5px; color: #f2eee6; background: rgba(14, 12, 22, 0.66); border: 1px solid rgba(160, 220, 255, 0.35);
+  border-radius: 999px; padding: 1px 8px; white-space: nowrap; text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6); }
+.mp-bubble { display: none; max-width: 200px; font-size: 13px; line-height: 1.25; color: #1a1610; background: #f6f0e0; border-radius: 8px; padding: 4px 9px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35); position: relative; text-align: center; overflow-wrap: anywhere; }
+.mp-bubble::after { content: ''; position: absolute; left: 50%; bottom: -5px; margin-left: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: #f6f0e0; }
+.mp-tag.talking .mp-bubble { display: block; animation: mp-pop 0.25s cubic-bezier(.2, 1.6, .4, 1); }
+.mp-emo { font-size: 18px; line-height: 1; }
+.mp-heart { color: #e0405a; font-size: 20px; }
+.mp-tag.targeted .mp-name { visibility: hidden; }
+@keyframes mp-pop { from { transform: scale(0.4); opacity: 0; } }
+#mp-pill { position: fixed; top: 196px; left: 16px; z-index: 25; display: none; align-items: center; gap: 7px; max-width: min(320px, 70vw);
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 13px; color: rgba(242, 238, 230, 0.92); background: rgba(14, 12, 22, 0.72);
+  border: 1px solid rgba(120, 220, 160, 0.35); border-radius: 999px; padding: 5px 13px 5px 10px; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }
+#mp-pill:hover { background: rgba(34, 30, 50, 0.9); }
+.mp-dot { width: 8px; height: 8px; border-radius: 50%; background: #60e090; box-shadow: 0 0 6px #60e090; flex: none; }
+.mp-where { color: rgba(242, 238, 230, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-more { color: #a0e0b0; }
+html.touch #mp-pill { padding: 7px 14px 7px 11px; left: calc(12px + env(safe-area-inset-left)); top: calc(230px + env(safe-area-inset-top)); }
+html.home-editing #mp-pill, html.home-editing #mp-layer { display: none !important; }
 #chart-pill .ip-key { font-size: 10px; min-width: 22px; height: 18px; }
 html.touch #chart-pill { padding: 7px 14px; left: calc(12px + env(safe-area-inset-left)); top: calc(186px + env(safe-area-inset-top)); }
 html.touch #chart-pill .ip-key { display: none; }
