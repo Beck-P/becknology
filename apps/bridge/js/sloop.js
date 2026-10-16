@@ -749,6 +749,13 @@ var BridgeSloop = (function () {
       ensureIslands();
       updateCells(performance.now() + 1e6);
       phase = 'cast'; phaseAt = performance.now();
+      lightTint = tintFor(A, BridgeWorld.getWorld && BridgeWorld.getWorld());
+      // walked aboard in the world: start the camera exactly where the world's is, so the sea view fades in over it without a
+      // jump (where the world's camera is held off the map's edge it isn't on the boat), then let it ease onto her
+      var wv = aboardStart && BridgeWorld.getView ? BridgeWorld.getView() : null;
+      if (wv && wv.ts === TS && wv.w) { var c0 = A.ox * TS - wv.offX, c1 = A.oy * TS - wv.offY; cam = { x: Math.round(c0), y: Math.round(c1), fx: c0, fy: c1 }; }
+      coverAt = performance.now();
+      setTimeout(function () { if (handoff) { var h = handoff; handoff = null; h(); } }, 600);
       if (aboardStart) { phaseAt -= CAST.board; said.board = 1; boat.empty = false; }   // you walked aboard in the world: already sat
       canvas.style.opacity = '1';
     }
@@ -2025,12 +2032,30 @@ var BridgeSloop = (function () {
     return [-0.82 * k, -b.side * 0.22 * (sp.beam || 1)];
   }
   // you standing at a big ship's wheel (the walking sheet, still)
+  // People aboard take the island's moonlight like everyone ashore (js/scene.js tintAt): drawn raw they lit up white in
+  // the boat and turned dark the moment they stepped onto the pier.
+  var lightTint = null, tcv = null, tcx = null;
+  function tintFor(I, world) {
+    if (!I || !I.sc || !I.sc.meta || !I.sc.meta.tileLight || typeof BridgeScene === 'undefined' || !BridgeScene.tintAt) return null;
+    try { return BridgeScene.tintAt(I.sc, world || {}, I.moor[0], I.moor[1] - 1, performance.now()); } catch (e) { return null; }
+  }
+  function drawLit(img, x0, y0, w, h, dx, dy) {
+    if (!lightTint) { bctx.drawImage(img, x0, y0, w, h, dx, dy, w, h); return; }
+    if (!tcv) { tcv = document.createElement('canvas'); tcx = tcv.getContext('2d'); }
+    if (tcv.width < w || tcv.height < h) { tcv.width = Math.max(tcv.width, w); tcv.height = Math.max(tcv.height, h); }
+    tcx.globalCompositeOperation = 'source-over'; tcx.clearRect(0, 0, w, h);
+    tcx.drawImage(img, x0, y0, w, h, 0, 0, w, h);
+    tcx.globalCompositeOperation = 'multiply'; tcx.fillStyle = lightTint; tcx.fillRect(0, 0, w, h);
+    tcx.globalCompositeOperation = 'destination-in'; tcx.drawImage(img, x0, y0, w, h, 0, 0, w, h);
+    tcx.globalCompositeOperation = 'source-over';
+    bctx.drawImage(tcv, 0, 0, w, h, dx, dy, w, h);
+  }
   function drawHelmsman(seat, b, now, suit) {
     if (typeof BridgeCharacter === 'undefined' || !BridgeCharacter.sportImage) return;
     var img = BridgeCharacter.sportImage(suit || BridgeCharacter.sportKey(), false);
     if (!img) return;
     var a = ((b.h % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
-    bctx.drawImage(img, [0, 1, 2, 1][Math.floor(now / 340) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 45, 32, 48);
+    drawLit(img, [0, 1, 2, 1][Math.floor(now / 340) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 45);
   }
   function disc(x, y, rx, ry) {
     for (var j = -ry; j <= ry; j++) {
@@ -2044,7 +2069,7 @@ var BridgeSloop = (function () {
     if (!crewImg) { crewImg = new Image(); crewImg.src = '/bridge/assets/characters/npc-regular.png'; }
     if (!crewImg.complete || !crewImg.naturalWidth) return;
     var a = ((b.h % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
-    bctx.drawImage(crewImg, [0, 1, 2, 1][Math.floor(now / 340 + b.seed) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 41, 32, 48);
+    drawLit(crewImg, [0, 1, 2, 1][Math.floor(now / 340 + b.seed) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 41);
   }
   // one of your hands on deck, standing their watch (sailors and dockhands, by turns)
   var handImgs = {};
@@ -2053,7 +2078,7 @@ var BridgeSloop = (function () {
     if (!img) { img = handImgs[sheet] = new Image(); img.src = '/bridge/assets/characters/' + sheet + '.png'; }
     if (!img.complete || !img.naturalWidth) return;
     var a = ((b.h + (i % 3 - 1) * 1.2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
-    bctx.drawImage(img, [0, 1, 2, 1][Math.floor(now / 380 + i * 1.7) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(pt[0]) - 16, Math.round(pt[1]) - 45, 32, 48);
+    drawLit(img, [0, 1, 2, 1][Math.floor(now / 380 + i * 1.7) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(pt[0]) - 16, Math.round(pt[1]) - 45);
   }
   // you on foot, stepping aboard or ashore (the walking sheet)
   function drawWalker(x, r, toward, now) {
@@ -2062,7 +2087,7 @@ var BridgeSloop = (function () {
     if (!img) return;
     var a = Math.atan2(toward[1] - r, toward[0] - x), q = ((Math.round(a / (Math.PI / 2)) % 4) + 4) % 4;
     var row = [1, 0, 3, 2][q], col = 4 + Math.floor(now / 90) % 8;
-    bctx.drawImage(img, col * 32, row * 48, 32, 48, sx(x) - 16, sy(r) - 45, 32, 48);
+    drawLit(img, col * 32, row * 48, 32, 48, sx(x) - 16, sy(r) - 45);
   }
   function drawPilot(seat, b, now, suit) {
     if (typeof BridgeCharacter === 'undefined' || !BridgeCharacter.sportImage) return;
@@ -2072,7 +2097,7 @@ var BridgeSloop = (function () {
     var a = ((b.h % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
     var row = [1, 0, 3, 2][q];                                          // right, down, left, up → sheet rows
     var col = [0, 1, 2, 1][Math.floor(now / 340) % 4];
-    bctx.drawImage(img, col * 32, row * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 45 + 4, 32, 48);
+    drawLit(img, col * 32, row * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 45 + 4);
   }
 
   function drawThing(o, now) {
@@ -2580,6 +2605,9 @@ var BridgeSloop = (function () {
   // and she dips under you; then the sea view takes over with you already at the helm (start's `aboard`), so the
   // boat you walked to is the one you sail. With more than one of your ships here, you're asked which first.
   var aboard = null, WDIR = { down: 0, right: 1, up: 2, left: 3 };
+  // Boarding hands over to the sea view only once it has faded in: until then the world keeps drawing her at the pier with
+  // you sat in her (it used to drop her the moment the passage began loading — half a second of an empty pier).
+  var handoff = null, handing = false, coverAt = 0;
   function walkPath(pts, speedAt, done) {
     var seg = 0, t = 0, dist = 0, cur = { x: pts[0].x, y: pts[0].y, z: pts[0].z || 0 }, facing = 'down';
     return {
@@ -2654,8 +2682,11 @@ var BridgeSloop = (function () {
       BridgeCharacter.setHidden(true);
       setTimeout(function () { sfx(m.spec.L > 3.6 ? 'step' : 'sit'); }, 180);
       setTimeout(function () {
-        BridgeWorld.setMode(null);
-        if (!start(worldId, null, { aboard: true })) { aboard = null; BridgeCharacter.setPose(null); BridgeCharacter.setHidden(false); }
+        handoff = function () { handing = true; BridgeWorld.setMode(null); handing = false; };
+        coverAt = 0;
+        if (!start(worldId, null, { aboard: true })) {
+          handoff = null; BridgeWorld.setMode(null); aboard = null; BridgeCharacter.setPose(null); BridgeCharacter.setHidden(false);
+        }
       }, 900);
     });
     aboard = { id: worldId, ship: m.ship, at: 0 };
@@ -2663,7 +2694,7 @@ var BridgeSloop = (function () {
     BridgeWorld.setMode({
       solo: true,
       focus: function () { return { x: w.cur.x - 0.5, y: w.cur.y - 1.2 }; },
-      end: function () { BridgeCharacter.setPose(null); BridgeCharacter.setHidden(false); aboard = null; },
+      end: function () { if (handing) return; handoff = null; BridgeCharacter.setPose(null); BridgeCharacter.setHidden(false); aboard = null; },
       update: function (dt) {
         if (aboard && aboard.at) return;
         if (w.step(dt)) w.pose(I);
@@ -2696,7 +2727,8 @@ var BridgeSloop = (function () {
     });
   }
   function mooredItems(world, offX, offY, ts, now) {
-    if (running || typeof BridgeWorld === 'undefined') return [];
+    if (typeof BridgeWorld === 'undefined') return [];
+    if (running && !(aboard && (!coverAt || performance.now() - coverAt < 600))) return [];
     var id = BridgeWorld.getWorldId();
     if (!knows(id)) return [];
     var I = moorFor(id);
@@ -2711,9 +2743,11 @@ var BridgeSloop = (function () {
     var on = !!(aboard && aboard.at && aboard.id === I.id && aboard.ship === m.ship), k = on ? (now - aboard.at) / 1000 : 0;
     m.heel = Math.sin(now / 1300 + m.x) * 0.035 / Math.sqrt(m.spec.L / 2.6) + (on ? Math.sin(k * 9) * 0.12 * Math.exp(-k * 2.5) * 2.6 / m.spec.L : 0);   // riding the swell
     m.empty = !on;
+    var lt = lightTint, w = BridgeWorld.getWorld(), sc = w && w.scene && typeof BridgeScene !== 'undefined' && BridgeScene.get ? BridgeScene.get(w.scene.id) : null;
     bctx = c; cam = { x: -offX, y: -offY }; wind = { now: I.moorH + 2.2, s: 0.4 }; A = I; B = null; palOverride = I.pal;
+    lightTint = sc && sc.meta && sc.meta.tileLight && BridgeScene.tintAt ? BridgeScene.tintAt(sc, w, m.x, m.r - 1, now) : null;
     try { drawBoat(now, m); moorLines(m, m.inner || I.dock, 1); }
-    finally { bctx = keep[0]; cam = keep[1]; wind = keep[2]; A = keep[3]; B = keep[4]; palOverride = keep[5]; }
+    finally { bctx = keep[0]; cam = keep[1]; wind = keep[2]; A = keep[3]; B = keep[4]; palOverride = keep[5]; lightTint = lt; }
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('lumar', { items: mooredItems });
 
@@ -2722,7 +2756,7 @@ var BridgeSloop = (function () {
     isRunning: function () { return running; },
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },
-    _loaded: function () { return isl; }, _snap: function () { cam = null; }, _sky: function () { return sky; }, _systems: function (x, r, T) { return systemsNear(x, r, T); }, _front: function (T) { return frontAt(T); }, _toWorld: function (cx, cy) { return pa ? toWorld(cx, cy) : null; }, _sea: function (x, r) { return seaAtWorld(x, r); },
+    _loaded: function () { return isl; }, _snap: function () { cam = null; }, _cam: function () { return cam && { x: cam.x, y: cam.y, ox: A && A.ox, oy: A && A.oy }; }, _sky: function () { return sky; }, _systems: function (x, r, T) { return systemsNear(x, r, T); }, _front: function (T) { return frontAt(T); }, _toWorld: function (cx, cy) { return pa ? toWorld(cx, cy) : null; }, _sea: function (x, r) { return seaAtWorld(x, r); },
     setCourse: setCourse, canSetCourse: canSetCourse, chartPos: chartPos, course: function () { return running ? course : null; },
     invite: invite, _crew: function () { return { crewOf: crewOf, captainOf: captainOf, mirror: mirror }; }, _seaPeers: function () { return seaPeers; },
     _things: function () { return things; }, _prompt: function () { return prompt; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }

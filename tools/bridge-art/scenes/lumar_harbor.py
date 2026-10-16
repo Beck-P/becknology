@@ -364,7 +364,7 @@ w['view'] = [-1.6, -1.6, COLS + 1.6, ROWS + 1.6]       # camera bounds (tiles): 
 for it in w['interactions']:                            # the pier's end is the DOCK now: the sloop, not a galleon
     if it.get('label') == 'GALLEON':
         it.update({'label': 'DOCK', 'x': 8, 'y': 16, 'dialog': 'YOUR SLOOP IS TIED UP AT THE END OF THE PIER.'})
-w['shuttle'] = {'spawn': [12, 11]}                      # the skiff sets down on the east beach
+w['shuttle'] = {'spawn': [9, 12]}                       # the skiff sets down on the east beach; you step out beside her (behind her nose you're hidden)
 if not any(it.get('type') == 'shuttle' for it in w['interactions']):
     w['interactions'].append({'x': 12, 'y': 12, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'})
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')

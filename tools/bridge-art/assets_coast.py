@@ -94,7 +94,10 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
     a ship's hull). beach_bias(x, r): added to the sand-or-rock choice there
     (sand by the harbour's beach, rock under its cliffs). sheer: rects
     where the land stops at a built wall (a quay) and the water is deep
-    right up to it. ground: (material, albedo) of the island's own surface
+    right up to it; a fifth number, soft, shelves its three seaward sides
+    into the shallows over that many tiles (a berth on a natural shore,
+    not a box cut into the sea), and a sixth, 'all', shelves the landward
+    side too (a pier off a beach, no wall). ground: (material, albedo) of the island's own surface
     (assets_isle.ground) — the lip then carries it on instead of one grass
     colour, so the land's edge is the coast's wandering outline, not the
     tile grid. Returns a Terrain (heights for placing things)."""
@@ -133,8 +136,22 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
                 z = -0.004                     # flush with assets_isle.ground: no seam along the tile edges
             if d > 0.5:                                                     # ripples and hollows on the bed
                 z += 0.05 * _n(x, r, 2.4, seed + 2) + 0.12 * _n(x, r, 0.6, seed + 3) * min(1.0, d - 0.5)
-            if D[j, i] > 0 and any(a <= x <= c and b <= r <= e for (a, b, c, e) in sheer):
-                z = min(z, WZ - 0.85)
+            if D[j, i] > 0:
+                for rect in sheer:
+                    a, b, c, e = rect[:4]
+                    soft = rect[4] if len(rect) > 4 else 0.0
+                    if not soft:
+                        if a <= x <= c and b <= r <= e:
+                            z = min(z, WZ - 0.85)
+                    elif r >= b or (len(rect) > 5 and rect[5] == 'all'):
+                        # a dredged berth on a natural shore: deep along the wall (row b), its other three sides
+                        # shelving into the shallows along a wandering line instead of a box cut into the sea
+                        # ('all': no wall at all — a pier off a beach — so the landward side shelves too)
+                        inside = min(x - a, c - x, e - r, r - b if len(rect) > 5 and rect[5] == 'all' else 9.0)
+                        inside += 0.45 * soft * _n(x, r, 0.7, seed + 9)
+                        w = _smooth(-soft, 0.6 * soft, inside)
+                        if w > 0:
+                            z = min(z, z + (WZ - 0.85 - z) * w)
             H[j, i] = z
 
     # faces by material band

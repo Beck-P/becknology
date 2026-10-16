@@ -131,7 +131,20 @@ var BridgeGifts = (function () {
     bryn: { love: ['mulled_cider', 'edelweiss'], like: ['hot_cocoa', 'roast_chestnuts', 'fondue', 'pocket_watch'], hate: ['void_fizz'],
             loveLine: 'WELL. I HAVEN\'T BEEN GIVEN ONE OF THESE SINCE I COULD STILL GET UP THE STAIRCASE FOR MY OWN. THANK YOU, CLIMBER.' },
     sigrun: { love: ['silver_nail', 'pocket_watch'], like: ['mulled_cider', 'fondue', 'hoar_crystal'], hate: ['old_boot'],
-              loveLine: 'NOW THAT\'S PRETTY WORK. SOMEBODY MADE THIS TO LAST. I\'LL KEEP IT IN THE LIFT HUT WHERE BRYN CAN\'T WIN IT OFF ME.' }
+              loveLine: 'NOW THAT\'S PRETTY WORK. SOMEBODY MADE THIS TO LAST. I\'LL KEEP IT IN THE LIFT HUT WHERE BRYN CAN\'T WIN IT OFF ME.' },
+    // Elderglade's elves (Sylvara)
+    elf_bard: { love: ['heron_feather', 'honey_cake', 'mulled_cider'], like: ['honey', 'apple', 'posy'], hate: ['old_boot'],
+                loveLine: 'A FEATHER FIT FOR A CAP! I\'LL WEAR IT TONIGHT AND PUT YOU IN A VERSE. A SHORT VERSE. YOU\'VE ONLY JUST ARRIVED.' },
+    elf_herbalist: { love: ['edelweiss', 'honey', 'sunflower'], like: ['strawberry', 'apple', 'carrot', 'posy'], hate: ['void_fizz'],
+                     loveLine: 'EDELWEISS, FROM THE ICE WORLD. IT KEEPS ITS SCENT EVEN DRIED. I\'LL PRESS IT IN THE BOOK WITH THE ONES THAT MATTER.' },
+    elf_warden: { love: ['heron_feather', 'glimmer_lantern'], like: ['bread', 'apple', 'roast_chestnuts'], hate: ['void_fizz'],
+                  loveLine: 'A HERON\'S FEATHER. STRAIGHT AND TRUE. IT WILL FLETCH AN ARROW THAT DOESN\'T MISS, AND I\'LL THINK OF YOU WHEN IT DOESN\'T.' },
+    elf_lamplighter: { love: ['moonstone', 'glimmer_lantern', 'star_pearl'], like: ['honey', 'edelweiss', 'posy'], hate: ['old_boot'],
+                       loveLine: 'IT HOLDS A LITTLE LIGHT, LIKE THE WELL DOES. I\'LL HANG IT IN THE LANTERN BY THE GREAT TREE. WHEN YOU PASS, IT WILL BE A LITTLE BRIGHTER.' },
+    elf_weaver: { love: ['heron_feather', 'sunflower', 'strawberry'], like: ['posy', 'honey', 'sea_glass'], hate: ['stone', 'old_boot'],
+                  loveLine: 'OH, THE COLOUR OF IT. THAT\'S GOING INTO A CLOAK. YOU\'LL KNOW IT WHEN YOU SEE A WARDEN WEARING IT.' },
+    elf_child: { love: ['honey_cake', 'strawberry', 'sweet_roll'], like: ['apple', 'posy', 'sea_glass', 'heron_feather'], hate: ['turnip'],
+                 loveLine: 'FOR ME? FOR ACTUALLY ME? I\'M GOING TO KEEP IT FOREVER. OR EAT IT. PROBABLY EAT IT.' }
   };
   var NOT = { key: 1, map: 1, seed: 1 };                  // things that aren't gifts
 

@@ -201,7 +201,7 @@ w['interactions'] = [
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 apply_world(WORLD, k, FLOOR, doors=DOORS, scene_id=WID, actors=[
-    {'sheet': 'npc-registrar', 'x': 2, 'y': 3, 'facing': 'down'},
+    {'sheet': 'npc-registrar', 'x': 2, 'y': 3, 'facing': 'down', 'lift': 0.65},     # up behind his high desk, or only his crown shows
     {'sheet': 'npc-clerk', 'x': 2, 'y': 6, 'facing': 'down'},
 ])
 print('exchange done')

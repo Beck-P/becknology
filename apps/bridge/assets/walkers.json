@@ -1,6 +1,6 @@
 {
   "verdance-village": [
-    { "sheet": "npc-vfarmer", "path": [[2, 12], [29, 12]], "speed": 0.7, "pause": 5000, "rest": "down" },
+    { "sheet": "npc-vfarmer", "path": [[2, 12], [9, 15], [23, 14], [23, 13], [27, 13], [27, 12], [29, 12]], "speed": 0.7, "pause": 5000, "rest": "down" },
     { "sheet": "npc-vschool", "path": [[34, 19], [44, 19]], "speed": 0.8, "pause": 6000, "rest": "up" },
     { "sheet": "npc-vfolk-b", "path": [[10, 15], [16, 15]], "speed": 0.9, "pause": 4500, "rest": "down" }
   ],
@@ -79,5 +79,10 @@
     { "sheet": "npc-broker", "path": [[7, 3], [15, 3]], "speed": 0.7, "pause": 4000, "rest": "up" },
     { "sheet": "npc-traveler", "path": [[8, 9], [8, 4]], "speed": 0.8, "pause": 5000, "rest": "right" },
     { "sheet": "npc-broker", "path": [[13, 4], [13, 9]], "speed": 0.6, "pause": 6000, "rest": "left" }
+  ],
+  "sylvara": [
+    { "sheet": "npc-elf-lamplighter", "talk": "LAMPLIGHTER", "path": [[22.5, 8], [23, 10], [25, 13], [28, 16], [32, 19.4], [34.6, 21.6]], "speed": 0.55, "pause": 6000, "rest": "down" },
+    { "sheet": "npc-elf-weaver", "talk": "WEAVER", "path": [[23.9, 11.6], [20, 13], [15.5, 15.2], [12.6, 17.6]], "speed": 0.75, "pause": 5000, "rest": "left" },
+    { "sheet": "npc-elf-child", "talk": "YOUNG ELF", "path": [[4, 21.5], [9.5, 22.4], [12.2, 20], [12.4, 15.6], [10, 13.4]], "speed": 1.6, "pause": 2500, "rest": "down" }
   ]
 }

@@ -59,7 +59,7 @@ I.ground(k, land, material, ALB)
 C.coast(k, land, ground=(material, ALB), palette='emerald', grass='#40603a', rock='#5e5e58', seed=81, beachiness=0.4,
         beach_bias=lambda x, r: 0.9 * I.smooth(QUAY - 3.0, QUAY + 0.5, r),
         keep_clear=[(PX - 0.4, QUAY - 0.2, PX + 1.4, SHIP_R + 0.2), (PX - 12.0, SHIP_R - 0.6, PX + 14.0, SHIP_R + 3.0)],
-        sheer=[(PX - 1.2, QUAY + 0.9, PX + 2.2, QUAY + 3.0)])
+        sheer=[(PX - 1.8, QUAY + 2.4, PX + 2.8, QUAY + 4.8, 1.4, 'all')])
 
 W.dock(k, PX + 0.05, PX + 0.95, QUAY + 0.6, SHIP_R + 0.0, z=0.02)
 I.crab_pots(k, PX + 1.6, QUAY - 0.2, n=3)

@@ -2,20 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Runouts</title>
-  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Orbitron:wght@400;700&family=Source+Code+Pro:wght@400;600&family=Bungee&family=MedievalSharp&family=Rye&family=Pirata+One&family=Cinzel+Decorative:wght@400;700&family=Monoton&family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/bridge/css/bridge-skin.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/bridge/js/shared/progression.js"></script>
-  <script src="/bridge/js/shared/bridge-skin.js" data-title="RUNOUTS"></script>
-  <!-- two pilots from the Bridge (its js/together.js): ?together=… -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1c0c2c" />
+  <title>Royale Link</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preload" href="/runouts/fonts/vt323.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/runouts/fonts/silkscreen-bold.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- two pilots at one table, from the Bridge's *Play a game…* (its js/together.js): ?together=… -->
   <script src="/bridge/js/shared/together-frame.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0e0618; }
+    .splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #fff0a8; font-family: monospace; }
+    .splash-name { font-size: 34px; letter-spacing: 6px; text-shadow: 0 0 18px rgba(255, 210, 100, .6); }
+    .splash-sub { font-size: 13px; letter-spacing: 3px; color: #80e0e8; text-transform: uppercase; }
+    .splash-crown { width: 30px; height: 18px; background: #e0c060; clip-path: polygon(0 100%, 0 20%, 25% 60%, 50% 0, 75% 60%, 100% 20%, 100% 100%); animation: sp 1s steps(2) infinite; }
+    @keyframes sp { 50% { opacity: .4; } }
+  </style>
 </head>
 <body>
-  <div id="root">
-    <div style="padding:24px;font-family:monospace;color:#6366f1;text-align:center;margin-top:40vh;">Loading game...</div>
-  </div>
+  <div id="root"><div class="splash"><div class="splash-crown"></div><div class="splash-name">ROYALE LINK</div><div class="splash-sub">connecting to the Neon Royale…</div></div></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

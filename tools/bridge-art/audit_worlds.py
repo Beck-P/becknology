@@ -10,7 +10,8 @@ and NPC actors standing on walkable tiles (walk-through people). Then checks
 that every person (people.json), quest clue (quests.json) and business
 (businesses.json) finds its {world, label}. Interactions added at load time
 by the JS (the Peddler, the hands on the farm, the Last Ridge's rope, the
-Park's gate) are listed in ADDED.
+Park's gate) are listed in ADDED; people out walking (walkers.json) carry
+their `talk` label with them, and their routes have to keep to walkable tiles.
 """
 import collections
 import glob
@@ -87,6 +88,21 @@ for wid, w in sorted(W.items()):
             issues.append((wid, 'actor %s stands on a walkable tile %s,%s' % (a['sheet'], a['x'], a['y'])))
 
 labels = {wid: set(i.get('label') for i in w.get('interactions', [])) for wid, w in W.items()}
+WALKERS = json.load(open(os.path.join(ROOT, 'walkers.json')))
+for wid, ws in sorted(WALKERS.items()):
+    if wid not in W:
+        issues.append(('walkers.json', 'no world %s' % wid))
+        continue
+    for wk in ws:
+        if wk.get('talk'):
+            labels[wid].add(wk['talk'])
+        P = wk['path']
+        for (ax, ay), (bx, by) in zip(P, P[1:]):          # along the route, a tenth of a tile at a time
+            n = max(1, int(max(abs(bx - ax), abs(by - ay)) * 10))
+            bad = {(round(ax + (bx - ax) * t / n), round(ay + (by - ay) * t / n)) for t in range(n + 1)}
+            bad = sorted(c for c in bad if not walk(W[wid], *c))
+            if bad:
+                issues.append((wid, 'walker %s crosses solid tiles %s' % (wk['sheet'], bad)))
 
 
 def found(world, label):

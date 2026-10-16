@@ -138,9 +138,9 @@ def slot(x, y, key):
 
 
 w['interactions'] = [
-    {'x': 0, 'y': 7, 'type': 'enter_world', 'target': 'bridge', 'spawn': [19, 7], 'label': 'BRIDGE', 'prompt': 'ENTER BRIDGE',
+    {'x': 0, 'y': 7, 'type': 'enter_world', 'target': 'bridge', 'spawn': [18, 7], 'label': 'BRIDGE', 'prompt': 'ENTER BRIDGE',
      'noBeacon': True},
-    {'x': 0, 'y': 8, 'type': 'enter_world', 'target': 'bridge', 'spawn': [19, 8], 'label': 'BRIDGE', 'prompt': 'ENTER BRIDGE',
+    {'x': 0, 'y': 8, 'type': 'enter_world', 'target': 'bridge', 'spawn': [18, 7], 'label': 'BRIDGE', 'prompt': 'ENTER BRIDGE',
      'noBeacon': True},
 ] + [slot(int(cx), 4, key) for key, art, cx, col in CABS] + [
     slot(13, 4, 'splice'), slot(4, 8, 'chess'), slot(11, 8, 'cipher-room'), slot(14, 8, 'typist'), slot(8, 9, 'genart'), slot(16, 5, 'pachinko'),

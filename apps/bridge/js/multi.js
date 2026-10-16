@@ -133,7 +133,7 @@ var BridgeMulti = (function () {
         var col = a.walking && !seated ? 4 + Math.floor(a.stride / 0.3) % 8 : IDLE[Math.floor(now / 340) % IDLE.length];
         var cx = Math.round(offX + (a.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
         BridgeScene.drawOccluded(ctx, sc, img, col * 32, (DIR_ROW[a.f] || 0) * 48, 32, 48, cx - 16, footY - 45, footRow, offX, offY,
-          BridgeScene.tintAt(sc, world, a.x, a.y, now), { x: cx, y: footY, rx: 9, ry: 3 });
+          BridgeScene.tintAt(sc, world, a.x, a.y, now), { x: cx, y: footY, rx: 9, ry: 3 }, null, 'auto');
       } };
     });
   }

@@ -39,9 +39,9 @@ var BridgeStarmap = (function () {
     },
     {
       id: 'arcadia-street', loc: 'arcadia', name: 'ARCADIA', kind: 'City world · night side lit',
-      blurb: 'A megacity stacked into the smog. Neon, rain, traffic between the towers; the Arcade where Runouts is played all night.',
+      blurb: 'A megacity stacked into the smog. Neon, rain, traffic between the towers; the Neon Royale, where the tables never close.',
       places: ['Skyport 7', 'The District', 'The Arcade'],
-      apps: [{ name: 'Runouts', url: '/runouts' }],
+      apps: [{ name: 'Royale Link', url: '/runouts/?link=1' }],
       color: '#e070b0', px: 0.32, py: 0.3, hasOverworld: true
     },
     {

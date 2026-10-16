@@ -2919,5 +2919,86 @@
         "a": "A SKIFF CREW FROM THE STATION USED TO PLAY HERE BEFORE THEIR LONG HAULS. THE YOUNGEST, A CARDSHARP CALLED BIX, LEFT A MARKER ON MY TABLE - ONE HAND, TO BE PLAYED WHEN THEY CAME BACK. I'VE KEPT THE CHAIR. I'M PATIENT."
       }
     ]
+  },
+  "elf_lamplighter": {
+    "name": "Faelan",
+    "role": "Lamplighter of Elderglade",
+    "sheet": "npc-elf-lamplighter",
+    "at": [
+      {
+        "world": "sylvara",
+        "label": "LAMPLIGHTER"
+      }
+    ],
+    "greet": "AH. SOMEONE ABROAD AT DUSK. MIND THE ROOTS - THEY SHIFT WHEN NOBODY'S LOOKING. I'M FAELAN. I LIGHT THE LANTERNS.",
+    "again": "STILL WANDERING? GOOD. THE LANTERNS ARE LIT. IN ELDERGLADE YOU CAN'T BE LOST, ONLY DELAYED.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I HAVE LIT EVERY LANTERN IN THE GLADE AT DUSK FOR SIX HUNDRED YEARS. I COULD DO IT WITH MY EYES SHUT. I TRIED, ONCE. THE QUEEN ASKED ME, VERY KINDLY, NOT TO TRY IT AGAIN."
+      },
+      {
+        "q": "The lanterns",
+        "a": "EACH ONE IS A LEAF FOLDED ROUND A DROP OF MOONWELL WATER. THE WATER REMEMBERS THE MOON AND GLOWS FOR IT. I ONLY WAKE THEM. AND TRIM THE WICKS. THERE ARE NO WICKS. I TRIM THEM ANYWAY."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE WOOD IS QUIET. THE FIRST SWORD HAS BEEN UP EARLY ALL WEEK, PACING BY THE MOONWELL. HE SAYS IT'S FOR THE AIR. I HAVE NEVER SEEN ANYONE TAKE THE AIR SO SADLY."
+      }
+    ]
+  },
+  "elf_weaver": {
+    "name": "Sefa",
+    "role": "Weaver, Elderglade",
+    "sheet": "npc-elf-weaver",
+    "at": [
+      {
+        "world": "sylvara",
+        "label": "WEAVER"
+      }
+    ],
+    "greet": "OH! YOU'RE NOT FROM HERE. NOBODY FROM HERE STANDS THAT STILL. I'M SEFA, I WEAVE. MAY I MEASURE YOUR SHOULDERS? NO? ANOTHER TIME.",
+    "again": "BACK AGAIN. YOUR CUFFS ARE FRAYING. I NOTICE THESE THINGS. I CAN'T HELP IT.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I SPIN MOONWELL THREAD AND WEAVE THE WARDENS' CLOAKS. A GOOD ELVEN CLOAK HIDES YOU IN THE WOOD AND KEEPS THE RAIN OFF. A GREAT ONE LOOKS LOVELY AS WELL. I ONLY MAKE GREAT ONES."
+      },
+      {
+        "q": "The queen's gown",
+        "a": "I WOVE IT. THE GOLD AT THE HEM IS REAL GOLD, BEATEN THINNER THAN A LEAF. SHE SAID IT WAS TOO MUCH. SHE WEARS IT EVERY DAY."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THIS SPRING THE QUEEN HAD ME WEAVE HER A RIBBON - GREEN SILK, GOLD LEAVES, MY BEST WORK. SHE WANTED IT FOR SOMEONE. SHE WOULDN'T SAY WHO. SHE DIDN'T HAVE TO."
+      }
+    ]
+  },
+  "elf_child": {
+    "name": "Pip",
+    "role": "The youngest elf in Elderglade",
+    "sheet": "npc-elf-child",
+    "at": [
+      {
+        "world": "sylvara",
+        "label": "YOUNG ELF"
+      }
+    ],
+    "greet": "ARE YOU FROM THE STARS? DO YOU KNOW ANY STARS? WHAT ARE THEY LIKE? ARE THEY NICE?",
+    "again": "YOU CAME BACK! I KNEW YOU WOULD. I ASKED THE MOONWELL AND IT DIDN'T SAY ANYTHING, SO THAT MEANT YES.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I'M PIP. I'M NINETY-ONE. THAT'S VERY YOUNG FOR AN ELF. WHEN I'M OLD I'M GOING TO BE A WARDEN LIKE AERIN. OR A BARD. OR A TREE."
+      },
+      {
+        "q": "What are you playing?",
+        "a": "CATCH-THE-FIREFLY. YOU HAVE TO BE QUICK AND NOT SQUASH THEM. I HAVEN'T CAUGHT ANY. I AM VERY GOOD AT NOT SQUASHING THEM."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "BECKOLAS CLIMBED A TREE! IN HIS ARMOUR! HE THOUGHT NOBODY SAW. I'M NOT SAYING WHICH TREE. MIRELLE SAYS SECRETS ARE LIKE SEEDS: DIG THEM UP TO LOOK AND THEY NEVER GROW."
+      }
+    ]
   }
 }
