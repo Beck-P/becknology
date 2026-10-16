@@ -17,7 +17,7 @@ var BridgeMulti = (function () {
   var PERSONAL = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, 'lumar-home': 1, 'arcadia-home': 1, 'verdance-home': 1, 'lumar-holm-home': 1, 'lumar-holm': 1 };
   var DIR_ROW = { down: 0, right: 1, up: 2, left: 3 }, IDLE = [0, 1, 2, 1];
   var others = {}, visiting = null, lastInst = null, sentAt = 0, sentJson = '', metaAt = 0, layer = null, tags = {}, pill = null, selfTag = null;
-  var last = performance.now();
+  var last = performance.now(), gone = {};
 
   function N() { return typeof BridgeNet !== 'undefined' ? BridgeNet : null; }
   function me() { var n = N(); return n && n.me(); }
@@ -77,11 +77,13 @@ var BridgeMulti = (function () {
     a.tx = d.x; a.ty = d.y; a.f = d.f || 'down'; a.k = d.k || 'purple'; a.mv = !!d.mv; a.seen = performance.now();
     if (a.fresh) { a.x = d.x; a.y = d.y; a.fresh = false; }
   }
+  // gone: nothing from them for 9 s, or they say they're somewhere else and haven't moved here since (what presence
+  // says lags; their own position messages, tagged with this place, are the truth)
   function prune(now) {
     var here = myInst(), n = N();
     Object.keys(others).forEach(function (id) {
       var a = others[id], p = n && n.peer(id);
-      if (!here || !p || (p.inst && p.inst !== here) || now - a.seen > 9000) drop(id);
+      if (!here || now - a.seen > 9000 || ((!p || (p.inst && p.inst !== here)) && now - a.seen > 3000)) drop(id);
     });
   }
   function drop(id) {
@@ -364,8 +366,9 @@ var BridgeMulti = (function () {
       n.send('here', { world: worldId(), inst: myInst(), x: rp ? rp.x : null, y: rp ? rp.y : null }, from);
     });
     n.on('here', function (d, from) { if (asking && asking.id === from && d && d.world) { asking = null; travel(d); } });
-    n.on('join', function (p) { if (p && p.name) toast('Online', cap(p.name), placeOf(p) || 'just arrived'); sfx('blip'); });
-    n.on('leave', function (p, id) { drop(id); });
+    // a dropped connection coming straight back isn't news
+    n.on('join', function (p, id) { if (p && p.name && !(gone[id] && Date.now() - gone[id] < 90000)) { toast('Online', cap(p.name), placeOf(p) || 'just arrived'); sfx('blip'); } });
+    n.on('leave', function (p, id) { gone[id] = Date.now(); drop(id); });
     n.on('peers', paintPill);
   }
 
