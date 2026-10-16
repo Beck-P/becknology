@@ -3,7 +3,8 @@
  * the Wayfarer where they end up (worlds/gameroom.json, scenes/gameroom.py).
  *
  * Playing a game anywhere (an arcade cabinet, the chess table, a terminal on
- * Enigma, the canvas at the Brink, NULL's rig, Lucky 7's pachinko) marks it found; its slot in
+ * Enigma, the canvas at the Brink, NULL's rig, Lucky 7's pachinko, a table at the Neon Royale —
+ * Royale Link, under the old `runouts` key) marks it found; its slot in
  * the game room swaps its dust sheet for the real thing (scene layers
  * `g_<game>`: `on` / `off`) and you can play it from there. The score board
  * says what you've found and hints at what's still out there.
@@ -11,7 +12,7 @@
 var BridgeGames = (function () {
   var KEY = 'bridge_games';
   var GAMES = {
-    'runouts':         { title: 'Runouts',      url: '/runouts',         kind: 'cabinet', where: "the Arcade, in Arcadia", hint: 'A cabinet everyone in Arcadia is queueing for' },
+    'runouts':         { title: 'Royale Link',  url: '/runouts/?link=1', kind: 'cabinet', where: 'the Neon Royale, in Arcadia', hint: 'Chips, cards and a wheel, under the neon in Arcadia' },
     'asteroids':       { title: 'Asteroids',    url: '/asteroids',       kind: 'cabinet', where: "the Arcade, in Arcadia", hint: 'Something with rocks in it, in a neon arcade' },
     'helicopter':      { title: 'Helicopter',   url: '/helicopter',      kind: 'cabinet', where: "the Arcade, in Arcadia", hint: 'A cave, a helicopter, an arcade' },
     'breakout':        { title: 'Breakout',     url: '/breakout',        kind: 'cabinet', where: "the Arcade, in Arcadia", hint: 'A wall of bricks, a paddle, an arcade' },
@@ -32,6 +33,7 @@ var BridgeGames = (function () {
     if (!inter) return null;
     if (inter.type === 'splice') return 'splice';
     if (inter.type === 'pachinko') return 'pachinko';
+    if (inter.type === 'casino') return 'runouts';             // the Neon Royale's tables and terminals (js/casino.js)
     if ((inter.type === 'cabinet' || inter.type === 'app') && inter.target) {
       var k = String(inter.target).split('?')[0].replace(/^\/+|\/+$/g, '');
       return GAMES[k] ? k : null;

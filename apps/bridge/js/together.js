@@ -3,9 +3,14 @@
  *
  * Walk up to someone (or find them on the players pill) → *Play a game…* → pick one of the games in the place
  * you're both in (the Arcade's cabinets, the dice table, the dance floor, Lucky 7's machines, NULL's rig, the relay
- * deck's terminals, Runouts), or any game you've both found (the game room's) → how to play it (a score duel, co-op, a race,
- * a game of chess, a seat at the table) → a stake (just for fun, or coins each). They're asked; they say yes (and
- * come over, if they were somewhere else) and you're both taken into it.
+ * deck's terminals, the Neon Royale's tables), or any game you've both found (the game room's) → how to play it (a score
+ * duel, co-op, a race, a game of chess, a seat at the table) → a stake (just for fun, or coins each). They're asked; they
+ * say yes (and come over, if they were somewhere else) and you're both taken into it.
+ *
+ * The Neon Royale (Royale Link, /runouts; js/casino.js): `royale-<game>` — the two of you at one table, side by side
+ * against the house (blackjack, roulette, craps, the slots, the derby, crash, Runouts) or against each other at hold'em
+ * (heads up, or with two regulars). There's no stake step: every bet is your own coins, staked and paid through the
+ * cabinet like playing alone, and the verdict just says how each of you came out (each game reports its net).
  *
  * Stakes: both put theirs in (BridgeProgression.wagerCoins) before anything starts. Against each other the pot goes
  * to the winner and a tie gives the stakes back; co-op, you stake together against the house — make the target
@@ -39,7 +44,14 @@ var BridgeTogether = (function () {
     chess:             { title: 'Chess', kind: 'cabinet', url: '/chess?theme=ship', modes: ['match'] },
     'cipher-room':     { title: 'Cipher', kind: 'cabinet', url: '/cipher-room/play.html?type=flash', modes: ['race', 'decode'] },
     typist:            { title: 'Signal Relay', kind: 'cabinet', url: '/typist', modes: ['duel', 'team'], base: 60 },
-    runouts:           { title: 'Runouts', kind: 'cabinet', url: '/runouts', modes: ['room'] },
+    'royale-blackjack': { title: 'Blackjack', kind: 'cabinet', url: '/runouts/?game=blackjack', modes: ['house'], casino: true },
+    'royale-roulette':  { title: 'Roulette', kind: 'cabinet', url: '/runouts/?game=roulette', modes: ['house'], casino: true },
+    'royale-craps':     { title: 'Craps', kind: 'cabinet', url: '/runouts/?game=craps', modes: ['house'], casino: true },
+    'royale-poker':     { title: 'Hold\'em', kind: 'cabinet', url: '/runouts/?game=poker', modes: ['headsup', 'ring'], casino: true },
+    'royale-slots':     { title: 'Slots', kind: 'cabinet', url: '/runouts/?game=slots', modes: ['house'], casino: true },
+    'royale-derby':     { title: 'The Derby', kind: 'cabinet', url: '/runouts/?game=derby', modes: ['house'], casino: true },
+    'royale-crash':     { title: 'Crash', kind: 'cabinet', url: '/runouts/?game=crash', modes: ['house'], casino: true },
+    'royale-runouts':   { title: 'Runouts', kind: 'cabinet', url: '/runouts/?game=runouts', modes: ['house'], casino: true },
     splice:            { title: 'Splice', kind: 'splice', modes: ['race', 'hands'] },
     pachinko:          { title: 'Pachinko', kind: 'pachinko', modes: ['duel', 'team'], base: 100 },
     dance:             { title: 'The dance floor', kind: 'dance', modes: ['duel', 'team'] },
@@ -55,7 +67,10 @@ var BridgeTogether = (function () {
     hands:  { name: 'Four hands', sub: 'one board, both of you turning junctions · splice it before the trace finds you', coop: true },
     decode: { name: 'Decode together', sub: 'one grid, both of you typing · decode it and the house doubles your stakes', coop: true },
     table:  { name: 'At the table', sub: 'liar\'s dice, real cups · the last with dice takes the pot', vs: true, result: true },
-    room:   { name: 'A Runouts room', sub: 'whoever asks hosts the room and the other takes a seat · whoever the first game picks takes the pot', vs: true, result: true }
+    // the Neon Royale: no stakes here, every bet's your own coins (js/casino.js)
+    house:   { name: 'At one table', sub: 'side by side against the house · your own chips, your own bets', casino: true },
+    headsup: { name: 'Heads up', sub: 'just the two of you at the table · your chips against theirs', casino: true, vs: true },
+    ring:    { name: 'With the regulars', sub: 'the two of you and two of the Royale\'s regulars · your chips against everyone\'s', casino: true, vs: true }
   };
   var NAMES = {                                       // a game's own words for its modes
     dance:    { duel: ['Dance-off', 'the same steps, each on your own panel · the higher score takes the floor and the pot'],
@@ -63,7 +78,9 @@ var BridgeTogether = (function () {
     pachinko: { duel: ['Race the tray', '50 match balls each on the same machine · the most balls won takes the pot'],
                 team: ['Beat the house', '50 match balls each · win back more than you fired, between you'] },
     typist:   { duel: ['Signal duel', 'the same messages, the same clock · the higher WPM takes the pot'],
-                team: ['Two operators', 'your WPM added up against a target'] }
+                team: ['Two operators', 'your WPM added up against a target'] },
+    'royale-slots':   { house: ['Side by side', 'two machines next to each other · your own coins, and their wins on the glass beside yours'] },
+    'royale-runouts': { house: ['At one counter', 'back the same runs side by side against the house · your own chips'] }
   };
   function modeName(g, m) { var o = NAMES[g] && NAMES[g][m]; return o ? o[0] : MODES[m].name; }
   // what a game's called for a session: the table's own name at the dice, the dance by how it's danced
@@ -134,19 +151,31 @@ var BridgeTogether = (function () {
     if (it.type === 'dance') return 'dance';
     if (it.type === 'pachinko') return 'pachinko';
     if (it.type === 'splice') return 'splice';
-    if (it.type === 'game_slot') return GAMES[it.game] && GAMES[it.game].kind !== 'dice' && foundHere(it.game) ? it.game : null;
+    if (it.type === 'casino') return GAMES['royale-' + it.game] ? 'royale-' + it.game : 'royale';   // a table, or a terminal
+    if (it.type === 'game_slot') {
+      if (it.game === 'runouts') return foundHere('runouts') ? 'royale' : null;
+      return GAMES[it.game] && GAMES[it.game].kind !== 'dice' && foundHere(it.game) ? it.game : null;
+    }
     if ((it.type === 'cabinet' || it.type === 'app') && it.target) {
       var k = String(it.target).split('?')[0].replace(/^\/+|\/+$/g, '');
+      if (k === 'runouts') return 'royale';                                     // a Royale Link terminal: any of its games
       return GAMES[k] ? k : null;
     }
     return null;
   }
   function foundHere(k) { return typeof BridgeGames === 'undefined' || !BridgeGames.has || BridgeGames.has(k); }
+  // the Royale's games are found together: playing any table (or a Royale Link terminal) finds Royale Link
+  function foundKey(k) { return GAMES[k] && GAMES[k].casino ? 'runouts' : k; }
+  var ROYALE = Object.keys(GAMES).filter(function (k) { return GAMES[k].casino; });
   var TABLES = { fell: 'Fell Dice', anchor: 'Bones' };
   function stationTitle(k, it) {
     if (k === 'dice') return TABLES[it.table] || TABLES.fell;
     if (k === 'pachinko') { var m = typeof BridgePachinko !== 'undefined' && BridgePachinko.machines()[it.machine]; return 'Pachinko' + (m ? ' · ' + m.title : ''); }
-    return GAMES[k].title;
+    if (k === 'royale') return 'Royale Link';
+    var t = GAMES[k].title;
+    if (k === 'royale-runouts' && it.mode && it.label && cap(it.label) !== t) t += ' · ' + cap(it.label);
+    if (GAMES[k].casino && it.stakes === 'high') t += ' · high roller';
+    return t;
   }
   // the games in this place, nearest first (one row a game: the nearest station of it)
   function gamesHere() {
@@ -157,10 +186,17 @@ var BridgeTogether = (function () {
       var k = keyOf(it);
       if (!k) return;
       var d = Math.hypot((it.x || 0) - rp.x, (it.y || 0) - rp.y), id = k === 'dice' ? 'dice:' + (it.table || 'fell') : k;
+      if (GAMES[k] && GAMES[k].casino) id += (it.stakes === 'high' ? ':high' : '') + (k === 'royale-runouts' ? ':' + (it.mode || '') : '');
       if (seen[id] && seen[id].d <= d) return;
       var row = { g: k, title: stationTitle(k, it), d: d, opts: {} };
       if (k === 'dice') row.opts.table = it.table || 'fell';
       if (k === 'pachinko') row.opts.machine = it.machine || 'lucky-cat';
+      if (k === 'royale' && it.stakes === 'high') row.opts.stakes = 'high';
+      if (GAMES[k] && GAMES[k].casino) {                // the table itself: its id, its limits, its Runouts game
+        if (it.table) row.opts.table = it.table;
+        if (it.stakes === 'high') row.opts.stakes = 'high';
+        if (it.mode) row.opts.mode = it.mode;
+      }
       if (seen[id]) out.splice(out.indexOf(seen[id]), 1);
       seen[id] = row; out.push(row);
     });
@@ -169,7 +205,7 @@ var BridgeTogether = (function () {
   // the games you've both found (the game room's): anywhere you're together
   function myFound() {
     if (typeof BridgeGames === 'undefined' || !BridgeGames.has) return [];
-    return Object.keys(GAMES).filter(function (k) { return GAMES[k].kind !== 'dice' && GAMES[k].kind !== 'dance' && BridgeGames.has(k); });
+    return Object.keys(GAMES).filter(function (k) { return GAMES[k].kind !== 'dice' && GAMES[k].kind !== 'dance' && BridgeGames.has(foundKey(k)); });
   }
   function bothFound(p) {
     var theirs = (p && p.found) || [];
@@ -186,10 +222,17 @@ var BridgeTogether = (function () {
     if (S && S.state !== 'settled') { toast('Online', 'You\'re in a game already', ''); return; }
     var who = nameOf(id), near = together(id), here = gamesHere(), rows = [];
     here.forEach(function (r) {
-      rows.push({ label: r.title, sub: r.d < 2.6 ? 'right here' : 'in this room', note: '', pick: function () { modes(id, r); return false; } });
+      rows.push({ label: r.title, sub: r.d < 2.6 ? 'right here' : 'in this room', note: '', pick: function () { if (r.g === 'royale') royale(id, r); else modes(id, r); return false; } });
     });
     var have = here.map(function (r) { return r.g; });
+    var roy = have.indexOf('royale') >= 0 || have.some(function (g) { return GAMES[g] && GAMES[g].casino; });
     bothFound(p).filter(function (k) { return have.indexOf(k) < 0; }).forEach(function (k) {
+      if (GAMES[k].casino) {                          // the Royale's games: one row, its games inside
+        if (roy) return;
+        roy = true;
+        rows.push({ label: 'Royale Link', sub: 'the Neon Royale\'s games · you\'ve both played there', note: '', pick: function () { royale(id, { g: 'royale', title: 'Royale Link', opts: {} }); return false; } });
+        return;
+      }
       rows.push({ label: GAMES[k].title, sub: 'from the game room · you\'ve both found it', note: '', pick: function () { modes(id, { g: k, title: GAMES[k].title, opts: {} }); return false; } });
     });
     var line = recordLine(id);
@@ -198,11 +241,21 @@ var BridgeTogether = (function () {
                         : 'NOTHING TO PLAY TOGETHER HERE. TRY THE ARCADE, LUCKY 7, THE LODGE\'S DICE TABLE OR CLUB VOID — OR A GAME YOU\'VE BOTH FOUND.',
       rows: rows, buttons: [{ label: 'Back', act: function () { if (near && M()) M().menu(id); else if (M()) M().panel(); return false; } }], closeLabel: 'Never mind' });
   }
+  // a Royale Link terminal (or the game room's slot): which of its games
+  function royale(id, r) {
+    choose({ title: 'Royale Link with ' + nameOf(id), text: 'WHICH TABLE? YOUR OWN CHIPS, SIDE BY SIDE - OR HEADS UP AT HOLD\'EM.' + (r.opts && r.opts.stakes === 'high' ? '\n\nTHE HIGH-ROLLER ROOM.' : ''),
+      rows: ROYALE.map(function (k) {
+        var G = GAMES[k];
+        return { label: G.title, sub: G.modes.map(function (m) { return modeName(k, m); }).join(' · '), note: G.modes.some(function (m) { return MODES[m].vs; }) ? 'vs' : 'house',
+                 pick: function () { modes(id, { g: k, title: G.title, opts: Object.assign({}, r.opts || {}) }); return false; } };
+      }),
+      buttons: [{ label: 'Back', act: function () { pick(id); return false; } }], closeLabel: 'Never mind' });
+  }
   function modes(id, r) {
     var G = GAMES[r.g], rows = G.modes.map(function (m) {
-      return { label: modeName(r.g, m), sub: modeSub(r.g, m), note: MODES[m].coop ? 'co-op' : 'vs', pick: function () { extras(id, r, m); return false; } };
+      return { label: modeName(r.g, m), sub: modeSub(r.g, m), note: MODES[m].casino ? (MODES[m].vs ? 'vs' : 'house') : MODES[m].coop ? 'co-op' : 'vs', pick: function () { extras(id, r, m); return false; } };
     });
-    if (rows.length === 1 && r.g !== 'dice') { extras(id, r, G.modes[0]); return; }
+    if (rows.length === 1 && r.g !== 'dice' && !G.casino) { extras(id, r, G.modes[0]); return; }
     if (r.g === 'dice') { stakes(id, r, 'table'); return; }
     choose({ title: r.title + ' with ' + nameOf(id), text: 'HOW DO YOU WANT TO PLAY?', rows: rows,
              buttons: [{ label: 'Back', act: function () { pick(id); return false; } }], closeLabel: 'Never mind' });
@@ -229,6 +282,7 @@ var BridgeTogether = (function () {
                buttons: [{ label: 'Back', act: function () { pick(id); return false; } }], closeLabel: 'Never mind' });
       return;
     }
+    if (MODES[m].casino) { ask(id, { g: r.g, mode: m, wager: 0, opts: r.opts }); return; }     // every bet's your own coins
     var coop = MODES[m].coop;
     rows = STAKES.map(function (s) {
       return { label: s ? s + ' coins each' : 'Just for fun', sub: !s ? 'no coins on it' : coop ? 'make it and the house pays you each ' + s * 2 : 'the pot: ' + s * 2,
@@ -240,6 +294,7 @@ var BridgeTogether = (function () {
   function describe(c) {
     var G = GAMES[c.g], t = (c.g === 'dice' ? TABLES[c.opts && c.opts.table] || 'Liar\'s dice' : G.title) + ' · ' + (c.g === 'dice' ? (c.opts.seats === 3 ? 'three cups' : 'heads up') : modeName(c.g, c.mode));
     if (c.opts && c.opts.level && typeof BridgeDance !== 'undefined' && BridgeDance.LEVELS[c.opts.level]) t += ' (' + cap(BridgeDance.LEVELS[c.opts.level].name) + ')';
+    if (MODES[c.mode] && MODES[c.mode].casino) return t + (c.opts && c.opts.stakes === 'high' ? ' · high roller' : '') + ' · your own chips';
     return t + ' · ' + (c.wager ? c.wager + ' coins each' : 'just for fun');
   }
 
@@ -275,6 +330,7 @@ var BridgeTogether = (function () {
       var m = MODES[d.mode], c = { g: d.g, mode: d.mode, wager: d.wager, opts: d.opts || {} };
       var text = describe(c).toUpperCase() + '.\n\n' + (d.g === 'dice' ? 'LIAR\'S DICE, REAL CUPS: THE LAST WITH DICE TAKES THE POT.' : modeSub(d.g, d.mode).toUpperCase() + '.') +
         (d.wager ? (m.coop ? '\n\nYOU EACH PUT IN ' + d.wager + '.' : '\n\nYOU EACH PUT IN ' + d.wager + ' · THE POT ' + d.wager * (d.opts && d.opts.seats === 3 ? 3 : 2) + '.') : '') +
+        (m.casino ? '\n\nAT THE NEON ROYALE: EVERY BET IS YOUR OWN COINS.' : '') +
         (here ? '' : '\n\nYOU\'LL GO TO ' + who.toUpperCase() + (d.at && d.at.world ? '' : '') + ' FIRST.');
       var line = recordLine(from);
       choose({ title: who + ' wants to play', text: text + (line ? '\n\n' + line : ''),
@@ -444,7 +500,8 @@ var BridgeTogether = (function () {
   function maybeSettle() {
     if (!S || S.state !== 'playing' || !S.mine.done || !S.theirs.done) return;
     var m = MODES[S.mode], a = S.mine.s, b = S.theirs.s;
-    if (m.coop) settle(a + b >= S.target ? 'made' : 'missed');
+    if (m.casino && !m.vs) settle('table');                   // side by side against the house: nobody beat anybody
+    else if (m.coop) settle(a + b >= S.target ? 'made' : 'missed');
     else settle(a > b ? 'win' : a < b ? 'lose' : 'draw');
   }
   // a game that decides for itself (chess, the dice table)
@@ -478,12 +535,12 @@ var BridgeTogether = (function () {
     else if (outcome === 'made') paid = S.wager * 2;
     if (paid) pay(paid, 'together:' + S.g + ':' + outcome);
     S.refunded = true; dropStake();
-    if (outcome !== 'house') tally(outcome === 'win' ? 'w' : outcome === 'lose' ? 'l' : outcome === 'draw' ? 'd' : outcome === 'made' ? 'made' : 'missed');
+    if (outcome !== 'house' && outcome !== 'table') tally(outcome === 'win' ? 'w' : outcome === 'lose' ? 'l' : outcome === 'draw' ? 'd' : outcome === 'made' ? 'made' : 'missed');
     S.outcome = outcome; S.paid = paid;
     var v = verdict(outcome, paid, why);
     if (head) { v.head = head; if (outcome === 'lose') { v.money = ''; v.line = v.score; } }   // you walked away: no one's won yet
     S.verdict = v;
-    sfx(outcome === 'win' || outcome === 'made' ? 'quest' : outcome === 'draw' ? 'coin' : 'fail');
+    sfx(outcome === 'win' || outcome === 'made' ? 'quest' : outcome === 'draw' || outcome === 'table' ? 'coin' : 'fail');
     adapter('verdict', v);
     paintBar(); presence();
     if (!quiet) noteIt(v);
@@ -493,7 +550,12 @@ var BridgeTogether = (function () {
   function verdict(outcome, paid, why) {
     var who = S.peerName, m = MODES[S.mode], a = S.mine, b = S.theirs, head, line = '', money = '';
     var lab = function (x) { return x.label || num(x.s); };
-    if (m.coop) {
+    if (m.casino) {                                    // the Royale: how each of you came out, your own coins
+      var up = function (x) { return x.s > 0 ? 'UP ' + num(x.s) : x.s < 0 ? 'DOWN ' + num(-x.s) : 'EVEN'; };
+      if (m.vs) head = outcome === 'win' ? 'You came out ahead' : outcome === 'lose' ? who + ' came out ahead' : 'Dead even';
+      else head = a.s > 0 && b.s > 0 ? 'You both beat the house' : a.s > 0 ? 'You beat the house' : b.s > 0 ? who + ' beat the house' : a.s === 0 && b.s === 0 ? 'Even with the house' : 'The house had the night';
+      line = 'YOU ' + up(a) + ' · ' + who.toUpperCase() + ' ' + up(b) + '.';
+    } else if (m.coop) {
       head = outcome === 'made' ? 'You made it together' : 'Not this time';
       if (S.mode === 'hands' || S.mode === 'decode') line = outcome === 'made' ? (S.mode === 'hands' ? 'THE FEED\'S THROUGH.' : 'INTERCEPT DECODED.') : 'THE CLOCK BEAT YOU BOTH.';
       else line = 'TOGETHER ' + num(a.s + b.s) + ' OF ' + num(S.target) + ' - YOU ' + lab(a) + ', ' + who.toUpperCase() + ' ' + lab(b) + '.';
@@ -592,12 +654,14 @@ var BridgeTogether = (function () {
         var G = GAMES[s.g], url = G.url;
         var cfg = { sid: s.sid, g: s.g, mode: s.mode, seed: s.seed, me: myName(), vs: s.peerName, host: s.host, side: s.host ? 'w' : 'b',
                     wager: s.wager, pot: s.pot, target: s.target };
+        if (G.casino) cfg.opts = { table: s.opts.table || null, stakes: s.opts.stakes || null, mode: s.opts.mode || null };   // which table (Royale Link)
         url += (url.indexOf('?') < 0 ? '?' : '&') + 'together=' + encodeURIComponent(JSON.stringify(cfg));
         if (typeof BridgeCabinetModal !== 'undefined') {
           s.opening = true;
           if (BridgeCabinetModal.isOpen()) BridgeCabinetModal.hide();
           s.opening = false;
-          BridgeCabinetModal.show({ url: url, title: G.title.toUpperCase(), gameKey: s.g, together: true });
+          BridgeCabinetModal.show(G.casino ? { url: url, title: G.title.toUpperCase(), gameKey: 'runouts', together: true, frame: 'casino', kicker: 'NEON ROYALE' }
+                                           : { url: url, title: G.title.toUpperCase(), gameKey: s.g, together: true });
         }
         paintBar();
         // never started (a game that didn't load): call it off

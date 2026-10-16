@@ -1075,7 +1075,7 @@ var BridgeWorld = (function () {
     if (world.interactions) {
       var target = (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.getTarget) ? BridgeInteractions.getTarget() : null;
       var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
-      var kinds = [['game', { app: 1, cabinet: 1, splice: 1, pachinko: 1 }], ['exit', { leave_world: 1 }]];
+      var kinds = [['game', { app: 1, cabinet: 1, splice: 1, pachinko: 1, casino: 1 }], ['exit', { leave_world: 1 }]];
       for (var ki = 0; ki < kinds.length; ki++) {
         var clusters = findAppClusters(world.interactions, kinds[ki][1]);
         for (var ci = 0; ci < clusters.length; ci++) {
