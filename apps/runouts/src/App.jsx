@@ -45,6 +45,12 @@ function loadHeavyModePlaybacks() {
   return heavyModePlaybacksPromise;
 }
 
+// Two pilots from the Bridge (its js/together.js, through /bridge/js/shared/together-frame.js): whoever asked hosts a
+// room with a code from the session, the other joins it as a player, and the first game's pick settles the pot
+// (the one it picks wins). After that the room's just a room. Null when Runouts is played any other way.
+const TOGETHER = typeof window !== 'undefined' ? window.BridgeTogetherFrame || null : null;
+const TOGETHER_CODE = TOGETHER ? 'BRIDGE-' + String(TOGETHER.cfg.sid || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) : null;
+
 const Leaderboard = React.lazy(loadLeaderboardModule);
 const WheelPlayback = React.lazy(() => loadClassicModePlaybacks().then((module) => ({ default: module.WheelPlayback })));
 const NumberPlayback = React.lazy(() => loadClassicModePlaybacks().then((module) => ({ default: module.NumberPlayback })));
@@ -2872,13 +2878,14 @@ function PlaybackStage({ result, step, done, interactiveBombState }) {
 export default function ChoreChaosApp() {
   // ── Device mode state ──
   const [deviceMode, setDeviceMode] = useState(() => {
+    if (TOGETHER) return TOGETHER.cfg.host ? 'host' : null;
     const params = new URLSearchParams(window.location.search);
     return params.get('room') ? null : 'choose';
   });
-  const [hostName, setHostName] = useState('');
-  const [hostSetupDone, setHostSetupDone] = useState(false);
+  const [hostName, setHostName] = useState(TOGETHER && TOGETHER.cfg.host ? TOGETHER.cfg.me : '');
+  const [hostSetupDone, setHostSetupDone] = useState(!!(TOGETHER && TOGETHER.cfg.host));
 
-  const [names, setNames] = useState(["Beck", "Nick", "Jeremy", "Oakley"]);
+  const [names, setNames] = useState(TOGETHER && TOGETHER.cfg.host ? [TOGETHER.cfg.me] : ["Beck", "Nick", "Jeremy", "Oakley"]);
   const [taskLabel, setTaskLabel] = useState("");
   const [selectionGoal, setSelectionGoal] = useState("winner");
   const [selectedModeId, setSelectedModeId] = useState("auto");
@@ -2920,10 +2927,12 @@ export default function ChoreChaosApp() {
 
   // Room / spectator / player state
   const [roomMode, setRoomMode] = useState(() => {
+    if (TOGETHER) return TOGETHER.cfg.host ? 'none' : 'joining';
     const params = new URLSearchParams(window.location.search);
     return params.get('room') ? 'joining' : 'none';
   });
   const [roomCode, setRoomCode] = useState(() => {
+    if (TOGETHER) return TOGETHER.cfg.host ? null : TOGETHER_CODE;
     const params = new URLSearchParams(window.location.search);
     return params.get('room') || null;
   });
@@ -2978,7 +2987,7 @@ export default function ChoreChaosApp() {
   useEffect(() => {
     let inIframe = false;
     try { inIframe = window.self !== window.top; } catch (e) { inIframe = true; }
-    if (!inIframe) return;
+    if (!inIframe || TOGETHER) return;                // with another pilot the stake's the Bridge's, not the solo wager
     setWagerMode(true);
     // Skip the device-mode chooser screen — go straight to single-device play.
     setDeviceMode('local');
@@ -5570,9 +5579,9 @@ export default function ChoreChaosApp() {
     window.__stockDrawIndex = 0;
   }
 
-  function createRoom() {
+  function createRoom(fixedCode) {
     if (!_supabase) return;
-    const code = generateRoomCode();
+    const code = fixedCode || generateRoomCode();
     const channel = _supabase.channel(`room:${code}`, {
       config: { broadcast: { self: false } }
     });
@@ -5684,6 +5693,33 @@ export default function ChoreChaosApp() {
     if (!playerName || !currentActionHandler.current) return;
     currentActionHandler.current({ playerName, ...action });
   }
+
+  // ── Two pilots from the Bridge: open the room (host) or take a seat in it (the other), then report the first pick ──
+  const togetherReported = useRef(false);
+  useEffect(() => {
+    if (!TOGETHER) return;
+    if (TOGETHER.cfg.host) createRoom(TOGETHER_CODE);
+    TOGETHER.ready();
+  }, []);
+  useEffect(() => {
+    if (!TOGETHER || TOGETHER.cfg.host || roomMode !== 'joining' || !roomChannel || !spectatorConnected) return;
+    handleJoinAsPlayer(TOGETHER.cfg.me);
+  }, [roomMode, roomChannel, spectatorConnected]);
+  function reportTogether(res) {
+    if (!TOGETHER || togetherReported.current || !res || res.awaitingResolution) return;
+    if (res.isTie) { togetherReported.current = true; TOGETHER.result('draw'); return; }
+    if (!res.selectedName) return;
+    togetherReported.current = true;
+    const picked = String(res.selectedName).trim().toUpperCase() === String(TOGETHER.cfg.me).trim().toUpperCase();
+    const winner = (res.selectionGoal || 'winner') === 'winner';
+    TOGETHER.result(picked === winner ? 'win' : 'lose');
+  }
+  useEffect(() => {
+    if (TOGETHER && roomMode === 'host' && playbackDone && result) reportTogether(result);
+  }, [roomMode, playbackDone, result, resultVersion]);
+  useEffect(() => {
+    if (TOGETHER && spectatorState && spectatorState.type === 'playing' && spectatorState.done) reportTogether(spectatorState.result);
+  }, [spectatorState]);
 
   // Spectator/Player: connect to room (only triggered on initial 'joining' state)
   const isJoining = roomMode === 'joining' || roomMode === 'spectator' || roomMode === 'player';

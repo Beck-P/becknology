@@ -3,7 +3,7 @@
  *
  * Walk up to someone (or find them on the players pill) → *Play a game…* → pick one of the games in the place
  * you're both in (the Arcade's cabinets, the dice table, the dance floor, Lucky 7's machines, NULL's rig, the relay
- * deck's terminals), or any game you've both found (the game room's) → how to play it (a score duel, co-op, a race,
+ * deck's terminals, Runouts), or any game you've both found (the game room's) → how to play it (a score duel, co-op, a race,
  * a game of chess, a seat at the table) → a stake (just for fun, or coins each). They're asked; they say yes (and
  * come over, if they were somewhere else) and you're both taken into it.
  *
@@ -39,6 +39,7 @@ var BridgeTogether = (function () {
     chess:             { title: 'Chess', kind: 'cabinet', url: '/chess?theme=ship', modes: ['match'] },
     'cipher-room':     { title: 'Cipher', kind: 'cabinet', url: '/cipher-room/play.html?type=flash', modes: ['race', 'decode'] },
     typist:            { title: 'Signal Relay', kind: 'cabinet', url: '/typist', modes: ['duel', 'team'], base: 60 },
+    runouts:           { title: 'Runouts', kind: 'cabinet', url: '/runouts', modes: ['room'] },
     splice:            { title: 'Splice', kind: 'splice', modes: ['race', 'hands'] },
     pachinko:          { title: 'Pachinko', kind: 'pachinko', modes: ['duel', 'team'], base: 100 },
     dance:             { title: 'The dance floor', kind: 'dance', modes: ['duel', 'team'] },
@@ -53,7 +54,8 @@ var BridgeTogether = (function () {
     race:   { name: 'Race', sub: 'the same board for both · first to finish takes the pot', vs: true },
     hands:  { name: 'Four hands', sub: 'one board, both of you turning junctions · splice it before the trace finds you', coop: true },
     decode: { name: 'Decode together', sub: 'one grid, both of you typing · decode it and the house doubles your stakes', coop: true },
-    table:  { name: 'At the table', sub: 'liar\'s dice, real cups · the last with dice takes the pot', vs: true, result: true }
+    table:  { name: 'At the table', sub: 'liar\'s dice, real cups · the last with dice takes the pot', vs: true, result: true },
+    room:   { name: 'A Runouts room', sub: 'whoever asks hosts the room and the other takes a seat · whoever the first game picks takes the pot', vs: true, result: true }
   };
   var NAMES = {                                       // a game's own words for its modes
     dance:    { duel: ['Dance-off', 'the same steps, each on your own panel · the higher score takes the floor and the pot'],
@@ -180,8 +182,8 @@ var BridgeTogether = (function () {
 
   function pick(id) {
     var n = N(), p = n && n.peer(id);
-    if (!p) { toast('Play together', nameOf(id) + ' isn\'t on', ''); return; }
-    if (S && S.state !== 'settled') { toast('Play together', 'You\'re in a game already', ''); return; }
+    if (!p) { toast('Online', nameOf(id) + ' isn\'t on', ''); return; }
+    if (S && S.state !== 'settled') { toast('Online', 'You\'re in a game already', ''); return; }
     var who = nameOf(id), near = together(id), here = gamesHere(), rows = [];
     here.forEach(function (r) {
       rows.push({ label: r.title, sub: r.d < 2.6 ? 'right here' : 'in this room', note: '', pick: function () { modes(id, r); return false; } });
@@ -250,12 +252,12 @@ var BridgeTogether = (function () {
     var sid = S.sid;
     n.send('g-ask', { sid: sid, g: c.g, mode: c.mode, wager: S.wager, opts: S.opts, name: myName(), best: best(c.g),
                       at: { world: inWorld() ? BridgeWorld.getWorldId() : null, inst: M() ? M().myInst() : null, x: rp.x, y: rp.y } }, id);
-    toast('Play together', 'Asked ' + S.peerName, describe(c));
+    toast('Online', 'Asked ' + S.peerName, describe(c));
     sfx('click');
     S.askTimer = setTimeout(function () {
       if (!S || S.sid !== sid || S.state !== 'asking') return;
       n.send('g-off', { sid: sid, why: 'too late' }, id);
-      toast('Play together', S.peerName + ' didn\'t answer', '');
+      toast('Online', S.peerName + ' didn\'t answer', '');
       S = null; presence();
     }, 45000);
     presence();
@@ -309,7 +311,7 @@ var BridgeTogether = (function () {
       if (!S || S.sid !== sid) return;
       stake(S.wager, 'together:' + S.g).then(function (ok) {
         if (!S || S.sid !== sid) { if (ok) pay(d.wager, 'together:refund'); return; }
-        if (!ok) { n.send('g-no', { sid: sid, why: 'hasn\'t the coins' }, from); toast('Play together', 'Not enough coins', 'You need ' + S.wager + ' to sit in'); S = null; return; }
+        if (!ok) { n.send('g-no', { sid: sid, why: 'hasn\'t the coins' }, from); toast('Online', 'Not enough coins', 'You need ' + S.wager + ' to sit in'); S = null; return; }
         S.staked = S.wager > 0; holdStake();
         S.state = 'waiting';
         n.send('g-yes', { sid: sid, best: best(S.g) }, from);
@@ -342,7 +344,7 @@ var BridgeTogether = (function () {
     var sid = S.sid;
     stake(S.wager, 'together:' + S.g).then(function (ok) {
       if (!S || S.sid !== sid) { if (ok) pay(S ? S.wager : 0, 'together:refund'); return; }
-      if (!ok) { n.send('g-off', { sid: sid, why: myName() + ' hasn\'t the coins' }, from); toast('Play together', 'Not enough coins', 'You need ' + S.wager); S = null; presence(); return; }
+      if (!ok) { n.send('g-off', { sid: sid, why: myName() + ' hasn\'t the coins' }, from); toast('Online', 'Not enough coins', 'You need ' + S.wager); S = null; presence(); return; }
       S.staked = S.wager > 0; holdStake();
       S.seed = Math.floor(Math.random() * 2147483646) + 1;
       S.target = target(S);
@@ -359,7 +361,7 @@ var BridgeTogether = (function () {
   function onNo(d, from) {
     if (!S || S.sid !== d.sid || S.state !== 'asking') return;
     clearTimeout(S.askTimer);
-    toast('Play together', S.peerName + ' ' + (d.why || 'said no'), '');
+    toast('Online', S.peerName + ' ' + (d.why || 'said no'), '');
     S = null; presence();
   }
   function onOff(d, from) {
@@ -555,7 +557,7 @@ var BridgeTogether = (function () {
     if (!S || S.state !== 'playing' || S.opening || GAMES[S.g].kind !== 'cabinet') return;
     if (MODES[S.mode].result) forfeit();
     else done(S.mine.s, S.mine.label);
-    if (S && S.state === 'playing') toast('Play together', 'Waiting for ' + S.peerName, 'You\'ll hear how it went');
+    if (S && S.state === 'playing') toast('Online', 'Waiting for ' + S.peerName, 'You\'ll hear how it went');
   }
   // the bar over the cabinet: the two of you, live
   function paintBar() {
@@ -647,16 +649,23 @@ var BridgeTogether = (function () {
     if (!n || !others || !sv || !sv.ts) { if (layer) layer.style.display = 'none'; return; }
     if (!layer) { layer = document.createElement('div'); layer.id = 'tg-layer'; document.body.appendChild(layer); }
     layer.style.display = '';
-    var k = sv.ts / 32, live = {};
-    Object.keys(others).forEach(function (id) {
-      var p = n.peer(id), a = others[id];
-      if (!p || !p.play) return;
+    var k = sv.ts / 32, live = {}, here = {};
+    Object.keys(others).forEach(function (id) { var p = n.peer(id); if (p && p.play) here[id] = { p: p, a: others[id] }; });
+    Object.keys(here).forEach(function (id) {
+      var p = here[id].p, a = here[id].a, pl = p.play, name = cap(p.name), mate = null, x = a.x, y = a.y, html;
+      // two here playing each other: one badge between them
+      Object.keys(here).forEach(function (o) { var q = here[o].p; if (o !== id && q.play && q.play.vs === name && cap(q.name) === pl.vs) mate = o; });
+      if (mate && mate < id) return;
       live[id] = true;
       var b = badges[id];
       if (!b) { b = badges[id] = document.createElement('div'); b.className = 'tg-badge'; layer.appendChild(b); }
-      var pl = p.play, html = '<span class="tg-ico">' + (pl.coop ? '♥' : '▶') + '</span>' + esc(pl.t) + ' <i>' + (pl.v ? esc(pl.v) : (pl.coop ? 'with ' : 'vs ') + esc(pl.vs) + ' · ' + esc(pl.s) + (pl.coop ? '' : '–' + esc(pl.o))) + '</i>';
+      if (mate) {
+        x = (a.x + here[mate].a.x) / 2; y = Math.min(a.y, here[mate].a.y);
+        html = '<span class="tg-ico">' + (pl.coop ? '♥' : '▶') + '</span>' + esc(pl.t) + ' <i>' + (pl.v ? esc(name) + ': ' + esc(pl.v)
+          : pl.coop ? esc(name) + ' & ' + esc(pl.vs) : esc(name) + ' ' + esc(pl.s) + ' – ' + esc(pl.o) + ' ' + esc(pl.vs)) + '</i>';
+      } else html = '<span class="tg-ico">' + (pl.coop ? '♥' : '▶') + '</span>' + esc(pl.t) + ' <i>' + (pl.v ? esc(pl.v) : (pl.coop ? 'with ' : 'vs ') + esc(pl.vs) + ' · ' + esc(pl.s) + (pl.coop ? '' : '–' + esc(pl.o))) + '</i>';
       if (b.getAttribute('data-h') !== html) { b.innerHTML = html; b.setAttribute('data-h', html); }
-      var cx = sv.offX + (a.x + 0.5) * sv.ts, top = sv.offY + (a.y + 1 - 3 / 32) * sv.ts - 46 * k - 22;
+      var cx = sv.offX + (x + 0.5) * sv.ts, top = sv.offY + (y + 1 - 3 / 32) * sv.ts - 46 * k - 22;
       b.style.transform = 'translate3d(' + Math.round(cx) + 'px,' + Math.round(top) + 'px,0) translate(-50%,-100%)';
     });
     Object.keys(badges).forEach(function (id) { if (!live[id]) { badges[id].remove(); delete badges[id]; } });
