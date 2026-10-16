@@ -74,16 +74,16 @@ var BridgeMulti = (function () {
     if (!d || d.i !== myInst()) return;
     var a = avatar(from), p = N().peer(from);
     if (p) a.name = p.name;
-    a.tx = d.x; a.ty = d.y; a.f = d.f || 'down'; a.k = d.k || 'purple'; a.mv = !!d.mv; a.seen = performance.now();
+    a.tx = d.x; a.ty = d.y; a.f = d.f || 'down'; a.k = d.k || 'purple'; a.mv = !!d.mv; a.seen = performance.now(); a.metaT = p ? p.t : null;
     if (a.fresh) { a.x = d.x; a.y = d.y; a.fresh = false; }
   }
-  // gone: nothing from them for 9 s, or they say they're somewhere else and haven't moved here since (what presence
-  // says lags; their own position messages, tagged with this place, are the truth)
+  // gone: nothing from them for 9 s, or they say they're somewhere else — at once if they've said so since their last
+  // step here, else (presence lagging behind their own position messages, which are tagged with this place) after 3 s
   function prune(now) {
     var here = myInst(), n = N();
     Object.keys(others).forEach(function (id) {
-      var a = others[id], p = n && n.peer(id);
-      if (!here || now - a.seen > 9000 || ((!p || (p.inst && p.inst !== here)) && now - a.seen > 3000)) drop(id);
+      var a = others[id], p = n && n.peer(id), elsewhere = !p || (p.inst && p.inst !== here);
+      if (!here || now - a.seen > 9000 || (elsewhere && (now - a.seen > 3000 || (p && p.t !== a.metaT)))) drop(id);
     });
   }
   function drop(id) {
