@@ -321,7 +321,7 @@ var BridgeCharacter = (function () {
   }
 
   // ---- fighting (js/arms.js): an attack frame, or the walk frame, with the weapon in hand ---------------------------
-  // The attack sheet (pilot-attack-…, 64 × 64 frames, attacks.json) and the weapon's own frame for the same pose
+  // The attack sheet (pilot-attack-…, 80 × 92 frames, attacks.json) and the weapon's own frame for the same pose
   // (assets/characters/weapons/<id>, cut where the body hides it) are put together and drawn as one, depth-tested
   // and lit like any character. o: { sc, world, offX, offY, ts, now (the world's clock, for the light), key (the
   // sheet key with no mode: '<style>-<colour>@<look>'), sheet (that walk sheet), x, y (render position), facing,
