@@ -204,7 +204,7 @@ var BridgeChart = (function () {
   }
   var base = null, baseKey = '';
   function drawBase() {                                    // the parchment and the seas, made once per set of charts
-    var key = Object.keys(st.seas).sort().join(',') + '|' + Object.keys(st.visited).sort().join(',');
+    var key = Object.keys(st.seas).sort().join(',') + '|' + Object.keys(st.visited).sort().join(',') + '|' + Object.keys(st.found || {}).sort().join(',');
     if (base && baseKey === key) return base;
     base = document.createElement('canvas'); base.width = NW; base.height = NH; baseKey = key;
     var g = base.getContext('2d'), img = g.createImageData(NW, NH), d = img.data;
@@ -213,8 +213,10 @@ var BridgeChart = (function () {
     for (var y2 = 0; y2 < NH; y2++) for (var x2 = 0; x2 < NW; x2++) {
       var i = y2 * NW + x2, s = regions[i], n = hash(x2 * 13 + y2 * 7919);
       var r = 216, gg = 200, b = 160;                                          // parchment
-      if (charted(s) || Object.keys(st.visited).some(function (id) { return seaOf(id) === s; })) {
-        var T = TINT[s], k = charted(s) ? 0.42 : 0.2;
+      // a sea you've charted in full colour; one you've sailed into (an island visited or stumbled on) lightly — its
+      // islands stay off the chart until you buy it
+      if (charted(s) || Object.keys(st.visited).concat(Object.keys(st.found || {})).some(function (id) { return seaOf(id) === s; })) {
+        var T = TINT[s], k = charted(s) ? 0.42 : 0.3;
         r = r * (1 - k) + T[0] * k; gg = gg * (1 - k) + T[1] * k; b = b * (1 - k) + T[2] * k;
         if ((x2 * 3 + y2 * 7) % 23 === 0 && ((y2 >> 2) % 3 === 0)) { r -= 24; gg -= 22; b -= 18; }   // little waves
       } else if ((x2 + y2) % 6 === 0) { r -= 14; gg -= 14; b -= 12; }        // uncharted: hatched
