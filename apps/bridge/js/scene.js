@@ -314,6 +314,9 @@ var BridgeScene = (function () {
     var th = (m.theta || 45) * Math.PI / 180;
     var cot = Math.cos(th) / Math.sin(th), tan = Math.tan(th);
     var depth = sc.depth, W = m.width, H = m.height;
+    // xray 'auto' (people walking about): a silhouette only once most of them is hidden — behind a building or a
+    // tall cabinet you'd lose yourself entirely; behind a counter your legs just go, as they should
+    var auto = xray === 'auto', hid = auto ? [] : null, seen = 0;
     for (var j = 0; j < sh; j++) {
       var Y = dy + j;
       var srow = (Y - offY) / NATIVE_TS;
@@ -328,10 +331,19 @@ var BridgeScene = (function () {
         if (!d[k]) continue;
         var xx = dx + i - left;
         if (xx < 0 || xx >= W) continue;
+        if (auto && d[k] > 120) seen++;
         if (depth[rowBase + xx] < cd - DEPTH_EPS) {
-          if (xray) { d[k - 3] = 214; d[k - 2] = 226; d[k - 1] = 255; d[k] = 92; }   // hidden: a pale silhouette, so you can see yourself in the trees
+          if (auto) { if (d[k] > 120) hid.push(k); else d[k] = 0; }   // (the shadow under them is fainter: never ghosted)
+          else if (xray) { d[k - 3] = 214; d[k - 2] = 226; d[k - 1] = 255; d[k] = 92; }   // hidden: a pale silhouette, so you can see yourself in the trees
           else d[k] = 0;
         }
+      }
+    }
+    if (auto) {
+      var ghost = seen && hid.length / seen > 0.55;
+      for (var h = 0; h < hid.length; h++) {
+        var q = hid[h];
+        if (ghost) d[q] = 120; else d[q] = 0;              // seen through: themselves, faded (reads on snow as on stone)
       }
     }
     tctx.putImageData(data, 0, 0);

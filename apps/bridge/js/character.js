@@ -279,7 +279,7 @@ var BridgeCharacter = (function () {
         var footY = Math.round(offY + footRow * ts);
         BridgeScene.drawOccluded(ctx, sc, sheet.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H,
           cx - FRAME_W / 2, footY - (FRAME_H - 3), footRow, offX, offY,
-          BridgeScene.tintAt(sc, world, pos.x, pos.y, now), { x: cx, y: footY, rx: 9, ry: 3 });
+          BridgeScene.tintAt(sc, world, pos.x, pos.y, now), { x: cx, y: footY, rx: 9, ry: 3 }, null, 'auto');
       }
     };
   }
