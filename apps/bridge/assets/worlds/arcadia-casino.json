@@ -4593,7 +4593,8 @@
         "sheet": "npc-pitboss",
         "x": 22,
         "y": 11,
-        "facing": "down"
+        "facing": "down",
+        "lift": 0.35
       },
       {
         "sheet": "npc-stickman",
@@ -4617,7 +4618,8 @@
         "sheet": "npc-royale-cashier",
         "x": 16,
         "y": 3,
-        "facing": "down"
+        "facing": "down",
+        "lift": 0.3
       },
       {
         "sheet": "npc-doorman",

@@ -299,7 +299,8 @@ SIT = [('npc-boxman', 14, 16, 'down'), ('npc-boxman', 22, 16, 'down'), ('npc-box
        ('npc-gambler-c', 15, 13, 'up'), ('npc-gambler-d', 27, 13, 'up'),
        ('npc-patron-b', 5, 8, 'up'), ('npc-gambler-a', 8, 13, 'up'), ('npc-gambler-d', 1, 18, 'up'), ('npc-gambler-b', 4, 23, 'up'),
        ('npc-patron-a', 39, 19, 'up'), ('npc-gambler-c', 37, 8, 'up'), ('npc-gambler-b', 40, 8, 'up'), ('npc-patron-b', 36, 15, 'up')]
-actors = [{'sheet': s, 'x': x, 'y': y, 'facing': f} for (s, x, y, f) in ACT]
+LIFT = {'npc-pitboss': 0.35, 'npc-royale-cashier': 0.3}          # stood up behind a podium, the cage's counter or a desk, or only their heads show
+actors = [dict({'sheet': s, 'x': x, 'y': y, 'facing': f}, **({'lift': LIFT[s]} if s in LIFT else {})) for (s, x, y, f) in ACT]
 actors += [{'sheet': s, 'x': x, 'y': y, 'facing': f, 'pose': 'sit'} for (s, x, y, f) in SIT]
 actors += [{'sheet': 'npc-singer', 'x': 39, 'y': 4, 'facing': 'down', 'lift': SH},
            {'sheet': 'npc-pianist', 'x': 36, 'y': 4, 'facing': 'right', 'pose': 'sit', 'lift': SH}]

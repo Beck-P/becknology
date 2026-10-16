@@ -1946,7 +1946,8 @@
         "sheet": "npc-runouts-host",
         "x": 27,
         "y": 10,
-        "facing": "down"
+        "facing": "down",
+        "lift": 0.25
       },
       {
         "sheet": "npc-courier",

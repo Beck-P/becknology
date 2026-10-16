@@ -162,7 +162,8 @@ ACT = [('npc-dealer', 4, 4, 'down'), ('npc-dealer-b', 11, 4, 'down'), ('npc-deal
 SIT = [('npc-gambler-b', 2, 6, 'right'), ('npc-gambler-a', 5, 7, 'up'), ('npc-patron-a', 3, 4, 'down'),
        ('npc-gambler-d', 13, 6, 'left'), ('npc-gambler-c', 10, 4, 'down'), ('npc-patron-b', 12, 7, 'up'),
        ('npc-gambler-b', 6, 10, 'right'), ('npc-gambler-a', 9, 9, 'down'), ('npc-patron-a', 10, 10, 'left')]
-actors = [{'sheet': s, 'x': x, 'y': y, 'facing': f} for (s, x, y, f) in ACT]
+LIFT = {'npc-runouts-host': 0.25}          # stood up behind a podium, the cage's counter or a desk, or only their heads show
+actors = [dict({'sheet': s, 'x': x, 'y': y, 'facing': f}, **({'lift': LIFT[s]} if s in LIFT else {})) for (s, x, y, f) in ACT]
 actors += [{'sheet': s, 'x': x, 'y': y, 'facing': f, 'pose': 'sit'} for (s, x, y, f) in SIT]
 for a in actors:
     k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
