@@ -87,5 +87,11 @@ for cj in range(rows):
     for ci in range(PER_ROW):
         k.point_light(ci * CW + 0.6, cj * CH + CH - 1.6, 3.2, '#fff0dc', 60, radius=0.6)
 k.render(OUT, light_states={'full': {}}, light_samples=64, world_light=('#a0a0b0', 0.9))
+# pieces that share another's sprite: (id, name, price, the piece whose cell they're drawn from) - the strongbox is a
+# bigger chest (js/storage.js CHESTS) on the old trunk's sprite
+SHARED = [('strongbox', "Captain's Strongbox", 280, 'trunk')]
+for pid, name, price, like in SHARED:
+    src = [m for m in manifest if m['id'] == like][0]
+    manifest.append(dict(src, id=pid, name=name, price=price))
 open(os.path.join(ROOT, 'apps', 'bridge', 'assets', 'furniture.json'), 'w').write(json.dumps({'pieces': manifest}, indent=1) + '\n')
 print('furniture', len(manifest))

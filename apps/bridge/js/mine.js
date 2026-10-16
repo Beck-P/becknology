@@ -338,7 +338,7 @@ var BridgeMine = (function () {
       BridgeInventory.removeItem(F.ore, F.n);
       if (F.also) BridgeInventory.removeItem(F.also, 1);
       if (F.from) BridgeInventory.removeItem(F.from, 1);
-      BridgeInventory.addItem(to, 1);
+      if (BridgeInventory.give) BridgeInventory.give(to, 1, { title: 'Hob\'s made it - but your pack is full' }); else BridgeInventory.addItem(to, 1);
       sfx('success');
       say('HOB', 'THE FORGE ROARS, THE HAMMER RINGS, AND HOB HANDS YOU A ' + F.name + ', STILL WARM. "MIND YOU DON\'T DIG STRAIGHT THROUGH THE FLOOR."');
     });

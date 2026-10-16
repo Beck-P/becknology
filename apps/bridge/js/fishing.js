@@ -241,7 +241,8 @@ var BridgeFishing = (function () {
         else where = 'The fish hold\'s full - you let it go';
       } else {
         var kept = typeof BridgeInventory !== 'undefined' ? BridgeInventory.addItem(id, 1) : true;
-        where = kept === false ? 'No room in your pack, so you let it go' : 'Into your pack';
+        if (kept === false && BridgeInventory.offer && !st.boat) { st.makeRoom = id; where = 'Your pack is full - make room for it'; }   // put the card away: the swap
+        else where = kept === false ? 'No room in your pack, so you let it go' : 'Into your pack';
       }
       msg = (junk ? '' : size + ' cm' + (best && c.n > 1 ? ' - your biggest yet! ' : '. ')) + where + '.';
     }
@@ -254,7 +255,7 @@ var BridgeFishing = (function () {
   // ---- the catch, up on a card: the fish drawn big, its rarity, its size, NEW the first time -------------------------
   // It takes no notice of keys or taps for a while (longer for the rare ones), and pressing during that only makes it
   // wait longer — someone still hammering the reel keeps it up until they stop; then a fresh press puts it away.
-  var card = null, cardTimer = 0, LOCK = [1400, 1700, 2300, 3000], STAY = [4200, 5000, 7000, 9500];
+  var card = null, cardTimer = 0, LOCK = [1400, 1700, 2300, 3000], STAY = [3000, 3500, 5000, 7000];   // STAY: how long it stays once it's ready
   function hush(c) { c.lockUntil = Math.max(c.lockUntil, performance.now() + 600); c.armed = false; }   // a press too soon: wait on
   function reveal(o) {
     hideCard(true);
@@ -280,7 +281,7 @@ var BridgeFishing = (function () {
     card.querySelector('.fr-tier').textContent = o.id === 'bottle' ? 'Flotsam' : T.name;
     card.querySelector('.fr-name').textContent = name(o.id);
     card.querySelector('.fr-size').textContent = o.quote || (o.size ? o.size + ' cm' + (o.best ? ' · your biggest yet!' : '') : '');
-    var worth = it && it.value > 1 && o.id !== 'old_boot' && !/let it go/.test(o.where) ? 'worth about ' + it.value : '';
+    var worth = it && it.value > 1 && o.id !== 'old_boot' && !/let it go|make room/.test(o.where) ? 'worth about ' + it.value : '';
     card.querySelector('.fr-where').textContent = [o.where, worth].filter(Boolean).join(' · ');
     if (o.chest) card.querySelector('.fr-chest').textContent = 'And a chest from the deep: ' + o.chest;
     card.querySelector('.fr-go').textContent = touch() ? 'Tap to carry on' : 'Space · carry on';
@@ -304,13 +305,19 @@ var BridgeFishing = (function () {
     sfx(o.tier >= 3 ? 'fanfare' : o.tier >= 2 ? 'rarecatch' : o.first ? 'success' : null);
     if (o.chest) setTimeout(function () { sfx('coin'); }, 500);
     clearTimeout(cardTimer);
-    cardTimer = setTimeout(function () { if (card === c0 && !c0.classList.contains('fr-ready')) { cardTimer = setTimeout(hideCard, 1500); return; } hideCard(); }, STAY[o.tier] || 4200);
+    c0.tier = o.tier;                                              // (it goes by itself a while after it's ready - frame())
   }
   function hideCard(now) {
     clearTimeout(cardTimer);
     var c = card; card = null;
     if (!c) return;
     if (st) st.calm = performance.now() + 300;                     // the next cast waits a moment, for a fresh press
+    if (st && st.makeRoom && !now) {                                // a catch your pack couldn't take: put the rod down, make room
+      var id = st.makeRoom; st.makeRoom = null;
+      close();
+      BridgeInventory.offer(id, 1, { title: 'You caught it - but your pack is full',
+        onTake: function () { sfx('pickup'); }, onDecline: function () { if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Let go', name(id), 'Back into the water it goes', false); } });
+    }
     if (now) { c.remove(); return; }
     c.classList.add('fr-out');
     setTimeout(function () { c.remove(); }, 320);
@@ -353,7 +360,10 @@ var BridgeFishing = (function () {
       if (st.progress >= 1) land();
       else if (st.progress <= 0) { pop('SNAP!', 'bad'); set('lost', { msg: 'The line snaps.', snap: true }); }
     }
-    if (card && !card.classList.contains('fr-ready') && now >= card.lockUntil) { card.classList.add('fr-ready'); if (!keyDown) card.armed = true; }
+    if (card && !card.classList.contains('fr-ready') && now >= card.lockUntil) {
+      card.classList.add('fr-ready'); if (!keyDown) card.armed = true;
+      clearTimeout(cardTimer); cardTimer = setTimeout(hideCard, STAY[card.tier] || 3000);
+    }
     swim(dt, now);
     draw(now);
     raf = requestAnimationFrame(frame);

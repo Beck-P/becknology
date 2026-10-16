@@ -1459,7 +1459,8 @@ var BridgeInteractions = (function () {
           buyBtn.textContent = '...';
           BridgeProgression.wagerCoins(entry.price, 'vendor:' + entry.id).then(function (res) {
             if (res && res.ok) {
-              BridgeInventory.addItem(entry.id, 1);
+              // bought and paid for: if it won't fit, you're asked what to make room with (it's never just lost)
+              if (BridgeInventory.give) BridgeInventory.give(entry.id, 1, { title: 'Bought - but your pack is full' }); else BridgeInventory.addItem(entry.id, 1);
               updateBalance(res.balance);
             }
             renderItems();

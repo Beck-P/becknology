@@ -163,7 +163,7 @@ var BridgeTreasure = (function () {
     var M = MAPS[id];
     BridgeProgression.wagerCoins(M.price, 'treasure_map:' + id).then(function (res) {
       if (!res || !res.ok) return say('ILSA', res && (res.reason === 'insufficient' || res.reason === 'no_balance') ? '"' + M.price + ' COINS, NOT A COPPER LESS."' : '"THE TILL\'S STUCK. COME BACK."');
-      BridgeInventory.addItem('tmap_' + id, 1);
+      BridgeInventory.give('tmap_' + id, 1);
       if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('pickup');
       say('ILSA', '"' + M.title + '. USE IT FROM YOUR PACK TO LOOK AT IT - AND LOOK HARD AT THE LANDMARKS."');
     });

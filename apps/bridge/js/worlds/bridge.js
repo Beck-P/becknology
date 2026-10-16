@@ -7,7 +7,7 @@
  * holographic star map (drawn live, depth-tested — the world JSON's `holo`
  * says where), and both open the nav chart. Around the room, stations are
  * `deck` interactions handled here (BridgeDeck): the navigator's chart desk
- * (the journal), the wireless and the scope (what's out the window), the
+ * (the map of everything, in the game menu: js/map.js), the wireless and the scope (what's out the window), the
  * aether gauges, the letter rack (letters from people you've helped or
  * befriended, js/talk.js) and the decor slots — plants, lamps, a rug, a
  * curio, a flag — shown as scene layers when owned. Hired crew stand at
@@ -973,7 +973,9 @@
   function use(inter) {
     var say = function (t) { BridgeInteractions.say(inter.label, t, inter); };
     switch (inter.action) {
-      case 'journal': if (typeof BridgeQuests !== 'undefined') BridgeQuests.open(); break;
+      case 'journal':                                        // the chart desk: the map of everything (js/map.js), in the game menu
+        if (typeof BridgeMenu !== 'undefined') BridgeMenu.open('map', { all: true }); else if (typeof BridgeQuests !== 'undefined') BridgeQuests.open();
+        break;
       case 'letters': openLetters(); break;
       case 'comms': say(commsText()); break;
       case 'engineering': say(engineeringText()); break;
