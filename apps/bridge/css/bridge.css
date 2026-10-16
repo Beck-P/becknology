@@ -1920,6 +1920,12 @@ html.home-editing #mp-pill, html.home-editing #mp-layer { display: none !importa
 #chart-pill .ip-key { font-size: 10px; min-width: 22px; height: 18px; }
 html.touch #chart-pill { padding: 7px 14px; left: calc(12px + env(safe-area-inset-left)); top: calc(186px + env(safe-area-inset-top)); }
 html.touch #chart-pill .ip-key { display: none; }
+#sf-fire {                                                                    /* crewing in a sea fight, on touch: the swivel (js/seafight.js) */
+  position: fixed; right: calc(16px + env(safe-area-inset-right)); bottom: 46%; z-index: 71; width: 64px; height: 64px; border-radius: 50%;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 14px; letter-spacing: 1px; color: #fff4d0;
+  background: radial-gradient(circle at 40% 35%, #b84a30, #6a2010); border: 2px solid rgba(255, 220, 140, 0.7); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+#sf-fire:active { transform: scale(0.94); }
 #sloop-chart-btn {
   position: fixed; top: calc(12px + env(safe-area-inset-top)); right: calc(64px + env(safe-area-inset-right)); z-index: 71;
   height: 44px; padding: 0 16px; font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 15px; color: rgba(242, 238, 230, 0.92);

@@ -12,9 +12,17 @@
  * The drowned don't hail. A Moon Lantern (js/fleet.js FITS) keeps them off; moonglass (`holy`) bites them twice as hard,
  * plain iron barely. A hull battered to nothing founders: salvors tow her into the nearest port, her hold lost
  * (`api.wreck`). A sloop with no guns can only pay or run.
+ *
+ * Sailing together (js/sloop.js crew mode), the fight is the captain's and both of you are in it. The captain's game runs
+ * it and sends the crew its state ten times a second (`sf`: every foe's id, kind, place, heading, speed, health, state;
+ * the hull; the shots fired since), what's said (`sf-say`), a hit on her (`sf-shake`) and the prize (`sf-prize`). The
+ * crew's game draws it all, plays the shots out, shows the hull — and the crew mans a swivel gun: F (or the FIRE button)
+ * sends `sf-fire` and the captain's game fires it at that ship (5 a ball, 7 tiles, every 1.6 s). With a mate aboard
+ * your guns reload a quarter quicker and you're two fighters stronger if they board. A ship sunk pays you both.
  */
 var BridgeSeaFight = (function () {
-  var api = null, foes = [], shots = [], puffs = [], gunT = [], asked = false, msgs = 0;
+  var api = null, foes = [], shots = [], puffs = [], gunT = [], asked = false, msgs = 0, nextId = 0;
+  var SWIVEL = { dmg: 5, range: 7, reload: 1.6, arc: 'any' };              // the crew's gun
   var CHANCE = { emerald: 0.1, sapphire: 0.22, rose: 0.2, crimson: 0.45, midnight: 0.55 };
   var BLACK = ['#3e383c', '#2c2629', '#1c1619'], GHOST = ['#b8d8c8', '#90b0a0', '#68887a'];
   var FOE_GUNS = {
@@ -32,6 +40,7 @@ var BridgeSeaFight = (function () {
   };
 
   function F() { return typeof BridgeFleet !== 'undefined' ? BridgeFleet : null; }
+  function say(t, ms) { if (api) api.say(t, ms); tellCrew('sf-say', { t: t, ms: ms }); }
   function wrap(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function dist(a, b) { return Math.hypot(a.x - b.x, a.r - b.r); }
@@ -44,7 +53,7 @@ var BridgeSeaFight = (function () {
   }
 
   /** A fresh passage. */
-  function reset(a) { api = a; foes = []; shots = []; puffs = []; gunT = []; asked = false; }
+  function reset(a) { api = a; foes = []; shots = []; puffs = []; gunT = []; asked = false; out = []; mir = null; }
   /** You've set a course: will anything come for you on the way? */
   function plan() {
     if (!api || foes.length) return;
@@ -67,7 +76,7 @@ var BridgeSeaFight = (function () {
   }
   function spawn(kind, x, r, h) {
     var K = KINDS[kind];
-    foes.push({ kind: kind, K: K, x: x, r: r, h: h, v: 0, hp: K.hull, max: K.hull, state: 'lurk', guns: K.guns.map(function (g) { return { g: FOE_GUNS[g], t: 1 + Math.random() * 2 }; }),
+    foes.push({ id: ++nextId, kind: kind, K: K, x: x, r: r, h: h, v: 0, hp: K.hull, max: K.hull, state: 'lurk', guns: K.guns.map(function (g) { return { g: FOE_GUNS[g], t: 1 + Math.random() * 2 }; }),
                 b: { x: x, r: r, h: h, v: 0, sheet: 1.2, boom: 0.5, side: 1, heel: 0, rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6, luff: false, empty: true,
                      crew: !K.ghost, seed: Math.random() * 10, spec: K.spec, cloth: K.cloth, tint: K.tint } });
   }
@@ -81,17 +90,19 @@ var BridgeSeaFight = (function () {
     o.state = 'hail';
     var guns = api.spec().guns || [], d = demand();
     api.sfx('bell');
+    tellCrew('sf-hail', { d: d });
     api.ask('A black flag', 'THEY\'VE RUN OUT THEIR GUNS. "HEAVE TO! ' + d + ' COINS AND YOU SAIL ON - OR WE TAKE YOUR HOLD."', [
       ['Pay them off (' + d + ')', function () { pay(o, d); }],
-      [guns.length ? 'Fight' : 'Fight (you have no guns)', guns.length ? function () { o.state = 'fight'; api.say('Fight it is. Put them on your beam - your guns fire as they bear', 4200); } : null],
-      ['Run for it', function () { o.state = 'chase'; api.say('You crack on every stitch of sail. They come after you', 3600); }]
-    ], function () { if (o.state === 'hail') { o.state = 'chase'; api.say('You turn away. They come after you', 3000); } });
+      [guns.length ? 'Fight' : crew() ? 'Fight (your mate has a swivel)' : 'Fight (you have no guns)', guns.length || crew() ? function () {
+        o.state = 'fight'; say(guns.length ? 'Fight it is. Put them on your beam - your guns fire as they bear' : 'Fight it is - your mate on the swivel. Keep them close', 4200); } : null],
+      ['Run for it', function () { o.state = 'chase'; say('You crack on every stitch of sail. They come after you', 3600); }]
+    ], function () { if (o.state === 'hail') { o.state = 'chase'; say('You turn away. They come after you', 3000); } });
   }
   function pay(o, d) {
     var P = typeof BridgeProgression !== 'undefined' && BridgeProgression.wagerCoins ? BridgeProgression.wagerCoins(d, 'pirates') : Promise.resolve({ ok: false });
     P.then(function (r) {
-      if (r && r.ok) { api.say('A bag of coins across the water. They dip their flag and bear away', 4000); }
-      else { var lost = takeHold(1 / 3); api.say(lost ? 'No coins - so they take a third of your hold, and laugh about it' : 'Nothing worth taking. They spit and bear away', 4200); }
+      if (r && r.ok) { say('A bag of coins across the water. They dip their flag and bear away', 4000); }
+      else { var lost = takeHold(1 / 3); say(lost ? 'No coins - so they take a third of your hold, and laugh about it' : 'Nothing worth taking. They spit and bear away', 4200); }
       o.state = 'leave';
     });
   }
@@ -114,8 +125,8 @@ var BridgeSeaFight = (function () {
       if (o.state === 'lurk') {                                       // drifting, waiting: close in once you're near
         speed = 0.35;
         if (d < (o.lost ? 9 : 18)) {
-          if (K.ghost) { o.state = ward ? 'shy' : 'hunt'; api.say(ward ? 'A drowned ship slides out of the mist - and turns from your lantern\'s light' : 'Green lanterns in the mist. A drowned ship, and it\'s coming for you', 4200); api.sfx('bell'); }
-          else { o.state = 'approach'; api.say('Sail on the ' + (wrap(Math.atan2(o.r - b.r, o.x - b.x) - b.h) > 0 ? 'starboard' : 'port') + ' bow. Black sails - pirates', 3600); }
+          if (K.ghost) { o.state = ward ? 'shy' : 'hunt'; say(ward ? 'A drowned ship slides out of the mist - and turns from your lantern\'s light' : 'Green lanterns in the mist. A drowned ship, and it\'s coming for you', 4200); api.sfx('bell'); }
+          else { o.state = 'approach'; say('Sail on the ' + (wrap(Math.atan2(o.r - b.r, o.x - b.x) - b.h) > 0 ? 'starboard' : 'port') + ' bow. Black sails - pirates', 3600); }
         }
       }
       if (o.state === 'approach') { want = Math.atan2(b.r - o.r, b.x - o.x); speed = 0.9; if (d < 9.5) hail(o); }
@@ -125,14 +136,14 @@ var BridgeSeaFight = (function () {
         var abeam = Math.atan2(b.r - o.r, b.x - o.x), keep = 4.5;
         if (d > keep + 2) { want = abeam; speed = 1; }
         else { var par = b.h + (wrap(abeam - b.h) > 0 ? 0.25 : -0.25) * (d < keep - 1.5 ? -1 : 1); want = par; speed = clamp(b.v / (K.spec.vmax || 4), 0.3, 1); }
-        if (o.hp < o.max * 0.3 && !K.ghost) { o.state = 'leave'; api.say('They\'ve had enough - they bear away, burning', 3200); }
-        else if (K.ghost && d > 22) { o.state = 'lurk'; o.lost = true; api.say('The green lanterns fade into the mist behind you. You\'ve lost it - for now', 3600); }
+        if (o.hp < o.max * 0.3 && !K.ghost) { o.state = 'leave'; say('They\'ve had enough - they bear away, burning', 3200); }
+        else if (K.ghost && d > 22) { o.state = 'lurk'; o.lost = true; say('The green lanterns fade into the mist behind you. You\'ve lost it - for now', 3600); }
         else if ((api.hull() < 0.35 || o.boardOk) && d < 2.2) board(o);
       }
       if (o.state === 'chase') {
         want = Math.atan2(b.r - o.r, b.x - o.x); speed = 1;
         if (d < 1.8) board(o);
-        if (d > 24) { o.state = 'leave'; api.say('They\'ve lost you in the swell. They give up the chase', 3600); }
+        if (d > 24) { o.state = 'leave'; say('They\'ve lost you in the swell. They give up the chase', 3600); }
       }
       if (o.state === 'leave') { want = Math.atan2(o.r - b.r, o.x - b.x); speed = 1; if (d > 34) o.state = 'gone'; }
       if (o.state === 'sink') { o.sinkT = (o.sinkT || 0) + dt; o.v *= 1 - dt; o.b.heel = Math.min(1.1, o.sinkT * 0.35); if (o.sinkT > 5) o.state = 'gone'; }
@@ -166,7 +177,7 @@ var BridgeSeaFight = (function () {
       var t = targets.filter(function (o) { return bears(b, o, g); }).sort(function (p, q) { return dist(p, b) - dist(q, b); })[0];
       if (!t) return;
       fire(b, t, g, 'you');
-      gunT[i] = g.reload * (g.manned ? 0.5 : 1);
+      gunT[i] = g.reload * (g.manned ? 0.5 : 1) * (crew() ? 0.75 : 1);     // a mate aboard helps run them out
     });
     // shots in flight
     shots.forEach(function (s) {
@@ -181,12 +192,13 @@ var BridgeSeaFight = (function () {
     });
     shots = shots.filter(function (s) { return !s.done; });
     puffs = puffs.filter(function (p) { p.age += dt; return p.age < 1.2; });
+    broadcast(now);
   }
   function bears(from, to, g) {
     var d = dist(from, to);
     if (d > g.range) return false;
     var rel = wrap(Math.atan2(to.r - from.r, to.x - from.x) - from.h);
-    return g.arc === 'bow' ? Math.abs(rel) < 0.35 : Math.abs(Math.sin(rel)) > 0.72;
+    return g.arc === 'any' ? true : g.arc === 'bow' ? Math.abs(rel) < 0.35 : Math.abs(Math.sin(rel)) > 0.72;
   }
   function fire(from, to, g, who) {
     var d = dist(from, to), acc = clamp(0.88 - d / g.range * 0.38 - Math.abs(to.v || 0) * 0.03, 0.25, 0.9);
@@ -197,6 +209,7 @@ var BridgeSeaFight = (function () {
     var mu = (Math.random() - 0.5) * L * 0.5, c = Math.cos(from.h), s = Math.sin(from.h), bw = g.arc === 'bow' ? 0 : 0.6;
     var ox = from.x + (g.arc === 'bow' ? c * L / 2 : c * mu - s * side * bw), or = from.r + (g.arc === 'bow' ? s * L / 2 : s * mu + c * side * bw);
     shots.push({ x: ox, r: or, tx: tx, tr: tr, t: 0, T: Math.max(0.25, d / 14), dmg: g.dmg, at: to, holy: !!g.holy, ghost: !!g.ghost, who: who });
+    if (crew()) out.push([r2(ox), r2(or), r2(tx), r2(tr), r2(Math.max(0.25, d / 14)), g.ghost ? 1 : 0, g.holy ? 1 : 0]);   // for the crew to see
     puffs.push({ x: ox, r: or, z: 0.4, age: 0, kind: g.ghost ? 'ghostflash' : 'smoke' });
     api.sfx(g.ghost ? 'zap' : 'cannon');
   }
@@ -204,8 +217,8 @@ var BridgeSeaFight = (function () {
     var f = F(), s = ship();
     if (!f || !s) return;
     var left = f.damage(s.id, dmg);
-    api.shake();
-    if (++msgs % 3 === 1) api.say(ghost ? 'Green fire splashes across the deck - the planks blacken with frost' : 'A ball smashes through the bulwark! Hull at ' + Math.round(left * 100) + '%', 2200);
+    api.shake(); tellCrew('sf-shake', {});
+    if (++msgs % 3 === 1) say(ghost ? 'Green fire splashes across the deck - the planks blacken with frost' : 'A ball smashes through the bulwark! Hull at ' + Math.round(left * 100) + '%', 2200);
     if (left <= 0) api.wreck('The ' + s.name + ' is holed below the waterline and settles by the head');
   }
   function hurtThem(o, dmg) {
@@ -224,24 +237,162 @@ var BridgeSeaFight = (function () {
     var s = ship(), T = typeof BridgeTrade !== 'undefined' ? BridgeTrade : null, got = 0, good = K.cargo[Math.floor(Math.random() * K.cargo.length)];
     if (s && T) { var n = Math.min(3 + Math.floor(Math.random() * 5), T.fits(s, good)); if (n > 0) { s.hold[good] = (s.hold[good] || 0) + n; got = n; F().save(); } }
     if (typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) BridgeProgression.awardCoins(coins, K.ghost ? 'sea:drowned' : 'sea:pirates');
-    api.say((K.ghost ? 'The drowned ship comes apart into mist and green light. ' : 'She strikes her colours and goes down by the stern. ') + coins + ' coins' +
+    say((K.ghost ? 'The drowned ship comes apart into mist and green light. ' : 'She strikes her colours and goes down by the stern. ') + coins + ' coins' +
             (got ? ' and ' + got + ' ' + (T ? T.name(good) : good) + ' hauled aboard' : '') + '!', 5200);
     if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('At sea', K.ghost ? 'A drowned ship sent home' : 'Pirates beaten', '+' + coins + ' coins' + (C && !K.ghost && C.marque() ? ' (the Crown\'s bounty, doubled)' : ''));
+    tellCrew('sf-prize', { coins: coins, kind: o.kind });
   }
   function board(o) {
     if (o.boarded) return;
     o.boarded = true;
-    var you = api.spec().fighters || 1, them = o.K.fighters, win = Math.random() < you / (you + them);
+    var you = (api.spec().fighters || 1) + (crew() ? 2 : 0), them = o.K.fighters, win = Math.random() < you / (you + them);
     api.sfx('slam');
-    if (win) { api.say('Grapnels! They swarm over the rail - and your hands throw them back. You board them in turn', 4200); sink(o); }
+    if (win) { say('Grapnels! They swarm over the rail - and your hands throw them back. You board them in turn', 4200); sink(o); }
     else {
       var lost = takeHold(0.5);
-      api.say(o.K.ghost ? 'Cold hands over the rail. The drowned take what they want and sink back into the mist' : 'Grapnels! They swarm aboard and take ' + (lost ? 'half your hold' : 'what little you have') + ', then cast off laughing', 4600);
+      say(o.K.ghost ? 'Cold hands over the rail. The drowned take what they want and sink back into the mist' : 'Grapnels! They swarm aboard and take ' + (lost ? 'half your hold' : 'what little you have') + ', then cast off laughing', 4600);
       var f = F(), s = ship();
       if (f && s && f.damage(s.id, 6) <= 0) api.wreck('Stripped and holed, the ' + s.name + ' wallows');
       o.state = 'leave';
     }
   }
+
+  // ---- sailing together: the captain's fight, sent to the crew; the crew's swivel gun --------------------------------
+  var out = [], sentAt = 0, mir = null, coolUntil = 0, loopOn = false;
+  function N() { return typeof BridgeNet !== 'undefined' ? BridgeNet : null; }
+  function sloopCrew() { return typeof BridgeSloop !== 'undefined' && BridgeSloop._crew ? BridgeSloop._crew() : {}; }
+  function crew() { return sloopCrew().crewOf || null; }                 // a mate aboard your ship
+  function captain() { return sloopCrew().captainOf || null; }           // you're aboard theirs
+  function r2(v) { return Math.round(v * 100) / 100; }
+  function tellCrew(e, d) { var c = crew(), n = N(); if (c && n) n.send(e, d, c.id); }
+  // the captain, each frame of the fight (from update): the state, ten times a second, while there's anything to tell
+  function broadcast(now) {
+    var c = crew(), n = N();
+    if (!c || !n || now - sentAt < 100) return;
+    if (!foes.length && !out.length && !(mir0 && mir0.length)) return;
+    sentAt = now;
+    var f = F(), sh = ship();
+    var state = foes.map(function (o) {
+      return [o.id, o.kind, r2(o.x), r2(o.r), r2(o.h), r2(o.v), Math.round(o.hp), o.max, o.state, r2(o.sinkT || 0), o.flash && now - o.flash < 200 ? 1 : 0, r2(o.b.boom), o.b.side, r2(o.b.hoist), r2(o.b.heel)];
+    });
+    n.send('sf', { f: state, hull: sh ? r2(sh.hull) : 1, s: out }, c.id);
+    out = []; mir0 = state;
+  }
+  var mir0 = null;
+  // the crew: apply what the captain's game says
+  function apply(d) {
+    if (!api || !d || !Array.isArray(d.f)) return;
+    var now = performance.now(), keep = {};
+    mir = { at: now, hull: typeof d.hull === 'number' ? d.hull : 1 };
+    d.f.forEach(function (e) {
+      keep[e[0]] = 1;
+      var o = foes.filter(function (q) { return q.id === e[0]; })[0];
+      if (!o) {
+        var K = KINDS[e[1]];
+        if (!K) return;
+        o = { id: e[0], kind: e[1], K: K, x: e[2], r: e[3], h: e[4], v: e[5], guns: [],
+              b: { x: e[2], r: e[3], h: e[4], v: 0, sheet: 1.2, boom: 0.5, side: 1, heel: 0, rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6, luff: false, empty: true,
+                   crew: !K.ghost, seed: Math.random() * 10, spec: K.spec, cloth: K.cloth, tint: K.tint } };
+        foes.push(o);
+      }
+      o.tx = e[2]; o.tr = e[3]; o.th = e[4]; o.v = e[5]; o.hp = e[6]; o.max = e[7]; o.state = e[8]; o.sinkT = e[9];
+      if (e[10]) o.flash = now;
+      o.b.boom = e[11]; o.b.side = e[12]; o.b.hoist = e[13]; o.b.heel = e[14];
+    });
+    foes = foes.filter(function (o) { return keep[o.id]; });
+    (d.s || []).forEach(function (q) {
+      shots.push({ x: q[0], r: q[1], tx: q[2], tr: q[3], t: 0, T: q[4], ghost: !!q[5], holy: !!q[6], mirror: true });
+      puffs.push({ x: q[0], r: q[1], z: 0.4, age: 0, kind: q[5] ? 'ghostflash' : 'smoke' });
+      api.sfx(q[5] ? 'zap' : 'cannon');
+    });
+    if (!loopOn) { loopOn = true; last = now; requestAnimationFrame(follow); }
+  }
+  // the crew's own frames: the foes eased toward where the captain's game has them, the shots played out
+  var last = 0;
+  function follow(now) {
+    var dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!api || !captain() || !mir || now - mir.at > 4000) {          // the captain's gone quiet (or you're ashore): it's over here too
+      loopOn = false; mir = null; if (captain() || !api) { foes = []; shots = []; puffs = []; } return;
+    }
+    var k = Math.min(1, dt * 8);
+    foes.forEach(function (o) {
+      if (typeof o.tx !== 'number') return;
+      if (Math.hypot(o.tx - o.x, o.tr - o.r) > 4) { o.x = o.tx; o.r = o.tr; } else { o.x += (o.tx - o.x) * k; o.r += (o.tr - o.r) * k; }
+      o.h = wrap(o.h + wrap(o.th - o.h) * k);
+      o.b.x = o.x; o.b.r = o.r; o.b.h = o.h; o.b.v = o.v;
+    });
+    shots.forEach(function (q) {
+      q.t += dt;
+      if (q.t < q.T || q.done) return;
+      q.done = true;
+      var b = api.boat(), hit = foes.some(function (o) { return Math.hypot(o.x - q.tx, o.r - q.tr) < o.K.spec.L * 0.5 + 0.45; }) ||
+                 (b && Math.hypot(b.x - q.tx, b.r - q.tr) < (api.spec().L || 2.6) * 0.5 + 0.45);
+      puffs.push({ x: q.tx, r: q.tr, z: 0, age: 0, kind: hit ? (q.ghost ? 'ghosthit' : 'hit') : 'splash' });
+      if (!hit) api.sfx('splash');
+    });
+    shots = shots.filter(function (q) { return !q.done; });
+    puffs = puffs.filter(function (p) { p.age += dt; return p.age < 1.2; });
+    requestAnimationFrame(follow);
+  }
+  // the crew's swivel: the nearest ship that means harm, in range
+  function swivelTarget() {
+    var b = api && api.boat();
+    if (!b || !mir) return null;
+    return foes.filter(function (o) { return (hostile(o) || o.state === 'hail' || o.state === 'leave') && o.state !== 'sink' && dist(o, b) <= SWIVEL.range; })
+      .sort(function (p, q) { return dist(p, b) - dist(q, b); })[0] || null;
+  }
+  function crewFire() {
+    var cap = captain(), n = N(), now = performance.now();
+    if (!cap || !n || !mir || now < coolUntil) return false;
+    var t = swivelTarget();
+    if (!t) { api.say('Nothing in reach of the swivel', 1400); return true; }
+    coolUntil = now + SWIVEL.reload * 1000;
+    n.send('sf-fire', { id: t.id }, cap.id);
+    var b = api.boat();
+    puffs.push({ x: b.x, r: b.r, z: 0.5, age: 0, kind: 'smoke' });
+    return true;
+  }
+  document.addEventListener('keydown', function (e) {
+    if ((e.key === 'f' || e.key === 'F') && !e.repeat && captain() && mir && foes.length) { if (crewFire()) { e.preventDefault(); e.stopPropagation(); } }
+  }, true);
+  var fireBtn = null;
+  function paintFire() {                                         // on touch: a FIRE button while there's a fight to fire at
+    var show = !!(captain() && mir && foes.some(function (o) { return hostile(o) || o.state === 'hail'; })) && document.documentElement.classList.contains('touch');
+    if (!fireBtn && show) {
+      fireBtn = document.createElement('button'); fireBtn.type = 'button'; fireBtn.id = 'sf-fire'; fireBtn.textContent = 'FIRE';
+      fireBtn.addEventListener('pointerdown', function (e) { e.preventDefault(); crewFire(); });
+      document.body.appendChild(fireBtn);
+    }
+    if (fireBtn) fireBtn.style.display = show ? '' : 'none';
+  }
+  (function wire() {
+    var n = N();
+    if (!n) return;
+    var fromCaptain = function (from) { var c = captain(); return c && c.id === from; };
+    n.on('sf', function (d, from) { if (fromCaptain(from)) apply(d); });
+    n.on('sf-say', function (d, from) { if (fromCaptain(from) && api && d && d.t) api.say(d.t, d.ms || 3000); });
+    n.on('sf-shake', function (d, from) { if (fromCaptain(from) && api) api.shake(); });
+    n.on('sf-hail', function (d, from) {
+      var c = captain();
+      if (!fromCaptain(from) || !api) return;
+      api.sfx('bell');
+      api.say('Black sails, guns run out: "HEAVE TO!" ' + (c && c.name ? String(c.name).charAt(0) + String(c.name).slice(1).toLowerCase() : 'The captain') + ' answers them', 4200);
+    });
+    n.on('sf-prize', function (d, from) {
+      if (!fromCaptain(from) || !d) return;
+      var coins = Math.max(0, Math.round(+d.coins || 0)), K = KINDS[d.kind];
+      if (coins && typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) BridgeProgression.awardCoins(coins, 'sea:crew');
+      if (K && typeof BridgeCrown !== 'undefined' && BridgeCrown.noteWin) BridgeCrown.noteWin(K);
+      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('At sea', K && K.ghost ? 'A drowned ship sent home' : 'Pirates beaten', 'Your share: +' + coins + ' coins');
+    });
+    n.on('sf-fire', function (d, from) {                          // the captain's game: the mate's swivel goes off
+      var c = crew();
+      if (!c || c.id !== from || !api || !d) return;
+      var b = api.boat(), o = foes.filter(function (q) { return q.id === d.id; })[0];
+      if (b && o && o.state !== 'sink' && dist(o, b) <= SWIVEL.range + 1) fire(b, o, SWIVEL, 'crew');
+    });
+  })();
+  setInterval(paintFire, 400);
 
   // ---- drawing ----------------------------------------------------------------------------------------------------
   function items(now) {
@@ -295,18 +446,24 @@ var BridgeSeaFight = (function () {
     var f = F(), sh = ship();
     if (!f || !sh || !api) return;
     var foe = foes.filter(function (o) { return hostile(o) || o.state === 'hail' || o.state === 'approach'; })[0];
-    if (!foe && sh.hull > 0.995) return;
+    var hull = captain() ? (mir ? mir.hull : 1) : sh.hull;          // aboard theirs: their hull
+    if (!foe && hull > 0.995) return;
     var w = Math.round(170 * s), h = Math.round(8 * s), x = Math.round(W - w - 34 * s), y = Math.round(40 * s);   // top right, clear of the messages
     ctx.save();
-    ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(x - 8 * s, y - 16 * s, w + 16 * s, foe ? 46 * s : 30 * s);
+    ctx.fillStyle = 'rgba(6,10,20,0.72)'; ctx.fillRect(x - 8 * s, y - 16 * s, w + 16 * s, foe ? (captain() ? 58 : 46) * s : 30 * s);
     ctx.font = Math.round(9 * s) + 'px "Pixelify Sans", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#c8d0e0'; ctx.fillText('HULL', x, y - 7 * s);
     ctx.fillStyle = '#2a3040'; ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = sh.hull > 0.5 ? '#60d080' : sh.hull > 0.25 ? '#e0c060' : '#e04838'; ctx.fillRect(x, y, Math.round(w * sh.hull), h);
+    ctx.fillStyle = hull > 0.5 ? '#60d080' : hull > 0.25 ? '#e0c060' : '#e04838'; ctx.fillRect(x, y, Math.round(w * hull), h);
     if (foe) {
       ctx.fillStyle = foe.K.ghost ? '#90ffc0' : '#f08070';
       var st = foe.state === 'chase' ? 'GIVING CHASE' : foe.state === 'hail' ? 'HAILING YOU' : foe.state === 'approach' ? 'CLOSING' : 'ENGAGED';
       ctx.fillText(foe.K.name.toUpperCase() + ' · ' + st, x, y + h + 10 * s);
+      if (captain() && !document.documentElement.classList.contains('touch')) {     // the crew's gun
+        var ready = performance.now() >= coolUntil, inR = !!swivelTarget();
+        ctx.fillStyle = ready && inR ? '#ffe080' : '#7a8090';
+        ctx.fillText(ready ? (inR ? 'F · FIRE THE SWIVEL' : 'SWIVEL · OUT OF RANGE') : 'SWIVEL · RELOADING', x, y + h + 22 * s);
+      }
     }
     ctx.restore();
   }
