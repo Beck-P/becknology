@@ -86,7 +86,7 @@ meta = k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 
 
 # ---- world JSON ------------------------------------------------------------------
 w = json.load(open(WORLD))
-blocked = {tuple(b) for b in meta['blocked']}
+blocked = {tuple(b) for b in meta['blocked']} if meta else set(k.blocked)          # (no meta under SCENE_NORENDER)
 coll = []
 for r in range(ROWS):
     row = []

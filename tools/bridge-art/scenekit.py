@@ -34,6 +34,16 @@ S = 1 / math.sin(THETA)
 TS = 32
 LIGHT_EXPOSURE = -2.0   # stops; keep in sync with scene_post.LIGHT_GAIN
 HEIGHT_RANGE = 3.0      # the height pass maps z in [-3, 3] tiles to 0..1
+SOLID_COVER = 0.3       # Kit.solid: a footprint no longer than a tile blocks the cells it covers at least this much of
+
+
+def _cells(a0, a1):
+    """The cells k.solid blocks along one axis of a footprint [a0, a1)."""
+    full = range(int(math.floor(a0)), int(math.ceil(a1)))
+    if a1 - a0 > 1.05:
+        return list(full)
+    keep = [c for c in full if min(a1, c + 1) - max(a0, c) >= SOLID_COVER - 1e-9]
+    return keep or [int(math.floor((a0 + a1) / 2))]
 
 
 def _scale(x, y, z):
@@ -310,11 +320,17 @@ class Kit:
 
     def solid(self, x0, r0, x1, r1):
         """Mark tiles [x0,x1) × [r0,r1) as blocked for the collision map
-        (ignored inside a variant: decor doesn't change collisions)."""
+        (ignored inside a variant: decor doesn't change collisions).
+
+        Along a side no longer than a tile (a post, a barrel, a tree's trunk, a bench's depth) only the cells the
+        footprint really stands on are blocked — at least SOLID_COVER of the cell — so a lamp post on a tile line
+        doesn't wall off both tiles and a crate that pokes a sliver over the line doesn't close the next tile; at
+        least one cell (the one under its centre) always is. Longer sides (walls, counters, buildings) block every
+        cell they touch."""
         if self._var is not None:
             return
-        for c in range(int(x0), int(math.ceil(x1))):
-            for r in range(int(r0), int(math.ceil(r1))):
+        for c in _cells(x0, x1):
+            for r in _cells(r0, r1):
                 self.blocked.add((c, r))
 
     # ---- materials per pass ---------------------------------------------
