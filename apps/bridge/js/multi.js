@@ -355,6 +355,7 @@ var BridgeMulti = (function () {
     var n = N();
     if (!n) return;
     n.on('pos', onPos);
+    n.on('clue', onClue);
     n.on('hi', function (d) { if (d && d.i === myInst()) { sentJson = ''; sentAt = 0; } });
     n.on('emote', function (d, from) { if (d && EMOTES[d.k]) heard(from, EMOTES[d.k], 2600, d.k === 'heart' ? 'sent you a heart ♥' : 'waves'); });
     n.on('say', function (d, from) { if (d && d.t) { heard(from, esc(d.t), 5200, '“' + d.t + '”'); if (typeof BridgeQuests !== 'undefined' && BridgeQuests.note && others[from]) { /* in person: not logged */ } } });
@@ -367,6 +368,32 @@ var BridgeMulti = (function () {
     n.on('leave', function (p, id) { drop(id); });
     n.on('peers', paintPill);
   }
+
+  // ---- found together: a clue you find with someone beside you (6 tiles) counts for them too ---------------------------
+  function shareClues() {
+    if (typeof BridgeQuests === 'undefined' || !BridgeQuests.onInteract || BridgeQuests.__shared) return;
+    var on0 = BridgeQuests.onInteract;
+    BridgeQuests.onInteract = function (worldId, inter) {
+      var before = BridgeQuests.found().length;
+      on0.apply(this, arguments);
+      if (sharing || !inter || BridgeQuests.found().length === before || typeof BridgeCharacter === 'undefined') return;
+      var here = myInst(), rp = BridgeCharacter.getRenderPos(), n = N();
+      Object.keys(others).forEach(function (id) {
+        var a = others[id];
+        if (n && Math.hypot(a.x - rp.x, a.y - rp.y) <= 6) n.send('clue', { w: worldId, label: inter.label, i: here }, id);
+      });
+    };
+    BridgeQuests.__shared = true;
+  }
+  var sharing = false;
+  function onClue(d, from) {
+    if (!d || !d.label || typeof BridgeQuests === 'undefined') return;
+    var before = BridgeQuests.found().length;
+    sharing = true;
+    try { BridgeQuests.onInteract(d.w, { label: d.label }); } finally { sharing = false; }
+    if (BridgeQuests.found().length > before) { var p = N() && N().peer(from); toast('Found together', 'With ' + cap(p ? p.name : 'your mate'), 'It\'s in your journal too'); }
+  }
+  shareClues();
 
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('*', { items: items });
   wire();

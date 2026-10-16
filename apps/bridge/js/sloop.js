@@ -445,7 +445,8 @@ var BridgeSloop = (function () {
     buoys(B);
     homeGulls(B, 3);
     whale = { done: false };
-    if (fight()) setTimeout(function () { if (running && fight()) fight().plan(); }, 0);
+    if (fight() && !captainOf) setTimeout(function () { if (running && fight()) fight().plan(); }, 0);
+    if (crewOf && net()) net().send('course', { id: J.id, P0: P0, prefer: prefer, outFrom: outFrom || null }, crewOf.id);
   }
   function crossing(P0) {
     var seed = wind.seed, course = Math.atan2(B.exit[1] - P0[1], B.exit[0] - P0[0]);
@@ -509,14 +510,23 @@ var BridgeSloop = (function () {
 
   // ---- start and stop ---------------------------------------------------------------------------------------------
   var aboardStart = false, shipId = null, shipName = 'your sloop', blessing = false;
+  // sailing together (js/multi.js): `crewOf` — a partner aboard your ship; `captainOf` — you're aboard theirs, and your
+  // passage follows their boat (`mirror`, their helm ten times a second) instead of sailing itself
+  var crewOf = null, captainOf = null, mirror = null, helmAt = 0, seaAt = 0, seaPeers = {};
   function mercy() { return blessing ? 0.5 : 1; }                  // a candle lit at St Brendan's (js/crown.js): half the harm
   function start(fromId, toId, opts) {
-    var charted = typeof BridgeChart !== 'undefined' ? BridgeChart.dest() : null;     // a course set on the chart ashore
+    var crewing = !!(opts && opts.crew);
+    var charted = !crewing && typeof BridgeChart !== 'undefined' ? BridgeChart.dest() : null;     // a course set on the chart ashore
     if (!toId && charted && charted !== fromId && knows(charted)) toId = charted;
-    if (running || !knows(fromId) || (toId && (!knows(toId) || fromId === toId))) return false;
+    if (running || (!crewing && (!knows(fromId) || (toId && (!knows(toId) || fromId === toId))))) return false;
     aboardStart = !!(opts && opts.aboard);
+    crewOf = opts && opts.crewWith || null; captainOf = opts && opts.crew || null; mirror = null; seaPeers = {};
     var act = typeof BridgeFleet !== 'undefined' ? BridgeFleet.active() : null;
     SP = act ? act.spec : SLOOP; shipId = act ? act.ship.id : null; shipName = act ? act.ship.name : 'your sloop';
+    if (captainOf) {                                                   // aboard someone else's: their hull, their name, none of your fleet
+      SP = typeof BridgeFleet !== 'undefined' && captainOf.type ? BridgeFleet.spec(captainOf.type) : SLOOP;
+      shipId = null; shipName = captainOf.shipName || 'their boat'; act = null; aboardStart = true;
+    }
     running = true; from = fromId; to = toId || null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
     wake = []; spray = []; fish = []; msg = null; prompt = null; readyCount = 0; seaWas = null; auto = false;
     aim = null; committing = false; hinted = false; said = {}; told = {}; B = null; B0 = null; wrecking = false; shakeUntil = 0;
@@ -553,6 +563,9 @@ var BridgeSloop = (function () {
       if (!running || !canvas) return;                               // put back before she was ready
       if (!A.sc) { fail(); return; }
       if (B0) lay(); else layA();
+      if (captainOf && captainOf.wind) { wind.from = captainOf.wind.from; wind.seed = captainOf.wind.seed; }
+      if (crewOf && net()) net().send('sail-go', { from: from, to: B0 ? B0.id : null, wind: { from: wind.from, seed: wind.seed }, type: act && act.ship ? act.ship.type : 'sloop',
+                                                  shipName: shipName, suit: suitOf() }, crewOf.id);
       var fl = fleetAt(A, act && act.ship), mine = fl.filter(function (e) { return e.ship.id === shipId; })[0] || fl[0];
       A.pier = A.moor.slice();
       A.moor = [mine.x, mine.r]; A.moorH = mine.h; A.inner = mine.inner;          // where she lies, among the rest of your ships
@@ -591,7 +604,7 @@ var BridgeSloop = (function () {
     return Math.hypot(boat.x - A.exit[0], boat.r - A.exit[1]) < 6 || boat.x < -4 || boat.r < -4 || boat.x > A.w + 4 || boat.r > A.h + 4;
   }
   // a course from the chart: laid out the way the island really lies, from the harbour mouth if you're still inside
-  function canSetCourse() { return running && !!A && !!boat && !B && !committing && (phase === 'sail' || phase === 'cast') && !(fight() && fight().busy()); }
+  function canSetCourse() { return running && !captainOf && !!A && !!boat && !B && !committing && (phase === 'sail' || phase === 'cast') && !(fight() && fight().busy()); }
   function setCourse(id) {
     if (!canSetCourse() || id === A.id || !knows(id)) return false;
     if (phase === 'sail' && outside()) commit(id, [boat.x, boat.r], bearingTo(id));
@@ -630,6 +643,8 @@ var BridgeSloop = (function () {
 
   function stop(dest, landed) {
     if (!running) return;
+    if (crewOf && net()) net().send('sail-end', { dest: dest || from, landed: !!landed }, crewOf.id);
+    crewOf = null; captainOf = null; mirror = null; seaPeers = {};
     running = false;
     cancelAnimationFrame(raf);
     document.documentElement.classList.remove('keys-mode');
@@ -701,6 +716,11 @@ var BridgeSloop = (function () {
 
   function openMenu() {
     if (menu || !running) return;
+    if (captainOf) {                                                 // aboard theirs: the helm isn't yours
+      ask('Aboard the ' + shipName, (cap(captainOf.name) + ' has the helm.').toUpperCase(), [['Keep sailing', closeMenu],
+        ['Open the chart (C)', function () { closeMenu(); openChart(); }], ['Row back ashore at ' + (A ? A.name : 'the quay'), function () { closeMenu(); stop(from); }]]);
+      return;
+    }
     var fn = A ? A.name : 'the quay', opts = [['Keep sailing', closeMenu]], fight = typeof BridgeSeaFight !== 'undefined' && BridgeSeaFight.busy();
     if (typeof BridgeChart !== 'undefined') opts.push(['Open the chart (C)', function () { closeMenu(); openChart(); }]);
     if (B && !fight) opts.push(['Skip ahead to ' + B.name, function () { closeMenu(); landThen(to, function () { stop(to); }); }]);
@@ -822,6 +842,7 @@ var BridgeSloop = (function () {
     wind.s = wind.base * (1 + g);
     wind.now = W0;
     var b = boat;
+    if (captainOf) { crewUpdate(b, dt, now, t); return; }
     // steering: a turn of speed from the rudder, a little even when stopped (you can scull her round)
     var castT = phase === 'cast' ? now - phaseAt : 1e9;
     var steer = (down('arrowright', 'd') ? 1 : 0) - (down('arrowleft', 'a') ? 1 : 0);
@@ -973,14 +994,165 @@ var BridgeSloop = (function () {
     if (phase === 'moor') {
       var mt = now - phaseAt;
       b.empty = mt > MOOR.off;
+      if (crewOf && net()) net().send('helm', helmState(now), crewOf.id);
       if (mt > MOOR.lines && !said.made) { said.made = 1; say('Made fast at ' + B.name + '. You throw the lines ashore', 1600); sfx('click'); }
-      if (mt > MOOR.done && !hold) {
+      if (mt > MOOR.done && !hold && !captainOf) {
         hold = 1;
         if (shipId && typeof BridgeFleet !== 'undefined') BridgeFleet.moored(shipId, to);   // she lies here now
         landThen(to, function () { setTimeout(function () { hold = 0; stop(to, true); }, 300); });
       }
     }
   }
+
+  // ---- sailing together -----------------------------------------------------------------------------------------------
+  function net() { return typeof BridgeNet !== 'undefined' && BridgeNet.online() ? BridgeNet : null; }
+  function helmState(now) {
+    var b = boat;
+    return { x: b.x, r: b.r, h: b.h, v: b.v, sheet: b.sheet, boom: b.boom, side: b.side, heel: b.heel, hoist: b.hoist, rudder: b.rudder,
+             luff: b.luff, stall: b.stall, eff: b.eff, off: b.off, bump: b.bump, empty: !!b.empty, ph: phase, pt: now - phaseAt, wn: wind.now, ws: wind.s };
+  }
+  // aboard their boat: she goes where their helm takes her; the sea, the islands and what's adrift are the same as theirs
+  function crewUpdate(b, dt, now, t) {
+    var m = mirror;
+    if (m) {
+      var k = Math.min(1, dt * 10);
+      if (Math.hypot(m.x - b.x, m.r - b.r) > 3) { b.x = m.x; b.r = m.r; } else { b.x += (m.x - b.x) * k; b.r += (m.r - b.r) * k; }
+      b.h = wrap(b.h + wrap(m.h - b.h) * k);
+      ['v', 'sheet', 'boom', 'heel', 'hoist', 'rudder', 'eff', 'off'].forEach(function (f) { if (typeof m[f] === 'number') b[f] += (m[f] - b[f]) * k; });
+      b.side = m.side; b.luff = m.luff; b.stall = m.stall; b.bump = m.bump || 0;
+      wind.now = m.wn; wind.s = m.ws;
+      if (m.ph && m.ph !== phase) { phase = m.ph; phaseAt = now - (m.pt || 0); }
+    }
+    b.empty = false;
+    var c = Math.cos(b.h), s = Math.sin(b.h);
+    if (Math.abs(b.v) > 0.25) {
+      b.wakeT = (b.wakeT || 0) + dt;
+      while (b.wakeT > 0.05) {
+        b.wakeT -= 0.05;
+        for (var q = -1; q <= 1; q += 2) wake.push({ x: b.x - c * 1.2 + -s * q * 0.3, r: b.r - s * 1.2 + c * q * 0.3, vx: -s * q * 0.35, vr: c * q * 0.35, age: 0, v: b.v });
+        wake.push({ x: b.x - c * 1.25, r: b.r - s * 1.25, vx: 0, vr: 0, age: 0, v: b.v, glow: true });
+      }
+    }
+    wake = wake.filter(function (w) { w.age += dt; w.x += w.vx * dt; w.r += w.vr * dt; return w.age < 2.6; });
+    spray = spray.filter(function (p) { p.age += dt; p.x += p.vx * dt; p.r += p.vr * dt; p.z += p.vz * dt; p.vz -= 6 * dt; return p.z > -0.05 && p.age < 1.4; });
+    life(dt, now);
+    var here = seaHere();
+    if (phase === 'sail' && here !== seaWas) { if (!told[here]) say(LORE[here], 5600); told[here] = true; seaWas = here; }
+    if (phase === 'cast' && !said.crew) { said.crew = 1; say('You\'re aboard the ' + shipName + ' - ' + cap(captainOf.name) + ' has the helm', 3200); }
+    prompt = null;
+    if (phase === 'sail' && Math.abs(b.v) < 0.6 && now - began > 6000 && typeof BridgeFishing !== 'undefined') prompt = { text: 'Cast a line', act: fishHere };
+    if (mirror && now - mirror.at > 12000 && !said.lost) {          // the captain's gone quiet: back to port
+      said.lost = 1; say('No word from the helm - you put back in', 2400);
+      setTimeout(function () { stop(B && to ? to : from, true); }, 2600);
+    }
+  }
+  function cap(n) { return String(n || '').toLowerCase().replace(/(^|\s)([a-z])/g, function (m, a, c) { return a + c.toUpperCase(); }); }
+  function onNet() {
+    var n = typeof BridgeNet !== 'undefined' ? BridgeNet : null;
+    if (!n) return;
+    n.on('helm', function (d, from) { if (running && captainOf && captainOf.id === from && d) { d.at = performance.now(); mirror = d; } });
+    n.on('course', function (d, from) {
+      if (!running || !captainOf || captainOf.id !== from || !d || B) return;
+      loadIsland(d.id, function (J) { if (running && J.sc && !B) { placeB(J, d.P0, d.prefer, d.outFrom); to = J.id; } });
+    });
+    n.on('haul', function (d, from) { var o = captainOf && captainOf.id === from && things[d && d.i]; if (o) { o.got = true; burst(o.x, o.r, 8, 'spray'); } });
+    n.on('sail-end', function (d, from) {
+      if (!running || !captainOf || captainOf.id !== from) return;
+      say(d.landed ? 'Made fast. You climb out onto the quay' : 'You go ashore', 1600);
+      var dest = d.dest;
+      setTimeout(function () { stop(dest, !!d.landed); }, 900);
+    });
+    n.on('leave', function (p, id) {
+      if (running && captainOf && captainOf.id === id) { say(cap(captainOf.name) + ' has gone - you bring her in yourself', 2400); setTimeout(function () { stop(B && to ? to : from, true); }, 2600); }
+      if (crewOf && crewOf.id === id) { say(cap(crewOf.name) + ' has gone ashore', 2200); crewOf = null; }
+      delete seaPeers[id];
+    });
+    // other boats out at the same time: where they are on the chart, shown where that falls on your water
+    n.on('sea', function (d, from) {
+      if (!running || !d || (captainOf && captainOf.id === from) || (crewOf && crewOf.id === from)) return;
+      var p = fromChart(d.cx, d.cy, d.hc);
+      if (!p) { delete seaPeers[from]; return; }
+      var o = seaPeers[from] || (seaPeers[from] = { x: p.x, r: p.r, h: p.h, v: 0, bump: 0, heel: 0, sheet: 1, boom: 0.6, side: 1, hoist: 1, eff: 1, off: 1.6, rudder: 0 });
+      o.tx = p.x; o.tr = p.r; o.th = p.h; o.v = d.v || 0; o.name = d.name; o.suit = d.suit; o.heel = d.heel || 0; o.boom = d.boom || 0.6; o.side = d.side || 1;
+      o.spec = typeof BridgeFleet !== 'undefined' && d.type ? BridgeFleet.spec(d.type) : SLOOP; o.at = performance.now();
+    });
+  }
+  // the chart's frame and back: where you are among the islands (chartPos), and a chart point on your water
+  function chartFrame() {
+    var P = isles(), pa = P[A.id];
+    if (!pa) return null;
+    if (!B || !P[B.id]) return { pa: pa, scale: true, qr: 1, qi: 0 };
+    var pb = P[B.id], cx = pb.x - pa.x, cy = (pb.y - pa.y) * 0.72, wx = B.cx + B.ox - A.cx, wy = B.cy + B.oy - A.cy;
+    var den = wx * wx + wy * wy || 1;
+    return { pa: pa, qr: (cx * wx + cy * wy) / den, qi: (cy * wx - cx * wy) / den };
+  }
+  function fromChart(cx, cy, hc) {
+    var F = chartFrame();
+    if (!F) return null;
+    var dx = cx - F.pa.x, dy = cy - F.pa.y;
+    if (F.scale) { if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) return null; return { x: A.cx + dx * 400, r: A.cy + dy * 288, h: hc }; }
+    var ex = dx, ey = dy * 0.72, m2 = F.qr * F.qr + F.qi * F.qi || 1;                  // world = (chart - pa) / q
+    return { x: A.cx + (ex * F.qr + ey * F.qi) / m2, r: A.cy + (ey * F.qr - ex * F.qi) / m2, h: hc - Math.atan2(F.qi, F.qr) };
+  }
+  function chartHeading() { var F = chartFrame(); return F ? boat.h + Math.atan2(F.qi, F.qr) : boat.h; }
+  // each frame: the helm to your crew; where you are to anyone else at sea
+  function broadcast(now) {
+    var n = net();
+    if (!n || !boat || phase === 'load') return;
+    if (crewOf && now - helmAt > 100) { helmAt = now; n.send('helm', helmState(now), crewOf.id); }
+    if (!captainOf && now - seaAt > 250 && n.peers().some(function (p) { return p.act === 'sailing'; })) {
+      seaAt = now;
+      var cp = chartPos(), me = n.me(), act = typeof BridgeFleet !== 'undefined' ? BridgeFleet.active().ship : null;
+      if (cp) n.send('sea', { cx: cp.x, cy: cp.y, hc: chartHeading(), v: boat.v, heel: boat.heel, boom: boat.boom, side: boat.side,
+                              type: act ? act.type : 'sloop', name: me && me.name, suit: suitOf() });
+    }
+    Object.keys(seaPeers).forEach(function (id) {                    // ease theirs toward where they said they were
+      var o = seaPeers[id];
+      if (now - o.at > 4000) { delete seaPeers[id]; return; }
+      var k = 0.12;
+      o.x += (o.tx - o.x) * k; o.r += (o.tr - o.r) * k; o.h = wrap(o.h + wrap(o.th - o.h) * k);
+    });
+  }
+  function suitOf() { return typeof BridgeCharacter !== 'undefined' ? String(BridgeCharacter.sportKey()).replace(/^(sit|ski|climb)-/, '') : 'purple'; }
+  onNet();
+  // asking someone aboard (their menu, js/multi.js): they say yes, you cast off, and their passage follows yours
+  function invite(id) {
+    var n = net(), w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId(), act = typeof BridgeFleet !== 'undefined' ? BridgeFleet.active().ship : null;
+    if (!n || !w || running) return;
+    n.send('sail-ask', { from: w, shipName: act ? act.name : 'your sloop', type: act ? act.type : 'sloop' }, id);
+    if (typeof BridgeQuests !== 'undefined') BridgeQuests.toast('Sail together', 'Asking ' + cap(n.peer(id) ? n.peer(id).name : 'them'), 'You cast off when they come aboard', false);
+  }
+  function wireInvites() {
+    var n = typeof BridgeNet !== 'undefined' ? BridgeNet : null;
+    if (!n) return;
+    n.on('sail-ask', function (d, from) {
+      var p = n.peer(from), who = cap(p ? p.name : 'Someone');
+      if (running || !d || typeof BridgeInteractions === 'undefined') { n.send('sail-no', {}, from); return; }
+      BridgeInteractions.choose({ title: who + ' asks you aboard', text: ('Sail together on the ' + d.shipName + '? ' + who + ' has the helm; you can fish over the side.').toUpperCase(),
+        buttons: [{ label: 'Come aboard', act: function () { n.send('sail-yes', { suit: suitOf() }, from); } },
+                  { label: 'Not now', act: function () { n.send('sail-no', {}, from); } }], closeLabel: 'Not now' });
+    });
+    n.on('sail-yes', function (d, from) {
+      var p = n.peer(from), w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId();
+      if (running || !w || !knows(w)) return;
+      start(w, null, { crewWith: { id: from, name: p ? p.name : 'your mate', suit: d && d.suit || 'purple' } });
+    });
+    n.on('sail-no', function (d, from) { var p = n.peer(from); if (typeof BridgeQuests !== 'undefined') BridgeQuests.toast('Sail together', cap(p ? p.name : 'They') + ' said not now', '', false); });
+    n.on('sail-go', function (d, from) {
+      var p = n.peer(from);
+      if (running || !d) return;
+      start(d.from, d.to, { crew: { id: from, name: p ? p.name : 'the captain', suit: d.suit, type: d.type, shipName: d.shipName, wind: d.wind } });
+    });
+  }
+  wireInvites();
+  window.addEventListener('load', function () {
+    if (typeof BridgeMulti === 'undefined') return;
+    BridgeMulti.addMenu(function (id, p, remote) {
+      var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId();
+      if (remote || !p || running || !w || !knows(w) || !BridgeMulti.others()[id]) return [];
+      return [{ label: 'Sail together', act: function () { invite(id); } }];
+    });
+  });
 
   function seaName(pal) { return { emerald: 'the Emerald Sea', crimson: 'the Crimson Sea', rose: 'the Rose Sea', sapphire: 'the Sapphire Sea', midnight: 'the Midnight Sea' }[pal] || 'open water'; }
 
@@ -1023,6 +1195,7 @@ var BridgeSloop = (function () {
   function seaHere() { return boat ? (seaSide(boat.x, boat.r) > 0 ? B : A).pal : A.pal; }
   function haul(o) {
     o.got = true;
+    if (crewOf && net()) net().send('haul', { i: things.indexOf(o) }, crewOf.id);
     burst(o.x, o.r, 8, 'spray');
     sfx('pickup');
     var r = hash(o.seed + Date.now() % 97);
@@ -1320,8 +1493,13 @@ var BridgeSloop = (function () {
         var wc = P(hs[0] + 0.32, 0, hz + 0.55);
         bctx.fillStyle = '#4a3018'; disc(wc[0], wc[1], 4, 4); bctx.fillStyle = '#2a1a0c'; disc(wc[0], wc[1], 2, 2);
       }
-      if (b.crew) drawCrew(seat, b, now); else if (!b.empty) (wheel ? drawHelmsman : drawPilot)(seat, b, now);
-      if (!bb && !b.empty && fishingOpen()) drawRod(b, seat, hs[0], bw, wheel, now);
+      var mate = !bb && (crewOf || captainOf), cu = wheel ? 0 : hs[0] + 0.75 * k, cv = wheel ? bw * 0.55 : -hs[1];
+      var mateSeat = mate ? P(cu, cv, wheel ? hz : 0.12) : null;
+      if (b.crew) drawCrew(seat, b, now);
+      else if (b.suit) (wheel ? drawHelmsman : drawPilot)(seat, b, now, b.suit);                      // another player's boat
+      else if (!b.empty) (wheel ? drawHelmsman : drawPilot)(seat, b, now, captainOf ? captainOf.suit : null);   // aboard theirs: they have the helm
+      if (mate) (wheel ? drawHelmsman : drawPilot)(mateSeat, b, now, crewOf ? crewOf.suit : null);  // your mate (or you, aboard theirs)
+      if (!bb && !b.empty && fishingOpen()) drawRod(b, captainOf ? mateSeat : seat, captainOf ? cu : hs[0], bw, wheel && !captainOf, now);
     } }];
     rg.masts.forEach(function (m) {
       var mu = -L2 + m.f * sp.L, deck = m.z != null ? m.z + 0.3 : rg.deck;   // (a mast on the quarterdeck stands higher)
@@ -1455,9 +1633,9 @@ var BridgeSloop = (function () {
     return [-0.82 * k, -b.side * 0.22 * (sp.beam || 1)];
   }
   // you standing at a big ship's wheel (the walking sheet, still)
-  function drawHelmsman(seat, b, now) {
+  function drawHelmsman(seat, b, now, suit) {
     if (typeof BridgeCharacter === 'undefined' || !BridgeCharacter.sportImage) return;
-    var img = BridgeCharacter.sportImage(BridgeCharacter.sportKey(), false);
+    var img = BridgeCharacter.sportImage(suit || BridgeCharacter.sportKey(), false);
     if (!img) return;
     var a = ((b.h % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
     bctx.drawImage(img, [0, 1, 2, 1][Math.floor(now / 340) % 4] * 32, [1, 0, 3, 2][q] * 48, 32, 48, Math.round(seat[0]) - 16, Math.round(seat[1]) - 45, 32, 48);
@@ -1494,9 +1672,9 @@ var BridgeSloop = (function () {
     var row = [1, 0, 3, 2][q], col = 4 + Math.floor(now / 90) % 8;
     bctx.drawImage(img, col * 32, row * 48, 32, 48, sx(x) - 16, sy(r) - 45, 32, 48);
   }
-  function drawPilot(seat, b, now) {
+  function drawPilot(seat, b, now, suit) {
     if (typeof BridgeCharacter === 'undefined' || !BridgeCharacter.sportImage) return;
-    var img = BridgeCharacter.sportImage(BridgeCharacter.sportKey('sit'), false);
+    var img = BridgeCharacter.sportImage(suit ? 'sit-' + suit : BridgeCharacter.sportKey('sit'), false);
     if (!img) return;
     // facing the way the bow points, nearest of four
     var a = ((b.h % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), q = Math.round(a / (Math.PI / 2)) % 4;
@@ -1722,6 +1900,10 @@ var BridgeSloop = (function () {
       var X = sx(o.x), Y = sy(o.r);
       if (X > -140 && X < W + 140 && Y > -160 && Y < H + 80) list.push({ row: o.r, draw: function () { drawBoat(now, o); } });
     });
+    Object.keys(seaPeers).forEach(function (id) {                     // other players out sailing
+      var o = seaPeers[id], X = sx(o.x), Y = sy(o.r);
+      if (X > -200 && X < W + 200 && Y > -220 && Y < H + 120) list.push({ row: o.r, draw: function () { drawBoat(now, o); } });
+    });
     // stepping aboard and ashore: you on the pier, the boat's lines made fast to it
     var castT = phase === 'cast' ? now - phaseAt : -1, moorT = phase === 'moor' ? now - phaseAt : -1;
     var quay = phase === 'moor' ? B && (B.inner || [B.dock[0] + B.ox, B.dock[1] + B.oy]) : (A.inner || [A.dock[0] + A.ox, A.dock[1] + A.oy]);
@@ -1800,7 +1982,7 @@ var BridgeSloop = (function () {
     ctx.fillStyle = '#f2ecd6'; ctx.fillRect(tx0 + (b.sheet - 0.1) / 1.35 * tw - px(2), ty0 - px(3), px(4), th + px(6));
     ctx.textAlign = 'left'; ctx.fillStyle = '#8a90a8'; ctx.fillText('IN', tx0, ty0 + th + px(10));
     ctx.textAlign = 'right'; ctx.fillText('OUT', tx0 + tw, ty0 + th + px(10));
-    var state = fishingOpen() ? ['LYING STILL — A LINE OVER THE SIDE', '#a0d0e0'] : b.off < 0.7 ? ['IN IRONS — BEAR AWAY', '#ff9080'] : b.luff ? ['LUFFING — HAUL IN', '#ffd060'] : b.stall ? ['STALLED — EASE OUT', '#ffb070'] : ['DRAWING', '#80e0a0'];
+    var state = captainOf ? ['CREWING — ' + cap(captainOf.name).toUpperCase() + ' HAS THE HELM', '#a0d0e0'] : fishingOpen() ? ['LYING STILL — A LINE OVER THE SIDE', '#a0d0e0'] : b.off < 0.7 ? ['IN IRONS — BEAR AWAY', '#ff9080'] : b.luff ? ['LUFFING — HAUL IN', '#ffd060'] : b.stall ? ['STALLED — EASE OUT', '#ffb070'] : ['DRAWING', '#80e0a0'];
     ctx.textAlign = 'left'; ctx.fillStyle = state[1]; ctx.font = px(10) + 'px "Pixelify Sans", monospace';
     ctx.fillText(state[0] + (auto ? ' · AUTO (T)' : ''), tx0, ty0 - px(14));
     var pos = b.off < 0.7 ? 'HEAD TO WIND' : b.off < 1.15 ? 'CLOSE-HAULED' : b.off < 1.9 ? 'BEAM REACH' : b.off < 2.65 ? 'BROAD REACH' : 'RUNNING';
@@ -1843,6 +2025,15 @@ var BridgeSloop = (function () {
         ctx.fillStyle = '#f2ecd6'; ctx.fillText(l, canvas.width / 2, y);
       });
     }
+    Object.keys(seaPeers).forEach(function (id) {
+      var o = seaPeers[id], X = sx(o.x) * Z, Y = (sy(o.r) - 18 - 30 * Math.sqrt((o.spec && o.spec.L || 2.6) / 2.6)) * Z;
+      if (X < -100 || X > canvas.width + 100 || Y < -40 || Y > canvas.height + 40 || !o.name) return;
+      ctx.font = px(11) + 'px "Pixelify Sans", monospace'; ctx.textAlign = 'center';
+      var nm = cap(o.name), wn = ctx.measureText(nm).width + px(14);
+      ctx.fillStyle = 'rgba(14,12,22,0.7)'; ctx.fillRect(X - wn / 2, Y - px(9), wn, px(18));
+      ctx.strokeStyle = 'rgba(160,220,255,0.4)'; ctx.lineWidth = px(1); ctx.strokeRect(X - wn / 2, Y - px(9), wn, px(18));
+      ctx.fillStyle = '#f2eee6'; ctx.fillText(nm, X, Y + px(1));
+    });
     if (prompt && !fishingOpen() && !menu) {
       ctx.font = px(13) + 'px "Pixelify Sans", monospace';
       var label = (touch() ? 'TAP' : 'E') + '  ' + prompt.text.toUpperCase(), w2 = ctx.measureText(label).width + px(28);
@@ -1871,6 +2062,8 @@ var BridgeSloop = (function () {
       return;
     }
     if (!menu && !chartOpen() && !fishingOpen()) update(dt, now);    // (she lies still while you fish)
+    else if (captainOf && boat) { var keepMenu = menu; menu = null; crewUpdate(boat, dt, now, now / 1000); menu = keepMenu; }   // aboard theirs, she sails on regardless
+    broadcast(now);
     bctx.setTransform(1, 0, 0, 1, 0, 0);
     bctx.imageSmoothingEnabled = false;
     draw(now);
@@ -2052,6 +2245,7 @@ var BridgeSloop = (function () {
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },
     setCourse: setCourse, canSetCourse: canSetCourse, chartPos: chartPos, course: function () { return running && B ? B.id : null; },
+    invite: invite, _crew: function () { return { crewOf: crewOf, captainOf: captainOf, mirror: mirror }; }, _seaPeers: function () { return seaPeers; },
     _things: function () { return things; }, _prompt: function () { return prompt; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }
   };
 })();
