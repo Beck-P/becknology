@@ -1005,6 +1005,7 @@ def build_human(spec):
     # ---- the Neon Royale's staff and guests ----
     if 'waistcoat' in spec:      # a closed waistcoat over the shirt, three brass buttons
         add('cube', 'waistcoat', (0, -2.55, 12.3), (3.9 * wide, 0.75, 3.4), 'waistcoat', 'waistcoat', body, bevel=0.3)
+        add('cube', 'waistcoat_back', (0, 2.55, 12.3), (3.9 * wide, 0.75, 3.4), 'waistcoat', 'waistcoat', body, bevel=0.3)   # it goes all the way round
         for bz in (10.4, 11.9, 13.4):
             add('uv_sphere', 'button', (0, -3.32, bz), (0.42, 0.3, 0.42), 'brass', 'buttons', body, segments=6, ring_count=4)
     if spec.get('bib'):          # a shirt front showing down a jacket (a dinner suit)
