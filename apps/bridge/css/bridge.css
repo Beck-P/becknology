@@ -1137,6 +1137,7 @@ html.touch #sound-pill .ip-key { display: none; }
 }
 #fishing.visible { display: block; }
 html.touch #fishing { bottom: calc(12px + env(safe-area-inset-bottom)); }   /* the hotbar steps aside while it's open */
+#fishing.fi-boat { z-index: 75; }                                            /* at sea: over the passage (60) and its stick and buttons (70-72) */
 .fi-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .fi-title { font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: #e0c060; }
 .fi-hint { flex: 1; font-size: 12px; color: #b8ac94; }

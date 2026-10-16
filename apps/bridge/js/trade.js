@@ -50,7 +50,7 @@ var BridgeTrade = (function () {
     crimson_crystal: { per: 6, kind: 'crystal' }, sapphire_crystal: { per: 6, kind: 'crystal' }, midnight_crystal: { per: 6, kind: 'crystal' },
     hoar_crystal: { per: 6, kind: 'crystal' }, sea_glass: { per: 8, kind: 'crystal' }, star_pearl: { per: 4, kind: 'gem' },
     silverfin: { per: 6, kind: 'fish' }, bluefin: { per: 4, kind: 'fish' }, ember_snapper: { per: 4, kind: 'fish' }, moon_eel: { per: 3, kind: 'fish' },
-    sapphire_ray: { per: 4, kind: 'fish' }, rose_shrimp: { per: 8, kind: 'fish' }, harbour_crab: { per: 6, kind: 'fish' }, fresh_fish: { per: 6, kind: 'fish' }
+    sapphire_ray: { per: 4, kind: 'fish' }, spore_tuna: { per: 3, kind: 'fish' }, lantern_angler: { per: 3, kind: 'fish' }, rose_shrimp: { per: 8, kind: 'fish' }, harbour_crab: { per: 6, kind: 'fish' }, fresh_fish: { per: 6, kind: 'fish' }
   };
   // each port's appetite: < 1 made here (cheap), > 1 wanted here (dear). Your own haul by kind.
   var MARKET = {

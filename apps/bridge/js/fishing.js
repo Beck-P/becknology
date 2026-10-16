@@ -10,7 +10,9 @@
  * snappers and coins from the Heron off Crimson, moon eels round Midnight —
  * and star pearls in the moon pool; perch and the odd sun carp in the farm pond
  * on Verdance, char and frostfin through the ice on Fellhaven's pond. Old boots.
- * Messages in bottles.
+ * Messages in bottles. And from a boat at sea (js/sloop.js: slow her right
+ * down and cast a line): each sea's own deep water (`sea_<pal>` pools), with
+ * two fish only a boat finds — the spore tuna and, deep down, the lantern angler.
  *
  * What you've caught (how many, the biggest) and the messages you've read
  * are kept in localStorage (bridge_fish) and listed in the journal.
@@ -33,14 +35,20 @@ var BridgeFishing = (function () {
     midnight: [['glowtail', 30], ['silverfin', 25], ['moon_eel', 20], ['old_boot', 10], ['bottle', 15]],
     moonpool: [['moon_eel', 50], ['glowtail', 35], ['star_pearl', 15]],
     pond:     [['pond_perch', 60], ['sun_carp', 12], ['old_boot', 20], ['bottle', 8]],
-    ice:      [['arctic_char', 62], ['frostfin', 18], ['old_boot', 20]]
+    ice:      [['arctic_char', 62], ['frostfin', 18], ['old_boot', 20]],
+    // out at sea, from the boat: deeper water, bigger fish
+    sea_emerald:  [['silverfin', 35], ['spore_tuna', 22], ['bluefin', 12], ['glowtail', 10], ['lantern_angler', 4], ['old_boot', 7], ['bottle', 10]],
+    sea_sapphire: [['bluefin', 30], ['spore_tuna', 22], ['sapphire_ray', 15], ['silverfin', 15], ['lantern_angler', 5], ['old_boot', 5], ['bottle', 8]],
+    sea_rose:     [['rose_shrimp', 25], ['spore_tuna', 20], ['glowtail', 20], ['silverfin', 15], ['lantern_angler', 5], ['old_boot', 5], ['bottle', 10]],
+    sea_crimson:  [['ember_snapper', 35], ['spore_tuna', 15], ['heron_coin', 10], ['silverfin', 15], ['lantern_angler', 8], ['old_boot', 7], ['bottle', 10]],
+    sea_midnight: [['moon_eel', 30], ['glowtail', 25], ['lantern_angler', 15], ['silverfin', 10], ['old_boot', 8], ['bottle', 12]]
   };
   // how each one fights on the line: speed it darts, how wild, the sizes it comes in (cm)
   var FIGHT = {
     silverfin: [0.8, 0.25, 18, 34], spore_minnow: [1.1, 0.4, 6, 12], harbour_crab: [0.5, 0.15, 10, 22],
     rose_shrimp: [1.0, 0.35, 8, 16], bluefin: [1.3, 0.45, 40, 90], glowtail: [1.2, 0.6, 20, 40],
     ember_snapper: [1.1, 0.4, 30, 60], sapphire_ray: [0.9, 0.3, 50, 110], moon_eel: [1.6, 0.7, 60, 140],
-    star_pearl: [1.8, 0.8, 1, 2], pond_perch: [0.7, 0.25, 12, 28], sun_carp: [1.2, 0.55, 30, 70], arctic_char: [0.9, 0.35, 25, 60], frostfin: [1.4, 0.6, 8, 16], old_boot: [0.25, 0.0, 26, 31], heron_coin: [0.3, 0.05, 3, 4], bottle: [0.35, 0.05, 20, 30]
+    star_pearl: [1.8, 0.8, 1, 2], pond_perch: [0.7, 0.25, 12, 28], sun_carp: [1.2, 0.55, 30, 70], arctic_char: [0.9, 0.35, 25, 60], frostfin: [1.4, 0.6, 8, 16], spore_tuna: [1.4, 0.5, 60, 140], lantern_angler: [1.5, 0.75, 30, 70], old_boot: [0.25, 0.0, 26, 31], heron_coin: [0.3, 0.05, 3, 4], bottle: [0.35, 0.05, 20, 30]
   };
   var BOTTLES = [
     "IF YOU FIND THIS, I AM STILL ON THE STACK OFF CRIMSON. BRING ROPE. - H.M.",
@@ -181,8 +189,8 @@ var BridgeFishing = (function () {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     // the spore sea at night - or, on Verdance, a farm pond in the afternoon sun, lily pads and glints
     var pond = st.pool === 'pond', ice = st.pool === 'ice';
-    var g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, ice ? '#1a3a5a' : pond ? '#3a7a70' : '#0c2a26'); g.addColorStop(1, ice ? '#08182a' : pond ? '#18403a' : '#06120f');
+    var g = ctx.createLinearGradient(0, 0, 0, H), deep = !!st.boat;              // from a boat: open water, dark and deep
+    g.addColorStop(0, ice ? '#1a3a5a' : pond ? '#3a7a70' : deep ? '#0a2a34' : '#0c2a26'); g.addColorStop(1, ice ? '#08182a' : pond ? '#18403a' : deep ? '#02080e' : '#06120f');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     if (pond) {
       [[70, 40, 9], [210, 96, 12], [330, 30, 8], [400, 110, 10]].forEach(function (l, j) {
@@ -297,11 +305,13 @@ var BridgeFishing = (function () {
       cv.addEventListener('pointerleave', function () { if (held) release(); });
       el.querySelector('.fi-close').addEventListener('click', close);
     }
-    st = { pool: (inter && inter.pool) || 'harbour' };
+    st = { pool: (inter && inter.pool) || 'harbour', boat: !!(inter && inter.boat) };
     held = false;
-    aimAt(inter);
+    if (st.boat) cast = null; else aimAt(inter);           // from a boat, js/sloop.js draws the line off her side
     set('ready');
-    el.classList.toggle('fi-top', !!(cast && cast.dy > 0.35));
+    el.classList.toggle('fi-top', !!(cast && cast.dy > 0.35) || st.boat);   // (from a boat the line goes out in front of her)
+    el.classList.toggle('fi-boat', st.boat);
+    el.querySelector('.fi-title').textContent = st.boat ? 'Fishing from the boat' : 'Fishing';
     el.classList.add('visible');
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     document.addEventListener('keydown', onKey, true);
@@ -316,8 +326,9 @@ var BridgeFishing = (function () {
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKey, true);
     cancelAnimationFrame(raf);
+    var boat = st && st.boat;
     st = null; cast = null;
-    if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+    if (!boat && typeof BridgeControls !== 'undefined') BridgeControls.enable();   // at sea the passage keeps the controls
   }
 
   // ---- in the world: the rod, the line, the bobber out on the water -------------------------------------
@@ -348,6 +359,13 @@ var BridgeFishing = (function () {
     var ph = st.phase, e = now - st.t0, k = cast, sx = k.face === 'left' ? -1 : k.face === 'right' ? 1 : 0;
     var cx = Math.round(offX + (rp.x + 0.5) * ts), fy = Math.round(offY + foot * ts);
     var hand = k.face === 'up' ? [cx - 5, fy - 21] : k.face === 'down' ? [cx + 6, fy - 17] : [cx + sx * 7, fy - 18];
+    drawLine(c, k, hand, offX, offY, ts, now, [cx, fy - 50]);
+  }
+  // the rod in your hand, the line, the bobber on the water - and the catch flying in. `k` is the cast: where you stand
+  // (px, py, in tiles), which way it goes (dx, dy), how far (reach), how far below you the water lies (wz); `bang` is
+  // where the "!" goes when something bites. js/sloop.js draws its own cast off the boat's side with it.
+  function drawLine(c, k, hand, offX, offY, ts, now, bang) {
+    var ph = st.phase, e = now - st.t0;
     // where the bobber lies: out along the cast, further for a strong one
     var pw = st.power != null ? st.power : 0.5, d = k.reach[0] + k.reach[1] * pw;
     var tx = k.px + k.dx * d - k.dy * k.side * 0.6, ty = k.py + k.dy * d + k.dx * k.side * 0.6;
@@ -409,7 +427,7 @@ var BridgeFishing = (function () {
         c.fillStyle = '#d83030'; c.fillRect(Math.round(qx) - 1, Math.round(qy + bob + dip) - 2, 3, 2);
       } else if (ph === 'bite') {
         c.fillStyle = '#ffe080'; c.font = 'bold 11px "Pixelify Sans", monospace'; c.textAlign = 'center';
-        c.fillText('!', cx, fy - 50 - Math.abs(Math.sin(e / 90)) * 3);
+        c.fillText('!', bang[0], bang[1] - Math.abs(Math.sin(e / 90)) * 3);
       }
     }
     // the catch flies in over the rail
@@ -436,5 +454,6 @@ var BridgeFishing = (function () {
   }
 
   return { decorate: decorate, open: open, close: close, journal: journal, _state: function () { return st; }, _cast: function () { return cast; },
+           drawLine: function (c, k, hand, offX, offY, ts, now, bang) { if (st && st.t0 != null) drawLine(c, k, hand, offX, offY, ts, now, bang); },
            isOpen: function () { return !!st; } };
 })();

@@ -264,6 +264,14 @@
             "price": 40
           },
           {
+            "id": "lantern_angler",
+            "price": 70
+          },
+          {
+            "id": "spore_tuna",
+            "price": 30
+          },
+          {
             "id": "heron_coin",
             "price": 25
           },
@@ -1900,6 +1908,14 @@
           {
             "id": "sapphire_ray",
             "price": 30
+          },
+          {
+            "id": "spore_tuna",
+            "price": 46
+          },
+          {
+            "id": "lantern_angler",
+            "price": 88
           },
           {
             "id": "spore_minnow",

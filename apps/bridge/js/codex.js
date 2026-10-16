@@ -24,7 +24,8 @@ var BridgeCodex = (function () {
       ['rose_shrimp', 'The water round Rose Cove'], ['bluefin', 'Off Sapphire Port\'s quay'], ['glowtail', 'Sapphire, Rose and Midnight waters'],
       ['ember_snapper', 'The water off Crimson Reach'], ['sapphire_ray', 'Off Sapphire Port; cast long'], ['moon_eel', 'Round Midnight Isle, and its moon pool'],
       ['star_pearl', 'The moon pool on Midnight Isle'], ['pond_perch', 'The farm pond on Verdance'], ['sun_carp', 'The farm pond on Verdance; a fighter'],
-      ['arctic_char', 'Through the ice on Fellhaven\'s pond'], ['frostfin', 'Through the ice on Fellhaven\'s pond; rare']] },
+      ['arctic_char', 'Through the ice on Fellhaven\'s pond'], ['frostfin', 'Through the ice on Fellhaven\'s pond; rare'],
+      ['spore_tuna', 'From a boat, out on the open sea'], ['lantern_angler', 'From a boat in deep water - the Midnight Sea most of all']] },
     { id: 'stones', name: 'Crystals and ore', reward: 200, items: [
       ['crimson_crystal', 'In the rock on Crimson Reach'], ['roseite', 'Rose Cove\'s terraces, and the Rose Mine'], ['sapphire_crystal', 'The hills of Sapphire Port; the mine\'s middle floors'],
       ['midnight_crystal', 'Among the ruins on Midnight Isle'], ['wisp_ember', 'The will-o\'-wisps on Midnight Isle'], ['sea_glass', 'Washed up on Lumar\'s beaches'], ['iron_ore', 'The Rose Mine, from the first floor'],

@@ -634,6 +634,7 @@ var BridgeSloop = (function () {
     cancelAnimationFrame(raf);
     document.documentElement.classList.remove('keys-mode');
     if (chartOpen()) BridgeChart.close();
+    if (fishingOpen()) BridgeFishing.close();
     ['sloop-menu-btn', 'sloop-chart-btn', 'sloop-menu'].forEach(function (id) { var e = document.getElementById(id); if (e) e.remove(); });
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKeyUp, true);
@@ -674,7 +675,7 @@ var BridgeSloop = (function () {
   var KEYS = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'e', ' ', 'enter', 'escape', 't'];
   function onKey(e) {
     var k = (e.key || '').toLowerCase();
-    if (chartOpen()) return;                                           // the chart has the keys while it's open
+    if (chartOpen() || fishingOpen()) return;                          // the chart (or the rod) has the keys while it's open
     if (KEYS.indexOf(k) < 0) return;
     e.preventDefault(); e.stopPropagation();
     if (menu) { if (k === 'escape' && !e.repeat) closeMenu(); return; }
@@ -685,8 +686,9 @@ var BridgeSloop = (function () {
   }
   function onKeyUp(e) { keys[(e.key || '').toLowerCase()] = false; }
   function chartOpen() { return typeof BridgeChart !== 'undefined' && BridgeChart.isOpen(); }
+  function fishingOpen() { return typeof BridgeFishing !== 'undefined' && BridgeFishing.isOpen(); }
   function openChart() { if (typeof BridgeChart === 'undefined' || menu) return; keys = {}; BridgeChart.open(); }
-  function onPointer() { if (prompt && phase === 'sail') prompt.act(); }
+  function onPointer() { if (prompt && phase === 'sail' && !fishingOpen()) prompt.act(); }
   function down(a, b) { return keys[a] || keys[b]; }
 
   function openMenu() {
@@ -941,6 +943,13 @@ var BridgeSloop = (function () {
                                                          : { text: 'Slow down to grab the ' + o.kind, act: function () {} };
         else if (o.kind === 'dory' && d < 4.2) prompt = { text: 'Hail the fisherman', act: function () { hail(o); } };
       });
+      // stopped out on the water (rounded up into the wind, say): a line over the side
+      if (!prompt && Math.abs(b.v) < 0.6 && now - began > 6000 && !(fight() && fight().busy()) && typeof BridgeFishing !== 'undefined')
+        prompt = { text: 'Cast a line', act: fishHere };
+      if (!said.fish && b.v > 1.4 && now - began > 40000 && now - msgAt > 2500 && !seaFishTold()) {
+        said.fish = 1; seaFishTold(true);
+        say('Fish bite out here too: round up into the wind till she stops, then cast a line', 5200);
+      }
     }
     if (phase === 'cast') {                                          // the cast-off, said as it happens
       b.empty = castT < CAST.board;
@@ -972,6 +981,15 @@ var BridgeSloop = (function () {
   function moor() {
     phase = 'moor'; phaseAt = performance.now();
     sfx('door');
+  }
+  // fishing over the side (js/fishing.js runs the rod; drawRod below draws the line off her rail)
+  var castSide = 0;
+  function fishHere() {
+    keys = {}; castSide = Math.random() - 0.5;
+    BridgeFishing.open({ pool: 'sea_' + seaHere(), boat: true });
+  }
+  function seaFishTold(set) {
+    try { if (set) localStorage.setItem('bridge_sea_fish', '1'); return localStorage.getItem('bridge_sea_fish') === '1'; } catch (e) { return true; }
   }
   function seaHere() { return boat ? (seaSide(boat.x, boat.r) > 0 ? B : A).pal : A.pal; }
   function haul(o) {
@@ -1265,6 +1283,7 @@ var BridgeSloop = (function () {
         bctx.fillStyle = '#4a3018'; disc(wc[0], wc[1], 4, 4); bctx.fillStyle = '#2a1a0c'; disc(wc[0], wc[1], 2, 2);
       }
       if (b.crew) drawCrew(seat, b, now); else if (!b.empty) (wheel ? drawHelmsman : drawPilot)(seat, b, now);
+      if (!bb && !b.empty && fishingOpen()) drawRod(b, seat, hs[0], bw, wheel, now);
     } }];
     rg.masts.forEach(function (m) {
       var mu = -L2 + m.f * sp.L, deck = m.z != null ? m.z + 0.3 : rg.deck;   // (a mast on the quarterdeck stands higher)
@@ -1383,6 +1402,13 @@ var BridgeSloop = (function () {
       line(P(A1[0], A1[1], zt, true), P(mu - 0.4, -lee * w * 0.9, deck - 0.2, true), 'rgba(200,190,170,0.35)');   // the braces
       line(P(B1[0], B1[1], zt, true), P(mu - 0.4, lee * w * 0.9, deck - 0.2, true), 'rgba(200,190,170,0.35)');
     });
+  }
+  // your line over the side, toward the near rail (the one facing the camera), from the hand at the helm
+  function drawRod(b, seat, u, bw, wheel, now) {
+    var c = Math.cos(b.h), s = Math.sin(b.h), nx = c >= 0 ? -s : s, nr = c >= 0 ? c : -c;
+    var k = { px: b.x + u * c + nx * bw, py: b.r + u * s + nr * bw, dx: nx, dy: nr, side: castSide, reach: [0.7, 2.6], wz: 0 };
+    var hand = [seat[0] + Math.round(nx * 6), seat[1] - (wheel ? 18 : 14)];
+    BridgeFishing.drawLine(bctx, k, hand, -cam.x, -cam.y, TS, now, [seat[0], seat[1] - 50]);
   }
   // the helm: the sloop's tiller seat on the windward bench, a big ship's wheel on her quarterdeck
   function helmOf(b) {
@@ -1736,7 +1762,7 @@ var BridgeSloop = (function () {
     ctx.fillStyle = '#f2ecd6'; ctx.fillRect(tx0 + (b.sheet - 0.1) / 1.35 * tw - px(2), ty0 - px(3), px(4), th + px(6));
     ctx.textAlign = 'left'; ctx.fillStyle = '#8a90a8'; ctx.fillText('IN', tx0, ty0 + th + px(10));
     ctx.textAlign = 'right'; ctx.fillText('OUT', tx0 + tw, ty0 + th + px(10));
-    var state = b.off < 0.7 ? ['IN IRONS — BEAR AWAY', '#ff9080'] : b.luff ? ['LUFFING — HAUL IN', '#ffd060'] : b.stall ? ['STALLED — EASE OUT', '#ffb070'] : ['DRAWING', '#80e0a0'];
+    var state = fishingOpen() ? ['LYING STILL — A LINE OVER THE SIDE', '#a0d0e0'] : b.off < 0.7 ? ['IN IRONS — BEAR AWAY', '#ff9080'] : b.luff ? ['LUFFING — HAUL IN', '#ffd060'] : b.stall ? ['STALLED — EASE OUT', '#ffb070'] : ['DRAWING', '#80e0a0'];
     ctx.textAlign = 'left'; ctx.fillStyle = state[1]; ctx.font = px(10) + 'px "Pixelify Sans", monospace';
     ctx.fillText(state[0] + (auto ? ' · AUTO (T)' : ''), tx0, ty0 - px(14));
     var pos = b.off < 0.7 ? 'HEAD TO WIND' : b.off < 1.15 ? 'CLOSE-HAULED' : b.off < 1.9 ? 'BEAM REACH' : b.off < 2.65 ? 'BROAD REACH' : 'RUNNING';
@@ -1771,7 +1797,7 @@ var BridgeSloop = (function () {
         ctx.fillStyle = '#f2ecd6'; ctx.fillText(l, canvas.width / 2, y);
       });
     }
-    if (prompt) {
+    if (prompt && !fishingOpen()) {
       ctx.font = px(13) + 'px "Pixelify Sans", monospace';
       var label = (touch() ? 'TAP' : 'E') + '  ' + prompt.text.toUpperCase(), w2 = ctx.measureText(label).width + px(28);
       var y2 = canvas.height - px(150);
@@ -1798,7 +1824,7 @@ var BridgeSloop = (function () {
       ctx.fillStyle = '#020308'; ctx.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
-    if (!menu && !chartOpen()) update(dt, now);
+    if (!menu && !chartOpen() && !fishingOpen()) update(dt, now);    // (she lies still while you fish)
     bctx.setTransform(1, 0, 0, 1, 0, 0);
     bctx.imageSmoothingEnabled = false;
     draw(now);
@@ -1980,6 +2006,6 @@ var BridgeSloop = (function () {
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },
     setCourse: setCourse, canSetCourse: canSetCourse, chartPos: chartPos, course: function () { return running && B ? B.id : null; },
-    _things: function () { return things; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }
+    _things: function () { return things; }, _prompt: function () { return prompt; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }
   };
 })();

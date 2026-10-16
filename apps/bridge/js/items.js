@@ -420,6 +420,19 @@ var BridgeItems = (function () {
   }
 
   // A fish in profile, in its own colours (the catch from js/fishing.js).
+  // the lantern angler: a dark lumpy fish with teeth and a glowing lure on a stalk
+  function anglerIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0a0810';
+    ctx.fillRect(x + 2*u, y + 6*u, 11*u, 7*u); ctx.fillRect(x + 1*u, y + 7*u, 2*u, 5*u);
+    ctx.fillStyle = '#3a2a3a'; ctx.fillRect(x + 3*u, y + 7*u, 9*u, 5*u);
+    ctx.fillStyle = '#5a4058'; ctx.fillRect(x + 4*u, y + 7*u, 6*u, 2*u);
+    ctx.fillStyle = '#e8e0d0'; ctx.fillRect(x + 10*u, y + 11*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 11*u, 1*u, 1*u);   // teeth
+    ctx.fillStyle = '#f8f0d0'; ctx.fillRect(x + 10*u, y + 8*u, 1*u, 1*u);
+    ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 9*u, y + 3*u, 1*u, 4*u); ctx.fillRect(x + 10*u, y + 2*u, 2*u, 1*u);    // the stalk
+    ctx.fillStyle = '#ffe080'; ctx.fillRect(x + 11*u, y + 1*u, 2*u, 2*u);
+    ctx.fillStyle = '#fff8d0'; ctx.fillRect(x + 11*u, y + 1*u, 1*u, 1*u);
+  }
   function fishIcon(body, belly, fin, glow) {
     return function (ctx, x, y, s) {
       var u = s / 16;
@@ -904,6 +917,10 @@ var BridgeItems = (function () {
                      draw: fishIcon('#1a2a5a', '#4060c0', '#80b0ff', '#c0e0ff'), value: 22 },
     moon_eel:      { id: 'moon_eel', name: 'Moon Eel', desc: 'Only ever seen in Midnight\'s waters. Pale as moonlight, cold as it too.', type: 'material', stackable: true,
                      draw: fishIcon('#c8c8e0', '#f0f0ff', '#8080b0', '#e0e0ff'), value: 40 },
+    spore_tuna:    { id: 'spore_tuna', name: 'Spore Tuna', desc: 'Only out in open water, from a boat. Runs like a horse and feeds a crew.', type: 'food', stackable: true,
+                     draw: fishIcon('#2a4a5a', '#9ab8c0', '#1a3040', '#60f0c0'), effects: { hp: 20, energy: 14 }, onUse: consumableUse, value: 30 },
+    lantern_angler: { id: 'lantern_angler', name: 'Lantern Angler', desc: 'Comes up from the deep after a light on its own head. The Midnight Sea is full of them, they say.', type: 'material', stackable: true,
+                     draw: anglerIcon, value: 70 },
     old_boot:      { id: 'old_boot', name: 'Old Boot', desc: 'Somebody, somewhere, is walking funny.', type: 'material', stackable: true, draw: bootIcon, value: 1 },
     heron_coin:    { id: 'heron_coin', name: 'Heron Coin', desc: 'Silver, from the Heron\'s lost cargo. The tide brings them in, one at a time.', type: 'material', stackable: true,
                      draw: coinIcon, value: 25 },
