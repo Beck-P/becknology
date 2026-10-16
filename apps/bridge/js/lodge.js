@@ -565,7 +565,7 @@ var BridgeLodge = (function () {
     var was = g;
     // walking away from a table played together: your cup's out and the game goes on without you
     if (!quiet && was && was.net && was.phase !== 'over') {
-      if (was.guest) { tsend('dact', { a: 'leave' }); g = null; hidePanel(); if (typeof BridgeTogether !== 'undefined') BridgeTogether.result('lose', 'You left the table'); return; }
+      if (was.guest) { tsend('dact', { a: 'leave' }); g = null; hidePanel(); if (typeof BridgeTogether !== 'undefined') BridgeTogether.result('lose', 'Your stake stays in the pot', 'You left the table'); return; }
       was.headless = true;                                           // the host's table runs on (the regular, the other pilot) till it's done
       hidePanel();
       leaveSeat(was.me);
@@ -614,6 +614,9 @@ var BridgeLodge = (function () {
   }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]; }); }
 
-  return { use: use, isOpen: function () { return (!!g && !g.headless) || climbing; }, together: together, verdict: verdict, gone: gone, rivalFor: rivalFor,
+  // walking away from a table played together (*Stop playing*, js/together.js): as if you'd pressed Esc
+  function leave() { if (g && g.net && !g.headless) close(false); }
+
+  return { use: use, isOpen: function () { return (!!g && !g.headless) || climbing; }, together: together, verdict: verdict, gone: gone, rivalFor: rivalFor, leave: leave,
            _g: function () { return g; }, _chance: chance, _act: act };
 })();

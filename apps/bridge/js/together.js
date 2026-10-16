@@ -341,9 +341,9 @@ var BridgeTogether = (function () {
     clearTimeout(S.askTimer);
     S.theirBest = d.best || 0;
     S.state = 'staking';
-    var sid = S.sid;
-    stake(S.wager, 'together:' + S.g).then(function (ok) {
-      if (!S || S.sid !== sid) { if (ok) pay(S ? S.wager : 0, 'together:refund'); return; }
+    var sid = S.sid, wager = S.wager;
+    stake(wager, 'together:' + S.g).then(function (ok) {
+      if (!S || S.sid !== sid) { if (ok) pay(wager, 'together:refund'); return; }
       if (!ok) { n.send('g-off', { sid: sid, why: myName() + ' hasn\'t the coins' }, from); toast('Online', 'Not enough coins', 'You need ' + S.wager); S = null; presence(); return; }
       S.staked = S.wager > 0; holdStake();
       S.seed = Math.floor(Math.random() * 2147483646) + 1;
@@ -404,6 +404,7 @@ var BridgeTogether = (function () {
     if (!S || S.state !== 'playing') { clearInterval(beat); return; }
     var n = N();
     n.send('g-beat', { sid: S.sid }, S.peer);
+    if (S.theirs.done) return;                         // they've finished (or left the table): nothing more to wait for
     var gone = !n.peer(S.peer);
     if (gone) S.missing = S.missing || Date.now(); else S.missing = 0;
     if ((S.missing && Date.now() - S.missing > 6000) || Date.now() - S.heard > 45000) vanished();
@@ -447,10 +448,13 @@ var BridgeTogether = (function () {
     else settle(a > b ? 'win' : a < b ? 'lose' : 'draw');
   }
   // a game that decides for itself (chess, the dice table)
-  function result(outcome, why) { if (S && S.state === 'playing') settle(outcome, false, why); }
-  // walking away from a game decided by a result: it goes to them
+  function result(outcome, why, head) { if (S && S.state === 'playing') settle(outcome, false, why, head); }
+  // *Stop playing*: the game closes as if you'd walked away from it (a run counts as it stood, a game decided by a
+  // result goes to them); a game with no panel open is ended here
   function forfeit() {
     if (!S || S.state !== 'playing') return;
+    adapter('stop');
+    if (!S || S.state !== 'playing' || S.mine.done || GAMES[S.g].kind === 'dice') return;   // the table settles its own (js/lodge.js)
     N().send('g-quit', { sid: S.sid }, S.peer);
     if (MODES[S.mode].result) settle('lose', true);
     else done(S.mine.s, S.mine.label);
@@ -460,10 +464,14 @@ var BridgeTogether = (function () {
     if (MODES[S.mode].result) { adapter('quit'); settle('win', false, S.peerName + ' gave it up'); }
   }
 
-  function settle(outcome, quiet, why) {
+  function settle(outcome, quiet, why, head) {
     if (!S || S.state === 'settled') return;
     S.state = 'settled';
     clearInterval(beat);
+    if (!S.mine.done) {                                // settled on your side first (a result): they know you're done
+      S.mine.done = true;
+      N().send('g-score', { sid: S.sid, s: S.mine.s, done: true, label: S.mine.label }, S.peer);
+    }
     var m = MODES[S.mode], paid = 0;
     if (outcome === 'win') paid = S.pot;
     else if (outcome === 'draw') paid = S.wager;
@@ -473,6 +481,7 @@ var BridgeTogether = (function () {
     if (outcome !== 'house') tally(outcome === 'win' ? 'w' : outcome === 'lose' ? 'l' : outcome === 'draw' ? 'd' : outcome === 'made' ? 'made' : 'missed');
     S.outcome = outcome; S.paid = paid;
     var v = verdict(outcome, paid, why);
+    if (head) { v.head = head; if (outcome === 'lose') { v.money = ''; v.line = v.score; } }   // you walked away: no one's won yet
     S.verdict = v;
     sfx(outcome === 'win' || outcome === 'made' ? 'quest' : outcome === 'draw' ? 'coin' : 'fail');
     adapter('verdict', v);
@@ -603,30 +612,38 @@ var BridgeTogether = (function () {
         post({ type: 'bridge-together-verdict', head: v.head, text: MODES[S.mode].coop || MODES[S.mode].result ? v.line : v.money, outcome: v.outcome, paid: v.paid });
         if (typeof BridgeCabinetModal === 'undefined' || !BridgeCabinetModal.isOpen()) showVerdict(v);
       },
-      gone: function () { post({ type: 'bridge-together-gone' }); }
+      gone: function (x, s) {
+        post({ type: 'bridge-together-gone' });
+        if (typeof BridgeCabinetModal !== 'undefined' && BridgeCabinetModal.setVersus) BridgeCabinetModal.setVersus('<span class="cm-vs-head">' + esc(s.peerName) + ' left</span>' + (s.staked ? '<span class="cm-vs-pot">stake back</span>' : ''));
+      },
+      stop: function () { if (typeof BridgeCabinetModal !== 'undefined' && BridgeCabinetModal.isOpen()) BridgeCabinetModal.hide(); }
     },
     dice: {
       start: function (s) { if (typeof BridgeLodge !== 'undefined') BridgeLodge.together(s); },
       verdict: function (v) { if (typeof BridgeLodge !== 'undefined' && BridgeLodge.verdict) BridgeLodge.verdict(v); else showVerdict(v); },
-      gone: function () { if (typeof BridgeLodge !== 'undefined' && BridgeLodge.gone) BridgeLodge.gone(); }
+      gone: function () { if (typeof BridgeLodge !== 'undefined' && BridgeLodge.gone) BridgeLodge.gone(); },
+      stop: function () { if (typeof BridgeLodge !== 'undefined' && BridgeLodge.leave) BridgeLodge.leave(); }
     },
     dance: {
       start: function (s) { if (typeof BridgeDance !== 'undefined') BridgeDance.together(s); },
       peer: function (t) { if (typeof BridgeDance !== 'undefined' && BridgeDance.peer) BridgeDance.peer(t); },
       verdict: function (v) { showVerdict(v); },
-      gone: function () { if (typeof BridgeDance !== 'undefined' && BridgeDance.gone) BridgeDance.gone(); }
+      gone: function () { if (typeof BridgeDance !== 'undefined' && BridgeDance.gone) BridgeDance.gone(); },
+      stop: function () { if (typeof BridgeDance !== 'undefined' && BridgeDance.gone) BridgeDance.gone(); }
     },
     pachinko: {
       start: function (s) { if (typeof BridgePachinko !== 'undefined') BridgePachinko.together(s); },
       peer: function (t) { if (typeof BridgePachinko !== 'undefined' && BridgePachinko.peer) BridgePachinko.peer(t); },
       verdict: function (v) { if (typeof BridgePachinko !== 'undefined' && BridgePachinko.verdict && BridgePachinko.verdict(v)) return; showVerdict(v); },
-      gone: function () { if (typeof BridgePachinko !== 'undefined' && BridgePachinko.gone) BridgePachinko.gone(); }
+      gone: function () { if (typeof BridgePachinko !== 'undefined' && BridgePachinko.gone) BridgePachinko.gone(); },
+      stop: function () { if (typeof BridgePachinko !== 'undefined') BridgePachinko.close(); }
     },
     splice: {
       start: function (s) { if (typeof BridgeSplice !== 'undefined') BridgeSplice.together(s); },
       peer: function (t) { if (typeof BridgeSplice !== 'undefined' && BridgeSplice.peer) BridgeSplice.peer(t); },
       verdict: function (v) { if (typeof BridgeSplice !== 'undefined' && BridgeSplice.verdict && BridgeSplice.verdict(v)) return; showVerdict(v); },
-      gone: function () { if (typeof BridgeSplice !== 'undefined' && BridgeSplice.gone) BridgeSplice.gone(); }
+      gone: function () { if (typeof BridgeSplice !== 'undefined' && BridgeSplice.gone) BridgeSplice.gone(); },
+      stop: function () { if (typeof BridgeSplice !== 'undefined') BridgeSplice.close(); }
     }
   };
 

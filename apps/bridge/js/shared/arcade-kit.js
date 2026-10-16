@@ -430,7 +430,7 @@
         });
         if (performance.now() > lockUntil && blink(true)) text(g, touch ? 'TAP TO PLAY ON' : 'SPACE TO PLAY ON', cx, yy + 3, P.grey, 1, 'center');
       } else if (tg.gone) {
-        text(g, VS + ' LEFT - YOUR STAKE IS BACK', cx, yy, U.best, 1, 'center');
+        text(g, VS + ' LEFT' + (tg.cfg.wager ? ' - YOUR STAKE IS BACK' : ''), cx, yy, U.best, 1, 'center');
       } else if (blink(true)) text(g, 'WAITING FOR ' + VS + '...', cx, yy, P.white, 1, 'center');
     }
     function overlay() {

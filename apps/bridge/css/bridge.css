@@ -1886,7 +1886,7 @@ html.home-editing #mp-pill, html.home-editing #mp-layer { display: none !importa
 .cm-vs-head.win, .cm-vs-head.made { color: #80ffb0; text-shadow: 0 0 8px rgba(128, 255, 176, 0.6); }
 .cm-vs-head.draw { color: #ffe080; }
 @keyframes tg-blink { 50% { opacity: 0.45; } }
-html.touch .cm-mid .cm-coins { display: none; }
+html.touch .cm-together .cm-mid .cm-coins { display: none; }   /* room for the two of you */
 #tg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 9; overflow: hidden; }   /* under the dialogs (#world-overlay is 10) */
 .tg-badge { position: absolute; left: 0; top: 0; will-change: transform; white-space: nowrap; font-family: 'Pixelify Sans', 'Courier New', monospace;
   font-size: 11px; color: #ffe8b0; background: rgba(20, 12, 30, 0.78); border: 1px solid rgba(255, 200, 96, 0.45); border-radius: 6px; padding: 1px 7px 2px;
