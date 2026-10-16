@@ -765,9 +765,9 @@
       "x": 11,
       "y": 5,
       "type": "dialog",
-      "label": "QUEEN ALYSSA",
+      "label": "QUEEN ALYSSARA",
       "prompt": "PRESS E TO KNEEL",
-      "dialog": "QUEEN ALYSSA OF THE WOOD ELVES INCLINES HER HEAD."
+      "dialog": "QUEEN ALYSSARA OF THE WOOD ELVES INCLINES HER HEAD."
     },
     {
       "x": 9,

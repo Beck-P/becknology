@@ -4,7 +4,7 @@ Usage: BVENV/bin/python sylvara_hall.py RENDER_DIR
 The throne room of the wood elves, hollowed out of a living tree: walls of ribbed heartwood, roots arching over a
 great round window full of the evening wood, the floor polished across the tree's own rings. A runner of moss
 leads to a dais of three steps and the throne — living branches woven together, gold leaves along them, green
-velvet in the seat — under a canopy of boughs hung with leaf lanterns. Queen Alyssa of the wood elves sits there in
+velvet in the seat — under a canopy of boughs hung with leaf lanterns. Queen Alyssara of the wood elves sits there in
 green and gold; Beckolas, her first sword, stands at her right hand. A bard's harp by the window, a basin of
 Moonwell water on a root, the elves' banners (a gold leaf on green) either side.
 """
@@ -163,8 +163,8 @@ w.update({'name': 'The Heartwood Hall', 'width': COLS, 'height': ROWS, 'tileSize
 w['interactions'] = [
     {'x': x, 'y': y, 'type': 'leave_world', 'leaveTo': 'sylvara', 'leaveSpawn': [22, 8], 'label': 'THE DOOR', 'prompt': 'PRESS E TO GO OUT'}
     for (x, y) in DOORS] + [
-    {'x': 11, 'y': 5, 'type': 'dialog', 'label': 'QUEEN ALYSSA', 'prompt': 'PRESS E TO KNEEL',
-     'dialog': 'QUEEN ALYSSA OF THE WOOD ELVES INCLINES HER HEAD.'},
+    {'x': 11, 'y': 5, 'type': 'dialog', 'label': 'QUEEN ALYSSARA', 'prompt': 'PRESS E TO KNEEL',
+     'dialog': 'QUEEN ALYSSARA OF THE WOOD ELVES INCLINES HER HEAD.'},
     {'x': 9, 'y': 4, 'type': 'dialog', 'label': 'BECKOLAS', 'prompt': 'PRESS E TO TALK', 'dialog': 'BECKOLAS WATCHES YOU, HAND NEAR HIS SWORD.'},
     {'x': 13, 'y': 5, 'type': 'dialog', 'label': 'THRONE', 'prompt': 'PRESS E TO LOOK',
      'dialog': 'THE THRONE OF THE WOOD ELVES IS NOT CARVED. IT WAS ASKED FOR, AND THE TREE GREW IT.'},

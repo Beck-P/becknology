@@ -626,14 +626,14 @@
     "title": "The Queen's Favour",
     "where": "Sylvara",
     "reward": 300,
-    "start": "Queen Alyssa asked you, quietly, to find the ribbon Beckolas lost from his sword.",
+    "start": "Queen Alyssara asked you, quietly, to find the ribbon Beckolas lost from his sword.",
     "done": "The queen's favour is back on her first sword's hilt. Beckolas owes you one, and he is the sort to remember it.",
     "clues": [
       {
         "id": "charge",
         "on": {
           "world": "sylvara-hall",
-          "label": "QUEEN ALYSSA"
+          "label": "QUEEN ALYSSARA"
         },
         "text": "The queen tied a ribbon to Beckolas's sword, green silk worked with gold leaves. He's lost it and is too proud to tell her. She knows anyway."
       },
@@ -681,5 +681,101 @@
       "from": "beckolas",
       "text": "Traveller.\n\nI am not good at letters. The queen says that is obvious and to write it anyway.\n\nThank you for the ribbon. You could have told the whole glade. You told no one, and you gave it to me to give back. That was kind, and I don't forget kindness.\n\nIf you are ever in Elderglade and in trouble, say my name. Loudly. I will come.\n\nBeckolas, first sword of the queen"
     }
+  },
+  "under-the-willow": {
+    "title": "Under the Willow",
+    "where": "Sylvara",
+    "reward": 400,
+    "needs": "queens-favour",
+    "start": "The queen loves her first sword, her first sword loves the queen, and the whole wood knows it except, possibly, the two of them. She's asked you to help. Gently.",
+    "done": "Under the willow at dusk, the first sword finally said it. Faelan's lanterns and Sefa's ribbons are staying up in the willow for good.",
+    "clues": [
+      {
+        "id": "start",
+        "on": {
+          "world": "sylvara-hall",
+          "label": "QUEEN ALYSSARA"
+        },
+        "text": "The queen confided in you: she loves Beckolas, and she's fairly sure he loves her, but a sworn sword won't speak above his oath and a queen can't command a heart. She asked you to find out. Gently. He bruises like a peach."
+      },
+      {
+        "id": "ask",
+        "after": "start",
+        "on": {
+          "world": "sylvara-hall",
+          "label": "BECKOLAS"
+        },
+        "text": "Beckolas denied everything, turned the colour of a sunset, then admitted it: three hundred years, two hundred and twelve attempts to tell her, and one letter he wrote, panicked over and ate."
+      },
+      {
+        "id": "song",
+        "after": "ask",
+        "on": {
+          "world": "sylvara",
+          "label": "BARD"
+        },
+        "text": "Thaelin has had the song written for a century. He agrees Beckolas has to say it himself, and he knows where: the Moonwell at dusk, where everyone says the true thing. He'll be in the bushes. Playing very quietly."
+      },
+      {
+        "id": "flower",
+        "after": "ask",
+        "on": {
+          "world": "sylvara",
+          "label": "HERBALIST"
+        },
+        "text": "Mirelle gave you a moonflower she's kept for Beckolas for twenty years. It only opens in the hand of someone who means what they're about to say."
+      },
+      {
+        "id": "lanterns",
+        "after": "ask",
+        "on": {
+          "world": "sylvara",
+          "label": "LAMPLIGHTER"
+        },
+        "text": "Faelan will light the willow over the Moonwell at dusk with the good lanterns. He's been saving them six hundred years for something worth lighting."
+      },
+      {
+        "id": "ribbons",
+        "after": "ask",
+        "on": {
+          "world": "sylvara",
+          "label": "WEAVER"
+        },
+        "text": "Sefa will tie the willow with ribbons of the same green silk as Beckolas's favour. She wove a whole bolt of it in the spring. She knew. Everyone knew."
+      },
+      {
+        "id": "courage",
+        "after": [
+          "song",
+          "flower",
+          "lanterns",
+          "ribbons"
+        ],
+        "on": {
+          "world": "sylvara-hall",
+          "label": "BECKOLAS"
+        },
+        "text": "You gave Beckolas the moonflower and told him: the Moonwell, at dusk. He went pale, said nothing for a long time, then went off to polish his armour. All of it. Twice."
+      },
+      {
+        "id": "invite",
+        "after": "courage",
+        "on": {
+          "world": "sylvara-hall",
+          "label": "QUEEN ALYSSARA"
+        },
+        "text": "You told the queen: the Moonwell, at dusk. She said she would be very surprised, and went to find a different circlet."
+      },
+      {
+        "id": "vow",
+        "after": "invite",
+        "on": {
+          "world": "sylvara",
+          "label": "WILLOW"
+        },
+        "text": "At dusk under the lit willow Beckolas held out the moonflower, and it opened in his hand. He said it all in one breath. The queen said \"Finally.\"",
+        "say": "THE WILLOW IS FULL OF LANTERNS AND GREEN RIBBONS, AND THE MOONWELL IS FULL OF THEIR LIGHT. BECKOLAS IS ALREADY HERE, IN VERY SHINY ARMOUR.\n\nTHE QUEEN COMES DOWN THE PATH. HE OPENS HIS MOUTH, CLOSES IT, AND HOLDS OUT THE MOONFLOWER. IT OPENS IN HIS HAND.\n\n\"I LOVE YOU,\" HE SAYS, ALL IN ONE BREATH. \"I HAVE FOR THREE HUNDRED YEARS. I'M SORRY IT TOOK SO LONG. I ATE A LETTER ABOUT IT ONCE.\"\n\nTHE QUEEN TAKES THE FLOWER. \"FINALLY,\" SHE SAYS, AND KISSES HIM.\n\nSOMEWHERE IN THE BUSHES, A LUTE PLAYS VERY QUIETLY."
+      }
+    ]
   }
 }

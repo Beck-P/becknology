@@ -2416,13 +2416,13 @@
     ]
   },
   "alyssa": {
-    "name": "Queen Alyssa",
+    "name": "Queen Alyssara",
     "role": "Queen of the wood elves, Elderglade",
     "sheet": "npc-alyssa",
     "at": [
       {
         "world": "sylvara-hall",
-        "label": "QUEEN ALYSSA"
+        "label": "QUEEN ALYSSARA"
       }
     ],
     "greet": "RISE, TRAVELLER FROM THE STARS. THE WOOD TOLD ME YOU WERE COMING. IT TELLS ME MOST THINGS, EVENTUALLY. WELCOME TO ELDERGLADE.",
@@ -2443,6 +2443,18 @@
       {
         "q": "Elderglade",
         "a": "THE GREAT TREE, THE MOONWELL, AND EVERY ROOF IN THE GLADE GROWN, NOT BUILT. WALK IT AT DUSK, WHEN THE LANTERNS ARE LIT. THAT IS WHEN IT IS MOST ITSELF."
+      },
+      {
+        "q": "Something on your mind?",
+        "a": "YOU HAVE SHARP EYES, TRAVELLER, SO I'LL SAVE US BOTH THE PRETENDING. I LOVE HIM. I HAVE FOR A VERY LONG TIME. AND I THINK HE LOVES ME, BUT HE IS A SWORN SWORD, AND A SWORN SWORD DOES NOT SPEAK ABOVE HIS OATH. I CAN COMMAND HIM TO GUARD ME. I CANNOT COMMAND HIM TO SAY IT.\n\nASK HIM FOR ME? GENTLY. HE BRUISES LIKE A PEACH.",
+        "when": "under-the-willow/start",
+        "until": "under-the-willow/courage"
+      },
+      {
+        "q": "The Moonwell, at dusk",
+        "a": "THE MOONWELL. AT DUSK. HE SAID THAT? HE SAID THAT.\n\nTHEN I SHALL BE THERE, AND I SHALL BE VERY SURPRISED. GO ON AHEAD. I NEED A MOMENT, AND POSSIBLY A DIFFERENT CIRCLET.",
+        "when": "under-the-willow/invite",
+        "until": "under-the-willow"
       }
     ]
   },
@@ -2461,7 +2473,7 @@
     "topics": [
       {
         "q": "About you",
-        "a": "I SWORE MY SWORD TO QUEEN ALYSSA AT THE MOONWELL, AND I MEANT EVERY WORD. WHERE SHE WALKS, I WALK. WHERE SHE SITS, I STAND. IT IS THE BEST WORK THERE IS."
+        "a": "I SWORE MY SWORD TO QUEEN ALYSSARA AT THE MOONWELL, AND I MEANT EVERY WORD. WHERE SHE WALKS, I WALK. WHERE SHE SITS, I STAND. IT IS THE BEST WORK THERE IS."
       },
       {
         "q": "The queen",
@@ -2470,6 +2482,18 @@
       {
         "q": "Your sword",
         "a": "...IT IS A GOOD SWORD. THERE IS NOTHING MISSING FROM IT. WHY DO YOU ASK. WHO HAVE YOU BEEN TALKING TO."
+      },
+      {
+        "q": "The queen... and you?",
+        "a": "I AM HER SWORD. A SWORD DOES NOT HAVE FEELINGS ABOUT THE HAND THAT HOLDS IT.\n\n...WHO TOLD YOU. WAS IT THE BARD. IT WAS THE BARD.\n\n...FINE. YES. FOR THREE HUNDRED YEARS. I HAVE TRIED TO TELL HER TWO HUNDRED AND TWELVE TIMES. ONCE I WROTE IT DOWN. THEN I PANICKED AND ATE THE LETTER. DO NOT TELL HER ABOUT THE LETTER.",
+        "when": "under-the-willow/ask",
+        "until": "under-the-willow/courage"
+      },
+      {
+        "q": "The Moonwell, at dusk",
+        "a": "THE LANTERNS. THE RIBBONS. A MOONFLOWER, FROM MIRELLE. YOU DID ALL THIS.\n\n...IT IS NEARLY DUSK. I MUST POLISH MY ARMOUR. ALL OF IT. TWICE. THEN I WILL SAY IT. PROBABLY. DEFINITELY. TELL HER... NO. TELL HER NOTHING. TELL HER THE MOONWELL.",
+        "when": "under-the-willow/courage",
+        "until": "under-the-willow"
       }
     ]
   },
@@ -2497,6 +2521,12 @@
       {
         "q": "The queen",
         "a": "SHE CAME TO THE THRONE YOUNG AND THE OLD ELVES DOUBTED HER. ONE WINTER LATER THEY'D HAVE FOLLOWED HER INTO THE SEA. IT'S IN THE SONG. THE LONG VERSION."
+      },
+      {
+        "q": "Help Beckolas say it",
+        "a": "AT LAST! I'VE HAD THE SONG WRITTEN FOR A CENTURY. 'THE FIRST SWORD SAYS NOTHING, AT LENGTH.' TWELVE VERSES.\n\n...NO, YOU'RE RIGHT. HE HAS TO SAY IT HIMSELF. THE MOONWELL, THEN, AT DUSK. EVERYONE SAYS THE TRUE THING AT THE MOONWELL. I'LL BE IN THE BUSHES. PLAYING VERY QUIETLY.",
+        "when": "under-the-willow/ask",
+        "until": "under-the-willow"
       }
     ]
   },
@@ -2524,6 +2554,12 @@
       {
         "q": "The Moonwell",
         "a": "IT SHOWS YOU WHAT YOU'D CROSS THE SEAS FOR. MOST PEOPLE LOOK ONCE AND GO HOME A LITTLE DIFFERENT."
+      },
+      {
+        "q": "A flower for him",
+        "a": "A MOONFLOWER. IT OPENS ONLY IN THE HAND OF SOMEONE WHO MEANS WHAT THEY'RE ABOUT TO SAY. I PICKED THIS ONE TWENTY YEARS AGO, FOR HIM. IT'S BEEN WAITING.\n\nTAKE IT TO HIM. IF IT STAYS SHUT, BRING IT BACK AND WE WILL NEVER SPEAK OF IT.",
+        "when": "under-the-willow/ask",
+        "until": "under-the-willow"
       }
     ]
   },
@@ -2944,6 +2980,12 @@
       {
         "q": "Heard anything?",
         "a": "THE WOOD IS QUIET. THE FIRST SWORD HAS BEEN UP EARLY ALL WEEK, PACING BY THE MOONWELL. HE SAYS IT'S FOR THE AIR. I HAVE NEVER SEEN ANYONE TAKE THE AIR SO SADLY."
+      },
+      {
+        "q": "Light the willow",
+        "a": "THE WILLOW? AT DUSK? FOR THE FIRST SWORD?\n\nI HAVE BEEN SAVING THE GOOD LANTERNS FOR SIX HUNDRED YEARS, FOR SOMETHING WORTH LIGHTING. CONSIDER IT DONE. I WILL EVEN KEEP MY EYES OPEN.",
+        "when": "under-the-willow/ask",
+        "until": "under-the-willow"
       }
     ]
   },
@@ -2971,6 +3013,12 @@
       {
         "q": "Heard anything?",
         "a": "THIS SPRING THE QUEEN HAD ME WEAVE HER A RIBBON - GREEN SILK, GOLD LEAVES, MY BEST WORK. SHE WANTED IT FOR SOMEONE. SHE WOULDN'T SAY WHO. SHE DIDN'T HAVE TO."
+      },
+      {
+        "q": "Ribbons for the willow",
+        "a": "RIBBONS! THE SAME SILK AS HIS FAVOUR, GREEN WITH GOLD LEAVES. I WOVE A WHOLE BOLT OF IT IN THE SPRING. I KNEW. EVERYONE KNEW.\n\nI'LL TIE THEM IN THE WILLOW MYSELF. HE'LL THINK IT'S A COINCIDENCE. HE WILL BE THE ONLY ONE.",
+        "when": "under-the-willow/ask",
+        "until": "under-the-willow"
       }
     ]
   },
@@ -2998,6 +3046,17 @@
       {
         "q": "Heard anything?",
         "a": "BECKOLAS CLIMBED A TREE! IN HIS ARMOUR! HE THOUGHT NOBODY SAW. I'M NOT SAYING WHICH TREE. MIRELLE SAYS SECRETS ARE LIKE SEEDS: DIG THEM UP TO LOOK AND THEY NEVER GROW."
+      },
+      {
+        "q": "Is it a secret?",
+        "a": "IS IT ABOUT BECKOLAS AND THE QUEEN? EVERYBODY KNOWS ABOUT BECKOLAS AND THE QUEEN. EXCEPT BECKOLAS. AND THE QUEEN.",
+        "when": "under-the-willow/start",
+        "until": "under-the-willow"
+      },
+      {
+        "q": "Did you see?",
+        "a": "I SAW! I WAS UP IN THE WILLOW! HE SAID IT ALL IN ONE BREATH AND THEN HE HAD TO SIT DOWN. AND SHE SAID 'FINALLY.' MIRELLE SAYS I'M NOT ALLOWED TO TELL ANYONE. I'M ONLY TELLING YOU.",
+        "when": "under-the-willow"
       }
     ]
   }
