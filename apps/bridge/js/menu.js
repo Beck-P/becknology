@@ -7,7 +7,7 @@
  *   Fish        every fish there is: the ones you've caught, the rest as shadows (js/codex.js)
  *   Collection  the codex's sets (js/codex.js)
  *
- * Keys: Tab opens it where you left it, I the Backpack, J the Journal, N the Map; the same key again (or Esc)
+ * Keys: Tab opens it where you left it, I the Backpack, J the Journal, N the Map, L the Ledger (js/ledger.js); the same key again (or Esc)
  * closes it, Tab / Shift-Tab step through the tabs while it's open. The Menu pill (top left, under the way out)
  * opens it on touch. It's dressed for the world you're in — parchment in Lumar, neon in Arcadia, holo aboard —
  * the same as the world's dialogs.
@@ -21,9 +21,10 @@ var BridgeMenu = (function () {
     { id: 'map', name: 'Map', key: 'N' },
     { id: 'journal', name: 'Journal', key: 'J' },
     { id: 'fish', name: 'Fish' },
-    { id: 'collection', name: 'Collection' }
+    { id: 'collection', name: 'Collection' },
+    { id: 'ledger', name: 'Ledger', key: 'L' }                 // js/ledger.js: businesses, hires, ships, what needs you
   ];
-  var KEYTAB = { i: 'backpack', n: 'map', j: 'journal' };
+  var KEYTAB = { i: 'backpack', n: 'map', j: 'journal', l: 'ledger' };
   var pages = {};
   var el = null, pageEl = null, cur = null, last = 'journal', curOpts = {}, wasOff = false, pillEl = null;
 
@@ -63,7 +64,11 @@ var BridgeMenu = (function () {
     collection: { pal: { k: '#1a1430', d: '#3a50b0', m: '#5a80e8', l: '#a8c8ff', w: '#f0f8ff', y: '#e0c060' }, rows: [
       '................', '.....kkkkkk.....', '....kllwwllk....', '...klmmllmmlk...', '..kkkkkkkkkkkk..', '..kdmmlwwlmmdk..',
       '...kdmmllmmdk...', '....kdmmmmdk....', '.....kdmmdk.....', '......kddk......', '.......kk.......', '................',
-      '...y.......y....', '................', '................', '................'] }
+      '...y.......y....', '................', '................', '................'] },
+    ledger: { pal: { k: '#14200e', G: '#2a5a2a', g: '#3a7a3a', p: '#f0e6c8', q: '#c8b890', y: '#e0c060', Y: '#a08030' }, rows: [
+      '................', '..kkkkkkkkkk....', '.kGGGGGGGGGGk...', '.kGgggggggGpk...', '.kGgyyyyygGpk...', '.kGgggggggGpk...',
+      '.kGgqqqqqgGpk...', '.kGgggggggGpk...', '.kGgqqqqqgGpk...', '.kGggggggkkkk...', '.kGGGGGGkyyyyk..', '..kkkkkkyYyyYyk.',
+      '.......kyyyyyyk.', '.......kyYyyYyk.', '........kyyyyk..', '.........kkkk...'] }
   };
   function icon(id, scale) {
     var A = ART[id], cv = document.createElement('canvas');
@@ -142,7 +147,7 @@ var BridgeMenu = (function () {
     pageEl.scrollTop = 0;
     var P = pages[cur];
     if (P && P.render) P.render(pageEl, curOpts);
-    var keys = touch() ? '' : 'Tab next tab · I backpack · N map · J journal';
+    var keys = touch() ? '' : 'Tab next tab · I backpack · N map · J journal · L ledger';
     el.querySelector('.gm-keys').textContent = keys;
   }
 
@@ -194,14 +199,14 @@ var BridgeMenu = (function () {
   function worldKeys(e) {
     if (isOpen() || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
     var k = e.key, t = e.target;
-    if (k !== 'Tab' && k !== 'n' && k !== 'N') return;
+    if (k !== 'Tab' && k !== 'n' && k !== 'N' && k !== 'l' && k !== 'L') return;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
     var root = document.documentElement;
     if (typeof BridgeState === 'undefined' || BridgeState.getState() !== 'world') return;
     if (root.classList.contains('controls-off') || root.classList.contains('home-editing') || root.classList.contains('keys-mode')) return;
     if (typeof BridgeWorld !== 'undefined' && BridgeWorld.getMode && BridgeWorld.getMode()) return;   // skiing, climbing...
     e.preventDefault(); e.stopPropagation();
-    open(k === 'Tab' ? last : 'map');
+    open(k === 'Tab' ? last : (k === 'l' || k === 'L') ? 'ledger' : 'map');
   }
 
   // ---- the Menu pill (it was the Journal pill; js/quests.js pings it when something's logged) --------------------

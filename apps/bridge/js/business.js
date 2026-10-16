@@ -104,5 +104,6 @@ var BridgeBusiness = (function () {
 
   return { find: find, owned: owned, pending: pending, cap: cap, perHour: perHour, nextUpgrade: nextUpgrade, buy: buy,
            upgrade: upgrade, collect: collect, freeCrew: freeCrew, assign: assign, summary: summary,
-           state: function (id) { return state[id] || null; } };
+           state: function (id) { return state[id] || null; },
+           all: function () { return Object.keys(defs).map(function (id) { return defs[id]; }); } };     // every business there is (js/ledger.js)
 })();
