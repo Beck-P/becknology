@@ -832,6 +832,7 @@ var BridgeInventory = (function () {
     init: init,
     show: show, hide: hide, refresh: refresh,
     addItem: addItem, removeItem: removeItem, getCount: getCount, getAll: getAll,
+    freeSlots: function () { var n = 0; for (var i = 0, c = cap(); i < c; i++) if (!state.slots[i]) n++; return n; },
     useItem: useItem, useSelected: useSelected,
     selectSlot: selectSlot, cycleSlot: cycleSlot,
     getSelectedSlot: getSelectedSlot, getSelectedItemId: getSelectedItemId,
