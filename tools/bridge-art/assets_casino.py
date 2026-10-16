@@ -915,9 +915,9 @@ def grand_piano(k, cx, cr, col=LACQUER, facing='right'):
         k.box(cx + 0.75, cr - 0.25, 0.0, cx + 0.95, cr + 0.25, 0.45, (col, 0.04), 'piano_bench')
 
 
-def stage(k, live, x0, x1, r_face, depth=2.2, h=0.4, curtain=VELVET):
+def stage(k, live, x0, x1, r_face, depth=2.2, h=0.4, curtain=VELVET, crown=True):
     """A raised stage against the back wall: a bulb-edged apron, swagged velvet curtains, a starburst backdrop in
-    neon, a footlight glow. Returns the stage's top height."""
+    neon (and a neon crown over it, unless the act's name goes there), a footlight glow. Returns the stage's top height."""
     r1 = r_face + depth
     pts = [(x0, r_face), (x1, r_face), (x1, r1 - 0.4), (x1 - 0.5, r1), (x0 + 0.5, r1), (x0, r1 - 0.4)]
     prism(k, pts, 0.0, h, (LACQUER_L, 0.05), 'stage')
@@ -938,7 +938,8 @@ def stage(k, live, x0, x1, r_face, depth=2.2, h=0.4, curtain=VELVET):
         a = math.pi * i / 12
         k.tube((cx, r_face + 0.08, h + 0.6), (cx + math.cos(a) * 1.4, r_face + 0.08, h + 0.6 + math.sin(a) * 1.4), 0.016,
                shade(GOLD_L, 0.5), 'starburst', emit=(YEL, 0.75), verts=4)
-    neon_crown(k, cx, r_face + 0.08, h + 1.85, s=0.38, col=PINK, gem=CYAN, energy=8)
+    if crown:
+        neon_crown(k, cx, r_face + 0.08, h + 1.85, s=0.38, col=PINK, gem=CYAN, energy=8)
     # curtains: swags at the top, drapes down the sides
     for side in (-1, 1):
         xe = x0 + 0.25 if side < 0 else x1 - 0.25

@@ -96,7 +96,7 @@ for (x, r) in ((4.5, 9.0), (12.5, 9.5), (2.5, 12.0), (14.5, 12.5)):
 
 # ---- the Runouts lounge ------------------------------------------------------------------------------------------------------------
 S.neon(k, 'RUNOUTS', 'Audiowide', 24.5, RB + 0.04, 3.3, size=0.8, col='#ff60d0', tube=0.026, energy=24)
-S.letters(k, 'EVERY GAME  EVERY STAKE', 'ZenDots', 24.5, RB + 0.04, 2.95, size=0.16, col=Y.CYAN_L, energy=4)
+S.letters(k, 'EVERY GAME  EVERY STAKE', 'ZenDots', 24.5, RB + 0.04, 2.9, size=0.22, col=Y.CYAN_L, energy=4)
 CAB = []
 for i, (mode, label) in enumerate(MODES[:8]):
     x = 17.5 + i * 2.0
@@ -118,7 +118,7 @@ k.box(25.55, 10.9, 1.0, 28.45, 11.65, 1.06, ('#c8ccd8', 0.04), 'desk_top')
 k.box(25.65, 11.6, 0.8, 28.35, 11.62, 0.86, shade('#ff60d0', 0.45), 'desk_neon', emit=('#ff60d0', 0.85))
 k.poly([(26.3, 11.1, 1.42), (27.1, 11.1, 1.42), (27.1, 11.3, 1.06), (26.3, 11.3, 1.06)], '#081020', 'desk_screen', emit=('#2a1a4a', 0.8))
 live.screens.append([26.35, round(11.1 - 1.42 * C.C45, 3), 27.05, round(11.3 - 1.06 * C.C45, 3), 'runouts:hall'])
-S.letters(k, 'RUNOUTS', 'Audiowide', 27.0, 11.62, 0.3, size=0.24, col='#ff60d0', energy=3)
+S.letters(k, 'RUNOUTS', 'Audiowide', 27.0, 11.62, 0.22, size=0.4, col='#ff60d0', energy=3)
 k.solid(25.6, 10.95, 28.4, 11.6)
 for (x0, r) in ((17.3, 11.2), (30.2, 11.2)):
     k.box(x0, r, 0.0, x0 + 2.2, r + 0.75, 0.42, ('#3a1450', 0.1), 'sofa', bevel=0.04)
