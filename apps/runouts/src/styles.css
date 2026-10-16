@@ -307,6 +307,11 @@ html.touch .pbtn .hot { display: none; }
 .raise-box input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #2c1f40; box-shadow: 0 0 0 2px var(--ink); outline: none; }
 .raise-box input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 18px; background: var(--gold); box-shadow: 0 0 0 2px var(--ink); cursor: pointer; }
 .raise-box input[type=range]::-moz-range-thumb { width: 16px; height: 18px; background: var(--gold); border: 0; box-shadow: 0 0 0 2px var(--ink); cursor: pointer; }
+.raise-row { display: flex; align-items: center; gap: 8px; }
+.raise-row input[type=range] { flex: 1; min-width: 0; }
+.raise-amt { flex: none; width: 76px; padding: 4px 7px; border: 0; outline: none; text-align: right; font-family: var(--head); font-size: 16px; color: var(--gold3);
+  background: #12081e; box-shadow: 0 0 0 2px var(--ink), inset 0 0 0 1px #5a3a12; caret-color: var(--gold); }
+.raise-amt:focus { box-shadow: 0 0 0 2px var(--gold), inset 0 0 0 1px #5a3a12; }
 @media (max-width: 640px) {
   .poker-acts { justify-content: center; }
   .raise-box { order: -1; width: 100%; min-width: 0; }

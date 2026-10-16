@@ -76,6 +76,8 @@ function PokerTable({ wallet, link, onBack, backLabel, say, info, buyIn, help, s
   const L = info.limits;
   const me = useMemo(() => (link ? link.me : { id: 'me', name: wallet.pilot || 'You' }), [link, wallet.pilot]);
   const [raiseTo, setRaiseTo] = useState(0);
+  const [draft, setDraft] = useState(null);     // an exact amount being typed into the box (null: it shows raiseTo)
+  const keepSel = useRef(false);                 // the click that focused the box doesn't undo selecting its number
   const [banner, setBanner] = useState(null);
   const [gone, setGone] = useState(false);
   const [left, setLeft] = useState(null);
@@ -108,7 +110,7 @@ function PokerTable({ wallet, link, onBack, backLabel, say, info, buyIn, help, s
 
   const mine = v && v.seats.find((x) => x.id === me.id);
   const o = v && mine ? P.options(v, me.id) : null;
-  useEffect(() => { if (o) setRaiseTo(Math.min(o.maxTo, o.minTo)); }, [o && o.minTo, o && o.maxTo, v && v.toAct]); // eslint-disable-line
+  useEffect(() => { if (o) setRaiseTo(Math.min(o.maxTo, o.minTo)); setDraft(null); }, [o && o.minTo, o && o.maxTo, v && v.toAct]); // eslint-disable-line
 
   // the hand's story: banners, sounds, wins
   const prev = useRef({});
@@ -139,6 +141,19 @@ function PokerTable({ wallet, link, onBack, backLabel, say, info, buyIn, help, s
   const fold = () => act({ t: 'fold' });
   const call = () => act({ t: o && o.canCheck ? 'check' : 'call' });
   const raise = (to) => act({ t: 'raise', to: to || raiseTo });
+  // the typed amount, taken: anything from the least raise to all in (said so when it's out of range)
+  const commit = () => {
+    if (draft == null || !o) return raiseTo;
+    const n = parseInt(draft, 10);
+    let to = raiseTo;
+    if (isFinite(n) && n > 0) {
+      to = Math.max(o.minTo, Math.min(o.maxTo, n));
+      if (n < o.minTo && say) say('The least you can ' + (o.curBet ? 'raise to' : 'bet') + ' is ' + num(o.minTo));
+      else if (n > o.maxTo && say) say('That\'s all in · ' + num(o.maxTo));
+    }
+    setRaiseTo(to); setDraft(null);
+    return to;
+  };
   const standUp = async () => {
     if (!v || !mine) { onBack && onBack(); return; }
     const cash = mine.stack;
@@ -350,10 +365,23 @@ function PokerTable({ wallet, link, onBack, backLabel, say, info, buyIn, help, s
         {o.canRaise && (
           <div className="raise-box">
             <div className="raise-presets">{presets.map(([lab, val]) => <button key={lab} type="button" className={'mini' + (raiseTo === val ? ' on' : '')} onClick={() => { setRaiseTo(val); sfx('click'); }}>{lab}</button>)}</div>
-            <input type="range" min={o.minTo} max={o.maxTo} step={Math.max(1, L.sb)} value={raiseTo} onChange={(e) => setRaiseTo(+e.target.value)} aria-label="Raise to" />
+            <div className="raise-row">
+              <input type="range" min={o.minTo} max={o.maxTo} step={Math.max(1, L.sb)} value={raiseTo} onChange={(e) => { setRaiseTo(+e.target.value); setDraft(null); }} aria-label="Raise to" />
+              <input className="raise-amt" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" enterKeyHint="go"
+                value={draft != null ? draft : String(raiseTo)} title={'Type an exact amount · ' + num(o.minTo) + ' to ' + num(o.maxTo)}
+                aria-label={(o.curBet ? 'Raise to' : 'Bet') + ', exact amount'}
+                onFocus={(e) => { setDraft(String(raiseTo)); e.target.select(); keepSel.current = true; }}
+                onMouseUp={(e) => { if (keepSel.current) { e.preventDefault(); keepSel.current = false; } }}
+                onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, '').slice(0, 9))}
+                onBlur={commit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); const to = commit(); e.target.blur(); raise(to); }
+                  else if (e.key === 'Escape') { e.preventDefault(); setDraft(null); e.target.blur(); }
+                }} />
+            </div>
           </div>
         )}
-        {o.canRaise && <Btn kind="gold" wide onClick={() => raise()} hot="R">{raiseTo >= o.maxTo ? 'All in' : (o.curBet ? 'Raise to ' : 'Bet ') + num(raiseTo)}</Btn>}
+        {o.canRaise && <Btn kind="gold" wide onClick={() => raise(commit())} hot="R">{raiseTo >= o.maxTo ? 'All in' : (o.curBet ? 'Raise to ' : 'Bet ') + num(raiseTo)}</Btn>}
       </div>
     );
   } else {
@@ -397,7 +425,7 @@ function PokerHelp({ open, onClose }) {
         {['Royal flush', 'Straight flush', 'Four of a kind', 'Full house', 'Flush', 'Straight', 'Three of a kind', 'Two pair', 'Pair', 'High card'].map((h, i) => <tr key={h}><td>{h}</td><td>{i + 1}</td></tr>)}
       </tbody></table>
       <h4>At the table</h4>
-      <p>No-limit: raise anything from the minimum to all in. Keys: F fold, C check or call, R raise. Stand up to cash your chips back; walking away mid-hand folds it.</p>
+      <p>No-limit: raise anything from the minimum to all in — tap a preset, slide, or type the exact amount in the box (Enter bets it). Keys: F fold, C check or call, R raise. Stand up to cash your chips back; walking away mid-hand folds it.</p>
     </Help>
   );
 }

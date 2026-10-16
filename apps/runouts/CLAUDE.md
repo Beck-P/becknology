@@ -36,6 +36,9 @@ one table talk through the Bridge.
 - `src/tables/*.jsx` — one screen per game: a pixel `Stage` (canvas at a whole number of device pixels per pixel, hit
   regions; drawn every frame from the view) plus DOM controls under it (chip rack — tap a chip, tap it again to bet it,
   or drag it to a spot — buttons, clock, banner, help). `src/tables/runouts/modes.js` draws each Runouts game.
+  Hold'em's raise: presets (min, ½ pot, pot, all in), a slider, and a box for the exact amount (`.raise-amt`; typed,
+  it's taken on blur, Enter or the raise button, kept between the least raise and all in, with a toast when it's moved;
+  Enter bets it; the table's F/C/R keys don't fire while typing — `useKeys` skips inputs).
 - `src/art/` — pixel art in code: `pix.js` (palette, 5×7 and 3×5 fonts, baked sprites, particles), `sprites.js` (cards,
   chips, dice), `felt.js`, `wheel.js`, `symbols.js` (slot symbols), `horse.js`, `people.js` (draws the Bridge's sheets
   from `/bridge/assets/characters/`), `tiles.js` (the lobby's neon sign and live tiles). Fonts: Silkscreen for headings,
