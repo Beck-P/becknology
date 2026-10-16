@@ -443,7 +443,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
         if (typeof BridgeActions !== 'undefined') BridgeActions.decorate(worldId, data);
-        if (typeof BridgeSylvara !== 'undefined') BridgeSylvara.decorate(worldId, data);   // the willow, once the first sword has said it
+        if (typeof BridgeSylvara !== 'undefined' && BridgeSylvara.decorate) BridgeSylvara.decorate(worldId, data);   // the willow, once the first sword has said it
         if (typeof BridgeHome !== 'undefined') BridgeHome.decorate(worldId, data);       // last: it keeps the rest clear
         if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);
         var finish = function () {
