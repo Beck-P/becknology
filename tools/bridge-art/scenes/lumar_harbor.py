@@ -353,7 +353,7 @@ k.point_light(10.0, 9.5, 2.8, '#ffc890', 30, radius=1.0)
 for (c, r) in sea:          # no walking on water
     k.solid(c, r, c + 1, r + 1)
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=int(os.environ.get('SAMPLES', 128)),
+k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=int(os.environ.get('SAMPLES', 128)),
          world_light=('#2a3450', 0.7))
 
 apply_world(WORLD, k, (0, 0, 15, 15), doors=[(7, 15), (8, 15), (7, 16), (8, 16)], scene_id='lumar', moves={

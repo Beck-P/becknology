@@ -226,11 +226,20 @@ var BridgeSloop = (function () {
     if (!own) BridgeScene.load(id, function (sc) { I.sc = sc; done(); });
     fetch('/bridge/assets/scenes/' + id + '/scene.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (meta) {
       if (own === true) {
-        var q = '?v=' + (meta.rev || ''), st = meta.states[0], pic = new Image();
+        var q = '?v=' + (meta.rev || ''), st = meta.states[0], pic = new Image(), im = {};
+        var cy = meta.cycle, more = cy ? [cy.day, cy.dusk].filter(function (x) { return x && x !== st; }) : [];
         n++;
-        pic.onload = function () { var im = {}; im[st] = pic; I.sc = { id: id, meta: meta, imgs: im, baseImgs: im, q: q, own: true }; done(); };
+        I.sc = { id: id, meta: meta, imgs: im, baseImgs: im, q: q, own: true };
+        pic.onload = function () { im[st] = pic; done(); };
         pic.onerror = function () { I.sc = null; done(); };
         pic.src = '/bridge/assets/scenes/' + id + '/' + st + '.png' + q;
+        more.forEach(function (name) {                    // the island by day and at dusk (js/scene.js blends them)
+          n++;
+          var p2 = new Image();
+          p2.onload = function () { im[name] = p2; done(); };
+          p2.onerror = function () { done(); };
+          p2.src = '/bridge/assets/scenes/' + id + '/' + name + '.png' + q;
+        });
       }
       var im = new Image();
       im.onload = function () {
@@ -763,7 +772,12 @@ var BridgeSloop = (function () {
     loadSheet(function (err) {
       if (err) { fail(); return; }
       loadHull(SP.sheet, function () {});
-      loadIsland(fromId, function (I) { A = I; go(); });
+      loadIsland(fromId, function (I) {
+        A = I;
+        daySea = !!(I.sc && I.sc.meta && I.sc.meta.cycle);                          // its art has a day: so does the sea
+        if (BridgeSea.setSeaCycles) BridgeSea.setSeaCycles(daySea);
+        go();
+      });
     });
     last = performance.now();
     raf = requestAnimationFrame(frame);
@@ -794,6 +808,7 @@ var BridgeSloop = (function () {
   function touch() { return document.documentElement.classList.contains('touch'); }
 
   function stop(dest, landed) {
+    if (typeof BridgeSea !== 'undefined' && BridgeSea.setSeaCycles) BridgeSea.setSeaCycles(false);
     if (!running) return;
     if (crewOf && net()) net().send('sail-end', { dest: dest || from, landed: !!landed }, crewOf.id);
     crewOf = null; captainOf = null; mirror = null; seaPeers = {};
@@ -1866,10 +1881,10 @@ var BridgeSloop = (function () {
     var X = Math.round(b.x * TS - cam.x), Y = Math.round(b.r * TS - cam.y) + bob, H = HULLS[sp.sheet];
     if (H && H.img) {
       var cp = H.cell * 32;
-      bctx.drawImage(tinted(H.img, b.tint), (hi % 8) * cp, Math.round(H.oy + Math.floor(hi / 8) * cp), cp, cp, X - cp / 2, Y - Math.round(H.cy * 32), cp, cp);
+      skyBlit(tinted(H.img, b.tint), (hi % 8) * cp, Math.round(H.oy + Math.floor(hi / 8) * cp), cp, cp, X - cp / 2, Y - Math.round(H.cy * 32), cp, cp);
     } else {
       var cc = cell(Math.floor(hi / 8), hi % 8), sz = Math.round(128 * k);
-      bctx.drawImage(tinted(sheetImg, b.tint), cc[0], cc[1], 128, 128, X - Math.round(64 * k), Y - Math.round(83 * k), sz, sz);
+      skyBlit(tinted(sheetImg, b.tint), cc[0], cc[1], 128, 128, X - Math.round(64 * k), Y - Math.round(83 * k), sz, sz);
     }
     var Pal = BridgeSea.palettes[b === boat ? seaHere() : palAt(b.x, b.r)] || BridgeSea.palettes.emerald;
     var c = Math.cos(b.h), s = Math.sin(b.h), nf = Math.round(18 * k);
@@ -1952,6 +1967,44 @@ var BridgeSloop = (function () {
     }
   }
   // a hull sheet washed with a colour (a pirate's tarred black, a drowned ship's pale green), made once and kept
+  // ---- by day (js/clock.js): the sheets are rendered in moonlight; a daylight and a dusk copy of each, made once, are
+  // laid over them by Lumar's sky — once the island you sailed from has its day art (`daySea`, set as she casts off)
+  var daySea = false, skyAt = 0, skyW = null;
+  function skyNow() {
+    var t = Date.now();
+    if (t - skyAt > 250) {
+      skyAt = t;
+      skyW = daySea && typeof BridgeClock !== 'undefined' ? BridgeClock.weights('lumar') : null;
+      if (skyW && skyW.day < 0.003 && skyW.dusk < 0.003) skyW = null;
+    }
+    return skyW;
+  }
+  function daylit(c) {
+    if (c.__lit) return c.__lit;
+    function make(gamma, k) {
+      var o = document.createElement('canvas'); o.width = c.width; o.height = c.height;
+      var x = o.getContext('2d', { willReadFrequently: true }); x.drawImage(c, 0, 0);
+      var id = x.getImageData(0, 0, o.width, o.height), d = id.data;
+      for (var i = 0; i < d.length; i += 4) {
+        if (!d[i + 3]) continue;
+        for (var j = 0; j < 3; j++) d[i + j] = Math.min(255, Math.round(255 * Math.pow(d[i + j] / 255, gamma) * k[j]));
+      }
+      x.putImageData(id, 0, 0);
+      return o;
+    }
+    c.__lit = { day: make(0.6, [1.08, 1.06, 1.0]), dusk: make(0.76, [1.22, 0.94, 0.82]) };
+    return c.__lit;
+  }
+  /** drawImage, with the day and dusk copies over it as the sky is now. */
+  function skyBlit(img, sx0, sy0, sw, sh, dx, dy, dw, dh) {
+    bctx.drawImage(img, sx0, sy0, sw, sh, dx, dy, dw, dh);
+    var W = skyNow();
+    if (!W || !img || !img.getContext) return;
+    var L = daylit(img), a0 = bctx.globalAlpha, aD = W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0;
+    if (W.day < 0.995 && aD > 0.003) { bctx.globalAlpha = a0 * aD; bctx.drawImage(L.dusk, sx0, sy0, sw, sh, dx, dy, dw, dh); }
+    if (W.day > 0.003) { bctx.globalAlpha = a0 * W.day; bctx.drawImage(L.day, sx0, sy0, sw, sh, dx, dy, dw, dh); }
+    bctx.globalAlpha = a0;
+  }
   var tints = [];
   function tinted(img, tint) {
     if (!tint || !img) return img;
@@ -2108,7 +2161,7 @@ var BridgeSloop = (function () {
     var P = BridgeSea.palettes[o.pal || palAt(o.x, o.r)] || BridgeSea.palettes.emerald;
     if (o.kind === 'dory') {
       var hi = ((Math.round(o.h / (Math.PI * 2) * 8) % 8) + 8) % 8, cc = cell(4, hi);
-      bctx.drawImage(sheetImg, cc[0], cc[1], 128, 128, X - 64, Y - 83 + bob, 128, 128);
+      skyBlit(sheetImg, cc[0], cc[1], 128, 128, X - 64, Y - 83 + bob, 128, 128);
       var lt = [X + Math.cos(o.h) * 0.68 * TS, Y + Math.sin(o.h) * 0.68 * TS - 0.95 * C45 * TS + bob];
       bctx.save(); bctx.globalCompositeOperation = 'lighter';
       for (var g = 3; g >= 1; g--) { bctx.fillStyle = 'rgba(255,190,110,' + (0.03 * (4 - g)).toFixed(3) + ')'; disc(lt[0], lt[1] + 22, g * 8, g * 4); }
@@ -2132,7 +2185,7 @@ var BridgeSloop = (function () {
       return;
     }
     var cc2 = cell(5, STATIC[o.kind]);
-    bctx.drawImage(sheetImg, cc2[0], cc2[1], 128, 128, X - 64, Y - 83 + bob, 128, 128);
+    skyBlit(sheetImg, cc2[0], cc2[1], 128, 128, X - 64, Y - 83 + bob, 128, 128);
     // surf round the rocks, a ring of foam round things afloat
     var rx = (o.rad || 0.5) * TS * 0.95, ry = rx * 0.6;
     for (var i = 0; i < 26; i++) {

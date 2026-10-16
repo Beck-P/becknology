@@ -977,7 +977,7 @@
         if (typeof BridgeMenu !== 'undefined') BridgeMenu.open('map', { all: true }); else if (typeof BridgeQuests !== 'undefined') BridgeQuests.open();
         break;
       case 'letters': openLetters(); break;
-      case 'comms': say(commsText()); break;
+      case 'comms': say(commsText() + (typeof BridgeHours !== 'undefined' ? '\n\n' + BridgeHours.chronometer() : '')); break;
       case 'engineering': say(engineeringText()); break;
       case 'sensors': say(scopeText()); break;
       case 'decor': say(decorText(inter.slot)); break;

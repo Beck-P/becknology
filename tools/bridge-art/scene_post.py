@@ -172,9 +172,17 @@ def main():
     depth = view + meta['camDot']                     # engine depth units
     depth = np.where(alpha, depth, np.inf)
 
+    def emit(state, e):                               # lamps by day glow less (scenekit `_emit`)
+        k = (meta.get('stateOpts') or {}).get(state, {}).get('emit', 1.0)
+        if k == 1.0:
+            return e
+        out = e.copy()
+        out[..., :3] = np.clip(e[..., :3].astype(np.float32) * k, 0, 255).astype(e.dtype)
+        return out
+
     for state in meta['lightStates']:
         light = load16(os.path.join(rd, 'light_' + state + '.png'))
-        img = toon(albedo, light, emission)
+        img = toon(albedo, light, emit(state, emission))
         img = lines(img, ids, depth, alpha)
         rgba = np.zeros(albedo.shape, np.uint8)
         rgba[..., :3] = (img * 255 + 0.5).astype(np.uint8)
@@ -205,7 +213,7 @@ def main():
         imgs = {}
         for state in meta['lightStates']:
             light = load16(os.path.join(vd, 'light_' + state + '.png'))
-            img = lines(toon(valb, light, vemi), vids, vdepth, va)
+            img = lines(toon(valb, light, emit(state, vemi)), vids, vdepth, va)
             rgba = np.zeros(valb.shape, np.uint8)
             rgba[..., :3] = (img * 255 + 0.5).astype(np.uint8)
             rgba[..., 3] = np.where(va, 255, 0)
@@ -276,6 +284,8 @@ def main():
         out['layers'] = layers
     if water:
         out['water'] = water
+    if meta.get('cycle'):
+        out['cycle'] = meta['cycle']                  # which state is day, dusk and night (js/scene.js blends them)
     out['rev'] = revision(od)
     json.dump(out, open(os.path.join(od, 'scene.json'), 'w'), separators=(',', ':'))
     print('wrote', od, out['width'], 'x', out['height'], 'depth', round(dmin, 2), round(dmax, 2))

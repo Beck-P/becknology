@@ -231,7 +231,7 @@ for c in range(COLS):                                            # the hedge alo
 
 # ---- the light: the same low golden sun as the farm ------------------------------------------------------------------
 k.sun((0.62, 0.42, -0.62), '#ffe2b0', 4.2, angle=3.0)
-k.render(OUT, light_states={'full': {}}, light_samples=96, world_light=('#a8c4e0', 0.85))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=96, world_light=('#a8c4e0', 0.85))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'Brambleford', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'verdance',

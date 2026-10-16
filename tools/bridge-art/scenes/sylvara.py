@@ -156,9 +156,13 @@ k.solid(0, 0, 1, ROWS)
 k.solid(COLS - 1, 0, COLS, ROWS)
 k.solid(0, ROWS - 2, COLS, ROWS)
 
-# ---- the light: dusk — a low gold sun from the west between the trunks, the shadows green-blue -----------------------------
-k.sun((0.78, 0.3, -0.36), '#ffb070', 1.8, angle=3.0)
-k.render(OUT, light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#3a5a7a', 0.55))
+# ---- the light (js/clock.js: Sylvara's day is a real day): by day the sun down through the canopy; at dusk — as the
+# glade was first built — a low gold sun from the west between the trunks, the shadows green-blue; by night the moon,
+# the leaf lanterns and the Moonwell (the kit derives dusk and night from this day)
+k.sun((0.62, 0.42, -0.62), '#fff0c8', 3.4, angle=3.0)
+k.render(OUT, cycle={'base': 'day', 'dusk_sun': ((0.78, 0.3, -0.36), '#ffb070', 1.8), 'dusk_sky': ('#3a5a7a', 0.55),
+                     'night_sky': ('#1e3040', 0.55), 'lamps_day': 0.3},
+         light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#86aac0', 0.8))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 SPAWN = [39, 24]

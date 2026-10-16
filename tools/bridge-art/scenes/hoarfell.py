@@ -178,7 +178,7 @@ k.solid(44, ROWS - 2, COLS, ROWS)
 
 # ---- the light: alpenglow — a low pink sun from the west, the sky's violet-blue in the shadows -------------------------------------
 k.sun((0.8, 0.25, -0.38), '#ffc4a4', 3.2, angle=3.0)
-k.render(OUT, light_states={'full': {}}, light_samples=96, world_light=('#8a96cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=96, world_light=('#8a96cc', 0.95))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'Fellhaven', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'hoarfell',

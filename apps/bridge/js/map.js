@@ -228,7 +228,7 @@ var BridgeMap = (function () {
   function sceneThumb(sceneId, live, cb) {
     var sc = live && typeof BridgeScene !== 'undefined' && BridgeScene.get ? BridgeScene.get(sceneId) : null;
     if (sc && sc.meta && sc.imgs) {                                // where you are: the render already in memory, as it looks now
-      var img = sc.imgs[sc.meta.states[0]] || sc.imgs.full;
+      var img = sc.imgs[(BridgeScene.shownState && BridgeScene.shownState(sc.id)) || sc.meta.states[0]] || sc.imgs.full;   // as the sky is now (js/clock.js)
       if (img && img.width) { cb({ c: scaleDown(img, K), meta: sc.meta }); return; }
     }
     if (thumbs[sceneId]) { cb(thumbs[sceneId]); return; }

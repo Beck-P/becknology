@@ -151,7 +151,7 @@ k.solid(0, ROWS - 2, 32, ROWS)
 
 # ---- the light: a low golden sun from the west, the sky's blue in the shadows ------------------------------------------
 k.sun((0.62, 0.42, -0.62), '#ffe2b0', 4.2, angle=3.0)
-k.render(OUT, light_states={'full': {}}, light_samples=96, world_light=('#a8c4e0', 0.85))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=96, world_light=('#a8c4e0', 0.85))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.pop('shuttle', None)                                # no pad here: the shuttle lands in Brambleford, up Meadow Lane

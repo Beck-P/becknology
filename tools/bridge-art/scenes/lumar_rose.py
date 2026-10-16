@@ -177,7 +177,7 @@ for (x, r) in ((7.4, 17.0), (17.2, 26.6), (35.0, 9.0), (21.4, 6.2), (47.6, 28.4)
 k.area_light(28.0, 18.0, 16.0, '#9a90c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))         # moonlight
 k.point_light(28.0, 14.0, 4.0, '#ffd8e0', 60, radius=1.5)
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
+k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
          world_light=('#3a2a40', 0.75))
 
 # ---- the world ------------------------------------------------------------------------------------------------

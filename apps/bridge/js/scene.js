@@ -234,6 +234,28 @@ var BridgeScene = (function () {
     return x1 > x0 && y1 > y0 ? [x0, y0, x1 - x0, y1 - y0] : null;
   }
 
+  // ---- day and night (js/clock.js) -----------------------------------------------------------------------------------
+  // A scene whose scene.json has a `cycle` ({day, dusk, night}: which light state is which) is drawn as a blend of
+  // them by its planet's sky: dusk's weight is the sun crossing the horizon, day's the sun up, night the rest. Drawn
+  // night first (with its firelight flicker), dusk over it, day over that — only the ones that show.
+  var skyCache = {};
+  function weights(sc) {
+    var cy = sc.meta.cycle;
+    if (!cy || typeof BridgeClock === 'undefined' || !sc.imgs[cy.day] || !sc.imgs[cy.night]) return null;   // its day art not loaded
+    var t = Date.now(), key = sc.id + (sc.own ? '#own' : ''), c = skyCache[key];
+    if (c && t - c.at < 250) return c.w;
+    var w = BridgeClock.weights(sc.id, !!sc.imgs[cy.dusk]);
+    w.cy = cy;
+    skyCache[key] = { at: t, w: w };
+    return w;
+  }
+  /** The light state that shows most right now (for things drawn from a single state). */
+  function shownState(sc) {
+    var w = weights(sc);
+    if (!w) return sc.meta.states[0];
+    return w.day >= w.dusk && w.day >= w.night ? w.cy.day : w.dusk >= w.night ? w.cy.dusk : w.cy.night;
+  }
+
   // Only the part of the render on screen is drawn. Blending two whole large renders every
   // frame made the browser draw them in 256-px tiles once GPU memory ran short, and now and
   // then one tile came out blank: a dark rectangle over the room.
@@ -244,14 +266,21 @@ var BridgeScene = (function () {
     if (!v) return;
     function blit(img) { ctx.drawImage(img, v[0], v[1], v[2], v[3], x + v[0], y + v[1], v[2], v[3]); }
     var fl = world.scene && world.scene.flicker;
+    var W = weights(sc);
+    if (W && W.day > 0.995) { blit(sc.imgs[W.cy.day]); return; }
     if (fl && sc.imgs[fl.from] && sc.imgs[fl.to]) {
       blit(sc.imgs[fl.from]);
       ctx.globalAlpha = flickerAt(now, fl.mode);
       blit(sc.imgs[fl.to]);
       ctx.globalAlpha = 1;
     } else {
-      blit(sc.imgs[m.states[0]]);
+      blit(sc.imgs[W ? W.cy.night : m.states[0]]);
     }
+    if (!W) return;
+    var aD = W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0;   // dusk over night, then day over both
+    if (aD > 0.003) { ctx.globalAlpha = aD; blit(sc.imgs[W.cy.dusk]); }
+    if (W.day > 0.003) { ctx.globalAlpha = W.day; blit(sc.imgs[W.cy.day]); }
+    ctx.globalAlpha = 1;
   }
 
   // Light falling on a character standing at (col, row), as a CSS colour
@@ -267,7 +296,19 @@ var BridgeScene = (function () {
     } else {
       a = b = m.tileLight[m.states[0]][r][c];
     }
-    function ch(i) { return Math.round(255 * Math.min(1, a[i] + (b[i] - a[i]) * f)); }
+    var W = weights(sc), d = null, s = null, aD = 0;
+    if (W) {
+      if (W.cy.night !== m.states[0] && !(fl && m.tileLight[fl.from])) { a = b = m.tileLight[W.cy.night][r][c]; }
+      d = m.tileLight[W.cy.dusk] && m.tileLight[W.cy.dusk][r][c];
+      s = m.tileLight[W.cy.day] && m.tileLight[W.cy.day][r][c];
+      aD = W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0;
+    }
+    function ch(i) {
+      var v = a[i] + (b[i] - a[i]) * f;
+      if (d) v += (d[i] - v) * aD;
+      if (s) v += (s[i] - v) * W.day;
+      return Math.round(255 * Math.min(1, v));
+    }
     return 'rgb(' + ch(0) + ',' + ch(1) + ',' + ch(2) + ')';
   }
 
@@ -486,7 +527,7 @@ var BridgeScene = (function () {
     if (!sc || !sc.ready) return null;
     var L = sc.layers.filter(function (l) { return l.slot === slot && l.key === key; })[0];
     if (!L) return null;
-    state = state || sc.meta.states[0];
+    state = state || shownState(sc);
     var ck = id + '/' + slot + '/' + key + '/' + state;
     if (!layerCanvases[ck] && L.imgs[state]) {
       var c = document.createElement('canvas');
@@ -514,6 +555,9 @@ var BridgeScene = (function () {
     drawOccluded: drawOccluded,
     restore: function () { for (var k in scenes) if (scenes[k].ready) composite(scenes[k]); },   // after the canvas was lost
     tintAt: tintAt,
+    sky: function (id) { var sc = scenes[id]; return sc && sc.ready ? weights(sc) : null; },
+    skyOf: function (sc) { return sc && sc.meta ? weights(sc) : null; },     // any scene object (the sloop's own islands)
+    shownState: function (id) { var sc = scenes[id]; return sc && sc.ready ? shownState(sc) : null; },
     actorDrawList: actorDrawList,
     walkerInteractions: walkerInteractions,
     flickerAt: flickerAt,

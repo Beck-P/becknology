@@ -123,7 +123,7 @@ I.tufts(k, [c for c in land if material(c[0] + 0.5, c[1] + 0.5) in ('grass', 'gr
 I.pebbles(k, land, '#7a7a72', per_cell=0.3, avoid=busy)
 
 k.area_light(19.0, 12.0, 16.0, '#90a8c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96, world_light=('#26384a', 0.8))
+k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96, world_light=('#26384a', 0.8))
 
 
 def look(label, x, y, text, prompt='PRESS E TO LOOK'):

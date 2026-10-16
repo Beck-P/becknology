@@ -213,7 +213,7 @@ I.pebbles(k, land, '#6a6a62', per_cell=0.2, avoid=busy)
 k.area_light(21.0, 14.0, 16.0, '#90a8c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))       # moonlight
 k.point_light(21.0, 13.0, 4.0, '#e0f0e8', 40, radius=1.5)
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
+k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
          world_light=('#26384a', 0.8))
 
 # ---- the world -----------------------------------------------------------------------------------------------------

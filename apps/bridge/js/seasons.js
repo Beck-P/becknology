@@ -27,7 +27,12 @@ var BridgeSeasons = (function () {
   var FAVOURS = { spring: ['turnip', 'strawberry', 'carrot'], summer: ['sunflower', 'starfruit', 'strawberry'], autumn: ['pumpkin', 'carrot', 'turnip'], winter: [] };
   var forced = null, told = null;
 
-  function dayNum() { return Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000); }
+  // days by the shared clock (Eastern time, js/clock.js) so every pilot is in the same season; the browser's own day
+  // where there's no clock
+  function dayNum() {
+    if (typeof BridgeClock !== 'undefined') return Math.floor(BridgeClock.etNow() / 86400000);
+    return Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
+  }
   function current() {
     var d = dayNum(), w = Math.floor((d + 3) / 7);                   // weeks start on a Monday
     var i = forced != null ? forced : ((w + 3) % 4 + 4) % 4;

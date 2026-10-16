@@ -2654,3 +2654,10 @@ html.touch .tc-pill.tc-inbar .tc-lbl { display: none; }
   .cm-bar:has(.tc-pill.tc-on):has(.cm-vs:not(:empty)) { grid-template-columns: 1fr auto; }
   .cm-bar:has(.tc-pill.tc-on):has(.cm-vs:not(:empty)) .cm-title { display: none; }
 }
+
+/* the sky by the place's name (js/hours.js): a sun, a moon, or half of each at dawn and dusk */
+.world-sky { display: inline-flex; line-height: 0; margin-left: 2px; opacity: 0.95; }
+.world-sky svg { display: block; }
+.world-sky.sky-morning, .world-sky.sky-midday, .world-sky.sky-afternoon, .world-sky.sky-midnight-sun { color: #ffd870; }
+.world-sky.sky-dawn, .world-sky.sky-dusk { color: #ff9a6a; }
+.world-sky.sky-night { color: #b8c4ff; }

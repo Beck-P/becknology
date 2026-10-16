@@ -27,6 +27,49 @@ var BridgeSea = (function () {
     sapphire: { deep: [8, 14, 34], mid: [16, 30, 64], hi: [44, 72, 124], shallow: '120,170,250', foam: '224,236,255', spore: '120,170,255' },
     midnight: { deep: [6, 6, 18], mid: [14, 14, 38], hi: [36, 32, 80], shallow: '150,130,250', foam: '226,220,255', spore: '170,140,255' }
   };
+  // ---- by day and at dusk (js/clock.js): each sea in sunlight, and warmed by a low sun ----------------------------------
+  var DAY = {
+    emerald: { deep: [28, 96, 92], mid: [44, 132, 118], hi: [110, 196, 170], shallow: '170,240,220', foam: '245,255,252', spore: '255,255,255' },
+    crimson: { deep: [104, 36, 46], mid: [150, 60, 72], hi: [214, 120, 128], shallow: '250,150,155', foam: '255,232,234', spore: '255,255,255' },
+    rose: { deep: [96, 56, 98], mid: [140, 86, 136], hi: [206, 146, 192], shallow: '250,190,225', foam: '255,240,248', spore: '255,255,255' },
+    sapphire: { deep: [24, 64, 128], mid: [40, 98, 170], hi: [104, 160, 226], shallow: '160,200,255', foam: '240,248,255', spore: '255,255,255' }
+  };
+  (function derive() {
+    var WARM = [214, 116, 84];
+    function mix3(n, d, k) { return [0, 1, 2].map(function (i) { return Math.round(n[i] * 0.42 + d[i] * 0.33 + WARM[i] * 0.25 * k); }); }
+    function mixs(n, d) { var a = n.split(',').map(Number), b = d.split(',').map(Number); return mix3(a, b, 1.3).join(','); }
+    Object.keys(DAY).forEach(function (k) {
+      var N = PALETTES[k], D = DAY[k];
+      PALETTES[k + '@day'] = D;
+      PALETTES[k + '@dusk'] = { deep: mix3(N.deep, D.deep, 1), mid: mix3(N.mid, D.mid, 1), hi: mix3(N.hi, D.hi, 1.2),
+                                shallow: mixs(N.shallow, D.shallow), foam: mixs(N.foam, D.foam), spore: N.spore };
+    });
+  })();
+  /** How much day and dusk show on this sea now: the scene's own blend where its art has a day (js/scene.js), else night. */
+  function skyFor(palette, sc) {
+    if (!DAY[palette] || typeof BridgeScene === 'undefined' || !BridgeScene.sky) return null;
+    var w;
+    if (sc) w = BridgeScene.skyOf(sc);
+    else if (camOverride) w = typeof BridgeClock !== 'undefined' && seaCycles ? BridgeClock.weights('lumar') : null;   // out at sea
+    else {
+      var id = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : null;
+      w = id ? BridgeScene.sky(id) : null;
+    }
+    return w && (w.day > 0.003 || w.dusk > 0.003) ? w : null;
+  }
+  // out at sea (the sloop's passage) the open water follows Lumar's sky once its islands have their day art
+  var seaCycles = false;
+  function setSeaCycles(on) { seaCycles = !!on; }
+  function blendStr(a, b, k) { var x = a.split(',').map(Number), y = b.split(',').map(Number); return x.map(function (v, i) { return Math.round(v + (y[i] - v) * k); }).join(','); }
+  /** The palette's shallows and foam for the sky now (the animated water's colours). */
+  function litPalette(name, W) {
+    var P = PALETTES[name];
+    if (!W) return P;
+    var D = PALETTES[name + '@dusk'], Y = PALETTES[name + '@day'];
+    var aD = W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0;
+    var sh = blendStr(blendStr(P.shallow, D.shallow, aD), Y.shallow, W.day), fo = blendStr(blendStr(P.foam, D.foam, aD), Y.foam, W.day);
+    return { deep: P.deep, mid: P.mid, hi: P.hi, shallow: sh, foam: fo, spore: P.spore };
+  }
 
   function hash(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
   var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
@@ -116,15 +159,24 @@ var BridgeSea = (function () {
              camX: camX, camY: camY };
   }
 
-  function waves(ctx, w, h, now, palette, sx, sy) {
+  function waves(ctx, w, h, now, palette, sx, sy, W) {
     var D = drift(now);
-    tiled(ctx, texture(palette, 1), w, h, D.ax + sx, D.ay + sy, 1);
-    tiled(ctx, texture(palette, 2), w, h, D.bx + sx, D.by + sy, 0.45);
+    function layer(name, a) {
+      if (a <= 0.003) return;
+      tiled(ctx, texture(name, 1), w, h, D.ax + sx, D.ay + sy, a);
+      tiled(ctx, texture(name, 2), w, h, D.bx + sx, D.by + sy, 0.45 * a);
+    }
+    if (W && W.day > 0.995) { layer(palette + '@day', 1); return; }
+    layer(palette, 1);
+    if (!W) return;
+    layer(palette + '@dusk', W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0);
+    layer(palette + '@day', W.day);
   }
 
   // moon glints and drifting spores, on a world-anchored grid; `isWater`
   // (screen x, y) filters them to the water over a scene
-  function glints(ctx, w, h, now, P, isWater) {
+  function glints(ctx, w, h, now, P, isWater, W) {
+    var dark = W ? Math.max(0, 1 - W.day * 1.1) : 1, sparkle = W ? 0.6 - 0.25 * W.day : 0.6;
     var D = drift(now);
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
@@ -135,13 +187,13 @@ var BridgeSea = (function () {
         var id = c * 7919 + r * 104729;
         var x = Math.round(c * cell - D.camX + hash(id) * cell), y = Math.round(r * cell - D.camY + hash(id + 1) * cell);
         var tw = Math.sin(now / (380 + hash(id + 2) * 400) + id);
-        if (tw > 0.6 && (!isWater || isWater(x, y))) {
-          ctx.fillStyle = 'rgba(220,240,255,' + ((tw - 0.6) * 1.6).toFixed(2) + ')';
+        if (tw > sparkle && (!isWater || isWater(x, y))) {
+          ctx.fillStyle = 'rgba(' + (W && W.day > 0.3 ? '255,252,236' : '220,240,255') + ',' + Math.min(1, (tw - sparkle) * 1.6).toFixed(2) + ')';
           ctx.fillRect(x, y, 2 + (tw > 0.9 ? 2 : 0), 1);
         }
         var sx = Math.round(x + Math.sin(now / 2000 + id) * 6), sy = Math.round(y + 20 + Math.cos(now / 2600 + id) * 4);
-        if (!isWater || isWater(sx, sy)) {
-          ctx.fillStyle = 'rgba(' + P.spore + ',' + (0.25 + 0.35 * Math.abs(Math.sin(now / 900 + id))).toFixed(2) + ')';
+        if (dark > 0.05 && (!isWater || isWater(sx, sy))) {
+          ctx.fillStyle = 'rgba(' + P.spore + ',' + ((0.25 + 0.35 * Math.abs(Math.sin(now / 900 + id))) * dark).toFixed(2) + ')';
           ctx.fillRect(sx, sy, 1, 1);
         }
       }
@@ -151,11 +203,11 @@ var BridgeSea = (function () {
 
   /** The open sea, filling the frame (native px), scrolling with the world. */
   function drawSea(ctx, w, h, now, palette) {
-    var P = PALETTES[palette] || PALETTES.emerald;
-    ctx.fillStyle = 'rgb(' + P.deep.join(',') + ')';
+    var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name], W = skyFor(name);
+    ctx.fillStyle = 'rgb(' + (W && W.day > 0.5 ? PALETTES[name + '@day'] : P).deep.join(',') + ')';
     ctx.fillRect(0, 0, w, h);
-    waves(ctx, w, h, now, PALETTES[palette] ? palette : 'emerald', 0, 0);
-    glints(ctx, w, h, now, P, null);
+    waves(ctx, w, h, now, name, 0, 0, W);
+    glints(ctx, w, h, now, P, null, W);
   }
 
   // ---- water over a scene (shore.png) -------------------------------------------------
@@ -251,7 +303,7 @@ var BridgeSea = (function () {
     if (!sc.meta.water) { drawShore(ctx, sc, offX, offY, now, palette); return; }
     var S = loadShore(sc);
     if (!S) return;
-    var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name];
+    var name = PALETTES[palette] ? palette : 'emerald', W = skyFor(name, sc), P = litPalette(name, W);
     var bx = Math.round(offX - sc.meta.originX), by = Math.round(offY - sc.meta.originY);
     // only the part on screen is rebuilt and drawn (an island's water is the size of its render)
     var v = BridgeScene.visible(S.W, S.H, bx, by, ctx.canvas.width, ctx.canvas.height);
@@ -268,21 +320,29 @@ var BridgeSea = (function () {
     // one fill per layer: a composite like source-in applies to the whole
     // clip on every draw, so the texture goes in as a pattern, not tiles
     var D = drift(now);
+    var base = W && W.day > 0.995 ? name + '@day' : name;
     L.globalCompositeOperation = 'source-in';
-    fillPattern(L, texture(name, 1), S.W, S.H, D.ax + bx, D.ay + by, 1);
+    fillPattern(L, texture(base, 1), S.W, S.H, D.ax + bx, D.ay + by, 1);
     L.globalCompositeOperation = 'source-atop';
-    fillPattern(L, texture(name, 2), S.W, S.H, D.bx + bx, D.by + by, 0.45);
+    fillPattern(L, texture(base, 2), S.W, S.H, D.bx + bx, D.by + by, 0.45);
+    if (W && base === name) {
+      [[name + '@dusk', W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0], [name + '@day', W.day]].forEach(function (l) {
+        if (l[1] <= 0.003) return;
+        fillPattern(L, texture(l[0], 1), S.W, S.H, D.ax + bx, D.ay + by, l[1]);
+        fillPattern(L, texture(l[0], 2), S.W, S.H, D.bx + bx, D.by + by, 0.45 * l[1]);
+      });
+    }
     L.restore();
     ctx.drawImage(S.layer, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
     // ripples, shallows and foam
-    var stamp = Math.floor(now / 70);
-    if (S.stamp !== stamp || S.palette !== name) { S.stamp = stamp; S.palette = name; animate(S, P, now, v); }
+    var stamp = Math.floor(now / 70), pk = name + P.shallow + P.foam;
+    if (S.stamp !== stamp || S.palette !== pk) { S.stamp = stamp; S.palette = pk; animate(S, P, now, v); }
     ctx.drawImage(S.anim, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
     glints(ctx, ctx.canvas.width, ctx.canvas.height, now, P, function (x, y) {
       var px = x - bx, py = y - by;
       if (px < 0 || py < 0 || px >= S.W || py >= S.H) return true;
       return S.water[py * S.W + px] === 1;
-    });
+    }, W);
   }
 
   // ---- older scenes: foam round the silhouette ----------------------------------------
@@ -372,5 +432,5 @@ var BridgeSea = (function () {
   // after the canvas was lost: every texture and mask is made again as it's next needed
   function reset() { tex = {}; patterns = {}; shores = {}; bands = {}; }
 
-  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset };
+  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
 })();

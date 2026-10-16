@@ -352,7 +352,7 @@ k.area_light(32.0, 20.0, 16.0, '#90a8c8', 3000, 44.0, rot=(math.radians(-35), 0,
 k.point_light(32.0, 19.0, 4.0, '#e0f0e8', 60, radius=1.5)
 k.point_light(40.0, 31.0, 2.5, '#ffc070', 30, radius=0.8, group='flicker')                  # the pub's glow on the quay
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
+k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
          world_light=('#26384a', 0.8))
 
 # ---- the world -----------------------------------------------------------------------------------------------------

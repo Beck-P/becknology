@@ -304,7 +304,7 @@ class Kit:
         self.scene.collection.objects.link(o)
         o.location = (x, -r * S, z)
         o.rotation_euler = rot
-        self._add_light({'obj': o, 'energy': energy, 'group': group})
+        self._add_light({'obj': o, 'energy': energy, 'group': group, 'sky': size >= 8})
         return o
 
     def sun(self, direction, color, strength, angle=4.0, group='static'):
@@ -317,7 +317,7 @@ class Kit:
         self.scene.collection.objects.link(o)
         d = Vector((direction[0], -direction[1] * S, direction[2])).normalized()
         o.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()
-        self._add_light({'obj': o, 'energy': strength, 'group': group})
+        self._add_light({'obj': o, 'energy': strength, 'group': group, 'sky': True})
         return o
 
     def solid(self, x0, r0, x1, r1):
@@ -435,9 +435,10 @@ class Kit:
                 m = cache[key]
             elif kind == 'light':
                 if p['emit']:
-                    key = ('le', p['emit'][0], p['emit'][1] if len(p['emit']) > 1 else 1.0)
+                    em = (light_state or {}).get('_emit', 1.0)
+                    key = ('le', p['emit'][0], (p['emit'][1] if len(p['emit']) > 1 else 1.0) * em)
                     if key not in cache:
-                        cache[key] = self._flat_emission(p['emit'][0], p['emit'][1] if len(p['emit']) > 1 else 1.0)
+                        cache[key] = self._flat_emission(p['emit'][0], (p['emit'][1] if len(p['emit']) > 1 else 1.0) * em)
                     m = cache[key]
                 else:
                     m = self._white_diffuse()
@@ -484,8 +485,11 @@ class Kit:
             o.visible_shadow = not p['emit']
         for L in self.lights:
             L['obj'].hide_render = kind != 'light' or (L['var'] is not None and L['var'] is not self._active_var)
-            if kind == 'light' and light_state:
-                L['obj'].data.energy = L['energy'] * light_state.get(L['group'], 1.0)
+            if kind == 'light' and light_state is not None:
+                m = light_state.get(L['group'], L.get('default', 1.0))
+                if not L['group'].startswith('_'):
+                    m *= light_state.get('_sky', 1.0) if L.get('sky') else light_state.get('_art', 1.0)
+                L['obj'].data.energy = L['energy'] * m
 
     # ---- camera + render ---------------------------------------------------
     def _camera(self):
@@ -580,6 +584,7 @@ class Kit:
             self._assign('id'); self._settings(1); self._render(os.path.join(d, 'id.png'))
             self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(d, 'depth.png'))
             for name, state in light_states.items():
+                self._sky(state)
                 self._assign('light', state); self._settings(light_samples, raw=True, sixteen=True)
                 self._render(os.path.join(d, 'light_' + name + '.png'))
             done.append({'slot': v['slot'], 'key': v['key'], 'dir': os.path.relpath(d, out), 'bbox': bb})
@@ -589,21 +594,72 @@ class Kit:
             p['obj'].visible_camera = True
         return done
 
-    def render(self, out, light_states=None, probe_z=0.9, light_samples=160, world_light=('#202838', 0.25)):
-        """light_states: {'name': {group: multiplier}} — one light pass each.
+    # ---- day and night (js/clock.js): a scene lit for one time of day gets the others derived ----------------------
+    def _sky(self, state):
+        """The ambient sky for a light pass: the state's own `_world`, else the scene's."""
+        col, st = (state or {}).get('_world', self._world_default)
+        bg = self.scene.world.node_tree.nodes.get('Background')
+        bg.inputs['Color'].default_value = lin(hexc(col))
+        bg.inputs['Strength'].default_value = st
+
+    def _cycle_states(self, cycle, light_states, world_light):
+        """cycle 'night' (lit by the moon and lamps, like Lumar) or 'day' (a sun, like Verdance), or a dict with
+        `base` and any of: sun / dusk_sun / moon ((direction, colour, strength) — the moon's strength is a fraction of
+        the usual), day_sky / dusk_sky / night_sky ((colour, strength)), lamps_day (how much lamps cast by day).
+        The sky lights already in the scene (its suns, and area lights eight tiles or more across) and the lamps
+        (everything else) are scaled per state by `_sky` and `_art`; the derived sun, dusk sun and moon are lights of
+        their own (groups `_day`, `_dusk`, `_moon`, off unless a state turns them on). Returns (states, map)."""
+        c = {'base': cycle} if isinstance(cycle, str) else dict(cycle)
+        base = c.get('base', 'night')
+        day_sky, dusk_sky, night_sky = c.get('day_sky', ('#a8c4e0', 0.85)), c.get('dusk_sky', ('#6a5a8c', 0.6)), c.get('night_sky', ('#2a3450', 0.6))
+        sun = c.get('sun', ((0.62, 0.42, -0.62), '#ffe2b0', 4.2))
+        dsun = c.get('dusk_sun', ((0.92, 0.12, -0.24), '#ff8a48', 3.2))       # low and warm, the shadows violet
+        states = dict(light_states)
+        first = list(states)[0]
+        if base == 'night':
+            for v in states.values():
+                v.setdefault('_world', world_light)
+            self.sun(sun[0], sun[1], sun[2], group='_day'); self.lights[-1]['default'] = 0.0
+            self.sun(dsun[0], dsun[1], dsun[2], group='_dusk'); self.lights[-1]['default'] = 0.0
+            night = dict(states[first])
+            states['day'] = {'_day': 1.0, '_sky': 0.0, '_art': c.get('lamps_day', 0.0), '_emit': 0.25, '_world': day_sky}
+            dusk = {k: v for k, v in night.items() if not k.startswith('_')}
+            dusk.update({'_dusk': 1.0, '_sky': 0.3, '_art': 0.85, '_emit': 0.85, '_world': dusk_sky})
+            states['dusk'] = dusk
+            return states, {'day': 'day', 'dusk': 'dusk', 'night': first}
+        # lit by day: add a moon over the whole place, and the lamps come up at night
+        size = float(max(self.cols, self.rows))
+        moon = c.get('moon', ((-0.35, 0.3, -0.9), '#8a98d0', 1.0))
+        self.area_light(self.cols / 2, self.rows / 2, 15.0, moon[1], 1.6 * size * size * moon[2], size,
+                        rot=(math.radians(-25), math.radians(10), 0), group='_moon')
+        self.lights[-1]['default'] = 0.0
+        self.sun(dsun[0], dsun[1], dsun[2], group='_dusk'); self.lights[-1]['default'] = 0.0
+        for v in states.values():
+            v.setdefault('_world', world_light)
+            v.setdefault('_art', c.get('lamps_day', 0.35))
+            v.setdefault('_emit', 0.4)
+        states['dusk'] = {'_dusk': 1.0, '_sky': 0.0, '_art': 0.8, '_emit': 0.8, '_world': dusk_sky}
+        states['night'] = {'_moon': 1.0, '_sky': 0.0, '_art': 1.0, '_emit': 1.0, '_world': night_sky}
+        return states, {'day': first, 'dusk': 'dusk', 'night': 'night'}
+
+    def render(self, out, light_states=None, probe_z=0.9, light_samples=160, world_light=('#202838', 0.25), cycle=None):
+        """light_states: {'name': {group: multiplier}} — one light pass each (keys starting `_` are the cycle's:
+        `_sky`, `_art`, `_emit`, `_world`; see _cycle_states). cycle: derive the other times of day (js/clock.js).
         SCENE_NORENDER=1 skips the render: a script re-run then only rewrites its world JSON
         (collisions, interactions, actors) against the scene already in place."""
         if os.environ.get('SCENE_NORENDER'):
             return
         os.makedirs(out, exist_ok=True)
         light_states = light_states or {'full': {}}
+        self._world_default = world_light
+        cmap = None
+        if cycle or os.environ.get('SCENE_CYCLE'):
+            light_states, cmap = self._cycle_states(cycle or os.environ.get('SCENE_CYCLE'), light_states, world_light)
         self._camera()
         sc = self.scene
         # Dim ambient sky so unlit corners aren't pure black
         sc.world.use_nodes = True
-        bg = sc.world.node_tree.nodes.get('Background')
-        bg.inputs['Color'].default_value = lin(hexc(world_light[0]))
-        bg.inputs['Strength'].default_value = world_light[1]
+        self._sky(None)
 
         self._assign('albedo'); self._settings(1); self._render(os.path.join(out, 'albedo.png'))
         self._assign('emission'); self._settings(1); self._render(os.path.join(out, 'emission.png'))
@@ -612,6 +668,7 @@ class Kit:
         if self.water_z is not None:
             self._assign('height'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(out, 'height.png'))
         for name, state in light_states.items():
+            self._sky(state)
             self._assign('light', state); self._settings(light_samples, raw=True, sixteen=True)
             self._render(os.path.join(out, 'light_' + name + '.png'))
 
@@ -626,6 +683,7 @@ class Kit:
         pl.location = (self.cols / 2, -self.rows / 2 * S, probe_z)
         pl.data.materials.append(self._white_diffuse())
         for name, state in light_states.items():
+            self._sky(state)
             self._assign('light', state)
             self._settings(64, raw=True, sixteen=True)
             self._render(os.path.join(out, 'probe_' + name + '.png'))
@@ -643,6 +701,8 @@ class Kit:
             'camDot': self.cam_dot, 'zmin': self.zmin, 'zmax': self.zmax,
             'probeZ': probe_z,
             'lightStates': list(light_states),
+            'stateOpts': {n: {'emit': st.get('_emit', 1.0)} for n, st in light_states.items()},
+            'cycle': cmap,
             'blocked': sorted([list(b) for b in self.blocked]),
             'variants': variants,
         }

@@ -99,7 +99,7 @@ var BridgeQuests = (function () {
   // ---- the log ----------------------------------------------------------------------------------
   var LOG_KEY = 'bridge_log', LOG_MAX = 250, logged = [], logAll = false;
   try { logged = JSON.parse(localStorage.getItem(LOG_KEY) || '[]') || []; } catch (e) { logged = []; }
-  var QUIET = { 'Course set': 1, 'Whiteout': 1, 'Online': 1, 'Made room': 1 };                   // hints of the moment, not things you did
+  var QUIET = { 'Course set': 1, 'Whiteout': 1, 'Online': 1, 'Made room': 1, 'The bells': 1 };                   // hints of the moment, not things you did
   function note(kicker, title, sub) {
     if (QUIET[kicker]) return;
     var w = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld && BridgeWorld.getWorld(), last = logged[0];

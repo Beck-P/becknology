@@ -140,7 +140,7 @@ k.area_light(13.0, 12.0, 12.0, '#8090c8', 900, 26.0, rot=(math.radians(-35), 0, 
 for (x, r) in ((12.0, 10.5), (6.0, 7.0), (19.0, 7.0), (12.0, 15.0)):
     k.point_light(x, r, 2.8, '#ffc890', 30, radius=1.0)
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=128,
+k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=128,
          world_light=('#2a3450', 0.75))
 
 k.solid(0, 0, 26, 1)                    # the strip behind the houses

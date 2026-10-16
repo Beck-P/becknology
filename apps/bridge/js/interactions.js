@@ -407,6 +407,7 @@ var BridgeInteractions = (function () {
       hits = BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter) || [];
       if (inter.home) BridgeQuests.onInteract(inter.home.world, { label: inter.home.label });   // crew aboard (js/crew.js)
     }
+    if (typeof BridgeHours !== 'undefined' && BridgeHours.gate(inter)) return;   // a shop shut for the night (js/hours.js)
     var person = (inter.type === 'dialog' || inter.type === 'random_dialog') && typeof BridgePeople !== 'undefined' &&
       BridgePeople.find(BridgeWorld.getWorldId(), inter.label);
     if (person) { showConversation(person, inter); return; }
