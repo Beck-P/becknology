@@ -258,15 +258,17 @@ var BridgeVoyage = (function () {
     window.removeEventListener('resize', resize);
     var target = dockAt || from;
     auto = null; route = null;
-    canvas.style.transition = 'opacity 0.4s'; canvas.style.opacity = '0';
-    setTimeout(function () {
-      if (canvas) canvas.remove();
-      canvas = null;
-      BridgeWorld.load(target, function () {
-        BridgeState.transition('world', { worldId: target, spawn: null });
-        if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
-      });
-    }, 400);
+    var cv = canvas;
+    canvas = null;
+    BridgeWorld.load(target, function () {                // load the island under the sea view, then fade it away
+      BridgeState.transition('world', { worldId: target, spawn: null });
+      if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        if (!cv) return;
+        cv.style.transition = 'opacity 0.4s'; cv.style.opacity = '0';
+        setTimeout(function () { cv.remove(); }, 420);
+      }); });
+    });
   }
 
   function resize() {

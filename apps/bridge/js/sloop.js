@@ -550,6 +550,7 @@ var BridgeSloop = (function () {
     if (typeof BridgeAudio !== 'undefined' && BridgeAudio.setWorld) BridgeAudio.setWorld('lumar-passage');
     var fail = function () { stop(from); };
     function go() {
+      if (!running || !canvas) return;                               // put back before she was ready
       if (!A.sc) { fail(); return; }
       if (B0) lay(); else layA();
       var fl = fleetAt(A, act && act.ship), mine = fl.filter(function (e) { return e.ship.id === shipId; })[0] || fl[0];
@@ -637,19 +638,26 @@ var BridgeSloop = (function () {
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('keyup', onKeyUp, true);
     window.removeEventListener('resize', resize);
-    var target = dest || from;
-    if (canvas) { canvas.style.transition = 'opacity 0.45s'; canvas.style.opacity = '0'; }
-    setTimeout(function () {
-      if (canvas) canvas.remove();
-      canvas = null;
-      BridgeWorld.load(target, function () {
-        BridgeState.transition('world', { worldId: target, spawn: null });
-        aboard = null;
-        if (typeof BridgeCharacter !== 'undefined') { BridgeCharacter.setPose(null); BridgeCharacter.setHidden(false); }
-        if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
-        if (landed) disembark(target);                                  // tied up: you climb out and walk up the pier
-      });
-    }, 460);
+    var target = dest || from, cv = canvas;
+    canvas = null;
+    // The sea view stays up, on its last frame, while the island you're making for loads underneath: fading it first
+    // showed the island you'd left (still the world under the passage) for a moment before the new one came in.
+    BridgeWorld.load(target, function () {
+      BridgeState.transition('world', { worldId: target, spawn: null });
+      aboard = null;
+      if (typeof BridgeCharacter !== 'undefined') { BridgeCharacter.setPose(null); BridgeCharacter.setHidden(false); }
+      if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+      if (landed) disembark(target);                                    // tied up: you climb out and walk up the pier
+      fadeOut(cv);
+    });
+  }
+  // let the passage's canvas go once the world under it has drawn a frame or two
+  function fadeOut(cv) {
+    if (!cv) return;
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      cv.style.transition = 'opacity 0.45s'; cv.style.opacity = '0';
+      setTimeout(function () { cv.remove(); }, 480);
+    }); });
   }
 
   function resize() {
