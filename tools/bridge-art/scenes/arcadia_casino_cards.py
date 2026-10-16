@@ -102,12 +102,12 @@ for i, (mode, label) in enumerate(MODES[:8]):
     x = 17.5 + i * 2.0
     C.runouts_cabinet(k, live, x, RB, mode)
     CAB.append((int(x), 3, mode, label))
-k.box(16.6, 6.7, 0.0, 32.4, 7.0, 1.9, (C.LACQUER, 0.05), 'island_spine')
-k.box(16.55, 6.65, 1.9, 32.45, 7.05, 1.96, (C.LACQUER_L, 0.05), 'island_cap')
-k.box(16.55, 7.02, 1.8, 32.45, 7.06, 1.86, shade('#2a8a9a', 0.5), 'island_neon', emit=('#40c8d8', 0.9))
-for xx in (16.5, 32.4):
+k.box(16.6, 6.7, 0.0, 32.0, 7.0, 1.9, (C.LACQUER, 0.05), 'island_spine')     # open at the east end: the way round to the back row
+k.box(16.55, 6.65, 1.9, 32.05, 7.05, 1.96, (C.LACQUER_L, 0.05), 'island_cap')
+k.box(16.55, 7.02, 1.8, 32.05, 7.06, 1.86, shade('#2a8a9a', 0.5), 'island_neon', emit=('#40c8d8', 0.9))
+for xx in (16.5, 31.9):
     k.box(xx, 6.6, 0.0, xx + 0.12, 7.8, 2.0, (C.GOLD, 0.05), 'island_end')
-k.solid(16.6, 6.7, 32.4, 7.0)
+k.solid(16.6, 6.7, 32.0, 7.0)
 for i, (mode, label) in enumerate(MODES[8:]):
     x = 17.5 + i * 2.0
     C.runouts_cabinet(k, live, x, 7.0, mode)
