@@ -95,11 +95,7 @@ for bx in (FX + 1.9, FX - 1.0):
 for (x, r) in ((30.0, QUAY + 0.2), (36.5, QUAY + 0.2), (41.0, QUAY + 0.25)):          # cargo on the quay
     A.crate(k, x, r, s=0.62, tone=A.WOOD_L)
 for (x, r) in ((31.0, QUAY + 0.25), (40.2, QUAY + 0.3), (26.6, QUAY + 0.2)):
-    A.barrel(k, x, r, h=0.8, radius=0.3)
-k.solid(29.5, 32.8, 31.5, 33.6)
-k.solid(36.0, 32.8, 37.0, 33.6)
-k.solid(39.7, 32.8, 41.5, 33.6)
-k.solid(26.2, 32.8, 27.0, 33.6)
+    A.barrel(k, x, r, h=0.8, radius=0.3)          # (crates and barrels block their own tiles: the quay runs on past them)
 for (x, r) in ((15.0, 31.6), (19.0, 31.6), (25.6, 31.6), (34.0, 31.6), (42.0, 31.6), (47.6, 31.6)):
     W.lantern_post(k, x, r, energy=22)
 
@@ -332,14 +328,17 @@ smoke(W.house(k, 7.6, 10.6, 20.2, 23.0, wall_h=1.9, rise=1.0, roof=GREEN_ROOF, w
               windows=[(8.3, 0.8), (9.9, 0.8)], chimney=10.1), 10.1)
 for (x, r) in ((3.2, 23.0), (9.2, 33.0), (11.0, 27.6), (4.0, 33.4)):
     W.tree(k, x, r, h=2.4, tone='#2e5a3a')
-    k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
+    k.solid(x - 0.3, r - 0.6, x + 0.3, r)          # the trunk and the tile its crown hides: the cottage's yard stays open
 W.bench(k, 7.6, 9.0, 31.2)
 k.solid(7.6, 31.0, 9.0, 31.5)
 
 # ---- the east beyond the yard, the north gardens ------------------------------------------------------------------
 for (x, r) in ((60.0, 30.0), (61.5, 24.0), (14.0, 9.5), (49.0, 9.5), (16.0, 12.5), (48.0, 12.8), (55.0, 18.0), (9.5, 17.0)):
     W.tree(k, x, r, h=2.5, tone='#2a5434')
-    k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
+    if (x, r) == (60.0, 30.0):                     # on the cliff path down past the yard: block the yard side of its trunk
+        k.solid(x - 0.4, r, x, r + 0.4)
+    else:
+        k.solid(x - 0.3, r - 0.6, x + 0.3, r)
 for (x, r) in ((13.0, 21.5), (20.0, 21.6)):
     W.planter(k, x - 0.5, x + 0.5, r)
 

@@ -277,14 +277,14 @@ w['interactions'] = [
     {'x': 33, 'y': 18, 'type': 'dialog', 'label': 'WAT', 'prompt': 'PRESS E TO TALK', 'dialog': 'WAT NODS, HAMMER IN HAND.'},
     {'x': 7, 'y': 24, 'type': 'dialog', 'label': 'OLD LUDD', 'prompt': 'PRESS E TO TALK', 'dialog': 'OLD LUDD TOUCHES HIS CAP.'},
     {'x': 23, 'y': 18, 'type': 'dialog', 'label': 'NELL', 'prompt': 'PRESS E TO TALK', 'dialog': 'NELL WAVES A SUNFLOWER AT YOU.'},
-    {'x': 15, 'y': 11, 'type': 'dialog', 'label': 'MAGS', 'prompt': 'PRESS E TO TALK', 'dialog': 'MAGS LEANS IN THE DOORWAY OF THE HAYLOFT.'},
+    {'x': 12, 'y': 11, 'type': 'dialog', 'label': 'MAGS', 'prompt': 'PRESS E TO TALK', 'dialog': 'MAGS LEANS IN THE DOORWAY OF THE HAYLOFT.'},
     {'x': 10, 'y': 33, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'target': 'verdance', 'spawn': [42, 21]},
     {'x': 11, 'y': 33, 'type': 'enter_world', 'label': 'MEADOW LANE', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'target': 'verdance', 'spawn': [42, 21]},
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 ACTORS = [{'sheet': 'npc-vbaker', 'x': 6, 'y': 11, 'facing': 'down'}, {'sheet': 'npc-vshop', 'x': 24, 'y': 11, 'facing': 'down'},
           {'sheet': 'npc-vsmith', 'x': 33, 'y': 18, 'facing': 'down'}, {'sheet': 'npc-vmiller', 'x': 7, 'y': 24, 'facing': 'down'},
-          {'sheet': 'npc-vfolk-a', 'x': 23, 'y': 18, 'facing': 'down'}, {'sheet': 'npc-vinn', 'x': 15, 'y': 11, 'facing': 'down'}]
+          {'sheet': 'npc-vfolk-a', 'x': 23, 'y': 18, 'facing': 'down'}, {'sheet': 'npc-vinn', 'x': 12, 'y': 11, 'facing': 'down'}]   # Mags beside her door, not across the street by the notice board
 for a in ACTORS:                                                 # the shopkeepers stand their ground
     k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,

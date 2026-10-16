@@ -190,7 +190,7 @@ for i in range(12):
           SR + math.sin(a) * 1.0 + 0.03, 0.2, '#140a28', 'dial_mark', emit=(V.AMBER, 0.7))
 k.tube((SX, SR, 0.18), (SX + 0.3, SR - 0.3, 1.4), 0.06, (V.STONE[3], 0.14), 'gnomon', verts=6)
 k.bar(SX, SR, SX + 0.95, SR - 0.6, 0.18, 0.19, 0.12, '#06040c', 'wrong_shadow')
-k.solid(SX - 1.2, SR - 1.2, SX + 1.2, SR + 1.2)
+k.solid(SX - 1.0, SR - 1.0, SX + 1.0, SR + 1.0)                    # the dial's round: not the empty corners of its box
 
 # ---- the stair to nowhere ---------------------------------------------------------------------------------
 TX, TR = 28.5, 21.5

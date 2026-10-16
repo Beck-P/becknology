@@ -60,6 +60,9 @@ def pool_d(x, r):
 POOL_CELLS = {(c, r) for (c, r) in land if any(((c + dx - cx) / (rx + 0.3)) ** 2 + ((r + dr - cr) / (ry + 0.3)) ** 2 < 1
                                                for (cx, cr, rx, ry) in POOLS for dx in (0.1, 0.9) for dr in (0.1, 0.9))}
 walk = land - POOL_CELLS
+# what you can't walk on: the pools out to their rims (POOL_CELLS, a little wider, keeps the scatter off the rims)
+POOL_SOLID = {(c, r) for (c, r) in land if any(((c + dx - cx) / (rx + 0.2)) ** 2 + ((r + dr - cr) / (ry + 0.2)) ** 2 < 1
+                                               for (cx, cr, rx, ry) in POOLS for dx in (0.25, 0.75) for dr in (0.25, 0.75))}
 
 
 def height(x, r):
@@ -222,7 +225,7 @@ apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + [(JX, 26)] + FJET
 w = json.load(open(WORLD))
 for r in range(ROWS):                     # only the island is ground: no walking on the sea or in the springs
     for c in range(COLS):
-        if (c, r) not in walk and (c, r) not in PIER and (c, r) != (JX, 26) and (c, r) not in FJET:
+        if ((c, r) not in land or (c, r) in POOL_SOLID) and (c, r) not in PIER and (c, r) != (JX, 26) and (c, r) not in FJET:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
 w['view'] = [-0.5, -1.5, COLS + 0.5, ROWS + 1.0]

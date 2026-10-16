@@ -866,7 +866,7 @@ def street_lamp(k, cx, cr, col=CYAN):
         k.cyl(hx, cr, 2.38, 2.48, 0.11, WALL[3], 'lamp_hood', verts=10)
         k.cyl(hx, cr, 2.16, 2.38, 0.08, shade(col, 0.5), 'lamp_head', emit=(col, 0.95), verts=10)
     k.point_light(cx, cr + 0.3, 2.1, col, 45, radius=0.3, group='flicker')
-    k.solid(cx - 0.25, cr - 0.25, cx + 0.25, cr + 0.25)
+    k.solid_post(cx, cr)
 
 
 def puddle(k, cx, cr, rx, ry, tint=PINK):

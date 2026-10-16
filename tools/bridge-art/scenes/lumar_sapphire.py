@@ -119,9 +119,10 @@ W.house(k, 41.0, 44.0, 11.4, 14.4, wall_h=1.9, rise=1.0, roof='#2a4a7a', wall='#
         windows=[(41.7, 0.8), (43.3, 0.8)])
 for (x0, x1, r) in ((13.2, 17.0, 14.0), (17.6, 21.6, 14.0), (31.8, 35.8, 14.0), (36.4, 40.4, 14.0)):
     W.planter(k, x0 + 0.2, x0 + 1.2, r + 0.25)
-k.solid(12, 9, 28, 14)                                    # behind the house rows, either side of the lane
-k.solid(31.6, 9, 45, 14)
-W.shore_crystals(k, 30.8, 9.2, col=CRYSTAL, s=1.0, energy=10)                               # the lookout up the lane
+k.solid(12, 8, 28, 14)                                    # behind the house rows (under their roofs), either side of the lane
+k.solid(31, 8, 45, 14)
+W.shore_crystals(k, 30.8, 9.2, col=CRYSTAL, s=1.0, energy=10, solid=False)    # the lookout up the lane: you walk on past
+                                                                                              # the bench and the crystals onto the clifftop
 W.bench(k, 28.3, 29.7, 10.2)
 k.solid(28.3, 10.0, 29.7, 10.5)
 
