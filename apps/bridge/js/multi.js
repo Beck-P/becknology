@@ -401,7 +401,7 @@ var BridgeMulti = (function () {
     n.on('clue', onClue);
     n.on('hi', function (d) { if (d && d.i === myInst()) { sentJson = ''; sentAt = 0; } });
     n.on('emote', function (d, from) { if (d && EMOTES[d.k]) heard(from, EMOTES[d.k], 2600, d.k === 'heart' ? 'sent you a heart ♥' : 'waves'); });
-    n.on('say', function (d, from) { if (d && d.t) { heard(from, esc(d.t), 5200, '“' + d.t + '”'); if (typeof BridgeQuests !== 'undefined' && BridgeQuests.note && others[from]) { /* in person: not logged */ } } });
+    n.on('say', function (d, from) { if (d && d.t) { if (typeof BridgeTableChat !== 'undefined' && BridgeTableChat.heardHere(from, d.t)) return; heard(from, esc(d.t), 5200, '“' + d.t + '”'); if (typeof BridgeQuests !== 'undefined' && BridgeQuests.note && others[from]) { /* in person: not logged */ } } });
     n.on('where', function (d, from) {
       var rp = inWorld() ? BridgeCharacter.getRenderPos() : null;
       n.send('here', { world: worldId(), inst: myInst(), x: rp ? rp.x : null, y: rp ? rp.y : null }, from);

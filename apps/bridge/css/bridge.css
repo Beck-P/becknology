@@ -2598,3 +2598,59 @@ html.keys-mode .dpad-roll { display: none; }
 #ws-tip .ws-name { font-size: 13px; color: #ffe080; letter-spacing: 1px; }
 #ws-tip .wstat { --ws-fill: #ffd060; --ws-good: #80e090; --ws-bad: #ff8070; }
 html.touch #ws-tip { display: none; }
+
+/* Table chat (js/tablechat.js): talk to whoever you're playing with over the game - the 💬 pill (in the cabinet's
+   bar, else bottom-left), what they say popping beside it, and the box with the last lines, quick lines and a line to type */
+.tc-pill {
+  display: none; align-items: center; gap: 6px; padding: 4px 11px 4px 8px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  font: 13px 'Pixelify Sans', 'Courier New', monospace; letter-spacing: 1px; color: #fff0d0;
+  background: linear-gradient(180deg, #3a1630, #1e0a1c); border: 1px solid rgba(255, 208, 112, 0.65);
+  box-shadow: 0 0 12px rgba(255, 190, 80, 0.18);
+}
+.tc-pill.tc-on { display: flex; }
+.tc-pill:hover, .tc-pill.tc-active { background: linear-gradient(180deg, #52203f, #2c0f28); border-color: #ffd070; }
+.tc-pill:not(.tc-inbar) { position: fixed; left: calc(14px + env(safe-area-inset-left, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 320; padding: 7px 14px 7px 10px; font-size: 14px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55); }
+.tc-ico { font-size: 14px; line-height: 1; }
+.tc-badge { display: none; min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; font-size: 11px; line-height: 17px; text-align: center; color: #2a0c10; background: #ff7088; box-shadow: 0 0 8px rgba(255, 90, 120, 0.7); }
+.tc-pill.tc-unread .tc-badge { display: inline-block; animation: tc-thump 1.4s ease-in-out infinite; }
+@keyframes tc-thump { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(1.25); } }
+#tchat { font-family: 'Pixelify Sans', 'Courier New', monospace; color: #f4ecdc; }
+#tchat .tc-pop, #tchat .tc-panel { position: fixed; z-index: 321; }
+#tchat .tc-pop {
+  display: none; max-width: min(320px, calc(100vw - 16px)); padding: 7px 12px; border-radius: 10px; font-size: 14px; line-height: 1.3; cursor: pointer;
+  color: #1c1208; background: #f8f0dc; border: 2px solid #ffd070; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55); overflow-wrap: anywhere;
+}
+#tchat .tc-pop b { color: #8a3a5a; margin-right: 4px; }
+#tchat .tc-pop.tc-show { display: block; animation: mp-pop 0.25s cubic-bezier(.2, 1.6, .4, 1); }
+#tchat .tc-panel {
+  display: none; flex-direction: column; width: min(330px, calc(100vw - 16px)); max-height: min(380px, calc(100vh - 120px)); overflow: hidden;
+  border-radius: 10px; background: rgba(20, 8, 22, 0.96); border: 1px solid rgba(255, 208, 112, 0.6);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 18px rgba(255, 180, 80, 0.12);
+}
+#tchat.tc-open .tc-panel { display: flex; animation: tc-in 0.16s ease-out; }
+@keyframes tc-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+#tchat .tc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 8px 6px 12px; border-bottom: 1px solid rgba(255, 208, 112, 0.25);
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #ffd070; }
+#tchat .tc-to { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tchat .tc-x { font: inherit; font-size: 18px; line-height: 1; padding: 0 6px; color: #c8b8c8; background: none; border: 0; cursor: pointer; }
+#tchat .tc-x:hover { color: #fff; }
+#tchat .tc-log { flex: 1; min-height: 64px; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 5px; font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+#tchat .tc-m b { color: #ff9ac0; font-weight: 600; margin-right: 3px; }
+#tchat .tc-m.tc-me { color: #d8d0e0; }
+#tchat .tc-m.tc-me b { color: #7ae0ff; }
+#tchat .tc-empty { color: #8a7a90; font-size: 12px; letter-spacing: 1px; }
+#tchat .tc-quick { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 10px; border-top: 1px solid rgba(255, 208, 112, 0.15); }
+#tchat .tc-q { font: inherit; font-size: 12px; padding: 3px 9px; border-radius: 999px; cursor: pointer; color: #f4e4c8; background: rgba(255, 208, 112, 0.08); border: 1px solid rgba(255, 208, 112, 0.35); }
+#tchat .tc-q:hover { background: rgba(255, 208, 112, 0.2); }
+#tchat .tc-form { display: flex; gap: 6px; padding: 8px 10px 10px; }
+#tchat .tc-in { flex: 1; min-width: 0; font: inherit; font-size: 14px; padding: 6px 9px; border-radius: 6px; color: #fff; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 208, 112, 0.4); outline: none; }
+#tchat .tc-in:focus { border-color: #ffd070; box-shadow: 0 0 0 2px rgba(255, 208, 112, 0.2); }
+#tchat .tc-send { font: inherit; font-size: 13px; letter-spacing: 1px; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: #2a1004; background: linear-gradient(180deg, #ffe08a, #e0a040); border: 0; }
+html.touch #tchat .tc-in { font-size: 16px; }                /* no zoom on focus */
+html.touch #tchat .tc-q { font-size: 13px; padding: 5px 11px; }
+html.touch .tc-pill.tc-inbar .tc-lbl { display: none; }
+/* a phone's cabinet bar with the score and the pill: the game's own header names the table, so the bar's title goes */
+@media (max-width: 560px) {
+  .cm-bar:has(.tc-pill.tc-on):has(.cm-vs:not(:empty)) { grid-template-columns: 1fr auto; }
+  .cm-bar:has(.tc-pill.tc-on):has(.cm-vs:not(:empty)) .cm-title { display: none; }
+}
