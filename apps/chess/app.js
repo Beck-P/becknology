@@ -31,6 +31,11 @@ const IN_FRAME = (() => {
   }
 })();
 
+// Another pilot over the wire (the Bridge's js/together.js, through js/shared/together-frame.js): null otherwise
+const TF = window.BridgeTogetherFrame || null;
+let netOver = false; // the together game has been decided
+let netEscAt = 0;
+
 // ?theme= picks the board for where the game was opened (the Bridge opens /chess?theme=ship)
 const URL_THEME = (new URLSearchParams(window.location.search).get("theme") || "").toLowerCase();
 const LAUNCH_THEME = WIZARD_THEMES[URL_THEME] ? URL_THEME : "classic";
@@ -197,7 +202,7 @@ function setTheaterMode(enabled, manual = false) {
   document.body.classList.toggle("wizard-theater", isTheaterMode);
   // Inside the Bridge's modal, Esc leaves full screen first; the next Esc closes the modal
   // (progression.js asks the Bridge to close unless the page owns Esc)
-  if (IN_FRAME) window.__bridgeOwnsEsc = isTheaterMode;
+  if (IN_FRAME) window.__bridgeOwnsEsc = isTheaterMode || (TF && !netOver);
   if (!isTheaterMode) {
     document.body.classList.remove("theater-drawer-open");
   }
@@ -237,6 +242,9 @@ function initWizardChess() {
       }
     },
     onEngineStatus: showEngineStatus,
+    onNetMove: (uci) => {
+      if (TF) TF.send("mv", { uci, ply: wizardGame ? wizardGame.timeline.length : 0 });
+    },
     onPromotionPrompt: (cb) => {
       pendingPromoCallback = cb;
       els.promoModal.hidden = false;
@@ -261,8 +269,8 @@ function initWizardChess() {
     if (engineState === null) showEngineStatus(false, true);
   }, 20000);
 
-  // Offer the game left in progress (resume / new) while the pieces load
-  offerResume();
+  // Offer the game left in progress (resume / new) while the pieces load (not when another pilot's waiting)
+  if (!TF) offerResume();
   if (els.wcResumeBtn) els.wcResumeBtn.addEventListener("click", resumeSavedGame);
   if (els.wcResumeNewBtn) {
     els.wcResumeNewBtn.addEventListener("click", () => startNewWizardGame(false));
@@ -504,7 +512,7 @@ function updateStageOverlay() {
 // ---------- Save / resume the game in progress ----------
 
 function saveWizardGame() {
-  if (!wizardGame || resumePending) return; // don't overwrite a save the player hasn't answered
+  if (!wizardGame || resumePending || TF) return; // don't overwrite a save the player hasn't answered (or one with another pilot)
   const st = wizardGame.exportState();
   try {
     if (st.moves === 0 || st.over) localStorage.removeItem(SAVE_KEY);
@@ -587,7 +595,9 @@ function renderRewardInfo() {
   const today = `Today <span class="stat-num">${info.dailyCoins}/${info.dailyCap}🪙</span>`;
   let note = "";
 
-  if (info.mode !== "ai") {
+  if (info.mode === "net" && TF) {
+    els.wcSpoils.innerHTML = TF.cfg.wager ? `Against ${TF.cfg.vs} · the pot <span class="stat-num">${TF.cfg.pot}🪙</span> to the winner` : `Against ${TF.cfg.vs} · just for fun`;
+  } else if (info.mode !== "ai") {
     els.wcSpoils.innerHTML = `Pass &amp; Play pays no coins · ${today}`;
     note = "Pass & Play — practice, no rewards";
   } else if (info.practice) {
@@ -871,6 +881,10 @@ function renderWizardState(state) {
   renderWizardMovesList(state.history, wizardGame && wizardGame.reviewMode ? currentReviewPly : -1);
 
   const sideName = state.turn === "w" ? "Ivory Legion (White)" : "Obsidian Legion (Black)";
+  if (TF && wizardGame && wizardGame.mode === "net") {
+    renderNetState(state);
+    return;
+  }
   if (state.isCheckmate) {
     const winner =
       state.turn === "w" ? "Obsidian Legion (Black)" : "Ivory Legion (White)";
@@ -889,6 +903,86 @@ function renderWizardState(state) {
     els.wizardStatus.textContent = `${sideName} to move.`;
     els.wizardStatus.className = "status";
   }
+}
+
+// ---------- Playing another pilot (from the Bridge) ----------
+// Whoever asked plays Ivory. Each board makes its own moves and plays the other's as they arrive; both see the
+// same mate (or draw) and say how it went for them. Leaving the cabinet gives the game up (Esc twice).
+
+function setupTogether() {
+  document.body.classList.add("together");
+  const hide = (el) => { if (el) el.hidden = true; };
+  hide(els.wcMode && els.wcMode.closest(".field-group"));
+  if (els.wcDiffGroup) els.wcDiffGroup.style.display = "none";
+  if (els.wcSideGroup) els.wcSideGroup.style.display = "none";
+  hide(els.wcNewBtn);
+  hide(els.wcUndoBtn);
+  hide(els.wcStageUndoBtn);
+  const side = TF.cfg.side === "b" ? "b" : "w";
+  els.pageSubtitle.textContent =
+    `You play ${side === "w" ? "Ivory" : "Obsidian"} against ${TF.cfg.vs}.` +
+    (TF.cfg.wager ? ` ${TF.cfg.wager} each on it — checkmate takes the pot of ${TF.cfg.pot}.` : "");
+  wizardGame.newGame({ mode: "net", playerColor: side });
+  TF.on("data", (m) => {
+    if (m.k === "mv" && m.d && !netOver) wizardGame.applyRemoteMove(m.d.uci);
+  });
+  TF.on("verdict", (v) => {
+    netOver = true;
+    if (IN_FRAME) window.__bridgeOwnsEsc = isTheaterMode;
+    runState(false);
+    els.wizardStatus.textContent = v.head + (v.paid ? ` · +${v.paid} coins` : v.outcome === "draw" && TF.cfg.wager ? " · your stake's back" : "");
+    els.wizardStatus.className = v.outcome === "win" ? "status complete" : "status";
+  });
+  TF.on("gone", () => {
+    netOver = true;
+    if (IN_FRAME) window.__bridgeOwnsEsc = isTheaterMode;
+    runState(false);
+    els.wizardStatus.textContent = `${TF.cfg.vs} left the board. Your stake is back.`;
+    els.wizardStatus.className = "status";
+  });
+  // Esc twice gives the game up (the first only warns); full screen's own Esc comes first
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || isTheaterMode || netOver) return;
+    e.preventDefault();
+    if (Date.now() - netEscAt < 2500) {
+      if (IN_FRAME) window.parent.postMessage({ type: "bridge-request-close", source: "chess" }, "*");
+      return;
+    }
+    netEscAt = Date.now();
+    els.wizardStatus.textContent = `Esc again to give the game up to ${TF.cfg.vs}.`;
+    els.wizardStatus.className = "status error";
+  });
+  if (IN_FRAME) window.__bridgeOwnsEsc = true;
+  window.__chessNet = { game: wizardGame };       // (for the test scripts)
+  runState(true);
+  TF.ready();
+}
+
+function runState(active) {
+  if (IN_FRAME) window.parent.postMessage({ type: "bridge-run-state", game: "chess", active, paused: false, hint: "Esc again to give the game up" }, "*");
+}
+
+function renderNetState(state) {
+  const side = TF.cfg.side === "b" ? "b" : "w";
+  const mine = state.turn === side;
+  if (state.isCheckmate) {
+    const won = state.turn !== side;
+    els.wizardStatus.textContent = won ? `Checkmate! ${TF.cfg.vs}'s king falls.` : `Checkmate. ${TF.cfg.vs} has you.`;
+    els.wizardStatus.className = won ? "status complete" : "status error";
+    if (!netOver) TF.result(won ? "win" : "lose");
+    return;
+  }
+  if (state.isDraw || state.isGameOver) {
+    els.wizardStatus.textContent = "Drawn — neither legion can win this.";
+    els.wizardStatus.className = "status";
+    if (!netOver) TF.result("draw");
+    return;
+  }
+  const who = mine ? "Your move" : `${TF.cfg.vs} is thinking…`;
+  els.wizardStatus.textContent = (state.inCheck ? (mine ? "Check! " : `${TF.cfg.vs} is in check. `) : "") + who;
+  els.wizardStatus.className = state.inCheck ? "status error" : mine ? "status success" : "status";
+  TF.score(state.history ? state.history.length : 0, false,
+    `${side === "w" ? "Ivory" : "Obsidian"} · ${mine ? "your move" : TF.cfg.vs + "'s move"}${state.inCheck ? " · check" : ""}`);
 }
 
 // ---------- Opening Trainer Init ----------
@@ -1236,3 +1330,4 @@ function renderStats() {
 setupTabs();
 renderMoveList();
 initWizardChess();
+if (TF) setupTogether();

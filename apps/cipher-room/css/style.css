@@ -273,6 +273,9 @@ h2 {
 .cell.white:hover { background: #283c4c; }
 .cell.word-highlight { background: #1d4c58; box-shadow: inset 0 0 0 1px #2f6b78; color: var(--text); }
 .cell.active { background: var(--cyan); box-shadow: inset 0 0 0 2px var(--cyan-hi); color: var(--wall-0); }
+/* decoding with another pilot (the Bridge's js/together.js): where their cursor is, and how they're doing */
+.cell.peer:not(.active) { box-shadow: inset 0 0 0 2px var(--amber); }
+.tg-peer { margin: -10px auto 16px; text-align: center; font-size: 12px; letter-spacing: 2px; color: var(--amber); }
 
 .cell.black { background: #060b10; }
 .cell.black .redaction {

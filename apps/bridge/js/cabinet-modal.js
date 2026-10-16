@@ -10,6 +10,11 @@
  *   { type: 'bridge-coins-changed', balance, delta, reason }
  *   { type: 'bridge-trophy-earned', key }
  *   { type: 'bridge-request-close', source }    // Esc inside game
+ *
+ * Playing together (js/together.js): show({ together: true }) adds a strip to the bar for the two of you
+ * (setVersus), and the game's `bridge-together-*` messages (js/shared/together-frame.js) go to BridgeTogether,
+ * which talks back through post(msg). Closing the cabinet tells it (frameClosed): a run cut short counts as it
+ * stood, a game of chess is given up.
  */
 var BridgeCabinetModal = (function () {
 
@@ -21,6 +26,7 @@ var BridgeCabinetModal = (function () {
   var open = false;
   var current = null;     // { url, title, gameKey }
   var runActive = false;  // a game run in progress (bridge-run-state): Esc pauses it before leaving
+  var runHint = '';       // what the second Esc does, if the game says (chess played together: gives it up)
   var lastRun = null;     // the last finished run (bridge-run-ended), toasted on the way out
   var displayedBalance = 0;
   var targetBalance = 0;
@@ -48,7 +54,7 @@ var BridgeCabinetModal = (function () {
 
     overlayEl = document.createElement('div');
     overlayEl.id = 'cabinet-modal-overlay';
-    overlayEl.className = 'cm-' + frameFor();
+    overlayEl.className = 'cm-' + frameFor() + (opts.together ? ' cm-together' : '');
     overlayEl.innerHTML = renderShellHTML();
     document.body.appendChild(overlayEl);
 
@@ -96,8 +102,9 @@ var BridgeCabinetModal = (function () {
       '<div class="cm-bar">' +
         '<div class="cm-title"><span class="cm-kicker">' + ({ enigma: 'TERMINAL', ship: 'GAME ROOM', void: 'THE BRINK', lumar: 'GAME' }[frameFor()] || 'CABINET') +
           '</span><span class="cm-sep">/</span><span id="cabinet-modal-title">' + escapeHtml(title) + '</span></div>' +
-        '<div class="cm-coins"><canvas width="20" height="20" id="cabinet-coin-icon"></canvas>' +
+        '<div class="cm-mid"><div class="cm-coins"><canvas width="20" height="20" id="cabinet-coin-icon"></canvas>' +
           '<span id="cabinet-modal-coins">0</span><div id="cabinet-modal-delta-pop"></div></div>' +
+          (current && current.together ? '<div class="cm-vs" id="cabinet-vs"></div>' : '') + '</div>' +
         '<div class="cm-right"><span class="cm-hint" id="cabinet-hint"></span>' +
           '<button id="cabinet-leave-btn"><span class="ip-key">Esc</span> Leave</button></div>' +
       '</div>' +
@@ -109,6 +116,7 @@ var BridgeCabinetModal = (function () {
   function hide() {
     if (!open) return;
     open = false;
+    var was = current;
     window.removeEventListener('message', onMessage);
     window.removeEventListener('keydown', onParentKey, true);
     cancelTicker();
@@ -127,6 +135,17 @@ var BridgeCabinetModal = (function () {
     lastRun = null;
     // Refresh the bridge HUD to show the new balance
     if (typeof BridgeCoinHUD !== 'undefined' && BridgeCoinHUD.refresh) BridgeCoinHUD.refresh();
+    if (was && was.together && typeof BridgeTogether !== 'undefined' && BridgeTogether.frameClosed) BridgeTogether.frameClosed();
+  }
+
+  // playing together: the strip in the bar, and messages into the game
+  function setVersus(html) {
+    var el = document.getElementById('cabinet-vs');
+    if (el && el.getAttribute('data-h') !== html) { el.innerHTML = html; el.setAttribute('data-h', html); }
+  }
+  function post(msg) {
+    if (!open || !iframeEl) return;
+    try { iframeEl.contentWindow.postMessage(msg, '*'); } catch (e) { /* gone */ }
   }
 
   function onParentKey(e) {
@@ -139,7 +158,7 @@ var BridgeCabinetModal = (function () {
       if (runActive) {
         runActive = false;
         try { iframeEl.contentWindow.postMessage({ type: 'bridge-pause' }, '*'); } catch (err) { /* gone */ }
-        hint('Paused \u00b7 Esc again to leave');
+        hint(runHint || 'Paused \u00b7 Esc again to leave');
         return;
       }
       hide();
@@ -158,6 +177,10 @@ var BridgeCabinetModal = (function () {
     var d = e && e.data;
     if (!d || !d.type || typeof d.type !== 'string') return;
     if (!d.type.indexOf || d.type.indexOf('bridge-') !== 0) return;
+    if (d.type.indexOf('bridge-together-') === 0) {
+      if (current && current.together && typeof BridgeTogether !== 'undefined') BridgeTogether.fromFrame(d);
+      return;
+    }
 
     if (d.type === 'bridge-iframe-ready') {
       // Game booted inside the iframe; focus it so keys reach it.
@@ -184,6 +207,7 @@ var BridgeCabinetModal = (function () {
     }
     if (d.type === 'bridge-run-state') {
       runActive = !!d.active && !d.paused;
+      runHint = d.hint || '';
       if (d.paused) hint('Paused \u00b7 Esc again to leave');
       return;
     }
@@ -246,5 +270,5 @@ var BridgeCabinetModal = (function () {
   }
   function escapeAttr(s) { return escapeHtml(s); }
 
-  return { show: show, hide: hide, isOpen: function () { return open; } };
+  return { show: show, hide: hide, isOpen: function () { return open; }, setVersus: setVersus, post: post };
 })();

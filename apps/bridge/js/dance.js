@@ -19,7 +19,16 @@
  * A grade at the end (S-D), your best per level, coins for a first clear and
  * once a day after. Saved in localStorage bridge_dance.
  *
- *   BridgeDance.decorate(worldId, data) / .use(inter) / .beat()
+ * Danced together (js/together.js): each of you dances on your own device,
+ * side by side on the floor (whoever asked in the middle, the other a tile to
+ * the right — each sees the other's pilot turning to their steps), the same
+ * chart (it's the day's), your panel on the left and theirs on the right, their
+ * hits and misses arriving as they make them (`dance` messages: when their
+ * steps start, then each judged note), drawn on their own clock. The scores go
+ * to js/together.js: a dance-off goes to the higher, in step adds them up
+ * against `target`. Like the keyboard dance-off, no coins or bests from it.
+ *
+ *   BridgeDance.decorate(worldId, data) / .use(inter) / .beat() / .together(session)
  */
 var BridgeDance = (function () {
   var KEY = 'bridge_dance', CLUB = 'arcadia-club', COVER = 60, BPM = 124;
@@ -146,31 +155,47 @@ var BridgeDance = (function () {
     return { name: name, keys: keys, notes: notes, score: 0, combo: 0, maxCombo: 0, counts: { perfect: 0, great: 0, good: 0, miss: 0 },
              judge: null, judgeT: 0, flash: [0, 0, 0, 0] };
   }
+  // a perfect run's score (every note perfect, the combo climbing): co-op targets are worked out from it
+  function perfect(id) {
+    var n = chart(id, 0).length, s = 0;
+    for (var c = 1; c <= n; c++) s += Math.round(PTS.perfect * (1 + Math.min(1, c / 50)));
+    return s;
+  }
+  function target(id) { return Math.round(perfect(id || 'club') * 1.1 / 1000) * 1000; }
   // play a level; duo: a dance-off, two panels, the same steps, WASD on the left against the arrows on the right
-  function play(id, duo) {
+  function play(id, duo, net) {
     var w = BridgeWorld.getWorld();
     if (!w || !w.club) return;
     var now = beat(), start = Math.floor(now / 4) * 4 + 8;       // two bars to get ready
     var F = w.club.floor, px = Math.floor((F[0] + F[2]) / 2), py = Math.floor((F[1] + F[3]) / 2);
-    BridgeCharacter.init(px, py);
+    BridgeCharacter.init(px + (net && !net.host ? 1 : 0), py);     // together: side by side, whoever asked in the middle
     BridgeCharacter.setFacing('down');
     var notes = chart(id, start), copy = function () { return notes.map(function (n) { return { beat: n.beat, lane: n.lane, hit: null }; }); };
     var both = {}; Object.keys(ARROWS).forEach(function (k) { both[k] = ARROWS[k]; }); Object.keys(WASD).forEach(function (k) { both[k] = WASD[k]; });
-    run = { id: id, duo: !!duo, start: start, end: notes[notes.length - 1].beat + 2, hitT: 0, x: px, y: py,
+    run = { id: id, duo: !!duo || !!net, start: start, end: notes[notes.length - 1].beat + 2, hitT: 0, x: px, y: py,
             players: duo ? [player('PLAYER ONE · WASD', WASD, copy()), player('PLAYER TWO · ARROWS', ARROWS, copy())] : [player('', both, copy())] };
+    if (net) {                                                     // their panel beside yours, fed from the wire
+      run.net = net; run.them = player(String(net.peerName || 'THEM').toUpperCase(), {}, copy()); run.them.remote = true;
+      run.players[0].name = 'YOU';
+      run.players.push(run.them);
+      tsend('dance', { k: 'go', ms: Math.round((start - now) * spbeat() * 1000) });
+    }
     if (duo) {                                                     // player two dances beside you, in a runner suit of another colour
       var mine = (typeof BridgeGear !== 'undefined' && BridgeGear.colour && BridgeGear.colour()) || 'purple';
       // (the two old helmeted runner sheets, pilot-runner-red / -cyan, are kept in assets/characters for this)
       run.partner = { sheet: 'pilot-runner-' + (mine === 'cyan' ? 'red' : 'cyan'), x: px + 1, y: py, facing: 'down', hitT: 0 };
       (run.acts = w.scene.actors).push(run.partner);
     }
-    BridgeWorld.setMode({ update: update, focus: function () { return { x: px - 0.5 + (duo ? 2.5 : 0), y: py - 1.6 }; }, solo: true, end: function () { quit(true); } });
+    BridgeWorld.setMode({ update: update, focus: function () { return { x: px - 0.5 + (duo || net ? 2.5 : 0), y: py - 1.6 }; }, solo: true, end: function () { quit(true); } });
     ensureHud(run.players.length);
     hud.classList.add('on');
-    hud.classList.toggle('duo', !!duo);
+    hud.classList.toggle('duo', !!duo || !!net);
+    hud.classList.toggle('net', !!net);
     document.documentElement.classList.add('dancing');            // the hotbar and the stick step aside (touch)
-    hud.querySelector('.dn-name').textContent = 'CLUB VOID · ' + (duo ? 'DANCE-OFF' : LEVELS[id].name);
-    hud.querySelector('.dn-help').textContent = duo ? 'Left: W A S D  ·  Right: ← ↓ ↑ →  ·  the same steps  ·  Esc stop' : '← ↓ ↑ → (or WASD) as the arrows reach the top · Esc stop';
+    hud.querySelector('.dn-name').textContent = 'CLUB VOID · ' + (net ? (net.mode === 'team' ? 'IN STEP WITH ' : 'DANCE-OFF VS ') + String(net.peerName).toUpperCase() + ' · ' + LEVELS[id].name
+      : duo ? 'DANCE-OFF' : LEVELS[id].name);
+    hud.querySelector('.dn-help').textContent = net ? '← ↓ ↑ → (or WASD) · their steps on the right · ' + (net.mode === 'team' ? 'together, beat ' + net.target : 'the higher score takes it') + ' · Esc stop'
+      : duo ? 'Left: W A S D  ·  Right: ← ↓ ↑ →  ·  the same steps  ·  Esc stop' : '← ↓ ↑ → (or WASD) as the arrows reach the top · Esc stop';
     run.players.forEach(function (pl, i) { pl.col = cols[i]; pl.col.querySelector('.dn-who').textContent = pl.name; });
     document.addEventListener('keydown', onKey, true);
     sfx('open');
@@ -206,19 +231,31 @@ var BridgeDance = (function () {
     pl.judge = j; pl.judgeT = performance.now(); run.hitT = performance.now();
     if (run.partner && pl === run.players[1]) { run.partner.facing = LANES[lane]; run.partner.hitT = performance.now(); }
     else BridgeCharacter.setFacing(LANES[lane]);
+    if (run.net) told(pl, best, j);
+  }
+  // together: each judged note goes to the other dancer (and your score to js/together.js)
+  function told(pl, n, j) {
+    tsend('dance', { k: 'h', i: pl.notes.indexOf(n), j: j, s: pl.score, c: pl.combo });
+    if (typeof BridgeTogether !== 'undefined') BridgeTogether.score(pl.score);
   }
 
   function update() {
     if (!run) return;
     var b = beat();
     run.players.forEach(function (pl) {
+      if (pl.remote) return;                                       // theirs are judged on their side
       pl.notes.forEach(function (n) {
-        if (!n.hit && (b - n.beat) * spbeat() > WIN.good) { n.hit = 'miss'; pl.counts.miss++; pl.combo = 0; pl.judge = 'miss'; pl.judgeT = performance.now(); }
+        if (!n.hit && (b - n.beat) * spbeat() > WIN.good) {
+          n.hit = 'miss'; pl.counts.miss++; pl.combo = 0; pl.judge = 'miss'; pl.judgeT = performance.now();
+          if (run.net) told(pl, n, 'miss');
+        }
       });
     });
     if (b > run.end) return finish();
-    run.players.forEach(function (pl) { paint(pl, b); });
+    run.players.forEach(function (pl) { paint(pl, pl.remote ? theirBeat(b) : b); });
   }
+  // their steps on their own clock: they started `ms` after they said so (or, till they say, on ours)
+  function theirBeat(b) { var t = run.them; return t && t.startAt != null ? run.start + (performance.now() - t.startAt) / (spbeat() * 1000) : b; }
 
   // ---- the arrows (a screen-space panel per dancer: a small native canvas, scaled up crisp) -------------------------------
   var PXB = 44, TOP = 22, W = 120, H = 210, cols = [];
@@ -283,7 +320,7 @@ var BridgeDance = (function () {
     var j = pl.col.querySelector('.dn-judge'), age = now - pl.judgeT;
     j.textContent = pl.judge && age < 600 ? pl.judge.toUpperCase() : '';
     j.className = 'dn-judge ' + (pl.judge || '');
-    pl.col.querySelector('.dn-combo').textContent = pl.combo > 3 ? pl.combo + ' COMBO' : b < run.start ? 'GET READY · ' + Math.ceil(run.start - b) : '';
+    pl.col.querySelector('.dn-combo').textContent = pl.combo > 3 ? pl.combo + ' COMBO' : pl.done ? 'DONE' : b < run.start ? 'GET READY · ' + Math.ceil(run.start - b) : '';
   }
 
   function grade(pl) {
@@ -292,6 +329,7 @@ var BridgeDance = (function () {
   }
   function finish() {
     var r = run, L = LEVELS[r.id], id = r.id;
+    if (r.net) return finishNet(r);
     if (r.duo) return finishDuo(r);
     var pl = r.players[0], g = grade(pl), best = st.best[id], nb = !best || pl.score > best.score;
     if (nb) st.best[id] = { score: pl.score, grade: g };
@@ -331,12 +369,48 @@ var BridgeDance = (function () {
     });
   }
 
+  // together: your steps are done — your score to js/together.js, which says how it went once theirs are in
+  function finishNet(r) {
+    var pl = r.players[0], g = grade(pl), them = r.them;
+    r.reported = true;
+    if (typeof BridgeTogether !== 'undefined') BridgeTogether.done(pl.score, pl.score.toLocaleString('en-US') + ' (' + g + ')');
+    quit(true);
+    sfx('quest');
+    if (!them.done && typeof BridgeQuests !== 'undefined') BridgeQuests.toast('Club Void', 'Grade ' + g + ' · ' + pl.score, 'Waiting for ' + (r.net.peerName || 'them') + ' to finish', false);
+  }
+  function tsend(k, d) { if (typeof BridgeTogether !== 'undefined') BridgeTogether.send(k, d); }
+  var wired = false;
+  function together(s) {
+    if (!wired && typeof BridgeTogether !== 'undefined') { BridgeTogether.on('dance', heard); wired = true; }
+    var w = BridgeWorld.getWorld();
+    if (!w || !w.club) { if (typeof BridgeTogether !== 'undefined') BridgeTogether.done(0, 'not on the floor'); return; }
+    if (run) quit(true);
+    play(s.opts && LEVELS[s.opts.level] ? s.opts.level : 'club', false, s);
+  }
+  // the other dancer, as they go
+  function heard(d) {
+    if (!run || !run.them || !d) return;
+    var t = run.them;
+    if (d.k === 'go') { t.startAt = performance.now() + (d.ms || 0); return; }
+    if (d.k === 'h') {
+      var n = t.notes[d.i];
+      if (n && !n.hit) { n.hit = d.j; t.counts[d.j] = (t.counts[d.j] || 0) + 1; }
+      t.score = d.s || 0; t.combo = d.c || 0; t.maxCombo = Math.max(t.maxCombo, t.combo);
+      t.judge = d.j; t.judgeT = performance.now();
+      if (d.j !== 'miss' && n) t.flash[n.lane] = performance.now();
+    }
+  }
+  function peerScore(p) { if (run && run.them && p) { if (p.done) run.them.done = true; if (typeof p.s === 'number') run.them.score = p.s; } }
+  function gone() { if (run && run.net) quit(true); }
+
   function quit(quiet) {
     if (!run) return;
+    // stepping off mid-dance (Esc, or the world changing under you): what you'd scored is your score
+    if (run.net && !run.reported && typeof BridgeTogether !== 'undefined') { run.reported = true; BridgeTogether.done(run.players[0].score, run.players[0].score.toLocaleString('en-US') + ' (stopped)'); }
     if (run.acts && run.acts.indexOf(run.partner) >= 0) run.acts.splice(run.acts.indexOf(run.partner), 1);
     run = null;
     document.removeEventListener('keydown', onKey, true);
-    if (hud) { hud.classList.remove('on'); hud.classList.remove('duo'); }
+    if (hud) { hud.classList.remove('on'); hud.classList.remove('duo'); hud.classList.remove('net'); }
     document.documentElement.classList.remove('dancing');
     if (BridgeWorld.getMode()) BridgeWorld.setMode(null);
     if (!quiet) say('DANCE FLOOR', 'YOU STEP OFF THE FLOOR, BREATHING HARD.');
@@ -387,5 +461,6 @@ var BridgeDance = (function () {
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('arcadia', { ground: ground, over: over });
 
   return { decorate: decorate, use: use, beat: beat, isOpen: function () { return !!run; }, LEVELS: LEVELS,
+           together: together, peer: peerScore, gone: gone, target: target,
            _st: function () { return st; }, _run: function () { return run; }, _hit: function (l, i) { if (run) hit(run.players[i || 0], l); } };
 })();
