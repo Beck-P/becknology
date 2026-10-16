@@ -276,7 +276,9 @@ var BridgeScene = (function () {
    * footRow: the row (tile units, fractional) where the figure meets the
    * floor; its feet are drawn at screen y = offY + footRow·ts.
    */
-  function drawOccluded(ctx, sc, img, sx, sy, sw, sh, dx, dy, footRow, offX, offY, tint, shadow, op, xray) {
+  // flat: what's drawn below the foot line lies on the ground in front (a weapon swung down, a pike thrust at you) —
+  // tested against the floor at its own row, not hidden as if it were underground
+  function drawOccluded(ctx, sc, img, sx, sy, sw, sh, dx, dy, footRow, offX, offY, tint, shadow, op, xray, flat) {
     if (tmp.width < sw || tmp.height < sh) { tmp.width = Math.max(tmp.width, sw); tmp.height = Math.max(tmp.height, sh); }
     tctx.setTransform(1, 0, 0, 1, 0, 0);
     tctx.globalCompositeOperation = 'source-over';
@@ -319,7 +321,7 @@ var BridgeScene = (function () {
       var srow = (Y - offY) / NATIVE_TS;
       var above = footRow - srow;
       if (above < 0) above = 0;
-      var cd = -footRow * cot - above * tan;
+      var cd = flat && srow > footRow ? -srow * cot : -footRow * cot - above * tan;
       var yy = Y - top;
       if (yy < 0 || yy >= H) continue;
       var rowBase = yy * W;

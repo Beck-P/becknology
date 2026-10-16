@@ -5,7 +5,8 @@
  * Other modules poll getDir() and consumeAction() each frame.
  *
  * Inventory hotkeys (Stardew-style):
- *   1-0 jump to slot · [ ] cycle · F use selected
+ *   1-0 jump to slot · [ ] cycle · F use selected (held after a swing: a charged swing, js/arms.js)
+ *   Shift: a dodge roll (the ROLL button on touch)
  *   left-click on world  = interact (E)
  *   right-click on world = use selected (F)
  */
@@ -14,6 +15,7 @@ var BridgeControls = (function () {
   var taps = {};             // arrows pressed since the last consumeTaps() (a quick tap can start and end between frames)
   var actionPressed = false;
   var enabled = false;
+  function armsKey(down) { if (typeof BridgeArms !== 'undefined') { if (down) BridgeArms.keyDown(); else BridgeArms.keyUp(); } }
 
   function enable() {
     enabled = true;
@@ -25,6 +27,7 @@ var BridgeControls = (function () {
 
   function disable() {
     enabled = false;
+    armsKey(false);
     document.documentElement.classList.add('controls-off');
     keys = { up: false, down: false, left: false, right: false };
     actionPressed = false;
@@ -40,8 +43,13 @@ var BridgeControls = (function () {
       case 'ArrowRight': case 'd': case 'D': keys.right = true; if (!e.repeat) taps.right = true; e.preventDefault(); break;
       case 'Enter': case ' ': case 'e': case 'E': actionPressed = true; e.preventDefault(); break;
       case 'f': case 'F':
-        if (typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
         e.preventDefault();
+        if (e.repeat) break;                       // held: a charge (js/arms.js), not a swing per key repeat
+        armsKey(true);
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
+        break;
+      case 'Shift':
+        if (!e.repeat && typeof BridgeArms !== 'undefined' && !/INPUT|TEXTAREA/.test((e.target && e.target.tagName) || '')) BridgeArms.roll();
         break;
       case 'j': case 'J':
         if (typeof BridgeQuests !== 'undefined') BridgeQuests.toggle();
@@ -73,6 +81,7 @@ var BridgeControls = (function () {
 
   document.addEventListener('keyup', function (e) {
     switch (e.key) {
+      case 'f': case 'F': armsKey(false); break;
       case 'ArrowUp': case 'w': case 'W': keys.up = false; break;
       case 'ArrowDown': case 's': case 'S': keys.down = false; break;
       case 'ArrowLeft': case 'a': case 'A': keys.left = false; break;
@@ -119,10 +128,13 @@ var BridgeControls = (function () {
         actionPressed = true;
         e.preventDefault();
       } else if (e.button === 2) {
+        armsKey(true);
         if (typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
         e.preventDefault();
       }
     });
+    window.addEventListener('mouseup', function (e) { if (e.button === 2) armsKey(false); });
+    window.addEventListener('blur', function () { armsKey(false); });
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   }
 
@@ -193,11 +205,22 @@ var BridgeControls = (function () {
       itemBtn.addEventListener('touchstart', function (e) {
         e.preventDefault();
         itemBtn.classList.add('held');
-        if (!keysMode() && enabled && typeof BridgeInventory !== 'undefined') BridgeInventory.useSelected();
+        if (!keysMode() && enabled && typeof BridgeInventory !== 'undefined') { armsKey(true); BridgeInventory.useSelected(); }
       }, { passive: false });
-      var upB = function () { itemBtn.classList.remove('held'); };
+      var upB = function () { itemBtn.classList.remove('held'); armsKey(false); };
       itemBtn.addEventListener('touchend', upB);
       itemBtn.addEventListener('touchcancel', upB);
+    }
+    var rollBtn = dpad.querySelector('.dpad-roll');         // the dodge roll, the way the stick points (js/arms.js)
+    if (rollBtn) {
+      rollBtn.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        rollBtn.classList.add('held');
+        if (!keysMode() && enabled && typeof BridgeArms !== 'undefined') BridgeArms.roll();
+      }, { passive: false });
+      var upR = function () { rollBtn.classList.remove('held'); };
+      rollBtn.addEventListener('touchend', upR);
+      rollBtn.addEventListener('touchcancel', upR);
     }
     if (act) {
       act.addEventListener('touchstart', function (e) {

@@ -191,6 +191,8 @@ var BridgeFight = (function () {
   function sendHit(h, dmg, w) {
     var t = {};
     if (w) ['frost', 'burn', 'heavy', 'holy', 'arc'].forEach(function (k) { if (w[k]) t[k] = 1; });
+    if (w && w.push) t.push = w.push;                           // a finisher's or a charged blow's knock back (js/arms.js)
+    if (w && w.cls) t.cls = w.cls;
     send('fh', { id: h.fid, d: dmg, w: t, x: BridgeCharacter.getX(), y: BridgeCharacter.getY() });
     h._mineAt = performance.now();
     if (w && w.drain && typeof BridgeInventory !== 'undefined') {

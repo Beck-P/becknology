@@ -9,9 +9,10 @@
  * world plus whose it is, and only pilots in the same instance see each other.
  *
  * On the wire: presence meta { name, key (suit sheet), inst, world, place, act, sea }; broadcast 'pos' { i (inst),
- * x, y, f, k, mv } at most ten times a second while you move (and every two seconds standing still) and only when
- * someone's in the same place; 'hi' { i } on arriving (they answer with where they are); 'emote' { k }; 'say' { t };
- * 'where' / 'here' { world, inst, x, y } for going to someone.
+ * x, y, f, k, mv, h (the weapon in hand) } at most ten times a second while you move (and every two seconds standing
+ * still) and only when someone's in the same place; 'hi' { i } on arriving (they answer with where they are);
+ * 'emote' { k }; 'say' { t }; 'where' / 'here' { world, inst, x, y } for going to someone; 'atk' (js/arms.js: a
+ * swing, a charge, a roll — played out on their pilot here, weapon and all).
  */
 var BridgeMulti = (function () {
   var PERSONAL = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, 'lumar-home': 1, 'arcadia-home': 1, 'verdance-home': 1, 'lumar-holm-home': 1, 'lumar-holm': 1 };
@@ -79,7 +80,7 @@ var BridgeMulti = (function () {
     if (!d || d.i !== myInst()) return;
     var a = avatar(from), p = N().peer(from);
     if (p) a.name = p.name;
-    a.tx = d.x; a.ty = d.y; a.f = d.f || 'down'; a.k = d.k || 'purple'; a.mv = !!d.mv; a.seen = performance.now(); a.metaT = p ? p.t : null;
+    a.tx = d.x; a.ty = d.y; a.f = d.f || 'down'; a.k = d.k || 'purple'; a.mv = !!d.mv; a.h = d.h || null; a.seen = performance.now(); a.metaT = p ? p.t : null;
     if (a.fresh) { a.x = d.x; a.y = d.y; a.fresh = false; }
   }
   // gone: they say they're somewhere else — at once if they've said so since their last step here, else (presence
@@ -106,7 +107,8 @@ var BridgeMulti = (function () {
     var anyone = n.peers().some(function (p) { return p.inst === here; });
     if (!anyone) return;
     var rp = BridgeCharacter.getRenderPos(), body = { i: here, x: Math.round(rp.x * 100) / 100, y: Math.round(rp.y * 100) / 100, f: BridgeCharacter.getFacing(),
-      k: String(BridgeCharacter.sportKey()).replace(/^(ski|climb)-/, ''), mv: !!(BridgeCharacter.isMoving && BridgeCharacter.isMoving()) };
+      k: String(BridgeCharacter.sportKey()).replace(/^(ski|climb)-/, ''), mv: !!(BridgeCharacter.isMoving && BridgeCharacter.isMoving()),
+      h: typeof BridgeArms !== 'undefined' ? BridgeArms.held() : null };
     var json = JSON.stringify(body);
     if ((json !== sentJson && now - sentAt > 140) || now - sentAt > 2000) { n.send('pos', body); sentJson = json; sentAt = now; }
   }
@@ -127,9 +129,15 @@ var BridgeMulti = (function () {
     return Object.keys(others).map(function (id) {
       var a = others[id], footRow = a.y + 1 - 3 / 32;
       return { footRow: footRow, draw: function (ctx) {
+        var seated = /^sit-/.test(a.k), A = typeof BridgeArms !== 'undefined' ? BridgeArms : null;
+        if (a.fight && A) a.fight = A.remoteTick(a.fight, { x: a.x, y: a.y }, performance.now());
+        if (A && !seated && (a.fight || a.h) && BridgeCharacter.drawFighter) {      // fighting, or a weapon in hand
+          BridgeCharacter.drawFighter(ctx, { sc: sc, world: world, offX: offX, offY: offY, ts: ts, now: now, key: a.k, sheet: BridgeCharacter.sheet(a.k),
+                                             x: a.x, y: a.y, facing: a.f, walking: a.walking, stride: a.stride, fight: a.fight, held: a.h });
+          return;
+        }
         var img = BridgeCharacter.sportImage(a.k);
         if (!img) return;
-        var seated = /^sit-/.test(a.k);
         var col = a.walking && !seated ? 4 + Math.floor(a.stride / 0.3) % 8 : IDLE[Math.floor(now / 340) % IDLE.length];
         var cx = Math.round(offX + (a.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
         BridgeScene.drawOccluded(ctx, sc, img, col * 32, (DIR_ROW[a.f] || 0) * 48, 32, 48, cx - 16, footY - 45, footRow, offX, offY,
@@ -382,6 +390,14 @@ var BridgeMulti = (function () {
     var n = N();
     if (!n) return;
     n.on('pos', onPos);
+    n.on('atk', function (d, from) {                       // their swing, charge or roll (js/arms.js), played out here
+      var a = others[from];
+      if (!d || d.i !== myInst() || !a || typeof BridgeArms === 'undefined') return;
+      if (d.k === 'x') { a.fight = null; return; }
+      var at = String(a.k).indexOf('@'), look = at < 0 ? null : BridgeLook.parse(String(a.k).slice(at + 1));
+      a.fight = BridgeArms.remote(d, look && look.body === 'b' ? 'b' : 'a');
+      if (d.f) a.f = d.f;
+    });
     n.on('clue', onClue);
     n.on('hi', function (d) { if (d && d.i === myInst()) { sentJson = ''; sentAt = 0; } });
     n.on('emote', function (d, from) { if (d && EMOTES[d.k]) heard(from, EMOTES[d.k], 2600, d.k === 'heart' ? 'sent you a heart ♥' : 'waves'); });

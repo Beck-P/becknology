@@ -553,6 +553,17 @@ var BridgeAudio = (function () {
 
   // ---- effects ------------------------------------------------------------------------------------
   var lastStep = 0;
+  // a whoosh: noise through a band that slides from f0 to f1 (a blade through the air: high and quick; a maul: low
+  // and slow), swelling and dying away
+  function whoosh(t, dur, f0, f1, gain, q) {
+    var src = ac.createBufferSource(); src.buffer = noiseBuf;
+    var f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = q || 1.4;
+    f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    var g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(gain, t + dur * 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(sfxBus);
+    src.start(t, Math.random() * 1.5); src.stop(t + dur + 0.05);
+  }
   var SFX = {
     blip:    function (t) { voice(sfxBus, t, 0.04, { type: 'square', freq: hz(84), gain: 0.05, a: 0.002, d: 0.05, s: 0.2, r: 0.04, cutoff: 3000 }); },
     click:   function (t) { voice(sfxBus, t, 0.01, { type: 'square', freq: hz(91), gain: 0.04, a: 0.001, d: 0.02, s: 0, r: 0.02, cutoff: 4000 }); },
@@ -668,7 +679,50 @@ var BridgeAudio = (function () {
     zap:     function (t) { voice(sfxBus, t, 0.18, { type: 'triangle', freq: 1400, glide: 0.25, glideT: 0.18, gain: 0.07, a: 0.002, d: 0.18, s: 0, r: 0.06 }); noiseHit(sfxBus, t, 0.1, { freq: 5000, ftype: 'highpass', gain: 0.03 }); },
     burn:    function (t) { noiseHit(sfxBus, t, 0.3, { freq: 1200, ftype: 'bandpass', q: 0.7, gain: 0.08 }); },
     frost:   function (t) { [0, 0.04, 0.09].forEach(function (d, i) { voice(sfxBus, t + d, 0.05, { type: 'sine', freq: 2400 + i * 520, gain: 0.04, a: 0.001, d: 0.12, s: 0, r: 0.1 }); }); },
-    error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); }
+    error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); },
+    // fighting (js/arms.js): each kind of weapon its own swing and its own blow
+    swing_blade: function (t) { whoosh(t, 0.09, 5200, 3000, 0.09, 1.6); },
+    swing_sword: function (t) { whoosh(t, 0.17, 1600, 4200, 0.11, 1.2); noiseHit(sfxBus, t + 0.02, 0.05, { freq: 7000, ftype: 'highpass', gain: 0.02 }); },
+    swing_chop:  function (t) { whoosh(t, 0.2, 700, 1900, 0.13, 1.0); },
+    swing_pole:  function (t) { whoosh(t, 0.12, 2600, 5200, 0.1, 2.2); voice(sfxBus, t + 0.08, 0.03, { type: 'triangle', freq: 900, glide: 0.7, gain: 0.03, a: 0.001, d: 0.05, s: 0, r: 0.04 }); },
+    swing_maul:  function (t) { whoosh(t, 0.32, 300, 900, 0.18, 0.8); },
+    swing_cast:  function (t) { [84, 88, 91, 96].forEach(function (m, i) { voice(sfxBus, t + i * 0.03, 0.05, { type: 'sine', freq: hz(m), gain: 0.035, a: 0.002, d: 0.15, s: 0, r: 0.15, rev: 0.4 }); }); whoosh(t, 0.14, 2000, 6000, 0.05, 0.8); },
+    swing_great: function (t) { whoosh(t, 0.26, 500, 2400, 0.15, 0.9); },
+    swing_pick:  function (t) { whoosh(t, 0.12, 900, 2000, 0.1, 1.0); },
+    impact_blade: function (t) {
+      voice(sfxBus, t, 0.02, { type: 'square', freq: 2600, glide: 0.6, glideT: 0.04, gain: 0.04, a: 0.001, d: 0.04, s: 0, r: 0.03, cutoff: 7000 });
+      noiseHit(sfxBus, t, 0.08, { freq: 1400, ftype: 'bandpass', q: 1.2, gain: 0.12 });
+    },
+    impact_sword: function (t) {
+      voice(sfxBus, t, 0.04, { type: 'square', freq: 1500 + Math.random() * 300, glide: 0.8, glideT: 0.08, gain: 0.04, a: 0.001, d: 0.12, s: 0, r: 0.1, cutoff: 5000, rev: 0.25 });
+      noiseHit(sfxBus, t, 0.12, { freq: 1000, ftype: 'bandpass', q: 1.1, gain: 0.15, rev: 0.15 });
+    },
+    impact_chop: function (t) {
+      voice(sfxBus, t, 0.06, { type: 'sine', freq: 150, glide: 0.5, glideT: 0.1, gain: 0.16, a: 0.002, d: 0.14, s: 0, r: 0.08 });
+      noiseHit(sfxBus, t, 0.16, { freq: 700, ftype: 'bandpass', q: 1.0, gain: 0.16 });
+    },
+    impact_pole: function (t) {
+      noiseHit(sfxBus, t, 0.1, { freq: 600, ftype: 'bandpass', q: 1.4, gain: 0.16 });
+      voice(sfxBus, t, 0.04, { type: 'sine', freq: 220, glide: 0.6, glideT: 0.06, gain: 0.1, a: 0.001, d: 0.08, s: 0, r: 0.05 });
+    },
+    impact_maul: function (t) {
+      noiseHit(sfxBus, t, 0.5, { freq: 140, ftype: 'lowpass', gain: 0.38, rev: 0.45 });
+      voice(sfxBus, t, 0.12, { type: 'sine', freq: 62, glide: 0.45, glideT: 0.25, gain: 0.26, a: 0.002, d: 0.3, s: 0, r: 0.15 });
+      for (var i = 0; i < 4; i++) noiseHit(sfxBus, t + 0.05 + i * 0.05, 0.05, { freq: 600 + Math.random() * 700, ftype: 'bandpass', q: 2, gain: 0.05 });
+    },
+    impact_great: function (t) {
+      voice(sfxBus, t, 0.05, { type: 'square', freq: 900 + Math.random() * 200, glide: 0.7, glideT: 0.1, gain: 0.04, a: 0.001, d: 0.16, s: 0, r: 0.12, cutoff: 4000, rev: 0.3 });
+      noiseHit(sfxBus, t, 0.3, { freq: 260, ftype: 'lowpass', gain: 0.26, rev: 0.3 });
+    },
+    impact_cast: function (t) { voice(sfxBus, t, 0.06, { type: 'triangle', freq: 1800, glide: 0.4, glideT: 0.1, gain: 0.05, a: 0.001, d: 0.12, s: 0, r: 0.08, rev: 0.4 }); },
+    impact_pick: function (t) {
+      voice(sfxBus, t, 0.03, { type: 'square', freq: 700, glide: 0.6, glideT: 0.06, gain: 0.05, a: 0.001, d: 0.07, s: 0, r: 0.05, cutoff: 3000 });
+      noiseHit(sfxBus, t, 0.1, { freq: 800, ftype: 'bandpass', q: 1.2, gain: 0.14 });
+    },
+    roll:    function (t) { whoosh(t, 0.26, 500, 1500, 0.09, 0.7); noiseHit(sfxBus, t + 0.3, 0.12, { freq: 260, ftype: 'lowpass', gain: 0.14 }); },
+    dodge:   function (t) { whoosh(t, 0.14, 3000, 1200, 0.07, 1.2); },
+    charge:  function (t) { voice(sfxBus, t, 0.18, { type: 'sine', freq: hz(79), glide: 0.5, glideT: 0.15, gain: 0.06, a: 0.01, d: 0.2, s: 0.2, r: 0.2, rev: 0.4 }); INST.bell(sfxBus, t + 0.12, 91, 0.2, 0.7); },
+    charged: function (t) { whoosh(t, 0.28, 600, 3600, 0.16, 0.9); [60, 67, 72].forEach(function (m) { voice(sfxBus, t, 0.2, { type: 'sawtooth', freq: hz(m), gain: 0.025, a: 0.005, d: 0.25, s: 0.2, r: 0.2, cutoff: 1800, rev: 0.4 }); }); }
   };
 
   function sfx(name) {

@@ -817,6 +817,16 @@ var BridgeWorld = (function () {
     updateParticles(dt * 60);
   }
 
+  // a nudge of the camera toward where a blow landed: out fast, back slow (native px)
+  var kickV = { x: 0, y: 0, at: 0, dur: 160 };
+  function kick(dx, dy, px) { kickV = { x: dx * (px || 2), y: dy * (px || 2), at: performance.now(), dur: 120 + (px || 2) * 12 }; }
+  function kickNow() {
+    var k = (performance.now() - kickV.at) / kickV.dur;
+    if (!(k >= 0 && k < 1)) return { x: 0, y: 0 };
+    var e = k < 0.2 ? k / 0.2 : 1 - (k - 0.2) / 0.8;
+    return { x: Math.round(kickV.x * e), y: Math.round(kickV.y * e) };
+  }
+
   function draw(ctx, w, h) {
     if (!active || !world) return;
 
@@ -842,8 +852,9 @@ var BridgeWorld = (function () {
     var now = Date.now();
     // Snap the world to whole native pixels; the leftover fraction slides
     // the finished frame on screen so the camera still glides smoothly.
-    var offXf = nw / 2 - camera.x * ts;
-    var offYf = nh / 2 - (camera.y + (view.lift || 0)) * ts;
+    var kk = kickNow();                       // a hit lands: the camera leans toward it a moment (js/arms.js)
+    var offXf = nw / 2 - camera.x * ts - kk.x;
+    var offYf = nh / 2 - (camera.y + (view.lift || 0)) * ts - kk.y;
     var offX = Math.floor(offXf);
     var offY = Math.floor(offYf);
     view.offX = offX; view.offY = offY; view.ts = ts; view.w = nw; view.h = nh;
@@ -1136,6 +1147,7 @@ var BridgeWorld = (function () {
     setFocus: function (p) { focus = p || null; },
     setMode: function (m) { mode = m || null; },
     getMode: function () { return mode; },
+    kick: kick,
     getCamera: function () { return camera; },
     getScale: function () { return scale; },
     getTileSize: function () { return tileSize; },

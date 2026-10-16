@@ -2527,3 +2527,63 @@ html.touch #journal-pill .jp-ico canvas { width: 20px; height: 20px; }
   .fb-d-art canvas { width: 160px; }
 }
 @media (prefers-reduced-motion: reduce) { .mp-pin.mp-you::after { animation: none; } #game-menu .gm-card { transition: none; } }
+
+/* ---- fighting (js/arms.js) ------------------------------------------------------------------------------------- */
+/* the dodge roll on touch, over A */
+.dpad-roll {
+  position: fixed;
+  right: calc(30px + env(safe-area-inset-right));
+  bottom: calc(var(--hud-h) + 118px + env(safe-area-inset-bottom));
+  width: 54px; height: 32px; border-radius: 16px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 11px; letter-spacing: 1px; color: rgba(242, 238, 230, 0.8);
+  background: rgba(16, 18, 30, 0.5); border: 1px solid rgba(255, 255, 255, 0.18);
+  touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
+}
+.dpad-roll.held { background: rgba(242, 238, 230, 0.26); }
+html.keys-mode .dpad-roll { display: none; }
+
+/* a weapon's stats (BridgeArms.card): damage, speed, reach, its kind, its traits in plain words, how it compares.
+   It takes its ink from where it sits; the bars and the up/down colours are set per dialog theme and for the menu. */
+.wstat { --ws-fill: currentColor; --ws-good: #3a9a4a; --ws-bad: #c04a3a; font-size: 12px; line-height: 1.35; margin-top: 6px; text-align: left; }
+.wstat .ws-kind { font-weight: 600; letter-spacing: 1px; margin-bottom: 3px; }
+.wstat .ws-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; white-space: nowrap; }
+.wstat .ws-k { opacity: 0.7; min-width: 52px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.wstat .ws-k2 { min-width: 0; margin-left: 8px; }
+.wstat .ws-dmg { font-size: 15px; min-width: 22px; text-align: right; }
+.wstat .ws-bar { flex: 1; min-width: 50px; max-width: 150px; height: 6px; background: rgba(128, 128, 128, 0.22); border: 1px solid rgba(128, 128, 128, 0.4); position: relative; }
+.wstat .ws-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ws-fill); }
+.wstat .ws-pips { display: inline-flex; gap: 2px; }
+.wstat .ws-pips i { width: 5px; height: 8px; background: rgba(128, 128, 128, 0.3); }
+.wstat .ws-pips i.on { background: var(--ws-fill); }
+.wstat .ws-what { font-size: 11px; opacity: 0.85; margin: 4px 0 3px; white-space: normal; }
+.wstat .ws-traits { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; }
+.wstat .ws-t { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+.wstat .ws-t img { width: 12px; height: 12px; image-rendering: pixelated; flex: 0 0 12px; }
+.wstat.compact { margin-top: 3px; }
+.wstat .ws-tag { margin-left: 4px; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 0 5px; border: 1px solid currentColor; border-radius: 3px; opacity: 0.65; }
+.wstat .ws-cmp { margin-top: 4px; font-size: 11px; }
+.wstat .ws-up { color: var(--ws-good); }
+.wstat .ws-down { color: var(--ws-bad); }
+.wstat .ws-even { opacity: 0.7; }
+.wd-parchment .wstat { --ws-fill: #8a2a18; --ws-good: #2e6a22; --ws-bad: #a02818; }
+.wd-neon .wstat { --ws-fill: #f078a8; --ws-good: #80f0a0; --ws-bad: #ff7090; }
+.wd-holo .wstat { --ws-fill: #40c8d8; --ws-good: #80f0b0; --ws-bad: #ff8a80; }
+.wd-crt .wstat { --ws-fill: #60f0a0; --ws-good: #b0ffd0; --ws-bad: #f0b060; }
+.wd-void .wstat { --ws-fill: #c0a0f0; --ws-good: #a0f0c0; --ws-bad: #ff90a0; }
+.wd-frost .wstat { --ws-fill: #f0b0a0; --ws-good: #a8f0c8; --ws-bad: #ffa090; }
+.wd-meadow .wstat { --ws-fill: #4a8a34; --ws-good: #2e6a22; --ws-bad: #a03a20; }
+.wd-sylvan .wstat { --ws-fill: #d0a040; --ws-good: #a8e080; --ws-bad: #f09070; }
+#game-menu .wstat { --ws-fill: var(--gm-accent); --ws-good: var(--gm-good); --ws-bad: var(--gm-bad); font-size: 12px; }
+#game-menu .bp-detail .wstat { padding-top: 6px; border-top: 1px solid var(--gm-line); }
+/* a shop row: the stats under the name and description */
+.wd-item-info .wstat { margin-top: 4px; }
+.wd-sell-row.pick .wstat, .wd-chooser .wstat { grid-column: 2 / -1; margin-top: 0; }
+/* the hotbar's hover card */
+#ws-tip {
+  position: fixed; z-index: 90; pointer-events: none; max-width: 300px; padding: 8px 11px; border-radius: 6px;
+  background: rgba(10, 14, 22, 0.94); border: 1px solid rgba(255, 200, 100, 0.4); color: #e8e0c8;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+#ws-tip .ws-name { font-size: 13px; color: #ffe080; letter-spacing: 1px; }
+#ws-tip .wstat { --ws-fill: #ffd060; --ws-good: #80e090; --ws-bad: #ff8070; }
+html.touch #ws-tip { display: none; }

@@ -220,8 +220,11 @@ var BridgeItems = (function () {
   // BridgeInteractions.killHostile to drop loot and clear the tile.
   // Returns false so the weapon itself doesn't get consumed. The swing
   // arc plays even on a whiff so the player gets feedback every press.
+  // With js/arms.js and the art loaded, the swing is played out and lands on its own frame (BridgeArms.press); this
+  // is the old instant swing it falls back to.
   var lastSwing = 0;
   function weaponUse(inv) {
+    if (typeof BridgeArms !== 'undefined' && BridgeArms.press(this)) return false;
     if (typeof BridgeWorld === 'undefined' || typeof BridgeCharacter === 'undefined') return false;
     if (typeof BridgeInteractions === 'undefined') return false;
     var world = BridgeWorld.getWorld();
@@ -259,11 +262,13 @@ var BridgeItems = (function () {
     target._hp -= dmg;
     var dot = w && w.dot;
     if (!dot) target._hitAt = performance.now();
-    // Hit-flash, sparks, and floating damage number on the target.
+    // Hit-flash, an impact in the weapon's element (steel, frost, embers, holy light, drain wisps, dust), the number.
     if (typeof BridgeFX !== 'undefined') {
       if (!dot) BridgeFX.spawnHitFlash(target.x, target.y);
-      if (BridgeFX.spawnSparks && !dot) BridgeFX.spawnSparks(target.x, target.y, w && w.burn ? '#ff9040' : w && w.frost ? '#a8e0ff' : w && w.holy ? '#fff0b0' : '#c868f0', w && w.heavy ? 12 : 7);
-      if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(target.x, target.y - 0.3, '-' + dmg, dot ? '#ff9040' : '#ffe080');
+      var elem = !w ? 'steel' : w.burn ? 'burn' : w.frost ? 'frost' : w.holy ? 'holy' : w.drain ? 'drain' : w.heavy || w.cls === 'maul' || w.cls === 'pick' ? 'heavy' : 'steel';
+      if (!dot && BridgeFX.spawnImpact) BridgeFX.spawnImpact(target.x, target.y, elem, !!(w && (w.heavy || w.push)), w && w.remote ? null : { x: BridgeCharacter.getX(), y: BridgeCharacter.getY() });
+      else if (BridgeFX.spawnSparks && !dot) BridgeFX.spawnSparks(target.x, target.y, w && w.burn ? '#ff9040' : w && w.frost ? '#a8e0ff' : w && w.holy ? '#fff0b0' : '#c868f0', w && w.heavy ? 12 : 7);
+      if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(target.x, target.y - 0.3, '-' + dmg, dot ? '#ff9040' : w && w.charged ? '#ffb040' : '#ffe080');
     }
     if (follow) F.sendHit(target, dmg, w);
     else {
@@ -524,6 +529,21 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#0a0a0c', [[1, 13, 2, 2], [3, 11, 2, 2], [5, 9, 2, 2], [7, 7, 2, 2], [9, 5, 2, 2], [10, 1, 5, 5]]);
     px(ctx, x, y, u, '#8a6a40', [[2, 13, 1, 1], [4, 11, 1, 1], [6, 9, 1, 1], [8, 7, 1, 1]]);
     px(ctx, x, y, u, '#b8c0cc', [[11, 3, 2, 2], [12, 2, 2, 2], [10, 5, 1, 1]]); px(ctx, x, y, u, '#eef2f8', [[13, 2, 1, 1]]);
+  }
+  function twinIcon(ctx, x, y, s) {               // two curved knives, crossed
+    var u = s / 16;
+    for (var i = 0; i < 8; i++) {
+      px(ctx, x, y, u, '#0a0a0c', [[3 + i, 11 - i - (i > 5 ? 1 : 0), 2, 2], [11 - i, 11 - i - (i > 5 ? 1 : 0), 2, 2]]);
+    }
+    for (var j = 0; j < 7; j++) px(ctx, x, y, u, '#dce4f0', [[4 + j, 11 - j - (j > 5 ? 1 : 0), 1, 1], [11 - j, 11 - j - (j > 5 ? 1 : 0), 1, 1]]);
+    px(ctx, x, y, u, '#9a2a20', [[2, 12, 2, 2], [12, 12, 2, 2]]);
+  }
+  function greatswordIcon(ctx, x, y, s) {           // a long, broad blade, corner to corner
+    var u = s / 16;
+    for (var i = 0; i < 11; i++) px(ctx, x, y, u, '#0a0a0c', [[3 + i, 11 - i, 3, 3]]);
+    for (var j = 0; j < 10; j++) px(ctx, x, y, u, j % 3 ? '#5a92aa' : '#bce4f4', [[4 + j, 11 - j, 2, 1]]);
+    px(ctx, x, y, u, '#0a0a0c', [[1, 11, 6, 3], [2, 13, 2, 3]]);
+    px(ctx, x, y, u, '#c8a040', [[2, 12, 4, 1], [3, 12, 1, 3]]);
   }
   function maulIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -880,7 +900,7 @@ var BridgeItems = (function () {
     iron_dagger: {
       id: 'iron_dagger', name: 'Iron Dagger', desc: 'Plain iron blade with leather grip. Sturdy.',
       type: 'weapon', stackable: false, draw: dagger,
-      damage: 25, onUse: weaponUse
+      damage: 25, cls: 'blade', onUse: weaponUse
     },
     lockpick: {
       id: 'lockpick', name: 'Lockpick', desc: 'A thin steel pick and tension wrench. Single-use.',
@@ -993,28 +1013,32 @@ var BridgeItems = (function () {
     heartsong:   { id: 'heartsong', name: 'Heartsong', desc: 'The heart of the great songstone at the bottom of the mine. It is still singing.', type: 'key',
                    stackable: false, draw: crystalIcon('#4a1a7a', '#d0a0ff', '#ffffff'), value: 0 },
     old_pickaxe: { id: 'old_pickaxe', name: 'Old Pickaxe', desc: 'From the rack in the Rose Mine. Blunt, but it breaks rock. Face a rock and press E.', type: 'tool',
-                   stackable: false, draw: pickaxeIcon('#5a5a60', '#8a8a90'), power: 1, damage: 8, onUse: pickUse },
+                   stackable: false, draw: pickaxeIcon('#5a5a60', '#8a8a90'), power: 1, damage: 8, cls: 'pick', onUse: pickUse },
     iron_pickaxe: { id: 'iron_pickaxe', name: 'Iron Pickaxe', desc: 'Forged on the square from your own ore. Twice the bite of the old one.', type: 'tool',
-                   stackable: false, draw: pickaxeIcon('#8a8a98', '#d0d0e0'), power: 2, damage: 14, onUse: pickUse },
+                   stackable: false, draw: pickaxeIcon('#8a8a98', '#d0d0e0'), power: 2, damage: 14, cls: 'pick', onUse: pickUse },
     star_pickaxe: { id: 'star_pickaxe', name: 'Star Pickaxe', desc: 'Star iron, edged by Hob Dunmore himself. Rock seems to want to break for it.', type: 'tool',
-                   stackable: false, draw: pickaxeIcon('#3a3848', '#ffe080'), power: 3, damage: 20, onUse: pickUse },
+                   stackable: false, draw: pickaxeIcon('#3a3848', '#ffe080'), power: 3, damage: 20, cls: 'pick', onUse: pickUse },
     cutlass:     { id: 'cutlass', name: 'Cutlass', desc: 'A sailor\'s curved blade from the smithy on the square. Its sweep cuts the tiles either side too.', type: 'weapon',
-                   stackable: false, draw: bladeIcon('#c8ccd8', '#8a5a30', true), damage: 40, arc: true, onUse: weaponUse },
+                   stackable: false, draw: bladeIcon('#c8ccd8', '#8a5a30', true), damage: 40, arc: true, cls: 'sword', onUse: weaponUse },
     boarding_pike: { id: 'boarding_pike', name: 'Boarding Pike', desc: 'Ash shaft, iron head, from the smithy on the square. Long enough to reach the second tile in front of you: hit them before they reach you.',
-                     type: 'weapon', stackable: false, draw: pikeIcon, damage: 34, reach: 2, value: 70, onUse: weaponUse },
+                     type: 'weapon', stackable: false, draw: pikeIcon, damage: 34, reach: 2, cls: 'pole', value: 70, onUse: weaponUse },
     war_maul:      { id: 'war_maul', name: 'War Maul', desc: 'A ship-breaker\'s hammer. Slow to swing; a hit staggers whatever is winding up to strike, and knocks it back a tile.',
-                     type: 'weapon', stackable: false, draw: maulIcon, damage: 58, heavy: true, rate: 650, value: 110, onUse: weaponUse },
+                     type: 'weapon', stackable: false, draw: maulIcon, damage: 58, heavy: true, rate: 650, cls: 'maul', value: 110, onUse: weaponUse },
     rime_hatchet:  { id: 'rime_hatchet', name: 'Rime Hatchet', desc: 'From Morwen\'s case. Its edge is never above freezing: what it hits is rimed in frost and slowed for a few seconds.',
-                     type: 'weapon', stackable: false, draw: hatchetIcon('#a8d8ff', '#f0faff'), damage: 38, frost: true, value: 160, onUse: weaponUse },
+                     type: 'weapon', stackable: false, draw: hatchetIcon('#a8d8ff', '#f0faff'), damage: 38, frost: true, cls: 'chop', value: 160, onUse: weaponUse },
     emberbrand:    { id: 'emberbrand', name: 'Emberbrand', desc: 'From Morwen\'s case: a sword with a live coal in its heart, raised from a wreck off Crimson Reach. What it cuts keeps burning.',
-                     type: 'weapon', stackable: false, draw: bladeIcon('#e8a060', '#5a2a1a', false, '#ffd040'), damage: 44, burn: true, value: 180, onUse: weaponUse },
+                     type: 'weapon', stackable: false, draw: bladeIcon('#e8a060', '#5a2a1a', false, '#ffd040'), damage: 44, burn: true, cls: 'chop', value: 180, onUse: weaponUse },
     moonglass_sabre: { id: 'moonglass_sabre', name: 'Moonglass Sabre', desc: 'From Morwen\'s case. Pale glass, ground on Midnight under a full moon. Its sweep cuts either side, and it bites the restless dead half as deep again.',
-                     type: 'weapon', stackable: false, draw: bladeIcon('#d8e8ff', '#4a3a6a', true, '#ffffff'), damage: 50, arc: true, holy: true, value: 220, onUse: weaponUse },
+                     type: 'weapon', stackable: false, draw: bladeIcon('#d8e8ff', '#4a3a6a', true, '#ffffff'), damage: 50, arc: true, holy: true, cls: 'sword', value: 220, onUse: weaponUse },
     veilpiercer:   { id: 'veilpiercer', name: 'Veilpiercer', desc: 'A narrow blade of black glass from the drowned tomb on Midnight. Quick in the hand - and what it draws out of them, it gives to you.',
-                     type: 'weapon', stackable: false, draw: glassDaggerIcon, damage: 32, rate: 170, drain: 0.25, value: 200, onUse: weaponUse },
+                     type: 'weapon', stackable: false, draw: glassDaggerIcon, damage: 32, rate: 170, drain: 0.25, cls: 'blade', value: 200, onUse: weaponUse },
     wispcaller:    { id: 'wispcaller', name: 'Wispcaller Staff', desc: 'The Bell Warden\'s. Black wood, a wisp caught in its head. F throws the wisp seven tiles down the way you face; it burns the restless dead brighter. Each throw takes 3 energy.',
-                     type: 'weapon', stackable: false, draw: staffIcon, damage: 42, holy: true, bolt: 'wisp', value: 300,
+                     type: 'weapon', stackable: false, draw: staffIcon, damage: 42, holy: true, bolt: 'wisp', cls: 'cast', value: 300,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
+    twin_fangs:    { id: 'twin_fangs', name: 'Twin Fangs', desc: 'A pair of curved knives from the smithy on the square, one for each hand. Quick, and every cut lands twice.',
+                     type: 'weapon', stackable: false, draw: twinIcon, damage: 18, twin: true, rate: 210, cls: 'blade', value: 90, onUse: weaponUse },
+    tidebreaker:   { id: 'tidebreaker', name: 'Tidebreaker', desc: 'A greatsword of sea-blue steel from the smithy on the square, long as a man is tall. Slow to lift, and it comes down in a cleave that cuts the tiles either side.',
+                     type: 'weapon', stackable: false, draw: greatswordIcon, damage: 62, arc: true, rate: 560, cls: 'great', value: 220, onUse: weaponUse },
     honey_cake:    { id: 'honey_cake', name: 'Honey Cake', desc: 'From the Crusty Loaf in Brambleford. Sticky, golden, and gone too quickly.', type: 'food',
                      stackable: true, draw: cakeIcon, effects: { hp: 15, energy: 20 }, value: 6, onUse: consumableUse },
     pumpkin_pie:   { id: 'pumpkin_pie', name: 'Pumpkin Pie', desc: 'Bridget\'s, from the Crusty Loaf - spiced, with a pastry leaf on top. Enough to keep you going all afternoon.', type: 'food',
@@ -1030,14 +1054,14 @@ var BridgeItems = (function () {
     tomb_key:      { id: 'tomb_key', name: 'Shell Key', desc: 'A key shaped like a cockle shell, green with the sea. A drowned thing in the graveyard on Midnight Isle was carrying it.',
                      type: 'key', stackable: false, draw: shellKeyIcon },
     star_blade:  { id: 'star_blade', name: 'Star Blade', desc: 'Star iron, forged by Hob with a songstone set in the hilt. It hums when something is close.', type: 'weapon',
-                   stackable: false, draw: bladeIcon('#3a3848', '#b080ff', true, '#ffe080'), damage: 80, arc: true, onUse: weaponUse },
+                   stackable: false, draw: bladeIcon('#3a3848', '#b080ff', true, '#ffe080'), damage: 80, arc: true, cls: 'sword', onUse: weaponUse },
     // the farm on Verdance (js/farm.js): tools from the shed, seeds from Hollin, what grows sells to Marlo
     hoe:           { id: 'hoe', name: 'Hoe', desc: 'From the tool shed on Verdance. Face bare earth in the field and use it to till a row.', type: 'tool',
-                     stackable: false, draw: hoeIcon, damage: 6, onUse: farmUse },
+                     stackable: false, draw: hoeIcon, damage: 6, cls: 'pick', onUse: farmUse },
     watering_can:  { id: 'watering_can', name: 'Watering Can', desc: 'Holds twenty waterings. Fill it at the well or the pond; a watered crop grows for twenty minutes.', type: 'tool',
                      stackable: false, draw: canIcon, onUse: farmUse },
     moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 3 energy.',
-                     type: 'weapon', stackable: false, draw: wandIcon, damage: 30, value: 200,
+                     type: 'weapon', stackable: false, draw: wandIcon, damage: 30, cls: 'cast', value: 200,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
     glimmer_lantern: { id: 'glimmer_lantern', name: 'Glimmer Lantern', desc: 'A lantern that burns brighter near hidden things. Hold it to see them; use it to ask which way is warmer.',
                      type: 'tool', stackable: false, draw: lanternIcon, value: 80,
@@ -1116,7 +1140,7 @@ var BridgeItems = (function () {
     climbing_rope: { id: 'climbing_rope', name: 'Climbing Rope', desc: 'Sixty metres of dynamic rope. Tied in, a fall takes you back to the last ledge, not the bottom.',
                      type: 'tool', stackable: false, draw: ropeIcon, value: 20 },
     ice_axe:       { id: 'ice_axe', name: 'Ice Axe', desc: 'A curved pick for climbing ice - the Icefall needs one. Not bad in a fight, either.', type: 'tool',
-                     stackable: false, draw: axeIcon, damage: 18, onUse: weaponUse, value: 60 },
+                     stackable: false, draw: axeIcon, damage: 18, cls: 'pick', fights: true, onUse: weaponUse, value: 60 },
     skis:          { id: 'skis', name: 'Skis', desc: 'Hired from Fellhaven, kept for good. Take the chairlift up and ski a run down.', type: 'tool',
                      stackable: false, draw: skisIcon, value: 40 },
     ski_goggles:   { id: 'ski_goggles', name: 'Ski Goggles', desc: 'Amber lenses. On the slopes they pick out the line to the next gate.', type: 'tool',
