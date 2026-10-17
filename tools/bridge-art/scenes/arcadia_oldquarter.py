@@ -362,7 +362,7 @@ w = {'name': 'Lantern Row', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tile
          dialog(17, 8, 'THE LANTERN MAKER', 'PRESS E TO TALK', 'HE IS GLUING PAPER TO A FRAME, ONE RIB AT A TIME.'),
          {'x': 21, 'y': 9, 'type': 'vendor', 'label': 'HOSHI RAMEN', 'prompt': 'PRESS E TO ORDER',
           'items': [{'id': 'shoyu_ramen', 'price': 10}, {'id': 'spore_ramen', 'price': 14}, {'id': 'green_tea', 'price': 4}]},
-         dialog(22, 8, 'OLD HOSHI', 'PRESS E TO TALK', 'THE COOK WIPES THE COUNTER AND NODS AT A STOOL.'),
+         dialog(23, 9, 'OLD HOSHI', 'PRESS E TO TALK', 'THE COOK WIPES THE COUNTER AND NODS AT A STOOL.'),
          dialog(27, 8, 'SHUTTERED HOUSE', 'PRESS E TO LOOK',
                 'STORM BOARDS UP, A BICYCLE CHAINED TO THE POST, A CAT ON THE STEP WHO DOES NOT MOVE FOR YOU. A NOTE IN THE '
                 'BOARDS SAYS "BACK IN THE SPRING". IT DOES NOT SAY WHICH SPRING.'),
