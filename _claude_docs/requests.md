@@ -45,6 +45,9 @@ only partly done, the rest stays here as open.
 | Ashcombe House (Crownhaven, 400,000, beside the Crown & Anchor) | **done**, needs a detail pass | Live, but mostly bare planks and one plain rug. |
 | The Starling (holm resort, 150,000 from the holm's ledger) | exterior **done**, interior open | The building and parasols on the holm, running as a venue; no interior yet. |
 | Detail pass on both homes + the Starling's interior | queued | Starts when one of the running work streams finishes (needs Blender renders). |
+| Penthouse: more space; an outdoor deck with the pool out there and views of the city all round | queued | Pool moves from inside to a roof deck (glass rail, the skyline, traffic and holo-ads round it, loungers, a fire pit, planters, string lights); a bigger interior. |
+| Ashcombe House should be big | queued | Great hall as the entry; rooms off it (drawing room, library, dining room, upstairs gallery and master bedroom) as places within places. |
+| All of them customisable | queued | Every room and the deck furnishable with the homes' furniture system, with open floor left for it. |
 
 ## Earlier this session
 | Ask | Status | Notes |
