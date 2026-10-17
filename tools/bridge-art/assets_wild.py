@@ -568,3 +568,42 @@ def path_stones(k, path, z_at=_flat, tone=STONE_LB, half=0.46, every=0.55, seed=
                 s = rng.uniform(0.07, 0.13)
                 k.rock(px, pr, z_at(px, pr) + s * 0.25, s, s * 0.8, s * 0.55, (shade(tone, rng.uniform(0.8, 1.15)), 0.3), part='path_stone',
                        segs=7)
+
+
+def fast_top(k):
+    """Swap k.top (a ray straight down: the part on top and its height, what the grass asks before every blade) for one
+    that asks a single BVH tree over everything built, made once on the first call. Blender's scene ray cast tests every
+    object in turn: with thousands of parts the grass took most of an hour. Same answers, by part name."""
+    import bpy
+    from mathutils import Vector
+    from mathutils.bvhtree import BVHTree
+    from scenekit import S
+    state = {}
+
+    def build():
+        bpy.context.view_layer.update()
+        dg = bpy.context.evaluated_depsgraph_get()
+        verts, polys, names = [], [], []
+        for p in k.parts:
+            o = p['obj']
+            if p['var'] is not None or o.hide_render:
+                continue
+            me = o.evaluated_get(dg).to_mesh()
+            M = o.matrix_world
+            base = len(verts)
+            verts.extend(M @ v.co for v in me.vertices)
+            for f in me.polygons:
+                polys.append([base + i for i in f.vertices])
+                names.append(p.get('pname'))
+            o.evaluated_get(dg).to_mesh_clear()
+        state['tree'] = BVHTree.FromPolygons(verts, polys, all_triangles=False)
+        state['names'] = names
+
+    def top(x, r):
+        if 'tree' not in state:
+            build()
+        loc, _n, i, _d = state['tree'].ray_cast(Vector((x, -r * S, 30.0)), Vector((0, 0, -1)))
+        if loc is None:
+            return None, None
+        return state['names'][i], loc.z
+    k.top = top

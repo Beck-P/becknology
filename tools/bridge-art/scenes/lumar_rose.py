@@ -749,7 +749,8 @@ k.later.append(lambda: W.meadow(k, '#5a8040', cells=sorted(SHORE - set(TERRACE_C
                                 ok=('ground', 'grass', 'coast_lip', 'coast_g:grass', 'coast_g:meadow'), density=1.0, avoid=busy,
                                 flowers=0.7, h=(0.06, 0.136)))
 k.later.append(lambda: W.meadow(k, GREEN, cells=TERRACE_CELLS, ok=('grass',), density=0.9, flowers=0.6, h=(0.07, 0.13)))
-k.later.insert(0, lambda: WL.merge_parts(k))               # before the grass (its rays then cross a few meshes, not 60000 blobs)
+k.later.insert(0, lambda: WL.merge_parts(k))               # before the grass
+WL.fast_top(k)                                             # the grass's rays: one BVH tree, not every object in turn
 k.later.append(lambda: WL.merge_parts(k))                  # and after it (see WL.merge_parts)
 I.pebbles(k, walk, '#8a7e78', per_cell=0.2, avoid=lambda x, r: pd(x, r) > 0.6)
 for (x, r) in ((7.4, 17.0), (17.2, 26.6), (35.0, 5.6), (21.4, 6.0), (47.6, 28.4), (38.8, 24.4)):
