@@ -44,7 +44,7 @@ const bad = (m) => { errors++; console.log('BAD', m); };
     if (!r.place || (r.count > 0 && r.n === 0)) bad(w + ': nobody out');
     if (r.walls.length) bad(w + ': standing in a wall: ' + r.walls.join(' '));
     if (r.dup) bad(w + ': two on one seat');
-    if (['lumar-square', 'arcadia-street', 'lumar-crown', 'lumar-tavern', 'hoarfell', 'verdance-village', 'sylvara'].includes(w)) await p.screenshot({ path: SHOTS + '/' + w + '.png' });
+    if (['lumar-square', 'arcadia-street', 'lumar-crown', 'lumar-tavern', 'hoarfell', 'verdance-village', 'sylvara', 'lumar-sapphire', 'lumar-rose'].includes(w)) await p.screenshot({ path: SHOTS + '/' + w + '.png' });
   }
   // lonely places stay lonely
   for (const w of ['lumar-midnight', 'enigma', 'singularity', 'bridge', 'lumar-home']) {
