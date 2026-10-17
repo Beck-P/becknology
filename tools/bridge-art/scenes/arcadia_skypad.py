@@ -25,7 +25,7 @@ import assets_lumar as A               # noqa: E402
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 WORLD = os.path.join(ROOT, 'apps', 'bridge', 'assets', 'worlds', 'arcadia-skypad.json')
-COLS, ROWS = 24, 16
+COLS, ROWS = 29, 16                                  # (the roof's 24, and the skybridge east to the Terraces)
 k = Kit(COLS, ROWS, margin_top=1.5, margin_bottom=1.0, margin_x=0.5, seed=241)
 st = D.Street()
 RX0, RX1, RR0, RR1 = 1.0, 23.0, 2.0, 14.0          # the roof
@@ -42,7 +42,9 @@ for i in range(int((RX1 - RX0) / 0.5)):
             rects.append((x, RR1 + 0.15, -0.6 - j * 0.9, x + 0.25, RR1 + 0.17, -0.25 - j * 0.9))
 k.boxes(rects, shade('#ffd890', 0.5), 'tower_window', emit=('#ffd890', 0.7))
 # parapet + rail round the edge, with a neon strip
-for (a, b, c, d) in ((RX0 - 0.15, RR1, RX1 + 0.15, RR1 + 0.15), (RX0 - 0.15, RR0 - 0.15, RX0, RR1), (RX1, RR0 - 0.15, RX1 + 0.15, RR1)):
+SB0, SB1 = 6.8, 9.7                                  # the skybridge's mouth in the east parapet
+for (a, b, c, d) in ((RX0 - 0.15, RR1, RX1 + 0.15, RR1 + 0.15), (RX0 - 0.15, RR0 - 0.15, RX0, RR1), (RX1, RR0 - 0.15, RX1 + 0.15, SB0),
+                     (RX1, SB1, RX1 + 0.15, RR1)):
     k.box(a, b, 0.0, c, d, 0.35, ('#3a3644', 0.06), 'parapet')
 k.box(RX0 - 0.15, RR1 + 0.1, 0.3, RX1 + 0.15, RR1 + 0.16, 0.34, shade(Y.CYAN, 0.4), 'parapet_neon', emit=(Y.CYAN, 0.8))
 x = RX0
@@ -106,12 +108,11 @@ k.point_light(11.0, GR1 + 0.8, 1.6, '#ffd8a0', 18, radius=0.3)
 k.solid(GX0, GR0, GX1, GR1)
 
 # ---- rooftop machinery, a mast, the back of a billboard ---------------------------------------------------------
-for (x, r) in ((2.2, 11.5), (3.4, 11.5), (21.0, 11.6)):
+for (x, r) in ((2.2, 11.5), (3.4, 11.5)):
     k.box(x - 0.45, r - 0.4, 0.0, x + 0.45, r + 0.4, 0.8, ('#6a6a76', 0.08), 'hvac')
     k.cyl(x, r, 0.8, 0.83, 0.32, '#2a2a32', 'hvac_fan', verts=14)
     st.vent(x, r, 0.9)
 k.solid(1.7, 11.0, 3.9, 12.0)
-k.solid(20.5, 11.1, 21.5, 12.1)
 k.cyl(8.0, 3.0, 0.0, 4.5, 0.08, '#3a3a44', 'mast', verts=8)
 for z in (2.0, 3.0, 4.0):
     k.box(7.6, 2.96, z, 8.4, 3.04, z + 0.04, '#3a3a44', 'mast_arm')
@@ -130,6 +131,59 @@ k.cyl(11.0, 12.8, 0.0, 0.9, 0.28, ('#c8a020', 0.08), 'fuel_tank', verts=12)
 k.tube((11.2, 12.6, 0.6), (11.9, 10.4, 0.05), 0.04, '#1a1a1a', 'fuel_hose', verts=6)
 k.solid(10.6, 12.4, 11.6, 13.4)
 
+# ---- the skybridge east to the Terraces (L200): a glass tube on a truss, lit along its floor -------------------------------
+import random                                                                   # noqa: E402  (its own dice: the roof renders as it did)
+rb = random.Random(2077)
+SBX = COLS + 0.6
+Y.tile_floor(k, RX1, SB0, SBX, SB1, tones=('#2e2a3a', '#2a2636'), size=1.0, seam='#14101c')
+k.box(RX1, SB0, -0.9, SBX, SB1, -0.04, ('#1a1626', 0.08), 'bridge_truss')
+for x in [RX1 + 0.5 + i for i in range(int(SBX - RX1))]:
+    k.bar(x, SB1, x + 0.5, SB1, -0.9, -0.05, 0.06, '#2a2638', 'truss_rib')
+k.box(RX1, SB1 - 0.02, -0.92, SBX, SB1 + 0.02, -0.86, shade(Y.CYAN, 0.4), 'truss_led', emit=(Y.CYAN, 0.8))
+k.box(RX1, (SB0 + SB1) / 2 - 0.04, 0.0, SBX, (SB0 + SB1) / 2 + 0.04, 0.006, shade(Y.CYAN, 0.4), 'bridge_led', emit=(Y.CYAN, 0.6))
+for (r0, r1) in ((SB0 - 0.12, SB0), (SB1 - 0.02, SB1 + 0.1)):               # its glass walls, a lit handrail, ribs
+    k.box(RX1 + 0.15, r0, 0.0, SBX, r1, 0.18, ('#2a2a3e', 0.06), 'curb')
+    k.box(RX1 + 0.15, r0, 0.18, SBX, r1, 0.92, '#0e1030', 'bridge_glass', emit=('#2a3a7a', 0.3))
+    k.box(RX1 + 0.15, r0, 0.92, SBX, r1, 0.98, ('#5a5a68', 0.1), 'bridge_rail')
+    k.box(RX1 + 0.15, r0, 0.88, SBX, r1, 0.92, shade(Y.CYAN, 0.4), 'rail_led', emit=(Y.CYAN, 0.7))
+for x in [RX1 + 0.6 + i * 1.2 for i in range(int((SBX - RX1) / 1.2))]:
+    k.tube((x, SB0 - 0.06, 0.0), (x, (SB0 + SB1) / 2, 2.0), 0.04, '#3a3a52', 'bridge_rib', verts=6)
+    k.tube((x, SB1 + 0.04, 0.0), (x, (SB0 + SB1) / 2, 2.0), 0.04, '#3a3a52', 'bridge_rib', verts=6)
+k.solid(RX1, SB0 - 0.3, SBX, SB0)
+k.solid(RX1, SB1 - 0.1, SBX, SB1 + 0.2)
+# the mouth: a gantry with its sign — where it goes, its level
+k.box(RX1 - 0.05, SB0 - 0.2, 1.9, RX1 + 0.35, SB1 + 0.2, 2.3, ('#2a2a3e', 0.06), 'gantry')
+for r in (SB0 - 0.2, SB1 + 0.05):
+    k.box(RX1 - 0.05, r, 0.0, RX1 + 0.35, r + 0.15, 1.9, ('#2a2a3e', 0.06), 'gantry_leg')
+S.lightbox(k, 'THE TERRACES · L200', 'RussoOne', RX1 + 0.15, SB1 + 0.25, 2.0, 2.6, 0.32, bg='#0c1a22', ink=Y.CYAN_L, glow=Y.CYAN, size=0.2)
+k.point_light(RX1 + 1.5, (SB0 + SB1) / 2, 1.4, '#80e0e8', 10, radius=0.4)
+
+# ---- the cab rank: a painted bay, an air cab waiting at it, its sign on a post ----------------------------------------------
+CX, CR = 17.3, 12.8
+k.box(15.5, 11.75, 0.0, 19.3, 13.75, 0.006, '#2a2430', 'cab_bay')
+for (a, b, c, d) in ((15.5, 11.75, 19.3, 11.82), (15.5, 13.68, 19.3, 13.75), (15.5, 11.75, 15.57, 13.75), (19.23, 11.75, 19.3, 13.75)):
+    k.box(a, b, 0.006, c, d, 0.01, '#e0c040', 'cab_bay_line')
+k.box(CX - 0.95, CR - 0.36, 0.3, CX + 0.95, CR + 0.36, 0.7, ('#e8b830', 0.06), 'cab_body', bevel=0.12)
+k.box(CX - 0.5, CR - 0.3, 0.68, CX + 0.35, CR + 0.3, 0.95, '#141c2c', 'cab_glass', emit=('#2a4060', 0.35), bevel=0.1)
+k.box(CX - 0.46, CR - 0.3, 0.93, CX + 0.3, CR + 0.3, 0.99, ('#e8b830', 0.06), 'cab_roof', bevel=0.04)
+k.box(CX - 0.95, CR + 0.32, 0.5, CX + 0.95, CR + 0.36, 0.55, '#141416', 'cab_stripe')
+for i in range(10):
+    if i % 2:
+        k.box(CX - 0.9 + i * 0.18, CR + 0.36, 0.5, CX - 0.72 + i * 0.18, CR + 0.37, 0.55, '#f0f0f0', 'cab_check')
+k.box(CX - 0.28, CR + 0.08, 1.0, CX + 0.04, CR + 0.09, 1.08, '#e8c040', 'cab_sign', emit=('#ffd860', 0.95))
+for sx in (-1, 1):                                                              # lift pods, glowing under her: she hovers
+    k.cyl(CX + sx * 0.62, CR, 0.14, 0.28, 0.16, '#2a2a30', 'cab_pod', verts=14)
+    k.cyl(CX + sx * 0.62, CR, 0.1, 0.14, 0.13, shade(Y.CYAN, 0.45), 'cab_pod_glow', emit=(Y.CYAN, 0.95), verts=14)
+for dr in (-0.2, 0.2):
+    k.sphere(CX + 0.96, CR + dr, 0.5, 0.06, 0.04, '#fff6e0', 'cab_head', emit=('#fff2d0', 1.0), segs=8)
+    k.sphere(CX - 0.97, CR + dr, 0.52, 0.05, 0.04, '#e83040', 'cab_tail', emit=('#ff3040', 0.95), segs=8)
+k.point_light(CX, CR + 0.1, 0.08, Y.CYAN, 6, radius=0.3)
+k.point_light(CX + 0.4, CR - 0.6, 2.4, '#fff0d0', 34, radius=0.4)                # the rank's lamp on her
+k.solid(CX - 1.0, CR - 0.4, CX + 1.0, CR + 0.4)
+k.cyl(20.0, 11.9, 0.0, 1.5, 0.04, '#3a3a44', 'cab_post', verts=6)
+S.lightbox(k, 'AIR CAB', 'RussoOne', 20.0, 11.95, 1.5, 1.1, 0.34, bg='#f0c830', ink='#141416', glow='#ffd860', size=0.22)
+k.solid_post(20.0, 11.9)
+
 k.area_light(12.0, 2.0, 10.0, '#7058b8', 700, 30.0, rot=(math.radians(-35), 0, 0))
 for (x, r, c) in ((12.0, 8.0, '#80c0ff'), (4.0, 6.0, '#ffd890'), (19.5, 6.0, '#80e0e8')):
     k.point_light(x, r, 3.0, c, 25, radius=1.0)
@@ -137,14 +191,16 @@ for (x, r, c) in ((12.0, 8.0, '#80c0ff'), (4.0, 6.0, '#ffd890'), (19.5, 6.0, '#8
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=128,
          world_light=('#241a40', 0.5))
 
+TERRACES = [1, 20]                                   # where the skybridge comes out on the Terraces (scenes/arcadia_terraces.py)
 w = {'name': 'Skyport 7', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',
      'spawns': {'player': [12, 11]}, 'shipExit': False, 'tiles': [], 'collisions': [], 'tileNames': {},
      'interactions': [
          {'x': 12, 'y': 9, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'},
-         {'x': 19, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-skywalk', 'spawn': [28, 5], 'label': 'LIFT',
-          'prompt': 'PRESS E TO RIDE DOWN'},
-         {'x': 20, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-skywalk', 'spawn': [28, 5], 'label': 'LIFT',
-          'prompt': 'PRESS E TO RIDE DOWN'},
+         {'x': 19, 'y': 4, 'type': 'express_lift', 'label': 'LIFT', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skyport', 'lobby': 'skypad'},
+         {'x': 20, 'y': 4, 'type': 'express_lift', 'label': 'LIFT', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skyport', 'lobby': 'skypad'},
+         {'x': 18, 'y': 11, 'type': 'air_cab', 'pad': 'skyport', 'label': 'AIR CAB', 'prompt': 'PRESS E TO HAIL A CAB'},
+         {'x': COLS - 1, 'y': 8, 'type': 'enter_world', 'target': 'arcadia-terraces', 'spawn': TERRACES, 'label': 'SKYBRIDGE · THE TERRACES',
+          'prompt': 'PRESS E TO CROSS'},
          {'x': 4, 'y': 4, 'type': 'dialog', 'label': 'MARSHAL', 'prompt': 'PRESS E TO TALK',
           'dialog': 'SKYPORT 7, PAD ONE.\n\nYOUR SKIFF IS LOGGED. NOBODY TOUCHES IT ON MY ROOF.\n\nLIFT\'S ON THE FAR SIDE - TAKES YOU DOWN TO THE SKYWALK.'},
          {'x': 11, 'y': 13, 'type': 'dialog', 'label': 'FUEL LINE', 'prompt': 'PRESS E TO LOOK',
@@ -154,6 +210,7 @@ w = {'name': 'Skyport 7', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tilese
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 apply_world(WORLD, k, (int(RX0), int(RR0), int(RX1) - 1, int(RR1) - 1), scene_id='arcadia-skypad',
+            extra_walkable=[(x, r) for x in range(int(RX1), COLS) for r in range(7, 10)],
             scene_extra={'backdrop': True, 'layers': {'shuttle': 'parked'}, 'steam': st.steam})
 w = json.load(open(WORLD))
 w['shuttle'] = {'spawn': [12, 11]}
