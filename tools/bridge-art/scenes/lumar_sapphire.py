@@ -443,6 +443,7 @@ for r in range(ROWS):
         if (c, r) not in land and (c, r) not in PIER and (c, r) not in FPIER:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
+w['collisions'][QUAY - 1][19] = 0                  # the sailors' row along the quay stays open (the barrels' foot just touches it)
 w['view'] = [-0.5, -2.0, COLS + 0.5, ROWS + 1.0]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 print('sapphire done; walkable', len(land))
