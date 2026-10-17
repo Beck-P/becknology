@@ -15,7 +15,7 @@ only partly done, the rest stays here as open.
 The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-denser-worlds.md`.
 | Ask | Status | Where / notes |
 |---|---|---|
-| Crowds of background people, "lots of people" | open (agreed) | Varied extras by planet wardrobe, going door to door, by clock and weather, the same for every pilot; never blocking doors, not in lonely places. Pairs with the other session's daily routines. |
+| Crowds of background people, "lots of people" | **done** | js/crowd.js + assets/crowds.json: 30 places, 17 bodies recoloured per planet, the same crowd for everyone, umbrellas in the rain, a word and now and then a favour. Pairs with the routines. |
 | Small events on the hour | open (agreed) | A few minutes each, shared by the clock. |
 | Race anyone who's there ("I want to be able to race Alyssa"): sailing, skiing, climbing; and the seas a little larger | open (agreed) | Today only against Liv, Ysolde or your ghost. Seas about a fifth bigger (`K` 600 → ~720). |
 | A party for playing together: travel waits for both of you (ready check), ride along on jumps, come aboard each other's Wayfarer | discuss | Beck's idea; details proposed in the spec. |
@@ -46,7 +46,8 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Chimneys are "a couple squares" | **done** (in the kit) | Brick stacks with courses, corbel, soot, cap, clay pots, flashing. Live as scenes re-render. |
 | More variation in character | in progress | Houses: tints, shutter/timber colours, dormers, door hoods, weathervanes (done in the kit). Next: more building types and NPC variety. |
 | Going forward, make renders detailed and realistic | **done** (standing rule) | "The detail standard" in apps/bridge/CLAUDE.md: checked before any render ships. |
-| Empire: economic engine across worlds, hire and automate, manage it all from the office | in progress | Agreed plan in `_claude_docs/spec-empire.md`, six chunks. |
+| Empire: economic engine across worlds, hire and automate, manage it all from the office | in progress | Agreed plan in `_claude_docs/spec-empire.md`, six chunks. Chunk 3 done: captains (mate, captain, master) on any ship, standing orders (trade loops, supply runs to your businesses, runs for the Workshop) that sail by themselves, the morning dispatch, the treasury, the office's desk and chart lines. Next: chunk 2 (your own slipway), then 4–6. |
+| The Undercroft (the other session's nightly dungeon under Midnight Isle): the art | in progress | Its scene scripts are in (`scenes/lumar_undercroft.py`, kit `assets_crypt.py`): the entrance hall (stair up, the slate of the deepest floor, the stair down) and three crypt layouts for every floor below, as the Rose Mine's caves are; the portal is in Midnight's graveyard. Renders join the queue once a test render passes the detail standard. |
 | Crafting: more materials, mining feeding upgrades, build things, build out your base | **done** (chunk 1) | The Workshop on Starling Holm: 14 materials with clear sources, 29 recipes (planks, bars, rope, sailcloth, guns, fittings — two only it makes — tools, furniture), plans bought, taught for a favour or found, smiths you hire who work while you're away, parts fitted by any harbourmaster for labour. Its building is in the holm's re-render (a stand-in shows till then). |
 | Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | in progress | Chunk 1 done (workshop, smiths, crafted fittings and guns). Next: chunk 2 (your own slipway, building and painting a ship; a designer later). |
 | Rarest magic items found yourself; a trophy hall; keep it cute | open | Chunks 4 and 5. |

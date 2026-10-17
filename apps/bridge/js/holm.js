@@ -229,6 +229,15 @@ var BridgeHolm = (function () {
                     } });
       });
     });
+    // what your businesses sell, from your pack into the store: a supply run takes it out to them (js/orders.js)
+    var sells = forBusinesses();
+    if (sells.length) rows.unshift({ label: 'Put away stock for your businesses', sub: sells.map(function (x) { return x.n + ' ' + t.name(x.id).toLowerCase(); }).join(', '), note: 'put away',
+      pick: function () {
+        var n = 0;
+        sells.forEach(function (x) { if (BridgeInventory.removeItem(x.id, x.n) !== false) { st.store[x.id] = (st.store[x.id] || 0) + x.n; n += x.n; } });
+        store(); sfx('pickup');
+        warehouse(n + ' PUT AWAY. A SHIP ON A SUPPLY RUN TAKES THEM OUT TO YOUR BUSINESSES.');
+      } });
     choose({ title: 'The warehouse', text: note || 'CARGO ASHORE, AND IN YOUR SHIPS AT THE JETTY. PICK ONE TO MOVE IT.', rows: rows, closeLabel: 'Done' });
     function pickShip(title, then) {
       if (ships.length === 1) { then(ships[0]); return; }
@@ -237,6 +246,13 @@ var BridgeHolm = (function () {
   }
 
   // ---- quarters: hands ashore -------------------------------------------------------------------------------------
+  // what you carry that any business of yours sells (fish, eggs, milk, fruit…)
+  function forBusinesses() {
+    var B = typeof BridgeBusiness !== 'undefined' ? BridgeBusiness : null, want = {};
+    if (!B || typeof BridgeInventory === 'undefined') return [];
+    B.all().forEach(function (d) { if (B.owned(d.id) && d.stock) d.stock.forEach(function (id) { want[id] = 1; }); });
+    return Object.keys(want).map(function (id) { return { id: id, n: BridgeInventory.getCount(id) }; }).filter(function (x) { return x.n > 0; });
+  }
   function quarters(note) {
     var f = F();
     if (!f) return;
@@ -293,7 +309,7 @@ var BridgeHolm = (function () {
     if (!f) return [];
     var back = [];
     f.all().forEach(function (s) {
-      if (!s.away || s.away.passage || Date.now() < s.away.back) return;    // (a passage you ordered: js/fleet.js arrivals)
+      if (!s.away || s.away.passage || s.away.order || Date.now() < s.away.back) return;    // (a passage you ordered: js/fleet.js arrivals; standing orders: js/orders.js)
       var a = s.away, sp = f.effective(s), hops = a.legs || [[a.from, a.to]];
       var profit = Math.round((a.profit || 0) * 0.6 * (1 + (f.crewOn(s.id).some(function (c) { return c.role === 'navigator'; }) ? 0.15 : 0)));   // wages and wear
       var story = hops.length > 1 ? 'a fair circuit' : 'a fair passage';
@@ -384,6 +400,6 @@ var BridgeHolm = (function () {
   return { reload: function () { st = { owned: false, name: 'Starling Holm', built: {}, store: {}, chest: 0, log: [] };
                                 try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* fresh */ } },
            decorate: decorate, use: use, owned: owned, built: built, canFarm: canFarm, returns: returns, ledger: ledger,
-           stored: stored, storeAdd: storeAdd, storeTake: storeTake, BUILD: BUILD,
+           stored: stored, storeAdd: storeAdd, storeTake: storeTake, BUILD: BUILD, DANGER: DANGER,
            name: function () { return st.name; }, _state: function () { return st; } };
 })();

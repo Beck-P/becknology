@@ -108,12 +108,13 @@ def say(xs, y, label, text, prompt='LOOK'):
 
 w['interactions'] = (
     [it(x, 11, 'enter_world', 'BRIDGE', 'ENTER BRIDGE', target='bridge', spawn=[5, 12], noBeacon=True) for x in (7, 8, 9)] +
-    office((6, 7, 8, 9, 10), 5, 'books', "CAPTAIN'S DESK", 'PRESS E TO OPEN THE BOOKS') +
+    office((6, 7, 8, 9), 5, 'books', "CAPTAIN'S DESK", 'PRESS E TO WORK AT YOUR DESK') +
+    office((10,), 5, 'workshop', 'WORKSHOP BOOK', 'PRESS E TO READ') +          # the ledgers stacked at the desk's end
     office((12, 13, 14, 15), 4, 'staff', 'STAFF BOARD', 'PRESS E TO READ') +
     office((2, 3, 4), 8, 'chart', 'CHART TABLE', 'PRESS E TO GIVE ORDERS') +
     office((2, 3, 4), 7, 'chart', 'CHART TABLE', 'PRESS E TO GIVE ORDERS') +
     office((14, 15), 7, 'accounts', 'STRONGBOX', 'PRESS E TO OPEN') +
-    office((12, 13), 7, 'accounts', 'COUNTING TABLE', 'PRESS E FOR THE ACCOUNTS') +
+    office((12, 13), 7, 'treasury', 'COUNTING TABLE', 'PRESS E FOR THE TREASURY') +
     say((8,), 4, "CAPTAIN'S CHAIR", 'YOUR CHAIR, WITH ITS BACK TO THE STARS. FROM HERE THE WHOLE OF IT IS IN REACH: THE BOOKS, THE BOARD, THE CHART.') +
     say((6, 10), 4, 'WINDOW', "THREE ARCHED WINDOWS ONTO WHEREVER THE WAYFARER LIES.") +
     say((1, 2), 4, 'BOOKSHELF', "LEDGERS GOING BACK YEARS, PILOT'S ALMANACS, A SEA ATLAS OF LUMAR, A BOOK ON THE HANDLING OF MEN WITH A GREAT DEAL UNDERLINED." +
