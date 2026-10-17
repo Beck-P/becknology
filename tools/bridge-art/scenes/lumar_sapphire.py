@@ -179,8 +179,10 @@ for (bx, sail) in ((FX - 0.95, '#e8e4dc'), (FX + 1.95, None)):
     n0, l0 = len(k.parts), len(k.lights)
     W.boat(k, bx, QUAY + 2.2, length=2.4, sail=sail)
     C.sink(k, n0, C.WZ + 0.12, l0)
-for (x0, x1, cr, hull, ring) in ((15.0, 17.0, Q + 0.75, '#2a4a6a', 16.0), (20.9, 22.9, Q + 1.3, '#6a3a2a', 22.6),
-                                 (41.6, 43.6, Q + 0.8, '#3a5a4a', 43.0)):
+P.sloop(k, 13.6, 18.3, Q + 1.45, beam=1.05, hull='#2e3a4a', strake='#2a4a7a', wz=C.WZ)      # a sloop at her moorings, sail furled
+P.line(k, (13.7, Q + 1.45, C.WZ + 0.55), (13.5, Q - 0.5, 0.38), sag=0.2)
+P.line(k, (18.2, Q + 1.45, C.WZ + 0.55), (17.0, Q - 0.5, 0.38), sag=0.2)
+for (x0, x1, cr, hull, ring) in ((20.9, 22.9, Q + 1.3, '#6a3a2a', 22.6), (41.6, 43.6, Q + 0.8, '#3a5a4a', 43.0)):
     n0, l0 = len(k.parts), len(k.lights)
     W.rowboat(k, x0, x1, cr, beam=0.78, hull=hull)
     C.sink(k, n0, C.WZ + 0.12, l0)
@@ -189,46 +191,42 @@ k.cyl(18.6, Q + 2.6, C.WZ - 0.1, C.WZ + 0.22, 0.16, '#c03a2e', 'buoy', verts=14)
 k.cyl(18.6, Q + 2.6, C.WZ + 0.08, C.WZ + 0.16, 0.165, '#ece4d4', 'buoy', verts=14)
 k.cone(18.6, Q + 2.6, C.WZ + 0.22, C.WZ + 0.38, 0.08, 0.02, '#2e2e34', 'buoy', verts=10)
 
-# ---- the town: houses and the warehouse along the north of the square (the richer kit, the old footprints) -----------
+# ---- the town: Lantern Quay's harbour houses along the north of the square, at the old footprints and doors ----------
 SMOKE = []
 
 
-def smoke(ridge, cx):
-    rm, zr = ridge
-    SMOKE.append([round(cx - 0.12, 3), round(rm - 0.35 - (zr + 1.3) * C45, 3)])
+def hh(chimney=None, **kw):
+    rm, zr = P.harbour_house(k, chimney=chimney, **kw)
+    if chimney is not None:
+        SMOKE.append([round(chimney - 0.12, 3), round(rm - 0.15 - (zr + 0.95) * C45, 3)])
 
 
-smoke(W.house(k, 13.2, 17.0, 10.6, 14.0, wall_h=2.0, roof=W.ROOF_SLATE, wall='#c8c4b8', door_x=15.1,
-              windows=[(13.9, 0.85), (16.3, 0.85)], windows_up=[(15.1, 1.5)], chimney=13.8), 13.8)
-smoke(W.house(k, 17.6, 21.6, 10.0, 14.0, wall_h=2.3, rise=1.4, roof='#2a4a7a', wall='#d8d0c0', door_x=19.6,
-              windows=[(18.4, 0.9), (20.8, 0.9)], windows_up=[(18.4, 1.7), (20.8, 1.7)], chimney=21.0,
-              sign=(21.45, 1.75, 'mug'), lanterns=(19.0, 20.2)), 21.0)
-# the Zephyr trader's warehouse: dressed stone, big doors with iron straps, a loft door and its hoist
-W.house(k, 22.4, 27.2, 9.6, 14.0, wall_h=2.6, rise=1.2, roof='#3a4a5a', wall='#8a8a90', windows=[(23.0, 1.0), (26.6, 1.0)],
-        stone=True, sign=(27.05, 1.9, 'compass'))
-k.box(23.8, 14.0, 0.0, 25.8, 14.26, 0.06, ('#9a9284', 0.14), 'step', bevel=0.02)                     # the threshold
-k.box(23.82, 14.0, 0.06, 25.78, 14.07, 1.78, A.WOOD_DD, 'door_frame')
-for i, (xa, xb) in enumerate(((23.9, 24.8), (24.8, 25.7))):
-    k.box(xa + 0.01, 14.05, 0.06, xb - 0.01, 14.11, 1.7, ('#4a3420', 0.12), 'warehouse_doors')
-    xx = xa + 0.15
-    while xx < xb - 0.1:
-        k.box(xx - 0.012, 14.1, 0.06, xx + 0.012, 14.125, 1.7, '#2a1a10', 'warehouse_plank')
-        xx += 0.2
-    for z in (0.35, 1.35):
-        k.box(xa + 0.05, 14.11, z, xb - 0.05, 14.14, z + 0.07, A.IRON, 'strap')
-k.box(24.4, 14.0, 2.32, 25.2, 14.08, 2.8, ('#4a3420', 0.12), 'loft_door')
-k.box(24.36, 14.0, 2.28, 25.24, 14.06, 2.84, A.WOOD_DD, 'door_frame')
-k.box(25.33, 13.6, 2.7, 25.47, 14.95, 2.82, (A.WOOD_D, 0.12), 'hoist_beam')
-k.cyl_x(25.34, 25.46, 14.82, 2.62, 0.08, 0.08, A.IRON, 'pulley', verts=10)
-k.tube((25.4, 14.82, 2.56), (25.4, 14.82, 1.2), 0.014, '#a08a60', 'rope', verts=5)
-V.board_sign(k, 'ZEPHYR', 'Rye-Regular', 24.8, 14.02, 1.92, size=0.24)
-smoke(W.house(k, 31.8, 35.8, 10.0, 14.0, wall_h=2.2, rise=1.3, roof='#2a4a7a', wall='#c8c0b0', door_x=33.8,
-              windows=[(32.6, 0.9), (35.0, 0.9)], windows_up=[(33.8, 1.6)], chimney=35.2), 35.2)
+hh(x0=13.2, x1=17.0, r_back=10.6, F=14.0, wall_h=2.9, rise=1.45, roof=W.ROOF_SLATE, wall='#e6d6b4', door_x=15.1,
+   win_down=[(13.95, 0.62), (16.3, 0.62)], win_up=[(13.95, 1.92), (16.3, 1.92)], chimney=13.8, lanterns=(15.85,))
+hh(x0=17.6, x1=21.6, r_back=10.0, F=14.0, wall_h=3.65, rise=1.6, roof='#2a4a7a', wall='#e2c88e', door_x=19.6, door_w=0.95,
+   win_down=[(18.3, 0.62), (20.9, 0.62)], win_up=[(18.3, 1.92), (19.6, 1.92), (20.9, 1.92)],
+   win_up2=[(18.3, 2.82), (19.6, 2.82), (20.9, 2.82)], chimney=21.0, sign=(21.4, 2.25, 'mug'), lanterns=(18.95, 20.25),
+   dormers=(19.6,))
+# the Zephyr trader's warehouse: weatherboards over coursed stone, the big door, a loft door and its hoist
+hh(x0=22.4, x1=27.2, r_back=9.6, F=14.0, wall_h=3.35, rise=1.5, roof='#3a4256', wall='#7a5a3e', door_x=24.8, door_w=1.3,
+   boards=True, hoist=True, win_down=[(23.0, 0.62), (26.6, 0.62)], sign=(27.05, 2.25, 'compass'))
+V.board_sign(k, 'ZEPHYR', 'Rye-Regular', 23.15, 14.22, 2.0, size=0.2)
+hh(x0=31.8, x1=35.8, r_back=10.0, F=14.0, wall_h=3.25, rise=1.55, roof='#2e5a7a', wall='#d4dccc', door_x=33.0,
+   shop=(33.75, 35.5), awning=('#2a4a9a', '#ece0c8'), win_up=[(32.5, 1.92), (33.8, 1.92), (35.1, 1.92)],
+   win_up2=[(33.8, 2.62)], chimney=35.2, sign=(32.0, 2.15, 'fish'), lanterns=(32.35,))
 # the White House (js/home.js: its door at 38, 13)
-smoke(W.house(k, 36.4, 40.4, 10.6, 14.0, wall_h=2.0, roof=W.ROOF_SLATE, wall='#f4f1ea', door_x=38.4,
-              windows=[(37.2, 0.85), (39.6, 0.85)], chimney=37.0, sign=(40.25, 1.6, 'bread')), 37.0)
-W.house(k, 41.0, 44.0, 11.4, 14.4, wall_h=1.9, rise=1.0, roof='#2a4a7a', wall='#b8b0a0', door_x=42.5,
-        windows=[(41.7, 0.8), (43.3, 0.8)])
+hh(x0=36.4, x1=40.4, r_back=10.6, F=14.0, wall_h=2.9, rise=1.45, roof=W.ROOF_SLATE, wall='#f4f1ea', ground='plaster',
+   door_x=38.4, win_down=[(37.2, 0.62), (39.6, 0.62)], win_up=[(37.2, 1.92), (39.6, 1.92)], chimney=37.0,
+   sign=(40.2, 2.1, 'bread'))
+hh(x0=41.0, x1=44.0, r_back=11.4, F=14.4, wall_h=3.75, rise=1.7, roof='#2e5a4a', wall='#ecdcbc', ground='plaster',
+   door_x=42.5, win_down=[(41.6, 0.62)], win_up=[(41.6, 1.92), (43.4, 1.92)], win_up2=[(42.5, 2.9)], chimney=43.4)
+HK.barrels(k, 21.75, 14.3)                                                     # by the inn, between it and the warehouse
+A.crate(k, 27.25, 14.15, s=0.5, tone=A.WOOD_L)
+A.crate(k, 27.3, 14.18, s=0.42, z0=0.43, tone=shade(A.WOOD_L, 1.08), solid=False, contents='apples')
+k.bar(16.55, 14.45, 16.8, 14.57, 0.0, 0.7, 0.04, (A.WOOD_D, 0.1), 'chalkboard_leg')               # a chalkboard by the inn door
+k.box(16.58, 14.47, 0.32, 16.86, 14.55, 0.72, '#2a2e2a', 'chalkboard')
+k.boxes([(16.61, 14.55, 0.62, 16.8, 14.56, 0.635), (16.61, 14.55, 0.55, 16.76, 14.56, 0.565)], '#e8e4d8', 'chalk')
+
 k.solid(12, 8, 28, 14)                                    # behind the house rows (under their roofs), either side of the lane
 k.solid(31, 8, 45, 14)
 W.shore_crystals(k, 30.8, 9.2, col=CRYSTAL, s=1.0, energy=10, solid=False)    # the lookout up the lane: you walk on past
@@ -264,20 +262,32 @@ k.box(14.3, 16.55, 0.85, 14.7, 16.58, 1.25, '#e8dcc0', 'note')
 k.solid(14, 16, 15, 17)
 W.bench(k, 21.0, 22.6, 20.6)
 W.bench(k, 36.4, 38.0, 20.6)
-W.wall_lantern(k, 23.6, 14.0, z=1.9, energy=8)
-W.wall_lantern(k, 26.0, 14.0, z=1.9, energy=8)
 for (tx, tr) in ((15.6, 19.6), (42.4, 19.6)):                               # trees in their beds at the square's ends
     W.tree_bed(k, tx, tr, rad=0.5, grass=GREEN)
     W.tree(k, tx, tr, h=2.5, tone='#2e5a3e')
-for (tx, tr) in ((12.6, 15.5), (44.4, 15.5), (17.3, 22.3), (40.7, 22.3)):     # tubs of flowers
+for (tx, tr) in ((12.6, 15.5), (44.4, 15.5), (17.3, 22.3), (40.7, 22.3), (32.6, 22.5), (14.0, 20.4)):     # tubs of flowers
     HK.tub(k, tx, tr)
+# a second row of stalls toward the quay, barrels and a handcart by them; bunting along the quay lamps; gulls
+W.market_stall(k, 19.6, 21.6, 21.25, 22.05, awning=('#c0a040', '#e8e8f0'), goods='produce')
+W.market_stall(k, 33.2, 35.2, 21.25, 22.05, awning=('#2a4a9a', '#e8e8f0'), goods='fish')
+A.barrel(k, 22.1, 21.7, h=0.75, radius=0.28)
+A.barrel(k, 35.75, 21.65, h=0.75, radius=0.28, tone=shade(A.WOOD, 0.88))
+V.sacks(k, 18.9, 21.75, n=3)
+for (bx, br) in ((36.3, 21.45), (36.7, 21.75)):
+    P.fish_basket(k, bx, br)
+W.cart(k, 18.4, 18.9)
+W.bunting(k, (14.5, 22.4, 2.0), (27.0, 21.6, 2.0), sag=0.45, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
+W.bunting(k, (27.0, 21.6, 2.0), (32.0, 21.6, 2.0), sag=0.3, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
+W.bunting(k, (32.0, 21.6, 2.0), (43.0, 22.4, 2.0), sag=0.45, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
+for (gx, gr, f) in ((23.5, 19.2, 1), (36.0, 19.4, -1), (31.4, 22.7, 1), (16.8, 17.6, -1)):
+    P.gull(k, gx, gr, facing=f)
 
 # ---- the quay: bollards, pots and nets, barrels, an anchor laid by the edge, gulls --------------------------------------
 for x in (13.5, 17.0, 21.0, 24.5, 32.5, 35.5, 41.0):
     P.bollard(k, x, Q - 0.5)
 P.pot_stack(k, 15.3, Q - 0.75)
 P.rope_coil(k, 18.2, Q - 0.62)
-HK.barrels(k, 19.2, Q - 1.05)
+HK.barrels(k, 19.2, Q - 0.85)
 P.anchor(k, 22.4, Q - 0.62)
 P.gull(k, 24.5, Q - 0.5, z=0.5)
 P.gull(k, 26.1, Q - 0.75, facing=-1)
@@ -288,7 +298,12 @@ A.crate(k, 41.5, Q - 0.95, s=0.5, tone=shade(A.WOOD_L, 0.95))
 A.crate(k, 41.6, Q - 0.92, s=0.42, z0=0.43, tone=shade(A.WOOD_L, 1.08), solid=False)
 P.lobster_pot(k, 42.9, Q - 0.62, solid=True)
 P.gull(k, 41.0, Q - 0.5, z=0.5, facing=-1)
-A.bucket(k, 30.9, Q - 0.6)
+A.bucket(k, 31.6, Q - 0.6)
+V.sacks(k, 25.9, Q - 0.7, n=3, col=('#c8b890', '#d8c8a0', '#b8a880'))
+A.crate(k, 39.3, Q - 0.95, s=0.5, tone=A.WOOD_L)
+A.crate(k, 39.35, Q - 0.92, s=0.42, z0=0.43, tone=shade(A.WOOD_L, 1.1), solid=False)
+P.rope_coil(k, 44.2, Q - 0.6)
+P.lobster_pot(k, 36.95, Q - 0.62)
 
 # ---- the west hill and the Sapphire Light ---------------------------------------------------------------------------
 LH = (8.6, 15.6)
