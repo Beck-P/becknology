@@ -133,7 +133,7 @@ k.solid(14, 12, 16, 13)
 V.picnic_table(k, 10.8, 13.8)
 V.picnic_table(k, 12.9, 13.8)
 W.tree(k, 25.2, 14.6, h=3.6, tone='#3e6a34')                    # the old oak on the square, a bench round it
-W.annulus(k, 25.2, 14.6, 0.55, 0.85, 0.0, 0.42, (V.WOOD, 0.15), 'oak_bench')
+W.round_bench(k, 25.2, 14.6, tone=V.WOOD)
 k.solid(24, 14, 26, 15)
 for (x, r) in ((9.4, 12.7), (26.6, 12.7), (9.4, 19.3), (26.6, 19.3)):
     W.lantern_post(k, x, r, energy=0)

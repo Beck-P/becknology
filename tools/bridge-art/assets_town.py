@@ -1458,6 +1458,24 @@ def tree_bed(k, cx, cr, rad=0.55, grass='#34462e'):
     k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
 
 
+def round_bench(k, cx, cr, r_in=0.55, r_out=0.88, h=0.4, tone=WOOD, sides=8):
+    """A bench round a tree: eight sides of three planks each, a pixel's gap between them so the seat reads as slats
+    (a solid ring read as an orange doughnut), on legs at every corner."""
+    angs = [2 * math.pi * (i + 0.5) / sides for i in range(sides)]
+    span = (r_out - r_in) / 3
+    for i in range(sides):
+        a0, a1 = angs[i], angs[(i + 1) % sides]
+        for j in range(3):
+            rr = r_in + span * (j + 0.5)
+            p0 = (cx + math.cos(a0) * rr, cr + math.sin(a0) * rr * 0.92)
+            p1 = (cx + math.cos(a1) * rr, cr + math.sin(a1) * rr * 0.92)
+            k.bar(p0[0], p0[1], p1[0], p1[1], h - 0.05, h, span * 0.6, (shade(tone, k.rng.uniform(0.72, 0.95)), 0.18), 'bench_plank')
+        for rr in (r_in + 0.04, r_out - 0.04):
+            x, y = cx + math.cos(a0) * rr, cr + math.sin(a0) * rr * 0.92
+            k.box(x - 0.03, y - 0.03, 0.0, x + 0.03, y + 0.03, h - 0.05, shade(tone, 0.6), 'bench_leg')
+    # (the scene marks its tiles solid: a ring round a tree sits across tile lines however it's placed)
+
+
 def bench(k, x0, x1, cr, tone=WOOD):
     """Park bench along the columns, its back to the north."""
     for x in (x0 + 0.08, x1 - 0.14):
