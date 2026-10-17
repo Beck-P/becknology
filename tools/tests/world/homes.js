@@ -13,7 +13,9 @@ const NIGHT = '2026-10-16T23:30', DAY = '2026-10-16T20:00';            // Lumar'
   let errors = 0;
   p.on('pageerror', e => { errors++; console.log('PAGEERR', e.message.slice(0, 200)); });
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) { errors++; console.log('CONSOLE-ERR', m.text().slice(0, 200)); } });
-  p.on('requestfailed', r => { if (/\/bridge\/assets\//.test(r.url())) { errors++; console.log('MISSING', r.url().slice(0, 160)); } });
+  p.on('requestfailed', r => {                       // (a request the page itself dropped, leaving or reloading, isn't a missing file)
+    if (/\/bridge\/assets\//.test(r.url()) && !/ABORTED/.test((r.failure() || {}).errorText || '')) { errors++; console.log('MISSING', r.url().slice(0, 160)); }
+  });
   await p.route(/supabase-js|supabase\.co|@supabase/, r => r.abort());
   await p.addInitScript(() => { localStorage.setItem('bridge_ship_location', 'lumar'); });
   await p.goto('http://127.0.0.1:8766/bridge/?at=' + NIGHT); await p.waitForTimeout(2500);
