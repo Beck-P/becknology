@@ -109,7 +109,9 @@ const bad = (m) => { errors++; console.log('BAD', m); };
     if (near) break;
   }
   if (near) {
-    await p.keyboard.press('e'); await wait(700);
+    // talk to them as E would (straight to their interaction: someone else stood near — a visitor on their rounds — would take the key)
+    await ev((name) => { const i = BridgeWorld.getWorld().interactions.find(i => i.type === 'crowd' && i.label === name); if (i) BridgeInteractions.execute(i); }, near.name);
+    await wait(700);
     const r = await card(p, 'crowd/' + near.body);
     r.file = p._asked.has('crowd/' + near.body);
     r.said = await ev(() => { const d = document.querySelector('.world-dialog'); return d ? d.innerText.replace(/\n+/g, ' / ').slice(0, 120) : null; });

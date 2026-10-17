@@ -148,7 +148,7 @@ with k.foliage('leaf'):
         for xx in (24.92, 25.28):
             s_ = rng.uniform(0.09, 0.12)
             k.sphere(xx, rr, 0.12, s_, s_ * 0.85, (shade('#6aa04a', rng.uniform(0.9, 1.1)), 0.15), 'crop', segs=8)
-k.solid(24.6, 11.7, 25.6, 13.25)
+k.solid(24.6, 11.7, 25.6, 12.95)                 # its fence's front is at the top of row 13: the row stays open (js/harbourlife.js mends a sail there)
 P.washing(k, 14.0, 16.4, 7.3)
 P.cat(k, 19.0, 12.0)
 # the chapel on the west head, a lantern in its little tower for the boats; three old stones in its yard
@@ -249,6 +249,7 @@ for r in range(ROWS):
         if (c, r) not in land and (c, r) not in PIER:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
+w['collisions'][16][3] = 0                          # the dockhand's walk starts here (the boulder only touches it)
 w['view'] = [-0.5, -2.0, COLS + 0.5, ROWS + 1.0]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 print('tern done; walkable', len(land))

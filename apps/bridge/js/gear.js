@@ -95,8 +95,10 @@ var BridgeGear = (function () {
   function style() { return state.style; }
   function colour() { return state.colour || null; }
   function perk() { return SUITS[state.style].perk; }
-  function speed() { return (1 + (perk().speed || 0)) * (typeof BridgeMagic !== 'undefined' ? BridgeMagic.speed() : 1); }
-  function bonus() { return { hp: perk().hp || 0, energy: perk().energy || 0 }; }
+  // implants add to the suit's perk (js/implants.js: core → health, lungs → energy, legs → speed)
+  function imp() { return typeof BridgeImplants !== 'undefined' ? BridgeImplants.bonus() : {}; }
+  function speed() { return (1 + (perk().speed || 0) + (typeof BridgeImplants !== 'undefined' ? BridgeImplants.speed() : 0)) * (typeof BridgeMagic !== 'undefined' ? BridgeMagic.speed() : 1); }
+  function bonus() { var i = imp(); return { hp: (perk().hp || 0) + (i.hp || 0), energy: (perk().energy || 0) + (i.energy || 0) }; }
   function has(what) { return !!perk()[what] || (typeof BridgeMagic !== 'undefined' && BridgeMagic.has(what)); }
   function bestPack() {
     var best = 'flight';
