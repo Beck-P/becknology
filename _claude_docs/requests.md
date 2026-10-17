@@ -81,11 +81,11 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 |---|---|---|
 | The Penthouse (Arcadia, 250,000, door on Skyport 7's roof pad) | **done**, needs a detail pass | Live and furnishable, but mostly empty floor by today's standard. |
 | Ashcombe House (Crownhaven, 400,000, beside the Crown & Anchor) | **done**, needs a detail pass | Live, but mostly bare planks and one plain rug. |
-| The Starling (holm resort, 150,000 from the holm's ledger) | exterior **done**, interior open | The building and parasols on the holm, running as a venue; no interior yet. |
-| Detail pass on both homes + the Starling's interior | in progress | Branch (worktree agent), started on Beck's go-ahead. |
-| Penthouse: more space; an outdoor deck with the pool out there and views of the city all round | in progress | Pool moves from inside to a roof deck (glass rail, the skyline, traffic and holo-ads round it, loungers, a fire pit, planters, string lights); a bigger interior. |
-| Ashcombe House should be big — "super bougie and gorgeous" | in progress | Great hall as the entry; rooms off it (drawing room, library, dining room, upstairs gallery and master bedroom) as places within places. |
-| All of them customisable | in progress | Every room and the deck furnishable with the homes' furniture system, with open floor left for it. |
+| The Starling (holm resort, 150,000 from the holm's ledger) | **done** | The building and parasols on the holm, running as a venue; its door leads into the lobby (front desk, a rattan bar round a tower of bottles, palms and fans, a terrace over the sea), staff at their posts as you hire them, guests while it runs. |
+| Detail pass on both homes + the Starling's interior | **done** | Every room looked at by day and night. Left: faint denoiser mottling on the hall's marble and the Starling's boards at night (a re-render at 96 samples would clear it). |
+| Penthouse: more space; an outdoor deck with the pool out there and views of the city all round | **done** | One world, the city all round through the glass and past the balustrade: inside on gold-veined black marble (the bed facing the city, a stone bath, a bathroom, a sectional, a white grand piano, the bar under HALCYON neon, the kitchen), and through sliding glass the teak roof deck — a plunge pool glowing cyan, loungers, a fire pit, an olive tree, string lights, rain on the deck but not indoors. |
+| Ashcombe House should be big — "super bougie and gorgeous" | **done** | The great hall (marble, the grand staircase to the gallery, a chimneypiece under the admiral's portrait, the great chandelier) and four rooms off it: the drawing room, the library, the dining room laid for twelve, the master bedroom up the stairs — each by day and by night, Lumar's live sky in the windows. |
+| All of them customisable | **done** | Every room, the deck and the Starling furnishable with H, open floor left for your pieces. |
 
 ## Sleep
 | Ask | Status | Notes |
