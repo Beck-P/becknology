@@ -85,16 +85,15 @@ in particular places, and the path from "I have money" to "I have something wond
    processing (timber → planks, ore → bars), ship fittings and guns (cheaper than the yards, and some only craftable),
    tools (better pick, rod), things for your homes. *(built, October 17: js/workshop.js — fourteen new materials,
    29 recipes, smiths on the payroll, plans bought, found or taught for a favour, parts fitted by a harbourmaster;
-   the Bridge's CLAUDE.md, "The Workshop". Still to do: render the workshop's own building — `lumar_holm.py`'s
-   `workshop` variant — which stands in as the quarters' bunkhouse until then.)*
+   the Bridge's CLAUDE.md, "The Workshop". Its building is in the holm's render.)*
 2. **Your own shipyard** — a slipway at the holm: fit the parts you've made to ships lying there; build a ship from
    plans you've bought at a yard plus timber, iron, rope and canvas, over days; choose her paint, sails and
    figurehead. Later: a designer to lay out decks, guns and holds.
    *(built, October 17: js/shipyard.js — the slipway on the holm (12,000, after the workshop), hull plans from the
    yards (cutter, brigantine, raider, galleon), a keel laid and named, three stages each with its own materials and
    hours, shipwrights on the payroll, launched into the fleet; paint, sails and figurehead on any ship lying at the holm;
-   parts fitted for nothing. The Bridge's CLAUDE.md, "Your own shipyard". Still to do: the slip in the holm's render,
-   her colours drawn at sea.)*
+   parts fitted for nothing. The Bridge's CLAUDE.md, "Your own shipyard". Her colours are drawn wherever she is; the slip
+   is in the holm's scene script (assets_yard.py) and the holm is queued to render with it.)*
 3. **Running it from the office** — standing orders and captains (trade loops, supply runs between your holdings),
    the Workshop's queue, the fleet's chart, the treasury, the daily dispatch: one desk for the whole empire.
    *(built, October 17: js/orders.js — captains in three grades on the payroll, trade loops of two to four ports and
