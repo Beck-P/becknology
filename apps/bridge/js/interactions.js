@@ -65,7 +65,8 @@ var BridgeInteractions = (function () {
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
-                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters', 'office': 'the Office',
+                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters', 'office': 'the Office', 'ship-passage': 'the Passage', 'ship-galley': 'the Galley',
+                      'ship-observatory': 'the Observatory', 'ship-greenhouse': 'the Greenhouse',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'arcadia-penthouse': 'the Penthouse', 'lumar-manor': 'Ashcombe House', 'lumar-sapphire': 'Sapphire Port',
                       'lumar-manor-drawing': 'the drawing room', 'lumar-manor-library': 'the library', 'lumar-manor-dining': 'the dining room',
                       'lumar-manor-bedroom': 'the master bedroom', 'lumar-holm-resort': 'the Starling',
@@ -1497,6 +1498,7 @@ var BridgeInteractions = (function () {
       you.textContent = '';
       if (face) face.set('neutral');
       say(t.a);
+      if (t.rumour && typeof BridgeQuests !== 'undefined' && BridgeQuests.hear) BridgeQuests.hear(t.rumour, person.name);   // gossip about a quest: into the journal
     }
     function close() {
       closed = true;

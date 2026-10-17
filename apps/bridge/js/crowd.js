@@ -825,8 +825,9 @@ var BridgeCrowd = (function () {
     shown.forEach(function (e) {
       var st = e.st, who = e.plan.who, sit = !!st.sit, sh = sheetOf(who, sit);
       if (!sh) return;
-      var cx = Math.round(offX + (st.x + 0.5) * ts), footRow = sit ? st.sit.seat[1] + 0.05 : st.y + 0.9;
-      var footY = Math.round(offY + footRow * ts);
+      // seated: drawn on the seat, depth-tested (and sorted) from its front edge, so the seat isn't drawn across them
+      var cx = Math.round(offX + (st.x + 0.5) * ts), seatY = sit ? st.sit.seat[1] + 0.05 : 0;
+      var footRow = sit ? BridgeScene.seatedRow(st.sit.seat[1], st.facing) : st.y + 0.9, footY = Math.round(offY + (sit ? seatY : footRow) * ts);
       if (V && (cx < -FW || cx > V.w + FW || footY < -8 || footY > V.h + FH)) return;
       list.push({ footRow: footRow, draw: function (ctx) {
         var col = st.walk != null ? 4 + Math.floor(st.walk / 0.3) % 8 : idleCol(Math.floor((nowMs + who.seed.length * 97 + e.plan.k * 131) / 360));
