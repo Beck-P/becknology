@@ -32,7 +32,7 @@
  */
 var BridgeParty = (function () {
   var KEY = 'bridge_party', ASK_MS = 30000, ARRIVE_MS = 45000, FOLLOW_MS = 90000;
-  var SHIP = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, office: 1 };
+  var SHIP = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, office: 1, 'ship-passage': 1, 'ship-galley': 1, 'ship-observatory': 1, 'ship-greenhouse': 1 };
 
   function N() { return typeof BridgeNet !== 'undefined' ? BridgeNet : null; }
   function M() { return typeof BridgeMulti !== 'undefined' ? BridgeMulti : null; }
@@ -391,7 +391,7 @@ var BridgeParty = (function () {
     return new Promise(function (res) {
       if (!n || !n.peer(owner)) { view = { owner: owner, decor: {}, crew: {}, games: {} }; res(); return; }
       var r = rid(), done = false;
-      waits[r] = function (v) { if (done) return; done = true; view = { owner: owner, decor: v.decor || {}, crew: v.crew || {}, games: v.games || {} }; res(); };
+      waits[r] = function (v) { if (done) return; done = true; view = { owner: owner, decor: v.decor || {}, crew: v.crew || {}, games: v.games || {}, wayfarer: v.wayfarer || {} }; res(); };
       n.send('pship?', { rid: r }, owner);
       setTimeout(function () { if (!done) { done = true; delete waits[r]; view = { owner: owner, decor: {}, crew: {}, games: {} }; res(); } }, 2500);
     });
@@ -443,7 +443,8 @@ var BridgeParty = (function () {
   // ---- their galleons out of the window -------------------------------------------------------------------------------
   var sprites = {}, cineAsked = false;
   function shipSprite(G, width) {
-    if (sprites[width]) return sprites[width];
+    var key = G.name + ':' + width;
+    if (sprites[key]) return sprites[key];
     var c = document.createElement('canvas'), k = width / G.w;
     c.width = width; c.height = Math.max(1, Math.round(G.h * k));
     var g = c.getContext('2d');
@@ -452,7 +453,7 @@ var BridgeParty = (function () {
     var d = g.getImageData(0, 0, c.width, c.height), px = d.data;
     for (var i = 3; i < px.length; i += 4) px[i] = px[i] < 110 ? 0 : 255;          // the edge kept hard, like every sprite
     g.putImageData(d, 0, 0);
-    return (sprites[width] = { img: c, w: c.width, h: c.height, k: k, anchors: G.anchors || {} });
+    return (sprites[key] = { img: c, w: c.width, h: c.height, k: k, anchors: G.anchors || {} });
   }
   /** js/orbit.js, every window aboard: the galleons of your party parked over the same world (yours, aboard theirs). */
   function drawShips(ctx, x, y, w, h, now, loc) {
@@ -462,9 +463,11 @@ var BridgeParty = (function () {
     list().forEach(function (m) { if (!m.on || m.id === host) return; var p = n.peer(m.id); if (p && p.ship === loc) who.push(m.id); });
     if (host && mine === loc) who.push(mm.id);
     if (!who.length) return;
-    var G = typeof BridgeCine !== 'undefined' && BridgeCine.get ? BridgeCine.get('mothership') : null;
-    if (!G) { if (!cineAsked && typeof BridgeCine !== 'undefined' && BridgeCine.load) { cineAsked = true; BridgeCine.load(); } return; }
+    var G0 = typeof BridgeCine !== 'undefined' && BridgeCine.get ? BridgeCine.get('mothership') : null;
+    if (!G0) { if (!cineAsked && typeof BridgeCine !== 'undefined' && BridgeCine.load) { cineAsked = true; BridgeCine.load(); } return; }
     who.forEach(function (id, i) {
+      var pp = id === mm.id ? null : n.peer(id);           // each galleon as she's fitted (presence `shipk`; yours: js/wayfarer.js)
+      var G = (BridgeCine.ship ? BridgeCine.ship(id === mm.id ? null : pp && pp.shipk) : null) || G0;
       var a = hashFrac(id), b = hashFrac(id + '~');
       var sw = Math.max(18, Math.round(w * (0.15 + 0.06 * a))), sp = shipSprite(G, sw);
       var px = Math.round(x + w * (0.2 + 0.3 * b) + Math.sin(now / 9000 + a * 6) * w * 0.015);
@@ -516,7 +519,7 @@ var BridgeParty = (function () {
     var el = document.getElementById('mp-pill');
     if (el) el.classList.toggle('party', list().some(function (x) { return x.on; }));
     var n = N();
-    if (n && me() && typeof BridgeOrbit !== 'undefined') n.set({ ship: BridgeOrbit.getLocation() });   // where your galleon is parked
+    if (n && me() && typeof BridgeOrbit !== 'undefined') n.set({ ship: BridgeOrbit.getLocation(), shipk: typeof BridgeWayfarer !== 'undefined' ? BridgeWayfarer.key() : 'mothership' });   // where your galleon is parked, and how she's fitted
   }, 1500);
 
   // ---- the wire ----------------------------------------------------------------------------------------------------
@@ -561,7 +564,7 @@ var BridgeParty = (function () {
     });
     n.on('pship?', function (d, from) {
       if (!d || !has(from)) return;
-      var send = function (decor) { n.send('pship', { rid: d.rid, decor: decor || {}, crew: own('bridge_crew'), games: own('bridge_games') }, from); };
+      var send = function (decor) { n.send('pship', { rid: d.rid, decor: decor || {}, crew: own('bridge_crew'), games: own('bridge_games'), wayfarer: own('bridge_wayfarer') }, from); };
       if (typeof BridgeProgression !== 'undefined' && dc0) dc0.call(BridgeProgression).then(send, function () { send({}); });
       else send({});
     });
@@ -574,6 +577,6 @@ var BridgeParty = (function () {
   }
   wire();
 
-  return { has: has, list: list, invite: invite, leave: leave, depart: depart, aboard: aboard, guestOf: guestOf, drawShips: drawShips,
+  return { has: has, list: list, invite: invite, leave: leave, depart: depart, aboard: aboard, guestOf: guestOf, drawShips: drawShips, hostShip: hostView,
            _D: function () { return D; }, _C: function () { return C; }, _view: function () { return view; } };
 })();

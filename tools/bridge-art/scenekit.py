@@ -152,7 +152,7 @@ class Kit:
     # by part name (less a 'ground_' / 'coast_' prefix) or a part's own 'nature' — for the seasons on the ground and the
     # wind and ripples the engine draws (js/foliage.js, js/nature.js)
     GRASS_PARTS = ('grass', 'grass_dark', 'meadow', 'meadow_dark', 'meadow_flower', 'lip_grass', 'turf')
-    WATER_PARTS = ('pond_water', 'pond_deep', 'stream_water', 'stream_deep', 'basin_water')
+    WATER_PARTS = ('pond_water', 'pond_deep', 'stream_water', 'stream_deep', 'basin_water', 'well_water', 'trough_water')
 
     def _nature(self, p):
         if p.get('nature'):

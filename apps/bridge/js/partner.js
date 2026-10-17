@@ -37,7 +37,7 @@ var BridgePartner = (function () {
   };
   // the Wayfarer: open to whoever you're playing with (js/party.js), not to partners as such. Its furniture, chests and
   // tanks go through the lens like a home's; its decor, crew and game room are shown from the owner's (js/party.js)
-  var SHIP = { keys: ['bridge_homes'], worlds: ['bridge', 'quarters', 'gameroom', 'hangar', 'office'], name: 'the Wayfarer', ship: true };
+  var SHIP = { keys: ['bridge_homes'], worlds: ['bridge', 'quarters', 'gameroom', 'hangar', 'office', 'ship-passage', 'ship-galley', 'ship-observatory', 'ship-greenhouse'], name: 'the Wayfarer', ship: true };
   SHIP.worlds.forEach(function (w) { PLACES[w] = SHIP; });
   function party(id) { return typeof BridgeParty !== 'undefined' && BridgeParty.has && BridgeParty.has(id); }
   function allowed(id, world) { var P = PLACES[world]; return !!P && (P.ship ? party(id) : is(id)); }

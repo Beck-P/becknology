@@ -26,7 +26,7 @@ var BridgeMap = (function () {
                 singularity: 'Black hole · the Brink', verdance: 'Garden world · two small moons', hoarfell: 'Ice world · the Hoarspire',
                 sylvara: 'Forest world · the wood elves' };
   var PLANET = { lumar: 'lumar', arcadia: 'arcadia', enigma: 'enigma', singularity: 'singularity', verdance: 'verdance', hoarfell: 'hoarfell', sylvara: 'sylvara' };
-  var SYS_RX = { ship: /^(bridge|quarters|hangar|gameroom|office)$/, lumar: /^lumar/, arcadia: /^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair|null-den)/,
+  var SYS_RX = { ship: /^(bridge|quarters|hangar|gameroom|office|ship-[a-z]+)$/, lumar: /^lumar/, arcadia: /^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair|null-den)/,
                  enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/, sylvara: /^sylvara/ };
   var MERGE = { 'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a' };
 

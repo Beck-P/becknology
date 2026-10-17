@@ -447,6 +447,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeBottle !== 'undefined') BridgeBottle.decorate(worldId, data);
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.decorate(worldId, data);
+        if (typeof BridgeHarbourLife !== 'undefined') BridgeHarbourLife.decorate(worldId, data);   // the crane's post on the quay
         if (typeof BridgeHolm !== 'undefined') BridgeHolm.decorate(worldId, data);
         if (typeof BridgeTrophies !== 'undefined') BridgeTrophies.decorate(worldId, data);   // the hall of finds
         if (typeof BridgeWorkshop !== 'undefined') BridgeWorkshop.decorate(worldId, data);   // flax seed wherever seed is sold
@@ -468,6 +469,8 @@ var BridgeWorld = (function () {
         if (typeof BridgeCombat !== 'undefined') BridgeCombat.decorate(worldId, data);
         if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
+        if (typeof BridgeWayfarer !== 'undefined') BridgeWayfarer.decorate(worldId, data);   // the bays as fitted
+        if (typeof BridgeGreenhouse !== 'undefined') BridgeGreenhouse.decorate(worldId, data);   // its beds: things to pick
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
         if (typeof BridgeActions !== 'undefined') BridgeActions.decorate(worldId, data);
         if (typeof BridgeSylvara !== 'undefined' && BridgeSylvara.decorate) BridgeSylvara.decorate(worldId, data);   // the willow, once the first sword has said it

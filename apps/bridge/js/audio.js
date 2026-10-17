@@ -280,7 +280,7 @@ var BridgeAudio = (function () {
     id = id || '';
     var ts = (w && w.tileset) || '';
     var amb;
-    if (/^(bridge|quarters|hangar|gameroom|office)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
+    if (/^(bridge|quarters|hangar|gameroom|office|ship-[a-z]+)$/.test(id)) return { theme: 'ship', amb: id === 'ship-galley' ? ['engine', 'creak', 'fire'] : ['engine', 'creak'] };
     if (id === 'arcadia' || id === 'arcadia-lucky-7') return { theme: 'arcade', amb: ['crowd', 'bleeps'] };
     if (id === 'arcadia-club') return { theme: 'club', amb: ['crowd'] };
     if (id === 'arcadia-casino') return { theme: 'casino', amb: ['crowd', 'slots'] };            // the Neon Royale's floor
@@ -732,6 +732,7 @@ var BridgeAudio = (function () {
     pickup:  function (t) { [76, 83, 88].forEach(function (m, i) { voice(sfxBus, t + i * 0.045, 0.05, { type: 'triangle', freq: hz(m), gain: 0.07, a: 0.002, d: 0.08, s: 0.2, r: 0.08 }); }); },
     step:    function (t) { noiseHit(sfxBus, t, 0.05, { freq: 420 + Math.random() * 200, ftype: 'bandpass', q: 1.2, gain: 0.035 }); },
     sit:     function (t) { noiseHit(sfxBus, t, 0.18, { freq: 300, ftype: 'lowpass', gain: 0.12 }); },
+    card:    function (t) { noiseHit(sfxBus, t, 0.04, { freq: 2600, ftype: 'highpass', gain: 0.06 }); noiseHit(sfxBus, t + 0.03, 0.03, { freq: 900, ftype: 'bandpass', q: 2, gain: 0.04 }); },   // a card laid on baize (js/eights.js)
     sleep:   function (t) { [79, 76, 72, 67].forEach(function (m, i) { INST.box(sfxBus, t + i * 0.32, m - 12, 0.3, 1); }); },
     splash:  function (t) { noiseHit(sfxBus, t, 0.5, { freq: 1200, ftype: 'lowpass', gain: 0.18, rev: 0.3 }); },
     plop:    function (t) { voice(sfxBus, t, 0.05, { type: 'sine', freq: 300, glide: 2.4, glideT: 0.08, gain: 0.14, a: 0.002, d: 0.12, s: 0, r: 0.1, rev: 0.3 }); },
