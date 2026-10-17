@@ -45,7 +45,8 @@ const CLIMBBOT = (pace) => {
     for (const p of [beck, aly]) if (/THE TOP/.test(await T.dlg(p))) await T.click(p, /^Walk out onto the summit|^Abseil/);
   }
   for (const p of [beck, aly]) if (/THE TOP/.test(await T.dlg(p))) await T.click(p, /^Walk out onto the summit|^Abseil/);
-  await beck.waitForTimeout(2500);
+  // the verdict waits for the summit to load in (whenFree)
+  for (let i = 0; i < 30 && !(/RACE UP/.test(await T.dlg(beck)) && /RACE UP/.test(await T.dlg(aly))); i++) await beck.waitForTimeout(500);
   console.log('beck verdict:', await T.dlg(beck));
   console.log('aly verdict:', await T.dlg(aly));
   await beck.screenshot({ path: T.S + '/shots/race_climb_verdict.png' });
