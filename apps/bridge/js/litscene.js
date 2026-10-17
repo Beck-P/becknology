@@ -422,7 +422,66 @@ var BridgeLit = (function () {
       wl: [0.55 + 0.45 * amb[0], 0.55 + 0.45 * amb[1], 0.55 + 0.45 * amb[2]],
       t0: performance.now()
     };
+    if (Lt.M.planet === 'hoarfell') job.hf = hoarfell(G, Lt);
     return job;
+  }
+
+  // ---- Hoarfell: the snow coloured by the hour (Look Book 2's Hoarfell tarn, _claude_docs/lookbook2/scenes/hoarfell.js)
+  // Snow is shaded from the light passes alone: the sun's share of the light decides lit or shade (measured against the
+  // best-lit snow this hour, so a low dawn or evening sun still reads as lit), the sky pass gives the hollows, the hour
+  // gives the colours — pink-gold where the sun lands at either end of the day, a cool blue-grey in the shade, white and
+  // blue at noon, blue under the lamps at night. A trodden lane is a touch darker and cooler; ice leans the same colours
+  // toward blue. Everything else keeps its colours with a warm lean where the sun lands and a cool one in the shade.
+  var ICE_LIT = rgbn('#c4e2f2'), ICE_SH = rgbn('#6c90b6');
+  function snowAt(A, F, p) {                           // the snow's own lightness at a pixel (0: not snow)
+    var ar = A[p], ag = A[p + 1], ab = A[p + 2], al = 0.3 * ar + 0.59 * ag + 0.11 * ab;
+    if (al < 195 || Math.max(ar, ag, ab) - Math.min(ar, ag, ab) > 46) return 0;    // pale rock stays rock
+    var f = F[p + 2];
+    if (f & 8) return 0;                                                          // the open water
+    if (f & 48) return al;                                                        // the ground and the roofs
+    return ab - ar < 20 ? al : 0;                                                 // white things on objects, not the bluish ice
+  }
+  function shareAt(G, Lt, p) {                         // the sun's share of the light at a pixel
+    var i0 = Lt.i0, i1 = Lt.i1;
+    function sunP(i) { return i < 2 ? G.lit_a[p + i + 1] : i < 5 ? G.lit_b[p + i - 2] : G.lit_c[p]; }
+    var a0 = DEC[sunP(i0)], a1 = DEC[sunP(i1)], sunL = (a0 + (a1 - a0) * Lt.f) * Lt.sun, sk = DEC[G.lit_a[p]], mo = DEC[G.lit_b[p]] * Lt.moon;
+    var Lr = Lt.sky * Lt.skyC[0] * sk + Lt.sunC[0] * sunL + Lt.moonC[0] * mo, Lg = Lt.sky * Lt.skyC[1] * sk + Lt.sunC[1] * sunL + Lt.moonC[1] * mo;
+    var Lb = Lt.sky * Lt.skyC[2] * sk + Lt.sunC[2] * sunL + Lt.moonC[2] * mo;
+    if (G.lit_lamps) { var k = Lt.lamp * 0.8; Lr += DEC[G.lit_lamps[p]] * k; Lg += DEC[G.lit_lamps[p + 1]] * k; Lb += DEC[G.lit_lamps[p + 2]] * k; }
+    return Math.min(1, sunL / (0.2126 * Lr + 0.7152 * Lg + 0.0722 * Lb + 1e-5));
+  }
+  function hoarfell(G, Lt) {
+    var A = G.lit_albedo, F = G.lit_c, N = G.w * G.h, i;
+    if (!G.snow) {                                     // which pixels are snow, how light fresh snow is, a sample for the light
+      var sn = new Uint8Array(N), sum = 0, n = 0, bright = [];
+      for (i = 0; i < N; i++) {
+        var al = snowAt(A, F, i * 4);
+        sn[i] = al;
+        if (al > 190) { sum += al; n++; }
+        if (al > 200) bright.push(i);
+      }
+      var step = Math.max(1, Math.ceil(bright.length / 40000));
+      G.snow = sn; G.snowRef = n ? sum / n : 230;
+      G.snowSample = bright.filter(function (v, k) { return k % step === 0; });
+    }
+    // the best-lit snow this hour (the 95th percentile of the sun's share)
+    var hist = new Uint32Array(256), ns = G.snowSample.length;
+    for (i = 0; i < ns; i++) hist[Math.round(shareAt(G, Lt, G.snowSample[i] * 4) * 255)]++;
+    var acc = 0, p95 = 255;
+    for (var v = 255; v >= 0; v--) { acc += hist[v]; if (acc >= ns * 0.05) { p95 = v; break; } }
+    // the colours by the hour
+    var M = Lt.M, t = M.h, gold = Lt.golden, night = Lt.night, wk = M.wx === 'clear' ? 0 : M.wk;
+    var late = clamp((t - 18.6) / 0.8, 0, 1);
+    var goldLit = t < 12 ? rgbn('#ffd0d2') : mixv(rgbn('#ffdcbc'), rgbn('#ffaa9c'), late);
+    var goldSh = t < 12 ? rgbn('#b0bad8') : mixv(rgbn('#adb8d8'), rgbn('#96a0c8'), late);
+    var lit = mixv(rgbn('#fbfcff'), goldLit, gold), sh = mixv(rgbn('#bcc8e8'), goldSh, gold);
+    lit = mixv(lit, rgbn('#8494d6'), night); sh = mixv(sh, rgbn('#3c4584'), night);
+    if (wk > 0) {
+      var grey = mixv(rgbn('#dfe3ec'), rgbn('#4a5280'), night);
+      lit = mixv(lit, grey, 0.65 * wk); sh = mixv(sh, mixv(grey, rgbn('#9aa2c4'), 0.5 * (1 - night)), 0.5 * wk);
+    }
+    return { lit: lit, sh: sh, iceLit: mixv(lit, ICE_LIT, 0.45), iceSh: mixv(sh, ICE_SH, 0.42), norm: Math.max(40, p95) / 255,
+             sunUp: t > 6.2 && t < 19.6 ? 1 : 0, wf: lerp(1, 0.35, wk), gold: gold, day: 1 - night };
   }
   function M_wx(Lt) { return Lt.M.wx; }
 
@@ -437,7 +496,7 @@ var BridgeLit = (function () {
     var sun = Lt.sun, sC0 = Lt.sunC[0], sC1 = Lt.sunC[1], sC2 = Lt.sunC[2];
     var moon = Lt.moon, mC0 = Lt.moonC[0], mC1 = Lt.moonC[1], mC2 = Lt.moonC[2];
     var lamp = Lt.lamp * 0.8, glow = Lt.glow, night = Lt.night;
-    var season = M.season, frac = M.frac, verd = M.planet === 'verdance';
+    var hf = job.hf, season = hf ? null : M.season, frac = M.frac, verd = M.planet === 'verdance';
     var snow = Lt.snow, snowZ = snow >= 1 ? 0.5 : 0.82, wet = Lt.wet;
     var wb = job.wb, wl = job.wl, open = job.open, box = G.wBox;
     var wB = clamp(lerp(1.0, 0.36, night) * (M.wx === 'clear' ? 1 : 0.88) * (1 + 0.08 * Lt.golden), 0, 1.2);
@@ -529,8 +588,30 @@ var BridgeLit = (function () {
             if (snowy) { r *= 1 - lk * 0.3; g *= 1 - lk * 0.26; bl *= 1 - lk * 0.14; }
             else { r *= 1 - lk * 0.62; g *= 1 - lk * 0.6; bl *= 1 - lk * 0.5; }
           }
-          if (GL && GL[p + 3]) { r += GL[p] / 255 * glow; g += GL[p + 1] / 255 * glow; bl += GL[p + 2] / 255 * glow; }
         }
+        if (hf) {
+          var share = Math.min(1, sunL / lum), sal = G.snow[i], lt = -1, hk;
+          if (sal || (!(fl & 8) && A[p + 2] - A[p] > 18 && 0.3 * A[p] + 0.59 * A[p + 1] + 0.11 * A[p + 2] > 120)) {
+            lt = smooth(0.3, 0.78, share / hf.norm) * hf.sunUp * (0.35 + 0.65 * hf.wf);
+            lt = lt > 0.62 ? 1 : lt > 0.25 ? 0.5 : 0;
+          }
+          if (sal) {                                   // snow: fresh or trodden, lit or in shade, the hollows a step down
+            var rel = clamp(0.72 + 0.28 * skyL, 0.62, 1.04);
+            rel = rel > 0.95 ? 1 : rel > 0.82 ? 0.9 : 0.78;
+            var lane = sal / G.snowRef < 0.92, tone = (lane ? 0.87 : 1) * rel, HL = hf.lit, HS2 = hf.sh;
+            r = (HS2[0] + (HL[0] - HS2[0]) * lt) * tone; g = (HS2[1] + (HL[1] - HS2[1]) * lt) * tone; bl = (HS2[2] + (HL[2] - HS2[2]) * lt) * tone;
+            if (lane) { r *= 0.97; bl *= 1.03; }
+            if (LP) { hk = Lt.lamp * 0.85; r += DEC[LP[p]] * hk * 0.9; g += DEC[LP[p + 1]] * hk * 0.8; bl += DEC[LP[p + 2]] * hk * 0.55; }
+          } else if (lt >= 0) {                        // ice: the snow's colours leaned blue, its marks kept
+            var mark = clamp((0.3 * A[p] + 0.59 * A[p + 1] + 0.11 * A[p + 2]) / 205, 0.62, 1.12), IL = hf.iceLit, IS = hf.iceSh;
+            r = (IS[0] + (IL[0] - IS[0]) * lt) * mark; g = (IS[1] + (IL[1] - IS[1]) * lt) * mark; bl = (IS[2] + (IL[2] - IS[2]) * lt) * mark;
+            if (LP) { hk = Lt.lamp * 0.6; r += DEC[LP[p]] * hk * 0.9; g += DEC[LP[p + 1]] * hk * 0.78; bl += DEC[LP[p + 2]] * hk * 0.59; }
+          } else {                                     // the rest: warm where the sun lands, cool in the shade
+            var s2 = share > 0.45 ? 1 : 0, kLit = s2 * (0.06 + 0.22 * hf.gold) * hf.day * hf.wf, kSh = (1 - s2) * (0.05 + 0.08 * hf.gold) * hf.day;
+            r *= (1 + kLit * 0.9) * (1 - kSh * 0.18); g *= (1 + kLit * 0.55) * (1 - kSh * 0.22); bl *= (1 + kLit * 0.4) * (1 + kSh * 0.1);
+          }
+        }
+        if (!water && GL && GL[p + 3]) { r += GL[p] / 255 * glow; g += GL[p + 1] / 255 * glow; bl += GL[p + 2] / 255 * glow; }
         o[p] = r * 255; o[p + 1] = g * 255; o[p + 2] = bl * 255; o[p + 3] = 255;
       }
     }
