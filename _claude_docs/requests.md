@@ -17,11 +17,11 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 |---|---|---|
 | Crowds of background people, "lots of people" | open (agreed) | Varied extras by planet wardrobe, going door to door, by clock and weather, the same for every pilot; never blocking doors, not in lonely places. Pairs with the other session's daily routines. |
 | Small events on the hour | open (agreed) | A few minutes each, shared by the clock. |
-| Races against whoever you're playing with: sailing, skiing, climbing | open (agreed) | Today only against Liv, Ysolde or your ghost. |
+| Race anyone who's there ("I want to be able to race Alyssa"): sailing, skiing, climbing; and the seas a little larger | open (agreed) | Today only against Liv, Ysolde or your ghost. Seas about a fifth bigger (`K` 600 → ~720). |
 | A party for playing together: travel waits for both of you (ready check), ride along on jumps, come aboard each other's Wayfarer | discuss | Beck's idea; details proposed in the spec. |
 | The Wayfarer grows with your crew | discuss | Galley and cook, the mess, crew walking about, modules. |
 | Enigma: restore the station, a zero-g spine | parked | Beck likes it; a note for later (the playing-together question). |
-| Arcadia: up, down and out — ritzier up, poorer down; the Undercity; trains and a sky loop; implants; restaurants on every level; large but connected, room to go side to side | discuss | Layout proposed in the spec (levels × districts). Heist out; rooftop running undecided. |
+| Arcadia: up, down and out — ritzier up, poorer down; the Undercity; trains and a sky loop; implants; restaurants on every level; large but connected, room to go side to side | discuss | Layout in the spec (levels × districts), agreed. The bottom dangerous, with fighting. Heist and rooftop running out. |
 | Lumar: harbours that work; a cliff town; the spore bloom; a weekly regatta; each sea's towns, people and ships their own; Crownhaven much bigger | discuss | Per-sea ideas in the spec (Beck likes them). Tides, ferry work maybe; diving, the dragon egg out. |
 | Sylvara: canopy city, the river by canoe to Mirror Lake with places along it, the falls, the Deepwood, brewing, bows | discuss | |
 | Verdance: the village grows with you, the countryside by horse and buggy, small towns, makers and a café, produce shipped to Arcadia, night-blooming flowers | discuss | Market day only if someone else runs the stall. |
@@ -52,8 +52,8 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Rarest magic items found yourself; a trophy hall; keep it cute | open | Chunks 4 and 5. |
 | Hired warriors hunting monsters for loot | dropped | Beck: "fine to leave out". |
 | Progression must feel natural, a real game to work up through | standing rule | Each chunk unlocks gradually (recipes learnt, plans bought, tiers by material). |
-| Title page: the ship over its planet, but keep the technology feel | in progress | Branch (worktree agent). |
-| Update the title page (the Becknology start screen) | in progress | Proposal in chat: the mothership over the planet it's parked at (real day/night), a crafted pixel BECKNOLOGY logo, a real menu (Continue as Beck with portrait/where/coins, settings, who's online), later postcards of the worlds. Waiting on Beck's pick. |
+| Title page: the ship over its planet, but keep the technology feel | **done** | The Wayfarer drifting over the planet she's parked at, day and night by that planet's own clock (lights on its night side, storms, the ship in its shadow after sunset), the shuttle diving now and then; the terminal kept: a pixel BECKNOLOGY with a cursor and glow, orbit readouts, a reticle on the landing site, boot lines; Continue as Beck with your face, coins and who's online; phone and desktop. |
+| Update the title page (the Becknology start screen) | **done** | See the row above. Not yet: title music, postcards of the worlds. |
 | Grass should be actual drawn grass and textures, "not random blobs", "subtle little grass… down to that small level" | **done** (rolling out) | Hand-drawn pixel marks stamped over every meadow (`scene_post.grass_detail`); broad patches evened out; the turf's grain in tile units. Each outdoor scene gets it as it re-renders (queue below). |
 | Smaller images (from the other session's split) | **done** | Every scene's images are lossless WebP — pixel for pixel the same, about a third smaller. |
 | "Use open source projects where it helps" | noted | Use permissively licensed (CC0 / MIT) tools or art only; none adopted yet. |

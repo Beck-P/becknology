@@ -1,8 +1,10 @@
 /**
  * BridgeIdentity — New/returning pilot UI.
  *
- * Renders DOM forms into #identity-overlay.
- * Flow: choice → (new pilot form | returning pilot form) → cockpit
+ * Renders DOM forms into #identity-overlay, over the title page's scene (js/intro.js).
+ * Flow: choice → (new pilot form | returning pilot form) → the push into the ship (BridgeIntro.board) → the bridge.
+ * show({ form: 'new' | 'returning' }) opens a form straight from the title's menu; BACK from there (and
+ * from the choice) goes back to the title.
  */
 var BridgeIdentity = (function () {
   var overlay;
@@ -17,29 +19,48 @@ var BridgeIdentity = (function () {
   var selectedColor = 'purple';
   var newLook = null;        // the look being made on the new-pilot form (js/look.js), saved on REGISTER
   var previewRaf = 0;
+  var direct = false;        // a form opened straight from the title's menu: its BACK goes back to the title
 
-  function show() {
+  function show(opts) {
+    opts = opts || {};
     overlay = document.getElementById('identity-overlay');
     overlay.style.display = 'flex';
     overlay.style.alignItems = 'center';
     overlay.style.justifyContent = 'center';
     overlay.classList.add('active');
-    showChoice();
+    direct = !!opts.form;
+    if (opts.form === 'new') showNewForm();
+    else if (opts.form === 'returning') showReturningForm();
+    else showChoice();
   }
 
   function stopPreview() { cancelAnimationFrame(previewRaf); previewRaf = 0; }
 
+  function toTitle() { stopPreview(); BridgeState.transition('intro'); }
+  function back() { if (direct) toTitle(); else showChoice(); }
+
+  // into the ship: the title's push through the stern gallery, then the bridge
+  function aboard() {
+    stopPreview();
+    hide();
+    var go = function () { BridgeWorld.load('bridge', function () { BridgeState.transition('world', { worldId: 'bridge' }); }); };
+    if (typeof BridgeIntro !== 'undefined' && BridgeIntro.board) BridgeIntro.board(go); else go();
+  }
+
   function showChoice() {
     stopPreview();
+    direct = false;
     overlay.innerHTML =
       '<div class="identity-panel">' +
         '<h2>PILOT IDENTITY</h2>' +
         '<button class="identity-btn primary" id="btn-new">NEW PILOT</button>' +
         '<button class="identity-btn" id="btn-returning">RETURNING PILOT</button>' +
+        '<button class="identity-btn" id="btn-title">BACK</button>' +
       '</div>';
 
     document.getElementById('btn-new').addEventListener('click', showNewForm);
     document.getElementById('btn-returning').addEventListener('click', showReturningForm);
+    document.getElementById('btn-title').addEventListener('click', toTitle);
   }
 
   function showNewForm() {
@@ -92,7 +113,7 @@ var BridgeIdentity = (function () {
     document.getElementById('pilot-name').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') doRegister();
     });
-    document.getElementById('btn-back-choice').addEventListener('click', showChoice);
+    document.getElementById('btn-back-choice').addEventListener('click', back);
   }
 
   function showReturningForm() {
@@ -112,7 +133,7 @@ var BridgeIdentity = (function () {
     document.getElementById('pilot-name').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') doLogin();
     });
-    document.getElementById('btn-back-choice').addEventListener('click', showChoice);
+    document.getElementById('btn-back-choice').addEventListener('click', back);
   }
 
   function showError(msg) {
@@ -141,10 +162,7 @@ var BridgeIdentity = (function () {
 
     BridgeState.setPilot(result);
     if (newLook) BridgeLook.set(newLook);
-    stopPreview();
-    BridgeWorld.load('bridge', function () {
-      BridgeState.transition('world', { worldId: 'bridge' });
-    });
+    aboard();
   }
 
   async function doLogin() {
@@ -167,9 +185,7 @@ var BridgeIdentity = (function () {
 
     BridgeState.setPilot(result);
     BridgeDB.updateLastSeen(result.id);
-    BridgeWorld.load('bridge', function () {
-      BridgeState.transition('world', { worldId: 'bridge' });
-    });
+    aboard();
   }
 
   function hide() {

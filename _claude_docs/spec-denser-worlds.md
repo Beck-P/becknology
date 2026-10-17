@@ -34,7 +34,7 @@ procession, the spirit stag, Thaelin playing. Enigma (before it wakes): lights f
 opening by itself, a voice on the comms.
 
 ### Races against each other — agreed
-Start a race with whoever you're playing with: sailing (a course round buoys and islands, both sloops on the start
+Race anyone who's there with you (Beck: "I want to be able to race Alyssa"), not just a partner or a party: sailing (a course round buoys and islands, both sloops on the start
 line), skiing (the same run side by side, not a ghost) and the climbing routes. Today you can only race Liv, Ysolde
 and your own ghost.
 
@@ -61,10 +61,11 @@ already ride with position (js/multi.js), so drifting would show.
 connected, with room to go side to side as well as up and down** — not a lift shaft with rooms on it. Each level has
 its own food and drink, its own people, light, sound and weather.
 
-**Bigger and deeper than the District street** (Beck: "a little bit bigger and deeper… maybe even go in on the levels,
-it's not all just the outside"): the street is 60 × 16; each main place is more like 80–120 across and 40–60 deep, and
+**The big places bigger and deeper than the District street** (Beck: "a little bit bigger and deeper… maybe even go in on the levels,
+it's not all just the outside"): the street is 60 × 16; the main hubs are more like 80–120 across and 40–60 deep (not every place: smaller ones can stay street-sized), and
 the levels have insides as well as outsides — atriums many floors high, malls and arcades inside the towers, corridors
-and stairwells between open terraces. **Really good views** the higher you go. **The bottom is dangerous.**
+and stairwells between open terraces. **Really good views** the higher you go. **The bottom is dangerous — agreed, with fighting**: gangs and their turf in
+the Undercity, scavenger drones and worse in the Sump, tougher the lower you go.
 
 **Nightlife by level, the vibe changing as you go up**: the Sump an illegal rave in a drowned station; the Undercity
 dive bars, an industrial club, the fight pit's bar; the District Club Void and the noodle bars; the Mid-Levels rooftop
@@ -94,7 +95,7 @@ fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 
 - The Map tab shows Arcadia as a side-on cutaway.
 - Inspirations: Coruscant, Midgar, Kowloon Walled City, Hong Kong, Chongqing, Blade Runner, Ghost in the Shell,
   Altered Carbon.
-- **Out**: the heist. **Not decided**: rooftop running and courier jobs.
+- **Out**: the heist, rooftop running and courier jobs.
 
 ## Lumar — agreed: harbours that work, a cliff town, the spore bloom; every sea its own
 - **Harbours that work — agreed**: the fleet out at dawn and home at dusk, a fish auction, ships unloading, a crane,
@@ -117,6 +118,8 @@ fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 
     board, more of its creatures.
 - **The regatta — agreed**: a race round a course of buoys and islands against the other sloops on a set day each week,
   people on the quays watching; and races you start yourself against whoever you're playing with (see *Races*).
+- **The seas a little larger — agreed**: more room to sail and race, and a world that feels bigger. About a fifth more
+  (`K` in js/sloop.js, 600 → ~720 tiles a chart unit: an Emerald neighbour ~2–2.5 minutes away instead of 1.5–2).
 - **Every sea's people and ships look their own — agreed**: what people wear, and the boats' hulls, sails and colours,
   differ from sea to sea.
 - **Maybe**: tides (a causeway at low tide), ferry work.
