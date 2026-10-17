@@ -61,7 +61,7 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Apply the seasons to all the places in those worlds | **done** | Ground through the year on every outdoor place of Lumar and Verdance (js/foliage.js `ground`), trees already turned. Fully visible once each scene re-renders with its grass marked. |
 | More detail, more realistic, like Stardew | in progress | Meadow, drawn grass, fuller trees, seasons. Keep going: water (ponds, streams), shorelines, paths, ground clutter. |
 | Animations for the worlds, especially nature | **done** (v1) | js/nature.js: trees in the wind, gusts over grass, water glints and rings, butterflies, dragonflies, fireflies, falling leaves and petals, flocks with shadows, grass rustling at your feet. Grass and water effects need the re-rendered scenes. |
-| Touch up every world so they match; shorelines; worlds without nights | in progress | Nights for Hoarfell's sport worlds: the summit, pistes, Park, face, ridge and Ice Step render day / dusk / night (queued after the current renders), and the drawn sky behind them follows. Shorelines: a damp band of sand the waves wash and a wrack line of weed, shells and driftwood along it, in the coast kit (live as the islands re-render). Still to do: a consistency pass after the re-renders. |
+| Touch up every world so they match; shorelines; worlds without nights | in progress | Nights for Hoarfell's sport worlds: the summit and the pistes are live by day, dusk and night; the Park, face, ridge and Ice Step are rendering; the drawn sky behind them follows. Shorelines: a damp band of sand the waves wash and a wrack line of weed, shells and driftwood along it, in the coast kit (live as the islands re-render). Still to do: a consistency pass after the re-renders. |
 | Command ships from anywhere | **done** | Ledger's fleet page, any harbourmaster, the Ferryman: send any ship to any island. |
 | My ship is stuck at Midnight Isle — bring it home | **done** | Ships left there sail home to the holm once, on your next load. The Ferryman's book has "Your ships" again. |
 | A fish tank to build, holding the fish you catch | **done** | The Fish Tank (5 fish) and the Grand Aquarium (12) from any home's furnishing shop or the Chandler; put fish in from your pack or a ship's hold, take one out, look in close; styled to the room (walnut, neon, gunmetal); a visiting partner can slip one in. |
@@ -106,9 +106,11 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | The farm's field soil | **done** | Crumbly earth, in the farm's re-render. |
 
 ## Render queue (every outdoor scene, once, with everything: meadow, drawn grass, trees and seasons, grass/water marks, the new roofs and house fronts)
-Shipped: Crownhaven, Tern Holm, Brambleford, Starling Holm (with the workshop). Running (two queues): Diggen's Point, the farm,
-Midnight Isle, Sylvara · Sapphire, Crimson, Rose Cove, the market square, Hoarfell town; then Crownhaven and Brambleford again
-(street clutter), Hoarfell's sport worlds (nights), and Starling Holm again (the slipway). Each ships as it finishes.
+Shipped: every outdoor scene once — Crownhaven, Tern Holm, Brambleford, Starling Holm (with the workshop), Diggen's Point,
+the farm, Midnight Isle (with the Undercroft's way in), Sylvara, Sapphire, Crimson, Rose Cove, the market square, Hoarfell town;
+Crownhaven again (street clutter); the Hoarspire's summit and the pistes by day, dusk and night. Running: Brambleford again
+(street clutter), the Park, then the face, the Last Ridge and the Ice Step (nights), and Starling Holm again (the slipway and
+the hall of finds). Each ships as it finishes.
 
 ## Older threads still open (from before this session; check what's left before calling them done)
 - Two ships: mothership home base + landing shuttle (#18)
@@ -120,4 +122,4 @@ Midnight Isle, Sylvara · Sapphire, Crimson, Rose Cove, the market square, Hoarf
 - Much bigger Lumar islands (#33)
 - Long game: quests, businesses, crew, NPC backstories (#34) — folds into the empire spec
 - Legacy interiors: penthouse, manor, holm resort (#129) — the holm resort's parasols done; check the rest
-- Night versions of Hoarfell's sport worlds and their skies (the living-worlds spec's last item) — the sky is done (js/worlds/hoarfell.js), the renders are queued
+- Night versions of Hoarfell's sport worlds and their skies (the living-worlds spec's last item) — the sky is done (js/worlds/hoarfell.js); the summit and pistes live, the other four rendering
