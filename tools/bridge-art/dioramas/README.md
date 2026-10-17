@@ -17,6 +17,11 @@ banks that slope into water — never a flat board), vegetation in layers (turf,
 from the richer house kit (`assets_house.py`: roofs by material with eaves and rafter ends, jetties, porches, framed
 windows with shutters and flower boxes, plinths and quoins), and small life at the human scale everywhere.
 
+**What they look like** — `ref/`: each place (and the richer village street) as Look Book 2 showed it in the toy
+finish with soft light, at noon in summer, golden hour in autumn and night in winter (`verdance` is Millpond Farm,
+`lumar` Lantern Quay, `hoarfell` the tarn, `sylvara` Elderglade Brook, `arcadia` Rainline Street, `village-richer`
+Brambleford's street rebuilt with `assets_house.py`). This is the bar for any place built or rebuilt.
+
 Run one like any scene, with live light for anywhere with a day:
 
     SCENE_CYCLE=day BVENV/bin/python tools/bridge-art/dioramas/millpond_farm.py /tmp/millpond

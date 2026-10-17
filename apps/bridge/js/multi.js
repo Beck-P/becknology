@@ -18,6 +18,7 @@ var BridgeMulti = (function () {
   var PERSONAL = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, office: 1, 'lumar-home': 1, 'arcadia-home': 1, 'arcadia-penthouse': 1, 'lumar-manor': 1, 'verdance-home': 1, 'lumar-holm-home': 1, 'lumar-holm': 1,
                    'lumar-manor-drawing': 1, 'lumar-manor-library': 1, 'lumar-manor-dining': 1, 'lumar-manor-bedroom': 1, 'lumar-holm-resort': 1 };
   var DIR_ROW = { down: 0, right: 1, up: 2, left: 3 }, IDLE = [0, 1, 2, 1];
+  function idleCol(k) { return k % 12 === 5 ? 3 : IDLE[k % 4]; }   // breathing, and now and then idle3: a blink
   var others = {}, visiting = null, lastInst = null, sentAt = 0, sentJson = '', metaAt = 0, layer = null, tags = {}, pill = null, selfTag = null;
   var last = performance.now(), gone = {};
 
@@ -149,7 +150,7 @@ var BridgeMulti = (function () {
         }
         var img = BridgeCharacter.sportImage(a.k);
         if (!img) return;
-        var col = a.walking && !seated ? 4 + Math.floor(a.stride / 0.3) % 8 : IDLE[Math.floor(now / 340) % IDLE.length];
+        var col = a.walking && !seated ? 4 + Math.floor(a.stride / 0.3) % 8 : idleCol(Math.floor(now / 340));
         var cx = Math.round(offX + (a.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
         BridgeScene.drawOccluded(ctx, sc, img, col * 32, (DIR_ROW[a.f] || 0) * 48, 32, 48, cx - 16, footY - 45, footRow, offX, offY,
           BridgeScene.tintAt(sc, world, a.x, a.y, now), { x: cx, y: footY, rx: 9, ry: 3 }, null, 'auto');

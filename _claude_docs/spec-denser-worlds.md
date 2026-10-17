@@ -1,6 +1,6 @@
 # Draft: denser, more alive worlds
 
-**Status: agreed (October 17). Built: crowds (js/crowd.js), small events (js/events.js), races and the regatta (js/race.js), the party (js/party.js). Next, when Beck says: items 5–10 (Lumar, Arcadia, Hoarfell, Sylvara, Verdance, the Wayfarer); Enigma parked.** Beck: "make our Becknology world a lot denser and more alive… really
+**Status: agreed. Built: crowds (js/crowd.js), small events (js/events.js), races and the regatta (js/race.js), the party (js/party.js). Now building, in parallel sessions: the planets (see *Building it* at the end). Enigma parked.** Beck: "make our Becknology world a lot denser and more alive… really
 big swings… make them each super unique and cohesive", then "each one should feel large but connected and unique."
 Each item is marked **agreed** (Beck picked it), **proposed** (offered, waiting on Beck), **parked** (a note for
 later) or **out** (not now). Festivals, the nightly dungeon, music, daily routines, secrets and the main story are with
@@ -162,3 +162,39 @@ fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 
   glacier caves, rime golems and frost wraiths in the frozen monastery, and a glacier wyrm that swims under the snow
   (ripples warn you) at the heart. The yetis stay shy and friendly.
 - **Out**: guiding jobs. **Maybe**: the dog sled.
+
+## Building it: the workstreams (Beck: "kick off a bunch of parallel sessions… build everything that we've talked about")
+Each workstream is its own Claude Code session, building in parallel and shipping to `main` piece by piece. **Every
+place is made in the house style**: read `apps/bridge/CLAUDE.md` (*North star*, *Live light*, *Making a new place*, the
+detail standard) and `tools/bridge-art/CLAUDE.md`, look at `tools/bridge-art/dioramas/ref/*.png` (Look Book 2, the toy
+finish in soft light) and the dioramas' scripts before building, and compare against them before shipping. New places
+are built, not just re-rendered: the land shaped, vegetation layered, buildings from `assets_house.py`, small life,
+live light, painted-face people, crowds (`assets/crowds.json`) and events where they fit.
+
+| # | Workstream | Owns |
+|---|---|---|
+| A | **Lumar — the Emerald Sea** | Crownhaven grown into a capital of districts (old town, canal quarter, Guild Row, academy and observatory, the Arsenal, the bridge of shops over the harbour mouth, a funicular up to the palace, stilt slums); harbours that work on every Lumar island (the fleet out at dawn and home at dusk, the catch auction, ships unloading, a crane, sailmakers and ropewalks); the spore bloom; each sea's boats looking their own (hulls, sails, colours) |
+| B1 | **Lumar — Sapphire and Rose** | the cliff town on the Sapphire Sea (white houses and blue domes round a drowned caldera, lanterns down to the water), Sapphire's glassblowers and floating market; Rose's bathhouse town on the hot springs, silk groves, tea houses; those seas' people looking their own |
+| B2 | **Lumar — Crimson and Midnight** | the pirate port in a wreck-strewn cove, the volcano, the stormwatch tower round the dragon's lair; Midnight's drowned village half under the water, a ghost ship to board, Morwen's tower grown, more of its creatures; those seas' people looking their own |
+| C | **Arcadia — below** | the Undercity (hawker hall, dive bars, an industrial club, the fight pit and its bar, scrapyards, gangs holding turf) and the Sump (canals, a noodle boat, the drowned shrine, the rave in the old station, scavenger drones and worse) — fighting tougher the lower you go; implants (the system, back-alley chrome below that sometimes glitches, clinic-grade at the Chrome Clinic) |
+| D | **Arcadia — above and across** | the Mid-Levels (terrace restaurants, rooftop cocktail lounges, a jazz bar, round the Skywalk and Skyport 7) and the Spires (above the smog, stars, sky gardens, the opera, a champagne bar, a members' club, Halcyon's crown); the District grown out (the lantern-lit old quarter, the spaceport); the sky train (the Loop), express lifts, air cabs; the side-on cutaway map; a designer implant boutique up top (using C's implants) |
+| E | **Hoarfell** | Fellhaven bigger and bougier; the château resort town and its casino salon; the mountain railway (a cutscene by season and hour); hut-to-hut ski touring; the hidden valley (hot springs, glacier caves, the cliff monastery, enemies in tiers, the shy yetis) |
+| F | **Sylvara** | the city in three tiers of the trees; the Silverrun by canoe to Mirror Lake and the places along it; the Deepwood; brewing with Mirelle (potions that matter on other planets); bows |
+| G | **Verdance** | the village that grows with you; the countryside by horse and buggy; the market town, the hill village and vineyard, the mill hamlet, the river ferry; local makers and the café; produce shipped to Arcadia; night-blooming flowers; market day with a hired stall-keeper |
+| H | **The Wayfarer** | crew life aboard (a galley and cook, cards in the mess at night, crew walking between posts); modules that make the ship longer |
+
+**Working alongside each other.**
+- Stay in your workstream: other sessions are changing the other planets at the same time.
+- Ship each finished, verified piece to `main` as you go (merge `main` in first; resolve conflicts keeping both sides).
+- Shared files (`apps/bridge/index.html`, `apps/bridge/CLAUDE.md`, `assets/people.json`, `js/items.js`, `js/gifts.js`,
+  `js/audio.js`, `assets/crowds.json`, `assets/walkers.json`, `assets/actions.json`, `_claude_docs/requests.md`): add your
+  own entries and sections, never rewrite others'; on a conflict keep both.
+- `assets/atlas.json` is generated: never hand-merge it — after merging `main`, re-run `python3 tools/bridge-art/atlas.py`.
+- New Lumar islands (A, B1, B2) go in `ISLES` (js/voyage.js), `MOORINGS` / `EXT` (js/sloop.js) and the chart: keep to
+  your own sea's part of the chart.
+- Arcadia (C, D): levels connect by doors you build; express lifts read the lift lobbies from
+  `assets/arcadia-lifts.json` (D builds the lifts and the file; C adds its own lobbies' entries). Implants are C's
+  module (`BridgeImplants`); D's boutique uses it once it's on main.
+- Check every world still loads (`node tools/tests/run.js world`, `python3 tools/bridge-art/audit_worlds.py`) and add
+  tests for what you build.
+

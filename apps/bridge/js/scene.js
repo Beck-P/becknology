@@ -41,6 +41,8 @@ var BridgeScene = (function () {
   var FRAME_W = 32, FRAME_H = 48;
   var DIR_ROW = { down: 0, right: 1, up: 2, left: 3 };
   var IDLE_SEQ = [0, 1, 2, 1];
+  // breathing, and one beat in twelve idle3 (idle1 with the eyes shut: the painted faces blink, as js/character.js does)
+  function idleCol(t) { var k = Math.floor(t / 360); return k % 12 === 5 ? 3 : IDLE_SEQ[k % IDLE_SEQ.length]; }
   var DEPTH_EPS = 0.04;
 
   var scenes = {};
@@ -566,7 +568,7 @@ var BridgeScene = (function () {
       if (!sh.ready) return;
       var p = walkerPos(wk, i, now, wid), footRow = p.y + 0.9;
       list.push({ footRow: footRow, draw: function (ctx) {
-        var col = p.moving ? 4 + Math.floor(p.dist / 0.3) % 8 : IDLE_SEQ[Math.floor((now + i * 137) / 360) % IDLE_SEQ.length];
+        var col = p.moving ? 4 + Math.floor(p.dist / 0.3) % 8 : idleCol(now + i * 137);
         var cx = Math.round(offX + (p.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
         drawOccluded(ctx, sc, sh.img, col * FRAME_W, (DIR_ROW[p.facing] || 0) * FRAME_H, FRAME_W, FRAME_H, cx - FRAME_W / 2,
           footY - (FRAME_H - 3), footRow, offX, offY, tintAt(sc, world, Math.round(p.x), Math.round(p.y), now), { x: cx, y: footY, rx: 8, ry: 3 });
@@ -582,7 +584,7 @@ var BridgeScene = (function () {
         footRow: footRow,
         draw: (function (a, sh, footRow) {
           return function (ctx) {
-            var col = IDLE_SEQ[Math.floor((now + a.x * 137 + a.y * 71) / 360) % IDLE_SEQ.length];
+            var col = idleCol(now + a.x * 137 + a.y * 71);
             var row = DIR_ROW[a.facing] || 0, bob = 0;
             if (a.dance) {                              // dancers (Club Void): turn on the beat, step, bounce
               var b = typeof BridgeDance !== 'undefined' ? BridgeDance.beat() : now / 484, kk = Math.floor(b) + Math.round(a.x * 3 + a.y);

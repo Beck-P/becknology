@@ -49,6 +49,12 @@ Caching: a Bridge scene image (`/bridge/assets/scenes/**.png|webp`) asked for wi
 - Vercel doesn't build `claude/*` branches (`git.deploymentEnabled` in `vercel.json`) — only `main` deploys, which keeps under the Hobby plan's daily build limit. If a deploy fails with "Deployment rate limited", the code is fine: the next push to `main` after the limit resets deploys everything.
 - **Ship every change.** After each completed, verified change: commit, push, and merge into `main` so it deploys live — Beck's standing instruction, no need to ask. If you're working on a feature branch, push it and then bring `main` up to it (fast-forward when possible; otherwise merge `main` in first and resolve conflicts, then push to `main`).
 
+## Bridge art
+Making or changing art for the Bridge (`apps/bridge`, built in `tools/bridge-art`): follow the house style in
+`apps/bridge/CLAUDE.md` (*North star*, *Live light*, *Making a new place*; the short version is
+`tools/bridge-art/CLAUDE.md`). The target looks like `tools/bridge-art/dioramas/ref/*.png` (Look Book 2, the toy finish
+in soft light) — look at them before building a place, and compare against them before shipping it.
+
 ## Testing
 `node tools/tests/run.js [world|multi|together|royale|combat]` — headless-Chromium tests for the Bridge and Royale Link (every world loading, two pilots playing together over a stand-in Supabase, every game together, the casino, combat). It starts its own local servers. See `tools/tests/README.md`. Run the suites a change touches before shipping it; add a test there when you build something new.
 
