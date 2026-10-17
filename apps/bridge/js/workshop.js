@@ -673,7 +673,8 @@ var BridgeWorkshop = (function () {
                    shop(key, person, line, ('"THERE. ' + rname(r) + ', EVERY MEASUREMENT." YOU CAN MAKE IT AT YOUR WORKSHOP NOW.').toUpperCase());
                  });
                } };
-    })).concat((S.favours || []).map(function (fv) {
+    })).concat(typeof BridgeShipyard !== 'undefined' ? BridgeShipyard.planRows(key, function (n) { shop(key, person, line, n); }) : [])   // hull plans (js/shipyard.js)
+      .concat((S.favours || []).map(function (fv) {
       var want = Object.keys(fv.want), ok = want.every(function (id) { return carried(id) >= fv.want[id]; });
       var list = want.map(function (id) { return fv.want[id] + ' ' + iname(id).toLowerCase() + ' (you carry ' + carried(id) + ')'; }).join(', ');
       return { label: 'Teach me: ' + rname(fv.r), icon: 'plan_' + fv.r, sub: known(fv.r) ? 'they taught you' : 'a favour: ' + list, note: known(fv.r) ? '✓' : ok ? 'give' : 'a favour',
@@ -798,7 +799,7 @@ var BridgeWorkshop = (function () {
   if (typeof window !== 'undefined') setInterval(function () { if (st.bench || st.queue.length) advance(); }, 30000);
 
   return { RECIPES: RECIPES, CRATES: CRATES, FROM: FROM, GRADES: GRADES, open: open, shop: shop, start: start, queue: function (r, n) { var out = null; for (var i = 0; i < (n || 1); i++) out = start(r, false); return out; },
-           cancel: cancel, known: known, learn: learn, have: have, summary: summary, smithRow: smithRow, smithCard: smithCard, candidates: candidates,
+           cancel: cancel, known: known, learn: learn, have: have, take: take, summary: summary, smithRow: smithRow, smithCard: smithCard, candidates: candidates,
            parts: parts, takePart: takePart, partsFor: partsFor, usePart: usePart, maybeFind: maybeFind, chestFind: chestFind, salvage: salvage,
            decorate: decorate, built: built, name: rname, looked: function () { st.seen = Date.now(); save(); },   // (read in the office's workshop book)
            _advance: advance, _state: function () { return st; }, reload: function () { st = load(); } };
