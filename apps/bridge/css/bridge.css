@@ -2925,3 +2925,26 @@ html.touch .tc-pill.tc-inbar .tc-lbl { display: none; }
 .world-watch .ww-foot { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 11px; text-align: center; color: rgba(242, 238, 230, 0.6); }
 @media (max-width: 520px) { .world-watch { min-width: 0; width: calc(100vw - 24px); } .world-watch .ww-row { grid-template-columns: 16px 74px 82px 1fr; gap: 6px; font-size: 12px; } }
 .world-wx svg { display: block; }
+
+/* A quest's thing, held up Zelda-style (js/keyitems.js): a card along the bottom, the pilot holding it up above */
+#item-get { position: fixed; left: 0; right: 0; bottom: max(96px, 14vh); z-index: 86; display: flex; justify-content: center; pointer-events: auto; cursor: pointer;
+  animation: ig-in 0.35s cubic-bezier(.2, 1.4, .4, 1) both; }
+#item-get.ig-out { animation: ig-out 0.25s ease-in forwards; }
+.ig-card { display: flex; align-items: center; gap: 16px; max-width: min(520px, 92vw); box-sizing: border-box; padding: 14px 20px 14px 14px; border-radius: 8px;
+  background: linear-gradient(180deg, rgba(26, 22, 14, 0.97), rgba(10, 9, 6, 0.97)); border: 2px solid #d0a040; color: #efe6cf;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 14px 36px rgba(0, 0, 0, 0.55), 0 0 30px rgba(240, 200, 100, 0.25);
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none; }
+.ig-art { width: 72px; height: 72px; flex: none; image-rendering: pixelated; animation: ig-bob 2.4s 0.4s ease-in-out infinite; }
+.ig-kicker { font-size: 11px; letter-spacing: 5px; text-transform: uppercase; color: #e0b850; }
+.ig-name { font-size: 21px; color: #fff4d8; margin: 2px 0 4px; line-height: 1.15; }
+.ig-text { font-size: 13px; line-height: 1.4; color: #d8ccb0; }
+.ig-go { font-size: 11px; letter-spacing: 2px; color: #8a8070; margin-top: 8px; opacity: 0; transition: opacity 0.3s; }
+#item-get.ig-ready .ig-go { opacity: 1; animation: fr-blink 1.4s ease-in-out infinite; }
+@keyframes ig-in { 0% { transform: translateY(30px) scale(0.92); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes ig-out { to { transform: translateY(16px); opacity: 0; } }
+@keyframes ig-bob { 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { #item-get, .ig-art { animation: none; } }
+html.item-get #interact-prompt { display: none !important; }
+.jn-clues li.carrying { color: var(--gm-ink); }
+.jn-clues li.carrying::before { content: none; }
+.jn-item { width: 16px; height: 16px; image-rendering: pixelated; vertical-align: -3px; margin: 0 6px 0 -16px; }

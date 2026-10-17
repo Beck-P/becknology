@@ -706,6 +706,14 @@ var BridgeAudio = (function () {
     door:    function (t) { noiseHit(sfxBus, t, 0.45, { freq: 700, ftype: 'bandpass', q: 0.8, gain: 0.12, rev: 0.3 }); voice(sfxBus, t, 0.1, { type: 'sine', freq: 90, glide: 1.4, gain: 0.08, a: 0.01, d: 0.2, s: 0, r: 0.2 }); },
     coin:    function (t) { voice(sfxBus, t, 0.05, { type: 'square', freq: hz(88), gain: 0.05, a: 0.001, d: 0.06, s: 0.3, r: 0.05, cutoff: 5000 }); voice(sfxBus, t + 0.07, 0.18, { type: 'square', freq: hz(95), gain: 0.05, a: 0.001, d: 0.2, s: 0.3, r: 0.2, cutoff: 5000, rev: 0.2 }); },
     clue:    function (t) { [72, 76, 79, 84].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.09, m, 0.3, 1.3); }); },
+    // a quest's thing held up (js/keyitems.js): a bright rising run, then a held chord with bells over it
+    itemget: function (t) {
+      [62, 66, 69, 74, 78, 81].forEach(function (m, i) { INST.pluck(sfxBus, t + i * 0.065, m, 0.25, 0.9); });
+      [74, 78, 81, 86].forEach(function (m) { INST.bell(sfxBus, t + 0.42, m, 0.35, 1.8); });
+      INST.warm(sfxBus, t + 0.4, 50, 1.6, 2.2); INST.warm(sfxBus, t + 0.4, 57, 1.6, 2.2);
+    },
+    // a quest's thing handed over: a soft chime falling into place
+    give:    function (t) { [86, 81, 78, 74].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.07, m, 0.25, 1.2); }); },
     quest:   function (t) { [60, 64, 67, 72, 76, 79, 84].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.08, m, 0.4, 1.2); }); INST.warm(sfxBus, t, 48, 1.4, 2); INST.warm(sfxBus, t, 55, 1.4, 2); },
     pickup:  function (t) { [76, 83, 88].forEach(function (m, i) { voice(sfxBus, t + i * 0.045, 0.05, { type: 'triangle', freq: hz(m), gain: 0.07, a: 0.002, d: 0.08, s: 0.2, r: 0.08 }); }); },
     step:    function (t) { noiseHit(sfxBus, t, 0.05, { freq: 420 + Math.random() * 200, ftype: 'bandpass', q: 1.2, gain: 0.035 }); },
