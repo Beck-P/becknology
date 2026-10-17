@@ -7,7 +7,7 @@ oblique view. Water is left out: the world's own animated sea shows through.
 """
 import math
 
-from scenekit import shade
+from scenekit import S, shade
 from assets_lumar import (BRASS, FIRE, FIRE_HOT, IRON, PLASTER, STONE, STONE_D, WOOD, WOOD_D, WOOD_DD, WOOD_L,
                           barrel, candle, crate, loaf)
 
@@ -261,34 +261,128 @@ def sand(k, x0, r0, x1, r1, tone='#8a7a5a'):
 
 
 # ---- houses -------------------------------------------------------------------------------
-def _gable_roof(k, x0, x1, r_back, r_front, z_eave, rise, col, over=0.25, strips=9):
-    """Gable roof, ridge along x. Shingle courses on the front slope."""
+def _gable_roof(k, x0, x1, r_back, r_front, z_eave, rise, col, over=0.25, strips=9, moss=0.6):
+    """Gable roof, ridge along x (Beck: "the roof is just like kind of a square with like some lines on it… we could do
+    a little bit better"): a dark deck under courses of separate shingles on both slopes, each course lapping the one
+    below with its butt edge standing proud (so the light catches it and it shadows the course under it), the shingles
+    a hair apart (the joints show the deck through them), a few tones and the odd weathered one; half-round ridge tiles,
+    bargeboards up the gable ends, a gutter along the front eave with a downpipe, moss and lichen. Snow (ROOF_SNOW) lies
+    in soft pillows instead, with a cornice over the eave. Returns (ridge row, ridge z)."""
     rm = (r_back + r_front) / 2
     zr = z_eave + rise
     ra, rb = r_front + over, r_back - over
     xa, xb = x0 - over, x1 + over
-    # front slope as shingle strips (each strip a slightly different shade)
-    for i in range(strips):
-        t0, t1 = i / strips, (i + 1) / strips
-        ra0, za0 = ra + (rm - ra) * t0, z_eave - 0.06 + (zr - z_eave + 0.06) * t0
-        ra1, za1 = ra + (rm - ra) * t1, z_eave - 0.06 + (zr - z_eave + 0.06) * t1
-        c = (shade(col, k.rng.uniform(0.88, 1.08) * (0.94 if i % 2 else 1.0)), 0.18)
-        k.poly([(xa, ra0, za0), (xb, ra0, za0), (xb, ra1, za1), (xa, ra1, za1)], c, 'roof')
-        k.poly([(xa, ra0 + 0.005, za0 - 0.02), (xb, ra0 + 0.005, za0 - 0.02), (xb, ra0 - 0.03, za0 + 0.02),
-                (xa, ra0 - 0.03, za0 + 0.02)], shade(col, 0.6), 'roof_edge')
-        x = xa + (0.17 if i % 2 else 0.0) + k.rng.uniform(0.0, 0.08)
-        while x < xb - 0.05:     # joints between the shingles of this course
-            p0 = (x, ra0 + (ra1 - ra0) * 0.12, za0 + (za1 - za0) * 0.12 + 0.012)
-            p1 = (x, ra0 + (ra1 - ra0) * 0.9, za0 + (za1 - za0) * 0.9 + 0.012)
-            k.tube(p0, p1, 0.012, shade(col, 0.62), 'roof_edge', verts=4)
-            x += 0.34 + k.rng.uniform(-0.03, 0.03)
-    k.poly([(xa, rb, z_eave - 0.06), (xb, rb, z_eave - 0.06), (xb, rm, zr), (xa, rm, zr)], (shade(col, 0.75), 0.18), 'roof_back')
-    for xe in (x0, x1):   # gable ends
+    snowy = col.lower() in ('#f2f5fa',)
+    ze = z_eave - 0.06
+    # the deck the shingles lie on (seen only through the joints)
+    deck = shade(col, 0.5) if not snowy else shade(col, 0.82)
+    k.poly([(xa, ra, ze), (xb, ra, ze), (xb, rm, zr), (xa, rm, zr)], deck, 'roof_deck')
+    k.poly([(xa, rb, ze), (xb, rb, ze), (xb, rm, zr), (xa, rm, zr)], deck, 'roof_deck')
+    tones = [shade(col, 0.9), shade(col, 0.96), shade(col, 1.02), shade(col, 1.07), _mix(shade(col, 0.94), '#8a8a80', 0.25)]
+    if snowy:
+        tones = [shade(col, 0.94), shade(col, 0.98), shade(col, 1.0), shade(col, 1.0), shade(col, 0.9)]
+    beds = {t: [] for t in tones}
+    course = 0.34 if snowy else 0.21                 # along the slope
+    sw = (0.55, 1.0) if snowy else (0.24, 0.33)      # shingle widths
+    lift = 0.022 if snowy else 0.034                 # how proud a course's butt stands
+    gap = 0.0 if snowy else 0.032                    # a pixel's joint between shingles, the deck dark through it
+    lines = []                                        # the shadow each course casts on the one below
+    for (r_e, back) in ((ra, False), (rb, True)):
+        run = rm - r_e
+        L = math.hypot(run * S, zr - ze)
+        n = max(3, int(round(L / course)))
+        if snowy:                                     # a smooth blanket, soft lumps where it's drifted
+            k.poly([(xa, r_e, ze + 0.05), (xb, r_e, ze + 0.05), (xb, rm, zr + 0.05), (xa, rm, zr + 0.05)], col, 'roof')
+            for _ in range(int((xb - xa) * 1.6)):
+                t = k.rng.uniform(0.05, 0.9)
+                x = k.rng.uniform(xa + 0.3, xb - 0.3)
+                rr, zz = r_e + run * t, ze + (zr - ze) * t + 0.05
+                k.blob(x, rr, zz, k.rng.uniform(0.3, 0.7), k.rng.uniform(0.12, 0.22), 0.05, shade(col, k.rng.uniform(0.97, 1.0)), 'roof', segs=10)
+            continue
+        for i in range(n):
+            t0, t1 = i / n, min(1.0, (i + 1.35) / n)  # each course laps over the next one up
+            def at(t, up=0.0):
+                return r_e + run * t, ze + (zr - ze) * t + up
+            x = xa + (k.rng.uniform(0.0, sw[0] * 0.5) if i % 2 else 0.0)
+            if i and not snowy:
+                rs0, zs0 = at(t0 - 0.045 / max(L, 0.1), lift * 0.6)
+                rs1, zs1 = at(t0 + 0.005 / max(L, 0.1), lift * 1.05)
+                lines.append(((xa, rs0, zs0), (xb, rs0, zs0), (xb, rs1, zs1), (xa, rs1, zs1)))
+            while x < xb - 0.02:
+                w = k.rng.uniform(*sw)
+                x1_ = min(xb, x + w - gap)
+                b0 = k.rng.uniform(-0.012, 0.012)                      # butts not quite in a line
+                rb0, zb0 = at(max(0.0, t0 + b0 / max(L, 0.1)), lift)
+                rt0, zt0 = at(t1, 0.004)
+                tone = k.rng.choices(tones, (0.22, 0.32, 0.28, 0.14, 0.04))[0]
+                beds[tone].append(((x, rb0, zb0), (x1_, rb0, zb0), (x1_, rt0, zt0), (x, rt0, zt0)))
+                x += w
+    for tone, qs in beds.items():
+        if qs:
+            k.quads(qs, tone, 'roof')
+    if lines:
+        k.quads(lines, shade(col, 0.58), 'roof')
+    # half-round ridge tiles
+    x = xa
+    while x < xb - 0.05:
+        x1_ = min(xb, x + 0.3)
+        k.tube((x + 0.01, rm, zr + 0.035), (x1_ - 0.01, rm, zr + 0.035), 0.075, shade(col, k.rng.uniform(0.62, 0.72)) if not snowy else shade(col, 0.96), 'ridge', verts=8)
+        x = x1_
+    # gable ends: the wall, and a bargeboard up each edge
+    for xe in (x0, x1):
         k.poly([(xe, r_front, z_eave), (xe, r_back, z_eave), (xe, rm, zr)], (PLASTER, 0.08), 'gable')
-    k.tube((xa, rm, zr + 0.03), (xb, rm, zr + 0.03), 0.06, shade(col, 0.55), 'ridge', verts=6)
-    # eave fascia
+    for xe in (xa - 0.02, xb + 0.02):
+        for r_e in (ra, rb):
+            k.tube((xe, r_e, ze + 0.03), (xe, rm, zr + 0.07), 0.04, WOOD_DD if not snowy else shade(col, 0.95), 'bargeboard', verts=4)
+    # eave fascia, the gutter along it and a downpipe at the corner
     k.box(xa, ra - 0.02, z_eave - 0.14, xb, ra + 0.04, z_eave - 0.04, WOOD_DD, 'fascia')
+    if snowy:
+        k.tube((xa, ra + 0.04, ze + 0.02), (xb, ra + 0.04, ze + 0.02), 0.07, shade(col, 0.97), 'cornice', verts=8)
+    else:
+        k.tube((xa + 0.05, ra + 0.07, z_eave - 0.12), (xb - 0.05, ra + 0.07, z_eave - 0.12), 0.035, '#4a4a4c', 'gutter', verts=6)
+        dx = xb - 0.12
+        k.tube((dx, ra + 0.07, z_eave - 0.12), (dx, r_front + 0.08, z_eave - 0.3), 0.025, '#4a4a4c', 'downpipe', verts=6)
+        k.tube((dx, r_front + 0.08, z_eave - 0.3), (dx, r_front + 0.08, 0.08), 0.025, '#4a4a4c', 'downpipe', verts=6)
+        # moss and lichen, thicker toward the eaves and on the back (shaded) slope
+        dots = {}
+        for _ in range(int((xb - xa) * 9 * moss)):
+            back = k.rng.random() < 0.55
+            r_e = rb if back else ra
+            t = k.rng.random() ** 2.2 * 0.8
+            x = k.rng.uniform(xa + 0.1, xb - 0.1)
+            rr, zz = r_e + (rm - r_e) * t, ze + (zr - ze) * t + 0.04
+            c = k.rng.choices(('#4a6a34', '#5a7a3a', '#3a5a2e', '#b8b48a'), (0.35, 0.25, 0.25, 0.15))[0]
+            for _j in range(k.rng.randint(2, 6)):
+                ox, oz = k.rng.uniform(-0.09, 0.09), k.rng.uniform(-0.03, 0.03)
+                sz = k.rng.uniform(0.018, 0.04)
+                dots.setdefault(c, []).append((x + ox - sz, rr - sz * 0.6, zz + oz, x + ox + sz, rr + sz * 0.6, zz + oz + 0.012))
+        for c, rs in dots.items():
+            k.boxes(rs, c, 'roof_moss')
     return rm, zr
+
+
+def chimney_stack(k, cx, r0, r1, z0, z1, brick='#8a5a48', mortar='#5a4a42', pots=2, cap=None):
+    """A brick chimney: courses of bricks over mortar, a flashing where it leaves the roof, a cap and its pots."""
+    w = 0.22
+    k.box(cx - w, r0, z0, cx + w, r1, z1, (mortar, 0.0), 'chimney')
+    z, i = z0, 0
+    while z < z1 - 0.02:
+        x = cx - w + (0.0 if i % 2 else -0.07)
+        while x < cx + w - 0.01:
+            xa_, xb_ = max(x, cx - w) , min(x + 0.14, cx + w)
+            if xb_ - xa_ > 0.03:
+                c = shade(brick, k.rng.uniform(0.84, 1.12))
+                k.box(xa_ + 0.006, r1 - 0.01, z + 0.008, xb_ - 0.006, r1 + 0.012, z + 0.062, (c, 0.0), 'brick')       # the face you see
+            x += 0.15
+        for xs in (cx - w - 0.012, cx + w - 0.008):                    # the sides' courses
+            k.box(xs, r0 + 0.01, z + 0.008, xs + 0.02, r1 - 0.01, z + 0.062, (shade(brick, k.rng.uniform(0.8, 1.0)), 0.0), 'brick')
+        z += 0.072
+        i += 1
+    k.box(cx - w - 0.05, r0 - 0.05, z1, cx + w + 0.05, r1 + 0.05, z1 + 0.07, (cap or STONE, 0.1), 'chimney_cap')
+    for j in range(pots):
+        px = cx + (j - (pots - 1) / 2) * 0.18
+        k.cyl(px, (r0 + r1) / 2, z1 + 0.07, z1 + 0.24, 0.055, ('#a8583a', 0.08), 'chimney_pot', verts=10)
+        k.cyl(px, (r0 + r1) / 2, z1 + 0.23, z1 + 0.25, 0.068, ('#8a4a32', 0.08), 'chimney_pot', verts=10)
 
 
 def window(k, cx, r_face, z0, w=0.55, h=0.65, lit=True, shutters='#2a4a3a', flowers=None):
@@ -400,15 +494,45 @@ def house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=ROOF_GREEN, wal
         window(k, wx, r_front + 0.02, wz, w=0.45, h=0.5)
     rm, zr = _gable_roof(k, x0, x1, r_back, r_front, wall_h, rise, roof)
     if chimney:
-        cx = chimney
-        k.box(cx - 0.2, rm - 0.35, wall_h, cx + 0.2, rm + 0.05, zr + 0.55, (STONE_D, 0.16), 'chimney', bevel=0.02)
-        k.box(cx - 0.25, rm - 0.4, zr + 0.55, cx + 0.25, rm + 0.1, zr + 0.65, (STONE, 0.12), 'chimney_cap')
+        chimney_stack(k, chimney, rm - 0.35, rm + 0.05, wall_h, zr + 0.55)
+    dress_front(k, x0, x1, r_front, wall_h, door_x, [w[0] for w in windows] + [w[0] for w in windows_up])
     if sign:
         hanging_sign(k, sign[0], r_front, sign[1], icon=sign[2])
     for lx in lanterns:
         wall_lantern(k, lx, r_front + 0.02)
     k.solid(x0, r_back, x1, r_front)
     return rm, zr
+
+
+def dress_front(k, x0, x1, r_face, wall_h, door_x=None, window_xs=(), ivy=0.35, pots=0.5):
+    """Life on a house front: ivy climbing a stretch of wall clear of the door and windows (leaves, so it turns red in
+    autumn and goes bare in winter, js/foliage.js), and potted plants by the door."""
+    busy = [(door_x - 0.55, door_x + 0.55)] if door_x is not None else []
+    busy += [(wx - 0.42, wx + 0.42) for wx in window_xs]
+    clear = [x for x in [x0 + 0.25 + 0.2 * i for i in range(int((x1 - x0 - 0.5) / 0.2) + 1)] if not any(a <= x <= b for a, b in busy)]
+    if clear and k.rng.random() < ivy:
+        cx = k.rng.choice(clear)
+        with k.foliage('leaf'):
+            for j in range(18):
+                z = 0.3 + (wall_h - 0.4) * (j / 18) ** 0.8
+                spread = 0.12 + 0.18 * (1 - j / 18)
+                x = cx + k.rng.uniform(-spread, spread)
+                if any(a <= x <= b for a, b in busy):
+                    continue
+                c = shade(k.rng.choice(('#2e5a2a', '#3a6a30', '#2a4e26')), k.rng.uniform(0.9, 1.1))
+                k.blob(x, r_face + 0.05, z, k.rng.uniform(0.06, 0.11), 0.05, k.rng.uniform(0.06, 0.1), c, 'ivy', segs=8)
+    if door_x is not None and k.rng.random() < pots:
+        for side in (-1, 1):
+            if k.rng.random() < 0.3:
+                continue
+            px = door_x + side * k.rng.uniform(0.52, 0.62)
+            k.cyl(px, r_face + 0.16, 0.0, 0.2, 0.1, ('#a8583a', 0.08), 'pot', verts=10)
+            with k.foliage('leaf'):
+                k.blob(px, r_face + 0.16, 0.3, 0.13, 0.11, 0.13, shade('#3a6a30', k.rng.uniform(0.9, 1.1)), 'pot_plant', segs=8)
+            if k.rng.random() < 0.6:
+                fc = k.rng.choice(('#e04060', '#e0c040', '#a060d0', '#f0f0f0'))
+                k.boxes([(px + k.rng.uniform(-0.08, 0.08) - 0.02, r_face + 0.16 - 0.015, 0.38, px + k.rng.uniform(-0.08, 0.08) + 0.02, r_face + 0.16 + 0.015, 0.42)
+                         for _ in range(4)], fc, 'pot_flower')
 
 
 # ---- street furniture --------------------------------------------------------------------

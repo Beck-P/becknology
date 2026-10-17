@@ -148,6 +148,19 @@ class Kit:
                 n = n[len(pre):]
         return 'grass' if n in self.GRASS_PARTS else 'water' if n in self.WATER_PARTS else None
 
+    def quads(self, items, albedo, part):
+        """Many flat four-cornered pieces as one object, each ((x, r, z) × 4) — a roof's shingles, a wall's boards."""
+        bm = bmesh.new()
+        for q in items:
+            vs = [bm.verts.new((p[0], -p[1] * S, p[2])) for p in q]
+            bm.faces.new(vs)
+        me = bpy.data.meshes.new('quads')
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new('quads', me)
+        self.scene.collection.objects.link(o)
+        return self._finish(o, albedo, part)
+
     def _add_part(self, d):
         d['var'] = self._var
         d['fol'] = self._fol
@@ -443,7 +456,7 @@ class Kit:
     # Ground that runs on for many tiles (an island's turf and paths, its banks and beaches) takes its grain in tile units:
     # over the object's own extent (the default, right for a crate or a wall) the noise stretches into wandering contour
     # lines across a whole island - squiggles, where the farm's meadow reads as a fine, even texture
-    GROUND = ('ground', 'coast_lip', 'coast_bank', 'coast_wet', 'grass', 'path', 'sand', 'turf')
+    GROUND = ('ground', 'coast_lip', 'coast_bank', 'coast_wet', 'grass', 'path', 'sand', 'turf', 'snow')
 
     def _ground(self, p):
         n = p.get('pname') or ''
