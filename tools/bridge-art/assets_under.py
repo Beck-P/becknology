@@ -80,7 +80,7 @@ def concrete(k, x0, r0, x1, r1, slab=1.0, tones=CONC, rng=None, stains=True):
     for _ in range(int(area / 40)):                                   # oil stains, a little darker and a little shiny
         cx, cr = rng.uniform(x0 + 0.5, x1 - 0.5), rng.uniform(r0 + 0.5, r1 - 0.5)
         s = rng.uniform(0.25, 0.6)
-        k.cyl(cx, cr, 0.0, 0.002, s, ('#2c2a32', 0.2), 'floor_stain', verts=12, ry=s * rng.uniform(0.35, 0.6))
+        k.cyl(cx, cr, 0.0, 0.002, s, ('#35333b', 0.2), 'floor_stain', verts=12, ry=s * rng.uniform(0.35, 0.6))
     for _ in range(int(area / 30)):                                   # a patched square
         cx, cr = rng.uniform(x0 + 0.5, x1 - 1.0), rng.uniform(r0 + 0.5, r1 - 1.0)
         k.box(cx, cr, 0.0, cx + rng.uniform(0.4, 0.9), cr + rng.uniform(0.3, 0.7), 0.004, (shade(rng.choice(tones), 1.15), 0.1), 'floor_patch')
@@ -94,7 +94,6 @@ def puddles(k, x0, r0, x1, r1, n, tints, rng=None):
 
 def drain(k, cx, cr, w=0.7):
     """A drain grate in the floor, a dark wet stain running to it."""
-    k.cyl(cx, cr - 0.25, 0.0, 0.002, w * 0.9, ('#1e1c22', 0.2), 'floor_wet', verts=12, ry=0.5)
     k.box(cx - w / 2, cr - 0.14, 0.0, cx + w / 2, cr + 0.14, 0.008, '#0c0a10', 'floor_drain')
     k.boxes([(cx - w / 2 + 0.04 + i * 0.07, cr - 0.12, 0.008, cx - w / 2 + 0.07 + i * 0.07, cr + 0.12, 0.012) for i in range(int(w / 0.07) - 1)],
             '#3a3640', 'floor_drain_bars')
@@ -312,7 +311,8 @@ def rooftop(k, dr, x0, x1, r0, r1, z, rng=None):
     on stands, a pigeon loft, a shed of corrugated, an antenna mast and dishes, a few pots of greens, washing on a line,
     a mattress, vents breathing steam."""
     rng = rng or k.rng
-    k.box(x0, r0, z - 0.06, x1, r1, z, ('#3a3840', 0.14), 'roof_tar')
+    k.box(x0, r0, z - 0.06, x1, r1, z, ('#4a4650', 0.14), 'roof_tar')
+    k.area_light((x0 + x1) / 2, (r0 + r1) / 2, z + 4.0, '#c0a8d0', 14 * (x1 - x0), max(2.0, x1 - x0), group='flicker')   # the stacks' windows on it
     for lx in [x0 + 2.0 + i * 5.0 for i in range(int((x1 - x0 - 1.0) / 5.0))]:      # bulbs strung over the roofs, so they're lived on
         caged_bulb(k, lx, (r0 + r1) / 2, z + 1.5, col=rng.choice(('#ffc070', '#ffd890', '#a0e0ff')), energy=14, wire_to=z + 1.9)
     k.boxes([(x0, r0, z, x1, r0 + 0.12, z + 0.25), (x0, r1 - 0.12, z, x1, r1, z + 0.25), (x0, r0, z, x0 + 0.12, r1, z + 0.25),
@@ -494,9 +494,9 @@ def chainlink(k, x0, r0, x1, r1, h=2.2, gap=None, wire=True, col='#8a8a94'):
             xb, rb = x0 + ux * min(b, t + s), r0 + ur * min(b, t + s)
             for z0 in [0.08 + j * 0.32 for j in range(int((h - 0.2) / 0.32))]:
                 for (za, zb) in ((z0, z0 + 0.32), (z0 + 0.32, z0)):
-                    mesh.append(((xa, ra, za), (xb, rb, zb), (xb, rb, zb + 0.014), (xa, ra, za + 0.014)))
+                    mesh.append(((xa, ra, za), (xb, rb, zb), (xb, rb, zb + 0.022), (xa, ra, za + 0.022)))
             t += s
-        k.quads(mesh, shade(col, 0.85), 'fence_mesh')
+        k.quads(mesh, shade(col, 1.1), 'fence_mesh')
         if wire:                                                     # razor wire: a zigzag coil along the top
             coil, n = [], int((b - a) / 0.07)
             for j in range(n):
@@ -529,6 +529,25 @@ def scrap_heap(k, cx, cr, s=1.0, rng=None, solid=True):
             k.box(x - 0.12, r, z, x + 0.12, r + 0.05, z + 0.18, '#141c18', 'scrap_screen', emit=(Y.GREEN, rng.choice((0.0, 0.0, 0.3))))
     if solid:
         k.solid(cx - 0.85 * s, cr - 0.5 * s, cx + 0.85 * s, cr + 0.5 * s)
+
+
+def lean_to(k, x0, x1, rb, rng=None, col=None):
+    """A camp: a tarp over a frame of pipe against nothing, a mattress and a crate under it, a sofa out front, a lamp on a
+    cable, a boom box. Solid where it stands."""
+    rng = rng or k.rng
+    col = col or rng.choice(TARP)
+    rf = rb + 1.6
+    for x in (x0, x1):
+        k.cyl(x, rb, 0, 1.8, 0.03, '#4a4a50', 'frame_pipe', verts=5)
+        k.cyl(x, rf, 0, 1.1, 0.03, '#4a4a50', 'frame_pipe', verts=5)
+    k.poly([(x0 - 0.1, rb, 1.85), (x1 + 0.1, rb, 1.85), (x1 + 0.15, rf + 0.15, 1.05), (x0 - 0.15, rf + 0.15, 1.05)], (col, 0.25), 'tarp')
+    k.box(x0 + 0.1, rb + 0.1, 0, x1 - 0.1, rb + 0.9, 0.2, ('#8a8070', 0.2), 'mattress', bevel=0.03)
+    k.box(x0 + 0.2, rf + 0.5, 0, x0 + 1.6, rf + 1.1, 0.4, (rng.choice(('#6a2a2a', '#3a4a6a', '#5a4a3a')), 0.2), 'sofa', bevel=0.06)
+    k.box(x0 + 0.2, rf + 0.4, 0.3, x0 + 1.6, rf + 0.55, 0.75, (rng.choice(('#6a2a2a', '#3a4a6a', '#5a4a3a')), 0.2), 'sofa_back', bevel=0.05)
+    k.box(x1 - 0.7, rf + 0.6, 0, x1 - 0.2, rf + 0.9, 0.3, '#2a2a30', 'boombox')
+    k.box(x1 - 0.66, rf + 0.9, 0.08, x1 - 0.24, rf + 0.91, 0.24, '#1a0a14', 'boombox_lights', emit=('#ff60c0', 0.7))
+    caged_bulb(k, (x0 + x1) / 2, rb + 0.8, 1.45, energy=14)
+    k.solid(x0 - 0.1, rb, x1 + 0.1, rf + 1.1)
 
 
 def barrels(k, x, r, n=3, rng=None):
@@ -645,11 +664,13 @@ def canal(k, x0, r0, x1, r1, z=WATER_Z, glow='#1a8a8a', rng=None, debris=True):
     glow from below in patches, slicks and floating rubbish."""
     rng = rng or k.rng
     k.box(x0, r0, z - 1.5, x1, r1, z - 1.4, '#06080a', 'canal_bed')
-    k.box(x0, r0, z - 0.02, x1, r1, z, ('#05080a', 0.04), 'canal_water', emit=(glow, 0.018))
-    for _ in range(int((x1 - x0) * (r1 - r0) / 28)):                # the glow under the surface, in long faint patches
-        cx, cr = rng.uniform(x0 + 0.5, x1 - 0.5), rng.uniform(r0 + 0.3, r1 - 0.3)
-        s = rng.uniform(0.8, 2.2)
-        k.cyl(cx, cr, z - 0.002, z + 0.001, s, '#0a1618', 'canal_water', emit=(glow, rng.uniform(0.05, 0.12)), verts=14, ry=s * rng.uniform(0.2, 0.35))
+    k.box(x0, r0, z - 0.02, x1, r1, z, ('#06090c', 0.03), 'canal_water', emit=(glow, 0.012))
+    glints = []                                                      # light on the black water: short bright dashes, in runs
+    for _ in range(int((x1 - x0) * (r1 - r0) / 3)):
+        cx, cr = rng.uniform(x0 + 0.2, x1 - 0.4), rng.uniform(r0 + 0.15, r1 - 0.15)
+        w = rng.uniform(0.08, 0.35)
+        glints.append((cx, cr, z, cx + w, cr + 0.03, z + 0.002))
+    k.boxes(glints, '#0a1416', 'canal_glint', emit=(glow, 0.35))
     if debris:
         for _ in range(int((x1 - x0) * (r1 - r0) / 18)):
             cx, cr = rng.uniform(x0 + 0.3, x1 - 0.3), rng.uniform(r0 + 0.2, r1 - 0.2)
@@ -659,7 +680,7 @@ def canal(k, x0, r0, x1, r1, z=WATER_Z, glow='#1a8a8a', rng=None, debris=True):
             elif what < 0.7:
                 k.cyl(cx, cr, z, z + 0.05, 0.08, rng.choice(('#e8e0d0', '#c83040', '#3a6ad0')), 'flotsam', verts=6)
             else:
-                k.cyl(cx, cr, z - 0.001, z + 0.002, rng.uniform(0.3, 0.6), '#181820', 'canal_slick', emit=('#a060e0', 0.08), verts=10, ry=0.15)
+                k.box(cx - 0.3, cr - 0.02, z, cx + 0.3, cr + 0.02, z + 0.002, '#181820', 'canal_slick', emit=('#a060e0', 0.25))
 
 
 def quay(k, x0, r0, x1, r1, z0=WATER_Z - 0.4, top=0.0, face='front', col='#34343a', moss=True, rng=None):

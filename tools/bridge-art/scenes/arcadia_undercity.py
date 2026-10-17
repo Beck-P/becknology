@@ -413,13 +413,23 @@ for r in range(int(FENCE_R), int(QY)):
         k.solid(FENCE_X - 0.1, r + 0.05, FENCE_X + 0.1, r + 0.95)
 U.ground_tag(k, FENCE_X - 1.6, FENCE_R + 5.6, SAINT)
 U.ground_tag(k, 71.0, 23.0, SAINT, w=2.4)
-for (x, r) in ((66.0, 20.0), (74.5, 27.2), (77.6, 21.0)):
+for (x, r) in ((67.6, 21.2), (74.5, 27.2), (77.6, 21.0)):
     U.drum_fire(k, x, r)
 U.scrap_heap(k, 69.6, 27.4, s=1.1, rng=rng)
 U.scrap_heap(k, 77.0, 28.2, s=0.8, rng=rng)
 U.scrap_heap(k, 75.6, 18.4, s=0.7, rng=rng)
 U.barrels(k, 64.2, 27.6, n=3, rng=rng)
-U.mattress_corner(k, 68.6, 18.2, rng=rng)
+U.lean_to(k, 64.0, 66.6, 17.4, rng=rng, col='#c05010')
+U.lean_to(k, 74.0, 76.8, 22.2, rng=rng)
+U.lean_to(k, 65.6, 68.0, 25.4, rng=rng, col='#8a4aa0')
+for (x0, x1, r) in ((68.6, 72.0, 17.2), (76.6, 79.6, 17.2)):                              # a barricade of sheet and doors
+    for i in range(int((x1 - x0) / 0.7)):
+        xx = x0 + i * 0.7
+        k.box(xx, r, 0.0, xx + 0.66, r + 0.12, rng.uniform(1.2, 1.9), (rng.choice(('#5a4a3a', '#4a5a5a', '#6a3a22', '#3a5a8a', '#8a2a2a')), 0.2), 'barricade')
+    U.tag(k, x0, x1, r + 0.12, 0.2, 1.1, SAINT, rng=rng)
+    k.solid(x0, r, x1, r + 0.12)
+D.cable(k, (64.0, 17.4, 1.85), (74.0, 22.2, 1.85), sag=0.4, lights=[SAINT, '#ffd080'], n=14)
+D.cable(k, (66.6, 17.4, 1.85), (79.4, 20.4, 2.4), sag=0.5, lights=[SAINT, '#ff60c0'], n=14)
 # the burnt-out shell of a hover car
 k.box(70.2, 20.2, 0.15, 72.6, 21.2, 0.6, (U.RUST, 0.3), 'car_shell', bevel=0.12)
 k.box(70.7, 20.3, 0.6, 72.0, 21.1, 0.9, '#1a1414', 'car_cab', bevel=0.08)
@@ -445,7 +455,7 @@ k.area_light(14, 24, 9.0, '#c89a60', 90, 28.0, rot=(math.radians(35), 0, 0))
 k.area_light(40, 24, 9.0, '#80b0a0', 90, 28.0, rot=(math.radians(35), 0, 0))
 k.area_light(68, 24, 9.0, '#c07050', 80, 26.0, rot=(math.radians(35), 0, 0))
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
-         world_light=('#2a2440', 1.0))
+         world_light=('#2a2440', 1.5))
 
 # ---- the world -------------------------------------------------------------------------------------------------------------
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
