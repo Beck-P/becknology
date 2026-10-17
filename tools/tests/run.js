@@ -27,6 +27,7 @@ const SUITES = {
     ['world/foliage.js', SHOTS],
     ['world/nature.js', SHOTS],
     ['world/orders.js', SHOTS],
+    ['world/sea.js', SHOTS],
     ['world/sleep.js', SHOTS],
     ['world/workshop.js', SHOTS],
     ['world/shipyard.js', SHOTS],
@@ -81,6 +82,7 @@ const KEEP = new RegExp([
   /contract|dispatch|orders away|route lines|treasury/,
   /slipway|keel|launched|shipwright/,
   /homes:|furnished|MISSING/,
+  /routes \d|busiest|in view|frames a second|traders|navy:|trawler:|privateer:|galleon:|man_of_war|pirate:|on the Midnight|hailed/,
   /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;

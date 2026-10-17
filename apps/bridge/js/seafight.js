@@ -39,11 +39,11 @@ var BridgeSeaFight = (function () {
   };
   var HARPOON = { dmg: 9, range: 6.5, reload: 1.1, arc: 'any', harpoon: true };   // the hand harpoon every boat carries
   var KINDS = {
-    cutter:  { name: 'a pirate cutter', spec: { L: 3.4, beam: 1.25, sheet: 'cutter', vmax: 4.5, nogo: 0.72, turn: 0.95 }, hull: 55,
+    cutter:  { name: 'a pirate cutter', spec: { L: 4.2, beam: 1.54, sheet: 'cutter', vmax: 4.5, nogo: 0.72, turn: 0.95 }, hull: 55,
                guns: ['swivel', 'swivel', 'chaser'], fighters: 3, loot: [70, 170], cargo: ['ember_rum', 'salt_fish'], cloth: BLACK, tint: 'rgba(24,14,16,0.62)' },
-    raider:  { name: 'a pirate raider', spec: { L: 4.4, beam: 1.3, sheet: 'raider', vmax: 5.0, nogo: 0.74, turn: 0.85 }, hull: 105,
+    raider:  { name: 'a pirate raider', spec: { L: 4.8, beam: 1.42, sheet: 'raider', vmax: 5.0, nogo: 0.74, turn: 0.85 }, hull: 105,
                guns: ['long_nine', 'long_nine', 'carronade', 'chaser'], fits: ['storm_rig'], fighters: 5, loot: [160, 340], cargo: ['blackpowder', 'ember_rum'], cloth: BLACK, tint: 'rgba(40,8,10,0.25)' },
-    drowned: { name: 'a drowned ship', spec: { L: 5.0, beam: 1.6, sheet: 'brigantine', vmax: 3.9, nogo: 0.9, turn: 0.6 }, hull: 120,
+    drowned: { name: 'a drowned ship', spec: { L: 6.0, beam: 1.92, sheet: 'brigantine', vmax: 3.9, nogo: 0.9, turn: 0.6 }, hull: 120,
                guns: ['ghostfire', 'ghostfire', 'ghostfire'], fighters: 6, loot: [120, 280], cargo: ['moon_salt'], cloth: GHOST, ghost: true, tint: 'rgba(150,220,190,0.55)' },
     // the monsters (drawn in code, no sails): spec.L is how big a target they are
     serpent: { name: 'the Gloamserpent', monster: 'serpent', spec: { L: 2.6 }, hull: 90, guns: [], fighters: 0, loot: [120, 220], cargo: [],
@@ -189,7 +189,7 @@ var BridgeSeaFight = (function () {
       if (o.state === 'hail') { want = Math.atan2(b.r - o.r, b.x - o.x) + 1.2; speed = 0.25; }
       if (o.state === 'shy') { want = Math.atan2(o.r - b.r, o.x - b.x) + 0.6; speed = 0.6; if (d > 28) o.state = 'gone'; }
       if (o.state === 'fight' || o.state === 'hunt') {                // close to gun range, then lie alongside on a parallel course
-        var abeam = Math.atan2(b.r - o.r, b.x - o.x), keep = 4.5;
+        var abeam = Math.atan2(b.r - o.r, b.x - o.x), keep = 3.3 + ((api.spec().beam || 1.23) + (K.spec.beam || 1.4)) / 2;   // (wider apart, the wider the hulls)
         if (d > keep + 2) { want = abeam; speed = 1; }
         else { var par = b.h + (wrap(abeam - b.h) > 0 ? 0.25 : -0.25) * (d < keep - 1.5 ? -1 : 1); want = par; speed = clamp(b.v / (K.spec.vmax || 4), 0.3, 1); }
         if (o.hp < o.max * 0.3 && !K.ghost) { o.state = 'leave'; say('They\'ve had enough - they bear away, burning', 3200); }
@@ -252,7 +252,7 @@ var BridgeSeaFight = (function () {
       s.t += dt;
       if (s.t < s.T) return;
       s.done = true;
-      var tgt = s.at, hit = tgt && !tgt.under && Math.hypot(tgt.x - s.tx, tgt.r - s.tr) < (tgt === b ? (sp.L || 2.6) : tgt.K.spec.L) * 0.5 + 0.45;
+      var tgt = s.at, hit = tgt && !tgt.under && Math.hypot(tgt.x - s.tx, tgt.r - s.tr) < (tgt === b ? (sp.L || 3.2) : tgt.K.spec.L) * 0.5 + 0.45;
       if (hit && tgt === b) hurtYou(s.dmg, s.ghost);
       else if (hit) hurtThem(tgt, s.dmg * (tgt.K.ghost ? (s.holy ? 2 : 0.6) : tgt.K.monster && s.holy ? 1.5 : 1));
       land(s, hit, hit && tgt !== b && tgt.K && tgt.K.monster);
@@ -283,7 +283,7 @@ var BridgeSeaFight = (function () {
     var miss = Math.random() > acc, ang = Math.random() * Math.PI * 2, spread = miss ? 1.2 + Math.random() * 1.6 : Math.random() * 0.3;
     var lead = (to.v || 0) * d / 14;
     var tx = to.x + Math.cos(to.h) * lead + Math.cos(ang) * spread, tr = to.r + Math.sin(to.h) * lead + Math.sin(ang) * spread;
-    var you = from === api.boat(), rel = wrap(Math.atan2(to.r - from.r, to.x - from.x) - from.h), side = g.arc === 'bow' ? 0 : rel > 0 ? 1 : -1, L = you ? (api.spec().L || 2.6) : from.K.spec.L;
+    var you = from === api.boat(), rel = wrap(Math.atan2(to.r - from.r, to.x - from.x) - from.h), side = g.arc === 'bow' ? 0 : rel > 0 ? 1 : -1, L = you ? (api.spec().L || 3.2) : from.K.spec.L;
     var hull = you ? from : from.b, SK = typeof BridgeShipKit !== 'undefined' ? BridgeShipKit : null;
     var M = SK && gi != null && hull ? SK.muzzle(hull, gi, side || 1) : null, ox, or, oz, dx, dr;
     if (M) { ox = M.x; or = M.r; oz = M.z; dx = M.dx; dr = M.dr; SK.fired(hull, gi, side); }
@@ -400,7 +400,7 @@ var BridgeSeaFight = (function () {
       var k = Math.min(1, o.t / 0.32);
       o.x = o.from[0] + (o.aim[0] - o.from[0]) * k; o.r = o.from[1] + (o.aim[1] - o.from[1]) * k; track(o);
       if (k >= 1) {
-        if (Math.hypot(b.x - o.aim[0], b.r - o.aim[1]) < (api.spec().L || 2.6) * 0.45 + 0.8) hurtYou(10 + Math.random() * 4, 'serpent');
+        if (Math.hypot(b.x - o.aim[0], b.r - o.aim[1]) < (api.spec().L || 3.2) * 0.45 + 0.8) hurtYou(10 + Math.random() * 4, 'serpent');
         else say('Its jaws snap shut on empty water', 1600);
         burst('splash', o.aim[0], o.aim[1], 2.2); api.sfx('slam');
         go(o, 'dive');
@@ -424,8 +424,8 @@ var BridgeSeaFight = (function () {
       if (d > 30) o.state = 'gone';
     } else if (S === 'latch') {
       o.under = false;
-      var L = api.spec().L || 2.6, c = Math.cos(b.h), sn = Math.sin(b.h);
-      o.x = b.x + c * o.along * L * 0.5 - sn * o.side * 0.55; o.r = b.r + sn * o.along * L * 0.5 + c * o.side * 0.55;
+      var L = api.spec().L || 3.2, bm = (api.spec().beam || 1.23) * 0.5 + 0.05, c = Math.cos(b.h), sn = Math.sin(b.h);   // (on her side, whatever her beam)
+      o.x = b.x + c * o.along * L * 0.5 - sn * o.side * bm; o.r = b.r + sn * o.along * L * 0.5 + c * o.side * bm;
       o.h = wrap(b.h + o.side * 1.3); o.v = b.v; track(o);
       o.bite -= dt;
       if (o.bite <= 0) { o.bite = 1.4; hurtYou(1, 'eel'); }
@@ -622,7 +622,7 @@ var BridgeSeaFight = (function () {
       if (q.t < q.T || q.done) return;
       q.done = true;
       var b = api.boat(), mon = null, hit = foes.some(function (o) { var h = Math.hypot(o.x - q.tx, o.r - q.tr) < o.K.spec.L * 0.5 + 0.45; if (h && o.K.monster) mon = o; return h; }) ||
-                 (b && Math.hypot(b.x - q.tx, b.r - q.tr) < (api.spec().L || 2.6) * 0.5 + 0.45);
+                 (b && Math.hypot(b.x - q.tx, b.r - q.tr) < (api.spec().L || 3.2) * 0.5 + 0.45);
       land(q, hit, !!mon);
     });
     shots = shots.filter(function (q) { return !q.done; });

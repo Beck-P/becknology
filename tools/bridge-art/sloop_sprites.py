@@ -1,17 +1,19 @@
 """The sloop you sail between Lumar's islands, a fisherman's dory, and the things out on the water — rendered like a
 scene (the scenes' 45° camera, the islands' moonlight, scene_post's dithered shading) with no floor, one sprite a
-4 × 4-tile cell.
+5 × 5-tile cell.
 
   BVENV/bin/python tools/bridge-art/sloop_sprites.py RENDER_DIR
   python3 tools/bridge-art/scene_post.py RENDER_DIR apps/bridge/assets/scenes/sloop
 
-Layout (cells of 4 × 4 tiles, 8 to a row; the boat's centre at (2, 2.6) in its cell):
+Layout (cells of 5 × 5 tiles, 8 to a row; the boat's centre at (2.5, 3.0) in its cell - js/sloop.js `cell()` says the same):
   rows 0-3   the sloop at 32 headings (heading i → angle i/32 of a turn, 0 = bow to +x, then turning toward +row)
   row 4      the dory at 8 headings
   row 5      rock_a, rock_b, rock_c, reef, buoy_red, buoy_green, crate, barrel
 
 The sloop is the hull, deck, cockpit, mast step and stern lantern only: js/sloop.js draws the mast and rigging (they
-heel with the wind), the boom and sails (they swing and luff), the tiller and you at it. The water line is z = 0 and the sheet has a water
+heel with the wind), the boom and sails (they swing and luff), the tiller and you at it. She's built to her old
+lines (2.6 tiles long) and grown by S to 3.2 as a whole (`frame`); js/shipkit.js LINES and js/sloop.js RIGS take the
+same S. The water line is z = 0 and the sheet has a water
 level there, so shore.png marks what's under the surface and the game cuts it off.
 """
 import math
@@ -22,7 +24,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 from scenekit import Kit, shade  # noqa: E402
 
 OUT = sys.argv[1]
-CELL = 4
+CELL = 5
+CX, CY = 2.5, 3.0                                   # the boat's centre in her cell
+S = 3.2 / 2.6                                       # the sloop, grown (the dory and the things on the water stay as they were)
 HEADINGS = 32
 k = Kit(8 * CELL, 6 * CELL, margin_top=0.6, margin_bottom=0.2, seed=17)
 k.water_z = 0.0
@@ -38,10 +42,10 @@ SPAR = '#4a3018'
 GLASS = '#ffe080'
 
 
-def frame(cx, cr, th):
-    """Boat-local (u along the keel, bow +; v to starboard; z up) → the sheet's (x, row, z)."""
-    c, s = math.cos(th), math.sin(th)
-    return lambda u, v, z: (cx + u * c - v * s, cr + u * s + v * c, z)
+def frame(cx, cr, th, g=1.0):
+    """Boat-local (u along the keel, bow +; v to starboard; z up) → the sheet's (x, row, z), grown by g."""
+    c, s = math.cos(th) * g, math.sin(th) * g
+    return lambda u, v, z: (cx + u * c - v * s, cr + u * s + v * c, z * g)
 
 
 def hull(P, L, half, sheer, bottom=0.0, n=16, paint=PAINT, inside=DECK_D, part='hull'):
@@ -100,7 +104,7 @@ def stripe(P, L, half, sheer, n=16):
 
 
 def sloop(cx, cr, th):
-    P = frame(cx, cr, th)
+    P = frame(cx, cr, th, S)
     L = 2.6
     half = lambda t: 0.5 * math.sin(math.pi * min(1.0, 0.22 + 0.86 * t)) ** 0.7 if t < 0.999 else 0.015
     sheer = lambda t: 0.38 + 0.03 * (1 - t) + 0.13 * max(0.0, t - 0.55) ** 2 / 0.2
@@ -129,10 +133,10 @@ def sloop(cx, cr, th):
            0.022, (WOOD_D, 0.06), 'coaming', verts=5, smooth=False)
     # the mast step, a brass collar on the foredeck (the mast itself heels with the wind, so the game draws it)
     mu = -L / 2 + 0.66 * L
-    k.cyl(*P(mu, 0, 0)[:2], sheer(0.66) - 0.02, sheer(0.66) + 0.05, 0.06, (WALE, 0.05), 'mast_step', verts=10)
+    k.cyl(*P(mu, 0, 0)[:2], (sheer(0.66) - 0.02) * S, (sheer(0.66) + 0.05) * S, 0.06 * S, (WALE, 0.05), 'mast_step', verts=10)
     # the rudder head on the transom and the stern lantern on its post (port quarter)
     ra, rb = P(-L / 2 - 0.05, 0, 0), P(-L / 2 + 0.03, 0, 0)
-    k.bar(ra[0], ra[1], rb[0], rb[1], 0.1, 0.42, 0.07, (WOOD_D, 0.06), 'rudder')
+    k.bar(ra[0], ra[1], rb[0], rb[1], 0.1 * S, 0.42 * S, 0.07 * S, (WOOD_D, 0.06), 'rudder')
     base = P(-L / 2 + 0.14, -0.36, sheer(0.05))
     head = P(-L / 2 + 0.14, -0.36, sheer(0.05) + 0.42)
     k.tube(base, head, 0.018, (WOOD_D, 0.06), 'post', verts=5, smooth=False)
@@ -205,13 +209,15 @@ def statics(cx, cr, kind):
 
 for i in range(HEADINGS):
     c, r = i % 8, i // 8
-    sloop(c * CELL + 2.0, r * CELL + 2.6, i / HEADINGS * 2 * math.pi)
+    sloop(c * CELL + CX, r * CELL + CY, i / HEADINGS * 2 * math.pi)
 for i in range(8):
-    dory(i * CELL + 2.0, 4 * CELL + 2.6, i / 8 * 2 * math.pi)
+    dory(i * CELL + CX, 4 * CELL + CY, i / 8 * 2 * math.pi)
 for i, kind in enumerate(['rock_a', 'rock_b', 'rock_c', 'reef', 'buoy_red', 'buoy_green', 'crate', 'barrel']):
-    statics(i * CELL + 2.0, 5 * CELL + 2.6, kind)
+    statics(i * CELL + CX, 5 * CELL + CY, kind)
 
-# the islands' moonlight, a cool sky over everything, and a little warm fill from below (the lantern-lit sea)
-k.area_light(16.0, 12.0, 16.0, '#9a90c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))
+# the islands' moonlight, a cool sky over everything (as bright over the bigger sheet as it was over the old 32 × 24)
+W, R = 8 * CELL, 6 * CELL
+F = max(W / 32, R / 24)
+k.area_light(W / 2, R / 2, 16.0, '#9a90c8', 2600 * F * F, 40.0 * F, rot=(math.radians(-35), 0, 0))
 k.render(OUT, light_states={'full': {}}, light_samples=96, world_light=('#3a3048', 0.75))
 print('sloop sheet')
