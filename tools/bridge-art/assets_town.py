@@ -184,7 +184,7 @@ def meadow(k, tone, area=None, cells=None, ok=('grass',), density=1.0, avoid=Non
             if z is None:
                 continue
             light = _vnoise(x / 3.4, r / 3.4, seed) * 0.75 + _vnoise(x / 1.1, r / 1.1, seed + 9) * 0.25    # the slow drifts
-            col = k.rng.choices((deep, mid, lit), (0.18 + 0.3 * (1 - light), 0.5, 0.06 + 0.32 * light))[0]
+            col = k.rng.choices((deep, mid, lit), (0.2 + 0.12 * (1 - light), 0.52, 0.12 + 0.12 * light))[0]   # (drifts kept faint: strong ones read as blobs)
             nb = k.rng.choice((3, 3, 4, 5))
             for j in range(nb):
                 dx = (j - (nb - 1) / 2) * 0.03 + k.rng.uniform(-0.01, 0.01)

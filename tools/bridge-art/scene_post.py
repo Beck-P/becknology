@@ -79,6 +79,95 @@ def toon(albedo, light, emission):
     return out
 
 
+# ---- the grass, drawn (Beck: "more actual grasses and drawn textures… not random blobs… subtle little grass") ----------
+# Over the grass the leaf pass marks (R 64), small hand-drawn marks are stamped into the albedo before it's lit, so every
+# light state shows them: little v and y strokes of lighter blades, slanted blades, darker accents, the odd tuft, clover,
+# a tiny flower, a pebble. Each mark is shaded from the grass round it (a smoothed local colour), and the grass between
+# them is calmed toward that colour, so the ground reads as a drawn texture, not noise. Legend: h highlight, l light,
+# m a little darker, d dark, s shadow (relative to the local grass); w, y, p, v flower colours; g, G, H a pebble.
+GRASS_MARKS = [
+    (10, ['.h.h.', '.l.l.', 'ml.lm', '.ddd.']),                         # a small tuft, its shadow under it
+    (7, ['...h...', '.h.l.h.', '.l.l.l.', 'm.lll.m', '.ddddd.']),       # a bigger one
+    (6, ['....h.', '..h.l.', '.l.l..', 'ml.l..', '.ddd..']),            # leaning in the wind
+    (5, ['.h....', '.l.h..', '..l.l.', '..ll.m', '..ddd.']),
+    (9, ['l.l', 'l.l', '.d.']),                                         # a pair of blades
+    (8, ['.h', 'l.', 'd.']),                                            # one blade
+    (7, ['h.', '.l', '.d']),
+    (7, ['d.d.d', '.ddd.', '..s..']),                                   # a shadowed tuft
+    (5, ['m.m', '.m.']),
+    (2, ['.ll..', 'lmll.', '.llm.', '..d..']),                          # clover
+    (1, ['.w.', 'wyw', '.w.', '.m.']),                                  # a daisy
+    (1, ['.y.', 'yyy', '.y.', '.m.']),                                  # a buttercup
+    (1, ['Hg.', 'gGG', '.d.']),                                         # a pebble
+]
+MARK_ABS = {'w': (240, 240, 232), 'y': (244, 214, 80), 'p': (236, 150, 186), 'v': (170, 140, 220),
+            'g': (150, 146, 134), 'G': (104, 100, 92), 'H': (196, 192, 178)}
+MARK_REL = {'h': (1.34, (14, 16, -6)), 'l': (1.17, (7, 9, -3)), 'm': (0.87, (0, 0, 0)), 'd': (0.72, (0, 0, 0)), 's': (0.6, (0, 0, 0))}
+
+
+def _blur(a, r):
+    """Box blur (r each side) of an (h, w[, c]) float array, by cumulative sums."""
+    out = a
+    for ax in (0, 1):
+        c = np.cumsum(np.pad(out, [(r + 1, r) if i == ax else (0, 0) for i in range(out.ndim)], mode='edge'), axis=ax)
+        n = out.shape[ax]
+        hi = np.take(c, np.arange(2 * r + 1, 2 * r + 1 + n), axis=ax)
+        lo = np.take(c, np.arange(0, n), axis=ax)
+        out = (hi - lo) / (2 * r + 1)
+    return out
+
+
+def grass_detail(albedo, grass, seed=1, calm=0.75, cell=(12, 9), fill=0.95):
+    """Stamp the drawn marks into the albedo (in place) over the grass mask."""
+    h, w = grass.shape
+    a = albedo[..., :3].astype(np.float32)
+    g = grass.astype(np.float32)
+    num = _blur(a * g[..., None], 4)
+    den = _blur(g, 4)[..., None]
+    base = np.where(den > 0.05, num / np.maximum(den, 1e-3), a)
+    a = np.where(grass[..., None], a * (1 - calm) + base * calm, a)       # the grass between the marks, calmed
+    rng = np.random.default_rng(seed)
+    marks = [(wt, [list(row) for row in rows]) for wt, rows in GRASS_MARKS]
+    weights = np.array([m[0] for m in marks], np.float64)
+    weights /= weights.sum()
+    cw, ch = cell
+    ph = rng.random(4) * 6.283
+    for y0 in range(0, h, ch):
+        for x0 in range(0, w, cw):
+            # thicker in some stretches than others (slow waves, not a grid's evenness)
+            f = fill * (0.72 + 0.28 * math.sin(x0 / 61 + ph[0]) * math.sin(y0 / 47 + ph[1]) + 0.12 * math.sin((x0 + y0) / 23 + ph[2]))
+            if rng.random() > f:
+                continue
+            mk = marks[rng.choice(len(marks), p=weights)][1]
+            mh, mw = len(mk), len(mk[0])
+            x = x0 + int(rng.integers(0, cw)) - mw // 2
+            y = y0 + int(rng.integers(0, ch)) - mh // 2
+            if x < 0 or y < 0 or x + mw > w or y + mh > h:
+                continue
+            ok = True
+            for j in range(mh):
+                for i in range(mw):
+                    if mk[j][i] != '.' and not grass[y + j, x + i]:
+                        ok = False
+                        break
+                if not ok:
+                    break
+            if not ok:
+                continue
+            for j in range(mh):
+                for i in range(mw):
+                    c = mk[j][i]
+                    if c == '.':
+                        continue
+                    if c in MARK_ABS:
+                        a[y + j, x + i] = MARK_ABS[c]
+                    else:
+                        k, add = MARK_REL[c]
+                        a[y + j, x + i] = base[y + j, x + i] * k + add
+    albedo[..., :3] = np.clip(a, 0, 255).astype(albedo.dtype)
+    return albedo
+
+
 def lines(img, ids, depth, alpha):
     h, w = alpha.shape
     idk = (ids[..., 0].astype(np.int64) << 16) | (ids[..., 1].astype(np.int64) << 8) | ids[..., 2]
@@ -179,6 +268,14 @@ def main():
         out = e.copy()
         out[..., :3] = np.clip(e[..., :3].astype(np.float32) * k, 0, 255).astype(e.dtype)
         return out
+
+    # the grass the leaf pass marks (R 64), drawn: small hand-drawn marks stamped into the albedo (grass_detail)
+    lfp = os.path.join(rd, 'leaf.png')
+    if os.path.exists(lfp):
+        lr = load(lfp, 'RGB')[..., 0]
+        grass = alpha & (lr > 32) & (lr <= 160)
+        if grass.any():
+            albedo = grass_detail(albedo.copy(), grass, seed=sum(map(ord, os.path.basename(os.path.normpath(od)))))
 
     for state in meta['lightStates']:
         light = load16(os.path.join(rd, 'light_' + state + '.png'))
