@@ -112,7 +112,7 @@ var BridgeFarm = (function () {
       });
     }
     var until = c.flat ? Math.min(now, c.flat) : now;
-    var pace = typeof BridgeSeasons !== 'undefined' ? BridgeSeasons.growth(c.k) : 1;   // the season favours some crops; winter slows all
+    var pace = (typeof BridgeSeasons !== 'undefined' ? BridgeSeasons.growth(c.k) : 1) * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('farm') ? 1.1 : 1);   // the season favours some crops; winter slows all (the farm's set in the Collection: a tenth quicker)
     if (wetTo > from && until > from) c.g = Math.min(c.need, c.g + (Math.min(until, wetTo) - from) * pace);
     if (c.g >= c.need && !c.ripeAt) c.ripeAt = now;
     c.t = now;

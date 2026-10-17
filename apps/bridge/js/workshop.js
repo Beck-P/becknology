@@ -377,8 +377,9 @@ var BridgeWorkshop = (function () {
   function smith(id) { return smiths().filter(function (p) { return p.id === id; })[0] || null; }
   function working(p, t) { return !(p.missed > 0) && (!p.arrives || p.arrives <= (t || Date.now())); }    // unpaid, they down tools
   function growth(p, t) { return 1 + Math.min(0.3, Math.max(0, (t || Date.now()) - (p.hired || Date.now())) / (7 * 86400000) * 0.02); }
-  function pace(p, t) { var G = GRADES[p.grade] || GRADES.apprentice; return G.pace * (p.skill || 1) * growth(p, t); }
-  function yourPace() { return YOU + Math.min(0.3, st.hand || 0); }
+  function setK() { return typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('materials') ? 1.1 : 1; }          // the Collection's materials, all found: a tenth quicker
+  function pace(p, t) { var G = GRADES[p.grade] || GRADES.apprentice; return G.pace * (p.skill || 1) * growth(p, t) * setK(); }
+  function yourPace() { return (YOU + Math.min(0.3, st.hand || 0)) * setK(); }
   function faceOf(p) { var G = GRADES[p.grade] || GRADES.apprentice; return { seed: p.name + ':' + p.key, style: 'coat', colour: G.colour }; }
   function perk(p) {
     var G = GRADES[p.grade] || GRADES.apprentice, x = Math.round(pace(p) * 10) / 10;

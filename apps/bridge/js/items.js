@@ -199,8 +199,9 @@ var BridgeItems = (function () {
   // reference — keep behavior and the inventory-detail display in sync.
   function consumableUse(inv) {
     if (!this.effects) return false;
-    if (this.effects.hp)     inv.restoreHP(this.effects.hp);
-    if (this.effects.energy) inv.restoreEnergy(this.effects.energy);
+    var far = this.type === 'food' && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('food') ? 1.25 : 1;      // the Collection's food and drink, all found: it goes further
+    if (this.effects.hp)     inv.restoreHP(Math.round(this.effects.hp * far));
+    if (this.effects.energy) inv.restoreEnergy(Math.round(this.effects.energy * far));
     if (typeof BridgeFX !== 'undefined' && typeof BridgeCharacter !== 'undefined') {
       var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
       if (this.effects.hp && BridgeFX.spawnFloatingText) {
@@ -257,6 +258,7 @@ var BridgeItems = (function () {
   // When you're fighting beside someone and their game runs this creature (js/fight.js), the hit shows here at once and
   // goes to them to settle; w.remote is such a hit arriving from them (w.by: who, w.from: where they stood).
   function strike(world, target, dmg, w) {
+    if (!(w && w.remote) && !(w && w.dot) && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('gear')) dmg = Math.round(dmg * 1.05);   // tools and weapons, all found
     var F = typeof BridgeFight !== 'undefined' ? BridgeFight : null, follow = F && !(w && w.remote) && F.follower(target);
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
     target._hp -= dmg;

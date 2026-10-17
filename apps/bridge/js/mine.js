@@ -303,7 +303,7 @@ var BridgeMine = (function () {
     w.collisions[r.y][r.x] = 0;
     var ix = inter ? w.interactions.indexOf(inter) : -1;
     if (ix >= 0) w.interactions.splice(ix, 1);
-    var pro = yours && prospecting(), more = pro && r.kind !== 'stone' && r.kind !== 'heart' && Math.random() < 0.3;
+    var pro = yours && prospecting(), more = r.kind !== 'stone' && r.kind !== 'heart' && ((pro && Math.random() < 0.3) || (yours && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('stones') && Math.random() < 0.12));
     if (yours) ROCKS[r.kind].drops.forEach(function (d, i) {
       if (Math.random() > d[3]) return;
       var n = d[1] + Math.floor(Math.random() * (d[2] - d[1] + 1)) + (more && i === 0 ? 1 : 0);

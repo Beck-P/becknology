@@ -114,8 +114,8 @@ in particular places, and the path from "I have money" to "I have something wond
    *(built, October 17: js/wonders.js — six wonders made at the Workshop from things you found yourself: the Storm
    Compass, the Gilded Ledger, the Tidecaller's Pearl, and three Undercroft relics woken (the Ferryman's Bell, the Barrow
    Crown, the Ferryman's Coin); each into the Cabinet of Wonders in the hall of finds, working for good (fog, takings,
-   fishing, the deep, wages, repairs). The Bridge's CLAUDE.md, "The Cabinet of Wonders". Still to do: the Collection's
-   completed sets giving lasting bonuses.)*
+   fishing, the deep, wages, repairs). The Bridge's CLAUDE.md, "The Cabinet of Wonders". And every completed set in the
+   Collection gives a lasting bonus in its own line of work (js/codex.js `BONUS`).)*
 6. **Across worlds** — bases beyond Lumar (the farm on Verdance, a lodge on Hoarfell, a front in Arcadia), freight by
    the mothership, ranks and licences.
 
