@@ -26,6 +26,16 @@ a new place*).
 | **Backlog** — each place's own sun path, and the GPU doing the live compose | open | Today every scene's sun comes from the same side (`LIT_SUNS`); a per-scene direction would suit coasts facing west. The compose is CPU, a few ms a frame about once a minute: a WebGL version could relight every frame. |
 | **Backlog** — the remaining PNG and code-drawn art into the 3D kit | open | AI-painted PNG buildings and props, procedural tiles, creatures; the PNG rules in CLAUDE.md are legacy now. |
 
+## October 17 (Denser worlds, Workstream B2: the Crimson and Midnight seas)
+Beck: "there's the Midnight Sea with the kind of evil monsters and the sorceress… and then the dragon one through the
+Crimson with the dangerous weather and the dragon's lair… build out those in more depth". One session, shipping piece
+by piece (`apps/bridge/CLAUDE.md`, *The Crimson and the Midnight seas, grown*).
+| Ask | Status | Where / notes |
+|---|---|---|
+| Morwen's tower grown: more floors that climb | **done** | The stillroom (her bed, the still, the black mirror, Idris Thorne's ghost in his ward circle) and the star chamber (the orrery of the seven worlds, the telescope, the scrying pool showing the Midnight Sea tonight). Ghosts drawn see-through (`ghost: true`). |
+| Crimson: a pirate port in a wreck-strewn cove (rogues' tavern, a fence, the pirates' slip), the volcano, a stormwatch tower | in progress | A new island in the Crimson's part of the chart. |
+| Midnight: a drowned village half under the water, a ghost ship to board at sea, more of its creatures | in progress | Saltmere (a new island in the Midnight Sea), the Gloaming. |
+
 ## October 17 (Look Book 2: "somewhere in between" — keep our 3D model world, swing bigger)
 | Ask | Status | Where / notes |
 |---|---|---|

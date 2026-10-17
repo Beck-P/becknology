@@ -43,6 +43,7 @@ const SUITES = {
     ['world/sylvara_quests.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/regatta.js', SHOTS],
+    ['world/tower.js', SHOTS],
     ['world/landings.js', SHOTS + '/landings'],
     ['world/arrive.js', SHOTS + '/arrive'],
     ['world/title.js', SHOTS + '/title'],
