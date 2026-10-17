@@ -868,7 +868,39 @@ var BridgeAudio = (function () {
     roll:    function (t) { whoosh(t, 0.26, 500, 1500, 0.09, 0.7); noiseHit(sfxBus, t + 0.3, 0.12, { freq: 260, ftype: 'lowpass', gain: 0.14 }); },
     dodge:   function (t) { whoosh(t, 0.14, 3000, 1200, 0.07, 1.2); },
     charge:  function (t) { voice(sfxBus, t, 0.18, { type: 'sine', freq: hz(79), glide: 0.5, glideT: 0.15, gain: 0.06, a: 0.01, d: 0.2, s: 0.2, r: 0.2, rev: 0.4 }); INST.bell(sfxBus, t + 0.12, 91, 0.2, 0.7); },
-    charged: function (t) { whoosh(t, 0.28, 600, 3600, 0.16, 0.9); [60, 67, 72].forEach(function (m) { voice(sfxBus, t, 0.2, { type: 'sawtooth', freq: hz(m), gain: 0.025, a: 0.005, d: 0.25, s: 0.2, r: 0.2, cutoff: 1800, rev: 0.4 }); }); }
+    charged: function (t) { whoosh(t, 0.28, 600, 3600, 0.16, 0.9); [60, 67, 72].forEach(function (m) { voice(sfxBus, t, 0.2, { type: 'sawtooth', freq: hz(m), gain: 0.025, a: 0.005, d: 0.25, s: 0.2, r: 0.2, cutoff: 1800, rev: 0.4 }); }); },
+    // small happenings (js/events.js)
+    fiddle:  function (t) {                                // a reel on the fiddle: two bars, bowed and bright
+      [74, 78, 81, 78, 76, 79, 83, 79, 74, 78, 81, 86, 85, 81, 76, 81].forEach(function (m, i) {
+        voice(sfxBus, t + i * 0.15, 0.13, { type: 'sawtooth', freq: hz(m), gain: 0.03, a: 0.012, d: 0.1, s: 0.7, r: 0.06, cutoff: 2400, q: 1.2, vib: [6, 8], rev: 0.25 });
+      });
+    },
+    harp:    function (t) { [65, 69, 72, 76, 79, 83, 84, 79, 76, 72].forEach(function (m, i) { INST.lute(sfxBus, t + i * 0.24, m, 0.3, 0.8); }); },
+    peal:    function (t) { [84, 83, 81, 79, 77, 76, 74, 72].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.24, m - 12, 0.3, 1.1); }); },
+    chime:   function (t) { [88, 91, 95, 100].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.11, m - 12, 0.2, 0.7); }); },
+    gavel:   function (t) { [0, 0.16].forEach(function (d) { noiseHit(sfxBus, t + d, 0.08, { freq: 500, ftype: 'lowpass', gain: 0.26, rev: 0.2 }); voice(sfxBus, t + d, 0.03, { type: 'sine', freq: 180, glide: 0.6, gain: 0.12, a: 0.001, d: 0.06, s: 0, r: 0.04 }); }); },
+    flash:   function (t) { noiseHit(sfxBus, t, 0.03, { freq: 6000, ftype: 'highpass', gain: 0.06 }); voice(sfxBus, t + 0.02, 0.2, { type: 'sine', freq: 2600, glide: 0.6, glideT: 0.2, gain: 0.012, a: 0.01, d: 0.2, s: 0, r: 0.1 }); },
+    drone:   function (t) { voice(sfxBus, t, 1.2, { type: 'sawtooth', freq: 190, gain: 0.02, a: 0.1, d: 0.3, s: 0.8, r: 0.3, cutoff: 1400, vib: [21, 40] }); },
+    thud:    function (t) { noiseHit(sfxBus, t, 0.14, { freq: 380, ftype: 'lowpass', gain: 0.22 }); voice(sfxBus, t, 0.05, { type: 'sine', freq: 90, glide: 0.6, gain: 0.12, a: 0.001, d: 0.1, s: 0, r: 0.06 }); },
+    powerdown: function (t) { voice(sfxBus, t, 0.7, { type: 'sine', freq: 420, glide: 0.15, glideT: 0.7, gain: 0.05, a: 0.005, d: 0.7, s: 0.3, r: 0.2 }); noiseHit(sfxBus, t, 0.05, { freq: 3000, ftype: 'bandpass', gain: 0.05 }); },
+    glitch:  function (t) { for (var i = 0; i < 9; i++) voice(sfxBus, t + i * 0.055, 0.04, { type: 'square', freq: 200 + Math.random() * 1600, gain: 0.03, a: 0.001, d: 0.04, s: 0.3, r: 0.02, cutoff: 5000 }); },
+    siren:   function (t) { for (var i = 0; i < 4; i++) voice(sfxBus, t + i * 0.42, 0.38, { type: 'square', freq: i % 2 ? 770 : 960, gain: 0.018, a: 0.02, d: 0.2, s: 0.8, r: 0.06, cutoff: 1800, rev: 0.3 }); },
+    cluck:   function (t) { [0, 0.11, 0.2].forEach(function (d, i) { voice(sfxBus, t + d, 0.05, { type: 'triangle', freq: 700 - i * 60, glide: 0.65, glideT: 0.05, gain: 0.05, a: 0.002, d: 0.06, s: 0, r: 0.03, cutoff: 2500 }); }); },
+    horn:    function (t) { [[67, 0, 0.3], [72, 0.34, 0.3], [79, 0.7, 0.6]].forEach(function (n) { voice(sfxBus, t + n[1], n[2], { type: 'sawtooth', freq: hz(n[0]), gain: 0.035, a: 0.03, d: 0.2, s: 0.8, r: 0.15, cutoff: 1600, rev: 0.35 }); }); },
+    jingle:  function (t) { for (var i = 0; i < 8; i++) { noiseHit(sfxBus, t + i * 0.06 + Math.random() * 0.02, 0.06, { freq: 6500, ftype: 'bandpass', q: 6, gain: 0.05 }); voice(sfxBus, t + i * 0.06, 0.03, { type: 'sine', freq: 3000 + Math.random() * 1200, gain: 0.012, a: 0.001, d: 0.08, s: 0, r: 0.06 }); } },
+    blast:   function (t) {                                // a charge on the far slope: the crack, then the boom rolling down the valley
+      noiseHit(sfxBus, t, 0.08, { freq: 2200, ftype: 'highpass', gain: 0.05 });
+      noiseHit(sfxBus, t + 0.05, 1.6, { freq: 120, ftype: 'lowpass', gain: 0.34, rev: 0.7 });
+      voice(sfxBus, t + 0.05, 0.1, { type: 'sine', freq: 50, glide: 0.5, glideT: 0.4, gain: 0.2, a: 0.002, d: 0.4, s: 0, r: 0.2 });
+      noiseHit(sfxBus, t + 0.9, 1.4, { freq: 90, ftype: 'lowpass', gain: 0.16, rev: 0.7 });
+    },
+    whistle: function (t) { [0, 0.32].forEach(function (d) { voice(sfxBus, t + d, 0.22, { type: 'sine', freq: 2300, gain: 0.03, a: 0.01, d: 0.2, s: 0.8, r: 0.05, vib: [28, 60] }); }); },
+    splat:   function (t) { noiseHit(sfxBus, t, 0.12, { freq: 900, ftype: 'lowpass', gain: 0.18 }); },
+    buzz:    function (t) { voice(sfxBus, t, 0.5, { type: 'square', freq: 60, gain: 0.03, a: 0.01, d: 0.3, s: 0.6, r: 0.1, cutoff: 700 }); noiseHit(sfxBus, t, 0.4, { freq: 3500, ftype: 'bandpass', q: 2, gain: 0.025 }); },
+    crackle: function (t) {                                // static, and something like a voice under it
+      for (var i = 0; i < 10; i++) noiseHit(sfxBus, t + Math.random() * 1.1, 0.03, { freq: 2000 + Math.random() * 3000, ftype: 'bandpass', q: 3, gain: 0.05 });
+      voice(sfxBus, t + 0.2, 0.8, { type: 'sawtooth', freq: 160, glide: 1.3, glideT: 0.6, gain: 0.012, a: 0.05, d: 0.4, s: 0.6, r: 0.2, cutoff: 900, q: 6, vib: [7, 50] });
+    }
   };
 
   function sfx(name) {

@@ -448,6 +448,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeSylvara !== 'undefined' && BridgeSylvara.decorate) BridgeSylvara.decorate(worldId, data);   // the willow, once the first sword has said it
         if (typeof BridgeDungeon !== 'undefined') BridgeDungeon.decorate(worldId, data);     // the Undercroft: tonight's crypt
         if (typeof BridgeFestivals !== 'undefined') BridgeFestivals.decorate(worldId, data); // a festival's props, stall and contest
+        if (typeof BridgeEvents !== 'undefined') BridgeEvents.decorate(worldId, data);       // small happenings on the hour
         if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.decorate(worldId, data);   // the cast keep their day
         if (typeof BridgeHome !== 'undefined') BridgeHome.decorate(worldId, data);       // last: it keeps the rest clear
         if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);
