@@ -254,7 +254,7 @@ def alpine_door(k, cx, r_face, col=None, wreath=True, lamp=1, canopy=True, rr=No
     k.box(cx + 0.5 * (-lamp or 1), r_face + 0.42, 0.0, cx + 0.5 * (-lamp or 1) + 0.12, r_face + 0.48, 0.16, ('#2e3038', 0.1), 'boot_scraper')
 
 
-def snow_sheet(k, a, b, c, d, nu, nv, amp=0.035, seed=0, part='roof_snow'):
+def snow_sheet(k, a, b, c, d, nu, nv, amp=0.07, seed=0, part='roof_snow'):
     """A blanket of snow over the quad a-b-c-d (corners (x, r, z); a-b along u, a-d along v), gently lumpy, so the
     light finds soft hollows in it instead of one flat slab."""
     def at(u, v):
@@ -316,7 +316,8 @@ def dormer(k, dx, rm, rs, zt, zs, rr, w=0.9):
     rd = rm + (rs - rm) * t                       # its face
     zb = zt + (zs - zt) * t                       # the slope's height there
     h = 0.62
-    D = 0.55
+    slope = (zt - zs) / max(0.1, rs - rm)
+    D = min(rs - rm - 0.1, 1.15 / max(0.2, slope))   # deep enough that its back runs in under the main roof
     k.box(dx - w / 2, rd - D, zb - 0.25, dx + w / 2, rd, zb + h, (LOG, 0.1), 'dormer_wall')
     k.box(dx - w / 2 - 0.05, rd - 0.02, zb - 0.05, dx + w / 2 + 0.05, rd + 0.06, zb + 0.06, (LOG_D, 0.1), 'dormer_sill')
     k.box(dx - 0.2, rd, zb + 0.1, dx + 0.2, rd + 0.05, zb + 0.5, '#5a3a18', 'window_glass', emit=(W.GLOW, 0.9))
@@ -334,7 +335,6 @@ def dormer(k, dx, rm, rs, zt, zs, rr, w=0.9):
         for j in range(3):
             L = rr.uniform(0.06, 0.18)
             k.cone(xe, rd - 0.6 + j * 0.3, zb + h - 0.06 - L, zb + h - 0.06, 0.02, 0.004, (ICE, 0.06), 'icicle', verts=5)
-    k.tube((dx, rd - D, zr + 0.12), (dx, rf_ - 0.03, zr + 0.12), 0.09, (ROOF_SNOW, 0.03), 'ridge_snow', verts=10)
     k.tube((dx - w / 2 - 0.14, rf_ + 0.01, zb + h - 0.08), (dx, rf_ + 0.01, zr), 0.04, (LOG_D, 0.08), 'bargeboard', verts=6)
     k.tube((dx + w / 2 + 0.14, rf_ + 0.01, zb + h - 0.08), (dx, rf_ + 0.01, zr), 0.04, (LOG_D, 0.08), 'bargeboard', verts=6)
     k.poly([(dx - w / 2, rd + 0.0, zb + h), (dx + w / 2, rd + 0.0, zb + h), (dx, rd + 0.0, zr - 0.04)], (LOG_L, 0.08), 'gable')
@@ -444,7 +444,7 @@ def side_gable_roof(k, x0, x1, r_back, r_front, wall_h, rise, over=0.4, side_ove
 
 def chalet(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.4, gable='front', door_x=None, windows=(), windows_up=(),
            chimney=None, balcony=False, lanterns=(), shutters=None, wall=LOG, door_col=None, wreath=True, canopy=True,
-           blankets=True, gable_window=True, dormers=(), rr=None):
+           blankets=True, gable_window=True, dormers=(), rail_boxes=True, rr=None):
     """A log chalet: a stone footing in rough blocks, log courses with notched ends standing out at the corners,
     framed windows with heart-cut shutters and boxes of evergreens, a plank door with a wreath under a snowy canopy,
     a carved balcony (front gable: across the gable; side gable: across the upper floor), a deep roof under a thick
@@ -501,7 +501,7 @@ def chalet(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.4, gable='front', door
                 k.box(b2, r_front + 0.56, bz + 0.2, b2 + 0.4, r_front + 0.6, bz + 0.6, (bc, 0.1), 'blanket')
                 k.box(b2 + 0.05, r_front + 0.6, bz + 0.25, b2 + 0.35, r_front + 0.605, bz + 0.29, (shade(bc, 1.3), 0.1), 'blanket_stripe')
         # boxes of evergreens on the rail
-        for bxx in (bx0 + (bx1 - bx0) * 0.33, bx0 + (bx1 - bx0) * 0.66):
+        for bxx in ((bx0 + (bx1 - bx0) * 0.33, bx0 + (bx1 - bx0) * 0.66) if rail_boxes else ()):
             k.box(bxx - 0.3, r_front + 0.58, bz + 0.3, bxx + 0.3, r_front + 0.72, bz + 0.48, (LOG_D, 0.1), 'flower_box')
             with k.foliage('needle'):
                 for i in range(5):

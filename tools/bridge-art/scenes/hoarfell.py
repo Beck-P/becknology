@@ -209,18 +209,17 @@ for i, ((ax, ar), (bx, br)) in enumerate(zip(seg, seg[1:])):
     elif i % 5 == 4:                                                               # snow shelving out from a bank
         s_ = 1 if (i // 5) % 2 else -1
         k.blob(ax + nx * s_ * 1.2, ar + nr * s_ * 1.2, -0.08, 0.28, 0.2, 0.05, (N.SNOW, 0.05), 'drift', segs=8)
-    if i % 4 == 2:                                                                 # a stone with a cap of snow
+    if i % 9 == 4:                                                                 # a stone with a cap of snow
         HR.rock(k, ax + nx * rr.uniform(-0.6, 0.6), ar + nr * rr.uniform(-0.6, 0.6), rr.uniform(0.1, 0.16), z=-0.12, rr=rr, part='stream_stone')
 for rf_ in (14.92, 16.5):                                                          # the culvert's stone headwalls
     sgn = -1 if rf_ < 15.7 else 1
-    k.box(11.3, rf_ - 0.12, -0.14, 12.75, rf_ + 0.06, 0.16, ('#7a7e88', 0.12), 'culvert_wall', bevel=0.02)
+    k.box(11.3, rf_ - 0.12, -0.14, 12.75, rf_ + 0.06, 0.04, ('#7a7e88', 0.12), 'culvert_wall', bevel=0.02)
     x = 11.3
     while x < 12.7:
-        k.box(x + 0.01, rf_ + 0.06 * (1 if sgn > 0 else -1) - 0.005, -0.12, x + 0.22, rf_ + 0.065 * (1 if sgn > 0 else -1), 0.14,
+        k.box(x + 0.01, rf_ + 0.06 * (1 if sgn > 0 else -1) - 0.005, -0.12, x + 0.22, rf_ + 0.065 * (1 if sgn > 0 else -1), 0.03,
               (shade('#7a7e88', rr.uniform(0.85, 1.12)), 0.12), 'culvert_stone')
         x += 0.24
     k.cyl_y(12.05, rf_ - 0.14, rf_ + 0.08, -0.12, 0.26, 0.2, '#14202a', 'culvert_mouth', verts=12)
-    k.tube((11.25, rf_ - 0.02, 0.2), (12.8, rf_ - 0.02, 0.2), 0.07, (N.ROOF_SNOW, 0.04), 'drift', verts=8)
 
 # ---- the tarn: an ice sheet over most of it, open water where the brook comes in -------------------------------------------
 SEGS = 80
@@ -339,10 +338,11 @@ HR.bird_feeder(k, 1.4, 13.4)
 SMOKE.append(HR.chalet(k, 14.0, 25.0, 9.4, 13.6, wall_h=2.7, rise=2.0, gable='side', door_x=19.5,
                        windows=[(15.2, 0.85), (16.9, 0.85), (22.1, 0.85), (23.8, 0.85)],
                        windows_up=[(15.2, 2.0), (16.7, 2.0), (22.3, 2.0), (23.8, 2.0)], chimney=23.4, balcony=(14.5, 24.5),
-                       lanterns=(18.6, 20.4), canopy=False, shutters='#7a2a22', door_col='#5a3420', dormers=(16.4, 19.5, 21.4),
+                       lanterns=(18.6, 20.4), canopy=False, shutters='#7a2a22', door_col='#5a3420', dormers=(16.4, 19.5, 21.4), rail_boxes=False,
                        rr=random.Random(7)))
-k.box(17.3, 13.6, 2.17, 21.7, 13.66, 2.55, (N.LOG_D, 0.1), 'sign_board')
-G.letters(k, 'Snowcap Lodge', 'Pacifico', 19.5, 13.66, 2.2, size=0.3, col='#ffd890', lit=True, energy=5)
+BZ = 2.7 * 0.55                                                                    # the name along the balcony's rail
+k.box(17.0, 14.17, BZ + 0.12, 22.0, 14.23, BZ + 0.6, (N.LOG_D, 0.1), 'sign_board')
+G.letters(k, 'Snowcap Lodge', 'Pacifico', 19.5, 14.23, BZ + 0.17, size=0.32, col='#ffd890', lit=True, energy=5)
 N.hanging_sign(k, 14.25, 13.58, 1.55, 'bed')
 HR.skis(k, 25.25, 13.2, cols=('#c83a2e', '#c83a2e'))
 HR.skis(k, 25.45, 12.2, cols=('#2a6ac0', '#e8e8f0'))
