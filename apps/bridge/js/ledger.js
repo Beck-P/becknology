@@ -37,10 +37,12 @@ var BridgeLedger = (function () {
       (count !== '' && count != null ? '<span class="jn-count">' + count + '</span>' : '') + '</div>' + body + '</section>';
   }
   // one line of the ledger: a name, what it's doing, a figure on the right, a Map button; `dim` for what you can't see yet
-  // (o.face: their portrait, js/look.js; o.act: what clicking the row does — a person you can manage)
+  // (o.face: their portrait, js/look.js, or o.sheet: a crew member's own; o.act: what clicking the row does — a person
+  // you can manage)
   var acts = [];
   function row(o) {
-    var face = o.face ? '<canvas class="lg-face" width="24" height="24" data-seed="' + esc(o.face.seed) + '" data-style="' + esc(o.face.style) + '" data-colour="' + esc(o.face.colour) + '"' + (o.face.wild ? ' data-wild="1"' : '') + '></canvas>' : '';
+    var face = o.face ? '<canvas class="lg-face" width="24" height="24" data-seed="' + esc(o.face.seed) + '" data-style="' + esc(o.face.style) + '" data-colour="' + esc(o.face.colour) + '"' + (o.face.wild ? ' data-wild="1"' : '') + '></canvas>'
+      : o.sheet ? '<canvas class="lg-face" width="24" height="24" data-sheet="' + esc(o.sheet) + '"></canvas>' : '';
     var act = o.act ? ' data-act="' + (acts.push(o.act) - 1) + '"' : '';
     return '<li class="lg-row' + (o.dim ? ' lg-dim' : '') + (o.alert ? ' lg-alert' : '') + (o.act ? ' lg-act' : '') + '"' + act + '>' + face + '<div class="lg-main"><b>' + esc(o.name) + '</b>' +
       (o.sub ? '<span>' + esc(o.sub) + '</span>' : '') + '</div>' + (o.fig ? '<div class="lg-fig">' + o.fig + '</div>' : '') + mapBtn(o.world) + '</li>';
@@ -233,7 +235,7 @@ var BridgeLedger = (function () {
     if (has('BridgeCrew')) BridgeCrew.list().forEach(function (c) {
       var w = B && B.crewWage ? B.crewWage(c.id) : 0;
       rows.push({ name: c.name + ' · ' + c.role.toLowerCase() + ' (crew)', sub: (all[c.id] && all[c.id].crew ? all[c.id].crew.perkText : c.perkText) + (B && B.unpaid(c.id) ? ' · UNPAID: not working' : ''),
-                  fig: coins(w) + '<small>/day</small>', alert: B && B.unpaid(c.id), world: 'bridge' });
+                  fig: coins(w) + '<small>/day</small>', alert: B && B.unpaid(c.id), world: 'bridge', sheet: all[c.id] && all[c.id].sheet });
     });
     // the farm's hands, by the day
     if (has('BridgeHomestead') && BridgeHomestead.HANDS) Object.keys(BridgeHomestead.HANDS).forEach(function (id) {
@@ -433,6 +435,7 @@ var BridgeLedger = (function () {
     var pay = page.querySelector('.lg-pay');
     if (pay) pay.addEventListener('click', function (e) { e.stopPropagation(); if (has('BridgeBusiness') && BridgeBusiness.payAll) BridgeBusiness.payAll(); setTimeout(function () { render(); }, 600); });
     if (has('BridgeLook') && BridgeLook.face) page.querySelectorAll('canvas.lg-face').forEach(function (cv) {
+      if (cv.getAttribute('data-sheet')) { if (BridgeLook.npcFace) BridgeLook.npcFace(cv, cv.getAttribute('data-sheet')); return; }
       BridgeLook.face(cv, cv.getAttribute('data-seed'), cv.getAttribute('data-style'), cv.getAttribute('data-colour'), !!cv.getAttribute('data-wild'));
     });
   }
