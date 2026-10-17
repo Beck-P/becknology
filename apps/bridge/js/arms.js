@@ -85,7 +85,7 @@ var BridgeArms = (function () {
   var WIND_DELAY = 1200, WIND_EVERY = 125, WIND_BACK = 0.75;
 
   // weapons with art (tools/bridge-art/weapon_sprites.py WEAPONS) and the colour of their swing
-  var TRAIL = { twin_fangs: '#eef2fa', tidebreaker: '#bce4f4', iron_dagger: '#e8eef8', veilpiercer: '#b890ff', cutlass: '#eef2fa', star_blade: '#ffe080', moonglass_sabre: '#dce6ff',
+  var TRAIL = { wyrmfang: '#c8f0ff', twin_fangs: '#eef2fa', tidebreaker: '#bce4f4', iron_dagger: '#e8eef8', veilpiercer: '#b890ff', cutlass: '#eef2fa', star_blade: '#ffe080', moonglass_sabre: '#dce6ff',
                 emberbrand: '#ffa040', rime_hatchet: '#a8e0ff', boarding_pike: '#eef2fa', war_maul: '#e0d0a8', wispcaller: '#c8a8ff',
                 moon_wand: '#e8eeff', old_pickaxe: '#d8d0c0', iron_pickaxe: '#e0e4ee', star_pickaxe: '#ffe080', ice_axe: '#a8d0ff', hoe: '#d8c8a0' };
 

@@ -444,6 +444,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeFoliage !== 'undefined') BridgeFoliage.apply(worldId);        // the trees turn with the seasons
         if (typeof BridgeWeather !== 'undefined') BridgeWeather.decorate(worldId, data);
         if (typeof BridgeCombat !== 'undefined') BridgeCombat.decorate(worldId, data);
+        if (typeof BridgeValley !== 'undefined') BridgeValley.decorate(worldId, data);       // the hidden valley's creatures and yetis
         if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
