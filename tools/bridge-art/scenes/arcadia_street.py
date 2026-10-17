@@ -276,7 +276,7 @@ w['interactions'] = [
     dialog(20, 7, 'CHROME CLINIC', 'PRESS E TO PEEK',
            'THROUGH THE FROSTED GLASS:\n\nSTERILE LIGHT, CHROME LIMBS,\nAND QUIET MACHINES WAITING\nBEHIND A SEALED DOOR.'),
     enter(25, 7, 'arcadia-lucky-7', 'LUCKY 7'),
-    enter(31, 7, 'arcadia-skywalk', 'SKYWALK LIFT', 'PRESS E TO RIDE UP', spawn=(2, 5)),
+    {'x': 31, 'y': 7, 'type': 'express_lift', 'label': 'SKYWALK LIFT', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skywalk', 'lobby': 'street'},   # js/transit.js
     {'x': 33, 'y': 7, 'type': 'password_gate', 'label': 'ALLEY GATE', 'prompt': 'PRESS E TO OPEN', 'password': 'NULL',
      'targetWorld': 'arcadia-alley', 'spawn': [16, 12], 'failMessage': 'THE KEYPAD BUZZES. NOT THAT.',
      'dialog': 'A GATE CHAINED SHUT. BEYOND IT THE BACK STREETS RUN DARK AND WET.\n\nTHE PADLOCK HAS A KEYPAD: FOUR '
