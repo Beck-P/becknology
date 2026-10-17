@@ -249,6 +249,7 @@ for r in range(ROWS):
         if (c, r) not in land and (c, r) not in PIER:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
+w['collisions'][16][3] = 0                          # the dockhand's walk starts here (the boulder only touches it)
 w['view'] = [-0.5, -2.0, COLS + 0.5, ROWS + 1.0]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 print('tern done; walkable', len(land))
