@@ -6,3 +6,6 @@ node_modules/
 /public/
 .playwright-mcp/
 __pycache__/
+
+# git worktrees the parallel builds work in (Claude Code agents)
+.claude/worktrees/

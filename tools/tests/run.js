@@ -28,6 +28,7 @@ const SUITES = {
     ['world/orders.js', SHOTS],
     ['world/sleep.js', SHOTS],
     ['world/workshop.js', SHOTS],
+    ['world/shipyard.js', SHOTS],
     ['world/gpu.js', SHOTS],
     ['world/routines.js', SHOTS],
     ['world/crowd.js', SHOTS],
@@ -78,6 +79,7 @@ const KEEP = new RegExp([
   /status|mate:|settled|beck:|aly:|chat|heard|unread|after|typed|my turn|sunk|crew|things match/,
   /hp|down|up:|roll|chain|energy|boxes/,
   /contract|dispatch|orders away|route lines|treasury/,
+  /slipway|keel|launched|shipwright/,
   /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,
   /schedule|in a storm|the gun:|finished|prizes|at the gate|at the foot|gun: beck|racing:/,
 ].map((r) => r.source).join('|'), 'i');
