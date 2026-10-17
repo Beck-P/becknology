@@ -128,8 +128,16 @@ def pool(k, cells):
     """Black water standing in a sunken part of the floor, a rim of stones round it (solid: you don't wade)."""
     for (c, r) in cells:
         k.box(c, r, -0.5, c + 1, r + 1, -0.3, '#06080a', 'pool_bed')
-        k.box(c, r, -0.3, c + 1, r + 1, -0.12, ('#0c1418', 0.0), 'pond_water', emit=('#203848', 0.06))
+        k.box(c, r, -0.3, c + 1, r + 1, -0.12, ('#0e1c26', 0.0), 'pond_water', emit=('#2a4c64', 0.12))
         k.solid(c, r, c + 1, r + 1)
+    for (c, r) in sorted(cells):                                                 # what the water hides, showing through
+        if k.rng.random() < 0.45:
+            x, y = c + k.rng.uniform(0.25, 0.75), r + k.rng.uniform(0.25, 0.75)
+            if k.rng.random() < 0.5:
+                k.sphere(x, y, -0.13, 0.08, 0.05, (shade(BONE, 0.6), 0.1), 'skull', segs=8)
+            else:
+                rr = k.rng.uniform(0.1, 0.16)
+                k.rock(x, y, -0.16, rr, rr * 0.8, 0.07, (shade(STONE_D, k.rng.uniform(0.8, 1.0)), 0.2), 'pool_stone')
     cells = set(cells)
     for (c, r) in cells:
         for (dc, dr) in ((1, 0), (-1, 0), (0, 1), (0, -1)):
@@ -138,6 +146,8 @@ def pool(k, cells):
             x0, r0 = (c + 1 - 0.1, r) if dc == 1 else (c - 0.06, r) if dc == -1 else (c, r + 1 - 0.1) if dr == 1 else (c, r - 0.06)
             x1, r1 = (x0 + 0.16, r + 1) if dc else (c + 1, r0 + 0.16)
             k.box(x0, r0, -0.12, x1, r1, 0.06, (shade(STONE_D, k.rng.uniform(0.9, 1.1)), 0.14), 'pool_rim', bevel=0.02)
+            if k.rng.random() < 0.4:                                             # moss where the damp meets the stone
+                k.blob((x0 + x1) / 2, (r0 + r1) / 2, 0.06, 0.18, 0.06, 0.03, (shade(MOSS, k.rng.uniform(0.8, 1.1)), 0.2), 'moss', segs=8)
 
 
 def cornice(k, x0, x1, rf):
@@ -262,7 +272,7 @@ def floor(k, walk):
 
     for (c, r) in sorted(walk, key=lambda q: (q[1], q[0])):
         quad = [(c, r), (c + 1, r), (c, r + 1), (c + 1, r + 1)]
-        if all(q in walk and q not in taken for q in quad) and k.rng.random() < 0.05 and \
+        if all(q in walk and q not in taken for q in quad) and k.rng.random() < 0.022 and \
                 not any(n in taken for q in quad for n in neighbours(*q)):
             ledger(c, r)
             taken.update(quad)
