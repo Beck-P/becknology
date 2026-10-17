@@ -258,22 +258,53 @@ var BridgeHoarfell = (function () {
     }
   }
 
-  // the summit's sky: the evening over the range, a sea of cloud below the rim
+  // the summit's sky: the range under the sky, a sea of cloud below the rim. Its colours follow the place's own render
+  // through the day (BridgeScene.sky: day, dusk and night weights) — the alpenglow Hoarfell is lit by, a deeper dusk,
+  // a moonlit night with the stars out; a render with only the one state keeps the alpenglow.
   var range = null;
+  var PAL = {                    // sky top → horizon, the far and near range (fill, lit rim), the cloud sea (base, tops)
+    day:   { sky: ['#1e1a4a', '#5a3a7a', '#d07a90', '#f6b890'], far: ['#8a7ab0', '#ffd0c0'], near: ['#6a6098', '#f0b0b8'], cloud: ['#c8b4d4', '#e8d8e8', '#f6e4e8'], glow: [255, 210, 160] },
+    dusk:  { sky: ['#140e34', '#4a1e52', '#b04a5a', '#f08a5a'], far: ['#5a4a80', '#ffa080'], near: ['#46406e', '#e08070'], cloud: ['#9a7a9a', '#c08a98', '#d89aa0'], glow: [255, 150, 90] },
+    night: { sky: ['#03040e', '#0a1028', '#18224a', '#2a3660'], far: ['#1e2440', '#8090c0'], near: ['#161a32', '#6070a0'], cloud: ['#2a3050', '#3a4268', '#46507a'], glow: [190, 210, 255] }
+  };
+  function hex(c) { return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]; }
+  function blend(w, f) {         // the three palettes' colour f, weighted
+    var a = hex(f(PAL.day)), b = hex(f(PAL.dusk)), c = hex(f(PAL.night));
+    return 'rgb(' + [0, 1, 2].map(function (i) { return Math.round(a[i] * w.day + b[i] * w.dusk + c[i] * w.night); }).join(',') + ')';
+  }
+  function skyWeights() {
+    var wd = BridgeWorld.getWorld && BridgeWorld.getWorld(), id = wd && wd.scene && wd.scene.id;
+    var k = id && typeof BridgeScene !== 'undefined' && BridgeScene.sky ? BridgeScene.sky(id) : null;
+    return k ? { day: k.day, dusk: k.dusk, night: k.night } : { day: 1, dusk: 0, night: 0 };
+  }
   function sky(ctx, w, h, now, still) {
     var v = !still && BridgeWorld.getView ? BridgeWorld.getView() : { offY: 0, offX: 0 };
+    var W = skyWeights();
     var g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, '#1e1a4a'); g.addColorStop(0.4, '#5a3a7a'); g.addColorStop(0.7, '#d07a90'); g.addColorStop(1, '#f6b890');
+    [0, 0.4, 0.7, 1].forEach(function (at, i) { g.addColorStop(at, blend(W, function (p) { return p.sky[i]; })); });
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    for (var i = 0; i < 50; i++) {
-      var a = 0.25 + 0.35 * Math.abs(Math.sin(now / 1300 + i * 1.7));
-      ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')';
-      ctx.fillRect((i * 137 + 11) % w, (i * 71) % Math.round(h * 0.35), 1, 1);
+    var starK = 0.45 + 0.55 * W.night + 0.25 * W.dusk;
+    for (var i = 0; i < (W.night > 0.3 ? 110 : 50); i++) {
+      var a = (0.25 + 0.35 * Math.abs(Math.sin(now / 1300 + i * 1.7))) * starK;
+      ctx.fillStyle = 'rgba(255,255,255,' + Math.min(1, a).toFixed(2) + ')';
+      ctx.fillRect((i * 137 + 11) % w, (i * 71) % Math.round(h * (i < 50 ? 0.35 : 0.55)), 1, 1);
     }
-    var sunX = w * 0.2, sunY = h * 0.5 + v.offY * 0.02;
-    var sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.35);
-    sg.addColorStop(0, 'rgba(255,230,190,0.9)'); sg.addColorStop(0.08, 'rgba(255,200,150,0.6)'); sg.addColorStop(1, 'rgba(255,170,140,0)');
-    ctx.fillStyle = sg; ctx.fillRect(0, 0, w, h);
+    var sunX = w * 0.2, sunY = h * (0.5 + 0.08 * W.dusk) + v.offY * 0.02;
+    var gl = PAL.day.glow.map(function (c, i) { return Math.round(c * W.day + PAL.dusk.glow[i] * W.dusk); }), ga = W.day + W.dusk;
+    if (ga > 0.02) {
+      var sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.35);
+      sg.addColorStop(0, 'rgba(' + gl + ',' + (0.9 * ga).toFixed(2) + ')'); sg.addColorStop(0.08, 'rgba(' + gl + ',' + (0.6 * ga).toFixed(2) + ')'); sg.addColorStop(1, 'rgba(' + gl + ',0)');
+      ctx.fillStyle = sg; ctx.fillRect(0, 0, w, h);
+    }
+    if (W.night > 0.05) {                                      // the moon, high in the east, with a cold halo
+      var mx = Math.round(w * 0.74), my = Math.round(h * 0.16), mg = ctx.createRadialGradient(mx, my, 0, mx, my, h * 0.18);
+      mg.addColorStop(0, 'rgba(190,210,255,' + (0.35 * W.night).toFixed(2) + ')'); mg.addColorStop(1, 'rgba(190,210,255,0)');
+      ctx.fillStyle = mg; ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = Math.min(1, W.night * 1.4);
+      ctx.fillStyle = '#e8eef8'; ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#c4cee0'; ctx.fillRect(mx - 2, my - 1, 2, 2); ctx.fillRect(mx + 1, my + 2, 1, 1);
+      ctx.globalAlpha = 1;
+    }
     if (!range || range.w !== w) {
       range = { w: w, a: [], b: [] };
       for (var x = 0; x <= w; x += 3) {
@@ -282,16 +313,16 @@ var BridgeHoarfell = (function () {
       }
     }
     var base = h * 0.64 + v.offY * 0.03;
-    peaks(ctx, range.a, base, '#8a7ab0', '#ffd0c0');
-    peaks(ctx, range.b, base + 14, '#6a6098', '#f0b0b8');
-    // the sea of cloud: bands of soft cloud drifting, lit pink on top
-    var top = Math.round(base + 10);
-    ctx.fillStyle = '#c8b4d4'; ctx.fillRect(0, top + 8, w, h - top);
+    peaks(ctx, range.a, base, blend(W, function (p) { return p.far[0]; }), blend(W, function (p) { return p.far[1]; }));
+    peaks(ctx, range.b, base + 14, blend(W, function (p) { return p.near[0]; }), blend(W, function (p) { return p.near[1]; }));
+    // the sea of cloud: bands of soft cloud drifting, lit on top
+    var top = Math.round(base + 10), c1 = blend(W, function (p) { return p.cloud[1]; }), c2 = blend(W, function (p) { return p.cloud[2]; });
+    ctx.fillStyle = blend(W, function (p) { return p.cloud[0]; }); ctx.fillRect(0, top + 8, w, h - top);
     for (var r = 0; r < 9; r++) {
       var yy = top + r * 9, sp = now / (900 + r * 300);
       for (var c = -1; c < w / 40 + 1; c++) {
         var cx = ((c * 40 + sp * (r % 2 ? 6 : -4)) % (w + 80)) - 40 + (r * 13) % 40;
-        ctx.fillStyle = r % 2 ? '#e8d8e8' : '#f6e4e8';
+        ctx.fillStyle = r % 2 ? c1 : c2;
         ctx.beginPath(); ctx.ellipse(cx, yy, 26 + (c * 7 + r) % 12, 6 + r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
       }
     }
