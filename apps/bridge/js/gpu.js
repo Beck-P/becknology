@@ -14,8 +14,8 @@
  *          Worked at half, quarter and eighth size, then laid over the frame (a screen blend) at native resolution, so it
  *          lands on the same pixel grid as the art; the art's own pixels are read exactly, never resampled.
  *
- * BridgeGPU.source(buf) — the place as drawn so far (scene and ground, no people yet): what glows this frame.
- *   Without it the whole finished frame is used.
+ * BridgeGPU.source(buf, offX, offY) — the place as drawn so far (scene and ground, no people yet): what glows this
+ *   frame (offX, offY: the camera's offset, so the glow's grid stays on the world). Without it the whole finished frame.
  * BridgeGPU.present(buf, w, h, opts) → a canvas holding the finished frame, or null when the card isn't there to
  *   help (no WebGL2, the context lost, graphics drawn in software, or turned off: ?gpu=0 in the URL, or localStorage
  *   bridge_gpu = 'off') — the caller then draws buf as before. ?gpu=1 keeps it on even in software (the tests).
@@ -32,6 +32,22 @@ var BridgeGPU = (function () {
 
   var cv = null, gl = null, failed = false, lost = false, frames = 0;
   var prog = {}, frame = null, src = null, sourced = false, T = {}, vao = null, none = null, glows = {};
+  // The glow is worked out on a copy of the frame shifted so the world always falls on the same grid: its half, quarter
+  // and eighth sizes, and the 8-px neighbourhood the eye compares a light against, group the same world pixels wherever
+  // the camera stands. On the frame's own grid every one-pixel step of the camera regrouped them, and halos pulsed as
+  // you walked (Beck: "a weird flicker anytime I move"). ALIGN is the coarsest grid used (the 8-px mip).
+  var ALIGN = 8, stage = null, sctx = null, phase = [0, 0], pw = 0, ph = 0;
+  function aligned(buf, w, h, offX, offY) {
+    phase = [(((-Math.round(offX || 0)) % ALIGN) + ALIGN) % ALIGN, (((-Math.round(offY || 0)) % ALIGN) + ALIGN) % ALIGN];
+    pw = Math.ceil((w + ALIGN) / ALIGN) * ALIGN; ph = Math.ceil((h + ALIGN) / ALIGN) * ALIGN;
+    if (!stage) { stage = document.createElement('canvas'); sctx = stage.getContext('2d'); }
+    if (stage.width !== pw || stage.height !== ph) { stage.width = pw; stage.height = ph; }
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    sctx.globalCompositeOperation = 'copy';
+    sctx.drawImage(buf, phase[0], phase[1]);
+    sctx.globalCompositeOperation = 'source-over';
+    return stage;
+  }
 
   var VS = '#version 300 es\nin vec2 p;\nvoid main() { gl_Position = vec4(p, 0.0, 1.0); }\n';
   var HEAD = '#version 300 es\nprecision highp float;\nout vec4 o;\n' +
@@ -73,14 +89,15 @@ var BridgeGPU = (function () {
     // the frame, exactly, with the glow screened over it (premultiplied, so the alpha comes along)
     out: HEAD +
       'uniform sampler2D frame; uniform sampler2D g1; uniform sampler2D g2; uniform sampler2D g3; uniform vec3 wts;\n' +
-      'uniform vec2 size; uniform float amt; uniform float vig;\n' +
+      'uniform vec2 size; uniform float amt; uniform float vig; uniform vec2 phase; uniform vec2 psize;\n' +
       'void main() {\n' +
       '  ivec2 px = ivec2(int(gl_FragCoord.x), int(size.y) - 1 - int(gl_FragCoord.y));\n' +
       '  vec4 f = texelFetch(frame, px, 0);\n' +
       '  vec2 uv = (vec2(px) + 0.5) / size;\n' +
+      '  vec2 gv = (vec2(px) + phase + 0.5) / psize;\n' +           // the glow was worked out on the world-aligned copy
       '  vec2 q = (uv - 0.5) * vec2(2.0, 2.0 * size.y / size.x);\n' +
       '  f.rgb *= 1.0 - vig * smoothstep(0.45, 1.3, length(q));\n' +
-      '  vec3 g = texture(g1, uv).rgb * wts.x + texture(g2, uv).rgb * wts.y + texture(g3, uv).rgb * wts.z;\n' +
+      '  vec3 g = texture(g1, gv).rgb * wts.x + texture(g2, gv).rgb * wts.y + texture(g3, gv).rgb * wts.z;\n' +
       '  g = min(vec3(1.0), g * amt);\n' +
       '  float ga = max(g.r, max(g.g, g.b));\n' +
       '  o = vec4(f.rgb + g - f.rgb * g, f.a + ga - f.a * ga);\n' +
@@ -212,9 +229,9 @@ var BridgeGPU = (function () {
 
   function glow(buf, w, h, amt, sourced, o) {
     upload(frame, buf, false);
-    if (!sourced) upload(src, buf, true);         // no source taken this frame: the whole frame is what glows
+    if (!sourced) upload(src, aligned(buf, w, h, o.offX, o.offY), true);   // no source this frame: the whole frame glows
     bind(0, src);
-    var lw = w, lh = h, outs = [];
+    var lw = pw, lh = ph, outs = [];
     for (var i = 0; i < LEVELS.length; i++) {
       lw = Math.max(1, Math.ceil(lw / 2)); lh = Math.max(1, Math.ceil(lh / 2));
       var a = target('a' + i, lw, lh), b = target('b' + i, lw, lh);
@@ -222,8 +239,8 @@ var BridgeGPU = (function () {
         var G = sceneGlow(o.scene), sky = G && typeof BridgeScene !== 'undefined' && BridgeScene.skyOf ? BridgeScene.skyOf(o.scene) : null;
         bind(1, G ? G.tex : none);
         pass('bright', a, lw, lh, function (u) {
-          gl.uniform1i(u.frame, 0); gl.uniform1f(u.gain, GAIN); gl.uniform1i(u.glowTex, 1); gl.uniform2f(u.full, w, h);
-          gl.uniform4f(u.glowAt, G ? o.offX - o.scene.meta.originX : 0, G ? o.offY - o.scene.meta.originY : 0, G ? G.w : 1, G ? G.h : 1);
+          gl.uniform1i(u.frame, 0); gl.uniform1f(u.gain, GAIN); gl.uniform1i(u.glowTex, 1); gl.uniform2f(u.full, pw, ph);
+          gl.uniform4f(u.glowAt, G ? o.offX - o.scene.meta.originX + phase[0] : 0, G ? o.offY - o.scene.meta.originY + phase[1] : 0, G ? G.w : 1, G ? G.h : 1);
           gl.uniform1f(u.glowK, G ? (sky ? 1 - 0.85 * sky.day : 1) : 0);              // a lamp by day hardly glows
           gl.uniform1f(u.guess, o.guess != null ? o.guess : 1);
         });
@@ -239,6 +256,7 @@ var BridgeGPU = (function () {
       gl.uniform1i(u.frame, 0); gl.uniform1i(u.g1, 1); gl.uniform1i(u.g2, 2); gl.uniform1i(u.g3, 3);
       gl.uniform3f(u.wts, LEVELS[0], LEVELS[1], LEVELS[2]); gl.uniform1f(u.amt, amt);
       gl.uniform1f(u.vig, o.vignette != null ? +o.vignette : VIGNETTE);
+      gl.uniform2f(u.phase, phase[0], phase[1]); gl.uniform2f(u.psize, pw, ph);
     });
   }
 
@@ -252,9 +270,9 @@ var BridgeGPU = (function () {
     if (window.console) console.warn('BridgeGPU off:', e.message);
   }
 
-  function source(buf) {
+  function source(buf, offX, offY) {
     if (!ready()) return;
-    try { upload(src, buf, true); sourced = true; } catch (e) { fail(e); }
+    try { upload(src, aligned(buf, buf.width, buf.height, offX, offY), true); sourced = true; } catch (e) { fail(e); }
   }
 
   function present(buf, w, h, opts) {
