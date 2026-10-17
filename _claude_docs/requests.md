@@ -8,7 +8,17 @@ only partly done, the rest stays here as open.
 | Ask | Status | Where / notes |
 |---|---|---|
 | Buildings need more detail — roofs are "a square with some lines on it"; make the world more detailed and alive | in progress | Done in the kit: shingled roofs (courses, joints, ridge tiles, gutters, moss), brick chimneys, ivy, doorstep pots, snowy roofs as drifts. Every outdoor scene is re-rendering with it (queue below). Next: walls, footings, street clutter. |
-| Update the title page (the Becknology start screen) | discuss | Proposal in chat: the mothership over the planet it's parked at (real day/night), a crafted pixel BECKNOLOGY logo, a real menu (Continue as Beck with portrait/where/coins, settings, who's online), later postcards of the worlds. Waiting on Beck's pick. |
+| Barn doors: the X's aren't all white, a spot on the right, panels not all the way across | **done** (in the kit) | Flat white braces in full frames, a track, handles, a cupola and weathervane. Live with the farm's re-render. |
+| Chimneys are "a couple squares" | **done** (in the kit) | Brick stacks with courses, corbel, soot, cap, clay pots, flashing. Live as scenes re-render. |
+| More variation in character | in progress | Houses: tints, shutter/timber colours, dormers, door hoods, weathervanes (done in the kit). Next: more building types and NPC variety. |
+| Going forward, make renders detailed and realistic | **done** (standing rule) | "The detail standard" in apps/bridge/CLAUDE.md: checked before any render ships. |
+| Empire: economic engine across worlds, hire and automate, manage it all from the office | in progress | Agreed plan in `_claude_docs/spec-empire.md`, six chunks. |
+| Crafting: more materials, mining feeding upgrades, build things, build out your base | in progress | Chunk 1 (materials and the Workshop) on a branch now. |
+| Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | open | Chunk 1 (workshop, smiths, crafted fittings) then chunk 2 (your own slipway, building and painting a ship; a designer later). |
+| Rarest magic items found yourself; hired warriors bring loot and monster trophies; a trophy hall; keep it cute | open | Chunks 4 and 5. |
+| Progression must feel natural, a real game to work up through | standing rule | Each chunk unlocks gradually (recipes learnt, plans bought, tiers by material). |
+| Title page: the ship over its planet, but keep the technology feel | in progress | Branch (worktree agent). |
+| Update the title page (the Becknology start screen) | in progress | Proposal in chat: the mothership over the planet it's parked at (real day/night), a crafted pixel BECKNOLOGY logo, a real menu (Continue as Beck with portrait/where/coins, settings, who's online), later postcards of the worlds. Waiting on Beck's pick. |
 | Grass should be actual drawn grass and textures, "not random blobs", "subtle little grass… down to that small level" | **done** (rolling out) | Hand-drawn pixel marks stamped over every meadow (`scene_post.grass_detail`); broad patches evened out; the turf's grain in tile units. Each outdoor scene gets it as it re-renders (queue below). |
 | "Use open source projects where it helps" | noted | Use permissively licensed (CC0 / MIT) tools or art only; none adopted yet. |
 | Apply the seasons to all the places in those worlds | **done** | Ground through the year on every outdoor place of Lumar and Verdance (js/foliage.js `ground`), trees already turned. Fully visible once each scene re-renders with its grass marked. |
