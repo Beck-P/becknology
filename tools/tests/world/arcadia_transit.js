@@ -13,7 +13,9 @@ const BASE = 'http://127.0.0.1:8766/';
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|supabase/i.test(m.text())) { errors++; console.log('console', m.text().slice(0, 200)); } });
   await p.route(/supabase-js|supabase\.co|@supabase/, r => r.abort());
   await p.goto(BASE); await p.waitForTimeout(2500);
-  await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); });
+  await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide();
+    window._coins = 500;                                       // the fares (a stand-in purse)
+    BridgeProgression.wagerCoins = (n) => Promise.resolve(window._coins >= n ? (window._coins -= n, { ok: true, balance: window._coins }) : { ok: false, reason: 'insufficient' }); });
   const go = (w, at) => p.evaluate(([w, at]) => new Promise(r => BridgeWorld.load(w, () => { BridgeState.transition('world', { worldId: w, spawn: at ? { x: at[0], y: at[1] } : null }); r(); })), [w, at]);
   const where = () => p.evaluate(() => [BridgeWorld.getWorldId(), BridgeCharacter.getX(), BridgeCharacter.getY()]);
   const use = (pred) => p.evaluate((src) => { const f = new Function('i', 'return ' + src); const it = BridgeWorld.getWorld().interactions.find(f); if (it) BridgeInteractions.execute(it); return it && it.label; }, pred);
