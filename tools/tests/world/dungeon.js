@@ -50,7 +50,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   const arrive = () => p.waitForFunction(() => BridgeDungeon._here() && BridgeWorld.getWorld() === BridgeDungeon._here().data, null, { timeout: 15000 }).then(() => p.waitForTimeout(600));
   const floorInfo = () => ev(() => {
     const H = BridgeDungeon._here(), w = BridgeWorld.getWorld(), C = w.collisions.map(r => r.slice());
-    w.interactions.forEach(i => { if (i.type === 'hostile') C[i._ry != null ? i._ry : i.y][i._rx != null ? i._rx : i.x] = 0; });   // they move: not walls
+    w.interactions.forEach(i => { if (i.type === 'hostile') C[i.y][i.x] = 0; });   // they move: not walls (their tile, not where they're drawn gliding)
     const s = [w.spawns.player[0], w.spawns.player[1]], seen = { [s]: 1 }, q = [s];
     while (q.length) { const c = q.shift(); [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(d => { const n = [c[0] + d[0], c[1] + d[1]]; if (n[0] < 0 || n[1] < 0 || n[0] >= w.width || n[1] >= w.height || seen[n] || C[n[1]][n[0]]) return; seen[n] = 1; q.push(n); }); }
     let open = 0, reached = 0; C.forEach((row, y) => row.forEach((v, x) => { if (!v) { open++; if (seen[[x, y]]) reached++; } }));
