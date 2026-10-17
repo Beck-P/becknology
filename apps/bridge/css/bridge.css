@@ -1500,6 +1500,9 @@ html.touch .pk-keys { display: none; }
   .sp-have, .sp-price { grid-column: 2; }
 }
 /* choosers (harbour books, wares): the name keeps its line, the detail wraps beside it */
+/* a chooser's picture (a ship as she's fitted, js/sloop.js portrait): game pixels at a whole multiple, framed */
+.wd-art { display: block; margin: 8px auto 2px; max-width: 100%; image-rendering: pixelated; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35); }
+.world-dialog.wd-has-art { top: 50%; max-height: calc(100vh - 16px); overflow-y: auto; }                 /* (a taller card: it scrolls) */
 .wd-chooser .wd-sell-row.pick { grid-template-columns: 24px minmax(96px, max-content) 1fr auto auto; }
 .wd-chooser .sp-name { white-space: nowrap; }
 .wd-chooser .sp-have { white-space: normal; text-align: right; line-height: 1.3; }

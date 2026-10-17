@@ -1150,8 +1150,8 @@ var BridgeInteractions = (function () {
   }
 
   // A chooser in the world's dialog style, for the systems that need one (the farm's bin, board and seed box,
-  // hiring a hand, giving a gift): spec = { title, text, rows: [{ label, note, icon: item id, stats: a weapon's id
-  // (its stats card under the row), disabled, pick }],
+  // hiring a hand, giving a gift): spec = { title, text, art: fn(canvas) (a picture under the text: a ship as she's
+  // fitted), rows: [{ label, note, icon: item id, stats: a weapon's id (its stats card under the row), disabled, pick }],
   // input: { placeholder, value, submit }, buttons: [{ label, act, disabled }] }. Picking a row or a button closes
   // the chooser unless its function returns false.
   function showChooser(spec) {
@@ -1163,6 +1163,7 @@ var BridgeInteractions = (function () {
     var rows = spec.rows || [], buttons = (spec.buttons || []).concat([{ label: spec.closeLabel || 'Leave', act: null }]);
     dialogEl.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(spec.title || '') + '</div>' +
       (spec.text ? '<div class="wd-text">' + esc(reflow(spec.text)) + '</div>' : '') +
+      (spec.art ? '<canvas class="wd-art" width="1" height="1"></canvas>' : '') +
       (rows.length ? '<div class="wd-sell wd-sell-pick wd-chooser">' + rows.map(function (r, i) {
         return '<div class="wd-sell-row pick' + (r.disabled ? ' none' : '') + '" data-r="' + i + '">' +
           '<canvas class="sp-icon" width="24" height="24"></canvas><span class="sp-name">' + esc(r.label) + '</span>' +
@@ -1178,6 +1179,8 @@ var BridgeInteractions = (function () {
       }).join('') + '</div>' + hintHTML('Esc', 'Leave') + '</div>';
     overlay.appendChild(dialogEl);
     requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
+    var art = spec.art && dialogEl.querySelector('.wd-art');
+    if (art) { dialogEl.classList.add('wd-has-art'); try { spec.art(art); } catch (e) { art.remove(); } }
     dialogEl.querySelectorAll('.wd-sell-row.pick').forEach(function (rowEl) {
       var r = rows[+rowEl.getAttribute('data-r')], cv = rowEl.querySelector('.sp-icon');
       var item = r.icon && typeof BridgeItems !== 'undefined' && BridgeItems.get(r.icon);

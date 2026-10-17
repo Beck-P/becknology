@@ -34,7 +34,7 @@ tools/tests/<suite>/<file>.js` — the `-r` loads the reroute before the test la
 | `multi` | two pilots (Beck and Alyssa) on the fake Supabase: seeing each other, walking, presence and away, gifts and trades, partners, shared clues, fighting together, health, sailing together, boats at sea, the players pill at sea, a sea fight together. |
 | `together` | every game played together (js/together.js): cabinets, helicopter, Fell Dice and Bones, chess, the dance floor, pachinko, Splice, the cipher room, the typist; the edges (a "not now", a watcher, a partner vanishing, someone elsewhere coming over); the games alone; table chat (desktop and phone). |
 | `royale` | every Neon Royale table opens its Royale Link game; coins staked and paid through the Bridge (Esc mid-round, a page closed with chips out); typing an exact hold'em bet (desktop and phone). |
-| `combat` | every weapon's swings land and do what they say (`hits.js`); a fight, blacking out and waking; a sea fight. |
+| `combat` | every weapon's swings land and do what they say (`hits.js`); a fight, blacking out and waking; a sea fight; ships as fitted (`shipviz.js`: guns and fittings on every hull at each heading — Lumar's night; `AT=2026-10-16T12:00` for its day — a broadside's flashes, smoke, shots, splashes and hits filmed frame by frame, the harbourmaster's portraits). |
 
 ## Reading the results
 
