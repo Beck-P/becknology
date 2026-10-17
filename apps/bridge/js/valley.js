@@ -93,33 +93,102 @@ var BridgeValley = (function () {
     return out;
   }
   function px(ctx, u) { return function (x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(Math.round(x * u), Math.round(y * u), Math.round(w * u), Math.round(h * u)); }; }
+  // An outlined painter on the 16-unit grid: shapes are collected, then drawn twice — first every one a unit fatter in
+  // the outline colour (so the line runs round the whole silhouette, not round each piece of it), then their fills in
+  // order. E an ellipse (`jag(row)` roughens its edge: fur, rubble), S a limb (a square brush along a line), T a
+  // triangle (ears, spines, jaws), R a small detail; `inner` shapes are shading and get no outline.
+  function painter(ctx, u) {
+    var list = [];
+    function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(Math.round(x * u), Math.round(y * u), Math.round(w * u), Math.round(h * u)); }
+    function ell(o, c, grow) {
+      var rx = o.rx + grow, ry = o.ry + grow;
+      for (var y = -ry; y <= ry; y++) {
+        var k = 1 - (y * y) / ((ry + 0.5) * (ry + 0.5));
+        if (k <= 0) continue;
+        var hw = Math.round(rx * Math.sqrt(k)) + (o.jag ? o.jag(y) : 0);
+        if (hw >= 0) rect(o.x - hw, o.y + y, hw * 2 + 1, 1, c);
+      }
+    }
+    function seg(o, c, grow) {
+      var n = Math.max(1, Math.round(Math.max(Math.abs(o.x1 - o.x0), Math.abs(o.y1 - o.y0)))), w = o.w + grow * 2;
+      for (var i = 0; i <= n; i++) {
+        var x = Math.round(o.x0 + (o.x1 - o.x0) * i / n), y = Math.round(o.y0 + (o.y1 - o.y0) * i / n);
+        rect(x - Math.floor(w / 2), y - Math.floor(w / 2), w, w, c);
+      }
+    }
+    function tri(o, c, dx, dy) {
+      var p = o.p, y0 = Math.min(p[0][1], p[1][1], p[2][1]), y1 = Math.max(p[0][1], p[1][1], p[2][1]);
+      for (var y = Math.round(y0); y <= Math.round(y1); y++) {
+        var xs = [];
+        for (var i = 0; i < 3; i++) {
+          var a = p[i], b = p[(i + 1) % 3];
+          if ((a[1] <= y && b[1] >= y) || (b[1] <= y && a[1] >= y)) xs.push(a[1] === b[1] ? a[0] : a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]));
+          if (a[1] === b[1] && a[1] === y) xs.push(b[0]);
+        }
+        if (!xs.length) continue;
+        var lo = Math.round(Math.min.apply(null, xs)), hi = Math.round(Math.max.apply(null, xs));
+        rect(lo + dx, y + dy, hi - lo + 1, 1, c);
+      }
+    }
+    function one(o, c, grow) { if (o.k === 'e') ell(o, c, grow); else if (o.k === 's') seg(o, c, grow); else if (o.k === 't') tri(o, c, 0, 0); else rect(o.x, o.y, o.w, o.h, c); }
+    var P = {
+      E: function (x, y, rx, ry, c, o) { list.push({ k: 'e', x: Math.round(x), y: Math.round(y), rx: Math.max(0, Math.round(rx)), ry: Math.max(0, Math.round(ry)), c: c, jag: o && o.jag, inner: o && o.inner }); return P; },
+      S: function (x0, y0, x1, y1, w, c, o) { list.push({ k: 's', x0: x0, y0: y0, x1: x1, y1: y1, w: w, c: c, inner: o && o.inner }); return P; },
+      T: function (p, c, o) { list.push({ k: 't', p: p, c: c, inner: o && o.inner }); return P; },
+      R: function (x, y, w, h, c) { list.push({ k: 'r', x: x, y: y, w: w, h: h, c: c, inner: true }); return P; },
+      go: function (OL) {
+        list.forEach(function (o) {
+          if (o.inner) return;
+          if (o.k === 't') [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { tri(o, OL, d[0], d[1]); });
+          else one(o, OL, 1);
+        });
+        list.forEach(function (o) { one(o, o.c, 0); });
+        list = [];
+      }
+    };
+    return P;
+  }
+  function shag(seed, n) { return function (y) { return (((y * 7 + seed) % (n || 3)) + (n || 3)) % (n || 3) === 0 ? 1 : 0; }; }
+
   function moving(h) { return Math.abs(h._rx - h.x) > 0.02 || Math.abs(h._ry - h.y) > 0.02; }
 
   // ---- the ice wolf ------------------------------------------------------------------------------------------------
   function drawWolf(ctx, h, u, t, st) {
-    var p = px(ctx, u);
+    var P = painter(ctx, u);
     ctx.scale(h._face || 1, 1);
-    var OL = '#141c2a', D = '#64789e', M = '#b2c4de', L = '#eef6ff', EYE = st.eye || '#5ae0ff';
-    var mv = moving(h), cr = st.wind ? 1 : 0;
-    var wag = Math.round(Math.sin(t * 7));                                 // the brush of a tail, up behind
-    p(-15, -15 + cr + wag, 6, 5, OL); p(-14, -14 + cr + wag, 4, 3, M); p(-14, -14 + cr + wag, 2, 1, L); p(-11, -11 + cr, 3, 3, OL); p(-10, -11 + cr, 2, 2, D);
-    [[-8, 0, D], [-5, 2, M], [3, 1, D], [6, 3, M]].forEach(function (lg) {  // legs, running; the near ones paler
-      var o = Math.round(Math.sin(t * 20 + lg[1]) * (mv ? 1 : 0));
-      p(lg[0] + o, -6 + cr, 3, 6 - cr, OL); p(lg[0] + o + 1, -6 + cr, 1, 5 - cr, lg[2]); p(lg[0] + o, -1, 3, 1, OL);
-    });
-    p(-10, -13 + cr, 19, 9, OL);                                           // the body: a dark saddle, pale flanks and belly
-    p(-9, -12 + cr, 17, 2, D); p(-9, -10 + cr, 17, 2, M); p(-9, -8 + cr, 17, 2, L); p(-8, -6 + cr, 15, 1, D);
-    p(-6, -12 + cr, 2, 1, M); p(-1, -12 + cr, 2, 1, M);                     // fur catching the light
-    if (st.wind) { for (var k = 0; k < 4; k++) p(-7 + k * 3, -14 + cr, 1, 1, OL); }   // hackles up
-    p(3, -16 + cr, 8, 11, OL); p(4, -15 + cr, 6, 9, L); p(4, -8 + cr, 6, 1, M); p(5, -15 + cr, 1, 1, M);   // the ruff
-    var hy = -18 + cr * 2;
-    p(7, hy, 8, 8, OL); p(8, hy + 1, 6, 6, M); p(8, hy + 1, 6, 1, D); p(8, hy + 5, 6, 1, L);   // the head
-    p(13, hy + 3, 3, 4, OL); p(13, hy + 4, 2, 2, L); p(15, hy + 3, 1, 1, '#0a0e16');           // the muzzle and its nose
-    if (st.wind || st.strike) { p(12, hy + 7, 4, 1, OL); p(13, hy + 6, 1, 1, '#ffffff'); p(15, hy + 6, 1, 1, '#ffffff'); }
-    p(8, hy - 3, 2, 3, OL); p(11, hy - 3, 2, 3, OL); p(8, hy - 2, 1, 1, D); p(11, hy - 2, 1, 1, D);   // ears up
-    p(11, hy + 2, 2, 1, OL); p(12, hy + 3, 1, 1, EYE);
+    var OL = '#141c2a', W = '#f2f8ff', PL = '#c2d0e4', S = '#8798b8', D = '#566a8e', EYE = st.wind || st.strike ? '#ffffff' : '#b8e4ff';
+    var run = moving(h) && !st.wind, cr = st.wind ? 2 : 0, by = -10 + cr;
+    var g = t * 12, a = run ? Math.sin(g) : 0, b = run ? Math.cos(g) : 0;
+    function leg(hx, fx, knee, col) {                                    // hip, foot, the knee's lean (back for the hind legs)
+      var ky = by + 5 - Math.round(cr / 2);
+      P.S(hx, by + 2, hx + knee, ky, 2, col).S(hx + knee, ky, fx, -1, 2, col).R(fx - 1, -1, 2, 1, D);
+    }
+    // the far legs, darker; the hind ones bent back at the hock, the fore ones straight; a gallop swings them in pairs
+    var reach = st.strike ? 3 : 0;
+    leg(-5, -6 - Math.round(a * 3) - reach, -1, D);
+    leg(5, 6 + Math.round(b * 3) + reach, 1, D);
+    // the tail, long and bushy, held low behind
+    var tw = Math.round(Math.sin(t * 3));
+    P.S(-8, by - 1, -12, by + 2 + tw, 3, PL).S(-12, by + 2 + tw, -14, by + 5 + tw, 2, W);
+    // the body: a rump, a tucked waist, a deep chest; the neck and head reaching forward
+    P.E(-5, by, 4, 3, PL).E(0, by - 1, 4, 2, PL).E(5, by + 1, 4, 4, PL);
+    P.S(6, by - 2, 8, by - 5, 4, PL);
+    P.E(10, by - 6, 3, 2, PL);
+    P.T([[11, by - 8], [15, by - 5], [11, by - 4]], PL);                 // the snout
+    P.T([[8, by - 7], [9, by - 11], [10, by - 7]], S).T([[10, by - 7], [11, by - 11], [12, by - 7]], S);   // ears pricked
+    if (st.wind) for (var k = 0; k < 4; k++) P.T([[-6 + k * 3, by - 3], [-5 + k * 3, by - 6], [-4 + k * 3, by - 3]], D);   // hackles up
+    // shading: a dark saddle along the back, a white chest and belly, a lit cheek
+    P.E(-2, by - 2, 6, 1, D, { inner: true }).E(4, by - 2, 2, 0, D, { inner: true });
+    P.E(6, by + 3, 2, 2, W, { inner: true }).E(0, by + 1, 3, 0, W, { inner: true }).E(-6, by + 2, 2, 0, S, { inner: true });
+    P.E(10, by - 5, 2, 0, W, { inner: true }).R(9, by - 9, 1, 1, D).R(11, by - 9, 1, 1, D);
+    P.R(14, by - 6, 2, 1, '#141c2a').R(11, by - 7, 2, 1, EYE).R(10, by - 8, 2, 1, D);
+    if (st.wind || st.strike) P.R(12, by - 4, 3, 1, '#5a1a2a').R(14, by - 4, 1, 1, '#ffffff');
+    // the near legs over the belly, pale
+    leg(-4, -4 + Math.round(a * 3) - reach, -1, PL);
+    leg(6, 7 - Math.round(b * 3) + reach, 1, W);
+    P.go(OL);
     var br = (t * 0.7) % 1;                                                // breath smoking in the cold
-    if (br < 0.5) { ctx.globalAlpha = 0.55 * (1 - br * 2); p(14 + br * 2, hy + 1 - br * 5, 2, 1, '#f0f8ff'); ctx.globalAlpha = 1; }
+    if (br < 0.5) { ctx.globalAlpha = 0.55 * (1 - br * 2); ctx.fillStyle = '#f0f8ff'; ctx.fillRect(Math.round((15 + br * 3) * u), Math.round((by - 7 - br * 5) * u), 2 * u, u); ctx.globalAlpha = 1; }
   }
   function wolfTick(world, h, now, player) {
     if (!player) return 1;
@@ -262,36 +331,55 @@ var BridgeValley = (function () {
 
   // ---- the rime golem ----------------------------------------------------------------------------------------------
   function drawGolem(ctx, h, u, t, st) {
-    var p = px(ctx, u);
-    var OL = '#0a1220', ID = '#3a5a7a', IM = '#6a9ac0', IL = '#b8e0f4', CORE = '#7af0ff', CR = '#f0f8ff', CK = '#1a2a3a';
-    var sw = st.wind || st.strike ? 0 : Math.round(Math.sin(t * 2) * 0.6);
-    p(-7, -7, 5, 7, OL); p(2, -7, 5, 7, OL); p(-6, -7, 3, 6, ID); p(3, -7, 3, 6, ID); p(-6, -7, 3, 1, IM); p(3, -7, 3, 1, IM);
-    p(-9 + sw, -21, 18, 15, OL);                                           // the body: blocks of old ice
-    p(-8 + sw, -20, 16, 13, IM); p(-8 + sw, -20, 16, 2, IL); p(-8 + sw, -9, 16, 2, ID); p(5 + sw, -18, 2, 9, ID);
-    p(-1 + sw, -20, 1, 6, ID); p(-8 + sw, -14, 7, 1, ID);
-    var beat = 0.6 + 0.4 * Math.abs(Math.sin(t * 2.2));                    // its heart, beating slowly
-    p(-3 + sw, -17, 6, 6, OL); ctx.globalAlpha = beat; p(-2 + sw, -16, 4, 4, CORE); p(-1 + sw, -15, 1, 1, '#ffffff'); ctx.globalAlpha = 1;
-    [[-9, -24, 3], [-6, -26, 4], [6, -25, 3], [8, -23, 2]].forEach(function (c) {           // ice grown on its shoulders
-      p(c[0] + sw - 1, c[1] - 1, 3, c[2] + 2, OL); p(c[0] + sw, c[1], 1, c[2] + 1, IL);
-    });
-    p(-5 + sw, -28, 10, 8, OL); p(-4 + sw, -27, 8, 6, IM); p(-4 + sw, -27, 8, 1, IL);   // the head
-    p(-2 + sw, -24, 1, 1, st.eye || CORE); p(1 + sw, -24, 1, 1, st.eye || CORE);
-    if (st.wind) {                                                         // both fists high over its head
-      p(-14, -32, 5, 15, OL); p(9, -32, 5, 15, OL); p(-13, -31, 3, 13, IM); p(10, -31, 3, 13, IM);
-      p(-15, -36, 7, 5, OL); p(8, -36, 7, 5, OL); p(-14, -35, 5, 3, IL); p(9, -35, 5, 3, IL);
-    } else if (st.strike) {                                                // driven into the ground
-      p(-14, -18, 5, 14, OL); p(9, -18, 5, 14, OL); p(-13, -17, 3, 12, IM); p(10, -17, 3, 12, IM);
-      p(-16, -5, 8, 5, OL); p(8, -5, 8, 5, OL); p(-15, -4, 6, 3, IL); p(9, -4, 6, 3, IL);
-      ctx.globalAlpha = 0.7; for (var dd = 0; dd < 8; dd++) p(-15 + dd * 4, -2 - (dd % 3), 1, 1, CR); ctx.globalAlpha = 1;
-    } else {
-      p(-13 + sw, -21, 5, 13, OL); p(8 + sw, -21, 5, 13, OL); p(-12 + sw, -20, 3, 11, IM); p(9 + sw, -20, 3, 11, IM);
-      p(-14 + sw, -9, 6, 5, OL); p(8 + sw, -9, 6, 5, OL); p(-13 + sw, -8, 4, 3, ID); p(9 + sw, -8, 4, 3, ID);
+    var P = painter(ctx, u);
+    var OL = '#0e1626', RD = '#3e4e68', RM = '#5e7494', RL = '#8aa2c2', C = '#eef6ff', CS = '#c8dcee', G = '#7af0ff', GD = '#2a9ac0';
+    var cracked = !!h._cracked, arm = h._armour === undefined ? 3 : h._armour;
+    var sw = st.wind || st.strike ? 0 : Math.round(Math.sin(t * 2) * 0.6), up = st.wind ? -2 : 0;
+    var pulse = 0.5 + 0.5 * Math.abs(Math.sin(t * 2.2)), glow = cracked || pulse > 0.6 ? G : GD;
+    var jA = shag(3, 4), jB = shag(5, 3), jC = shag(1, 5);
+    function stones(pts, fist) {                                           // an arm of stacked stones, a fist of rubble
+      pts.forEach(function (q) { P.E(q[0], q[1], 2, 2, RM, { jag: jC }); });
+      P.E(fist[0], fist[1], 3, 2, RM, { jag: jA });
     }
-    if (!h._cracked) {                                                     // the frost armour: a white crust
-      var a = h._armour === undefined ? 3 : h._armour;
-      p(-8 + sw, -21, 6, 3, CR); p(3 + sw, -21, 5, 2, CR); p(-4 + sw, -28, 8, 2, CR); p(-8 + sw, -12, 3, 3, CR); p(6 + sw, -14, 2, 4, CR);
-      if (a < 3) { p(-6 + sw, -20, 1, 2, CK); p(-5 + sw, -19, 2, 1, CK); }
-      if (a < 2) { p(4 + sw, -20, 1, 1, CK); p(-2 + sw, -27, 2, 1, CK); p(7 + sw, -13, 1, 2, CK); }
+    function stoneLight(pts, fist) {
+      pts.forEach(function (q) { P.R(q[0] - 1, q[1] - 2, 2, 1, RL); });
+      P.R(fist[0] - 2, fist[1] - 2, 3, 1, cracked ? RL : C);
+    }
+    P.E(-5, -3, 3, 3, RD, { jag: jA }).E(5, -3, 3, 3, RD, { jag: jB });   // two boulders for feet
+    P.E(0, -8, 7, 3, RM, { jag: jA });                                     // the hips
+    P.E(-1 + sw, -14 + up, 8, 6, RM, { jag: jB });                         // the chest: one great stone
+    P.E(8 + sw, -20 + up, 6, 5, RM, { jag: jA }).E(-8 + sw, -19 + up, 4, 4, RM, { jag: jB });   // a big shoulder and a small one
+    P.E(1 + sw, -22 + up, 3, 3, RM, { jag: jC });                          // the head, a small boulder sunk between them
+    var L, F, L2, F2;
+    if (st.wind) { L = [[-11, -21], [-10, -24]]; F = [-7, -27]; L2 = [[13, -23], [11, -25]]; F2 = [6, -27]; }
+    else if (st.strike) { L = [[-11, -14], [-12, -9]]; F = [-13, -3]; L2 = [[13, -14], [13, -9]]; F2 = [13, -3]; }
+    else { L = [[-12 + sw, -16], [-13 + sw, -12]]; F = [-13 + sw, -8]; L2 = [[14 + sw, -16], [14 + sw, -12]]; F2 = [13 + sw, -8]; }
+    stones(L, F); stones(L2, F2);
+    // light on their tops, dark below; cracks with cold light leaking out
+    P.E(-3 + sw, -17 + up, 5, 2, RL, { inner: true }).E(3 + sw, -11 + up, 5, 1, RD, { inner: true }).E(6 + sw, -22 + up, 3, 1, RL, { inner: true });
+    P.E(11 + sw, -18 + up, 2, 2, RD, { inner: true }).E(-9 + sw, -21 + up, 2, 1, RL, { inner: true }).E(2, -6, 5, 1, RD, { inner: true });
+    P.R(-6, -5, 2, 1, RL).R(4, -5, 2, 1, RL);
+    P.E(-1 + sw, -8 + up, 6, 0, OL, { inner: true }).E(3 + sw, -15 + up, 0, 3, OL, { inner: true });   // the seams where its stones meet
+    P.S(-5 + sw, -21 + up, -2 + sw, -18 + up, 1, OL, { inner: true }).S(4 + sw, -19 + up, 2 + sw, -15 + up, 1, OL, { inner: true });
+    P.R(-1 + sw, -20 + up, 5, 1, OL).R(0, -1, 1, 1, OL);
+    P.S(-4 + sw, -18 + up, -1 + sw, -15 + up, 1, glow, { inner: true }).S(-1 + sw, -15 + up, -3 + sw, -11 + up, 1, glow, { inner: true });
+    P.S(9 + sw, -23 + up, 11 + sw, -19 + up, 1, glow, { inner: true }).S(1, -9, 4, -7, 1, glow, { inner: true });
+    if (cracked) P.S(2 + sw, -17 + up, 5 + sw, -13 + up, 1, G, { inner: true }).S(-7 + sw, -21 + up, -9 + sw, -18 + up, 1, G, { inner: true });
+    P.R(0 + sw, -23 + up, 1, 1, st.eye || G).R(2 + sw, -23 + up, 1, 1, st.eye || G);
+    stoneLight(L, F); stoneLight(L2, F2);
+    if (!cracked) {                                                        // the rime: a crust on whatever faces up
+      P.E(8 + sw, -24 + up, 4, 0, C, { inner: true }).E(7 + sw, -23 + up, 3, 0, CS, { inner: true });
+      P.E(-8 + sw, -22 + up, 2, 0, C, { inner: true }).E(1 + sw, -24 + up, 2, 0, C, { inner: true });
+      P.E(-2 + sw, -19 + up, 4, 0, CS, { inner: true }).E(0, -10, 4, 0, CS, { inner: true });
+      P.R(10 + sw, -23 + up, 1, 2, C).R(-9 + sw, -21 + up, 1, 2, C).R(-5 + sw, -18 + up, 1, 2, CS);
+      if (arm < 3) P.R(6 + sw, -24 + up, 1, 1, RD).R(-1 + sw, -19 + up, 1, 1, RD);
+      if (arm < 2) P.R(9 + sw, -24 + up, 2, 1, RD).R(-8 + sw, -22 + up, 1, 1, RD).R(-3 + sw, -19 + up, 1, 1, RD);
+    } else P.R(7 + sw, -24 + up, 1, 1, C).R(-8 + sw, -22 + up, 1, 1, C);   // a few flakes of it left
+    P.go(OL);
+    if (st.strike) {                                                       // the ground cracking
+      ctx.globalAlpha = 0.7; ctx.fillStyle = C;
+      for (var dd = 0; dd < 8; dd++) ctx.fillRect(Math.round((-15 + dd * 4) * u), Math.round((-2 - (dd % 3)) * u), u, u);
+      ctx.globalAlpha = 1;
     }
   }
   function golemGuard(world, h, dmg, w) {
@@ -319,7 +407,15 @@ var BridgeValley = (function () {
       var wv = r > 12 ? Math.round(Math.sin(t * 4 + r * 0.5)) : 0;
       var half = r < 5 ? 2 + r : r < 9 ? 6 : Math.min(9, 6 + Math.floor((r - 8) / 3));
       var y = -24 + r + bob, x0 = -half + wv;
-      if (r === 21) { for (var tt = -half; tt < half; tt += 3) p(tt + wv, y, 2, 1 + ((tt + Math.round(t * 3)) & 1), OL); continue; }   // the tattered hem
+      if (r === 21) {                                                      // the hem frays into wisps of frost
+        ctx.globalAlpha = bl * 0.7;
+        for (var tt = -half; tt < half; tt += 2) {
+          var L = 2 + ((tt * 5 + Math.round(t * 4)) % 3 + 3) % 3, sx = tt + wv + Math.round(Math.sin(t * 5 + tt));
+          p(sx, y, 1, L, (tt & 2) ? MI : FO); p(sx + (tt % 4 ? 1 : -1), y + L, 1, 1, HI);
+        }
+        ctx.globalAlpha = bl * (st.wind ? 0.95 : 0.85);
+        continue;
+      }
       p(x0 - 1, y, half * 2 + 2, 1, OL);
       p(x0, y, half * 2, 1, MI);
       p(x0, y, 1, 1, HI);
@@ -342,46 +438,81 @@ var BridgeValley = (function () {
   function under(h) { return h._attackPhase === 'under' || (h._attackPhase === 'winding' && h._kind === 'breach'); }
   function drawWyrm(ctx, h, u, t, st) {
     if (under(h)) return;
-    var p = px(ctx, u), f = h._face || 1;
-    var OL = '#0c1830', S1 = '#4e82b8', S2 = '#6a9ed0', SL = '#b8e4f8', BL = '#e8f6fc', IC = '#f4fcff', EYE = '#ffffff';
+    var P = painter(ctx, u), f = h._face || 1;
+    var OL = '#0c1830', S1 = '#4e82b8', S2 = '#6a9ed0', SL = '#b8e4f8', BL = '#e8f6fc', IC = '#f4fcff', EYE = '#a8f4ff';
     var rise = h._surfaced ? Math.min(1, (performance.now() - h._surfaced) / 260) : 1;
     var bite = (st.wind || st.strike) && h._kind === 'bite', sweep = (st.wind || st.strike) && h._kind === 'sweep';
-    // the hole it came up through: broken snow round a dark mouth
-    p(-16, -3, 32, 4, OL); p(-14, -2, 28, 2, '#14243a');
-    for (var c = 0; c < 9; c++) { var cx = -16 + c * 4 + (c % 2); p(cx, -4 - (c % 3), 4, 3, OL); p(cx + 1, -4 - (c % 3), 2, 2, c % 2 ? '#e8f0fa' : '#c4d2e6'); }
-    if (sweep) {                                                           // its tail, flung round out of the snow
-      var sa = st.strike ? 1 : 0.5 + 0.5 * Math.sin(t * 9);
-      for (var q = 0; q < 8; q++) { var tx = -f * (6 + q * 2), ty = -4 - Math.round(Math.sin(q * 0.6 + sa) * 3); p(tx - 2, ty - 2, 4, 3, OL); p(tx - 1, ty - 2, 2, 2, q % 2 ? S1 : S2); }
+    ctx.scale(f, 1);
+    // the snow broken where its body comes up through it
+    P.E(-4, 0, 21, 2, '#dfe8f6', { jag: shag(2, 3) }).E(-4, 1, 18, 0, '#c4d2e6', { inner: true });
+    [-20, -10, -11, 0, 1, 7].forEach(function (x) { P.E(x, -1, 2, 1, '#14243a', { inner: true }); });
+    P.go('#8a9cbc');
+    // a coil of its body arching out of the snow and back in: discs along a half circle, spines on its back
+    function arch(cx, R, r0, r1) {
+      var n = Math.round(R * 2);
+      for (var i = 0; i <= n; i++) {
+        var a = Math.PI - Math.PI * i / n, x = cx + Math.cos(a) * R, y = -Math.sin(a) * R * rise, r = r0 + (r1 - r0) * i / n;
+        P.E(x, y, r, r, S2);
+        if (i % 3 === 1 && i < n) {
+          var dx = Math.cos(a), dy = -Math.sin(a);
+          P.T([[x + dx * (r + 2), y + dy * (r + 2)], [x + dx * r - dy * 1, y + dy * r + dx * 1], [x + dx * r + dy * 1, y + dy * r - dx * 1]], IC);
+        }
+      }
+      for (var j = 0; j <= n; j++) {                                       // the light along its top, the pale belly under
+        var b = Math.PI - Math.PI * j / n, X = cx + Math.cos(b) * R, Y = -Math.sin(b) * R * rise, rr = r0 + (r1 - r0) * j / n;
+        P.R(Math.round(X - 1), Math.round(Y - rr + 1), 2, 1, SL);
+        if (j % 3 === 0) P.R(Math.round(X), Math.round(Y + rr - 1), 1, 1, BL);
+        if (j % 3 === 0) P.R(Math.round(X + 1), Math.round(Y), 1, 1, S1);
+      }
     }
-    var N = 15, top = 33 * rise, lean = bite ? 6 : 0;
-    var hx = 0, hy = 0, segs = [];
-    for (var i = 0; i < N; i++) {                                          // the neck, out of the hole and arching over
-      var k = i / (N - 1);
-      segs.push([Math.round(f * (Math.sin(k * 1.5) * 7 + k * lean)), Math.round(-2 - k * top), Math.round(14 - k * 5)]);
+    if (sweep) {                                                           // the tail flung round out of the snow
+      var sa = st.strike ? 1.2 : 0.5 + 0.5 * Math.sin(t * 9);
+      for (var q = 0; q <= 9; q++) {
+        var x = -7 - q * 1.8, y = -3 - Math.abs(Math.sin(q * 0.45 + sa)) * 6, r = 3 - q * 0.22;
+        P.E(x, y, r, r, q % 2 ? S1 : S2);
+        if (q % 2 === 0) P.T([[x, y - r - 3], [x - 1.5, y - r], [x + 1.5, y - r]], IC);
+      }
+      var ty = -3 - Math.round(Math.abs(Math.sin(4.05 + sa)) * 6);
+      P.T([[-25, ty], [-22, ty - 2], [-22, ty + 2]], IC);
+    } else arch(-17, 5, 1.2, 2.4);
+    arch(-6, 7, 3, 3.5);
+    // the neck rising out of the snow and arching over, then the head
+    var lean = bite ? 3 : 0, top = 27 * rise;
+    var pts = [[2, 0.03], [3, -0.25], [2, -0.45], [4, -0.65], [7 + lean, -0.85], [10 + lean, -0.97]];
+    var hx = 0, hy = 0;
+    for (var i = 0; i < pts.length - 1; i++) {
+      for (var s = 0; s < 4; s++) {
+        var k = s / 4, x0 = pts[i][0] + (pts[i + 1][0] - pts[i][0]) * k, yk = pts[i][1] + (pts[i + 1][1] - pts[i][1]) * k;
+        var y0 = Math.min(1, yk * top), r = 4 - (i * 4 + s) * 0.07;
+        P.E(x0, y0, r, r, S2);
+        P.R(Math.round(x0 + r - 1), Math.round(y0 - 1), 1, 3, BL).R(Math.round(x0 - r + 1), Math.round(y0 - 2), 1, 2, SL);
+        if (s === 2) P.T([[x0 - r - 3, y0 - 1], [x0 - r, y0 - 2.5], [x0 - r, y0 + 1]], IC);   // spines down the back of its neck
+        hx = x0; hy = y0;
+      }
     }
-    segs.forEach(function (q) { p(q[0] - q[2] / 2 - 1, q[1] - 4, q[2] + 2, 6, OL); });   // its outline first, all the way up
-    segs.forEach(function (q, i) {                                         // then its scales over it
-      var x = q[0], y = q[1], w = q[2];
-      p(x - w / 2, y - 3, w, 4, i % 3 === 0 ? S1 : S2);
-      p(x - w / 2, y - 3, Math.max(1, Math.round(w * 0.35)), 1, SL);
-      p(x + f * (w / 2 - 2) - (f < 0 ? 1 : 0), y - 3, 2, 3, BL);           // the pale belly plates
-      if (i % 2 === 0 && i > 1) { p(x - f * (w / 2) - 1 - (f > 0 ? 1 : 0), y - 6, 2, 4, OL); p(x - f * (w / 2) - (f > 0 ? 1 : 0), y - 5, 1, 3, IC); }   // ice spines down its back
-      hx = x; hy = y;
+    var jaw = bite ? (st.strike ? 4 : 3) : st.wind ? 2 : 1, HX = hx + 4, HY = hy - 1;
+    P.E(HX, HY, 5, 3, S2);                                                 // the head: a wedge of a skull
+    P.T([[HX + 2, HY - 3], [HX + 10, HY], [HX + 2, HY + 2]], S2);          // the snout
+    P.T([[HX + 1, HY + 2], [HX + 9, HY + 2 + jaw], [HX + 1, HY + 4 + Math.min(jaw, 2)]], S1);   // the jaw, dropping open
+    P.T([[HX - 3, HY - 2], [HX - 8, HY - 6], [HX - 1, HY - 3]], IC).T([[HX - 1, HY - 3], [HX - 4, HY - 8], [HX + 1, HY - 3]], IC);   // its crest of ice
+    // shading on the neck: a lit edge, the pale belly plates down its front
+    P.E(HX - 1, HY - 2, 3, 0, SL, { inner: true });
+    if (jaw > 1) { P.R(HX + 2, HY + 2, 6, jaw - 1, '#3a0a1a'); for (var tth = 0; tth < 3; tth++) P.R(HX + 3 + tth * 2, HY + 2, 1, 1, IC); }
+    P.R(HX + 1, HY - 1, 2, 1, EYE).R(HX + 2, HY - 1, 1, 1, '#ffffff');
+    if (h._phase >= 3) P.E(HX, HY, 2, 1, '#9ae4ff', { inner: true });
+    P.go(OL);
+    [[-22, 2], [-12, 2], [-13, 3], [1, 3], [3, 5]].forEach(function (m) {    // the snow heaped where it breaks the surface, in front of it
+      if (sweep && m[0] < -11 && m[1] === 2) return;
+      P.E(m[0], m[1] > 4 ? 2 : 1, m[1] + 1, m[1] > 4 ? 3 : 2, '#eef3fa', { jag: shag(m[0] + 9, 3) }).R(m[0] - m[1], 1, m[1] * 2, 1, '#c4d2e6');
     });
-    var jaw = bite ? (st.strike ? 4 : 3) : st.wind ? 2 : 1;
-    p(hx - 7, hy - 10, 15, 9, OL);                                         // the head
-    p(hx - 6, hy - 9, 13, 6, S2); p(hx - 6, hy - 9, 13, 1, SL); p(hx - 6, hy - 4, 13, 1, S1);
-    p(hx + f * 5 - (f < 0 ? 4 : 0), hy - 7, 5, 4, OL); p(hx + f * 5 - (f < 0 ? 3 : 0) + (f < 0 ? 0 : 0), hy - 6, 4, 2, S1);   // the snout
-    p(hx - 4, hy - 1 + jaw, 12, 3, OL); p(hx - 3, hy - 1 + jaw, 10, 1, S1);  // the jaw, dropping open
-    if (jaw > 1) { p(hx - 3, hy - 2, 10, jaw, '#3a0a1a'); for (var tth = 0; tth < 4; tth++) p(hx - 2 + tth * 3, hy - 2, 1, 1, IC); }
-    p(hx + f * 1, hy - 7, 2, 2, EYE); p(hx + f * 1 + (f > 0 ? 1 : 0), hy - 6, 1, 1, '#4ab0ff');
-    for (var fr = 0; fr < 4; fr++) p(hx - f * (3 + fr * 2), hy - 11 - (fr % 2) * 2, 2, 3 + (fr % 2), IC);   // the frill of icicles
-    if (h._phase >= 3) { ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 8); p(hx - 6, hy - 9, 13, 8, '#7ad8ff'); ctx.globalAlpha = 1; }
-    if (st.wind) {                                                         // breath freezing in the air
-      ctx.globalAlpha = 0.6;
-      for (var b = 0; b < 4; b++) p(hx + f * (7 + b * 2), hy - 3 - b, 1, 1, '#e8fbff');
-      ctx.globalAlpha = 1;
+    P.go('#8a9cbc');
+    // snow spraying off where it breaks the surface
+    for (var sp = 0; sp < 8; sp++) {
+      var base = [-20, -10, -11, 0, 2, 7][sp % 6], ph = ((t * 1.6) + sp * 0.37) % 1;
+      ctx.fillStyle = sp % 3 ? '#ffffff' : '#dfe8f6';
+      ctx.fillRect(Math.round((base + Math.sin(sp * 2.1) * 3 * ph) * u), Math.round((-1 - Math.sin(ph * Math.PI) * 6) * u), u, u);
     }
+    if (st.wind) { ctx.globalAlpha = 0.6; ctx.fillStyle = '#e8fbff'; for (var bb = 0; bb < 4; bb++) ctx.fillRect(Math.round((HX + 11 + bb * 2) * u), Math.round((HY - bb) * u), u, u); ctx.globalAlpha = 1; }
   }
   var WYRM = { windup: 1150, under: 360, exposed: 3000 };
   function wyrmTick(world, h, now, player) {
@@ -770,6 +901,7 @@ var BridgeValley = (function () {
       var Y = yeti(o.id), dx = p.x - o.fx, dy = p.y - o.fy, d = Math.hypot(dx, dy);
       var keep = [4, 2.2, 1.6, 1.4, 1.2, 1.2][Y.trust] || 1.2;
       var goal = null, spd = 0.9;
+      o.curious = false;
       if (o.state === 'hide' && now < o.until) { goal = o.goal; spd = 2.6; }
       else if (o.state === 'sit' && now < o.until) goal = null;
       else {
@@ -782,13 +914,14 @@ var BridgeValley = (function () {
         } else if (Y.trust >= 2 && d < 7 && Math.hypot(p.x - o.home[0], p.y - o.home[1]) < 7 && d > keep + 0.4) {   // follows a little
           goal = [p.x - dx / d * keep, p.y - dy / d * keep]; spd = 1.2;
         } else if (d < 6 && stillFor > (Y.trust ? 1500 : 3000) && d > keep + 0.3) {      // curious about someone standing still
-          goal = [p.x - dx / d * keep, p.y - dy / d * keep]; spd = 0.6;
+          goal = [p.x - dx / d * keep, p.y - dy / d * keep]; spd = 0.6; o.curious = true;
         } else if (now > o.until) {                                               // pottering about near home
           o.goal = [o.home[0] + Math.round(Math.sin(o.seed + now / 4000) * 2.5), o.home[1] + Math.round(Math.cos(o.seed * 1.3 + now / 5200) * 1.5)];
           o.until = now + 2500 + (o.seed * 997 % 2000);
           goal = o.goal;
         } else goal = o.goal;
         o.sit = Y.trust >= 1 && !goal && d < 3;
+        if (!goal && d < 5 && stillFor > 1200) o.curious = true;           // head on one side, watching you
       }
       if (goal) {
         var gx = goal[0] - o.fx, gy = goal[1] - o.fy, gd = Math.hypot(gx, gy);
@@ -816,60 +949,73 @@ var BridgeValley = (function () {
     return best || o.home;
   }
 
-  // a yeti: a pear of shaggy white fur, a blue-grey face peering out of it, long arms, big dark feet; standing,
-  // walking, sitting with its hands in its lap, or crouched low behind something with just its eyes over the top
-  var YPROF = [3, 5, 6, 7, 8, 8, 8, 9, 10, 10, 11, 11, 11, 12, 12, 12, 12, 12, 11, 11, 10, 9, 8];
+  // a yeti: big, shaggy and gentle — a body of tufted fur, cream lit and lavender in shadow, a dark blue-grey face with
+  // small kind eyes, long arms down to its knees, big feet; it sways a little, tilts its head when it's curious, and
+  // hiding it crouches behind a snowy rock with just its eyes over the top
   function drawYeti(g, o, u, now) {
-    var p = px(g, u), Y = yeti(o.id), t = now / 1000 + o.seed;
-    var OL = '#384258', SH = '#aebcd2', MI = '#dfe6f1', HI = '#f8fbff', SK = '#5c6c90', SKL = '#7e8eb0', SKD = '#3e4a68';
+    var P = painter(g, u), Y = yeti(o.id), t = now / 1000 + o.seed;
+    var OL = '#3a3450', HI = '#fdfaf3', MI = '#ece6ee', SH = '#c2b8d6', DP = '#968cb4', FC = '#56637f', FL = '#74829e', EY = '#151522';
     var hide = o.state === 'hide' && o.goal && Math.hypot(o.goal[0] - o.fx, o.goal[1] - o.fy) < 0.3;
     var walk = !o.sit && !hide && o.moving, bob = walk ? Math.round(Math.abs(Math.sin(t * 6))) : 0;
-    var breathe = Math.round(Math.sin(t * 1.4) * 0.6);
-    g.save(); g.translate(16 * u, 31 * u); g.scale(o.face || 1, 1);
-    var sit = o.sit && !hide, low = hide ? 13 : sit ? 6 : 0;
-    var top = -28 + low + bob - breathe, rows = hide ? 12 : YPROF.length;
-    function jag(r) { return ((r * 7 + Math.floor(o.seed * 3)) % 5 === 0) ? 1 : 0; }
-    if (!hide && !sit) {                                                     // short thick legs, big dark feet
-      var o1 = walk ? Math.round(Math.sin(t * 6)) : 0;
-      p(-7 + o1, -6, 5, 6, OL); p(2 - o1, -6, 5, 6, OL); p(-6 + o1, -6, 3, 4, SH); p(3 - o1, -6, 3, 4, SH);
-      p(-8 + o1, -2, 6, 2, SKD); p(2 - o1, -2, 6, 2, SKD);
-    }
-    if (sit) { p(-10, -3, 7, 3, OL); p(3, -3, 7, 3, OL); p(-9, -3, 5, 2, SKD); p(4, -3, 5, 2, SKD); }   // feet stuck out in front
-    for (var r = 0; r < rows; r++) {                                         // the fur, row by row, ragged at the edges
-      var hw = YPROF[r] + (r > 9 ? breathe : 0), j = jag(r), y = top + r;
-      p(-hw - 1 - j, y, (hw + 1) * 2 + j * 2, 1, OL);
-      p(-hw - j + (j ? 1 : 0), y, hw * 2 + (j ? 2 * j - 2 : 0), 1, MI);
-      p(-hw, y, Math.max(1, Math.round(hw * 0.7)), 1, r < 12 ? HI : MI);   // lit from the upper left
-      p(hw - 3, y, 3, 1, SH);                                                // shadowed on the right
-      if (r > 15) p(hw - 6, y, 3, 1, SH);                                   // its belly rounding into shadow
-    }
-    if (!hide) p(-11, top + rows, 22, 1, OL);
-    for (var s = 0; s < 4; s++) p(-5 + s * 3, top + 13 + (s % 2) * 2, 1, 4, SH);   // strands of fur hanging
-    // the face: blue-grey, set in the fur, a brow of fur over the eyes
-    var fy = top + 3;
-    p(-4, fy, 9, 7, OL); p(-3, fy + 1, 7, 5, SK); p(-3, fy + 1, 7, 1, SKL); p(-3, fy + 5, 7, 1, SKD);
-    p(-4, fy - 1, 9, 2, HI);                                                 // the brow
+    var sway = Math.round(Math.sin(t * 1.1) * 0.8), tilt = o.curious ? 1 : 0, sd = Math.floor(o.seed * 3);
     var blink = Math.sin(t * 1.3 + o.seed) > 0.97;
-    if (!blink) { p(-2, fy + 2, 2, 2, '#0a0e16'); p(2, fy + 2, 2, 2, '#0a0e16'); p(-2, fy + 2, 1, 1, '#ffffff'); p(2, fy + 2, 1, 1, '#ffffff'); }
-    else { p(-2, fy + 3, 1, 1, SKD); p(2, fy + 3, 1, 1, SKD); }
-    if (!hide) {
-      p(0, fy + 4, 1, 1, SKD);                                               // the nose; a small smile once it knows you
-      if (Y.trust >= 1) { p(-1, fy + 5, 3, 1, SKD); g.globalAlpha = 0.55; p(-3, fy + 4, 1, 1, '#e8a0b8'); p(3, fy + 4, 1, 1, '#e8a0b8'); g.globalAlpha = 1; }
-      // the arms: long, hanging to its knees (one up in a wave now and then; in its lap sitting)
-      var sw = walk ? Math.round(Math.sin(t * 6)) : 0, ay = top + 9;
-      var wave = o.state === 'wander' && Y.trust >= 1 && Math.sin(t * 0.7) > 0.95;
-      if (sit) {
-        p(-12, ay, 5, 12, OL); p(7, ay, 5, 12, OL); p(-11, ay + 1, 3, 10, MI); p(8, ay + 1, 3, 10, SH);
-        p(-8, ay + 10, 16, 3, OL); p(-7, ay + 11, 5, 1, SK); p(2, ay + 11, 5, 1, SK);   // hands together in its lap
-      } else {
-        p(-15, ay + sw, 5, 15, OL); p(-14, ay + 1 + sw, 3, 13, MI); p(-14, ay + 1 + sw, 1, 10, HI); p(-15, ay + 14 + sw, 5, 2, SKD);
-        if (wave) { p(10, ay - 12, 5, 14, OL); p(11, ay - 11, 3, 12, SH); p(10, ay - 14, 5, 3, SKD); }
-        else { p(10, ay - sw, 5, 15, OL); p(11, ay + 1 - sw, 3, 13, SH); p(10, ay + 14 - sw, 5, 2, SKD); }
+    g.save(); g.translate(16 * u, 31 * u); g.scale(o.face || 1, 1);
+    function face(fx, fy, peek) {
+      P.E(fx, fy, 3, 2, FC).R(fx - 1, fy - 2, 3, 1, FL);
+      P.R(fx - 2, fy - 3, 6, 1, HI);                                       // a brow of fur over the eyes
+      P.R(fx - 1, fy - 1, 1, 1, blink ? FC : EY).R(fx + 2, fy - 1, 1, 1, blink ? FC : EY);
+      if (!blink) P.R(fx - 1, fy - 1, 1, 1, EY);
+      if (!peek) {
+        P.R(fx, fy + 1, 2, 1, Y.trust >= 1 ? '#3a3450' : FC);              // a mouth that smiles once it knows you
+        if (Y.trust >= 1) P.R(fx - 2, fy, 1, 1, '#c890a8').R(fx + 3, fy, 1, 1, '#c890a8');
       }
-    } else {
-      p(-11, top + 6, 4, 4, OL); p(-10, top + 7, 2, 2, SK);                 // fingers over the rock
-      p(7, top + 6, 4, 4, OL); p(8, top + 7, 2, 2, SK);
     }
+    if (hide) {                                                            // crouched behind a rock, peeking over it
+      P.E(0, -13, 7, 5, MI, { jag: shag(sd, 3) }).E(-2, -15, 3, 2, HI, { inner: true });
+      P.T([[-2, -17], [0, -20], [2, -17]], MI).T([[-7, -14], [-10, -13], [-7, -11]], MI).T([[7, -14], [10, -13], [7, -11]], MI);
+      face(1, -13, true);
+      P.go(OL);
+      P.E(-7, -10, 2, 1, FC).E(7, -10, 2, 1, FC);                          // its fingers over the top
+      P.E(0, -4, 11, 5, '#8a90a4', { jag: shag(2, 4) }).E(-2, -6, 7, 2, '#a4aabc', { inner: true }).E(4, -2, 6, 2, '#6a7086', { inner: true });
+      P.E(-1, -8, 8, 1, '#f2f6fc', { inner: true });
+      P.go('#2a2e3e');
+      g.restore(); return;
+    }
+    var sit = o.sit, dy = (sit ? 5 : 0) - bob;
+    if (sit) P.E(-6, -1, 3, 1, FC).E(6, -1, 3, 1, FC);                     // big feet stuck out in front
+    else {
+      var st_ = walk ? Math.round(Math.sin(t * 6)) : 0;
+      P.E(-4 + st_, -4, 3, 3, MI, { jag: shag(sd + 1, 3) }).E(4 - st_, -4, 3, 3, MI, { jag: shag(sd + 2, 3) });
+      P.E(-5 + st_, -1, 3, 1, FC).E(5 - st_, -1, 3, 1, FC);
+    }
+    var bx = sway;
+    P.E(bx, -12 + dy, 8, 8, MI, { jag: shag(sd, 3) });                     // the great shaggy body
+    [[-9, -15], [9, -15], [-9, -9], [9, -9], [-5, -5], [5, -5]].forEach(function (q) {   // tufts breaking its outline
+      var s = q[0] < 0 ? -1 : 1;
+      P.T([[bx + q[0], q[1] + dy - 2], [bx + q[0] + s * 3, q[1] + dy], [bx + q[0], q[1] + dy + 1]], MI);
+    });
+    var wave = !sit && o.state === 'wander' && Y.trust >= 1 && Math.sin(t * 0.7) > 0.95;
+    var aw = walk ? Math.round(Math.sin(t * 6)) : 0;
+    if (sit) { P.S(bx - 8, -13 + dy, bx - 4, -6 + dy, 4, MI).S(bx + 8, -13 + dy, bx + 4, -6 + dy, 4, MI).E(bx, -5 + dy, 3, 1, FC); }
+    else {
+      P.S(bx - 8, -16 + dy, bx - 12 - aw, -5 + dy, 4, MI).E(bx - 12 - aw, -3 + dy, 2, 1, FC);
+      if (wave) P.S(bx + 8, -16 + dy, bx + 12, -25 + dy, 4, MI).E(bx + 12, -27 + dy, 2, 1, FC);
+      else P.S(bx + 8, -16 + dy, bx + 12 + aw, -5 + dy, 4, MI).E(bx + 12 + aw, -3 + dy, 2, 1, FC);
+    }
+    var hx = bx + tilt, hy = -21 + dy;
+    P.E(hx, hy, 6, 5, MI, { jag: shag(sd + 3, 3) });                       // the head, a hood of fur
+    P.T([[hx - 2, hy - 4], [hx, hy - 7], [hx + 2, hy - 4]], MI).T([[hx + 1, hy - 4], [hx + 4, hy - 6], [hx + 3, hy - 3]], MI);
+    // fur lit cream on the upper left, lavender in the shadows
+    P.E(bx - 3, -14 + dy, 5, 5, HI, { inner: true }).E(bx + 6, -11 + dy, 2, 6, SH, { inner: true }).E(bx + 2, -5 + dy, 6, 1, SH, { inner: true }).E(bx + 7, -9 + dy, 1, 3, DP, { inner: true });
+    P.E(hx - 2, hy - 2, 3, 2, HI, { inner: true }).E(hx + 3, hy + 2, 2, 1, SH, { inner: true });
+    for (var s2 = 0; s2 < 4; s2++) P.R(bx - 5 + s2 * 3, -11 + dy + (s2 % 2) * 2, 1, 3, SH);   // strands of fur
+    if (!sit) {                                                            // its arms, parted from its body by a shadow
+      P.S(bx - 8, -14 + dy, bx - 10 - aw, -6 + dy, 1, DP, { inner: true }).S(bx + 8, -14 + dy, bx + 10 + aw, -6 + dy, 1, DP, { inner: true });
+      P.S(bx - 9, -15 + dy, bx - 13 - aw, -6 + dy, 1, HI, { inner: true });
+      if (!wave) P.S(bx + 10, -15 + dy, bx + 13 + aw, -6 + dy, 1, SH, { inner: true });
+    }
+    face(hx + 1, hy + 1, false);
+    P.go(OL);
     g.restore();
   }
 
@@ -1050,7 +1196,7 @@ var BridgeValley = (function () {
 
   return { decorate: decorate, KINDS: KINDS, ROSTER: ROSTER, FOODS: FOODS,
            _spawn: _spawn, _yeti: _yeti, _yetis: function () { return yetis; }, _walker: function () { return walker; },
-           _feed: function (o, id) { BridgeInventory.addItem(id, 1); feed(o, o.inter, id); }, _use: useYeti, _gift: useGift,
+           _drawYeti: drawYeti, _feed: function (o, id) { BridgeInventory.addItem(id, 1); feed(o, o.inter, id); }, _use: useYeti, _gift: useGift,
            _day: function (n) { shift = n; }, _save: function () { return save; }, _hazards: function () { return hazards; },
            _reset: function () { save = { yetis: {}, found: {} }; store(); } };
 })();
