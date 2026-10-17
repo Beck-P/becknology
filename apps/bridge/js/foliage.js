@@ -67,7 +67,7 @@ var BridgeFoliage = (function () {
         var k4 = j * 4;
         if (!leaves[k4 + 3]) continue;
         var lj = (Math.max(src[k4], src[k4 + 1], src[k4 + 2]) + Math.min(src[k4], src[k4 + 1], src[k4 + 2])) / 510, bin = Math.min(63, Math.floor(lj * 64));
-        if (leaves[k4] > 127) { hl[bin]++; nl++; } else { hn[bin]++; nn++; }
+        if (leaves[k4] > 127) { hl[bin]++; nl++; } else if (leaves[k4 + 2] > 127) { hn[bin]++; nn++; }   // (grass and water: not trees)
       }
       function pct(hh, n, q) { var c = 0; for (var b2 = 0; b2 < 64; b2++) { c += hh[b2]; if (c >= n * q) return (b2 + 0.5) / 64; } return 1; }
       var leafSnow = pct(hl, nl, 0.55), bloomAt = pct(hl, nl, 0.6), needleSnow = pct(hn, nn, 0.74), twigAt = pct(hl, nl, 0.2);

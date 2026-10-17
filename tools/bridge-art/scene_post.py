@@ -195,12 +195,17 @@ def main():
             return False
         lf = load(path, 'RGB')
         out = np.zeros(lf.shape[:2] + (4,), np.uint8)
-        on = mask & ((lf[..., 0] > 127) | (lf[..., 2] > 127))
+        R, B = lf[..., 0], lf[..., 2]
+        leaf, needle = mask & (R > 160), mask & (B > 160)
+        tree = leaf | needle
+        grass = mask & ~tree & (R > 32)                                  # scenekit marks grass R 64, still water B 64
+        water = mask & ~tree & ~grass & (B > 32)
+        on = tree | grass | water
         if not on.any():
             return False
-        out[..., 0] = np.where(on & (lf[..., 0] > 127), 255, 0)
-        out[..., 2] = np.where(on & (lf[..., 2] > 127), 255, 0)
-        out[..., 1] = np.where(on, (lf[..., 1].astype(np.int32) // 16) * 16 + 8, 0)   # written 8 + 16 * tree (mod 15)
+        out[..., 0] = np.where(leaf, 255, np.where(grass, 64, 0))
+        out[..., 2] = np.where(needle, 255, np.where(water, 64, 0))
+        out[..., 1] = np.where(tree, (lf[..., 1].astype(np.int32) // 16) * 16 + 8, 0)   # written 8 + 16 * tree (mod 15)
         out[..., 3] = np.where(on, 255, 0)
         return out if box is None else out[box[1]:box[3], box[0]:box[2]]
     base_leaves = leaves(os.path.join(rd, 'leaf.png'), alpha)

@@ -146,7 +146,8 @@ var BridgeScene = (function () {
   }
 
   // A colour grade baked into a scene's images (the seasons: js/foliage.js, js/seasons.js): fn(rgba, w, h, leaves, state,
-  // ref) reworks the pixels in place — leaves is the leaf pass as composited (RGBA: R leaf, B needle, G which tree; null
+  // ref) reworks the pixels in place — leaves is the leaf pass as composited (RGBA: R 255 a leaf, 64 grass; B 255 a
+  // needle, 64 still water; G which tree; null
   // when the render has none); ref, for a scene with a day and a night (meta.cycle), is the day image as composited, so a
   // grade can decide from the day's colours and carry each state's own light over (`BridgeScene.relight`). Like the
   // layers, it runs on load and when it changes — never per frame.
@@ -164,10 +165,12 @@ var BridgeScene = (function () {
     var want = activeLayers[sc.id] || {};
     var use = sc.layers.filter(function (L) { return want[L.slot] === L.key && L.depth; });
     var grade = grades[sc.id];
+    sc.rev = (sc.rev || 0) + 1;                         // the images changed: whatever is worked out from them (js/nature.js) redoes it
     if (!use.length && !grade) {
       sc.imgs = {};
       for (var k in sc.baseImgs) sc.imgs[k] = sc.baseImgs[k];
       sc.depth = sc.baseDepth;
+      sc.leaves = sc.baseLeaves || null;
       return;
     }
     var m = sc.meta, W = m.width;
@@ -185,7 +188,7 @@ var BridgeScene = (function () {
       return mask;
     });
     var leaves = null;                                  // the leaf pass with the chosen variants over it
-    if (grade && (sc.baseLeaves || use.some(function (L) { return L.leaves; }))) {
+    if (sc.baseLeaves || use.some(function (L) { return L.leaves; })) {
       leaves = sc.baseLeaves ? new Uint8ClampedArray(sc.baseLeaves) : new Uint8ClampedArray(W * m.height * 4);
       use.forEach(function (L, n) {
         var b = L.box, mask = masks[n], lv = L.leaves;
@@ -223,6 +226,7 @@ var BridgeScene = (function () {
       sc.imgs[s] = c;
     });
     sc.depth = depth;
+    sc.leaves = leaves;                                 // (sc.leaves: what js/nature.js reads — the trees, grass and water as shown)
   }
 
   function decodeDepth(img, meta) {

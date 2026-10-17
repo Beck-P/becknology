@@ -72,7 +72,7 @@ var BridgeSeasons = (function () {
       var t = [0, 0, 0], o = [0, 0, 0], L = [0, 0, 0], src = ref || px;
       for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
         var i = (y * w + x) * 4;
-        if (!px[i + 3] || (leaves && leaves[i + 3])) continue;
+        if (!px[i + 3] || (leaves && (leaves[i] > 127 || leaves[i + 2] > 127))) continue;   // the trees are js/foliage.js's
         var r = src[i] / 255, g = src[i + 1] / 255, b = src[i + 2] / 255;
         hsl(r, g, b, t);
         var hu = t[0], sa = t[1], li = t[2], green = hu > 55 && hu < 170 && sa > 0.12;
@@ -125,6 +125,7 @@ var BridgeSeasons = (function () {
     var s = current().id, W = ctx.canvas.width, H = ctx.canvas.height;
     if (s === 'summer') return;
     if (s === 'winter' && typeof BridgeWeather !== 'undefined' && BridgeWeather.raining()) return;   // the snow day draws its own
+    if (s !== 'winter' && typeof BridgeNature !== 'undefined' && world.scene && BridgeNature.covers(world.scene.id).fall) return;   // they fall from the trees themselves (js/nature.js)
     var n = s === 'winter' ? 70 : 26;
     for (var i = 0; i < n; i++) {
       var sp = s === 'winter' ? 0.014 + (i % 5) * 0.004 : 0.018 + (i % 4) * 0.006;

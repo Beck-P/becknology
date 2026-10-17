@@ -591,8 +591,9 @@ var BridgeFarm = (function () {
         ctx.fillRect(Math.round(sx), Math.round(sy), sz, sz);
       }
     });
-    // glints on the pond
-    for (var gl = 0; gl < 7; gl++) {
+    // glints on the pond (js/nature.js draws the water's own once the render marks it)
+    var nat = typeof BridgeNature !== 'undefined' && BridgeNature.covers && world.scene ? BridgeNature.covers(world.scene.id) : {};
+    for (var gl = 0; gl < (nat.water ? 0 : 7); gl++) {
       var a = Math.sin(now / 500 + gl * 1.7);
       if (a < 0.6) continue;
       ctx.fillStyle = 'rgba(255,255,240,' + ((a - 0.6) * 2).toFixed(2) + ')';
@@ -606,8 +607,8 @@ var BridgeFarm = (function () {
       ctx.fillStyle = '#1a1408'; ctx.fillRect(Math.round(bx), Math.round(by), 2, 1);
       ctx.fillStyle = '#f0c030'; ctx.fillRect(Math.round(bx) + 1, Math.round(by), 1, 1);
     }
-    // butterflies over the wildflowers
-    if (!still) butterflies.forEach(function (bf, i) {
+    // butterflies over the wildflowers (js/nature.js's, over the render's own meadow, when it has one)
+    if (!still && !nat.grass) butterflies.forEach(function (bf, i) {
       var t = now / 1000 + i * 3.3;
       var x = offX + (bf[0] + Math.sin(t * 0.31) * 2.2 + Math.sin(t * 0.9) * 0.4) * ts, y = offY + (bf[1] + Math.cos(t * 0.23) * 1.4 + Math.sin(t * 1.7) * 0.2) * ts;
       var wing = Math.sin(now / 70 + i) > 0 ? 2 : 1, bx2 = Math.round(x), by2 = Math.round(y);

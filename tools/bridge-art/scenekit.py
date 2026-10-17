@@ -133,6 +133,21 @@ class Kit:
         self.scene.collection.objects.link(o)
         return self._finish(o, albedo, part)
 
+    # The leaf pass also marks the grass (turf, blades, meadow flowers) and still water (ponds, streams, fountain basins),
+    # by part name (less a 'ground_' / 'coast_' prefix) or a part's own 'nature' — for the seasons on the ground and the
+    # wind and ripples the engine draws (js/foliage.js, js/nature.js)
+    GRASS_PARTS = ('grass', 'grass_dark', 'meadow', 'meadow_dark', 'meadow_flower', 'lip_grass', 'turf')
+    WATER_PARTS = ('pond_water', 'pond_deep', 'stream_water', 'stream_deep', 'basin_water')
+
+    def _nature(self, p):
+        if p.get('nature'):
+            return p['nature']
+        n = p.get('pname') or ''
+        for pre in ('ground_', 'coast_'):
+            if n.startswith(pre):
+                n = n[len(pre):]
+        return 'grass' if n in self.GRASS_PARTS else 'water' if n in self.WATER_PARTS else None
+
     def _add_part(self, d):
         d['var'] = self._var
         d['fol'] = self._fol
@@ -425,19 +440,36 @@ class Kit:
             bsdf.inputs['Specular IOR Level'].default_value = 0.0
         return m
 
-    def _albedo_mat(self, spec):
-        """spec: '#hex' or ('#hex', grain) — grain adds per-pixel noise."""
+    # Ground that runs on for many tiles (an island's turf and paths, its banks and beaches) takes its grain in tile units:
+    # over the object's own extent (the default, right for a crate or a wall) the noise stretches into wandering contour
+    # lines across a whole island - squiggles, where the farm's meadow reads as a fine, even texture
+    GROUND = ('ground', 'coast_lip', 'coast_bank', 'coast_wet', 'grass', 'path', 'sand', 'turf')
+
+    def _ground(self, p):
+        n = p.get('pname') or ''
+        if not n.startswith(self.GROUND) or n.startswith(('coast_shelf', 'coast_deep', 'coast_weed')):
+            return False
+        d = p['obj'].dimensions
+        return max(d.x, d.y) > 2.5
+
+    def _albedo_mat(self, spec, tiles=False):
+        """spec: '#hex' or ('#hex', grain) — grain adds per-pixel noise. tiles: the grain in tile units (see GROUND)."""
         if isinstance(spec, str):
             spec = (spec, 0.0)
         hx, grain = spec[0], spec[1]
+        if tiles:
+            grain *= 0.7
 
         def fn(nt, em):
             if not grain:
                 em.inputs['Color'].default_value = lin(hexc(hx))
                 return
             noise = nt.nodes.new('ShaderNodeTexNoise')
-            noise.inputs['Scale'].default_value = 9.0
+            noise.inputs['Scale'].default_value = 3.2 if tiles else 9.0
             noise.inputs['Detail'].default_value = 2.0
+            if tiles:
+                tc = nt.nodes.new('ShaderNodeTexCoord')
+                nt.links.new(tc.outputs['Object'], noise.inputs['Vector'])
             ramp = nt.nodes.new('ShaderNodeValToRGB')
             ramp.color_ramp.interpolation = 'CONSTANT'
             e = ramp.color_ramp.elements
@@ -473,9 +505,10 @@ class Kit:
                 o.visible_shadow = False
                 continue
             if kind == 'albedo':
-                key = ('a', str(p['albedo']))
+                tiles = self._ground(p)
+                key = ('a', str(p['albedo']), tiles)
                 if key not in cache:
-                    cache[key] = self._albedo_mat(p['albedo'])
+                    cache[key] = self._albedo_mat(p['albedo'], tiles)
                 m = cache[key]
             elif kind == 'light':
                 if p['emit']:
@@ -496,10 +529,12 @@ class Kit:
                 m = cache[key]
             elif kind == 'leaf':
                 f, t = p.get('fol'), p.get('tree', 0)
-                key = ('lf', f, t % 15 if f else 0)
+                nat = None if f else self._nature(p)
+                key = ('lf', f, t % 15 if f else 0, nat)
                 if key not in cache:
                     g = 8 + 16 * (t % 15) if f else 0
-                    cache[key] = self._flat_emission('#%02x%02x%02x' % (255 if f == 'leaf' else 0, g, 255 if f == 'needle' else 0))
+                    cache[key] = self._flat_emission('#%02x%02x%02x' % (255 if f == 'leaf' else 64 if nat == 'grass' else 0, g,
+                                                                     255 if f == 'needle' else 64 if nat == 'water' else 0))
                 m = cache[key]
             elif kind == 'id':
                 pid = p['pid']
@@ -633,7 +668,7 @@ class Kit:
             self._assign('albedo'); self._settings(1); self._render(os.path.join(d, 'albedo.png'))
             self._assign('emission'); self._settings(1); self._render(os.path.join(d, 'emission.png'))
             self._assign('id'); self._settings(1); self._render(os.path.join(d, 'id.png'))
-            if any(p.get('fol') for p in v['parts']):
+            if any(p.get('fol') or self._nature(p) for p in v['parts']):
                 self._assign('leaf'); self._settings(1); self._render(os.path.join(d, 'leaf.png'))
             self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(d, 'depth.png'))
             for name, state in light_states.items():
@@ -720,7 +755,7 @@ class Kit:
         self._assign('albedo'); self._settings(1); self._render(os.path.join(out, 'albedo.png'))
         self._assign('emission'); self._settings(1); self._render(os.path.join(out, 'emission.png'))
         self._assign('id'); self._settings(1); self._render(os.path.join(out, 'id.png'))
-        if any(p.get('fol') and p['var'] is None for p in self.parts):
+        if any((p.get('fol') or self._nature(p)) and p['var'] is None for p in self.parts):
             self._assign('leaf'); self._settings(1); self._render(os.path.join(out, 'leaf.png'))
         self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(out, 'depth.png'))
         if self.water_z is not None:

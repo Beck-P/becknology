@@ -211,6 +211,8 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
         o = bpy.data.objects.new('coast', me)
         k.scene.collection.objects.link(o)
         k._finish(o, ALB[key], 'coast_' + key.split('_')[0])
+        if key == 'lip_grass' or (key.startswith('g:') and key[2:] in k.GRASS_PARTS):
+            k.parts[-1]['nature'] = 'grass'                 # the leaf pass marks it (the seasons on the ground, the wind)
         for p in o.data.polygons:
             p.use_smooth = True
 
