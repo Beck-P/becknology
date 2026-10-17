@@ -173,7 +173,7 @@ for rid, (x, r, col) in TOPS.items():
 
 # ---- the light: the same evening, higher up: the sun lower and pinker, the cloud sea's blue in the shadows -------------------------
 k.sun((0.85, 0.2, -0.3), '#ffb894', 3.4, angle=3.0)
-k.render(OUT, light_states={'full': {}}, light_samples=96, world_light=('#8a90d0', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=96, world_light=('#8a90d0', 0.95))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Hoarspire', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'hoarfell',

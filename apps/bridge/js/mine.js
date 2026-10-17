@@ -198,9 +198,13 @@ var BridgeMine = (function () {
     return null;
   }
 
-  // v: following someone down — their dig's seed
-  function goFloor(n, v) {
+  // v: following someone down — their dig's seed. Playing together (js/party.js) the others are asked first, wherever
+  // they are, and climb down after you with the same seed
+  function goFloor(n, v, go) {
     var to = Math.max(1, Math.min(DEEPEST, n)), seed = v != null ? v : visits + 1 + Math.floor(Math.random() * 1000);
+    if (v == null && !go && typeof BridgeParty !== 'undefined' &&
+        BridgeParty.depart({ kind: 'mine', f: to, v: seed }, function () { goFloor(to, null, seed); })) return;
+    if (go) seed = go;
     if (v == null) tell('delve', { f: to, v: seed });
     floor = to; nextVisits = seed;
     var layout = 'abc'[(floor * 7 + Math.floor(floor / 3)) % 3];
@@ -226,7 +230,7 @@ var BridgeMine = (function () {
   }
   if (typeof BridgeNet !== 'undefined') {
     BridgeNet.on('delve', function (d, from) {
-      if (!mine_here(d)) return;
+      if (!mine_here(d) || (typeof BridgeParty !== 'undefined' && BridgeParty.has(from))) return;   // your party asked you already
       var p = BridgeNet.peer(from), who = p ? p.name : 'SOMEONE';
       BridgeInteractions.choose({ title: 'Down the ladder', text: (who + ' climbs down to floor ' + d.f + '.').toUpperCase(),
         buttons: [{ label: 'Follow them down', act: function () { goFloor(d.f, d.v); } }], closeLabel: 'Stay here' });

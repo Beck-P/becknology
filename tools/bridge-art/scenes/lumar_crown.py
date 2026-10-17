@@ -209,6 +209,8 @@ for (x, r) in ((24.4, 15.2), (39.6, 15.2), (24.4, 19.6), (39.6, 19.6)):
     k.solid(x - 0.45, r - 0.45, x + 0.45, r + 0.45)
 W.cart(k, 34.6, 24.2)
 k.solid(33.4, 23.8, 35.2, 24.6)
+W.street_clutter(k, (22.6, 14.0, 41.4, 23.4), seed=811, straw=[(23.0, 22.0, 29.0, 22.9), (35.4, 22.0, 41.0, 22.9)],
+                 chalk=(29.0, 20.4))           # weeds, drains, a cracked flag, straw by the stalls, hopscotch
 
 
 # ---- the palace on the hill: the wall, the gatehouse, the keep and its towers ---------------------------------------

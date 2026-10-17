@@ -1107,6 +1107,7 @@ var BridgeInteractions = (function () {
       var t = total();
       if (which === 'close' || !t) { close(); return; }
       var sold = rows.filter(function (r) { return r.qty > 0; }).map(function (r) { return { id: r.id, n: r.qty, name: r.name }; });
+      if (typeof BridgeTreasury !== 'undefined') BridgeTreasury.noteSale(rows.filter(function (r) { return r.qty > 0; }).map(function (r) { return { id: r.id, total: r.qty * r.price }; }));   // (what the Workshop made, in the treasury)
       var paid = typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins
         ? BridgeProgression.awardCoins(t, 'sell:' + (inter.label || 'trader')) : Promise.resolve(null);
       close();
@@ -1152,7 +1153,7 @@ var BridgeInteractions = (function () {
   // A chooser in the world's dialog style, for the systems that need one (the farm's bin, board and seed box,
   // hiring a hand, giving a gift): spec = { title, text, art: fn(canvas) (a picture under the text: a ship as she's
   // fitted), rows: [{ label, note, icon: item id, draw: fn(ctx, size) for any other picture (a fish tank), stats: a
-  // weapon's id (its stats card under the row), disabled, pick }],
+  // weapon's id (its stats card under the row), disabled, info: a row to read, not pick (a figure), pick }],
   // input: { placeholder, value, submit }, buttons: [{ label, act, disabled }] }. Picking a row or a button closes
   // the chooser unless its function returns false.
   function showChooser(spec) {
@@ -1166,7 +1167,7 @@ var BridgeInteractions = (function () {
       (spec.text ? '<div class="wd-text">' + esc(reflow(spec.text)) + '</div>' : '') +
       (spec.art ? '<canvas class="wd-art" width="1" height="1"></canvas>' : '') +
       (rows.length ? '<div class="wd-sell wd-sell-pick wd-chooser">' + rows.map(function (r, i) {
-        return '<div class="wd-sell-row pick' + (r.disabled ? ' none' : '') + '" data-r="' + i + '">' +
+        return '<div class="wd-sell-row pick' + (r.disabled ? ' none' : '') + (r.info ? ' info' : '') + '" data-r="' + i + '">' +
           '<canvas class="sp-icon" width="24" height="24"></canvas><span class="sp-name">' + esc(r.label) + '</span>' +
           '<span class="sp-have">' + esc(r.sub || '') + '</span><span class="sp-qty"></span>' +
           '<span class="sp-price">' + esc(r.note || '') + '</span>' +
@@ -1190,7 +1191,7 @@ var BridgeInteractions = (function () {
       else if (r.face && typeof BridgeLook !== 'undefined' && BridgeLook.face) { cv.classList.add('sp-face'); BridgeLook.face(cv, r.face.seed, r.face.style, r.face.colour, r.face.wild); }   // someone you'd hire
       else cv.style.visibility = 'hidden';
     });
-    var rowEls = [].slice.call(dialogEl.querySelectorAll('.wd-sell-row.pick')).filter(function (e) { return !rows[+e.getAttribute('data-r')].disabled; });
+    var rowEls = [].slice.call(dialogEl.querySelectorAll('.wd-sell-row.pick')).filter(function (e) { var r = rows[+e.getAttribute('data-r')]; return !r.disabled && !r.info; });
     var btnEls = [].slice.call(dialogEl.querySelectorAll('.wd-opt'));
     var items = rowEls.concat(btnEls.filter(function (b) { return !b.disabled; })), sel = 0;
     var form = dialogEl.querySelector('.wd-chooser-input'), input = form && form.querySelector('input');

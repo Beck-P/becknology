@@ -88,6 +88,7 @@ A.barrel(k, 18.6, 11.35)                 # the merchant's stock in one row, the 
 k.solid(17, 11, 19, 12)
 W.bulletin_board(k, 18.0, 15.5)          # by the harbour steps, out of the way up to the fountain
 W.statue(k, 8.5, 14.5)
+W.street_clutter(k, (0.5, 4.0, 25.5, 17.5), seed=303, straw=[(18.4, 9.85, 21.2, 10.6)], chalk=(4.5, 16.8))
 k.solid(7, 11, 8, 12)                    # the passerby
 k.solid(16, 11, 17, 12)                  # the merchant
 W.planter(k, 12.3, 13.5, 5.6)

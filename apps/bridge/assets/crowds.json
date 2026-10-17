@@ -1,0 +1,140 @@
+{
+  "_doc": "Passers-by by place (js/crowd.js): n at the busiest, the wardrobe (who they are), when it's busiest (day, night, bustle, always), the share who sit where there are seats, extra sources/spots and tiles to avoid. _lines: what they say, by wardrobe (rain and night lines join outdoors in the rain and after dark). _wants: what someone now and then would like, and pays for.",
+
+  "lumar":                  { "n": 6,  "wardrobe": "lumar",   "busy": "day" },
+  "lumar-square":           { "n": 13, "wardrobe": "lumar",   "busy": "day" },
+  "lumar-sapphire":         { "n": 14, "wardrobe": "lumar",   "busy": "day" },
+  "lumar-rose":             { "n": 9,  "wardrobe": "lumar",   "busy": "day" },
+  "lumar-tern":             { "n": 7,  "wardrobe": "lumar",   "busy": "day" },
+  "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
+  "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day" },
+  "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
+  "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },
+  "lumar-crown-pub":        { "n": 9,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
+  "lumar-tavern":           { "n": 7,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
+  "lumar-inn":              { "n": 4,  "wardrobe": "lumar",   "busy": "night", "sit": 0.7 },
+  "lumar-tern-inn":         { "n": 5,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
+  "lumar-bakery":           { "n": 3,  "wardrobe": "lumar",   "busy": "day" },
+
+  "arcadia-street":         { "n": 26, "wardrobe": "arcadia", "busy": "bustle" },
+  "arcadia-skywalk":        { "n": 12, "wardrobe": "arcadia", "busy": "bustle" },
+  "arcadia-skypad":         { "n": 4,  "wardrobe": "arcadia", "busy": "bustle" },
+  "arcadia-alley":          { "n": 4,  "wardrobe": "arcadia", "busy": "bustle" },
+  "arcadia":                { "n": 8,  "wardrobe": "arcadia", "busy": "bustle" },
+  "cyber-noodle-bar":       { "n": 5,  "wardrobe": "arcadia", "busy": "bustle", "sit": 0.8 },
+  "arcadia-lucky-7":        { "n": 5,  "wardrobe": "arcadia", "busy": "bustle" },
+  "arcadia-casino":         { "n": 14, "wardrobe": "casino",  "busy": "bustle" },
+  "arcadia-casino-cards":   { "n": 6,  "wardrobe": "casino",  "busy": "bustle" },
+  "arcadia-casino-dining":  { "n": 6,  "wardrobe": "casino",  "busy": "bustle", "sit": 0.9 },
+
+  "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
+
+  "hoarfell":               { "n": 14, "wardrobe": "hoarfell", "busy": "day" },
+  "hoarfell-lodge":         { "n": 7,  "wardrobe": "hoarfell", "busy": "night", "sit": 0.8 },
+  "hoarfell-skihire":       { "n": 3,  "wardrobe": "hoarfell", "busy": "day" },
+
+  "sylvara":                { "n": 7,  "wardrobe": "sylvara", "busy": "always", "emerge": 4 },
+  "sylvara-hall":           { "n": 4,  "wardrobe": "sylvara", "busy": "always" },
+
+  "_lines": {
+    "lumar": [
+      "MIND THE NETS. THEY BITE IF YOU TREAD ON THEM, OR THE FISHERMEN DO.",
+      "THE CATCH WAS THIN THIS MORNING. THE SPORES WERE DIM.",
+      "MY SISTER MARRIED A SAPPHIRE MAN. NOW SHE TALKS ABOUT GLASS ALL DAY.",
+      "CAN'T STOP - THE FERRY WON'T WAIT, AND NEITHER WILL MY MOTHER.",
+      "THEY SAY THE MIDNIGHT SEA'S GOT TEETH. I'VE NEVER BEEN. NEVER WILL.",
+      "BEST BREAD ON THE ISLANDS IS UP IN THE SQUARE. DON'T TELL THE CAPITAL.",
+      "YOU'RE ONE OF THOSE SKY PEOPLE. THE SHIP IN THE CLOUDS - IS IT COLD UP THERE?",
+      "SPORE-LAMP OIL'S GONE UP AGAIN. EVERYTHING'S GONE UP AGAIN.",
+      "ONE MORE GOOD SEASON AND I'M BUYING A BOAT OF MY OWN.",
+      "WATCH THE GULLS. THEY'LL HAVE YOUR PIE BEFORE YOU KNOW YOU HAD ONE.",
+      "AYE, LOVELY NIGHT FOR IT. EVERY NIGHT'S A NIGHT FOR IT HERE.",
+      "THE OLD LIGHTHOUSE KEEPER SAYS THE SEA'S RESTLESS. SHE ALWAYS SAYS THAT."
+    ],
+    "crown": [
+      "THE QUEEN-REGENT'S IN RESIDENCE - SEE THE FLAG ON THE KEEP?",
+      "PRICES AT THE EXCHANGE WOULD MAKE A PIRATE BLUSH.",
+      "THEY'VE A GALLEON ON THE STOCKS AT THE ROYAL YARD. A GALLEON! FOR WHOM, I ASK YOU.",
+      "IF YOU'RE LOST, THE PALACE IS UP. IT'S ALWAYS UP.",
+      "MIND YOUR PURSE ON MARKET ROW, DEAR. NOT EVERYONE THERE IS SELLING.",
+      "THE CROWN & ANCHOR POURS THE BEST ALE IN THE FIVE SEAS. I'VE CHECKED.",
+      "I'VE AN APPOINTMENT AT THE HARBOUR OFFICE. THREE HOURS IN A QUEUE FOR ONE STAMP.",
+      "SAINT BRENDAN'S BELL RINGS FOR EVERY SHIP THAT COMES HOME. IT RINGS LESS THAN IT USED TO."
+    ],
+    "pirates": [
+      "YOU LOST, SKY-BOY? THIS AIN'T A PLACE FOR SIGHTSEEING.",
+      "THE DRAGON? AYE, IT'S UP THERE. NO, I'M NOT TAKING YOU.",
+      "STORM'S COMING. STORM'S ALWAYS COMING ON THE CRIMSON.",
+      "GOT ANY RUM? NO? THEN WHAT GOOD ARE YOU.",
+      "THE TEETH TOOK THREE SHIPS LAST SEASON. THE SEA TAKES WHAT IT LIKES.",
+      "KEEP WALKING, FRIEND. KEEP WALKING."
+    ],
+    "arcadia": [
+      "NEW IN TOWN? YOU'VE GOT THE LOOK. ALL UP, NO DOWN.",
+      "DON'T EAT AT THE STALLS PAST THE RAMEN CART. TRUST ME.",
+      "THE SKYWALK'S TWO HUNDRED FLOORS UP AND I STILL WON'T LOOK DOWN.",
+      "HALCYON'S BUYING UP THE WHOLE BLOCK. AGAIN.",
+      "HEARD SOMEONE HIJACKED THE BILLBOARDS LAST NIGHT. HAD TO BE NULL.",
+      "CAN'T TALK. DELIVERY IN SIX MINUTES OR I DON'T GET PAID.",
+      "THE RAIN HERE NEVER STOPS. YOU STOP NOTICING. MOSTLY.",
+      "NEON ROYALE'S RUNNING HOT TONIGHT. SOMEBODY'S WINNING BIG, AND IT AIN'T ME.",
+      "NICE JACKET. VINTAGE?",
+      "THEY SAY THERE'S A WHOLE CITY UNDER THE STREETS. I SAY KEEP IT THERE."
+    ],
+    "casino": [
+      "DARLING, NOBODY WALKS INTO THE ROYALE BY ACCIDENT.",
+      "I'M UP TWELVE HUNDRED. DON'T TELL MY HUSBAND. OR DO - HE'S DOWN THREE THOUSAND.",
+      "THE DUCHESS NEVER LOSES. SHE SIMPLY DECIDES NOT TO WIN.",
+      "SEEN LADY VELVET SING? YOU HAVEN'T LIVED.",
+      "NEVER SPLIT TENS. NEVER. MY GRANDMOTHER'S ONLY RULE.",
+      "THE CHAMPAGNE'S FREE IF YOU'RE LOSING. I'M VERY THIRSTY."
+    ],
+    "verdance": [
+      "MORNIN'. LOOKS LIKE FAIR WEATHER FOR THE BEANS.",
+      "MAGS AT THE HAYLOFT DOES A PLOUGHMAN'S THAT'LL SET YOU UP TILL SUPPER.",
+      "THE MILLWHEEL'S BEEN SQUEAKING A WEEK. LUDD SAYS IT'S SINGING.",
+      "YOU'VE THE FARM ON THE HILL? EDDA'S OLD PLACE? SHE'D BE PLEASED.",
+      "BRIDGET'S HONEY CAKE SELLS OUT BY NOON. GET THERE EARLY.",
+      "MY MOTHER SAYS IT'LL RAIN BY TEA. MY MOTHER'S NEVER WRONG.",
+      "THE CHAPEL BELL'S A NOTE FLAT. WE'RE ALL VERY FOND OF IT.",
+      "TWO MOONS UP TONIGHT. GOOD FOR PLANTING, THEY SAY."
+    ],
+    "hoarfell": [
+      "THE POWDER'S PERFECT UP TOP. DON'T TELL ANYONE.",
+      "DID THE PINEWOOD THIS MORNING. FELL IN THE SAME TREE TWICE.",
+      "COCOA FIRST. THEN SKIING. THEN MORE COCOA.",
+      "LIV BEAT ME DOWN THE COULOIR BY NINE SECONDS. NINE.",
+      "THE LODGE FIRE'S THE WARMEST PLACE ON THE PLANET. I'VE MEASURED.",
+      "THEY SAY THERE'S A LIGHT PAST THE HOARSPIRE. I SAY THERE'S A BAR AT THE BOTTOM.",
+      "YOU'LL WANT A THERMAL SUIT IF YOU'RE GOING UP. TRUST ME ON THIS."
+    ],
+    "sylvara": [
+      "THE LANTERNS ARE LIT. THE WOOD IS LISTENING.",
+      "THE QUEEN WALKED THE MOONWELL PATH AT DAWN. THE FLOWERS TURNED TO WATCH HER.",
+      "YOU STEP LIGHTLY FOR ONE FROM THE STARS.",
+      "THAELIN PLAYED THE OLD SONG LAST NIGHT. EVEN THE OWLS WERE QUIET.",
+      "THE WILLOW REMEMBERS EVERYONE WHO SITS BENEATH IT.",
+      "MAY YOUR PATH BE MOSSY AND YOUR LANTERN NEVER GUTTER."
+    ],
+    "rain": [
+      "LOVELY WEATHER FOR FISH.",
+      "SOAKED THROUGH. AGAIN. SHOULD'VE BROUGHT THE BROLLY.",
+      "IN OUT OF THIS, IF I WERE YOU."
+    ],
+    "night": [
+      "LATE ONE, EH?",
+      "SHOULD BE ABED. WON'T BE.",
+      "QUIET THIS TIME OF NIGHT. I LIKE IT QUIET."
+    ]
+  },
+
+  "_wants": {
+    "lumar":    [{ "id": "sea_glass", "pay": 22 }, { "id": "bread", "pay": 12 }, { "id": "silver_nail", "pay": 18 }],
+    "crown":    [{ "id": "sea_glass", "pay": 26 }, { "id": "roseite", "pay": 40 }],
+    "pirates":  [{ "id": "mug_of_ale", "pay": 14, "ask": "ANY {item}? I'D GIVE {pay} FOR IT. AND I'D OWE YOU." }],
+    "arcadia":  [{ "id": "silver_nail", "pay": 20 }, { "id": "sea_glass", "pay": 30 }],
+    "verdance": [{ "id": "bread", "pay": 14 }, { "id": "sea_glass", "pay": 24 }],
+    "hoarfell": [{ "id": "roast_chestnuts", "pay": 20 }, { "id": "summit_crystal", "pay": 90 }],
+    "sylvara":  [{ "id": "sea_glass", "pay": 30, "ask": "THE {item} FROM THE SPORE SEA - YOU WOULDN'T HAVE ONE? I'D TRADE {pay} FOR ITS LIGHT." }]
+  }
+}

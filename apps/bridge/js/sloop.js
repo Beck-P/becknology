@@ -3108,6 +3108,7 @@ var BridgeSloop = (function () {
     pts.push({ x: seat[0], y: seat[1] + 0.25, z: m.spec.L > 3.6 ? (rg.qd != null ? rg.qd : rg.deck - 0.2) : 0.24 });
     return pts;
   }
+  var partyGo = false;
   function board(worldId, shipId) {
     var I = moored[worldId], world = BridgeWorld.getWorld(), F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null;
     if (running || aboard) return false;
@@ -3141,6 +3142,12 @@ var BridgeSloop = (function () {
       }
       F.sail(shipId);
     }
+    // playing together (js/party.js): the others are asked first; whoever comes is brought to the pier and comes aboard
+    // as crew (they answer 'sail-yes', and she casts off with them); nobody, and you go alone
+    if (!partyGo && typeof BridgeParty !== 'undefined' && BridgeParty.depart({ kind: 'sail', world: worldId, place: world && world.name }, function (ids) {
+      var alone = function () { if (running || aboard) return; partyGo = true; try { board(worldId, shipId); } finally { partyGo = false; } };
+      if (!ids || !ids.length) alone(); else setTimeout(alone, 9000);     // their 'sail-yes' starts the passage; if it never comes
+    })) return true;
     if (!I || !world || !BridgeWorld.setMode || !BridgeCharacter.setPose) return start(worldId);
     var list = fleetHere(I), m = list.filter(function (e) { return e.ship === shipId; })[0] || list[0];
     var pts = [{ x: BridgeCharacter.getX() + 0.5, y: BridgeCharacter.getY() + 1 - 3 / 32 }].concat(wayAboard(I, m));
@@ -3175,7 +3182,9 @@ var BridgeSloop = (function () {
     if (running || aboard || !knows(worldId)) return false;
     var F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null, gull = F ? F.here(worldId).filter(function (sh) { return sh.type === 'sloop'; })[0] : null;
     pendingRace = spec;
-    var ok = board(worldId, gull ? gull.id : undefined);
+    var ok;
+    partyGo = true;                                                   // each races her own sloop: a party isn't called aboard
+    try { ok = board(worldId, gull ? gull.id : undefined); } finally { partyGo = false; }
     if (!ok) pendingRace = null;
     return ok;
   }
