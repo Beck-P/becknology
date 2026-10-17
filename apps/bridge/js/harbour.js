@@ -45,7 +45,8 @@ var BridgeHarbour = (function () {
   function why(r) {
     var x = r && r.reason;
     return x === 'offline' || x === 'no_client' || x === 'no_pilot' || x === 'error' ? 'NO WAY TO MOVE COINS RIGHT NOW.' :
-           x === 'slots' ? 'EVERY GUN PORT SHE HAS IS FULL.' : x === 'fitted' ? 'SHE HAS ONE ALREADY.' :
+           x === 'slots' ? 'EVERY GUN PORT SHE HAS IS FULL.' : x === 'fitted' ? 'SHE HAS ONE ALREADY.' : x === 'better' ? 'SHE HAS BETTER THAN THAT ALREADY.' :
+           x === 'part' ? 'THE PART ISN\'T THERE ANY MORE.' :
            x === 'berths' ? 'NO BERTH FREE ON ANY SHIP OF YOURS HERE.' : x === 'full' ? 'HER HOLD IS FULL.' :
            x === 'sold_out' ? 'SOLD OUT FOR TODAY.' : x === 'cargo' ? 'EMPTY HER HOLD FIRST.' : 'NOT ENOUGH COINS.';
   }
@@ -278,9 +279,17 @@ var BridgeHarbour = (function () {
       return { label: G.name, sub: sub, note: base.slots ? (full ? 'ports full' : G.price + ' coins') : 'no gun ports', disabled: !base.slots || full,
                pick: function () { confirmFit(worldId, s, g, G, sub, 'Mount it'); } };
     }).concat(Pd.fits.map(function (k) {
-      var X = f.FITS[k], has = s.fits.indexOf(k) >= 0;
-      return { label: X.name, sub: 'fitting', note: has ? 'fitted' : X.price + ' coins', disabled: has,
+      var X = f.FITS[k], has = s.fits.indexOf(k) >= 0, better = f.canFit(s, k) === 'better';
+      return { label: X.name, sub: 'fitting', note: has ? 'fitted' : better ? 'has better' : X.price + ' coins', disabled: has || better,
                pick: function () { confirmFit(worldId, s, k, X, 'fitting', 'Fit it'); } };
+    }));
+    // your own work, from your Workshop (js/workshop.js): in your pack or her hold, fitted here for the yard's labour
+    // (never by the Ferryman: the sea does not mend ships)
+    if (!Pd.ferry && typeof BridgeWorkshop !== 'undefined') rows = rows.concat(BridgeWorkshop.partsFor(s).map(function (p) {
+      var no = f.canFit(s, p.what);
+      return { label: p.name + ' (your own)', icon: 'part_' + p.what, sub: 'made at your workshop · ' + (p.where === 'hold' ? 'in her hold' : 'in your pack') + (p.n > 1 ? ' · ' + p.n : ''),
+               note: no ? (no === 'slots' ? 'ports full' : no === 'better' ? 'has better' : 'fitted') : 'labour ' + p.fee, disabled: !!no,
+               pick: function () { confirmOwn(worldId, s, p); } };
     }));
     var buttons = [];
     if (s.guns.length) buttons.push({ label: 'Unmount a gun', act: function () {
@@ -297,6 +306,25 @@ var BridgeHarbour = (function () {
     choose({ title: X.name, text: X.blurb.toUpperCase(), rows: [{ label: X.name, sub: sub, note: X.price + ' coins', disabled: true }],
              buttons: [{ label: verb + ' (' + X.price + ')', act: function () {
                f.fit(s.id, id).then(function (r) { if (r.ok) sfx('coin'); fitOut(worldId, s, r.ok ? X.name.toUpperCase() + (f.GUNS[id] ? ' MOUNTED.' : ' FITTED.') : why(r)); });
+             } }, { label: 'Back', act: function () { fitOut(worldId, s); } }] });
+  }
+
+  // a part you made: the yard fits it for their labour only (the part comes out of your pack or her hold once it's paid)
+  function confirmOwn(worldId, s, p) {
+    var f = F(), G = f.GUNS[p.what], X = G || f.FITS[p.what];
+    choose({ title: X.name, text: ('Your own ' + X.name + ', from your workshop. ' + X.blurb + ' The yard fits it for their labour: ' + p.fee + ' coins.').toUpperCase(),
+             rows: [{ label: X.name + ' (your own)', icon: 'part_' + p.what, sub: G ? G.dmg + ' a shot · ' + G.range + ' tiles · ' + (G.arc === 'bow' ? 'ahead' : 'abeam') : 'fitting', note: 'labour ' + p.fee, disabled: true }],
+             buttons: [{ label: (G ? 'Mount it' : 'Fit it') + ' (' + p.fee + ')', act: function () {
+               if (f.canFit(s, p.what)) { fitOut(worldId, s, why({ reason: f.canFit(s, p.what) })); return; }
+               if (!BridgeWorkshop.partsFor(s).some(function (x) { return x.what === p.what; })) { fitOut(worldId, s, why({ reason: 'part' })); return; }
+               var pay = typeof BridgeProgression !== 'undefined' && BridgeProgression.wagerCoins ? BridgeProgression.wagerCoins(p.fee, 'fit-own:' + p.what) : Promise.resolve({ ok: false, reason: 'offline' });
+               pay.then(function (r) {
+                 if (!r || !r.ok) { fitOut(worldId, s, why(r)); return; }
+                 if (!BridgeWorkshop.usePart(p.what, s)) { fitOut(worldId, s, why({ reason: 'part' })); return; }
+                 var m = f.mount(s.id, p.what);
+                 if (m.ok) sfx('coin');
+                 fitOut(worldId, s, m.ok ? 'YOUR OWN ' + X.name.toUpperCase() + (G ? ', MOUNTED.' : ', FITTED.') + ' GOOD WORK, THAT.' : why(m));
+               });
              } }, { label: 'Back', act: function () { fitOut(worldId, s); } }] });
   }
 

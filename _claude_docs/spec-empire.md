@@ -83,7 +83,10 @@ in particular places, and the path from "I have money" to "I have something wond
 1. **Materials and the Workshop** — every material with a clear source (mining, forage, farm, markets, salvage,
    monsters); a Workshop you build at your base, smiths you hire to work it while you're away; recipes on the clock:
    processing (timber → planks, ore → bars), ship fittings and guns (cheaper than the yards, and some only craftable),
-   tools (better pick, rod), things for your homes. *(in progress)*
+   tools (better pick, rod), things for your homes. *(built, October 17: js/workshop.js — fourteen new materials,
+   29 recipes, smiths on the payroll, plans bought, found or taught for a favour, parts fitted by a harbourmaster;
+   the Bridge's CLAUDE.md, "The Workshop". Still to do: render the workshop's own building — `lumar_holm.py`'s
+   `workshop` variant — which stands in as the quarters' bunkhouse until then.)*
 2. **Your own shipyard** — a slipway at the holm: fit the parts you've made to ships lying there; build a ship from
    plans you've bought at a yard plus timber, iron, rope and canvas, over days; choose her paint, sails and
    figurehead. Later: a designer to lay out decks, guns and holds.

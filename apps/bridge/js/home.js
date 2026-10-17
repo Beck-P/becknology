@@ -750,5 +750,7 @@ var BridgeHome = (function () {
 
   return { decorate: decorate, use: use, buy: buy, edit: edit, done: finish, owns: owns, editing: function () { return !!ed; }, reload: function () { save = load(); },
            pieces: function () { return pieces; }, piece: function (id) { return byId[id] || null; }, spare: spare, buyPiece: buyPiece, persist: store,
+           // a piece made at your workshop (js/workshop.js): into your tray, to put down with H
+           givePiece: function (pid, n) { save.have[pid] = (save.have[pid] || 0) + (n || 1); store(); },
            HOMES: HOMES, _save: function () { return save; }, _check: function (pid, x, y) { return check(pid, x, y); } };
 })();
