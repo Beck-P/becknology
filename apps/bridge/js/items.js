@@ -262,9 +262,9 @@ var BridgeItems = (function () {
     target._hp -= dmg;
     var dot = w && w.dot;
     if (!dot) target._hitAt = performance.now();
-    // Hit-flash, an impact in the weapon's element (steel, frost, embers, holy light, drain wisps, dust), the number.
+    // An impact in the weapon's element (steel, frost, embers, holy light, drain wisps, dust) and the number; the creature
+    // itself flashes on its own pixels (js/combat.js, from _hitAt) — no box over the tile.
     if (typeof BridgeFX !== 'undefined') {
-      if (!dot) BridgeFX.spawnHitFlash(target.x, target.y);
       var elem = !w ? 'steel' : w.burn ? 'burn' : w.frost ? 'frost' : w.holy ? 'holy' : w.drain ? 'drain' : w.heavy || w.cls === 'maul' || w.cls === 'pick' ? 'heavy' : 'steel';
       if (!dot && BridgeFX.spawnImpact) BridgeFX.spawnImpact(target.x, target.y, elem, !!(w && (w.heavy || w.push)), w && w.remote ? null : { x: BridgeCharacter.getX(), y: BridgeCharacter.getY() });
       else if (BridgeFX.spawnSparks && !dot) BridgeFX.spawnSparks(target.x, target.y, w && w.burn ? '#ff9040' : w && w.frost ? '#a8e0ff' : w && w.holy ? '#fff0b0' : '#c868f0', w && w.heavy ? 12 : 7);
@@ -1264,7 +1264,7 @@ var BridgeItems = (function () {
                      type: 'weapon', stackable: false, draw: bladeIcon('#d8e8ff', '#4a3a6a', true, '#ffffff'), damage: 50, arc: true, holy: true, cls: 'sword', value: 220, onUse: weaponUse },
     veilpiercer:   { id: 'veilpiercer', name: 'Veilpiercer', desc: 'A narrow blade of black glass from the drowned tomb on Midnight. Quick in the hand - and what it draws out of them, it gives to you.',
                      type: 'weapon', stackable: false, draw: glassDaggerIcon, damage: 32, rate: 170, drain: 0.25, cls: 'blade', value: 200, onUse: weaponUse },
-    wispcaller:    { id: 'wispcaller', name: 'Wispcaller Staff', desc: 'The Bell Warden\'s. Black wood, a wisp caught in its head. F throws the wisp seven tiles down the way you face; it burns the restless dead brighter. Each throw takes 3 energy.',
+    wispcaller:    { id: 'wispcaller', name: 'Wispcaller Staff', desc: 'The Bell Warden\'s. Black wood, a wisp caught in its head. F throws the wisp seven tiles down the way you face; it burns the restless dead brighter. Each throw takes 2 energy.',
                      type: 'weapon', stackable: false, draw: staffIcon, damage: 42, holy: true, bolt: 'wisp', cls: 'cast', value: 300,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
     twin_fangs:    { id: 'twin_fangs', name: 'Twin Fangs', desc: 'A pair of curved knives from the smithy on the square, one for each hand. Quick, and every cut lands twice.',
@@ -1292,7 +1292,7 @@ var BridgeItems = (function () {
                      stackable: false, draw: hoeIcon, damage: 6, cls: 'pick', onUse: farmUse },
     watering_can:  { id: 'watering_can', name: 'Watering Can', desc: 'Holds twenty waterings. Fill it at the well or the pond; a watering keeps the ground wet to the end of the Verdance day.', type: 'tool',
                      stackable: false, draw: canIcon, onUse: farmUse },
-    moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 3 energy.',
+    moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 2 energy.',
                      type: 'weapon', stackable: false, draw: wandIcon, damage: 30, cls: 'cast', value: 200,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
     glimmer_lantern: { id: 'glimmer_lantern', name: 'Glimmer Lantern', desc: 'A lantern that burns brighter near hidden things. Hold it to see them; use it to ask which way is warmer.',

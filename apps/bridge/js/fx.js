@@ -1,16 +1,23 @@
 /**
  * BridgeFX — transient visual effects layer.
  *
- * Particles, slashes, hit flashes — anything short-lived that should
+ * Particles, slashes, impacts — anything short-lived that should
  * render on top of the world but not be tracked as a tile or entity.
  * Each effect has a startTime + duration; expired effects are pruned
  * each draw. Effects are world-relative (tile coordinates).
  *
+ * Nothing here is a box: a hit shows as a flash on the struck sprite's own
+ * pixels (js/combat.js for creatures, js/character.js `hurt` for you), an
+ * impact in its element and a number; glows are round and soft, cores are
+ * discs of whole pixels (disc / ring / glow, shared with loot, bolts and
+ * the marks a wind-up leaves on the ground).
+ *
  *   BridgeFX.spawnSlash(x, y, facing)  // weapon swing arc from a tile (the old swing, when there's no art)
- *   BridgeFX.spawnHitFlash(x, y)        // bright pulse on a target tile
+ *   BridgeFX.spawnStrike(fromX, fromY, toX, toY, colour)  // a creature's blow raking across the tile it struck
  *   BridgeFX.spawnTrail(points, colour, cls, charged)   // a swing's arc through the blade tip's path (js/arms.js)
  *   BridgeFX.spawnImpact(x, y, kind, heavy, from)       // a hit in its element: steel, frost, burn, holy, drain, heavy
  *   BridgeFX.spawnShock(x, y, scale) / spawnCharge(x, y, level, colour) / spawnDust(x, y, n)
+ *   BridgeFX.disc(ctx, cx, cy, r, squash) / ring(...) / glow(ctx, cx, cy, r, rgb, alpha, squash)   // round, crisp
  *   BridgeFX.draw(ctx, offX, offY, ts, time)
  */
 var BridgeFX = (function () {
@@ -25,34 +32,17 @@ var BridgeFX = (function () {
     });
   }
 
-  function spawnHitFlash(x, y) {
-    effects.push({
-      type: 'hit_flash',
-      x: x, y: y,
-      startTime: performance.now(),
-      duration: 320
-    });
-  }
-
-  // Enemy-strike streak: dark red line from one tile to another, used by
-  // hostiles when they commit to an attack on a locked target tile.
-  function spawnStrike(fromX, fromY, toX, toY) {
+  // A creature's blow coming down on the tile it locked onto: three quick
+  // slashes raked across it (claws, teeth, a fist), white at the head and
+  // its colour behind, from the side the blow came from.
+  function spawnStrike(fromX, fromY, toX, toY, colour) {
     effects.push({
       type: 'strike',
       fromX: fromX, fromY: fromY,
       toX: toX, toY: toY,
+      colour: colour || '#ff7060',
       startTime: performance.now(),
-      duration: 240
-    });
-  }
-
-  // Damage flash on the player's tile when an enemy lands a hit.
-  function spawnDamageFlash(x, y) {
-    effects.push({
-      type: 'damage_flash',
-      x: x, y: y,
-      startTime: performance.now(),
-      duration: 320
+      duration: 280
     });
   }
 
@@ -90,6 +80,38 @@ var BridgeFX = (function () {
       startTime: performance.now(),
       duration: 420
     });
+  }
+
+  // ---- round things, crisp ------------------------------------------------------------------------------------------
+  // a disc of whole pixels, a row at a time (squash < 1: lying flat on the ground); its outline a pixel wide; a soft
+  // glow, brightest in the middle and gone at the edge. Drawn at native resolution, so they stay pixel art upscaled.
+  function disc(ctx, cx, cy, r, squash) {
+    cx = Math.round(cx); cy = Math.round(cy);
+    var q = squash || 1, ry = Math.round(r * q), R = (r + 0.35) * (r + 0.35);
+    for (var y = -ry; y <= ry; y++) {
+      var yn = q === 1 ? y : y / q, w = Math.floor(Math.sqrt(Math.max(0, R - yn * yn)));
+      ctx.fillRect(cx - w, cy + y, w * 2 + 1, 1);
+    }
+  }
+  function ring(ctx, cx, cy, r, squash) {
+    var seen = {}, n = Math.max(12, Math.ceil(r * 7));
+    for (var i = 0; i < n; i++) {
+      var a = i / n * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r * (squash || 1)), k = x + ',' + y;
+      if (!seen[k]) { seen[k] = 1; ctx.fillRect(x, y, 1, 1); }
+    }
+  }
+  function glow(ctx, cx, cy, r, rgb, a, squash) {
+    if (!(r > 0) || !(a > 0)) return;
+    var c = typeof rgb === 'string' ? rgb : rgb.join(','), g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    g.addColorStop(0, 'rgba(' + c + ',' + a.toFixed(3) + ')');
+    g.addColorStop(0.4, 'rgba(' + c + ',' + (a * 0.5).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(' + c + ',0)');
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (squash && squash !== 1) ctx.scale(1, squash);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   }
 
   // ---- fighting (js/arms.js) --------------------------------------------------------------------------------------
@@ -186,7 +208,7 @@ var BridgeFX = (function () {
       for (var r = 0; r < 8; r++) { var ra = r * Math.PI / 4, rl = 4 + k * 12; ctx.fillRect(Math.round(cx + Math.cos(ra) * rl), Math.round(cy + Math.sin(ra) * rl * 0.7), 2, 2); }
     }
     if (fx.kind === 'frost' && k < 0.3) { ctx.globalAlpha = (0.3 - k) * 2.5; ctx.fillStyle = C[0]; ctx.fillRect(cx - 7, cy - 1, 15, 3); ctx.fillRect(cx - 1, cy - 7, 3, 15); }
-    if (fx.kind === 'burn' && k < 0.25) { ctx.globalAlpha = (0.25 - k) * 3; ctx.fillStyle = C[1]; ctx.fillRect(cx - 6, cy - 6, 13, 13); }
+    if (fx.kind === 'burn' && k < 0.25) { ctx.globalAlpha = (0.25 - k) * 3; ctx.fillStyle = C[1]; disc(ctx, cx, cy, 4 + Math.round(k * 12)); ctx.fillStyle = C[0]; disc(ctx, cx, cy, 2); }
     // the particles: shards, embers, motes, dust
     fx.parts.forEach(function (p, i) {
       var px, py;
@@ -228,7 +250,7 @@ var BridgeFX = (function () {
     if (fx.full) {                                                  // full: a ring bursts off the hand
       ctx.globalAlpha = 1 - k; var R = 3 + k * 14;
       for (var i = 0; i < 12; i++) { var a = i * Math.PI / 6; ctx.fillRect(Math.round(cx + Math.cos(a) * R), Math.round(cy + Math.sin(a) * R * 0.8), 2, 2); }
-      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = (1 - k) * 0.9; ctx.fillRect(Math.round(cx) - 2, Math.round(cy) - 2, 5, 5);
+      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = (1 - k) * 0.9; disc(ctx, cx, cy, 2);
     } else {                                                        // motes drawn in to the hand
       for (var j = 0; j < 3; j++) {
         var b = fx.a + j * 2.1, d = (1 - k) * 12;
@@ -261,9 +283,7 @@ var BridgeFX = (function () {
       if (elapsed >= fx.duration) { effects.splice(i, 1); continue; }
       var progress = elapsed / fx.duration;
       if (fx.type === 'slash')              drawSlash(ctx, offX, offY, ts, fx, progress);
-      else if (fx.type === 'hit_flash')     drawHitFlash(ctx, offX, offY, ts, fx, progress);
       else if (fx.type === 'strike')        drawStrike(ctx, offX, offY, ts, fx, progress);
-      else if (fx.type === 'damage_flash')  drawDamageFlash(ctx, offX, offY, ts, fx, progress);
       else if (fx.type === 'sparks')        drawSparks(ctx, offX, offY, ts, fx, progress);
       else if (fx.type === 'trail')         drawTrail(ctx, offX, offY, ts, fx, progress);
       else if (fx.type === 'impact')        drawImpact(ctx, offX, offY, ts, fx, progress);
@@ -360,106 +380,54 @@ var BridgeFX = (function () {
     ctx.fillRect(Math.floor(cx - w / 2), Math.floor(cy - h / 2), Math.ceil(w), Math.ceil(h));
   }
 
-  function drawHitFlash(ctx, offX, offY, ts, fx, progress) {
-    var cx = offX + (fx.x + 0.5) * ts;
-    var cy = offY + (fx.y + 0.5) * ts;
-    var alpha = 1 - progress;
-    // Outer red halo — bigger and brighter so the impact reads
-    var outerSize = ts * (1.0 + 0.3 * progress);
-    ctx.fillStyle = 'rgba(255,120,60,' + (alpha * 0.55).toFixed(2) + ')';
-    ctx.fillRect(Math.floor(cx - outerSize / 2), Math.floor(cy - outerSize / 2),
-                 Math.ceil(outerSize), Math.ceil(outerSize));
-    // Mid warm band
-    var midSize = ts * (0.75 - 0.10 * progress);
-    ctx.fillStyle = 'rgba(255,200,120,' + (alpha * 0.7).toFixed(2) + ')';
-    ctx.fillRect(Math.floor(cx - midSize / 2), Math.floor(cy - midSize / 2),
-                 Math.ceil(midSize), Math.ceil(midSize));
-    // Inner bright core
-    var innerSize = ts * (0.45 - 0.18 * progress);
-    ctx.fillStyle = 'rgba(255,255,240,' + (alpha * 0.95).toFixed(2) + ')';
-    ctx.fillRect(Math.floor(cx - innerSize / 2), Math.floor(cy - innerSize / 2),
-                 Math.ceil(innerSize), Math.ceil(innerSize));
-  }
-
-  // Enemy strike: a dark red line that extends from the statue's tile to
-  // the target tile over the first half, then snaps back over the second.
+  // The creature's blow: three slashes drawn in one after another across the
+  // tile, leaning away from where it came from, then gone.
   function drawStrike(ctx, offX, offY, ts, fx, progress) {
-    var fcx = offX + (fx.fromX + 0.5) * ts;
-    var fcy = offY + (fx.fromY + 0.5) * ts;
-    var tcx = offX + (fx.toX + 0.5) * ts;
-    var tcy = offY + (fx.toY + 0.5) * ts;
-    var reach = (progress < 0.5) ? (progress * 2) : 1;
-    var fade = (progress < 0.5) ? 1 : (1 - (progress - 0.5) * 2);
-
-    var tipX = fcx + (tcx - fcx) * reach;
-    var tipY = fcy + (tcy - fcy) * reach;
-
-    ctx.lineCap = 'round';
-    // Dark outer band
-    ctx.strokeStyle = 'rgba(80,10,20,' + (fade * 0.85).toFixed(2) + ')';
-    ctx.lineWidth = Math.max(4, ts * 0.26);
-    ctx.beginPath(); ctx.moveTo(fcx, fcy); ctx.lineTo(tipX, tipY); ctx.stroke();
-    // Crimson mid
-    ctx.strokeStyle = 'rgba(200,40,60,' + (fade * 0.9).toFixed(2) + ')';
-    ctx.lineWidth = Math.max(3, ts * 0.15);
-    ctx.beginPath(); ctx.moveTo(fcx, fcy); ctx.lineTo(tipX, tipY); ctx.stroke();
-    // Hot core
-    ctx.strokeStyle = 'rgba(255,180,200,' + fade.toFixed(2) + ')';
-    ctx.lineWidth = Math.max(2, ts * 0.07);
-    ctx.beginPath(); ctx.moveTo(fcx, fcy); ctx.lineTo(tipX, tipY); ctx.stroke();
-
-    // Tip puck at the leading edge
-    var tipSize = Math.max(6, ts * 0.35);
-    ctx.fillStyle = 'rgba(255,200,220,' + fade.toFixed(2) + ')';
-    ctx.beginPath();
-    ctx.arc(tipX, tipY, tipSize / 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Player damage flash: red pulse on the player's tile + subtle screen border pulse.
-  function drawDamageFlash(ctx, offX, offY, ts, fx, progress) {
-    var cx = offX + (fx.x + 0.5) * ts;
-    var cy = offY + (fx.y + 0.5) * ts;
-    var alpha = 1 - progress;
-    // Outer dim red, grows slightly
-    var outerSize = ts * (1.05 + 0.25 * progress);
-    ctx.fillStyle = 'rgba(180,20,30,' + (alpha * 0.55).toFixed(2) + ')';
-    ctx.fillRect(Math.floor(cx - outerSize / 2), Math.floor(cy - outerSize / 2),
-                 Math.ceil(outerSize), Math.ceil(outerSize));
-    // Inner bright red
-    var innerSize = ts * (0.7 - 0.2 * progress);
-    ctx.fillStyle = 'rgba(255,80,60,' + (alpha * 0.85).toFixed(2) + ')';
-    ctx.fillRect(Math.floor(cx - innerSize / 2), Math.floor(cy - innerSize / 2),
-                 Math.ceil(innerSize), Math.ceil(innerSize));
-
-    // Screen-edge crimson warning pulse
-    if (ctx.canvas) {
-      var cw = ctx.canvas.width, ch = ctx.canvas.height;
-      var border = Math.max(8, Math.floor(Math.min(cw, ch) * 0.025));
-      ctx.fillStyle = 'rgba(220,25,45,' + (alpha * 0.28).toFixed(2) + ')';
-      ctx.fillRect(0, 0, cw, border);
-      ctx.fillRect(0, ch - border, cw, border);
-      ctx.fillRect(0, border, border, ch - border * 2);
-      ctx.fillRect(cw - border, border, border, ch - border * 2);
+    var side = fx.toX < fx.fromX ? 1 : fx.toX > fx.fromX ? -1 : (fx.toY >= fx.fromY ? 1 : -1);
+    var vx = -0.55 * side, vy = 0.85, vl = Math.hypot(vx, vy);
+    vx /= vl; vy /= vl;                                          // along a slash
+    var qx = vy, qy = -vx;                                       // across them
+    var cx = offX + (fx.toX + 0.5) * ts, cy = offY + (fx.toY + 0.4) * ts;
+    var L = Math.round(ts * 0.38), fade = progress < 0.45 ? 1 : 1 - (progress - 0.45) / 0.55;
+    ctx.save();
+    for (var s = -1; s <= 1; s++) {
+      var t0 = (s + 1) * 0.08, drawn = Math.max(0, Math.min(1, (progress - t0) / 0.22));
+      if (!drawn) continue;
+      var len = Math.round(L * (s ? 0.8 : 1)), sx = cx + qx * s * 4 - vx * len / 2, sy = cy + qy * s * 4 - vy * len / 2;
+      var n = Math.round(len * drawn);
+      for (var i = 0; i <= n; i++) {
+        var x = Math.round(sx + vx * i), y = Math.round(sy + vy * i), head = n - i < 3;
+        ctx.globalAlpha = fade * (head ? 1 : 0.55 + 0.45 * i / Math.max(1, n));
+        ctx.fillStyle = head ? '#ffffff' : fx.colour;
+        ctx.fillRect(x, y, 1, 1);
+        if (i > len * 0.25 && i < len * 0.75) ctx.fillRect(x + 1, y, 1, 1);   // heavier through the middle
+      }
     }
+    ctx.restore();
   }
 
+  // Each spark a short streak along the way it's flying: the head a pixel or two (white-hot at first), the tail fading
+  // behind it, a pixel of shadow under the head so it reads on pale ground — no outlined squares.
   function drawSparks(ctx, offX, offY, ts, fx, progress) {
     var cx = offX + (fx.x + 0.5) * ts;
     var cy = offY + (fx.y + 0.5) * ts;
-    var u = Math.max(2, Math.floor(ts / 16));
     var alpha = Math.max(0, 1 - progress * 0.9);
     ctx.save();
-    ctx.globalAlpha = alpha;
     for (var i = 0; i < fx.particles.length; i++) {
-      var p = fx.particles[i];
-      var px = cx + p.vx * progress * ts;
-      var py = cy + (p.vy * progress + 0.45 * progress * progress) * ts;
-      var sz = Math.max(2, Math.round(u * p.size));
-      ctx.fillStyle = '#0a0a16';
-      ctx.fillRect(Math.floor(px - 1), Math.floor(py - 1), sz + 2, sz + 2);
+      var p = fx.particles[i], back = Math.max(0, progress - 0.12);
+      var hx = cx + p.vx * progress * ts, hy = cy + (p.vy * progress + 0.45 * progress * progress) * ts;
+      var tx = cx + p.vx * back * ts, ty = cy + (p.vy * back + 0.45 * back * back) * ts;
+      var s = p.size > 1 ? 2 : 1, n = Math.max(1, Math.round(Math.max(Math.abs(hx - tx), Math.abs(hy - ty))));
       ctx.fillStyle = fx.color;
-      ctx.fillRect(Math.floor(px), Math.floor(py), sz, sz);
+      for (var j = n; j >= 1; j--) {
+        ctx.globalAlpha = alpha * 0.75 * (1 - j / (n + 1));
+        ctx.fillRect(Math.round(hx + (tx - hx) * j / n), Math.round(hy + (ty - hy) * j / n), 1, 1);
+      }
+      ctx.globalAlpha = alpha * 0.45; ctx.fillStyle = '#0a0a16';
+      ctx.fillRect(Math.round(hx), Math.round(hy) + s, s, 1);
+      ctx.globalAlpha = alpha; ctx.fillStyle = fx.color;
+      ctx.fillRect(Math.round(hx), Math.round(hy), s, s);
+      if (progress < 0.3) { ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(hx), Math.round(hy), 1, 1); }
     }
     ctx.restore();
   }
@@ -469,28 +437,27 @@ var BridgeFX = (function () {
     var lift = Math.pow(progress, 0.7) * ts * 0.75;
     var cy = offY + (fx.y + 0.25) * ts - lift;
     var alpha = progress < 0.65 ? 1 : (1 - (progress - 0.65) / 0.35);
-    var fontSize = Math.max(9, Math.round(ts * 0.22));
+    var fontSize = Math.max(10, Math.round(ts * 0.25));
+    var pop = progress < 0.1 ? 1.3 - progress * 3 : 1;           // it pops in a touch big and settles
     ctx.save();
     ctx.globalAlpha = Math.max(0, alpha);
-    ctx.font = 'bold ' + fontSize + 'px "Press Start 2P", monospace';
+    ctx.translate(Math.round(cx), Math.round(cy));
+    if (pop !== 1) ctx.scale(pop, pop);
+    // the game's pixel font (index.html loads Pixelify Sans), a dark outline all round and a shade deeper below
+    ctx.font = '600 ' + fontSize + 'px "Pixelify Sans", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    // Crisp 1px pixel shadow outline
+    var o = Math.max(1, Math.round(fontSize / 12));
     ctx.fillStyle = '#0a0a16';
-    ctx.fillText(fx.text, Math.floor(cx) - 1, Math.floor(cy));
-    ctx.fillText(fx.text, Math.floor(cx) + 1, Math.floor(cy));
-    ctx.fillText(fx.text, Math.floor(cx), Math.floor(cy) - 1);
-    ctx.fillText(fx.text, Math.floor(cx), Math.floor(cy) + 2);
+    for (var ox = -o; ox <= o; ox += o) for (var oy = -o; oy <= o + o; oy += o) if (ox || oy) ctx.fillText(fx.text, ox, oy);
     ctx.fillStyle = fx.color;
-    ctx.fillText(fx.text, Math.floor(cx), Math.floor(cy));
+    ctx.fillText(fx.text, 0, 0);
     ctx.restore();
   }
 
   return {
     spawnSlash: spawnSlash,
-    spawnHitFlash: spawnHitFlash,
     spawnStrike: spawnStrike,
-    spawnDamageFlash: spawnDamageFlash,
     spawnFloatingText: spawnFloatingText,
     spawnSparks: spawnSparks,
     spawnTrail: spawnTrail,
@@ -498,6 +465,9 @@ var BridgeFX = (function () {
     spawnShock: spawnShock,
     spawnCharge: spawnCharge,
     spawnDust: spawnDust,
+    disc: disc,
+    ring: ring,
+    glow: glow,
     clear: clear,
     draw: draw,
     drawScreen: drawScreen
