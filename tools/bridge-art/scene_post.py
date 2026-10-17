@@ -467,7 +467,7 @@ def lit_refl(rd, od, water):
 WET_SMEAR = 7         # steps of the neon smeared down the wet ground, 2 px each
 WET_DARK = 0.5        # the mirrored flat colours, darkened (the street at night: a dark, coloured reflection)
 WET_MIX = 0.25        # how far a fully wet surface turns to that reflection
-WET_GLOW = 0.5        # how strongly what glows shows in it
+WET_GLOW = 0.75       # how strongly what glows shows in it
 
 
 def wet_layer(rd, meta, ids, alpha):
