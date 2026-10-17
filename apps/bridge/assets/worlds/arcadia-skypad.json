@@ -1071,6 +1071,18 @@
       "label": "THE DROP",
       "prompt": "PRESS E TO LOOK",
       "dialog": "TWO HUNDRED FLOORS STRAIGHT DOWN, THE STREETS ARE RIVERS OF LIGHT.\n\nTRAFFIC PASSES BELOW YOU."
+    },
+    {
+      "x": 28,
+      "y": 8,
+      "type": "enter_world",
+      "target": "arcadia-terraces",
+      "spawn": [
+        2,
+        19
+      ],
+      "label": "SKYBRIDGE \u00b7 THE TERRACES",
+      "prompt": "PRESS E TO CROSS"
     }
   ],
   "designTiles": [],

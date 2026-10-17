@@ -282,7 +282,7 @@ w = {'name': 'Skyport 7', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tilese
          {'x': 12, 'y': 13, 'type': 'dialog', 'label': 'THE DROP', 'prompt': 'PRESS E TO LOOK',
           'dialog': 'TWO HUNDRED FLOORS STRAIGHT DOWN, THE STREETS ARE RIVERS OF LIGHT.\n\nTRAFFIC PASSES BELOW YOU.'},
      ]}
-TERRACES = [1, 20]                                   # where the skybridge comes out on the Terraces (scenes/arcadia_terraces.py)
+TERRACES = [2, 19]                                   # where the skybridge comes out on the Terraces (scenes/arcadia_terraces.py)
 if os.path.exists(os.path.join(os.path.dirname(WORLD), 'arcadia-terraces.json')):
     w['interactions'].append({'x': COLS - 1, 'y': 8, 'type': 'enter_world', 'target': 'arcadia-terraces', 'spawn': TERRACES,
                               'label': 'SKYBRIDGE \u00b7 THE TERRACES', 'prompt': 'PRESS E TO CROSS'})

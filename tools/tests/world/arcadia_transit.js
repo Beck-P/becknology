@@ -47,6 +47,18 @@ const BASE = 'http://127.0.0.1:8766/';
   await waitFor(() => BridgeWorld.getWorldId() === 'arcadia-skywalk' && !document.getElementById('transit-ride'));
   console.log('skipped down, now at', JSON.stringify(await where()));
 
+  // ---- across the skybridge from Skyport 7 to the Terraces and back ----
+  if (await p.evaluate(() => BridgeTransit.built('arcadia-terraces'))) {
+    await go('arcadia-skypad', [27, 8]); await p.waitForTimeout(1200);
+    console.log('skybridge:', await use("/SKYBRIDGE/.test(i.label)"));
+    await waitFor(() => BridgeWorld.getWorldId() === 'arcadia-terraces'); await p.waitForTimeout(900);
+    console.log('across the skybridge, now at', JSON.stringify(await where()));
+    await p.screenshot({ path: OUT + '/transit_terraces_arrive.png' });
+    await use("/SKYBRIDGE/.test(i.label)");
+    await waitFor(() => BridgeWorld.getWorldId() === 'arcadia-skypad'); await p.waitForTimeout(600);
+    console.log('back across, now at', JSON.stringify(await where()));
+  }
+
   // ---- a ride's frames: up through the smog to the Spires, down below the street, a cab across ----
   const film = async (spec, name, n, gap) => {
     await p.evaluate((spec) => BridgeTransit.ride(spec, () => BridgeTransit._close()), spec);
