@@ -708,6 +708,28 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#2a1a10', [[5, 8, 2, 1]]); px(ctx, x, y, u, '#d83a2e', [[4, 2, 1, 2], [5, 1, 3, 1]]);
   }
   // ---- the Neon Royale (the casino in Arcadia): the bar, Aurum's kitchen, the boutique ----
+  // the Spires (Arcadia L480): the tea salon's pot and its petit fours, Aurelle's glass of starlight
+  function teaPotIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a2a', [[4, 5, 8, 8], [3, 6, 1, 6], [12, 6, 1, 6], [13, 7, 2, 1], [14, 8, 1, 2], [1, 7, 2, 1], [1, 8, 1, 3], [6, 3, 4, 2], [7, 2, 2, 1]]);
+    px(ctx, x, y, u, '#f4eef4', [[4, 6, 8, 6], [7, 3, 2, 2]]); px(ctx, x, y, u, '#d8c8dc', [[9, 7, 3, 5]]);
+    px(ctx, x, y, u, '#e8a8cc', [[5, 8, 6, 1]]); px(ctx, x, y, u, '#d8b060', [[4, 5, 8, 1], [7, 2, 2, 1]]);
+    px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[2, 4, 1, 2], [1, 2, 1, 2]]);
+  }
+  function petitFourIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1a22', [[1, 11, 14, 2]]); px(ctx, x, y, u, '#f4f4f8', [[2, 11, 12, 1]]);
+    [[2, 7, '#f4a8d0'], [6, 6, '#a8e8d0'], [10, 7, '#c8b0f8']].forEach(function (c) {
+      px(ctx, x, y, u, '#2a1a2a', [[c[0], c[1], 4, 4]]); px(ctx, x, y, u, c[2], [[c[0], c[1], 4, 3]]);
+      px(ctx, x, y, u, '#fffaf2', [[c[0], c[1], 4, 1]]); px(ctx, x, y, u, '#d8b060', [[c[0] + 1, c[1] - 1, 2, 1]]);
+    });
+  }
+  function starlightIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1430', [[5, 1, 6, 1], [4, 2, 1, 6], [11, 2, 1, 6], [5, 8, 6, 1], [7, 9, 2, 4], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#3a3a8a', [[5, 2, 6, 6]]); px(ctx, x, y, u, '#c8b0f8', [[5, 5, 6, 3]]);
+    px(ctx, x, y, u, '#fff8d0', [[6, 3, 1, 1], [9, 4, 1, 1], [7, 6, 1, 1]]); px(ctx, x, y, u, '#d8d8e8', [[7, 9, 1, 4], [6, 13, 4, 1]]);
+  }
   function coupeIcon(drink) {                       // a cocktail coupe on a stem
     return function (ctx, x, y, s) {
       var u = s / 16;
@@ -1344,6 +1366,15 @@ var BridgeItems = (function () {
     // Club Void's bar (js/dance.js)
     void_fizz:     { id: 'void_fizz', name: 'Void Fizz', desc: 'Purple, fizzing, faintly glowing under the lights. Tastes like a bassline. Energy.', type: 'drink',
                      stackable: true, draw: fizzIcon, effects: { energy: 30 }, value: 4, onUse: consumableUse },
+    // the Spires (Arcadia L480): the tea salon, Aurelle
+    jasmine_pearls: { id: 'jasmine_pearls', name: 'Jasmine Pearls', desc: 'A pot of rolled jasmine tea from the Spires\' tea salon: the pearls open as you watch. Energy, and calm.', type: 'drink',
+                     stackable: true, draw: teaPotIcon, effects: { energy: 30, hp: 10 }, value: 8, onUse: consumableUse },
+    petit_fours:   { id: 'petit_fours', name: 'Petit Fours', desc: 'Three little cakes in pastel icing, a gold dot on each. Clemence makes them. Health and energy.', type: 'food',
+                     stackable: true, draw: petitFourIcon, effects: { hp: 20, energy: 25 }, value: 10, onUse: consumableUse },
+    starlight:     { id: 'starlight', name: 'Starlight', desc: 'Aurelle\'s own: champagne over a violet liqueur that glitters, served under the only real stars in Arcadia. Energy.', type: 'drink',
+                     stackable: true, draw: starlightIcon, effects: { energy: 50 }, value: 14, onUse: consumableUse },
+    sky_oysters:   { id: 'sky_oysters', name: 'Sky Oysters', desc: 'Six Lumar oysters on crushed ice, a pearl of caviar on each. Aurelle\'s. Health.', type: 'food',
+                     stackable: true, draw: coupeIcon('#e8e0d0'), effects: { hp: 45, energy: 15 }, value: 15, onUse: consumableUse },
     // the Neon Royale: its bar, Aurum (the restaurant), its boutique
     gold_rush:     { id: 'gold_rush', name: 'Gold Rush', desc: 'The Royale\'s own: honey, lemon, rye and a flake of gold leaf, in a coupe. Energy.', type: 'drink',
                      stackable: true, draw: coupeIcon('#e8b030'), effects: { energy: 35 }, value: 6, onUse: consumableUse },

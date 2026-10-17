@@ -81,22 +81,7 @@ def low():
     k.render(os.path.join(OUT, 'low'), light_states={'full': {}}, light_samples=24, world_light=('#2a1c50', 0.9))
 
 
-def peaks():
-    """The Spires' neighbours (js/skyline.js mode 'spires'): white-and-gold towers whose feet are lost in the smog."""
-    W = 130
-    k = CineKit((0, W, -3, 1.0, 0, 30), elev=45, ppt=9, seed=61)
-    rng = random.Random(61)
-    x = 0.5
-    while x < W - 2:
-        w = rng.uniform(2.2, 4.5)
-        Y.spire(k, x, x + w, rng.uniform(-1.2, 0.4), rng.choice((rng.uniform(8, 14), rng.uniform(12, 20), rng.uniform(18, 26))), rng=rng)
-        x += w + rng.uniform(0.6, 3.5)
-    k.sun((0.25, -0.45, -0.85), '#e8ecff', 1.6)              # starlight and the moon, cool from above
-    k.sun((0.1, -0.7, 0.5), '#ffa8d0', 0.3)                # the city's glow up through the smog
-    k.render(os.path.join(OUT, 'peaks'), light_states={'full': {}}, light_samples=32, world_light=('#4a5070', 0.6))
-
-
-for name, fn in (('far', far), ('mid', mid), ('low', low), ('peaks', peaks)):
+for name, fn in (('far', far), ('mid', mid), ('low', low)):
     if not ONLY or name in ONLY:
         fn()
         print(name, 'rendered')

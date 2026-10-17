@@ -748,5 +748,163 @@
       "action": "view",
       "view": "orbit"
     }
+  ],
+  "arcadia-spires": [
+    {
+      "label": "BENCH",
+      "x": 9,
+      "y": 26,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        9.0,
+        26.4
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT",
+      "caption": "THE POOL LIES BLACK AND STILL, AND THE STARS ARE IN IT. A REAL SKY, UPSIDE DOWN, AT YOUR FEET."
+    },
+    {
+      "label": "BENCH",
+      "x": 21,
+      "y": 26,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        21.0,
+        26.4
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT",
+      "caption": "SOMEBODY HAS LEFT A PAPER BOAT ON THE POOL. IT TURNS SLOWLY THROUGH THE REFLECTED STARS."
+    },
+    {
+      "label": "BENCH",
+      "x": 5,
+      "y": 33,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        5.5,
+        33.4
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "BENCH",
+      "x": 25,
+      "y": 33,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        24.9,
+        33.4
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "BENCH",
+      "x": 45,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        45.0,
+        16.2
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT",
+      "caption": "THE CROWN FOUNTAIN PLAYS. WATER FALLS FROM GOLD INTO STONE, AND THE ONLY OTHER SOUND IS A LOOP TRAIN, VERY FAR BELOW, LIKE THE SEA."
+    },
+    {
+      "label": "BENCH",
+      "x": 50,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        50.0,
+        16.2
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "BENCH",
+      "x": 45,
+      "y": 27,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        45.0,
+        27.2
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "BENCH",
+      "x": 50,
+      "y": 27,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        50.0,
+        27.2
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "BENCH",
+      "x": 45,
+      "y": 38,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        45.3,
+        38.3
+      ],
+      "facing": "down",
+      "view": "spires",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "THE SMOG LIES BELOW LIKE A SEA AT NIGHT, LIT FROM UNDERNEATH. THE TOPS OF THE MID-LEVELS STAND OUT OF IT. ABOVE, THE STARS. REAL ONES."
+    },
+    {
+      "label": "BENCH",
+      "x": 50,
+      "y": 38,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        49.7,
+        38.3
+      ],
+      "facing": "down",
+      "view": "spires",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "FAR OFF, ANOTHER SPIRE'S GOLD NEEDLE CATCHES THE MOON. SOMEONE OVER THERE IS PROBABLY LOOKING BACK."
+    },
+    {
+      "label": "BENCH",
+      "x": 67,
+      "y": 31,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        67.1,
+        31.0
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "TELESCOPE",
+      "action": "view",
+      "view": "spires",
+      "prompt": "PRESS E TO LOOK THROUGH"
+    }
   ]
 }

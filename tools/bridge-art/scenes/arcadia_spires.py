@@ -36,7 +36,9 @@ FRONT = 40.0                     # the plaza's front edge (the balustrade)
 DOCK_FRONT = 41.4                # the sky docks reach a little further out
 DX0 = 64.0                       # where the docks begin
 k = Kit(COLS, ROWS, margin_top=4.5, margin_bottom=0.6, margin_x=0.5, seed=4801)
-SAMPLES = int(os.environ.get('SPIRES_SAMPLES', 128))
+SAMPLES = int(os.environ.get('SAMPLES', 64))
+from _manor import preview  # noqa: E402
+preview(k)                       # PREVIEW=n: every pass at no more than n samples, for a quick look
 
 # ---- the ground ------------------------------------------------------------------------------------------------------------
 # the gardens' lawns and walks (west), the plaza's paving (middle and in front of the opera), the docks' teak (east front)
@@ -289,8 +291,8 @@ w = {'name': 'The Spires', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tiles
          {'x': 47, 'y': 9, 'type': 'dialog', 'label': 'HALCYON TOWER', 'prompt': 'PRESS E TO LOOK',
           'dialog': 'THE GREAT DOORS OF HALCYON\'S TOWER. BEHIND THE GLASS A LOBBY OF WHITE MARBLE, A RECEPTION DESK WITH NOBODY AT IT, AND A LIFT THAT ONLY GOES UP. THE DOORS DO NOT OPEN FOR YOU. A SMALL GOLD PLATE SAYS: BY APPOINTMENT.'},
          {'x': 59, 'y': 9, 'type': 'orrery_door', 'target': 'arcadia-members', 'spawn': [11, 12], 'label': 'THE ORRERY', 'prompt': 'PRESS E TO KNOCK'},
-         {'x': 72, 'y': 10, 'type': 'enter_world', 'target': 'arcadia-opera', 'spawn': [12, 13], 'label': 'THE LYRA', 'prompt': 'PRESS E TO GO IN'},
-         {'x': 73, 'y': 10, 'type': 'enter_world', 'target': 'arcadia-opera', 'spawn': [12, 13], 'label': 'THE LYRA', 'prompt': 'PRESS E TO GO IN'},
+         {'x': 72, 'y': 10, 'type': 'enter_world', 'target': 'arcadia-opera', 'spawn': [12, 14], 'label': 'THE LYRA', 'prompt': 'PRESS E TO GO IN'},
+         {'x': 73, 'y': 10, 'type': 'enter_world', 'target': 'arcadia-opera', 'spawn': [12, 14], 'label': 'THE LYRA', 'prompt': 'PRESS E TO GO IN'},
          {'x': 89, 'y': 9, 'type': 'enter_world', 'target': 'arcadia-champagne', 'spawn': [5, 12], 'label': 'AURELLE', 'prompt': 'PRESS E TO GO IN'},
          {'x': 9, 'y': 10, 'type': 'vendor', 'label': 'THE TEA SALON', 'prompt': 'PRESS E TO ORDER',
           'items': [{'id': 'jasmine_pearls', 'price': 14}, {'id': 'petit_fours', 'price': 18}, {'id': 'honey_cake', 'price': 12}]},
@@ -312,8 +314,10 @@ actors = [
     {'sheet': 'npc-gardener', 'x': 26, 'y': 35, 'facing': 'left'},
     {'sheet': 'npc-halcyon-doorman', 'x': 46, 'y': 9, 'facing': 'down'},
     {'sheet': 'npc-dockmaster', 'x': 87, 'y': 31, 'facing': 'down'},
-    {'sheet': 'npc-steward', 'x': 80, 'y': 42, 'facing': 'up'},
+    {'sheet': 'npc-yacht-steward', 'x': 80, 'y': 42, 'facing': 'up'},
 ]
+for a in actors:                                  # nobody walks through the people
+    k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
 apply_world(WORLD, k, (1, int(RB) + 1, 94, int(DOCK_FRONT)), scene_id=WID, actors=actors,
             scene_extra={'backdrop': True})
 w = json.load(open(WORLD))

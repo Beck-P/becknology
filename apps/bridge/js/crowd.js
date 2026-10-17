@@ -108,6 +108,17 @@ var BridgeCrowd = (function () {
       names: { m: ['Kade', 'Jin', 'Rook', 'Dex', 'Hiro', 'Vasco', 'Ozu', 'Kenji', 'Lio', 'Marz'],
                f: ['Nyx', 'Kiri', 'Juno', 'Mika', 'Sable', 'Reya', 'Tamsin', 'Yuki', 'Zara', 'Echo'], c: ['Bit', 'Pixel', 'Zip'] }
     },
+    spires: {     // Arcadia above the smog (L480): white, gold and pastel, old money and new eyes
+      bodies: { suit: 4, gown: 4, woman: 1.5, 'woman-bun': 1.5, elder: 1.5, vest: 1, man: 1, child: 0.4 },
+      top: ['#f4f0e8', '#e8dce8', '#d8c8f0', '#c8e8e0', '#1c1c26', '#c89a28', '#f0c8d8', '#22304a'],
+      bot: ['#e4e0d4', '#1c1c26', '#c8c2d4', '#22304a', '#5a2a44', '#2e2a30'],
+      out: ['#f4f0e8', '#c89a28', '#d8c8f0', '#e2d8c8', '#1a2a5a', '#f0c8d8'],
+      hat: ['#f4f0e8', '#c89a28', '#1c1c26'],
+      umbrella: null,
+      wild: 0.25,
+      names: { m: ['Aurelien', 'Caspian', 'Lucan', 'Sebastien', 'Orion', 'Ambrose', 'Felix', 'Ravel'],
+               f: ['Celestine', 'Isolde', 'Valentina', 'Seraphine', 'Ondine', 'Perpetua', 'Lux', 'Vesper'], c: ['Clio', 'Teddy', 'Bijou'] }
+    },
     casino: {
       bodies: { suit: 5, gown: 5, vest: 1, man: 1, woman: 1 },
       top: ['#1c1c26', '#22304a', '#34164a', '#c89a28', '#8a1022', '#e4e0d4', '#0e0e14'],

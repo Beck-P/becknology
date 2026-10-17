@@ -43,6 +43,7 @@ EXTRA = [
     ('lumar-holm', 'lumar-holm-resort', ['THE STARLING'], 'door', 35, 20),          # js/holm.js, once it's built
     ('lumar-holm', 'lumar-holm-hall', ['THE HALL OF FINDS'], 'door', 35, 13),       # js/holm.js, once it's built
     ('arcadia-street', 'arcadia-club', ['CLUB VOID'], 'door'),                # js/dance.js
+    ('arcadia-spires', 'arcadia-members', ['THE ORRERY'], 'door'),            # js/spires.js: members, by introduction or bought
     ('arcadia-casino', 'arcadia-casino-vip', ['THE CROWN ROOM'], 'door'),     # js/worlds/casino.js: the rope opens for poker winners
     ('lumar-crown', 'lumar-crown-palace', ['PALACE GATE'], 'door'),           # js/crown.js
     ('lumar-rose-mine', 'lumar-rose-mine-a', ['THE LIFT'], 'lift'),           # js/mine.js: the floors below

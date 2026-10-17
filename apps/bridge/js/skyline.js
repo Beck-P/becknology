@@ -17,9 +17,10 @@
  * opts: { baseRow, railRow, centerCol } — the world row the towers stand
  * behind, the row of the railing (the drop starts there) and the column
  * the layers centre on. mode 'spires': the Spires above the smog — real
- * stars and a white moon, the other spires (the `peaks` layer: white stone
- * and gold), the smog sea below with the Mid-Levels' tower tops through it,
- * needles of towers piercing it under the rail (drawSpires).
+ * stars and a white moon, the other spires (the `peaks` layer, its own
+ * backdrop in backdrops/spires: white stone and gold), the smog sea below
+ * with the Mid-Levels' tower tops through it, needles of towers piercing it
+ * under the rail (drawSpires).
  */
 var BridgeSkyline = (function () {
   var BASE = '/bridge/assets/backdrops/arcadia/';
@@ -332,6 +333,31 @@ var BridgeSkyline = (function () {
   }
 
   // ---- the Spires (opts.mode 'spires'): above the smog, under real stars ------------------------------------
+  // its own layer and manifest (tools/bridge-art/spires_backdrop.py -> backdrops/spires), loaded on its own
+  var SBASE = '/bridge/assets/backdrops/spires/';
+  var spMan = null, spImgs = {}, spLoading = false;
+  function spLoad() {
+    if (spLoading) return;
+    spLoading = true;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', SBASE + 'cine.json?v=' + Date.now());
+    xhr.onload = function () {
+      if (xhr.status !== 200) return;
+      spMan = JSON.parse(xhr.responseText);
+      Object.keys(spMan).forEach(function (n) {
+        var im = new Image();
+        im.onload = function () { spImgs[n] = im; };
+        im.src = SBASE + n + '.png?v=' + (spMan[n].rev || Date.now());
+      });
+    };
+    xhr.send();
+  }
+  function spPlace(name, w, h, v, opts, p, pv, anchorRow) {
+    var m = spMan[name], ts = v.ts;
+    var x = Math.round(w / 2 + (v.offX + opts.centerCol * ts - w / 2) * p - m.w / 2);
+    var y = Math.round(h / 2 + (v.offY + anchorRow * ts - h / 2) * pv - m.h);
+    return { x: x, y: y, m: m };
+  }
   var SMOG = [[42, 30, 72], [62, 40, 96], [92, 58, 120], [130, 84, 150]];
   function spiresSky(ctx, w, h, now, horizon) {
     var g = ctx.createLinearGradient(0, 0, 0, horizon);
@@ -439,11 +465,12 @@ var BridgeSkyline = (function () {
     var horizon = Math.round(h / 2 + (v.offY + baseRow * ts - h / 2) * 0.3);
     spiresSky(ctx, w, h, now, horizon);
     whiteMoon(ctx, Math.round(w * 0.78 + (v.offX + opts.centerCol * ts - w / 2) * 0.05), Math.round(horizon * 0.22), 11);
-    if (manifest && imgs.peaks) {                     // the far spires, small and pale with distance
-      var P = place('peaks', w, h, v, opts, 0.12, 0.3, baseRow + 1);
+    spLoad();
+    if (spMan && spImgs.peaks) {                      // the far spires, small and pale with distance
+      var P = spPlace('peaks', w, h, v, opts, 0.12, 0.3, baseRow + 1);
       ctx.save();
       ctx.globalAlpha = 0.5;
-      ctx.drawImage(imgs.peaks, P.x + Math.round(P.m.w * 0.2), P.y + 14, Math.round(P.m.w * 0.6), Math.round(P.m.h * 0.6));
+      ctx.drawImage(spImgs.peaks, P.x + Math.round(P.m.w * 0.2), P.y + 14, Math.round(P.m.w * 0.6), Math.round(P.m.h * 0.6));
       ctx.restore();
     }
     var seaTop = horizon + 6;
@@ -457,9 +484,9 @@ var BridgeSkyline = (function () {
       ctx.restore();
       smog(ctx, w, seaTop - 6, 10, now, 0.004, '140,90,160', 0.35);
     }
-    if (manifest && imgs.peaks) {                     // the near spires, standing out of the sea
-      var Q = place('peaks', w, h, v, opts, 0.35, 0.45, baseRow + 2);
-      ctx.drawImage(imgs.peaks, Q.x, Q.y + 18);
+    if (spMan && spImgs.peaks) {                      // the near spires, standing out of the sea
+      var Q = spPlace('peaks', w, h, v, opts, 0.35, 0.45, baseRow + 2);
+      ctx.drawImage(spImgs.peaks, Q.x, Q.y + 18);
       smog(ctx, w, Q.y + 18 + Q.m.h * 0.8, Q.m.h * 0.25, now, 0.005, '150,100,170', 0.4);
     }
     // below the rail: the needles of towers reaching up through the smog
@@ -472,6 +499,7 @@ var BridgeSkyline = (function () {
     }
     traffic(ctx, w, drop + (h - drop) * 0.35, now + 9000, 1, 0.8);
   }
+
 
   // ---- the backdrop ---------------------------------------------------------------------------
   function draw(ctx, w, h, now, opts) {
@@ -561,6 +589,7 @@ var BridgeSkyline = (function () {
 
   // ---- rain ---------------------------------------------------------------------------------------
   function rain(ctx, w, h, now, opts) {
+    if (opts && opts.none) return;                          // indoors with a skyline (the Loop's carriage)
     var n = (opts && opts.drops) || 140;
     ctx.save();
     if (opts && opts.dry) {                                 // under a roof (world tiles, screen rows): no rain falls there
@@ -601,5 +630,8 @@ var BridgeSkyline = (function () {
   // the rendered layers themselves, for views drawn outside a world (js/transit.js's lift and cab rides)
   function layers() { load(); return manifest ? { far: imgs.far, mid: imgs.mid, low: imgs.low, manifest: manifest } : null; }
 
-  return { draw: draw, rain: rain, load: load, ad: ad, streetAds: streetAds, steam: steam, setMotion: setMotion, layers: layers };
+  // the Spires' own layer rides along as layers().peaks, from its own loader
+  function layersWithPeaks() { var L = layers(); spLoad(); if (L) L.peaks = spImgs.peaks || null; return L; }
+
+  return { draw: draw, rain: rain, load: load, ad: ad, streetAds: streetAds, steam: steam, setMotion: setMotion, layers: layersWithPeaks };
 })();

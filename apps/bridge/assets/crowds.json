@@ -26,6 +26,7 @@
   "arcadia-casino":         { "n": 14, "wardrobe": "casino",  "busy": "bustle" },
   "arcadia-casino-cards":   { "n": 6,  "wardrobe": "casino",  "busy": "bustle" },
   "arcadia-casino-dining":  { "n": 6,  "wardrobe": "casino",  "busy": "bustle", "sit": 0.9 },
+  "arcadia-spires":         { "n": 18, "wardrobe": "spires",  "busy": "bustle", "sit": 0.35, "pass": 0.3 },
 
   "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
 
@@ -82,6 +83,16 @@
       "NEON ROYALE'S RUNNING HOT TONIGHT. SOMEBODY'S WINNING BIG, AND IT AIN'T ME.",
       "NICE JACKET. VINTAGE?",
       "THEY SAY THERE'S A WHOLE CITY UNDER THE STREETS. I SAY KEEP IT THERE."
+    ],
+    "spires": [
+      "DARLING, I HAVEN'T BEEN BELOW THE SMOG SINCE THE CORONATION. WHOSE? DOES IT MATTER?",
+      "THEY SAY THE STARS ARE REAL. I PAY FOR THEM EITHER WAY.",
+      "MY NEW EYES SEE ULTRAVIOLET. THE OPERA IS ASTONISHING. THE PEOPLE ARE NOT.",
+      "THE LYRA'S SOPRANO HIT A NOTE LAST NIGHT THAT CRACKED A CHAMPAGNE FLUTE. WE APPLAUDED THE FLUTE.",
+      "IS IT TRUE THEY HAVE RAIN DOWN THERE? EVERY DAY? HOW DO THEY BEAR IT?",
+      "THE ORRERY TURNED ME DOWN. THIRD TIME. I'M BUILDING MY OWN ORRERY. WITH BLACKJACK.",
+      "LOOK - THE LOOP'S LIGHTS, THROUGH THE SMOG. LIKE A NECKLACE SOMEBODY DROPPED.",
+      "CLEMENCE'S PETIT FOURS ARE THE ONLY HONEST THING ON THIS PLATFORM."
     ],
     "casino": [
       "DARLING, NOBODY WALKS INTO THE ROYALE BY ACCIDENT.",

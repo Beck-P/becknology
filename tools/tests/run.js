@@ -44,6 +44,7 @@ const SUITES = {
     ['world/events.js', SHOTS],
     ['world/regatta.js', SHOTS],
     ['world/arcadia_transit.js', SHOTS],
+    ['world/arcadia_spires.js', SHOTS],
     ['world/tower.js', SHOTS],
     ['world/landings.js', SHOTS + '/landings'],
     ['world/arrive.js', SHOTS + '/arrive'],
@@ -77,6 +78,7 @@ const SUITES = {
 // what of each test's output is shown: one group of alternatives a line (add a test's own on a new line)
 const KEEP = new RegExp([
   /street lift|lift offers|now at|skyport pod|loop stations|loop offers|aboard:|in at:|doors:|stepped off|train crossing|cutaway places/,
+  /arrived at|crowd here|tea salon|telescope|-> \[|back out at|collection:|orrery,|spire express|air cab|offers|happening|event check/,
   /PAGEERR|live light|light under her|out of reach|signed in|a tap on|hide\(\)|office|through the door|roster/,
   /board|orders|accounts|seated|the view|back on the bridge|before:|asleep|woken early|up and about/,
   /slept through|recovery bed|tanks in|the tank:|in the tank|looking:|aboard at|aly visiting|into his save/,

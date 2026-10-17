@@ -21,7 +21,7 @@ NIGHT_GLASS = ('#141c38', '#2a3a70')          # glass with the room's glow behin
 
 
 # ---- the ground: pale stone slabs, gold strips, inlaid stars ----------------------------------------------------------
-def paving(k, x0, r0, x1, r1, size=1.0, strip=4, tones=('#ddd7ca', '#e4dfd3', '#d6cfc1', '#e8e3d8'), part='paving'):
+def paving(k, x0, r0, x1, r1, size=1.0, strip=4, tones=('#ddd7ca', '#e4dfd3', '#d6cfc1', '#e8e3d8'), part='paving', grout='#8f8676'):
     """Big slabs of pale stone, each its own tone, with a thin grout line and a gold strip every `strip` slabs."""
     groups = {t: [] for t in tones}
     r, j = r0, 0
@@ -36,7 +36,7 @@ def paving(k, x0, r0, x1, r1, size=1.0, strip=4, tones=('#ddd7ca', '#e4dfd3', '#
         r, j = rb, j + 1
     for t, rects in groups.items():
         k.boxes(rects, (t, 0.06), part)
-    k.box(x0, r0, -0.08, x1, r1, -0.02, ('#8f8676', 0.1), part + '_grout')
+    k.box(x0, r0, -0.08, x1, r1, -0.02, (grout, 0.1), part + '_grout')
     if strip:
         golds = []
         x = x0 + strip
@@ -600,3 +600,63 @@ def awning(k, x0, x1, r, z, depth=1.2, cols=('#f6f0ea', PINK)):
     k.box(x0, r + depth - 0.02, z - 0.25, x1, r + depth + 0.02, z + 0.02, (cols[1], 0.08), 'awning_valance')
     for x in (x0 + 0.05, x1 - 0.05):
         k.tube((x, r, z + 0.4), (x, r + depth, z), 0.02, GOLD, 'awning_rod', verts=4)
+
+
+# ---- rooms ----------------------------------------------------------------------------------------------------------------
+def window_wall(k, x0, x1, r_face, z0, z1, H, step=1.6, wall=STONE_L, frame=GOLD, neon=LILAC):
+    """Glass from sill to lintel across a back wall onto the Spires' night (a HOLDOUT pane: js/spires.js draws the stars
+    and the smog sea behind it), white stone under and over it, slim gold mullions, a gold sill, a pastel cove light
+    under the cornice. Returns the glass's rect in screen tiles (the world JSON's spires.windows)."""
+    k.box(x0, r_face - 0.5, 0.0, x1, r_face, z0, (wall, 0.05), 'wall')
+    k.box(x0, r_face - 0.5, z1, x1, r_face, H, (wall, 0.05), 'wall')
+    k.box(x0, r_face - 0.52, z0, x1, r_face - 0.48, z1, 'HOLDOUT', 'window')
+    k.box(x0, r_face - 0.02, 0, x1, r_face + 0.06, 0.2, (STONE_D, 0.06), 'skirting')
+    k.box(x0 - 0.05, r_face - 0.5, z0 - 0.08, x1 + 0.05, r_face + 0.12, z0, (frame, 0.2), 'sill')
+    k.box(x0 - 0.05, r_face - 0.5, z1, x1 + 0.05, r_face + 0.08, z1 + 0.08, (frame, 0.2), 'lintel')
+    k.box(x0, r_face - 0.02, H - 0.4, x1, r_face + 0.12, H - 0.28, (STONE, 0.05), 'cornice')
+    k.box(x0, r_face + 0.1, H - 0.34, x1, r_face + 0.13, H - 0.31, shade(neon, 0.5), 'cornice_neon', emit=(neon, 0.85))
+    n = max(1, int(round((x1 - x0) / step)))
+    for i in range(n + 1):
+        mx = x0 + i * (x1 - x0) / n
+        k.box(mx - 0.045, r_face - 0.5, z0, mx + 0.045, r_face + 0.03, z1, (frame, 0.2), 'mullion')
+    k.box(x0, r_face - 0.5, z0 + (z1 - z0) * 0.78, x1, r_face - 0.46, z0 + (z1 - z0) * 0.78 + 0.03, (frame, 0.2), 'transom')
+    return [round(x0, 3), round(r_face - z1 * C45, 3), round(x1, 3), round(r_face - z0 * C45, 3)]
+
+
+def stone_room(k, x0, x1, r_back, r_front, H, door=None, wall=STONE_L, trim=GOLD, side_glass=False):
+    """The side walls and the low front wall of a white room (the back wall is the caller's), a gold dado line."""
+    for (a, b) in ((x0 - 0.6, x0), (x1, x1 + 0.6)):
+        k.box(a, r_back - 0.5, 0, b, r_front, H, (wall, 0.05), 'side_wall')
+        k.box(a, r_back - 0.5, H, b, r_front, H + 0.05, '#0e0c14', 'wall_cap')
+        if side_glass:
+            k.box(a + 0.25, r_back + 0.6, 0.9, b - 0.25, r_front - 0.8, H - 0.6, NIGHT_GLASS[0], 'side_glass', emit=(NIGHT_GLASS[1], 0.4))
+    segs = [(x0 - 0.6, door[0]), (door[1], x1 + 0.6)] if door else [(x0 - 0.6, x1 + 0.6)]
+    for (a, b) in segs:
+        k.box(a, r_front, 0, b, r_front + 0.6, 0.42, (wall, 0.05), 'front_wall')
+        k.box(a, r_front, 0.42, b, r_front + 0.6, 0.47, (trim, 0.2), 'wall_cap')
+
+
+def champagne_bar(k, cx, cr, w=4.6, d=2.4, stools=()):
+    """Aurelle's bar: a racetrack of white onyx lit from inside, a gold rail, a tower of glass shelves in the middle with
+    bottles in their foils and a pyramid of coupes on top."""
+    outer = CA.stadium(cx, cr, w, d, n=12)
+    inner = CA.stadium(cx, cr, w - 1.0, d - 1.0, n=12)
+    CA.rim(k, outer, inner, 0.0, 1.0, ('#f2eee8', 0.04), 'bar_ring', emit=('#ffe8d0', 0.18))
+    CA.rim(k, CA.stadium(cx, cr, w + 0.14, d + 0.14, n=12), CA.stadium(cx, cr, w - 1.12, d - 1.12, n=12), 1.0, 1.06, (GOLD, 0.2), 'bar_top')
+    CA.rail(k, CA.stadium(cx, cr, w + 0.1, d + 0.1, n=12), 0.18, 0.025, GOLD, 'bar_rail', verts=6)
+    rad = min(0.5, d / 2 - 0.65)
+    k.cyl(cx, cr, 0.0, 2.2, rad * 0.4, ('#f4f0e8', 0.04), 'bar_tower', verts=16)
+    for li, zz in enumerate((1.15, 1.55, 1.95)):
+        k.cyl(cx, cr, zz - 0.03, zz, rad, ('#e0f0f8', 0.02), 'bar_shelf', emit=('#8a9ab8', 0.25), verts=18)
+        for i in range(12):
+            a = 2 * math.pi * i / 12 + li * 0.3
+            bx, br = cx + math.cos(a) * (rad - 0.1), cr + math.sin(a) * (rad - 0.1) * 0.9
+            k.cyl(bx, br, zz, zz + 0.24, 0.035, ('#1a3a2a', 0.08), 'bottle', verts=6)
+            k.cyl(bx, br, zz + 0.2, zz + 0.3, 0.025, (GOLD_L, 0.2), 'bottle_foil', verts=6)
+    CA.champagne_tower(k, cx, cr, 2.2, levels=4)
+    k.point_light(cx, cr, 2.7, '#ffe0b8', 18, radius=0.3, group='static')
+    for (x, r) in stools:
+        k.cyl(x, r, 0.0, 0.05, 0.16, GOLD_D, 'stool_foot', verts=10)
+        k.cyl(x, r, 0.05, 0.62, 0.03, GOLD, 'stool_stem', verts=6)
+        k.cyl(x, r, 0.62, 0.72, 0.2, (PINK, 0.08), 'stool_seat', verts=12)
+    k.solid(cx - w / 2, cr - d / 2, cx + w / 2, cr + d / 2)

@@ -196,6 +196,8 @@ var BridgeActions = (function () {
     if (inter.view && inter.view !== true) return inter.view;
     var id = BridgeWorld.getWorldId() || '';
     if (/^lumar/.test(id)) return 'sea';
+    var wd = BridgeWorld.getWorld();
+    if (wd && wd.skyline && wd.skyline.mode === 'spires') return 'spires';
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return 'skyline';
     if (/^enigma/.test(id)) return 'giant';
     if (/^singularity/.test(id)) return 'void';
@@ -283,16 +285,19 @@ var BridgeActions = (function () {
   // Arcadia's skyline (js/skyline.js) framed for a window: no street in front, so the mid towers end
   // just above the middle and the city far below starts under them. The painter reads the world's view,
   // so it's handed one placed for this canvas while it draws.
-  function drawSkyline(c, now, w, h) {
+  function drawSkyline(c, now, w, h, mode) {
     if (typeof BridgeSkyline === 'undefined') { c.fillStyle = '#0a0418'; c.fillRect(0, 0, w, h); return; }
     var real = BridgeWorld.getView;
     var offY = Math.round((0.55 * h - h / 2) / 0.55 + h / 2 - 6 * 32);
     BridgeWorld.getView = function () { return { offX: w / 2 - 16 * 32, offY: offY, ts: 32, w: w, h: h }; };
     try {
-      BridgeSkyline.draw(c, w, h, now, { baseRow: 6, railRow: 7, centerCol: 16 });
-      if (BridgeSkyline.rain) BridgeSkyline.rain(c, w, h, now, { drops: 110 });
+      BridgeSkyline.draw(c, w, h, now, { baseRow: 6, railRow: 7, centerCol: 16, mode: mode });
+      if (BridgeSkyline.rain && mode !== 'spires') BridgeSkyline.rain(c, w, h, now, { drops: 110 });   // above the smog it doesn't rain
     } finally { BridgeWorld.getView = real; }
   }
+  // views other modules bring: BridgeActions.addView(kind, fn(ctx, w, h, now)) — the opera's stage from a box (js/spires.js)
+  var MORE = {};
+  function addView(k, fn) { MORE[k] = fn; }
 
   function drawGiant(c, now) {
     c.fillStyle = '#03040a'; c.fillRect(0, 0, VW, VH);
@@ -322,6 +327,8 @@ var BridgeActions = (function () {
     ctx.imageSmoothingEnabled = false;
     if (kind === 'sea') drawSea(ctx, now);
     else if (kind === 'skyline') drawSkyline(ctx, now, cv.width, cv.height);
+    else if (kind === 'spires') drawSkyline(ctx, now, cv.width, cv.height, 'spires');   // the Spires: stars, the smog sea below
+    else if (MORE[kind]) MORE[kind](ctx, cv.width, cv.height, now);
     else if (kind === 'giant') drawGiant(ctx, now);
     else if (kind === 'void') drawVoid(ctx, now);
     else if (kind === 'stars') drawStarsView(ctx, now);
@@ -351,7 +358,7 @@ var BridgeActions = (function () {
     opts = { beam: !!inter.beam, roofs: !!inter.roofs };
     // the canvas takes the screen's shape, so the view fills it without bars
     var vw = window.innerWidth, vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-    var base = kind === 'skyline' ? 270 : 180;
+    var base = kind === 'skyline' || kind === 'spires' ? 270 : 180;
     VH = base; VW = Math.max(Math.round(base * 0.9), Math.min(560, Math.round(base * vw / vh)));   // a phone held upright sees the middle of a squarer view
     if (seaBuf && (seaBuf.width !== VW || seaBuf.height !== VH - Math.round(VH * 0.46))) seaBuf = null;
     cv.width = VW; cv.height = VH;
@@ -401,6 +408,6 @@ var BridgeActions = (function () {
     }, 420);
   }
 
-  return { decorate: decorate, run: run, closeView: closeView, ready: function (cb) { load(cb); },
+  return { decorate: decorate, run: run, closeView: closeView, addView: addView, ready: function (cb) { load(cb); },
            rest: slumber, sleeping: function () { return !!sleeping; }, _wake: function () { if (sleeping && sleeping.wake) sleeping.wake(false); } };
 })();

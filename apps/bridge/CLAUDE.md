@@ -696,6 +696,60 @@ Beck: "instead of Runouts being like a game or a casino game, it's an actual int
 - **Sound**: the `casino` theme everywhere inside; the floor over `crowd` and `slots`, the Card Room over `murmur` and `chips`, Aurum and the Crown Room over `murmur`.
 - **The kit** (`assets_casino.py`): floors (`carpet` with bare patches, `marble`, `medallion`, `runner`), walls (`deco_wall` — pilasters with neon flutes, smoked mirrors and gold sunbursts, a cornice of fans; `clear` stretches stay plain behind anything mounted — `side_wall`, `front_wall`, `arch`, `panorama` for the great windows), `column`, `chandelier`, `neon_crown`, `crown_3d`, the tables (`blackjack`, `roulette`, `craps`, `poker` with chairs on tile centres so people sit on them), `slot_machine` / `slot_bank`, `video_wall`, `bet_terminal`, `link_kiosk`, `cage`, `island_bar` / `bottle_tower`, `stage`, `grand_piano`, `mic_stand`, `cocktail_table`, `club_chair`, `runouts_cabinet`, `dining_table`, `kitchen_pass`, `champagne_tower`, `throne_chair`, `prize_coupe`, and for the street `royale_facade`, `revolving_door`, `rope_line`, `gold_palm`, `hover_limo`. Shapes are `prism` (an extruded outline), `rim` (a wall between two outlines: tubs, ring counters) and `rail` (a tube along a path: padded rails). Light: a warm area light over every table (`table_lamp_light`), the slot glow in the `pulse` light group (the scene's `flicker.mode` is `pulse`, so the slot floor breathes).
 
+### The Spires (Arcadia)
+The top of Arcadia (L480; the plan is `_claude_docs/spec-arcadia-above.md`, Workstream D): above the smog, the only place
+in the city with real stars — white stone, gold and soft pastel neon, quiet. Beck: "really cool views and stuff as you get
+up above the ground". `js/spires.js` (BridgeSpires) is what its places do; the kit is `tools/bridge-art/assets_spires.py`.
+- **The crown plaza** (`arcadia-spires`, `scenes/arcadia_spires.py`, 96 × 46): a platform of white stone hung on the side of
+  Halcyon's tower, a backdrop world in the skyline's **spires mode** (js/skyline.js `drawSpires`, the world JSON's
+  `skyline.mode: 'spires'`: a clear sky of real stars, a galaxy band, a white moon and the odd shooting star; the other
+  spires — the `peaks` layer, white stone and gold rendered by `tools/bridge-art/spires_backdrop.py` into its own
+  `assets/backdrops/spires/` (its own cine.json, loaded by `drawSpires` alone; `BridgeSkyline.layers().peaks`) — standing out of a sea of smog that glows pink and cyan where the city shows through; the Mid-Levels'
+  tallest towers, the `far` layer sunk to its crowns, poking up through it; under the rail the smog seen from above with the
+  needles of towers piercing it). No rain falls up here (js/worlds/arcadia.js leaves it out in spires mode). West, **the sky
+  gardens**: lawns with drawn grass, real trees (some in blossom) in stone rings, clipped hedges with flowers at their feet, a
+  long reflecting pool with the stars in it, gravel walks, the orangery behind; **the tea salon** — Clémence's counter
+  under a striped awning (a samovar, cakes under glass, tins of tea), tea tables under a pergola of wisteria (THE TEA SALON:
+  jasmine pearls, petit fours, honey cake). The middle, **the crown plaza**: gold-strip paving round an inlaid star,
+  Halcyon's crown fountain (a gilt crown spilling falls of water into a bowl), winged statues, lamps, benches, a flower
+  cart; the foot of **Halcyon's tower** (HALCYON in gold, `L480 · THE SPIRES`): LUMEN's jewel-box windows, the **Spire
+  Express** (`express_lift`, shaft `spire`, at 40, 9), the great doors (by appointment; Aurelio the concierge), the **Core
+  Express** (shaft `core`, 54, 9), the Orrery's bronze door. East, **the Lyra** (the opera) up its steps behind a colonnade,
+  **Aurelle** behind its round windows and velvet ropes, and **the sky docks** out over the drop: teak decking, the **air
+  cab** pad (`air_cab` pad `spires`, 70, 34), Harlan Quay's dockmaster's kiosk, luggage trolleys, champagne crates, and the
+  yacht *Lumière* lying alongside on her lift fields with her steward at the gangway. A white balustrade round it all, frosted
+  globes on its piers, a telescope at the front (`spires` view: js/actions.js draws the skyline's spires mode in it; seats
+  facing the edge open it too). People: Clémence (`clemence`), Old Ferris the gardener (`ferris`), Aurelio (`aurelio`),
+  Harlan Quay (`harlan`); the crowd in its own wardrobe (`spires`: suits, gowns and pastels; `assets/crowds.json`).
+- **Its rooms** (`scenes/_spires_room.py`: night light in two states, glass as HOLDOUT panes that js/spires.js fills with the
+  Spires' night from the world JSON's `spires.windows`):
+  - **LUMEN** (`arcadia-boutique`, `scenes/arcadia_boutique.py`): the designer implant atelier — arched niches each holding one
+    piece in its own pastel light, glass cases on white plinths, a gold mirror, the fitting chair under a ring of light behind
+    voile; Iris Kade (`iris_kade`, `npc-atelier`) and Nox (`nox`). THE COLLECTION is an `implants` interaction (`shop: 'lumen'`): js/implants.js's designer tier
+    in LUMEN's own shop (`BridgeImplants.shop('lumen', …)`, js/spires.js) with two pieces of the house's own — Starlight
+    Optics (eyes: criticals and energy) and Gilt Lace (arm: damage and a little plate).
+  - **The Lyra** (`arcadia-opera`, `scenes/arcadia_opera.py`): the grand foyer — cream and red velvet, a gallery on fluted
+    columns, the grand stair to THE BOXES (the `opera` view: the stage from a box, drawn by js/spires.js — the curtain, the
+    soprano in her follow spot, the chorus, the pit, the house in the dark; an act every two and a half minutes by the clock,
+    the interval with the house lights up), the doors to the stalls, the box office (Madame Fleur), the foyer bar, Tobias the
+    usher, and Seraphine Lune, tonight's soprano.
+  - **Aurelle** (`arcadia-champagne`, `scenes/arcadia_champagne.py`): the champagne bar and sky lounge — glass across the back
+    onto the stars, a racetrack bar of white onyx with a tower of bottles and a pyramid of coupes (Coco; THE BAR: Starlight,
+    champagne, sky oysters, petit fours), Bastien the sommelier, a white grand piano, banquettes, and the sky lounge's sofa and
+    chairs turned to the glass round a fire table.
+  - **The Orrery** (`arcadia-members`, `scenes/arcadia_members.py`): the private members' club — midnight silk over walnut, a
+    great brass orrery of the seven worlds on its drum, bookcases with the ladder, the fire and the wing chairs, a card table,
+    the bar cart, glass onto the stars, Mr Ashdown at the members' book, Lady Perpetua and Sir Augustin. Its door
+    (`orrery_door`) lets members in; otherwise Mr Ashdown at the grille takes an introduction (the Penthouse or Ashcombe House
+    is yours, or the Neon Royale's Crown Room is open to you) or 25,000 coins (`MEMBERSHIP`); kept in localStorage
+    `bridge_spires`.
+- **Happenings** (js/events.js): *The Lyra lets out* (the interval — Seraphine comes down the steps, the crowd round her) and
+  *Fireworks over the sky docks* (shells bursting in pastel over the *Lumière*, the crowd at the rail).
+- Music: the `spires` theme (a slow lydian harp, bells high up) over a high wind; the rooms `casino`'s lounge jazz or the
+  spires theme over a murmur. Items: `jasmine_pearls`, `petit_fours`, `starlight`, `sky_oysters` (js/items.js). Test:
+  `world/arcadia_spires.js` (the hub west to east, every room through its door and back, the box, the Orrery's door both
+  ways, the lift and the cab, the happenings; `shots/spires_*.png`).
+
 ### The Rose Mine (mining)
 Rose Cove's OLD MINE leads into **the hall** (`lumar-rose-mine`, `scenes/lumar_rose_mine.py`): the lift under its headframe, rails, a cart of roseite on a siding, the pickaxe rack (take an Old Pickaxe), the foreman's slate (your deepest floor), and Hob Dunmore (`npc-miner`), the last miner — he buys ore and stone and forges better picks (Iron: 5 iron ore + 150 coins; Star: 3 star iron + 400). Iron rock gives copper ore a third of the time, silver rock a quarter, for the workshop; the workshop's prospector's pick gets a piece more now and then, and finds the depth's best hidden in plain rock (the floors stay the same for everyone on them). **Floors** are three cave layouts (`lumar-rose-mine-a/b/c`, `scenes/lumar_rose_mine_floor.py <a|b|c>`, rendered without rocks) reused for all twenty floors. `js/mine.js` (BridgeMine) scatters rocks over a floor's open ground as it loads (seeded by floor and day; a rock is only placed if every open cell stays reachable), one of them over the ladder down. Rocks by depth: stone and iron at the top, roseite (to 8) and silver (from 4), sapphire (6-16), moonstone geodes (from 10), star iron (from 13), songstone (from 17); floor 20 holds **the great songstone** (its heart is the `singing-deep` quest's last clue). Swinging costs energy (`BridgeInventory.useEnergy`); a pick's power is its bite (old 1, iron 2, star 3). The lift stops at every fifth floor you've reached (`bridge_mine`). Rock sprites are a sheet rendered like a scene with no floor (`tools/bridge-art/mine_sprites.py` → `assets/scenes/mine-rocks`, KINDS order = `SPRITES` in mine.js), drawn depth-tested through the cave tileset's scene hooks (only in worlds with a `mine` block); the light takes on the depth band's colour (rose, sapphire, violet). Quest clue worlds may end in `*` to match any floor.
 
