@@ -579,7 +579,7 @@ var BridgeSea = (function () {
         var fx = x / CG - 0.5, x0 = Math.max(0, Math.floor(fx)), x1 = Math.min(gw - 1, x0 + 1), tx = Math.max(0, Math.min(1, fx - x0));
         var vv = (g[y0 * gw + x0] * (1 - tx) + g[y0 * gw + x1] * tx) * (1 - ty) + (g[y1 * gw + x0] * (1 - tx) + g[y1 * gw + x1] * tx) * ty;
         vv += (hash((x >> 2) * 131 + (y >> 2) * 977) - 0.5) * 0.18;
-        var a = vv > 0.62 ? 1 : vv > 0.32 ? 0.5 : 0;
+        var a = vv > 0.32 ? 1 : 0;
         if (a) d[i * 4 + 3] = Math.round(a * 255);
       }
     }
@@ -596,10 +596,11 @@ var BridgeSea = (function () {
     calmX.clearRect(0, 0, v[2], v[3]);
     calmX.drawImage(S.calm, v[0], v[1], v[2], v[3], 0, 0, v[2], v[3]);
     calmX.globalCompositeOperation = 'source-in';
-    var cc = mixc(C.deep, C.base, 0.35 + 0.25 * Lw.day);
-    cc = mixc(cc, [62, 122, 142], 0.4 * Lw.day * (1 - Lw.golden));                 // Look Book 2's still water by day
-    cc = mixc(cc, [128, 112, 112], 0.35 * Lw.golden * (1 - Lw.night));             // and greyed warm at golden hour
-    calmX.fillStyle = rgb(cc);
+    // Look Book 2's still water (js/litscene.js's bands as its harbour shows them): teal-grey by day, a warm grey at
+    // golden hour, a deep blue at night; a fifth of the sea's own body kept so each sea's harbours are still its own
+    var lb = mixc(mixc([24, 32, 56], [92, 98, 104], Lw.aD), [70, 106, 128], Lw.day * (1 - Lw.golden));
+    lb = mixc(lb, [104, 100, 104], Lw.golden * (1 - Lw.night));
+    calmX.fillStyle = rgb(mixc(lb, C.base, 0.2));
     calmX.fillRect(0, 0, v[2], v[3]);
     L.globalAlpha = 1 - 0.6 * Math.max(Lw.storm, 0.7 * Lw.gale);      // a storm reaches in even here
     L.drawImage(calmC, 0, 0, v[2], v[3], v[0], v[1], v[2], v[3]);
@@ -831,8 +832,8 @@ var BridgeSea = (function () {
     L.globalCompositeOperation = 'source-in';
     fillPattern(L, texture(name, 0, C), S.W, S.H, D.ax + bx, D.ay + by, 1);
     L.globalCompositeOperation = 'source-atop';
-    if (S.calm) calmOver(L, S, v, C, Lw);
     fillPattern(L, texture(name, 1, C), S.W, S.H, D.bx + bx, D.by + by, 1);
+    if (S.calm) calmOver(L, S, v, C, Lw);                     // over the swell and its wavelets: still water
     var cap = capAlpha(Lw);
     if (cap) fillPattern(L, texture(name, 2, C), S.W, S.H, D.cx + bx, D.cy + by, cap);
     // the bloom: the open sea's currents carried on over the island's water at its opacity (so it meets the open sea
