@@ -285,6 +285,12 @@ var BridgeTransit = (function () {
     var up = smooth(360, 440, f);
     if (up <= 0) return;
     g.globalAlpha = up;
+    var L = typeof BridgeSkyline !== 'undefined' && BridgeSkyline.layers ? BridgeSkyline.layers() : null;
+    if (L && L.peaks && L.peaks.width) {                     // the Spires' own rendered layer (tools/bridge-art/spires_backdrop.py), when it's in
+      var k = 0.6, pw = Math.round(L.peaks.width * k), ph = Math.round(L.peaks.height * k);
+      var px = -((dx * 0.25) % pw + pw) % pw;
+      for (var xx = px; xx < NW; xx += pw) g.drawImage(L.peaks, xx, y + 26 - ph, pw, ph);
+    } else
     for (var i = 0; i < 9; i++) {
       var d = 0.35 + hash(i + 40) * 0.65;                    // far … near
       var span = NW + 120, x = ((i * 47 + hash(i + 41) * 60 - dx * (0.15 + 0.5 * (1 - d))) % span + span) % span - 60;
@@ -528,7 +534,8 @@ var BridgeTransit = (function () {
     if (trip) banner('The Loop', 'Doors closing \u00b7 next stop ' + stationAt(trip.at + 1).name);
   }
   // where she is: the phase, how far into it, and how far she's gone (px)
-  function motion(now) {
+  function motion() {                                       // (on performance.now(): the world's draw clock is Date.now())
+    var now = performance.now();
     if (!trip) return 0;
     var t = now - trip.t0;
     if (trip.phase === 'dwell') {
@@ -550,7 +557,8 @@ var BridgeTransit = (function () {
     else { var r = RUN - t; d = LEG - VMAX * r * r / (2 * ACC); }
     return trip.base + d;
   }
-  function speed(now) {                                      // 0 still … 1 flat out
+  function speed() {                                         // 0 still … 1 flat out
+    var now = performance.now();
     if (!trip || trip.phase !== 'run') return 0;
     var t = now - trip.t0;
     return t < ACC ? t / ACC : t > RUN - ACC ? Math.max(0, (RUN - t) / ACC) : 1;
@@ -567,6 +575,7 @@ var BridgeTransit = (function () {
   }
   var bannerEl = null, bannerT = 0;
   function banner(kick, text) {
+    if (here() !== 'arcadia-loop') return;                   // (the carriage's own announcements)
     if (!bannerEl) {
       bannerEl = document.createElement('div');
       bannerEl.id = 'loop-banner';
@@ -577,10 +586,12 @@ var BridgeTransit = (function () {
     clearTimeout(bannerT);
     bannerT = setTimeout(function () { bannerEl.classList.remove('on'); }, 5200);
   }
+  setInterval(function () { if (bannerEl && here() !== 'arcadia-loop') bannerEl.classList.remove('on'); }, 500);
   function stepOff() {
     if (!trip || trip.phase !== 'dwell') return;
     var s = stationAt(trip.at);
     trip = null;
+    if (bannerEl) bannerEl.classList.remove('on');
     sfx('doors');
     BridgeWorld.enterWorld(s.world, s.spawn);
   }
@@ -616,7 +627,9 @@ var BridgeTransit = (function () {
   function carriageBehind(ctx, world, offX, offY, ts, now) {
     if (!world.loopcar || !trip) return;
     var c = world.loopcar, s = motion(now), v = speed(now);
-    var W = ctx.canvas.width, top = Math.round(offY + c.window[0] * ts), bot = Math.round(offY + c.window[1] * ts);
+    var W = ctx.canvas.width, H = ctx.canvas.height, top = Math.round(offY + c.window[0] * ts), bot = Math.round(offY + c.window[1] * ts);
+    ctx.fillStyle = '#16141f';                                // the car's shell round the glass: no city under the floor
+    ctx.fillRect(0, 0, W, Math.max(0, top - 2)); ctx.fillRect(0, bot + 2, W, H - bot - 2);
     // towers passing close, every so often, a blur at speed
     var gap = 900;
     for (var i = Math.floor((s - W) / gap); i <= Math.floor((s + W * 2) / gap); i++) {
@@ -776,6 +789,6 @@ var BridgeTransit = (function () {
   return { ready: ready, data: function () { return D; }, links: links, level: level, levelOf: levelOf, tag: tag, placeName: placeName,
            ride: ride, built: built, fare: fare, stations: stations,
            _trip: function () { return trip ? { at: trip.at, dest: trip.dest, phase: trip.phase, station: stationAt(trip.at) && stationAt(trip.at).id, dist: motion(performance.now()) } : null; },
-           _skipLeg: function () { if (trip) trip.t0 -= trip.phase === 'run' ? RUN : (trip.boarding ? 4500 : DWELL); },
+           _skipLeg: function () { if (trip) trip.t0 = performance.now() - (trip.phase === 'run' ? RUN : (trip.boarding ? 4500 : DWELL)); },   // to the end of this leg or stop, now
            _crossing: crossing, _close: closeRide };
 })();

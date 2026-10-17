@@ -225,6 +225,10 @@ NOT_GROUND = {'roof', 'wall', 'post', 'rail', 'fence', 'house', 'stall', 'table'
 ROOF_WORDS = {'roof', 'shingle', 'shingles', 'slate', 'slates', 'thatch', 'ridge', 'pantile', 'pantiles', 'eave', 'eaves'}
 
 
+# falling water (a stream over a weir, a waterfall): the live light runs light down it and churns foam where it lands
+FALL_WORDS = {'waterfall', 'falls', 'cascade', 'weir', 'spillway'}
+
+
 def _words(name):
     return set(w for w in name.lower().replace('-', '_').split('_') if w)
 
@@ -242,6 +246,17 @@ def part_kinds(ids_rgb, names):
         elif w & GROUND_WORDS and not w & NOT_GROUND:
             gk.append(kk)
     return np.isin(key, gk), np.isin(key, rk)
+
+
+def part_mask(ids_rgb, names, words):
+    """Pixels of the parts whose names have any of these words (render.json `ids`)."""
+    key = (ids_rgb[..., 0].astype(np.int64) << 16) | (ids_rgb[..., 1].astype(np.int64) << 8) | ids_rgb[..., 2]
+    ks = []
+    for k, name in (names or {}).items():
+        if _words(name) & words:
+            r, g, b = [int(v) for v in k.split(',')]
+            ks.append((r << 16) | (g << 8) | b)
+    return np.isin(key, ks)
 
 
 def toy_lines(ids, depth, alpha, ground, roof):
@@ -361,11 +376,12 @@ def lit_lum(path):
     return a * LIT_GAIN
 
 
-def lit_pack(rd, od, nsuns, mask, albedo, ids, line, ground, roof, box=None, water_ok=True):
+def lit_pack(rd, od, nsuns, mask, albedo, ids, line, ground, roof, box=None, water_ok=True, names=None):
     """The live-light passes of one render (the base, or a variant cropped to its box) packed for js/litscene.js:
       lit_albedo  the flat colours (alpha: covered)
       lit_a       R the white sky's light, G sun 0, B sun 1     lit_b  R, G, B suns 2, 3, 4
-      lit_c       R sun 5, G the normal's z (× 0.5 + 0.5), B flags (1 leaf, 2 needle, 4 grass, 8 still water, 16 ground, 32 roof)
+      lit_c       R sun 5, G the normal's z (× 0.5 + 0.5), B flags (1 leaf, 2 needle, 4 grass, 8 still water, 16 ground, 32 roof,
+                  64 falling water — parts named with FALL_WORDS)
       lit_d       R which tree (the leaf pass's G), G line strength, B 0
       lit_lamps   the lamps' coloured light (only when there's any)
     Returns {'lamps': bool}."""
@@ -395,6 +411,8 @@ def lit_pack(rd, od, nsuns, mask, albedo, ids, line, ground, roof, box=None, wat
         tree = np.where((lr > 200) | (lb > 200), (lg // 16) * 16 + 8, 0).astype(np.uint8)
     flags |= np.where(crop(ground) | ((flags & 12) > 0), 16, 0).astype(np.uint8)
     flags |= np.where(crop(roof), 32, 0).astype(np.uint8)
+    if names:
+        flags |= np.where(crop(part_mask(ids, names, FALL_WORDS)), 64, 0).astype(np.uint8)
     flags = np.where(m, flags, 0).astype(np.uint8)
 
     def rgb(r, g, b):
@@ -445,6 +463,47 @@ def lit_refl(rd, od, water):
     return out
 
 
+# ---- a wet street (scenekit `k.wet`, Arcadia after the rain): the mirror passes laid over each light state ---------------
+WET_SMEAR = 7         # steps of the neon smeared down the wet ground, 2 px each
+WET_DARK = 0.5        # the mirrored flat colours, darkened (the street at night: a dark, coloured reflection)
+WET_MIX = 0.25        # how far a fully wet surface turns to that reflection
+WET_GLOW = 0.75       # how strongly what glows shows in it
+
+
+def wet_layer(rd, meta, ids, alpha):
+    """(strength per pixel, mirrored colours, their weight, mirrored glow smeared down) — or None."""
+    wet = meta.get('wet')
+    if not wet or not os.path.exists(os.path.join(rd, 'wet.png')):
+        return None
+    m = np.zeros(ids.shape[:2], np.float32)
+    key = ids[..., 0].astype(np.int32) * 65536 + ids[..., 1].astype(np.int32) * 256 + ids[..., 2]
+    for col, name in (meta.get('ids') or {}).items():
+        if wet.get(name):
+            r, g, b = map(int, col.split(','))
+            m = np.where(key == r * 65536 + g * 256 + b, float(wet[name]), m)
+    m *= alpha
+    wa = load(os.path.join(rd, 'wet.png'), 'RGBA').astype(np.float32)
+    sky = (wa[..., 0] > 200) & (wa[..., 1] < 60) & (wa[..., 2] > 200) | (wa[..., 3] < 128)
+    wa_w = np.where(sky, 0.0, 1.0).astype(np.float32)
+    bw = _blur(wa_w, 1)                                   # soft, as water is: a pixel's blur, the sky left out of it
+    wa = np.concatenate([_blur(wa[..., :3] * wa_w[..., None], 1) / np.maximum(bw, 1e-3)[..., None], wa[..., 3:]], -1)
+    wa_w = bw
+    g = load(os.path.join(rd, 'wet_glow.png'), 'RGB').astype(np.float32) / 255
+    sm = g * 0.85
+    for i in range(1, WET_SMEAR + 1):
+        sh = np.zeros_like(g)
+        sh[2 * i:] = g[:-2 * i]
+        sm = np.maximum(sm, sh * 0.55 * (1 - i / (WET_SMEAR + 1)))
+    return m, wa[..., :3] / 255, wa_w, sm
+
+
+def wet_over(img, wl, k_emit=1.0):
+    m, wa, wa_w, sm = wl
+    a = (m * WET_MIX * wa_w)[..., None]
+    out = img * (1 - a) + wa * WET_DARK * a
+    return np.clip(out + sm * m[..., None] * k_emit * WET_GLOW, 0, 1)
+
+
 def main():
     rd, od = sys.argv[1], sys.argv[2]
     os.makedirs(od, exist_ok=True)
@@ -484,9 +543,12 @@ def main():
         if grass.any():
             albedo = grass_detail(albedo.copy(), grass, seed=sum(map(ord, os.path.basename(os.path.normpath(od)))))
 
+    wl = wet_layer(rd, meta, ids, alpha)
     for state in meta['lightStates']:
         light = load16(os.path.join(rd, 'light_' + state + '.png'))
         img = toon(albedo, light, emit(state, emission))
+        if wl is not None:
+            img = wet_over(img, wl, (meta.get('stateOpts') or {}).get(state, {}).get('emit', 1.0))
         img = finish(img, ids, depth, alpha, base_line)
         rgba = np.zeros(albedo.shape, np.uint8)
         rgba[..., :3] = (img * 255 + 0.5).astype(np.uint8)
@@ -516,16 +578,19 @@ def main():
     # its strongest state's strength (a lamp by night), black and clear wherever nothing glows
     glow_k = max([(meta.get('stateOpts') or {}).get(s_, {}).get('emit', 1.0) for s_ in meta['lightStates']] or [1.0])
 
-    def glow(e, mask, box=None):
+    def glow(e, mask, box=None, leaf=None):
         rgb = np.clip(e[..., :3].astype(np.float32) * glow_k, 0, 255).astype(np.uint8)
         on = mask & (rgb.max(axis=-1) > 8)
+        if leaf is not None:                          # not still water: its light at night is the water's own (Look Book 2)
+            on &= ~((leaf[..., 2] > 32) & (leaf[..., 2] <= 160) & (leaf[..., 0] <= 32))
         if not on.any():
             return False
         out = np.zeros(e.shape[:2] + (4,), np.uint8)
         out[..., :3] = np.where(on[..., None], rgb, 0)
         out[..., 3] = np.where(on, 255, 0)
         return out if box is None else out[box[1]:box[3], box[0]:box[2]]
-    base_glow = glow(emission, alpha)
+    lfp_ = os.path.join(rd, 'leaf.png')
+    base_glow = glow(emission, alpha, leaf=load(lfp_, 'RGB').astype(int) if os.path.exists(lfp_) and meta.get('lit') else None)
     if base_glow is not False:
         save(base_glow, od, 'glow')
     else:
@@ -612,7 +677,7 @@ def main():
         if vl is not False:
             vd_, valb_, vids_, vline_, vg_, vr_, va_ = vl
             info = lit_pack(vd_, ld, len(meta['lit']['suns']), va_, valb_, vids_, vline_, vg_, vr_, box=(x0, y0, x1, y1),
-                            water_ok='waterZ' not in meta)
+                            water_ok='waterZ' not in meta, names=names)
             layers[v['slot']][v['key']]['lit'] = 1
             if info['lamps']:
                 layers[v['slot']][v['key']]['litLamps'] = 1
@@ -647,7 +712,7 @@ def main():
 
     lit = None
     if meta.get('lit') and os.path.exists(os.path.join(rd, 'lit_sky.png')):
-        info = lit_pack(rd, od, len(meta['lit']['suns']), alpha, albedo, ids, base_line, ground, roof)
+        info = lit_pack(rd, od, len(meta['lit']['suns']), alpha, albedo, ids, base_line, ground, roof, names=names)
         lit = {'suns': [s_['u'] for s_ in meta['lit']['suns']], 'lamps': info['lamps'], 'base': meta['lit'].get('base')}
         if info['water']:
             lf = load(os.path.join(rd, 'leaf.png'), 'RGB').astype(int) if os.path.exists(os.path.join(rd, 'leaf.png')) else None

@@ -48,6 +48,18 @@ const SHOTS = process.argv[2] || __dirname + '/shots', WORLD = process.argv[3] |
   if (day.noon.tint === day.night.tint) { errs++; console.log('live light: ERROR a figure is lit the same at noon and at night'); }
   for (const s of ['spring', 'autumn', 'winter']) { const r = await at({ hour: 12.4, season: s }, s); console.log('live light:', s, 'brightness', r.px); }
   for (const w of ['rain', 'fog', 'snow']) { const r = await at({ hour: 12.4, season: 'summer', weather: w }, w); console.log('live light:', w, 'brightness', r.px); }
+  // walking across the square: the light on a figure changes smoothly (it once jumped from cobble to crevice: a flicker)
+  await at({ hour: 15, season: 'summer' }, 'walk');
+  const walk = await p.evaluate((q) => {
+    const sc = BridgeScene.get(q.w), out = [];
+    for (let x = 4; x <= 22; x += 0.125) out.push(BridgeLit.tint(sc, x, q.y));
+    return out;
+  }, { w: WORLD, y: POS[1] });
+  const rgb = (c) => (/rgb\((\d+),(\d+),(\d+)\)/.exec(c || '') || [0, 0, 0, 0]).slice(1).map(Number);
+  let jump = 0;
+  for (let i = 1; i < walk.length; i++) { const a = rgb(walk[i - 1]), b2 = rgb(walk[i]); jump = Math.max(jump, ...a.map((v, k) => Math.abs(v - b2[k]))); }
+  console.log('live light: walking across, the biggest change in a figure\'s light over an eighth of a tile', jump);
+  if (jump > 14) { errs++; console.log('live light: ERROR a figure\'s light jumps as they walk'); }
   await p.evaluate(() => BridgeLit._force(null));
   console.log('live light: compositions', (await stats()).comps, '· errors', errs);
   await b.close();

@@ -32,7 +32,9 @@ Ritzier as you go up. Each level has a tag on its signs (`L480`, `L200`, `L0`, `
 - `arcadia-street` west edge (0, 10) ⇄ `arcadia-oldquarter` east edge; `arcadia-street` east edge (59, 10) ⇄
   `arcadia-spaceport` west edge. The street's two `leave_world SHIP` exits become these `enter_world`s (fork C changes
   just those two interactions; Return to ship works anywhere). Street side spawns: from the old quarter `[1, 10]`, from
-  the spaceport `[58, 10]`.
+  the spaceport `[58, 10]`. **Built:** (the street's edges wait for the street's rebuild, which owns arcadia_street.py; the main session wires
+  them) Lantern Row's way back is `THE NEON STREET` at (63, 11), arriving at [62, 11]; the spaceport's at
+  (0, 11), arriving at [1, 11]. Lantern Row's roof shrine is its own world (`arcadia-oldquarter-shrine`), up `SHRINE STEPS` (8, 8).
 - `arcadia-skypad` east edge door (22, 8) `SKYBRIDGE · THE TERRACES` ⇄ `arcadia-terraces` west edge
   (`SKYBRIDGE · SKYPORT 7`, back to `arcadia-skypad` `[27, 8]`). D re-renders Skyport 7 with the bridge. Fork B: the Terraces end is at (0, 19–20); arriving from Skyport 7, spawn `[2, 19]`.
 - Everything else by the transit below.

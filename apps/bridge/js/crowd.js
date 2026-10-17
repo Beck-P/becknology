@@ -121,6 +121,28 @@ var BridgeCrowd = (function () {
       names: { m: ['Aurel', 'Kenzo', 'Felix', 'Idris', 'Mateo', 'Sven', 'Ravi', 'Jules', 'Teo', 'Caspian'],
                f: ['Celeste', 'Mira', 'Noor', 'Ines', 'Saskia', 'Lena', 'Yara', 'Ottilie', 'Rin', 'Paloma'], c: ['Pip', 'Lumi'] }
     },
+    lantern: {    // Lantern Row, the old quarter: older folk, plainer cloth, indigo and rust, paper umbrellas
+      bodies: { man: 2, 'man-cap': 1, vest: 2, elder: 3, worker: 1, woman: 2, 'woman-bun': 3, 'woman-hood': 1, child: 0.6, 'child-cap': 0.4 },
+      top: ['#2e3e6a', '#7a3a2a', '#d8ccb0', '#3a4a3a', '#5a2048', '#a02a1e', '#1e2a4a', '#8a7a5a'],
+      bot: ['#1e2a4a', '#2e2a30', '#3e3646', '#4a3a28', '#141418'],
+      out: ['#1e2a4a', '#7a3a2a', '#3a2416', '#2a4a3a', '#d4c8ae'],
+      hat: ['#1e2a4a', '#d4c8ae', '#7a3a2a', '#2a2a30'],
+      umbrella: ['#c8301e', '#e8d8b0', '#1e2a4a', '#d89a30', '#3a6a4a'],
+      wild: 0.08,
+      names: { m: ['Taro', 'Genji', 'Ikki', 'Shun', 'Bo', 'Ren', 'Haru', 'Old Sato', 'Kaito', 'Yoshi'],
+               f: ['Hana', 'Aiko', 'Sumi', 'Nori', 'Fumi', 'Rin', 'Old Mitsu', 'Chiyo', 'Asa', 'Mei'], c: ['Tama', 'Koji', 'Momo'] }
+    },
+    spacers: {    // the spaceport: freighter crews off nine worlds, dockers, a customs clerk or two
+      bodies: { worker: 4, 'man-cap': 3, vest: 3, traveller: 3, man: 1, 'woman-hood': 2, woman: 1, 'woman-bun': 1 },
+      top: ['#d86a1a', '#3a4a3a', '#5a5a64', '#2a3a5a', '#a8c020', '#7a3a2a', '#1e1e26', '#c8a050'],
+      bot: ['#2a2a30', '#3a3a2a', '#1e2a38', '#4a3a28', '#141418'],
+      out: ['#d86a1a', '#3a3a2a', '#5e3a22', '#2a2a30', '#e0b020'],
+      hat: ['#e0b020', '#d86a1a', '#2a2a30', '#5e3a22', '#3a4a3a'],
+      umbrella: ['#2a2a30', '#d86a1a', '#e0b020'],
+      wild: 0.3,
+      names: { m: ['Vosk', 'Tibor', 'Okoro', 'Lenz', 'Ruk', 'Marten', 'Abe', 'Sol', 'Corvin', 'Dag'],
+               f: ['Ines', 'Petra', 'Yara', 'Ondine', 'Kass', 'Mags', 'Lior', 'Seren', 'Bex', 'Noor'], c: ['Sprocket'] }
+    },
     casino: {
       bodies: { suit: 5, gown: 5, vest: 1, man: 1, woman: 1 },
       top: ['#1c1c26', '#22304a', '#34164a', '#c89a28', '#8a1022', '#e4e0d4', '#0e0e14'],
@@ -815,8 +837,9 @@ var BridgeCrowd = (function () {
     shown.forEach(function (e) {
       var st = e.st, who = e.plan.who, sit = !!st.sit, sh = sheetOf(who, sit);
       if (!sh) return;
-      var cx = Math.round(offX + (st.x + 0.5) * ts), footRow = sit ? st.sit.seat[1] + 0.05 : st.y + 0.9;
-      var footY = Math.round(offY + footRow * ts);
+      // seated: drawn on the seat, depth-tested (and sorted) from its front edge, so the seat isn't drawn across them
+      var cx = Math.round(offX + (st.x + 0.5) * ts), seatY = sit ? st.sit.seat[1] + 0.05 : 0;
+      var footRow = sit ? BridgeScene.seatedRow(st.sit.seat[1], st.facing) : st.y + 0.9, footY = Math.round(offY + (sit ? seatY : footRow) * ts);
       if (V && (cx < -FW || cx > V.w + FW || footY < -8 || footY > V.h + FH)) return;
       list.push({ footRow: footRow, draw: function (ctx) {
         var col = st.walk != null ? 4 + Math.floor(st.walk / 0.3) % 8 : idleCol(Math.floor((nowMs + who.seed.length * 97 + e.plan.k * 131) / 360));

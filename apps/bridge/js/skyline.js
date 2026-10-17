@@ -415,6 +415,7 @@ var BridgeSkyline = (function () {
 
   // ---- rain ---------------------------------------------------------------------------------------
   function rain(ctx, w, h, now, opts) {
+    if (opts && opts.none) return;                          // indoors with a skyline (the Loop's carriage)
     var n = (opts && opts.drops) || 140;
     ctx.save();
     if (opts && opts.dry) {                                 // under a roof (world tiles, screen rows): no rain falls there
