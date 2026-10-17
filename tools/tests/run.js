@@ -44,6 +44,7 @@ const SUITES = {
     ['world/events.js', SHOTS],
     ['world/regatta.js', SHOTS],
     ['world/arcadia_transit.js', SHOTS],
+    ['world/arcadia_district.js', SHOTS],
     ['world/tower.js', SHOTS],
     ['world/landings.js', SHOTS + '/landings'],
     ['world/arrive.js', SHOTS + '/arrive'],

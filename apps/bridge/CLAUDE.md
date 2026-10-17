@@ -702,6 +702,61 @@ Rose Cove's OLD MINE leads into **the hall** (`lumar-rose-mine`, `scenes/lumar_r
 ### Treasure maps
 `js/treasure.js` (BridgeTreasure): a map is an item (`tmap_<id>`); using it unfolds the sketch — the spot cut from its island's own scene render (14 × 10 tiles round it), inked onto parchment (luminance in five sepia tones, dark edges, the sea left as bare paper) with a red X and a line in the finder's hand. The map never names the island; you know it by the landmarks. Holding the map, an **X MARKS THE SPOT** dig appears at the place (`decorate`); digging (6 energy) brings up a chest: coins, goods, and on some maps the next map in a chain (the old light → the Heron's strongbox → the Crimson watch; the drowned → the abbey). Ilsa Venn the cartographer sells three (a topic with `treasure: 'shop'`); others turn up under rocks in the Rose Mine from floor 4. `MAPS` holds each spot (world, tile, reward); dug spots are kept in `bridge_treasure`.
 
+### The District grown out: Lantern Row and the spaceport (Arcadia)
+Workstream D of `_claude_docs/spec-denser-worlds.md` (the plan: `_claude_docs/spec-arcadia-above.md`): the District
+(tag L0 on the signs) runs on past both ends of the neon street. The street's two edges, once `leave_world SHIP`, are
+`enter_world`s now — west (0, 10) `LANTERN ROW` → `arcadia-oldquarter` [62, 11], east (59, 10) `THE SPACEPORT` →
+`arcadia-spaceport` [1, 11]; both come back by `THE NEON STREET` to [1, 10] and [58, 10] (in `scenes/arcadia_street.py`'s
+interaction list too, so a re-render keeps them). Kits: `assets_oldquarter.py` (the old quarter: `shophouse` — a timber
+ground floor `lattice` / `open` / `shutter`, a tiled pent over it, a framed or slatted upper floor, a **front gable**
+`gable_roof` toward the lane, because a roof whose eave faces the camera hides the whole facade at 45° — `tile_roof` for
+the eave-on kind where nothing's behind it, `pent`, `noren`, `lattice`, `stone_lantern`, `torii`, `shimenawa`,
+`goldfish_stall`, `market_stall`, `sake_barrels`, `potted_plant`, `cat`, `bicycle`, and the Loop's `viaduct` and
+`station_block`, shared with the spaceport) and `assets_spaceport.py` (`apron` slabs and stains, `bay_marks`, `hauler`
+and `container_ship` freighters on their legs, `floodlight` masts, the air cab and its `cab_pad`).
+- **Lantern Row** (`arcadia-oldquarter`, `scenes/arcadia_oldquarter.py`, 64 × 20, a backdrop world under the skyline):
+  the District before the towers — wet stone setts under strings of paper lanterns, two-storey shophouses under curved
+  tile roofs: Granny Ume's tea house open to the lane (a raised tatami floor, low tables, the kettle steaming; TEA HOUSE
+  sells green tea, matcha, mochi), Tokuda the lantern maker's (LANTERNS: a paper lantern, an omamori), Hoshi Ramen's
+  counter on the lane with stools (seats; shoyu ramen), a shuttered old house with a bicycle and a cat, the Loop's
+  **Lantern Row station** under its viaduct (`loop_station` `lantern` at (33, 8), the DEPARTURES board), Mama Keiko's
+  Akachochin (red lanterns, sake casks, crates; yakitori, warm sake), the bathhouse and its chimney, the kampo herbalist
+  (a kampo tonic), a tall old house of potted bamboo; across the lane the stalls — the **goldfish scoop**
+  (`goldfish`, js/oldquarter.js: 5 coins a paper net, now and then a goldfish in a bag, a gift), greens, dried goods,
+  the charm stall, a yakitori cart, fruit — a red parasol over the tea house's bench, a little Jizo between two stone
+  lanterns; along the railing a promenade of benches over the drop (seats with the skyline view) and a coin viewer. The
+  Loop's viaduct strides over the roofs the whole width (`loop.track` [29.2, 37.2, 6.2, 6.0]: js/transit.js stops the
+  train between the station's portals). People: `ume`, `lanternmaker`, `hoshi`, `keiko` (sheets `npc-*`, portraits,
+  gifts.js). Crowd: the `lantern` wardrobe (older folk, indigo and rust, paper umbrellas). Music: the `lantern` theme
+  (a slow plucked line over a warm pad) over rain and murmur.
+- **The roof shrine** (`arcadia-oldquarter-shrine`, `scenes/arcadia_oldquarter_shrine.py`, 22 × 13): up the stone stair at
+  the lane's west end (`SHRINE STEPS` (8, 8) → [19, 6]; `STAIRS DOWN` (20, 5) → [8, 9]) — its own world because a walkable
+  terrace above the lane would hide whoever stood on it (characters are depth-tested as standing at z = 0), and the
+  quarter's render shows it up on the roof all the same. Raked white gravel and stepping stones, the little hall under
+  its tile roof with the bell rope, the stone fox guardians, a vermilion torii, stone lanterns, a bent pine (needles,
+  `k.foliage`), the ema rack of wishes, the omikuji cord; round it the quarter's tile roofs just below, the Loop's viaduct
+  passing at eye level, a tower's lit foot. The **offering box** (`omikuji`, js/oldquarter.js: 5 coins, the bell, a
+  fortune — great blessing (Kanna gives you an omamori), blessing, small blessing, or a curse you tie to the cord).
+  Kanna keeps it (`kanna`, `npc-kanna`).
+- **The spaceport** (`arcadia-spaceport`, `scenes/arcadia_spaceport.py`, 72 × 30): a concourse along the buildings —
+  customs with its scanner arch (Inspector Halloran, `halloran`), **the Last Burn** (the spacers' bar out of an old hull,
+  portholes, a neon rocket; Brannigan, `brannigan`; reactor stout, spacer's stew; drum tables and crates to sit on),
+  **the Core Express** — the deep lift's tower, as wide as a street, rising out of sight, passenger doors and a striped
+  freight door (`express_lift` shaft `core` lobby `spaceport` at (25, 8), spawn [25, 10]; Workstream C adds the
+  Undercity and Sump stops to `core` in `assets/arcadia-lifts.json`), Halcyon Freight and its departures board, the Loop's
+  **Spaceport station** (`loop_station` `spaceport` at (41, 8), spawn [41, 10]; `loop.track` [37.2, 45.2, 6.2, 6.0]), the
+  Spacer's Rest (capsule bunks), the engine shop — then the crew line and the apron: **the Old Mercy** (a battered bulk
+  hauler on her legs, her ramp down and crates spilling off it; Captain Desh, `desh`, by it), **the Halcyon IX** (a
+  corporate container carrier under a gantry crane), **the Slow Hazard** (small, rusty, destination ???), and **the air
+  cab rank** (`air_cab` pad `spaceport` at (57, 17), spawn [57, 18]), floodlight masts, fuel lines, crates and drums.
+  Crowd: the `spacers` wardrobe. Music: the `arcadia` theme over rain, city and engine.
+- **Happenings** (js/events.js): **sky lanterns** let go from the roof shrine (`skylanterns`, Lantern Row: they rise and
+  drift up among the towers; let one go yourself for a little energy) and **a freighter lifting off** past the railing
+  (`liftoff`, the spaceport: engines lighting below the drop, then she climbs up through the view on three plumes of
+  thrust, the crowd at the railing watching). The sky chase and NULL's hijack reach both places (`arcadia-sky`).
+- Test: `world/arcadia_district.js` (the street's edges both ways, each place walked and shot, the people, the goldfish
+  and the fortunes, the transit stops, both happenings, a phone).
+
 ### The farm on Verdance (farming)
 Verdance is the fifth system on the nav chart (`garden` in `js/orbit.js`: a green planet quilted with fields, lakes and farm lights, two small moons) and the Bridge's one daylight world: `scenes/verdance.py` + `tools/bridge-art/assets_farm.py` (split-rail fences, the barn, hay, scarecrow, pond, the field's bare earth, lane, skeps, mailbox, windsock, wildflowers, apple trees, the seed stall, log pile) and `assets_town` houses, lit by one sun (`Kit.sun`). The farmstead (farmhouse, barn, tool shed, windmill, the landing pad), the field, the well and scarecrow, the pond and jetty (fishing: perch and the odd sun carp), the orchard and the skeps (forage: apples, honey), and down the lane the village corner: **Hollin Ashby**'s seed stall (`npc-hollin`, seeds) and **Marlo Fenn**'s cart (`npc-marlo`, buys all of it), the notice board, Hollin's cottage.
 - `js/farm.js` (BridgeFarm) works the field — the world JSON's `farm.plot` (tiles, inclusive; the last earth row under the fence is a headland, left out). Face a tile and press E: one `farm_plot` interaction sits on the tile you face and says what E will do there (Till / Plant / Water / Harvest / Look), rebuilt whenever that changes. The tool shed (`farm_tools`) gives the hoe, the watering can and eight turnip seeds; the well (`farm_well`) or the pond fills the can (20 waterings; a watering wets the tile you face and one either side). Tilling costs 2 energy. The hoe, the can and seeds also work from the hotbar (F) on the tile you face.

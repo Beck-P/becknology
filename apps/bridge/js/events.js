@@ -402,17 +402,39 @@ var BridgeEvents = (function () {
       note: 'A brownout rolled down the District street'
     },
     chase: {
-      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley'], name: 'A chase in the sky lanes',
+      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-oldquarter', 'arcadia-spaceport'], name: 'A chase in the sky lanes',
       len: 1.5, w: 2, at: null, hint: 'Sirens — a chase through the sky lanes!', sfx: 'siren', loop: { name: 'siren', every: 2.2, near: 999 },
       behind: function (L, ctx, offX, offY, ts, ms) { chaseSky(L, ctx, ms); },
       over: function (L, ctx, offX, offY, ts, ms) { chaseLights(L, ctx, ms); },
       react: 'look', note: 'A police chase tore through Arcadia\'s sky lanes'
     },
     hijack: {
-      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-home', 'arcadia-penthouse'],
+      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-home', 'arcadia-penthouse', 'arcadia-oldquarter', 'arcadia-spaceport'],
       name: 'NULL takes the screens', len: 1, w: 1, at: null, hint: 'Every screen in the city — NULL\'s mark', sfx: 'glitch', loop: { name: 'glitch', every: 7, near: 999 },
       react: 'look', note: function (L) { return 'NULL had every screen in Arcadia: "' + pick(NULL_SAYS, L.key) + '"'; },
       over: function (L, ctx, offX, offY, ts, ms) { scanlines(L, ctx, ms); }
+    },
+
+    liftoff: {
+      world: 'arcadia-spaceport', name: 'A freighter lifts off', len: 1.5, w: 3, at: [36, 26],
+      hint: 'Engines lighting past the railing — a freighter\'s lifting off', sfx: 'blast', loop: { name: 'thunder', every: 6, near: 40 },
+      gather: { x: 36, y: 26.4, r: 4.5, n: 12, face: [36, 29] },
+      say: [[4, 'at', 'THERE SHE GOES!'], [30, 'at', 'WHERE\'S SHE BOUND?'], [60, 'at', 'SAFE ROAD, SPACER.']],
+      over: function (L, ctx, offX, offY, ts, ms) { liftoff(L, ctx, offX, offY, ts, ms); },
+      react: 'look', note: function (L) { return 'Watched the ' + pick(SHIPS_OUT, L.key) + ' lift off from the spaceport'; }
+    },
+    skylanterns: {
+      world: 'arcadia-oldquarter', name: 'Sky lanterns from the roof shrine', len: 4, w: 3, at: [5, 12],
+      hint: 'Paper lanterns rising off the shrine roof', sfx: 'chime', loop: { name: 'chime', every: 9, near: 26 },
+      gather: { x: 6, y: 11.5, r: 3.2, n: 10, face: [3, 6] },
+      say: [[5, 'at', 'MAKE A WISH!'], [50, 'at', 'THAT ONE\'S MINE, THE BIG ONE'], [120, 'at', 'LOOK HOW HIGH…']],
+      talk: [{ x: 8, y: 10, label: 'A SKY LANTERN', prompt: 'PRESS E TO LET ONE GO', on: function (L) {
+        if (once(L, 'wish', function () { if (typeof BridgeInventory !== 'undefined') BridgeInventory.restoreEnergy(20); }))
+          say('A SKY LANTERN', 'A CHILD HANDS YOU A LANTERN, ALREADY LIT. YOU HOLD IT TILL IT TUGS, AND LET GO. IT CLIMBS PAST THE ROOFS, PAST THE LOOP, UP TOWARD THE TOWERS, AND YOU LOSE IT AMONG THEIR WINDOWS.');
+        else say('A SKY LANTERN', 'YOURS IS UP THERE SOMEWHERE, AMONG THE TOWERS\' LIGHTS.');
+      } }],
+      over: function (L, ctx, offX, offY, ts, ms) { skyLanterns(L, ctx, offX, offY, ts, ms); },
+      note: 'Let a sky lantern go from Lantern Row'
     },
 
     // ---- Verdance ----
@@ -1127,6 +1149,54 @@ var BridgeEvents = (function () {
     ctx.fillStyle = 'rgba(40,255,120,0.035)';
     for (var y = (Math.floor(ms / 40) % 4); y < Hh; y += 4) ctx.fillRect(0, y, Wd, 1);
     if (Math.sin(ms / 70) > 0.96) { ctx.fillStyle = 'rgba(40,255,120,0.08)'; ctx.fillRect(0, Math.round(H(ms) * Hh), Wd, 6); }
+  }
+  // the spaceport: a freighter lifting off from a berth past the railing, rising up through the view on her engines
+  var SHIPS_OUT = ['Kestrel Run', 'Tolliver\'s Pride', 'Saltwind', 'Long Odds', 'Margery Fane', 'Ninth Wave'];
+  function freighterArt() { return sprite('freighter', 30, 12, function (P) {
+    P(O, [[2, 2, 24, 8], [0, 4, 3, 4], [26, 3, 4, 6], [6, 0, 6, 3], [8, 10, 3, 2], [19, 10, 3, 2]]);
+    P('#8a5a3a', [[3, 3, 22, 6]]); P('#a8744a', [[3, 3, 22, 2]]); P('#5a3a2a', [[3, 8, 22, 1]]);
+    P('#4a4a54', [[26, 4, 3, 4]]); P('#7ad0f0', [[1, 5, 2, 2]]); P('#5a5e68', [[7, 1, 4, 2]]);
+    P('#e0b020', [[12, 6, 6, 1]]); P('#3a2a20', [[9, 9, 1, 2], [20, 9, 1, 2]]);
+    P('#ff4040', [[4, 3, 1, 1]]); P('#40e080', [[24, 3, 1, 1]]);
+  }); }
+  function liftoff(L, ctx, offX, offY, ts, ms) {
+    var s = L.t / 1000, W2 = ctx.canvas.width, H2 = ctx.canvas.height;
+    var x = Math.round(offX + 36 * ts), base = H2 + 40;
+    var warm = Math.min(1, s / 6);
+    if (s < 10) glow(ctx, x, H2, 140, '255,180,90', 0.35 * warm * (0.8 + 0.2 * Math.sin(ms / 60)));
+    if (s < 8) return;
+    var u = Math.min(1, (s - 8) / 60), y = Math.round(base - Math.pow(u, 1.5) * (H2 + 240));
+    if (y < -120) return;
+    var art = freighterArt(), k = 2;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    glow(ctx, x, y + 34, 70, '120,170,255', 0.55);
+    ctx.fillStyle = 'rgba(200,225,255,0.85)';
+    for (var i = 0; i < 3; i++) {                                   // three plumes of thrust, flickering
+      var fx = x - 30 + i * 30, len = 26 + Math.round(Math.sin(ms / 45 + i) * 6);
+      ctx.fillRect(fx - 3, y + 18, 6, len); ctx.fillStyle = 'rgba(120,170,255,0.6)'; ctx.fillRect(fx - 5, y + 18 + len, 10, 10);
+      ctx.fillStyle = 'rgba(200,225,255,0.85)';
+    }
+    ctx.drawImage(art, Math.round(x - art.width * k / 2), Math.round(y - art.height * k / 2), art.width * k, art.height * k);
+    ctx.restore();
+  }
+  // Lantern Row: paper sky lanterns let go from the roof shrine, rising and drifting up between the towers
+  function skyLanternArt() { return sprite('skylantern', 4, 5, function (P) {
+    P('#6a1a0a', [[0, 0, 4, 5]]); P('#e8702a', [[1, 0, 2, 4]]); P('#ffd890', [[1, 1, 2, 2]]); P('#fff4c8', [[1, 3, 2, 1]]);
+  }); }
+  function skyLanterns(L, ctx, offX, offY, ts, ms) {
+    var s = L.t / 1000, art = skyLanternArt();
+    for (var i = 0; i < 26; i++) {
+      var born = 3 + i * 7 + H(L.key + 'b' + i) * 4, age = s - born;
+      if (age < 0 || age > 70) continue;
+      var x0 = 1.5 + H(L.key + 'x' + i) * 5.5, rise = age * (0.12 + H(L.key + 'r' + i) * 0.06);
+      var x = offX + (x0 + Math.sin(age / 6 + i) * 0.6 + age * 0.03) * ts, y = offY + (5.6 - rise) * ts;
+      var a = Math.min(1, age / 2) * Math.min(1, (70 - age) / 10);
+      ctx.globalAlpha = a;
+      glow(ctx, x + 4, y + 5, 14, '255,170,80', 0.35 * a);
+      ctx.drawImage(art, Math.round(x), Math.round(y));
+    }
+    ctx.globalAlpha = 1;
   }
   /** What every screen in Arcadia shows while NULL has them (js/skyline.js), else null. */
   var scr = { at: 0, v: null };

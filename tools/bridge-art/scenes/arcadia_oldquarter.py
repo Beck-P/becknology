@@ -340,7 +340,7 @@ for (x, c) in ((6.0, '#ff9050'), (16.0, '#ffb060'), (25.0, '#ff7a40'), (33.0, '#
                (58.0, '#ff9060')):
     k.point_light(x, 11.5, 2.8, c, 34, radius=1.0)
 k.area_light(COLS / 2, 6.0, 12.0, '#7058b8', 1100 * COLS / 44, COLS + 2.0, rot=(math.radians(-35), 0, 0))     # the city's glow
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.78}}, light_samples=128, world_light=('#241a40', 0.45))
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.78}}, light_samples=96, world_light=('#241a40', 0.45))
 
 # ---- the world -------------------------------------------------------------------------------------------------------
 def dialog(x, y, label, prompt, text):
