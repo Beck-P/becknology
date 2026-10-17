@@ -40,6 +40,7 @@ const SUITES = {
     ['world/festivals.js', SHOTS],
     ['world/music.js'],
     ['world/dungeon.js', SHOTS],
+    ['world/undercity.js', SHOTS],
     ['world/sylvara_quests.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/regatta.js', SHOTS],
@@ -94,6 +95,7 @@ const KEEP = new RegExp([
   /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,
   /schedule|in a storm|the gun:|finished|prizes|at the gate|at the foot|gun: beck|racing:/,
   /full draw|snap shot|close snap|fire arrow|ghost arrow|selected/,
+  /arcadia-|BAD |implants|glitch|tuned|fitted|the cage|the book|Gage|shrine|Teo|freight|the way down|tougher|a Saint|came round|scrap pile|Sallow|clinic/,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
 

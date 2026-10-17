@@ -475,6 +475,11 @@ w['interactions'] = [
     door(59, 9, 'arcadia-pit', [17, 23], 'THE PIT'),
     door(60, 9, 'arcadia-pit', [18, 23], 'THE PIT'),
     {'x': 67, 'y': 9, 'type': 'under', 'act': 'scrap', 'label': 'SCRAP TRADER', 'prompt': 'PRESS E TO TRADE'},
+    {'x': 9, 'y': 9, 'type': 'dialog', 'label': 'MAMA ROO', 'prompt': 'PRESS E TO TALK', 'dialog': 'MAMA ROO STIRS THE POT.'},
+    {'x': 44, 'y': 10, 'type': 'dialog', 'label': 'BRICK', 'prompt': 'PRESS E TO TALK', 'dialog': 'BRICK LOOKS AT YOU. JUST LOOKS.'},
+    {'x': 63, 'y': 9, 'type': 'dialog', 'label': 'TALLY', 'prompt': 'PRESS E TO TALK', 'dialog': 'TALLY CHALKS UP THE ODDS.'},
+    {'x': 64, 'y': 9, 'type': 'under', 'act': 'bets', 'label': 'BETS', 'prompt': 'PRESS E TO BET'},
+    {'x': 68, 'y': 9, 'type': 'dialog', 'label': 'GAGE', 'prompt': 'PRESS E TO TALK', 'dialog': 'GAGE WIPES HIS HANDS.'},
     {'x': 72, 'y': 9, 'type': 'express_lift', 'shaft': 'core', 'lobby': 'undercity', 'label': 'LIFT', 'prompt': 'PRESS E TO CALL THE LIFT'},
     {'x': 74, 'y': 9, 'type': 'express_lift', 'shaft': 'core', 'lobby': 'undercity', 'label': 'LIFT', 'prompt': 'PRESS E TO CALL THE LIFT'},
     door(34, 27, 'arcadia-sump', [6, 9], 'STAIRS DOWN', 'DOWN TO THE SUMP'),
@@ -516,6 +521,7 @@ ACTORS = [
     {'sheet': 'npc-roo', 'x': 9, 'y': 9, 'facing': 'down'},
     {'sheet': 'npc-bouncer', 'x': 44, 'y': 10, 'facing': 'down'},
     {'sheet': 'npc-bookie', 'x': 63, 'y': 9, 'facing': 'down'},
+    {'sheet': 'npc-gage', 'x': 68, 'y': 9, 'facing': 'down'},
 ]
 for a in ACTORS:
     k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)

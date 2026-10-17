@@ -3195,5 +3195,283 @@
         "a": "UP THE STAIR. HER ORRERY - THE SEVEN WORLDS YOUR SHIP KNOWS, THOUGH SHE BUILT IT LONG BEFORE ANY OF YOU CAME. AND THE SCRYING POOL: LOOK IN IT AT NIGHT. IT SHOWS THE SEA AS IT IS NOW, AND WHAT'S SAILING ON IT."
       }
     ]
+  },
+  "roo": {
+    "name": "Mama Roo",
+    "role": "Noodles in the Warrens",
+    "sheet": "npc-roo",
+    "at": [
+      {
+        "world": "arcadia-undercity",
+        "label": "MAMA ROO"
+      }
+    ],
+    "greet": "SIT. EAT. YOU LOOK LIKE SOMEONE FROM UP TOP WHO TOOK A WRONG TURN. EVERYONE DOWN HERE TOOK A WRONG TURN ONCE.",
+    "again": "BACK AGAIN. GOOD. THE BROTH REMEMBERS YOU.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "FORTY YEARS AT THIS COUNTER. MY MOTHER BEFORE ME. THE POT IS OLDER THAN BOTH OF US. WHEN THEY BUILT THE DISTRICT ON TOP OF US WE KEPT COOKING. THE STEAM GOES UP THROUGH THE GRATES. THEY SMELL US UP THERE, YOU KNOW. THEY JUST DON'T COME DOWN."
+      },
+      {
+        "q": "The Warrens",
+        "a": "HAWKER HALL FOR FOOD, THE DRIP FOR DRINK, THE FOUNDRY IF YOU WANT YOUR EARS TO BLEED, THE PIT IF YOU WANT THE REST OF YOU TO. SALLOW FOR CHROME, IF YOU MUST. AND KEEP OFF THE SAINTS' SIDE OF THE FENCE UNLESS YOU'RE LOOKING FOR TROUBLE."
+      },
+      {
+        "q": "The Rust Saints",
+        "a": "THE ORANGE VESTS. THEY HOLD THE YARDS PAST THE FENCE AND THEY TAKE A CUT OF EVERYTHING THAT GOES THROUGH. THEIR BOSS CALLS HIMSELF SAINT RUIN. CHROME FIST. SITS ON A THRONE MADE OF A CAR. IF SOMEONE EVER KNOCKED HIM OFF IT I'D GIVE THEM BROTH FOR A YEAR."
+      },
+      {
+        "q": "Further down",
+        "a": "THE STAIRS BY THE CANAL GO DOWN TO THE SUMP: THE OLD STREET, UNDER THE WATER. THERE'S A SHRINE DOWN THERE, AND OLD TEO'S BOAT, AND A PARTY THAT NEVER STOPS. AND THINGS IN THE WATER. EAT FIRST."
+      }
+    ]
+  },
+  "brick": {
+    "name": "Brick",
+    "role": "On the Foundry's door",
+    "sheet": "npc-bouncer",
+    "at": [
+      {
+        "world": "arcadia-undercity",
+        "label": "BRICK"
+      }
+    ],
+    "greet": "...",
+    "again": "...YOU AGAIN.",
+    "topics": [
+      {
+        "q": "Can I go in?",
+        "a": "DOOR'S OPEN. DON'T START ANYTHING. DON'T FINISH ANYTHING EITHER."
+      },
+      {
+        "q": "About you",
+        "a": "I STAND HERE. PEOPLE BEHAVE. THAT'S THE WHOLE JOB."
+      },
+      {
+        "q": "The Foundry",
+        "a": "OLD SMELTING HALL. STATIC LIT THE FURNACE AGAIN WITH LAMPS. DANCE ON THE GRATING, DRINK THE TONIC, DON'T CLIMB THE LADLE. SOMEBODY ALWAYS CLIMBS THE LADLE."
+      }
+    ]
+  },
+  "tally": {
+    "name": "Tally",
+    "role": "The Pit's bookie",
+    "sheet": "npc-bookie",
+    "at": [
+      {
+        "world": "arcadia-undercity",
+        "label": "TALLY"
+      },
+      {
+        "world": "arcadia-pit",
+        "label": "TALLY"
+      }
+    ],
+    "greet": "BETTING OR SIGHTSEEING? SIGHTSEEING'S FREE. BETTING'S WHERE THE FUN IS.",
+    "again": "BACK FOR ANOTHER FLUTTER?",
+    "topics": [
+      {
+        "q": "How the book works",
+        "a": "HOUSE BOUT EVERY TWENTY MINUTES. TWO FIGHTERS, ODDS ON THE BOARD. PICK ONE, PUT YOUR COINS DOWN, THE BELL GOES. SAME BOUT FOR EVERYONE IN THE ROOM, SAME RESULT. I DON'T FIX THEM. MUCH."
+      },
+      {
+        "q": "The cage",
+        "a": "ANYONE CAN CLIMB IN. TWENTY TO GET IN, THREE ROUNDS AGAINST THE HOUSE, EACH ONE PAYS BETTER. THE THIRD ROUND'S A HUSK FROM THE SUMP. NOBODY LIKES THE THIRD ROUND."
+      },
+      {
+        "q": "Tips?",
+        "a": "WATCH THE GROUND. EVERYONE TELEGRAPHS. ROLL OUT OF IT. AND IRON MAE NEVER GOES DOWN IN THE FIRST, SO DON'T BET THAT SHE WILL."
+      }
+    ]
+  },
+  "sallow": {
+    "name": "Doc Sallow",
+    "role": "Back-alley chrome",
+    "sheet": "npc-sallow",
+    "at": [
+      {
+        "world": "arcadia-chopshop",
+        "label": "DOC SALLOW"
+      }
+    ],
+    "greet": "SIT IN THE CHAIR OR DON'T. BUT DON'T TOUCH THE JARS.",
+    "again": "HOW'S THE CHROME? STILL TWITCHING? GOOD. MEANS IT'S ALIVE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I WAS A SURGEON UP TOP ONCE. CLINIC GRADE, LICENCE AND ALL. THEN I PUT A FEW THINGS IN A FEW PEOPLE THAT THE LICENCE DIDN'T COVER. NOW I PUT EVERYTHING IN EVERYONE, AND NOBODY ASKS FOR THE LICENCE."
+      },
+      {
+        "q": "Street chrome",
+        "a": "CHEAP, STRONG, SECOND-HAND. IT GLITCHES. AN ARM THAT FORGETS A SWING, LEGS THAT LOCK, PLATE THAT DROPS OUT FOR A FEW SECONDS. IN A FIGHT, MORE. NAKURI UP ON THE DISTRICT CAN TUNE IT STEADY, IF YOU CAN STAND HER SNIFFING AT MY WORK."
+      },
+      {
+        "q": "Trophies",
+        "a": "BRING ME SAINT RUIN'S FIST AND I'LL PUT IT ON YOUR ARM. BRING ME THE HEART OUT OF THE DREDGE AND I'LL PUT IT IN YOUR CHEST. THAT'S CHROME WORTH HAVING. IT DOESN'T GLITCH: IT WAS PAID FOR IN BLOOD ALREADY."
+      },
+      {
+        "q": "Parts",
+        "a": "MED-KITS AND STIMS ON THE BENCH. THEY'RE THE REAL THING. MOSTLY."
+      }
+    ]
+  },
+  "nell": {
+    "name": "Nell",
+    "role": "Behind the bar at The Drip",
+    "sheet": "npc-nell",
+    "at": [
+      {
+        "world": "arcadia-dive",
+        "label": "NELL"
+      }
+    ],
+    "greet": "WHAT'LL IT BE? THE LAGER'S COLD AND THE ROTGUT'S HONEST. DON'T ASK ABOUT THE BUCKET.",
+    "again": "SAME AGAIN?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I BOUGHT THE DRIP WITH MY WINNINGS FROM THE PIT. FOUGHT SIX ROUNDS, WON FIVE, LOST AN EAR'S WORTH OF HEARING. BEST TRADE I EVER MADE."
+      },
+      {
+        "q": "The bucket",
+        "a": "THERE'S A LEAK IN THE CEILING. THE WATER COMES FROM THE DISTRICT'S GUTTERS, FOUR FLOORS UP. I EMPTY IT EVERY HOUR. NO, NOT INTO THE LAGER. PROBABLY."
+      },
+      {
+        "q": "Gossip",
+        "a": "THEY SAY THE DREDGE CAME UP OUT OF THE CANAL BY THE OLD STATION LAST WEEK AND TOOK A WHOLE BRIDGE. THEY SAY THE SAINTS ARE SHORT OF MONEY. THEY SAY HALCYON WANTS TO PAVE THE SUMP OVER. THEY SAY A LOT, IN HERE."
+      }
+    ]
+  },
+  "static": {
+    "name": "Static",
+    "role": "On the Foundry's decks",
+    "sheet": "npc-static",
+    "at": [
+      {
+        "world": "arcadia-foundry",
+        "label": "STATIC"
+      }
+    ],
+    "greet": "CAN'T HEAR YOU. CAN'T HEAR ANYTHING. THAT'S THE POINT.",
+    "again": "STILL STANDING? TURN IT UP THEN.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I MAKE MUSIC OUT OF THE NOISE THE CITY MAKES. HYDRAULICS. PRESSES. THE LIFT CABLES SINGING. I RECORDED THE FOUNDRY THE NIGHT THEY SHUT IT. EVERY TRACK I PLAY HAS THAT IN IT SOMEWHERE."
+      },
+      {
+        "q": "Club Void",
+        "a": "UP TOP? KIRI'S ALL RIGHT. CLEAN SOUND. TOO CLEAN. DOWN HERE IT RATTLES YOUR TEETH. THAT'S HOW YOU KNOW IT'S REAL."
+      },
+      {
+        "q": "The rave",
+        "a": "LUX. DOWN IN THE OLD STATION. NEVER STOPS. I PLAY THERE ON THE NIGHTS I CAN'T SLEEP, WHICH IS MOST NIGHTS."
+      }
+    ]
+  },
+  "gage": {
+    "name": "Gage",
+    "role": "Buys scrap",
+    "sheet": "npc-gage",
+    "at": [
+      {
+        "world": "arcadia-undercity",
+        "label": "GAGE"
+      }
+    ],
+    "greet": "SCRAP? BOARDS? CHROME? I BUY. I DON'T ASK.",
+    "again": "BRING ME SOMETHING HEAVY.",
+    "topics": [
+      {
+        "q": "What do you buy?",
+        "a": "SCRAP BY THE PIECE, CIRCUIT BOARDS BY THE BOARD, CHROME PARTS BY THE POUND. PEARLS OUT OF THE SUMP, IF YOU'VE BEEN THAT FAR. EEL I LEAVE TO TEO."
+      },
+      {
+        "q": "Where's it from?",
+        "a": "THE SAINTS DROP IT WHEN YOU DROP THEM. THE HEAPS IN THE YARD, IF YOU DON'T MIND RATS. THE DRONES IN THE SUMP ARE FULL OF BOARDS. EVERYTHING UP TOP ENDS UP DOWN HERE IN THE END."
+      }
+    ]
+  },
+  "teo": {
+    "name": "Old Teo",
+    "role": "The noodle boat",
+    "sheet": "npc-teo",
+    "at": [
+      {
+        "world": "arcadia-sump",
+        "label": "OLD TEO"
+      }
+    ],
+    "greet": "LAKSA? SIT ON THE QUAY, MIND THE EDGE. THE WATER DOESN'T GIVE BACK WHAT IT TAKES.",
+    "again": "HUNGRY AGAIN. GOOD. THE SUMP MAKES YOU HUNGRY.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I'VE BEEN ON THIS WATER SINCE IT WAS A STREET. MY FATHER HAD A SHOP ON IT. THEN THE CITY CAME DOWN ON TOP OF US AND THE WATER CAME UP UNDERNEATH, AND I BOUGHT A BOAT. YOU MAKE THE BEST OF WHERE YOU ARE."
+      },
+      {
+        "q": "The eels",
+        "a": "THE SUMP EELS COME UP OUT OF THE CANALS. THEY BITE HARD. BUT THE MEAT GLOWS, AND IT MAKES A BROTH YOU WON'T FORGET. BRING ME ONE AND I'LL PAY."
+      },
+      {
+        "q": "The Dredge",
+        "a": "AN OLD DREDGER. THEY LEFT IT RUNNING WHEN THEY ABANDONED THE STREET. IT'S BEEN DREDGING FIFTY YEARS WITH NOBODY AT THE CONTROLS, AND SOMEWHERE IN THERE IT GOT ANGRY. COMES UP BY THE SOUTH BASIN. SISTER WEN SAYS IT'S LONELY. I SAY IT'S A MACHINE."
+      }
+    ]
+  },
+  "wen": {
+    "name": "Sister Wen",
+    "role": "Keeps the drowned shrine",
+    "sheet": "npc-wen",
+    "at": [
+      {
+        "world": "arcadia-sump",
+        "label": "SISTER WEN"
+      }
+    ],
+    "greet": "YOU CAME ALL THE WAY DOWN. SIT ON THE STEP. THE WATER IS QUIET TODAY.",
+    "again": "THE CANDLES LEANED WHEN YOU CAME. THEY DO THAT FOR PEOPLE THEY LIKE.",
+    "topics": [
+      {
+        "q": "The shrine",
+        "a": "IT WAS HERE BEFORE THE CITY. WHEN THEY BUILT OVER THE STREET THEY LEFT IT, AND THE GATE, BECAUSE THE BUILDERS WERE AFRAID TO MOVE THEM. THE WATER CAME UP TO THE THIRD STEP AND STOPPED. IT HAS NEVER COME HIGHER."
+      },
+      {
+        "q": "A blessing",
+        "a": "A COIN FOR THE WATER AND A BOW. ONCE A DAY IT GIVES BACK: YOUR STRENGTH, YOUR BREATH. AND IF YOU FALL DOWN HERE, IT BRINGS YOU TO MY STEPS. IT HAS DONE THAT FOR MANY PEOPLE."
+      },
+      {
+        "q": "The husks",
+        "a": "PEOPLE WHO PUT IN TOO MUCH CHROME AND LET THE CHROME DECIDE. THEY WALK THE QUAYS. THEY DON'T REMEMBER THEIR NAMES. BE GENTLE WITH THEM IF YOU CAN, AND QUICK IF YOU CAN'T."
+      }
+    ]
+  },
+  "lux": {
+    "name": "Lux",
+    "role": "The rave's DJ",
+    "sheet": "npc-lux",
+    "at": [
+      {
+        "world": "arcadia-sump-rave",
+        "label": "LUX"
+      }
+    ],
+    "greet": "WELCOME TO CENTRAL! LAST STOP! EVERYBODY OFF! EVERYBODY DANCE!",
+    "again": "YOU CAME BACK DOWN! NOBODY COMES BACK DOWN!",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I FOUND THIS PLACE WHEN I WAS NINE, CLIMBING DOWN THE OLD VENT SHAFTS. A WHOLE STATION, UNDER THE WATER, AND THE POWER STILL ON IN THE CARRIAGE. I SAID: ONE DAY THIS IS GOING TO BE THE BEST PARTY IN THE CITY. IT IS."
+      },
+      {
+        "q": "Does it ever stop?",
+        "a": "NOT SINCE I STARTED IT. THREE YEARS, FOUR MONTHS. PEOPLE TAKE TURNS ON THE DECKS WHEN I SLEEP. STATIC COMES DOWN SOMETIMES. EVEN TEO DANCED ONCE."
+      },
+      {
+        "q": "Glow shots",
+        "a": "TEAL LIGHT IN A TUBE, FROM THE CARRIAGE BAR. IT'S MOSTLY SUGAR AND SOMETHING THAT GLOWS. YOU'LL DANCE TILL MORNING. THERE IS NO MORNING DOWN HERE, SO, FOREVER."
+      }
+    ]
   }
 }

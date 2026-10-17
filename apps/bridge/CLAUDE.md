@@ -713,6 +713,90 @@ Playing together, creatures are shared and the fighting is co-op — see *Fighti
 - **No boxes** — Beck: "it's a little janky with those red squares that pop up… we don't need those. And there's also a little square around the floating orbs when they fall." Nothing a fight draws is a filled or outlined rectangle: no red/orange square over a struck tile or over you (the old `spawnHitFlash` / `spawnDamageFlash`, gone), no square marks on the ground, no square bolts, no square halo round loot. Round things go through `BridgeFX.disc` (a disc of whole pixels, `squash` to lie it on the ground), `ring` (its pixel outline) and `glow` (a soft radial glow); sparks are short streaks, not outlined squares; loot glows round and soft with its icon the crisp core, over a pixel-oval shadow; numbers are in Pixelify Sans (the font index.html loads — they were asking for one it doesn't) with a dark outline all round, popping in. `tools/tests/combat/look.js` shoots each moment and fails on any rectangle 6 × 6 or bigger from the fight's own drawing (sprites and health bars aside).
 - **Weapon traits** (items with `damage`, read by `weaponUse` and `BridgeCombat.onHit`): `arc` sweeps the tiles either side; `reach` 2 hits the second tile too; `heavy` staggers a wind-up and knocks the creature back a tile; `frost` slows it (moves and wind-ups ×1.7, 3 s); `burn` sets it burning (3 a tick); `holy` bites the undead (wisps, wights, shades, the warden) ×1.6; `drain` gives you back a quarter of what it takes; `rate` scales its class's swing timing (js/arms.js); `twin` strikes twice; `cls` is its class. The smithy adds the **Boarding Pike** (34, reach 2; 160) and the **War Maul** (58, heavy, slow; 240); **Morwen's ARCANE CASE** in her tower sells the **Rime Hatchet** (38, frost; 340), the **Emberbrand** (44, burns; 380) and the **Moonglass Sabre** (50, arc, holy; 460); found: the **Veilpiercer** (32, quick, drains) and the **Wispcaller Staff** (42, holy; a wisp thrown seven tiles, 2 energy — `BridgeMagic.cast` with `bolt: 'wisp'`). Wisps drop **Wisp Embers**.
 
+### Arcadia below: the Undercity and the Sump (js/undercity.js)
+Workstream C of `_claude_docs/spec-denser-worlds.md` (Beck: "ritzier as you go up, poor as you go down… dangerous at the
+bottom… bars and nightclubs at the bottom… below it should still have restaurants"). Two levels under the District —
+**the Undercity** (B20) and **the Sump** (B60) — built in the house style (`tools/bridge-art/assets_under.py`, the kit:
+`shanty` Kowloon stacks of units each in its own cladding, windows lit or caged, AC units, washing; `column` the city's
+great columns; `concrete` poured slabs with cracks, stains and patches; `stall` hawker stalls under tarps; `fluoro`
+hanging tubes, `sodium` lamps, `caged_bulb`; `grate_drip` where the rain comes through; `drum_fire`, `chainlink`,
+`scrap_heap`, `barrels`, `crates`, `mattress_corner`; `rooftop` a low block's crowded roof seen from above; `stair_up`,
+`stair_down`; `room` an interior's shell, `pillar`, `long_table`; and for the Sump `canal` (`canal_water`, the teal glow
+under it), `quay`, `bollard`, `sampan`). Always night: the scenes render `full` / `dim` light states (sodium orange and
+fluorescent green below, teal on black water in the Sump), the toy finish from `scene_post.py`.
+
+| World | Script | What |
+|---|---|---|
+| `arcadia-undercity` | `scenes/arcadia_undercity.py` | **The Warrens**, the hub (80 × 36): the stacks along the back with the doors in their ground storeys — the stair up to the Backs, Mama Roo's noodle counter, the Hawker Hall's gate, The Drip, Sallow's Chrome, the Foundry, the Pit, Gage's scrap counter, Tally's betting window, the Core Express lobby (B20) — a market lane of stalls, a low Kowloon block down the middle (the grill, the curry stall, a pawn shop, the mahjong den, the capsule hostel, the meds counter, a hawker stall, a noodle stall, the KTV; its roofs crowded with tanks, lofts, sheds and greens) with alleys through it, the south lane's tables and drum fire, the drain canal along the front with the stairwell down to the Sump, and east behind chain-link the Rust Saints' turf and the gate to the scrapyards |
+| `arcadia-hawker` | `arcadia_hawker.py` | **The Hawker Hall** (40 × 24): fourteen stalls round the walls and back to back down the middle, long tables, pillars, lanterns, the kitchen god |
+| `arcadia-dive` | `arcadia_dive.py` | **The Drip** (20 × 15): the bar under a wall of bottles (Nell), booths, a pool table, the jukebox, the bucket under the leak |
+| `arcadia-chopshop` | `arcadia_chopshop.py` | **Sallow's Chrome** (16 × 13): the chair under the ring lamp (street chrome, js/implants.js), the wall of parts, eyes in jars, the bench (med-kits and stims) |
+| `arcadia-foundry` | `arcadia_foundry.py` | **The Foundry** (32 × 22): an industrial club in a smelting hall — the furnace lit again, Static on the decks, a steel-grating floor lit red from under, the ladle hung over it, cages, the conveyor bar |
+| `arcadia-pit` | `arcadia_pit.py` | **The Pit** (36 × 24): the cage of sand in the middle (world JSON `undercity.ring`), bleachers, the bar, the bell, Tally's book |
+| `arcadia-scrapyard` | `arcadia_scrapyard.py` | **The Scrapyards** (64 × 36): heaps, stacked crushed cars, the magnet crane, the compactor, the Saints' shacks, Saint Ruin's throne |
+| `arcadia-sump` | `arcadia_sump.py` | **The Sump** (84 × 40): the drowned original street — four quays between canals with footbridges, the old shopfronts with their tide line, the towers' feet; Old Teo's noodle boat, the drowned shrine and its gate standing in the water, the freight lift (B60), the old Central station's entrance |
+| `arcadia-sump-rave` | `arcadia_sump_rave.py` | **Central**, the rave (34 × 22): a drowned station platform under its tiled vault, the flooded track bed, a half-sunk carriage made the bar, Lux on the decks, lasers |
+
+- **Joined**: the Backs ⇄ the Warrens (until the Backs' rebuild lands, the way down is its manhole, added by
+  `BridgeUndercity.decorate`; after, a stairwell goes into `arcadia_alley.py`), every door both ways, the Warrens ⇄ the
+  Sump by the stairwell on the canal and by the Core Express (`express_lift`, shaft `core`, lobbies `undercity` and `sump`
+  in `assets/arcadia-lifts.json`, with `places` entries for the Map's cutaway). Until js/transit.js lands, `decorate`
+  turns `express_lift` into this module's own chooser of the shaft's stops.
+- **The `undercity` block** (world JSON, written by the scene scripts): `level` (`undercity` / `sump`), `drips` ([x, row,
+  height]: rain falling in a stream from that height onto the tile), `tubes` (fluorescents that stutter), `turf` (`rect`:
+  where the fighters stand), `safe` (rects nobody spawns in), `boss` (the boss's tile), `ring` (the Pit's cage), `comeRound`.
+  The scene's `steam` is drawn too. The arcadia scene hooks here draw the drips, the steam, the failing tubes, the dark
+  of the underside overhead, and the fights (BridgeCombat's ground / items / over, exported for this).
+- **Food and drink below** (items.js; sold by label, `SHOPS`): Mama Roo's Broth, Char Skewers, Steam Dumplings, Kopi,
+  Teo's Laksa, Drip Lager, Foundry Tonic, Pit Rotgut, Glow Shot. **Scrap** (Gage buys it, `act: 'scrap'`): Scrap Metal,
+  Circuit Board, Chrome Part, Sump Pearl, Eel Fillet (Teo buys eel).
+- **Fighting, tougher the lower you go** (js/combat.js CREATURES): the Undercity — **Rust Saints** (`saint` with a pipe,
+  `shiv` with a knife: people, drawn from their own painted sheets with the weapon over them, leaning into the wind-up),
+  **scrap rats**; the Sump — **scav drones** (fly, a red bolt down a line), **sump eels**, **husks** (chromed-over drifters
+  that blink away). `ROSTER` places them in each place's `turf` from a hash of the place and the day, so two pilots see
+  the same ones. Once a day a boss: **Saint Ruin** on his throne in the scrapyards (a chrome fist; every other blow a
+  slam; calls two Saints at two thirds and a third), **the Dredge** in the Sump's south basin (900 health, its scoop
+  slams a 3 × 3, calls drones). Their first kill drops a trophy Doc Sallow fits (`ruin_knuckles`, `dredge_heart`).
+  Blacking out below brings you round at Mama Roo's counter (the Undercity) or on the shrine's steps (the Sump):
+  `onFaint`.
+- **Things to do** (`under` interactions, by `act`): `scrap` (Gage), `search` (a scrap pile, once a day each — scrap, a
+  board, chrome, or a rat out at you), `ring` (the Pit's cage: 20 to get in, three rounds against the house — two
+  Saints, the knife sisters, a husk from the Sump — 30, 60 and 120 coins, 50 more for the night's first win), `bets`
+  (Tally's book: the house bout of the twenty-minute slot, the same fighters and winner for everyone), `shrine` (a coin
+  and a bow: health and energy full once a day), `boat` (Teo's laksa; he buys eel), `dance` (the Foundry's floor and the
+  rave's platform: +40 energy once a day each), `lift`.
+- **People** (people.json, characters.py, portraits): Mama Roo (`npc-roo`), Brick on the Foundry's door
+  (`npc-bouncer`), Tally the bookie (`npc-bookie`), Gage (`npc-gage`), Doc Sallow (`npc-sallow`), Nell (`npc-nell`),
+  the hawkers (`npc-hawker-a/b`), Static (`npc-static`), Old Teo (`npc-teo`), Sister Wen (`npc-wen`), Lux (`npc-lux`);
+  the Rust Saints (`npc-saint-a/b`, `npc-saint-boss`) and the husks (`npc-husk`) are the fighters' sheets. Crowds:
+  `assets/crowds.json` (the `undercity` and `sump` wardrobes in js/crowd.js).
+- **Small happenings** (js/events.js): **the Saints come collecting** down the Warrens' market lane (stand up to them
+  for a broth and twenty coins, once a happening), **a downpour through the grates** (rain in sheets over the Warrens),
+  **something moving in the canal** in the Sump (rings going out over the south basin; people back off the edge).
+- Test: `tools/tests/world/undercity.js` (every place, the doors both ways, nothing walled off, the rosters the same on
+  two pages and tougher below, a fight and coming round, the shops, Gage, the book, a pile, the shrine, Teo, the lift,
+  the cage's three rounds, implants).
+
+### Implants (js/implants.js, BridgeImplants)
+Chrome you have put in, in six slots — **eyes** (criticals ×1.75), **arm** (damage), **skin** (each blow on you lighter by
+a few points), **legs** (speed), **core** (health), **lungs** (energy) — one in each. Three tiers (Beck: "back-alley
+chrome below (cheap, now and then it glitches), clinic-grade on the District, designer up top"): **street** at Sallow's
+Chrome in the Warrens (cheap; now and then it glitches — the arm seizes for a swing, the legs lock, the plate drops out,
+the eyes fill with static, the core spikes and takes energy — about once in four minutes a piece walking about, once a
+minute in a fight); **clinic** at the Chrome Clinic's IMPLANT SUITE (the holo-display; about twice the numbers, never
+glitches; it also **tunes** a street piece steady for 60); **designer** up top (Workstream D's boutique: the best
+numbers, a finish). And **trophies** fitted at Sallow's from what the bosses leave. Saved in localStorage
+`bridge_implants`.
+- Where it feeds the game: `BridgeGear.bonus()` adds `hp` and `energy` (max health and energy follow), `BridgeGear.speed()`
+  adds `speed`, `BridgeCombat.damageFor` multiplies by `BridgeImplants.damage()` and rolls `crit()`, interactions.js takes
+  a creature's blow through `absorb(dmg)`.
+- **API** (for D's boutique): `BridgeImplants.open({ shop: 'designer' })` opens a shop's chooser (`SHOPS`: `street`,
+  `clinic`, `designer`; `shop(id, { title, who, tiers, tune, line })` registers another), `register(id, { slot, tier,
+  name, price, perk: { damage, armour, speed, hp, energy, crit }, blurb, finish, item })` adds an implant,
+  `install(id, { free })` → Promise `{ ok, reason }` (pays through BridgeProgression.wagerCoins), `remove(slot)`,
+  `installed()`, `has(id)`, `tier(slot)`, `bonus()`, `perkLine(perk)`. An interaction `{ type: 'implants', shop: '…' }`
+  opens a shop.
+
 ### Homes and furniture
 `js/home.js` (BridgeHome). Places of your own: **the White House** on Sapphire Port's square (`lumar-home`, `scenes/lumar_home.py`: hearth, two windows on the sea, bare boards; 1500 coins) and a **capsule apartment** over the District's Capsule Hotel (`arcadia-home`, `scenes/arcadia_home.py`: a strip window onto the live skyline and rain — the `'*'` behind hook draws them in `scene.sky` — the sleeping capsule, a kitchenette; 600 coins). **The farmhouse** on Verdance (`verdance-home`, `scenes/verdance_home.py`: Edda's kitchen in daylight — whitewash over green wainscot, the black range, a dresser of blue-and-white plates, two windows on the field, her kitchen table with the ledger) comes with the farm's deed (`HOMES[id].farm`: `owns` asks `BridgeHomestead.owned()`; the FARMHOUSE door goes in once it's yours, and Edda's rocking chair and bed are waiting the first time). Their doors are `home_door` interactions set on the street as worlds load (`HOMES[id].door`: the WHITE HOUSE door at 38,13 on Sapphire; the CAPSULE HOTEL on the street): the first time they offer the place for sale (`wagerCoins`, a menu option `home_buy`), then let you in. Each comes with two pieces to start. Aboard, **your quarters and the bridge** are yours already. The rooms are rendered empty; everything else is what you put in them. The legacy homes (*Legacy* below) are rendered furnished with their architecture and fixed pieces — the Penthouse's inside and roof deck, Ashcombe House's five rooms, the Starling — with open floor left round them for yours: a home can be several worlds (`part: '<home id>'` in HOMES: owned with that home, furnished on its own, no toast of its own), and a world can be a hotel you own (`resort`: owned once the holm's Starling is built).
 - **Furniture**: 36 pieces, each built with the scene kits' own builders by `tools/bridge-art/furniture_sprites.py` into one floorless sheet (`assets/scenes/furniture`, a 3 × 4-tile cell each, footprint at the bottom of its cell) plus `assets/furniture.json` (id, name, price, footprint `w` × `d`, `walk` for rugs, the footprint's corner on the sheet). The engine cuts each sprite at its cell's opaque bounds and draws it depth-tested against the room (`drawOccluded` at its front row, tinted by the room's light but softened, since the sheet is lit already); rugs sort under everyone, and a seat you're sitting on draws before you. Non-rug pieces block their tiles. A module can add pieces it draws itself, live (`BridgeHome.add({id, name, price, w, d, spr: {img, sx, sy, sw, sh, ax, ay}, live(entry, now, theme), glow?, use?, after?})`: `live` hands back this frame's picture, drawn through the same `drawOccluded`; `glow` a light laid over it with `lighter`, untinted; `use` its interaction; `after` the piece it's listed beside) — the fish tanks are.
