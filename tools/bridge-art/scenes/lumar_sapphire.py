@@ -182,6 +182,9 @@ for (bx, sail) in ((FX - 0.95, '#e8e4dc'), (FX + 1.95, None)):
 P.sloop(k, 13.6, 18.3, Q + 1.45, beam=1.05, hull='#2e3a4a', strake='#2a4a7a', wz=C.WZ)      # a sloop at her moorings, sail furled
 P.line(k, (13.7, Q + 1.45, C.WZ + 0.55), (13.5, Q - 0.5, 0.38), sag=0.2)
 P.line(k, (18.2, Q + 1.45, C.WZ + 0.55), (17.0, Q - 0.5, 0.38), sag=0.2)
+P.sloop(k, 30.8, 35.2, Q + 1.6, beam=1.0, hull='#3a2a1c', strake='#7a2a2a', sail='#e8dcc4', wz=C.WZ)
+P.line(k, (30.9, Q + 1.6, C.WZ + 0.55), (32.5, Q - 0.5, 0.38), sag=0.25)
+P.line(k, (35.1, Q + 1.6, C.WZ + 0.55), (35.5, Q - 0.5, 0.38), sag=0.2)
 for (x0, x1, cr, hull, ring) in ((20.9, 22.9, Q + 1.3, '#6a3a2a', 22.6), (41.6, 43.6, Q + 0.8, '#3a5a4a', 43.0)):
     n0, l0 = len(k.parts), len(k.lights)
     W.rowboat(k, x0, x1, cr, beam=0.78, hull=hull)
@@ -276,6 +279,19 @@ V.sacks(k, 18.9, 21.75, n=3)
 for (bx, br) in ((36.3, 21.45), (36.7, 21.75)):
     P.fish_basket(k, bx, br)
 W.cart(k, 18.4, 18.9)
+for (tx, tr) in ((28.25, 17.75), (30.75, 17.75), (28.2, 19.55), (30.8, 19.55)):  # tubs at the corners of the well's flags
+    HK.tub(k, tx, tr)
+k.box(25.15, 19.15, 0.0, 26.85, 19.75, 0.62, (A.WOOD, 0.14), 'trestle', bevel=0.01)      # a trestle of the morning's catch
+k.box(25.2, 19.18, 0.62, 26.8, 19.72, 0.68, ('#dfeef2', 0.06), 'ice')
+for i in range(10):
+    k.blob(25.35 + (i % 5) * 0.32, 19.3 + (i // 5) * 0.22, 0.71, 0.11, 0.045, 0.03,
+           (k.rng.choice(('#9ab0b8', '#b8c4c8', '#8a9aa6', '#c87a5a', '#4a6aa0')), 0.08), 'fish', segs=8)
+k.solid(25.15, 19.15, 26.85, 19.75)
+A.crate(k, 22.0, 19.1, s=0.55, tone=A.WOOD_L, contents='apples')
+A.crate(k, 22.6, 19.2, s=0.5, tone=shade(A.WOOD_L, 0.9))
+A.crate(k, 22.3, 19.15, s=0.45, z0=0.47, tone=shade(A.WOOD_L, 1.08), solid=False)
+HK.barrels(k, 33.4, 19.3)
+V.sacks(k, 36.4, 19.4, n=4, col=('#c8b890', '#d8c8a0', '#b8a880'))
 W.bunting(k, (14.5, 22.4, 2.0), (27.0, 21.6, 2.0), sag=0.45, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
 W.bunting(k, (27.0, 21.6, 2.0), (32.0, 21.6, 2.0), sag=0.3, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
 W.bunting(k, (32.0, 21.6, 2.0), (43.0, 22.4, 2.0), sag=0.45, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
@@ -388,6 +404,19 @@ for (x, r) in ((47.3, 12.2), (5.0, 13.6)):
     W.tree(k, x, r, h=2.3, tone='#2e4a44')
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
 W.cart(k, 44.0, 17.8)
+# the way through to the floating market's inner basin (js/sapphire.js puts its door at 44, 22): stone gate piers either
+# side of the way east, an iron arch with a lantern over it, a fingerpost
+for gr in (21.12, 22.98):
+    k.box(45.0, gr - 0.15, 0.0, 45.3, gr + 0.15, 1.25, (shade('#9a9284', k.rng.uniform(0.92, 1.05)), 0.14), 'gate_pier', bevel=0.02)
+    k.box(44.96, gr - 0.19, 1.25, 45.34, gr + 0.19, 1.33, ('#a89c88', 0.12), 'gate_pier', bevel=0.015)
+    k.sphere(45.15, gr, 1.42, 0.1, 0.09, ('#a89c88', 0.1), 'gate_pier', segs=8)
+    k.solid_post(45.15, gr)
+arc = [(45.15, 21.12 + 1.86 * t, 1.35 + 0.75 * math.sin(math.pi * t)) for t in [i / 10 for i in range(11)]]
+for a_, b_ in zip(arc, arc[1:]):
+    k.tube(a_, b_, 0.03, A.IRON, 'gate_arch', verts=6)
+k.tube((45.15, 22.05, 2.1), (45.15, 22.05, 1.85), 0.012, A.IRON, 'chain', verts=4)
+W.lantern(k, 45.15, 22.05, 1.55, 1.85, s=0.09, energy=10)
+V.signpost(k, 44.45, 20.7, [('FLOATING MARKET', 'e', 1.45)])
 
 # ---- the grass ------------------------------------------------------------------------------------------------------
 busy = lambda x, r: pd(x, r) < 0.6 or pond_d(x, r) < 1.18
