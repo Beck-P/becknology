@@ -370,7 +370,11 @@ Look Book 2's relight, in the game: outdoors the picture is put together live fo
 as many to the pixel of water as it had (js/nature.js leaves water in live light to it). Falling water (parts named
 `waterfall`, `falls`, `cascade`, `weir`: flag 64 in `lit_c`) runs with light streaking down it and foam churning and rings
 spreading where it lands; in a hard frost only a thread down the middle still runs. Still water's own glow (a well's)
-stays out of the glow image: its light at night is the water's. A composition takes a few ms a frame (`BUDGET`) whenever the light has moved on enough to show — about once a real minute — and fades in over the last (`FADE`). Characters are lit from the same passes at their feet (`tint`): in shadow under a tree, gold at sunset, lamplit at night.
+stays out of the glow image: its light at night is the water's. On Hoarfell the snow is coloured by the hour as the Look
+Book's tarn was (`hoarfell()` in litscene.js): lit or shade from the sun's share of the light against the best-lit snow
+that hour, the hollows a step down from the sky pass, pink-gold where the sun lands at either end of the day and a cool
+blue-grey in the shade, white and blue at noon, blue under the lamps at night; a trodden lane a touch darker, ice (pale
+and bluish) leaned blue with its marks kept, and a warm lean where the sun lands on everything else. A composition takes a few ms a frame (`BUDGET`) whenever the light has moved on enough to show — about once a real minute — and fades in over the last (`FADE`). Characters are lit from the same passes at their feet (`tint`): in shadow under a tree, gold at sunset, lamplit at night.
 - **Hooks:** js/scene.js calls `BridgeLit.load(sc)`, `.layers(sc, use, masks)` (decor and stand-ins carry their lit passes), `.frame(sc)` in drawBackground, `.water(…)` after it and `.tint(…)` in tintAt; a scene without `lit` draws as before. Previews and tests: `BridgeLit._force({ hour, season, weather })` (hour on the 24-hour face; season `spring|summer|autumn|winter`; weather `clear|cloud|rain|fog|snow`), `BridgeLit._stats(id)`, `BridgeLit.light(id)`.
 - Not yet: the open sea's own reflections (js/sea.js draws the sea over the relit seabed), firelight flicker in the live picture (its lamps burn steady; the baked `full` / `dim` cross-fade only shows without live light), a per-scene sun path (every scene's sun comes from the same side). The re-renders are the backlog (`_claude_docs/requests.md`, *The new look*).
 

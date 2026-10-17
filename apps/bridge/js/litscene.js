@@ -438,7 +438,7 @@ var BridgeLit = (function () {
     if (al < 195 || Math.max(ar, ag, ab) - Math.min(ar, ag, ab) > 46) return 0;    // pale rock stays rock
     var f = F[p + 2];
     if (f & 8) return 0;                                                          // the open water
-    if (f & 48) return al;                                                        // the ground and the roofs
+    if (f & 48) return ab - ar > 18 ? 0 : al;                                     // the ground and the roofs (ice is bluish: ice)
     return ab - ar < 20 ? al : 0;                                                 // white things on objects, not the bluish ice
   }
   function shareAt(G, Lt, p) {                         // the sun's share of the light at a pixel
