@@ -579,6 +579,71 @@ def lean_to(k, x0, x1, rb, rng=None, col=None):
     k.solid(x0 - 0.1, rb, x1 + 0.1, rf + 1.1)
 
 
+JUNK = ['#c86a2a', '#3a6ab0', '#c83a32', '#e8c040', '#d8d8d0', '#4a8a4a', '#8a8a92', '#6a3a22', '#2a2a30', '#a05a8a']
+
+
+def scrap_ridge(k, x0, x1, rc, h=2.0, d=1.6, rng=None, solid=True):
+    """A wall of scrap, as a yard piles it: a long mound of crushed stuff with big recognisable things stuck in and on it
+    — car doors and bonnets in their paint, fridges and washers gone grey, tyres in stacks, sheets of corrugated, pipes,
+    a robot's head, a sign — lit colours, not a dark blob. Centre row rc, height h, depth d."""
+    rng = rng or k.rng
+    L = x1 - x0
+    n = max(2, int(L / 1.2))
+    for i in range(n):                                               # the mound itself, in lumps
+        cx = x0 + (i + 0.5) * L / n + rng.uniform(-0.2, 0.2)
+        hh = h * rng.uniform(0.65, 1.0)
+        k.blob(cx, rc, 0.0, L / n * 0.85, d * 0.5, hh, (rng.choice(('#4a3a30', '#3e3a36', '#4a4038')), 0.35), 'scrap_mound', segs=10)
+    for _ in range(int(L * 4.5)):                                    # what's in it and on it
+        t = rng.uniform(0.04, 0.96)
+        x = x0 + t * L
+        dd = rng.uniform(-0.45, 0.45) * d
+        prof = max(0.0, 1 - (2 * dd / d) ** 2) ** 0.5
+        z = h * prof * rng.uniform(0.55, 0.95)
+        r = rc + dd
+        col = rng.choice(JUNK)
+        what = rng.random()
+        if what < 0.2:                                               # a car door or bonnet, in its paint, tilted
+            k.poly([(x - 0.35, r - 0.1, z - 0.05), (x + 0.35, r - 0.12, z + 0.1), (x + 0.32, r + 0.3, z + 0.4), (x - 0.38, r + 0.32, z + 0.25)], (col, 0.2), 'scrap_panel')
+            k.box(x - 0.2, r + 0.1, z + 0.18, x + 0.15, r + 0.12, z + 0.32, '#1a2a3a', 'scrap_glass', emit=('#4060a0', 0.08))
+        elif what < 0.32:                                            # a fridge or a washer, white gone grey
+            k.box(x - 0.22, r - 0.2, z - 0.1, x + 0.22, r + 0.2, z + 0.45, (rng.choice(('#c8c8c0', '#a8a8a0', '#d8d0c0')), 0.12), 'scrap_appliance', bevel=0.03)
+            if rng.random() < 0.5:
+                k.cyl_y(x, r + 0.2, r + 0.22, z + 0.18, 0.13, 0.13, '#3a3a40', 'scrap_drum', verts=10)
+        elif what < 0.45:                                            # tyres, stacked
+            for j in range(rng.randint(1, 3)):
+                k.cyl(x, r, z + j * 0.13, z + j * 0.13 + 0.12, 0.2, ('#18181a', 0.1), 'scrap_tyre', verts=12)
+                k.cyl(x, r, z + j * 0.13 + 0.12, z + j * 0.13 + 0.125, 0.1, '#3a3a40', 'scrap_rim', verts=10)
+        elif what < 0.6:                                             # a sheet of corrugated
+            k.poly([(x - 0.4, r, z), (x + 0.4, r + 0.05, z + 0.08), (x + 0.38, r + 0.35, z + 0.3), (x - 0.42, r + 0.3, z + 0.22)], (rng.choice(('#7a7a80', '#8a5a3a', '#5a6a7a')), 0.15), 'scrap_sheet')
+        elif what < 0.72:                                            # a pipe or a girder sticking out
+            k.tube((x - 0.4, r, z), (x + 0.4, r + rng.uniform(-0.2, 0.2), z + rng.uniform(0.1, 0.5)), rng.uniform(0.03, 0.06), (rng.choice(('#6a6a70', '#8a4a2a', '#c8a030')), 0.1), 'scrap_pipe', verts=6)
+        elif what < 0.82:                                            # a crate, a drum
+            k.box(x - 0.18, r - 0.15, z - 0.05, x + 0.18, r + 0.15, z + 0.25, (col, 0.15), 'scrap_box', bevel=0.02)
+        elif what < 0.9:                                             # a screen, one still lit
+            k.box(x - 0.2, r, z, x + 0.2, r + 0.06, z + 0.28, '#141818', 'scrap_screen', emit=(rng.choice(('#40e080', '#ff4060', '#40c0ff')), rng.choice((0.0, 0.0, 0.5))))
+        elif what < 0.95:                                            # a robot's head, eyes dark
+            k.sphere(x, r, z + 0.12, 0.16, 0.15, ('#a8b0b8', 0.06), 'scrap_robot', segs=10)
+            k.box(x - 0.1, r + 0.13, z + 0.12, x + 0.1, r + 0.15, z + 0.17, '#1a1a1a', 'scrap_robot_eyes')
+        else:                                                        # a sign off a shop, its tubes dead
+            k.box(x - 0.45, r, z, x + 0.45, r + 0.05, z + 0.32, (rng.choice(('#2a0a20', '#0a1a2a')), 0.1), 'scrap_sign')
+            k.box(x - 0.35, r + 0.05, z + 0.12, x + 0.3, r + 0.06, z + 0.2, rng.choice(('#e870c0', '#5cc8d0', '#e8c040')), 'scrap_sign_tube')
+    if solid:
+        k.solid(x0, rc - d / 2, x1, rc + d / 2)
+
+
+def floodlight(k, cx, cr, h=6.0, col='#ffd8a0', energy=160):
+    """A floodlight tower: a lattice mast, a cluster of lamps at the top throwing a hard pool on the yard."""
+    for (dx, dd) in ((-0.15, -0.12), (0.15, -0.12), (0.0, 0.14)):
+        k.cyl(cx + dx, cr + dd, 0, h, 0.03, '#6a6a70', 'mast', verts=5)
+    for z in [0.8 + i * 0.8 for i in range(int(h / 0.8))]:
+        k.box(cx - 0.18, cr - 0.14, z, cx + 0.18, cr + 0.16, z + 0.03, '#6a6a70', 'mast_brace')
+    k.box(cx - 0.5, cr - 0.1, h, cx + 0.5, cr + 0.15, h + 0.35, '#3a3a40', 'flood_frame')
+    for i in range(3):
+        k.box(cx - 0.42 + i * 0.3, cr + 0.15, h + 0.05, cx - 0.18 + i * 0.3, cr + 0.17, h + 0.3, '#5a5040', 'flood_lamp', emit=(col, 1.0))
+    k.point_light(cx, cr + 1.5, h - 0.5, col, energy, radius=0.5, group='flicker')
+    k.solid_post(cx, cr)
+
+
 def barrels(k, x, r, n=3, rng=None):
     rng = rng or k.rng
     for i in range(n):

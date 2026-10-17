@@ -82,19 +82,24 @@ k.solid(44.4, RF + 0.6, 47.4, RF + 2.0)
 U.drum_fire(k, 43.2, RF + 3.0)
 U.drum_fire(k, 48.8, RF + 3.0)
 
-# ---- the yard: heaps with lanes between them, stacked cars, the crane, the compactor -----------------------------------------
-HEAPS = [(5.0, 14.0, 1.4), (12.0, 13.0, 1.1), (6.0, 22.0, 1.3), (14.0, 24.0, 1.5), (24.0, 18.0, 1.2), (30.0, 25.0, 1.4),
-         (40.0, 20.0, 1.3), (50.0, 24.0, 1.5), (58.0, 18.0, 1.2), (36.0, 31.0, 1.1), (54.0, 31.0, 1.3), (20.0, 31.0, 1.2),
-         (60.0, 27.0, 0.9), (3.0, 30.0, 1.0)]
-for (x, r, s) in HEAPS:
-    U.scrap_heap(k, x, r, s=s, rng=rng)
-    U.scrap_heap(k, x + s * 0.9, r + 0.3, s=s * 0.6, rng=rng)
-
-
+# ---- the yard: walls of scrap with lanes between, containers stacked, crushed cars, floodlights ---------------------------------
+RIDGES = [(5.0, 17.0, 16.8), (22.0, 31.0, 16.8), (35.0, 44.0, 16.8), (50.0, 59.0, 16.8),
+          (2.0, 13.0, 22.8), (17.0, 27.0, 22.8), (32.0, 41.0, 22.8), (46.0, 56.0, 22.8),
+          (6.0, 19.0, 28.8), (24.0, 37.0, 28.8), (42.0, 52.0, 28.8), (56.0, 63.0, 28.8)]
+for (a0, a1, r) in RIDGES:
+    U.scrap_ridge(k, a0, a1, r, h=rng.uniform(1.8, 2.6), rng=rng)
+HEAPS = [(((a0 + a1) / 2 + rng.uniform(-2, 2)), r + 0.8, 1.0) for (a0, a1, r) in RIDGES]   # where to search: the foot of each wall
+for (x0, r0, n, cols) in ((1.0, 8.0, 2, ('#c86a2a', '#2a6a8a')), (1.0, 10.6, 1, ('#a02a2a',)), (24.6, 8.0, 2, ('#2a8a5a', '#c8a030')),
+                          (28.0, 8.0, 1, ('#3a5aa0',))):
+    for j, col in enumerate(cols):
+        k.box(x0, r0, j * 1.25, x0 + 3.2, r0 + 1.3, j * 1.25 + 1.22, (col, 0.15), 'container', bevel=0.03)
+        k.boxes([(x0 + 0.1 + i * 0.2, r0 + 1.3, j * 1.25 + 0.05, x0 + 0.16 + i * 0.2, r0 + 1.32, j * 1.25 + 1.17) for i in range(15)], shade(col, 1.25), 'container_rib')
+        k.box(x0 + 0.2, r0 + 1.32, j * 1.25 + 0.7, x0 + 1.4, r0 + 1.33, j * 1.25 + 0.95, '#e8e8e0', 'container_mark')
+    k.solid(x0, r0, x0 + 3.2, r0 + 1.3)
 def car_stack(x, r, n=3):
-    """Crushed hover cars stacked: flattened slabs of colour, glass crazed, a door hanging."""
+    """Crushed hover cars stacked: flattened slabs of colour, glass crazed."""
     for i in range(n):
-        col = rng.choice(('#c8a030', '#8a2a2a', '#2a5a8a', '#c8c8d0', '#2a6a3a', '#1a1a1e'))
+        col = rng.choice(('#c8a030', '#a02a2a', '#2a5a9a', '#c8c8d0', '#2a7a4a', '#d06020'))
         dx = rng.uniform(-0.15, 0.15)
         z = i * 0.55
         k.box(x - 1.0 + dx, r - 0.45, z, x + 1.0 + dx, r + 0.45, z + 0.5, (col, 0.25), 'crushed_car', bevel=0.06)
@@ -102,8 +107,12 @@ def car_stack(x, r, n=3):
     k.solid(x - 1.1, r - 0.5, x + 1.1, r + 0.5)
 
 
-for (x, r, n) in ((19.0, 13.0, 3), (19.0, 14.2, 2), (33.0, 15.0, 3), (45.0, 15.0, 2), (27.0, 30.0, 3), (46.0, 29.0, 3), (60.0, 12.6, 2)):
+for (x, r, n) in ((19.6, 16.8, 3), (47.0, 16.8, 2), (15.0, 22.8, 3), (29.5, 22.8, 2), (43.6, 22.8, 3), (21.6, 28.8, 2), (39.5, 28.8, 3),
+                  (54.0, 28.8, 2), (61.0, 16.8, 2), (33.0, 33.6, 3), (12.0, 33.6, 2)):
     car_stack(x, r, n)
+for (x, r) in ((20.0, 20.6), (44.0, 26.6), (8.0, 26.6), (58.0, 32.6), (33.0, 13.6)):
+    U.floodlight(k, x, r, h=6.0)
+
 # the magnet crane: a lattice tower, a jib over the yard, the cab lit, the magnet hanging
 CX, CR = 9.0, 9.4
 for (dx, dd) in ((-0.5, -0.4), (0.5, -0.4), (-0.5, 0.4), (0.5, 0.4)):
@@ -134,11 +143,11 @@ k.box(-0.5, 17.2, 0, 0.4, 17.4, 2.6, '#3a3842', 'gate_post')
 S.lightbox(k, '← THE WARRENS', 'RussoOne', 1.4, 12.5, 2.4, 2.0, 0.3, bg='#2a1a08', ink='#ffb050', size=0.18, energy=3)
 U.chainlink(k, 0.0, RF + 0.6, 0.0, 12.6, h=2.4)
 U.chainlink(k, 0.0, 17.4, 0.0, ROWS + 0.5, h=2.4)
-for (x, r) in ((10.0, 18.0), (26.0, 22.0), (38.0, 26.0), (52.0, 20.0), (17.0, 28.0), (60.0, 33.0)):
+for (x, r) in ((10.0, 19.6), (26.0, 20.0), (38.0, 26.0), (52.0, 20.0), (17.0, 26.0), (60.0, 33.0)):
     U.drum_fire(k, x, r)
 for (x, r) in ((3.0, 16.2), (22.0, 27.0), (44.0, 24.0), (62.0, 22.0), (32.0, 11.0)):
     U.sodium(k, x, r, z=3.0, energy=60)
-for (x, r) in ((8.0, 26.0), (28.0, 20.0), (42.0, 33.0), (56.0, 22.0), (16.0, 18.4)):
+for (x, r) in ((8.0, 26.0), (28.0, 20.0), (42.0, 33.0), (58.0, 20.0), (16.0, 19.0)):
     U.grate_drip(k, dr, x, r, top=13.0)
 U.puddles(k, 1, 12, 63, 35, 14, (U.SODIUM, SAINT, '#2a7a5a'), rng=rng)
 
