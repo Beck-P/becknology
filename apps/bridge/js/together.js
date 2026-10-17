@@ -20,7 +20,8 @@
  *
  * The games plug in by kind (ADAPTERS): `cabinet` — any game in the cabinet (js/cabinet-modal.js), which reads
  * `?together=` with js/shared/together-frame.js (the arcade kit, chess, the cipher, Signal Relay); `dice`
- * (js/lodge.js), `dance` (js/dance.js), `pachinko` (js/pachinko.js), `splice` (js/splice.js). A game reports
+ * (js/lodge.js), `dance` (js/dance.js), `pachinko` (js/pachinko.js), `splice` (js/splice.js), `race` (js/race.js: a ski race,
+ * a climbing race, a sailing race, offered wherever you stand to have one — a time is its score, less is more). A game reports
  * with BridgeTogether.score(n, label) as it goes and .done(n, label) at the end (or .result('win'|'lose'|'draw'|
  * 'house') when it decides for itself), and talks to the other copy with .send(k, d) / .on(k, fn).
  *
@@ -55,7 +56,11 @@ var BridgeTogether = (function () {
     splice:            { title: 'Splice', kind: 'splice', modes: ['race', 'hands'] },
     pachinko:          { title: 'Pachinko', kind: 'pachinko', modes: ['duel', 'team'], base: 100 },
     dance:             { title: 'The dance floor', kind: 'dance', modes: ['duel', 'team'] },
-    dice:              { title: 'Liar\'s dice', kind: 'dice', modes: ['table'] }
+    dice:              { title: 'Liar\'s dice', kind: 'dice', modes: ['table'] },
+    // races (js/race.js): offered where you stand (the pistes, the face, a pier), never from the game room
+    'race-ski':        { title: 'Ski race', kind: 'race', modes: ['race'] },
+    'race-climb':      { title: 'Climbing race', kind: 'race', modes: ['race'] },
+    'race-sail':       { title: 'Sailing race', kind: 'race', modes: ['race'] }
   };
   // how you play it: against each other (vs: the pot to the winner) or together (coop: against the house)
   var MODES = {
@@ -80,11 +85,14 @@ var BridgeTogether = (function () {
     typist:   { duel: ['Signal duel', 'the same messages, the same clock · the higher WPM takes the pot'],
                 team: ['Two operators', 'your WPM added up against a target'] },
     'royale-slots':   { house: ['Side by side', 'two machines next to each other · your own coins, and their wins on the glass beside yours'] },
-    'royale-runouts': { house: ['At one counter', 'back the same runs side by side against the house · your own chips'] }
+    'royale-runouts': { house: ['At one counter', 'back the same runs side by side against the house · your own chips'] },
+    'race-ski':   { race: ['Race down', 'the same run side by side from the gate, one clock · the quicker time takes the pot'] },
+    'race-climb': { race: ['Race up', 'the same route from the foot, each on your own holds · first to the top takes the pot'] },
+    'race-sail':  { race: ['Race', 'your sloops side by side off the pier, one gun · first across the line takes the pot'] }
   };
   function modeName(g, m) { var o = NAMES[g] && NAMES[g][m]; return o ? o[0] : MODES[m].name; }
   // what a game's called for a session: the table's own name at the dice, the dance by how it's danced
-  function titleOf(s) { return s.g === 'dice' ? TABLES[s.opts && s.opts.table] || TABLES.fell : s.g === 'dance' ? modeName('dance', s.mode) : GAMES[s.g].title; }
+  function titleOf(s) { return s.g === 'dice' ? TABLES[s.opts && s.opts.table] || TABLES.fell : s.g === 'dance' ? modeName('dance', s.mode) : GAMES[s.g].kind === 'race' && s.opts && s.opts.name ? GAMES[s.g].title + ' · ' + s.opts.name : GAMES[s.g].title; }
   function modeSub(g, m) { var o = NAMES[g] && NAMES[g][m]; return o ? o[1] : MODES[m].sub; }
 
   // ---- small things ------------------------------------------------------------------------------------------------
@@ -200,6 +208,7 @@ var BridgeTogether = (function () {
       if (seen[id]) out.splice(out.indexOf(seen[id]), 1);
       seen[id] = row; out.push(row);
     });
+    if (typeof BridgeRace !== 'undefined') out = out.concat(BridgeRace.here());          // a race, where there's one to be had
     return out.sort(function (a, b) { return a.d - b.d; });
   }
   // the games you've both found (the game room's): anywhere you're together
@@ -262,6 +271,10 @@ var BridgeTogether = (function () {
   }
   // a game's own choice before the stake (the dance's level)
   function extras(id, r, m) {
+    if (GAMES[r.g].kind === 'race' && typeof BridgeRace !== 'undefined') {      // which run, route or course
+      BridgeRace.choose(r, function (opts) { stakes(id, Object.assign({}, r, { opts: opts }), m); }, function () { pick(id); });
+      return;
+    }
     if (r.g === 'dance') {
       var L = typeof BridgeDance !== 'undefined' ? BridgeDance.LEVELS : { club: { name: 'CLUB', sub: '' } };
       choose({ title: modeName('dance', m), text: 'WHICH STEPS?', rows: Object.keys(L).map(function (lv) {
@@ -293,6 +306,7 @@ var BridgeTogether = (function () {
   }
   function describe(c) {
     var G = GAMES[c.g], t = (c.g === 'dice' ? TABLES[c.opts && c.opts.table] || 'Liar\'s dice' : G.title) + ' · ' + (c.g === 'dice' ? (c.opts.seats === 3 ? 'three cups' : 'heads up') : modeName(c.g, c.mode));
+    if (G.kind === 'race' && c.opts && c.opts.name) t = G.title + ' · ' + c.opts.name;
     if (c.opts && c.opts.level && typeof BridgeDance !== 'undefined' && BridgeDance.LEVELS[c.opts.level]) t += ' (' + cap(BridgeDance.LEVELS[c.opts.level].name) + ')';
     if (MODES[c.mode] && MODES[c.mode].casino) return t + (c.opts && c.opts.stakes === 'high' ? ' · high roller' : '') + ' · your own chips';
     return t + ' · ' + (c.wager ? c.wager + ' coins each' : 'just for fun');
@@ -701,6 +715,13 @@ var BridgeTogether = (function () {
       verdict: function (v) { if (typeof BridgePachinko !== 'undefined' && BridgePachinko.verdict && BridgePachinko.verdict(v)) return; showVerdict(v); },
       gone: function () { if (typeof BridgePachinko !== 'undefined' && BridgePachinko.gone) BridgePachinko.gone(); },
       stop: function () { if (typeof BridgePachinko !== 'undefined') BridgePachinko.close(); }
+    },
+    race: {
+      start: function (s) { if (typeof BridgeRace !== 'undefined') BridgeRace.start(s); },
+      peer: function (t) { if (typeof BridgeRace !== 'undefined') BridgeRace.peer(t); },
+      verdict: function (v) { if (typeof BridgeRace !== 'undefined') BridgeRace.gone(); showVerdict(v); },
+      gone: function () { if (typeof BridgeRace !== 'undefined') BridgeRace.gone(); },
+      stop: function () { if (typeof BridgeRace !== 'undefined') BridgeRace.stop(); }
     },
     splice: {
       start: function (s) { if (typeof BridgeSplice !== 'undefined') BridgeSplice.together(s); },

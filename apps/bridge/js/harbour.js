@@ -112,6 +112,10 @@ var BridgeHarbour = (function () {
         choose({ title: 'The weather board', text: 'CHALKED UP BY THE DOOR, EASTERN TIME:\n\n' + lines.join('\n'), rows: [{ label: 'Back', sub: '', pick: function () { menu(worldId); } }], closeLabel: 'Done' });
       } });
     }
+    if (typeof BridgeRace !== 'undefined' && BridgeRace.bookRow) {             // the Emerald Regatta (js/race.js): Fridays off Crownhaven
+      var rr = BridgeRace.bookRow(worldId, function () { menu(worldId); });
+      if (rr) rows.push(rr);
+    }
     if (typeof BridgeChart !== 'undefined') {
       var unc = ['sapphire', 'rose', 'crimson', 'midnight'].filter(function (s) { return !BridgeChart.charted(s); }).length;
       rows.push({ label: 'Charts', sub: unc ? unc + ' sea' + (unc > 1 ? 's' : '') + ' still uncharted' : 'every sea charted', pick: function () { BridgeChart.shop(worldId, null, function () { menu(worldId); }); } });

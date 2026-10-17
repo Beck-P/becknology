@@ -30,6 +30,7 @@ const SUITES = {
     ['world/gpu.js', SHOTS],
     ['world/routines.js', SHOTS],
     ['world/festivals.js', SHOTS],
+    ['world/regatta.js', SHOTS],
     ['world/landings.js', SHOTS + '/landings'],
     ['world/arrive.js', SHOTS + '/arrive'],
     ['world/title.js', SHOTS + '/title'],
@@ -43,7 +44,7 @@ const SUITES = {
     ['t_chess.js'], ['t_dance.js'], ['t_dance.js', 'In step'], ['t_solodance.js'], ['t_pach.js'], ['t_pach.js', 'Beat the house'],
     ['t_splice.js', 'Race'], ['t_splice.js', 'Four hands'], ['t_cipher.js', 'Race'], ['t_cipher.js', 'Decode'], ['t_typist.js'],
     ['t_typist.js', 'Two operators'], ['t_misc.js'], ['t_travel.js'], ['t_solo.js'], ['t_err.js'], ['t_chat.js'], ['t_chat.js', '390', '760'],
-    ['t_chat_dice.js']].map(([f, ...a]) => ['together/' + f, ...a]),
+    ['t_chat_dice.js'], ['t_race_ski.js'], ['t_race_climb.js'], ['t_race_sail.js']].map(([f, ...a]) => ['together/' + f, ...a]),
   // the Neon Royale: every casino table opens its Royale Link game; coins through the Bridge; typing a hold'em bet
   royale: [['royale/tables.js'], ['royale/bridge_cab.js'], ['royale/poker_amt.js'], ['royale/poker_amt.js', '390', '760']],
   // weapons: every swing lands and does what it says; a fight, blacking out and waking; a sea fight; what a fight costs in
@@ -71,6 +72,7 @@ const KEEP = new RegExp([
   /specialist|move|screen|topics|CONSOLE|FAILED|Error|errors?\b|worlds|same|coins|verdict|bar /,
   /status|mate:|settled|beck:|aly:|chat|heard|unread|after|typed|my turn|sunk|crew|things match/,
   /hp|down|up:|roll|chain|energy|boxes/,
+  /schedule|in a storm|the gun:|finished|prizes|at the gate|at the foot|gun: beck|racing:/,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
 

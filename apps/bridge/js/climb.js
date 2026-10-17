@@ -26,7 +26,13 @@
  * day), keeps your best time, and walks you out onto the summit. Saved in
  * localStorage bridge_climb.
  *
+ * Racing someone else (js/race.js): the same route from the foot, each on your own holds (a crystal one of you takes is
+ * still there for the other), waiting at the foot till you're both there, then 3-2-1 on one clock; first to the top
+ * takes it. You see each other climbing (js/multi.js draws the other's pose, a little aside so you're not on top of
+ * each other).
+ *
  *   BridgeClimb.start(routeId, {rival: true})   // a 'climb' interaction (Fellhaven's route feet, the face's own); rival: race Ysolde
+ *   BridgeClimb.start(routeId, {race: R})       // R: { vs, at (the gun, Date.now() ms, set by js/race.js), ready(), finish(t), quit(), where() }
  *   BridgeClimb.board()              // the route board: grades, your ascents
  *   BridgeClimb.items / over         // the hoarfell tileset's scene hooks (js/worlds/hoarfell.js)
  */
@@ -181,6 +187,7 @@ var BridgeClimb = (function () {
       g.rival = rivalLine(wall, rid);
       if (g.rival) { g.phase = 'count'; g.count = 3.4; }
     }
+    if (opts.race) { g.race = opts.race; g.phase = 'count'; g.count = 1e9; }       // the foot waits for you both
     refresh();
     BridgeWorld.setMode({ update: update, focus: focus, solo: true, end: function () { quit(true); } });
     ensureHud();
@@ -189,7 +196,9 @@ var BridgeClimb = (function () {
     document.addEventListener('keydown', onKey, true);
     var D = ROUTES[rid], best = save.routes[rid] && save.routes[rid].best;
     var rope = D.fixed ? 'A FIXED LINE ALL THE WAY.' : has('climbing_rope') ? 'YOU TIE IN TO YOUR ROPE.' : 'NO ROPE: A FALL TAKES YOU TO THE FOOT.';
-    say(g.rival ? 'YSOLDE CHALKS UP BESIDE YOU. HER BEST LINE: ' + fmt(g.rival.time) + '. FIRST TO THE TOP.'
+    if (g.race && g.race.ready) g.race.ready();
+    say(g.race ? 'AT THE FOOT. WAITING FOR ' + String(g.race.vs || 'THEM').toUpperCase() + '… FIRST TO THE TOP.'
+      : g.rival ? 'YSOLDE CHALKS UP BESIDE YOU. HER BEST LINE: ' + fmt(g.rival.time) + '. FIRST TO THE TOP.'
                 : rope + (D.needs && !has(D.needs) ? ' NO ICE AXE - THE ICE IS NO USE TO YOU.' : '') + (best ? '  BEST ' + fmt(best) : ''), 3200);
     pose(performance.now());
     sfx('open');
@@ -208,7 +217,8 @@ var BridgeClimb = (function () {
     var press = function (k) { return !!taps[k]; };
     if (g.phase === 'count') {                                 // the race: 3-2-1, then both of you go
       var before = Math.ceil(g.count);
-      g.count -= dt;
+      if (g.race) g.count = g.race.at ? (g.race.at - Date.now()) / 1000 : 1e9;   // one clock for the two of you
+      else g.count -= dt;
       if (Math.ceil(g.count) !== before && g.count > 0 && before <= 3) { sfx('blip'); say(String(Math.ceil(g.count)), 800); }
       if (g.count <= 0) { g.phase = 'climb'; g.started = true; sfx('success'); say('GO!', 900); }
       pose(now); hudTick();
@@ -367,7 +377,8 @@ var BridgeClimb = (function () {
       (gift ? '\n\nAND ' + (D.gift[1] > 1 ? D.gift[1] + ' ' : /^[aeiou]/i.test(gift.name) ? 'AN ' : 'A ') + gift.name.toUpperCase() + (D.gift[1] > 1 ? 'S' : '') + ', FROM THE TOP.' : '') +
       (raced ? '\n\n' + (won ? 'YOU BEAT YSOLDE TO THE TOP (' + fmt(raced.time) + ')! SHE HAULS HERSELF OVER THE EDGE AND JUST LAUGHS.' + (beatPay ? ' ' + beatPay + ' COINS.' : '')
                                : 'YSOLDE WAS UP IN ' + fmt(raced.time) + ', SITTING ON THE EDGE WITH HER FLASK. "NOT BAD. AGAIN?"') : '');
-    var rid = g.rid;
+    var rid = g.rid, R = g.race;
+    if (R) { g.race = null; if (R.finish) R.finish(t); }         // a race: the verdict comes from js/together.js once you're both up
     pose(performance.now());
     setTimeout(function () {
       var out = ROUTES[rid].exit ? { label: ROUTES[rid].exit.label, action: 'enter_world', target: ROUTES[rid].exit.target, spawn: ROUTES[rid].exit.spawn }
@@ -390,8 +401,9 @@ var BridgeClimb = (function () {
   // off the wall: back to walking at the foot
   function quit(quiet) {
     if (!g) return;
-    var w = data(), x = g.hand.x;
+    var w = data(), x = g.hand.x, R = g.race;
     g = null;
+    if (R && R.quit) R.quit();                                   // off the wall before the top: out of the race
     document.removeEventListener('keydown', onKey, true);
     if (hud) hud.classList.remove('on');
     if (BridgeWorld.getMode()) BridgeWorld.setMode(null);
@@ -507,6 +519,10 @@ var BridgeClimb = (function () {
     if (!hud || !g) return;
     var rv = '';
     if (g.rival && g.started) { var rp = rivalAt(g.rival, g.t); rv = g.rival.done ? '  ·  YSOLDE: TOP' : rp.z > g.hand.z + 0.3 ? '  ·  YSOLDE AHEAD' : rp.z < g.hand.z - 0.3 ? '  ·  YSOLDE BEHIND' : '  ·  LEVEL'; }
+    if (g.race && g.started && g.race.where) {                   // the other climber: higher or lower on the face than you
+      var o = g.race.where(), who = String(g.race.vs || 'THEM').toUpperCase();
+      if (o) rv = o.done ? '  ·  ' + who + ': TOP' : o.sy < g.hand.sy - 0.3 ? '  ·  ' + who + ' AHEAD' : o.sy > g.hand.sy + 0.3 ? '  ·  ' + who + ' BEHIND' : '  ·  LEVEL';
+    }
     hud.querySelector('.sk-clock').textContent = fmt(g.t) + rv;
     var pct = clamp(g.stam / g.max, 0, 1), bar = hud.querySelector('.cl-arms i');
     bar.style.width = Math.round(pct * 100) + '%';
