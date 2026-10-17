@@ -48,8 +48,8 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Going forward, make renders detailed and realistic | **done** (standing rule) | "The detail standard" in apps/bridge/CLAUDE.md: checked before any render ships. |
 | Empire: economic engine across worlds, hire and automate, manage it all from the office | in progress | Agreed plan in `_claude_docs/spec-empire.md`, six chunks. Chunks 1–3 built (chunk 2: your own slipway). Chunk 3 done: captains (mate, captain, master) on any ship, standing orders (trade loops, supply runs to your businesses, runs for the Workshop) that sail by themselves, the morning dispatch, the treasury, the office's desk and chart lines. Next: chunks 4–6. |
 | The Undercroft (the other session's nightly dungeon under Midnight Isle): the art | in progress | Its scene scripts are in (`scenes/lumar_undercroft.py`, kit `assets_crypt.py`): the entrance hall (stair up, the slate of the deepest floor, the stair down) and three crypt layouts for every floor below, as the Rose Mine's caves are; the portal is in Midnight's graveyard. Renders join the queue once a test render passes the detail standard. |
-| Crafting: more materials, mining feeding upgrades, build things, build out your base | **done** (chunk 1) | The Workshop on Starling Holm: 14 materials with clear sources, 29 recipes (planks, bars, rope, sailcloth, guns, fittings — two only it makes — tools, furniture), plans bought, taught for a favour or found, smiths you hire who work while you're away, parts fitted by any harbourmaster for labour. Its building is in the holm's re-render (a stand-in shows till then). |
-| Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | in progress | Chunk 1 done (workshop, smiths, crafted fittings and guns). Chunk 2 built: the slipway on your holm — hull plans from the yards, a keel laid and named, materials in by stage, shipwrights on the payroll, launched into your fleet; her paint, sails and figurehead; parts fitted for nothing. Still to come: the slipway in the holm's render, her colours drawn at sea (after the ship-size work lands), a designer later. |
+| Crafting: more materials, mining feeding upgrades, build things, build out your base | **done** (chunk 1) | The Workshop on Starling Holm: 14 materials with clear sources, 29 recipes (planks, bars, rope, sailcloth, guns, fittings — two only it makes — tools, furniture), plans bought, taught for a favour or found, smiths you hire who work while you're away, parts fitted by any harbourmaster for labour. Its building is in the holm's render now (the forge and timber shop). |
+| Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | in progress | Chunk 1 done (workshop, smiths, crafted fittings and guns). Chunk 2 built: the slipway on your holm — hull plans from the yards, a keel laid and named, materials in by stage, shipwrights on the payroll, launched into your fleet; her paint, sails and figurehead; parts fitted for nothing. Her colours drawn wherever she is (painted topsides with the deck bare, her cloth, her figurehead; the colours screen shows her as you choose). The slipway is built in the holm's scene script (the old slip into the water, rebuilt with ways and sheer-legs, a hull at each stage) and the holm is in the render queue for it. Still to come: a designer later. |
 | Rarest magic items found yourself; a trophy hall; keep it cute | open | Chunks 4 and 5. |
 | Hired warriors hunting monsters for loot | dropped | Beck: "fine to leave out". |
 | Progression must feel natural, a real game to work up through | standing rule | Each chunk unlocks gradually (recipes learnt, plans bought, tiers by material). |
@@ -106,8 +106,9 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | The farm's field soil | in progress | Crumbly earth; the farm is in the render queue. |
 
 ## Render queue (every outdoor scene, once, with everything: meadow, drawn grass, trees and seasons, grass/water marks, the new roofs and house fronts)
-Running (two queues): Crownhaven, Tern Holm, Diggen's Point, the farm, Midnight Isle, Sylvara · Brambleford, Starling Holm,
-Sapphire, Crimson, Rose Cove, the market square, Hoarfell town. Each ships as it finishes.
+Shipped: Crownhaven, Tern Holm, Brambleford, Starling Holm (with the workshop). Running (two queues): Diggen's Point, the farm,
+Midnight Isle, Sylvara · Sapphire, Crimson, Rose Cove, the market square, Hoarfell town; then Crownhaven and Brambleford again
+(street clutter), Hoarfell's sport worlds (nights), and Starling Holm again (the slipway). Each ships as it finishes.
 
 ## Older threads still open (from before this session; check what's left before calling them done)
 - Two ships: mothership home base + landing shuttle (#18)
@@ -119,4 +120,4 @@ Sapphire, Crimson, Rose Cove, the market square, Hoarfell town. Each ships as it
 - Much bigger Lumar islands (#33)
 - Long game: quests, businesses, crew, NPC backstories (#34) — folds into the empire spec
 - Legacy interiors: penthouse, manor, holm resort (#129) — the holm resort's parasols done; check the rest
-- Night versions of Hoarfell's sport worlds and their skies (the living-worlds spec's last item)
+- Night versions of Hoarfell's sport worlds and their skies (the living-worlds spec's last item) — the sky is done (js/worlds/hoarfell.js), the renders are queued
