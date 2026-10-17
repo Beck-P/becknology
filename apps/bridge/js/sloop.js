@@ -918,6 +918,36 @@ var BridgeSloop = (function () {
   var GROUNDS = { 'lumar': [-2.4, -0.6], 'lumar-crown': [-2.3, -0.8, 0.15], 'lumar-tern': [-1.6, -2.75, -0.25], 'lumar-sapphire': [-2.1, -0.5], 'lumar-rose': [-1.3, 0.3] };
   var GOODS = { 'lumar': 'spore-lamp oil', 'lumar-crown': 'pine timber', 'lumar-tern': 'salt fish', 'lumar-sapphire': 'Sapphire glass', 'lumar-rose': 'spore silk' };
   var BLACKSAIL = ['#3e383c', '#2c2629', '#1c1619'], WHITESAIL = ['#ece6d6', '#c8c2b2', '#9a9688'];
+  // your own ship's colours (js/shipyard.js: a ship's `look` - her paint, her sails, her figurehead, chosen on the slip or
+  // repainted at the holm): her paint over her topsides (js/shipkit.js `PAINT`, the deck left bare), her sails a cloth of
+  // their own, her figurehead at the stem
+  var SAILCLOTH = { white: ['#f6f4ec', '#d6d2c6', '#a8a498'], tan: ['#c8946a', '#a2744e', '#764e32'], red: ['#c44234', '#98302a', '#6a2018'],
+                    black: BLACKSAIL, blue: ['#8ab6e2', '#6890bc', '#4a6a90'] };
+  // a figurehead at her stem, under the bowsprit: [body, its shadow side, face / beak / mane / glint]
+  var FIGS = { mermaid: ['#e6b48c', '#2a8a6a', '#d0663a'], lion: ['#e0b040', '#a07420', '#f8e090'], swan: ['#f4f2ea', '#bcb8ac', '#e8902a'],
+               dragon: ['#c0342c', '#6a1410', '#e8c050'], owl: ['#94704a', '#5a4028', '#f0d060'], starling: ['#2e2a40', '#4c3c86', '#e8e4f0'] };
+  function lookOf(b) {
+    if (b.look) return b.look;
+    var id = b.ship && typeof b.ship === 'object' ? b.ship.id : b.ship;
+    if (!id || typeof BridgeFleet === 'undefined' || !BridgeFleet.get) return null;
+    var s = BridgeFleet.get(id);
+    return s && s.look || null;
+  }
+  function figurehead(P, u, z, fig, k) {
+    var c = FIGS[fig];
+    if (!c) return;
+    var a = P(u, 0, z, true), f = P(u + 0.4, 0, z + 0.1, true), dx = f[0] - a[0], dy = f[1] - a[1], n = Math.hypot(dx, dy) || 1;
+    dx /= n; dy /= n;
+    var len = Math.max(3, Math.round(3 * Math.sqrt(k)));
+    for (var i = 0; i <= len; i++) {                                 // out along the stem, shadow side under, the head at the end
+      var x = Math.round(a[0] + dx * i), y = Math.round(a[1] + dy * i);
+      bctx.fillStyle = c[1]; bctx.fillRect(x, y + 1, 2, 1);
+      bctx.fillStyle = c[0]; bctx.fillRect(x, y, 2, 1);
+    }
+    var hx = Math.round(a[0] + dx * len), hy = Math.round(a[1] + dy * len);
+    bctx.fillStyle = c[0]; bctx.fillRect(hx - 1, hy - 1, 3, 2);
+    bctx.fillStyle = c[2]; bctx.fillRect(hx + (dx > 0 ? 1 : -1), hy - 1, 1, 1);
+  }
   var HOUSES = [                                        // merchant houses: a wash over the hull, their cloth, their flag
     { name: 'Ashgrove & Vane', tint: 'rgba(206,150,60,0.2)', cloth: CLOTH[0], flag: ['#e0b040', '#7a2a1a'] },
     { name: 'the Sapphire Glassworks', tint: 'rgba(60,110,200,0.22)', cloth: WHITESAIL, flag: ['#2a5ad8', '#e8e8f0'] },
@@ -2250,6 +2280,7 @@ var BridgeSloop = (function () {
       o.tx = p.x; o.tr = p.r; o.th = p.h; o.v = d.v || 0; o.name = d.name; o.suit = d.suit; o.heel = d.heel || 0; o.boom = d.boom || 0.6; o.side = d.side || 1;
       o.spec = typeof BridgeFleet !== 'undefined' && d.type ? BridgeFleet.spec(d.type) : SLOOP; o.at = performance.now();
       if (d.k !== o.kitS) { o.kitS = d.k; o.kit = typeof d.k === 'string' ? unkit(d.k) : null; }      // her guns and fittings
+      if (d.lk !== o.lkS) { o.lkS = d.lk; var lk = String(d.lk || '').split(','); o.look = d.lk ? { paint: lk[0], sails: lk[1], figure: lk[2] } : null; }   // her colours
       o.rs = d.rs; o.rg = d.rg; o.rf = d.rf;                           // racing: which race, how far she's still to go, her time
     });
   }
@@ -2279,7 +2310,7 @@ var BridgeSloop = (function () {
       seaAt = now;
       var cp = chartPos(), me = n.me(), act = typeof BridgeFleet !== 'undefined' ? BridgeFleet.active().ship : null;
       if (cp) n.send('sea', { cx: cp.x, cy: cp.y, hc: chartHeading(), v: boat.v, heel: boat.heel, boom: boat.boom, side: boat.side,
-                              type: act ? act.type : 'sloop', name: me && me.name, suit: suitOf(), k: kitMsg(),
+                              type: act ? act.type : 'sloop', name: me && me.name, suit: suitOf(), k: kitMsg(), lk: act && act.look ? [act.look.paint, act.look.sails, act.look.figure].join(',') : undefined,
                               rs: race ? race.spec.id : undefined, rg: raceOn() ? Math.round(togo()) : undefined, rf: race && race.done ? Math.round(race.ms) : undefined });
     }
     Object.keys(seaPeers).forEach(function (id) {                    // ease theirs toward where they said they were
@@ -2754,17 +2785,19 @@ var BridgeSloop = (function () {
     if (H && !H.img && !H.failed && !H.loading) loadHull(sp.sheet, function () {});     // (a pirate's hull, the first time one's seen)
     // what she's fitted (js/shipkit.js), on her own sheet only: guns at the rails, her hull's bands, her rig's extras
     var kit = typeof BridgeShipKit !== 'undefined' && (!H || H.img) ? BridgeShipKit.kitOf(b) : null;
+    var look = lookOf(b), tint = b.tint || null;
+    b.paint = look && look.paint || null;
     var tallest = rg.masts.reduce(function (m, x) { return x.h > m.h ? x : m; }, rg.masts[0]);
     if (kit ? kit.moon : sp.ward) moonPool(b, P(-L2 + tallest.f * sp.L, 0, 0), sp, now);
     if (b.traffic && b.v > 0.3) trafficWake(b, now);
     if (b.nets) drawNet(b, now);
     if (H && H.img) {
       var cp = H.cell * 32;
-      var tc = tinted(H.img, b.tint, (hi % 8) * cp, Math.round(H.oy + Math.floor(hi / 8) * cp), cp, cp);
+      var tc = tinted(H.img, tint, (hi % 8) * cp, Math.round(H.oy + Math.floor(hi / 8) * cp), cp, cp);
       skyBlit(tc.img, tc.x, tc.y, cp, cp, X - cp / 2, Y - Math.round(H.cy * 32), cp, cp);
     } else {
       var ks = sp.L / SHEET_L, cc = cell(Math.floor(hi / 8), hi % 8), sz = Math.round(CP * ks);   // (the sloop's own, at 1)
-      var tc2 = tinted(sheetImg, b.tint, cc[0], cc[1], CP, CP);
+      var tc2 = tinted(sheetImg, tint, cc[0], cc[1], CP, CP);
       skyBlit(tc2.img, tc2.x, tc2.y, CP, CP, X - Math.round(CX * ks), Y - Math.round(CY * ks), sz, sz);
     }
     if (kit) BridgeShipKit.hull(bctx, b, X, Y, hi, now, skyBlit);
@@ -2783,7 +2816,7 @@ var BridgeSloop = (function () {
     // what's aboard, back to front: you at the helm, each mast and its sails, the headsails out on the bow
     var lee = b.side, hoist = b.hoist, boom = b.boom, deck = rg.deck, wheel = wheeled(sp);
     var hz = rg.qd != null ? rg.qd : deck - 0.2, hs = helmOf(b), seat = P(hs[0], hs[1], wheel ? hz : 0.12 * k), pilotRow = seat[2];
-    var tone = 0.5 + 0.5 * Math.cos(wrap(b.h + lee * boom - 2.3)), cloth = b.cloth || (kit && kit.crystal ? CRYSTAL : null), glint = !!(kit && kit.crystal);
+    var tone = 0.5 + 0.5 * Math.cos(wrap(b.h + lee * boom - 2.3)), cloth = b.cloth || (kit && kit.crystal ? CRYSTAL : null) || (look && SAILCLOTH[look.sails]) || null, glint = !!(kit && kit.crystal);
     var drawList = [{ row: pilotRow, draw: function () {
       if (wheel) {                                                    // the wheel on her quarterdeck
         var wc = P(hs[0] + 0.32, 0, hz + 0.55);
@@ -2825,6 +2858,7 @@ var BridgeSloop = (function () {
       var fore = rg.masts.reduce(function (m, x) { return x.f > m.f ? x : m; }, rg.masts[0]), fu = -L2 + fore.f * sp.L;
       var bow = rg.bow || deck, nose = [-L2 + (1 + (rg.bowsprit || 0)) * sp.L, 0, bow - 0.12];
       if (rg.bowsprit) line(P(L2 - 0.1, 0, bow - 0.05, true), P(nose[0], 0, nose[2], true), '#4a3018', 2);
+      if (look && look.figure && look.figure !== 'none') figurehead(P, L2 - 0.12, bow - 0.22, look.figure, k);
       line(P(fu, 0, deck + fore.h, true), P(nose[0], 0, nose[2], true), 'rgba(30,24,20,0.85)');                 // the forestay
       if (hoist > 0.05) rg.jibs.forEach(function (j, ji) {
         var tu = -L2 + j.tack * sp.L, ja = Math.min(boom * 0.85 + 0.1, 1.2), jl = (j.tack - j.head) * sp.L * 0.9 + 0.3;
@@ -3788,9 +3822,9 @@ var BridgeSloop = (function () {
     var F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null;
     if (!cv || !ship || !F) return;
     var sp = F.effective(ship), I = isles(), pal = (I && I[ship.at] && I[ship.at].pal) || 'emerald', began = 0;
-    var set = (ship.fits || []).indexOf('crystal_sails') >= 0;        // (furled, but crystal-weave is set to be seen)
+    var set = (ship.fits || []).indexOf('crystal_sails') >= 0 || !!(ship.look && SAILCLOTH[ship.look.sails]);   // (furled, but crystal-weave or coloured cloth is set to be seen)
     var m = { x: 0, r: 0, h: 3 / 32 * Math.PI * 2, v: 0, sheet: set ? 1 : 1.45, boom: set ? 0.55 : 0.06, side: 1, heel: 0, rudder: 0, bump: 0, hoist: set ? 0.85 : 0,
-              eff: 0, off: 2, luff: false, empty: true, spec: sp, ship: ship.id, seed: 0.3 };
+              eff: 0, off: 2, luff: false, empty: true, spec: sp, ship: ship.id, look: ship.look || null, seed: 0.3 };
     var scratch = document.createElement('canvas'), crop = null, PW = 500, PH = 440, OX = 250, OY = 340;   // (room for a galleon, masts and all)
     scratch.width = PW; scratch.height = PH;
     function paint(now) {

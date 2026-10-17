@@ -129,6 +129,10 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await row(/Figurehead/); await wait(300);
   await row(/A starling/); await wait(300);
   console.log('colours:', (await dialog()).slice(0, 200));
+  await wait(900);
+  const art = await ev(() => { const c = document.querySelector('.wd-art'); if (!c || !c.width) return 0; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; });
+  await p.screenshot({ path: SHOTS + '/shipyard_colours.png' });
+  expect('her colours screen draws her as she\'ll be', art > 500);
   await btn(/Done/); await wait(300);
   await p.screenshot({ path: SHOTS + '/shipyard_ready.png' });
   await row(/Launch her/); await wait(600);
@@ -156,6 +160,24 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await btn(/Done/); await wait(300);
   const swift = await ev(() => BridgeFleet.get('c2').look);
   expect('the Swift in red sails', swift && swift.sails === 'red');
+  // drawn so: her portrait in red cloth, the same ship in no colours of her own none
+  const reds = await ev(() => new Promise(res => {
+    const s = BridgeFleet.get('c2'), mk = (ship) => { const c = document.createElement('canvas'); document.body.appendChild(c); BridgeSloop.portrait(c, ship); return c; };
+    const lass = BridgeFleet.all().find(x => x.name === 'Holm Lass');
+    const a = mk(s), plain = mk(Object.assign({}, s, { id: 'plain', look: null })), navy = mk(lass), bare = mk(Object.assign({}, lass, { id: 'bare', look: null }));
+    setTimeout(() => {
+      const RED = ['c44234', '98302a', '6a2018'], NAVY = BridgeShipKit.PAINT.navy.map(h => h.slice(1)), hex = (d, i) => ((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]).toString(16).padStart(6, '0');
+      const count = (c, set) => { if (!c.width) return -1; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (set.indexOf(hex(d, i)) >= 0) n++; return n; };
+      const out = { red: count(a, RED), plain: count(plain, RED), navy: count(navy, NAVY), bare: count(bare, NAVY) };
+      [a, plain, navy, bare].forEach(c => c.remove()); res(out);
+    }, 1800);
+  }));
+  console.log('her colours in the portraits:', JSON.stringify(reds));
+  expect('the Swift drawn under red sails', reds.red > 40 && reds.plain >= 0 && reds.plain < 5);
+  expect('the Holm Lass drawn with navy topsides', reds.navy > 40 && reds.bare >= 0 && reds.bare < 5);
+  // and the Holm Lass lying at the holm's pier in navy, a starling at her bow
+  await shut(); await ev(() => BridgeCharacter.init(20, 23)); await wait(1800);
+  await p.screenshot({ path: SHOTS + '/shipyard_moored.png' });
 
   // ---- the ledger -------------------------------------------------------------------------------------------------------
   const roster = await ev(() => BridgeLedger.roster().map(r => r.name + ':' + r.state).join(', '));

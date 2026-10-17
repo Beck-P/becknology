@@ -250,7 +250,7 @@ var BridgeShipyard = (function () {
           open(s ? 'THE CHOCKS COME OUT, SHE SHIVERS, AND THEN SHE\'S RUNNING DOWN THE SLIP IN A ROAR OF GREASE AND SPRAY. THE ' + s.name.toUpperCase() + ' IS AFLOAT.' : 'SHE WON\'T BUDGE. (SOMETHING\'S WRONG WITH THE FLEET.)');
         } });
       }
-      rows.push({ label: 'Her name and colours', sub: lookLine(j.look), note: 'choose', pick: function () { lookView(j.look, j.name, function (nm) { j.name = nm; save(); }, function () { save(); open(); }); } });
+      rows.push({ label: 'Her name and colours', sub: lookLine(j.look), note: 'choose', pick: function () { lookView(j.look, j.name, function (nm) { j.name = nm; save(); }, function () { save(); open(); }, { type: j.type }); } });
     }
     var wr = wrights();
     rows.push({ label: 'Shipwrights', sub: wr.length ? wr.map(function (p) { return p.name.split(' ')[0] + ' (' + (GRADES[p.grade] || GRADES.apprentice).short + ')'; }).join(', ') : 'nobody hired: nothing gets built', note: wr.length + '/' + WRIGHTS, pick: function () { wrightsView(); } });
@@ -282,21 +282,24 @@ var BridgeShipyard = (function () {
     return (PAINT[L.paint] || PAINT.natural).name + ' · ' + (SAILS[L.sails] || SAILS.canvas).name.toLowerCase() + ' sails · ' + ((FIGURES[L.figure] || FIGURES.none).name === 'None' ? 'no figurehead' : FIGURES[L.figure].name.toLowerCase());
   }
   /** Choose a look: paint, sails, figurehead (and her name, when `rename` is given). `done` when you're finished. */
-  function lookView(L, name, rename, done) {
-    var rows = [];
+  // her name and colours; `ship` (one of yours, or { type } for the hull on the slip) draws her in them as you choose
+  function lookView(L, name, rename, done, ship) {
+    var rows = [], again = function () { lookView(L, name, rename, done, ship); };
     if (rename) rows.push({ label: 'Her name', sub: name, note: 'rename', pick: function () {
-      choose({ title: 'Her name', text: 'WHAT WILL YOU CALL HER?', input: { value: name, max: 24, button: 'Name her', submit: function (v) { if (v) { name = v.slice(0, 24); rename(name); } lookView(L, name, rename, done); } }, closeLabel: 'Back' });
+      choose({ title: 'Her name', text: 'WHAT WILL YOU CALL HER?', input: { value: name, max: 24, button: 'Name her', submit: function (v) { if (v) { name = v.slice(0, 24); rename(name); } again(); } }, closeLabel: 'Back' });
     } });
     rows.push({ label: 'Paint', sub: (PAINT[L.paint] || PAINT.natural).name, note: 'change', pick: function () {
-      pick('Her paint', PAINT, L.paint, function (k) { L.paint = k; lookView(L, name, rename, done); });
+      pick('Her paint', PAINT, L.paint, function (k) { L.paint = k; again(); });
     } });
     rows.push({ label: 'Sails', sub: (SAILS[L.sails] || SAILS.canvas).name, note: 'change', pick: function () {
-      pick('Her sails', SAILS, L.sails, function (k) { L.sails = k; lookView(L, name, rename, done); });
+      pick('Her sails', SAILS, L.sails, function (k) { L.sails = k; again(); });
     } });
     rows.push({ label: 'Figurehead', sub: (FIGURES[L.figure] || FIGURES.none).name, note: 'change', pick: function () {
-      pick('Her figurehead', FIGURES, L.figure, function (k) { L.figure = k; lookView(L, name, rename, done); });
+      pick('Her figurehead', FIGURES, L.figure, function (k) { L.figure = k; again(); });
     } });
-    choose({ title: name, text: lookLine(L).toUpperCase(), rows: rows, buttons: [{ label: 'Done', act: function () { done(); } }], closeLabel: 'Back' });
+    var her = ship && { id: ship.id || '_slip', type: ship.type, guns: ship.guns || [], fits: ship.fits || [], at: WID, look: L };
+    var art = her && typeof BridgeSloop !== 'undefined' && BridgeSloop.portrait ? function (cv) { BridgeSloop.portrait(cv, her); } : null;
+    choose({ title: name, text: lookLine(L).toUpperCase(), art: art, rows: rows, buttons: [{ label: 'Done', act: function () { done(); } }], closeLabel: 'Back' });
   }
   function pick(title, set, cur, then) {
     choose({ title: title, text: 'CHOOSE ONE.', rows: Object.keys(set).map(function (k) {
@@ -332,7 +335,7 @@ var BridgeShipyard = (function () {
     choose({ title: 'Repaint', text: 'WHICH SHIP?', rows: ships().map(function (s) {
       return { label: s.name, sub: kind(s.type) + ' · ' + lookLine(s.look), note: 'paint', pick: function () {
         var L = Object.assign({ paint: 'natural', sails: 'canvas', figure: 'none' }, s.look || {});
-        lookView(L, s.name, null, function () { if (f.setLook) f.setLook(s.id, L); sfx('pickup'); open('THE ' + s.name.toUpperCase() + ' IN HER NEW COLOURS.'); });
+        lookView(L, s.name, null, function () { if (f.setLook) f.setLook(s.id, L); sfx('pickup'); open('THE ' + s.name.toUpperCase() + ' IN HER NEW COLOURS.'); }, s);
       } };
     }), buttons: [{ label: 'Back', act: function () { open(); } }], closeLabel: 'Done' });
   }

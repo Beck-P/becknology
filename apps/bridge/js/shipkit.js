@@ -321,10 +321,55 @@ var BridgeShipKit = (function () {
     BANDS[id] = out;
     return out;
   }
+  // ---- her paint (a ship of your own building's colours, js/shipyard.js): her topsides from the waterline band to the
+  // rail, planked, the deck left bare. Tones as the moonlit sheets have them: rail light, light, body, seam, shadow
+  var PAINT = { black: ['#3a3a44', '#26262e', '#1c1c24', '#141418', '#08080c'], oxblood: ['#a4443a', '#7e2a22', '#64201a', '#501812', '#240806'],
+                green: ['#3e8a6e', '#28664e', '#1e5240', '#184434', '#08201a'], navy: ['#4a62a2', '#2c3e7a', '#22305e', '#1a264c', '#0a1028'],
+                white: ['#f4f2ea', '#d8d6ce', '#c4c2ba', '#a8a69e', '#5e5c56'], ochre: ['#d0a448', '#a87e2e', '#8a6624', '#70521c', '#36260c'] };
+  var PAINTED = {}, paintN = 0;
+  function painted(sheet, hi, paint) {
+    var id = sheet + ':' + hi + ':' + paint;
+    if (PAINTED[id]) return PAINTED[id];
+    var T = PAINT[paint], Ln = lines(sheet), H = hi / 32 * TAU, c = Math.cos(H), sn = Math.sin(H), px = {}, B = bilge(Ln);
+    function scr(u, v, z) { return [Math.round((u * c - v * sn) * TS), Math.round((u * sn + v * c - z * C45) * TS)]; }
+    var tEnd = 0;
+    for (var t0 = 0; t0 < 1; t0 += 0.005) if (half(Ln, t0) > 0.03) tEnd = t0;
+    var LL = Ln.L * Ln.s, step = 1 / (LL * TS * 2);
+    [-1, 1].forEach(function (s) {
+      for (var t = 0; t <= tEnd; t += step) {
+        var u = uOf(Ln, t), w = half(Ln, t), dw = (half(Ln, Math.min(1, t + 0.01)) - half(Ln, Math.max(0, t - 0.01))) / (0.02 * LL);
+        var nu = -s * dw, nv = s, nn = Math.hypot(nu, nv), facing = (nu * sn + nv * c) / nn;
+        if (facing < -0.04 || w < 0.05) continue;
+        var za = B[1] + 0.03, zb = sheer(Ln, t) - 0.02;
+        var pa = scr(u, s * (sideV(Ln, t, za) + 0.01), za), pb = scr(u, s * (sideV(Ln, t, zb) + 0.01), zb);
+        var y0 = Math.min(pa[1], pb[1]), y1 = Math.max(pa[1], pb[1]);
+        for (var y = y0; y <= y1; y++) {
+          var row = y - y0, col = row === 0 ? T[0] : row === 1 ? T[1] : y === y1 ? T[4] : y === y1 - 1 ? T[3] : (row % 3 === 0 ? T[3] : T[2]);
+          px[pa[0] + ',' + y] = col;
+        }
+      }
+    });
+    var keys = Object.keys(px), x0 = 1e9, y0b = 1e9, x1 = -1e9, y1b = -1e9;
+    keys.forEach(function (kk) { var a = kk.split(','), x = +a[0], y = +a[1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0b) y0b = y; if (y > y1b) y1b = y; });
+    var out = { x: x0, y: y0b, c: null };
+    if (keys.length) {
+      var cv = document.createElement('canvas'); cv.width = x1 - x0 + 1; cv.height = y1b - y0b + 1;
+      var g = cv.getContext('2d');
+      keys.forEach(function (kk) { var a = kk.split(','); g.fillStyle = px[kk]; g.fillRect(+a[0] - x0, +a[1] - y0b, 1, 1); });
+      out.c = cv;
+    }
+    if (++paintN > 96) { PAINTED = {}; paintN = 1; }
+    PAINTED[id] = out;
+    return out;
+  }
   /** Her hull's bands, on the water at (X, Y) (her centre on the screen), with a glint running along copper and a
-   *  sparkle in roseite. */
+   *  sparkle in roseite; and her paint over her topsides (`b.paint`, a PAINT name). */
   function hull(c, b, X, Y, hi, now, blit) {
     var k = kitOf(b);
+    if (b.paint && PAINT[b.paint]) {
+      var Pt = painted(k.sheet, hi, b.paint);
+      if (Pt.c) blit(Pt.c, 0, 0, Pt.c.width, Pt.c.height, X + Pt.x, Y + Pt.y, Pt.c.width, Pt.c.height);
+    }
     if (!k.bands) return;
     var B = bands(k.sheet, hi, k.bands);
     if (!B.c) return;
@@ -346,5 +391,5 @@ var BridgeShipKit = (function () {
   }
 
   return { LINES: LINES, STATIONS: STATIONS, LOOK: LOOK, lines: lines, scale: scale, length: length, half: half, sheer: sheer, deckAt: deckAt,
-           kitOf: kitOf, sig: sig, mounts: mounts, guns: guns, hull: hull, muzzle: muzzle, fired: fired, mountOf: mountOf, flash: flash };
+           kitOf: kitOf, sig: sig, mounts: mounts, guns: guns, hull: hull, PAINT: PAINT, muzzle: muzzle, fired: fired, mountOf: mountOf, flash: flash };
 })();
