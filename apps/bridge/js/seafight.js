@@ -80,6 +80,7 @@ var BridgeSeaFight = (function () {
     var p = Math.max(CHANCE[A.pal] || 0.1, CHANCE[B.pal] || 0.1), rich = holdValue(B.id);
     if (!midnight) p = Math.min(0.85, p + Math.min(0.25, rich / 2500));
     if (api.blessed && api.blessed()) p *= 0.5;                        // a candle at St Brendan's: they think twice
+    if (midnight && typeof BridgeWonders !== 'undefined') p *= BridgeWonders.deep();         // the Ferryman's Bell: the deep turns away
     if (typeof BridgeWeather !== 'undefined' && BridgeWeather.pirates) p *= BridgeWeather.pirates();   // a storm keeps them in port
     if (api.rand() > p) return;
     var kind = midnight ? deep() : seas.indexOf('crimson') >= 0 ? (api.rand() < 0.6 ? 'raider' : 'cutter') : (api.rand() < 0.15 ? 'raider' : 'cutter');

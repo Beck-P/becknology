@@ -1,7 +1,9 @@
 // The hall of finds (js/trophies.js): built from its lot on the holm once the cottage is up; inside, an empty board,
 // plinth or case says where to look; what you've found yourself — a legend landed, a relic out of the Undercroft, a
 // scale off the Gloamserpent, the Lantern Beyond — goes on show on its spot, drawn and readable; a find made while
-// you're away from the hall turns up there too. node world/trophies.js [shots]
+// you're away from the hall turns up there too. The Cabinet of Wonders (js/wonders.js): a relic's waking known as soon as
+// it's found, made at the Workshop, on its shelf in the hall, working (the Midnight Sea's things come half as often);
+// an empty shelf says where the plan's from. node world/trophies.js [shots]
 const { chromium } = require('playwright');
 const SHOTS = process.argv[2] || __dirname + '/shots';
 (async () => {
@@ -14,9 +16,10 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
     if (!sessionStorage.getItem('seeded')) {
       sessionStorage.setItem('seeded', '1');
       localStorage.setItem('bridge_ship_location', 'lumar');
-      localStorage.setItem('bridge_holm', JSON.stringify({ owned: true, name: 'Starling Holm', built: { house: 1, dock: 1 }, store: {}, chest: 0, log: [] }));
+      localStorage.setItem('bridge_holm', JSON.stringify({ owned: true, name: 'Starling Holm', built: { house: 1, dock: 1, workshop: 1 }, store: {}, chest: 0, log: [] }));
       localStorage.setItem('bridge_dungeon', JSON.stringify({ nights: {}, best: 0, relics: ['drowned_bell', 'barrow_crown'] }));
     }
+    const real = Date.now; window._off = 0; Date.now = () => real() + window._off;
   });
   await p.goto('http://127.0.0.1:8766/bridge/?at=2026-10-16T21:00'); await p.waitForTimeout(3500);
   const ev = (f, a) => p.evaluate(f, a);
@@ -83,6 +86,37 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   expect('the Regatta Cup on its plinth as soon as it\'s won', cup === 'THE REGATTA CUP');
   await ev(() => BridgeCharacter.init(9, 7)); await wait(1200);
   await p.screenshot({ path: SHOTS + '/trophies_close.png' });
+
+  // ---- the Cabinet of Wonders: the Drowned Bell woken at the Workshop, onto its shelf, working -------------------------
+  const plans = await ev(() => ({ bell: BridgeWorkshop.known('ferry_bell'), crown: BridgeWorkshop.known('crown_woken'), coin: BridgeWorkshop.known('coin_woken'), compass: BridgeWorkshop.known('storm_compass'), deep: BridgeWonders.deep() }));
+  console.log('plans:', JSON.stringify(plans));
+  expect('a relic\'s waking known once it\'s found, the others not yet', plans.bell && plans.crown && !plans.coin && !plans.compass && plans.deep === 1);
+  const shelf0 = await ev(() => { const i = BridgeWorld.getWorld().interactions.find(x => x.type === 'trophy' && x.id === 'storm_compass'); return i && i.label; });
+  expect('an empty shelf in the cabinet', shelf0 === 'EMPTY SHELF');
+  await ev(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.type === 'trophy' && i.id === 'storm_compass'))); await wait(400);
+  const card = await dialog();
+  console.log('an empty shelf:', card.slice(0, 220));
+  expect('it says what goes there and whose plan it is', /STORM COMPASS/.test(card) && /TAMSIN GALE/.test(card));
+  await shut();
+  const made = await ev(() => {
+    ['drowned_bell'].forEach(id => BridgeInventory.addItem(id, 1)); BridgeInventory.addItem('moonglass', 2); BridgeInventory.addItem('songstone', 1);
+    const r = BridgeWorkshop.start('ferry_bell', true), again = BridgeWorkshop.start('ferry_bell', false);
+    return { ok: r.ok, again: again.reason, bell: BridgeInventory.getCount('drowned_bell') };
+  });
+  console.log('on the bench:', JSON.stringify(made));
+  expect('the bell on your bench, its inputs taken, and only one of it', made.ok && made.again === 'one' && made.bell === 0);
+  const done = await ev(() => { window._off += 31 * 3600000; BridgeWorkshop._advance(); return { has: BridgeWonders.has('ferry_bell'), deep: BridgeWonders.deep(), relic: BridgeTrophies.has('drowned_bell') }; });
+  console.log('woken:', JSON.stringify(done));
+  expect('woken: in the cabinet, the deep turning away, and the relic still on show', done.has && done.deep === 0.5 && done.relic);
+  await ev(() => BridgeWorld.load('lumar-holm-hall', () => BridgeState.transition('world', { worldId: 'lumar-holm-hall', spawn: { x: 3, y: 4 } }))); await wait(2500);
+  const shelf1 = await ev(() => BridgeWorld.getWorld().interactions.find(x => x.type === 'trophy' && x.id === 'ferry_bell').label);
+  expect('on its shelf', shelf1 === 'THE FERRYMAN\'S BELL');
+  await ev(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.type === 'trophy' && i.id === 'drowned_bell'))); await wait(400);
+  const relic = await dialog();
+  console.log('the relic\'s plate:', relic.slice(0, 240));
+  expect('the relic\'s plate says it\'s been woken', /WOKEN SINCE/.test(relic));
+  await shut(); await ev(() => BridgeCharacter.init(3, 4)); await wait(1200);
+  await p.screenshot({ path: SHOTS + '/trophies_cabinet.png' });
 
   console.log('errors', errors);
   await b.close();

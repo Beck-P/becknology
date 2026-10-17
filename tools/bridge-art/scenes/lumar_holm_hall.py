@@ -39,15 +39,15 @@ A.door_frame(k, 8.0, 10.0, 10)
 E.runner_carpet(k, 8.2, 4.0, 9.8, 10.0, col='#24405a', trim=E.GILT)
 
 # ---- the back wall: five oak boards for the sea legends, the middle one the biggest, a brass plate under each ---------
-for i, (x, legend) in enumerate(((2.9, 'old_mossback'), (5.95, 'crownfin'), (9.0, 'nightglass'), (12.05, 'dawnveil'), (15.1, 'emberjaw'))):
-    w, h, z = (1.0, 0.42, 1.62) if i != 2 else (1.25, 0.5, 1.72)
+for i, (x, legend) in enumerate(((3.65, 'old_mossback'), (6.3, 'crownfin'), (9.0, 'nightglass'), (11.7, 'dawnveil'), (14.35, 'emberjaw'))):
+    w, h, z = (0.95, 0.42, 1.62) if i != 2 else (1.2, 0.5, 1.72)
     k.box(x - w, 2.0, z - h, x + w, 2.06, z + h, (OAK_D, 0.1), 'board', bevel=0.03)
     k.box(x - w + 0.08, 2.06, z - h + 0.08, x + w - 0.08, 2.08, z + h - 0.08, (OAK, 0.12), 'board_face', bevel=0.01)
     for sx in (-1, 1):                                      # the board's carved ends, half-rounds
         k.cyl_y(x + sx * w, 2.0, 2.07, z, h * 0.62, h * 0.62, (OAK_D, 0.1), 'board', verts=14)
     k.box(x - 0.28, 2.04, z - h - 0.2, x + 0.28, 2.08, z - h - 0.06, (E.GILT, 0.06), 'plate', bevel=0.01)
     SPOTS.append([legend, x, 2.09, z, 'board'])
-for x in (4.42, 7.48, 10.52, 13.58):
+for x in (4.98, 7.62, 10.38, 13.02):
     E.sconce(k, x, 2.0, z=1.85, energy=7.0)
 k.box(1.0, 1.98, H - 0.42, 17.0, 2.12, H - 0.3, (OAK_D, 0.1), 'cornice')
 
@@ -74,12 +74,30 @@ for (x0, x1, ids) in ((1.9, 5.1, ('drowned_bell', 'wight_lantern', 'heron_coin')
     for i, tid in enumerate(ids):
         SPOTS.append([tid, round(x0 + (x1 - x0) * (i + 0.5) / len(ids), 3), (r0 + r1) / 2, z - 0.1, 'case'])
 
-# ---- by the walls: banners; light from the sconces, the chandelier and two lamps --------------------------------------
-for (x, r) in ((1.7, 2.7), (16.3, 2.7)):                 # a palm in each back corner
+# ---- the Cabinet of Wonders (js/wonders.js): two glazed cabinets in the back corners, three shelves each; the glass is
+# js/trophies.js's (a sheen over each wonder), so what's made shows ------------------------------------------------------
+WONDERS = (('storm_compass', 'gilded_ledger', 'tide_pearl'), ('ferry_bell', 'crown_woken', 'coin_woken'))
+for (x0, x1), ids in zip(((1.05, 2.4), (15.6, 16.95)), WONDERS):
+    r0, r1, top = 2.0, 2.6, 2.55
+    k.box(x0, r0, 0.0, x1, r1, 0.5, (E.WALNUT, 0.08), 'wcab')                     # the base, a drawer front
+    k.box(x0 + 0.08, r1, 0.12, x1 - 0.08, r1 + 0.01, 0.4, (shade(E.WALNUT, 1.15), 0.08), 'wcab_drawer')
+    k.box(x0, r0, 0.5, x1, r0 + 0.06, top, (shade(E.WALNUT, 0.6), 0.1), 'wcab_back')
+    k.box(x0, r0, 0.5, x0 + 0.07, r1, top, (E.WALNUT, 0.08), 'wcab')
+    k.box(x1 - 0.07, r0, 0.5, x1, r1, top, (E.WALNUT, 0.08), 'wcab')
+    k.box(x0 - 0.04, r0, top, x1 + 0.04, r1 + 0.05, top + 0.12, (shade(E.WALNUT, 1.1), 0.06), 'wcab')
+    k.box(x0 + 0.2, r1 + 0.02, top + 0.02, x1 - 0.2, r1 + 0.05, top + 0.1, (E.GILT, 0.06), 'wcab_trim')
+    for i, wid in enumerate(ids):
+        z = 0.5 + i * 0.68
+        if i:
+            k.box(x0 + 0.07, r0 + 0.06, z - 0.03, x1 - 0.07, r1, z, (shade(E.WALNUT, 1.2), 0.06), 'wcab_shelf')
+        k.box(x0 + 0.07, r1 - 0.02, z, x0 + 0.1, r1, z + 0.62, (E.GILT, 0.06), 'wcab_glazing')
+        SPOTS.append([wid, round((x0 + x1) / 2, 3), r0 + 0.32, z, 'shelf'])
+    k.solid(x0, r0, x1, r1)
+
+# ---- palms in the front corners; light from the sconces, the chandelier and two lamps ----------------------------------
+for (x, r) in ((1.6, 8.9), (16.4, 8.9)):                 # a palm in each front corner
     E.potted_palm(k, x, r)
     k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
-for (x, col) in ((1.25, '#24405a'), (16.75, '#5a2430')):
-    k.box(x - 0.04, 2.3, 1.0, x + 0.04, 2.36, 2.45, (col, 0.6), 'banner')
 E.chandelier(k, 9.0, 5.0, H - 0.4, rad=0.55, arms=6, tiers=1, chain_top=H, energy=70.0)
 A.hanging_lamp(k, 4.6, 6.0, energy=55, visible=False)
 A.hanging_lamp(k, 13.4, 6.0, energy=55, visible=False)

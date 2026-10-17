@@ -153,7 +153,7 @@ var BridgeBusiness = (function () {
           b.stock = (b.stock || 0) - used;
           f = need > 0 ? (used + (need - used) * BOUGHT) / need : 1;
         }
-        var earn = d.rate * c.run * o * f * dt / 3600000 * lift(id, mid);
+        var earn = d.rate * c.run * o * f * dt / 3600000 * lift(id, mid) * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.takings() : 1);   // the Gilded Ledger
         if (c.banks) bank += earn; else held = Math.min(limit, held + earn);
         made += earn;
         b.today = (b.dayKey === dayOf(mid) ? b.today || 0 : 0) + earn; b.dayKey = dayOf(mid);
@@ -195,7 +195,7 @@ var BridgeBusiness = (function () {
           }
           toast('Wages', p.name + ' wasn\'t paid', 'Pay them before the next payday or they walk');
         }
-        p.owe = (p.owe || 0) + p.wage * days;
+        p.owe = (p.owe || 0) + p.wage * days * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.wages() : 1);   // (the Barrow Crown, woken)
       });
       if (typeof BridgeCrew !== 'undefined') BridgeCrew.list().forEach(function (c) {
         var w = crewWage(c.id), o = crewOwed(c.id);
@@ -216,7 +216,7 @@ var BridgeBusiness = (function () {
           }
           toast('Wages', c.name + ' wasn\'t paid', 'Pay them before the next payday or they go ashore');
         }
-        o.owe += BridgeFleet.wage(c) * days;
+        o.owe += BridgeFleet.wage(c) * days * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.wages() : 1);
       });
       save();
     }

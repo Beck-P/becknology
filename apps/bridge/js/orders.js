@@ -245,14 +245,15 @@ var BridgeOrders = (function () {
     var sp = F().effective(s), short = F().crewOn(s.id).length < F().spec(s.type).crew;
     var m = (12 + 50 * d) / (sp.vmax / 4.6) * (short ? 1.5 : 1) * 1.5 + 35 + (crates || 0) / 6;   // under sail, and a morning's loading
     var w = weather(t);
-    if (w === 'storm') m *= 1.25; else if (w === 'fog') m *= 1.1;
+    if (w === 'storm') m *= 1.25; else if (w === 'fog' && !compass()) m *= 1.1;   // (the Storm Compass: fog doesn't hold them)
     var bl = blockOf(from, to, t);
     if (bl && bl.choice === 'reroute') m *= 1.4;             // the long way round
     return Math.round(m);
   }
+  function compass() { return typeof BridgeWonders !== 'undefined' && BridgeWonders.fog() < 1; }
   function risk(s, from, to, t, G) {
     var Dg = danger(), r = Math.max(Dg[from] || 0.05, Dg[to] || 0.05) * G.risk, w = weather(t);
-    if (w === 'storm') r *= 0.25; else if (w === 'gale') r *= 0.6; else if (w === 'fog') r *= 0.8;   // pirates keep to port in a blow
+    if (w === 'storm') r *= 0.25; else if (w === 'gale') r *= 0.6; else if (w === 'fog' && !compass()) r *= 0.8;   // pirates keep to port in a blow
     var bl = blockOf(from, to, t);
     if (bl) r = bl.choice === 'escort' ? Math.min(r, 0.02) : bl.choice === 'run' ? r + 0.35 : r;
     return Math.min(0.85, r);

@@ -37,7 +37,14 @@ var BridgeTrophies = (function () {
     barrow_crown: { name: 'The Barrow Crown', line: 'From the Undercroft. Too small for any head you know.', hint: 'THE UNDERCROFT, UNDER MIDNIGHT ISLE. THE DEEPER, THE LIKELIER.' },
     star_pearl:   { name: 'A Star Pearl', line: 'From the moon pool. There are stars moving inside it.', hint: 'THE MOON POOL ON MIDNIGHT ISLE. FISH IT.' }
   };
-  var KIND = { board: 'BOARD', plinth: 'PLINTH', case: 'CASE' };
+  var KIND = { board: 'BOARD', plinth: 'PLINTH', case: 'CASE', shelf: 'SHELF' };
+  // the Cabinet of Wonders' shelves hold what you've made (js/wonders.js); everything else in the hall is a find
+  function Wn() { return typeof BridgeWonders !== 'undefined' ? BridgeWonders : null; }
+  function info(id, kind) {
+    if (kind === 'shelf') { var w = Wn() && Wn().W[id]; return w ? { name: w.name, line: w.what, glow: w.glow, has: Wn().has(id), at: Wn()._state().made[id], where: Wn().where(id) } : null; }
+    var t = T[id];
+    return t ? { name: t.name, line: t.line, hint: t.hint, glow: t.glow, has: has(id), at: st.found[id] } : null;
+  }
 
   var st = load();
   function load() {
@@ -91,15 +98,21 @@ var BridgeTrophies = (function () {
     if (!here) return;
     here.data.interactions.forEach(function (it) {
       if (it.type !== 'trophy') return;
-      it.label = has(it.id) ? T[it.id].name.toUpperCase() : 'EMPTY ' + (KIND[it.kind] || 'PLINTH');
+      var f = info(it.id, it.kind);
+      it.label = f && f.has ? f.name.toUpperCase() : 'EMPTY ' + (KIND[it.kind] || 'PLINTH');
     });
   }
   function look(it) {
-    var t = T[it.id], c = choose();
+    var t = info(it.id, it.kind), c = choose();
     if (!t || !c) return;
-    if (has(it.id)) {
-      var d = new Date(st.found[it.id]);
-      c({ title: t.name, text: (t.line + ' Found ' + d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) + '.').toUpperCase(),
+    if (it.kind === 'shelf' && !t.has) {
+      return c({ title: 'An empty shelf', text: ('A card propped on it in the Cabinet of Wonders: "' + t.name + '." ' + t.line + ' Make it at your workshop - the plan is from ' + t.where + '.').toUpperCase(), closeLabel: 'Done' });
+    }
+    if (t.has) {
+      var d = new Date(t.at);
+      var woke = it.kind !== 'shelf' && Wn() ? Object.keys(Wn().W).filter(function (w) { return Wn().W[w].wakes === it.id && Wn().has(w); })[0] : null;   // a relic woken
+      c({ title: t.name, text: (t.line + (it.kind === 'shelf' ? ' Made ' : ' Found ') + d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) + '.' +
+                                (woke ? ' Woken since: ' + Wn().W[woke].name + ', in the Cabinet of Wonders.' : '')).toUpperCase(),
           art: function (cv) {                           // the find itself, big
             var p = pic(it.id, it.kind);
             if (!p) return;
@@ -125,9 +138,9 @@ var BridgeTrophies = (function () {
       c = BridgeFishArt.canvas(id, big ? 64 : 52, big ? 26 : 22, 1);
     }
     if (!c) {
-      var it = typeof BridgeItems !== 'undefined' && BridgeItems.get ? BridgeItems.get(id) : null;
+      var it = typeof BridgeItems !== 'undefined' && BridgeItems.get ? BridgeItems.get(kind === 'shelf' ? 'wonder_' + id : id) : null;
       if (!it || !it.draw) return null;
-      var size = kind === 'case' ? 24 : 32;
+      var size = kind === 'case' ? 24 : kind === 'shelf' ? 26 : 32;
       c = document.createElement('canvas'); c.width = size; c.height = size;
       var g = c.getContext('2d'); g.imageSmoothingEnabled = false;
       it.draw(g, 0, 0, size);
@@ -139,11 +152,11 @@ var BridgeTrophies = (function () {
     if (!here || here.data !== world || !sc || typeof BridgeScene === 'undefined') return [];
     var out = [];
     here.spots.forEach(function (s) {
-      var id = s[0], x = s[1], r = s[2], z = s[3], kind = s[4], t = T[id];
-      if (!t || !has(id)) return;
+      var id = s[0], x = s[1], r = s[2], z = s[3], kind = s[4], t = info(id, kind);
+      if (!t || !t.has) return;
       var c = pic(id, kind);
       if (!c) return;
-      var foot = kind === 'board' ? r : r + 0.02;
+      var foot = kind === 'board' ? r : kind === 'shelf' ? r + 0.3 : r + 0.02;
       out.push({ footRow: foot, draw: function (ctx) {
         // a board's fish hangs centred on it; a plinth's find stands on its top; a case's lies on the velvet
         var cx = Math.round(offX + x * ts), base = offY + (r - z * C45) * ts;
@@ -153,6 +166,7 @@ var BridgeTrophies = (function () {
         if (t.glow) glow(ctx, cx, dy + c.height / 2, t.glow, now);
         BridgeScene.drawOccluded(ctx, sc, c, 0, 0, c.width, c.height, dx, dy, foot, offX, offY, t.glow ? null : tint, null);
         if (kind === 'case') glass(ctx, cx, Math.round(base), c.width);
+        if (kind === 'shelf') pane(ctx, cx, Math.round(base), c.width, c.height);
       } });
     });
     return out;
@@ -170,6 +184,12 @@ var BridgeTrophies = (function () {
   function glass(ctx, x, y, w) {
     ctx.fillStyle = 'rgba(200,220,240,0.10)'; ctx.fillRect(x - w / 2 - 4, y - w * 0.6 - 2, w + 8, w * 0.6 + 4);
     ctx.fillStyle = 'rgba(240,248,255,0.35)'; ctx.fillRect(x - w / 2 - 2, y - w * 0.6 - 1, 6, 1); ctx.fillRect(x + w / 2 - 6, y + 1, 5, 1);
+  }
+
+  // ...and the cabinet's glazing in front of a wonder: a faint pane and a stripe of light across it
+  function pane(ctx, x, y, w, h) {
+    ctx.fillStyle = 'rgba(200,220,240,0.08)'; ctx.fillRect(x - w / 2 - 3, y - h - 2, w + 6, h + 3);
+    ctx.fillStyle = 'rgba(240,248,255,0.28)'; ctx.fillRect(x - w / 2 + 2, y - h, 1, Math.round(h * 0.6)); ctx.fillRect(x - w / 2 + 4, y - h + 2, 1, Math.round(h * 0.3));
   }
 
   // ---- start: watch for finds, register the plates, draw in every scene world (only the hall has spots) ------------

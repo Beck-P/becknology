@@ -340,7 +340,7 @@ var BridgeFleet = (function () {
     return s.hull;
   }
   function repairCost(s) {                               // the Crown's captain pays the yards a quarter less
-    var royal = typeof BridgeCrown !== 'undefined' && BridgeCrown.captain() ? 0.75 : 1;
+    var royal = (typeof BridgeCrown !== 'undefined' && BridgeCrown.captain() ? 0.75 : 1) * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.repairs() : 1);   // (and the Ferryman's Coin, woken)
     return s.hull >= 0.999 ? 0 : Math.max(20, Math.round((1 - s.hull) * (spec(s.type).price || 160) * 0.22 * royal));
   }
   function repair(shipId) {

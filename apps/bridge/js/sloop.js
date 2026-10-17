@@ -1881,6 +1881,7 @@ var BridgeSloop = (function () {
       if (o.kind === 'squall') { sq = Math.max(sq, q); d += q * (0.55 * Math.sin(T * 0.33 + o.seed) + 0.2 * Math.sin(T * 1.3 + o.seed * 2)); s *= 1 + 0.2 * q; }
       else { fg = Math.max(fg, q * o.thick); s *= 1 - 0.3 * q; }
     });
+    if (typeof BridgeWonders !== 'undefined') fg *= BridgeWonders.fog();                    // the Storm Compass: the mist lies thin round you
     sky = { squall: sq, fog: fg, systems: sys };
     return { d: d, s: clamp(s, 0.15, 1.3) };
   }

@@ -37,6 +37,9 @@ var BridgeWorkshop = (function () {
   var CRATES = { timber: ['pine_log', 8], glassware: ['glass', 6], spore_silk: ['sailcloth', 4], blackpowder: ['powder', 6] };
   // where to get each thing a recipe wants
   var FROM = {
+    star_pearl: 'the moon pool on Midnight Isle - fish it', deep_pearl: 'the Deep Maw, far out in the Midnight Sea',
+    heron_coin: 'the water off Crimson Reach, where the Heron went down', drowned_bell: 'the Undercroft, under Midnight Isle',
+    barrow_crown: 'the Undercroft, deep down', ferry_coin: 'the Undercroft, under Midnight Isle',
     pine_log: 'windfall pine on Diggen\'s Point and on your holm; Bess Tolliver sells logs, and a crate of pine timber is eight',
     oak_log: 'the log pile on Verdance and the Royal Yard\'s offcuts; Agnes Rook in Crownhaven sells it',
     plank: 'saw pine logs', oak_plank: 'saw oak logs',
@@ -84,7 +87,9 @@ var BridgeWorkshop = (function () {
     crystal_lamp: { kind: 'home', group: 'home', in: { glass: 2, copper_sheet: 1, sapphire_crystal: 2 }, mins: 60 },
     telescope:    { kind: 'home', group: 'home', in: { glass: 2, copper_sheet: 2, oak_plank: 1 }, mins: 120, plan: true }
   };
-  var GROUPS = [['materials', 'Materials'], ['guns', 'Guns'], ['fittings', 'Fittings'], ['tools', 'Tools'], ['home', 'For your homes']];
+  // the wonders (js/wonders.js, loaded first): the highest tier, into the Cabinet of Wonders in your hall
+  if (typeof BridgeWonders !== 'undefined') Object.assign(RECIPES, BridgeWonders.recipes());
+  var GROUPS = [['materials', 'Materials'], ['guns', 'Guns'], ['fittings', 'Fittings'], ['tools', 'Tools'], ['home', 'For your homes'], ['wonders', 'Wonders']];
   var PIECES = { oak_table: 'Oak Table', trunk: 'Old Trunk', crystal_lamp: 'Crystal Lamp', telescope: 'Telescope' };   // (js/home.js names them once it's loaded)
   // where each plan is learnt (the Plans page)
   var WHERE = {
@@ -95,6 +100,7 @@ var BridgeWorkshop = (function () {
     prospector_pick: 'Hob, once you\'ve been down to the fifteenth floor', greenheart_rod: 'Old Pell on Tern Holm, or a fishing chest',
     telescope: 'Ilsa Venn the cartographer, on Diggen\'s Point'
   };
+  if (typeof BridgeWonders !== 'undefined') Object.keys(BridgeWonders.W).forEach(function (r) { WHERE[r] = BridgeWonders.where(r); });
 
   // the people who sell materials and plans, and the favours some ask before they'll teach you (a `workshop: <key>`
   // topic in assets/people.json): sells [item, price, a day's supply], plans [recipe, price, gate], favours
@@ -115,7 +121,11 @@ var BridgeWorkshop = (function () {
                              ask: 'THE SEA KEEPS ITS OWN BOOK. I KEEP MINE IN ITS INK - AND I AM OUT OF IT. THE DEEP MAW CARRIES IT. BRING ME A JAR.',
                              thanks: '...FRESH. FOR THAT: THE SERPENT\'S SCALES, LAPPED LIKE A FISH\'S ON A HULL. THE ROCKS SLIDE OFF THEM. SO DOES EVERYTHING ELSE.' }] },
     aldous:    { sells: [['glass', 11], ['copper_sheet', 32]] },
-    tern_pell: { sells: [['rope', 12]], plans: [['greenheart_rod', 180]] },
+    tern_pell: { sells: [['rope', 12]], plans: [['greenheart_rod', 180], ['tide_pearl', 900]] },
+    keeper:    { favours: [{ r: 'storm_compass', want: { sapphire_crystal: 2 },
+                             ask: 'THE LIGHT KNOWS FOG BETTER THAN ANY OF US. THERE\'S A WAY TO BIND A COMPASS TO IT - MY GRANDMOTHER\'S. BRING ME TWO SAPPHIRE CRYSTALS FOR THE LENS AND I\'LL DRAW IT FOR YOU.',
+                             thanks: 'CLEAR AS THE NIGHT IT WAS CUT. HERE: MOONGLASS FOR THE NEEDLE, SONGSTONE IN THE BOWL, AND THE CARD READ BY THE LIGHT, NOT THE STARS. FOG WON\'T HOLD YOUR SHIPS AGAIN.' }] },
+    registrar: { plans: [['gilded_ledger', 2400]] },
     ilsa:      { plans: [['telescope', 160]] }
   };
 
@@ -174,13 +184,14 @@ var BridgeWorkshop = (function () {
     if (R.kind === 'home') { var P = typeof BridgeHome !== 'undefined' && BridgeHome.piece && BridgeHome.piece(r); return P ? P.name : PIECES[r] || r; }
     return iname(R.out[0]);
   }
-  function iconOf(r) { var R = RECIPES[r]; return !R ? null : R.kind === 'gun' || R.kind === 'fit' ? 'part_' + r : R.kind === 'home' ? R.in && Object.keys(R.in)[0] : R.out[0]; }
+  function iconOf(r) { var R = RECIPES[r]; return !R ? null : R.kind === 'gun' || R.kind === 'fit' ? 'part_' + r : R.kind === 'home' ? R.in && Object.keys(R.in)[0] : R.kind === 'wonder' ? 'wonder_' + r : R.out[0]; }
   // a gun, a lantern, a table: one of them; sheathing, doubling, sails, rigging: some
   function one(r) { var R = RECIPES[r], nm = rname(r); return R.kind === 'fit' && r !== 'moon_lantern' ? nm.toLowerCase() : an(nm); }
   function makes(r) {
     var R = RECIPES[r];
     if (R.kind === 'gun' || R.kind === 'fit') return one(r) + ', ready to fit';
     if (R.kind === 'home') return one(r) + ' for your homes';
+    if (R.kind === 'wonder') return R.name + ', for the Cabinet of Wonders in your hall';
     return plural(R.out[1], R.out[0]);
   }
   function needs(r, k) { var R = RECIPES[r]; return Object.keys(R.in).map(function (id) { return plural(R.in[id] * (k || 1), id); }).join(', '); }
@@ -188,10 +199,16 @@ var BridgeWorkshop = (function () {
     var R = RECIPES[r], f = F(), X = f && (f.GUNS[r] || f.FITS[r]);
     if (X) return X.blurb;
     if (R.kind === 'home') return 'For your homes: it goes straight to your furnishing tray. Put it down with H in any place of yours.';
+    if (R.kind === 'wonder') return typeof BridgeWonders !== 'undefined' ? BridgeWonders.W[r].what : '';
     var it = typeof BridgeItems !== 'undefined' && BridgeItems.get(R.out[0]);
     return it ? it.desc : '';
   }
-  function known(r) { return !!RECIPES[r] && (!RECIPES[r].plan || !!st.learnt[r]); }
+  function known(r) {
+    var R = RECIPES[r];
+    if (!R) return false;
+    if (!R.plan || st.learnt[r]) return true;
+    return !!(R.wakes && typeof BridgeTrophies !== 'undefined' && BridgeTrophies.has(R.wakes));   // the relic itself tells you
+  }
   function learn(r, quiet) {
     if (!RECIPES[r] || known(r)) return false;
     st.learnt[r] = Date.now(); save();
@@ -437,6 +454,11 @@ var BridgeWorkshop = (function () {
       if (typeof BridgeHome !== 'undefined' && BridgeHome.givePiece) BridgeHome.givePiece(r, 1);
       return one(r);
     }
+    if (R.kind === 'wonder') {
+      if (typeof BridgeWonders !== 'undefined') BridgeWonders.place(r);
+      if (lucky) offcuts(j);
+      return R.name;
+    }
     if (R.kind === 'gun' || R.kind === 'fit') {
       if (h) h.storeAdd('part_' + r, 1);
       if (lucky) offcuts(j);
@@ -464,6 +486,8 @@ var BridgeWorkshop = (function () {
     if (!built()) return { ok: false, reason: 'no_workshop' };
     advance();
     if (you && st.bench) return { ok: false, reason: 'busy' };
+    if (R.kind === 'wonder' && (typeof BridgeWonders !== 'undefined' && BridgeWonders.has(r) || st.queue.concat(st.bench ? [st.bench] : []).some(function (j) { return j.r === r; })))
+      return { ok: false, reason: 'one' };
     var short = shortOf(r);
     if (short.length) return { ok: false, reason: 'short', short: short };
     var took = {};
@@ -525,7 +549,7 @@ var BridgeWorkshop = (function () {
   function book(forYou, note) {
     var rows = [];
     GROUPS.forEach(function (g) {
-      Object.keys(RECIPES).filter(function (r) { return RECIPES[r].group === g[0] && known(r); }).forEach(function (r) {
+      Object.keys(RECIPES).filter(function (r) { return RECIPES[r].group === g[0] && known(r) && !(RECIPES[r].kind === 'wonder' && typeof BridgeWonders !== 'undefined' && BridgeWonders.has(r)); }).forEach(function (r) {
         var R = RECIPES[r], short = shortOf(r);
         rows.push({ label: rname(r), icon: iconOf(r), sub: needs(r) + ' · ' + hm(R.mins / (forYou ? yourPace() : 1)) + (forYou ? ' for you' : ''),
                     note: short.length ? 'short' : 'ready', pick: function () { card(r); } });
@@ -552,7 +576,7 @@ var BridgeWorkshop = (function () {
   function go(r, you, times) {
     var made = 0, last = null;
     for (var i = 0; i < (times || 1); i++) { last = start(r, you); if (!last.ok) break; made++; }
-    if (!made) return card(r, last.reason === 'busy' ? 'YOUR BENCH IS BUSY.' : last.reason === 'short' ? 'SHORT OF ' + last.short.map(iname).join(', ').toUpperCase() + '.' : 'NOT NOW.');
+    if (!made) return card(r, last.reason === 'busy' ? 'YOUR BENCH IS BUSY.' : last.reason === 'one' ? 'THERE\'S ONLY EVER ONE OF THESE, AND IT\'S MADE OR ON THE WAY.' : last.reason === 'short' ? 'SHORT OF ' + last.short.map(iname).join(', ').toUpperCase() + '.' : 'NOT NOW.');
     open(you ? 'ON YOUR BENCH: ' + rname(r).toUpperCase() + '. ' + hm(leftMs(st.bench) / 60000).toUpperCase() + ' AT YOUR PACE; IT CARRIES ON WHILE YOU\'RE AWAY.'
              : (made > 1 ? made + ' × ' : '') + rname(r).toUpperCase() + ' QUEUED.' + (smiths().length ? ' YOUR SMITHS WILL GET TO IT.' : ' HIRE A SMITH TO WORK THE QUEUE - OR TAKE IT ON YOURSELF.'));
   }

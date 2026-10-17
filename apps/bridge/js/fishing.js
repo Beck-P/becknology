@@ -138,7 +138,7 @@ var BridgeFishing = (function () {
     var sky = typeof BridgeWeather !== 'undefined' && BridgeWeather.fishLuck ? BridgeWeather.fishLuck(pool) : 1;   // they bite in the rain and the storm
     var list = (POOLS[pool] || POOLS.harbour).map(function (e) {
       var rare = tierOf(e[0]) >= 2;
-      return [e[0], e[1] * (rare && power > 0.7 ? 1.6 : 1) * (rare && lucky ? 1.2 : 1) * (rare && rod() ? 1.1 : 1) * (rare ? sky : 1)];
+      return [e[0], e[1] * (rare && power > 0.7 ? 1.6 : 1) * (rare && lucky ? 1.2 : 1) * (rare && rod() ? 1.1 : 1) * (rare ? sky : 1) * (rare && pearl() ? 1.3 : 1)];
     });
     var total = list.reduce(function (a, e) { return a + e[1]; }, 0), r = Math.random() * total;
     for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) return list[i][0]; }
@@ -147,6 +147,8 @@ var BridgeFishing = (function () {
   function sfx(n) { if (n && typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(n); }
   // the greenheart rod (made at your workshop, js/workshop.js), carried: a quicker bite, more room on the reel
   function rod() { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('greenheart_rod') > 0; }
+  // the Tidecaller's Pearl in your Cabinet of Wonders (js/wonders.js): the rare ones come up more often
+  function pearl() { return typeof BridgeWonders !== 'undefined' && BridgeWonders.rare(); }
   function touch() { return document.documentElement.classList.contains('touch'); }
 
   function set(phase, extra) {
@@ -187,7 +189,7 @@ var BridgeFishing = (function () {
       log.casts += 1; store();
       if (fishes[0]) { fishes[0].s = 3 + Math.floor(Math.random() * 3); fishes[0].x = Math.random() < 0.5 ? -10 : NW + 10; }   // a new one to come for it
       var lucky = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('lucky_horseshoe') > 0;
-      var wait = (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1) * (rod() ? 0.85 : 1) * (perfect ? 0.8 : 1);   // the horseshoe (and the rod): they bite sooner
+      var wait = (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1) * (rod() ? 0.85 : 1) * (perfect ? 0.8 : 1) * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.bite() : 1);   // the horseshoe (and the rod, and the Tidecaller's Pearl): they bite sooner
       // what takes the hook is decided as it lands (so its shadow can come for it, bigger for a rarer fish)
       set('wait', { power: power, perfect: perfect, wait: wait, nibbles: [], catchId: pick(st.pool, power), treasure: null, snap: false, hooked: false });
       var n = Math.floor(Math.random() * 3);
