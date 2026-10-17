@@ -1486,6 +1486,7 @@ var BridgeInteractions = (function () {
       you.textContent = '';
       if (face) face.set('neutral');
       say(t.a);
+      if (t.rumour && typeof BridgeQuests !== 'undefined' && BridgeQuests.hear) BridgeQuests.hear(t.rumour, person.name);   // gossip about a quest: into the journal
     }
     function close() {
       closed = true;

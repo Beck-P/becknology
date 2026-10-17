@@ -92,6 +92,7 @@ var BridgeQuests = (function () {
         if (shown()) render();
       });
     });
+    if (hits.length) { trSig = ''; refreshTracker(); }
     return hits;
   }
 
@@ -110,6 +111,122 @@ var BridgeQuests = (function () {
     var k = String(key).split('/'), s = state[k[0]];
     return !!(s && (k[1] ? s.clues && s.clues[k[1]] : s.done));
   }
+
+  // ---- where quests start, rumours, leads and the one you're following ---------------------------------------------
+  // Alyssa and Beck: a quest you haven't begun is marked where it starts (a gold ! over that person or thing, and on
+  // the map); once it's under way nothing is marked, but the tracker and the journal give a lead for each clue you can
+  // find now (its `hint`: leading, not the answer). People's gossip (a topic with `rumour`) puts a quest you haven't
+  // begun in the journal as a rumour, with where to start. Kept in localStorage bridge_quest_meta (cloud-saved).
+  var META = 'bridge_quest_meta', meta = {};
+  try { meta = JSON.parse(localStorage.getItem(META) || '{}') || {}; } catch (e) { meta = {}; }
+  if (!meta.heard) meta.heard = {};
+  function saveMeta() { try { localStorage.setItem(META, JSON.stringify(meta)); } catch (e) { /* private mode */ } }
+  function unlocked(id) { var q = defs && defs[id]; return !!q && (!q.needs || !!(state[q.needs] && state[q.needs].done)); }
+  function beginOf(id) {
+    var q = defs[id];
+    return q.clues.filter(function (c) { return c.id === q.begin; })[0] || q.clues[0];
+  }
+  function inWorld(w, wid) { return w === wid || (w.slice(-1) === '*' && String(wid).indexOf(w.slice(0, -1)) === 0); }
+  // the quests you could begin here, by the label of what starts them
+  function startsHere(wid) {
+    var out = {};
+    Object.keys(defs || {}).forEach(function (id) {
+      if (state[id] || !unlocked(id)) return;
+      var c = beginOf(id);
+      if (c && inWorld(c.on.world, wid)) out[c.on.label] = id;
+    });
+    return out;
+  }
+  // somebody mentioned a quest you haven't begun (people.json: a topic's `rumour`, one id or a list)
+  function hear(ids, who) {
+    var news = [];
+    [].concat(ids || []).forEach(function (id) {
+      if (!defs || !defs[id] || state[id] || meta.heard[id]) return;
+      meta.heard[id] = { t: Date.now(), who: who || '' };
+      news.push(id);
+    });
+    if (!news.length) return news;
+    saveMeta();
+    var q = defs[news[0]];
+    setTimeout(function () { toast('Rumour', q.title, q.rumour || q.start); }, 400);   // (after what they said is up)
+    refreshTracker(); if (shown()) render();
+    return news;
+  }
+  function rumours() {                               // heard of, not begun: newest first
+    return Object.keys(meta.heard).filter(function (id) { return defs && defs[id] && !state[id]; })
+      .sort(function (a, b) { return meta.heard[b].t - meta.heard[a].t; });
+  }
+  // the leads for a quest: its findable clues' hints, the ones where you are first; a quest not begun leads to its start
+  function leads(id, n) {
+    var q = defs && defs[id];
+    if (!q) return [];
+    var wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : '';
+    if (!state[id]) { var b = beginOf(id); return b && b.hint ? [b.hint] : []; }
+    if (state[id].done) return [];
+    var got = state[id].clues || {};
+    var open = q.clues.filter(function (c) { return !got[c.id] && ready(id, q, c) && c.hint; });
+    open = open.filter(function (c) { return inWorld(c.on.world, wid); }).concat(open.filter(function (c) { return !inWorld(c.on.world, wid); }));
+    return open.slice(0, n || 99).map(function (c) { return c.hint; });
+  }
+  // the quest the tracker follows: the one you chose, or the one you last moved on, or the newest rumour
+  function tracked() {
+    var t = meta.track;
+    if (t && defs && defs[t] && !(state[t] && state[t].done) && (state[t] || meta.heard[t])) return t;
+    var going = Object.keys(defs || {}).filter(function (id) { return state[id] && !state[id].done; })
+      .sort(function (a, b) { return lastFound(b) - lastFound(a); });
+    return going[0] || rumours()[0] || null;
+  }
+  function track(id) {
+    meta.track = id || null;
+    if (id) meta.min = false;
+    saveMeta(); refreshTracker(); if (shown()) render();
+  }
+
+  // ---- the tracker: the quest you're following, under the coins ------------------------------------------------------
+  var trEl = null, trSig = '';
+  function trackerHTML(id) {
+    var q = defs[id], begun = !!state[id], p = begun ? progress(id) : null;
+    var carry = typeof BridgeKeyItems !== 'undefined' ? BridgeKeyItems.carried(id) : [];
+    var ls = leads(id, 2);
+    return '<div class="qtr-head"><span class="qtr-kicker">' + (begun ? 'Quest' : 'Rumour') + '</span>' +
+        (p ? '<span class="qtr-n">' + p.found + ' / ' + p.total + '</span>' : '') +
+        '<button type="button" class="qtr-min" title="' + (meta.min ? 'Show' : 'Hide') + ' the details">' + (meta.min ? '+' : '\u2013') + '</button></div>' +
+      '<button type="button" class="qtr-title" title="Open the journal">' + esc(q.title) + '</button>' +
+      (meta.min ? '' :
+        (p ? '<div class="qtr-bar"><i style="width:' + Math.round(p.found / p.total * 100) + '%"></i></div>' : '<div class="qtr-rumour">' + esc(q.rumour || q.start) + '</div>') +
+        carry.map(function (it) {
+          return '<div class="qtr-carry"><img alt="" src="' + BridgeKeyItems.iconURL(it.icon, 32) + '"><span>' + esc(it.name) + (it.to ? ' \u2192 ' + esc(it.to) : '') + '</span></div>';
+        }).join('') +
+        (ls.length ? '<ul class="qtr-leads">' + ls.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' : ''));
+  }
+  function refreshTracker() {
+    if (!defs) return;
+    var on = typeof BridgeWorld !== 'undefined' && BridgeWorld.isActive && BridgeWorld.isActive() &&
+             typeof BridgeState !== 'undefined' && BridgeState.getState && BridgeState.getState() === 'world';
+    var id = on ? tracked() : null;
+    if (!trEl) {
+      if (!id) return;
+      trEl = document.createElement('div');
+      trEl.id = 'quest-tracker';
+      document.body.appendChild(trEl);
+      trEl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (e.target.closest('.qtr-min')) { meta.min = !meta.min; saveMeta(); trSig = ''; refreshTracker(); return; }
+        if (e.target.closest('.qtr-title') && typeof BridgeMenu !== 'undefined') BridgeMenu.show('journal');
+      });
+    }
+    var sig = id ? id + '|' + JSON.stringify(state[id] || 0) + '|' + !!meta.min + '|' + (BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : '') : '';
+    if (sig === trSig) return;
+    trSig = sig;
+    trEl.classList.toggle('on', !!id);
+    trEl.classList.toggle('min', !!meta.min);
+    if (id) {
+      if (trEl.dataset.q && trEl.dataset.q !== id) { trEl.classList.remove('flash'); void trEl.offsetWidth; trEl.classList.add('flash'); }
+      trEl.dataset.q = id;
+      trEl.innerHTML = trackerHTML(id);
+    }
+  }
+  setInterval(function () { refreshTracker(); }, 1000);   // (cheap: nothing's rebuilt unless what it shows has changed)
 
   // ---- the toast ---------------------------------------------------------------------------
   // ---- the log ----------------------------------------------------------------------------------
@@ -204,8 +321,12 @@ var BridgeQuests = (function () {
       out.push({ tag: 'Carrying', title: it.name, text: it.to ? 'Give it to ' + it.to + '.' : '' });
     });
     active.slice(0, 3).forEach(function (id) {
-      var p = progress(id), w = whereNext(id)[0];
-      out.push({ tag: 'Quest', title: defs[id].title + ' · ' + p.found + '/' + p.total, text: w ? 'Next, look ' + (w.known ? 'in ' : '') + w.text + '.' : '', world: w && w.known ? w.world : null });
+      var p = progress(id), w = whereNext(id)[0], l = leads(id, 1)[0];
+      out.push({ tag: 'Quest', title: defs[id].title + ' · ' + p.found + '/' + p.total, text: l || (w ? 'Next, look ' + (w.known ? 'in ' : '') + w.text + '.' : ''), world: w && w.known ? w.world : null });
+    });
+    if (!active.length) rumours().slice(0, 1).forEach(function (id) {               // nothing under way: the newest rumour
+      var b = beginOf(id);
+      out.push({ tag: 'Rumour', title: defs[id].title, text: leads(id, 1)[0] || defs[id].rumour || '', world: beenTo(b.on.world) ? b.on.world.replace(/-\*$/, '') : null });
     });
     if (typeof BridgeBusiness !== 'undefined') BridgeBusiness.summary().forEach(function (b) {
       if (b.pending > 0) out.push({ tag: 'Takings', title: b.pending + ' coins waiting', text: 'at ' + b.name + '.' });
@@ -244,7 +365,10 @@ var BridgeQuests = (function () {
   function render(el) {
     page = el || page;
     if (!page) return;
-    var ids = Object.keys(defs || {}).filter(function (id) { return state[id]; });
+    var ids = Object.keys(defs || {}).filter(function (id) { return state[id]; }), tr = tracked();
+    function trackBtn(id) {
+      return tr === id ? '<span class="jn-tracking">Tracking</span>' : '<button type="button" class="gm-btn gm-btn-sm jn-track" data-q="' + esc(id) + '">Track</button>';
+    }
     ids.sort(function (a, b) { return (!!state[a].done - !!state[b].done) || (lastFound(b) - lastFound(a)); });
     var left = '', right = '';
     // what to do next
@@ -256,12 +380,14 @@ var BridgeQuests = (function () {
     // quests: the ones under way, then the finished ones folded up
     var going = ids.filter(function (id) { return !state[id].done; }), done = ids.filter(function (id) { return state[id].done; });
     var qh = going.map(function (id) {
-      var q = defs[id], s = state[id], p = progress(id), nxt = whereNext(id);
-      return '<article class="jn-quest"><div class="jn-q-head"><span class="jn-q-title">' + esc(q.title) + '</span><span class="jn-count">' + p.found + ' / ' + p.total + '</span></div>' +
+      var q = defs[id], s = state[id], p = progress(id), nxt = whereNext(id), ls = leads(id);
+      return '<article class="jn-quest' + (tr === id ? ' tracked' : '') + '"><div class="jn-q-head"><span class="jn-q-title">' + esc(q.title) + '</span>' + trackBtn(id) +
+        '<span class="jn-count">' + p.found + ' / ' + p.total + '</span></div>' +
         '<div class="jn-bar"><i style="width:' + Math.round(p.found / p.total * 100) + '%"></i></div>' +
         '<div class="jn-q-where">' + esc(q.where) + '</div><p class="jn-q-text">' + esc(q.start) + '</p><ul class="jn-clues">' +
         q.clues.filter(function (c) { return s.clues[c.id]; }).map(function (c) { return li(esc(c.text), 'found'); }).join('') +
         carrying(id) +
+        ls.map(function (l) { return li(esc(l), 'lead'); }).join('') +
         (nxt.length ? li('Still to find: ' + nxt.map(function (w) { return esc(w.text); }).join(' · '), 'missing') : '') + '</ul></article>';
     }).join('');
     if (done.length) {
@@ -271,7 +397,15 @@ var BridgeQuests = (function () {
           '<p class="jn-q-text">' + esc(q.done) + '</p></article>';
       }).join('') + '</details>';
     }
-    left += section('Quests', ids.length ? going.length + ' under way' : '', qh || '<div class="jn-empty">None yet. People\'s rumours, odd things lying about and the notes on boards start them.</div>');
+    // rumours: quests you've heard of and not begun, with where to start
+    var rs = rumours();
+    if (rs.length) qh += '<div class="jn-sub">Rumours</div>' + rs.map(function (id) {
+      var q = defs[id], h = meta.heard[id];
+      return '<article class="jn-quest rumour' + (tr === id ? ' tracked' : '') + '"><div class="jn-q-head"><span class="jn-q-title">' + esc(q.title) + '</span>' + trackBtn(id) + '</div>' +
+        '<div class="jn-q-where">' + esc(q.where) + (h.who ? ' · heard from ' + esc(h.who) : '') + '</div><p class="jn-q-text">' + esc(q.rumour || q.start) + '</p>' +
+        '<ul class="jn-clues">' + leads(id).map(function (l) { return li(esc(l), 'lead'); }).join('') + '</ul></article>';
+    }).join('');
+    left += section('Quests', ids.length ? going.length + ' under way' : rs.length ? rs.length + ' heard of' : '', qh || '<div class="jn-empty">None yet. People\'s rumours, odd things lying about and the notes on boards start them.</div>');
     // the log
     if (logged.length) {
       var shown = logAll ? logged : logged.slice(0, 10);
@@ -285,6 +419,9 @@ var BridgeQuests = (function () {
     page.innerHTML = '<div class="jn"><div class="jn-col">' + left + '</div><div class="jn-col">' + right + '</div></div>';
     page.querySelectorAll('.jn-go').forEach(function (b) {
       b.addEventListener('click', function (e) { e.stopPropagation(); if (typeof BridgeMenu !== 'undefined') BridgeMenu.show('map', { world: b.getAttribute('data-w') }); });
+    });
+    page.querySelectorAll('.jn-track').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.stopPropagation(); track(b.getAttribute('data-q')); });
     });
     var more = page.querySelector('.jn-more');
     if (more) more.addEventListener('click', function (e) { e.stopPropagation(); logAll = !logAll; render(); });
@@ -418,5 +555,7 @@ var BridgeQuests = (function () {
            log: function () { return logged.slice(); },
            found: found, finished: finished, has: has, defs: function () { return defs || {}; }, def: function (id) { return defs ? defs[id] || null : null; },
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
+           startsHere: function (wid) { return defs ? startsHere(wid) : {}; }, hear: hear, rumours: function () { return defs ? rumours() : []; },
+           leads: leads, tracked: function () { return defs ? tracked() : null; }, track: track, refreshTracker: function () { trSig = ''; refreshTracker(); },
            reset: function () { state = {}; save(); } };
 })();
