@@ -76,7 +76,7 @@ def material(x, r):
 
 ALB = {'path': ('#7a6a50', 0.3), 'grass': ('#3e5e38', 0.3), 'grass_dark': ('#30503a', 0.3), 'stone': ('#6a6a62', 0.25)}
 I.ground(k, land, material, ALB)
-C.coast(k, land, ground=(material, ALB), palette='emerald', grass='#3e5e38', rock='#5a5a54', seed=71, beachiness=0.25,
+TERRAIN = C.coast(k, land, ground=(material, ALB), palette='emerald', grass='#3e5e38', rock='#5a5a54', seed=71, beachiness=0.25,
         beach_bias=lambda x, r: 0.9 * I.smooth(QUAY - 2.0, QUAY + 0.5, r) * (1 - I.smooth(13.0, 15.0, x) * (1 - I.smooth(28.0, 30.0, x))),
         keep_clear=[(PX - 0.4, QUAY - 0.2, PX + 1.4, SHIP_R + 0.2), (PX - 14.0, SHIP_R - 0.6, PX + 16.0, SHIP_R + 3.0),
                     (14.0, QUAY + 0.6, 29.0, QUAY + 1.6)],
@@ -259,7 +259,7 @@ Y.clear_parts(k, (SLIP[0] - 0.3, SLIP[1] + 0.3, SLIP[2], SLIP[3] + 0.6), ('coast
 Y.slip_bed(k, SLIP[0], SLIP[1], SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], random.Random(9091))
 with k.variant('slipway', 'built'):
     yr = random.Random(9092)
-    Y.slip_new(k, SLIP[0], SLIP[1], SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], yr)
+    Y.slip_new(k, SLIP[0], SLIP[1], SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], yr, ground=TERRAIN.z)
     Y.lumber(k, 5.2, 6.8, 19.15, 19.85, yr, solid=False)                 # (js/holm.js walls its lot once it's built)
 for stage in ('keel', 'frame', 'planked'):
     with k.variant('hull', stage):

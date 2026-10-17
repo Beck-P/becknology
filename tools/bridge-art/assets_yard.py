@@ -49,19 +49,28 @@ def slip_bed(k, x0, x1, r0, r1, z0, z1, rng):
     k.solid(x0, r0, x1, r1)
 
 
-def slip_new(k, x0, x1, r0, r1, z0, z1, rng):
+def slip_new(k, x0, x1, r0, r1, z0, z1, rng, ground=None):
     """The slip rebuilt over its old bed: fresh sleepers across, two oak ground ways greased dark along their tops, chocks
-    at the foot, a capstan at the head, sheer-legs over it with a block and tackle hanging."""
+    at the foot, a capstan at the head, sheer-legs over it with a block and tackle hanging. `ground(x, r)`: the land's
+    height (the coast's Terrain.z) — the old bed runs straight down and the bank bulges over it near the top, where it's
+    silted over; the new one is laid on whichever is higher, or its sleepers lie a hair under the sand, black in its
+    shadow (and close enough to the surface that the engine's depth test shows them)."""
     cx = (x0 + x1) / 2
+
+    def at(xa, xb, ra, rb, z):                                            # on the ramp, or on the ground where it's higher
+        if not ground:
+            return z
+        g = max(ground(x, r) for x in (xa, (xa + xb) / 2, xb) for r in (ra, rb))
+        return max(z, g + 0.015)
     r = r0 + 0.05
     while r < r1 - 0.2:                                                   # sleepers
-        z = deck_z(r + 0.12, r0, r1, z0, z1)
+        z = at(x0, x1, r + 0.04, r + 0.22, deck_z(r + 0.12, r0, r1, z0, z1))
         k.box(x0 + 0.05, r + 0.04, z, x1 - 0.05, r + 0.22, z + 0.05, (shade(OAK, rng.uniform(0.85, 1.05)), 0.2), 'slip_sleeper', bevel=0.01)
         r += 0.45
     for x in (cx - 0.95, cx + 0.95):                                      # the ground ways, a step at a time down the slope
         for i in range(int((r1 - r0) / 0.4)):
             ra = r0 + i * 0.4
-            z = deck_z(ra + 0.2, r0, r1, z0, z1) + 0.05
+            z = at(x - 0.17, x + 0.17, ra, ra + 0.4, deck_z(ra + 0.2, r0, r1, z0, z1)) + 0.05
             k.box(x - 0.17, ra, z, x + 0.17, ra + 0.4, z + 0.12, (OAK_D, 0.2), 'slip_way')
             k.box(x - 0.12, ra, z + 0.12, x + 0.12, ra + 0.4, z + 0.135, (GREASE, 0.05), 'slip_grease')
     zf = deck_z(r1 - 0.2, r0, r1, z0, z1)
