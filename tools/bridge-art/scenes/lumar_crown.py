@@ -177,7 +177,7 @@ C.coast(k, land, ground=(material, ALB), palette='emerald', grass=GRASS, rock='#
 
 
 # ---- paving --------------------------------------------------------------------------------------------------------
-def flags(x0, r0, x1, r1, tone, w=(0.5, 1.0), h=(0.42, 0.62), part='flagstone', skip=None, gap=0.025):
+def flags(x0, r0, x1, r1, tone, w=(0.42, 0.78), h=(0.32, 0.46), part='flagstone', skip=None, gap=0.022):
     """Big flags in running bond, the courses of random height so no seam lines up with the tiles."""
     k.box(x0, r0, -0.12, x1, r1, -0.035, ('#2e2b26', 0.2), 'grout')
     r = r0
@@ -192,7 +192,7 @@ def flags(x0, r0, x1, r1, tone, w=(0.5, 1.0), h=(0.42, 0.62), part='flagstone', 
             cx, cr = (a0 + a1) / 2, r + hh / 2
             if a1 - a0 > 0.1 and not under(cx, cr) and not (skip and skip(cx, cr)):
                 k.box(a0 + gap, r + gap, -0.05, a1 - gap, r + hh - gap, rng.uniform(-0.008, 0.01),
-                      (shade(tone, rng.uniform(0.86, 1.1)), 0.16), part, bevel=0.016)
+                      (shade(tone, rng.uniform(0.92, 1.06)), 0.16), part, bevel=0.016)
             x += ww
         r += hh
 
@@ -205,8 +205,9 @@ def kerb(x0, x1, r, d=0.16, tone='#b0a490'):
         x += w
 
 
-def cobble_area(x0, r0, x1, r1, tone='#8e8678', worn=None):
-    W.cobbles(k, x0, r0, x1, r1, tone=tone, size=0.27, skip=lambda x, r: under(x, r) or (worn and worn(x, r)))
+def cobble_area(x0, r0, x1, r1, tone='#a59c8a', worn=None, skip=None):
+    k.box(x0, r0, -0.11, x1, r1, -0.025, ('#7a705e', 0.3), 'path_grit')       # sandy grit between the stones
+    W.cobbles(k, x0, r0, x1, r1, tone=tone, size=0.27, skip=lambda x, r: under(x, r) or (worn and worn(x, r)) or (skip and skip(x, r)))
 
 
 SQ = (32.0, 18.5)                                   # the fountain
@@ -218,16 +219,16 @@ def ring_d(x, r):
 
 # the grand square, the Exchange's forecourt, the church's: big pale flags; setts in rings round the fountain
 SQUARE = (21.6, 12.1, 43.0, 23.0)
-flags(*SQUARE, '#a8a090', w=(0.6, 1.2), h=(0.5, 0.7), skip=lambda x, r: 1.35 < ring_d(x, r) < 3.55)
+flags(*SQUARE, '#b0a693', w=(0.5, 0.9), h=(0.36, 0.5), skip=lambda x, r: 1.35 < ring_d(x, r) < 3.55)
 for (x0, r0, x1, r1) in ((11.0, 19.0, 21.6, 23.0), (11.0, 11.0, 12.4, 19.0), (43.0, 18.4, 53.0, 23.0), (51.0, 11.0, 53.0, 18.4),
                          (12.4, 11.0, 17.0, 12.6), (47.0, 11.0, 51.0, 12.1), (17.0, 12.0, 21.6, 12.6)):
-    flags(x0, r0, x1, r1, '#a09888')
+    flags(x0, r0, x1, r1, '#aaa08e')
 # rings of setts: a dark band, pale between, a dark band
 rr = 1.42
 band = 0
 while rr < 3.5:
     n = int(2 * math.pi * rr / 0.27)
-    tone = '#6e685e' if band in (0, 7) else ('#b4ab98' if band % 2 else '#a29a88')
+    tone = '#857e70' if band in (0, 7) else ('#b4ab98' if band % 2 else '#aaa290')
     for i in range(n):
         a = (i + 0.5 * (band % 2)) / n * math.tau
         cx, cr = SQ[0] + math.cos(a) * rr, SQ[1] + math.sin(a) * rr
@@ -244,14 +245,23 @@ def worn(x, r):
     return n > 1.45
 
 
+AV = (30.9, 33.1)                                    # the avenue's flagged way up the middle, quay to square
 kerb(11.0, 53.0, 23.0)
-cobble_area(11.0, 23.16, 53.0, 25.4, worn=worn)
-for (x0, x1) in ((27.4, 37.4), (21.0, 22.6), (16.4, 16.8), (42.6, 43.2), (46.8, 47.2), (50.4, 53.0), (11.0, 11.6)):
+cobble_area(11.0, 23.16, 53.0, 25.4, worn=worn, skip=lambda x, r: AV[0] - 0.12 < x < AV[1] + 0.12)
+flags(AV[0], 23.16, AV[1], 29.6, '#aaa08e', w=(0.4, 0.7))
+for (xa, xb) in ((AV[0] - 0.16, AV[0]), (AV[1], AV[1] + 0.16)):
+    r = 23.16
+    while r < 29.55:
+        hh = rng.uniform(0.5, 0.9)
+        k.box(xa + 0.01, r + 0.012, -0.02, xb - 0.01, min(29.6, r + hh) - 0.012, 0.05, (shade('#a89c88', rng.uniform(0.86, 1.04)), 0.1), 'kerb', bevel=0.012)
+        r += hh
+cobble_area(27.4, 25.4, AV[0] - 0.16, 29.6, worn=worn)
+cobble_area(AV[1] + 0.16, 25.4, 37.4, 29.6, worn=worn)
+for (x0, x1) in ((21.0, 22.6), (16.4, 16.8), (42.6, 43.2), (46.8, 47.2), (50.4, 53.0), (11.0, 11.6)):
     cobble_area(x0, 25.4, x1, 29.6, worn=worn)
 flags(11.0, 29.6, 53.0, 30.45, '#a89c88', w=(0.32, 0.6), h=(0.2, 0.3), part='paving_flag', gap=0.015)
 kerb(11.0, 53.0, 30.45)
-k.box(11.0, 30.61, -0.11, 53.0, QUAY + 0.62, -0.025, ('#6e6452', 0.3), 'path_grit')       # sandy grit where the cobbles are worn
-cobble_area(11.0, 30.61, 53.0, QUAY + 0.62, tone='#958c7c', worn=worn)
+cobble_area(11.0, 30.61, 53.0, QUAY + 0.62, tone='#a09684', worn=worn)
 # the coping along the quay's edge: long dressed stones, a little proud
 x = 11.6
 while x < 50.4:
@@ -683,9 +693,6 @@ for s in (-1, 1):
 # the roofs: the hall's (slate courses, its ridge along the street) and the portico's running back into it
 EOVER = 0.32
 rm_e, zr_e = W._gable_roof(k, EX[0], EX[1], EX[2], EXF, 3.5, 1.7, '#4a5a66', over=EOVER)
-t_ = (APEX - 3.44) / max(0.1, zr_e - 3.44)
-r_meet = (EXF + EOVER) - ((EXF + EOVER) - rm_e) * min(1.0, t_) - 0.12
-ns_roof(ECX, EX[1] - EX[0] - 0.2, PR + 0.42, r_meet, ZE + 0.06, APEX + 0.06, '#4a5a66')
 for (ux, uz) in ((ECX, APEX + 0.06), (EX[0] + 0.3, ZE), (EX[1] - 0.3, ZE)):        # urns on the pediment
     k.cyl(ux, PR + 0.3, uz, uz + 0.08, 0.12, (shade(ASHLAR, 1.05), 0.1), 'urn', verts=12)
     k.blob(ux, PR + 0.3, uz + 0.22, 0.12, 0.12, 0.14, (shade(ASHLAR, 1.05), 0.1), 'urn', segs=10)
