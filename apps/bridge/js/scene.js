@@ -25,10 +25,10 @@
  *                   "facing": "down", "pose": "sit" } ],
  *     "sky": [1, 0.6, 15, 3]          // optional: screen-tile rect behind the
  *                                    // render's transparent holes (windows)
- *     "lift": [[0, 0, 1.2, …], …]    // optional: ground height per tile (tiles of z, at each tile's centre)
+ *     "heights": [[0, 0, 1.2, …], …] // optional: ground height per tile (tiles of z, at each tile's centre)
  *   }
  *
- * Walkable height (scene.lift; the cliff town's terraces): wherever the ground stands up, everyone standing there is
+ * Walkable height (scene.heights; the cliff town's terraces): wherever the ground stands up, everyone standing there is
  * drawn raised by z·cos 45° (the height between tile centres blended), their feet on the terrace. Their foot row stays
  * their true row, which is what keeps the depth test right — a pixel h tiles above raised feet is h + z tiles up, and
  * the formula below already gives it that depth. liftAt / liftPx answer how high the ground is anywhere.
@@ -339,7 +339,8 @@ var BridgeScene = (function () {
   // then one tile came out blank: a dark rectangle over the room.
   function drawBackground(ctx, sc, world, offX, offY, now) {
     var m = sc.meta;
-    sc.liftZ = (world.scene && world.scene.lift) || null;
+    var hz = world.scene && world.scene.heights;                 // (scene.lift is the chairlift's cables on Hoarfell)
+    sc.liftZ = Array.isArray(hz) && hz.length ? hz : null;
     var x = Math.round(offX - m.originX), y = Math.round(offY - m.originY);
     var v = visible(m.width, m.height, x, y, ctx.canvas.width, ctx.canvas.height);
     if (!v) return;

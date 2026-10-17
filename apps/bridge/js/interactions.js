@@ -156,7 +156,7 @@ var BridgeInteractions = (function () {
     var cx = view.offX + (t.x + 0.5) * view.ts;
     var cy = view.offY + (t.y - promptLift(t)) * view.ts;
     var lw = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld && BridgeWorld.getWorld();
-    var lsc = lw && lw.scene && lw.scene.lift && typeof BridgeScene !== 'undefined' && BridgeScene.get(lw.scene.id);
+    var lsc = lw && lw.scene && Array.isArray(lw.scene.heights) && typeof BridgeScene !== 'undefined' && BridgeScene.get(lw.scene.id);
     if (lsc) cy -= BridgeScene.liftAt(lsc, t.x + 0.5, t.y + 0.5) * Math.SQRT1_2 * view.ts;   // on raised ground, over it there
     var w = el.offsetWidth || 120, h = el.offsetHeight || 28;
     var x = Math.round(Math.max(8, Math.min(window.innerWidth - w - 8, cx - w / 2)));

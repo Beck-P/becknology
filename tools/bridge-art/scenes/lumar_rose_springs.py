@@ -13,7 +13,7 @@ at the foot, the street up from the cove.
 
   rows 0-7    the silk groves (z 3.2): trees with glowing cocoons, the drying lines, the weavers' shed
   rows 8-20   the terraces: four levels of pools (z 2.4, 1.6, 0.8, 0.0 down the slope), a stair of white stone down
-              the middle with a landing on each; the bathing pools you can wade into (scene.lift sinks you to the waist)
+              the middle with a landing on each; the bathing pools you can wade into (scene.heights sinks you to the waist)
   rows 21-27  the street: houses, lamps, the way back down to the cove at its south edge
 """
 import json
@@ -380,7 +380,7 @@ for (x0, x1, r0, r1, z, i) in POOLS:
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
             actors=[{'sheet': 'npc-rose-seren', 'x': 21, 'y': 5, 'facing': 'down'},
                     {'sheet': 'npc-rose-amaryllis', 'x': 25, 'y': 24, 'facing': 'down'}] + BATHERS,
-            scene_extra={'smoke': [], 'steam': STEAM, 'lift': LIFT})
+            scene_extra={'smoke': [], 'steam': STEAM, 'heights': LIFT})
 w = json.load(open(WORLD))
 for r in range(ROWS):
     for c in range(COLS):

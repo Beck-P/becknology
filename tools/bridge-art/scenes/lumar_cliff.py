@@ -19,7 +19,7 @@ How it's laid out (rows run toward you, z is up; everything on the terraces is b
   rows 29-31  the old port, z 0: the quay, the fish taverna, boathouses, the donkeys; the pier south from row 32
 
 The ground's height is one function (H) for everything: the land's mesh, where things stand, and the world's
-`scene.lift` — the height of every tile, so the game draws whoever stands on a terrace up on it (js/scene.js).
+`scene.heights` — the height of every tile, so the game draws whoever stands on a terrace up on it (js/scene.js).
 """
 import json
 import math
@@ -759,7 +759,7 @@ apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + FPIER, scene_id='
                     {'sheet': 'npc-cliff-despina', 'x': 32, 'y': 11, 'facing': 'down'},
                     {'sheet': 'npc-cliff-ilias', 'x': 23, 'y': 11, 'facing': 'down'},
                     {'sheet': 'npc-cliff-aris', 'x': 26, 'y': 19, 'facing': 'down'}],
-            scene_extra={'backdrop': True, 'smoke': SMOKE, 'steam': [[VENT[0], round(VENT[1] - (vz + 0.2) * C45, 2)]], 'lift': LIFT})
+            scene_extra={'backdrop': True, 'smoke': SMOKE, 'steam': [[VENT[0], round(VENT[1] - (vz + 0.2) * C45, 2)]], 'heights': LIFT})
 w = json.load(open(WORLD))
 for r in range(ROWS):
     for c in range(COLS):

@@ -2,7 +2,7 @@
 // Sapphire Port; Rosewell, the bathhouse town on Rose Cove's springs, its bathhouse and tea house. Every place loads and
 // can be reached from where it's meant to be (the gate on Sapphire Port's quay, the path up from Rose Cove, the
 // sloop's pier); every interaction stands where you can reach it; standing on a terrace draws you up on it and wading
-// into a pool sinks you (scene.lift); the places do what they say (the donkeys, the tavernas, the church's lamp, the
+// into a pool sinks you (scene.heights); the places do what they say (the donkeys, the tavernas, the church's lamp, the
 // lantern maker, blowing glass, the bath, the pools, tea, the silk groves and the looms, a reading); shots of each
 // place by day, at golden hour and by night (`shots/b1_*.png`).
 // node world/seas_b1.js [shots]
@@ -54,7 +54,7 @@ const PLACES = [
     const far = W.interactions.filter(it => !(open(it.x, it.y) || [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].some(d => open(it.x + d[0], it.y + d[1]))));
     const sp = W.spawns.player, walk = C.flat().filter(v => v === 0).length;
     console.log(`seas: ${w} · ${W.width}×${W.height} · walkable ${walk} · interactions ${W.interactions.length} · actors ${(W.scene.actors || []).length}` +
-      ` · lift ${W.scene.lift ? 'yes' : 'no'} · spawn open ${open(sp[0], sp[1])}`);
+      ` · lift ${W.scene.heights ? 'yes' : 'no'} · spawn open ${open(sp[0], sp[1])}`);
     if (!open(sp[0], sp[1])) bad(w + ' spawn ' + sp + ' is not walkable');
     far.forEach(it => bad(`${w}: ${it.label} at ${it.x},${it.y} has nowhere to stand by it`));
     const people = await ev(() => fetch('/bridge/assets/people.json').then(r => r.json()));

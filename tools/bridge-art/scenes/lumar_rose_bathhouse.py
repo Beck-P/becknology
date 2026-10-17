@@ -4,7 +4,7 @@ Usage: BVENV/bin/python lumar_rose_bathhouse.py RENDER_DIR
 Under the three rose domes: a hall of blue tiles (the Sapphire Glassworks made them, a hundred all the same), the great
 round bath sunk in the middle of the floor, its water hot from the springs and faintly pink, steps down into it all
 round, columns holding up the dome's ring, lattice windows lit from outside, benches with folded towels, a fountain
-of a fish spitting hot water into the bath, Oda at her counter by the door. Wade in: the floor's height (scene.lift)
+of a fish spitting hot water into the bath, Oda at her counter by the door. Wade in: the floor's height (scene.heights)
 takes you down the steps up to your shoulders. Use the bath (`bath`, js/rose.js) to rest and warm up.
 """
 import json
@@ -132,5 +132,5 @@ apply_world(WORLD, k, FLOOR, doors=DOORS, scene_id=WID, actors=[
     {'sheet': 'npc-rose-oda', 'x': 14, 'y': 9, 'facing': 'down'},
     {'sheet': 'npc-rose-bather-a', 'x': 6, 'y': 6, 'facing': 'right', 'pose': 'sit'},
     {'sheet': 'npc-rose-bather-b', 'x': 11, 'y': 7, 'facing': 'left', 'pose': 'sit'},
-], scene_extra={'lift': LIFT, 'steam': [[BATH[0] - 1.5, BATH[1]], [BATH[0] + 1.5, BATH[1] + 0.3], [BATH[0], BATH[1] - 0.8]]})
+], scene_extra={'heights': LIFT, 'steam': [[BATH[0] - 1.5, BATH[1]], [BATH[0] + 1.5, BATH[1] + 0.3], [BATH[0], BATH[1] - 0.8]]})
 print('bathhouse done')
