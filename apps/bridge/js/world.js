@@ -185,6 +185,30 @@ var BridgeWorld = (function () {
     ctx.restore();
   }
 
+  // a quest starts here: a gold ! on a dark shield, bobbing, with a soft glow and a pulse ring now and then
+  function drawQuestMark(ctx, cx, cy, ts, now) {
+    var s = Math.max(1, Math.round(ts / 22));          // a few screen px a unit, whole
+    cy += Math.round(Math.sin(now / 420 + cx * 0.02) * 2.5);
+    ctx.save();
+    var pulse = (now % 2200) / 2200;
+    if (pulse < 0.5) {
+      ctx.globalAlpha = 0.5 * (1 - pulse * 2);
+      ctx.strokeStyle = '#ffd56a'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(cx, cy, 9 * s + pulse * 16 * s, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    var g = ctx.createRadialGradient(cx, cy, 2, cx, cy, 16 * s);
+    g.addColorStop(0, 'rgba(255, 210, 100, 0.45)'); g.addColorStop(1, 'rgba(255, 210, 100, 0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 16 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(30, 20, 8, 0.9)';
+    ctx.beginPath(); ctx.moveTo(cx, cy - 10 * s); ctx.lineTo(cx + 8 * s, cy); ctx.lineTo(cx, cy + 10 * s); ctx.lineTo(cx - 8 * s, cy); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#ffd56a'; ctx.lineWidth = Math.max(1.5, s); ctx.stroke();
+    ctx.fillStyle = '#ffe08a';
+    ctx.fillRect(Math.round(cx - s), Math.round(cy - 6 * s), 2 * s, 7 * s);
+    ctx.fillRect(Math.round(cx - s), Math.round(cy + 3 * s), 2 * s, 2 * s);
+    ctx.restore();
+  }
+
   function initParticles() {
     particles = [];
     if (!world || !world.tileGlow) return;
@@ -451,6 +475,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeDungeon !== 'undefined') BridgeDungeon.decorate(worldId, data);     // the Undercroft: tonight's crypt
         if (typeof BridgeFestivals !== 'undefined') BridgeFestivals.decorate(worldId, data); // a festival's props, stall and contest
         if (typeof BridgeEvents !== 'undefined') BridgeEvents.decorate(worldId, data);       // small happenings on the hour
+        if (typeof BridgeMidnight !== 'undefined') BridgeMidnight.decorate(worldId, data);   // the haunted sea: the tower, Saltmere
         if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.decorate(worldId, data);   // the cast keep their day
         if (typeof BridgeHome !== 'undefined') BridgeHome.decorate(worldId, data);       // last: it keeps the rest clear
         if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);
@@ -1128,6 +1153,22 @@ var BridgeWorld = (function () {
           drawBadge(ctx, offX + ccx * ts, offY + (cl.minY - (kinds[ki][0] === 'game' ? 0.7 : 0.35)) * ts, kinds[ki][0],
                     exitDir(cl), dist, now);
         }
+      }
+    }
+    // A gold ! over whoever (or whatever) starts a quest you haven't begun (js/quests.js startsHere) — the start only,
+    // never the clues after it. It stays up when you're next to them, above the prompt pill.
+    if (world.interactions && typeof BridgeQuests !== 'undefined' && BridgeQuests.startsHere) {
+      var starts = BridgeQuests.startsHere(currentWorldId), marked = {};
+      for (var si = 0; si < world.interactions.length; si++) {
+        var sit = world.interactions[si];
+        if (!sit.label || !starts[sit.label] || marked[sit.label] || typeof sit.x !== 'number') continue;
+        marked[sit.label] = 1;
+        // over the person's own figure when they're a scene actor (a queen on her throne isn't where you talk to her from)
+        var who = typeof BridgePeople !== 'undefined' && BridgePeople.find ? BridgePeople.find(currentWorldId, sit.label) : null;
+        var act = who && who.sheet && world.scene && world.scene.actors ? world.scene.actors.filter(function (a) { return a.sheet === who.sheet; })[0] : null;
+        var mx = act ? act.x + 0.5 : sit.x + 0.5;
+        var my = act ? act.y + (act.pose === 'sit' ? 0.55 : 0.9) - 45 / 32 - (act.lift || 0) * Math.SQRT1_2 - 0.4 : sit.y - 0.85;
+        drawQuestMark(ctx, offX + mx * ts, offY + my * ts, ts, now);
       }
     }
     if (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.placePrompt) {

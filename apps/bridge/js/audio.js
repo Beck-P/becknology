@@ -28,7 +28,7 @@ var BridgeAudio = (function () {
   try { prefs = Object.assign(prefs, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* defaults */ }
   function savePrefs() { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) { /* private mode */ } }
 
-  var ac = null, master, musicBus, ambBus, sfxBus, revIn, dlyIn, noiseBuf = null, meter = null;
+  var ac = null, master, musicBus, ambBus, sfxBus, wetBus, revIn, dlyIn, noiseBuf = null, meter = null;
   var wanted = null;            // { theme, amb } waiting for the context
 
   // ---- the graph -----------------------------------------------------------------------------
@@ -44,16 +44,19 @@ var BridgeAudio = (function () {
     meter = ac.createAnalyser(); meter.fftSize = 2048; comp.connect(meter);
     musicBus = ac.createGain(); ambBus = ac.createGain(); sfxBus = ac.createGain();
     musicBus.connect(master); ambBus.connect(master); sfxBus.connect(master);
+    // the reverb and echo come back through their own bus: every note sends to them directly, not through the music's
+    // bus, so without this turning the music off left its echoes playing (Alyssa: "the mute button doesn't mute")
+    wetBus = ac.createGain(); wetBus.connect(master);
     // a reverb (a decaying burst of noise as the room) and a filtered echo
     var conv = ac.createConvolver();
     conv.buffer = impulse(2.8, 2.4);
     revIn = ac.createGain(); revIn.gain.value = 1;
     var revOut = ac.createGain(); revOut.gain.value = 0.55;
-    revIn.connect(conv); conv.connect(revOut); revOut.connect(master);
+    revIn.connect(conv); conv.connect(revOut); revOut.connect(wetBus);
     dlyIn = ac.createGain();
     var dl = ac.createDelay(2), fb = ac.createGain(), lp = ac.createBiquadFilter();
     dl.delayTime.value = 0.42; fb.gain.value = 0.32; lp.type = 'lowpass'; lp.frequency.value = 2200;
-    dlyIn.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(revIn); lp.connect(master);
+    dlyIn.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(revIn); lp.connect(wetBus);
     noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
     var nd = noiseBuf.getChannelData(0);
     for (var i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
@@ -80,6 +83,8 @@ var BridgeAudio = (function () {
     musicBus.gain.setTargetAtTime(prefs.mode === 'all' ? prefs.music * 0.5 : 0, t, 0.4);
     ambBus.gain.setTargetAtTime(prefs.mode === 'all' ? prefs.amb * 0.5 : 0, t, 0.4);
     sfxBus.gain.setTargetAtTime(prefs.mode === 'off' ? 0 : prefs.sfx * 0.6, t, 0.05);
+    wetBus.gain.setTargetAtTime(prefs.mode === 'all' ? 1 : 0, t, 0.05);          // the room's echo is the music's (effects play dry)
+    master.gain.setTargetAtTime(prefs.mode === 'off' ? 0 : 0.9, t, 0.05);         // off is off: nothing gets out
   }
 
   function unlock() {
@@ -704,6 +709,15 @@ var BridgeAudio = (function () {
     open:    function (t) { [79, 86].forEach(function (m, i) { voice(sfxBus, t + i * 0.05, 0.08, { type: 'sine', freq: hz(m), gain: 0.07, a: 0.003, d: 0.2, s: 0.2, r: 0.2, rev: 0.3 }); }); },
     close:   function (t) { [86, 79].forEach(function (m, i) { voice(sfxBus, t + i * 0.05, 0.06, { type: 'sine', freq: hz(m), gain: 0.05, a: 0.003, d: 0.15, s: 0.1, r: 0.15 }); }); },
     door:    function (t) { noiseHit(sfxBus, t, 0.45, { freq: 700, ftype: 'bandpass', q: 0.8, gain: 0.12, rev: 0.3 }); voice(sfxBus, t, 0.1, { type: 'sine', freq: 90, glide: 1.4, gain: 0.08, a: 0.01, d: 0.2, s: 0, r: 0.2 }); },
+    // getting round Arcadia (js/transit.js): a lift's chime, a cab pulling away, the Loop's doors and her rumble overhead
+    ding:    function (t) { [84, 79].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.16, m, 0.22, 1.1); }); },
+    cab:     function (t) { whoosh(t, 0.9, 200, 900, 0.1, 0.7); voice(sfxBus, t, 1.0, { type: 'sawtooth', freq: 70, glide: 2.2, glideT: 0.9, gain: 0.03, a: 0.1, d: 0.5, s: 0.5, r: 0.3, cutoff: 600 }); },
+    doors:   function (t) { noiseHit(sfxBus, t, 0.35, { freq: 2600, ftype: 'bandpass', q: 0.7, gain: 0.06 }); [76, 72].forEach(function (m, i) { voice(sfxBus, t + 0.05 + i * 0.22, 0.16, { type: 'sine', freq: hz(m), gain: 0.04, a: 0.005, d: 0.2, s: 0.3, r: 0.2, rev: 0.3 }); }); },
+    train:   function (t) {                                // the Loop over the street: a rising rumble, the rails clicking, gone
+      noiseHit(sfxBus, t, 4.2, { freq: 160, ftype: 'lowpass', gain: 0.16, rev: 0.5 });
+      voice(sfxBus, t, 4.0, { type: 'sawtooth', freq: 48, glide: 1.3, glideT: 4, gain: 0.03, a: 1.4, d: 1.5, s: 0.5, r: 1.0, cutoff: 300 });
+      for (var i = 0; i < 12; i++) noiseHit(sfxBus, t + 0.8 + i * 0.24 + (i % 2) * 0.06, 0.04, { freq: 1800, ftype: 'bandpass', q: 3, gain: 0.03 });
+    },
     coin:    function (t) { voice(sfxBus, t, 0.05, { type: 'square', freq: hz(88), gain: 0.05, a: 0.001, d: 0.06, s: 0.3, r: 0.05, cutoff: 5000 }); voice(sfxBus, t + 0.07, 0.18, { type: 'square', freq: hz(95), gain: 0.05, a: 0.001, d: 0.2, s: 0.3, r: 0.2, cutoff: 5000, rev: 0.2 }); },
     clue:    function (t) { [72, 76, 79, 84].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.09, m, 0.3, 1.3); }); },
     // a quest's thing held up (js/keyitems.js): a bright rising run, then a held chord with bells over it
@@ -844,6 +858,12 @@ var BridgeAudio = (function () {
     swing_cast:  function (t) { [84, 88, 91, 96].forEach(function (m, i) { voice(sfxBus, t + i * 0.03, 0.05, { type: 'sine', freq: hz(m), gain: 0.035, a: 0.002, d: 0.15, s: 0, r: 0.15, rev: 0.4 }); }); whoosh(t, 0.14, 2000, 6000, 0.05, 0.8); },
     swing_great: function (t) { whoosh(t, 0.26, 500, 2400, 0.15, 0.9); },
     swing_pick:  function (t) { whoosh(t, 0.12, 900, 2000, 0.1, 1.0); },
+    // the bow (js/arms.js, js/bows.js): the creak of the draw, the string's thrum on the loose, an arrow going home
+    bow_draw:    function (t) { voice(sfxBus, t, 0.28, { type: 'sawtooth', freq: 140, glide: 1.6, glideT: 0.3, gain: 0.018, a: 0.05, d: 0.25, s: 0, r: 0.05, cutoff: 900 }); },
+    bow_full:    function (t) { voice(sfxBus, t, 0.08, { type: 'triangle', freq: 520, gain: 0.025, a: 0.002, d: 0.08, s: 0, r: 0.05 }); },
+    swing_bow:   function (t) { voice(sfxBus, t, 0.14, { type: 'triangle', freq: 196, glide: 0.92, glideT: 0.14, gain: 0.07, a: 0.001, d: 0.14, s: 0, r: 0.08 }); whoosh(t + 0.02, 0.1, 3000, 6000, 0.05, 2.0); },
+    impact_bow:  function (t) { noiseHit(sfxBus, t, 0.06, { freq: 900, ftype: 'bandpass', q: 1.6, gain: 0.14 }); voice(sfxBus, t, 0.05, { type: 'sine', freq: 240, glide: 0.6, glideT: 0.05, gain: 0.08, a: 0.001, d: 0.05, s: 0, r: 0.04 }); },
+    arrow_thunk: function (t) { noiseHit(sfxBus, t, 0.05, { freq: 500, ftype: 'bandpass', q: 1.2, gain: 0.12 }); voice(sfxBus, t, 0.04, { type: 'sine', freq: 180, glide: 0.7, glideT: 0.04, gain: 0.06, a: 0.001, d: 0.04, s: 0, r: 0.03 }); },
     impact_blade: function (t) {
       voice(sfxBus, t, 0.02, { type: 'square', freq: 2600, glide: 0.6, glideT: 0.04, gain: 0.04, a: 0.001, d: 0.04, s: 0, r: 0.03, cutoff: 7000 });
       noiseHit(sfxBus, t, 0.08, { freq: 1400, ftype: 'bandpass', q: 1.2, gain: 0.12 });
