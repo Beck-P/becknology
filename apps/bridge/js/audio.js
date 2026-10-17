@@ -256,7 +256,7 @@ var BridgeAudio = (function () {
     id = id || '';
     var ts = (w && w.tileset) || '';
     var amb;
-    if (/^(bridge|quarters|hangar|gameroom)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
+    if (/^(bridge|quarters|hangar|gameroom|office)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
     if (id === 'arcadia' || id === 'arcadia-lucky-7') return { theme: 'arcade', amb: ['crowd', 'bleeps'] };
     if (id === 'arcadia-club') return { theme: 'club', amb: ['crowd'] };
     if (id === 'arcadia-casino') return { theme: 'casino', amb: ['crowd', 'slots'] };            // the Neon Royale's floor

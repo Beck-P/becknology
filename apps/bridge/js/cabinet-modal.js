@@ -45,7 +45,7 @@ var BridgeCabinetModal = (function () {
     var id = (typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId()) || '';
     if (/^enigma/.test(id)) return 'enigma';
     if (/^singularity/.test(id)) return 'void';
-    if (/^(bridge|quarters|hangar|gameroom)$/.test(id)) return 'ship';
+    if (/^(bridge|quarters|hangar|gameroom|office)$/.test(id)) return 'ship';
     if (/^lumar/.test(id)) return 'lumar';
     return 'arcadia';
   }

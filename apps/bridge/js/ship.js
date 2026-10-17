@@ -16,7 +16,7 @@
  * shadow and dust, by drawWorld (called from world.js every frame).
  */
 var BridgeShip = (function () {
-  var SHIP = { bridge: 1, quarters: 1, hangar: 1, gameroom: 1 };
+  var SHIP = { bridge: 1, quarters: 1, hangar: 1, gameroom: 1, office: 1 };
   var LANDING = { lumar: 'lumar', arcadia: 'arcadia-skypad', enigma: 'enigma-dock', singularity: 'singularity', verdance: 'verdance-village', hoarfell: 'hoarfell', sylvara: 'sylvara' };   // Verdance: Brambleford's green, the farm's up the lane
   var HANGAR_SPAWN = { x: 8, y: 9 };
   var anim = null;      // the shuttle in the air in this world
