@@ -9,6 +9,7 @@ the gallery, the chart table in the middle (its hologram is drawn live by
 js/worlds/bridge.js), the navigator's desk, the wireless and the letter
 rack, engineering's aether gauges, the sensor scope, the chandler's ledger.
 Doors: the quarters and the captain's office (scenes/office.py) south, the
+passage aft to the fitted rooms (scenes/ship_passage.py) south-east, the
 hangar west, the game room east. Hired crew stand at the posts in the world
 JSON's `crewPosts` (js/crew.js).
 Decor slots (assets_deck.DECOR) are variants the engine shows when owned;
@@ -39,7 +40,8 @@ MULL = D.gallery_wall(k, 0.5, 20.5, RF, H, WIN)
 D.side_wall(k, 0.4, 1.0, 3.5, 13.0, H, door=(9.0, 11.0))     # to the hangar
 D.side_wall(k, 20.0, 20.6, 3.5, 13.0, H, door=(7.0, 9.0), face=-1)   # to the game room
 D.front_wall(k, 0.4, 8.0, 13.0, door=(5.0, 7.0))               # to the captain's office
-D.front_wall(k, 8.0, 20.6, 13.0, door=(9.0, 12.0))             # to the quarters
+D.front_wall(k, 8.0, 12.6, 13.0, door=(9.0, 12.0))             # to the quarters
+D.front_wall(k, 12.6, 20.6, 13.0, door=(13.0, 15.0))           # aft, to the passage
 D.helm_dais(k, 7.95, RF, 13.05, 6.95)
 D.compass_rose(k, 10.5, 6.4, 0.42, z=0.012)
 for mx in MULL:
@@ -104,7 +106,7 @@ k.point_light(17.5, 10.6, 2.3, '#ffc890', 35, radius=0.5)
 k.render(OUT, light_states={'full': {'pulse': 1.0, 'flicker': 1.0}, 'dim': {'pulse': 0.6, 'flicker': 0.8}},
          light_samples=128, world_light=('#2a2438', 0.4))
 
-apply_world(WORLD, k, (1, 4, 19, 12), doors=[(9, 13), (10, 13), (11, 13), (5, 13), (6, 13), (0, 9), (0, 10), (20, 7), (20, 8)], scene_id='bridge',
+apply_world(WORLD, k, (1, 4, 19, 12), doors=[(9, 13), (10, 13), (11, 13), (5, 13), (6, 13), (13, 13), (14, 13), (0, 9), (0, 10), (20, 7), (20, 8)], scene_id='bridge',
             scene_extra={'flicker': {'mode': 'pulse'},
                          'sky': [WIN[0], round(RF - WIN[3] * C, 3), WIN[1], round(RF - WIN[2] * C, 3)]})
 print('bridge done')

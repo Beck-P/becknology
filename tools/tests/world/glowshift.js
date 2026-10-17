@@ -3,7 +3,7 @@
 // compares the glow added, moved back into line: it should be the same wherever the camera stands.
 // node world/glowshift.js [shots] [world] [x,y]
 const { chromium } = require('playwright');
-const SHOTS = process.argv[2] || __dirname + '/shots', WORLD = process.argv[3] || 'arcadia-street', POS = (process.argv[4] || '20,10').split(',').map(Number);
+const SHOTS = process.argv[2] || __dirname + '/shots', WORLD = process.argv[3] || 'arcadia-street', POS = (process.argv[4] || '20,10').split(',').map(Number), KEEP_SCENE = process.argv[5] === 'scene';
 (async () => {
   const b = await chromium.launch({ executablePath: require(__dirname + '/../chrome.js'), args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await (await b.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
@@ -16,7 +16,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots', WORLD = process.argv[3] |
   await p.evaluate((w) => new Promise(r => BridgeWorld.load(w, () => { BridgeState.transition('world', { worldId: w }); r(); })), WORLD);
   await p.evaluate((q) => { BridgeCharacter.init(q[0], q[1]); if (BridgeWorld.snapCamera) BridgeWorld.snapCamera(); }, POS);
   await p.waitForTimeout(2000);
-  const r = await p.evaluate(() => new Promise((done) => {
+  const r = await p.evaluate((KEEP) => new Promise((done) => {
     // catch one finished frame on its way to the card
     const orig = BridgeGPU.present;
     BridgeGPU.present = function (buf, w, h, opts) {
@@ -29,7 +29,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots', WORLD = process.argv[3] |
         const glowOf = (dx, dy) => {                 // the frame moved by (dx, dy), through the card: the glow it adds
           const s = document.createElement('canvas'); s.width = w; s.height = h;
           s.getContext('2d').drawImage(keep, dx, dy);
-          const o = orig.call(BridgeGPU, s, w, h, Object.assign({}, opts, { scene: null, guess: 1, glow: 1, vignette: 0, offX: opts.offX + dx, offY: opts.offY + dy }));
+          const o = orig.call(BridgeGPU, s, w, h, Object.assign({}, opts, { scene: KEEP ? opts.scene : null, guess: KEEP ? opts.guess : 1, glow: 1, vignette: 0, offX: opts.offX + dx, offY: opts.offY + dy }));
           if (!o) return null;
           const c = document.createElement('canvas'); c.width = w; c.height = h;
           const g = c.getContext('2d'); g.drawImage(o, 0, 0);
@@ -54,7 +54,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots', WORLD = process.argv[3] |
       }, 50);
       return out;
     };
-  }));
+  }), KEEP_SCENE);
   console.log('glow shift:', JSON.stringify(r));
   await p.screenshot({ path: SHOTS + '/glowshift_' + WORLD + '.png' });
   const bad = r.gpu && r.shifts.some((s) => s.meanDiff > 0.05 * Math.max(1, r.glowMean) + 0.02);

@@ -225,6 +225,10 @@ NOT_GROUND = {'roof', 'wall', 'post', 'rail', 'fence', 'house', 'stall', 'table'
 ROOF_WORDS = {'roof', 'shingle', 'shingles', 'slate', 'slates', 'thatch', 'ridge', 'pantile', 'pantiles', 'eave', 'eaves'}
 
 
+# falling water (a stream over a weir, a waterfall): the live light runs light down it and churns foam where it lands
+FALL_WORDS = {'waterfall', 'falls', 'cascade', 'weir', 'spillway'}
+
+
 def _words(name):
     return set(w for w in name.lower().replace('-', '_').split('_') if w)
 
@@ -242,6 +246,17 @@ def part_kinds(ids_rgb, names):
         elif w & GROUND_WORDS and not w & NOT_GROUND:
             gk.append(kk)
     return np.isin(key, gk), np.isin(key, rk)
+
+
+def part_mask(ids_rgb, names, words):
+    """Pixels of the parts whose names have any of these words (render.json `ids`)."""
+    key = (ids_rgb[..., 0].astype(np.int64) << 16) | (ids_rgb[..., 1].astype(np.int64) << 8) | ids_rgb[..., 2]
+    ks = []
+    for k, name in (names or {}).items():
+        if _words(name) & words:
+            r, g, b = [int(v) for v in k.split(',')]
+            ks.append((r << 16) | (g << 8) | b)
+    return np.isin(key, ks)
 
 
 def toy_lines(ids, depth, alpha, ground, roof):
@@ -361,11 +376,12 @@ def lit_lum(path):
     return a * LIT_GAIN
 
 
-def lit_pack(rd, od, nsuns, mask, albedo, ids, line, ground, roof, box=None, water_ok=True):
+def lit_pack(rd, od, nsuns, mask, albedo, ids, line, ground, roof, box=None, water_ok=True, names=None):
     """The live-light passes of one render (the base, or a variant cropped to its box) packed for js/litscene.js:
       lit_albedo  the flat colours (alpha: covered)
       lit_a       R the white sky's light, G sun 0, B sun 1     lit_b  R, G, B suns 2, 3, 4
-      lit_c       R sun 5, G the normal's z (× 0.5 + 0.5), B flags (1 leaf, 2 needle, 4 grass, 8 still water, 16 ground, 32 roof)
+      lit_c       R sun 5, G the normal's z (× 0.5 + 0.5), B flags (1 leaf, 2 needle, 4 grass, 8 still water, 16 ground, 32 roof,
+                  64 falling water — parts named with FALL_WORDS)
       lit_d       R which tree (the leaf pass's G), G line strength, B 0
       lit_lamps   the lamps' coloured light (only when there's any)
     Returns {'lamps': bool}."""
@@ -395,6 +411,8 @@ def lit_pack(rd, od, nsuns, mask, albedo, ids, line, ground, roof, box=None, wat
         tree = np.where((lr > 200) | (lb > 200), (lg // 16) * 16 + 8, 0).astype(np.uint8)
     flags |= np.where(crop(ground) | ((flags & 12) > 0), 16, 0).astype(np.uint8)
     flags |= np.where(crop(roof), 32, 0).astype(np.uint8)
+    if names:
+        flags |= np.where(crop(part_mask(ids, names, FALL_WORDS)), 64, 0).astype(np.uint8)
     flags = np.where(m, flags, 0).astype(np.uint8)
 
     def rgb(r, g, b):
@@ -560,16 +578,19 @@ def main():
     # its strongest state's strength (a lamp by night), black and clear wherever nothing glows
     glow_k = max([(meta.get('stateOpts') or {}).get(s_, {}).get('emit', 1.0) for s_ in meta['lightStates']] or [1.0])
 
-    def glow(e, mask, box=None):
+    def glow(e, mask, box=None, leaf=None):
         rgb = np.clip(e[..., :3].astype(np.float32) * glow_k, 0, 255).astype(np.uint8)
         on = mask & (rgb.max(axis=-1) > 8)
+        if leaf is not None:                          # not still water: its light at night is the water's own (Look Book 2)
+            on &= ~((leaf[..., 2] > 32) & (leaf[..., 2] <= 160) & (leaf[..., 0] <= 32))
         if not on.any():
             return False
         out = np.zeros(e.shape[:2] + (4,), np.uint8)
         out[..., :3] = np.where(on[..., None], rgb, 0)
         out[..., 3] = np.where(on, 255, 0)
         return out if box is None else out[box[1]:box[3], box[0]:box[2]]
-    base_glow = glow(emission, alpha)
+    lfp_ = os.path.join(rd, 'leaf.png')
+    base_glow = glow(emission, alpha, leaf=load(lfp_, 'RGB').astype(int) if os.path.exists(lfp_) and meta.get('lit') else None)
     if base_glow is not False:
         save(base_glow, od, 'glow')
     else:
@@ -656,7 +677,7 @@ def main():
         if vl is not False:
             vd_, valb_, vids_, vline_, vg_, vr_, va_ = vl
             info = lit_pack(vd_, ld, len(meta['lit']['suns']), va_, valb_, vids_, vline_, vg_, vr_, box=(x0, y0, x1, y1),
-                            water_ok='waterZ' not in meta)
+                            water_ok='waterZ' not in meta, names=names)
             layers[v['slot']][v['key']]['lit'] = 1
             if info['lamps']:
                 layers[v['slot']][v['key']]['litLamps'] = 1
@@ -691,7 +712,7 @@ def main():
 
     lit = None
     if meta.get('lit') and os.path.exists(os.path.join(rd, 'lit_sky.png')):
-        info = lit_pack(rd, od, len(meta['lit']['suns']), alpha, albedo, ids, base_line, ground, roof)
+        info = lit_pack(rd, od, len(meta['lit']['suns']), alpha, albedo, ids, base_line, ground, roof, names=names)
         lit = {'suns': [s_['u'] for s_ in meta['lit']['suns']], 'lamps': info['lamps'], 'base': meta['lit'].get('base')}
         if info['water']:
             lf = load(os.path.join(rd, 'leaf.png'), 'RGB').astype(int) if os.path.exists(os.path.join(rd, 'leaf.png')) else None

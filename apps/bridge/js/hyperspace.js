@@ -15,6 +15,12 @@ var BridgeHyperspace = (function () {
     // The Wayfarer's jump, as a cutscene (from where it was parked to the new world), then straight down
     // in the shuttle to the world's pad — the first time at a world, a moment on it and its name before
     // the shuttle goes. The star map's "stay aboard" keeps you on the bridge instead (gaze out of the window).
+    // the galleon jumping alongside yours, as she's fitted (presence `shipk`, js/party.js), or none
+    function wingOf(party) {
+      if (!party || !party.length) return false;
+      var p = typeof BridgeNet !== 'undefined' && BridgeNet.peer ? BridgeNet.peer(party[0]) : null;
+      return (p && p.shipk) || true;
+    }
     if (world.hasOverworld && typeof BridgeShip !== 'undefined' && typeof BridgeCine !== 'undefined' && BridgeCine.jump) {
       var from = context.from || 'deep-space';
       var first = !BridgeStarmap.getVisited()[world.id];
@@ -23,7 +29,7 @@ var BridgeHyperspace = (function () {
       // them — or, if they stay aboard, come aboard their bridge
       var follow = context.follow || null;
       if (follow) stay = !!follow.stay;
-      BridgeCine.jump(from, world.loc || world.id, { hold: 150, first: first, name: world.name, kind: world.kind, wing: !!(context.party && context.party.length) }).then(function () {
+      BridgeCine.jump(from, world.loc || world.id, { hold: 150, first: first, name: world.name, kind: world.kind, wing: wingOf(context.party) }).then(function () {
         BridgeStarmap.markVisited(world.id);
         if (typeof BridgeProgression !== 'undefined') {
           BridgeProgression.recordAchievement('visited_' + (world.loc || world.id), 25, { source: 'hyperspace' })
