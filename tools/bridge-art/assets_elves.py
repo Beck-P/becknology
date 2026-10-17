@@ -6,6 +6,7 @@ import math
 import random
 
 from scenekit import shade
+import assets_town as W
 
 BARK = '#5a4232'          # the giant trees' bark, warm grey-brown
 BARK_D = '#3a2a20'
@@ -113,14 +114,15 @@ def giant_tree(k, cx, cr, rad=1.4, h=7.0, roots=7, canopy=True, seed=0):
         z = k.rng.uniform(0.2, h * 0.6)
         k.blob(cx + math.cos(a) * rad, cr + math.sin(a) * rad, z, 0.3, 0.12, k.rng.uniform(0.3, 0.6), (MOSS, 0.4), 'trunk_moss', segs=8)
     if canopy:
-        f = max(1.0, rad / 1.5)                                           # a wider trunk carries a wider crown
-        for (dx, dr, dz, s) in ((0, 0, 0.0, 2.6), (-2.2, 0.4, -0.5, 1.8), (2.3, 0.3, -0.4, 1.9), (0.6, 1.2, -0.7, 1.6),
-                                (-1.0, -0.8, 0.4, 1.8), (1.4, -0.9, 0.3, 1.6), (-1.6, 1.0, -0.9, 1.3), (2.0, 1.1, -1.0, 1.2)):
-            k.blob(cx + dx * f, cr + dr * f, h + dz, s * f, s * f * 0.85, s * 0.6, (shade(LEAF, k.rng.uniform(0.75, 1.1)), 0.35), 'canopy', segs=14)
-        for _ in range(int(10 * f)):                                      # leaves hanging off the crown's edge
-            a = k.rng.uniform(0, math.tau)
-            x, r = cx + math.cos(a) * 2.4 * f, cr + math.sin(a) * 1.9 * f
-            k.blob(x, r, h - 1.1 + k.rng.uniform(-0.3, 0.3), 0.5, 0.4, 0.5, (shade(LEAF_L, k.rng.uniform(0.75, 1.0)), 0.35), 'canopy', segs=10)
+        with k.foliage('leaf'):
+            f = max(1.0, rad / 1.5)                                           # a wider trunk carries a wider crown
+            for (dx, dr, dz, s) in ((0, 0, 0.0, 2.6), (-2.2, 0.4, -0.5, 1.8), (2.3, 0.3, -0.4, 1.9), (0.6, 1.2, -0.7, 1.6),
+                                    (-1.0, -0.8, 0.4, 1.8), (1.4, -0.9, 0.3, 1.6), (-1.6, 1.0, -0.9, 1.3), (2.0, 1.1, -1.0, 1.2)):
+                k.blob(cx + dx * f, cr + dr * f, h + dz, s * f, s * f * 0.85, s * 0.6, (shade(LEAF, k.rng.uniform(0.75, 1.1)), 0.35), 'canopy', segs=14)
+            for _ in range(int(10 * f)):                                      # leaves hanging off the crown's edge
+                a = k.rng.uniform(0, math.tau)
+                x, r = cx + math.cos(a) * 2.4 * f, cr + math.sin(a) * 1.9 * f
+                k.blob(x, r, h - 1.1 + k.rng.uniform(-0.3, 0.3), 0.5, 0.4, 0.5, (shade(LEAF_L, k.rng.uniform(0.75, 1.0)), 0.35), 'canopy', segs=10)
     k.solid(cx - rad, cr - rad, cx + rad, cr + rad)
 
 
@@ -130,8 +132,9 @@ def birch(k, cx, cr, h=3.2):
     for i in range(6):
         z = k.rng.uniform(0.2, h * 0.7)
         k.box(cx - 0.06, cr + 0.06, z, cx + 0.04, cr + 0.1, z + 0.05, '#2a2622', 'birch_mark')
-    for (dx, dz, s) in ((0, 0.85, 0.55), (-0.35, 0.72, 0.4), (0.4, 0.75, 0.42), (0.1, 1.0, 0.38)):
-        k.blob(cx + dx, cr, h * dz, s, s * 0.8, s * 0.9, (shade('#7aa048', k.rng.uniform(0.85, 1.15)), 0.3), 'birch_leaves', segs=10)
+    with k.foliage('leaf'):
+        for (dx, dz, s) in ((0, 0.85, 0.55), (-0.35, 0.72, 0.4), (0.4, 0.75, 0.42), (0.1, 1.0, 0.38)):
+            W.leafy_crown(k, cx + dx, cr, h * dz, s, s * 0.8, s * 0.9, shade('#7aa048', k.rng.uniform(0.9, 1.1)), part='birch_leaves')
     k.solid(cx - 0.3, cr - 0.3, cx + 0.3, cr + 0.3)
 
 

@@ -29,7 +29,7 @@ var BridgeVoyage = (function () {
     'lumar-crimson': { name: 'Crimson Reach', x: 0.18, y: 0.78, pal: 'crimson' },
     // the capital and the small islands round it, all in the Emerald Sea
     'lumar-crown': { name: 'Crownhaven', x: 0.50, y: 0.16, pal: 'emerald' },
-    'lumar-tern': { name: 'Tern Holm', x: 0.34, y: 0.30, pal: 'emerald' },
+    'lumar-tern': { name: 'Tern Holm', x: 0.39, y: 0.35, pal: 'emerald' },
     'lumar-holm': { name: 'Starling Holm', x: 0.66, y: 0.36, pal: 'emerald' }
   };
   var running = false, canvas = null, ctx = null, buf = null, bctx = null, raf = 0, last = 0;
@@ -614,7 +614,7 @@ var BridgeVoyage = (function () {
     var wy = y + (vnoise(x / 700 + 31, y / 700 + 17) - 0.5) * 520 + (vnoise(x / 220, y / 220 + 5) - 0.5) * 170 + (vnoise(x / 60 + 7, y / 60) - 0.5) * 36;
     var best = 'emerald', bd = 1e18;
     for (var id in ISLES) {
-      var I = ISLES[id], dx = wx - I.x * CW, dy = (wy - I.y * CH) * 1.25, d = dx * dx + dy * dy;
+      var I = ISLES[id], dx = wx - I.x * CW, dy = (wy - I.y * CH) * 1.25, d = (dx * dx + dy * dy) * (I.pal === 'midnight' ? 0.4624 : 1);   // (js/chart.js SEA_W)
       if (d < bd) { bd = d; best = I.pal; }
     }
     return best;

@@ -144,12 +144,15 @@ var BridgeChart = (function () {
     return h(xi, yi) * (1 - u) * (1 - v) + h(xi + 1, yi) * u * (1 - v) + h(xi, yi + 1) * (1 - u) * v + h(xi + 1, yi + 1) * u * v;
   }
   // the sea at a chart point: the nearest island's, the borders nudged by noise (the voyage's seas, at chart scale)
+  // the Midnight Sea reaches further than the rest (a weighted nearest island: its distances count for less), so the
+  // Midnight Isle sits deep inside its own sea. Squared here; js/sloop.js and js/voyage.js weigh the same way.
+  var SEA_W = { midnight: 0.4624 };
   function seaAt(px, py) {
     var wx = px + (vnoise(px / 26, py / 26) - 0.5) * 34 + (vnoise(px / 9 + 9, py / 9) - 0.5) * 9;
     var wy = py + (vnoise(px / 26 + 31, py / 26 + 17) - 0.5) * 34 + (vnoise(px / 9, py / 9 + 5) - 0.5) * 9;
     var I = isles(), best = 'emerald', bd = 1e18;
     for (var id in I) {
-      var dx = wx - mapX(I[id].x), dy = (wy - mapY(I[id].y)) * 1.25, d = dx * dx + dy * dy;
+      var dx = wx - mapX(I[id].x), dy = (wy - mapY(I[id].y)) * 1.25, d = (dx * dx + dy * dy) * (SEA_W[I[id].pal] || 1);
       if (d < bd) { bd = d; best = I[id].pal; }
     }
     return best;

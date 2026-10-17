@@ -738,6 +738,19 @@ var BridgeAudio = (function () {
     toll:    function (t) { INST.bell(sfxBus, t, 43, 0.5, 2.6); INST.bell(sfxBus, t + 0.01, 55, 0.22, 2.0); INST.bell(sfxBus, t + 0.02, 62, 0.08, 1.4); },   // the warden's bell
     zap:     function (t) { voice(sfxBus, t, 0.18, { type: 'triangle', freq: 1400, glide: 0.25, glideT: 0.18, gain: 0.07, a: 0.002, d: 0.18, s: 0, r: 0.06 }); noiseHit(sfxBus, t, 0.1, { freq: 5000, ftype: 'highpass', gain: 0.03 }); },
     burn:    function (t) { noiseHit(sfxBus, t, 0.3, { freq: 1200, ftype: 'bandpass', q: 0.7, gain: 0.08 }); },
+    roar:    function (t) {                                // something vast under the boat: a growl through the water
+      voice(sfxBus, t, 1.1, { type: 'sawtooth', freq: 48, glide: 1.35, glideT: 0.5, gain: 0.16, a: 0.12, d: 0.6, s: 0.4, r: 0.5, cutoff: 420, rev: 0.6 });
+      voice(sfxBus, t + 0.05, 0.9, { type: 'sawtooth', freq: 71, glide: 0.8, glideT: 0.7, gain: 0.08, a: 0.1, d: 0.5, s: 0.3, r: 0.4, cutoff: 600, rev: 0.6 });
+      noiseHit(sfxBus, t, 1.2, { freq: 260, ftype: 'lowpass', gain: 0.16, rev: 0.6 });
+    },
+    hiss:    function (t) {                                // the serpent rearing
+      noiseHit(sfxBus, t, 0.7, { freq: 4200, ftype: 'highpass', gain: 0.07, rev: 0.3 });
+      noiseHit(sfxBus, t + 0.1, 0.5, { freq: 2600, ftype: 'bandpass', q: 1.2, gain: 0.05, rev: 0.3 });
+    },
+    harpoon: function (t) {                                // thrown off the rail: a whoosh, the line paying out, a thunk
+      noiseHit(sfxBus, t, 0.22, { freq: 1800, ftype: 'bandpass', q: 0.9, gain: 0.07 });
+      noiseHit(sfxBus, t + 0.18, 0.08, { freq: 420, ftype: 'lowpass', gain: 0.14, rev: 0.2 });
+    },
     frost:   function (t) { [0, 0.04, 0.09].forEach(function (d, i) { voice(sfxBus, t + d, 0.05, { type: 'sine', freq: 2400 + i * 520, gain: 0.04, a: 0.001, d: 0.12, s: 0, r: 0.1 }); }); },
     error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); },
     // fighting (js/arms.js): each kind of weapon its own swing and its own blow

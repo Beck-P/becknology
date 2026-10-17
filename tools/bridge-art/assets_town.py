@@ -75,13 +75,154 @@ def cobbles(k, x0, r0, x1, r1, tone='#55524c', size=0.3, skip=None):
 
 
 def grass(k, x0, r0, x1, r1, tone='#2a4a2a', tufts=0.6):
-    k.box(x0, r0, -0.1, x1, r1, 0.0, (tone, 0.3), 'grass')
-    n = int((x1 - x0) * (r1 - r0) * tufts)
-    for _ in range(n):
-        x, r = k.rng.uniform(x0, x1), k.rng.uniform(r0, r1)
-        for j in range(3):
-            k.cone(x + j * 0.04 - 0.04, r, 0.0, k.rng.uniform(0.08, 0.16), 0.025, 0.002,
-                   shade(tone, k.rng.uniform(1.0, 1.4)), 'tuft', verts=3)
+    """A lawn: the turf, and over it, once the whole scene is laid out (k.later), the grass itself (meadow) wherever the
+    turf is still what's on top - so nothing grows through the paths, the floors or under the houses."""
+    k.box(x0, r0, -0.1, x1, r1, 0.0, (tone, 0.12), 'grass')
+    k.later.append(lambda: meadow(k, tone, area=(x0, r0, x1, r1), ok=('grass',), density=0.6 + tufts))
+
+
+def _mix(a, b, t):
+    from scenekit import hexc
+    ca, cb = hexc(a), hexc(b)
+    return '#' + ''.join('%02x' % max(0, min(255, round(255 * (ca[i] + (cb[i] - ca[i]) * t)))) for i in range(3))
+
+
+FLOWERS = ('#f4f0e4', '#f8d848', '#e87aa8', '#a88ae8', '#f4f0e4', '#80b8f0')
+
+
+EDGES = ('path', 'field', 'sand', 'cobble', 'flag', 'yard', 'lane')   # what the grass spills over the edge of
+
+
+def ragged_edges(k, x0, r0, x1, r1, tone, z=0.006):
+    """Turf creeping over the edges of a path or a field, the way Stardew draws them: a ragged border of bumps of turf
+    a few pixels into it, each with a tuft leaning out, wherever there's turf just beyond the edge (k.later: after the
+    layout, so a path meeting a path stays clear)."""
+    mid, deep, lit = shade(tone, 1.0), _mix(tone, '#0e2a14', 0.35), _mix(shade(tone, 1.4), '#d8f070', 0.32)
+    rects = {mid: [], deep: []}
+    blades = {mid: [], lit: [], deep: []}
+
+    def grassy(x, r):
+        p_ = k.top(x, r)[0]
+        return p_ is not None and p_.startswith('grass')
+    for kind, at, out in (('h', r0, -1), ('h', r1, 1), ('v', x0, -1), ('v', x1, 1)):
+        a, b = (x0, x1) if kind == 'h' else (r0, r1)
+        t = a + k.rng.uniform(0, 0.1)
+        while t < b - 0.05:
+            w = min(k.rng.uniform(0.07, 0.22), b - t)
+            d = k.rng.uniform(0.04, 0.15)
+            m = t + w / 2
+            px, pr = (m, at + out * 0.1) if kind == 'h' else (at + out * 0.1, m)
+            if k.rng.random() < 0.8 and grassy(px, pr):
+                lo, hi = sorted((at - out * d, at + out * 0.03))
+                col = mid if k.rng.random() < 0.75 else deep
+                rects[col].append((t, lo, z + 0.0005, t + w, hi, z + 0.004) if kind == 'h' else (lo, t, z + 0.0005, hi, t + w, z + 0.004))
+                for j in range(k.rng.choice((1, 2, 3))):              # a tuft on it, leaning out over the path
+                    u = t + k.rng.uniform(0.02, max(0.03, w - 0.02))
+                    bx, br = (u, at - out * d * 0.5) if kind == 'h' else (at - out * d * 0.5, u)
+                    lx, lr = (k.rng.uniform(-0.03, 0.03), -out * 0.04) if kind == 'h' else (-out * 0.06, 0.0)
+                    blades[k.rng.choice((mid, lit, deep))].append((bx, br, z + 0.004, k.rng.uniform(0.08, 0.14), 0.024, lx, lr))
+            t += w + k.rng.uniform(0.0, 0.1)
+    for col, rs in rects.items():
+        if rs:
+            k.boxes(rs, (col, 0.2), 'grass_edge')
+    for col, bs in blades.items():
+        if bs:
+            k.blades(bs, (col, 0.32), 'grass_blade')
+
+
+def meadow(k, tone, area=None, cells=None, ok=('grass',), density=1.0, avoid=None, flowers=1.0, tall=0.08, h=(0.11, 0.2)):
+    """Grass the way Stardew draws it: dense little tufts of blades in three greens - deep ones in the hollows, the
+    turf's own, and bright yellow-green tips catching the light - a tall clump here and there, clover and tiny flowers,
+    the odd pebble. Grows wherever the part on top is one of `ok` (k.top), over `area` (x0, r0, x1, r1) or `cells`."""
+    deep, mid, lit = _mix(tone, '#0e2a14', 0.5), shade(tone, 1.06), _mix(shade(tone, 1.4), '#d8f070', 0.32)
+    tips = _mix(lit, '#f0ffa0', 0.35)
+    beds = {deep: [], mid: [], lit: [], tips: []}
+    dots = {}
+    if cells is None:
+        x0, r0, x1, r1 = area
+        cells = [(c, r) for c in range(int(math.floor(x0)), int(math.ceil(x1))) for r in range(int(math.floor(r0)), int(math.ceil(r1)))]
+        inside = lambda x, r: x0 <= x < x1 and r0 <= r < r1
+    else:
+        inside = lambda x, r: True
+    per = 13.0 * density
+    for (c, rr) in cells:
+        m = int(per) + (1 if k.rng.random() < per % 1 else 0)
+        for _ in range(m):
+            x, r = c + k.rng.random(), rr + k.rng.random()
+            if not inside(x, r) or (avoid and avoid(x, r)):
+                continue
+            part, z = k.top(x, r)
+            if part is None or not any(part == o or part.startswith(o + '_') for o in ok):
+                continue
+            z += 0.002
+            col = k.rng.choices((deep, mid, lit), (0.34, 0.36, 0.30))[0]
+            nb = k.rng.choice((2, 3, 3, 4))
+            for j in range(nb):
+                dx = (j - (nb - 1) / 2) * 0.055 + k.rng.uniform(-0.012, 0.012)
+                hh = k.rng.uniform(*h) * (1.15 if j == nb // 2 else 1.0)
+                lean = dx * 0.6 + k.rng.uniform(-0.02, 0.02)
+                beds[col].append((x + dx, r, z, hh, 0.026, lean, k.rng.uniform(-0.02, 0.02)))
+                if col != deep and k.rng.random() < 0.5:           # the tip catching the light
+                    beds[tips].append((x + dx + lean * 0.55, r, z + hh * 0.55, hh * 0.47, 0.014, lean * 0.45, 0.0))
+        # where the turf meets a path or a field in this cell: grass spilling over the edge, leaning out from the turf
+        def isok(p_):
+            return p_ is not None and any(p_ == o or p_.startswith(o + '_') for o in ok)
+        corners = [k.top(c + ax, rr + ar)[0] for (ax, ar) in ((0.05, 0.05), (0.95, 0.05), (0.05, 0.95), (0.95, 0.95), (0.5, 0.5))]
+        if any(isok(p_) for p_ in corners) and any(p_ is not None and any(p_.startswith(e) for e in EDGES) for p_ in corners):
+            for _ in range(int(16 * density)):
+                x, r = c + k.rng.random(), rr + k.rng.random()
+                part, z = k.top(x, r)
+                if part is None or not any(part.startswith(e) for e in EDGES) or not inside(x, r):
+                    continue
+                for (ex, er) in ((0.16, 0), (-0.16, 0), (0, 0.16), (0, -0.16)):
+                    if isok(k.top(x + ex, r + er)[0]):
+                        # a scrap of turf creeping over the edge (flat), and grass on it
+                        a_, b_ = k.rng.uniform(0.04, 0.09), k.rng.uniform(0.03, 0.06)
+                        hx, hr = (b_, a_) if ex else (a_, b_)
+                        cx_, cr_ = x + ex * 0.25, r + er * 0.25
+                        dots.setdefault(k.rng.choice((mid, mid, deep)), []).append((cx_ - hx, cr_ - hr, z + 0.0005, cx_ + hx, cr_ + hr, z + 0.004))
+                        for j in range(k.rng.choice((2, 3, 4))):
+                            beds[k.rng.choice((deep, mid, lit))].append((x + ex * 0.5 + (j - 1) * 0.045, r + er * 0.5, z + 0.002, k.rng.uniform(0.09, 0.16), 0.024,
+                                                                          -ex * 0.45 + (j - 1) * 0.03, -er * 0.35))
+                        break
+        # now and then a tall clump, a flower or some clover, a pebble
+        if k.rng.random() < tall:
+            x, r = c + k.rng.random(), rr + k.rng.random()
+            part, z = k.top(x, r)
+            if part is not None and any(part == o or part.startswith(o + '_') for o in ok) and inside(x, r) and not (avoid and avoid(x, r)):
+                for j in range(9):
+                    a = j / 9 * math.pi * 2 + k.rng.uniform(-0.3, 0.3)
+                    hh = k.rng.uniform(0.2, 0.32)
+                    beds[deep if j % 3 == 0 else mid].append((x + math.cos(a) * 0.05, r + math.sin(a) * 0.03, z, hh, 0.024,
+                                                             math.cos(a) * 0.09, math.sin(a) * 0.05))
+                    beds[tips].append((x + math.cos(a) * 0.1, r + math.sin(a) * 0.05, z + hh * 0.7, hh * 0.32, 0.01, math.cos(a) * 0.05, 0.0))
+        for _ in range(3):
+            if k.rng.random() < 0.3 * flowers:
+                x, r = c + k.rng.random(), rr + k.rng.random()
+                part, z = k.top(x, r)
+                if part is None or not any(part == o or part.startswith(o + '_') for o in ok) or not inside(x, r) or (avoid and avoid(x, r)):
+                    continue
+                if k.rng.random() < 0.45:                          # clover: three leaves, flat
+                    for j in range(3):
+                        a = j * 2.1 + k.rng.uniform(0, 0.5)
+                        dots.setdefault(_mix(deep, mid, 0.4), []).append((x + math.cos(a) * 0.03 - 0.02, r + math.sin(a) * 0.02 - 0.015, z, x + math.cos(a) * 0.03 + 0.02, r + math.sin(a) * 0.02 + 0.015, z + 0.012))
+                else:                                              # a tiny flower on a stalk
+                    fc = k.rng.choice(FLOWERS)
+                    hh = k.rng.uniform(0.05, 0.11)
+                    beds[mid].append((x, r, z, hh, 0.008, 0.0, 0.0))
+                    dots.setdefault(fc, []).append((x - 0.032, r - 0.026, z + hh - 0.012, x + 0.032, r + 0.026, z + hh + 0.034))
+                    dots.setdefault('#f8e070', []).append((x - 0.007, r + 0.019, z + hh + 0.008, x + 0.007, r + 0.024, z + hh + 0.02))
+        if k.rng.random() < 0.06:
+            x, r = c + k.rng.random(), rr + k.rng.random()
+            part, z = k.top(x, r)
+            if part is not None and any(part == o or part.startswith(o + '_') for o in ok) and inside(x, r):
+                sz = k.rng.uniform(0.03, 0.06)
+                dots.setdefault('#8a8478', []).append((x - sz, r - sz * 0.7, z, x + sz, r + sz * 0.7, z + sz * 0.6))
+    for col, items in beds.items():
+        if items:
+            k.blades(items, (col, 0.32), 'grass_blade')
+    for col, rects in dots.items():
+        k.boxes(rects, (col, 0.3), 'meadow_flower' if col in FLOWERS else 'clover')
 
 
 def sand(k, x0, r0, x1, r1, tone='#8a7a5a'):
@@ -835,34 +976,103 @@ def rowboat(k, x0, x1, cr, beam=0.8, hull=WOOD_D, inside=WOOD_DD, oars=True):
 
 
 # ---- vegetation -------------------------------------------------------------------------------------
+# Foliage is built inside k.foliage(): 'leaf' for trees and bushes that turn with the seasons, 'needle' for evergreens
+# (js/foliage.js recolours them by the planet's season from the render's leaf pass).
+KEY = (-0.45, 0.35, 0.82)          # toward the key light (upper left, toward the camera): lit clumps get a lighter albedo
+
+
+def leafy_crown(k, cx, cr, z, rx, ry, rz, tone, n=None, part='leaves', sprigs=True):
+    """A crown of leaves: a dark core with many small clumps over it, lighter toward the light, and sprigs breaking
+    the outline — at 32 px a tile it reads as leaves, where one smooth ball read as a lump."""
+    k.blob(cx, cr, z, rx * 0.84, ry * 0.84, rz * 0.84, (shade(tone, 0.6), 0.25), part, segs=10)
+    rr = (rx + ry + rz) / 3
+    n = n or max(10, int(4 * math.pi * rr * rr / 0.075))
+    cs = max(0.11, min(0.26, rr * 0.34))                      # clump size grows a little with the crown
+    for i in range(n):
+        u, v = k.rng.uniform(-1, 1), k.rng.uniform(0, math.tau)
+        w = math.sqrt(1 - u * u)
+        d = (w * math.cos(v), w * math.sin(v), u)           # a direction on the sphere (x, row, z)
+        if d[1] < -0.55 and d[2] < 0.1:
+            continue                                          # back and below: never seen
+        lit = d[0] * KEY[0] + d[1] * KEY[1] + d[2] * KEY[2]
+        f = 0.78 + 0.34 * max(0.0, lit) + k.rng.uniform(-0.07, 0.07)
+        out = k.rng.uniform(0.86, 1.02)
+        s_ = cs * k.rng.uniform(0.75, 1.2)
+        k.blob(cx + d[0] * rx * out, cr + d[1] * ry * out, z + d[2] * rz * out, s_, s_ * 0.9, s_ * 0.72,
+               (shade(tone, f), 0.24), part, rot=(k.rng.uniform(-30, 30), k.rng.uniform(-30, 30), k.rng.uniform(0, 360)), segs=7)
+    if sprigs:
+        for i in range(max(6, n // 4)):                       # sprigs past the edge, mostly round the sides and top
+            a = k.rng.uniform(0, math.tau)
+            u = k.rng.uniform(-0.2, 0.9)
+            w = math.sqrt(1 - u * u)
+            d = (w * math.cos(a), w * math.sin(a), u)
+            s_ = cs * k.rng.uniform(0.45, 0.7)
+            lit = d[0] * KEY[0] + d[1] * KEY[1] + d[2] * KEY[2]
+            k.blob(cx + d[0] * rx * 1.1, cr + d[1] * ry * 1.1, z + d[2] * rz * 1.1, s_, s_ * 0.8, s_ * 0.6,
+                   (shade(tone, 0.85 + 0.3 * max(0.0, lit)), 0.24), part, rot=(0, 0, k.rng.uniform(0, 360)), segs=6)
+
+
+def pine_tiers(k, cx, cr, h, tone, rad=0.6, z0=0.16, tiers=5, lean=0.0, snow=None, part='pine'):
+    """An evergreen's boughs: tiers of cones, each fringed with drooping sprays so the outline is ragged; `snow`
+    lays snow on each tier's top (a colour). Built as needles (they stay green through the year)."""
+    with k.foliage('needle'):
+        for i in range(tiers):
+            t = i / (tiers - 1)
+            zb = h * (z0 + t * (0.8 - z0))
+            R = rad * (1 - t * 0.78) * k.rng.uniform(0.9, 1.1)
+            hh = h * 0.3 * (1 - t * 0.35)
+            x = cx + lean * t
+            col = shade(tone, 0.88 + t * 0.26)
+            k.cone(x, cr, zb, zb + hh, R, 0.02, (col, 0.18), part, verts=11)
+            m = max(6, int(R * 17))
+            for j in range(m):
+                a = j / m * math.tau + k.rng.uniform(-0.18, 0.18)
+                L = R * k.rng.uniform(0.32, 0.46)
+                sx, sr = x + math.cos(a) * R * 0.8, cr + math.sin(a) * R * 0.8
+                k.blob(sx, sr, zb + 0.04, L, L * 0.45, 0.05,
+                       (shade(col, k.rng.uniform(0.82, 1.12)), 0.18), part, rot=(0, -16, math.degrees(a)), segs=6)
+                if snow and math.sin(a) > -0.6:               # snow lying along the sprays you can see
+                    k.blob(sx - math.cos(a) * L * 0.2, sr - math.sin(a) * L * 0.2, zb + 0.1, L * 0.7, L * 0.35, 0.035,
+                           (snow, 0.2), part + '_snow', rot=(0, -12, math.degrees(a)), segs=6)
+            if snow:
+                k.cone(x, cr, zb + hh * 0.3, zb + hh * 0.92, R * 0.78, 0.05, (snow, 0.2), part + '_snow', verts=10)
+        k.cone(cx + lean, cr, h * 0.86, h * 1.02, 0.08, 0.01, (shade(tone, 1.15), 0.18), part, verts=6)
+
+
 def pine(k, cx, cr, h=2.4, tone='#28483a'):
-    """Seaside pine: a short trunk and four stacked, faceted cones."""
+    """Seaside pine: a short trunk and ragged tiers of boughs."""
     k.cyl(cx, cr, 0, h * 0.3, 0.07, (WOOD_D, 0.12), 'trunk', verts=6)
-    for i in range(4):
-        z0 = h * (0.18 + i * 0.19)
-        rad = 0.58 * (1 - i * 0.2) * k.rng.uniform(0.9, 1.1)
-        k.cone(cx, cr, z0, z0 + h * 0.36, rad, 0.02, (shade(tone, 1 + i * 0.07), 0.18), 'pine', verts=9)
+    pine_tiers(k, cx, cr, h, tone, rad=0.6)
 
 
 def bush(k, cx, cr, s=0.3, tone='#2a4a2e', berries=None):
-    for i in range(3):
-        a = i * 2.1 + k.rng.uniform(0, 0.6)
-        k.blob(cx + math.cos(a) * s * 0.5, cr + math.sin(a) * s * 0.4, s * 0.55, s * 0.7, s * 0.6, s * 0.55,
-               (shade(tone, k.rng.uniform(0.9, 1.15)), 0.2), 'bush', segs=8)
+    with k.foliage('leaf'):
+        leafy_crown(k, cx, cr, s * 0.62, s * 1.05, s * 0.85, s * 0.62, shade(tone, k.rng.uniform(0.94, 1.06)), part='bush')
     if berries:
-        for i in range(4):
-            k.sphere(cx + k.rng.uniform(-s, s) * 0.7, cr + s * 0.4, s * k.rng.uniform(0.6, 1.0), 0.03, 0.03, berries, 'berry', segs=5)
+        for i in range(5):
+            k.sphere(cx + k.rng.uniform(-s, s) * 0.75, cr + s * 0.62, s * k.rng.uniform(0.45, 0.95), 0.03, 0.03, berries, 'berry', segs=5)
 
 
 def tree(k, cx, cr, h=2.6, tone='#2e5434', lean=0.1):
-    """Round-crowned town tree: a leaning trunk and a crown of lumpy blobs."""
-    top = (cx + lean, cr, h * 0.62)
-    k.tube((cx, cr, 0.0), top, 0.1, (WOOD_D, 0.14), 'trunk', rb=0.06, verts=8)
-    k.tube((cx + lean * 0.6, cr, h * 0.45), (cx + lean + 0.35, cr - 0.05, h * 0.7), 0.04, (WOOD_D, 0.14), 'branch', verts=6)
-    for (dx, dr, dz, s_) in ((0, 0, 0.78, 0.62), (-0.38, 0.05, 0.66, 0.44), (0.4, 0.04, 0.68, 0.46), (0.05, 0.12, 0.95, 0.42),
-                             (-0.15, 0.2, 0.62, 0.36), (0.25, -0.15, 0.9, 0.36)):
-        k.blob(cx + lean + dx, cr + dr, h * dz, s_, s_ * 0.85, s_ * 0.8, (shade(tone, k.rng.uniform(0.9, 1.15)), 0.22), 'leaves',
-               segs=12)
+    """Round-crowned town tree: a tapering trunk with a root flare, forking into branches under a crown of leaf clumps
+    in a few lobes (so it isn't a ball)."""
+    tone = shade(tone, k.rng.uniform(0.93, 1.07))
+    top = (cx + lean, cr, h * 0.56)
+    k.tube((cx, cr, 0.0), top, 0.11, (WOOD_D, 0.14), 'trunk', rb=0.065, verts=8)
+    for a in (0.5 + k.rng.uniform(0, 0.4), 2.5 + k.rng.uniform(0, 0.4), 4.4 + k.rng.uniform(0, 0.4)):
+        k.tube((cx, cr, 0.14), (cx + math.cos(a) * 0.24, cr + math.sin(a) * 0.16, -0.02), 0.055, (WOOD_D, 0.14), 'root', rb=0.02, verts=5)
+    lobes = [(0.0, 0.0, 0.78, 0.6, 0.54, 0.5), (-0.36, 0.06, 0.66, 0.42, 0.38, 0.36), (0.4, 0.02, 0.68, 0.44, 0.4, 0.37),
+             (0.06, 0.1, 0.95, 0.4, 0.36, 0.34)]
+    k.rng.shuffle(lobes)
+    for (dx, dr, dz, rx, ry, rz) in lobes[:3] + [(0.06, 0.1, 0.95, 0.4, 0.36, 0.34)]:
+        k.tube((top[0], cr, top[2] * 0.92), (cx + lean + dx * 0.8, cr + dr, h * dz * 0.92), 0.04, (WOOD_D, 0.14), 'branch', rb=0.02, verts=5)
+    out = []
+    with k.foliage('leaf'):
+        for (dx, dr, dz, rx, ry, rz) in lobes:
+            c = (cx + lean + dx, cr + dr, h * dz, rx * h / 2.6, ry * h / 2.6, rz * h / 2.6)
+            leafy_crown(k, c[0], c[1], c[2], c[3], c[4], c[5], tone)
+            out.append(c)
+    return out                                                # the crown's lobes (x, row, z, rx, ry, rz): fruit goes on them
 
 
 def tree_bed(k, cx, cr, rad=0.55, grass='#34462e'):

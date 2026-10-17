@@ -82,6 +82,9 @@ class Kit:
         self._var = None      # variant being built (see variant())
         self._active_var = None
         self.water_z = None   # set (assets_coast) when the scene stands in the sea: renders the height pass
+        self._fol = None      # foliage being built (see foliage()): 'leaf' or 'needle'
+        self._tree = 0        # which tree it belongs to
+        self.later = []       # built once everything else is placed, just before the render (the grass: see top())
         self.scene.world = bpy.data.worlds.new('w')
 
     # ---- ids / materials -------------------------------------------------
@@ -100,11 +103,40 @@ class Kit:
             # round sides smooth, flat caps/tops flat
             p.use_smooth = smooth and abs(p.normal.z) < 0.5
         o.data.materials.append(bpy.data.materials.new('tmp'))
-        self._add_part({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
+        self._add_part({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part), 'pname': part})
         return o
+
+    def top(self, x, r):
+        """Looking straight down at (x, r): the part name and height of whatever is on top there, or (None, None). For
+        things laid over the finished scene (the grass grows only where the turf is still the top)."""
+        if not hasattr(self, '_names'):
+            bpy.context.view_layer.update()
+            self._dg = bpy.context.evaluated_depsgraph_get()
+            self._names = {p['obj'].name: p.get('pname') for p in self.parts}
+        hit, loc, _n, _i, ob, _m = self.scene.ray_cast(self._dg, Vector((x, -r * S, 30.0)), Vector((0, 0, -1)))
+        if not hit:
+            return None, None
+        return self._names.get(ob.name), loc.z
+
+    def blades(self, items, albedo, part):
+        """Many thin blades as one object, (x, r, z, h, w, lx, lr) each: a triangle w either side of (x, r, z) to a tip
+        h up, leaning (lx, lr). A meadow's grass is a few of these."""
+        bm = bmesh.new()
+        for (x, r, z, h, w, lx, lr) in items:
+            a = bm.verts.new((x - w, -r * S, z)); b = bm.verts.new((x + w, -r * S, z))
+            t = bm.verts.new((x + lx, -(r + lr) * S, z + h))
+            bm.faces.new((a, b, t))
+        me = bpy.data.meshes.new('blades')
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new('blades', me)
+        self.scene.collection.objects.link(o)
+        return self._finish(o, albedo, part)
 
     def _add_part(self, d):
         d['var'] = self._var
+        d['fol'] = self._fol
+        d['tree'] = self._tree if self._fol else 0
         self.parts.append(d)
         if self._var is not None:
             self._var['parts'].append(d)
@@ -114,6 +146,18 @@ class Kit:
         self.lights.append(d)
         if self._var is not None:
             self._var['lights'].append(d)
+
+    @contextlib.contextmanager
+    def foliage(self, kind='leaf'):
+        """Parts built inside `with k.foliage(kind):` are one tree's leaves ('leaf', which turn with the seasons) or
+        needles ('needle', evergreen): the leaf pass marks them (leaves.png: R leaf, B needle, G which tree), so the
+        engine can colour each tree for the season (js/foliage.js)."""
+        self._tree += 1
+        self._fol = kind
+        try:
+            yield
+        finally:
+            self._fol = None
 
     @contextlib.contextmanager
     def variant(self, slot, key):
@@ -181,7 +225,7 @@ class Kit:
         for p in o.data.polygons:
             p.use_smooth = abs(p.normal[axis]) < 0.5
         o.data.materials.append(bpy.data.materials.new('tmp'))
-        self._add_part({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part)})
+        self._add_part({'obj': o, 'albedo': albedo, 'emit': emit, 'pid': self.pid(part), 'pname': part})
         return o
 
     def cyl_y(self, cx, r0, r1, cz, rx, rz, albedo, part, emit=None, verts=16):
@@ -450,6 +494,13 @@ class Kit:
                 if key not in cache:
                     cache[key] = self._flat_emission(p['emit'][0] if p['emit'] else '#000000', st)
                 m = cache[key]
+            elif kind == 'leaf':
+                f, t = p.get('fol'), p.get('tree', 0)
+                key = ('lf', f, t % 15 if f else 0)
+                if key not in cache:
+                    g = 8 + 16 * (t % 15) if f else 0
+                    cache[key] = self._flat_emission('#%02x%02x%02x' % (255 if f == 'leaf' else 0, g, 255 if f == 'needle' else 0))
+                m = cache[key]
             elif kind == 'id':
                 pid = p['pid']
                 key = ('i', pid)
@@ -582,6 +633,8 @@ class Kit:
             self._assign('albedo'); self._settings(1); self._render(os.path.join(d, 'albedo.png'))
             self._assign('emission'); self._settings(1); self._render(os.path.join(d, 'emission.png'))
             self._assign('id'); self._settings(1); self._render(os.path.join(d, 'id.png'))
+            if any(p.get('fol') for p in v['parts']):
+                self._assign('leaf'); self._settings(1); self._render(os.path.join(d, 'leaf.png'))
             self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(d, 'depth.png'))
             for name, state in light_states.items():
                 self._sky(state)
@@ -647,6 +700,9 @@ class Kit:
         `_sky`, `_art`, `_emit`, `_world`; see _cycle_states). cycle: derive the other times of day (js/clock.js).
         SCENE_NORENDER=1 skips the render: a script re-run then only rewrites its world JSON
         (collisions, interactions, actors) against the scene already in place."""
+        for fn in self.later:                              # what grows over the finished layout (the grass)
+            fn()
+        self.later = []
         if os.environ.get('SCENE_NORENDER'):
             return
         os.makedirs(out, exist_ok=True)
@@ -664,6 +720,8 @@ class Kit:
         self._assign('albedo'); self._settings(1); self._render(os.path.join(out, 'albedo.png'))
         self._assign('emission'); self._settings(1); self._render(os.path.join(out, 'emission.png'))
         self._assign('id'); self._settings(1); self._render(os.path.join(out, 'id.png'))
+        if any(p.get('fol') and p['var'] is None for p in self.parts):
+            self._assign('leaf'); self._settings(1); self._render(os.path.join(out, 'leaf.png'))
         self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(out, 'depth.png'))
         if self.water_z is not None:
             self._assign('height'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(out, 'height.png'))

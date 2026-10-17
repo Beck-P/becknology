@@ -215,7 +215,7 @@ for i in range(60):
 
 # ---- scatter -------------------------------------------------------------------------------------------------------
 busy = lambda x, r: pd(x, r) < 0.6 or on_way(x, r, 0.3)
-I.tufts(k, [c for c in walk if material(c[0] + 0.5, c[1] + 0.5) in ('moor', 'moss', 'grave')], '#3e4448', per_cell=1.0, avoid=busy)
+I.tufts(k, [c for c in walk if material(c[0] + 0.5, c[1] + 0.5) in ('moor', 'moss', 'grave')], '#3e4448', per_cell=1.0, avoid=busy, flowers=0.12)
 I.pebbles(k, walk, '#4a4658', per_cell=0.2, avoid=busy)
 for (x, r, s) in ((45.0, 10.0, 0.9), (8.0, 14.6, 0.8), (31.0, 31.0, 0.7), (44.0, 26.0, 0.8)):
     W.shore_crystals(k, x, r, col=VIOLET, s=s, energy=10)

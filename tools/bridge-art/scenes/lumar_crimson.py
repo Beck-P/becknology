@@ -224,7 +224,7 @@ I.dead_tree(k, 52.3, 28.6, h=1.4, lean=-0.2)
 # ---- scatter: tufts and pebbles over the open ground --------------------------------------------------------------------
 busy = lambda x, r: pd(x, r) < 0.6
 I.tufts(k, [c for c in walk if material(c[0] + 0.5, c[1] + 0.5) in ('moor', 'moor_dark', 'grass', 'crystal_moss')], '#6a3430',
-        per_cell=1.1, avoid=busy)
+        per_cell=1.1, avoid=busy, flowers=0.3)
 I.pebbles(k, walk, '#4a4044', per_cell=0.25, avoid=busy)
 
 # ---- light ---------------------------------------------------------------------------------------------------------------

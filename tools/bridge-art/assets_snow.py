@@ -39,13 +39,9 @@ def trodden(k, x0, r0, x1, r1, z=0.006, prints=0.5):
 
 
 def snow_pine(k, cx, cr, h=2.6, tone=PINE):
-    """A fir in deep snow: dark tiers, each with snow lying on top."""
+    """A fir in deep snow: ragged dark tiers, each with snow lying on top."""
     k.cyl(cx, cr, 0, h * 0.25, 0.07, (LOG_D, 0.12), 'trunk', verts=6)
-    for i in range(4):
-        z0 = h * (0.15 + i * 0.19)
-        rad = 0.62 * (1 - i * 0.2) * k.rng.uniform(0.9, 1.1)
-        k.cone(cx, cr, z0, z0 + h * 0.34, rad, 0.02, (shade(tone, 1 + i * 0.08), 0.18), 'pine', verts=9)
-        k.cone(cx, cr, z0 + h * 0.13, z0 + h * 0.3, rad * 0.62, 0.04, (ROOF_SNOW, 0.2), 'pine_snow', verts=9)
+    W.pine_tiers(k, cx, cr, h, tone, rad=0.64, z0=0.15, tiers=5, snow=ROOF_SNOW)
     k.cyl(cx, cr, 0.0, 0.03, 0.55, (SNOW_SH, 0.2), 'tree_well', verts=12)
 
 
@@ -348,11 +344,12 @@ def finish_arch(k, x0, x1, cr, h=2.6):
 def piste_tree(k, cx, cr, h=2.6, tone=PINE):
     """A lighter fir for forests of hundreds: three snowy tiers."""
     k.cyl(cx, cr, 0, h * 0.25, 0.07, (LOG_D, 0.12), 'trunk', verts=6)
-    for i in range(3):
-        z0 = h * (0.14 + i * 0.25)
-        rad = 0.6 * (1 - i * 0.26) * k.rng.uniform(0.9, 1.1)
-        k.cone(cx, cr, z0, z0 + h * 0.42, rad, 0.02, (shade(tone, 1 + i * 0.08), 0.18), 'pine', verts=9)
-        k.cone(cx, cr, z0 + h * 0.17, z0 + h * 0.38, rad * 0.62, 0.04, (ROOF_SNOW, 0.2), 'pine_snow', verts=9)
+    with k.foliage('needle'):
+        for i in range(3):
+            z0 = h * (0.14 + i * 0.25)
+            rad = 0.6 * (1 - i * 0.26) * k.rng.uniform(0.9, 1.1)
+            k.cone(cx, cr, z0, z0 + h * 0.42, rad, 0.02, (shade(tone, 1 + i * 0.08), 0.18), 'pine', verts=9)
+            k.cone(cx, cr, z0 + h * 0.17, z0 + h * 0.38, rad * 0.62, 0.04, (ROOF_SNOW, 0.2), 'pine_snow', verts=9)
 
 
 def hanging_sign(k, x, r_face, z, icon, board='#5a3a1e', side=1):

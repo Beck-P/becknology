@@ -99,6 +99,11 @@ var BridgeScene = (function () {
         if (img) sc.baseDepth = sc.depth = decodeDepth(img, meta);
         done();
       });
+      // the leaf pass (scenekit k.foliage): which pixels are leaves or needles, and of which tree (js/foliage.js)
+      if (meta.leaves) {
+        pending++;
+        loadImage(base + 'leaves.png' + q, function (img) { sc.baseLeaves = img ? pixels(img) : null; done(); });
+      }
       // Decor variants: a lit image per state + depth for each
       Object.keys(meta.layers || {}).forEach(function (slot) {
         Object.keys(meta.layers[slot]).forEach(function (key) {
@@ -113,6 +118,10 @@ var BridgeScene = (function () {
             if (img) L.depth = decodeDepth(img, meta);
             done();
           });
+          if (L.box.leaves) {
+            pending++;
+            loadImage(dir + 'leaves.png' + q, function (img) { L.leaves = img ? pixels(img) : null; done(); });
+          }
         });
       });
     };
@@ -136,8 +145,11 @@ var BridgeScene = (function () {
     if (scenes[id] && scenes[id].ready) composite(scenes[id]);
   }
 
-  // A colour grade baked into a scene's images (Verdance's seasons, js/seasons.js): fn(rgba, w, h) reworks
-  // the pixels in place. Like the layers, it runs on load and when it changes — never per frame.
+  // A colour grade baked into a scene's images (the seasons: js/foliage.js, js/seasons.js): fn(rgba, w, h, leaves, state,
+  // ref) reworks the pixels in place — leaves is the leaf pass as composited (RGBA: R leaf, B needle, G which tree; null
+  // when the render has none); ref, for a scene with a day and a night (meta.cycle), is the day image as composited, so a
+  // grade can decide from the day's colours and carry each state's own light over (`BridgeScene.relight`). Like the
+  // layers, it runs on load and when it changes — never per frame.
   var grades = {};
   function setGrade(id, fn, key) {
     var g = grades[id];
@@ -172,7 +184,22 @@ var BridgeScene = (function () {
       }
       return mask;
     });
-    m.states.forEach(function (s) {
+    var leaves = null;                                  // the leaf pass with the chosen variants over it
+    if (grade && (sc.baseLeaves || use.some(function (L) { return L.leaves; }))) {
+      leaves = sc.baseLeaves ? new Uint8ClampedArray(sc.baseLeaves) : new Uint8ClampedArray(W * m.height * 4);
+      use.forEach(function (L, n) {
+        var b = L.box, mask = masks[n], lv = L.leaves;
+        for (var li = 0; li < mask.length; li++) {
+          if (!mask[li]) continue;
+          var gi = ((b.y + Math.floor(li / b.w)) * W + b.x + li % b.w) * 4;
+          leaves[gi] = lv ? lv[li * 4] : 0; leaves[gi + 1] = lv ? lv[li * 4 + 1] : 0;
+          leaves[gi + 2] = lv ? lv[li * 4 + 2] : 0; leaves[gi + 3] = lv ? lv[li * 4 + 3] : 0;
+        }
+      });
+    }
+    var dayState = m.cycle && m.cycle.day, ref = null, order = m.states.slice();
+    if (grade && dayState && order.indexOf(dayState) > 0) { order.splice(order.indexOf(dayState), 1); order.unshift(dayState); }   // the day first: it's the reference
+    order.forEach(function (s) {
       var c = document.createElement('canvas');
       c.width = m.width; c.height = m.height;
       var cx = c.getContext('2d');
@@ -189,7 +216,8 @@ var BridgeScene = (function () {
       });
       if (grade) {
         var all = cx.getImageData(0, 0, m.width, m.height);
-        grade.fn(all.data, m.width, m.height);
+        if (s === dayState) ref = new Uint8ClampedArray(all.data);
+        grade.fn(all.data, m.width, m.height, leaves, s, s === dayState ? null : ref);
         cx.putImageData(all, 0, 0);
       }
       sc.imgs[s] = c;
@@ -549,6 +577,12 @@ var BridgeScene = (function () {
     get: get,
     setLayers: setLayers,
     setGrade: setGrade,
+    // a graded colour decided on the day image (r, g, b 0..1) carried into another state: times that state's light over
+    // the day's at this pixel, channel by channel (out: [r, g, b])
+    relight: function (px, ref, i, r, g, b, out) {
+      out[0] = r * Math.min(4, (px[i] + 1) / (ref[i] + 1)); out[1] = g * Math.min(4, (px[i + 1] + 1) / (ref[i + 1] + 1)); out[2] = b * Math.min(4, (px[i + 2] + 1) / (ref[i + 2] + 1));
+      return out;
+    },
     getLayers: getLayers,
     layerImage: layerImage,
     drawBackground: drawBackground,

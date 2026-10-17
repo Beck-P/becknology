@@ -63,13 +63,17 @@ var BridgeSeasons = (function () {
     else if (hp < 4) { g = x; b = c; } else if (hp < 5) { r = x; b = c; } else { r = c; b = x; }
     out[0] = r + m; out[1] = g + m; out[2] = b + m;
   }
+  // leaves: the render's leaf pass (js/foliage.js recolours the trees and bushes; this leaves them be) — null on a render
+  // from before it, when the trees turn here with everything else that's green
+  // ref: the day image (a scene with a night too): the change is decided on the day's colours, then carried into this
+  // state's own light (BridgeScene.relight) — so the snow and the gold lie right under the moon and the lamps
   function grade(season) {
-    return function (px, w, h) {
-      var t = [0, 0, 0], o = [0, 0, 0];
+    return function (px, w, h, leaves, state, ref) {
+      var t = [0, 0, 0], o = [0, 0, 0], L = [0, 0, 0], src = ref || px;
       for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
         var i = (y * w + x) * 4;
-        if (!px[i + 3]) continue;
-        var r = px[i] / 255, g = px[i + 1] / 255, b = px[i + 2] / 255;
+        if (!px[i + 3] || (leaves && leaves[i + 3])) continue;
+        var r = src[i] / 255, g = src[i + 1] / 255, b = src[i + 2] / 255;
         hsl(r, g, b, t);
         var hu = t[0], sa = t[1], li = t[2], green = hu > 55 && hu < 170 && sa > 0.12;
         if (season === 'winter') {
@@ -88,12 +92,14 @@ var BridgeSeasons = (function () {
         } else if (season === 'spring') {
           if (green) { rgb(hu * 0.94 + 6, sa * 0.96, li * 1.03, o); r = o[0]; g = o[1]; b = o[2]; }
         } else continue;
+        if (ref) { BridgeScene.relight(px, ref, i, r, g, b, L); r = L[0]; g = L[1]; b = L[2]; }
         px[i] = Math.round(Math.max(0, Math.min(1, r)) * 255); px[i + 1] = Math.round(Math.max(0, Math.min(1, g)) * 255); px[i + 2] = Math.round(Math.max(0, Math.min(1, b)) * 255);
       }
     };
   }
   function apply() {
     if (typeof BridgeScene === 'undefined' || !BridgeScene.setGrade) return;
+    if (typeof BridgeFoliage !== 'undefined') { BridgeFoliage.apply('verdance'); BridgeFoliage.apply('verdance-village'); return; }
     var s = current().id;
     BridgeScene.setGrade('verdance', s === 'summer' ? null : grade(s), s);
     BridgeScene.setGrade('verdance-village', s === 'summer' ? null : grade(s), s);   // Brambleford turns with the farm
@@ -137,6 +143,6 @@ var BridgeSeasons = (function () {
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('verdance', { over: over });
 
-  return { now: current, growth: growth, favours: favours, quiet: quiet, decorate: decorate, apply: apply,
+  return { now: current, growth: growth, favours: favours, quiet: quiet, decorate: decorate, apply: apply, meadow: function (s) { return s === 'summer' ? null : grade(s); },
            _force: function (i) { forced = i; told = null; apply(); } };
 })();

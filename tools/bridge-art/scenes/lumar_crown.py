@@ -334,7 +334,10 @@ k.solid(7.6, 31.0, 9.0, 31.5)
 
 # ---- the east beyond the yard, the north gardens ------------------------------------------------------------------
 for (x, r) in ((60.0, 30.0), (61.5, 24.0), (14.0, 9.5), (49.0, 9.5), (16.0, 12.5), (48.0, 12.8), (55.0, 18.0), (9.5, 17.0)):
-    W.tree(k, x, r, h=2.5, tone='#2a5434')
+    if (x, r) in ((61.5, 24.0), (14.0, 9.5), (49.0, 9.5), (9.5, 17.0)):   # pines on the cliff path, yews by the gardens
+        W.pine(k, x, r, h=2.6, tone='#24463a')
+    else:
+        W.tree(k, x, r, h=2.5, tone='#2a5434')
     if (x, r) == (60.0, 30.0):                     # on the cliff path down past the yard: block the yard side of its trunk
         k.solid(x - 0.4, r, x, r + 0.4)
     else:

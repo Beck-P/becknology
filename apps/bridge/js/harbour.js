@@ -29,7 +29,9 @@ var BridgeHarbour = (function () {
                         guns: [], fits: ['crystal_sails', 'roseite'] },
     'lumar-crimson':  { at: [31, 35], face: 'left', who: 'Garro', sheet: 'npc-hm-garro', yard: ['raider'],
                         guns: ['swivel', 'long_nine', 'carronade', 'chaser'], fits: ['storm_rig', 'oak'] },
-    'lumar-midnight': { at: [26, 35], face: 'left', who: 'the Ferryman', sheet: 'npc-ferryman', yard: [],
+    // no harbour on the Midnight Isle: the Ferryman keeps the pier and a trade of his own (moonglass, moon salt, the
+    // drowned who'd sail again) - no yard, no repairs, no contracts taken, no charts
+    'lumar-midnight': { at: [26, 35], face: 'left', who: 'the Ferryman', sheet: 'npc-ferryman', yard: [], label: 'THE FERRYMAN', ferry: true,
                         guns: ['moon_harpoon'], fits: ['moon_lantern'] },
     'lumar-holm':     { at: null, own: true, who: 'Your own', yard: [], guns: [], fits: [] }      // your island: js/holm.js keeps its book
   };
@@ -53,8 +55,9 @@ var BridgeHarbour = (function () {
   function decorate(worldId, data) {
     var P = PORTS[worldId];
     if (!P || !P.at || !data) return;
-    data.interactions = (data.interactions || []).filter(function (it) { return it.label !== LABEL; });
-    data.interactions.push({ x: P.at[0], y: P.at[1], type: 'dialog', label: LABEL, prompt: 'PRESS E TO TALK', text: '...' });
+    var lab = P.label || LABEL;
+    data.interactions = (data.interactions || []).filter(function (it) { return it.label !== LABEL && it.label !== lab; });
+    data.interactions.push({ x: P.at[0], y: P.at[1], type: 'dialog', label: lab, prompt: 'PRESS E TO TALK', text: '...' });
     if (data.scene) {
       data.scene.actors = (data.scene.actors || []).filter(function (a) { return a.sheet !== P.sheet; });
       data.scene.actors.push({ sheet: P.sheet, x: P.at[0], y: P.at[1], facing: P.face });
@@ -85,6 +88,7 @@ var BridgeHarbour = (function () {
   function menu(worldId, intro, note) {
     registry = false;
     var P = portOf(worldId), Pd = PORTS[P], f = F(), here = f.here(worldId);
+    if (Pd.ferry) { ferry(worldId, intro, note); return; }
     var hurt = here.filter(function (s) { return f.repairCost(s) > 0; });
     var rows = [
       { label: 'Your ships', sub: f.all().length + ' in all, ' + here.length + ' here', pick: function () { ledger(worldId); } }
@@ -112,6 +116,17 @@ var BridgeHarbour = (function () {
       rows.push({ label: 'Charts', sub: unc ? unc + ' sea' + (unc > 1 ? 's' : '') + ' still uncharted' : 'every sea charted', pick: function () { BridgeChart.shop(worldId, null, function () { menu(worldId); }); } });
     }
     choose({ title: Pd.who + ', harbourmaster', text: note || intro || 'WHAT CAN I DO FOR YOU?', rows: rows, closeLabel: 'Done' });
+  }
+  // the Ferryman's trade (Midnight has no harbourmaster)
+  function ferry(worldId, intro, note) {
+    var f = F(), Pd = PORTS[portOf(worldId)];
+    choose({ title: 'The Ferryman', text: note || intro || '...WHAT DO THE LIVING WANT?', rows: [
+      { label: 'Moonglass', sub: Pd.guns.concat(Pd.fits).map(function (g) { return (f.GUNS[g] || f.FITS[g]).name; }).join(', '),
+        pick: function () { pickShip(worldId, 'Which ship?', fitOut); } },
+      { label: 'Moon salt', sub: 'by the crate, a little each day, into a hold', pick: function () { pickShip(worldId, 'Into which hold?', market); } },
+      { label: 'The drowned who\'d sail again', sub: f.recruits(worldId).filter(function (r) { return !r.signed; }).length + ' waiting on the stair', pick: function () { hands(worldId); } },
+      { label: 'The hold', sub: 'your pack to her hold, and back', pick: function () { pickShip(worldId, 'Whose hold?', hold); } }
+    ], closeLabel: 'Done' });
   }
   function pickShip(worldId, title, then) {
     var f = F(), here = f.here(worldId);

@@ -145,7 +145,10 @@ var BridgeSloop = (function () {
     'Fish are deep tonight. Something big moving under them, I reckon. Mind your rudder.',
     "My da said there's a sea past the five — a sixth colour, the one the old charts leave blank. Said it like he'd seen it.",
     "Silverfin running off Sapphire. If you've a line aboard, now's the time.",
-    'Keep the red buoy to port coming home. Forgot it once. Spent the night on a rock with the crabs.'
+    'Keep the red buoy to port coming home. Forgot it once. Spent the night on a rock with the crabs.',
+    "There's a serpent in the Midnight Sea, pale as a drowned man. It circles you first. When it rears, you crack on sail and pray.",
+    'Eels that glow, out past the mist. They latch on and chew. Fast is the only thing they hate.',
+    "My cousin swears something with one great yellow eye took his anchor chain off Midnight. Took the anchor too. Took his nerve."
   ];
 
   var running = false, canvas = null, ctx = null, buf = null, bctx = null, raf = 0, last = 0, began = 0;
@@ -673,7 +676,7 @@ var BridgeSloop = (function () {
     var wx = px + (vn2(px / 26, py / 26) - 0.5) * 34 + (vn2(px / 9 + 9, py / 9) - 0.5) * 9;
     var wy = py + (vn2(px / 26 + 31, py / 26 + 17) - 0.5) * 34 + (vn2(px / 9, py / 9 + 5) - 0.5) * 9;
     for (var id in P) {
-      var I = P[id], dx = wx - (CMX + I.x * (CNW - 2 * CMX)), dy = (wy - (CMY + I.y * (CNH - 2 * CMY))) * 1.25, d = Math.sqrt(dx * dx + dy * dy);
+      var I = P[id], dx = wx - (CMX + I.x * (CNW - 2 * CMX)), dy = (wy - (CMY + I.y * (CNH - 2 * CMY))) * 1.25, d = Math.sqrt(dx * dx + dy * dy) * (I.pal === 'midnight' ? 0.68 : 1);   // (the Midnight Sea reaches further: js/chart.js SEA_W)
       if (x != null) {
         var sh = shapeOf(id), out = (ellipseK(sh, x, r, 0) - 1) * (sh.a + sh.b) / 2;
         if (out < 16) d -= (16 - out) * CPX * 1.8;
@@ -981,7 +984,8 @@ var BridgeSloop = (function () {
     hull: function () { var f = typeof BridgeFleet !== 'undefined' && BridgeFleet.get(shipId); return f ? f.hull : 1; },
     blessed: function () { return blessing; },
     shake: function () { shakeUntil = performance.now() + 260; }, wreck: function (why) { wreck(why); },
-    ctx: function () { return bctx; }, drawBoat: function (now, b) { drawBoat(now, b); }, sx: function (x) { return sx(x); }, sy: function (r, z) { return sy(r, z); }
+    ctx: function () { return bctx; }, drawBoat: function (now, b) { drawBoat(now, b); }, sx: function (x) { return sx(x); }, sy: function (r, z) { return sy(r, z); },
+    sea: function () { return seaHere(); }, seaAt: function (x, r) { return seaAtWorld(x, r); }
   };
   function fight() { return typeof BridgeSeaFight !== 'undefined' ? BridgeSeaFight : null; }
   // she's gone: the salvors tow what's left into the nearer port, her hold lost
@@ -990,9 +994,9 @@ var BridgeSloop = (function () {
     wrecking = true;
     say(why + '. Salvors are coming...', 4000);
     sfx('slam');
-    var P = isles(), near = { id: A.id, name: A.name }, nd = 1e18;            // the nearest port with a harbourmaster to mend her
+    var P = isles(), near = { id: A.id === 'lumar-midnight' ? 'lumar-tern' : A.id, name: A.id === 'lumar-midnight' ? P['lumar-tern'].name : A.name }, nd = 1e18;   // the nearest port with a harbourmaster to mend her
     Object.keys(P).forEach(function (id) {
-      if (id === 'lumar-holm') return;
+      if (id === 'lumar-holm' || id === 'lumar-midnight') return;     // (the Ferryman mends nothing)
       var c = centreOf(id), d = Math.hypot(c.x - boat.x, c.r - boat.r);
       if (d < nd) { nd = d; near = { id: id, name: P[id].name }; }
     });
@@ -1303,7 +1307,7 @@ var BridgeSloop = (function () {
     ensureIslands();
     updateCells(now);
     if (phase === 'sail' && offshore(b.x, b.r)) openT += dt;
-    if (fight() && phase === 'sail' && openT > troubleAt) { troubleAt = openT + 150; fight().plan(); }
+    if (fight() && phase === 'sail' && openT > troubleAt) { troubleAt = openT + (seaHere() === 'midnight' ? 75 : 150); fight().plan(); }   // the Midnight Sea is never quiet long
     // where you are: the sea you're on (said as you cross into one), land coming up
     crossing(here, now);
     if (phase === 'sail') landHo();

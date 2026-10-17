@@ -134,10 +134,18 @@ for x in [i * 2.3 + 0.8 for i in range(19)]:
         W.tree(k, x, 1.0, h=k.rng.uniform(2.4, 3.0), tone='#3a6a34')
     else:
         W.pine(k, x, 1.0, h=k.rng.uniform(2.2, 2.8), tone='#2e5a38')
-for r in [i * 2.2 + 3.0 for i in range(12)]:
-    W.tree(k, 0.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34') if r < 26 else W.bush(k, 0.6, r, s=0.45, tone='#3a6a30')
+for i, r in enumerate([i * 2.2 + 3.0 for i in range(12)]):                        # oaks with a fir every third
+    if r >= 26:
+        W.bush(k, 0.6, r, s=0.45, tone='#3a6a30')
+    elif i % 3 == 1:
+        W.pine(k, 0.5, r, h=k.rng.uniform(2.3, 2.9), tone='#2e5a38')
+    else:
+        W.tree(k, 0.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
     if r < 19 or r > 27.5:
-        W.tree(k, 43.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
+        if i % 3 == 2:
+            W.pine(k, 43.5, r, h=k.rng.uniform(2.3, 2.9), tone='#2e5a38')
+        else:
+            W.tree(k, 43.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
 for x in [i * 2.0 + 1.0 for i in range(22)]:
     if 32.5 < x < 44:
         continue

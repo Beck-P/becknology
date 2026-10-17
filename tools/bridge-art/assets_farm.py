@@ -14,7 +14,7 @@ WOOD_D = '#5a3e22'
 BARN = '#9a3428'
 TRIM = '#ece4d4'
 EARTH = '#7a5634'
-GRASS = '#5a8a3c'
+GRASS = '#5e9a3a'
 
 
 def fence(k, a, b, h=0.72, tone=WOOD, every=1.0, solid=True):
@@ -116,6 +116,7 @@ def pond(k, cx, cr, rx, ry, seed=0):
 def earth(k, x0, r0, x1, r1):
     """The field: bare, crumbly earth waiting to be worked (the game tills it, a tile at a time)."""
     k.box(x0, r0, -0.02, x1, r1, 0.012, (EARTH, 0.35), 'field')
+    k.later.append(lambda: W.ragged_edges(k, x0, r0, x1, r1, GRASS, z=0.012))
     for _ in range(int((x1 - x0) * (r1 - r0) * 1.4)):
         x, r = k.rng.uniform(x0 + 0.1, x1 - 0.1), k.rng.uniform(r0 + 0.1, r1 - 0.1)
         s = k.rng.uniform(0.04, 0.09)
@@ -124,6 +125,7 @@ def earth(k, x0, r0, x1, r1):
 
 def dirt_path(k, x0, r0, x1, r1):
     k.box(x0, r0, -0.01, x1, r1, 0.006, ('#9a7a4e', 0.3), 'path')
+    k.later.append(lambda: W.ragged_edges(k, x0, r0, x1, r1, GRASS, z=0.006))       # the turf creeping over its edges
     for _ in range(int((x1 - x0) * (r1 - r0) * 0.8)):
         x, r = k.rng.uniform(x0, x1), k.rng.uniform(r0, r1)
         k.rock(x, r, 0.0, 0.04, 0.035, 0.02, (shade('#9a7a4e', k.rng.uniform(0.7, 1.1)), 0.3), part='pebble', segs=5)
@@ -162,10 +164,13 @@ def wildflowers(k, x0, r0, x1, r1, n, cols=('#f0d040', '#e05070', '#a070e0', '#f
 
 
 def apple_tree(k, cx, cr, h=2.4):
-    W.tree(k, cx, cr, h=h, tone='#3e7a34', lean=k.rng.uniform(-0.08, 0.08))
-    for _ in range(9):
-        a = k.rng.uniform(0, math.tau)
-        k.sphere(cx + math.cos(a) * 0.5, cr + 0.25 + math.sin(a) * 0.15, h * k.rng.uniform(0.55, 0.85), 0.06, 0.06, '#d02a2a', 'apple', segs=6)
+    lobes = W.tree(k, cx, cr, h=h, tone='#3e7a34', lean=k.rng.uniform(-0.08, 0.08))
+    for i in range(14):                                       # apples on the crown's face, toward you
+        x, r, z, rx, ry, rz = lobes[i % len(lobes)]
+        u, a = k.rng.uniform(-0.5, 0.6), k.rng.uniform(math.pi * 0.1, math.pi * 0.9)
+        w = math.sqrt(1 - u * u)
+        k.sphere(x + w * math.cos(a) * rx * 1.04, r + w * math.sin(a) * ry * 1.04, z + u * rz * 1.04, 0.065, 0.065,
+                 ('#d02a2a', 0.2), 'apple', segs=6)
     k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
 
 

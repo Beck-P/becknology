@@ -922,6 +922,33 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 7*u, y + 6*u, 2*u, 2*u);
   }
 
+  // the Midnight Sea's monsters (js/seafight.js): a gloamserpent's scale, the Deep Maw's ink and its pearl
+  function scaleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0a0a18'; ctx.fillRect(x + 4*u, y + 2*u, 8*u, 12*u); ctx.fillRect(x + 3*u, y + 4*u, 10*u, 8*u);
+    ctx.fillStyle = '#2c4660'; ctx.fillRect(x + 5*u, y + 3*u, 6*u, 10*u); ctx.fillRect(x + 4*u, y + 5*u, 8*u, 6*u);
+    ctx.fillStyle = '#5a86a0'; ctx.fillRect(x + 5*u, y + 4*u, 3*u, 5*u);
+    ctx.fillStyle = '#9ad8ff'; ctx.fillRect(x + 8*u, y + 7*u, 2*u, 2*u); ctx.fillRect(x + 6*u, y + 10*u, 1*u, 1*u);
+    ctx.fillStyle = '#c8a0ff'; ctx.fillRect(x + 7*u, y + 3*u, 2*u, 1*u);
+  }
+  function inkIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 5*u, y + 2*u, 6*u, 3*u); ctx.fillRect(x + 3*u, y + 5*u, 10*u, 10*u);
+    ctx.fillStyle = '#7a6a5a'; ctx.fillRect(x + 6*u, y + 3*u, 4*u, 1*u);
+    ctx.fillStyle = '#2a1838'; ctx.fillRect(x + 4*u, y + 6*u, 8*u, 8*u);
+    ctx.fillStyle = '#5a2a7a'; ctx.fillRect(x + 4*u, y + 9*u, 8*u, 5*u);
+    ctx.fillStyle = '#c890ff'; ctx.fillRect(x + 5*u, y + 7*u, 2*u, 1*u); ctx.fillRect(x + 9*u, y + 11*u, 1*u, 1*u);
+  }
+  function deepPearlIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = 'rgba(160,120,255,0.3)'; ctx.fillRect(x + 2*u, y + 2*u, 12*u, 12*u);
+    ctx.fillStyle = '#0a0810'; ctx.fillRect(x + 4*u, y + 4*u, 8*u, 8*u);
+    ctx.fillStyle = '#3a2a6a'; ctx.fillRect(x + 5*u, y + 5*u, 6*u, 6*u);
+    ctx.fillStyle = '#8a70e0'; ctx.fillRect(x + 5*u, y + 5*u, 4*u, 4*u);
+    ctx.fillStyle = '#e8e0ff'; ctx.fillRect(x + 6*u, y + 6*u, 2*u, 1*u);
+    ctx.fillStyle = '#e8ff90'; ctx.fillRect(x + 8*u, y + 8*u, 1*u, 1*u);
+  }
+
   // ---- Item registry --------------------------------------------------
   // type drives display + grouping.
   // effects is the source of truth for what an item does — both the
@@ -1051,6 +1078,12 @@ var BridgeItems = (function () {
                      draw: coinIcon, value: 25 },
     star_pearl:    { id: 'star_pearl', name: 'Star Pearl', desc: 'From the moon pool. There are stars moving inside it.', type: 'material', stackable: true,
                      draw: pearlIcon, value: 80 },
+    gloam_scale:   { id: 'gloam_scale', name: 'Gloamserpent Scale', desc: 'A scale off the serpent of the Midnight Sea, the size of your hand. Its spots still glow. The Ferryman buys them.', type: 'material', stackable: true,
+                     draw: scaleIcon, value: 90 },
+    abyss_ink:     { id: 'abyss_ink', name: 'Abyss Ink', desc: 'A stoppered jar of the Deep Maw\'s ink. Black as the Midnight Sea, violet where the light catches it.', type: 'material', stackable: true,
+                     draw: inkIcon, value: 160 },
+    deep_pearl:    { id: 'deep_pearl', name: 'Deep Pearl', desc: 'From the Deep Maw itself. Something moves inside it, very slowly, like an eye opening.', type: 'material', stackable: true,
+                     draw: deepPearlIcon, value: 450 },
     fallen_star:   { id: 'fallen_star', name: 'Fallen Star', desc: 'It came down by you on a starfall night on Sylvara. Still warm, and humming to itself. Mirelle the herbalist buys them.', type: 'material', stackable: true,
                      draw: fallenStarIcon, value: 150 },
     // treasure maps (js/treasure.js)

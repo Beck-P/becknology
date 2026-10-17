@@ -191,16 +191,12 @@ def ridge(k, cells, top=3.0, slope=1.1, seed=5, rock='#3a3034', strata=('#4a3c3e
 
 
 # ---- things -------------------------------------------------------------------------------------
-def tufts(k, cells, tone, per_cell=1.2, avoid=None, h=(0.08, 0.17)):
-    for (c, r) in cells:
-        m = int(per_cell) + (1 if k.rng.random() < per_cell % 1 else 0)
-        for _ in range(m):
-            x, y = c + k.rng.random(), r + k.rng.random()
-            if avoid and avoid(x, y):
-                continue
-            for j in range(3):
-                k.cone(x + j * 0.04 - 0.04, y, -0.01, k.rng.uniform(*h), 0.025, 0.002,
-                       shade(tone, k.rng.uniform(1.0, 1.45)), 'tuft', verts=3)
+def tufts(k, cells, tone, per_cell=1.2, avoid=None, h=(0.08, 0.17), flowers=0.7):
+    """The grass over an island's turf (assets_town.meadow), once the scene is laid out: dense tufts in three greens,
+    tall clumps, clover and small flowers, on the cells given, wherever the ground is still what's on top."""
+    cells = list(cells)
+    k.later.append(lambda: W.meadow(k, tone, cells=cells, ok=('ground', 'grass'), density=0.55 + per_cell * 0.45, avoid=avoid,
+                                    flowers=flowers, h=(h[0] * 0.75, h[1] * 0.8)))
 
 
 def pebbles(k, cells, tone, per_cell=0.3, avoid=None):
@@ -246,10 +242,7 @@ def red_pine(k, cx, cr, h=2.6, tone='#4a2430', trunk='#2a1a18'):
     """A wind-bent pine of the crimson isle: dark needles with a red cast."""
     lean = k.rng.uniform(-0.15, 0.2)
     k.tube((cx, cr, 0.0), (cx + lean, cr, h * 0.35), 0.08, (trunk, 0.15), 'trunk', rb=0.06, verts=6)
-    for i in range(4):
-        z0 = h * (0.2 + i * 0.18)
-        rad = 0.62 * (1 - i * 0.2) * k.rng.uniform(0.85, 1.1)
-        k.cone(cx + lean * (0.8 + i * 0.1), cr, z0, z0 + h * 0.34, rad, 0.02, (shade(tone, 1 + i * 0.08), 0.2), 'pine', verts=8)
+    W.pine_tiers(k, cx + lean * 0.8, cr, h, tone, rad=0.64, z0=0.2, tiers=4, lean=lean * 0.4)
     k.solid(cx - 0.35, cr - 0.35, cx + 0.35, cr + 0.35)
 
 

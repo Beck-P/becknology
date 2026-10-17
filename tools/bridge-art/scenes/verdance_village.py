@@ -205,10 +205,16 @@ for x in [i * 2.3 + 0.8 for i in range(20)]:
         W.tree(k, x, 1.0, h=k.rng.uniform(2.4, 3.0), tone='#3a6a34')
     else:
         W.pine(k, x, 1.0, h=k.rng.uniform(2.2, 2.8), tone='#2e5a38')
-for r in (3.0, 5.6, 8.2, 13.6, 16.0):
-    W.tree(k, 0.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
+for r in (3.0, 5.6, 8.2, 13.6, 16.0):                           # oaks, and firs among them
+    if r in (5.6, 13.6):
+        W.pine(k, 0.5, r, h=k.rng.uniform(2.3, 2.9), tone='#2e5a38')
+    else:
+        W.tree(k, 0.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
 for r in (12.8, 21.0, 23.4):
-    W.tree(k, 45.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
+    if r == 21.0:
+        W.pine(k, 45.5, r, h=k.rng.uniform(2.3, 2.9), tone='#2e5a38')
+    else:
+        W.tree(k, 45.5, r, h=k.rng.uniform(2.2, 2.8), tone='#3a6a34')
 for x in [i * 1.9 + 0.8 for i in range(25)]:
     if 9.4 < x < 12.0 or 13.8 < x < 19.0:                         # the lane's gap, the cottage garden
         continue

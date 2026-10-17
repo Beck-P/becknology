@@ -53,5 +53,17 @@ const st = p => p.evaluate(() => { const b = BridgeSloop._boat(); return b ? Bri
   for (let i = 0; i < 20; i++) { await aly.keyboard.press('f'); await aly.waitForTimeout(800); if (await beck.evaluate(() => !BridgeSeaFight._foes()[0] || BridgeSeaFight._foes()[0].state === 'sink')) break; }
   await aly.waitForTimeout(1500);
   console.log('sunk:', await beck.evaluate(() => BridgeSeaFight._foes().map(o => o.state)), '| aly coins', c0, '->', await aly.evaluate(() => window._coins));
+  // out into the Midnight Sea: the serpent surfaces and dives for both of them, and Beck harpoons it
+  await beck.evaluate(() => { const c = BridgeVoyage._isles['lumar-midnight'], w = BridgeSloop._toWorld(c.x, c.y), bt = BridgeSloop._boat(); bt.x = w.x + 6; bt.r = w.r + 34; bt.v = 0; });
+  await beck.waitForTimeout(2500);
+  await beck.evaluate(() => { BridgeSeaFight._foes().length = 0; BridgeSeaFight._spawn('serpent'); });
+  const seenA = {};
+  for (let i = 0; i < 50; i++) {
+    await beck.waitForTimeout(300);
+    (await aly.evaluate(() => BridgeSeaFight._foes().map(o => o.kind + ':' + o.state + (o.under ? '~' : '')))).forEach(x => seenA[x] = 1);
+    await beck.keyboard.press('f');
+  }
+  console.log('monster: aly saw', Object.keys(seenA).join(' '), '| serpent hp', await beck.evaluate(() => BridgeSeaFight._foes().map(o => o.state + ' ' + Math.round(o.hp))));
+  await aly.screenshot({ path: `${S}/seafight_serpent_aly.png` });
   await b.close();
 })();

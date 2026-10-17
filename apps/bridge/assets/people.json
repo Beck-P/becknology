@@ -1855,25 +1855,25 @@
   },
   "ferryman": {
     "name": "The Ferryman",
-    "role": "Rows the dead no longer. Sells moon salt and moonglass to the living",
+    "role": "Rows the dead no longer. Keeps the pier, and sells the living what they came for",
     "sheet": "npc-ferryman",
     "at": [
       {
         "world": "lumar-midnight",
-        "label": "HARBOURMASTER"
+        "label": "THE FERRYMAN"
       }
     ],
     "greet": "...YOU CAME BY SEA. FEW DO. I FERRIED THE DROWNED ACROSS THE MOON POOL FOR LONGER THAN THE ABBEY STOOD. NOW I KEEP THE PIER, AND SELL THE LIVING WHAT THEY CAME FOR.",
     "again": "...THE MIST LET YOU THROUGH AGAIN.",
     "topics": [
       {
-        "q": "The harbour book",
-        "a": "MY LEDGER IS OLDER THAN MOST SHIPS. MOON SALT, MOONGLASS, AND THOSE OF THE DROWNED WHO WOULD SAIL AGAIN.",
+        "q": "What do you sell?",
+        "a": "MOONGLASS, MOON SALT, AND THOSE OF THE DROWNED WHO WOULD SAIL AGAIN. I KEEP NO HARBOUR BOOK. THE SEA KEEPS ITS OWN, AND IT DOES NOT MEND SHIPS.",
         "harbour": true
       },
       {
         "q": "The Midnight Sea?",
-        "a": "THE ROCKS COME OUT OF THE MIST WITHOUT WARNING. AND THERE ARE THINGS IN THE WATER THAT WERE SAILORS ONCE. A MOON LANTERN AT YOUR MASTHEAD KEEPS THEM OFF AND SHOWS THE ROCKS. A MOONGLASS HARPOON SENDS THEM HOME."
+        "a": "THE ROCKS COME OUT OF THE MIST WITHOUT WARNING. THERE ARE THINGS IN THE WATER THAT WERE SAILORS ONCE, AND THINGS THAT NEVER WERE. A MOON LANTERN KEEPS THE DROWNED OFF. NOTHING KEEPS THE OTHERS OFF. KEEP A HARPOON TO HAND."
       },
       {
         "q": "Moon salt?",
@@ -1882,6 +1882,28 @@
       {
         "q": "The drowned who would sail?",
         "a": "SOME OF THEM REMEMBER THE SEA FONDLY. THEY DON'T EAT, THEY DON'T SLEEP AND THEY DON'T FEAR BOARDERS. SIGN ONE ON, IF YOU CAN BEAR THE COLD OF THEM."
+      },
+      {
+        "q": "Things that never were sailors?",
+        "a": "THE GLOAMSERPENT, PALE AS THE DROWNED. IT CIRCLES BEFORE IT STRIKES, AND IT STRIKES WHERE YOU WERE - SO DON'T BE THERE. THE WISP EELS, WHICH HATE SPEED. AND THE DEEP MAW, WHICH I HAVE SEEN ONCE, AND ONCE WAS ENOUGH. ITS ARMS HOLD; ITS EYE IS WHERE IT FEELS. BRING ME WHAT YOU TAKE FROM THEM."
+      },
+      {
+        "q": "Scales and ink?",
+        "a": "SERPENT SCALE FOR THE LANTERN-MAKERS, MAW INK FOR THE CHARTS THAT MUST NOT FADE. I PAY WELL. THE PEARL... I PAY BETTER.",
+        "sell": [
+          {
+            "id": "gloam_scale",
+            "price": 110
+          },
+          {
+            "id": "abyss_ink",
+            "price": 190
+          },
+          {
+            "id": "deep_pearl",
+            "price": 520
+          }
+        ]
       }
     ]
   },
@@ -2565,7 +2587,10 @@
         "q": "Fallen stars?",
         "a": "ON A STARFALL NIGHT THEY COME DOWN IN THE WOOD, STILL WARM. MOST FOLK STEP OVER THEM. BRING THEM TO ME AND I'LL PAY WELL: THEY KEEP A TINCTURE BRIGHT FOR A CENTURY.",
         "sell": [
-          { "id": "fallen_star", "price": 150 }
+          {
+            "id": "fallen_star",
+            "price": 150
+          }
         ]
       },
       {
