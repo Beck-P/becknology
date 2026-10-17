@@ -609,6 +609,58 @@ Sapphire's lighthouse opens from its door on the west hill (`LIGHTHOUSE`): **the
 
 Arcadia's **Lucky 7** (`arcadia-lucky-7`, `scenes/arcadia_lucky_7.py`, `assets_cyber.pachinko_machine` / `prize_wall` / `maneki_neko`) is the pachinko parlour behind the bulb sign on the District street: a row of machines under the neon, an island of them back to back, the prize counter where Sev Akana (`npc-sev`, a persona sheet) cashes balls for coins, the lucky cat by the door. **Pachinko** (`js/pachinko.js`, interaction types `pachinko` with `machine`, and `pachinko_prizes`) is a real pin board in a native buffer: hold to fire, turn the handle (slider or ←/→) so balls ride the rail round the arch to the return rubber and drop beside the screen; the centre pocket pays 2 and spins the reels (four held), three alike (1 in 32) opens the attacker for a fever — guide rails swing over the funnels — ten balls at 8 (three 7s: two rounds at 10); tulips pay 2. Each of the six machines has its own seeded pins and art. Balls live in your box (`bridge_pachinko`): a free house tray of 30 a night, trays of 50 for 10 coins, the counter pays 5 balls to the coin up to 150 coins a night. Tuned in simulation (`BridgePachinko._sim`) to return about 85%.
 
+### Getting around Arcadia: express lifts, air cabs, the Loop (js/transit.js)
+Arcadia is a vertical city — "ritzier as you go up, poor as you go down" — in five levels, each with a tag on its signs:
+**the Spires** (L480, above the smog, real stars), **the Mid-Levels** (L200: the Skywalk, Skyport 7, the Terraces),
+**the District** (L0: Lantern Row, the neon street, the spaceport), **the Undercity** (B20) and **the Sump** (B60) — the
+plan is `_claude_docs/spec-arcadia-above.md`. Beck: "the skytrain, express lifts, and stuff like that" (no funicular).
+- **`assets/arcadia-lifts.json`** is the one file all of it reads (js/transit.js, js/map.js's cutaway, `atlas.py`,
+  `audit_worlds.py`): `levels` (top first: `id`, `name`, `tag`, `floors` — the range the lift counter shows, below the
+  street negative and shown `B20`), `places` (each main place's `level` and `x`, 0 west … 1 east, and `name`, for the Map;
+  rooms inside them aren't listed), `shafts` (`{ id: { name, x, lobbies: [{ id, world, floor, spawn }] } }`: an express lift
+  and its stops, `spawn` where you step out), `loop` (`{ name, stations: [{ id, name, world, spawn }] }`, in order round the
+  ring) and `cabs` (`{ pads: [{ id, name, world, spawn, level }] }`). A stop whose world isn't in the game yet stays dark
+  (js/transit.js asks the atlas), so another workstream's lobby can go in before its place does. Workstream C adds the
+  Undercity's and the Sump's lobbies to the `core` shaft.
+- **In a world** they're interactions: `express_lift { shaft, lobby }`, `air_cab { pad }`, `loop_station { station }`
+  (registered by js/transit.js with `BridgeInteractions.register`; the old `enter_world` lifts on the street, the Skywalk
+  and Skyport 7 are lifts now: shafts `skywalk` — the street and the Skywalk's west pod — and `skyport` — its east pod and
+  Skyport 7). The audit checks every one names a stop in the file, that stop is in its own world and steps out onto open
+  ground; the atlas makes every stop an exit to every other on its shaft, ring or rank (kinds `lift`, `loop`, `cab`).
+- **A lift**: pick a floor (the stops top first, with their levels and floors; yours greyed), the doors close and you're
+  in the car looking out through its glass (`#transit-ride`: a 320 × 180 canvas scaled by a whole number): the floor
+  counter rolling over odometer-style, the city's own rendered layers (`BridgeSkyline.layers()`) sliding down past as you
+  rise, the near towers' faces whipping by, the level's name lighting up as you pass into it (*Through the smog* between
+  the Mid-Levels and the Spires — the car fills with pink fog — then stars, the smog sea below with tower tops through it
+  and the white-and-gold spires standing out of it; below the street, the shaft's concrete and sodium lamps). Gold trim on
+  the Spire Express. Space, Esc or a tap skips to the doors opening; then the world, under its own fade.
+- **An air cab**: pick a pad and pay (12 coins a hop, 6 more a level, 10 more to or from the Spires: `fare`); the ride is
+  the cab's side window — the layers streaming past, traffic lanes the other way, a tower close enough to see into, the
+  driver's little route screen, a charm swinging.
+- **The Loop** (the carriage, `arcadia-loop` — its render and the train's sprite are the next piece in; until then the
+  stations say the service is suspended; 3 coins): board at a station (where to, or *ride round*), sit by the window
+  and she runs station to station round the ring — 22 s a leg, 9 s at each stop with the doors open (`RUN`, `DWELL`) —
+  the skyline streaming past at speed (the world's `skyline.motion: "loop"`: `BridgeSkyline.setMotion` scrolls and
+  repeats the layers by how far she's gone), towers flashing by close, each station's platform sliding in and stopping
+  outside the windows with its name board; a banner says the next stop and yours. The doors (`loop_doors`) step you off
+  onto that station's platform while she's in; stay on and she carries on round. The route map (`loop_map`). Reload
+  aboard (or arrive some other way) and she's waiting at the first station with the doors open.
+- **The Loop's train in the city** (the same moment for everyone, from the clock): a world whose skyline block has
+  `loop: { row, from, to, scale }` (screen tiles) has her viaduct across its sky and sees her cross every 150 s, west then
+  east (`PASS`, `CROSS`; a rumble, `train`) — the neon street; a station world's `loop: { track: [x0, x1, row, z] }` sees
+  her brake in, wait and pull out on its track every 90 s (`stationItems`, depth-tested at the track's row). Her sprite is
+  `assets/scenes/loop-train` (`tools/bridge-art/loop_train.py`).
+- **The Map** (js/map.js): Arcadia's card on *All places* opens with a side-on cutaway of the city (`cutaway`, a
+  360 × 226 canvas at a whole number of device pixels): the starlit Spires over the smog, the Mid-Levels and the Loop's
+  ring, the street in neon, the Undercity's sodium lamps, the Sump's water; every main place where it stands — named
+  where you've been (a button: its map), "?" where a way you know leads; the lift shafts between their stops, the cab
+  routes arcing between pads, the Loop's stations on its ring; the levels down the left (a "?" until you've been on one).
+  The tree of every room is still under it. A lift, a cab rank or a station on a place's own map is a marker that says
+  where it goes (`BridgeTransit.links`).
+- Sounds: `ding`, `cab`, `doors`, `train` (js/audio.js). Test: `world/arcadia_transit.js` (the lifts up and across and
+  back down, a ride's frames to the Spires and below the street and in a cab, the Loop boarded and ridden to a stop, the
+  train over the street, the cutaway; `shots/transit_*.png`).
+
 ### The Neon Royale (the casino)
 Beck: "instead of Runouts being like a game or a casino game, it's an actual interior space where you go… actual poker, actual blackjack… craps, roulette… make it an actual casino… really lean into the casino vibes." Then: big and ritzy (Monaco money under Arcadia's neon), two or three of each table, the old Runouts games in their own corner, a high-roller room you earn at poker, a bar and a restaurant. The Neon Royale is the oldest house in Arcadia, at the east end of the District street, owned by **the Duchess**. It is built in two halves: **the place** (these scenes, people, life and sound) and **Royale Link** — `js/casino.js` (`BridgeCasino`) and the games, which register the `casino` interaction type and run every table (see *Royale Link* below).
 - **The contract.** Every playable spot is `{ "type": "casino", "game": <id>, "table": <unique id>, "label", "prompt": "PRESS E TO PLAY" }`, game one of `blackjack`, `roulette`, `craps`, `poker`, `slots`, `derby`, `crash`, `lobby` (a Royale Link terminal: your account, chips) or `runouts` (with `mode`, a Runouts mode id from `apps/runouts/src/games/runouts.js`; without one it opens the whole Runouts section). The Crown Room's tables add `"stakes": "high"`. The map shows them as games (`js/map.js` `CASINO`), and they get the gold ▶ badge (`js/world.js`).
