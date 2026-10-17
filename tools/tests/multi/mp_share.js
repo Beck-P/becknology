@@ -51,7 +51,7 @@ const dlg = p => p.evaluate(() => { const d = document.querySelector('.world-dia
   await click(beck, /Sea Glass/); await beck.waitForTimeout(300);
   console.log('beck howmany:', await dlg(beck));
   await click(beck, /^1$/); await beck.waitForTimeout(1000);
-  const dump = await (await fetch('http://127.0.0.1:8767/dump')).json();
+  const dump = await (await fetch('http://127.0.0.1:' + (process.env.SUPA_PORT || 8767) + '/dump')).json();
   console.log('mail rows', JSON.stringify(dump.tables.pilot_mail.map(m => [m.from_name, m.body.slice(0, 20), m.items, m.coins, m.opened_at])));
   const aly2 = await player(b, S, ALY);
   await aly2.waitForTimeout(5000);                                        // the cloud pulls her game onto this "device" and reloads
@@ -63,7 +63,7 @@ const dlg = p => p.evaluate(() => { const d = document.querySelector('.world-dia
   console.log('aly2 letter:', await dlg(aly2));
   await aly2.screenshot({ path: `${S}/sh_letter.png` });
   await click(aly2, /Take it|Keep it/); await aly2.waitForTimeout(800);
-  const d2 = await (await fetch('http://127.0.0.1:8767/dump')).json();
+  const d2 = await (await fetch('http://127.0.0.1:' + (process.env.SUPA_PORT || 8767) + '/dump')).json();
   console.log('aly2 sea glass', await aly2.evaluate(() => BridgeInventory.getCount('sea_glass')), 'opened', !!d2.tables.pilot_mail[0].opened_at, 'log', await aly2.evaluate(() => BridgeQuests.log().slice(0, 2).map(e => e.k + ': ' + e.t)));
   await b.close();
 })();
