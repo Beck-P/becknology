@@ -9,7 +9,9 @@ module.exports = process.env.CHROME || (fs.existsSync(BUILT_IN) ? BUILT_IN : und
 const PORT = process.env.BRIDGE_PORT;
 if (PORT && PORT !== '8766') {
   const pw = require('playwright');
-  const swap = (r) => r.continue({ url: r.request().url().replace('127.0.0.1:8766', '127.0.0.1:' + PORT) });
+  // fetched from that port and handed back as the page's own (continue() to another port is blocked for its scripts)
+  const swap = (r) => r.fetch({ url: r.request().url().replace('127.0.0.1:8766', '127.0.0.1:' + PORT) })
+    .then((res) => r.fulfill({ response: res }), () => r.abort().catch(() => {}));
   const launch = pw.chromium.launch.bind(pw.chromium);
   pw.chromium.launch = async (...a) => {
     const b = await launch(...a);
