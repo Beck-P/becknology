@@ -107,7 +107,7 @@ var BridgeEvents = (function () {
     if (!sh.ready || !sc) return null;
     var footRow = o.y + 0.9;
     return { footRow: footRow, draw: function (ctx) {
-      var col = o.walk != null ? 4 + Math.floor(o.walk / 0.3) % 8 : IDLE[Math.floor((ms + (o.seed || 0) * 137) / 360) % 4];
+      var col = o.walk != null ? 4 + Math.floor(o.walk / 0.3) % 8 : (function (k) { return k % 12 === 5 ? 3 : IDLE[k % 4]; })(Math.floor((ms + (o.seed || 0) * 137) / 360));
       var cx = Math.round(offX + (o.x + 0.5) * ts), footY = Math.round(offY + footRow * ts) - (o.lift || 0);
       BridgeScene.drawOccluded(ctx, sc, sh.img, col * FW, (DIR[o.f] || 0) * FH, FW, FH, cx - FW / 2, footY - (FH - 3), footRow,
         offX, offY, BridgeScene.tintAt(sc, world, Math.round(o.x), Math.round(o.y), ms), { x: cx, y: footY + (o.lift || 0), rx: 8, ry: 3 });

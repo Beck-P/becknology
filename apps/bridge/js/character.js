@@ -203,6 +203,8 @@ var BridgeCharacter = (function () {
   var FRAME_W = 32, FRAME_H = 48;
   var DIR_ROW = { down: 0, right: 1, up: 2, left: 3 };
   var IDLE_SEQ = [0, 1, 2, 1];   // breathe; frame 2 also blinks the antenna
+  // the idle frame at a time: breathing, and one beat in twelve (every ~4 s) idle3 — idle1 with the eyes shut, a blink
+  function idleCol(now) { var k = Math.floor(now / 340), c = IDLE_SEQ[k % IDLE_SEQ.length]; return k % 12 === 5 ? 3 : c; }
   var WALK_CYCLE_TILES = 2.4;    // tiles per full 8-frame stride
   var sheets = {};
 
@@ -267,7 +269,7 @@ var BridgeCharacter = (function () {
     if (player.moveProgress < 1) {
       col = 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8;
     } else {
-      col = IDLE_SEQ[Math.floor(Date.now() / 340) % IDLE_SEQ.length];
+      col = idleCol(Date.now());
     }
     var row = DIR_ROW[player.facing] || 0;
     var k = ts / 32;
@@ -309,7 +311,7 @@ var BridgeCharacter = (function () {
         if (!sheet.ready) return;
         var col = player.moveProgress < 1
           ? 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8
-          : IDLE_SEQ[Math.floor(Date.now() / 340) % IDLE_SEQ.length];
+          : idleCol(Date.now());
         var row = DIR_ROW[player.facing] || 0;
         var cx = Math.round(offX + (pos.x + 0.5) * ts);
         var footY = Math.round(offY + footRow * ts);
@@ -355,7 +357,7 @@ var BridgeCharacter = (function () {
     if (!img) {                                        // walking or standing (or the attack sheet still loading)
       var sh = o.sheet && o.sheet.ready ? o.sheet : null;
       if (!sh) return;
-      var col = o.walking ? 4 + Math.floor(o.stride / (WALK_CYCLE_TILES / 8)) % 8 : IDLE_SEQ[Math.floor(Date.now() / 340) % IDLE_SEQ.length];
+      var col = o.walking ? 4 + Math.floor(o.stride / (WALK_CYCLE_TILES / 8)) % 8 : idleCol(Date.now());
       img = sh.img; fw = FRAME_W; fh = FRAME_H; ox = 16; oy = 45; sx = col * FRAME_W; sy = row * FRAME_H;
       frame = col >= 4 ? 'walk' + (col - 4) : 'idle' + col;
       weapon = p && p.col.indexOf('roll-') === 0 ? null : o.held;
@@ -424,7 +426,7 @@ var BridgeCharacter = (function () {
     if (!sheet.ready) return null;
     var col = player.moveProgress < 1
       ? 4 + Math.floor(player.stride / (WALK_CYCLE_TILES / 8)) % 8
-      : IDLE_SEQ[Math.floor(Date.now() / 340) % IDLE_SEQ.length];
+      : idleCol(Date.now());
     var pos = getRenderPos();
     return { img: sheet.img, sx: col * FRAME_W, sy: (DIR_ROW[player.facing] || 0) * FRAME_H, w: FRAME_W, h: FRAME_H,
              x: pos.x, y: pos.y, footRow: pos.y + 1 - 3 / 32 };

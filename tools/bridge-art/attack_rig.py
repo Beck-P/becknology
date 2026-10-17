@@ -146,6 +146,7 @@ def render_sheet(J, base, variants):
         for name, spec in attacks.COLS:
             pose(J, spec, yaw)
             tag = '%s_%s.png' % (dname, name)
+            ns['face_record'](tag)              # where the painted face goes (characters.py writes anchors.json after)
             ns['set_pass']('id'); ns['render'](os.path.join(base, 'id', tag))
             ns['set_pass']('depth'); ns['render'](os.path.join(base, 'depth', tag), sixteen=True)
             for v in variants:
