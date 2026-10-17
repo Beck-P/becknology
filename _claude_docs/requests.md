@@ -17,11 +17,12 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 |---|---|---|
 | Crowds of background people, "lots of people" | open (agreed) | Varied extras by planet wardrobe, going door to door, by clock and weather, the same for every pilot; never blocking doors, not in lonely places. Pairs with the other session's daily routines. |
 | Small events on the hour | open (agreed) | A few minutes each, shared by the clock. |
+| Races against whoever you're playing with: sailing, skiing, climbing | open (agreed) | Today only against Liv, Ysolde or your ghost. |
 | A party for playing together: travel waits for both of you (ready check), ride along on jumps, come aboard each other's Wayfarer | discuss | Beck's idea; details proposed in the spec. |
 | The Wayfarer grows with your crew | discuss | Galley and cook, the mess, crew walking about, modules. |
 | Enigma: restore the station, a zero-g spine | parked | Beck likes it; a note for later (the playing-together question). |
 | Arcadia: up, down and out — ritzier up, poorer down; the Undercity; trains and a sky loop; implants; restaurants on every level; large but connected, room to go side to side | discuss | Layout proposed in the spec (levels × districts). Heist out; rooftop running undecided. |
-| Lumar: harbours that work; a cliff town; the spore bloom; each sea's towns and people their own; Crownhaven much bigger | discuss | Per-sea ideas proposed in the spec. Tides, ferry work, regattas maybe; diving, the dragon egg out. |
+| Lumar: harbours that work; a cliff town; the spore bloom; a weekly regatta; each sea's towns, people and ships their own; Crownhaven much bigger | discuss | Per-sea ideas in the spec (Beck likes them). Tides, ferry work maybe; diving, the dragon egg out. |
 | Sylvara: canopy city, the river by canoe to Mirror Lake with places along it, the falls, the Deepwood, brewing, bows | discuss | |
 | Verdance: the village grows with you, the countryside by horse and buggy, small towns, makers and a café, produce shipped to Arcadia, night-blooming flowers | discuss | Market day only if someone else runs the stall. |
 | Hoarfell: Fellhaven bougier; a grand hotel (château, Monaco-y, its own town and casino salon); a mountain railway as a cutscene; hut-to-hut touring; the hidden valley with tiers of enemies | discuss | Guiding jobs out; the dog sled maybe. |

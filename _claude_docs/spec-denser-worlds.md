@@ -33,6 +33,11 @@ Hoarfell: avalanche blasting, the ski patrol's sled, a sleigh, a snowball fight,
 procession, the spirit stag, Thaelin playing. Enigma (before it wakes): lights flickering down the ring, a door
 opening by itself, a voice on the comms.
 
+### Races against each other — agreed
+Start a race with whoever you're playing with: sailing (a course round buoys and islands, both sloops on the start
+line), skiing (the same run side by side, not a ghost) and the climbing routes. Today you can only race Liv, Ysolde
+and your own ghost.
+
 ### Playing together: a party — agreed (Beck's idea)
 Invite someone to play together; from then on travel waits for both of you. Whoever sets off (the jump, the shuttle,
 the sloop, a mine floor, a game) sends a boarding call; the other gets *Beck is casting off — come?* and the departure
@@ -56,6 +61,15 @@ already ride with position (js/multi.js), so drifting would show.
 connected, with room to go side to side as well as up and down** — not a lift shaft with rooms on it. Each level has
 its own food and drink, its own people, light, sound and weather.
 
+**Bigger and deeper than the District street** (Beck: "a little bit bigger and deeper… maybe even go in on the levels,
+it's not all just the outside"): the street is 60 × 16; each main place is more like 80–120 across and 40–60 deep, and
+the levels have insides as well as outsides — atriums many floors high, malls and arcades inside the towers, corridors
+and stairwells between open terraces. **Really good views** the higher you go. **The bottom is dangerous.**
+
+**Nightlife by level, the vibe changing as you go up**: the Sump an illegal rave in a drowned station; the Undercity
+dive bars, an industrial club, the fight pit's bar; the District Club Void and the noodle bars; the Mid-Levels rooftop
+cocktail lounges and a jazz bar; the Spires a champagne bar, a sky lounge and a private members' club.
+
 Proposed layout: a grid of places, levels by districts, joined side to side by walking and up and down at a few
 fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 tiles across like the District street:
 
@@ -65,7 +79,7 @@ fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 
 | **The Mid-Levels** | the Skywalk | Skyport 7 | a Loop station, terrace restaurants, a rooftop bar |
 | **The District** (now) | the old quarter: lanterns, ramen, a rooftop shrine | the neon street | the spaceport, freighters berthed |
 | **The Undercity** | the market warrens: a hawker hall, dive bars, noodle shops | the fight pit, scrapyards | the Undercity station, back-alley chrome |
-| **The Sump** | the canals, a noodle boat | the drowned shrine | |
+| **The Sump** | the canals, a noodle boat | the drowned shrine | the rave in the old station |
 
 - **Light by level**: the Spires white, gold and pastel under real stars; the Mid-Levels glass and cyan; the District
   pink and cyan in the rain; the Undercity sodium orange and green tubes in steam, rain dripping through grates; the
@@ -98,11 +112,14 @@ fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 
   - **Rose, the crystal sea**: makers and mystics — crystal terraces, a bathhouse town on the hot springs, the silk
     groves, tea houses.
   - **Crimson, the dangerous sea**: a pirate port in a wreck-strewn cove, the volcano, the dragon's lair grown deeper,
-    a stormwatch tower, the dragon seen circling in the storms.
+    a stormwatch tower; the dragon's lair (already built) at its heart.
   - **Midnight, the haunted sea**: Morwen's tower grown, a drowned village half under the water, a ghost ship to
     board, more of its creatures.
-- **Maybe**: tides (a causeway at low tide), ferry work, a weekly regatta (a race round a course of buoys and islands
-  against the other sloops, on a set day).
+- **The regatta — agreed**: a race round a course of buoys and islands against the other sloops on a set day each week,
+  people on the quays watching; and races you start yourself against whoever you're playing with (see *Races*).
+- **Every sea's people and ships look their own — agreed**: what people wear, and the boats' hulls, sails and colours,
+  differ from sea to sea.
+- **Maybe**: tides (a causeway at low tide), ferry work.
 - **Out**: diving under the spore sea, the dragon egg, two flags.
 
 ## Sylvara — agreed: a really pretty nature planet with a really cool city
@@ -110,14 +127,15 @@ fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 
   bridges, a tavern in a hollow bough, basket lifts), the crown (the queen's hall, a star platform above the leaves).
 - **The Silverrun by canoe to Mirror Lake**, with places along the river (proposed: a bridge village over the water, an
   otter weir, a shrine on a river island, the rapids, the falls with a cave behind them, the fork into the Deepwood,
-  Mirror Lake and a lake house on stilts, the Moonwell's source). Glowing mushroom groves, flowering meadows.
+  Mirror Lake, the Moonwell's source). Super nature-y for now: no lake house yet. Glowing mushroom groves, flowering meadows.
 - **The Deepwood**, **brewing with Mirelle**, **bows** (hold to draw, let go to loose; the archery range, rope arrows for
   zip lines, fire arrows for lanterns, switches, and a weapon on Midnight).
 
 ## Verdance — agreed: small countryside towns, "local granola" vibes, our own take on Stardew
 - **The village grows with you — agreed**: fund projects and it visibly gets bigger and busier.
 - **The countryside by horse and buggy — agreed**: a river ferry, a vineyard whose wine ages over real weeks, more
-  small towns (proposed: a honey-stone market town on the river, a hill village with the vineyard, the mill hamlet).
+  small towns (proposed: a honey-stone market town on the river, a hill village with the vineyard, the mill hamlet), with
+  lovely countryside between them to ride through.
 - **Local makers and a cosy café** (a coffee roaster, a cheesemaker, a cider press, a potter, a candlemaker, a flower
   farm, a farm stand with an honesty box).
 - **Produce shipped off-world to Arcadia's restaurants — agreed.** **Night-blooming flowers — agreed.** Crops by the
@@ -131,10 +149,12 @@ fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 
 - **The grand hotel — agreed**: a château, "a little bit Monaco-y", with a town beside it — the ski slopes, bars, fine
   restaurants, its own salon of casino games (Royale Link's, in its own fancier style). Proposed: Fellhaven stays the
   small working village; the château and its resort town are a second, bigger place up the line.
-- **The mountain railway — agreed**, as a cutscene journey between towns or up to the hotel (panoramic carriage).
+- **The mountain railway — agreed**, as a cutscene journey between towns or up to the hotel (panoramic carriage): really
+  pretty, not too long but a little while — gorges, viaducts, glaciers, the peaks — and different by season and time of
+  day.
 - **Hut-to-hut ski touring — agreed**: several days across glaciers and passes, a hut each night; the way into the
   hidden valley.
-- **The hidden valley — agreed, with enemies in tiers** (not the yetis). Proposed: warm from below (hot springs, moss,
+- **The hidden valley — agreed, with enemies in tiers** (not the yetis; the tiers below agreed): warm from below (hot springs, moss,
   glacier caves, a cliff monastery with prayer flags); ice wolves on the outer slopes, rime beetles and ice bats in the
   glacier caves, rime golems and frost wraiths in the frozen monastery, and a glacier wyrm that swims under the snow
   (ripples warn you) at the heart. The yetis stay shy and friendly.
