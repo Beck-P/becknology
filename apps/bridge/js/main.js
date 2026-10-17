@@ -43,8 +43,8 @@ var Bridge = (function () {
         }
       });
     } else {
-      // Normal start — intro (ship flythrough)
-      // Cached pilots skip identity after the zoom — handled in intro.js
+      // Normal start — the title page (js/intro.js): a pilot on this device continues from there,
+      // anyone else picks New pilot / Sign in (js/identity.js)
       BridgeState.transition('intro');
     }
 
@@ -85,16 +85,18 @@ var Bridge = (function () {
 
     var state = BridgeState.getState();
 
-    // Background: world tiles for world state, starfield for everything else
+    // Background: world tiles for world state, starfield for everything else — but the title page (js/intro.js) draws
+    // its own sky, and stays behind the identity forms
+    var title = (state === 'intro' || state === 'identity') && typeof BridgeIntro !== 'undefined' && BridgeIntro.covers && BridgeIntro.covers();
     if (state === 'world' && typeof BridgeWorld !== 'undefined') {
       BridgeWorld.update();
       BridgeWorld.draw(ctx, w, h);
-    } else if (state !== 'redirect') {
+    } else if (state !== 'redirect' && !title) {
       BridgeStarfield.draw(ctx, w, h);
     }
 
     // State-specific rendering (guarded — modules load incrementally)
-    if (state === 'intro' && typeof BridgeIntro !== 'undefined') {
+    if (title) {
       BridgeIntro.draw(ctx, w, h);
     } else if (state === 'starmap' && typeof BridgeStarmap !== 'undefined') {
       BridgeStarmap.draw(ctx, w, h);
@@ -123,7 +125,7 @@ var Bridge = (function () {
         if (typeof BridgeIntro !== 'undefined') BridgeIntro.show();
         break;
       case 'identity':
-        if (typeof BridgeIdentity !== 'undefined') BridgeIdentity.show();
+        if (typeof BridgeIdentity !== 'undefined') BridgeIdentity.show(context);
         break;
       case 'starmap':
         if (typeof BridgeStarmap !== 'undefined') BridgeStarmap.show();
