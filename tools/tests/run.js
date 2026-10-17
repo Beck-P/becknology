@@ -18,6 +18,7 @@ const SUITES = {
     ['world/business.js', SHOTS],
     ['world/weather.js', SHOTS],
     ['world/legacy.js', SHOTS],
+    ['world/homes.js', SHOTS],
     ['world/hands.js'],
     ['world/staff.js', SHOTS],
     ['world/office.js', SHOTS],
@@ -79,6 +80,7 @@ const KEEP = new RegExp([
   /hp|down|up:|roll|chain|energy|boxes/,
   /contract|dispatch|orders away|route lines|treasury/,
   /slipway|keel|launched|shipwright/,
+  /homes:|furnished|MISSING/,
   /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
@@ -109,6 +111,9 @@ ensure(SUPA, 'fakesupa.py', 'http://127.0.0.1:' + SUPA + '/');
   .forEach((d) => fs.mkdirSync(d, { recursive: true }));
 let npmRoot = ''; try { npmRoot = execSync('npm root -g', { encoding: 'utf8' }).trim(); } catch (e) { /* playwright local */ }
 const env = Object.assign({}, process.env, { NODE_PATH: [process.env.NODE_PATH, npmRoot].filter(Boolean).join(path.delimiter) });
+// another port: chrome.js loaded before each test, so its swap is in place by the first launch (a test that requires it
+// inside its own launch() call reads chromium.launch before chrome.js has patched it)
+if (PORT !== 8766) env.NODE_OPTIONS = [process.env.NODE_OPTIONS, '--require ' + path.join(D, 'chrome.js')].filter(Boolean).join(' ');
 
 const results = [];
 for (const n of names) {

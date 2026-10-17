@@ -13,6 +13,9 @@
  *   - THE WORKSHOP (once the dock's rebuilt): a forge, a saw-pit and benches — materials made into planks and bars,
  *     guns, fittings, tools, things for your homes, by your own hand or by smiths you hire (js/workshop.js). What it
  *     makes goes into the store (`store`, the warehouse's too: `stored`, `storeAdd`, `storeTake`).
+ * Built up as a resort (js/legacy.js), the old boathouse becomes the Starling, a hotel you walk into (lumar-holm-resort,
+ * scenes/lumar_holm_resort.py): its front desk runs the business, its staff stand at their posts as you hire them and
+ * guests fill it while it's open.
  * Ships sent trading are away a while (`away`) and come back with the profit in the strongbox, or with a story: the
  * Crimson and Midnight seas are dangerous, and a ship with guns and fighters comes off better. Name the island what you
  * like. Kept in localStorage bridge_holm.
@@ -67,6 +70,7 @@ var BridgeHolm = (function () {
 
   // ---- as the island loads: what's built, what smokes, which lots are walls now -------------------------------------
   function decorate(worldId, data) {
+    if (worldId === WID + '-resort' && data) return starling(data);
     if (worldId !== WID || !data) return;
     returns();
     data.name = st.name;
@@ -94,12 +98,14 @@ var BridgeHolm = (function () {
       var L = lots[k];
       for (var y = L[1]; y <= L[3]; y++) for (var x = L[0]; x <= L[2]; x++) if (data.collisions[y]) data.collisions[y][x] = 1;
     });
-    // the resort built: the boathouse is the Starling now, its door the business's (js/business.js)
+    // the resort built: the boathouse is the Starling now, its door into the lobby (scenes/lumar_holm_resort.py), where
+    // the front desk is the business's (js/business.js `holm-resort`)
     if (built('resort')) {
       data.interactions = (data.interactions || []).filter(function (it) { return it.label !== 'BOATHOUSE'; });
       if (!data.interactions.some(function (it) { return it.label === 'THE STARLING'; }))
-        data.interactions.push({ x: 35, y: 20, type: 'dialog', label: 'THE STARLING', prompt: 'PRESS E TO GO IN',
-                                 dialog: 'THE STARLING: TWELVE ROOMS ON THE WATER. THE BELL ON THE DESK SAYS "RING FOR THE MANAGER".' });
+        data.interactions.push({ x: 35, y: 20, type: 'enter_world', target: WID + '-resort', spawn: [11, 13], label: 'THE STARLING', prompt: 'PRESS E TO GO IN' });
+      // the strip of sand along its front, walkable now, so you can reach its door from the parasols
+      for (var bx = 29; bx <= 36; bx++) if (data.collisions[21]) data.collisions[21][bx] = 0;
     }
     (data.interactions || []).forEach(function (it) {
       if (it.type !== 'holm') return;
@@ -107,6 +113,27 @@ var BridgeHolm = (function () {
       if (it.act === 'house') it.prompt = built('house') ? 'PRESS E TO GO IN' : 'PRESS E TO LOOK';
       if (it.act === 'workshop') it.prompt = built('workshop') ? 'PRESS E FOR THE WORKSHOP' : 'PRESS E TO LOOK';
       if (it.act === 'slipway') it.prompt = built('slipway') ? 'PRESS E FOR THE SLIPWAY' : 'PRESS E TO LOOK';
+    });
+  }
+
+  // The Starling inside: its staff at their posts as you hire them (the desk first, then the bar, then the terrace), and
+  // guests about the place while it's open and running (scene actors with a `role`: desk, bar, floor, guest).
+  function starling(data) {
+    var sc = data.scene, B = typeof BridgeBusiness !== 'undefined' ? BridgeBusiness : null, id = 'holm-resort';
+    if (!sc || !sc.actors) return;
+    var n = 0, open = false;
+    try {
+      if (B && B.owned(id) && B.get(id)) {
+        var s = B.status(id), b = B.state(id);
+        n = s.staff.length + (b && b.manager ? 1 : 0);
+        open = !!s.running;
+      }
+    } catch (e) { n = 0; open = false; }
+    var posts = ['desk', 'bar', 'floor'];
+    sc.actors = sc.actors.filter(function (a) {
+      if (a.role === 'guest') return open;
+      var i = posts.indexOf(a.role);
+      return i < 0 || i < n;
     });
   }
 

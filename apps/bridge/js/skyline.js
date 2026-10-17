@@ -3,7 +3,8 @@
  *
  *   BridgeSkyline.draw(ctx, w, h, now, opts)   the backdrop (registered as the
  *                                              arcadia background for street worlds)
- *   BridgeSkyline.rain(ctx, w, h, now, opts)   rain over everything (scene `over` hook)
+ *   BridgeSkyline.rain(ctx, w, h, now, opts)   rain over everything (scene `over` hook); opts.dry: rects
+ *                                              (world tiles) under a roof, left dry (the Penthouse indoors)
  *
  * Three Blender-rendered layers (tools/bridge-art/skyline.py → assets/
  * backdrops/arcadia/): `far` towers fading into smog, `mid` towers with
@@ -406,6 +407,13 @@ var BridgeSkyline = (function () {
   function rain(ctx, w, h, now, opts) {
     var n = (opts && opts.drops) || 140;
     ctx.save();
+    if (opts && opts.dry) {                                 // under a roof (world tiles, screen rows): no rain falls there
+      var vd = BridgeWorld.getView();
+      ctx.beginPath();
+      ctx.rect(0, 0, w, h);
+      opts.dry.forEach(function (d) { ctx.rect(vd.offX + d[0] * vd.ts, vd.offY + d[1] * vd.ts, (d[2] - d[0]) * vd.ts, (d[3] - d[1]) * vd.ts); });
+      ctx.clip('evenodd');
+    }
     for (var i = 0; i < n; i++) {
       var sp = 0.32 + hash(i) * 0.18;
       var x = (hash(i * 3) * (w + 60) - now * sp * 0.35) % (w + 60);

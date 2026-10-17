@@ -5,10 +5,13 @@
  * capsule apartment over the District's Capsule Hotel (arcadia-home), each
  * an empty Blender-rendered room (tools/bridge-art/scenes/lumar_home.py,
  * arcadia_home.py); at the top of the ramp (js/legacy.js) the Penthouse on
- * Skyport 7, its brass door on the roof pad (arcadia-penthouse, 250,000),
- * and Ashcombe House on Crownhaven's waterfront (lumar-manor, 400,000) —
- * and aboard the Wayfarer, your quarters and the bridge,
- * which are yours already. Their doors are `home_door` interactions put on
+ * Skyport 7, its brass door on the roof pad (arcadia-penthouse, 250,000: the
+ * whole top floor, inside and the roof deck), and Ashcombe House on
+ * Crownhaven's waterfront (lumar-manor, 400,000: the great hall, and off it
+ * the drawing room, the library, the dining room and up the stairs the master
+ * bedroom — `part` of the house, yours with it, each furnished on its own); the
+ * Starling's lobby once it's built (js/holm.js); and aboard the Wayfarer, your
+ * quarters and the bridge, which are yours already. Their doors are `home_door` interactions put on
  * the street as worlds load: the first time, the door offers the place for
  * sale (wagerCoins); after that it lets you in.
  *
@@ -51,15 +54,22 @@ var BridgeHome = (function () {
     // the legacy homes (js/legacy.js): the top of Skyport 7's tower, its private lift from the roof pad; and the
     // Ashcombes' house on Crownhaven's waterfront, beside the Crown & Anchor
     'arcadia-penthouse': { name: 'The Penthouse', price: 250000, theme: 'neon', gift: ['sofa', 'arcade_cabinet', 'nebula_tank', 'telescope'],
-                           door: { world: 'arcadia-skypad', x: 11, y: 3, label: 'PENTHOUSE', spawn: [10, 10] },
+                           door: { world: 'arcadia-skypad', x: 11, y: 3, label: 'PENTHOUSE', spawn: [11, 15] },
                            shop: 'ARCADIAMART LIVING',
-                           pitch: 'A BRASS DOOR ON THE ROOF, A LIFT THAT GOES ONE FLOOR DOWN. THE LISTING ON ITS GLASS: "THE TOP OF THE TOWER. THE WHOLE CITY THROUGH ONE WINDOW. A POOL. A BAR. DISCRETION INCLUDED."',
+                           pitch: 'A BRASS DOOR ON THE ROOF, A LIFT THAT GOES ONE FLOOR DOWN. THE LISTING ON ITS GLASS: "THE WHOLE TOP FLOOR OF THE TOWER. THE CITY THROUGH A WALL OF GLASS, AND ALL ROUND A ROOF DECK. A POOL UNDER THE SKY. A BAR. DISCRETION INCLUDED."',
                            bought: 'THE BRASS DOOR KNOWS YOUR HAND NOW. THE LIFT HUMS DOWN ONE FLOOR AND OPENS ON THE CITY. THE AGENT LEFT A SOFA, A CABINET, A NEBULA IN A JAR AND A TELESCOPE, "TO GET YOU STARTED".' },
     'lumar-manor': { name: 'Ashcombe House', price: 400000, theme: 'parchment', gift: ['wingback', 'chess_table', 'orrery', 'clock'],
-                     door: { world: 'lumar-crown', x: 45, y: 29, label: 'ASHCOMBE HOUSE', spawn: [10, 11] },
+                     door: { world: 'lumar-crown', x: 45, y: 29, label: 'ASHCOMBE HOUSE', spawn: [12, 13] },
                      shop: 'WEXLEY & DAUGHTERS, JOINERS',
                      pitch: 'THE TALL HOUSE ON THE WATERFRONT, SHUTTERED SINCE THE LAST ADMIRAL ASHCOMBE DIED. A BRASS PLATE BY THE DOOR: "FOR SALE BY ORDER OF THE CROWN. A GREAT HALL, A GALLERY, EIGHT BEDROOMS, A VIEW OF EVERY SHIP IN THE CAPITAL."',
                      bought: 'THE REGISTRAR HANDS YOU A KEY AS LONG AS YOUR HAND. INSIDE, THE DUST SHEETS ARE OFF: A HALL, A FIRE ALREADY LIT, AND THE ASHCOMBES\' OWN WINGBACK, CHESS TABLE, ORRERY AND CLOCK, LEFT FOR THE NEXT CAPTAIN.' },
+    // Ashcombe House's other rooms, off the great hall (places within places): yours with the house, each furnished on its own
+    'lumar-manor-drawing': { name: 'The Drawing Room', part: 'lumar-manor', theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
+    'lumar-manor-library': { name: 'The Library', part: 'lumar-manor', theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
+    'lumar-manor-dining': { name: 'The Dining Room', part: 'lumar-manor', theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
+    'lumar-manor-bedroom': { name: 'The Master Bedroom', part: 'lumar-manor', theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
+    // the Starling's lobby, bar and terrace (js/holm.js): a venue, and yours to furnish once it's built
+    'lumar-holm-resort': { name: 'The Starling', resort: true, theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
     // Edda's farmhouse on Verdance: it comes with the farm's deed (js/homestead.js), its door is the farm's own
     'verdance-home': { name: 'The Farmhouse', farm: true, theme: 'parchment', gift: ['rocking_chair', 'bed'], shop: 'HOLLIN\'S MAIL-ORDER' },
     // the cottage on Starling Holm: yours once it's rebuilt (js/holm.js), its door the island's own
@@ -119,6 +129,8 @@ var BridgeHome = (function () {
   function owns(id) {
     if (HOMES[id] && HOMES[id].farm) return typeof BridgeHomestead !== 'undefined' && BridgeHomestead.owned();
     if (HOMES[id] && HOMES[id].holm) return typeof BridgeHolm !== 'undefined' && BridgeHolm.built('house');
+    if (HOMES[id] && HOMES[id].resort) return typeof BridgeHolm !== 'undefined' && BridgeHolm.built('resort');
+    if (HOMES[id] && HOMES[id].part) return owns(HOMES[id].part);
     return !!(HOMES[id] && (HOMES[id].ship || save.owned[id]));
   }
   function layout(id) { return save.layout[id] || (save.layout[id] = []); }
@@ -213,7 +225,7 @@ var BridgeHome = (function () {
     if (!HOMES[worldId] || !data.collisions) return;
     cur = { id: worldId, data: data, base: data.collisions.map(function (r) { return r.slice(); }) };
     whenReady(function () { if (cur && cur.data === data) apply(); });
-    if (!HOMES[worldId].ship && owns(worldId) && !save.seen[worldId]) {
+    if (!HOMES[worldId].ship && !HOMES[worldId].part && owns(worldId) && !save.seen[worldId]) {
       save.seen[worldId] = Date.now();
       if (HOMES[worldId].farm || HOMES[worldId].holm) (HOMES[worldId].gift || []).forEach(function (g) { save.have[g] = (save.have[g] || 0) + 1; });   // Edda (or the joiners) left you a start
       store();

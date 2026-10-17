@@ -169,7 +169,7 @@ var BridgeFleet = (function () {
     if (!I || !worldId) return worldId;
     if (I[worldId]) return worldId;
     if (worldId === 'lumar-home') return 'lumar-sapphire';                 // the White House is on Sapphire's square
-    if (worldId === 'lumar-manor') return 'lumar-crown';                   // Ashcombe House, on Crownhaven's waterfront
+    if (/^lumar-manor(-|$)/.test(worldId)) return 'lumar-crown';           // Ashcombe House and its rooms, on Crownhaven's waterfront
     var best = null;                                                        // a room on an island: the longest match wins
     for (var id in I) if (worldId.indexOf(id + '-') === 0 && (!best || id.length > best.length)) best = id;
     return best || worldId;

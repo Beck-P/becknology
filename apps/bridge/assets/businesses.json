@@ -151,7 +151,7 @@
   },
 
   "holm-resort": {
-    "name": "The Starling", "world": "lumar-holm", "label": "THE STARLING", "loc": "lumar", "built": "holm",
+    "name": "The Starling", "world": "lumar-holm-resort", "label": "THE STARLING", "loc": "lumar", "built": "holm",
     "kind": "venue", "trade": "food", "hours": "always", "stock": ["silverfin", "bluefin", "harbour_crab", "egg", "milk", "strawberry", "apple", "honey"], "price": 150000, "rate": 700, "cap": 10,
     "pitch": "YOUR OWN HOTEL ON YOUR OWN ISLAND. BUILD IT FROM THE HOLM'S LEDGER.",
     "upgrades": [

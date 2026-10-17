@@ -59,6 +59,7 @@ var BridgeChart = (function () {
     if (!worldId) return null;
     if (I[worldId]) return worldId;
     if (INSIDE[worldId]) return INSIDE[worldId];
+    if (/^lumar-manor-/.test(worldId)) return 'lumar-crown';                 // Ashcombe House's other rooms
     for (var id in I) if (worldId.indexOf(id + '-') === 0 && (!best || id.length > best.length)) best = id;   // the longest: lumar-rose-mine is Rose's
     return best;
   }
