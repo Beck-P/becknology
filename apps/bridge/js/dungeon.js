@@ -249,12 +249,17 @@ var BridgeDungeon = (function () {
     var c = document.createElement('canvas'); c.width = 32; c.height = 40;
     var x = c.getContext('2d'), P = function (col, rs) { px(x, 0, 8, 2, col, rs); };
     var o = '#120c10';
-    if (kind === 'stair') {                                        // steps going down into the dark, a worn lip
-      P(o, [[0, 0, 16, 16]]); P('#4a4048', [[1, 1, 14, 3]]); P('#38303a', [[2, 4, 12, 3]]); P('#28222c', [[3, 7, 10, 3]]); P('#1a1520', [[4, 10, 8, 3]]); P('#0a0810', [[5, 13, 6, 2]]);
-      P('#5a5058', [[1, 1, 14, 1]]); P('#6a3a7a', [[2, 2, 1, 1], [13, 2, 1, 1]]);
-    } else if (kind === 'sealed') {                                 // the same, a runed slab across it
-      P(o, [[0, 0, 16, 16]]); P('#4a4048', [[1, 1, 14, 3]]); P('#28222c', [[3, 7, 10, 3]]);
-      P('#2a2430', [[0, 5, 16, 8]]); P('#5a5260', [[1, 6, 14, 6]]); P('#6a6270', [[1, 6, 14, 1]]); P('#9a70d0', [[4, 8, 2, 2], [7, 8, 2, 2], [10, 8, 2, 2]]);
+    if (kind === 'stair' || kind === 'sealed') {                   // a dressed stone kerb round steps going down into the dark
+      P(o, [[0, 0, 16, 16]]);
+      P('#685e7a', [[0, 0, 16, 2]]); P('#4c4460', [[0, 2, 2, 13], [14, 2, 2, 13], [0, 14, 16, 2]]); P('#82789a', [[0, 0, 16, 1]]);
+      P('#302a3c', [[0, 15, 16, 1]]); P('#3a3448', [[5, 0, 1, 2], [11, 0, 1, 2]]);         // the kerb's joints
+      P('#4a4456', [[2, 2, 12, 3]]); P('#363040', [[2, 5, 12, 3]]); P('#241e2c', [[2, 8, 12, 3]]); P('#140f1a', [[2, 11, 12, 3]]);
+      P('#8088b0', [[2, 2, 12, 1]]); P('#5a6088', [[2, 5, 12, 1]]); P('#3a3e60', [[2, 8, 12, 1]]); P('#262840', [[2, 11, 12, 1]]);   // the treads' edges in the cold light
+      P('#1a1622', [[2, 2, 1, 12], [13, 2, 1, 12]]);                // the walls of the stairwell, in shadow
+      if (kind === 'sealed') {                                      // a runed slab across it
+        P(o, [[1, 4, 14, 9]]); P('#4a4454', [[2, 5, 12, 7]]); P('#6a6474', [[2, 5, 12, 1]]); P('#2a2432', [[2, 11, 12, 1]]);
+        P('#b080ff', [[4, 7, 2, 2], [7, 7, 2, 2], [10, 7, 2, 2]]); P('#e0d0ff', [[4, 7, 1, 1], [7, 7, 1, 1], [10, 7, 1, 1]]);
+      }
     } else if (kind === 'portal') {                                // a stair down in a stone frame, a wisp-flame each side
       P(o, [[1, 2, 14, 14]]); P('#5a5260', [[2, 3, 12, 2], [2, 3, 2, 12], [12, 3, 2, 12]]); P('#6a6270', [[2, 3, 12, 1]]);
       P('#2a2430', [[4, 5, 8, 3]]); P('#1a1520', [[4, 8, 8, 3]]); P('#0a0810', [[4, 11, 8, 4]]);
@@ -298,17 +303,50 @@ var BridgeDungeon = (function () {
       } }];
     }
     if (!here || here.data !== world || !sc || typeof BridgeScene === 'undefined') return [];
-    var out = [], sealed = here.guardian && here.guardian._hp > 0 && world.interactions.indexOf(here.guardian) >= 0;
+    // the creatures: on the cave tileset only js/mine.js draws them, and only in the mine
+    var out = typeof BridgeCombat !== 'undefined' && BridgeCombat.sceneItems ? BridgeCombat.sceneItems(world, offX, offY, ts, now, sc) : [];
+    var sealed = here.guardian && here.guardian._hp > 0 && world.interactions.indexOf(here.guardian) >= 0;
     var add = function (kind, x, y) {
       var c = sprite(kind), footRow = y + 0.95;
       out.push({ footRow: footRow, draw: function (ctx) {
         var dx = Math.round(offX + x * ts), dy = Math.round(offY + (y + 1) * ts) - c.height;
-        BridgeScene.drawOccluded(ctx, sc, c, 0, 0, c.width, c.height, dx, dy, footRow, offX, offY, BridgeScene.tintAt(sc, world, x, y, now), null);
+        BridgeScene.drawOccluded(ctx, sc, c, 0, 0, c.width, c.height, dx, dy, footRow, offX, offY, lift(BridgeScene.tintAt(sc, world, x, y, now), 0.25), null);
       } });
     };
-    if (here.stair) add(sealed ? 'sealed' : 'stair', here.stair[0], here.stair[1]);
+    if (here.stair) {                                              // a hole in the floor: lies flat, and the cold comes up out of it
+      var st = here.stair, sk = sealed ? 'sealed' : 'stair', c = sprite(sk);
+      out.push({ footRow: st[1], draw: function (ctx) {
+        var dx = Math.round(offX + st[0] * ts), dy = Math.round(offY + (st[1] + 1) * ts) - c.height;
+        BridgeScene.drawOccluded(ctx, sc, c, 0, 0, c.width, c.height, dx, dy, st[1], offX, offY, lift(BridgeScene.tintAt(sc, world, st[0], st[1], now), 0.4), null, null, false, true);
+        if (!sealed) breath(ctx, dx, Math.round(offY + st[1] * ts), ts, performance.now());
+      } });
+    }
     here.chests.forEach(function (c) { add(c.open ? 'chest_open' : 'chest', c.x, c.y); });
     return out;
+  }
+  // a tint lifted toward white: the room's light, but enough to read by
+  function lift(tint, k) {
+    var m = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/.exec(tint || '');
+    if (!m) return tint;
+    var f = function (v) { return Math.round(+v + (255 - v) * k); };
+    return 'rgb(' + f(m[1]) + ',' + f(m[2]) + ',' + f(m[3]) + ')';
+  }
+  // the stair's breath: a faint cold glow over the hole, slowly brightening and fading, and motes drifting up out of it
+  function breath(ctx, x, y, ts, t) {
+    var u = ts / 16, pulse = 0.5 + 0.5 * Math.sin(t / 900);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    var g = ctx.createRadialGradient(x + ts / 2, y + ts * 0.55, 0, x + ts / 2, y + ts * 0.55, ts * 0.9);
+    g.addColorStop(0, 'rgba(110,120,210,' + (0.16 + 0.1 * pulse).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(110,120,210,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - ts / 2, y - ts / 2, ts * 2, ts * 2);
+    for (var i = 0; i < 3; i++) {
+      var k = ((t / 2600) + i / 3) % 1, mx = 4 + ((i * 5 + Math.floor(t / 2600 + i / 3) * 3) % 9);
+      ctx.fillStyle = 'rgba(190,200,255,' + (0.55 * Math.sin(k * Math.PI)).toFixed(3) + ')';
+      ctx.fillRect(Math.round(x + mx * u), Math.round(y + (11 - k * 16) * u), Math.max(1, Math.round(u)), Math.max(1, Math.round(u)));
+    }
+    ctx.restore();
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('*', { ground: ground, items: items });
 
