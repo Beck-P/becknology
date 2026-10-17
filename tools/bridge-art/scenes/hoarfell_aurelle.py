@@ -73,7 +73,12 @@ def paved_d(x, r):
     return best
 
 
+POOL = (46.8, 10.6, 54.4, 14.2)                                        # the spa's heated pool, sunk below the snow
+
+
 def height(x, r):
+    if POOL[0] - 0.05 < x < POOL[2] + 0.05 and POOL[1] - 0.05 < r < POOL[3] + 0.05:
+        return -0.7
     h = slope_h(x, r)
     n = I.n2(x * 0.5, r * 0.9, 1.0, 51) * 0.6 + I.n2(x * 1.2, r * 1.8, 1.0, 53) * 0.4
     h += max(0.0, n) * 0.18 * sm(0.6, 1.8, paved_d(x, r)) * sm(0.5, 1.5, abs(r - 36.6)) * (1 - sm(31.5, 33.5, r) * sm(35.8, 33.8, r))
@@ -259,7 +264,7 @@ SMOKE.append(screen(54.6, 3.58, zt_s + 1.05))
 A.double_door(k, 51.0, 8.38, w=0.9, h=1.4)
 k.box(49.4, 8.42, 1.62, 52.6, 8.46, 1.92, ('#2a1a12', 0.05), 'sign_board')
 G.letters(k, 'LES THERMES', 'CinzelDecorative-Bold', 51.0, 8.46, 1.66, size=0.17, col=A.GILT, lit=True, energy=2)
-STEAM = A.heated_pool(k, 46.8, 10.6, 54.4, 14.2)
+STEAM = A.heated_pool(k, *POOL)
 for (x, f) in ((47.4, 1), (48.9, 1), (50.4, 1), (52.6, -1), (54.1, -1)):
     A.lounger(k, x, 15.1, facing=f, towel=k.rng.choice(('#f0f0f0', '#8a1a2a', '#1e2a4a')))
 for x in (49.6, 53.4):
@@ -377,7 +382,9 @@ w['interactions'] = [
     {'x': 28, 'y': 35, 'type': 'railway', 'label': 'THE TRAIN', 'prompt': 'PRESS E TO BOARD', 'to': 'hoarfell-promenade'},
     {'x': 12, 'y': 33, 'type': 'railway_board', 'label': 'DEPARTURES', 'prompt': 'PRESS E TO READ'},
     {'x': 28, 'y': 7, 'type': 'enter_world', 'label': 'CHATEAU AURELLE', 'prompt': 'PRESS E TO GO IN', 'target': 'hoarfell-chateau', 'spawn': [15, 18]},
-    {'x': 27, 'y': 9, 'type': 'aurelle', 'label': 'CONCIERGE', 'prompt': 'PRESS E TO TALK'},
+    {'x': 26, 'y': 9, 'type': 'dialog', 'label': 'MONSIEUR AUBERT', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE CONCIERGE INCLINES HIS HEAD.'},
+    {'x': 15, 'y': 12, 'type': 'dialog', 'label': 'ANOUK', 'prompt': 'PRESS E TO TALK', 'dialog': 'ANOUK PATS THE GREY\'S NECK.'},
+    {'x': 26, 'y': 33, 'type': 'dialog', 'label': 'STATIONMASTER', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE STATIONMASTER CHECKS HER WATCH.'},
     {'x': 21, 'y': 9, 'type': 'aurelle', 'label': 'LA TERRASSE', 'prompt': 'PRESS E TO SIT'},
     {'x': 35, 'y': 9, 'type': 'aurelle', 'label': 'FIRE PIT', 'prompt': 'PRESS E TO WARM UP'},
     {'x': 20, 'y': 12, 'type': 'aurelle', 'label': 'SLEIGHS', 'prompt': 'PRESS E TO RIDE'},
@@ -395,6 +402,10 @@ w['interactions'] = [
 ]
 w['lift'] = {'lines': LINES}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID, actors=[],
+ACTORS = [{'sheet': 'npc-aubert', 'x': 26, 'y': 9, 'facing': 'down'}, {'sheet': 'npc-anouk', 'x': 15, 'y': 12, 'facing': 'right'},
+          {'sheet': 'npc-stationmaster', 'x': 26, 'y': 33, 'facing': 'down'}]
+for a in ACTORS:
+    k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
+apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID, actors=ACTORS,
             scene_extra={'smoke': SMOKE, 'steam': STEAM, 'lift': {'lines': LINES}, 'train': [TRAIN_X0, 36.8, TRAIN_X1]})
 print('aurelle done')

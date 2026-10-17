@@ -73,7 +73,7 @@ var BridgeAlpine = (function () {
   function use(inter) {
     var L = inter.label, w = typeof BridgeWorld !== 'undefined' ? BridgeWorld.getWorldId() : '';
     switch (L) {
-      case 'CONCIERGE': return concierge();
+      case 'CONCIERGE': case 'THE LIFT': return concierge();
       case 'LA TERRASSE': case 'APRES-SKI': return terrace(L);
       case 'FIRE PIT': return firePit();
       case 'SLEIGHS': return sleigh();
@@ -103,13 +103,13 @@ var BridgeAlpine = (function () {
           BridgeActions.rest({ rate: 1.4, text: 'A suite under the mansard: a fire in the grate, a bed like a cloud, the turrets lit outside the window.',
             rested: 'Breakfast on a silver tray, the mountains pink in the window. Health and energy full, warm through.',
             onTick: function (dt) { warm(dt * 2); }, woke: function () {} });
-        }, function () { say('CONCIERGE', '"OF COURSE. PERHAPS MONSIEUR WOULD PREFER THE LODGE IN FELLHAVEN. IT IS VERY… RUSTIC."'); });
+        }, function () { say('CONCIERGE', '"OF COURSE. PERHAPS THE LODGE IN FELLHAVEN WOULD SUIT. IT IS VERY… RUSTIC."'); });
       } },
       { label: 'What is there to do?', sub: 'his recommendations', pick: function () {
         say('CONCIERGE', '"THE SALON DE JEU, OF COURSE, THROUGH THE GRAND HALL. LA TABLE FOR DINNER - BOOK, OR BRIBE. THE THERMES BEFORE, THE CHAMPAGNE AT BAR ETOILE AFTER. A SLEIGH ROUND THE TOWN AT DUSK. AND FOR THE VERY BRAVE, THE GUIDES TAKE PARTIES ACROSS THE GLACIER, HUT TO HUT. I HAVE NEVER UNDERSTOOD THE APPEAL."');
       } },
       { label: 'The way to the slopes', sub: 'the chairlift by the ski-in', pick: function () {
-        say('CONCIERGE', '"THE CHAIRLIFT, MONSIEUR, BESIDE THE SKI-IN. IT TAKES YOU TO THE SUMMIT OF THE HOARSPIRE; FROM THERE EVERY RUN ON THE MOUNTAIN. ONE SKIS BACK TO THE DOOR. ONE DOES NOT WALK."');
+        say('CONCIERGE', '"THE CHAIRLIFT, BESIDE THE SKI-IN. IT TAKES YOU TO THE SUMMIT OF THE HOARSPIRE; FROM THERE EVERY RUN ON THE MOUNTAIN. ONE SKIS BACK TO THE DOOR. ONE DOES NOT WALK."');
       } }
     ], 'Thank you');
   }
@@ -248,6 +248,47 @@ var BridgeAlpine = (function () {
     say('MAISON VAUTRIN', 'COATS OF EVERY FUR ON BRASS RAILS AND A GLASS CASE OF WATCHES. MADAME VAUTRIN LOOKS AT YOUR FLIGHT SUIT THE WAY A DOCTOR LOOKS AT A WOUND.');
   }
 
+  // ---- the hidden valley's landmarks (type `vale`; its creatures and yetis are js/valley.js's) ---------------------------------
+  function vale(inter) {
+    switch (inter.label) {
+      case 'THE WAY OUT':
+        return choose('The way out', 'THE PATH CLIMBS BACK UP THROUGH THE LARCHES TOWARD THE COL. A LONG DAY OVER THE TOP AND DOWN THE GLACIER TO AURELLE - OR DOWN THE OTHER SIDE TO FELLHAVEN IF THE GUIDES ARE KIND.', [
+          { label: 'Walk out to Aurelle', sub: 'a long day, over the col and down', pick: function () { BridgeWorld.enterWorld('hoarfell-aurelle', [9, 18]); } }
+        ], 'Stay');
+      case 'THE SHELTER':
+        if (typeof BridgeActions === 'undefined' || !BridgeActions.rest) { health(999); energy(999); return say('THE SHELTER', 'YOU SLEEP BY THE FIRE.'); }
+        return BridgeActions.rest({ rate: 1.0, text: 'A herders\' shelter of dry stone: a sheepskin, the fire ticking, steam from the springs drifting past the door.',
+          rested: 'You wake warm. Something left a pile of berries by the door in the night.', onTick: function (dt) { warm(dt * 1.5); }, woke: function () {} });
+      case 'FIRE': warm(15); energy(5); sfx('sit');
+        return say('FIRE', 'JUNIPER CRACKLING IN A RING OF STONES. THE SMOKE SMELLS OF GIN AND HONEY.');
+      case 'HOT SPRING':
+        warm(30); health(30); energy(30); sfx('splash'); float('+30', '#ffd890');
+        if (save.bathed !== today()) { save.bathed = today(); store(); note('A hot spring', 'Warm from below, in the hidden valley'); }
+        return say('HOT SPRING', night()
+          ? 'YOU SLIDE INTO WATER AS HOT AS A BATH, THE STARS THICK OVER THE VALLEY, STEAM CURLING UP PAST THE MONASTERY\'S LAMPS ON ITS CLIFF.'
+          : 'YOU SLIDE INTO WATER AS HOT AS A BATH. IT SMELLS OF STONE AND SOMETHING GREEN. SNOW ON THE SLOPES, MOSS UNDER YOUR HAND, STEAM EVERYWHERE. THE COLD CAN\'T FIND YOU FOR HALF AN HOUR.');
+      case 'PRAYER WHEELS':
+        sfx('chime');
+        if (save.wheels !== today()) { save.wheels = today(); store(); energy(25); health(15); float('+25 EN', '#60c8ff');
+          return say('PRAYER WHEELS', 'YOU WALK ALONG THE ROW TURNING EACH ONE CLOCKWISE AS THE MONKS DID. THEY SPIN ON, CREAKING, LONG AFTER YOU\'VE PASSED. YOU FEEL LIGHTER. (ONCE A DAY.)'); }
+        return say('PRAYER WHEELS', 'THE WHEELS ARE STILL TURNING FROM THIS MORNING.');
+      case 'THE BELL':
+        var cold = (BridgeWorld.getWorld().interactions || []).filter(function (h) { return h.type === 'hostile' && h._hp > 0; }).length;
+        if (cold && !save.bell) return say('THE BELL', 'YOU PULL THE ROPE. THE BELL GIVES A DEAD CLUNK, MUFFLED IN RIME. ACROSS THE COURTYARD SOMETHING COLD TURNS TOWARD THE SOUND. NOT WHILE THEY STILL KEEP THE PLACE.');
+        sfx('peal');
+        if (!save.bell) { save.bell = true; store(); note('The bell rings', 'The cliff monastery, its courtyard clear'); }
+        return say('THE BELL', 'YOU HAUL ON THE ROPE AND THE BELL SWINGS FREE OF ITS RIME. ITS NOTE GOES OUT OVER THE VALLEY, ROUND THE CLIFFS AND BACK. ACROSS THE COURTYARD THE ICE ON THE NORTH-EAST GATE CRACKS FROM TOP TO BOTTOM.');
+      case 'THE ICE GATE':
+        if (!save.bell) return say('THE ICE GATE', 'THE GATE IN THE OLD WALL, ITS DOORS SEALED UNDER A HAND\'S DEPTH OF BLUE ICE. A CHILL COMES OFF IT LIKE BREATH. CARVED OVER IT: A BELL, AND A SERPENT UNDER WAVES OF SNOW.');
+        sfx('door');
+        return choose('The ice gate', 'THE ICE HAS FALLEN AWAY IN SHEETS. BEYOND THE DOORS, THE HIGH SNOWFIELD WHERE THE GLACIER BEGINS, AND A SILENCE THAT FEELS LIKE LISTENING.', [
+          { label: 'Go through', sub: 'the heart of the valley', pick: function () { BridgeWorld.enterWorld('hoarfell-heart'); } }
+        ], 'Not yet');
+      case 'CHORTEN':
+        return say('CHORTEN', 'A WHITE STUPA, ITS GILT SPIRE BRIGHT AGAINST THE SNOW. PAINTED EYES ON ITS TOP LOOK OUT OVER THE VALLEY IN EVERY DIRECTION. SOMEONE HAS LEFT A JUNIPER SPRIG AND A COIN AT ITS FOOT.');
+    }
+  }
+
   // ---- the railway ------------------------------------------------------------------------------------------------------
   var STATIONS = {
     'hoarfell-promenade': { name: 'Fellhaven', key: 'fellhaven', spawn: [28, 23] },
@@ -271,7 +312,7 @@ var BridgeAlpine = (function () {
     save.rode = (save.rode || 0) + 1; store();
     if (first) note('The Aurelle Line', 'Fellhaven to Aurelle by the mountain railway');
     if (typeof BridgeRailway !== 'undefined' && BridgeRailway.ride) {
-      BridgeRailway.ride(fromKey, toKey, { name: 'THE AURELLE LINE', sub: (fromKey === 'aurelle' ? 'AURELLE TO FELLHAVEN' : 'FELLHAVEN TO AURELLE') }).then(go, go);
+      BridgeRailway.ride(fromKey, toKey, { hold: 600 }).then(go, go);   // its title card names the line and the stations
     } else go();
   }
   function departures() {
@@ -334,6 +375,7 @@ var BridgeAlpine = (function () {
       BridgeInteractions.register('promenade', use, 'Go');
       BridgeInteractions.register('railway', railway, 'Board');
       BridgeInteractions.register('railway_board', departures, 'Read');
+      BridgeInteractions.register('vale', vale, 'Go');
     }
     if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('hoarfell', { over: over });
   }

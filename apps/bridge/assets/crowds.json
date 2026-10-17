@@ -32,7 +32,7 @@
   "hoarfell":               { "n": 14, "wardrobe": "hoarfell", "busy": "day" },
   "hoarfell-lodge":         { "n": 7,  "wardrobe": "hoarfell", "busy": "night", "sit": 0.8 },
   "hoarfell-skihire":       { "n": 3,  "wardrobe": "hoarfell", "busy": "day" },
-  "hoarfell-promenade":     { "n": 16, "wardrobe": "hoarfell", "busy": "day" },
+  "hoarfell-promenade":     { "n": 16, "wardrobe": "aurelle", "busy": "day" },
   "hoarfell-aurelle":       { "n": 18, "wardrobe": "aurelle", "busy": "day" },
   "hoarfell-chateau":       { "n": 9,  "wardrobe": "aurelle", "busy": "night", "sit": 0.5 },
 

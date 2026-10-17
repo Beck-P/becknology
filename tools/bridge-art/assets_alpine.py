@@ -212,7 +212,6 @@ def dormer(k, cx, r_face, z0, h, inset, w=0.5):
     qb(k, cx - 0.012, rr + 0.06, zb + 0.08, cx + 0.012, rr + 0.08, zb + 0.5, IVORY, 'window_frame')
     k.cyl_y(cx, rr - 0.25, rr + 0.06, zb + 0.66, w / 2 + 0.1, 0.2, (shade(STONE, 1.1), 0.05), 'dormer', verts=14)
     k.blob(cx, rr - 0.08, zb + 0.84, w / 2 + 0.08, 0.2, 0.07, (SNOW, 0.03), 'roof_snow', segs=10)
-    k.point_light(cx, rr + 0.4, zb + 0.3, '#ffc070', 2.0, radius=0.15, group='flicker')
 
 
 def hip_roof(k, x0, x1, r_back, r_front, z0, rise, col=SLATE, dormers=(), over=0.12):
@@ -270,7 +269,6 @@ def dormer_hip(k, cx, rr, zb, w=0.5):
     qb(k, cx - 0.012, rr + 0.04, zb + 0.08, cx + 0.012, rr + 0.06, zb + 0.5, IVORY, 'window_frame')
     k.cyl_y(cx, rr - 0.45, rr + 0.04, zb + 0.66, w / 2 + 0.1, 0.2, (shade(STONE, 1.1), 0.05), 'dormer', verts=14)
     k.blob(cx, rr - 0.2, zb + 0.84, w / 2 + 0.08, 0.26, 0.07, (SNOW, 0.03), 'roof_snow', segs=10)
-    k.point_light(cx, rr + 0.4, zb + 0.3, '#ffc070', 2.0, radius=0.15, group='flicker')
 
 
 def grand_block(k, x0, x1, r_back, r_front, floors=3, floor_h=0.95, bays=None, door=None, base_h=0.5, roof_h=1.2,
@@ -310,7 +308,7 @@ def grand_block(k, x0, x1, r_back, r_front, floors=3, floor_h=0.95, bays=None, d
             h = floor_h * (0.72 if f == 0 else 0.68 if f < floors - 1 else 0.58)
             grand_window(k, bx, rf - 0.02, zf + (0.16 if f else 0.18), h=h, lit=(hash((round(bx * 10), f)) % 7) != 0,
                          balcony=f in balconies, head='pediment' if f in pediments else 'arch' if f == 0 else 'flat', shutters=shutters,
-                         light=(f + int(bx * 3)) % 2 == 0)
+                         light=(f + int(bx * 3)) % 4 == 0)
     if roof == 'hip':
         zt = hip_roof(k, x0 - 0.04, x1 + 0.04, r_back, rf + 0.04, z_eave, rise=roof_h, col=slate, dormers=bays if dormers else ())
     else:
@@ -438,15 +436,15 @@ def urn_planter(k, cx, cr, fir=True):
 
 
 # ---- warm things outdoors ----------------------------------------------------------------------------------------
-def heated_pool(k, x0, r0, x1, r1, coping=STONE, tile='#2a8aa0', loungers=True):
+def heated_pool(k, x0, r0, x1, r1, coping=STONE, tile='#2a8aa0', loungers=True, z0=0.0):
     """A heated pool sunk into a stone terrace: dressed coping with snow on its outer edge only (the warmth keeps it
     off the water side), blue tiles down its sides, a ladder and steps, a pale band where the water meets the tiles.
     The water is still water (`basin_water`): the live light mirrors the château in it. Returns steam points (x, r)."""
     rng = _r(k)
-    z = -0.4
+    z = z0 - 0.4
     qb(k, x0, r0, z - 0.02, x1, r1, z, (shade(tile, 0.7), 0.05), 'pool_floor')
     for (a, b, c, d) in ((x0, r0, x1, r0 + 0.08), (x0, r1 - 0.08, x1, r1), (x0, r0, x0 + 0.08, r1), (x1 - 0.08, r0, x1, r1)):
-        qb(k, a, b, z, c, d, 0.0, (tile, 0.06), 'pool_tiles')
+        qb(k, a, b, z, c, d, z0, (tile, 0.06), 'pool_tiles')
     qb(k, x0 + 0.08, r0 + 0.08, z + 0.24, x1 - 0.08, r1 - 0.08, z + 0.26, ('#3ab0c0', 0.04), 'basin_water')
     # coping all round
     w = 0.28
@@ -454,18 +452,18 @@ def heated_pool(k, x0, r0, x1, r1, coping=STONE, tile='#2a8aa0', loungers=True):
         x = a
         while x < c - 0.02:
             xb = min(c, x + rng.uniform(0.45, 0.7)) if c - a > w + 0.01 else c
-            qb(k, x + 0.01, b, 0.0, xb - 0.01, d, 0.05, (shade(coping, rng.uniform(0.95, 1.06)), 0.04), 'coping')
+            qb(k, x + 0.01, b, z0, xb - 0.01, d, z0 + 0.05, (shade(coping, rng.uniform(0.95, 1.06)), 0.04), 'coping')
             x = xb
     # steps down at the shallow end (left), a ladder at the deep end
     for i in range(3):
         qb(k, x0 + 0.08, r0 + 0.5 + i * 0.0, z + 0.05 + i * 0.0, x0 + 0.38 + i * 0.25, r1 - 0.5, z + 0.22 - i * 0.07, (shade(coping, 0.9), 0.04), 'pool_step')
     for dr in (-0.15, 0.15):
-        k.tube((x1 - 0.06, (r0 + r1) / 2 + dr, 0.4), (x1 - 0.14, (r0 + r1) / 2 + dr, -0.25), 0.018, ('#c8ccd4', 0.04), 'ladder', verts=6)
+        k.tube((x1 - 0.06, (r0 + r1) / 2 + dr, z0 + 0.4), (x1 - 0.14, (r0 + r1) / 2 + dr, z0 - 0.25), 0.018, ('#c8ccd4', 0.04), 'ladder', verts=6)
     # snow banked outside the coping (not on it)
     for i in range(int((x1 - x0) / 0.5) + 2):
         x = x0 - w + i * 0.5
         for r in (r0 - w - 0.12, r1 + w + 0.12):
-            k.blob(x, r, 0.0, rng.uniform(0.25, 0.4), 0.14, rng.uniform(0.05, 0.12), (SNOW, 0.03), 'drift', segs=8)
+            k.blob(x, r, z0, rng.uniform(0.25, 0.4), 0.14, rng.uniform(0.05, 0.12), (SNOW, 0.03), 'drift', segs=8)
     steam = []
     x = x0 + 0.6
     while x < x1 - 0.4:
@@ -1137,3 +1135,152 @@ def snow_edge(k, x0, r0, x1, r1, every=0.5):
             t = i / n
             k.blob(a + (c - a) * t, b + (d - b) * t, 0.0, rng.uniform(0.18, 0.32), rng.uniform(0.14, 0.24), rng.uniform(0.04, 0.09),
                    (SNOW, 0.03), 'drift', segs=7)
+
+
+# ---- the hidden valley (Workstream E): warm from below --------------------------------------------------------------------
+TRAV = ('#e8d8b8', '#d8b888', '#c89a68')          # travertine: cream rims, ochre and rust where the water runs
+SPRING = '#4ab8c0'
+MOSS = ('#3e6a34', '#5a8a3e', '#7aa84a')
+
+
+def spring_terraces(k, cx, cr, steps=4, w=2.6, d=1.0, z0=0.0, drop=0.16, seed=0):
+    """Hot springs stepping down a slope in travertine terraces: each pool a kidney of still blue water (`pond_water`,
+    so the live light gives it Look Book water) inside a scalloped rim of cream stone stained ochre where it spills, the
+    next one below and a little to the side. Returns (steam points, the pools' ellipses (x, r, rx, ry))."""
+    rng = _r(k)
+    steam, pools = [], []
+    x, r, z = cx, cr, z0 + drop * steps
+    for i in range(steps):
+        rx, ry = w * (0.75 + 0.25 * rng.random()) / 2, d * (0.8 + 0.3 * rng.random()) / 2
+        n = 28
+        rim = []
+        for j in range(n):
+            a = j / n * math.tau
+            f = 1 + 0.08 * math.sin(3 * a + seed + i) + 0.05 * math.sin(5 * a + i * 2)
+            rim.append((x + math.cos(a) * rx * f, r + math.sin(a) * ry * f))
+        # the rim: a thick lip of travertine all round, scalloped where it spills (the front), stained below
+        for j, (px_, pr_) in enumerate(rim):
+            front = math.sin(j / n * math.tau) > 0.3
+            col = TRAV[1] if front else TRAV[0]
+            k.blob(px_, pr_, z - 0.02, 0.16 if front else 0.13, 0.1, 0.07, (col, 0.1), 'travertine', segs=6)
+            if front:
+                k.blob(px_, pr_ + 0.12, z - 0.12, 0.14, 0.12, 0.09, (TRAV[2], 0.12), 'travertine', segs=6)
+        k.poly([(x, r, z)] + [(px_, pr_, z) for (px_, pr_) in rim[::-1]] + [(rim[-1][0], rim[-1][1], z)], (SPRING, 0.04), 'pond_water')
+        k.poly([(x, r, z - 0.06)] + [(px_, pr_, z - 0.06) for (px_, pr_) in rim[::-1]] + [(rim[-1][0], rim[-1][1], z - 0.06)],
+               ('#d8c8a0', 0.1), 'pool_floor')
+        # the step down: a wall of travertine below the lip, draped
+        k.blob(x, r + ry * 0.6, z - drop * 0.6, rx * 1.05, ry * 0.7, drop * 0.7 + 0.04, (TRAV[1], 0.12), 'travertine', segs=12)
+        steam.append([round(x, 2), round(r, 2)])
+        pools.append((x, r, rx, ry))
+        x += rng.uniform(-0.8, 0.8)
+        r += d * 0.95
+        z -= drop
+    return steam, pools
+
+
+def chorten(k, cx, cr, s=1.0, z0=0.0, flags=True):
+    """A white stupa: a stepped base, the dome, a square harmika with painted eyes, a spire of gilt rings, a parasol;
+    snow on its steps."""
+    W_ = '#f0ece2'
+    for i in range(3):
+        a = (0.7 - i * 0.14) * s
+        qb(k, cx - a, cr - a * 0.8, z0 + i * 0.16 * s, cx + a, cr + a * 0.8, z0 + (i + 1) * 0.16 * s, (shade(W_, 1 - i * 0.03), 0.06), 'chorten')
+        qb(k, cx - a + 0.02, cr + a * 0.8 - 0.04, z0 + (i + 1) * 0.16 * s, cx + a - 0.02, cr + a * 0.8, z0 + (i + 1) * 0.16 * s + 0.03,
+           (SNOW, 0.03), 'ledge_snow')
+    zb = z0 + 0.48 * s
+    k.sphere(cx, cr, zb + 0.32 * s, 0.4 * s, 0.38 * s, (W_, 0.06), 'chorten', segs=16)
+    qb(k, cx - 0.16 * s, cr - 0.14 * s, zb + 0.62 * s, cx + 0.16 * s, cr + 0.14 * s, zb + 0.82 * s, ('#e8e0cc', 0.05), 'chorten')
+    for dx in (-0.06, 0.06):                                        # the eyes, painted on the harmika's face
+        qb(k, cx + dx * s - 0.03 * s, cr + 0.14 * s, zb + 0.7 * s, cx + dx * s + 0.03 * s, cr + 0.15 * s, zb + 0.73 * s, '#1a2a6a', 'chorten_eye')
+    for i in range(7):
+        rad = (0.13 - i * 0.012) * s
+        k.cyl(cx, cr, zb + (0.84 + i * 0.07) * s, zb + (0.89 + i * 0.07) * s, rad, (GILT, 0.05), 'spire', verts=12)
+    k.cone(cx, cr, zb + 1.36 * s, zb + 1.48 * s, 0.16 * s, 0.02, (GILT, 0.05), 'spire', verts=12)
+    k.sphere(cx, cr, zb + 1.54 * s, 0.05 * s, 0.05 * s, (GILT, 0.05), 'spire', segs=8)
+    k.solid(cx - 0.7 * s, cr - 0.56 * s, cx + 0.7 * s, cr + 0.56 * s)
+    return (cx, cr, zb + 1.5 * s)
+
+
+def prayer_wheels(k, x0, x1, r_face, n=None):
+    """A row of prayer wheels under a little roof: red drums with gilt bands on spindles, a timber frame, a snowy
+    shingle roof."""
+    n = n or max(2, int((x1 - x0) / 0.4))
+    qb(k, x0 - 0.1, r_face - 0.5, 0.0, x1 + 0.1, r_face + 0.1, 0.2, ('#8a8478', 0.1), 'plinth')
+    for i in range(n):
+        x = x0 + (i + 0.5) * (x1 - x0) / n
+        k.cyl(x, r_face - 0.2, 0.25, 0.85, 0.15, ('#a8222a', 0.08), 'prayer_wheel', verts=12)
+        for z in (0.32, 0.55, 0.78):
+            k.cyl(x, r_face - 0.2, z, z + 0.03, 0.155, GILT, 'prayer_wheel_band', verts=12)
+        k.cyl(x, r_face - 0.2, 0.2, 1.0, 0.015, ('#3a2a1a', 0.06), 'spindle', verts=5)
+    for x in (x0 - 0.05, x1 + 0.05):
+        qb(k, x - 0.05, r_face - 0.25, 0.2, x + 0.05, r_face - 0.15, 1.15, ('#6a2a1a', 0.08), 'post')
+    qb(k, x0 - 0.2, r_face - 0.6, 1.1, x1 + 0.2, r_face + 0.15, 1.2, ('#6a2a1a', 0.08), 'beam')
+    k.quads([((x0 - 0.3, r_face + 0.25, 1.15), (x1 + 0.3, r_face + 0.25, 1.15), (x1 + 0.3, r_face - 0.4, 1.45), (x0 - 0.3, r_face - 0.4, 1.45))],
+            (SNOW, 0.03), 'roof_snow')
+    k.solid(x0 - 0.1, r_face - 0.5, x1 + 0.1, r_face + 0.1)
+
+
+def mani_flags(k, a, b, sag=0.35, n=None):
+    """A line of prayer flags in the five colours."""
+    W.bunting(k, a, b, sag=sag, cols=('#2a6ac0', '#f4f0e8', '#c83a2e', '#3aa060', '#e0b030'), n=n)
+
+
+WHITE = '#efeae0'
+MAROON = '#6a2420'
+
+
+def gompa(k, x0, x1, r_back, r_front, h=2.2, z0=0.0, windows=3, door=None, roof='flat', gold=True, floors=None):
+    """A monastery building: whitewashed walls leaning in a little as they rise, a deep band of maroon under the roof
+    (the penbey frieze, with gilt roundels), small windows in black trapezoid frames with a striped awning, a flat roof
+    with snow and gilt finials at the corners — or a gilt pagoda roof over the main hall. Returns the roof z."""
+    rng = _r(k)
+    zt = z0 + h
+    lean = 0.12
+    k.loft([[(x0, r_back, z0), (x1, r_back, z0), (x1, r_front, z0), (x0, r_front, z0)],
+            [(x0 + lean, r_back + lean, zt - 0.4), (x1 - lean, r_back + lean, zt - 0.4), (x1 - lean, r_front - lean, zt - 0.4), (x0 + lean, r_front - lean, zt - 0.4)]],
+           (WHITE, 0.08), 'gompa_wall', closed=True, smooth=False)
+    qb(k, x0 + lean - 0.04, r_back + lean - 0.04, zt - 0.4, x1 - lean + 0.04, r_front - lean + 0.04, zt - 0.05, (MAROON, 0.12), 'penbey')
+    qb(k, x0 + lean - 0.06, r_back + lean - 0.06, zt - 0.05, x1 - lean + 0.06, r_front - lean + 0.06, zt, ('#2a1a14', 0.08), 'parapet')
+    x = x0 + 0.4
+    while x < x1 - 0.3:
+        k.cyl_y(x, r_front - lean + 0.04, r_front - lean + 0.07, zt - 0.22, 0.07, 0.07, GILT, 'roundel', verts=10)
+        x += 0.7
+    nf = floors or max(1, int((h - 0.6) / 0.85))
+    for f in range(nf):
+        zf = z0 + 0.35 + f * 0.85
+        nw = windows
+        for i in range(nw):
+            wx = x0 + (x1 - x0) * (i + 0.5) / nw
+            if door is not None and f == 0 and abs(wx - door) < 0.5:
+                continue
+            rf = r_front - lean * (zf - z0) / max(0.1, h - 0.4) + 0.02
+            k.quads([((wx - 0.26, rf, zf), (wx + 0.26, rf, zf), (wx + 0.18, rf, zf + 0.46), (wx - 0.18, rf, zf + 0.46))], ('#14100e', 0.06), 'window_frame')
+            qb(k, wx - 0.11, rf + 0.005, zf + 0.08, wx + 0.11, rf + 0.02, zf + 0.4, '#2a1a10', 'window_glass', emit=('#ffb060', 0.6) if rng.random() < 0.5 else None)
+            for j, c in enumerate(('#c83a2e', '#2a6ac0', '#e0b030', '#3aa060')):   # the striped awning over it
+                qb(k, wx - 0.24 + j * 0.12, rf, zf + 0.5, wx - 0.12 + j * 0.12, rf + 0.12, zf + 0.56, (c, 0.06), 'awning')
+    if door is not None:
+        qb(k, door - 0.32, r_front - 0.02, z0, door + 0.32, r_front + 0.04, z0 + 0.95, ('#6a1a14', 0.08), 'door')
+        qb(k, door - 0.4, r_front - 0.02, z0 + 0.95, door + 0.4, r_front + 0.08, z0 + 1.05, (MAROON, 0.08), 'lintel')
+        for s_ in (-1, 1):
+            k.sphere(door + s_ * 0.12, r_front + 0.05, z0 + 0.5, 0.03, 0.03, GILT, 'door_ring', segs=6)
+    if roof == 'gold':
+        ri = r_back + lean
+        rf2 = r_front - lean
+        hr = 0.6
+        k.quads([((x0 - 0.1, rf2 + 0.25, zt), (x1 + 0.1, rf2 + 0.25, zt), (x1 - 0.4, (ri + rf2) / 2, zt + hr), (x0 + 0.4, (ri + rf2) / 2, zt + hr))],
+                (GILT, 0.06), 'roof_gold')
+        k.quads([((x1 + 0.1, ri - 0.25, zt), (x0 - 0.1, ri - 0.25, zt), (x0 + 0.4, (ri + rf2) / 2, zt + hr), (x1 - 0.4, (ri + rf2) / 2, zt + hr))],
+                (shade(GILT, 0.85), 0.06), 'roof_gold')
+        for (xa, xb) in ((x0 - 0.1, x0 + 0.4), (x1 + 0.1, x1 - 0.4)):
+            k.poly([(xa, ri - 0.25, zt), (xa, rf2 + 0.25, zt), (xb, (ri + rf2) / 2, zt + hr)], (shade(GILT, 0.9), 0.06), 'roof_gold')
+        k.cone((x0 + x1) / 2, (ri + rf2) / 2, zt + hr, zt + hr + 0.5, 0.12, 0.02, GILT, 'finial', verts=8)
+        for xe in (x0 - 0.1, x1 + 0.1):                              # the upturned eaves
+            k.cone(xe, rf2 + 0.25, zt - 0.05, zt + 0.15, 0.05, 0.005, GILT, 'finial', verts=6)
+    else:
+        qb(k, x0 + lean + 0.04, r_back + lean + 0.04, zt, x1 - lean - 0.04, r_front - lean - 0.04, zt + 0.05, (SNOW, 0.03), 'roof_snow')
+        if gold:
+            for (xe, re_) in ((x0 + lean, r_front - lean), (x1 - lean, r_front - lean)):     # victory banners at the corners
+                k.cyl(xe, re_, zt, zt + 0.42, 0.06, (GILT, 0.05), 'finial', verts=8)
+                k.sphere(xe, re_, zt + 0.46, 0.05, 0.05, GILT, 'finial', segs=6)
+    k.solid(x0, r_back, x1, r_front)
+    return zt

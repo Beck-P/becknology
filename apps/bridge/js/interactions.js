@@ -1447,6 +1447,11 @@ var BridgeInteractions = (function () {
         BridgePet.adopt(t.pet, person.name.split(' ')[0]);
         return;
       }
+      if (t.use && OWN[t.use.type]) {                                 // a topic that does what a thing in the world does (a sleigh ride, a room)
+        close();
+        OWN[t.use.type](Object.assign({}, t.use));
+        return;
+      }
       if (t.climbrace && typeof BridgeHoarfell !== 'undefined') {     // Ysolde: race her up the face (js/climb.js)
         close();
         BridgeHoarfell.climbRace(person.name.split(' ')[0]);

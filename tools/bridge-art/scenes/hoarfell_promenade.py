@@ -125,7 +125,11 @@ k.box(26.8, 8.62, 3.05, 32.2, 8.66, 3.4, ('#3a2416', 0.05), 'sign_board')
 G.letters(k, 'ALPENHOF', 'CinzelDecorative-Bold', 29.5, 8.66, 3.08, size=0.28, col=A.GILT, lit=True, energy=3)
 for x in (25.4, 33.6):
     A.urn_planter(k, x, 9.2)
-STEAM = A.heated_pool(k, 24.8, 10.6, 34.2, 13.6, coping='#d8d2c4', tile='#2a8aa0')
+# the pool sits in a raised stone terrace (the shelf's snow is one sheet at z 0): a plinth round it, the water within
+for (a, b, c, d) in ((24.2, 10.0, 34.8, 10.6), (24.2, 13.6, 34.8, 14.2), (24.2, 10.6, 24.8, 13.6), (34.2, 10.6, 34.8, 13.6)):
+    k.box(a, b, 0.0, c, d, 0.5, ('#a8a4ac', 0.12), 'terrace_wall')
+A.ashlar(k, 24.2, 34.8, 14.2, 0.0, 0.5, '#a8a4ac', course=0.25, block=(0.35, 0.6))
+STEAM = A.heated_pool(k, 24.8, 10.6, 34.2, 13.6, coping='#d8d2c4', tile='#2a8aa0', z0=0.5)
 for (x, f) in ((25.6, 1), (27.1, 1), (31.9, -1), (33.4, -1)):
     A.lounger(k, x, 14.5, facing=f, col='#f0e8d8', towel=k.rng.choice(('#b82a2a', '#f0f0f0', '#1e2a4a')))
 A.heater(k, 29.5, 14.6)
@@ -229,7 +233,8 @@ w['interactions'] = [
     {'x': 43, 'y': 17, 'type': 'enter_world', 'label': 'FELLHAVEN', 'prompt': 'PRESS E TO WALK UP', 'target': 'hoarfell', 'spawn': [3, 16]},
     {'x': 30, 'y': 24, 'type': 'railway', 'label': 'THE TRAIN', 'prompt': 'PRESS E TO BOARD', 'to': 'hoarfell-aurelle'},
     {'x': 14, 'y': 24, 'type': 'railway_board', 'label': 'DEPARTURES', 'prompt': 'PRESS E TO READ'},
-    {'x': 23, 'y': 23, 'type': 'promenade', 'label': 'STATIONMASTER', 'prompt': 'PRESS E TO TALK'},
+    {'x': 21, 'y': 23, 'type': 'dialog', 'label': 'STATIONMASTER', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE STATIONMASTER CHECKS HER WATCH.'},
+    {'x': 5, 'y': 10, 'type': 'dialog', 'label': 'KASPAR', 'prompt': 'PRESS E TO TALK', 'dialog': 'KASPAR STIRS THE POT IN FIGURES OF EIGHT.'},
     {'x': 7, 'y': 10, 'type': 'promenade', 'label': 'STUBLI', 'prompt': 'PRESS E TO GO IN'},
     {'x': 15, 'y': 8, 'type': 'promenade', 'label': 'RINK', 'prompt': 'PRESS E TO SKATE'},
     {'x': gate[0], 'y': gate[1] + 1, 'type': 'promenade', 'label': 'RINK', 'prompt': 'PRESS E TO SKATE'},
@@ -243,7 +248,10 @@ w['interactions'] = [
 ]
 w['lift'] = None
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID, actors=[],
+ACTORS = [{'sheet': 'npc-stationmaster', 'x': 21, 'y': 23, 'facing': 'down'}, {'sheet': 'npc-kaspar', 'x': 5, 'y': 10, 'facing': 'down'}]
+for a in ACTORS:
+    k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
+apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID, actors=ACTORS,
             scene_extra={'backdrop': True, 'smoke': [s for s in SMOKE if s], 'steam': STEAM, 'train': [TRAIN_X0, 25.6, TRAIN_X1],
                          'skaters': SKATERS})
 w = json.load(open(WORLD))

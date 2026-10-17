@@ -291,7 +291,7 @@ w.update({'name': 'The Aurelle Glacier', 'width': COLS, 'height': ROWS, 'tileSiz
           'shipExit': False, 'cold': True, 'coldRate': 1.5, 'view': [0.0, -4.5, COLS, ROWS], 'expedition': EXP, 'touring': {'day': 1}})
 w['interactions'] = [
     {'x': 10, 'y': 40, 'type': 'touring', 'action': 'back', 'label': 'THE WAY DOWN', 'prompt': 'PRESS E TO GO BACK', 'target': 'hoarfell-aurelle', 'spawn': [9, 17]},
-    {'x': 8, 'y': 7, 'type': 'touring', 'action': 'hut', 'label': 'CABANE BLEUE', 'prompt': 'PRESS E TO GO IN', 'target': 'hoarfell-hut-bleue', 'spawn': [8, 10]},
+    {'x': 8, 'y': 5, 'type': 'touring', 'action': 'hut', 'label': 'CABANE BLEUE', 'prompt': 'PRESS E TO GO IN', 'target': 'hoarfell-hut-bleue', 'spawn': [8, 10]},
     {'x': 12, 'y': 38, 'type': 'dialog', 'label': 'SIGNPOST', 'prompt': 'PRESS E TO READ',
      'dialog': 'A YELLOW SIGN NAILED TO A POST IN THE MORAINE:\n\nCABANE BLEUE ...... 4 H\nCOL DU VENT ...... 1 DAY\n\nUNDER IT, IN MARKER: "ROPE UP. KEEP TO THE WANDS. THE GLACIER IS NOT YOUR FRIEND." AND UNDER THAT, IN A DIFFERENT HAND: "IT\'S A BIT YOUR FRIEND."'},
 ] + [{'x': int(x), 'y': int(r), 'type': 'expedition', 'action': 'cairn', 'label': 'CAIRN', 'prompt': 'PRESS E TO LOOK'} for (x, r) in CAIRNS]

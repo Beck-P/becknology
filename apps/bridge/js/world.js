@@ -434,6 +434,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeMagic !== 'undefined') BridgeMagic.decorate(worldId, data);
         if (typeof BridgeExpedition !== 'undefined') BridgeExpedition.decorate(worldId, data);
         if (typeof BridgeAlpine !== 'undefined') BridgeAlpine.decorate(worldId, data);       // Aurelle, the promenade, the way down to it
+        if (typeof BridgeTouring !== 'undefined') BridgeTouring.decorate(worldId, data);     // the High Route: the guides, the huts
         if (typeof BridgeSki !== 'undefined' && BridgeSki.decorate) BridgeSki.decorate(worldId, data);
         if (typeof BridgeDance !== 'undefined') BridgeDance.decorate(worldId, data);
         if (typeof BridgeAnimals !== 'undefined') BridgeAnimals.decorate(worldId, data);

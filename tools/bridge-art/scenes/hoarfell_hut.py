@@ -112,7 +112,7 @@ k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}},
 
 # ---- the two huts' worlds ---------------------------------------------------------------------------------------------------
 HUTS = {
-    'hoarfell-hut-bleue': {'name': 'The Cabane Bleue', 'out': 'hoarfell-glacier', 'outSpawn': [8, 8], 'warden': 'ODILE',
+    'hoarfell-hut-bleue': {'name': 'The Cabane Bleue', 'out': 'hoarfell-glacier', 'outSpawn': [8, 6], 'warden': 'ODILE',
                            'next': 'hoarfell-col', 'nextLabel': 'ON TO THE COL'},
     'hoarfell-hut-col': {'name': 'The Refuge du Col', 'out': 'hoarfell-col', 'outSpawn': [24, 37], 'warden': 'BRAM',
                          'next': 'hoarfell-valley', 'nextLabel': 'DOWN TO THE VALLEY'},
@@ -126,7 +126,7 @@ for wid, h in HUTS.items():
     w['interactions'] = [
         {'x': x, 'y': y, 'type': 'leave_world', 'leaveTo': h['out'], 'leaveSpawn': h['outSpawn'], 'label': 'OUTSIDE', 'prompt': 'PRESS E TO GO OUT'}
         for (x, y) in DOORS] + [
-        {'x': 14, 'y': 4, 'type': 'touring', 'action': 'warden', 'label': h['warden'], 'prompt': 'PRESS E TO TALK'},
+        {'x': 14, 'y': 4, 'type': 'dialog', 'label': h['warden'], 'prompt': 'PRESS E TO TALK', 'dialog': 'THE WARDEN WIPES HER HANDS.' if h['warden'] == 'ODILE' else 'THE WARDEN WIPES HIS HANDS.'},
         {'x': 13, 'y': 4, 'type': 'touring', 'action': 'soup', 'label': 'THE POT', 'prompt': 'PRESS E FOR SOUP'},
         {'x': 4, 'y': 3, 'type': 'touring', 'action': 'bunk', 'label': 'BUNKS', 'prompt': 'PRESS E TO SLEEP'},
         {'x': 2, 'y': 7, 'type': 'touring', 'action': 'book', 'label': 'HUT BOOK', 'prompt': 'PRESS E TO READ'},

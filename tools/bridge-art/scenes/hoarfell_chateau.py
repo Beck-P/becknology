@@ -46,8 +46,8 @@ def peaks_window(x, w=1.2, z0=1.0, z1=3.2):
     for (xa, ha), (xb, hb) in zip(pts, pts[1:]):
         k.quads([((xa, rf + 0.046, base), (xb, rf + 0.046, base), (xb, rf + 0.046, base + hb * (z1 - z0) * 0.6), (xa, rf + 0.046, base + ha * (z1 - z0) * 0.6))],
                 ('#2a2a48', 0.05), 'window_peaks')
-        k.quads([((xa, rf + 0.048, base + ha * (z1 - z0) * 0.6 - 0.12), (xb, rf + 0.048, base + hb * (z1 - z0) * 0.6 - 0.12),
-                  (xb, rf + 0.048, base + hb * (z1 - z0) * 0.6), (xa, rf + 0.048, base + ha * (z1 - z0) * 0.6))], ('#5a3a4a', 0.05), 'window_snow', emit=('#ffd8c8', 0.9))
+        k.poly([(xa, rf + 0.048, base + ha * (z1 - z0) * 0.6 - 0.12), (xb, rf + 0.048, base + hb * (z1 - z0) * 0.6 - 0.12),
+                (xb, rf + 0.048, base + hb * (z1 - z0) * 0.6), (xa, rf + 0.048, base + ha * (z1 - z0) * 0.6)], ('#5a3a4a', 0.05), 'window_snow', emit=('#ffd8c8', 0.9))
     k.box(x - 0.025, rf + 0.05, z0, x + 0.025, rf + 0.09, z1, (WOOD, 0.05), 'window_bar')
     for f in (0.33, 0.66):
         k.box(x - w / 2, rf + 0.05, z0 + (z1 - z0) * f - 0.02, x + w / 2, rf + 0.09, z0 + (z1 - z0) * f + 0.02, (WOOD, 0.05), 'window_bar')
@@ -174,8 +174,8 @@ I += [
     table(19, 6, 'blackjack', 'bj-aurelle', 'BLACKJACK'),
     table(12, 10, 'poker', 'poker-aurelle', 'THE POKER TABLE'),
     table(19, 10, 'craps', 'craps-aurelle', 'CRAPS'),
-    {'x': 4, 'y': 6, 'type': 'aurelle', 'label': 'CONCIERGE', 'prompt': 'PRESS E TO TALK'},
-    {'x': 2, 'y': 9, 'type': 'aurelle', 'label': 'CONCIERGE', 'prompt': 'PRESS E FOR A ROOM'},
+    {'x': 4, 'y': 5, 'type': 'dialog', 'label': 'MONSIEUR AUBERT', 'prompt': 'PRESS E TO TALK', 'dialog': 'THE CONCIERGE LOOKS UP FROM HIS BOOK.'},
+    {'x': 2, 'y': 9, 'type': 'aurelle', 'label': 'THE LIFT', 'prompt': 'PRESS E FOR A ROOM'},
     {'x': 27, 'y': 8, 'type': 'vendor', 'label': 'LE BAR DORE', 'prompt': 'PRESS E TO ORDER',
      'items': [{'id': 'champagne', 'price': 40}, {'id': 'vin_chaud', 'price': 10}, {'id': 'truffles', 'price': 26}, {'id': 'hot_cocoa', 'price': 8}],
      'dialog': 'GREEN MARBLE AND GILT, A BARMAN IN A WHITE JACKET WHO MIXES YOUR DRINK BEFORE YOU\'VE DECIDED WHAT IT IS.'},
@@ -188,7 +188,8 @@ I += [
     look('KEY BOARD', 6, 4, 'A HUNDRED BRASS KEYS ON GREEN TASSELS. NUMBER 13 HAS NO KEY. NUMBER 14 HAS TWO.'),
     look('STATUE', 1, 16, 'A MARBLE NYMPH IN A FUR STOLE. SOMEBODY ADDED THE STOLE LATER, IN PLASTER, AND NOBODY HAS DARED TAKE IT OFF.'),
 ]
-actors = [{'sheet': 'npc-croupier', 'x': 11, 'y': 4, 'facing': 'down'}, {'sheet': 'npc-dealer', 'x': 19, 'y': 4, 'facing': 'down'},
+actors = [{'sheet': 'npc-croupier-aurelle', 'x': 11, 'y': 4, 'facing': 'down'}, {'sheet': 'npc-dealer', 'x': 19, 'y': 4, 'facing': 'down'},
+          {'sheet': 'npc-aubert', 'x': 4, 'y': 4, 'facing': 'down'},
           {'sheet': 'npc-dealer-b', 'x': 12, 'y': 9, 'facing': 'down'},
           {'sheet': 'npc-gambler-a', 'x': 10, 'y': 10, 'facing': 'right', 'pose': 'sit'},
           {'sheet': 'npc-gambler-b', 'x': 13, 'y': 12, 'facing': 'up', 'pose': 'sit'}]
