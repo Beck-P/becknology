@@ -753,6 +753,9 @@ class Kit:
         size = float(max(self.cols, self.rows))
         moon = c.get('moon', ((-0.35, 0.3, -0.9), '#8a98d0', 1.0))
         rot = (math.radians(-25), math.radians(10), 0)
+        if 'moon' in c:                                    # its own way (a wall facing you wants it from the front, or
+            d = Vector((moon[0][0], -moon[0][1] * S, moon[0][2])).normalized()     # it's in its own shadow all night)
+            rot = tuple(d.to_track_quat('-Z', 'Y').to_euler())
         n = Euler(rot).to_matrix() @ Vector((0, 0, -1))
         at = Vector((self.cols / 2, -self.rows / 2 * S, 15.0))
         near = self._nearest_along(at, n)
