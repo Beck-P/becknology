@@ -27,6 +27,7 @@ const SUITES = {
     ['world/foliage.js', SHOTS],
     ['world/nature.js', SHOTS],
     ['world/litlight.js', SHOTS],
+    ['world/holm_look.js', SHOTS],
     ['world/orders.js', SHOTS],
     ['world/sea.js', SHOTS],
     ['world/sleep.js', SHOTS],
