@@ -2661,3 +2661,6 @@ html.touch .tc-pill.tc-inbar .tc-lbl { display: none; }
 .world-sky.sky-morning, .world-sky.sky-midday, .world-sky.sky-afternoon, .world-sky.sky-midnight-sun { color: #ffd870; }
 .world-sky.sky-dawn, .world-sky.sky-dusk { color: #ff9a6a; }
 .world-sky.sky-night { color: #b8c4ff; }
+.world-sky .sky-time { margin-left: 4px; line-height: 14px; font-size: 0.92em; letter-spacing: 0.04em; color: inherit; }
+.world-wx { display: inline-flex; line-height: 0; margin-left: 3px; cursor: help; }
+.world-wx svg { display: block; }

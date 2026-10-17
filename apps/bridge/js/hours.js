@@ -103,6 +103,7 @@ var BridgeHours = (function () {
   var MOON = '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M10.6 2.2a6 6 0 1 0 3.2 9.6A5 5 0 0 1 10.6 2.2z" fill="#c8d2ff"/></svg>';
   var GLYPH = { morning: SUN, midday: SUN, afternoon: SUN, dawn: LOW, dusk: LOW, night: MOON, 'midnight sun': LOW };
   var PART = { morning: 'Morning', midday: 'Midday', afternoon: 'Afternoon', dawn: 'Dawn', dusk: 'Dusk', night: 'Night', 'midnight sun': 'The midnight sun' };
+  function etClock() { var p = C().etParts(); return (p.h % 12 || 12) + ':' + (p.m < 10 ? '0' : '') + p.m + (p.h < 12 ? 'am' : 'pm'); }
   var lastHour = null, lastWorld = null;
   function tick() {
     if (!C() || typeof BridgeWorld === 'undefined' || !BridgeWorld.getWorldId) return;
@@ -113,8 +114,12 @@ var BridgeHours = (function () {
       if (!sp) { sp = document.createElement('span'); sp.className = 'world-sky'; badge.appendChild(sp); }
       var show = k.cycles || k.part === 'night';
       sp.style.display = show ? '' : 'none';
+      // with a timepiece that keeps this planet's clock (js/gear.js), the time itself — Arcadia's is Eastern time
+      var G = typeof BridgeGear !== 'undefined' && BridgeGear.keepsTime ? BridgeGear : null;
+      var tell = G && k.planet && G.keepsTime(k.planet) ? (k.time ? k.time.text : C().fmtHours ? etClock() : '') : '';
       if (show) {
-        if (sp.getAttribute('data-p') !== k.part) { sp.innerHTML = GLYPH[k.part] || ''; sp.setAttribute('data-p', k.part); }
+        var key = k.part + '|' + tell;
+        if (sp.getAttribute('data-p') !== key) { sp.innerHTML = (GLYPH[k.part] || '') + (tell ? '<span class="sky-time">' + tell + '</span>' : ''); sp.setAttribute('data-p', key); }
         sp.title = (PART[k.part] || '') + (k.season ? ' · ' + k.season.name : '');
         sp.className = 'world-sky sky-' + k.part.replace(' ', '-');
       }
@@ -130,16 +135,22 @@ var BridgeHours = (function () {
   }
   setInterval(tick, 4000);
 
-  /** Every planet's time and season, as the ship's chronometer reads it (the wireless on the bridge). */
+  // the weather beside it (js/weather.js): now, and what's next
+  function wx(r) {
+    if (typeof BridgeWeather === 'undefined' || !BridgeWeather.forecast) return '';
+    var f = BridgeWeather.forecast(r, 2);
+    return f.length ? '  ·  ' + f[0].name.toUpperCase() + ', THEN ' + f[1].name.toUpperCase() + ' FROM ' + BridgeWeather.etHour(f[1].from).toUpperCase() : '';
+  }
+  /** Every planet's time, season and weather, as the ship's chronometer reads it (the wireless on the bridge). */
   function chronometer() {
     if (!C()) return '';
     var rows = ['sylvara', 'hoarfell', 'lumar', 'verdance'].map(function (p) {
       var k = C().sky(p), P = C().PLANETS[p];
-      return P.name.toUpperCase() + '  ' + k.time.text + ' OF ' + P.day + ':00  ·  ' + (PART[k.part] || k.part).toUpperCase() + '  ·  ' + (k.season ? k.season.name.toUpperCase() : '');
+      return P.name.toUpperCase() + '  ' + k.time.text + ' OF ' + P.day + ':00  ·  ' + (PART[k.part] || k.part).toUpperCase() + '  ·  ' + (k.season ? k.season.name.toUpperCase() : '') + wx(p);
     });
-    rows.push('ARCADIA  ·  NIGHT, AS EVER  ·  ' + (C().bustle() > 0.9 ? 'THE STREETS ARE FULL' : C().bustle() > 0.5 ? 'BUSY' : 'QUIET'));
+    rows.push('ARCADIA  ·  NIGHT, AS EVER  ·  ' + (C().bustle() > 0.9 ? 'THE STREETS ARE FULL' : C().bustle() > 0.5 ? 'BUSY' : 'QUIET') + wx('arcadia'));
     rows.push('ENIGMA, THE SINGULARITY  ·  NO SUN TO KEEP');
-    return "THE SHIP'S CHRONOMETER KEEPS EVERY WORLD'S TIME:\n\n" + rows.join('\n');
+    return "THE SHIP'S CHRONOMETER KEEPS EVERY WORLD'S TIME AND WEATHER (EASTERN TIME):\n\n" + rows.join('\n');
   }
 
   return { HOURS: HOURS, hours: hours, open: isOpen, gate: gate, all: all, anchors: anchors, chronometer: chronometer, _tick: tick };

@@ -912,6 +912,16 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#a080ff'; ctx.fillRect(x + 9*u, y + 9*u, 1*u, 1*u); ctx.fillRect(x + 3*u, y + 3*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 4*u, 1*u, 1*u);
   }
 
+  // a fallen star (a Sylvara starfall, js/weather.js): a little five-pointed glow
+  function fallenStarIcon(ctx, x, y, s) {
+    var u = s / 16;
+    ctx.fillStyle = 'rgba(255,240,170,0.35)'; ctx.fillRect(x + 3*u, y + 3*u, 10*u, 10*u);
+    ctx.fillStyle = '#ffe680';
+    ctx.fillRect(x + 7*u, y + 2*u, 2*u, 12*u); ctx.fillRect(x + 2*u, y + 6*u, 12*u, 2*u);
+    ctx.fillRect(x + 4*u, y + 10*u, 2*u, 3*u); ctx.fillRect(x + 10*u, y + 10*u, 2*u, 3*u);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 7*u, y + 6*u, 2*u, 2*u);
+  }
+
   // ---- Item registry --------------------------------------------------
   // type drives display + grouping.
   // effects is the source of truth for what an item does — both the
@@ -1041,6 +1051,8 @@ var BridgeItems = (function () {
                      draw: coinIcon, value: 25 },
     star_pearl:    { id: 'star_pearl', name: 'Star Pearl', desc: 'From the moon pool. There are stars moving inside it.', type: 'material', stackable: true,
                      draw: pearlIcon, value: 80 },
+    fallen_star:   { id: 'fallen_star', name: 'Fallen Star', desc: 'It came down by you on a starfall night on Sylvara. Still warm, and humming to itself. Mirelle the herbalist buys them.', type: 'material', stackable: true,
+                     draw: fallenStarIcon, value: 150 },
     // treasure maps (js/treasure.js)
     tmap_lighthouse: { id: 'tmap_lighthouse', name: 'Map: Under the Old Light', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
                 stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('lighthouse'); return false; } },

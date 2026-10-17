@@ -20,7 +20,7 @@ var BridgeHarbour = (function () {
   var PORTS = {
     'lumar':          { at: [9, 13], face: 'left', who: 'Bess Tolliver', sheet: 'npc-hm-bess', yard: ['cutter'],
                         guns: ['swivel', 'long_nine'], fits: ['sheathing', 'oak'] },
-    'lumar-crown':    { at: [24, 32], face: 'left', who: 'Rowena Ashgrove', sheet: 'npc-hm-rowena', yard: ['cutter', 'brigantine', 'galleon'],
+    'lumar-crown':    { at: [24, 32], face: 'left', who: 'Rowena Ashgrove', sheet: 'npc-hm-rowena', yard: ['cutter', 'brigantine', 'galleon', 'sovereign'],
                         guns: ['swivel', 'long_nine', 'carronade', 'chaser'], fits: ['sheathing', 'oak'] },
     'lumar-tern':     { at: [18, 16], face: 'right', who: 'Old Pell', sheet: 'npc-hm-pell', yard: [], guns: ['swivel'], fits: [] },
     'lumar-sapphire': { at: [30, 24], face: 'left', who: 'Aldous Penhallow', sheet: 'npc-hm-aldous', yard: ['cutter', 'brigantine'],
@@ -98,6 +98,15 @@ var BridgeHarbour = (function () {
     rows.push({ label: 'The hold', sub: 'your pack to her hold, and back', pick: function () { pickShip(worldId, 'Whose hold?', hold); } });
     rows.push({ label: 'Market', sub: 'buy and sell cargo', pick: function () { pickShip(worldId, 'Trade from which ship?', market); } });
     rows.push({ label: 'Contracts', sub: T() ? T().mine().length + ' taken' : '', pick: function () { contracts(worldId); } });
+    if (typeof BridgeWeather !== 'undefined' && BridgeWeather.forecast) {          // the weather board by the door (js/weather.js)
+      var fc = BridgeWeather.forecast('lumar', 4);
+      rows.push({ label: 'The weather board', sub: fc[0].name + ' till about ' + BridgeWeather.etHour(fc[0].to) + ', then ' + fc[1].name.toLowerCase(), pick: function () {
+        var lines = fc.map(function (x, i) {
+          return (i ? 'FROM ABOUT ' + BridgeWeather.etHour(x.from).toUpperCase() + ': ' : 'NOW: ') + x.name.toUpperCase() + (x.stake ? '. ' + x.stake.toUpperCase() + '.' : '.');
+        });
+        choose({ title: 'The weather board', text: 'CHALKED UP BY THE DOOR, EASTERN TIME:\n\n' + lines.join('\n'), rows: [{ label: 'Back', sub: '', pick: function () { menu(worldId); } }], closeLabel: 'Done' });
+      } });
+    }
     if (typeof BridgeChart !== 'undefined') {
       var unc = ['sapphire', 'rose', 'crimson', 'midnight'].filter(function (s) { return !BridgeChart.charted(s); }).length;
       rows.push({ label: 'Charts', sub: unc ? unc + ' sea' + (unc > 1 ? 's' : '') + ' still uncharted' : 'every sea charted', pick: function () { BridgeChart.shop(worldId, null, function () { menu(worldId); }); } });

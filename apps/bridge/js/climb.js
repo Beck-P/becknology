@@ -238,7 +238,7 @@ var BridgeClimb = (function () {
       if (resting) { g.stam = Math.min(g.max, g.stam + 22 * dt); g.restT += dt; }
       else {
         g.restT = 0;
-        g.stam -= 1.7 * K.hang * (warm() ? 1 : 1.6) * (gusting && g.at.kind !== 'jug' ? 3.2 : 1) * dt;
+        g.stam -= 1.7 * K.hang * (warm() ? 1 : 1.6) * (gusting && g.at.kind !== 'jug' ? 3.2 : 1) * (typeof BridgeWeather !== 'undefined' && BridgeWeather.climb ? BridgeWeather.climb() : 1) * dt;
       }
       if (g.crumble && now > g.crumble) { g.at.broke = true; g.crumble = null; sfx('crumble'); return fall('THE HOLD BREAKS AWAY!'); }
       if (g.at.kind === 'sloper' && g.stam < 25) {

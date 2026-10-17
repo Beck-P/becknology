@@ -44,13 +44,23 @@ var BridgeGear = (function () {
     expedition: { name: 'Expedition Pack', slots: 20, price: 400, blurb: 'A frame pack with a dozen pockets. Smells faintly of new nylon.' },
     voidweave:  { name: 'Voidweave Rucksack', slots: 30, price: 900, blurb: 'Folds space. Weighs nothing. Don\'t look inside for long.' }
   };
+  // timepieces (js/hours.js shows the time by the place's name while you carry one that keeps that planet's clock):
+  // each world's own make, none on Lumar (its chapels ring the hours); the Arcadian chrono keeps them all
+  var TIMES = {
+    fell_watch:   { name: 'Fell Pocket Watch', price: 600, reads: ['hoarfell'], blurb: 'Brass, a hunter case with a snowflake on the lid. Twelve hours to the face: Hoarfell\'s day.' },
+    farm_watch:   { name: 'Farmer\'s Watch', price: 500, reads: ['verdance'], blurb: 'Six hours to the face, wound every market day. Tells you when to water.' },
+    moonglass:    { name: 'Moonglass', price: 900, reads: ['sylvara'], blurb: 'An elvish lens. Hold it to the sky and the hour shows in it, and the moon.' },
+    wrist_chrono: { name: 'Wrist Chrono', price: 2500, reads: ['all'], blurb: 'Synced to every world\'s clock, and Eastern time besides. Glows in the dark, obviously.' }
+  };
   var SHOPS = {
     lumar_tailor:     { title: 'THE TRAVELLING TAILOR', goods: ['suit:coat', 'pack:satchel'] },
     sapphire_imports: { title: 'RARE IMPORTS', goods: ['suit:thermal', 'pack:satchel'] },
-    cyber_gear:       { title: 'CYBER GEAR', goods: ['suit:runner', 'pack:expedition'] },
+    cyber_gear:       { title: 'CYBER GEAR', goods: ['suit:runner', 'pack:expedition', 'time:wrist_chrono'] },
     joro:             { title: "JORO'S BACK ROOM", goods: ['suit:plate', 'pack:expedition'] },
     vex:              { title: "VEX'S STASH", goods: ['pack:voidweave'] },
-    alpine:           { title: 'ALPINE OUTFITTERS', goods: ['suit:thermal', 'pack:expedition'] },
+    alpine:           { title: 'ALPINE OUTFITTERS', goods: ['suit:thermal', 'pack:expedition', 'time:fell_watch'] },
+    pennyworth:       { title: "PENNYWORTH'S GLASS CASE", goods: ['time:farm_watch'] },
+    elf_lens:         { title: "MIRELLE'S LENS", goods: ['time:moonglass'] },
     peddler:          { title: 'THE PEDDLER\'S CLOTHES RAIL', goods: ['suit:mystic', 'suit:ranger'] }
   };
   // outfitters set up on world interactions as worlds load (so a re-render can't lose them)
@@ -74,6 +84,7 @@ var BridgeGear = (function () {
     s = s && typeof s === 'object' ? s : {};
     s.suits = s.suits || { flight: 1 };
     s.packs = s.packs || { flight: 1 };
+    s.times = s.times || {};
     if (!SUITS[s.style] || !s.suits[s.style]) s.style = 'flight';
     return s;
   }
@@ -200,8 +211,13 @@ var BridgeGear = (function () {
     if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
   }
 
-  function owned(r) { return r.kind === 'suit' ? !!state.suits[r.key] : !!state.packs[r.key]; }
-  function info(r) { return r.kind === 'suit' ? SUITS[r.key] : PACKS[r.key]; }
+  function owned(r) { return r.kind === 'suit' ? !!state.suits[r.key] : r.kind === 'time' ? !!state.times[r.key] : !!state.packs[r.key]; }
+  function info(r) { return r.kind === 'suit' ? SUITS[r.key] : r.kind === 'time' ? TIMES[r.key] : PACKS[r.key]; }
+  /** Do you carry a timepiece that keeps this planet's clock? */
+  function keepsTime(planet) {
+    return Object.keys(state.times).some(function (k) { var T = TIMES[k]; return T && (T.reads.indexOf(planet) >= 0 || T.reads.indexOf('all') >= 0); });
+  }
+  function timeText(I) { return I.reads[0] === 'all' ? 'tells every world\'s time' : 'tells ' + I.reads.map(function (p) { return p.charAt(0).toUpperCase() + p.slice(1); }).join(', ') + ' time'; }
   function choose(i) { if (!rows.length) return; sel = (i + rows.length) % rows.length; note = ''; render(); }
   function stepColour(d) {
     var i = COLOURS.map(function (c) { return c[0]; }).indexOf(previewColour);
@@ -242,10 +258,11 @@ var BridgeGear = (function () {
     list.innerHTML = rows.map(function (row, i) {
       var I = info(row), tag;
       if (row.kind === 'suit') tag = state.style === row.key ? 'WEARING' : owned(row) ? 'OWNED' : I.price + ' COINS';
+      else if (row.kind === 'time') tag = owned(row) ? 'CARRYING' : I.price + ' COINS';
       else tag = owned(row) ? (bestPack() === row.key ? 'CARRYING' : 'OWNED') : I.price + ' COINS';
       return '<button class="wd-item gear-row' + (i === sel ? ' active' : '') + '" data-i="' + i + '">' +
         '<span class="gear-name">' + esc(I.name) + '</span><span class="gear-tag">' + tag + '</span>' +
-        '<span class="gear-perk">' + esc(row.kind === 'suit' ? perkText(I.perk) : '+' + I.slots + ' pack slots') + '</span></button>';
+        '<span class="gear-perk">' + esc(row.kind === 'suit' ? perkText(I.perk) : row.kind === 'time' ? timeText(I) : '+' + I.slots + ' pack slots') + '</span></button>';
     }).join('') || '<div class="gear-perk">NOTHING HERE YET.</div>';
     list.querySelectorAll('.gear-row').forEach(function (b) {
       b.addEventListener('click', function (e) { e.stopPropagation(); var i = +b.getAttribute('data-i'); if (i === sel) act(0); else choose(i); });
@@ -300,6 +317,7 @@ var BridgeGear = (function () {
         render(); return;
       }
       if (r.kind === 'suit') { state.suits[r.key] = 1; state.style = r.key; note = 'YOURS. YOU PUT IT ON THERE AND THEN.'; }
+      else if (r.kind === 'time') { state.times[r.key] = 1; note = 'YOURS. THE TIME SHOWS BY THE PLACE\'S NAME NOW, WHEREVER IT KEEPS IT.'; }
       else { state.packs[r.key] = 1; note = 'YOURS. YOU MOVE YOUR THINGS INTO IT: ' + (10 + packSlots()) + ' SLOTS NOW.'; }
       save(); changed();
       if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('coin');
@@ -316,5 +334,5 @@ var BridgeGear = (function () {
 
   return { open: open, close: close, decorate: decorate, isOpen: function () { return !!el; },
            style: style, colour: colour, speed: speed, bonus: bonus, has: has, packSlots: packSlots, packName: function () { return PACKS[bestPack()].name; },
-           SUITS: SUITS, PACKS: PACKS, SHOPS: SHOPS };
+           keepsTime: keepsTime, SUITS: SUITS, PACKS: PACKS, TIMES: TIMES, SHOPS: SHOPS };
 })();

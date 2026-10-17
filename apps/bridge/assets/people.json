@@ -1599,6 +1599,11 @@
         "a": "THREE GENERATIONS OF PENNYWORTHS BEHIND THIS COUNTER. I'M THE FIRST ONE WHO CAN WORK THE TILL WITHOUT KICKING IT."
       },
       {
+        "q": "A pocket watch?",
+        "a": "IN THE GLASS CASE. SIX HOURS TO THE FACE, SAME AS THE DAY. MY GRANDFATHER SOLD THE FIRST ONE TO A FARMER WHO KEPT MISSING THE WATERING.",
+        "outfit": "pennyworth"
+      },
+      {
         "q": "Seeds",
         "a": "TURNIPS IF YOU'RE IMPATIENT, PUMPKINS IF YOU'RE NOT, STARFRUIT IF YOU'RE RICH. EVERYTHING GROWS QUICKER IN ITS SEASON - THE CHAPEL CALENDAR SAYS WHICH."
       },
@@ -2550,6 +2555,18 @@
       {
         "q": "Heard anything?",
         "a": "AT DAWN I SAW THE FIRST SWORD BY THE MOONWELL, CLIMBING THE WILLOW IN FULL ARMOUR, VERY QUIETLY. THEN CLIMBING DOWN AGAIN WITH NOTHING, VERY QUIETLY. I DIDN'T ASK. I DID WATCH."
+      },
+      {
+        "q": "A moonglass?",
+        "a": "ELVES DON'T KEEP CLOCKS. WE KEEP THE SKY. HOLD THIS LENS UP AND IT SHOWS YOU THE HOUR AND THE MOON. FOR YOU, A FAIR PRICE. FOR AN ELF, AN INSULT.",
+        "outfit": "elf_lens"
+      },
+      {
+        "q": "Fallen stars?",
+        "a": "ON A STARFALL NIGHT THEY COME DOWN IN THE WOOD, STILL WARM. MOST FOLK STEP OVER THEM. BRING THEM TO ME AND I'LL PAY WELL: THEY KEEP A TINCTURE BRIGHT FOR A CENTURY.",
+        "sell": [
+          { "id": "fallen_star", "price": 150 }
+        ]
       },
       {
         "q": "The Moonwell",

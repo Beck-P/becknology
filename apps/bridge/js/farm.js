@@ -44,8 +44,11 @@ var BridgeFarm = (function () {
   /** Until when a watering given now keeps the ground wet: the end of this Verdance day, or two hours. */
   function wetUntil(now) {
     var T = typeof BridgeClock !== 'undefined' ? BridgeClock.time('verdance') : null;
-    return now + Math.max(2 * 3600000, T ? T.len - T.t : 6 * 3600000);
+    var left = T ? T.len - T.t : 6 * 3600000;
+    if (typeof BridgeWeather !== 'undefined' && BridgeWeather.heat && BridgeWeather.heat()) return now + Math.max(3600000, left / 2);   // a heat wave dries it out
+    return now + Math.max(2 * 3600000, left);
   }
+  function hash01(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10007) / 10007; }
   var WET = 2 * 3600000;             // the least a watering (or a hand's) wet lasts
   var ORDER = ['turnip', 'carrot', 'strawberry', 'sunflower', 'pumpkin', 'starfruit'];
 
@@ -95,13 +98,32 @@ var BridgeFarm = (function () {
     // a sprinkler beside it, or Tam on the payroll, keeps it watered (js/homestead.js)
     var kept = k && k.indexOf('|') < 0 && typeof BridgeHomestead !== 'undefined' ? BridgeHomestead.keptWet(k, now) : 0;   // (Verdance's)
     if (kept) { wetTo = Math.max(wetTo, Math.min(now, kept)); if (kept > now) t.wet = Math.max(t.wet || 0, Math.min(kept, now + WET)); }
+    // a storm (js/weather.js) flattens half the crops that have grown tall (past 40%), an hour into it: they stop
+    // growing till they're staked up (E, or Tam does it on his round)
+    var Wx = typeof BridgeWeather !== 'undefined' && BridgeWeather.stormsBetween ? BridgeWeather : null;
+    if (Wx && !c.flat && c.g < c.need && c.g / c.need >= 0.4 && now > from) {
+      Wx.stormsBetween(k && k.indexOf('|') >= 0 ? 'lumar' : 'verdance', from, now).forEach(function (st) {
+        var when = st.from + 3600000;
+        if (c.flat || st.id <= (c.storm || 0) || when > now) return;
+        c.storm = st.id;
+        if (hash01((k || '') + ':' + st.id) < 0.5) c.flat = Math.max(from, when);
+      });
+    }
+    var until = c.flat ? Math.min(now, c.flat) : now;
     var pace = typeof BridgeSeasons !== 'undefined' ? BridgeSeasons.growth(c.k) : 1;   // the season favours some crops; winter slows all
-    if (wetTo > from) c.g = Math.min(c.need, c.g + (Math.min(now, wetTo) - from) * pace);
+    if (wetTo > from && until > from) c.g = Math.min(c.need, c.g + (Math.min(until, wetTo) - from) * pace);
     if (c.g >= c.need && !c.ripeAt) c.ripeAt = now;
     c.t = now;
   }
   function advanceAll(now) {
     for (var k in save.tiles) advance(save.tiles[k], now, k);
+    // Tam stakes up what a storm flattened, on his round (an hour or so after)
+    if (typeof BridgeHomestead !== 'undefined' && BridgeHomestead.active('tam')) {
+      for (var f in save.tiles) {
+        var fc = save.tiles[f].crop;
+        if (fc && fc.flat && f.indexOf('|') < 0 && now - fc.flat > 3600000) { fc.flat = 0; fc.t = now; }
+      }
+    }
     // Odile brings in whatever's been ripe a while (she walks to the rest herself while you're watching)
     if (typeof BridgeHomestead !== 'undefined' && BridgeHomestead.active('odile')) {
       for (var j in save.tiles) {
@@ -169,6 +191,7 @@ var BridgeFarm = (function () {
       return { act: 'look', verb: 'LOOK', label: 'TILLED EARTH' };
     }
     var C = CROPS[t.crop.k];
+    if (t.crop.flat && t.crop.flat <= now) return { act: 'stake', verb: 'STAKE IT UP', label: C.name + ' (FLATTENED)' };
     if (ripe(t.crop)) return { act: 'harvest', verb: 'HARVEST', label: C.name };
     if (!wet(t, now) && canReady()) return { act: 'water', verb: 'WATER', label: C.name };
     return { act: 'look', verb: 'LOOK', label: C.name };
@@ -310,10 +333,23 @@ var BridgeFarm = (function () {
     else if (p.act === 'plant') plant(x, y, p.seed);
     else if (p.act === 'water') water(x, y, f);
     else if (p.act === 'harvest') harvest(x, y);
+    else if (p.act === 'stake') stake(x, y);
     else if (p.act === 'lift') BridgeHomestead.liftSprinkler(x, y);
     else if (p.act === 'sprinkle') BridgeHomestead.placeSprinkler(x, y);
     else if (p.act === 'locked') say('EDDA\'S FIELD', 'THIS END OF THE FIELD IS STILL EDDA\'S. THE KITCHEN GARDEN - THE NEAR END, PAST THE TWINE - IS YOURS TO WORK; THE REST COMES WITH THE FARM. HER NOTE\'S ON THE FARMHOUSE DOOR.');
     else look(x, y);
+  }
+
+  // a crop the storm flattened, staked up again: it grows on from where it was
+  function stake(x, y) {
+    var t = save.tiles[key(x, y)];
+    if (!t || !t.crop || !t.crop.flat || tired(1, x, y)) return;
+    BridgeInventory.useEnergy(1);
+    t.crop.flat = 0; t.crop.t = Date.now();
+    store();
+    sfx('sow');
+    burst(x, y, '#90d060', 4, 1);
+    float(x, y, 'STAKED UP', '#a8e070');
   }
 
   function fill() {
@@ -512,9 +548,12 @@ var BridgeFarm = (function () {
       if (!t.crop || !here(k)) continue;
       var xy = xyOf(k), x = +xy[0], y = +xy[1];
       if (!inPlot(world, x, y)) continue;
-      (function (img, dx, dy, foot) {
-        out.push({ footRow: foot, draw: function (c) { c.drawImage(img, dx, dy); } });
-      })(sprite(t.crop.k, stage(t.crop)), Math.round(offX + x * ts), Math.round(offY + (y + 1) * ts) - 64, y + 0.82);
+      (function (img, dx, dy, foot, flat) {
+        out.push({ footRow: foot, draw: function (c) {
+          if (flat) c.drawImage(img, dx - 4, dy + 44, img.width + 8, 20);     // laid flat by the storm
+          else c.drawImage(img, dx, dy);
+        } });
+      })(sprite(t.crop.k, stage(t.crop)), Math.round(offX + x * ts), Math.round(offY + (y + 1) * ts) - 64, y + 0.82, t.crop.flat && t.crop.flat <= now);
     }
     return out;
   }

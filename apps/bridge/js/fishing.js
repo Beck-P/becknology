@@ -135,9 +135,10 @@ var BridgeFishing = (function () {
 
   function pick(pool, power) {
     var lucky = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('lucky_horseshoe') > 0;
+    var sky = typeof BridgeWeather !== 'undefined' && BridgeWeather.fishLuck ? BridgeWeather.fishLuck(pool) : 1;   // they bite in the rain and the storm
     var list = (POOLS[pool] || POOLS.harbour).map(function (e) {
       var rare = tierOf(e[0]) >= 2;
-      return [e[0], e[1] * (rare && power > 0.7 ? 1.6 : 1) * (rare && lucky ? 1.2 : 1)];
+      return [e[0], e[1] * (rare && power > 0.7 ? 1.6 : 1) * (rare && lucky ? 1.2 : 1) * (rare ? sky : 1)];
     });
     var total = list.reduce(function (a, e) { return a + e[1]; }, 0), r = Math.random() * total;
     for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) return list[i][0]; }

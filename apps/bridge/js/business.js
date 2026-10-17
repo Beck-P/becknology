@@ -139,6 +139,7 @@ var BridgeBusiness = (function () {
     while (t < now) {
       var dt = Math.min(STEP, now - t), mid = t + dt / 2;
       var c = crewOf(id, mid, inHere && mid > now - 2 * STEP), o = c.run ? openAt(id, mid) : 0;
+      if (o && typeof BridgeWeather !== 'undefined' && BridgeWeather.trade) o *= BridgeWeather.trade(d.world, mid);   // a storm empties the street
       if (o) {
         var earn = d.rate * c.run * o * dt / 3600000;
         if (c.banks) bank += earn; else held = Math.min(limit, held + earn);
@@ -160,7 +161,12 @@ var BridgeBusiness = (function () {
   function crewOwed(id) { var o = state.owed[id]; return o && typeof o === 'object' ? o : (state.owed[id] = { owe: 0, missed: 0 }); }
   function payroll() {
     var day = today();
-    if (!state.paid) { state.paid = day; save(); return; }                  // nothing owed for the days before this
+    if (!state.paid) {                                                    // nothing owed for the days before this
+      state.paid = day; save();
+      var crew = typeof BridgeCrew !== 'undefined' ? BridgeCrew.list() : [];
+      if (crew.length) toast('Crew', 'Your crew draw a daily wage now', 'A third of their signing fee each day, from tomorrow');
+      return;
+    }
     if (day > state.paid) {
       var days = Math.min(14, day - state.paid);
       state.paid = day;

@@ -52,7 +52,8 @@ var BridgeClock = (function () {
   // under the open sky (the rest are indoors: their windows follow the time, their light doesn't)
   var OUTDOOR = ['lumar', 'lumar-crimson', 'lumar-rose', 'lumar-sapphire', 'lumar-midnight', 'lumar-crown', 'lumar-holm',
     'lumar-tern', 'lumar-square', 'verdance', 'verdance-village', 'hoarfell', 'hoarfell-face', 'hoarfell-icestep',
-    'hoarfell-park', 'hoarfell-piste', 'hoarfell-ridge', 'hoarfell-summit', 'sylvara'];
+    'hoarfell-park', 'hoarfell-piste', 'hoarfell-ridge', 'hoarfell-summit', 'sylvara',
+    'arcadia-street', 'arcadia-skypad', 'arcadia-alley', 'arcadia-skywalk'];                // (Arcadia: always night, but it rains)
   var EVER_NIGHT = /^lumar-midnight/;                         // the Midnight Isle never sees the sun
 
   // ---- now, in Eastern time --------------------------------------------------------------------------------------------

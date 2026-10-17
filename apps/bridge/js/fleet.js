@@ -40,12 +40,17 @@ var BridgeFleet = (function () {
     galleon:    { name: 'Galleon', price: 60000, L: 7.0, beam: 2.2, vmax: 4.2, turn: 0.42, accel: 0.4, nogo: 1.0, hold: 300, fish: 50, hull: 280, slots: 5, crew: 5,
                   storm: 0.15, rocks: 0.3, sheet: 'galleon',
                   blurb: 'Three masts of square sail and a hold like a warehouse. She sails like a cathedral, and nothing on the Midnight Sea frightens her hull.' },
+    // the legendary ship (js/legacy.js): built to order at the Royal Yard, on the galleon's lines but lighter and finer
+    sovereign:  { name: 'Sovereign', price: 300000, L: 7.0, beam: 2.1, vmax: 4.9, turn: 0.55, accel: 0.55, nogo: 0.9, hold: 400, fish: 70, hull: 420, slots: 6, crew: 6,
+                  storm: 0.1, rocks: 0.2, sheet: 'galleon',
+                  blurb: 'A legend, built to order: gilded stern, a Crown commission in her papers. Quicker and handier than any galleon, a hold like a cathedral, six guns, and she fears nothing that swims.' },
     raider:     { name: 'Raider', price: 22000, L: 4.4, beam: 1.3, vmax: 5.6, turn: 0.85, accel: 0.8, nogo: 0.74, hold: 50, fish: 12, hull: 110, slots: 4, crew: 3,
                   storm: 0.5, rocks: 0.7, sheet: 'raider',
                   blurb: 'A black-hulled Crimson schooner, no questions asked. The fastest hull on the five seas, and teeth to match.' }
   };
   var NAMES = { cutter: ['Swift', 'Tern', 'Kittiwake', 'Spindrift'], brigantine: ['Mary Ferris', 'Good Hope', 'Lantern', 'Wayfarer'],
-                galleon: ['Sovereign', 'Emerald Crown', 'Old Faithful', 'Leviathan'], raider: ['Red Gull', 'Sea Wolf', 'Ember', 'Black Petrel'] };
+                galleon: ['Sovereign', 'Emerald Crown', 'Old Faithful', 'Leviathan'], raider: ['Red Gull', 'Sea Wolf', 'Ember', 'Black Petrel'],
+                sovereign: ['Queen of the Five Seas', 'Evermore', 'Dawnbringer'] };
 
   // guns: damage a shot, range (tiles), reload (s), where they bear (the beam, or dead ahead); `holy` bites the drowned
   var GUNS = {

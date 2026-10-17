@@ -126,8 +126,13 @@ for qid, q in records('quests.json'):
     for c in q.get('clues', []):
         if 'world' in c and not found(c['world'], c.get('label')):
             issues.append(('quests.json', '%s clue not found at %s / %s' % (qid, c['world'], c.get('label'))))
+people = dict(records('people.json'))
 for bid, b in records('businesses.json'):
-    if 'world' in b and not found(b['world'], b.get('label')):
+    if 'owner' in b:                       # sold in conversation: its owner must exist and stand in its world
+        o = people.get(b['owner'])
+        if not o or not any(at['world'] == b['world'] for at in o.get('at', [])):
+            issues.append(('businesses.json', '%s: owner %s is not in %s' % (bid, b['owner'], b['world'])))
+    elif 'world' in b and not found(b['world'], b.get('label')):
         issues.append(('businesses.json', '%s not found at %s / %s' % (bid, b['world'], b.get('label'))))
 
 for i in issues:

@@ -36,18 +36,21 @@ var BridgeHoarfell = (function () {
   function suited() { return typeof BridgeGear !== 'undefined' && BridgeGear.has('cold'); }
   function warm(minutes) { save.warm = Date.now() + minutes * 60000; store(); coldSince = 0; }
   function chilled(world, now) {
-    if (!world || !world.cold || suited() || Date.now() < save.warm) { coldSince = 0; return 0; }
+    // a blizzard (js/weather.js) bites through a Thermal Suit too, and twice as hard without one: get indoors
+    var wx = typeof BridgeWeather !== 'undefined' && BridgeWeather.cold ? BridgeWeather.cold(BridgeWorld.getWorldId()) : { rate: 1, suited: 0 };
+    if (!world || !world.cold || (suited() && wx.suited < 0.2) || Date.now() < save.warm) { coldSince = 0; return 0; }
     if (typeof BridgeClimb !== 'undefined' && BridgeClimb.isOpen()) return 0;     // the climb has its own cold
     if (typeof BridgeSki !== 'undefined' && BridgeSki.isOpen()) return 0;            // skiing keeps you warm
     if (!coldSince) { coldSince = now; lastChill = now; }
     if (!warned) {
       warned = true;
       if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) {
-        BridgeQuests.toast('Bitter cold', 'The cold is sapping your strength', 'A Thermal Suit keeps it out; hot cocoa warms you');
+        if (suited()) BridgeQuests.toast('Blizzard', 'It cuts through even a Thermal Suit', 'Get indoors: the lodge, a hut. Hot cocoa warms you');
+        else BridgeQuests.toast('Bitter cold', 'The cold is sapping your strength', 'A Thermal Suit keeps it out; hot cocoa warms you');
       }
     }
     // the Last Ridge is colder (`coldRate`), and colder again in a whiteout (js/expedition.js)
-    var rate = (world.coldRate || 1) * (typeof BridgeExpedition !== 'undefined' && BridgeExpedition.whiteout() > 0.5 ? 1.5 : 1);
+    var rate = (world.coldRate || 1) * (typeof BridgeExpedition !== 'undefined' && BridgeExpedition.whiteout() > 0.5 ? 1.5 : 1) * (suited() ? wx.suited : wx.rate);
     if (now - lastChill > 12000 / rate && typeof BridgeInventory !== 'undefined') {
       lastChill = now;
       var st = BridgeInventory.getStats();

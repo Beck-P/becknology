@@ -246,8 +246,13 @@ var BridgeAudio = (function () {
                 lead: { inst: 'box', oct: 24, density: 0.25 } }
   };
 
-  // ambience: which beds play under which places
+  // ambience: which beds play under which places — and the weather's own over them outdoors (js/weather.js)
   function themeFor(id, w) {
+    var t = themeOf(id, w);
+    if (typeof BridgeWeather !== 'undefined' && BridgeWeather.amb && t.amb) t = { theme: t.theme, amb: BridgeWeather.amb(id, t.amb) };
+    return t;
+  }
+  function themeOf(id, w) {
     id = id || '';
     var ts = (w && w.tileset) || '';
     var amb;

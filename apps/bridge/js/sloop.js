@@ -1041,7 +1041,9 @@ var BridgeSloop = (function () {
     var seed = i * 7349 + j * 1931 + 77;
     function h(k) { return hash(seed * 0.4127 + k * 11.3); }
     var pal = seaAtChart((i + 0.5) * WCELL / K, (j + 0.5) * WCELL / KY);
-    var kind = h(1) < (pal === 'crimson' ? 0.6 : pal === 'midnight' ? 0.12 : 0.24) ? 'squall' : h(2) < (pal === 'midnight' ? 0.7 : pal === 'crimson' ? 0.05 : 0.16) ? 'fog' : null;
+    var Wx = wx() || { squall: 1, fog: 1 };                       // the day's weather over Lumar (js/weather.js): more or fewer of each
+    var kind = h(1) < Math.min(0.9, (pal === 'crimson' ? 0.6 : pal === 'midnight' ? 0.12 : 0.24) * Wx.squall) ? 'squall'
+             : h(2) < Math.min(0.9, (pal === 'midnight' ? 0.7 : pal === 'crimson' ? 0.05 : 0.16) * Wx.fog) ? 'fog' : null;
     if (!kind) return 0;
     var a = h(5) * 6.28, sp = 0.05 + h(6) * 0.06, L = 420 + h(3) * 300, rx = kind === 'squall' ? 12 + h(9) * 14 : 18 + h(9) * 22;
     return { kind: kind, c0: [(i + 0.2 + h(7) * 0.6) * WCELL, (j + 0.2 + h(8) * 0.6) * WCELL], v: [Math.cos(a) * sp, Math.sin(a) * sp], L: L, ph: h(4) * L,
@@ -1115,10 +1117,25 @@ var BridgeSloop = (function () {
     });
   }
 
+  // the weather over all Lumar (js/weather.js), looked at once a second: a storm makes every sea the Crimson's
+  var wxC = null;
+  function wx() {
+    var t = Date.now();
+    if (!wxC || t - wxC.at > 1000) wxC = { at: t, s: typeof BridgeWeather !== 'undefined' && BridgeWeather.sea ? BridgeWeather.sea() : null };
+    return wxC.s;
+  }
+  /** Where the Sapphire light is, on screen (it sweeps through the fog: steer for it). */
+  function lightOnScreen() {
+    var I = isl['lumar-sapphire'], w = null;
+    if (I) w = [8.5 + I.ox, 14 + I.oy];
+    else if (isles() && isles()['lumar-sapphire'] && pa) { var c = toWorld(isles()['lumar-sapphire'].x, isles()['lumar-sapphire'].y); w = [c.x, c.r]; }
+    return w ? [sx(w[0]), sy(w[1])] : null;
+  }
+
   function update(dt, now) {
-    var t = now / 1000, here = seaHere();
-    wind.base += ((BASE[here] || 0.92) - wind.base) * Math.min(1, dt * 0.25);
-    if (here === 'crimson') {                                        // a squall: the wind jumps round, the rain comes on
+    var t = now / 1000, here = seaHere(), Wx = wx();
+    wind.base += ((BASE[here] || 0.92) * (Wx ? Wx.wind : 1) - wind.base) * Math.min(1, dt * 0.25);
+    if (here === 'crimson' || (Wx && Wx.storm)) {                    // a squall: the wind jumps round, the rain comes on
       if (!storm.squallAt) storm.squallAt = now + 9000;
       if (!storm.warned && now > storm.squallAt - 2800 && phase === 'sail') { storm.warned = 1; say(auto ? 'A squall coming down on you - lower the sail (↓) before it hits!' : 'A squall coming down on you - ease the sheet (↓) before it hits!', 2800); }
       if (now > storm.squallAt) {
@@ -1147,9 +1164,9 @@ var BridgeSloop = (function () {
     var W0 = wind.from + wa.d + 0.12 * (vnoise(t / 7.3 + 9) - 0.5);
     if (phase === 'sail') windNews(T);
     if (now > wind.gustAt) {
-      var rough = here === 'crimson' || sky.squall > 0.3;
+      var hard = Wx && (Wx.storm || (Wx.kind === 'gale' && Wx.k > 0.5)), rough = here === 'crimson' || sky.squall > 0.3 || hard;
       wind.gustAt = now + (rough ? 3500 + hash(Math.floor(now / 1000)) * 4000 : 9000 + hash(Math.floor(now / 1000)) * 9000);
-      wind.gust = here === 'crimson' ? 0.62 : rough ? 0.45 : 0.32; wind.gustT = now;
+      wind.gust = here === 'crimson' || hard ? 0.62 : rough ? 0.45 : 0.32; wind.gustT = now;
     }
     var g = wind.gust * Math.max(0, Math.sin(clamp((now - (wind.gustT || 0)) / 4200, 0, 1) * Math.PI));
     wind.s = wind.base * (1 + g) * wa.s;
@@ -2485,6 +2502,7 @@ var BridgeSloop = (function () {
     drawWisps(now);
     drawSky(now);
     drawWeather(now);
+    if (typeof BridgeWeather !== 'undefined' && BridgeWeather.drawSea) BridgeWeather.drawSea(bctx, W, H, now, sx(b.x), sy(b.r), TS, lightOnScreen());
     // a soft vignette, darker at the top (the night sky's edge)
     var g = bctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
     g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(2,3,10,0.55)');
@@ -2829,7 +2847,7 @@ var BridgeSloop = (function () {
     isRunning: function () { return running; },
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },
-    _loaded: function () { return isl; }, _snap: function () { cam = null; }, _cam: function () { return cam && { x: cam.x, y: cam.y, W: W, H: H, ox: A && A.ox, oy: A && A.oy, bx: B && B.ox, by: B && B.oy, seat: dockAt && dockAt._seatCam, phase: phase }; }, _sky: function () { return sky; }, _systems: function (x, r, T) { return systemsNear(x, r, T); }, _front: function (T) { return frontAt(T); }, _toWorld: function (cx, cy) { return pa ? toWorld(cx, cy) : null; }, _sea: function (x, r) { return seaAtWorld(x, r); },
+    _loaded: function () { return isl; }, _light: function () { return lightOnScreen(); }, _snap: function () { cam = null; }, _cam: function () { return cam && { x: cam.x, y: cam.y, W: W, H: H, ox: A && A.ox, oy: A && A.oy, bx: B && B.ox, by: B && B.oy, seat: dockAt && dockAt._seatCam, phase: phase }; }, _sky: function () { return sky; }, _systems: function (x, r, T) { return systemsNear(x, r, T); }, _front: function (T) { return frontAt(T); }, _toWorld: function (cx, cy) { return pa ? toWorld(cx, cy) : null; }, _sea: function (x, r) { return seaAtWorld(x, r); },
     setCourse: setCourse, canSetCourse: canSetCourse, chartPos: chartPos, course: function () { return running ? course : null; },
     invite: invite, _crew: function () { return { crewOf: crewOf, captainOf: captainOf, mirror: mirror }; }, _seaPeers: function () { return seaPeers; },
     _things: function () { return things; }, _prompt: function () { return prompt; }, _commit: commit, _moored: function () { return moored; }, _route: function () { return [route, leg]; }, _whale: function () { return whale; }

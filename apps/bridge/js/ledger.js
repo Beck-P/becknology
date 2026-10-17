@@ -106,6 +106,16 @@ var BridgeLedger = (function () {
     return { html: list(rows) + (mine ? '<div class="lg-total">Yours: ' + mine + ' · ' + today.toLocaleString() + ' coins made today · wages ' + wages.toLocaleString() + ' a day</div>' : ''), n: mine + ' / ' + all.length };
   }
 
+  // ---- legacy: the long goals (js/legacy.js) -------------------------------------------------------------------------
+  function legacy() {
+    if (!has('BridgeLegacy')) return { html: '', n: '' };
+    var g = BridgeLegacy.list(), done = g.filter(function (x) { return x.done; }).length;
+    return { html: list(g.map(function (x) {
+      return { name: x.name, sub: x.done ? 'Done' : x.how + (x.progress ? ' · ' + x.progress : ''), world: x.world,
+               fig: x.done ? '<span class="lg-ok">yours</span>' : x.price ? coins(x.price) : '' };
+    })), n: done + ' / ' + g.length };
+  }
+
   // ---- people you can hire ------------------------------------------------------------------------------------------
   function people() {
     var rows = [];
@@ -185,12 +195,13 @@ var BridgeLedger = (function () {
   function render(el) {
     page = el || page;
     if (!page) return;
-    var nd = needs(), bz = businesses(), pp = people(), fl = fleet(), pl = places(), ct = contracts();
+    var nd = needs(), bz = businesses(), pp = people(), fl = fleet(), pl = places(), ct = contracts(), lg = legacy();
     var left = section('Needs you', nd.length || '', nd.length ? list(nd) : '<div class="jn-empty">Nothing needs you right now.</div>', 'jn-first') +
                section('Businesses', bz.n, bz.html || '<div class="jn-empty">No businesses known yet.</div>') +
                (pl.html ? section('Your places', pl.n, pl.html) : '');
     var right = section('People you can hire', pp.n, pp.html || '<div class="jn-empty">Nobody yet.</div>') +
-                (fl.html ? section('Your fleet', fl.n, fl.html) : '') + (ct.html ? section('Contracts', ct.n, ct.html) : '');
+                (fl.html ? section('Your fleet', fl.n, fl.html) : '') + (ct.html ? section('Contracts', ct.n, ct.html) : '') +
+                (lg.html ? section('Legacy', lg.n, lg.html) : '');
     page.innerHTML = '<div class="jn lg"><div class="jn-col">' + left + '</div><div class="jn-col">' + right + '</div></div>';
     page.querySelectorAll('.lg-go').forEach(function (b) {
       b.addEventListener('click', function (e) { e.stopPropagation(); if (has('BridgeMenu')) BridgeMenu.show('map', { world: b.getAttribute('data-w') }); });
