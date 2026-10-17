@@ -492,7 +492,11 @@ var BridgeCombat = (function () {
   }
 
   // a weapon's hit: holy bites the undead deeper; frost, embers, the drinking blade; heavy staggers and knocks back
-  function damageFor(w, h) { return Math.round((w && w.damage || 1) * (w && w.holy && UNDEAD[h.creature] ? 1.6 : 1)); }
+  // implants (js/implants.js): the arm hits harder, the eyes find criticals
+  function damageFor(w, h) {
+    var I = typeof BridgeImplants !== 'undefined' ? BridgeImplants : null, m = I ? I.damage() * (I.crit() ? 1.75 : 1) : 1;
+    return Math.round((w && w.damage || 1) * (w && w.holy && UNDEAD[h.creature] ? 1.6 : 1) * m);
+  }
   function onHit(world, h, w, dmg) {
     var now = performance.now();
     if (!w || w.dot) return;
