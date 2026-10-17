@@ -811,6 +811,7 @@ var BridgeFishing = (function () {
   }
 
   return { decorate: decorate, open: open, close: close, journal: journal, _state: function () { return st; }, _cast: function () { return cast; },
+           size: function (id) { var f = FIGHT[id]; return f ? [f[2], f[3]] : null; },       // the sizes it comes in, cm (js/aquarium.js)
            drawLine: function (c, k, hand, offX, offY, ts, now, bang) { if (st && st.t0 != null) drawLine(c, k, hand, offX, offY, ts, now, bang); },
            isOpen: function () { return !!st; } };
 })();
