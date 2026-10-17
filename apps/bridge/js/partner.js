@@ -21,12 +21,17 @@ var BridgePartner = (function () {
   var KEYS = { bridge_homes: 'BridgeHome', bridge_holm: 'BridgeHolm', bridge_farm: 'BridgeFarm', bridge_homestead: 'BridgeHomestead', bridge_animals: 'BridgeAnimals' };
   // which keys each place needs, and the set of worlds a visit covers (leave them and the visit ends)
   var PLACES = {
-    'lumar-holm':      { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home'], name: 'Starling Holm' },
-    'lumar-holm-home': { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home'], name: 'the cottage on the holm' },
+    'lumar-holm':      { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home', 'lumar-holm-resort'], name: 'Starling Holm' },
+    'lumar-holm-home': { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home', 'lumar-holm-resort'], name: 'the cottage on the holm' },
+    'lumar-holm-resort': { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home', 'lumar-holm-resort'], name: 'the Starling' },
     'lumar-home':      { keys: ['bridge_homes'], worlds: ['lumar-home'], name: 'the house in Lumar' },
     'arcadia-home':    { keys: ['bridge_homes'], worlds: ['arcadia-home'], name: 'the flat in Arcadia' },
     'arcadia-penthouse': { keys: ['bridge_homes'], worlds: ['arcadia-penthouse'], name: 'the penthouse in Arcadia' },
-    'lumar-manor':     { keys: ['bridge_homes'], worlds: ['lumar-manor'], name: 'Ashcombe House' },
+    'lumar-manor':     { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
+    'lumar-manor-drawing': { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
+    'lumar-manor-library': { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
+    'lumar-manor-dining': { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
+    'lumar-manor-bedroom': { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
     'verdance-home':   { keys: ['bridge_homes', 'bridge_farm', 'bridge_homestead', 'bridge_animals'], worlds: ['verdance', 'verdance-home'], name: 'the farmhouse' },
     'verdance':        { keys: ['bridge_farm', 'bridge_homestead', 'bridge_animals', 'bridge_homes'], worlds: ['verdance', 'verdance-home'], name: 'the farm on Verdance' }
   };

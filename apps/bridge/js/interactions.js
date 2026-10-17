@@ -67,6 +67,8 @@ var BridgeInteractions = (function () {
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'arcadia-penthouse': 'the Penthouse', 'lumar-manor': 'Ashcombe House', 'lumar-sapphire': 'Sapphire Port',
+                      'lumar-manor-drawing': 'the drawing room', 'lumar-manor-library': 'the library', 'lumar-manor-dining': 'the dining room',
+                      'lumar-manor-bedroom': 'the master bedroom', 'lumar-holm-resort': 'the Starling',
                       'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void',
                       'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall',
                       'arcadia-casino': 'the casino floor', 'arcadia-casino-cards': 'the Card Room', 'arcadia-casino-vip': 'the Crown Room',

@@ -105,7 +105,7 @@ var BridgeLedger = (function () {
                  (st.banks ? ' · banked to you' : full ? ' · FULL' : p ? ' · ' + p + ' waiting' : ''),
                  fig: st.banks ? coins(st.banked) : coins(p), world: d.world, alert: full || !st.running };
       }
-      if (d.built === 'holm' && been(d.world)) return { name: d.name, sub: 'Build it from your island\'s ledger · ~' + d.rate + ' an open hour', fig: coins(d.price), world: d.world };
+      if (d.built === 'holm' && been('lumar-holm')) return { name: d.name, sub: 'Build it from your island\'s ledger · ~' + d.rate + ' an open hour', fig: coins(d.price), world: 'lumar-holm' };   // (it stands on the holm)
       if (been(d.world)) return { name: d.name, sub: 'For sale · ' + placeOf(d.world) + ' · ' + BridgeBusiness.hoursText(d.id) + ' · ~' + d.rate + ' an open hour' +
                                   (d.owner && has('BridgePeople') && BridgePeople.all()[d.owner] ? ' · ask ' + BridgePeople.all()[d.owner].name : ''), fig: coins(d.price), world: d.world };
       var reg = regionOf(d.world);

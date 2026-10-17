@@ -29,14 +29,18 @@ SYSTEMS = [
 ]
 # Lumar's islands (js/voyage.js ISLES), each its own tree from its pier; rooms whose ids don't start with their island's
 ISLES = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-holm', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight']
-INSIDE = {'lumar-home': 'lumar-sapphire'}
+INSIDE = {'lumar-home': 'lumar-sapphire', 'lumar-manor': 'lumar-crown', 'lumar-manor-drawing': 'lumar-crown', 'lumar-manor-library': 'lumar-crown',
+          'lumar-manor-dining': 'lumar-crown', 'lumar-manor-bedroom': 'lumar-crown'}
 # ways between places that the JS makes or opens, not the world JSON: (from, to, the interactions' labels, kind[, x, y])
 # - x, y only for one the JS adds as the world loads (the rest are found by label, so the map can mark them)
 EXTRA = [
     ('lumar-sapphire', 'lumar-home', ['WHITE HOUSE'], 'door'),                # js/home.js
     ('arcadia-street', 'arcadia-home', ['CAPSULE HOTEL'], 'door'),
+    ('arcadia-skypad', 'arcadia-penthouse', ['PENTHOUSE'], 'door', 11, 3),         # js/home.js: the legacy homes (js/legacy.js)
+    ('lumar-crown', 'lumar-manor', ['ASHCOMBE HOUSE'], 'door', 45, 29),
     ('verdance', 'verdance-home', ['FARMHOUSE'], 'door'),                     # js/homestead.js
     ('lumar-holm', 'lumar-holm-home', ['THE COTTAGE'], 'door'),               # js/holm.js
+    ('lumar-holm', 'lumar-holm-resort', ['THE STARLING'], 'door', 35, 20),          # js/holm.js, once it's built
     ('arcadia-street', 'arcadia-club', ['CLUB VOID'], 'door'),                # js/dance.js
     ('arcadia-casino', 'arcadia-casino-vip', ['THE CROWN ROOM'], 'door'),     # js/worlds/casino.js: the rope opens for poker winners
     ('lumar-crown', 'lumar-crown-palace', ['PALACE GATE'], 'door'),           # js/crown.js

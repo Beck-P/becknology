@@ -82,13 +82,17 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   // the Starling on your holm: the dock rebuilt, the resort built, a manager hired
   await ev(() => { const st = BridgeHolm._state(); st.owned = Date.now(); st.built = { dock: Date.now(), house: Date.now(), resort: Date.now() }; localStorage.setItem('bridge_holm', JSON.stringify(st)); BridgeBusiness.grant('holm-resort'); });
   await go('lumar-holm'); await wait(2000);
-  console.log('the Starling:', JSON.stringify(await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE STARLING'); return it && [it.x, it.y, BridgeWorld.getWorld().scene.layers.resort]; })));
-  await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE STARLING'); BridgeInteractions.execute(it); });
-  await wait(500);
-  console.log('its books:', (await ev(() => (document.querySelector('.world-dialog') || {}).innerText || 'none')).replace(/\n+/g, ' / ').slice(0, 220));
-  await ev(() => document.querySelectorAll('.world-dialog').forEach(x => x.remove()));
+  console.log('the Starling:', JSON.stringify(await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE STARLING'); return it && [it.x, it.y, it.type, BridgeWorld.getWorld().scene.layers.resort]; })));
   await ev(() => BridgeCharacter.init(34, 22)); await wait(1200);
   await p.screenshot({ path: SHOTS + '/legacy_resort.png' });
+  await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE STARLING'); BridgeInteractions.execute(it); });
+  await wait(2500);
+  console.log('into the Starling:', await ev(() => BridgeWorld.getWorldId()));
+  await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE STARLING'); BridgeInteractions.execute(it); });
+  await wait(500);
+  console.log('its books, at the front desk:', (await ev(() => (document.querySelector('.world-dialog') || {}).innerText || 'none')).replace(/\n+/g, ' / ').slice(0, 220));
+  await ev(() => document.querySelectorAll('.world-dialog').forEach(x => x.remove()));
+  await p.screenshot({ path: SHOTS + '/legacy_resort_inside.png' });
   // the ledger's Legacy list
   console.log('legacy:', JSON.stringify(await ev(() => BridgeLegacy.list().map(g => g.name + (g.done ? ' ✓' : '')))));
   await b.close();

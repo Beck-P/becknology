@@ -14,7 +14,7 @@ rewrites, `/runouts` from `apps/runouts/dist`) and `fakesupa.py` (:8767). It fet
 `npm/` the first time (`npm.sh`), and stops the servers it started when it's done.
 
 Working in a second checkout (a git worktree) alongside another: `BRIDGE_PORT=8771 node tools/tests/run.js world` serves
-*that* checkout on :8771 and sends every test page there (`chrome.js` reroutes their `127.0.0.1:8766` requests), so the
+*that* checkout on :8771 and sends every test page there (`chrome.js`, loaded before each test, answers their `127.0.0.1:8766` requests from it), so the
 two don't test each other's files. (The `multi` suites share the Supabase stand-in on :8767: run one at a time.)
 
 ## What you need
@@ -28,7 +28,7 @@ two don't test each other's files. (The `multi` suites share the Supabase stand-
 
 | suite | what it checks |
 |---|---|
-| `world` | `errs.js`: every world in `apps/bridge/assets/worlds` loads with no page errors, console errors or missing files. `actors.js`: who's drawn where in each. `clock.js`, `weather.js`, `business.js`, `legacy.js`, `hands.js`: the living worlds (time, weather, businesses and their stock, the long goals, the farm hands working while you're away). `staff.js`: the people who work for you — faces and perks in the hiring lists, ship's hands on the payroll, the ledger's Staff & payroll page, the captain's desk. `landings.js`: the pad you land on in each place. `arrive.js`: sailing into a harbour. |
+| `world` | `errs.js`: every world in `apps/bridge/assets/worlds` loads with no page errors, console errors or missing files. `actors.js`: who's drawn where in each. `clock.js`, `weather.js`, `business.js`, `legacy.js`, `hands.js`: the living worlds (time, weather, businesses and their stock, the long goals, the farm hands working while you're away). `homes.js`: the legacy homes — buys the Penthouse and Ashcombe House and builds the Starling, walks every room and the roof deck, furnishes each, the doors both ways, the Starling's staff at their posts, screenshots by night and day. `staff.js`: the people who work for you — faces and perks in the hiring lists, ship's hands on the payroll, the ledger's Staff & payroll page, the captain's desk. `landings.js`: the pad you land on in each place. `arrive.js`: sailing into a harbour. |
 | `multi` | two pilots (Beck and Alyssa) on the fake Supabase: seeing each other, walking, presence and away, gifts and trades, partners, shared clues, fighting together, health, sailing together, boats at sea, the players pill at sea, a sea fight together. |
 | `together` | every game played together (js/together.js): cabinets, helicopter, Fell Dice and Bones, chess, the dance floor, pachinko, Splice, the cipher room, the typist; the edges (a "not now", a watcher, a partner vanishing, someone elsewhere coming over); the games alone; table chat (desktop and phone). |
 | `royale` | every Neon Royale table opens its Royale Link game; coins staked and paid through the Bridge (Esc mid-round, a page closed with chips out); typing an exact hold'em bet (desktop and phone). |

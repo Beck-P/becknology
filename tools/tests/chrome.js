@@ -5,11 +5,16 @@ const BUILT_IN = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 module.exports = process.env.CHROME || (fs.existsSync(BUILT_IN) ? BUILT_IN : undefined);
 
 // BRIDGE_PORT: the game from another server than :8766 (a second checkout, a worktree working alongside this one —
-// run.js starts serve.py there): every page the tests open has its :8766 requests sent to that port instead.
+// run.js starts serve.py there): every page the tests open has its :8766 requests answered from that port instead.
+// Fetched and fulfilled, not continued to the new URL (Chromium blocks a page's scripts rerouted to another origin),
+// and run.js loads this file before each test (--require), so the swap is in place by the test's first launch().
 const PORT = process.env.BRIDGE_PORT;
 if (PORT && PORT !== '8766') {
   const pw = require('playwright');
-  const swap = (r) => r.continue({ url: r.request().url().replace('127.0.0.1:8766', '127.0.0.1:' + PORT) });
+  const swap = async (r) => {
+    try { await r.fulfill({ response: await r.fetch({ url: r.request().url().replace('127.0.0.1:8766', '127.0.0.1:' + PORT) }) }); }
+    catch (e) { await r.abort().catch(() => {}); }
+  };
   const launch = pw.chromium.launch.bind(pw.chromium);
   pw.chromium.launch = async (...a) => {
     const b = await launch(...a);
