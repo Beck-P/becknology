@@ -842,6 +842,7 @@ var BridgeInventory = (function () {
     if (!s || !buyer || !price || typeof BridgeProgression === 'undefined' || !BridgeProgression.awardCoins) return;
     var id = s.id, total = price * n;
     say('Counting it out…'); refreshMenuDetail();
+    if (typeof BridgeTreasury !== 'undefined') BridgeTreasury.noteSale([{ id: id, total: total }]);
     BridgeProgression.awardCoins(total, 'sell:' + buyer.label).then(function (bal) {
       if (bal === null || bal === undefined) { say('No way to pay you right now - keep it.'); refresh(); return; }
       removeItem(id, n);

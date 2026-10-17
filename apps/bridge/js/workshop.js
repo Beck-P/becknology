@@ -800,6 +800,6 @@ var BridgeWorkshop = (function () {
   return { RECIPES: RECIPES, CRATES: CRATES, FROM: FROM, GRADES: GRADES, open: open, shop: shop, start: start, queue: function (r, n) { var out = null; for (var i = 0; i < (n || 1); i++) out = start(r, false); return out; },
            cancel: cancel, known: known, learn: learn, have: have, summary: summary, smithRow: smithRow, smithCard: smithCard, candidates: candidates,
            parts: parts, takePart: takePart, partsFor: partsFor, usePart: usePart, maybeFind: maybeFind, chestFind: chestFind, salvage: salvage,
-           decorate: decorate, built: built, name: rname,
+           decorate: decorate, built: built, name: rname, looked: function () { st.seen = Date.now(); save(); },   // (read in the office's workshop book)
            _advance: advance, _state: function () { return st; }, reload: function () { st = load(); } };
 })();
