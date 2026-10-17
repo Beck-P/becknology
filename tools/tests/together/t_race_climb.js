@@ -46,10 +46,16 @@ const CLIMBBOT = (pace) => {
   }
   for (const p of [beck, aly]) if (/THE TOP/.test(await T.dlg(p))) await T.click(p, /^Walk out onto the summit|^Abseil/);
   // the verdict waits for the summit to load in (whenFree)
-  for (let i = 0; i < 30 && !(/RACE UP/.test(await T.dlg(beck)) && /RACE UP/.test(await T.dlg(aly))); i++) await beck.waitForTimeout(500);
+  // (up to 30 s: on a busy machine the summit's images take a while)
+  for (let i = 0; i < 60 && !(/RACE UP/.test(await T.dlg(beck)) && /RACE UP/.test(await T.dlg(aly))); i++) await beck.waitForTimeout(500);
   console.log('beck verdict:', await T.dlg(beck));
   console.log('aly verdict:', await T.dlg(aly));
+  for (const [n, p] of [['beck', beck], ['aly', aly]]) if (!/RACE UP/.test(await T.dlg(p)))   // where they are without one
+    console.log(n, 'has no verdict:', JSON.stringify(await p.evaluate(() => ({ world: BridgeWorld.getWorldId(), mode: !!(BridgeWorld.getMode && BridgeWorld.getMode()),
+      dialogs: [...document.querySelectorAll('.world-dialog')].length, busy: BridgeInteractions.isDialogOpen && BridgeInteractions.isDialogOpen() }))),
+      JSON.stringify(await T.sess(p)));
   await beck.screenshot({ path: T.S + '/shots/race_climb_verdict.png' });
+  await aly.screenshot({ path: T.S + '/shots/race_climb_verdict_aly.png' });
   console.log('errors:', T.errs.length);
   await b.close();
 })();
