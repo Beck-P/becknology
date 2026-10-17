@@ -58,7 +58,7 @@
       "y": 5,
       "type": "office",
       "label": "CAPTAIN'S DESK",
-      "prompt": "PRESS E TO OPEN THE BOOKS",
+      "prompt": "PRESS E TO WORK AT YOUR DESK",
       "part": "books"
     },
     {
@@ -66,7 +66,7 @@
       "y": 5,
       "type": "office",
       "label": "CAPTAIN'S DESK",
-      "prompt": "PRESS E TO OPEN THE BOOKS",
+      "prompt": "PRESS E TO WORK AT YOUR DESK",
       "part": "books"
     },
     {
@@ -74,7 +74,7 @@
       "y": 5,
       "type": "office",
       "label": "CAPTAIN'S DESK",
-      "prompt": "PRESS E TO OPEN THE BOOKS",
+      "prompt": "PRESS E TO WORK AT YOUR DESK",
       "part": "books"
     },
     {
@@ -82,16 +82,16 @@
       "y": 5,
       "type": "office",
       "label": "CAPTAIN'S DESK",
-      "prompt": "PRESS E TO OPEN THE BOOKS",
+      "prompt": "PRESS E TO WORK AT YOUR DESK",
       "part": "books"
     },
     {
       "x": 10,
       "y": 5,
       "type": "office",
-      "label": "CAPTAIN'S DESK",
-      "prompt": "PRESS E TO OPEN THE BOOKS",
-      "part": "books"
+      "label": "WORKSHOP BOOK",
+      "prompt": "PRESS E TO READ",
+      "part": "workshop"
     },
     {
       "x": 12,
@@ -194,16 +194,16 @@
       "y": 7,
       "type": "office",
       "label": "COUNTING TABLE",
-      "prompt": "PRESS E FOR THE ACCOUNTS",
-      "part": "accounts"
+      "prompt": "PRESS E FOR THE TREASURY",
+      "part": "treasury"
     },
     {
       "x": 13,
       "y": 7,
       "type": "office",
       "label": "COUNTING TABLE",
-      "prompt": "PRESS E FOR THE ACCOUNTS",
-      "part": "accounts"
+      "prompt": "PRESS E FOR THE TREASURY",
+      "part": "treasury"
     },
     {
       "x": 8,
