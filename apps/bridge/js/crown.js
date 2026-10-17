@@ -140,19 +140,21 @@ var BridgeCrown = (function () {
     say('PALACE GATE', 'THE GUARD LOOKS YOU UP AND DOWN. "THE QUEEN-REGENT SEES CAPTAINS OF FLEETS, NOT CAPTAINS OF SLOOPS." THE OTHER ONE, QUIETLY: "THREE SHIPS, THEY SAY. COME BACK WITH THREE AND WE\'LL OPEN THE GATE."\n\nYOU HAVE ' + ships() + '.');
   }
   function current() { return COMMISSIONS[st.stage || 0] || null; }
+  // her face beside what she says (assets/portraits/npc-queen.png, js/look.js)
+  function queenFace(cv, expr) { if (typeof BridgeLook !== 'undefined' && BridgeLook.npcFace) BridgeLook.npcFace(cv, 'npc-queen', { blink: true, expr: expr }); else cv.remove(); }
   function audience(note) {
     var c = current();
     if (!c) {
-      return choose({ title: 'The Queen-Regent', text: note || '"MY CAPTAIN." SHE SMILES - THE FIRST TIME ANYONE IN THE HALL HAS SEEN HER DO IT THIS YEAR. "THE SEAS ARE QUIETER WITH YOU ON THEM. GO AND MAKE THEM QUIETER STILL."', rows: [], closeLabel: 'Bow and go' });
+      return choose({ title: 'The Queen-Regent', face: function (cv) { queenFace(cv, note ? null : 'happy'); }, text: note || '"MY CAPTAIN." SHE SMILES - THE FIRST TIME ANYONE IN THE HALL HAS SEEN HER DO IT THIS YEAR. "THE SEAS ARE QUIETER WITH YOU ON THEM. GO AND MAKE THEM QUIETER STILL."', rows: [], closeLabel: 'Bow and go' });
     }
     if (!st.took) {
       var first = !st.met;
       st.met = 1; store();
-      return choose({ title: 'The Queen-Regent', text: (first ? 'A WOMAN IN EMERALD ON A GILT THRONE, A CIRCLET ON HER DARK HAIR, A SAILOR\'S HANDS FOLDED IN HER LAP. "SO YOU\'RE THE CAPTAIN WITH THREE KEELS AND NO MANNERS. GOOD. I HAVE WORK FOR BOTH."\n\n' : '') + c.ask,
+      return choose({ title: 'The Queen-Regent', face: queenFace, text: (first ? 'A WOMAN IN EMERALD ON A GILT THRONE, A CIRCLET ON HER DARK HAIR, A SAILOR\'S HANDS FOLDED IN HER LAP. "SO YOU\'RE THE CAPTAIN WITH THREE KEELS AND NO MANNERS. GOOD. I HAVE WORK FOR BOTH."\n\n' : '') + c.ask,
                       rows: [{ label: c.title, sub: c.todo, note: c.coins + ' coins', pick: function () { take(c); } }], closeLabel: 'Not yet' });
     }
     if (c.done()) return report(c);
-    choose({ title: 'The Queen-Regent', text: note || '"' + c.title.toUpperCase() + '. IS IT DONE?" IT IS NOT, AND SHE CAN SEE IT IS NOT. "THEN WHY ARE YOU HERE AND NOT AT SEA?"',
+    choose({ title: 'The Queen-Regent', face: queenFace, text: note || '"' + c.title.toUpperCase() + '. IS IT DONE?" IT IS NOT, AND SHE CAN SEE IT IS NOT. "THEN WHY ARE YOU HERE AND NOT AT SEA?"',
              rows: [{ label: c.title, sub: c.todo + (c.prog() ? ' · ' + c.prog() : ''), note: 'in hand', disabled: true }], closeLabel: 'Bow and go' });
   }
   function take(c) {
@@ -171,7 +173,7 @@ var BridgeCrown = (function () {
     toast('Royal commission', c.title + ' - done', '+' + c.coins + ' coins');
     if (typeof BridgeProgression !== 'undefined' && BridgeProgression.recordAchievement) BridgeProgression.recordAchievement('royal_' + c.id, 0, { source: 'crown' });
     var next = current();
-    choose({ title: 'The Queen-Regent', text: c.thanks + '\n\n' + c.coins + ' COINS FROM THE TREASURY.',
+    choose({ title: 'The Queen-Regent', face: queenFace, text: c.thanks + '\n\n' + c.coins + ' COINS FROM THE TREASURY.',
              rows: next ? [{ label: 'Hear the next commission', sub: next.title, pick: function () { audience(); } }] : [], closeLabel: 'Bow and go' });
   }
   function table() {                                       // the Admiralty table: the commissions on the Crown's chart

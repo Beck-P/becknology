@@ -279,7 +279,9 @@ var BridgeMulti = (function () {
       { label: 'Say something', act: function () { sayBox(id); return false; } }
     ];
     extras.forEach(function (f) { try { buttons = buttons.concat(f(id, p) || []); } catch (e) { /* */ } });
-    choose({ title: cap(name), text: (cap(name) + ' is ' + (DOING[p && p.act] || 'here') + '.').toUpperCase(), buttons: buttons, closeLabel: 'Done' });
+    var o = others[id], face = o && o.k && typeof BridgeLook !== 'undefined' && BridgeLook.pilotFace
+      ? function (cv) { BridgeLook.pilotFace(cv, o.k, name, { blink: true }); } : null;      // their face, as they look
+    choose({ title: cap(name), text: (cap(name) + ' is ' + (DOING[p && p.act] || 'here') + '.').toUpperCase(), buttons: buttons, closeLabel: 'Done', face: face });
   }
   function sayBox(id) {
     choose({ title: 'Say something', text: 'THEY\'LL SEE IT OVER YOUR HEAD.', input: { placeholder: 'Hi!', max: 90, button: 'Say', submit: function (v) { say(v); } },
