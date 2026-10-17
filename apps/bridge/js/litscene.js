@@ -87,6 +87,20 @@ var BridgeLit = (function () {
     [21.5, '#4a5492', '#0c1238', '#2a3062', 0.95, 0],
     [24, '#3c4884', '#060a1e', '#1a2448', 1, 0]
   ].map(function (k) { return [k[0], rgbn(k[1]), rgbn(k[2]), rgbn(k[3]), k[4], k[5]]; });
+  // the hour's colours dressed for the season and the weather (Look Book 2's LB.sky)
+  var DRESS = { rain: ['#9aa6b8', '#3a4468', 0.55, '#5a6478', '#8a94a4', 0.65], fog: ['#c6ccd6', '#4a5470', 0.4, '#aab2c0', '#d0d4da', 0.6],
+                snow: ['#cfd8ec', '#4c5884', 0.35, '#a8b4cc', '#dce2ee', 0.6] };
+  function dress(P, M) {
+    var amb = P.amb, top = P.skyTop, hor = P.skyHor;
+    if (M.season === 'winter') amb = mixv(amb, rgbn('#dde6ff'), 0.14);
+    else if (M.season === 'autumn') amb = mixv(amb, rgbn('#ffe2b8'), 0.08);
+    var W = DRESS[M.wx], k = M.wk || 0;
+    if (W && k > 0) {
+      amb = mixv(amb, mixv(rgbn(W[0]), rgbn(W[1]), P.night), W[2] * k);
+      top = mixv(top, rgbn(W[3]), W[5] * k); hor = mixv(hor, rgbn(W[4]), W[5] * k);
+    }
+    return { amb: amb, skyTop: top, skyHor: hor, night: P.night, golden: P.golden };
+  }
   function palette(h) {
     h = ((h % 24) + 24) % 24;
     var i = 0;
@@ -132,7 +146,7 @@ var BridgeLit = (function () {
 
   /** The light for a moment, as the compose wants it. */
   function light(sc, M) {
-    var P = palette(M.h), night = P.night, golden = P.golden * (M.wx === 'clear' ? 1 : M.wx === 'cloud' ? 0.5 : 0.3);
+    var P = dress(palette(M.h), M), night = P.night, golden = P.golden * (M.wx === 'clear' ? 1 : M.wx === 'cloud' ? 0.5 : 0.3);
     var elev = M.up ? Math.sin(Math.PI * M.u) : 0;
     var wSun = { clear: 1, cloud: 0.45, rain: 0.1, fog: 0.28, snow: 0.3 }[M.wx] || 1;
     wSun = lerp(1, wSun, M.wk);
@@ -145,8 +159,6 @@ var BridgeLit = (function () {
       i1 = i0 + 1; f = (M.u - us[i0]) / (us[i1] - us[i0]); f = f * f * (3 - 2 * f);
     }
     var skyC = mixv(mixv(P.skyTop, P.skyHor, 0.45), [1, 1, 1], 0.55 * (1 - night));
-    var an = luma(P.amb) || 1;                         // the hour's own light over it: gold at either end of the day, blue at night
-    skyC = [skyC[0] * lerp(1, P.amb[0] / an, 0.8), skyC[1] * lerp(1, P.amb[1] / an, 0.8), skyC[2] * lerp(1, P.amb[2] / an, 0.8)];
     var sky = lerp(0.62, 0.16, night);
     if (M.wx !== 'clear') {
       var k = M.wk;
@@ -241,11 +253,57 @@ var BridgeLit = (function () {
     for (var i = 0; i < N; i++) hs[i] = Math.floor(hash(i % W, (i / W) | 0, 17) * 255);
     G.hash = hs;
     waterPrep(G);
+    fallPrep(G);
     L.G = G;
     L.key = null;                                      // compose again
   }
 
   // ---- still water: distance from the shore, depth bands, the far shore's line, points for the shimmer ----
+  // falling water (flag 64: parts named waterfall, falls, cascade, weir): each fall's columns, top to foot
+  function fallPrep(G) {
+    var w = G.w, h = G.h, C = G.lit_c, cols = {}, x, y;
+    G.falls = [];
+    if (!C) return;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      if (!(C[(y * w + x) * 4 + 2] & 64)) continue;
+      var c = cols[x] || (cols[x] = [y, y]);
+      if (y > c[1]) c[1] = y;
+    }
+    var xs = Object.keys(cols).map(Number).sort(function (a, b) { return a - b; }), cur = null;
+    xs.forEach(function (xx) {
+      if (!cur || xx > cur.x1 + 1) { cur = { x0: xx, x1: xx, foot: 0, cols: [] }; G.falls.push(cur); }
+      cur.x1 = xx; cur.cols.push([xx, cols[xx][0], cols[xx][1]]); cur.foot = Math.max(cur.foot, cols[xx][1]);
+    });
+  }
+  // light running down each fall and foam churning where it lands (Look Book 2's waterfall); in a hard frost only a
+  // thread down the middle still runs
+  function falls(ctx, G, Lt, X, Y, v, t, a) {
+    var frozen = Lt.snow >= 1, night = Lt.night > 0.6, hi = night ? '#a8b8e0' : '#ffffff', mid = night ? '#6c80b4' : '#cfeaf2';
+    for (var f = 0; f < G.falls.length; f++) {
+      var F = G.falls[f], cx = (F.x0 + F.x1) / 2, half = (F.x1 - F.x0 + 1) * 0.18;
+      if (F.x1 < v[0] || F.x0 > v[0] + v[2] || F.foot < v[1]) continue;
+      for (var pass = 0; pass < 2; pass++) {
+        ctx.fillStyle = pass ? hi : mid; ctx.globalAlpha = 0.75 * a;
+        for (var k = 0; k < F.cols.length; k++) {
+          var c = F.cols[k], x = c[0];
+          if (frozen && Math.abs(x - cx) > half) continue;
+          var sp = 55 + hash(x, 0, 1) * 30, L = Math.round(3 + hash(x, 1, 1) * 5);
+          for (var y = c[1]; y <= c[2]; y++) {
+            var hv = hash(x, Math.floor((y - t * sp) / L), 77);
+            if (hv > 0.78 && (hv > 0.93) === !!pass) ctx.fillRect(X + x, Y + y, 1, 1);
+          }
+        }
+      }
+      if (frozen) continue;
+      ctx.fillStyle = hi;
+      for (var n = 0; n < 14; n++) {
+        var ph = hash(n + f * 31, 3, 5), u = (t * 1.6 + ph * 7) % 1;
+        ctx.globalAlpha = a * (1 - u) * 0.8;
+        ctx.fillRect(X + Math.round(F.x0 - 3 + hash(n + f * 31, 4, 5) * (F.x1 - F.x0 + 6)), Y + Math.round(F.foot - u * 4), 1, 1);
+      }
+    }
+  }
+
   function waterPrep(G) {
     var w = G.w, h = G.h, N = w * h, C = G.lit_c, A = G.lit_albedo;
     var x0 = w, x1 = -1, y0 = h, y1 = -1, x, y, i;
@@ -330,10 +388,16 @@ var BridgeLit = (function () {
       }
       return out;
     }
-    var area = BN / (480 * 270);
+    // as many as the Look Book had for its water (the farm pond: 11,211 px of water, 144 glints, 46 dashes, 40 stars,
+    // 3 fish rising, 28 places for rain to ring)
+    var wpx = 0;
+    for (i = 0; i < BN; i++) if (isW(i)) wpx++;
     G.wDist = D; G.wBand = band; G.wShore = shore; G.wCrack = crack; G.wTop = sm; G.wFade = fade;
-    G.shimPts = pts(Math.round(60 * area) + 12, 6);
-    G.starPts = pts(Math.round(34 * area) + 6, 8);
+    G.shimPts = pts(Math.round(12 + wpx * 0.003), 6);
+    G.starPts = pts(Math.round(wpx / 280), 8);
+    G.glintPts = pts(Math.round(wpx / 78), 5);
+    G.fishPts = pts(Math.max(3, Math.round(wpx / 3700)), 9);
+    G.ringPts = pts(Math.round(wpx / 400) + 2, 9);
     G.wIsW = isW;
   }
 
@@ -544,9 +608,9 @@ var BridgeLit = (function () {
     if (job.y >= G.h) { finish(job); job = null; }
   }
 
-  // Only the place being drawn keeps its passes (a big outdoor scene's are ~100 MB decoded): the last one's go as you
-  // leave it, and come back from the browser's cache if you return
-  var shown = null;
+  // Only places being drawn keep their passes (a big outdoor scene's are ~100 MB decoded): one not drawn for KEEP ms
+  // lets them go (they come back from the browser's cache if you return). Two drawn in the same frame both keep theirs.
+  var lit = [], KEEP = 8000;
   function drop(sc) {
     var L = sc.lit;
     if (!L || L.dropped) return;
@@ -557,8 +621,13 @@ var BridgeLit = (function () {
   /** What to draw for a scene this frame: { canvas, prev, a } (prev null: the baked states under it), or null. */
   function frame(sc) {
     if (!sc.lit) return null;
-    if (shown && shown !== sc) drop(shown);
-    shown = sc;
+    var t = performance.now();
+    sc.litSeen = t;
+    if (lit.indexOf(sc) < 0) lit.push(sc);
+    lit = lit.filter(function (o) {                    // what hasn't been drawn for a while lets its passes go
+      if (o === sc || t - (o.litSeen || 0) < KEEP) return true;
+      drop(o); return false;
+    });
     if (sc.lit.dropped) { load(sc); return null; }
     step(sc);
     var L = sc.lit;
@@ -581,7 +650,13 @@ var BridgeLit = (function () {
 
   function water(ctx, sc, X, Y, v, now) {
     var L = sc.lit;
-    if (!L || !L.cur || !L.cur.open || !L.G) return;
+    if (!L || !L.cur || !L.G) return;
+    if (L.G.falls.length) {
+      ctx.save();
+      falls(ctx, L.G, L.cur.Lt, X, Y, v, now / 1000, fading(L) ? clamp((performance.now() - L.fadeAt) / FADE, 0, 1) : 1);
+      ctx.restore();
+    }
+    if (!L.cur.open) return;
     var G = L.G, C = L.cur, Lt = C.Lt, M = Lt.M, b = G.wBox, bw = b[2], bh = b[3];
     // only the rows of the water box on screen
     var ry0 = Math.max(0, v[1] - b[1]), ry1 = Math.min(bh, v[1] + v[3] - b[1]);
@@ -620,6 +695,14 @@ var BridgeLit = (function () {
       ctx.globalAlpha = a * (s - 0.55) * 1.6 * lerp(1, 0.5, Lt.night);
       var len = 2 + Math.floor(ph * 3), ox = Math.round(Math.sin(t * 0.3 + ph * 10) * 2);
       ctx.fillRect(X + px + ox, Y + py, len, 1);
+    }
+    // glints: the sun (or the moon) catching the water here and there, a pixel or a little cross
+    ctx.fillStyle = Lt.night > 0.5 ? '#c8d8ff' : css(mixv([1, 1, 1], rgbn('#ffd890'), Lt.golden));
+    ctx.globalAlpha = a;
+    for (n = 0; n < G.glintPts.length; n++) {
+      var gp = G.glintPts[n], gs = Math.sin(t * 1.3 * (0.6 + gp[2]) + gp[2] * 40);
+      if (gs <= 0.86 || !inOpen(gp[0], gp[1])) continue;
+      if (gs > 0.97) ctx.fillRect(X + gp[0] - 1, Y + gp[1], 3, 1); else ctx.fillRect(X + gp[0], Y + gp[1], 1, 1);
     }
     // the sun's glitter path at golden hour, toward where it sets (or rises)
     var gold = Lt.golden * (M.wx === 'clear' ? 1 : 0.2) * (1 - Lt.night);
@@ -660,42 +743,86 @@ var BridgeLit = (function () {
       sx2.globalAlpha = 1; sx2.globalCompositeOperation = 'destination-in'; sx2.drawImage(C.open, 0, 0);
       ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.85 * Lt.glow * a;
       ctx.drawImage(scratch2, 0, ry0, bw, ry1 - ry0, X + b[0], Y + b[1] + ry0, bw, ry1 - ry0);
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    // rings: a fish rising now and then, or the rain coming down on it; and where a fall lands
+    var rain = M.wx === 'rain', rp = rain ? G.ringPts.concat(G.glintPts.slice(0, 14)) : G.fishPts;
+    if (!(Lt.snow >= 1)) G.falls.forEach(function (F) {
+      var fx = Math.round((F.x0 + F.x1) / 2);
+      ringsAt([[fx - 4, F.foot + 3, 0], [fx + 5, F.foot + 5, 0.4]], 2.2, 9, 0.45);
+    });
+    ringsAt(rp, rain ? 1 : 5, rain ? 4 : 7, rain ? 0.6 : 0.5);
+    function ringsAt(pts, per, rmax, ralpha) {
+      ctx.fillStyle = '#e6f0ff';
+      for (var j = 0; j < pts.length; j++) {
+        var rq = pts[j];
+        if (!inOpen(rq[0], rq[1])) continue;
+        var rk = (t / per + rq[2]) % 1, rr = Math.round(1 + rk * rmax), rry = Math.max(1, Math.round(rr * 0.5));
+        ctx.globalAlpha = a * (1 - rk) * ralpha;
+        var seen = {};
+        for (var ra = 0; ra < 40; ra++) {
+          var th = ra / 40 * Math.PI * 2, ex = rq[0] + Math.round(Math.cos(th) * rr), ey = rq[1] + Math.round(Math.sin(th) * rry);
+          if (seen[ex + ',' + ey] || !inOpen(ex, ey)) continue;
+          seen[ex + ',' + ey] = 1;
+          ctx.fillRect(X + ex, Y + ey, 1, 1);
+        }
+      }
     }
     ctx.restore();
   }
 
-  // ---- the light on a character standing at (col, row): the passes at their feet ----
+  // ---- the light on a character standing at (col, row) ----
+  // Worked out once a composition for every tile — the light over the floor round its foot point, averaged — then
+  // blended between the four nearest tiles as someone walks, so they pass smoothly into shade and out again. (Sampled
+  // from a few pixels at the feet, it jumped from cobble to crevice as you walked: a flicker.)
+  function grid(sc) {
+    var L = sc.lit, C = L.cur;
+    if (C.grid) return C.grid;
+    var G = L.G, m = sc.meta, Lt = C.Lt, W = G.w, H = G.h;
+    var cols = Math.max(1, Math.floor((W - m.originX) / 32)), rows = Math.max(1, Math.floor((H - m.originY) / 32));
+    var out = new Float32Array(cols * rows * 3).fill(NaN);
+    function sunAt(i, p) { return i < 2 ? G.lit_a[p + i + 1] : i < 5 ? G.lit_b[p + i - 2] : G.lit_c[p]; }
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      var sk = 0, sn = 0, mo = 0, lr = 0, lg = 0, lb = 0, n = 0;
+      for (var y = Math.round(m.originY + (r + 0.45) * 32); y < Math.round(m.originY + (r + 1.25) * 32); y += 3) {
+        if (y < 0 || y >= H) continue;
+        for (var x = Math.round(m.originX + c * 32 - 6); x < Math.round(m.originX + c * 32 + 38); x += 3) {
+          if (x < 0 || x >= W) continue;
+          var p = (y * W + x) * 4;
+          if (G.lit_albedo[p + 3] < 8) continue;
+          sk += DEC[G.lit_a[p]];
+          var a0 = DEC[sunAt(Lt.i0, p)], a1 = DEC[sunAt(Lt.i1, p)];
+          sn += a0 + (a1 - a0) * Lt.f;
+          mo += DEC[G.lit_b[p]];
+          if (G.lit_lamps) { lr += DEC[G.lit_lamps[p]]; lg += DEC[G.lit_lamps[p + 1]]; lb += DEC[G.lit_lamps[p + 2]]; }
+          n++;
+        }
+      }
+      if (!n) continue;
+      var Lc = [lr / n, lg / n, lb / n].map(function (lamp, k) {
+        return Lt.sky * Lt.skyC[k] * sk / n + Lt.sunC[k] * sn / n * Lt.sun * 0.85 + Lt.moonC[k] * mo / n * Lt.moon + lamp * Lt.lamp * 0.8;
+      });
+      var lum = luma(Lc) + 1e-5, bb = 1.1 * (1 - Math.exp(-lum)) / 0.9 * (1 - 0.25 * Lt.night), q = (r * cols + c) * 3;
+      for (var k = 0; k < 3; k++) out[q + k] = clamp(bb * (1 + (Lc[k] / lum - 1) * 0.7), 0.22, 1);
+    }
+    C.grid = { cols: cols, rows: rows, v: out };
+    return C.grid;
+  }
   function tint(sc, col, row) {
     var L = sc.lit;
     if (!L || !L.cur || !L.G) return null;
-    var G = L.G, m = sc.meta, Lt = L.cur.Lt, W = G.w;
-    var ck = Math.round(col * 4) + ',' + Math.round(row * 4);           // a quarter tile is close enough; kept per composition
+    var g = grid(sc), ck = Math.round(col * 8) + ',' + Math.round(row * 8);
     if (L.tintFor !== L.cur) { L.tintFor = L.cur; L.tints = {}; }
     if (L.tints[ck] !== undefined) return L.tints[ck];
-    var cx = Math.round(m.originX + (col + 0.5) * 32), cy = Math.round(m.originY + (row + 0.85) * 32);
-    var s0 = Lt.i0, s1 = Lt.i1;
-    function sunAt(i, p) { return i < 2 ? G.lit_a[p + i + 1] : i < 5 ? G.lit_b[p + i - 2] : G.lit_c[p]; }
-    var sk = 0, sn = 0, mo = 0, lr = 0, lg = 0, lb = 0, n = 0;
-    for (var dy = -1; dy <= 1; dy++) for (var dx = -3; dx <= 3; dx++) {
-      var x = cx + dx, y = cy + dy;
-      if (x < 0 || y < 0 || x >= W || y >= G.h) continue;
-      var p = (y * W + x) * 4;
-      if (G.lit_albedo[p + 3] < 8) continue;
-      sk += DEC[G.lit_a[p]];
-      var a0 = DEC[sunAt(s0, p)], a1 = DEC[sunAt(s1, p)];
-      sn += a0 + (a1 - a0) * Lt.f;
-      mo += DEC[G.lit_b[p]];
-      if (G.lit_lamps) { lr += DEC[G.lit_lamps[p]]; lg += DEC[G.lit_lamps[p + 1]]; lb += DEC[G.lit_lamps[p + 2]]; }
-      n++;
-    }
-    if (!n) return (L.tints[ck] = null);
-    sk /= n; sn /= n; mo /= n; lr /= n; lg /= n; lb /= n;
-    var Lc = [0, 1, 2].map(function (c) {
-      return Lt.sky * Lt.skyC[c] * sk + Lt.sunC[c] * sn * Lt.sun * 0.85 + Lt.moonC[c] * mo * Lt.moon + [lr, lg, lb][c] * Lt.lamp * 0.8;
+    var fx = clamp(col, 0, g.cols - 1), fy = clamp(row, 0, g.rows - 1), c0 = Math.floor(fx), r0 = Math.floor(fy);
+    var tx = fx - c0, ty = fy - r0, acc = [0, 0, 0], wsum = 0;
+    [[c0, r0, (1 - tx) * (1 - ty)], [c0 + 1, r0, tx * (1 - ty)], [c0, r0 + 1, (1 - tx) * ty], [c0 + 1, r0 + 1, tx * ty]].forEach(function (t) {
+      if (t[2] <= 0 || t[0] >= g.cols || t[1] >= g.rows) return;
+      var q = (t[1] * g.cols + t[0]) * 3;
+      if (isNaN(g.v[q])) return;
+      acc[0] += g.v[q] * t[2]; acc[1] += g.v[q + 1] * t[2]; acc[2] += g.v[q + 2] * t[2]; wsum += t[2];
     });
-    var lum = luma(Lc) + 1e-5;
-    var bb = 1.1 * (1 - Math.exp(-lum)) / 0.9 * (1 - 0.25 * Lt.night);
-    return (L.tints[ck] = css(Lc.map(function (v) { return clamp(bb * (1 + (v / lum - 1) * 0.7), 0.22, 1); })));
+    return (L.tints[ck] = wsum > 0 ? css([acc[0] / wsum, acc[1] / wsum, acc[2] / wsum]) : null);
   }
 
   return {

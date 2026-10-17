@@ -34,7 +34,8 @@ WEAPON_FRAME = (176, 176)       # weapons are rendered big (a pike thrust reache
 WEAPON_ORIGIN = (88, 104)
 
 REST = dict(chest=(0, 0, 0), armW=(8, 4, 0), armO=(8, -4, 0), hipW=(0, 0), hipO=(0, 0), kneeW=0, kneeO=0,
-            aim=(0, -50, 0), off=None, fwd=0.0, lift=0.0, yaw=0.0, tumble=0.0, head=(0, 0, 0), hide=False)
+            aim=(0, -50, 0), off=None, fwd=0.0, lift=0.0, yaw=0.0, tumble=0.0, head=(0, 0, 0), hide=False,
+            draw=False, arrow=False)
 
 
 def P(**kw):
@@ -122,6 +123,19 @@ ROLL = [
     ('rise', P(chest=(16, 0, 0), armW=(-30, 0, 10), armO=(-30, 0, -10), hide=True, **crouch(30, 50))),
 ]
 
+# the bow (Sylvara's bowyer, Aerin's range): its poses are a sheet of their own — pilot-bow[-<style>]-<a|b>-<head>.png,
+# laid out in assets/characters/bow.json — so the attack sheets above never need re-rendering for it. The bow is in
+# the weapon hand held out toward the mark (aim), the other hand draws the string back to the chin (off < 0: that far
+# behind the grip along the arrow); `draw` pulls the string to that hand, `arrow` shows one nocked.
+BOW = [
+    ('nock', P(chest=(2, 0, 20), armW=(-60, 6, -22), aim=(0, -16, -30), off=-2.5, draw=True, arrow=True)),
+    ('draw', P(chest=(0, 0, 38), armW=(-86, 4, -40), aim=(0, 2, -30), off=-5.5, draw=True, arrow=True, **crouch(6, 10))),
+    ('full', P(chest=(-4, 0, 48), armW=(-90, 4, -50), aim=(0, 4, -30), off=-9.0, draw=True, arrow=True, **crouch(10, 16))),
+    ('loose', P(chest=(-2, 0, 44), armW=(-92, 4, -46), aim=(0, 3, -30), armO=(40, -40, 0), **crouch(8, 12))),
+    ('lower', P(chest=(4, 0, 16), armW=(-40, 4, -14), aim=(0, -30, -20), armO=(14, -8, 0))),
+]
+BOW_COLS = [('bow-' + n, s) for n, s in BOW]
+
 COLS = [(c + '-' + n, spec) for c, frames in CLASSES for n, spec in frames] + [('roll-' + n, s) for n, s in ROLL]
 COLNAMES = [n for n, _ in COLS]
 DIRS = [('down', 0), ('right', 90), ('up', 180), ('left', -90)]
@@ -136,6 +150,7 @@ CARRY = {
     'maul': dict(aim=(176, 68, 0)),
     'cast': dict(aim=(0, 84, 0)),
     'pick': dict(aim=(0, -36, 0)),
+    'bow': dict(aim=(0, 8, 0)),           # held by the grip at the side, upright, the string toward you
 }
 
 
@@ -159,9 +174,16 @@ def layout():
     }
 
 
+def bow_layout():
+    """The bow's own sheet (pilot-bow-…png): the same frame and rows as the attack sheet, its own columns."""
+    return {'frame': list(FRAME), 'origin': list(ORIGIN), 'rows': [d for d, _ in DIRS], 'cols': [n for n, _ in BOW_COLS]}
+
+
 if __name__ == '__main__':
     here = os.path.dirname(os.path.abspath(__file__))
     out = os.path.join(here, '..', '..', 'apps', 'bridge', 'assets', 'characters', 'attacks.json')
     with open(out, 'w') as f:
         json.dump(layout(), f, separators=(',', ':'))
     print(os.path.normpath(out), len(COLNAMES), 'columns')
+    with open(os.path.join(os.path.dirname(out), 'bow.json'), 'w') as f:
+        json.dump(bow_layout(), f, separators=(',', ':'))
