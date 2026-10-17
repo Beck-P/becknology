@@ -65,7 +65,7 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Enigma: restore the station, a zero-g spine | parked | Beck likes it; a note for later (the playing-together question). |
 | Arcadia: up, down and out — ritzier up, poorer down; the Undercity; trains and a sky loop; implants; restaurants on every level; large but connected, room to go side to side | discuss | Layout in the spec (levels × districts), agreed. The bottom dangerous, with fighting. Heist and rooftop running out. |
 | Lumar: harbours that work; a cliff town; the spore bloom; a weekly regatta; each sea's towns, people and ships their own; Crownhaven much bigger | discuss | Per-sea ideas in the spec (Beck likes them). Tides, ferry work maybe; diving, the dragon egg out. |
-| Sylvara: canopy city, the river by canoe to Mirror Lake with places along it, the falls, the Deepwood, brewing, bows | discuss | |
+| Sylvara: canopy city, the river by canoe to Mirror Lake with places along it, the falls, the Deepwood, brewing, bows | in progress (workstream F) | Built: **bows** (js/arms.js `bow`, js/bows.js — hold to draw, let go to loose; rope and fire arrows, zip lines, high lanterns, switches, Aerin's range; the bow's own pilot sheets). Next: the Rootmarket, the Boughs, the Crown; the Silverrun by canoe; the Deepwood; brewing with Mirelle. |
 | Verdance: the village grows with you, the countryside by horse and buggy, small towns, makers and a café, produce shipped to Arcadia, night-blooming flowers | discuss | Market day only if someone else runs the stall. |
 | Hoarfell: Fellhaven bougier; a grand hotel (château, Monaco-y, its own town and casino salon); a mountain railway as a cutscene; hut-to-hut touring; the hidden valley with tiers of enemies | discuss | Guiding jobs out; the dog sled maybe. |
 
@@ -148,13 +148,11 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | The farm's field soil | **done** | Crumbly earth, in the farm's re-render. |
 
 ## Render queue (every outdoor scene, once, with everything: meadow, drawn grass, trees and seasons, grass/water marks, the new roofs and house fronts)
-Shipped: every outdoor scene once — Crownhaven, Tern Holm, Brambleford, Starling Holm, Diggen's Point, the farm, Midnight
-Isle (with the Undercroft's way in), Sylvara, Sapphire, Crimson, Rose Cove, the market square, Hoarfell town. Since: Crownhaven
-again (street clutter); Brambleford and the market square again (their hopscotch); Starling Holm again (the slipway, a hull at
-each stage, the hall of finds); and all six of Hoarfell's sport worlds by day, dusk and night (the summit, the pistes, the Park,
-the face, the Last Ridge, the Ice Step). Two fixes on the way: the moon over daylit places stood too close to a long map (a
-straight-edged wedge at the top had no moonlight), and on a wall facing you it came from behind; both fixed in the kit.
-Running: Sapphire and Crownhaven (their hopscotch), then Fellhaven, Sylvara and the farm (the moon). Each ships as it finishes.
+Stopped: the old-finish queue is done with. Every outdoor scene got one re-render in the old (dithered) finish, plus
+Crownhaven, Brambleford and the market square again (street clutter, hopscotch), Starling Holm again (slipway, hull stages, the
+hall of finds) and Hoarfell's six sport worlds by day, dusk and night. Bringing places into the new look (toy finish + live
+light) is the backlog in the October 17 new-look section above; its re-renders pick up the kit fixes made here on the way (the
+moon set back from long maps and from in front on walls, the hopscotch finding clear paving, the slip laid on the bank).
 
 ## Older threads still open (from before this session; check what's left before calling them done)
 - Two ships: mothership home base + landing shuttle (#18)
