@@ -949,7 +949,7 @@ var BridgeWorld = (function () {
     if (hooks.ground) hooks.ground(ctx, world, offX, offY, ts, now, sc);
     if (all.ground) all.ground(ctx, world, offX, offY, ts, now, sc);
     // the place as it stands, before anyone's in it, is what glows (js/gpu.js): lamps and windows, not a pale helmet
-    if (glowNow > 0 && typeof BridgeGPU !== 'undefined') BridgeGPU.source(ctx.canvas, offX, offY);
+    if (glowNow > 0 && typeof BridgeGPU !== 'undefined') BridgeGPU.source(ctx.canvas);
     drawInteractHighlight(ctx, offX, offY, ts, now);
     if (typeof BridgeForage !== 'undefined') BridgeForage.draw(ctx, world, offX, offY, ts, now);
     if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) BridgeLoot.draw(ctx, offX, offY, ts);
