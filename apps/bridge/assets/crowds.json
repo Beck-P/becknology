@@ -26,6 +26,13 @@
   "arcadia-casino":         { "n": 14, "wardrobe": "casino",  "busy": "bustle" },
   "arcadia-casino-cards":   { "n": 6,  "wardrobe": "casino",  "busy": "bustle" },
   "arcadia-casino-dining":  { "n": 6,  "wardrobe": "casino",  "busy": "bustle", "sit": 0.9 },
+  "arcadia-undercity":      { "n": 30, "wardrobe": "undercity", "busy": "always", "pass": 0.45, "avoid": [[63, 17, 79, 29]] },
+  "arcadia-hawker":         { "n": 22, "wardrobe": "undercity", "busy": "always" },
+  "arcadia-dive":           { "n": 7,  "wardrobe": "undercity", "busy": "always", "adults": true },
+  "arcadia-foundry":        { "n": 16, "wardrobe": "undercity", "busy": "bustle", "adults": true },
+  "arcadia-pit":            { "n": 18, "wardrobe": "undercity", "busy": "always", "adults": true, "avoid": [[12, 9, 23, 16]] },
+  "arcadia-sump":           { "n": 8,  "wardrobe": "sump", "busy": "always", "pass": 0.5, "adults": true },
+  "arcadia-sump-rave":      { "n": 20, "wardrobe": "sump", "busy": "always", "adults": true },
 
   "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
 
@@ -37,6 +44,22 @@
   "sylvara-hall":           { "n": 4,  "wardrobe": "sylvara", "busy": "always" },
 
   "_lines": {
+    "undercity": [
+      "THE SAINTS RUN THE YARD. YOU PAY THEM OR YOU FIGHT THEM. MOSTLY YOU PAY THEM.",
+      "MAMA ROO'S BROTH HAS BEEN ON THE BOIL FOR FORTY YEARS. SAME POT.",
+      "YOU CAN SEE THE DISTRICT'S LIGHTS THROUGH THE GRATES WHEN IT STOPS RAINING. IT NEVER STOPS RAINING.",
+      "SALLOW'S CHROME IS CHEAP. CHEAP CHROME HICCUPS. ASK ME HOW I KNOW.",
+      "DON'T GO DOWN TO THE SUMP WITHOUT A FULL BELLY AND A GOOD BLADE.",
+      "BET ON IRON MAE. EVERYONE BETS ON IRON MAE.",
+      "THE LIFT GOES ALL THE WAY UP, THEY SAY. NOBODY I KNOW HAS TAKEN IT."
+    ],
+    "sump": [
+      "THE WATER REMEMBERS. THAT'S WHAT WEN SAYS.",
+      "THE DRONES COME OUT OF THE OLD BILLBOARD. KILL THEM FAST, BEFORE THEY CALL THE OTHERS.",
+      "I HEARD THE DREDGE MOVE LAST NIGHT. THE WHOLE CANAL SLOSHED.",
+      "TEO'S LAKSA IS THE ONLY WARM THING DOWN HERE.",
+      "THE RAVE NEVER STOPS. IT JUST CHANGES WHO'S DANCING."
+    ],
     "lumar": [
       "MIND THE NETS. THEY BITE IF YOU TREAD ON THEM, OR THE FISHERMEN DO.",
       "THE CATCH WAS THIN THIS MORNING. THE SPORES WERE DIM.",
@@ -129,6 +152,8 @@
   },
 
   "_wants": {
+    "undercity": [{ "id": "scrap_metal", "pay": 6 }, { "id": "roo_broth", "pay": 16 }, { "id": "medkit", "pay": 40 }],
+    "sump":     [{ "id": "sump_laksa", "pay": 24 }, { "id": "circuit", "pay": 18 }],
     "lumar":    [{ "id": "sea_glass", "pay": 22 }, { "id": "bread", "pay": 12 }, { "id": "silver_nail", "pay": 18 }],
     "crown":    [{ "id": "sea_glass", "pay": 26 }, { "id": "roseite", "pay": 40 }],
     "pirates":  [{ "id": "mug_of_ale", "pay": 14, "ask": "ANY {item}? I'D GIVE {pay} FOR IT. AND I'D OWE YOU." }],
