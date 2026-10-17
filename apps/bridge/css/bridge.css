@@ -3005,6 +3005,50 @@ html.item-get #interact-prompt { display: none !important; }
 .jn-clues li.carrying::before { content: none; }
 .jn-item { width: 16px; height: 16px; image-rendering: pixelated; vertical-align: -3px; margin: 0 6px 0 -16px; }
 
+/* ---- Eights in the Wayfarer's mess (js/eights.js): green baize in an oak rim, the cards drawn a pixel at a time ---- */
+#eights {
+  position: fixed; inset: 0; z-index: 40; display: none; align-items: center; justify-content: center;
+  background: rgba(8, 6, 4, 0.55); font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none;
+}
+#eights.visible { display: flex; }
+.e8-panel { width: min(520px, 96vw); max-height: 96vh; overflow: auto; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 9px;
+  background: #1e3a2a; border: 4px solid #5e3b1e; border-radius: 10px; box-shadow: inset 0 0 0 2px #3e2612, inset 0 0 40px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.6); color: #eaf2e4; }
+.e8-head { display: flex; align-items: baseline; gap: 12px; }
+.e8-title { font-size: 15px; letter-spacing: 5px; text-transform: uppercase; color: #ffe8b0; text-shadow: 0 0 8px rgba(255, 200, 120, 0.5); }
+.e8-pot { flex: 1; font-size: 12px; color: #e0b040; }
+.e8-rivals { display: flex; gap: 8px; }
+.e8-rival { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 6px; border-radius: 5px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 232, 176, 0.12); }
+.e8-rival.turn { border-color: #e0b040; box-shadow: 0 0 10px rgba(224, 176, 64, 0.35); }
+.e8-rival.won { border-color: #78e8a8; box-shadow: 0 0 12px rgba(120, 232, 168, 0.4); }
+.e8-face { width: 40px; height: 40px; image-rendering: pixelated; border-radius: 50%; background: rgba(0, 0, 0, 0.25); }
+.e8-who { font-size: 11px; letter-spacing: 1px; color: #d8ecd0; }
+.e8-fan { display: flex; min-height: 20px; }
+.e8-back { width: 10px; height: 14px; margin-right: -4px; image-rendering: pixelated; }
+.e8-table { display: flex; align-items: center; justify-content: center; gap: 18px; padding: 6px 0; }
+.e8-stock { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: rgba(234, 242, 228, 0.6); }
+.e8-card { width: 40px; height: 56px; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; transition: transform 0.12s; }
+.e8-card.big { width: 60px; height: 84px; cursor: default; }
+.e8-suit { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #ffe8b0; min-width: 60px; }
+.e8-suit canvas, .e8-suits canvas { width: 21px; height: 21px; image-rendering: pixelated; }
+.e8-log { min-height: 64px; font-size: 11px; line-height: 1.45; color: rgba(234, 242, 228, 0.6); }
+.e8-log .last { color: #f4f8ee; }
+.e8-log b { color: #ffe8b0; font-weight: normal; }
+.e8-verdict { color: #78e8a8 !important; }
+.e8-you { display: flex; flex-direction: column; gap: 5px; padding: 6px 8px; border-radius: 5px; background: rgba(0, 0, 0, 0.18); border: 1px solid rgba(255, 232, 176, 0.12); }
+.e8-you.turn { border-color: #e0b040; }
+.e8-hand { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.e8-hand.nope { animation: e8-nope 0.3s; }
+@keyframes e8-nope { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.e8-hand .e8-card.fits { transform: translateY(-3px); }
+.e8-hand .e8-card.sel { transform: translateY(-8px); filter: drop-shadow(0 0 4px rgba(255, 220, 140, 0.9)); }
+.e8-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+.e8-controls button { font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 4px; border: 1px solid #a07a40; background: #3e2612; color: #ffe8b0; cursor: pointer; }
+.e8-controls button:disabled { opacity: 0.4; cursor: default; }
+.e8-suits { display: flex; gap: 6px; }
+.e8-suits button { padding: 3px 6px; background: #f2ecdc; }
+.e8-help { font-size: 10px; color: rgba(234, 242, 228, 0.5); text-align: center; }
+html.touch .e8-keys { display: none; }
+#wf-fed { font-size: 10px; letter-spacing: 1px; color: #ffe0a0; padding-left: 32px; opacity: 0.85; }
 /* ---- getting round Arcadia (js/transit.js): a lift's glass or a cab's window, the Loop's announcements ---- */
 #transit-ride { position: fixed; inset: 0; z-index: 70; background: #000; display: flex; align-items: center; justify-content: center;
   opacity: 0; transition: opacity 0.25s ease; font-family: 'Pixelify Sans', 'Courier New', monospace; cursor: pointer; }
