@@ -483,6 +483,18 @@ var BridgeScene = (function () {
     if (op) ctx.restore();
   }
 
+  // One of Midnight's dead (an actor or walker with `ghost`): see-through, breathing a cold light, no shadow, not lit by
+  // the room (they give off their own light) — the sheet drawn faint, then again added on top, faint
+  function drawGhost(ctx, sc, img, sx, sy, dx, dy, footRow, offX, offY, now) {
+    var a = 0.5 + 0.12 * Math.sin(now / 900);
+    ctx.save();
+    ctx.globalAlpha = a;
+    drawOccluded(ctx, sc, img, sx, sy, FRAME_W, FRAME_H, dx, dy, footRow, offX, offY, '#bfeaff', null);
+    ctx.globalAlpha = 0.22 + 0.08 * Math.sin(now / 600);
+    drawOccluded(ctx, sc, img, sx, sy, FRAME_W, FRAME_H, dx, dy, footRow, offX, offY, '#7ad0ff', null, 'lighter');
+    ctx.restore();
+  }
+
   function getSheet(name) {
     if (!sheets[name]) {
       var e = { img: null, ready: false };
@@ -570,6 +582,8 @@ var BridgeScene = (function () {
       list.push({ footRow: footRow, draw: function (ctx) {
         var col = p.moving ? 4 + Math.floor(p.dist / 0.3) % 8 : idleCol(now + i * 137);
         var cx = Math.round(offX + (p.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
+        if (wk.ghost) return drawGhost(ctx, sc, sh.img, col * FRAME_W, (DIR_ROW[p.facing] || 0) * FRAME_H, cx - FRAME_W / 2,
+          footY - (FRAME_H - 3) - 2 - Math.round(Math.sin(now / 700 + i) * 2), footRow, offX, offY, now + i * 311);
         drawOccluded(ctx, sc, sh.img, col * FRAME_W, (DIR_ROW[p.facing] || 0) * FRAME_H, FRAME_W, FRAME_H, cx - FRAME_W / 2,
           footY - (FRAME_H - 3), footRow, offX, offY, tintAt(sc, world, Math.round(p.x), Math.round(p.y), now), { x: cx, y: footY, rx: 8, ry: 3 });
       } });
@@ -596,7 +610,9 @@ var BridgeScene = (function () {
 
             var cx = Math.round(offX + (a.x + 0.5) * ts);
             var footY = Math.round(offY + footRow * ts);
+            if (a.ghost) bob = 2 + Math.round(Math.sin(now / 700 + a.x) * 2);       // the dead float a hand's breadth up
             var dx = cx - FRAME_W / 2, dy = footY - (FRAME_H - 3) - bob - Math.round((a.lift || 0) * Math.SQRT1_2 * ts);   // a height z shows z·cos 45° up
+            if (a.ghost) return drawGhost(ctx, sc, sh.img, col * FRAME_W, row * FRAME_H, dx, dy, footRow, offX, offY, now + a.x * 311);
             drawOccluded(ctx, sc, sh.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy,
               footRow, offX, offY, tintAt(sc, world, a.light ? a.light[0] : a.x, a.light ? a.light[1] : a.y, now),   // light: lit as if on another tile (a throne in its own shadow)
               a.pose === 'sit' ? null : { x: cx, y: footY, rx: 8, ry: 3 });

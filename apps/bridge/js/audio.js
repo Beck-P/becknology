@@ -844,6 +844,12 @@ var BridgeAudio = (function () {
     swing_cast:  function (t) { [84, 88, 91, 96].forEach(function (m, i) { voice(sfxBus, t + i * 0.03, 0.05, { type: 'sine', freq: hz(m), gain: 0.035, a: 0.002, d: 0.15, s: 0, r: 0.15, rev: 0.4 }); }); whoosh(t, 0.14, 2000, 6000, 0.05, 0.8); },
     swing_great: function (t) { whoosh(t, 0.26, 500, 2400, 0.15, 0.9); },
     swing_pick:  function (t) { whoosh(t, 0.12, 900, 2000, 0.1, 1.0); },
+    // the bow (js/arms.js, js/bows.js): the creak of the draw, the string's thrum on the loose, an arrow going home
+    bow_draw:    function (t) { voice(sfxBus, t, 0.28, { type: 'sawtooth', freq: 140, glide: 1.6, glideT: 0.3, gain: 0.018, a: 0.05, d: 0.25, s: 0, r: 0.05, cutoff: 900 }); },
+    bow_full:    function (t) { voice(sfxBus, t, 0.08, { type: 'triangle', freq: 520, gain: 0.025, a: 0.002, d: 0.08, s: 0, r: 0.05 }); },
+    swing_bow:   function (t) { voice(sfxBus, t, 0.14, { type: 'triangle', freq: 196, glide: 0.92, glideT: 0.14, gain: 0.07, a: 0.001, d: 0.14, s: 0, r: 0.08 }); whoosh(t + 0.02, 0.1, 3000, 6000, 0.05, 2.0); },
+    impact_bow:  function (t) { noiseHit(sfxBus, t, 0.06, { freq: 900, ftype: 'bandpass', q: 1.6, gain: 0.14 }); voice(sfxBus, t, 0.05, { type: 'sine', freq: 240, glide: 0.6, glideT: 0.05, gain: 0.08, a: 0.001, d: 0.05, s: 0, r: 0.04 }); },
+    arrow_thunk: function (t) { noiseHit(sfxBus, t, 0.05, { freq: 500, ftype: 'bandpass', q: 1.2, gain: 0.12 }); voice(sfxBus, t, 0.04, { type: 'sine', freq: 180, glide: 0.7, glideT: 0.04, gain: 0.06, a: 0.001, d: 0.04, s: 0, r: 0.03 }); },
     impact_blade: function (t) {
       voice(sfxBus, t, 0.02, { type: 'square', freq: 2600, glide: 0.6, glideT: 0.04, gain: 0.04, a: 0.001, d: 0.04, s: 0, r: 0.03, cutoff: 7000 });
       noiseHit(sfxBus, t, 0.08, { freq: 1400, ftype: 'bandpass', q: 1.2, gain: 0.12 });

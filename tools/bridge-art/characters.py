@@ -71,6 +71,7 @@ FIXED = {
     'skin2':  ('#7a4e36', '#b0784e', '#cc9468'),
     'skin3':  ('#3e2418', '#6a3e28', '#8a563a'),
     'skin0':  ('#b48468', '#ecc0a0', '#fcdcc4'),     # very fair (Queen Alyssara)
+    'ghost':  ('#4a7a8a', '#8cc0cc', '#c4eaf0'),     # the drowned of Midnight: cold light, not flesh (drawn see-through in the game)
     'eye':    ('#120c0a', '#120c0a', '#2a1a14'),     # (unused: eyes are painted now — FACE_POINTS, EYE)
     'white':  ('#9a968c', '#e4e0d4', '#fbf8f0'),
     'leather': ('#3a2416', '#5e3a22', '#7e5232'),
@@ -151,6 +152,10 @@ NPCS = {
                           pose='sit'),
     'npc-keeper':    dict(skin='skin', shirt=('#18223a', '#26365a', '#3a5080'), vest=('#9a7418', '#d0a028', '#e8c050'),
                           hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bun=True, pose='sit'),
+    # Midnight's dead (the game draws them see-through, floating: an actor's `ghost`): Master Idris Thorne in Morwen's
+    # stillroom, the drowned of Saltmere
+    'npc-ghost-scholar': dict(skin='ghost', shirt=('#2a5a6a', '#4a8a9a', '#7abcc8'), skirt=('#2a5a6a', '#4a8a9a', '#7abcc8'),
+                          hair=('#8ab8c4', '#b8e0e8', '#e4f8fc'), long_hair=True, beard=True, smile=False, pose='stand'),
     'npc-scholar':   dict(skin='skin2', shirt=('#3a2a1e', '#5e4430', '#7e6046'), vest=('#1e2a3a', '#2e4058', '#465c78'),
                           hair=('#c8c8d0', '#e0e0e8', '#f4f4fa'), long_hair=True, beard=True, pose='stand'),
     # Arcadia (neon city)
@@ -522,6 +527,12 @@ EXTRAS = {
     'gown':      dict(_X, skirt=XKEYS['bot'], gown=True, sequin=True, sleeve='xskin', long_hair='flowing', stole=XKEYS['out']),
     'elf':       dict(_X, long_hair=True, elf_ears=True, tunic=XKEYS['out'], tall_boots=True, bracers=True),
     'elf-braid': dict(_X, skirt=XKEYS['bot'], braid='side', elf_ears=True, shawl=XKEYS['out']),
+    # Lumar's other seas (workstream B1): Sapphire's merchants in waistcoats and sashes, its market women in shawls;
+    # Rose's mystics in long robes with flaring sleeves, the cowl fallen back
+    'merchant':  dict(_X, waistcoat=XKEYS['out'], sash=XKEYS['hat'], mustache=True),
+    'woman-shawl': dict(_X, skirt=XKEYS['bot'], shawl=XKEYS['out'], bun=True),
+    'mystic':    dict(_X, skirt=XKEYS['bot'], gown=True, bell_sleeves=True, cowl=XKEYS['out'], long_hair=True),
+    'mystic-m':  dict(_X, skirt=XKEYS['bot'], gown=True, bell_sleeves=True, cowl=XKEYS['out'], beard=True),
 }
 for _n, _s in EXTRAS.items():
     NPCS['extra-' + _n] = dict(_s, pose='stand')
@@ -1392,22 +1403,22 @@ def build_human(spec):
         head.scale = (1.14,) * 3
 
 
-if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb|-attack|-weapons][-<style>]-<a|b>: one suit on one body, every head
+if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb|-attack|-bow|-weapons][-<style>]-<a|b>: one suit on one body, every head
     _parts = WHO.split('-')[1:]
     BODY = _parts.pop() if _parts and _parts[-1] in ('a', 'b') else 'a'
-    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb', 'attack', 'weapons') else 'stand'
+    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb', 'attack', 'bow', 'weapons') else 'stand'
     _rest = _parts[1:] if MODE != 'stand' else _parts
     STYLE = _rest[0] if _rest else 'flight'
     {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner,
      'mystic': build_mystic, 'ranger': build_ranger}[STYLE]()
     if BODY == 'b':
         body_b()
-    if MODE in ('attack', 'weapons'):  # fighting (attacks.py, attack_rig.py): a waist to turn at, a grip, the weapons
+    if MODE in ('attack', 'bow', 'weapons'):  # fighting (attacks.py, attack_rig.py): a waist to turn at, a grip, the weapons
         import attack_rig
         import attacks
         import weapon_sprites
-        W, H = attacks.FRAME if MODE == 'attack' else attacks.WEAPON_FRAME
-        ORIGIN_PX = attacks.ORIGIN if MODE == 'attack' else attacks.WEAPON_ORIGIN
+        W, H = attacks.FRAME if MODE in ('attack', 'bow') else attacks.WEAPON_FRAME
+        ORIGIN_PX = attacks.ORIGIN if MODE in ('attack', 'bow') else attacks.WEAPON_ORIGIN
         RIG = attack_rig.rig(globals(), list(weapon_sprites.WEAPONS) if MODE == 'weapons' else
                              [w for w in os.environ.get('ATTACK_WEAPON', '').split(',') if w])   # a weapon in hand: a quick look
     if MODE == 'climb':                # arms over the head need a taller frame
@@ -1741,8 +1752,8 @@ def render_cell(base, dname, col, yaw, spec):
 
 def render_all(base):
     """Every frame of this character (as it's shown right now) into base/{id,depth,color_<variant>}/."""
-    if POSE == 'attack':
-        attack_rig.render_sheet(RIG, base, VARIANTS)
+    if POSE in ('attack', 'bow'):        # the bow's poses are a sheet of their own (attacks.BOW_COLS)
+        attack_rig.render_sheet(RIG, base, VARIANTS, attacks.BOW_COLS if POSE == 'bow' else None)
         return face_write(base)
     for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
         os.makedirs(os.path.join(base, kind), exist_ok=True)

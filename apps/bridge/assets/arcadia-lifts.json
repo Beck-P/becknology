@@ -1,0 +1,33 @@
+{
+  "_doc": "Arcadia's levels and the ways between them (js/transit.js, js/map.js's cutaway, tools/bridge-art/atlas.py and audit_worlds.py read it). levels: top first; tag on the signs, floors the range the lift counter shows (below the street negative, shown B20). places: each main place's level and where it sits across the city (x 0 west .. 1 east) on the Map's side-on cutaway; rooms inside them aren't listed. shafts: express lifts, a lobby per stop (world, floor, spawn: where you step out). loop: the sky train's stations round the ring, in order. cabs: air cab pads. A world's interactions name them: express_lift {shaft, lobby}, loop_station {station}, air_cab {pad}. See apps/bridge/CLAUDE.md, Getting around Arcadia.",
+  "levels": [
+    { "id": "spires", "name": "The Spires", "tag": "L480", "floors": [400, 520], "about": "above the smog, under real stars" },
+    { "id": "midlevels", "name": "The Mid-Levels", "tag": "L200", "floors": [180, 260], "about": "glass and cyan, the Loop's ring" },
+    { "id": "district", "name": "The District", "tag": "L0", "floors": [0, 12], "about": "the street, in the rain" },
+    { "id": "undercity", "name": "The Undercity", "tag": "B20", "floors": [-30, -8], "about": "under the street" },
+    { "id": "sump", "name": "The Sump", "tag": "B60", "floors": [-70, -50], "about": "the drowned bottom" }
+  ],
+  "places": {
+    "arcadia-spires": { "level": "spires", "x": 0.5, "w": 0.7, "name": "The Spires" },
+    "arcadia-skywalk": { "level": "midlevels", "x": 0.2, "name": "The Skywalk" },
+    "arcadia-skypad": { "level": "midlevels", "x": 0.47, "name": "Skyport 7" },
+    "arcadia-terraces": { "level": "midlevels", "x": 0.78, "name": "The Terraces" },
+    "arcadia-oldquarter": { "level": "district", "x": 0.15, "name": "Lantern Row" },
+    "arcadia-street": { "level": "district", "x": 0.47, "name": "The neon street" },
+    "arcadia-spaceport": { "level": "district", "x": 0.82, "name": "The spaceport" }
+  },
+  "shafts": {
+    "skywalk": { "name": "The Skywalk Lift", "x": 0.3, "lobbies": [
+      { "id": "street", "world": "arcadia-street", "floor": 0, "spawn": [31, 9] },
+      { "id": "skywalk", "world": "arcadia-skywalk", "floor": 200, "spawn": [2, 5] }
+    ] },
+    "skyport": { "name": "The Skyport Lift", "x": 0.4, "lobbies": [
+      { "id": "skywalk", "world": "arcadia-skywalk", "floor": 200, "spawn": [28, 5] },
+      { "id": "skypad", "world": "arcadia-skypad", "floor": 212, "spawn": [19, 5] }
+    ] },
+    "spire": { "name": "Spire Express", "x": 0.66, "lobbies": [] },
+    "core": { "name": "The Core Express", "x": 0.92, "lobbies": [] }
+  },
+  "loop": { "name": "The Loop", "stations": [] },
+  "cabs": { "pads": [] }
+}

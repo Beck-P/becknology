@@ -233,7 +233,7 @@ var BridgeCharacter = (function () {
     if (!sheets[key]) {
       var at = key.indexOf('@'), base = at < 0 ? key : key.slice(0, at);
       var parts = base.split('-'), colour = parts.pop();
-      var mode = parts[0] === 'sit' || parts[0] === 'ski' || parts[0] === 'climb' || parts[0] === 'attack' ? parts.shift() : '';
+      var mode = parts[0] === 'sit' || parts[0] === 'ski' || parts[0] === 'climb' || parts[0] === 'attack' || parts[0] === 'bow' ? parts.shift() : '';
       var look = at < 0 ? BridgeLook.clean(null) : BridgeLook.parse(key.slice(at + 1));
       sheets[key] = BridgeLook.sheet(mode, parts[0] || 'flight', colour, look);
     }
@@ -347,8 +347,9 @@ var BridgeCharacter = (function () {
     var at = o.key.indexOf('@'), look = at < 0 ? BridgeLook.clean(null) : BridgeLook.parse(o.key.slice(at + 1));
     var build = look.body === 'b' ? 'b' : 'a', dir = p ? p.facing : o.facing, row = DIR_ROW[dir] || 0;
     var img = null, sx, sy, fw, fh, ox, oy, frame, weapon = null;
+    if (p && p.sheet && p.sheet !== 'attack') L = A.layoutOf(o.fight.cls);      // a class with a sheet of its own (the bow)
     if (p && L) {
-      var ash = getSheet('attack-' + o.key), ci = L.cols.indexOf(p.col);
+      var ash = getSheet((p.sheet || 'attack') + '-' + o.key), ci = L.cols.indexOf(p.col);
       if (ash.ready && ci >= 0) {
         img = ash.img; fw = L.frame[0]; fh = L.frame[1]; ox = L.origin[0]; oy = L.origin[1];
         sx = ci * fw; sy = row * fh; frame = p.col; weapon = p.weapon;
