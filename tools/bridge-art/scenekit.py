@@ -933,6 +933,7 @@ class Kit:
         if os.environ.get('SCENE_NORENDER'):
             return
         os.makedirs(out, exist_ok=True)
+        light_samples = int(os.environ.get('SCENE_SAMPLES', light_samples))     # a quick look: SCENE_SAMPLES=16
         light_states = light_states or {'full': {}}
         self._world_default = world_light
         cmap = None

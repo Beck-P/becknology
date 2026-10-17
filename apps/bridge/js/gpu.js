@@ -11,8 +11,8 @@
  *          guess, used outdoors; indoors only without a glow image, where a firelit pale thing can pass for a lamp).
  *          The guess is taken from the place before anyone is drawn in it (BridgeGPU.source, js/world.js), so a pale
  *          helmet never glows; the halo is then laid over everything.
- *          Worked at half, quarter and eighth size, then laid over the frame (a screen blend) at native resolution, so it
- *          lands on the same pixel grid as the art; the art's own pixels are read exactly, never resampled.
+ *          Worked at the frame's own size (three widths of blur), then laid over it (a screen blend), so it lands on the
+ *          art's pixel grid and moves with it pixel for pixel; the art's own pixels are read exactly, never resampled.
  *
  * BridgeGPU.source(buf) — the place as drawn so far (scene and ground, no people yet): what glows this frame.
  *   Without it the whole finished frame is used.
@@ -32,7 +32,10 @@ var BridgeGPU = (function () {
 
   var cv = null, gl = null, failed = false, lost = false, frames = 0;
   var prog = {}, frame = null, src = null, sourced = false, T = {}, vao = null, none = null, glows = {};
-
+  // The glow is worked out at the frame's full size, every step a fixed filter round each pixel, so it moves with what
+  // gives off light, pixel for pixel: worked out at half, quarter and eighth size (and judged against an 8-px mip) it
+  // regrouped with every one-pixel step of the camera — and of the slower parallax behind a place (Arcadia's skyline) —
+  // and halos pulsed as you walked (Beck: "a weird flicker anytime I move… the background buildings").
   var VS = '#version 300 es\nin vec2 p;\nvoid main() { gl_Position = vec4(p, 0.0, 1.0); }\n';
   var HEAD = '#version 300 es\nprecision highp float;\nout vec4 o;\n' +
              'float luma(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }\n';
@@ -40,21 +43,22 @@ var BridgeGPU = (function () {
     // what glows: a light, not a pale surface. Lights here are coloured (flame, lamp yellow, neon) or blazing white;
     // and brighter than their neighbourhood, so a sunlit wall or a lit room's floor doesn't, a lamp in the dark does
     bright: HEAD +
-      'uniform sampler2D frame; uniform vec2 size; uniform float gain;\n' +
+      'uniform sampler2D frame; uniform sampler2D around; uniform vec2 size; uniform float gain;\n' +
       'uniform sampler2D glowTex; uniform vec4 glowAt; uniform vec2 full; uniform float glowK; uniform float guess;\n' +
       'float val(vec3 c) { return max(c.r, max(c.g, c.b)); }\n' +
-      'void main() {\n' +
+      'const float GUESS = 0.3;\n' +                                   // at full size a thin neon line counts in full (at half
+      'void main() {\n' +                                              // size it was averaged with the dark round it): as bright as before
       '  vec2 uv = gl_FragCoord.xy / size;\n' +
-      '  vec3 c = textureLod(frame, uv, 0.0).rgb;\n' +                 // the 2x2 of the frame under this texel
+      '  vec3 c = textureLod(frame, uv, 0.0).rgb;\n' +                 // this pixel of the frame
       '  float v = val(c), sat = v > 0.0 ? (v - min(c.r, min(c.g, c.b))) / v : 0.0;\n' +
-      '  float near = val(textureLod(frame, uv, 3.0).rgb);\n' +        // the neighbourhood, ~8 px round
+      '  float near = val(texture(around, uv).rgb);\n' +                // the neighbourhood, ~8 px round (a blurred copy)
       '  float all = luma(textureLod(frame, vec2(0.5), 12.0).rgb);\n' + // the whole frame
       '  float light = max(smoothstep(0.3, 0.55, sat), 0.6 * smoothstep(0.9, 0.98, v));\n' +
       '  float k = guess * light * smoothstep(0.6, 0.9, v) * smoothstep(0.15, 0.4, v - near);\n' +
       '  float dark = 1.0 - smoothstep(0.12, 0.5, all);\n' +
       '  vec2 su = (uv * full - glowAt.xy) / glowAt.zw;\n' +              // where this falls on the scene's glow image
       '  vec3 e = (glowK > 0.0 && su.x >= 0.0 && su.y >= 0.0 && su.x <= 1.0 && su.y <= 1.0) ? texture(glowTex, su).rgb * glowK : vec3(0.0);\n' +
-      '  o = vec4(max(c * k * gain * mix(0.25, 1.0, dark), e * gain * 0.8), 1.0);\n' +
+      '  o = vec4(max(c * k * gain * GUESS * mix(0.25, 1.0, dark), e * gain * 0.8), 1.0);\n' +
       '}\n',
     // a 9-tap gaussian along dir, from five linear reads
     blur: HEAD +
@@ -181,7 +185,7 @@ var BridgeGPU = (function () {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
-  // the halo at half, quarter and eighth size: a tight bloom round the light, then wider and softer
+  // how much of each width of halo goes into the glow (the tight one, the wider, the widest)
   var LEVELS = [0.9, 1.3, 1.6], GAIN = 2.0;
 
   // a canvas into a texture; mips: with its chain (the neighbourhood and whole-frame averages the bright pass reads)
@@ -210,28 +214,48 @@ var BridgeGPU = (function () {
     return G.ready ? G : null;
   }
 
+  // The halo in three widths, kept steady as things move: blurred smoothly at full size first (a 9-tap gaussian, twice),
+  // and only shrunk once it's soft — a blurred picture halved comes out the same wherever the grid falls — to half size
+  // for the wider one and a quarter for the widest, each blurred again there. (Shrinking the sharp frame regrouped its
+  // pixels with every step of the camera; one wide blur at full size, its taps far apart, left ghost stripes.)
+  function blur2(from, tmp, into, w, h, k) {
+    bind(0, from.tex); pass('blur', tmp, w, h, function (u) { gl.uniform1i(u.src, 0); gl.uniform2f(u.dir, k, 0); });
+    bind(0, tmp.tex); pass('blur', into, w, h, function (u) { gl.uniform1i(u.src, 0); gl.uniform2f(u.dir, 0, k); });
+  }
+  function down(from, into, w, h) { bind(0, from.tex); pass('copy', into, w, h, function (u) { gl.uniform1i(u.src, 0); }); }
   function glow(buf, w, h, amt, sourced, o) {
     upload(frame, buf, false);
     if (!sourced) upload(src, buf, true);         // no source taken this frame: the whole frame is what glows
-    bind(0, src);
-    var lw = w, lh = h, outs = [];
-    for (var i = 0; i < LEVELS.length; i++) {
-      lw = Math.max(1, Math.ceil(lw / 2)); lh = Math.max(1, Math.ceil(lh / 2));
-      var a = target('a' + i, lw, lh), b = target('b' + i, lw, lh);
-      if (i === 0) {
-        var G = sceneGlow(o.scene), sky = G && typeof BridgeScene !== 'undefined' && BridgeScene.skyOf ? BridgeScene.skyOf(o.scene) : null;
-        bind(1, G ? G.tex : none);
-        pass('bright', a, lw, lh, function (u) {
-          gl.uniform1i(u.frame, 0); gl.uniform1f(u.gain, GAIN); gl.uniform1i(u.glowTex, 1); gl.uniform2f(u.full, w, h);
-          gl.uniform4f(u.glowAt, G ? o.offX - o.scene.meta.originX : 0, G ? o.offY - o.scene.meta.originY : 0, G ? G.w : 1, G ? G.h : 1);
-          gl.uniform1f(u.glowK, G ? (sky ? 1 - 0.85 * sky.day : 1) : 0);              // a lamp by day hardly glows
-          gl.uniform1f(u.guess, o.guess != null ? o.guess : 1);
-        });
-      } else { bind(0, outs[i - 1].tex); pass('copy', a, lw, lh, function (u) { gl.uniform1i(u.src, 0); }); }
-      bind(0, a.tex); pass('blur', b, lw, lh, function (u) { gl.uniform1i(u.src, 0); gl.uniform2f(u.dir, 1, 0); });
-      bind(0, b.tex); pass('blur', a, lw, lh, function (u) { gl.uniform1i(u.src, 0); gl.uniform2f(u.dir, 0, 1); });
-      outs.push(a);
-    }
+    var tmp = target('tmp', w, h), near = target('near', w, h);
+    // the neighbourhood a light is judged against: the source blurred ~8 px round
+    down(src, near, w, h);
+    blur2(near, tmp, near, w, h, 1.5);
+    blur2(near, tmp, near, w, h, 1.5);
+    var G = sceneGlow(o.scene), sky = G && typeof BridgeScene !== 'undefined' && BridgeScene.skyOf ? BridgeScene.skyOf(o.scene) : null;
+    var lit = target('lit', w, h);
+    bind(0, src); bind(1, G ? G.tex : none); bind(2, near.tex);
+    pass('bright', lit, w, h, function (u) {
+      gl.uniform1i(u.frame, 0); gl.uniform1f(u.gain, GAIN); gl.uniform1i(u.glowTex, 1); gl.uniform1i(u.around, 2); gl.uniform2f(u.full, w, h);
+      gl.uniform4f(u.glowAt, G ? o.offX - o.scene.meta.originX : 0, G ? o.offY - o.scene.meta.originY : 0, G ? G.w : 1, G ? G.h : 1);
+      gl.uniform1f(u.glowK, G ? (sky ? 1 - 0.85 * sky.day : 1) : 0);              // a lamp by day hardly glows
+      gl.uniform1f(u.guess, o.guess != null ? o.guess : 1);
+    });
+    // tight: full size
+    var g0 = target('g0', w, h);
+    blur2(lit, tmp, g0, w, h, 1.0);
+    blur2(g0, tmp, g0, w, h, 1.0);
+    // wider: half size
+    var w1 = Math.max(1, Math.ceil(w / 2)), h1 = Math.max(1, Math.ceil(h / 2)), t1 = target('t1', w1, h1), g1 = target('g1', w1, h1);
+    down(g0, g1, w1, h1);
+    blur2(g1, t1, g1, w1, h1, 1.0);
+    blur2(g1, t1, g1, w1, h1, 1.0);
+    // widest: a quarter
+    var w2 = Math.max(1, Math.ceil(w1 / 2)), h2 = Math.max(1, Math.ceil(h1 / 2)), t2 = target('t2', w2, h2), g2 = target('g2', w2, h2);
+    down(g1, g2, w2, h2);
+    blur2(g2, t2, g2, w2, h2, 1.0);
+    blur2(g2, t2, g2, w2, h2, 1.0);
+    blur2(g2, t2, g2, w2, h2, 1.0);
+    var outs = [g0, g1, g2];
     // out to the canvas
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     bind(0, frame); bind(1, outs[0].tex); bind(2, outs[1].tex); bind(3, outs[2].tex);

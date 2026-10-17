@@ -71,6 +71,7 @@ FIXED = {
     'skin2':  ('#7a4e36', '#b0784e', '#cc9468'),
     'skin3':  ('#3e2418', '#6a3e28', '#8a563a'),
     'skin0':  ('#b48468', '#ecc0a0', '#fcdcc4'),     # very fair (Queen Alyssara)
+    'ghost':  ('#4a7a8a', '#8cc0cc', '#c4eaf0'),     # the drowned of Midnight: cold light, not flesh (drawn see-through in the game)
     'eye':    ('#120c0a', '#120c0a', '#2a1a14'),     # (unused: eyes are painted now — FACE_POINTS, EYE)
     'white':  ('#9a968c', '#e4e0d4', '#fbf8f0'),
     'leather': ('#3a2416', '#5e3a22', '#7e5232'),
@@ -151,6 +152,10 @@ NPCS = {
                           pose='sit'),
     'npc-keeper':    dict(skin='skin', shirt=('#18223a', '#26365a', '#3a5080'), vest=('#9a7418', '#d0a028', '#e8c050'),
                           hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bun=True, pose='sit'),
+    # Midnight's dead (the game draws them see-through, floating: an actor's `ghost`): Master Idris Thorne in Morwen's
+    # stillroom, the drowned of Saltmere
+    'npc-ghost-scholar': dict(skin='ghost', shirt=('#2a5a6a', '#4a8a9a', '#7abcc8'), skirt=('#2a5a6a', '#4a8a9a', '#7abcc8'),
+                          hair=('#8ab8c4', '#b8e0e8', '#e4f8fc'), long_hair=True, beard=True, smile=False, pose='stand'),
     'npc-scholar':   dict(skin='skin2', shirt=('#3a2a1e', '#5e4430', '#7e6046'), vest=('#1e2a3a', '#2e4058', '#465c78'),
                           hair=('#c8c8d0', '#e0e0e8', '#f4f4fa'), long_hair=True, beard=True, pose='stand'),
     # Arcadia (neon city)
@@ -277,7 +282,8 @@ NPCS = {
                           hair=('#a8843a', '#d8b058', '#f0d080'), long_hair='flowing', elf_ears=True,
                           circlet=('#9a7618', '#d8ac30', '#fae27a'), gem=('#0a6a3a', '#18b060', '#80f0b0'), gown='court',
                           veil=('#c8b888', '#ece0b8', '#fff8e0'),
-                          bell_sleeves=True, neckline=True, girdle=True, shoes=('#8a6a10', '#c89a20', '#f0d060'), blush=True, pose='sit'),
+                          bell_sleeves=True, neckline=True, girdle=True, shoes=('#8a6a10', '#c89a20', '#f0d060'), blush=True,
+                          eye=('#2e1a10', '#5a3420', '#8a5a34'), pose='sit'),
     'npc-beckolas':  dict(skin='skin', shirt=('#2e4a22', '#4a6a30', '#6a8a44'), armour=('#3a5a26', '#5a7a34', '#7e9a4a'),
                           cuirass=('#3a5a26', '#5a7a34', '#7e9a4a'), tunic=('#2e4a22', '#4a6a30', '#6a8a44'),
                           cloak=('#1e3a1e', '#2e5a2e', '#447a3e'), leaf_cloak=True, trim=('#7a5a20', '#c8a040', '#f0d070'),
@@ -487,7 +493,18 @@ NPCS = {
                           trim=('#7a5a10', '#c89a28', '#f0d060'), stole=('#a89a88', '#e2d8c8', '#fbf6ec'), sleeve='skin2',
                           circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#6a0a3a', '#c0186a', '#ff70b0'),
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), long_hair='flowing', pose='sit'),
+    # the Wayfarer's cook (the galley, js/galley.js): Dorrie Kettle — broad and ruddy, her grey-streaked hair in a bun,
+    # a blue dress under a white apron, sleeves rolled
+    'npc-dorrie':    dict(skin='skin', shirt=('#24386a', '#34529a', '#5274bc'), skirt=('#24386a', '#34529a', '#5274bc'),
+                          apron=('#a8a49a', '#dcd8cc', '#f6f2e8'), hair=('#4a2216', '#743622', '#9a5030'), bun=True,
+                          blush=True, brawny=True, pose='stand'),
 }
+# the Wayfarer's crew keep a day aboard (js/aboard.js): walking between their posts, the mess and the cards, so each needs
+# a standing sheet and a seated one (the cast's own sheets are one or the other)
+for _n in ('npc-regular', 'npc-traveler'):
+    NPCS[_n + '-stand'] = dict(NPCS[_n], pose='stand')
+for _n in ('npc-watcher', 'npc-okafor', 'npc-pawn-customer', 'npc-dorrie'):
+    NPCS[_n + '-sit'] = dict(NPCS[_n], pose='sit')
 # ---- the crowd: passers-by (js/crowd.js) -----------------------------------------------------------------------
 # A few bodies and outfits, every colour on them a KEY (XKEYS) that js/crowd.js swaps for the planet's wardrobe as a
 # sheet loads (as js/look.js does the pilot's) — so a handful of renders make hundreds of different people. Each

@@ -858,26 +858,20 @@
     {
       "x": 2,
       "y": 4,
-      "type": "enter_world",
-      "target": "arcadia-street",
-      "spawn": [
-        31,
-        9
-      ],
+      "type": "express_lift",
       "label": "LIFT \u00b7 STREET",
-      "prompt": "PRESS E TO RIDE DOWN"
+      "prompt": "PRESS E TO CALL THE LIFT",
+      "shaft": "skywalk",
+      "lobby": "skywalk"
     },
     {
       "x": 28,
       "y": 4,
-      "type": "enter_world",
-      "target": "arcadia-skypad",
-      "spawn": [
-        19,
-        5
-      ],
+      "type": "express_lift",
       "label": "LIFT \u00b7 SKYPORT 7",
-      "prompt": "PRESS E TO RIDE UP"
+      "prompt": "PRESS E TO CALL THE LIFT",
+      "shaft": "skyport",
+      "lobby": "skywalk"
     },
     {
       "x": 4,
