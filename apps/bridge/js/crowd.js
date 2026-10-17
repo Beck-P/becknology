@@ -185,18 +185,23 @@ var BridgeCrowd = (function () {
     }
     return bases[name];
   }
-  /** A person's sheet ({ body, dress }, seated or not) recoloured, or null while its base loads. Kept (the last 80). */
-  function sheetOf(p, sit) {
-    var name = p.body + (sit ? '-sit' : ''), key = name + '|' + p.code;
-    if (painted[key]) return painted[key];
-    var b = base(name);
-    if (!b.ready) return null;
+  // what each key colour (and its line-work copy) becomes on this person
+  function keyMap(p) {
     var map = {};
     Object.keys(XKEYS).forEach(function (k) {
       var to = p.dress[k];
       if (!to) return;
       for (var i = 0; i < 3; i++) { var from = hex(XKEYS[k][i]), into = hex(to[i]); map[int(from)] = into; map[int(lineOf(from))] = lineOf(into); }
     });
+    return map;
+  }
+  /** A person's sheet ({ body, dress }, seated or not) recoloured, or null while its base loads. Kept (the last 80). */
+  function sheetOf(p, sit) {
+    var name = p.body + (sit ? '-sit' : ''), key = name + '|' + p.code;
+    if (painted[key]) return painted[key];
+    var b = base(name);
+    if (!b.ready) return null;
+    var map = keyMap(p);
     var c = document.createElement('canvas');
     c.width = b.img.naturalWidth; c.height = b.img.naturalHeight;
     var g = c.getContext('2d', { willReadFrequently: true });
@@ -697,26 +702,34 @@ var BridgeCrowd = (function () {
       if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast(who.name, 'Thanks a lot', '+' + want.pay + ' coins for the ' + item.name.toLowerCase());
     } });
     if (typeof BridgeInteractions === 'undefined') return;
-    BridgeInteractions.choose({ title: who.name, text: text, buttons: buttons, closeLabel: 'Bye', art: function (cv) { portrait(cv, who); } });
+    BridgeInteractions.choose({ title: who.name, text: text, buttons: buttons, closeLabel: 'Bye', face: function (cv) { portrait(cv, who); } });
   }
   function towardYou(st) {
     if (typeof BridgeCharacter === 'undefined') return st.facing;
     var rp = BridgeCharacter.getRenderPos(), dx = rp.x - st.x, dy = rp.y - st.y;
     return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
   }
-  // their head and shoulders, from the first standing frame, for the talk card
+  // their face for the talk card: their body's portrait (assets/portraits/crowd/<body>.png, tools/bridge-art/portraits.py)
+  // in their colours — the same keys as the sheets, plus the portrait's iris and blush (js/look.js portraitKeys) — or,
+  // with no portrait file, the head and shoulders of their first standing frame
   function portrait(cv, who) {
+    if (typeof BridgeLook !== 'undefined' && BridgeLook.portrait) {
+      return BridgeLook.portrait(cv, 'crowd/' + who.body, { map: BridgeLook.portraitKeys(keyMap(who), who.seed, who.dress.skin),
+        key: who.code + '|' + who.seed, blink: true, fallback: function () { crop(cv, who); } });
+    }
+    crop(cv, who);
+  }
+  function crop(cv, who) {
     var sh = sheetOf(who, false);
     if (!sh) { cv.remove(); return; }
-    var S = 3;
-    cv.width = 26 * S; cv.height = 26 * S;
     var g = cv.getContext('2d');
     g.imageSmoothingEnabled = false;
     var t = document.createElement('canvas'); t.width = FW; t.height = FH;
     var tg = t.getContext('2d'); tg.drawImage(sh, 0, 0, FW, FH, 0, 0, FW, FH);
     var a = tg.getImageData(0, 0, FW, FH).data, top = 0;
     for (var y = 0; y < FH && !top; y++) for (var x = 0; x < FW; x++) if (a[(y * FW + x) * 4 + 3]) { top = y; break; }
-    g.drawImage(t, 3, Math.max(0, top - 1), 26, 26, 0, 0, 26 * S, 26 * S);
+    g.clearRect(0, 0, cv.width, cv.height);
+    g.drawImage(t, 3, Math.max(0, top - 1), 26, 26, 0, 0, cv.width, cv.height);
   }
 
   // ---- drawing ----------------------------------------------------------------------------------------------------

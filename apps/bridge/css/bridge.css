@@ -981,7 +981,10 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
 .wd-sub { font-size: 12px; letter-spacing: 1px; margin: -2px 0 10px; opacity: 0.85; }
 .wd-hint { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; margin-top: 10px; opacity: 0.75; }
 .wd-hint .ip-key { min-width: 18px; height: 18px; font-size: 10px; }
-.wd-portrait { width: 72px; height: 72px; flex: 0 0 72px; image-rendering: pixelated; border-radius: 4px; }
+/* a face on the talk card (tools/bridge-art/portraits.py, 64 px): ×2 here, ×1 on a phone — a whole multiple, inside a
+   2 px ring (padding) that each theme's frame draws in */
+.wd-portrait { width: 132px; height: 132px; flex: 0 0 132px; padding: 2px; image-rendering: pixelated; border-radius: 4px; }
+.world-dialog.wd-talk { width: min(520px, 92vw); }
 .wd-options { display: flex; flex-direction: column; gap: 5px; margin: 10px 0 2px; }
 .wd-opt, .wd-btn {
   font: inherit; font-size: 14px; text-align: left; cursor: pointer;
@@ -1133,7 +1136,7 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
 @media (max-width: 520px) {
   .world-dialog { top: auto; bottom: 86px; transform: translate(-50%, 0) scale(0.97); }
   .world-dialog.visible { transform: translate(-50%, 0) scale(1); }
-  .wd-portrait { width: 56px; height: 56px; flex-basis: 56px; }
+  .wd-portrait { width: 68px; height: 68px; flex-basis: 68px; }
 }
 .wd-menu .wd-text, .wd-shop .wd-text { min-height: 0; }
 
@@ -1753,7 +1756,7 @@ html.touch .world-dialog {
 }
 @media (orientation: landscape) and (max-height: 520px) {
   html.touch .world-dialog { width: min(600px, 94vw); padding: 10px 14px 8px; gap: 10px; }
-  html.touch .wd-portrait { width: 48px; height: 48px; flex-basis: 48px; }
+  html.touch .wd-portrait { width: 68px; height: 68px; flex-basis: 68px; }
   html.touch .wd-convo .wd-options { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
   html.touch .wd-opt { padding: 6px 10px; }
 }
