@@ -3156,5 +3156,279 @@
         "when": "under-the-willow"
       }
     ]
+  },
+  "nadia": {
+    "name": "Nadia Voss",
+    "role": "Mixologist, Cirrus (the Terraces, L200)",
+    "sheet": "npc-mixologist",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "NADIA"
+      }
+    ],
+    "greet": "CIRRUS. THE HIGHEST BAR YOU CAN GET INTO WITHOUT A NAME ON A LIST. WHAT ARE WE CELEBRATING?",
+    "again": "BACK FOR THE SOUR? EVERYONE COMES BACK FOR THE SOUR.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I POURED IN THE DISTRICT TEN YEARS. CLUB VOID, A PLACE THAT ISN'T THERE ANY MORE, A NOODLE BAR THAT SOLD BEER IF YOU ASKED NICELY. UP HERE THEY TIP IN SPIRES MONEY AND COMPLAIN ABOUT THE ICE. I LIKE IT BETTER DOWN THERE. I EARN MORE UP HERE."
+      },
+      {
+        "q": "The bar",
+        "a": "ROUND, SO NOBODY GETS THE BAD SEAT. THE TOWER IN THE MIDDLE IS MY BACK BAR; THE SIGN IS PINK BECAUSE THE OWNER'S WIFE LIKED PINK. THE SOUR'S MINE. THE SPRITZ IS FOR PEOPLE WHO WANT TO HOLD SOMETHING PRETTY."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE CHAMPAGNE BAR UP IN THE SPIRES POACHED MY LAST BARBACK. THEY GAVE HIM A WHITE JACKET AND A NEW NAME. HE STILL SENDS ME POSTCARDS OF THE STARS. YOU CAN'T SEE THEM FROM HERE - THE SMOG'S IN THE WAY."
+      },
+      {
+        "q": "The Loop",
+        "a": "THE TRAIN GOES ROUND EVERY TWELVE MINUTES. THE LAST ONE OF THE NIGHT IS ALWAYS FULL OF PEOPLE WHO MISSED THE ONE BEFORE. I CAN SET MY CLOCK BY THE RUMBLE."
+      }
+    ]
+  },
+  "bastien": {
+    "name": "Chef Bastien",
+    "role": "Halo grill (the Terraces)",
+    "sheet": "npc-grill-chef",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "CHEF BASTIEN"
+      }
+    ],
+    "greet": "YOU'RE STANDING IN THE SMOKE. GOOD. THAT'S WHERE THE FLAVOUR IS.",
+    "again": "SKEWERS? I'LL PUT SOME ON.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "BASTIEN. I COOKED ON A FREIGHTER FOR SIX YEARS - THE SPACEPORT DOWN IN THE DISTRICT, THEN EVERYWHERE. A GRILL IS A GRILL. UP HERE THE WIND TAKES THE SMOKE OFF OVER THE EDGE AND SOMEWHERE A THOUSAND FEET DOWN SOMEONE GETS HUNGRY."
+      },
+      {
+        "q": "The meat",
+        "a": "VAT BEEF, GROWN IN THE UNDERCITY, AND DON'T MAKE THAT FACE - IT'S GOOD BEEF. THE SALT COMES FROM LUMAR, OFF A HARBOUR CALLED DIGGEN'S POINT. SEA SALT FROM ANOTHER WORLD. THEY CHARGE MORE FOR THE SALT THAN THE STEAK."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "LUMEN'S HIRO AND I HAVE A BET ON WHO SELLS MORE SKEWERS BY THE END OF THE YEAR. HE'S WINNING. DON'T TELL HIM I SAID."
+      }
+    ]
+  },
+  "hiro": {
+    "name": "Hiro Tanabe",
+    "role": "Lumen izakaya (the Terraces)",
+    "sheet": "npc-izakaya",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "HIRO"
+      }
+    ],
+    "greet": "IRASSHAI. SIT, SIT. THE SAKE IS WARM AND THE COALS ARE WHITE.",
+    "again": "WELCOME BACK. THE USUAL CUSHION?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "MY FATHER HAD A STALL ON LANTERN ROW, DOWN IN THE OLD QUARTER. SAME TARE - HE STARTED IT THIRTY YEARS AGO AND I'VE ADDED TO IT EVERY NIGHT SINCE. THE POT IS OLDER THAN THIS TOWER."
+      },
+      {
+        "q": "The skewers",
+        "a": "BINCHOTAN - WHITE CHARCOAL. NO FLAME, JUST HEAT. YOU TURN THEM WHEN THEY TELL YOU. THEY TELL YOU WITH A SOUND."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "BASTIEN THINKS WE HAVE A BET. WE DO NOT HAVE A BET. I AM SIMPLY WINNING."
+      }
+    ]
+  },
+  "dove": {
+    "name": "Dove Okafor-Reyes",
+    "role": "Air cab driver (the Terraces pad)",
+    "sheet": "npc-cabbie",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "DOVE"
+      }
+    ],
+    "greet": "NEED A LIFT? I DO SKYPORT, THE SPIRES, THE SPACEPORT, ANYWHERE WITH A PAD AND A REASON.",
+    "again": "WHERE TO?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TWENTY YEARS IN THE LANES. I KNOW EVERY TOWER BY ITS LIGHTS. YOU KNOW YOU'RE IN THE SPIRES WHEN THE NEON GOES PASTEL AND THE PASSENGERS STOP SAYING THANK YOU."
+      },
+      {
+        "q": "The lanes",
+        "a": "THE TRAFFIC RUNS IN RIVERS BETWEEN THE TOWERS - EAST ON THE TOP LANE, WEST UNDER IT. POLICE CUT ACROSS WHEREVER THEY LIKE. ABOVE THE SMOG IT'S QUIET. TOO QUIET. I DON'T TRUST QUIET."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMEONE UP IN THE SPIRES HAS A YACHT THAT CAN FLY. ACTUALLY FLY. KEEPS IT AT THE SKY DOCKS. I'VE SEEN IT GO OUT ONCE, LIT UP LIKE A CHANDELIER, NOBODY AT THE WHEEL."
+      }
+    ]
+  },
+  "liftman": {
+    "name": "Augustin",
+    "role": "Lift attendant, the Terraces express lobby",
+    "sheet": "npc-liftman",
+    "at": [
+      {
+        "world": "arcadia-terraces",
+        "label": "THE LIFT ATTENDANT"
+      }
+    ],
+    "greet": "GOOD EVENING. THE SPIRE EXPRESS GOES UP TO FOUR HUNDRED AND EIGHTY. THE CORE EXPRESS GOES - WELL. EVERYWHERE.",
+    "again": "UP OR DOWN THIS EVENING?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "AUGUSTIN. FORTY-ONE YEARS IN THIS LOBBY. I HAVE PRESSED THE BUTTON FOR TWO MAYORS, A DUCHESS AND A MAN WHO SAID HE WAS A GOD. THE GOD TIPPED THE WORST."
+      },
+      {
+        "q": "The express",
+        "a": "THE SPIRE EXPRESS CLIMBS TWO HUNDRED AND EIGHTY FLOORS IN NINETY SECONDS. YOUR EARS WILL POP AT THE SMOG LINE. WHEN THE DOORS OPEN, LOOK UP. YOU'LL SEE STARS. REAL ONES."
+      },
+      {
+        "q": "The Core",
+        "a": "THE CORE EXPRESS GOES DOWN THROUGH THE DISTRICT AND KEEPS GOING. I HAVE NEVER TAKEN IT BELOW THE STREET. I HAVE A WIFE."
+      }
+    ]
+  },
+  "odette": {
+    "name": "Odette Lark",
+    "role": "Singer, Moonglow",
+    "sheet": "npc-jazz-singer",
+    "at": [
+      {
+        "world": "arcadia-jazz",
+        "label": "ODETTE"
+      }
+    ],
+    "greet": "CAREFUL, HONEY. YOU WALKED IN DURING THE QUIET PART. EVERYBODY HEARD YOUR SHOES.",
+    "again": "YOU CAME BACK. THEY ALWAYS COME BACK FOR THE SECOND SET.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I SANG MY FIRST NIGHT HERE AT NINETEEN IN THIS SAME DRESS. THEY'VE LET THE DRESS OUT TWICE AND MY FEE UP FOUR TIMES. THE SPIRES KEEP ASKING ME TO SING AT THE OPERA. I KEEP SAYING THE OPERA CAN COME DOWN HERE."
+      },
+      {
+        "q": "The band",
+        "a": "RAY ON THE PIANO - HE TAUGHT ME TO WAIT A BEAT. MINGO ON THE BASS, WHO HASN'T SPOKEN A FULL SENTENCE SINCE I'VE KNOWN HIM AND DOESN'T NEED TO. LOU-LOU ON THE DRUMS. SHE'S THE ONLY ONE OF US UNDER FIFTY AND SHE KEEPS US HONEST."
+      },
+      {
+        "q": "Moonglow",
+        "a": "THE WINDOW. THAT'S THE WHOLE REASON. THE MOON SITS IN THE SMOG RIGHT THERE BEHIND ME ON A CLEAR NIGHT AND I SING TO IT AND IT DOESN'T SING BACK. BEST AUDIENCE I EVER HAD."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "LADY VELVET AT THE ROYALE AND I CAME UP TOGETHER. WE DON'T SPEAK. WE SEND EACH OTHER FLOWERS ON OPENING NIGHTS WITH NO CARD. EVERYBODY KNOWS WHO THEY'RE FROM."
+      }
+    ]
+  },
+  "ray": {
+    "name": "Ray Delacroix",
+    "role": "Pianist, Moonglow",
+    "sheet": "npc-jazz-pianist",
+    "at": [
+      {
+        "world": "arcadia-jazz",
+        "label": "RAY"
+      }
+    ],
+    "greet": "MM. ONE MORE CHORUS AND I'M ALL YOURS.",
+    "again": "STILL HERE? GOOD. THIS NEXT ONE'S FOR THE PEOPLE STILL HERE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I'VE PLAYED THIS PIANO LONGER THAN THE TOWER'S HAD ITS NAME. IT USED TO BE THE HALBERD BUILDING. BEFORE THAT IT WAS A HOLE IN THE AIR. I PLAYED THE HOLE TOO."
+      },
+      {
+        "q": "The cigarette",
+        "a": "I QUIT THIRTY YEARS AGO. THE CIGARETTE DIDN'T. IT LIKES IT HERE."
+      }
+    ]
+  },
+  "mingo": {
+    "name": "Mingo",
+    "role": "Bass, Moonglow",
+    "sheet": "npc-jazz-bassist",
+    "at": [
+      {
+        "world": "arcadia-jazz",
+        "label": "MINGO"
+      }
+    ],
+    "greet": "MINGO NODS. THE BASS SAYS HELLO FOR HIM.",
+    "again": "MINGO NODS AGAIN, A LITTLE WARMER.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "...BASS."
+      },
+      {
+        "q": "The band",
+        "a": "ODETTE SINGS. RAY THINKS. LOU-LOU DRIVES. I HOLD THE FLOOR UP. ...GOOD BAND."
+      }
+    ]
+  },
+  "sol": {
+    "name": "Sol Achebe",
+    "role": "Bartender, Moonglow",
+    "sheet": "npc-jazz-bartender",
+    "at": [
+      {
+        "world": "arcadia-jazz",
+        "label": "SOL"
+      }
+    ],
+    "greet": "EVENING. KEEP YOUR VOICE DOWN AND YOUR GLASS UP AND WE'LL GET ALONG FINE.",
+    "again": "OLD FASHIONED? STIRRED FOR THE LENGTH OF A BALLAD. IT'S A RULE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "SOL. I TEND BAR LIKE RAY PLAYS PIANO - SLOW, AND ONLY WHAT'S NEEDED. THE BLUE NOTE'S MINE. IT TASTES THE WAY THE LAST SONG OF THE NIGHT SOUNDS."
+      },
+      {
+        "q": "The room",
+        "a": "NO SCREENS IN HERE. NO HOLO-ADS. THE OWNERS TRIED ONCE; ODETTE STOPPED SINGING UNTIL THEY TOOK IT DOWN. TOOK FOUR NIGHTS. FULLEST FOUR NIGHTS WE EVER HAD."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THERE'S A MEMBERS' CLUB UP IN THE SPIRES WITH A JAZZ ROOM NOBODY'S PLAYED IN FOR YEARS. THEY'VE OFFERED ODETTE A FORTUNE. SHE SENDS THEIR LETTERS BACK WITH A LIPSTICK KISS ON THEM."
+      }
+    ]
+  },
+  "iris": {
+    "name": "Iris Vance",
+    "role": "Concierge, the Atrium",
+    "sheet": "npc-concierge",
+    "at": [
+      {
+        "world": "arcadia-atrium",
+        "label": "IRIS"
+      }
+    ],
+    "greet": "WELCOME TO THE ATRIUM, L200. HOW CAN I HELP YOU FIND YOUR WAY?",
+    "again": "LOST AGAIN? IT'S A BIG CITY. IT'S ALL I THINK ABOUT.",
+    "topics": [
+      {
+        "q": "Getting around",
+        "a": "THE LOOP TAKES YOU ROUND THE RING - LANTERN ROW, THE SPACEPORT, BACK HERE. THE SPIRE EXPRESS IN THE LOBBY OUTSIDE GOES UP TO THE SPIRES. THE CORE EXPRESS GOES DOWN, ALL THE WAY. AND THE CABS ON THE PAD GO ANYWHERE WITH A PAD."
+      },
+      {
+        "q": "The levels",
+        "a": "THE STREET IS LEVEL ZERO. WE'RE TWO HUNDRED UP. THE SPIRES ARE FOUR-EIGHTY, ABOVE THE SMOG. BELOW THE STREET, THE UNDERCITY, AND BELOW THAT THE SUMP. THE MONEY GOES UP. THE WATER GOES DOWN."
+      },
+      {
+        "q": "The Atrium",
+        "a": "FORTY FLOORS OF SHOPS AROUND ONE EMPTY MIDDLE. THE CHANDELIER IS NINE HUNDRED RODS OF LIGHT; A MAN COMES ONCE A MONTH TO REPLACE THE ONE THAT WENT OUT. HE NEVER FINDS IT. HE CHANGES ONE ANYWAY."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE SPIRES HAVE A CHROME BOUTIQUE NOW - DESIGNER IMPLANTS, GOLD-LEAF CIRCUITRY. THEY'RE TALKING ABOUT OPENING A BRANCH DOWN HERE. THE SHUTTERED SHOP AT THE END. WE'LL SEE."
+      }
+    ]
   }
 }

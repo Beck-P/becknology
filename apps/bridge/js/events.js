@@ -402,17 +402,54 @@ var BridgeEvents = (function () {
       note: 'A brownout rolled down the District street'
     },
     chase: {
-      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley'], name: 'A chase in the sky lanes',
+      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-terraces'], name: 'A chase in the sky lanes',
       len: 1.5, w: 2, at: null, hint: 'Sirens — a chase through the sky lanes!', sfx: 'siren', loop: { name: 'siren', every: 2.2, near: 999 },
       behind: function (L, ctx, offX, offY, ts, ms) { chaseSky(L, ctx, ms); },
       over: function (L, ctx, offX, offY, ts, ms) { chaseLights(L, ctx, ms); },
       react: 'look', note: 'A police chase tore through Arcadia\'s sky lanes'
     },
     hijack: {
-      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-home', 'arcadia-penthouse'],
+      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-home', 'arcadia-penthouse', 'arcadia-terraces'],
       name: 'NULL takes the screens', len: 1, w: 1, at: null, hint: 'Every screen in the city — NULL\'s mark', sfx: 'glitch', loop: { name: 'glitch', every: 7, near: 999 },
       react: 'look', note: function (L) { return 'NULL had every screen in Arcadia: "' + pick(NULL_SAYS, L.key) + '"'; },
       over: function (L, ctx, offX, offY, ts, ms) { scanlines(L, ctx, ms); }
+    },
+
+    // the Mid-Levels' Terraces (L200): a proposal at Halo, a jam at Moonglow
+    proposal: {
+      world: 'arcadia-terraces', name: 'A proposal at Halo', len: 4, w: 2, at: [16.5, 32],
+      hint: 'Everyone on Halo\'s deck has gone quiet — someone\'s on one knee', sfx: 'chime',
+      cast: [{ sheet: 'npc-highroller', x: 15, y: 32, f: 'right' }, { sheet: 'npc-gambler-a', x: 17, y: 32, f: 'left' }],
+      gather: { x: 16, y: 33.4, r: 3, n: 8, face: [16, 32] },
+      say: [[4, 0, 'I HAD A WHOLE SPEECH…'], [16, 0, 'WILL YOU…?'], [22, 1, 'YES! OBVIOUSLY YES!'], [26, 'at', 'SHE SAID YES!'], [90, 'at', 'CHAMPAGNE FOR THE DECK!']],
+      talk: [{ x: 16, y: 33, label: 'THE HAPPY COUPLE', prompt: 'PRESS E TO CONGRATULATE THEM', on: function (L) {
+        if (L.t < 22000) { say('THE HAPPY COUPLE', 'NOT YET - HE HASN\'T ASKED. EVERYONE ON THE DECK IS HOLDING THEIR BREATH.'); return; }
+        if (once(L, 'fizz', function () { give('champagne', 1); }))
+          say('THE HAPPY COUPLE', 'HE SHAKES YOUR HAND TWICE. SHE PUTS A FLUTE OF CHAMPAGNE IN YOUR OTHER ONE. "WE MET DOWN IN THE DISTRICT. LOOK AT US NOW."');
+        else say('THE HAPPY COUPLE', '"THANK YOU! WE\'RE GOING TO TELL EVERYONE ABOUT THE STRANGER WHO CLAPPED LOUDEST."');
+      } }],
+      tick: function (L) {
+        if (L.t > 22000 && !L.cheered) {
+          L.cheered = 1;
+          if (typeof BridgeCrowd !== 'undefined' && BridgeCrowd.react) try { BridgeCrowd.react('arcadia-terraces', { x: 16, y: 32, r: 8, kind: 'cheer', ms: 5000 }); } catch (e) { /* no crowd */ }
+        }
+      },
+      over: function (L, ctx, offX, offY, ts, ms) { if (L.t > 22000) petals(L, ctx, offX, offY, ts, ms, [12, 27, 21, 36]); },
+      note: 'A proposal on Halo\'s deck, two hundred floors up'
+    },
+    jam: {
+      world: 'arcadia-jazz', name: 'A jam at Moonglow', len: 5, w: 3, at: [14, 6],
+      hint: 'Ray\'s waved someone up from the floor — a jam session', loop: { name: 'chime', every: 6, near: 18 },
+      cast: [{ sheet: 'npc-highroller', x: 16, y: 6, f: 'up' }, { sheet: 'npc-gambler-c', x: 9, y: 5, f: 'right' }],
+      gather: { x: 14, y: 8, r: 2.6, n: 6, face: [14, 4] },
+      say: [[3, 'at', 'RAY CALLS A TUNE NOBODY KNOWS'], [30, 0, 'TAKE IT, ODETTE'], [80, 'at', 'ONE MORE CHORUS!']],
+      talk: [{ x: 14, y: 7, label: 'THE JAM', prompt: 'PRESS E TO LISTEN', on: function (L) {
+        if (once(L, 'listen', function () { if (typeof BridgeInventory !== 'undefined' && BridgeInventory.restoreEnergy) BridgeInventory.restoreEnergy(25); }))
+          note('A jam at Moonglow', 'Odette scatted over Ray\'s chords until the moon went behind the smog.');
+        say('THE JAM', 'YOU STAND AT THE BACK WITH YOUR EYES SHUT. THE PIANO ASKS, THE SAX ANSWERS, THE BASS AGREES WITH BOTH OF THEM. NOBODY IS LOOKING AT THEIR WRIST.');
+      } }],
+      over: function (L, ctx, offX, offY, ts, ms) { notes(ctx, offX, offY, ts, ms, 14, 4, 1); notes(ctx, offX, offY, ts, ms, 11, 4, 2); },
+      note: 'Sat in on a jam session at Moonglow'
     },
 
     // ---- Verdance ----

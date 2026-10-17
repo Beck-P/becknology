@@ -716,6 +716,34 @@ var BridgeItems = (function () {
       px(ctx, x, y, u, '#d8d8e8', [[7, 8, 1, 4], [5, 12, 6, 1]]);
     };
   }
+  // the Mid-Levels' Terraces (L200): an espresso, a skewer off the grill, a tumbler on the rocks, a flask of sake
+  function espressoIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1418', [[3, 6, 9, 6], [12, 7, 2, 3], [2, 12, 12, 2]]);
+    px(ctx, x, y, u, '#f0ece4', [[4, 7, 7, 4], [12, 8, 1, 1], [3, 12, 10, 1]]); px(ctx, x, y, u, '#5a3018', [[4, 7, 7, 1]]);
+    px(ctx, x, y, u, '#c87a40', [[5, 7, 3, 1]]); px(ctx, x, y, u, 'rgba(240,240,255,0.6)', [[6, 2, 1, 3], [8, 3, 1, 3]]);
+  }
+  function skewerIcon(meat, glaze) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#6a4a2a', [[1, 13, 2, 1], [3, 12, 1, 1], [13, 2, 2, 1]]);
+      px(ctx, x, y, u, '#2a1608', [[3, 9, 4, 4], [6, 6, 4, 4], [9, 3, 4, 4]]);
+      px(ctx, x, y, u, meat, [[4, 10, 2, 2], [7, 7, 2, 2], [10, 4, 2, 2]]); px(ctx, x, y, u, glaze, [[4, 10, 1, 1], [7, 7, 1, 1], [10, 4, 1, 1]]);
+    };
+  }
+  function tumblerIcon(drink, peel) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#1a1a2a', [[3, 4, 10, 10]]);
+      px(ctx, x, y, u, '#d8e8f0', [[4, 5, 8, 8]]); px(ctx, x, y, u, drink, [[4, 8, 8, 5]]);
+      px(ctx, x, y, u, '#f0f8ff', [[5, 8, 3, 3]]); px(ctx, x, y, u, peel, [[9, 3, 2, 4]]); px(ctx, x, y, u, '#ffffff', [[4, 5, 1, 3]]);
+    };
+  }
+  function sakeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1418', [[6, 2, 4, 2], [5, 4, 6, 9], [3, 11, 4, 3], [11, 11, 3, 3]]);
+    px(ctx, x, y, u, '#f0ece0', [[6, 4, 4, 8], [7, 3, 2, 1], [4, 12, 2, 1], [12, 12, 1, 1]]); px(ctx, x, y, u, '#3a5a8a', [[6, 7, 4, 2]]);
+  }
   function martiniIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1a3a', [[1, 2, 14, 1], [2, 3, 1, 1], [13, 3, 1, 1], [3, 4, 1, 1], [12, 4, 1, 1], [4, 5, 1, 1], [11, 5, 1, 1], [5, 6, 1, 1], [10, 6, 1, 1], [6, 7, 4, 1], [7, 8, 2, 5], [4, 13, 8, 1]]);
@@ -1365,6 +1393,25 @@ var BridgeItems = (function () {
                      type: 'material', stackable: true, draw: chipIcon, value: 60 },
     lucky_dice:    { id: 'lucky_dice', name: 'Lucky Dice', desc: 'A pair of the Royale\'s retired craps dice, drilled and sealed. They have seen a lot of sevens.',
                      type: 'material', stackable: true, draw: diceIcon, value: 25 },
+    // the Mid-Levels' Terraces: the café, Halo's grill, Lumen, Cirrus's bar and Moonglow's
+    cloud_espresso: { id: 'cloud_espresso', name: 'Cloud Espresso', desc: 'Glass & Steam\'s house shot, crema like a smog bank. Energy.', type: 'drink',
+                     stackable: true, draw: espressoIcon, effects: { energy: 25 }, value: 4, onUse: consumableUse },
+    glass_cake:    { id: 'glass_cake', name: 'Glass Cake', desc: 'A slice of sponge under a sugar pane you can see the city through. Energy and health.', type: 'food',
+                     stackable: true, draw: cakeIcon, effects: { energy: 25, hp: 10 }, value: 6, onUse: consumableUse },
+    halo_skewers:  { id: 'halo_skewers', name: 'Halo Skewers', desc: 'Vat beef off Bastien\'s grill, charred, glazed and salted with Lumar sea salt. Health and energy.', type: 'food',
+                     stackable: true, draw: skewerIcon('#8a3a1e', '#e8a050'), effects: { hp: 35, energy: 30 }, value: 8, onUse: consumableUse },
+    lumen_yakitori: { id: 'lumen_yakitori', name: 'Lumen Yakitori', desc: 'Hiro\'s skewers over binchotan: chicken, a little smoke, a lot of tare. Energy and health.', type: 'food',
+                     stackable: true, draw: skewerIcon('#c88a40', '#5a2a10'), effects: { energy: 30, hp: 20 }, value: 7, onUse: consumableUse },
+    warm_sake:     { id: 'warm_sake', name: 'Warm Sake', desc: 'A flask warmed in a pan of water, tested on Hiro\'s fingertip. Energy.', type: 'drink',
+                     stackable: true, draw: sakeIcon, effects: { energy: 30 }, value: 5, onUse: consumableUse },
+    cirrus_sour:   { id: 'cirrus_sour', name: 'Cirrus Sour', desc: 'Nadia\'s own: yuzu, gin, a cloud of egg white with the bar\'s neon in it. Energy.', type: 'drink',
+                     stackable: true, draw: coupeIcon('#f0c8e8'), effects: { energy: 40 }, value: 7, onUse: consumableUse },
+    skyline_spritz: { id: 'skyline_spritz', name: 'Skyline Spritz', desc: 'Pink bitters and bubbles over ice, a sliver of blood orange. Energy.', type: 'drink',
+                     stackable: true, draw: tumblerIcon('#e86a8a', '#e8902a'), effects: { energy: 32 }, value: 6, onUse: consumableUse },
+    blue_note:     { id: 'blue_note', name: 'Blue Note', desc: 'Moonglow\'s house cocktail: blue, cold, and a little sad in the best way. Energy.', type: 'drink',
+                     stackable: true, draw: coupeIcon('#4a6ae0'), effects: { energy: 38 }, value: 7, onUse: consumableUse },
+    moonglow_old_fashioned: { id: 'moonglow_old_fashioned', name: 'Moonglow Old Fashioned', desc: 'Rye, a sugar cube, bitters, one big ice moon. Sol stirs it for exactly as long as a ballad. Energy and health.',
+                     type: 'drink', stackable: true, draw: tumblerIcon('#c87a30', '#e8902a'), effects: { energy: 35, hp: 10 }, value: 8, onUse: consumableUse },
     // past the Hoarspire (js/expedition.js)
     probe:         { id: 'probe', name: 'Avalanche Probe', desc: 'A folding pole, three paces long. On the Last Ridge, F pushes it into the snow ahead of you: hollow, or solid.',
                      type: 'tool', stackable: false, draw: probeIcon, value: 20,

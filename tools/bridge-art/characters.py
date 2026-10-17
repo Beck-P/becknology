@@ -448,6 +448,37 @@ NPCS = {
                           trim=('#7a5a10', '#c89a28', '#f0d060'), stole=('#a89a88', '#e2d8c8', '#fbf6ec'), sleeve='skin2',
                           circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#6a0a3a', '#c0186a', '#ff70b0'),
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), long_hair='flowing', pose='sit'),
+    # The Mid-Levels' Terraces (L200): Nadia behind Cirrus's round bar in a cyan waistcoat, Chef Bastien at Halo's grill,
+    # Hiro at Lumen's skewers, Dove the cab driver in her company jacket, the lift attendant in his cap; Moonglow's
+    # quartet — Odette Lark in midnight-blue sequins, Ray at the piano, Mingo on the bass, Lou-Lou on the drums — and Sol
+    # behind the bar
+    'npc-mixologist': dict(skin='skin3', shirt=('#a8a49a', '#e8e4d8', '#fcfaf2'), waistcoat=('#0e4a54', '#1a7a88', '#30b0c0'),
+                          bowtie=('#0a0a0e', '#18181e', '#2e2e3a'), hair=('#141010', '#241c1a', '#362a26'), bun=True,
+                          earpiece=True, pose='stand'),
+    'npc-grill-chef': dict(skin='skin', shirt=('#1a1a20', '#2a2a32', '#3e3e48'), apron=('#5a3a20', '#8a5a30', '#aa7a48'),
+                          hair=('#8a4a20', '#b06a30', '#d08a48'), beard=True, brawny=True, beanie=('#1a1a20', '#2a2a32', '#3e3e48'),
+                          pose='stand'),
+    'npc-izakaya':   dict(skin='skin2', shirt=('#1a2a4a', '#2a3e6a', '#3e5a8a'), apron=('#141018', '#241c2c', '#3a2e44'),
+                          hair=('#141010', '#241c1a', '#362a26'), cap=('#e8e4dc', '#f4f0e8', '#ffffff'), pose='stand'),
+    'npc-cabbie':    dict(skin='skin3', shirt=('#7a5a10', '#c89a20', '#f0c840'), vest=('#141018', '#241c2c', '#3a2e44'),
+                          hair=('#5a1a4a', '#8a2a70', '#b04a90'), ponytail=True, cap=('#141018', '#241c2c', '#3a2e44'), pose='stand'),
+    'npc-liftman':   dict(skin='skin', shirt=('#4a0612', '#7a0e1e', '#a81a2e'), coat=('#4a0612', '#7a0e1e', '#a81a2e'),
+                          cap=('#4a0612', '#7a0e1e', '#a81a2e'), gloves=True, hair=('#8a8a90', '#b8b8c0', '#dcdce4'),
+                          mustache=True, pose='stand'),
+    'npc-jazz-singer': dict(skin='skin3', shirt=('#141c4a', '#24307a', '#3a4ab0'), skirt=('#141c4a', '#24307a', '#3a4ab0'), gown=True,
+                          sequin=True, sleeve='skin3', gloves=('#c8c0b0', '#ece4d4', '#fffaf0'),
+                          hair=('#141010', '#241c1a', '#362a26'), long_hair='flowing', blush=True, pose='stand'),
+    'npc-jazz-pianist': dict(skin='skin2', shirt=('#0e0e14', '#1c1c26', '#30303e'), bib=True, bowtie=('#5a0a14', '#8a1420', '#b02030'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), mustache=True, pose='sit'),
+    'npc-jazz-bassist': dict(skin='skin3', shirt=('#2a2018', '#4a3a28', '#6a5438'), vest=('#141018', '#241c2c', '#3a2e44'),
+                          hair=('#141010', '#241c1a', '#362a26'), beard=True, cap=('#2a2018', '#4a3a28', '#6a5438'), pose='stand'),
+    'npc-jazz-drummer': dict(skin='skin', shirt=('#4a1a3a', '#7a2a5a', '#a84a7a'), hair=('#c06080', '#e080a0', '#f0a8c0'),
+                          bun=True, shades=True, pose='sit'),
+    'npc-concierge': dict(skin='skin0', shirt=('#4a7a8a', '#7ab0c0', '#a8dce8'), bib=('#c8ccd4', '#eceef2', '#ffffff'),
+                          hair=('#c8a050', '#e8c870', '#f8e8a0'), bun=True, earpiece=True, blush=True, pose='stand'),
+    'npc-jazz-bartender': dict(skin='skin2', shirt=('#a8a49a', '#e8e4d8', '#fcfaf2'), waistcoat=('#141c3a', '#24305a', '#3a4880'),
+                          bowtie=('#7a5a10', '#c89a28', '#f0d060'), hair=('#141010', '#241c1a', '#362a26'), bald=True,
+                          beard=True, pose='stand'),
 }
 # ---- the crowd: passers-by (js/crowd.js) -----------------------------------------------------------------------
 # A few bodies and outfits, every colour on them a KEY (XKEYS) that js/crowd.js swaps for the planet's wardrobe as a
