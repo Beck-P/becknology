@@ -28,7 +28,8 @@ const WS = process.argv[2] ? JSON.parse(fs.readFileSync(process.argv[2])) : fs.r
           const cx = Math.round(offX + (a.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
           const dx = cx - 16, dy = footY - 45 - Math.round((a.lift || 0) * Math.SQRT1_2 * ts);
           const row = rows[a.facing] || 0;
-          BridgeScene.drawOccluded(g, sc, img, 0, row * 48, 32, 48, dx, dy, footRow, offX, offY, null, null);
+          const depthRow = a.pose === 'sit' ? BridgeScene.seatedRow(footRow, a.facing) : footRow;   // as js/scene.js tests it
+          BridgeScene.drawOccluded(g, sc, img, 0, row * 48, 32, 48, dx, dy, depthRow, offX, offY, null, null);
           const seen = g.getImageData(0, 0, 120, 120).data;
           const c2 = document.createElement('canvas'); c2.width = 32; c2.height = 48; const g2 = c2.getContext('2d'); g2.drawImage(img, 0, row * 48, 32, 48, 0, 0, 32, 48);
           const all = g2.getImageData(0, 0, 32, 48).data;

@@ -506,6 +506,18 @@ var BridgeScene = (function () {
     if (op) ctx.restore();
   }
 
+  // One of Midnight's dead (an actor or walker with `ghost`): see-through, breathing a cold light, no shadow, not lit by
+  // the room (they give off their own light) — the sheet drawn faint, then again added on top, faint
+  function drawGhost(ctx, sc, img, sx, sy, dx, dy, footRow, offX, offY, now) {
+    var a = 0.5 + 0.12 * Math.sin(now / 900);
+    ctx.save();
+    ctx.globalAlpha = a;
+    drawOccluded(ctx, sc, img, sx, sy, FRAME_W, FRAME_H, dx, dy, footRow, offX, offY, '#bfeaff', null);
+    ctx.globalAlpha = 0.22 + 0.08 * Math.sin(now / 600);
+    drawOccluded(ctx, sc, img, sx, sy, FRAME_W, FRAME_H, dx, dy, footRow, offX, offY, '#7ad0ff', null, 'lighter');
+    ctx.restore();
+  }
+
   function getSheet(name) {
     if (!sheets[name]) {
       var e = { img: null, ready: false };
@@ -582,6 +594,19 @@ var BridgeScene = (function () {
     return { x: P[0][0], y: P[0][1], facing: 'down', moving: false, dist: 0 };
   }
 
+  // ---- seated figures ------------------------------------------------------------------------------------------------
+  // A seated sheet puts its floor point (16, 45) on the floor under the middle of the seat, but the figure isn't an upright
+  // billboard standing there: facing you, or side-on, its lap and hands reach forward over the seat, and the front half of
+  // the seat — nearer than that point — was taken for something in front of it and drawn across its waist (Beck: "this guy
+  // is clipping through the bench"). So a seated figure is depth-tested and sorted from the front edge of its seat, a
+  // quarter tile nearer (every bench, chair and stool is behind that; a table or desk in front, a little further, still
+  // hides the lap). Facing away, its lap reaches away from you: only its back overhangs the seat's near half, a tenth of a
+  // tile (a stool's or a window seat's rim no longer cuts across it), and a chair's back between you and it, a quarter
+  // tile out, still hides it. Drawn where it always was — only the row it's tested at moves. (You: js/character.js; other
+  // pilots: js/multi.js; passers-by: js/crowd.js; scene actors: below.)
+  var SEAT_FRONT = 0.25, SEAT_BACK = 0.1;
+  function seatedRow(row, facing) { return row + (facing === 'up' ? SEAT_BACK : SEAT_FRONT); }
+
   function actorDrawList(sc, world, offX, offY, ts, now) {
     var list = [];
     var wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId();
@@ -593,6 +618,8 @@ var BridgeScene = (function () {
       list.push({ footRow: footRow, draw: function (ctx) {
         var col = p.moving ? 4 + Math.floor(p.dist / 0.3) % 8 : idleCol(now + i * 137);
         var cx = Math.round(offX + (p.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
+        if (wk.ghost) return drawGhost(ctx, sc, sh.img, col * FRAME_W, (DIR_ROW[p.facing] || 0) * FRAME_H, cx - FRAME_W / 2,
+          footY - (FRAME_H - 3) - 2 - Math.round(Math.sin(now / 700 + i) * 2), footRow, offX, offY, now + i * 311);
         drawOccluded(ctx, sc, sh.img, col * FRAME_W, (DIR_ROW[p.facing] || 0) * FRAME_H, FRAME_W, FRAME_H, cx - FRAME_W / 2,
           footY - (FRAME_H - 3), footRow, offX, offY, tintAt(sc, world, Math.round(p.x), Math.round(p.y), now), { x: cx, y: footY, rx: 8, ry: 3 });
       } });
@@ -602,10 +629,10 @@ var BridgeScene = (function () {
       var a = actors[i];
       var sh = getSheet(a.sheet);
       if (!sh.ready) continue;
-      var footRow = a.y + (a.pose === 'sit' ? 0.55 : 0.9);
+      var footRow = a.y + (a.pose === 'sit' ? 0.55 : 0.9), depthRow = a.pose === 'sit' ? seatedRow(footRow, a.facing) : footRow;
       list.push({
-        footRow: footRow,
-        draw: (function (a, sh, footRow) {
+        footRow: depthRow,
+        draw: (function (a, sh, footRow, depthRow) {
           return function (ctx) {
             var col = idleCol(now + a.x * 137 + a.y * 71);
             var row = DIR_ROW[a.facing] || 0, bob = 0;
@@ -619,12 +646,14 @@ var BridgeScene = (function () {
 
             var cx = Math.round(offX + (a.x + 0.5) * ts);
             var footY = Math.round(offY + footRow * ts);
+            if (a.ghost) bob = 2 + Math.round(Math.sin(now / 700 + a.x) * 2);       // the dead float a hand's breadth up
             var dx = cx - FRAME_W / 2, dy = footY - (FRAME_H - 3) - bob - Math.round((a.lift || 0) * Math.SQRT1_2 * ts);   // a height z shows z·cos 45° up
+            if (a.ghost) return drawGhost(ctx, sc, sh.img, col * FRAME_W, row * FRAME_H, dx, dy, footRow, offX, offY, now + a.x * 311);
             drawOccluded(ctx, sc, sh.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy,
-              footRow, offX, offY, tintAt(sc, world, a.light ? a.light[0] : a.x, a.light ? a.light[1] : a.y, now),   // light: lit as if on another tile (a throne in its own shadow)
+              depthRow, offX, offY, tintAt(sc, world, a.light ? a.light[0] : a.x, a.light ? a.light[1] : a.y, now),   // light: lit as if on another tile (a throne in its own shadow)
               a.pose === 'sit' ? null : { x: cx, y: footY, rx: 8, ry: 3 });
           };
-        })(a, sh, footRow)
+        })(a, sh, footRow, depthRow)
       });
     }
     return list;
@@ -683,6 +712,7 @@ var BridgeScene = (function () {
     skyOf: function (sc) { return sc && sc.meta ? weights(sc) : null; },     // any scene object (the sloop's own islands)
     shownState: function (id) { var sc = scenes[id]; return sc && sc.ready ? shownState(sc) : null; },
     actorDrawList: actorDrawList,
+    seatedRow: seatedRow,
     walkerInteractions: walkerInteractions,
     flickerAt: flickerAt,
     visible: visible
