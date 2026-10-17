@@ -38,6 +38,14 @@ only partly done, the rest stays here as open.
 | Split work into branches and merge later; do several things at once | doing | Each stream above is its own worktree branch, merged and shipped when its tests pass. |
 | Make sure nothing slips through the cracks | doing | This file. |
 
+## Legacy homes (from before: the Penthouse, Ashcombe House, the Starling)
+| Ask | Status | Notes |
+|---|---|---|
+| The Penthouse (Arcadia, 250,000, door on Skyport 7's roof pad) | **done**, needs a detail pass | Live and furnishable, but mostly empty floor by today's standard. |
+| Ashcombe House (Crownhaven, 400,000, beside the Crown & Anchor) | **done**, needs a detail pass | Live, but mostly bare planks and one plain rug. |
+| The Starling (holm resort, 150,000 from the holm's ledger) | exterior **done**, interior open | The building and parasols on the holm, running as a venue; no interior yet. |
+| Detail pass on both homes + the Starling's interior | queued | Starts when one of the running work streams finishes (needs Blender renders). |
+
 ## Earlier this session
 | Ask | Status | Notes |
 |---|---|---|
