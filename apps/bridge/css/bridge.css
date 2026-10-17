@@ -981,7 +981,10 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
 .wd-sub { font-size: 12px; letter-spacing: 1px; margin: -2px 0 10px; opacity: 0.85; }
 .wd-hint { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; margin-top: 10px; opacity: 0.75; }
 .wd-hint .ip-key { min-width: 18px; height: 18px; font-size: 10px; }
-.wd-portrait { width: 72px; height: 72px; flex: 0 0 72px; image-rendering: pixelated; border-radius: 4px; }
+/* a face on the talk card (tools/bridge-art/portraits.py, 64 px): ×2 here, ×1 on a phone — a whole multiple, inside a
+   2 px ring (padding) that each theme's frame draws in */
+.wd-portrait { width: 132px; height: 132px; flex: 0 0 132px; padding: 2px; image-rendering: pixelated; border-radius: 4px; }
+.world-dialog.wd-talk { width: min(520px, 92vw); }
 .wd-options { display: flex; flex-direction: column; gap: 5px; margin: 10px 0 2px; }
 .wd-opt, .wd-btn {
   font: inherit; font-size: 14px; text-align: left; cursor: pointer;
@@ -1133,7 +1136,7 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
 @media (max-width: 520px) {
   .world-dialog { top: auto; bottom: 86px; transform: translate(-50%, 0) scale(0.97); }
   .world-dialog.visible { transform: translate(-50%, 0) scale(1); }
-  .wd-portrait { width: 56px; height: 56px; flex-basis: 56px; }
+  .wd-portrait { width: 68px; height: 68px; flex-basis: 68px; }
 }
 .wd-menu .wd-text, .wd-shop .wd-text { min-height: 0; }
 
@@ -1753,7 +1756,7 @@ html.touch .world-dialog {
 }
 @media (orientation: landscape) and (max-height: 520px) {
   html.touch .world-dialog { width: min(600px, 94vw); padding: 10px 14px 8px; gap: 10px; }
-  html.touch .wd-portrait { width: 48px; height: 48px; flex-basis: 48px; }
+  html.touch .wd-portrait { width: 68px; height: 68px; flex-basis: 68px; }
   html.touch .wd-convo .wd-options { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 6px; }
   html.touch .wd-opt { padding: 6px 10px; }
 }
@@ -2925,3 +2928,26 @@ html.touch .tc-pill.tc-inbar .tc-lbl { display: none; }
 .world-watch .ww-foot { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 11px; text-align: center; color: rgba(242, 238, 230, 0.6); }
 @media (max-width: 520px) { .world-watch { min-width: 0; width: calc(100vw - 24px); } .world-watch .ww-row { grid-template-columns: 16px 74px 82px 1fr; gap: 6px; font-size: 12px; } }
 .world-wx svg { display: block; }
+
+/* A quest's thing, held up Zelda-style (js/keyitems.js): a card along the bottom, the pilot holding it up above */
+#item-get { position: fixed; left: 0; right: 0; bottom: max(96px, 14vh); z-index: 86; display: flex; justify-content: center; pointer-events: auto; cursor: pointer;
+  animation: ig-in 0.35s cubic-bezier(.2, 1.4, .4, 1) both; }
+#item-get.ig-out { animation: ig-out 0.25s ease-in forwards; }
+.ig-card { display: flex; align-items: center; gap: 16px; max-width: min(520px, 92vw); box-sizing: border-box; padding: 14px 20px 14px 14px; border-radius: 8px;
+  background: linear-gradient(180deg, rgba(26, 22, 14, 0.97), rgba(10, 9, 6, 0.97)); border: 2px solid #d0a040; color: #efe6cf;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 14px 36px rgba(0, 0, 0, 0.55), 0 0 30px rgba(240, 200, 100, 0.25);
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-variant-ligatures: none; }
+.ig-art { width: 72px; height: 72px; flex: none; image-rendering: pixelated; animation: ig-bob 2.4s 0.4s ease-in-out infinite; }
+.ig-kicker { font-size: 11px; letter-spacing: 5px; text-transform: uppercase; color: #e0b850; }
+.ig-name { font-size: 21px; color: #fff4d8; margin: 2px 0 4px; line-height: 1.15; }
+.ig-text { font-size: 13px; line-height: 1.4; color: #d8ccb0; }
+.ig-go { font-size: 11px; letter-spacing: 2px; color: #8a8070; margin-top: 8px; opacity: 0; transition: opacity 0.3s; }
+#item-get.ig-ready .ig-go { opacity: 1; animation: fr-blink 1.4s ease-in-out infinite; }
+@keyframes ig-in { 0% { transform: translateY(30px) scale(0.92); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes ig-out { to { transform: translateY(16px); opacity: 0; } }
+@keyframes ig-bob { 50% { transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { #item-get, .ig-art { animation: none; } }
+html.item-get #interact-prompt { display: none !important; }
+.jn-clues li.carrying { color: var(--gm-ink); }
+.jn-clues li.carrying::before { content: none; }
+.jn-item { width: 16px; height: 16px; image-rendering: pixelated; vertical-align: -3px; margin: 0 6px 0 -16px; }

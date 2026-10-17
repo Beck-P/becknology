@@ -402,12 +402,26 @@ var BridgeInteractions = (function () {
   }
 
   function executeInteraction(inter) {
-    if (typeof BridgeAudio !== 'undefined' && inter.type !== 'farm_plot') BridgeAudio.sfx(/^(enter_world|leave_world|password_gate)$/.test(inter.type) ? 'door' : 'open');   // the field makes its own sounds
+    if (typeof BridgeAudio !== 'undefined' && inter.type !== 'farm_plot' && !inter.__given) BridgeAudio.sfx(/^(enter_world|leave_world|password_gate)$/.test(inter.type) ? 'door' : 'open');   // the field makes its own sounds
     if (typeof BridgeGames !== 'undefined') BridgeGames.note(inter);      // a game played: it waits in the game room now
     var hits = [];
-    if (typeof BridgeQuests !== 'undefined') {
+    if (inter.__given) hits = inter.__given;          // back from handing something over (below): the clues were found already
+    else if (typeof BridgeQuests !== 'undefined') {
       hits = BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter) || [];
       if (inter.home) BridgeQuests.onInteract(inter.home.world, { label: inter.home.label });   // crew aboard (js/crew.js)
+    }
+    // a quest's things (js/keyitems.js): one you give flies from your hands to them before they speak;
+    // one you get is held up over your head once whatever's said here has been read
+    if (typeof BridgeKeyItems !== 'undefined' && !inter.__given) {
+      var giving = hits.filter(function (c) { return c.give; })[0];
+      hits.forEach(function (c) { if (c.get) BridgeKeyItems.got(c); });
+      if (giving) {
+        BridgeKeyItems.give(giving, inter, function () {
+          inter.__given = hits;
+          try { executeInteraction(inter); } finally { delete inter.__given; }
+        });
+        return;
+      }
     }
     if (typeof BridgeHours !== 'undefined' && BridgeHours.gate(inter)) return;   // a shop shut for the night (js/hours.js)
     if (typeof BridgeLegacy !== 'undefined' && BridgeLegacy.handle(inter)) return; // Captain Mira's statue: room for one more (js/legacy.js)
@@ -814,7 +828,26 @@ var BridgeInteractions = (function () {
     return null;
   }
 
+  // Their face on the talk card: the portrait (assets/portraits/<sheet>.png, tools/bridge-art/portraits.py — seen from
+  // the front, a strip of expressions; it blinks now and then), or with no portrait file the head and shoulders cropped
+  // out of the sheet. Returns the portrait's handle (set(expr)) or null.
+  var PORTRAIT_PX = 64;          // a portrait's native size: the card shows it ×2, ×1 on a phone (css .wd-portrait)
   function drawPortrait(canvas, sheet) {
+    if (typeof BridgeLook !== 'undefined' && BridgeLook.npcFace)
+      return BridgeLook.npcFace(canvas, sheet, { blink: true, fallback: function () { cropPortrait(canvas, sheet); } });
+    cropPortrait(canvas, sheet);
+    return null;
+  }
+  // how a reply looks on their face: its mood's words first, else which way their feeling moved
+  function expressionOf(d) {
+    var m = String(d && d.mood || '').toLowerCase();
+    if (/surpris|shock|startl|astonish|amaz|stunn|aghast|taken aback/.test(m)) return 'surprised';
+    if (/sad|sorrow|grie|melanchol|wistful|hurt|upset|lonely|gloom|forlorn|tearful|sorry|regret|disappoint/.test(m)) return 'sad';
+    if (/happy|glad|cheer|delight|amus|pleas|joy|excit|fond|merry|playful|warm|grate|thrill|giddy|proud|tickled|bright/.test(m)) return 'happy';
+    var f = d && +d.feeling;
+    return f >= 1 ? 'happy' : f <= -2 ? 'sad' : 'neutral';
+  }
+  function cropPortrait(canvas, sheet) {
     var img = new Image();
     img.onload = function () {
       // idle frame, facing down: find the top of the head, frame head and shoulders
@@ -861,7 +894,7 @@ var BridgeInteractions = (function () {
     var dialogEl = dialogShell(sheet ? 'talk' : null);
     var body = reflow(text);
     dialogEl.innerHTML =
-      (sheet ? '<canvas class="wd-portrait" width="72" height="72"></canvas>' : '') +
+      (sheet ? '<canvas class="wd-portrait" width="' + PORTRAIT_PX + '" height="' + PORTRAIT_PX + '"></canvas>' : '') +
       '<div class="wd-body">' +
         '<div class="wd-title">' + esc(title || '') + '</div>' +
         '<div class="wd-text"></div>' +
@@ -1154,7 +1187,7 @@ var BridgeInteractions = (function () {
 
   // A chooser in the world's dialog style, for the systems that need one (the farm's bin, board and seed box,
   // hiring a hand, giving a gift): spec = { title, text, art: fn(canvas) (a picture under the text: a ship as she's
-  // fitted), rows: [{ label, note, icon: item id, draw: fn(ctx, size) for any other picture (a fish tank), stats: a
+  // fitted), face: fn(canvas) (someone's portrait beside it, as on the talk card: a passer-by), rows: [{ label, note, icon: item id, draw: fn(ctx, size) for any other picture (a fish tank), stats: a
   // weapon's id (its stats card under the row), disabled, info: a row to read, not pick (a figure), pick }],
   // input: { placeholder, value, submit }, buttons: [{ label, act, disabled }] }. Picking a row or a button closes
   // the chooser unless its function returns false.
@@ -1163,9 +1196,10 @@ var BridgeInteractions = (function () {
     dialogVisible = true;
     if (typeof BridgeControls !== 'undefined' && BridgeControls.disable) BridgeControls.disable();
     var overlay = document.getElementById('world-overlay');
-    var dialogEl = dialogShell('shop');
+    var dialogEl = dialogShell(spec.face ? 'shop wd-talk' : 'shop');
     var rows = spec.rows || [], buttons = (spec.buttons || []).concat([{ label: spec.closeLabel || 'Leave', act: null }]);
-    dialogEl.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(spec.title || '') + '</div>' +
+    dialogEl.innerHTML = (spec.face ? '<canvas class="wd-portrait" width="' + PORTRAIT_PX + '" height="' + PORTRAIT_PX + '"></canvas>' : '') +
+      '<div class="wd-body"><div class="wd-title">' + esc(spec.title || '') + '</div>' +
       (spec.text ? '<div class="wd-text">' + esc(reflow(spec.text)) + '</div>' : '') +
       (spec.art ? '<canvas class="wd-art" width="1" height="1"></canvas>' : '') +
       (rows.length ? '<div class="wd-sell wd-sell-pick wd-chooser">' + rows.map(function (r, i) {
@@ -1185,6 +1219,8 @@ var BridgeInteractions = (function () {
     requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
     var art = spec.art && dialogEl.querySelector('.wd-art');
     if (art) { dialogEl.classList.add('wd-has-art'); try { spec.art(art); } catch (e) { art.remove(); } }
+    var faceCv = spec.face && dialogEl.querySelector('.wd-portrait');
+    if (faceCv) { try { spec.face(faceCv); } catch (e) { faceCv.remove(); } }
     dialogEl.querySelectorAll('.wd-sell-row.pick').forEach(function (rowEl) {
       var r = rows[+rowEl.getAttribute('data-r')], cv = rowEl.querySelector('.sp-icon');
       var item = r.icon && typeof BridgeItems !== 'undefined' && BridgeItems.get(r.icon);
@@ -1274,7 +1310,7 @@ var BridgeInteractions = (function () {
     person.topics = topics;
     var opts = topics.map(function (t) { return t.q; }).concat(['Goodbye']);
     dialogEl.innerHTML =
-      (sheet ? '<canvas class="wd-portrait" width="72" height="72"></canvas>' : '') +
+      (sheet ? '<canvas class="wd-portrait" width="' + PORTRAIT_PX + '" height="' + PORTRAIT_PX + '"></canvas>' : '') +
       '<div class="wd-body">' +
         '<div class="wd-title">' + esc(person.name) + '</div>' +
         '<div class="wd-role">' + esc(person.role || '') + '<span class="wd-feel"></span></div>' +
@@ -1290,7 +1326,7 @@ var BridgeInteractions = (function () {
         hintHTML('Esc', 'Leave') +
       '</div>';
     overlay.appendChild(dialogEl);
-    if (sheet) drawPortrait(dialogEl.querySelector('.wd-portrait'), sheet);
+    var face = sheet ? drawPortrait(dialogEl.querySelector('.wd-portrait'), sheet) : null;
     requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
 
     var out = dialogEl.querySelector('.wd-text');
@@ -1329,6 +1365,7 @@ var BridgeInteractions = (function () {
         out.classList.remove('wd-thinking');
         if (!d) { say("(THEY DON'T SEEM TO HEAR YOU. TRY AGAIN IN A MOMENT.)"); return; }
         heard('them', d.reply);
+        if (face) face.set(expressionOf(d));          // their face follows how they took it
         say(d.reply.toUpperCase());
         showFeel(true);
         if (d.action === 'join_crew') nudge(function (t) { return t.hire || t.q === 'Join my crew?'; });
@@ -1429,6 +1466,7 @@ var BridgeInteractions = (function () {
         out.textContent = 'SIGNING ON...';
         BridgeCrew.hire(Object.getPrototypeOf(person)).then(function (res) {
           if (res.ok) {
+            if (face) face.set('happy');
             say('DONE. YOU WON\'T REGRET IT.');
             btns[n].textContent = 'About the work';
             person.topics[n] = { q: 'About the work', a: person.crew.perkText.toUpperCase() };
@@ -1446,6 +1484,7 @@ var BridgeInteractions = (function () {
       heard('you', t.q);
       heard('them', t.a);
       you.textContent = '';
+      if (face) face.set('neutral');
       say(t.a);
     }
     function close() {

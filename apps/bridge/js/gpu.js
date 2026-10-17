@@ -20,9 +20,13 @@
  *   help (no WebGL2, the context lost, graphics drawn in software, or turned off: ?gpu=0 in the URL, or localStorage
  *   bridge_gpu = 'off') — the caller then draws buf as before. ?gpu=1 keeps it on even in software (the tests).
  *   opts.glow scales the glow (0 none, 1 as tuned; a world's JSON may set "glow"); opts.scene / offX / offY: the
- *   scene drawn and where (its glow image); opts.guess: how much to trust the eye (0..1).
+ *   scene drawn and where (its glow image); opts.guess: how much to trust the eye (0..1); opts.vignette: how much the
+ *   corners darken (soft light; VIGNETTE by default, 0 none).
  */
 var BridgeGPU = (function () {
+  // soft light (Beck's pick from Look Book 2: "toy… with soft light"): the glow below, and the frame's corners a little
+  // darker so the eye settles in the middle (opts.vignette, 0 none)
+  var VIGNETTE = 0.18;
   var off = /[?&]gpu=0(&|$)/.test(location.search), force = /[?&]gpu=1(&|$)/.test(location.search);
   try { if (localStorage.getItem('bridge_gpu') === 'off') off = true; } catch (e) { /* private mode */ }
 
@@ -69,11 +73,13 @@ var BridgeGPU = (function () {
     // the frame, exactly, with the glow screened over it (premultiplied, so the alpha comes along)
     out: HEAD +
       'uniform sampler2D frame; uniform sampler2D g1; uniform sampler2D g2; uniform sampler2D g3; uniform vec3 wts;\n' +
-      'uniform vec2 size; uniform float amt;\n' +
+      'uniform vec2 size; uniform float amt; uniform float vig;\n' +
       'void main() {\n' +
       '  ivec2 px = ivec2(int(gl_FragCoord.x), int(size.y) - 1 - int(gl_FragCoord.y));\n' +
       '  vec4 f = texelFetch(frame, px, 0);\n' +
       '  vec2 uv = (vec2(px) + 0.5) / size;\n' +
+      '  vec2 q = (uv - 0.5) * vec2(2.0, 2.0 * size.y / size.x);\n' +
+      '  f.rgb *= 1.0 - vig * smoothstep(0.45, 1.3, length(q));\n' +
       '  vec3 g = texture(g1, uv).rgb * wts.x + texture(g2, uv).rgb * wts.y + texture(g3, uv).rgb * wts.z;\n' +
       '  g = min(vec3(1.0), g * amt);\n' +
       '  float ga = max(g.r, max(g.g, g.b));\n' +
@@ -232,6 +238,7 @@ var BridgeGPU = (function () {
     pass('out', null, w, h, function (u) {
       gl.uniform1i(u.frame, 0); gl.uniform1i(u.g1, 1); gl.uniform1i(u.g2, 2); gl.uniform1i(u.g3, 3);
       gl.uniform3f(u.wts, LEVELS[0], LEVELS[1], LEVELS[2]); gl.uniform1f(u.amt, amt);
+      gl.uniform1f(u.vig, o.vignette != null ? +o.vignette : VIGNETTE);
     });
   }
 

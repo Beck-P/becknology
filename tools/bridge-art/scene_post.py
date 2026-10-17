@@ -12,10 +12,16 @@ Writes to OUT_DIR (every image lossless WebP, exact to the pixel; scene.json
                 alone (the emission pass at its strongest; scene.json "glow"), layers/<slot>/<key>/
   scene.json    size, origin, depth range, per-tile light for characters
 
-Toon shading: final = albedo × band(light) + emission. Light luminance is
-snapped to a few flat bands while keeping its hue, so warm firelight stays
-warm. Lines are drawn where a part sits in front of another (id + depth) and
-around the silhouette.
+The finish is "toy" (Beck's pick, Look Book 2): final = albedo × band(light) + emission, the light's
+luminance snapped to a few flat bands keeping part of its hue (warm firelight stays warm), shadows leaning cool and
+lights warm, and a strong line wherever one thing stands in front of another — never inside the ground, between a
+roof's shingles or round a blade of grass. SCENE_STYLE=dither gives the older look (many small dithered steps and
+soft lines).
+
+A scene rendered with live light (scenekit `lit`, any scene with a day) also gets the passes the engine relights as the
+planet's clock turns (js/litscene.js): lit_albedo (the flat colours), lit_a / lit_b / lit_c (the white sky and the six
+suns, each with its shadows; the normal's z; flags), lit_d (which tree; line strength), lit_lamps (the lamps' light)
+and, over still water, lit_refl / lit_reflglow (the mirror) — for the base and every variant layer; scene.json `lit`.
 """
 import json
 import math
@@ -48,9 +54,13 @@ def load16(path):
     return a.astype(np.float32) / 255.0
 
 
-# Painterly shading (Cast n Chill-like): a smooth tone curve quantized into
-# many small steps with 4×4 ordered dithering, instead of a few hard bands.
-STYLE = 'dither'
+# The finish. 'toy' (since Oct 2026, every scene): the light in a few flat bands of tone(), shadows cool and lights warm,
+# strong lines between things (toy_lines). 'dither' (the older look, Cast n Chill-like): a smooth tone curve quantized
+# into many small steps with 4×4 ordered dithering and soft lines.
+STYLE = os.environ.get('SCENE_STYLE', 'toy')
+TOY_BANDS = [(0.0, 0.14), (0.17, 0.22), (0.27, 0.32), (0.4, 0.52), (0.58, 0.76), (0.82, 1.0)]    # on tone(), as (from, value)
+TOY_COOL = 1.0      # how far shadows lean blue and the brightest lights warm
+TOY_LINE = 0.95     # line strength: a pixel on a line is darkened to ~40%
 STEPS = 14
 BAYER4 = (np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], np.float32) + 0.5) / 16
 
@@ -62,7 +72,12 @@ def tone(lum):
 def toon(albedo, light, emission):
     L = light[..., :3] * EXPOSURE
     lum = L @ np.array([0.2126, 0.7152, 0.0722], np.float32)
-    if STYLE == 'dither':
+    if STYLE == 'toy':
+        b = tone(lum)
+        band = np.full(lum.shape, TOY_BANDS[0][1], np.float32)
+        for t, v in TOY_BANDS:
+            band = np.where(b >= t, v, band)
+    elif STYLE == 'dither':
         h, w = lum.shape
         th = np.tile(BAYER4, (h // 4 + 1, w // 4 + 1))[:h, :w]
         top = 1.12
@@ -77,6 +92,10 @@ def toon(albedo, light, emission):
     tint = 1 + (chroma - 1) * TINT
     a = albedo[..., :3].astype(np.float32) / 255
     out = a * band[..., None] * tint
+    if STYLE == 'toy':
+        sh = np.clip(1 - band, 0, 1) * TOY_COOL                    # shadows lean cool, the brightest light warm
+        wv = np.clip(band - 0.85, 0, None) * TOY_COOL
+        out = out * np.stack([(1 - sh * 0.22) * (1 + wv * 0.25), (1 - sh * 0.1) * (1 + wv * 0.1), 1 + sh * 0.12], -1)
     e = emission[..., :3].astype(np.float32) / 255
     out = np.clip(out + e, 0, 1)
     return out
@@ -193,6 +212,63 @@ def lines(img, ids, depth, alpha):
     return out
 
 
+# What a part is, from its name (render.json `ids`: id colour → part name), by the words in it: the ground (no lines
+# inside it — paths, turf, paving, floors, rugs, water) and roofs (lines only where the roof meets what's behind it).
+GROUND_WORDS = {'ground', 'grass', 'meadow', 'turf', 'path', 'paths', 'dirt', 'sand', 'earth', 'snow', 'coast', 'lip',
+                'cobble', 'cobbles', 'flagstone', 'flagstones', 'paving', 'pave', 'road', 'street', 'floor', 'rug',
+                'carpet', 'water', 'pond', 'stream', 'mud', 'soil', 'field', 'moss', 'drift', 'lane', 'yard', 'beach',
+                'shore', 'bank', 'wet', 'damp', 'ice', 'deck', 'parquet', 'gravel', 'pebbles', 'shallows', 'seabed', 'lawn',
+                'tilled', 'furrow', 'furrows', 'litter', 'clover', 'tuft', 'tufts', 'blades', 'puddle', 'kerb', 'straw', 'chalk',
+                'grout', 'plaza', 'drain', 'grate', 'weed', 'setts', 'hopscotch'}
+NOT_GROUND = {'roof', 'wall', 'post', 'rail', 'fence', 'house', 'stall', 'table', 'bench', 'tree', 'trunk', 'pot',
+              'box', 'window', 'door', 'sign', 'lamp', 'lantern', 'pole', 'snowman', 'cart', 'boat', 'hull', 'crate'}
+ROOF_WORDS = {'roof', 'shingle', 'shingles', 'slate', 'slates', 'thatch', 'ridge', 'pantile', 'pantiles', 'eave', 'eaves'}
+
+
+def _words(name):
+    return set(w for w in name.lower().replace('-', '_').split('_') if w)
+
+
+def part_kinds(ids_rgb, names):
+    """(ground, roof) masks from the id pass and render.json `ids`."""
+    key = (ids_rgb[..., 0].astype(np.int64) << 16) | (ids_rgb[..., 1].astype(np.int64) << 8) | ids_rgb[..., 2]
+    gk, rk = [], []
+    for k, name in (names or {}).items():
+        r, g, b = [int(v) for v in k.split(',')]
+        kk = (r << 16) | (g << 8) | b
+        w = _words(name)
+        if w & ROOF_WORDS:
+            rk.append(kk)
+        elif w & GROUND_WORDS and not w & NOT_GROUND:
+            gk.append(kk)
+    return np.isin(key, gk), np.isin(key, rk)
+
+
+def toy_lines(ids, depth, alpha, ground, roof):
+    """Line strength 0..1 per pixel: 1 on a thing where what's next to it lies behind it (or nothing does), 0.45 where
+    two things meet without a step in depth — never on the ground, and on a roof only its real edges."""
+    h, w = alpha.shape
+    idk = (ids[..., 0].astype(np.int64) << 16) | (ids[..., 1].astype(np.int64) << 8) | ids[..., 2]
+    line = np.zeros((h, w), np.float32)
+    dep = np.where(alpha, depth, 1e9)
+    for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+        ys0, ys1 = max(0, -dy), h - max(0, dy)
+        xs0, xs1 = max(0, -dx), w - max(0, dx)
+        p = (slice(ys0, ys1), slice(xs0, xs1))
+        q = (slice(ys0 + dy, ys1 + dy), slice(xs0 + dx, xs1 + dx))
+        mine = alpha[p] & ~ground[p] & (idk[p] != idk[q])
+        farther = (dep[q] - dep[p]) > 0.06
+        edge = mine & (farther | ~alpha[q])
+        crease = mine & alpha[q] & ~ground[q] & ~farther & ~roof[p]
+        line[p] = np.maximum(line[p], np.where(edge, 1.0, np.where(crease, 0.45, 0.0)))
+    return line
+
+
+def apply_lines(img, line):
+    k = (line * TOY_LINE)[..., None]
+    return img * (1 - k * np.array([0.62, 0.6, 0.5], np.float32))
+
+
 EXT = 'webp'      # every image a scene writes (scene.json "ext"; the engine reads meta.ext, absent = png)
 
 
@@ -267,6 +343,108 @@ def shore(rd, od, meta, alpha):
     return {'z': wz, 'reach': SHORE_REACH}
 
 
+# ---- live light (js/litscene.js) ------------------------------------------------------------------------------------
+LIT_GAIN = LIGHT_GAIN / 0.8        # undo the light passes' -2 stops and the white diffuse's 0.8: 1 = lit like open ground
+                                   # under the white sky dome
+
+
+def lit_enc(L):
+    """Light as stored: sqrt(min(1, L / 4)) × 255 (decode (v / 255)² × 4)."""
+    return (np.sqrt(np.clip(L / 4.0, 0, 1)) * 255 + 0.5).astype(np.uint8)
+
+
+def lit_lum(path):
+    a = load16(path)
+    a = a[..., :3] if a.ndim == 3 else a
+    if a.ndim == 3:
+        a = a @ np.array([0.2126, 0.7152, 0.0722], np.float32)
+    return a * LIT_GAIN
+
+
+def lit_pack(rd, od, nsuns, mask, albedo, ids, line, ground, roof, box=None, water_ok=True):
+    """The live-light passes of one render (the base, or a variant cropped to its box) packed for js/litscene.js:
+      lit_albedo  the flat colours (alpha: covered)
+      lit_a       R the white sky's light, G sun 0, B sun 1     lit_b  R, G, B suns 2, 3, 4
+      lit_c       R sun 5, G the normal's z (× 0.5 + 0.5), B flags (1 leaf, 2 needle, 4 grass, 8 still water, 16 ground, 32 roof)
+      lit_d       R which tree (the leaf pass's G), G line strength, B 0
+      lit_lamps   the lamps' coloured light (only when there's any)
+    Returns {'lamps': bool}."""
+    def crop(a):
+        return a if box is None else a[box[1]:box[3], box[0]:box[2]]
+    m = crop(mask)
+    H, W = m.shape
+    alb = crop(albedo).copy()
+    alb[..., 3] = np.where(m, 255, 0)
+    save(alb, od, 'lit_albedo')
+    sky = crop(lit_lum(os.path.join(rd, 'lit_sky.png')))
+    suns = [crop(lit_lum(os.path.join(rd, 'lit_sun%d.png' % i))) for i in range(nsuns)]
+    while len(suns) < 6:
+        suns.append(np.zeros((H, W), np.float32))
+    nz = crop(load(os.path.join(rd, 'normal.png'), 'RGB'))[..., 2]
+    flags = np.zeros((H, W), np.uint8)
+    tree = np.zeros((H, W), np.uint8)
+    lfp = os.path.join(rd, 'leaf.png')
+    if os.path.exists(lfp):
+        lf = crop(load(lfp, 'RGB')).astype(np.int32)
+        lr, lg, lb = lf[..., 0], lf[..., 1], lf[..., 2]
+        flags |= np.where(lr > 200, 1, 0).astype(np.uint8)
+        flags |= np.where(lb > 200, 2, 0).astype(np.uint8)
+        flags |= np.where((lr > 32) & (lr <= 160), 4, 0).astype(np.uint8)
+        if water_ok:
+            flags |= np.where((lb > 32) & (lb <= 160), 8, 0).astype(np.uint8)
+        tree = np.where((lr > 200) | (lb > 200), (lg // 16) * 16 + 8, 0).astype(np.uint8)
+    flags |= np.where(crop(ground) | ((flags & 12) > 0), 16, 0).astype(np.uint8)
+    flags |= np.where(crop(roof), 32, 0).astype(np.uint8)
+    flags = np.where(m, flags, 0).astype(np.uint8)
+
+    def rgb(r, g, b):
+        out = np.zeros((H, W, 4), np.uint8)
+        out[..., 0], out[..., 1], out[..., 2], out[..., 3] = r, g, b, 255
+        return out
+    save(rgb(lit_enc(sky), lit_enc(suns[0]), lit_enc(suns[1])), od, 'lit_a')
+    save(rgb(lit_enc(suns[2]), lit_enc(suns[3]), lit_enc(suns[4])), od, 'lit_b')
+    save(rgb(lit_enc(suns[5]), nz, flags), od, 'lit_c')
+    save(rgb(tree, (crop(line) * 255 + 0.5).astype(np.uint8), 0), od, 'lit_d')
+    lp = load16(os.path.join(rd, 'lit_lamps.png'))[..., :3] * LIT_GAIN
+    lp = crop(lp)
+    lamps = bool((lp.max(axis=-1)[m] > 0.02).any()) if m.any() else False
+    if lamps:
+        save(rgb(*[lit_enc(lp[..., c]) for c in range(3)]), od, 'lit_lamps')
+    else:
+        for f in ('lit_lamps.' + EXT,):
+            if os.path.exists(os.path.join(od, f)):
+                os.remove(os.path.join(od, f))
+    return {'lamps': lamps, 'water': bool((flags & 8).any())}
+
+
+def lit_refl(rd, od, water):
+    """The still water's mirror (scenekit _lit_mirror): its colours where the water is, the sky (keyed magenta) taken
+    out; and what glows, alone, for the lamps' streaks after dark."""
+    rp = os.path.join(rd, 'refl.png')
+    if not os.path.exists(rp) or not water.any():
+        return {}
+    refl = load(rp, 'RGBA')
+    r, g, b = refl[..., 0].astype(int), refl[..., 1].astype(int), refl[..., 2].astype(int)
+    sky = ((r > g + 50) & (b > g + 50)) | ((r + g + b) < 6)
+    refl[..., 3] = np.where(water & ~sky & (refl[..., 3] > 0), 255, 0)
+    refl[..., :3] = np.where(refl[..., 3:] > 0, refl[..., :3], 0)
+    out = {}
+    if refl[..., 3].any():
+        save(refl, od, 'lit_refl')
+        out['refl'] = 1
+    gp = os.path.join(rd, 'refl_glow.png')
+    if os.path.exists(gp):
+        rg = load(gp, 'RGB')
+        lit = water & (rg.astype(int).sum(-1) > 30)
+        if lit.any():
+            o = np.zeros(rg.shape[:2] + (4,), np.uint8)
+            o[..., :3] = np.where(lit[..., None], rg, 0)
+            o[..., 3] = np.where(lit, 255, 0)
+            save(o, od, 'lit_reflglow')
+            out['reflGlow'] = 1
+    return out
+
+
 def main():
     rd, od = sys.argv[1], sys.argv[2]
     os.makedirs(od, exist_ok=True)
@@ -281,6 +459,14 @@ def main():
     view = meta['zmin'] + d01 * (meta['zmax'] - meta['zmin'])
     depth = view + meta['camDot']                     # engine depth units
     depth = np.where(alpha, depth, np.inf)
+    names = meta.get('ids')
+    ground, roof = part_kinds(ids, names)
+
+    def finish(img, ids_, depth_, alpha_, line_):
+        if STYLE == 'toy':
+            return apply_lines(img, line_)
+        return lines(img, ids_, depth_, alpha_)
+    base_line = toy_lines(ids, depth, alpha, ground, roof)
 
     def emit(state, e):                               # lamps by day glow less (scenekit `_emit`)
         k = (meta.get('stateOpts') or {}).get(state, {}).get('emit', 1.0)
@@ -301,7 +487,7 @@ def main():
     for state in meta['lightStates']:
         light = load16(os.path.join(rd, 'light_' + state + '.png'))
         img = toon(albedo, light, emit(state, emission))
-        img = lines(img, ids, depth, alpha)
+        img = finish(img, ids, depth, alpha, base_line)
         rgba = np.zeros(albedo.shape, np.uint8)
         rgba[..., :3] = (img * 255 + 0.5).astype(np.uint8)
         rgba[..., 3] = np.where(alpha, 255, 0)
@@ -377,15 +563,18 @@ def main():
         ys, xs = np.nonzero(va)
         x0, y0, x1, y1 = int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
         imgs = {}
+        vground, vroof = part_kinds(vids, names)
+        vline = toy_lines(vids, vdepth, va, vground, vroof)
         for state in meta['lightStates']:
             light = load16(os.path.join(vd, 'light_' + state + '.png'))
-            img = lines(toon(valb, light, emit(state, vemi)), vids, vdepth, va)
+            img = finish(toon(valb, light, emit(state, vemi)), vids, vdepth, va, vline)
             rgba = np.zeros(valb.shape, np.uint8)
             rgba[..., :3] = (img * 255 + 0.5).astype(np.uint8)
             rgba[..., 3] = np.where(va, 255, 0)
             imgs[state] = rgba[y0:y1, x0:x1]
         imgs['leaves'] = leaves(os.path.join(vd, 'leaf.png'), va, (x0, y0, x1, y1))
         imgs['glow'] = glow(vemi, va, (x0, y0, x1, y1))
+        imgs['lit'] = (vd, valb, vids, vline, vground, vroof, va) if meta.get('lit') and os.path.exists(os.path.join(vd, 'lit_sky.png')) else False
         variants.append((v, (x0, y0, x1, y1), imgs, vdepth[y0:y1, x0:x1]))
 
     # Packed depth (one range for the base and every variant)
@@ -409,6 +598,7 @@ def main():
         os.makedirs(ld, exist_ok=True)
         lv = imgs.pop('leaves', False)
         lg = imgs.pop('glow', False)
+        vl = imgs.pop('lit', False)
         for state, rgba in imgs.items():
             save(rgba, ld, state)
         save(pack(vdp), ld, 'depth')
@@ -419,6 +609,13 @@ def main():
         if lg is not False:
             save(lg, ld, 'glow')
             layers[v['slot']][v['key']]['glow'] = 1
+        if vl is not False:
+            vd_, valb_, vids_, vline_, vg_, vr_, va_ = vl
+            info = lit_pack(vd_, ld, len(meta['lit']['suns']), va_, valb_, vids_, vline_, vg_, vr_, box=(x0, y0, x1, y1),
+                            water_ok='waterZ' not in meta)
+            layers[v['slot']][v['key']]['lit'] = 1
+            if info['lamps']:
+                layers[v['slot']][v['key']]['litLamps'] = 1
 
     # Per-tile light on characters (probe plane at chest height)
     theta = math.radians(meta['theta'])
@@ -448,6 +645,19 @@ def main():
 
     water = shore(rd, od, meta, alpha) if 'waterZ' in meta else None
 
+    lit = None
+    if meta.get('lit') and os.path.exists(os.path.join(rd, 'lit_sky.png')):
+        info = lit_pack(rd, od, len(meta['lit']['suns']), alpha, albedo, ids, base_line, ground, roof)
+        lit = {'suns': [s_['u'] for s_ in meta['lit']['suns']], 'lamps': info['lamps'], 'base': meta['lit'].get('base')}
+        if info['water']:
+            lf = load(os.path.join(rd, 'leaf.png'), 'RGB').astype(int) if os.path.exists(os.path.join(rd, 'leaf.png')) else None
+            still = alpha & (lf[..., 2] > 32) & (lf[..., 2] <= 160) & (lf[..., 0] <= 32) if lf is not None else np.zeros_like(alpha)
+            lit.update(lit_refl(rd, od, still))
+    else:
+        for f in os.listdir(od):
+            if f.startswith('lit_'):
+                os.remove(os.path.join(od, f))
+
     out = {
         'width': meta['width'], 'height': meta['height'],
         'originX': meta['originX'], 'originY': meta['originY'],
@@ -465,6 +675,8 @@ def main():
         out['glow'] = 1                               # glow.<ext>: what gives off light, alone (js/gpu.js)
     if water:
         out['water'] = water
+    if lit:
+        out['lit'] = lit                              # js/litscene.js relights the scene live from the lit_* passes
     if meta.get('cycle'):
         out['cycle'] = meta['cycle']                  # which state is day, dusk and night (js/scene.js blends them)
     out['rev'] = revision(od)

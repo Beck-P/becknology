@@ -2,22 +2,20 @@
 
 > **Scope: this file applies to `apps/bridge/` only.** Do not apply these art-direction or prompt rules to any other Becknology app (aether-seas, cipher-room, hub, etc.).
 
-If you are an agent generating PNG sprites, drawing procedural art, or editing visuals for the bridge game, read these two files in this order:
+If you are an agent making art or editing visuals for the bridge game, read **`apps/bridge/CLAUDE.md`** first — the source of truth for its look (*North star*, *Live light*, *Making a new place*, the detail standard, palettes, engine integration).
 
-1. **`apps/bridge/CLAUDE.md`** — the source of truth for the bridge's art direction (view angle, palette, procedural rules, animation hooks, sizing reference, engine integration).
-2. **`apps/bridge/PNG-PROMPTS.md`** — copy/paste master prompt + per-asset prompts to feed an image model when generating PNGs.
-
-The current art style is a **high-oblique elevated front-facing RPG building view** (Stardew / Harvest Moon / Rune Factory): full front facade visible AND most or nearly all of the roof plane visible from above. Chunky pixel art, hard edges, no anti-aliasing, transparent background. The full master prompt is embedded in both files above.
+The look (since October 2026, Beck's pick from Look Book 2): **our own little 3D model world, finished like toys, in soft light.** Places, props and people are the game's own Blender models (`tools/bridge-art/`: `scenekit.py`, the `assets_*.py` kits, `characters.py`) rendered at 32 px a tile through the 45° camera, then finished by `scene_post.py` in the toy style — flat light bands, cool shadows and warm lights, strong lines between things — and relit live outdoors by `js/litscene.js` (the sun crossing the sky, seasons, weather, water that mirrors its banks). People have simple drawn faces and a Stardew-style face portrait when you talk to them.
 
 ## Quick rules
 
-- **Always paste the full master prompt** from `PNG-PROMPTS.md` when generating a new PNG. Don't paraphrase; the wording is load-bearing.
-- **Don't introduce new view angles.** Every building must use the same high-oblique camera as the existing set (`tavern.png`, `inn.png`, `lighthouse.png` are the gold standard).
-- **Don't use these prompts for other apps.** They are tuned to the bridge's specific art and palette.
-- **Match procedural and PNG style.** Procedural canvas drawing in `js/worlds/*.js` should look like it came from the same art family — see `CLAUDE.md` "Procedural drawing rules" section.
-- **Don't paint detail inside windows / lantern flames / dragon eye** — those are animation hooks; leave a flat shape.
-- **Everything lands on one 32 px-per-tile grid.** Convert new PNGs with `tools/bridge-art/native_sprites.py` (never load full-size PNGs at runtime); characters come from the Blender pipeline in `tools/bridge-art/`. See `CLAUDE.md` → "Rendering pipeline" and "Engine integration".
-- **Lighting is per world** — a `lighting` block in the world JSON (see `js/lighting.js`).
+- **Build new art in Blender in the game's kit** — scenes in `tools/bridge-art/scenes/`, the richer house kit `assets_house.py`, the reference dioramas in `tools/bridge-art/dioramas/` as the bar. No new AI-painted PNGs: `PNG-PROMPTS.md` is legacy, kept only for touching up the PNGs still in the game.
+- **One camera.** Everything through scenekit's orthographic 45° camera, on the 32 px-per-tile grid.
+- **Give places shape and life:** shaped land, layered vegetation, small life at the human scale; ponds sunk into the land, never a circle in a field.
+- **Anything with a day gets live light** (`cycle=` in `k.render`); check it at dawn, noon, golden hour and night and in each season (`BridgeLit._force`).
+- **Name parts so the finish reads them:** the ground (`floor_*`, `path`, `grass`, `cobbles`…) gets no lines inside it, roofs (`roof_*`) only at their edges.
+- **Code-drawn things** (creatures, crops, effects) sit with the toy finish: flat tones, a dark outline, whole pixels.
+- **Don't paint detail inside windows / lantern flames** — those are animation hooks; leave a flat shape.
+- **Lighting is per world** — a `lighting` block in the world JSON (see `js/lighting.js`) for worlds that aren't scenes.
 
 ## Working on the bridge
 

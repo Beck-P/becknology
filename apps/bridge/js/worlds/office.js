@@ -53,8 +53,8 @@
     }
     return people;
   }
-  // their face, 24 × 24 like the ledger's, painted once its sheet has loaded (asked again now and then until it has:
-  // BridgeLook.face gives up on a sheet slow to come)
+  // their face, 24 × 24 like the ledger's — their portrait at half size (js/look.js) — painted once it has loaded
+  // (asked again now and then until it has: BridgeLook.face gives up on a sheet slow to come)
   function faceOf(p, now) {
     var key = p.sheet ? 'sheet:' + p.sheet : [p.face.seed, p.face.style, p.face.colour, p.face.wild ? 1 : 0].join('|');
     var f = faces[key];
@@ -62,7 +62,8 @@
     if (!f.ok && now >= f.next) {
       if (f.next) f.ok = f.cv.getContext('2d').getImageData(12, 12, 1, 1).data[3] > 0;
       f.next = now + 5000;
-      if (!f.ok && p.sheet) {                              // a crew member: the head of their own sheet, facing you
+      if (!f.ok && p.sheet && has('BridgeLook') && BridgeLook.npcFace) BridgeLook.npcFace(f.cv, p.sheet);   // a crew member: their portrait
+      else if (!f.ok && p.sheet) {                         // (no js/look.js: the head of their own sheet, facing you)
         var im = new Image();
         im.onload = function () { var g = f.cv.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(im, 4, 2, 24, 24, 0, 0, 24, 24); };
         im.src = '/bridge/assets/characters/' + p.sheet + '.png';

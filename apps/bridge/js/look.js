@@ -16,6 +16,10 @@
  *   BridgeLook.sheet(mode, style, colour, look)     { img, ready }, img a recoloured canvas once ready
  *   BridgeLook.drawPreview(canvas, t, style, colour, look)
  *   BridgeLook.editor(el, { look, onChange })        the picker rows (new pilot screen, wardrobe)
+ *   BridgeLook.face(canvas, seed, style, colour, wild)  someone you hire: their portrait, drawn from their name
+ *   BridgeLook.portrait(canvas, path, opts)          any portrait (assets/portraits/, tools/bridge-art/portraits.py)
+ *   BridgeLook.npcFace(canvas, sheet, opts)           an NPC's portrait from their sheet's name
+ *   BridgeLook.pilotFace(canvas, key, seed)          another pilot's, from their character key (js/character.js)
  */
 var BridgeLook = (function () {
   var STORE = 'bridge_look';
@@ -195,10 +199,17 @@ var BridgeLook = (function () {
     return { body: body, hair: hair, beard: body === 'a' && hair !== 'bun' && hash01(seed + ':d') < 0.35, helmet: false,
              skin: p('s', SKINS), hairColour: p('c', wild ? HAIR_COLOURS : NATURAL) };
   }
-  /** Their face (head and shoulders, from the standing frame) painted into a canvas, once their sheet's loaded. */
+  /** Their face painted into a canvas: their portrait (pilots/…, dressed for the job and coloured as they are), or
+   *  — no portrait file — the head and shoulders of their standing frame, once their sheet's loaded. */
   function face(canvas, seed, style, colour, wild) {
-    if (!canvas) return;
-    var sh = sheet('', style || 'flight', colour || 'gold', lookFor(seed, wild)), tries = 0;
+    if (!canvas) return null;
+    var l = lookFor(seed, wild), st = style || 'flight', col = colour || 'gold';
+    var path = 'pilots/' + (st !== 'flight' ? st + '-' : '') + l.body + '-' + head(l);
+    return portrait(canvas, path, { map: portraitKeys(palette(col, l), seed, SKIN[l.skin]), key: col + '|' + code(l) + '|' + seed,
+                                    fallback: function () { sheetFace(canvas, seed, st, col, wild); } });
+  }
+  function sheetFace(canvas, seed, style, colour, wild) {
+    var sh = sheet('', style, colour, lookFor(seed, wild)), tries = 0;
     (function draw() {
       if (!sh.ready) { if (++tries < 60) setTimeout(draw, 80); return; }
       var g = canvas.getContext('2d');
@@ -206,6 +217,149 @@ var BridgeLook = (function () {
       g.imageSmoothingEnabled = false;
       g.drawImage(sh.img, 4, 2, 24, 24, 0, 0, canvas.width, canvas.height);
     })();
+  }
+
+  // ---- portraits: a face seen from the front, head and shoulders (tools/bridge-art/portraits.py) -----------------------
+  // assets/portraits/<path>.png is a strip of square frames, one per expression (EXPRESSIONS). An NPC's (npc-baker) is
+  // in its own colours; the crowd's (crowd/<body>) and the pilots' (pilots/[<style>-]<a|b>-<head>: anyone you hire) are
+  // in key colours, swapped like their sheets, plus two keys of the portraits' own: the iris (a colour per person) and
+  // the blush (mixed from their skin). Keep IRIS_KEY and BLUSH_KEY in step with portraits.py.
+  var PORTRAITS = '/bridge/assets/portraits/';
+  var EXPRESSIONS = ['neutral', 'happy', 'surprised', 'sad', 'blink'];
+  var IRIS_KEY = ['#00284c', '#003c70', '#0058a0'], BLUSH_KEY = '#f05878';
+  var IRISES = [['#2e1a10', '#5a3420', '#8a5a34'], ['#1a1210', '#33221a', '#523828'], ['#3a2a12', '#6a5226', '#9a8040'],
+                ['#1a2e5a', '#2e5aa0', '#5a8ad0'], ['#1a3a24', '#2e6a3e', '#5a9a5a'], ['#2e3440', '#5a6474', '#8a96a6'],
+                ['#2e1a10', '#5a3420', '#8a5a34'], ['#1a1210', '#33221a', '#523828']];     // brown and dark the likeliest
+  /** Adds a portrait's own keys for someone to a recolour map: their iris (from seed) and blush (from their skin). */
+  function portraitKeys(map, seed, skin) {
+    var iris = IRISES[Math.floor(hash01('iris:' + seed) * IRISES.length)];
+    for (var i = 0; i < 3; i++) map[int(hex(IRIS_KEY[i]))] = hex(iris[i]);
+    if (skin) map[int(hex(BLUSH_KEY))] = hex(mix(skin[1], '#ff5a6e', 0.42));
+    return map;
+  }
+  var pImages = {}, pColoured = {}, pKeys = [], pHalves = {};
+  function portraitImage(path) {
+    var e = pImages[path];
+    if (!e) {
+      e = pImages[path] = { img: new Image(), ready: false, failed: false, waiting: [] };
+      var done = function () { var w = e.waiting; e.waiting = []; w.forEach(function (fn) { fn(); }); };
+      e.img.onload = function () { e.ready = true; done(); };
+      e.img.onerror = function () { e.failed = true; done(); };
+      e.img.src = PORTRAITS + path + '.png';
+    }
+    return e;
+  }
+  function coloured(path, e, map, key) {             // the strip recoloured for someone (the last 60 kept)
+    if (!map) return e.img;
+    var id = path + '|' + key;
+    if (!pColoured[id]) {
+      pColoured[id] = recolour(e.img, map);
+      pKeys.push(id);
+      if (pKeys.length > 60) { var old = pKeys.shift(); delete pColoured[old]; delete pHalves[old]; }
+    }
+    return pColoured[id];
+  }
+  // a frame at half size for a small face (a list's 24 × 24): each pixel the average of four, the silhouette kept crisp
+  function half(src, id, f, S) {
+    var hs = pHalves[id] || (pHalves[id] = {});
+    if (hs[f]) return hs[f];
+    var t = document.createElement('canvas');
+    t.width = S; t.height = S;
+    var tg = t.getContext('2d');
+    tg.drawImage(src, f * S, 0, S, S, 0, 0, S, S);
+    var a = tg.getImageData(0, 0, S, S).data, H = S >> 1;
+    var c = document.createElement('canvas');
+    c.width = H; c.height = H;
+    var cg = c.getContext('2d'), out = cg.createImageData(H, H), o = out.data;
+    for (var y = 0; y < H; y++) for (var x = 0; x < H; x++) {
+      var r = 0, g = 0, b = 0, al = 0;
+      for (var j = 0; j < 4; j++) {
+        var i = ((2 * y + (j >> 1)) * S + 2 * x + (j & 1)) * 4, w = a[i + 3];
+        r += a[i] * w; g += a[i + 1] * w; b += a[i + 2] * w; al += w;
+      }
+      var q = (y * H + x) * 4;
+      if (al >= 510) { o[q] = r / al; o[q + 1] = g / al; o[q + 2] = b / al; o[q + 3] = 255; }
+    }
+    cg.putImageData(out, 0, 0);
+    return (hs[f] = c);
+  }
+  /** A portrait drawn into a canvas. A canvas the portrait's size (64) or a whole multiple of it shows it whole; a
+   *  smaller one (a 24 × 24 face in a list) shows the head and shoulders at half size. path: under assets/portraits/,
+   *  no '.png' ('npc-baker', 'crowd/man'). opts: map + key (key colours to swap, and a name for that recolouring),
+   *  expr ('neutral' · 'happy' · 'surprised' · 'sad'), blink (now and then, while the canvas is on the page),
+   *  fallback() (called when there's no portrait file). Returns a handle: set(expr) changes the face; ok is true once
+   *  it's drawn, false if there's no portrait. */
+  function portrait(canvas, path, opts) {
+    opts = opts || {};
+    var e = portraitImage(path), h = { ok: null, expr: opts.expr || 'neutral', set: function (x) { h.expr = x || 'neutral'; draw(h.expr); } };
+    var src = null, id = path + '|' + (opts.key || '');
+    function draw(name) {
+      if (!src) return;
+      var g = canvas.getContext('2d'), S = src.height, f = Math.max(0, EXPRESSIONS.indexOf(name));
+      if (f * S >= src.width) f = 0;
+      g.imageSmoothingEnabled = false;
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      if (canvas.width >= S) {
+        var k = Math.floor(Math.min(canvas.width, canvas.height) / S) || 1;
+        g.drawImage(src, f * S, 0, S, S, (canvas.width - S * k) >> 1, (canvas.height - S * k) >> 1, S * k, S * k);
+      } else {
+        var hf = half(src, id, f, S), H = S >> 1;
+        g.drawImage(hf, (H - canvas.width) >> 1, Math.max(0, Math.min(2, H - canvas.height)), canvas.width, canvas.height,
+                    0, 0, canvas.width, canvas.height);
+      }
+    }
+    function blink() {                                // now and then, for a moment, while it's on the page
+      setTimeout(function () {
+        if (!canvas.isConnected) return;
+        if (h.expr !== 'happy') { draw('blink'); setTimeout(function () { draw(h.expr); }, 140); }
+        blink();
+      }, 2200 + Math.random() * 3800);
+    }
+    function ready() {
+      if (e.failed || !e.img.naturalWidth) { h.ok = false; if (opts.fallback) opts.fallback(); return; }
+      src = coloured(path, e, opts.map, opts.key || '');
+      h.ok = true;
+      draw(h.expr);
+      if (opts.blink) blink();
+    }
+    if (e.ready || e.failed) ready(); else e.waiting.push(ready);
+    return h;
+  }
+  /** A pilot's face from their character key ('[sit-|ski-|…][<style>-]<colour>@<look code>', js/character.js): another
+   *  player you walk up to. seed picks their eyes' colour (their name). */
+  function pilotFace(canvas, key, seed, opts) {
+    key = String(key || '');
+    var at = key.indexOf('@'), parts = (at < 0 ? key : key.slice(0, at)).split('-'), col = parts.pop();
+    if (/^(sit|ski|climb|attack)$/.test(parts[0] || '')) parts.shift();
+    var st = parts[0] || 'flight', l = at < 0 ? clean(null) : parse(key.slice(at + 1));
+    if (!SUITS[col]) col = 'purple';
+    var path = 'pilots/' + (st !== 'flight' ? st + '-' : '') + l.body + '-' + head(l);
+    opts = opts || {};
+    return portrait(canvas, path, { map: portraitKeys(palette(col, l), seed || '', SKIN[l.skin]), key: col + '|' + code(l) + '|' + seed,
+                                    blink: opts.blink, fallback: function () {
+      var sh = sheet('', st, col, l), tries = 0;
+      (function draw() {
+        if (!sh.ready) { if (++tries < 60) setTimeout(draw, 80); return; }
+        var g = canvas.getContext('2d');
+        g.clearRect(0, 0, canvas.width, canvas.height);
+        g.imageSmoothingEnabled = false;
+        g.drawImage(sh.img, 4, 2, 24, 24, 0, 0, canvas.width, canvas.height);
+      })();
+    } });
+  }
+  /** An NPC's face from their sheet's name (npc-baker): their portrait, else the head of the sheet's first frame. */
+  function npcFace(canvas, sheetName, opts) {
+    opts = opts || {};
+    return portrait(canvas, sheetName, { expr: opts.expr, blink: opts.blink, fallback: opts.fallback || function () {
+      var im = new Image();
+      im.onload = function () {
+        var g = canvas.getContext('2d');
+        g.imageSmoothingEnabled = false;
+        g.clearRect(0, 0, canvas.width, canvas.height);
+        g.drawImage(im, 4, 2, 24, 24, 0, 0, canvas.width, canvas.height);
+      };
+      im.src = '/bridge/assets/characters/' + sheetName + '.png';
+    } });
   }
 
   // ---- the preview: turning on the spot and walking in place ------------------------------------------
@@ -310,6 +464,7 @@ var BridgeLook = (function () {
   return {
     get: get, set: set, onChange: onChange, code: code, parse: parse, clean: clean,
     sheet: sheet, drawPreview: drawPreview, editor: editor, face: face, lookFor: lookFor,
+    portrait: portrait, portraitKeys: portraitKeys, npcFace: npcFace, pilotFace: pilotFace, EXPRESSIONS: EXPRESSIONS,
     SUITS: SUITS, SKINS: SKINS, HAIR_COLOURS: HAIR_COLOURS, HAIRS: HAIRS, BODIES: BODIES, DEFAULT: DEFAULT
   };
 })();
