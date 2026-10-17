@@ -29,5 +29,7 @@
     "core": { "name": "The Core Express", "x": 0.92, "lobbies": [] }
   },
   "loop": { "name": "The Loop", "stations": [] },
-  "cabs": { "pads": [] }
+  "cabs": { "pads": [
+    { "id": "skyport", "name": "Skyport 7", "world": "arcadia-skypad", "spawn": [19, 11], "level": "midlevels" }
+  ] }
 }
