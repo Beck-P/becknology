@@ -7,10 +7,11 @@ only partly done, the rest stays here as open.
 ## October 17 (ideas Beck picked — "not super pressing… good options to start working on")
 | Ask | Status | Where / notes |
 |---|---|---|
-| Festivals: one per planet per season, on its own clock — the place dresses up, limited stock, contests | other session | Beck is handing these three to the "Becknology world improvements" session. Ideas: Lumar's lanterns on the water and a fishing derby, Arcadia's blackout night, Hoarfell's ice fair and ski race, Verdance's harvest fair judging your best crop. Builds on js/clock.js, js/seasons.js, js/weather.js, js/hours.js. |
+| Festivals: one per planet per season, on its own clock — the place dresses up, limited stock, contests | other session | Beck is handing these four (with daily routines) to the "Becknology world improvements" session. Ideas: Lumar's lanterns on the water and a fishing derby, Arcadia's blackout night, Hoarfell's ice fair and ski race, Verdance's harvest fair judging your best crop. Builds on js/clock.js, js/seasons.js, js/weather.js, js/hours.js. |
 | A dungeon that resets every night | other session | Generated floors under Midnight Isle on js/mine.js + js/combat.js: new layout each night, deeper is richer, a best-run board for Beck and Alyssa. |
 | Music that changes with the moment | other session | js/audio.js layered by time of day, weather and place; a tavern band when you sit; a jukebox for your homes. |
-| A guided first hour | open (later) | One character walks a new pilot through fish → sell → buy → sail, so a friend visiting cold isn't lost. |
+| Daily routines for the cast | other session | People keep a day by their planet's clock instead of walking fixed paths (assets/walkers.json): the baker at the oven at dawn, the harbourmaster home when it rains, the tavern full after dark; the Map tab shows where someone is now. Builds on js/clock.js, js/hours.js, js/weather.js. |
+| A guided first hour | later | Beck: a good idea at some point, not yet. One character walks a new pilot through fish → sell → buy → sail. |
 | Secrets in every world | open (later) | Hidden rooms, things only there at certain hours or weather, glyphs that are ciphers (cipher-room, typist); a count per world on the Map tab. Shape to be worked out with Beck. |
 | A main story that ties the quests together and ends at the Singularity | discuss | Beck wants one "at some point"; think it through first. The quests already hint at a thread (the ship mark, the Listeners, Forty-Seven Point Three, the Brink). |
 
