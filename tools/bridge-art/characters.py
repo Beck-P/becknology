@@ -1435,11 +1435,14 @@ def face_record(tag):
     for nm, (e, n) in FACE.items():
         co = world_to_camera_view(scene, cam, e.matrix_world.translation)
         a[nm] = [round(co.x * W, 2), round((1 - co.y) * H, 2), round(-(rot @ n).normalized().dot(fwd), 3)]
-    # the chin: the head's lowest point on screen (its silhouette), which the face's rows hang off
+    # the chin, which the face's rows hang off: the head's lowest point on screen (its silhouette) — when that is the
+    # chin, at the front of the face below the mouth (not with the head turned aside or tumbling in a roll)
     u = (rot.inverted() @ Vector((0, math.sin(ELEV), math.cos(ELEV)))).normalized()
     ru = Vector((25.0 * u.x, 23.04 * u.y, 25.0 * u.z))         # the sphere's radii squared × u: its extreme point along -u
-    co = world_to_camera_view(scene, cam, head.matrix_world @ (Vector((0, 0, 5.2)) - ru / math.sqrt(u.dot(ru))))
-    a['chin'] = [round(co.x * W, 2), round((1 - co.y) * H, 2), 1.0]
+    p = Vector((0, 0, 5.2)) - ru / math.sqrt(u.dot(ru))
+    if p.y <= -2.5 and p.z <= 3.0:
+        co = world_to_camera_view(scene, cam, head.matrix_world @ p)
+        a['chin'] = [round(co.x * W, 2), round((1 - co.y) * H, 2), 1.0]
     ANCHORS[tag] = a
 
 
