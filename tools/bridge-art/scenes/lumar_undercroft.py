@@ -12,6 +12,7 @@ other session's) scatters the night's monsters, chests, traps and the stair down
 JSON has a `dungeon` block for it to fill and the stair up as `dungeon.up`.
 """
 import json
+import math
 import os
 import sys
 
@@ -66,26 +67,37 @@ fixed = set(L['pillars']) | set(L['pools']) | set(L['braziers'])
 floor_cells = walk - fixed
 
 # ---- floor, walls, the stair up -----------------------------------------------------------------------------
-C.floor(k, walk - set(L['pools']))
+WELL = {(9, 8), (10, 8), (9, 9), (10, 9)} if LAYOUT == 'hall' else set()   # the stair down, cut through the floor
+C.floor(k, walk - set(L['pools']) - WELL)
 faces = C.build(k, walk, COLS, ROWS, keep_clear=stair)
 for (c, r) in stair:
     k.solid(c, r, c + 1, r + 1)
-# the stair up: an arch in the back wall, worn steps climbing into the dark behind it
-for (x0, x1) in ((sx, sx + 0.25), (sx + 1.75, sx + 2)):                                     # the jambs
-    k.box(x0, sy, 0.0, x1, sy + 1, C.WALL_H, (C.MORTAR, 0.1), 'crypt_wall')
-    C.coursed(k, x0, x1, sy + 1, 0.0, C.WALL_H)
-k.box(sx + 0.25, sy, 1.75, sx + 1.75, sy + 1, C.WALL_H, (C.MORTAR, 0.1), 'crypt_wall')          # over the arch
-C.coursed(k, sx + 0.25, sx + 1.75, sy + 1, 1.75, C.WALL_H)
-k.box(sx, sy, C.WALL_H, sx + 2, sy + 1.06, C.WALL_H + 0.1, (C.shade(C.STONE, 0.8), 0.12), 'crypt_cornice')
-k.box(sx + 0.25, sy - 0.05, 0.0, sx + 1.75, sy + 0.08, 1.75, '#040306', 'stair_dark')          # the dark it climbs into
+# the stair up: a round-headed arch in the back wall, worn steps climbing into the dark behind it
+front, cxs = sy + 1, sx + 1.0
+w, spring, rz = 0.6, 1.0, 0.7                                                               # half-width, springing, rise
+for (x0, x1) in ((sx, cxs - w), (cxs + w, sx + 2)):                                       # the jambs
+    k.box(x0, sy, 0.0, x1, front, C.WALL_H, '#0a080e', 'crypt_wall')
+    C.coursed(k, x0, x1, front, 0.0, C.WALL_H)
+k.box(cxs - w, sy, spring, cxs + w, front, C.WALL_H, '#0a080e', 'crypt_wall')                # over the arch
+C.coursed(k, cxs - w, cxs + w, front, spring, C.WALL_H)
+C.cornice(k, sx, sx + 2, front)
+k.box(cxs - w, sy - 0.05, 0.0, cxs + w, sy + 0.08, spring + rz, '#040306', 'stair_dark')     # the dark it climbs into
 for i in range(5):
-    r0 = sy + 1.0 - (i + 1) * 0.2
-    k.box(sx + 0.3, r0, 0.0, sx + 1.7, r0 + 0.2, 0.17 * (i + 1), (C.shade(C.STONE, 0.95 - 0.12 * i), 0.14), 'stair_step', bevel=0.015)
-k.cyl_y(sx + 1.0, sy + 1.0, sy + 1.07, 1.42, 0.8, 0.33, (C.shade(C.STONE, 1.15), 0.12), 'stair_arch', verts=16)
-k.cyl_y(sx + 1.0, sy + 0.99, sy + 1.08, 1.42, 0.7, 0.27, '#040306', 'stair_dark', verts=16)
-for x in (sx + 0.2, sx + 1.7):
-    k.box(x, sy + 0.98, 0.0, x + 0.1, sy + 1.07, 1.42, (C.shade(C.STONE, 1.1), 0.12), 'stair_arch')
-k.point_light(sx + 1.0, sy + 0.5, 1.2, '#8090c0', 5, radius=0.4)                           # a little night down the stair
+    r1 = front - i * 0.18
+    k.box(cxs - w + 0.03, r1 - 0.18, -0.3, cxs + w - 0.03, r1, 0.17 * (i + 1), (C.shade(C.STONE, 0.98 - 0.12 * i), 0.14), 'stair_step', bevel=0.015)
+k.poly([(cxs, front + 0.05, spring)] + [(cxs + w * math.cos(t), front + 0.05, spring + rz * math.sin(t)) for t in [math.pi * j / 16 for j in range(17)]],
+       '#040306', 'stair_dark')                                                             # the arch's dark head
+n, gap = 9, 0.035
+for j in range(n):                                                                          # voussoirs round it, a keystone
+    t0, t1 = math.pi * j / n + gap / 2, math.pi * (j + 1) / n - gap / 2
+    o = 0.2 if j == n // 2 else 0.14
+    q = [(cxs + (w + dw) * math.cos(t), front + 0.04, spring + (rz + dw) * math.sin(t)) for (dw, t) in ((0, t0), (o, t0), (o, t1), (0, t1))]
+    k.quads([q], (C.shade(C.STONE, k.rng.uniform(1.0, 1.22)), 0.12), 'stair_arch')
+for x in (cxs - w - 0.12, cxs + w):                                                          # dressed reveals, imposts at the spring
+    k.box(x, front - 0.02, 0.0, x + 0.12, front + 0.035, spring, (C.shade(C.STONE, 1.08), 0.12), 'stair_arch')
+    k.box(x - 0.04, front - 0.02, spring - 0.08, x + 0.16, front + 0.07, spring, (C.shade(C.STONE, 1.16), 0.12), 'stair_arch', bevel=0.01)
+k.point_light(cxs, sy + 0.3, 1.3, '#8090c0', 4, radius=0.4)                                 # a little night down the stair
+k.point_light(cxs, front - 0.45, 1.25, '#8090c0', 5, radius=0.2)                              # and on its steps
 
 # ---- what stands in the rooms: pillars, black water, braziers ------------------------------------------------
 for (c, r) in L['pillars']:
@@ -107,11 +119,13 @@ inter = []
 if LAYOUT == 'hall':
     slate_x = 11
     k.box(slate_x - 0.62, 3.95, 0.8, slate_x + 0.62, 4.06, 1.8, (A.WOOD_D, 0.14), 'slate_frame')
-    k.box(slate_x - 0.55, 3.97, 0.85, slate_x + 0.55, 4.05, 1.75, ('#1e2228', 0.06), 'slate')
+    k.box(slate_x - 0.55, 3.97, 0.85, slate_x + 0.55, 4.08, 1.75, ('#1e2228', 0.06), 'slate')
     for i, w in enumerate((0.7, 0.5, 0.62, 0.3)):                                          # chalk marks of floors reached
-        k.box(slate_x - 0.45, 4.05, 1.55 - i * 0.18, slate_x - 0.45 + w, 4.06, 1.58 - i * 0.18, '#c8c8c0', 'chalk')
-    A.stairwell_down(k, 9.0, 11.0, 8.0, 10.0)
+        k.box(slate_x - 0.45, 4.08, 1.55 - i * 0.18, slate_x - 0.45 + w, 4.095, 1.58 - i * 0.18, '#c8c8c0', 'chalk')
+    C.stair_down(k, 9.0, 11.0, 8.0, 10.0)
     k.solid(9, 8, 11, 10)
+    C.sarcophagus(k, 2.15, 9.1)                                                             # an old knight's tomb, bones in the corner
+    C.bones(k, 13.45, 10.4)
     inter = [
         {'x': sx, 'y': sy, 'type': 'enter_world', 'target': 'lumar-midnight', 'spawn': list(GRAVE_DOOR), 'label': 'STAIR UP', 'prompt': 'PRESS E TO CLIMB'},
         {'x': slate_x, 'y': 4, 'type': 'dialog', 'label': 'DEEPEST FLOOR', 'prompt': 'PRESS E TO READ',
@@ -123,9 +137,9 @@ else:
     inter = [{'x': sx, 'y': sy, 'type': 'dungeon_up', 'label': 'STAIR UP', 'prompt': 'PRESS E TO CLIMB'}]
 
 # ---- light: cold dark, warm only where fire is ------------------------------------------------------------------
-k.point_light(COLS / 2, ROWS / 2, 4.0, '#6a6890', 30 if LAYOUT == 'hall' else 60, radius=3.0)
+k.area_light(COLS / 2, ROWS / 2 + 1, 6.0, '#6a70a8', 2.6 * COLS * ROWS, max(COLS, ROWS) * 0.8)                # a little cold light from nowhere in particular
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.72}}, light_samples=int(os.environ.get('SCENE_SAMPLES', 112)),
-         world_light=('#1c1826', 0.45))
+         world_light=('#1c1a2a', 0.4))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Undercroft', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'cave',
