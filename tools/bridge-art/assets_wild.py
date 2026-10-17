@@ -337,89 +337,17 @@ def test_hooks(k):
     pass, so scene_post finishes the crop on its own); SCENE_SAMPLES caps the light samples. Off unless set."""
     import os
     crop = os.environ.get('SCENE_CROP')
-    if crop:
-        x0, r0, x1, r1 = (float(v) for v in crop.split(','))
+    cap = os.environ.get('SCENE_SAMPLES')
+    if crop or cap:
         settings = k._settings
 
-        def patched(*a, **kw):
-            settings(*a, **kw)
-            rd, ts = k.scene.render, 32
-            ox, oy = k.origin
-            rd.use_border, rd.use_crop_to_border = True, True
-            rd.border_min_x, rd.border_max_x = (ox + x0 * ts) / k.resx, (ox + x1 * ts) / k.resx
-            rd.border_min_y, rd.border_max_y = 1 - (oy + r1 * ts) / k.resy, 1 - (oy + r0 * ts) / k.resy
+        def patched(samples, *a, **kw):
+            settings(min(samples, int(cap)) if cap else samples, *a, **kw)      # the probes too (they ask for 64)
+            if crop:
+                x0, r0, x1, r1 = (float(v) for v in crop.split(','))
+                rd, ts = k.scene.render, 32
+                ox, oy = k.origin
+                rd.use_border, rd.use_crop_to_border = True, True
+                rd.border_min_x, rd.border_max_x = (ox + x0 * ts) / k.resx, (ox + x1 * ts) / k.resx
+                rd.border_min_y, rd.border_max_y = 1 - (oy + r1 * ts) / k.resy, 1 - (oy + r0 * ts) / k.resy
         k._settings = patched
-    cap = os.environ.get('SCENE_SAMPLES')
-    if cap:
-        render = k.render
-
-        def capped(out, *a, **kw):
-            kw['light_samples'] = min(kw.get('light_samples', 160), int(cap))
-            return render(out, *a, **kw)
-        k.render = capped
-
-
-# ---- crags ----------------------------------------------------------------------------------------------------------
-def rock_block(k, x0, x1, rf, rback, z_top, lean, col, seed, ledge=None, lip=None, cracks=None, part='crag'):
-    """One block of a crag face (the Hoarfell tarn's): a jagged top edge, the face leaning back by `lean`, its sides
-    seen in the cracks between blocks, the top lying back to the next tier — `ledge` (colour) lies over it (ash, turf,
-    snow) with a rounded `lip` along the front edge; `cracks` (colour) runs a seam or two up the face (glowing if a
-    (colour, glow) pair)."""
-    rr = random.Random(seed)
-    n = max(3, int((x1 - x0) / 0.18))
-    tops = []
-    for i in range(n + 1):
-        x = x0 + (x1 - x0) * i / n
-        if 0 < i < n:
-            z = z_top + rr.uniform(-0.1, 0.08) + (0.14 if rr.random() < 0.15 else 0.0) * rr.choice((-1, 1))
-        else:
-            z = z_top + rr.uniform(-0.12, -0.02)
-        tops.append((x, z))
-    xm = (x0 + x1) / 2
-    outline = [(x0, rf, 0.0)] + [(x, rf - lean, z) for (x, z) in tops] + [(x1, rf, 0.0)]
-    k.poly([(xm, rf, 0.0)] + outline, (col, 0.07), part + '_face')
-    for (x, z) in (tops[0], tops[-1]):
-        k.loft([[(x, rf, 0.0), (x, rf - lean, z)], [(x, rback, 0.0), (x, rback, z)]], (shade(col, 0.8), 0.07), part + '_side', smooth=False)
-    top_col = ledge or shade(col, 1.12)
-    k.loft([[(x, rf - lean, z + 0.01) for (x, z) in tops], [(x, rback, z + 0.01) for (x, z) in tops]], (top_col, 0.05),
-           part + '_ledge', smooth=True)
-    if lip:
-        for (xa, za), (xb, zb) in zip(tops, tops[1:]):
-            k.tube((xa, rf - lean + 0.02, za + 0.025), (xb, rf - lean + 0.02, zb + 0.025), 0.05, (lip, 0.05), part + '_lip', verts=6)
-    # bedding lines across the face, a step in it here and there
-    for f in (0.35, 0.68):
-        if rr.random() < 0.8:
-            zl = z_top * f + rr.uniform(-0.05, 0.05)
-            k.tube((x0 + 0.03, rf - lean * f + 0.006, zl), (x1 - 0.03, rf - lean * f + 0.006, zl + rr.uniform(-0.05, 0.05)), 0.016,
-                   (shade(col, 0.62), 0.07), part + '_bed', verts=4)
-    if cracks:
-        cc, glow = cracks if isinstance(cracks, tuple) else (cracks, None)
-        for _ in range(rr.randint(0, 2)):
-            cx = rr.uniform(x0 + 0.15, x1 - 0.15)
-            zc = rr.uniform(0.35, 0.85) * z_top
-            k.tube((cx, rf + 0.004, 0.02), (cx + rr.uniform(-0.08, 0.08), rf - lean * zc / z_top + 0.004, zc), 0.02,
-                   cc if glow else (cc, 0.05), part + '_crack', emit=(glow, 0.8) if glow else None, verts=4)
-
-
-def crag(k, front, x0, x1, tiers, faces, seed=0, skip=(), ledge=None, lip=None, cracks=None, core='#2a2426', part='crag'):
-    """A crag of tiers stepping back up a slope: front(x) -> the row of its foot at x; tiers: [(top z, set back)], front
-    to back; each tier a run of blocks split by cracks, a solid core behind so nothing shows through. skip: (xa, xb)
-    spans left open in the lower tiers (a cave mouth, a recess)."""
-    rr = random.Random(seed)
-    for ti, (zt, back) in enumerate(tiers):
-        nxt = tiers[ti + 1][1] if ti + 1 < len(tiers) else back + 0.8
-        x = x0 - rr.uniform(0.0, 0.5)
-        while x < x1:
-            w = rr.uniform(0.5, 1.7) if ti < len(tiers) - 1 else rr.uniform(1.0, 2.0)
-            xe = min(x1, x + w)
-            xm = (x + xe) / 2
-            if any(a < xm < b for (a, b) in skip) and ti < len(tiers) - 1:
-                x = xe
-                continue
-            gap = rr.uniform(0.03, 0.08)
-            f = front(xm) - back + rr.uniform(-0.12, 0.1)
-            top = zt + rr.uniform(-0.18, 0.12)
-            rock_block(k, x + gap / 2, xe - gap / 2, f, front(xm) - nxt - 0.05, top, rr.uniform(0.06, 0.2), faces[rr.randrange(len(faces))],
-                       rr.randrange(10 ** 6), ledge=ledge, lip=lip, cracks=cracks, part=part)
-            k.box(x, front(xm) - nxt - 0.3, 0.0, xe, f - 0.25, top - 0.15, (core, 0.05), part + '_core')
-            x = xe
