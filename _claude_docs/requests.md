@@ -111,9 +111,10 @@ the farm, Midnight Isle (with the Undercroft's way in), Sylvara, Sapphire, Crims
 Crownhaven and Brambleford again (street clutter); the Hoarspire's summit by day, dusk and night. The moon over the daylit
 places was mis-set (on a long map a straight-edged wedge at the top had no moonlight: the pistes' night was taken back out,
 the Park's never went in; Fellhaven's snow crown and Sylvara's far canopy had a corner of it) — fixed in the kit. Running:
-Starling Holm again (the slipway and the hall of finds) · the pistes, the Park, the face, the Last Ridge and the Ice Step by
-day, dusk and night. Then Brambleford and the market square (their hopscotch), Fellhaven, Sylvara and the farm (the moon) ·
-Sapphire and Crownhaven (their hopscotch). Each ships as it finishes.
+Brambleford and the market square (their hopscotch) · the pistes, the Park, the face, the Last Ridge and the Ice Step by day,
+dusk and night, then Sapphire and Crownhaven (their hopscotch). Then Starling Holm again (the slipway and the hall of finds:
+its first try had the new slip's sleepers buried under the bank near its head, black bars across it, so it didn't ship),
+Fellhaven, Sylvara and the farm (the moon). Each ships as it finishes.
 
 ## Older threads still open (from before this session; check what's left before calling them done)
 - Two ships: mothership home base + landing shuttle (#18)
