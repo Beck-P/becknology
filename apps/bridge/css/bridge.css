@@ -1348,6 +1348,55 @@ html.touch #act-pill .ip-key { display: none; }
 #view-panel .vp-caption { font-size: 15px; line-height: 1.5; color: #f0e6d0; max-width: 680px; white-space: pre-line; text-shadow: 0 1px 2px #000; }
 #view-panel .vp-hint { font-size: 11px; color: rgba(240, 230, 210, 0.6); display: flex; align-items: center; gap: 6px; }
 html.touch #view-panel .vp-hint .ip-key { display: none; }
+/* Looking into a fish tank (js/aquarium.js): the room leans in (fp-lean) and the tank's water fills the screen,
+   whole native pixels scaled up; the fish's names float under them at the screen's own resolution. */
+#tank-view {
+  position: fixed; inset: 0; z-index: 65; display: none; background: #0a1c22; overflow: hidden;
+  font-family: 'Pixelify Sans', 'Courier New', monospace;
+}
+#tank-view.visible { display: block; }
+#tank-view .tv-canvas { position: absolute; left: 0; top: 0; image-rendering: pixelated; display: block; cursor: pointer; opacity: 0; transform-origin: 50% 40%; }
+#tank-view.tv-in .tv-canvas { animation: tv-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+#tank-view.tv-out .tv-canvas { animation: tv-out 0.36s cubic-bezier(0.6, 0, 0.8, 0.4) forwards; }
+@keyframes tv-in { from { opacity: 0; transform: scale(0.62); } 40% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes tv-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.7); } }
+#tank-view .tv-names { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s 0.4s; }
+#tank-view.tv-in .tv-names { opacity: 1; }
+#tank-view.tv-out .tv-names { opacity: 0; transition-delay: 0s; transition-duration: 0.12s; }
+#tank-view .tv-name {
+  position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 12px; letter-spacing: 1px; line-height: 1;
+  padding: 2px 6px; border-radius: 8px; background: rgba(6, 24, 30, 0.45); text-shadow: 0 1px 2px #000; will-change: transform;
+}
+#tank-view .tv-name.far { opacity: 0.7; font-size: 11px; }
+#tank-view .tv-name.on { background: rgba(6, 24, 30, 0.8); box-shadow: 0 0 0 1px currentColor; }
+/* the glass: the tank's frame posts at the edges and a sheen across it, in the cabinet's style */
+#tank-view .tv-glass {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s 0.25s;
+  box-shadow: inset clamp(10px, 2.2vw, 26px) 0 0 #24160a, inset calc(-1 * clamp(10px, 2.2vw, 26px)) 0 0 #24160a,
+              inset calc(clamp(10px, 2.2vw, 26px) + 3px) 0 0 #7a5028, inset calc(-1 * clamp(10px, 2.2vw, 26px) - 3px) 0 0 #4a2e16,
+              inset 0 0 120px rgba(0, 10, 16, 0.55);
+  background: linear-gradient(115deg, transparent 18%, rgba(255, 255, 255, 0.05) 19%, rgba(255, 255, 255, 0.05) 24%, transparent 25%,
+                                      transparent 29%, rgba(255, 255, 255, 0.035) 30%, rgba(255, 255, 255, 0.035) 31.5%, transparent 32.5%);
+}
+#tank-view.tv-neon .tv-glass { box-shadow: inset clamp(10px, 2.2vw, 26px) 0 0 #0a0810, inset calc(-1 * clamp(10px, 2.2vw, 26px)) 0 0 #0a0810,
+  inset calc(clamp(10px, 2.2vw, 26px) + 2px) 0 0 #f078a8, inset calc(-1 * clamp(10px, 2.2vw, 26px) - 2px) 0 0 #f078a8, inset 0 0 120px rgba(20, 0, 20, 0.5); }
+#tank-view.tv-holo .tv-glass { box-shadow: inset clamp(10px, 2.2vw, 26px) 0 0 #10151a, inset calc(-1 * clamp(10px, 2.2vw, 26px)) 0 0 #10151a,
+  inset calc(clamp(10px, 2.2vw, 26px) + 2px) 0 0 #40c8d8, inset calc(-1 * clamp(10px, 2.2vw, 26px) - 2px) 0 0 #40c8d8, inset 0 0 120px rgba(0, 10, 20, 0.55); }
+#tank-view.tv-in .tv-glass { opacity: 1; }
+#tank-view .tv-foot {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 24px calc(16px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.72)); opacity: 0; transition: opacity 0.4s 0.4s; pointer-events: none;
+}
+#tank-view.tv-in .tv-foot { opacity: 1; }
+#tank-view.tv-out .tv-foot { opacity: 0; transition-delay: 0s; transition-duration: 0.12s; }
+#tank-view .tv-title { font-size: 12px; letter-spacing: 5px; text-transform: uppercase; color: #d8e8e0; }
+#tank-view .tv-caption { font-size: 14px; line-height: 1.5; color: #f0ece0; max-width: 680px; text-shadow: 0 1px 2px #000; min-height: 1.5em; }
+#tank-view .tv-back {
+  pointer-events: auto; font: inherit; font-size: 11px; color: rgba(240, 236, 224, 0.75); background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(240, 236, 224, 0.25); border-radius: 12px; padding: 4px 12px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+}
+html.touch #tank-view .tv-back .ip-key { display: none; }
 
 /* Pachinko — Lucky 7's machines and prize counter (js/pachinko.js) */
 #pachinko {
@@ -1510,6 +1559,9 @@ html.touch .pk-keys { display: none; }
   .sp-have, .sp-price { grid-column: 2; }
 }
 /* choosers (harbour books, wares): the name keeps its line, the detail wraps beside it */
+/* a chooser's picture (a ship as she's fitted, js/sloop.js portrait): game pixels at a whole multiple, framed */
+.wd-art { display: block; margin: 8px auto 2px; max-width: 100%; image-rendering: pixelated; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35); }
+.world-dialog.wd-has-art { top: 50%; max-height: calc(100vh - 16px); overflow-y: auto; }                 /* (a taller card: it scrolls) */
 .wd-chooser .wd-sell-row.pick { grid-template-columns: 24px minmax(96px, max-content) 1fr auto auto; }
 .wd-chooser .sp-name { white-space: nowrap; }
 .wd-chooser .sp-have { white-space: normal; text-align: right; line-height: 1.3; }

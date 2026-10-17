@@ -123,7 +123,7 @@ var BridgeLoot = (function () {
 
   function draw(ctx, offX, offY, ts) {
     if (drops.length === 0) return;
-    var now = performance.now();
+    var now = performance.now(), FX = typeof BridgeFX !== 'undefined' && BridgeFX.disc ? BridgeFX : null;
     for (var i = 0; i < drops.length; i++) {
       var d = drops[i];
       var item = BridgeItems.get(d.itemId);
@@ -133,15 +133,12 @@ var BridgeLoot = (function () {
       var cx = offX + d.x * ts;
       var cy = offY + d.y * ts;
 
-      // Soft shadow underneath, scaled by arc height (higher = smaller shadow)
+      // Soft shadow underneath, scaled by arc height (higher = smaller shadow): an oval of whole pixels on the ground
       var arcLift = d._arcLift || 0;
       var shadowAlpha = 0.35 * (1 - arcLift / POP_HEIGHT);
       ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0.10, shadowAlpha).toFixed(2) + ')';
-      var shadowW = ts * (0.45 - 0.10 * (arcLift / POP_HEIGHT));
-      var shadowH = ts * 0.10;
-      ctx.fillRect(Math.floor(cx - shadowW / 2),
-                   Math.floor(cy + ts * 0.20 - shadowH / 2),
-                   Math.ceil(shadowW), Math.ceil(shadowH));
+      var shadowR = ts * (0.22 - 0.05 * (arcLift / POP_HEIGHT));
+      if (FX) FX.disc(ctx, cx, cy + ts * 0.20, Math.round(shadowR), 0.3);
 
       // Bob for landed drops (skip during pop).
       var bob = 0;
@@ -152,11 +149,9 @@ var BridgeLoot = (function () {
       var iconX = cx - iconSize / 2;
       var iconY = cy - iconSize / 2 - arcLift * ts - bob * ts;
 
-      // Faint sparkle halo so loot reads against any background.
+      // Faint glow so loot reads against any background: round and soft, gone at its edge (the icon is the crisp core)
       var pulse = 0.55 + 0.35 * Math.sin((now + d.seed) / 500);
-      ctx.fillStyle = 'rgba(255,235,150,' + (pulse * 0.18).toFixed(2) + ')';
-      ctx.fillRect(Math.floor(iconX - 1), Math.floor(iconY - 1),
-                   Math.ceil(iconSize + 2), Math.ceil(iconSize + 2));
+      if (FX) FX.glow(ctx, cx, iconY + iconSize / 2, iconSize * 0.9, [255, 235, 150], pulse * 0.38);
 
       // Item icon
       item.draw(ctx, iconX, iconY, iconSize);

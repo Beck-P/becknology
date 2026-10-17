@@ -423,9 +423,12 @@ var BridgeCatalog = (function () {
   // ---- Preview painters ----
   // Deck decor is previewed from its own render (assets/scenes/bridge/layers):
   // cut out, brightened out of the room's dim light, fitted to the card.
-  var deckArt = {};
+  var deckArt = {}, deckExt = null;
   function previewDeck(slot, key) {
-    var url = '/bridge/assets/scenes/bridge/layers/' + slot + '/' + key + '/full.png';
+    if (!deckExt) {                                   // which format the bridge's render is in (scene.json "ext")
+      deckExt = fetch('/bridge/assets/scenes/bridge/scene.json?v=' + Date.now()).then(function (r) { return r.json(); })
+        .then(function (m) { return m.ext || 'png'; }).catch(function () { return 'png'; });
+    }
     var img = new Image();
     img.onload = function () {
       var c = document.createElement('canvas');
@@ -441,7 +444,7 @@ var BridgeCatalog = (function () {
       } catch (e) { /* tainted: keep it as rendered */ }
       deckArt[key] = c;
     };
-    img.src = url;
+    deckExt.then(function (ext) { img.src = '/bridge/assets/scenes/bridge/layers/' + slot + '/' + key + '/full.' + ext; });
     return function (ctx) {
       var c = deckArt[key], W = ctx.canvas.width;
       if (!c) {

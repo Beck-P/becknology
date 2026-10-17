@@ -5,7 +5,7 @@
  * the District street, the village corner on Verdance, Fellhaven, Sapphire's quay, Enigma's docking bay. He sells
  * things that do something:
  *   - the Moonlit Wand: F casts a bolt of moonlight down the way you face, seven tiles, through the first creature
- *     it meets (3 energy a cast);
+ *     it meets (2 energy a cast, most of it back once you stop for a breath — js/arms.js, the second wind);
  *   - the Heron Feather: carried, you walk a little quicker;
  *   - the Ring of Hoarfrost: carried, the cold can't touch you (like the Thermal Suit);
  *   - the Tide Charm: carried, the sloop sails a little faster;
@@ -176,14 +176,20 @@ var BridgeMagic = (function () {
   // ---- the wand -------------------------------------------------------------------------------------------------
   // The staff or wand is raised and thrust out (js/arms.js, the cast swing); the bolt leaves on the thrust. Charged
   // (F held), it's twice as strong, bigger, and goes on through whatever it meets.
-  var lastCast = 0;
+  var lastCast = 0, COST = 2;
   function cast(item) {
-    var inv = BridgeInventory;
-    var tired = function () { return inv.getStats && inv.getStats().energy < 3; };
-    if (tired()) { sfx('error'); return say(item.bolt === 'wisp' ? 'WISPCALLER STAFF' : 'MOONLIT WAND', (item.bolt === 'wisp' ? 'THE WISP IN THE STAFF GUTTERS.' : 'THE WAND IS COLD IN YOUR HAND.') + ' YOU\'RE TOO TIRED - EAT, OR REST.'); }
+    var inv = BridgeInventory, A = typeof BridgeArms !== 'undefined' ? BridgeArms : null;
+    var tired = function () { return inv.getStats && inv.getStats().energy < COST; };
+    // too tired: said over your head, not in a box mid-fight (the bolt's energy comes back once you stop - js/arms.js)
+    var gutter = function () {
+      sfx('error');
+      if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(BridgeCharacter.getX(), BridgeCharacter.getY() - 0.4, 'TOO TIRED', '#ffe0a0');
+      return false;
+    };
+    if (tired()) return gutter();
     var fire = function (mult, charged) {
-      if (tired()) { sfx('error'); return false; }
-      if (inv.useEnergy) inv.useEnergy(3);
+      if (A && A.spend ? !A.spend(COST) : tired()) return gutter();
+      if (!A && inv.useEnergy) inv.useEnergy(COST);
       var f = BridgeCharacter.getFacing(), dx = f === 'right' ? 1 : f === 'left' ? -1 : 0, dy = f === 'down' ? 1 : f === 'up' ? -1 : 0;
       var w = item;
       if (charged) { w = Object.create(item); w.damage = Math.round((item.damage || 30) * (mult || 2)); w.charged = true; }
@@ -227,15 +233,19 @@ var BridgeMagic = (function () {
     if (bolts.length) stepBolts(dt);
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
+    var FX = typeof BridgeFX !== 'undefined' && BridgeFX.disc ? BridgeFX : null;
+    // a bolt: a soft round glow, a core of whole pixels, motes trailing off behind it (no squares)
     bolts.forEach(function (b) {
       b.trail.forEach(function (p, i) {
-        var a = (i + 1) / b.trail.length;
-        ctx.fillStyle = (b.wisp ? 'rgba(190,140,255,' : 'rgba(170,190,255,') + (0.35 * a).toFixed(2) + ')';
-        ctx.fillRect(Math.round(offX + p[0] * ts) - 2, Math.round(offY + p[1] * ts) - 2, 4, 4);
+        var a = (i + 1) / b.trail.length, s = a > 0.6 ? 2 : 1;
+        ctx.fillStyle = (b.wisp ? 'rgba(190,140,255,' : 'rgba(170,190,255,') + (0.55 * a).toFixed(2) + ')';
+        ctx.fillRect(Math.round(offX + p[0] * ts + Math.sin(i * 2.1 + now / 80) * (1 - a) * 2) - (s >> 1), Math.round(offY + p[1] * ts) - (s >> 1), s, s);
       });
-      var X = Math.round(offX + b.x * ts), Y = Math.round(offY + b.y * ts), R = b.big ? 8 : 5, r = b.big ? 3 : 2;
-      ctx.fillStyle = b.wisp ? 'rgba(200,160,255,0.55)' : 'rgba(200,215,255,0.5)'; ctx.fillRect(X - R, Y - R, R * 2, R * 2);
-      ctx.fillStyle = b.wisp ? '#f0e4ff' : '#f4f6ff'; ctx.fillRect(X - r, Y - r, r * 2, r * 2);
+      var X = Math.round(offX + b.x * ts), Y = Math.round(offY + b.y * ts), R = b.big ? 13 : 9, r = b.big ? 3 : 2;
+      if (FX) FX.glow(ctx, X, Y, R, b.wisp ? [190, 150, 255] : [180, 200, 255], b.big ? 0.65 : 0.5);
+      ctx.fillStyle = b.wisp ? '#f0e4ff' : '#f4f6ff';
+      if (FX) FX.disc(ctx, X, Y, r); else ctx.fillRect(X - r, Y - r, r * 2, r * 2);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(X, Y, 1, 1);
     });
     // curios: a glint now and then where one lies, bright to the lantern
     var wid = BridgeWorld.getWorldId && BridgeWorld.getWorldId(), lamp = held('glimmer_lantern') || held('lantern_beyond');

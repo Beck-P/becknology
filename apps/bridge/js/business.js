@@ -313,7 +313,7 @@ var BridgeBusiness = (function () {
   setInterval(tick, 60000);
 
   // ---- hiring ----------------------------------------------------------------------------------------------------
-  function region(id) { var p = planetOf(id) || defs[id].loc; return NAMES[p] ? p : defs[id].loc === 'singularity' ? 'singularity' : 'lumar'; }
+  function region(id) { var d = defs[id]; if (!d) return 'lumar'; var p = planetOf(id) || d.loc; return NAMES[p] ? p : d.loc === 'singularity' ? 'singularity' : 'lumar'; }
   /** Today's people looking for work at this business: a hand, a manager (where there's room for one) and a specialist. */
   function candidates(id) {
     var d = defs[id], day = today(), out = [], names = NAMES[region(id)];
@@ -356,6 +356,23 @@ var BridgeBusiness = (function () {
       state.staff.push(p);
       if (!state.paid) state.paid = today();
       note(p.name + ' hired at ' + defs[id].name + ' (' + p.title.toLowerCase() + ', ' + p.wage + ' a day)');
+      save();
+      return { ok: true, staff: p };
+    });
+  }
+  /** Someone working for you somewhere that isn't a business — the smiths at your Workshop (js/workshop.js, `at:
+   *  'workshop'`): on the same payroll as everyone else, their first day's wage now and one each Eastern-time day; two
+   *  paydays unpaid and they walk out. Resolves { ok, staff | reason }. */
+  function engage(place, cand) {
+    if (state.staff.some(function (p) { return p.key === cand.key; })) return Promise.resolve({ ok: false, reason: 'taken' });
+    payroll();
+    return pay(cand.wage, 'wages:hire').then(function (r) {
+      if (!r.ok) return r;
+      var p = { id: 's' + (++state.n), key: cand.key, name: cand.name, tier: cand.tier, title: cand.title, grade: cand.grade, wage: cand.wage,
+                skill: cand.skill || 1, at: place, hired: Date.now(), missed: 0, owe: 0 };
+      state.staff.push(p);
+      if (!state.paid) state.paid = today();
+      note(p.name + ' taken on (' + p.title.toLowerCase() + ', ' + p.wage + ' a day)');
       save();
       return { ok: true, staff: p };
     });
@@ -469,7 +486,7 @@ var BridgeBusiness = (function () {
 
   return { find: find, owned: owned, pending: pending, cap: cap, perHour: perHour, nextUpgrade: nextUpgrade, buy: buy, grant: grant,
            upgrade: upgrade, collect: collect, freeCrew: freeCrew, assign: assign, summary: summary, status: status,
-           candidates: candidates, hire: hire, dismiss: dismiss, move: move, room: room, staff: function (id) { return id ? staffAll(id) : state.staff.slice(); },
+           candidates: candidates, hire: hire, engage: engage, dismiss: dismiss, move: move, room: room, staff: function (id) { return id ? staffAll(id) : state.staff.slice(); },
            openNow: function (id) { return openAt(id, Date.now()) > 0; }, hoursText: hoursText, stockable: stockable, restock: restock, stockOf: stockOf, BOUGHT: BOUGHT, perkOf: perkOf, faceOf: faceOf, unpaid: unpaid, owing: owing, payAll: payAll, handOwed: handOwed, crewWage: crewWage,
            get: function (id) { return defs[id] || null; }, ofOwner: ofOwner, TIERS: TIERS, SLOTS: SLOTS, log: function () { return state.log; },
            state: function (id) { return state.biz[id] || null; }, _tick: tick, _state: function () { return state; },

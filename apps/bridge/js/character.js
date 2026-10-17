@@ -300,7 +300,7 @@ var BridgeCharacter = (function () {
     if (fit) {
       return { footRow: footRow, draw: function (ctx) {
         drawFighter(ctx, { sc: sc, world: world, offX: offX, offY: offY, ts: ts, now: now, key: baseKey(), sheet: sheet, x: pos.x, y: pos.y,
-                           facing: player.facing, walking: player.moveProgress < 1, stride: player.stride, fight: fit.fight, held: fit.held });
+                           facing: player.facing, walking: player.moveProgress < 1, stride: player.stride, fight: fit.fight, held: fit.held, hurt: fit.hurt });
       } };
     }
     return {
@@ -327,12 +327,16 @@ var BridgeCharacter = (function () {
   // sheet key with no mode: '<style>-<colour>@<look>'), sheet (that walk sheet), x, y (render position), facing,
   // walking, stride, fight (a BridgeArms state, yours or someone's), held (the weapon id carried) }. Others' pilots
   // (js/multi.js) draw through this too.
-  var fcan = null;
+  // A blow landing on you (interactions.js) sets `hurt`: for a moment you flash, white-hot then red, on your own pixels
+  // and flinch — drawn through drawFighter (o.hurt, 0 to 1 through the flash), so it holds a weapon or not.
+  var fcan = null, hurtAt = -1e9, HURT_MS = 280;
+  function hurt() { hurtAt = performance.now(); }
   function fightLook() {
     var A = typeof BridgeArms !== 'undefined' ? BridgeArms : null;
     if (!A || seat || pose) return null;
-    var f = A.state(), h = A.held();
-    return f || h ? { fight: f, held: h } : null;
+    var f = A.state(), h = A.held(), k = (performance.now() - hurtAt) / HURT_MS;
+    if (!(k >= 0 && k < 1)) k = -1;
+    return f || h || k >= 0 ? { fight: f, held: h, hurt: k } : null;
   }
   function baseKey() { return sheetKey(); }
   function drawFighter(ctx, o) {
@@ -368,11 +372,22 @@ var BridgeCharacter = (function () {
     g.imageSmoothingEnabled = false;
     g.drawImage(img, sx, sy, fw, fh, -ox - x0, -oy - y0, fw, fh);
     if (c) g.drawImage(c.img, c.r[0], c.r[1], c.r[2], c.r[3], c.r[4] - x0, c.r[5] - y0, c.r[2], c.r[3]);
-    var cx = Math.round(o.offX + (o.x + 0.5) * o.ts) + (p && p.shake || 0), footRow = o.y + 1 - 3 / 32, footY = Math.round(o.offY + footRow * o.ts);
+    var hk = o.hurt >= 0 && o.hurt < 1 ? o.hurt : -1;
+    if (hk >= 0) {                                      // struck: the flash, on the sprite's own pixels only
+      g.globalCompositeOperation = 'source-atop';
+      g.fillStyle = hk < 0.22 ? 'rgba(255,236,232,0.9)' : 'rgba(255,52,52,' + (0.72 * (1 - (hk - 0.22) / 0.78)).toFixed(2) + ')';
+      g.fillRect(0, 0, W, H);
+      g.globalCompositeOperation = 'source-over';
+    }
+    var flinch = hk >= 0 && hk < 0.5 ? (Math.floor(t / 35) % 2 ? 1 : -1) : 0;
+    var cx = Math.round(o.offX + (o.x + 0.5) * o.ts) + (p && p.shake || 0) + flinch, footRow = o.y + 1 - 3 / 32, footY = Math.round(o.offY + footRow * o.ts);
     var shadow = { x: cx, y: footY, rx: 9, ry: 3 };
     if (o.sc) {
+      // the flash is light of its own: the room's light (tint) lifts toward white while it lasts, so it isn't muddied
+      var tint = BridgeScene.tintAt(o.sc, o.world, o.x, o.y, o.now), tn = hk >= 0 && /^rgb\((\d+),(\d+),(\d+)\)$/.exec(String(tint).replace(/\s/g, ''));
+      if (tn) tint = 'rgb(' + [1, 2, 3].map(function (i) { return Math.round(+tn[i] + (255 - tn[i]) * (1 - hk)); }).join(',') + ')';
       BridgeScene.drawOccluded(ctx, o.sc, fcan, 0, 0, W, H, cx + x0, footY + y0, footRow, o.offX, o.offY,
-        BridgeScene.tintAt(o.sc, o.world, o.x, o.y, o.now), shadow, null, 'auto', true);
+        tint, shadow, null, 'auto', true);
     } else {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
       ctx.beginPath(); ctx.ellipse(cx, footY, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
@@ -432,7 +447,7 @@ var BridgeCharacter = (function () {
     var fit = sheet.ready && fightLook();
     if (fit) {
       drawFighter(ctx, { sc: null, offX: offX, offY: offY, ts: ts, now: Date.now(), key: baseKey(), sheet: sheet, x: pos.x, y: pos.y, facing: player.facing,
-                         walking: player.moveProgress < 1, stride: player.stride, fight: fit.fight, held: fit.held });
+                         walking: player.moveProgress < 1, stride: player.stride, fight: fit.fight, held: fit.held, hurt: fit.hurt });
       return;
     }
     if (sheet.ready) {
@@ -586,6 +601,7 @@ var BridgeCharacter = (function () {
     sceneItem: sceneItem,
     roll: roll,
     isRolling: isRolling,
+    hurt: hurt,
     drawFighter: drawFighter,
     sheet: getSheet,
     setHidden: setHidden,

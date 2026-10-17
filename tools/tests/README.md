@@ -14,8 +14,12 @@ rewrites, `/runouts` from `apps/runouts/dist`) and `fakesupa.py` (:8767). It fet
 `npm/` the first time (`npm.sh`), and stops the servers it started when it's done.
 
 Working in a second checkout (a git worktree) alongside another: `BRIDGE_PORT=8771 node tools/tests/run.js world` serves
-*that* checkout on :8771 and sends every test page there (`chrome.js` reroutes their `127.0.0.1:8766` requests), so the
-two don't test each other's files. (The `multi` suites share the Supabase stand-in on :8767: run one at a time.)
+*that* checkout on :8771 and answers every test page's `127.0.0.1:8766` requests from it (`chrome.js`: files straight
+from that checkout's disk, through `vercel.json`'s rewrites as `serve.py` does; anything else fetched from :8771), so the
+two don't test each other's files. `run.js` loads `chrome.js` ahead of each test (`node -r`; it also catches a browser
+launched before it ran). One test alone: `python3 tools/tests/serve.py 8771 &` then
+`BRIDGE_PORT=8771 NODE_PATH=$(npm root -g) node -r ./tools/tests/chrome.js tools/tests/<suite>/<file>.js`. (The `multi`
+suites share the Supabase stand-in on :8767: run one at a time.)
 
 ## What you need
 
@@ -28,11 +32,11 @@ two don't test each other's files. (The `multi` suites share the Supabase stand-
 
 | suite | what it checks |
 |---|---|
-| `world` | `errs.js`: every world in `apps/bridge/assets/worlds` loads with no page errors, console errors or missing files. `gpu.js`: the glow on the graphics card (js/gpu.js) runs where it should, falls back on a lost context, stays off on software graphics unless `?gpu=1`. `routines.js`: the cast's days (js/routines.js) — every routine's spots and walks checked, at work while their shop's open, walking between stops and stopping beside you, visitors you can talk to, the Map knowing where they are. `actors.js`: who's drawn where in each. `clock.js`, `weather.js`, `business.js`, `legacy.js`, `hands.js`: the living worlds (time, weather, businesses and their stock, the long goals, the farm hands working while you're away). `staff.js`: the people who work for you — faces and perks in the hiring lists, ship's hands on the payroll, the ledger's Staff & payroll page, the captain's desk. `landings.js`: the pad you land on in each place. `arrive.js`: sailing into a harbour. |
+| `world` | `errs.js`: every world in `apps/bridge/assets/worlds` loads with no page errors, console errors or missing files. `gpu.js`: the glow on the graphics card (js/gpu.js) runs where it should, falls back on a lost context, stays off on software graphics unless `?gpu=1`. `routines.js`: the cast's days (js/routines.js) — every routine's spots and walks checked, at work while their shop's open, walking between stops and stopping beside you, visitors you can talk to, the Map knowing where they are. `actors.js`: who's drawn where in each. `clock.js`, `weather.js`, `business.js`, `legacy.js`, `hands.js`: the living worlds (time, weather, businesses and their stock, the long goals, the farm hands working while you're away). `staff.js`: the people who work for you — faces and perks in the hiring lists, ship's hands on the payroll, the ledger's Staff & payroll page, the captain's desk. `office.js`: the captain's office aboard — through its door off the bridge, the staff board (faces and lamps), the chart table's pins and orders, the accounts, the captain's chair and the windows. `aquarium.js`: fish tanks — bought in a home's furnishing shop and from the Chandler, put down at home, aboard and in Arcadia, fish in from the pack and a ship's hold, one out, looking into the tank (desktop and phone), still there after a reload, a partner visiting sees it and slips a fish in. `workshop.js`: the Workshop on your holm — built on its lot, materials from pack, store and a hold, your bench and a hired smith on the clock, plans bought and taught, a gun you made fitted by a harbourmaster, the ledger. `landings.js`: the pad you land on in each place. `arrive.js`: sailing into a harbour. |
 | `multi` | two pilots (Beck and Alyssa) on the fake Supabase: seeing each other, walking, presence and away, gifts and trades, partners, shared clues, fighting together, health, sailing together, boats at sea, the players pill at sea, a sea fight together. |
 | `together` | every game played together (js/together.js): cabinets, helicopter, Fell Dice and Bones, chess, the dance floor, pachinko, Splice, the cipher room, the typist; the edges (a "not now", a watcher, a partner vanishing, someone elsewhere coming over); the games alone; table chat (desktop and phone). |
 | `royale` | every Neon Royale table opens its Royale Link game; coins staked and paid through the Bridge (Esc mid-round, a page closed with chips out); typing an exact hold'em bet (desktop and phone). |
-| `combat` | every weapon's swings land and do what they say (`hits.js`); a fight, blacking out and waking; a sea fight. |
+| `combat` | every weapon's swings land and do what they say (`hits.js`); a fight, blacking out and waking; a sea fight; ships as fitted (`shipviz.js`: guns and fittings on every hull at each heading — Lumar's night; `AT=2026-10-16T12:00` for its day — a broadside's flashes, smoke, shots, splashes and hits filmed frame by frame, the harbourmaster's portraits). `energy.js`: what a roll, each class's charged blow and a bolt cost, the second wind (three quarters back after a breath, none while you keep swinging, none for energy spent off the fight). `look.js`: each moment of a fight shot off the canvas (`shots/look/look_*.png`: a wind-up's marks, a slam, a wisp's bolt, a hit, embers, a bite on you, loot, the staff's bolt, the warden's toll), failing on any box the fight draws. |
 
 ## Reading the results
 
