@@ -72,7 +72,7 @@ def paint_face(out, face, a, o, blink):
     mid = a['centre'][0]
     # The rows hang off the chin: the last pixel row the head covers (a pixel is the head's if its centre is above the
     # chin's edge). From the eyes to the chin is under 4 px, so rounding each point on its own would put the mouth off
-    # the chin, or touching the eyes, in some frames. Eyes m-1..m+1, brows m-2, blush m+1, the smile m+2..m+3 (the chin).
+    # the chin, or touching the eyes, in some frames. Eyes m-1..m+1, brows m-3, blush m+1, the smile m+2..m+3 (the chin).
     # (No chin — the head turned aside, tumbling, or tipped so far the chin isn't ~3.5 px under the eyes — and the rows
     # hang off the eyes instead.)
     ey = (a['eyeL'][1] + a['eyeR'][1]) / 2
@@ -108,8 +108,8 @@ def paint_face(out, face, a, o, blink):
                 if on(c - 1, r):
                     eye.append((c - 1, r - 1, WHITE))
                 stamp(eye, 3)
-            if a['brow' + side][2] >= 0.35:
-                stamp([(c - 1, r - 2, brow), (c, r - 2, brow)], 2)
+            if a['brow' + side][2] >= 0.35:                  # a row clear above the eye (touching, they read as one)
+                stamp([(c - 1, r - 3, brow), (c, r - 3, brow)], 2)
         elif f >= 0.2:                                       # in profile: one dark pixel wide, two tall
             c, r = int(np.floor(x)), int(np.floor(y))
             stamp([(c, r + 1, lid)] if blink else [(c, r, rest), (c, r + 1, rest)], 1 if blink else 2)
