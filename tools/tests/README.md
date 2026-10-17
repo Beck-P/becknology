@@ -14,8 +14,11 @@ rewrites, `/runouts` from `apps/runouts/dist`) and `fakesupa.py` (:8767). It fet
 `npm/` the first time (`npm.sh`), and stops the servers it started when it's done.
 
 Working in a second checkout (a git worktree) alongside another: `BRIDGE_PORT=8771 node tools/tests/run.js world` serves
-*that* checkout on :8771 and sends every test page there (`chrome.js` reroutes their `127.0.0.1:8766` requests), so the
-two don't test each other's files. (The `multi` suites share the Supabase stand-in on :8767: run one at a time.)
+*that* checkout on :8771 and sends every test page there (`chrome.js` fetches their `127.0.0.1:8766` requests from
+there), so the two don't test each other's files. `run.js` loads `chrome.js` ahead of each test (`node -r`) — a test only
+asks for it inside its first `chromium.launch(...)`, too late for that browser — so a test run on its own needs the same:
+`python3 tools/tests/serve.py 8771 &` then `BRIDGE_PORT=8771 NODE_PATH=$(npm root -g) node -r ./tools/tests/chrome.js
+tools/tests/<suite>/<file>.js`. (The `multi` suites share the Supabase stand-in on :8767: run one at a time.)
 
 ## What you need
 
