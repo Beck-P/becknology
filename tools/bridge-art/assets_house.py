@@ -623,8 +623,9 @@ def _frame(k, face, x0, x1, za, zb, busy, timber, braces=True):
 
 
 def rich_house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=W.ROOF_GREEN, wall=W.PLASTER, timber=W.WOOD_DD,
-               door_x=None, windows=(), windows_up=(), chimney=None, sign=None, lanterns=(), stone=False, base=W.SALT[2]):
-    """assets_town.house, richer: same arguments and footprint, returns (ridge row, ridge z)."""
+               door_x=None, windows=(), windows_up=(), chimney=None, sign=None, lanterns=(), stone=False, base=W.SALT[2], barrels=True):
+    """assets_town.house, richer: same arguments and footprint, returns (ridge row, ridge z). barrels=False keeps the
+    barrels it otherwise stands by its east end now and then (where the next house is too close)."""
     rng = k.rng
     wall_h *= 1.1
     rise *= 0.9
@@ -756,7 +757,7 @@ def rich_house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=W.ROOF_GRE
             for j in range(9):
                 k.sphere(rx + rng.uniform(-0.16, 0.16), rl + 0.11, rng.uniform(0.5, (zf if jet else wall_h) - 0.2), 0.045, 0.04,
                          rng.choice(('#f080a0', '#e04870', '#fff0f4')), 'rose', segs=6)
-    if rng.random() < 0.7:
+    if rng.random() < 0.7 and barrels:
         barrel(k, x1 + 0.3, rl - 0.3, h=0.62, radius=0.24)
         if rng.random() < 0.6:
             barrel(k, x1 + 0.32, rl - 0.85, h=0.55, radius=0.22, tone='#7a5a34')
