@@ -71,6 +71,8 @@ var BridgeInteractions = (function () {
                       'lumar-manor-bedroom': 'the master bedroom', 'lumar-holm-resort': 'the Starling',
                       'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void',
                       'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall',
+                      'sylvara-roots': 'the Rootmarket', 'sylvara-boughs': 'the Boughs', 'sylvara-crown': 'the Crown', 'sylvara-river': 'the Silverrun',
+                      'sylvara-falls': 'the Falls', 'sylvara-lake': 'Mirror Lake', 'sylvara-deepwood': 'the Deepwood', 'sylvara-fallcave': 'the cave behind the falls',
                       'arcadia-casino': 'the casino floor', 'arcadia-casino-cards': 'the Card Room', 'arcadia-casino-vip': 'the Crown Room',
                       'arcadia-casino-dining': 'Aurum' };
 
@@ -1491,6 +1493,7 @@ var BridgeInteractions = (function () {
       you.textContent = '';
       if (face) face.set('neutral');
       say(t.a);
+      if (t.rumour && typeof BridgeQuests !== 'undefined' && BridgeQuests.hear) BridgeQuests.hear(t.rumour, person.name);   // gossip about a quest: into the journal
     }
     function close() {
       closed = true;

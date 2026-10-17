@@ -56,6 +56,11 @@ TONES = {
     'w_tide':     ('#24485a', '#5a92aa', '#bce4f4'),
     'w_tooth':    ('#8aa4c0', '#d4e6f4', '#fafdff'),
     'w_hide':     ('#1e3046', '#3a5674', '#5e80a4'),
+    'w_yew':      ('#4a2a14', '#8a5428', '#c08448'),
+    'w_elfwood':  ('#3a2a1a', '#6e5232', '#a8865a'),
+    'w_string':   ('#b8b0a0', '#e8e2d4', '#fffaf0'),
+    'w_fletch':   ('#5a7a3a', '#8ab858', '#c8e890'),
+    'w_moonleaf': ('#a8e0d8', '#a8e0d8', '#a8e0d8'),
 }
 
 Y = (math.pi / 2, 0, 0)      # turns a cone or cylinder (built along +z) to lie along -y
@@ -226,6 +231,36 @@ def hoe(add, p):
     add('cube', 'blade', (0, -12.3, -1.5), (1.35, 0.24, 1.2), 'w_iron', 'head', p)
 
 
+def _bow(wood, grip='w_leather', tip_cap='w_brass', inlay=None):
+    """A bow, upright: the limbs bent along a parabola from the grip (the back toward the mark, -y) to the tips, which
+    sit `curve` back toward the archer at ±half and flick forward a little (a recurve). The string and the nocked arrow
+    aren't built here: attack_rig.rig() adds them and moves them every frame (BOWS: half, curve), so the string runs to
+    the drawing hand."""
+    def build(add, p):
+        from mathutils import Vector
+        half, curve = BOWS_BY_BUILD[build]['half'], BOWS_BY_BUILD[build]['curve']
+        segs = 10
+        pts = [Vector((0, curve * t * t, half * t)) for t in [-1 + 2 * i / segs for i in range(segs + 1)]]
+        for i in range(segs):
+            a, b = pts[i], pts[i + 1]
+            d = b - a
+            mid = abs((i + 0.5) / segs - 0.5)
+            r = 0.62 - 0.5 * mid                                  # thick at the grip, slim at the tips
+            add('cylinder', 'limb', tuple((a + b) / 2), (r, r * 0.7, d.length / 2 + 0.06), wood, 'limb', p,
+                rot=d.normalized().to_track_quat('Z', 'Y').to_euler(), vertices=8)
+        for sgn in (-1, 1):                                       # the recurved tips, capped
+            a = pts[-1] if sgn > 0 else pts[0]
+            b = a + Vector((0, -0.9, sgn * 0.9))
+            add('cylinder', 'limb_tip', tuple((a + b) / 2), (0.22, 0.2, (b - a).length / 2), wood, 'limb', p,
+                rot=(b - a).normalized().to_track_quat('Z', 'Y').to_euler(), vertices=6)
+            add('uv_sphere', 'tip_cap', tuple(b), (0.3, 0.3, 0.3), tip_cap, 'cap', p, segments=6, ring_count=4)
+        add('cylinder', 'grip', (0, 0.05, 0), (0.78, 0.7, 1.5), grip, 'grip', p, vertices=8)
+        if inlay:                                                 # a leaf inlaid either side of the grip
+            for sgn in (-1, 1):
+                add('cube', 'inlay', (0, -0.2 + curve * 0.09, sgn * 2.6), (0.5, 0.3, 0.75), inlay, 'inlay', p)
+    return build
+
+
 # id: (class, build, tip in model units along the weapon, trail colour for the swing in the game)
 WEAPONS = {
     'iron_dagger':     ('blade', iron_dagger, 8.5),
@@ -248,6 +283,15 @@ WEAPONS = {
     'tidebreaker':     ('maul', tidebreaker, 24.2),      # a greatsword, swung with the maul's poses (js/arms.js 'great')
     'wyrmfang':        ('sword', wyrmfang, 14.5),
 }
+# the bows (Sylvara): the tip is where the arrow leaves (just ahead of the grip); half, curve shape the limbs and the
+# string (attack_rig.py moves the string and the nocked arrow to the drawing hand frame by frame)
+BOWS = {
+    'elven_bow':       dict(build=_bow('w_elfwood', grip='w_leather', tip_cap='w_gold', inlay='w_gold'), half=9.5, curve=2.6),
+    'heartwood_bow':   dict(build=_bow('w_yew', grip='w_moonhilt', tip_cap='w_silver', inlay='w_moonleaf'), half=11.5, curve=3.0),
+}
+BOWS_BY_BUILD = {v['build']: v for v in BOWS.values()}
+for _id, _b in BOWS.items():
+    WEAPONS[_id] = ('bow', _b['build'], 1.2)
 TWIN = {'twin_fangs'}             # a second one in the other hand
 
 

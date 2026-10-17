@@ -43,7 +43,8 @@ def sm(a, b, t):
 
 
 # ---- the cave's outline: a blob of floor inside the ice --------------------------------------------------------------------
-LOBES = [(10.0, 20.0, 7.0, 6.5), (19.0, 15.0, 8.5, 7.0), (28.0, 10.0, 7.5, 6.0), (31.0, 18.0, 5.0, 5.0), (8.0, 25.5, 4.0, 3.0)]
+LOBES = [(10.0, 20.0, 7.0, 6.5), (19.0, 15.0, 8.5, 7.0), (28.0, 10.0, 7.5, 6.0), (31.0, 18.0, 5.0, 5.0), (8.0, 25.5, 4.0, 3.0),
+         (33.0, 6.0, 3.0, 2.6)]                                       # up to the monks' stair
 
 
 def floor_d(x, r):
@@ -182,7 +183,7 @@ for (x, r) in xs:
 
 A.flush(k)
 k.render(OUT, light_states={'full': {'flicker': 1.0, 'static': 1.0}, 'dim': {'flicker': 0.75, 'static': 1.0}},
-         light_samples=24 if QUICK else 128, world_light=('#6a90c0', 0.75))
+         light_samples=24 if QUICK else 96, world_light=('#6a90c0', 0.75))
 
 VALLEY = {'spawns': [['beetle', 27, 18], ['beetle', 31, 12], ['beetle', 22, 14], ['beetle', 11, 21],
                      ['bat', 10, 15], ['bat', 31, 21], ['bat', 21, 10], ['bat', 25, 17], ['bat', 8, 19]]}
@@ -190,7 +191,7 @@ w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Ice Caves', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'hoarfell',
           'spawns': {'player': [6, 26]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
           'shipExit': False, 'cold': True, 'coldRate': 1.2, 'hollow': True, 'valley': VALLEY,
-          'onFaint': {'world': 'hoarfell-valley', 'spawn': [23, 45], 'who': 'A YETI',
+          'onFaint': {'world': 'hoarfell-valley', 'spawn': [23, 44], 'who': 'A YETI',
                       'line': 'YOU COME ROUND BY THE SHELTER\'S FIRE IN THE VALLEY, WRAPPED IN SOMETHING THAT SMELLS OF WET FUR. BIG FOOTPRINTS LEAD AWAY TOWARD THE CAVES.'}})
 w['interactions'] = [
     {'x': 6, 'y': 27, 'type': 'enter_world', 'label': 'THE VALLEY', 'prompt': 'PRESS E TO GO OUT', 'target': 'hoarfell-valley', 'spawn': [43, 21]},

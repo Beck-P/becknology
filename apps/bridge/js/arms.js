@@ -12,6 +12,9 @@
  *   maul   War Maul — swung back, heaved overhead, slammed down: the ground shakes the tiles beside it too.
  *   cast   Wispcaller, Moonlit Wand — raised and thrust out; the bolt leaves the tip on the thrust (js/magic.js).
  *   pick   pickaxes, the ice axe, the hoe — up and down on the tile in front: rock (js/mine.js), earth (js/farm.js).
+ *   bow    the Elven Bow, the Heartwood Longbow (Sylvara) — hold F to draw, let go to loose: the longer the draw, the
+ *          further and harder the arrow flies (js/bows.js flies it). Its poses are a sheet of their own (pilot-bow-…,
+ *          assets/characters/bow.json), so the attack sheets don't change for it.
  * Hold F (B on touch, the right button) after a swing and it charges: let go once it's full for the class's big one
  * (a double spin, a long lunge, a quake, a heavy bolt...; 2 energy for a blade or a staff, 3 for a sword, an axe, a pike
  * or a pick, 4 for a maul or a greatsword — `cost`). Shift (the ROLL button on touch) is a dodge roll: up to two tiles,
@@ -77,8 +80,18 @@ var BridgeArms = (function () {
       charged: { steps: [['raise', 40], ['burst', 90, 1], ['after', 220]], mult: 2 } },
     pick: { name: 'Pick', rate: 300, stop: 50, kick: 2, charge: 'up', cost: 3, what: 'Up over the head and down on what\'s in front: it breaks rock',
       swings: [{ steps: [['up', 110], ['swing', 45], ['strike', 50, 1], ['strike', 100]] }],
-      charged: { steps: [['up', 40], ['swing', 45], ['strike', 60, 1], ['strike', 160]], mult: 2 } }
+      charged: { steps: [['up', 40], ['swing', 45], ['strike', 60, 1], ['strike', 160]], mult: 2 } },
+    // the bow: F held draws (nock → draw → full, DRAW_MS), let go and it looses; the loose is a swing whose landing frame
+    // sends the arrow (js/bows.js) with the draw's strength. Its own sheet (sheet: 'bow'), no charge of its own: the draw is it.
+    bow: { name: 'Bow', sheet: 'bow', rate: 420, stop: 0, kick: 1, cost: 0, draw: 1, what: 'Hold to draw, let go to loose: the longer the draw, the further and harder it flies',
+      swings: [{ steps: [['loose', 60, 1], ['loose', 90], ['lower', 150]] }],
+      charged: { steps: [['loose', 60, 1], ['loose', 90], ['lower', 150]] } }
   };
+  var DRAW_MS = 900;                              // nothing to full draw
+  var bowLayout = null;
+  try {
+    fetch(DIR + 'bow.json').then(function (r) { return r.json(); }).then(function (j) { bowLayout = j; }).catch(function () { /* no bow art yet */ });
+  } catch (e) { /* no fetch */ }
   var ROLL = [['dive', 0.14], ['tuck1', 0.24], ['tuck2', 0.24], ['tuck3', 0.24], ['rise', 0.14]];
   var ROLL_MS = 380, ROLL_SAFE = 0.85, ROLL_COST = 3, CHARGE_MS = 650, CHAIN_GAP = 420;
   // the second wind: how long you stop before it comes, how often a point comes back, and how much of what you spent
@@ -87,9 +100,13 @@ var BridgeArms = (function () {
   // weapons with art (tools/bridge-art/weapon_sprites.py WEAPONS) and the colour of their swing
   var TRAIL = { wyrmfang: '#c8f0ff', twin_fangs: '#eef2fa', tidebreaker: '#bce4f4', iron_dagger: '#e8eef8', veilpiercer: '#b890ff', cutlass: '#eef2fa', star_blade: '#ffe080', moonglass_sabre: '#dce6ff',
                 emberbrand: '#ffa040', rime_hatchet: '#a8e0ff', boarding_pike: '#eef2fa', war_maul: '#e0d0a8', wispcaller: '#c8a8ff',
-                moon_wand: '#e8eeff', old_pickaxe: '#d8d0c0', iron_pickaxe: '#e0e4ee', star_pickaxe: '#ffe080', ice_axe: '#a8d0ff', hoe: '#d8c8a0' };
+                moon_wand: '#e8eeff', old_pickaxe: '#d8d0c0', iron_pickaxe: '#e0e4ee', star_pickaxe: '#ffe080', ice_axe: '#a8d0ff', hoe: '#d8c8a0',
+                elven_bow: '#f0e0a0', heartwood_bow: '#c8f0e8' };
 
   function colOf(cls, pose) { return ((CLASSES[cls] && CLASSES[cls].poses) || cls) + '-' + pose; }   // a pose's sheet column
+  /** Which sheet a class's poses are on ('attack', or its own: 'bow') and that sheet's layout. */
+  function sheetOf(cls) { var C = CLASSES[cls]; return C && C.sheet ? C.sheet : 'attack'; }
+  function layoutOf(cls) { return sheetOf(cls) === 'bow' ? bowLayout : layout; }
   function classOf(item) {
     if (!item) return null;
     if (item.cls && CLASSES[item.cls]) return item.cls;
@@ -198,7 +215,33 @@ var BridgeArms = (function () {
   function press(item) {
     var cls = classOf(item);
     if (!cls || !canFight()) return false;
+    if (CLASSES[cls].draw) return draw({ item: item, cls: cls });
     return swing({ item: item, cls: cls });
+  }
+  /** A bow drawn (F held): { item, cls, arrow (an arrow item id: rope, fire…), loose(power, o) }. Let go and it looses. */
+  function draw(o) {
+    if (!canFight() || !bowLayout) return false;
+    if (st && st.kind === 'draw') return true;
+    if (st && st.kind === 'swing') { st.buffer = o; return true; }
+    if (st) return true;
+    var t = now();
+    lastAct = t;
+    st = { kind: 'draw', cls: o.cls, item: o.item, id: o.item && o.item.id, arrow: o.arrow || null, loose: o.loose, facing: BridgeCharacter.getFacing(),
+           t0: t, paused: 0, stopUntil: 0, tap: !keyHeld };
+    tell({ k: 'd', c: o.cls, f: st.facing, w: st.id });
+    sfx('bow_draw');
+    return true;
+  }
+  function drawLevel(s, t) { return Math.max(0, Math.min(1, (t - s.t0) / DRAW_MS)); }
+  // let go: the loose plays, and on its landing frame the arrow flies with what the draw had
+  function loose(s, t) {
+    var power = Math.max(0.2, drawLevel(s, t)), C = CLASSES[s.cls];
+    var shot = { power: power, item: s.item, arrow: s.arrow, facing: s.facing };
+    st = { kind: 'swing', cls: s.cls, sw: C.swings[0], idx: 0, charged: false, item: s.item, id: s.id, facing: s.facing, speed: 1, t0: t, paused: 0,
+           stopUntil: 0, stopAt: 0, hit: false, power: power,
+           onHit: function () { if (s.loose) s.loose(power, shot); else if (typeof BridgeBows !== 'undefined') BridgeBows.loose(shot); return false; } };
+    st.total = totalOf(st.sw.steps, 1);
+    tell({ k: 's', c: s.cls, n: 0, f: s.facing, w: s.id, s: 1, p: Math.round(power * 100) / 100, a: s.arrow || 0 });
   }
   /** Any swing: { item | id, cls, onHit(mult, charged) } — onHit replaces the weapon's own strike (rock, earth, bolt). */
   function swing(o) {
@@ -238,6 +281,13 @@ var BridgeArms = (function () {
     if (st.stopUntil && t >= st.stopUntil) { st.paused += st.stopUntil - st.stopAt; st.stopUntil = 0; }
     if (st.kind === 'roll') {
       if (t - st.t0 >= st.total) { var b = st.buffer; st = null; rollReady = t + 120; if (b) begin(b); }    // a swing pressed mid-roll
+      return;
+    }
+    if (st.kind === 'draw') {
+      var dl = drawLevel(st, t);
+      if (dl >= 1 && !st.full) { st.full = true; sfx('bow_full'); }
+      // a tap (touch, or F let go before the frame saw it held) still draws a little before it looses
+      if (!keyHeld && (!st.tap || t - st.t0 > 220)) loose(st, t);
       return;
     }
     if (st.kind === 'charge') {
@@ -341,6 +391,7 @@ var BridgeArms = (function () {
   // the swing's arc, through where the tip goes from the pose before the landing frame to the one after
   function trail(s, pos, mine) {
     if (!s.id || typeof BridgeFX === 'undefined' || !BridgeFX.spawnTrail) return;
+    if (CLASSES[s.cls] && CLASSES[s.cls].draw) return;     // a bow doesn't cut the air: the arrow is the arc (js/bows.js)
     var build = s.build || buildOf(mine ? null : s), steps = s.sw.steps, hi = hitIndex(steps);
     if (s.cls === 'cast') {                                // a staff or wand doesn't cut the air: a burst off the tip
       var a = anchor(s.id, build, s.facing, colOf('cast', steps[hi][0]));
@@ -409,7 +460,10 @@ var BridgeArms = (function () {
     return !!(s && s.i <= hitIndex(st.sw.steps));
   }
   function charging() { return !!(st && st.kind === 'charge'); }
-  function cancel() { if (st && st.kind === 'swing') { chain = { cls: st.cls, idx: st.idx + 1, at: now() }; st = null; } }
+  function cancel() {
+    if (st && st.kind === 'swing') { chain = { cls: st.cls, idx: st.idx + 1, at: now() }; st = null; }
+    else if (st && st.kind === 'draw') { st = null; tell({ k: 'x' }); }
+  }
 
   // F / B / the right mouse button: held for a charge
   function keyDown() { keyHeld = true; pressAt = now(); }
@@ -423,13 +477,18 @@ var BridgeArms = (function () {
       for (var i = 0; i < ROLL.length; i++) { acc += ROLL[i][1]; if (k < acc) return { col: 'roll-' + ROLL[i][0], facing: s.facing, weapon: null }; }
       return null;
     }
+    if (s.kind === 'draw') {
+      var dl = drawLevel(s, t);
+      return { col: colOf(s.cls, dl < 0.22 ? 'nock' : dl < 0.8 ? 'draw' : 'full'), facing: s.facing, weapon: s.id, sheet: sheetOf(s.cls),
+               shake: dl >= 1 && t - s.t0 > DRAW_MS + 2500 ? (Math.floor(t / 60) % 2 ? 1 : 0) : 0, glow: dl };
+    }
     if (s.kind === 'charge') {
       var full = t - s.t0 >= CHARGE_MS;
       return { col: colOf(s.cls, CLASSES[s.cls].charge), facing: s.facing, weapon: s.id, shake: full ? (Math.floor(t / 33) % 2 ? 1 : -1) : 0, glow: Math.min(1, (t - s.t0) / CHARGE_MS) };
     }
     var e = clock(s, t), at = stepAt(s.sw.steps, s.speed, e);
     if (!at) return null;
-    return { col: colOf(s.cls, at.pose), facing: s.facing, weapon: s.id, stopped: s.stopUntil > t };
+    return { col: colOf(s.cls, at.pose), facing: s.facing, weapon: s.id, stopped: s.stopUntil > t, sheet: sheetOf(s.cls) };
   }
   function state() { return st; }
   function held() {
@@ -444,10 +503,11 @@ var BridgeArms = (function () {
     var t = now();
     if (d.k === 'r') return { kind: 'roll', facing: d.f, t0: t, total: d.d || ROLL_MS };
     if (d.k === 'c' && CLASSES[d.c]) return { kind: 'charge', cls: d.c, id: d.w, facing: d.f, t0: t };
+    if (d.k === 'd' && CLASSES[d.c]) return { kind: 'draw', cls: d.c, id: d.w, facing: d.f, t0: t };
     if (d.k === 's' && CLASSES[d.c]) {
       var C = CLASSES[d.c], sw = d.n < 0 ? C.charged : C.swings[d.n] || C.swings[0], sp = +d.s || 1;
       return { kind: 'swing', cls: d.c, sw: sw, idx: d.n, charged: d.n < 0, id: d.w, facing: d.f, speed: sp, t0: t, paused: 0, stopUntil: 0,
-               total: totalOf(sw.steps, sp), look: look };
+               total: totalOf(sw.steps, sp), look: look, power: +d.p || 0, arrow: d.a || null };
     }
     return null;
   }
@@ -456,9 +516,14 @@ var BridgeArms = (function () {
     if (!s) return null;
     if (s.kind === 'roll') return t - s.t0 < s.total ? s : null;
     if (s.kind === 'charge') return t - s.t0 < 8000 ? s : null;          // never let go (the message lost): stand down
+    if (s.kind === 'draw') return t - s.t0 < 12000 ? s : null;
     var at = stepAt(s.sw.steps, s.speed, clock(s, t));
     if (!at) return null;
-    if (at.hitPast && !s.hit) { s.hit = true; trail(s, pos, false); sfx('swing_' + s.cls); }
+    if (at.hitPast && !s.hit) {
+      s.hit = true; trail(s, pos, false); sfx('swing_' + s.cls);
+      // their arrow, flying on your screen too (just to see: the hits come from them)
+      if (CLASSES[s.cls].draw && typeof BridgeBows !== 'undefined') BridgeBows.ghost(pos, s.facing, s.power || 0.5, s.arrow);
+    }
     return s;
   }
 
@@ -483,6 +548,7 @@ var BridgeArms = (function () {
     ['quick', 'Quick', 'swings faster than most', function (it, c) { return it.rate && CLASSES[c] && it.rate < CLASSES[c].rate; }],
     ['twin', 'Twin', 'a blade in each hand: every cut lands twice'],
     ['bolt', 'Bolt', 'thrown seven tiles, through the first it meets; 2 energy', function (it) { return it.bolt || it.id === 'moon_wand'; }],
+    ['draw', 'Draw', 'hold to draw: a full draw flies ten tiles and hits ×1.25', function (it, c) { return c === 'bow'; }],
     ['rock', 'Breaks rock', '', function (it) { return it.power; }]
   ];
   function cycle(cls, item) {                             // ms per swing, averaged over the chain
@@ -496,7 +562,7 @@ var BridgeArms = (function () {
 
     var ms = cycle(cls, item), tier = ms < 190 ? 5 : ms < 260 ? 4 : ms < 430 ? 3 : ms < 680 ? 2 : 1;
     var speed = ['Very slow', 'Slow', 'Normal', 'Quick', 'Very quick'][tier - 1];
-    var reach = item.bolt || item.id === 'moon_wand' ? '7 tiles' : (item.reach || 1) > 1 ? item.reach + ' tiles' : item.arc ? '3 tiles wide' : '1 tile';
+    var reach = cls === 'bow' ? 'up to ' + (item.range || 10) + ' tiles' : item.bolt || item.id === 'moon_wand' ? '7 tiles' : (item.reach || 1) > 1 ? item.reach + ' tiles' : item.arc ? '3 tiles wide' : '1 tile';
     var traits = TRAITS.filter(function (t) { return t[3] ? t[3](item, cls) : item[t[0]]; }).map(function (t) {
       return { k: t[0], name: t[1], line: t[0] === 'rock' ? 'bite ' + item.power + (item.power > 1 ? ' — rock breaks ' + item.power + '× quicker' : '') : t[2] };
     });
@@ -527,11 +593,12 @@ var BridgeArms = (function () {
     holy:  ['....XX....', '....XX....', '..XXXXXX..', '..XXXXXX..', '....XX....', '....XX....', '....XX....', '....XX....', '....XX....', '..........'],
     drain: ['....X.....', '....X.....', '...XXX....', '..XXXXX...', '.XXXXXXX..', '.XXXXXXX..', '.XXXXXXX..', '..XXXXX...', '...XXX....', '..........'],
     quick: ['.....XX...', '....XX....', '...XX.....', '..XXXXXX..', '.....XX...', '....XX....', '...XX.....', '..XX......', '.X........', '..........'],
+    draw:  ['..X.......', '..XX......', '..X.X.....', '..X..X....', 'XXXXXXXXX.', '..X..X....', '..X.X.....', '..XX......', '..X.......', '..........'],
     bolt:  ['........X.', '.......XX.', '..X...XX..', '...XXXX...', '..XXXXX...', '..XXXX....', '.XX..X....', 'X.........', '..........', '..........'],
     rock:  ['..........', '...XXXX...', '..XXXXXX..', '.XXX.XXXX.', '.XXXXX.XX.', 'XXXXXXXXXX', 'XX.XXXXXXX', 'XXXXXXX.XX', '.XXXXXXXX.', '..........']
   };
   var TCOL = { twin: '#e8eef8', arc: '#d8dce8', reach: '#d8dce8', heavy: '#c0a080', frost: '#a8e0ff', burn: '#ff9a40', holy: '#ffe890', drain: '#90f0a8',
-               quick: '#ffe060', bolt: '#c8a8ff', rock: '#b0a090' };
+               quick: '#ffe060', bolt: '#c8a8ff', draw: '#f0e0a0', rock: '#b0a090' };
   var iconUrl = {};
   function icon(k) {
     if (iconUrl[k]) return iconUrl[k];
@@ -589,5 +656,7 @@ var BridgeArms = (function () {
            spend: spend, winded: winded,
            dodging: dodging, rooted: rooted, charging: charging, cancel: cancel, busy: busy, state: state, pose: pose, held: held,
            art: art, cell: cell, anchor: anchor, remote: remote, remoteTick: remoteTick, layout: function () { return layout; },
+           draw: draw, drawing: function () { return !!(st && st.kind === 'draw'); }, drawLevel: function () { return st && st.kind === 'draw' ? drawLevel(st, now()) : 0; },
+           sheetOf: sheetOf, layoutOf: layoutOf,
            stats: stats, card: card, line: line, wielded: wielded, hasArt: function (id) { return !!TRAIL[id]; } };
 })();

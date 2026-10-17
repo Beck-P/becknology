@@ -57,7 +57,7 @@ def peaks_window(x, w=1.2, z0=1.0, z1=3.2):
 
 # ---- floor and walls ----------------------------------------------------------------------------------------------
 E.marble_cabochon(k, 1.0, RB, 31.0, 19.0, size=1.0, border=0.42)
-E.panelled_wall(k, 0.4, 31.6, RB, H, paper=PAPER, wood=WOOD, skip=[(FX - 1.5, FX + 1.5), (24.2, 30.8)])
+E.panelled_wall(k, 0.4, 31.6, RB, H, paper=PAPER, wood=WOOD, skip=[(FX - 1.5, FX + 1.5)])
 E.side_wall(k, 0.4, 1.0, 1.5, 19.0, H, paper=PAPER, wood=WOOD)
 E.side_wall(k, 31.0, 31.6, 1.5, 19.0, H, paper=PAPER, wood=WOOD)
 E.front_wall(k, 0.4, 31.6, 19.0, door=(15.0, 17.0), wood=WOOD)
@@ -131,10 +131,14 @@ for (x, r) in ((12.0, 8.2), (19.4, 8.2)):
     E.chandelier(k, x, r, 3.25, rad=0.85, arms=12, chain_top=H + 0.3, energy=150)
 
 # ---- Le Bar Doré (east) ------------------------------------------------------------------------------------------------
-C.wine_wall(k, 24.2, 30.8, RB, z0=0.3, z1=2.9)
+E.sideboard(k, 24.6, 30.4, RB, d=0.55, h=0.95, wood='#2a1a10', silver=True)            # the back bar: decanters on a long sideboard
+E.mirror(k, 25.2, 29.8, RB + 0.02, 1.15, 2.85, arched=False)
+for x in (24.4, 30.6):
+    E.sconce(k, x, RB, z=2.2, energy=5)
+k.solid(24.6, RB, 30.4, RB + 0.6)
 k.box(24.6, RB + 0.1, 3.0, 30.4, RB + 0.14, 3.4, ('#1e3a36', 0.05), 'sign_board')
 G.letters(k, 'LE BAR DORE', 'Limelight', 27.5, RB + 0.14, 3.04, size=0.3, col='#f8e0a0', lit=True, energy=4)
-C.island_bar(k, 27.5, 6.2, w=5.2, d=2.6, top=C.GOLD, stools=[(25.5, 8.0), (26.5, 8.0), (28.5, 8.0), (29.5, 8.0)])
+C.island_bar(k, 27.5, 6.2, w=5.2, d=2.6, top='#2e524c', stools=[(25.5, 8.0), (26.5, 8.0), (28.5, 8.0), (29.5, 8.0)])
 k.solid(24.9, 4.9, 30.1, 7.5)
 C.grand_piano(k, 25.6, 13.0, facing='right')
 k.solid(24.6, 12.3, 26.8, 13.8)
@@ -144,6 +148,26 @@ for (x, r, f) in ((28.4, 11.2, 'down'), (30.0, 12.4, 'left'), (28.4, 14.6, 'up')
 C.cocktail_table(k, 29.0, 12.8, glow='#ffd890')
 k.solid(28.7, 12.5, 29.3, 13.1)
 E.potted_palm(k, 30.3, 17.4, h=1.6, jardiniere='#1e3a36', fronds=9)
+# marble columns between the hall and the salon, gilt at their feet and heads
+for x in (8.6, 23.4):
+    for r in (6.6, 10.6, 14.6):
+        k.cyl(x, r, 0.0, 0.18, 0.3, (E.GILT, 0.04), 'column_base', verts=16)
+        k.cyl(x, r, 0.18, H - 0.3, 0.22, ('#ece6da', 0.05), 'column', verts=16)
+        for i in range(8):                                                   # flutes
+            a = i / 8 * math.tau
+            k.box(x + math.cos(a) * 0.21 - 0.012, r + math.sin(a) * 0.21 - 0.012, 0.25, x + math.cos(a) * 0.21 + 0.012,
+                  r + math.sin(a) * 0.21 + 0.012, H - 0.4, ('#d8d0c0', 0.04), 'column_flute')
+        k.cyl(x, r, H - 0.3, H - 0.12, 0.32, (E.GILT, 0.04), 'capital', verts=16)
+        k.solid_post(x, r)
+# the lounges: a sofa and chairs by the reception, another by the piano
+E.sofa(k, 4.6, 15.6, length=2.4, facing='up', col='#1e3a36')
+E.wingback(k, 2.6, 13.4, facing='right', col='#6a1a22')
+E.wingback(k, 6.6, 13.4, facing='left', col='#6a1a22')
+z = E.tea_table(k, 4.6, 13.6, w=1.0, d=0.6)
+E.potted_palm(k, 7.6, 17.4, h=1.4, jardiniere='#1e3a36', fronds=8, s=0.9)
+E.sofa(k, 28.4, 17.2, length=2.2, facing='up', col='#6a1a22')
+E.torchere(k, 26.6, 17.6, h=1.75, energy=8)
+E.persian_rug(k, 1.6, 12.2, 7.6, 16.8, field='#6a1a22', border='#1e3a36', accent='#d8b060', ivory='#ece4d2')
 E.torchere(k, 23.6, 16.8, h=1.8, energy=10)
 E.torchere(k, 8.2, 16.8, h=1.8, energy=10)
 for (x, r) in ((23.6, 3.4), (8.2, 3.4)):

@@ -182,7 +182,7 @@ k.blocked.discard((22, 34))
 
 A.flush(k)
 k.sun((0.8, 0.25, -0.38), '#ffe0c0', 3.2, angle=3.0)
-k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 96, world_light=('#8a96cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 64, world_light=('#8a96cc', 0.95))
 
 VALLEY = {'spawns': [['golem', 17, 18], ['golem', 27, 18], ['golem', 22, 25], ['wraith', 14, 15], ['wraith', 30, 15],
                      ['wraith', 22, 16], ['wraith', 38, 12]]}

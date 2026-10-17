@@ -177,7 +177,7 @@ k.solid(-1, ROWS - 2, COLS + 1, ROWS + 1)
 
 A.flush(k)
 k.sun((0.8, 0.25, -0.38), '#ffd8b8', 3.2, angle=3.0)
-k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 96, world_light=('#8a96cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 64, world_light=('#8a96cc', 0.95))
 
 # ---- the ski block: the bowl skied free from the col down to the bench ------------------------------------------------------
 grade, zone = [], []

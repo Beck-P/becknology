@@ -275,19 +275,19 @@ for (x, r) in pts:                                                      # the st
 
 A.flush(k)
 k.sun((0.8, 0.25, -0.38), '#ffe0c0', 3.2, angle=3.0)
-k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 96, world_light=('#8a96cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 64, world_light=('#8a96cc', 0.95))
 
 # ---- the world -----------------------------------------------------------------------------------------------------------------
 VALLEY = {
-    'spawns': [['wolf', 6, 12], ['wolf', 8, 13], ['wolf', 11, 16], ['wolf', 4, 20], ['wolf', 7, 22], ['wolf', 13, 11],
-               ['wolf', 40, 31], ['wolf', 43, 34]],
+    'spawns': [['wolf', 6, 12, 0], ['wolf', 8, 13, 0], ['wolf', 11, 16, 0], ['wolf', 4, 20, 1], ['wolf', 7, 22, 1], ['wolf', 10, 24, 1],
+               ['wolf', 40, 31, 2], ['wolf', 43, 34, 2]],
     'yetis': [[6, 36], [9, 39]],
 }
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Hidden Valley', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'hoarfell',
           'spawns': {'player': [5, 9]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
           'shipExit': False, 'cold': True, 'coldRate': 0.6, 'view': [0.0, -7.5, COLS, ROWS], 'valley': VALLEY,
-          'onFaint': {'world': WID, 'spawn': [23, 45], 'who': 'A YETI',
+          'onFaint': {'world': WID, 'spawn': [23, 44], 'who': 'A YETI',
                       'line': 'YOU COME ROUND BY THE SHELTER\'S FIRE, A SMELL OF WET FUR AND BERRIES. BIG FOOTPRINTS LEAD AWAY INTO THE SNOW. SOMETHING CARRIED YOU HERE.'}})
 w['interactions'] = [
     {'x': 4, 'y': 8, 'type': 'vale', 'label': 'THE WAY OUT', 'prompt': 'PRESS E TO GO BACK'},

@@ -57,23 +57,36 @@ edge = [(X0 + (X1 - X0) * i / N_, rim(X0 + (X1 - X0) * i / N_)) for i in range(N
 top = [(X1, -8.0), (X0, -8.0)]
 k.poly([(COLS / 2, 10.0, 0.0)] + [(x, r, 0.0) for (x, r) in edge[::-1]] + [(X0, -8.0, 0.0), (X1, -8.0, 0.0), (edge[-1][0], edge[-1][1], 0.0)],
        (N.SNOW, 0.06), 'snow')
-STRATA = ('#5a6274', '#4a5264', '#6a7286', '#3e4658')
-levels, z = [0.0], 0.0
-while z > -7.0:
-    z -= 0.42 + 0.2 * abs(n2(z * 3, 1, 1.3, 5))
-    levels.append(z)
+# the face below the rim: a few deep beds of grey rock (not many thin ones — thin blue bands read as water), each bed
+# stepping out a little with snow lying on its ledge, cut by gullies, crags standing out of it, falling away into the cloud
+STRATA = ('#6a6e7a', '#5a5e6a', '#767a86', '#4e525e')
+levels = [0.0, -0.9, -1.9, -3.1, -4.6]
 rings = []
 for j, zz in enumerate(levels):
-    rings.append([(x, r + (0.0 if j == 0 else 0.05 * j + 0.06 * n2(x * 3, zz * 3, 1.0, 9)), zz) for (x, r) in edge])
+    rings.append([(x, r + (0.0 if j == 0 else 0.22 * j + 0.18 * n2(x * 1.7, zz * 3, 1.0, 9) + 0.1 * math.sin(x * 2.9 + j)), zz) for (x, r) in edge])
 for j in range(len(rings) - 1):
-    k.loft([rings[j], rings[j + 1]], (STRATA[j % 4], 0.14), 'cliff', closed=False, smooth=False)
+    a, b = rings[j], rings[j + 1]
+    k.loft([a, [(x, r - 0.18, z - 0.05) for (x, r, z) in b]], (STRATA[j % 4], 0.2), 'cliff', closed=False, smooth=False)
+    k.loft([[(x, r - 0.18, z - 0.05) for (x, r, z) in b], b], (shade(STRATA[j % 4], 1.12), 0.12), 'cliff', closed=False, smooth=False)
+    for i in range(0, len(b), 2):                                         # snow on the ledge each bed makes
+        x, r, z = b[i]
+        if k.rng.random() < 0.75:
+            k.blob(x, r - 0.1, z, k.rng.uniform(0.25, 0.45), 0.16, 0.06, (N.SNOW, 0.06), 'ledge_snow', segs=7)
+for i in range(0, len(edge), 9):                                          # gullies down the face
+    x, r = edge[i]
+    if k.rng.random() < 0.5:
+        k.tube((x, r + 0.05, -0.1), (x + k.rng.uniform(-0.3, 0.3), r + 1.0, -4.4), 0.12, ('#3e424e', 0.12), 'gully', rb=0.06, verts=5)
 for i, (x, r) in enumerate(edge):
     if i % 3 == 0:
         k.blob(x, r - 0.1, 0.0, 0.5, 0.22, 0.1, (N.SNOW, 0.08), 'cornice', segs=8)
-    if k.rng.random() < 0.1:
-        d = k.rng.uniform(0.8, 4.5)
-        k.rock(x, r + 0.1 + 0.04 * d, -d, 0.32, 0.2, 0.28, ('#4a5264', 0.18), part='crag', segs=7)
-        k.blob(x, r + 0.04 * d, -d + 0.22, 0.3, 0.18, 0.08, (N.SNOW, 0.08), 'crag_snow', segs=7)
+    if k.rng.random() < 0.16:
+        d = k.rng.uniform(0.6, 4.2)
+        s_ = k.rng.uniform(0.25, 0.5)
+        k.rock(x, r + 0.15 + 0.22 * d, -d, s_, s_ * 0.7, s_ * 0.9, ('#5a5e6a', 0.18), part='crag', segs=7)
+        k.blob(x, r + 0.1 + 0.22 * d, -d + s_ * 0.8, s_ * 0.8, 0.18, 0.08, (N.SNOW, 0.08), 'crag_snow', segs=7)
+    if k.rng.random() < 0.05:                                             # a fir clinging to the face
+        d = k.rng.uniform(1.0, 3.6)
+        W.pine_tiers(k, x, r + 0.3 + 0.22 * d, 1.0, N.PINE, rad=0.3, z0=-d, tiers=3, snow=N.ROOF_SNOW)
 
 # the mountainside behind: a band of cliff and the massif over it, firs at its foot
 cliff = [(c, r) for c in range(-3, COLS + 3) for r in range(-8, 3)]
@@ -91,7 +104,8 @@ for rect in ((0.4, 15.4, COLS, 18.6),                        # the promenade
              (22.4, 18.6, 24.0, 19.8), (5.6, 18.6, 7.2, 19.4)):
     if rect[3] > rect[1]:
         N.trodden(k, *rect, prints=0.3 if QUICK else 0.6)
-A.setts(k, 1.0, 15.6, COLS + 1.0, 18.4, tone='#a8a296')
+A.setts(k, 1.0, 15.6, COLS + 1.0, 18.4, tone='#c2bcae')
+A.snow_edge(k, 1.0, 15.6, COLS + 1.0, 18.4, every=0.7)
 
 SMOKE = []
 # ---- the Stübli: fondue in a little pine chalet, its terrace ----------------------------------------------------------------
@@ -154,6 +168,24 @@ for x in (3.0, 11.0, 19.0, 27.0, 35.0, 42.0):
 for (x0, x1) in ((8.0, 9.6), (14.0, 15.6), (31.6, 33.2), (37.6, 39.2)):
     A.bench_iron(k, x0, x1, 19.0)
     k.solid(x0, 18.8, x1, 19.2)
+# a stone balustrade along the promenade's south side, open where the ways go down to the terrace and the station
+for (xa, xb) in ((0.6, 4.6), (7.8, 13.6), (16.0, 21.6), (24.8, 26.0), (27.4, 31.0), (34.8, 37.0), (39.6, 43.6)):
+    A.balustrade(k, xa, 18.75, xb, 18.75, h=0.5)
+    k.solid(xa, 18.6, xb, 18.9)
+# small life: a snowman, sleds, a signpost, drifts, firs in clusters
+N.snowman(k, 36.2, 20.8, scarf='#2a6ac0')
+N.sled(k, 37.8, 21.6)
+N.sled(k, 11.6, 14.4, col='#2a9a5a')
+N.signpost(k, 41.6, 19.6, cols=('#c83a2e', '#2a6ac0', '#e0b030'))
+k.solid(36, 20, 37, 21)
+for (x, r) in ((1.6, 10.6), (2.8, 13.0), (11.6, 4.6), (22.0, 4.4), (43.0, 9.6), (34.8, 4.4), (17.6, 21.0), (31.0, 21.6), (40.4, 22.4),
+               (13.4, 21.4), (0.8, 7.0)):
+    N.snow_pine(k, x, r, h=k.rng.uniform(2.2, 2.9))
+    k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
+for _ in range(24):
+    x, r = k.rng.uniform(1, 43), k.rng.uniform(19.4, 22.4)
+    if not (19.0 < x < 27.4) and not (12.0 < x < 13.0):
+        k.blob(x, r, 0.0, k.rng.uniform(0.4, 0.9), k.rng.uniform(0.2, 0.4), k.rng.uniform(0.05, 0.1), (N.SNOW, 0.04), 'drift', segs=9)
 k.cyl(26.6, 19.2, 0.0, 0.9, 0.05, ('#3a3c44', 0.05), 'telescope_post', verts=8)
 k.tube((26.6, 19.2, 1.0), (26.9, 19.6, 1.12), 0.08, ('#c8a050', 0.05), 'telescope', verts=10)
 k.box(26.45, 19.05, 0.9, 26.75, 19.35, 1.0, ('#3a3c44', 0.05), 'telescope_head')
@@ -220,7 +252,7 @@ for c in range(int(RINK[0]) + 1, int(RINK[2]) - 1):                     # gates 
 # ---- the light: the bright sun Hoarfell's day has, the lamps warm --------------------------------------------------------------
 k.sun((0.8, 0.25, -0.38), '#ffd8b8', 3.2, angle=3.0)
 A.flush(k)
-k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 96, world_light=('#8a96cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 64, world_light=('#8a96cc', 0.95))
 
 # ---- the world -----------------------------------------------------------------------------------------------------------------------
 gate = (int((RINK[0] + RINK[2]) / 2), int(RINK[3]) - 1)                  # the rink's gate, in its front boards

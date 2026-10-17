@@ -281,7 +281,7 @@ for i in range(len(CRACKS)):
 
 k.sun((0.8, 0.25, -0.38), '#ffd8b8', 3.2, angle=3.0)
 A.flush(k)
-k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 96, world_light=('#8a96cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 64, world_light=('#8a96cc', 0.95))
 
 EXP = {'crevasses': sorted([list(t) for t in hidden]), 'cairns': [[int(x), int(r)] for (x, r) in CAIRNS],
        'field': [8, 12, 42, 34], 'wands': WANDS, 'arrive': [10, 39]}

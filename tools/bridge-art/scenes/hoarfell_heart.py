@@ -145,7 +145,7 @@ for r in range(ROWS):
 
 A.flush(k)
 k.sun((0.8, 0.25, -0.38), '#ffe0c8', 3.2, angle=3.0)
-k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 96, world_light=('#8a96cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=24 if QUICK else 64, world_light=('#8a96cc', 0.95))
 
 VALLEY = {'spawns': [['wyrm', 23, 19]], 'arena': [6, 6, 40, 34]}
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
