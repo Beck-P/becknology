@@ -3,8 +3,11 @@
 let ctx = null, master = null, on = true;
 try { on = localStorage.getItem('royale_sound') !== 'off'; } catch (e) { /* private mode */ }
 
+// the Bridge's sound switch (its ♪ pill / M): off means off in here too
+const bridgeOff = () => { try { return (JSON.parse(localStorage.getItem('bridge_audio') || '{}') || {}).mode === 'off'; } catch (e) { return false; } };
+
 function ac() {
-  if (!on) return null;
+  if (!on || bridgeOff()) return null;
   if (!ctx) {
     const A = window.AudioContext || window.webkitAudioContext;
     if (!A) return null;

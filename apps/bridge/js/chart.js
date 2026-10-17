@@ -212,7 +212,36 @@ var BridgeChart = (function () {
     }).catch(function () { /* drawn as a blob */ });
     return null;
   }
-  var base = null, baseKey = '';
+  var base = null, baseKey = '', baseRegions = null, bloomInk = null;
+  // the spore bloom (js/bloom.js) on the chart: on its nights every sea washed in its own light, specks of it twinkling;
+  // the note under the title says when the next one is
+  function drawBloom(now) {
+    var B = typeof BridgeBloom !== 'undefined' ? BridgeBloom : null, k = B ? B.on() : 0, note = el && el.querySelector('.ch-bloom');
+    if (note && B && (!note._at || now - note._at > 1000)) { note._at = now; note.textContent = B.label(); note.classList.toggle('on', B.next() && B.next().tonight); }
+    if (!B || k < 0.01 || !baseRegions) return;
+    if (!bloomInk) {                                       // the wash (dithered) and the specks, worked out once per base
+      var c = document.createElement('canvas'); c.width = NW; c.height = NH;
+      var g = c.getContext('2d'), img = g.createImageData(NW, NH), d = img.data, specks = [], H = {};
+      Object.keys(SEA).forEach(function (s) { H[s] = B.hue(s).split(',').map(Number); });
+      for (var i = 0; i < NW * NH; i++) {
+        var x = i % NW, y = (i - x) / NW, s = baseRegions[i], h = H[s];
+        if (!h || x < 9 || y < 9 || x >= NW - 9 || y >= NH - 9) continue;
+        if ((x + y) % 2 === 0) { d[i * 4] = h[0]; d[i * 4 + 1] = h[1]; d[i * 4 + 2] = h[2]; d[i * 4 + 3] = 56; }
+        if (hash(i * 1.37) < 0.012) specks.push([x, y, s, hash(i * 2.11) * 6.28]);
+      }
+      g.putImageData(img, 0, 0);
+      bloomInk = { cv: c, specks: specks };
+    }
+    ctx.globalAlpha = k;
+    ctx.drawImage(bloomInk.cv, 0, 0);
+    bloomInk.specks.forEach(function (p) {
+      var n = Math.sin(now / 520 + p[3] * 3);
+      if (n < 0.2) return;
+      ctx.fillStyle = 'rgb(' + (n > 0.85 ? B.core(p[2]) : B.hue(p[2])) + ')';
+      ctx.fillRect(p[0], p[1], n > 0.7 ? 2 : 1, 1);
+    });
+    ctx.globalAlpha = 1;
+  }
   function drawBase() {                                    // the parchment and the seas, made once per set of charts
     var key = Object.keys(st.seas).sort().join(',') + '|' + Object.keys(st.visited).sort().join(',') + '|' + Object.keys(st.found || {}).sort().join(',') +
               '|' + Object.keys(st.sailed).sort().join(',');
@@ -221,6 +250,7 @@ var BridgeChart = (function () {
     var g = base.getContext('2d'), img = g.createImageData(NW, NH), d = img.data;
     var regions = new Array(NW * NH);
     for (var y = 0; y < NH; y++) for (var x = 0; x < NW; x++) regions[y * NW + x] = seaAt(x, y);
+    baseRegions = regions; bloomInk = null;
     for (var y2 = 0; y2 < NH; y2++) for (var x2 = 0; x2 < NW; x2++) {
       var i = y2 * NW + x2, s = regions[i], n = hash(x2 * 13 + y2 * 7919);
       var r = 216, gg = 200, b = 160;                                          // parchment
@@ -266,6 +296,7 @@ var BridgeChart = (function () {
     raf = requestAnimationFrame(render);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(drawBase(), 0, 0);
+    drawBloom(now);
     var I = isles(), me = whereAmI(), d = course();
     // the course: a dotted gold line from you to where you're bound
     if (me && d && I[d]) {
@@ -372,7 +403,7 @@ var BridgeChart = (function () {
     if (!available()) return;
     el = document.createElement('div');
     el.id = 'sea-chart';
-    el.innerHTML = '<div class="ch-frame"><div class="ch-title">The Seas of Lumar</div><div class="ch-body"><div class="ch-map"><canvas width="' + NW + '" height="' + NH + '"></canvas></div>' +
+    el.innerHTML = '<div class="ch-frame"><div class="ch-title">The Seas of Lumar</div><div class="ch-bloom"></div><div class="ch-body"><div class="ch-map"><canvas width="' + NW + '" height="' + NH + '"></canvas></div>' +
       '<div class="ch-info"></div></div><div class="ch-hint"><span class="ip-key">C</span> close · click an island · ←/→ to step through them</div></div>';
     document.body.appendChild(el);
     cv = el.querySelector('canvas'); ctx = cv.getContext('2d'); info = el.querySelector('.ch-info');

@@ -60,6 +60,19 @@ for wid, w in W.items():
             entries[tgt].append(tuple(spn))
 for wid, extra in EXTRA_ENTRIES.items():
     entries[wid] += extra
+# Arcadia's lifts, the Loop's stations and the cab pads (assets/arcadia-lifts.json, js/transit.js): where you step out
+LIFTS = json.load(open(os.path.join(ROOT, 'arcadia-lifts.json')))
+STOPS = {}                                                   # (type, key, id) -> the stop
+for sid, sh in LIFTS.get('shafts', {}).items():
+    for l in sh.get('lobbies', []):
+        STOPS[('express_lift', sid, l['id'])] = l
+for l in LIFTS.get('loop', {}).get('stations', []):
+    STOPS[('loop_station', None, l['id'])] = l
+for l in LIFTS.get('cabs', {}).get('pads', []):
+    STOPS[('air_cab', None, l['id'])] = l
+for l in STOPS.values():
+    if l['world'] in W:
+        entries[l['world']].append(tuple(l['spawn']))
 
 issues = []
 for wid, w in sorted(W.items()):
@@ -83,9 +96,28 @@ for wid, w in sorted(W.items()):
             issues.append((wid, 'exit %s leads to a missing world %s' % (it.get('label'), tgt)))
         elif tgt in W and spn and not walk(W[tgt], spn[0], spn[1]):
             issues.append((wid, 'exit %s lands on a solid tile %s in %s' % (it.get('label'), spn, tgt)))
+        stop = None
+        if it['type'] == 'express_lift':
+            stop = STOPS.get(('express_lift', it.get('shaft'), it.get('lobby')))
+        elif it['type'] in ('loop_station', 'air_cab'):
+            stop = STOPS.get((it['type'], None, it.get('station') or it.get('pad')))
+        if it['type'] in ('express_lift', 'loop_station', 'air_cab'):
+            if not stop:
+                issues.append((wid, '%s %s names no stop in arcadia-lifts.json' % (it['type'], it.get('label'))))
+            elif stop['world'] != wid:
+                issues.append((wid, '%s %s is %s\'s stop' % (it['type'], it.get('label'), stop['world'])))
     for a in (w.get('scene') or {}).get('actors', []):
         if a.get('pose') != 'sit' and walk(w, a['x'], a['y']):
             issues.append((wid, 'actor %s stands on a walkable tile %s,%s' % (a['sheet'], a['x'], a['y'])))
+
+for key, l in sorted(STOPS.items(), key=lambda kv: str(kv[0])):
+    if l['world'] not in W:
+        continue                                             # (another workstream's place, not built yet: js/transit.js leaves it out)
+    if not walk(W[l['world']], *l['spawn']):
+        issues.append(('arcadia-lifts.json', '%s %s steps out onto a solid tile %s in %s' % (key[0], key[2], l['spawn'], l['world'])))
+    if not any(i['type'] == key[0] and (i.get('lobby') or i.get('station') or i.get('pad')) == key[2] and (key[1] is None or i.get('shaft') == key[1])
+               for i in W[l['world']].get('interactions', [])):
+        issues.append(('arcadia-lifts.json', '%s %s has no %s interaction in %s' % (key[0], key[2], key[0], l['world'])))
 
 labels = {wid: set(i.get('label') for i in w.get('interactions', [])) for wid, w in W.items()}
 WALKERS = json.load(open(os.path.join(ROOT, 'walkers.json')))
