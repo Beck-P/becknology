@@ -98,6 +98,7 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
   console.log('in view', vis.length, JSON.stringify(vis.map(v => v.kind)));
   if (vis.length < 2) bad('a quiet sea where it should be busy: ' + vis.length + ' in view');
   vis = await seen();
+  const me = await p.evaluate(() => { const b = BridgeSloop._boat(); return { x: b.x, r: b.r, h: b.h, L: 3.2, B: 1.23 }; });   // where she was as they were measured
   await shot('crowded_night');
   const fps = await p.evaluate(() => new Promise(r => { let n = 0; const t0 = performance.now(); (function f() { n++; if (performance.now() - t0 < 2000) requestAnimationFrame(f); else r(n / ((performance.now() - t0) / 1000)); })(); }));
   console.log('frames a second with them all in view:', fps.toFixed(1));
@@ -107,7 +108,6 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
     if (d < (a.B + c.B) / 2 + 0.3) { close++; console.log('close: ' + a.kind + ' and ' + c.kind + ' ' + d.toFixed(2) + ' apart'); }
   }
   if (close > 2) bad(close + ' pairs of ships on top of each other');
-  const me = await p.evaluate(() => { const b = BridgeSloop._boat(); return { x: b.x, r: b.r, h: b.h, L: 3.2, B: 1.23 }; });
   vis.forEach(v => { if (gap(v, me) < (v.B + me.B) / 2 + 0.6) bad('the ' + v.kind + ' sailed into you'); });
   await p.evaluate((at) => BridgeClock._at(at), DAY); await p.waitForTimeout(1200);
   await shot('crowded_day');

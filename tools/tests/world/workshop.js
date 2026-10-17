@@ -52,10 +52,10 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   console.log('offer:', (await dialog()).slice(0, 260));
   await btn(/Build it/); await wait(2500);
   const after = await ev(() => { const w = BridgeWorld.getWorld(), sc = BridgeScene.get('lumar-holm');
-    return { built: BridgeHolm.built('workshop'), layer: w.scene.layers.workshop, standIn: !!(sc && sc.layers.find(L => L.slot === 'workshop' && L.standIn)),
+    return { built: BridgeHolm.built('workshop'), layer: w.scene.layers.workshop, shown: !!(sc && sc.layers.find(L => L.slot === 'workshop' && L.key === 'built')),
              wall: w.collisions[8][12], smoke: w.scene.smoke.length, coins: window._coins }; });
   console.log('built:', JSON.stringify(after));
-  expect('built for 9000, its lot walled, its stand-in in the scene and its chimney smoking', after.built && after.layer === 'built' && after.standIn && after.wall === 1 && after.coins === 51000);
+  expect('built for 9000, its lot walled, in the scene (its own render, or the stand-in) and its chimney smoking', after.built && after.layer === 'built' && after.shown && after.wall === 1 && after.coins === 51000);
   await ev(() => BridgeCharacter.init(13, 11)); await wait(1500);
   await p.screenshot({ path: SHOTS + '/workshop_holm.png' });
 
