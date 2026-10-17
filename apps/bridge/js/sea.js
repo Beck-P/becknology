@@ -138,8 +138,9 @@ var BridgeSea = (function () {
   function fillPattern(ctx, t, w, h, ox, oy, alpha) {
     var key = t.__key || (t.__key = Math.random().toString(36));
     var pat = patterns[key] || (patterns[key] = ctx.createPattern(t, 'repeat'));
-    ox = ((Math.round(ox) % TW) + TW) % TW;
-    oy = ((Math.round(oy) % TH) + TH) % TH;
+    var tw = t.width, th = t.height;
+    ox = ((Math.round(ox) % tw) + tw) % tw;
+    oy = ((Math.round(oy) % th) + th) % th;
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(-ox, -oy);
@@ -175,8 +176,9 @@ var BridgeSea = (function () {
 
   // moon glints and drifting spores, on a world-anchored grid; `isWater`
   // (screen x, y) filters them to the water over a scene
-  function glints(ctx, w, h, now, P, isWater, W) {
+  function glints(ctx, w, h, now, P, isWater, W, k, name) {
     var dark = W ? Math.max(0, 1 - W.day * 1.1) : 1, sparkle = W ? 0.6 - 0.25 * W.day : 0.6;
+    var spore = k > 0.01 ? BridgeBloom.hue(name) : P.spore, boost = 1 + 1.4 * (k || 0);
     var D = drift(now);
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
@@ -193,21 +195,134 @@ var BridgeSea = (function () {
         }
         var sx = Math.round(x + Math.sin(now / 2000 + id) * 6), sy = Math.round(y + 20 + Math.cos(now / 2600 + id) * 4);
         if (dark > 0.05 && (!isWater || isWater(sx, sy))) {
-          ctx.fillStyle = 'rgba(' + P.spore + ',' + ((0.25 + 0.35 * Math.abs(Math.sin(now / 900 + id))) * dark).toFixed(2) + ')';
+          ctx.fillStyle = 'rgba(' + spore + ',' + Math.min(1, (0.25 + 0.35 * Math.abs(Math.sin(now / 900 + id))) * dark * boost).toFixed(2) + ')';
           ctx.fillRect(sx, sy, 1, 1);
         }
       }
     }
+    if (k > 0.01) motes(ctx, w, h, now, D, isWater, k, name);
     ctx.restore();
+  }
+  // the bloom's motes: spores drifting through the water, a few of them bright with a small halo (a plus)
+  var moteStyles = {};
+  function moteStyle(rgb, a8) {                               // 'rgba(…)' strings by eighths of opacity, made once
+    var key = rgb + a8;
+    return moteStyles[key] || (moteStyles[key] = 'rgba(' + rgb + ',' + (a8 / 8).toFixed(3) + ')');
+  }
+  function motes(ctx, w, h, now, D, isWater, k, name) {
+    var hue = BridgeBloom.hue(name), core = BridgeBloom.core(name), cell = 32;
+    var c0 = Math.floor(D.camX / cell) - 1, r0 = Math.floor(D.camY / cell) - 1;
+    for (var r = r0; r < r0 + h / cell + 3; r++) {
+      for (var c = c0; c < c0 + w / cell + 3; c++) {
+        var id = c * 4513 + r * 92821 + 7, hs = hash(id);
+        var x = Math.round(c * cell - D.camX + hs * cell + Math.sin(now / 3100 + id) * 5);
+        var y = Math.round(r * cell - D.camY + hash(id + 1) * cell + Math.cos(now / 3700 + id) * 3);
+        if (x < -2 || y < -2 || x > w + 2 || y > h + 2) continue;
+        var pulse = Math.sin(now / (700 + hs * 900) + id * 1.3);
+        if (pulse < -0.3 || (isWater && !isWater(x, y))) continue;
+        var a8 = Math.round(Math.min(1, k * (0.35 + 0.5 * (pulse + 0.3))) * 8);
+        if (pulse > 0.75 && hs < 0.45) {
+          ctx.fillStyle = moteStyle(hue, Math.round(a8 * 0.45));
+          ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3);
+          ctx.fillStyle = moteStyle(core, a8);
+        } else ctx.fillStyle = moteStyle(hue, Math.round(a8 * 0.8));
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+
+  // ---- the spore bloom (js/bloom.js): a night or two a month the whole sea lights up ------------------------------------
+  // Slow luminous currents: a seamless texture of swirling filaments and faint haze in the sea's own bloom light (in a few
+  // flat, dithered bands like the waves), worked out once and drifting slowly over the water. The shallows, the surf and
+  // the foam light up in animate(); the motes drift in glints(). Cheap: two pattern fills and a few hundred specks a frame.
+  var GLOWS = [{ w: 384, h: 192, seed: 0 }, { w: 320, h: 160, seed: 7 }], gfield = [], gtex = {};   // two sizes: no visible repeat
+  function bloomK() {
+    if (typeof BridgeBloom === 'undefined') return 0;
+    var id = camOverride ? null : (typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : null);
+    return BridgeBloom.on(null, id);
+  }
+  function pnoise(u, v, cx, cy, seed) {                       // periodic value noise, u/v in [0, 1) of the texture
+    var x = u * cx, y = v * cy, xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+    var a = xf * xf * (3 - 2 * xf), b = yf * yf * (3 - 2 * yf);
+    function h(i, j) { return hash(((i % cx) + cx) % cx * 57 + ((j % cy) + cy) % cy * 131 + seed * 977); }
+    return h(xi, yi) * (1 - a) * (1 - b) + h(xi + 1, yi) * a * (1 - b) + h(xi, yi + 1) * (1 - a) * b + h(xi + 1, yi + 1) * a * b;
+  }
+  function pfbm(u, v, base, seed, oct) {                      // cells half as wide again as tall: currents run sideways
+    var n = 0, amp = 0.5, tot = 0, f = 1;
+    for (var o = 0; o < (oct || 2); o++) { n += pnoise(u, v, Math.round(base * 1.5) * f, base * f, seed + o) * amp; tot += amp; amp *= 0.5; f *= 2; }
+    return n / tot;
+  }
+  // 0..4 per pixel: the bands of light (palette-free). The currents are contour lines of a swirled noise — long thin
+  // ribbons, wider and softer where the water's slack — bright where the spores have drifted together, faint elsewhere.
+  // Worked out a few rows a frame (no stall as the bloom comes on); null till done
+  function glowField(n) {
+    var G = GLOWS[n], F = gfield[n] || (gfield[n] = { d: new Uint8Array(G.w * G.h), row: 0 });
+    if (F.row >= G.h) return F.d;
+    for (var y = F.row, end = Math.min(G.h, F.row + 24); y < end; y++) for (var x = 0; x < G.w; x++) {
+      var u = x / G.w, v = y / G.h, s = G.seed;
+      var wu = (pfbm(u, v, 2, 41 + s) - 0.5) * 0.5, wv = (pfbm(u, v, 2, 47 + s) - 0.5) * 0.45;   // the currents' swirl
+      var q0 = pfbm(u + wu, v + wv, 4, 53 + s);
+      var line = Math.max(0, 1 - Math.abs(q0 - 0.5) * 22) + 0.7 * Math.max(0, 1 - Math.abs(q0 - 0.36) * 30) + 0.7 * Math.max(0, 1 - Math.abs(q0 - 0.64) * 30);
+      var gather = Math.max(0, Math.min(1, (pfbm(u - wu * 0.5, v - wv * 0.5, 2, 61 + s, 3) - 0.35) / 0.3));
+      var q = line * gather * 4.2 + (BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.5) * 0.9;
+      F.d[y * G.w + x] = Math.max(0, Math.min(4, Math.floor(q)));
+    }
+    F.row = end;
+    return F.row >= G.h ? F.d : null;
+  }
+  function glowTex(name, n) {
+    var key = name + n;
+    if (gtex[key]) return gtex[key];
+    var F = glowField(n);
+    if (!F) return null;
+    var G = GLOWS[n], H = BridgeBloom.hue(name).split(',').map(Number), K = BridgeBloom.core(name).split(',').map(Number);
+    var c = document.createElement('canvas');
+    c.width = G.w; c.height = G.h;
+    var cx = c.getContext('2d'), img = cx.createImageData(G.w, G.h), d = img.data, AL = [8, 28, 60, 104, 170];   // (8: the faint wash)
+    for (var i = 0; i < G.w * G.h; i++) {
+      var lv = F[i], col = lv === 4 ? K : H;
+      d[i * 4] = col[0]; d[i * 4 + 1] = col[1]; d[i * 4 + 2] = col[2]; d[i * 4 + 3] = AL[lv];
+    }
+    cx.putImageData(img, 0, 0);
+    gtex[key] = c;
+    return c;
+  }
+  // the bloom over the water, w × h of ctx from its corner, the texture shifted by (sx, sy) (an island's water layer is in
+  // its render's frame: sx, sy is where that lies on screen, so the currents run on from the open sea without a seam):
+  // a faint wash of the sea's light and the currents (both in the texture), two layers drifting apart. On the open sea it
+  // goes over the waves; on an island's water layer 'source-atop', so it keeps the water's opacity (thin over the shallows)
+  // (tiled with drawImage over just the rect asked for: a blit, quicker than a pattern fill, and source-atop is bounded)
+  function bloomWater(ctx, x0, y0, x1, y1, sx, sy, now, name, k, op) {
+    var D = drift(now), a = glowTex(name, 0), b = a && glowTex(name, 1);
+    if (!a || !b) return;
+    ctx.save();
+    ctx.globalCompositeOperation = op || 'source-over';
+    tiles(ctx, a, x0, y0, x1, y1, D.camX + sx + now * 0.0021, D.camY + sy + now * 0.0009, 0.6 * k);
+    tiles(ctx, b, x0, y0, x1, y1, D.camX + sx - now * 0.0016 + 101, D.camY + sy + now * 0.0013 + 57, 0.35 * k);
+    ctx.restore();
+  }
+  // texture t tiled over [x0, x1) × [y0, y1) of ctx, the pixel at (x, y) taking the texture's (x + ox, y + oy)
+  function tiles(ctx, t, x0, y0, x1, y1, ox, oy, alpha) {
+    var tw = t.width, th = t.height;
+    var fx = x0 - ((((Math.round(ox) + x0) % tw) + tw) % tw), fy = y0 - ((((Math.round(oy) + y0) % th) + th) % th);
+    ctx.globalAlpha = alpha;
+    for (var y = fy; y < y1; y += th) {
+      for (var x = fx; x < x1; x += tw) {
+        var cx0 = Math.max(x, x0), cy0 = Math.max(y, y0), cx1 = Math.min(x + tw, x1), cy1 = Math.min(y + th, y1);
+        if (cx1 > cx0 && cy1 > cy0) ctx.drawImage(t, cx0 - x, cy0 - y, cx1 - cx0, cy1 - cy0, cx0, cy0, cx1 - cx0, cy1 - cy0);
+      }
+    }
+    ctx.globalAlpha = 1;
   }
 
   /** The open sea, filling the frame (native px), scrolling with the world. */
   function drawSea(ctx, w, h, now, palette) {
-    var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name], W = skyFor(name);
+    var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name], W = skyFor(name), k = bloomK();
     ctx.fillStyle = 'rgb(' + (W && W.day > 0.5 ? PALETTES[name + '@day'] : P).deep.join(',') + ')';
     ctx.fillRect(0, 0, w, h);
     waves(ctx, w, h, now, name, 0, 0, W);
-    glints(ctx, w, h, now, P, null, W);
+    if (k > 0.01) bloomWater(ctx, 0, 0, w, h, 0, 0, now, name, k);
+    glints(ctx, w, h, now, P, null, W, k, name);
   }
 
   // ---- water over a scene (shore.png) -------------------------------------------------
@@ -284,9 +399,15 @@ var BridgeSea = (function () {
     return lo;
   }
 
-  function animate(S, P, now, v) {
+  function animate(S, P, now, v, k, name) {
     var d = S.aimg.data;
     var sh = P.shallow.split(',').map(Number), fo = P.foam.split(',').map(Number);
+    // the bloom: the shallows, the surf and the foam lit by the spores (the sea's own light; its brightest at the crests)
+    var bl = k > 0.01, hu = bl ? BridgeBloom.hue(name).split(',').map(Number) : sh, co = bl ? BridgeBloom.core(name).split(',').map(Number) : fo;
+    if (bl) {
+      sh = sh.map(function (c, i) { return Math.round(c + (hu[i] - c) * k); });
+      fo = fo.map(function (c, i) { return Math.round(c + (co[i] - c) * k); });
+    }
     var t = now / 520, tc = now / 900;
     var reach = S.reach, W = S.W, R = around(v, W, S.H), n = S.idx.length;
     for (var y = R[1]; y < R[3]; y++) {
@@ -302,21 +423,26 @@ var BridgeSea = (function () {
         if (depth > 0 && depth < CAUSTIC) {
           var cv = Math.sin(hx * 0.42 + 1.8 * Math.sin(hy * 0.23 + tc * 0.8)) +
                    Math.sin(hy * 0.37 - tc * 0.6 + 1.6 * Math.sin(hx * 0.19 - tc * 0.5));
-          if (Math.abs(cv) < 0.2) { r = sh[0]; g = sh[1]; b = sh[2]; al = 0.26 * (1 - depth / CAUSTIC); }
+          if (Math.abs(cv) < 0.2) { r = sh[0]; g = sh[1]; b = sh[2]; al = 0.26 * (1 - depth / CAUSTIC) * (bl ? 1 + 0.3 * k : 1); }
         }
         if (dist <= reach) {
           var f = 1 - dist / reach;
           if (al < 0.14 * f * f) { r = sh[0]; g = sh[1]; b = sh[2]; al = 0.14 * f * f; }      // pale water at the edge
+          var wash = Math.sin(t * 1.3 + nz * 6.3);
+          if (bl) {                                          // the shallows glowing, a band that swells as each wave comes in
+            var gl = k * (0.42 * f * f * f + (dist <= 3 ? 0.16 : 0) + (dist <= 6 && wash > 0.3 ? 0.3 * (wash - 0.3) : 0));
+            gl = Math.round(gl * 8) / 8;                     // in flat steps, not a smooth ramp
+            if (gl > al) { r = hu[0]; g = hu[1]; b = hu[2]; al = gl; }
+          }
           // foam lines lapping in toward the shore, broken into flecks
           var wave = Math.sin(dist * 0.7 + t + nz * 2.2);
-          if (dist <= 9 && wave > 0.86 - nz * 0.2 && nz > 0.25) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.4 * (1 - dist / 10)); }
+          if (dist <= 9 && wave > 0.86 - nz * 0.2 && nz > 0.25) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, (0.4 + 0.45 * (k || 0)) * (1 - dist / 10)); }
           // the wash at the waterline, breathing in and out, with gaps
-          var wash = Math.sin(t * 1.3 + nz * 6.3);
-          if (dist <= 1 + (wash > 0.5 ? 1 : 0) && wash > -0.2) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.5 - dist * 0.12); }
+          if (dist <= 1 + (wash > 0.5 ? 1 : 0) && wash > -0.2) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.5 + 0.45 * (k || 0) - dist * 0.12); }
         }
         if (al > 0) {
           var o = p * 4;
-          d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = Math.round(al * 255);
+          d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = Math.round(Math.min(1, al) * 255);
         }
       }
     }
@@ -356,17 +482,21 @@ var BridgeSea = (function () {
         fillPattern(L, texture(l[0], 2), S.W, S.H, D.bx + bx, D.by + by, 0.45 * l[1]);
       });
     }
+    // the bloom: the open sea's currents carried on over the island's water at its opacity (so it meets the open sea
+    // without a seam and thins over the shallows, where the surf, in animate, takes over)
+    var k = bloomK();
+    if (k > 0.01) bloomWater(L, v[0], v[1], v[0] + v[2], v[1] + v[3], bx, by, now, name, k, 'source-atop');
     L.restore();
     ctx.drawImage(S.layer, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
     // ripples, shallows and foam
-    var stamp = Math.floor(now / 70), pk = name + P.shallow + P.foam;
-    if (S.stamp !== stamp || S.palette !== pk) { S.stamp = stamp; S.palette = pk; animate(S, P, now, v); }
+    var stamp = Math.floor(now / 70), pk = name + P.shallow + P.foam + Math.round(k * 20);
+    if (S.stamp !== stamp || S.palette !== pk) { S.stamp = stamp; S.palette = pk; animate(S, P, now, v, k, name); }
     ctx.drawImage(S.anim, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
     glints(ctx, ctx.canvas.width, ctx.canvas.height, now, P, function (x, y) {
       var px = x - bx, py = y - by;
       if (px < 0 || py < 0 || px >= S.W || py >= S.H) return true;
       return S.water[py * S.W + px] === 1;
-    }, W);
+    }, W, k, name);
   }
 
   // ---- older scenes: foam round the silhouette ----------------------------------------
@@ -420,6 +550,11 @@ var BridgeSea = (function () {
       S.stamp = stamp;
       var d = S.img.data, R = around(v, S.W, S.H), n = S.idx.length;
       var sh = P.shallow.split(',').map(Number), fo = P.foam.split(',').map(Number);
+      var bk = bloomK();
+      if (bk > 0.01) {                                       // the bloom: the band and the foam in the spores' light
+        var nm = PALETTES[palette] ? palette : 'emerald';
+        sh = BridgeBloom.foam(nm, P.shallow, bk).split(',').map(Number); fo = BridgeBloom.foam(nm, P.foam, bk).split(',').map(Number);
+      }
       var t = now / 520;
       for (var y = R[1]; y < R[3]; y++) {
         var row = y * S.W, end = row + R[2];
@@ -458,7 +593,7 @@ var BridgeSea = (function () {
   function forget(id) { delete shores[id]; delete bands[id]; }
 
   // after the canvas was lost: every texture and mask is made again as it's next needed
-  function reset() { tex = {}; patterns = {}; shores = {}; bands = {}; }
+  function reset() { tex = {}; patterns = {}; shores = {}; bands = {}; gtex = {}; }
 
   return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
 })();
