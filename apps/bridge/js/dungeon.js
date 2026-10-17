@@ -14,6 +14,8 @@
  *   - the stair down, well away from the stair up. Every fifth floor a crypt guardian stands over it, and it's
  *     sealed till the guardian falls.
  * The floors are never walled off: whatever's put down leaves every open cell reachable from the stair up.
+ * Until Midnight's own render has the crypt portal in its graveyard, one is put there (a stone stairwell between two
+ * wisp-flames) once the Undercroft's hall exists; the real one, when it comes, takes its place.
  * Black out and you come round in the hall (data.onFaint, js/combat.js). The hall's stair takes you to the first floor,
  * or straight to any fifth floor you've reached tonight. The board keeps your deepest tonight and ever.
  *
@@ -130,8 +132,21 @@ var BridgeDungeon = (function () {
     return { stair: stair, chests: chests, traps: traps, guardian: guardian, start: start };
   }
 
+  // the way in, till Midnight's render has its own: only once the hall is there to go to
+  var PORTAL = [5, 21], hallThere = false, portalHere = null;
+  fetch('/bridge/assets/worlds/' + HALL + '.json', { method: 'HEAD' }).then(function (r) { hallThere = r.ok; }).catch(function () {});
+  function wayIn(data) {
+    portalHere = null;
+    var I = data.interactions || [], C = data.collisions;
+    if (!hallThere || I.some(function (i) { return i.target === HALL; }) || !C || C[PORTAL[1]][PORTAL[0]]) return;
+    I.push({ x: PORTAL[0], y: PORTAL[1], type: 'enter_world', target: HALL, spawn: HALL_SPAWN, label: 'THE UNDERCROFT', prompt: 'PRESS E TO GO DOWN' });
+    C[PORTAL[1]][PORTAL[0]] = 1;
+    portalHere = data;
+  }
+
   function decorate(worldId, data) {
     here = null;
+    if (worldId === 'lumar-midnight') { wayIn(data); return; }
     if (worldId === HALL) {
       data.name = 'The Undercroft';
       (data.interactions || []).forEach(function (it) {
@@ -240,6 +255,9 @@ var BridgeDungeon = (function () {
     } else if (kind === 'sealed') {                                 // the same, a runed slab across it
       P(o, [[0, 0, 16, 16]]); P('#4a4048', [[1, 1, 14, 3]]); P('#28222c', [[3, 7, 10, 3]]);
       P('#2a2430', [[0, 5, 16, 8]]); P('#5a5260', [[1, 6, 14, 6]]); P('#6a6270', [[1, 6, 14, 1]]); P('#9a70d0', [[4, 8, 2, 2], [7, 8, 2, 2], [10, 8, 2, 2]]);
+    } else if (kind === 'portal') {                                // a stair down in a stone frame, a wisp-flame each side
+      P(o, [[1, 2, 14, 14]]); P('#5a5260', [[2, 3, 12, 2], [2, 3, 2, 12], [12, 3, 2, 12]]); P('#6a6270', [[2, 3, 12, 1]]);
+      P('#2a2430', [[4, 5, 8, 3]]); P('#1a1520', [[4, 8, 8, 3]]); P('#0a0810', [[4, 11, 8, 4]]);
     } else if (kind === 'chest' || kind === 'chest_open') {         // iron-bound oak; open, the lid back and the inside dark
       if (kind === 'chest') {
         P(o, [[1, 4, 14, 11]]); P('#6a4020', [[2, 5, 12, 9]]); P('#8a5a2a', [[2, 5, 12, 3]]); P('#3a3a44', [[2, 8, 12, 1], [4, 5, 1, 9], [11, 5, 1, 9]]);
@@ -261,12 +279,24 @@ var BridgeDungeon = (function () {
     }
   }
   function ground(ctx, world, offX, offY, ts, now) {
+    if (portalHere === world) {                                   // the portal's wisp-flames: their own light, never dimmed by the night
+      var u2 = ts / 16, fx = Math.round(offX + PORTAL[0] * ts), fy = Math.round(offY + PORTAL[1] * ts), fl = Math.sin(performance.now() / 140) > 0;
+      [2, 12].forEach(function (c) {
+        px(ctx, fx, fy, u2, '#7a50c0', [[c, 0, 2, 3]]); px(ctx, fx, fy, u2, '#b080ff', [[c, fl ? 0 : 1, 2, 2]]); px(ctx, fx, fy, u2, '#f0e8ff', [[c + (fl ? 0 : 1), 1, 1, 1]]);
+      });
+    }
     if (!here || here.data !== world) return;
     traps(performance.now());
     var u = ts / 16;
     here.traps.forEach(function (t) { stoneAt(ctx, Math.round(offX + t.x * ts), Math.round(offY + t.y * ts), u, t.sprung, performance.now()); });
   }
   function items(world, offX, offY, ts, now, sc) {
+    if (portalHere === world && sc && typeof BridgeScene !== 'undefined') {
+      var pc = sprite('portal'), pf = PORTAL[1] + 0.95;
+      return [{ footRow: pf, draw: function (ctx) {
+        BridgeScene.drawOccluded(ctx, sc, pc, 0, 0, pc.width, pc.height, Math.round(offX + PORTAL[0] * ts), Math.round(offY + (PORTAL[1] + 1) * ts) - pc.height, pf, offX, offY, BridgeScene.tintAt(sc, world, PORTAL[0], PORTAL[1], now), null);
+      } }];
+    }
     if (!here || here.data !== world || !sc || typeof BridgeScene === 'undefined') return [];
     var out = [], sealed = here.guardian && here.guardian._hp > 0 && world.interactions.indexOf(here.guardian) >= 0;
     var add = function (kind, x, y) {
