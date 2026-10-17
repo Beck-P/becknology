@@ -342,8 +342,8 @@ var BridgeInteractions = (function () {
         if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
           BridgeInventory.takeDamage(dmg);
         }
+        if (BridgeCharacter.hurt) BridgeCharacter.hurt();          // you flash red on your own pixels and flinch (no box)
         if (typeof BridgeFX !== 'undefined') {
-          if (BridgeFX.spawnDamageFlash) BridgeFX.spawnDamageFlash(px, py);
           if (BridgeFX.spawnSparks) BridgeFX.spawnSparks(px, py, '#ff4050', 6);
           if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(px, py - 0.3, '-' + dmg, '#ff5060');
         }

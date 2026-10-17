@@ -85,18 +85,30 @@ var BridgeCombat = (function () {
     if (Math.abs(h.y - h._ry) < 0.01) h._ry = h.y;
   }
 
-  // draws one creature into ctx with its feet at (cx, footY), u = one 16th of a tile
-  function drawCreature(ctx, h, cx, footY, ts, now) {
+  // the shadow under a creature: an oval of whole pixels on the ground ([half its width in u, how dark])
+  var SHADOW = { mite: [5, 0.3], crab: [7, 0.3], shade: [5, 0.25], sentinel: [7, 0.35], wisp: [3, 0.18], wight: [5, 0.3], hound: [7, 0.3], warden: [10, 0.4] };
+  function feet(ctx, h, cx, footY, ts) {
+    var s = SHADOW[h.creature];
+    if (!s || typeof BridgeFX === 'undefined' || !BridgeFX.disc) return;
+    var u = Math.max(1, Math.round(ts / 16)), t = h._attackTarget, lunge = h._attackPhase === 'striking' && t, r = s[0] * u;
+    var bl = h._blinkAt ? Math.min(1, (performance.now() - h._blinkAt) / 350) : 1;
+    ctx.fillStyle = 'rgba(0,0,0,' + (s[1] * bl).toFixed(3) + ')';
+    BridgeFX.disc(ctx, Math.round(cx) + (lunge ? Math.round((t.x - h.x) * 3 * u) : 0), Math.round(footY) - u + (lunge ? Math.round((t.y - h.y) * 3 * u) : 0), r, 2 / r);
+  }
+
+  // draws one creature into ctx with its feet at (cx, footY), u = one 16th of a tile; bare: leave its shadow and health
+  // bar off (sceneItems puts them on after the hit flash, so the flash lights the creature and not what's round it)
+  function drawCreature(ctx, h, cx, footY, ts, now, bare) {
     var u = Math.max(1, Math.round(ts / 16)), t = now / 1000 + (h.seed || 0);
     var wind = h._attackPhase === 'winding', strike = h._attackPhase === 'striking';
     var eye = wind || strike ? '#ffffff' : null;
+    if (!bare) feet(ctx, h, cx, footY, ts);
     ctx.save();
     ctx.translate(Math.round(cx), Math.round(footY));
     if (strike) ctx.translate(Math.round(((h._attackTarget ? h._attackTarget.x - h.x : 0)) * 3 * u), Math.round(((h._attackTarget ? h._attackTarget.y - h.y : 0)) * 3 * u));
     if (h.creature === 'mite') {
       var hop = Math.abs(Math.sin(t * 9)) * u * (wind ? 0 : 1);
       ctx.translate(0, -Math.round(hop));
-      ctx.globalAlpha = 0.3; px(ctx, -5 * u, -1 * u + Math.round(hop), 10 * u, 1 * u, '#000'); ctx.globalAlpha = 1;
       px(ctx, -5 * u, -6 * u, 10 * u, 5 * u, '#14100e');                          // outline
       px(ctx, -4 * u, -6 * u, 8 * u, 4 * u, '#5a4a40');                           // shell
       px(ctx, -3 * u, -6 * u, 4 * u, 1 * u, '#8a7a6a');                           // shine
@@ -108,7 +120,6 @@ var BridgeCombat = (function () {
       px(ctx, -2 * u, -5 * u, 1 * u, 1 * u, eye || '#f070b0'); px(ctx, 1 * u, -5 * u, 1 * u, 1 * u, eye || '#f070b0');
     } else if (h.creature === 'crab') {
       var sway = Math.round(Math.sin(t * 3) * u);
-      ctx.globalAlpha = 0.3; px(ctx, -7 * u, -1 * u, 14 * u, 1 * u, '#000'); ctx.globalAlpha = 1;
       px(ctx, -7 * u + sway, -7 * u, 14 * u, 6 * u, '#0c0e18');
       px(ctx, -6 * u + sway, -7 * u, 12 * u, 5 * u, '#2a4a8a');
       px(ctx, -5 * u + sway, -7 * u, 6 * u, 1 * u, '#4a7ac0');
@@ -124,7 +135,6 @@ var BridgeCombat = (function () {
       }
     } else if (h.creature === 'shade') {
       var bob = Math.round(Math.sin(t * 2.4) * 2 * u);
-      ctx.globalAlpha = 0.25; px(ctx, -5 * u, -1 * u, 10 * u, 1 * u, '#000');
       ctx.globalAlpha = wind ? 0.95 : 0.75;
       for (var r = 0; r < 14; r++) {                                               // a tattered wisp, wider at the hood
         var wv = Math.round(Math.sin(t * 5 + r * 0.6) * u);
@@ -136,7 +146,6 @@ var BridgeCombat = (function () {
     } else if (h.creature === 'sentinel') {
       var cracked = h._hp < h.maxHP * 0.5, cg = cracked ? 0.55 + 0.45 * Math.abs(Math.sin(t * 7)) : 0.45;
       var OL = '#120e16', ST = '#4e485c', LT = '#6e6880', DK = '#34303e', CR = '#c49cff';
-      ctx.globalAlpha = 0.35; px(ctx, -7 * u, -1 * u, 14 * u, 1 * u, '#000'); ctx.globalAlpha = 1;
       var sw = wind || strike ? 0 : Math.round(Math.sin(t * 3) * 0.6) * u;
       px(ctx, -5 * u, -7 * u, 4 * u, 7 * u, OL); px(ctx, 1 * u, -7 * u, 4 * u, 7 * u, OL);                      // legs
       px(ctx, -4 * u, -7 * u, 2 * u, 6 * u, ST); px(ctx, 2 * u, -7 * u, 2 * u, 6 * u, ST);
@@ -165,7 +174,6 @@ var BridgeCombat = (function () {
       }
     } else if (h.creature === 'wisp') {
       var wy = -15 * u + Math.round(Math.sin(t * 3) * 2) * u, fl = Math.abs(Math.sin(t * 11));
-      ctx.globalAlpha = 0.18; px(ctx, -3 * u, -1 * u, 6 * u, 1 * u, '#000'); ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'lighter';
       var orb = function (r, c) { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(0, wy, r * u, 0, Math.PI * 2); ctx.fill(); };
       orb(7.5 + (wind ? 1.5 : 0), wind ? 'rgba(190,150,255,0.13)' : 'rgba(170,130,255,0.07)');
@@ -181,7 +189,6 @@ var BridgeCombat = (function () {
       var bl = h._blinkAt ? Math.min(1, (performance.now() - h._blinkAt) / 350) : 1;
       ctx.globalAlpha = bl;
       var hs = Math.round(Math.sin(t * 2) * 0.6) * u, cl = wind ? -3 * u : 0, SK = '#8aa298', WD = '#2a5a3a';
-      ctx.globalAlpha = 0.3 * bl; px(ctx, -5 * u, -1 * u, 10 * u, 1 * u, '#000'); ctx.globalAlpha = bl;
       px(ctx, -5 * u, -12 * u, 10 * u, 11 * u, '#0a100e');                                                    // the sodden robe
       px(ctx, -4 * u, -12 * u, 8 * u, 10 * u, '#22323a'); px(ctx, -4 * u, -12 * u, 8 * u, 1 * u, '#33474e');
       px(ctx, -5 * u, -1 * u, 2 * u, 1 * u, '#0a100e'); px(ctx, -1 * u, -1 * u, 2 * u, 1 * u, '#0a100e'); px(ctx, 3 * u, -1 * u, 2 * u, 1 * u, '#0a100e');
@@ -200,7 +207,6 @@ var BridgeCombat = (function () {
       ctx.scale(h._face || 1, 1);
       var moving = h._ry !== h.y || h._rx !== h.x, st = moving ? Math.sin(t * 22) : 0, cr = wind ? 1 * u : 0;
       var OL = '#0a080c', HB = '#2a2430', HL = '#3c3446', BN = '#d4cbb8';
-      ctx.globalAlpha = 0.3; px(ctx, -7 * u, -1 * u, 14 * u, 1 * u, '#000'); ctx.globalAlpha = 1;
       var lg = function (x, ph) { var o = Math.round(Math.sin(t * 22 + ph) * (moving ? 1 : 0)) * u; px(ctx, x + o, -5 * u + cr, 1 * u, 5 * u - cr, OL); };
       lg(-6 * u, 0); lg(-4 * u, 2); lg(3 * u, 1); lg(5 * u, 3);                                                  // long thin legs
       px(ctx, -7 * u, -8 * u + cr, 14 * u, 3 * u, OL); px(ctx, -6 * u, -8 * u + cr, 12 * u, 2 * u, HB);        // a lean body
@@ -217,7 +223,6 @@ var BridgeCombat = (function () {
     } else if (h.creature === 'warden') {
       var rage = h._hp < h.maxHP / 3, toll = h._kind === 'toll', sl = Math.round(Math.sin(t * 1.6) * 0.6) * u;
       var RB = '#1c282c', RL = '#28383c', BZ = '#8a6428', BZL = '#c09048';
-      ctx.globalAlpha = 0.4; px(ctx, -10 * u, -1 * u, 20 * u, 2 * u, '#000'); ctx.globalAlpha = 1;
       for (var rr = 0; rr < 19; rr++) {                                                                        // the long robe, wider at the hem
         var hw = Math.round(5 + rr * 0.3);
         px(ctx, -(hw + 1) * u, (-19 + rr) * u, (hw + 1) * 2 * u, 1 * u, '#080c0e');
@@ -242,12 +247,19 @@ var BridgeCombat = (function () {
         px(ctx, -10 * u, -19 * u, 3 * u, 8 * u, '#080c0e'); px(ctx, -9 * u, -18 * u, 1 * u, 6 * u, RL);
       }
     }
-    // health bar once it's been hurt (a boss has its own, across the top)
-    if (h._hp < h.maxHP && !h.boss) {
-      var w = 12 * u, f = Math.max(0, h._hp / h.maxHP);
-      px(ctx, -w / 2, -21 * u, w, 2 * u, '#140a0a'); px(ctx, -w / 2, -21 * u, Math.round(w * f), 2 * u, f > 0.4 ? '#e8c040' : '#e84040');
-    }
     ctx.restore();
+    if (!bare) bar(ctx, h, cx, footY, ts);
+  }
+  // its health bar once it's been hurt (a boss has its own, across the top): a dark rim, the colour, a lit top edge
+  function bar(ctx, h, cx, footY, ts) {
+    if (!(h._hp < h.maxHP) || h.boss) return;
+    var u = Math.max(1, Math.round(ts / 16)), w = 12 * u, f = Math.max(0, h._hp / h.maxHP);
+    var x = Math.round(cx - w / 2), y = Math.round(footY) - 21 * u, fill = Math.round(w * f);
+    px(ctx, x - 1, y - 1, w + 2, 2 * u + 2, 'rgba(10,6,8,0.85)');
+    if (fill > 0) {
+      px(ctx, x, y, fill, 2 * u, f > 0.4 ? '#e0b838' : '#e04838');
+      px(ctx, x, y, fill, 1, f > 0.4 ? '#fff0a0' : '#ff9a80');
+    }
   }
 
   // a scene world's items: every creature, depth-sorted with the characters
@@ -266,16 +278,22 @@ var BridgeCombat = (function () {
         if (c.width !== S) { c.width = S; c.height = S; }
         var g = c.getContext('2d');
         g.clearRect(0, 0, S, S);
-        drawCreature(g, h, S / 2, S - ts * 0.15, ts, now);
-        // what's on it: struck (a white flash), frozen (rimed blue), burning (embers lifting off) — on the clock the
-        // hits keep (performance.now), not the world's
-        var pn = performance.now(), held = h._stopUntil > pn;
-        var hit = h._hitAt && (pn - h._hitAt < 110 || held), frozen = h._frostUntil > pn, burning = h._burnUntil > pn;
-        if (hit || frozen) {
+        drawCreature(g, h, S / 2, S - ts * 0.15, ts, now, true);
+        // what's on it: struck (a flash on its own pixels: white while the blow holds it, then a red blush fading),
+        // frozen (rimed blue), burning (embers lifting off) — on the clock the hits keep (performance.now), not the world's
+        var pn = performance.now(), held = h._stopUntil > pn, since = h._hitAt ? pn - h._hitAt : 1e9;
+        var white = since < 90 || held, blush = !white && since < 240, frozen = h._frostUntil > pn, burning = h._burnUntil > pn;
+        if (white || blush || frozen) {
           g.save(); g.globalCompositeOperation = 'source-atop';
-          g.fillStyle = hit ? 'rgba(255,255,255,0.8)' : 'rgba(150,205,255,0.38)'; g.fillRect(0, 0, S, S);
+          g.fillStyle = white ? 'rgba(255,255,255,0.85)' : blush ? 'rgba(255,90,80,' + (0.5 * (1 - (since - 90) / 150)).toFixed(2) + ')' : 'rgba(150,205,255,0.38)';
+          g.fillRect(0, 0, S, S);
+          if (blush && frozen) { g.fillStyle = 'rgba(150,205,255,0.3)'; g.fillRect(0, 0, S, S); }
           g.restore();
         }
+        g.save(); g.globalCompositeOperation = 'destination-over';        // the shadow goes in under it, unflashed
+        feet(g, h, S / 2, S - ts * 0.15, ts);
+        g.restore();
+        bar(g, h, S / 2, S - ts * 0.15, ts);
         if (frozen) { g.fillStyle = '#e8f6ff'; for (var i = 0; i < 4; i++) g.fillRect(Math.round(S / 2 + Math.sin(i * 2.1) * ts * 0.3), Math.round(S - ts * (0.4 + i * 0.2)), 2, 2); }
         if (burning) {
           for (var j = 0; j < 6; j++) {
@@ -325,69 +343,106 @@ var BridgeCombat = (function () {
   }
   function dangerAt(h, x, y) { return dangerCells(h).some(function (c) { return c[0] === x && c[1] === y; }); }
   function attackDamage(h) { return Math.round((h.damage || 5) * (h._kind === 'toll' ? 0.85 : h._kind === 'slam' && h.creature === 'sentinel' ? 1.2 : 1)); }
-  // the strike leaves the creature: a bolt flies, a slam shakes the ground, the bell rings out
+  // the strike leaves the creature: a bolt flies, a slam shakes the ground, the bell rings out, a bite or a blow rakes
+  // the tile it locked onto (js/fx.js spawnStrike, in its own colour)
   var bolts = [], rings = [];
+  var RAKE = { mite: '#f070b0', crab: '#80b0ff', shade: '#c090ff', sentinel: '#c49cff', wisp: '#c8a8ff', wight: '#70fff0', hound: '#e8e0d0', warden: '#ffd070' };
   function strikeFx(h, now) {
     var t = h._attackTarget;
     if (h._kind === 'bolt') { bolts.push({ x0: h.x + 0.5, y0: h.y - 0.1, x1: t.x + 0.5, y1: t.y + 0.4, at: now, dur: h.strikeMs || 380 }); sfx('zap'); return true; }
     if (h._kind === 'toll') { rings.push({ x: h.x + 0.5, y: h.y + 0.5, at: now }); sfx('toll'); shake(4); return true; }
     if (h._kind === 'slam') { sfx('slam'); shake(h.boss ? 5 : 3); if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnSparks) BridgeFX.spawnSparks(t.x, t.y, '#b8a8d0', 10); return true; }
+    if (t && typeof BridgeFX !== 'undefined' && BridgeFX.spawnStrike) { BridgeFX.spawnStrike(h.x, h.y, t.x, t.y, RAKE[h.creature]); return true; }
     return false;
   }
-  function ground(ctx, world, offX, offY, ts, now) {
+  // A wind-up marks the tiles it will hit on the ground: under each, a pool of its colour lying flat on the floor with
+  // a crisp pixel edge, and a second ring closing in onto that edge as the blow comes; struck, the pool flares. Red for a
+  // blow or a slam, gold for the toll, violet where a bolt will land. Round, not boxes. On performance.now(), the clock
+  // the wind-up keeps (the world draws on Date.now()).
+  function ground(ctx, world, offX, offY, ts) {
+    var pn = performance.now(), FX = typeof BridgeFX !== 'undefined' && BridgeFX.disc ? BridgeFX : null;
     (world.interactions || []).forEach(function (h) {
-      if (h.type !== 'hostile' || !h.creature || (h._attackPhase !== 'winding' && h._attackPhase !== 'striking')) return;
-      var wind = h._attackPhase === 'winding', p = wind ? Math.min(1, (now - h._attackStart) / (h._windFor || h.windupMs || 500)) : 1;
-      var col = h._kind === 'toll' ? [255, 200, 90] : h._kind === 'bolt' ? [200, 150, 255] : [255, 70, 60];
+      if (h.type !== 'hostile' || !h.creature || (h._attackPhase !== 'winding' && h._attackPhase !== 'striking') || !FX) return;
+      var wind = h._attackPhase === 'winding', p = wind ? Math.max(0, Math.min(1, (pn - h._attackStart) / (h._windFor || h.windupMs || 500))) : 1;
+      var col = h._kind === 'toll' ? [255, 200, 90] : h._kind === 'bolt' ? [200, 150, 255] : [255, 70, 60], rgb = col.join(',');
+      var rx = Math.round(ts * 0.42), Q = 0.5;
+      ctx.save();
       dangerCells(h).forEach(function (c) {
-        var X = Math.round(offX + c[0] * ts), Y = Math.round(offY + c[1] * ts);
-        var a = wind ? 0.1 + 0.28 * p + 0.08 * Math.sin(now / 70) : 0.55;
-        ctx.fillStyle = 'rgba(' + col.join(',') + ',' + a.toFixed(2) + ')';
-        ctx.fillRect(X + 2, Y + 2, ts - 4, ts - 4);
-        ctx.strokeStyle = 'rgba(' + col.join(',') + ',' + Math.min(0.9, a + 0.3).toFixed(2) + ')';
-        ctx.lineWidth = 1; ctx.strokeRect(X + 2.5, Y + 2.5, ts - 5, ts - 5);
-        if (wind) {                                                // closing in from the corners as it comes
-          var k = Math.round((1 - p) * (ts / 2 - 4));
-          ctx.fillStyle = 'rgba(' + col.join(',') + ',0.9)';
-          ctx.fillRect(X + 2 + k, Y + 2 + k, 3, 1); ctx.fillRect(X + ts - 5 - k, Y + ts - 3 - k, 3, 1);
+        var cx = Math.round(offX + (c[0] + 0.5) * ts), cy = Math.round(offY + (c[1] + 0.78) * ts);
+        var a = wind ? 0.16 + 0.3 * p + 0.06 * Math.sin(pn / 70) : 0.6;
+        FX.glow(ctx, cx, cy, rx * 1.25, col, a, Q);                         // the pool, soft
+        ctx.fillStyle = 'rgba(' + rgb + ',' + (wind ? 0.08 + 0.14 * p : 0.32).toFixed(2) + ')';
+        FX.disc(ctx, cx, cy, rx, Q);                                         // its body, in whole pixels
+        ctx.fillStyle = 'rgba(' + rgb + ',' + Math.min(0.95, a + 0.3).toFixed(2) + ')';
+        FX.ring(ctx, cx, cy, rx, Q);                                         // the edge
+        if (wind) {                                                          // closing in as it comes
+          ctx.fillStyle = 'rgba(' + rgb + ',' + (0.25 + 0.6 * p).toFixed(2) + ')';
+          FX.ring(ctx, cx, cy, rx + Math.round((1 - p) * ts * 0.4), Q);
+        } else {
+          ctx.fillStyle = 'rgba(255,240,230,0.7)';
+          FX.disc(ctx, cx, cy, Math.round(rx * 0.45), Q);
         }
       });
+      ctx.restore();
     });
   }
-  // over everything: bolts in flight, the bell's ring going out, a boss's health across the top
+  // over everything: bolts in flight (a soft round glow, a pixel core, motes behind, its shadow on the ground under the
+  // arc, a ring where it lands), the bell's ring going out, a boss's health across the top — on performance.now() too
   function over(ctx, world, offX, offY, ts, now) {
-    bolts = bolts.filter(function (b) { return now - b.at < b.dur + 120; });
-    rings = rings.filter(function (r) { return now - r.at < 600; });
-    if (bolts.length || rings.length) {
-      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    var pn = performance.now(), FX = typeof BridgeFX !== 'undefined' && BridgeFX.disc ? BridgeFX : null;
+    bolts = bolts.filter(function (b) { return pn - b.at < b.dur + 220; });
+    rings = rings.filter(function (r) { return pn - r.at < 600; });
+    if ((bolts.length || rings.length) && FX) {
+      ctx.save();
       bolts.forEach(function (b) {
-        var k = Math.min(1, (now - b.at) / b.dur);
-        for (var i = 0; i < 6; i++) {
-          var q = Math.max(0, k - i * 0.05), X = offX + (b.x0 + (b.x1 - b.x0) * q) * ts, Y = offY + (b.y0 + (b.y1 - b.y0) * q) * ts - Math.sin(Math.PI * q) * ts * 0.5;
-          ctx.fillStyle = 'rgba(200,170,255,' + (0.55 - i * 0.08).toFixed(2) + ')';
-          var r = i ? 3 : 5; ctx.fillRect(Math.round(X) - r, Math.round(Y) - r, r * 2, r * 2);
+        var k = Math.min(1, (pn - b.at) / b.dur);
+        var at = function (q) { return [offX + (b.x0 + (b.x1 - b.x0) * q) * ts, offY + (b.y0 + (b.y1 - b.y0) * q) * ts, Math.sin(Math.PI * q) * ts * 0.5]; };
+        var hd = at(k);
+        ctx.globalCompositeOperation = 'source-over';
+        if (k < 1) { ctx.fillStyle = 'rgba(10,6,20,0.3)'; FX.disc(ctx, hd[0], hd[1] + ts * 0.35, 3, 0.5); }
+        ctx.globalCompositeOperation = 'lighter';
+        if (k < 1) {
+          for (var i = 1; i < 8; i++) {                                       // motes trailing off it
+            var q = k - i * 0.04;
+            if (q <= 0) break;
+            var m = at(q);
+            ctx.fillStyle = 'rgba(200,170,255,' + (0.6 - i * 0.07).toFixed(2) + ')';
+            ctx.fillRect(Math.round(m[0] + Math.sin(i * 2.3 + pn / 90)), Math.round(m[1] - m[2]), i < 3 ? 2 : 1, i < 3 ? 2 : 1);
+          }
+          var X = hd[0], Y = hd[1] - hd[2];
+          FX.glow(ctx, X, Y, 9, [180, 140, 255], 0.5);
+          ctx.fillStyle = '#e8dcff'; FX.disc(ctx, X, Y, 2);
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(X), Math.round(Y), 1, 1);
+        } else {                                                              // landed: a ring going out, a flare going down
+          var e = Math.min(1, (pn - b.at - b.dur) / 220), LX = offX + b.x1 * ts, LY = offY + b.y1 * ts;
+          FX.glow(ctx, LX, LY, 12 * (1 - e * 0.4), [200, 170, 255], 0.55 * (1 - e));
+          ctx.fillStyle = 'rgba(230,214,255,' + (0.85 * (1 - e)).toFixed(2) + ')';
+          FX.ring(ctx, LX, LY, 3 + e * 10, 0.6);
         }
-        if (k >= 1) { ctx.fillStyle = 'rgba(230,210,255,0.6)'; ctx.fillRect(Math.round(offX + b.x1 * ts) - 8, Math.round(offY + b.y1 * ts) - 8, 16, 16); }
       });
+      ctx.globalCompositeOperation = 'lighter';
       rings.forEach(function (r) {
-        var k = (now - r.at) / 600, R = (0.6 + k * 2.2) * ts;
-        ctx.strokeStyle = 'rgba(255,210,120,' + (0.8 * (1 - k)).toFixed(2) + ')'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.ellipse(offX + r.x * ts, offY + r.y * ts, R, R * 0.72, 0, 0, Math.PI * 2); ctx.stroke();
+        var k = (pn - r.at) / 600, R = Math.round((0.6 + k * 2.2) * ts);
+        for (var j = 0; j < 3; j++) {                                         // three pixels deep, the outer edge brightest
+          ctx.fillStyle = 'rgba(255,' + (210 + j * 15) + ',' + (120 + j * 40) + ',' + (0.8 * (1 - k) * (1 - j * 0.3)).toFixed(2) + ')';
+          FX.ring(ctx, offX + r.x * ts, offY + r.y * ts, R - j, 0.72);
+        }
       });
       ctx.restore();
     }
     var boss = (world.interactions || []).filter(function (h) { return h.type === 'hostile' && h.boss && (h._engaged || h._hp < h.maxHP); })[0];
-    if (boss) {
-      // under the place name at the top of the screen (62 CSS px down, whatever the zoom)
-      var sv = BridgeWorld.getScreenView ? BridgeWorld.getScreenView() : null, zk = sv && sv.ts ? sv.ts / ts : 1;
-      var W = ctx.canvas.width, bw = Math.min(320, W - 40), bx = Math.round((W - bw) / 2), by = Math.round(66 / zk) + 8, f = Math.max(0, boss._hp / boss.maxHP);
-      ctx.fillStyle = 'rgba(8,6,10,0.8)'; ctx.fillRect(bx - 3, by - 3, bw + 6, 12);
-      ctx.fillStyle = '#3a1a1a'; ctx.fillRect(bx, by, bw, 6);
-      ctx.fillStyle = f > 0.33 ? '#d8a040' : '#e85030'; ctx.fillRect(bx, by, Math.round(bw * f), 6);
-      [0.66, 0.33].forEach(function (m) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(bx + Math.round(bw * m), by, 1, 6); });
-      ctx.font = '8px "Pixelify Sans", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#f0d8a0';
-      ctx.fillText(boss.label, W / 2, by - 6);
-    }
+    if (boss) bossBar(ctx, boss, ts);
+  }
+  // a boss's health, under the place name at the top of the screen (62 CSS px down, whatever the zoom)
+  function bossBar(ctx, boss, ts) {
+    var sv = BridgeWorld.getScreenView ? BridgeWorld.getScreenView() : null, zk = sv && sv.ts ? sv.ts / ts : 1;
+    var W = ctx.canvas.width, bw = Math.min(320, W - 40), bx = Math.round((W - bw) / 2), by = Math.round(66 / zk) + 8, f = Math.max(0, boss._hp / boss.maxHP);
+    ctx.fillStyle = 'rgba(8,6,10,0.8)'; ctx.fillRect(bx - 3, by - 3, bw + 6, 12);
+    ctx.fillStyle = '#3a1a1a'; ctx.fillRect(bx, by, bw, 6);
+    ctx.fillStyle = f > 0.33 ? '#d8a040' : '#e85030'; ctx.fillRect(bx, by, Math.round(bw * f), 6);
+    [0.66, 0.33].forEach(function (m) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(bx + Math.round(bw * m), by, 1, 6); });
+    ctx.font = '8px "Pixelify Sans", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#f0d8a0';
+    ctx.fillText(boss.label, W / 2, by - 6);
   }
 
   // ---- each frame, for each creature: what's burning it, what's slowed it, the warden's call ---------------------------

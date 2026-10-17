@@ -54,7 +54,7 @@ var BridgeInventory = (function () {
   var slotsRow = null;
   var slotEls = [];                // 10 DOM nodes, indexed 0..9
   var hpFillEl = null, hpTextEl = null;
-  var enFillEl = null, enTextEl = null;
+  var enFillEl = null, enTextEl = null, enBackEl = null;
   var inited = false;
 
   var menuSlotEls = [];            // the Backpack page's slots (the game menu, js/menu.js)
@@ -358,10 +358,14 @@ var BridgeInventory = (function () {
     var enLabel = document.createElement('span');
     enLabel.textContent = 'EN'; enLabel.style.cssText = 'color:#ffd060;width:24px;';
     var enBarWrap = document.createElement('div');
-    enBarWrap.style.cssText = 'flex:1;height:10px;background:rgba(255,200,80,0.18);border:1px solid rgba(255,200,80,0.35);';
+    enBarWrap.style.cssText = 'position:relative;flex:1;height:10px;background:rgba(255,200,80,0.18);border:1px solid rgba(255,200,80,0.35);';
     enFillEl = document.createElement('div');
     enFillEl.style.cssText = 'height:100%;background:#e8c040;transition:width 0.25s ease;';
     enBarWrap.appendChild(enFillEl);
+    // what a fight took that's still coming back once you stop for a breath (js/arms.js, the second wind), pale
+    enBackEl = document.createElement('div');
+    enBackEl.style.cssText = 'position:absolute;top:0;height:100%;left:0;width:0;background:rgba(255,224,140,0.45);transition:left 0.25s ease,width 0.25s ease;';
+    enBarWrap.appendChild(enBackEl);
     enTextEl = document.createElement('span');
     enTextEl.style.cssText = 'min-width:48px;text-align:right;color:#ffe0a0;';
     enRow.appendChild(enLabel); enRow.appendChild(enBarWrap); enRow.appendChild(enTextEl);
@@ -475,6 +479,8 @@ var BridgeInventory = (function () {
     var enPct = Math.max(0, Math.min(100, (state.energy / state.maxEnergy) * 100));
     hpFillEl.style.width = hpPct + '%';
     enFillEl.style.width = enPct + '%';
+    var back = typeof BridgeArms !== 'undefined' && BridgeArms.winded ? BridgeArms.winded() : 0;
+    if (enBackEl) { enBackEl.style.left = enPct + '%'; enBackEl.style.width = Math.max(0, Math.min(100 - enPct, back / state.maxEnergy * 100)) + '%'; }
     hpTextEl.textContent = state.hp + '/' + state.maxHP;
     enTextEl.textContent = state.energy + '/' + state.maxEnergy;
     if (menuOpen) refreshMenu();

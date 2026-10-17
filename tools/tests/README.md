@@ -35,7 +35,7 @@ tools/tests/<suite>/<file>.js`. (The `multi` suites share the Supabase stand-in 
 | `multi` | two pilots (Beck and Alyssa) on the fake Supabase: seeing each other, walking, presence and away, gifts and trades, partners, shared clues, fighting together, health, sailing together, boats at sea, the players pill at sea, a sea fight together. |
 | `together` | every game played together (js/together.js): cabinets, helicopter, Fell Dice and Bones, chess, the dance floor, pachinko, Splice, the cipher room, the typist; the edges (a "not now", a watcher, a partner vanishing, someone elsewhere coming over); the games alone; table chat (desktop and phone). |
 | `royale` | every Neon Royale table opens its Royale Link game; coins staked and paid through the Bridge (Esc mid-round, a page closed with chips out); typing an exact hold'em bet (desktop and phone). |
-| `combat` | every weapon's swings land and do what they say (`hits.js`); a fight, blacking out and waking; a sea fight. |
+| `combat` | every weapon's swings land and do what they say (`hits.js`); a fight, blacking out and waking; a sea fight. `energy.js`: what a roll, each class's charged blow and a bolt cost, the second wind (three quarters back after a breath, none while you keep swinging, none for energy spent off the fight). `look.js`: each moment of a fight shot off the canvas (`shots/look/look_*.png`: a wind-up's marks, a slam, a wisp's bolt, a hit, embers, a bite on you, loot, the staff's bolt, the warden's toll), failing on any box the fight draws. |
 
 ## Reading the results
 
