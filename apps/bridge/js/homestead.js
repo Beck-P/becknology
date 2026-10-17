@@ -105,8 +105,12 @@ var BridgeHomestead = (function () {
       var q = s.sprinklers[i].split(','), dx = Math.abs(+q[0] - x), dy = Math.abs(+q[1] - y);
       if (dx <= 1 && dy <= 1) return Infinity;
     }
-    if (typeof BridgeWeather !== 'undefined' && BridgeWeather.rainDay()) return BridgeWeather.endOfDay();   // rain waters everything till midnight
-    return active('tam') ? s.hands.tam : 0;
+    // rain (js/weather.js) waters everything: now, to the end of the Verdance day; worked out for a moment while you
+    // were away (js/farm.js catches up), the rain then
+    var W = typeof BridgeWeather !== 'undefined' ? BridgeWeather : null;
+    if (W && Math.abs(now - Date.now()) < 60000 && W.rainDay()) return W.endOfDay();
+    if (W && W.at) { var w = W.at('verdance', now); if (w && w.def.wet && w.k > 0.3) return now + 2 * 3600000; }
+    return activeAt('tam', now) ? s.hands.tam : 0;
   }
   function placeSprinkler(x, y) {
     var k = x + ',' + y;
@@ -128,6 +132,7 @@ var BridgeHomestead = (function () {
 
   // ---- the hands -------------------------------------------------------------------------------------------------
   function active(id) { return (s.hands[id] || 0) > Date.now(); }
+  function activeAt(id, at) { return (s.hands[id] || 0) > at; }                // was on at that moment (catching up)
   function hire(id) {
     var H = HANDS[id];
     if (!H) return;
@@ -499,7 +504,7 @@ var BridgeHomestead = (function () {
   }
 
   return { reload: function () { s = load(); }, decorate: decorate, use: use, items: items, over: over, canWork: canWork, starterEdge: starterEdge, keptWet: keptWet,
-           sprinklerAt: sprinklerAt, placeSprinkler: placeSprinkler, liftSprinkler: liftSprinkler, active: active, hire: hire,
+           sprinklerAt: sprinklerAt, placeSprinkler: placeSprinkler, liftSprinkler: liftSprinkler, active: active, activeAt: activeAt, hire: hire,
            toBin: toBin, takeSeed: takeSeed, owned: owned, name: farmName, journal: journal, HANDS: HANDS,
            _s: function () { return s; }, _round: function () { s.round = 1; round(); } };
 })();

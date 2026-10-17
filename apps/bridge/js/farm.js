@@ -61,7 +61,7 @@ var BridgeFarm = (function () {
     var d = null;
     try { d = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { d = null; }
     d = d || {};
-    return { tiles: d.tiles || {}, can: d.can || 0, given: !!d.given, picked: d.picked || {} };
+    return { tiles: d.tiles || {}, can: d.can || 0, given: !!d.given, picked: d.picked || {}, worked: d.worked || 0 };
   }
   function store() { try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* private mode */ } }
   function say(label, text) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(label, text); }
@@ -115,27 +115,38 @@ var BridgeFarm = (function () {
     if (c.g >= c.need && !c.ripeAt) c.ripeAt = now;
     c.t = now;
   }
+  function on(id, at) { return typeof BridgeHomestead !== 'undefined' && (BridgeHomestead.activeAt ? BridgeHomestead.activeAt(id, at) : BridgeHomestead.active(id)); }
   function advanceAll(now) {
     for (var k in save.tiles) advance(save.tiles[k], now, k);
     // Tam stakes up what a storm flattened, on his round (an hour or so after)
-    if (typeof BridgeHomestead !== 'undefined' && BridgeHomestead.active('tam')) {
+    if (on('tam', now)) {
       for (var f in save.tiles) {
         var fc = save.tiles[f].crop;
         if (fc && fc.flat && f.indexOf('|') < 0 && now - fc.flat > 3600000) { fc.flat = 0; fc.t = now; }
       }
     }
     // Odile brings in whatever's been ripe a while (she walks to the rest herself while you're watching)
-    if (typeof BridgeHomestead !== 'undefined' && BridgeHomestead.active('odile')) {
+    if (on('odile', now)) {
       for (var j in save.tiles) {
         if (j.indexOf('|') >= 0) continue;                         // she works Verdance's field, not your holm's garden
         var c = save.tiles[j].crop;
-        if (c && c.g >= c.need && now - (c.ripeAt || now) > 60000) pickFor(j);
+        if (c && c.g >= c.need && now - (c.ripeAt || now) > 60000) pickFor(j, now);
       }
     }
   }
+  // The hands work whether you're on the farm or not, or playing at all: every half minute wherever you are, and the
+  // time you were away is worked through in ten-minute steps when the game opens — so Odile brought each crop in
+  // when it ripened, what she replanted has been growing since, and Tam's rows stayed wet. (save.worked: done up to.)
+  var STEP = 10 * 60000, BACK = 14 * 24 * 3600000;
+  function work(now) {
+    var from = Math.max(save.worked || now, now - BACK);
+    for (var t = Math.min(now, from + STEP); ; t = Math.min(now, t + STEP)) { advanceAll(t); if (t >= now) break; }
+    if (save.worked !== now) { save.worked = now; store(); }
+  }
+  setTimeout(function () { work(Date.now()); setInterval(function () { work(Date.now()); }, 30000); }, 1500);
   /** A ripe crop brought in by a hand: into the shipping bin, and the same planted again if the seed box has it. */
-  function pickFor(k) {
-    var t = save.tiles[k];
+  function pickFor(k, at) {
+    var t = save.tiles[k], when = at || Date.now();
     if (!t || !t.crop || t.crop.g < t.crop.need) return;
     var C = CROPS[t.crop.k];
     C.out.forEach(function (o) {
@@ -144,12 +155,12 @@ var BridgeFarm = (function () {
     });
     save.picked[t.crop.k] = (save.picked[t.crop.k] || 0) + 1;
     var kind = t.crop.k;
-    if (C.again) { t.crop.g = 0; t.crop.need = growMs(C.again); t.crop.again = true; t.crop.t = Date.now(); t.crop.ripeAt = 0; }
-    else if (BridgeHomestead.takeSeed(kind)) t.crop = { k: kind, g: 0, need: growMs(C.days), t: Date.now() };
+    if (C.again) { t.crop.g = 0; t.crop.need = growMs(C.again); t.crop.again = true; t.crop.t = when; t.crop.ripeAt = 0; }
+    else if (BridgeHomestead.takeSeed(kind)) t.crop = { k: kind, g: 0, need: growMs(C.days), t: when };
     else delete t.crop;
     store();
     var xy = xyOf(k);
-    if (here(k)) burst(+xy[0], +xy[1], '#90d060', 5, 1);
+    if (here(k) && Date.now() - when < 60000) burst(+xy[0], +xy[1], '#90d060', 5, 1);
   }
   function wet(t, now) { return (t.wet || 0) > now; }
   function ripe(c) { return c.g >= c.need; }
@@ -199,7 +210,7 @@ var BridgeFarm = (function () {
 
   // keep one interaction on the field tile you face, saying what E will do there
   function sync(world, now) {
-    if (now - lastTick > 1000) { lastTick = now; advanceAll(Date.now()); }
+    if (now - lastTick > 1000) { lastTick = now; work(Date.now()); }
     var want = null;
     if (typeof BridgeCharacter !== 'undefined' && !(BridgeCharacter.isHidden && BridgeCharacter.isHidden()) &&
         !(BridgeCharacter.isSeated && BridgeCharacter.isSeated())) {
@@ -647,7 +658,7 @@ var BridgeFarm = (function () {
   // for the journal: what's in the ground, what's ready, what you've brought in
   function journal() {
     var now = Date.now(), grow = {}, rows = [];
-    advanceAll(now);
+    work(now);
     for (var k in save.tiles) {
       var c = save.tiles[k].crop;
       if (!c) continue;

@@ -29,13 +29,22 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await wait(500);
   const rows = await ev(() => [...document.querySelectorAll('.gear-row')].map(r => r.innerText.replace(/\n+/g, ' ')));
   console.log('cyber gear sells:', rows.join(' | '));
-  await ev(() => { const rs = [...document.querySelectorAll('.gear-row')]; const i = rs.findIndex(r => /Chrono/.test(r.innerText)); rs[i].click(); rs[i].click(); });
+  await ev(() => { const rs = [...document.querySelectorAll('.gear-row')]; const i = rs.findIndex(r => /World Watch/.test(r.innerText)); rs[i].click(); rs[i].click(); });
   await wait(400);
   console.log('bought:', await ev(() => document.querySelector('.gear-note').innerText), '· coins', await ev(() => window._coins));
   await ev(() => BridgeGear.close());
   console.log('time by the name in Arcadia (Eastern time):', await sky());
   await go('lumar-sapphire'); await wait(1200);
   console.log('time by the name on Lumar:', await sky());
+  // tap it: the world watch, every world's time and weather on one face
+  await ev(() => document.querySelector('.world-sky').click());
+  await wait(500);
+  console.log('world watch:', (await ev(() => (document.querySelector('#world-watch') || {}).innerText || 'none')).replace(/\n+/g, ' | '));
+  await p.screenshot({ path: SHOTS + '/legacy_watch.png' });
+  await ev(() => document.body.click());
+  console.log('closed on a click elsewhere:', await ev(() => !document.querySelector('#world-watch')));
+  await go('bridge'); await wait(1200);
+  console.log('time by the name on the ship:', await sky());
   // the statue
   await go('lumar-crown'); await wait(1500);
   await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'STATUE'); BridgeInteractions.execute(it); });

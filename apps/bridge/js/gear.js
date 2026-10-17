@@ -50,11 +50,11 @@ var BridgeGear = (function () {
     fell_watch:   { name: 'Fell Pocket Watch', price: 600, reads: ['hoarfell'], blurb: 'Brass, a hunter case with a snowflake on the lid. Twelve hours to the face: Hoarfell\'s day.' },
     farm_watch:   { name: 'Farmer\'s Watch', price: 500, reads: ['verdance'], blurb: 'Six hours to the face, wound every market day. Tells you when to water.' },
     moonglass:    { name: 'Moonglass', price: 900, reads: ['sylvara'], blurb: 'An elvish lens. Hold it to the sky and the hour shows in it, and the moon.' },
-    wrist_chrono: { name: 'Wrist Chrono', price: 2500, reads: ['all'], blurb: 'Synced to every world\'s clock, and Eastern time besides. Glows in the dark, obviously.' }
+    wrist_chrono: { name: 'World Watch', price: 2500, reads: ['all'], blurb: 'Every world on one face: tap the time by the place\'s name and it shows them all, with the weather. Synced to Eastern time; glows in the dark, obviously.' }
   };
   var SHOPS = {
     lumar_tailor:     { title: 'THE TRAVELLING TAILOR', goods: ['suit:coat', 'pack:satchel'] },
-    sapphire_imports: { title: 'RARE IMPORTS', goods: ['suit:thermal', 'pack:satchel'] },
+    sapphire_imports: { title: 'RARE IMPORTS', goods: ['suit:thermal', 'pack:satchel', 'time:wrist_chrono'] },
     cyber_gear:       { title: 'CYBER GEAR', goods: ['suit:runner', 'pack:expedition', 'time:wrist_chrono'] },
     joro:             { title: "JORO'S BACK ROOM", goods: ['suit:plate', 'pack:expedition'] },
     vex:              { title: "VEX'S STASH", goods: ['pack:voidweave'] },
@@ -217,6 +217,12 @@ var BridgeGear = (function () {
   function keepsTime(planet) {
     return Object.keys(state.times).some(function (k) { var T = TIMES[k]; return T && (T.reads.indexOf(planet) >= 0 || T.reads.indexOf('all') >= 0); });
   }
+  /** The planets your timepieces keep (or 'all'). */
+  function timeReads() {
+    var out = [];
+    Object.keys(state.times).forEach(function (k) { var T = TIMES[k]; if (T) T.reads.forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); }); });
+    return out.indexOf('all') >= 0 ? ['all'] : out;
+  }
   function timeText(I) { return I.reads[0] === 'all' ? 'tells every world\'s time' : 'tells ' + I.reads.map(function (p) { return p.charAt(0).toUpperCase() + p.slice(1); }).join(', ') + ' time'; }
   function choose(i) { if (!rows.length) return; sel = (i + rows.length) % rows.length; note = ''; render(); }
   function stepColour(d) {
@@ -334,5 +340,5 @@ var BridgeGear = (function () {
 
   return { open: open, close: close, decorate: decorate, isOpen: function () { return !!el; },
            style: style, colour: colour, speed: speed, bonus: bonus, has: has, packSlots: packSlots, packName: function () { return PACKS[bestPack()].name; },
-           keepsTime: keepsTime, SUITS: SUITS, PACKS: PACKS, TIMES: TIMES, SHOPS: SHOPS };
+           keepsTime: keepsTime, timeReads: timeReads, SUITS: SUITS, PACKS: PACKS, TIMES: TIMES, SHOPS: SHOPS };
 })();

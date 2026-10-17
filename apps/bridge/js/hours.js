@@ -101,6 +101,7 @@ var BridgeHours = (function () {
   var SUN = '<svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="3.4" fill="#ffd870"/><g stroke="#ffd870" stroke-width="1.6" stroke-linecap="round"><path d="M8 1.2v1.8M8 13v1.8M1.2 8h1.8M13 8h1.8M3.2 3.2l1.3 1.3M11.5 11.5l1.3 1.3M3.2 12.8l1.3-1.3M11.5 4.5l1.3-1.3"/></g></svg>';
   var LOW = '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 11a5 5 0 0 1 10 0z" fill="#ff9a6a"/><path d="M1 12.6h14" stroke="#ff9a6a" stroke-width="1.6" stroke-linecap="round"/><path d="M8 2.6v2M3.4 4.6l1.3 1.3M12.6 4.6l-1.3 1.3" stroke="#ff9a6a" stroke-width="1.4" stroke-linecap="round"/></svg>';
   var MOON = '<svg viewBox="0 0 16 16" width="14" height="14"><path d="M10.6 2.2a6 6 0 1 0 3.2 9.6A5 5 0 0 1 10.6 2.2z" fill="#c8d2ff"/></svg>';
+  var WATCH = '<svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8.5" r="5.6" fill="none" stroke="#e0c060" stroke-width="1.5"/><path d="M8 5.2v3.5l2.2 1.3M6.6 1.6h2.8" stroke="#e0c060" stroke-width="1.4" stroke-linecap="round"/></svg>';
   var GLYPH = { morning: SUN, midday: SUN, afternoon: SUN, dawn: LOW, dusk: LOW, night: MOON, 'midnight sun': LOW };
   var PART = { morning: 'Morning', midday: 'Midday', afternoon: 'Afternoon', dawn: 'Dawn', dusk: 'Dusk', night: 'Night', 'midnight sun': 'The midnight sun' };
   function etClock() { var p = C().etParts(); return (p.h % 12 || 12) + ':' + (p.m < 10 ? '0' : '') + p.m + (p.h < 12 ? 'am' : 'pm'); }
@@ -112,16 +113,17 @@ var BridgeHours = (function () {
     if (badge && id) {
       var k = C().sky(id), sp = badge.querySelector('.world-sky');
       if (!sp) { sp = document.createElement('span'); sp.className = 'world-sky'; badge.appendChild(sp); }
-      var show = k.cycles || k.part === 'night';
+      // with a timepiece that keeps this planet's clock (js/gear.js), the time itself (Arcadia's, and the World Watch's
+      // where there's no sun to keep, is Eastern time); with any timepiece it opens the world watch when tapped
+      var G = typeof BridgeGear !== 'undefined' && BridgeGear.keepsTime ? BridgeGear : null, mine = reads();
+      var skyless = !(k.cycles || k.part === 'night'), show = !skyless || mine.length > 0;
       sp.style.display = show ? '' : 'none';
-      // with a timepiece that keeps this planet's clock (js/gear.js), the time itself — Arcadia's is Eastern time
-      var G = typeof BridgeGear !== 'undefined' && BridgeGear.keepsTime ? BridgeGear : null;
-      var tell = G && k.planet && G.keepsTime(k.planet) ? (k.time ? k.time.text : C().fmtHours ? etClock() : '') : '';
+      var tell = G && k.planet && G.keepsTime(k.planet) ? (k.time ? k.time.text : etClock()) : '';
       if (show) {
-        var key = k.part + '|' + tell;
-        if (sp.getAttribute('data-p') !== key) { sp.innerHTML = (GLYPH[k.part] || '') + (tell ? '<span class="sky-time">' + tell + '</span>' : ''); sp.setAttribute('data-p', key); }
-        sp.title = (PART[k.part] || '') + (k.season ? ' · ' + k.season.name : '');
-        sp.className = 'world-sky sky-' + k.part.replace(' ', '-');
+        var glyph = skyless ? WATCH : GLYPH[k.part] || '', key = (skyless ? 'watch' : k.part) + '|' + tell;
+        if (sp.getAttribute('data-p') !== key) { sp.innerHTML = glyph + (tell ? '<span class="sky-time">' + tell + '</span>' : ''); sp.setAttribute('data-p', key); }
+        sp.title = (skyless ? 'Your timepiece' : (PART[k.part] || '') + (k.season ? ' · ' + k.season.name : '')) + (mine.length ? ' · tap for every world\'s time' : '');
+        sp.className = 'world-sky sky-' + (skyless ? 'watch' : k.part.replace(' ', '-')) + (mine.length ? ' has-watch' : '');
       }
     }
     var lumar = /^lumar/.test(id || '') && C().outdoor(id);
@@ -153,5 +155,59 @@ var BridgeHours = (function () {
     return "THE SHIP'S CHRONOMETER KEEPS EVERY WORLD'S TIME AND WEATHER (EASTERN TIME):\n\n" + rows.join('\n');
   }
 
-  return { HOURS: HOURS, hours: hours, open: isOpen, gate: gate, all: all, anchors: anchors, chronometer: chronometer, _tick: tick };
+  // ---- the world watch: every world's time on one face (a timepiece from js/gear.js; the World Watch keeps them all) --
+  // Tap the time by the place's name: a panel under it with each planet you keep the time of — its time of day, part
+  // of the day, season and weather, now and next — and Eastern time. It ticks while it's open.
+  var watchEl = null, watchT = 0;
+  function reads() { return typeof BridgeGear !== 'undefined' && BridgeGear.timeReads ? BridgeGear.timeReads() : []; }
+  function watchRows() {
+    var R = reads(), all = R[0] === 'all', W = typeof BridgeWeather !== 'undefined' ? BridgeWeather : null, rows = [];
+    function wx(r) {
+      if (!W || !W.forecast) return '';
+      var f = W.forecast(r, 2);
+      return f.length ? f[0].name + (f[1] && f[1].kind !== f[0].kind ? ', then ' + f[1].name.toLowerCase() + ' from ' + W.etHour(f[1].from) : '') : '';
+    }
+    ['sylvara', 'hoarfell', 'lumar', 'verdance'].forEach(function (p) {
+      if (!all && R.indexOf(p) < 0) return;
+      var k = C().sky(p), P = C().PLANETS[p];
+      rows.push({ name: P.name, time: k.time.text, of: 'of ' + P.day + ':00', part: (PART[k.part] || k.part) + (k.season ? ' · ' + k.season.name : ''), wx: wx(p), glyph: GLYPH[k.part] || '' });
+    });
+    if (all) {
+      var b = C().bustle();
+      rows.push({ name: 'Arcadia', time: etClock(), of: 'Eastern', part: 'Night, as ever · ' + (b > 0.9 ? 'the streets are full' : b > 0.5 ? 'busy' : 'quiet'), wx: wx('arcadia'), glyph: MOON });
+      rows.push({ name: 'Enigma · the Singularity', time: '—', of: '', part: 'No sun to keep', wx: '', glyph: '' });
+    }
+    return rows;
+  }
+  function renderWatch() {
+    if (!watchEl) return;
+    var rows = watchRows(), d = new Date(C().etNow());
+    var day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d.getUTCDay()];
+    watchEl.innerHTML = '<div class="ww-head">' + (reads()[0] === 'all' ? 'World Watch' : 'Your timepieces') + '</div>' +
+      rows.map(function (r) {
+        return '<div class="ww-row"><span class="ww-g">' + r.glyph + '</span><span class="ww-name">' + r.name + '</span>' +
+          '<span class="ww-time">' + r.time + ' <small>' + r.of + '</small></span>' +
+          '<span class="ww-part">' + r.part + (r.wx ? '<br><i>' + r.wx + '</i>' : '') + '</span></div>';
+      }).join('') + '<div class="ww-foot">Eastern time ' + etClock() + ' · ' + day + '</div>';
+  }
+  function toggleWatch(on) {
+    on = on === undefined ? !watchEl : on;
+    if (!on) { if (watchEl) watchEl.remove(); watchEl = null; clearInterval(watchT); return; }
+    if (!reads().length) return;
+    watchEl = document.createElement('div');
+    watchEl.id = 'world-watch'; watchEl.className = 'world-watch';
+    watchEl.addEventListener('click', function () { toggleWatch(false); });
+    document.body.appendChild(watchEl);
+    renderWatch();
+    watchT = setInterval(renderWatch, 1000);
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('click');
+  }
+  document.addEventListener('click', function (e) {
+    var sky = e.target.closest && e.target.closest('.world-sky');
+    if (sky && reads().length) { e.stopPropagation(); toggleWatch(); }
+    else if (watchEl && !(e.target.closest && e.target.closest('#world-watch'))) toggleWatch(false);
+  }, true);
+
+  return { HOURS: HOURS, hours: hours, open: isOpen, gate: gate, all: all, anchors: anchors, chronometer: chronometer, _tick: tick,
+           watch: toggleWatch };
 })();

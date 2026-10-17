@@ -135,10 +135,18 @@ var BridgeAnimals = (function () {
   }
 
   // Odile, if she's on, brings in what's waiting (homestead's hands)
+  // every day she was on while you were away, too (up to a fortnight): each of those days' eggs and milk
   function gather() {
-    if (!owned() || typeof BridgeHomestead === 'undefined' || !BridgeHomestead.active('odile')) return;
-    var d = today(), n = 0;
-    st.herd.forEach(function (a) { if (a.prodDay !== d) { a.prodDay = d; BridgeHomestead.toBin(product(a), 1); n++; } });
+    var H = typeof BridgeHomestead !== 'undefined' ? BridgeHomestead : null;
+    if (!owned() || !H) return;
+    var d = today(), n = 0, off = new Date().getTimezoneOffset() * 60000;
+    st.herd.forEach(function (a) {
+      for (var day = Math.max((a.prodDay || d - 1) + 1, d - 14); day <= d; day++) {
+        var at = day === d ? Date.now() : day * DAY + off + DAY / 2;               // midday that day, or now
+        if (!(H.activeAt ? H.activeAt('odile', at) : H.active('odile'))) continue;
+        a.prodDay = day; H.toBin(product(a), 1); n++;
+      }
+    });
     if (n) store();
   }
   setInterval(gather, 30000);
