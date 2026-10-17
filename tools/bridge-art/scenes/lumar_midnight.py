@@ -19,6 +19,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
 import assets_coast as C               # noqa: E402
+import assets_crypt as Crypt           # noqa: E402
 import assets_isle as I                # noqa: E402
 import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
@@ -64,6 +65,7 @@ PATHS = [
 WAY = (22.4, 26.6)                     # the processional way's outer reach (trees and scatter keep off it)
 WAY_X = 24.5
 GRAVES = (11.0, 23.0, 6.0, 6.6)        # the graveyard: an irregular plot round this ellipse
+UC = (4.0, 6.6, 20.4, 21.6)            # the Undercroft's portal in the graveyard's west side (x0, x1, back, front); its door (5, 21)
 
 
 def way_hw(r):
@@ -147,7 +149,7 @@ for j, r in enumerate((18.2, 20.0, 22.0, 24.0, 26.0, 27.9)):
     for i in range(7):
         x = 5.4 + i * 1.45 + (0.6 if j % 2 else 0) + k.rng.uniform(-0.3, 0.3)
         rr = r + k.rng.uniform(-0.18, 0.18)
-        if (int(x), int(rr)) in walk and pd(x, rr) > 0.7 and grave_d(x, rr) < 0.88 and k.rng.random() > 0.15:
+        if (int(x), int(rr)) in walk and pd(x, rr) > 0.7 and grave_d(x, rr) < 0.88 and k.rng.random() > 0.15 and not (UC[0] - 0.5 < x < UC[1] + 0.5 and UC[2] - 0.6 < rr < UC[3] + 0.6):
             I.headstone(k, x, rr, lean=k.rng.uniform(-14, 14), kind=k.rng.choice((0, 0, 1, 2)))
 # an iron railing round the east side of the plot, rusted through in places, the gate hanging open on the path
 fence = []
@@ -165,6 +167,7 @@ for (x, r), (x2, r2) in zip(fence, fence[1:]):
             k.tube((x, r, z), (x2, r2, z + k.rng.uniform(-0.03, 0.03)), 0.015, '#2a2630', 'fence_rail', verts=4)
         k.solid(min(x, x2) - 0.05, min(r, r2) - 0.05, max(x, x2) + 0.05, max(r, r2) + 0.05)
 I.mausoleum(k, 7.0, 10.4, 15.6, 18.0)
+Crypt.crypt_portal(k, *UC)                                  # the way down to the Undercroft (scenes/lumar_undercroft.py)
 gap = [(GRAVES[0] + math.cos(a) * GRAVES[2] * 1.02, GRAVES[1] + math.sin(a) * GRAVES[3] * 1.02)
        for a in (-1.35 + i * 2.7 / 45 for i in range(46))]
 gap = [p_ for p_ in gap if pd(*p_) <= 0.75]
@@ -258,6 +261,7 @@ w = {'name': 'Midnight Isle', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'ti
          look('EMPTY PLINTH', 21, 15, 'A PLINTH WITH NOTHING ON IT BUT TWO WORN FOOTPRINTS IN THE STONE.\n\nWHATEVER STOOD HERE STOOD HERE A VERY LONG TIME, AND THEN LEFT.'),
          look('STATUE', 22, 18, 'A SENTINEL STILL ON ITS PLINTH, HEAD BOWED.\n\nIT HASN\'T MOVED. YOU ARE ALMOST SURE IT HASN\'T MOVED.'),
          look('GRAVEYARD', 14, 23, 'THE GRAVEYARD OF THE DROWNED. NO BODIES UNDER THESE STONES - ONLY NAMES, FOR THOSE THE SEA KEPT.\n\nONE STONE IS NEW AND STILL BLANK, AS IF IT IS WAITING FOR A NAME.'),
+         {'x': 5, 'y': 21, 'type': 'enter_world', 'target': 'lumar-undercroft', 'spawn': [7, 4], 'label': 'THE UNDERCROFT', 'prompt': 'PRESS E TO GO DOWN'},
          look('TOMB', 9, 19, 'A SMALL STONE TOMB, ITS DOOR AJAR, VIOLET LIGHT INSIDE.\n\nCARVED ABOVE THE DOOR: "THEY LISTENED TOO."'),
          look('MOON POOL', 36, 27, 'A ROUND POOL RINGED WITH STANDING STONES. THE WATER IS PERFECTLY STILL.\n\nTHE MOON IN IT IS NOT THE MOON IN THE SKY. IT IS FULL, AND GREEN.'),
          look('ABBEY RUINS', 41, 19, 'THREE ARCHES OF AN ABBEY WHOSE WALLS ARE GONE, AND ONE OF THOSE ARCHES HALF FALLEN.\n\nTHE MONKS HERE KEPT A RECORD OF EVERY SHIP THAT PASSED. THE BOOK IS GONE TOO.'),

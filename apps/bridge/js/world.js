@@ -872,7 +872,8 @@ var BridgeWorld = (function () {
     var post = world.scene && SCENE_HOOKS[world.tileset] && SCENE_HOOKS[world.tileset].post;
     if (post) post(bctx, buf, nw, nh, offX, offY, ts, now);
     // the finished frame through the graphics card (js/gpu.js: the glow), or as it is when there's no card to help
-    var out = (typeof BridgeGPU !== 'undefined' && BridgeGPU.present(buf, nw, nh, { glow: glowNow })) || buf;
+    var gsc = world.scene && typeof BridgeScene !== 'undefined' ? BridgeScene.get(world.scene.id) : null;
+    var out = (typeof BridgeGPU !== 'undefined' && BridgeGPU.present(buf, nw, nh, { glow: glowNow, guess: glowGuess, scene: gsc, offX: offX, offY: offY })) || buf;
 
     // ---- Blit: integer upscale onto the device-pixel canvas ----
     var blitX = Math.round(dw / 2 - (nw * zoom) / 2 + (offXf - offX) * zoom);
@@ -891,13 +892,18 @@ var BridgeWorld = (function () {
     drawScreenLayer(ctx, w, h, soffX, soffY, sts, now);
   }
 
-  // How much a place glows (js/gpu.js): its JSON's "glow" if it says, else outdoors and all of Arcadia do. Indoors
-  // waits for its own say: a brightly lit room's pale things (piano keys in the tavern's firelight) read as lights.
-  var glowNow = 0;
+  // How much a place glows (js/gpu.js): its JSON's "glow" if it says, else outdoors and all of Arcadia, and anywhere
+  // whose scene was rendered with its glow image (what gives off light, exactly). Indoors without one waits for its
+  // own say: a brightly lit room's pale things (piano keys in the tavern's firelight) pass for lights by eye — and
+  // with one, the eye isn't asked (glowGuess 0).
+  var glowNow = 0, glowGuess = 1;
   function glowOf(w) {
-    if (w.glow != null) return w.glow;
     var C = typeof BridgeClock !== 'undefined' ? BridgeClock : null;
-    return C && (C.outdoor(currentWorldId) || C.planet(currentWorldId) === 'arcadia') ? 1 : 0;
+    var sc = w.scene && typeof BridgeScene !== 'undefined' ? BridgeScene.get(w.scene.id) : null, img = !!(sc && sc.meta && sc.meta.glow);
+    var open = C && (C.outdoor(currentWorldId) || C.planet(currentWorldId) === 'arcadia');
+    glowGuess = open || !img ? 1 : 0;
+    if (w.glow != null) return w.glow;
+    return open || img ? 1 : 0;
   }
 
   // Everything that lives in the world: tiles, glow, entities, character,

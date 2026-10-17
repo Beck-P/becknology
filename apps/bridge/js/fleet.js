@@ -423,6 +423,7 @@ var BridgeFleet = (function () {
   function where(s) {
     if (s.type === 'sloop') return 'at whichever pier you are';
     if (s.away && s.away.passage) return 'sailing for ' + isleName(s.away.to) + ', in about ' + Math.max(1, Math.ceil((s.away.back - Date.now()) / 60000)) + ' min';
+    if (s.away && s.away.order && typeof BridgeOrders !== 'undefined') return BridgeOrders.line(s) || 'on standing orders';
     if (s.away) return 'away on a voyage';
     var I = typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles;
     return 'at ' + (I && I[s.at] ? I[s.at].name : s.at || 'sea');
