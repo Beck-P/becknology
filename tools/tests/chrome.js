@@ -10,7 +10,11 @@ module.exports = process.env.CHROME || (fs.existsSync(BUILT_IN) ? BUILT_IN : und
 // anything else is fetched from that port. (Rewriting the request's own URL to the port gets the page's scripts
 // blocked as cross-origin, ERR_BLOCKED_BY_CLIENT.)
 const PORT = process.env.BRIDGE_PORT;
-if (PORT && PORT !== '8766') {
+// SUPA_PORT: the Supabase stand-in on another port than :8767 (the second checkout's own fakesupa.py, so two checkouts'
+// multiplayer tests don't reset each other's): every page the tests open is told it (fakesupa.js reads __SUPA_PORT).
+const SUPA = process.env.SUPA_PORT;
+const BRIDGE = PORT && PORT !== '8766', OWN_SUPA = SUPA && SUPA !== '8767';
+if (BRIDGE || OWN_SUPA) {
   const pw = require('playwright');
   const path = require('path');
   const ROOT = path.join(__dirname, '..', '..');
@@ -35,8 +39,22 @@ if (PORT && PORT !== '8766') {
     if (!b || b.__rerouted) return b;
     b.__rerouted = true;
     const nc = b.newContext.bind(b), np = b.newPage.bind(b);
-    b.newContext = async (...c) => { const x = await nc(...c); await x.route(/^http:\/\/127\.0\.0\.1:8766\//, swap); return x; };
-    b.newPage = async (...c) => { const x = await np(...c); await x.route(/^http:\/\/127\.0\.0\.1:8766\//, swap); return x; };
+    // a page sent to :8766 goes to the port itself, so the game is served there natively (its own origin: the Supabase
+    // stand-in's stream, which never came up through the route below); the route still answers any :8766 request
+    const goes = (pg) => {
+      const g = pg.goto.bind(pg);
+      if (BRIDGE) pg.goto = (u, ...r) => g(String(u).replace('127.0.0.1:8766', '127.0.0.1:' + PORT), ...r);
+      return pg;
+    };
+    const fit = async (x) => {
+      if (OWN_SUPA) await x.addInitScript('window.__SUPA_PORT = ' + (+SUPA) + ';');
+      if (BRIDGE) await x.route(/^http:\/\/127\.0\.0\.1:8766\//, swap);
+      if (typeof x.newPage === 'function' && !x.__goes) { const xp = x.newPage.bind(x); x.newPage = async (...a) => goes(await xp(...a)); x.__goes = true; }
+      if (typeof x.goto === 'function') goes(x);
+      return x;
+    };
+    b.newContext = async (...c) => fit(await nc(...c));
+    b.newPage = async (...c) => fit(await np(...c));
     return b;
   };
   const launch = pw.chromium.launch.bind(pw.chromium);

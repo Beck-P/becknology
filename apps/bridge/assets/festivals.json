@@ -1,11 +1,11 @@
 {
-  "_doc": "One festival a season on a planet (js/festivals.js), on the weekend (Saturday and Sunday, Eastern time) of that season's last week. hours: [from, to] anchors (js/hours.js) of each planet-day the fair is open. crowd: who gathers where while it's open (js/routines.js) [x, y, facing, pose?]. props: what's put up [kind, x, y] (solid while the festival's on). contest: show (hand the judge produce) or derby (the biggest fish caught on the planet while it's on).",
+  "_doc": "One festival a season on a planet (js/festivals.js), on the weekend (Saturday and Sunday, Eastern time) of that season's last week. hours: [from, to] anchors (js/hours.js) of each planet-day the fair is open. crowd: who gathers where while it's open (js/routines.js) [x, y, facing, pose?]. props: what's put up [kind, x, y] (solid while the festival's on). contest: show (hand the judge produce) or derby (the biggest fish caught on the planet while it's on). music: the tune while it's open (js/audio.js THEMES).",
 
   "harvest_fair": {
     "name": "The Harvest Fair",
     "planet": "verdance", "season": "autumn", "world": "verdance-village", "place": "Brambleford square",
     "line": "Bunting and pies, and Old Ludd judging the produce",
-    "hours": ["morning", "evening"],
+    "hours": ["morning", "evening"], "music": "fair",
     "props": [["show_table", 12, 16], ["show_table", 13, 16], ["stall", 19, 13], ["stall", 20, 13], ["hay", 9, 16], ["pumpkins", 10, 16], ["hay", 16, 16], ["pumpkins", 21, 14], ["hay", 8, 18]],
     "contest": {
       "kind": "show", "at": [12, 16], "label": "JUDGING TABLE", "judge": "Old Ludd",
@@ -23,7 +23,7 @@
     "name": "Lantern Tide",
     "planet": "lumar", "season": "autumn", "world": "lumar-crown", "place": "Crownhaven quay",
     "line": "Lanterns on the water for everyone the sea has kept",
-    "hours": ["sunset", "small"],
+    "hours": ["sunset", "small"], "music": "tide",
     "props": [["derby_board", 11, 32], ["stall", 44, 31], ["stall", 45, 31]],
     "lanterns": { "x": [6, 50], "y": [34.6, 45], "skip": [[12, 17], [21, 24]], "n": 72 },
     "contest": {

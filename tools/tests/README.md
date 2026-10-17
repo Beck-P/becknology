@@ -16,10 +16,13 @@ rewrites, `/runouts` from `apps/runouts/dist`) and `fakesupa.py` (:8767). It fet
 Working in a second checkout (a git worktree) alongside another: `BRIDGE_PORT=8771 node tools/tests/run.js world` serves
 *that* checkout on :8771 and answers every test page's `127.0.0.1:8766` requests from it (`chrome.js`: files straight
 from that checkout's disk, through `vercel.json`'s rewrites as `serve.py` does; anything else fetched from :8771), so the
-two don't test each other's files. `run.js` loads `chrome.js` ahead of each test (`node -r`; it also catches a browser
+two don't test each other's files; a page the tests send to :8766 is sent to that port itself (`chrome.js`), so it's
+served there natively. `SUPA_PORT=8777` does the same for the Supabase stand-in (`run.js` starts `fakesupa.py` there and
+every page is told it), so two checkouts can run the `multi` and `together` suites at once without resetting each
+other's. `run.js` loads `chrome.js` ahead of each test (`node -r`; it also catches a browser
 launched before it ran). One test alone: `python3 tools/tests/serve.py 8771 &` then
-`BRIDGE_PORT=8771 NODE_PATH=$(npm root -g) node -r ./tools/tests/chrome.js tools/tests/<suite>/<file>.js`. (The `multi`
-suites share the Supabase stand-in on :8767: run one at a time.)
+`BRIDGE_PORT=8771 NODE_PATH=$(npm root -g) node -r ./tools/tests/chrome.js tools/tests/<suite>/<file>.js`. (Within one checkout the `multi` suites share its Supabase stand-in: run one at a time; a second checkout
+uses its own `SUPA_PORT`.)
 
 ## What you need
 

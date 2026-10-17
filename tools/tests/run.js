@@ -31,6 +31,7 @@ const SUITES = {
     ['world/gpu.js', SHOTS],
     ['world/routines.js', SHOTS],
     ['world/festivals.js', SHOTS],
+    ['world/music.js'],
     ['world/landings.js', SHOTS + '/landings'],
     ['world/arrive.js', SHOTS + '/arrive'],
     ['world/title.js', SHOTS + '/title'],
@@ -96,7 +97,8 @@ if (names.includes('together') && !fs.existsSync(path.join(D, 'npm/chess/package
 
 const PORT = +(process.env.BRIDGE_PORT || 8766);                 // another checkout's server (see chrome.js)
 ensure(PORT, 'serve.py', 'http://127.0.0.1:' + PORT + '/bridge/');
-ensure(8767, 'fakesupa.py', 'http://127.0.0.1:8767/');
+const SUPA = +(process.env.SUPA_PORT || 8767);                    // a second checkout's Supabase stand-in (see chrome.js)
+ensure(SUPA, 'fakesupa.py', 'http://127.0.0.1:' + SUPA + '/');
 [SHOTS, ...Object.keys(SUITES).map((s) => path.join(D, s, 'shots')), ...[].concat(...Object.values(SUITES)).flat().filter((a) => a.startsWith(SHOTS + '/'))]
   .forEach((d) => fs.mkdirSync(d, { recursive: true }));
 let npmRoot = ''; try { npmRoot = execSync('npm root -g', { encoding: 'utf8' }).trim(); } catch (e) { /* playwright local */ }
