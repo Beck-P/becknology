@@ -28,7 +28,7 @@
  * your guns reload a quarter quicker and you're two fighters stronger if they board. A ship sunk pays you both.
  */
 var BridgeSeaFight = (function () {
-  var api = null, foes = [], shots = [], puffs = [], gunT = [], asked = false, msgs = 0, nextId = 0;
+  var api = null, foes = [], shots = [], puffs = [], gunT = [], salvo = [], asked = false, msgs = 0, nextId = 0;
   var SWIVEL = { dmg: 5, range: 7, reload: 1.6, arc: 'any' };              // the crew's gun
   var CHANCE = { emerald: 0.1, sapphire: 0.22, rose: 0.2, crimson: 0.45, midnight: 0.72 };
   var BLACK = ['#3e383c', '#2c2629', '#1c1619'], GHOST = ['#b8d8c8', '#90b0a0', '#68887a'];
@@ -42,7 +42,7 @@ var BridgeSeaFight = (function () {
     cutter:  { name: 'a pirate cutter', spec: { L: 3.4, beam: 1.25, sheet: 'cutter', vmax: 4.5, nogo: 0.72, turn: 0.95 }, hull: 55,
                guns: ['swivel', 'swivel', 'chaser'], fighters: 3, loot: [70, 170], cargo: ['ember_rum', 'salt_fish'], cloth: BLACK, tint: 'rgba(24,14,16,0.62)' },
     raider:  { name: 'a pirate raider', spec: { L: 4.4, beam: 1.3, sheet: 'raider', vmax: 5.0, nogo: 0.74, turn: 0.85 }, hull: 105,
-               guns: ['long_nine', 'long_nine', 'carronade', 'chaser'], fighters: 5, loot: [160, 340], cargo: ['blackpowder', 'ember_rum'], cloth: BLACK, tint: 'rgba(40,8,10,0.25)' },
+               guns: ['long_nine', 'long_nine', 'carronade', 'chaser'], fits: ['storm_rig'], fighters: 5, loot: [160, 340], cargo: ['blackpowder', 'ember_rum'], cloth: BLACK, tint: 'rgba(40,8,10,0.25)' },
     drowned: { name: 'a drowned ship', spec: { L: 5.0, beam: 1.6, sheet: 'brigantine', vmax: 3.9, nogo: 0.9, turn: 0.6 }, hull: 120,
                guns: ['ghostfire', 'ghostfire', 'ghostfire'], fighters: 6, loot: [120, 280], cargo: ['moon_salt'], cloth: GHOST, ghost: true, tint: 'rgba(150,220,190,0.55)' },
     // the monsters (drawn in code, no sails): spec.L is how big a target they are
@@ -68,7 +68,7 @@ var BridgeSeaFight = (function () {
   }
 
   /** A fresh passage. */
-  function reset(a) { api = a; foes = []; shots = []; puffs = []; gunT = []; asked = false; out = []; mir = null; eelShook = false; harpoonUntil = 0; midT = 0; outT = 0; }
+  function reset(a) { api = a; foes = []; shots = []; puffs = []; gunT = []; salvo = []; asked = false; out = []; mir = null; eelShook = false; harpoonUntil = 0; midT = 0; outT = 0; }
   /** You've set a course: will anything come for you on the way? */
   function plan() {
     if (!api || foes.length) return;
@@ -102,8 +102,12 @@ var BridgeSeaFight = (function () {
   function spawn(kind, x, r, h) {
     var K = KINDS[kind];
     foes.push({ id: ++nextId, kind: kind, K: K, x: x, r: r, h: h, v: 0, hp: K.hull, max: K.hull, state: 'lurk', guns: K.guns.map(function (g) { return { g: FOE_GUNS[g], t: 1 + Math.random() * 2 }; }),
-                b: { x: x, r: r, h: h, v: 0, sheet: 1.2, boom: 0.5, side: 1, heel: 0, rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6, luff: false, empty: true,
-                     crew: !K.ghost, seed: Math.random() * 10, spec: K.spec, cloth: K.cloth, tint: K.tint } });
+                b: foeBoat(K, x, r, h) });
+  }
+  // a ship's hull as js/sloop.js draws her, with her guns at her rails (js/shipkit.js)
+  function foeBoat(K, x, r, h) {
+    return { x: x, r: r, h: h, v: 0, sheet: 1.2, boom: 0.5, side: 1, heel: 0, rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6, luff: false, empty: true,
+             crew: !K.ghost, seed: Math.random() * 10, spec: K.spec, cloth: K.cloth, tint: K.tint, kit: { guns: K.guns.slice(), fits: (K.fits || []).slice() } };
   }
   var MID_WAIT = 35, MID_DEEP = 26, midT = 0, outT = 0;          // seconds in the Midnight Sea first; tiles from any other sea
   function deepIn(b, R) {                                          // the Midnight Sea all round you, R tiles out
@@ -214,22 +218,34 @@ var BridgeSeaFight = (function () {
       o.b.x = o.x; o.b.r = o.r; o.b.h = o.h; o.b.v = o.v; o.b.side = wrap(wind.now - o.h) > 0 ? -1 : 1;
       o.b.boom = clamp(Math.abs(wrap(o.h - wind.now)) - 0.42, 0.1, 1.45); o.b.hoist = o.state === 'sink' ? Math.max(0, 1 - (o.sinkT || 0) / 2) : 1;
       // their guns
-      if (hostile(o) && o.state !== 'sink') o.guns.forEach(function (gn) {
+      if (hostile(o) && o.state !== 'sink') o.guns.forEach(function (gn, gi) {
         gn.t -= dt;
         if (gn.t > 0) return;
-        if (bears(o, b, gn.g)) { fire(o, b, gn.g, 'them'); gn.t = gn.g.reload * (0.85 + Math.random() * 0.3); }
+        if (bears(o, b, gn.g)) { fire(o, b, gn.g, 'them', gi); gn.t = gn.g.reload * (0.85 + Math.random() * 0.3); }
       });
     });
     foes = foes.filter(function (o) { return o.state !== 'gone'; });
     // your guns: whatever bears on something that means you harm
     var guns = sp.guns || [], targets = foes.filter(function (o) { return !o.under && o.state !== 'sink' && (hostile(o) || o.state === 'leave' && o.hp < o.max); });
+    var volley = [];
     guns.forEach(function (g, i) {
       gunT[i] = (gunT[i] || 0) - dt;
       if (gunT[i] > 0 || !targets.length) return;
       var t = targets.filter(function (o) { return bears(b, o, g); }).sort(function (p, q) { return dist(p, b) - dist(q, b); })[0];
       if (!t) return;
-      fire(b, t, g, 'you');
+      volley.push({ i: i, g: g, t: t });
       gunT[i] = g.reload * (g.manned ? 0.5 * (1 - 0.08 * Math.max(0, (g.skill || 1) - 1)) : 1) * (crew() ? 0.75 : 1);     // a mate aboard helps run them out
+    });
+    // a broadside: the guns that bear go off one after another down her side, stern to bow, not all in one instant
+    if (volley.length) {
+      var SK = typeof BridgeShipKit !== 'undefined' ? BridgeShipKit : null, at = function (v) { var m = SK && SK.mountOf(b, v.i); return m ? m.u : 0; };
+      volley.sort(function (p, q) { return at(p) - at(q); }).forEach(function (v, k) { salvo.push({ wait: k * 0.085 + (k ? Math.random() * 0.03 : 0), i: v.i, g: v.g, t: v.t }); });
+    }
+    salvo = salvo.filter(function (q) {
+      q.wait -= dt;
+      if (q.wait > 0) return true;
+      if (q.t.state !== 'sink' && q.t.state !== 'gone' && !q.t.under) fire(b, q.t, q.g, 'you', q.i);
+      return false;
     });
     // shots in flight
     shots.forEach(function (s) {
@@ -239,12 +255,20 @@ var BridgeSeaFight = (function () {
       var tgt = s.at, hit = tgt && !tgt.under && Math.hypot(tgt.x - s.tx, tgt.r - s.tr) < (tgt === b ? (sp.L || 2.6) : tgt.K.spec.L) * 0.5 + 0.45;
       if (hit && tgt === b) hurtYou(s.dmg, s.ghost);
       else if (hit) hurtThem(tgt, s.dmg * (tgt.K.ghost ? (s.holy ? 2 : 0.6) : tgt.K.monster && s.holy ? 1.5 : 1));
-      puffs.push({ x: s.tx, r: s.tr, z: 0, age: 0, kind: hit ? (s.ghost ? 'ghosthit' : tgt.K && tgt.K.monster ? 'gore' : 'hit') : 'splash' });
-      if (!hit) api.sfx('splash');
+      land(s, hit, hit && tgt !== b && tgt.K && tgt.K.monster);
     });
     shots = shots.filter(function (s) { return !s.done; });
-    puffs = puffs.filter(function (p) { p.age += dt; return p.age < 1.2; });
+    puffs = puffs.filter(function (p) { p.age += dt; drift(p, dt); return p.age < (p.life || 1.2); });
     broadcast(now);
+  }
+  // where a shot comes down: a splash where it misses, splinters and sparks where it strikes a hull (green fire on the
+  // drowned's, gore on a monster's hide)
+  function land(s, hit, monster) {
+    if (!hit) { burst('splash', s.tx, s.tr, s.dmg >= 20 ? 1.25 : s.dmg <= 6 ? 0.7 : 1); api.sfx('splash'); return; }
+    if (monster) { puffs.push({ x: s.tx, r: s.tr, z: 0, age: 0, kind: 'gore' }); return; }
+    burst(s.ghost ? 'ghosthit' : s.holy ? 'moonhit' : 'hit', s.tx, s.tr, s.dmg >= 20 ? 1.3 : 1);
+    if (!s.ghost && !s.holy) smoke(s.tx, s.tr, 0.5, 0, 0, false, 8, true);
+    api.sfx('hit');
   }
   function bears(from, to, g) {
     var d = dist(from, to);
@@ -252,18 +276,64 @@ var BridgeSeaFight = (function () {
     var rel = wrap(Math.atan2(to.r - from.r, to.x - from.x) - from.h);
     return g.arc === 'any' ? true : g.arc === 'bow' ? Math.abs(rel) < 0.35 : Math.abs(Math.sin(rel)) > 0.72;
   }
-  function fire(from, to, g, who) {
+  // a gun goes off: the shot leaves her gun's mouth (js/shipkit.js `muzzle`, gun `gi` of hers; the crew's swivel and the
+  // hand harpoon from her rail), she jumps back, and smoke rolls out of it
+  function fire(from, to, g, who, gi) {
     var d = dist(from, to), acc = clamp(0.88 - d / g.range * 0.38 - Math.abs(to.v || 0) * 0.03, 0.25, 0.9);
     var miss = Math.random() > acc, ang = Math.random() * Math.PI * 2, spread = miss ? 1.2 + Math.random() * 1.6 : Math.random() * 0.3;
     var lead = (to.v || 0) * d / 14;
     var tx = to.x + Math.cos(to.h) * lead + Math.cos(ang) * spread, tr = to.r + Math.sin(to.h) * lead + Math.sin(ang) * spread;
-    var rel = wrap(Math.atan2(to.r - from.r, to.x - from.x) - from.h), side = g.arc === 'bow' ? 0 : rel > 0 ? 1 : -1, L = from === api.boat() ? (api.spec().L || 2.6) : from.K.spec.L;
-    var mu = (Math.random() - 0.5) * L * 0.5, c = Math.cos(from.h), s = Math.sin(from.h), bw = g.arc === 'bow' ? 0 : 0.6;
-    var ox = from.x + (g.arc === 'bow' ? c * L / 2 : c * mu - s * side * bw), or = from.r + (g.arc === 'bow' ? s * L / 2 : s * mu + c * side * bw);
-    shots.push({ x: ox, r: or, tx: tx, tr: tr, t: 0, T: Math.max(0.25, d / 14), dmg: g.dmg, at: to, holy: !!g.holy, ghost: !!g.ghost, who: who, harpoon: !!g.harpoon });
-    if (crew()) out.push([r2(ox), r2(or), r2(tx), r2(tr), r2(Math.max(0.25, d / 14)), g.ghost ? 1 : 0, g.holy ? 1 : 0, g.harpoon ? 1 : 0]);   // for the crew to see
-    if (!g.harpoon) puffs.push({ x: ox, r: or, z: 0.4, age: 0, kind: g.ghost ? 'ghostflash' : 'smoke' });
-    api.sfx(g.harpoon ? 'harpoon' : g.ghost ? 'zap' : 'cannon');
+    var you = from === api.boat(), rel = wrap(Math.atan2(to.r - from.r, to.x - from.x) - from.h), side = g.arc === 'bow' ? 0 : rel > 0 ? 1 : -1, L = you ? (api.spec().L || 2.6) : from.K.spec.L;
+    var hull = you ? from : from.b, SK = typeof BridgeShipKit !== 'undefined' ? BridgeShipKit : null;
+    var M = SK && gi != null && hull ? SK.muzzle(hull, gi, side || 1) : null, ox, or, oz, dx, dr;
+    if (M) { ox = M.x; or = M.r; oz = M.z; dx = M.dx; dr = M.dr; SK.fired(hull, gi, side); }
+    else {
+      var mu = (Math.random() - 0.5) * L * 0.5, c = Math.cos(from.h), s = Math.sin(from.h), bw = g.arc === 'bow' ? 0 : 0.6;
+      ox = from.x + (g.arc === 'bow' ? c * L / 2 : c * mu - s * side * bw); or = from.r + (g.arc === 'bow' ? s * L / 2 : s * mu + c * side * bw);
+      oz = 0.55; dx = g.arc === 'bow' ? c : -s * side; dr = g.arc === 'bow' ? s : c * side;
+    }
+    var T = Math.max(0.25, d / 14);
+    shots.push({ x: ox, r: or, z0: oz, tx: tx, tr: tr, t: 0, T: T, dmg: g.dmg, at: to, holy: !!g.holy, ghost: !!g.ghost, who: who, harpoon: !!g.harpoon });
+    if (crew()) out.push([r2(ox), r2(or), r2(tx), r2(tr), r2(T), g.ghost ? 1 : 0, g.holy ? 1 : 0, g.harpoon ? 1 : 0, M ? gi : -1, side, you ? 0 : from.id, r2(oz)]);   // for the crew to see
+    if (!g.harpoon && !g.holy) smoke(ox, or, oz, dx, dr, g.ghost, g.dmg);
+    api.sfx(g.harpoon ? 'harpoon' : g.ghost ? 'zap' : g.holy ? 'harpoon' : 'cannon');
+  }
+  // gun smoke: a few puffs thrown out of the gun's mouth that slow, swell, rise a little and drift away downwind, thinning
+  // as they go (`soot`: dark smoke off a hit)
+  function smoke(x, r, z, dx, dr, ghost, dmg, soot) {
+    var big = dmg >= 20 ? 1.3 : dmg <= 6 ? 0.65 : 1, n = soot ? 1 : dmg >= 10 ? 3 : 2;
+    for (var i = 0; i < n; i++) {
+      var sp = (soot ? 0.3 : 2.8 - i * 0.9) * (0.85 + Math.random() * 0.3), wob = (Math.random() - 0.5) * 0.6;
+      puffs.push({ kind: soot ? 'soot' : ghost ? 'ghostsmoke' : 'smoke', x: x + dx * 0.1 * i, r: r + dr * 0.1 * i, z: z, age: -i * 0.05, seed: Math.random() * 100,
+                   vx: dx * sp - dr * wob, vr: dr * sp + dx * wob, vz: soot ? 0.5 : 0.2, life: (soot ? 1.4 : 2.3) + Math.random() * 0.7, big: big * (1 - i * 0.2) });
+    }
+  }
+  // a burst of bits flying from where a shot comes down: water (a splash), wood and sparks (a hit), green fire, moonglass
+  var BITS = { splash: 12, hit: 14, ghosthit: 10, moonhit: 10 };
+  function burst(kind, x, r, big) {
+    var parts = [], n = Math.round(BITS[kind] * Math.min(1.8, big || 1));
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * Math.PI * 2, sp = (kind === 'splash' ? 0.5 + Math.random() * 1.3 : 0.8 + Math.random() * 2.4) * Math.sqrt(big || 1);
+      var spark = kind !== 'splash' && i % 3 === 0;                     // every third of a hit's bits is a spark, quick and bright
+      parts.push({ x: x, r: r, z: kind === 'splash' ? 0.05 : 0.45, vx: Math.cos(a) * sp * (spark ? 1.6 : 1), vr: Math.sin(a) * sp * 0.7 * (spark ? 1.6 : 1),
+                   vz: (kind === 'splash' ? 2.6 + Math.random() * 2.2 : 1.4 + Math.random() * 2.6) * Math.sqrt(big || 1), spark: spark, k: Math.floor(Math.random() * 3) });
+    }
+    puffs.push({ kind: kind, x: x, r: r, z: 0, age: 0, life: kind === 'splash' ? 1.5 : 1.3, big: big || 1, parts: parts });
+  }
+  // each frame: smoke slows and drifts downwind (rising, as it cools), the bits of a burst fly and fall
+  function drift(p, dt) {
+    if (p.age < 0) return;
+    if (p.vx != null) {
+      var w = api && api.wind ? api.wind() : null, dw = w ? w.now + Math.PI : 0, ws = w ? 0.25 + 0.5 * Math.min(1.4, w.s || 0.6) : 0.4, k = Math.min(1, dt * 2.6);
+      p.vx -= p.vx * k; p.vr -= p.vr * k;
+      p.x += (p.vx + Math.cos(dw) * ws) * dt; p.r += (p.vr + Math.sin(dw) * ws) * dt; p.z += p.vz * dt;
+    }
+    if (p.parts) p.parts.forEach(function (q) {
+      if (q.gone) return;
+      q.px = q.x; q.pr = q.r; q.pz = q.z;
+      q.x += q.vx * dt; q.r += q.vr * dt; q.z += q.vz * dt; q.vz -= 9 * dt;
+      if (q.z < 0) q.gone = true;                                       // back into the sea
+    });
   }
   var BITES = { serpent: 'Its jaws close on the rail and wrench - planks splinter', eel: 'The eels are gnawing at the hull', kraken: 'An arm as thick as a mast slams across the deck' };
   function hurtYou(dmg, ghost) {
@@ -332,7 +402,7 @@ var BridgeSeaFight = (function () {
       if (k >= 1) {
         if (Math.hypot(b.x - o.aim[0], b.r - o.aim[1]) < (api.spec().L || 2.6) * 0.45 + 0.8) hurtYou(10 + Math.random() * 4, 'serpent');
         else say('Its jaws snap shut on empty water', 1600);
-        puffs.push({ x: o.aim[0], r: o.aim[1], z: 0, age: 0, kind: 'bigsplash' }); api.sfx('slam');
+        burst('splash', o.aim[0], o.aim[1], 2.2); api.sfx('slam');
         go(o, 'dive');
       }
     } else if (S === 'dive') {
@@ -377,7 +447,7 @@ var BridgeSeaFight = (function () {
         go(o, 'grip'); o.hold = true; o.gripHurt = 0; o.slamT = 1.8; o.slamI = -1; o.ang = Math.random() * Math.PI * 2;
         o.x = b.x + Math.cos(o.ang) * 4.6; o.r = b.r + Math.sin(o.ang) * 4.6;
         say('The Deep Maw! Its arms come up round the hull - harpoon the eye (F) to break its grip!', 4600);
-        api.sfx('thunder'); api.shake(); puffs.push({ x: o.x, r: o.r, z: 0, age: 0, kind: 'bigsplash' });
+        api.sfx('thunder'); api.shake(); burst('splash', o.x, o.r, 2.2);
       }
     } else if (S === 'grip') {
       o.under = false;
@@ -393,7 +463,7 @@ var BridgeSeaFight = (function () {
         if (o.slamAt > 1.0 && !o.slammed) {
           o.slammed = true;
           if (Math.hypot(b.x - o.aim[0], b.r - o.aim[1]) < 1.7) hurtYou(6 + Math.random() * 3, 'kraken');
-          puffs.push({ x: o.aim[0], r: o.aim[1], z: 0, age: 0, kind: 'bigsplash' }); api.sfx('slam');
+          burst('splash', o.aim[0], o.aim[1], 2.2); api.sfx('slam');
         }
         if (o.slamAt > 1.6) { o.slamI = -1; o.aimed = false; o.slamT = 2.6 + Math.random() * 1.6; }
       }
@@ -405,7 +475,7 @@ var BridgeSeaFight = (function () {
   function slay(o) {
     o.state = 'sink'; o.sinkT = 0; o.under = false; o.hold = false;
     var K = o.K, coins = Math.round(K.loot[0] + Math.random() * (K.loot[1] - K.loot[0])), got = trophies(K);
-    puffs.push({ x: o.x, r: o.r, z: 0, age: 0, kind: 'bigsplash' });
+    burst('splash', o.x, o.r, 2.2);
     api.sfx(K.monster === 'eel' ? 'splash' : 'roar');
     if (typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) BridgeProgression.awardCoins(coins, 'sea:' + o.kind);
     var I = typeof BridgeItems !== 'undefined' ? BridgeItems : null, names = got.map(function (g) { var it = I && I.get ? I.get(g[0]) : null; return g[1] + ' × ' + (it ? it.name : g[0]); });
@@ -507,9 +577,7 @@ var BridgeSeaFight = (function () {
       if (!o) {
         var K = KINDS[e[1]];
         if (!K) return;
-        o = { id: e[0], kind: e[1], K: K, x: e[2], r: e[3], h: e[4], v: e[5], guns: [],
-              b: { x: e[2], r: e[3], h: e[4], v: 0, sheet: 1.2, boom: 0.5, side: 1, heel: 0, rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6, luff: false, empty: true,
-                   crew: !K.ghost, seed: Math.random() * 10, spec: K.spec, cloth: K.cloth, tint: K.tint } };
+        o = { id: e[0], kind: e[1], K: K, x: e[2], r: e[3], h: e[4], v: e[5], guns: [], b: foeBoat(K, e[2], e[3], e[4]) };
         foes.push(o);
       }
       o.tx = e[2]; o.tr = e[3]; o.th = e[4]; o.v = e[5]; o.hp = e[6]; o.max = e[7]; o.state = e[8]; o.sinkT = e[9];
@@ -521,10 +589,16 @@ var BridgeSeaFight = (function () {
       }
     });
     foes = foes.filter(function (o) { return keep[o.id]; });
+    var ripple = {};                                                // (a broadside sent in one go still ripples down her side)
     (d.s || []).forEach(function (q) {
-      shots.push({ x: q[0], r: q[1], tx: q[2], tr: q[3], t: 0, T: q[4], ghost: !!q[5], holy: !!q[6], harpoon: !!q[7], mirror: true });
-      if (!q[7]) puffs.push({ x: q[0], r: q[1], z: 0.4, age: 0, kind: q[5] ? 'ghostflash' : 'smoke' });
-      api.sfx(q[7] ? 'harpoon' : q[5] ? 'zap' : 'cannon');
+      var wait = q[8] >= 0 ? (ripple[q[10] || 0] = (ripple[q[10] || 0] == null ? -1 : ripple[q[10] || 0]) + 1) * 0.085 : 0;
+      shots.push({ x: q[0], r: q[1], z0: q[11] != null ? q[11] : 0.55, tx: q[2], tr: q[3], t: -wait, T: q[4], ghost: !!q[5], holy: !!q[6], harpoon: !!q[7], mirror: true });
+      // whose gun it was (gun q[8] of her: 0 your own ship, else that ship's id): it jumps back and flashes here too
+      var SK = typeof BridgeShipKit !== 'undefined' ? BridgeShipKit : null, who = q[10] ? foes.filter(function (o) { return o.id === q[10]; })[0] : null;
+      var hull = q[10] ? who && who.b : api.boat(), M = SK && hull && q[8] >= 0 ? SK.muzzle(hull, q[8], q[9] || 1) : null;
+      if (M) SK.fired(hull, q[8], q[9], wait * 1000);
+      if (!q[7] && !q[6]) { smoke(q[0], q[1], q[11] != null ? q[11] : 0.55, M ? M.dx : 0, M ? M.dr : 0, !!q[5], 10); if (wait) puffs.slice(-3).forEach(function (pf) { pf.age -= wait; }); }
+      setTimeout(function () { api && api.sfx(q[7] || q[6] ? 'harpoon' : q[5] ? 'zap' : 'cannon'); }, wait * 1000);
     });
     if (!loopOn) { loopOn = true; last = now; requestAnimationFrame(follow); }
   }
@@ -547,13 +621,12 @@ var BridgeSeaFight = (function () {
       q.t += dt;
       if (q.t < q.T || q.done) return;
       q.done = true;
-      var b = api.boat(), hit = foes.some(function (o) { return Math.hypot(o.x - q.tx, o.r - q.tr) < o.K.spec.L * 0.5 + 0.45; }) ||
+      var b = api.boat(), mon = null, hit = foes.some(function (o) { var h = Math.hypot(o.x - q.tx, o.r - q.tr) < o.K.spec.L * 0.5 + 0.45; if (h && o.K.monster) mon = o; return h; }) ||
                  (b && Math.hypot(b.x - q.tx, b.r - q.tr) < (api.spec().L || 2.6) * 0.5 + 0.45);
-      puffs.push({ x: q.tx, r: q.tr, z: 0, age: 0, kind: hit ? (q.ghost ? 'ghosthit' : 'hit') : 'splash' });
-      if (!hit) api.sfx('splash');
+      land(q, hit, !!mon);
     });
     shots = shots.filter(function (q) { return !q.done; });
-    puffs = puffs.filter(function (p) { p.age += dt; return p.age < 1.2; });
+    puffs = puffs.filter(function (p) { p.age += dt; drift(p, dt); return p.age < (p.life || 1.2); });
     requestAnimationFrame(follow);
   }
   // the crew's swivel: the nearest ship that means harm, in range
@@ -570,8 +643,8 @@ var BridgeSeaFight = (function () {
     if (!t) { api.say('Nothing in reach of the swivel', 1400); return true; }
     coolUntil = now + SWIVEL.reload * 1000;
     n.send('sf-fire', { id: t.id }, cap.id);
-    var b = api.boat();
-    puffs.push({ x: b.x, r: b.r, z: 0.5, age: 0, kind: 'smoke' });
+    var b = api.boat(), a = Math.atan2(t.r - b.r, t.x - b.x);
+    smoke(b.x + Math.cos(a) * 0.6, b.r + Math.sin(a) * 0.6, 0.6, Math.cos(a), Math.sin(a), false, 5);
     return true;
   }
   function sailing() { return typeof BridgeSloop !== 'undefined' && BridgeSloop.isRunning && BridgeSloop.isRunning(); }
@@ -656,38 +729,163 @@ var BridgeSeaFight = (function () {
       } });
     });
     shots.forEach(function (s) {
-      var f = s.t / s.T, x = s.x + (s.tx - s.x) * f, r = s.r + (s.tr - s.r) * f, z = Math.sin(f * Math.PI) * Math.min(1.4, s.T * 1.6) + 0.4;
-      out.push({ row: r, draw: function () {
-        var c = api.ctx(), X = api.sx(x), Y = api.sy(r, z);
-        if (s.harpoon) {                                            // the line paying out behind it, the iron at its head
-          var bt = api.boat(), dx = s.tx - s.x, dr = s.tr - s.r, n = Math.hypot(dx, dr) || 1;
-          c.strokeStyle = 'rgba(214,200,170,0.7)'; c.lineWidth = 1; c.beginPath();
-          c.moveTo(api.sx(bt ? bt.x : s.x) + 0.5, api.sy(bt ? bt.r : s.r, 0.6) + 0.5); c.lineTo(X + 0.5, Y + 0.5); c.stroke();
-          c.fillStyle = '#5a4630'; c.fillRect(X - Math.round(dx / n * 4), Y - Math.round(dr / n * 2), 2, 2);
-          c.fillStyle = '#d8dce4'; c.fillRect(X - 1, Y - 1, 3, 2);
-        }
-        else if (s.ghost || s.holy) { c.fillStyle = s.ghost ? '#90ffc0' : '#d8e8ff'; c.fillRect(X - 1, Y - 1, 3, 3); c.fillStyle = 'rgba(160,255,200,0.35)'; c.fillRect(X - 2, Y - 2, 5, 5); }
-        else { c.fillStyle = '#141418'; c.fillRect(X - 1, Y - 1, 2, 2); }
-        c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(api.sx(x), api.sy(r, 0), 2, 1);
-      } });
+      if (s.t < 0) return;                                            // (not away yet)
+      var f = s.t / s.T, p = shotAt(s, f);
+      out.push({ row: p[1], draw: function () { drawShot(api.ctx(), s, f, p); } });
     });
     puffs.forEach(function (p) {
-      out.push({ row: p.r + 0.01, draw: function () {
-        var c = api.ctx(), X = api.sx(p.x), Y = api.sy(p.r, p.z + p.age * 0.8), k = p.age / 1.2;
-        if (p.kind === 'smoke') { var rad = 2 + p.age * 9; c.fillStyle = 'rgba(200,196,188,' + (0.5 * (1 - k)).toFixed(2) + ')'; c.fillRect(X - rad, Y - rad * 0.7, rad * 2, rad * 1.4); if (p.age < 0.08) { c.fillStyle = '#ffd070'; c.fillRect(X - 2, Y - 2, 4, 4); } }
-        else if (p.kind === 'splash') { var h = Math.round(10 * Math.sin(Math.min(1, k * 2) * Math.PI)); c.fillStyle = 'rgba(230,240,255,0.8)'; c.fillRect(X - 1, api.sy(p.r) - h, 3, h); c.fillRect(X - 3, api.sy(p.r) - 1, 7, 2); }
-        else if (p.kind === 'hit' || p.kind === 'ghosthit') { var rr = 3 + p.age * 10; c.fillStyle = p.kind === 'hit' ? 'rgba(255,170,80,' + (0.8 * (1 - k)).toFixed(2) + ')' : 'rgba(140,255,190,' + (0.8 * (1 - k)).toFixed(2) + ')'; c.fillRect(X - rr / 2, Y - rr / 2, rr, rr); c.fillStyle = 'rgba(60,40,30,' + (0.7 * (1 - k)).toFixed(2) + ')'; c.fillRect(X - 1 + p.age * 8, Y - p.age * 10, 2, 2); c.fillRect(X - p.age * 9, Y - p.age * 7, 2, 2); }
-        else if (p.kind === 'ghostflash' && p.age < 0.25) { c.fillStyle = 'rgba(140,255,190,0.7)'; c.fillRect(X - 3, Y - 3, 6, 6); }
-        else if (p.kind === 'gore') { var gr = 2 + p.age * 8; c.fillStyle = 'rgba(150,220,255,' + (0.8 * (1 - k)).toFixed(2) + ')'; c.fillRect(X - gr / 2, Y - gr / 2, gr, gr); c.fillStyle = 'rgba(200,170,255,' + (0.7 * (1 - k)).toFixed(2) + ')'; c.fillRect(X + p.age * 7, Y - p.age * 9, 2, 2); c.fillRect(X - p.age * 8, Y - p.age * 6, 2, 2); }
-        else if (p.kind === 'bigsplash') {                                // a column of water and a ring of foam
-          var wy = api.sy(p.r), hh = Math.round(22 * Math.sin(Math.min(1, k * 1.6) * Math.PI)), rw = Math.round(6 + k * 22);
-          c.fillStyle = 'rgba(220,235,255,' + (0.85 * (1 - k)).toFixed(2) + ')';
-          c.fillRect(X - 3, wy - hh, 7, hh); c.fillRect(X - 6, wy - Math.round(hh * 0.6), 3, Math.round(hh * 0.6)); c.fillRect(X + 4, wy - Math.round(hh * 0.7), 3, Math.round(hh * 0.7));
-          c.fillStyle = 'rgba(230,240,255,' + (0.6 * (1 - k)).toFixed(2) + ')'; c.fillRect(X - rw, wy - 1, rw * 2, 2);
-        }
-      } });
+      if (p.age < 0) return;
+      out.push({ row: p.r + 0.01, draw: function () { drawPuff(api.ctx(), p, now); } });
     });
     return out;
+  }
+  // a shot along its arc: out of the gun's mouth, up and over, down onto its mark ([x, r, z])
+  function shotAt(s, f) {
+    var z0 = s.z0 != null ? s.z0 : 0.4, arc = Math.min(1.4, s.T * 1.6) * (s.harpoon ? 0.6 : 1);
+    return [s.x + (s.tx - s.x) * f, s.r + (s.tr - s.r) * f, z0 + (0.3 - z0) * f + Math.sin(f * Math.PI) * arc];
+  }
+  function drawShot(c, s, f, p) {
+    var X = api.sx(p[0]), Y = api.sy(p[1], p[2]);
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(api.sx(p[0]), api.sy(p[1], 0), 2, 1);        // its shadow on the water
+    if (s.harpoon) {                                                  // the line paying out behind it, the iron at its head
+      var bt = api.boat(), dx = s.tx - s.x, dr = s.tr - s.r, n = Math.hypot(dx, dr) || 1;
+      c.strokeStyle = 'rgba(214,200,170,0.7)'; c.lineWidth = 1; c.beginPath();
+      c.moveTo(api.sx(bt ? bt.x : s.x) + 0.5, api.sy(bt ? bt.r : s.r, 0.6) + 0.5); c.lineTo(X + 0.5, Y + 0.5); c.stroke();
+      c.fillStyle = '#5a4630'; c.fillRect(X - Math.round(dx / n * 4), Y - Math.round(dr / n * 2), 2, 2);
+      c.fillStyle = '#d8dce4'; c.fillRect(X - 1, Y - 1, 3, 2);
+      return;
+    }
+    // the trail: where it was a moment ago (smoke behind a ball, green fire behind ghostfire, pale light behind moonglass)
+    var TR = s.ghost ? ['#d8fff0', '#80f0b0', '#3a9a6a', '#1e5a40'] : s.holy ? ['#ffffff', '#c8ecff', '#80b8f0', '#4a6ab0'] : ['#c8cad4', '#9a9caa', '#6e7080', '#4a4c5a'];
+    for (var k = 4; k >= 1; k--) {
+      var fk = f - k * 0.035;
+      if (fk < 0) continue;
+      var q = shotAt(s, fk);
+      c.globalAlpha = (s.ghost || s.holy ? 0.9 : 0.6) * (1 - k / 5);
+      c.fillStyle = TR[k - 1]; c.fillRect(api.sx(q[0]), api.sy(q[1], q[2]), k < 3 ? 2 : 1, k < 3 ? 2 : 1);
+    }
+    c.globalAlpha = 1;
+    if (s.ghost || s.holy) {                                          // a ball of green fire / the moonglass bolt, glowing
+      var prev = shotAt(s, Math.max(0, f - 0.05)), ex = X - api.sx(prev[0]), ey = Y - api.sy(prev[1], prev[2]), en = Math.hypot(ex, ey) || 1;
+      c.save(); c.globalCompositeOperation = 'lighter';
+      disc(c, X, Y, 3, s.ghost ? 'rgba(110,255,170,0.2)' : 'rgba(140,200,255,0.2)'); disc(c, X, Y, 2, s.ghost ? 'rgba(110,255,170,0.25)' : 'rgba(140,200,255,0.25)');
+      c.restore();
+      if (s.holy) {
+        for (var i = 1; i <= 4; i++) { c.fillStyle = i < 2 ? '#ffffff' : '#d8c8a0'; c.fillRect(Math.round(X - ex / en * i), Math.round(Y - ey / en * i), 1, 1); }
+        c.fillStyle = '#e8fbff'; c.fillRect(X - 1, Y - 1, 2, 2);
+      } else { c.fillStyle = '#90ffc0'; c.fillRect(X - 1, Y - 1, 3, 3); c.fillStyle = '#f0fff6'; c.fillRect(X, Y, 1, 1); }
+      return;
+    }
+    c.fillStyle = '#0c0c10'; c.fillRect(X - 1, Y - 1, 3, 3);              // a round shot, catching the light on its shoulder
+    c.fillStyle = '#2a2c36'; c.fillRect(X - 1, Y - 1, 2, 2);
+    c.fillStyle = '#7a7e92'; c.fillRect(X - 1, Y - 1, 1, 1);
+  }
+  // smoke: a cluster of round billows in three tones (the shadow under it, its body, the light on its top), swelling,
+  // parting and thinning in steps as it ages; moonlit grey-blue at night, whiter by day
+  var SMOKE = { night: ['#4a5068', '#7c84a0', '#a8b0c8'], day: ['#8a8c96', '#c4c6ce', '#eeeef2'] }, GSMOKE = ['#1e4a3a', '#4a8a6e', '#90d8b4'], SOOT = ['#121014', '#262226', '#3e383c'];
+  var WOOD = ['#c89058', '#8a5a2a', '#5a3a1a'], skyAt = 0, skyDay = 0;
+  function dayK() {
+    var t = Date.now();
+    if (t - skyAt > 500) { skyAt = t; skyDay = typeof BridgeClock !== 'undefined' && BridgeClock.weights ? (BridgeClock.weights('lumar') || {}).day || 0 : 0; }
+    return skyDay;
+  }
+  function hash(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  // a billow: solid inside, its outermost pixel ring a checkerboard, so it reads soft without a blur
+  function soft(c, X, Y, R, col) {
+    R = Math.max(1, Math.round(R)); X = Math.round(X); Y = Math.round(Y);
+    if (R < 2) { disc(c, X, Y, R, col); return; }
+    c.fillStyle = col;
+    for (var y = -R; y <= R; y++) {
+      var w = Math.round(Math.sqrt(Math.max(0, R * R - y * y))), w2 = Math.round(Math.sqrt(Math.max(0, (R - 1) * (R - 1) - y * y)));
+      if (Math.abs(y) < R) c.fillRect(X - w2, Y + y, w2 * 2 + 1, 1);
+      for (var x = w2 + 1; x <= w; x++) {
+        if (((X + x + Y + y) & 1) === 0) c.fillRect(X + x, Y + y, 1, 1);
+        if (((X - x + Y + y) & 1) === 0) c.fillRect(X - x, Y + y, 1, 1);
+      }
+      if (Math.abs(y) === R) for (var x2 = -w; x2 <= w; x2++) if (((X + x2 + Y + y) & 1) === 0) c.fillRect(X + x2, Y + y, 1, 1);
+    }
+  }
+  // a puff of smoke at one size: three round billows (one of four arrangements), the shadow under them, their bodies, the
+  // light on their tops - drawn once and kept, so a broadside's smoke costs a drawImage a puff
+  var BILLOWS = {}, billowN = 0;
+  function billow(tone, R, v, lit) {
+    var key = tone + R + ':' + v + (lit ? 'l' : '');
+    if (BILLOWS[key]) return BILLOWS[key];
+    var S = tone === 'soot' ? SOOT : tone === 'ghostsmoke' ? GSMOKE : SMOKE[tone], n = R * 4 + 6, c = document.createElement('canvas');
+    c.width = c.height = n;
+    var g = c.getContext('2d'), X = n >> 1, Y = n >> 1, blobs = [];
+    for (var j = 0; j < 3; j++) {
+      var a = v * 1.7 + j * 2.2, d = R * 0.55 * (j ? 1 : 0.3);
+      blobs.push([X + Math.cos(a) * d, Y + Math.sin(a) * d * 0.7, Math.max(1, R * (j ? 0.62 + 0.2 * hash(v * 3 + j) : 0.8))]);
+    }
+    blobs.forEach(function (q) { soft(g, q[0] + 1, q[1] + 1, q[2], S[0]); });                                // the shadow under it
+    blobs.forEach(function (q) { soft(g, q[0], q[1], q[2], S[1]); });
+    blobs.forEach(function (q) { if (q[1] <= Y + 0.5 || q === blobs[0]) soft(g, q[0] - q[2] * 0.3, q[1] - q[2] * 0.35, Math.max(1, q[2] * 0.5), lit ? '#ffd890' : S[2]); });
+    if (++billowN > 400) { BILLOWS = {}; billowN = 1; }
+    return (BILLOWS[key] = c);
+  }
+  function drawPuff(c, p, now) {
+    var X = api.sx(p.x), Y = api.sy(p.r, p.z), k = p.age / (p.life || 1.2);
+    if (p.kind === 'smoke' || p.kind === 'ghostsmoke' || p.kind === 'soot') {
+      var tone = p.kind === 'smoke' ? (dayK() > 0.5 ? 'day' : 'night') : p.kind, R = Math.max(2, Math.round((2.5 + 8 * Math.sqrt(k)) * (p.big || 1)));
+      var spr = billow(tone, R, Math.floor(p.seed || 0) % 4, p.age < 0.12 && p.kind === 'smoke');
+      c.globalAlpha = k < 0.15 ? 0.8 : k < 0.38 ? 0.64 : k < 0.62 ? 0.46 : k < 0.84 ? 0.28 : 0.13;
+      c.drawImage(spr, X - (spr.width >> 1), Y - (spr.height >> 1));
+      c.globalAlpha = 1;
+      return;
+    }
+    if (p.kind === 'gore') {                                         // a monster hit: pale blood and bits of hide
+      var gr = Math.round(2 + p.age * 8), gk = 1 - k;
+      c.fillStyle = 'rgba(150,220,255,' + (0.8 * gk).toFixed(2) + ')'; c.fillRect(X - (gr >> 1), Y - (gr >> 1), gr, gr);
+      c.fillStyle = 'rgba(200,170,255,' + (0.7 * gk).toFixed(2) + ')'; c.fillRect(Math.round(X + p.age * 7), Math.round(Y - p.age * 9), 2, 2); c.fillRect(Math.round(X - p.age * 8), Math.round(Y - p.age * 6), 2, 2);
+      return;
+    }
+    if (!p.pal) p.pal = api.seaAt ? api.seaAt(p.x, p.r) : 'emerald';
+    var P = BridgeSea.palettes && BridgeSea.palettes[p.pal] || { foam: '214,250,236' }, wy = api.sy(p.r);
+    if (p.kind === 'splash') {                                       // a column of white water thrown up, a crown at its top
+      var big = p.big || 1, sq = Math.sqrt(big);
+      if (p.age < 0.6) {                                             // up it goes, then falls back into itself from the top
+        var top = Math.round(16 * big * Math.sin(Math.min(1, p.age / 0.3) * Math.PI / 2)), fall = Math.max(0, (p.age - 0.3) / 0.3);
+        var lo = Math.round(top * fall), w0 = Math.max(3, Math.round(5 * sq));
+        for (var y = lo; y <= top; y++) {
+          var w = y < 3 ? w0 : y > top - 2 ? Math.max(1, Math.round(2 * sq)) : Math.max(2, Math.round(3 * sq)), x0 = X - (w >> 1);
+          c.fillStyle = '#cfe0f4'; c.fillRect(x0, wy - y, w, 1);
+          c.fillStyle = '#ffffff'; c.fillRect(x0, wy - y, 1, 1);
+          if (w > 2) { c.fillStyle = '#8eaacc'; c.fillRect(x0 + w - 1, wy - y, 1, 1); }
+        }
+        if (top > 5 && fall < 0.6) {                                 // the crown, spraying outward
+          var cw = Math.round((2 + 3 * Math.min(1, p.age / 0.3)) * sq);
+          c.fillStyle = '#ffffff'; c.fillRect(X - cw, wy - top + 1, 1, 1); c.fillRect(X + cw, wy - top + 1, 1, 1);
+          c.fillStyle = '#e4eefa'; c.fillRect(X - cw + 1, wy - top, 1, 1); c.fillRect(X + cw - 1, wy - top, 1, 1); c.fillRect(X, wy - top - 1, 1, 1);
+        }
+      }
+      var rw = Math.round((3 + k * 15) * Math.sqrt(big)), rh = Math.max(1, Math.round(rw * 0.42)), sp = Math.floor(p.age * 12);   // the ring of foam
+      c.fillStyle = 'rgba(' + P.foam + ',' + (0.85 * (1 - k)).toFixed(2) + ')';
+      for (var i = 0; i < 18; i++) if ((i + sp) % 4) c.fillRect(Math.round(X + Math.cos(i / 18 * Math.PI * 2) * rw), Math.round(wy + Math.sin(i / 18 * Math.PI * 2) * rh), 2, 1);
+    } else if (p.kind === 'hit' || p.kind === 'ghosthit' || p.kind === 'moonhit') {
+      var FL = p.kind === 'hit' ? ['#ffffff', '#ffe27a', '#ff8a30'] : p.kind === 'ghosthit' ? ['#f0fff6', '#a8ffd0', '#40c080'] : ['#ffffff', '#d8f4ff', '#80b8ff'];
+      if (p.age < 0.14) {                                            // the strike: a flash and a ring of fire
+        var r0 = p.age < 0.07 ? 2 : 4, Y0 = api.sy(p.r, 0.45);
+        c.save(); c.globalCompositeOperation = 'lighter'; disc(c, X, Y0, 6, p.kind === 'hit' ? 'rgba(255,190,110,0.18)' : 'rgba(150,255,210,0.18)'); disc(c, X, Y0, 3, p.kind === 'hit' ? 'rgba(255,200,120,0.3)' : 'rgba(150,255,210,0.3)'); c.restore();
+        c.fillStyle = FL[0]; c.fillRect(X - 1, Y0 - 1, 3, 3);
+        for (var a = 0; a < 8; a++) { c.fillStyle = a % 2 ? FL[2] : FL[1]; c.fillRect(Math.round(X + Math.cos(a * Math.PI / 4) * (r0 + 2)), Math.round(Y0 + Math.sin(a * Math.PI / 4) * (r0 + 1)), 1, 1); }
+      }
+    }
+    if (p.parts) p.parts.forEach(function (q, i) {                   // the bits: drops, splinters tumbling, sparks with a tail
+      if (q.gone) return;
+      var qx = api.sx(q.x), qy = api.sy(q.r, q.z);
+      if (p.kind === 'splash') { c.fillStyle = q.vz < 0 ? 'rgba(' + P.foam + ',0.9)' : '#f0f6ff'; c.fillRect(qx, qy, 1, q.vz < 0 && q.k ? 2 : 1); return; }
+      if (q.spark) {
+        if (p.age > 0.55) return;
+        var px = api.sx(q.px != null ? q.px : q.x), py = api.sy(q.pr != null ? q.pr : q.r, q.pz != null ? q.pz : q.z);
+        c.fillStyle = p.kind === 'hit' ? '#ff9a3a' : p.kind === 'ghosthit' ? '#50e090' : '#80b8ff'; c.fillRect(px, py, 1, 1);
+        c.fillStyle = p.kind === 'hit' ? (p.age < 0.25 ? '#fff0a0' : '#ffc050') : FL[1]; c.fillRect(qx, qy, 1, 1);
+        return;
+      }
+      var tumble = (Math.floor(p.age * 18) + i) % 2;
+      c.fillStyle = p.kind === 'hit' ? WOOD[q.k] : p.kind === 'ghosthit' ? ['#b0f0d0', '#4a8a6a', '#2a5a48'][q.k] : ['#e8f4ff', '#a8c8f0', '#6a88c0'][q.k];
+      c.fillRect(qx, qy, tumble ? 2 : 1, tumble ? 1 : 2);
+    });
   }
   // ---- drawing the monsters: pixel balls on the native grid (outline, shadow side, body, light) -------------------------
   var SERP = ['#05060e', '#14223a', '#2a4866', '#5a8aa8'], SERP_BELLY = '#9cc4c0', SERP_GLOW = '#8ae0ff', FIN = ['#05060e', '#3a2a7a', '#6a4ab8', '#a88af0'];
@@ -904,5 +1102,5 @@ var BridgeSeaFight = (function () {
              if (KINDS[kind] && KINDS[kind].monster) spawnMonster(kind, b.x + Math.cos(b.h) * 14, b.r + Math.sin(b.h) * 14);
              else spawn(kind, b.x + Math.cos(b.h) * 14, b.r + Math.sin(b.h) * 14, b.h + Math.PI);
            },
-           _harpoon: function () { return throwHarpoon(); } };
+           _harpoon: function () { return throwHarpoon(); }, _burst: function (kind, x, r, big) { burst(kind, x, r, big); } };
 })();

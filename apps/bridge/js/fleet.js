@@ -151,6 +151,7 @@ var BridgeFleet = (function () {
       return Object.assign({ id: g, manned: i < sp.gunners, skill: gunSkills[i] || 0 }, GUNS[g]);
     });
     sp.berths = berths(ship);
+    sp.fits = ship.fits.filter(function (f) { return FITS[f]; });          // (what's fitted, as js/shipkit.js draws her)
     return sp;
   }
   /** The ship you're sailing now (the sloop if she's been sold or lost), as she sails. */
