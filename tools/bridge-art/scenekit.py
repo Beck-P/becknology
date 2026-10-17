@@ -666,7 +666,7 @@ class Kit:
         base = c.get('base', 'night')
         day_sky, dusk_sky, night_sky = c.get('day_sky', ('#a8c4e0', 0.85)), c.get('dusk_sky', ('#66708a', 0.55)), c.get('night_sky', ('#2a3450', 0.6))
         sun = c.get('sun', ((0.62, 0.42, -0.62), '#ffe2b0', 4.2))
-        dsun = c.get('dusk_sun', ((0.92, 0.12, -0.24), '#ffa45e', 3.0))       # low and warm, the shadows violet
+        dsun = c.get('dusk_sun', ((0.92, 0.12, -0.24), '#ffa45e', 3.0))       # low and gold, the shadows cool
         states = dict(light_states)
         first = list(states)[0]
         if base == 'night':

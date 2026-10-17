@@ -53,10 +53,13 @@ def lantern(k, lx, lr, z0, z1, s=0.1, energy=0.0, light_dr=0.2):
 
 
 # ---- ground ------------------------------------------------------------------------------
-def cobbles(k, x0, r0, x1, r1, tone='#55524c', size=0.3, skip=None):
+def cobbles(k, x0, r0, x1, r1, tone='#55524c', size=0.3, skip=None, lawn=False):
     """Rounded, irregular cobblestones (jittered, varied in size and tone)
-    over dark grout. skip(x, r) -> True leaves a spot bare."""
-    k.box(x0, r0, -0.12, x1, r1, -0.03, ('#24221e', 0.25), 'grout')
+    over dark grout. skip(x, r) -> True leaves a spot bare. lawn: the square is
+    laid over a lawn (W.grass), so the grout and stones sit just above its turf."""
+    lift = 0.033 if lawn else 0.0
+    k.box(x0, r0, -0.12, x1, r1, -0.03 + lift, ('#3a3730', 0.1) if lawn else ('#24221e', 0.25), 'grout')
+    k.sparse = getattr(k, 'sparse', []) + [(x0, r0, x1, r1, 0.08)]   # a lawn under a square grows only a little moss between the stones
     r = r0
     i = 0
     while r < r1 - 1e-6:
@@ -67,7 +70,7 @@ def cobbles(k, x0, r0, x1, r1, tone='#55524c', size=0.3, skip=None):
             if x0 <= cx <= x1 and not (skip and skip(cx, cr)):
                 rx = size * k.rng.uniform(0.4, 0.5)
                 ry = size * k.rng.uniform(0.38, 0.47)
-                k.cyl(cx, cr, -0.05, 0.0 + k.rng.uniform(0.0, 0.02), rx, (shade(tone, k.rng.uniform(0.8, 1.12)), 0.12),
+                k.cyl(cx, cr, -0.05, lift + k.rng.uniform(0.0, 0.02), rx, (shade(tone, k.rng.uniform(0.8, 1.12)), 0.12),
                       'cobble', ry=ry, verts=k.rng.choice((6, 7, 8)), bevel=0.02)
             x += size * k.rng.uniform(0.95, 1.05)
         r += size
@@ -161,9 +164,14 @@ def meadow(k, tone, area=None, cells=None, ok=('grass',), density=1.0, avoid=Non
     def isok(p_):
         return p_ is not None and any(p_ == o or p_.startswith(o + '_') for o in ok)
 
+    sparse = getattr(k, 'sparse', [])
+
     def spot(x, r):                                            # grass can grow here: its height, else None
         if not inside(x, r) or (avoid and avoid(x, r)):
             return None
+        for (sx0, sr0, sx1, sr1, keep) in sparse:            # between cobbles: only now and then
+            if sx0 <= x < sx1 and sr0 <= r < sr1 and k.rng.random() > keep:
+                return None
         p_, z = k.top(x, r)
         return z + 0.002 if isok(p_) else None
     per = 20.0 * density

@@ -43,7 +43,7 @@ SMOKE = []
 W.grass(k, 0, -2.4, COLS, ROWS + 0.6, tone=F.GRASS, tufts=0.45)
 F.dirt_path(k, 0.6, 10.4, 45.4, 12.4)                            # the main street
 F.dirt_path(k, 38.6, 9.2, 40.4, 10.4)                            # up to the landing green
-W.cobbles(k, 9.0, 12.4, 27.0, 19.6, tone='#8a8274')              # the square
+W.cobbles(k, 9.0, 12.4, 27.0, 19.6, tone='#8a8274', lawn=True)   # the square
 F.dirt_path(k, 10.0, 19.6, 11.4, SR0 - 0.2)                      # Meadow Lane, down to the footbridge...
 F.dirt_path(k, 10.0, SR1 + 0.2, 11.4, ROWS + 0.6)                # ...and away south
 F.dirt_path(k, 30.0, 19.6, 31.8, SR0 - 0.2)                      # to the stone bridge
@@ -91,9 +91,20 @@ V.board_sign(k, "ST ELM'S", 'IMFellEnglishSC', 28.9, FRONT + 0.03, 1.66, size=0.
 W.bell_tower(k, 32.0, FRONT, w=1.5, h=4.6)
 # the landing green: a mown ring in the meadow, the skiff on it, a windsock, the village sign
 PX, PR = 39.6, 6.2
-k.cyl(PX, PR, -0.01, 0.014, 3.05, ('#b8ad94', 0.3), 'pad_gravel', verts=48)
-k.cyl(PX, PR, 0.0, 0.02, 2.6, ('#ece6d4', 0.25), 'pad_ring', verts=48)
-k.cyl(PX, PR, 0.0, 0.026, 2.42, ('#b0a58c', 0.3), 'pad_gravel', verts=48)
+k.cyl(PX, PR, -0.01, 0.014, 3.05, ('#b8ad94', 0.0), 'pad_gravel', verts=48)
+k.cyl(PX, PR, 0.0, 0.02, 2.6, ('#ece6d4', 0.1), 'pad_ring', verts=48)
+k.cyl(PX, PR, 0.0, 0.026, 2.42, ('#b0a58c', 0.0), 'pad_gravel', verts=48)
+grit = {}                                                           # the gravel: a fine grit of light and dark stones
+for _ in range(2600):
+    a, d = k.rng.uniform(0, math.tau), 3.0 * math.sqrt(k.rng.random())
+    if 2.36 < d < 2.66:
+        continue
+    x, r, z = PX + math.cos(a) * d, PR + math.sin(a) * d, (0.026 if d < 2.4 else 0.014)
+    col = k.rng.choices(('#8e846c', '#a29880', '#cdc4ae', '#e0d8c4'), (0.3, 0.3, 0.25, 0.15))[0]
+    s = k.rng.uniform(0.012, 0.026)
+    grit.setdefault(col, []).append((x - s, r - s * 0.8, z, x + s, r + s * 0.8, z + 0.0015))
+for col, rs in grit.items():
+    k.boxes(rs, (col, 0.0), 'pad_gravel')
 for i in range(28):
     a = i * math.tau / 28
     k.rock(PX + math.cos(a) * 3.2, PR + math.sin(a) * 3.2, 0.02, 0.1, 0.08, 0.06, ('#e8e4dc', 0.2), part='pad_stone', segs=6)

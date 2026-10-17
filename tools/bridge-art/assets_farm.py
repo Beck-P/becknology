@@ -115,8 +115,16 @@ def pond(k, cx, cr, rx, ry, seed=0):
 
 def earth(k, x0, r0, x1, r1):
     """The field: bare, crumbly earth waiting to be worked (the game tills it, a tile at a time)."""
-    k.box(x0, r0, -0.02, x1, r1, 0.012, (EARTH, 0.35), 'field')
+    k.box(x0, r0, -0.02, x1, r1, 0.012, (EARTH, 0.0), 'field')
     k.later.append(lambda: W.ragged_edges(k, x0, r0, x1, r1, GRASS, z=0.012))
+    specks = {shade(EARTH, 0.78): [], shade(EARTH, 0.9): [], shade(EARTH, 1.14): [], shade(EARTH, 0.64): []}
+    cols = list(specks)
+    for _ in range(int((x1 - x0) * (r1 - r0) * 40)):                   # crumbs of earth, light and dark (a grain read as blotches)
+        x, r = k.rng.uniform(x0, x1), k.rng.uniform(r0, r1)
+        a, b = k.rng.uniform(0.012, 0.032), k.rng.uniform(0.01, 0.024)
+        specks[k.rng.choices(cols, (0.3, 0.35, 0.22, 0.13))[0]].append((x - a, r - b, 0.012, x + a, r + b, 0.0135))
+    for col, rs in specks.items():
+        k.boxes(rs, (col, 0.0), 'field')
     for _ in range(int((x1 - x0) * (r1 - r0) * 1.4)):
         x, r = k.rng.uniform(x0 + 0.1, x1 - 0.1), k.rng.uniform(r0 + 0.1, r1 - 0.1)
         s = k.rng.uniform(0.04, 0.09)
