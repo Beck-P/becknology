@@ -323,7 +323,7 @@ while x < 29.0:                                     # the coping, worn, some sto
     if rng.random() > 0.14:
         tip = rng.uniform(-0.03, 0.03) if rng.random() < 0.25 else 0.0
         k.box(x + 0.02, QF - 0.42, -0.06, min(29.0, x + w) - 0.02, QF + 0.04, -0.005 + tip + rng.uniform(0, 0.02),
-              (shade(rng.choice(('#8a8478', '#7e786c', '#948c7e')), rng.uniform(0.85, 1.05)), 0.2), 'quay_cope', bevel=0.02)
+              (shade(rng.choice(('#7a746a', '#706a60', '#827a6e')), rng.uniform(0.85, 1.05)), 0.2), 'quay_cope', bevel=0.02)
     x += w
 r = QUAY - 0.25                                      # the apron behind it: old flags, grass in the joints, some lifted
 while r < QF - 0.45:
