@@ -75,6 +75,13 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await use('STAIR DOWN'); await arrive();
   const f1 = await floorInfo();
   console.log('floor 1:', JSON.stringify(f1));
+  const drawn = await ev(() => new Promise(r => {                 // the creatures are drawn (on the cave tileset only the mine drew them)
+    const was = BridgeCombat.sceneItems; let n = 0;
+    BridgeCombat.sceneItems = function () { const out = was.apply(this, arguments); n += out.length; return out; };
+    setTimeout(() => { BridgeCombat.sceneItems = was; r(n); }, 600);
+  }));
+  console.log('creatures drawn:', drawn > 0);
+  if (!(drawn > 0)) console.log('FAILED: the creatures on floor 1 are not drawn');
   await p.screenshot({ path: SHOTS + '/dungeon_floor1.png' });
   await ev(() => BridgeDungeon._go(1)); await arrive();
   const f1b = await floorInfo();
