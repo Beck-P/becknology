@@ -10,7 +10,8 @@
  * when it only counts once those are found. A quest with `needs: <quest id>`
  * doesn't begin until that quest is done (a sequel). A clue with `say` has
  * its moment shown in place of the thing's usual words as it's found
- * (js/interactions.js). Progress is kept in localStorage.
+ * (js/interactions.js). A quest can hold things (`items`) that a clue `get`s or
+ * `give`s — js/keyitems.js shows them, Zelda-style. Progress is kept in localStorage.
  *
  * UI: a toast under the place label when something is found, and the
  * journal — the game menu's Journal tab (J, or the Menu pill; js/menu.js):
@@ -66,7 +67,7 @@ var BridgeQuests = (function () {
         if (s.clues[c.id]) return;
         var fresh = !Object.keys(s.clues).length;
         s.clues[c.id] = Date.now();
-        hits.push(c);
+        hits.push(Object.assign({ quest: id }, c));   // (with its quest: js/keyitems.js finds the thing it gets or gives)
         var p = progress(id);
         if (p.found === p.total && !s.done) {
           s.done = Date.now();
@@ -169,11 +170,23 @@ var BridgeQuests = (function () {
     });
   }
 
+  // what you're carrying for a quest (js/keyitems.js): got and not yet given
+  function carrying(id) {
+    if (typeof BridgeKeyItems === 'undefined') return '';
+    return BridgeKeyItems.carried(id).map(function (it) {
+      return '<li class="carrying"><img class="jn-item" alt="" src="' + BridgeKeyItems.iconURL(it.icon, 32) + '"><b>Carrying: ' + esc(it.name) + '</b>' +
+        (it.to ? ' \u2014 for ' + esc(it.to) : '') + '</li>';
+    }).join('');
+  }
+
   // what to do next: active quests first, then things waiting for you, then where to look round here
   function nextUp() {
     var out = [], wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : '', m = M();
     var active = Object.keys(defs || {}).filter(function (id) { return state[id] && !state[id].done; })
       .sort(function (a, b) { return lastFound(b) - lastFound(a); });
+    if (typeof BridgeKeyItems !== 'undefined') BridgeKeyItems.carried().forEach(function (it) {   // something to hand over: that first
+      out.push({ tag: 'Carrying', title: it.name, text: it.to ? 'Give it to ' + it.to + '.' : '' });
+    });
     active.slice(0, 3).forEach(function (id) {
       var p = progress(id), w = whereNext(id)[0];
       out.push({ tag: 'Quest', title: defs[id].title + ' · ' + p.found + '/' + p.total, text: w ? 'Next, look ' + (w.known ? 'in ' : '') + w.text + '.' : '', world: w && w.known ? w.world : null });
@@ -232,6 +245,7 @@ var BridgeQuests = (function () {
         '<div class="jn-bar"><i style="width:' + Math.round(p.found / p.total * 100) + '%"></i></div>' +
         '<div class="jn-q-where">' + esc(q.where) + '</div><p class="jn-q-text">' + esc(q.start) + '</p><ul class="jn-clues">' +
         q.clues.filter(function (c) { return s.clues[c.id]; }).map(function (c) { return li(esc(c.text), 'found'); }).join('') +
+        carrying(id) +
         (nxt.length ? li('Still to find: ' + nxt.map(function (w) { return esc(w.text); }).join(' · '), 'missing') : '') + '</ul></article>';
     }).join('');
     if (done.length) {
@@ -386,7 +400,7 @@ var BridgeQuests = (function () {
   return { onInteract: onInteract, open: open, close: close, toggle: toggle, toast: toast, summary: summary, note: note, arrived: arrived,
            visited: function () { return seen; }, whereNext: function (id) { return defs && defs[id] ? whereNext(id) : []; }, render: function () { if (shown()) render(); },
            log: function () { return logged.slice(); },
-           found: found, finished: finished, has: has, def: function (id) { return defs ? defs[id] || null : null; },
+           found: found, finished: finished, has: has, defs: function () { return defs || {}; }, def: function (id) { return defs ? defs[id] || null : null; },
            progress: function (id) { return defs && defs[id] ? progress(id) : null; },
            reset: function () { state = {}; save(); } };
 })();

@@ -628,6 +628,14 @@
     "reward": 300,
     "start": "Queen Alyssara asked you, quietly, to find the ribbon Beckolas lost from his sword.",
     "done": "The queen's favour is back on her first sword's hilt. Beckolas owes you one, and he is the sort to remember it.",
+    "items": {
+      "ribbon": {
+        "name": "Beckolas's Ribbon",
+        "text": "The queen's favour: green silk worked with gold leaves. Give it back to Beckolas, in the Heartwood Hall.",
+        "to": "Beckolas",
+        "icon": "ribbon"
+      }
+    },
     "clues": [
       {
         "id": "charge",
@@ -665,7 +673,9 @@
           "world": "sylvara",
           "label": "WILLOW"
         },
-        "text": "With what the bard and the herbalist told you, you know where to look: high in the willow over the Moonwell, caught on a frond, a ribbon of green silk with gold leaves. You climb up and free it."
+        "text": "With what the bard and the herbalist told you, you know where to look: high in the willow over the Moonwell, caught on a frond, a ribbon of green silk with gold leaves. You climb up and free it.",
+        "get": "ribbon",
+        "say": "WITH WHAT THE BARD AND THE HERBALIST TOLD YOU, YOU KNOW WHERE TO LOOK. HIGH IN THE WILLOW, CAUGHT ON A FROND: A RIBBON OF GREEN SILK WITH GOLD LEAVES.\n\nYOU CLIMB UP AND FREE IT."
       },
       {
         "id": "return",
@@ -674,7 +684,8 @@
           "world": "sylvara-hall",
           "label": "BECKOLAS"
         },
-        "text": "You hand Beckolas the ribbon. He ties it back on his sword without a word, then bows to you, very low. On the throne, the queen pretends not to notice, and smiles."
+        "text": "You hand Beckolas the ribbon. He ties it back on his sword without a word, then bows to you, very low. On the throne, the queen pretends not to notice, and smiles.",
+        "give": "ribbon"
       }
     ],
     "letter": {
@@ -689,6 +700,14 @@
     "needs": "queens-favour",
     "start": "The queen loves her first sword, her first sword loves the queen, and the whole wood knows it except, possibly, the two of them. She's asked you to help. Gently.",
     "done": "Under the willow at dusk, the first sword finally said it. Faelan's lanterns and Sefa's ribbons are staying up in the willow for good.",
+    "items": {
+      "moonflower": {
+        "name": "Moonflower",
+        "text": "Mirelle kept it twenty years for Beckolas. It only opens in the hand of someone who means what they're about to say. Take it to him.",
+        "to": "Beckolas",
+        "icon": "moonflower"
+      }
+    },
     "clues": [
       {
         "id": "start",
@@ -723,7 +742,8 @@
           "world": "sylvara",
           "label": "HERBALIST"
         },
-        "text": "Mirelle gave you a moonflower she's kept for Beckolas for twenty years. It only opens in the hand of someone who means what they're about to say."
+        "text": "Mirelle gave you a moonflower she's kept for Beckolas for twenty years. It only opens in the hand of someone who means what they're about to say.",
+        "get": "moonflower"
       },
       {
         "id": "lanterns",
@@ -755,7 +775,8 @@
           "world": "sylvara-hall",
           "label": "BECKOLAS"
         },
-        "text": "You gave Beckolas the moonflower and told him: the Moonwell, at dusk. He went pale, said nothing for a long time, then went off to polish his armour. All of it. Twice."
+        "text": "You gave Beckolas the moonflower and told him: the Moonwell, at dusk. He went pale, said nothing for a long time, then went off to polish his armour. All of it. Twice.",
+        "give": "moonflower"
       },
       {
         "id": "invite",
