@@ -53,7 +53,7 @@ const SUITES = {
     ['t_chess.js'], ['t_dance.js'], ['t_dance.js', 'In step'], ['t_solodance.js'], ['t_pach.js'], ['t_pach.js', 'Beat the house'],
     ['t_splice.js', 'Race'], ['t_splice.js', 'Four hands'], ['t_cipher.js', 'Race'], ['t_cipher.js', 'Decode'], ['t_typist.js'],
     ['t_typist.js', 'Two operators'], ['t_misc.js'], ['t_travel.js'], ['t_solo.js'], ['t_err.js'], ['t_chat.js'], ['t_chat.js', '390', '760'],
-    ['t_chat_dice.js'], ['t_race_ski.js'], ['t_race_climb.js'], ['t_race_sail.js']].map(([f, ...a]) => ['together/' + f, ...a]),
+    ['t_chat_dice.js'], ['t_race_ski.js'], ['t_race_climb.js'], ['t_race_sail.js'], ['t_race_sail.js', 'party']].map(([f, ...a]) => ['together/' + f, ...a]),
   // the Neon Royale: every casino table opens its Royale Link game; coins through the Bridge; typing a hold'em bet
   royale: [['royale/tables.js'], ['royale/bridge_cab.js'], ['royale/poker_amt.js'], ['royale/poker_amt.js', '390', '760']],
   // weapons: every swing lands and does what it says; a fight, blacking out and waking; a sea fight; what a fight costs in
