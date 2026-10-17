@@ -85,7 +85,7 @@ var BridgeGPU = (function () {
       '  vec2 q = (uv - 0.5) * vec2(2.0, 2.0 * size.y / size.x);\n' +
       '  f.rgb *= 1.0 - vig * smoothstep(0.45, 1.3, length(q));\n' +
       '  vec3 g = texture(g1, uv).rgb * wts.x + texture(g2, uv).rgb * wts.y + texture(g3, uv).rgb * wts.z;\n' +
-      '  g = min(vec3(1.0), g * amt);\n' +
+      '  g = 1.0 - exp(-g * amt);\n' +                                   // a soft shoulder, not a clip: neon keeps its colour
       '  float ga = max(g.r, max(g.g, g.b));\n' +
       '  o = vec4(f.rgb + g - f.rgb * g, f.a + ga - f.a * ga);\n' +
       '}\n'
@@ -232,12 +232,13 @@ var BridgeGPU = (function () {
     blur2(near, tmp, near, w, h, 1.5);
     blur2(near, tmp, near, w, h, 1.5);
     var G = sceneGlow(o.scene), sky = G && typeof BridgeScene !== 'undefined' && BridgeScene.skyOf ? BridgeScene.skyOf(o.scene) : null;
+    var Lt = G && o.scene.lit && o.scene.lit.cur ? o.scene.lit.cur.Lt : null;   // a place in live light: its lamps' own hour
     var lit = target('lit', w, h);
     bind(0, src); bind(1, G ? G.tex : none); bind(2, near.tex);
     pass('bright', lit, w, h, function (u) {
       gl.uniform1i(u.frame, 0); gl.uniform1f(u.gain, GAIN); gl.uniform1i(u.glowTex, 1); gl.uniform1i(u.around, 2); gl.uniform2f(u.full, w, h);
       gl.uniform4f(u.glowAt, G ? o.offX - o.scene.meta.originX : 0, G ? o.offY - o.scene.meta.originY : 0, G ? G.w : 1, G ? G.h : 1);
-      gl.uniform1f(u.glowK, G ? (sky ? 1 - 0.85 * sky.day : 1) : 0);              // a lamp by day hardly glows
+      gl.uniform1f(u.glowK, G ? (Lt ? Lt.glow : sky ? 1 - 0.85 * sky.day : 1) : 0);   // a lamp by day hardly glows
       gl.uniform1f(u.guess, o.guess != null ? o.guess : 1);
     });
     // tight: full size

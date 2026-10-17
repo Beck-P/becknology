@@ -6,18 +6,20 @@
  *                                                     the water over the scene: drawn
  *                                                     right after the render
  *
- * The sea is two seamless dithered wave textures drifting at different
- * speeds, moon glints and spores glowing in it — continuous, no tile grid.
+ * The sea in the toy finish (Look Book 2's water, as js/litscene.js draws still water): each sea's own colours in a
+ * few flat bands — broad swells of deeper and lighter water, no noise and no dithering — crossed by short crisp wave
+ * crests (a light dash over a dark one) drifting two ways; whitecaps in a storm, the colours dulled in rain and fog.
+ * Over it the light of the hour: the sun's sparkle by day, a glitter path toward the low sun at golden hour, the moon
+ * road and the stars on clear nights. Continuous, anchored to the world, no tile grid.
  *
- * A scene that stands in the sea (assets_coast) is rendered with its banks,
- * beaches and seabed, and scene_post writes shore.png from its height pass:
- * how deep each pixel lies under the surface and how far it is from the
- * waterline. drawWater lays the same moving sea over everything below the
- * surface — thin in the shallows so the sand, rocks and kelp show through,
- * opaque in the deep where it meets the open sea seamlessly — with light
- * rippling on the shallow bed and foam lapping in at the waterline round
- * rocks, beaches, piles and hulls. Older scenes without shore.png get a
- * foam band round their silhouette instead.
+ * A scene that stands in the sea (assets_coast) is rendered with its banks, beaches and seabed, and scene_post writes
+ * shore.png from its height pass: how deep each pixel lies under the surface and how far it is from the waterline.
+ * drawWater lays the same sea over everything below the surface, its depth in flat bands with wandering shelves (thin
+ * and pale over the shallows so the sand, rocks and kelp show through, solid in the deep where it meets the open sea
+ * without a seam); what stands above the waterline — banks, quays, piers, hulls, rocks — mirrored in it and wobbling,
+ * lit windows and lanterns streaking down it after dark; light rippling on the shallow bed; and foam in the toy style:
+ * a lap line at the waterline breathing in and out and lines of surf rolling in. Older scenes without shore.png get a
+ * foam band round their silhouette instead. The spore bloom (js/bloom.js) lights all of it on its nights.
  */
 var BridgeSea = (function () {
   var PALETTES = {
@@ -73,11 +75,90 @@ var BridgeSea = (function () {
 
   function hash(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
   var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+  function mixc(a, b, k) { return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]; }
+  function rgb(c, a) { return a == null ? 'rgb(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ')' : 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + a + ')'; }
+  function nums(s) { return s.split(',').map(Number); }
+  function worldId() { return typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId ? BridgeWorld.getWorldId() : null; }
 
-  // ---- seamless wave textures --------------------------------------------------------
-  var TW = 192, TH = 96;
-  var tex = {};
+  // ---- the light on the water now: the sky's blend (day, dusk, night), golden hour, which side the sun is on, the moon,
+  // the weather. The scene's own when it has one (its live light when that's composed: BridgeLit's hour, so a preview
+  // moves the sea too), else Lumar's sky out at sea. Worked out a few times a second, in steps (so the colours made from
+  // it change now and then, not every frame).
+  var lights = {};
+  function lightOn(name, sc) {
+    var id = sc ? sc.id : camOverride ? 'lumar' : worldId() || 'lumar', key = name + '|' + id, t = Date.now(), c = lights[key];
+    if (c && t - c.at < 300 && c.sc === sc) return c.L;
+    var W = skyFor(name, sc), L = { day: W ? W.day : 0, dusk: W ? W.dusk : 0, night: W ? W.night : 1, golden: 0, eve: true, moon: 0.3,
+                                    storm: 0, rain: 0, fog: 0, gale: 0, clear: 1 };
+    var lt = sc && sc.lit && typeof BridgeLit !== 'undefined' && BridgeLit.light ? BridgeLit.light(sc.id) : null;
+    if (lt && DAY[name]) {                                                  // the live light's own hour
+      L.night = lt.night; L.golden = lt.golden; L.day = (1 - lt.night) * (1 - 0.6 * lt.golden); L.dusk = Math.max(0, 1 - L.night - L.day);
+      L.eve = lt.M ? lt.M.h > 12.8 : true;
+    } else if (DAY[name]) L.golden = clamp(L.dusk * 1.8, 0, 1) * (L.day > 0.02 ? 1 : 0.5);
+    if (typeof BridgeClock !== 'undefined') {
+      var s = BridgeClock.sky(id);
+      if (s) {
+        if (!lt && s.sunrise != null && s.sunset != null) L.eve = s.t > (s.sunrise + s.sunset) / 2;
+        if (s.moon != null) L.moon = s.moon;
+      }
+    }
+    if (typeof BridgeWeather !== 'undefined') {
+      var w = (BridgeWeather.here && BridgeWeather.here(id)) || (BridgeWeather.at && BridgeWeather.at('lumar'));
+      if (w && w.k > 0.05) {
+        var K = w.kind, k = w.k;
+        L.storm = K === 'storm' ? k : 0;
+        L.gale = K === 'gale' ? k : K === 'storm' ? k : 0;
+        L.rain = K === 'rain' ? k : K === 'storm' ? k : 0;
+        L.fog = K === 'fog' ? k : 0;
+        L.clear = K === 'fair' || K === 'breezy' || K === 'clear' ? 1 : 1 - k;
+      }
+    }
+    ['day', 'dusk', 'night', 'golden', 'moon', 'storm', 'gale', 'rain', 'fog', 'clear'].forEach(function (f) { L[f] = Math.round(L[f] * 24) / 24; });
+    L.aD = L.dusk + L.night > 0 ? L.dusk / (L.dusk + L.night) : 0;
+    lights[key] = { at: t, sc: sc, L: L };
+    return L;
+  }
 
+  // ---- the sea's colours for that light: deep, the body of the water, the lighter swells, a crest and the dark under
+  // it, whitecaps. Night's palette, dusk's over it, day's over that (as the scenes blend their light states), then golden
+  // hour warming the crests and the swells, a storm greying it all, fog washing it out.
+  function colours(name, L) {
+    var N = PALETTES[name], Dk = PALETTES[name + '@dusk'], Y = PALETTES[name + '@day'];
+    function at(f) { var c = N[f]; if (Dk && L.aD) c = mixc(c, Dk[f], L.aD); if (Y && L.day) c = mixc(c, Y[f], L.day); return c; }
+    function atS(f) { var c = nums(N[f]); if (Dk && L.aD) c = mixc(c, nums(Dk[f]), L.aD); if (Y && L.day) c = mixc(c, nums(Y[f]), L.day); return c; }
+    var deep = at('deep'), mid = at('mid'), hi = at('hi');
+    var C = { deep: mixc(deep, mid, 0.3), base: mixc(deep, mid, 0.55), light: mixc(mid, hi, 0.08), crest: mixc(mixc(mid, hi, 0.75), [255, 255, 255], 0.08 + 0.1 * L.day),
+              trough: mixc(deep, [0, 0, 0], 0.15), cap: atS('foam') };
+    var g = L.golden * L.clear;
+    if (g > 0) {
+      C.crest = mixc(C.crest, [255, 214, 150], 0.25 * g);
+      C.light = mixc(C.light, [236, 168, 118], 0.24 * g);
+      C.base = mixc(C.base, [206, 134, 110], 0.14 * g);
+      C.deep = mixc(C.deep, [150, 90, 96], 0.1 * g);
+    }
+    var s = Math.max(L.storm, L.rain * 0.45);
+    if (s > 0) {
+      var grey = mixc([116, 124, 132], [34, 38, 50], L.night);
+      ['deep', 'base', 'light'].forEach(function (f) { C[f] = mixc(mixc(C[f], grey, 0.42 * s), [0, 0, 0], 0.16 * s); });
+      C.crest = mixc(C.crest, mixc([214, 222, 226], [96, 104, 124], L.night), 0.5 * s);
+      C.trough = mixc(C.deep, [0, 0, 0], 0.3);
+    }
+    if (L.fog > 0) {
+      var fogc = mixc([176, 188, 194], [44, 50, 66], L.night);
+      ['deep', 'base', 'light', 'crest', 'trough', 'cap'].forEach(function (f) { C[f] = mixc(C[f], fogc, (f === 'crest' || f === 'trough' ? 0.55 : 0.38) * L.fog); });
+    }
+    ['deep', 'base', 'light', 'crest', 'trough', 'cap'].forEach(function (f) { C[f] = C[f].map(Math.round); });
+    C.key = [C.deep, C.base, C.light, C.crest, C.trough, C.cap].join(';');
+    return C;
+  }
+
+  // ---- seamless wave maps (an index a pixel, worked out once) and the textures coloured from them ----------------------
+  // 0 deeper water, 1 the body, 2 a lighter swell (wide flat bands of a smooth noise, stretched sideways), 3 a wavelet's
+  // crest, 4 the dark under it (short crisp dashes, placed, a little arc each), 5 a whitecap, 255 nothing. Three maps of
+  // different sizes (no visible repeat): the body with its wavelets, a second set of wavelets drifting the other way, and
+  // the whitecaps (a storm's, faded in by it in two steps).
+  var MAPS = [{ w: 512, h: 256, seed: 1, per: 420 }, { w: 384, h: 192, seed: 2, per: 1100 }, { w: 320, h: 160, seed: 3, per: 380 }], maps = [];
   function periodicNoise(x, y, px, py, seed) {
     // value noise on a lattice that wraps every px × py cells
     var xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
@@ -85,59 +166,72 @@ var BridgeSea = (function () {
     function h(i, j) { return hash(((i % px) + px) % px * 57 + ((j % py) + py) % py * 131 + seed * 977); }
     return h(xi, yi) * (1 - u) * (1 - v) + h(xi + 1, yi) * u * (1 - v) + h(xi, yi + 1) * (1 - u) * v + h(xi + 1, yi + 1) * u * v;
   }
-
-  function fbm(x, y, base, seed, stretch) {
-    var n = 0, amp = 0.5, f = 1, tot = 0;
-    for (var o = 0; o < 4; o++) {
-      var cy = base * f, cx = Math.max(1, Math.round(cy * 2 / (stretch || 1)));
-      n += periodicNoise(x / TW * cx, y / TH * cy, cx, cy, seed + o) * amp;
-      tot += amp; amp *= 0.5; f *= 2;
+  // fbm over a W × H tile that wraps: `base` cells down it, as many across as keep them `stretch` times wider than tall
+  function tfbm(x, y, W, H, base, seed, stretch, oct) {
+    var n = 0, amp = 0.5, tot = 0;
+    for (var o = 0, f = 1; o < oct; o++, f *= 2) {
+      var cy = base * f, cx = Math.max(1, Math.round(cy * W / H / stretch));
+      n += periodicNoise(x / W * cx, y / H * cy, cx, cy, seed + o) * amp;
+      tot += amp; amp *= 0.5;
     }
     return n / tot;
   }
-
-  function texture(name, seed) {
-    var key = name + seed;
-    if (tex[key]) return tex[key];
-    var P = PALETTES[name];
-    var c = document.createElement('canvas');
-    c.width = TW; c.height = TH;
-    var cx = c.getContext('2d'), img = cx.createImageData(TW, TH), d = img.data;
-    var mix = [(P.mid[0] + P.hi[0]) / 2, (P.mid[1] + P.hi[1]) / 2, (P.mid[2] + P.hi[2]) / 2];
-    for (var y = 0; y < TH; y++) {
-      for (var x = 0; x < TW; x++) {
-        // broad swells of light and dark, crossed by thin wave crests:
-        // ridged noise stretched sideways, bright only along its ridges
-        var body = fbm(x, y, 2, seed, 2);
-        var ridge = 1 - Math.abs(fbm(x, y, 6, seed + 10, 4) * 2 - 1);
-        ridge = Math.pow(ridge, 10);
-        var v = body * 0.7 + ridge * 0.7;
-        var q = v * 3.4 - 1.05 + (BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.5) * 0.8;
-        var lv = Math.max(0, Math.min(3, Math.floor(q)));
-        var col = lv === 0 ? P.deep : lv === 1 ? P.mid : lv === 2 ? mix : P.hi;
-        var o2 = (y * TW + x) * 4;
-        d[o2] = col[0]; d[o2 + 1] = col[1]; d[o2 + 2] = col[2]; d[o2 + 3] = 255;
+  function waveMap(n) {
+    if (maps[n]) return maps[n];
+    var M = MAPS[n], W = M.w, H = M.h, s = M.seed * 100, out = new Uint8Array(W * H).fill(n ? 255 : 1), x, y;
+    var sw = new Float32Array(W * H);
+    for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
+      sw[y * W + x] = tfbm(x, y, W, H, 3, s + 1, 3.2, 3);
+      if (!n) out[y * W + x] = sw[y * W + x] < 0.4 ? 0 : sw[y * W + x] < 0.61 ? 1 : 2;     // the swells
+    }
+    // the wavelets: short dashes, a light crest with its shadow a row under it, the ends a row lower (a little arc);
+    // more of them on the swells, fewer in the troughs. Whitecaps are a heavier crest of foam.
+    var count = Math.round(W * H / M.per);
+    function put(px, py, v) { var i = ((py % H) + H) % H * W + ((px % W) + W) % W; if (v === 4 && (out[i] === 3 || out[i] === 5)) return; out[i] = v; }
+    for (var k = 0; k < count; k++) {
+      var cx = Math.floor(hash(s * 7 + k * 3.1) * W), cy = Math.floor(hash(s * 11 + k * 5.7) * H), here = sw[cy * W + cx];
+      if (hash(s + k * 1.3) > 0.25 + here * 1.1) continue;
+      var len = 3 + Math.floor(hash(s * 13 + k * 2.9) * (n === 2 ? 5 : 8)), crest = n === 2 ? 5 : 3;
+      for (var j = 0; j < len; j++) {
+        var end = j === 0 || j === len - 1, yy = cy + (end && len > 4 ? 1 : 0);
+        put(cx + j, yy, crest);
+        if (!end || n === 2) put(cx + j, yy + 1, 4);
+        if (n === 2 && !end && j % 2) put(cx + j, yy - 1, 5);
       }
     }
+    return (maps[n] = out);
+  }
+  var tex = {};
+  function texture(name, n, C) {
+    var key = name + n, T = tex[key];
+    if (T && T.k === C.key) return T.c;
+    if (!T) { T = tex[key] = { c: document.createElement('canvas') }; T.c.width = MAPS[n].w; T.c.height = MAPS[n].h; }
+    var m = waveMap(n), cx = T.c.getContext('2d'), img = cx.createImageData(MAPS[n].w, MAPS[n].h), d = img.data;
+    var cols = [C.deep, C.base, C.light, C.crest, C.trough, C.cap];
+    for (var i = 0; i < m.length; i++) {
+      var v = m[i];
+      if (v === 255) continue;
+      var c = cols[v];
+      d[i * 4] = c[0]; d[i * 4 + 1] = c[1]; d[i * 4 + 2] = c[2]; d[i * 4 + 3] = 255;
+    }
     cx.putImageData(img, 0, 0);
-    tex[key] = c;
-    return c;
+    T.k = C.key; T.c.__pat = null;
+    return T.c;
   }
 
   function tiled(ctx, t, w, h, ox, oy, alpha) {
-    ox = ((Math.round(ox) % TW) + TW) % TW;
-    oy = ((Math.round(oy) % TH) + TH) % TH;
+    var tw = t.width, th = t.height;
+    ox = ((Math.round(ox) % tw) + tw) % tw;
+    oy = ((Math.round(oy) % th) + th) % th;
     ctx.globalAlpha = alpha;
-    for (var y = -oy; y < h; y += TH) {
-      for (var x = -ox; x < w; x += TW) ctx.drawImage(t, x, y);
+    for (var y = -oy; y < h; y += th) {
+      for (var x = -ox; x < w; x += tw) ctx.drawImage(t, x, y);
     }
     ctx.globalAlpha = 1;
   }
 
-  var patterns = {};
   function fillPattern(ctx, t, w, h, ox, oy, alpha) {
-    var key = t.__key || (t.__key = Math.random().toString(36));
-    var pat = patterns[key] || (patterns[key] = ctx.createPattern(t, 'repeat'));
+    var pat = t.__pat || (t.__pat = ctx.createPattern(t, 'repeat'));
     var tw = t.width, th = t.height;
     ox = ((Math.round(ox) % tw) + tw) % tw;
     oy = ((Math.round(oy) % th) + th) % th;
@@ -149,35 +243,89 @@ var BridgeSea = (function () {
     ctx.restore();
   }
 
-  // where the two wave layers sit for screen x = 0, y = 0 (the sea is
-  // anchored to the world, so it scrolls with the camera)
+  // where the wave layers sit for screen x = 0, y = 0 (the sea is anchored to the world, so it scrolls with the
+  // camera): the body and its crests one way, the second crests the other, the whitecaps quicker
   var camOverride = null;      // drawSeaAt: a camera of the caller's own (the voyage)
   function drift(now) {
     var camX, camY;
     if (camOverride) { camX = camOverride[0]; camY = camOverride[1]; }
     else { var v = BridgeWorld.getView(); camX = -v.offX; camY = -v.offY; }
-    return { ax: camX + now * 0.006, ay: camY + now * 0.002, bx: camX - now * 0.004 + 37, by: camY + now * 0.0035 + 19,
-             camX: camX, camY: camY };
+    return { ax: camX + now * 0.004, ay: camY + now * 0.0016, bx: camX - now * 0.0055 + 37, by: camY + now * 0.0028 + 19,
+             cx: camX + now * 0.011 + 71, cy: camY + now * 0.005 + 41, camX: camX, camY: camY };
   }
-
-  function waves(ctx, w, h, now, palette, sx, sy, W) {
+  // the three layers onto ctx: the body and the crests always, the whitecaps by the storm (in two steps, not a fade)
+  function waves(ctx, w, h, now, name, L, C) {
     var D = drift(now);
-    function layer(name, a) {
-      if (a <= 0.003) return;
-      tiled(ctx, texture(name, 1), w, h, D.ax + sx, D.ay + sy, a);
-      tiled(ctx, texture(name, 2), w, h, D.bx + sx, D.by + sy, 0.45 * a);
+    tiled(ctx, texture(name, 0, C), w, h, D.ax, D.ay, 1);
+    tiled(ctx, texture(name, 1, C), w, h, D.bx, D.by, 1);
+    var cap = capAlpha(L);
+    if (cap) tiled(ctx, texture(name, 2, C), w, h, D.cx, D.cy, cap);
+  }
+  function capAlpha(L) { var s = Math.max(L.storm, 0.6 * L.gale); return s < 0.2 ? 0 : s < 0.6 ? 0.5 : 1; }
+
+  // ---- the light on the water: the sun's sparkle by day, a glitter path toward a low sun, the moon road, the stars --
+  // Points on a grid anchored to the world (so they hold still as the camera moves), each lit or not by its own clock;
+  // the paths are where the sun and the moon would be mirrored, a column down the screen widening toward the viewer.
+  // Flat dashes, two strengths. `isWater` (screen x, y) keeps them on an island's open water.
+  var STAR = ['#fffbe8', '#c8d4ff', '#e8ecff'];
+  function skyLight(ctx, w, h, now, L, C, isWater) {
+    var D = drift(now), clear = L.clear * (1 - L.fog);
+    ctx.save();
+    // the sun's sparkle by day: short white dashes coming and going
+    var sp = L.day * (0.4 + 0.6 * clear) * (1 - 0.6 * L.golden);
+    if (sp > 0.05) {
+      var cell = 40, c0 = Math.floor(D.camX / cell) - 1, r0 = Math.floor(D.camY / cell) - 1;
+      ctx.fillStyle = 'rgb(255,252,236)';
+      for (var r = r0; r < r0 + h / cell + 3; r++) for (var c = c0; c < c0 + w / cell + 3; c++) {
+        var id = c * 7919 + r * 104729, tw = Math.sin(now / (380 + hash(id + 2) * 400) + id);
+        if (tw < 0.72) continue;
+        var x = Math.round(c * cell - D.camX + hash(id) * cell), y = Math.round(r * cell - D.camY + hash(id + 1) * cell);
+        if (isWater && !isWater(x, y)) continue;
+        ctx.globalAlpha = (tw > 0.9 ? 0.9 : 0.5) * sp;
+        ctx.fillRect(x, y, tw > 0.9 ? 3 : 2, 1);
+      }
     }
-    if (W && W.day > 0.995) { layer(palette + '@day', 1); return; }
-    layer(palette, 1);
-    if (!W) return;
-    layer(palette + '@dusk', W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0);
-    layer(palette + '@day', W.day);
+    // the glitter path at golden hour, toward where the sun sets (or rises), and the moon road on a clear night
+    var gold = L.golden * clear * (1 - L.night), moon = L.night * L.moon * clear;
+    if (gold > 0.06) path(ctx, w, h, now, D, Math.round(w * (L.eve ? 0.3 : 0.7)), 16, 0.45, Math.min(1, 0.3 + gold), rgb(mixc(C.crest, [255, 228, 160], 0.6)), isWater, 11);
+    if (moon > 0.05) path(ctx, w, h, now, D, Math.round(w * 0.6), 10, 0.25, Math.min(1, 0.35 + moon * 2.5), 'rgb(214,226,255)', isWater, 23);
+    // stars mirrored on a clear night
+    if (L.night > 0.6 && clear > 0.7) {
+      var sc2 = 30, s0 = Math.floor(D.camX / sc2) - 1, t0 = Math.floor(D.camY / sc2) - 1;
+      for (var sr = t0; sr < t0 + h / sc2 + 3; sr++) for (var scl = s0; scl < s0 + w / sc2 + 3; scl++) {
+        var sid = scl * 5303 + sr * 81131 + 3, hs = hash(sid);
+        if (hs > 0.42 || Math.sin(now / (500 + hs * 900) + sid) < -0.4) continue;
+        var stx = Math.round(scl * sc2 - D.camX + hash(sid + 1) * sc2), sty = Math.round(sr * sc2 - D.camY + hash(sid + 2) * sc2);
+        if (isWater && !isWater(stx, sty)) continue;
+        ctx.globalAlpha = (hs < 0.12 ? 1 : 0.6) * (L.night - 0.5) * 2;
+        ctx.fillStyle = STAR[Math.floor(hash(sid + 3) * 3)];
+        ctx.fillRect(stx, sty, 1, 1);
+      }
+    }
+    ctx.restore();
+  }
+  // a column of glints centred on cx: `w0` px wide at the top, widening by `grow` a row; strength k
+  function path(ctx, w, h, now, D, cx, w0, grow, k, col, isWater, seed) {
+    var cell = 5, rw = w0 + h * grow;
+    var c0 = Math.floor((D.camX + cx - rw * 1.2) / cell), c1 = Math.ceil((D.camX + cx + rw * 1.2) / cell), r0 = Math.floor(D.camY / cell) - 1;
+    ctx.fillStyle = col;
+    for (var r = r0; r < r0 + h / cell + 2; r++) for (var c = c0; c <= c1; c++) {
+      var id = c * 4513 + r * 92821 + seed, hs = hash(id);
+      var y = Math.round(r * cell - D.camY + hash(id + 1) * cell);
+      var spread = w0 + Math.max(0, y) * grow, x = Math.round(c * cell - D.camX + hs * cell), off = Math.abs(x - cx) / spread;
+      if (off > 1.15 || hs > 0.92 - off * 0.55) continue;
+      var v = Math.sin(now / (260 + hash(id + 2) * 420) + id * 1.7);
+      if (v < -0.1) continue;
+      if (isWater && !isWater(x, y)) continue;
+      ctx.globalAlpha = k * (v > 0.55 && off < 0.65 ? 1 : 0.6);
+      ctx.fillRect(x, y, 1 + Math.floor(hash(id + 3) * (off < 0.5 ? 4 : 2)), 1);
+    }
   }
 
-  // moon glints and drifting spores, on a world-anchored grid; `isWater`
-  // (screen x, y) filters them to the water over a scene
+  // drifting spores (and the bloom's motes), on a world-anchored grid; `isWater` (screen x, y) filters them to the water
+  // over a scene (the moon's and the sun's light on the water is skyLight's)
   function glints(ctx, w, h, now, P, isWater, W, k, name) {
-    var dark = W ? Math.max(0, 1 - W.day * 1.1) : 1, sparkle = W ? 0.6 - 0.25 * W.day : 0.6;
+    var dark = W ? Math.max(0, 1 - W.day * 1.1) : 1;
     var spore = k > 0.01 ? BridgeBloom.hue(name) : P.spore, boost = 1 + 1.4 * (k || 0);
     var D = drift(now);
     ctx.save();
@@ -188,11 +336,6 @@ var BridgeSea = (function () {
       for (var c = c0; c < c0 + w / cell + 3; c++) {
         var id = c * 7919 + r * 104729;
         var x = Math.round(c * cell - D.camX + hash(id) * cell), y = Math.round(r * cell - D.camY + hash(id + 1) * cell);
-        var tw = Math.sin(now / (380 + hash(id + 2) * 400) + id);
-        if (tw > sparkle && (!isWater || isWater(x, y))) {
-          ctx.fillStyle = 'rgba(' + (W && W.day > 0.3 ? '255,252,236' : '220,240,255') + ',' + Math.min(1, (tw - sparkle) * 1.6).toFixed(2) + ')';
-          ctx.fillRect(x, y, 2 + (tw > 0.9 ? 2 : 0), 1);
-        }
         var sx = Math.round(x + Math.sin(now / 2000 + id) * 6), sy = Math.round(y + 20 + Math.cos(now / 2600 + id) * 4);
         if (dark > 0.05 && (!isWater || isWater(sx, sy))) {
           ctx.fillStyle = 'rgba(' + spore + ',' + Math.min(1, (0.25 + 0.35 * Math.abs(Math.sin(now / 900 + id))) * dark * boost).toFixed(2) + ')';
@@ -318,16 +461,20 @@ var BridgeSea = (function () {
   /** The open sea, filling the frame (native px), scrolling with the world. */
   function drawSea(ctx, w, h, now, palette) {
     var name = PALETTES[palette] ? palette : 'emerald', P = PALETTES[name], W = skyFor(name), k = bloomK();
-    ctx.fillStyle = 'rgb(' + (W && W.day > 0.5 ? PALETTES[name + '@day'] : P).deep.join(',') + ')';
-    ctx.fillRect(0, 0, w, h);
-    waves(ctx, w, h, now, name, 0, 0, W);
+    var L = lightOn(name, null), C = colours(name, L);
+    waves(ctx, w, h, now, name, L, C);
     if (k > 0.01) bloomWater(ctx, 0, 0, w, h, 0, 0, now, name, k);
+    skyLight(ctx, w, h, now, L, C, null);
     glints(ctx, w, h, now, P, null, W, k, name);
   }
 
   // ---- water over a scene (shore.png) -------------------------------------------------
   var shores = {};
   var CAUSTIC = 110;          // depth byte below which light ripples on the bed
+  var SHELF = [34, 72, 118];  // depth bytes where the water steps down a band (wandered by a slow noise: shelves, not rings)
+  var BAND_A = [0.4, 0.6, 0.8, 1];      // the water's opacity in each band, shallow to deep
+  var BAND_T = [0.3, 0.18, 0.08, 0];    // and the shallows' pale tint over it
+  var MAXR = 26;              // how far down the water a reflection reaches (px)
 
   function loadShore(sc) {
     var S = shores[sc.id];
@@ -342,39 +489,87 @@ var BridgeSea = (function () {
       cx.drawImage(img, 0, 0);
       var px = cx.getImageData(0, 0, W, H).data;
       var reach = (sc.meta.water && sc.meta.water.reach) || 14;
-      // the water's opacity over the render: thin in the shallows, solid in the deep
+      // the water's opacity over the render, in flat bands: thin in the shallows, solid in the deep
       var mask = document.createElement('canvas');
       mask.width = W; mask.height = H;
       var mctx = mask.getContext('2d');
       var md = mctx.createImageData(W, H), m = md.data;
-      var water = new Uint8Array(W * H), idx = [], dd = [], dep = [];
+      var water = new Uint8Array(W * H), band = new Uint8Array(W * H).fill(255), idx = [], dd = [], dep = [], bd = [];
+      var gw = (W >> 2) + 2, gh = (H >> 2) + 2, n1 = new Float32Array(gw * gh), gw2 = (W >> 1) + 2, n2 = new Float32Array(gw2 * ((H >> 1) + 2));
+      for (var gy = 0; gy < gh; gy++) for (var gx = 0; gx < gw; gx++) n1[gy * gw + gx] = periodicNoise(gx * 4 / 46, gy * 4 / 34, 4096, 4096, 5) - 0.5;
+      for (gy = 0; gy < (H >> 1) + 2; gy++) for (gx = 0; gx < gw2; gx++) n2[gy * gw2 + gx] = periodicNoise(gx * 2 / 13, gy * 2 / 10, 4096, 4096, 9) - 0.5;
       for (var i = 0; i < W * H; i++) {
         var dist = px[i * 4], depth = px[i * 4 + 1], empty = px[i * 4 + 2] > 127;
         if (depth > 0) {
-          var f = (depth - 1) / 254;
-          m[i * 4 + 3] = Math.round(255 * Math.min(1, 0.3 + f * 1.15));
+          var x = i % W, y = (i - x) / W;
+          var dj = depth + n1[(y >> 2) * gw + (x >> 2)] * 44 + n2[(y >> 1) * gw2 + (x >> 1)] * 12;
+          var b = dj < SHELF[0] ? 0 : dj < SHELF[1] ? 1 : dj < SHELF[2] ? 2 : 3;
+          band[i] = b;
+          m[i * 4 + 3] = Math.round(255 * BAND_A[b]);
         }
         if (depth > 0 || empty) water[i] = 1;
-        if ((dist <= reach && water[i]) || (depth > 0 && depth < CAUSTIC)) {
+        if ((dist <= reach && water[i]) || (depth > 0 && (depth < CAUSTIC || band[i] < 3))) {
           idx.push(i); dd.push(Math.min(255, dist)); dep.push(depth);
         }
       }
       mctx.putImageData(md, 0, 0);
+      for (var q = 0; q < idx.length; q++) {         // each one's band, and a step onto a shallower shelf (the shelf's lip)
+        var p = idx[q], bb = band[p], up = p >= W ? band[p - W] : 255, lf = p % W ? band[p - 1] : 255;
+        bd.push(bb === 255 ? 255 : bb | ((up !== 255 && up < bb) || (lf !== 255 && lf < bb) ? 16 : 0));
+      }
       var layer = document.createElement('canvas');
       layer.width = W; layer.height = H;
       var anim = document.createElement('canvas');
       anim.width = W; anim.height = H;
       var actx = anim.getContext('2d');
-      S.W = W; S.H = H; S.reach = reach; S.mask = mask; S.water = water;
+      S.W = W; S.H = H; S.reach = reach; S.mask = mask; S.water = water; S.band = band;
       S.layer = layer; S.lctx = layer.getContext('2d');
       S.anim = anim; S.actx = actx; S.aimg = actx.createImageData(W, H);
-      S.idx = new Int32Array(idx); S.dd = new Uint8Array(dd); S.dep = new Uint8Array(dep);
+      S.idx = new Int32Array(idx); S.dd = new Uint8Array(dd); S.dep = new Uint8Array(dep); S.bd = new Uint8Array(bd);
       S.nz = noiseOf(S.idx, W);
+      S.segs = mirrorSegs(water, band, W, H);
       S.stamp = -1; S.palette = null;
       S.ready = true;
     };
     img.src = '/bridge/assets/scenes/' + sc.id + '/shore' + (sc.ext || '.png') + (sc.q || '');
+    if (sc.meta.glow) {                                // what gives off light, alone: the lamps' streaks down the water
+      var gi = new Image();
+      gi.onload = function () { S.glow = gi; S.rv = null; };
+      gi.src = '/bridge/assets/scenes/' + sc.id + '/glow' + (sc.ext || '.png') + (sc.q || '');
+    }
     return null;
+  }
+
+  // Where the water mirrors what stands above it: in each column, every place the water begins under something that
+  // isn't water (a bank, a quay, a pier, a hull, a rock) — the waterline — and how far down it the mirror reaches (as far
+  // as the thing is tall, as the water runs, MAXR at most). Neighbouring columns with the same line and reach are one
+  // run: [x, waterline row, columns, reach] four to a run, sorted by row.
+  function mirrorSegs(water, band, W, H) {
+    var runs = [], open = null;
+    var lineAt = new Int32Array(W).fill(-1), lenAt = new Int32Array(W);
+    var segs = [];
+    for (var x = 0; x < W; x++) {
+      var land = 0;
+      for (var y = 0; y < H; y++) {
+        var p = y * W + x;
+        if (!water[p]) { land++; continue; }
+        if (land >= 2 && band[p] !== 255) {
+          var run = 0;
+          while (run < MAXR && y + run < H && water[(y + run) * W + x]) run++;
+          var len = Math.min(land, run, MAXR);
+          if (len >= 3) segs.push([x, y, len]);
+        }
+        land = 0;
+      }
+    }
+    segs.sort(function (a, b) { return a[1] - b[1] || a[0] - b[0]; });
+    var out = [];
+    for (var i = 0; i < segs.length; i++) {
+      var s = segs[i], last = out.length ? out.length - 4 : -1;
+      if (last >= 0 && out[last + 1] === s[1] && out[last + 3] === s[2] && out[last] + out[last + 2] === s[0]) out[last + 2]++;
+      else out.push(s[0], s[1], 1, s[2]);
+    }
+    return new Int32Array(out);
   }
 
   // Each shore pixel's grain (fixed by where it is), worked out once rather than every stamp.
@@ -388,8 +583,8 @@ var BridgeSea = (function () {
   }
   // The view and a margin round it (room for the camera to move until the next stamp), clamped
   // to the render: [x0, y0, x1, y1]. Only this much of an island's water is worked each stamp.
-  function around(v, W, H) {
-    var M = 96;
+  function around(v, W, H, M) {
+    M = M || 96;
     return [Math.max(0, v[0] - M), Math.max(0, v[1] - M), Math.min(W, v[0] + v[2] + M), Math.min(H, v[1] + v[3] + M)];
   }
   // the first k with idx[k] >= p (the shore's pixel list is in row order)
@@ -399,7 +594,100 @@ var BridgeSea = (function () {
     return lo;
   }
 
-  function animate(S, P, now, v, k, name) {
+  // ---- the mirror: what stands above the water, upside down under its waterline, darkened to the water's colour,
+  // fading in three steps down it; and the lamps' light smeared down the water after dark. Made for the view and a
+  // margin round it (a canvas the size of the screen, not of the island) whenever the view leaves that, the picture
+  // above the water changes (a new live-light composition, or the baked light state that shows most), or the light
+  // does; then drawn a dozen times a second with each row nudged sideways on a slow wave (the ripple).
+  var FADE = [[0, 6, 0.85], [6, 14, 0.55], [14, MAXR, 0.28]];
+  function mirrorSource(sc) {
+    if (sc.lit && sc.lit.cur) return { img: sc.lit.cur.canvas, key: sc.lit.cur };
+    var W = typeof BridgeScene !== 'undefined' && BridgeScene.skyOf ? BridgeScene.skyOf(sc) : null, st = sc.meta.states[0];
+    if (W) st = W.day >= W.dusk && W.day >= W.night ? W.cy.day : W.dusk >= W.night ? W.cy.dusk : W.cy.night;
+    var img = sc.imgs && sc.imgs[st];
+    return img ? { img: img, key: img } : null;
+  }
+  function mirror(S, sc, v, C, L) {
+    var src = mirrorSource(sc);
+    if (!src) return null;
+    var R = S.rv, ck = C.key + '|' + Math.round(L.night * 8);
+    if (R && R.src === src.key && R.ck === ck && R.glow === !!S.glow && v[0] >= R.x0 && v[1] >= R.y0 && v[0] + v[2] <= R.x1 && v[1] + v[3] <= R.y1) return R;
+    var A = around(v, S.W, S.H, 128), x0 = A[0], y0 = A[1], w = A[2] - x0, h = A[3] - y0;
+    if (!R) R = S.rv = { c: document.createElement('canvas'), g: document.createElement('canvas'), w2: document.createElement('canvas') };
+    [R.c, R.g, R.w2].forEach(function (cv) { if (cv.width < w || cv.height < h) { cv.width = Math.max(cv.width, w); cv.height = Math.max(cv.height, h); } });
+    R.x0 = x0; R.y0 = y0; R.x1 = A[2]; R.y1 = A[3]; R.w = w; R.h = h; R.src = src.key; R.ck = ck; R.glow = !!S.glow;
+    var g = R.c.getContext('2d'), gg = S.glow ? R.g.getContext('2d') : null, segs = S.segs, rows = R.rows = new Uint8Array(h);
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, R.c.width, R.c.height);
+    if (gg) { gg.setTransform(1, 0, 0, 1, 0, 0); gg.globalCompositeOperation = 'source-over'; gg.globalAlpha = 1; gg.clearRect(0, 0, R.g.width, R.g.height); }
+    var any = false;
+    for (var i = lowerBound4(segs, y0 - MAXR); i < segs.length; i += 4) {
+      var sx = segs[i], s = segs[i + 1], n = segs[i + 2], len = segs[i + 3];
+      if (s >= A[3]) break;
+      if (s + len <= y0 || sx >= A[2] || sx + n <= x0) continue;
+      any = true;
+      g.setTransform(1, 0, 0, -1, -x0, 2 * s - y0);                // y below the line = the row as far above it
+      for (var f = 0; f < FADE.length; f++) {
+        var a = FADE[f][0], b = Math.min(FADE[f][1], len);
+        if (b <= a) break;
+        g.globalAlpha = FADE[f][2];
+        g.drawImage(src.img, sx, s - b, n, b - a, sx, s - b, n, b - a);
+      }
+      if (gg) { gg.setTransform(1, 0, 0, -1, -x0, 2 * s - y0); gg.drawImage(S.glow, sx, s - len, n, len, sx, s - len, n, len); }
+      for (var y = Math.max(0, s - y0); y < Math.min(h, s + len + 14 - y0); y++) rows[y] = 1;
+    }
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1;
+    // the water's own colour over it: a reflection is darker and takes the sea's tone
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = rgb(mixc(C.deep, C.base, 0.4), (0.3 + 0.2 * L.day).toFixed(2));
+    g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = 'source-over';
+    if (gg) {                                                    // the lamps' light, smeared down the water
+      var wg = R.w2.getContext('2d');
+      wg.setTransform(1, 0, 0, 1, 0, 0); wg.globalCompositeOperation = 'source-over'; wg.globalAlpha = 1; wg.clearRect(0, 0, R.w2.width, R.w2.height);
+      for (var d = 0; d <= 6; d++) { wg.globalAlpha = d < 2 ? 1 : d < 4 ? 0.6 : 0.3; wg.drawImage(R.g, 0, 0, w, h, 0, d * 2, w, h); }
+      wg.globalAlpha = 1; wg.globalCompositeOperation = 'destination-in';
+      wg.drawImage(S.mask, x0, y0, w, h, 0, 0, w, h);
+      wg.globalCompositeOperation = 'source-over';
+    }
+    R.any = any; R.at = -1;
+    return R;
+  }
+  function lowerBound4(segs, row) {                 // the first run at or below `row` (runs are sorted by row)
+    var lo = 0, hi = segs.length / 4;
+    while (lo < hi) { var m = (lo + hi) >> 1; if (segs[m * 4 + 1] < row) lo = m + 1; else hi = m; }
+    return lo * 4;
+  }
+  function drawMirror(ctx, S, sc, bx, by, v, now, C, L) {
+    var R = mirror(S, sc, v, C, L);
+    if (!R || !R.any) return;
+    if (!R.rp) { R.rp = document.createElement('canvas'); R.rx = R.rp.getContext('2d'); }
+    var rip = R.rp, ripx = R.rx;
+    if (rip.width < R.w || rip.height < R.h) { rip.width = Math.max(rip.width, R.w); rip.height = Math.max(rip.height, R.h); }
+    var t = Math.floor(now / 90);
+    if (R.at !== t) {                                         // the ripple: each row nudged on a slow wave, in whole pixels
+      R.at = t;
+      ripx.clearRect(0, 0, R.w, R.h);
+      var amp = 1.3 + 1.2 * L.rain + 1.6 * L.gale, tt = now / 1000;
+      for (var y = 0; y < R.h; y++) {
+        if (!R.rows[y]) continue;
+        var wy = y + R.y0, off = Math.round(amp * (Math.sin(wy * 0.8 + tt * 1.8) + 0.5 * Math.sin(wy * 2.1 - tt * 2.4)) / 1.5);
+        ripx.drawImage(R.c, 0, y, R.w, 1, off, y, R.w, 1);
+      }
+    }
+    ctx.save();
+    ctx.globalAlpha = (1 - 0.5 * L.fog) * (1 - 0.3 * L.storm);
+    ctx.drawImage(rip, 0, 0, R.w, R.h, bx + R.x0, by + R.y0, R.w, R.h);
+    // lit windows and lanterns streaking down the water after dark
+    var gk = clamp((L.night + 0.5 * L.dusk - 0.3) / 0.5, 0, 1);
+    if (S.glow && gk > 0.05) {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.8 * gk * (1 - 0.5 * L.fog);
+      ctx.drawImage(R.w2, 0, 0, R.w, R.h, bx + R.x0 + (Math.floor(now / 420) % 3 === 1 ? 1 : 0), by + R.y0, R.w, R.h);
+    }
+    ctx.restore();
+  }
+
+  function animate(S, P, now, v, k, name, C, L) {
     var d = S.aimg.data;
     var sh = P.shallow.split(',').map(Number), fo = P.foam.split(',').map(Number);
     // the bloom: the shallows, the surf and the foam lit by the spores (the sea's own light; its brightest at the crests)
@@ -408,22 +696,24 @@ var BridgeSea = (function () {
       sh = sh.map(function (c, i) { return Math.round(c + (hu[i] - c) * k); });
       fo = fo.map(function (c, i) { return Math.round(c + (co[i] - c) * k); });
     }
-    var t = now / 520, tc = now / 900;
+    var t = now / 520, tc = now / 900, rough = 1 + 0.8 * Math.max(L.storm, 0.6 * L.gale);
     var reach = S.reach, W = S.W, R = around(v, W, S.H), n = S.idx.length;
     for (var y = R[1]; y < R[3]; y++) {
       var row = y * W, end = row + R[2];
       d.fill(0, (row + R[0]) * 4, end * 4);
       for (var i = lowerBound(S.idx, row + R[0]); i < n && S.idx[i] < end; i++) {
-        var p = S.idx[i], dist = S.dd[i], depth = S.dep[i];
+        var p = S.idx[i], dist = S.dd[i], depth = S.dep[i], bd = S.bd[i];
         var x = p - row;
         var hx = x >> 1, hy = y >> 1;
         var nz = S.nz[i];
         var r = 0, g = 0, b = 0, al = 0;
+        // the shallows pale over the bed, a band at a time, the lip of each shelf a little lighter
+        if (bd !== 255) { r = sh[0]; g = sh[1]; b = sh[2]; al = BAND_T[bd & 15] + (bd & 16 ? 0.1 : 0); }
         // light rippling on the shallow bed
         if (depth > 0 && depth < CAUSTIC) {
           var cv = Math.sin(hx * 0.42 + 1.8 * Math.sin(hy * 0.23 + tc * 0.8)) +
                    Math.sin(hy * 0.37 - tc * 0.6 + 1.6 * Math.sin(hx * 0.19 - tc * 0.5));
-          if (Math.abs(cv) < 0.2) { r = sh[0]; g = sh[1]; b = sh[2]; al = 0.26 * (1 - depth / CAUSTIC) * (bl ? 1 + 0.3 * k : 1); }
+          if (Math.abs(cv) < 0.2) { r = sh[0]; g = sh[1]; b = sh[2]; al = Math.max(al, (depth < CAUSTIC / 2 ? 0.32 : 0.2) * (bl ? 1 + 0.3 * k : 1)); }
         }
         if (dist <= reach) {
           var f = 1 - dist / reach;
@@ -434,11 +724,12 @@ var BridgeSea = (function () {
             gl = Math.round(gl * 8) / 8;                     // in flat steps, not a smooth ramp
             if (gl > al) { r = hu[0]; g = hu[1]; b = hu[2]; al = gl; }
           }
-          // foam lines lapping in toward the shore, broken into flecks
-          var wave = Math.sin(dist * 0.7 + t + nz * 2.2);
-          if (dist <= 9 && wave > 0.86 - nz * 0.2 && nz > 0.25) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, (0.4 + 0.45 * (k || 0)) * (1 - dist / 10)); }
-          // the wash at the waterline, breathing in and out, with gaps
-          if (dist <= 1 + (wash > 0.5 ? 1 : 0) && wash > -0.2) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.5 + 0.45 * (k || 0) - dist * 0.12); }
+          // surf rolling in: lines of foam in toward the shore, broken into dashes, flat (two strengths)
+          var wave = Math.sin(dist * 0.62 - t * rough + nz * 1.4);
+          if (dist <= 9 * rough && wave > 0.9 - 0.08 * rough && nz > 0.22) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, (dist <= 4 ? 0.62 : 0.4) + 0.4 * (k || 0)); }
+          // the lap line at the waterline, breathing in and out a pixel, with gaps
+          var lap = wash > 0.45 ? 2 : 1;
+          if (dist <= lap && (wash > -0.3 || dist <= 1) && nz > 0.08) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, (dist <= 1 ? 0.85 : 0.6) + 0.15 * (k || 0)); }
         }
         if (al > 0) {
           var o = p * 4;
@@ -454,6 +745,7 @@ var BridgeSea = (function () {
     var S = loadShore(sc);
     if (!S) return;
     var name = PALETTES[palette] ? palette : 'emerald', W = skyFor(name, sc), P = litPalette(name, W);
+    var Lw = lightOn(name, sc), C = colours(name, Lw);
     var bx = Math.round(offX - sc.meta.originX), by = Math.round(offY - sc.meta.originY);
     // only the part on screen is rebuilt and drawn (an island's water is the size of its render)
     var v = BridgeScene.visible(S.W, S.H, bx, by, ctx.canvas.width, ctx.canvas.height);
@@ -470,33 +762,36 @@ var BridgeSea = (function () {
     // one fill per layer: a composite like source-in applies to the whole
     // clip on every draw, so the texture goes in as a pattern, not tiles
     var D = drift(now);
-    var base = W && W.day > 0.995 ? name + '@day' : name;
     L.globalCompositeOperation = 'source-in';
-    fillPattern(L, texture(base, 1), S.W, S.H, D.ax + bx, D.ay + by, 1);
+    fillPattern(L, texture(name, 0, C), S.W, S.H, D.ax + bx, D.ay + by, 1);
     L.globalCompositeOperation = 'source-atop';
-    fillPattern(L, texture(base, 2), S.W, S.H, D.bx + bx, D.by + by, 0.45);
-    if (W && base === name) {
-      [[name + '@dusk', W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0], [name + '@day', W.day]].forEach(function (l) {
-        if (l[1] <= 0.003) return;
-        fillPattern(L, texture(l[0], 1), S.W, S.H, D.ax + bx, D.ay + by, l[1]);
-        fillPattern(L, texture(l[0], 2), S.W, S.H, D.bx + bx, D.by + by, 0.45 * l[1]);
-      });
-    }
+    fillPattern(L, texture(name, 1, C), S.W, S.H, D.bx + bx, D.by + by, 1);
+    var cap = capAlpha(Lw);
+    if (cap) fillPattern(L, texture(name, 2, C), S.W, S.H, D.cx + bx, D.cy + by, cap);
     // the bloom: the open sea's currents carried on over the island's water at its opacity (so it meets the open sea
     // without a seam and thins over the shallows, where the surf, in animate, takes over)
     var k = bloomK();
     if (k > 0.01) bloomWater(L, v[0], v[1], v[0] + v[2], v[1] + v[3], bx, by, now, name, k, 'source-atop');
     L.restore();
     ctx.drawImage(S.layer, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
-    // ripples, shallows and foam
-    var stamp = Math.floor(now / 70), pk = name + P.shallow + P.foam + Math.round(k * 20);
-    if (S.stamp !== stamp || S.palette !== pk) { S.stamp = stamp; S.palette = pk; animate(S, P, now, v, k, name); }
+    // what stands above the water, mirrored in it; the lamps streaking down it after dark
+    drawMirror(ctx, S, sc, bx, by, v, now, C, Lw);
+    // the shallows' bands, ripples and foam
+    var stamp = Math.floor(now / 70), pk = name + P.shallow + P.foam + Math.round(k * 20) + '|' + Math.round(Lw.storm * 4 + Lw.gale * 2);
+    if (S.stamp !== stamp || S.palette !== pk) { S.stamp = stamp; S.palette = pk; animate(S, P, now, v, k, name, C, Lw); }
     ctx.drawImage(S.anim, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
-    glints(ctx, ctx.canvas.width, ctx.canvas.height, now, P, function (x, y) {
+    var isW = function (x, y) {
       var px = x - bx, py = y - by;
       if (px < 0 || py < 0 || px >= S.W || py >= S.H) return true;
       return S.water[py * S.W + px] === 1;
-    }, W, k, name);
+    };
+    skyLight(ctx, ctx.canvas.width, ctx.canvas.height, now, Lw, C, function (x, y) {   // on open water, not the shallows
+      var px = x - bx, py = y - by;
+      if (px < 0 || py < 0 || px >= S.W || py >= S.H) return true;
+      var b = S.band[py * S.W + px];
+      return S.water[py * S.W + px] === 1 && (b === 255 || b >= 2);
+    });
+    glints(ctx, ctx.canvas.width, ctx.canvas.height, now, P, isW, W, k, name);
   }
 
   // ---- older scenes: foam round the silhouette ----------------------------------------
@@ -593,7 +888,8 @@ var BridgeSea = (function () {
   function forget(id) { delete shores[id]; delete bands[id]; }
 
   // after the canvas was lost: every texture and mask is made again as it's next needed
-  function reset() { tex = {}; patterns = {}; shores = {}; bands = {}; gtex = {}; }
+  function reset() { tex = {}; shores = {}; bands = {}; gtex = {}; }
 
-  return { drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
+  return { _light: function (name, id) { var sc = id && typeof BridgeScene !== 'undefined' ? BridgeScene.get(id) : null; var L = lightOn(name || 'emerald', sc); return { L: L, C: colours(name || 'emerald', L) }; },
+           drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
 })();
