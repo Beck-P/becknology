@@ -2473,6 +2473,12 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .bp-icon { position: absolute; left: 12%; top: 12%; width: 76%; height: 76%; image-rendering: pixelated; }
 .bp-num { position: absolute; top: 1px; left: 4px; font-size: 10px; color: var(--gm-dim); pointer-events: none; }
 .bp-count { position: absolute; bottom: 1px; right: 4px; font-size: 12px; font-weight: 600; color: #fff; text-shadow: 1px 1px 0 #000, -1px 0 0 #000; pointer-events: none; }
+/* quest items (js/inventory.js refreshQuest): what a quest has given you to hand on, in its own row under the pack */
+.bp-quest .bp-head { margin-top: 2px; }
+.bp-quest-grid { margin-bottom: 12px; }
+.bp-qslot { border-color: color-mix(in srgb, #d0a040 70%, var(--gm-line)); box-shadow: inset 0 0 10px color-mix(in srgb, #d0a040 25%, transparent); }
+.bp-qslot.focus { border-color: #f0d070; box-shadow: 0 0 0 1px #f0d070, 0 0 10px rgba(240, 208, 112, 0.5); }
+.bp-offering .bp-quest { display: none; }
 .bp-next { font-size: 12px; line-height: 1.45; color: var(--gm-dim); padding: 8px 10px; border-radius: 4px; background: var(--gm-hi); border: 1px dashed var(--gm-line); max-width: 560px; }
 .bp-next b { color: var(--gm-ink); font-weight: 600; }
 .bp-chest { padding: 10px 12px 2px; margin-bottom: 14px; border-radius: 6px; background: var(--gm-hi); border: 1px solid var(--gm-line); max-width: 584px; }
@@ -2588,6 +2594,51 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .jn-log b { color: var(--gm-title); font-weight: 600; }
 .jn-when { display: block; font-size: 11px; color: var(--gm-dim); margin-top: 1px; }
 .jn-more { margin-top: 8px; }
+/* leads (a clue's `hint`), rumours and the one you're tracking (js/quests.js) */
+.jn-clues li.lead { color: var(--gm-ink); }
+.jn-clues li.lead::before { content: '\279C'; font-size: 10px; top: 3px; color: var(--gm-accent); }
+.jn-quest.tracked { border-color: var(--gm-accent); box-shadow: inset 3px 0 0 var(--gm-accent); }
+.jn-quest.rumour { background: transparent; border-style: dashed; }
+.jn-q-head .jn-track { margin-left: auto; padding: 1px 8px; font-size: 11px; }
+.jn-tracking { margin-left: auto; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gm-accent); }
+.jn-sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gm-dim); margin: 12px 0 6px; }
+
+/* ---- the quest tracker (js/quests.js refreshTracker): the quest you're following, top right under the coins ---- */
+#quest-tracker {
+  position: fixed; top: 100px; right: 16px; z-index: 24; width: 252px; display: none;
+  padding: 8px 10px 9px; border-radius: 10px; pointer-events: auto;
+  background: rgba(14, 12, 22, 0.74); border: 1px solid rgba(255, 213, 106, 0.28);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  font-family: 'Pixelify Sans', 'Courier New', monospace; color: rgba(242, 238, 230, 0.92);
+}
+#quest-tracker.on { display: block; }
+#quest-tracker.flash { animation: qtr-flash 0.9s ease-out; }
+@keyframes qtr-flash { 0% { box-shadow: 0 0 0 0 rgba(255, 213, 106, 0.9); } 100% { box-shadow: 0 0 0 10px rgba(255, 213, 106, 0); } }
+.qtr-head { display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #ffd56a; }
+.qtr-n { color: rgba(242, 238, 230, 0.6); letter-spacing: 1px; }
+.qtr-min { margin-left: auto; width: 18px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.18);
+  background: none; color: rgba(242, 238, 230, 0.7); font: inherit; font-size: 13px; line-height: 15px; cursor: pointer; }
+.qtr-title { display: block; width: 100%; text-align: left; padding: 0; margin: 2px 0 0; background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 15px; color: #fff4dc; }
+.qtr-title:hover { color: #ffd56a; }
+.qtr-bar { height: 3px; margin: 5px 0 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.qtr-bar i { display: block; height: 100%; background: #ffd56a; transition: width 0.6s; }
+.qtr-rumour { font-size: 12px; line-height: 1.35; color: rgba(242, 238, 230, 0.7); font-style: italic; margin: 4px 0 6px; }
+.qtr-carry { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #ffe8b0; margin: 2px 0 4px; }
+.qtr-carry img { width: 20px; height: 20px; image-rendering: pixelated; }
+.qtr-leads { list-style: none; margin: 0; padding: 0; font-size: 12.5px; line-height: 1.35; }
+.qtr-leads li { position: relative; padding: 2px 0 2px 14px; }
+.qtr-leads li::before { content: '\279C'; position: absolute; left: 0; top: 2px; font-size: 10px; color: #ffd56a; }
+#quest-tracker.min { width: auto; max-width: 252px; }
+#quest-tracker.min .qtr-title { font-size: 13px; }
+html.menu-open #quest-tracker, html.at-sea #quest-tracker, body:has(.sport-hud.on) #quest-tracker { display: none; }
+html.touch #quest-tracker { top: calc(100px + env(safe-area-inset-top)); right: calc(12px + env(safe-area-inset-right)); width: 210px; padding: 6px 8px 7px; }
+@media (max-width: 760px) {                         /* a phone: one lead, a narrow card, so the room stays in view */
+  #quest-tracker, html.touch #quest-tracker { width: 176px; padding: 5px 8px 6px; }
+  .qtr-title { font-size: 13px; } .qtr-leads { font-size: 11px; } .qtr-leads li:nth-child(n+2), .qtr-rumour { display: none; }
+}
+@media (max-width: 960px) { body:has(.quest-toast.visible) #quest-tracker { opacity: 0; } }   /* the toast is centred: give it the room */
+#quest-tracker { transition: opacity 0.3s; }
 .jn-empty { font-size: 13px; line-height: 1.45; color: var(--gm-dim); padding: 6px 0; }
 
 /* ---- Fish (js/codex.js) ---- */
