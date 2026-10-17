@@ -78,8 +78,9 @@ const CASES = [
     await ev((a) => { BridgeClock._at(a[0]); if (a[1]) BridgeWeather._pin(a[1][0], a[1][1]); }, [at, pin || null]);
     await go(w, x, y);
     await ev((a) => BridgeEvents._force(a[0], a[1]), [id, s]);
-    await p.waitForTimeout(1800);
+    await p.waitForTimeout(4500);                                   // long enough for a crowd to walk up
     const run = await ev(() => BridgeEvents._running());
+    const crowd = await ev(() => typeof BridgeCrowd !== 'undefined' && BridgeCrowd._here ? BridgeCrowd._here().filter(c => c.gather).length : 'no crowds');
     await p.screenshot({ path: SHOTS + '/event_' + id + '.png' });
     let did = '';
     if (id === 'trader') { await use('SHIP\'S TRADER'); did = (await dialog()).slice(0, 120); await ev(() => document.querySelector('.world-dialog .wd-sell-row.pick:not(.none)').click()); await p.waitForTimeout(500); did += ' → coins ' + await ev(() => window._coins); }
@@ -100,7 +101,7 @@ const CASES = [
     if (id === 'door') { await use('PRESSURE DOOR'); did = (await dialog()).slice(0, 80); }
     if (id === 'comms') { await use('ANTENNA ARRAY'); did = (await dialog()).slice(0, 110); }
     await close();
-    console.log('event ' + id + ' in ' + w + ': running ' + JSON.stringify(run) + (did ? ' | ' + did : ''));
+    console.log('event ' + id + ' in ' + w + ': running ' + JSON.stringify(run) + ' · gathered ' + crowd + (did ? ' | ' + did : ''));
     await ev((a) => { if (a) BridgeWeather._pin(a[0], null); BridgeEvents._clear(); }, pin || null);
   }
   // the journal heard about them, quietly
