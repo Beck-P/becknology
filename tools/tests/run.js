@@ -83,7 +83,7 @@ const KEEP = new RegExp([
   /hp|down|up:|roll|chain|energy|boxes/,
   /contract|dispatch|orders away|route lines|treasury/,
   /slipway|keel|launched|shipwright/,
-  /hall interaction|inside:|its plate|an empty board|found:|plans:|woken:|on the bench|empty shelf/,
+  /hall interaction|inside:|its plate|an empty board|found:|plans:|woken:|on the bench|empty shelf|food:|the Collection:/,
   /homes:|furnished|MISSING/,
   /routes \d|busiest|in view|frames a second|traders|navy:|trawler:|privateer:|galleon:|man_of_war|pirate:|on the Midnight|hailed/,
   /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,

@@ -179,7 +179,7 @@ var BridgeCodex = (function () {
         return '<button type="button" class="cx-tab' + (x.id === s.id ? ' on' : '') + (full ? ' full' : '') + '" data-set="' + x.id + '">' + esc(x.name) + ' <i>' + n + '/' + x.items.length + '</i></button>';
       }).join('') + '</div>' +
       '<div class="cx-set"><span class="cx-name">' + esc(s.name) + '</span><span class="cx-reward">' +
-        (st.paid[s.id] ? 'Complete · ' + s.reward + ' coins paid' : 'Find them all: ' + s.reward + ' coins') + '</span></div>' +
+        (st.paid[s.id] ? 'Complete: ' + BONUS[s.id] : 'Find them all: ' + s.reward + ' coins, and ' + BONUS[s.id]) + '</span></div>' +
       '<div class="cx-grid"></div><div class="cx-detail">' + (document.documentElement.classList.contains('touch') ? 'Tap' : 'Point at') + ' one to see where it\'s found.</div></div>';
     el.innerHTML = html;
     var grid = el.querySelector('.cx-grid'), detail = el.querySelector('.cx-detail'), shade = shadeOf(el);
@@ -290,5 +290,14 @@ var BridgeCodex = (function () {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(init, 0); });
     else setTimeout(init, 0);
   }
-  return { SETS: SETS, count: count, total: total, render: render, renderFish: renderFish, note: note, init: init, _st: function () { return st; } };
+  // what a completed set gives for good (the empire plan's Cabinet of Wonders: "completed sets give lasting bonuses to
+  // the engine, not just a one-time payout"); each module asks `bonus(set)`
+  var BONUS = {
+    fish: 'fish bite a little sooner, wherever you cast', legends: 'the rare fish come up more often', stones: 'now and then the rock gives a piece more',
+    farm: 'crops grow a tenth quicker', materials: 'your workshop works a tenth quicker', magic: 'a bolt or a wand costs one less energy',
+    finds: 'treasure chests hold a fifth more coins', gear: 'every weapon hits a twentieth harder', food: 'food goes a quarter further',
+    maps: 'Ilsa sells her maps for a quarter less'
+  };
+  function bonus(id) { return !!st.paid[id]; }
+  return { SETS: SETS, BONUS: BONUS, bonus: bonus, count: count, total: total, render: render, renderFish: renderFish, note: note, init: init, _st: function () { return st; } };
 })();

@@ -177,9 +177,10 @@ var BridgeMagic = (function () {
   // The staff or wand is raised and thrust out (js/arms.js, the cast swing); the bolt leaves on the thrust. Charged
   // (F held), it's twice as strong, bigger, and goes on through whatever it meets.
   var lastCast = 0, COST = 2;
+  function cost() { return COST - (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('magic') ? 1 : 0); }          // the Collection's magic things, all found
   function cast(item) {
     var inv = BridgeInventory, A = typeof BridgeArms !== 'undefined' ? BridgeArms : null;
-    var tired = function () { return inv.getStats && inv.getStats().energy < COST; };
+    var tired = function () { return inv.getStats && inv.getStats().energy < cost(); };
     // too tired: said over your head, not in a box mid-fight (the bolt's energy comes back once you stop - js/arms.js)
     var gutter = function () {
       sfx('error');
@@ -188,8 +189,8 @@ var BridgeMagic = (function () {
     };
     if (tired()) return gutter();
     var fire = function (mult, charged) {
-      if (A && A.spend ? !A.spend(COST) : tired()) return gutter();
-      if (!A && inv.useEnergy) inv.useEnergy(COST);
+      if (A && A.spend ? !A.spend(cost()) : tired()) return gutter();
+      if (!A && inv.useEnergy) inv.useEnergy(cost());
       var f = BridgeCharacter.getFacing(), dx = f === 'right' ? 1 : f === 'left' ? -1 : 0, dy = f === 'down' ? 1 : f === 'up' ? -1 : 0;
       var w = item;
       if (charged) { w = Object.create(item); w.damage = Math.round((item.damage || 30) * (mult || 2)); w.charged = true; }

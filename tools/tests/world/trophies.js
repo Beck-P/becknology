@@ -118,6 +118,25 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await shut(); await ev(() => BridgeCharacter.init(3, 4)); await wait(1200);
   await p.screenshot({ path: SHOTS + '/trophies_cabinet.png' });
 
+  // ---- the Collection: a completed set gives something for good ---------------------------------------------------------
+  const eat = (bonus) => ev((b) => { const C = BridgeCodex._st(); if (b) C.paid.food = Date.now(); else delete C.paid.food;
+    const inv = BridgeInventory, s0 = inv.getStats(); inv.useEnergy(s0.energy - 1); const e0 = inv.getStats().energy;
+    const food = Object.values(BridgeItems.all()).find(it => it.type === 'food' && it.effects && it.effects.energy >= 20 && it.onUse);
+    food.onUse.call(food, inv); return { id: food.id, gain: inv.getStats().energy - e0, bonus: BridgeCodex.bonus('food') }; }, bonus);
+  const plain = await eat(false), fed = await eat(true);
+  console.log('food:', JSON.stringify(plain), JSON.stringify(fed));
+  expect('the food and drink set, complete, makes food go a quarter further', fed.bonus && fed.gain === Math.round(plain.gain * 1.25));
+  await ev(() => BridgeMenu.open('collection')); await wait(800);
+  const tab = (name) => ev((n) => { const b = [...document.querySelectorAll('#game-menu button, #game-menu [role=tab], #game-menu .cx-tab')].find(x => x.textContent.indexOf(n) === 0); if (b) b.click(); return !!b; }, name);
+  const text = () => ev(() => document.querySelector('#game-menu') ? document.querySelector('#game-menu').innerText : '');
+  await tab('From the farm'); await wait(300);
+  const farm = await text();
+  await tab('Food and drink'); await wait(300);
+  const page = await text();
+  console.log('the Collection:', (page.match(/Complete:[^\n]*/i) || ['(no complete line)'])[0], '|', (farm.match(/Find them all:[^\n]*/i) || ['(none)'])[0]);
+  expect('the Collection says what each set gives, and what a complete one does now', /Complete: food goes a quarter further/i.test(page) && /crops grow a tenth quicker/i.test(farm));
+  await p.screenshot({ path: SHOTS + '/trophies_collection.png' });
+
   console.log('errors', errors);
   await b.close();
 })();
