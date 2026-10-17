@@ -285,6 +285,12 @@ var BridgeTransit = (function () {
     var up = smooth(360, 440, f);
     if (up <= 0) return;
     g.globalAlpha = up;
+    var L = typeof BridgeSkyline !== 'undefined' && BridgeSkyline.layers ? BridgeSkyline.layers() : null;
+    if (L && L.peaks && L.manifest.peaks) {                  // the Spires' own rendered layer (tools/bridge-art/skyline.py peaks), when it's in
+      var m = L.manifest.peaks, k = 0.6, pw = Math.round(m.w * k), ph = Math.round(m.h * k);
+      var px = -((dx * 0.25) % pw + pw) % pw;
+      for (var xx = px; xx < NW; xx += pw) g.drawImage(L.peaks, xx, y + 26 - ph, pw, ph);
+    } else
     for (var i = 0; i < 9; i++) {
       var d = 0.35 + hash(i + 40) * 0.65;                    // far … near
       var span = NW + 120, x = ((i * 47 + hash(i + 41) * 60 - dx * (0.15 + 0.5 * (1 - d))) % span + span) % span - 60;
