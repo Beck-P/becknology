@@ -7,7 +7,33 @@ This file is the single source of truth for the **bridge app's** visual style �
 <!-- Last reviewed: 2026-10-14 -->
 
 ## North star
-**Cast n Chill meets Stardew Valley.** A cozy 2D world that feels alive — very slightly pixelated, painterly light, rich small detail: Stardew's readable top-down map and high-oblique building sprites (full facade visible AND most/all of the roof plane visible from above), with Cast n Chill's richer detail, mood lighting and constant small motion (smoke, flicker, water, breathing idles). We are intentionally hybrid — AI-painted PNGs, Blender-rendered sprites and procedural canvas drawing all meet on **one native pixel grid**, under one lighting model. The job of this doc is to keep those paths looking like one game.
+**Our own little model world, finished like toys, in soft light** (Beck's call after Look Book 2, October 2026: "toy, the
+normal toy, not HD. With soft light… the normal faces… make a face for them for that picture, kind of like Stardew").
+Everything is the game's own 3D models rendered by Blender at 32 px a tile — the 45° camera, the chunky cel-shaded
+people, the scene kits — and then finished as toys:
+
+- **The toy finish.** Light falls in a few flat bands (no smooth gradients, no dithering), shadows lean cool and the
+  brightest light warm, and a strong dark line runs wherever one thing stands in front of another — round a house, a
+  tree, a barrel, a person — but never inside the ground, between a roof's shingles or round a blade of grass. Not HD:
+  32 px a tile, as ever.
+- **Soft light.** What gives off light glows into its surroundings (js/gpu.js bloom, from each scene's glow image) and
+  the frame's corners settle a little darker (the vignette), so lamps, windows and neon read as light, not paint.
+- **Live light.** Outdoors the sun really crosses the sky with the planet's clock: shadows swing from the left in the
+  morning to the right in the evening and lie long and warm at golden hour, the moon and the lamps take over at night;
+  the seasons and the weather work on the same picture (snow on whatever faces up, autumn trees each their own colour,
+  wet ground in the rain) and still water mirrors its far bank (js/litscene.js, *Live light* below).
+- **Places with shape and life.** Land that rises and falls, terraces, banks sloping into water; vegetation in layers;
+  buildings from the richer house kit (`assets_house.py`); small life at the human scale everywhere. The bar is the
+  reference dioramas in `tools/bridge-art/dioramas/` (Millpond Farm, Lantern Quay, the Hoarfell tarn, Elderglade Brook,
+  Rainline Street) — "swing larger… still in our 3D style… less boxy and thrown together".
+- **People with faces.** The same chibi models with a simple drawn face — two eyes with a catch-light, brows, a mouth, a
+  touch of blush (the "normal" face, not the round one) — and, when you talk to someone, a Stardew-style portrait of
+  their face, not the top of their hat (*Faces and portraits* below).
+
+Stardew Valley and Cast n Chill are still the touchstones for coziness, readability and constant small motion (smoke,
+flicker, water, breathing idles); the look is ours. Older art (AI-painted PNGs, procedural drawers, scenes rendered
+before the toy finish) is being brought over — the backlog is in `_claude_docs/requests.md` (*The new look*). **Every
+new place is made the new way** (*Making a new place* below).
 
 ## Rendering pipeline (js/world.js)
 
@@ -31,6 +57,7 @@ This file is the single source of truth for the **bridge app's** visual style �
 | All scaling | nearest-neighbor only — `imageSmoothingEnabled = false` (except the light map, which is soft on purpose) |
 
 ## Procedural drawing rules — match the PNG style
+Code-drawn things that are still in the game (creatures, crops, effects, small props) should sit with the toy finish: flat tones, no gradients on subjects, a dark outline.
 
 The procedural drawers in `js/worlds/*.js` should look like they were drawn at 16 logical pixels per tile, even though they're rendered with `fillRect`. This is what keeps procedural and PNG art looking like the same family.
 
@@ -42,6 +69,8 @@ The procedural drawers in `js/worlds/*.js` should look like they were drawn at 1
 5. **Animation as overlay.** Animation goes in a separate pass on top of static art (see `drawChimneySmoke`, `drawWindowFlicker`). Keep it cheap and frame-based — small additive sprites or simple `Math.sin` modulations.
 
 ## PNG generation rules
+**Legacy.** New art is built in Blender in the game's own kit (*Making a new place*); no new AI-painted PNGs. These rules stay for the PNG sprites still in the game until they're replaced.
+
 
 **View angle: high oblique elevated front-facing RPG building view.** The building faces directly forward with the full front facade readable, AND most or nearly all of the roof plane is visible from above. The roof should feel almost top-down while the front wall stays fully visible. This is the classic farming-RPG building sprite that drops onto a top-down tile map (Stardew, Harvest Moon, Rune Factory).
 
@@ -285,7 +314,7 @@ python3 tools/bridge-art/scene_post.py /tmp/tavern apps/bridge/assets/scenes/lum
 ```
 
 - **Camera:** orthographic, 45° elevation; the world is stretched along rows by 1/sin 45° so every floor tile lands on an exact 32 × 32 px cell — the render lines up with the game grid.
-- **Light is real:** Cycles renders lamps, fire and moonlight with cast shadows. `scene_post.py` shades it Cast n Chill-style: a smooth tone curve quantized into many small steps with 4 × 4 ordered dithering, colour of the light kept, soft lines (a deeper shade of the surface) where one part sits in front of another.
+- **Light is real, finished as toys:** Cycles renders lamps, fire, sun and moonlight with cast shadows. `scene_post.py` finishes it in the toy style (`STYLE = 'toy'`, the default since October 2026): the light's luminance through the tone curve into six flat bands (`TOY_BANDS`), part of the light's colour kept (warm firelight stays warm), shadows leaning cool and the brightest light warm (`TOY_COOL`), and a strong line (`TOY_LINE`, a pixel darkened to ~40%) on a thing wherever what's next to it lies behind it or nothing does — a softer one where two things meet without a step — but never on the ground (`GROUND_WORDS`: paths, turf, paving, floors, rugs, water — by the words in the part's name, from render.json `ids`) and on a roof only at its real edges (`ROOF_WORDS`). Name parts so this reads: a floor is `floor_*`, a path `path`, a roof `roof_*`. `SCENE_STYLE=dither` re-posts a render in the older look (many dithered steps, soft lines).
 - **Firelight flickers:** each scene renders two light states (`full`, `dim`); the engine cross-fades them.
 - **Depth, not layers:** `depth.png` stores per-pixel depth; `js/scene.js` depth-tests every character against it (a character is an upright billboard at its foot row), so walking behind tables, counters and stools is always right — no hand-sorted layers. People walking about (you and the other pilots: `drawOccluded(…, 'auto')`) show through as a faded copy of themselves once more than half of them is hidden — behind a lodge's long roof or a tall cabinet you'd otherwise vanish; behind a counter your legs just go (Beck saw people "being clipped"). Posed sports (ski, climb) use `xray: true`, a pale silhouette.
 - **Characters pick up the room's light** from a per-tile light grid the render bakes (`tileLight` in `scene.json`).
@@ -310,6 +339,25 @@ python3 tools/bridge-art/scene_post.py /tmp/tavern apps/bridge/assets/scenes/lum
 - **The District kit** (`assets_district.py`): `frontage` builds a storefront by floors (cladding, window rows, balconies, fire escapes, AC units, side signs, posters, graffiti) and bespoke one-offs give each shop its own face — the arcade's canopy and portholes, the noodle bar's timber front, Lucky 7's bulb sign, the capsule hotel's pod wall, the club's monolith and velvet rope.
 - **Arcadia's skyline** (`tools/bridge-art/skyline.py` + `assets_city.py` → `assets/backdrops/arcadia/`, drawn by `js/skyline.js`): three Blender layers at the scenes' 45° — `far` mega-towers sinking into smog, `mid` towers with blank holo-ad screens (CineKit anchors `ad<N>_a/_b` mark their corners) and `low`, the city under the walkway's railing — scrolled at different speeds, with a moon in smog, lanes of flying traffic, searchlights, animated holo-ads and rain (`BridgeSkyline.rain`, the arcadia `over` hook, for worlds with a `"skyline"` block).
 - Ship scenes use `flicker.mode: "pulse"` — a slow breathing cross-fade between the light states for LED strips, instead of firelight flicker.
+
+### Live light (js/litscene.js)
+Look Book 2's relight, in the game: outdoors the picture is put together live for the planet's hour, season and weather instead of blended from three baked states.
+- **Rendering it** (`tools/bridge-art/scenekit.py`): any scene with a day (`cycle=`, or `SCENE_CYCLE`, or `SCENE_LIT=1`; `SCENE_NOLIT=1` never) also renders, at `SCENE_LIT_SAMPLES` (64) samples: `normal.png` (world normal), `lit_sky.png` (a white sky dome alone), `lit_sun0…5.png` (six white suns through the day, `LIT_SUNS`: how far from sunrise to sunset and the light's direction — each alone, with its own shadows; the grass casts none there, glowing parts are lit like any surface) and `lit_lamps.png` (the scene's own lamps and glowing parts as its first light state has them, no sky); over still water `refl.png` / `refl_glow.png` (a perfect mirror of the flat colours, the sky keyed magenta; and what glows alone); and render.json `ids` (each part's id colour → its name) and `lit`. Every variant gets the same passes. About twice the render time of the baked states.
+- **Packing it** (`scene_post.py lit_pack`): `lit_albedo` (the flat colours, the drawn grass in them), `lit_a` (R the sky, G/B suns 0-1), `lit_b` (suns 2-4), `lit_c` (R sun 5, G the normal's z, B flags: 1 leaf, 2 needle, 4 grass, 8 still water, 16 ground, 32 roof), `lit_d` (R which tree, G line strength), `lit_lamps` — light stored as sqrt(L / 4) × 255, 1 being open ground under the white sky — and `lit_refl` / `lit_reflglow`; a layer has the same in its own folder (`lit: 1`, `litLamps`). scene.json `lit`: `{ suns: [u…], lamps, base, refl, reflGlow }`. The baked states are still written (the map, the sloop, the chart, treasure maps and anything else that reads a state image keep working, and they show until the live picture is ready).
+- **In the game** (`js/litscene.js`, BridgeLit, loaded with the scene in the background): the hour comes from `BridgeClock.sky` on a 24-hour face (sunrise at 6, sunset at 19.6, the night stretched over the rest) and picks Look Book 2's sky palette for it; the sun's light is the two nearest sun passes blended (strength from its height, warmer and redder low down), the sky's light in the sky's colour, at night the moon (the noon pass, faint and blue) and the lamps (rising through dusk) and what glows. Seasons from `BridgeFoliage.season` (Lumar and Verdance): grass fresh / straw / dormant, each leafy tree its own autumn colour (more of them turned as the season goes on), blossom, bare winter boughs; on Verdance in winter snow on whatever faces up (the normal's z) and ice creeping in from a pond's shore. Weather from `BridgeWeather.here`: rain wets the ground and dims the sun, cloud and fog flatten it, snowfall lays a light snow. Then the toy finish (four flat bands, cool shadows, warm lights, the lines). Still water: four depth bands with organic shelves (worked out once), the far bank mirrored and wobbling, Blender's mirror for what stands in it, light dashes, a glitter path at golden hour, stars on clear nights, the lap line on the near shore, lamps streaking down it after dark (js/nature.js adds the glints and the rings). A composition takes a few ms a frame (`BUDGET`) whenever the light has moved on enough to show — about once a real minute — and fades in over the last (`FADE`). Characters are lit from the same passes at their feet (`tint`): in shadow under a tree, gold at sunset, lamplit at night.
+- **Hooks:** js/scene.js calls `BridgeLit.load(sc)`, `.layers(sc, use, masks)` (decor and stand-ins carry their lit passes), `.frame(sc)` in drawBackground, `.water(…)` after it and `.tint(…)` in tintAt; a scene without `lit` draws as before. Previews and tests: `BridgeLit._force({ hour, season, weather })` (hour on the 24-hour face; season `spring|summer|autumn|winter`; weather `clear|cloud|rain|fog|snow`), `BridgeLit._stats(id)`, `BridgeLit.light(id)`.
+- Not yet: the open sea's own reflections (js/sea.js draws the sea over the relit seabed), firelight flicker in the live picture (its lamps burn steady; the baked `full` / `dim` cross-fade only shows without live light), a per-scene sun path (every scene's sun comes from the same side). The re-renders are the backlog (`_claude_docs/requests.md`, *The new look*).
+
+### Making a new place (the house style)
+Every new place, and every place rebuilt, is made this way (Beck: "make it a goal… all the new places that we would make are going to adopt this").
+1. **Read a reference diorama first** (`tools/bridge-art/dioramas/`, its README): that's the bar for detail and composition.
+2. **Shape the land.** A heightfield or terraces (`assets_isle.ground` / `ridge`, the dioramas' own), banks that slope into water, nothing a flat board. Water sits in the land: a pond is sunk into it with muddy, pebbly, reedy banks and an irregular outline — never a circle in a field (Beck: "a random circle in the middle of a field"). Name still water `pond_water` / `stream_water` / `basin_water` (`Kit.WATER_PARTS`) so the live light gives it Look Book water.
+3. **Vegetation in layers:** turf with drawn grass (`W.grass` + `W.meadow`, `grass_detail`), tufts and flowers in clumps, shrubs and hedges, trees with real crowns (`leafy_crown`, `tree`, `pine`) inside `k.foliage(...)` so they turn with the seasons; evergreens where the place wants them.
+4. **Buildings from the richer house kit** (`assets_house.py`, `HK.rich_house` — the arguments of `assets_town.house` — `HK.bay_shop`, `HK.street`, `HK.garden`, `HK.pump`, `HK.tub`, `HK.barrels`, `HK.crate_stack`; `HK.install()` swaps it in for `W.house` everywhere in a script): roofs by material (thatch, pantile, shingle; hipped now and then) with deep eaves and rafter ends, jettied upper floors, porches and door canopies, framed windows with shutters and flower boxes, plinths and quoins, ivy and roses.
+5. **Small life at the human scale:** barrels, crates, tubs of flowers, a cat on the step, washing, signs, street clutter (`street_clutter`), the odd thing out of place.
+6. **Light it for its world** (`cycle='day'` for a place under the sun, `'night'` for Lumar's moonlit towns — either way it gets live light) and lamps where the art shows a source; interiors keep their own light states (firelight `full` / `dim`) and get the toy finish.
+7. **Name parts so the finish reads them** (the ground words, `roof_*`) and keep the detail standard below.
+8. **Look at it at 2× in the game** at dawn, noon, golden hour and night, in each season, before it ships (`BridgeLit._force`), and run `node tools/tests/run.js world`.
 
 ### The game menu: backpack, map, journal, fish, collection, ledger (`js/menu.js`)
 Added after Beck found the game hard to follow ("it's hard to understand what's going on in a lot of places, where things are"): one window, Stardew's game menu, with folder tabs across the top — **Backpack**, **Map**, **Journal**, **Fish**, **Collection** — each tab a page its module registers (`BridgeMenu.page(id, { render, key, leave, resize })`). **Tab** opens it where you left it, **I** the Backpack, **J** the Journal, **N** the Map (M is the sound); the same key again or **Esc** closes it, Tab / Shift-Tab step through the tabs. On touch the **Menu pill** (it was the Journal pill, top left; it still pings when something's logged) opens it, and on a phone it fills the screen with the tabs as a row of icons. It's dressed like the world's dialogs — parchment in Lumar, neon in Arcadia, holo aboard, a CRT on Enigma, violet glass at the Singularity, frost on Hoarfell, linen on Verdance, green velvet edged in gold in Sylvara (`gm-sylvan`) — every colour a CSS variable (`--gm-*`) the theme sets on `#game-menu`. While it's open the world waits: controls off, hostiles paused (`BridgeInventory.isMenuOpen`), every key goes to the menu (the active page first), the hotbar and prompts hidden (`html.menu-open`).
@@ -748,6 +796,9 @@ Beck and Alyssa play the same game at the same time: their own progress, the sam
 
 ## Don't
 
+- Don't ship a new place in the old look (`SCENE_STYLE=dither`), as a flat board, or without live light if it has a day.
+- Don't put a pond in a field as a circle: water sits in the land, with banks.
+- Don't make new AI-painted PNG art for the bridge (the PNG rules are legacy).
 - Don't ask the image model for "isometric," "diagonal rotation," "realistic perspective," "side view," or "pure top-down roof-only view." High-oblique elevated front-facing only.
 - Don't generate PNGs at 64×64 native — image models render small badly. Generate 700-1200px and let chunkify handle resolution.
 - Don't paint window interiors in PNGs. Yellow rectangle only — we overlay glow.
@@ -761,8 +812,9 @@ Beck and Alyssa play the same game at the same time: their own progress, the sam
 
 ## Reference: what good looks like
 
-- **Tavern PNG** at `apps/bridge/assets/buildings/tavern.png` — gold standard for building art.
-- **Procedural lantern** at `drawLantern` in `js/worlds/lumar.js` — gold standard for matching procedural style (limited palette, hard edges, 1-px outline).
-- **Animated sea bands** at `drawSeaShared` — gold standard for procedural animation.
+- **The reference dioramas** in `tools/bridge-art/dioramas/` (Millpond Farm, Lantern Quay, the Hoarfell tarn, Elderglade Brook, Rainline Street) — the bar for a place: shaped land, layers of vegetation, the richer house kit, small life.
+- **Look Book 2** (`_claude_docs/lookbook2/`, published as an artifact) — the toy finish with soft light, live light through the day and the seasons, the water, the faces: what Beck picked.
+- **The toy finish** as `scene_post.py` writes it, and live as `js/litscene.js` composes it.
+- Older references (still right for what they cover): the **procedural lantern** `drawLantern` in `js/worlds/lumar.js` (limited palette, hard edges, a 1-px outline) and the **animated sea bands** `drawSeaShared`.
 
 If a future asset doesn't match these, fix the asset.

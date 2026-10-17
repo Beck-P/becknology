@@ -33,6 +33,21 @@ THETA = math.radians(45)
 S = 1 / math.sin(THETA)
 TS = 32
 LIGHT_EXPOSURE = -2.0   # stops; keep in sync with scene_post.LIGHT_GAIN
+
+# Live light (scene.json `lit`, js/litscene.js): a scene with a day renders the sun through the day as six white suns,
+# each pass on its own, so the engine moves the shadows with the planet's clock. (u: how far through the day, sunrise 0
+# to sunset 1; the direction the light travels — x east, row toward the viewer, z up. Shadows fall a little toward the
+# viewer, swinging from the left in the morning to the right in the evening, as in the game's day scenes.)
+LIT_SUNS = [
+    (0.065, (-0.93, 0.30, -0.20)),
+    (0.233, (-0.66, 0.46, -0.58)),
+    (0.465, (-0.10, 0.44, -0.89)),
+    (0.684, (0.56, 0.48, -0.66)),
+    (0.865, (0.86, 0.40, -0.31)),
+    (0.967, (0.94, 0.30, -0.14)),
+]
+LIT_SUN = 3.0          # the white suns' strength (js/litscene.js is tuned to it)
+LIT_SKY = 1.0          # the white sky dome's
 HEIGHT_RANGE = 3.0      # the height pass maps z in [-3, 3] tiles to 0..1
 SOLID_COVER = 0.3       # Kit.solid: a footprint no longer than a tile blocks the cells it covers at least this much of
 
@@ -507,6 +522,44 @@ class Kit:
         nt.links.new(h.outputs['Holdout'], out.inputs['Surface'])
         return m
 
+    def _is_grass(self, p):
+        """Grass for the live-light passes (no blade casts a shadow there: thousands of them read as combed streaks)."""
+        n = (p.get('pname') or '').replace('ground_', '').replace('coast_', '')
+        return self._nature(p) == 'grass' or n.startswith(('meadow', 'tuft', 'flower', 'clover', 'reed'))
+
+    def _is_water(self, p):
+        return self._nature(p) == 'water'
+
+    def _normal_mat(self):
+        m = bpy.data.materials.get('lit_normal')
+        if m:
+            return m
+
+        def fn(nt, em):
+            geo = nt.nodes.new('ShaderNodeNewGeometry')
+            vm = nt.nodes.new('ShaderNodeVectorMath')
+            vm.operation = 'MULTIPLY_ADD'
+            vm.inputs[1].default_value = (0.5, 0.5, 0.5)
+            vm.inputs[2].default_value = (0.5, 0.5, 0.5)
+            nt.links.new(geo.outputs['Normal'], vm.inputs[0])
+            nt.links.new(vm.outputs['Vector'], em.inputs['Color'])
+        return self._emission_mat('lit_normal', fn)
+
+    def _mirror_mat(self):
+        m = bpy.data.materials.get('lit_mirror')
+        if m:
+            return m
+        m = bpy.data.materials.new('lit_mirror')
+        m.use_nodes = True
+        nt = m.node_tree
+        nt.nodes.clear()
+        out = nt.nodes.new('ShaderNodeOutputMaterial')
+        g = nt.nodes.new('ShaderNodeBsdfGlossy')
+        g.inputs['Roughness'].default_value = 0.0
+        g.inputs['Color'].default_value = (1, 1, 1, 1)
+        nt.links.new(g.outputs['BSDF'], out.inputs['Surface'])
+        return m
+
     def _assign(self, kind, light_state=None):
         cache = {}
         for p in self.parts:
@@ -524,7 +577,9 @@ class Kit:
                     cache[key] = self._albedo_mat(p['albedo'], tiles)
                 m = cache[key]
             elif kind == 'light':
-                if p['emit']:
+                if p['emit'] and (light_state or {}).get('_emitdiffuse'):
+                    m = self._white_diffuse()             # a live-light sky or sun pass: glass and lamps lit like anything else
+                elif p['emit']:
                     em = (light_state or {}).get('_emit', 1.0)
                     key = ('le', p['emit'][0], (p['emit'][1] if len(p['emit']) > 1 else 1.0) * em)
                     if key not in cache:
@@ -580,8 +635,11 @@ class Kit:
                     cache['height'] = self._emission_mat('height', fn)
                 m = cache['height']
             o.data.materials[0] = m
-            # glowing parts (lamp glass, flames) must not block their own light
-            o.visible_shadow = not p['emit']
+            # glowing parts (lamp glass, flames) must not block their own light — except from the sun and sky; and in the
+            # live-light sun passes the grass casts no shadow (thousands of blades' shadows read as combed streaks)
+            o.visible_shadow = not p['emit'] or bool((light_state or {}).get('_emitdiffuse'))
+            if kind == 'light' and (light_state or {}).get('_nograss') and self._is_grass(p):
+                o.visible_shadow = False
         for L in self.lights:
             L['obj'].hide_render = kind != 'light' or (L['var'] is not None and L['var'] is not self._active_var)
             if kind == 'light' and light_state is not None:
@@ -680,7 +738,7 @@ class Kit:
             sc.render.border_min_y, sc.render.border_max_y = 1 - bb[3] / self.resy, 1 - bb[1] / self.resy
             self._assign('albedo'); self._settings(1); self._render(os.path.join(d, 'albedo.png'))
             self._assign('emission'); self._settings(1); self._render(os.path.join(d, 'emission.png'))
-            self._assign('id'); self._settings(1); self._render(os.path.join(d, 'id.png'))
+            self._assign('id'); self._settings(1, raw=True); sc.view_settings.exposure = 0.0; self._render(os.path.join(d, 'id.png'))
             if any(p.get('fol') or self._nature(p) for p in v['parts']):
                 self._assign('leaf'); self._settings(1); self._render(os.path.join(d, 'leaf.png'))
             self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(d, 'depth.png'))
@@ -688,6 +746,8 @@ class Kit:
                 self._sky(state)
                 self._assign('light', state); self._settings(light_samples, raw=True, sixteen=True)
                 self._render(os.path.join(d, 'light_' + name + '.png'))
+            if getattr(self, '_lit', False):
+                self._lit_passes(d, light_states, self._lit_samples)
             done.append({'slot': v['slot'], 'key': v['key'], 'dir': os.path.relpath(d, out), 'bbox': bb})
         self._active_var = None
         sc.render.use_border = False
@@ -781,6 +841,87 @@ class Kit:
         states['night'] = {'_moon': 1.0, '_sky': 0.0, '_art': 1.0, '_emit': 1.0, '_world': night_sky}
         return states, {'day': first, 'dusk': 'dusk', 'night': 'night'}
 
+    # ---- live light (js/litscene.js) ------------------------------------------------------------------------------
+    def _lit_on(self, cycle):
+        """Whether to render the live-light passes: any scene with a day (cycle), or SCENE_LIT=1; SCENE_NOLIT=1 never."""
+        if os.environ.get('SCENE_NOLIT'):
+            return False
+        return bool(cycle or os.environ.get('SCENE_CYCLE') or os.environ.get('SCENE_LIT'))
+
+    def _lit_lights(self):
+        """The six white suns of LIT_SUNS, off unless a lit pass turns one on (groups _lsun0 … _lsun5)."""
+        self._lsuns = []
+        for i, (u, d) in enumerate(LIT_SUNS):
+            self.sun(d, '#ffffff', LIT_SUN, angle=2.0, group='_lsun%d' % i)
+            self.lights[-1]['default'] = 0.0
+            self._lsuns.append(self.lights[-1])
+
+    def _lit_passes(self, d, light_states, samples):
+        """Into d: normal.png (world normal × 0.5 + 0.5), lit_sky.png (a white sky dome alone), lit_sun<i>.png (each
+        white sun alone, with its shadows), lit_lamps.png (the scene's own lamps and glowing parts, no sky). Everything
+        white diffuse; in the sky and sun passes a glowing part is lit like any surface (else it's a black hole by day)
+        and the grass casts no shadow."""
+        sc = self.scene
+        self._sky({'_world': ('#000000', 0.0)})
+        self._assign('albedo')
+        for p in self.parts:
+            if p['albedo'] != 'HOLDOUT':
+                p['obj'].data.materials[0] = self._normal_mat()
+        self._settings(1, raw=True)
+        sc.view_settings.exposure = 0.0
+        self._render(os.path.join(d, 'normal.png'))
+        off = {'_sky': 0.0, '_art': 0.0, '_emit': 0.0, '_emitdiffuse': True, '_nograss': True}
+        # white light, so one channel says it all: 16-bit grey (an RGBA PNG reads back as 8 bits a channel), still
+        # written 4x dimmer so a sunlit wall never clips
+        def grey():
+            self._settings(samples, raw=True, sixteen=True, bw=True)
+            sc.view_settings.exposure = LIGHT_EXPOSURE
+        self._sky({'_world': ('#ffffff', LIT_SKY)})
+        self._assign('light', dict(off, _world=('#ffffff', LIT_SKY)))
+        grey()
+        self._render(os.path.join(d, 'lit_sky.png'))
+        self._sky({'_world': ('#000000', 0.0)})
+        for i in range(len(LIT_SUNS)):
+            self._assign('light', dict(off, **{'_lsun%d' % i: 1.0, '_world': ('#000000', 0.0)}))
+            grey()
+            self._render(os.path.join(d, 'lit_sun%d.png' % i))
+        # the lamps as the scene's first state has them (its flame groups and all), the sky and any sun off
+        first = {k: v for k, v in list(light_states.values())[0].items() if not k.startswith('_')}
+        self._assign('light', dict(first, _sky=0.0, _art=1.0, _emit=1.0, _world=('#000000', 0.0)))
+        self._settings(samples, raw=True, sixteen=True)
+        self._render(os.path.join(d, 'lit_lamps.png'))
+
+    def _lit_mirror(self, out):
+        """Still water (ponds, streams, basins) as a perfect mirror of the flat colours: what stands in or over it (posts,
+        reeds, a jetty, the bank) seen upside down. The sky is keyed magenta (scene_post takes it out). Then the same
+        with only what glows (refl_glow.png), for lit windows and lanterns streaking down the water after dark."""
+        water = [p for p in self.parts if self._is_water(p) and p['var'] is None]
+        if not water:
+            return False
+        sc = self.scene
+        mm = self._mirror_mat()
+        for name, kind, world in (('refl.png', 'albedo', ('#ff00ff', 1.0)), ('refl_glow.png', 'emission', ('#000000', 0.0))):
+            if kind == 'emission' and not any(p['emit'] for p in self.parts):
+                continue
+            self._sky({'_world': world})
+            self._assign(kind)
+            for p in water:
+                p['obj'].data.materials[0] = mm
+            for L in self.lights:
+                L['obj'].hide_render = True
+            self._settings(16)
+            sc.cycles.use_denoising = False
+            sc.cycles.max_bounces = 2
+            sc.cycles.glossy_bounces = 2
+            self._render(os.path.join(out, name))
+        sc.cycles.max_bounces = 12
+        sc.cycles.glossy_bounces = 4
+        return True
+
+    def _id_names(self):
+        """The id pass's colour of each part name (as rendered: raw, so the values themselves)."""
+        return {'%d,%d,%d' % ((pid * 37) % 251, (pid * 91) % 251, (pid * 53) % 251): name for name, pid in self.pid_names.items()}
+
     def render(self, out, light_states=None, probe_z=0.9, light_samples=160, world_light=('#202838', 0.25), cycle=None):
         """light_states: {'name': {group: multiplier}} — one light pass each (keys starting `_` are the cycle's:
         `_sky`, `_art`, `_emit`, `_world`; see _cycle_states). cycle: derive the other times of day (js/clock.js).
@@ -797,6 +938,10 @@ class Kit:
         cmap = None
         if cycle or os.environ.get('SCENE_CYCLE'):
             light_states, cmap = self._cycle_states(cycle or os.environ.get('SCENE_CYCLE'), light_states, world_light)
+        lit = self._lit_on(cycle)
+        if lit:
+            self._lit_lights()
+        self._lit_samples = min(light_samples, int(os.environ.get('SCENE_LIT_SAMPLES', 64)))
         self._camera()
         sc = self.scene
         # Dim ambient sky so unlit corners aren't pure black
@@ -805,7 +950,7 @@ class Kit:
 
         self._assign('albedo'); self._settings(1); self._render(os.path.join(out, 'albedo.png'))
         self._assign('emission'); self._settings(1); self._render(os.path.join(out, 'emission.png'))
-        self._assign('id'); self._settings(1); self._render(os.path.join(out, 'id.png'))
+        self._assign('id'); self._settings(1, raw=True); sc.view_settings.exposure = 0.0; self._render(os.path.join(out, 'id.png'))
         if any((p.get('fol') or self._nature(p)) and p['var'] is None for p in self.parts):
             self._assign('leaf'); self._settings(1); self._render(os.path.join(out, 'leaf.png'))
         self._assign('depth'); self._settings(1, raw=True, sixteen=True, bw=True); self._render(os.path.join(out, 'depth.png'))
@@ -835,6 +980,11 @@ class Kit:
         for p in self.parts:
             p['obj'].visible_camera = True
 
+        refl = False
+        if lit:
+            self._lit_passes(out, light_states, self._lit_samples)
+            refl = self._lit_mirror(out)
+        self._lit = lit
         variants = self._render_variants(out, light_states, light_samples)
 
         meta = {
@@ -849,7 +999,12 @@ class Kit:
             'cycle': cmap,
             'blocked': sorted([list(b) for b in self.blocked]),
             'variants': variants,
+            'ids': self._id_names(),
         }
+        if lit:
+            meta['lit'] = {'suns': [{'u': u, 'dir': d} for u, d in LIT_SUNS], 'sun': LIT_SUN, 'sky': LIT_SKY,
+                           'refl': refl, 'base': (cycle if isinstance(cycle, str) else (cycle or {}).get('base')) if cycle
+                           else os.environ.get('SCENE_CYCLE')}
         if self.water_z is not None:
             meta['waterZ'] = self.water_z
             meta['heightRange'] = HEIGHT_RANGE

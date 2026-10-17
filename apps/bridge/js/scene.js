@@ -27,6 +27,10 @@
  *                                    // render's transparent holes (windows)
  *   }
  *
+ * Live light: a scene.json with "lit" also brings Blender's light passes, and
+ * js/litscene.js relights it for the planet's hour, season and weather (the
+ * baked states show until that's ready, and stay for anything that reads them).
+ *
  * Swappable decor: scene.json "layers" lists variants rendered in the room's
  * light (scenekit k.variant). setLayers(id, {slot: key|null}) composites the
  * chosen ones into the scene image and depth, so characters are occluded by
@@ -91,6 +95,7 @@ var BridgeScene = (function () {
           scenes[id] = sc;
           evict(id);
           addStandIns(sc);
+          if (meta.lit && typeof BridgeLit !== 'undefined') BridgeLit.load(sc);   // live light (js/litscene.js), in the background
           composite(sc);
           cb(sc);
         }
@@ -162,7 +167,7 @@ var BridgeScene = (function () {
         depth = new Float32Array(src.depth.length);
         for (var i = 0; i < depth.length; i++) depth[i] = src.depth[i] === Infinity ? Infinity : src.depth[i] - shift;
       }
-      sc.layers.push({ slot: s.slot, key: s.key, box: box, imgs: src.imgs, depth: depth, leaves: src.leaves, standIn: true });
+      sc.layers.push({ slot: s.slot, key: s.key, box: box, imgs: src.imgs, depth: depth, leaves: src.leaves, standIn: true, from: src });
       added = true;
     });
     return added;
@@ -202,6 +207,7 @@ var BridgeScene = (function () {
       for (var k in sc.baseImgs) sc.imgs[k] = sc.baseImgs[k];
       sc.depth = sc.baseDepth;
       sc.leaves = sc.baseLeaves || null;
+      if (sc.lit) BridgeLit.layers(sc, [], []);
       return;
     }
     var m = sc.meta, W = m.width;
@@ -218,6 +224,7 @@ var BridgeScene = (function () {
       }
       return mask;
     });
+    if (sc.lit) BridgeLit.layers(sc, use, masks);      // the live light's passes take the same decor
     var leaves = null;                                  // the leaf pass with the chosen variants over it
     if (sc.baseLeaves || use.some(function (L) { return L.leaves; })) {
       leaves = sc.baseLeaves ? new Uint8ClampedArray(sc.baseLeaves) : new Uint8ClampedArray(W * m.height * 4);
@@ -328,27 +335,43 @@ var BridgeScene = (function () {
     var v = visible(m.width, m.height, x, y, ctx.canvas.width, ctx.canvas.height);
     if (!v) return;
     function blit(img) { ctx.drawImage(img, v[0], v[1], v[2], v[3], x + v[0], y + v[1], v[2], v[3]); }
-    var fl = world.scene && world.scene.flicker;
-    var W = weights(sc);
-    if (W && W.day > 0.995) { blit(sc.imgs[W.cy.day]); return; }
-    if (fl && sc.imgs[fl.from] && sc.imgs[fl.to]) {
-      blit(sc.imgs[fl.from]);
-      ctx.globalAlpha = flickerAt(now, fl.mode);
-      blit(sc.imgs[fl.to]);
+    // live light (js/litscene.js): the scene relit for the hour, season and weather, faded in over the baked states
+    var lv = sc.lit && BridgeLit.frame(sc);
+    if (lv) {
+      if (lv.a < 1) {
+        if (lv.prev) blit(lv.prev); else baked();
+        ctx.globalAlpha = lv.a;
+      }
+      blit(lv.canvas);
       ctx.globalAlpha = 1;
-    } else {
-      blit(sc.imgs[W ? W.cy.night : m.states[0]]);
+      BridgeLit.water(ctx, sc, x, y, v, now);
+      return;
     }
-    if (!W) return;
-    var aD = W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0;   // dusk over night, then day over both
-    if (aD > 0.003) { ctx.globalAlpha = aD; blit(sc.imgs[W.cy.dusk]); }
-    if (W.day > 0.003) { ctx.globalAlpha = W.day; blit(sc.imgs[W.cy.day]); }
-    ctx.globalAlpha = 1;
+    baked();
+    function baked() {
+      var fl = world.scene && world.scene.flicker;
+      var W = weights(sc);
+      if (W && W.day > 0.995) { blit(sc.imgs[W.cy.day]); return; }
+      if (fl && sc.imgs[fl.from] && sc.imgs[fl.to]) {
+        blit(sc.imgs[fl.from]);
+        ctx.globalAlpha = flickerAt(now, fl.mode);
+        blit(sc.imgs[fl.to]);
+        ctx.globalAlpha = 1;
+      } else {
+        blit(sc.imgs[W ? W.cy.night : m.states[0]]);
+      }
+      if (!W) return;
+      var aD = W.dusk + W.night > 0 ? W.dusk / (W.dusk + W.night) : 0;   // dusk over night, then day over both
+      if (aD > 0.003) { ctx.globalAlpha = aD; blit(sc.imgs[W.cy.dusk]); }
+      if (W.day > 0.003) { ctx.globalAlpha = W.day; blit(sc.imgs[W.cy.day]); }
+      ctx.globalAlpha = 1;
+    }
   }
 
   // Light falling on a character standing at (col, row), as a CSS colour
   // used to multiply its sprite. Blends the light states like the flicker.
   function tintAt(sc, world, col, row, now) {
+    if (sc.lit) { var lt = BridgeLit.tint(sc, col, row); if (lt) return lt; }   // live light: the passes at their feet
     var m = sc.meta;
     var c = Math.max(0, Math.min(m.tileLight[m.states[0]][0].length - 1, Math.round(col)));
     var r = Math.max(0, Math.min(m.tileLight[m.states[0]].length - 1, Math.round(row)));

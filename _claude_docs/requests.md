@@ -4,15 +4,37 @@ Everything asked for, so nothing slips. Newest batch first. Status: **done** (li
 now — a branch or a render queue), **open** (not started), **discuss** (needs a decision with Beck). When something is
 only partly done, the rest stays here as open.
 
+## October 17 (the new look: "toy… not HD… with soft light", the normal faces, Stardew portraits — into the game)
+Beck's pick from Look Book 2, and: "make it a goal of implementing all of these changes and updating everything… start
+with updating the engine and all the descriptions and instructions… so all the new places… adopt this… then we can work
+on updating everything else… as a backlog". The how-to is `apps/bridge/CLAUDE.md` (*North star*, *Live light*, *Making
+a new place*).
+| Ask | Status | Where / notes |
+|---|---|---|
+| The engine: the toy finish for every scene | **done** | `tools/bridge-art/scene_post.py` `STYLE = 'toy'` (bands, cool shadows / warm lights, lines between things — never in the ground or a roof's shingles). Shows on each scene as it's re-rendered: the Market Square first. |
+| The engine: live light (the sun crossing the sky, seasons, weather, Look Book water) | **done** | `scenekit.py` renders the sky, six suns and the lamps for any scene with a day; `scene_post.py` packs them; `js/litscene.js` relights live in the game (test: `world/litlight.js`). Live on the Market Square; every other outdoor place as it's re-rendered (backlog below). |
+| Soft light | **done** | js/gpu.js: the glow (bloom) plus a gentle vignette. |
+| The instructions: how to make a place in the new style | **done** | `apps/bridge/CLAUDE.md` *Making a new place*; reference dioramas in `tools/bridge-art/dioramas/`; the richer house kit `tools/bridge-art/assets_house.py`. |
+| The normal faces (not the round ones) on the people | in progress | Drawn faces on the character sheets (eyes with a catch-light, brows, mouth, blush; a blink). |
+| A face in the talk portrait, Stardew-style (not the top of a hat) | in progress | Portraits rendered face-on for everyone you talk to. |
+| **Backlog** — re-render the outdoor places with live light and the toy finish | open | Done: the Market Square. To do — Lumar: Diggen's Point (`lumar_harbor`), Crownhaven, Tern Holm, Starling Holm, Rose Cove, Sapphire Port, Crimson Reach. Verdance: the farm, Brambleford. Hoarfell: Fellhaven, the pistes, the Park, the face, the summit, the Last Ridge, the Ice Step. Sylvara: Elderglade. (Midnight Isle and Arcadia never see the sun: the toy finish only.) |
+| **Backlog** — re-render the interiors and night places in the toy finish | open | Every other scene in `tools/bridge-art/scenes/` (taverns, shops, homes, the ship, the stations, the casino, Arcadia's streets, Midnight Isle, the mines and caves). |
+| **Backlog** — rebuild the places as richer dioramas, world by world | open | Shaped land, layered vegetation, the house kit, small life (the reference dioramas' standard). Start with the farm and Brambleford (Millpond Farm shows the way), then Lumar's towns, Elderglade, Fellhaven. |
+| **Backlog** — faces on every sheet, pilots included | open | Whatever the first pass doesn't reach (the pilots' sport and attack sheets, the crowd, event sheets). |
+| **Backlog** — the sea under live light: reflections of islands, ships and the sky | open | js/sea.js draws the sea over the relit seabed; Look Book's mirrored reflections for the open water and harbours. |
+| **Backlog** — postcard views and cutscenes (fishing, benches, the title) | open | Look Book 2's postcard: a low side camera, a painted sky, a smooth camera move from the game view. |
+| **Backlog** — each place's own sun path, and the GPU doing the live compose | open | Today every scene's sun comes from the same side (`LIT_SUNS`); a per-scene direction would suit coasts facing west. The compose is CPU, a few ms a frame about once a minute: a WebGL version could relight every frame. |
+| **Backlog** — the remaining PNG and code-drawn art into the 3D kit | open | AI-painted PNG buildings and props, procedural tiles, creatures; the PNG rules in CLAUDE.md are legacy now. |
+
 ## October 17 (Look Book 2: "somewhere in between" — keep our 3D model world, swing bigger)
 | Ask | Status | Where / notes |
 |---|---|---|
 | Keep the 3D model look (cohesive, the 45° angle, the chibis) but tie it together: more detail, more realistic, less boxy | **done** (examples) | Look Book 2: https://claude.ai/artifact/8aQQzX3EuZ7x4q5xsTyEjx (source `_claude_docs/lookbook2/`). Five places rebuilt as new Blender dioramas from our kit (Millpond Farm, Lantern Quay, Elderglade Brook, Fellhaven Tarn, Rainline Street), a richer house kit (Brambleford today vs richer), all lit live. |
 | The light, soft light / HD-2D, shadows moving with the sun, weather | **done** (examples) | relight.js: six sun passes, sky, lamps, flat colour, mixed per hour/season/weather; four finishes (Model, Toy, Model HD, Toy HD). |
 | Water like Look Book 1: reflections, natural, not rings; ponds that belong to the land | **done** (examples) | Far-bank mirrored reflections, organic depth patches, lap line on the near shore, glitter path, stars, shore ice in winter, light streaks at night. Millpond's pond is irregular, sunk into the land. |
-| People: rounder, cuter, Stardew-like faces, not realistic | **done** (examples) | "Round" chibis: the game's 3D models with rounder heads and faces painted after the render (chars/). Beck's pick. |
+| People: rounder, cuter, Stardew-like faces, not realistic | **done** (examples) | Chibis: the game's 3D models with faces painted after the render (chars/), in two heads, normal and round. Beck's final pick: the normal one. |
 | Postcard view with smooth transitions into cutscenes | **done** (example) | The farm from a low side camera, painted sky behind, a click plays the camera tilting down from the game view. |
-| Pick a version and bring it into the game | discuss | Next: Beck's pick of version, then the engine work (live light, finish, water, people) with Millpond Farm first, then rebuild the places world by world. |
+| Pick a version and bring it into the game | **done** (picked) | Toy (not HD) with soft light, normal faces, Stardew portraits — see the section above. |
 
 ## October 17 (the art direction: "more like Stardew… gorgeous landscapes… high-def pixel")
 | Ask | Status | Where / notes |

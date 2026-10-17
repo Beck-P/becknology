@@ -1,5 +1,7 @@
 # Bridge — PNG asset prompts (copy/paste templates)
 
+> **Legacy (October 2026).** The Bridge's art is now built in Blender in the game's own kit and finished as toys (`apps/bridge/CLAUDE.md`, *North star* and *Making a new place*). Don't generate new PNG sprites; these prompts stay only for touching up the PNGs still in the game until they're replaced.
+
 > **Scope: bridge app only.** These prompts produce assets that match `apps/bridge/CLAUDE.md` art direction. They are **not** for any other Becknology app (aether-seas, cipher-room, etc.). Don't reuse this prompt vocabulary outside `apps/bridge/`.
 >
 > **For agents:** Both Claude Code and Codex should follow this file when generating PNG sprites for the bridge. The header block below is the full master prompt — paste it verbatim at the top of every prompt and only swap the `[BUILDING TYPE]` and `[INSERT DETAILS]` slots.
