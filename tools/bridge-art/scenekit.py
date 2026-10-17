@@ -944,7 +944,7 @@ class Kit:
                 groups[key] = []
                 order.append(key)
             groups[key].append(p)
-        out, before = [], len(self.parts)
+        out, before, dead = [], len(self.parts), []
         for key in order:
             ps = groups[key]
             if len(ps) == 1:
@@ -963,8 +963,7 @@ class Kit:
             o = bpy.data.objects.new('merged', me)
             self.scene.collection.objects.link(o)
             o.data.materials.append(bpy.data.materials.new('tmp'))
-            for p in ps:
-                bpy.data.objects.remove(p['obj'], do_unlink=True)
+            dead += [p['obj'] for p in ps]
             q = dict(ps[0])
             q['obj'] = o
             out.append(q)
@@ -972,6 +971,7 @@ class Kit:
             if v is not None:
                 gone = set(map(id, ps))
                 v['parts'] = [x for x in v['parts'] if id(x) not in gone] + [q]
+        bpy.data.batch_remove(dead)                    # (one by one, twenty thousand removals take most of an hour)
         self.parts = out
         if hasattr(self, '_names'):
             del self._names
