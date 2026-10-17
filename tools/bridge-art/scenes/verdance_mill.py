@@ -76,7 +76,16 @@ YARD = (12.0, 11.4, 36.0, 19.2)                                       # the haml
 LANDING_PATH = [(12.6, 18.4), (8.0, 18.8), (5.0, 19.2)]
 
 
+WHEAT = [(1.0, 0.6, 19.6, 9.6), (28.0, 0.6, 41.5, 9.0)]              # wheat fields above the hamlet, for the mill
+
+
+def wheat(x, r):
+    return any(x0 <= x <= x1 and r0 <= r <= r1 for (x0, r0, x1, r1) in WHEAT) and I.path_dist([LANE], x, r) > 1.6
+
+
 def material(x, r):
+    if wheat(x, r):
+        return 'wheat' if I.n2(x, r, 1.4, 6) > -0.35 else 'wheat2'
     nb, sb = north_bank(x), south_bank(x)
     if nb < r < sb:
         return 'bed'
@@ -90,7 +99,7 @@ def material(x, r):
 
 
 ALB = {'grass': (G.GREEN, 0.12), 'path': (F.DIRT, 0.1), 'bank': ('#6a5638', 0.22), 'bed': ('#3e4a3a', 0.2), 'gravel': ('#8a8274', 0.25),
-       'yard': ('#9a8460', 0.12)}
+       'yard': ('#9a8460', 0.12), 'wheat': ('#d8b860', 0.12), 'wheat2': ('#c8a450', 0.12)}
 CELLS = [(c, r) for c in range(-1, COLS + 1) for r in range(-4, ROWS + 2)]
 I.ground(k, CELLS, material, ALB, height=height, bump=0.0, seed=91, dither=0.035, step=0.0625)
 
@@ -160,12 +169,12 @@ k.box(lx - 0.18, 19.1, 1.6, lx + 0.18, 19.3, 1.9, ('#d8c8a0', 0.2), 'sack')
 V.board_sign(k, 'WEND MILL', 'IMFellEnglishSC', 27.0, 18.63, 2.1, size=0.15, board='#e8dcc0', ink='#3a2414', trim='#6a4a2a', pad=0.08)
 V.waterwheel(k, 31.6, 20.0, rad=1.25, width=0.55)
 k.box(30.6, 19.2, -0.5, 32.6, 19.3, 0.3, ('#8a8274', 0.16), 'race_wall')
-V.sacks(k, 22.8, 18.0, n=4)
-k.solid(22.3, 17.6, 23.4, 18.5)
+V.sacks(k, 31.4, 18.4, n=3)
+k.solid(31.0, 18.0, 32.0, 18.9)
 k.cyl_y(31.4, 17.4, 17.6, 0.55, 0.55, 0.55, ('#a8a090', 0.25), 'millstone', verts=20)
 k.solid(30.8, 17.0, 32.0, 17.8)
-W.cart(k, 21.6, 16.6)
-k.solid(20.9, 16.1, 22.3, 17.1)
+W.cart(k, 18.4, 11.7)
+k.solid(17.7, 11.2, 19.1, 12.2)
 # Tobias Ludd's house, the bakehouse, the cottages
 rm, zr = HK.rich_house(k, 32.2, 36.6, 13.8, 17.8, wall_h=2.0, rise=1.35, roof='#a85a3a', wall=STONE, door_x=34.4, windows=[(33.1, 0.85), (35.7, 0.85)],
                        chimney=36.1, stone=True)
@@ -202,18 +211,31 @@ for (x, r) in ((3.0, 29.0), (21.8, 28.6), (34.0, 30.6), (8.0, 31.0)):
 W.bench(k, 12.6, 13.8, 28.2)
 F.wildflowers(k, 0.5, 28.0, 41.0, 31.6, 80)
 # around the hamlet: the lane's hedges, trees, the green with a horse chestnut
-for (x, r) in ((1.0, 9.0), (6.0, 6.0), (11.0, 3.0), (17.0, 6.5), (30.0, 6.0), (36.0, 9.0), (40.0, 4.0), (40.6, 13.0)):
+for (x, r) in ((1.0, 11.2), (20.6, 2.0), (27.2, 4.0), (40.6, 13.0), (0.8, 15.0), (36.0, 11.0)):
     (W.tree if rng.random() < 0.7 else W.pine)(k, x, r, h=rng.uniform(2.6, 3.3), tone=rng.choice(('#3a6a34', '#4a7a30', '#2e5a38')))
     k.solid(x - 0.4, r - 0.4, x + 0.4, r + 0.4)
 G.hedge(k, (21.6, 0.0), (21.6, 10.6))
 G.hedge(k, (26.0, 0.0), (26.0, 10.6))
 W.tree(k, 38.6, 18.0, h=3.4, tone='#4a7a30')
 k.solid(38.1, 17.5, 39.1, 18.5)
-F.wildflowers(k, 0.5, 4.0, 21.0, 11.0, 50)
-F.wildflowers(k, 27.0, 4.0, 41.0, 12.0, 50)
+F.wildflowers(k, 0.5, 10.4, 21.0, 12.0, 30)
+F.wildflowers(k, 27.0, 10.2, 41.0, 12.0, 30)
 for (x, r) in ((14.6, 11.6), (31.6, 12.6), (6.8, 18.0)):
     W.lantern_post(k, x, r, h=2.1, energy=28)
 
+for (x0, r0, x1, r1) in WHEAT:                                       # the ears, standing over the golden fields
+    ears = {'#d8b860': [], '#e8c870': [], '#c8a048': []}
+    for _ in range(int((x1 - x0) * (r1 - r0) * 26)):
+        x, r = rng.uniform(x0, x1), rng.uniform(r0, r1)
+        if wheat(x, r):
+            ears[rng.choice(list(ears))].append((x, r, height(x, r), rng.uniform(0.22, 0.34), 0.03, rng.uniform(-0.04, 0.06), rng.uniform(-0.02, 0.02)))
+    for col, bl in ears.items():
+        k.blades(bl, (col, 0.2), 'wheat_ears')
+    for (a, b) in (((x0, r1 + 0.3), (x1, r1 + 0.3)), ((x0, r0 - 0.2), (x1, r0 - 0.2))):
+        G.hedge(k, a, b, h=0.6, flowers=0.3)
+for (x, r) in ((5.0, 10.6), (9.0, 10.8), (13.0, 10.5), (31.0, 10.2), (35.6, 10.4), (39.0, 10.0)):
+    G.stook(k, x, r)
+F.barn(k, 33.0, 38.0, 1.4, 4.4, wall_h=2.0, rise=1.3)
 k.later.append(lambda: W.meadow(k, G.GREEN, cells=CELLS, ok=('ground_grass',), density=0.9, flowers=0.8))
 
 
@@ -222,13 +244,13 @@ def walkable(c, r):
     x, y = c + 0.5, r + 0.5
     if I.path_dist([LANE, LANDING_PATH], x, y) < 0.9:
         return True
-    if 1.0 <= x <= 38.0 and 16.0 <= y <= north_bank(x) - 0.3:
+    if 1.0 <= x <= 38.0 and 16.0 <= y <= north_bank(x) - 0.05:
         return True                                                    # along the north bank
     if YARD[0] <= x <= YARD[2] and YARD[1] <= y <= YARD[3]:
         return True
     if 9.2 <= x <= 10.8 and north_bank(x) - 1.0 <= y <= south_bank(x) + 1.0:
         return True                                                    # the bridge
-    if 5.4 <= x <= 6.8 and y <= north_bank(6.0) + 2.4:
+    if 5.4 <= x <= 6.8 and north_bank(6.0) - 1.0 <= y <= north_bank(6.0) + 2.4:
         return True                                                    # the landing
     if y >= south_bank(x) + 0.6 and 2.0 <= x <= 24.0 and y < 31.0:
         return True                                                    # the water meadow
@@ -265,10 +287,10 @@ w['interactions'] = [
     look('THE WEIR', 21, 20, 'THE WEND TIPS OVER THE WEIR IN A WHITE SHEET, ROARING SOFTLY. THE TROUT HANG IN THE POOL BELOW IT, NOSES UPSTREAM, WAITING FOR WHATEVER COMES OVER.'),
     look('THE WATERWHEEL', 32, 19, 'THE WHEEL TURNS IN ITS RACE, SLOW AND HEAVY, WATER SHEETING OFF THE PADDLES. INSIDE, YOU CAN FEEL THE STONES GOING THROUGH THE FLOOR.'),
     look('THE PACKHORSE BRIDGE', 10, 20, 'A NARROW HUMPED BRIDGE, JUST WIDE ENOUGH FOR A PONY AND ITS PANNIERS. THE PARAPETS ARE WORN SMOOTH WHERE FOUR HUNDRED YEARS OF ELBOWS HAVE LEANED.'),
-    {'x': 25, 'y': 19, 'type': 'dialog', 'label': 'TOBIAS', 'prompt': 'PRESS E TO TALK', 'dialog': 'TOBIAS LUDD, FLOURY TO THE EYEBROWS, NODS.'},
+    {'x': 23, 'y': 18, 'type': 'dialog', 'label': 'TOBIAS', 'prompt': 'PRESS E TO TALK', 'dialog': 'TOBIAS LUDD, FLOURY TO THE EYEBROWS, NODS.'},
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-ACTORS = [{'sheet': 'npc-tobias', 'x': 25, 'y': 19, 'facing': 'down'}]
+ACTORS = [{'sheet': 'npc-tobias', 'x': 23, 'y': 18, 'facing': 'down'}]
 for a in ACTORS:
     k.solid(a['x'], a['y'], a['x'] + 1, a['y'] + 1)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID, actors=ACTORS, scene_extra={'smoke': SMOKE})

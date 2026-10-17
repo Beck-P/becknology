@@ -54,7 +54,7 @@ def terrace_z(r):
 
 def river_r(x):
     """The river's near bank (row) at column x: it cuts across the south-west corner."""
-    return RIV[0] + (x - 0.0) * 0.18
+    return 30.4 + 0.62 * x
 
 
 def height(x, r):
@@ -78,19 +78,19 @@ def material(x, r):
     if I.path_dist([LANE, TO_LANDING], x, r) < 0.75 + 0.08 * I.n2(x, r, 2.0, 7):
         return 'path'
     if 14.2 < x < 27.0 and 15.2 < r < 23.6:
-        return 'grass'                                                  # under the square's setts
+        return 'paving'                                                 # under the square's setts
     if r < TERR[0][0] and r > TERR[-1][0] - 2.0:
         return 'soil' if I.n2(x, r, 2.5, 3) > -0.2 else 'grass'         # the terraces' earth between the vines
     return 'grass'
 
 
-ALB = {'grass': (G.GREEN, 0.12), 'path': (F.DIRT, 0.1), 'bank': ('#6a5638', 0.22), 'bed': ('#3e4a3a', 0.2), 'soil': ('#8a6a44', 0.14)}
+ALB = {'grass': (G.GREEN, 0.12), 'path': (F.DIRT, 0.1), 'bank': ('#6a5638', 0.22), 'bed': ('#3e4a3a', 0.2), 'soil': ('#8a6a44', 0.14), 'paving': ('#9a8a6a', 0.1)}
 CELLS = [(c, r) for c in range(-1, COLS + 1) for r in range(-6, ROWS + 2)]
 I.ground(k, CELLS, material, ALB, height=height, bump=0.0, seed=88, dither=0.035, step=0.0625)
 q = []
 for i in range(40):
     x0, x1 = -1 + i * 0.8, -1 + (i + 1) * 0.8
-    if x0 > 31:
+    if river_r(x0) > ROWS + 2:
         break
     q.append(((x0, river_r(x0) + 0.15, RZ), (x1, river_r(x1) + 0.15, RZ), (x1, ROWS + 2, RZ), (x0, ROWS + 2, RZ)))
 k.quads(q, '#2a5a6a', 'stream_water')
@@ -139,7 +139,7 @@ for (x, r) in ((12.0, -1.6), (24.0, -2.0), (42.0, -1.0), (2.0, -2.4)):
     G.lift(k, sp, height(x, r))
 
 # ---- the village on the level -------------------------------------------------------------------------------------------
-W.cobbles(k, 14.2, 15.2, 27.0, 23.6, tone='#b8a888', size=0.26, lawn=True)
+W.cobbles(k, 14.2, 15.2, 27.0, 23.6, tone='#d0c0a0', size=0.26)
 W.street_clutter(k, (14.2, 15.4, 27.0, 23.6), seed=8841)
 W.tree(k, 20.6, 19.2, h=3.8, tone='#5a8a3a', lean=0.06)               # the plane tree, a bench round it
 W.round_bench(k, 20.6, 19.2, tone=V.WOOD)
@@ -181,7 +181,7 @@ while x <= PX1 + 0.01:
     k.box(x - 0.03, PR0 - 0.3, 2.1, x + 0.03, PR1 + 0.3, 2.16, (G.WOOD, 0.15), 'pergola_rafter')
     x += 0.6
 with k.foliage('leaf'):
-    for _ in range(140):
+    for _ in range(320):
         k.blob(rng.uniform(PX0 - 0.2, PX1 + 0.2), rng.uniform(PR0 - 0.2, PR1 + 0.2), 2.2 + rng.uniform(0, 0.12), 0.16, 0.13, 0.06,
                (shade(rng.choice(('#3e6a2a', '#4a7a30', '#56863a')), rng.uniform(0.9, 1.1)), 0.22), 'vine_leaf', segs=7)
 for _ in range(16):
@@ -194,7 +194,15 @@ W.lantern_post(k, 29.6, 21.8, h=2.1, energy=28)
 V.flower_bed(k, 30.4, 22.0, 37.6, 22.5, cols=('#e05070', '#f0d040', '#a070e0', '#f0f0f0'))
 # the chapel and the houses round the square
 HK.rich_house(k, 8.6, 13.4, 11.4, 15.0, wall_h=2.4, rise=1.9, roof='#8a5040', wall=WARM, door_x=11.0, windows=[(9.5, 1.0), (12.5, 1.0)], stone=True)
-W.bell_tower(k, 14.4, 15.0, w=1.3, h=4.2)
+tx0, tx1, tr0, tr1 = 13.8, 15.0, 13.8, 15.0                         # the campanile, in the village's stone
+k.box(tx0, tr0, 0.0, tx1, tr1, 3.4, (WARM, 0.16), 'tower')
+for z in (0.9, 1.9, 2.9):
+    k.box(tx0 - 0.03, tr1 - 0.02, z, tx1 + 0.03, tr1 + 0.03, z + 0.06, (shade(WARM, 1.1), 0.12), 'string_course')
+k.box(14.2, tr1 + 0.0, 2.95, 14.6, tr1 + 0.03, 3.35, '#2a2420', 'belfry')
+k.cyl_y(14.4, tr1 + 0.0, tr1 + 0.03, 3.35, 0.2, 0.12, '#2a2420', 'belfry', verts=10)
+k.cone(14.4, 14.4, 3.25, 3.55, 0.12, 0.08, ('#c8a040', 0.06), 'bell', verts=10)
+W.pyramid(k, tx0 - 0.1, tr0 - 0.1, tx1 + 0.1, tr1 + 0.1, 3.4, 4.3, ('#b85a3a', 0.14), 'roof_tower')
+k.solid(tx0, tr0, tx1, tr1)
 for (x0, x1, door, roof, rb, rf) in ((2.0, 5.6, 3.8, '#b85a3a', 19.4, 22.8), (5.8, 8.8, 7.3, '#a85030', 19.6, 22.6),
                                       (27.6, 30.6, 29.1, '#b85a3a', 23.8, 27.0), (31.0, 34.6, 32.8, '#8a5040', 24.0, 27.2)):
     rm, zr = HK.rich_house(k, x0, x1, rb, rf, wall_h=1.95, rise=1.3, roof=roof, wall=WARM, door_x=door, windows=[(x0 + 0.7, 0.85), (x1 - 0.7, 0.85)],
@@ -214,7 +222,7 @@ k.box(3.4, 33.0, 0.02, 6.6, 33.9, 0.1, (G.WOOD, 0.15), 'jetty_plank')
 W.dock(k, 4.4, 5.6, 33.8, 36.6, z=0.05)
 V.board_sign(k, 'VINEHALLOW LANDING', 'Rye', 6.6, 32.8, 0.9, size=0.09, board='#2e5a3e', ink='#f0e8c8', trim='#c8a050', pad=0.04)
 k.box(6.55, 32.74, 0.0, 6.65, 32.8, 0.95, (G.WOOD_D, 0.15), 'sign_post')
-for (x, r) in ((9.0, 34.4), (1.6, 32.0), (14.0, 35.6)):
+for (x, r) in ((8.6, 33.8), (1.0, 29.4), (14.0, 35.6)):
     G.willow(k, x, r, h=2.8)
 for (x0, r0, x1, r1, n) in ((0.5, 24.5, 12.0, 31.0, 50), (24.0, 28.0, 44.0, 38.0, 70), (36.0, 14.0, 45.0, 22.0, 30)):
     F.wildflowers(k, x0, r0, x1, r1, n)
@@ -223,6 +231,21 @@ for (x, r) in ((40.0, 30.0), (43.0, 34.0), (36.0, 36.0), (28.0, 33.5), (44.0, 27
     k.solid(x - 0.4, r - 0.4, x + 0.4, r + 0.4)
 for (x, r) in ((25.0, 31.0), (16.0, 27.0)):
     G.hedge(k, (x - 2.0, r), (x + 2.0, r))
+
+# the lower slope: lavender in rows, olive-grey trees, a stone wall along the lane, a bench at the view
+for rr in (28.4, 29.2, 30.0, 30.8, 31.6):
+    G.flower_row(k, 25.0, 38.0, rr, 'lavender')
+for (x, r) in ((40.0, 30.0), (24.0, 34.6), (32.0, 34.6), (38.6, 34.0), (13.0, 27.6), (7.0, 26.4), (16.6, 31.4)):
+    W.tree(k, x, r, h=rng.uniform(2.0, 2.5), tone='#7a8a5a', lean=rng.uniform(-0.15, 0.15))
+    k.solid(x - 0.4, r - 0.4, x + 0.4, r + 0.4)
+HK.stone_wall(k, 21.8, 30.0, 26.2, h=0.5)
+HK.stone_wall(k, 12.0, 19.2, 26.2, h=0.5)
+W.bench(k, 9.0, 10.2, 29.2)
+for (x0, r0, x1, r1) in ((1.0, 25.0, 8.0, 30.0), (23.0, 33.0, 30.0, 36.5)):
+    F.wildflowers(k, x0, r0, x1, r1, 40, cols=('#e03030', '#e83a3a', '#f0d040', '#f0f0f0'))
+for (x, r) in ((44.0, 18.0), (44.6, 21.0), (12.6, 20.6)):
+    W.pine(k, x, r, h=3.2, tone='#2e4a30')
+    k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
 
 k.later.append(lambda: W.meadow(k, G.GREEN, cells=CELLS, ok=('ground_grass',), density=0.9, flowers=0.8))
 
@@ -250,8 +273,8 @@ def look(label, x, y, text, prompt='PRESS E TO LOOK'):
 
 
 w['interactions'] = [
-    {'x': 20, 'y': 39, 'type': 'enter_world', 'label': 'THE DOWNS', 'prompt': 'PRESS E TO TAKE THE LANE DOWN', 'target': 'verdance-downs', 'spawn': [52, 1]},
-    {'x': 21, 'y': 39, 'type': 'enter_world', 'label': 'THE DOWNS', 'prompt': 'PRESS E TO TAKE THE LANE DOWN', 'target': 'verdance-downs', 'spawn': [52, 1]},
+    {'x': 20, 'y': 39, 'type': 'enter_world', 'label': 'THE DOWNS', 'prompt': 'PRESS E TO TAKE THE LANE DOWN', 'target': 'verdance-downs', 'spawn': [51, 1]},
+    {'x': 21, 'y': 39, 'type': 'enter_world', 'label': 'THE DOWNS', 'prompt': 'PRESS E TO TAKE THE LANE DOWN', 'target': 'verdance-downs', 'spawn': [51, 1]},
     {'x': 5, 'y': 34, 'type': 'ferry', 'label': 'VINEHALLOW LANDING', 'prompt': 'PRESS E FOR THE FERRY'},
     {'x': 29, 'y': 16, 'type': 'winery', 'label': 'VANE ESTATE', 'prompt': 'PRESS E TO GO IN'},
     {'x': 36, 'y': 15, 'type': 'cellar', 'label': 'THE CELLAR', 'prompt': 'PRESS E TO GO DOWN'},

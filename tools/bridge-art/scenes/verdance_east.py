@@ -321,15 +321,17 @@ V.board_sign(k, "HOBB'S LIVERY", 'Rye', 31.1, 18.03, 1.6, size=0.15, board='#2a1
 G.paddock(k, [(30.2, 19.4), (36.4, 19.4), (36.4, 22.6), (30.2, 22.6), (30.2, 21.4)])
 G.trough(k, 28.0, 29.4, 19.5)
 G.hay_rack(k, 33.0, 19.1)
-G.mounting_block(k, 27.0, 21.6)
-W.cart(k, 28.5, 21.5)
-k.solid(27.6, 20.8, 29.4, 22.2)
-F.haybale(k, 26.6, 19.4)
-k.solid(26.1, 18.9, 27.1, 19.9)
+G.mounting_block(k, 29.0, 21.2)
+W.cart(k, 25.4, 16.4)
+k.solid(24.7, 15.9, 26.1, 16.9)
+F.haybale(k, 26.6, 19.5)
+k.solid(26.2, 19.1, 26.95, 19.9)
 k.cyl(29.8, 18.6, 0.0, 0.4, 0.2, ('#7a5a34', 0.15), 'bucket', verts=10)
 W.lantern_post(k, 26.0, 18.4, h=2.0, energy=24)
 G.hedge(k, (21.4, 13.9), (26.2, 13.9))
-G.hedge(k, (21.0, 14.2), (21.0, 21.8), gap=(17.0, 17.0))
+for r in (14.8, 16.2, 19.4, 20.8):                                    # bushes along the orchard's lane side
+    W.bush(k, 21.0, r, s=0.42, tone=rng.choice(('#3a6a30', '#2e5a2e')), berries=rng.choice((None, '#c03050')))
+    k.solid(20.6, r - 0.3, 21.4, r + 0.3)
 G.hedge(k, (36.0, 14.4), (36.0, 17.8))
 
 # ---- the river and its bridges -------------------------------------------------------------------------------------------
@@ -431,7 +433,7 @@ w['interactions'] = [
     look('DUCK POND', 8, 17, 'THE DUCK POND. THE DUCKS LOOK AT YOU AS IF YOU OWE THEM BREAD. YOU MIGHT.'),
     look('SIGNPOST', 17, 14, 'BRAMBLEFORD, WEST. THE STATION, EAST. THE DOWNS, OVER THE OLD BRIDGE - "WHEN IT\'S MENDED", SOMEBODY HAS CHALKED UNDER IT.', 'PRESS E TO READ'),
     {'x': 16, 'y': 21, 'type': 'farm_well', 'label': 'PUMP', 'prompt': 'PRESS E TO FILL THE CAN'},
-    {'x': 30, 'y': 19, 'type': 'village_livery', 'label': "HOBB'S LIVERY", 'prompt': 'PRESS E TO LOOK IN'},
+    {'x': 33, 'y': 18, 'type': 'village_livery', 'label': "HOBB'S LIVERY", 'prompt': 'PRESS E TO LOOK IN'},
     look('THE LINE', 38, 15, 'THE BRANCH LINE, NORTH TO THE JUNCTION AND SOUTH OVER THE RIVER TO THISTLECOMBE. THE RAILS ARE BRIGHT AGAIN WHERE THE TRAINS RUN.'),
     {'x': 20, 'y': 29, 'type': 'dialog', 'label': 'THE ROAD SOUTH', 'prompt': 'PRESS E TO READ',
      'dialog': 'THE ROAD SOUTH, OVER THE DOWNS TO THISTLECOMBE ON THE RIVER.'},

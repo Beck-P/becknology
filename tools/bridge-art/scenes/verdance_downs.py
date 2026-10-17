@@ -47,7 +47,7 @@ L_E = [(22.6, 18.0), (29.0, 18.6), (36.0, 19.4), (44.0, 19.9), (57.5, 20.2)]
 L_NE = [(26.0, 18.3), (29.0, 15.2), (34.0, 12.4), (40.0, 9.2), (46.0, 5.6), (50.5, 2.4), (52.5, -1.5)]
 L_SW = [(22.6, 18.0), (18.6, 22.6), (14.4, 27.2), (10.4, 31.6), (8.0, 35.8), (7.4, 41.5)]
 L_FARM = [(20.4, 8.2), (16.0, 8.4)]
-L_CIDER = [(31.0, 18.8), (31.4, 24.2)]
+L_CIDER = [(31.0, 18.8), (30.2, 21.6), (28.0, 23.2), (27.4, 25.0)]
 LANES = [L_N, L_E, L_NE, L_SW, L_FARM, L_CIDER]
 YARDS = [(2.0, 3.0, 16.2, 16.6), (19.4, 14.6, 27.0, 21.6), (26.6, 24.0, 39.6, 36.2), (4.0, 33.0, 12.0, 38.6)]   # the flower farm, the crossroads, the cider, the pond's bank
 TRACK = (40.2, 41.8)
@@ -167,6 +167,8 @@ k.poly([(cx_, cr_, PZ)] + [(x, r, PZ) for (x, r) in outline] + [(outline[0][0], 
 
 
 def tree_at(x, r, h=None, kind='oak'):
+    if lane_d(x, r) < 1.4 or in_yard(x, r, m=0.3):
+        return                                                         # never in the way
     h = h or rng.uniform(2.4, 3.2)
     if kind == 'oak':
         G.on(k, height, W.tree, x, r, h=h, tone=rng.choice(('#3a6a34', '#3e7a34', '#4a7a30')), lean=rng.uniform(-0.1, 0.1))
@@ -247,18 +249,18 @@ for i in range(6):                                                # buckets of c
         k.sphere(x + rng.uniform(-0.1, 0.1), 7.1 + rng.uniform(-0.08, 0.08), rng.uniform(0.45, 0.6), 0.06, 0.05,
                  rng.choice(('#e86a3a', '#f0c040', '#c83a5a', '#f0a0c0', '#ffffff', '#b080e0')), 'bloom', segs=6)
 k.solid(8.3, 6.9, 12.0, 7.3)
-W.market_stall(k, 14.0, 16.0, 7.6, 8.6, awning=('#d070a0', '#f4ece4'), goods=None)
+W.market_stall(k, 16.6, 18.6, 6.4, 7.2, awning=('#d070a0', '#f4ece4'), goods=None)
 for i in range(5):
-    k.sphere(14.3 + i * 0.35, 8.1, 1.02, 0.11, 0.09, rng.choice(('#f080b0', '#f0d040', '#a070e0', '#f0f0f0', '#e05050')), 'bloom', segs=8)
-k.solid(14, 7.6, 16, 8.6)
+    k.sphere(16.9 + i * 0.35, 6.8, 1.02, 0.11, 0.09, rng.choice(('#f080b0', '#f0d040', '#a070e0', '#f0f0f0', '#e05050')), 'bloom', segs=8)
+k.solid(16.6, 6.4, 18.6, 7.2)
 G.washing_line(k, (2.6, 2.4), (6.6, 2.2))
 # the cutting garden: rows of colour, sweet peas on hazel, sunflowers at the back, the moonflower bed by the path
 ROWS_FL = [('sunflower', 9.6), ('sweetpea', 10.4), ('dahlia', 11.2), ('zinnia', 12.0), ('cosmos', 12.8), ('lavender', 13.6), ('dahlia', 14.4), ('moonflower', 15.4)]
 for kind, rr in ROWS_FL:
     if kind == 'sweetpea':
-        G.sweetpea_frame(k, 2.8, 15.2, rr)
+        G.sweetpea_frame(k, 3.4, 14.4, rr)
     else:
-        G.flower_row(k, 2.8, 15.2, rr, kind)
+        G.flower_row(k, 3.4, 14.4, rr, kind)
 V.board_sign(k, 'MOONFLOWERS - PICK AFTER DARK', 'Rye', 9.0, 16.05, 0.15, size=0.08, board='#2a3048', ink='#e8eeff', trim='#8a9ac8', pad=0.04)
 k.box(6.9, 15.98, 0.0, 6.96, 16.04, 0.42, (G.WOOD_D, 0.15), 'sign_post')
 k.box(11.04, 15.98, 0.0, 11.1, 16.04, 0.42, (G.WOOD_D, 0.15), 'sign_post')
@@ -275,7 +277,7 @@ V.board_sign(k, "COBB'S CIDER", 'Rye', 31.6, 27.62, 2.0, size=0.15, board='#2a1a
 rm, zr = HK.rich_house(k, 35.4, 39.2, 24.4, 27.4, wall_h=1.9, rise=1.3, roof='#5a4636', wall='#d8c8a8', door_x=37.3, windows=[(36.2, 0.85), (38.4, 0.85)],
                        chimney=38.8, stone=True)
 SMOKE.append([38.68, round(rm - 0.15 - (zr + 1.05) * C, 3)])
-for (x, r) in ((28.0, 28.4), (35.0, 28.2)):
+for (x, r) in ((38.6, 28.4), (35.0, 28.2)):
     G.apple_heap(k, x, r)
 W.cart(k, 36.6, 28.9)
 k.solid(35.9, 28.4, 37.3, 29.4)
@@ -355,7 +357,7 @@ for (kind, x0, r0, x1, r1) in FIELDS:                                 # the whea
     for col, bl in ears.items():
         k.blades(bl, (col, 0.2), 'wheat_ears')
 # field hedges dividing the Downs into its patchwork
-hedge_on((27.0, 23.4), (42.8, 23.4), gap=[(30.6, 31.8)])
+hedge_on((27.0, 23.4), (42.8, 23.4), gap=[(26.6, 29.0)])
 hedge_on((43.0, 22.6), (56.0, 22.6))
 hedge_on((43.0, 22.6), (43.0, 40.0))
 hedge_on((12.4, 29.0), (27.0, 29.0), gap=[(17.0, 19.0)])
@@ -402,16 +404,16 @@ w['interactions'] = [
     {'x': 19, 'y': 0, 'type': 'enter_world', 'label': 'STATION ROAD', 'prompt': 'PRESS E TO GO BACK OVER THE BRIDGE', 'target': 'verdance-east', 'spawn': [19, 30]},
     {'x': 20, 'y': 0, 'type': 'enter_world', 'label': 'STATION ROAD', 'prompt': 'PRESS E TO GO BACK OVER THE BRIDGE', 'target': 'verdance-east', 'spawn': [19, 30]},
     {'x': 55, 'y': 20, 'type': 'lane', 'to': 'verdance-market', 'label': 'THE LANE TO THISTLECOMBE', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'spawn': [1, 20]},
-    {'x': 52, 'y': 0, 'type': 'lane', 'to': 'verdance-hill', 'label': 'THE LANE UP TO VINEHALLOW', 'prompt': 'PRESS E TO CLIMB THE LANE', 'spawn': [20, 38]},
+    {'x': 51, 'y': 0, 'type': 'lane', 'to': 'verdance-hill', 'label': 'THE LANE UP TO VINEHALLOW', 'prompt': 'PRESS E TO CLIMB THE LANE', 'spawn': [20, 38]},
     {'x': 7, 'y': 39, 'type': 'lane', 'to': 'verdance-mill', 'label': 'THE LANE TO THE MILL', 'prompt': 'PRESS E TO FOLLOW THE LANE', 'spawn': [24, 1]},
     {'x': 23, 'y': 17, 'type': 'dialog', 'label': 'FINGERPOST', 'prompt': 'PRESS E TO READ',
      'dialog': 'THISTLECOMBE, EAST, 2 MILES. VINEHALLOW, UP THE HILL. THE MILL, SOUTH-WEST BY THE RIVER. BRAMBLEFORD, BACK OVER THE BRIDGE.'},
     {'x': 21, 'y': 16, 'type': 'farm_stand', 'label': 'THE FARM STAND', 'prompt': 'PRESS E TO LOOK'},
     look('POST BOX', 23, 22, 'A RED PILLAR BOX. COLLECTION: WHEN THE MAIL COACH FEELS LIKE IT.'),
-    look('THE OLD OAK', 26, 22, 'A BENCH ROUND THE OAK AT THE CROSSROADS. FROM HERE YOU CAN SEE THE CHALK HORSE ON THE HILL, AND ON A CLEAR DAY THE SPIRE AT THISTLECOMBE.'),
+    look('THE OLD OAK', 25, 21, 'A BENCH ROUND THE OAK AT THE CROSSROADS. FROM HERE YOU CAN SEE THE CHALK HORSE ON THE HILL, AND ON A CLEAR DAY THE SPIRE AT THISTLECOMBE.'),
     {'x': 20, 'y': 21, 'type': 'farm_well', 'label': 'TROUGH', 'prompt': 'PRESS E TO FILL THE CAN'},
     {'x': 10, 'y': 7, 'type': 'flower_farm', 'label': 'LARKSPUR FLOWERS', 'prompt': 'PRESS E TO GO IN'},
-    {'x': 15, 'y': 9, 'type': 'flower_farm', 'label': 'FLOWER STALL', 'prompt': 'PRESS E TO BROWSE'},
+    {'x': 17, 'y': 7, 'type': 'flower_farm', 'label': 'FLOWER STALL', 'prompt': 'PRESS E TO BROWSE'},
     {'x': 9, 'y': 16, 'type': 'flower_bed', 'label': 'THE MOONFLOWER BED', 'prompt': 'PRESS E TO LOOK'},
     look('GLASSHOUSE', 14, 7, 'TRAYS OF SEEDLINGS, A VINE OF SWEET PEAS UP THE WALL, A RADIO PLAYING TO THE TOMATOES.'),
     look('WINDPUMP', 2, 9, 'IT CREAKS ROUND IN THE BREEZE, PUMPING WATER UP FOR THE FLOWERS.'),

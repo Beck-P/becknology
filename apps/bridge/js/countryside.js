@@ -63,6 +63,9 @@ var BridgeCountryside = (function () {
     if (walking) return 4 + Math.floor(stride / (3.2 / 8)) % 8;
     return IDLE[Math.floor((now / 420) + (seed || 0)) % IDLE.length];
   }
+  // A horse (and still more the buggy) reaches past the floor point toward you — the head riding down the screen, the
+  // gig behind — so it's depth-tested from its own front edge, not the rider's feet (else the ground in front hides it).
+  function depthRow(o, what) { var D = seats[what]; return o.footRow + (D ? (D.h - D.origin[1]) / o.ts * 0.9 : 0.4); }
   /** Draw a horse (or the buggy) at a floor point, with a rider fn between it and its front. */
   function drawMount(ctx, o, what, coat, facing, col, rider) {
     var D = seats[what], full = sheet(what + '-' + coat), front = sheet(what + '-' + coat + '_front');
@@ -70,20 +73,20 @@ var BridgeCountryside = (function () {
     var fw = D.w, fh = D.h, ox = D.origin[0], oy = D.origin[1], row = ROW[facing] || 0;
     var cx = Math.round(o.offX + (o.x + 0.5) * o.ts), footY = Math.round(o.offY + o.footRow * o.ts);
     var tint = BridgeScene.tintAt ? BridgeScene.tintAt(o.sc, o.world, Math.round(o.x), Math.round(o.y), o.now) : null;
-    var dx = cx - ox, dy = footY - oy;
-    BridgeScene.drawOccluded(ctx, o.sc, full.img, col * fw, row * fh, fw, fh, dx, dy, o.footRow, o.offX, o.offY, tint,
+    var dx = cx - ox, dy = footY - oy, depth = depthRow(o, what);
+    BridgeScene.drawOccluded(ctx, o.sc, full.img, col * fw, row * fh, fw, fh, dx, dy, depth, o.offX, o.offY, tint,
       { x: cx, y: footY, rx: what === 'buggy' ? 22 : 15, ry: 4 }, null, 'auto');
     if (rider) {
       var st = D.seat[Object.keys(ROW)[row] + '_' + COLN[col] + '.png'] || [0, -20];
-      rider(ctx, cx + st[0], footY + st[1], tint);
-      if (front.ready) BridgeScene.drawOccluded(ctx, o.sc, front.img, col * fw, row * fh, fw, fh, dx, dy, o.footRow, o.offX, o.offY, tint, null, null, 'auto');
+      rider(ctx, cx + st[0], footY + st[1], tint, depth);
+      if (front.ready) BridgeScene.drawOccluded(ctx, o.sc, front.img, col * fw, row * fh, fw, fh, dx, dy, depth, o.offX, o.offY, tint, null, null, 'auto');
     }
   }
 
   // ---- riding ------------------------------------------------------------------------------------------------------------
   function mountFor(what) {
     return { speed: SPEED[what], what: what, item: function (o) {
-      return { footRow: o.footRow, draw: function (ctx) {
+      return { footRow: depthRow(o, what), draw: function (ctx) {
         drawMount(ctx, o, what, s.horse.coat, o.facing, frameCol(o.walking, o.stride, o.now), o.rider);
       } };
     } };
@@ -274,7 +277,8 @@ var BridgeCountryside = (function () {
     var g = cv.getContext('2d'), t0 = performance.now();
     var sky = typeof BridgeClock !== 'undefined' ? BridgeClock.sky('verdance') : { sun: 1, dusk: 0 };
     var sun = sky.sun, dusk = sky.dusk || 0;
-    function mix(a, b, f) { return 'rgb(' + [0, 1, 2].map(function (i) { return Math.round(a[i] + (b[i] - a[i]) * f); }).join(',') + ')'; }
+    function lerp(a, b, f) { return [0, 1, 2].map(function (i) { return Math.round(a[i] + (b[i] - a[i]) * f); }); }
+    function mix(a, b, f) { return 'rgb(' + lerp(a, b, f).join(',') + ')'; }
     function hill(off, base, amp, f, col, seed) {
       g.fillStyle = col; g.beginPath(); g.moveTo(0, H_);
       for (var x = 0; x <= W_; x += 4) g.lineTo(x, base - amp * (Math.sin((x + off) * f + seed) * 0.6 + Math.sin((x + off) * f * 2.3 + seed * 2) * 0.4));
@@ -283,17 +287,36 @@ var BridgeCountryside = (function () {
     function frame(now) {
       var t = now - t0, v = t * (kind === 'train' ? 0.09 : 0.03);
       var day = [118, 178, 228], night = [16, 22, 48], gold = [240, 168, 96];
-      var top = mix(night, day, sun), low = mix(mix(night, [170, 210, 236], sun), gold, dusk * 0.7);
+      var top = mix(night, day, sun), low = mix(lerp(night, [170, 210, 236], sun), gold, dusk * 0.7);
       var gr = g.createLinearGradient(0, 0, 0, H_ * 0.7); gr.addColorStop(0, top); gr.addColorStop(1, low);
       g.fillStyle = gr; g.fillRect(0, 0, W_, H_);
       if (sun < 0.3) for (var i = 0; i < 40; i++) { g.fillStyle = 'rgba(255,255,240,' + (0.6 * (1 - sun / 0.3)) + ')'; g.fillRect((i * 73) % W_, (i * 37) % 70, 1, 1); }
+      if (sun < 0.5 && typeof BridgeFarm !== 'undefined' && BridgeFarm.moonLight) [[250, 26, 7], [60, 38, 4]].forEach(function (m, i) {   // the Lantern and the Button
+        var L = BridgeFarm.moonLight(i, Date.now()), a = (1 - sun * 2);
+        g.fillStyle = 'rgba(240,236,210,' + (a * (0.25 + 0.75 * L)).toFixed(2) + ')'; g.beginPath(); g.arc(m[0], m[1], m[2], 0, 7); g.fill();
+        g.fillStyle = 'rgba(20,24,48,' + (a * (1 - L) * 0.9).toFixed(2) + ')'; g.beginPath(); g.arc(m[0] + m[2] * (0.4 + L), m[1] - 1, m[2], 0, 7); g.fill();
+      });
+      var lit = sun < 0.35;
       var shade = function (c) { return mix([12, 18, 24], c, 0.35 + 0.65 * sun); };
       if (kind === 'train') {
         hill(v * 0.15, 104, 14, 0.012, shade([120, 168, 104]), 1);
         var hx = 260 - (v * 0.15 % 700);                       // the chalk horse on the far hill
-        g.fillStyle = mix([60, 60, 60], [240, 236, 224], sun);
-        g.fillRect(hx, 90, 14, 3); g.fillRect(hx + 12, 86, 3, 4); g.fillRect(hx + 2, 93, 1, 4); g.fillRect(hx + 11, 93, 1, 4);
+        g.fillStyle = mix([70, 74, 70], [240, 236, 224], sun);
+        g.fillRect(hx, 101, 14, 2); g.fillRect(hx + 12, 98, 2, 3); g.fillRect(hx + 14, 98, 2, 1); g.fillRect(hx + 1, 103, 1, 3); g.fillRect(hx + 4, 103, 1, 3);
+        g.fillRect(hx + 10, 103, 1, 3); g.fillRect(hx + 12, 103, 1, 2); g.fillRect(hx - 2, 100, 2, 1);
+        var vx = 420 - (v * 0.25 % 900);                       // a village going by: cottages, a spire, lit windows after dark
+        for (var hh = 0; hh < 5; hh++) {
+          var bx = vx + hh * 13, bh = 8 + (hh % 2) * 2;
+          g.fillStyle = shade([200, 176, 132]); g.fillRect(bx, 116 - bh, 10, bh);
+          g.fillStyle = shade([150, 80, 60]); g.beginPath(); g.moveTo(bx - 1, 116 - bh); g.lineTo(bx + 5, 110 - bh); g.lineTo(bx + 11, 116 - bh); g.fill();
+          if (lit) { g.fillStyle = '#ffd890'; g.fillRect(bx + 2, 112 - bh + 4, 2, 2); g.fillRect(bx + 6, 112 - bh + 4, 2, 2); }
+        }
+        g.fillStyle = shade([190, 168, 128]); g.fillRect(vx + 66, 98, 5, 18); g.beginPath(); g.moveTo(vx + 65, 98); g.lineTo(vx + 68.5, 84); g.lineTo(vx + 72, 98); g.fill();
         hill(v * 0.35, 124, 12, 0.02, shade([92, 148, 70]), 3);
+        if (sun > 0.3) for (var sh = 0; sh < 7; sh++) {          // sheep on the near field
+          var sx_ = ((sh * 47 - v * 0.35) % 360 + 360) % 360 - 20;
+          g.fillStyle = '#ece8dc'; g.fillRect(sx_, 128 + (sh * 7) % 9, 4, 2); g.fillStyle = '#2a2420'; g.fillRect(sx_ + 4, 128 + (sh * 7) % 9, 1, 1);
+        }
         for (var h = 0; h < 8; h++) {                           // hedgerows across the fields, trees in them
           var hy = 128 + h * 3, xo = -(v * (0.4 + h * 0.05)) % 90;
           g.fillStyle = shade([58, 104, 48]);
@@ -306,7 +329,7 @@ var BridgeCountryside = (function () {
         g.strokeStyle = 'rgba(30,30,30,0.5)'; g.beginPath(); g.moveTo(0, 101); g.lineTo(W_, 103); g.stroke();
         for (var sm = 0; sm < 6; sm++) {                        // steam drifting back past the window
           var sx = (W_ - ((t * 0.12 + sm * 70) % (W_ + 80))), sy = 20 + Math.sin(t / 300 + sm) * 6 + sm * 3;
-          g.fillStyle = 'rgba(240,240,240,' + (0.35 - sm * 0.04) + ')'; g.beginPath(); g.arc(sx, sy, 10 + sm * 2, 0, 7); g.fill();
+          g.fillStyle = 'rgba(240,240,240,' + ((0.35 - sm * 0.04) * (0.3 + 0.7 * sun)).toFixed(2) + ')'; g.beginPath(); g.arc(sx, sy, 6 + sm * 1.5, 0, 7); g.fill();
         }
         g.fillStyle = '#1e3a2a';                                // the carriage window
         g.fillRect(0, 0, W_, 12); g.fillRect(0, H_ - 26, W_, 26); g.fillRect(0, 0, 14, H_); g.fillRect(W_ - 14, 0, 14, H_); g.fillRect(156, 0, 8, H_);
@@ -321,6 +344,11 @@ var BridgeCountryside = (function () {
           for (var f2 = 0; f2 < 9; f2++) g.fillRect(w2 + 2 + f2 * 4, 84, 2, 16 + (f2 % 3) * 5);
         }
         g.fillStyle = shade([84, 132, 60]); g.fillRect(0, 108, W_, 6);
+        g.fillStyle = shade([70, 110, 50]);                        // reeds along the far bank
+        for (var rd = 0; rd < 60; rd++) { var rx_ = ((rd * 29 - v * 0.6) % 340 + 340) % 340 - 10; g.fillRect(rx_, 104 - (rd % 4), 1, 6 + (rd % 4)); }
+        var hx2 = ((150 - v * 0.6) % 600 + 600) % 600 - 100;       // a heron standing in the shallows
+        g.fillStyle = shade([150, 160, 170]); g.fillRect(hx2, 102, 4, 6); g.fillRect(hx2 + 3, 97, 1, 5); g.fillRect(hx2 + 3, 96, 3, 1);
+        g.fillStyle = shade([60, 60, 60]); g.fillRect(hx2 + 1, 108, 1, 5); g.fillRect(hx2 + 3, 108, 1, 5);
         var wg = g.createLinearGradient(0, 114, 0, H_); wg.addColorStop(0, shade([60, 110, 120])); wg.addColorStop(1, shade([30, 70, 84]));
         g.fillStyle = wg; g.fillRect(0, 114, W_, H_ - 114);
         for (var gl = 0; gl < 24; gl++) {                       // glints sliding by

@@ -308,11 +308,11 @@ var BridgeCharacter = (function () {
       var rider = liveSheet(sheetKey('sit'));
       return mount.item({ sc: sc, world: world, offX: offX, offY: offY, ts: ts, now: now, x: pos.x, y: pos.y, footRow: footRow,
                           facing: player.facing, walking: player.moveProgress < 1, stride: player.stride,
-                          rider: function (ctx, dx, dy, tint) {           // the seated frame, its seat point at (dx, dy)
+                          rider: function (ctx, dx, dy, tint, depth) {    // the seated frame, its seat point at (dx, dy)
                             if (!rider.ready) return;
                             var row = DIR_ROW[player.facing] || 0, col = idleCol(Date.now());
                             BridgeScene.drawOccluded(ctx, sc, rider.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, Math.round(dx) - FRAME_W / 2,
-                              Math.round(dy) - (FRAME_H - 3), footRow, offX, offY, tint, null, null, 'auto');
+                              Math.round(dy) - (FRAME_H - 3), depth || footRow, offX, offY, tint, null, null, 'auto');
                           } });
     }
     var depth = seat ? BridgeScene.seatedRow(footRow, seat.facing) : footRow;   // seated: tested from the seat's front edge

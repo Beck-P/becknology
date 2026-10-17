@@ -346,6 +346,10 @@ var BridgeVillage = (function () {
     return { stage: stage(), of: PROJECTS.length, given: s.given, projects: PROJECTS.map(function (p) { return { id: p.id, name: p.name, state: state(p.id), fund: s.fund[p.id] || 0, cost: p.cost }; }) };
   }
 
-  return { decorate: decorate, done: done, state: state, stage: stage, roadSouth: roadSouth, journal: journal, PROJECTS: PROJECTS,
+  // someone who keeps a day (assets/routines.json) but hasn't moved in yet: not about till their project's done
+  var WHO = { juniper: 'cafe', hester: 'dairy', pike: 'station' };
+  function absent(id) { return !!WHO[id] && !done(WHO[id]); }
+
+  return { decorate: decorate, done: done, state: state, stage: stage, absent: absent, roadSouth: roadSouth, journal: journal, PROJECTS: PROJECTS,
            reload: function () { s = load(); }, _s: function () { return s; }, _finish: function (id) { s.fund[id] = project(id).cost; s.paid[id] = Date.now() - BUILD - 1; store(); } };
 })();

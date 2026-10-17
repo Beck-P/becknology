@@ -41,7 +41,7 @@ RIV = (29.0, 34.2)
 RZ = -0.45
 TRACK = (44.2, 45.8)
 STONE = G.HONEY
-SLATE = '#8a8070'
+SLATE = '#9a8c74'
 k = Kit(COLS, ROWS, margin_top=3.0, margin_bottom=0.6, seed=7121)
 G.fast_top(k)
 rng = k.rng
@@ -75,21 +75,23 @@ def material(x, r):
             return 'bank'
         return 'grass'
     if SQ[0] - 0.4 < x < SQ[2] + 0.4 and SQ[1] < r < SQ[3]:
-        return 'grass'                                                   # under the cobbles
+        return 'paving'                                                  # under the setts
+    if 1.0 < x < 42.0 and 25.0 < r < QUAY_R:
+        return 'paving'
     if I.path_dist(LANES, x, r) < 0.9:
         return 'path'
     return 'grass'
 
 
-ALB = {'grass': (G.GREEN, 0.12), 'path': (F.DIRT, 0.1), 'bank': ('#6a5638', 0.22), 'bed': ('#3e4a3a', 0.2)}
+ALB = {'grass': (G.GREEN, 0.12), 'path': (F.DIRT, 0.1), 'bank': ('#6a5638', 0.22), 'bed': ('#3e4a3a', 0.2), 'paving': ('#8a7a60', 0.1)}
 CELLS = [(c, r) for c in range(-1, COLS + 1) for r in range(-4, ROWS + 2)]
 I.ground(k, CELLS, material, ALB, height=height, bump=0.0, seed=71, dither=0.035, step=0.0625)
 G.river_water(k, -1.0, COLS + 1.0, RIV[0] - 1.2, RIV[1], RZ, seed=2.2)
 
 # the cobbles: the square, West Street, the wharf
-W.cobbles(k, SQ[0], SQ[1], SQ[2], SQ[3], tone='#a89878', size=0.26, lawn=True)
+W.cobbles(k, SQ[0], SQ[1], SQ[2], SQ[3], tone='#c8b490', size=0.26)
 HK.street(k, -1.0, 19.0, SQ[0], 21.0, tone='#a89878')
-W.cobbles(k, 1.0, 25.0, 42.0, QUAY_R - 0.3, tone='#9a8e78', size=0.28, lawn=True)
+W.cobbles(k, 1.0, 25.0, 42.0, QUAY_R - 0.3, tone='#b8a688', size=0.28)
 W.street_clutter(k, (SQ[0], SQ[1] + 0.5, SQ[2], SQ[3]), seed=7122, straw=[(15.0, 21.0, 33.0, 23.6)], chalk=(30.0, 14.2))
 G.quay(k, -1.0, 43.0, QUAY_R, z_top=0.0, z_water=RZ)
 
@@ -124,8 +126,8 @@ W.hanging_sign(k, 35.35, FRONT, 2.0, icon='bread')
 
 # ---- St Mary's and the churchyard, west -------------------------------------------------------------------------------------
 G.spire_church(k, 2.0, 12.6, 6.4, 12.4, stone=STONE, roof=SLATE)
-for (x, r, kind) in ((3.0, 14.4, 0), (4.4, 15.2, 1), (6.0, 14.2, 2), (7.6, 15.6, 0), (9.2, 14.6, 1), (10.8, 15.4, 2), (3.6, 16.8, 1), (6.8, 17.0, 0)):
-    I.headstone(k, x, r, tone=shade(STONE, 0.85), lean=rng.uniform(-6, 6), kind=kind)
+for (x, r) in ((3.0, 14.4), (4.4, 15.2), (6.0, 14.2), (7.6, 15.6), (9.2, 14.6), (10.8, 15.4), (3.6, 16.8), (6.8, 17.0), (9.6, 17.2)):
+    G.headstone(k, x, r, tone=shade('#c8bca8', rng.uniform(0.85, 1.05)))
     k.solid(x - 0.3, r - 0.2, x + 0.3, r + 0.2)
 W.tree(k, 11.6, 16.8, h=3.2, tone='#2e5a38')                       # a yew
 k.solid(11.1, 16.3, 12.1, 17.3)
@@ -157,6 +159,18 @@ W.bench(k, 25.6, 26.8, 24.5)
 HK.pump(k, 30.6, 19.4)
 for (x, r) in ((19.6, 12.5), (29.0, 12.5)):
     HK.tub(k, x, r)
+
+# the east side: two cottages and their gardens between the square and the station approach
+for (x0, x1, rb, rf, door, roof) in ((36.4, 39.6, 19.4, 22.6, 38.0, '#a85a3a'), (40.0, 43.6, 19.6, 22.8, 41.8, SLATE)):
+    rm, zr = HK.rich_house(k, x0, x1, rb, rf, wall_h=1.95, rise=1.3, roof=roof, wall=STONE, door_x=door, windows=[(x0 + 0.7, 0.85), (x1 - 0.7, 0.85)],
+                           chimney=x1 - 0.4, stone=True)
+    SMOKE.append([x1 - 0.52, round(rm - 0.15 - (zr + 1.05) * C, 3)])
+    V.flower_bed(k, x0 + 0.2, rf + 0.1, x1 - 0.2, rf + 0.5)
+G.washing_line(k, (36.8, 18.6), (39.4, 18.4))
+for (x, r) in ((36.0, 13.6), (42.4, 16.0)):
+    W.bush(k, x, r, s=0.4, tone='#3a6a30', berries='#c03050')
+    k.solid(x - 0.4, r - 0.3, x + 0.4, r + 0.3)
+F.wildflowers(k, 35.6, 12.6, 46.0, 18.6, 40)
 
 # ---- the station, east -------------------------------------------------------------------------------------------------------
 HK.rich_house(k, 37.0, 42.4, 6.0, 10.6, wall_h=2.2, rise=1.3, roof=SLATE, wall=STONE, door_x=39.7, windows=[(38.0, 0.9), (41.4, 0.9)], stone=True)

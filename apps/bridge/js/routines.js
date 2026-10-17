@@ -68,7 +68,7 @@ var BridgeRoutines = (function () {
   }
   // everyone who keeps a day: their routines, and whoever a festival on today gathers
   function ids() {
-    var out = Object.keys(R || {}).filter(function (id) { return id.charAt(0) !== '_'; });
+    var out = Object.keys(R || {}).filter(function (id) { return id.charAt(0) !== '_' && !(typeof BridgeVillage !== 'undefined' && BridgeVillage.absent(id)); });   // (not before the village fund brings them: js/village.js)
     if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on) BridgeFestivals.on().forEach(function (f) {
       Object.keys(f.crowd || {}).forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); });
     });

@@ -81,7 +81,8 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   // a horse: bought (the state, as Hobb would leave it), whistled, ridden
   await p.evaluate(() => { localStorage.setItem('bridge_country', JSON.stringify({ horse: { coat: 'chestnut', name: 'Bramble' }, buggy: true })); BridgeCountryside.reload();
     BridgeInventory.addItem('horse_whistle', 1); });
-  await go('verdance-east', 19, 13);
+  await go('verdance-east', 3, 14);
+  await p.evaluate(() => BridgeLit._force({ hour: 12.4, season: 'summer' }));
   await p.evaluate(() => BridgeCountryside.whistle());
   await p.waitForTimeout(400);
   await p.evaluate(() => { const b = [...document.querySelectorAll('.wd-sell-row')].find(e => /Ride/.test(e.textContent)); if (b) b.click(); });
@@ -92,9 +93,9 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await p.screenshot({ path: SHOTS + '/vg_riding.png' });
   // quicker than walking: hold right for a second
   const x0 = await p.evaluate(() => BridgeCharacter.getX());
-  await p.keyboard.down('ArrowRight'); await p.waitForTimeout(1000); await p.keyboard.up('ArrowRight'); await p.waitForTimeout(400);
+  await p.keyboard.down('ArrowRight'); await p.waitForTimeout(500); await p.keyboard.up('ArrowRight'); await p.waitForTimeout(2400);
   const x1 = await p.evaluate(() => BridgeCharacter.getX());
-  console.log('village: a second riding east,', x1 - x0, 'tiles');
+  console.log('village: half a second riding east,', x1 - x0, 'tiles');
   await p.screenshot({ path: SHOTS + '/vg_riding2.png' });
   for (const f of ['down', 'up', 'left']) {
     await p.evaluate((f) => BridgeCharacter.setFacing ? BridgeCharacter.setFacing(f) : null, f);
@@ -108,8 +109,9 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   if (!left.waiting) fail('the horse should wait where you left it');
   // the buggy
   await p.evaluate(() => { const s = BridgeCountryside._s(); s.riding = 'buggy'; s.at = null; BridgeCharacter.setMount(null); });
-  await go('verdance-east', 22, 13);
-  await p.waitForTimeout(1200);
+  await go('verdance-east', 6, 14);
+  await p.evaluate(() => BridgeLit._force({ hour: 12.4, season: 'summer' }));
+  await p.waitForTimeout(2400);
   await p.screenshot({ path: SHOTS + '/vg_buggy.png' });
   const bg = await p.evaluate(() => BridgeCharacter.getMount() && BridgeCharacter.getMount().what);
   console.log('village: driving the', bg);

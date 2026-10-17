@@ -126,14 +126,16 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
 
   // ---- the field: the moonflower opens only by night, the twin-moon melon grows only by moonlight ----
   const moon = await p.evaluate(() => {
-    const day = Date.UTC(2026, 9, 17, 16), out = { nightNoon: BridgeFarm.nightAt(day) };
-    let t = day; while (!BridgeFarm.nightAt(t)) t += 600000;
-    out.nightAfter = Math.round((t - day) / 60000) + ' min';
-    out.lantern = BridgeFarm.moonLight(0, t).toFixed(2); out.button = BridgeFarm.moonLight(1, t).toFixed(2);
+    // night on Verdance (js/farm.js nightAt) agrees with the sky now, and comes round for part of every Verdance day
+    const now = Date.now(), sky = BridgeClock.sky('verdance'), out = { skyNow: +sky.sun.toFixed(2), nightNow: BridgeFarm.nightAt(now) };
+    let n = 0; for (let t = now; t < now + 6 * 3600000; t += 600000) if (BridgeFarm.nightAt(t)) n++;
+    out.nightShare = (n / 36).toFixed(2);
+    out.lantern = BridgeFarm.moonLight(0, now).toFixed(2); out.button = BridgeFarm.moonLight(1, now).toFixed(2);
     return out;
   });
   console.log('country: moons', JSON.stringify(moon));
-  if (moon.nightNoon) fail('noon should not be night');
+  if ((moon.skyNow > 0.6 && moon.nightNow) || (moon.skyNow < 0.1 && !moon.nightNow)) fail('night on the farm disagrees with the sky');
+  if (!(moon.nightShare > 0.15 && moon.nightShare < 0.75)) fail('no proper night in a Verdance day');
   // the journey
   await p.evaluate(() => BridgeCountryside.journey('train', () => { window.__arrived = 1; }));
   await p.waitForTimeout(2400);

@@ -1091,3 +1091,13 @@ def greenhouse(k, x0, x1, r0, r1, h=1.4, frame='#f0f0ec'):
         x += 0.2
     k.box((x0 + x1) / 2 - 0.28, r1 - 0.01, 0.35, (x0 + x1) / 2 + 0.28, r1 + 0.02, 1.2, ('#e8e8e4', 0.08), 'gh_door')
     k.solid(x0, r0, x1, r1)
+
+
+def headstone(k, cx, cr, tone='#c8bca8'):
+    """A churchyard headstone: a rounded-topped slab, lichen on it, a clump of grass at its foot."""
+    h = k.rng.uniform(0.45, 0.7)
+    k.box(cx - 0.2, cr - 0.05, 0.0, cx + 0.2, cr + 0.05, h, (tone, 0.16), 'headstone', bevel=0.02)
+    k.cyl_y(cx, cr - 0.05, cr + 0.05, h, 0.2, 0.12, (tone, 0.16), 'headstone', verts=12)
+    k.blob(cx + 0.08, cr + 0.055, h * 0.6, 0.06, 0.01, 0.05, ('#a8b070', 0.2), 'lichen', segs=6)
+    k.blades([(cx + k.rng.uniform(-0.15, 0.15), cr + 0.08, 0.0, k.rng.uniform(0.1, 0.18), 0.03, k.rng.uniform(-0.05, 0.05), 0.02) for _ in range(8)],
+             ('#4e7a34', 0.2), 'grass_tuft')
