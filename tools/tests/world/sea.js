@@ -66,6 +66,7 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
   }, !!onScreen);
 
   await sailFrom('lumar');
+  await p.evaluate(() => { const a = BridgeSloop._toWorld(0, 0), b = BridgeSloop._toWorld(1, 1); window.KX = b.x - a.x; window.KY = b.r - a.r; });   // the chart's scale, tiles a chart unit
   const chk = await p.evaluate(() => BridgeSloop._planCheck());
   console.log('routes', chk.routes, 'ships', chk.ships, 'grounds', chk.grounds, 'route points', chk.pts, 'on land', chk.land, 'in a harbour mouth', chk.mouth, JSON.stringify(chk.kinds));
   if (chk.ships < 30) bad('only ' + chk.ships + ' ships on the routes');
@@ -78,7 +79,7 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
   // and no trader in the Crimson or the Midnight Sea, ever (sampled through a day)
   const traders = await p.evaluate((T) => {
     let shown = 0, wrong = 0;
-    for (let k = 0; k < 96; k++) BridgeSloop._shipsAt(T + k * 900).forEach(s => { if (s.role === 'merchant' && s.shown) { shown++; const c = BridgeSloop._toWorld(s.X / 600, s.Y / 432); const sea = BridgeSloop._sea(c.x, c.r); if (sea === 'crimson' || sea === 'midnight') wrong++; } });
+    for (let k = 0; k < 96; k++) BridgeSloop._shipsAt(T + k * 900).forEach(s => { if (s.role === 'merchant' && s.shown) { shown++; const c = BridgeSloop._toWorld(s.X / KX, s.Y / KY); const sea = BridgeSloop._sea(c.x, c.r); if (sea === 'crimson' || sea === 'midnight') wrong++; } });
     return { shown, wrong };
   }, T);
   console.log('traders sampled', traders.shown, 'in the Crimson or Midnight', traders.wrong);
@@ -90,7 +91,7 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
     let top = null, n = 0;
     S.forEach(a => { const c = S.filter(b => Math.abs(b.X - a.X) < 12 && Math.abs(b.Y - a.Y) < 8); if (c.length > n) { n = c.length; top = c; } });
     const mx = top.reduce((t, b) => t + b.X, 0) / n, my = top.reduce((t, b) => t + b.Y, 0) / n;
-    return { n, cx: mx / 600, cy: (my - 2) / 432 };
+    return { n, cx: mx / KX, cy: (my - 2) / KY };
   });
   console.log('busiest water', best.n, 'ships on the routes there');
   await goTo(best.cx, best.cy);
@@ -116,7 +117,7 @@ const NIGHT = '2026-10-16T07:20', DAY = '2026-10-16T12:00';           // Lumar's
 
   // a navy patrol in company, and a fishing ground (a trawler with her net out, dories at anchor)
   for (const [role, name] of [['navy', 'navy'], ['fisher', 'trawler'], ['privateer', 'privateer'], ['m_galleon', 'merchant_galleon'], ['navy_galleon', 'man_of_war']]) {
-    const at = await p.evaluate((role) => { const s = BridgeSloop._shipsAt(Date.now() / 1000 + 1.5).find(s => (s.role === role || s.kind === role) && s.shown); return s && { cx: s.X / 600, cy: (s.Y - 3) / 432, kind: s.kind }; }, role);
+    const at = await p.evaluate((role) => { const s = BridgeSloop._shipsAt(Date.now() / 1000 + 1.5).find(s => (s.role === role || s.kind === role) && s.shown); return s && { cx: s.X / KX, cy: (s.Y - 3) / KY, kind: s.kind }; }, role);
     if (!at) { bad('no ' + role + ' on the routes'); continue; }
     await goTo(at.cx, at.cy);
     await frameOn(role);

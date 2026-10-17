@@ -61,7 +61,8 @@ var BridgeCodex = (function () {
       ['lantern_beyond', 'Past the last ridge, where the whispers go']] },
     { id: 'finds', name: 'Treasures', reward: 250, items: [
       ['heron_coin', 'Fished up off Crimson Reach'], ['pocket_watch', 'Somewhere in Joro\'s junk pile'], ['edelweiss', 'The top of the Staircase, on Hoarfell'],
-      ['silver_nail', 'Lying about on Crimson Reach'], ['heartsong', 'The heart of the great songstone, floor 20'], ['old_boot', 'Everywhere. Everyone has one.']] },
+      ['silver_nail', 'Lying about on Crimson Reach'], ['heartsong', 'The heart of the great songstone, floor 20'], ['old_boot', 'Everywhere. Everyone has one.'],
+      ['regatta_cup', 'Win the Emerald Regatta - Fridays, off Crownhaven']] },
     { id: 'gear', name: 'Tools and weapons', reward: 150, items: [
       ['iron_dagger', 'The smithy on Lumar\'s square'], ['cutlass', 'The smithy on Lumar\'s square'], ['star_blade', 'Hob forges it, in the Rose Mine'],
       ['boarding_pike', 'The smithy on Lumar\'s square'], ['war_maul', 'The smithy on Lumar\'s square'],

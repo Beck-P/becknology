@@ -915,6 +915,17 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#a080ff'; ctx.fillRect(x + 9*u, y + 9*u, 1*u, 1*u); ctx.fillRect(x + 3*u, y + 3*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 4*u, 1*u, 1*u);
   }
 
+  // the Regatta Cup (js/race.js): a silver cup with two handles on a dark plinth
+  function cupIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[3, 2, 10, 7], [1, 3, 3, 4], [12, 3, 3, 4], [5, 9, 6, 2], [7, 10, 2, 2], [4, 12, 8, 3]]);
+    px(ctx, x, y, u, '#c8ccd8', [[4, 3, 8, 5], [2, 4, 1, 2], [13, 4, 1, 2], [6, 9, 4, 1], [7, 10, 2, 2]]);
+    px(ctx, x, y, u, '#f0f4ff', [[5, 3, 2, 3], [4, 3, 8, 1]]);
+    px(ctx, x, y, u, '#7a7e8a', [[10, 4, 2, 4], [6, 8, 5, 1]]);
+    px(ctx, x, y, u, '#3a2410', [[5, 12, 6, 2]]);
+    px(ctx, x, y, u, '#e0c060', [[7, 12, 2, 1]]);
+  }
+
   // a fallen star (a Sylvara starfall, js/weather.js): a little five-pointed glow
   function fallenStarIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -1210,6 +1221,8 @@ var BridgeItems = (function () {
                      draw: inkIcon, value: 160 },
     deep_pearl:    { id: 'deep_pearl', name: 'Deep Pearl', desc: 'From the Deep Maw itself. Something moves inside it, very slowly, like an eye opening.', type: 'material', stackable: true,
                      draw: deepPearlIcon, value: 450 },
+    regatta_cup:   { id: 'regatta_cup', name: 'The Regatta Cup', desc: 'Silver, a sloop under full sail engraved round it and your name on the plinth. The Emerald Regatta, first across the line.', type: 'material', stackable: false,
+                     draw: cupIcon, value: 0 },
     fallen_star:   { id: 'fallen_star', name: 'Fallen Star', desc: 'It came down by you on a starfall night on Sylvara. Still warm, and humming to itself. Mirelle the herbalist buys them.', type: 'material', stackable: true,
                      draw: fallenStarIcon, value: 150 },
     // treasure maps (js/treasure.js)

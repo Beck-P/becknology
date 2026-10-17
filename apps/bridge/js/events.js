@@ -418,6 +418,7 @@ var BridgeEvents = (function () {
     // ---- Verdance ----
     hen: {
       world: 'verdance-village', name: 'A hen loose in Brambleford', len: 3, w: 3, at: [20, 15], when: both(day(0.3), dry),
+      gather: { x: 20, y: 15, r: 3.4, n: 5, face: [20, 15] },          // the village stops to watch
       hint: 'A hen\'s got loose — the whole street\'s after her!', sfx: 'cluck', loop: { name: 'cluck', every: 2.4, near: 12 },
       begin: function (L) { L.henPath = henWay(W.data.collisions) || HEN_WAY; },
       cast: [{ sheet: 'npc-kid-a', path: null, chase: 2.2, speed: 1.5 }, { sheet: 'npc-vfolk-b', path: null, chase: 4.2, speed: 1.5 }],
@@ -438,6 +439,7 @@ var BridgeEvents = (function () {
     },
     balloon: {
       world: 'verdance-village', name: 'A balloon drifting over', len: 3, w: 2, at: null,
+      gather: { x: 23, y: 20, r: 4, n: 6, face: [23, 12] },            // out on the green, looking up
       when: function (ms, E) { var w = wxAt(E.worlds[0], ms); return skyAt(E.worlds[0], ms).sun > 0.45 && !w.wet && !w.bad; },
       hint: 'Look up — a hot-air balloon!', react: 'look',
       ground: function (L, ctx, offX, offY, ts, ms) { balloon(L, ctx, offX, offY, ts, ms, true); },
@@ -446,6 +448,7 @@ var BridgeEvents = (function () {
     },
     kites: {
       world: 'verdance-village', name: 'Kites over the green', len: 5, w: 2, at: [30, 22],
+      gather: { x: 30, y: 23.5, r: 3.4, n: 6, face: [30, 18] },        // faces up at the kites
       when: function (ms, E) { var w = wxAt(E.worlds[0], ms); return skyAt(E.worlds[0], ms).sun > 0.35 && (w.kind === 'cloudy' || (w.kind === 'fair' && H('breeze' + Math.floor(ms / 10800000)) < 0.5)); },
       hint: 'A good wind — kites up over the green',
       cast: [{ sheet: 'npc-kid-a', x: 29, y: 22, f: 'up' }, { sheet: 'npc-kid-b', x: 33, y: 23, f: 'up' }, { sheet: 'npc-vfolk-a', x: 26, y: 24, f: 'up' }],

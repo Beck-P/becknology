@@ -83,6 +83,11 @@ var BridgeMulti = (function () {
     var a = avatar(from), p = N().peer(from);
     if (p) a.name = p.name;
     a.tx = d.x; a.ty = d.y; a.f = d.f || 'down'; a.k = d.k || 'purple'; a.mv = !!d.mv; a.h = d.h || null; a.seen = performance.now(); a.metaT = p ? p.t : null;
+    // skiing or climbing (js/ski.js, js/climb.js): the sport's frame, how high off the ground
+    if (d.p && POSE_KIND[d.p[0]]) {
+      if (!a.pose) a.lift = d.p[4];
+      a.pose = { kind: POSE_KIND[d.p[0]], row: d.p[1], col: d.p[2], flip: !!d.p[3] }; a.tlift = d.p[4];
+    } else a.pose = null;
     if (a.fresh) { a.x = d.x; a.y = d.y; a.fresh = false; }
   }
   // gone: they say they're somewhere else — at once if they've said so since their last step here, else (presence
@@ -111,6 +116,8 @@ var BridgeMulti = (function () {
     var rp = BridgeCharacter.getRenderPos(), body = { i: here, x: Math.round(rp.x * 100) / 100, y: Math.round(rp.y * 100) / 100, f: BridgeCharacter.getFacing(),
       k: String(BridgeCharacter.sportKey()).replace(/^(ski|climb)-/, ''), mv: !!(BridgeCharacter.isMoving && BridgeCharacter.isMoving()),
       h: typeof BridgeArms !== 'undefined' ? BridgeArms.held() : null };
+    var ps = BridgeCharacter.getPose && BridgeCharacter.getPose();
+    if (ps && POSE_KIND.indexOf(ps.kind) > 0) body.p = [POSE_KIND.indexOf(ps.kind), ps.row, ps.col, ps.flip ? 1 : 0, Math.round(ps.lift || 0)];
     var json = JSON.stringify(body);
     if ((json !== sentJson && now - sentAt > 140) || now - sentAt > 2000) { n.send('pos', body); sentJson = json; sentAt = now; }
   }
@@ -118,6 +125,7 @@ var BridgeMulti = (function () {
   function step(dt) {
     Object.keys(others).forEach(function (id) {
       var a = others[id], dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
+      if (a.pose) a.lift += (a.tlift - a.lift) * Math.min(1, dt * 9);
       if (d > 4) { a.x = a.tx; a.y = a.ty; return; }
       var mv = Math.min(d, Math.max(4.5, d * 9) * dt);
       if (d > 0.001) { a.x += dx / d * mv; a.y += dy / d * mv; a.stride += mv; }
@@ -130,6 +138,7 @@ var BridgeMulti = (function () {
     if (!sc || typeof BridgeScene === 'undefined') return [];
     return Object.keys(others).map(function (id) {
       var a = others[id], footRow = a.y + 1 - 3 / 32;
+      if (a.pose) return posed(a, world, offX, offY, ts, now, sc, id);
       return { footRow: footRow, draw: function (ctx) {
         var seated = /^sit-/.test(a.k), A = typeof BridgeArms !== 'undefined' ? BridgeArms : null;
         if (a.fight && A) a.fight = A.remoteTick(a.fight, { x: a.x, y: a.y }, performance.now());
@@ -146,6 +155,26 @@ var BridgeMulti = (function () {
           BridgeScene.tintAt(sc, world, a.x, a.y, now), { x: cx, y: footY, rx: 9, ry: 3 }, null, 'auto');
       } };
     });
+  }
+
+  // someone skiing or climbing: their sport sheet's frame where they are, lifted as they are (a jump, up the face), drawn
+  // through the scenery like your own pose - so you see each other on the mountain (and race: js/race.js)
+  var POSE_KIND = ['walk', 'ski', 'climb'];
+  var nudges = {};                                     // tiles to draw someone aside by (two climbers on the same holds)
+  function posed(a, world, offX, offY, ts, now, sc, id) {
+    var p = a.pose, x = a.x + 0.5 + (nudges[id] || 0), y = a.y + 1 - 3 / 32;
+    return { footRow: y, draw: function (ctx) {
+      var m = BridgeCharacter.SPORT[p.kind], img = BridgeCharacter.sportImage(p.kind + '-' + a.k, p.flip);
+      if (!img || !m) return;
+      var cx = Math.round(offX + x * ts), footY = Math.round(offY + y * ts), lift = Math.round(a.lift || 0);
+      var shadow = lift > 2 ? null : { x: cx, y: footY, rx: p.kind === 'ski' ? 10 : 8, ry: 3 };
+      if (!shadow && p.kind === 'ski') {
+        ctx.fillStyle = 'rgba(40, 50, 90, 0.28)';
+        ctx.beginPath(); ctx.ellipse(cx, footY, Math.max(4, 10 - lift / 5), Math.max(2, 3 - lift / 20), 0, 0, Math.PI * 2); ctx.fill();
+      }
+      BridgeScene.drawOccluded(ctx, sc, img, p.col * m.w, p.row * m.h, m.w, m.h, cx - m.ox, footY - m.oy - lift, y, offX, offY,
+        BridgeScene.tintAt(sc, world, x - 0.5, y - 1, now), shadow, null, true);
+    } };
   }
 
   // walk up to them: a prompt like anyone else's (interactions.js runs 'player' through BridgeMulti.menu)
@@ -449,6 +478,7 @@ var BridgeMulti = (function () {
   var api = { menu: menu, panel: panel, emote: emote, say: say, inst: inst, myInst: myInst, PERSONAL: PERSONAL, addMenu: addMenu, addPanel: addPanel,
            guard: goGuard, travel: travel, visiting: function () { return visiting; }, setVisiting: function (id) { visiting = id || null; },
            others: function () { return others; }, cap: cap, placeOf: placeOf, friends: null,
+           nudge: function (id, dx) { if (dx) nudges[id] = dx; else delete nudges[id]; },
            promptFor: null, direct: null, isDown: null };   // js/fight.js: a downed partner's prompt, helping them up
   return api;
 })();
