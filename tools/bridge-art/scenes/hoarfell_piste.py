@@ -289,6 +289,33 @@ for (run, rr, off, s) in (('couloir', 50.0, -1.4, 0.42), ('pinewood', 41.0, 2.0,
 for t in towers + [top]:                                                   # the lift towers' feet
     OBST.append([LX, round(t[0][1], 2), 0.35, 'pylon'])
 
+# ---- the surroundings, enriched (Oct 2026, on their own dice: nothing above moves, nothing here is solid or in the ski data) ------
+import random  # noqa: E402
+import assets_hoarfell_rich as HR  # noqa: E402
+er = random.Random(7312)
+for run in RUNS:                                          # earlier skiers' carves down the edges of each run, flat in the snow
+    for side in (-1, 1):
+        r0 = er.uniform(9.0, 20.0)
+        while r0 < BOWL_R - 6:
+            r1 = r0 + er.uniform(8.0, 16.0)
+            pts = []
+            r = r0
+            while r < min(r1, BOWL_R - 4):
+                pts.append((centre(run, r) + side * half(run, r) * (0.62 + 0.18 * math.sin(r * 0.9 + side)), r))
+                r += 0.7
+            for (ax, ar), (bx, br) in zip(pts, pts[1:]):
+                if jump_at(ax, ar) or jump_at(bx, br) or in_moguls(ax, ar):
+                    continue
+                for o in (-0.06, 0.06):
+                    k.tube((ax + o, ar, 0.008), (bx + o, br, 0.008), 0.014, ('#c4cee0', 0.05), 'print', verts=4, smooth=False)
+            r0 = r1 + er.uniform(6.0, 14.0)
+for (x0, r0, dx, dr, n) in ((2.0, 12.0, 0.42, 0.18, 22), (41.5, 30.0, -0.38, 0.22, 18), (30.0, 60.0, 0.4, -0.12, 16)):
+    for i in range(n):                                    # a fox's line across the slope
+        x, r = x0 + i * dx, r0 + i * dr + 0.12 * math.sin(i * 1.3)
+        k.blob(x, r, 0.008, 0.03, 0.04, 0.01, ('#b4c0d6', 0.05), 'print', segs=5)
+HR.windswept(k, 0.5, 2.6, 45.5, 8.8, 26, er, ok=lambda x, r: not any(abs(x - centre(run, 5)) < 2.2 for run in RUNS))
+HR.windswept(k, 9.0, BOWL_R - 1.0, 39.0, ROWS - 1.0, 14, er, ok=lambda x, r: r > FINISH_R + 3)
+
 # ---- the light: the same alpenglow as the village ----------------------------------------------------------------------------------
 k.sun((0.8, 0.25, -0.38), '#ffc4a4', 3.2, angle=3.0)
 k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=64, world_light=('#8a96cc', 0.95))

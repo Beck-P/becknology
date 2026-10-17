@@ -344,6 +344,10 @@ BZ = 2.7 * 0.55                                                                 
 k.box(17.0, 14.17, BZ + 0.12, 22.0, 14.23, BZ + 0.6, (N.LOG_D, 0.1), 'sign_board')
 G.letters(k, 'Snowcap Lodge', 'Pacifico', 19.5, 14.23, BZ + 0.17, size=0.32, col='#ffd890', lit=True, energy=5)
 N.hanging_sign(k, 14.25, 13.58, 1.55, 'bed')
+for (x, c) in ((14.35, '#7a1a22'), (24.65, '#1e3a5a')):                            # the lodge's flags, its clipped firs
+    HR.flagpole(k, x, 14.25, c)
+for x in (18.55, 20.45):
+    HR.tub_fir(k, x, 14.05)
 HR.skis(k, 25.25, 13.2, cols=('#c83a2e', '#c83a2e'))
 HR.skis(k, 25.45, 12.2, cols=('#2a6ac0', '#e8e8f0'))
 N.woodpile(k, 14.2, 15.8, 14.1)

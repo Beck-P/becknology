@@ -254,7 +254,7 @@ def alpine_door(k, cx, r_face, col=None, wreath=True, lamp=1, canopy=True, rr=No
     k.box(cx + 0.5 * (-lamp or 1), r_face + 0.42, 0.0, cx + 0.5 * (-lamp or 1) + 0.12, r_face + 0.48, 0.16, ('#2e3038', 0.1), 'boot_scraper')
 
 
-def snow_sheet(k, a, b, c, d, nu, nv, amp=0.07, seed=0, part='roof_snow'):
+def snow_sheet(k, a, b, c, d, nu, nv, amp=0.045, seed=0, part='roof_snow'):
     """A blanket of snow over the quad a-b-c-d (corners (x, r, z); a-b along u, a-d along v), gently lumpy, so the
     light finds soft hollows in it instead of one flat slab."""
     def at(u, v):
@@ -732,3 +732,54 @@ def string_lights(k, a, b, sag=0.3, n=None, energy=0.0):
         k.tube(p, q, 0.008, ('#1a1a1e', 0.1), 'wire', verts=3)
     for p in pts[1:-1]:
         k.sphere(p[0], p[1], p[2] - 0.05, 0.035, 0.04, '#5a3a10', 'bulb', emit=('#ffd070', 1.4), segs=6)
+
+
+def tub_fir(k, x, r, h=0.9):
+    """A clipped fir in a wooden tub by a door: the grand hotel's touch."""
+    k.cyl(x, r, 0, 0.42, 0.2, ('#4e2e18', 0.12), 'tub', verts=10)
+    k.cyl(x, r, 0.4, 0.44, 0.215, ('#c8a040', 0.1), 'tub_band', verts=10)
+    with k.foliage('needle'):
+        k.cone(x, r, 0.42, 0.42 + h, 0.22, 0.02, ('#24463a', 0.15), 'pine', verts=10)
+    k.cone(x, r, 0.42 + h * 0.45, 0.42 + h * 0.9, 0.12, 0.02, (ROOF_SNOW, 0.1), 'pine_snow', verts=8)
+    k.solid_post(x, r)
+
+
+def flagpole(k, x, r, col, h=2.6):
+    """A white pole with a long banner hanging from a yard at its top."""
+    k.cyl(x, r, 0, h, 0.035, ('#e8e8ee', 0.1), 'flagpole', verts=6)
+    k.sphere(x, r, h + 0.03, 0.05, 0.05, ('#c8a040', 0.1), 'finial', segs=6)
+    k.box(x - 0.02, r - 0.02, h - 0.15, x + 0.4, r + 0.02, h - 0.11, ('#e8e8ee', 0.1), 'flag_yard')
+    k.box(x + 0.03, r, h - 1.05, x + 0.37, r + 0.02, h - 0.15, (col, 0.1), 'flag')
+    k.box(x + 0.03, r + 0.02, h - 0.65, x + 0.37, r + 0.025, h - 0.58, ('#f2ead6', 0.1), 'flag_stripe')
+    k.solid_post(x, r)
+
+
+def windswept(k, x0, r0, x1, r1, n, rr, ok=None, z=0.0):
+    """Wind-carved snow over open ground: long low ripples (sastrugi) lying across the wind and soft little drifts,
+    flat enough to walk over (no solids). ok(x, r) says where they may go."""
+    placed = 0
+    for _ in range(n * 6):
+        if placed >= n:
+            break
+        x, r = rr.uniform(x0, x1), rr.uniform(r0, r1)
+        if ok and not ok(x, r):
+            continue
+        placed += 1
+        zz = z(x, r) if callable(z) else z
+        if rr.random() < 0.65:
+            L = rr.uniform(0.5, 1.4)
+            k.blob(x, r, zz - 0.01, L, rr.uniform(0.06, 0.12), 0.035, (SNOW, 0.04), 'drift', rot=(0, 0, rr.uniform(-12, 12)), segs=10)
+            k.blob(x + 0.04, r + 0.1, zz - 0.012, L * 0.85, 0.05, 0.02, (SNOW_SH, 0.04), 'drift', rot=(0, 0, rr.uniform(-12, 12)), segs=8)
+        else:
+            k.blob(x, r, zz - 0.03, rr.uniform(0.4, 0.8), rr.uniform(0.25, 0.45), rr.uniform(0.06, 0.1), (SNOW, 0.04), 'drift', segs=10)
+
+
+def rime_rock(k, x, r, s, z=0.0, rr=None):
+    """A rock furred with rime on its windward side (the west), snow on its top."""
+    rr = rr or k.rng
+    k.rock(x, r, z + s * 0.3, s, s * 0.75, s * 0.65, ('#5a6272', 0.15), part='boulder', segs=8, jitter=0.18)
+    k.blob(x - s * 0.5, r, z + s * 0.45, s * 0.45, s * 0.6, s * 0.4, ('#e4eef8', 0.06), 'rime', segs=8)
+    for j in range(4):
+        k.tube((x - s * 0.55, r + rr.uniform(-0.3, 0.3) * s, z + s * rr.uniform(0.3, 0.6)),
+               (x - s * 0.95, r + rr.uniform(-0.3, 0.3) * s, z + s * rr.uniform(0.3, 0.6)), 0.03 * s / 0.4, ('#e4eef8', 0.06), 'rime', rb=0.004, verts=4)
+    k.blob(x, r, z + s * 0.6, s * 0.75, s * 0.55, s * 0.2, (ROOF_SNOW, 0.05), 'boulder_snow', segs=9)

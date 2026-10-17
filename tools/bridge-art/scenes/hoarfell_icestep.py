@@ -231,6 +231,18 @@ k.solid(0, 0, COLS, int(FACE_R) + 1)                                          # 
 k.solid(0, 0, 1, ROWS)
 k.solid(COLS - 1, 0, COLS, ROWS)
 
+# ---- the surroundings, enriched (Oct 2026, on their own dice: nothing above moves; new firs only on the blocked edge columns) --
+import random  # noqa: E402
+import assets_hoarfell_rich as HR  # noqa: E402
+er = random.Random(7220)
+HR.windswept(k, 1.2, FACE_R + 2.2, COLS - 1.2, ROWS - 0.3, int(COLS * 0.9), er,
+             ok=lambda x, r: not 11.2 < x < 12.9)
+for (x, r, h) in [(0.3, 29.0, 2.4), (0.4, 33.4, 2.7), (23.6, 29.4, 2.3), (23.5, 33.2, 2.6)]:                                   # firs framing the shelf on the edge columns
+    HR.fir(k, x, r, h, rr=er, solid=False)
+for i in range(int(COLS * 0.6)):                              # boot prints along the shelf's trodden line
+    x = 1.5 + i * (COLS - 3) / (COLS * 0.6)
+    k.blob(x, FACE_R + 1.0 + (0.12 if i % 2 else -0.12), 0.01, 0.055, 0.085, 0.012, ('#a8b6ce', 0.05), 'print', segs=6)
+
 # ---- the light: the village's alpenglow ----------------------------------------------------------------------------------------------
 k.sun((0.7, -0.5, -0.4), '#ff9a88', 2.6, angle=3.0)        # lower and redder up here: the sun nearly down
 # by night the moon from in front too (from behind, the face was in its own shadow all night)

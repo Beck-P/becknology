@@ -17,6 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
+import assets_hoarfell_rich as HR             # noqa: E402
 import assets_isle as I                       # noqa: E402
 import assets_signs as G                      # noqa: E402
 import assets_snow as N                       # noqa: E402
@@ -170,6 +171,29 @@ for rid, (x, r, col) in TOPS.items():
     k.tube((x + 0.5, r + 0.56, 0.06), (x + 0.5, rr + 0.04, 0.03), 0.02, (col, 0.1), 'rope', verts=4)
     k.tube((x + 0.5, rr + 0.04, 0.03), (x + 0.56, rr + 0.5, -4.5), 0.02, (col, 0.1), 'rope', verts=4)
     TOPS[rid] = (x, r, col)
+
+# ---- the surroundings, enriched (Oct 2026, on their own dice: nothing above moves, nothing here is solid) -----------------------
+import random  # noqa: E402
+er = random.Random(4412)
+BUSY = [(1.6, 4.6, 6.6, 8.6), (5.4, 11.8, 10.6, 13.6), (2.4, 12.2, 5.2, 13.4), (12.6, 5.6, 14.8, 7.6), (19.2, 11.2, 23.8, 16.2),
+        (13.6, 15.8, 16.4, 17.4), (8.6, 0.0, 20.6, 5.2)]
+
+
+def open_snow(x, r):
+    return inside(x, r) and ((x - CX) / AX) ** 2 + ((r - CR) / AR) ** 2 < 0.8 and not any(a <= x <= c and b <= r <= d for (a, b, c, d) in BUSY)
+
+
+HR.windswept(k, 1.0, 1.0, 27.0, 19.0, 70, er, ok=open_snow)
+for i, (x, r, a) in enumerate(outline):                       # rime-furred rocks along the rim, where nobody walks
+    if i % 7 == 3 and er.random() < 0.6:
+        HR.rime_rock(k, x - math.cos(a) * 0.25, r - math.sin(a) * 0.2, er.uniform(0.16, 0.3), rr=er)
+HR.prints(k, [(21.0, 15.4), (18.0, 12.0), (14.6, 8.2), (13.9, 7.2)], rr=er)          # up from the lift to the register
+HR.prints(k, [(14.4, 8.6), (9.0, 9.2), (5.0, 8.4)], rr=er)                            # over to the observatory
+for xo in (7.3, 8.7):                                                                 # ski tracks away from the start gate
+    pts = [(xo, 13.4)] + [(xo + 0.9 * math.sin(t * 0.9 + xo), 13.4 + t * 0.7) for t in range(1, 6)]
+    for (ax, ar), (bx, br) in zip(pts, pts[1:]):
+        for o in (-0.07, 0.07):
+            k.tube((ax + o, ar, 0.006), (bx + o, br, 0.006), 0.016, ('#b0bcd2', 0.05), 'print', verts=4, smooth=False)
 
 # ---- the light: the same evening, higher up: the sun lower and pinker, the cloud sea's blue in the shadows -------------------------
 k.sun((0.85, 0.2, -0.3), '#ffb894', 3.4, angle=3.0)
