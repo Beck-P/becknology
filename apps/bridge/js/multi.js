@@ -15,7 +15,7 @@
  * swing, a charge, a roll — played out on their pilot here, weapon and all).
  */
 var BridgeMulti = (function () {
-  var PERSONAL = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, office: 1, 'lumar-home': 1, 'arcadia-home': 1, 'arcadia-penthouse': 1, 'lumar-manor': 1, 'verdance-home': 1, 'lumar-holm-home': 1, 'lumar-holm': 1,
+  var PERSONAL = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, office: 1, 'ship-passage': 1, 'ship-galley': 1, 'ship-observatory': 1, 'ship-greenhouse': 1, 'lumar-home': 1, 'arcadia-home': 1, 'arcadia-penthouse': 1, 'lumar-manor': 1, 'verdance-home': 1, 'lumar-holm-home': 1, 'lumar-holm': 1,
                    'lumar-manor-drawing': 1, 'lumar-manor-library': 1, 'lumar-manor-dining': 1, 'lumar-manor-bedroom': 1, 'lumar-holm-resort': 1 };
   var DIR_ROW = { down: 0, right: 1, up: 2, left: 3 }, IDLE = [0, 1, 2, 1];
   function idleCol(k) { return k % 12 === 5 ? 3 : IDLE[k % 4]; }   // breathing, and now and then idle3: a blink

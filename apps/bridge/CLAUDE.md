@@ -249,6 +249,14 @@ own cozy identity. Animations on top: viewport stars + occasional planet/ship
 events, cyan strip pulse, desk lamp dust motes, coffee-mug steam, cockpit-door
 LED blink, and the drone-pet's idle wander + bob + LED.
 
+### The Wayfarer's fitted rooms (the passage, galley, observatory, greenhouse)
+The bridge's wood and brass (`DECK_WALL`, deck planks, brass `#d0a048` / `#a08040`), and each room its own accent:
+- Galley: brick `#8a3e2a` / mortar `#5a2618`, copper `#b8683a` `#7a3e22` `#e09868`, the range's iron `#1c1c22`, firebox `#ff6a20`;
+  blue-and-white crockery `#2a4a8a` / `#e8e4d8`; card baize `#1e4a32`, card backs `#9a2222` with gold `#e0b040`
+- Observatory: navy `#16233e`, night `#0c1424`, velvet `#3a2450`, starlight `#7a90e0`, the astronomer's red lamp `#ff5040`
+- Greenhouse: painted iron `#2e4a3a`, brick `#7a4836`, soil `#3a2618`, leaves `#3a7a32` `#4e9a3a` `#68b048`, grow-light `#ffc8d8`
+- The Eights panel: baize `#1e3a2a` in an oak rim `#5e3b1e`, gold `#e0b040`, cream `#ffe8b0`
+
 ## Character sprite sheets
 
 Every walking character (the pilot now, NPCs next) uses this format:
@@ -437,9 +445,9 @@ Each Lumar island is a whole place to walk (≈56 × 40 tiles), built with `tool
 - **Adding a sheet:** a new key in `api/_personas.json` matching the person's id in `people.json`; keep facts consistent with the quests, and gate anything that would spoil one behind `trust`.
 
 ### The captain's deck (the bridge)
-`scenes/bridge.py` + `tools/bridge-art/assets_deck.py`. Doors: the quarters and the captain's office in the south wall, the hangar west, the game room east. Stations are `deck` interactions handled by `BridgeDeck` in `js/worlds/bridge.js` (`action`): the chart desk opens the map of everything (the game menu's Map tab on *All places*), the wireless and the scope say what's out the window (`BridgeOrbit.getLocation()`), the aether gauges know whether you have an engineer, the letter rack opens your letters. The helm and the chart table open the nav chart; the hologram stands where the world JSON's `holo` says.
+`scenes/bridge.py` + `tools/bridge-art/assets_deck.py`. Doors: the quarters, the captain's office and the passage aft (the fitted rooms) in the south wall, the hangar west, the game room east. Stations are `deck` interactions handled by `BridgeDeck` in `js/worlds/bridge.js` (`action`): the chart desk opens the map of everything (the game menu's Map tab on *All places*), the wireless and the scope say what's out the window (`BridgeOrbit.getLocation()`), the aether gauges know whether you have an engineer, the letter rack opens your letters. The helm and the chart table open the nav chart; the hologram stands where the world JSON's `holo` says.
 - **Decor:** five slots (`deck_plant`, `deck_lamp`, `deck_rug`, `deck_curio`, `deck_flag`), three pieces each, all built from `assets_deck.DECOR` as variants; bought from the Ship's Chandler on the bridge, the Lumar dockside merchant or ArcadiaMart (`js/catalog.js`, which previews them from their own layer renders) and swapped from the quarters' locker. A slot is a decor `slot_key` like the quarters' ones.
-- **Crew aboard:** once hired, a crew member leaves where you found them and stands at their post (`crewPosts` in `bridge.json`: Bram at the chart desk, Okafor at the gauges, Ansel at the wireless, Corra by the ledger, Pip on the sea chest) — `BridgeCrew.decorate`. Talking to them aboard still counts for quests that send you to them (`home`).
+- **Crew aboard:** once hired, a crew member leaves where you found them and keeps a day aboard by the ship's clock (js/aboard.js, *The Wayfarer grown longer* below), on duty at their post (`crewPosts` in `bridge.json`: Bram at the chart desk, Okafor at the gauges, Ansel at the wireless, Corra by the ledger, Pip on the sea chest). Talking to them aboard still counts for quests that send you to them (`home`).
 - **Letters:** `BridgeTalk.checkMail()` runs when you come onto the bridge. A finished quest's `letter` in `quests.json` (from, text) arrives as a thank-you; with the AI server on, someone who's fond of you (feeling ≥ 3, talked at least once, not in the last 8 hours) writes now and then (`api/talk.mjs` mode `letter`), three a day at most. Envelopes show in the rack (the `mail` layer) while you have letters.
 
 ### The captain's office
@@ -706,6 +714,72 @@ The cabinets (Asteroids, Breakout, Helicopter, Missile Command, Space Invaders) 
 
 ### The game room
 Aboard the Wayfarer, through the bridge's east door (`gameroom`, `scenes/gameroom.py`). Every mini-game you play out in the worlds — the Arcade's cabinets, the Neon Royale's tables and Royale Link terminals (one game, `runouts`, its slot labelled ROYALE LINK), the chess table, Enigma's cipher terminal and signal relay, the canvas at the Brink, NULL's Splice rig, Lucky 7's pachinko — is marked found (`js/games.js`, `bridge_games`) and its slot in the game room swaps a dust sheet for the real thing (scene layers `g_<game>`: `on` / `off`); play it from there (`game_slot` interactions). The score board (`game_scores`) lists what you've found, where, Splice's best times and how many are still out there. A new game: an entry in `GAMES` (games.js) keyed by its app path, and a `g_<key>` variant pair in the scene. The inn has its guest floor upstairs (`stairs_up` / `stairwell_down` in `assets_lumar`), the Market Square the fisher's cottage and the cartographer's house, Enigma's relay deck the hydroponics bay through its east door (`enigma-hydro`, where Okafor lives; `station_room(..., east=(r0, r1))` opens the wall); more back rooms, cellars and rooftops follow (see `WORLDS.md`).
+
+### The Wayfarer grown longer: rooms aft, the galley, crew life aboard
+Beck: "the Wayfarer is generally a good idea" (the denser-worlds plan's workstream H): the ship grows with your crew.
+- **The passage** (`ship-passage`, `scenes/ship_passage.py`, the kit `tools/bridge-art/assets_wayfarer.py`): through the
+  bridge's new door in its south wall (tiles 13–14, east of the quarters'), a long panelled companionway under wall
+  lanterns, a runner down it, round brass ports onto the planet between three **module bays**. Each bay is a scene layer
+  `bay_<module>`: `sealed` (a riveted iron blank, a stencilled number, a builder's tag, a coil of cable) or `fitted` (a
+  panelled door with a light in it, its lamp and nameboard) — js/wayfarer.js sets them as fitted. Also the **watch bill**
+  by the bridge door (a HOLDOUT `scene.bill`: js/worlds/wayfarer.js pins each of your crew's faces to it with a lamp —
+  green at their post, amber off duty, dark below), the **scuttlebutt** (a dipper once a watch, +10 energy, and whatever
+  the crew are saying), fire buckets, lockers, oilskins, and the **hatch** down to the crew's berths, open and lamplit.
+- **Modules** (`js/wayfarer.js`, BridgeWayfarer; localStorage `bridge_wayfarer` `{ mods: { id: at } }`): the galley and
+  mess (1,800, one crew aboard), the observatory (3,200, two), the greenhouse deck (2,600, two) — bought from the Ship's
+  Chandler (*Ship's modules*) or at the bay itself, the chooser showing her as she'd look fitted (`shipArt`: her sprite).
+  The yard won't fit a room there's nobody aboard to use (`crew`). `key(mods)` names her sprite as fitted.
+- **She's longer wherever she's drawn**: `assets_ship.mothership(…, mods=)` lets a 2.6-tile section in amidships for each
+  room, just abaft the mainmast (`MOD_AT`, `MOD_LEN`; `module_section`): gold seams where she was let out; the galley's
+  big warm mess windows and its copper stove funnel; the observatory's glass dome with the telescope out of its slot;
+  the greenhouse's glasshouse along the deck glowing green. `cine_sprites.py` renders every set (`mothership-galley`,
+  `…-galley-observatory-greenhouse`, eight in all). The jump (`BridgeCine.jump`: `SHIP`, and the wing galleon as hers is,
+  `opts.wing` a sprite name), the title page (`BridgeCine.ship()`) and the other galleons in every window
+  (`BridgeParty.drawShips`: presence `shipk`) draw her as fitted; a fitted set not rendered falls back on her as built.
+- **The ship's clock** (`BridgeWayfarer.clock()`): the ship keeps no sun but keeps watches — her day is four real hours
+  from ET midnight, read on a 24-hour face of six watches (middle, morning, forenoon, afternoon, dog, first).
+- **The galley and mess** (`ship-galley`, `scenes/ship_galley.py`; `js/galley.js`, BridgeGalley): the cook's black range
+  in a brick alcove under a copper hood (the stockpot and kettle steam: `scene.steam`), copper pans over the butcher's
+  block, the sink under the water tank, sacks and apples, a cat on the warm hearth; the pass down the room; two long
+  mess tables, the menu on a blackboard, windows onto the planet, the dresser, the card table under a low lamp (its
+  cards are the `cards` layer, out while anyone's playing). **Dorrie Kettle** the cook (`npc-dorrie`, portrait) keeps the
+  pass 05:00–21:00 ship's time. **Meals** by the ship's clock — breakfast 06:00 (+25 most energy), dinner 12:00 (+25 most
+  health), supper 18:00 (+15 each), one of each a ship's day — leave you **fed** for 90 real minutes (BridgeGear.bonus /
+  speed carry it, so the bars show it; a chip under them says what and how long). Give her a fish from your pack and
+  it's the next meal's special (+6% speed while it lasts); greens from the greenhouse make a meal last half as long
+  again. Broth from the stockpot once a watch (+15 energy), a bowl of stew to take once a ship's day, bread and cheese
+  under a cloth at night.
+- **Cards in the mess** (`js/eights.js`, BridgeEights): after supper three of the crew are round the card table (by
+  turns; Dorrie sits in when there are fewer). Sit in for a hand of **Eights** — match the suit or the number, eights wild
+  (call the suit), draw one if nothing goes, first out takes the pot (5 coins each, the house puts in the crew's; or for
+  matches). Each plays to their own habits (`STYLE`) and says so. The panel is green baize in an oak rim, the cards drawn
+  a pixel at a time (`card`); ←/→ choose, Enter lay, D draw, Esc leave.
+- **Crew life** (`js/aboard.js`, BridgeAboard): hired hands keep a day by the ship's clock instead of standing at their
+  posts (`day(id)`): asleep below through the middle watch (one keeps the night watch on the bridge by turns), breakfast,
+  dinner and supper at the mess tables (below, with no galley), at their post (`crewPosts`), a forenoon errand (the
+  watch bill, the cask, the lockers), one off duty in the afternoon by turns (the greenhouse, the observatory), the cards
+  or the telescope after supper, below at 23:00. Between stops they walk — out by one room's door, along the passage, in
+  by the next, down the hatch — at a steady pace, worked out from the clock and who's aboard alone, so a party guest
+  sees them in the same places. Seated at the tables and the cards they use seated sheets (`characters.py`: the crew's
+  `-sit` / `-stand` pairs); their talk point goes with them, and people.js knows them aboard. js/crew.js hands the ship's
+  rooms to it (`BridgeCrew.decorate`).
+- **The observatory** (`ship-observatory`, `scenes/ship_observatory.py`; `js/observatory.js`): the back wall all glass
+  under a dome's brass ribs, the great telescope on its round dais raised to it, a star chart under a red-shaded lamp,
+  a celestial globe, the orrery, an armillary, almanacs, two chaises, the round rug of the twelve houses. The telescope
+  opens the stars (js/actions.js `stars`) with the ship's day's **sight** (twelve: a comet, the Singularity's ring, an
+  aether whale…): log each the first time for 40 coins, all twelve for 500; the desk and the globe keep the log; the star
+  chart reads every world's weather; the orrery every world's time.
+- **The greenhouse deck** (`ship-greenhouse`, `scenes/ship_greenhouse.py`; `js/greenhouse.js`): glazed in green-painted
+  iron onto the planet, a brick floor, raised beds under grow-lamps (herbs, salad, tomatoes, strawberries — forage spots
+  from the scene's `beds`) and two lemon trees; the potting bench says what's ready; water the beds once a ship's day for
+  one more of everything you pick. Picking here gives Dorrie greens for the next meal. Items: `ship_herbs`,
+  `salad_greens`, `ship_tomato`, `ship_lemon` (js/items.js) and `strawberry`.
+- **Aboard someone else's** (js/party.js): their modules come with `pship` (`wayfarer`), so you see their bays, rooms and
+  crew; you can eat at their galley and sit in at their cards; you can't fit their bays.
+- Tests: `world/wayfarer.js` — the door aft, the bays sealed, no fitting without crew, the galley fitted from the
+  Chandler's list, Dorrie's meals (on the bars, the chip), broth, a fish for the special, the galley dark at night, the
+  crew at the cards and a hand of Eights played out for the pot, someone walking up from below to breakfast, the
+  observatory (a sight logged, the chart, the orrery, the log) and the greenhouse (watered, picked, greens for the galley).
 
 ### Royale Link (the casino games)
 The Neon Royale's games are one app, **Royale Link** (`apps/runouts`, served at `/runouts`; its own `CLAUDE.md` has the inside): blackjack, roulette, craps, hold'em, the slots, the derby, crash, and the sixteen Runouts games (back a player to win, finish safe or come last). `js/casino.js` (BridgeCasino) is the Bridge's side of it.
