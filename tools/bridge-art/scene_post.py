@@ -8,7 +8,8 @@ Writes to OUT_DIR (every image lossless WebP, exact to the pixel; scene.json
   <state>.webp  toon-shaded scene, one per light state (e.g. full / dim —
                 the game cross-fades them to make firelight flicker)
   depth.webp    engine depth packed in 16 bits (R = high byte, G = low)
-  leaves.webp   the leaf pass, shore.webp the water, layers/<slot>/<key>/
+  leaves.webp   the leaf pass, shore.webp the water, glow.webp what gives off light
+                alone (the emission pass at its strongest; scene.json "glow"), layers/<slot>/<key>/
   scene.json    size, origin, depth range, per-tile light for characters
 
 Toon shading: final = albedo × band(light) + emission. Light luminance is
@@ -325,6 +326,27 @@ def main():
         out[..., 1] = np.where(tree, (lf[..., 1].astype(np.int32) // 16) * 16 + 8, 0)   # written 8 + 16 * tree (mod 15)
         out[..., 3] = np.where(on, 255, 0)
         return out if box is None else out[box[1]:box[3], box[0]:box[2]]
+    # What gives off light, alone (js/gpu.js blooms from it instead of guessing lamps from colour): the emission pass at
+    # its strongest state's strength (a lamp by night), black and clear wherever nothing glows
+    glow_k = max([(meta.get('stateOpts') or {}).get(s_, {}).get('emit', 1.0) for s_ in meta['lightStates']] or [1.0])
+
+    def glow(e, mask, box=None):
+        rgb = np.clip(e[..., :3].astype(np.float32) * glow_k, 0, 255).astype(np.uint8)
+        on = mask & (rgb.max(axis=-1) > 8)
+        if not on.any():
+            return False
+        out = np.zeros(e.shape[:2] + (4,), np.uint8)
+        out[..., :3] = np.where(on[..., None], rgb, 0)
+        out[..., 3] = np.where(on, 255, 0)
+        return out if box is None else out[box[1]:box[3], box[0]:box[2]]
+    base_glow = glow(emission, alpha)
+    if base_glow is not False:
+        save(base_glow, od, 'glow')
+    else:
+        for f in ('glow.png', 'glow.' + EXT):
+            if os.path.exists(os.path.join(od, f)):
+                os.remove(os.path.join(od, f))
+
     base_leaves = leaves(os.path.join(rd, 'leaf.png'), alpha)
     if base_leaves is not False:
         save(base_leaves, od, 'leaves')
@@ -363,6 +385,7 @@ def main():
             rgba[..., 3] = np.where(va, 255, 0)
             imgs[state] = rgba[y0:y1, x0:x1]
         imgs['leaves'] = leaves(os.path.join(vd, 'leaf.png'), va, (x0, y0, x1, y1))
+        imgs['glow'] = glow(vemi, va, (x0, y0, x1, y1))
         variants.append((v, (x0, y0, x1, y1), imgs, vdepth[y0:y1, x0:x1]))
 
     # Packed depth (one range for the base and every variant)
@@ -385,6 +408,7 @@ def main():
         ld = os.path.join(od, 'layers', v['slot'], v['key'])
         os.makedirs(ld, exist_ok=True)
         lv = imgs.pop('leaves', False)
+        lg = imgs.pop('glow', False)
         for state, rgba in imgs.items():
             save(rgba, ld, state)
         save(pack(vdp), ld, 'depth')
@@ -392,6 +416,9 @@ def main():
         if lv is not False:
             save(lv, ld, 'leaves')
             layers[v['slot']][v['key']]['leaves'] = 1
+        if lg is not False:
+            save(lg, ld, 'glow')
+            layers[v['slot']][v['key']]['glow'] = 1
 
     # Per-tile light on characters (probe plane at chest height)
     theta = math.radians(meta['theta'])
@@ -434,6 +461,8 @@ def main():
         out['layers'] = layers
     if base_leaves is not False:
         out['leaves'] = 1
+    if base_glow is not False:
+        out['glow'] = 1                               # glow.<ext>: what gives off light, alone (js/gpu.js)
     if water:
         out['water'] = water
     if meta.get('cycle'):
