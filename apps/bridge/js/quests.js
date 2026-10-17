@@ -59,8 +59,8 @@ var BridgeQuests = (function () {
       var q = defs[id];
       if (q.needs && !(state[q.needs] && state[q.needs].done)) return;   // a sequel waits for the quest before it
       q.clues.forEach(function (c) {
-        var wm = c.on.world;                      // 'lumar-rose-mine-*' matches any of the mine's floors
-        if (!(wm === worldId || (wm.slice(-1) === '*' && worldId.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;
+        var wm = c.on.world, wid = inter.home ? inter.home.world : worldId;   // someone visiting counts as at home (js/routines.js)
+        if (!(wm === wid || (wm.slice(-1) === '*' && wid.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;   // 'lumar-rose-mine-*': any floor
         if (c.after && ![].concat(c.after).every(function (a) { return state[id] && state[id].clues[a]; })) return;   // only once those are found
         var s = state[id] || (state[id] = { clues: {}, started: Date.now() });
         if (s.clues[c.id]) return;

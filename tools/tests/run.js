@@ -11,7 +11,7 @@ const SHOTS = path.join(D, 'shots');
 
 const SUITES = {
   // every world loads with no page errors, missing files or console errors; the pads you land on; Lumar's harbours
-  world: [['world/errs.js'], ['world/actors.js'], ['world/clock.js'], ['world/business.js', SHOTS], ['world/weather.js', SHOTS], ['world/legacy.js', SHOTS], ['world/hands.js'], ['world/staff.js', SHOTS], ['world/foliage.js', SHOTS], ['world/nature.js', SHOTS], ['world/orders.js', SHOTS], ['world/sleep.js', SHOTS], ['world/gpu.js', SHOTS], ['world/landings.js', SHOTS + '/landings'], ['world/arrive.js', SHOTS + '/arrive']],
+  world: [['world/errs.js'], ['world/actors.js'], ['world/clock.js'], ['world/business.js', SHOTS], ['world/weather.js', SHOTS], ['world/legacy.js', SHOTS], ['world/hands.js'], ['world/staff.js', SHOTS], ['world/foliage.js', SHOTS], ['world/nature.js', SHOTS], ['world/orders.js', SHOTS], ['world/sleep.js', SHOTS], ['world/gpu.js', SHOTS], ['world/routines.js', SHOTS], ['world/landings.js', SHOTS + '/landings'], ['world/arrive.js', SHOTS + '/arrive']],
   // two pilots on the fake Supabase: seeing each other, walking, presence, sharing, partners, fighting, sailing
   multi: ['mp_see', 'mp_walk', 'mp_visible', 'mp_presence', 'mp_away', 'mp_share', 'mp_partner', 'mp_clue', 'mp_fight', 'mp_hp',
     'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight'].map((t) => ['multi/' + t + '.js', D]),
