@@ -254,6 +254,7 @@ var BridgeSea = (function () {
       S.layer = layer; S.lctx = layer.getContext('2d');
       S.anim = anim; S.actx = actx; S.aimg = actx.createImageData(W, H);
       S.idx = new Int32Array(idx); S.dd = new Uint8Array(dd); S.dep = new Uint8Array(dep);
+      S.nz = noiseOf(S.idx, W);
       S.stamp = -1; S.palette = null;
       S.ready = true;
     };
@@ -261,42 +262,65 @@ var BridgeSea = (function () {
     return null;
   }
 
+  // Each shore pixel's grain (fixed by where it is), worked out once rather than every stamp.
+  function noiseOf(idx, W) {
+    var nz = new Float32Array(idx.length);
+    for (var k = 0; k < idx.length; k++) {
+      var p = idx[k], x = p % W, y = (p - x) / W;
+      nz[k] = hash((x >> 1) * 131 + (y >> 1) * 977);
+    }
+    return nz;
+  }
+  // The view and a margin round it (room for the camera to move until the next stamp), clamped
+  // to the render: [x0, y0, x1, y1]. Only this much of an island's water is worked each stamp.
+  function around(v, W, H) {
+    var M = 96;
+    return [Math.max(0, v[0] - M), Math.max(0, v[1] - M), Math.min(W, v[0] + v[2] + M), Math.min(H, v[1] + v[3] + M)];
+  }
+  // the first k with idx[k] >= p (the shore's pixel list is in row order)
+  function lowerBound(idx, p) {
+    var lo = 0, hi = idx.length;
+    while (lo < hi) { var m = (lo + hi) >> 1; if (idx[m] < p) lo = m + 1; else hi = m; }
+    return lo;
+  }
+
   function animate(S, P, now, v) {
     var d = S.aimg.data;
-    d.fill(0);
     var sh = P.shallow.split(',').map(Number), fo = P.foam.split(',').map(Number);
     var t = now / 520, tc = now / 900;
-    var reach = S.reach, W = S.W;
-    for (var i = 0; i < S.idx.length; i++) {
-      var p = S.idx[i], dist = S.dd[i], depth = S.dep[i];
-      var x = p % W, y = (p - x) / W;
-      var hx = x >> 1, hy = y >> 1;
-      var nz = hash(hx * 131 + hy * 977);
-      var r = 0, g = 0, b = 0, al = 0;
-      // light rippling on the shallow bed
-      if (depth > 0 && depth < CAUSTIC) {
-        var cv = Math.sin(hx * 0.42 + 1.8 * Math.sin(hy * 0.23 + tc * 0.8)) +
-                 Math.sin(hy * 0.37 - tc * 0.6 + 1.6 * Math.sin(hx * 0.19 - tc * 0.5));
-        if (Math.abs(cv) < 0.2) { r = sh[0]; g = sh[1]; b = sh[2]; al = 0.26 * (1 - depth / CAUSTIC); }
-      }
-      if (dist <= reach) {
-        var f = 1 - dist / reach;
-        if (al < 0.14 * f * f) { r = sh[0]; g = sh[1]; b = sh[2]; al = 0.14 * f * f; }      // pale water at the edge
-        // foam lines lapping in toward the shore, broken into flecks
-        var wave = Math.sin(dist * 0.7 + t + nz * 2.2);
-        if (dist <= 9 && wave > 0.86 - nz * 0.2 && nz > 0.25) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.4 * (1 - dist / 10)); }
-        // the wash at the waterline, breathing in and out, with gaps
-        var wash = Math.sin(t * 1.3 + nz * 6.3);
-        if (dist <= 1 + (wash > 0.5 ? 1 : 0) && wash > -0.2) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.5 - dist * 0.12); }
-      }
-      if (al > 0) {
-        var o = p * 4;
-        d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = Math.round(al * 255);
+    var reach = S.reach, W = S.W, R = around(v, W, S.H), n = S.idx.length;
+    for (var y = R[1]; y < R[3]; y++) {
+      var row = y * W, end = row + R[2];
+      d.fill(0, (row + R[0]) * 4, end * 4);
+      for (var i = lowerBound(S.idx, row + R[0]); i < n && S.idx[i] < end; i++) {
+        var p = S.idx[i], dist = S.dd[i], depth = S.dep[i];
+        var x = p - row;
+        var hx = x >> 1, hy = y >> 1;
+        var nz = S.nz[i];
+        var r = 0, g = 0, b = 0, al = 0;
+        // light rippling on the shallow bed
+        if (depth > 0 && depth < CAUSTIC) {
+          var cv = Math.sin(hx * 0.42 + 1.8 * Math.sin(hy * 0.23 + tc * 0.8)) +
+                   Math.sin(hy * 0.37 - tc * 0.6 + 1.6 * Math.sin(hx * 0.19 - tc * 0.5));
+          if (Math.abs(cv) < 0.2) { r = sh[0]; g = sh[1]; b = sh[2]; al = 0.26 * (1 - depth / CAUSTIC); }
+        }
+        if (dist <= reach) {
+          var f = 1 - dist / reach;
+          if (al < 0.14 * f * f) { r = sh[0]; g = sh[1]; b = sh[2]; al = 0.14 * f * f; }      // pale water at the edge
+          // foam lines lapping in toward the shore, broken into flecks
+          var wave = Math.sin(dist * 0.7 + t + nz * 2.2);
+          if (dist <= 9 && wave > 0.86 - nz * 0.2 && nz > 0.25) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.4 * (1 - dist / 10)); }
+          // the wash at the waterline, breathing in and out, with gaps
+          var wash = Math.sin(t * 1.3 + nz * 6.3);
+          if (dist <= 1 + (wash > 0.5 ? 1 : 0) && wash > -0.2) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.5 - dist * 0.12); }
+        }
+        if (al > 0) {
+          var o = p * 4;
+          d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = Math.round(al * 255);
+        }
       }
     }
-    // write back round the view only (with room for the camera to move until the next stamp)
-    var M = 96, x0 = Math.max(0, v[0] - M), y0 = Math.max(0, v[1] - M);
-    S.actx.putImageData(S.aimg, 0, 0, x0, y0, Math.min(S.W, v[0] + v[2] + M) - x0, Math.min(S.H, v[1] + v[3] + M) - y0);
+    S.actx.putImageData(S.aimg, 0, 0, R[0], R[1], R[2] - R[0], R[3] - R[1]);
   }
 
   function drawWater(ctx, sc, offX, offY, now, palette) {
@@ -378,7 +402,8 @@ var BridgeSea = (function () {
     var out = document.createElement('canvas');
     out.width = W; out.height = H;
     var octx = out.getContext('2d');
-    bands[sc.id] = { W: W, H: H, idx: new Int32Array(idx), ds: new Uint8Array(ds), canvas: out, ctx: octx,
+    var bi = new Int32Array(idx);
+    bands[sc.id] = { W: W, H: H, idx: bi, ds: new Uint8Array(ds), nz: noiseOf(bi, W), canvas: out, ctx: octx,
                      img: octx.createImageData(W, H), stamp: -1 };
     return bands[sc.id];
   }
@@ -387,31 +412,34 @@ var BridgeSea = (function () {
     var S = bandOf(sc);
     if (!S) return;
     var P = PALETTES[palette] || PALETTES.emerald;
+    var bx = Math.round(offX - sc.meta.originX), by = Math.round(offY - sc.meta.originY);
+    var v = BridgeScene.visible(S.W, S.H, bx, by, ctx.canvas.width, ctx.canvas.height);
+    if (!v) return;
     var stamp = Math.floor(now / 70);
     if (S.stamp !== stamp) {
       S.stamp = stamp;
-      var d = S.img.data;
-      d.fill(0);
+      var d = S.img.data, R = around(v, S.W, S.H), n = S.idx.length;
       var sh = P.shallow.split(',').map(Number), fo = P.foam.split(',').map(Number);
       var t = now / 520;
-      for (var i = 0; i < S.idx.length; i++) {
-        var p = S.idx[i], dd = S.ds[i];
-        var x = p % S.W, y = (p - x) / S.W;
-        var nz = hash((x >> 1) * 131 + (y >> 1) * 977);
-        var f = 1 - dd / REACH;
-        var r = sh[0], g = sh[1], b = sh[2];
-        var al = 0.3 * f * f;
-        var wave = Math.sin(dd * 0.7 + t + nz * 2.2);
-        if (dd <= 9 && wave > 0.8 - nz * 0.22) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.5 * (1 - dd / 10)); }
-        if (dd <= 2 && Math.sin(t * 1.4 + nz * 6.3) > -0.35) { r = fo[0]; g = fo[1]; b = fo[2]; al = 0.7; }
-        var o = p * 4;
-        d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = Math.round(al * 255);
+      for (var y = R[1]; y < R[3]; y++) {
+        var row = y * S.W, end = row + R[2];
+        d.fill(0, (row + R[0]) * 4, end * 4);
+        for (var i = lowerBound(S.idx, row + R[0]); i < n && S.idx[i] < end; i++) {
+          var p = S.idx[i], dd = S.ds[i];
+          var nz = S.nz[i];
+          var f = 1 - dd / REACH;
+          var r = sh[0], g = sh[1], b = sh[2];
+          var al = 0.3 * f * f;
+          var wave = Math.sin(dd * 0.7 + t + nz * 2.2);
+          if (dd <= 9 && wave > 0.8 - nz * 0.22) { r = fo[0]; g = fo[1]; b = fo[2]; al = Math.max(al, 0.5 * (1 - dd / 10)); }
+          if (dd <= 2 && Math.sin(t * 1.4 + nz * 6.3) > -0.35) { r = fo[0]; g = fo[1]; b = fo[2]; al = 0.7; }
+          var o = p * 4;
+          d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = Math.round(al * 255);
+        }
       }
-      S.ctx.putImageData(S.img, 0, 0);
+      S.ctx.putImageData(S.img, 0, 0, R[0], R[1], R[2] - R[0], R[3] - R[1]);
     }
-    var bx = Math.round(offX - sc.meta.originX), by = Math.round(offY - sc.meta.originY);
-    var v = BridgeScene.visible(S.W, S.H, bx, by, ctx.canvas.width, ctx.canvas.height);
-    if (v) ctx.drawImage(S.canvas, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
+    ctx.drawImage(S.canvas, v[0], v[1], v[2], v[3], bx + v[0], by + v[1], v[2], v[3]);
   }
 
   /** The open sea seen from a camera at (camX, camY) in the caller's own space (the voyage). */

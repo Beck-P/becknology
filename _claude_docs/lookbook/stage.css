@@ -1,0 +1,14 @@
+/* the stage: one native-resolution canvas scaled up nearest-neighbour, plus the finish layers over it */
+.stage { position: relative; width: 100%; max-width: 100%; background: #07080c; overflow: hidden; }
+.stage .layer { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.stage .dof, .stage .bloom, .stage .vig { display: none; pointer-events: none; }
+.stage[data-finish="soft"] .bloom, .stage[data-finish="hd2d"] .bloom { display: block; filter: blur(7px) brightness(1.2); mix-blend-mode: screen; opacity: .9; image-rendering: auto; }
+.stage[data-finish="hd2d"] .bloom { filter: blur(9px) brightness(1.35); }
+.stage[data-finish="hd2d"] .dof { display: block; filter: blur(2.6px) saturate(1.05);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.7) 12%, transparent 34%, transparent 66%, rgba(0,0,0,.7) 88%, #000 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.7) 12%, transparent 34%, transparent 66%, rgba(0,0,0,.7) 88%, #000 100%); }
+.stage[data-finish="soft"] .vig { display: block; background: radial-gradient(ellipse at center, transparent 62%, rgba(8, 6, 18, .26) 100%); }
+.stage[data-finish="hd2d"] .vig { display: block; background: radial-gradient(ellipse at center, transparent 48%, rgba(8, 6, 18, .5) 100%); }
+.stage[data-finish="hd2d"] .main { filter: contrast(1.07) saturate(1.1); }
+.stage-tag { position: absolute; left: 8px; bottom: 8px; font: 600 11px/1.2 system-ui, sans-serif; color: #f4ead6; background: rgba(10, 10, 16, .72); padding: 4px 7px; border-radius: 3px; letter-spacing: .02em; }
+.stage-err { position: absolute; left: 0; right: 0; top: 0; font: 12px/1.3 monospace; color: #fff; background: #a01c2c; padding: 6px 8px; }

@@ -25,6 +25,8 @@ becknology/
 ## How Routing Works
 `vercel.json` uses rewrites to map URL paths to app folders. The root `/` serves `apps/hub/index.html`. Each app gets a clean path like `/my-app` that maps to `apps/my-app/index.html`.
 
+Caching: a Bridge scene image (`/bridge/assets/scenes/**.png|webp`) asked for with `?v=` is cached by browsers for a year, never rechecked (`headers` in `vercel.json`). So `v` must only ever be the scene's `rev` from its scene.json — a fingerprint of its images (tools/bridge-art/scene_post.py `revision`) — or something unique like `Date.now()`; never a hand-kept number.
+
 ## Adding a New App
 1. Create `apps/my-app/` with at least an `index.html`
 2. Add a rewrite to `vercel.json`: `{ "source": "/my-app", "destination": "/apps/my-app/index.html" }`

@@ -8,6 +8,13 @@
       "maxDuration": 20
     }
   },
+  "headers": [
+    {
+      "source": "/bridge/assets/scenes/(.*)\\.(png|webp)",
+      "has": [{ "type": "query", "key": "v", "value": ".+" }],
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ],
   "rewrites": [
     { "source": "/", "destination": "/apps/bridge/index.html" },
     { "source": "/hub", "destination": "/apps/hub/index.html" },
