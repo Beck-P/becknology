@@ -16,7 +16,10 @@
  *
  * opts: { baseRow, railRow, centerCol } — the world row the towers stand
  * behind, the row of the railing (the drop starts there) and the column
- * the layers centre on.
+ * the layers centre on. mode 'spires': the Spires above the smog — real
+ * stars and a white moon, the other spires (the `peaks` layer: white stone
+ * and gold), the smog sea below with the Mid-Levels' tower tops through it,
+ * needles of towers piercing it under the rail (drawSpires).
  */
 var BridgeSkyline = (function () {
   var BASE = '/bridge/assets/backdrops/arcadia/';
@@ -318,6 +321,148 @@ var BridgeSkyline = (function () {
     }
   }
 
+  // ---- the Spires (opts.mode 'spires'): above the smog, under real stars ------------------------------------
+  var SMOG = [[42, 30, 72], [62, 40, 96], [92, 58, 120], [130, 84, 150]];
+  function spiresSky(ctx, w, h, now, horizon) {
+    var g = ctx.createLinearGradient(0, 0, 0, horizon);
+    g.addColorStop(0, '#04061a');
+    g.addColorStop(0.55, '#0c1236');
+    g.addColorStop(0.9, '#262a5c');
+    g.addColorStop(1, '#3a3270');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, Math.ceil(horizon) + 1);
+    for (var i = 0; i < 900; i++) {                   // the galaxy's band, a faint dithered sweep
+      var t = hash(i * 7.1), bx = t * w, by = horizon * (0.15 + 0.5 * t) + (hash(i * 3.3) - 0.5) * horizon * 0.22;
+      ctx.fillStyle = 'rgba(190,190,255,' + (0.05 + hash(i) * 0.08).toFixed(2) + ')';
+      ctx.fillRect(Math.floor(bx), Math.floor(by), 1, 1);
+    }
+    for (var j = 0; j < 260; j++) {                   // real stars: many, a few bright with a cross, twinkling
+      var sx = Math.floor(hash(j + 400) * w), sy = Math.floor(hash(j + 900) * horizon * 0.95);
+      var b = hash(j + 1300), tw = 0.55 + 0.45 * Math.sin(now / (700 + b * 900) + j * 1.7);
+      var a = (b > 0.93 ? 0.95 : b > 0.7 ? 0.6 : 0.35) * tw;
+      var c = b > 0.8 ? (j % 3 ? '255,250,235' : '200,220,255') : '220,225,255';
+      ctx.fillStyle = 'rgba(' + c + ',' + a.toFixed(2) + ')';
+      ctx.fillRect(sx, sy, 1, 1);
+      if (b > 0.965) {
+        ctx.fillStyle = 'rgba(' + c + ',' + (a * 0.45).toFixed(2) + ')';
+        ctx.fillRect(sx - 1, sy, 1, 1); ctx.fillRect(sx + 1, sy, 1, 1); ctx.fillRect(sx, sy - 1, 1, 1); ctx.fillRect(sx, sy + 1, 1, 1);
+      }
+    }
+    var ss = Math.floor(now / 7000), st = (now % 7000) / 700;   // a shooting star now and then
+    if (hash(ss * 13) > 0.55 && st < 1) {
+      var x0 = hash(ss) * w, y0 = hash(ss + 5) * horizon * 0.5;
+      for (var k2 = 0; k2 < 14; k2++) {
+        ctx.fillStyle = 'rgba(255,255,240,' + ((1 - k2 / 14) * (1 - st)).toFixed(2) + ')';
+        ctx.fillRect(Math.round(x0 + st * 60 - k2 * 2), Math.round(y0 + st * 22 - k2 * 0.75), 1, 1);
+      }
+    }
+  }
+  function whiteMoon(ctx, x, y, r) {
+    var halo = ctx.createRadialGradient(x, y, r * 0.8, x, y, r * 5);
+    halo.addColorStop(0, 'rgba(220,230,255,0.28)');
+    halo.addColorStop(1, 'rgba(200,210,255,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(x - r * 5, y - r * 5, r * 10, r * 10);
+    for (var dy = -r; dy <= r; dy++) for (var dx = -r; dx <= r; dx++) {
+      var d = Math.sqrt(dx * dx + dy * dy) / r;
+      if (d > 1) continue;
+      var c = 1 - d * d * 0.3 - (dx + dy > r * 0.5 ? 0.12 : 0);
+      var mare = hash(Math.floor((dx + r) / 3) * 31 + Math.floor((dy + r) / 3) * 7) > 0.74 ? 0.86 : 1;
+      c = Math.floor((c * mare) * 6 + ((dx & 1) + (dy & 1) * 2) / 4) / 6;
+      ctx.fillStyle = 'rgb(' + Math.round(236 * c) + ',' + Math.round(240 * c) + ',' + Math.round(255 * c) + ')';
+      ctx.fillRect(x + dx, y + dy, 1, 1);
+    }
+  }
+  // the smog sea from y0 down to y1: lighter on top, rolling puffs bigger nearer, lit from underneath by the city
+  function smogSea(ctx, w, y0, y1, now) {
+    var H = y1 - y0;
+    if (H <= 0) return;
+    var g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, 'rgb(' + SMOG[3].join(',') + ')');
+    g.addColorStop(0.08, 'rgb(' + SMOG[2].join(',') + ')');
+    g.addColorStop(0.35, 'rgb(' + SMOG[1].join(',') + ')');
+    g.addColorStop(1, 'rgb(' + SMOG[0].join(',') + ')');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, Math.floor(y0), w, Math.ceil(H) + 1);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var i = 0; i < 16; i++) {
+      var gx = ((hash(i * 5) * (w + 200) + now * 0.003 * (hash(i) - 0.5)) % (w + 200) + w + 200) % (w + 200) - 100;
+      var gy = y0 + H * (0.12 + 0.85 * hash(i * 9));
+      var rr = (30 + hash(i * 2) * 70) * (0.5 + (gy - y0) / H);
+      var col = i % 3 === 0 ? '90,200,220' : i % 3 === 1 ? '240,110,180' : '170,120,240';
+      var a = 0.1 + 0.06 * Math.sin(now / 2400 + i * 2.1);
+      var rg = ctx.createRadialGradient(gx, gy, 0, gx, gy, rr);
+      rg.addColorStop(0, 'rgba(' + col + ',' + a.toFixed(3) + ')');
+      rg.addColorStop(1, 'rgba(' + col + ',0)');
+      ctx.fillStyle = rg;
+      ctx.fillRect(gx - rr, gy - rr * 0.5, rr * 2, rr);
+    }
+    ctx.restore();
+    for (var p = 0; p < 46; p++) {
+      var depth = hash(p * 3 + 1), py = y0 + H * depth * depth;
+      var pw = (40 + hash(p) * 90) * (0.35 + depth * 1.3);
+      var px = ((hash(p * 11) * (w + pw * 2) + now * (0.002 + depth * 0.006)) % (w + pw * 2)) - pw;
+      var ph = pw * 0.22;
+      ctx.fillStyle = 'rgba(' + SMOG[2].join(',') + ',0.55)';
+      ctx.beginPath(); ctx.ellipse(Math.round(px), Math.round(py + ph * 0.25), pw * 0.5, ph * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(' + SMOG[3].join(',') + ',0.45)';
+      ctx.beginPath(); ctx.ellipse(Math.round(px - pw * 0.06), Math.round(py), pw * 0.4, ph * 0.38, 0, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // a tower's needle through the smog, seen from above: a dark tapering shaft, a gold tip, a lit window, a beacon
+  function needle(ctx, x, y, s, now, i) {
+    var hgt = Math.round(18 * s), wid = Math.max(2, Math.round(3 * s));
+    for (var r = 0; r < hgt; r++) {
+      var ww = Math.max(1, Math.round(wid * (0.4 + 0.6 * r / hgt)));
+      ctx.fillStyle = r < 2 ? '#e8c870' : '#1a1430';
+      ctx.fillRect(x - Math.floor(ww / 2), y - hgt + r, ww, 1);
+    }
+    ctx.fillStyle = 'rgba(255,160,210,0.8)';
+    ctx.fillRect(x, y - Math.round(hgt * 0.5), 1, 1);
+    if (Math.sin(now / 600 + i) > 0.2) { ctx.fillStyle = '#ff4050'; ctx.fillRect(x, y - hgt - 1, 1, 1); }
+  }
+  function drawSpires(ctx, w, h, now, opts, v) {
+    var ts = v.ts;
+    var baseRow = opts.baseRow != null ? opts.baseRow : 6;
+    var railRow = opts.railRow != null ? opts.railRow : 13.2;
+    var horizon = Math.round(h / 2 + (v.offY + baseRow * ts - h / 2) * 0.3);
+    spiresSky(ctx, w, h, now, horizon);
+    whiteMoon(ctx, Math.round(w * 0.78 + (v.offX + opts.centerCol * ts - w / 2) * 0.05), Math.round(horizon * 0.22), 11);
+    if (manifest && imgs.peaks) {                     // the far spires, small and pale with distance
+      var P = place('peaks', w, h, v, opts, 0.12, 0.3, baseRow + 1);
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.drawImage(imgs.peaks, P.x + Math.round(P.m.w * 0.2), P.y + 14, Math.round(P.m.w * 0.6), Math.round(P.m.h * 0.6));
+      ctx.restore();
+    }
+    var seaTop = horizon + 6;
+    smogSea(ctx, w, seaTop, h, now);
+    if (manifest && imgs.far) {                       // the Mid-Levels' tallest towers: only their crowns above the smog
+      var F = place('far', w, h, v, opts, 0.25, 0.3, baseRow);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, 0, w, seaTop + 4); ctx.clip();
+      ctx.globalAlpha = 0.7;
+      ctx.drawImage(imgs.far, F.x, seaTop + 4 - Math.round(F.m.h * 0.35));
+      ctx.restore();
+      smog(ctx, w, seaTop - 6, 10, now, 0.004, '140,90,160', 0.35);
+    }
+    if (manifest && imgs.peaks) {                     // the near spires, standing out of the sea
+      var Q = place('peaks', w, h, v, opts, 0.35, 0.45, baseRow + 2);
+      ctx.drawImage(imgs.peaks, Q.x, Q.y + 18);
+      smog(ctx, w, Q.y + 18 + Q.m.h * 0.8, Q.m.h * 0.25, now, 0.005, '150,100,170', 0.4);
+    }
+    // below the rail: the needles of towers reaching up through the smog
+    var railY = Math.round(v.offY + railRow * ts);
+    var drop = Math.max(seaTop + 20, railY);
+    for (var n = 0; n < 12; n++) {
+      var d = hash(n * 17 + 3), ny = drop + (h - drop) * (0.15 + 0.8 * d);
+      var nx = ((hash(n * 29) * (w + 80) + (v.offX + opts.centerCol * ts) * (0.6 + d * 0.4)) % (w + 80) + w + 80) % (w + 80) - 40;
+      needle(ctx, Math.round(nx), Math.round(ny), 0.6 + d * 1.2, now, n);
+    }
+    traffic(ctx, w, drop + (h - drop) * 0.35, now + 9000, 1, 0.8);
+  }
+
   // ---- the backdrop ---------------------------------------------------------------------------
   function draw(ctx, w, h, now, opts) {
     load();
@@ -327,6 +472,7 @@ var BridgeSkyline = (function () {
     var baseRow = opts.baseRow != null ? opts.baseRow : 6;
     var railRow = opts.railRow != null ? opts.railRow : 13.2;
     opts.centerCol = opts.centerCol != null ? opts.centerCol : 16;
+    if (opts.mode === 'spires') { drawSpires(ctx, w, h, now, opts, v); return; }
     var horizon = h / 2 + (v.offY + baseRow * ts - h / 2) * 0.35;
     sky(ctx, w, h, now, horizon);
     var mx = Math.round(w * 0.72 + (v.offX + opts.centerCol * ts - w / 2) * 0.06);
