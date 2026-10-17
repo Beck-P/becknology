@@ -15,7 +15,9 @@ rewrites, `/runouts` from `apps/runouts/dist`) and `fakesupa.py` (:8767). It fet
 
 Working in a second checkout (a git worktree) alongside another: `BRIDGE_PORT=8771 node tools/tests/run.js world` serves
 *that* checkout on :8771 and sends every test page there (`chrome.js` reroutes their `127.0.0.1:8766` requests), so the
-two don't test each other's files. (The `multi` suites share the Supabase stand-in on :8767: run one at a time.)
+two don't test each other's files (run.js preloads `chrome.js` for that; one test by hand on another port:
+`python3 tools/tests/serve.py 8771 &` then `BRIDGE_PORT=8771 NODE_PATH=$(npm root -g) node -r ./tools/tests/chrome.js tools/tests/world/<file>.js`).
+(The `multi` suites share the Supabase stand-in on :8767: run one at a time.)
 
 ## What you need
 
