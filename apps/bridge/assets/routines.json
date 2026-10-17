@@ -1,0 +1,20 @@
+{
+  "_doc": "Each person's day (js/routines.js): [anchor, where, {via}] in the order of the day. Anchors (js/hours.js): midnight small dawn sunrise morning noon afternoon sunset evening late. Where: \"home\" (their own spot), \"away\" (out of sight; via [x, y] the door they use in their own place), or {world?, x, y, facing?, pose?}. A shopkeeper's \"home\" covers their shop's hours.",
+
+  "bridget": [["dawn", "home"], ["afternoon", { "x": 22, "y": 19, "facing": "up" }], ["sunset", { "x": 11, "y": 12, "facing": "up" }], ["late", "away", { "via": [4, 10] }]],
+  "mags": [["small", "away", { "via": [13, 10] }], ["morning", "home"]],
+  "percy": [["sunrise", "home"], ["sunset", { "x": 13, "y": 12, "facing": "left" }], ["late", "away", { "via": [22, 10] }]],
+  "wat": [["sunrise", "home"], ["sunset", { "x": 10, "y": 12, "facing": "right" }], ["late", "away", { "via": [38, 17] }]],
+  "nell": [["morning", "home"], ["afternoon", { "x": 24, "y": 16, "facing": "right" }], ["sunset", "away", { "via": [14, 30] }]],
+  "ludd": [["sunrise", "home"], ["evening", { "x": 16, "y": 12, "facing": "left" }], ["late", "away", { "via": [5, 24] }]],
+
+  "annie": [["small", "away"], ["noon", "home"]],
+  "joss": [["small", "away"], ["noon", "home"]],
+  "bosun": [["small", "away"], ["sunrise", { "world": "lumar-crown", "x": 21, "y": 32, "facing": "down" }], ["evening", "home"]],
+  "wright": [["sunrise", "home"], ["sunset", { "world": "lumar-crown-pub", "x": 4, "y": 4, "facing": "up" }], ["late", "away"]],
+
+  "regular": [["small", "away"], ["morning", { "world": "lumar-square", "x": 10, "y": 12, "facing": "up" }], ["noon", "home"]],
+  "merchant": [["small", "away"], ["sunrise", { "world": "lumar-square", "x": 18, "y": 12, "facing": "up" }], ["sunset", "home"]],
+  "gran-wilde": [["morning", "home"], ["afternoon", { "world": "lumar-square", "x": 2, "y": 5, "facing": "down" }], ["sunset", "home"]],
+  "ilsa": [["morning", "home"], ["sunset", { "world": "lumar-tavern", "x": 10, "y": 3, "facing": "up" }], ["late", "away"]]
+}
