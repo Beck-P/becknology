@@ -864,10 +864,13 @@ var BridgeWorld = (function () {
     var offY = Math.floor(offYf);
     view.offX = offX; view.offY = offY; view.ts = ts; view.w = nw; view.h = nh;
 
+    glowNow = glowOf(world);
     drawWorldLayer(bctx, nw, nh, offX, offY, ts, now);
     // a world can rework its finished frame (the Singularity warps it)
     var post = world.scene && SCENE_HOOKS[world.tileset] && SCENE_HOOKS[world.tileset].post;
     if (post) post(bctx, buf, nw, nh, offX, offY, ts, now);
+    // the finished frame through the graphics card (js/gpu.js: the glow), or as it is when there's no card to help
+    var out = (typeof BridgeGPU !== 'undefined' && BridgeGPU.present(buf, nw, nh, { glow: glowNow })) || buf;
 
     // ---- Blit: integer upscale onto the device-pixel canvas ----
     var blitX = Math.round(dw / 2 - (nw * zoom) / 2 + (offXf - offX) * zoom);
@@ -875,7 +878,7 @@ var BridgeWorld = (function () {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(buf, blitX, blitY, nw * zoom, nh * zoom);
+    ctx.drawImage(out, blitX, blitY, nw * zoom, nh * zoom);
     ctx.restore();
 
     // ---- Screen-space pass (CSS px): text, markers, vignette ----
@@ -884,6 +887,15 @@ var BridgeWorld = (function () {
     var soffY = (blitY + offY * zoom) / dpr;
     screenView.offX = soffX; screenView.offY = soffY; screenView.ts = sts;
     drawScreenLayer(ctx, w, h, soffX, soffY, sts, now);
+  }
+
+  // How much a place glows (js/gpu.js): its JSON's "glow" if it says, else outdoors and all of Arcadia do. Indoors
+  // waits for its own say: a brightly lit room's pale things (piano keys in the tavern's firelight) read as lights.
+  var glowNow = 0;
+  function glowOf(w) {
+    if (w.glow != null) return w.glow;
+    var C = typeof BridgeClock !== 'undefined' ? BridgeClock : null;
+    return C && (C.outdoor(currentWorldId) || C.planet(currentWorldId) === 'arcadia') ? 1 : 0;
   }
 
   // Everything that lives in the world: tiles, glow, entities, character,
@@ -900,6 +912,8 @@ var BridgeWorld = (function () {
     BridgeScene.drawBackground(ctx, sc, world, offX, offY, now);
     if (hooks.ground) hooks.ground(ctx, world, offX, offY, ts, now, sc);
     if (all.ground) all.ground(ctx, world, offX, offY, ts, now, sc);
+    // the place as it stands, before anyone's in it, is what glows (js/gpu.js): lamps and windows, not a pale helmet
+    if (glowNow > 0 && typeof BridgeGPU !== 'undefined') BridgeGPU.source(ctx.canvas);
     drawInteractHighlight(ctx, offX, offY, ts, now);
     if (typeof BridgeForage !== 'undefined') BridgeForage.draw(ctx, world, offX, offY, ts, now);
     if (typeof BridgeLoot !== 'undefined' && BridgeLoot.draw) BridgeLoot.draw(ctx, offX, offY, ts);
