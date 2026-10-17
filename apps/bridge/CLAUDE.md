@@ -28,7 +28,7 @@ people, the scene kits — and then finished as toys:
   Rainline Street) — "swing larger… still in our 3D style… less boxy and thrown together".
 - **People with faces.** The same chibi models with a simple drawn face — two eyes with a catch-light, brows, a mouth, a
   touch of blush (the "normal" face, not the round one) — and, when you talk to someone, a Stardew-style portrait of
-  their face, not the top of their hat (*Faces and portraits* below).
+  their face, not the top of their hat (*Characters — the Blender pipeline*: faces are painted; *Portraits*).
 
 Stardew Valley and Cast n Chill are still the touchstones for coziness, readability and constant small motion (smoke,
 flicker, water, breathing idles); the look is ours. Older art (AI-painted PNGs, procedural drawers, scenes rendered
