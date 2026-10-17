@@ -26,6 +26,16 @@ a new place*).
 | **Backlog** — each place's own sun path, and the GPU doing the live compose | open | Today every scene's sun comes from the same side (`LIT_SUNS`); a per-scene direction would suit coasts facing west. The compose is CPU, a few ms a frame about once a minute: a WebGL version could relight every frame. |
 | **Backlog** — the remaining PNG and code-drawn art into the 3D kit | open | AI-painted PNG buildings and props, procedural tiles, creatures; the PNG rules in CLAUDE.md are legacy now. |
 
+## October 17 (Denser worlds, Workstream B2: the Crimson and Midnight seas)
+Beck: "there's the Midnight Sea with the kind of evil monsters and the sorceress… and then the dragon one through the
+Crimson with the dangerous weather and the dragon's lair… build out those in more depth". One session, shipping piece
+by piece (`apps/bridge/CLAUDE.md`, *The Crimson and the Midnight seas, grown*).
+| Ask | Status | Where / notes |
+|---|---|---|
+| Morwen's tower grown: more floors that climb | **done** | The stillroom (her bed, the still, the black mirror, Idris Thorne's ghost in his ward circle) and the star chamber (the orrery of the seven worlds, the telescope, the scrying pool showing the Midnight Sea tonight). Ghosts drawn see-through (`ghost: true`). |
+| Crimson: a pirate port in a wreck-strewn cove (rogues' tavern, a fence, the pirates' slip), the volcano, a stormwatch tower | in progress | A new island in the Crimson's part of the chart. |
+| Midnight: a drowned village half under the water, a ghost ship to board at sea, more of its creatures | in progress | Saltmere (a new island in the Midnight Sea), the Gloaming. |
+
 ## October 17 (Look Book 2: "somewhere in between" — keep our 3D model world, swing bigger)
 | Ask | Status | Where / notes |
 |---|---|---|
@@ -55,7 +65,7 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Enigma: restore the station, a zero-g spine | parked | Beck likes it; a note for later (the playing-together question). |
 | Arcadia: up, down and out — ritzier up, poorer down; the Undercity; trains and a sky loop; implants; restaurants on every level; large but connected, room to go side to side | discuss | Layout in the spec (levels × districts), agreed. The bottom dangerous, with fighting. Heist and rooftop running out. |
 | Lumar: harbours that work; a cliff town; the spore bloom; a weekly regatta; each sea's towns, people and ships their own; Crownhaven much bigger | discuss | Per-sea ideas in the spec (Beck likes them). Tides, ferry work maybe; diving, the dragon egg out. |
-| Sylvara: canopy city, the river by canoe to Mirror Lake with places along it, the falls, the Deepwood, brewing, bows | discuss | |
+| Sylvara: canopy city, the river by canoe to Mirror Lake with places along it, the falls, the Deepwood, brewing, bows | in progress (workstream F) | Built: **bows** (js/arms.js `bow`, js/bows.js — hold to draw, let go to loose; rope and fire arrows, zip lines, high lanterns, switches, Aerin's range; the bow's own pilot sheets). Next: the Rootmarket, the Boughs, the Crown; the Silverrun by canoe; the Deepwood; brewing with Mirelle. |
 | Verdance: the village grows with you, the countryside by horse and buggy, small towns, makers and a café, produce shipped to Arcadia, night-blooming flowers | discuss | Market day only if someone else runs the stall. |
 | Hoarfell: Fellhaven bougier; a grand hotel (château, Monaco-y, its own town and casino salon); a mountain railway as a cutscene; hut-to-hut touring; the hidden valley with tiers of enemies | discuss | Guiding jobs out; the dog sled maybe. |
 
