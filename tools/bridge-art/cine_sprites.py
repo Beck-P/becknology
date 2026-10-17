@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from cinekit import CineKit       # noqa: E402
 import assets_ship as P           # noqa: E402
 import assets_town as W           # noqa: E402
+import assets_alpine as AL        # noqa: E402
 
 OUT = sys.argv[1]
 ONLY = set(sys.argv[2:])
@@ -57,7 +58,32 @@ def galleon():
     k.render(os.path.join(OUT, 'galleon'), light_states={'full': {}}, light_samples=64, world_light=('#283450', 0.45))
 
 
+def train(name='train', ppt=12, lit=False):
+    """The mountain railway's train side-on (js/railway.js): two panoramic carriages and the locomotive, running right.
+    No snow on the roofs (the cutscene runs through every season); `lit`: the carriages' lamps on, for dusk and night."""
+    car, loco, gap = 4.2, 3.4, 0.12
+    L = 2 * car + 2 * gap + loco
+    k = CineKit((-0.4, L + 0.4, -0.6, 0.6, -0.05, 2.5), elev=13, ppt=ppt)
+    x = 0.0
+    for i in range(2):
+        AL.carriage(k, x, x + car, 0.0, z=0.0, lit=lit, snow=False)
+        x += car + gap
+    AL.locomotive(k, x, x + loco, 0.0, z=0.0, facing=1)
+    k.anchor('tail', 0.0, 0.0, 0.0)
+    k.anchor('nose', L, 0.0, 0.0)
+    k.anchor('rail', L / 2, 0.45, 0.0)
+    k.anchor('windows', car / 2, 0.45, 0.9)
+    k.anchor('pantograph', L - loco / 2 + 0.45, 0.0, 2.28)
+    lights(k, 2.6)
+    AL.flush(k)                                    # the kit batches its small boxes (assets_alpine.qb)
+    k.render(os.path.join(OUT, name), light_states={'full': {}}, light_samples=48, world_light=('#283450', 0.45))
+
+
 JOBS = {
+    'train': train,
+    'train-lit': lambda: train('train-lit', 12, True),
+    'train-small': lambda: train('train-small', 5),
+    'train-small-lit': lambda: train('train-small-lit', 5, True),
     'galleon': galleon,
     'shuttle': lambda: shuttle('shuttle', 0),
     'shuttle-down': lambda: shuttle('shuttle-down', -16),

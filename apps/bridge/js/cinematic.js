@@ -5,6 +5,8 @@
  *
  *   BridgeCine.jump(from, to)  → Promise   spool-up, the leap, the tunnel, dropping out
  *   BridgeCine.sail(from, to)  → Promise   the galleon side-on through the swells
+ *   BridgeCine.play(makeShots, opts)       any other cutscene's shots (js/railway.js: the mountain railway);
+ *                                          opts.noskip: no skipping it, opts.kicker: the title card's small line
  *
  * Drawn like the world: into a small native-resolution buffer (about 480
  * native px across) scaled to the screen by a whole number, so the
@@ -402,8 +404,11 @@ var BridgeCine = (function () {
         function onKey(e) {
           if (e.key === ' ' || e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); finish(); }
         }
-        window.addEventListener('keydown', onKey, true);
-        canvas.addEventListener('pointerdown', finish);
+        if (!(opts && opts.noskip)) {                          // the first ride on the railway can't be skipped (js/railway.js)
+          window.addEventListener('keydown', onKey, true);
+          canvas.addEventListener('pointerdown', finish);
+        }
+        canvas.style.cursor = opts && opts.noskip ? 'default' : 'pointer';
         function frame() {
           if (done) return;
           var now = performance.now();
@@ -727,7 +732,7 @@ var BridgeCine = (function () {
   function titleCard(opts) {
     var el = document.createElement('div');
     el.className = 'cine-title';
-    el.innerHTML = '<div class="ct-kicker">' + (opts.first ? 'A new world' : 'Arriving') + '</div><div class="ct-name">' +
+    el.innerHTML = '<div class="ct-kicker">' + (opts.kicker || (opts.first ? 'A new world' : 'Arriving')) + '</div><div class="ct-name">' +
       String(opts.name).replace(/</g, '') + '</div>' + (opts.kind ? '<div class="ct-kind">' + String(opts.kind).replace(/</g, '') + '</div>' : '');
     document.body.appendChild(el);
     return el;
@@ -741,5 +746,5 @@ var BridgeCine = (function () {
    *  Wayfarer and the skiff from these, with the same nebulae and engine flames. */
   function get(name) { return has(name) ? { img: imgs[name], w: meta[name].w, h: meta[name].h, anchors: meta[name].anchors || {} } : null; }
 
-  return { sail: sail, jump: jump, load: load, has: has, get: get, nebula: nebula, flame: flame };
+  return { sail: sail, jump: jump, play: play, load: load, has: has, get: get, nebula: nebula, flame: flame };
 })();

@@ -42,6 +42,7 @@ const SUITES = {
     ['world/dungeon.js', SHOTS],
     ['world/sylvara_quests.js', SHOTS],
     ['world/events.js', SHOTS],
+    ['world/railway.js', SHOTS + '/railway'],
     ['world/regatta.js', SHOTS],
     ['world/landings.js', SHOTS + '/landings'],
     ['world/arrive.js', SHOTS + '/arrive'],
@@ -73,6 +74,7 @@ const SUITES = {
 };
 // what of each test's output is shown: one group of alternatives a line (add a test's own on a new line)
 const KEEP = new RegExp([
+  /railway:/,
   /PAGEERR|live light|light under her|out of reach|signed in|a tap on|hide\(\)|office|through the door|roster/,
   /board|orders|accounts|seated|the view|back on the bridge|before:|asleep|woken early|up and about/,
   /slept through|recovery bed|tanks in|the tank:|in the tank|looking:|aboard at|aly visiting|into his save/,
