@@ -974,7 +974,7 @@ class Kit:
         for name, state in light_states.items():
             self._sky(state)
             self._assign('light', state)
-            self._settings(64, raw=True, sixteen=True)
+            self._settings(int(os.environ.get('SCENE_PROBE_SAMPLES', 64)), raw=True, sixteen=True)   # (fewer for a quick look)
             self._render(os.path.join(out, 'probe_' + name + '.png'))
         bpy.data.objects.remove(pl)
         for p in self.parts:

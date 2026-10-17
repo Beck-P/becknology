@@ -53,7 +53,8 @@ var BridgeClock = (function () {
   var OUTDOOR = ['lumar', 'lumar-crimson', 'lumar-rose', 'lumar-sapphire', 'lumar-midnight', 'lumar-crown', 'lumar-holm',
     'lumar-tern', 'lumar-square', 'verdance', 'verdance-village', 'hoarfell', 'hoarfell-face', 'hoarfell-icestep',
     'hoarfell-park', 'hoarfell-piste', 'hoarfell-ridge', 'hoarfell-summit', 'sylvara',
-    'arcadia-street', 'arcadia-skypad', 'arcadia-alley', 'arcadia-skywalk'];                // (Arcadia: always night, but it rains)
+    'arcadia-street', 'arcadia-skypad', 'arcadia-alley', 'arcadia-skywalk',          // (Arcadia: always night, but it rains)
+    'lumar-cliff', 'lumar-sapphire-market', 'lumar-rose-springs'];                  // (the Sapphire and Rose seas' places)
   var EVER_NIGHT = /^lumar-midnight/;                         // the Midnight Isle never sees the sun
 
   // ---- now, in Eastern time --------------------------------------------------------------------------------------------

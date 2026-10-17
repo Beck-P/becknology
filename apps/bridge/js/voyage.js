@@ -30,7 +30,9 @@ var BridgeVoyage = (function () {
     // the capital and the small islands round it, all in the Emerald Sea
     'lumar-crown': { name: 'Crownhaven', x: 0.50, y: 0.16, pal: 'emerald' },
     'lumar-tern': { name: 'Tern Holm', x: 0.39, y: 0.35, pal: 'emerald' },
-    'lumar-holm': { name: 'Starling Holm', x: 0.66, y: 0.36, pal: 'emerald' }
+    'lumar-holm': { name: 'Starling Holm', x: 0.66, y: 0.36, pal: 'emerald' },
+    // the Sapphire Sea's cliff town in its drowned caldera (scenes/lumar_cliff.py, js/sapphire.js)
+    'lumar-cliff': { name: 'Lanternfall', x: 0.68, y: 0.90, pal: 'sapphire' }
   };
   var running = false, canvas = null, ctx = null, buf = null, bctx = null, raf = 0, last = 0;
   var Z = 2, W = 480, H = 300;
