@@ -558,6 +558,8 @@
   }
 
   function use(inter) {
+    var host = has('BridgeParty') && BridgeParty.guestOf && BridgeParty.guestOf();     // aboard someone else's Wayfarer
+    if (host) { choose({ title: 'The captain\'s office', text: (host + '\'S DESK, ' + host + '\'S BOOKS. NOT YOURS TO READ - YOUR OWN ARE IN YOUR OWN OFFICE.').toUpperCase(), closeLabel: 'Done' }); return; }
     switch (inter.part) {
       case 'books': sfx('open'); desk(); break;            // the captain's desk: the day's business
       case 'workshop': sfx('open'); workshop(); break;     // the workshop book at the desk's end

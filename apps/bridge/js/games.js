@@ -52,9 +52,10 @@ var BridgeGames = (function () {
     }
   }
 
-  function layers() {
-    var m = {};
-    Object.keys(GAMES).forEach(function (k) { m['g_' + k] = found[k] ? 'on' : 'off'; });
+  // `over`: whose finds to show (aboard someone else's Wayfarer, theirs — js/party.js)
+  function layers(over) {
+    var m = {}, F = over || found;
+    Object.keys(GAMES).forEach(function (k) { m['g_' + k] = F[k] ? 'on' : 'off'; });
     return m;
   }
 

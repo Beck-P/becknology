@@ -2088,6 +2088,34 @@ html.at-sea .quest-toast { z-index: 74; }
 .mp-more { color: #a0e0b0; }
 html.touch #mp-pill { padding: 7px 14px 7px 11px; left: calc(12px + env(safe-area-inset-left)); top: calc(230px + env(safe-area-inset-top)); }
 html.home-editing #mp-pill, html.home-editing #mp-layer { display: none !important; }
+/* playing together as a party (js/party.js): the pill's dot gold while your party's on; the ready check while you wait
+   to set off, the call when someone in your party sets off, and the line while you wait to go with them */
+#mp-pill.party .mp-dot { background: #ffd060; box-shadow: 0 0 7px #ffc040; }
+.party-panel { position: fixed; left: 50%; top: calc(150px + env(safe-area-inset-top));   /* under the toasts (top 58) */ transform: translateX(-50%); z-index: 330;
+  width: min(340px, calc(100vw - 32px)); box-sizing: border-box; padding: 12px 16px 12px; border-radius: 12px;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; color: #f2eee6; background: rgba(14, 12, 24, 0.9);
+  border: 1px solid rgba(255, 208, 96, 0.5); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.55), 0 0 18px rgba(255, 192, 64, 0.12); }
+.party-panel .pp-kicker { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: #ffd070; }
+.party-panel .pp-title { font-size: 17px; margin: 2px 0 6px; line-height: 1.25; }
+.party-panel .pp-text { font-size: 13px; color: rgba(242, 238, 230, 0.78); margin-bottom: 8px; }
+.party-panel .pp-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 3px 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.party-panel .pp-st { color: rgba(242, 238, 230, 0.6); }
+.party-panel .pp-coming { color: #a0d8ff; }
+.party-panel .pp-ready { color: #80f0a8; }
+.party-panel .pp-no, .party-panel .pp-gone { color: #c8a8a0; }
+.party-panel .pp-asked { animation: tg-blink 1.2s steps(2) infinite; }
+.party-panel .pp-bar { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); overflow: hidden; margin-bottom: 9px; }
+.party-panel .pp-bar i { display: block; height: 100%; width: 100%; background: #ffd060; }
+.party-panel .pp-btns { display: flex; gap: 8px; margin-top: 8px; }
+.party-panel button { flex: 1; font: inherit; font-size: 13px; color: #f2eee6; cursor: pointer; padding: 6px 10px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.22); }
+.party-panel button:hover { background: rgba(255, 255, 255, 0.14); }
+.party-panel .pp-go { background: rgba(255, 192, 64, 0.18); border-color: rgba(255, 208, 96, 0.7); color: #ffe8b0; }
+.party-panel .pp-go:hover { background: rgba(255, 192, 64, 0.3); }
+.party-panel.pp-small { display: flex; align-items: center; gap: 9px; width: auto; max-width: calc(100vw - 32px); padding: 6px 8px 6px 13px; border-radius: 999px; font-size: 13px; }
+.party-panel.pp-small button { flex: none; padding: 3px 11px; font-size: 12px; }
+.party-panel .pp-dot { width: 8px; height: 8px; border-radius: 50%; background: #ffd060; box-shadow: 0 0 6px #ffc040; animation: tg-blink 1.2s steps(2) infinite; }
+html.touch .party-panel { top: calc(158px + env(safe-area-inset-top)); }
 /* playing games together (js/together.js): the two of you in the cabinet's bar, what others are playing over their heads */
 .cm-mid { display: flex; align-items: center; justify-content: center; gap: 12px; min-width: 0; }
 .cm-vs { display: flex; align-items: baseline; gap: 7px; padding: 3px 12px; border-radius: 999px; white-space: nowrap; font-size: 13px; color: #f0ecf8;

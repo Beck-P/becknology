@@ -534,6 +534,26 @@ var BridgeCine = (function () {
     for (var m = 0; m <= panes; m++) b.fillRect(Math.round(m * (pw + mull) + mull / 2), Math.round(H * 0.3), 1, Math.round(H * 0.5));
   }
 
+  // a galleon further off (jumping with someone: js/party.js): the sprite shrunk once, its edge kept hard
+  var farCache = {};
+  function farShip(k) {
+    var key = Math.round(k * 100);
+    if (farCache[key]) return farCache[key];
+    var m = meta.mothership, im = imgs.mothership, c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(m.w * k)); c.height = Math.max(1, Math.round(m.h * k));
+    var g = c.getContext('2d');
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+    g.drawImage(im, 0, 0, c.width, c.height);
+    var d = g.getImageData(0, 0, c.width, c.height), px = d.data;
+    for (var i = 0; i < px.length; i += 4) {
+      if (px[i + 3] < 110) { px[i + 3] = 0; continue; }
+      px[i + 3] = 255;
+      px[i] = Math.round(px[i] * 0.86); px[i + 1] = Math.round(px[i + 1] * 0.86); px[i + 2] = Math.round(Math.min(255, px[i + 2] * 0.92 + 6));  // a little haze
+    }
+    g.putImageData(d, 0, 0);
+    return (farCache[key] = { img: c, w: c.width, h: c.height, k: k, anchors: m.anchors });
+  }
+  var WING = 0.56;
   function jumpShots(from, to, opts) {
     opts = opts || {};
     var shots = [];
@@ -541,6 +561,21 @@ var BridgeCine = (function () {
       var m = meta.mothership;
       var j = shake ? (hash(Math.floor(now / 30)) - 0.5) * shake : 0, k = shake ? (hash(Math.floor(now / 30) + 7) - 0.5) * shake : 0;
       return [Math.round(W * 0.5 - m.w * 0.5 + dx + j), Math.round(H * 0.5 - m.h * 0.55 + dy + k), m];
+    }
+    // the other ship, keeping station off your bow quarter, higher and further off; drawn before yours
+    function wingAt(W, H, dx, dy, shake, now) {
+      var f = farShip(WING), m = meta.mothership;
+      var j = shake ? (hash(Math.floor(now / 30) + 3) - 0.5) * shake : 0;
+      return [Math.round(W * 0.5 - m.w * 0.5 + m.w * 0.62 + dx * WING + j), Math.round(H * 0.5 - m.h * 0.55 - m.h * 0.42 + dy * WING + Math.sin(now / 900) * 2), f];
+    }
+    function wing(b, W, H, dx, dy, shake, now, len) {
+      if (!opts.wing) return;
+      var p = wingAt(W, H, dx, dy, shake, now), f = p[2];
+      for (var i = 0; i < 2; i++) {
+        var a = f.anchors['exhaust_' + i];
+        if (a) flame(b, p[0] + a[0] * WING, p[1] + a[1] * WING, Math.round((len || 6) * WING) + i * 2, -1, 0, now + 90 + i * 50, AETHER, 3);
+      }
+      b.drawImage(f.img, p[0], p[1]);
     }
     function engines(b, p, now, len, col) {
       for (var i = 0; i < 2; i++) {
@@ -575,6 +610,7 @@ var BridgeCine = (function () {
       g.addColorStop(0, 'rgba(210,200,255,' + (0.25 + t * 0.6).toFixed(2) + ')'); g.addColorStop(1, 'rgba(120,100,255,0)');
       b.fillStyle = g; b.fillRect(cx - m.w, cy - 120, m.w * 2, 240);
       b.restore();
+      wing(b, W, H, -t * 14, 0, t * t * 3, now, 12 + t * 36);
       engines(b, p, now, 12 + t * 36);
       sprite(b, 'mothership', p[0], p[1]);
       b.save(); b.globalCompositeOperation = 'lighter'; b.globalAlpha = t * 0.35;          // the hull itself starting to glow
@@ -596,6 +632,14 @@ var BridgeCine = (function () {
       b.lineWidth = 2;
       b.beginPath(); b.ellipse(cx, cy, 20 + t * W * 0.6, (20 + t * W * 0.6) * 0.3, 0, 0, Math.PI * 2); b.stroke();
       var stretch = 1 + e * 7, x0 = cx - m.w * 0.5 + e * W * 0.9;
+      if (opts.wing) {                                        // the other ship leaps a beat ahead of yours
+        var f = farShip(WING), e2 = Math.min(1, e * 1.25), st2 = 1 + e2 * 7, wy = cy - m.h * 0.55 - m.h * 0.42;
+        for (var g2 = 2; g2 >= 0; g2--) {
+          b.globalAlpha = g2 === 0 ? 1 : 0.22 / g2;
+          b.drawImage(f.img, Math.round(cx - m.w * 0.5 + m.w * 0.62 + e2 * W * 0.9 - g2 * 20 * e2 - f.w * (st2 - 1)), Math.round(wy), Math.round(f.w * st2), f.h);
+        }
+        b.globalAlpha = 1;
+      }
       for (var gh = 3; gh >= 0; gh--) {                       // after-images along its path
         b.globalAlpha = gh === 0 ? 1 : 0.25 / gh;
         b.drawImage(imgs.mothership, Math.round(x0 - gh * 30 * e - m.w * (stretch - 1)), Math.round(cy - m.h * 0.55),
@@ -633,6 +677,7 @@ var BridgeCine = (function () {
       b.lineWidth = 3 * (1 - u) + 1;
       b.beginPath(); b.ellipse(W * 0.5, H * 0.5, R, R * 0.4, 0, 0, Math.PI * 2); b.stroke();
       b.restore();
+      wing(b, W, H, (1 - u) * -W * 0.6, 0, (1 - u) * 3, now, 6 + (1 - u) * 18);
       var p = shipAt(W, H, (1 - u) * -W * 0.7, 0, (1 - u) * 4, now);
       var nose = p[2].anchors.nose;
       if (nose) flame(b, p[0] + nose[0], p[1] + nose[1], 8 + (1 - u) * 26, 1, 0, now, AETHER, 4);   // braking off the bow
@@ -645,6 +690,7 @@ var BridgeCine = (function () {
     if (opts.first) {
       shots.push({ dur: 2400, dip: false, title: true, draw: function (b, W, H, t, now) {
         spaceShot(b, W, H, now, to);
+        wing(b, W, H, -t * 10, 0, 0, now, 6);
         var p = shipAt(W, H, -t * 10, 0, 0, now);
         engines(b, p, now, 6);
         sprite(b, 'mothership', p[0], p[1]);
@@ -653,6 +699,7 @@ var BridgeCine = (function () {
     // 6 · the shuttle drops out of the bay and dives for the planet, a streak of re-entry behind it
     shots.push({ dur: 1100, dip: false, sfx: 'lift', draw: function (b, W, H, t, now) {
       spaceShot(b, W, H, now, to);
+      wing(b, W, H, -(opts.first ? 10 : 0) - t * 8, 0, 0, now, 6);
       var p = shipAt(W, H, -(opts.first ? 10 : 0) - t * 8, 0, 0, now), m = p[2];
       engines(b, p, now, 6);
       sprite(b, 'mothership', p[0], p[1]);
