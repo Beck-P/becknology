@@ -84,7 +84,7 @@
       4,
       2,
       2,
-      2,
+      4,
       4,
       4,
       4,
@@ -268,7 +268,7 @@
       1,
       0,
       0,
-      0,
+      1,
       1,
       1,
       1,
@@ -478,6 +478,30 @@
       "label": "SPELL CIRCLE",
       "prompt": "PRESS E TO STUDY",
       "dialog": "A SUMMONING GLYPH.\\n\\nTHE TRIANGLE ROTATES.\\nA TINY CRYSTAL HOVERS\\nAT ITS CENTER, HUMMING."
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "type": "enter_world",
+      "target": "lumar-midnight-tower-2",
+      "spawn": [
+        5,
+        8
+      ],
+      "label": "STAIRS UP",
+      "prompt": "PRESS E TO CLIMB"
+    },
+    {
+      "x": 7,
+      "y": 3,
+      "type": "enter_world",
+      "target": "lumar-midnight-tower-2",
+      "spawn": [
+        5,
+        8
+      ],
+      "label": "STAIRS UP",
+      "prompt": "PRESS E TO CLIMB"
     }
   ],
   "scene": {
