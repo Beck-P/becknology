@@ -2626,6 +2626,11 @@
     "again": "STILL STANDING? GOOD. DRINK SOMETHING GREEN.",
     "topics": [
       {
+        "q": "Brew with me",
+        "a": "HERBS FROM THE WOOD, A CRYSTAL FROM LUMAR'S SEAS, HONEY FROM THE FARMS ON VERDANCE. THE WOOD GROWS HALF OF IT; THE REST YOU CARRY HOME. WHAT SHALL WE MAKE?",
+        "sylvan": "brew"
+      },
+      {
         "q": "About you",
         "a": "I'VE KEPT THIS STALL FOR FOUR HUNDRED YEARS. I GREW MY HAIR WHITE ON PURPOSE. IT MAKES PEOPLE LISTEN."
       },
@@ -2668,11 +2673,20 @@
       {
         "world": "sylvara",
         "label": "WARDEN"
+      },
+      {
+        "world": "sylvara-roots",
+        "label": "WARDEN"
       }
     ],
     "greet": "WELCOME TO SYLVARA, SKY-TRAVELLER. YOUR SHIP WILL BE SAFE ON THE RING. THE TREES WILL NOT TOUCH IT. PROBABLY.",
     "again": "THE RING HOLDS. YOUR SHIP IS WELL.",
     "topics": [
+      {
+        "q": "Shoot a round",
+        "a": "TEN ARROWS AT THE MARKS ON THEIR RAILS.",
+        "sylvan": "range"
+      },
       {
         "q": "About you",
         "a": "I KEEP THE RING FOR THOSE WHO COME DOWN FROM THE STARS. YOU ARE THE FIRST IN A LONG WHILE WHO DIDN'T LAND ON A TREE."
@@ -3154,6 +3168,253 @@
         "q": "Did you see?",
         "a": "I SAW! I WAS UP IN THE WILLOW! HE SAID IT ALL IN ONE BREATH AND THEN HE HAD TO SIT DOWN. AND SHE SAID 'FINALLY.' MIRELLE SAYS I'M NOT ALLOWED TO TELL ANYONE. I'M ONLY TELLING YOU.",
         "when": "under-the-willow"
+      }
+    ]
+  },
+  "elf_bowyer": {
+    "name": "Corin",
+    "role": "Bowyer of the Rootmarket",
+    "sheet": "npc-elf-bowyer",
+    "at": [
+      {
+        "world": "sylvara-roots",
+        "label": "BOWYER"
+      }
+    ],
+    "greet": "MIND THE STAVES, THEY'RE SEASONING. YOU'VE GOT AN ARCHER'S SHOULDERS, OR YOU WILL HAVE. LOOKING FOR A BOW?",
+    "again": "BACK FOR ANOTHER STRING? OR JUST TO ADMIRE THE RACK. PEOPLE DO.",
+    "topics": [
+      {
+        "q": "Your bows",
+        "a": "ELM AND HORN, GLUED WITH SOMETHING I WON'T TELL YOU, STRUNG WITH SPIDER-SILK FROM THE DEEPWOOD. AND ROPE ARROWS, FOR THE CANOPY - A GRAPNEL HEAD AND A LINE OF ELVEN CORD. LOOSE ONE INTO AN ANCHOR TREE AND YOU'VE A ZIP LINE.",
+        "sylvan": "shop:bowyer"
+      },
+      {
+        "q": "How do I shoot?",
+        "a": "HOLD IT AND DRAW - THE LONGER YOU HOLD, THE FURTHER IT GOES, UP TO WHAT THE BOW CAN GIVE. LET GO AND IT'S GONE. A SNAP SHOT'S FOR CLOSE WORK. AERIN'S RANGE IS ACROSS THE SQUARE IF YOU WANT TO EMBARRASS YOURSELF WHERE IT'S SAFE."
+      },
+      {
+        "q": "About you",
+        "a": "I MADE MY FIRST BOW WHEN THE GREAT TREE WAS A SAPLING. IT WAS TERRIBLE. I'VE MADE ONE A WEEK SINCE AND THEY'VE GOT LESS TERRIBLE. BECKOLAS CARRIES ONE OF MINE. HE'LL TELL YOU IT'S THE BEST BOW IN THE WOOD. HE'S RIGHT."
+      },
+      {
+        "q": "The Heartwood Longbow",
+        "a": "CUT FROM A LIMB THE GREAT TREE DROPPED IN A STORM. I'VE MADE THREE. AERIN GIVES ONE TO WHOEVER SHOOTS A WARDEN'S ROUND ON HER RANGE. OR YOU CAN PAY ME TWELVE HUNDRED AND I'LL PRETEND NOT TO MIND."
+      }
+    ]
+  },
+  "elf_lanternmaker": {
+    "name": "Wren",
+    "role": "Lantern maker of the Rootmarket",
+    "sheet": "npc-elf-lanternmaker",
+    "at": [
+      {
+        "world": "sylvara-roots",
+        "label": "LANTERN MAKER"
+      }
+    ],
+    "greet": "OH - HELLO. SORRY, I WAS COUNTING. NINE HUNDRED AND TWELVE LANTERNS IN THE CITY AND I'VE MADE SIX HUNDRED OF THEM. FAELAN MADE THE REST. DON'T TELL HIM I'M COUNTING.",
+    "again": "STILL NINE HUNDRED AND TWELVE. I CHECKED.",
+    "topics": [
+      {
+        "q": "Fire arrows",
+        "a": "PITCH AND TOW BEHIND THE HEAD, LIT AS YOU LOOSE. THE HIGH LANTERNS IN THE BOUGHS WENT OUT IN THE BIG WIND AND NOBODY CAN REACH THEM. NOBODY WITH A LADDER, ANYWAY.",
+        "sylvan": "shop:lanterns"
+      },
+      {
+        "q": "The high lanterns",
+        "a": "FIVE OF THEM, UP IN THE BOUGHS WHERE THE BRANCHES ARE TOO THIN TO STAND ON. LIGHT ALL FIVE AND THE WHOLE CANOPY WILL SEE IT. I'D SEE IT. I'D CRY, PROBABLY."
+      },
+      {
+        "q": "About you",
+        "a": "THE LEAVES ARE FROM THE LAMPLEAF VINE, FOLDED WET AND DRIED ROUND A FORM. THE LIGHT'S A LITTLE OIL AND A LITTLE OF SOMETHING THE ELVES DON'T WRITE DOWN. FAELAN TAUGHT ME. HE SAYS I FOLD TOO FAST. I SAY HE FOLDS TOO SLOW. WE'RE BOTH RIGHT."
+      }
+    ]
+  },
+  "elf_loomer": {
+    "name": "Ysane",
+    "role": "Weaver at the looms",
+    "sheet": "npc-elf-loomer",
+    "at": [
+      {
+        "world": "sylvara-roots",
+        "label": "WEAVER"
+      }
+    ],
+    "greet": "COME IN UNDER THE AWNING, THE LIGHT'S BETTER. DON'T TOUCH THE WARP. EVERYONE TOUCHES THE WARP.",
+    "again": "YOU'RE BACK. YOU DIDN'T TOUCH THE WARP. I LIKE YOU.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I WEAVE THE COURT'S CLOTH - THE QUEEN'S GREEN, THE WARDENS' GREY, THE GOLD FOR THE BANNERS. SEFA DOES THE FINE SILK. I DO THE MILES OF IT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SEFA WOVE A WHOLE BOLT OF THE FIRST SWORD'S FAVOUR SILK IN THE SPRING. A WHOLE BOLT. FOR ONE RIBBON. YOU WORK IT OUT."
+      },
+      {
+        "q": "The city",
+        "a": "THREE CITIES, REALLY. DOWN HERE IS FOR WORK - THE MARKET, THE MAKERS. THE BOUGHS ARE FOR LIVING; THE CROWN IS FOR THE QUEEN AND THE STARS. THE LIFT TAKES YOU UP IF YOUR KNEES ARE OLD. MINE ARE."
+      }
+    ]
+  },
+  "elf_grocer": {
+    "name": "Merrow",
+    "role": "Fruit seller in the Rootmarket",
+    "sheet": "npc-elf-grocer",
+    "at": [
+      {
+        "world": "sylvara-roots",
+        "label": "FRUIT STALL"
+      }
+    ],
+    "greet": "STARPEARS! FROM THE CANOPY ORCHARDS THIS MORNING. CUT ONE ACROSS AND THERE'S A STAR IN IT. GO ON. EVERYONE'S DELIGHTED THE FIRST TIME.",
+    "again": "BACK FOR THE STAR AGAIN? IT'S STILL THERE. IT'S ALWAYS THERE.",
+    "topics": [
+      {
+        "q": "What's good?",
+        "a": "STARPEARS, WAYBREAD - ONE BITE AND YOU COULD WALK TILL DARK - AND HONEY THAT CAME ALL THE WAY FROM VERDANCE IN A CRATE, BECAUSE MIRELLE WANTS IT FOR HER BREWING AND WON'T SAY WHY.",
+        "sylvan": "shop:grocer"
+      },
+      {
+        "q": "About you",
+        "a": "MY FAMILY'S HAD THIS STALL SINCE BEFORE THE SQUARE WAS PAVED. MY GRANDMOTHER SOLD THE QUEEN HER FIRST STARPEAR. SHE STILL BUYS ONE EVERY MIDSUMMER. THE QUEEN, I MEAN. GRANDMOTHER'S GONE WEST."
+      }
+    ]
+  },
+  "elf_liftkeeper": {
+    "name": "Brannoc",
+    "role": "Keeper of the basket lift",
+    "sheet": "npc-elf-liftkeeper",
+    "at": [
+      {
+        "world": "sylvara-roots",
+        "label": "LIFTKEEPER"
+      }
+    ],
+    "greet": "UP? IN YOU GET. KEEP YOUR HANDS INSIDE THE BASKET AND YOUR OPINIONS ABOUT THE ROPE TO YOURSELF. IT'S A GOOD ROPE.",
+    "again": "THE ROPE'S STILL GOOD.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I'VE WOUND THIS WINCH FOR FOUR HUNDRED YEARS. THE COUNTERWEIGHT IS THE SAME STONES IT ALWAYS WAS. THE ROPE I CHANGE EVERY SPRING, WHATEVER PEOPLE THINK."
+      },
+      {
+        "q": "The Boughs",
+        "a": "WHERE MOST OF THE CITY LIVES: HOMES ON PLATFORMS ROUND THE TRUNKS, BRIDGES OF ROPE BETWEEN. THE HOLLOW BOUGH'S UP THERE - THE TAVERN IN A BRANCH SO BIG A HUNDRED ELVES CAN DANCE IN IT. AND THE QUEEN'S STAIR UP TO THE CROWN."
+      }
+    ]
+  },
+  "elf_starreader": {
+    "name": "Ithil",
+    "role": "Star-reader of the Crown",
+    "sheet": "npc-elf-starreader",
+    "at": [
+      {
+        "world": "sylvara-crown",
+        "label": "STAR-READER"
+      }
+    ],
+    "greet": "HUSH - NO, YOU'RE FINE, THE STARS DON'T MIND TALKING. I'M ITHIL. I READ THEM. THEY'RE VERY SLOW READING, BUT THE PLOT IS EXCELLENT.",
+    "again": "STILL THERE. ALL OF THEM. I COUNTED.",
+    "topics": [
+      {
+        "q": "The moon",
+        "a": "SYLVARA'S MOON KEEPS THE SAME TIME AS YOURS, OUT IN THE DARK WHERE YOU COME FROM - THE SAME FULL, THE SAME NEW. WHEN IT'S NEW THE WOOD GOES INTO THE DIMMING: DAWN AND DUSK STRETCH OVER THE WHOLE DAY AND NOBODY GETS ANYTHING DONE. IT'S MY FAVOURITE WEEK."
+      },
+      {
+        "q": "The dial",
+        "a": "THE CONSTELLATIONS OF THE WOOD, SET IN GOLD AND MOONSTONE: THE HARP, THE STAG, THE TWO SWORDS, THE WILLOW, THE LANTERN, AND THE WANDERER - THAT ONE'S YOU, OR SOMEONE LIKE YOU. IT COMES DOWN OUT OF THE SKY IN THE OLD SONGS AND NOBODY KNOWS WHY."
+      },
+      {
+        "q": "About you",
+        "a": "I WAS A WARDEN ONCE. I LOOKED UP ONE NIGHT ON WATCH AND FORGOT TO LOOK DOWN AGAIN FOR ABOUT A HUNDRED YEARS. AERIN STILL HASN'T FORGIVEN ME. THE QUEEN GAVE ME THE PLATFORM INSTEAD OF THE SACK."
+      },
+      {
+        "q": "Falling stars",
+        "a": "ON A CLEAR NIGHT IN THE STARFALL THEY COME DOWN INTO THE WOOD - LITTLE ONES, STILL WARM. IF YOU FIND ONE, BRING IT UP HERE. I'D LIKE TO SEE IT. I'VE NEVER BEEN QUICK ENOUGH."
+      }
+    ]
+  },
+  "elf_boatwright": {
+    "name": "Tamsin",
+    "role": "Boatwright on the Silverrun",
+    "sheet": "npc-elf-boatwright",
+    "at": [
+      {
+        "world": "sylvara-river",
+        "label": "BOATWRIGHT"
+      }
+    ],
+    "greet": "MIND THE SHAVINGS. YOU WANT A CANOE? THEY'RE ON THE RACK - TAKE ONE, BRING IT BACK, OR LEAVE IT AT THE LAKE AND SOMEONE BRINGS IT UP. THAT'S HOW IT WORKS. MOSTLY.",
+    "again": "THE RIVER'S KIND TODAY. MOSTLY.",
+    "topics": [
+      {
+        "q": "The river",
+        "a": "DOWN FROM HERE: THE BRIDGE VILLAGE - YOU GO UNDER IT, DUCK - THEN THE OTTER WEIR, KEEP TO THE CHUTE IN THE MIDDLE. THE SHRINE ISLAND. THEN THE RAPIDS, AND THE FALLS. LAND ABOVE THE FALLS. I MEAN IT. THERE'S A POST WITH A RED LEAF. THERE'S A RACK AT THE POOL BELOW FOR THE REST OF THE WAY TO MIRROR LAKE."
+      },
+      {
+        "q": "The Deep Run",
+        "a": "BELOW THE RAPIDS A QUIET ARM GOES OFF EAST INTO THE DEEPWOOD. SLOW, DARK, LOVELY. IT ENDS IN A POOL WHERE THE FROGS LIGHT UP. YOU CAN LAND THERE."
+      },
+      {
+        "q": "About you",
+        "a": "I BUILD THEM. BIRCH BARK OVER ASH RIBS, SEWN WITH SPRUCE ROOT, SEALED WITH PINE GUM. SIX WEEKS EACH. SOMEBODY BORROWED THE ONE I WAS PROUDEST OF AND LEFT IT AT THE LAKE. AGAIN."
+      }
+    ]
+  },
+  "elf_hermit": {
+    "name": "Sorrel",
+    "role": "Forager of the Deepwood",
+    "sheet": "npc-elf-hermit",
+    "at": [
+      {
+        "world": "sylvara-deepwood",
+        "label": "FORAGER"
+      }
+    ],
+    "greet": "OH! A VISITOR. I DON'T GET MANY. I DON'T WANT MANY, BUT ONE NOW AND THEN IS NICE. YOU'LL BE AFTER HERBS, THEN. EVERYONE IS, EVENTUALLY.",
+    "again": "THE WOOD SAID YOU'D BE BACK. IT DIDN'T, REALLY. BUT IT LOOKED LIKE IT MIGHT.",
+    "topics": [
+      {
+        "q": "Herbs",
+        "a": "EMBERROOT UNDER THE OLDEST TREES - DIG BY THE ROOTS, IT'S WARM WHEN YOU'RE CLOSE. OWLMOSS ON THE LOGS IN THE GROVE, IT GLOWS. DREAMCAPS IN THE GROVE TOO, THE LITTLE VIOLET ONES. WINDTHISTLE IN THE MEADOW. TAKE THEM TO MIRELLE; SHE KNOWS WHAT TO DO WITH THEM. I JUST KNOW WHERE THEY ARE."
+      },
+      {
+        "q": "The Mossback",
+        "a": "SHE'S BEEN ASLEEP SINCE BEFORE THE CITY. ONCE A HUNDRED YEARS OR SO SHE WAKES, HAS A GOOD LOOK ROUND, EATS AN ENTIRE MEADOW, AND GOES BACK TO SLEEP. ON FULL MOON NIGHTS SHE DREAMS OUT LOUD. IT'S WORTH STAYING UP FOR."
+      },
+      {
+        "q": "About you",
+        "a": "I WAS A WARDEN. I CAME OUT HERE ON PATROL ONE SPRING AND THE MEADOW WAS IN FLOWER AND I THOUGHT, NO. I'M STAYING. AERIN STILL SENDS ME A LETTER EVERY YEAR ASKING WHEN I'M COMING BACK. I SEND HER DREAMCAPS."
+      }
+    ]
+  },
+  "elf_tavernkeeper": {
+    "name": "Fennick",
+    "role": "Keeper of the Hollow Bough",
+    "sheet": "npc-elf-tavernkeeper",
+    "at": [
+      {
+        "world": "sylvara-tavern",
+        "label": "TAVERN KEEPER"
+      }
+    ],
+    "greet": "WELCOME TO THE HOLLOW BOUGH! THE ONLY TAVERN IN ANY WORLD INSIDE A BRANCH. SIT ANYWHERE. NOT THERE, THAT'S THALION. HE'S ASLEEP. HE'S ALWAYS ASLEEP.",
+    "again": "THE USUAL? WE DON'T HAVE A USUAL. I JUST LIKE SAYING IT.",
+    "topics": [
+      {
+        "q": "Something to drink",
+        "a": "STARPEAR CIDER, ELDERFLOWER WINE, A HONEY-CAKE IF YOU'RE PEAKISH. ALL FROM THE CANOPY, EXCEPT THE HONEY, WHICH IS FROM VERDANCE AND COSTS ME A FORTUNE.",
+        "sylvan": "shop:tavern"
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THEY SAY THE HIGH LANTERNS IN THE BOUGHS WENT OUT IN THE BIG WIND AND NOBODY CAN REACH THEM. THEY SAY AERIN COULD. AERIN SAYS SHE'S BUSY. AERIN IS NOT BUSY."
+      },
+      {
+        "q": "About you",
+        "a": "MY GREAT-GRANDMOTHER HOLLOWED THIS BOUGH OUT WITH A SPOON. THAT'S THE STORY. IT WAS PROBABLY A LOT OF SPOONS."
       }
     ]
   }

@@ -21,7 +21,8 @@ import os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'apps', 'bridge', 'assets'))
 W = {os.path.basename(f)[:-5]: json.load(open(f)) for f in glob.glob(os.path.join(ROOT, 'worlds', '*.json'))}
 ADDED = {('*', 'PEDDLER'), ('*', 'HARBOURMASTER'), ('lumar-midnight', 'THE FERRYMAN'), ('verdance', 'TAM'), ('verdance', 'ODILE'), ('hoarfell-summit', 'THE LAST RIDGE'), ('hoarfell-piste', 'THE PARK')}
-EXTRA_ENTRIES = {'hoarfell-ridge': [(14, 27), (41, 60)]}      # the Ice Step's top-out (js/climb.js), back out of the Hollow
+EXTRA_ENTRIES = {'hoarfell-ridge': [(14, 27), (41, 60)],      # the Ice Step's top-out (js/climb.js), back out of the Hollow
+                 'sylvara-boughs': [(41, 18), (25, 14)]}        # the Owl's Rest by zip line, the nook down the rope ladder (js/bows.js)
 
 
 def walk(w, x, y):

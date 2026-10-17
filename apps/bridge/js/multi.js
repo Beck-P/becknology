@@ -160,9 +160,10 @@ var BridgeMulti = (function () {
 
   // someone skiing or climbing: their sport sheet's frame where they are, lifted as they are (a jump, up the face), drawn
   // through the scenery like your own pose - so you see each other on the mountain (and race: js/race.js)
-  var POSE_KIND = ['walk', 'ski', 'climb'];
+  var POSE_KIND = ['walk', 'ski', 'climb', 'canoe'];
   var nudges = {};                                     // tiles to draw someone aside by (two climbers on the same holds)
   function posed(a, world, offX, offY, ts, now, sc, id) {
+    if (a.pose.kind === 'canoe' && typeof BridgeCanoe !== 'undefined') return BridgeCanoe.remoteItem(a, world, offX, offY, ts, now, sc);   // js/canoe.js
     var p = a.pose, x = a.x + 0.5 + (nudges[id] || 0), y = a.y + 1 - 3 / 32;
     return { footRow: y, draw: function (ctx) {
       var m = BridgeCharacter.SPORT[p.kind], img = BridgeCharacter.sportImage(p.kind + '-' + a.k, p.flip);
