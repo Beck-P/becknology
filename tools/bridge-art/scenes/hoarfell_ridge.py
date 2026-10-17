@@ -564,7 +564,7 @@ k.blob(DOOR_X + 1.7, 60.4, 0.1, 0.7, 0.45, 0.3, (N.SNOW, 0.1), 'door_drift', seg
 
 # ---- the light: the same evening as the summit, lower and redder; the cloud sea's blue in the shadows -----------------------------------
 k.sun((0.82, 0.3, -0.3), '#ffa890', 3.3, angle=3.0)
-k.render(OUT, light_states={'full': {}}, light_samples=64, world_light=('#8088cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=64, world_light=('#8088cc', 0.95))
 
 # ---- what the game needs ---------------------------------------------------------------------------------------------------------------------
 cells = {(c, r) for c in range(COLS) for r in range(ROWS)
