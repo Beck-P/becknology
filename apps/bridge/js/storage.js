@@ -182,6 +182,8 @@ var BridgeStorage = (function () {
       rows: [
         { label: 'Deck fittings', sub: 'rugs, lamps, plants, curios, colours', icon: 'glimmer_lantern', pick: function () { if (typeof BridgeCatalog !== 'undefined') BridgeCatalog.show(inter.shop || 'wayfarer_chandler'); } },
         { label: 'Chests and storage', sub: 'crates, trunks, a strongbox', icon: 'pocket_watch', pick: chestShop },
+        { label: 'Ship\'s modules', sub: 'make her longer: a galley, an observatory, a greenhouse deck', icon: 'bowl_of_stew', disabled: typeof BridgeWayfarer === 'undefined',
+          pick: function () { BridgeWayfarer.shop(null, function () { chandler(inter); }); } },
         { label: 'Fish tanks', sub: 'somewhere for what you catch', icon: 'glowtail', disabled: typeof BridgeAquarium === 'undefined',
           pick: function () { BridgeAquarium.shop(null, function () { chandler(inter); }); } },
         { label: 'Packs', sub: n ? 'next: ' + n.name + ', ' + n.slots + ' slots' : 'you have the biggest', icon: 'climbing_rope',

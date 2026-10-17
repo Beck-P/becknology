@@ -3,7 +3,7 @@
  *
  * The pilot sheets (tools/bridge-art/pilots.sh → assets/characters/pilots/) are rendered once per
  * suit × build × head, where a head is the helmet or a hairstyle with or without a beard:
- *   pilot[-sit|-ski|-climb][-<style>]-<a|b>-<head>.png
+ *   pilot[-sit|-ski|-climb|-attack|-bow][-<style>]-<a|b>-<head>.png
  * Suit, skin and hair aren't baked in. They're drawn in KEY colours (characters.py KEYS) and swapped
  * here for the player's picks as a sheet loads, along with the darker line-work copies sprites_post.py
  * makes of them. So any skin tone or hair colour costs nothing in files.
@@ -330,7 +330,7 @@ var BridgeLook = (function () {
   function pilotFace(canvas, key, seed, opts) {
     key = String(key || '');
     var at = key.indexOf('@'), parts = (at < 0 ? key : key.slice(0, at)).split('-'), col = parts.pop();
-    if (/^(sit|ski|climb|attack)$/.test(parts[0] || '')) parts.shift();
+    if (/^(sit|ski|climb|attack|bow)$/.test(parts[0] || '')) parts.shift();
     var st = parts[0] || 'flight', l = at < 0 ? clean(null) : parse(key.slice(at + 1));
     if (!SUITS[col]) col = 'purple';
     var path = 'pilots/' + (st !== 'flight' ? st + '-' : '') + l.body + '-' + head(l);
