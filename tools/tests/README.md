@@ -13,6 +13,10 @@ node tools/tests/run.js world royale    # just those suites
 rewrites, `/runouts` from `apps/runouts/dist`) and `fakesupa.py` (:8767). It fetches the chess CDN modules into
 `npm/` the first time (`npm.sh`), and stops the servers it started when it's done.
 
+Working in a second checkout (a git worktree) alongside another: `BRIDGE_PORT=8771 node tools/tests/run.js world` serves
+*that* checkout on :8771 and sends every test page there (`chrome.js` reroutes their `127.0.0.1:8766` requests), so the
+two don't test each other's files. (The `multi` suites share the Supabase stand-in on :8767: run one at a time.)
+
 ## What you need
 
 - Node with Playwright (`npm i -g playwright`); `run.js` adds `npm root -g` to `NODE_PATH`.

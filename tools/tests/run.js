@@ -48,7 +48,8 @@ if (names.includes('royale') && !fs.existsSync(path.join(ROOT, 'apps/runouts/dis
 }
 if (names.includes('together') && !fs.existsSync(path.join(D, 'npm/chess/package'))) execFileSync(path.join(D, 'npm.sh'), { stdio: 'inherit' });
 
-ensure(8766, 'serve.py', 'http://127.0.0.1:8766/bridge/');
+const PORT = +(process.env.BRIDGE_PORT || 8766);                 // another checkout's server (see chrome.js)
+ensure(PORT, 'serve.py', 'http://127.0.0.1:' + PORT + '/bridge/');
 ensure(8767, 'fakesupa.py', 'http://127.0.0.1:8767/');
 [SHOTS, ...Object.keys(SUITES).map((s) => path.join(D, s, 'shots')), ...[].concat(...Object.values(SUITES)).flat().filter((a) => a.startsWith(SHOTS + '/'))]
   .forEach((d) => fs.mkdirSync(d, { recursive: true }));
