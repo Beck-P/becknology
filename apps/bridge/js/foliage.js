@@ -113,6 +113,97 @@ var BridgeFoliage = (function () {
     };
   }
 
+  // ---- the ground through the year: the grass the leaf pass marks (R 64), wherever it is ----------------------------------
+  // spring freshens it and sprinkles wildflowers; autumn turns it toward straw and drops each turned tree's leaves round
+  // its foot, in its own colour; winter: on Lumar the grass lies dormant, olive and tan, with the brown litter under the
+  // trees; on Verdance snow lies on it. Decided on the day image and carried into each state's light like the trees.
+  var WILD = [[0, 0, 0.94], [52, 0.85, 0.62], [330, 0.55, 0.78], [270, 0.45, 0.72]];   // daisy, buttercup, campion, violet
+  function grassy(leaves) {
+    if (!leaves) return false;
+    for (var i = 0; i < leaves.length; i += 64) if (leaves[i] > 32 && leaves[i] <= 160) return true;
+    return false;
+  }
+  function hash2(x, y) { var v = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return v - Math.floor(v); }
+  function ground(season, frac, snow, seed) {
+    var fallen = null, turn = 0.45 + 0.55 * Math.max(0, Math.min(1, frac));
+    // where leaves lie: round the foot of each turned tree (its crown is drawn above its foot), by 8-px cells
+    function fallMap(w, h, leaves) {
+      var cw = Math.ceil(w / 8), ch = Math.ceil(h / 8), dens = new Float32Array(cw * ch), code = new Int32Array(cw * ch).fill(-1);
+      for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+        var i = (y * w + x) * 4;
+        if (leaves[i] <= 160) continue;                                    // leaves only: needles don't drop
+        var tree = (leaves[i + 1] >> 4) + seed * 15;
+        if (season === 'autumn' && hash(tree) > turn) continue;            // not turned yet
+        var c = (y >> 3) * cw + (x >> 3);
+        dens[c] += 1 / 64; code[c] = tree;
+      }
+      var F = new Float32Array(cw * ch), T = new Int32Array(cw * ch).fill(-1);
+      for (var cy = 0; cy < ch; cy++) for (var cx = 0; cx < cw; cx++) {
+        var best = 0, bt = -1;
+        for (var dy = 0; dy <= 5; dy++) for (var dx = -2; dx <= 2; dx++) {
+          var X = cx + dx, Y = cy - dy;
+          if (X < 0 || Y < 0 || X >= cw) continue;
+          var v = Math.min(1, dens[Y * cw + X] * 1.6) / (1 + Math.abs(dx) * 0.6 + Math.max(0, dy - 2) * 0.5);
+          if (v > best) { best = v; bt = code[Y * cw + X]; }
+        }
+        F[cy * cw + cx] = best; T[cy * cw + cx] = bt;
+      }
+      return { F: F, T: T, cw: cw };
+    }
+    return function (px, w, h, leaves, state, ref) {
+      if (!grassy(leaves) || season === 'summer') return;
+      var t = [0, 0, 0], o = [0, 0, 0], L = [0, 0, 0], src = ref || px;
+      var drop = season === 'autumn' ? 0.16 + 0.3 * frac : season === 'winter' && !snow ? 0.12 : 0;
+      if (drop && !fallen) fallen = fallMap(w, h, leaves);
+      for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+        var i = (y * w + x) * 4;
+        if (!(leaves[i] > 32 && leaves[i] <= 160) || !px[i + 3]) {       // only the grass: (and on Verdance in winter, a cold light on all else)
+          if (snow && season === 'winter' && px[i + 3] && !(leaves[i] > 160 || leaves[i + 2] > 160)) {
+            var r0 = src[i] / 255 * 0.96, g0 = src[i + 1] / 255 * 0.98, b0 = Math.min(1, src[i + 2] / 255 * 1.04);
+            if (ref) { BridgeScene.relight(px, ref, i, r0, g0, b0, L); r0 = L[0]; g0 = L[1]; b0 = L[2]; }
+            px[i] = Math.round(Math.max(0, Math.min(1, r0)) * 255); px[i + 1] = Math.round(Math.max(0, Math.min(1, g0)) * 255); px[i + 2] = Math.round(Math.max(0, Math.min(1, b0)) * 255);
+          }
+          continue;
+        }
+        var r = src[i] / 255, g = src[i + 1] / 255, b = src[i + 2] / 255;
+        hsl(r, g, b, t);
+        var hu = t[0], sa = t[1], li = t[2], green = hu > 45 && hu < 175 && sa > 0.08, d = bayer(x, y);
+        var fl = null;
+        if (drop) {
+          var c = (y >> 3) * fallen.cw + (x >> 3), f = fallen.F[c] * drop;
+          if (f > 0.02 && hash2(x >> 1, y) < f) fl = fallen.T[c];
+        }
+        if (season === 'winter' && snow) {
+          var k = Math.min(1, Math.max(0, (li - 0.12) / 0.35));
+          r = 0.72 + 0.2 * k; g = 0.76 + 0.19 * k; b = 0.86 + 0.11 * k;
+        } else if (fl != null && fl >= 0) {                              // a fallen leaf
+          if (season === 'autumn') { var A = AUTUMN[Math.floor(hash(fl + 7) * AUTUMN.length)]; rgb(A[0] + (d - 0.5) * 16, A[1] * 0.85, Math.max(0.2, li * A[2] * 1.05 + 0.04), o); }
+          else rgb(24 + (d - 0.5) * 10, 0.35, Math.max(0.16, li * 0.85), o);
+          r = o[0]; g = o[1]; b = o[2];
+        } else if (season === 'spring') {
+          if (green && hash2(x, y + seed) < 0.0035) { var W2 = WILD[Math.floor(hash2(y, x) * WILD.length)]; rgb(W2[0], W2[1], Math.max(W2[2] * (0.7 + li * 0.6), 0.4), o); }
+          else if (green) rgb(hu * 0.94 + 6, Math.min(1, sa * 1.05), li * 1.03, o);
+          else continue;
+          r = o[0]; g = o[1]; b = o[2];
+        } else if (season === 'autumn') {
+          if (green) {
+            if (snow) { var n = (Math.sin(x * 0.093 + y * 0.051) + Math.sin(x * 0.031 - y * 0.077) * 0.7 + Math.sin((x + y) * 0.017)) / 2.7; rgb(50 + n * 7, sa * 0.85, li * 1.04, o); }   // Verdance: the meadow gone gold
+            else rgb(hu + (52 - hu) * (0.22 + 0.25 * frac), sa * 0.86, li * 1.02, o);                                                      // Lumar: toward straw
+          } else if (hash2(x >> 1, y >> 1) < 0.5) continue;              // half the flowers still out
+          else rgb(48, 0.3, li * 0.9, o);
+          r = o[0]; g = o[1]; b = o[2];
+        } else if (season === 'winter') {                               // Lumar: dormant
+          rgb(green ? hu + (56 - hu) * 0.55 : 50, green ? sa * 0.52 : 0.25, li * 0.93, o);
+          r = o[0]; g = o[1]; b = o[2];
+        } else continue;
+        if (ref) { BridgeScene.relight(px, ref, i, r, g, b, L); r = L[0]; g = L[1]; b = L[2]; }
+        px[i] = Math.round(Math.max(0, Math.min(1, r)) * 255);
+        px[i + 1] = Math.round(Math.max(0, Math.min(1, g)) * 255);
+        px[i + 2] = Math.round(Math.max(0, Math.min(1, b)) * 255);
+      }
+    };
+  }
+
   function apply(worldId) {
     if (typeof BridgeScene === 'undefined' || !BridgeScene.setGrade) return;
     var S = seasonFor(worldId);
@@ -121,10 +212,11 @@ var BridgeFoliage = (function () {
     var meadow = verd && typeof BridgeSeasons !== 'undefined' && BridgeSeasons.meadow ? BridgeSeasons.meadow(S.id) : null;
     var seed = 0;
     for (var c = 0; c < worldId.length; c++) seed = (seed * 31 + worldId.charCodeAt(c)) % 997;
-    var fn = trees(S.id, S.frac, verd, seed);
-    BridgeScene.setGrade(worldId, S.id === 'summer' ? null : function (px, w, h, leaves, state) {
-      if (meadow) meadow(px, w, h, leaves, state);
-      fn(px, w, h, leaves, state);
+    var fn = trees(S.id, S.frac, verd, seed), gr = ground(S.id, S.frac, verd, seed);
+    BridgeScene.setGrade(worldId, S.id === 'summer' ? null : function (px, w, h, leaves, state, ref) {
+      if (grassy(leaves)) gr(px, w, h, leaves, state, ref);            // the render marks its grass: the ground through the year
+      else if (meadow) meadow(px, w, h, leaves, state, ref);           // an older render on Verdance: everything green turns
+      fn(px, w, h, leaves, state, ref);
     }, S.id + ':' + step);
   }
 

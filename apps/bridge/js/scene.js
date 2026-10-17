@@ -581,10 +581,14 @@ var BridgeScene = (function () {
     get: get,
     setLayers: setLayers,
     setGrade: setGrade,
-    // a graded colour decided on the day image (r, g, b 0..1) carried into another state: times that state's light over
-    // the day's at this pixel, channel by channel (out: [r, g, b])
+    // a graded colour decided on the day image (r, g, b 0..1) carried into another state: the state's light over the
+    // day's at this pixel — how much darker (by brightness) and its colour (each channel's share, damped by half: a pure
+    // ratio per channel blew snow to a saturated blue under a moon that had only tinted the green grass) (out: [r, g, b])
     relight: function (px, ref, i, r, g, b, out) {
-      out[0] = r * Math.min(4, (px[i] + 1) / (ref[i] + 1)); out[1] = g * Math.min(4, (px[i + 1] + 1) / (ref[i + 1] + 1)); out[2] = b * Math.min(4, (px[i + 2] + 1) / (ref[i + 2] + 1));
+      var lr = (px[i] + 1) / (ref[i] + 1), lg = (px[i + 1] + 1) / (ref[i + 1] + 1), lb = (px[i + 2] + 1) / (ref[i + 2] + 1);
+      var k = Math.min(4, (0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2] + 1) / (0.3 * ref[i] + 0.59 * ref[i + 1] + 0.11 * ref[i + 2] + 1));
+      var m = (lr + lg + lb) / 3;
+      out[0] = r * k * (1 + (lr / m - 1) * 0.5); out[1] = g * k * (1 + (lg / m - 1) * 0.5); out[2] = b * k * (1 + (lb / m - 1) * 0.5);
       return out;
     },
     getLayers: getLayers,
