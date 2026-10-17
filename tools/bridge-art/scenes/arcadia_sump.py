@@ -182,12 +182,58 @@ k.box(4.3, 26.2, 0.25, 11.7, 27.8, 0.27, '#0a0818', 'billboard_face', emit=('#ff
 k.boxes([(4.5 + i * 0.6, 26.4, 0.27, 4.8 + i * 0.6, 27.6, 0.28) for i in range(12) if i % 3], '#1a0820', 'billboard_dead')
 k.solid(4.0, 26.0, 12.0, 28.0)
 for (x, r, s) in ((18.0, 28.0, 1.0), (24.0, 32.0, 0.9), (34.0, 26.0, 1.1), (8.0, 33.0, 0.8), (50.0, 32.0, 1.0), (80.0, 27.0, 0.9), (58.0, 26.0, 0.8)):
-    U.scrap_heap(k, x, r, s=s, rng=rng)
+    U.scrap_ridge(k, x - 1.6 * s, x + 1.6 * s, r, h=1.3 * s, d=1.2, rng=rng)
 for (x, r) in ((22.0, 12.0), (34.0, 15.0), (78.0, 14.0), (50.0, 27.0), (14.0, 30.0)):
     U.crates(k, x, r, n=3, rng=rng)
 U.barrels(k, 28.0, 10.0, n=3, rng=rng)
 U.barrels(k, 66.0, 33.0, n=3, rng=rng)
 U.mattress_corner(k, 36.0, 10.4, rng=rng)
+
+# ---- the drowned street's leftovers, and the people who live in them -------------------------------------------------------------
+def bus(x0, r):
+    """A bus that never left: its shell on the old road, the windows dark or boarded, someone living in the back."""
+    k.box(x0, r - 0.55, 0.15, x0 + 5.0, r + 0.55, 1.6, ('#c8a030', 0.2), 'bus', bevel=0.08)
+    k.box(x0 + 0.1, r - 0.56, 1.55, x0 + 4.9, r + 0.56, 1.66, ('#a88020', 0.1), 'roof_bus')
+    k.box(x0, r + 0.55, 0.15, x0 + 5.0, r + 0.57, 0.45, ('#1e3a2a', 0.3), 'tide_mark')
+    for i in range(7):
+        lit = i in (5, 6)
+        k.box(x0 + 0.3 + i * 0.66, r + 0.56, 0.85, x0 + 0.85 + i * 0.66, r + 0.58, 1.35, '#141820' if not lit else '#3a2a10', 'bus_window',
+              emit=('#ffc070', 0.6) if lit else None)
+    for x in (x0 + 0.8, x0 + 4.2):
+        k.cyl_y(x, r + 0.5, r + 0.6, 0.18, 0.2, 0.2, '#141414', 'bus_wheel', verts=10)
+    k.solid(x0, r - 0.55, x0 + 5.0, r + 0.55)
+
+
+def phone_booth(x, r):
+    k.box(x - 0.3, r - 0.3, 0, x + 0.3, r + 0.3, 2.0, ('#a02a2a', 0.15), 'booth', bevel=0.02)
+    k.box(x - 0.24, r + 0.3, 0.3, x + 0.24, r + 0.31, 1.7, '#141820', 'booth_glass', emit=('#5cc8d0', 0.15))
+    k.box(x - 0.3, r - 0.3, 1.95, x + 0.3, r + 0.3, 2.1, '#2a0a0a', 'booth_sign', emit=('#ffe0a0', 0.5))
+    k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
+
+
+def bent_lamp(x, r, lean=0.4):
+    k.tube((x, r, 0.0), (x + lean, r, 2.4), 0.05, '#4a4a50', 'old_lamp', verts=6)
+    k.tube((x + lean, r, 2.4), (x + lean + 0.5, r, 2.5), 0.04, '#4a4a50', 'old_lamp', verts=6)
+    k.box(x + lean + 0.35, r - 0.1, 2.35, x + lean + 0.7, r + 0.1, 2.48, '#2a2a30', 'old_lamp_head')
+    k.solid_post(x, r)
+
+
+for (a0, a1, rb, col) in ((21.0, 23.6, 10.0, '#3a6a6a'), (69.0, 71.6, 10.4, '#6a4a2a'), (76.0, 78.6, 13.6, '#2a5a7a'),
+                          (27.0, 29.6, 24.0, '#5a3a5a'), (47.0, 49.6, 24.0, '#3a5a3a'), (77.0, 79.6, 23.6, '#2a5a6a'), (16.0, 18.6, 33.0, '#6a3a2a')):
+    U.lean_to(k, a0, a1, rb, rng=rng, col=col)
+bus(26.0, 13.8)
+bus(55.0, 17.6)
+bus(76.0, 34.2)
+for (x, r) in ((35.6, 13.4), (59.0, 10.4), (38.4, 25.4), (66.0, 26.2)):
+    phone_booth(x, r)
+for (x, r, l) in ((12.0, 12.6, 0.5), (31.0, 17.0, -0.4), (45.6, 13.8, 0.6), (74.6, 17.0, -0.5), (3.0, 30.0, 0.5), (56.0, 26.0, -0.4)):
+    bent_lamp(x, r, l)
+for (x0, rb, kind) in ((9.0, 10.4, 'junk'), (65.0, 12.6, 'tea')):
+    U.stall(k, dr, x0, x0 + 3.0, rb, kind=kind, rng=rng)
+for (x, r) in ((6.0, 21.0), (36.0, 21.3), (70.0, 21.2), (78.0, 37.4), (14.0, 37.6), (46.0, 37.2), (42.0, 32.6)):   # boats tied up
+    U.sampan(k, x, r, l=2.2, col=rng.choice(('#3a2a1a', '#2a3a3a', '#4a3a2a')), roof=rng.random() < 0.5, lamp=U.SODIUM if rng.random() < 0.4 else None)
+for (a, b, z) in ((10.0, 30.0, 3.4), (46.0, 66.0, 3.2), (20.0, 38.0, 3.0), (52.0, 80.0, 3.3)):
+    D.laundry(k, (a, 9.0 if z > 3.25 else 24.4, z), (b, 9.6 if z > 3.25 else 25.0, z + 0.2), sag=0.5, rng=rng)
 
 # ---- light: teal from under the water, a few sodium lamps still burning, tubes failing, drips ------------------------------------
 for (x, r) in ((10.0, 15.0), (26.0, 16.0), (36.0, 30.0), (52.0, 17.0), (68.0, 16.0), (58.0, 31.0), (78.0, 31.0), (6.0, 24.6)):
@@ -209,7 +255,7 @@ for (x0, r0, x1, r1) in WATER:                                                  
                     k.point_light(x, r, WZ + 0.2, TEAL, 10, radius=1.2)
 k.area_light(20, 24, 9.0, '#40a0a0', 70, 28.0, rot=(math.radians(35), 0, 0))
 k.area_light(62, 24, 9.0, '#40a0a0', 70, 28.0, rot=(math.radians(35), 0, 0))
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=96, world_light=('#1e2c36', 1.4))
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=96, world_light=('#22303a', 1.7))
 
 # ---- the world ---------------------------------------------------------------------------------------------------------------------
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}

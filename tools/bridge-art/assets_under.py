@@ -758,7 +758,7 @@ def canal(k, x0, r0, x1, r1, z=WATER_Z, glow='#1a8a8a', rng=None, debris=True):
     glow from below in patches, slicks and floating rubbish."""
     rng = rng or k.rng
     k.box(x0, r0, z - 1.5, x1, r1, z - 1.4, '#06080a', 'canal_bed')
-    k.box(x0, r0, z - 0.02, x1, r1, z, ('#06090c', 0.03), 'canal_water', emit=(glow, 0.012))
+    k.box(x0, r0, z - 0.02, x1, r1, z, ('#040608', 0.03), 'canal_water', emit=(glow, 0.006))
     glints = []                                                      # light on the black water: short bright dashes, in runs
     for _ in range(int((x1 - x0) * (r1 - r0) / 3)):
         cx, cr = rng.uniform(x0 + 0.2, x1 - 0.4), rng.uniform(r0 + 0.15, r1 - 0.15)
