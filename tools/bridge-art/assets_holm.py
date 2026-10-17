@@ -417,3 +417,85 @@ def flower_clump(k, x, r, rng, z=0.0, col=None, n=None):
     for j in range(rng.randint(4, 8)):
         a, d = rng.uniform(0, math.tau), rng.uniform(0, 0.2)
         k.sphere(x + math.cos(a) * d, r + math.sin(a) * d * 0.7, z + rng.uniform(0.18, 0.3), 0.035, 0.03, col, 'meadow_flower', segs=5)
+
+
+def capstan(k, x, r, z=0.0):
+    """An old iron-bound capstan, its bars gone but one."""
+    k.cyl(x, r, z, z + 0.1, 0.3, ('#6a6458', 0.2), 'capstan_base', verts=12)
+    k.cyl(x, r, z + 0.1, z + 0.55, 0.2, ('#5a4632', 0.18), 'capstan', verts=12)
+    for zz in (z + 0.18, z + 0.46):
+        k.cyl(x, r, zz, zz + 0.04, 0.21, '#3a3230', 'capstan_band', verts=12)
+    k.cyl(x, r, z + 0.55, z + 0.66, 0.24, ('#4a3a2a', 0.18), 'capstan_head', verts=12)
+    k.tube((x, r, z + 0.6), (x + 0.65, r + 0.25, z + 0.62), 0.025, A.WOOD, 'capstan_bar', verts=5)
+
+
+def net_heap(k, x, r, rng, z=0.0, col='#4a5a52'):
+    """A heap of old net thrown down, its floats among it."""
+    for j in range(7):
+        k.blob(x + rng.uniform(-0.3, 0.3), r + rng.uniform(-0.15, 0.15), z + 0.05, rng.uniform(0.15, 0.28), rng.uniform(0.1, 0.18), 0.07,
+               (shade(col, rng.uniform(0.85, 1.12)), 0.35), 'net', rot=(0, 0, rng.uniform(0, 180)), segs=8)
+    for j in range(5):
+        k.sphere(x + rng.uniform(-0.3, 0.3), r + rng.uniform(-0.1, 0.18), z + 0.12, 0.05, 0.045, rng.choice(('#e8a040', '#e05a30', '#f0e8d8')), 'float', segs=8)
+
+
+def old_barrels(k, x, r, rng):
+    """Two old barrels and one fallen and staved in, a broken crate."""
+    A.barrel(k, x, r, h=0.6, radius=0.22, tone='#6a5a44')
+    A.barrel(k, x + 0.45, r + 0.12, h=0.55, radius=0.21, tone='#5e5040')
+    A.barrel(k, x + 0.2, r + 0.5, h=0.42, radius=0.19, upright=False, tone='#6a5a44')
+    for j in range(4):                                                   # the crate's boards, come apart
+        a = rng.uniform(-30, 30)
+        k.blob(x - 0.35 + j * 0.08, r + 0.45 + rng.uniform(-0.05, 0.05), 0.03 + j * 0.015, 0.22, 0.05, 0.015, ('#8a7458', 0.2), 'old_board',
+               rot=(0, 0, a), segs=6)
+
+
+def boat_ribs(k, x0, x1, r, rng, z=0.0):
+    """What's left of a boat on the shingle: her keel and the ribs standing out of the stones."""
+    k.box(x0, r - 0.05, z - 0.02, x1, r + 0.05, z + 0.08, ('#4a3e32', 0.2), 'wreck_keel')
+    n = 6
+    for i in range(n):
+        t = (i + 0.5) / n
+        x = x0 + (x1 - x0) * t
+        hw = 0.45 * math.sin(math.pi * t) ** 0.6
+        h = (0.5 + 0.25 * math.sin(math.pi * t)) * rng.uniform(0.6, 1.0)
+        for s in (-1, 1):
+            if rng.random() < 0.85:
+                k.tube((x, r, z + 0.04), (x, r + s * hw, z + h * 0.55), 0.03, ('#5a4a3a', 0.2), 'wreck_rib', verts=5)
+                k.tube((x, r + s * hw, z + h * 0.55), (x, r + s * hw * 0.85, z + h), 0.028, ('#5a4a3a', 0.2), 'wreck_rib', verts=5)
+    k.tube((x1, r, z + 0.04), (x1 + 0.15, r, z + 0.7), 0.04, ('#4a3e32', 0.2), 'wreck_stem', verts=5)
+
+
+def footings(k, x0, r0, x1, r1, rng, z=0.0):
+    """The low footings of something older, a course of stones round a rectangle, grassed over and broken."""
+    for (a, b) in (((x0, r0), (x1, r0)), ((x1, r0), (x1, r1)), ((x1, r1), (x0, r1)), ((x0, r1), (x0, r0))):
+        L, (ux, ur) = _seg(a, b)
+        t = 0.0
+        while t < L:
+            w = rng.uniform(0.25, 0.45)
+            if rng.random() < 0.72:
+                k.bar(a[0] + ux * t, a[1] + ur * t, a[0] + ux * min(L, t + w - 0.03), a[1] + ur * min(L, t + w - 0.03), z - 0.03,
+                      z + rng.uniform(0.06, 0.13), 0.24, (shade(rng.choice(STONES), rng.uniform(0.8, 1.0)), 0.2), 'footing_stone', bevel=0.02)
+            t += w
+
+
+def timber_heap(k, x, r, rng, z=0.0):
+    """Old timbers left in a heap, greyed, a stone or two on them."""
+    for j in range(5):
+        a = rng.uniform(-0.25, 0.25)
+        L = rng.uniform(0.9, 1.4)
+        zz = z + 0.05 + (j // 2) * 0.09
+        k.tube((x - L / 2 * math.cos(a), r - L / 2 * math.sin(a) + j * 0.06, zz), (x + L / 2 * math.cos(a), r + L / 2 * math.sin(a) + j * 0.06, zz),
+               0.05, (shade('#6a5e50', rng.uniform(0.85, 1.1)), 0.2), 'old_timber', verts=6, smooth=False)
+
+
+def cairn(k, x, r, rng, z=0.0, h=0.9):
+    """A cairn: stones piled to a point."""
+    zz, s = z, 0.3
+    while zz < z + h:
+        for j in range(max(1, int(s / 0.08))):
+            a = rng.uniform(0, math.tau)
+            ss = rng.uniform(0.08, 0.13)
+            k.rock(x + math.cos(a) * s * 0.6, r + math.sin(a) * s * 0.45, zz + ss * 0.5, ss, ss * 0.85, ss * 0.65,
+                   (shade(rng.choice(STONES), rng.uniform(0.8, 1.05)), 0.2), part='cairn', segs=7)
+        zz += 0.13
+        s *= 0.8

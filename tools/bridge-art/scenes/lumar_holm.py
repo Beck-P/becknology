@@ -656,7 +656,7 @@ F.wildflowers(k, 30.0, 4.6, 34.0, 9.6, 12)
 busy = lambda x, r: pd(x, r) < 0.55                       # noqa: E731
 FC = random.Random(2727)
 n = 0
-while n < 34:                                              # clumps of flowering grass over the open meadows
+while n < 64:                                              # clumps of flowering grass over the open meadows
     x, r = FC.uniform(3.0, 39.0), FC.uniform(4.2, 20.5)
     if (int(x), int(r)) not in land or busy(x, r) or pond_d(x, r) < 1.4 or edge_d(x, r) < 0.4:
         continue
@@ -671,6 +671,58 @@ while n < 34:                                              # clumps of flowering
     H.flower_clump(k, x, r, FC, z=gz(x, r))
     n += 1
 I.pebbles(k, land, '#8a8478', per_cell=0.18, avoid=busy)
+
+# ---- life round the cove and on the shingle (its own dice) ------------------------------------------------------------
+LF = random.Random(5353)
+# two rowing boats lying on their lines in the cove either side of the jetty (Lantern Quay's), a buoy beyond
+for (x0, x1, cr_, hull, inside, ring) in ((17.4, 19.4, QUAY + 2.05, '#2a4a6a', A.WOOD_D, (18.9, QF - 0.1)),
+                                          (23.3, 25.2, QUAY + 2.35, '#6a3a2a', A.WOOD_DD, (24.4, QF - 0.1))):
+    since, lsince = len(k.parts), len(k.lights)
+    W.rowboat(k, x0, x1, cr_, beam=0.82, hull=hull, inside=inside)
+    C.sink(k, since, C.WZ + 0.12, lights_since=lsince)
+    a, b = (x1 - 0.1 if x0 < PX else x0 + 0.1, cr_ - 0.2, C.WZ + 0.42), (ring[0], ring[1], -0.12)
+    for i in range(4):
+        t0, t1 = i / 4, (i + 1) / 4
+        p0 = (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0, a[2] + (b[2] - a[2]) * t0 - 0.15 * math.sin(math.pi * t0))
+        p1 = (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1, a[2] + (b[2] - a[2]) * t1 - 0.15 * math.sin(math.pi * t1))
+        k.tube(p0, p1, 0.013, '#b8a070', 'mooring_line', verts=4)
+    W.annulus(k, ring[0], ring[1] + 0.02, 0.03, 0.07, -0.2, -0.16, A.IRON, 'mooring_ring', segs=10)
+k.sphere(27.2, QUAY + 2.6, C.WZ + 0.06, 0.16, 0.14, ('#c84a30', 0.2), 'buoy', segs=12)
+k.cyl(27.2, QUAY + 2.6, C.WZ + 0.18, C.WZ + 0.42, 0.02, A.IRON, 'buoy_post', verts=5)
+H.gull(k, 27.2, QUAY + 2.6, C.WZ + 0.42, yaw=210)
+# on the quay's blocked cells (by the jetty's head, under where the lamps and the crane go): what was left behind
+H.old_barrels(k, 20.2, QUAY - 0.75, LF)
+H.capstan(k, 26.5, QUAY - 0.45)
+H.net_heap(k, 15.6, QUAY - 0.5, LF)
+H.lobster_pots(k, 16.05, QUAY - 0.35, LF, n=3)
+H.gull(k, 20.4, QUAY - 0.65, 0.6, yaw=-20)
+# the east shingle past the boathouse: a wreck's ribs, net poles, a crab
+for (x, r) in ((38.4, 18.6), (38.9, 17.6), (39.3, 16.6)):
+    if on_lip(x, r, C.WZ + 0.1):
+        H.boat_ribs(k, x - 0.9, x + 0.9, r, LF, z=TERRAIN.z(x, r) - 0.04)
+        break
+for (x, r) in ((29.6, 21.8), (31.0, 22.0), (32.4, 21.9)):
+    if TERRAIN.z(x, r) > C.WZ + 0.08:
+        k.cyl(x, r, TERRAIN.z(x, r) - 0.2, TERRAIN.z(x, r) + 1.2, 0.04, (A.WOOD_D, 0.15), 'net_post', verts=6)
+if all(TERRAIN.z(x, r) > C.WZ + 0.08 for (x, r) in ((29.6, 21.8), (32.4, 21.9))):
+    H.net_rack(k, 29.6, 31.0, 21.85, LF, h=1.15)
+k.blob(30.6, 21.5, TERRAIN.z(30.6, 21.5) + 0.03, 0.06, 0.045, 0.025, '#c8502a', 'crab', segs=8)
+# the empty lots: the footings of something older on one, old timbers heaped on another, nettles round them
+H.footings(k, 33.4, 10.5, 37.6, 13.7, LF, z=0.0)
+H.timber_heap(k, 31.4, 14.2, LF)
+H.timber_heap(k, 26.9, 7.0, LF)
+H.nettles(k, [(32.2, 13.6), (26.4, 6.6), (33.6, 10.7)], LF)
+H.ferns(k, [(37.2, 13.5), (29.8, 15.2), (11.0, 6.5), (14.8, 6.4)], LF)
+# the lookout's cairn, on the head past the bench
+for (x, r) in ((3.4, 8.6), (3.6, 9.2), (4.0, 8.4)):
+    if on_lip(x, r, -0.03):
+        H.cairn(k, x, r, LF, z=TERRAIN.z(x, r))
+        break
+# bracken and foxgloves at the trees' feet, on the cells they already stand on
+for (x, r) in ORCHARD + ((8.3, 8.1), (31.6, 10.6), (7.2, 19.6), (34.6, 8.6)):
+    H.ferns(k, [(x + LF.uniform(-0.3, 0.3), r + 0.25)], LF, z=gz(x, r), size=0.8)
+    if LF.random() < 0.4:
+        H.foxgloves(k, x + 0.3, r + 0.2, LF, n=2, z=gz(x, r))
 
 # ---- the slipway below the garden wall (js/shipyard.js) --------------------------------------------------------------
 # The old slip's bed on its piles is always there (dry to the sea's mask, so the hull built on it is never drawn under
