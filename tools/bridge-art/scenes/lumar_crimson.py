@@ -349,7 +349,7 @@ for _ in range(90):
         continue
     roll = rng.random()
     if roll < 0.6:
-        WL.fern(k, x, r, s=rng.uniform(0.3, 0.45), tone=rng.choice(('#9a4a2a', '#8a3e26', '#7a4a2a')))
+        WL.fern(k, x, r, s=rng.uniform(0.48, 0.72), tone=rng.choice(('#9a4a2a', '#8a3e26', '#7a4a2a')))
     elif roll < 0.85:
         for j in range(rng.randint(2, 4)):
             mx, mr = x + rng.uniform(-0.15, 0.15), r + rng.uniform(-0.1, 0.1)

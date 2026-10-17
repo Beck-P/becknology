@@ -671,7 +671,7 @@ for (gx, gr) in GROVES:
             WL.shrub(k, x, r, s=rng.uniform(0.26, 0.38), tone=rng.choice(('#3a6430', '#467038')),
                      blooms=rng.choice((None, '#f8f0f4', '#f0d050')))
         elif roll < 0.7:
-            WL.fern(k, x, r, s=rng.uniform(0.32, 0.45), tone=rng.choice(('#4a7a34', '#3e6a30')))
+            WL.fern(k, x, r, s=rng.uniform(0.51, 0.72), tone=rng.choice(('#4a7a34', '#3e6a30')))
         else:
             WL.heather(k, x, r, s=rng.uniform(0.2, 0.3), tone=rng.choice(('#8a4a7a', '#a05a8a')))
 # dry-stone walls in short runs a tile off the meadow path, the odd stone fallen out of them
@@ -693,22 +693,50 @@ for (x, r) in LIP:
         WL.boulder(k, x, r, s=rng.uniform(0.22, 0.4), tone='#8a7e80', moss='#4e6a34', z=-0.03, tufts='#5a7a3a')
         for _ in range(rng.randint(0, 2)):
             a = rng.uniform(0, math.tau)
-            WL.fern(k, x + math.cos(a) * 0.45, r + math.sin(a) * 0.3, s=rng.uniform(0.28, 0.4), tone=rng.choice(('#4a7a34', '#3e6a30')))
+            WL.fern(k, x + math.cos(a) * 0.45, r + math.sin(a) * 0.3, s=rng.uniform(0.45, 0.64), tone=rng.choice(('#4a7a34', '#3e6a30')))
 for (x, r) in TREES + ((MINE[0] - 2.0, MINE[1] - 0.6), (MINE[0] + 2.2, MINE[1] - 0.9), (9.3, 10.4), (14.2, 9.2)):
     for _ in range(2):
         a = rng.uniform(0, math.tau)
         fx, fr = x + math.cos(a) * 0.55, r + math.sin(a) * 0.4
         if pd(fx, fr) > 0.8:
-            WL.fern(k, fx, fr, s=rng.uniform(0.3, 0.42), tone=rng.choice(('#4a7a34', '#3e6a30')))
+            WL.fern(k, fx, fr, s=rng.uniform(0.48, 0.67), tone=rng.choice(('#4a7a34', '#3e6a30')))
 
 WL.tick('scatter -------------------------')
+# the Look Book's small things: stones edging every path, litter and toadstools under the trees, moss mounds, twigs
+for i, path in enumerate(PATHS):
+    WL.path_stones(k, path, seed=600 + i)
+for (x, r) in list(GROVE_TREES) + list(TREES):
+    WL.leaf_litter(k, x - 1.0, r - 0.6, x + 1.0, r + 0.9, 14, ok=lambda a, b: pd(a, b) > 0.6, seed=int(x * 100 + r))
+    if rng.random() < 0.5:
+        WL.mushroom_ring(k, x + rng.uniform(-0.8, 0.8), r + rng.uniform(0.4, 0.8), n=rng.randint(3, 5))
+    if rng.random() < 0.6:
+        WL.twig(k, x + rng.uniform(-1, 1), r + rng.uniform(0.3, 1.0))
+for (gx, gr) in GROVES[:4]:                                     # a fallen log in some of the groves
+    a = gx + rng.uniform(-1.2, 0.4)
+    if all((int(a + t), int(gr + 1.3)) in walk for t in (0.0, 1.4)) and pd(a + 0.7, gr + 1.3) > 1.2:
+        WL.log(k, a, a + 1.4, gr + 1.3, 0.2, seed=int(gx))
+for _ in range(60):
+    x, r = rng.uniform(4, 52), rng.uniform(6, 37)
+    if clear_of_things(x, r, 0.3) and terrace_h(x, r) is None and pool_d(x, r) > 2.5:
+        WL.moss_mound(k, x, r, rng.uniform(0.14, 0.26), moss='#5a8a3c')
+# the harvest corner by the pier's foot: crates of roseite, a handcart, a basket, a finger post
+for (x, r) in ((30.4, 18.4), (30.95, 18.55)):
+    A.crate(k, x, r, s=0.5, solid=True)
+    for j in range(5):
+        k.tube((x + 0.1 + j * 0.07, r + 0.25, 0.42), (x + 0.1 + j * 0.07 + rng.uniform(-0.03, 0.03), r + 0.25, 0.42 + rng.uniform(0.08, 0.16)),
+               0.03, GEM, 'crystal', rb=0.004, emit=(CRYSTAL[1], 0.45), verts=6, smooth=False)
+W.cart(k, 32.2, 18.9)
+WL.basket(k, 29.95, 18.95, fill=ROSE, glow=CRYSTAL[1], s=0.16)
+WL.signpost(k, 26.8, 16.2, arms=((-0.6, '#d8c8a0'), (0.6, '#c8b890'), (-0.55, '#d0c098')))
+
 # ---- scatter --------------------------------------------------------------------------------------------------------
 SHORE = {(c + dc, r + dr) for (c, r) in land for dc in (-1, 0, 1) for dr in (-1, 0, 1)}      # the land and the coast's lip
 k.later.append(lambda: W.meadow(k, '#5a8040', cells=sorted(SHORE - set(TERRACE_CELLS)),
                                 ok=('ground', 'grass', 'coast_lip', 'coast_g:grass', 'coast_g:meadow'), density=1.0, avoid=busy,
                                 flowers=0.7, h=(0.06, 0.136)))
 k.later.append(lambda: W.meadow(k, GREEN, cells=TERRACE_CELLS, ok=('grass',), density=0.9, flowers=0.6, h=(0.07, 0.13)))
-k.later.append(lambda: WL.merge_parts(k))                  # last: after the grass (see WL.merge_parts)
+k.later.insert(0, lambda: WL.merge_parts(k))               # before the grass (its rays then cross a few meshes, not 60000 blobs)
+k.later.append(lambda: WL.merge_parts(k))                  # and after it (see WL.merge_parts)
 I.pebbles(k, walk, '#8a7e78', per_cell=0.2, avoid=lambda x, r: pd(x, r) > 0.6)
 for (x, r) in ((7.4, 17.0), (17.2, 26.6), (35.0, 5.6), (21.4, 6.0), (47.6, 28.4), (38.8, 24.4)):
     WL.crystal_cluster(k, x, r, s=rng.uniform(0.6, 1.0), col=(GEM, CRYSTAL[1]), energy=8)

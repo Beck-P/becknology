@@ -354,7 +354,7 @@ with WL.own_dice(k, 2301) as kr:
             continue
         roll = kr.random()
         if roll < 0.55:
-            WL.fern(k, x, r, s=kr.uniform(0.3, 0.45), tone=kr.choice(('#2e4a44', '#34504a', '#283e3a')))
+            WL.fern(k, x, r, s=kr.uniform(0.48, 0.72), tone=kr.choice(('#2e4a44', '#34504a', '#283e3a')))
         elif roll < 0.8:
             col = kr.choice(('#a080ff', '#70e0d0'))
             for j in range(kr.randint(2, 4)):
