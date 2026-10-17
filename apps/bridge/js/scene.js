@@ -559,6 +559,19 @@ var BridgeScene = (function () {
     return { x: P[0][0], y: P[0][1], facing: 'down', moving: false, dist: 0 };
   }
 
+  // ---- seated figures ------------------------------------------------------------------------------------------------
+  // A seated sheet puts its floor point (16, 45) on the floor under the middle of the seat, but the figure isn't an upright
+  // billboard standing there: facing you, or side-on, its lap and hands reach forward over the seat, and the front half of
+  // the seat — nearer than that point — was taken for something in front of it and drawn across its waist (Beck: "this guy
+  // is clipping through the bench"). So a seated figure is depth-tested and sorted from the front edge of its seat, a
+  // quarter tile nearer (every bench, chair and stool is behind that; a table or desk in front, a little further, still
+  // hides the lap). Facing away, its lap reaches away from you: only its back overhangs the seat's near half, a tenth of a
+  // tile (a stool's or a window seat's rim no longer cuts across it), and a chair's back between you and it, a quarter
+  // tile out, still hides it. Drawn where it always was — only the row it's tested at moves. (You: js/character.js; other
+  // pilots: js/multi.js; passers-by: js/crowd.js; scene actors: below.)
+  var SEAT_FRONT = 0.25, SEAT_BACK = 0.1;
+  function seatedRow(row, facing) { return row + (facing === 'up' ? SEAT_BACK : SEAT_FRONT); }
+
   function actorDrawList(sc, world, offX, offY, ts, now) {
     var list = [];
     var wid = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId();
@@ -579,10 +592,10 @@ var BridgeScene = (function () {
       var a = actors[i];
       var sh = getSheet(a.sheet);
       if (!sh.ready) continue;
-      var footRow = a.y + (a.pose === 'sit' ? 0.55 : 0.9);
+      var footRow = a.y + (a.pose === 'sit' ? 0.55 : 0.9), depthRow = a.pose === 'sit' ? seatedRow(footRow, a.facing) : footRow;
       list.push({
-        footRow: footRow,
-        draw: (function (a, sh, footRow) {
+        footRow: depthRow,
+        draw: (function (a, sh, footRow, depthRow) {
           return function (ctx) {
             var col = idleCol(now + a.x * 137 + a.y * 71);
             var row = DIR_ROW[a.facing] || 0, bob = 0;
@@ -598,10 +611,10 @@ var BridgeScene = (function () {
             var footY = Math.round(offY + footRow * ts);
             var dx = cx - FRAME_W / 2, dy = footY - (FRAME_H - 3) - bob - Math.round((a.lift || 0) * Math.SQRT1_2 * ts);   // a height z shows z·cos 45° up
             drawOccluded(ctx, sc, sh.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, dx, dy,
-              footRow, offX, offY, tintAt(sc, world, a.light ? a.light[0] : a.x, a.light ? a.light[1] : a.y, now),   // light: lit as if on another tile (a throne in its own shadow)
+              depthRow, offX, offY, tintAt(sc, world, a.light ? a.light[0] : a.x, a.light ? a.light[1] : a.y, now),   // light: lit as if on another tile (a throne in its own shadow)
               a.pose === 'sit' ? null : { x: cx, y: footY, rx: 8, ry: 3 });
           };
-        })(a, sh, footRow)
+        })(a, sh, footRow, depthRow)
       });
     }
     return list;
@@ -658,6 +671,7 @@ var BridgeScene = (function () {
     skyOf: function (sc) { return sc && sc.meta ? weights(sc) : null; },     // any scene object (the sloop's own islands)
     shownState: function (id) { var sc = scenes[id]; return sc && sc.ready ? shownState(sc) : null; },
     actorDrawList: actorDrawList,
+    seatedRow: seatedRow,
     walkerInteractions: walkerInteractions,
     flickerAt: flickerAt,
     visible: visible

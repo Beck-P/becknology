@@ -298,6 +298,7 @@ var BridgeCharacter = (function () {
     var sheet = liveSheet(sheetKey());
     var pos = getRenderPos();
     var footRow = pos.y + 1 - 3 / 32;
+    var depth = seat ? BridgeScene.seatedRow(footRow, seat.facing) : footRow;   // seated: tested from the seat's front edge
     var fit = fightLook();
     if (fit) {
       return { footRow: footRow, draw: function (ctx) {
@@ -306,7 +307,7 @@ var BridgeCharacter = (function () {
       } };
     }
     return {
-      footRow: footRow,
+      footRow: depth,
       draw: function (ctx) {
         if (!sheet.ready) return;
         var col = player.moveProgress < 1
@@ -316,7 +317,7 @@ var BridgeCharacter = (function () {
         var cx = Math.round(offX + (pos.x + 0.5) * ts);
         var footY = Math.round(offY + footRow * ts);
         BridgeScene.drawOccluded(ctx, sc, sheet.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H,
-          cx - FRAME_W / 2, footY - (FRAME_H - 3), footRow, offX, offY,
+          cx - FRAME_W / 2, footY - (FRAME_H - 3), depth, offX, offY,
           BridgeScene.tintAt(sc, world, pos.x, pos.y, now), { x: cx, y: footY, rx: 9, ry: 3 }, null, 'auto');
       }
     };
