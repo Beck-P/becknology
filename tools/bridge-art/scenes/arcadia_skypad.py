@@ -161,7 +161,7 @@ k.solid(10.6, 12.4, 11.6, 13.4)
 AR.planter(k, 8.2, 4.4, glow=Y.YEL)                                     # a little garden by the penthouse's door
 AR.planter(k, 13.8, 4.4, leaf='#3a6048', glow=Y.PINK)
 AR.windsock(k, 22.2, 2.8)
-for (x, r0, r1) in ((1.35, 5.2, 10.2), (22.65, 5.6, 10.2)):                     # ducts along the parapets on stands
+for (x, r0, r1) in ((1.35, 5.2, 10.2), (22.65, 4.8, 6.3)):                      # ducts along the parapets on stands (the east one short: the way to the Terraces)
     k.box(x - 0.25, r0, 0.35, x + 0.25, r1, 0.75, ('#6a6a76', 0.08), 'duct', bevel=0.02)
     k.boxes([(x - 0.27, r, 0.33, x + 0.27, r + 0.06, 0.77) for r in [r0 + 0.2 + i * 0.8 for i in range(int((r1 - r0) / 0.8) + 1)] if r < r1],
             '#4a4a56', 'duct_band')
@@ -169,7 +169,7 @@ for (x, r0, r1) in ((1.35, 5.2, 10.2), (22.65, 5.6, 10.2)):                     
         if r < r1:
             k.box(x - 0.2, r - 0.04, 0.0, x + 0.2, r + 0.04, 0.35, '#3a3a44', 'duct_stand')
     k.solid(x - 0.3, r0, x + 0.3, r1)
-CX0, CX1, CR0, CR1 = 20.4, 22.1, 6.6, 8.4                                        # a cargo container, waiting for a lifter
+CX0, CX1, CR0, CR1 = 2.0, 3.7, 7.7, 9.5                                          # a cargo container, waiting for a lifter
 k.box(CX0, CR0, 0.0, CX1, CR1, 1.6, ('#2a5a8a', 0.1), 'container')
 k.boxes([(x, CR1, 0.1, x + 0.05, CR1 + 0.03, 1.52) for x in [CX0 + 0.12 + i * 0.16 for i in range(10)]], '#3a6a9a', 'corrugation')
 k.box(CX0 - 0.02, CR0, 1.56, CX1 + 0.02, CR1 + 0.03, 1.62, '#1e4064', 'container_rail')
@@ -178,13 +178,30 @@ k.box(CX0 + 0.4, CR1 + 0.04, 1.0, CX1 - 0.4, CR1 + 0.045, 1.15, '#1a1a1a', 'cont
 k.solid(CX0, CR0, CX1, CR1)
 for (x, r) in ((6.8, 11.0), (17.2, 11.0)):
     AR.floodlight(k, x, r, aim=-1)
-B_X = 15.6                                                                      # cargo waiting for a skiff
+B_X = 7.5                                                                       # cargo waiting for a skiff
 A.crate(k, B_X, 12.6, s=0.6, tone='#4a5468')
 A.crate(k, B_X + 0.7, 12.7, s=0.55, tone='#5a4a38')
 A.crate(k, B_X + 0.3, 12.65, s=0.45, tone='#3a4a5a')
 AR.gas_bottles(k, 13.95, 12.75, n=2, col='#d8b030')
-AR.puddles(k, ((3.0, 7.6, 0.6, 0.22, Y.CYAN), (20.2, 8.6, 0.5, 0.2, Y.PINK), (9.2, 12.9, 0.4, 0.16, Y.YEL)))
+AR.puddles(k, ((4.6, 10.0, 0.6, 0.22, Y.CYAN), (20.2, 8.6, 0.5, 0.2, Y.PINK), (9.6, 12.95, 0.4, 0.16, Y.YEL)))
 AR.pigeons(k, 5.0, 9.5, n=3, rng=gr)
+AR.pigeons(k, 19.0, 9.8, n=2, rng=gr)
+AR.chairs_and_crate(k, 4.2, 6.3, rng=gr)                                       # where the marshal takes a break
+Y.metal_bench(k, 2.4, 4.2, 13.35, neon=Y.PINK)                                  # a bench at the edge, facing the drop
+AR.planter(k, 21.3, 13.05, leaf='#2a5a48', glow=Y.CYAN)
+# a baggage tug and its trailer, parked by the pad
+TX, TR = 5.6, 8.4
+k.box(TX - 0.45, TR - 0.3, 0.12, TX + 0.45, TR + 0.3, 0.55, ('#d8a020', 0.06), 'tug_body', bevel=0.05)
+k.box(TX - 0.2, TR - 0.26, 0.55, TX + 0.35, TR + 0.26, 0.95, '#141c2c', 'tug_cab', emit=('#2a4060', 0.3), bevel=0.04)
+k.box(TX - 0.22, TR - 0.28, 0.95, TX + 0.37, TR + 0.28, 1.0, ('#d8a020', 0.06), 'tug_roof')
+k.sphere(TX - 0.08, TR, 1.04, 0.05, 0.04, '#ff8030', 'tug_beacon', emit=('#ff8030', 1.0), segs=6)
+for (dx, dr) in ((-0.3, -0.3), (0.3, -0.3), (-0.3, 0.3), (0.3, 0.3)):
+    k.cyl_y(TX + dx, TR + dr - 0.04, TR + dr + 0.04, 0.12, 0.12, 0.12, '#141418', 'tug_wheel', verts=10)
+k.box(TX - 1.55, TR - 0.3, 0.2, TX - 0.6, TR + 0.3, 0.28, '#4a4a56', 'trailer')
+for (dx, h, col) in ((-1.4, 0.3, '#3a5a8a'), (-1.08, 0.4, '#8a3a3a'), (-0.78, 0.26, '#4a6a3a')):
+    k.box(TX + dx - 0.13, TR - 0.22, 0.28, TX + dx + 0.13, TR + 0.2, 0.28 + h, (col, 0.1), 'luggage', bevel=0.02)
+k.tube((TX - 0.6, TR, 0.24), (TX - 0.45, TR, 0.24), 0.02, '#2a2a30', 'trailer_bar', verts=4)
+k.solid(TX - 1.6, TR - 0.32, TX + 0.47, TR + 0.32)
 AR.coffee_cup(k, 7.4, 4.75)
 AR.flyers(k, RX0 + 0.3, RR0 + 2.5, RX1 - 0.3, RR1 - 0.4, 16, rng=gr)
 k.area_light(12.0, 2.0, 10.0, '#7058b8', 700, 30.0, rot=(math.radians(-35), 0, 0))
