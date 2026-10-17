@@ -5,7 +5,9 @@
  * The goals (`GOALS`), each with where to go for it, ticked off as you reach them — the ledger lists them (js/ledger.js):
  *   a statue of you in Crownhaven's square (250,000: commission it at Captain Mira's statue — then you stand beside her,
  *   cast in bronze, in whatever you were wearing), the Sovereign (300,000: a legendary ship the Royal Yard builds to
- *   order, js/fleet.js), an enterprise of your own, ten businesses, and the Neon Royale's high-roller room (2,000,000).
+ *   order, js/fleet.js), an enterprise of your own, ten businesses, the Penthouse at the top of Skyport 7 (250,000) and
+ *   Ashcombe House on Crownhaven's waterfront (400,000) (js/home.js), the Starling, a hotel on your holm (150,000,
+ *   js/holm.js), and the Neon Royale's high-roller room (2,000,000).
  * State in localStorage `bridge_legacy`.
  */
 var BridgeLegacy = (function () {
@@ -22,6 +24,12 @@ var BridgeLegacy = (function () {
       progress: function () { return Math.min(10, businesses().length) + ' of 10'; }, done: function () { return businesses().length >= 10; } },
     { id: 'enterprise', name: 'An enterprise of your own', price: 250000, world: 'lumar-crown', how: 'A table at the Neon Royale, a trading house on Crownhaven\'s quay, or a share in the Royal Yard',
       done: function () { return businesses().some(function (d) { return d.kind === 'enterprise'; }); } },
+    { id: 'penthouse', name: 'The Penthouse', price: 250000, world: 'arcadia-skypad', how: 'The top of Skyport 7\'s tower: its brass door is on the roof pad',
+      done: function () { return has('BridgeHome') && BridgeHome.owns('arcadia-penthouse'); } },
+    { id: 'manor', name: 'Ashcombe House', price: 400000, world: 'lumar-crown', how: 'The Ashcombes\' house on Crownhaven\'s waterfront, beside the Crown & Anchor',
+      done: function () { return has('BridgeHome') && BridgeHome.owns('lumar-manor'); } },
+    { id: 'resort', name: 'A resort on your island', price: 150000, world: 'lumar-holm', how: 'The Starling, a hotel where the old boathouse stands: build it from the holm\'s ledger',
+      done: function () { return owns('holm-resort'); } },
     { id: 'statue', name: 'A statue in Crownhaven', price: STATUE, world: 'lumar-crown', how: 'Commission it at Captain Mira\'s statue in the square',
       done: function () { return !!save.statue; } },
     { id: 'sovereign', name: 'The Sovereign', price: 300000, world: 'lumar-crown', how: 'A legendary ship: the Royal Yard builds one to order',

@@ -178,7 +178,7 @@ var BridgeSeaFight = (function () {
       var t = targets.filter(function (o) { return bears(b, o, g); }).sort(function (p, q) { return dist(p, b) - dist(q, b); })[0];
       if (!t) return;
       fire(b, t, g, 'you');
-      gunT[i] = g.reload * (g.manned ? 0.5 : 1) * (crew() ? 0.75 : 1);     // a mate aboard helps run them out
+      gunT[i] = g.reload * (g.manned ? 0.5 * (1 - 0.08 * Math.max(0, (g.skill || 1) - 1)) : 1) * (crew() ? 0.75 : 1);     // a mate aboard helps run them out
     });
     // shots in flight
     shots.forEach(function (s) {

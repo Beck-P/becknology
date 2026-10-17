@@ -184,6 +184,30 @@ var BridgeLook = (function () {
     return out;
   }
 
+  // ---- faces for other people: the hands, staff and crew you hire (a look drawn from their name) -------------
+  function hash01(t) { var h = 2166136261; for (var i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 100003) / 100003; }
+  var NATURAL = HAIR_COLOURS.filter(function (c) { return ['pink', 'teal', 'violet'].indexOf(c[0]) < 0; });
+  /** A look for someone, the same every time for the same seed (their name, or their hiring key); `wild` lets
+   *  Arcadia's people have pink, teal or violet hair. */
+  function lookFor(seed, wild) {
+    var p = function (k, list) { return list[Math.floor(hash01(seed + ':' + k) * list.length)][0]; };
+    var body = p('b', BODIES), hair = p('h', HAIRS);
+    return { body: body, hair: hair, beard: body === 'a' && hair !== 'bun' && hash01(seed + ':d') < 0.35, helmet: false,
+             skin: p('s', SKINS), hairColour: p('c', wild ? HAIR_COLOURS : NATURAL) };
+  }
+  /** Their face (head and shoulders, from the standing frame) painted into a canvas, once their sheet's loaded. */
+  function face(canvas, seed, style, colour, wild) {
+    if (!canvas) return;
+    var sh = sheet('', style || 'flight', colour || 'gold', lookFor(seed, wild)), tries = 0;
+    (function draw() {
+      if (!sh.ready) { if (++tries < 60) setTimeout(draw, 80); return; }
+      var g = canvas.getContext('2d');
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      g.imageSmoothingEnabled = false;
+      g.drawImage(sh.img, 4, 2, 24, 24, 0, 0, canvas.width, canvas.height);
+    })();
+  }
+
   // ---- the preview: turning on the spot and walking in place ------------------------------------------
   function drawPreview(canvas, t, style, colour, look) {
     var g = canvas.getContext('2d');
@@ -285,7 +309,7 @@ var BridgeLook = (function () {
 
   return {
     get: get, set: set, onChange: onChange, code: code, parse: parse, clean: clean,
-    sheet: sheet, drawPreview: drawPreview, editor: editor,
+    sheet: sheet, drawPreview: drawPreview, editor: editor, face: face, lookFor: lookFor,
     SUITS: SUITS, SKINS: SKINS, HAIR_COLOURS: HAIR_COLOURS, HAIRS: HAIRS, BODIES: BODIES, DEFAULT: DEFAULT
   };
 })();

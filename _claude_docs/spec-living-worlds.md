@@ -131,8 +131,10 @@ Recurring costs keep coins moving: wages, repairs, docking and upkeep, seeds and
 All five steps are in the game: the clock, hours and chronometer (js/clock.js, js/hours.js); day and night renders for
 Lumar's harbour and square first, the other islands, Verdance, Sylvara and Hoarfell's town following; the economy pass and
 staff (js/business.js, re-pricing across ships, homes, the farm and the holm); weather with stakes (js/weather.js);
-timepieces (js/gear.js) and the legacy goals (js/legacy.js). Not yet: the penthouse, the manor and the holm as a resort;
-night versions of Hoarfell's sport worlds and their drawn skies; restocking (shops buying in what they sell).
+timepieces and the World Watch (js/gear.js, js/hours.js) and the legacy goals (js/legacy.js): the Penthouse, Ashcombe
+House, the Starling on the holm, a statue, the Sovereign. Restocking: businesses that sell goods use stock you bring
+them, or buy in at cost. Farm hands work on their own clock whether you're there or not. Not yet: night versions of
+Hoarfell's sport worlds and their drawn skies.
 
 ## 9. Build order
 

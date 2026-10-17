@@ -195,8 +195,9 @@ var BridgeHarbour = (function () {
       title: 'Hands aboard the ' + s.name,
       text: 'SHE NEEDS ' + f.spec(s.type).crew + ' TO SAIL AND BERTHS ' + f.berths(s) + '. PICK SOMEONE TO MOVE THEM OR PAY THEM OFF.',
       rows: crew.map(function (c) {
-        return { label: c.name, sub: f.ROLES[c.role].name + ' · skill ' + c.skill + ' · from the ' + c.sea + ' Sea', pick: function () {
-          choose({ title: c.name, text: f.ROLES[c.role].blurb.toUpperCase(),
+        var grade = f.GRADES ? f.GRADES[c.skill] : 'skill ' + c.skill, perk = f.perk ? f.perk(c.role, c.skill) : f.ROLES[c.role].blurb;
+        return { label: c.name, sub: f.ROLES[c.role].name + ', ' + grade + ': ' + perk, note: (f.wage ? f.wage(c) : 0) + '/day', face: handFace(c), pick: function () {
+          choose({ title: c.name, text: (f.ROLES[c.role].name + ', ' + grade + ', from the ' + c.sea + ' Sea. ' + perk + '. ' + (f.wage ? f.wage(c) + ' A DAY.' : '')).toUpperCase(),
                    rows: others.map(function (o) { return { label: 'Move to the ' + o.name, sub: f.where(o), pick: function () { f.assign(c.id, o.id); crewCard(worldId, s); } }; }),
                    buttons: [{ label: 'Pay them off', act: function () { f.dismiss(c.id); crewCard(worldId, s); } }, { label: 'Back', act: function () { crewCard(worldId, s); } }],
                    closeLabel: 'Done' });
@@ -278,6 +279,9 @@ var BridgeHarbour = (function () {
   }
 
   // ---- hands ------------------------------------------------------------------------------------------------------
+  // a hand's face: a sailor's coat, its colour by their trade (js/look.js draws them from their name)
+  var ROLE_COLOUR = { deckhand: 'white', gunner: 'red', navigator: 'cyan', rigger: 'green', fighter: 'purple', purser: 'gold' };
+  function handFace(c) { return { seed: c.name + ':' + (c.key || c.id), style: 'coat', colour: ROLE_COLOUR[c.role] || 'white' }; }
   function hands(worldId, note, solo) {                 // solo: asked at the bosun's table, not from the harbour book
     var f = F(), recs = f.recruits(worldId), here = f.here(worldId);
     var room = here.some(function (s) { return f.crewOn(s.id).length < f.berths(s); });
@@ -285,11 +289,14 @@ var BridgeHarbour = (function () {
       title: 'Looking for a berth',
       text: note || (room ? 'THEY\'LL GO ABOARD WHICHEVER SHIP OF YOURS HERE HAS ROOM, THE BIGGEST FIRST. A FRESH LOT TOMORROW.' : 'NO SHIP OF YOURS HERE HAS A BERTH FREE. A BIGGER SHIP BERTHS MORE.'),
       rows: recs.map(function (r) {
-        var R = f.ROLES[r.role];
-        var sub = R.name + ' · ' + ['', 'green', 'able', 'old hand'][r.skill] + ' · the ' + r.sea + ' Sea';
-        return { label: r.name, sub: sub, note: r.signed ? 'signed on' : r.fee + ' coins', disabled: r.signed || !room,
+        var R = f.ROLES[r.role], grade = f.GRADES ? f.GRADES[r.skill] : '', wage = f.wage ? f.wage(r) : 0;
+        var sub = R.name + ', ' + grade + ': ' + (f.perk ? f.perk(r.role, r.skill) : R.blurb);
+        var face = handFace(r);
+        return { label: r.name, sub: sub, note: r.signed ? 'signed on' : r.fee + ' + ' + wage + '/day', disabled: r.signed || !room, face: face,
                  pick: function () {
-                   choose({ title: r.name, text: R.blurb.toUpperCase(), rows: [{ label: r.name, sub: sub, note: r.fee + ' coins', disabled: true }],
+                   choose({ title: r.name, text: (R.name + ', ' + grade + ', from the ' + r.sea + ' Sea. ' + (f.perk ? f.perk(r.role, r.skill) : R.blurb) + '.\n\n' +
+                                                  r.fee + ' coins to sign on, then ' + wage + ' a day in wages (paid with your other staff, js/business.js).').toUpperCase(),
+                            rows: [{ label: r.name, sub: sub, note: r.fee + ' + ' + wage + '/day', disabled: true, face: face }],
                             buttons: [{ label: 'Sign them on (' + r.fee + ')', act: function () {
                               f.hire(r, worldId).then(function (res) {
                                 if (res.ok) { sfx('coin'); toast('Crew', r.name + ' signs on', R.name + ', aboard the ' + res.ship.name); }

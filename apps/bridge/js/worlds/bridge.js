@@ -979,6 +979,9 @@
       case 'letters': openLetters(); break;
       case 'comms': say(commsText() + (typeof BridgeHours !== 'undefined' ? '\n\n' + BridgeHours.chronometer() : '')); break;
       case 'engineering': say(engineeringText()); break;
+      case 'office':                                         // the captain's desk: the books, open at the staff (js/ledger.js)
+        if (typeof BridgeMenu !== 'undefined') BridgeMenu.open('ledger', { focus: 'staff' });
+        break;
       case 'sensors': say(scopeText()); break;
       case 'decor': say(decorText(inter.slot)); break;
     }

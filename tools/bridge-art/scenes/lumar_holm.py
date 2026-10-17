@@ -12,6 +12,7 @@ own light and switched on as you build it:
   garden     tilled                the walled garden cleared and dug (the farm's plot: `farm.plot`)
   warehouse  built                 a timber warehouse on its lot (cargo kept ashore between ships)
   quarters   built                 a bunkhouse for your hands
+  resort     old | built           the old boathouse, or the Starling, a seaside hotel in its place (a venue that earns)
 Lots that are open ground until you build on them (warehouse, quarters) are left walkable here and listed in the world
 JSON's `holm.lots`; js/holm.js blocks their tiles once built.
 """
@@ -27,6 +28,7 @@ import assets_farm as F                # noqa: E402
 import assets_isle as I                # noqa: E402
 import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
+import assets_village as V             # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -190,11 +192,32 @@ k.solid(15.5, QUAY - 1, 16.5, QUAY)
 for (x, r) in ((16.0, 14.6), (17.6, 17.2), (24.8, 14.2), (26.0, 16.6), (14.2, 18.6), (23.4, 12.2)):
     F.apple_tree(k, x, r, h=k.rng.uniform(2.0, 2.5))
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
-# the old boathouse, roof sagging, its doors to the water
+# the old boathouse, roof sagging, its doors to the water — or, built (js/holm.js), the Starling: a seaside hotel on
+# the same footing, white and blue, lamps lit, parasols on the lawn beside it (a venue: js/business.js `holm-resort`)
 BH = (33.0, 37.4, 17.4, 20.2)
-k.box(BH[0], BH[2], 0.0, BH[1], BH[3], 1.4, ('#5a4a3a', 0.2), 'boathouse')
-W._gable_roof(k, BH[0], BH[1], BH[2], BH[3], 1.4, 0.9, '#4a4a46')
-k.box(BH[0] + 1.0, BH[3], 0.0, BH[1] - 1.0, BH[3] + 0.05, 1.1, ('#2a1e14', 0.15), 'boathouse_doors')
+with k.variant('resort', 'old'):
+    k.box(BH[0], BH[2], 0.0, BH[1], BH[3], 1.4, ('#5a4a3a', 0.2), 'boathouse')
+    W._gable_roof(k, BH[0], BH[1], BH[2], BH[3], 1.4, 0.9, '#4a4a46')
+    k.box(BH[0] + 1.0, BH[3], 0.0, BH[1] - 1.0, BH[3] + 0.05, 1.1, ('#2a1e14', 0.15), 'boathouse_doors')
+with k.variant('resort', 'built'):
+    W.house(k, BH[0], BH[1], BH[2], BH[3], wall_h=2.7, rise=1.3, roof='#34507a', wall='#f0ece2', door_x=35.2,
+            windows=[(33.8, 0.9), (36.6, 0.9)], windows_up=[(33.8, 1.9), (36.6, 1.9)], chimney=36.9,
+            lanterns=(34.4, 36.0))
+    V.board_sign(k, 'THE STARLING', 'IMFellEnglishSC-Regular', 35.2, BH[3], 1.78, size=0.22, board='#1e2e4a', ink='#f0e8d0')
+    # cafe tables on the lawn under striped parasols: a thin pole, a shallow canopy of eight panels, two chairs
+    for (x, r, c) in ((31.0, 18.4, '#d84848'), (32.2, 19.6, '#3a7ac8'), (31.2, 20.6, '#e0b040')):
+        k.cyl(x, r, 0.0, 1.5, 0.025, '#e8e4dc', 'parasol_pole', verts=6)
+        for i in range(8):
+            a0, a1 = math.tau * i / 8, math.tau * (i + 1) / 8
+            k.poly([(x, r, 1.52), (x + 0.7 * math.cos(a0), r + 0.7 * math.sin(a0), 1.24), (x + 0.7 * math.cos(a1), r + 0.7 * math.sin(a1), 1.24)],
+                   (c if i % 2 == 0 else '#f2eee4', 0.2), 'parasol')
+        k.cyl(x, r, 0.0, 0.48, 0.035, '#2e2e30', 'cafe_leg', verts=6)
+        k.cyl(x, r, 0.46, 0.5, 0.26, ('#f0ece2', 0.1), 'cafe_table', verts=12)
+        for dx in (-0.42, 0.42):
+            k.box(x + dx - 0.11, r - 0.11, 0.0, x + dx + 0.11, r + 0.11, 0.26, ('#2e4466', 0.15), 'cafe_chair')
+            bx = x + dx + (0.09 if dx > 0 else -0.11)
+            k.box(bx, r - 0.11, 0.26, bx + 0.02, r + 0.11, 0.56, ('#2e4466', 0.15), 'cafe_chair_back')
+    I.flagpole(k, 37.9, 18.0, h=3.0, col='#34507a')
 k.solid(BH[0], BH[2], BH[1], BH[3])
 W.bench(k, 4.0, 5.4, 9.4)
 k.solid(4.0, 9.2, 5.4, 9.7)
@@ -238,7 +261,7 @@ w = {'name': 'Starling Holm', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'ti
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER, scene_id=WID, actors=[],
-            scene_extra={'backdrop': True, 'smoke': [], 'layers': {'house': 'ruin', 'garden': 'wild'}})
+            scene_extra={'backdrop': True, 'smoke': [], 'layers': {'house': 'ruin', 'garden': 'wild', 'resort': 'old'}})
 w = json.load(open(WORLD))
 for r in range(ROWS):
     for c in range(COLS):

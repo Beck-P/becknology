@@ -25,6 +25,8 @@ var BridgePartner = (function () {
     'lumar-holm-home': { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home'], name: 'the cottage on the holm' },
     'lumar-home':      { keys: ['bridge_homes'], worlds: ['lumar-home'], name: 'the house in Lumar' },
     'arcadia-home':    { keys: ['bridge_homes'], worlds: ['arcadia-home'], name: 'the flat in Arcadia' },
+    'arcadia-penthouse': { keys: ['bridge_homes'], worlds: ['arcadia-penthouse'], name: 'the penthouse in Arcadia' },
+    'lumar-manor':     { keys: ['bridge_homes'], worlds: ['lumar-manor'], name: 'Ashcombe House' },
     'verdance-home':   { keys: ['bridge_homes', 'bridge_farm', 'bridge_homestead', 'bridge_animals'], worlds: ['verdance', 'verdance-home'], name: 'the farmhouse' },
     'verdance':        { keys: ['bridge_farm', 'bridge_homestead', 'bridge_animals', 'bridge_homes'], worlds: ['verdance', 'verdance-home'], name: 'the farm on Verdance' }
   };
@@ -106,7 +108,7 @@ var BridgePartner = (function () {
     if (holm.owned) out.push({ world: 'lumar-holm', label: holm.name || 'Starling Holm', sub: 'their island' });
     if (holm.owned && holm.built && holm.built.house) out.push({ world: 'lumar-holm-home', label: 'The cottage on ' + (holm.name || 'the holm'), sub: 'their home' });
     if (stead.owned) out.push({ world: 'verdance', label: stead.name || 'The farm on Verdance', sub: 'their farm' });
-    ['lumar-home', 'arcadia-home', 'verdance-home'].forEach(function (w) { if (homes.owned && homes.owned[w]) out.push({ world: w, label: cap(PLACES[w].name), sub: 'their home' }); });
+    ['lumar-home', 'arcadia-home', 'arcadia-penthouse', 'lumar-manor', 'verdance-home'].forEach(function (w) { if (homes.owned && homes.owned[w]) out.push({ world: w, label: cap(PLACES[w].name), sub: 'their home' }); });
     return out;
   }
   // their latest: from them if they're on, else their cloud save

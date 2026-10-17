@@ -53,7 +53,7 @@ var BridgeChart = (function () {
     var p = BridgeSloop.chartPos(), sea = p && seaAt(mapX(p.x), mapY(p.y));
     if (sea && !charted(sea) && !st.sailed[sea]) { st.sailed[sea] = Date.now(); store(); }
   }, 1000);
-  var INSIDE = { 'lumar-home': 'lumar-sapphire' };          // rooms whose ids don't start with their island's
+  var INSIDE = { 'lumar-home': 'lumar-sapphire', 'lumar-manor': 'lumar-crown' };          // rooms whose ids don't start with their island's
   function islandOf(worldId) {
     var I = isles(), best = null;
     if (!worldId) return null;

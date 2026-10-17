@@ -94,6 +94,17 @@ S.letters(k, 'LIFT', 'Audiowide', (LX0 + LX1) / 2, LR1, 2.0, size=0.34, col=Y.CY
 k.box(LX1 - 0.4, LR1, 1.0, LX1 - 0.25, LR1 + 0.04, 1.2, '#0c2030', 'lift_button', emit=(Y.YEL, 0.9))
 k.solid(LX0, LR0, LX1, LR1)
 
+# ---- the penthouse's private entrance: a glass-and-brass kiosk on the back edge (js/home.js puts its door here) ----------
+GX0, GX1, GR0, GR1 = 9.3, 12.7, 2.0, 3.0
+k.box(GX0, GR0, 0.0, GX1, GR1, 2.4, ('#1a1626', 0.08), 'ph_kiosk')
+k.box(GX0 + 0.12, GR1, 0.2, GX1 - 0.12, GR1 + 0.02, 2.2, ('#3a5060', 0.02), 'ph_glass', emit=('#1a2a3a', 0.4))
+k.box(10.45, GR1 + 0.02, 0.0, 11.55, GR1 + 0.05, 2.0, ('#d8b060', 0.3), 'ph_door_frame')
+k.box(10.55, GR1 + 0.05, 0.0, 11.45, GR1 + 0.07, 1.9, '#2a1a0c', 'ph_door', emit=('#ffd8a0', 0.25))
+k.box(GX0 - 0.1, GR0 - 0.1, 2.4, GX1 + 0.1, GR1 + 0.35, 2.5, ('#d8b060', 0.3), 'ph_canopy')
+S.lightbox(k, 'PENTHOUSE', 'RussoOne', (GX0 + GX1) / 2, GR1 + 0.35, 2.55, 2.8, 0.32, bg='#1a1626', ink='#ffd890', glow='#ffd890')
+k.point_light(11.0, GR1 + 0.8, 1.6, '#ffd8a0', 18, radius=0.3)
+k.solid(GX0, GR0, GX1, GR1)
+
 # ---- rooftop machinery, a mast, the back of a billboard ---------------------------------------------------------
 for (x, r) in ((2.2, 11.5), (3.4, 11.5), (21.0, 11.6)):
     k.box(x - 0.45, r - 0.4, 0.0, x + 0.45, r + 0.4, 0.8, ('#6a6a76', 0.08), 'hvac')

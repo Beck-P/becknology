@@ -289,7 +289,7 @@ var BridgeAudio = (function () {
     if (id === 'lumar-crown-office') return { theme: 'lumar-in', amb: ['murmur'] };
     if (/^lumar/.test(id)) {
       var inside = w && w.scene && !w.scene.backdrop && !/^lumar(-square|-crimson|-rose|-sapphire|-midnight)?$/.test(id);
-      if (inside) return { theme: 'lumar-in', amb: id === 'lumar-home' || id === 'lumar-holm-home' ? ['fire'] : ['fire', 'murmur'] };     // your own house is quiet
+      if (inside) return { theme: 'lumar-in', amb: id === 'lumar-home' || id === 'lumar-holm-home' || id === 'lumar-manor' ? ['fire'] : ['fire', 'murmur'] };     // your own house is quiet
       return { theme: 'lumar', amb: id === 'lumar-square' ? ['wind', 'murmur'] : ['sea', 'wind'] };
     }
     return { theme: 'ship', amb: ['engine'] };

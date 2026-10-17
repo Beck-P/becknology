@@ -4,7 +4,10 @@
  * Homes: the White House on Sapphire Port's square (lumar-home) and a
  * capsule apartment over the District's Capsule Hotel (arcadia-home), each
  * an empty Blender-rendered room (tools/bridge-art/scenes/lumar_home.py,
- * arcadia_home.py) — and aboard the Wayfarer, your quarters and the bridge,
+ * arcadia_home.py); at the top of the ramp (js/legacy.js) the Penthouse on
+ * Skyport 7, its brass door on the roof pad (arcadia-penthouse, 250,000),
+ * and Ashcombe House on Crownhaven's waterfront (lumar-manor, 400,000) —
+ * and aboard the Wayfarer, your quarters and the bridge,
  * which are yours already. Their doors are `home_door` interactions put on
  * the street as worlds load: the first time, the door offers the place for
  * sale (wagerCoins); after that it lets you in.
@@ -42,6 +45,18 @@ var BridgeHome = (function () {
                       shop: 'ARCADIAMART LIVING',
                       pitch: 'CAPSULE HOTEL, 24 HOURS. "NO VACANCY" - BUT UNDER IT, SMALLER: "LONG-STAY FLOOR. ONE ROOM, ONE WINDOW, YOUR OWN CAPSULE. KEYCARD AT THE DESK."',
                       bought: 'THE KEYCARD BLINKS GREEN. A BARE ROOM, A WINDOW FULL OF CITY, A CAPSULE IN THE WALL - YOURS. THE DESK THREW IN A STOOL AND A PLANT.' },
+    // the legacy homes (js/legacy.js): the top of Skyport 7's tower, its private lift from the roof pad; and the
+    // Ashcombes' house on Crownhaven's waterfront, beside the Crown & Anchor
+    'arcadia-penthouse': { name: 'The Penthouse', price: 250000, theme: 'neon', gift: ['sofa', 'arcade_cabinet', 'nebula_tank', 'telescope'],
+                           door: { world: 'arcadia-skypad', x: 11, y: 3, label: 'PENTHOUSE', spawn: [10, 10] },
+                           shop: 'ARCADIAMART LIVING',
+                           pitch: 'A BRASS DOOR ON THE ROOF, A LIFT THAT GOES ONE FLOOR DOWN. THE LISTING ON ITS GLASS: "THE TOP OF THE TOWER. THE WHOLE CITY THROUGH ONE WINDOW. A POOL. A BAR. DISCRETION INCLUDED."',
+                           bought: 'THE BRASS DOOR KNOWS YOUR HAND NOW. THE LIFT HUMS DOWN ONE FLOOR AND OPENS ON THE CITY. THE AGENT LEFT A SOFA, A CABINET, A NEBULA IN A JAR AND A TELESCOPE, "TO GET YOU STARTED".' },
+    'lumar-manor': { name: 'Ashcombe House', price: 400000, theme: 'parchment', gift: ['wingback', 'chess_table', 'orrery', 'clock'],
+                     door: { world: 'lumar-crown', x: 45, y: 29, label: 'ASHCOMBE HOUSE', spawn: [10, 11] },
+                     shop: 'WEXLEY & DAUGHTERS, JOINERS',
+                     pitch: 'THE TALL HOUSE ON THE WATERFRONT, SHUTTERED SINCE THE LAST ADMIRAL ASHCOMBE DIED. A BRASS PLATE BY THE DOOR: "FOR SALE BY ORDER OF THE CROWN. A GREAT HALL, A GALLERY, EIGHT BEDROOMS, A VIEW OF EVERY SHIP IN THE CAPITAL."',
+                     bought: 'THE REGISTRAR HANDS YOU A KEY AS LONG AS YOUR HAND. INSIDE, THE DUST SHEETS ARE OFF: A HALL, A FIRE ALREADY LIT, AND THE ASHCOMBES\' OWN WINGBACK, CHESS TABLE, ORRERY AND CLOCK, LEFT FOR THE NEXT CAPTAIN.' },
     // Edda's farmhouse on Verdance: it comes with the farm's deed (js/homestead.js), its door is the farm's own
     'verdance-home': { name: 'The Farmhouse', farm: true, theme: 'parchment', gift: ['rocking_chair', 'bed'], shop: 'HOLLIN\'S MAIL-ORDER' },
     // the cottage on Starling Holm: yours once it's rebuilt (js/holm.js), its door the island's own
@@ -264,8 +279,8 @@ var BridgeHome = (function () {
     var id = inter.homeId, H = HOMES[id];
     if (!H) return;
     if (owns(id)) { sfx('door'); return BridgeWorld.enterWorld(id, H.door.spawn); }
-    BridgeInteractions.execute({ type: 'menu', label: inter.label, dialog: H.pitch + '\n\n' + H.price + ' COINS, AND IT\'S YOURS.',
-      options: [{ label: 'BUY IT - ' + H.price + ' COINS', action: 'home_buy', home: id }, { label: 'NOT NOW', action: 'close' }] });
+    BridgeInteractions.execute({ type: 'menu', label: inter.label, dialog: H.pitch + '\n\n' + H.price.toLocaleString() + ' COINS, AND IT\'S YOURS.',
+      options: [{ label: 'BUY IT - ' + H.price.toLocaleString() + ' COINS', action: 'home_buy', home: id }, { label: 'NOT NOW', action: 'close' }] });
   }
 
   function buy(id) {
@@ -275,7 +290,7 @@ var BridgeHome = (function () {
     BridgeProgression.wagerCoins(H.price, 'home:' + id).then(function (res) {
       if (!res || !res.ok) {
         return say(H.name.toUpperCase(), res && (res.reason === 'insufficient' || res.reason === 'no_balance')
-          ? 'YOU NEED ' + H.price + ' COINS. MINE, FISH, DIG, PLAY - IT\'LL STILL BE HERE.' : 'THE SALE WON\'T GO THROUGH RIGHT NOW. TRY AGAIN IN A MOMENT.');
+          ? 'YOU NEED ' + H.price.toLocaleString() + ' COINS. MINE, FISH, DIG, PLAY - IT\'LL STILL BE HERE.' : 'THE SALE WON\'T GO THROUGH RIGHT NOW. TRY AGAIN IN A MOMENT.');
       }
       save.owned[id] = Date.now();
       (H.gift || []).forEach(function (g) { save.have[g] = (save.have[g] || 0) + 1; });
@@ -688,7 +703,7 @@ var BridgeHome = (function () {
   // Arcadia's skyline and rain through the apartment's strip window (scene.sky, in screen tiles)
   var skyCv = null;
   function behind(ctx, world, offX, offY, ts, now) {
-    if (!cur || cur.data !== world || cur.id !== 'arcadia-home' || !world.scene || !world.scene.sky || typeof BridgeSkyline === 'undefined') return;
+    if (!cur || cur.data !== world || HOMES[cur.id].theme !== 'neon' || !world.scene || !world.scene.sky || typeof BridgeSkyline === 'undefined') return;
     var S = world.scene.sky;
     var x = Math.round(offX + S[0] * ts), y = Math.round(offY + S[1] * ts), w = Math.round((S[2] - S[0]) * ts), h = Math.round((S[3] - S[1]) * ts);
     var H = Math.max(140, h * 3);

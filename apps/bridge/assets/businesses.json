@@ -9,7 +9,7 @@
   },
   "soda-cart": {
     "name": "The Soda Cart", "world": "arcadia-street", "label": "SODA CART", "loc": "arcadia",
-    "kind": "stall", "trade": "drink", "hours": "crowd", "price": 800, "rate": 28, "cap": 8,
+    "kind": "stall", "trade": "drink", "hours": "crowd", "stock": ["strawberry", "apple", "honey"], "price": 800, "rate": 28, "cap": 8,
     "pitch": "TWELVE FLAVOURS NOBODY CAN NAME. THE VENDOR'S SELLING UP TO CHASE A CAREER IN THE ARCADE.",
     "upgrades": [
       { "name": "A thirteenth flavour", "cost": 600, "mult": 1.4 }
@@ -25,7 +25,7 @@
   },
   "skewer-cart": {
     "name": "The Skewer Cart", "world": "arcadia-street", "label": "SKEWER CART", "loc": "arcadia",
-    "kind": "stall", "trade": "food", "hours": "crowd", "price": 1200, "rate": 45, "cap": 8,
+    "kind": "stall", "trade": "food", "hours": "crowd", "stock": ["spore_tuna", "silverfin", "bluefin", "carrot", "turnip", "egg"], "price": 1200, "rate": 45, "cap": 8,
     "pitch": "THE OLD MAN WHO RUNS IT WANTS OUT. \"BUY THE CART, KEEP THE GRILL HOT, TAKE THE NIGHT TRADE.\"",
     "upgrades": [
       { "name": "A second grill", "cost": 900, "mult": 1.4 },
@@ -42,7 +42,7 @@
   },
   "fish-stall": {
     "name": "Sapphire Fish Stall", "world": "lumar-sapphire", "label": "FISH STALL", "loc": "lumar",
-    "kind": "stall", "trade": "fish", "hours": ["dawn", "afternoon"], "price": 1500, "rate": 75, "cap": 8,
+    "kind": "stall", "trade": "fish", "hours": ["dawn", "afternoon"], "stock": ["silverfin", "bluefin", "harbour_crab", "rose_shrimp", "glowtail", "ember_snapper", "sapphire_ray", "moon_eel", "spore_tuna", "spore_minnow", "arctic_char", "frostfin", "pond_perch"], "price": 1500, "rate": 75, "cap": 8,
     "pitch": "THE STALL'S OWNER IS RETIRING TO THE ROSE BATHHOUSE. THE ICE, THE AWNING AND THE REGULARS COME WITH IT.",
     "upgrades": [
       { "name": "Your own fishing boat at the pier", "cost": 1500, "mult": 1.5 }
@@ -69,7 +69,7 @@
   },
   "crusty-loaf": {
     "name": "The Crusty Loaf", "world": "verdance-village", "owner": "bridget", "loc": "verdance",
-    "kind": "shop", "trade": "food", "hours": ["dawn", "afternoon"], "price": 9000, "rate": 260, "cap": 10,
+    "kind": "shop", "trade": "food", "hours": ["dawn", "afternoon"], "stock": ["egg", "large_egg", "milk", "honey", "apple", "strawberry", "pumpkin"], "price": 9000, "rate": 260, "cap": 10,
     "pitch": "\"I'LL BAKE TILL THEY CARRY ME OUT, LOVE, BUT THE BOOKS, THE COUNTER AND THE FLOUR BILLS? HAVE THEM. YOU'LL WANT SOMEONE ON THE COUNTER BY DAWN.\"",
     "upgrades": [
       { "name": "A second oven", "cost": 6000, "mult": 1.3 },
@@ -96,7 +96,7 @@
   },
   "noodle-bar": {
     "name": "Miyu's Noodles", "world": "cyber-noodle-bar", "owner": "miyu", "loc": "arcadia",
-    "kind": "shop", "trade": "food", "hours": "crowd", "price": 16000, "rate": 320, "cap": 10,
+    "kind": "shop", "trade": "food", "hours": "crowd", "stock": ["silverfin", "spore_tuna", "bluefin", "glowtail", "egg", "carrot", "turnip"], "price": 16000, "rate": 320, "cap": 10,
     "pitch": "\"I COOK. I DO NOT DO RENT, TAX OR THE NIGHT SHIFT. YOU BUY IN, YOU WORRY ABOUT THE COUNTER, I WORRY ABOUT THE BROTH. DEAL?\"",
     "upgrades": [
       { "name": "Six more stools at the counter", "cost": 10000, "mult": 1.3 },
@@ -106,7 +106,7 @@
 
   "hayloft": {
     "name": "The Hayloft", "world": "verdance-village", "owner": "mags", "loc": "verdance",
-    "kind": "venue", "trade": "drink", "hours": ["noon", "small"], "price": 45000, "rate": 450, "cap": 10,
+    "kind": "venue", "trade": "drink", "hours": ["noon", "small"], "stock": ["apple", "strawberry", "honey"], "price": 45000, "rate": 450, "cap": 10,
     "pitch": "\"THE CIDER POURS ITSELF, THE FIDDLER DOESN'T. A PLACE LIKE THIS NEEDS A PROPER MANAGER, NOT A LAD ON A STOOL. FIND ONE AND IT'S YOURS.\"",
     "upgrades": [
       { "name": "A barn dance every rest-day", "cost": 25000, "mult": 1.3 },
@@ -115,7 +115,7 @@
   },
   "terns-rest": {
     "name": "The Tern's Rest", "world": "lumar-tern-inn", "owner": "bryony", "loc": "lumar",
-    "kind": "venue", "trade": "food", "hours": ["morning", "late"], "price": 50000, "rate": 480, "cap": 10,
+    "kind": "venue", "trade": "food", "hours": ["morning", "late"], "stock": ["silverfin", "bluefin", "harbour_crab", "rose_shrimp", "turnip", "carrot", "egg"], "price": 50000, "rate": 480, "cap": 10,
     "pitch": "\"ROOMS, STEW AND EVERY SAILOR ON THE TERN PASSAGE. IT'S TOO MUCH FOR ONE PAIR OF HANDS. BRING A MANAGER WHO CAN KEEP A LEDGER AND I'LL STICK TO THE POT.\"",
     "upgrades": [
       { "name": "Four more rooms over the stable", "cost": 30000, "mult": 1.3 },
@@ -124,7 +124,7 @@
   },
   "crown-anchor": {
     "name": "The Crown & Anchor", "world": "lumar-crown-pub", "owner": "hetty", "loc": "lumar",
-    "kind": "venue", "trade": "drink", "hours": ["noon", "small"], "price": 70000, "rate": 650, "cap": 10,
+    "kind": "venue", "trade": "drink", "hours": ["noon", "small"], "stock": ["apple", "honey", "strawberry"], "price": 70000, "rate": 650, "cap": 10,
     "pitch": "\"BEST HOUSE IN CROWNHAVEN, AND I'M TIRED. THE FIGUREHEAD STAYS. THE REGULARS STAY. YOU PUT A MANAGER BEHIND THE BAR WHO CAN HANDLE A NAVY CREW ON PAY NIGHT.\"",
     "upgrades": [
       { "name": "A cellar of Crimson spore-ale", "cost": 40000, "mult": 1.3 },
@@ -133,7 +133,7 @@
   },
   "snowcap-lodge": {
     "name": "The Snowcap Lodge", "world": "hoarfell-lodge", "owner": "mette", "loc": "hoarfell",
-    "kind": "venue", "trade": "food", "hours": "always", "price": 80000, "rate": 420, "cap": 10,
+    "kind": "venue", "trade": "food", "hours": "always", "stock": ["milk", "egg", "pumpkin", "honey", "arctic_char", "frostfin"], "price": 80000, "rate": 420, "cap": 10,
     "pitch": "\"THE FIRE NEVER GOES OUT AND NEITHER DO I. TIME SOMEONE ELSE WATCHED THE NIGHT DESK. A MANAGER, MIND, NOT A SKI BUM.\"",
     "upgrades": [
       { "name": "A sauna by the stream", "cost": 45000, "mult": 1.3 },
@@ -147,6 +147,16 @@
     "upgrades": [
       { "name": "A sound system that rattles teeth", "cost": 50000, "mult": 1.3 },
       { "name": "A VIP mezzanine", "cost": 80000, "mult": 1.3 }
+    ]
+  },
+
+  "holm-resort": {
+    "name": "The Starling", "world": "lumar-holm", "label": "THE STARLING", "loc": "lumar", "built": "holm",
+    "kind": "venue", "trade": "food", "hours": "always", "stock": ["silverfin", "bluefin", "harbour_crab", "egg", "milk", "strawberry", "apple", "honey"], "price": 150000, "rate": 700, "cap": 10,
+    "pitch": "YOUR OWN HOTEL ON YOUR OWN ISLAND. BUILD IT FROM THE HOLM'S LEDGER.",
+    "upgrades": [
+      { "name": "A bathing jetty and changing huts", "cost": 60000, "mult": 1.25 },
+      { "name": "A packet boat from the capital, twice a day", "cost": 120000, "mult": 1.35 }
     ]
   },
 

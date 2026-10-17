@@ -79,6 +79,19 @@ const H = 3600000;
   console.log('move', JSON.stringify(await ev((id) => BridgeBusiness.move(id, 'crusty-loaf'), hand)), 'loaf staff now', (await st('crusty-loaf')).staff.length, '(on the way)');
   await ahead(1);
   console.log('an hour later at the loaf', JSON.stringify((await st('crusty-loaf')).staff));
+  // stock: the bakery bought in at cost vs stocked from your pack (eggs and honey from the farm)
+  const bake = async (stocked) => ev(async (stocked) => {
+    const S = BridgeBusiness._state(), b = S.biz['crusty-loaf'];
+    b.stock = 0; b.held = 0; b.bank = 0; b.last = Date.now();
+    if (stocked) { BridgeInventory.addItem('egg', 20); BridgeInventory.addItem('honey', 10); BridgeBusiness.restock('crusty-loaf'); }
+    const units = BridgeBusiness.stockOf('crusty-loaf').units;
+    let made = 0;
+    for (let i = 0; i < 24; i++) { const b0 = (b.held || 0) + (b.bank || 0); window._off += 3600000; BridgeBusiness._tick(); made += (b.held || 0) + (b.bank || 0) - b0; }
+    return [units, Math.round(made), BridgeBusiness.stockOf("crusty-loaf").units];
+  }, stocked);
+  await ev(() => { const S = BridgeBusiness._state(); S.staff.filter(x => x.at === 'crusty-loaf').forEach(x => { x.arrives = 0; }); });
+  console.log('bakery, a day bought in: [stock, made, stock left]', JSON.stringify(await bake(false)));
+  console.log('bakery, a day stocked from the pack: [stock, made, stock left]', JSON.stringify(await bake(true)));
   // the screen at the stall, and the ledger
   await ev(() => new Promise(r => BridgeWorld.load('lumar-sapphire', () => { BridgeState.transition('world', { worldId: 'lumar-sapphire' }); r(); })));
   await wait(1500);

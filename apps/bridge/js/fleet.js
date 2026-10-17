@@ -18,9 +18,11 @@
  * Ferryman's moonglass).
  *
  * CREW: hands you sign on at a port (each sea has its own people: `recruits(port)`, a fresh three a day). Each has a
- * ROLE and a skill (1-3) and lives aboard one of your ships. A ship needs `crew` hands to sail; gunners make her guns
- * fire twice as fast, a navigator makes her quicker, a rigger handier and safer in a storm, fighters repel boarders,
- * a purser haggles. `effective(ship)` folds fittings and crew into her spec.
+ * ROLE and a skill (1-3: green, able, old hand) and lives aboard one of your ships. A ship needs `crew` hands to sail;
+ * every grade does something (`perk(role, skill)` says what, in numbers): deckhands steady her in a squall, gunners make
+ * her guns fire twice as fast and better, a navigator makes her quicker, a rigger handier and safer in a storm, fighters
+ * repel boarders, a purser haggles. They sign on for a fee and draw a quarter of it a day (`wage`, on the business
+ * payroll, js/business.js). `effective(ship)` folds fittings and crew into her spec.
  *
  * Where they lie: the sloop is always at the pier of whatever island you're on (the starter boat follows you); every
  * bigger ship is where you last tied her up (`at`, an island id). Kept in localStorage bridge_fleet.
@@ -125,6 +127,8 @@ var BridgeFleet = (function () {
     });
     var best = function (role) { return cr.filter(function (c) { return c.role === role; }).reduce(function (m, c) { return Math.max(m, c.skill); }, 0); };
     var nav = best('navigator'), rig = best('rigger');
+    cr.forEach(function (c) { if (c.role === 'deckhand') sp.storm *= 1 - 0.04 * c.skill; });   // old hands steady her in a blow
+    var gunSkills = cr.filter(function (c) { return c.role === 'gunner'; }).map(function (c) { return c.skill; }).sort(function (a, b) { return b - a; });
     if (nav) sp.vmax *= 1 + 0.03 * nav;
     if (rig) { sp.turn *= 1 + 0.05 * rig; sp.storm *= 1 - 0.1 * rig; }
     sp.hands = cr.length;
@@ -132,7 +136,7 @@ var BridgeFleet = (function () {
     sp.gunners = cr.filter(function (c) { return c.role === 'gunner'; }).length;
     sp.fighters = cr.reduce(function (n, c) { return n + (c.role === 'fighter' ? 1 + c.skill * 0.5 : 0.4); }, 1);   // you count too
     sp.guns = ship.guns.filter(function (g) { return GUNS[g]; }).map(function (g, i) {
-      return Object.assign({ id: g, manned: i < sp.gunners }, GUNS[g]);
+      return Object.assign({ id: g, manned: i < sp.gunners, skill: gunSkills[i] || 0 }, GUNS[g]);
     });
     sp.berths = berths(ship);
     return sp;
@@ -152,6 +156,7 @@ var BridgeFleet = (function () {
     if (!I || !worldId) return worldId;
     if (I[worldId]) return worldId;
     if (worldId === 'lumar-home') return 'lumar-sapphire';                 // the White House is on Sapphire's square
+    if (worldId === 'lumar-manor') return 'lumar-crown';                   // Ashcombe House, on Crownhaven's waterfront
     var best = null;                                                        // a room on an island: the longest match wins
     for (var id in I) if (worldId.indexOf(id + '-') === 0 && (!best || id.length > best.length)) best = id;
     return best || worldId;
@@ -300,6 +305,21 @@ var BridgeFleet = (function () {
   function crew() { return st.crew.slice(); }
   /** Has the ship you're sailing someone in this role aboard? */
   function crewHas(role) { var a = active().ship; return crewOn(a.id).some(function (c) { return c.role === role; }); }
+  /** The best grade aboard the ship you're sailing in a role (0: nobody). */
+  function crewBest(role) { var a = active().ship; return crewOn(a.id).reduce(function (m, c) { return c.role === role ? Math.max(m, c.skill) : m; }, 0); }
+  var GRADES = ['', 'green', 'able', 'old hand'];
+  /** What someone in a role at a grade does for a ship, in numbers. */
+  function perk(role, skill) {
+    var s = skill || 1;
+    return { deckhand: 'one of the hands she needs, and steadier in a squall: ' + 4 * s + '% less harm',
+             gunner: 'mans a gun: it fires twice as fast' + (s > 1 ? ', and ' + 8 * (s - 1) + '% faster again' : ''),
+             navigator: 'reads the wind: she sails ' + 3 * s + '% quicker',
+             rigger: 'she turns ' + 5 * s + '% quicker, and squalls do ' + 10 * s + '% less harm',
+             fighter: 'fights like ' + (1 + s * 0.5) + ' in a boarding',
+             purser: 'cargo ' + (3 + 2 * s) + '% cheaper to buy and dearer to sell' }[role] || '';
+  }
+  /** Their daily wage: a quarter of what they signed on for. */
+  function wageOf(c) { return Math.max(5, Math.round(ROLES[c.role].fee * (0.6 + 0.4 * c.skill) / 4)); }
 
   // ---- the ledger line for a ship ---------------------------------------------------------------------------------
   function where(s) {
@@ -318,6 +338,6 @@ var BridgeFleet = (function () {
            line: line, where: where, rename: rename, buy: buy, value: value, sellShip: sellShip, fit: fit, unmount: unmount,
            damage: damage, repairCost: repairCost, repair: repair, wreck: wreck,
            fishCap: fishCap, catchOf: catchOf, catchCount: catchCount, stowFish: stowFish, takeFish: takeFish,
-           recruits: recruits, hire: hire, assign: assign, dismiss: dismiss, crew: crew, crewOn: crewOn, crewHas: crewHas, berths: berths,
+           recruits: recruits, hire: hire, assign: assign, dismiss: dismiss, crew: crew, crewOn: crewOn, crewHas: crewHas, crewBest: crewBest, perk: perk, wage: wageOf, GRADES: GRADES, berths: berths,
            save: store, _state: function () { return st; } };
 })();

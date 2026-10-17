@@ -2925,7 +2925,8 @@
     "smoke": [],
     "layers": {
       "house": "ruin",
-      "garden": "wild"
+      "garden": "wild",
+      "resort": "old"
     }
   },
   "view": [

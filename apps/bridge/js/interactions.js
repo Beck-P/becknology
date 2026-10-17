@@ -66,7 +66,7 @@ var BridgeInteractions = (function () {
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
                       'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
-                      'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'lumar-sapphire': 'Sapphire Port',
+                      'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'arcadia-penthouse': 'the Penthouse', 'lumar-manor': 'Ashcombe House', 'lumar-sapphire': 'Sapphire Port',
                       'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void',
                       'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall',
                       'arcadia-casino': 'the casino floor', 'arcadia-casino-cards': 'the Card Room', 'arcadia-casino-vip': 'the Crown Room',
@@ -904,9 +904,22 @@ var BridgeInteractions = (function () {
   // A business's books (js/business.js): buy it; or see when it opens, who works it and what it's made, hire (a hand,
   // a manager, a specialist), move someone to another of yours or let them go, collect what a hand's holding, upgrade
   // it, put crew in charge. `view`: { v: 'main' | 'hire' | 'person', who }.
+  function stockNames(biz) {
+    var names = (biz.stock || []).slice(0, 4).map(function (it) { var I = typeof BridgeItems !== 'undefined' && BridgeItems.get(it); return (I ? I.name : it).toLowerCase(); });
+    return names.join(', ') + ((biz.stock || []).length > 4 ? '…' : '');
+  }
+  // someone at a business, with their face (js/look.js), what they do there and what they cost
+  function personRow(p, id, right) {
+    var f = BridgeBusiness.faceOf(p, id);
+    return '<div class="wd-sell-row biz-person"><canvas class="biz-face" width="24" height="24" data-seed="' + esc(f.seed) + '" data-style="' + f.style +
+      '" data-colour="' + f.colour + '"' + (f.wild ? ' data-wild="1"' : '') + '></canvas><span class="bp-name">' + esc(p.name) + '<small>' + esc(p.title) + '</small></span>' +
+      '<span class="bp-perk">' + esc(BridgeBusiness.perkOf(p, id)) + '</span><span class="bp-wage">' + esc(right) + '</span></div>';
+  }
+  function paintFaces(el) {
+    if (typeof BridgeLook === 'undefined' || !BridgeLook.face) return;
+    el.querySelectorAll('canvas.biz-face').forEach(function (cv) { BridgeLook.face(cv, cv.getAttribute('data-seed'), cv.getAttribute('data-style'), cv.getAttribute('data-colour'), !!cv.getAttribute('data-wild')); });
+  }
   var KIND_NAME = { stall: 'A stall', shop: 'A shop', venue: 'A venue', enterprise: 'An enterprise', legacy: 'A legacy' };
-  var TIER_DOES = { hand: 'keeps it open; you collect', manager: 'runs it, banks the takings to you, half as much again',
-                    specialist: 'lifts it 60% in their own trade' };
   function showBusiness(biz, inter, note, view) {
     hideDialog();
     dialogVisible = true;
@@ -923,21 +936,21 @@ var BridgeInteractions = (function () {
         row(KIND_NAME[biz.kind] || 'A business', 'room for ' + slots + (slots > 1 ? ' staff' : ' on staff')) +
         row('Hours', st.hours + ' (' + open + ')') +
         row('Takings', biz.rate + ' coins an open hour, with a hand on') +
-        row('To open', st.needsManager ? 'it needs a manager' : 'a hand keeps it open; a manager runs it') + '</div>';
+        row('To open', st.needsManager ? 'it needs a manager' : 'a hand keeps it open; a manager runs it') +
+        (biz.stock ? row('Sells', stockNames(biz) + ': stock it yourself, or it buys in at cost') : '') + '</div>';
       acts.push({ label: 'Buy it for ' + biz.price.toLocaleString() + ' coins', act: 'buy' });
     } else if (view.v === 'hire') {
       var cands = B.candidates(id);
       lines = '<div class="wd-text">' + esc(cands.length ? "WHO'S LOOKING FOR WORK TODAY (NEW FACES TOMORROW). THE FIRST DAY'S WAGE IS PAID UP FRONT, THEN ONE EVERY DAY." : 'NOBODY ELSE IS LOOKING TODAY. TRY TOMORROW.') + '</div>' +
-        '<div class="wd-sell">' + cands.map(function (c) {
-          return row(c.name + ', ' + c.title.toLowerCase(), (TIER_DOES[c.tier] || '') + (c.skill > 1.08 ? ' · sharp' : c.skill < 0.95 ? ' · green' : ''));
-        }).join('') + '</div>';
+        '<div class="wd-sell">' + cands.map(function (c) { return personRow(c, id, c.wage.toLocaleString() + '/day'); }).join('') + '</div>';
       cands.forEach(function (c) { acts.push({ label: 'Hire ' + c.name + ' (' + c.title.toLowerCase() + ', ' + c.wage.toLocaleString() + ' a day)', act: 'hire', cand: c }); });
       acts.push({ label: 'Back', act: 'back' });
     } else if (view.v === 'person') {
       var p = B.staff().filter(function (x) { return x.id === view.who; })[0];
       if (!p) { showBusiness(biz, inter, note); return; }
       var days = Math.max(0, Math.floor((Date.now() - p.hired) / 86400000));
-      lines = '<div class="wd-sell">' + row('Role', p.title + (p.trade ? ' (' + p.trade + ')' : '')) + row('Wage', p.wage.toLocaleString() + ' coins a day') +
+      lines = '<div class="wd-sell">' + personRow(p, id, p.wage.toLocaleString() + '/day') + row('Wage', p.wage.toLocaleString() + ' coins a day') +
+        row('Brought in today', '' + B.status(id).today.toLocaleString() + ' coins (all of ' + biz.name + ')') +
         row('With you', days ? days + (days === 1 ? ' day' : ' days') : 'since today') +
         (p.arrives && p.arrives > Date.now() ? row('On the way', 'starts in about ' + Math.ceil((p.arrives - Date.now()) / 3600000) + 'h') : '') +
         (p.owe > 0 ? row('Owed', Math.ceil(p.owe).toLocaleString() + ' coins') : '') + '</div>';
@@ -951,11 +964,14 @@ var BridgeInteractions = (function () {
       var why = !st.running ? (st.needsManager ? 'shut: it needs a manager' : 'shut: nobody working it') : B.perHour(id).toLocaleString() + ' coins an open hour';
       lines = (inter && inter.dialog ? '<div class="wd-text">' + esc(reflow(inter.dialog)) + '</div>' : '') +
         '<div class="wd-sell">' + row('Hours', st.hours + ' (' + open + ')') + row('Takings', why) +
-        row('Staff', working.length ? working.join(', ') : 'nobody yet') +
+        (mgr ? row('Run by', mgr.name + ' (crew)') : '') + (st.staff.length ? st.staff.map(function (x) { return personRow(x, id, x.wage.toLocaleString() + '/day'); }).join('') : row('Staff', 'nobody yet')) +
         (st.wages ? row('Wages', st.wages.toLocaleString() + ' coins a day') : '') +
         row('Made today', st.today.toLocaleString() + ' coins') +
+        (B.stockOf(id) ? row('Stock', B.stockOf(id).units ? B.stockOf(id).units + ' units, about ' + B.stockOf(id).hours + ' open hours' : 'none: buying in at cost (takings down a third)') : '') +
         (st.banks ? row('Banked to you', st.banked.toLocaleString() + ' coins so far') : row('Waiting to collect', B.pending(id).toLocaleString() + ' coins')) + '</div>';
       if (!st.banks || B.pending(id)) acts.push({ label: B.pending(id) ? 'Collect ' + B.pending(id).toLocaleString() + ' coins' : 'Nothing to collect yet', act: 'collect', off: !B.pending(id) });
+      var canStock = B.stockable(id);
+      if (biz.stock) acts.push({ label: canStock.length ? 'Stock it from your pack (' + canStock.reduce(function (a, x) { return a + x.units; }, 0) + ' units)' : 'Nothing in your pack it sells', act: 'stock', off: !canStock.length });
       if (B.room(id)) acts.push({ label: 'Hire someone (' + st.staff.length + ' of ' + slots + ')', act: 'hireview' });
       st.staff.forEach(function (x) { acts.push({ label: x.name + ': move or let go', act: 'person', who: x.id }); });
       if (up) acts.push({ label: up.name + ' (' + up.cost.toLocaleString() + ')', act: 'upgrade' });
@@ -969,6 +985,7 @@ var BridgeInteractions = (function () {
         return '<button class="wd-opt' + (i === 0 ? ' active' : '') + '"' + (a.off ? ' disabled' : '') + '>' + esc(a.label) + '</button>';
       }).join('') + '</div>' + hintHTML('Esc', 'Leave') + '</div>';
     overlay.appendChild(dialogEl);
+    paintFaces(dialogEl);
     requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
     var btns = dialogEl.querySelectorAll('.wd-opt'), sel = 0, busy = false;
     function choose(n) { sel = (n + btns.length) % btns.length; for (var j = 0; j < btns.length; j++) btns[j].classList.toggle('active', j === sel); }
@@ -998,6 +1015,11 @@ var BridgeInteractions = (function () {
         reopen(m.ok ? (m.same ? 'ON THEIR WAY. THEY START WITHIN THE HOUR.' : 'ON THEIR WAY. ANOTHER WORLD: THEY START TOMORROW.') : 'NO ROOM THERE.');
       }
       else if (a.act === 'dismiss') { B.dismiss(a.who); reopen('THEY PACK UP AND GO.'); }
+      else if (a.act === 'stock') {
+        var r = B.restock(id);
+        if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('pickup');
+        reopen(r.units ? 'STOCKED: ' + r.items.map(function (x) { var I = typeof BridgeItems !== 'undefined' && BridgeItems.get(x.id); return x.n + ' ' + (I ? I.name : x.id).toUpperCase(); }).join(', ') + ' (+' + r.units + ' UNITS).' : 'NOTHING TO STOCK IT WITH.');
+      }
       else if (a.act === 'collect') B.collect(id).then(function (r) { reopen(r.ok ? 'COLLECTED ' + r.amount.toLocaleString() + ' COINS.' : fail(r)); });
       else if (a.act === 'upgrade') B.upgrade(id).then(function (r) { reopen(r.ok ? 'DONE. BUSINESS IS LOOKING UP.' : fail(r)); });
       else if (a.act === 'assign') { B.assign(id, a.who); reopen(a.who ? "THEY'LL RUN IT AS WELL AS ANY MANAGER." : 'BACK TO THE SHIP THEY GO.'); }
@@ -1160,6 +1182,7 @@ var BridgeInteractions = (function () {
       var r = rows[+rowEl.getAttribute('data-r')], cv = rowEl.querySelector('.sp-icon');
       var item = r.icon && typeof BridgeItems !== 'undefined' && BridgeItems.get(r.icon);
       if (item && item.draw) { var g = cv.getContext('2d'); g.imageSmoothingEnabled = false; item.draw(g, 0, 0, 24); }
+      else if (r.face && typeof BridgeLook !== 'undefined' && BridgeLook.face) { cv.classList.add('sp-face'); BridgeLook.face(cv, r.face.seed, r.face.style, r.face.colour, r.face.wild); }   // someone you'd hire
       else cv.style.visibility = 'hidden';
     });
     var rowEls = [].slice.call(dialogEl.querySelectorAll('.wd-sell-row.pick')).filter(function (e) { return !rows[+e.getAttribute('data-r')].disabled; });
@@ -1846,5 +1869,6 @@ var BridgeInteractions = (function () {
 
   return { update: update, tryClickAt: tryClickAt, killHostile: killHostile, register: register, placePrompt: placePrompt, getTarget: getTarget,
            say: showDialog, execute: executeInteraction, choose: showChooser,
+           business: function (id, view) { var d = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.get(id); if (d) showBusiness(d, null, null, view); },   // the ledger's staff page
            findTarget: findTarget, promptParts: promptParts };
 })();

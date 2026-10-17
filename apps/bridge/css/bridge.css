@@ -1474,6 +1474,13 @@ html.touch .pk-keys { display: none; }
 .wd-sell { margin: 8px 0 2px; font-size: 13px; }
 .wd-sell-row { display: flex; justify-content: space-between; padding: 3px 2px; border-bottom: 1px dashed rgba(128, 128, 128, 0.25); }
 .wd-sell-row.none { opacity: 0.4; }
+/* someone at a business: their face, name and job, what they do there, their wage (js/interactions.js personRow) */
+.wd-sell-row.biz-person { display: grid; grid-template-columns: 28px minmax(110px, max-content) 1fr auto; gap: 8px; align-items: center; justify-content: stretch; }
+.wd-sell-row.biz-person .biz-face, .sp-icon.sp-face { width: 28px; height: 28px; image-rendering: pixelated; border-radius: 4px; background: rgba(0, 0, 0, 0.12); }
+.wd-sell-row.biz-person .bp-name small { display: block; font-size: 0.82em; opacity: 0.7; }
+.wd-sell-row.biz-person .bp-perk { font-size: 0.86em; opacity: 0.85; }
+.wd-sell-row.biz-person .bp-wage { white-space: nowrap; }
+@media (max-width: 600px) { .wd-sell-row.biz-person { grid-template-columns: 28px 1fr auto; } .wd-sell-row.biz-person .bp-perk { grid-column: 2 / -1; } }
 /* pick what to sell: icon, name, how many you have, a count, the price */
 .wd-sell-pick { max-height: 46vh; overflow-y: auto; }
 .wd-sell-row.pick { display: grid; grid-template-columns: 24px 1fr auto auto auto; align-items: center; gap: 8px; padding: 4px 4px; }
@@ -2300,6 +2307,9 @@ html.menu-open #bridge-toast, html.menu-open #quarters-toast { visibility: hidde
 .lg-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; line-height: 1.35; }
 .lg-row + .lg-row { border-top: 1px dashed var(--gm-line); }
 .lg-main { flex: 1; min-width: 0; }
+.lg-face { width: 28px; height: 28px; flex: none; image-rendering: pixelated; border-radius: 4px; background: rgba(0, 0, 0, 0.18); }
+.lg-row.lg-act { cursor: pointer; }
+.lg-row.lg-act:hover { background: rgba(255, 255, 255, 0.04); }
 .lg-main b { display: block; color: var(--gm-ink); font-weight: 600; }
 .lg-main span { color: var(--gm-dim); }
 .lg-fig { flex: none; text-align: right; color: var(--gm-ink); white-space: nowrap; }

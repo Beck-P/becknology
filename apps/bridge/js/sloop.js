@@ -247,11 +247,20 @@ var BridgeSloop = (function () {
         var x = c.getContext('2d', { willReadFrequently: true });
         x.drawImage(im, 0, 0);
         var p = x.getImageData(0, 0, im.width, im.height).data, m = new Uint8Array(im.width * im.height);
+        // the island's own water fades into whatever sea is round it toward its render's edge (an island near another
+        // sea - Tern Holm by the Midnight Sea - otherwise ends in a square of its own colour): opaque over land and the
+        // shallows, deep water going to nothing over the last FEATHER px of the render
+        var FEATHER = 192, fd = x.createImageData(im.width, im.height), fa = fd.data, IW = im.width, IH = im.height;
         // 0 open water, 1 land (or anything standing out of it), 2 shallows the keel would touch
         for (var i = 0; i < m.length; i++) {
           var g = p[i * 4 + 1], empty = p[i * 4 + 2] > 127;
           m[i] = empty ? 0 : g === 0 ? 1 : g < 46 ? 2 : 0;
+          var px0 = i % IW, py0 = (i - px0) / IW, e = Math.min(px0, py0, IW - 1 - px0, IH - 1 - py0) / FEATHER;
+          var keep = g === 0 && !empty ? 1 : Math.max(Math.min(1, e), Math.min(1, Math.max(0, (200 - g) / 90)));
+          fa[i * 4 + 3] = Math.round(255 * keep * keep * (3 - 2 * keep));
         }
+        x.putImageData(fd, 0, 0);
+        I.feather = c;
         I.mask = m; I.mw = im.width; I.mh = im.height; I.meta = meta;
         done();
       };
@@ -774,7 +783,9 @@ var BridgeSloop = (function () {
       loadHull(SP.sheet, function () {});
       loadIsland(fromId, function (I) {
         A = I;
-        daySea = !!(I.sc && I.sc.meta && I.sc.meta.cycle);                          // its art has a day: so does the sea
+        // the open sea keeps Lumar's sky whichever island you left (it used to stay night unless hers had day art, and
+        // an island that had came up as a square of daylight on a night sea); an island's own water is feathered into it
+        daySea = true;
         if (BridgeSea.setSeaCycles) BridgeSea.setSeaCycles(daySea);
         go();
       });
@@ -1768,12 +1779,27 @@ var BridgeSloop = (function () {
     }
   }
 
+  var iso = null, isoCtx = null;                // an island and its water, drawn apart to be feathered into the sea
   function drawIsland(I, now) {
     if (!I || !I.sc) return;
     var offX = Math.round(I.ox * TS - cam.x), offY = Math.round(I.oy * TS - cam.y), m = I.sc.meta;
     if (offX - m.originX > W || offY - m.originY > H || offX - m.originX + m.width < 0 || offY - m.originY + m.height < 0) return;
-    BridgeScene.drawBackground(bctx, I.sc, I.world || {}, offX, offY, now);
-    if (BridgeSea.drawWaterAt) BridgeSea.drawWaterAt(bctx, I.sc, offX, offY, now, I.pal, cam.x, cam.y);
+    var out = bctx, cw = bctx.canvas.width, ch = bctx.canvas.height;
+    if (I.feather) {
+      if (!iso || iso.width !== cw || iso.height !== ch) {
+        iso = document.createElement('canvas'); iso.width = cw; iso.height = ch;
+        isoCtx = iso.getContext('2d'); isoCtx.imageSmoothingEnabled = false;
+      }
+      isoCtx.clearRect(0, 0, cw, ch);
+      out = isoCtx;
+    }
+    BridgeScene.drawBackground(out, I.sc, I.world || {}, offX, offY, now);
+    if (BridgeSea.drawWaterAt) BridgeSea.drawWaterAt(out, I.sc, offX, offY, now, I.pal, cam.x, cam.y);
+    if (out === bctx) return;
+    isoCtx.globalCompositeOperation = 'destination-in';
+    isoCtx.drawImage(I.feather, offX - m.originX, offY - m.originY);
+    isoCtx.globalCompositeOperation = 'source-over';
+    bctx.drawImage(iso, 0, 0);
   }
 
   // the gusts: darker, rippled water sweeping downwind
@@ -1985,7 +2011,7 @@ var BridgeSloop = (function () {
   }
   // a hull sheet washed with a colour (a pirate's tarred black, a drowned ship's pale green), made once and kept
   // ---- by day (js/clock.js): the sheets are rendered in moonlight; a daylight and a dusk copy of each, made once, are
-  // laid over them by Lumar's sky — once the island you sailed from has its day art (`daySea`, set as she casts off)
+  // laid over them by Lumar's sky (`daySea`, set as she casts off)
   var daySea = false, skyAt = 0, skyW = null;
   function skyNow() {
     var t = Date.now();

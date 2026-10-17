@@ -15,7 +15,7 @@
  * swing, a charge, a roll — played out on their pilot here, weapon and all).
  */
 var BridgeMulti = (function () {
-  var PERSONAL = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, 'lumar-home': 1, 'arcadia-home': 1, 'verdance-home': 1, 'lumar-holm-home': 1, 'lumar-holm': 1 };
+  var PERSONAL = { bridge: 1, quarters: 1, gameroom: 1, hangar: 1, 'lumar-home': 1, 'arcadia-home': 1, 'arcadia-penthouse': 1, 'lumar-manor': 1, 'verdance-home': 1, 'lumar-holm-home': 1, 'lumar-holm': 1 };
   var DIR_ROW = { down: 0, right: 1, up: 2, left: 3 }, IDLE = [0, 1, 2, 1];
   var others = {}, visiting = null, lastInst = null, sentAt = 0, sentJson = '', metaAt = 0, layer = null, tags = {}, pill = null, selfTag = null;
   var last = performance.now(), gone = {};

@@ -128,6 +128,8 @@ for qid, q in records('quests.json'):
             issues.append(('quests.json', '%s clue not found at %s / %s' % (qid, c['world'], c.get('label'))))
 people = dict(records('people.json'))
 for bid, b in records('businesses.json'):
+    if 'built' in b:                       # built from somewhere else (the holm's ledger), its door added then
+        continue
     if 'owner' in b:                       # sold in conversation: its owner must exist and stand in its world
         o = people.get(b['owner'])
         if not o or not any(at['world'] == b['world'] for at in o.get('at', [])):

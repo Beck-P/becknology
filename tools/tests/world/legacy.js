@@ -62,6 +62,33 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   console.log('royal yard builds:', await ev(() => BridgeFleet.spec('sovereign').name + ' ' + BridgeFleet.spec('sovereign').price));
   console.log('buy the Sovereign:', JSON.stringify(await ev(() => BridgeFleet.buy('sovereign', 'lumar-crown').then(r => [r.ok, r.ship && r.ship.name]))), '· coins', await ev(() => window._coins));
   console.log('her resale value:', await ev(() => BridgeFleet.value(BridgeFleet.all().find(s => s.type === 'sovereign'))));
+  // the Penthouse: its brass door on Skyport 7's roof pad
+  await go('arcadia-skypad'); await wait(1500);
+  console.log('penthouse door:', JSON.stringify(await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'PENTHOUSE'); return it && [it.type, it.x, it.y]; })));
+  await ev(() => BridgeHome.buy('arcadia-penthouse')); await wait(400);
+  await ev(() => document.querySelectorAll('.world-dialog').forEach(x => x.remove()));
+  await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'PENTHOUSE'); BridgeInteractions.execute(it); });
+  await wait(2500);
+  console.log('through the door:', await ev(() => BridgeWorld.getWorldId()), '· coins', await ev(() => window._coins));
+  await p.screenshot({ path: SHOTS + '/legacy_penthouse.png' });
+  // Ashcombe House on Crownhaven's waterfront
+  await go('lumar-crown'); await wait(1500);
+  await ev(() => BridgeHome.buy('lumar-manor')); await wait(400);
+  await ev(() => document.querySelectorAll('.world-dialog').forEach(x => x.remove()));
+  await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'ASHCOMBE HOUSE'); BridgeInteractions.execute(it); });
+  await wait(2500);
+  console.log('through the door:', await ev(() => BridgeWorld.getWorldId()), '· coins', await ev(() => window._coins));
+  await p.screenshot({ path: SHOTS + '/legacy_manor.png' });
+  // the Starling on your holm: the dock rebuilt, the resort built, a manager hired
+  await ev(() => { const st = BridgeHolm._state(); st.owned = Date.now(); st.built = { dock: Date.now(), house: Date.now(), resort: Date.now() }; localStorage.setItem('bridge_holm', JSON.stringify(st)); BridgeBusiness.grant('holm-resort'); });
+  await go('lumar-holm'); await wait(2000);
+  console.log('the Starling:', JSON.stringify(await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE STARLING'); return it && [it.x, it.y, BridgeWorld.getWorld().scene.layers.resort]; })));
+  await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE STARLING'); BridgeInteractions.execute(it); });
+  await wait(500);
+  console.log('its books:', (await ev(() => (document.querySelector('.world-dialog') || {}).innerText || 'none')).replace(/\n+/g, ' / ').slice(0, 220));
+  await ev(() => document.querySelectorAll('.world-dialog').forEach(x => x.remove()));
+  await ev(() => BridgeCharacter.init(34, 22)); await wait(1200);
+  await p.screenshot({ path: SHOTS + '/legacy_resort.png' });
   // the ledger's Legacy list
   console.log('legacy:', JSON.stringify(await ev(() => BridgeLegacy.list().map(g => g.name + (g.done ? ' ✓' : '')))));
   await b.close();

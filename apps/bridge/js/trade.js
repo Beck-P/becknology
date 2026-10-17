@@ -124,7 +124,8 @@ var BridgeTrade = (function () {
     var drift = 0.85 + 0.3 * hash(today() + ':' + P + ':' + id), K = depth(id);
     var press = side === 'buy' ? 1 + (n / 2) / K : 1 / (1 + (glutOf(id, P) + n / 2) / K);
     var p = base(id) * appetite(id, P) * drift * press;
-    var purser = typeof BridgeFleet !== 'undefined' && BridgeFleet.crewHas && BridgeFleet.crewHas('purser') ? 0.05 : 0;
+    var pb = typeof BridgeFleet !== 'undefined' && BridgeFleet.crewBest ? BridgeFleet.crewBest('purser') : 0;
+    var purser = pb ? 0.03 + 0.02 * pb : 0;                                  // a green purser 5%, an old hand 9%
     p = side === 'buy' ? p * (1 + SPREAD - purser) : p * (1 - SPREAD + purser);
     return Math.max(1, Math.round(p));
   }

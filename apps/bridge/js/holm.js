@@ -22,7 +22,10 @@ var BridgeHolm = (function () {
     dock:      { name: 'The dock', price: 8000, what: 'NEW PLANKING ON THE JETTY, THE QUAY RE-SET, LAMPS AND A CRANE. YOUR SHIPS CAN BE BASED HERE AND SENT OUT TRADING.' },
     garden:    { name: 'The garden', price: 1000, what: 'THE BRAMBLES GRUBBED OUT, THE GROUND DUG OVER. A FIELD OF YOUR OWN WITHIN THE OLD WALL.' },
     warehouse: { name: 'A warehouse', price: 6000, what: 'TIMBER, ON STONE FOOTINGS. CARGO KEPT ASHORE BETWEEN SHIPS - AS MUCH AS YOU LIKE.' },
-    quarters:  { name: 'Quarters for your hands', price: 4000, what: 'A BUNKHOUSE. YOUR HANDS CAN LIVE ASHORE BETWEEN VOYAGES, EIGHT OF THEM.' }
+    quarters:  { name: 'Quarters for your hands', price: 4000, what: 'A BUNKHOUSE. YOUR HANDS CAN LIVE ASHORE BETWEEN VOYAGES, EIGHT OF THEM.' },
+    // the holm as a resort (js/legacy.js): the old boathouse rebuilt as a hotel, run as a venue (js/business.js `holm-resort`)
+    resort:    { name: 'The Starling, a seaside hotel', price: 150000, needs: 'dock',
+                 what: 'THE OLD BOATHOUSE DOWN, A HOTEL UP IN ITS PLACE: TWELVE ROOMS ON THE WATER, PARASOLS ON THE LAWN, GUESTS OFF EVERY PACKET FROM THE CAPITAL. IT RUNS LIKE ANY VENUE: PUT A MANAGER IN AND IT EARNS, NIGHT AND DAY.' }
   };
   var QUARTERS = 8;
 
@@ -54,7 +57,8 @@ var BridgeHolm = (function () {
     data.name = st.name;
     if (data.scene) {
       data.scene.layers = { house: built('house') ? 'cottage' : 'ruin', garden: built('garden') ? 'tilled' : 'wild',
-                            dock: built('dock') ? 'built' : null, warehouse: built('warehouse') ? 'built' : null, quarters: built('quarters') ? 'built' : null };
+                            dock: built('dock') ? 'built' : null, warehouse: built('warehouse') ? 'built' : null, quarters: built('quarters') ? 'built' : null,
+                            resort: built('resort') ? 'built' : 'old' };
       var sm = (data.holm && data.holm.smoke) || {};
       data.scene.smoke = ['house', 'quarters'].filter(function (k) { return built(k) && sm[k]; }).map(function (k) { return sm[k]; });
     }
@@ -64,6 +68,13 @@ var BridgeHolm = (function () {
       var L = lots[k];
       for (var y = L[1]; y <= L[3]; y++) for (var x = L[0]; x <= L[2]; x++) if (data.collisions[y]) data.collisions[y][x] = 1;
     });
+    // the resort built: the boathouse is the Starling now, its door the business's (js/business.js)
+    if (built('resort')) {
+      data.interactions = (data.interactions || []).filter(function (it) { return it.label !== 'BOATHOUSE'; });
+      if (!data.interactions.some(function (it) { return it.label === 'THE STARLING'; }))
+        data.interactions.push({ x: 35, y: 20, type: 'dialog', label: 'THE STARLING', prompt: 'PRESS E TO GO IN',
+                                 dialog: 'THE STARLING: TWELVE ROOMS ON THE WATER. THE BELL ON THE DESK SAYS "RING FOR THE MANAGER".' });
+    }
     (data.interactions || []).forEach(function (it) {
       if (it.type !== 'holm') return;
       if (it.act === 'deed') { it.label = owned() ? st.name.toUpperCase() : 'FOR SALE'; it.prompt = owned() ? 'PRESS E FOR THE LEDGER' : 'PRESS E TO READ'; }
@@ -120,12 +131,14 @@ var BridgeHolm = (function () {
   }
   function offer(k) {
     var B = BUILD[k];
-    choose({ title: B.name, text: B.what, buttons: [{ label: 'Build it (' + B.price + ')', act: function () {
+    if (B.needs && !built(B.needs)) return say('REBUILD THE ' + BUILD[B.needs].name.replace(/^The /, '').toUpperCase() + ' FIRST: THE GUESTS COME BY SEA.', B.name);
+    choose({ title: B.name, text: B.what, buttons: [{ label: 'Build it (' + B.price.toLocaleString() + ')', act: function () {
       pay(B.price, 'holm:' + k).then(function (r) {
         if (!r || !r.ok) { say(why(r), B.name); return; }
         st.built[k] = Date.now(); store(); sfx('coin');
         toast('Built', B.name, st.name);
         if (k === 'garden') tools();
+        if (k === 'resort' && typeof BridgeBusiness !== 'undefined' && BridgeBusiness.grant) BridgeBusiness.grant('holm-resort');
         reload();
       });
     } }], closeLabel: 'Not yet' });
@@ -285,7 +298,7 @@ var BridgeHolm = (function () {
     if (st.chest > 0) rows.push({ label: 'The strongbox', sub: st.chest + ' coins from your ships\' voyages', note: 'take it', pick: collect });
     Object.keys(BUILD).forEach(function (k) {
       var B = BUILD[k];
-      rows.push({ label: B.name, sub: built(k) ? 'built' : B.price + ' coins', note: built(k) ? '✓' : 'build', disabled: built(k), pick: function () { offer(k); } });
+      rows.push({ label: B.name, sub: built(k) ? 'built' : B.price.toLocaleString() + ' coins', note: built(k) ? '✓' : 'build', disabled: built(k), pick: function () { offer(k); } });
     });
     rows.push({ label: 'Send a ship trading', sub: built('dock') ? 'a ship based here, with her hands' : 'rebuild the dock first', disabled: !built('dock'), pick: voyage });
     rows.push({ label: 'Your ships', sub: f ? f.all().length + ' in all' : '', pick: function () { if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.ledger(WID); } });
