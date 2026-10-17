@@ -124,18 +124,31 @@ def ragged_edges(k, x0, r0, x1, r1, tone, z=0.006):
             t += w + k.rng.uniform(0.0, 0.1)
     for col, rs in rects.items():
         if rs:
-            k.boxes(rs, (col, 0.2), 'grass_edge')
+            k.boxes(rs, (col, 0.12), 'grass')
     for col, bs in blades.items():
         if bs:
-            k.blades(bs, (col, 0.32), 'grass_blade')
+            k.blades(bs, (col, 0.25), 'grass')
 
 
-def meadow(k, tone, area=None, cells=None, ok=('grass',), density=1.0, avoid=None, flowers=1.0, tall=0.08, h=(0.11, 0.2)):
-    """Grass the way Stardew draws it: dense little tufts of blades in three greens - deep ones in the hollows, the
-    turf's own, and bright yellow-green tips catching the light - a tall clump here and there, clover and tiny flowers,
-    the odd pebble. Grows wherever the part on top is one of `ok` (k.top), over `area` (x0, r0, x1, r1) or `cells`."""
-    deep, mid, lit = _mix(tone, '#0e2a14', 0.5), shade(tone, 1.06), _mix(shade(tone, 1.4), '#d8f070', 0.32)
-    tips = _mix(lit, '#f0ffa0', 0.35)
+def _vnoise(x, y, seed=0):
+    """Smooth value noise, 0..1 (the slow light and dark drifts across a meadow)."""
+    def h(i, j):
+        v = math.sin(i * 127.1 + j * 311.7 + seed * 74.7) * 43758.5453
+        return v - math.floor(v)
+    xi, yi = math.floor(x), math.floor(y)
+    fx, fy = x - xi, y - yi
+    fx, fy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+    a, b, c, d = h(xi, yi), h(xi + 1, yi), h(xi, yi + 1), h(xi + 1, yi + 1)
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy
+
+
+def meadow(k, tone, area=None, cells=None, ok=('grass',), density=1.0, avoid=None, flowers=1.0, tall=0.04, h=(0.09, 0.17)):
+    """Grass as a lush carpet, the way Stardew draws it: blades packed close in greens only a little apart - the
+    shadowed ones between, the turf's own, sunlit ones with a few bright tips - drifting lighter and darker across the
+    meadow in slow patches; flowers and clover in clumps, the odd tall clump and pebble. Grows wherever the part on top is
+    one of `ok` (k.top), over `area` (x0, r0, x1, r1) or `cells`."""
+    deep, mid, lit = _mix(tone, '#10301a', 0.4), shade(tone, 1.02), _mix(shade(tone, 1.26), '#d0e868', 0.22)
+    tips = _mix(lit, '#eaf8a0', 0.3)
     beds = {deep: [], mid: [], lit: [], tips: []}
     dots = {}
     if cells is None:
@@ -144,29 +157,35 @@ def meadow(k, tone, area=None, cells=None, ok=('grass',), density=1.0, avoid=Non
         inside = lambda x, r: x0 <= x < x1 and r0 <= r < r1
     else:
         inside = lambda x, r: True
-    per = 13.0 * density
+
+    def isok(p_):
+        return p_ is not None and any(p_ == o or p_.startswith(o + '_') for o in ok)
+
+    def spot(x, r):                                            # grass can grow here: its height, else None
+        if not inside(x, r) or (avoid and avoid(x, r)):
+            return None
+        p_, z = k.top(x, r)
+        return z + 0.002 if isok(p_) else None
+    per = 20.0 * density
+    seed = k.rng.random() * 100
     for (c, rr) in cells:
-        m = int(per) + (1 if k.rng.random() < per % 1 else 0)
-        for _ in range(m):
+        m_ = int(per) + (1 if k.rng.random() < per % 1 else 0)
+        for _ in range(m_):
             x, r = c + k.rng.random(), rr + k.rng.random()
-            if not inside(x, r) or (avoid and avoid(x, r)):
+            z = spot(x, r)
+            if z is None:
                 continue
-            part, z = k.top(x, r)
-            if part is None or not any(part == o or part.startswith(o + '_') for o in ok):
-                continue
-            z += 0.002
-            col = k.rng.choices((deep, mid, lit), (0.34, 0.36, 0.30))[0]
-            nb = k.rng.choice((2, 3, 3, 4))
+            light = _vnoise(x / 3.4, r / 3.4, seed) * 0.75 + _vnoise(x / 1.1, r / 1.1, seed + 9) * 0.25    # the slow drifts
+            col = k.rng.choices((deep, mid, lit), (0.18 + 0.3 * (1 - light), 0.5, 0.06 + 0.32 * light))[0]
+            nb = k.rng.choice((3, 3, 4, 5))
             for j in range(nb):
-                dx = (j - (nb - 1) / 2) * 0.055 + k.rng.uniform(-0.012, 0.012)
-                hh = k.rng.uniform(*h) * (1.15 if j == nb // 2 else 1.0)
-                lean = dx * 0.6 + k.rng.uniform(-0.02, 0.02)
-                beds[col].append((x + dx, r, z, hh, 0.026, lean, k.rng.uniform(-0.02, 0.02)))
-                if col != deep and k.rng.random() < 0.5:           # the tip catching the light
-                    beds[tips].append((x + dx + lean * 0.55, r, z + hh * 0.55, hh * 0.47, 0.014, lean * 0.45, 0.0))
-        # where the turf meets a path or a field in this cell: grass spilling over the edge, leaning out from the turf
-        def isok(p_):
-            return p_ is not None and any(p_ == o or p_.startswith(o + '_') for o in ok)
+                dx = (j - (nb - 1) / 2) * 0.03 + k.rng.uniform(-0.01, 0.01)
+                hh = k.rng.uniform(*h) * (1.12 if j == nb // 2 else 1.0)
+                lean = dx * 0.7 + k.rng.uniform(-0.015, 0.015)
+                beds[col].append((x + dx, r, z, hh, 0.02, lean, k.rng.uniform(-0.015, 0.015)))
+                if col == lit and k.rng.random() < 0.3:              # a few tips catching the sun
+                    beds[tips].append((x + dx + lean * 0.6, r, z + hh * 0.6, hh * 0.42, 0.01, lean * 0.4, 0.0))
+        # where the turf meets a path or a field in this cell: grass spilling over the edge
         corners = [k.top(c + ax, rr + ar)[0] for (ax, ar) in ((0.05, 0.05), (0.95, 0.05), (0.05, 0.95), (0.95, 0.95), (0.5, 0.5))]
         if any(isok(p_) for p_ in corners) and any(p_ is not None and any(p_.startswith(e) for e in EDGES) for p_ in corners):
             for _ in range(int(16 * density)):
@@ -176,53 +195,57 @@ def meadow(k, tone, area=None, cells=None, ok=('grass',), density=1.0, avoid=Non
                     continue
                 for (ex, er) in ((0.16, 0), (-0.16, 0), (0, 0.16), (0, -0.16)):
                     if isok(k.top(x + ex, r + er)[0]):
-                        # a scrap of turf creeping over the edge (flat), and grass on it
-                        a_, b_ = k.rng.uniform(0.04, 0.09), k.rng.uniform(0.03, 0.06)
-                        hx, hr = (b_, a_) if ex else (a_, b_)
-                        cx_, cr_ = x + ex * 0.25, r + er * 0.25
-                        dots.setdefault(k.rng.choice((mid, mid, deep)), []).append((cx_ - hx, cr_ - hr, z + 0.0005, cx_ + hx, cr_ + hr, z + 0.004))
-                        for j in range(k.rng.choice((2, 3, 4))):
-                            beds[k.rng.choice((deep, mid, lit))].append((x + ex * 0.5 + (j - 1) * 0.045, r + er * 0.5, z + 0.002, k.rng.uniform(0.09, 0.16), 0.024,
-                                                                          -ex * 0.45 + (j - 1) * 0.03, -er * 0.35))
+                        for j in range(k.rng.choice((2, 3))):
+                            beds[k.rng.choice((deep, mid, mid))].append((x + ex * 0.5 + (j - 1) * 0.035, r + er * 0.5, z + 0.002, k.rng.uniform(0.08, 0.14), 0.02,
+                                                                          -ex * 0.4 + (j - 1) * 0.025, -er * 0.3))
                         break
-        # now and then a tall clump, a flower or some clover, a pebble
+        # a tall clump now and then
         if k.rng.random() < tall:
             x, r = c + k.rng.random(), rr + k.rng.random()
-            part, z = k.top(x, r)
-            if part is not None and any(part == o or part.startswith(o + '_') for o in ok) and inside(x, r) and not (avoid and avoid(x, r)):
+            z = spot(x, r)
+            if z is not None:
                 for j in range(9):
                     a = j / 9 * math.pi * 2 + k.rng.uniform(-0.3, 0.3)
-                    hh = k.rng.uniform(0.2, 0.32)
-                    beds[deep if j % 3 == 0 else mid].append((x + math.cos(a) * 0.05, r + math.sin(a) * 0.03, z, hh, 0.024,
-                                                             math.cos(a) * 0.09, math.sin(a) * 0.05))
-                    beds[tips].append((x + math.cos(a) * 0.1, r + math.sin(a) * 0.05, z + hh * 0.7, hh * 0.32, 0.01, math.cos(a) * 0.05, 0.0))
-        for _ in range(3):
-            if k.rng.random() < 0.3 * flowers:
-                x, r = c + k.rng.random(), rr + k.rng.random()
-                part, z = k.top(x, r)
-                if part is None or not any(part == o or part.startswith(o + '_') for o in ok) or not inside(x, r) or (avoid and avoid(x, r)):
+                    hh = k.rng.uniform(0.18, 0.28)
+                    beds[deep if j % 3 == 0 else mid].append((x + math.cos(a) * 0.05, r + math.sin(a) * 0.03, z, hh, 0.022,
+                                                             math.cos(a) * 0.08, math.sin(a) * 0.04))
+        # flowers grow in clumps of one kind; clover in patches; the odd pebble
+        if k.rng.random() < 0.05 * flowers:
+            fc, cx_, cr_ = k.rng.choice(FLOWERS), c + k.rng.random(), rr + k.rng.random()
+            for _ in range(k.rng.randint(4, 11)):
+                a, d = k.rng.uniform(0, math.tau), k.rng.uniform(0, 0.38) ** 1.3
+                x, r = cx_ + math.cos(a) * d, cr_ + math.sin(a) * d * 0.8
+                z = spot(x, r)
+                if z is None:
                     continue
-                if k.rng.random() < 0.45:                          # clover: three leaves, flat
-                    for j in range(3):
-                        a = j * 2.1 + k.rng.uniform(0, 0.5)
-                        dots.setdefault(_mix(deep, mid, 0.4), []).append((x + math.cos(a) * 0.03 - 0.02, r + math.sin(a) * 0.02 - 0.015, z, x + math.cos(a) * 0.03 + 0.02, r + math.sin(a) * 0.02 + 0.015, z + 0.012))
-                else:                                              # a tiny flower on a stalk
-                    fc = k.rng.choice(FLOWERS)
-                    hh = k.rng.uniform(0.05, 0.11)
-                    beds[mid].append((x, r, z, hh, 0.008, 0.0, 0.0))
-                    dots.setdefault(fc, []).append((x - 0.032, r - 0.026, z + hh - 0.012, x + 0.032, r + 0.026, z + hh + 0.034))
-                    dots.setdefault('#f8e070', []).append((x - 0.007, r + 0.019, z + hh + 0.008, x + 0.007, r + 0.024, z + hh + 0.02))
-        if k.rng.random() < 0.06:
+                hh = k.rng.uniform(0.07, 0.13)
+                beds[mid].append((x, r, z, hh, 0.008, 0.0, 0.0))
+                sz = k.rng.uniform(0.022, 0.03)
+                dots.setdefault(fc, []).append((x - sz, r - sz * 0.8, z + hh - 0.012, x + sz, r + sz * 0.8, z + hh + 0.026))
+                if fc != '#f8d848':
+                    dots.setdefault('#f8e070', []).append((x - 0.006, r + sz * 0.8 - 0.004, z + hh + 0.008, x + 0.006, r + sz * 0.8 + 0.002, z + hh + 0.02))
+        if k.rng.random() < 0.05 * flowers:
+            cx_, cr_ = c + k.rng.random(), rr + k.rng.random()
+            for _ in range(k.rng.randint(4, 9)):
+                x, r = cx_ + k.rng.uniform(-0.3, 0.3), cr_ + k.rng.uniform(-0.22, 0.22)
+                z = spot(x, r)
+                if z is None:
+                    continue
+                for j in range(3):
+                    a = j * 2.1 + k.rng.uniform(0, 0.5)
+                    dots.setdefault(_mix(deep, mid, 0.5), []).append((x + math.cos(a) * 0.028 - 0.018, r + math.sin(a) * 0.02 - 0.014, z,
+                                                                       x + math.cos(a) * 0.028 + 0.018, r + math.sin(a) * 0.02 + 0.014, z + 0.012))
+        if k.rng.random() < 0.04:
             x, r = c + k.rng.random(), rr + k.rng.random()
-            part, z = k.top(x, r)
-            if part is not None and any(part == o or part.startswith(o + '_') for o in ok) and inside(x, r):
+            z = spot(x, r)
+            if z is not None:
                 sz = k.rng.uniform(0.03, 0.06)
                 dots.setdefault('#8a8478', []).append((x - sz, r - sz * 0.7, z, x + sz, r + sz * 0.7, z + sz * 0.6))
     for col, items in beds.items():
         if items:
-            k.blades(items, (col, 0.32), 'grass_blade')
+            k.blades(items, (col, 0.25), 'grass')     # one with the turf: no line work round each blade
     for col, rects in dots.items():
-        k.boxes(rects, (col, 0.3), 'meadow_flower' if col in FLOWERS else 'clover')
+        k.boxes(rects, (col, 0.25), 'meadow_flower' if col in FLOWERS else 'grass')
 
 
 def sand(k, x0, r0, x1, r1, tone='#8a7a5a'):

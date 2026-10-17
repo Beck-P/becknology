@@ -123,12 +123,25 @@ def earth(k, x0, r0, x1, r1):
         k.rock(x, r, 0.0, s, s * 0.8, 0.03, (shade(EARTH, k.rng.uniform(0.75, 1.2)), 0.3), part='clod', segs=6)
 
 
+DIRT = '#a08a68'
+
+
 def dirt_path(k, x0, r0, x1, r1):
-    k.box(x0, r0, -0.01, x1, r1, 0.006, ('#9a7a4e', 0.3), 'path')
+    """A trodden earth path: sandy dirt speckled light and dark, small stones, the turf creeping over its edges."""
+    k.box(x0, r0, -0.01, x1, r1, 0.006, (DIRT, 0.0), 'path')
     k.later.append(lambda: W.ragged_edges(k, x0, r0, x1, r1, GRASS, z=0.006))       # the turf creeping over its edges
-    for _ in range(int((x1 - x0) * (r1 - r0) * 0.8)):
+    specks = {shade(DIRT, 0.8): [], shade(DIRT, 0.9): [], shade(DIRT, 1.12): [], shade(DIRT, 0.66): []}
+    cols = list(specks)
+    for _ in range(int((x1 - x0) * (r1 - r0) * 36)):
         x, r = k.rng.uniform(x0, x1), k.rng.uniform(r0, r1)
-        k.rock(x, r, 0.0, 0.04, 0.035, 0.02, (shade('#9a7a4e', k.rng.uniform(0.7, 1.1)), 0.3), part='pebble', segs=5)
+        a, b = k.rng.uniform(0.012, 0.03), k.rng.uniform(0.01, 0.022)
+        specks[k.rng.choices(cols, (0.3, 0.35, 0.25, 0.1))[0]].append((x - a, r - b, 0.006, x + a, r + b, 0.0075))
+    for col, rs in specks.items():
+        k.boxes(rs, (col, 0.0), 'path')
+    for _ in range(int((x1 - x0) * (r1 - r0) * 0.9)):
+        x, r = k.rng.uniform(x0, x1), k.rng.uniform(r0, r1)
+        sz = k.rng.uniform(0.025, 0.05)
+        k.rock(x, r, 0.0, sz, sz * 0.85, sz * 0.5, (shade('#a09888', k.rng.uniform(0.75, 1.1)), 0.2), part='pebble', segs=5)
 
 
 def beehive(k, cx, cr):
