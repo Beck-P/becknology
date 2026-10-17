@@ -7,6 +7,8 @@ only partly done, the rest stays here as open.
 ## October 17 (the nature, the fleet, the empire)
 | Ask | Status | Where / notes |
 |---|---|---|
+| Buildings need more detail — roofs are "a square with some lines on it"; make the world more detailed and alive | in progress | Done in the kit: shingled roofs (courses, joints, ridge tiles, gutters, moss), brick chimneys, ivy, doorstep pots, snowy roofs as drifts. Every outdoor scene is re-rendering with it (queue below). Next: walls, footings, street clutter. |
+| Update the title page (the Becknology start screen) | discuss | Proposal in chat: the mothership over the planet it's parked at (real day/night), a crafted pixel BECKNOLOGY logo, a real menu (Continue as Beck with portrait/where/coins, settings, who's online), later postcards of the worlds. Waiting on Beck's pick. |
 | Grass should be actual drawn grass and textures, "not random blobs", "subtle little grass… down to that small level" | **done** (rolling out) | Hand-drawn pixel marks stamped over every meadow (`scene_post.grass_detail`); broad patches evened out; the turf's grain in tile units. Each outdoor scene gets it as it re-renders (queue below). |
 | "Use open source projects where it helps" | noted | Use permissively licensed (CC0 / MIT) tools or art only; none adopted yet. |
 | Apply the seasons to all the places in those worlds | **done** | Ground through the year on every outdoor place of Lumar and Verdance (js/foliage.js `ground`), trees already turned. Fully visible once each scene re-renders with its grass marked. |
@@ -38,10 +40,9 @@ only partly done, the rest stays here as open.
 | Brambleford square: grass between the cobbles | in progress | Fixed in the kit; the village is in the render queue. |
 | The farm's field soil | in progress | Crumbly earth; the farm is in the render queue. |
 
-## Render queue (outdoor scenes re-rendering with the meadow, trees, seasons, grass/water marks, drawn grass)
-Done and live: Verdance farm (first pass), Starling Holm, Diggen's Point, Crownhaven (these four before the grass marks —
-queued again), Tern Holm (with everything). Queued: Sapphire, Crimson, Hoarfell town, the market square, Rose Cove,
-Sylvara, Midnight Isle, the farm again, Brambleford, then the holm, the harbour and Crownhaven again.
+## Render queue (every outdoor scene, once, with everything: meadow, drawn grass, trees and seasons, grass/water marks, the new roofs and house fronts)
+Running (two queues): Crownhaven, Tern Holm, Diggen's Point, the farm, Midnight Isle, Sylvara · Brambleford, Starling Holm,
+Sapphire, Crimson, Rose Cove, the market square, Hoarfell town. Each ships as it finishes.
 
 ## Older threads still open (from before this session; check what's left before calling them done)
 - Two ships: mothership home base + landing shuttle (#18)
