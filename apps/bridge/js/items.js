@@ -261,6 +261,11 @@ var BridgeItems = (function () {
     if (!(w && w.remote) && !(w && w.dot) && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('gear')) dmg = Math.round(dmg * 1.05);   // tools and weapons, all found
     var F = typeof BridgeFight !== 'undefined' ? BridgeFight : null, follow = F && !(w && w.remote) && F.follower(target);
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
+    // a creature's own armour (js/combat.js kinds: a rime beetle's shell, the wyrm under the snow) takes its share first
+    if (!(w && (w.remote || w.dot)) && target.creature && typeof BridgeCombat !== 'undefined' && BridgeCombat.guard) {
+      dmg = BridgeCombat.guard(world, target, dmg, w);
+      if (dmg <= 0) return;
+    }
     target._hp -= dmg;
     var dot = w && w.dot;
     if (!dot) target._hitAt = performance.now();
@@ -581,6 +586,40 @@ var BridgeItems = (function () {
     var u = s / 16;
     px(ctx, x, y, u, '#1a1028', [[5, 5, 6, 7], [6, 4, 4, 9]]);
     px(ctx, x, y, u, '#8a60e0', [[6, 6, 4, 5]]); px(ctx, x, y, u, '#d8c8ff', [[7, 7, 2, 2]]); px(ctx, x, y, u, '#c0a0ff', [[7, 2, 1, 2], [9, 3, 1, 1]]);
+  }
+  // Hoarfell's hidden valley (js/valley.js): what its creatures leave
+  function peltIcon(ctx, x, y, s) {               // a folded pelt, white-blue fur
+    var u = s / 16;
+    px(ctx, x, y, u, '#121a26', [[2, 5, 12, 8], [4, 4, 8, 1], [3, 13, 3, 1], [10, 13, 3, 1]]);
+    px(ctx, x, y, u, '#8aa0c0', [[3, 6, 10, 6]]); px(ctx, x, y, u, '#c8d8ec', [[3, 6, 10, 3], [4, 12, 2, 1], [10, 12, 2, 1]]);
+    px(ctx, x, y, u, '#f0f8ff', [[4, 6, 3, 1], [9, 7, 2, 1]]);
+  }
+  function shellIcon(ctx, x, y, s) {              // a domed plate of blue shell, rime on its ridge
+    var u = s / 16;
+    px(ctx, x, y, u, '#0e1622', [[3, 5, 10, 8], [5, 4, 6, 1]]);
+    px(ctx, x, y, u, '#2a4a6a', [[4, 6, 8, 6]]); px(ctx, x, y, u, '#4a7aa8', [[5, 6, 6, 3]]); px(ctx, x, y, u, '#e8f8ff', [[7, 5, 2, 1], [6, 7, 1, 1]]);
+    px(ctx, x, y, u, '#1a2a3a', [[7, 9, 2, 3]]);
+  }
+  function wingIcon(ctx, x, y, s) {               // a bat's wing, the membrane between its fingers
+    var u = s / 16;
+    px(ctx, x, y, u, '#0e1220', [[2, 3, 2, 9], [4, 4, 3, 8], [7, 5, 3, 6], [10, 6, 3, 4], [13, 6, 1, 2]]);
+    px(ctx, x, y, u, '#4a6a9a', [[3, 4, 1, 7], [5, 5, 2, 6], [8, 6, 2, 4], [11, 7, 2, 2]]); px(ctx, x, y, u, '#7ab0d8', [[5, 5, 1, 3], [8, 6, 1, 2]]);
+  }
+  function coreIcon(ctx, x, y, s) {               // a golem's heart: a cyan glow in a fist of ice
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1420', [[4, 4, 8, 9], [3, 6, 10, 5]]);
+    px(ctx, x, y, u, '#5a8ab0', [[4, 6, 8, 5], [5, 5, 6, 7]]); px(ctx, x, y, u, '#a8e8ff', [[6, 7, 4, 3]]); px(ctx, x, y, u, '#ffffff', [[7, 8, 2, 1]]);
+  }
+  function essenceIcon(ctx, x, y, s) {            // a stoppered phial of pale cold light
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1018', [[5, 6, 6, 8], [6, 3, 4, 3]]);
+    px(ctx, x, y, u, '#5a4a3a', [[6, 3, 4, 2]]); px(ctx, x, y, u, '#9ae8ff', [[6, 7, 4, 6]]); px(ctx, x, y, u, '#e8fcff', [[7, 8, 1, 3]]);
+  }
+  function scaleIcon(ctx, x, y, s) {              // a great blue-white scale, iridescent at the edge
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1220', [[4, 2, 8, 11], [5, 13, 6, 1], [3, 4, 10, 7]]);
+    px(ctx, x, y, u, '#3a6a9a', [[4, 4, 8, 7], [5, 3, 6, 9]]); px(ctx, x, y, u, '#8ac8ec', [[6, 3, 4, 6]]); px(ctx, x, y, u, '#e8f8ff', [[7, 4, 1, 3]]);
+    px(ctx, x, y, u, '#a080e0', [[11, 6, 1, 3]]);
   }
   function shellKeyIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -1296,6 +1335,21 @@ var BridgeItems = (function () {
                      stackable: true, draw: posyIcon, value: 4 },
     lucky_horseshoe: { id: 'lucky_horseshoe', name: 'Lucky Horseshoe', desc: 'From Wat at the Anvil & Hoof, nail holes and all. Carried, the fish bite sooner.',
                      type: 'tool', stackable: false, draw: horseshoeIcon, value: 30, onUse: charmUse },
+    // the hidden valley under the Hoarspire (js/valley.js): what its creatures leave, and the wyrm's tooth
+    wolf_pelt:     { id: 'wolf_pelt', name: 'Ice Wolf Pelt', desc: 'Thick white fur, blue at the roots, from an ice wolf of the valley\'s outer slopes. Warm even wet.',
+                     type: 'material', stackable: true, draw: peltIcon, value: 24 },
+    rime_shell:    { id: 'rime_shell', name: 'Rime Shell', desc: 'A plate off a rime beetle\'s back, hard as glass and furred with frost that doesn\'t melt.',
+                     type: 'material', stackable: true, draw: shellIcon, value: 30 },
+    bat_wing:      { id: 'bat_wing', name: 'Ice Bat Wing', desc: 'Thin as paper and cold to touch. Held to the light it shows the veins, blue as a glacier.',
+                     type: 'material', stackable: true, draw: wingIcon, value: 16 },
+    golem_core:    { id: 'golem_core', name: 'Golem Core', desc: 'What kept a rime golem walking: a fist of old ice round a cyan glow that beats, very slowly.',
+                     type: 'material', stackable: true, draw: coreIcon, value: 90 },
+    wraith_essence: { id: 'wraith_essence', name: 'Wraith Essence', desc: 'The last of a frost wraith, stoppered in a phial. It mists the glass from the inside.',
+                     type: 'material', stackable: true, draw: essenceIcon, value: 60 },
+    wyrm_scale:    { id: 'wyrm_scale', name: 'Wyrm Scale', desc: 'A scale off the glacier wyrm, as broad as your hand, blue-white with a violet sheen at the edge. Proof, if anyone asks.',
+                     type: 'material', stackable: true, draw: scaleIcon, value: 180 },
+    wyrmfang:      { id: 'wyrmfang', name: 'Wyrmfang', desc: 'A sabre ground from the glacier wyrm\'s own tooth, bound in its hide. Its sweep cuts either side, and what it cuts is rimed and slowed.',
+                     type: 'weapon', stackable: false, draw: bladeIcon('#d8f0ff', '#2a4a6a', true, '#ffffff'), damage: 72, arc: true, frost: true, cls: 'sword', value: 400, onUse: weaponUse },
     wisp_ember:    { id: 'wisp_ember', name: 'Wisp Ember', desc: 'What\'s left of a will-o\'-wisp: a cold violet coal that won\'t go out. Morwen buys them.',
                      type: 'material', stackable: true, draw: emberIcon, value: 15 },
     tomb_key:      { id: 'tomb_key', name: 'Shell Key', desc: 'A key shaped like a cockle shell, green with the sea. A drowned thing in the graveyard on Midnight Isle was carrying it.',

@@ -54,6 +54,8 @@ TONES = {
     'w_axeblue':  ('#1a4a8a', '#3a8ae0', '#8ac0ff'),
     'w_red':      ('#5a1410', '#9a2a20', '#c84a3a'),
     'w_tide':     ('#24485a', '#5a92aa', '#bce4f4'),
+    'w_tooth':    ('#8aa4c0', '#d4e6f4', '#fafdff'),
+    'w_hide':     ('#1e3046', '#3a5674', '#5e80a4'),
 }
 
 Y = (math.pi / 2, 0, 0)      # turns a cone or cylinder (built along +z) to lie along -y
@@ -210,6 +212,15 @@ def tidebreaker(add, p):
     _tip(add, 'tip', -21.4, 2.8, 1.45, 0.38, 'w_tide', 'blade', p)
 
 
+def wyrmfang(add, p):
+    # the glacier wyrm's tooth ground to a sabre: a long pale curve, bound at the root in its blue hide, a scale for a guard
+    _hilt(add, p, grip='w_hide', guard='w_ice', pommel='w_ice', guard_w=1.7, pommel_r=0.75)
+    y, z, a = _curved(add, 'blade', -1.9, 11.5, 5, 7, 1.1, 0.34, 'w_tooth', 'blade', p)
+    add('cube', 'root', (0, -2.6, 0), (0.4, 0.8, 1.2), 'w_hide', 'grip', p)
+    add('cone', 'tip', (0, y - 0.8 * math.cos(a), z + 0.8 * math.sin(a)), (0.34, 1.0, 1.1), 'w_tooth', 'blade', p,
+        rot=(math.pi / 2 - a, 0, 0), vertices=4, radius1=1.0, radius2=0.0, depth=1.8)
+
+
 def hoe(add, p):
     _cyl(add, 'haft', 2.4, -12.0, 0.42, 'w_wood', 'haft', p, verts=8)
     add('cube', 'blade', (0, -12.3, -1.5), (1.35, 0.24, 1.2), 'w_iron', 'head', p)
@@ -235,6 +246,7 @@ WEAPONS = {
     'hoe':             ('pick', hoe, 12.3),
     'twin_fangs':      ('blade', twin_fangs, 9.0),
     'tidebreaker':     ('maul', tidebreaker, 24.2),      # a greatsword, swung with the maul's poses (js/arms.js 'great')
+    'wyrmfang':        ('sword', wyrmfang, 14.5),
 }
 TWIN = {'twin_fangs'}             # a second one in the other hand
 
