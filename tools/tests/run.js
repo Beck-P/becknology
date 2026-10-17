@@ -67,6 +67,7 @@ const SUITES = {
     ['combat/fight_test.js', SHOTS],
     ['combat/monsters.js', SHOTS],
     ['combat/energy.js'],
+    ['combat/bow.js', SHOTS + '/bow'],
     ['combat/look.js', SHOTS + '/look'],
     ['combat/shipviz.js', SHOTS + '/shipviz'],
   ]
@@ -91,6 +92,7 @@ const KEEP = new RegExp([
   /routes \d|busiest|in view|frames a second|traders|navy:|trawler:|privateer:|galleon:|man_of_war|pirate:|on the Midnight|hailed/,
   /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,
   /schedule|in a storm|the gun:|finished|prizes|at the gate|at the foot|gun: beck|racing:/,
+  /full draw|snap shot|close snap|fire arrow|ghost arrow|selected/,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
 

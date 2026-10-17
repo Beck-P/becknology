@@ -1354,22 +1354,22 @@ def build_human(spec):
         head.scale = (1.14,) * 3
 
 
-if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb|-attack|-weapons][-<style>]-<a|b>: one suit on one body, every head
+if WHO.startswith('pilot'):          # pilot[-sit|-ski|-climb|-attack|-bow|-weapons][-<style>]-<a|b>: one suit on one body, every head
     _parts = WHO.split('-')[1:]
     BODY = _parts.pop() if _parts and _parts[-1] in ('a', 'b') else 'a'
-    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb', 'attack', 'weapons') else 'stand'
+    MODE = _parts[0] if _parts and _parts[0] in ('sit', 'ski', 'climb', 'attack', 'bow', 'weapons') else 'stand'
     _rest = _parts[1:] if MODE != 'stand' else _parts
     STYLE = _rest[0] if _rest else 'flight'
     {'flight': build_pilot, 'coat': build_coat, 'plate': build_plate, 'thermal': build_thermal, 'runner': build_runner,
      'mystic': build_mystic, 'ranger': build_ranger}[STYLE]()
     if BODY == 'b':
         body_b()
-    if MODE in ('attack', 'weapons'):  # fighting (attacks.py, attack_rig.py): a waist to turn at, a grip, the weapons
+    if MODE in ('attack', 'bow', 'weapons'):  # fighting (attacks.py, attack_rig.py): a waist to turn at, a grip, the weapons
         import attack_rig
         import attacks
         import weapon_sprites
-        W, H = attacks.FRAME if MODE == 'attack' else attacks.WEAPON_FRAME
-        ORIGIN_PX = attacks.ORIGIN if MODE == 'attack' else attacks.WEAPON_ORIGIN
+        W, H = attacks.FRAME if MODE in ('attack', 'bow') else attacks.WEAPON_FRAME
+        ORIGIN_PX = attacks.ORIGIN if MODE in ('attack', 'bow') else attacks.WEAPON_ORIGIN
         RIG = attack_rig.rig(globals(), list(weapon_sprites.WEAPONS) if MODE == 'weapons' else
                              [w for w in os.environ.get('ATTACK_WEAPON', '').split(',') if w])   # a weapon in hand: a quick look
     if MODE == 'climb':                # arms over the head need a taller frame
@@ -1703,8 +1703,8 @@ def render_cell(base, dname, col, yaw, spec):
 
 def render_all(base):
     """Every frame of this character (as it's shown right now) into base/{id,depth,color_<variant>}/."""
-    if POSE == 'attack':
-        attack_rig.render_sheet(RIG, base, VARIANTS)
+    if POSE in ('attack', 'bow'):        # the bow's poses are a sheet of their own (attacks.BOW_COLS)
+        attack_rig.render_sheet(RIG, base, VARIANTS, attacks.BOW_COLS if POSE == 'bow' else None)
         return face_write(base)
     for kind in ['id', 'depth'] + ['color_' + v for v in VARIANTS]:
         os.makedirs(os.path.join(base, kind), exist_ok=True)
