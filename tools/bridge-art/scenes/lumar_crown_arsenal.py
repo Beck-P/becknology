@@ -57,7 +57,7 @@ I.ground(k, {(c, r) for c in range(0, COLS) for r in range(-3, 3)}, lambda x, r:
 # the yard: packed earth and grit, flagged where it's worked hardest, setts along the road and the quay
 k.box(-0.6, ROAD[0], -0.05, COLS + 0.6, QUAY, -0.01, ('#7a6e5c', 0.32), 'path_yard')
 for (x0, r0, x1, r1) in ((-0.6, ROAD[0], COLS + 0.6, ROAD[1]), (-0.6, 28.6, CHAN[0], QUAY - 0.3), (CHAN[1], 28.6, COLS + 0.6, QUAY - 0.3)):
-    W.cobbles(k, x0, r0, x1, r1, tone='#8e8676', size=0.3)
+    CAP.cobbles(k, x0, r0, x1, r1, tone='#8e8676', size=0.3)
 CAP.flagged(k, -0.6, 13.6, DOCK[0] - 0.4, 20.0, tone='#8a8274')
 CAP.flagged(k, DOCK[1] + 0.4, 13.6, COLS + 0.6, 19.6, tone='#8a8274')
 

@@ -80,7 +80,7 @@ k.box(X0 - 0.1, SOUTH + 0.15, DECK_Z - 0.12, X1 + 0.1, SOUTH + 0.32, DECK_Z + 0.
 
 # the street on the bridge: worn setts, a kerbed pavement under the shop fronts
 k.box(X0 - 4, ST[0], -0.07, X1 + 4, SOUTH, -0.012, ('#7a6e5c', 0.3), 'path_grit')
-W.cobbles(k, X0 - 4, ST[0] + 0.5, X1 + 4, SOUTH - 0.05, tone='#9a9080', size=0.26)
+CAP.cobbles(k, X0 - 4, ST[0] + 0.5, X1 + 4, SOUTH - 0.05, tone='#9a9080', size=0.26)
 CAP.flagged(k, X0 - 4, ST[0] - 0.05, X1 + 4, ST[0] + 0.5, tone='#a09684')
 
 # the south parapet: a coped wall, piers over each cutwater with a lamp, the loggia's arcade in the middle

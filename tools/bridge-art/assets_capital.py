@@ -43,6 +43,73 @@ def mix(a, b, t):
     return W._mix(a, b, t)
 
 
+# ---- batching: thousands of stones as a few meshes -----------------------------------------------------------------
+# A place the size of a district is tens of thousands of stones; as separate objects every render pass spends minutes
+# syncing them. The builders below collect their pieces by part and tone (quantized to STEPS shades between the two
+# ends of the range asked for) and add each bucket as one object (k.boxes / one bmesh) — the same stones, the same
+# lines between them (the toy finish draws them from the depth steps), a fraction of the objects.
+STEPS = 8
+
+
+class Batch:
+    def __init__(self, k):
+        self.k = k
+        self.b = {}
+
+    def box(self, x0, r0, z0, x1, r1, z1, tone, f, vary, part, rough=0.14):
+        lo, hi = vary
+        q = round((f - lo) / max(1e-6, hi - lo) * (STEPS - 1))
+        key = (part, shade(tone, lo + (hi - lo) * q / (STEPS - 1)), rough)
+        self.b.setdefault(key, []).append((x0, r0, z0, x1, r1, z1))
+
+    def flush(self):
+        for (part, col, rough), rects in self.b.items():
+            self.k.boxes(rects, (col, rough), part)
+        self.b = {}
+
+
+def cobbles(k, x0, r0, x1, r1, tone='#9a9080', size=0.3, skip=None, rng=None):
+    """W.cobbles, batched: rounded irregular setts over dark grout, a few meshes (one per tone) instead of a part each."""
+    import bmesh
+    from scenekit import S
+    rng = rng or k.rng
+    k.box(x0, r0, -0.12, x1, r1, -0.03, ('#24221e', 0.25), 'grout')
+    buckets = {}
+    r, i = r0, 0
+    while r < r1 - 1e-6:
+        x = x0 - (size / 2 if i % 2 else 0)
+        while x < x1 - 1e-6:
+            cx = x + size / 2 + rng.uniform(-0.04, 0.04)
+            cr = r + size / 2 + rng.uniform(-0.03, 0.03)
+            if x0 <= cx <= x1 and not (skip and skip(cx, cr)):
+                f = rng.uniform(0.8, 1.12)
+                q = round((f - 0.8) / 0.32 * (STEPS - 1))
+                buckets.setdefault(q, []).append((cx, cr, size * rng.uniform(0.4, 0.5), size * rng.uniform(0.38, 0.47),
+                                                  rng.uniform(0.0, 0.02), rng.choice((6, 7, 8)), rng.uniform(0, 1)))
+            x += size * rng.uniform(0.95, 1.05)
+        r += size
+        i += 1
+    for q, stones in buckets.items():
+        bm = bmesh.new()
+        for (cx, cr, rx, ry, top, n, ph) in stones:
+            ring_b, ring_t = [], []
+            for j in range(n):
+                a = (j + ph) * 2 * math.pi / n
+                ring_b.append(bm.verts.new((cx + math.cos(a) * rx, -(cr + math.sin(a) * ry) * S, -0.05)))
+                ring_t.append(bm.verts.new((cx + math.cos(a) * rx * 0.82, -(cr + math.sin(a) * ry * 0.82) * S, top)))
+            bm.faces.new(ring_t)
+            for j in range(n):
+                bm.faces.new((ring_b[j], ring_b[(j + 1) % n], ring_t[(j + 1) % n], ring_t[j]))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        import bpy
+        me = bpy.data.meshes.new('cobbles')
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new('cobbles', me)
+        k.scene.collection.objects.link(o)
+        k._finish(o, (shade(tone, 0.8 + 0.32 * q / (STEPS - 1)), 0.12), 'cobble')
+
+
 # ---- a townhouse ----------------------------------------------------------------------------------------------------
 def _corbels(k, x0, x1, rf, z):
     x = x0 + 0.25
@@ -73,8 +140,9 @@ def _framing(k, x0, x1, z0, z1, rf, timber, openings):
 
 def coursed(k, x0, x1, z0, z1, rf, tone, skip=(), part='stone_block', rng=None, size=(0.2, 0.26, 0.36, 0.58), vary=(0.82, 1.12)):
     """Coursed blocks of dressed stone on a face at row rf, leaving the openings in skip [(xa, xb, za, zb)] bare.
-    size: (course height min, max, block length min, max); vary: how far a block's tone strays."""
+    size: (course height min, max, block length min, max); vary: how far a block's tone strays. Batched (Batch)."""
     rng = rng or k.rng
+    bt = Batch(k)
     zz, i = z0, 0
     while zz < z1 - 0.05:
         h = rng.uniform(size[0], size[1])
@@ -83,11 +151,12 @@ def coursed(k, x0, x1, z0, z1, rf, tone, skip=(), part='stone_block', rng=None, 
             w = rng.uniform(size[2], size[3])
             a, b = max(x, x0), min(x + w, x1)
             if b - a > 0.06 and not any(sa < (a + b) / 2 < sb and sz0 < zz + h / 2 < sz1 for (sa, sb, sz0, sz1) in skip):
-                k.box(a + 0.015, rf - 0.02, zz + 0.015, b - 0.015, rf + 0.01 + rng.uniform(0, 0.012), min(z1, zz + h) - 0.015,
-                      (shade(tone, rng.uniform(*vary)), 0.16), part, bevel=0.012)
+                bt.box(a + 0.015, rf - 0.02, zz + 0.015, b - 0.015, rf + 0.01 + rng.uniform(0, 0.012), min(z1, zz + h) - 0.015,
+                       tone, rng.uniform(*vary), vary, part, 0.16)
             x += w
         zz += h
         i += 1
+    bt.flush()
 
 
 def shop_window(k, x0, x1, z0, z1, rf, frame='#3a2a1e', panes=(4, 2), energy=10):
@@ -528,25 +597,27 @@ def balustrade(k, xa, xb, r, h=0.7, tone=STONE_L):
 
 
 def flagged(k, x0, r0, x1, r1, tone='#8a8478', rng=None, part='flagstone'):
-    """Big flags a hair apart (a square or a pavement)."""
+    """Big flags a hair apart (a square or a pavement), batched."""
     rng = rng or k.rng
     k.box(x0, r0, -0.14, x1, r1, -0.03, ('#2a2724', 0.15), 'grout')
+    bt = Batch(k)
     r = r0 + 0.02
     while r < r1 - 0.02:
         x = x0 + rng.uniform(0, 0.3)
         h = rng.choice((0.36, 0.4, 0.44))
         while x < x1:
             w = rng.choice((0.48, 0.56, 0.62, 0.7))
-            k.box(max(x0, x) + 0.02, r + 0.02, -0.05, min(x1, x + w) - 0.02, min(r1, r + h) - 0.02, 0.0,
-                  (shade(tone, rng.uniform(0.86, 1.1)), 0.12), part, bevel=0.012)
+            bt.box(max(x0, x) + 0.02, r + 0.02, -0.05, min(x1, x + w) - 0.02, min(r1, r + h) - 0.02, 0.0,
+                   tone, rng.uniform(0.86, 1.1), (0.86, 1.1), part, 0.12)
             x += w
         r += h
+    bt.flush()
 
 
 def lane(k, x0, r0, x1, r1, tone='#9a9080', worn=None):
     """A cobbled lane on packed grit, worn bare here and there."""
     k.box(x0, r0, -0.07, x1, r1, -0.012, ('#7a6e5c', 0.3), 'path_grit')
-    W.cobbles(k, x0, r0, x1, r1, tone=tone, size=0.26, skip=worn)
+    cobbles(k, x0, r0, x1, r1, tone=tone, size=0.26, skip=worn)
 
 
 def theatre(k, x0, x1, r_back, r_front, name='LANTERN THEATRE'):

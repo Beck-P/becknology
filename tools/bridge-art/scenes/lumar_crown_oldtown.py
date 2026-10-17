@@ -106,7 +106,7 @@ def worn(x, r):
 
 # every street inside the walls in one carpet of cobbles (what the houses stand on, left out), on out through the gates
 k.box(WX + 0.4, NR, -0.07, COLS + 0.6, SR, -0.012, ('#7a6e5c', 0.3), 'path_grit')
-W.cobbles(k, WX + 0.4, NR, COLS + 0.6, SR - 0.1, tone='#9a9080', size=0.3, skip=worn)
+CAP.cobbles(k, WX + 0.4, NR, COLS + 0.6, SR - 0.1, tone='#9a9080', size=0.3, skip=worn)
 # pavements of big flags along every house front, a kerb at their edge
 for sp in ROWSPEC:
     for (a, b) in segs(sp):
