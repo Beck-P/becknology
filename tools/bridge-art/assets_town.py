@@ -769,25 +769,44 @@ def street_clutter(k, area, seed, density=1.0, straw=(), chalk=None):
                 if z is not None:
                     k.sphere(x, r, z + 0.035, 0.038, 0.035, (rr.choice(('#b02a22', '#c8a028', '#5a8a2a')), 0.2), 'apple', segs=8)
         if chalk:                                                             # hopscotch: 1, 2, 1, 2, 1, and the round home
-            cx, cr = chalk
             s, rows = 0.3, (1, 2, 1, 2, 1)
-            if all(paving(cx + dx, cr - dy) is not None for dx in (-0.32, 0.32) for dy in (0.0, s * 5.6)):
-                c = ('#e4e0d4', 0.3)
 
-                def line(p, q, u, v):                                         # chalk follows the stones' own tops
-                    z = paving((p + u) / 2, (q + v) / 2)
-                    if z is not None:
-                        k.box(p, q, z - 0.02, u, v, z + 0.004, c, 'chalk')
+            def clear(x, r):                                                  # bare paving under all of it, with a margin
+                return all(paving(x + dx, r - dy) is not None for dx in (-0.42, -0.2, 0.0, 0.2, 0.42)
+                           for dy in [i * 0.15 - 0.1 for i in range(int((s * 5 + 0.55) / 0.15) + 1)])
+            # the nearest clear spot to the one asked for (a stall, a lamp post or a planter is often just where it was
+            # asked: then the next one along, never on top of it)
+            cx, cr = chalk
+            spots = sorted(((dx * 0.25, dy * 0.25) for dx in range(-16, 17) for dy in range(-16, 17)),
+                           key=lambda d: (d[0] ** 2 + d[1] ** 2, d))
+            found = next(((cx + dx, cr + dy) for dx, dy in spots
+                          if x0 + 0.4 <= cx + dx <= x1 - 0.4 and r0 + s * 5 + 0.5 <= cr + dy <= r1 and clear(cx + dx, cr + dy)), None)
+            print('street clutter: hopscotch', 'at (%.2f, %.2f)' % found if found else 'nowhere clear near (%.2f, %.2f)' % (cx, cr))
+            if found:
+                cx, cr = found
+                c, w = ('#e4e0d4', 0.3), 0.036
+
+                def line(p, q, u, v):                                         # chalk follows the stones' own tops in short
+                    across = u - p > v - q                                    # pieces (over cobbles' humps and into their
+                    n = max(1, int(((u - p) if across else (v - q)) / 0.05 + 0.5))   # joints), and takes their part, so no
+                    for i in range(n):                                        # line work rings it
+                        if across:
+                            a, b, e, f = p + (u - p) * i / n, q, p + (u - p) * (i + 1) / n, v
+                        else:
+                            a, b, e, f = p, q + (v - q) * i / n, u, q + (v - q) * (i + 1) / n
+                        z = paving((a + e) / 2, (b + f) / 2)
+                        if z is not None:
+                            k.box(a, b, z - 0.02, e, f, z + 0.004, c, on[0])
                 for i, n in enumerate(rows):
                     y1 = cr - i * s
                     for j in range(n):
                         xa = cx - n * s / 2 + j * s
-                        for (p, q, u, v) in ((xa, y1 - s, xa + s, y1 - s + 0.016), (xa, y1 - 0.016, xa + s, y1),
-                                             (xa, y1 - s, xa + 0.016, y1), (xa + s - 0.016, y1 - s, xa + s, y1)):
+                        for (p, q, u, v) in ((xa, y1 - s, xa + s, y1 - s + w), (xa, y1 - w, xa + s, y1),   # a pixel wide
+                                             (xa, y1 - s, xa + w, y1), (xa + s - w, y1 - s, xa + s, y1)):
                             line(p, q, u, v)
                 hz = paving(cx, cr - 5 * s - 0.2)
                 if hz is not None:
-                    annulus(k, cx, cr - 5 * s - 0.2, 0.17, 0.19, hz - 0.02, hz + 0.004, c, 'chalk', segs=20)
+                    annulus(k, cx, cr - 5 * s - 0.2, 0.16, 0.196, hz - 0.02, hz + 0.004, c, on[0], segs=20)
     k.later.append(run)
 
 
