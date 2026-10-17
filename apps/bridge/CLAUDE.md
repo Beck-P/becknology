@@ -500,6 +500,49 @@ Every Lumar DOCK says **Go sailing** (`go_sailing` → `BridgeSloop.board(worldI
 - **Arriving:** E (or a tap) within reach of any island's quay — the one you set a course for or not — brings you alongside (`moor(I)`, `dockAt`) and the island loads at its spawn by the dock; near your own quay you can put back in. Esc offers to keep sailing, skip ahead or put back. Sounds: the `lumar-passage` place (sea, wind, creak) and `luff`, `gybe`, `bell`, `thunder`.
 - Test hooks: `BridgeSloop._phase()`, `_boat()`, `_isles()`, `_route()`, `_things()`, `_commit(id)`, `_moored()`, `_loaded()` (the islands up), `_toWorld(cx, cy)`, `_sea(x, r)`, `_snap()` (the camera onto the boat), `_race()`.
 
+### The spore bloom (Lumar)
+Beck agreed it: "a night or two a month the whole sea lights up". `js/bloom.js` (BridgeBloom) keeps the calendar; the
+water everywhere draws it.
+- **When** (the same for every pilot, from the real moon and the date in Eastern time): each ET calendar month has one
+  bloom day — the day the real moon is nearest new in that month (`BridgeClock.moon`) — and in about half the months (a
+  hash of the month) the darker of its neighbours too: one or two bloom days a month (November 2026: the 9th and 10th).
+  A bloom day's nights are Lumar's nights centred in it (centred on 0:00, 8:00 and 16:00 ET): three Lumar nights a
+  day. The strength (`on(ms, worldId)`, 0..1) eases in as the light goes and out at dawn — (1 − the sun)^1.5, the sun
+  worked out for that moment from Lumar's own year (`daylightAt`), so every page agrees; on the Midnight Isle, which never
+  sees the sun, it's on all the bloom day. `next(ms)` → `{ tonight, days, date, start }`, `label()` → *The spore bloom:
+  tonight!* / *…is on: the whole sea's alight* / *Next spore bloom in 9 days*. `nights(y, mo)` lists a month's days.
+  Previews: `?at=2026-11-09T08:00` (Lumar's midnight on a bloom day), or `BridgeBloom._force(k)` (`null`: back to the
+  calendar).
+- **Each sea in its own light** (`HUE`, `core()` its brightest, near white): the Emerald green, the Sapphire blue, the Rose
+  pink, the Crimson ember-orange, the Midnight pale violet.
+- **The water** (`js/sea.js`, so it's everywhere the sea is drawn — the islands you walk, the sloop's open sea and the
+  islands it passes, the galleon's fallback, the window views): slow luminous currents — contour lines of a swirled noise,
+  in the sea's light, brighter where the spores have drifted together, in four flat dithered bands like the waves (two
+  textures of different sizes, 384 × 192 and 320 × 160, worked out a few rows a frame as the bloom first comes on, so
+  there's no stall and no visible repeat) — drifting slowly two ways over the waves (`bloomWater`: drawImage tiles over
+  just the rect drawn, quicker than a pattern fill); on an island's water layer they go in `source-atop`, so they keep
+  the water's opacity from `shore.png` (thin over the shallows) and run on from the open sea without a seam. The shore
+  (`animate`) lights up most: a glowing band out from the waterline in flat steps that swells as each wave comes in, the
+  foam lines and the wash at the waterline in the sea's brightest light — round rocks, beaches, piles and hulls. Motes
+  (`motes`) drift through the water, a few bright with a small plus of a halo; the night spores in `glints` brighten and
+  take the bloom's hue. Older scenes without `shore.png` get their foam band in its light. The brightest pixels are
+  saturated and above their neighbourhood, so js/gpu.js's glow (the eye's guess, outdoors) blooms the surf by itself.
+- **At sea** (`js/sloop.js` `drawBloom`, one call after the wake): soft dithered glows (`BridgeBloom.glowAt`, small
+  sprites added on — `blob`) along your wake, round every hull's waterline, in the V astern of every other ship, and in
+  the surf round rocks, the reef and things afloat; the galleon's wake (js/voyage.js) takes the bloom's light too.
+- **The chart** (js/chart.js `drawBloom`): a note under the title, every day (*Next spore bloom in 9 days*, glowing green
+  when it's tonight), and on a bloom night every sea washed in its own light with specks of it twinkling.
+- **People notice** (`arrive`, through the Lumar `ground` hook, checked once a second): a toast the first time you're on
+  Lumar's open ground once it's lit (*The spore bloom — the whole sea is alight tonight*), and on the quays of Diggen's
+  Point, Crownhaven, Tern Holm and Sapphire Port a few people gather by the pier to watch (`BridgeCrowd.gather`, round the
+  DOCK, facing the sea, half an hour). From the boat the rare fish bite a quarter more often on a bloom night
+  (js/fishing.js `pick`, `sea_*` pools).
+- **Cost**: two blits and a few hundred specks a frame on the open sea, two blits on an island's water layer, a little
+  more arithmetic in the shore's animation. Test: `world/bloom.js` (the calendar — one or two days every month, the same
+  on two pages, lit only on bloom nights — the note and the crowd, shots of Diggen's Point, Crownhaven, Rose Cove, the
+  Emerald and Rose Seas from the sloop and the chart, each beside an ordinary night: `shots/bloom_*.png`, and what it
+  adds to the sea's drawing a frame).
+
 ### Racing: anyone who's there, and the Emerald Regatta (js/race.js)
 Beck: "make it where you can race anybody else that's in there… I want to be able to race Alyssa" — on skis, up the face, across the water — and a sailing race round buoys and islands against the other sloops, on a set day each week.
 - **Racing someone** is a play-together game (js/together.js; `BridgeRace.here()` adds it to *Play a game…* where you stand): **Ski race** on the pistes, Fellhaven and the summit (`race-ski`: pick the run), **Climbing race** at the face and Fellhaven's route feet (`race-climb`: pick the route), **Sailing race** at any Lumar pier you can sail from (`race-sail`: a course from `COURSES` — first across the harbour mouth of any island you know near this one, and from Crownhaven the regatta's course). A stake as for any game. Each is taken to the start — the run's gate (side by side, `lane` ±0.75 tiles), the route's foot, your own sloop at the pier — and it **waits for both**: each says `rdy` over the game's wire (`BridgeTogether.send`) when they're in it, and on hearing the other's each sets the gun 3.5 s ahead, so both start within a heartbeat and each times their own run from their own gun. 3-2-1, go. The quicker time takes it: a time is scored as minus its milliseconds (together.js is higher-is-better), labelled as the time; Esc, falling off, or going ashore before the line is DNF. On the way the HUD says how you stand against them (ski: *Alyssa ahead / behind / down*, by who's further down the hill; climb: ALYSSA AHEAD / BEHIND / LEVEL by height, TOP when they're up), and a toast says when they're across (*Alyssa is down in 0:41.2*).

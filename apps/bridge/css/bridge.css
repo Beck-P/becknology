@@ -2226,6 +2226,8 @@ html.touch #chart-pill .ip-key { display: none; }
 }
 #sea-chart.open .ch-frame { transform: none; }
 #sea-chart .ch-title { text-align: center; color: #e0c060; font-size: 17px; letter-spacing: 2px; margin: 0 0 8px; text-transform: uppercase; }
+#sea-chart .ch-bloom { text-align: center; color: rgba(224, 192, 96, 0.8); font-size: 12px; letter-spacing: 1px; margin: -4px 0 8px; }
+#sea-chart .ch-bloom.on { color: #9effc8; text-shadow: 0 0 6px rgba(110, 255, 170, 0.75); }
 #sea-chart .ch-map { position: relative; line-height: 0; margin: 0 auto; width: max-content; }
 #sea-chart .ch-map canvas { image-rendering: pixelated; display: block; cursor: pointer; }
 #sea-chart .ch-label {

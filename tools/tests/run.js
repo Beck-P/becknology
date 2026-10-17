@@ -29,6 +29,7 @@ const SUITES = {
     ['world/litlight.js', SHOTS],
     ['world/orders.js', SHOTS],
     ['world/sea.js', SHOTS],
+    ['world/bloom.js', SHOTS],
     ['world/sleep.js', SHOTS],
     ['world/workshop.js', SHOTS],
     ['world/shipyard.js', SHOTS],
