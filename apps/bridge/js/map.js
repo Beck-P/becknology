@@ -79,12 +79,13 @@ var BridgeMap = (function () {
     person: { name: 'People', col: '#e3a33a', g: ['..###..', '..###..', '...#...', '.#####.', '#######', '#######', '.......'] },
     shop:   { name: 'Shops and traders', col: '#3c94d6', g: ['..###..', '.#####.', '##.#.##', '##...##', '##.#.##', '.#####.', '..###..'] },
     door:   { name: 'Ways in and out', col: '#2aa88a', g: ['.#####.', '.#...#.', '.#...#.', '.#..##.', '.#...#.', '.#...#.', '.#####.'] },
-    travel: { name: 'Ship, shuttle and sloop', col: '#8566e0', g: ['...#...', '..#.#..', '...#...', '#######', '...#...', '#..#..#', '.#####.'] },
+    travel: { name: 'Ship, shuttle, sloop and lifts', col: '#8566e0', g: ['...#...', '..#.#..', '...#...', '#######', '...#...', '#..#..#', '.#####.'] },
     fish:   { name: 'Fishing spots', col: '#2a86b8', g: ['.......', '..##..#', '.####.#', '#.#####', '.####.#', '..##..#', '.......'] },
     forage: { name: 'Things to gather', col: '#62a83a', g: ['...#...', '..###..', '.#####.', '.##.##.', '..###..', '...#...', '...#...'] },
     game:   { name: 'Games', col: '#d24f96', g: ['...#...', '..###..', '#######', '.#####.', '..###..', '.##.##.', '##...##'] },
     home:   { name: 'Yours', col: '#d8643a', g: ['...#...', '..###..', '.#####.', '#######', '.#...#.', '.#.#.#.', '.#.#.#.'] },
     use:    { name: 'Useful things', col: '#8a7a5a', g: ['.......', '.#####.', '.#...#.', '.#####.', '.#...#.', '.#####.', '.......'] },
+    start:  { name: 'Quests to start', col: '#f2a020', g: ['..###..', '..###..', '..###..', '..###..', '..###..', '.......', '..###..'] },
     clue:   { name: 'Clues you\'ve found', col: '#e2b632', g: ['..###..', '..###..', '..###..', '..###..', '...#...', '.......', '..###..'] }
   };
   var UNKNOWN = ['..###..', '.#...#.', '.....#.', '....#..', '...#...', '.......', '...#...'];
@@ -148,6 +149,10 @@ var BridgeMap = (function () {
       var met = P.met(person.id);
       return { cat: 'person', name: met ? person.name : 'Someone', sub: met ? person.role : 'You haven\'t met yet' + (clues[label] ? ' · a clue in ' + clues[label] : '') };
     }
+    if ((t === 'express_lift' || t === 'air_cab' || t === 'loop_station') && typeof BridgeTransit !== 'undefined' && BridgeTransit.links) {   // js/transit.js
+      var lk = BridgeTransit.links(it);
+      if (lk) return { cat: 'travel', name: lk.name, sub: lk.to.length ? 'To ' + lk.to.map(function (w2) { return visited(w2) ? placeName(w2) : '?'; }).join(', ') : 'Nowhere open yet' };
+    }
     var ex = exitByLabel(wid, label, it.x, it.y);
     if (DOOR[t] || (ex && t !== 'dialog' && t !== 'random_dialog') || (ex && (label === 'FARMHOUSE' || label === 'PALACE GATE' || label === 'CLUB VOID' || label === 'CAPSULE HOTEL' || label === 'WHITE HOUSE'))) {
       var to = MERGE[it.target] || it.target || it.leaveTo || it.targetWorld || (ex && ex.to) || null;
@@ -193,10 +198,14 @@ var BridgeMap = (function () {
 
   // the markers for a world: one per thing (a door three tiles wide is one door)
   function markersFor(wid, data) {
-    var clues = cluesHere(wid), out = [];
+    var clues = cluesHere(wid), out = [], starts = typeof BridgeQuests !== 'undefined' && BridgeQuests.startsHere ? BridgeQuests.startsHere(wid) : {}, started = {};
     (data.interactions || []).forEach(function (it) {
       if (typeof it.x !== 'number') return;
       var m = classify(it, wid, clues);
+      if (it.label && starts[it.label] && !started[it.label]) {          // a quest you haven't begun starts here (the world's gold !)
+        started[it.label] = 1;
+        m = { cat: 'start', name: m ? m.name : title(it.label), sub: 'A quest starts here' + (m && m.sub ? ' · ' + m.sub : '') };
+      }
       if (!m) return;
       var same = out.filter(function (o) { return o.cat === m.cat && o.name === m.name && o.target === m.target && Math.abs(o.x - it.x) <= 2 && Math.abs(o.y - it.y) <= 2 &&
                                                    (m.cat !== 'person' || o.lab === it.label); })[0];   // two people you haven't met are two "Someone"s
@@ -502,6 +511,7 @@ var BridgeMap = (function () {
         foot.textContent = 'Between the islands you sail: Go sailing at any pier.' + (hidden ? ' ' + hidden + ' island' + (hidden > 1 ? 's' : '') + ' not on your chart yet.' : '');
         card.appendChild(foot);
       } else {
+        if (sys.id === 'arcadia') cutaway(card, ids, S, h);
         card.appendChild(tree(sys.root, ids, S, h));
         if (sys.id === 'ship') {
           var n2 = document.createElement('div');
@@ -553,6 +563,147 @@ var BridgeMap = (function () {
     ul.innerHTML = shown(rootId) ? node(rootId) : items(rootId);
     return ul;
   }
+  // ---- Arcadia, side on ---------------------------------------------------------------------------------------------
+  // A cutaway of the vertical city (assets/arcadia-lifts.json through js/transit.js): the Spires over the smog, the
+  // Mid-Levels and the Loop's ring, the District on the street, the Undercity and the Sump below it; each main place where
+  // it stands (named once you've been, "?" for one a way you know leads to), the express lifts as shafts between their
+  // stops, the cab routes arcing between pads. Drawn in a small native canvas scaled by a whole number; the names are text.
+  var CUT_W = 360, BANDS = { spires: [10, 50], midlevels: [66, 114], district: [118, 158], undercity: [162, 192], sump: [196, 222] }, CUT_H = 226;
+  function cutaway(card, ids, S, h) {
+    if (typeof BridgeTransit === 'undefined' || !BridgeTransit.ready) return;
+    card.classList.add('mp-sys-wide');
+    var box = document.createElement('div');
+    box.className = 'mp-cut';
+    box.innerHTML = '<div class="mp-cut-frame"><canvas class="mp-cut-cv" width="' + CUT_W + '" height="' + CUT_H + '"></canvas><div class="mp-cut-pins"></div></div>';
+    card.appendChild(box);
+    var tries = 0, go = function () {                                             // once it's on the page (the menu builds its pages off it)
+      if (box.isConnected && box.clientWidth) drawCut(box, ids, S, h);
+      else if (tries++ < 120) requestAnimationFrame(go);
+    };
+    BridgeTransit.ready(go);
+  }
+  function cutHash(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function drawCut(box, ids, S, h) {
+    var T = BridgeTransit.data() || {}, P = T.places || {}, inSys = {};
+    ids.forEach(function (k) { inSys[k] = 1; });
+    var frame = box.querySelector('.mp-cut-frame'), cv = box.querySelector('.mp-cut-cv'), pins = box.querySelector('.mp-cut-pins');
+    var dpr = window.devicePixelRatio || 1, avail = Math.max(240, box.clientWidth || 360);
+    var k = Math.max(1, Math.floor(avail * dpr / CUT_W)) / dpr;            // CSS px a native px: a whole number of device pixels
+    if (CUT_W * k > avail) k = avail / CUT_W;
+    frame.style.width = Math.round(CUT_W * k) + 'px'; frame.style.height = Math.round(CUT_H * k) + 'px';
+    cv.style.width = '100%'; cv.style.height = '100%';
+    var g = cv.getContext('2d'), now = performance.now();
+    g.imageSmoothingEnabled = false;
+    var X = function (u) { return Math.round(10 + u * (CUT_W - 20)); };
+    // the sky over the smog, the city's glow under it, the ground, the dark below
+    var sky = g.createLinearGradient(0, 0, 0, 158);
+    sky.addColorStop(0, '#05061a'); sky.addColorStop(0.3, '#0c1032'); sky.addColorStop(0.42, '#3a2654'); sky.addColorStop(0.62, '#1c0c2e'); sky.addColorStop(1, '#3a1040');
+    g.fillStyle = sky; g.fillRect(0, 0, CUT_W, 158);
+    for (var i = 0; i < 60; i++) { g.fillStyle = 'rgba(230,226,255,' + (0.3 + cutHash(i + 3) * 0.6).toFixed(2) + ')'; g.fillRect(Math.round(cutHash(i) * CUT_W), Math.round(cutHash(i + 99) * 46), 1, 1); }
+    g.fillStyle = '#16100c'; g.fillRect(0, 158, CUT_W, 38);                 // under the street
+    g.fillStyle = '#0e0a08'; for (var r = 162; r < 196; r += 6) g.fillRect(0, r, CUT_W, 1);
+    for (var sd = 0; sd < 40; sd++) { g.fillStyle = cutHash(sd + 7) > 0.7 ? '#60e090' : '#ffa850'; g.fillRect(Math.round(cutHash(sd + 50) * CUT_W), 164 + Math.round(cutHash(sd + 80) * 28), 1, 1); }   // sodium lamps and green tubes
+    var wat = g.createLinearGradient(0, 196, 0, CUT_H);
+    wat.addColorStop(0, '#0a1e22'); wat.addColorStop(1, '#04100f');
+    g.fillStyle = wat; g.fillRect(0, 196, CUT_W, CUT_H - 196);
+    g.fillStyle = 'rgba(64,200,190,0.5)'; for (var w2 = 0; w2 < CUT_W; w2 += 9) g.fillRect(w2 + (Math.floor(w2 / 9) % 2) * 3, 205 + (w2 % 4), 4, 1);
+    // the towers: dark, lit, standing on the street, the tallest through the smog into the stars
+    for (var t = 0; t < 34; t++) {
+      var tx = Math.round(cutHash(t * 3) * CUT_W), tw = 6 + Math.round(cutHash(t * 5) * 12), top = 66 + Math.round(cutHash(t * 7) * 80);
+      if (t % 7 === 0) top = 20 + Math.round(cutHash(t) * 30);
+      g.fillStyle = '#120e1e'; g.fillRect(tx, top, tw, 158 - top);
+      if (top < 60) {                                                             // a spire: white stone above the smog, gold at its crown
+        g.fillStyle = '#c8c0d0'; g.fillRect(tx, top, tw, 62 - top);
+        g.fillStyle = '#ece4dc'; g.fillRect(tx, top, Math.max(1, Math.floor(tw / 3)), 62 - top);
+        g.fillStyle = '#c8c0d0'; g.fillRect(tx + 2, top - 4, tw - 4, 4); g.fillRect(tx + Math.floor(tw / 2) - 1, top - 8, 3, 4);
+        g.fillStyle = '#e8c060'; g.fillRect(tx + Math.floor(tw / 2), top - 12, 1, 4);
+        g.fillStyle = ['#ffc0e0', '#c0e8ff', '#e0d0ff'][t % 3]; g.fillRect(tx, top + 10, tw, 1);
+      }
+      for (var wy = top + 3; wy < 156; wy += 4) for (var wx = tx + 1; wx < tx + tw - 1; wx += 3) {
+        var hh = cutHash(t * 131 + wy * 7 + wx);
+        if (hh > 0.62) { g.fillStyle = hh > 0.95 ? '#f078a8' : hh > 0.9 ? '#80e0e8' : top < 60 && wy < 60 ? '#a08868' : '#ffd890'; g.fillRect(wx, wy, 1, 1); }
+      }
+    }
+    // the smog between the Mid-Levels and the Spires
+    var sm = g.createLinearGradient(0, 46, 0, 70);
+    sm.addColorStop(0, 'rgba(160,110,180,0)'); sm.addColorStop(0.5, 'rgba(160,110,180,0.7)'); sm.addColorStop(1, 'rgba(120,70,140,0.2)');
+    g.fillStyle = sm; g.fillRect(0, 46, CUT_W, 24);
+    g.fillStyle = '#e870c0'; g.fillRect(0, 158, CUT_W, 1);                    // the street, in neon
+    // the Loop: a ring round the Mid-Levels, seen side on
+    var st = T.loop && T.loop.stations || [];
+    g.strokeStyle = 'rgba(92,200,208,0.85)'; g.lineWidth = 1;
+    g.beginPath(); g.ellipse(CUT_W / 2, 106, CUT_W * 0.42, 6, 0, 0, Math.PI * 2); g.stroke();
+    st.forEach(function (x, i) { var c = cutAt(x.world, P); if (c && inSys[x.world]) { g.fillStyle = '#5cc8d0'; g.fillRect(X(c.x) - 2, 103, 5, 3); } });
+    // the cab routes between pads: dashed arcs
+    var pads = (T.cabs && T.cabs.pads || []).filter(function (p) { return inSys[p.world]; });
+    g.fillStyle = 'rgba(255,214,120,0.55)';
+    for (var a = 0; a < pads.length; a++) for (var b = a + 1; b < pads.length; b++) {
+      var pa = cutAt(pads[a].world, P), pb = cutAt(pads[b].world, P);
+      if (!pa || !pb) continue;
+      for (var q = 0; q <= 40; q += 2) {
+        var u = q / 40, cx = X(pa.x + (pb.x - pa.x) * u), cy = pa.y + (pb.y - pa.y) * u - Math.sin(Math.PI * u) * 14;
+        g.fillRect(cx, Math.round(cy), 1, 1);
+      }
+    }
+    // the lift shafts: a line from their lowest stop to their highest, a dot at each stop
+    var shafts = T.shafts || {};
+    Object.keys(shafts).forEach(function (id) {
+      var sh = shafts[id], stops = (sh.lobbies || []).filter(function (l) { return inSys[l.world]; });
+      if (stops.length < 2) return;
+      var ys = stops.map(function (l) { var c = cutAt(l.world, P); return c ? c.y : null; }).filter(function (y) { return y != null; });
+      if (ys.length < 2) return;
+      var x = X(sh.x != null ? sh.x : 0.5), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+      g.fillStyle = 'rgba(10,8,18,0.8)'; g.fillRect(x - 1, y0, 3, y1 - y0);
+      g.fillStyle = 'rgba(200,220,255,0.75)'; g.fillRect(x, y0, 1, y1 - y0);
+      ys.forEach(function (y) { g.fillStyle = '#80e0e8'; g.fillRect(x - 1, y - 1, 3, 3); });
+    });
+    // the places: named where you've been, "?" where a way you know leads; the levels down the left
+    pins.innerHTML = '';
+    (T.levels || []).forEach(function (L) {
+      var B = BANDS[L.id];
+      if (!B) return;
+      var known = Object.keys(P).some(function (w) { return P[w].level === L.id && S[w] && inSys[w]; });
+      var lab = document.createElement('div');
+      lab.className = 'mp-cut-level' + (known ? '' : ' dim');
+      lab.style.top = (B[0] / CUT_H * 100) + '%';
+      lab.innerHTML = '<b>' + esc(L.tag) + '</b> ' + esc(known ? L.name : '?');
+      pins.appendChild(lab);
+    });
+    var cur = cutParent(h, P);
+    Object.keys(P).forEach(function (w) {
+      if (!inSys[w]) return;                                                       // not built yet
+      var c = cutAt(w, P), been = !!S[w], near = !been && cutNear(w, S, P);
+      if (!c || (!been && !near)) return;
+      var b = document.createElement(been ? 'button' : 'span');
+      if (been) { b.type = 'button'; b.setAttribute('data-w', w); }
+      b.className = 'mp-cut-pin' + (been ? '' : ' unknown') + (w === cur ? ' here' : '');
+      b.style.left = (X(c.x) / CUT_W * 100) + '%';
+      b.style.top = (c.y / CUT_H * 100) + '%';
+      b.innerHTML = '<i></i><span>' + esc(been ? P[w].name || placeName(w) : '?') + (w === cur ? ' \u00b7 you' : '') + '</span>';
+      pins.appendChild(b);
+    });
+    pins.querySelectorAll('[data-w]').forEach(function (b) {
+      b.addEventListener('click', function (e) { e.stopPropagation(); viewing = b.getAttribute('data-w'); mode = 'here'; draw(); });
+    });
+  }
+  function cutAt(w, P) {                                                           // a place's spot on the cutaway (tiles of the native canvas)
+    var p = P[w], B = p && BANDS[p.level];
+    return B ? { x: p.x != null ? p.x : 0.5, y: Math.round(B[0] + (B[1] - B[0]) * 0.62) } : null;
+  }
+  function cutParent(id, P) {                                                      // the main place a room is in (by the door that leads to it)
+    if (!id || P[id]) return id;
+    var hit = null;
+    Object.keys(P).forEach(function (w) { var A = W(w); if (A && A.exits.some(function (e) { return e.to === id; })) hit = w; });
+    return hit;
+  }
+  function cutNear(w, S, P) {                                                      // a way from somewhere you've been leads here
+    var T = BridgeTransit.data() || {};
+    if (Object.keys(S).some(function (k) { var A = W(k); return A && A.exits.some(function (e) { return e.to === w; }); })) return true;
+    var linked = function (list) { return list.some(function (a) { return a.world === w; }) && list.some(function (a) { return S[a.world]; }); };
+    if (Object.keys(T.shafts || {}).some(function (id) { return linked(T.shafts[id].lobbies || []); })) return true;
+    return linked(T.loop && T.loop.stations || []) || linked(T.cabs && T.cabs.pads || []);
+  }
+
   function planet(cv, sys, dim) {
     var g = cv.getContext('2d');
     g.imageSmoothingEnabled = false;
