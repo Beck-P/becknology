@@ -27,6 +27,7 @@ var BridgeMulti = (function () {
   function inst(wid, owner) {
     if (!wid) return null;
     if (/^lumar-rose-mine-[abc]$/.test(wid) && typeof BridgeMine !== 'undefined' && BridgeMine.party) return wid + '#' + BridgeMine.party();
+    if (/^lumar-undercroft-[abc]$/.test(wid) && typeof BridgeDungeon !== 'undefined' && BridgeDungeon.party) return wid + '#' + BridgeDungeon.party();
     if (!PERSONAL[wid]) return wid;
     var m = me();
     return wid + '@' + (owner || visiting || (m && m.id) || '');

@@ -621,6 +621,7 @@ var BridgeCombat = (function () {
     document.body.appendChild(veil);
     requestAnimationFrame(function () { veil.style.opacity = '1'; });
     var w = BridgeWorld.getWorld(), inMine = !!(w && w.mine), onMidnight = BridgeWorld.getWorldId() === 'lumar-midnight';
+    var away = w && w.onFaint;                                    // a place that says where you come round (the Undercroft, js/dungeon.js)
     setTimeout(function () {
       var st = BridgeInventory.getStats();
       BridgeInventory.restoreHP(Math.ceil(st.maxHP / 2));
@@ -628,12 +629,14 @@ var BridgeCombat = (function () {
       var after = function () {
         veil.style.opacity = '0';
         setTimeout(function () { veil.remove(); fainting = false; if (typeof BridgeControls !== 'undefined') BridgeControls.enable(); }, 900);
-        var who = inMine ? 'HOB' : onMidnight ? 'MORWEN' : 'SOMEONE';
+        var who = away ? away.who : inMine ? 'HOB' : onMidnight ? 'MORWEN' : 'SOMEONE';
         var line = onMidnight ? 'YOU COME ROUND ON THE PIER, A BLANKET OVER YOU THAT SMELLS OF WOODSMOKE AND CAT.\n\n"THE STONES DON\'T LIKE VISITORS," SAYS A VOICE FROM THE MIST. "AND I DON\'T LIKE CARRYING THEM. WATCH THE GROUND - IT TELLS YOU WHERE THEY\'LL STRIKE."' : inMine ? 'YOU COME ROUND ON A CRATE IN THE HALL. HOB IS WATCHING YOU OVER HIS PIPE.\n\n"FOUND YOU ON THE LADDER. TAKE FOOD DOWN WITH YOU NEXT TIME, AND DON\'T FIGHT WHAT YOU CAN WALK AWAY FROM."'
                           : 'YOU COME ROUND, ACHING, WHERE YOU STARTED. WHATEVER IT WAS, IT LOST INTEREST IN YOU.';
+        if (away) line = away.line;
         setTimeout(function () { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say(who, line); }, 400);
       };
-      if (inMine) BridgeWorld.enterWorld('lumar-rose-mine', [12, 6]);
+      if (away) BridgeWorld.enterWorld(away.world, away.spawn);
+      else if (inMine) BridgeWorld.enterWorld('lumar-rose-mine', [12, 6]);
       else BridgeWorld.enterWorld(BridgeWorld.getWorldId(), null);
       setTimeout(after, 900);
     }, 1800);

@@ -37,7 +37,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await p.waitForTimeout(1500);
   await ev(() => BridgeMenu.open('ledger'));
   await p.waitForTimeout(800);
-  await ev(() => [...document.querySelectorAll('.lg-act')].find(li => /Good Hope/.test(li.textContent)).click());
+  await ev(() => [...document.querySelectorAll('.lg-fleet .lg-act')].find(li => /Good Hope/.test(li.textContent)).click());   // (the fleet's row: the Standing orders section lists her too)
   await p.waitForTimeout(600);
   console.log('send screen:', (await ev(() => (document.querySelector('.world-dialog') || {}).innerText || 'none')).replace(/\n+/g, ' | ').slice(0, 300));
   await p.screenshot({ path: SHOTS + '/orders_send.png' });

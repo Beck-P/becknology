@@ -12,6 +12,10 @@
  *                 here (js/worlds/office.js, which pins the same people's faces to it: `roster`)
  *   People        who you can hire: your crew (where they stand, what they do for you), the farm's hands, the hands
  *                 aboard your ships; anyone you haven't met yet is a shadow with a hint where to look
+ *   Today         the morning dispatch (js/dispatch.js): what's on the desk this morning, decided or not
+ *   Orders        your captains and their ships' standing orders (js/orders.js): each loop, where she is on it, what
+ *                 her runs have made; captains ashore; captains for hire
+ *   Treasury      the last seven days' money in and out by source, as little bars a day (js/treasury.js), and the hints
  *   Fleet         every ship: where she lies (or how long till she's home), hull, hold, fish hold, hands
  *   Places        your homes, the farm, the holm and what's built on it, the Workshop and what's being made there
  *   Contracts     what you've promised to carry, where, by when
@@ -82,6 +86,11 @@ var BridgeLedger = (function () {
     if (dry && !(has('BridgeHomestead') && BridgeHomestead.active && BridgeHomestead.active('tam'))) out.push({ name: 'Thirsty rows', sub: dry + ' planted tiles have dried out — water them, or hire Tam', world: 'verdance' });
     var herd = has('BridgeAnimals') ? BridgeAnimals.journal() : [], ready = herd.filter(function (a) { return a.ready; }).length;
     if (ready) out.push({ name: 'In the barnyard', sub: ready + (ready === 1 ? ' animal has' : ' animals have') + ' eggs or milk for you', world: 'verdance' });
+    if (has('BridgeOrders')) out = out.concat(BridgeOrders.needs());
+    if (has('BridgeDispatch') && BridgeDispatch.undecided()) {
+      var und = BridgeDispatch.undecided();
+      out.push({ name: 'The morning dispatch', sub: und + ' thing' + (und === 1 ? '' : 's') + ' to decide — on your desk in the office, or under Today here (none of it has to be)', act: function () { closeMenu(); BridgeDispatch.open(); } });
+    }
     if (has('BridgeTrade')) {
       var d0 = BridgeTrade.today();
       BridgeTrade.mine().forEach(function (c) {
@@ -151,6 +160,11 @@ var BridgeLedger = (function () {
   function roster() {
     var out = [], B = has('BridgeBusiness') ? BridgeBusiness : null, F = has('BridgeFleet') ? BridgeFleet : null;
     if (B && B.staff) B.staff().forEach(function (x) {
+      if (x.at === 'captain' && has('BridgeOrders')) {             // a captain (js/orders.js): at sea, lying somewhere, ashore
+        var c = BridgeOrders.captainRow(x);
+        out.push({ name: x.name, face: c.face, state: c.state });
+        return;
+      }
       if (!B.get(x.at)) {                                         // a smith at your workshop (js/workshop.js): no opening hours
         var w = has('BridgeWorkshop') ? BridgeWorkshop.smithRow(x) : {};
         out.push({ name: x.name, face: w.face || B.faceOf(x, x.at), state: x.missed > 0 ? 'owed' : 'on' });
@@ -178,6 +192,12 @@ var BridgeLedger = (function () {
     // at your businesses
     if (B && B.staff) B.staff().forEach(function (x) {
       var d = B.get(x.at), on = d && B.openNow(x.at), coming = x.arrives && x.arrives > Date.now(), st = d ? B.status(x.at) : null;
+      if (x.at === 'captain' && has('BridgeOrders')) {             // a captain, on the same payroll (js/orders.js)
+        var c = BridgeOrders.captainRow(x);
+        rows.push({ name: x.name + ' · ' + String(x.title || 'captain').toLowerCase(), face: c.face, sub: c.sub + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
+                    fig: coins(x.wage) + '<small>/day</small>', alert: x.missed > 0, act: function () { closeMenu(); BridgeOrders.captain(x.id); } });
+        return;
+      }
       if (!d) {                                                     // a smith at your workshop (js/workshop.js), on the same payroll
         var w = has('BridgeWorkshop') ? BridgeWorkshop.smithRow(x) : { sub: '' };
         rows.push({ name: x.name + ' · ' + (x.title || 'smith').toLowerCase() + ' at the workshop', face: w.face, sub: w.sub + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
@@ -238,6 +258,12 @@ var BridgeLedger = (function () {
       var H = BridgeHomestead.HANDS[id], on = BridgeHomestead.active(id);
       rows.push({ name: H.name + ' · farm hand', sub: (on ? 'Working the farm today — ' : 'By the day, at the notice board on the farm — ') + H.does, fig: on ? '<span class="lg-ok">today</span>' : coins(H.wage) + '<small>/day</small>', world: 'verdance' });
     });
+    if (has('BridgeOrders')) {
+      var caps = BridgeOrders.captains(), fresh = BridgeOrders.candidates().filter(function (c) { return !c.taken && !c.locked; });
+      rows.push({ name: 'Captains for your ships', sub: (caps.length ? caps.length + ' working for you · ' : '') + 'three look for a ship each day: ' + BridgeOrders.candidates().map(function (c) { return c.name + ' (' + c.title.toLowerCase() + (c.locked ? ', not yet' : '') + ')'; }).join(', ') +
+                 ' — at the chart table in your office, or here', fig: fresh.length ? coins(fresh[0].wage) + '<small>/day</small>' : '', dim: !BridgeFleet.all().some(function (s) { return s.type !== 'sloop'; }),
+                 act: function () { closeMenu(); BridgeOrders.hireView(null); } });
+    }
     if (has('BridgeFleet')) {
       var hands = BridgeFleet._state().crew || [];
       if (hands.length) rows.push({ name: hands.length + ' hand' + (hands.length === 1 ? '' : 's') + ' aboard your ships', sub: hands.map(function (h) { return h.name + ' (' + h.role + ')'; }).join(', ') });
@@ -256,6 +282,7 @@ var BridgeLedger = (function () {
       var sp = BridgeFleet.spec(s.type), hold = 0;
       Object.keys(s.hold || {}).forEach(function (k) { hold += s.hold[k]; });
       var where = s.away && s.away.passage ? 'Sailing for ' + portName(s.away.to) + ' — arrives in ' + ago(Math.max(0, s.away.back - Date.now()))
+                : s.away && s.away.order ? BridgeFleet.where(s).replace(/^./, function (c) { return c.toUpperCase(); })
                 : s.away ? 'Away on a voyage — home in ' + ago(Math.max(0, s.away.back - Date.now())) : s.at ? 'Lying at ' + portName(s.at) : 'At whichever pier you\'re at';
       var crew = BridgeFleet.crewOn(s.id).length, fish = BridgeFleet.catchCount ? BridgeFleet.catchCount(s) : 0;
       // tap a ship lying somewhere to send her anywhere, from wherever you are (js/fleet.js order)
@@ -266,6 +293,56 @@ var BridgeLedger = (function () {
                act: sendable ? function () { closeMenu(); BridgeHarbour.send(s, function (msg) { if (msg) BridgeInteractions.choose({ title: 'Orders given', text: msg, closeLabel: 'Done' }); }); } : null };
     });
     return { html: list(rows), n: ships.length };
+  }
+
+  // ---- today's dispatch, standing orders, the treasury (js/dispatch.js, orders.js, treasury.js) -----------------------
+  function today() {
+    if (!has('BridgeDispatch')) return { html: '', n: '' };
+    var items = BridgeDispatch.today();
+    var rows = items.map(function (it) {
+      var k = BridgeDispatch.decided(it.id);
+      return { name: it.title, sub: k ? 'Decided: ' + BridgeDispatch.choiceLabel(it, k).replace(/ \(.*\)$/, '') : it.dfltText ? 'Left alone, ' + it.dfltText + ' — tap to read it' : 'Yours to decide — tap to read it',
+               fig: k ? '<span class="lg-ok">done</span>' : '', act: function () { closeMenu(); BridgeDispatch.view(it.id); } };
+    });
+    return { html: rows.length ? '<div class="lg-total lg-left">' + esc(BridgeDispatch.dateline()) + ' — the morning dispatch</div>' + list(rows) : '', n: rows.length ? BridgeDispatch.undecided() + ' to decide' : '' };
+  }
+  function orders() {
+    if (!has('BridgeOrders') || !has('BridgeFleet') || !BridgeFleet.all().some(function (s) { return s.type !== 'sloop'; })) return { html: '', n: '' };
+    var rows = [], sum = BridgeOrders.summary();
+    BridgeOrders.list().forEach(function (x) {
+      var s = x.ship, o = x.order;
+      rows.push({ name: s.name + (x.captain ? ' · ' + x.captain.name : ' · no captain'), sub: o ? x.name + ' · ' + x.line.replace(/^on standing orders(: |, )/, '') + (o.last[0] ? ' · last run: ' + o.last[0].story : '')
+                                                                                             : x.captain ? 'No standing orders yet — tap to give her some' : 'No captain — tap to hire one',
+                  fig: o && o.made ? coins(o.made) : '', alert: !!(o && o.wait && ['nocap', 'unpaid', 'gone', 'nodock', 'off', 'away'].indexOf(o.wait.code) >= 0),
+                  act: function () { closeMenu(); BridgeOrders.ship(s.id); } });
+    });
+    BridgeOrders.captains().forEach(function (p) {
+      var c = BridgeOrders.captainRow(p);
+      if (c.state === 'off' && /ashore/.test(c.sub)) rows.push({ name: p.name + ' · ' + String(p.title || 'captain').toLowerCase(), face: c.face, sub: 'Ashore, waiting for a ship', act: function () { closeMenu(); BridgeOrders.captain(p.id); } });
+    });
+    return { html: list(rows) + (sum.runs ? '<div class="lg-total">' + sum.runs + ' runs in all · ' + sum.made.toLocaleString() + ' coins made · ' + sum.day.toLocaleString() + ' in the last day</div>' : ''), n: sum.orders ? sum.orders + ' on orders' : '' };
+  }
+  function bars(series, col) {                                   // a bar a day: up for what came in clear, down for what went out
+    var max = 1;
+    series.forEach(function (v) { max = Math.max(max, Math.abs(v.in - v.out)); });
+    return '<span class="lg-bars">' + series.map(function (v) {
+      var net = v.in - v.out, h = Math.round(Math.abs(net) / max * 8);
+      if (net && !h) h = 1;
+      return '<i style="--c:' + (net >= 0 ? col : '#c04030') + ';--u:' + (net > 0 ? h : 0) + 'px;--d:' + (net < 0 ? h : 0) + 'px"></i>';
+    }).join('') + '</span>';
+  }
+  function treasury() {
+    if (!has('BridgeTreasury')) return { html: '', n: '' };
+    var Tr = BridgeTreasury, w = Tr.week();
+    if (!w.inAll && !w.outAll) return { html: '', n: '' };
+    var rows = Tr.CATS.filter(function (c) { return w.tot[c.id].in || w.tot[c.id].out; }).map(function (c) {
+      var t = w.tot[c.id], tw = Tr.trendWord(c.id, w);
+      return { name: c.name, sub: (t.in ? 'in ' + t.in.toLocaleString() : '') + (t.in && t.out ? ' · ' : '') + (t.out ? 'out ' + t.out.toLocaleString() : '') + (tw ? ' · ' + tw : ''),
+               fig: bars(w.series[c.id], c.col) + (t.net < 0 ? '−' : '') + coins(Math.abs(t.net)), alert: t.net < 0 && c.id !== 'wages' && c.id !== 'build' };
+    });
+    Tr.hints().forEach(function (h) { rows.push({ name: h.kind === 'up' ? 'Growing' : h.kind === 'down' ? 'Losing' : 'The next coin', sub: h.text, world: h.world && h.world !== 'office' ? h.world : null }); });
+    return { html: '<div class="lg-total lg-left">The last seven days: in ' + w.inAll.toLocaleString() + ' · out ' + w.outAll.toLocaleString() + ' · ' + (w.net >= 0 ? w.net.toLocaleString() + ' to the good' : (-w.net).toLocaleString() + ' down') + '</div>' + list(rows),
+             n: (w.net >= 0 ? '+' : '−') + Math.abs(w.net).toLocaleString() };
   }
 
   // ---- places of your own -------------------------------------------------------------------------------------------
@@ -312,13 +389,16 @@ var BridgeLedger = (function () {
     page = el || page;
     if (!page) return;
     acts = [];
-    var nd = needs(), bz = businesses(), sf = staff(), pp = people(), fl = fleet(), pl = places(), ct = contracts(), lg = legacy();
+    var nd = needs(), bz = businesses(), sf = staff(), pp = people(), fl = fleet(), pl = places(), ct = contracts(), lg = legacy(), td = today(), od = orders(), tr = treasury();
     var left = section('Needs you', nd.length || '', nd.length ? list(nd) : '<div class="jn-empty">Nothing needs you right now.</div>', 'jn-first') +
+               (td.html ? section('Today', td.n, td.html, 'lg-today') : '') +
+               (tr.html ? section('Treasury', tr.n, tr.html, 'lg-treasury') : '') +
                section('Businesses', bz.n, bz.html || '<div class="jn-empty">No businesses known yet.</div>') +
                (pl.html ? section('Your places', pl.n, pl.html) : '');
     var right = (sf.html ? section('Staff & payroll', sf.n, sf.html, 'lg-staff') : '') +
                 section('People you can hire', pp.n, pp.html || '<div class="jn-empty">Nobody yet.</div>') +
-                (fl.html ? section('Your fleet', fl.n, fl.html) : '') + (ct.html ? section('Contracts', ct.n, ct.html) : '') +
+                (od.html ? section('Standing orders', od.n, od.html, 'lg-orders') : '') +
+                (fl.html ? section('Your fleet', fl.n, fl.html, 'lg-fleet') : '') + (ct.html ? section('Contracts', ct.n, ct.html) : '') +
                 (lg.html ? section('Legacy', lg.n, lg.html) : '');
     page.innerHTML = '<div class="jn lg"><div class="jn-col">' + left + '</div><div class="jn-col">' + right + '</div></div>';
     page.querySelectorAll('.lg-go').forEach(function (b) {
@@ -334,11 +414,11 @@ var BridgeLedger = (function () {
     });
   }
 
-  function focusStaff() {
-    var sec = page && page.querySelector('.lg-staff');
+  function focus(which) {
+    var sec = page && page.querySelector('.lg-' + which);
     if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: 'start' });
   }
 
-  if (has('BridgeMenu') && BridgeMenu.page) BridgeMenu.page('ledger', { render: function (el, opts) { render(el); if (opts && opts.focus === 'staff') focusStaff(); }, leave: function () { page = null; } });
+  if (has('BridgeMenu') && BridgeMenu.page) BridgeMenu.page('ledger', { render: function (el, opts) { render(el); if (opts && opts.focus) focus(opts.focus); }, leave: function () { page = null; } });
   return { render: render, needs: needs, roster: roster, payroll: payroll };
 })();

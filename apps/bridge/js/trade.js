@@ -348,6 +348,8 @@ var BridgeTrade = (function () {
     return st.taken.slice();
   }
   function takeContract(c) { if (!mine().filter(function (x) { return x.id === c.id; })[0]) { st.taken.push(c); store(); } }
+  /** A contract delivered out of sight — by a captain on standing orders (js/orders.js), who's paid the fee. */
+  function complete(id) { st.done[id] = Date.now(); store(); }
   /** Hand over every contract due at this port that the ship has the goods for. Resolves [{contract, ok}] */
   function deliver(ship, P) {
     P = port(P);
@@ -422,6 +424,6 @@ var BridgeTrade = (function () {
   return { GOODS: GOODS, HAUL: HAUL, MARKET: MARKET, PORTS: PORTS, isGood: isGood, name: name, per: per, port: port, price: price,
            catchValue: catchValue, sellCatch: sellCatch, carryCatch: carryCatch, catchList: catchList,
            stock: stock, supply: supply, crates: crates, capacity: capacity, room: room, fits: fits, load: load, unload: unload,
-           buy: buy, sell: sell, noteSold: noteSold, bestRun: bestRun, routes: routes, circuits: circuits, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver,
+           buy: buy, sell: sell, noteSold: noteSold, bestRun: bestRun, routes: routes, circuits: circuits, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver, complete: complete,
            _state: function () { return st; } };
 })();

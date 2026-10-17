@@ -92,6 +92,12 @@ in particular places, and the path from "I have money" to "I have something wond
    figurehead. Later: a designer to lay out decks, guns and holds.
 3. **Running it from the office** — standing orders and captains (trade loops, supply runs between your holdings),
    the Workshop's queue, the fleet's chart, the treasury, the daily dispatch: one desk for the whole empire.
+   *(built, October 17: js/orders.js — captains in three grades on the payroll, trade loops of two to four ports and
+   supply runs from the holm's warehouse to your businesses' stock (and materials home for the Workshop), worked out on
+   the clock with risk by sea and a profit per run; js/dispatch.js — two to four seeded opportunities and troubles each
+   ET morning, each a choice with a safe default; js/treasury.js — money in and out by source over seven days, with
+   hints; the office's desk, workshop book, chart-table route lines and counting table, and the ledger's Today, Treasury
+   and Standing orders. The Bridge's CLAUDE.md, "Running it from the office".)*
 4. **Trophies and your own finds** — no hired warriors (Beck: "I don't know if I like the hired warriors hunt monsters
    and bring back the loot… fine to leave out"). The monsters you beat yourself and the relics you dig up yourself go
    in a trophy hall at your base; the rarest finds are always yours to go and get.

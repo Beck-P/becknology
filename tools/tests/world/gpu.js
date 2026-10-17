@@ -34,6 +34,13 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
     console.log('glow in', w, n > 0 ? 'on' : 'off', '(want ' + want + ')', '· drawn', await drawn(p));
     await p.screenshot({ path: SHOTS + '/gpu_' + w + '.png' });
   }
+  // a scene rendered with its glow image (scene.json "glow"): indoors too, from the image alone (a stand-in image here)
+  await p.route(/\/scenes\/lumar-tavern\/glow\./, r => r.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAFElEQVR4nGNgwAX+TzP6j1MSBQAAcMkCx2W3zKkAAAAASUVORK5CYII=', 'base64') }));
+  await go(p, 'lumar-tavern'); await p.waitForTimeout(800);                       // (seen above: its scene is loaded)
+  await p.evaluate(() => { BridgeScene.get('lumar-tavern').meta.glow = true; });
+  await go(p, 'lumar-tavern'); await p.waitForTimeout(1500);
+  console.log('glow in lumar-tavern with its glow image', (await frames(p)) > 0 ? 'on' : 'off', '(want on)');
+
   // a lost context: back to the plain frame, then the glow again once it's restored
   await go(p, 'arcadia-street'); await p.waitForTimeout(1200);
   await p.evaluate(() => { window.__lose = BridgeGPU._gl().getExtension('WEBGL_lose_context'); window.__lose.loseContext(); });
