@@ -609,6 +609,7 @@
       return audioCtx;
     }
     function playTone(freq, duration, vol, type) {
+      if ((function () { try { return (JSON.parse(localStorage.getItem('bridge_audio') || '{}') || {}).mode === 'off'; } catch (e) { return false; } })()) return;   // the Bridge's sound switch is off
       try {
         var ctx = getAudio();
         var osc = ctx.createOscillator();
