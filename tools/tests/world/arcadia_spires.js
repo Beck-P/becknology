@@ -74,6 +74,7 @@ const BASE = 'http://127.0.0.1:8766/';
   await close();
   await go('arcadia-spires', [70, 35]); await p.waitForTimeout(1200);
   console.log('air cab:', await use("i.type === 'air_cab'")); await p.waitForTimeout(500);
+  console.log(' says', await dialog());
   console.log(' offers', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('.wd-chooser .wd-sell-row .sp-name')].map(e => e.textContent))));
   await close();
 
@@ -85,7 +86,7 @@ const BASE = 'http://127.0.0.1:8766/';
     await shot('event_' + ev);
     await p.evaluate(() => BridgeEvents._clear());
   }
-  console.log('event check', JSON.stringify(await p.evaluate(() => (BridgeEvents._check() || []).filter(s => /spires|operaout|fireworks/.test(JSON.stringify(s))))));
+  console.log('event check', JSON.stringify(await p.evaluate(() => Promise.resolve(BridgeEvents._check()).then(o => (o || []).filter(s => /operaout|fireworks/.test(s))))));
   console.log('errors', errors);
   await b.close();
 })();
