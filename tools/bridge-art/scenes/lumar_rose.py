@@ -634,18 +634,46 @@ drift_c = [(6.5, 18.5), (15.5, 19.6), (5.2, 25.8), (14.6, 27.4), (12.4, 33.0), (
 for (dx, dr) in drift_c:
     for _ in range(rng.randint(4, 7)):
         x, r = dx + rng.uniform(-1.3, 1.3), dr + rng.uniform(-0.9, 0.9)
-        if clear_of_things(x, r, 0.3) and terrain.z(x, r) > -0.05:
-            WL.shrub(k, x, r, s=rng.uniform(0.22, 0.32), tone=rng.choice(('#365a30', '#3e6234', '#30502c')), blooms=ROSE,
+        if clear_of_things(x, r, 0.4) and terrain.z(x, r) > -0.05:
+            WL.shrub(k, x, r, s=rng.uniform(0.3, 0.42), tone=rng.choice(('#3e6a34', '#467238', '#38602e')), blooms=ROSE,
                      bloom_glow='#ff80c0')
 # wildflower clumps and heather over the whole island's turf
 for _ in range(420):
     x, r = rng.uniform(3, 53), rng.uniform(5, 38)
     if clear_of_things(x, r, 0.1) and terrace_h(x, r) is None and terrain.z(x, r) > -0.04 \
             and material(x, r) in ('grass', 'grass_dark', 'meadow', 'meadow_dark'):
-        if rng.random() < 0.25:
-            WL.heather(k, x, r, s=rng.uniform(0.18, 0.3), tone=rng.choice(('#8a4a7a', '#a05a8a', '#7a3a6a')))
+        WL.flowers(k, x, r, n=rng.randint(6, 12), cols=('#f8f0f4', '#f0d050', '#f0a0c8', '#c8a8f0', '#ffffff'))
+# groves: a few trees together in the open ground well off the paths, shrubs and ferns under them, heather round the edge
+GROVES = []
+for _ in range(3000):
+    x, r = rng.uniform(4, 52), rng.uniform(6, 37)
+    if clear_of_things(x, r, 1.8) and terrace_h(x, r) is None and pool_d(x, r) > 5 and pd(x, r) > 2.6 \
+            and math.hypot(x - 46.5, r - 19) > 3.5 and math.hypot(x - MINE[0], r - MINE[1]) > 3.5 \
+            and all(math.hypot(x - a, r - b) > 5.5 for (a, b) in GROVES + list(TREES)) \
+            and all((int(x + dx), int(r + dr)) in walk for dx in (-1.5, 0, 1.5) for dr in (-1.2, 0, 1.2)):
+        GROVES.append((x, r))
+    if len(GROVES) >= 9:
+        break
+GROVE_TREES = []
+for (gx, gr) in GROVES:
+    for j in range(rng.randint(2, 3)):
+        x, r = gx + rng.uniform(-0.9, 0.9), gr + rng.uniform(-0.7, 0.7)
+        if all(math.hypot(x - a, r - b) > 0.95 for (a, b) in GROVE_TREES):
+            GROVE_TREES.append((x, r))
+            with WL.own_dice(k, int(x * 100 + r)):
+                W.tree(k, x, r, h=rng.uniform(2.1, 2.9), tone=rng.choice(('#3e6a38', '#46723c', '#4e7a40', '#3a6034')))
+            k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
+    for _ in range(rng.randint(5, 8)):
+        a, d = rng.uniform(0, math.tau), rng.uniform(1.0, 1.9)
+        x, r = gx + math.cos(a) * d, gr + math.sin(a) * d * 0.8
+        roll = rng.random()
+        if roll < 0.4:
+            WL.shrub(k, x, r, s=rng.uniform(0.26, 0.38), tone=rng.choice(('#3a6430', '#467038')),
+                     blooms=rng.choice((None, '#f8f0f4', '#f0d050')))
+        elif roll < 0.7:
+            WL.fern(k, x, r, s=rng.uniform(0.32, 0.45), tone=rng.choice(('#4a7a34', '#3e6a30')))
         else:
-            WL.flowers(k, x, r, n=rng.randint(6, 12), cols=('#f8f0f4', '#f0d050', '#f0a0c8', '#c8a8f0', '#ffffff'))
+            WL.heather(k, x, r, s=rng.uniform(0.2, 0.3), tone=rng.choice(('#8a4a7a', '#a05a8a')))
 # dry-stone walls in short runs a tile off the meadow path, the odd stone fallen out of them
 WL.drystone(k, [(12.6, 13.3), (11.4, 16.7)], seed=6, solid=True)
 WL.drystone(k, [(11.24, 17.8), (10.7, 20.8)], seed=5, solid=True)
@@ -675,8 +703,10 @@ for (x, r) in TREES + ((MINE[0] - 2.0, MINE[1] - 0.6), (MINE[0] + 2.2, MINE[1] -
 
 WL.tick('scatter -------------------------')
 # ---- scatter --------------------------------------------------------------------------------------------------------
-I.tufts(k, [c for c in walk if material(c[0] + 0.5, c[1] + 0.5) in ('meadow', 'meadow_dark', 'grass', 'grass_dark')],
-        '#5a8040', per_cell=1.0, avoid=busy)
+SHORE = {(c + dc, r + dr) for (c, r) in land for dc in (-1, 0, 1) for dr in (-1, 0, 1)}      # the land and the coast's lip
+k.later.append(lambda: W.meadow(k, '#5a8040', cells=sorted(SHORE - set(TERRACE_CELLS)),
+                                ok=('ground', 'grass', 'coast_lip', 'coast_g:grass', 'coast_g:meadow'), density=1.0, avoid=busy,
+                                flowers=0.7, h=(0.06, 0.136)))
 k.later.append(lambda: W.meadow(k, GREEN, cells=TERRACE_CELLS, ok=('grass',), density=0.9, flowers=0.6, h=(0.07, 0.13)))
 I.pebbles(k, walk, '#8a7e78', per_cell=0.2, avoid=lambda x, r: pd(x, r) > 0.6)
 for (x, r) in ((7.4, 17.0), (17.2, 26.6), (35.0, 5.6), (21.4, 6.0), (47.6, 28.4), (38.8, 24.4)):

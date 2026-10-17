@@ -366,3 +366,12 @@ def test_hooks(k):
                 rd.border_min_x, rd.border_max_x = (ox + x0 * ts) / k.resx, (ox + x1 * ts) / k.resx
                 rd.border_min_y, rd.border_max_y = 1 - (oy + r1 * ts) / k.resy, 1 - (oy + r0 * ts) / k.resy
         k._settings = patched
+    if crop:                                         # the grass grows only in the window (the slowest part of a build)
+        meadow = W.meadow
+        x0, r0, x1, r1 = (float(v) for v in crop.split(','))
+
+        def cropped(k_, tone, area=None, cells=None, **kw):
+            if cells is not None:
+                cells = [(c, r) for (c, r) in cells if x0 - 1 <= c <= x1 and r0 - 1 <= r <= r1 + 2]
+            return meadow(k_, tone, area=area, cells=cells, **kw)
+        W.meadow = cropped
