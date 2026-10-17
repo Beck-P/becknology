@@ -49,62 +49,178 @@ body::after {
   );
 }
 
-/* ---- Intro ---- */
-.intro-ascii {
-  font-family: 'Courier New', Consolas, monospace;
-  white-space: pre;
-  font-size: 10px;
-  line-height: 1.15;
-  color: #e8e8f0;
-  text-align: center;
-  letter-spacing: 2px;
-  text-shadow:
-    0 0 8px rgba(160, 200, 255, 0.35),
-    0 0 24px rgba(160, 120, 220, 0.18);
-  margin: 0;
+/* ---- The title page (js/intro.js) ----
+   A terminal's phosphor over the scene: VT323, cyan readouts, a glass panel for the menu. Desktop: the wordmark at
+   the top, the readouts in the corners of a thin HUD frame, the menu low on the left; a phone: the wordmark and one
+   readout line up top, the menu across the bottom. */
+#intro-overlay.active { cursor: pointer; }
+.ti {
+  position: absolute; inset: 0;
+  font-family: 'VT323', 'Courier New', monospace;
+  color: #bfe9f3;
+  -webkit-font-smoothing: none;
+}
+.ti-scrim { display: none; }
+.ti-frame i {
+  position: absolute; width: 24px; height: 24px;
+  border: 0 solid rgba(127, 232, 240, 0.34);
+  pointer-events: none;
+}
+.ti-frame .tl { top: 14px; left: 14px; border-top-width: 1px; border-left-width: 1px; }
+.ti-frame .tr { top: 14px; right: 14px; border-top-width: 1px; border-right-width: 1px; }
+.ti-frame .bl { bottom: 14px; left: 14px; border-bottom-width: 1px; border-left-width: 1px; }
+.ti-frame .br { bottom: 14px; right: 14px; border-bottom-width: 1px; border-right-width: 1px; }
+.ti-read {
   position: absolute;
-  top: 12%;
-  left: 50%;
-  transform: translateX(-50%);
-  transition: opacity 0.3s;
-  animation: logo-breathe 5s ease-in-out infinite;
+  font-size: 16px; line-height: 1.1; letter-spacing: 1px;
+  color: rgba(160, 226, 238, 0.6);
+  white-space: nowrap; pointer-events: none;
+  text-shadow: 0 0 6px rgba(110, 220, 240, 0.25), 0 1px 2px rgba(0, 0, 0, 0.85);
 }
-
-@keyframes logo-breathe {
-  0%, 100% { text-shadow: 0 0 6px rgba(160, 200, 255, 0.32), 0 0 24px rgba(160, 120, 220, 0.14); }
-  50%      { text-shadow: 0 0 14px rgba(160, 200, 255, 0.55), 0 0 36px rgba(200, 160, 255, 0.28); }
+.ti-read.ti-l { top: 24px; left: 30px; }
+.ti-read.ti-r { top: 24px; right: 30px; text-align: right; }
+.ti-site {
+  position: absolute; transform: translateY(-100%);
+  font-size: 15px; line-height: 1; letter-spacing: 1px; white-space: nowrap; pointer-events: none;
+  color: rgba(214, 246, 252, 0.92);
+  text-shadow: 0 0 3px rgba(2, 8, 18, 0.95), 0 1px 2px rgba(2, 8, 18, 0.95), 0 0 8px rgba(2, 8, 18, 0.7);
+  opacity: 0; transition: opacity 0.8s;
 }
-
-.intro-prompt {
-  position: absolute;
-  bottom: 18%;
-  left: 50%;
-  transform: translateX(-50%);
-  transition: opacity 0.3s;
+.ti-site.on { opacity: 1; }
+.ti-site small { display: block; font-size: 14px; color: rgba(186, 230, 240, 0.85); }
+.ti-read.ti-m { display: none; position: static; margin-top: 6px; text-align: center; font-size: 15px; }
+.ti-head {
+  position: absolute; top: 9vh; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  pointer-events: none;
 }
-
-@media (max-width: 900px) {
-  .intro-ascii { font-size: 7px; letter-spacing: 1px; }
+#ti-mark { display: block; image-rendering: pixelated; }
+.ti-sub {
+  margin-top: 2px;
+  font-size: 19px; letter-spacing: 9px; padding-left: 9px;
+  color: rgba(186, 236, 246, 0.72);
+  text-shadow: 0 0 8px rgba(110, 220, 240, 0.35);
+  opacity: 0; transition: opacity 0.6s ease 0.2s;
 }
-
-@media (max-width: 600px) {
-  .intro-ascii { font-size: 4.5px; letter-spacing: 0.5px; top: 8%; }
+.ti-cur {
+  display: inline-block; width: 8px; height: 14px; margin-left: 2px; vertical-align: -1px;
+  background: #8ff0fa; box-shadow: 0 0 6px rgba(127, 232, 240, 0.7);
+  animation: ti-blink 1.06s steps(1) infinite;
 }
+@keyframes ti-blink { 50% { opacity: 0; } }
 
-.intro-prompt {
-  font-size: clamp(12px, 2vw, 18px);
-  letter-spacing: 4px;
-  text-align: center;
-  color: #b0b0c8;
-  margin-top: 40px;
-  text-shadow: 0 0 8px rgba(160, 200, 255, 0.20);
-  animation: blink 1.6s ease-in-out infinite;
+.ti-panel {
+  position: absolute; left: max(30px, 4vw); bottom: max(34px, 7vh);
+  width: 410px; max-width: calc(100vw - 60px);
+  cursor: default;
+}
+.ti-boot { font-size: 16px; line-height: 1.12; color: rgba(150, 208, 222, 0.62); margin-bottom: 10px; min-height: 72px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85); }
+.ti-bl { display: flex; white-space: nowrap; }
+.ti-bt { flex: none; }
+.ti-dots { flex: 1; margin: 0 6px 4px; border-bottom: 1px dotted rgba(150, 208, 222, 0.32); }
+.ti-ok { flex: none; color: #78e8a8; text-shadow: 0 0 6px rgba(120, 232, 168, 0.4); }
+.ti-bl.bad .ti-ok, .ti-bl.bad .ti-bt { color: #ff8a7a; }
+.ti-bl.none .ti-ok { color: #ffd07a; text-shadow: 0 0 6px rgba(255, 208, 122, 0.35); }
+.ti-menu { opacity: 0; transform: translateY(6px); transition: opacity 0.5s ease, transform 0.5s ease; }
+#intro-overlay.ti-ready .ti-menu, #intro-overlay.ti-ready .ti-sub { opacity: 1; transform: none; }
+.ti-item {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; margin: 0 0 8px; padding: 10px 14px;
+  font: inherit; color: inherit; text-align: left;
+  background: rgba(5, 12, 24, 0.66);
+  border: 1px solid rgba(127, 232, 240, 0.22);
+  border-radius: 2px;
+  cursor: pointer; outline: none;
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.ti-item.sel {
+  border-color: rgba(143, 240, 250, 0.85);
+  background: rgba(8, 22, 38, 0.78);
+  box-shadow: 0 0 0 1px rgba(127, 232, 240, 0.18), 0 0 22px rgba(110, 220, 240, 0.16), inset 0 0 18px rgba(110, 220, 240, 0.06);
+}
+.ti-cb { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ti-kick { font-size: 15px; letter-spacing: 3px; color: rgba(143, 240, 250, 0.75); }
+.ti-name { font-size: 30px; line-height: 0.95; letter-spacing: 2px; color: #f2fbff; text-shadow: 0 0 10px rgba(127, 232, 240, 0.35); }
+.ti-line { font-size: 17px; line-height: 1.1; color: rgba(186, 226, 236, 0.78); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ti-stats { display: flex; gap: 10px; align-items: center; color: rgba(186, 226, 236, 0.9); }
+.ti-coins { display: inline-flex; align-items: center; gap: 5px; color: #ffe080; }
+.ti-coins[hidden] { display: none; }
+.ti-coins i {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff2b0 0 25%, #f0c040 26% 70%, #a07818 71%);
+  box-shadow: 0 0 5px rgba(255, 200, 80, 0.5);
+}
+.ti-face {
+  width: 60px; height: 60px; flex: none;
+  image-rendering: pixelated;
+  background: radial-gradient(circle at 50% 60%, rgba(110, 220, 240, 0.16), rgba(5, 12, 24, 0.2) 70%);
+  border: 1px solid rgba(127, 232, 240, 0.28);
+  opacity: 0.35; transition: opacity 0.4s;
+}
+.ti-face.on { opacity: 1; }
+.ti-go, .ti-gl { font-size: 26px; color: rgba(143, 240, 250, 0.5); }
+.ti-item.sel .ti-go, .ti-item.sel .ti-gl { color: #8ff0fa; animation: ti-nudge 1.2s ease-in-out infinite; }
+@keyframes ti-nudge { 50% { transform: translateX(3px); } }
+.ti-big .ti-name { font-size: 26px; }
+.ti-row { display: flex; gap: 8px; }
+.ti-small { width: auto; flex: 1; justify-content: center; padding: 6px 10px; font-size: 18px; letter-spacing: 1px; color: rgba(186, 226, 236, 0.85); }
+.ti-wire {
+  display: inline-block; font-size: 16px; color: rgba(170, 220, 232, 0.85); min-height: 18px; padding: 1px 8px 1px 6px;
+  background: rgba(3, 9, 18, 0.55); border-radius: 2px;
+  opacity: 0; transition: opacity 0.6s;
+}
+.ti-wire.on { opacity: 1; }
+.ti-wire b { color: #e8fbff; font-weight: normal; }
+.ti-wire span { color: rgba(170, 220, 232, 0.8); }
+.ti-dot {
+  display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%;
+  background: #78e8a8; box-shadow: 0 0 6px #78e8a8;
+  animation: ti-blink 2s steps(1) infinite;
+}
+.ti-hint {
+  position: absolute; right: 30px; bottom: 26px;
+  font-size: 16px; letter-spacing: 3px; color: rgba(160, 226, 238, 0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+#intro-overlay.ti-going .ti { opacity: 0; transition: opacity 0.35s ease; pointer-events: none; }
+.ti-flash {
+  position: fixed; inset: 0; z-index: 55; pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, #f6f4ff 0%, #e8e2ff 55%, #cfc6ff 100%);
+  opacity: 1;
+}
+.ti-flash.out { opacity: 0; transition: opacity 0.9s ease-out; }
+
+/* a phone, or any narrow window: the wordmark and one readout line on top, the menu across the bottom */
+@media (max-width: 760px), (max-aspect-ratio: 4/5) {
+  .ti-frame, .ti-read.ti-l, .ti-read.ti-r, .ti-hint { display: none; }
+  .ti-scrim {
+    display: block; position: absolute; left: 0; right: 0; bottom: 0; height: 46%; pointer-events: none;
+    background: linear-gradient(to top, rgba(2, 5, 14, 0.9) 0%, rgba(2, 5, 14, 0.72) 55%, rgba(2, 5, 14, 0) 100%);
+  }
+  .ti-read.ti-m { display: block; }
+  .ti-head { top: calc(env(safe-area-inset-top, 0px) + 5vh); }
+  .ti-sub { font-size: 17px; letter-spacing: 7px; padding-left: 7px; }
+  .ti-panel {
+    left: 16px; right: 16px; width: auto; max-width: none;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .ti-boot { min-height: 0; font-size: 15px; }
+  .ti-name { font-size: 28px; }
+  .ti-item { padding: 10px 12px; }
+}
+@media (max-height: 520px) and (min-aspect-ratio: 4/3) {
+  .ti-boot { display: none; }
+  .ti-head { top: 4vh; }
+  .ti-panel { bottom: 18px; }
 }
 
 /* ---- Identity ---- */
-.identity-panel {
-  background: rgba(10, 10, 10, 0.92);
-  border: 1px solid #2a2a2a;
+.identity-panel {                       /* glass over the title's scene (js/intro.js) */
+  background: rgba(5, 12, 24, 0.88);
+  border: 1px solid rgba(127, 232, 240, 0.26);
+  box-shadow: 0 0 34px rgba(110, 220, 240, 0.08);
   border-radius: 4px;
   padding: 40px;
   max-width: 380px;
@@ -115,7 +231,7 @@ body::after {
 .identity-panel h2 {
   font-size: 14px;
   letter-spacing: 4px;
-  color: #888;
+  color: rgba(160, 226, 238, 0.72);
   margin-bottom: 24px;
 }
 
@@ -125,8 +241,8 @@ body::after {
   padding: 12px;
   margin: 8px 0;
   background: transparent;
-  border: 1px solid #333;
-  color: #aaa;
+  border: 1px solid rgba(127, 232, 240, 0.2);
+  color: #aac4cc;
   font-family: inherit;
   font-size: 13px;
   letter-spacing: 2px;
@@ -135,21 +251,21 @@ body::after {
 }
 
 .identity-btn:hover {
-  border-color: rgba(160, 120, 220, 0.4);
-  color: #ddd;
+  border-color: rgba(143, 240, 250, 0.6);
+  color: #e8fbff;
 }
 
 .identity-btn.primary {
-  border-color: rgba(160, 120, 220, 0.3);
-  color: #ccc;
+  border-color: rgba(143, 240, 250, 0.4);
+  color: #d6f2f8;
 }
 
 .identity-input {
   width: 100%;
   padding: 10px 12px;
-  background: #111;
-  border: 1px solid #2a2a2a;
-  color: #ddd;
+  background: rgba(2, 8, 16, 0.8);
+  border: 1px solid rgba(127, 232, 240, 0.2);
+  color: #e8fbff;
   font-family: inherit;
   font-size: 14px;
   letter-spacing: 2px;
@@ -160,7 +276,7 @@ body::after {
 }
 
 .identity-input:focus {
-  border-color: rgba(160, 120, 220, 0.4);
+  border-color: rgba(143, 240, 250, 0.6);
 }
 
 .identity-error {
@@ -797,9 +913,6 @@ html:not(.in-world):not(.keys-mode) .dpad { display: none !important; }
   /* Pilot switch link bigger tap target */
   .pilot-switch { font-size: 12px; padding: 8px; bottom: 8px; right: 8px; }
   .quarters-back { font-size: 12px; padding: 8px; bottom: 8px; left: 8px; }
-
-  /* Intro prompt */
-  .intro-prompt { bottom: 12%; font-size: 14px; }
 
   /* Interaction prompt */
   .interact-prompt { font-size: 13px; }

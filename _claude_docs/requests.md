@@ -52,8 +52,8 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Rarest magic items found yourself; a trophy hall; keep it cute | open | Chunks 4 and 5. |
 | Hired warriors hunting monsters for loot | dropped | Beck: "fine to leave out". |
 | Progression must feel natural, a real game to work up through | standing rule | Each chunk unlocks gradually (recipes learnt, plans bought, tiers by material). |
-| Title page: the ship over its planet, but keep the technology feel | in progress | Branch (worktree agent). |
-| Update the title page (the Becknology start screen) | in progress | Proposal in chat: the mothership over the planet it's parked at (real day/night), a crafted pixel BECKNOLOGY logo, a real menu (Continue as Beck with portrait/where/coins, settings, who's online), later postcards of the worlds. Waiting on Beck's pick. |
+| Title page: the ship over its planet, but keep the technology feel | **done** | The Wayfarer drifting over the planet she's parked at, day and night by that planet's own clock (lights on its night side, storms, the ship in its shadow after sunset), the shuttle diving now and then; the terminal kept: a pixel BECKNOLOGY with a cursor and glow, orbit readouts, a reticle on the landing site, boot lines; Continue as Beck with your face, coins and who's online; phone and desktop. |
+| Update the title page (the Becknology start screen) | **done** | See the row above. Not yet: title music, postcards of the worlds. |
 | Grass should be actual drawn grass and textures, "not random blobs", "subtle little grass… down to that small level" | **done** (rolling out) | Hand-drawn pixel marks stamped over every meadow (`scene_post.grass_detail`); broad patches evened out; the turf's grain in tile units. Each outdoor scene gets it as it re-renders (queue below). |
 | Smaller images (from the other session's split) | **done** | Every scene's images are lossless WebP — pixel for pixel the same, about a third smaller. |
 | "Use open source projects where it helps" | noted | Use permissively licensed (CC0 / MIT) tools or art only; none adopted yet. |

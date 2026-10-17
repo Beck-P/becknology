@@ -690,6 +690,9 @@ var BridgeCine = (function () {
 
 
   function has(name) { return !!(meta && meta[name] && imgs[name]); }
+  /** A loaded sprite with its size and anchors ({ img, w, h, anchors }), or null — the title page (js/intro.js) draws the
+   *  Wayfarer and the skiff from these, with the same nebulae and engine flames. */
+  function get(name) { return has(name) ? { img: imgs[name], w: meta[name].w, h: meta[name].h, anchors: meta[name].anchors || {} } : null; }
 
-  return { sail: sail, jump: jump, load: load, has: has };
+  return { sail: sail, jump: jump, load: load, has: has, get: get, nebula: nebula, flame: flame };
 })();
