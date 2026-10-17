@@ -296,6 +296,19 @@ STYLES = {
 }
 
 
+def blend(a, b, t, **over):
+    """A style part way from a to b: every measure t of the way across (t = 0 is a, 1 is b)."""
+    A, B = STYLES[a], STYLES[b]
+    out = {k: (A[k] + (B[k] - A[k]) * t if isinstance(A[k], float) else A[k]) for k in A}
+    out.update(over)
+    return out
+
+
+# in between: Stardew's drawing with a little of the game's chibi look (a bigger head, bigger eyes)
+STYLES['between'] = blend('stardew', 'storybook', 0.35, face='between')
+STYLES['halfway'] = blend('stardew', 'storybook', 0.6, face='halfway')
+
+
 # =====================================================================================================================
 #  A person
 # =====================================================================================================================
@@ -761,6 +774,61 @@ FACES = {
         nose=(['.N', 'Nn'], (0, -1)),
         cheek=(['HH'], (-1, 0)),
     ),
+    'between': dict(
+        eye={
+            'open':   (['.KKKK.',
+                        'KDCDWK',
+                        'KIDIW.',
+                        '..SS..'], (-3, -2)),
+            'lashes': (['.....E',
+                        '.KKKKK',
+                        'KDCDWK',
+                        'KIDIW.',
+                        '..SS..'], (-3, -3)),
+            'wide':   (['.KKKK.',
+                        'KDCDWK',
+                        'WIDIWW',
+                        '.WWWW.'], (-3, -2)),
+            'happy':  (['......',
+                        '.KKKK.',
+                        'K....K',
+                        '......'], (-3, -2)),
+            'sad':    (['.SS...',
+                        '..KKKK',
+                        'KDCDWK',
+                        '.IDIW.'], (-3, -2)),
+            'shut':   (['......',
+                        '......',
+                        'KKKKKK',
+                        '.SSSS.'], (-3, -2)),
+            'old':    (['......',
+                        '......',
+                        '......',
+                        '......',
+                        '.SSSS.'], (-3, -2)),
+        },
+        brow={
+            'soft':   (['.BBBB.', 'B....B'], (-3, 0)),
+            'raised': (['.BBBB.', 'B....B'], (-3, -1)),
+            'high':   (['.BBBB.', 'B....B'], (-3, -2)),
+            'sad':    (['BB....', '..BBB.', '.....B'], (-3, 0)),
+            'stern':  (['....BB', '.BBB..', 'B.....'], (-3, 0)),
+            'heavy':  (['BBBBBB', 'B....B'], (-3, 0)),
+        },
+        mouth={
+            'smile':  ['R....R', '.MMMM.'],
+            'flat':   ['.MMMM.', '..RR..'],
+            'stern':  ['MMMMMM', '.RRRR.'],
+            'smirk':  ['.....R', '.MMMM.'],
+            'open':   ['MMMMMM', 'MTTTTM', '.MMMM.'],
+            'o':      ['.MM.', 'MTTM', '.MM.'],
+            'frown':  ['.MMMM.', 'M....M'],
+            'beard':  ['.MMMM.', '..RR..'],
+        },
+        mouth_dy={'smile': -1, 'open': -1, 'o': -1, 'smirk': -1},
+        nose=(['.N', 'Nn'], (0, -1)),
+        cheek=(['HHH'], (-1, 0)),
+    ),
     'storybook': dict(
         eye={
             'open':   (['.KKKK.',
@@ -906,6 +974,37 @@ FACES = {
     ),
 }
 
+# halfway: the in-between face with the eyes a size bigger again (a four-wide iris, a pupil and its catch-light)
+FACES['halfway'] = dict(FACES['between'], eye=dict(FACES['between']['eye'], **{
+    'open':   (['.KKKK.',
+                'KDDDDK',
+                'KDCPDW',
+                '.IIII.',
+                '..SS..'], (-3, -2)),
+    'lashes': (['.....E',
+                '.KKKKE',
+                'KDDDDK',
+                'KDCPDW',
+                '.IIII.'], (-3, -3)),
+    'wide':   (['.KKKK.',
+                'KWDDWK',
+                'WDCPDW',
+                'WIIIIW',
+                '.WWWW.'], (-3, -2)),
+    'sad':    (['.SS...',
+                '..KKKK',
+                'KDCPDW',
+                '.IIII.',
+                '......'], (-3, -2)),
+    'old':    (['......',
+                '......',
+                '......',
+                '......',
+                '......',
+                '.SSSS.'], (-3, -2)),
+}))
+
+
 MOODS = {
     'stern': ['npc-watcher', 'npc-doorman', 'npc-pitboss', 'npc-samurai', 'npc-hm-garro', 'npc-boxman', 'npc-stickman',
               'npc-elf-warden', 'npc-registrar', 'npc-dealer-b', 'npc-vex', 'npc-sev'],
@@ -933,7 +1032,7 @@ def name_hash(t):
 
 
 def paint_face(img, top, layers, A, me, style, expr):
-    F = FACES[style]
+    F = FACES[STYLES[style].get('face', style)]
     n = img.shape[0]
     k = n / 64.0
     out = img.copy()
