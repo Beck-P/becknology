@@ -35,6 +35,7 @@ const SUITES = {
     ['world/gpu.js', SHOTS],
     ['world/routines.js', SHOTS],
     ['world/crowd.js', SHOTS],
+    ['world/portraits.js', SHOTS],
     ['world/festivals.js', SHOTS],
     ['world/music.js'],
     ['world/dungeon.js', SHOTS],
