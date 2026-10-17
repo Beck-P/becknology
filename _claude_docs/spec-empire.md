@@ -105,6 +105,10 @@ in particular places, and the path from "I have money" to "I have something wond
 4. **Trophies and your own finds** — no hired warriors (Beck: "I don't know if I like the hired warriors hunt monsters
    and bring back the loot… fine to leave out"). The monsters you beat yourself and the relics you dig up yourself go
    in a trophy hall at your base; the rarest finds are always yours to go and get.
+   *(built, October 17: js/trophies.js — the hall of finds on the holm (7,500, after the cottage), its own render with
+   oak boards for the five sea legends, plinths and glass cases; eighteen finds drawn on their spots once you have them
+   (relics from the Undercroft, the deep's monster trophies, the Lantern Beyond, the Heartsong, the Regatta Cup…), each
+   with a plate; the empty ones say where to look. The Bridge's CLAUDE.md, "The hall of finds".)*
 5. **Magic things** — the Workshop's highest tier: rare materials you found yourself + trophies → wondrous items with
    real effects; the Cabinet of Wonders' set bonuses.
 6. **Across worlds** — bases beyond Lumar (the farm on Verdance, a lodge on Hoarfell, a front in Arcadia), freight by
