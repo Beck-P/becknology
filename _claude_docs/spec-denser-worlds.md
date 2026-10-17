@@ -198,3 +198,41 @@ live light, painted-face people, crowds (`assets/crowds.json`) and events where 
 - Check every world still loads (`node tools/tests/run.js world`, `python3 tools/bridge-art/audit_worlds.py`) and add
   tests for what you build.
 
+
+## Alongside the new-look rebuilds (Beck: "building on top of what's being changed there so… it all comes together")
+Nine other sessions (tag **bridge-new-look**, `_claude_docs/prompt-bridge-rebuild.md`) are rebuilding today's exteriors
+in the new look at the same time: the same places, the same map, richer art. **The rebuild goes first; the denser worlds
+build on top of it.**
+
+| Rebuild session (its branch) | Its scripts and worlds | Built on top of by |
+|---|---|---|
+| Verdance (`claude/verdance-rebuild`) | `verdance.py` (`verdance`), `verdance_village.py` (`verdance-village`) | G |
+| Diggen's Point + Market Square (`claude/lumar-harbor-square`) | `lumar_harbor.py` (`lumar`), `lumar_square.py` (`lumar-square`) | A |
+| Crownhaven (`claude/lumar-crown-rebuild`) | `lumar_crown.py` (`lumar-crown`) | A |
+| Sapphire Port + Tern Holm (`claude/lumar-sapphire-tern`) | `lumar_sapphire.py`, `lumar_tern.py` | B1 (Sapphire), A (Tern Holm) |
+| Rose, Crimson, Midnight (`claude/lumar-wild-rebuild`) | `lumar_rose.py`, `lumar_crimson.py`, `lumar_midnight.py` | B1 (Rose), B2 (Crimson, Midnight) |
+| Starling Holm (`claude/holm-rebuild`) | `lumar_holm.py` (+ `assets_yard.py` variants) | — |
+| Hoarfell (`claude/hoarfell-rebuild`) | `hoarfell.py` and the six sport worlds | E |
+| Sylvara (`claude/sylvara-rebuild`) | `sylvara.py` (`sylvara`) | F |
+| Arcadia (`claude/arcadia-rebuild`) | `arcadia_street.py`, `arcadia_alley.py`, `arcadia_skywalk.py`, `arcadia_skypad.py` | C (ways down), D (lifts, the Loop, the Mid-Levels) |
+
+- **Until a place's rebuild is on `main`** (its row in `requests.md`'s new-look backlog says Done, or
+  `git log origin/main -- tools/bridge-art/scenes/<script>.py` shows it), don't edit its scene script, its world JSON or
+  its renders. Watch its branch (`git fetch origin <branch>`, read only — never push to it) to see where it's going.
+- **Start with what doesn't touch them**: new worlds and their scene scripts, interiors (the rebuilds are exteriors
+  only), the JS systems, people, items, data and tests.
+- **New places next to a rebuilt one match it**: the same ground, palette and builders — reuse the rebuild's kit file and
+  builders (from its branch, or `main` once landed) so the seam between the old place and the new one doesn't show.
+- **Hook-ups go in after it lands** (a door, an exit, a lift lobby, a funicular station, a crane on a quay, new buildings
+  at the edge): merge `main`, add to *their* rebuilt script (never put back the old art), keep every interaction where
+  the rebuild left it, and re-render once with all of it.
+- **One of us edits each rebuilt script after it lands**: A — `lumar_harbor`, `lumar_square`, `lumar_crown`,
+  `lumar_tern`; B1 — `lumar_sapphire`, `lumar_rose`; B2 — `lumar_crimson`, `lumar_midnight`; C and D share Arcadia's four
+  (C the ways down from the street and the Backs, D the lifts, stations and the Mid-Levels round the Skywalk and Skyport
+  — merge `main` before each, never render the same script at once). A's working-harbour pieces for B1's and B2's
+  islands are live JS plus builders in A's own kit (`assets_harbour.py`); B1 and B2 place them in their scripts.
+- **Shared kits** (`assets_town`, `assets_isle`, `assets_coast`, `assets_house`, `assets_lumar`, `assets_snow`,
+  `assets_elves`, `assets_district`, `scenekit.py`, `scene_post.py`…): additive and backward compatible only — every
+  place still renders the same with your change. The engine (`js/litscene.js`, `js/scene.js`) only if something's broken.
+- **Faces**: a separate session is working on the face pipeline (`characters.py`'s faces, `sprites_post.py`,
+  `portraits.py`). Add your people as `NPCS` entries and render their sheets and portraits; leave the pipeline to it.
