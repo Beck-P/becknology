@@ -179,7 +179,7 @@ def shrub(k, x, r, s=0.32, tone='#3a6030', blooms=None, bloom_glow=None, z=0.0, 
             br = r + abs(math.sin(a)) * s * 0.8 * math.sqrt(1 - u * u) * 0.8 + 0.05
             bz = z + s * 0.62 + u * s * 0.6
             if bloom_glow:
-                k.sphere(bx, br, bz, 0.045, 0.04, shade(blooms, 0.6), 'rose', emit=(bloom_glow, 0.55), segs=6)
+                k.sphere(bx, br, bz, 0.045, 0.04, (blooms, 0.2), 'rose', emit=(bloom_glow, 0.45), segs=6)
             else:
                 k.sphere(bx, br, bz, 0.04, 0.035, (blooms, 0.3), 'bloom', segs=6)
 
@@ -375,3 +375,62 @@ def test_hooks(k):
                 cells = [(c, r) for (c, r) in cells if x0 - 1 <= c <= x1 and r0 - 1 <= r <= r1 + 2]
             return meadow(k_, tone, area=area, cells=cells, **kw)
         W.meadow = cropped
+
+
+# ---- fewer objects ---------------------------------------------------------------------------------------------------
+def merge_parts(k, block=3.0):
+    """Join the scene's many small parts into a few meshes before it renders: parts alike (the same name, colour, glow,
+    tree, variant) within the same block × block tiles become one object. A rich island is tens of thousands of blobs
+    (every leaf clump, flower and fern frond its own object) and Blender pays for each one on every pass; joined, a
+    full render takes a fraction of the time and looks the same. The ground and coast (already a few big meshes whose
+    grain is laid in tile units by their size) are left as they are. Run last in k.later (after the grass)."""
+    import bmesh
+    import bpy
+    from collections import defaultdict
+    from mathutils import Vector
+    from scenekit import S
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    groups = defaultdict(list)
+    for p in k.parts:
+        n = p.get('pname') or ''
+        if p['albedo'] == 'HOLDOUT' or n.startswith(k.GROUND) or n.startswith(('ridge', 'coast')):
+            continue
+        o = p['obj']
+        c = o.matrix_world @ (sum((Vector(b) for b in o.bound_box), Vector()) / 8)
+        key = (n, repr(p['albedo']), repr(p['emit']), p.get('fol'), p.get('tree', 0), id(p['var']) if p['var'] else 0,
+               p.get('nature'), int(c.x // block), int((-c.y / S) // block))
+        groups[key].append(p)
+    before = len(k.parts)
+    gone = set()
+    for key, ps in groups.items():
+        if len(ps) < 2:
+            continue
+        bm = bmesh.new()
+        for p in ps:
+            o = p['obj']
+            me = o.evaluated_get(dg).to_mesh()
+            me.transform(o.matrix_world)
+            bm.from_mesh(me)
+            o.evaluated_get(dg).to_mesh_clear()
+        me = bpy.data.meshes.new('merged')
+        bm.to_mesh(me)
+        bm.free()
+        ob = bpy.data.objects.new('merged', me)
+        k.scene.collection.objects.link(ob)
+        ob.data.materials.append(bpy.data.materials.new('tmp'))
+        d = {kk: v for kk, v in ps[0].items() if kk != 'obj'}
+        d['obj'] = ob
+        for p in ps:
+            gone.add(id(p))
+            bpy.data.objects.remove(p['obj'], do_unlink=True)
+        k.parts.append(d)
+        if d['var'] is not None:
+            d['var']['parts'] = [q for q in d['var']['parts'] if id(q) not in gone] + [d]
+    k.parts = [p for p in k.parts if id(p) not in gone]
+    for v in k.variants:
+        v['parts'] = [q for q in v['parts'] if id(q) not in gone]
+        for p in k.parts:
+            if p['var'] is v and p not in v['parts']:
+                v['parts'].append(p)
+    print('merge_parts: %d parts -> %d' % (before, len(k.parts)), flush=True)
