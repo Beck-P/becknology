@@ -1,6 +1,6 @@
 # Draft: the empire — how the business side fits together
 
-**Status: draft for discussion with Beck.** Nothing here is built yet beyond what's marked as existing. Beck: "I think
+**Status: agreed direction; building it in chunks (below).** Beck: "I think
 that's kind of where I'm going with the game… you want a bunch of ways to get these magic items and cool things and do
 all your random business ops… ultimately build a cool engine or empire of all these cool things… make sure it all
 makes sense and flows together."
@@ -67,7 +67,36 @@ in particular places, and the path from "I have money" to "I have something wond
    bonuses.
 5. **Ranks, licences, rivals and events.**
 
-## Questions for Beck
+## Beck's decisions (October 17)
+- **Yes to the engine**: an economy that scales across worlds as an empire; hire people, move toward automation, and
+  see and manage all of it — from the office above all.
+- **Crafting is central**: more materials, mining feeding upgrades, building more things; it all feeds the economy and
+  your base. Build out bases in several of the places you've been.
+- **Earn the best things yourself.** Hired warriors/expeditions bring loot and monster trophies, but the rarest magic
+  items you have to go and find on your own. Keep it cute and personal.
+- **Upgrades have a place**: buy them where they're made (sail your ship there), or bring parts home to your own yard
+  and hire smiths to build custom things. Build your own ship from enough timber and iron; long term, design it and
+  add to it.
+- **Progression must feel natural** — a real game you work up through, not a menu of everything at once.
+
+## The chunks, in order
+1. **Materials and the Workshop** — every material with a clear source (mining, forage, farm, markets, salvage,
+   monsters); a Workshop you build at your base, smiths you hire to work it while you're away; recipes on the clock:
+   processing (timber → planks, ore → bars), ship fittings and guns (cheaper than the yards, and some only craftable),
+   tools (better pick, rod), things for your homes. *(in progress)*
+2. **Your own shipyard** — a slipway at the holm: fit the parts you've made to ships lying there; build a ship from
+   plans you've bought at a yard plus timber, iron, rope and canvas, over days; choose her paint, sails and
+   figurehead. Later: a designer to lay out decks, guns and holds.
+3. **Running it from the office** — standing orders and captains (trade loops, supply runs between your holdings),
+   the Workshop's queue, the fleet's chart, the treasury, the daily dispatch: one desk for the whole empire.
+4. **Expeditions and trophies** — warriors you hire to hunt the Midnight Sea's monsters and clear wild places for
+   loot and trophies; a trophy hall. The rarest finds stay personal: relics only you can reach.
+5. **Magic things** — the Workshop's highest tier: rare materials you found yourself + trophies → wondrous items with
+   real effects; the Cabinet of Wonders' set bonuses.
+6. **Across worlds** — bases beyond Lumar (the farm on Verdance, a lodge on Hoarfell, a front in Arcadia), freight by
+   the mothership, ranks and licences.
+
+## Questions for Beck (still open)
 - How hands-on should it feel? (Proposal: early on you do things yourself; hiring officers is how you scale; visiting
   in person is always worth something but never required.)
 - Should the empire reach across planets — Arcadia's businesses, the farm, Hoarfell's lodge — with the mothership as
