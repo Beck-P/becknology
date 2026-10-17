@@ -140,7 +140,7 @@ w['interactions'] = [
     {'x': 2, 'y': 13, 'type': 'dialog', 'label': 'FOUNDRY BAR', 'prompt': 'PRESS E TO ORDER', 'dialog': 'DRINKS.'},
     look(5, 11, 'CAGE', 'A DANCING CAGE ON A PLINTH. THE BARS ARE POLISHED BRIGHT AT HAND HEIGHT.'),
     look(27, 11, 'CAGE', 'A DANCING CAGE. SOMEONE HAS SCRATCHED A TALLY OF NIGHTS INTO THE PLINTH. IT GOES ROUND TWICE.'),
-    look(11, 3, 'FURNACE', 'THE OLD FURNACE, COLD FOR FIFTY YEARS, LIT AGAIN FROM INSIDE WITH ORANGE LAMPS. WHEN THE BASS DROPS IT SEEMS TO BREATHE.'),
+    look(7, 6, 'FURNACE', 'THE OLD FURNACE, COLD FOR FIFTY YEARS, LIT AGAIN FROM INSIDE WITH ORANGE LAMPS. WHEN THE BASS DROPS IT SEEMS TO BREATHE.'),
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 DANCERS = [('npc-patron-a', 10, 11, 'up'), ('npc-patron-b', 13, 10, 'down'), ('npc-passerby', 19, 13, 'left'), ('npc-shopper', 21, 10, 'down'),

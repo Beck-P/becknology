@@ -163,7 +163,7 @@ w['interactions'] = [
     {'x': 26, 'y': 5, 'type': 'under', 'act': 'bets', 'label': 'THE BOOK', 'prompt': 'PRESS E TO BET'},
     {'x': 27, 'y': 4, 'type': 'dialog', 'label': 'TALLY', 'prompt': 'PRESS E TO TALK', 'dialog': 'TALLY CHALKS UP THE ODDS.'},
     {'x': 9, 'y': 4, 'type': 'dialog', 'label': 'PIT BAR', 'prompt': 'PRESS E TO ORDER', 'dialog': 'DRINKS.'},
-    look(13, 3, 'BELL', 'THE BELL THAT STARTS EVERY BOUT, DENTED WHERE THE HAMMER HITS IT. SOMEONE HAS SCRATCHED A NAME BESIDE EACH DENT.'),
+    look(14, 4, 'BELL', 'THE BELL THAT STARTS EVERY BOUT, DENTED WHERE THE HAMMER HITS IT. SOMEONE HAS SCRATCHED A NAME BESIDE EACH DENT.'),
     look(31, 18, 'STRETCHER', 'A STRETCHER WITH A STAIN ON IT, A BUCKET, A FIRST AID BOX. "IT\'S FOR AFTER," SAYS THE MAN BESIDE IT. "MOSTLY IT\'S FOR AFTER."'),
     look(6, 5, 'FIGHT BILLS', 'TONIGHT: IRON MAE v THE DEACON. RUST-EYE v WHOEVER\'S DAFT ENOUGH. AND IN SMALL LETTERS AT THE BOTTOM: OPEN CAGE - ANYONE - 20 TO GET IN.'),
 ]
