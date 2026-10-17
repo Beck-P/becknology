@@ -92,6 +92,7 @@ PATHS = [
     [(14.0, 12.0), (12.5, 17.0), (11.2, 24.2), (9.5, 28.0), (8.0, 31.5)],
     [J, (36.0, 14.5), (40.5, 12.5), GLASS_DOOR],
     [(40.5, 12.5), (43.5, 17.0), (44.0, 20.5), (44.5, 28.0), (45.0, 31.6)],
+    [(44.1, 21.2), (48.0, 21.7), (52.4, 22.5)],      # up to Rosewell (lumar-rose-springs: js/rose.js's door at (52, 22))
 ]
 TOP_PATH = [(18.0, 5.6), (28.0, 5.8), (38.2, 6.2)]                  # the walk along the terraces' backs
 
@@ -618,6 +619,19 @@ for (x, r) in ((39.0, 20.0), (48.6, 22.6), (38.8, 28.6)):        # between the p
     WL.crystal_cluster(k, x, r, s=0.8, col=(GEM, CRYSTAL[1]), energy=10)
 
 WL.tick('the meadow: rose drifts, wildflow')
+# the way up to Rosewell, the bathhouse town on the hill behind the springs (its own world: js/rose.js puts the door on
+# (52, 22)): stone steps climbing a grassy knoll off the island's east edge, a finger post and a lantern at their foot
+KNOLL = (54.4, 22.3)
+k.blob(KNOLL[0], KNOLL[1], -0.25, 1.6, 1.3, 1.25, (GREEN, 0.3), 'grass', segs=16)
+for i in range(6):
+    x = 52.75 + i * 0.3
+    z = 0.06 + i * 0.17
+    k.box(x, 22.05 - i * 0.02, -0.2, x + 0.34, 22.95 + i * 0.02, z, (shade('#a89c90', rng.uniform(0.88, 1.08)), 0.2), 'stone_step', bevel=0.02)
+for (x, r) in ((52.95, 21.75), (53.05, 23.25), (53.9, 21.8), (54.0, 23.2)):
+    WL.boulder(k, x, r, s=rng.uniform(0.2, 0.3), tone='#8a7e80', moss='#5a8a3c', solid=False)
+WL.lantern_post(k, 52.15, 21.75, h=1.7, energy=14, glow='#ff70c0')
+WL.signpost(k, 51.6, 23.35, arms=((0.7, '#d8c8a0'), (-0.6, '#c8b890')))
+
 # ---- the meadow: rose drifts, wildflowers, walls, boulders ----------------------------------------------------------
 busy = lambda x, r: pd(x, r) < 0.75
 meadow_cells = [c for c in walk if c[0] < 20 and c[1] > 14]
