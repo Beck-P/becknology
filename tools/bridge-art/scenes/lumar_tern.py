@@ -73,7 +73,7 @@ SMOKE = []
 
 def smoke(ridge, cx):
     rm, zr = ridge
-    SMOKE.append([round(cx - 0.12, 3), round(rm - 0.15 - (zr + 0.65) * C45, 3)])
+    SMOKE.append([round(cx - 0.12, 3), round(rm - 0.15 - (zr + 1.05) * C45, 3)])
 
 
 # the cottages round the cove, each with room round it: a lane between every two, gardens in front

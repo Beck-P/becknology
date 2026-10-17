@@ -120,6 +120,17 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
         dr = np.maximum(np.maximum(r - R, R - (r + 1)), 0)
         D = np.minimum(D, np.hypot(dx, dr))
 
+    # the land's outline smoothed: the walkable cells are whole tiles, so a diagonal shore is a staircase of them, and a
+    # sand line drawn by distance from them followed every step. A blurred mask of the land (a tile and a half across)
+    # rounds the steps into the slope they stand for; the sand begins where it falls below a wandering level
+    M = (D <= 0).astype(np.float64)
+    rad = int(round(0.7 / STEP))
+    for _ in range(3):                              # three box passes ≈ a gaussian
+        for ax in (0, 1):
+            c = np.cumsum(np.pad(M, [(rad + 1, rad) if a == ax else (0, 0) for a in (0, 1)], mode='edge'), axis=ax)
+            n_ = M.shape[ax]
+            M = (np.take(c, np.arange(2 * rad + 1, 2 * rad + 1 + n_), axis=ax) - np.take(c, np.arange(0, n_), axis=ax)) / (2 * rad + 1)
+
     H = np.zeros(X.shape)
     B = np.zeros(X.shape)          # beach factor
     for j in range(nr):
@@ -157,9 +168,14 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
     # faces by material band
     bands = {}
 
-    def band(z, b, x, r, d):
-        if z > -0.06:      # grass runs on from the island; sand starts a ragged way out
-            if b > 0.6 and d > 0.25 + 0.35 * (0.5 + 0.5 * _n(x, r, 1.1, seed + 6)):
+    def jit(x, r, a=0.09):                          # a hair's jitter: band edges fray instead of stepping
+        h1 = math.sin(x * 211.7 + r * 57.3) * 43758.5453
+        h2 = math.sin(x * 47.1 + r * 301.9) * 24634.6345
+        return x + a * (2 * (h1 - math.floor(h1)) - 1), r + a * (2 * (h2 - math.floor(h2)) - 1)
+
+    def band(z, b, x, r, d, m=0.0):
+        if z > -0.06:      # grass runs on from the island; sand starts a ragged way out, along its smoothed outline
+            if b > 0.6 and d > 0.05 and m < 0.4 - 0.16 * (0.5 + 0.5 * _n(x, r, 1.1, seed + 6)):
                 return 'lip_sand'
             if ground:     # the island's own ground, dithered at band edges like assets_isle.ground
                 h1 = math.sin(x * 103.9 + r * 626.1) * 43758.5453
@@ -172,7 +188,8 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
         if z > WZ - 0.1:
             return 'wet_sand' if b > 0.5 else 'wet_rock'
         if z > WZ - 0.75:
-            w = _n(x, r, 0.9, seed + 4)
+            jx, jr = jit(x, r, 0.12)
+            w = _n(jx, jr, 0.9, seed + 4)
             return 'weed' if w > 0.3 else ('shelf_sand' if b > 0.35 else 'shelf')
         return 'deep'
 
@@ -180,7 +197,7 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
         for i in range(nx - 1):
             zc = (H[j, i] + H[j, i + 1] + H[j + 1, i] + H[j + 1, i + 1]) / 4
             if zc < -0.04 or D[j, i] > 0.0 or D[j + 1, i + 1] > 0.0:
-                key = band(zc, B[j, i], X[j, i], R[j, i], D[j, i])
+                key = band(zc, B[j, i], X[j, i], R[j, i], D[j, i], (M[j, i] + M[j + 1, i + 1] + M[j, i + 1] + M[j + 1, i]) / 4)
                 bands.setdefault(key, []).append((j, i))
     ALB = {
         'lip_grass': (grass, 0.3), 'lip_sand': (shade(P['sand'], 1.15), 0.25),

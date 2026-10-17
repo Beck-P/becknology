@@ -361,28 +361,56 @@ def _gable_roof(k, x0, x1, r_back, r_front, z_eave, rise, col, over=0.25, strips
     return rm, zr
 
 
-def chimney_stack(k, cx, r0, r1, z0, z1, brick='#8a5a48', mortar='#5a4a42', pots=2, cap=None):
-    """A brick chimney: courses of bricks over mortar, a flashing where it leaves the roof, a cap and its pots."""
-    w = 0.22
+def weathervane(k, cx, cr, z, col='#2a2a2c'):
+    """An iron weathervane: a post, the compass arms, a cockerel-and-arrow on top."""
+    k.cyl(cx, cr, z, z + 0.5, 0.018, (col, 0.0), 'vane', verts=6)
+    k.box(cx - 0.18, cr - 0.01, z + 0.28, cx + 0.18, cr + 0.01, z + 0.3, (col, 0.0), 'vane')
+    k.box(cx - 0.01, cr - 0.18, z + 0.28, cx + 0.01, cr + 0.18, z + 0.3, (col, 0.0), 'vane')
+    k.box(cx - 0.22, cr - 0.008, z + 0.46, cx + 0.2, cr + 0.008, z + 0.48, (col, 0.0), 'vane')
+    k.poly([(cx + 0.2, cr, z + 0.43), (cx + 0.28, cr, z + 0.47), (cx + 0.2, cr, z + 0.51)], (col, 0.0), 'vane')
+    k.poly([(cx - 0.12, cr, z + 0.48), (cx - 0.02, cr, z + 0.48), (cx - 0.04, cr, z + 0.6), (cx - 0.1, cr, z + 0.62)], (col, 0.0), 'vane')
+
+
+def chimney_stack(k, cx, r0, r1, z0, z1, brick='#8a5a48', mortar='#5a4a42', pots=None, cap=None, roof_z=None):
+    """A brick chimney (Beck: chimneys were "a couple squares"): bricks you can count, laid in courses on every face you
+    see, a corbelled band of two courses standing out near the top, soot darkening the last few, a stone cap, clay pots
+    with dark mouths, and lead flashing where it leaves the roof."""
+    w = 0.26
+    rc = (r0 + r1) / 2
     k.box(cx - w, r0, z0, cx + w, r1, z1, (mortar, 0.0), 'chimney')
+    bh, bw = 0.085, 0.19                                # a brick: about 3 × 6 pixels
     z, i = z0, 0
     while z < z1 - 0.02:
-        x = cx - w + (0.0 if i % 2 else -0.07)
-        while x < cx + w - 0.01:
-            xa_, xb_ = max(x, cx - w) , min(x + 0.14, cx + w)
-            if xb_ - xa_ > 0.03:
-                c = shade(brick, k.rng.uniform(0.84, 1.12))
-                k.box(xa_ + 0.006, r1 - 0.01, z + 0.008, xb_ - 0.006, r1 + 0.012, z + 0.062, (c, 0.0), 'brick')       # the face you see
-            x += 0.15
-        for xs in (cx - w - 0.012, cx + w - 0.008):                    # the sides' courses
-            k.box(xs, r0 + 0.01, z + 0.008, xs + 0.02, r1 - 0.01, z + 0.062, (shade(brick, k.rng.uniform(0.8, 1.0)), 0.0), 'brick')
-        z += 0.072
+        top = (z1 - z) < 0.36                            # sooty toward the top
+        corbel = 0.12 < (z1 - z) < 0.12 + 2 * bh + 0.01  # two courses standing out
+        o = 0.025 if corbel else 0.0
+        x = cx - w - o + (0.0 if i % 2 else -bw / 2)
+        while x < cx + w + o - 0.01:
+            xa_, xb_ = max(x, cx - w - o), min(x + bw, cx + w + o)
+            if xb_ - xa_ > 0.04:
+                c = shade(brick, k.rng.uniform(0.82, 1.14) * (0.72 if top else 1.0))
+                k.box(xa_ + 0.008, r1 - 0.01, z + 0.01, xb_ - 0.008, r1 + 0.014 + o, z + bh - 0.004, (c, 0.0), 'brick')
+            x += bw
+        for side in (-1, 1):                              # the sides' courses
+            xs = cx + side * (w + o)
+            y = r0 + (0.0 if i % 2 else bw / 2)
+            while y < r1 - 0.02:
+                c = shade(brick, k.rng.uniform(0.75, 0.98) * (0.72 if top else 1.0))
+                k.box(xs - 0.014, max(y, r0) + 0.008, z + 0.01, xs + 0.014, min(y + bw, r1) - 0.008, z + bh - 0.004, (c, 0.0), 'brick')
+                y += bw
+        z += bh
         i += 1
-    k.box(cx - w - 0.05, r0 - 0.05, z1, cx + w + 0.05, r1 + 0.05, z1 + 0.07, (cap or STONE, 0.1), 'chimney_cap')
-    for j in range(pots):
-        px = cx + (j - (pots - 1) / 2) * 0.18
-        k.cyl(px, (r0 + r1) / 2, z1 + 0.07, z1 + 0.24, 0.055, ('#a8583a', 0.08), 'chimney_pot', verts=10)
-        k.cyl(px, (r0 + r1) / 2, z1 + 0.23, z1 + 0.25, 0.068, ('#8a4a32', 0.08), 'chimney_pot', verts=10)
+    k.box(cx - w - 0.035, r0 - 0.035, z1, cx + w + 0.035, r1 + 0.035, z1 + 0.06, (cap or STONE, 0.0), 'chimney_cap')
+    k.box(cx - w + 0.02, r0 + 0.02, z1 + 0.06, cx + w - 0.02, r1 - 0.02, z1 + 0.11, (shade(cap or STONE, 0.8), 0.0), 'chimney_cap')
+    n = pots if pots is not None else k.rng.choice((1, 2, 2, 3))
+    for j in range(n):
+        px = cx + (j - (n - 1) / 2) * 0.17
+        h = k.rng.uniform(0.16, 0.26)
+        k.cyl(px, rc, z1 + 0.11, z1 + 0.11 + h, 0.055, (shade('#a8583a', k.rng.uniform(0.9, 1.08)), 0.0), 'chimney_pot', verts=12)
+        k.cyl(px, rc, z1 + 0.09 + h, z1 + 0.12 + h, 0.07, ('#8a4a32', 0.0), 'chimney_pot', verts=12)
+        k.cyl(px, rc, z1 + 0.12 + h, z1 + 0.125 + h, 0.045, ('#1a1412', 0.0), 'chimney_mouth', verts=12)
+    if roof_z is not None:                               # lead flashing round its foot
+        k.box(cx - w - 0.05, r1 - 0.02, roof_z - 0.02, cx + w + 0.05, r1 + 0.05, roof_z + 0.07, ('#5a5e64', 0.0), 'flashing')
 
 
 def window(k, cx, r_face, z0, w=0.55, h=0.65, lit=True, shutters='#2a4a3a', flowers=None):
@@ -464,7 +492,14 @@ def house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=ROOF_GREEN, wal
           door_x=None, windows=(), windows_up=(), chimney=None, sign=None, lanterns=(), stone=False, base=SALT[2]):
     """A Lumar house: saltstone footing, plaster and timber (or stone)
     walls, glowing windows, door with a step, gable roof, chimney, sign.
-    Returns (ridge row, ridge z) for smoke and the like."""
+    Each has its own character (Beck: "more variation in character"): its plaster's tint, its timbers' and shutters'
+    colours, sometimes a dormer in the roof, a hood over the door, a weathervane — picked by the scene's dice, so a
+    street of them isn't one house over and over. Returns (ridge row, ridge z) for smoke and the like."""
+    if wall == PLASTER:
+        wall = k.rng.choice((PLASTER, PLASTER, '#e8d8b8', '#e4c8b0', '#d8dccc', '#e8dcc8', '#d4c4a4'))
+    if timber == WOOD_DD:
+        timber = k.rng.choice((WOOD_DD, WOOD_DD, '#2a2220', '#5a4a3c', '#3a3028'))
+    shutters = k.rng.choice(('#2a4a3a', '#3a4a6a', '#6a2a2a', '#4a5a3a', '#5a4a3a', '#2a3a4a', '#7a6a3a'))
     k.box(x0, r_back, 0, x1, r_front, 0.35, (base, 0.16), 'footing', bevel=0.02)
     wall_alb = (wall, 0.16 if stone else 0.08)
     k.box(x0 + 0.04, r_back + 0.04, 0.35, x1 - 0.04, r_front - 0.02, wall_h, wall_alb, 'house_wall')
@@ -488,13 +523,29 @@ def house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=ROOF_GREEN, wal
     if door_x is not None:
         door(k, door_x, r_front)
     for (wx, wz) in windows:
-        window(k, wx, r_front + 0.02, wz,
+        window(k, wx, r_front + 0.02, wz, shutters=shutters,
                flowers=k.rng.choice((None, ('#e04060', '#e0c040'), ('#a060d0', '#e0e0f0'), ('#e07030', '#e0c040'))))
     for (wx, wz) in windows_up:
-        window(k, wx, r_front + 0.02, wz, w=0.45, h=0.5)
+        window(k, wx, r_front + 0.02, wz, w=0.45, h=0.5, shutters=shutters)
     rm, zr = _gable_roof(k, x0, x1, r_back, r_front, wall_h, rise, roof)
+    # a dormer or two in the front slope of a wide house, clear of the chimney
+    if x1 - x0 >= 4.0 and k.rng.random() < 0.5:
+        n = 1 if x1 - x0 < 6.0 or k.rng.random() < 0.5 else 2
+        for j in range(n):
+            dx = x0 + (x1 - x0) * ((j + 1) / (n + 1) if n > 1 else k.rng.uniform(0.35, 0.65))
+            if chimney is not None and abs(dx - chimney) < 0.9:
+                dx = x0 + (x1 - x0) - (dx - x0)
+            if chimney is None or abs(dx - chimney) >= 0.9:
+                dormer(k, dx, r_front + 0.25, rm, wall_h - 0.06, zr, roof, wall, shutters)
+    if door_x is not None and k.rng.random() < 0.45:
+        door_hood(k, door_x, r_front + 0.03, 1.8, roof)
+    if k.rng.random() < 0.15:
+        weathervane(k, k.rng.choice((x0 + 0.3, x1 - 0.3)), rm, zr + 0.08)
     if chimney:
-        chimney_stack(k, chimney, rm - 0.35, rm + 0.05, wall_h, zr + 0.55)
+        # where the chimney's front face leaves the front slope (it stands just in front of the ridge)
+        ra_ = r_front + 0.25
+        rz = zr - (zr - wall_h + 0.06) * ((rm + 0.05) - rm) / max(0.1, ra_ - rm)
+        chimney_stack(k, chimney, rm - 0.35, rm + 0.05, wall_h, zr + 0.8, roof_z=rz)
     dress_front(k, x0, x1, r_front, wall_h, door_x, [w[0] for w in windows] + [w[0] for w in windows_up])
     if sign:
         hanging_sign(k, sign[0], r_front, sign[1], icon=sign[2])
@@ -502,6 +553,43 @@ def house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=ROOF_GREEN, wal
         wall_lantern(k, lx, r_front + 0.02)
     k.solid(x0, r_back, x1, r_front)
     return rm, zr
+
+
+def dormer(k, cx, ra, rm, ze, zr, roof, wall, shutters, w=0.95):
+    """A shed dormer in a front slope (eave at row ra, height ze; ridge at rm, zr): its face upright a third of the
+    way up the slope with a window, cheeks back to the roof, a shallow roof of its own, shingled."""
+    t = 0.32
+    rd, zb = ra + (rm - ra) * t, ze + (zr - ze) * t
+    hd = 0.62
+    t2 = min(0.92, (zb + hd + 0.02 - ze) / (zr - ze))
+    r2 = ra + (rm - ra) * t2
+    k.box(cx - w / 2, r2, zb - 0.1, cx + w / 2, rd, zb + hd, (wall, 0.0), 'dormer')
+    window(k, cx, rd + 0.01, zb + 0.1, w=0.42, h=0.38, shutters=shutters)
+    over = 0.08
+    k.quads([((cx - w / 2 - over, rd + 0.12, zb + hd + 0.02), (cx + w / 2 + over, rd + 0.12, zb + hd + 0.02),
+              (cx + w / 2 + over, r2, zb + hd + 0.12), (cx - w / 2 - over, r2, zb + hd + 0.12))], shade(roof, 0.95), 'roof')
+    zz, i = 0.0, 0
+    rows = []
+    while zz < 0.95:                                     # a few courses of shingle lines on it
+        rr = rd + 0.12 + (r2 - rd - 0.12) * zz
+        z_ = zb + hd + 0.02 + 0.1 * zz + 0.004
+        rows.append(((cx - w / 2 - over, rr, z_), (cx + w / 2 + over, rr, z_), (cx + w / 2 + over, rr - 0.025, z_ + 0.003), (cx - w / 2 - over, rr - 0.025, z_ + 0.003)))
+        zz += 0.24
+    k.quads(rows, shade(roof, 0.58), 'roof')
+    k.box(cx - w / 2 - over, rd + 0.1, zb + hd - 0.04, cx + w / 2 + over, rd + 0.15, zb + hd + 0.03, WOOD_DD, 'fascia')
+
+
+def door_hood(k, cx, r_face, z, roof, w=1.1):
+    """A little lean-to hood over a door on two brackets, roofed to match."""
+    d = 0.42
+    k.quads([((cx - w / 2, r_face, z + 0.2), (cx + w / 2, r_face, z + 0.2), (cx + w / 2, r_face + d, z), (cx - w / 2, r_face + d, z))], shade(roof, 0.92), 'roof')
+    for j in range(3):                                   # its shingle lines
+        rr = r_face + d * (j + 1) / 4
+        zz = z + 0.2 - 0.2 * (j + 1) / 4 + 0.005
+        k.quads([((cx - w / 2, rr, zz), (cx + w / 2, rr, zz), (cx + w / 2, rr - 0.02, zz + 0.01), (cx - w / 2, rr - 0.02, zz + 0.01))], shade(roof, 0.6), 'roof')
+    k.box(cx - w / 2, r_face + d - 0.03, z - 0.06, cx + w / 2, r_face + d + 0.02, z + 0.01, WOOD_DD, 'fascia')
+    for sx in (-1, 1):
+        k.box(cx + sx * (w / 2 - 0.08) - 0.03, r_face, z - 0.32, cx + sx * (w / 2 - 0.08) + 0.03, r_face + 0.32, z - 0.02, WOOD_DD, 'bracket')
 
 
 def dress_front(k, x0, x1, r_face, wall_h, door_x=None, window_xs=(), ivy=0.35, pots=0.5):

@@ -56,7 +56,7 @@ F.dirt_path(k, 32.6, 18.6, 45.0, 19.6)                           # past the forg
 # The Crusty Loaf: cream and terracotta, bread in the window, smoke from the oven chimney
 rm, zr = W.house(k, 2.6, 7.4, 5.2, FRONT, wall_h=2.3, rise=1.4, roof='#b85a3a', wall='#f4e8c8', door_x=4.2,
                  windows=[(3.1, 0.9)], chimney=3.2)
-SMOKE.append([3.08, round(rm - 0.15 - (zr + 0.65) * C, 3)])
+SMOKE.append([3.08, round(rm - 0.15 - (zr + 1.05) * C, 3)])
 V.shop_window(k, 5.0, 7.0, FRONT + 0.02, 0.45, 1.35, frame='#6a3a22', goods=('#c89048', '#e0b060', '#a86a30', '#f0d8a0'))
 V.board_sign(k, 'The Crusty Loaf', 'Pacifico', 5.0, FRONT + 0.03, 1.72, size=0.2, board='#f0e0c0', ink='#7a3a1a', trim='#8a5030')
 W.hanging_sign(k, 7.15, FRONT, 1.9, icon='bread')
@@ -64,7 +64,7 @@ W.bench(k, 5.4, 6.9, FRONT + 0.75)
 # The Hayloft: a big thatched inn, two floors of windows, its name over the door, a mug on a bracket
 rm, zr = W.house(k, 9.6, 17.4, 4.0, FRONT, wall_h=2.9, rise=1.9, roof='#c4a25a', wall='#efe2c6', timber='#4a3020', door_x=13.5,
                  windows=[(10.9, 0.85), (16.1, 0.85)], windows_up=[(10.9, 2.15), (13.5, 2.2), (16.1, 2.15)], chimney=16.6)
-SMOKE.append([16.48, round(rm - 0.15 - (zr + 0.65) * C, 3)])
+SMOKE.append([16.48, round(rm - 0.15 - (zr + 1.05) * C, 3)])
 V.board_sign(k, 'THE HAYLOFT', 'Rye', 13.5, FRONT + 0.03, 1.78, size=0.22)
 W.hanging_sign(k, 17.55, FRONT, 2.1, icon='mug')
 for x in (12.4, 14.6):
@@ -154,7 +154,7 @@ for x in (34.5, 36.1):
 F.haybale(k, 35.3, 17.4)
 rm, zr = W.house(k, 36.4, 40.2, 13.6, 17.8, wall_h=2.1, rise=1.3, roof='#3a6a8a', wall='#e8dcc8', door_x=38.3, windows=[(37.2, 0.9), (39.4, 0.9)],
                  chimney=37.0)
-SMOKE.append([36.88, round(rm - 0.15 - (zr + 0.65) * C, 3)])
+SMOKE.append([36.88, round(rm - 0.15 - (zr + 1.05) * C, 3)])
 V.picket_fence(k, (36.2, 18.55), (38.0, 18.55))
 V.picket_fence(k, (38.6, 18.55), (40.4, 18.55))
 V.flower_bed(k, 36.5, 17.95, 37.8, 18.35, n=12)
@@ -201,7 +201,7 @@ F.scarecrow(k, 31.0, 31.0)
 k.solid(30.5, 30.5, 31.5, 31.5)
 rm, zr = W.house(k, 14.4, 18.6, 28.6, 32.4, wall_h=2.0, rise=1.3, roof='#4a7a4a', wall='#f0e4d0', door_x=16.5, windows=[(15.3, 0.85), (17.7, 0.85)],
                  chimney=18.0)
-SMOKE.append([17.88, round(rm - 0.15 - (zr + 0.65) * C, 3)])
+SMOKE.append([17.88, round(rm - 0.15 - (zr + 1.05) * C, 3)])
 V.flower_bed(k, 14.6, 32.6, 16.0, 33.2)
 V.flower_bed(k, 17.0, 32.6, 18.4, 33.2)
 for (x, r) in ((20.6, 29.6), (21.9, 32.2), (40.6, 30.4), (42.8, 32.0)):

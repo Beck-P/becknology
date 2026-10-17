@@ -32,7 +32,7 @@ C = math.cos(math.radians(45))
 
 def smoke(ridge, cx):
     rm, zr = ridge
-    SMOKE.append([round(cx - 0.12, 3), round(rm - 0.15 - (zr + 0.65) * C, 3)])
+    SMOKE.append([round(cx - 0.12, 3), round(rm - 0.15 - (zr + 1.05) * C, 3)])
 
 
 def built(x0, r0, x1, r1):

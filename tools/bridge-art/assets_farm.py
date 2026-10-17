@@ -45,19 +45,40 @@ def barn(k, x0, x1, r_back, r_front, wall_h=2.6, rise=1.6, wall=BARN, roof='#4a3
         k.box(xe - 0.06, r_front - 0.06, 0.25, xe + 0.06, r_front + 0.02, wall_h, TRIM, 'barn_trim')
     cx = (x0 + x1) / 2
     dw, dh = 1.6, 1.9
-    k.box(cx - dw / 2, r_front, 0.25, cx + dw / 2, r_front + 0.04, 0.25 + dh, ('#7a2620', 0.12), 'barn_door')
-    for (xa, xb) in ((cx - dw / 2, cx), (cx, cx + dw / 2)):              # the X braces and frame of each leaf
-        k.box(xa, r_front + 0.04, 0.25, xb, r_front + 0.07, 0.33, TRIM, 'barn_door_trim')
-        k.box(xa, r_front + 0.04, 0.17 + dh, xb, r_front + 0.07, 0.25 + dh, TRIM, 'barn_door_trim')
-        k.box(xa, r_front + 0.04, 0.25, xa + 0.07, r_front + 0.07, 0.25 + dh, TRIM, 'barn_door_trim')
-        k.tube((xa + 0.05, r_front + 0.06, 0.3), (xb - 0.05, r_front + 0.06, 0.2 + dh), 0.03, TRIM, 'barn_brace', verts=4)
-        k.tube((xb - 0.05, r_front + 0.06, 0.3), (xa + 0.05, r_front + 0.06, 0.2 + dh), 0.03, TRIM, 'barn_brace', verts=4)
+    rf = r_front
+    k.box(cx - dw / 2, rf, 0.25, cx + dw / 2, rf + 0.04, 0.25 + dh, ('#7a2620', 0.0), 'barn_door')
+    x = cx - dw / 2 + 0.1
+    while x < cx + dw / 2 - 0.05:                                          # the boards of the leaves
+        k.box(x, rf + 0.035, 0.27, x + 0.018, rf + 0.045, 0.23 + dh, shade('#7a2620', 0.7), 'barn_door_seam')
+        x += 0.2
+    t, z0, z1 = 0.08, 0.25, 0.25 + dh
+    for (xa, xb) in ((cx - dw / 2, cx), (cx, cx + dw / 2)):              # each leaf: a white frame all round and its X
+        for (a, b, c, d) in ((xa, z0, xb, z0 + t), (xa, z1 - t, xb, z1), (xa, z0, xa + t, z1), (xb - t, z0, xb, z1)):
+            k.box(a, rf + 0.045, b, c, rf + 0.08, d, (TRIM, 0.0), 'barn_door_trim')
+        for (pa, pb) in (((xa + t, z0 + t), (xb - t, z1 - t)), ((xb - t, z0 + t), (xa + t, z1 - t))):
+            dx_, dz_ = pb[0] - pa[0], pb[1] - pa[1]
+            Ln = math.hypot(dx_, dz_)
+            nx_, nz_ = -dz_ / Ln * 0.04, dx_ / Ln * 0.04                   # flat strips, so they light evenly white
+            k.poly([(pa[0] + nx_, rf + 0.07, pa[1] + nz_), (pb[0] + nx_, rf + 0.07, pb[1] + nz_),
+                    (pb[0] - nx_, rf + 0.07, pb[1] - nz_), (pa[0] - nx_, rf + 0.07, pa[1] - nz_)], (TRIM, 0.0), 'barn_brace')
+        k.box(xb - 0.16 if xa < cx else xa + 0.1, rf + 0.08, 0.25 + dh * 0.45, (xb - 0.1) if xa < cx else xa + 0.16, rf + 0.11, 0.25 + dh * 0.53,
+              ('#2a2a2c', 0.0), 'barn_handle')
+    k.box(cx - dw, rf + 0.02, z1 + 0.06, cx + dw, rf + 0.08, z1 + 0.13, ('#2a2a2c', 0.0), 'barn_track')   # the rail they slide on
+    for hx in (cx - dw / 2 + 0.2, cx - 0.2, cx + 0.2, cx + dw / 2 - 0.2):
+        k.cyl_y(hx, rf + 0.08, rf + 0.11, z1 + 0.09, 0.06, 0.06, ('#3a3a3c', 0.0), 'barn_hanger', verts=8)
     k.box(cx - 0.4, r_front, wall_h - 0.75, cx + 0.4, r_front + 0.04, wall_h - 0.12, ('#3a1a14', 0.1), 'hayloft')
     k.box(cx - 0.46, r_front + 0.04, wall_h - 0.8, cx + 0.46, r_front + 0.07, wall_h - 0.75, TRIM, 'hayloft_trim')
     for i in range(5):                                                     # hay spilling from the loft
         k.blob(cx + k.rng.uniform(-0.25, 0.25), r_front + 0.06, wall_h - 0.72 + k.rng.uniform(-0.04, 0.05), 0.12, 0.06, 0.05,
                ('#d8b858', 0.3), 'hay', segs=6)
     rm, zr = W._gable_roof(k, x0, x1, r_back, r_front, wall_h, rise, roof, over=0.3)
+    # the cupola on the ridge, louvred, with a weathervane
+    k.box(cx - 0.3, rm - 0.3, zr - 0.1, cx + 0.3, rm + 0.3, zr + 0.42, (wall, 0.0), 'cupola')
+    for zz in (zr + 0.06, zr + 0.16, zr + 0.26):
+        k.box(cx - 0.22, rm + 0.3, zz, cx + 0.22, rm + 0.34, zz + 0.05, (TRIM, 0.0), 'cupola_louvre')
+    k.box(cx - 0.34, rm + 0.28, zr - 0.1, cx + 0.34, rm + 0.36, zr - 0.02, (TRIM, 0.0), 'cupola_trim')
+    W.pyramid(k, cx - 0.38, rm - 0.38, cx + 0.38, rm + 0.38, zr + 0.42, zr + 0.72, (roof, 0.0), 'cupola_roof')
+    W.weathervane(k, cx, rm, zr + 0.72)
     k.solid(x0, r_back, x1, r_front)
     return rm, zr
 

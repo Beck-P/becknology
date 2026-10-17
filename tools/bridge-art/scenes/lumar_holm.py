@@ -127,7 +127,7 @@ with k.variant('house', 'cottage'):
     W.planter(k, 17.2, 18.4, HOUSE[3] + 0.25)
     W.planter(k, 22.6, 23.8, HOUSE[3] + 0.25)
     rm, zr = ridge
-    SMOKE['house'] = [round(17.5 - 0.12, 3), round(rm - 0.15 - (zr + 0.65) * C45, 3)]
+    SMOKE['house'] = [round(17.5 - 0.12, 3), round(rm - 0.15 - (zr + 1.05) * C45, 3)]
 
 # ---- the walled garden: brambles, or dug and planted --------------------------------------------------------------
 gx0, gr0, gx1, gr1 = GARDEN
@@ -166,7 +166,7 @@ with k.variant('quarters', 'built'):
     c0, r0, c1, r1 = LOTS['quarters']
     q = W.house(k, c0 + 0.1, c1 + 0.9, r0 + 0.1, r1 + 0.95, wall_h=1.9, rise=1.1, roof='#5a3a2a', wall='#d8ccb0', door_x=(c0 + c1 + 1) / 2,
                 windows=[(c0 + 1.0, 0.8), (c1 - 0.0, 0.8)], chimney=c1 + 0.4)
-    SMOKE['quarters'] = [round(c1 + 0.4 - 0.12, 3), round(q[0] - 0.15 - (q[1] + 0.65) * C45, 3)]
+    SMOKE['quarters'] = [round(c1 + 0.4 - 0.12, 3), round(q[0] - 0.15 - (q[1] + 1.05) * C45, 3)]
 k.blocked -= {(c, r) for nm, (c0, r0, c1, r1) in LOTS.items() for c in range(c0, c1 + 1) for r in range(r0, r1 + 1)}
 
 # ---- the rebuilt dock -------------------------------------------------------------------------------------------

@@ -52,7 +52,7 @@ SMOKE = []
 C = math.cos(math.radians(45))
 rm, zr = W.house(k, 2.6, 9.4, 2.6, 7.6, wall_h=2.3, rise=1.6, roof='#a04a30', wall='#efe2c6', door_x=6.0,
                  windows=[(3.8, 0.9), (8.2, 0.9)], windows_up=[(3.8, 1.75), (6.0, 1.8), (8.2, 1.75)], chimney=8.4)
-SMOKE.append([8.28, round(rm - 0.15 - (zr + 0.65) * C, 3)])
+SMOKE.append([8.28, round(rm - 0.15 - (zr + 1.05) * C, 3)])
 W.bench(k, 7.0, 8.7, 8.3)
 W.planter(k, 3.0, 4.8, 8.2, flowers=('#e05070', '#f0d040', '#f0f0f0'))
 F.mailbox(k, 10.5, 8.4)

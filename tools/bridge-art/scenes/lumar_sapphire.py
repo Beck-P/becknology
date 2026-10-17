@@ -98,7 +98,7 @@ SMOKE = []
 
 def smoke(ridge, cx):
     rm, zr = ridge
-    SMOKE.append([round(cx - 0.12, 3), round(rm - 0.15 - (zr + 0.65) * C45, 3)])
+    SMOKE.append([round(cx - 0.12, 3), round(rm - 0.15 - (zr + 1.05) * C45, 3)])
 
 
 smoke(W.house(k, 13.2, 17.0, 10.6, 14.0, wall_h=2.0, roof=W.ROOF_SLATE, wall='#c8c4b8', door_x=15.1,
