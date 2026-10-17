@@ -243,7 +243,7 @@ var BridgeMap = (function () {
         cb(t);
       };
       im.onerror = function () { cb(null); };
-      im.src = '/bridge/assets/scenes/' + sceneId + '/' + (meta.states && meta.states[0] || 'full') + '.png?v=' + (meta.rev || Date.now());
+      im.src = '/bridge/assets/scenes/' + sceneId + '/' + (meta.states && meta.states[0] || 'full') + '.' + (meta.ext || 'png') + '?v=' + (meta.rev || Date.now());
     }).catch(function () { cb(null); });
   }
   // a world's data: where you are, the live one; anywhere else its JSON with what the JS would add (fish, forage, shops)

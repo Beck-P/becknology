@@ -64,7 +64,8 @@ var BridgeSloop = (function () {
       }
       full.onload = done; shore.onload = done;
       full.onerror = shore.onerror = function () { H.failed = true; cb(); };
-      full.src = base + 'full.png' + q; shore.src = base + 'shore.png' + q;
+      var ext = '.' + (meta.ext || 'png');
+      full.src = base + 'full' + ext + q; shore.src = base + 'shore' + ext + q;
     }).catch(function () { H.failed = true; cb(); });
   }
   // ---- your ships at an island ---------------------------------------------------------------------------------------
@@ -210,7 +211,8 @@ var BridgeSloop = (function () {
       }
       full.onload = done; shore.onload = done;
       full.onerror = shore.onerror = function () { cb(new Error('sheet')); };
-      full.src = SHEET + 'full.png' + q; shore.src = SHEET + 'shore.png' + q;
+      var ext = '.' + (meta.ext || 'png');
+      full.src = SHEET + 'full' + ext + q; shore.src = SHEET + 'shore' + ext + q;
     }).catch(function () { cb(new Error('sheet')); });
   }
   // a cell of the sheet: [sx, sy] of its top-left (4 × 4 tiles), the thing's centre at (64, 83) in it
@@ -229,19 +231,19 @@ var BridgeSloop = (function () {
     if (!own) BridgeScene.load(id, function (sc) { I.sc = sc; done(); });
     fetch('/bridge/assets/scenes/' + id + '/scene.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (meta) {
       if (own === true) {
-        var q = '?v=' + (meta.rev || ''), st = meta.states[0], pic = new Image(), imgs = {};
+        var q = '?v=' + (meta.rev || ''), x = '.' + (meta.ext || 'png'), st = meta.states[0], pic = new Image(), imgs = {};
         var cy = meta.cycle, more = cy ? [cy.day, cy.dusk].filter(function (x) { return x && x !== st; }) : [];
         n++;
-        I.sc = { id: id, meta: meta, imgs: imgs, baseImgs: imgs, q: q, own: true };
+        I.sc = { id: id, meta: meta, imgs: imgs, baseImgs: imgs, q: q, ext: x, own: true };
         pic.onload = function () { imgs[st] = pic; done(); };
         pic.onerror = function () { I.sc = null; done(); };
-        pic.src = '/bridge/assets/scenes/' + id + '/' + st + '.png' + q;
+        pic.src = '/bridge/assets/scenes/' + id + '/' + st + x + q;
         more.forEach(function (name) {                    // the island by day and at dusk (js/scene.js blends them)
           n++;
           var p2 = new Image();
           p2.onload = function () { imgs[name] = p2; done(); };
           p2.onerror = function () { done(); };
-          p2.src = '/bridge/assets/scenes/' + id + '/' + name + '.png' + q;
+          p2.src = '/bridge/assets/scenes/' + id + '/' + name + x + q;
         });
       }
       var im = new Image();
@@ -268,7 +270,7 @@ var BridgeSloop = (function () {
         done();
       };
       im.onerror = function () { I.mask = null; I.meta = meta; done(); };
-      im.src = '/bridge/assets/scenes/' + id + '/shore.png?v=' + meta.rev;
+      im.src = '/bridge/assets/scenes/' + id + '/shore.' + (meta.ext || 'png') + '?v=' + meta.rev;
     }).catch(function () { I.mask = null; done(); });
   }
   /** What's at passage tile (x, r) on island I: 0 water, 1 land, 2 shallows (or 0 off its render). */

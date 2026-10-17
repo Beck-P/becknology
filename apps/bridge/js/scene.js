@@ -5,8 +5,9 @@
  * (tools/bridge-art/scenes/*) instead of tiles:
  *
  *   assets/scenes/<id>/scene.json   size, origin, depth range, per-tile light
- *   assets/scenes/<id>/<state>.png  the render, one per light state
- *   assets/scenes/<id>/depth.png    depth, 16 bits packed in R (high) + G (low)
+ *   assets/scenes/<id>/<state>.webp the render, one per light state
+ *   assets/scenes/<id>/depth.webp   depth, 16 bits packed in R (high) + G (low)
+ * (lossless WebP; scene.json's "ext" says which — a scene without it is PNG)
  *
  * Characters are depth-tested against the render pixel by pixel, so they
  * pass in front of and behind furniture correctly with no hand-placed
@@ -80,7 +81,8 @@ var BridgeScene = (function () {
                  baseImgs: {}, baseDepth: null, layers: [] };
       // images carry the scene's revision so a cached one never meets a newer layout
       var q = '?v=' + (meta.rev || Date.now());
-      sc.q = q;
+      var x = '.' + (meta.ext || 'png');             // scene_post writes lossless WebP now; older scenes are PNG
+      sc.q = q; sc.ext = x;
       var pending = meta.states.length + 1;
       function done() {
         if (--pending === 0) {
@@ -93,16 +95,16 @@ var BridgeScene = (function () {
         }
       }
       meta.states.forEach(function (s) {
-        loadImage(base + s + '.png' + q, function (img) { sc.baseImgs[s] = img; sc.imgs[s] = img; done(); });
+        loadImage(base + s + x + q, function (img) { sc.baseImgs[s] = img; sc.imgs[s] = img; done(); });
       });
-      loadImage(base + 'depth.png' + q, function (img) {
+      loadImage(base + 'depth' + x + q, function (img) {
         if (img) sc.baseDepth = sc.depth = decodeDepth(img, meta);
         done();
       });
       // the leaf pass (scenekit k.foliage): which pixels are leaves or needles, and of which tree (js/foliage.js)
       if (meta.leaves) {
         pending++;
-        loadImage(base + 'leaves.png' + q, function (img) { sc.baseLeaves = img ? pixels(img) : null; done(); });
+        loadImage(base + 'leaves' + x + q, function (img) { sc.baseLeaves = img ? pixels(img) : null; done(); });
       }
       // Decor variants: a lit image per state + depth for each
       Object.keys(meta.layers || {}).forEach(function (slot) {
@@ -112,15 +114,15 @@ var BridgeScene = (function () {
           var dir = base + 'layers/' + slot + '/' + key + '/';
           pending += meta.states.length + 1;
           meta.states.forEach(function (s) {
-            loadImage(dir + s + '.png' + q, function (img) { L.imgs[s] = img ? pixels(img) : null; done(); });
+            loadImage(dir + s + x + q, function (img) { L.imgs[s] = img ? pixels(img) : null; done(); });
           });
-          loadImage(dir + 'depth.png' + q, function (img) {
+          loadImage(dir + 'depth' + x + q, function (img) {
             if (img) L.depth = decodeDepth(img, meta);
             done();
           });
           if (L.box.leaves) {
             pending++;
-            loadImage(dir + 'leaves.png' + q, function (img) { L.leaves = img ? pixels(img) : null; done(); });
+            loadImage(dir + 'leaves' + x + q, function (img) { L.leaves = img ? pixels(img) : null; done(); });
           }
         });
       });

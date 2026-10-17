@@ -138,7 +138,7 @@ var BridgeHome = (function () {
         var w = waiting; waiting = [];
         w.forEach(function (f) { f(); });
       };
-      sheet.src = '/bridge/assets/scenes/furniture/full.png?v=' + meta.rev;
+      sheet.src = '/bridge/assets/scenes/furniture/full.' + (meta.ext || 'png') + '?v=' + meta.rev;
     }).catch(function () { /* no furniture: homes still open, just bare */ });
   })();
 

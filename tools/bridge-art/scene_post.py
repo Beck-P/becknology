@@ -3,10 +3,12 @@
 
   python3 tools/bridge-art/scene_post.py RENDER_DIR OUT_DIR
 
-Writes to OUT_DIR:
-  <state>.png   toon-shaded scene, one per light state (e.g. full / dim —
+Writes to OUT_DIR (every image lossless WebP, exact to the pixel; scene.json
+"ext" names the format, and the engine reads meta.ext — absent means PNG):
+  <state>.webp  toon-shaded scene, one per light state (e.g. full / dim —
                 the game cross-fades them to make firelight flicker)
-  depth.png     engine depth packed in 16 bits (R = high byte, G = low)
+  depth.webp    engine depth packed in 16 bits (R = high byte, G = low)
+  leaves.webp   the leaf pass, shore.webp the water, layers/<slot>/<key>/
   scene.json    size, origin, depth range, per-tile light for characters
 
 Toon shading: final = albedo × band(light) + emission. Light luminance is
@@ -190,6 +192,19 @@ def lines(img, ids, depth, alpha):
     return out
 
 
+EXT = 'webp'      # every image a scene writes (scene.json "ext"; the engine reads meta.ext, absent = png)
+
+
+def save(arr, d, name, mode='RGBA'):
+    """<name>.webp in d, lossless and exact (every pixel as written, transparent ones
+    included — depth and the leaf pass are data), about half a PNG's size; an older
+    <name>.png beside it goes."""
+    Image.fromarray(arr, mode).save(os.path.join(d, name + '.' + EXT), 'WEBP', lossless=True, method=4, exact=True)
+    old = os.path.join(d, name + '.png')
+    if os.path.exists(old):
+        os.remove(old)
+
+
 def revision(od):
     """A fingerprint of a scene's images: the engine loads them with ?v=rev,
     so a cached picture is never paired with a newer scene.json."""
@@ -197,7 +212,7 @@ def revision(od):
     h = hashlib.sha1()
     for root, _, files in sorted(os.walk(od)):
         for f in sorted(files):
-            if f.endswith('.png'):
+            if f.endswith(('.png', '.webp')):
                 h.update(f.encode())
                 h.update(open(os.path.join(root, f), 'rb').read())
     return h.hexdigest()[:10]
@@ -247,7 +262,7 @@ def shore(rd, od, meta, alpha):
     out[..., 1] = np.where(under, 1 + np.round(depth * 254), 0).astype(np.uint8)
     out[..., 2] = np.where(alpha, 0, 255)
     out[..., 3] = 255
-    Image.fromarray(out, 'RGBA').save(os.path.join(od, 'shore.png'), optimize=True)
+    save(out, od, 'shore')
     return {'z': wz, 'reach': SHORE_REACH}
 
 
@@ -289,7 +304,7 @@ def main():
         rgba = np.zeros(albedo.shape, np.uint8)
         rgba[..., :3] = (img * 255 + 0.5).astype(np.uint8)
         rgba[..., 3] = np.where(alpha, 255, 0)
-        Image.fromarray(rgba, 'RGBA').save(os.path.join(od, state + '.png'), optimize=True)
+        save(rgba, od, state)
 
     # Foliage (scenekit k.foliage): R leaf, B needle, G which tree - js/foliage.js colours each tree for the season
     def leaves(path, mask, box=None):
@@ -312,9 +327,11 @@ def main():
         return out if box is None else out[box[1]:box[3], box[0]:box[2]]
     base_leaves = leaves(os.path.join(rd, 'leaf.png'), alpha)
     if base_leaves is not False:
-        Image.fromarray(base_leaves, 'RGBA').save(os.path.join(od, 'leaves.png'), optimize=True)
-    elif os.path.exists(os.path.join(od, 'leaves.png')):
-        os.remove(os.path.join(od, 'leaves.png'))
+        save(base_leaves, od, 'leaves')
+    else:
+        for f in ('leaves.png', 'leaves.' + EXT):
+            if os.path.exists(os.path.join(od, f)):
+                os.remove(os.path.join(od, f))
 
     # Swappable decor variants (scenekit k.variant): each rendered alone in
     # the room's light -> cropped lit image per state + depth
@@ -361,7 +378,7 @@ def main():
         out[..., 1] = q & 255
         out[..., 3] = 255
         return out
-    Image.fromarray(pack(depth), 'RGBA').save(os.path.join(od, 'depth.png'), optimize=True)
+    save(pack(depth), od, 'depth')
 
     layers = {}
     for v, (x0, y0, x1, y1), imgs, vdp in variants:
@@ -369,11 +386,11 @@ def main():
         os.makedirs(ld, exist_ok=True)
         lv = imgs.pop('leaves', False)
         for state, rgba in imgs.items():
-            Image.fromarray(rgba, 'RGBA').save(os.path.join(ld, state + '.png'), optimize=True)
-        Image.fromarray(pack(vdp), 'RGBA').save(os.path.join(ld, 'depth.png'), optimize=True)
+            save(rgba, ld, state)
+        save(pack(vdp), ld, 'depth')
         layers.setdefault(v['slot'], {})[v['key']] = {'x': x0, 'y': y0, 'w': x1 - x0, 'h': y1 - y0}
         if lv is not False:
-            Image.fromarray(lv, 'RGBA').save(os.path.join(ld, 'leaves.png'), optimize=True)
+            save(lv, ld, 'leaves')
             layers[v['slot']][v['key']]['leaves'] = 1
 
     # Per-tile light on characters (probe plane at chest height)
@@ -411,6 +428,7 @@ def main():
         'depthMin': dmin, 'depthMax': dmax,
         'states': meta['lightStates'],
         'tileLight': tiles,
+        'ext': EXT,
     }
     if layers:
         out['layers'] = layers

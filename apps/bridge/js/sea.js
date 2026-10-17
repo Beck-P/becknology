@@ -257,7 +257,7 @@ var BridgeSea = (function () {
       S.stamp = -1; S.palette = null;
       S.ready = true;
     };
-    img.src = '/bridge/assets/scenes/' + sc.id + '/shore.png' + (sc.q || '');
+    img.src = '/bridge/assets/scenes/' + sc.id + '/shore' + (sc.ext || '.png') + (sc.q || '');
     return null;
   }
 

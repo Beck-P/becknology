@@ -69,7 +69,7 @@ var BridgeMine = (function () {
     if (sheet) return;
     sheet = new Image();
     fetch('/bridge/assets/scenes/mine-rocks/scene.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (m) {
-      meta = m; sheet.src = '/bridge/assets/scenes/mine-rocks/full.png?v=' + m.rev;
+      meta = m; sheet.src = '/bridge/assets/scenes/mine-rocks/full.' + (m.ext || 'png') + '?v=' + m.rev;
     }).catch(function () { /* drawn as plain stones */ });
   }
   function sprRect(name) {                    // the tile's column, from a little above the tile to its bottom edge

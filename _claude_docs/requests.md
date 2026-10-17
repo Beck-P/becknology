@@ -43,6 +43,8 @@ only partly done, the rest stays here as open.
 | Combat uses too much energy too quickly | in progress | Branch (worktree agent). |
 | Combat looks janky: red squares popping up; a square round the falling orbs | in progress | Branch (worktree agent). |
 | Visual ship upgrades: see the guns, cannons firing, fittings | in progress | Branch (worktree agent). |
+| Ships a little bigger: the starting boat a bit bigger, each size up a bit bigger again — "never super crazy" | open | Next for the ship-visuals agent once its branch lands (hull sheets re-rendered at the new sizes, moorings and boarding refit). |
+| Other ships out on the ocean: different sizes and types — fishing boats, merchant ships, fighting ships | open | Same agent, same code (js/sloop.js traffic): trawlers and dories working the grounds, merchantmen on the trade lanes, patrols and warships, each sized and rigged its own way. |
 | Keep working on the office space | in progress | Branch (worktree agent): the Captain's Office aboard — desk, staff board, fleet chart table, strongbox. |
 | Ship orchestration, hiring, sending ships out, upgrading — make it better | discuss | Draft: `_claude_docs/spec-empire.md`. |
 | Think through business operations as a whole: magic items, cool things, building an empire that flows together | discuss | Draft: `_claude_docs/spec-empire.md`. |
