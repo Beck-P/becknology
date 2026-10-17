@@ -89,7 +89,7 @@ fixed cores (lift towers, the Loop's stations, stairs), each main place 40–80 
   through it from the Spires, up at the District's underside from below; level numbers on the signs.
 - **Getting around**: the Loop, a sky train circling the Mid-Levels through the towers (a carriage you sit in while
   the skyline streams by; it passes over the District street every few minutes); express lifts with the floors rolling
-  past; a funicular down; air cabs between pads.
+  past; air cabs between pads. No funicular (Beck: the sky train, express lifts "and stuff like that").
 - **Implants — agreed**, tiered by level: back-alley chrome below (cheap, now and then it glitches), clinic-grade on the
   District, designer up top.
 - The Map tab shows Arcadia as a side-on cutaway.

@@ -402,12 +402,26 @@ var BridgeInteractions = (function () {
   }
 
   function executeInteraction(inter) {
-    if (typeof BridgeAudio !== 'undefined' && inter.type !== 'farm_plot') BridgeAudio.sfx(/^(enter_world|leave_world|password_gate)$/.test(inter.type) ? 'door' : 'open');   // the field makes its own sounds
+    if (typeof BridgeAudio !== 'undefined' && inter.type !== 'farm_plot' && !inter.__given) BridgeAudio.sfx(/^(enter_world|leave_world|password_gate)$/.test(inter.type) ? 'door' : 'open');   // the field makes its own sounds
     if (typeof BridgeGames !== 'undefined') BridgeGames.note(inter);      // a game played: it waits in the game room now
     var hits = [];
-    if (typeof BridgeQuests !== 'undefined') {
+    if (inter.__given) hits = inter.__given;          // back from handing something over (below): the clues were found already
+    else if (typeof BridgeQuests !== 'undefined') {
       hits = BridgeQuests.onInteract(BridgeWorld.getWorldId(), inter) || [];
       if (inter.home) BridgeQuests.onInteract(inter.home.world, { label: inter.home.label });   // crew aboard (js/crew.js)
+    }
+    // a quest's things (js/keyitems.js): one you give flies from your hands to them before they speak;
+    // one you get is held up over your head once whatever's said here has been read
+    if (typeof BridgeKeyItems !== 'undefined' && !inter.__given) {
+      var giving = hits.filter(function (c) { return c.give; })[0];
+      hits.forEach(function (c) { if (c.get) BridgeKeyItems.got(c); });
+      if (giving) {
+        BridgeKeyItems.give(giving, inter, function () {
+          inter.__given = hits;
+          try { executeInteraction(inter); } finally { delete inter.__given; }
+        });
+        return;
+      }
     }
     if (typeof BridgeHours !== 'undefined' && BridgeHours.gate(inter)) return;   // a shop shut for the night (js/hours.js)
     if (typeof BridgeLegacy !== 'undefined' && BridgeLegacy.handle(inter)) return; // Captain Mira's statue: room for one more (js/legacy.js)

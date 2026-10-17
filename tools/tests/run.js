@@ -39,6 +39,7 @@ const SUITES = {
     ['world/festivals.js', SHOTS],
     ['world/music.js'],
     ['world/dungeon.js', SHOTS],
+    ['world/sylvara_quests.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/regatta.js', SHOTS],
     ['world/landings.js', SHOTS + '/landings'],

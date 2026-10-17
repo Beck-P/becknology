@@ -77,7 +77,9 @@ var BridgeSylvara = (function () {
         ? "THE WILLOW OVER THE MOONWELL, HUNG WITH FAELAN'S LEAF LANTERNS AND SEFA'S RIBBONS OF GREEN SILK AND GOLD. THE ELVES SAY IT'S WHERE THE FIRST SWORD FINALLY SAID IT. PIP SAYS SHE SAW."
         : q('queens-favour/ribbon')
           ? 'A WILLOW BENDING OVER THE MOONWELL, ITS FRONDS TRAILING IN THE WATER. NOTHING CAUGHT IN IT NOW.'
-          : it.dialog;
+          : q('queens-favour/charge')                    // looking for the ribbon, but not told where yet
+            ? "SOMETHING IS CAUGHT HIGH IN THE FRONDS, BUT YOU CAN'T MAKE OUT WHAT FROM DOWN HERE. MAYBE SOMEONE IN THE GLADE SAW WHAT HAPPENED."
+            : 'A WILLOW BENDING OVER THE MOONWELL, ITS FRONDS TRAILING IN THE WATER. SOMETHING IS CAUGHT HIGH IN THEM.';
     });
   }
   function decorate(worldId, data) {                 // js/world.js, as each world loads
@@ -87,6 +89,7 @@ var BridgeSylvara = (function () {
   }
   var lit = false;
   function keepsake(ctx, world, offX, offY, ts, now) {
+    willowWords(world);                               // the willow says what the story's got to (cheap: one label match)
     var on = wed(), sid = world.scene && world.scene.id;
     if (on && !lit && sid && typeof BridgeScene !== 'undefined') {          // it just happened: up they go, there and then
       var map = {}, cur = BridgeScene.getLayers(sid);
