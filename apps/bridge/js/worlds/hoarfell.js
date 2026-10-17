@@ -261,9 +261,8 @@ var BridgeHoarfell = (function () {
   // the summit's sky: the range under the sky, a sea of cloud below the rim. Its colours follow the place's own render
   // through the day (BridgeScene.sky: day, dusk and night weights) — the alpenglow Hoarfell is lit by, a deeper dusk,
   // a moonlit night with the stars out; a render with only the one state keeps the alpenglow.
-  var range = null;
   var PAL = {                    // sky top → horizon, the far and near range (fill, lit rim), the cloud sea (base, tops)
-    day:   { sky: ['#1e1a4a', '#5a3a7a', '#d07a90', '#f6b890'], far: ['#8a7ab0', '#ffd0c0'], near: ['#6a6098', '#f0b0b8'], cloud: ['#c8b4d4', '#e8d8e8', '#f6e4e8'], glow: [255, 210, 160] },
+    day:   { sky: ['#3a5698', '#6a8cc8', '#a8c0e4', '#f2dcd4'], far: ['#8a7ab0', '#ffd0c0'], near: ['#6a6098', '#f0b0b8'], cloud: ['#bcc6e0', '#dfe6f4', '#f6f8fc'], glow: [255, 230, 200] },
     dusk:  { sky: ['#140e34', '#4a1e52', '#b04a5a', '#f08a5a'], far: ['#5a4a80', '#ffa080'], near: ['#46406e', '#e08070'], cloud: ['#9a7a9a', '#c08a98', '#d89aa0'], glow: [255, 150, 90] },
     night: { sky: ['#03040e', '#0a1028', '#18224a', '#2a3660'], far: ['#1e2440', '#8090c0'], near: ['#161a32', '#6070a0'], cloud: ['#2a3050', '#3a4268', '#46507a'], glow: [190, 210, 255] }
   };
@@ -283,7 +282,7 @@ var BridgeHoarfell = (function () {
     var g = ctx.createLinearGradient(0, 0, 0, h);
     [0, 0.4, 0.7, 1].forEach(function (at, i) { g.addColorStop(at, blend(W, function (p) { return p.sky[i]; })); });
     ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
-    var starK = 0.45 + 0.55 * W.night + 0.25 * W.dusk;
+    var starK = 0.05 * W.day + 0.95 * W.night + 0.45 * W.dusk;
     for (var i = 0; i < (W.night > 0.3 ? 110 : 50); i++) {
       var a = (0.25 + 0.35 * Math.abs(Math.sin(now / 1300 + i * 1.7))) * starK;
       ctx.fillStyle = 'rgba(255,255,255,' + Math.min(1, a).toFixed(2) + ')';
@@ -305,33 +304,110 @@ var BridgeHoarfell = (function () {
       ctx.fillStyle = '#c4cee0'; ctx.fillRect(mx - 2, my - 1, 2, 2); ctx.fillRect(mx + 1, my + 2, 1, 1);
       ctx.globalAlpha = 1;
     }
-    if (!range || range.w !== w) {
-      range = { w: w, a: [], b: [] };
-      for (var x = 0; x <= w; x += 3) {
-        range.a.push(26 + 30 * Math.abs(Math.sin(x / 47)) + 18 * Math.abs(Math.sin(x / 19 + 1.3)));
-        range.b.push(14 + 22 * Math.abs(Math.sin(x / 31 + 2.1)) + 9 * Math.abs(Math.sin(x / 11)));
-      }
+    // the far ranges: three bands of mountains (tools/bridge-art/hoarfell_range.py), coloured for the hour in flat bands,
+    // scrolled a whole pixel at a time; the sea of cloud below them, banked and drifting
+    var base = Math.round(h * 0.64 + v.offY * 0.03);
+    var lay = ranges(W);
+    if (lay) {
+      [[0, 0.015, -6], [1, 0.03, 6], [2, 0.05, 16]].forEach(function (L) {
+        var c = lay[L[0]], ox = Math.round(-(v.offX || 0) * L[1]) % c.width;
+        if (ox > 0) ox -= c.width;
+        var y = base + L[2] - c.height;
+        for (var x = ox; x < w; x += c.width) ctx.drawImage(c, x, y);
+      });
     }
-    var base = h * 0.64 + v.offY * 0.03;
-    peaks(ctx, range.a, base, blend(W, function (p) { return p.far[0]; }), blend(W, function (p) { return p.far[1]; }));
-    peaks(ctx, range.b, base + 14, blend(W, function (p) { return p.near[0]; }), blend(W, function (p) { return p.near[1]; }));
-    // the sea of cloud: bands of soft cloud drifting, lit on top
-    var top = Math.round(base + 10), c1 = blend(W, function (p) { return p.cloud[1]; }), c2 = blend(W, function (p) { return p.cloud[2]; });
-    ctx.fillStyle = blend(W, function (p) { return p.cloud[0]; }); ctx.fillRect(0, top + 8, w, h - top);
-    for (var r = 0; r < 9; r++) {
-      var yy = top + r * 9, sp = now / (900 + r * 300);
-      for (var c = -1; c < w / 40 + 1; c++) {
-        var cx = ((c * 40 + sp * (r % 2 ? 6 : -4)) % (w + 80)) - 40 + (r * 13) % 40;
-        ctx.fillStyle = r % 2 ? c1 : c2;
-        ctx.beginPath(); ctx.ellipse(cx, yy, 26 + (c * 7 + r) % 12, 6 + r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
-      }
-    }
+    clouds(ctx, w, h, base, now, W);
   }
-  function peaks(ctx, hs, base, fill, rim) {
-    ctx.fillStyle = fill;
-    for (var i = 0; i < hs.length; i++) { var top = Math.round(base - hs[i]); ctx.fillRect(i * 3, top, 3, ctx.canvas.height - top); }
-    ctx.fillStyle = rim;
-    for (var j = 1; j < hs.length; j++) if (hs[j] > hs[j - 1]) ctx.fillRect(j * 3, Math.round(base - hs[j]), 3, 1);
+
+  // ---- the ranges' colours through the day: four tones of snow and of rock, the line, the alpenglow on the peaks ----------
+  var RPAL = {
+    day:   { snow: ['#9aa6d0', '#c0cce8', '#e4ecf8', '#fbfcff'], rock: ['#48527a', '#5e6890', '#7a84a8', '#969ebe'], line: '#262a4a', glow: [255, 214, 196], g: 0.18 },
+    dusk:  { snow: ['#6a5a90', '#9a7aa8', '#d8909c', '#ffb898'], rock: ['#33284e', '#463660', '#5e4672', '#7a5480'], line: '#1e1636', glow: [255, 136, 90], g: 0.55 },
+    night: { snow: ['#2e3660', '#3e4a78', '#56649a', '#7a8aba'], rock: ['#121628', '#1a2038', '#222a48', '#2c3658'], line: '#080a16', glow: [0, 0, 0], g: 0 }
+  };
+  var RIMG = null, RCACHE = { key: '', lay: null };
+  function ranges(W) {
+    if (!RIMG) {
+      RIMG = ['far', 'mid', 'near'].map(function (n) {
+        var im = new Image(); im.src = '/bridge/assets/backdrops/hoarfell/range_' + n + '.png'; return im;
+      });
+    }
+    if (!RIMG.every(function (im) { return im.complete && im.naturalWidth; })) return RCACHE.lay;
+    var key = [W.day, W.dusk, W.night].map(function (x) { return Math.round(x * 20); }).join(',');
+    if (RCACHE.key === key && RCACHE.lay) return RCACHE.lay;
+    function mix(f) {
+      var a = f(RPAL.day), b = f(RPAL.dusk), c = f(RPAL.night);
+      if (typeof a === 'string') { a = hex(a); b = hex(b); c = hex(c); }
+      if (typeof a === 'number') return a * W.day + b * W.dusk + c * W.night;
+      return [0, 1, 2].map(function (i) { return a[i] * W.day + b[i] * W.dusk + c[i] * W.night; });
+    }
+    var snow = [0, 1, 2, 3].map(function (i) { return mix(function (p) { return p.snow[i]; }); });
+    var rock = [0, 1, 2, 3].map(function (i) { return mix(function (p) { return p.rock[i]; }); });
+    var line = mix(function (p) { return p.line; }), glow = mix(function (p) { return p.glow; }), gs = mix(function (p) { return p.g; });
+    RCACHE.lay = RIMG.map(function (im, li) {
+      var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+      var x = c.getContext('2d'); x.drawImage(im, 0, 0);
+      var d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+      var haze = [0.35, 0.18, 0][li];                          // the farther, the more of the sky's colour
+      var sk = mix(function (q) { return q.sky[3]; });
+      for (var i = 0; i < p.length; i += 4) {
+        if (!p[i + 3]) continue;
+        var band = Math.min(3, (p[i] / 64) | 0), m = p[i + 1], col;
+        if (m === 255) col = line;
+        else {
+          col = (m === 128 ? snow : rock)[band];
+          if (m === 128 && band >= 2) {                         // the alpenglow on the high snow
+            var t = Math.pow(p[i + 2] / 255, 2) * gs;
+            col = [col[0] + (glow[0] - col[0]) * t, col[1] + (glow[1] - col[1]) * t, col[2] + (glow[2] - col[2]) * t];
+          }
+        }
+        p[i] = Math.round(col[0] + (sk[0] - col[0]) * haze); p[i + 1] = Math.round(col[1] + (sk[1] - col[1]) * haze);
+        p[i + 2] = Math.round(col[2] + (sk[2] - col[2]) * haze); p[i + 3] = 255;
+      }
+      x.putImageData(d, 0, 0);
+      return c;
+    });
+    RCACHE.key = key;
+    return RCACHE.lay;
+  }
+  RPAL.day.sky = PAL.day.sky; RPAL.dusk.sky = PAL.dusk.sky; RPAL.night.sky = PAL.night.sky;
+
+  // the sea of cloud: banks of puffs in three flat tones (shadowed base, body, lit tops), each bank its own drift, laid out
+  // once from a seed so they never shuffle; a whole pixel at a time
+  var CL = null;
+  function rnd(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+  function clouds(ctx, w, h, base, now, W) {
+    var c0 = blend(W, function (p) { return p.cloud[0]; }), c1 = blend(W, function (p) { return p.cloud[1]; }), c2 = blend(W, function (p) { return p.cloud[2]; });
+    var top = base + 4, span = 1024;
+    if (!CL) {
+      CL = [];
+      for (var r = 0; r < 6; r++) {
+        var bank = [], x = 0, i = 0;
+        while (x < span) {
+          var big = rnd(r * 977 + i * 13) < 0.25;
+          var rx = (big ? 26 : 12) + rnd(r * 31 + i * 7) * (big ? 20 : 14) + r * 2;
+          bank.push({ x: x, rx: rx, ry: rx * (0.32 + 0.12 * rnd(i * 3 + r)), dy: Math.round((rnd(i * 5 + r * 17) - 0.5) * 6) });
+          x += rx * (0.9 + 0.7 * rnd(i * 11 + r));
+          i++;
+        }
+        CL.push(bank);
+      }
+    }
+    ctx.fillStyle = c0; ctx.fillRect(0, top + 6, w, h - top);
+    for (var r2 = 0; r2 < CL.length; r2++) {
+      var yy = top + 4 + r2 * (8 + r2 * 2), drift = Math.round(now / (900 + r2 * 400)) * (r2 % 2 ? 1 : -1);
+      for (var pass = 0; pass < 3; pass++) {
+        ctx.fillStyle = [c0, c1, c2][pass];
+        CL[r2].forEach(function (p) {
+          var cx = ((p.x + drift) % span + span) % span;
+          for (var o = cx - span; o < w + p.rx; o += span) {
+            if (o < -p.rx * 2) continue;
+            var k = [1, 0.86, 0.5][pass], up = [0, -2, -p.ry * 0.45][pass];
+            ctx.beginPath(); ctx.ellipse(Math.round(o), Math.round(yy + p.dy + up + (pass ? 0 : 2)), Math.round(p.rx * k), Math.max(2, Math.round(p.ry * k)), 0, 0, Math.PI * 2); ctx.fill();
+          }
+        });
+      }
+    }
   }
 
   if (typeof BridgeWorld !== 'undefined') {
