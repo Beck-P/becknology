@@ -47,7 +47,7 @@ var BridgeClock = (function () {
   var RX = [
     [/^lumar/, 'lumar'], [/^verdance/, 'verdance'], [/^hoarfell/, 'hoarfell'], [/^sylvara/, 'sylvara'],
     [/^(arcadia|cyber-noodle-bar|chrome-clinic|junk-pawn-shop|tech-repair-shop|null-den)/, 'arcadia'],
-    [/^enigma/, 'enigma'], [/^singularity/, 'singularity'], [/^(bridge|quarters|hangar|gameroom|office)$/, 'ship']
+    [/^enigma/, 'enigma'], [/^singularity/, 'singularity'], [/^(bridge|quarters|hangar|gameroom|office|ship-[a-z]+)$/, 'ship']
   ];
   // under the open sky (the rest are indoors: their windows follow the time, their light doesn't)
   var OUTDOOR = ['lumar', 'lumar-crimson', 'lumar-cinder', 'lumar-cinder-volcano', 'lumar-saltmere', 'lumar-gloaming', 'lumar-rose', 'lumar-sapphire', 'lumar-midnight', 'lumar-crown', 'lumar-holm',

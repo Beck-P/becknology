@@ -2697,6 +2697,49 @@ var BridgeSloop = (function () {
     });
   }
 
+  // ---- the spore bloom (js/bloom.js): where the water moves it lights up - your wake, the surf on rocks, round every hull
+  // and astern of every ship (soft glows in the sea's own light, added on; the water itself is js/sea.js)
+  function drawBloom(now) {
+    var k = typeof BridgeBloom !== 'undefined' ? BridgeBloom.on() : 0;
+    if (k < 0.01) return;
+    var t = now / 1000, by = {};
+    function add(sea, X, Y, a, r) { if (X > -8 && Y > -8 && X < W + 8 && Y < H + 8) (by[sea] || (by[sea] = [])).push([X, Y, a, r]); }
+    var here = seaHere();
+    for (var i = 0; i < wake.length; i += 2) {                       // your wake
+      var w = wake[i], a = 1 - w.age / 2.6;
+      add(here, sx(w.x), sy(w.r), (w.glow ? 0.8 : 0.6) * a * Math.min(1, w.v / 1.5), a > 0.6 ? 4 : 3);
+    }
+    function hull(b, sea) {                                          // round her waterline, and the V astern
+      var sp = b.spec || SLOOP, c = Math.cos(b.h), s = Math.sin(b.h), L = sp.L / 2, B = (sp.beam || 1) * 0.5, sp0 = Math.min(1, Math.abs(b.v || 0) / 2);
+      for (var j = 0; j < 12; j++) {
+        var ang = j / 12 * Math.PI * 2, n = Math.sin(t * 2.1 + j * 1.9 + (b.seed || 0));
+        if (n < 0) continue;
+        var u = Math.cos(ang) * L, v = Math.sin(ang) * B;
+        add(sea, sx(b.x + u * c - v * s), sy(b.r + u * s + v * c), 0.3 + 0.3 * n + 0.3 * sp0, 3);
+      }
+      if (b === boat) return;
+      for (var q = 1; q <= 10; q++) {
+        var uu = sp.L / 2 + q * 0.45, ww = (sp.beam || 1) * 0.35 + q * 0.16, aa = 0.5 * (1 - q / 11) * (0.3 + sp0);
+        for (var sg = -1; sg <= 1; sg += 2) add(sea, sx(b.x - c * uu - s * sg * ww), sy(b.r - s * uu + c * sg * ww), aa, 2);
+      }
+    }
+    hull(boat, here);
+    traffic.forEach(function (o) { hull(o, palAt(o.x, o.r)); });
+    things.forEach(function (o) {                                    // the surf round rocks and the reef, rings round things afloat
+      if (o.kind === 'dory' || o.kind === 'wreck' || (o.flot && o.got)) return;
+      var X = sx(o.x), Y = sy(o.r);
+      if (X < -80 || Y < -60 || X > W + 80 || Y > H + 60) return;
+      var rock = o.kind === 'reef' || o.kind.indexOf('rock') === 0, rx = (o.rad || 0.5) * TS * 0.95, ry = rx * 0.6, sea = o.pal || palAt(o.x, o.r);
+      for (var m = 0; m < 14; m++) {
+        var ang = m / 14 * Math.PI * 2, n = Math.sin(t * 2.3 + m * 1.7 + o.seed);
+        if (n < 0.1) continue;
+        var kk = 1 + (rock ? 0.15 * n : 0);
+        add(sea, X + Math.cos(ang) * rx * kk, Y + Math.sin(ang) * ry * kk, (rock ? 0.6 : 0.4) * n, rock && n > 0.7 ? 4 : 3);
+      }
+    });
+    for (var sea in by) BridgeBloom.glowAt(bctx, sea, by[sea], k);
+  }
+
   // the boat in its frame: (u along the keel, v to starboard, z up) → screen, heeling the rig to leeward
   function rig(b, bob) {
     var c = Math.cos(b.h), s = Math.sin(b.h), lee = b.side, hs = Math.sin(b.heel) * lee, hc = Math.cos(b.heel);
@@ -3433,6 +3476,7 @@ var BridgeSloop = (function () {
     drawGusts(now);
     for (var iid in isl) drawIsland(isl[iid], now);
     drawWake(now);
+    drawBloom(now);
     drawWhale(now);
     var list = things.map(function (o) { return { row: o.r, draw: function () { drawThing(o, now); } }; });
     list.push({ row: b.r, draw: function () { drawBoat(now); } });

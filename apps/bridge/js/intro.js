@@ -250,7 +250,7 @@ var BridgeIntro = (function () {
   // ---- the Wayfarer ---------------------------------------------------------------------------------------------------
   // Her night copy: the hull in the planet's shadow, its lamps (portholes, the gallery, the keel and engine rings) kept.
   function prepShip() {
-    var m = BridgeCine.get('mothership');
+    var m = BridgeCine.ship ? BridgeCine.ship() : BridgeCine.get('mothership');      // as fitted (js/wayfarer.js)
     if (!m) return;
     var c = document.createElement('canvas');
     c.width = m.w; c.height = m.h;

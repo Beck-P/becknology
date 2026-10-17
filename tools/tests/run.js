@@ -22,6 +22,7 @@ const SUITES = {
     ['world/hands.js'],
     ['world/staff.js', SHOTS],
     ['world/office.js', SHOTS],
+    ['world/wayfarer.js', SHOTS],
     ['world/empire.js', SHOTS],
     ['world/aquarium.js', SHOTS],
     ['world/foliage.js', SHOTS],
@@ -29,20 +30,25 @@ const SUITES = {
     ['world/litlight.js', SHOTS],
     ['world/orders.js', SHOTS],
     ['world/sea.js', SHOTS],
+    ['world/bloom.js', SHOTS],
     ['world/sleep.js', SHOTS],
     ['world/workshop.js', SHOTS],
     ['world/shipyard.js', SHOTS],
     ['world/trophies.js', SHOTS],
     ['world/gpu.js', SHOTS],
+    ['world/glowshift.js', SHOTS],
     ['world/routines.js', SHOTS],
     ['world/crowd.js', SHOTS],
     ['world/portraits.js', SHOTS],
+    ['world/seats.js', SHOTS],
     ['world/festivals.js', SHOTS],
     ['world/music.js'],
     ['world/dungeon.js', SHOTS],
     ['world/sylvara_quests.js', SHOTS],
+    ['world/quest_tracker.js', SHOTS],
     ['world/events.js', SHOTS],
     ['world/regatta.js', SHOTS],
+    ['world/arcadia_transit.js', SHOTS],
     ['world/tower.js', SHOTS],
     ['world/crimson.js', SHOTS],
     ['world/midnight.js', SHOTS],
@@ -52,7 +58,7 @@ const SUITES = {
   ],
   // two pilots on the fake Supabase: seeing each other, walking, presence, sharing, partners, fighting, sailing, a party
   multi: ['mp_see', 'mp_walk', 'mp_visible', 'mp_presence', 'mp_away', 'mp_share', 'mp_partner', 'mp_clue', 'mp_fight', 'mp_hp',
-    'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight', 'mp_party'].map((t) => ['multi/' + t + '.js', D]),
+    'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight', 'mp_party', 'mp_wayfarer'].map((t) => ['multi/' + t + '.js', D]),
   // playing every game together (js/together.js), and the table chat
   together: [['t_cab.js', 'asteroids'], ['t_cab.js', 'breakout'], ['t_cab.js', 'space-invaders', 'Co-op', 'Just for fun'],
     ['t_heli.js', 'Score duel'], ['t_heli.js', 'Tandem'], ['t_dice.js', 'With'], ['t_dice.js', 'Heads', 'lumar-crown-pub'], ['t_diceleave.js'],
@@ -77,7 +83,8 @@ const SUITES = {
 };
 // what of each test's output is shown: one group of alternatives a line (add a test's own on a new line)
 const KEEP = new RegExp([
-  /PAGEERR|live light|light under her|out of reach|signed in|a tap on|hide\(\)|office|through the door|roster/,
+  /street lift|lift offers|now at|aboard|skyport pod|loop stations|loop offers|aboard:|in at:|doors:|stepped off|train crossing|cutaway places/,
+  /PAGEERR|live light|glow shift|light under her|out of reach|signed in|a tap on|hide\(\)|office|through the door|roster/,
   /board|orders|accounts|seated|the view|back on the bridge|before:|asleep|woken early|up and about/,
   /slept through|recovery bed|tanks in|the tank:|in the tank|looking:|aboard at|aly visiting|into his save/,
   /left at Midnight|sent to|a passage|after the passage|send screen|orders given|the Ferryman|leaves in the render/,
@@ -95,7 +102,9 @@ const KEEP = new RegExp([
   /routes \d|busiest|in view|frames a second|traders|navy:|trawler:|privateer:|galleon:|man_of_war|pirate:|on the Midnight|hailed/,
   /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,
   /schedule|in a storm|the gun:|finished|prizes|at the gate|at the foot|gun: beck|racing:/,
+  /ship's clock|passage|bays|bay 1|fit |modules|fitted|galley|Dorrie|breakfast|dinner|broth|fish|special|night|cards|chip|watch bill|below|butt/,
   /full draw|snap shot|close snap|fire arrow|ghost arrow|selected/,
+  /seats sat on|depth row|^BAD /,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
 

@@ -4,6 +4,8 @@
     "where": "Lumar",
     "reward": 150,
     "start": "Someone who wore your ship's mark came to Lumar long before you did.",
+    "rumour": "Sailors in Lumar's tavern still talk about a painting of a ship under a green moon, signed by a pilot who never came back.",
+    "begin": "painting",
     "done": "A pilot of your line came here, met the dragon, and never left. Whatever they were listening for, the egg is listening for it too.",
     "clues": [
       {
@@ -12,7 +14,8 @@
           "world": "lumar-crimson-cave",
           "label": "BONES"
         },
-        "text": "A skeleton deep in the dragon's cave clutches a medal. The ship mark on it is yours."
+        "text": "A skeleton deep in the dragon's cave clutches a medal. The ship mark on it is yours.",
+        "hint": "Whoever wore your mark went into the dragon's cave on Crimson Reach. Go deep."
       },
       {
         "id": "scrolls",
@@ -20,7 +23,8 @@
           "world": "lumar-midnight-tower",
           "label": "SCROLLS"
         },
-        "text": "In the sorceress's tower, a scroll sealed in red wax. The seal bears the same ship mark."
+        "text": "In the sorceress's tower, a scroll sealed in red wax. The seal bears the same ship mark.",
+        "hint": "The sorceress on Midnight Isle keeps old papers in her tower. Something there is sealed."
       },
       {
         "id": "painting",
@@ -28,7 +32,8 @@
           "world": "lumar-tavern",
           "label": "PAINTING"
         },
-        "text": "The tavern's oil painting: a ship under a full green moon, signed 'E.B.'"
+        "text": "The tavern's oil painting: a ship under a full green moon, signed 'E.B.'",
+        "hint": "Look at the painting by the fire in Lumar's tavern. Who signed it?"
       },
       {
         "id": "compass",
@@ -36,7 +41,8 @@
           "world": "lumar-inn-upstairs",
           "label": "THE OTHER BED"
         },
-        "text": "A traveller's compass at the inn that never settles on north."
+        "text": "A traveller's compass at the inn that never settles on north.",
+        "hint": "A traveller's things have sat on the other bed at the inn for a year. Look at them."
       },
       {
         "id": "guestbook",
@@ -44,7 +50,8 @@
           "world": "lumar-inn-upstairs",
           "label": "WRITING DESK"
         },
-        "text": "The inn's guestbook, last entry, no name: 'The dragon is not asleep. It is listening.'"
+        "text": "The inn's guestbook, last entry, no name: 'The dragon is not asleep. It is listening.'",
+        "hint": "Inns keep a book of who stayed. Read the last entry upstairs."
       },
       {
         "id": "egg",
@@ -52,7 +59,8 @@
           "world": "lumar-crimson-cave",
           "label": "DRAGON'S EGG"
         },
-        "text": "The dragon's egg glows faintly. Something inside is listening."
+        "text": "The dragon's egg glows faintly. Something inside is listening.",
+        "hint": "The dragon's hoard holds something that glows. Get close to it."
       }
     ],
     "letter": {
@@ -65,6 +73,8 @@
     "where": "Crimson Reach, Lumar",
     "reward": 120,
     "start": "A galleon called the Heron broke her back on the Crimson reef. Somebody thinks her cargo is still aboard.",
+    "rumour": "The pirates on Crimson Reach are waiting on a low tide to get at an old wreck.",
+    "begin": "watcher",
     "done": "H.M. charted the reef, hid the chart on the stack and went for the cargo through the dragon's caves. The pirates are waiting for the tide to do the same.",
     "clues": [
       {
@@ -73,7 +83,8 @@
           "world": "lumar-crimson",
           "label": "SEA CHEST"
         },
-        "text": "A chest under an X on the sea stack: a reef chart and a note. 'The Heron's cargo is still aboard. - H.M.'"
+        "text": "A chest under an X on the sea stack: a reef chart and a note. 'The Heron's cargo is still aboard. - H.M.'",
+        "hint": "Someone left a chest where only a climber would look: out on the sea stack off Crimson Reach."
       },
       {
         "id": "wreck",
@@ -81,7 +92,8 @@
           "world": "lumar-crimson",
           "label": "GILDED HERON"
         },
-        "text": "The Heron lies listing on the reef, her hold open to the sea."
+        "text": "The Heron lies listing on the reef, her hold open to the sea.",
+        "hint": "The Heron is still out on the reef. See her for yourself."
       },
       {
         "id": "tent",
@@ -89,7 +101,8 @@
           "world": "lumar-crimson",
           "label": "TENT"
         },
-        "text": "In the pirates' tent, the same reef chart, the wreck circled twice."
+        "text": "In the pirates' tent, the same reef chart, the wreck circled twice.",
+        "hint": "The pirates have a chart of their own. Their tent might be worth a look."
       },
       {
         "id": "charcoal",
@@ -97,7 +110,8 @@
           "world": "lumar-crimson",
           "label": "CHARCOAL MARK"
         },
-        "text": "Charcoal by the cave mouth, signed H.M.: 'Down the stairs, bear left, mind the lava.'"
+        "text": "Charcoal by the cave mouth, signed H.M.: 'Down the stairs, bear left, mind the lava.'",
+        "hint": "H.M. left notes as he went. Look around the mouth of the cave."
       },
       {
         "id": "watcher",
@@ -105,7 +119,8 @@
           "world": "lumar-crimson",
           "label": "CRIMSON WATCHER"
         },
-        "text": "The Crimson Watcher keeps the camp's fire and tells you to keep away from the cave."
+        "text": "The Crimson Watcher keeps the camp's fire and tells you to keep away from the cave.",
+        "hint": "Someone keeps the fire at the pirates' camp. Ask her about the wreck."
       }
     ],
     "letter": {
@@ -118,6 +133,8 @@
     "where": "Enigma Station",
     "reward": 150,
     "start": "Enigma's antenna is still listening to something on 47.3 MHz.",
+    "rumour": "Something on Enigma Station is still listening on 47.3, and nobody remembers telling it to.",
+    "begin": "antenna",
     "done": "Okafor never left. The missing suit, the bedroll, the lantern, the drone tuned to the signal: someone is still aboard Enigma, answering it.",
     "clues": [
       {
@@ -126,7 +143,8 @@
           "world": "enigma",
           "label": "ANTENNA ARRAY"
         },
-        "text": "The antenna array: signal detected on 47.3 MHz, source unknown, still listening."
+        "text": "The antenna array: signal detected on 47.3 MHz, source unknown, still listening.",
+        "hint": "The station's ears point at the stars. Find out what they're hearing."
       },
       {
         "id": "core",
@@ -134,7 +152,8 @@
           "world": "enigma",
           "label": "DATA CORE"
         },
-        "text": "The data core's logs: contact with command lost 72 cycles ago. 'No one is coming.'"
+        "text": "The data core's logs: contact with command lost 72 cycles ago. 'No one is coming.'",
+        "hint": "Every station keeps logs. Find where Enigma keeps its memory."
       },
       {
         "id": "log",
@@ -142,7 +161,8 @@
           "world": "enigma-dock",
           "label": "BAY CONTROL"
         },
-        "text": "The bay log: the skiff Wren left in 4402 and never returned. Okafor started repairs on the Kestrel."
+        "text": "The bay log: the skiff Wren left in 4402 and never returned. Okafor started repairs on the Kestrel.",
+        "hint": "The docking bay kept a record of who came and went."
       },
       {
         "id": "suit",
@@ -150,7 +170,8 @@
           "world": "enigma-dock",
           "label": "SUIT RACK"
         },
-        "text": "Four hooks, three suits. The empty one is D. Okafor's."
+        "text": "Four hooks, three suits. The empty one is D. Okafor's.",
+        "hint": "Count the suits hanging in the docking bay."
       },
       {
         "id": "bedroll",
@@ -158,7 +179,8 @@
           "world": "enigma-dock",
           "label": "BEDROLL"
         },
-        "text": "A bedroll in Docking Bay 3. The lantern beside it is still lit."
+        "text": "A bedroll in Docking Bay 3. The lantern beside it is still lit.",
+        "hint": "Someone has been sleeping in the docking bay. Find where."
       },
       {
         "id": "drone",
@@ -166,7 +188,8 @@
           "world": "enigma-dock",
           "label": "DRONE"
         },
-        "text": "A maintenance drone on the bench, tuned to 47.3 MHz."
+        "text": "A maintenance drone on the bench, tuned to 47.3 MHz.",
+        "hint": "A drone on a workbench is tuned to the same number."
       }
     ],
     "letter": {
@@ -179,6 +202,8 @@
     "where": "The Singularity",
     "reward": 150,
     "start": "Time runs wrong at the Brink. Things that happened elsewhere happen here too.",
+    "rumour": "Okafor on Enigma says a piece of her station turned up at the Brink, on the far side of the dark.",
+    "begin": "sundial",
     "done": "Every echo at the Brink is of somewhere you have been. The hole isn't remembering the universe. It's remembering you.",
     "clues": [
       {
@@ -187,7 +212,8 @@
           "world": "singularity",
           "label": "SUNDIAL"
         },
-        "text": "A sundial with no sun, its shadow pointing at the hole and growing."
+        "text": "A sundial with no sun, its shadow pointing at the hole and growing.",
+        "hint": "Time runs wrong at the Brink. Start with the thing that tells it."
       },
       {
         "id": "gate",
@@ -195,7 +221,8 @@
           "world": "singularity",
           "label": "RING GATE"
         },
-        "text": "A half-sunk ring of stone. Through it the stars are in the wrong places, and you can see your own back."
+        "text": "A half-sunk ring of stone. Through it the stars are in the wrong places, and you can see your own back.",
+        "hint": "A ring of stone stands half-sunk at the Brink. Look through it."
       },
       {
         "id": "stair",
@@ -203,7 +230,8 @@
           "world": "singularity",
           "label": "STAIR"
         },
-        "text": "Steps that climb into nothing, the last few hanging loose and turning slowly."
+        "text": "Steps that climb into nothing, the last few hanging loose and turning slowly.",
+        "hint": "Some steps at the Brink lead nowhere. Climb as far as they let you."
       },
       {
         "id": "lumar",
@@ -211,7 +239,8 @@
           "world": "singularity",
           "label": "LUMAR ECHO"
         },
-        "text": "An echo of Lumar: cobbles from a square you know, a lantern still burning, half a wall."
+        "text": "An echo of Lumar: cobbles from a square you know, a lantern still burning, half a wall.",
+        "hint": "A piece of Lumar has ended up at the Brink. Look for cobbles and a lamp."
       },
       {
         "id": "arcadia",
@@ -219,7 +248,8 @@
           "world": "singularity",
           "label": "ARCADIA ECHO"
         },
-        "text": "An echo of Arcadia: a slab of street still wet with rain that fell somewhere else."
+        "text": "An echo of Arcadia: a slab of street still wet with rain that fell somewhere else.",
+        "hint": "Rain that fell in Arcadia is still wet at the Brink somewhere."
       },
       {
         "id": "station",
@@ -227,7 +257,8 @@
           "world": "singularity",
           "label": "STATION ECHO"
         },
-        "text": "An echo of a station: a server rack blinking the same pattern Enigma was transmitting."
+        "text": "An echo of a station: a server rack blinking the same pattern Enigma was transmitting.",
+        "hint": "Something at the Brink is blinking Enigma's pattern."
       },
       {
         "id": "fall",
@@ -235,7 +266,8 @@
           "world": "singularity",
           "label": "FROZEN FALL"
         },
-        "text": "A rockfall stopped mid-air. If you watch long enough, one stone moves."
+        "text": "A rockfall stopped mid-air. If you watch long enough, one stone moves.",
+        "hint": "At the Brink, not everything that falls hits the ground."
       }
     ],
     "letter": {
@@ -248,6 +280,8 @@
     "where": "Arcadia",
     "reward": 100,
     "start": "Somebody has been spraying NULL around the District.",
+    "rumour": "Somebody keeps spraying NULL all over Arcadia's District, and the kids know who.",
+    "begin": "kid",
     "done": "NULL is a crew. The broken cabinet is their drop, the kid runs their messages, and Club Void is where they meet. The chained gate is where they live.",
     "clues": [
       {
@@ -256,7 +290,8 @@
           "world": "arcadia-street",
           "label": "ALLEY GATE"
         },
-        "text": "The alley gate, chained shut. Someone sprayed NULL on the bars."
+        "text": "The alley gate, chained shut. Someone sprayed NULL on the bars.",
+        "hint": "NULL is sprayed on something chained shut along the District's street."
       },
       {
         "id": "cabinet",
@@ -264,7 +299,8 @@
           "world": "arcadia",
           "label": "???"
         },
-        "text": "A broken arcade cabinet flickers fragments of something hidden."
+        "text": "A broken arcade cabinet flickers fragments of something hidden.",
+        "hint": "One machine in the arcade isn't working properly. Look at it closely."
       },
       {
         "id": "stranger",
@@ -272,7 +308,8 @@
           "world": "arcadia",
           "label": "STRANGER"
         },
-        "text": "A stranger in the arcade: the old owner left something inside that broken cabinet."
+        "text": "A stranger in the arcade: the old owner left something inside that broken cabinet.",
+        "hint": "Someone in the arcade knew the old owner. They don't look like they're there to play."
       },
       {
         "id": "kid",
@@ -280,7 +317,8 @@
           "world": "arcadia-street",
           "label": "STREET KID"
         },
-        "text": "The street kid asks for tokens, and watches the gate."
+        "text": "The street kid asks for tokens, and watches the gate.",
+        "hint": "The kids on the street notice everything. One of them is watching a gate."
       },
       {
         "id": "void",
@@ -288,7 +326,8 @@
           "world": "arcadia-street",
           "label": "CLUB VOID"
         },
-        "text": "Club Void. A slot in the door opens, two eyes, and closes again."
+        "text": "Club Void. A slot in the door opens, two eyes, and closes again.",
+        "hint": "Knock at the club where the music's loudest."
       }
     ],
     "letter": {
@@ -301,6 +340,8 @@
     "where": "Lumar",
     "reward": 120,
     "start": "The cartographer says each of Lumar's four islands grows its own colour of crystal.",
+    "rumour": "The cartographer in Lumar wants to hear about the crystals each island grows.",
+    "begin": "cartographer",
     "done": "Crimson, rose, sapphire, and whatever the stones on Midnight are guarding. The cartographer will want to hear it.",
     "clues": [
       {
@@ -309,7 +350,8 @@
           "world": "lumar-house",
           "label": "CARTOGRAPHER"
         },
-        "text": "The cartographer: four islands, four colours of crystal. Three mapped. Nobody maps Midnight."
+        "text": "The cartographer: four islands, four colours of crystal. Three mapped. Nobody maps Midnight.",
+        "hint": "Lumar's cartographer is mapping crystals. She works from a house on the square."
       },
       {
         "id": "crimson",
@@ -317,7 +359,8 @@
           "world": "lumar-crimson",
           "label": "CRYSTAL FIELD"
         },
-        "text": "Crimson crystals in a field above the reef, all leaning toward the ridge."
+        "text": "Crimson crystals in a field above the reef, all leaning toward the ridge.",
+        "hint": "Crimson Reach grows red crystal, in a field above the reef."
       },
       {
         "id": "rose",
@@ -325,7 +368,8 @@
           "world": "lumar-rose",
           "label": "ROSE CRYSTAL"
         },
-        "text": "Rose crystals, harvested on Rose Cove."
+        "text": "Rose crystals, harvested on Rose Cove.",
+        "hint": "Rose Cove grows its crystal on terraces. Go and see it."
       },
       {
         "id": "sapphire",
@@ -333,7 +377,8 @@
           "world": "lumar-sapphire",
           "label": "SAPPHIRE CRYSTAL"
         },
-        "text": "Sapphire crystals, traded at Sapphire Port."
+        "text": "Sapphire crystals, traded at Sapphire Port.",
+        "hint": "Sapphire Port trades its blue crystal at the market."
       },
       {
         "id": "midnight",
@@ -341,7 +386,8 @@
           "world": "lumar-midnight",
           "label": "STONE SENTINEL"
         },
-        "text": "On Midnight Isle, stone sentinels guard the way to the sorceress's tower."
+        "text": "On Midnight Isle, stone sentinels guard the way to the sorceress's tower.",
+        "hint": "Nobody maps Midnight Isle. Its stone guards might show you what grows there."
       }
     ],
     "letter": {
@@ -354,6 +400,8 @@
     "where": "Enigma Station",
     "reward": 200,
     "start": "Okafor has been listening to the same distress loop for seventy-two cycles. It's getting clearer.",
+    "rumour": "A skiff called the Wren left Enigma Station and never came back. Someone there still listens for her.",
+    "begin": "okafor",
     "done": "The Wren was waved off at Arcadia and spent its last burn going toward the dark. It reached the Brink and is still there, nose-first over the edge, falling so slowly it looks still. The loop Okafor hears is its call, slowed by the hole, only now climbing out.",
     "clues": [
       {
@@ -362,7 +410,8 @@
           "world": "enigma-hydro",
           "label": "OKAFOR"
         },
-        "text": "Dami Okafor, the engineer who stayed, in a garden off the relay deck."
+        "text": "Dami Okafor, the engineer who stayed, in a garden off the relay deck.",
+        "hint": "One engineer stayed behind on Enigma. She grows a garden off the relay deck."
       },
       {
         "id": "radio",
@@ -370,7 +419,8 @@
           "world": "enigma-hydro",
           "label": "RADIO RIG"
         },
-        "text": "The radio: \"Wren to Enigma. We can see the edge. We are not afraid.\""
+        "text": "The radio: \"Wren to Enigma. We can see the edge. We are not afraid.\"",
+        "hint": "Okafor's radio picks up the same loop every night. Listen to it."
       },
       {
         "id": "photos",
@@ -378,7 +428,8 @@
           "world": "enigma-hydro",
           "label": "PHOTO BOARD"
         },
-        "text": "Five crew in flight jackets in front of a skiff called Wren. Okafor in the corner of every photo."
+        "text": "Five crew in flight jackets in front of a skiff called Wren. Okafor in the corner of every photo.",
+        "hint": "Okafor has the crew's photos pinned up somewhere in her garden."
       },
       {
         "id": "marshal",
@@ -386,7 +437,8 @@
           "world": "arcadia-skypad",
           "label": "MARSHAL"
         },
-        "text": "Marshal Ruiz waved the Wren off Skyport 7 in a storm. It turned toward the dark side."
+        "text": "Marshal Ruiz waved the Wren off Skyport 7 in a storm. It turned toward the dark side.",
+        "hint": "The Wren tried to land somewhere high up in Arcadia. Ask whoever runs that pad."
       },
       {
         "id": "echo",
@@ -394,7 +446,8 @@
           "world": "singularity",
           "label": "STATION ECHO"
         },
-        "text": "At the Brink, a piece of Enigma's hull, its lights blinking the station's pattern."
+        "text": "At the Brink, a piece of Enigma's hull, its lights blinking the station's pattern.",
+        "hint": "The Wren turned toward the dark. Look at the Brink for a piece of home."
       },
       {
         "id": "wreck",
@@ -402,7 +455,8 @@
           "world": "singularity",
           "label": "THE WREN"
         },
-        "text": "The Wren itself, past the altar at the very edge, frozen mid-fall. Its running lights are on."
+        "text": "The Wren itself, past the altar at the very edge, frozen mid-fall. Its running lights are on.",
+        "hint": "At the Brink, go as far toward the edge as you can."
       }
     ],
     "letter": {
@@ -415,6 +469,8 @@
     "where": "Midnight Isle, Lumar",
     "reward": 150,
     "start": "The monks of Midnight Isle kept a record of every ship that passed. The record is gone.",
+    "rumour": "The monks of Midnight Isle kept a book of every ship that passed. Nobody knows where it went.",
+    "begin": "abbey",
     "done": "The monks listened to the sky from the moon pool and wrote down the ships they heard overhead - starships, on a sea world. Morwen keeps their book. Its last page names the Wren, and after it a skiff that hadn't been built yet. Yours.",
     "clues": [
       {
@@ -423,7 +479,8 @@
           "world": "lumar-midnight",
           "label": "ABBEY RUINS"
         },
-        "text": "The abbey ruins: the monks kept a record of every ship that passed. The book is gone."
+        "text": "The abbey ruins: the monks kept a record of every ship that passed. The book is gone.",
+        "hint": "The monks lived in the abbey on Midnight Isle. Start in its ruins."
       },
       {
         "id": "tomb",
@@ -431,7 +488,8 @@
           "world": "lumar-midnight",
           "label": "TOMB"
         },
-        "text": "Carved over the tomb door, violet light inside: \"THEY LISTENED TOO.\""
+        "text": "Carved over the tomb door, violet light inside: \"THEY LISTENED TOO.\"",
+        "hint": "A violet light burns in a tomb on Midnight Isle. Read what's carved over the door."
       },
       {
         "id": "pool",
@@ -439,7 +497,8 @@
           "world": "lumar-midnight",
           "label": "MOON POOL"
         },
-        "text": "In the moon pool, a full green moon that isn't in the sky."
+        "text": "In the moon pool, a full green moon that isn't in the sky.",
+        "hint": "Look into the moon pool on Midnight Isle."
       },
       {
         "id": "grave",
@@ -447,7 +506,8 @@
           "world": "lumar-midnight",
           "label": "GRAVEYARD"
         },
-        "text": "The graveyard of the drowned. One stone is new and still blank."
+        "text": "The graveyard of the drowned. One stone is new and still blank.",
+        "hint": "The drowned are buried on Midnight Isle. One stone there is different."
       },
       {
         "id": "telescope",
@@ -455,7 +515,8 @@
           "world": "lumar-midnight-tower",
           "label": "TELESCOPE"
         },
-        "text": "Through Morwen's telescope: something dark moving between the stars."
+        "text": "Through Morwen's telescope: something dark moving between the stars.",
+        "hint": "The sorceress's tower has a telescope. Look through it."
       },
       {
         "id": "morwen",
@@ -463,7 +524,8 @@
           "world": "lumar-midnight-tower",
           "label": "SORCERESS"
         },
-        "text": "Morwen has the monks' book. She knows what's on the last page."
+        "text": "Morwen has the monks' book. She knows what's on the last page.",
+        "hint": "Someone on Midnight Isle has the monks' book. She lives in a tower."
       }
     ],
     "letter": {
@@ -476,6 +538,8 @@
     "where": "Enigma Station",
     "reward": 120,
     "start": "The Wren's crew left their berths in Enigma's ring exactly as they were the day they flew.",
+    "rumour": "The Wren's crew left their berths on Enigma exactly as they were the day they flew.",
+    "begin": "ada",
     "done": "A harmonica, a short deck of cards, a pressed flower, a letter nobody finished, a child's drawing. They all meant to come back. Okafor should know someone has seen them.",
     "clues": [
       {
@@ -484,7 +548,8 @@
           "world": "enigma-quarters",
           "label": "ADA'S BERTH"
         },
-        "text": "Ada's harmonica, worn bright where her thumbs went: 'For the long hauls.'"
+        "text": "Ada's harmonica, worn bright where her thumbs went: 'For the long hauls.'",
+        "hint": "In the crew quarters off Enigma's ring, one berth belonged to a musician."
       },
       {
         "id": "bix",
@@ -492,7 +557,8 @@
           "world": "enigma-quarters",
           "label": "BIX'S BERTH"
         },
-        "text": "Bix's cards, fifty-one of them. The ace of hearts is missing: 'I'll win it back.'"
+        "text": "Bix's cards, fifty-one of them. The ace of hearts is missing: 'I'll win it back.'",
+        "hint": "One of the Wren's crew couldn't stop playing cards."
       },
       {
         "id": "cora",
@@ -500,7 +566,8 @@
           "world": "enigma-quarters",
           "label": "CORA'S BERTH"
         },
-        "text": "Cora, the medic, kept a pressed Lumar spore-bloom. It still glows."
+        "text": "Cora, the medic, kept a pressed Lumar spore-bloom. It still glows.",
+        "hint": "The Wren's medic kept something from Lumar that still glows."
       },
       {
         "id": "dell",
@@ -508,7 +575,8 @@
           "world": "enigma-quarters",
           "label": "DELL'S BERTH"
         },
-        "text": "Dell's unfinished letter: he swapped a shift so Dami could finish her tug."
+        "text": "Dell's unfinished letter: he swapped a shift so Dami could finish her tug.",
+        "hint": "One of the Wren's crew never finished a letter."
       },
       {
         "id": "eze",
@@ -516,7 +584,8 @@
           "world": "enigma-quarters",
           "label": "EZE'S BERTH"
         },
-        "text": "Eze, the youngest, flew the Wren. A drawing from home: 'Big sister Eze flies the Wren.'"
+        "text": "Eze, the youngest, flew the Wren. A drawing from home: 'Big sister Eze flies the Wren.'",
+        "hint": "The youngest of the Wren's crew flew her. Look for a drawing from home."
       }
     ],
     "letter": {
@@ -529,6 +598,8 @@
     "where": "Sapphire Port, Lumar",
     "reward": 140,
     "start": "The Sapphire Light never goes out, but nobody in the port has seen its keeper in weeks.",
+    "rumour": "The Sapphire Light never goes out, but nobody in the port has seen its keeper in weeks.",
+    "begin": "logbook",
     "done": "Thirty years ago the Morning Tide didn't come home, and a light on Midnight Isle answered the lighthouse with her call sign. Three weeks ago it started answering again. Tamsin Gale hasn't left the lamp since; she answers it every night, so whoever's out there knows where home is.",
     "clues": [
       {
@@ -537,7 +608,8 @@
           "world": "lumar-sapphire-lighthouse",
           "label": "THE LOGBOOK"
         },
-        "text": "Three weeks of the same entry in the keeper's log: a light answering from Midnight, north by east. Three long, one short."
+        "text": "Three weeks of the same entry in the keeper's log: a light answering from Midnight, north by east. Three long, one short.",
+        "hint": "The lighthouse keeper writes everything down. Read this year's log."
       },
       {
         "id": "oldlogs",
@@ -545,7 +617,8 @@
           "world": "lumar-sapphire-lighthouse",
           "label": "OLD LOGS"
         },
-        "text": "Thirty years back, the night the Morning Tide was lost, the old keeper logged the same signal from Midnight - and never wrote of it again."
+        "text": "Thirty years back, the night the Morning Tide was lost, the old keeper logged the same signal from Midnight - and never wrote of it again.",
+        "hint": "The lighthouse keeps forty years of logs. Go back thirty."
       },
       {
         "id": "lens",
@@ -553,7 +626,8 @@
           "world": "lumar-sapphire-lamproom",
           "label": "THE LENS"
         },
-        "text": "A cut sapphire set in the lens turns the beam blue. Scratched beside it: 'So they know it's us.'"
+        "text": "A cut sapphire set in the lens turns the beam blue. Scratched beside it: 'So they know it's us.'",
+        "hint": "Something in the lamp room turns the light blue. Look closely at the lens."
       },
       {
         "id": "signal",
@@ -561,7 +635,8 @@
           "world": "lumar-sapphire-lamproom",
           "label": "SIGNAL LAMP"
         },
-        "text": "Someone has been answering from up here, every night. Three long, one short: the Morning Tide's call."
+        "text": "Someone has been answering from up here, every night. Three long, one short: the Morning Tide's call.",
+        "hint": "Someone answers Midnight from the top of the lighthouse. Find what they use."
       },
       {
         "id": "keeper",
@@ -569,7 +644,8 @@
           "world": "lumar-sapphire-lamproom",
           "label": "KEEPER"
         },
-        "text": "Tamsin Gale keeps the light. Her mother skippered the Morning Tide."
+        "text": "Tamsin Gale keeps the light. Her mother skippered the Morning Tide.",
+        "hint": "The keeper is up in the lamp room. Ask her about it."
       }
     ],
     "letter": {
@@ -582,6 +658,8 @@
     "where": "Rose Cove, Lumar",
     "reward": 300,
     "start": "Somewhere deep in the old Rose Mine, something is singing.",
+    "rumour": "Rose Cove's old mine was shut when the singing down there got loud enough to hear in town.",
+    "begin": "mouth",
     "done": "Twenty floors down, under the cold and the blue stone, the great songstone sang its one long note. You broke it open and took its heart - and the whole mine sang back. Hob says it's the first time in forty years he's heard it change key.",
     "clues": [
       {
@@ -590,7 +668,8 @@
           "world": "lumar-rose",
           "label": "OLD MINE"
         },
-        "text": "The Rose Mine. The timbers are old but sound, and from somewhere deep inside comes a sound like singing."
+        "text": "The Rose Mine. The timbers are old but sound, and from somewhere deep inside comes a sound like singing.",
+        "hint": "Stand at the old mine's entrance on Rose Cove and listen."
       },
       {
         "id": "slate",
@@ -598,7 +677,8 @@
           "world": "lumar-rose-mine",
           "label": "FOREMAN'S SLATE"
         },
-        "text": "The foreman's slate counts down the floors: blue at five, cold at ten, 'don't linger' at fifteen - and a question mark at twenty."
+        "text": "The foreman's slate counts down the floors: blue at five, cold at ten, 'don't linger' at fifteen - and a question mark at twenty.",
+        "hint": "The foreman counted down the floors on a slate in the mine's hall."
       },
       {
         "id": "hob",
@@ -606,7 +686,8 @@
           "world": "lumar-rose-mine",
           "label": "HOB"
         },
-        "text": "Hob Dunmore, the last miner, says the singing started the winter they opened floor twenty. Nobody has been down to see what it is."
+        "text": "Hob Dunmore, the last miner, says the singing started the winter they opened floor twenty. Nobody has been down to see what it is.",
+        "hint": "One miner stayed when the rest left. He's in the mine's hall."
       },
       {
         "id": "heart",
@@ -614,7 +695,8 @@
           "world": "lumar-rose-mine-*",
           "label": "THE GREAT SONGSTONE"
         },
-        "text": "At the bottom of the mine, the great songstone - a crystal the size of a cart, singing one long note."
+        "text": "At the bottom of the mine, the great songstone - a crystal the size of a cart, singing one long note.",
+        "hint": "Whatever is singing is at the very bottom of the mine."
       }
     ],
     "letter": {
@@ -627,6 +709,8 @@
     "where": "Sylvara",
     "reward": 300,
     "start": "Queen Alyssara asked you, quietly, to find the ribbon Beckolas lost from his sword.",
+    "rumour": "The elves say Beckolas has lost something and is far too proud to say what.",
+    "begin": "charge",
     "done": "The queen's favour is back on her first sword's hilt. Beckolas owes you one, and he is the sort to remember it.",
     "items": {
       "ribbon": {
@@ -643,49 +727,47 @@
           "world": "sylvara-hall",
           "label": "QUEEN ALYSSARA"
         },
-        "text": "The queen tied a ribbon to Beckolas's sword, green silk worked with gold leaves. He's lost it and is too proud to tell her. She knows anyway."
+        "text": "The queen tied a ribbon to Beckolas's sword, green silk worked with gold leaves. He's lost it and is too proud to tell her. She knows anyway.",
+        "hint": "The queen would like a quiet word. She's in the Heartwood Hall."
       },
       {
         "id": "song",
-        "after": "charge",
         "on": {
           "world": "sylvara",
           "label": "BARD"
         },
-        "text": "The bard is already writing a song about it: the first sword at the Moonwell, a gust of wind, a ribbon gone up into the willow."
+        "text": "The bard is already writing a song about it: the first sword at the Moonwell, a gust of wind, a ribbon gone up into the willow.",
+        "hint": "The bard is already writing a song about what happened."
       },
       {
         "id": "dawn",
-        "after": "charge",
         "on": {
           "world": "sylvara",
           "label": "HERBALIST"
         },
-        "text": "At dawn the herbalist saw Beckolas climbing the willow by the Moonwell in full armour, and climbing down again with nothing."
+        "text": "At dawn the herbalist saw Beckolas climbing the willow by the Moonwell in full armour, and climbing down again with nothing.",
+        "hint": "The herbalist is up at dawn and sees everything from her stall."
       },
       {
         "id": "ribbon",
-        "after": [
-          "song",
-          "dawn"
-        ],
         "on": {
           "world": "sylvara",
           "label": "WILLOW"
         },
-        "text": "With what the bard and the herbalist told you, you know where to look: high in the willow over the Moonwell, caught on a frond, a ribbon of green silk with gold leaves. You climb up and free it.",
+        "text": "High in the willow over the Moonwell, caught on a frond: a ribbon of green silk worked with gold leaves. You climb up and free it.",
         "get": "ribbon",
-        "say": "WITH WHAT THE BARD AND THE HERBALIST TOLD YOU, YOU KNOW WHERE TO LOOK. HIGH IN THE WILLOW, CAUGHT ON A FROND: A RIBBON OF GREEN SILK WITH GOLD LEAVES.\n\nYOU CLIMB UP AND FREE IT."
+        "say": "SOMETHING IS CAUGHT HIGH IN THE WILLOW, ON A FROND OVER THE MOONWELL: A RIBBON OF GREEN SILK WITH GOLD LEAVES.\n\nYOU CLIMB UP AND FREE IT.",
+        "hint": "Something is caught high in the willow over the Moonwell."
       },
       {
         "id": "return",
-        "after": "ribbon",
         "on": {
           "world": "sylvara-hall",
           "label": "BECKOLAS"
         },
         "text": "You hand Beckolas the ribbon. He ties it back on his sword without a word, then bows to you, very low. On the throne, the queen pretends not to notice, and smiles.",
-        "give": "ribbon"
+        "give": "ribbon",
+        "hint": "Beckolas would like his ribbon back. He will never ask."
       }
     ],
     "letter": {
@@ -698,7 +780,9 @@
     "where": "Sylvara",
     "reward": 400,
     "needs": "queens-favour",
-    "start": "The queen loves her first sword, her first sword loves the queen, and the whole wood knows it except, possibly, the two of them. She's asked you to help. Gently.",
+    "start": "The queen loves her first sword, her first sword loves the queen, and the whole wood knows it except, possibly, the two of them. Somebody ought to help. Gently.",
+    "rumour": "Pip says everyone knows about Beckolas and the queen, except Beckolas and the queen.",
+    "begin": "start",
     "done": "Under the willow at dusk, the first sword finally said it. Faelan's lanterns and Sefa's ribbons are staying up in the willow for good.",
     "items": {
       "moonflower": {
@@ -715,68 +799,64 @@
           "world": "sylvara-hall",
           "label": "QUEEN ALYSSARA"
         },
-        "text": "The queen confided in you: she loves Beckolas, and she's fairly sure he loves her, but a sworn sword won't speak above his oath and a queen can't command a heart. She asked you to find out. Gently. He bruises like a peach."
+        "text": "The queen confided in you: she loves Beckolas, and she's fairly sure he loves her, but a sworn sword won't speak above his oath and a queen can't command a heart. She asked you to find out. Gently. He bruises like a peach.",
+        "hint": "Something's on the queen's mind. Ask her."
       },
       {
         "id": "ask",
-        "after": "start",
         "on": {
           "world": "sylvara-hall",
           "label": "BECKOLAS"
         },
-        "text": "Beckolas denied everything, turned the colour of a sunset, then admitted it: three hundred years, two hundred and twelve attempts to tell her, and one letter he wrote, panicked over and ate."
+        "text": "Beckolas denied everything, turned the colour of a sunset, then admitted it: three hundred years, two hundred and twelve attempts to tell her, and one letter he wrote, panicked over and ate.",
+        "hint": "Ask Beckolas how he feels about the queen. Gently."
       },
       {
         "id": "song",
-        "after": "ask",
         "on": {
           "world": "sylvara",
           "label": "BARD"
         },
-        "text": "Thaelin has had the song written for a century. He agrees Beckolas has to say it himself, and he knows where: the Moonwell at dusk, where everyone says the true thing. He'll be in the bushes. Playing very quietly."
+        "text": "Thaelin has had the song written for a century, but Beckolas has to say it himself, and Thaelin knows where: the Moonwell at dusk, where everyone says the true thing. He'll be in the bushes. Playing very quietly.",
+        "hint": "Thaelin has a song for this, and an idea where it should happen."
       },
       {
         "id": "flower",
-        "after": "ask",
         "on": {
           "world": "sylvara",
           "label": "HERBALIST"
         },
         "text": "Mirelle gave you a moonflower she's kept for Beckolas for twenty years. It only opens in the hand of someone who means what they're about to say.",
-        "get": "moonflower"
+        "get": "moonflower",
+        "hint": "Mirelle has been keeping a flower for Beckolas."
       },
       {
         "id": "lanterns",
-        "after": "ask",
         "on": {
           "world": "sylvara",
           "label": "LAMPLIGHTER"
         },
-        "text": "Faelan will light the willow over the Moonwell at dusk with the good lanterns. He's been saving them six hundred years for something worth lighting."
+        "text": "Faelan will light the willow over the Moonwell at dusk with the good lanterns. He's been saving them six hundred years for something worth lighting.",
+        "hint": "Faelan the lamplighter has some good lanterns put away."
       },
       {
         "id": "ribbons",
-        "after": "ask",
         "on": {
           "world": "sylvara",
           "label": "WEAVER"
         },
-        "text": "Sefa will tie the willow with ribbons of the same green silk as Beckolas's favour. She wove a whole bolt of it in the spring. She knew. Everyone knew."
+        "text": "Sefa will tie the willow with ribbons of the same green silk as Beckolas's favour. She wove a whole bolt of it in the spring. She knew. Everyone knew.",
+        "hint": "Sefa the weaver made far too much of a certain green silk."
       },
       {
         "id": "courage",
-        "after": [
-          "song",
-          "flower",
-          "lanterns",
-          "ribbons"
-        ],
         "on": {
           "world": "sylvara-hall",
           "label": "BECKOLAS"
         },
         "text": "You gave Beckolas the moonflower and told him: the Moonwell, at dusk. He went pale, said nothing for a long time, then went off to polish his armour. All of it. Twice.",
-        "give": "moonflower"
+        "give": "moonflower",
+        "hint": "Bring Beckolas the moonflower."
       },
       {
         "id": "invite",
@@ -785,17 +865,19 @@
           "world": "sylvara-hall",
           "label": "QUEEN ALYSSARA"
         },
-        "text": "You told the queen: the Moonwell, at dusk. She said she would be very surprised, and went to find a different circlet."
+        "text": "You told the queen: the Moonwell, at dusk. She said she would be very surprised, and went to find a different circlet.",
+        "hint": "Tell the queen where to be at dusk."
       },
       {
         "id": "vow",
-        "after": "invite",
+        "after": "*",
         "on": {
           "world": "sylvara",
           "label": "WILLOW"
         },
         "text": "At dusk under the lit willow Beckolas held out the moonflower, and it opened in his hand. He said it all in one breath. The queen said \"Finally.\"",
-        "say": "THE WILLOW IS FULL OF LANTERNS AND GREEN RIBBONS, AND THE MOONWELL IS FULL OF THEIR LIGHT. BECKOLAS IS ALREADY HERE, IN VERY SHINY ARMOUR.\n\nTHE QUEEN COMES DOWN THE PATH. HE OPENS HIS MOUTH, CLOSES IT, AND HOLDS OUT THE MOONFLOWER. IT OPENS IN HIS HAND.\n\n\"I LOVE YOU,\" HE SAYS, ALL IN ONE BREATH. \"I HAVE FOR THREE HUNDRED YEARS. I'M SORRY IT TOOK SO LONG. I ATE A LETTER ABOUT IT ONCE.\"\n\nTHE QUEEN TAKES THE FLOWER. \"FINALLY,\" SHE SAYS, AND KISSES HIM.\n\nSOMEWHERE IN THE BUSHES, A LUTE PLAYS VERY QUIETLY."
+        "say": "THE WILLOW IS FULL OF LANTERNS AND GREEN RIBBONS, AND THE MOONWELL IS FULL OF THEIR LIGHT. BECKOLAS IS ALREADY HERE, IN VERY SHINY ARMOUR.\n\nTHE QUEEN COMES DOWN THE PATH. HE OPENS HIS MOUTH, CLOSES IT, AND HOLDS OUT THE MOONFLOWER. IT OPENS IN HIS HAND.\n\n\"I LOVE YOU,\" HE SAYS, ALL IN ONE BREATH. \"I HAVE FOR THREE HUNDRED YEARS. I'M SORRY IT TOOK SO LONG. I ATE A LETTER ABOUT IT ONCE.\"\n\nTHE QUEEN TAKES THE FLOWER. \"FINALLY,\" SHE SAYS, AND KISSES HIM.\n\nSOMEWHERE IN THE BUSHES, A LUTE PLAYS VERY QUIETLY.",
+        "hint": "When everything's ready, go to the willow at dusk."
       }
     ]
   },
