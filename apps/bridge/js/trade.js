@@ -53,7 +53,12 @@ var BridgeTrade = (function () {
     sapphire_ray: { per: 4, kind: 'fish' }, spore_tuna: { per: 3, kind: 'fish' }, lantern_angler: { per: 3, kind: 'fish' }, rose_shrimp: { per: 8, kind: 'fish' }, harbour_crab: { per: 6, kind: 'fish' }, fresh_fish: { per: 6, kind: 'fish' },
     glowtail: { per: 6, kind: 'fish' }, coral_dragonet: { per: 6, kind: 'fish' }, cinder_grouper: { per: 2, kind: 'fish' }, starfin: { per: 3, kind: 'fish' },
     jade_marlin: { per: 1, kind: 'fish' }, glass_swordfish: { per: 1, kind: 'fish' }, old_mossback: { per: 1, kind: 'fish' }, dawnveil: { per: 1, kind: 'fish' },
-    emberjaw: { per: 1, kind: 'fish' }, crownfin: { per: 1, kind: 'fish' }, nightglass: { per: 1, kind: 'fish' }
+    emberjaw: { per: 1, kind: 'fish' }, crownfin: { per: 1, kind: 'fish' }, nightglass: { per: 1, kind: 'fish' },
+    // the workshop's materials (js/workshop.js), a ship's stores: they sell anywhere at what they're worth
+    pine_log: { per: 10, kind: 'stores' }, oak_log: { per: 6, kind: 'stores' }, plank: { per: 20, kind: 'stores' }, oak_plank: { per: 12, kind: 'stores' },
+    copper_ore: { per: 5, kind: 'ore' }, iron_bar: { per: 10, kind: 'stores' }, copper_sheet: { per: 10, kind: 'stores' }, flax: { per: 20, kind: 'stores' },
+    rope: { per: 10, kind: 'stores' }, pitch: { per: 10, kind: 'stores' }, sailcloth: { per: 4, kind: 'stores' }, glass: { per: 6, kind: 'stores' },
+    powder: { per: 6, kind: 'stores' }, moonglass: { per: 6, kind: 'stores' }
   };
   // each port's appetite: < 1 made here (cheap), > 1 wanted here (dear). Your own haul by kind.
   var MARKET = {

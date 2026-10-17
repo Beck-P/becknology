@@ -115,7 +115,7 @@ var BridgeTreasure = (function () {
         sketches[id] = c;
         cb(c);
       };
-      im.src = '/bridge/assets/scenes/' + M.world + '/full.png?v=' + meta.rev;
+      im.src = '/bridge/assets/scenes/' + M.world + '/full.' + (meta.ext || 'png') + '?v=' + meta.rev;
     }).catch(function () { cb(null); });
   }
 

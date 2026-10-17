@@ -65,7 +65,7 @@ var BridgeInteractions = (function () {
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
-                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
+                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters', 'office': 'the Office',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'arcadia-penthouse': 'the Penthouse', 'lumar-manor': 'Ashcombe House', 'lumar-sapphire': 'Sapphire Port',
                       'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void',
                       'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall',
@@ -342,8 +342,8 @@ var BridgeInteractions = (function () {
         if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
           BridgeInventory.takeDamage(dmg);
         }
+        if (BridgeCharacter.hurt) BridgeCharacter.hurt();          // you flash red on your own pixels and flinch (no box)
         if (typeof BridgeFX !== 'undefined') {
-          if (BridgeFX.spawnDamageFlash) BridgeFX.spawnDamageFlash(px, py);
           if (BridgeFX.spawnSparks) BridgeFX.spawnSparks(px, py, '#ff4050', 6);
           if (BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(px, py - 0.3, '-' + dmg, '#ff5060');
         }
@@ -1150,8 +1150,9 @@ var BridgeInteractions = (function () {
   }
 
   // A chooser in the world's dialog style, for the systems that need one (the farm's bin, board and seed box,
-  // hiring a hand, giving a gift): spec = { title, text, rows: [{ label, note, icon: item id, stats: a weapon's id
-  // (its stats card under the row), disabled, pick }],
+  // hiring a hand, giving a gift): spec = { title, text, art: fn(canvas) (a picture under the text: a ship as she's
+  // fitted), rows: [{ label, note, icon: item id, draw: fn(ctx, size) for any other picture (a fish tank), stats: a
+  // weapon's id (its stats card under the row), disabled, pick }],
   // input: { placeholder, value, submit }, buttons: [{ label, act, disabled }] }. Picking a row or a button closes
   // the chooser unless its function returns false.
   function showChooser(spec) {
@@ -1163,6 +1164,7 @@ var BridgeInteractions = (function () {
     var rows = spec.rows || [], buttons = (spec.buttons || []).concat([{ label: spec.closeLabel || 'Leave', act: null }]);
     dialogEl.innerHTML = '<div class="wd-body"><div class="wd-title">' + esc(spec.title || '') + '</div>' +
       (spec.text ? '<div class="wd-text">' + esc(reflow(spec.text)) + '</div>' : '') +
+      (spec.art ? '<canvas class="wd-art" width="1" height="1"></canvas>' : '') +
       (rows.length ? '<div class="wd-sell wd-sell-pick wd-chooser">' + rows.map(function (r, i) {
         return '<div class="wd-sell-row pick' + (r.disabled ? ' none' : '') + '" data-r="' + i + '">' +
           '<canvas class="sp-icon" width="24" height="24"></canvas><span class="sp-name">' + esc(r.label) + '</span>' +
@@ -1178,10 +1180,13 @@ var BridgeInteractions = (function () {
       }).join('') + '</div>' + hintHTML('Esc', 'Leave') + '</div>';
     overlay.appendChild(dialogEl);
     requestAnimationFrame(function () { dialogEl.classList.add('visible'); });
+    var art = spec.art && dialogEl.querySelector('.wd-art');
+    if (art) { dialogEl.classList.add('wd-has-art'); try { spec.art(art); } catch (e) { art.remove(); } }
     dialogEl.querySelectorAll('.wd-sell-row.pick').forEach(function (rowEl) {
       var r = rows[+rowEl.getAttribute('data-r')], cv = rowEl.querySelector('.sp-icon');
       var item = r.icon && typeof BridgeItems !== 'undefined' && BridgeItems.get(r.icon);
       if (item && item.draw) { var g = cv.getContext('2d'); g.imageSmoothingEnabled = false; item.draw(g, 0, 0, 24); }
+      else if (r.draw) { var g2 = cv.getContext('2d'); g2.imageSmoothingEnabled = false; r.draw(g2, 24); }
       else if (r.face && typeof BridgeLook !== 'undefined' && BridgeLook.face) { cv.classList.add('sp-face'); BridgeLook.face(cv, r.face.seed, r.face.style, r.face.colour, r.face.wild); }   // someone you'd hire
       else cv.style.visibility = 'hidden';
     });
@@ -1385,6 +1390,11 @@ var BridgeInteractions = (function () {
       if (t.charts && typeof BridgeChart !== 'undefined') {           // Ilsa's sea charts (js/chart.js)
         close();
         BridgeChart.shop(BridgeWorld.getWorldId(), 'EVERY SOUNDING, EVERY SHOAL, EVERY HARBOUR MOUTH. ONCE A SEA\'S ON YOUR CHART YOU CAN SET A COURSE FOR ANY ISLAND IN IT.');
+        return;
+      }
+      if (t.workshop && typeof BridgeWorkshop !== 'undefined') {      // materials and plans for your workshop (js/workshop.js)
+        close();
+        BridgeWorkshop.shop(t.workshop, person, t.a);
         return;
       }
       if (t.mine && typeof BridgeMine !== 'undefined') {              // Hob's forge: a better pickaxe

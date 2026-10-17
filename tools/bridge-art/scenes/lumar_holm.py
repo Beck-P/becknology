@@ -12,9 +12,11 @@ own light and switched on as you build it:
   garden     tilled                the walled garden cleared and dug (the farm's plot: `farm.plot`)
   warehouse  built                 a timber warehouse on its lot (cargo kept ashore between ships)
   quarters   built                 a bunkhouse for your hands
+  workshop   built                 an open forge under its chimney and a timber workshop by the well (js/workshop.js)
   resort     old | built           the old boathouse, or the Starling, a seaside hotel in its place (a venue that earns)
-Lots that are open ground until you build on them (warehouse, quarters) are left walkable here and listed in the world
-JSON's `holm.lots`; js/holm.js blocks their tiles once built.
+Lots that are open ground until you build on them (warehouse, quarters, workshop) are left walkable here and listed in
+the world JSON's `holm.lots`; js/holm.js blocks their tiles once built. (Until this script's been rendered with the
+workshop, js/holm.js stands the quarters' bunkhouse on its lot in its place: BridgeScene.standIn.)
 """
 import json
 import math
@@ -50,7 +52,7 @@ SHIP_R = QUAY + 4
 
 HOUSE = (16.8, 24.2, 6.4, 10.6)
 GARDEN = (5, 11, 11, 17)                           # the plot, tiles inclusive (the wall round it is outside)
-LOTS = {'warehouse': (27, 13, 32, 17), 'quarters': (26, 6, 31, 9)}
+LOTS = {'warehouse': (27, 13, 32, 17), 'quarters': (26, 6, 31, 9), 'workshop': (10, 6, 15, 9)}
 
 
 # ---- ground ---------------------------------------------------------------------------------------------------------
@@ -167,6 +169,18 @@ with k.variant('quarters', 'built'):
     q = W.house(k, c0 + 0.1, c1 + 0.9, r0 + 0.1, r1 + 0.95, wall_h=1.9, rise=1.1, roof='#5a3a2a', wall='#d8ccb0', door_x=(c0 + c1 + 1) / 2,
                 windows=[(c0 + 1.0, 0.8), (c1 - 0.0, 0.8)], chimney=c1 + 0.4)
     SMOKE['quarters'] = [round(c1 + 0.4 - 0.12, 3), round(q[0] - 0.15 - (q[1] + 1.05) * C45, 3)]
+with k.variant('workshop', 'built'):
+    # the workshop by the well: an open forge at the west end, its hearth's chimney through the roof, and a timber shop
+    # with its door on the lot's front row (js/holm.js puts the WORKSHOP interaction there), a log pile by it
+    c0, r0, c1, r1 = LOTS['workshop']
+    V.forge(k, c0 + 0.1, c0 + 2.5, r0 + 0.1, r1 + 0.95, wall='#7a7268', roof='#4a3e36', energy=70)
+    hx = c0 + 0.1 + 2.4 * 0.32
+    W.chimney_stack(k, hx, r0 + 0.3, r0 + 0.8, 0.0, 3.8, pots=1, roof_z=2.5)
+    SMOKE['workshop'] = [round(hx - 0.12, 3), round(r0 + 0.55 - 0.15 - 4.1 * C45, 3)]
+    W.house(k, c0 + 2.6, c1 + 0.9, r0 + 0.1, r1 - 0.05, wall_h=2.3, rise=1.2, roof='#5a4a3a', wall='#8a6a48', timber='#3a2618',
+            door_x=13.5, windows=[(14.9, 0.9)])
+    W.wall_lantern(k, 12.95, r1 - 0.05, z=1.6, energy=8)
+    F.log_pile(k, 15.4, r1 + 0.5)
 k.blocked -= {(c, r) for nm, (c0, r0, c1, r1) in LOTS.items() for c in range(c0, c1 + 1) for r in range(r0, r1 + 1)}
 
 # ---- the rebuilt dock -------------------------------------------------------------------------------------------
@@ -221,7 +235,7 @@ with k.variant('resort', 'built'):
 k.solid(BH[0], BH[2], BH[1], BH[3])
 W.bench(k, 4.0, 5.4, 9.4)
 k.solid(4.0, 9.2, 5.4, 9.7)
-for (x, r) in ((10.0, 7.8), (31.6, 10.6), (36.4, 12.2), (7.2, 19.6), (34.6, 8.6)):
+for (x, r) in ((8.3, 8.1), (31.6, 10.6), (36.4, 12.2), (7.2, 19.6), (34.6, 8.6)):          # (the first moved off the workshop's lot)
     W.pine(k, x, r, h=2.3)
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
 F.wildflowers(k, 22.0, 15.0, 26.0, 19.5, 26)
@@ -254,6 +268,7 @@ w = {'name': 'Starling Holm', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'ti
          {'x': 20, 'y': 10, 'type': 'holm', 'act': 'house', 'label': 'THE COTTAGE', 'prompt': 'PRESS E TO GO IN'},
          {'x': 29, 'y': 17, 'type': 'holm', 'act': 'warehouse', 'label': 'WAREHOUSE', 'prompt': 'PRESS E TO LOOK'},
          {'x': 28, 'y': 9, 'type': 'holm', 'act': 'quarters', 'label': 'QUARTERS', 'prompt': 'PRESS E TO LOOK'},
+         {'x': 13, 'y': 9, 'type': 'holm', 'act': 'workshop', 'label': 'WORKSHOP', 'prompt': 'PRESS E TO LOOK'},
          {'x': 12, 'y': 14, 'type': 'holm', 'act': 'garden', 'label': 'THE GARDEN', 'prompt': 'PRESS E TO LOOK'},
          {'x': 13, 'y': 12, 'type': 'farm_well', 'label': 'WELL', 'prompt': 'PRESS E TO DRAW WATER'},
          look('BOATHOUSE', 33, 18, 'THE OLD BOATHOUSE, ITS ROOF SAGGING. INSIDE, A ROWING BOAT WITH NO BOTTOM AND A NAME YOU CAN\'T READ.'),

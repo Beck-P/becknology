@@ -46,6 +46,9 @@ var BridgeSloop = (function () {
   function loadHull(type, cb) {
     var H = HULLS[type];
     if (!H || H.img || H.failed) { cb(); return; }
+    if (H.loading) { H.loading.push(cb); return; }               // (asked for again while she loads: told when she's in)
+    H.loading = [cb];
+    function fin() { var q = H.loading || []; H.loading = null; q.forEach(function (f) { f(); }); }
     var base = '/bridge/assets/scenes/ship-' + type + '/';
     fetch(base + 'scene.json?v=' + Date.now()).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (meta) {
       var q = '?v=' + meta.rev, full = new Image(), shore = new Image(), n = 2;
@@ -60,12 +63,13 @@ var BridgeSloop = (function () {
         for (var i = 0; i < c.width * c.height; i++) if (sp2[i * 4 + 1] > 0) d[i * 4 + 3] = 0;     // cut at the water line
         x.putImageData(px, 0, 0);
         H.img = c; H.oy = meta.originY || 0;
-        cb();
+        fin();
       }
       full.onload = done; shore.onload = done;
-      full.onerror = shore.onerror = function () { H.failed = true; cb(); };
-      full.src = base + 'full.png' + q; shore.src = base + 'shore.png' + q;
-    }).catch(function () { H.failed = true; cb(); });
+      full.onerror = shore.onerror = function () { H.failed = true; fin(); };
+      var ext = '.' + (meta.ext || 'png');
+      full.src = base + 'full' + ext + q; shore.src = base + 'shore' + ext + q;
+    }).catch(function () { H.failed = true; fin(); });
   }
   // ---- your ships at an island ---------------------------------------------------------------------------------------
   // The sloop lies across the pier's end (MOORINGS); every bigger ship of yours there lies in line with her, bow to
@@ -210,7 +214,8 @@ var BridgeSloop = (function () {
       }
       full.onload = done; shore.onload = done;
       full.onerror = shore.onerror = function () { cb(new Error('sheet')); };
-      full.src = SHEET + 'full.png' + q; shore.src = SHEET + 'shore.png' + q;
+      var ext = '.' + (meta.ext || 'png');
+      full.src = SHEET + 'full' + ext + q; shore.src = SHEET + 'shore' + ext + q;
     }).catch(function () { cb(new Error('sheet')); });
   }
   // a cell of the sheet: [sx, sy] of its top-left (4 × 4 tiles), the thing's centre at (64, 83) in it
@@ -229,19 +234,19 @@ var BridgeSloop = (function () {
     if (!own) BridgeScene.load(id, function (sc) { I.sc = sc; done(); });
     fetch('/bridge/assets/scenes/' + id + '/scene.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (meta) {
       if (own === true) {
-        var q = '?v=' + (meta.rev || ''), st = meta.states[0], pic = new Image(), imgs = {};
+        var q = '?v=' + (meta.rev || ''), x = '.' + (meta.ext || 'png'), st = meta.states[0], pic = new Image(), imgs = {};
         var cy = meta.cycle, more = cy ? [cy.day, cy.dusk].filter(function (x) { return x && x !== st; }) : [];
         n++;
-        I.sc = { id: id, meta: meta, imgs: imgs, baseImgs: imgs, q: q, own: true };
+        I.sc = { id: id, meta: meta, imgs: imgs, baseImgs: imgs, q: q, ext: x, own: true };
         pic.onload = function () { imgs[st] = pic; done(); };
         pic.onerror = function () { I.sc = null; done(); };
-        pic.src = '/bridge/assets/scenes/' + id + '/' + st + '.png' + q;
+        pic.src = '/bridge/assets/scenes/' + id + '/' + st + x + q;
         more.forEach(function (name) {                    // the island by day and at dusk (js/scene.js blends them)
           n++;
           var p2 = new Image();
           p2.onload = function () { imgs[name] = p2; done(); };
           p2.onerror = function () { done(); };
-          p2.src = '/bridge/assets/scenes/' + id + '/' + name + '.png' + q;
+          p2.src = '/bridge/assets/scenes/' + id + '/' + name + x + q;
         });
       }
       var im = new Image();
@@ -268,7 +273,7 @@ var BridgeSloop = (function () {
         done();
       };
       im.onerror = function () { I.mask = null; I.meta = meta; done(); };
-      im.src = '/bridge/assets/scenes/' + id + '/shore.png?v=' + meta.rev;
+      im.src = '/bridge/assets/scenes/' + id + '/shore.' + (meta.ext || 'png') + '?v=' + meta.rev;
     }).catch(function () { I.mask = null; done(); });
   }
   /** What's at passage tile (x, r) on island I: 0 water, 1 land, 2 shallows (or 0 off its render). */
@@ -718,6 +723,7 @@ var BridgeSloop = (function () {
     SP = act ? act.spec : SLOOP; shipId = act ? act.ship.id : null; shipName = act ? act.ship.name : 'your sloop';
     if (captainOf) {                                                   // aboard someone else's: their hull, their name, none of your fleet
       SP = typeof BridgeFleet !== 'undefined' && captainOf.type ? BridgeFleet.spec(captainOf.type) : SLOOP;
+      if (captainOf.kit) SP = Object.assign({}, SP, unkit(captainOf.kit));        // her guns and fittings, as they're drawn
       shipId = null; shipName = captainOf.shipName || 'their boat'; act = null; aboardStart = true;
     }
     running = true; from = fromId; to = null; phase = 'load'; began = performance.now(); keys = {}; menu = null;
@@ -762,7 +768,7 @@ var BridgeSloop = (function () {
       layA();
       if (captainOf && captainOf.wind) { wind.from = captainOf.wind.from; wind.seed = captainOf.wind.seed; }
       if (crewOf && net()) net().send('sail-go', { from: from, to: toId || null, wind: { from: wind.from, seed: wind.seed }, type: act && act.ship ? act.ship.type : 'sloop',
-                                                  shipName: shipName, suit: suitOf() }, crewOf.id);
+                                                  shipName: shipName, suit: suitOf(), kit: kitMsg() }, crewOf.id);
       boat = { x: A.moor[0], r: A.moor[1], h: A.moorH, v: 0, sheet: 1.45, boom: 0, side: wrap(wind.from - A.moorH) > 0 ? -1 : 1, heel: 0, rudder: 0,
                bump: 0, hoist: 0, eff: 0, off: 0, luff: true, drift: [0, 0], empty: true, spec: SP, ship: shipId };
       castOut = unit(A.moor[0] - A.dock[0], A.moor[1] - A.dock[1]);
@@ -1495,7 +1501,17 @@ var BridgeSloop = (function () {
       var o = seaPeers[from] || (seaPeers[from] = { x: p.x, r: p.r, h: p.h, v: 0, bump: 0, heel: 0, sheet: 1, boom: 0.6, side: 1, hoist: 1, eff: 1, off: 1.6, rudder: 0 });
       o.tx = p.x; o.tr = p.r; o.th = p.h; o.v = d.v || 0; o.name = d.name; o.suit = d.suit; o.heel = d.heel || 0; o.boom = d.boom || 0.6; o.side = d.side || 1;
       o.spec = typeof BridgeFleet !== 'undefined' && d.type ? BridgeFleet.spec(d.type) : SLOOP; o.at = performance.now();
+      if (d.k !== o.kitS) { o.kitS = d.k; o.kit = typeof d.k === 'string' ? unkit(d.k) : null; }      // her guns and fittings
     });
+  }
+  // what your ship carries, for the others to draw her with: 'gun,gun|fitting,fitting' (and back)
+  function kitMsg() {
+    var a = typeof BridgeFleet !== 'undefined' ? BridgeFleet.active().ship : null;
+    return a ? (a.guns || []).join(',') + '|' + (a.fits || []).join(',') : '';
+  }
+  function unkit(k) {
+    var p = String(k || '').split('|'), fits = (p[1] || '').split(',').filter(Boolean);
+    return { guns: (p[0] || '').split(',').filter(Boolean), fits: fits, ward: fits.indexOf('moon_lantern') >= 0 };
   }
   // a chart point on your water (chartPos the other way): the chart is the world at a fixed scale, the same for everyone,
   // so another boat's chart position is simply where she is on yours (and headings need no turning)
@@ -1514,7 +1530,7 @@ var BridgeSloop = (function () {
       seaAt = now;
       var cp = chartPos(), me = n.me(), act = typeof BridgeFleet !== 'undefined' ? BridgeFleet.active().ship : null;
       if (cp) n.send('sea', { cx: cp.x, cy: cp.y, hc: chartHeading(), v: boat.v, heel: boat.heel, boom: boat.boom, side: boat.side,
-                              type: act ? act.type : 'sloop', name: me && me.name, suit: suitOf() });
+                              type: act ? act.type : 'sloop', name: me && me.name, suit: suitOf(), k: kitMsg() });
     }
     Object.keys(seaPeers).forEach(function (id) {                    // ease theirs toward where they said they were
       var o = seaPeers[id];
@@ -1551,7 +1567,7 @@ var BridgeSloop = (function () {
     n.on('sail-go', function (d, from) {
       var p = n.peer(from);
       if (running || !d) return;
-      start(d.from, d.to, { crew: { id: from, name: p ? p.name : 'the captain', suit: d.suit, type: d.type, shipName: d.shipName, wind: d.wind } });
+      start(d.from, d.to, { crew: { id: from, name: p ? p.name : 'the captain', suit: d.suit, type: d.type, shipName: d.shipName, wind: d.wind, kit: d.kit } });
     });
   }
   wireInvites();
@@ -1636,10 +1652,15 @@ var BridgeSloop = (function () {
     burst(o.x, o.r, 8, 'spray');
     sfx('pickup');
     var r = hash(o.seed + Date.now() % 97);
+    var salv = (r >= 0.45 && r < 0.6) || r > 0.96 ? typeof BridgeWorkshop !== 'undefined' && BridgeWorkshop.salvage(r) : null;   // a ship's stores gone over the side (js/workshop.js)
     if (r < 0.45 && typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) {
       var n = 8 + Math.floor(r * 40);
       BridgeProgression.awardCoins(n, 'sloop:flotsam');
       say('Inside the ' + o.kind + ': ' + n + ' coins in an oilskin purse', 3000);
+    } else if (salv && typeof BridgeInventory !== 'undefined' && BridgeInventory.addItem) {
+      var got = BridgeInventory.addItem(salv[0], salv[1]), what = BridgeItems.get(salv[0]);
+      say(got === false ? 'Your pack is full — you let it drift' : /^plan_/.test(salv[0]) ? 'Inside the ' + o.kind + ', in an oilskin tube: ' + what.name.toLowerCase()
+                                                               : 'Inside the ' + o.kind + ': ' + (salv[1] > 1 ? salv[1] + ' × ' : '') + what.name.toLowerCase() + ', a ship\'s stores gone over the side', 3500);
     } else if (typeof BridgeInventory !== 'undefined' && BridgeInventory.addItem) {
       var item = r < 0.75 ? 'sea_glass' : 'silver_nail';
       var ok = BridgeInventory.addItem(item, r < 0.75 ? 2 : 1);
@@ -1860,8 +1881,9 @@ var BridgeSloop = (function () {
     bctx.closePath();
     bctx.fill();
   }
-  // a sail: luff from tack to head, the leech from head to clew bellied out (and flogging when it luffs), shaded
-  function sail(P, tack, head, clew, lee, flog, now, tone, cloth) {
+  // a sail: luff from tack to head, the leech from head to clew bellied out (and flogging when it luffs), shaded;
+  // crystal-weave (`glint`) has rose seams and crystal threads catching the light
+  function sail(P, tack, head, clew, lee, flog, now, tone, cloth, glint) {
     cloth = cloth || CLOTH[2];
     var pts = [], n = 10;
     for (var i = 0; i <= n; i++) {                                   // luff, bottom to top
@@ -1901,15 +1923,75 @@ var BridgeSloop = (function () {
       bctx.restore();
     }
     // seams across it, and its edge
-    bctx.fillStyle = 'rgba(60,54,70,0.35)';
     for (var sm = 1; sm < 4; sm++) {
       var f2 = sm / 4, l0 = pts[Math.round(f2 * n)], l1 = pts[n + Math.round((1 - f2) * (n - 1))];
-      if (l0 && l1) line(l0, l1, 'rgba(60,54,70,0.35)');
+      if (l0 && l1) line(l0, l1, glint ? 'rgba(255,170,220,0.5)' : 'rgba(60,54,70,0.35)');
     }
+    if (glint) sparkle(function (a, g) { var l = pts[1 + Math.floor(a * (n - 2))], r = pts[n + (n - 1 - Math.floor(a * (n - 2)))]; return l && r && [l[0] + (r[0] - l[0]) * g, l[1] + (r[1] - l[1]) * g]; }, now, 7);
     for (var e = 0; e < pts.length; e++) {
       var p0 = pts[e], p1 = pts[(e + 1) % pts.length];
       line(p0, p1, '#2c2634');
     }
+  }
+  // crystal threads in the cloth catching the light: a pixel here and there twinkling (at(a, g): a point on the cloth)
+  function sparkle(at, now, n) {
+    for (var i = 0; i < n; i++) {
+      var tw = Math.sin(now / 240 + i * 2.39 + hash(i) * 6);
+      if (tw < 0.55) continue;
+      var p = at(hash(i * 3.1 + 1), 0.15 + hash(i * 5.3 + 2) * 0.7);
+      if (!p) continue;
+      var x = Math.round(p[0]), y = Math.round(p[1]);
+      bctx.fillStyle = tw > 0.9 ? '#ffffff' : '#ffd4ee'; bctx.fillRect(x, y, 1, 1);
+      if (tw > 0.93) { bctx.fillStyle = 'rgba(255,214,240,0.75)'; bctx.fillRect(x - 1, y, 3, 1); bctx.fillRect(x, y - 1, 1, 3); }
+    }
+  }
+  var CRYSTAL = ['#f4e6f2', '#d6bcd8', '#9c86aa'];                      // crystal-weave: rose-silver spore silk
+  // storm rigging (Crimson's): the shrouds doubled, ratlines across them, backstays from the masthead aft, tarred black
+  function stormRig(P, m, mu, deck, bw) {
+    var TAR = 'rgba(20,12,12,0.9)';
+    [-1, 1].forEach(function (s) {
+      var foot = [P(mu - 0.22, s * bw * 0.93, deck - 0.24, true), P(mu + 0.2, s * bw * 0.93, deck - 0.24, true)];
+      line(P(mu, 0, deck + m.h * 0.8, true), foot[0], TAR);
+      line(P(mu, 0, deck + m.h * 0.78, true), foot[1], TAR);
+      for (var j = 1; j <= 4; j++) {                                  // the ratlines: rungs up the shrouds
+        var f = j / 5.5;
+        line(P(mu - 0.22 * (1 - f), s * bw * 0.93 * (1 - f), deck - 0.24 + (m.h * 0.8 + 0.24) * f, true),
+             P(mu + 0.2 * (1 - f), s * bw * 0.93 * (1 - f), deck - 0.24 + (m.h * 0.78 + 0.24) * f, true), 'rgba(40,26,20,0.75)');
+      }
+      line(P(mu, 0, deck + m.h * 0.97, true), P(mu - Math.min(1.6, m.h * 0.38), s * bw * 0.8, deck - 0.1, true), 'rgba(28,16,14,0.8)');   // a backstay
+    });
+  }
+  // the moon lantern at the masthead: a lantern of moonglass in an iron frame, its cold light breathing
+  function moonLantern(top, t) {
+    var x = Math.round(top[0]), y = Math.round(top[1]) + 4, pulse = 0.8 + 0.2 * Math.sin(t * 2.2);
+    bctx.save(); bctx.globalCompositeOperation = 'lighter';
+    for (var gl = 4; gl >= 1; gl--) { bctx.fillStyle = 'rgba(170,196,255,' + (0.045 * (5 - gl) * pulse).toFixed(3) + ')'; disc(x, y + 1, gl * 4, gl * 4); }
+    bctx.restore();
+    bctx.fillStyle = '#10101a'; bctx.fillRect(x - 2, y - 2, 5, 6);              // the frame
+    bctx.fillStyle = '#9ec2ff'; bctx.fillRect(x - 1, y - 1, 3, 4);              // the glass
+    bctx.fillStyle = '#eef6ff'; bctx.fillRect(x, y, 1, 2); bctx.fillRect(x - 1, y - 1, 1, 1);
+    bctx.fillStyle = '#10101a'; bctx.fillRect(x - 1, y - 3, 3, 1); bctx.fillRect(x, y - 4, 1, 1);   // the cap and its ring
+  }
+  // its light on the water round her: a pool of moonlight (strong at night and on the Midnight Sea, faint by day) with
+  // the wavelets in it catching it, fixed to the water so they slip past as she sails
+  function moonPool(b, at, sp, now) {
+    var W0 = skyNow(), night = W0 ? 1 - W0.day : 1, mid = (b === boat ? seaHere() : palAt(b.x, b.r)) === 'midnight';
+    var k = (0.25 + 0.75 * night) * (mid ? 1.45 : 1), R = (sp.L * 0.5 + 1.6) * TS, cx = Math.round(at[0]), cy = Math.round(at[1]) + 2;
+    bctx.save(); bctx.globalCompositeOperation = 'lighter';
+    for (var g = 4; g >= 1; g--) { bctx.fillStyle = 'rgba(140,170,255,' + (0.021 * (5 - g) * k).toFixed(3) + ')'; disc(cx, cy, Math.round(R * g / 4), Math.round(R * g / 4 * 0.52)); }
+    var G = 0.7, gx0 = Math.floor((b.x - R / TS) / G), gx1 = Math.ceil((b.x + R / TS) / G), gr0 = Math.floor((b.r - R / TS * 0.52) / G), gr1 = Math.ceil((b.r + R / TS * 0.52) / G);
+    for (var i = gx0; i <= gx1; i++) for (var j = gr0; j <= gr1; j++) {
+      var hh = hash(i * 31.7 + j * 57.3);
+      if (hh > 0.22) continue;
+      var wx = (i + hash(i + j * 13.1)) * G, wr = (j + hash(j * 7.7 + i)) * G, X = sx(wx), Y = sy(wr);
+      var e = Math.hypot((X - cx) / R, (Y - cy) / (R * 0.52));
+      if (e > 1) continue;
+      var tw = Math.sin(now / 380 + hh * 60);
+      if (tw < 0.4) continue;
+      bctx.fillStyle = 'rgba(200,220,255,' + ((0.25 + 0.5 * (tw - 0.4)) * (1 - e) * Math.min(1, k)).toFixed(2) + ')';
+      bctx.fillRect(X, Y, tw > 0.85 ? 2 : 1, 1);
+    }
+    bctx.restore();
   }
 
   function drawBoat(now, bb) {
@@ -1926,6 +2008,11 @@ var BridgeSloop = (function () {
     // the hull, nearest of 32 headings: her own sheet, or the sloop's drawn to her length until it's there
     var hi = ((Math.round(b.h / (Math.PI * 2) * 32) % 32) + 32) % 32;
     var X = Math.round(b.x * TS - cam.x), Y = Math.round(b.r * TS - cam.y) + bob, H = HULLS[sp.sheet];
+    if (H && !H.img && !H.failed && !H.loading) loadHull(sp.sheet, function () {});     // (a pirate's hull, the first time one's seen)
+    // what she's fitted (js/shipkit.js), on her own sheet only: guns at the rails, her hull's bands, her rig's extras
+    var kit = typeof BridgeShipKit !== 'undefined' && (!H || H.img) ? BridgeShipKit.kitOf(b) : null;
+    var tallest = rg.masts.reduce(function (m, x) { return x.h > m.h ? x : m; }, rg.masts[0]);
+    if (kit ? kit.moon : sp.ward) moonPool(b, P(-L2 + tallest.f * sp.L, 0, 0), sp, now);
     if (H && H.img) {
       var cp = H.cell * 32;
       skyBlit(tinted(H.img, b.tint), (hi % 8) * cp, Math.round(H.oy + Math.floor(hi / 8) * cp), cp, cp, X - cp / 2, Y - Math.round(H.cy * 32), cp, cp);
@@ -1933,6 +2020,7 @@ var BridgeSloop = (function () {
       var cc = cell(Math.floor(hi / 8), hi % 8), sz = Math.round(128 * k);
       skyBlit(tinted(sheetImg, b.tint), cc[0], cc[1], 128, 128, X - Math.round(64 * k), Y - Math.round(83 * k), sz, sz);
     }
+    if (kit) BridgeShipKit.hull(bctx, b, X, Y, hi, now, skyBlit);
     var Pal = BridgeSea.palettes[b === boat ? seaHere() : palAt(b.x, b.r)] || BridgeSea.palettes.emerald;
     var c = Math.cos(b.h), s = Math.sin(b.h), nf = Math.round(18 * k);
     for (var i = 0; i < nf; i++) {                                    // the water lapping round her
@@ -1948,8 +2036,7 @@ var BridgeSloop = (function () {
     // what's aboard, back to front: you at the helm, each mast and its sails, the headsails out on the bow
     var lee = b.side, hoist = b.hoist, boom = b.boom, deck = rg.deck, wheel = sp.L > 3.6;
     var hz = rg.qd != null ? rg.qd : deck - 0.2, hs = helmOf(b), seat = P(hs[0], hs[1], wheel ? hz : 0.12), pilotRow = seat[2];
-    var tone = 0.5 + 0.5 * Math.cos(wrap(b.h + lee * boom - 2.3));
-    var tallest = rg.masts.reduce(function (m, x) { return x.h > m.h ? x : m; }, rg.masts[0]);
+    var tone = 0.5 + 0.5 * Math.cos(wrap(b.h + lee * boom - 2.3)), cloth = b.cloth || (kit && kit.crystal ? CRYSTAL : null), glint = !!(kit && kit.crystal);
     var drawList = [{ row: pilotRow, draw: function () {
       if (wheel) {                                                    // the wheel on her quarterdeck
         var wc = P(hs[0] + 0.32, 0, hz + 0.55);
@@ -1969,6 +2056,7 @@ var BridgeSloop = (function () {
         var foot = P(mu, 0, deck - 0.3, true), top = P(mu, 0, deck + m.h, true);
         line(P(mu, 0, deck + m.h * 0.82, true), P(mu, -bw * 0.95, deck - 0.24, true), 'rgba(30,24,20,0.8)');     // shrouds
         line(P(mu, 0, deck + m.h * 0.82, true), P(mu, bw * 0.95, deck - 0.24, true), 'rgba(30,24,20,0.8)');
+        if (kit && kit.storm) stormRig(P, m, mu, deck, bw);
         line(foot, top, '#3a2614', m.h > 4 ? 3 : 2);
         line([foot[0] + 1, foot[1]], [top[0] + 1, top[1]], '#6a4a2a');
         if (m === tallest) {                                          // the pennant at the main truck, streaming downwind
@@ -1976,18 +2064,13 @@ var BridgeSloop = (function () {
           var royal = b.ship && typeof BridgeCrown !== 'undefined' && BridgeCrown.captain();              // the Crown's captain flies gold
           poly([top, [top[0] + Math.cos(dw + fl) * 9 * Math.sqrt(k), top[1] + Math.sin(dw + fl) * 9 * C45 * Math.sqrt(k)], [top[0], top[1] + 3]], royal ? '#e0b040' : '#c83a2e');
           if (royal) poly([top, [top[0] + Math.cos(dw + fl) * 5 * Math.sqrt(k), top[1] + Math.sin(dw + fl) * 5 * C45 * Math.sqrt(k)], [top[0], top[1] + 2]], '#2a7a4a');
-          if (sp.ward) {                                              // the moon lantern at the masthead
-            bctx.save(); bctx.globalCompositeOperation = 'lighter';
-            var pulse = 0.8 + 0.2 * Math.sin(t * 2.2);
-            for (var gl = 4; gl >= 1; gl--) { bctx.fillStyle = 'rgba(170,190,255,' + (0.05 * (5 - gl) * pulse).toFixed(3) + ')'; disc(top[0], top[1] + 4, gl * 4, gl * 4); }
-            bctx.restore();
-            bctx.fillStyle = '#e8f0ff'; bctx.fillRect(Math.round(top[0]) - 1, Math.round(top[1]) + 3, 3, 3);
-          }
+          if (kit ? kit.moon : sp.ward) moonLantern(top, t);          // the moon lantern at the masthead
         }
-        if (m.square) squareMast(P, b, sp, m, mu, deck, lee, boom, hoist, tone, now);
-        else foreAft(P, b, m, mu, deck, lee, boom, hoist, tone, now);
+        if (m.square) squareMast(P, b, sp, m, mu, deck, lee, boom, hoist, tone, now, cloth, glint);
+        else foreAft(P, b, m, mu, deck, lee, boom, hoist, tone, now, cloth, glint);
       } });
     });
+    if (kit) BridgeShipKit.guns(bctx, b, rig({ x: b.x, r: b.r, h: hi / 32 * Math.PI * 2, side: 1, heel: 0 }, bob), hi, now, skyBlit, drawList);   // at her sprite's heading
     drawList.push({ row: P(L2 * 0.9, 0, 0)[2], draw: function () {
       var fore = rg.masts.reduce(function (m, x) { return x.f > m.f ? x : m; }, rg.masts[0]), fu = -L2 + fore.f * sp.L;
       var bow = rg.bow || deck, nose = [-L2 + (1 + (rg.bowsprit || 0)) * sp.L, 0, bow - 0.12];
@@ -1996,7 +2079,7 @@ var BridgeSloop = (function () {
       if (hoist > 0.05) rg.jibs.forEach(function (j, ji) {
         var tu = -L2 + j.tack * sp.L, ja = Math.min(boom * 0.85 + 0.1, 1.2), jl = (j.tack - j.head) * sp.L * 0.9 + 0.3;
         sail(P, [tu, 0, bow - 0.17], [-L2 + j.head * sp.L, 0, bow - 0.17 + j.h * hoist],
-             [tu - Math.cos(ja) * jl, lee * Math.sin(ja) * jl, bow - 0.07], lee, b.luff, now + 200 + ji * 70, tone, b.cloth);
+             [tu - Math.cos(ja) * jl, lee * Math.sin(ja) * jl, bow - 0.07], lee, b.luff, now + 200 + ji * 70, tone, cloth, glint);
       });
     } });
     // your hands about the deck: one at each mast's foot, the rest forward (a big ship only - the sloop is just you)
@@ -2063,12 +2146,12 @@ var BridgeSloop = (function () {
     return c;
   }
   // a fore-and-aft mast: the main on its boom (or bundled along it, furled), the mainsheet
-  function foreAft(P, b, m, mu, deck, lee, boom, hoist, tone, now) {
+  function foreAft(P, b, m, mu, deck, lee, boom, hoist, tone, now, cloth, glint) {
     var goose = [mu, 0, deck], clew = [mu - Math.cos(boom) * m.boom, lee * Math.sin(boom) * m.boom, deck + 0.08];
     var head = [mu, 0, deck + m.sail * hoist];
-    if (hoist > 0.05) sail(P, goose, head, clew, lee, b.luff, now, tone, b.cloth);
+    if (hoist > 0.05) sail(P, goose, head, clew, lee, b.luff, now, tone, cloth, glint);
     else {
-      var cl = (b.cloth || CLOTH[2]);
+      var cl = (cloth || CLOTH[2]);
       line(P(goose[0], goose[1], goose[2] + 0.08, true), P(clew[0], clew[1], clew[2] + 0.08, true), cl[1], 3);
       line(P(goose[0], goose[1], goose[2] + 0.12, true), P(clew[0], clew[1], clew[2] + 0.12, true), cl[0], 1);
       for (var ti = 1; ti < 4; ti++) { var f = ti / 4, tp = P(goose[0] + (clew[0] - goose[0]) * f, goose[1] + (clew[1] - goose[1]) * f, deck + 0.12, true); bctx.fillStyle = '#5a3a1a'; bctx.fillRect(Math.round(tp[0]), Math.round(tp[1]) - 1, 1, 3); }
@@ -2078,9 +2161,9 @@ var BridgeSloop = (function () {
   }
   // a square-rigged mast: its yards braced round with the sheet (square across running, sharp up close-hauled), the
   // sails loosed down from them as she hoists, bellied out before the wind
-  function squareMast(P, b, sp, m, mu, deck, lee, boom, hoist, tone, now) {
+  function squareMast(P, b, sp, m, mu, deck, lee, boom, hoist, tone, now, cloth, glint) {
     var phi = hoist < 0.05 ? Math.PI / 2 : 0.62 + (Math.PI / 2 - 0.62) * clamp(boom / 1.3, 0, 1), cp = Math.cos(phi), spn = Math.sin(phi);   // furled: squared away
-    var cl = b.cloth || ['#e4dccb', '#c4bca9', '#948e82'];
+    var cl = cloth || ['#e4dccb', '#c4bca9', '#948e82'];
     m.square.forEach(function (y) {
       var w = y[0], zt = deck + y[2], zb = deck + y[2] - (y[2] - y[1]) * hoist;
       var A1 = [mu + w * cp, -lee * w * spn, zt], B1 = [mu - w * cp, lee * w * spn, zt];
@@ -2108,8 +2191,9 @@ var BridgeSloop = (function () {
         for (var sm = 1; sm < 3; sm++) {                             // seams down the cloth
           var f4 = sm / 3;
           line(P(A1[0] + (B1[0] - A1[0]) * f4, A1[1] + (B1[1] - A1[1]) * f4, zt, true),
-               P(A1[0] + (B1[0] - A1[0]) * f4 + nu, A1[1] + (B1[1] - A1[1]) * f4 + nv, zb, true), 'rgba(60,54,70,0.3)');
+               P(A1[0] + (B1[0] - A1[0]) * f4 + nu, A1[1] + (B1[1] - A1[1]) * f4 + nv, zb, true), glint ? 'rgba(255,170,220,0.5)' : 'rgba(60,54,70,0.3)');
         }
+        if (glint) sparkle(function (a, g) { return P(A1[0] + (B1[0] - A1[0]) * a + nu * g, A1[1] + (B1[1] - A1[1]) * a + nv * g, zt - (zt - zb) * g, true); }, now + y[2] * 900, 6);
         for (var ed = 0; ed < pts.length; ed++) line(pts[ed], pts[(ed + 1) % pts.length], '#2c2634');
       } else {                                                       // furled: a fat roll along the yard
         line(P(A1[0], A1[1], zt - 0.08, true), P(B1[0], B1[1], zt - 0.08, true), cl[1], 3);
@@ -2712,7 +2796,7 @@ var BridgeSloop = (function () {
   // your ships at this island as the world draws them (laid out again only when the fleet changes)
   function fleetHere(I) {
     var F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null;
-    var key = F ? F.here(I.id).map(function (s) { return s.id + ':' + s.type; }).join(',') : 'gull';
+    var key = F ? F.here(I.id).map(function (s) { return s.id + ':' + s.type + ':' + (typeof BridgeShipKit !== 'undefined' ? BridgeShipKit.sig(s) : ''); }).join(',') : 'gull';   // (what's fitted shows at the pier at once)
     if (I.fleetKey !== key) {
       I.fleetKey = key; I.fleetList = fleetAt(I).map(function (e) { return lying(e, 0, 0); });
       I.fleetList.forEach(function (m) { loadHull(m.spec.sheet, function () {}); });   // each ship's own hull, not the sloop's stretched
@@ -2872,8 +2956,55 @@ var BridgeSloop = (function () {
   }
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('lumar', { items: mooredItems });
 
+  // ---- her portrait (the harbourmaster's book): a ship as she's fitted, lying on a patch of her sea in the moonlight ----
+  // Drawn by drawBoat, sails furled, three-quarters on, into `cv` at the game's own pixels (its CSS size a whole multiple
+  // that fits the dialog), and kept moving - the pennant, the lanterns, the water, a glint on her copper - while it's shown.
+  function portrait(cv, ship) {
+    var F = typeof BridgeFleet !== 'undefined' ? BridgeFleet : null;
+    if (!cv || !ship || !F) return;
+    var sp = F.effective(ship), I = isles(), pal = (I && I[ship.at] && I[ship.at].pal) || 'emerald', began = 0;
+    var set = (ship.fits || []).indexOf('crystal_sails') >= 0;        // (furled, but crystal-weave is set to be seen)
+    var m = { x: 0, r: 0, h: 3 / 32 * Math.PI * 2, v: 0, sheet: set ? 1 : 1.45, boom: set ? 0.55 : 0.06, side: 1, heel: 0, rudder: 0, bump: 0, hoist: set ? 0.85 : 0,
+              eff: 0, off: 2, luff: false, empty: true, spec: sp, ship: ship.id, seed: 0.3 };
+    var scratch = document.createElement('canvas'), crop = null, PW = 420, PH = 380, OX = 210, OY = 300;
+    scratch.width = PW; scratch.height = PH;
+    function paint(now) {
+      var sc = scratch.getContext('2d'), keep = [bctx, cam, wind, A, B, palOverride, lightTint, daySea, skyAt, skyW];
+      sc.clearRect(0, 0, PW, PH); sc.imageSmoothingEnabled = false;
+      bctx = sc; cam = { x: -OX, y: -OY }; wind = { now: 2.4, s: 0.4 }; A = null; B = null; palOverride = pal; lightTint = null;
+      daySea = false; skyAt = Date.now(); skyW = null;                // (in moonlight, whatever the hour: the sheets' own light)
+      m.heel = Math.sin(now / 1300) * 0.03;
+      try { drawBoat(now, m); }
+      finally { bctx = keep[0]; cam = keep[1]; wind = keep[2]; A = keep[3]; B = keep[4]; palOverride = keep[5]; lightTint = keep[6]; daySea = keep[7]; skyAt = keep[8]; skyW = keep[9]; }
+      if (!crop) {                                                    // (her bounds, worked out on the first frame)
+        var d = sc.getImageData(0, 0, PW, PH).data, x0 = PW, y0 = PH, x1 = 0, y1 = 0;
+        for (var y = 0; y < PH; y++) for (var x = 0; x < PW; x++) if (d[(y * PW + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x1 <= x0) return false;
+        crop = [Math.max(0, x0 - 10), Math.max(0, y0 - 8), 0, 0];
+        crop[2] = Math.min(PW, x1 + 11) - crop[0]; crop[3] = Math.min(PH, y1 + 9) - crop[1];
+        cv.width = crop[2]; cv.height = crop[3];
+        // a whole number of the screen's own pixels to each of hers (1.5 CSS px on a sharp screen is still crisp), as big as fits
+        var dp = Math.max(1, Math.round(window.devicePixelRatio || 1)), k = Math.max(dp, Math.min(2 * dp, Math.floor(Math.min(380 * dp / crop[2], 230 * dp / crop[3]))));
+        cv.style.width = crop[2] * k / dp + 'px';                     // (its height follows: a narrow screen shrinks it whole)
+      }
+      var c = cv.getContext('2d');
+      c.imageSmoothingEnabled = false;
+      if (typeof BridgeSea !== 'undefined' && BridgeSea.drawSeaAt) BridgeSea.drawSeaAt(c, cv.width, cv.height, now, pal, crop[0] - OX, crop[1] - OY);
+      else { c.fillStyle = '#0e2a26'; c.fillRect(0, 0, cv.width, cv.height); }
+      c.drawImage(scratch, crop[0], crop[1], crop[2], crop[3], 0, 0, crop[2], crop[3]);
+      return true;
+    }
+    function tick(now) {
+      if (!began) began = now;
+      if (!cv.isConnected && now - began > 1500) return;              // (the dialog's gone)
+      if (cv.isConnected && !(now - (tick.at || 0) < 80)) { tick.at = now; paint(now); }
+      requestAnimationFrame(tick);
+    }
+    loadSheet(function (err) { if (!err) loadHull(sp.sheet, function () { requestAnimationFrame(tick); }); });
+  }
+
   return {
-    start: start, stop: stop, knows: knows, board: board, _disembark: disembark,
+    start: start, stop: stop, knows: knows, board: board, _disembark: disembark, portrait: portrait,
     isRunning: function () { return running; },
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },

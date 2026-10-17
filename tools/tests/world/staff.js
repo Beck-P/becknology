@@ -1,6 +1,6 @@
 // The people who work for you: faces and what each grade does in the harbour's hiring list and at a business, ship's
 // hands on the daily payroll, the ledger's Staff & payroll page (faces, wages, what they bring in, managing someone
-// from it) and the captain's desk on the bridge. node world/staff.js [shots]
+// from it) and the staff board in the captain's office. node world/staff.js [shots]
 const { chromium } = require('playwright');
 const SHOTS = process.argv[2] || __dirname + '/shots';
 (async () => {
@@ -55,10 +55,10 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await ev(() => { window._off += 86400000; BridgeBusiness._tick(); });
   await wait(300);
   console.log('after a payday, owing:', JSON.stringify(await ev(() => BridgeBusiness.owing())), '· coins', await ev(() => window._coins));
-  // the ledger's staff page, from the captain's desk on the bridge
-  await go('bridge'); await wait(1500);
-  console.log('the desk:', JSON.stringify(await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.action === 'office'); return it && [it.label, it.x, it.y]; })));
-  await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.action === 'office'); BridgeInteractions.execute(it); });
+  // the ledger's staff page, from the staff board in the captain's office (world/office.js does the rest of the room)
+  await go('office'); await wait(1500);
+  console.log('the board:', JSON.stringify(await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.part === 'staff'); return it && [it.label, it.x, it.y]; })));
+  await ev(() => { const it = BridgeWorld.getWorld().interactions.find(i => i.part === 'staff'); BridgeInteractions.execute(it); });
   await wait(1500);
   console.log('staff page:', (await ev(() => (document.querySelector('.lg-staff') || {}).innerText || 'none')).replace(/\n+/g, ' | ').slice(0, 700));
   await p.screenshot({ path: SHOTS + '/staff_ledger.png' });

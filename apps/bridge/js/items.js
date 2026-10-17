@@ -262,9 +262,9 @@ var BridgeItems = (function () {
     target._hp -= dmg;
     var dot = w && w.dot;
     if (!dot) target._hitAt = performance.now();
-    // Hit-flash, an impact in the weapon's element (steel, frost, embers, holy light, drain wisps, dust), the number.
+    // An impact in the weapon's element (steel, frost, embers, holy light, drain wisps, dust) and the number; the creature
+    // itself flashes on its own pixels (js/combat.js, from _hitAt) — no box over the tile.
     if (typeof BridgeFX !== 'undefined') {
-      if (!dot) BridgeFX.spawnHitFlash(target.x, target.y);
       var elem = !w ? 'steel' : w.burn ? 'burn' : w.frost ? 'frost' : w.holy ? 'holy' : w.drain ? 'drain' : w.heavy || w.cls === 'maul' || w.cls === 'pick' ? 'heavy' : 'steel';
       if (!dot && BridgeFX.spawnImpact) BridgeFX.spawnImpact(target.x, target.y, elem, !!(w && (w.heavy || w.push)), w && w.remote ? null : { x: BridgeCharacter.getX(), y: BridgeCharacter.getY() });
       else if (BridgeFX.spawnSparks && !dot) BridgeFX.spawnSparks(target.x, target.y, w && w.burn ? '#ff9040' : w && w.frost ? '#a8e0ff' : w && w.holy ? '#fff0b0' : '#c868f0', w && w.heavy ? 12 : 7);
@@ -330,6 +330,8 @@ var BridgeItems = (function () {
       case 'map':    return '#d6c49c';
       case 'key':    return '#e0c060';
       case 'seed':   return '#90c060';
+      case 'part':   return '#c87a3a';
+      case 'plan':   return '#c8b48a';
       default:       return '#888';
     }
   }
@@ -782,7 +784,8 @@ var BridgeItems = (function () {
     strawberry: function (ctx, x, y, u) { px(ctx, x, y, u, '#e03040', [[6, 7, 4, 3], [7, 10, 2, 1]]); px(ctx, x, y, u, '#50a040', [[7, 6, 2, 1]]); px(ctx, x, y, u, '#ffe080', [[7, 8, 1, 1]]); },
     sunflower: function (ctx, x, y, u) { px(ctx, x, y, u, '#f0c020', [[6, 6, 4, 4]]); px(ctx, x, y, u, '#6a3a1a', [[7, 7, 2, 2]]); },
     pumpkin: function (ctx, x, y, u) { px(ctx, x, y, u, '#e07020', [[5, 7, 6, 4]]); px(ctx, x, y, u, '#b05010', [[7, 7, 1, 4], [9, 7, 1, 4]]); px(ctx, x, y, u, '#50a040', [[8, 6, 1, 1]]); },
-    starfruit: function (ctx, x, y, u) { px(ctx, x, y, u, '#ffe040', [[7, 5, 2, 6], [5, 7, 6, 2], [6, 6, 4, 4]]); px(ctx, x, y, u, '#fff8b0', [[7, 7, 1, 1]]); }
+    starfruit: function (ctx, x, y, u) { px(ctx, x, y, u, '#ffe040', [[7, 5, 2, 6], [5, 7, 6, 2], [6, 6, 4, 4]]); px(ctx, x, y, u, '#fff8b0', [[7, 7, 1, 1]]); },
+    flax: function (ctx, x, y, u) { px(ctx, x, y, u, '#6a8a3a', [[7, 7, 1, 4], [9, 7, 1, 4]]); px(ctx, x, y, u, '#5a7ae0', [[6, 5, 2, 2], [9, 5, 2, 2]]); }
   };
   function seedIcon(kind, paper) {
     return function (ctx, x, y, s) {
@@ -947,6 +950,129 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#8a70e0'; ctx.fillRect(x + 5*u, y + 5*u, 4*u, 4*u);
     ctx.fillStyle = '#e8e0ff'; ctx.fillRect(x + 6*u, y + 6*u, 2*u, 1*u);
     ctx.fillStyle = '#e8ff90'; ctx.fillRect(x + 8*u, y + 8*u, 1*u, 1*u);
+  }
+
+  // ---- the Workshop's materials (js/workshop.js): wood, metal, cloth, what a yard is made of ------------------------
+  // a log on its side, its sawn end toward you
+  function logIcon(bark, end, ring) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#140c06', [[1, 5, 12, 7], [12, 4, 3, 9]]);
+      px(ctx, x, y, u, bark, [[2, 6, 10, 5]]);
+      px(ctx, x, y, u, 'rgba(255,255,255,0.16)', [[2, 6, 10, 1]]);
+      px(ctx, x, y, u, 'rgba(0,0,0,0.3)', [[3, 8, 3, 1], [7, 9, 3, 1], [5, 10, 2, 1]]);
+      px(ctx, x, y, u, end, [[12, 5, 2, 7]]);
+      px(ctx, x, y, u, ring, [[13, 7, 1, 3], [12, 6, 1, 1], [12, 10, 1, 1]]);
+    };
+  }
+  // three sawn boards, stacked
+  function plankIcon(wood, hi, grain) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      [[2, 3], [1, 7], [3, 11]].forEach(function (b, i) {
+        px(ctx, x, y, u, '#140c06', [[b[0], b[1], 12, 4]]);
+        px(ctx, x, y, u, wood, [[b[0] + 1, b[1] + 1, 10, 2]]);
+        px(ctx, x, y, u, hi, [[b[0] + 1, b[1] + 1, 10, 1]]);
+        px(ctx, x, y, u, grain, [[b[0] + 3 + i * 2, b[1] + 2, 3, 1]]);
+      });
+    };
+  }
+  // a cast bar of metal
+  function ingotIcon(dark, mid, hi) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#0c0a0a', [[2, 6, 12, 7], [3, 5, 10, 1]]);
+      px(ctx, x, y, u, dark, [[3, 7, 10, 5]]);
+      px(ctx, x, y, u, mid, [[4, 6, 8, 3]]);
+      px(ctx, x, y, u, hi, [[5, 6, 5, 1]]);
+    };
+  }
+  // a plate of beaten copper, pierced for nails
+  function sheetIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a0c06', [[2, 4, 12, 9]]);
+    px(ctx, x, y, u, '#c87a3a', [[3, 5, 10, 7]]);
+    px(ctx, x, y, u, '#f0b070', [[3, 5, 10, 1], [3, 5, 1, 7]]);
+    px(ctx, x, y, u, '#8a4a20', [[11, 10, 2, 2], [4, 8, 6, 1]]);
+    px(ctx, x, y, u, '#2a1a10', [[5, 6, 1, 1], [11, 6, 1, 1], [5, 10, 1, 1], [8, 6, 1, 1]]);
+  }
+  // a sheaf of flax, tied, its blue flowers at the top
+  function flaxIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a2008', [[6, 5, 4, 10]]);
+    px(ctx, x, y, u, '#c8a850', [[7, 5, 1, 9], [8, 4, 1, 10]]);
+    px(ctx, x, y, u, '#7a5a20', [[6, 9, 4, 1]]);
+    px(ctx, x, y, u, '#5a8a3a', [[5, 3, 1, 3], [10, 3, 1, 3], [7, 2, 1, 3]]);
+    px(ctx, x, y, u, '#5a7ae0', [[4, 1, 2, 2], [10, 1, 2, 2], [7, 0, 2, 2]]);
+    px(ctx, x, y, u, '#c8d4ff', [[4, 1, 1, 1], [10, 1, 1, 1], [7, 0, 1, 1]]);
+  }
+  // a coil of rope, its end hanging off
+  function ropeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a08', [[3, 4, 10, 9], [2, 6, 12, 5]]);
+    px(ctx, x, y, u, '#b89858', [[4, 5, 8, 7], [3, 7, 10, 3]]);
+    px(ctx, x, y, u, '#2a1a08', [[6, 7, 4, 3]]);
+    px(ctx, x, y, u, '#7a5a28', [[4, 6, 1, 1], [6, 5, 1, 1], [9, 5, 1, 1], [11, 7, 1, 1], [11, 10, 1, 1], [8, 11, 1, 1], [5, 11, 1, 1], [3, 9, 1, 1]]);
+    px(ctx, x, y, u, '#e8d098', [[5, 5, 1, 1], [10, 6, 1, 1]]);
+    px(ctx, x, y, u, '#b89858', [[12, 11, 2, 1], [13, 12, 1, 2]]);
+  }
+  // a pot of pitch, a stick in it
+  function pitchIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0806', [[3, 5, 10, 9], [4, 4, 8, 1]]);
+    px(ctx, x, y, u, '#6a4a2a', [[4, 7, 8, 6]]);
+    px(ctx, x, y, u, '#8a6a3a', [[4, 7, 2, 6]]);
+    px(ctx, x, y, u, '#141014', [[4, 5, 8, 2]]);
+    px(ctx, x, y, u, '#5a5a6a', [[6, 5, 2, 1]]);
+    px(ctx, x, y, u, '#3a2a1a', [[8, 1, 1, 5]]);
+  }
+  // a folded bolt of cloth
+  function clothIcon(base, hi, seam) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#1a1410', [[2, 4, 12, 9]]);
+      px(ctx, x, y, u, base, [[3, 5, 10, 7]]);
+      px(ctx, x, y, u, hi, [[3, 5, 10, 2]]);
+      px(ctx, x, y, u, seam, [[3, 8, 10, 1], [3, 10, 10, 1]]);
+      px(ctx, x, y, u, 'rgba(0,0,0,0.22)', [[11, 5, 2, 7]]);
+    };
+  }
+  // a pane of blue glass
+  function glassIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#10202a', [[3, 2, 10, 12]]);
+    px(ctx, x, y, u, '#5a90c0', [[4, 3, 8, 10]]);
+    px(ctx, x, y, u, '#a0d0f0', [[5, 4, 2, 4], [7, 3, 1, 2]]);
+    px(ctx, x, y, u, '#e8f8ff', [[5, 4, 1, 2]]);
+    px(ctx, x, y, u, '#3a6a9a', [[9, 9, 2, 3]]);
+  }
+  // a little powder keg, iron-hooped, a red mark on its head, a spill of powder
+  function powderIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#120c08', [[4, 2, 8, 12], [3, 4, 10, 8]]);
+    px(ctx, x, y, u, '#5a3e24', [[5, 3, 6, 10], [4, 5, 8, 6]]);
+    px(ctx, x, y, u, '#7a5634', [[6, 3, 2, 10], [5, 5, 2, 6]]);
+    px(ctx, x, y, u, '#3a3a42', [[4, 5, 8, 1], [4, 10, 8, 1]]);
+    px(ctx, x, y, u, '#c03028', [[7, 7, 2, 2]]);
+    px(ctx, x, y, u, '#2a2a30', [[2, 14, 3, 1], [11, 14, 2, 1]]);
+  }
+  // a shard of moonglass, frost-pale, a little light in it
+  function moonglassIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, 'rgba(200,210,255,0.22)', [[3, 2, 10, 12]]);
+    px(ctx, x, y, u, '#10101a', [[6, 1, 4, 14], [4, 5, 8, 7]]);
+    px(ctx, x, y, u, '#a8b0d8', [[7, 2, 2, 12], [5, 6, 6, 5]]);
+    px(ctx, x, y, u, '#eef0ff', [[7, 3, 1, 5], [5, 7, 1, 2]]);
+    px(ctx, x, y, u, '#7a80b8', [[9, 9, 2, 2]]);
+  }
+  // a greenheart rod, a cork grip, a copper reel
+  function rodIcon(ctx, x, y, s) {
+    var u = s / 16;
+    for (var i = 0; i < 12; i++) px(ctx, x, y, u, i < 3 ? '#c8a060' : i % 2 ? '#4a6a28' : '#5a7a30', [[2 + i, 14 - i, 1, 1]]);
+    px(ctx, x, y, u, '#140c06', [[4, 13, 3, 2]]);
+    px(ctx, x, y, u, '#c87a3a', [[5, 13, 1, 1]]);
+    px(ctx, x, y, u, '#d8d8e0', [[13, 3, 1, 6]]);
+    px(ctx, x, y, u, '#c03028', [[13, 9, 1, 1]]);
   }
 
   // ---- Item registry --------------------------------------------------
@@ -1138,7 +1264,7 @@ var BridgeItems = (function () {
                      type: 'weapon', stackable: false, draw: bladeIcon('#d8e8ff', '#4a3a6a', true, '#ffffff'), damage: 50, arc: true, holy: true, cls: 'sword', value: 220, onUse: weaponUse },
     veilpiercer:   { id: 'veilpiercer', name: 'Veilpiercer', desc: 'A narrow blade of black glass from the drowned tomb on Midnight. Quick in the hand - and what it draws out of them, it gives to you.',
                      type: 'weapon', stackable: false, draw: glassDaggerIcon, damage: 32, rate: 170, drain: 0.25, cls: 'blade', value: 200, onUse: weaponUse },
-    wispcaller:    { id: 'wispcaller', name: 'Wispcaller Staff', desc: 'The Bell Warden\'s. Black wood, a wisp caught in its head. F throws the wisp seven tiles down the way you face; it burns the restless dead brighter. Each throw takes 3 energy.',
+    wispcaller:    { id: 'wispcaller', name: 'Wispcaller Staff', desc: 'The Bell Warden\'s. Black wood, a wisp caught in its head. F throws the wisp seven tiles down the way you face; it burns the restless dead brighter. Each throw takes 2 energy.',
                      type: 'weapon', stackable: false, draw: staffIcon, damage: 42, holy: true, bolt: 'wisp', cls: 'cast', value: 300,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
     twin_fangs:    { id: 'twin_fangs', name: 'Twin Fangs', desc: 'A pair of curved knives from the smithy on the square, one for each hand. Quick, and every cut lands twice.',
@@ -1166,7 +1292,7 @@ var BridgeItems = (function () {
                      stackable: false, draw: hoeIcon, damage: 6, cls: 'pick', onUse: farmUse },
     watering_can:  { id: 'watering_can', name: 'Watering Can', desc: 'Holds twenty waterings. Fill it at the well or the pond; a watering keeps the ground wet to the end of the Verdance day.', type: 'tool',
                      stackable: false, draw: canIcon, onUse: farmUse },
-    moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 3 energy.',
+    moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 2 energy.',
                      type: 'weapon', stackable: false, draw: wandIcon, damage: 30, cls: 'cast', value: 200,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
     glimmer_lantern: { id: 'glimmer_lantern', name: 'Glimmer Lantern', desc: 'A lantern that burns brighter near hidden things. Hold it to see them; use it to ask which way is warmer.',
@@ -1297,6 +1423,43 @@ var BridgeItems = (function () {
                      draw: fishIcon('#6a8a3a', '#c0d080', '#3a5a1a'), effects: { hp: 8, energy: 8 }, onUse: consumableUse, value: 7 },
     sun_carp:      { id: 'sun_carp', name: 'Sun Carp', desc: 'A golden carp from the farm pond, scales like coins. Hollin swears there\'s only one.', type: 'material', stackable: true,
                      draw: fishIcon('#d8a020', '#ffe080', '#a06010', '#fff0a0'), value: 45 },
+    // the Workshop's materials (js/workshop.js `FROM` says where to get each); what's cargo by the crate in a hold
+    // (pine timber, Sapphire glass, spore silk, black powder) breaks open into these at the workshop
+    pine_log:      { id: 'pine_log', name: 'Pine Log', desc: 'A length of straight pine off Diggen\'s Point. A crate of pine timber holds eight.', type: 'material',
+                     stackable: true, draw: logIcon('#6a4422', '#d8b070', '#a07a48'), value: 3 },
+    oak_log:       { id: 'oak_log', name: 'Oak Log', desc: 'Heavy, slow-grown oak from Verdance and the Royal Yard. Shipwrights won\'t frame a hull with anything else.', type: 'material',
+                     stackable: true, draw: logIcon('#4a3420', '#b88a58', '#7a5634'), value: 9 },
+    plank:         { id: 'plank', name: 'Pine Plank', desc: 'Sawn pine, straight and clean. Decks, crates, benches.', type: 'material',
+                     stackable: true, draw: plankIcon('#c89a5a', '#e8c088', '#8a6234'), value: 3 },
+    oak_plank:     { id: 'oak_plank', name: 'Oak Plank', desc: 'Sawn oak, hard as a bad winter. Gun carriages, doubling, a good table.', type: 'material',
+                     stackable: true, draw: plankIcon('#8a6038', '#b0844e', '#5a3a1e'), value: 8 },
+    copper_ore:    { id: 'copper_ore', name: 'Copper Ore', desc: 'Green-streaked rock out of the Rose Mine\'s iron and silver seams. Beat it into sheet at your workshop.', type: 'material',
+                     stackable: true, draw: rockIcon('#5a4a3a', '#40c0a0', '#e09050'), value: 6 },
+    iron_bar:      { id: 'iron_bar', name: 'Iron Bar', desc: 'Iron ore smelted and hammered into a bar. Everything with a bolt in it starts here.', type: 'material',
+                     stackable: true, draw: ingotIcon('#3a3a44', '#7a7a88', '#c8c8d8'), value: 18 },
+    copper_sheet:  { id: 'copper_sheet', name: 'Copper Sheet', desc: 'Copper beaten flat and pierced for nails. Ships\' bottoms, lamps, a reel.', type: 'material',
+                     stackable: true, draw: sheetIcon, value: 20 },
+    flax:          { id: 'flax', name: 'Flax', desc: 'A sheaf of flax, blue flowers and all. Twisted, it makes rope; woven, plain sailcloth.', type: 'material',
+                     stackable: true, draw: flaxIcon, value: 4 },
+    seed_flax:     { id: 'seed_flax', name: 'Flax Seeds', desc: 'Two watered Verdance days to a sheaf or three. Grows in your field, or your holm\'s garden.', type: 'seed', stackable: true,
+                     draw: seedIcon('flax', '#e8e8f0'), onUse: farmUse, value: 2 },
+    rope:          { id: 'rope', name: 'Rope', desc: 'A coil of three-strand rope. Rigging, gun tackle, everything.', type: 'material',
+                     stackable: true, draw: ropeIcon, value: 7 },
+    pitch:         { id: 'pitch', name: 'Pitch', desc: 'Pine tar boiled down black. It keeps the sea out of a seam.', type: 'material',
+                     stackable: true, draw: pitchIcon, value: 5 },
+    sailcloth:     { id: 'sailcloth', name: 'Sailcloth', desc: 'A bolt of sailcloth: spore silk off the Rose Cove looms, or plain linen woven from flax.', type: 'material',
+                     stackable: true, draw: clothIcon('#e8dcc8', '#fff4e4', '#c8b49a'), value: 26 },
+    glass:         { id: 'glass', name: 'Glass', desc: 'A pane of blue Sapphire glass. A crate of it holds six.', type: 'material',
+                     stackable: true, draw: glassIcon, value: 9 },
+    powder:        { id: 'powder', name: 'Black Powder', desc: 'A horn of Crimson powder; a keg holds six. Keep it dry and away from the stove.', type: 'material',
+                     stackable: true, draw: powderIcon, value: 12 },
+    moonglass:     { id: 'moonglass', name: 'Moonglass', desc: 'Glass ground on Midnight under the full moon, pale as frost. The drowned can\'t abide it.', type: 'material',
+                     stackable: true, draw: moonglassIcon, value: 70 },
+    // made at your own bench (js/workshop.js)
+    greenheart_rod: { id: 'greenheart_rod', name: 'Greenheart Rod', desc: 'A springy greenheart rod with a copper reel, made at your own bench. Carried, the fish bite sooner and there\'s more room on the reel.',
+                     type: 'tool', stackable: false, draw: rodIcon, value: 120, onUse: charmUse },
+    prospector_pick: { id: 'prospector_pick', name: 'Prospector\'s Pick', desc: 'Star iron, a songstone set in the head: it hums near the good stuff. The rare rock turns up more, and now and then gives a piece more. Face a rock and press E.',
+                     type: 'tool', stackable: false, draw: pickaxeIcon('#3a3848', '#c8a0ff'), power: 3, damage: 22, cls: 'pick', onUse: pickUse, value: 400 },
     stone_shard: {
       id: 'stone_shard', name: 'Stone Shard',
       desc: 'A jagged fragment from a fallen sentinel. Amethyst still glints in the break.',

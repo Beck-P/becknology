@@ -13,8 +13,13 @@
  *   cast   Wispcaller, Moonlit Wand — raised and thrust out; the bolt leaves the tip on the thrust (js/magic.js).
  *   pick   pickaxes, the ice axe, the hoe — up and down on the tile in front: rock (js/mine.js), earth (js/farm.js).
  * Hold F (B on touch, the right button) after a swing and it charges: let go once it's full for the class's big one
- * (a double spin, a long lunge, a quake, a heavy bolt...; 4 energy). Shift (the ROLL button on touch) is a dodge roll:
- * up to two tiles, untouchable for most of it, 5 energy.
+ * (a double spin, a long lunge, a quake, a heavy bolt...; 2 energy for a blade or a staff, 3 for a sword, an axe, a pike
+ * or a pick, 4 for a maul or a greatsword — `cost`). Shift (the ROLL button on touch) is a dodge roll: up to two tiles,
+ * untouchable for most of it, 3 energy. A plain swing costs nothing.
+ *
+ * SECOND WIND: three quarters of what a fight takes (rolls, charged blows, bolts — `spend`) comes back once you stop for
+ * a breath: 1.2 s with no swing, charge, roll or cast and it returns, 8 a second. Keep swinging and nothing comes back;
+ * food and rest are still what fill you up.
  *
  * FEEL: a landed hit freezes the swing and the creature for a moment (longer for heavier weapons), throws sparks of
  * its element (js/fx.js spawnImpact: steel, frost shards, embers, holy light, drain wisps, dust), nudges the camera
@@ -40,42 +45,44 @@ var BridgeArms = (function () {
 
   // ---- the classes: their swings, in key poses (attacks.py) and milliseconds; 1 marks the frame that lands --------
   var CLASSES = {
-    blade: { name: 'Quick blade', rate: 260, stop: 40, kick: 1, charge: 'coil', what: 'Jab, cut, and a lunging stab to finish a chain',
+    blade: { name: 'Quick blade', rate: 260, stop: 40, kick: 1, charge: 'coil', cost: 2, what: 'Jab, cut, and a lunging stab to finish a chain',
       swings: [{ steps: [['ready', 40], ['jab', 70, 1], ['ready', 70]] },
                { steps: [['cross', 45], ['cut', 75, 1], ['ready', 70]] },
                { steps: [['coil', 80], ['lunge', 120, 1], ['ready', 100]], fin: 1, mult: 1.5, reach: 1 }],
       charged: { steps: [['coil', 30], ['lunge', 170, 1], ['ready', 120]], mult: 2.2, reach: 1 } },
-    sword: { name: 'Sword', rate: 300, stop: 55, kick: 2, charge: 'wind', what: 'Wide sweeps; the third of a chain spins and cuts all round',
+    sword: { name: 'Sword', rate: 300, stop: 55, kick: 2, charge: 'wind', cost: 3, what: 'Wide sweeps; the third of a chain spins and cuts all round',
       swings: [{ steps: [['wind', 70], ['sweep', 55, 1], ['left', 70], ['left', 60]] },
                { steps: [['left', 25], ['sweep', 55, 1], ['right', 70], ['right', 60]] },
                { steps: [['wind', 90], ['spin1', 50, 1], ['spin2', 50], ['spin3', 50], ['sweep', 50], ['right', 110]], fin: 1, mult: 1.25, ring: 1 }],
       charged: { steps: [['wind', 40], ['spin1', 45, 1], ['spin2', 45], ['spin3', 45], ['sweep', 45], ['spin1', 45], ['spin2', 45], ['spin3', 45],
                          ['sweep', 45], ['right', 140]], mult: 2, ring: 1, push: 1 } },
-    chop: { name: 'Axe', rate: 340, stop: 75, kick: 3, charge: 'raise', what: 'A heavy chop from over the shoulder; the second, from the other side, bites deeper',
+    chop: { name: 'Axe', rate: 340, stop: 75, kick: 3, charge: 'raise', cost: 3, what: 'A heavy chop from over the shoulder; the second, from the other side, bites deeper',
       swings: [{ steps: [['raise', 120], ['fall', 40], ['through', 50, 1], ['through', 130]] },
                { steps: [['raise2', 110], ['through2', 50, 1], ['through2', 140]], fin: 1, mult: 1.3 }],
       charged: { steps: [['raise', 40], ['fall', 40], ['through', 60, 1], ['through', 220]], mult: 2.3, arc: 1 } },
-    pole: { name: 'Polearm', rate: 320, stop: 60, kick: 3, charge: 'draw', what: 'A long thrust; the third of a chain lunges a tile further and pushes them back',
+    pole: { name: 'Polearm', rate: 320, stop: 60, kick: 3, charge: 'draw', cost: 3, what: 'A long thrust; the third of a chain lunges a tile further and pushes them back',
       swings: [{ steps: [['draw', 90], ['thrust', 50, 1], ['reach', 80], ['back', 90]] },
                { steps: [['back', 40], ['thrust', 50, 1], ['reach', 80], ['back', 90]] },
                { steps: [['draw', 110], ['long', 60, 1], ['long', 110], ['back', 120]], fin: 1, mult: 1.3, reach: 1, push: 1 }],
       charged: { steps: [['draw', 40], ['long', 60, 1], ['long', 160], ['back', 150]], mult: 2.2, reach: 2, push: 1 } },
-    maul: { name: 'Maul', rate: 650, stop: 110, kick: 5, charge: 'over', what: 'Slow to lift; it slams the ground and the shock hits the tiles beside it',
+    maul: { name: 'Maul', rate: 650, stop: 110, kick: 5, charge: 'over', cost: 4, what: 'Slow to lift; it slams the ground and the shock hits the tiles beside it',
       swings: [{ steps: [['heft', 150], ['over', 210], ['slam', 60, 1], ['quake', 180], ['rise', 170]], shock: 0.4 }],
       charged: { steps: [['over', 60], ['slam', 60, 1], ['quake', 260], ['rise', 200]], mult: 1.8, quake: 1, push: 1 } },
     // a greatsword (Tidebreaker) swings off the maul's poses: lifted overhead two-handed and brought down in a cleave
-    great: { name: 'Greatsword', poses: 'maul', rate: 560, stop: 85, kick: 4, charge: 'over', what: 'Heaved overhead two-handed and brought down in a cleave across three tiles',
+    great: { name: 'Greatsword', poses: 'maul', rate: 560, stop: 85, kick: 4, charge: 'over', cost: 4, what: 'Heaved overhead two-handed and brought down in a cleave across three tiles',
       swings: [{ steps: [['heft', 110], ['over', 170], ['slam', 55, 1], ['quake', 140], ['rise', 130]], arc: 1 }],
       charged: { steps: [['over', 60], ['slam', 60, 1], ['quake', 240], ['rise', 180]], mult: 2, arc: 1, push: 1 } },
-    cast: { name: 'Staff & wand', rate: 450, stop: 0, kick: 1, charge: 'raise', what: 'Raised and thrust out: a bolt flies seven tiles, through the first thing it meets',
+    cast: { name: 'Staff & wand', rate: 450, stop: 0, kick: 1, charge: 'raise', cost: 2, what: 'Raised and thrust out: a bolt flies seven tiles, through the first thing it meets',
       swings: [{ steps: [['raise', 130], ['burst', 70, 1], ['after', 170]] }],
       charged: { steps: [['raise', 40], ['burst', 90, 1], ['after', 220]], mult: 2 } },
-    pick: { name: 'Pick', rate: 300, stop: 50, kick: 2, charge: 'up', what: 'Up over the head and down on what\'s in front: it breaks rock',
+    pick: { name: 'Pick', rate: 300, stop: 50, kick: 2, charge: 'up', cost: 3, what: 'Up over the head and down on what\'s in front: it breaks rock',
       swings: [{ steps: [['up', 110], ['swing', 45], ['strike', 50, 1], ['strike', 100]] }],
       charged: { steps: [['up', 40], ['swing', 45], ['strike', 60, 1], ['strike', 160]], mult: 2 } }
   };
   var ROLL = [['dive', 0.14], ['tuck1', 0.24], ['tuck2', 0.24], ['tuck3', 0.24], ['rise', 0.14]];
-  var ROLL_MS = 380, ROLL_SAFE = 0.85, ROLL_COST = 5, CHARGE_MS = 650, CHARGE_COST = 4, CHAIN_GAP = 420;
+  var ROLL_MS = 380, ROLL_SAFE = 0.85, ROLL_COST = 3, CHARGE_MS = 650, CHAIN_GAP = 420;
+  // the second wind: how long you stop before it comes, how often a point comes back, and how much of what you spent
+  var WIND_DELAY = 1200, WIND_EVERY = 125, WIND_BACK = 0.75;
 
   // weapons with art (tools/bridge-art/weapon_sprites.py WEAPONS) and the colour of their swing
   var TRAIL = { twin_fangs: '#eef2fa', tidebreaker: '#bce4f4', iron_dagger: '#e8eef8', veilpiercer: '#b890ff', cutlass: '#eef2fa', star_blade: '#ffe080', moonglass_sabre: '#dce6ff',
@@ -157,6 +164,36 @@ var BridgeArms = (function () {
     return !!layout;
   }
 
+  // ---- energy: what a fight takes, and the second wind ------------------------------------------------------------
+  var owed = 0, lastAct = 0, windAt = 0;
+  function tired(x, y) {
+    sfx('error');
+    if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnFloatingText) BridgeFX.spawnFloatingText(x, y - 0.4, 'TOO TIRED', '#ffe0a0');
+  }
+  /** Energy for a fighting move (a roll, a charged blow, a bolt): false if you haven't got it. Most of it comes back. */
+  function spend(n) {
+    lastAct = now();
+    if (typeof BridgeInventory === 'undefined') return true;
+    if (BridgeInventory.getStats().energy < n) return false;
+    owed += n * WIND_BACK;
+    BridgeInventory.useEnergy(n);
+    return true;
+  }
+  // each frame: once you've stopped a moment, what the fight took comes back a point every WIND_EVERY ms (by the clock,
+  // so a slow frame gets the points it missed)
+  function breathe(t) {
+    if (owed <= 0 || st || t - lastAct < WIND_DELAY || typeof BridgeInventory === 'undefined') return;
+    var e = BridgeInventory.getStats();
+    if (e.energy >= e.maxEnergy || owed < 1) { owed = 0; return; }   // filled up some other way (food, sleep), or a crumb left
+    windAt = Math.max(windAt, lastAct + WIND_DELAY - WIND_EVERY);      // this breath began then, its first point at once
+    var n = Math.min(Math.floor(owed), Math.floor((t - windAt) / WIND_EVERY));
+    if (n < 1) return;
+    windAt += n * WIND_EVERY; owed -= n;
+    BridgeInventory.restoreEnergy(n);
+  }
+  /** What's still to come back (the pale end of the energy bar, js/inventory.js). */
+  function winded() { return Math.floor(owed); }
+
   /** F with a weapon (items.js weaponUse). false: no swing art — the caller strikes the old way. */
   function press(item) {
     var cls = classOf(item);
@@ -179,11 +216,9 @@ var BridgeArms = (function () {
   function begin(o) {
     var C = CLASSES[o.cls], t = now(), charged = pendingCharge;
     pendingCharge = false;
+    lastAct = t;                                             // swinging: no second wind till you stop
     var idx = 0, sw;
-    if (charged) {
-      if (typeof BridgeInventory !== 'undefined' && BridgeInventory.getStats().energy < CHARGE_COST) { sfx('error'); charged = false; }
-      else if (typeof BridgeInventory !== 'undefined') BridgeInventory.useEnergy(CHARGE_COST);
-    }
+    if (charged && !spend(C.cost || 3)) { tired(BridgeCharacter.getX(), BridgeCharacter.getY()); charged = false; }
     if (charged) sw = C.charged;
     else {
       if (chain.cls === o.cls && t - chain.at < CHAIN_GAP) idx = chain.idx % C.swings.length;
@@ -198,6 +233,7 @@ var BridgeArms = (function () {
 
   function update() {
     var t = now();
+    breathe(t);
     if (!st) return;
     if (st.stopUntil && t >= st.stopUntil) { st.paused += st.stopUntil - st.stopAt; st.stopUntil = 0; }
     if (st.kind === 'roll') {
@@ -213,6 +249,9 @@ var BridgeArms = (function () {
     }
     var e = clock(st, t), s = stepAt(st.sw.steps, st.speed, e);
     if (s && s.hitPast && !st.hit) { st.hit = true; land(st); }
+    // a frame that came late enough to skip the whole swing (a quick blade's is ~120 ms) still lands it, and finishes
+    // it on the next frame, after its hit-stop
+    if (!s && !st.hit) { st.hit = true; land(st); return; }
     if (!s) {                                                  // done
       var was = st;
       chain = { cls: was.cls, idx: was.sw.fin || was.charged ? 0 : was.idx + 1, at: t };
@@ -342,7 +381,7 @@ var BridgeArms = (function () {
     if (t < rollReady) return false;
     if (typeof BridgeInventory !== 'undefined' && BridgeInventory.isMenuOpen && BridgeInventory.isMenuOpen()) return false;
     var st0 = typeof BridgeInventory !== 'undefined' ? BridgeInventory.getStats() : null;
-    if (st0 && st0.energy < ROLL_COST) { sfx('error'); if (typeof BridgeFX !== 'undefined') BridgeFX.spawnFloatingText(BridgeCharacter.getX(), BridgeCharacter.getY() - 0.4, 'TOO TIRED', '#ffe0a0'); return false; }
+    if (st0 && st0.energy < ROLL_COST) { tired(BridgeCharacter.getX(), BridgeCharacter.getY()); return false; }
     var dir = BridgeControls.getDir(), f = BridgeCharacter.getFacing();
     if (dir.dx || dir.dy) f = dir.dx > 0 ? 'right' : dir.dx < 0 ? 'left' : dir.dy > 0 ? 'down' : 'up';
     var d = DV[f], w = BridgeWorld.getWorld(), x = Math.round(BridgeCharacter.getRenderPos().x), y = Math.round(BridgeCharacter.getRenderPos().y), n = 0;
@@ -353,7 +392,7 @@ var BridgeArms = (function () {
     }
     var dur = n ? ROLL_MS : ROLL_MS * 0.7;
     if (!BridgeCharacter.roll || !BridgeCharacter.roll(d[0], d[1], n, dur)) return false;
-    if (typeof BridgeInventory !== 'undefined') BridgeInventory.useEnergy(ROLL_COST);
+    spend(ROLL_COST);
     st = { kind: 'roll', facing: f, t0: t, total: dur, paused: 0, stopUntil: 0 };
     sfx('roll');
     if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnDust) { BridgeFX.spawnDust(x, y, 6); setTimeout(function () { BridgeFX.spawnDust(x + d[0] * n, y + d[1] * n, 5); }, dur * 0.8); }
@@ -443,7 +482,7 @@ var BridgeArms = (function () {
     ['drain', 'Drain', 'heals you a quarter of the damage'],
     ['quick', 'Quick', 'swings faster than most', function (it, c) { return it.rate && CLASSES[c] && it.rate < CLASSES[c].rate; }],
     ['twin', 'Twin', 'a blade in each hand: every cut lands twice'],
-    ['bolt', 'Bolt', 'thrown seven tiles, through the first it meets; 3 energy', function (it) { return it.bolt || it.id === 'moon_wand'; }],
+    ['bolt', 'Bolt', 'thrown seven tiles, through the first it meets; 2 energy', function (it) { return it.bolt || it.id === 'moon_wand'; }],
     ['rock', 'Breaks rock', '', function (it) { return it.power; }]
   ];
   function cycle(cls, item) {                             // ms per swing, averaged over the chain
@@ -547,6 +586,7 @@ var BridgeArms = (function () {
   }
 
   return { CLASSES: CLASSES, classOf: classOf, press: press, swing: swing, update: update, keyDown: keyDown, keyUp: keyUp, roll: roll,
+           spend: spend, winded: winded,
            dodging: dodging, rooted: rooted, charging: charging, cancel: cancel, busy: busy, state: state, pose: pose, held: held,
            art: art, cell: cell, anchor: anchor, remote: remote, remoteTick: remoteTick, layout: function () { return layout; },
            stats: stats, card: card, line: line, wielded: wielded, hasArt: function (id) { return !!TRAIL[id]; } };

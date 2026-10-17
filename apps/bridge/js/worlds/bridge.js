@@ -11,8 +11,9 @@
  * aether gauges, the letter rack (letters from people you've helped or
  * befriended, js/talk.js) and the decor slots — plants, lamps, a rug, a
  * curio, a flag — shown as scene layers when owned. Hired crew stand at
- * their posts (crewPosts, js/crew.js). Doors: the quarters south, the
- * hangar west.
+ * their posts (crewPosts, js/crew.js). Doors: the quarters and the
+ * captain's office south (js/worlds/office.js), the hangar west, the game
+ * room east.
  *
  * Registers itself with BridgeWorld on load.
  */

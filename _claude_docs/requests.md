@@ -17,11 +17,12 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 |---|---|---|
 | Crowds of background people, "lots of people" | open (agreed) | Varied extras by planet wardrobe, going door to door, by clock and weather, the same for every pilot; never blocking doors, not in lonely places. Pairs with the other session's daily routines. |
 | Small events on the hour | open (agreed) | A few minutes each, shared by the clock. |
+| Races against whoever you're playing with: sailing, skiing, climbing | open (agreed) | Today only against Liv, Ysolde or your ghost. |
 | A party for playing together: travel waits for both of you (ready check), ride along on jumps, come aboard each other's Wayfarer | discuss | Beck's idea; details proposed in the spec. |
 | The Wayfarer grows with your crew | discuss | Galley and cook, the mess, crew walking about, modules. |
 | Enigma: restore the station, a zero-g spine | parked | Beck likes it; a note for later (the playing-together question). |
 | Arcadia: up, down and out — ritzier up, poorer down; the Undercity; trains and a sky loop; implants; restaurants on every level; large but connected, room to go side to side | discuss | Layout proposed in the spec (levels × districts). Heist out; rooftop running undecided. |
-| Lumar: harbours that work; a cliff town; the spore bloom; each sea's towns and people their own; Crownhaven much bigger | discuss | Per-sea ideas proposed in the spec. Tides, ferry work, regattas maybe; diving, the dragon egg out. |
+| Lumar: harbours that work; a cliff town; the spore bloom; a weekly regatta; each sea's towns, people and ships their own; Crownhaven much bigger | discuss | Per-sea ideas in the spec (Beck likes them). Tides, ferry work maybe; diving, the dragon egg out. |
 | Sylvara: canopy city, the river by canoe to Mirror Lake with places along it, the falls, the Deepwood, brewing, bows | discuss | |
 | Verdance: the village grows with you, the countryside by horse and buggy, small towns, makers and a café, produce shipped to Arcadia, night-blooming flowers | discuss | Market day only if someone else runs the stall. |
 | Hoarfell: Fellhaven bougier; a grand hotel (château, Monaco-y, its own town and casino salon); a mountain railway as a cutscene; hut-to-hut touring; the hidden valley with tiers of enemies | discuss | Guiding jobs out; the dog sled maybe. |
@@ -40,20 +41,21 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 ## October 17 (the nature, the fleet, the empire)
 | Ask | Status | Where / notes |
 |---|---|---|
-| Buildings need more detail — roofs are "a square with some lines on it"; make the world more detailed and alive | in progress | Done in the kit: shingled roofs (courses, joints, ridge tiles, gutters, moss), brick chimneys, ivy, doorstep pots, snowy roofs as drifts. Every outdoor scene is re-rendering with it (queue below). Next: walls, footings, street clutter. |
+| Buildings need more detail — roofs are "a square with some lines on it"; make the world more detailed and alive | in progress | Done in the kit: shingled roofs (courses, joints, ridge tiles, gutters, moss), brick chimneys, ivy, doorstep pots, snowy roofs as drifts; and now every house's foot — footings in dressed stone, weathered plaster (damp, rain streaks, a patch of brick), a water butt under the downpipe, crates, barrels, a broom. Every outdoor scene is re-rendering with it (queue below; Crownhaven and Brambleford started before the walls pass and get one more). Next: street clutter in the open squares. |
 | Barn doors: the X's aren't all white, a spot on the right, panels not all the way across | **done** (in the kit) | Flat white braces in full frames, a track, handles, a cupola and weathervane. Live with the farm's re-render. |
 | Chimneys are "a couple squares" | **done** (in the kit) | Brick stacks with courses, corbel, soot, cap, clay pots, flashing. Live as scenes re-render. |
 | More variation in character | in progress | Houses: tints, shutter/timber colours, dormers, door hoods, weathervanes (done in the kit). Next: more building types and NPC variety. |
 | Going forward, make renders detailed and realistic | **done** (standing rule) | "The detail standard" in apps/bridge/CLAUDE.md: checked before any render ships. |
 | Empire: economic engine across worlds, hire and automate, manage it all from the office | in progress | Agreed plan in `_claude_docs/spec-empire.md`, six chunks. |
-| Crafting: more materials, mining feeding upgrades, build things, build out your base | in progress | Chunk 1 (materials and the Workshop) on a branch now. |
-| Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | open | Chunk 1 (workshop, smiths, crafted fittings) then chunk 2 (your own slipway, building and painting a ship; a designer later). |
+| Crafting: more materials, mining feeding upgrades, build things, build out your base | **done** (chunk 1) | The Workshop on Starling Holm: 14 materials with clear sources, 29 recipes (planks, bars, rope, sailcloth, guns, fittings — two only it makes — tools, furniture), plans bought, taught for a favour or found, smiths you hire who work while you're away, parts fitted by any harbourmaster for labour. Its building is in the holm's re-render (a stand-in shows till then). |
+| Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | in progress | Chunk 1 done (workshop, smiths, crafted fittings and guns). Next: chunk 2 (your own slipway, building and painting a ship; a designer later). |
 | Rarest magic items found yourself; a trophy hall; keep it cute | open | Chunks 4 and 5. |
 | Hired warriors hunting monsters for loot | dropped | Beck: "fine to leave out". |
 | Progression must feel natural, a real game to work up through | standing rule | Each chunk unlocks gradually (recipes learnt, plans bought, tiers by material). |
 | Title page: the ship over its planet, but keep the technology feel | in progress | Branch (worktree agent). |
 | Update the title page (the Becknology start screen) | in progress | Proposal in chat: the mothership over the planet it's parked at (real day/night), a crafted pixel BECKNOLOGY logo, a real menu (Continue as Beck with portrait/where/coins, settings, who's online), later postcards of the worlds. Waiting on Beck's pick. |
 | Grass should be actual drawn grass and textures, "not random blobs", "subtle little grass… down to that small level" | **done** (rolling out) | Hand-drawn pixel marks stamped over every meadow (`scene_post.grass_detail`); broad patches evened out; the turf's grain in tile units. Each outdoor scene gets it as it re-renders (queue below). |
+| Smaller images (from the other session's split) | **done** | Every scene's images are lossless WebP — pixel for pixel the same, about a third smaller. |
 | "Use open source projects where it helps" | noted | Use permissively licensed (CC0 / MIT) tools or art only; none adopted yet. |
 | Apply the seasons to all the places in those worlds | **done** | Ground through the year on every outdoor place of Lumar and Verdance (js/foliage.js `ground`), trees already turned. Fully visible once each scene re-renders with its grass marked. |
 | More detail, more realistic, like Stardew | in progress | Meadow, drawn grass, fuller trees, seasons. Keep going: water (ponds, streams), shorelines, paths, ground clutter. |
@@ -61,11 +63,13 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Touch up every world so they match; shorelines; worlds without nights | open | Task #138: shorelines (wet sand, foam), nights for Hoarfell's sport worlds, consistency pass after the re-renders. |
 | Command ships from anywhere | **done** | Ledger's fleet page, any harbourmaster, the Ferryman: send any ship to any island. |
 | My ship is stuck at Midnight Isle — bring it home | **done** | Ships left there sail home to the holm once, on your next load. The Ferryman's book has "Your ships" again. |
-| A fish tank to build, holding the fish you catch | in progress | Branch (worktree agent): tank furniture, put fish in/out, swimming fish art, close-up view, partners see it. |
-| Combat uses too much energy too quickly | in progress | Branch (worktree agent). |
-| Combat looks janky: red squares popping up; a square round the falling orbs | in progress | Branch (worktree agent). |
-| Visual ship upgrades: see the guns, cannons firing, fittings | in progress | Branch (worktree agent). |
-| Keep working on the office space | in progress | Branch (worktree agent): the Captain's Office aboard — desk, staff board, fleet chart table, strongbox. |
+| A fish tank to build, holding the fish you catch | **done** | The Fish Tank (5 fish) and the Grand Aquarium (12) from any home's furnishing shop or the Chandler; put fish in from your pack or a ship's hold, take one out, look in close; styled to the room (walnut, neon, gunmetal); a visiting partner can slip one in. |
+| Combat uses too much energy too quickly | **done** | Rolls 3 (was 5), charged blows 2–4 by weapon, bolts 2; a second wind gives three quarters back after a breath. |
+| Combat looks janky: red squares popping up; a square round the falling orbs | **done** | No boxes anywhere in a fight (a test fails on any): round wind-up pools, slashes, white-then-red flashes, round loot glows, pixel numbers; the wisps' bolts and the Warden's toll now show at all. |
+| Visual ship upgrades: see the guns, cannons firing, fittings | **done** | Every gun and fitting drawn on the ship (copper, oak, roseite, storm rigging, crystal-weave sails, the moon lantern); broadsides ripple with flashes, recoil, drifting smoke, shot trails, splashes and hits; the harbourmaster shows her as fitted. |
+| Ships a little bigger: the starting boat a bit bigger, each size up a bit bigger again — "never super crazy" | in progress | Next for the ship-visuals agent once its branch lands (hull sheets re-rendered at the new sizes, moorings and boarding refit). |
+| Other ships out on the ocean: different sizes and types — fishing boats, merchant ships, fighting ships | in progress | Same agent, same code (js/sloop.js traffic): trawlers and dories working the grounds, merchantmen on the trade lanes, patrols and warships, each sized and rigged its own way. |
+| Keep working on the office space | **done** | The Captain's Office, through a new door off the bridge: the desk (the whole ledger), a staff board of everyone's faces with lamps (at work, off, at sea, owed), a chart table with your ships as pins under way (send them from it), the strongbox and accounts (pay what's owed), the captain's chair and windows. |
 | Ship orchestration, hiring, sending ships out, upgrading — make it better | discuss | Draft: `_claude_docs/spec-empire.md`. |
 | Think through business operations as a whole: magic items, cool things, building an empire that flows together | discuss | Draft: `_claude_docs/spec-empire.md`. |
 | Split work into branches and merge later; do several things at once | doing | Each stream above is its own worktree branch, merged and shipped when its tests pass. |

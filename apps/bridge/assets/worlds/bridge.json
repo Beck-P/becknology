@@ -337,8 +337,8 @@
       1,
       1,
       1,
-      1,
-      1,
+      3,
+      3,
       1,
       1,
       3,
@@ -661,8 +661,8 @@
       1,
       1,
       1,
-      1,
-      1,
+      0,
+      0,
       1,
       1,
       0,
@@ -742,6 +742,30 @@
       "label": "QUARTERS",
       "prompt": "ENTER QUARTERS",
       "noBeacon": true
+    },
+    {
+      "x": 5,
+      "y": 13,
+      "type": "enter_world",
+      "target": "office",
+      "spawn": [
+        8,
+        10
+      ],
+      "label": "CAPTAIN'S OFFICE",
+      "prompt": "PRESS E TO ENTER"
+    },
+    {
+      "x": 6,
+      "y": 13,
+      "type": "enter_world",
+      "target": "office",
+      "spawn": [
+        8,
+        10
+      ],
+      "label": "CAPTAIN'S OFFICE",
+      "prompt": "PRESS E TO ENTER"
     },
     {
       "x": 0,

@@ -11,7 +11,7 @@ const SHOTS = path.join(D, 'shots');
 
 const SUITES = {
   // every world loads with no page errors, missing files or console errors; the pads you land on; Lumar's harbours
-  world: [['world/errs.js'], ['world/actors.js'], ['world/clock.js'], ['world/business.js', SHOTS], ['world/weather.js', SHOTS], ['world/legacy.js', SHOTS], ['world/hands.js'], ['world/staff.js', SHOTS], ['world/foliage.js', SHOTS], ['world/nature.js', SHOTS], ['world/orders.js', SHOTS], ['world/sleep.js', SHOTS], ['world/gpu.js', SHOTS], ['world/routines.js', SHOTS], ['world/festivals.js', SHOTS], ['world/landings.js', SHOTS + '/landings'], ['world/arrive.js', SHOTS + '/arrive']],
+  world: [['world/errs.js'], ['world/actors.js'], ['world/clock.js'], ['world/business.js', SHOTS], ['world/weather.js', SHOTS], ['world/legacy.js', SHOTS], ['world/hands.js'], ['world/staff.js', SHOTS], ['world/office.js', SHOTS], ['world/aquarium.js', SHOTS], ['world/foliage.js', SHOTS], ['world/nature.js', SHOTS], ['world/orders.js', SHOTS], ['world/sleep.js', SHOTS], ['world/workshop.js', SHOTS], ['world/gpu.js', SHOTS], ['world/routines.js', SHOTS], ['world/festivals.js', SHOTS], ['world/landings.js', SHOTS + '/landings'], ['world/arrive.js', SHOTS + '/arrive']],
   // two pilots on the fake Supabase: seeing each other, walking, presence, sharing, partners, fighting, sailing
   multi: ['mp_see', 'mp_walk', 'mp_visible', 'mp_presence', 'mp_away', 'mp_share', 'mp_partner', 'mp_clue', 'mp_fight', 'mp_hp',
     'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight'].map((t) => ['multi/' + t + '.js', D]),
@@ -24,10 +24,11 @@ const SUITES = {
     ['t_chat_dice.js']].map(([f, ...a]) => ['together/' + f, ...a]),
   // the Neon Royale: every casino table opens its Royale Link game; coins through the Bridge; typing a hold'em bet
   royale: [['royale/tables.js'], ['royale/bridge_cab.js'], ['royale/poker_amt.js'], ['royale/poker_amt.js', '390', '760']],
-  // weapons: every swing lands and does what it says; a fight, blacking out and waking; a sea fight
-  combat: [['combat/hits.js', SHOTS + '/hits'], ['combat/combattest.js', SHOTS + '/combat'], ['combat/fight_test.js', SHOTS], ['combat/monsters.js', SHOTS]]
+  // weapons: every swing lands and does what it says; a fight, blacking out and waking; a sea fight; what a fight costs in
+  // energy and the second wind; the look of a fight (no boxes)
+  combat: [['combat/hits.js', SHOTS + '/hits'], ['combat/combattest.js', SHOTS + '/combat'], ['combat/fight_test.js', SHOTS], ['combat/monsters.js', SHOTS], ['combat/energy.js'], ['combat/look.js', SHOTS + '/look'], ['combat/shipviz.js', SHOTS + '/shipviz']]
 };
-const KEEP = /PAGEERR|before:|asleep|woken early|up and about|slept through|recovery bed|left at Midnight|sent to|a passage|after the passage|send screen|orders given|the Ferryman|leaves in the render|wind |a flock over|a summer night|indoors:|grade|monster:|serpent:|eel:|kraken:|out on the|faces|staff page|signed on|owing|desk|tapped|sky |seasons|bakery|stocked|bought in|chronometer|away|brought in|in the bin|in the ground|world watch|time by|sells|bought|statue|commissioned|Sovereign|legacy|mix|outlook|effects|storm on|shot |catalogue|hire|payday|venue|specialist|move|screen|topics|CONSOLE|FAILED|Error|errors?\b|worlds|same|coins|verdict|bar |status|mate:|settled|beck:|aly:|chat|heard|unread|after|typed|my turn|sunk|crew|things match|hp|down|up:|roll|chain/i;
+const KEEP = /PAGEERR|office|through the door|roster|board|orders|accounts|seated|the view|back on the bridge|before:|asleep|woken early|up and about|slept through|recovery bed|tanks in|the tank:|in the tank|looking:|aboard at|aly visiting|into his save|left at Midnight|sent to|a passage|after the passage|send screen|orders given|the Ferryman|leaves in the render|wind |a flock over|a summer night|indoors:|grade|monster:|serpent:|eel:|kraken:|out on the|guns mounted|portrait|faces|staff page|signed on|owing|desk|tapped|sky |seasons|bakery|stocked|bought in|chronometer|away|brought in|in the bin|in the ground|world watch|time by|sells|bought|statue|commissioned|Sovereign|legacy|mix|outlook|effects|storm on|shot |catalogue|hire|payday|venue|specialist|move|screen|topics|CONSOLE|FAILED|Error|errors?\b|worlds|same|coins|verdict|bar |status|mate:|settled|beck:|aly:|chat|heard|unread|after|typed|my turn|sunk|crew|things match|hp|down|up:|roll|chain|energy|boxes/i;
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
 
 const up = (url) => { try { execSync('curl -s -o /dev/null -m 2 ' + url, { stdio: 'ignore' }); return true; } catch (e) { return false; } };
@@ -62,7 +63,9 @@ for (const n of names) {
   for (const [file, ...args] of SUITES[n]) {
     const t0 = Date.now();
     let out = '', ok = true;
-    try { out = execFileSync('node', [path.join(D, file), ...args], { env, cwd: D, timeout: 300000, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
+    // chrome.js loaded first (-r): a test asks for it in its first chromium.launch(...) call, by when launch has
+    // already been looked up, so its BRIDGE_PORT reroute would miss that browser
+    try { out = execFileSync('node', ['-r', path.join(D, 'chrome.js'), path.join(D, file), ...args], { env, cwd: D, timeout: 300000, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
     catch (e) { ok = false; out = (e.stdout || '') + '\nFAILED: ' + String(e.stderr || e.message).split('\n').filter((l) => l.trim() && !/^\s+at /.test(l)).slice(0, 4).join(' | '); }
     if (BAD.test(out)) ok = false;
     const label = [file, ...args.filter((a) => !a.startsWith('/'))].join(' ');

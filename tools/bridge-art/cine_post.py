@@ -24,7 +24,8 @@ for name in sorted(os.listdir(rd)):
         continue
     tmp = os.path.join(rd, '_post_' + name)
     subprocess.run([sys.executable, os.path.join(HERE, 'scene_post.py'), src, tmp], check=True, stdout=subprocess.DEVNULL)
-    im = Image.open(os.path.join(tmp, 'full.png')).convert('RGBA')
+    ext = json.load(open(os.path.join(tmp, 'scene.json'))).get('ext', 'png')
+    im = Image.open(os.path.join(tmp, 'full.' + ext)).convert('RGBA')
     a = np.array(im)[..., 3]
     ys, xs = np.nonzero(a)
     x0, y0, x1, y1 = xs.min(), ys.min(), xs.max() + 1, ys.max() + 1
