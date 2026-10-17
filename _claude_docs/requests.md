@@ -103,7 +103,7 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Hired people do their jobs whether you're looking or not | **done** | Confirmed (farm hands, staff, ships on the clock). |
 | Grass detail like Stardew; then "more realistic, less fake" | **done**, iterating | See the October 17 rows. |
 | Brambleford square: grass between the cobbles | in progress | Fixed in the kit; the village is in the render queue. |
-| The farm's field soil | in progress | Crumbly earth; the farm is in the render queue. |
+| The farm's field soil | **done** | Crumbly earth, in the farm's re-render. |
 
 ## Render queue (every outdoor scene, once, with everything: meadow, drawn grass, trees and seasons, grass/water marks, the new roofs and house fronts)
 Shipped: Crownhaven, Tern Holm, Brambleford, Starling Holm (with the workshop). Running (two queues): Diggen's Point, the farm,
