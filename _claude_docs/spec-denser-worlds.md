@@ -1,6 +1,6 @@
 # Draft: denser, more alive worlds
 
-**Status: being shaped with Beck (October 17).** Beck: "make our Becknology world a lot denser and more alive… really
+**Status: agreed (October 17). Built: crowds (js/crowd.js), small events (js/events.js), races and the regatta (js/race.js), the party (js/party.js). Next, when Beck says: items 5–10 (Lumar, Arcadia, Hoarfell, Sylvara, Verdance, the Wayfarer); Enigma parked.** Beck: "make our Becknology world a lot denser and more alive… really
 big swings… make them each super unique and cohesive", then "each one should feel large but connected and unique."
 Each item is marked **agreed** (Beck picked it), **proposed** (offered, waiting on Beck), **parked** (a note for
 later) or **out** (not now). Festivals, the nightly dungeon, music, daily routines, secrets and the main story are with
