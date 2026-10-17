@@ -703,6 +703,24 @@ class Kit:
         bg.inputs['Color'].default_value = lin(hexc(col))
         bg.inputs['Strength'].default_value = st
 
+    def _nearest_along(self, at, n):
+        """The least distance, along direction n from the point `at`, of any vertex of the scene (negative: behind)."""
+        import numpy as np
+        bpy.context.view_layer.update()
+        best = math.inf
+        nv = np.array(n[:])
+        for p in self.parts:
+            o = p['obj']
+            if o.type != 'MESH' or not len(o.data.vertices):
+                continue
+            co = np.empty(len(o.data.vertices) * 3)
+            o.data.vertices.foreach_get('co', co)
+            co = co.reshape(-1, 3)
+            m = np.array(o.matrix_world)
+            w = co @ m[:3, :3].T + m[:3, 3]
+            best = min(best, float(((w - np.array(at[:])) @ nv).min()))
+        return best
+
     def _cycle_states(self, cycle, light_states, world_light):
         """cycle 'night' (lit by the moon and lamps, like Lumar) or 'day' (a sun, like Verdance), or a dict with
         `base` and any of: sun / dusk_sun / moon ((direction, colour, strength) — the moon's strength is a fraction of
@@ -728,11 +746,28 @@ class Kit:
             dusk.update({'_dusk': 1.0, '_sky': 0.3, '_art': 0.85, '_emit': 0.85, '_world': dusk_sky})
             states['dusk'] = dusk
             return states, {'day': 'day', 'dusk': 'dusk', 'night': first}
-        # lit by day: add a moon over the whole place, and the lamps come up at night
+        # lit by day: add a moon over the whole place, and the lamps come up at night. An area light lights only the
+        # side of its plane it faces: on a long map (the pistes, the Park) the tilted plane passed under the far end,
+        # and a straight-edged wedge of the place had no moon at all. So it stands back along its own direction until
+        # everything built is in front of it, turned up to light the middle of the map as before.
         size = float(max(self.cols, self.rows))
         moon = c.get('moon', ((-0.35, 0.3, -0.9), '#8a98d0', 1.0))
-        self.area_light(self.cols / 2, self.rows / 2, 15.0, moon[1], 1.6 * size * size * moon[2], size,
-                        rot=(math.radians(-25), math.radians(10), 0), group='_moon')
+        rot = (math.radians(-25), math.radians(10), 0)
+        n = Euler(rot).to_matrix() @ Vector((0, 0, -1))
+        at = Vector((self.cols / 2, -self.rows / 2 * S, 15.0))
+        near = self._nearest_along(at, n)
+        back = max(0.0, 2.0 - near)
+        d0 = (Vector((self.cols / 2, -self.rows / 2 * S, 0.0)) - at).dot(n)
+
+        def seen(h):                                       # how much of the light a point h below its middle sees
+            a = size / 2 / h
+            q = a / math.sqrt(1 + a * a)
+            return 4 * q * math.atan(q) / math.pi
+        at = at - n * back
+        self.area_light(at.x, -at.y / S, at.z, moon[1], 1.6 * size * size * moon[2] * seen(d0) / seen(d0 + back), size,
+                        rot=rot, group='_moon')
+        if back:
+            print('moon stood back %.1f tiles (nearest part %.1f in front of where it was)' % (back, near))
         self.lights[-1]['default'] = 0.0
         self.sun(dsun[0], dsun[1], dsun[2], group='_dusk'); self.lights[-1]['default'] = 0.0
         for v in states.values():
