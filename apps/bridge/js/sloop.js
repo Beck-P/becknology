@@ -2975,6 +2975,7 @@ var BridgeSloop = (function () {
     b.paint = look && look.paint || null;
     var tallest = rg.masts.reduce(function (m, x) { return x.h > m.h ? x : m; }, rg.masts[0]);
     if (kit ? kit.moon : sp.ward) moonPool(b, P(-L2 + tallest.f * sp.L, 0, 0), sp, now);
+    mirrored(b, P, rg, sp, bw, lx, now, b.cloth || (kit && kit.crystal ? CRYSTAL : null) || (look && SAILCLOTH[look.sails]) || null);
     if (b.traffic && b.v > 0.3) trafficWake(b, now);
     if (b.nets) drawNet(b, now);
     if (H && H.img) {
@@ -3065,6 +3066,108 @@ var BridgeSloop = (function () {
       var tz = typeof BridgeShipKit !== 'undefined' ? BridgeShipKit.sheer(BridgeShipKit.lines(sp.sheet), 0) : 0.42 * k, tlen = 0.55 * Math.sqrt(k);
       var tl = P(-L2, 0, tz), tr = P(-L2 + Math.cos(b.rudder * 0.6) * tlen, -Math.sin(b.rudder * 0.6) * tlen, tz + 0.03);
       line(tl, tr, '#5a3a1a', 1);
+    }
+  }
+  // ---- her reflection (the toy water's mirror, as js/sea.js gives the islands): her hull's side, her masts and her sails
+  // upside down under her, in rows nudged sideways on a slow wave, the hull dark and the sails pale in the water's tone,
+  // fading down; her stern lantern streaking down the water after dark. Broken up and fainter in rough weather.
+  var seaWx = { at: 0, k: 1 };
+  function calmNow() {
+    var t = Date.now();
+    if (t - seaWx.at > 1000) {
+      seaWx.at = t;
+      var w = typeof BridgeWeather !== 'undefined' && BridgeWeather.at ? BridgeWeather.at('lumar') : null;
+      seaWx.k = !w ? 1 : 1 - w.k * ({ storm: 0.75, gale: 0.6, rain: 0.4, fog: 0.5 }[w.kind] || 0);
+    }
+    return seaWx.k;
+  }
+  // fill a convex outline a row at a time (fn(y, x0, x1)): the rows of a reflection, each one nudged on its own
+  function spans(pts, fn) {
+    var y0 = Infinity, y1 = -Infinity;
+    pts.forEach(function (p) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+    for (var y = Math.ceil(y0); y <= Math.floor(y1); y++) {
+      var xl = Infinity, xr = -Infinity;
+      for (var i = 0; i < pts.length; i++) {
+        var a = pts[i], c = pts[(i + 1) % pts.length];
+        if ((a[1] <= y && c[1] >= y) || (c[1] <= y && a[1] >= y)) {
+          var x = a[1] === c[1] ? Math.min(a[0], c[0]) : a[0] + (c[0] - a[0]) * (y - a[1]) / (c[1] - a[1]), x2 = a[1] === c[1] ? Math.max(a[0], c[0]) : x;
+          xl = Math.min(xl, x); xr = Math.max(xr, x2);
+        }
+      }
+      if (xr >= xl) fn(y, xl, xr);
+    }
+  }
+  function hullOf(pts) {                                             // the convex outline round some points
+    pts = pts.slice().sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+    function cross(o, a, b) { return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); }
+    var lo = [], up = [];
+    pts.forEach(function (p) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); });
+    for (var i = pts.length - 1; i >= 0; i--) { var p = pts[i]; while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+    return lo.slice(0, -1).concat(up.slice(0, -1));
+  }
+  function mirrored(b, P, rg, sp, bw, lx, now, cloth) {
+    var calm = calmNow(), t = now / 1000, L2 = sp.L / 2, k = sp.L / 2.6;
+    if (calm < 0.2) return;
+    var Pal = BridgeSea.palettes[palAt(b.x, b.r)] || BridgeSea.palettes.emerald, deep = Pal.deep, W = skyNow(), day = W ? W.day : 0;
+    var dark = 'rgb(' + deep.map(function (c) { return Math.round(c * 0.55); }).join(',') + ')';
+    var cl = cloth || CLOTH[2], pale = cl[0];
+    var M = function (u, v, z) { return P(u, v, -z); };              // mirrored in the water
+    var cy = Math.round(cam.y);
+    function rows(pts, col, a, skip) {
+      var top = Infinity;
+      pts.forEach(function (p) { top = Math.min(top, p[1]); });
+      bctx.fillStyle = col;
+      spans(pts, function (y, x0, x1) {
+        var wy = y + cy, d = y - top;
+        if (skip && (wy % skip) === 0) return;
+        if (calm < 0.7 && (wy * 7 + Math.floor(t * 3)) % 3 === 0) return;      // broken up by the chop
+        var off = Math.round(Math.sin(wy * 0.8 + t * 1.8) + 0.5 * Math.sin(wy * 2.1 - t * 2.4));
+        bctx.globalAlpha = a * calm * (d < 8 ? 1 : d < 18 ? 0.6 : 0.3);
+        bctx.fillRect(Math.round(x0) + off, y, Math.max(1, Math.round(x1 - x0) + 1), 1);
+      });
+      bctx.globalAlpha = 1;
+    }
+    // the hull's side under her waterline
+    var fb = 0.38 * k, pts = [];
+    for (var i = 0; i <= 8; i++) {
+      var u = -L2 + sp.L * i / 8, w = bw * Math.sin(Math.PI * Math.min(1, 0.22 + 0.86 * i / 8)) + 0.05;
+      pts.push(P(u, w, 0), P(u, -w, 0), M(u, w * 0.9, fb), M(u, -w * 0.9, fb));
+    }
+    rows(hullOf(pts), dark, 0.42);
+    // the masts and the sails
+    rg.masts.forEach(function (m) {
+      var mu = -L2 + m.f * sp.L, deck = m.z != null ? m.z + 0.3 : rg.deck, top = deck + m.h;
+      if (b.hoist > 0.05 && !m.square) {
+        var clew = [mu - Math.cos(b.boom) * m.boom, b.side * Math.sin(b.boom) * m.boom, deck + 0.08];
+        rows([M(mu, 0, deck), M(mu, 0, deck + m.sail * b.hoist), M(clew[0], clew[1], clew[2])], pale, 0.16 + 0.08 * day, 3);
+      }
+      if (b.hoist > 0.05 && m.square) m.square.forEach(function (y) {
+        var phi = 0.62 + (Math.PI / 2 - 0.62) * clamp(b.boom / 1.3, 0, 1), w = y[0], zt = deck + y[2], zb = deck + y[2] - (y[2] - y[1]) * b.hoist;
+        var cu = Math.cos(phi) * w, cv = Math.sin(phi) * w * b.side;
+        rows([M(mu + cu, -cv, zt), M(mu - cu, cv, zt), M(mu - cu, cv, zb), M(mu + cu, -cv, zb)], pale, 0.14 + 0.08 * day, 3);
+      });
+      var f0 = M(mu, 0, 0.2), f1 = M(mu, 0, top), n = Math.round(Math.abs(f1[1] - f0[1]));
+      bctx.fillStyle = dark;
+      for (var j = 0; j <= n; j++) {
+        var y = Math.round(f0[1] + (f1[1] - f0[1]) * j / Math.max(1, n)), wy = y + cy;
+        if ((wy % 4) === 0 || (calm < 0.7 && (wy + Math.floor(t * 3)) % 3 === 0)) continue;
+        bctx.globalAlpha = 0.5 * calm * (1 - 0.7 * j / Math.max(1, n));
+        bctx.fillRect(Math.round(f0[0] + (f1[0] - f0[0]) * j / Math.max(1, n)) + Math.round(Math.sin(wy * 0.8 + t * 1.8)), y, m.h > 4 ? 2 : 1, 1);
+      }
+      bctx.globalAlpha = 1;
+    });
+    // her stern lantern streaking down the water after dark
+    var night = W ? W.night + 0.5 * W.dusk : 1;
+    if (night > 0.3) {
+      bctx.save(); bctx.globalCompositeOperation = 'lighter';
+      bctx.fillStyle = 'rgb(255,196,120)';
+      for (var r = 3; r < 22; r += 2) {
+        var wy2 = Math.round(lx[1]) + r + cy;
+        if (Math.sin(wy2 * 1.3 + t * 3.1) < -0.2) continue;
+        bctx.globalAlpha = (night - 0.3) / 0.7 * calm * (r < 9 ? 0.5 : r < 15 ? 0.3 : 0.16);
+        bctx.fillRect(Math.round(lx[0]) - 1 + Math.round(Math.sin(wy2 * 0.8 + t * 1.8)), Math.round(lx[1]) + r, r < 9 ? 3 : 2, 1);
+      }
+      bctx.restore();
     }
   }
   // a hull sheet washed with a colour (a pirate's tarred black, a drowned ship's pale green), made once and kept
