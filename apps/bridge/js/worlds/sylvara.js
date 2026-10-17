@@ -77,13 +77,54 @@ var BridgeSylvara = (function () {
         ? "THE WILLOW OVER THE MOONWELL, HUNG WITH FAELAN'S LEAF LANTERNS AND SEFA'S RIBBONS OF GREEN SILK AND GOLD. THE ELVES SAY IT'S WHERE THE FIRST SWORD FINALLY SAID IT. PIP SAYS SHE SAW."
         : q('queens-favour/ribbon')
           ? 'A WILLOW BENDING OVER THE MOONWELL, ITS FRONDS TRAILING IN THE WATER. NOTHING CAUGHT IN IT NOW.'
-          : q('queens-favour/charge')                    // looking for the ribbon, but not told where yet
-            ? "SOMETHING IS CAUGHT HIGH IN THE FRONDS, BUT YOU CAN'T MAKE OUT WHAT FROM DOWN HERE. MAYBE SOMEONE IN THE GLADE SAW WHAT HAPPENED."
-            : 'A WILLOW BENDING OVER THE MOONWELL, ITS FRONDS TRAILING IN THE WATER. SOMETHING IS CAUGHT HIGH IN THEM.';
+          : 'A WILLOW BENDING OVER THE MOONWELL, ITS FRONDS TRAILING IN THE WATER. SOMETHING IS CAUGHT HIGH IN THEM.';   // (the ribbon's clue says what)
     });
   }
+  // ---- the new places join on (Elderglade and the Heartwood Hall are built by their own scripts: their ways out to the
+  // Rootmarket, the Silverrun and the Crown are added here as they load, the cells opened) -----------------------------
+  var JOINS = {
+    sylvara: []         // the Rootmarket (east) and the Silverrun (south) join here as they're built
+  };
+  function joins(worldId, data) {
+    (JOINS[worldId] || []).forEach(function (j) {
+      if ((data.interactions || []).some(function (it) { return it.target === j.target && it.x === j.x && it.y === j.y; })) return;
+      var it = {};
+      for (var k in j) it[k] = j[k];
+      it._join = true;
+      (data.interactions = data.interactions || []).push(it);
+      if (data.collisions && data.collisions[j.y]) data.collisions[j.y][j.x] = 0;
+    });
+  }
+
+  /** E on one of Sylvara's own things (type 'sylvan', by kind): the range and zip lines (js/bows.js), the canoe
+   *  (js/canoe.js), brewing (js/brewing.js), lifts and the rest here. */
+  function use(inter) {
+    var k = inter.kind;
+    if ((k === 'range' || k === 'zip') && typeof BridgeBows !== 'undefined') return BridgeBows.use(inter);
+    if ((k === 'canoe' || k === 'launch') && typeof BridgeCanoe !== 'undefined') return BridgeCanoe.use(inter);
+    if (k === 'brew' && typeof BridgeBrewing !== 'undefined') return BridgeBrewing.use(inter);
+    if (k === 'lift') return lift(inter);
+  }
+  // a basket lift: down or up between the tiers, the basket swaying, the wood going by
+  function lift(inter) {
+    if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('lift');
+    BridgeWorld.enterWorld(inter.target, inter.spawn);
+  }
+  /** Every lantern of a group lit by fire arrows (js/bows.js): what that opens. */
+  function groupLit(group, world) {
+    if (typeof BridgeInteractions === 'undefined') return;
+    var words = {
+      boughs: 'THE LAST OF THE HIGH LANTERNS CATCHES. ALL ALONG THE BOUGHS THE ELVES COME OUT ON THEIR PLATFORMS TO LOOK. SOMEONE STARTS SINGING. WREN, THE LANTERN MAKER, WILL WANT TO HEAR ABOUT THIS.'
+    };
+    BridgeInteractions.say('THE LANTERNS', words[group] || 'THE LAST LANTERN CATCHES.');
+  }
+
   function decorate(worldId, data) {                 // js/world.js, as each world loads
-    if (worldId !== 'sylvara' || !data) return;
+    if (!data) return;
+    reg();
+    if (typeof BridgeBows !== 'undefined') BridgeBows.decorate(worldId, data);
+    if (/^sylvara/.test(worldId)) joins(worldId, data);
+    if (worldId !== 'sylvara') return;
     willowWords(data);
     if (data.scene && wed()) { data.scene.layers = data.scene.layers || {}; data.scene.layers.willow = 'lit'; }
   }
@@ -125,5 +166,14 @@ var BridgeSylvara = (function () {
 
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('sylvara', { over: over });
 
-  return { over: over, decorate: decorate };
+  // interactions.js loads after this file: the 'sylvan' type is registered once it's there
+  var registered = false;
+  function reg() {
+    if (registered || typeof BridgeInteractions === 'undefined' || !BridgeInteractions.register) return;
+    BridgeInteractions.register('sylvan', use, 'Use');
+    registered = true;
+  }
+  setTimeout(reg, 0);
+
+  return { over: over, decorate: decorate, use: use, groupLit: groupLit, JOINS: JOINS };
 })();
