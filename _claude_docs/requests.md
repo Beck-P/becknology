@@ -59,7 +59,7 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Empire: economic engine across worlds, hire and automate, manage it all from the office | in progress | Agreed plan in `_claude_docs/spec-empire.md`, six chunks. Chunks 1–3 built (chunk 2: your own slipway). Chunk 3 done: captains (mate, captain, master) on any ship, standing orders (trade loops, supply runs to your businesses, runs for the Workshop) that sail by themselves, the morning dispatch, the treasury, the office's desk and chart lines. Chunk 4 built: the hall of finds on your holm, where what you find yourself goes on show. Chunk 5 built: the Cabinet of Wonders (six wonders made from your own finds, each working for good). Every completed Collection set now gives a lasting bonus too. Next: chunk 6 (across worlds). |
 | The Undercroft (the other session's nightly dungeon under Midnight Isle): the art | **done** | The four rooms (`scenes/lumar_undercroft.py`, kit `assets_crypt.py`): the entrance hall (stair up, the slate of the deepest floor, the stair down) and three crypt layouts for every floor below, as the Rose Mine's caves are; and the way in, a roofed stone stairwell between two wisp-flames in Midnight Isle's graveyard (its re-render). Its relics also go on show in the hall of finds, and three can be woken into wonders. |
 | Crafting: more materials, mining feeding upgrades, build things, build out your base | **done** (chunk 1) | The Workshop on Starling Holm: 14 materials with clear sources, 29 recipes (planks, bars, rope, sailcloth, guns, fittings — two only it makes — tools, furniture), plans bought, taught for a favour or found, smiths you hire who work while you're away, parts fitted by any harbourmaster for labour. Its building is in the holm's render now (the forge and timber shop). |
-| Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | in progress | Chunk 1 done (workshop, smiths, crafted fittings and guns). Chunk 2 built: the slipway on your holm — hull plans from the yards, a keel laid and named, materials in by stage, shipwrights on the payroll, launched into your fleet; her paint, sails and figurehead; parts fitted for nothing. Her colours drawn wherever she is (painted topsides with the deck bare, her cloth, her figurehead; the colours screen shows her as you choose). The slipway is built in the holm's scene script (the old slip into the water, rebuilt with ways and sheer-legs, a hull at each stage) and the holm is in the render queue for it. Still to come: a designer later. |
+| Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | in progress | Chunk 1 done (workshop, smiths, crafted fittings and guns). Chunk 2 built: the slipway on your holm — hull plans from the yards, a keel laid and named, materials in by stage, shipwrights on the payroll, launched into your fleet; her paint, sails and figurehead; parts fitted for nothing. Her colours drawn wherever she is (painted topsides with the deck bare, her cloth, her figurehead; the colours screen shows her as you choose). The slipway is in the holm's render: the old slip into the water, rebuilt with ways and sheer-legs, a hull on it at each stage. Still to come: a designer later. |
 | Rarest magic items found yourself; a trophy hall; keep it cute | open | Chunks 4 and 5. |
 | Hired warriors hunting monsters for loot | dropped | Beck: "fine to leave out". |
 | Progression must feel natural, a real game to work up through | standing rule | Each chunk unlocks gradually (recipes learnt, plans bought, tiers by material). |
@@ -71,7 +71,7 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | Apply the seasons to all the places in those worlds | **done** | Ground through the year on every outdoor place of Lumar and Verdance (js/foliage.js `ground`), trees already turned. Fully visible once each scene re-renders with its grass marked. |
 | More detail, more realistic, like Stardew | in progress | Meadow, drawn grass, fuller trees, seasons. Keep going: water (ponds, streams), shorelines, paths, ground clutter. |
 | Animations for the worlds, especially nature | **done** (v1) | js/nature.js: trees in the wind, gusts over grass, water glints and rings, butterflies, dragonflies, fireflies, falling leaves and petals, flocks with shadows, grass rustling at your feet. Grass and water effects need the re-rendered scenes. |
-| Touch up every world so they match; shorelines; worlds without nights | in progress | Nights for Hoarfell's sport worlds: the summit is live by day, dusk and night; the pistes, Park, face, ridge and Ice Step are rendering (with the moon fixed); the drawn sky behind them follows. Shorelines: a damp band of sand the waves wash and a wrack line of weed, shells and driftwood along it, in the coast kit (live as the islands re-render). Still to do: a consistency pass after the re-renders. |
+| Touch up every world so they match; shorelines; worlds without nights | in progress | Nights for Hoarfell's sport worlds: all six live by day, dusk and night (the summit, the pistes, the Park, the face, the Last Ridge, the Ice Step), the drawn sky behind them following. Shorelines: a damp band of sand the waves wash and a wrack line of weed, shells and driftwood along it, in the coast kit (live as the islands re-render). Still to do: a consistency pass after the re-renders. |
 | Command ships from anywhere | **done** | Ledger's fleet page, any harbourmaster, the Ferryman: send any ship to any island. |
 | My ship is stuck at Midnight Isle — bring it home | **done** | Ships left there sail home to the holm once, on your next load. The Ferryman's book has "Your ships" again. |
 | A fish tank to build, holding the fish you catch | **done** | The Fish Tank (5 fish) and the Grand Aquarium (12) from any home's furnishing shop or the Chandler; put fish in from your pack or a ship's hold, take one out, look in close; styled to the room (walnut, neon, gunmetal); a visiting partner can slip one in. |
@@ -116,15 +116,13 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | The farm's field soil | **done** | Crumbly earth, in the farm's re-render. |
 
 ## Render queue (every outdoor scene, once, with everything: meadow, drawn grass, trees and seasons, grass/water marks, the new roofs and house fronts)
-Shipped: every outdoor scene once — Crownhaven, Tern Holm, Brambleford, Starling Holm (with the workshop), Diggen's Point,
-the farm, Midnight Isle (with the Undercroft's way in), Sylvara, Sapphire, Crimson, Rose Cove, the market square, Hoarfell town;
-Crownhaven and Brambleford again (street clutter); the Hoarspire's summit by day, dusk and night. The moon over the daylit
-places was mis-set (on a long map a straight-edged wedge at the top had no moonlight: the pistes' night was taken back out,
-the Park's never went in; Fellhaven's snow crown and Sylvara's far canopy had a corner of it) — fixed in the kit. Running:
-Brambleford and the market square (their hopscotch) · the pistes, the Park, the face, the Last Ridge and the Ice Step by day,
-dusk and night, then Sapphire and Crownhaven (their hopscotch). Then Starling Holm again (the slipway and the hall of finds:
-its first try had the new slip's sleepers buried under the bank near its head, black bars across it, so it didn't ship),
-Fellhaven, Sylvara and the farm (the moon). Each ships as it finishes.
+Shipped: every outdoor scene once — Crownhaven, Tern Holm, Brambleford, Starling Holm, Diggen's Point, the farm, Midnight
+Isle (with the Undercroft's way in), Sylvara, Sapphire, Crimson, Rose Cove, the market square, Hoarfell town. Since: Crownhaven
+again (street clutter); Brambleford and the market square again (their hopscotch); Starling Holm again (the slipway, a hull at
+each stage, the hall of finds); and all six of Hoarfell's sport worlds by day, dusk and night (the summit, the pistes, the Park,
+the face, the Last Ridge, the Ice Step). Two fixes on the way: the moon over daylit places stood too close to a long map (a
+straight-edged wedge at the top had no moonlight), and on a wall facing you it came from behind; both fixed in the kit.
+Running: Sapphire and Crownhaven (their hopscotch), then Fellhaven, Sylvara and the farm (the moon). Each ships as it finishes.
 
 ## Older threads still open (from before this session; check what's left before calling them done)
 - Two ships: mothership home base + landing shuttle (#18)
@@ -136,4 +134,4 @@ Fellhaven, Sylvara and the farm (the moon). Each ships as it finishes.
 - Much bigger Lumar islands (#33)
 - Long game: quests, businesses, crew, NPC backstories (#34) — folds into the empire spec
 - Legacy interiors: penthouse, manor, holm resort (#129) — the holm resort's parasols done; check the rest
-- Night versions of Hoarfell's sport worlds and their skies (the living-worlds spec's last item) — the sky is done (js/worlds/hoarfell.js); the summit live, the other five rendering
+- Night versions of Hoarfell's sport worlds and their skies (the living-worlds spec's last item) — done: all six by day, dusk and night
