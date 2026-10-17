@@ -182,16 +182,27 @@ var BridgeHoarfell = (function () {
     var W = ctx.canvas.width, H = ctx.canvas.height;
     // the chairlift going round: chairs every couple of tiles along each line, up one side, down the other
     if (sc.lift && sc.lift.lines) sc.lift.lines.forEach(function (ln, side) { chairs(ctx, ln, side, offX, offY, ts, now); });
-    // chimney smoke
+    // chimney smoke: soft round puffs rising and leaning off downwind (the Look Book's)
     (sc.smoke || []).forEach(function (p, i) {
-      for (var q = 0; q < 6; q++) {
-        var ph = ((now / 1900) + q / 6 + i * 0.29) % 1;
-        var sx = offX + p[0] * ts + Math.sin(now / 1000 + q * 2 + i) * 2 + ph * 14, sy = offY + p[1] * ts - ph * 34;
-        var sz = Math.round(2 + ph * 6);
-        ctx.fillStyle = 'rgba(232,232,240,' + (0.55 * (1 - ph)).toFixed(2) + ')';
-        ctx.fillRect(Math.round(sx), Math.round(sy), sz, sz);
+      for (var q = 0; q < 8; q++) {
+        var ph = ((now / 5000) + q / 8 + i * 0.29) % 1;
+        var sx = offX + p[0] * ts + ph * ph * 18 + Math.sin(ph * 6 + q) * 1.5, sy = offY + p[1] * ts - ph * 34;
+        ctx.fillStyle = ph < 0.3 ? 'rgba(238,240,246,' + (0.5 * (1 - ph)).toFixed(2) + ')' : 'rgba(212,216,228,' + (0.5 * (1 - ph)).toFixed(2) + ')';
+        ctx.beginPath(); ctx.arc(Math.round(sx), Math.round(sy), 1.5 + ph * 4.5, 0, Math.PI * 2); ctx.fill();
       }
     });
+    // glints on the ice (the render's own spots, sc.glints: screen tiles): a pixel, now and then a little cross
+    if (sc.glints) {
+      var Wt = skyWeights(), gc = Wt.night > 0.5 ? '200,214,255' : Wt.dusk > 0.4 ? '255,214,192' : '255,255,255';
+      sc.glints.forEach(function (g) {
+        var ph = (now / 1430 + g[2] * 7.3) % 1;
+        if (ph > 0.16) return;
+        var a = Math.sin(ph / 0.16 * Math.PI), gx = Math.round(offX + g[0] * ts), gy = Math.round(offY + g[1] * ts);
+        ctx.fillStyle = 'rgba(' + gc + ',' + (0.9 * a).toFixed(2) + ')';
+        ctx.fillRect(gx, gy, 1, 1);
+        if (a > 0.7 && g[2] > 0.5) { ctx.fillRect(gx - 1, gy, 3, 1); ctx.fillRect(gx, gy - 1, 1, 3); }
+      });
+    }
     // your breath, in the cold
     var c = chilled(world, now);
     if (world.cold && !(BridgeCharacter.isHidden && BridgeCharacter.isHidden())) {
@@ -214,8 +225,11 @@ var BridgeHoarfell = (function () {
       var spd = 0.012 + (i % 5) * 0.004, wind = world.summit ? 0.03 : 0.008;
       var x = ((i * 97.13 + now * wind * (1 + (i % 3))) % (W + 20)) - 10 + Math.sin(now / 1100 + i) * 3;
       var y = (i * 53.71 + now * spd) % (H + 10) - 5;
-      ctx.fillStyle = 'rgba(255,255,255,' + (0.45 + (i % 4) * 0.13).toFixed(2) + ')';
-      ctx.fillRect(Math.round(x), Math.round(y), i % 7 === 0 ? 2 : 1, i % 7 === 0 ? 2 : 1);
+      var fx = Math.round(x), fy = Math.round(y), big = i % 7 === 0;    // a white pixel with a blue-grey one under it: they show on snow too
+      ctx.fillStyle = 'rgba(154,166,196,' + (0.35 + (i % 4) * 0.1).toFixed(2) + ')';
+      ctx.fillRect(fx, fy + 1, big ? 2 : 1, 1);
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.55 + (i % 4) * 0.12).toFixed(2) + ')';
+      ctx.fillRect(fx, fy, big ? 2 : 1, 1);
     }
     // frost creeping in at the edges while the cold has you
     if (c > 0) {

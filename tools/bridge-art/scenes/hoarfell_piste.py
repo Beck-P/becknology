@@ -307,12 +307,12 @@ for run in RUNS:                                          # earlier skiers' carv
                 if jump_at(ax, ar) or jump_at(bx, br) or in_moguls(ax, ar):
                     continue
                 for o in (-0.06, 0.06):
-                    k.tube((ax + o, ar, 0.008), (bx + o, br, 0.008), 0.014, ('#c4cee0', 0.05), 'print', verts=4, smooth=False)
+                    k.tube((ax + o, ar, 0.008), (bx + o, br, 0.008), 0.014, ('#cdd2da', 0.05), 'print', verts=4, smooth=False)
             r0 = r1 + er.uniform(6.0, 14.0)
 for (x0, r0, dx, dr, n) in ((2.0, 12.0, 0.42, 0.18, 22), (41.5, 30.0, -0.38, 0.22, 18), (30.0, 60.0, 0.4, -0.12, 16)):
     for i in range(n):                                    # a fox's line across the slope
         x, r = x0 + i * dx, r0 + i * dr + 0.12 * math.sin(i * 1.3)
-        k.blob(x, r, 0.008, 0.03, 0.04, 0.01, ('#b4c0d6', 0.05), 'print', segs=5)
+        k.blob(x, r, 0.008, 0.03, 0.04, 0.01, ('#c4c9d2', 0.05), 'print', segs=5)
 HR.windswept(k, 0.5, 2.6, 45.5, 8.8, 26, er, ok=lambda x, r: not any(abs(x - centre(run, 5)) < 2.2 for run in RUNS))
 HR.windswept(k, 9.0, BOWL_R - 1.0, 39.0, ROWS - 1.0, 14, er, ok=lambda x, r: r > FINISH_R + 3)
 

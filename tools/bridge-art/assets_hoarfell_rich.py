@@ -545,7 +545,7 @@ def fir(k, x, r, h=2.6, rr=None, tone=N.PINE, solid=True):
     tone = shade(tone, rr.uniform(0.88, 1.12))
     k.cyl(x, r, 0, h * 0.25, 0.07 * h / 2.6, (LOG_D, 0.12), 'trunk', verts=6)
     W.pine_tiers(k, x, r, h, tone, rad=0.64 * h / 2.6, z0=0.15, tiers=5 if h > 1.8 else 4, snow=ROOF_SNOW)
-    k.blob(x, r, 0.0, 0.62 * h / 2.6, 0.5 * h / 2.6, 0.08, (SNOW_SH, 0.1), 'tree_well', segs=10)
+    k.blob(x, r, 0.0, 0.62 * h / 2.6, 0.5 * h / 2.6, 0.08, ('#cdd2dc', 0.1), 'tree_well', segs=10)
     if solid:
         k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
 
@@ -596,7 +596,7 @@ def birch(k, x, r, h=2.4, rr=None):
                    ('#4a3a32', 0.1), 'twig', verts=3)
         k.tube((x + math.cos(a) * L * 0.2, r + math.sin(a) * L * 0.08, z0 + L * 0.25), (tip[0], tip[1], tip[2] + 0.03), 0.018,
                (ROOF_SNOW, 0.05), 'branch_snow', verts=4)
-    k.blob(x, r, 0.0, 0.4, 0.32, 0.07, (SNOW_SH, 0.1), 'tree_well', segs=10)
+    k.blob(x, r, 0.0, 0.4, 0.32, 0.07, ('#cdd2dc', 0.1), 'tree_well', segs=10)
     k.solid_post(x, r)
 
 
@@ -624,7 +624,7 @@ def fence(k, pts, height=None, rr=None):
             k.tube((x, r, z + 0.46), (x2, r2, z2 + 0.46), 0.03, (ROOF_SNOW, 0.05), 'rail_snow', verts=5)
 
 
-def prints(k, pts, height=None, step=0.42, rr=None, col='#a8b6ce', part='print'):
+def prints(k, pts, height=None, step=0.42, rr=None, col='#c4c9d2', part='print'):
     """Boot prints in pairs along a polyline."""
     rr = rr or k.rng
     hz = height or (lambda x, r: 0.0)
@@ -652,7 +652,7 @@ def sled_tracks(k, pts, height=None):
         nx, nr = -(br - ar) / L, (bx - ax) / L
         for s in (-0.13, 0.13):
             k.tube((ax + nx * s, ar + nr * s, hz(ax, ar) + 0.006), (bx + nx * s, br + nr * s, hz(bx, br) + 0.006), 0.018,
-                   ('#b0bcd2', 0.05), 'print', verts=4, smooth=False)
+                   ('#c4c9d2', 0.05), 'print', verts=4, smooth=False)
 
 
 def skis(k, x, r, cols=('#c83a2e', '#e8e8f0'), lean=0.08, z=0.0):
@@ -769,7 +769,7 @@ def windswept(k, x0, r0, x1, r1, n, rr, ok=None, z=0.0):
         if rr.random() < 0.65:
             L = rr.uniform(0.5, 1.4)
             k.blob(x, r, zz - 0.01, L, rr.uniform(0.06, 0.12), 0.035, (SNOW, 0.04), 'drift', rot=(0, 0, rr.uniform(-12, 12)), segs=10)
-            k.blob(x + 0.04, r + 0.1, zz - 0.012, L * 0.85, 0.05, 0.02, (SNOW_SH, 0.04), 'drift', rot=(0, 0, rr.uniform(-12, 12)), segs=8)
+            k.blob(x + 0.04, r + 0.1, zz - 0.012, L * 0.85, 0.05, 0.02, ('#d4d9e2', 0.04), 'drift', rot=(0, 0, rr.uniform(-12, 12)), segs=8)
         else:
             k.blob(x, r, zz - 0.03, rr.uniform(0.4, 0.8), rr.uniform(0.25, 0.45), rr.uniform(0.06, 0.1), (SNOW, 0.04), 'drift', segs=10)
 

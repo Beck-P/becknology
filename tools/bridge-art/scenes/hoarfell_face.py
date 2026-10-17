@@ -265,7 +265,7 @@ for (x, r, h) in [(0.3, 35.2, 2.6), (0.5, 39.4, 2.9), (35.6, 35.6, 2.5), (35.4, 
     HR.fir(k, x, r, h, rr=er, solid=False)
 for i in range(int(COLS * 0.6)):                              # boot prints along the shelf's trodden line
     x = 1.5 + i * (COLS - 3) / (COLS * 0.6)
-    k.blob(x, FACE_R + 1.0 + (0.12 if i % 2 else -0.12), 0.01, 0.055, 0.085, 0.012, ('#a8b6ce', 0.05), 'print', segs=6)
+    k.blob(x, FACE_R + 1.0 + (0.12 if i % 2 else -0.12), 0.01, 0.055, 0.085, 0.012, ('#c4c9d2', 0.05), 'print', segs=6)
 
 # ---- the light: the village's alpenglow ----------------------------------------------------------------------------------------------
 k.sun((0.55, -0.62, -0.56), '#ffc4a4', 3.4, angle=3.0)      # the face catches the last of the sun, full on (row -: away from you)

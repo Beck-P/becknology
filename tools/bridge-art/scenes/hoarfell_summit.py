@@ -193,7 +193,7 @@ for xo in (7.3, 8.7):                                                           
     pts = [(xo, 13.4)] + [(xo + 0.9 * math.sin(t * 0.9 + xo), 13.4 + t * 0.7) for t in range(1, 6)]
     for (ax, ar), (bx, br) in zip(pts, pts[1:]):
         for o in (-0.07, 0.07):
-            k.tube((ax + o, ar, 0.006), (bx + o, br, 0.006), 0.016, ('#b0bcd2', 0.05), 'print', verts=4, smooth=False)
+            k.tube((ax + o, ar, 0.006), (bx + o, br, 0.006), 0.016, ('#c4c9d2', 0.05), 'print', verts=4, smooth=False)
 
 # ---- the light: the same evening, higher up: the sun lower and pinker, the cloud sea's blue in the shadows -------------------------
 k.sun((0.85, 0.2, -0.3), '#ffb894', 3.4, angle=3.0)

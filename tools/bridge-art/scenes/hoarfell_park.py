@@ -220,7 +220,7 @@ for side in (0, 1):                                   # old carves down the marg
         if jump_at(ax, ar) or jump_at(bx, br):
             continue
         for o in (-0.06, 0.06):
-            k.tube((ax + o, ar, 0.008), (bx + o, br, 0.008), 0.014, ('#c4cee0', 0.05), 'print', verts=4, smooth=False)
+            k.tube((ax + o, ar, 0.008), (bx + o, br, 0.008), 0.014, ('#cdd2da', 0.05), 'print', verts=4, smooth=False)
 HR.windswept(k, 2.0, BOTTOM_R, 38.0, ROWS - 0.5, 18, er, ok=lambda x, r: not 17.5 < x < 22.5)
 
 # ---- the light: the alpenglow --------------------------------------------------------------------------------------------------

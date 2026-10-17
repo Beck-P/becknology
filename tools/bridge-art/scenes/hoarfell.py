@@ -149,8 +149,8 @@ def material(x, r):
 
 
 cells = [(c, r) for c in range(-1, COLS + 1) for r in range(4, ROWS + 2)]
-I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'path': ('#c6d0e2', 0.06), 'path_edge': ('#d8e0ee', 0.05),
-                              'snow_ploughed': ('#dce4ef', 0.05), 'ice_bank': ('#d2deec', 0.06), 'stream_bed': ('#8a9cb0', 0.08)},
+I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'path': ('#c8ced8', 0.06), 'path_edge': ('#d8dee6', 0.05),
+                              'snow_ploughed': ('#dde2ea', 0.05), 'ice_bank': ('#d2deec', 0.06), 'stream_bed': ('#8a9cb0', 0.08)},
          step=0.0625, bump=0.01, seed=7, height=height, dither=0.07)
 
 # ---- the massif: tiers of rock stepping back, the icefall in its recess ---------------------------------------------------
@@ -462,7 +462,7 @@ HR.prints(k, [(26.6, 15.0), (24.8, 18.0), (21.0, 23.8), (17.0, 24.6)], HZ, rr=rr
 HR.sled_tracks(k, [(9.8, 13.6), (11.0, 17.5), (14.8, 24.0), (16.6, 24.6)], HZ)
 for i in range(14):                                                               # fox tracks across the open snow
     x, r = 18.5 + i * 0.4, 27.0 - i * 0.16 + 0.1 * math.sin(i)
-    k.blob(x, r, HZ(x, r) + 0.004, 0.03, 0.04, 0.01, ('#b4c0d6', 0.05), 'print', segs=5)
+    k.blob(x, r, HZ(x, r) + 0.004, 0.03, 0.04, 0.01, ('#c4c9d2', 0.05), 'print', segs=5)
 
 # ---- the busy places: an après-ski terrace, the ski school, a sleigh waiting, children's things ---------------------------------
 HR.deck(k, 25.8, 17.7, 30.0, 19.9)                                                 # the terrace by the cocoa hut
@@ -492,6 +492,17 @@ for xb in (11.45, 12.65):
     k.box(xb - 0.03, 12.0, 0.05, xb + 0.03, 12.8, 0.1, (N.LOG_D, 0.1), 'bridge_beam')
 for (x, r, s_) in ((19.0, 8.1, 0.32), (30.2, 8.2, 0.28), (5.6, 8.0, 0.3), (43.4, 8.7, 0.34)):
     HR.rock(k, x, r, s_, z=HZ(x, r) - 0.05, rr=rr)
+
+# ---- glints on the ice (drawn live by js/worlds/hoarfell.js, sc.glints: screen tiles and a seed) ---------------------------------
+GLINTS = []
+gr = random.Random(77)
+while len(GLINTS) < 70:
+    x, r = gr.uniform(TX - TRX, TX + TRX), gr.uniform(TR - TRY, TR + TRY)
+    if tarn_inside(x, r) > 0.22:
+        GLINTS.append(screen(x, r, -0.17) + [round(gr.random(), 3)])
+for (x, r) in seg[::3]:
+    if abs(r - 15.7) > 1.2:
+        GLINTS.append(screen(x + gr.uniform(-0.15, 0.15), r, -0.1) + [round(gr.random(), 3)])
 
 # ---- the borders ------------------------------------------------------------------------------------------------------------------
 k.solid(0, 0, COLS, 7)
@@ -550,5 +561,5 @@ k.solid(43, 13, 44, 14)
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,
             actors=[{'sheet': 'npc-ysolde', 'x': 9, 'y': 13, 'facing': 'down'}, {'sheet': 'npc-ansgar', 'x': 43, 'y': 13, 'facing': 'left'},
                     {'sheet': 'npc-tove', 'x': 19, 'y': 19, 'facing': 'down'}],
-            scene_extra={'layers': {'shuttle': 'parked'}, 'smoke': [s for s in SMOKE if s], 'lift': {'lines': lines}})
+            scene_extra={'layers': {'shuttle': 'parked'}, 'smoke': [s for s in SMOKE if s], 'lift': {'lines': lines}, 'glints': GLINTS})
 print('hoarfell done')
