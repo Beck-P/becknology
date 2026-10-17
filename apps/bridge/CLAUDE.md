@@ -659,14 +659,16 @@ plan is `_claude_docs/spec-arcadia-above.md`. Beck: "the skytrain, express lifts
 - **An air cab**: pick a pad and pay (12 coins a hop, 6 more a level, 10 more to or from the Spires: `fare`); the ride is
   the cab's side window — the layers streaming past, traffic lanes the other way, a tower close enough to see into, the
   driver's little route screen, a charm swinging.
-- **The Loop** (the carriage, `arcadia-loop` — its render and the train's sprite are the next piece in; until then the
-  stations say the service is suspended; 3 coins): board at a station (where to, or *ride round*), sit by the window
+- **The Loop** (the carriage, `arcadia-loop`, `scenes/arcadia_loop.py`: three bays of glass along her side with sliding
+  doors between, cyan benches, grab poles, the route map over each door, ads, riders; 3 coins): board at a station (where to, or *ride round*), sit by the window
   and she runs station to station round the ring — 22 s a leg, 9 s at each stop with the doors open (`RUN`, `DWELL`) —
   the skyline streaming past at speed (the world's `skyline.motion: "loop"`: `BridgeSkyline.setMotion` scrolls and
   repeats the layers by how far she's gone), towers flashing by close, each station's platform sliding in and stopping
   outside the windows with its name board; a banner says the next stop and yours. The doors (`loop_doors`) step you off
   onto that station's platform while she's in; stay on and she carries on round. The route map (`loop_map`). Reload
-  aboard (or arrive some other way) and she's waiting at the first station with the doors open.
+  aboard (or arrive some other way) and she's waiting at the first station with the doors open. The carriage's world
+  JSON has `loopcar` (`window`: the glass's screen rows, `seats`, `board`); round the glass js/transit.js fills the
+  screen with her shell, and the skyline block's `rain: { none: true }` keeps it dry inside.
 - **The Loop's train in the city** (the same moment for everyone, from the clock): a world whose skyline block has
   `loop: { row, from, to, scale }` (screen tiles) has her viaduct across its sky and sees her cross every 150 s, west then
   east (`PASS`, `CROSS`; a rumble, `train`) — the neon street; a station world's `loop: { track: [x0, x1, row, z] }` sees
