@@ -704,10 +704,10 @@ Rose Cove's OLD MINE leads into **the hall** (`lumar-rose-mine`, `scenes/lumar_r
 
 ### The District grown out: Lantern Row and the spaceport (Arcadia)
 Workstream D of `_claude_docs/spec-denser-worlds.md` (the plan: `_claude_docs/spec-arcadia-above.md`): the District
-(tag L0 on the signs) runs on past both ends of the neon street. The street's two edges, once `leave_world SHIP`, are
-`enter_world`s now — west (0, 10) `LANTERN ROW` → `arcadia-oldquarter` [62, 11], east (59, 10) `THE SPACEPORT` →
-`arcadia-spaceport` [1, 11]; both come back by `THE NEON STREET` to [1, 10] and [58, 10] (in `scenes/arcadia_street.py`'s
-interaction list too, so a re-render keeps them). Kits: `assets_oldquarter.py` (the old quarter: `shophouse` — a timber
+(tag L0 on the signs) runs on past both ends of the neon street: Lantern Row west, the spaceport east. Each comes
+back to the street by `THE NEON STREET` (Lantern Row's at (63, 11) to the street's [1, 10], the spaceport's at (0, 11) to
+[58, 10]); the street's own two edges (0, 10) and (59, 10) are wired to them — arriving at [62, 11] and [1, 11] — once
+the street's rebuild lands (it owns `scenes/arcadia_street.py` until then). Kits: `assets_oldquarter.py` (the old quarter: `shophouse` — a timber
 ground floor `lattice` / `open` / `shutter`, a tiled pent over it, a framed or slatted upper floor, a **front gable**
 `gable_roof` toward the lane, because a roof whose eave faces the camera hides the whole facade at 45° — `tile_roof` for
 the eave-on kind where nothing's behind it, `pent`, `noren`, `lattice`, `stone_lantern`, `torii`, `shimenawa`,
@@ -754,7 +754,7 @@ and `container_ship` freighters on their legs, `floodlight` masts, the air cab a
   drift up among the towers; let one go yourself for a little energy) and **a freighter lifting off** past the railing
   (`liftoff`, the spaceport: engines lighting below the drop, then she climbs up through the view on three plumes of
   thrust, the crowd at the railing watching). The sky chase and NULL's hijack reach both places (`arcadia-sky`).
-- Test: `world/arcadia_district.js` (the street's edges both ways, each place walked and shot, the people, the goldfish
+- Test: `world/arcadia_district.js` (the ways back to the street, each place walked and shot, the people, the goldfish
   and the fortunes, the transit stops, both happenings, a phone).
 
 ### The farm on Verdance (farming)

@@ -352,7 +352,7 @@ w = {'name': 'Lantern Row', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tile
      'interactions': [
          {'x': 63, 'y': 11, 'type': 'enter_world', 'target': 'arcadia-street', 'spawn': [1, 10], 'label': 'THE NEON STREET',
           'prompt': 'PRESS E TO WALK ON'},
-         {'x': 8, 'y': 8, 'type': 'enter_world', 'target': 'arcadia-oldquarter-shrine', 'spawn': [11, 9], 'label': 'SHRINE STEPS',
+         {'x': 8, 'y': 8, 'type': 'enter_world', 'target': 'arcadia-oldquarter-shrine', 'spawn': [19, 6], 'label': 'SHRINE STEPS',
           'prompt': 'PRESS E TO CLIMB'},
          dialog(11, 8, 'GRANNY UME', 'PRESS E TO TALK', 'AN OLD WOMAN KNEELS BY THE KETTLE, POURING.'),
          {'x': 13, 'y': 8, 'type': 'vendor', 'label': 'TEA HOUSE', 'prompt': 'PRESS E FOR TEA',

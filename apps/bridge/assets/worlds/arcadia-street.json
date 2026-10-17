@@ -2136,26 +2136,16 @@
     {
       "x": 0,
       "y": 10,
-      "type": "enter_world",
-      "target": "arcadia-oldquarter",
-      "spawn": [
-        62,
-        11
-      ],
-      "label": "LANTERN ROW",
-      "prompt": "PRESS E TO WALK ON"
+      "type": "leave_world",
+      "label": "SHIP",
+      "prompt": "RETURN TO BRIDGE"
     },
     {
       "x": 59,
       "y": 10,
-      "type": "enter_world",
-      "target": "arcadia-spaceport",
-      "spawn": [
-        1,
-        11
-      ],
-      "label": "THE SPACEPORT",
-      "prompt": "PRESS E TO WALK ON"
+      "type": "leave_world",
+      "label": "SHIP",
+      "prompt": "RETURN TO BRIDGE"
     },
     {
       "x": 10,

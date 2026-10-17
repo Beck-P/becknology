@@ -1,5 +1,5 @@
-// The District grown out: Lantern Row (the old quarter) and its roof shrine, and the spaceport — the street's two edges
-// leading to them and back, each place walked and shot, the goldfish scoop and the shrine's fortunes, the Loop's stations,
+// The District grown out: Lantern Row (the old quarter) and its roof shrine, and the spaceport — their ways back to the
+// street, each place walked and shot, the goldfish scoop and the shrine's fortunes, the Loop's stations,
 // the Core Express and the air cab rank wired to js/transit.js, their happenings (sky lanterns, a freighter lifting off),
 // the crowds out. node world/arcadia_district.js [shots]
 const { chromium } = require('playwright');
@@ -28,18 +28,14 @@ fs.mkdirSync(SHOTS, { recursive: true });
   const exec = (label) => ev((l) => { const i = BridgeWorld.getWorld().interactions.find(x => x.label === l); if (!i) return false; BridgeInteractions.execute(i); return true; }, label);
   const walkable = (x, y) => ev((a) => { const w = BridgeWorld.getWorld(); return !w.collisions[a[1]][a[0]]; }, [x, y]);
 
-  // ---- the street's edges --------------------------------------------------------------------------------------------
-  await go('arcadia-street', 1, 10); await settle();
-  console.log('street west exit', await exec('LANTERN ROW')); await settle(2200);
-  console.log('through the west edge ->', await here());
+  // ---- the ways back to the street (the street's own edges are wired once its rebuild lands) ------------------------
+  await go('arcadia-oldquarter', 62, 11); await settle();
   await p.screenshot({ path: SHOTS + '/district_lanternrow_arrive.png' });
-  console.log('back to the street', await exec('THE NEON STREET')); await settle(2200);
+  console.log('lantern row -> street', await exec('THE NEON STREET')); await settle(2200);
   console.log('back ->', await here());
-  await go('arcadia-street', 58, 10); await settle();
-  console.log('street east exit', await exec('THE SPACEPORT')); await settle(2200);
-  console.log('through the east edge ->', await here());
+  await go('arcadia-spaceport', 1, 11); await settle();
   await p.screenshot({ path: SHOTS + '/district_spaceport_arrive.png' });
-  console.log('back to the street', await exec('THE NEON STREET')); await settle(2200);
+  console.log('spaceport -> street', await exec('THE NEON STREET')); await settle(2200);
   console.log('back ->', await here());
 
   // ---- Lantern Row, walked end to end, its people and things ---------------------------------------------------------

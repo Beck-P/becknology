@@ -263,8 +263,8 @@ w['interactions'] = [
     enter(13, 7, 'arcadia', 'ARCADIA ARCADE', 'ENTER ARCADE', spawn=(9, 9)),
     enter(16, 7, 'tech-repair-shop', 'TINKERS TECH'),
     enter(19, 7, 'chrome-clinic', 'CHROME CLINIC'),
-    enter(0, 10, 'arcadia-oldquarter', 'LANTERN ROW', 'PRESS E TO WALK ON', spawn=(62, 11)),    # the old quarter, west (scenes/arcadia_oldquarter.py)
-    enter(COLS - 1, 10, 'arcadia-spaceport', 'THE SPACEPORT', 'PRESS E TO WALK ON', spawn=(1, 11)),  # the spaceport, east
+    {'x': 0, 'y': 10, 'type': 'leave_world', 'label': 'SHIP', 'prompt': 'RETURN TO BRIDGE'},
+    {'x': COLS - 1, 'y': 10, 'type': 'leave_world', 'label': 'SHIP', 'prompt': 'RETURN TO BRIDGE'},
     keep('PASSERBY', 10, 8),
     keep('STREET KID', 6, 12),
     keep('TRASH CAN', 9, 12),
