@@ -2234,14 +2234,11 @@
     {
       "x": 31,
       "y": 7,
-      "type": "enter_world",
-      "target": "arcadia-skywalk",
-      "spawn": [
-        2,
-        5
-      ],
+      "type": "express_lift",
       "label": "SKYWALK LIFT",
-      "prompt": "PRESS E TO RIDE UP"
+      "prompt": "PRESS E TO CALL THE LIFT",
+      "shaft": "skywalk",
+      "lobby": "street"
     },
     {
       "x": 33,

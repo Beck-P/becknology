@@ -65,7 +65,8 @@ var BridgeCrowd = (function () {
   var NATURAL = ['dark', 'black', 'brown', 'brown', 'auburn', 'blond', 'ginger', 'dark', 'black'];
   // the bodies (assets/characters/crowd/<body>.png and <body>-sit.png) and who wears what where; colours are mid
   // tones, shaded into three bands as the NPCs' are (shade)
-  var MEN = ['man', 'man-cap', 'vest', 'worker', 'elder', 'suit', 'elf'], WOMEN = ['woman', 'woman-bun', 'woman-hat', 'woman-hood', 'gown', 'elf-braid'];
+  var MEN = ['man', 'man-cap', 'vest', 'worker', 'elder', 'suit', 'elf', 'merchant', 'mystic-m'],
+      WOMEN = ['woman', 'woman-bun', 'woman-hat', 'woman-hood', 'gown', 'elf-braid', 'woman-shawl', 'mystic'];
   var WARDROBES = {
     lumar: {
       bodies: { man: 3, 'man-cap': 3, vest: 3, worker: 2, elder: 2, traveller: 1, woman: 3, 'woman-bun': 2, 'woman-hood': 2, child: 1, 'child-cap': 1 },
@@ -160,6 +161,32 @@ var BridgeCrowd = (function () {
       skins: [0, 3, 1],
       names: { m: ['Eldrin', 'Calael', 'Thoren', 'Ilvar', 'Saelith', 'Vaeron'], f: ['Lirael', 'Ysmir', 'Naeva', 'Aelin', 'Seraphel', 'Thalia'], c: ['Fenwick'] }
     }
+  };
+  // Lumar's other seas look their own (Beck: "each of their people and cities should probably be a little bit more
+  // unique"): Sapphire, the merchants' sea — whitewash and deep blue, gold sashes, the glassblowers' leather aprons;
+  // Rose, the crystal sea — makers and mystics in plum, rose and cream, robes with the cowl fallen back, silk
+  WARDROBES.sapphire = {
+    bodies: { merchant: 3, 'woman-shawl': 3, man: 2, worker: 1.5, 'man-cap': 1, woman: 2, 'woman-hat': 1.5, elder: 1, traveller: 1, child: 1, 'child-cap': 1 },
+    top: ['#eceae2', '#dcd8cc', '#2a4a9a', '#3a6ac8', '#1e2e5a', '#c8d4e8', '#e8e0c8', '#5a7ab0'],
+    bot: ['#1e2e5a', '#2a3548', '#eceae2', '#3a4a6a', '#5e5a50'],
+    out: ['#1a3a8a', '#2a5ad8', '#e8e8f0', '#6a4a2a', '#c8a040', '#16306a', '#8ab0e0'],
+    hat: ['#c8a040', '#e0b848', '#2a5ad8', '#e8e8f0', '#1a3a8a'],
+    umbrella: ['#2a5ad8', '#e8e8f0', '#1a3a8a', '#c8a040'],
+    names: { m: ['Aris', 'Stavro', 'Nikos', 'Theo', 'Pelle', 'Doran', 'Mattias', 'Yannis', 'Lukas', 'Corin'],
+             f: ['Ione', 'Calla', 'Daria', 'Melina', 'Thessaly', 'Nerys', 'Zoe', 'Ariadne', 'Kassia', 'Lyra'],
+             c: ['Niko', 'Pip', 'Effie', 'Tam'] }
+  };
+  WARDROBES.rose = {
+    bodies: { mystic: 3, 'mystic-m': 2, 'woman-hood': 2, woman: 2, 'woman-bun': 1.5, traveller: 1.5, man: 1.5, vest: 1, elder: 1, child: 1 },
+    top: ['#e8d8d0', '#c87a9a', '#7a2a5a', '#f0c8d8', '#5a3a6a', '#d8b8a0', '#9a4a6a', '#eae2d8'],
+    bot: ['#4a2440', '#6a3458', '#e8d8d0', '#3a2a3e', '#8a5a7a', '#5a4a52'],
+    out: ['#b04884', '#f08cc8', '#e8d0b8', '#5a2a5a', '#d8a0b8', '#c8a050', '#3a2440'],
+    hat: ['#f08cc8', '#c8a050', '#e8d0b8', '#7a2a5a'],
+    umbrella: ['#f08cc8', '#b04884', '#e8d0b8', '#5a2a5a'],
+    hairs: ['dark', 'black', 'brown', 'auburn', 'blond', 'grey', 'white', 'pink', 'violet', 'silver', 'dark', 'brown'],
+    names: { m: ['Ilan', 'Soren', 'Eben', 'Rafe', 'Teodor', 'Ashby', 'Lior', 'Quill'],
+             f: ['Rosalind', 'Mireille', 'Ottoline', 'Seren', 'Amaryllis', 'Liesl', 'Wisteria', 'Odette', 'Briar', 'Isolde'],
+             c: ['Petal', 'Wren', 'Nim'] }
   };
   WARDROBES.crown.names = WARDROBES.lumar.names;
   function sexOf(body) { return body.indexOf('child') === 0 ? 'c' : MEN.indexOf(body) >= 0 ? 'm' : WOMEN.indexOf(body) >= 0 ? 'f' : null; }
