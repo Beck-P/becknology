@@ -865,26 +865,20 @@
     {
       "x": 19,
       "y": 4,
-      "type": "enter_world",
-      "target": "arcadia-skywalk",
-      "spawn": [
-        28,
-        5
-      ],
+      "type": "express_lift",
       "label": "LIFT",
-      "prompt": "PRESS E TO RIDE DOWN"
+      "prompt": "PRESS E TO CALL THE LIFT",
+      "shaft": "skyport",
+      "lobby": "skypad"
     },
     {
       "x": 20,
       "y": 4,
-      "type": "enter_world",
-      "target": "arcadia-skywalk",
-      "spawn": [
-        28,
-        5
-      ],
+      "type": "express_lift",
       "label": "LIFT",
-      "prompt": "PRESS E TO RIDE DOWN"
+      "prompt": "PRESS E TO CALL THE LIFT",
+      "shaft": "skyport",
+      "lobby": "skypad"
     },
     {
       "x": 4,

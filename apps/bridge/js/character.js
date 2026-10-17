@@ -233,7 +233,7 @@ var BridgeCharacter = (function () {
     if (!sheets[key]) {
       var at = key.indexOf('@'), base = at < 0 ? key : key.slice(0, at);
       var parts = base.split('-'), colour = parts.pop();
-      var mode = parts[0] === 'sit' || parts[0] === 'ski' || parts[0] === 'climb' || parts[0] === 'attack' ? parts.shift() : '';
+      var mode = parts[0] === 'sit' || parts[0] === 'ski' || parts[0] === 'climb' || parts[0] === 'attack' || parts[0] === 'bow' ? parts.shift() : '';
       var look = at < 0 ? BridgeLook.clean(null) : BridgeLook.parse(key.slice(at + 1));
       sheets[key] = BridgeLook.sheet(mode, parts[0] || 'flight', colour, look);
     }
@@ -298,6 +298,7 @@ var BridgeCharacter = (function () {
     var sheet = liveSheet(sheetKey());
     var pos = getRenderPos();
     var footRow = pos.y + 1 - 3 / 32;
+    var depth = seat ? BridgeScene.seatedRow(footRow, seat.facing) : footRow;   // seated: tested from the seat's front edge
     var fit = fightLook();
     if (fit) {
       return { footRow: footRow, draw: function (ctx) {
@@ -306,7 +307,7 @@ var BridgeCharacter = (function () {
       } };
     }
     return {
-      footRow: footRow,
+      footRow: depth,
       draw: function (ctx) {
         if (!sheet.ready) return;
         var col = player.moveProgress < 1
@@ -316,7 +317,7 @@ var BridgeCharacter = (function () {
         var cx = Math.round(offX + (pos.x + 0.5) * ts);
         var footY = Math.round(offY + footRow * ts);
         BridgeScene.drawOccluded(ctx, sc, sheet.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H,
-          cx - FRAME_W / 2, footY - (FRAME_H - 3), footRow, offX, offY,
+          cx - FRAME_W / 2, footY - (FRAME_H - 3), depth, offX, offY,
           BridgeScene.tintAt(sc, world, pos.x, pos.y, now), { x: cx, y: footY, rx: 9, ry: 3 }, null, 'auto');
       }
     };
@@ -347,8 +348,9 @@ var BridgeCharacter = (function () {
     var at = o.key.indexOf('@'), look = at < 0 ? BridgeLook.clean(null) : BridgeLook.parse(o.key.slice(at + 1));
     var build = look.body === 'b' ? 'b' : 'a', dir = p ? p.facing : o.facing, row = DIR_ROW[dir] || 0;
     var img = null, sx, sy, fw, fh, ox, oy, frame, weapon = null;
+    if (p && p.sheet && p.sheet !== 'attack') L = A.layoutOf(o.fight.cls);      // a class with a sheet of its own (the bow)
     if (p && L) {
-      var ash = getSheet('attack-' + o.key), ci = L.cols.indexOf(p.col);
+      var ash = getSheet((p.sheet || 'attack') + '-' + o.key), ci = L.cols.indexOf(p.col);
       if (ash.ready && ci >= 0) {
         img = ash.img; fw = L.frame[0]; fh = L.frame[1]; ox = L.origin[0]; oy = L.origin[1];
         sx = ci * fw; sy = row * fh; frame = p.col; weapon = p.weapon;
