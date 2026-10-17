@@ -6,8 +6,11 @@
  * interaction finds the clue: the first clue starts the quest, the last
  * completes it and pays its reward (BridgeProgression.recordAchievement,
  * once per pilot). Order doesn't matter — you piece it together however
- * you wander — unless a clue says `after: <clue id>` (or a list of them),
- * when it only counts once those are found. A quest with `needs: <quest id>`
+ * you wander (Alyssa: who you talk to first shouldn't decide whether you can
+ * finish). Only what has to come first does: a clue that `give`s a thing waits
+ * till you've got it, and `after: <clue id>` (or a list) for a story that
+ * can't happen otherwise — `after: '*'` is a finale, found once every other
+ * clue is. A quest with `needs: <quest id>`
  * doesn't begin until that quest is done (a sequel). A clue with `say` has
  * its moment shown in place of the thing's usual words as it's found
  * (js/interactions.js). A quest can hold things (`items`) that a clue `get`s or
@@ -56,13 +59,15 @@ var BridgeQuests = (function () {
   function onInteract(worldId, inter) {
     var hits = [];                                 // the clues found just now (js/interactions.js shows a clue's `say`)
     if (!defs || !inter) return hits;
+    var was = {};                                  // done before this — so a sequel can't start on the same word that ended the quest before it
+    Object.keys(defs).forEach(function (id) { was[id] = !!(state[id] && state[id].done); });
     Object.keys(defs).forEach(function (id) {
       var q = defs[id];
-      if (q.needs && !(state[q.needs] && state[q.needs].done)) return;   // a sequel waits for the quest before it
+      if (q.needs && !was[q.needs]) return;        // a sequel waits for the quest before it
       q.clues.forEach(function (c) {
         var wm = c.on.world, wid = inter.home ? inter.home.world : worldId;   // someone visiting counts as at home (js/routines.js)
         if (!(wm === wid || (wm.slice(-1) === '*' && wid.indexOf(wm.slice(0, -1)) === 0)) || c.on.label !== inter.label) return;   // 'lumar-rose-mine-*': any floor
-        if (c.after && ![].concat(c.after).every(function (a) { return state[id] && state[id].clues[a]; })) return;   // only once those are found
+        if (!ready(id, q, c)) return;
         var s = state[id] || (state[id] = { clues: {}, started: Date.now() });
         if (s.clues[c.id]) return;
         var fresh = !Object.keys(s.clues).length;
@@ -88,6 +93,16 @@ var BridgeQuests = (function () {
       });
     });
     return hits;
+  }
+
+  // can this clue be found yet? Only the things that really have to come first: what it gives must be in hand,
+  // and an `after` (a list, or '*': every other clue in the quest)
+  function ready(id, q, c) {
+    var got = (state[id] && state[id].clues) || {};
+    if (c.give && !q.clues.every(function (g) { return g.get !== c.give || got[g.id]; })) return false;
+    if (!c.after) return true;
+    var need = c.after === '*' ? q.clues.filter(function (o) { return o.id !== c.id; }).map(function (o) { return o.id; }) : [].concat(c.after);
+    return need.every(function (a) { return got[a]; });
   }
 
   // 'quest' — is it done; 'quest/clue' — has that clue been found (people's topics use this: `when`, `until`)
@@ -158,8 +173,9 @@ var BridgeQuests = (function () {
   // where a quest's missing clues are: the places you know by name, the rest as somewhere on an island or a world
   function whereNext(id) {
     var q = defs[id], s = state[id] || { clues: {} }, by = {}, order = [];
-    q.clues.forEach(function (c) {
-      if (s.clues[c.id]) return;
+    var left = q.clues.filter(function (c) { return !s.clues[c.id]; });
+    left = left.filter(function (c) { return ready(id, q, c); }).concat(left.filter(function (c) { return !ready(id, q, c); }));   // what can be found now first
+    left.forEach(function (c) {
       var w = c.on.world.slice(-1) === '*' ? c.on.world.slice(0, -2) : c.on.world;
       if (!by[w]) { by[w] = 0; order.push(w); }
       by[w]++;

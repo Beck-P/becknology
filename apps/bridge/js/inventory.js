@@ -524,6 +524,7 @@ var BridgeInventory = (function () {
   // or right-click: just one). With something offered and no room for it
   // (BridgeInventory.offer), the new thing sits on top and you pick what goes.
   var root = null, chest = null, offerNow = null, menuGrid = null, chestGrid = null, menuCap = 0, held = -1, focus = -1, focusChest = -1;
+  var questFocus = null;           // a quest item picked to read about (js/keyitems.js): 'quest/item'
   var chestSlotEls = [], note = '', binArmed = -1, drag = null, dragged = false;
   function isTouch() { return document.documentElement.classList.contains('touch'); }
 
@@ -536,7 +537,7 @@ var BridgeInventory = (function () {
     menuOpen = true;
     chest = opts.chest || null;
     offerNow = opts.offer && offers[0] === opts.offer ? opts.offer : null;
-    held = -1; focus = -1; focusChest = -1; menuCap = 0; menuSlotEls = []; chestSlotEls = []; note = ''; binArmed = -1;
+    held = -1; focus = -1; focusChest = -1; questFocus = null; menuCap = 0; menuSlotEls = []; chestSlotEls = []; note = ''; binArmed = -1;
     root = document.createElement('div');
     root.className = 'bp' + (chest ? ' bp-with-chest' : '') + (offerNow ? ' bp-offering' : '');
     root.innerHTML =
@@ -551,7 +552,7 @@ var BridgeInventory = (function () {
         '<section class="bp-mine"><div class="bp-slots"></div><div class="bp-tools">' +
           '<span class="bp-tools-label">Pack</span><button type="button" class="gm-btn gm-btn-sm" data-s="type">Sort by kind</button>' +
           '<button type="button" class="gm-btn gm-btn-sm" data-s="value">Sort by worth</button><button type="button" class="gm-btn gm-btn-sm" data-s="stack">Stack like with like</button></div>' +
-        '<div class="bp-next"></div></section>' +
+        '<div class="bp-quest"></div><div class="bp-next"></div></section>' +
       '</div>' +
       '<aside class="bp-side"><div class="bp-detail"></div><div class="bp-stats"></div>' +
         '<div class="bp-actions"><button type="button" class="gm-btn" data-a="outfit"><span class="ip-key">O</span>Wardrobe</button></div>' +
@@ -688,6 +689,8 @@ var BridgeInventory = (function () {
   // what the item in hand (or under the pointer) is, does and is worth - and what you can do with it
   function refreshMenuDetail() {
     if (!menuDetailEl) return;
+    markQuest();
+    if (questFocus && held < 0 && focus < 0 && focusChest < 0 && questDetail()) return;
     var inChest = focusChest >= 0 && chest, idx = held >= 0 ? held : focus >= 0 ? focus : state.selected;
     var s = inChest ? chest.slots[focusChest] : state.slots[idx];
     var item = s && BridgeItems.get(s.id);
@@ -790,7 +793,66 @@ var BridgeInventory = (function () {
     refreshMenuDetail();
     refreshMenuStats();
     refreshNext();
+    refreshQuest();
     if (offerNow) paintOffer();
+  }
+
+  // ---- quest items (Alyssa: they should be in your backpack): what a quest has given you to hand on ----------------
+  // Not stacks in the pack: they come from the quest itself (BridgeKeyItems.carried — got and not yet given), so they
+  // can't be dropped, sold, stored or lost; they go when you give them to whoever they're for.
+  function questItems() { return typeof BridgeKeyItems !== 'undefined' ? BridgeKeyItems.carried() : []; }
+  function refreshQuest() {
+    var box = root && root.querySelector('.bp-quest');
+    if (!box) return;
+    var list = questItems(), key = list.map(function (it) { return it.quest + '/' + it.id; }).join(',');
+    if (questFocus && key.split(',').indexOf(questFocus) < 0) questFocus = null;     // given away since
+    if (box.dataset.key !== key || !box.childNodes.length) {
+      box.dataset.key = key;
+      box.innerHTML = '<div class="bp-head bp-quest-head"><span class="bp-title">Quest items</span><span class="bp-sub">' +
+        (list.length ? 'for someone else - hand them over by talking to them' : 'nothing to hand on right now') + '</span></div>';
+      if (list.length) {
+        var row = document.createElement('div');
+        row.className = 'bp-grid bp-quest-grid';
+        list.forEach(function (it) {
+          var k = it.quest + '/' + it.id, b = document.createElement('button');
+          b.type = 'button'; b.className = 'bp-slot bp-qslot'; b.dataset.q = k; b.title = it.name + (it.to ? ' · for ' + it.to : '');
+          var c = document.createElement('canvas'); c.className = 'bp-icon'; c.width = c.height = 32;
+          var ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+          BridgeKeyItems.draw(it.icon, ctx, 0, 0, 32);
+          b.appendChild(c);
+          function pick(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            if (held >= 0 || drag || offerNow) return;
+            questFocus = k; focus = -1; focusChest = -1; binArmed = -1;
+            refreshQuest(); refreshMenuDetail();
+          }
+          b.addEventListener('click', pick);
+          b.addEventListener('mouseenter', function () { pick(); });
+          row.appendChild(b);
+        });
+        box.appendChild(row);
+      }
+    }
+    markQuest();
+  }
+  function markQuest() {
+    var on = held < 0 && focus < 0 && focusChest < 0 ? questFocus : null;
+    if (root) root.querySelectorAll('.bp-qslot').forEach(function (b) { b.classList.toggle('focus', b.dataset.q === on); });
+  }
+  function questDetail() {
+    var it = questItems().filter(function (x) { return x.quest + '/' + x.id === questFocus; })[0];
+    if (!it) { questFocus = null; return false; }
+    var q = typeof BridgeQuests !== 'undefined' && BridgeQuests.def ? BridgeQuests.def(it.quest) : null;
+    menuDetailEl.innerHTML =
+      '<div class="bp-d-top"><canvas class="bp-d-icon" width="64" height="64"></canvas><div class="bp-d-id">' +
+        '<div class="bp-d-name">' + esc(it.name) + '</div><span class="bp-d-type" style="--tc:#d0a040">quest item</span></div></div>' +
+      '<div class="bp-d-desc">' + esc(it.text) + '</div>' +
+      (it.to ? '<div class="bp-d-worth">For <b>' + esc(it.to) + '</b>' + (q ? ' · ' + esc(q.title) : '') + '</div>' : '') +
+      '<div class="bp-d-hint">Kept safe till you hand it over: it can\'t be dropped, sold or put away.</div>';
+    var cv = menuDetailEl.querySelector('.bp-d-icon'), cx = cv.getContext('2d');
+    cx.imageSmoothingEnabled = false;
+    BridgeKeyItems.draw(it.icon, cx, 0, 0, 64);
+    return true;
   }
 
   // ---- doing things with what you carry -------------------------------------

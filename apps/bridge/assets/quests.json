@@ -647,7 +647,6 @@
       },
       {
         "id": "song",
-        "after": "charge",
         "on": {
           "world": "sylvara",
           "label": "BARD"
@@ -656,7 +655,6 @@
       },
       {
         "id": "dawn",
-        "after": "charge",
         "on": {
           "world": "sylvara",
           "label": "HERBALIST"
@@ -665,21 +663,16 @@
       },
       {
         "id": "ribbon",
-        "after": [
-          "song",
-          "dawn"
-        ],
         "on": {
           "world": "sylvara",
           "label": "WILLOW"
         },
-        "text": "With what the bard and the herbalist told you, you know where to look: high in the willow over the Moonwell, caught on a frond, a ribbon of green silk with gold leaves. You climb up and free it.",
+        "text": "High in the willow over the Moonwell, caught on a frond: a ribbon of green silk worked with gold leaves. You climb up and free it.",
         "get": "ribbon",
-        "say": "WITH WHAT THE BARD AND THE HERBALIST TOLD YOU, YOU KNOW WHERE TO LOOK. HIGH IN THE WILLOW, CAUGHT ON A FROND: A RIBBON OF GREEN SILK WITH GOLD LEAVES.\n\nYOU CLIMB UP AND FREE IT."
+        "say": "SOMETHING IS CAUGHT HIGH IN THE WILLOW, ON A FROND OVER THE MOONWELL: A RIBBON OF GREEN SILK WITH GOLD LEAVES.\n\nYOU CLIMB UP AND FREE IT."
       },
       {
         "id": "return",
-        "after": "ribbon",
         "on": {
           "world": "sylvara-hall",
           "label": "BECKOLAS"
@@ -698,7 +691,7 @@
     "where": "Sylvara",
     "reward": 400,
     "needs": "queens-favour",
-    "start": "The queen loves her first sword, her first sword loves the queen, and the whole wood knows it except, possibly, the two of them. She's asked you to help. Gently.",
+    "start": "The queen loves her first sword, her first sword loves the queen, and the whole wood knows it except, possibly, the two of them. Somebody ought to help. Gently.",
     "done": "Under the willow at dusk, the first sword finally said it. Faelan's lanterns and Sefa's ribbons are staying up in the willow for good.",
     "items": {
       "moonflower": {
@@ -719,7 +712,6 @@
       },
       {
         "id": "ask",
-        "after": "start",
         "on": {
           "world": "sylvara-hall",
           "label": "BECKOLAS"
@@ -728,16 +720,14 @@
       },
       {
         "id": "song",
-        "after": "ask",
         "on": {
           "world": "sylvara",
           "label": "BARD"
         },
-        "text": "Thaelin has had the song written for a century. He agrees Beckolas has to say it himself, and he knows where: the Moonwell at dusk, where everyone says the true thing. He'll be in the bushes. Playing very quietly."
+        "text": "Thaelin has had the song written for a century, but Beckolas has to say it himself, and Thaelin knows where: the Moonwell at dusk, where everyone says the true thing. He'll be in the bushes. Playing very quietly."
       },
       {
         "id": "flower",
-        "after": "ask",
         "on": {
           "world": "sylvara",
           "label": "HERBALIST"
@@ -747,7 +737,6 @@
       },
       {
         "id": "lanterns",
-        "after": "ask",
         "on": {
           "world": "sylvara",
           "label": "LAMPLIGHTER"
@@ -756,7 +745,6 @@
       },
       {
         "id": "ribbons",
-        "after": "ask",
         "on": {
           "world": "sylvara",
           "label": "WEAVER"
@@ -765,12 +753,6 @@
       },
       {
         "id": "courage",
-        "after": [
-          "song",
-          "flower",
-          "lanterns",
-          "ribbons"
-        ],
         "on": {
           "world": "sylvara-hall",
           "label": "BECKOLAS"
@@ -789,7 +771,7 @@
       },
       {
         "id": "vow",
-        "after": "invite",
+        "after": "*",
         "on": {
           "world": "sylvara",
           "label": "WILLOW"

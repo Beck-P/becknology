@@ -2530,7 +2530,7 @@
         "q": "Something on your mind?",
         "a": "YOU HAVE SHARP EYES, TRAVELLER, SO I'LL SAVE US BOTH THE PRETENDING. I LOVE HIM. I HAVE FOR A VERY LONG TIME. AND I THINK HE LOVES ME, BUT HE IS A SWORN SWORD, AND A SWORN SWORD DOES NOT SPEAK ABOVE HIS OATH. I CAN COMMAND HIM TO GUARD ME. I CANNOT COMMAND HIM TO SAY IT.\n\nASK HIM FOR ME? GENTLY. HE BRUISES LIKE A PEACH.",
         "when": "under-the-willow/start",
-        "until": "under-the-willow/courage"
+        "until": "under-the-willow"
       },
       {
         "q": "The Moonwell, at dusk",
@@ -2569,11 +2569,11 @@
         "q": "The queen... and you?",
         "a": "I AM HER SWORD. A SWORD DOES NOT HAVE FEELINGS ABOUT THE HAND THAT HOLDS IT.\n\n...WHO TOLD YOU. WAS IT THE BARD. IT WAS THE BARD.\n\n...FINE. YES. FOR THREE HUNDRED YEARS. I HAVE TRIED TO TELL HER TWO HUNDRED AND TWELVE TIMES. ONCE I WROTE IT DOWN. THEN I PANICKED AND ATE THE LETTER. DO NOT TELL HER ABOUT THE LETTER.",
         "when": "under-the-willow/ask",
-        "until": "under-the-willow/courage"
+        "until": "under-the-willow"
       },
       {
         "q": "The Moonwell, at dusk",
-        "a": "THE LANTERNS. THE RIBBONS. A MOONFLOWER, FROM MIRELLE. YOU DID ALL THIS.\n\n...IT IS NEARLY DUSK. I MUST POLISH MY ARMOUR. ALL OF IT. TWICE. THEN I WILL SAY IT. PROBABLY. DEFINITELY. TELL HER... NO. TELL HER NOTHING. TELL HER THE MOONWELL.",
+        "a": "A MOONFLOWER. FROM MIRELLE. SHE'S BEEN KEEPING IT FOR ME, HASN'T SHE. EVERYONE HAS BEEN KEEPING SOMETHING FOR ME.\n\nTHE MOONWELL, AT DUSK. ...IT IS NEARLY DUSK. I MUST POLISH MY ARMOUR. ALL OF IT. TWICE. THEN I WILL SAY IT. PROBABLY. DEFINITELY. TELL HER... NO. TELL HER NOTHING. TELL HER THE MOONWELL.",
         "when": "under-the-willow/courage",
         "until": "under-the-willow"
       }
@@ -2606,8 +2606,8 @@
       },
       {
         "q": "Help Beckolas say it",
-        "a": "AT LAST! I'VE HAD THE SONG WRITTEN FOR A CENTURY. 'THE FIRST SWORD SAYS NOTHING, AT LENGTH.' TWELVE VERSES.\n\n...NO, YOU'RE RIGHT. HE HAS TO SAY IT HIMSELF. THE MOONWELL, THEN, AT DUSK. EVERYONE SAYS THE TRUE THING AT THE MOONWELL. I'LL BE IN THE BUSHES. PLAYING VERY QUIETLY.",
-        "when": "under-the-willow/ask",
+        "a": "YOU'VE NOTICED TOO? AT LAST. I'VE HAD THE SONG WRITTEN FOR A CENTURY. 'THE FIRST SWORD SAYS NOTHING, AT LENGTH.' TWELVE VERSES.\n\n...NO, YOU'RE RIGHT. HE HAS TO SAY IT HIMSELF. THE MOONWELL, THEN, AT DUSK. EVERYONE SAYS THE TRUE THING AT THE MOONWELL. I'LL BE IN THE BUSHES. PLAYING VERY QUIETLY.",
+        "when": "under-the-willow/song",
         "until": "under-the-willow"
       }
     ]
@@ -2655,7 +2655,7 @@
       {
         "q": "A flower for him",
         "a": "A MOONFLOWER. IT OPENS ONLY IN THE HAND OF SOMEONE WHO MEANS WHAT THEY'RE ABOUT TO SAY. I PICKED THIS ONE TWENTY YEARS AGO, FOR HIM. IT'S BEEN WAITING.\n\nTAKE IT TO HIM. IF IT STAYS SHUT, BRING IT BACK AND WE WILL NEVER SPEAK OF IT.",
-        "when": "under-the-willow/ask",
+        "when": "under-the-willow/flower",
         "until": "under-the-willow"
       }
     ]
@@ -3081,7 +3081,7 @@
       {
         "q": "Light the willow",
         "a": "THE WILLOW? AT DUSK? FOR THE FIRST SWORD?\n\nI HAVE BEEN SAVING THE GOOD LANTERNS FOR SIX HUNDRED YEARS, FOR SOMETHING WORTH LIGHTING. CONSIDER IT DONE. I WILL EVEN KEEP MY EYES OPEN.",
-        "when": "under-the-willow/ask",
+        "when": "under-the-willow/lanterns",
         "until": "under-the-willow"
       }
     ]
@@ -3114,7 +3114,7 @@
       {
         "q": "Ribbons for the willow",
         "a": "RIBBONS! THE SAME SILK AS HIS FAVOUR, GREEN WITH GOLD LEAVES. I WOVE A WHOLE BOLT OF IT IN THE SPRING. I KNEW. EVERYONE KNEW.\n\nI'LL TIE THEM IN THE WILLOW MYSELF. HE'LL THINK IT'S A COINCIDENCE. HE WILL BE THE ONLY ONE.",
-        "when": "under-the-willow/ask",
+        "when": "under-the-willow/ribbons",
         "until": "under-the-willow"
       }
     ]
@@ -3147,7 +3147,7 @@
       {
         "q": "Is it a secret?",
         "a": "IS IT ABOUT BECKOLAS AND THE QUEEN? EVERYBODY KNOWS ABOUT BECKOLAS AND THE QUEEN. EXCEPT BECKOLAS. AND THE QUEEN.",
-        "when": "under-the-willow/start",
+        "when": "queens-favour",
         "until": "under-the-willow"
       },
       {
