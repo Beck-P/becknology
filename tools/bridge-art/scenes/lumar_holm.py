@@ -21,6 +21,7 @@ workshop, js/holm.js stands the quarters' bunkhouse on its lot in its place: Bri
 import json
 import math
 import os
+import random
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -31,6 +32,7 @@ import assets_isle as I                # noqa: E402
 import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
 import assets_village as V             # noqa: E402
+import assets_yard as Y                # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -247,6 +249,23 @@ busy = lambda x, r: pd(x, r) < 0.6
 I.tufts(k, [c for c in land if material(c[0] + 0.5, c[1] + 0.5) in ('grass', 'grass_dark')], '#4e6e44', per_cell=1.3, avoid=busy)
 I.pebbles(k, land, '#6a6a62', per_cell=0.2, avoid=busy)
 
+# ---- the slipway below the garden wall (js/shipyard.js) --------------------------------------------------------------
+# The old slip's bed on its piles is always there (dry to the sea's mask, so the hull built on it is never drawn under
+# water); built, the slip is relaid over it, sheer-legs over its head and timber stacked by it; and a hull on it as she's
+# built (`hull`: keel | frame | planked). Its own dice, laid last, so nothing else on the island moves.
+SLIP = (8.6, 12.4, 19.8, 25.6)
+SLIP_Z = (0.0, C.WZ + 0.06)
+Y.clear_parts(k, (SLIP[0] - 0.3, SLIP[1] + 0.3, SLIP[2], SLIP[3] + 0.6), ('coast_rock', 'coast_weed', 'kelp', 'spore_clump', 'shell', 'driftwood', 'rim_rock'))
+Y.slip_bed(k, SLIP[0], SLIP[1], SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], random.Random(9091))
+with k.variant('slipway', 'built'):
+    yr = random.Random(9092)
+    Y.slip_new(k, SLIP[0], SLIP[1], SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], yr)
+    Y.lumber(k, 5.2, 6.8, 19.15, 19.85, yr, solid=False)                 # (js/holm.js walls its lot once it's built)
+for stage in ('keel', 'frame', 'planked'):
+    with k.variant('hull', stage):
+        Y.hull_on_slip(k, 10.5, 20.6, 24.8, 1.5, 0.55, 1.15, stage, SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], random.Random(9093))
+LOTS['slipway'] = (5, 19, 6, 19)
+
 k.area_light(21.0, 14.0, 16.0, '#90a8c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))       # moonlight
 k.point_light(21.0, 13.0, 4.0, '#e0f0e8', 40, radius=1.5)
 
@@ -269,6 +288,7 @@ w = {'name': 'Starling Holm', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'ti
          {'x': 29, 'y': 17, 'type': 'holm', 'act': 'warehouse', 'label': 'WAREHOUSE', 'prompt': 'PRESS E TO LOOK'},
          {'x': 28, 'y': 9, 'type': 'holm', 'act': 'quarters', 'label': 'QUARTERS', 'prompt': 'PRESS E TO LOOK'},
          {'x': 13, 'y': 9, 'type': 'holm', 'act': 'workshop', 'label': 'WORKSHOP', 'prompt': 'PRESS E TO LOOK'},
+         {'x': 10, 'y': 19, 'type': 'holm', 'act': 'slipway', 'label': 'SLIPWAY', 'prompt': 'PRESS E TO LOOK'},
          {'x': 12, 'y': 14, 'type': 'holm', 'act': 'garden', 'label': 'THE GARDEN', 'prompt': 'PRESS E TO LOOK'},
          {'x': 13, 'y': 12, 'type': 'farm_well', 'label': 'WELL', 'prompt': 'PRESS E TO DRAW WATER'},
          look('BOATHOUSE', 33, 18, 'THE OLD BOATHOUSE, ITS ROOF SAGGING. INSIDE, A ROWING BOAT WITH NO BOTTOM AND A NAME YOU CAN\'T READ.'),
