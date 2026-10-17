@@ -597,6 +597,8 @@ var BridgeOrbit = (function () {
     } else if (P.planet === 'hole') {
       drawHole(ctx, x + w * 0.5, y + h * 0.5, Math.max(8, Math.round(h * 0.16)), now);
     }
+    // playing together: the others' galleons parked here too (js/party.js)
+    if (opts.ships !== false && typeof BridgeParty !== 'undefined' && BridgeParty.drawShips) BridgeParty.drawShips(ctx, x, y, w, h, now, loc);
     ctx.restore();
   }
 

@@ -19,14 +19,19 @@ var BridgeHyperspace = (function () {
       var from = context.from || 'deep-space';
       var first = !BridgeStarmap.getVisited()[world.id];
       var stay = BridgeStarmap.stayAboard();
-      BridgeCine.jump(from, world.loc || world.id, { hold: 150, first: first, name: world.name, kind: world.kind }).then(function () {
+      // jumping with someone (js/party.js): their galleon alongside yours; following their jump, you land beside
+      // them — or, if they stay aboard, come aboard their bridge
+      var follow = context.follow || null;
+      if (follow) stay = !!follow.stay;
+      BridgeCine.jump(from, world.loc || world.id, { hold: 150, first: first, name: world.name, kind: world.kind, wing: !!(context.party && context.party.length) }).then(function () {
         BridgeStarmap.markVisited(world.id);
         if (typeof BridgeProgression !== 'undefined') {
           BridgeProgression.recordAchievement('visited_' + (world.loc || world.id), 25, { source: 'hyperspace' })
             .then(function () { BridgeProgression.maybeAwardWayfarer(); });
         }
+        if (follow && stay && typeof BridgeParty !== 'undefined' && BridgeParty.aboard(follow.leader, 'bridge', { x: 11, y: 10 })) return;
         if (stay) BridgeShip.arriveInOrbit(world);
-        else BridgeShip.descend(world);
+        else BridgeShip.descend(world, follow ? { beside: true } : null);
       });
       return;
     }

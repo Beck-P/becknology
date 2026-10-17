@@ -202,8 +202,8 @@ var BridgeShip = (function () {
     else returnToShip();
   }
 
-  /** From the mothership down to the world it's parked over. */
-  function launch() {
+  /** From the mothership down to the world it's parked over (playing together, js/party.js asks the others first). */
+  function launch(go) {
     if (busy) return;
     var loc = BridgeOrbit.getLocation();
     var dest = LANDING[loc];
@@ -211,6 +211,7 @@ var BridgeShip = (function () {
       BridgeInteractions.say('SHUTTLE', 'NOTHING BELOW BUT STARS.\\n\\nJUMP SOMEWHERE FROM THE\\nSTAR MAP ON THE BRIDGE FIRST.');
       return;
     }
+    if (!go && typeof BridgeParty !== 'undefined' && BridgeParty.depart({ kind: 'down', loc: loc }, function () { launch(true); })) return;
     busy = true;
     lockControls(true);
     BridgeCharacter.setHidden(true);
@@ -222,10 +223,12 @@ var BridgeShip = (function () {
     });
   }
 
-  function arrive(dest) {
+  // beside: riding down with someone (js/party.js) — step out a tile off the pad's spawn, not on top of them
+  function arrive(dest, opts) {
     BridgeWorld.load(dest, function (w) {
-      var pad = w.shuttle;
-      BridgeState.transition('world', { worldId: dest, spawn: pad ? { x: pad.spawn[0], y: pad.spawn[1] } : null });
+      var pad = w.shuttle, spot = pad ? { x: pad.spawn[0], y: pad.spawn[1] } : null;
+      if (spot && opts && opts.beside) spot = besideOf(w, spot) || spot;
+      BridgeState.transition('world', { worldId: dest, spawn: spot });
       if (pad) {
         BridgeCharacter.setHidden(true);
         lockControls(true);
@@ -243,9 +246,20 @@ var BridgeShip = (function () {
     });
   }
 
-  /** From anywhere off the ship, back up to the hangar. */
-  function returnToShip() {
+  // a free tile next to a spot: beside it first, then in front, then behind
+  function besideOf(w, at) {
+    var ring = [[1, 0], [-1, 0], [1, 1], [-1, 1], [0, 1], [2, 0], [-2, 0], [1, -1], [-1, -1], [0, -1]];
+    for (var i = 0; i < ring.length; i++) {
+      var x = at.x + ring[i][0], y = at.y + ring[i][1];
+      if (y >= 0 && y < w.height && x >= 0 && x < w.width && w.collisions && w.collisions[y][x] === 0) return { x: x, y: y };
+    }
+    return null;
+  }
+
+  /** From anywhere off the ship, back up to the hangar (playing together, the others are asked first). */
+  function returnToShip(go) {
     if (busy) return;
+    if (!go && typeof BridgeParty !== 'undefined' && BridgeParty.depart({ kind: 'up', world: BridgeWorld.getWorldId() }, function () { returnToShip(true); })) return;
     busy = true;
     var id = BridgeWorld.getWorldId();
     var loc = locationOf(id) || BridgeOrbit.getLocation();
@@ -276,14 +290,28 @@ var BridgeShip = (function () {
   }
 
   // ---- arriving in orbit after a jump ----------------------------------------------------------
-  /** Straight down after a jump: the screen is dark from the cutscene; touch down on the world's pad. */
-  function descend(world) {
+  /** Straight down after a jump: the screen is dark from the cutscene; touch down on the world's pad (`opts.beside`:
+   *  a tile off it, jumping with someone who lands there too). */
+  function descend(world, opts) {
     BridgeOrbit.setLocation(world.id);
     var dest = LANDING[BridgeOrbit.getLocation()];
     if (!dest || busy) return arriveInOrbit(world);
     busy = true;
     lockControls(true);
-    fade(true, 0).then(function () { arrive(dest); });
+    fade(true, 0).then(function () { arrive(dest, opts); });
+  }
+
+  /** Riding down with someone (js/party.js): from wherever you are to `loc`'s pad, beside them; your ship comes too. */
+  function rideDown(loc) {
+    var dest = LANDING[loc];
+    if (!dest || busy) return false;
+    BridgeOrbit.setLocation(loc);
+    busy = true;
+    lockControls(true);
+    if (typeof BridgeCharacter !== 'undefined') BridgeCharacter.setHidden(true);
+    sound('lift');
+    fade(true, 450).then(function () { arrive(dest, { beside: true }); });
+    return true;
   }
 
   function arriveInOrbit(dest) {
@@ -326,5 +354,6 @@ var BridgeShip = (function () {
   }
 
   return { isShipWorld: isShipWorld, locationOf: locationOf, board: board, launch: launch, returnToShip: returnToShip,
-           arriveInOrbit: arriveInOrbit, descend: descend, drawWorld: drawWorld, bayText: bayText, isBusy: function () { return busy; } };
+           arriveInOrbit: arriveInOrbit, descend: descend, rideDown: rideDown, fade: fade, landing: function (loc) { return LANDING[loc] || null; },
+           drawWorld: drawWorld, bayText: bayText, isBusy: function () { return busy; } };
 })();
