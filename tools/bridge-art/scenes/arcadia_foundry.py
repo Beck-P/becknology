@@ -69,10 +69,10 @@ S.letters(k, 'FOUNDRY', 'RubikMonoOne', 16.0, R0 + 1.46, 3.8, size=0.8, col=ORG,
 
 # ---- the dance floor: steel grating with red light coming up through it -------------------------------------------------------
 DF = (8, 9, 24, 15)                     # tiles x 8..23, rows 9..14
-k.box(DF[0], DF[1], -0.3, DF[2], DF[3], -0.25, '#1a0402', 'grate_pit', emit=(RED, 0.8))
+k.box(DF[0], DF[1], 0.0, DF[2], DF[3], 0.006, '#2a0604', 'floor_glow', emit=(RED, 0.75))
 k.box(DF[0] - 0.1, DF[1] - 0.1, -0.02, DF[2] + 0.1, DF[3] + 0.1, 0.0, '#3a3a40', 'floor_frame')
-bars = [(x, DF[1], -0.04, x + 0.05, DF[3], 0.0) for x in [DF[0] + i * 0.25 for i in range(int((DF[2] - DF[0]) / 0.25) + 1)]]
-bars += [(DF[0], r, -0.03, DF[2], r + 0.04, 0.0) for r in [DF[1] + i * 0.5 for i in range(int((DF[3] - DF[1]) / 0.5) + 1)]]
+bars = [(x, DF[1], 0.006, x + 0.06, DF[3], 0.03) for x in [DF[0] + i * 0.25 for i in range(int((DF[2] - DF[0]) / 0.25) + 1)]]
+bars += [(DF[0], r, 0.006, DF[2], r + 0.05, 0.03) for r in [DF[1] + i * 0.5 for i in range(int((DF[3] - DF[1]) / 0.5) + 1)]]
 k.boxes(bars, ('#4a4a50', 0.06), 'floor_grating')
 k.point_light((DF[0] + DF[2]) / 2, (DF[1] + DF[3]) / 2, 0.4, RED, 70, radius=2.0, group='flicker')
 # the ladle hung over the floor on chains, chains and hooks hanging from the dark
@@ -117,8 +117,10 @@ for x in (14.0, 18.0):
     dr.vent(x, 9.2, 0.0)
 
 # ---- light: red from the floor, orange from the furnace, a hard beam or two ----------------------------------------------------
-k.area_light(16, 12, 6.0, '#a04020', 60, 20.0, rot=(math.radians(30), 0, 0))
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.6}}, light_samples=96, world_light=('#2a1414', 0.55))
+k.area_light(16, 12, 6.0, '#c06040', 130, 24.0, rot=(math.radians(30), 0, 0))
+for (x, r) in ((10.0, 7.0), (22.0, 7.0), (4.0, 16.0), (28.0, 16.0), (16.0, 18.0)):
+    k.point_light(x, r, 3.2, '#ff8050', 30, radius=0.6, group='flicker')
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.6}}, light_samples=96, world_light=('#3a2420', 1.3))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Foundry', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',

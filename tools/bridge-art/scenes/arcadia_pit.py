@@ -40,7 +40,7 @@ for shelf in (1.35, 1.85):
     k.box(4.0, R0 + 0.05, shelf - 0.04, 22.0, R0 + 0.45, shelf, '#4a3020', 'shelf')
     for i in range(80):
         col = rng.choice(('#8a5a1a', '#5a2a1a', '#c8c8a0', '#3a6a3a'))
-        k.cyl(4.15 + i * 0.22, R0 + 0.28, shelf, shelf + rng.uniform(0.2, 0.34), 0.05, shade(col, 0.45), 'bottle', emit=(col, 0.3), verts=6)
+        k.cyl(4.15 + i * 0.22, R0 + 0.28, shelf, shelf + rng.uniform(0.2, 0.34), 0.05, shade(col, 0.55), 'bottle', emit=(col, 0.6), verts=6)
 k.box(3.8, R0 + 1.3, 0.0, 22.2, R0 + 1.9, 1.0, ('#3a2a20', 0.12), 'bar_counter', bevel=0.02)
 k.box(3.75, R0 + 1.25, 1.0, 22.25, R0 + 1.95, 1.06, ('#5a3a24', 0.15), 'bar_top')
 k.box(3.8, R0 + 1.9, 0.08, 22.2, R0 + 1.92, 0.13, '#1a0606', 'bar_led', emit=(RED, 0.7))
@@ -71,9 +71,9 @@ k.solid(24.4, R0, 29.0, R0 + 2.0)
 # ---- the pit: sand, the cage, the gate, the lamps over it -----------------------------------------------------------------------
 x0, r0, x1, r1 = RING
 k.box(x0, r0, -0.02, x1, r1, 0.01, ('#8a7a5a', 0.3), 'floor_sand')
-for _ in range(10):                                                              # dark where it's been wet, scuffs
+for _ in range(14):                                                              # scuffs where they've fought
     cx, cr = rng.uniform(x0 + 1, x1 - 1), rng.uniform(r0 + 1, r1 - 1)
-    k.cyl(cx, cr, 0.01, 0.012, rng.uniform(0.3, 0.8), ('#6a5a40', 0.3), 'floor_sand_dark', verts=12, ry=rng.uniform(0.2, 0.4))
+    k.cyl(cx, cr, 0.01, 0.012, rng.uniform(0.15, 0.4), ('#7e6e50', 0.3), 'floor_sand_dark', verts=12, ry=rng.uniform(0.08, 0.16))
 for (a, b) in ((0, 1), (1, 2), (2, 3), (3, 0)):
     p = [(x0, r0), (x1, r0), (x1, r1), (x0, r1)]
     gap = (5.0, 7.0) if (a, b) == (2, 3) else None                               # the gate on the near side, toward the door
@@ -96,8 +96,8 @@ for r in range(int(r0), int(r1)):
     k.solid(x1 - 0.1, r + 0.05, x1 + 0.1, r + 0.95)
 for (x, r) in ((x0 + 2, r0 + 2), (x1 - 2, r0 + 2), (x0 + 2, r1 - 2), (x1 - 2, r1 - 2)):             # the square of lamps over it
     k.tube((x, r, 3.5), (x, r, H + 1.0), 0.01, '#14121a', 'lamp_wire', verts=3)
-    k.cyl(x, r, 3.4, 3.6, 0.3, '#2a2a30', 'lamp_shade', verts=12)
-    k.cyl(x, r, 3.38, 3.4, 0.24, '#5a5a50', 'lamp_glass', emit=('#fff8e0', 1.0), verts=12)
+    k.cyl(x, r, 3.42, 3.56, 0.2, '#8a8a92', 'lamp_shade', verts=12)
+    k.cyl(x, r, 3.56, 3.58, 0.21, '#5a5a50', 'lamp_rim', emit=('#fff8e0', 0.8), verts=12)
     k.point_light(x, r, 3.1, '#fff4e0', 60, radius=0.4, group='flicker')
 for (x, r) in ((x0 + 0.5, r0 + 0.3), (x1 - 0.5, r1 - 0.3)):                     # the corner stools and buckets
     k.cyl(x, r + (0.4 if r < 12 else -0.4), 0.0, 0.3, 0.16, ('#5a6a7a', 0.1), 'bucket', verts=10)
@@ -140,8 +140,12 @@ U.fluoro(k, dr, 30.0, 20.6, 3.0, w=1.2, hang=H + 0.4, energy=16)
 dr.drip(28.0, 13.0, H + 1.0)
 U.puddles(k, 27.5, 12.6, 28.5, 13.4, 1, ('#a0c0e0',), rng=rng)
 
-k.area_light(18, 13, 6.0, '#a03030', 50, 22.0, rot=(math.radians(30), 0, 0))
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.8}}, light_samples=96, world_light=('#2a1a1c', 0.6))
+k.area_light(18, 13, 6.0, '#c06050', 110, 26.0, rot=(math.radians(30), 0, 0))
+for x in (6.0, 13.0, 20.0):                                                      # the bar's own light
+    k.point_light(x, R0 + 2.2, 2.4, '#ffb070', 30, radius=0.5, group='flicker')
+for (x, r) in ((5.7, 10.4), (30.3, 10.4), (5.7, 16.2), (30.3, 16.2)):           # and over the bleachers
+    k.point_light(x, r, 3.4, '#ff8070', 22, radius=0.6, group='flicker')
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.8}}, light_samples=96, world_light=('#3a2a2c', 1.3))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Pit', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',

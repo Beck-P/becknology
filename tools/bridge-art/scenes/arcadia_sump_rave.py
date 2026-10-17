@@ -119,7 +119,7 @@ for x in (6.0, 14.0, 22.0):
     dr.vent(x, 13.0, 0.0)
 dr.drip(9.0, 10.0, 6.0)
 dr.drip(25.0, 6.0, 6.0)
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.5}}, light_samples=96, world_light=('#140a24', 0.6))
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.5}}, light_samples=96, world_light=('#22163a', 1.2))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'Central (the rave)', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',

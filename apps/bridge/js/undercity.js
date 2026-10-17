@@ -402,11 +402,14 @@ var BridgeUndercity = (function () {
     });
     // rain coming through the grates: a stream of drops down from the dark, a splash where it lands
     (U.drips || []).forEach(function (d, i) {
-      var x = Math.round(offX + d[0] * ts), yb = offY + (d[1] + 0.05) * ts, yt = offY + (d[1] - d[2] * C45) * ts;
+      var x = Math.round(offX + d[0] * ts), yb = offY + (d[1] + 0.05) * ts, yt = offY + (d[1] - Math.min(d[2], 4.5) * C45) * ts;
       if (x < -10 || x > W + 10 || yb < -10 || yt > H + 10) return;
       yt = Math.max(yt, -10);
-      ctx.fillStyle = 'rgba(170,200,230,0.16)';
-      ctx.fillRect(x, Math.round(yt), 1, Math.round(yb - yt));                       // the thin stream itself
+      for (var sg = 0; sg < 5; sg++) {                                              // the stream, broken into falling runs
+        var ph = ((now / 520) + sg / 5 + hash('r' + i) * 0.3) % 1, sy = yt + (yb - yt) * ph;
+        ctx.fillStyle = 'rgba(170,200,230,' + (0.1 + 0.18 * ph).toFixed(2) + ')';
+        ctx.fillRect(x, Math.round(sy), 1, Math.round((yb - yt) * 0.12));
+      }
       for (var p = 0; p < 9; p++) {
         var life = ((now / 700) + p / 9 + hash('d' + i + ':' + p) * 0.2) % 1, y = yt + (yb - yt) * life * life;
         ctx.fillStyle = 'rgba(200,225,255,' + (0.35 + 0.4 * life).toFixed(2) + ')';

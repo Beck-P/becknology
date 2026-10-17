@@ -271,6 +271,29 @@ def shanty(k, dr, x0, x1, rf, floors, top=None, base=1.6, fh=1.05, rng=None, lit
     return units
 
 
+SIGN_WORDS = ['麺', '酒', '薬', '金', '鍵', '電', '修理', '質', '茶', '宿', '按摩', '歯科', '当', '肉', '魚', '粥', '理髪', '雀']
+SIGN_COLS = ['#ff4060', '#ff9a3a', '#40e0c0', '#f078a8', '#a0ff70', '#5cc8d0', '#ffd040', '#c060ff']
+
+
+def stack_signs(k, x0, x1, rf, z0=1.8, z1=6.0, n=None, rng=None):
+    """Kowloon's signs: blades standing off the stacks on brackets, one glyph a row, and lit boxes, crowded up the lower
+    floors in every colour."""
+    import assets_signs as SG
+    rng = rng or k.rng
+    n = n or int((x1 - x0) / 2.2)
+    for i in range(n):
+        x = x0 + (i + rng.uniform(0.15, 0.85)) * (x1 - x0) / n
+        col = rng.choice(SIGN_COLS)
+        word = rng.choice(SIGN_WORDS)
+        z = rng.uniform(z0, z1 - 1.0)
+        if rng.random() < 0.6:
+            h = 0.36 * len(word) + 0.25
+            SG.blade(k, word, 'DelaGothicOne', x, rf + rng.uniform(0.25, 0.45), z, h, col=col, w=0.38, stand=0.25)
+        else:
+            SG.lightbox(k, word, 'DelaGothicOne', x, rf + rng.uniform(0.3, 0.5), z, 0.4 * len(word) + 0.3, 0.42, bg=shade(col, 0.8),
+                        ink='#14080a', size=0.3, energy=3)
+
+
 def column(k, dr, cx, rf, w=2.2, d=1.6, top=12.0, posters=True, rng=None):
     """One of the city's great columns, going up into the dark: board-marked concrete in lifts, stained, hazard paint at
     its foot, a bundle of pipes clamped up it, posters pasted over posters, a tube light on it."""
@@ -383,7 +406,12 @@ def stall(k, dr, x0, x1, rb, kind='noodle', tarp=None, rng=None, name=None, dept
     for x in (x0 + 0.08, x1 - 0.08):                                 # poles
         k.cyl(x, rf - 0.05, 0, 2.15, 0.035, '#3a3842', 'stall_pole', verts=6)
         k.cyl(x, rb + 0.1, 0, 2.5, 0.035, '#3a3842', 'stall_pole', verts=6)
-    k.poly([(x0 - 0.1, rb, 2.55), (x1 + 0.1, rb, 2.55), (x1 + 0.12, rf + 0.15, 2.12), (x0 - 0.12, rf + 0.15, 2.12)], (tarp, 0.2), 'tarp')
+    n = max(3, int((x1 - x0 + 0.24) / 0.42))                         # the tarp in stripes, two tones
+    for i in range(n):
+        a0 = x0 - 0.12 + i * (x1 - x0 + 0.24) / n
+        a1 = a0 + (x1 - x0 + 0.24) / n
+        k.poly([(a0, rb, 2.55), (a1, rb, 2.55), (a1, rf + 0.15, 2.12), (a0, rf + 0.15, 2.12)],
+               (tarp if i % 2 == 0 else shade(tarp, 1.35), 0.2), 'tarp')
     k.box(x0 - 0.12, rf + 0.12, 1.98, x1 + 0.12, rf + 0.16, 2.14, shade(tarp, 0.8), 'tarp_valance')
     if rng.random() < 0.5:                                           # a patch on the tarp
         px = rng.uniform(x0 + 0.2, x1 - 0.6)
@@ -443,11 +471,12 @@ def stall(k, dr, x0, x1, rb, kind='noodle', tarp=None, rng=None, name=None, dept
     for i in range(int((w - 0.3) / 0.25)):
         k.box(x0 + 0.18 + i * 0.25, rb + 0.12, 1.54, x0 + 0.33 + i * 0.25, rb + 0.26, 1.54 + rng.uniform(0.1, 0.25),
               (rng.choice(('#c8a050', '#e8e0d0', '#8a3a2a', '#3a5a8a', '#4a7a4a')), 0.12), 'jar')
-    k.box(x0 + w * 0.5 - 0.4, rb + 0.085, 1.7, x0 + w * 0.5 + 0.4, rb + 0.1, 2.15, '#f0e8d0', 'menu_card', emit=('#fff4d8', 0.35))
+    k.box(x0 + w * 0.5 - 0.4, rb + 0.085, 1.7, x0 + w * 0.5 + 0.4, rb + 0.1, 2.15, '#c8c0a8', 'menu_card', emit=('#fff4d8', 0.12))
     k.boxes([(x0 + w * 0.5 - 0.32, rb + 0.1, 1.78 + i * 0.09, x0 + w * 0.5 + rng.uniform(0.0, 0.32), rb + 0.104, 1.81 + i * 0.09) for i in range(4)], '#3a2020', 'menu_ink')
     if name:
         import assets_signs as SG
-        SG.lightbox(k, name, 'DelaGothicOne', (x0 + x1) / 2, rf + 0.16, 2.0, min(w - 0.2, 1.8), 0.32, bg='#f4e8d0', ink='#a01818', size=0.22, energy=4)
+        bg, ink = rng.choice((('#e8a040', '#2a0a04'), ('#e84060', '#fff0e0'), ('#40c0c0', '#04201e'), ('#f0d060', '#3a0a04'), ('#a060e0', '#fff0ff')))
+        SG.lightbox(k, name, 'DelaGothicOne', (x0 + x1) / 2, rf + 0.16, 2.0, min(w - 0.2, 1.8), 0.36, bg=shade(bg, 0.8), ink=ink, size=0.26, energy=4)
     fluoro(k, dr, (x0 + x1) / 2, rf - 0.4, 2.15, w=min(1.0, w - 0.4), energy=10)
     if rng.random() < 0.7:
         Y.paper_lantern(k, x0 + 0.15, rf + 0.1, 1.75, col=rng.choice(('#e03030', '#f0a030')), s=0.32, top=2.12)
@@ -740,7 +769,8 @@ def room(k, dr, x0, r0, x1, r1, h, door, floor='concrete', wall='#2e2a30', clad=
     if floor == 'concrete':
         concrete(k, x0, r0, x1, r1, tones=tones or CONC, rng=rng)
     else:
-        Y.tile_floor(k, x0, r0, x1, r1, tones=tones or ('#3a3640', '#34303a'), size=0.5, seam='#141018')
+        tones = tones or ('#3a3640', '#34303a')
+        Y.tile_floor(k, x0, r0, x1, r1, tones=tones, size=0.5, seam=shade(tones[0], 0.72))
     k.box(x0 - 0.6, r0 - 0.5, 0, x1 + 0.6, r0, h, (wall, 0.08), 'wall')
     _clad(k, x0 - 0.6, x1 + 0.6, r0, 0.25, h - 0.3, wall, clad, rng)
     k.box(x0 - 0.6, r0 - 0.02, 0, x1 + 0.6, r0 + 0.06, 0.25, shade(wall, 0.6), 'skirting')

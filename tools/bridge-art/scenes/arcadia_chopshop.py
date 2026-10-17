@@ -71,10 +71,12 @@ k.box(CX - 0.42, CR - 1.1, 0.5, CX + 0.42, CR - 0.7, 1.2, ('#2a5a4a', 0.12), 'ch
 for s in (-1, 1):
     k.box(CX + s * 0.52 - 0.06, CR - 0.4, 0.55, CX + s * 0.52 + 0.06, CR + 0.4, 0.62, '#3a3a40', 'chair_arm')
     k.box(CX + s * 0.52 - 0.07, CR + 0.1, 0.62, CX + s * 0.52 + 0.07, CR + 0.2, 0.66, '#8a5a3a', 'strap')
-k.cyl(CX, CR - 0.2, 0.0, 2.3, 0.04, '#5a5a60', 'lamp_arm', verts=6)
-k.cyl(CX, CR + 0.2, 2.25, 2.33, 0.45, '#2a2a30', 'ring_lamp', verts=20)
-k.cyl(CX, CR + 0.2, 2.22, 2.25, 0.38, shade(GRN, 0.4), 'ring_lamp_glow', emit=('#e8fff0', 1.0), verts=20)
-k.point_light(CX, CR + 0.2, 1.9, '#e8fff0', 55, radius=0.4, group='flicker')
+k.cyl(CX - 0.9, CR - 0.6, 0.0, 1.9, 0.04, '#5a5a60', 'lamp_stand', verts=6)                  # the surgical lamp on its arm, beside the chair
+k.solid_post(CX - 0.9, CR - 0.6)
+k.tube((CX - 0.9, CR - 0.6, 1.9), (CX - 0.35, CR - 0.1, 1.75), 0.03, '#5a5a60', 'lamp_arm', verts=6)
+k.cyl(CX - 0.3, CR - 0.05, 1.62, 1.76, 0.2, '#c8ccd0', 'lamp_head', verts=14)
+k.cyl(CX - 0.3, CR - 0.05, 1.6, 1.62, 0.16, shade(GRN, 0.4), 'lamp_glass', emit=('#e8fff0', 1.0), verts=14)
+k.point_light(CX - 0.1, CR + 0.1, 1.3, '#e8fff0', 32, radius=0.3, group='flicker')
 k.solid(CX - 0.55, CR - 1.1, CX + 0.55, CR + 0.9)
 k.cyl(8.2, 6.8, 0.0, 0.9, 0.03, '#8a8a90', 'tray_stand', verts=6)                           # the tools on a tray
 k.box(7.8, 6.5, 0.9, 8.6, 7.1, 0.94, ('#b8c0c8', 0.06), 'tray')

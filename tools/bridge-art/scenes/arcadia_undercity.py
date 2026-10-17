@@ -67,6 +67,8 @@ for (a, b) in spans:
 for cx in COLUMNS:
     U.column(k, dr, cx, RF + 0.35, w=2.6, d=2.4, top=TOP + 2, rng=rng)
 k.box(-0.5, RF - 0.05, 1.55, COLS + 0.5, RF + 0.2, 1.65, '#1e1c24', 'awning_ledge')
+for (a0, a1) in spans:                                                             # their signs, crowded up the lower floors
+    U.stack_signs(k, a0 + 0.6, a1 - 0.6, RF + 0.3, z0=2.4, z1=7.0, rng=rng)
 
 # ---- the ground storeys: what each door is --------------------------------------------------------------------------
 G = 1.65
@@ -249,6 +251,7 @@ for (a0, a1) in SEGS:
     k.box(a0, BB, 0, a1, BF - 0.02, BT, ('#1e1c22', 0.05), 'block_body')
     U.shanty(k, dr, a0, a1, BF, 1, top=BT, base=1.65, fh=1.6, rng=rng, lit=0.55, signs=True)
     U.rooftop(k, dr, a0, a1, BB, BF, BT, rng=rng)
+    U.stack_signs(k, a0 + 0.4, a1 - 0.4, BF, z0=1.7, z1=3.3, n=max(1, int((a1 - a0) / 4)), rng=rng)
     k.box(a0, BF - 0.05, 1.55, a1, BF + 0.2, 1.65, '#1e1c24', 'awning_ledge')
     k.solid(a0, BB, a1, BF)
 for (a0, a1) in ALLEYS:                                                            # the alleys through: wet, a tube, a cable over

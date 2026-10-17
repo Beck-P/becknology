@@ -144,7 +144,7 @@ U.puddles(k, 1, 12, 63, 35, 14, (U.SODIUM, SAINT, '#2a7a5a'), rng=rng)
 
 k.area_light(16, 22, 9.0, '#c08060', 80, 28.0, rot=(math.radians(35), 0, 0))
 k.area_light(48, 22, 9.0, '#c07050', 80, 28.0, rot=(math.radians(35), 0, 0))
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96, world_light=('#2a2230', 0.9))
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96, world_light=('#2e2634', 1.4))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'The Scrapyards', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',

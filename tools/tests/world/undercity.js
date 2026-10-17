@@ -51,6 +51,10 @@ const PLACES = ['arcadia-undercity', 'arcadia-hawker', 'arcadia-dive', 'arcadia-
 
   // ---- every place: loads, scene and people there, nothing walled off, every door both ways ---------------------------------
   const links = {};
+  for (const w of PLACES.slice()) {                         // a place not there at all is a failure, but the rest still run
+    const there = await ev((w) => fetch('/bridge/assets/worlds/' + w + '.json').then(r => r.ok), w);
+    if (!there) { bad(w + ' is missing'); PLACES.splice(PLACES.indexOf(w), 1); }
+  }
   for (const w of PLACES) {
     await go(w); await p.waitForTimeout(1800);
     const info = await ev(() => { const w = BridgeWorld.getWorld(); return { name: w.name, scene: !!(w.scene && w.scene.id), actors: (w.scene && w.scene.actors || []).length,
@@ -69,7 +73,8 @@ const PLACES = ['arcadia-undercity', 'arcadia-hawker', 'arcadia-dive', 'arcadia-
   // doors land on open ground, and each place you can go to leads back
   for (const w of PLACES) for (const d of links[w]) {
     const [to, sp] = d.split('@'), xy = sp.split(',').map(Number);
-    const ok = await ev(([to, xy]) => fetch('/bridge/assets/worlds/' + to + '.json').then(r => r.json()).then(d => d.collisions[xy[1]] && d.collisions[xy[1]][xy[0]] === 0), [to, xy]);
+    const ok = await ev(([to, xy]) => fetch('/bridge/assets/worlds/' + to + '.json').then(r => r.ok ? r.json() : null).then(d => !d ? 'missing' : d.collisions[xy[1]] && d.collisions[xy[1]][xy[0]] === 0), [to, xy]);
+    if (ok === 'missing') { bad(w + ' → ' + to + ': no such place'); continue; }
     if (!ok) bad(w + ' → ' + to + ' lands on a wall at ' + sp);
     if (PLACES.includes(to) && !links[to].some(x => x.startsWith(w + '@'))) bad(to + ' has no way back to ' + w);
   }
@@ -81,6 +86,7 @@ const PLACES = ['arcadia-undercity', 'arcadia-hawker', 'arcadia-dive', 'arcadia-
   const roster = (pg, w) => pg.evaluate((w) => fetch('/bridge/assets/worlds/' + w + '.json').then(r => r.json()).then(d => JSON.stringify(BridgeUndercity._roster(w, d))), w);
   const p2 = await page();
   for (const w of ['arcadia-undercity', 'arcadia-scrapyard', 'arcadia-sump']) {
+    if (!PLACES.includes(w)) continue;
     const a = await roster(p, w), b2 = await roster(p2, w);
     console.log('roster', w, a === b2 ? 'the same on two pages' : 'DIFFERENT', '·', JSON.parse(a).length, 'out');
     if (a !== b2) bad('roster differs on two pages: ' + w);
@@ -106,16 +112,18 @@ const PLACES = ['arcadia-undercity', 'arcadia-hawker', 'arcadia-dive', 'arcadia-
 
   // ---- shops, Gage, the book, a pile, the shrine, Teo -------------------------------------------------------------------------------
   await go('arcadia-undercity'); await p.waitForTimeout(1200);
-  await use("i.label === 'NOODLE COUNTER'"); console.log("Mama Roo's:", (await dialog()).slice(0, 100)); await pick(0);
-  console.log('  bought a broth:', await ev(() => BridgeInventory.getCount('roo_broth')), '· coins', await ev(() => window._coins)); await closeAll();
+  await use("i.label === 'NOODLE COUNTER'"); console.log("Mama Roo's sells:", (await dialog()).slice(0, 120)); await closeAll();
   await ev(() => { BridgeInventory.addItem('scrap_metal', 5); BridgeInventory.addItem('circuit', 2); });
   await use("i.act === 'scrap'"); const before = await ev(() => window._coins); await pick(2); await closeAll();
   console.log('Gage bought it all:', (await ev(() => window._coins)) - before, 'coins · scrap left', await ev(() => BridgeInventory.getCount('scrap_metal')));
   await use("i.act === 'bets'"); console.log('the book:', (await dialog()).slice(0, 110)); await pick(0); console.log('  ', (await dialog()).slice(0, 160)); await closeAll();
+  if (PLACES.includes('arcadia-scrapyard')) {
   await go('arcadia-scrapyard'); await p.waitForTimeout(1200);
   console.log('the scrapyard: Saint Ruin today?', await ev(() => BridgeWorld.getWorld().interactions.some(i => i.creature === 'ruin')));
   await use("i.act === 'search'"); console.log('a scrap pile:', (await dialog()).slice(0, 120)); await closeAll();
   await use("i.act === 'search'"); console.log('the same pile again:', (await dialog()).slice(0, 80)); await closeAll();
+  }
+  if (PLACES.includes('arcadia-sump')) {
   await go('arcadia-sump'); await p.waitForTimeout(1200);
   console.log('the Sump: the Dredge today?', await ev(() => BridgeWorld.getWorld().interactions.some(i => i.creature === 'dredge')));
   await ev(() => BridgeInventory.takeDamage(40));
@@ -123,10 +131,14 @@ const PLACES = ['arcadia-undercity', 'arcadia-hawker', 'arcadia-dive', 'arcadia-
   await ev(() => BridgeInventory.addItem('eel_fillet', 2));
   await use("i.act === 'boat'"); await pick(1); console.log("Teo's boat:", (await dialog()).slice(0, 120)); await closeAll();
   await use("i.type === 'express_lift' || i.act === 'lift'"); console.log('the freight lift:', (await dialog()).slice(0, 140)); await closeAll();
+  }
+  if (PLACES.includes('arcadia-foundry')) {
   await go('arcadia-foundry'); await p.waitForTimeout(1000);
   await use("i.act === 'dance'"); console.log('the Foundry floor:', (await dialog()).slice(0, 80)); await closeAll();
+  }
 
   // ---- the Pit: the cage, three rounds ------------------------------------------------------------------------------------------------
+  if (PLACES.includes('arcadia-pit')) {
   await go('arcadia-pit'); await p.waitForTimeout(1200);
   await use("i.act === 'ring'"); await pick(0); await closeAll(); await p.waitForTimeout(1600);
   for (let round = 1; round <= 3; round++) {
@@ -138,6 +150,7 @@ const PLACES = ['arcadia-undercity', 'arcadia-hawker', 'arcadia-dive', 'arcadia-
   }
   console.log('after three rounds: coins', await ev(() => window._coins), '· still in a bout?', await ev(() => !!BridgeUndercity._ring()));
   await p.screenshot({ path: SHOTS + '/under_pit.png' });
+  }
 
   // ---- implants ------------------------------------------------------------------------------------------------------------------------
   const st = () => ev(() => ({ max: BridgeInventory.getStats().maxHP + '/' + BridgeInventory.getStats().maxEnergy, speed: BridgeGear.speed().toFixed(2), b: BridgeImplants.bonus() }));

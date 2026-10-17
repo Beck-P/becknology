@@ -209,7 +209,7 @@ for (x0, r0, x1, r1) in WATER:                                                  
                     k.point_light(x, r, WZ + 0.2, TEAL, 10, radius=1.2)
 k.area_light(20, 24, 9.0, '#40a0a0', 70, 28.0, rot=(math.radians(35), 0, 0))
 k.area_light(62, 24, 9.0, '#40a0a0', 70, 28.0, rot=(math.radians(35), 0, 0))
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=96, world_light=('#14202a', 0.9))
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=96, world_light=('#1e2c36', 1.4))
 
 # ---- the world ---------------------------------------------------------------------------------------------------------------------
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
