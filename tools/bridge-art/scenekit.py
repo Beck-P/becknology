@@ -683,6 +683,9 @@ class Kit:
         sc = self.scene
         sc.render.engine = 'CYCLES'
         sc.cycles.device = 'CPU'
+        # SCENE_PERSIST=1 keeps the scene's geometry (its BVH) from pass to pass: only the materials change between the
+        # passes, so a scene of thousands of parts stops rebuilding it every time (off by default)
+        sc.render.use_persistent_data = bool(os.environ.get('SCENE_PERSIST'))
         sc.cycles.samples = samples
         sc.cycles.use_denoising = samples > 1
         sc.cycles.filter_width = 0.01 if samples == 1 else 1.0
@@ -942,6 +945,7 @@ class Kit:
         if lit:
             self._lit_lights()
         self._lit_samples = min(light_samples, int(os.environ.get('SCENE_LIT_SAMPLES', 64)))
+        print('scenekit: %d parts, %d lights' % (len(self.parts), len(self.lights)), flush=True)
         self._camera()
         sc = self.scene
         # Dim ambient sky so unlit corners aren't pure black
