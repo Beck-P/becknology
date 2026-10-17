@@ -756,6 +756,8 @@ def lantern_post(k, cx, cr, h=2.2, energy=40):
     lx = cx + 0.28
     k.cone(lx, cr, h - 0.2, h - 0.1, 0.03, 0.01, IRON, 'post_hook', verts=4)
     lantern(k, lx, cr, h - 0.5, h - 0.24, s=0.1, energy=energy)
+    if energy:      # its pool on the ground: a lamp up a post alone lights the ground no more than the moon does
+        k.point_light(lx, cr + 0.12, 0.85, '#ffb060', energy * 1.6, radius=0.3, group='flicker')
     k.solid_post(cx, cr)
 
 
