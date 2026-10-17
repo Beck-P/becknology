@@ -15,6 +15,7 @@ water meets what stands in it (scene_post writes the shore field from the
 height pass).
 """
 import math
+import random
 
 import bmesh
 import bpy
@@ -183,8 +184,10 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
                 cx, cr = x + STEP / 2, r + STEP / 2
                 return 'g:' + ground[0](cx + 0.09 * (2 * (h1 - math.floor(h1)) - 1), cr + 0.09 * (2 * (h2 - math.floor(h2)) - 1))
             return 'lip_grass'
-        if z > WZ + 0.05:
-            return 'bank_sand' if b > 0.5 else 'bank_rock'
+        if z > WZ + 0.05:     # above the water: a damp band the waves wash, wandering, then the dry bank
+            if b > 0.5:
+                return 'damp_sand' if z < WZ + 0.15 + 0.05 * _n(x, r, 1.7, seed + 8) else 'bank_sand'
+            return 'wet_rock' if z < WZ + 0.09 else 'bank_rock'
         if z > WZ - 0.1:
             return 'wet_sand' if b > 0.5 else 'wet_rock'
         if z > WZ - 0.75:
@@ -202,7 +205,7 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
     ALB = {
         'lip_grass': (grass, 0.3), 'lip_sand': (shade(P['sand'], 1.15), 0.25),
         'bank_sand': (P['sand'], 0.25), 'bank_rock': (rock, 0.25),
-        'wet_sand': (shade(P['sand'], 0.72), 0.2), 'wet_rock': (shade(rock, 0.7), 0.2),
+        'damp_sand': (shade(P['sand'], 0.86), 0.22), 'wet_sand': (shade(P['sand'], 0.72), 0.12), 'wet_rock': (shade(rock, 0.7), 0.16),
         'shelf_sand': (shade(P['sand'], 0.85), 0.25), 'shelf': (P['bed'], 0.3), 'weed': (P['weed'], 0.35),
         'deep': (shade(P['bed'], 0.7), 0.3),
     }
@@ -302,6 +305,30 @@ def coast(k, land, palette='emerald', grass='#34462e', rock=SALT[2], beachiness=
                              emit=(P['glow'], 0.55), segs=6)
             elif b > 0.6 and WZ + 0.2 > z > WZ - 0.05 and rng.random() < 0.12:
                 k.blob(x, r, z + 0.01, 0.05, 0.04, 0.02, ('#d8ccc0', 0.1), 'shell', segs=6)
+    # the wrack line along the top of the wet sand: weed thrown up in strands, a shell, a stick of driftwood. Its own
+    # dice, so everything the scene's dice place after the coast stays where it was
+    wr = random.Random(seed * 7919 + 11)
+    g = 0.3
+    for j in range(int((r1 - r0) / g)):
+        for i in range(int((x1 - x0) / g)):
+            x = x0 + (i + wr.random()) * g
+            r = r0 + (j + wr.random()) * g
+            roll = wr.random()
+            z, b, d = h_at(x, r)
+            if roll > 0.34 or b < 0.6 or not (WZ + 0.2 > z > WZ + 0.1) or d <= 0.05 or not clear(x, r):
+                continue
+            for _ in range(wr.randint(2, 4)):
+                a, l = wr.uniform(0, math.pi), wr.uniform(0.06, 0.16)
+                ox, orr = wr.uniform(-0.1, 0.1), wr.uniform(-0.06, 0.06)
+                k.bar(x + ox, r + orr, x + ox + math.cos(a) * l, r + orr + math.sin(a) * l * 0.6, z - 0.005, z + 0.012, 0.022,
+                      (shade('#3a4a2a', wr.uniform(0.75, 1.2)), 0.3), 'coast_weed')
+            if wr.random() < 0.3:
+                k.blob(x + wr.uniform(-0.1, 0.1), r + wr.uniform(-0.06, 0.06), z + 0.01, 0.04, 0.03, 0.018,
+                       (wr.choice(('#e8dcd0', '#d8b8a8', '#f0e8e0')), 0.1), 'shell', segs=6)
+            if wr.random() < 0.08:
+                a = wr.uniform(0, math.pi)
+                k.tube((x - math.cos(a) * 0.2, r - math.sin(a) * 0.12, z + 0.02), (x + math.cos(a) * 0.2, r + math.sin(a) * 0.12, z + 0.025),
+                       0.025, (shade('#8a7a68', wr.uniform(0.85, 1.1)), 0.3), 'driftwood', rb=0.018, verts=6)
     k.water_z = WZ
     return Terrain(x0, r0, H, B, D, nx, nr)
 

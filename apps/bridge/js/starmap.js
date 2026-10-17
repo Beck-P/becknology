@@ -193,13 +193,17 @@ var BridgeStarmap = (function () {
     if (e.key === 'Enter' || e.key === 'j' || e.key === 'J' || e.key === ' ') stopCharge();
   }
 
-  function jump() {
+  // playing together (js/party.js), the others are asked to come first; `party` is who's jumping with you
+  function jump(go, party) {
     var w = WORLDS[selected];
     charging = null;
+    if (go !== true && typeof BridgeParty !== 'undefined' &&
+        BridgeParty.depart({ kind: 'jump', to: w.id, toName: w.name, stay: stayAboard() }, function (ids) { jump(true, ids); })) return;
     var from = typeof BridgeOrbit !== 'undefined' ? BridgeOrbit.getLocation() : 'deep-space';
     if (typeof BridgeOrbit !== 'undefined') BridgeOrbit.setLocation(w.id);
-    BridgeState.transition('travel', { world: w, from: from });
+    BridgeState.transition('travel', { world: w, from: from, party: party && party.length ? party : null });
   }
+  function worldById(id) { for (var i = 0; i < WORLDS.length; i++) if (WORLDS[i].id === id || WORLDS[i].loc === id) return WORLDS[i]; return null; }
 
   function back(e) {
     if (e && e.preventDefault) e.preventDefault();
@@ -354,5 +358,5 @@ var BridgeStarmap = (function () {
   // after a jump: straight down in the shuttle (the default), or stay aboard on the bridge to look out at the world
   function stayAboard() { try { return localStorage.getItem('bridge_stay_aboard') === '1'; } catch (e) { return false; } }
 
-  return { show: show, draw: draw, hide: hide, markVisited: markVisited, getVisited: getVisited, stayAboard: stayAboard };
+  return { show: show, draw: draw, hide: hide, markVisited: markVisited, getVisited: getVisited, stayAboard: stayAboard, world: worldById };
 })();

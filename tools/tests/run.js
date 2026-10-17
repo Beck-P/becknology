@@ -39,9 +39,9 @@ const SUITES = {
     ['world/arrive.js', SHOTS + '/arrive'],
     ['world/title.js', SHOTS + '/title'],
   ],
-  // two pilots on the fake Supabase: seeing each other, walking, presence, sharing, partners, fighting, sailing
+  // two pilots on the fake Supabase: seeing each other, walking, presence, sharing, partners, fighting, sailing, a party
   multi: ['mp_see', 'mp_walk', 'mp_visible', 'mp_presence', 'mp_away', 'mp_share', 'mp_partner', 'mp_clue', 'mp_fight', 'mp_hp',
-    'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight'].map((t) => ['multi/' + t + '.js', D]),
+    'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight', 'mp_party'].map((t) => ['multi/' + t + '.js', D]),
   // playing every game together (js/together.js), and the table chat
   together: [['t_cab.js', 'asteroids'], ['t_cab.js', 'breakout'], ['t_cab.js', 'space-invaders', 'Co-op', 'Just for fun'],
     ['t_heli.js', 'Score duel'], ['t_heli.js', 'Tandem'], ['t_dice.js', 'With'], ['t_dice.js', 'Heads', 'lumar-crown-pub'], ['t_diceleave.js'],
@@ -77,6 +77,7 @@ const KEEP = new RegExp([
   /status|mate:|settled|beck:|aly:|chat|heard|unread|after|typed|my turn|sunk|crew|things match/,
   /hp|down|up:|roll|chain|energy|boxes/,
   /contract|dispatch|orders away|route lines|treasury/,
+  /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
 
