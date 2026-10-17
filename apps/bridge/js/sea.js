@@ -474,7 +474,7 @@ var BridgeSea = (function () {
   var SHELF = [34, 72, 118];  // depth bytes where the water steps down a band (wandered by a slow noise: shelves, not rings)
   var BAND_A = [0.4, 0.6, 0.8, 1];      // the water's opacity in each band, shallow to deep
   var BAND_T = [0.3, 0.18, 0.08, 0];    // and the shallows' pale tint over it
-  var MAXR = 26;              // how far down the water a reflection reaches (px)
+  var MAXR = 40;              // how far down the water a reflection reaches (px)
 
   function loadShore(sc) {
     var S = shores[sc.id];
@@ -517,6 +517,7 @@ var BridgeSea = (function () {
         var p = idx[q], bb = band[p], up = p >= W ? band[p - W] : 255, lf = p % W ? band[p - 1] : 255;
         bd.push(bb === 255 ? 255 : bb | ((up !== 255 && up < bb) || (lf !== 255 && lf < bb) ? 16 : 0));
       }
+      S.calm = shelter(water, px, W, H);
       var layer = document.createElement('canvas');
       layer.width = W; layer.height = H;
       var anim = document.createElement('canvas');
@@ -538,6 +539,71 @@ var BridgeSea = (function () {
       gi.src = '/bridge/assets/scenes/' + sc.id + '/glow' + (sc.ext || '.png') + (sc.q || '');
     }
     return null;
+  }
+
+  // ---- sheltered water: harbours, coves and the water along a quay lie still (Look Book 2's harbour: calm and darker,
+  // the swell's bands gone, only a few wavelets; the mirror reads on it). How sheltered each patch is comes from rays
+  // cast toward the land in eight directions on a coarse grid (8 px), at load: land close by on most sides is a harbour,
+  // land close on one side is a quay's edge. Spread to full size with a wandering edge in two flat steps (half, still).
+  // Returns an alpha mask the size of the render, or null when the island has no sheltered water.
+  var CG = 8, RAYS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  function shelter(water, px, W, H) {
+    var gw = Math.ceil(W / CG), gh = Math.ceil(H / CG), land = new Uint8Array(gw * gh), g = new Float32Array(gw * gh), any = false, x, y;
+    for (y = 0; y < gh; y++) for (x = 0; x < gw; x++) {
+      var p = Math.min(H - 1, y * CG + 4) * W + Math.min(W - 1, x * CG + 4);
+      land[y * gw + x] = water[p] ? 0 : 1;
+    }
+    for (y = 0; y < gh; y++) for (x = 0; x < gw; x++) {
+      if (land[y * gw + x]) continue;
+      var hits = 0, near = 99;
+      for (var r = 0; r < 8; r++) {
+        for (var k = 1; k <= 22; k++) {
+          var xx = x + RAYS[r][0] * k, yy = y + RAYS[r][1] * k;
+          if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) break;
+          if (land[yy * gw + xx]) { hits++; near = Math.min(near, k); break; }
+        }
+      }
+      var v = hits >= 5 ? 1 : hits >= 4 ? 0.75 : hits >= 3 ? 0.45 : 0;
+      v = Math.max(v, near <= 2 ? 0.7 : near <= 4 ? 0.4 : 0);
+      g[y * gw + x] = v;
+      if (v > 0) any = true;
+    }
+    if (!any) return null;
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var cx = c.getContext('2d'), img = cx.createImageData(W, H), d = img.data;
+    for (y = 0; y < H; y++) {
+      var fy = y / CG - 0.5, y0 = Math.max(0, Math.floor(fy)), y1 = Math.min(gh - 1, y0 + 1), ty = Math.max(0, Math.min(1, fy - y0));
+      for (x = 0; x < W; x++) {
+        var i = y * W + x;
+        if (!water[i] || !px[i * 4 + 1]) continue;
+        var fx = x / CG - 0.5, x0 = Math.max(0, Math.floor(fx)), x1 = Math.min(gw - 1, x0 + 1), tx = Math.max(0, Math.min(1, fx - x0));
+        var vv = (g[y0 * gw + x0] * (1 - tx) + g[y0 * gw + x1] * tx) * (1 - ty) + (g[y1 * gw + x0] * (1 - tx) + g[y1 * gw + x1] * tx) * ty;
+        vv += (hash((x >> 2) * 131 + (y >> 2) * 977) - 0.5) * 0.18;
+        var a = vv > 0.62 ? 1 : vv > 0.32 ? 0.5 : 0;
+        if (a) d[i * 4 + 3] = Math.round(a * 255);
+      }
+    }
+    cx.putImageData(img, 0, 0);
+    return c;
+  }
+  // the still water's flat body over the swell, where it's sheltered: deep's colour with a little of the body's, darker
+  // by night, in step with the light (the colours come from the live light's hour when there is one)
+  var calmC = null, calmX = null;
+  function calmOver(L, S, v, C, Lw) {
+    if (!calmC) { calmC = document.createElement('canvas'); calmX = calmC.getContext('2d'); }
+    if (calmC.width < v[2] || calmC.height < v[3]) { calmC.width = Math.max(calmC.width, v[2]); calmC.height = Math.max(calmC.height, v[3]); }
+    calmX.globalCompositeOperation = 'source-over'; calmX.globalAlpha = 1;
+    calmX.clearRect(0, 0, v[2], v[3]);
+    calmX.drawImage(S.calm, v[0], v[1], v[2], v[3], 0, 0, v[2], v[3]);
+    calmX.globalCompositeOperation = 'source-in';
+    var cc = mixc(C.deep, C.base, 0.35 + 0.25 * Lw.day);
+    cc = mixc(cc, [62, 122, 142], 0.4 * Lw.day * (1 - Lw.golden));                 // Look Book 2's still water by day
+    cc = mixc(cc, [128, 112, 112], 0.35 * Lw.golden * (1 - Lw.night));             // and greyed warm at golden hour
+    calmX.fillStyle = rgb(cc);
+    calmX.fillRect(0, 0, v[2], v[3]);
+    L.globalAlpha = 1 - 0.6 * Math.max(Lw.storm, 0.7 * Lw.gale);      // a storm reaches in even here
+    L.drawImage(calmC, 0, 0, v[2], v[3], v[0], v[1], v[2], v[3]);
+    L.globalAlpha = 1;
   }
 
   // Where the water mirrors what stands above it: in each column, every place the water begins under something that
@@ -599,7 +665,7 @@ var BridgeSea = (function () {
   // margin round it (a canvas the size of the screen, not of the island) whenever the view leaves that, the picture
   // above the water changes (a new live-light composition, or the baked light state that shows most), or the light
   // does; then drawn a dozen times a second with each row nudged sideways on a slow wave (the ripple).
-  var FADE = [[0, 6, 0.85], [6, 14, 0.55], [14, MAXR, 0.28]];
+  var FADE = [[0, 8, 0.9], [8, 20, 0.6], [20, MAXR, 0.3]];
   function mirrorSource(sc) {
     if (sc.lit && sc.lit.cur) return { img: sc.lit.cur.canvas, key: sc.lit.cur };
     var W = typeof BridgeScene !== 'undefined' && BridgeScene.skyOf ? BridgeScene.skyOf(sc) : null, st = sc.meta.states[0];
@@ -765,6 +831,7 @@ var BridgeSea = (function () {
     L.globalCompositeOperation = 'source-in';
     fillPattern(L, texture(name, 0, C), S.W, S.H, D.ax + bx, D.ay + by, 1);
     L.globalCompositeOperation = 'source-atop';
+    if (S.calm) calmOver(L, S, v, C, Lw);
     fillPattern(L, texture(name, 1, C), S.W, S.H, D.bx + bx, D.by + by, 1);
     var cap = capAlpha(Lw);
     if (cap) fillPattern(L, texture(name, 2, C), S.W, S.H, D.cx + bx, D.cy + by, cap);
