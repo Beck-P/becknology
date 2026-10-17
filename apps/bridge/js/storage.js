@@ -16,7 +16,8 @@
  * market in Crownhaven (3/4) — interactions given type `trader` as their worlds load (`TRADERS`), keeping what they
  * sell. Each opens the game's own sell sheet (js/interactions.js, type `sell`).
  *
- * The Ship's Chandler on the bridge (`chandler`): deck fittings (js/catalog.js), chests, packs, and selling.
+ * The Ship's Chandler on the bridge (`chandler`): deck fittings (js/catalog.js), chests, fish tanks (js/aquarium.js),
+ * packs, and selling.
  *
  *   BridgeStorage.open(inter) / chest(id) / count(chestOrPiece) / sell(label, rate, text) / worthLine(id)
  *   BridgeStorage.nextPack() → {name, slots, price, where} | null
@@ -177,10 +178,12 @@ var BridgeStorage = (function () {
   function chandler(inter) {
     var C = BridgeInteractions;
     var n = nextPack();
-    C.choose({ title: 'Ship\'s Chandler', text: 'THE CHANDLER\'S CABINET: DECK FITTINGS, CHESTS, PACKS - AND A HATCH WHERE THE QUARTERMASTER TAKES WHAT YOU\'VE FOUND, NO QUESTIONS, AT A SHIP\'S PRICE.',
+    C.choose({ title: 'Ship\'s Chandler', text: 'THE CHANDLER\'S CABINET: DECK FITTINGS, CHESTS, FISH TANKS, PACKS - AND A HATCH WHERE THE QUARTERMASTER TAKES WHAT YOU\'VE FOUND, NO QUESTIONS, AT A SHIP\'S PRICE.',
       rows: [
         { label: 'Deck fittings', sub: 'rugs, lamps, plants, curios, colours', icon: 'glimmer_lantern', pick: function () { if (typeof BridgeCatalog !== 'undefined') BridgeCatalog.show(inter.shop || 'wayfarer_chandler'); } },
         { label: 'Chests and storage', sub: 'crates, trunks, a strongbox', icon: 'pocket_watch', pick: chestShop },
+        { label: 'Fish tanks', sub: 'somewhere for what you catch', icon: 'glowtail', disabled: typeof BridgeAquarium === 'undefined',
+          pick: function () { BridgeAquarium.shop(null, function () { chandler(inter); }); } },
         { label: 'Packs', sub: n ? 'next: ' + n.name + ', ' + n.slots + ' slots' : 'you have the biggest', icon: 'climbing_rope',
           pick: function () { if (typeof BridgeGear !== 'undefined') BridgeGear.open({ shop: 'wayfarer', intro: 'PACKS ON PEGS, WAXED CANVAS AND FRAME. MORE ROOM FOR WHAT YOU FIND.' }); } },
         { label: 'Sell your goods', sub: 'anything with a value, at 6/10 of it', icon: 'silverfin', pick: function () { sell('QUARTERMASTER\'S HATCH', SHIP_RATE, 'THE HATCH SLIDES OPEN.'); } }

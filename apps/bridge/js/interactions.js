@@ -1150,8 +1150,8 @@ var BridgeInteractions = (function () {
   }
 
   // A chooser in the world's dialog style, for the systems that need one (the farm's bin, board and seed box,
-  // hiring a hand, giving a gift): spec = { title, text, rows: [{ label, note, icon: item id, stats: a weapon's id
-  // (its stats card under the row), disabled, pick }],
+  // hiring a hand, giving a gift): spec = { title, text, rows: [{ label, note, icon: item id, draw: fn(ctx, size) for any
+  // other picture (a fish tank), stats: a weapon's id (its stats card under the row), disabled, pick }],
   // input: { placeholder, value, submit }, buttons: [{ label, act, disabled }] }. Picking a row or a button closes
   // the chooser unless its function returns false.
   function showChooser(spec) {
@@ -1182,6 +1182,7 @@ var BridgeInteractions = (function () {
       var r = rows[+rowEl.getAttribute('data-r')], cv = rowEl.querySelector('.sp-icon');
       var item = r.icon && typeof BridgeItems !== 'undefined' && BridgeItems.get(r.icon);
       if (item && item.draw) { var g = cv.getContext('2d'); g.imageSmoothingEnabled = false; item.draw(g, 0, 0, 24); }
+      else if (r.draw) { var g2 = cv.getContext('2d'); g2.imageSmoothingEnabled = false; r.draw(g2, 24); }
       else if (r.face && typeof BridgeLook !== 'undefined' && BridgeLook.face) { cv.classList.add('sp-face'); BridgeLook.face(cv, r.face.seed, r.face.style, r.face.colour, r.face.wild); }   // someone you'd hire
       else cv.style.visibility = 'hidden';
     });
