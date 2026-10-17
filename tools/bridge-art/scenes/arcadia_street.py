@@ -276,7 +276,7 @@ w['interactions'] = [
     dialog(20, 7, 'CHROME CLINIC', 'PRESS E TO PEEK',
            'THROUGH THE FROSTED GLASS:\n\nSTERILE LIGHT, CHROME LIMBS,\nAND QUIET MACHINES WAITING\nBEHIND A SEALED DOOR.'),
     enter(25, 7, 'arcadia-lucky-7', 'LUCKY 7'),
-    enter(31, 7, 'arcadia-skywalk', 'SKYWALK LIFT', 'PRESS E TO RIDE UP', spawn=(2, 5)),
+    {'x': 31, 'y': 7, 'type': 'express_lift', 'label': 'SKYWALK LIFT', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skywalk', 'lobby': 'street'},   # js/transit.js
     {'x': 33, 'y': 7, 'type': 'password_gate', 'label': 'ALLEY GATE', 'prompt': 'PRESS E TO OPEN', 'password': 'NULL',
      'targetWorld': 'arcadia-alley', 'spawn': [16, 12], 'failMessage': 'THE KEYPAD BUZZES. NOT THAT.',
      'dialog': 'A GATE CHAINED SHUT. BEYOND IT THE BACK STREETS RUN DARK AND WET.\n\nTHE PADLOCK HAS A KEYPAD: FOUR '
@@ -315,6 +315,7 @@ w['view'] = [-0.5, -4.5, COLS + 0.5, ROWS + 0.4]
 w['cameraLead'] = -2.0
 w['royale'] = {'beams': [[47.4, 2.8], [54.6, 2.8]]}            # the Neon Royale's searchlights (js/worlds/casino.js)
 w['skyline'] = {'baseRow': 5.2, 'railRow': 14.3, 'centerCol': COLS / 2,
-                'rain': {'drops': 150, 'splash': [0, RF + 0.3, COLS, 13.8]}}
+                'rain': {'drops': 150, 'splash': [0, RF + 0.3, COLS, 13.8]},
+                'loop': {'row': 3.7, 'from': -12, 'to': COLS + 12, 'scale': 0.5}}   # the Loop's viaduct over the street (js/transit.js)
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 print('street done')

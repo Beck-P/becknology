@@ -174,8 +174,8 @@ k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, 
 w = {'name': 'The Skywalk', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',
      'spawns': {'player': [2, 5]}, 'shipExit': False, 'tiles': [], 'collisions': [], 'tileNames': {},
      'interactions': [
-         {'x': 2, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-street', 'spawn': [31, 9], 'label': 'LIFT · STREET', 'prompt': 'PRESS E TO RIDE DOWN'},
-         {'x': 28, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-skypad', 'spawn': [19, 5], 'label': 'LIFT · SKYPORT 7', 'prompt': 'PRESS E TO RIDE UP'},
+         {'x': 2, 'y': 4, 'type': 'express_lift', 'label': 'LIFT · STREET', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skywalk', 'lobby': 'skywalk'},   # js/transit.js
+         {'x': 28, 'y': 4, 'type': 'express_lift', 'label': 'LIFT · SKYPORT 7', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skyport', 'lobby': 'skywalk'},
          {'x': 4, 'y': 4, 'type': 'vendor', 'label': 'VENDING MACHINE', 'prompt': 'PRESS E TO BUY',
           'items': [{'id': 'void_fizz', 'price': 6}, {'id': 'neon_udon', 'price': 9}, {'id': 'stim_pack', 'price': 28}]},
          {'x': 7, 'y': 4, 'type': 'fortune', 'label': 'ZOLTA.EXE', 'prompt': 'PRESS E FOR A FORTUNE'},

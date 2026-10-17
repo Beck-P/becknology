@@ -139,8 +139,9 @@ var BridgeMulti = (function () {
     if (!sc || typeof BridgeScene === 'undefined') return [];
     return Object.keys(others).map(function (id) {
       var a = others[id], footRow = a.y + 1 - 3 / 32;
+      var depth = /^sit-/.test(a.k) ? BridgeScene.seatedRow(footRow, a.f) : footRow;   // seated: tested from the seat's front edge
       if (a.pose) return posed(a, world, offX, offY, ts, now, sc, id);
-      return { footRow: footRow, draw: function (ctx) {
+      return { footRow: depth, draw: function (ctx) {
         var seated = /^sit-/.test(a.k), A = typeof BridgeArms !== 'undefined' ? BridgeArms : null;
         if (a.fight && A) a.fight = A.remoteTick(a.fight, { x: a.x, y: a.y }, performance.now());
         if (A && !seated && (a.fight || a.h) && BridgeCharacter.drawFighter) {      // fighting, or a weapon in hand
@@ -152,7 +153,7 @@ var BridgeMulti = (function () {
         if (!img) return;
         var col = a.walking && !seated ? 4 + Math.floor(a.stride / 0.3) % 8 : idleCol(Math.floor(now / 340));
         var cx = Math.round(offX + (a.x + 0.5) * ts), footY = Math.round(offY + footRow * ts);
-        BridgeScene.drawOccluded(ctx, sc, img, col * 32, (DIR_ROW[a.f] || 0) * 48, 32, 48, cx - 16, footY - 45, footRow, offX, offY,
+        BridgeScene.drawOccluded(ctx, sc, img, col * 32, (DIR_ROW[a.f] || 0) * 48, 32, 48, cx - 16, footY - 45, depth, offX, offY,
           BridgeScene.tintAt(sc, world, a.x, a.y, now), { x: cx, y: footY, rx: 9, ry: 3 }, null, 'auto');
       } };
     });
