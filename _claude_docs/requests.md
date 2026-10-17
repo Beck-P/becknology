@@ -44,10 +44,15 @@ only partly done, the rest stays here as open.
 | The Penthouse (Arcadia, 250,000, door on Skyport 7's roof pad) | **done**, needs a detail pass | Live and furnishable, but mostly empty floor by today's standard. |
 | Ashcombe House (Crownhaven, 400,000, beside the Crown & Anchor) | **done**, needs a detail pass | Live, but mostly bare planks and one plain rug. |
 | The Starling (holm resort, 150,000 from the holm's ledger) | exterior **done**, interior open | The building and parasols on the holm, running as a venue; no interior yet. |
-| Detail pass on both homes + the Starling's interior | queued | Starts when one of the running work streams finishes (needs Blender renders). |
-| Penthouse: more space; an outdoor deck with the pool out there and views of the city all round | queued | Pool moves from inside to a roof deck (glass rail, the skyline, traffic and holo-ads round it, loungers, a fire pit, planters, string lights); a bigger interior. |
-| Ashcombe House should be big | queued | Great hall as the entry; rooms off it (drawing room, library, dining room, upstairs gallery and master bedroom) as places within places. |
-| All of them customisable | queued | Every room and the deck furnishable with the homes' furniture system, with open floor left for it. |
+| Detail pass on both homes + the Starling's interior | in progress | Branch (worktree agent), started on Beck's go-ahead. |
+| Penthouse: more space; an outdoor deck with the pool out there and views of the city all round | in progress | Pool moves from inside to a roof deck (glass rail, the skyline, traffic and holo-ads round it, loungers, a fire pit, planters, string lights); a bigger interior. |
+| Ashcombe House should be big — "super bougie and gorgeous" | in progress | Great hall as the entry; rooms off it (drawing room, library, dining room, upstairs gallery and master bedroom) as places within places. |
+| All of them customisable | in progress | Every room and the deck furnishable with the homes' furniture system, with open floor left for it. |
+
+## Sleep
+| Ask | Status | Notes |
+|---|---|---|
+| Sleep should restore health and energy over time, not instantly; never too long | **done** | Health and energy fill as you sleep (full from nothing in ~45–60 s), wake any time with what you've got, wake by yourself when full; beds differ (clinic ×2, hammock ×0.8, lodge ×1.2 and warming, the stove chair ×0.9). |
 
 ## Earlier this session
 | Ask | Status | Notes |
