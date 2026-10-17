@@ -448,6 +448,29 @@ NPCS = {
                           trim=('#7a5a10', '#c89a28', '#f0d060'), stole=('#a89a88', '#e2d8c8', '#fbf6ec'), sleeve='skin2',
                           circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#6a0a3a', '#c0186a', '#ff70b0'),
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), long_hair='flowing', pose='sit'),
+    # Arcadia's District grown out: Lantern Row (Granny Ume at the tea house, the lantern maker, old Hoshi at his ramen
+    # counter, Mama Keiko of the Akachochin, Kanna who keeps the roof shrine) and the spaceport (Inspector Halloran at
+    # customs, Brannigan behind the Last Burn's bar, Captain Desh of the Old Mercy)
+    'npc-ume':       dict(skin='skin0', shirt=('#1e2a4a', '#2e3e6a', '#4a5a8a'), skirt=('#1e2a4a', '#2e3e6a', '#4a5a8a'),
+                          apron=('#9a8e78', '#d4c8ae', '#f0e6d0'), hair=('#8a8a90', '#c0c0c8', '#e4e4ec'), bun=True, blush=True,
+                          pose='stand'),
+    'npc-lanternmaker': dict(skin='skin', shirt=('#6a1a12', '#a02a1e', '#c84a30'), pants=('#24202a', '#3e3646', '#5a5064'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), beanie=('#9a8e78', '#d4c8ae', '#f0e6d0'), mustache=True, pose='stand'),
+    'npc-hoshi':     dict(skin='skin2', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), apron=('#14203a', '#1e2e52', '#2e4270'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bald=True, mustache=True, beard=True,
+                          beanie=('#14203a', '#1e2e52', '#2e4270'), pose='stand'),
+    'npc-keiko':     dict(skin='skin', shirt=('#3a1430', '#5a2048', '#7a3466'), skirt=('#3a1430', '#5a2048', '#7a3466'),
+                          apron=('#14100e', '#241c1a', '#362a26'), hair=('#141010', '#241c1a', '#362a26'), bun=True, blush=True,
+                          pose='stand'),
+    'npc-kanna':     dict(skin='skin0', shirt=('#9a968c', '#e4e0d4', '#fbf8f0'), skirt=('#6a0e0a', '#a81a14', '#d83a2a'),
+                          hair=('#141010', '#241c1a', '#362a26'), ponytail=True, blush=True, pose='stand'),
+    'npc-halloran':  dict(skin='skin3', shirt=('#141c30', '#22304a', '#34466a'), pants=('#141c30', '#22304a', '#34466a'),
+                          cap=('#141c30', '#22304a', '#34466a'), hair=('#141010', '#241c1a', '#362a26'), earpiece=True,
+                          gloves=True, smile=False, pose='stand'),
+    'npc-brannigan': dict(skin='skin', shirt=('#24242c', '#3a3a46', '#545462'), apron=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#6a2a14', '#9a4422', '#c06030'), bald=True, beard=True, brawny=True, chrome_arm=True, pose='stand'),
+    'npc-desh':      dict(skin='skin2', shirt=('#3a3a2a', '#5a5a40', '#7a7a58'), coat=('#3a2416', '#5e3a22', '#7e5232'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), ponytail=True, cap=('#3a2416', '#5e3a22', '#7e5232'), pose='stand'),
 }
 # ---- the crowd: passers-by (js/crowd.js) -----------------------------------------------------------------------
 # A few bodies and outfits, every colour on them a KEY (XKEYS) that js/crowd.js swaps for the planet's wardrobe as a

@@ -1,41 +1,180 @@
 {
   "_doc": "Passers-by by place (js/crowd.js): n at the busiest, the wardrobe (who they are), when it's busiest (day, night, bustle, always), the share who sit where there are seats, extra sources/spots and tiles to avoid. _lines: what they say, by wardrobe (rain and night lines join outdoors in the rain and after dark). _wants: what someone now and then would like, and pays for.",
-
-  "lumar":                  { "n": 6,  "wardrobe": "lumar",   "busy": "day" },
-  "lumar-square":           { "n": 13, "wardrobe": "lumar",   "busy": "day" },
-  "lumar-sapphire":         { "n": 14, "wardrobe": "lumar",   "busy": "day" },
-  "lumar-rose":             { "n": 9,  "wardrobe": "lumar",   "busy": "day" },
-  "lumar-tern":             { "n": 7,  "wardrobe": "lumar",   "busy": "day" },
-  "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
-  "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day" },
-  "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
-  "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },
-  "lumar-crown-pub":        { "n": 9,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
-  "lumar-tavern":           { "n": 7,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
-  "lumar-inn":              { "n": 4,  "wardrobe": "lumar",   "busy": "night", "sit": 0.7 },
-  "lumar-tern-inn":         { "n": 5,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
-  "lumar-bakery":           { "n": 3,  "wardrobe": "lumar",   "busy": "day" },
-
-  "arcadia-street":         { "n": 26, "wardrobe": "arcadia", "busy": "bustle" },
-  "arcadia-skywalk":        { "n": 12, "wardrobe": "arcadia", "busy": "bustle" },
-  "arcadia-skypad":         { "n": 4,  "wardrobe": "arcadia", "busy": "bustle" },
-  "arcadia-alley":          { "n": 4,  "wardrobe": "arcadia", "busy": "bustle" },
-  "arcadia":                { "n": 8,  "wardrobe": "arcadia", "busy": "bustle" },
-  "cyber-noodle-bar":       { "n": 5,  "wardrobe": "arcadia", "busy": "bustle", "sit": 0.8 },
-  "arcadia-lucky-7":        { "n": 5,  "wardrobe": "arcadia", "busy": "bustle" },
-  "arcadia-casino":         { "n": 14, "wardrobe": "casino",  "busy": "bustle" },
-  "arcadia-casino-cards":   { "n": 6,  "wardrobe": "casino",  "busy": "bustle" },
-  "arcadia-casino-dining":  { "n": 6,  "wardrobe": "casino",  "busy": "bustle", "sit": 0.9 },
-
-  "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
-
-  "hoarfell":               { "n": 14, "wardrobe": "hoarfell", "busy": "day" },
-  "hoarfell-lodge":         { "n": 7,  "wardrobe": "hoarfell", "busy": "night", "sit": 0.8 },
-  "hoarfell-skihire":       { "n": 3,  "wardrobe": "hoarfell", "busy": "day" },
-
-  "sylvara":                { "n": 7,  "wardrobe": "sylvara", "busy": "always", "emerge": 4 },
-  "sylvara-hall":           { "n": 4,  "wardrobe": "sylvara", "busy": "always" },
-
+  "lumar": {
+    "n": 6,
+    "wardrobe": "lumar",
+    "busy": "day"
+  },
+  "lumar-square": {
+    "n": 13,
+    "wardrobe": "lumar",
+    "busy": "day"
+  },
+  "lumar-sapphire": {
+    "n": 14,
+    "wardrobe": "lumar",
+    "busy": "day"
+  },
+  "lumar-rose": {
+    "n": 9,
+    "wardrobe": "lumar",
+    "busy": "day"
+  },
+  "lumar-tern": {
+    "n": 7,
+    "wardrobe": "lumar",
+    "busy": "day"
+  },
+  "lumar-crimson": {
+    "n": 6,
+    "wardrobe": "pirates",
+    "busy": "always"
+  },
+  "lumar-crown": {
+    "n": 22,
+    "wardrobe": "crown",
+    "busy": "day"
+  },
+  "lumar-crown-exchange": {
+    "n": 8,
+    "wardrobe": "crown",
+    "busy": "day"
+  },
+  "lumar-crown-chapel": {
+    "n": 4,
+    "wardrobe": "crown",
+    "busy": "day",
+    "sit": 0.9
+  },
+  "lumar-crown-pub": {
+    "n": 9,
+    "wardrobe": "lumar",
+    "busy": "night",
+    "sit": 0.8
+  },
+  "lumar-tavern": {
+    "n": 7,
+    "wardrobe": "lumar",
+    "busy": "night",
+    "sit": 0.8
+  },
+  "lumar-inn": {
+    "n": 4,
+    "wardrobe": "lumar",
+    "busy": "night",
+    "sit": 0.7
+  },
+  "lumar-tern-inn": {
+    "n": 5,
+    "wardrobe": "lumar",
+    "busy": "night",
+    "sit": 0.8
+  },
+  "lumar-bakery": {
+    "n": 3,
+    "wardrobe": "lumar",
+    "busy": "day"
+  },
+  "arcadia-street": {
+    "n": 26,
+    "wardrobe": "arcadia",
+    "busy": "bustle"
+  },
+  "arcadia-skywalk": {
+    "n": 12,
+    "wardrobe": "arcadia",
+    "busy": "bustle"
+  },
+  "arcadia-skypad": {
+    "n": 4,
+    "wardrobe": "arcadia",
+    "busy": "bustle"
+  },
+  "arcadia-alley": {
+    "n": 4,
+    "wardrobe": "arcadia",
+    "busy": "bustle"
+  },
+  "arcadia": {
+    "n": 8,
+    "wardrobe": "arcadia",
+    "busy": "bustle"
+  },
+  "cyber-noodle-bar": {
+    "n": 5,
+    "wardrobe": "arcadia",
+    "busy": "bustle",
+    "sit": 0.8
+  },
+  "arcadia-lucky-7": {
+    "n": 5,
+    "wardrobe": "arcadia",
+    "busy": "bustle"
+  },
+  "arcadia-casino": {
+    "n": 14,
+    "wardrobe": "casino",
+    "busy": "bustle"
+  },
+  "arcadia-casino-cards": {
+    "n": 6,
+    "wardrobe": "casino",
+    "busy": "bustle"
+  },
+  "arcadia-casino-dining": {
+    "n": 6,
+    "wardrobe": "casino",
+    "busy": "bustle",
+    "sit": 0.9
+  },
+  "verdance-village": {
+    "n": 12,
+    "wardrobe": "verdance",
+    "busy": "day"
+  },
+  "hoarfell": {
+    "n": 14,
+    "wardrobe": "hoarfell",
+    "busy": "day"
+  },
+  "hoarfell-lodge": {
+    "n": 7,
+    "wardrobe": "hoarfell",
+    "busy": "night",
+    "sit": 0.8
+  },
+  "hoarfell-skihire": {
+    "n": 3,
+    "wardrobe": "hoarfell",
+    "busy": "day"
+  },
+  "sylvara": {
+    "n": 7,
+    "wardrobe": "sylvara",
+    "busy": "always",
+    "emerge": 4
+  },
+  "sylvara-hall": {
+    "n": 4,
+    "wardrobe": "sylvara",
+    "busy": "always"
+  },
+  "arcadia-oldquarter": {
+    "n": 18,
+    "wardrobe": "lantern",
+    "busy": "bustle",
+    "sit": 0.5
+  },
+  "arcadia-oldquarter-shrine": {
+    "n": 3,
+    "wardrobe": "lantern",
+    "busy": "night"
+  },
+  "arcadia-spaceport": {
+    "n": 20,
+    "wardrobe": "spacers",
+    "busy": "always"
+  },
   "_lines": {
     "lumar": [
       "MIND THE NETS. THEY BITE IF YOU TREAD ON THEM, OR THE FISHERMEN DO.",
@@ -125,16 +264,96 @@
       "LATE ONE, EH?",
       "SHOULD BE ABED. WON'T BE.",
       "QUIET THIS TIME OF NIGHT. I LIKE IT QUIET."
+    ],
+    "lantern": [
+      "HOSHI'S POT HAS BEEN ON SINCE BEFORE I WAS BORN. I'M SEVENTY.",
+      "THE TOWERS WANT THIS STREET. THE STREET SAYS NO. THE STREET IS VERY OLD.",
+      "RING THE BELL UP ON THE ROOF FOR LUCK. KANNA WON'T MIND.",
+      "MY GRANDDAUGHTER TAKES THE LOOP UP TO THE TERRACES FOR WORK. SHE SAYS THE VIEW'S NICE. I SAY SO IS THIS.",
+      "TRY THE GOLDFISH. THE PAPER ALWAYS TEARS. THAT'S THE GAME.",
+      "MAMA KEIKO'S SAKE COULD WAKE THE DEAD. IT HAS, TWICE.",
+      "THE LANTERNS ARE TOKUDA'S. EVERY ONE. HE COUNTS THEM ON SUNDAYS.",
+      "WHEN THE LOOP GOES OVER, THE TEACUPS RATTLE. YOU STOP NOTICING."
+    ],
+    "spacers": [
+      "NINE DAYS FROM ENIGMA ON A HULL THAT WHISTLES. I NEED A DRINK AND A FLOOR THAT STAYS STILL.",
+      "DON'T STAND UNDER THE GANTRY. THE HALCYON IX DOESN'T LOOK DOWN.",
+      "DESH IS HIRING AGAIN. RUN. OR DON'T - THE PAY'S GOOD.",
+      "CUSTOMS? JUST SMILE AT HALLORAN. HE LIKES A SMILE.",
+      "THE CORE EXPRESS GOES ALL THE WAY DOWN. I TOOK IT ONCE BY MISTAKE. ONCE.",
+      "REACTOR STOUT AT THE LAST BURN. ONE. NOT TWO. TRUST ME ON THE TWO.",
+      "LUMAR SALT FISH IN THE HOLD. I'LL SMELL OF IT TILL VERDANCE.",
+      "THE SLOW HAZARD CAME IN LIGHT AGAIN. NOBODY ASKS. NOBODY."
     ]
   },
-
   "_wants": {
-    "lumar":    [{ "id": "sea_glass", "pay": 22 }, { "id": "bread", "pay": 12 }, { "id": "silver_nail", "pay": 18 }],
-    "crown":    [{ "id": "sea_glass", "pay": 26 }, { "id": "roseite", "pay": 40 }],
-    "pirates":  [{ "id": "mug_of_ale", "pay": 14, "ask": "ANY {item}? I'D GIVE {pay} FOR IT. AND I'D OWE YOU." }],
-    "arcadia":  [{ "id": "silver_nail", "pay": 20 }, { "id": "sea_glass", "pay": 30 }],
-    "verdance": [{ "id": "bread", "pay": 14 }, { "id": "sea_glass", "pay": 24 }],
-    "hoarfell": [{ "id": "roast_chestnuts", "pay": 20 }, { "id": "summit_crystal", "pay": 90 }],
-    "sylvara":  [{ "id": "sea_glass", "pay": 30, "ask": "THE {item} FROM THE SPORE SEA - YOU WOULDN'T HAVE ONE? I'D TRADE {pay} FOR ITS LIGHT." }]
+    "lumar": [
+      {
+        "id": "sea_glass",
+        "pay": 22
+      },
+      {
+        "id": "bread",
+        "pay": 12
+      },
+      {
+        "id": "silver_nail",
+        "pay": 18
+      }
+    ],
+    "crown": [
+      {
+        "id": "sea_glass",
+        "pay": 26
+      },
+      {
+        "id": "roseite",
+        "pay": 40
+      }
+    ],
+    "pirates": [
+      {
+        "id": "mug_of_ale",
+        "pay": 14,
+        "ask": "ANY {item}? I'D GIVE {pay} FOR IT. AND I'D OWE YOU."
+      }
+    ],
+    "arcadia": [
+      {
+        "id": "silver_nail",
+        "pay": 20
+      },
+      {
+        "id": "sea_glass",
+        "pay": 30
+      }
+    ],
+    "verdance": [
+      {
+        "id": "bread",
+        "pay": 14
+      },
+      {
+        "id": "sea_glass",
+        "pay": 24
+      }
+    ],
+    "hoarfell": [
+      {
+        "id": "roast_chestnuts",
+        "pay": 20
+      },
+      {
+        "id": "summit_crystal",
+        "pay": 90
+      }
+    ],
+    "sylvara": [
+      {
+        "id": "sea_glass",
+        "pay": 30,
+        "ask": "THE {item} FROM THE SPORE SEA - YOU WOULDN'T HAVE ONE? I'D TRADE {pay} FOR ITS LIGHT."
+      }
+    ]
   }
 }

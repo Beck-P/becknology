@@ -220,6 +220,10 @@ var BridgeAudio = (function () {
                 arp: { inst: 'chip', steps: [0, 2, 4, 6, 8, 10, 12, 14], oct: 12, pattern: [0, 1, 2, 1] },
                 bass: { inst: 'chip', steps: [0, 4, 8, 12], oct: -12 }, lead: { inst: 'chip', oct: 24, density: 0.6 },
                 perc: [['chipdrum', [0, 8], 1], ['chipdrum', [2, 6, 10, 14], 0], ['chipdrum', [4, 12], 1]] },
+    // Lantern Row: a slow plucked line over a warm pad, a flute now and then, a shaker on the off-beats
+    lantern:  { bpm: 68, root: 50, mode: 'aeolian', chords: [0, 5, 3, 4, 0, 5, 6, 4], swing: 0.15, pad: 'warm',
+                arp: { inst: 'pluck', steps: [0, 3, 6, 10, 12], oct: 12, pattern: [0, 2, 3, 1] }, bass: { inst: 'bass', steps: [0, 10] },
+                lead: { inst: 'flute', oct: 24, density: 0.26 }, perc: [['shaker', [4, 12]]] },
     lofi:     { bpm: 74, root: 53, mode: 'dorian', chords: [0, 3, 6, 4], swing: 0.22, pad: null,
                 arp: { inst: 'keys', steps: [0, 7, 10], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 7, 10] },
                 perc: [['kick', [0, 9]], ['snare', [4, 12]], ['hat', [0, 2, 4, 6, 8, 10, 12, 14]]] },
@@ -281,6 +285,9 @@ var BridgeAudio = (function () {
     if (id === 'arcadia-casino') return { theme: 'casino', amb: ['crowd', 'slots'] };            // the Neon Royale's floor
     if (id === 'arcadia-casino-cards') return { theme: 'casino', amb: ['murmur', 'chips'] };
     if (/^arcadia-casino-(dining|vip)$/.test(id)) return { theme: 'casino', amb: ['murmur'] };
+    if (id === 'arcadia-oldquarter') return { theme: 'lantern', amb: ['rain', 'murmur'] };                 // Lantern Row
+    if (id === 'arcadia-oldquarter-shrine') return { theme: 'lantern', amb: ['rainsoft', 'chimes'] };      // its roof shrine
+    if (id === 'arcadia-spaceport') return { theme: 'arcadia', amb: ['rain', 'city', 'engine'] };
     if (/^arcadia-(street|skypad|alley|skywalk)$/.test(id)) return { theme: 'arcadia', amb: ['rain', 'city'] };
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };

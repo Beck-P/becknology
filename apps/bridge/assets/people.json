@@ -3156,5 +3156,229 @@
         "when": "under-the-willow"
       }
     ]
+  },
+  "ume": {
+    "name": "Granny Ume",
+    "role": "Keeps the tea house on Lantern Row",
+    "sheet": "npc-ume",
+    "at": [
+      {
+        "world": "arcadia-oldquarter",
+        "label": "GRANNY UME"
+      }
+    ],
+    "greet": "SIT, SIT. NOBODY DRINKS TEA STANDING UP ON MY ROW. YOU'VE COME DOWN OUT OF THE RAIN AND THE NEON - YOU HAVE THE LOOK. GREEN OR MATCHA?",
+    "again": "BACK AGAIN. GOOD. THE KETTLE KNEW. IT STARTED SINGING BEFORE YOU TURNED THE CORNER.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "UME. I'VE POURED TEA IN THIS ROOM SINCE BEFORE THE FIRST TOWER WENT UP. THEY BUILT IT RIGHT OVER MY HEAD. I KEPT POURING."
+      },
+      {
+        "q": "Lantern Row",
+        "a": "THIS WAS THE WHOLE DISTRICT ONCE. TIMBER AND TILE AND LANTERNS. NOW IT'S ONE STREET THE CITY FORGOT TO KNOCK DOWN. DON'T REMIND IT."
+      },
+      {
+        "q": "The shrine",
+        "a": "UP THE STEPS AT THE END, ON TOKUDA'S ROOF. KANNA KEEPS IT. RING THE BELL, DRAW A FORTUNE. IF IT'S A BAD ONE, TIE IT TO THE CORD AND LEAVE IT THERE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "HALCYON SENT ANOTHER MAN WITH A CLIPBOARD ABOUT 'REDEVELOPMENT'. HOSHI FED HIM. HE CAME BACK THE NEXT NIGHT, WITHOUT THE CLIPBOARD."
+      }
+    ]
+  },
+  "lanternmaker": {
+    "name": "Tokuda the Lantern Maker",
+    "role": "Makes the paper lanterns of Lantern Row",
+    "sheet": "npc-lanternmaker",
+    "at": [
+      {
+        "world": "arcadia-oldquarter",
+        "label": "THE LANTERN MAKER"
+      }
+    ],
+    "greet": "MIND THE GLUE. EVERY LANTERN ON THIS ROW CAME OFF THAT TABLE, ONE RIB AT A TIME. TAKE ONE IF YOU LIKE - THEY'RE FOR GIVING.",
+    "again": "AH, THE SKY-CAPTAIN. I'VE SAVED YOU A RED ONE. RED FOR LUCK, AMBER FOR HOME.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "TOKUDA. MY GRANDFATHER MADE LANTERNS, AND HIS, AND HIS. I'M THE FIRST ONE WHO HAD TO MAKE THEM UNDER A SKY YOU CAN'T SEE."
+      },
+      {
+        "q": "Why lanterns?",
+        "a": "THE TOWERS HAVE NEON. NEON IS LOUD. A PAPER LANTERN IS QUIET. IT SAYS: SOMEONE LIVES HERE AND THEY'RE STILL UP."
+      },
+      {
+        "q": "The shrine roof",
+        "a": "THAT'S MY ROOF THE SHRINE'S ON. MY FATHER LET THE OLD KEEPER PUT IT THERE IN A STORM AND NOBODY EVER MOVED IT. NOBODY WANTS TO."
+      }
+    ]
+  },
+  "hoshi": {
+    "name": "Old Hoshi",
+    "role": "Cooks at Hoshi Ramen on Lantern Row",
+    "sheet": "npc-hoshi",
+    "at": [
+      {
+        "world": "arcadia-oldquarter",
+        "label": "OLD HOSHI"
+      }
+    ],
+    "greet": "SIT. EAT. TALK AFTER. THE BROTH'S BEEN GOING FORTY YEARS AND IT'S NEVER BEEN BETTER THAN TONIGHT.",
+    "again": "YOU AGAIN. GOOD - THE STOOL REMEMBERS YOU. SHOYU?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "HOSHI. FORTY YEARS AT THIS COUNTER. THE POT'S NEVER GONE COLD. NOT IN THE BROWNOUTS, NOT IN THE FLOOD, NOT WHEN THE LOOP CAME THROUGH."
+      },
+      {
+        "q": "The broth",
+        "a": "SOY, BONES, KELP FROM LUMAR WHEN I CAN GET IT, AND WHATEVER WAS IN THE POT YESTERDAY. THE SECRET IS YESTERDAY."
+      },
+      {
+        "q": "Miyu on the street",
+        "a": "CYBER NOODLES? HER BROTH GLOWS. MINE DOESN'T NEED TO. SHE LEARNED ON THIS STOOL. TELL HER I SAID SO."
+      }
+    ]
+  },
+  "keiko": {
+    "name": "Mama Keiko",
+    "role": "Owns the Akachochin izakaya on Lantern Row",
+    "sheet": "npc-keiko",
+    "at": [
+      {
+        "world": "arcadia-oldquarter",
+        "label": "MAMA KEIKO"
+      }
+    ],
+    "greet": "IN OR OUT, THE RAIN DOESN'T CARE. THE SAKE'S WARM, THE SKEWERS ARE ON, AND I DON'T SERVE ANYONE WHO TALKS ABOUT WORK.",
+    "again": "THE SKY-CAPTAIN. YOUR CRATE'S STILL THERE, NOBODY SITS ON IT BUT YOU.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "KEIKO. MY MOTHER RAN THIS PLACE AND HER MOTHER BEFORE HER. EVERYONE CALLS ME MAMA. EVEN MAMA DID."
+      },
+      {
+        "q": "The spaceport",
+        "a": "THE FREIGHTER CREWS COME UP THE STREET WHEN THEY BERTH. THEY DRINK WHAT I POUR AND PAY IN WHATEVER THEY'VE GOT. I'VE A JAR OF COINS FROM NINE WORLDS."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "DESH OFF THE OLD MERCY IS LOOKING FOR CREW AGAIN. SHE ALWAYS IS. NOBODY STAYS ON THAT SHIP AND NOBODY KNOWS WHY THEY LEAVE."
+      }
+    ]
+  },
+  "kanna": {
+    "name": "Kanna",
+    "role": "Keeps the shrine on Lantern Row's roofs",
+    "sheet": "npc-kanna",
+    "at": [
+      {
+        "world": "arcadia-oldquarter-shrine",
+        "label": "KANNA"
+      }
+    ],
+    "greet": "WELCOME UP. MIND THE GRAVEL - I'VE JUST RAKED IT. RING THE BELL TO SAY YOU'RE HERE, AND DRAW A FORTUNE IF YOU DARE.",
+    "again": "BACK UP THE STEPS. THE FOXES SAID YOU'D COME.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "KANNA. MY GRANDMOTHER KEPT THE SHRINE AND I KEEP IT NOW. I SWEEP, I LIGHT THE LANTERNS, I LISTEN. PEOPLE TELL A SHRINE THINGS THEY DON'T TELL EACH OTHER."
+      },
+      {
+        "q": "The foxes",
+        "a": "INARI'S MESSENGERS. THEY KEEP AN EYE ON THE ROW. AND ON THE TOWERS, WHICH I THINK WORRIES THEM MORE."
+      },
+      {
+        "q": "The fortunes",
+        "a": "A COIN IN THE BOX, RING THE BELL, DRAW A SLIP. GREAT BLESSING, BLESSING, SMALL BLESSING, OR A CURSE. A CURSE YOU TIE TO THE CORD AND WALK AWAY FROM."
+      },
+      {
+        "q": "The view",
+        "a": "THE LOOP GOES BY AT EYE LEVEL UP HERE. AT NIGHT EVERY WINDOW'S LIT AND YOU CAN SEE THE PEOPLE IN THEM. SOME OF THEM WAVE."
+      }
+    ]
+  },
+  "halloran": {
+    "name": "Inspector Halloran",
+    "role": "Customs, the spaceport",
+    "sheet": "npc-halloran",
+    "at": [
+      {
+        "world": "arcadia-spaceport",
+        "label": "INSPECTOR HALLORAN"
+      }
+    ],
+    "greet": "ARMS OUT. HOLD STILL. NOTHING? NOTHING. YOU'D BE AMAZED WHAT PEOPLE TRY TO WALK THROUGH THIS ARCH. MOSTLY SPORES. ONCE A GOAT.",
+    "again": "YOU AGAIN. STILL CLEAN. I'M ALMOST DISAPPOINTED.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "HALLORAN, ARCADIA CUSTOMS. TWENTY-TWO YEARS ON THIS ARCH. I'VE CONFISCATED NINE PLANETS' WORTH OF CONTRABAND AND I KEEP THE BEST OF IT IN A DRAWER I'M NOT ALLOWED TO OPEN."
+      },
+      {
+        "q": "The ships",
+        "a": "THE OLD MERCY, HAULING. THE HALCYON IX, HALCYON'S - DON'T TOUCH, DON'T LOOK. THE SLOW HAZARD, WHO KNOWS. NOBODY'S EVER DECLARED A THING OFF HER."
+      },
+      {
+        "q": "The Core Express",
+        "a": "THE BIG LIFT. GOES ALL THE WAY UP TO THE SPIRES AND ALL THE WAY DOWN TO THE PLACES WE DON'T TALK ABOUT. FREIGHT GOES DOWN. THINGS COME UP. I DON'T INSPECT WHAT COMES UP."
+      }
+    ]
+  },
+  "brannigan": {
+    "name": "Brannigan",
+    "role": "Keeps the Last Burn, the spacers' bar",
+    "sheet": "npc-brannigan",
+    "at": [
+      {
+        "world": "arcadia-spaceport",
+        "label": "BRANNIGAN"
+      }
+    ],
+    "greet": "WELCOME TO THE LAST BURN. LAST THING YOU DO BEFORE YOU LEAVE A PLANET, FIRST THING YOU DO WHEN YOU GET BACK. REACTOR STOUT'S ON. DON'T ASK WHAT'S IN IT.",
+    "again": "THE SKY-CAPTAIN. YOUR MUG'S ON THE HOOK - THE ONE WITH THE DENT.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "BRANNIGAN. FLEW HAULERS THIRTY YEARS TILL A REACTOR TOOK MY ARM. GOT A CHROME ONE AND A BAR. THE BAR'S THE BETTER DEAL."
+      },
+      {
+        "q": "The arm",
+        "a": "CHROME CLINIC ON THE STREET DID IT, BACK WHEN THEY STILL DID IT CHEAP. NOW YOU WANT GOOD CHROME YOU GO UP TO THE SPIRES AND PAY FOR THE NAME."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE SLOW HAZARD COMES IN EMPTY AND GOES OUT HEAVY, AND HER CREW DRINK HERE AND NEVER SAY A WORD. I DON'T ASK. YOU SHOULDN'T EITHER."
+      }
+    ]
+  },
+  "desh": {
+    "name": "Captain Desh",
+    "role": "Captain of the Old Mercy, a bulk hauler",
+    "sheet": "npc-desh",
+    "at": [
+      {
+        "world": "arcadia-spaceport",
+        "label": "CAPTAIN DESH"
+      }
+    ],
+    "greet": "FORTY-ONE, FORTY-TWO - YOU MADE ME LOSE COUNT. DESH, OLD MERCY. IF YOU'RE HERE ABOUT THE CREW JOB, YOU'RE HIRED. IF YOU'RE NOT, YOU'RE STILL HIRED.",
+    "again": "BACK FOR THE JOB? NO? THE OFFER STANDS. IT ALWAYS STANDS.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "DESH. I'VE RUN THE OLD MERCY BETWEEN LUMAR, ENIGMA AND HERE FOR NINETEEN YEARS. SHE'S HELD TOGETHER WITH PATCHES AND SPITE AND SHE'S NEVER MISSED A BERTH."
+      },
+      {
+        "q": "The Old Mercy",
+        "a": "SALT FISH AND SPORE-LAMP OIL OUT, CHROME AND CIRCUIT IN. LUMAR PAYS IN FISH, ARCADIA PAYS IN CREDIT, ENIGMA DOESN'T PAY AT ALL, THEY JUST WAVE."
+      },
+      {
+        "q": "Why no crew?",
+        "a": "THEY LEAVE. EVERY ONE OF THEM, AFTER A RUN OR TWO. THEY SAY SHE HUMS AT NIGHT. SHE DOES. I LIKE IT."
+      }
+    ]
   }
 }
