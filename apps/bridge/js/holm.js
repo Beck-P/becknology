@@ -268,7 +268,7 @@ var BridgeHolm = (function () {
     if (!f) return [];
     var back = [];
     f.all().forEach(function (s) {
-      if (!s.away || Date.now() < s.away.back) return;
+      if (!s.away || s.away.passage || Date.now() < s.away.back) return;    // (a passage you ordered: js/fleet.js arrivals)
       var a = s.away, sp = f.effective(s), hops = a.legs || [[a.from, a.to]];
       var profit = Math.round((a.profit || 0) * 0.6 * (1 + (f.crewOn(s.id).some(function (c) { return c.role === 'navigator'; }) ? 0.15 : 0)));   // wages and wear
       var story = hops.length > 1 ? 'a fair circuit' : 'a fair passage';

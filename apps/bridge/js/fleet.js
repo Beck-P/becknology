@@ -26,6 +26,11 @@
  *
  * Where they lie: the sloop is always at the pier of whatever island you're on (the starter boat follows you); every
  * bigger ship is where you last tied her up (`at`, an island id). Kept in localStorage bridge_fleet.
+ *
+ * ORDERS (Beck: "command your ships to sail from anywhere"): `order(id, isle)` sends a ship to any island from wherever
+ * you are (the ledger's Fleet page, any harbourmaster, the Ferryman): she's away on a passage (`away.passage`) for a
+ * while by the distance — longer short-handed — and lies at her new island when she comes in (`arrivals()`, checked as
+ * you play). Ships left at Midnight Isle before it had a way to take them out were sailed home once (`rescue`).
  */
 var BridgeFleet = (function () {
   var KEY = 'bridge_fleet';
@@ -165,6 +170,69 @@ var BridgeFleet = (function () {
   /** She's tied up at this island now (you sailed her here). */
   function moored(id, worldId) { var s = get(id); if (s && s.type !== 'sloop') { s.at = islandOf(worldId); store(); } }
   function rename(id, name) { var s = get(id); if (s && name) { s.name = String(name).slice(0, 24); store(); } }
+
+  // ---- orders: send a ship to another island from anywhere ----------------------------------------------------------
+  function isles() { return typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles ? BridgeVoyage._isles : null; }
+  function isleName(id) { var I = isles(); return I && I[id] ? I[id].name : id; }
+  /** How long a passage takes (minutes), and whether she's short of hands for it. */
+  function passage(s, to) {
+    var I = isles(), a = I && I[s.at], b = I && I[to];
+    var d = a && b ? Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2)) : 0.5;
+    var short = crewOn(s.id).length < spec(s.type).crew;
+    var mins = Math.round((12 + 50 * d) / (effective(s).vmax / 4.6) * (short ? 1.5 : 1));
+    return { mins: mins, short: short };
+  }
+  /** Can she be sent? null if so, else why not. */
+  function canOrder(s, to) {
+    if (!s || s.type === 'sloop') return 'the sloop goes where you go';
+    if (s.away) return 'she\'s at sea';
+    if (to && s.at === to) return 'she\'s there already';
+    return null;
+  }
+  function order(id, to) {
+    var s = get(id), no = canOrder(s, to);
+    if (no || !to) return { ok: false, reason: no || 'nowhere' };
+    var p = passage(s, to);
+    s.away = { passage: true, from: s.at, to: to, out: Date.now(), back: Date.now() + p.mins * 60000 };
+    s.at = 'away';
+    if (st.sailing === id) st.sailing = (st.ships.filter(function (x) { return x.type === 'sloop'; })[0] || st.ships[0]).id;
+    store();
+    return { ok: true, mins: p.mins, short: p.short };
+  }
+  /** Ships come in from their passages: they lie at their new island. */
+  function arrivals() {
+    var came = [];
+    st.ships.forEach(function (s) {
+      if (!s.away || !s.away.passage || Date.now() < s.away.back) return;
+      s.at = s.away.to; delete s.away; came.push(s);
+    });
+    if (came.length) {
+      store();
+      came.forEach(function (s) {
+        if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Ship in', 'The ' + s.name + ' has come in', 'at ' + isleName(s.at));
+      });
+    }
+    return came;
+  }
+  // Midnight Isle lost its harbourmaster (the Ferryman keeps no ships' book), and for a while a ship left there couldn't
+  // be taken out again: they were sailed home once — to the holm if you have it, else Diggen's Point
+  function rescue() {
+    if (st.rescued) return;
+    var home = typeof BridgeHolm !== 'undefined' && BridgeHolm.owned && BridgeHolm.owned() ? 'lumar-holm' : 'lumar';
+    var moved = st.ships.filter(function (s) { return s.type !== 'sloop' && !s.away && s.at === 'lumar-midnight'; });
+    moved.forEach(function (s) { s.at = home; if (st.sailing === s.id) st.sailing = st.ships[0].id; });
+    st.rescued = true;
+    store();
+    if (moved.length) setTimeout(function () {
+      var names = moved.map(function (s) { return 'the ' + s.name; }).join(' and ');
+      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Brought home', names.charAt(0).toUpperCase() + names.slice(1), 'sailed home to ' + isleName(home) + ' by the Ferryman\'s drowned crew');
+    }, 2500);
+  }
+  function settle() { rescue(); arrivals(); }                       // once every module's loaded (the holm says if it's yours)
+  if (typeof window !== 'undefined') {
+    if (document.readyState === 'complete') setTimeout(settle, 0); else window.addEventListener('load', settle);
+    setInterval(arrivals, 20000);
+  }
 
   function pay(n, why) {
     return typeof BridgeProgression !== 'undefined' && BridgeProgression.wagerCoins
@@ -324,6 +392,8 @@ var BridgeFleet = (function () {
   // ---- the ledger line for a ship ---------------------------------------------------------------------------------
   function where(s) {
     if (s.type === 'sloop') return 'at whichever pier you are';
+    if (s.away && s.away.passage) return 'sailing for ' + isleName(s.away.to) + ', in about ' + Math.max(1, Math.ceil((s.away.back - Date.now()) / 60000)) + ' min';
+    if (s.away) return 'away on a voyage';
     var I = typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles;
     return 'at ' + (I && I[s.at] ? I[s.at].name : s.at || 'sea');
   }
@@ -335,7 +405,7 @@ var BridgeFleet = (function () {
 
   return { SHIPS: SHIPS, GUNS: GUNS, FITS: FITS, ROLES: ROLES, SEAS: SEAS,
            spec: spec, get: get, all: all, active: active, effective: effective, here: here, islandOf: islandOf, sail: sail, moored: moored,
-           line: line, where: where, rename: rename, buy: buy, value: value, sellShip: sellShip, fit: fit, unmount: unmount,
+           line: line, where: where, rename: rename, order: order, canOrder: canOrder, passage: passage, arrivals: arrivals, buy: buy, value: value, sellShip: sellShip, fit: fit, unmount: unmount,
            damage: damage, repairCost: repairCost, repair: repair, wreck: wreck,
            fishCap: fishCap, catchOf: catchOf, catchCount: catchCount, stowFish: stowFish, takeFish: takeFish,
            recruits: recruits, hire: hire, assign: assign, dismiss: dismiss, crew: crew, crewOn: crewOn, crewHas: crewHas, crewBest: crewBest, perk: perk, wage: wageOf, GRADES: GRADES, berths: berths,

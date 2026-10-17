@@ -208,10 +208,15 @@ var BridgeLedger = (function () {
     var rows = ships.map(function (s) {
       var sp = BridgeFleet.spec(s.type), hold = 0;
       Object.keys(s.hold || {}).forEach(function (k) { hold += s.hold[k]; });
-      var where = s.away ? 'Away on a voyage — home in ' + ago(Math.max(0, s.away.back - Date.now())) : s.at ? 'Lying at ' + portName(s.at) : 'At whichever pier you\'re at';
+      var where = s.away && s.away.passage ? 'Sailing for ' + portName(s.away.to) + ' — arrives in ' + ago(Math.max(0, s.away.back - Date.now()))
+                : s.away ? 'Away on a voyage — home in ' + ago(Math.max(0, s.away.back - Date.now())) : s.at ? 'Lying at ' + portName(s.at) : 'At whichever pier you\'re at';
       var crew = BridgeFleet.crewOn(s.id).length, fish = BridgeFleet.catchCount ? BridgeFleet.catchCount(s) : 0;
+      // tap a ship lying somewhere to send her anywhere, from wherever you are (js/fleet.js order)
+      var sendable = BridgeFleet.canOrder && !BridgeFleet.canOrder(s) && has('BridgeHarbour') && BridgeHarbour.send;
       return { name: s.name + ' · ' + sp.name, sub: where + ' · hull ' + Math.round((s.hull == null ? 1 : s.hull) * 100) + '%' + (sp.hold ? ' · hold ' + hold + '/' + sp.hold : '') +
-               (fish ? ' · ' + fish + ' fish' : '') + (sp.crew ? ' · hands ' + crew + '/' + sp.crew : ''), world: s.away ? null : s.at, alert: (s.hull || 1) < 0.25 };
+               (fish ? ' · ' + fish + ' fish' : '') + (sp.crew ? ' · hands ' + crew + '/' + sp.crew : '') + (sendable ? ' · tap to send her anywhere' : ''),
+               world: s.away ? null : s.at, alert: (s.hull || 1) < 0.25,
+               act: sendable ? function () { closeMenu(); BridgeHarbour.send(s, function (msg) { if (msg) BridgeInteractions.choose({ title: 'Orders given', text: msg, closeLabel: 'Done' }); }); } : null };
     });
     return { html: list(rows), n: ships.length };
   }

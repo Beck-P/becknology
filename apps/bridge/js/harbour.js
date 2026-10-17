@@ -121,6 +121,7 @@ var BridgeHarbour = (function () {
   function ferry(worldId, intro, note) {
     var f = F(), Pd = PORTS[portOf(worldId)];
     choose({ title: 'The Ferryman', text: note || intro || '...WHAT DO THE LIVING WANT?', rows: [
+      { label: 'Your ships', sub: f.all().length + ' in all, ' + f.here(worldId).length + ' here — take one out, or send one anywhere', pick: function () { ledger(worldId); } },
       { label: 'Moonglass', sub: Pd.guns.concat(Pd.fits).map(function (g) { return (f.GUNS[g] || f.FITS[g]).name; }).join(', '),
         pick: function () { pickShip(worldId, 'Which ship?', fitOut); } },
       { label: 'Moon salt', sub: 'by the crate, a little each day, into a hold', pick: function () { pickShip(worldId, 'Into which hold?', market); } },
@@ -166,11 +167,28 @@ var BridgeHarbour = (function () {
     ];
     var buttons = [];
     if (hereNow && s.id !== f.active().ship.id) buttons.push({ label: 'Take her out', act: function () { f.sail(s.id); sfx('click'); shipCard(worldId, s, 'SHE\'S THE ONE YOU\'LL SAIL. GO SAILING FROM THE PIER.'); } });
+    if (!f.canOrder(s)) buttons.push({ label: 'Send her to…', act: function () { send(s, function (msg) { shipCard(worldId, s, msg); }); } });
     buttons.push({ label: 'Rename', act: function () { rename(worldId, s); } });
     if (hereNow && s.type !== 'sloop' && Pd.yard.length) buttons.push({ label: 'Sell (' + f.value(s) + ')', act: function () { sellShip(worldId, s); } });
     buttons.push({ label: 'Back', act: function () { ledger(worldId); } });
     choose({ title: s.name + ', ' + base.name.toLowerCase(), text: note || base.blurb.toUpperCase(), rows: rows, buttons: buttons, closeLabel: 'Done' });
   }
+  // Send a ship to any island from wherever you are (js/fleet.js order): her crew sail her there while you get on with
+  // things. then(note) is called after (or with nothing on Back).
+  function send(s, then) {
+    var f = F(), I = typeof BridgeVoyage !== 'undefined' ? BridgeVoyage._isles : {};
+    var rows = Object.keys(I).filter(function (id) { return id !== s.at; }).map(function (id) {
+      var p = f.passage(s, id);
+      return { label: I[id].name, sub: 'about ' + p.mins + ' min' + (p.short ? ' — short of hands, she\'ll go slow' : ''), pick: function () {
+        var r = f.order(s.id, id);
+        sfx('bell');
+        then(r.ok ? ('THE ' + s.name.toUpperCase() + ' SAILS FOR ' + I[id].name.toUpperCase() + '. SHE\'LL ARRIVE IN ABOUT ' + r.mins + ' MINUTES.') : String(r.reason).toUpperCase());
+      } };
+    });
+    choose({ title: 'Send the ' + s.name, text: ('SHE LIES AT ' + (I[s.at] ? I[s.at].name : s.at) + '. WHERE TO? HER HANDS WILL SAIL HER THERE WHILE YOU\'RE ELSEWHERE.').toUpperCase(),
+             rows: rows, buttons: [{ label: 'Back', act: function () { then(); } }], closeLabel: 'Done' });
+  }
+
   // what she caught at sea, still aboard: sell it on the quay or carry it ashore
   function landCatch(worldId, s) {
     var t = T(), f = F(), v = t.catchValue(s, worldId);
@@ -413,7 +431,7 @@ var BridgeHarbour = (function () {
              rows: rows, closeLabel: 'Done' });
   }
 
-  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs, exchange: exchange,
+  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs, exchange: exchange, send: send,
            hands: function (worldId, note) { hands(worldId, note, true); },
            registry: function (worldId) { registry = true; ledger(worldId); } };
 })();

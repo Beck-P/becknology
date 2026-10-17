@@ -117,7 +117,7 @@ def _blur(a, r):
     return out
 
 
-def grass_detail(albedo, grass, seed=1, calm=0.75, cell=(12, 9), fill=0.95):
+def grass_detail(albedo, grass, seed=1, calm=0.75, cell=(12, 9), fill=0.95, even=0.5):
     """Stamp the drawn marks into the albedo (in place) over the grass mask."""
     h, w = grass.shape
     a = albedo[..., :3].astype(np.float32)
@@ -125,6 +125,11 @@ def grass_detail(albedo, grass, seed=1, calm=0.75, cell=(12, 9), fill=0.95):
     num = _blur(a * g[..., None], 4)
     den = _blur(g, 4)[..., None]
     base = np.where(den > 0.05, num / np.maximum(den, 1e-3), a)
+    # and the broad patches (an island's two greens, the meadow's drifts) evened out by half: big soft blobs are what
+    # read as 'random', not the marks
+    bnum = _blur(a * g[..., None], 22)
+    bden = _blur(g, 22)[..., None]
+    base = np.where(bden > 0.05, base * (1 - even) + bnum / np.maximum(bden, 1e-3) * even, base)
     a = np.where(grass[..., None], a * (1 - calm) + base * calm, a)       # the grass between the marks, calmed
     rng = np.random.default_rng(seed)
     marks = [(wt, [list(row) for row in rows]) for wt, rows in GRASS_MARKS]
