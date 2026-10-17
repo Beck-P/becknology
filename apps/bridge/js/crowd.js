@@ -45,6 +45,7 @@ var BridgeCrowd = (function () {
     .then(function (d) { SEATS = d; }).catch(function () { SEATS = {}; });
 
   var FW = 32, FH = 48, DIR = { down: 0, right: 1, up: 2, left: 3 }, IDLE = [0, 1, 2, 1];
+  function idleCol(k) { return k % 12 === 5 ? 3 : IDLE[k % 4]; }   // breathing, and now and then idle3: a blink
   var PHONE = (function () { try { return matchMedia('(pointer: coarse)').matches || innerWidth < 760; } catch (e) { return false; } })();
   var CAP = PHONE ? 12 : 28;                   // at most this many drawn in one place
 
@@ -173,6 +174,9 @@ var BridgeCrowd = (function () {
 
   // ---- recolouring (as js/look.js does the pilot's) ----------------------------------------------------------------
   var OUTLINE = [11, 10, 24];                  // sprites_post.py OUTLINE: line work is half this, half the colour
+  // painted faces: eyes, mouth and catch-light are no key colour (left alone); brows are the hair key's deep tone (they
+  // swap with the hair); blush is XBLUSH (characters.py), swapped for the skin flushed toward PINK (sprites_post.py)
+  var XBLUSH = [255, 96, 96], PINK = [240, 128, 124];
   function lineOf(c) { return [(c[0] + OUTLINE[0]) >> 1, (c[1] + OUTLINE[1]) >> 1, (c[2] + OUTLINE[2]) >> 1]; }
   function int(c) { return (c[0] << 16) | (c[1] << 8) | c[2]; }
   var bases = {}, painted = {}, paintedKeys = [];
@@ -197,6 +201,9 @@ var BridgeCrowd = (function () {
       if (!to) return;
       for (var i = 0; i < 3; i++) { var from = hex(XKEYS[k][i]), into = hex(to[i]); map[int(from)] = into; map[int(lineOf(from))] = lineOf(into); }
     });
+    // the painted face's blush (sprites_post.py) is one key colour: this person's skin, flushed pink
+    var sk = p.dress.skin ? hex(p.dress.skin[1]) : [216, 160, 122];
+    map[int(XBLUSH)] = [0, 1, 2].map(function (i) { return Math.floor(sk[i] * 0.45 + PINK[i] * 0.55); });
     var c = document.createElement('canvas');
     c.width = b.img.naturalWidth; c.height = b.img.naturalHeight;
     var g = c.getContext('2d', { willReadFrequently: true });
@@ -759,7 +766,7 @@ var BridgeCrowd = (function () {
       var footY = Math.round(offY + footRow * ts);
       if (V && (cx < -FW || cx > V.w + FW || footY < -8 || footY > V.h + FH)) return;
       list.push({ footRow: footRow, draw: function (ctx) {
-        var col = st.walk != null ? 4 + Math.floor(st.walk / 0.3) % 8 : IDLE[Math.floor((nowMs + who.seed.length * 97 + e.plan.k * 131) / 360) % 4];
+        var col = st.walk != null ? 4 + Math.floor(st.walk / 0.3) % 8 : idleCol(Math.floor((nowMs + who.seed.length * 97 + e.plan.k * 131) / 360));
         if (sit) cx = Math.round(offX + st.sit.seat[0] * ts);
         var hop = st.hop ? Math.round(Math.abs(Math.sin(nowMs / 140)) * 3) : 0;
         var dx = cx - FW / 2, dy = footY - (FH - 3) - hop, tint = BridgeScene.tintAt(sc, world, Math.round(st.x), Math.round(st.y), nowMs);
