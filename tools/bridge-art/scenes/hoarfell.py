@@ -464,6 +464,35 @@ for i in range(14):                                                             
     x, r = 18.5 + i * 0.4, 27.0 - i * 0.16 + 0.1 * math.sin(i)
     k.blob(x, r, HZ(x, r) + 0.004, 0.03, 0.04, 0.01, ('#b4c0d6', 0.05), 'print', segs=5)
 
+# ---- the busy places: an après-ski terrace, the ski school, a sleigh waiting, children's things ---------------------------------
+HR.deck(k, 25.8, 17.7, 30.0, 19.9)                                                 # the terrace by the cocoa hut
+HR.parasol_table(k, 26.8, 18.9, col='#c83a2e')
+HR.parasol_table(k, 28.9, 18.6, col='#2a5a8a', chairs=3)
+HR.deckchair(k, 29.55, 19.75, col='#c8a040')
+HR.string_lights(k, (25.9, 17.8, 1.7), (29.9, 17.8, 1.7), sag=0.15)
+for x in (25.95, 29.95):
+    k.cyl(x, 17.8, 0.08, 1.75, 0.03, (N.LOG_D, 0.1), 'pole', verts=5)
+HR.chalet(k, 36.6, 38.9, 10.6, 12.7, wall_h=1.55, rise=0.95, gable='front', door_x=37.75, windows=[], canopy=False, balcony=False,
+          gable_window=False, shutters='#2e4a6a', door_col='#2e4a6a', rr=random.Random(23))
+G.letters(k, 'SKI SCHOOL', 'Righteous', 37.75, 12.76, 1.48, size=0.17, col='#2a6ac0', lit=False)
+HR.skis(k, 36.2, 12.95, cols=('#e0b030', '#2a9a5a'))
+HR.skis(k, 39.0, 12.5, cols=('#c83a2e', '#e8e8f0'))
+HR.sleigh(k, 42.7, 17.85, facing=-1)                                               # the sleigh, waiting for a ride
+HR.igloo(k, 12.8, 26.3)                                                            # the children's igloo, their snowballs
+HR.snowballs(k, 15.4, 25.2, rr=rr)
+HR.snowballs(k, 20.6, 25.6, n=5, rr=rr)
+N.sled(k, 14.2, 26.9, col='#c83a2e')
+for x in (29.7, 31.3):                                                             # clipped firs by the chalets' doors
+    HR.tub_fir(k, x, 23.55, h=0.7)
+for x in (36.2, 37.8):
+    HR.tub_fir(k, x, 23.15, h=0.7)
+for i in range(5):                                                                 # a plank footbridge over the brook above the street
+    k.box(12.05 + i * 0.0 - 0.6, 12.0 + i * 0.16, 0.0, 12.05 + 0.6, 12.0 + i * 0.16 + 0.13, 0.05, ((N.LOG_L, N.LOG)[i % 2], 0.1), 'bridge_plank')
+for xb in (11.45, 12.65):
+    k.box(xb - 0.03, 12.0, 0.05, xb + 0.03, 12.8, 0.1, (N.LOG_D, 0.1), 'bridge_beam')
+for (x, r, s_) in ((19.0, 8.1, 0.32), (30.2, 8.2, 0.28), (5.6, 8.0, 0.3), (43.4, 8.7, 0.34)):
+    HR.rock(k, x, r, s_, z=HZ(x, r) - 0.05, rr=rr)
+
 # ---- the borders ------------------------------------------------------------------------------------------------------------------
 k.solid(0, 0, COLS, 7)
 k.solid(0, 0, 1, ROWS)

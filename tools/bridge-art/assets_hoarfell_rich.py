@@ -783,3 +783,90 @@ def rime_rock(k, x, r, s, z=0.0, rr=None):
         k.tube((x - s * 0.55, r + rr.uniform(-0.3, 0.3) * s, z + s * rr.uniform(0.3, 0.6)),
                (x - s * 0.95, r + rr.uniform(-0.3, 0.3) * s, z + s * rr.uniform(0.3, 0.6)), 0.03 * s / 0.4, ('#e4eef8', 0.06), 'rime', rb=0.004, verts=4)
     k.blob(x, r, z + s * 0.6, s * 0.75, s * 0.55, s * 0.2, (ROOF_SNOW, 0.05), 'boulder_snow', segs=9)
+
+
+def sleigh(k, x, r, col='#9a1c22', facing=1):
+    """A sleigh parked in the snow: curled runners, a red body with gold trim, a tartan blanket over the seat, a lamp."""
+    s = facing
+    for dr in (-0.32, 0.32):
+        k.tube((x - 0.8 * s, r + dr, 0.04), (x + 0.75 * s, r + dr, 0.04), 0.03, ('#c8a040', 0.1), 'runner', verts=5)
+        k.tube((x + 0.75 * s, r + dr, 0.04), (x + 0.95 * s, r + dr, 0.32), 0.03, ('#c8a040', 0.1), 'runner', verts=5)
+        for xx in (-0.5, 0.3):
+            k.tube((x + xx * s, r + dr, 0.04), (x + xx * s, r + dr, 0.28), 0.025, ('#c8a040', 0.1), 'runner', verts=4)
+    k.box(x - 0.75, r - 0.38, 0.28, x + 0.6, r + 0.38, 0.62, (col, 0.1), 'sleigh')
+    k.box(x - (0.75 if s > 0 else -0.45), r - 0.38, 0.62, x - (0.45 if s > 0 else -0.75), r + 0.38, 1.05, (col, 0.1), 'sleigh')
+    k.box(x - 0.77, r + 0.38, 0.5, x + 0.62, r + 0.4, 0.56, ('#e0b840', 0.1), 'sleigh_trim')
+    k.box(x - 0.45, r - 0.34, 0.62, x + 0.2, r + 0.34, 0.74, ('#2a5a3a', 0.12), 'blanket')
+    for j in range(3):
+        k.box(x - 0.45 + j * 0.22, r + 0.34, 0.62, x - 0.38 + j * 0.22, r + 0.345, 0.74, ('#c83a2e', 0.1), 'blanket_stripe')
+    k.blob(x - 0.1, r, 0.78, 0.35, 0.3, 0.06, (ROOF_SNOW, 0.05), 'sleigh_snow', segs=8)
+    W.lantern(k, x + 0.62 * s, r + 0.4, 0.62, 0.86, s=0.06, energy=3)
+    k.solid(x - 0.8, r - 0.4, x + 0.9, r + 0.4)
+
+
+def igloo(k, x, r, rad=0.75):
+    """A children's igloo of snow blocks, a dark doorway facing you."""
+    k.sphere(x, r, 0.0, rad, rad * 0.85, (SNOW, 0.05), 'igloo', segs=16)
+    for j in range(4):
+        z = 0.15 + j * 0.17
+        rr_ = rad * math.sqrt(max(0.0, 1 - (z / (rad * 0.85)) ** 2))
+        k.cyl(x, r, z - 0.006, z + 0.006, rr_ + 0.005, ('#c4d0e2', 0.05), 'igloo_joint', verts=16)
+    k.cyl_y(x, r + rad * 0.55, r + rad + 0.35, 0.0, 0.3, 0.38, (SNOW, 0.05), 'igloo', verts=12)
+    k.cyl_y(x, r + rad + 0.3, r + rad + 0.37, 0.0, 0.2, 0.28, '#1a2236', 'igloo_door', verts=12)
+    k.solid(x - rad, r - rad * 0.8, x + rad, r + rad)
+
+
+def parasol_table(k, x, r, col='#c83a2e', chairs=2):
+    """A café table on the terrace under a parasol (furled a little, snow on its crown), chairs with sheepskins."""
+    k.cyl(x, r, 0, 0.7, 0.03, ('#2e3038', 0.1), 'table_leg', verts=6)
+    k.cyl(x, r, 0.7, 0.74, 0.32, ('#e8e4dc', 0.1), 'table_top', verts=14)
+    k.cyl(x, r, 0.74, 2.0, 0.025, ('#c8c4bc', 0.1), 'parasol_pole', verts=6)
+    k.cone(x, r, 1.6, 2.05, 0.95, 0.04, (col, 0.1), 'parasol', verts=8)
+    k.cone(x, r, 1.95, 2.1, 0.3, 0.02, (ROOF_SNOW, 0.1), 'parasol_snow', verts=8)
+    for i in range(8):
+        a = i * math.tau / 8 + math.pi / 8
+        k.cyl(x + math.cos(a) * 0.95, r + math.sin(a) * 0.95, 1.52, 1.6, 0.06, ('#f2ead6', 0.1), 'parasol_tassel', verts=5)
+    for i in range(chairs):
+        a = math.pi * (0.15 + i * 0.7)
+        cx, cr = x + math.cos(a) * 0.55, r + math.sin(a) * 0.45
+        k.box(cx - 0.17, cr - 0.17, 0.4, cx + 0.17, cr + 0.17, 0.46, ('#5a3a20', 0.1), 'chair')
+        k.box(cx - 0.18, cr - 0.18, 0.46, cx + 0.18, cr + 0.18, 0.5, ('#f0e8d8', 0.05), 'sheepskin')
+        for (dx, dr) in ((-0.13, -0.13), (0.13, -0.13), (-0.13, 0.13), (0.13, 0.13)):
+            k.box(cx + dx - 0.02, cr + dr - 0.02, 0, cx + dx + 0.02, cr + dr + 0.02, 0.4, ('#3a2410', 0.1), 'chair_leg')
+    k.cyl(x - 0.1, r + 0.05, 0.74, 0.88, 0.04, ('#f2ead6', 0.1), 'glass', verts=6)
+    k.cyl(x + 0.12, r - 0.06, 0.74, 0.84, 0.05, ('#c83a2e', 0.1), 'mug', verts=8)
+    k.solid_post(x, r)
+
+
+def deck(k, x0, r0, x1, r1, z=0.08):
+    """A timber terrace laid on the snow: boards, a dark edge, a low rail along the back with snow on it."""
+    k.box(x0, r0, -0.02, x1, r1, z - 0.02, ('#4e2e18', 0.1), 'deck_frame')
+    rects = {0: [], 1: [], 2: []}
+    x, j = x0 + 0.02, 0
+    while x < x1 - 0.05:
+        rects[j % 3].append((x, r0 + 0.02, z - 0.02, min(x1 - 0.02, x + 0.2), r1 - 0.02, z))
+        x += 0.22
+        j += 1
+    for i, tone in enumerate(('#8a5a32', '#7a4e2a', '#946238')):
+        if rects[i]:
+            k.boxes(rects[i], (tone, 0.1), 'deck')
+    for xx in (x0 + 0.05, x1 - 0.05):
+        k.box(xx - 0.04, r0 + 0.02, z, xx + 0.04, r0 + 0.1, z + 0.55, ('#4e2e18', 0.1), 'rail_post')
+    k.box(x0, r0 + 0.02, z + 0.5, x1, r0 + 0.1, z + 0.56, ('#4e2e18', 0.1), 'rail')
+    k.tube((x0, r0 + 0.06, z + 0.6), (x1, r0 + 0.06, z + 0.6), 0.05, (ROOF_SNOW, 0.05), 'rail_snow', verts=8)
+
+
+def snowballs(k, x, r, n=7, rr=None):
+    rr = rr or k.rng
+    for i in range(n):
+        k.sphere(x + rr.uniform(-0.2, 0.2), r + rr.uniform(-0.15, 0.15), 0.06 + (0.08 if i > n * 0.6 else 0), 0.07, 0.065, (SNOW, 0.05), 'snowball', segs=8)
+
+
+def deckchair(k, x, r, col='#2a6ac0'):
+    """A slatted lounger tipped back toward the view, a blanket folded on it."""
+    k.box(x - 0.22, r - 0.45, 0.25, x + 0.22, r + 0.15, 0.3, ('#7a4e2a', 0.1), 'lounger')
+    k.poly([(x - 0.22, r - 0.45, 0.3), (x + 0.22, r - 0.45, 0.3), (x + 0.22, r - 0.65, 0.75), (x - 0.22, r - 0.65, 0.75)], ('#7a4e2a', 0.1), 'lounger')
+    for (dx, dr) in ((-0.18, -0.4), (0.18, -0.4), (-0.18, 0.1), (0.18, 0.1)):
+        k.box(x + dx - 0.02, r + dr - 0.02, 0, x + dx + 0.02, r + dr + 0.02, 0.26, ('#4e2e18', 0.1), 'lounger_leg')
+    k.box(x - 0.2, r - 0.1, 0.3, x + 0.2, r + 0.12, 0.36, (col, 0.1), 'blanket')
+    k.solid_post(x, r)
