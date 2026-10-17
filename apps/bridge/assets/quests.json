@@ -798,5 +798,84 @@
         "say": "THE WILLOW IS FULL OF LANTERNS AND GREEN RIBBONS, AND THE MOONWELL IS FULL OF THEIR LIGHT. BECKOLAS IS ALREADY HERE, IN VERY SHINY ARMOUR.\n\nTHE QUEEN COMES DOWN THE PATH. HE OPENS HIS MOUTH, CLOSES IT, AND HOLDS OUT THE MOONFLOWER. IT OPENS IN HIS HAND.\n\n\"I LOVE YOU,\" HE SAYS, ALL IN ONE BREATH. \"I HAVE FOR THREE HUNDRED YEARS. I'M SORRY IT TOOK SO LONG. I ATE A LETTER ABOUT IT ONCE.\"\n\nTHE QUEEN TAKES THE FLOWER. \"FINALLY,\" SHE SAYS, AND KISSES HIM.\n\nSOMEWHERE IN THE BUSHES, A LUTE PLAYS VERY QUIETLY."
       }
     ]
+  },
+  "gloaming-light": {
+    "title": "The Gloaming's Light",
+    "where": "Lumar \u00b7 the Midnight Sea",
+    "reward": 600,
+    "start": "Idris Thorne, Morwen's drowned master, told you about the Gloaming: the boat that put out from Saltmere the night it drowned, and never came home.",
+    "done": "The Gloaming's lantern burns on Saltmere's harbour light, cold and green, and on the dark of the moon the drowned bell rings for her as she comes in. Somebody, at last, is home.",
+    "items": {
+      "lantern": {
+        "name": "The Gloaming's Lantern",
+        "text": "Her stern lantern, its glass cracked, a cold green flame still in it. Hang it on Saltmere's harbour light, so she can see her way home.",
+        "to": "Saltmere's harbour light",
+        "icon": "lantern"
+      }
+    },
+    "clues": [
+      {
+        "id": "idris",
+        "on": {
+          "world": "lumar-midnight-tower-2",
+          "label": "IDRIS THORNE"
+        },
+        "text": "Idris Thorne drowned with Saltmere, a village south-west of Midnight Isle. Its boat, the Gloaming, went out that night for help and never came back. Sailors still see her: green lanterns in the mist."
+      },
+      {
+        "id": "tobiah",
+        "after": "idris",
+        "on": {
+          "world": "lumar-saltmere",
+          "label": "TOBIAH"
+        },
+        "text": "Tobiah Wren, the bell-ringer, rang till the water came up the tower stairs. He rings still, in the dark of the moon, for the Gloaming. \"She can't find us,\" he says. \"The harbour light went out with the rest of us. She's looking for a light.\"",
+        "say": "THE OLD MAN OF COLD LIGHT TURNS TO YOU AND, FOR A MOMENT, SEES YOU.\n\n\"YOU'VE SEEN HER? THE GLOAMING? WE RING FOR HER EVERY DARK OF THE MOON. SHE CAN'T FIND US. THE HARBOUR LIGHT WENT OUT WITH THE REST OF US.\n\nSHE'S LOOKING FOR A LIGHT. SHE ALWAYS CARRIED HER OWN.\""
+      },
+      {
+        "id": "pool",
+        "after": "idris",
+        "on": {
+          "world": "lumar-midnight-tower-3",
+          "label": "SCRYING POOL"
+        },
+        "text": "Morwen's scrying pool shows the Midnight Sea tonight, and the Gloaming drifting on it: green lanterns, sails like lace, south-west of the Isle. Come alongside her with your sail down and you can go aboard."
+      },
+      {
+        "id": "captain",
+        "after": "tobiah",
+        "on": {
+          "world": "lumar-gloaming",
+          "label": "CAPTAIN MARROW"
+        },
+        "text": "Captain Wenna Marrow of the Gloaming has been steering for Saltmere for fifty years. \"Can't see the light. Can't find the quay. Take my stern lantern - it's the only light she's got left. Hang it where we'll see it.\""
+      },
+      {
+        "id": "lantern",
+        "after": "captain",
+        "on": {
+          "world": "lumar-gloaming",
+          "label": "STERN LANTERN"
+        },
+        "text": "You lift the Gloaming's stern lantern off its hook. The flame in it wakes as you touch it, cold and green.",
+        "get": "lantern",
+        "say": "YOU LIFT THE STERN LANTERN OFF ITS HOOK. THE DROWNED WICK CATCHES AS YOUR HAND CLOSES ON THE HANDLE: A COLD GREEN FLAME, NO BIGGER THAN A THUMBNAIL, AND THEN THE SIZE OF A FIST.\n\nBEHIND YOU, AT THE WHEEL, THE CAPTAIN SAYS QUIETLY: \"SALTMERE. THE HARBOUR LIGHT. PLEASE.\""
+      },
+      {
+        "id": "home",
+        "after": "lantern",
+        "on": {
+          "world": "lumar-saltmere",
+          "label": "HARBOUR LIGHT"
+        },
+        "text": "You hang the Gloaming's lantern in Saltmere's harbour light. Out in the mist, green lanterns turn toward it, and the drowned bell rings once, for her.",
+        "give": "lantern",
+        "say": "YOU CLIMB THE POST AND HANG THE LANTERN ON ITS HOOK IN THE CAGE. THE GREEN FLAME STEADIES, AND GROWS, AND THROWS ITS LIGHT ACROSS THE DROWNED STREET.\n\nOUT IN THE MIST, FAR OFF, GREEN LANTERNS TURN.\n\nIN THE CHAPEL TOWER, THE BELL RINGS ONCE - NOT FOR THE DARK OF THE MOON. FOR HER."
+      }
+    ],
+    "letter": {
+      "from": "idris",
+      "text": "Traveller.\n\nMorwen came up the stair this morning and sat by my circle, and for the first time in fifty years she didn't apologise to me. She said: the light is lit at Saltmere. She said: they're home.\n\nShe went up to the star chamber afterwards and I heard her laughing at something in the pool. I haven't heard that since she was seventeen.\n\nThank you. From both of us. From all of them.\n\n- Idris Thorne"
+    }
   }
 }

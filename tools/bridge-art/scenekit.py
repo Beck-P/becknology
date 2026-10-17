@@ -934,6 +934,9 @@ class Kit:
             return
         os.makedirs(out, exist_ok=True)
         light_samples = int(os.environ.get('SCENE_SAMPLES', light_samples))     # a quick look: SCENE_SAMPLES=16
+        if os.environ.get('SCENE_QUICK'):                                        # a quicker look: its own light only, no day
+            cycle = None
+            os.environ['SCENE_NOLIT'] = '1'
         light_states = light_states or {'full': {}}
         self._world_default = world_light
         cmap = None
@@ -975,7 +978,7 @@ class Kit:
         for name, state in light_states.items():
             self._sky(state)
             self._assign('light', state)
-            self._settings(64, raw=True, sixteen=True)
+            self._settings(min(64, light_samples) if os.environ.get('SCENE_QUICK') else 64, raw=True, sixteen=True)
             self._render(os.path.join(out, 'probe_' + name + '.png'))
         bpy.data.objects.remove(pl)
         for p in self.parts:

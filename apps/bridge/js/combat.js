@@ -55,9 +55,18 @@ var BridgeCombat = (function () {
     hound:    { label: 'BARROW HOUND', hp: 40, damage: 7, move: 300, aggro: 7, windup: 320, recover: 540, reward: 7,
                 drops: [{ id: 'stone_shard', min: 1, max: 1, chance: 0.5 }] },
     warden:   { label: 'THE BELL WARDEN', hp: 420, damage: 15, move: 1100, aggro: 7, windup: 820, recover: 1000, reach: 2, reward: 120, boss: true,
-                drops: [{ id: 'moonstone', min: 1, max: 2 }, { id: 'songstone', min: 1, max: 1, chance: 0.5 }] }
+                drops: [{ id: 'moonstone', min: 1, max: 2 }, { id: 'songstone', min: 1, max: 1, chance: 0.5 }] },
+    // the Crimson and Midnight seas, grown (Workstream B2): the volcano on Cinder Key, drowned Saltmere, the ghost ship
+    imp:      { label: 'EMBER IMP', hp: 34, damage: 7, move: 360, aggro: 8, windup: 420, strike: 340, recover: 700, range: 3, reward: 7,
+                drops: [{ id: 'ember_glass', min: 1, max: 1, chance: 0.45 }] },
+    magma:    { label: 'MAGMA CRAB', hp: 130, damage: 12, move: 1150, aggro: 5, windup: 720, recover: 950, reward: 14, crack: 0.5,
+                drops: [{ id: 'ember_glass', min: 1, max: 2 }, { id: 'crimson_crystal', min: 1, max: 1, chance: 0.3 }] },
+    drowned:  { label: 'DROWNED FISHER', hp: 58, damage: 8, move: 760, aggro: 6, windup: 520, recover: 720, blink: 0.15, reward: 8,
+                drops: [{ id: 'drowned_locket', min: 1, max: 1, chance: 0.3 }, { id: 'sea_glass', min: 1, max: 1, chance: 0.4 }] },
+    spectre:  { label: 'SPECTRAL SAILOR', hp: 72, damage: 10, move: 520, aggro: 7, windup: 440, recover: 640, blink: 0.35, reward: 11,
+                drops: [{ id: 'drowned_locket', min: 1, max: 1, chance: 0.35 }, { id: 'moonstone', min: 1, max: 1, chance: 0.2 }] }
   };
-  var UNDEAD = { shade: 1, wisp: 1, wight: 1, warden: 1 };
+  var UNDEAD = { shade: 1, wisp: 1, wight: 1, warden: 1, drowned: 1, spectre: 1 };
 
   function spawn(world, kind, x, y) {
     var C = CREATURES[kind];
@@ -86,7 +95,8 @@ var BridgeCombat = (function () {
   }
 
   // the shadow under a creature: an oval of whole pixels on the ground ([half its width in u, how dark])
-  var SHADOW = { mite: [5, 0.3], crab: [7, 0.3], shade: [5, 0.25], sentinel: [7, 0.35], wisp: [3, 0.18], wight: [5, 0.3], hound: [7, 0.3], warden: [10, 0.4] };
+  var SHADOW = { mite: [5, 0.3], crab: [7, 0.3], shade: [5, 0.25], sentinel: [7, 0.35], wisp: [3, 0.18], wight: [5, 0.3], hound: [7, 0.3], warden: [10, 0.4],
+                 imp: [3, 0.2], magma: [9, 0.4], drowned: [5, 0.3], spectre: [5, 0.15] };
   function feet(ctx, h, cx, footY, ts) {
     var s = SHADOW[h.creature];
     if (!s || typeof BridgeFX === 'undefined' || !BridgeFX.disc) return;
@@ -220,6 +230,59 @@ var BridgeCombat = (function () {
       px(ctx, 5 * u, hy - 2 * u, 1 * u, 2 * u, OL); px(ctx, 7 * u, hy - 2 * u, 1 * u, 2 * u, OL);               // ears up
       px(ctx, 7 * u, hy + 1 * u, 1 * u, 1 * u, eye || '#c080ff');
       px(ctx, -9 * u, -9 * u + cr + Math.round(st) * u, 2 * u, 1 * u, OL); px(ctx, -10 * u, -10 * u + cr + Math.round(st) * u, 1 * u, 1 * u, OL);   // tail
+    } else if (h.creature === 'imp') {                     // an ember imp: a hot coal with wings, flitting, a tail of sparks
+      ctx.scale(h._face || 1, 1);
+      var iy = -14 * u + Math.round(Math.sin(t * 7) * 2) * u, wf = Math.sin(t * 24) > 0 ? 1 : 0, IO = '#1a0804';
+      px(ctx, -3 * u, iy - 3 * u, 7 * u, 7 * u, IO); px(ctx, -2 * u, iy - 2 * u, 5 * u, 5 * u, '#8a2a10');
+      px(ctx, -2 * u, iy - 2 * u, 3 * u, 2 * u, '#e85a20'); px(ctx, -1 * u, iy - 1 * u, 1 * u, 1 * u, '#ffd060');
+      px(ctx, -7 * u, iy - (2 + wf * 2) * u, 4 * u, 2 * u, IO); px(ctx, 4 * u, iy - (2 + wf * 2) * u, 4 * u, 2 * u, IO);   // wings, beating
+      px(ctx, -6 * u, iy - (2 + wf * 2) * u, 2 * u, 1 * u, '#5a1a0a'); px(ctx, 5 * u, iy - (2 + wf * 2) * u, 2 * u, 1 * u, '#5a1a0a');
+      px(ctx, -2 * u, iy - 5 * u, 1 * u, 2 * u, IO); px(ctx, 2 * u, iy - 5 * u, 1 * u, 2 * u, IO);                   // horns
+      px(ctx, -1 * u, iy, 1 * u, 1 * u, eye || '#fff0a0'); px(ctx, 1 * u, iy, 1 * u, 1 * u, eye || '#fff0a0');
+      ctx.globalCompositeOperation = 'lighter';
+      for (var es = 0; es < 4; es++) {
+        var ep = ((t * 1.6) + es / 4) % 1;
+        px(ctx, Math.round(Math.sin(es * 2.1 + t * 3) * 2) * u, iy + Math.round((4 + ep * 9)) * u, 1 * u, 1 * u, 'rgba(255,' + (160 - ep * 100 | 0) + ',40,' + (0.8 * (1 - ep)).toFixed(2) + ')');
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    } else if (h.creature === 'magma') {                   // a magma crab: a shell of black crust split with glowing seams
+      var mcr = h._hp < h.maxHP * 0.5, glow = mcr ? 0.6 + 0.4 * Math.abs(Math.sin(t * 6)) : 0.55 + 0.15 * Math.sin(t * 2);
+      var msw = Math.round(Math.sin(t * 2.5) * u), mcl = wind ? -3 * u : strike ? 2 * u : 0, MO = '#0a0606', MS = '#2a1e1c', ML = '#4a3a36';
+      for (var mk = 0; mk < 4; mk++) {
+        var ml = Math.sin(t * 5 + mk) > 0 ? 1 : 0;
+        px(ctx, (-9 + mk * 2) * u + msw, (-3 + ml) * u, 1 * u, 3 * u, MO); px(ctx, (2 + mk * 2) * u + msw, (-3 + 1 - ml) * u, 1 * u, 3 * u, MO);
+      }
+      px(ctx, -9 * u + msw, -11 * u, 18 * u, 9 * u, MO); px(ctx, -8 * u + msw, -11 * u, 16 * u, 8 * u, MS);
+      px(ctx, -7 * u + msw, -11 * u, 10 * u, 2 * u, ML);
+      ctx.globalAlpha = glow;
+      px(ctx, -4 * u + msw, -9 * u, 1 * u, 5 * u, '#ff7020'); px(ctx, -3 * u + msw, -6 * u, 4 * u, 1 * u, '#ff7020'); px(ctx, 3 * u + msw, -10 * u, 1 * u, 4 * u, '#ff7020');
+      if (mcr) { px(ctx, -7 * u + msw, -8 * u, 3 * u, 1 * u, '#ffb040'); px(ctx, 5 * u + msw, -7 * u, 2 * u, 1 * u, '#ffb040'); }
+      ctx.globalAlpha = 1;
+      px(ctx, -13 * u + msw, -10 * u + mcl, 4 * u, 4 * u, MO); px(ctx, -12 * u + msw, -9 * u + mcl, 2 * u, 2 * u, ML);    // claws
+      px(ctx, 9 * u + msw, -10 * u + mcl, 4 * u, 4 * u, MO); px(ctx, 10 * u + msw, -9 * u + mcl, 2 * u, 2 * u, ML);
+      px(ctx, -2 * u + msw, -13 * u, 1 * u, 2 * u, MO); px(ctx, 2 * u + msw, -13 * u, 1 * u, 2 * u, MO);
+      px(ctx, -2 * u + msw, -14 * u, 1 * u, 1 * u, eye || '#ffd060'); px(ctx, 2 * u + msw, -14 * u, 1 * u, 1 * u, eye || '#ffd060');
+    } else if (h.creature === 'drowned' || h.creature === 'spectre') {   // the drowned of Saltmere; the Gloaming's sailors, see-through
+      var spec = h.creature === 'spectre', dbl = h._blinkAt ? Math.min(1, (performance.now() - h._blinkAt) / 350) : 1;
+      ctx.globalAlpha = dbl * (spec ? 0.7 + 0.15 * Math.sin(t * 3) : 1);
+      var dh = Math.round(Math.sin(t * 1.8) * 0.6) * u, dcl = wind ? -3 * u : 0, fl = spec ? Math.round(Math.sin(t * 2) * 2) * u - 2 * u : 0;
+      var DO = spec ? '#0a1a1c' : '#0a0e0c', DC = spec ? '#3a7a80' : '#3a4a3a', DL = spec ? '#6ab8c0' : '#5a6a52', DS = spec ? '#9ad8e0' : '#8a9a88';
+      px(ctx, -5 * u, -12 * u + fl, 10 * u, 11 * u, DO); px(ctx, -4 * u, -12 * u + fl, 8 * u, 10 * u, DC); px(ctx, -4 * u, -12 * u + fl, 8 * u, 1 * u, DL);
+      if (!spec) { px(ctx, -4 * u, -6 * u, 8 * u, 1 * u, '#c8b040'); px(ctx, -2 * u, -10 * u, 1 * u, 5 * u, '#2a5a3a'); }   // an oilskin's yellow band, weed
+      else { px(ctx, -4 * u, -9 * u + fl, 8 * u, 1 * u, '#e0e8ff'); px(ctx, -4 * u, -7 * u + fl, 8 * u, 1 * u, '#e0e8ff'); }   // a striped shirt
+      px(ctx, -3 * u + dh, -17 * u + fl, 6 * u, 6 * u, DO); px(ctx, -2 * u + dh, -17 * u + fl, 4 * u, 5 * u, DS);
+      if (spec) { px(ctx, -3 * u + dh, -18 * u + fl, 6 * u, 2 * u, '#1a3a40'); px(ctx, 3 * u + dh, -18 * u + fl, 2 * u, 1 * u, '#1a3a40'); }   // a bandana
+      else { px(ctx, -3 * u + dh, -18 * u, 6 * u, 2 * u, '#a8902a'); px(ctx, -4 * u + dh, -17 * u, 8 * u, 1 * u, '#a8902a'); }               // a sou'wester
+      px(ctx, -1 * u + dh, -15 * u + fl, 1 * u, 1 * u, eye || (spec ? '#c0ffff' : '#a0ffd0')); px(ctx, 1 * u + dh, -15 * u + fl, 1 * u, 1 * u, eye || (spec ? '#c0ffff' : '#a0ffd0'));
+      px(ctx, -7 * u, -11 * u + dcl + fl, 2 * u, 6 * u, DO); px(ctx, 5 * u, -11 * u + dcl + fl, 2 * u, 6 * u, DO);
+      px(ctx, -7 * u, -11 * u + dcl + fl, 1 * u, 5 * u, DS); px(ctx, 6 * u, -11 * u + dcl + fl, 1 * u, 5 * u, DS);
+      if (spec) { px(ctx, 7 * u, -16 * u + dcl + fl, 1 * u, 8 * u, '#d8e8f0'); px(ctx, 6 * u, -9 * u + dcl + fl, 3 * u, 1 * u, '#5a6a70'); }   // a cutlass
+      else {
+        var ddp = (t * 2.6) % 1;                                                                                 // dripping
+        px(ctx, -4 * u, Math.round((-6 + ddp * 6)) * u, 1 * u, 1 * u, 'rgba(120,200,220,' + (0.8 * (1 - ddp)).toFixed(2) + ')');
+      }
+      if (spec) { ctx.globalCompositeOperation = 'lighter'; px(ctx, -5 * u, -12 * u + fl, 10 * u, 11 * u, 'rgba(60,160,170,0.18)'); ctx.globalCompositeOperation = 'source-over'; }
+      ctx.globalAlpha = 1;
     } else if (h.creature === 'warden') {
       var rage = h._hp < h.maxHP / 3, toll = h._kind === 'toll', sl = Math.round(Math.sin(t * 1.6) * 0.6) * u;
       var RB = '#1c282c', RL = '#28383c', BZ = '#8a6428', BZL = '#c09048';
@@ -318,7 +381,7 @@ var BridgeCombat = (function () {
     var px = player.getX(), py = player.getY(), d = Math.abs(px - h.x) + Math.abs(py - h.y);
     h._kind = 'hit';
     if (h.range && d > 1) h._kind = 'bolt';
-    if (h.creature === 'sentinel' && h._hp < h.maxHP * 0.5) h._kind = 'slam';
+    if ((h.creature === 'sentinel' || h.creature === 'magma') && h._hp < h.maxHP * 0.5) h._kind = 'slam';
     if (h.creature === 'warden') {
       h._swings = (h._swings || 0) + 1;
       h._kind = d >= 2 || h._swings % 3 === 0 ? 'toll' : 'slam';
@@ -346,10 +409,12 @@ var BridgeCombat = (function () {
   // the strike leaves the creature: a bolt flies, a slam shakes the ground, the bell rings out, a bite or a blow rakes
   // the tile it locked onto (js/fx.js spawnStrike, in its own colour)
   var bolts = [], rings = [];
-  var RAKE = { mite: '#f070b0', crab: '#80b0ff', shade: '#c090ff', sentinel: '#c49cff', wisp: '#c8a8ff', wight: '#70fff0', hound: '#e8e0d0', warden: '#ffd070' };
+  var RAKE = { mite: '#f070b0', crab: '#80b0ff', shade: '#c090ff', sentinel: '#c49cff', wisp: '#c8a8ff', wight: '#70fff0', hound: '#e8e0d0', warden: '#ffd070',
+               imp: '#ff9040', magma: '#ff6a20', drowned: '#a0ffd0', spectre: '#c0ffff' };
+  var BOLT = { imp: [255, 140, 60] };                     // a bolt's colour by who threw it (the wisps' violet, else)
   function strikeFx(h, now) {
     var t = h._attackTarget;
-    if (h._kind === 'bolt') { bolts.push({ x0: h.x + 0.5, y0: h.y - 0.1, x1: t.x + 0.5, y1: t.y + 0.4, at: now, dur: h.strikeMs || 380 }); sfx('zap'); return true; }
+    if (h._kind === 'bolt') { bolts.push({ x0: h.x + 0.5, y0: h.y - 0.1, x1: t.x + 0.5, y1: t.y + 0.4, at: now, dur: h.strikeMs || 380, col: BOLT[h.creature] }); sfx('zap'); return true; }
     if (h._kind === 'toll') { rings.push({ x: h.x + 0.5, y: h.y + 0.5, at: now }); sfx('toll'); shake(4); return true; }
     if (h._kind === 'slam') { sfx('slam'); shake(h.boss ? 5 : 3); if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnSparks) BridgeFX.spawnSparks(t.x, t.y, '#b8a8d0', 10); return true; }
     if (t && typeof BridgeFX !== 'undefined' && BridgeFX.spawnStrike) { BridgeFX.spawnStrike(h.x, h.y, t.x, t.y, RAKE[h.creature]); return true; }
@@ -364,7 +429,7 @@ var BridgeCombat = (function () {
     (world.interactions || []).forEach(function (h) {
       if (h.type !== 'hostile' || !h.creature || (h._attackPhase !== 'winding' && h._attackPhase !== 'striking') || !FX) return;
       var wind = h._attackPhase === 'winding', p = wind ? Math.max(0, Math.min(1, (pn - h._attackStart) / (h._windFor || h.windupMs || 500))) : 1;
-      var col = h._kind === 'toll' ? [255, 200, 90] : h._kind === 'bolt' ? [200, 150, 255] : [255, 70, 60], rgb = col.join(',');
+      var col = h._kind === 'toll' ? [255, 200, 90] : h._kind === 'bolt' ? (BOLT[h.creature] || [200, 150, 255]) : [255, 70, 60], rgb = col.join(',');
       var rx = Math.round(ts * 0.42), Q = 0.5;
       ctx.save();
       dangerCells(h).forEach(function (c) {
@@ -406,16 +471,16 @@ var BridgeCombat = (function () {
             var q = k - i * 0.04;
             if (q <= 0) break;
             var m = at(q);
-            ctx.fillStyle = 'rgba(200,170,255,' + (0.6 - i * 0.07).toFixed(2) + ')';
+            ctx.fillStyle = 'rgba(' + (b.col || [200, 170, 255]).join(',') + ',' + (0.6 - i * 0.07).toFixed(2) + ')';
             ctx.fillRect(Math.round(m[0] + Math.sin(i * 2.3 + pn / 90)), Math.round(m[1] - m[2]), i < 3 ? 2 : 1, i < 3 ? 2 : 1);
           }
           var X = hd[0], Y = hd[1] - hd[2];
-          FX.glow(ctx, X, Y, 9, [180, 140, 255], 0.5);
-          ctx.fillStyle = '#e8dcff'; FX.disc(ctx, X, Y, 2);
+          FX.glow(ctx, X, Y, 9, b.col || [180, 140, 255], 0.5);
+          ctx.fillStyle = b.col ? '#fff0c0' : '#e8dcff'; FX.disc(ctx, X, Y, 2);
           ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(X), Math.round(Y), 1, 1);
         } else {                                                              // landed: a ring going out, a flare going down
           var e = Math.min(1, (pn - b.at - b.dur) / 220), LX = offX + b.x1 * ts, LY = offY + b.y1 * ts;
-          FX.glow(ctx, LX, LY, 12 * (1 - e * 0.4), [200, 170, 255], 0.55 * (1 - e));
+          FX.glow(ctx, LX, LY, 12 * (1 - e * 0.4), b.col || [200, 170, 255], 0.55 * (1 - e));
           ctx.fillStyle = 'rgba(230,214,255,' + (0.85 * (1 - e)).toFixed(2) + ')';
           FX.ring(ctx, LX, LY, 3 + e * 10, 0.6);
         }
@@ -587,6 +652,28 @@ var BridgeCombat = (function () {
       if (i.label === 'TOMB' && i.type === 'dialog') { i.type = 'midnight_tomb'; i.prompt = 'PRESS E TO LOOK'; }
     });
   }
+  // the Crimson and Midnight seas' other fights (Workstream B2): who's out there as each place loads, each on the nearest
+  // open ground to where it's listed (the crater on Cinder Key; drowned Saltmere and the ghost ship add theirs here)
+  var ROSTERS = {
+    'lumar-cinder-volcano': [['imp', 12, 14], ['imp', 32, 18], ['imp', 17, 27], ['imp', 30, 8], ['imp', 8, 18],
+                             ['magma', 10, 22], ['magma', 33, 25], ['magma', 25, 8]],
+    'lumar-saltmere': [['drowned', 8, 12], ['drowned', 10, 15], ['drowned', 37, 12], ['drowned', 35, 14], ['drowned', 25, 8]],
+    'lumar-gloaming': [['spectre', 20, 6], ['spectre', 28, 9]]
+  };
+  function openNear(data, x, y) {
+    for (var d = 0; d <= 3; d++) {
+      for (var dy = -d; dy <= d; dy++) for (var dx = -d; dx <= d; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== d) continue;
+        var row = data.collisions[y + dy];
+        if (row && row[x + dx] === 0) return [x + dx, y + dy];
+      }
+    }
+    return null;
+  }
+  function populate(data, list) {
+    data.interactions = data.interactions.filter(function (i) { return i.type !== 'hostile'; });
+    list.forEach(function (r) { var at = openNear(data, r[1], r[2]); if (at) spawn(data, r[0], at[0], at[1]); });
+  }
   // the violet tomb: the drowned keep its key
   function tomb(inter) {
     var say = function (t) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say('TOMB', t); };
@@ -645,6 +732,7 @@ var BridgeCombat = (function () {
   // ---- where weapons are sold ------------------------------------------------------------------------------
   function decorate(worldId, data) {
     if (worldId === 'lumar-midnight') return midnight(data);
+    if (ROSTERS[worldId]) return populate(data, ROSTERS[worldId]);
     if (worldId === 'lumar-midnight-tower' && !data.interactions.some(function (i) { return i.label === 'ARCANE CASE'; })) {
       data.interactions.push({ x: 9, y: 6, type: 'vendor', label: 'ARCANE CASE', prompt: 'PRESS E TO BROWSE',
         items: [{ id: 'rime_hatchet', price: 340 }, { id: 'emberbrand', price: 380 }, { id: 'moonglass_sabre', price: 460 }, { id: 'health_draught', price: 30 }] });
@@ -662,5 +750,6 @@ var BridgeCombat = (function () {
 
   return { CREATURES: CREATURES, spawn: spawn, drawCreature: drawCreature, sceneItems: sceneItems, faint: faint, decorate: decorate,
            tick: tick, attackStart: attackStart, dangerAt: dangerAt, dangerCells: dangerCells, attackDamage: attackDamage, strikeFx: strikeFx,
-           onHit: onHit, onKill: onKill, damageFor: damageFor, shake: shake, tomb: tomb, engage: engage, _save: function () { return save; } };
+           onHit: onHit, onKill: onKill, damageFor: damageFor, shake: shake, tomb: tomb, engage: engage, ROSTERS: ROSTERS, populate: populate,
+           _save: function () { return save; } };
 })();

@@ -28,9 +28,10 @@ SYSTEMS = [
     ('sylvara', 'Sylvara', 'sylvara', r'^sylvara'),
 ]
 # Lumar's islands (js/voyage.js ISLES), each its own tree from its pier; rooms whose ids don't start with their island's
-ISLES = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-holm', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight']
+ISLES = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-holm', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-cinder', 'lumar-midnight', 'lumar-saltmere']
 INSIDE = {'lumar-home': 'lumar-sapphire', 'lumar-manor': 'lumar-crown', 'lumar-manor-drawing': 'lumar-crown', 'lumar-manor-library': 'lumar-crown',
-          'lumar-manor-dining': 'lumar-crown', 'lumar-manor-bedroom': 'lumar-crown'}
+          'lumar-manor-dining': 'lumar-crown', 'lumar-manor-bedroom': 'lumar-crown',
+          'lumar-gloaming': 'lumar-saltmere'}       # the ghost ship, boarded at sea (js/sloop.js): Saltmere's own
 # ways between places that the JS makes or opens, not the world JSON: (from, to, the interactions' labels, kind[, x, y])
 # - x, y only for one the JS adds as the world loads (the rest are found by label, so the map can mark them)
 EXTRA = [

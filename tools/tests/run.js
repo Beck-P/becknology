@@ -44,6 +44,8 @@ const SUITES = {
     ['world/events.js', SHOTS],
     ['world/regatta.js', SHOTS],
     ['world/tower.js', SHOTS],
+    ['world/crimson.js', SHOTS],
+    ['world/midnight.js', SHOTS],
     ['world/landings.js', SHOTS + '/landings'],
     ['world/arrive.js', SHOTS + '/arrive'],
     ['world/title.js', SHOTS + '/title'],

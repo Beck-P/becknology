@@ -445,6 +445,45 @@ own code is `js/midnight.js` (BridgeMidnight).
   the room. Their sheets are in the `ghost` skin (`characters.py` FIXED: pale blue-green, cold light not flesh).
   Midnight keeps no living people by design; ghosts and the drowned are its people.
 - Test: `world/tower.js`.
+- **Cinder Key** (`lumar-cinder`, `scenes/lumar_cinder.py`, chart 0.33 / 0.88 in the Crimson): the pirates' port, a
+  Tortuga under a smoking volcano. A world JSON `sea` field (`"crimson"`) gives its water the sea's palette whatever
+  island is nearest on the chart (js/worlds/lumar.js `seaPalette`, js/actions.js). The cove: a boardwalk on piles round
+  a black-sand beach strewn with wrecks, your pier (`MOORINGS`), the fishing jetty off the east point, stilt shacks,
+  drying racks, crab pots, market stalls, a campfire and an old anchor in the square, the gibbet and the battery on the
+  point. **Scarlet Dee** keeps the harbour (`dee`, `npc-hm-dee`; js/harbour.js `PORTS`); **Kettle** (`kettle`) works
+  the pirates' slip, a raider in frame on it (SHIPWRIGHT); **Vesper Quick** the fence (`vesper`, `npc-fence`) trades out
+  of an upturned hull (THE FENCE). Up the switchback, THE CRATER TRAIL; on the east cliff, the STORMWATCH. Its crowd is
+  the `pirates` wardrobe. Trade (`MARKET`, js/trade.js): rum and powder cheap, roseite and glass wanted.
+- **Hot goods** (js/crimson.js, BridgeCrimson): a pirate ship you sink now and then leaves plunder (`prize(K)`, called
+  from js/seafight.js `sink`: a plate 60%, rings 30%, an idol 10%; a drowned ship a locket). They're worth nothing to a
+  trader (`value: 0`) and their `fence` price to Vesper, whose `sell` topic is the only one that buys them.
+- **The Salt Rat** (`lumar-cinder-tavern`, `scenes/lumar_cinder_tavern.py`): the rogues' tavern in a ship's stern — the
+  gallery windows across the back, Rook (`rook`, eyepatch) behind the bar, a parrot, the stove, barrel tables, a cannon
+  for a table, a mermaid figurehead; **Bones** with Red Annis and Gash (js/lodge.js `TABLES.rat`, js/together.js).
+- **The stormwatch** (`lumar-cinder-stormwatch`): an octagon of stone with a ladder to the lamp; old Wick (`wick`) and
+  his BAROMETER BOARD (`stormwatch`, js/crimson.js): the Crimson's weather now and coming (`BridgeWeather`), a cone
+  hoisted for it, and a **storm glass** to buy (`storm_glass`, 180, a charm: squalls and lightning do 0.6 of the harm —
+  js/sloop.js `stormGlass()`).
+- **The Crater** (`lumar-cinder-volcano`, `scenes/lumar_cinder_volcano.py`): the caldera — a lava lake with crust
+  plates and hot seams, fumaroles, spires of black glass, the pirates' old shrine, the lookout. **Ember imps** (quick,
+  throw fire down the line) and **magma crabs** (slow, a slam once cracked) live there (js/combat.js `ROSTERS`);
+  **ember glass** grows in the cracks (forage.json, sold to Vesper); black out and you come round on the boardwalk
+  (`onFaint` in the world JSON).
+- **Saltmere** (`lumar-saltmere`, `scenes/lumar_saltmere.py`, chart 0.08 / 0.42 in the Midnight): the drowned village,
+  half under the water — roofs and chimneys standing out of the sea, plank walks between the three humps of land still
+  dry, the chapel and its bell tower, the graveyard, the net loft, the dead harbour light on the quay. No living people:
+  the drowned walk it as ghosts (walkers.json, `ghost: true`), Tobiah the bell-ringer (`tobiah`, `npc-ghost-ringer`)
+  stands under his tower, and the **drowned** (js/combat.js) come up out of the water at you. No harbourmaster.
+- **The Gloaming** (`lumar-gloaming`, `scenes/lumar_gloaming.py`): the ghost ship. At sea she sails a loop in the
+  Midnight Sea on the clock (js/sloop.js `GHOST_LOOP`, `ghostChart(T)`: the same place for everyone); come alongside
+  with your sail down and the prompt is *Board the Gloaming* (`boardGhost`: where you left your boat is kept in
+  `bridge_gloaming`). Her deck: torn sails glowing cold, Captain Marrow (`marrow`, `npc-ghost-captain`) at the wheel,
+  her dead crew as ghosts, **spectres** to fight, her stern lantern; YOUR BOAT (`ghost_return`, js/midnight.js) puts you
+  back in your boat where you left it (`BridgeSloop.resume`).
+- **The quest** `gloaming-light` (*The Gloaming's Light*): Idris tells you Saltmere drowned when its light went out;
+  Tobiah says the Gloaming carries it; the scrying pool shows where she is; her captain lets you take the stern lantern
+  (a key item, `lantern`); hung on Saltmere's HARBOUR LIGHT it burns again for good (js/midnight.js draws it).
+- Tests: `world/crimson.js`, `world/midnight.js`.
 
 ### Quests and people
 - **Quests** (`assets/quests.json`, `js/quests.js`): each quest is a set of clues tied to interactions by `{world, label}`. Using one finds the clue — the first starts the quest, the last pays its reward through `BridgeProgression.recordAchievement('quest_<id>', coins)` (once per pilot). A toast reports each find; the journal (the game menu's Journal tab: J, or the Menu pill — see *The game menu*) lists what you've pieced together. Progress lives in localStorage. Keep labels stable when re-rendering a world, or the clue stops matching. A quest with `needs: <quest id>` doesn't begin until that one's done (a sequel: its first clue can sit on someone the earlier quest already used). A clue with `say` has its moment shown in place of the thing's usual words as it's found (`BridgeQuests.onInteract` returns the clues found just now). A person's topic can wait on a quest — `when: 'quest/clue'` (or `'quest'`, done; or a list) — and go once it's moved on (`until`); topics a quest has just opened come first in the list, lit up (`BridgeQuests.has`). **Things in a quest** (`js/keyitems.js`, BridgeKeyItems; Alyssa: you couldn't see you'd got the ribbon, and handing it back was just text — "like in Legend of Zelda"): a quest's `items` (`{ <id>: { name, text, to, icon } }`), and a clue that `get`s or `give`s one. Got: once whatever the clue opened has been read, the pilot turns to face you and holds it up over their head, light turning behind it, a fanfare (`itemget`), and a card along the bottom (*You got* · the thing, big · what it is and who it's for; Space / E / a tap). Given: it flies from your hands to theirs and bursts into sparkles (`give`) before they speak (`executeInteraction` runs again after, with the clues it found). What you carry is worked out from the quest itself (its `get` clue found, its `give` clue not), shown in the journal under the quest and first in Next up (*Carrying*). Icons are drawn in code on the 16-grid (`ICONS`; `grid` takes rows of letters). Sylvara's ribbon and moonflower use it; any quest can (`tools/tests/world/sylvara_quests.js` plays both through). **The log** (top of the journal, localStorage `bridge_log`, the last 250): what you've done, newest first, with where and when — every `BridgeQuests.toast` lands in it (they all say "J Journal", so the journal has to have it; `QUIET` skips passing hints like *Course set*), plus `BridgeQuests.arrived` (the first time you set foot in each place, from js/world.js) and the first time you meet each person (`BridgePeople.meet`). A new event worth remembering: toast it, or `BridgeQuests.note(kicker, title, sub)` to log it quietly. (Added after a new player found the journal empty: before it, a first hour of talking and wandering logged nothing.)
