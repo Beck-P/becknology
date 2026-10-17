@@ -217,12 +217,39 @@ def ring_d(x, r):
     return math.hypot(x - SQ[0], (r - SQ[1]) * 1.0)
 
 
+def inlay_rose(cx, cr, R=1.25):
+    """A compass rose let into the paving: a ring of dark setts, eight points in two stones."""
+    k.cyl(cx, cr, -0.04, 0.012, R + 0.08, ('#7a7468', 0.15), 'paving_inlay', verts=40)
+    k.cyl(cx, cr, -0.04, 0.016, R - 0.08, ('#c0b6a2', 0.15), 'paving_inlay', verts=40)
+    for i in range(8):
+        a = i / 8 * math.tau - math.pi / 2
+        L = R * (0.92 if i % 2 == 0 else 0.6)
+        for s_ in (-1, 1):
+            b = a + s_ * (0.2 if i % 2 == 0 else 0.26)
+            k.poly([(cx, cr, 0.02), (cx + math.cos(a) * L, cr + math.sin(a) * L, 0.02),
+                    (cx + math.cos(b) * L * 0.32, cr + math.sin(b) * L * 0.32, 0.02)],
+                   ('#5a6a72' if (s_ > 0) == (i % 2 == 0) else '#c8a858', 0.12), 'paving_inlay')
+    k.cyl(cx, cr, 0.0, 0.026, 0.12, GOLD, 'paving_inlay', verts=12)
+
+
 # the grand square, the Exchange's forecourt, the church's: big pale flags; setts in rings round the fountain
 SQUARE = (21.6, 12.1, 43.0, 23.0)
 flags(*SQUARE, '#b0a693', w=(0.5, 0.9), h=(0.36, 0.5), skip=lambda x, r: 1.35 < ring_d(x, r) < 3.55)
 for (x0, r0, x1, r1) in ((11.0, 19.0, 21.6, 23.0), (11.0, 11.0, 12.4, 19.0), (43.0, 18.4, 53.0, 23.0), (51.0, 11.0, 53.0, 18.4),
                          (12.4, 11.0, 17.0, 12.6), (47.0, 11.0, 51.0, 12.1), (17.0, 12.0, 21.6, 12.6)):
-    flags(x0, r0, x1, r1, '#aaa08e')
+    flags(x0, r0, x1, r1, '#aaa08e', skip=lambda x, r: math.hypot(x - 16.5, r - 21.0) < 1.38 or (abs(x - 47.5) < 0.38 and 19.0 < r < 22.6)
+          or (abs(r - 20.4) < 0.38 and 45.2 < x < 49.8))
+inlay_rose(16.5, 21.0)
+for (xa, ra, xb, rb) in ((47.12, 19.0, 47.88, 22.6), (45.2, 20.02, 49.8, 20.78)):      # a cross of dark setts before St Brendan's
+    xx = xa
+    while xx < xb - 0.05:
+        rr_ = ra
+        while rr_ < rb - 0.05:
+            if not (xa == 45.2 and 47.12 < xx + 0.1 < 47.88):
+                k.box(xx + 0.015, rr_ + 0.015, -0.05, xx + 0.175, rr_ + 0.175, rng.uniform(-0.004, 0.01),
+                      (shade('#7e786a', rng.uniform(0.88, 1.08)), 0.14), 'paving_setts', bevel=0.012)
+            rr_ += 0.19
+        xx += 0.19
 # rings of setts: a dark band, pale between, a dark band
 rr = 1.42
 band = 0
@@ -243,6 +270,8 @@ while rr < 3.5:
 def worn(x, r):
     n = math.sin(x * 1.3 + 0.7) * math.cos(r * 2.1 - x * 0.4) + math.sin(x * 0.37 + r * 0.9) + 0.4 * math.sin(x * 3.1 + r * 4.7)
     return n > 1.45
+
+
 
 
 AV = (30.9, 33.1)                                    # the avenue's flagged way up the middle, quay to square
@@ -693,6 +722,20 @@ for s in (-1, 1):
 # the roofs: the hall's (slate courses, its ridge along the street) and the portico's running back into it
 EOVER = 0.32
 rm_e, zr_e = W._gable_roof(k, EX[0], EX[1], EX[2], EXF, 3.5, 1.7, '#4a5a66', over=EOVER)
+# a cupola on the ridge: a drum of arched lights under a leaded dome, a gilt ball on top
+for cx_ in (ECX - 3.2, ECX + 3.2):
+    W.chimney_stack(k, cx_, rm_e - 0.35, rm_e + 0.05, 3.5, zr_e + 0.8, brick='#9a9284', mortar='#7a7468', pots=2)
+CUZ = zr_e - 0.15
+k.box(ECX - 0.55, rm_e - 0.55, CUZ - 0.4, ECX + 0.55, rm_e + 0.55, CUZ + 0.15, (shade(ASHLAR, 0.95), 0.12), 'cupola_base')
+k.cyl(ECX, rm_e, CUZ + 0.15, CUZ + 0.75, 0.42, (shade(ASHLAR, 1.05), 0.12), 'cupola', verts=16)
+for i in range(4):
+    a = math.pi / 2 + (i - 1.5) * 0.55
+    wx_, wr_ = ECX + math.cos(a) * 0.42, rm_e + math.sin(a) * 0.42
+    k.box(wx_ - 0.07, wr_ - 0.03, CUZ + 0.25, wx_ + 0.07, wr_ + 0.03, CUZ + 0.62, '#4a3218', 'window_glass', emit=(W.GLOW, 0.8))
+k.cyl(ECX, rm_e, CUZ + 0.75, CUZ + 0.83, 0.5, (shade(ASHLAR, 1.12), 0.1), 'cornice', verts=16)
+k.blob(ECX, rm_e, CUZ + 0.83, 0.44, 0.44, 0.42, ('#5a7a7a', 0.12), 'dome', segs=14)
+k.cyl(ECX, rm_e, CUZ + 1.2, CUZ + 1.45, 0.03, A.IRON, 'finial', verts=6)
+k.sphere(ECX, rm_e, CUZ + 1.5, 0.08, 0.08, GOLD, 'finial', segs=10)
 for (ux, uz) in ((ECX, APEX + 0.06), (EX[0] + 0.3, ZE), (EX[1] - 0.3, ZE)):        # urns on the pediment
     k.cyl(ux, PR + 0.3, uz, uz + 0.08, 0.12, (shade(ASHLAR, 1.05), 0.1), 'urn', verts=12)
     k.blob(ux, PR + 0.3, uz + 0.22, 0.12, 0.12, 0.14, (shade(ASHLAR, 1.05), 0.1), 'urn', segs=10)
@@ -740,6 +783,19 @@ for bx in (CH[0] + 0.1, 46.0, 48.0, CH[1] - 0.4):   # buttresses, stepped back a
     k.quads([((bx, CF + 0.32, 1.4), (bx + 0.3, CF + 0.32, 1.4), (bx + 0.3, CF + 0.2, 1.55), (bx, CF + 0.2, 1.55))], shade(CSTONE, 1.12), 'buttress_cap')
     k.quads([((bx + 0.02, CF + 0.2, 2.5), (bx + 0.28, CF + 0.2, 2.5), (bx + 0.28, CF - 0.08, 2.75), (bx + 0.02, CF - 0.08, 2.75))], shade(CSTONE, 1.12), 'buttress_cap')
 rm_c, zr_c = W._gable_roof(k, CH[0], CH[1], CH[2], CF, 3.2, 2.2, '#4a3a48', over=0.3)
+x = CH[0] + 0.2                                       # iron cresting along the ridge, a flèche over the crossing
+while x < CH[1] - 0.2:
+    k.box(x - 0.015, rm_c - 0.015, zr_c + 0.05, x + 0.015, rm_c + 0.015, zr_c + 0.22, '#2a2a30', 'cresting')
+    k.sphere(x, rm_c, zr_c + 0.24, 0.03, 0.03, '#2a2a30', 'cresting', segs=6)
+    x += 0.3
+k.box(CH[0] + 0.2, rm_c - 0.02, zr_c + 0.12, CH[1] - 0.2, rm_c + 0.02, zr_c + 0.15, '#2a2a30', 'cresting')
+FX_ = 45.2
+k.box(FX_ - 0.28, rm_c - 0.28, zr_c - 0.2, FX_ + 0.28, rm_c + 0.28, zr_c + 0.55, (shade('#4a3a48', 1.1), 0.12), 'fleche')
+for dx in (-0.13, 0.13):
+    k.box(FX_ + dx - 0.05, rm_c + 0.27, zr_c + 0.12, FX_ + dx + 0.05, rm_c + 0.3, zr_c + 0.45, '#1a1418', 'louvre')
+W.pyramid(k, FX_ - 0.32, rm_c - 0.32, FX_ + 0.32, rm_c + 0.32, zr_c + 0.55, zr_c + 1.7, ('#4a3a48', 0.14), 'roof_fleche', top=0.04)
+k.tube((FX_, rm_c, zr_c + 1.7), (FX_, rm_c, zr_c + 2.0), 0.015, A.IRON, 'cross', verts=4)
+k.box(FX_ - 0.08, rm_c - 0.01, zr_c + 1.88, FX_ + 0.08, rm_c + 0.01, zr_c + 1.92, A.IRON, 'cross')
 # the porch: a gabled bay standing forward, the door in a pointed arch, the rose window high in its gable
 PW, PF = 2.8, CF + 0.55
 k.box(CCX - PW / 2, CF - 0.1, 0.0, CCX + PW / 2, PF, 0.36, (shade(CSTONE, 0.8), 0.15), 'footing')
