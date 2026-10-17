@@ -233,7 +233,7 @@ k.solid(COLS - 1, 0, COLS, ROWS)
 
 # ---- the light: the village's alpenglow ----------------------------------------------------------------------------------------------
 k.sun((0.7, -0.5, -0.4), '#ff9a88', 2.6, angle=3.0)        # lower and redder up here: the sun nearly down
-k.render(OUT, light_states={'full': {}}, light_samples=64, world_light=('#7a86c8', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=64, world_light=('#7a86c8', 0.95))
 
 FOOT = int(FACE_R) + 1
 CLIMB = {

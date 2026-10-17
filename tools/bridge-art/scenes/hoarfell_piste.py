@@ -291,7 +291,7 @@ for t in towers + [top]:                                                   # the
 
 # ---- the light: the same alpenglow as the village ----------------------------------------------------------------------------------
 k.sun((0.8, 0.25, -0.38), '#ffc4a4', 3.2, angle=3.0)
-k.render(OUT, light_states={'full': {}}, light_samples=64, world_light=('#8a96cc', 0.95))
+k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=64, world_light=('#8a96cc', 0.95))
 
 # ---- what the game needs ---------------------------------------------------------------------------------------------------------------
 def gates(run, n, w):
