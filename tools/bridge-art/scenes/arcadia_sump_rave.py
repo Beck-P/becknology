@@ -45,10 +45,13 @@ for x0 in (4.0, 22.0):                                                          
     k.box(x0 + 0.08, R0 + 0.06, 2.48, x0 + 6.92, R0 + 0.065, 3.22, '#e8e8e0', 'enamel_border')
     k.box(x0 + 0.14, R0 + 0.065, 2.54, x0 + 6.86, R0 + 0.07, 3.16, ('#1a3a7a', 0.1), 'enamel_sign')
     S.letters(k, 'CENTRAL', 'RussoOne', x0 + 3.5, R0 + 0.07, 2.62, size=0.46, col='#e8e8e0', lit=False)
-k.box(13.0, R0 - 0.4, 0.0, 19.0, R0 + 0.02, 3.4, '#0c0a10', 'stair_arch')                                 # the way up, a dark arch
-for i in range(8):
-    k.box(13.2, R0 - 0.4 + i * 0.05, 0.0 + i * 0.3, 18.8, R0 - 0.35 + i * 0.05, 0.3 + i * 0.3, ('#3a3a40', 0.1), 'stair_tread')
-k.cyl_y(16.0, R0 - 0.05, R0 + 0.03, 3.4, 3.0, 0.6, '#c8d0c0', 'arch_top', verts=20)
+k.box(14.4, R0 - 0.3, 0.0, 17.6, R0 + 0.01, 2.2, '#100c14', 'stair_arch')                               # the way up: a tiled arch, the stair lit
+for i in range(7):
+    k.box(14.5, R0 - 0.3 + i * 0.04, i * 0.3, 17.5, R0 - 0.26 + i * 0.04, 0.05 + i * 0.3, ('#4a4a50', 0.1), 'stair_tread')
+for x0 in (13.9, 17.6):                                                                       # the arch's tiled jambs and head
+    k.box(x0, R0 + 0.0, 0.0, x0 + 0.5, R0 + 0.12, 2.4, ('#d8dcd0', 0.1), 'arch_jamb')
+k.box(13.9, R0 + 0.0, 2.2, 18.1, R0 + 0.12, 2.6, ('#d8dcd0', 0.1), 'arch_head')
+k.box(14.6, R0 + 0.12, 2.28, 17.4, R0 + 0.13, 2.52, '#0a2a0a', 'exit_sign', emit=('#40ff80', 0.8))
 k.point_light(16.0, R0 + 0.3, 2.8, '#ffc070', 20, radius=0.5, group='flicker')
 
 # ---- the platform: old tiles, cracked; benches; the decks on a stack of speakers ----------------------------------------------
