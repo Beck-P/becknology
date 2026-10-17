@@ -11,7 +11,7 @@ const SHOTS = path.join(D, 'shots');
 
 const SUITES = {
   // every world loads with no page errors, missing files or console errors; the pads you land on; Lumar's harbours
-  world: [['world/errs.js'], ['world/actors.js'], ['world/clock.js'], ['world/business.js', SHOTS], ['world/weather.js', SHOTS], ['world/legacy.js', SHOTS], ['world/hands.js'], ['world/staff.js', SHOTS], ['world/aquarium.js', SHOTS], ['world/foliage.js', SHOTS], ['world/nature.js', SHOTS], ['world/orders.js', SHOTS], ['world/sleep.js', SHOTS], ['world/landings.js', SHOTS + '/landings'], ['world/arrive.js', SHOTS + '/arrive']],
+  world: [['world/errs.js'], ['world/actors.js'], ['world/clock.js'], ['world/business.js', SHOTS], ['world/weather.js', SHOTS], ['world/legacy.js', SHOTS], ['world/hands.js'], ['world/staff.js', SHOTS], ['world/aquarium.js', SHOTS], ['world/foliage.js', SHOTS], ['world/nature.js', SHOTS], ['world/orders.js', SHOTS], ['world/sleep.js', SHOTS], ['world/workshop.js', SHOTS], ['world/landings.js', SHOTS + '/landings'], ['world/arrive.js', SHOTS + '/arrive']],
   // two pilots on the fake Supabase: seeing each other, walking, presence, sharing, partners, fighting, sailing
   multi: ['mp_see', 'mp_walk', 'mp_visible', 'mp_presence', 'mp_away', 'mp_share', 'mp_partner', 'mp_clue', 'mp_fight', 'mp_hp',
     'mp_sail', 'mp_sailcol', 'mp_seapill', 'mp_seafight'].map((t) => ['multi/' + t + '.js', D]),
@@ -58,21 +58,26 @@ const env = Object.assign({}, process.env, { NODE_PATH: [process.env.NODE_PATH, 
 
 const results = [];
 for (const n of names) {
-  console.log('\n######## ' + n);
+  console.log('\
+######## ' + n);
   for (const [file, ...args] of SUITES[n]) {
     const t0 = Date.now();
     let out = '', ok = true;
     try { out = execFileSync('node', [path.join(D, file), ...args], { env, cwd: D, timeout: 300000, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
-    catch (e) { ok = false; out = (e.stdout || '') + '\nFAILED: ' + String(e.stderr || e.message).split('\n').filter((l) => l.trim() && !/^\s+at /.test(l)).slice(0, 4).join(' | '); }
+    catch (e) { ok = false; out = (e.stdout || '') + '\
+FAILED: ' + String(e.stderr || e.message).split('\
+').filter((l) => l.trim() && !/^\s+at /.test(l)).slice(0, 4).join(' | '); }
     if (BAD.test(out)) ok = false;
     const label = [file, ...args.filter((a) => !a.startsWith('/'))].join(' ');
     results.push([label, ok]);
     console.log((ok ? 'PASS ' : 'FAIL ') + label + '  (' + Math.round((Date.now() - t0) / 1000) + 's)');
-    out.split('\n').filter((l) => KEEP.test(l) && !/^\s+at /.test(l)).slice(0, 14).forEach((l) => console.log('     ' + l.slice(0, 200)));
+    out.split('\
+').filter((l) => KEEP.test(l) && !/^\s+at /.test(l)).slice(0, 14).forEach((l) => console.log('     ' + l.slice(0, 200)));
   }
 }
 spawned.forEach((p) => { try { process.kill(-p.pid); } catch (e) { /* gone */ } });
 const bad = results.filter((r) => !r[1]);
-console.log('\n' + (results.length - bad.length) + '/' + results.length + ' passed' + (bad.length ? ' · failed: ' + bad.map((r) => r[0]).join(', ') : ''));
+console.log('\
+' + (results.length - bad.length) + '/' + results.length + ' passed' + (bad.length ? ' · failed: ' + bad.map((r) => r[0]).join(', ') : ''));
 console.log('screenshots: tools/tests/shots and tools/tests/<suite>/shots');
 process.exit(bad.length ? 1 : 0);

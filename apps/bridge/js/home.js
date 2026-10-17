@@ -779,5 +779,7 @@ var BridgeHome = (function () {
            pieces: function () { return pieces; }, piece: function (id) { return byId[id] || null; }, spare: spare, buyPiece: buyPiece, persist: store, add: add,
            // the piece of this kind on this spot in the place you're in, as saved now (an interaction's may be an old copy)
            at: function (pid, x, y) { return cur ? layout(cur.id).filter(function (q) { return q.id === pid && q.x === x && q.y === y; })[0] || null : null; },
+           // a piece made at your workshop (js/workshop.js): into your tray, to put down with H
+           givePiece: function (pid, n) { save.have[pid] = (save.have[pid] || 0) + (n || 1); store(); },
            HOMES: HOMES, _save: function () { return save; }, _check: function (pid, x, y) { return check(pid, x, y); } };
 })();

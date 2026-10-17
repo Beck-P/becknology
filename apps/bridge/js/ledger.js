@@ -12,11 +12,11 @@
  *   People        who you can hire: your crew (where they stand, what they do for you), the farm's hands, the hands
  *                 aboard your ships; anyone you haven't met yet is a shadow with a hint where to look
  *   Fleet         every ship: where she lies (or how long till she's home), hull, hold, fish hold, hands
- *   Places        your homes, the farm, the holm and what's built on it
+ *   Places        your homes, the farm, the holm and what's built on it, the Workshop and what's being made there
  *   Contracts     what you've promised to carry, where, by when
  *
  * It only reads: each module keeps its own state (js/business.js, crew.js, fleet.js, holm.js, homestead.js, farm.js,
- * animals.js, trade.js, home.js). Registered as a page with BridgeMenu.
+ * animals.js, trade.js, home.js, workshop.js). Registered as a page with BridgeMenu.
  */
 var BridgeLedger = (function () {
   var page = null;
@@ -63,6 +63,11 @@ var BridgeLedger = (function () {
       if (BridgeHolm.returns) BridgeHolm.returns();
       var chest = BridgeHolm._state().chest || 0;
       if (chest > 0) out.push({ name: 'The strongbox on ' + BridgeHolm.name(), sub: 'What your ships brought home', fig: coins(chest), world: 'lumar-holm-home' });
+    }
+    if (has('BridgeWorkshop') && BridgeWorkshop.built()) {
+      var ws = BridgeWorkshop.summary();
+      if (ws.since) out.push({ name: 'Made at the workshop', sub: ws.since + ' thing' + (ws.since === 1 ? '' : 's') + ' since you last looked — on the racks on ' + BridgeHolm.name(), world: 'lumar-holm' });
+      if (ws.idle) out.push({ name: 'Idle at the forge', sub: ws.idle + ' smith' + (ws.idle === 1 ? '' : 's') + ' with nothing to make — queue something at the workshop', world: 'lumar-holm', alert: true });
     }
     if (has('BridgeFleet')) BridgeFleet.all().forEach(function (s) {
       if (s.away) return;
@@ -134,6 +139,12 @@ var BridgeLedger = (function () {
     if (B && B.staff) B.staff().forEach(function (x) {
       var d = B.get(x.at), on = d && B.openNow(x.at), coming = x.arrives && x.arrives > Date.now(), st = d ? B.status(x.at) : null;
       wages += x.wage;
+      if (!d) {                                                     // a smith at your workshop (js/workshop.js), on the same payroll
+        var w = has('BridgeWorkshop') ? BridgeWorkshop.smithRow(x) : { sub: '' };
+        rows.push({ name: x.name + ' · ' + (x.title || 'smith').toLowerCase() + ' at the workshop', face: w.face, sub: w.sub + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
+                    fig: coins(x.wage) + '<small>/day</small>', alert: x.missed > 0, act: has('BridgeWorkshop') ? function () { closeMenu(); BridgeWorkshop.smithCard(x.id); } : null });
+        return;
+      }
       rows.push({ name: x.name + ' · ' + x.title.toLowerCase() + (d ? ' at ' + d.name : ''), face: B.faceOf(x, x.at),
                   sub: B.perkOf(x, x.at) + ' · ' + (coming ? 'on the way there' : on ? 'on shift now' : 'off till it opens') +
                        (st ? ' · it made ' + st.today.toLocaleString() + ' today' : '') + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
@@ -236,6 +247,16 @@ var BridgeLedger = (function () {
     if (has('BridgeHolm') && BridgeHolm.owned && BridgeHolm.owned()) {
       var st = BridgeHolm._state(), b = Object.keys(st.built || {}).filter(function (k) { return st.built[k]; });
       rows.push({ name: BridgeHolm.name(), sub: 'Your island · built: ' + (b.length ? b.join(', ') : 'nothing yet') + (st.chest ? ' · ' + st.chest + ' in the strongbox' : ''), fig: '<span class="lg-ok">yours</span>', world: 'lumar-holm' });
+      // the workshop: who's making what, and when it's done (js/workshop.js)
+      if (has('BridgeWorkshop') && BridgeWorkshop.built()) {
+        var ws = BridgeWorkshop.summary();
+        rows.push({ name: 'The workshop on ' + BridgeHolm.name(), sub: ws.smiths.length + ' smith' + (ws.smiths.length === 1 ? '' : 's') + ' · ' + ws.made + ' made in all · ' + ws.line,
+                    fig: ws.working ? '<span class="lg-ok">at work</span>' : 'idle', world: 'lumar-holm' });
+        ws.jobs.forEach(function (j) {
+          rows.push({ name: '· ' + j.name, sub: j.working ? (j.by === 'you' ? 'At your bench' : j.by) + ' · ' + Math.floor(j.done * 100) + '% done' : 'Waiting for a free smith',
+                      fig: j.working ? 'in ' + ago(Math.max(60000, j.left)) : '' });
+        });
+      }
     }
     return { html: rows.length ? list(rows) : '', n: rows.length };
   }

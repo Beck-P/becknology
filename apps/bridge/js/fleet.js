@@ -15,7 +15,8 @@
  *
  * GUNS go in a ship's slots; FITS (sheathing, sails, rigging, lanterns) are fitted once each. Harbourmasters
  * (js/harbour.js) sell both, and each port has its own (Crimson the heavy guns, Rose the crystal sails, Midnight the
- * Ferryman's moonglass).
+ * Ferryman's moonglass). Your Workshop (js/workshop.js) makes them too, and two no yard sells (`craft`: ironwood
+ * doubling, gloamscale sheathing — each `replaces` what it betters); a part you made is fitted with `mount`.
  *
  * CREW: hands you sign on at a port (each sea has its own people: `recruits(port)`, a fresh three a day). Each has a
  * ROLE and a skill (1-3: green, able, old hand) and lives aboard one of your ships. A ship needs `crew` hands to sail;
@@ -74,7 +75,13 @@ var BridgeFleet = (function () {
     crystal_sails:{ name: 'Crystal-weave Sails', price: 940, vmax: 1.08, nogo: -0.06, blurb: 'Rose Cove spore-silk with crystal woven through. Quicker, and she points higher.' },
     roseite:      { name: 'Roseite Sheathing', price: 820, rocks: 0.5, blurb: 'Roseite grown over her bilges. Rocks and reefs do half the harm.' },
     storm_rig:    { name: 'Storm Rigging', price: 720, storm: 0.55, turn: 1.04, blurb: 'Crimson rigging: doubled shrouds, storm sails. Squalls do half the harm.' },
-    moon_lantern: { name: 'Moon Lantern', price: 1250, ward: true, blurb: 'A lantern of moonglass at the masthead. The Midnight Sea\'s things keep off its light, and rocks show through the mist.' }
+    moon_lantern: { name: 'Moon Lantern', price: 1250, ward: true, blurb: 'A lantern of moonglass at the masthead. The Midnight Sea\'s things keep off its light, and rocks show through the mist.' },
+    // no yard sells these: they're made at your own Workshop (js/workshop.js), from a plan and things found far out.
+    // Each takes the place of what it betters (`replaces`); `price` is what the work's worth (the yard's labour to fit it)
+    ironwood:     { name: 'Ironwood Doubling', price: 1600, hull: 1.6, replaces: ['oak'], craft: true,
+                    blurb: 'Oak through-bolted with star iron, a skin no yard on the five seas will sell you. Takes over half as much again in punishment.' },
+    gloamscale:   { name: 'Gloamscale Sheathing', price: 2400, vmax: 1.07, rocks: 0.45, replaces: ['sheathing', 'roseite'], craft: true,
+                    blurb: 'The Gloamserpent\'s own scales, lapped over her bottom like a fish\'s: she slips through the water, and rocks glance off her.' }
   };
   var ROLES = {
     deckhand:  { name: 'Deckhand', fee: 60, blurb: 'Hauls, reefs and coils. Counts toward the hands a ship needs.' },
@@ -271,17 +278,39 @@ var BridgeFleet = (function () {
   }
 
   // ---- guns and fittings --------------------------------------------------------------------------------------------
+  /** Can she take it? null if so, else why not: 'slots' (her gun ports are full), 'fitted' (she has one), 'better' (she
+   *  has what replaces it). */
+  function canFit(s, what) {
+    var G = GUNS[what], F = FITS[what];
+    if (!s || (!G && !F)) return 'no';
+    if (G) return s.guns.length >= spec(s.type).slots ? 'slots' : null;
+    if (s.fits.indexOf(what) >= 0) return 'fitted';
+    if (s.fits.some(function (f) { return FITS[f] && (FITS[f].replaces || []).indexOf(what) >= 0; })) return 'better';
+    return null;
+  }
+  function apply(s, what) {
+    if (GUNS[what]) { s.guns.push(what); return; }
+    var gone = FITS[what].replaces || [];
+    s.fits = s.fits.filter(function (f) { return gone.indexOf(f) < 0; }).concat([what]);
+  }
   function fit(shipId, what) {
-    var s = get(shipId), G = GUNS[what], F = FITS[what];
-    if (!s || (!G && !F)) return Promise.resolve({ ok: false, reason: 'no' });
-    if (G && s.guns.length >= spec(s.type).slots) return Promise.resolve({ ok: false, reason: 'slots' });
-    if (F && s.fits.indexOf(what) >= 0) return Promise.resolve({ ok: false, reason: 'fitted' });
-    return pay((G || F).price, 'fit:' + what).then(function (r) {
+    var s = get(shipId), no = canFit(s, what);
+    if (no) return Promise.resolve({ ok: false, reason: no });
+    return pay((GUNS[what] || FITS[what]).price, 'fit:' + what).then(function (r) {
       if (!r || !r.ok) return { ok: false, reason: (r && r.reason) || 'coins' };
-      (G ? s.guns : s.fits).push(what);
+      apply(s, what);
       store();
       return { ok: true };
     });
+  }
+  /** Fit something you made yourself (js/workshop.js): no yard's price, the part's yours already — the harbourmaster's
+   *  labour is paid by the caller (js/harbour.js), and your own slipway at the holm will fit them too. {ok, reason} */
+  function mount(shipId, what) {
+    var s = get(shipId), no = canFit(s, what);
+    if (no) return { ok: false, reason: no };
+    apply(s, what);
+    store();
+    return { ok: true };
   }
   function unmount(shipId, idx) { var s = get(shipId); if (s && s.guns[idx]) { s.guns.splice(idx, 1); store(); } }
 
@@ -405,7 +434,7 @@ var BridgeFleet = (function () {
 
   return { SHIPS: SHIPS, GUNS: GUNS, FITS: FITS, ROLES: ROLES, SEAS: SEAS,
            spec: spec, get: get, all: all, active: active, effective: effective, here: here, islandOf: islandOf, sail: sail, moored: moored,
-           line: line, where: where, rename: rename, order: order, canOrder: canOrder, passage: passage, arrivals: arrivals, buy: buy, value: value, sellShip: sellShip, fit: fit, unmount: unmount,
+           line: line, where: where, rename: rename, order: order, canOrder: canOrder, passage: passage, arrivals: arrivals, buy: buy, value: value, sellShip: sellShip, fit: fit, canFit: canFit, mount: mount, unmount: unmount,
            damage: damage, repairCost: repairCost, repair: repair, wreck: wreck,
            fishCap: fishCap, catchOf: catchOf, catchCount: catchCount, stowFish: stowFish, takeFish: takeFish,
            recruits: recruits, hire: hire, assign: assign, dismiss: dismiss, crew: crew, crewOn: crewOn, crewHas: crewHas, crewBest: crewBest, perk: perk, wage: wageOf, GRADES: GRADES, berths: berths,

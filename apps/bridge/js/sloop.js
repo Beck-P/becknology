@@ -1638,10 +1638,15 @@ var BridgeSloop = (function () {
     burst(o.x, o.r, 8, 'spray');
     sfx('pickup');
     var r = hash(o.seed + Date.now() % 97);
+    var salv = (r >= 0.45 && r < 0.6) || r > 0.96 ? typeof BridgeWorkshop !== 'undefined' && BridgeWorkshop.salvage(r) : null;   // a ship's stores gone over the side (js/workshop.js)
     if (r < 0.45 && typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) {
       var n = 8 + Math.floor(r * 40);
       BridgeProgression.awardCoins(n, 'sloop:flotsam');
       say('Inside the ' + o.kind + ': ' + n + ' coins in an oilskin purse', 3000);
+    } else if (salv && typeof BridgeInventory !== 'undefined' && BridgeInventory.addItem) {
+      var got = BridgeInventory.addItem(salv[0], salv[1]), what = BridgeItems.get(salv[0]);
+      say(got === false ? 'Your pack is full — you let it drift' : /^plan_/.test(salv[0]) ? 'Inside the ' + o.kind + ', in an oilskin tube: ' + what.name.toLowerCase()
+                                                               : 'Inside the ' + o.kind + ': ' + (salv[1] > 1 ? salv[1] + ' × ' : '') + what.name.toLowerCase() + ', a ship\'s stores gone over the side', 3500);
     } else if (typeof BridgeInventory !== 'undefined' && BridgeInventory.addItem) {
       var item = r < 0.75 ? 'sea_glass' : 'silver_nail';
       var ok = BridgeInventory.addItem(item, r < 0.75 ? 2 : 1);

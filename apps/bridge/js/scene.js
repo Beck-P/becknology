@@ -90,6 +90,7 @@ var BridgeScene = (function () {
           sc.used = Date.now();
           scenes[id] = sc;
           evict(id);
+          addStandIns(sc);
           composite(sc);
           cb(sc);
         }
@@ -137,6 +138,34 @@ var BridgeScene = (function () {
     var cx = c.getContext('2d', { willReadFrequently: true });
     cx.drawImage(img, 0, 0);
     return cx.getImageData(0, 0, img.width, img.height).data;
+  }
+
+  // Stand-ins: a variant a scene's render doesn't have yet (its own render still to come) shown with another variant's
+  // art, moved by (dx, dy) tiles — its depth moved with it — so a new building can stand on its lot before Blender has
+  // drawn it (the holm's workshop wears the quarters' bunkhouse till then, js/holm.js). Only used while the scene has
+  // no layer of its own for that slot and key: once it's rendered, the real one shows.
+  var standIns = {};
+  function standIn(id, slot, key, from, dx, dy) {
+    (standIns[id] = standIns[id] || []).push({ slot: slot, key: key, from: from, dx: dx || 0, dy: dy || 0 });
+    if (scenes[id] && scenes[id].ready && addStandIns(scenes[id])) composite(scenes[id]);
+  }
+  function addStandIns(sc) {
+    var added = false, m = sc.meta;
+    (standIns[sc.id] || []).forEach(function (s) {
+      if (sc.layers.some(function (L) { return L.slot === s.slot && L.key === s.key; })) return;
+      var src = sc.layers.filter(function (L) { return L.slot === s.from[0] && L.key === s.from[1] && L.depth; })[0];
+      if (!src) return;
+      var b = src.box, box = { x: b.x + Math.round(s.dx * NATIVE_TS), y: b.y + Math.round(s.dy * NATIVE_TS), w: b.w, h: b.h };
+      if (box.x < 0 || box.y < 0 || box.x + box.w > m.width || box.y + box.h > m.height) return;
+      var shift = s.dy / Math.tan((m.theta || 45) * Math.PI / 180), depth = src.depth;     // a row nearer is that much nearer
+      if (shift) {
+        depth = new Float32Array(src.depth.length);
+        for (var i = 0; i < depth.length; i++) depth[i] = src.depth[i] === Infinity ? Infinity : src.depth[i] - shift;
+      }
+      sc.layers.push({ slot: s.slot, key: s.key, box: box, imgs: src.imgs, depth: depth, leaves: src.leaves, standIn: true });
+      added = true;
+    });
+    return added;
   }
 
   // Which variant each slot shows, per scene id (set before or after load)
@@ -582,6 +611,7 @@ var BridgeScene = (function () {
     load: load,
     get: get,
     setLayers: setLayers,
+    standIn: standIn,
     setGrade: setGrade,
     // a graded colour decided on the day image (r, g, b 0..1) carried into another state: the state's light over the
     // day's at this pixel — how much darker (by brightness) and its colour (each channel's share, damped by half: a pure

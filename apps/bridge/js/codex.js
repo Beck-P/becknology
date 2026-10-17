@@ -1,8 +1,9 @@
 /**
  * BridgeCodex — the Collection: everything there is to find, set by set.
  *
- * Nine sets (`SETS`): fish, the sea legends, crystals and ore, the farm,
- * magic things, treasures, gear, food and drink, treasure maps. Anything that lands in
+ * Ten sets (`SETS`): fish, the sea legends, crystals and ore, the farm,
+ * materials (the workshop's), magic things, treasures, gear, food and drink,
+ * treasure maps. Anything that lands in
  * your pack counts (BridgeInventory.addItem is wrapped, and the pack is
  * looked over every few seconds for anything that came in another way);
  * what's in it the first time you open the game counts quietly. A new find
@@ -47,6 +48,14 @@ var BridgeCodex = (function () {
       ['sunflower', 'Grow it: Hollin\'s seed stall'], ['pumpkin', 'Grow it, and be patient'], ['starfruit', 'Grow it, and be very patient'],
       ['apple', 'The orchard on Verdance'], ['honey', 'The skeps by the orchard'], ['egg', 'Your hens, once the farm is yours'],
       ['large_egg', 'A hen who loves you (four hearts)'], ['golden_egg', 'A hen who adores you (five hearts)'], ['milk', 'Your cows, once the farm is yours']] },
+    // what a workshop is fed with (js/workshop.js): each has a place to get it
+    { id: 'materials', name: 'Materials', reward: 200, items: [
+      ['pine_log', 'Windfall pine on Diggen\'s Point; Bess Tolliver sells logs'], ['oak_log', 'The log pile on Verdance; the Royal Yard in Crownhaven'],
+      ['plank', 'Saw pine logs at your workshop'], ['oak_plank', 'Saw oak logs at your workshop'], ['copper_ore', 'The Rose Mine\'s iron and silver seams'],
+      ['iron_bar', 'Smelt iron ore at your workshop'], ['copper_sheet', 'Beat copper ore at your workshop; Aldous on Sapphire'],
+      ['flax', 'Grow it: flax seed at Hollin\'s stall'], ['rope', 'Twist flax at your workshop; Old Pell sells coils'], ['pitch', 'Boil pine logs; Bess sells it'],
+      ['sailcloth', 'Mira Quell on Rose Cove'], ['glass', 'Aldous Penhallow on Sapphire'], ['powder', 'Garro on Crimson Reach'],
+      ['moonglass', 'The Ferryman on Midnight Isle']] },
     { id: 'magic', name: 'Magic things', reward: 250, items: [
       ['moon_wand', PEDDLER], ['glimmer_lantern', PEDDLER], ['heron_feather', PEDDLER], ['frost_ring', PEDDLER], ['tide_charm', PEDDLER],
       ['lantern_beyond', 'Past the last ridge, where the whispers go']] },
@@ -60,7 +69,7 @@ var BridgeCodex = (function () {
       ['rime_hatchet', 'Morwen\'s case, in the tower on Midnight'], ['emberbrand', 'Morwen\'s case'], ['moonglass_sabre', 'Morwen\'s case'],
       ['veilpiercer', 'Behind a locked grate on Midnight Isle'], ['wispcaller', 'Whatever guards the abbey on Midnight'],
       ['lockpick', 'The smithy on Lumar\'s square'], ['old_pickaxe', 'The rack in the Rose Mine\'s hall'], ['iron_pickaxe', 'Hob forges it'],
-      ['star_pickaxe', 'Hob forges it, from star iron'], ['hoe', 'The tool shed on Verdance'], ['watering_can', 'The tool shed on Verdance'],
+      ['star_pickaxe', 'Hob forges it, from star iron'], ['prospector_pick', 'Your workshop, from Hob\'s plan'], ['greenheart_rod', 'Your workshop, from a rod-maker\'s plan'], ['hoe', 'The tool shed on Verdance'], ['watering_can', 'The tool shed on Verdance'],
       ['sprinkler', 'Hollin\'s seed stall'], ['chalk', 'Ysolde\'s guide hut in Fellhaven'], ['climbing_rope', 'Ysolde\'s guide hut'],
       ['ice_axe', 'Ysolde\'s guide hut'], ['skis', 'The ski hire in Fellhaven'], ['ski_goggles', 'The ski hire in Fellhaven'],
       ['probe', 'Ysolde, once you\'ve seen the Last Ridge'], ['whistle', 'Comes with your first companion'], ['lucky_horseshoe', 'The Anvil & Hoof, in Brambleford']] },
