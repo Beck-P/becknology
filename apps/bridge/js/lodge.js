@@ -169,28 +169,13 @@ var BridgeLodge = (function () {
       }
     });
   }
-  // the night: dark, the lodge going quiet, a cup of coffee in the morning
+  // the night: a feather bed that rests you a little quicker than most and warms you through (js/actions.js rest)
   function sleepThrough(next) {
-    var fade = document.createElement('div');
-    fade.id = 'sleep-fade';
-    fade.innerHTML = '<div class="sf-z">z<span>z</span><span>z</span></div><div class="sf-text"></div>';
-    fade.querySelector('.sf-text').textContent = 'A feather bed under the eaves. Snow on the skylight. Somewhere below, Barley snores.';
-    document.body.appendChild(fade);
-    sfx('sleep');
-    if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
-    requestAnimationFrame(function () { fade.classList.add('dark'); });
-    setTimeout(function () {
-      if (typeof BridgeInventory !== 'undefined' && BridgeInventory.restoreAll) BridgeInventory.restoreAll();
-      if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(20);
-      fade.querySelector('.sf-text').textContent = 'Mette knocks with coffee. You wake rested: health and energy full, and warm through.';
-      fade.classList.add('woke');
-    }, 2800);
-    setTimeout(function () {
-      fade.classList.remove('dark');
-      if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
-      next();
-    }, 4600);
-    setTimeout(function () { fade.remove(); }, 5600);
+    if (typeof BridgeActions === 'undefined' || !BridgeActions.rest) { next(); return; }
+    BridgeActions.rest({ rate: 1.2, text: 'A feather bed under the eaves. Snow on the skylight. Somewhere below, Barley snores.',
+      rested: 'Mette knocks with coffee. You wake rested: health and energy full, and warm through.',
+      onTick: function (dt) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(dt * 1.5); },
+      woke: function () { next(); } });
   }
 
   // ---- the fire and the board ----------------------------------------------------------------------------------------

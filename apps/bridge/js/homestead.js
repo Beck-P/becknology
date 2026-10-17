@@ -309,9 +309,10 @@ var BridgeHomestead = (function () {
             'SHIPPED: ' + ledger.coins + ' COINS OVER ' + ledger.rounds + ' ROUNDS · ORDERS FILLED: ' + ledger.orders +
             (active('tam') ? ' · TAM ON FOR ' + hours(s.hands.tam - Date.now()) : '') + (active('odile') ? ' · ODILE ON FOR ' + hours(s.hands.odile - Date.now()) : ''),
       rows: [
-        { label: 'Rest by the stove', sub: 'energy and health back', pick: function () {
-          if (typeof BridgeInventory !== 'undefined' && BridgeInventory.restoreAll) BridgeInventory.restoreAll();
-          sfx('sleep'); say(farmName().toUpperCase(), 'YOU DOZE IN EDDA\'S OLD CHAIR WITH YOUR FEET TO THE STOVE, AND WAKE WITH THE KETTLE SINGING.');
+        { label: 'Rest by the stove', sub: 'energy and health back, a little at a time', pick: function () {
+          if (typeof BridgeActions !== 'undefined' && BridgeActions.rest) BridgeActions.rest({ rate: 0.9, text: 'You doze in Edda\'s old chair with your feet to the stove.',
+                                                                                              rested: 'You wake with the kettle singing, rested through.' });
+          else if (typeof BridgeInventory !== 'undefined' && BridgeInventory.restoreAll) BridgeInventory.restoreAll();
         } },
         { label: 'Name the farm', sub: s.name ? 'now: ' + s.name : 'it has no name of its own yet', pick: rename }
       ]

@@ -1293,6 +1293,16 @@ html.touch #act-pill .ip-key { display: none; }
 #sleep-fade .sf-z span:nth-child(1) { font-size: 26px; opacity: 0.7; } #sleep-fade .sf-z span:nth-child(2) { font-size: 18px; opacity: 0.45; }
 #sleep-fade .sf-text { font-size: 13px; max-width: 420px; text-align: center; line-height: 1.5; white-space: pre-line; padding: 0 20px; }
 #sleep-fade.woke .sf-z { opacity: 0; transition: opacity 0.6s; }
+/* resting (js/actions.js rest): the room dims instead of going black; health and energy fill as you sleep */
+#sleep-fade.resting { background: rgba(2, 3, 10, 0.84); }
+#sleep-fade .sf-bars { display: flex; flex-direction: column; gap: 6px; width: 220px; }
+#sleep-fade .sf-bar { position: relative; height: 14px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(200, 210, 240, 0.25); border-radius: 3px; overflow: hidden; }
+#sleep-fade .sf-bar i { position: absolute; left: 0; top: 0; bottom: 0; transition: width 0.25s linear; }
+#sleep-fade .sf-hp i { background: linear-gradient(90deg, #a83a3a, #e05a5a); }
+#sleep-fade .sf-en i { background: linear-gradient(90deg, #a8862a, #e8c050); }
+#sleep-fade .sf-bar b { position: relative; display: block; font-weight: normal; font-size: 10px; line-height: 14px; padding-left: 6px; color: #f0f2f8; text-shadow: 0 1px 0 #000; }
+#sleep-fade .sf-hint { font-size: 11px; color: #7a86a8; letter-spacing: 1px; }
+#sleep-fade.woke .sf-hint { opacity: 0; transition: opacity 0.4s; }
 @keyframes sf-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 /* Looking out (js/actions.js): first person. The world leans in toward the window, then the
    view swivels in from that side to fill the screen; getting up turns back. */

@@ -500,9 +500,9 @@
       "label": "BED",
       "prompt": "REST",
       "messages": [
-        "The bed looks comfortable.\\n\\nSleep \u2014 coming soon.",
-        "Rumpled sheets. The blanket is warm.\\n\\nSleep \u2014 coming soon.",
-        "Your bed. Familiar.\\n\\nSleep \u2014 coming soon."
+        "The bed looks comfortable. The ship hums you under.",
+        "Rumpled sheets, a warm blanket. Somewhere aft, the engines breathe.",
+        "Your bed. Familiar. The stars drift past the porthole."
       ]
     },
     {
@@ -512,8 +512,8 @@
       "label": "BED",
       "prompt": "REST",
       "messages": [
-        "The bed looks comfortable.\\n\\nSleep \u2014 coming soon.",
-        "Rumpled sheets. The blanket is warm.\\n\\nSleep \u2014 coming soon."
+        "The bed looks comfortable. The ship hums you under.",
+        "Rumpled sheets, a warm blanket. Somewhere aft, the engines breathe."
       ]
     },
     {

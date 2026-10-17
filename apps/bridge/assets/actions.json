@@ -285,6 +285,7 @@
     {
       "label": "HAMMOCK",
       "action": "sleep",
+      "rest": 0.8,
       "caption": "OKAFOR WAVES A HAND WITHOUT LOOKING UP. \"GO ON. I NEVER USE IT.\"\n\nTHE GROW LIGHTS DIM TO NIGHT CYCLE. THE PUMPS HUM YOU UNDER."
     }
   ],
@@ -301,6 +302,7 @@
     {
       "label": "RECOVERY BED",
       "action": "sleep",
+      "rest": 2,
       "caption": "THE BED HUMS. A SOFT VOICE COUNTS YOU DOWN FROM TEN.\n\nYOU DON'T REMEMBER SEVEN."
     },
     {

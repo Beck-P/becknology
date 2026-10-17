@@ -66,7 +66,7 @@ var BridgeActions = (function () {
   function textOf(inter) {
     if (inter.caption) return inter.caption;
     if (inter.type === 'bay_view' && typeof BridgeShip !== 'undefined') return BridgeShip.bayText().replace(/\\n/g, '\n');
-    if (inter.messages && inter.messages.length) return inter.messages[Math.floor(Math.random() * inter.messages.length)];
+    if (inter.messages && inter.messages.length) return inter.messages[Math.floor(Math.random() * inter.messages.length)].replace(/\\n/g, '\n');
     return unwrap((inter.dialog || '').replace(/\\n/g, '\n'));
   }
   // old dialogs were wrapped by hand to a narrow box; keep their paragraphs, not their line ends
@@ -108,31 +108,84 @@ var BridgeActions = (function () {
   }
 
   // ---- sleeping ----------------------------------------------------------------------------------
-  var sleeping = false;
+  // Sleep takes a little time (Beck: "you have to get a little bit of health and energy back for every certain amount of
+  // time that you sleep… shouldn't ever have to sleep for too long"): the room dims, health and energy fill as you sleep —
+  // from nothing, energy in FULL_EN seconds and health in FULL_HP in an ordinary bed — and any key or tap wakes you with
+  // what you've got; sleep till both are full and you wake by yourself. A bed's `rest` (actions.json) scales it: the
+  // clinic's recovery bed heals at twice the pace, a hammock a little slower.
+  var FULL_HP = 60, FULL_EN = 45;
+  var sleeping = null;
   function sleep(inter) {
+    slumber({ text: textOf(inter), rate: inter.rest || 1 });
+  }
+  /** Go to sleep: { text, rate (× an ordinary bed), woke(summary) — after you're up, onTick(dt) — extra each second asleep }. */
+  function slumber(o) {
     if (sleeping) return;
-    sleeping = true;
+    o = o || {};
     if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('sleep');
     var fade = document.createElement('div');
     fade.id = 'sleep-fade';
-    fade.innerHTML = '<div class="sf-z">z<span>z</span><span>z</span></div><div class="sf-text"></div>';
-    var t = textOf(inter);
-    fade.querySelector('.sf-text').textContent = t || 'You sleep.';
+    fade.className = 'resting';
+    fade.innerHTML = '<div class="sf-z">z<span>z</span><span>z</span></div><div class="sf-text"></div>' +
+      '<div class="sf-bars"><div class="sf-bar sf-hp"><i></i><b></b></div><div class="sf-bar sf-en"><i></i><b></b></div></div>' +
+      '<div class="sf-hint"></div>';
+    fade.querySelector('.sf-text').textContent = o.text || 'You sleep.';
     document.body.appendChild(fade);
     if (typeof BridgeControls !== 'undefined') BridgeControls.disable();
     BridgeCharacter.setHidden(true);
     requestAnimationFrame(function () { fade.classList.add('dark'); });
-    setTimeout(function () {
-      if (typeof BridgeInventory !== 'undefined' && BridgeInventory.restoreAll) BridgeInventory.restoreAll();
-      fade.querySelector('.sf-text').textContent = 'You wake rested. Health and energy full.';
+    var S = st(), start = { hp: S.hp, energy: S.energy }, t0 = Date.now(), last = t0, acc = { hp: 0, en: 0 }, rate = o.rate || 1;
+    var touch = document.documentElement.classList.contains('touch');
+    sleeping = { o: o, fade: fade };
+    function st() { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getStats ? BridgeInventory.getStats() : { hp: 1, maxHP: 1, energy: 1, maxEnergy: 1 }; }
+    function show() {
+      var s2 = st(), secs = Math.round((Date.now() - t0) / 1000);
+      fade.querySelector('.sf-hp i').style.width = Math.round(100 * s2.hp / s2.maxHP) + '%';
+      fade.querySelector('.sf-hp b').textContent = 'Health ' + Math.floor(s2.hp) + ' / ' + s2.maxHP;
+      fade.querySelector('.sf-en i').style.width = Math.round(100 * s2.energy / s2.maxEnergy) + '%';
+      fade.querySelector('.sf-en b').textContent = 'Energy ' + Math.floor(s2.energy) + ' / ' + s2.maxEnergy;
+      fade.querySelector('.sf-hint').textContent = (secs ? 'Asleep ' + secs + 's · ' : '') + (touch ? 'tap to wake' : 'any key to wake');
+    }
+    show();
+    var timer = setInterval(function () {
+      var now = Date.now(), dt = Math.min(1, (now - last) / 1000); last = now;
+      var s2 = st();
+      acc.hp += s2.maxHP / FULL_HP * rate * dt; acc.en += s2.maxEnergy / FULL_EN * rate * dt;
+      var h = Math.floor(acc.hp), e = Math.floor(acc.en);
+      if (h && s2.hp < s2.maxHP) { BridgeInventory.restoreHP(h); acc.hp -= h; } else if (s2.hp >= s2.maxHP) acc.hp = 0;
+      if (e && s2.energy < s2.maxEnergy) { BridgeInventory.restoreEnergy(e); acc.en -= e; } else if (s2.energy >= s2.maxEnergy) acc.en = 0;
+      if (o.onTick) o.onTick(dt);
+      show();
+      s2 = st();
+      if (s2.hp >= s2.maxHP && s2.energy >= s2.maxEnergy && now - t0 > 1500) wake(true);
+    }, 250);
+    function key(e) { if (e.key === 'Escape' || e.key.length === 1 || /^(Enter|Arrow)/.test(e.key)) { e.preventDefault(); wake(false); } }
+    function tap(e) { e.preventDefault(); wake(false); }
+    setTimeout(function () {                            // a moment to settle before a key can wake you
+      if (!sleeping || sleeping.fade !== fade) return;
+      window.addEventListener('keydown', key, true);
+      fade.addEventListener('pointerdown', tap);
+      fade.style.pointerEvents = 'auto';
+    }, 900);
+    function wake(full) {
+      if (!sleeping || sleeping.fade !== fade) return;
+      clearInterval(timer);
+      window.removeEventListener('keydown', key, true);
+      fade.removeEventListener('pointerdown', tap);
+      var s2 = st(), got = { hp: Math.round(s2.hp - start.hp), energy: Math.round(s2.energy - start.energy), secs: Math.round((Date.now() - t0) / 1000), full: full };
+      fade.querySelector('.sf-text').textContent = full ? (o.rested || 'You wake rested. Health and energy full.')
+        : 'You wake after ' + got.secs + 's' + (got.hp > 0 || got.energy > 0 ? ': ' + [got.hp > 0 ? '+' + got.hp + ' health' : '', got.energy > 0 ? '+' + got.energy + ' energy' : ''].filter(Boolean).join(', ') + '.' : '.');
       fade.classList.add('woke');
-    }, 2600);
-    setTimeout(function () {
-      BridgeCharacter.setHidden(false);
-      fade.classList.remove('dark');
-      if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
-    }, 4200);
-    setTimeout(function () { fade.remove(); sleeping = false; }, 5200);
+      fade.style.pointerEvents = 'none';
+      setTimeout(function () {
+        BridgeCharacter.setHidden(false);
+        fade.classList.remove('dark');
+        if (typeof BridgeControls !== 'undefined') BridgeControls.enable();
+        if (o.woke) o.woke(got);
+      }, 1100);
+      setTimeout(function () { fade.remove(); if (sleeping && sleeping.fade === fade) sleeping = null; }, 2000);
+    }
+    sleeping.wake = wake;
   }
 
   // ---- looking out -------------------------------------------------------------------------------
@@ -348,5 +401,6 @@ var BridgeActions = (function () {
     }, 420);
   }
 
-  return { decorate: decorate, run: run, closeView: closeView, ready: function (cb) { load(cb); } };
+  return { decorate: decorate, run: run, closeView: closeView, ready: function (cb) { load(cb); },
+           rest: slumber, sleeping: function () { return !!sleeping; }, _wake: function () { if (sleeping && sleeping.wake) sleeping.wake(false); } };
 })();
