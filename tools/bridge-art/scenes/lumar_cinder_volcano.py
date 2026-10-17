@@ -64,8 +64,8 @@ def material(x, r):
     return 'ash' if w > 0.05 else ('cinder' if w > -0.18 else 'scoria')
 
 
-ALB = {'crust_near': ('#1e1616', 0.35), 'trail': ('#4a3c34', 0.3), 'ash': ('#4a4242', 0.35), 'cinder': ('#2a2224', 0.4),
-       'scoria': ('#3a2420', 0.35)}
+ALB = {'crust_near': ('#221a1a', 0.35), 'trail': ('#4a3c34', 0.3), 'ash': ('#3e3638', 0.3), 'cinder': ('#332b2c', 0.35),
+       'scoria': ('#3a2a26', 0.3)}
 I.ground(k, walk | {(c, r) for (c, r) in lake if ell(c + 0.5, r + 0.5, LAKE) > 0.55}, material, ALB,
          height=lambda x, r: -0.5 * I.smooth(1.18, 0.9, ell(x, r, LAKE, wob(x, r, 7))))      # the ground shelving down under the lava
 I.ridge(k, rim, top=3.6, slope=2.2, seed=31, rock='#3a3034', strata=('#4a3a3c', '#2e2426', '#5a3a36'), moss='#241c1e',
@@ -216,14 +216,14 @@ w = {'name': 'The Crater', 'sea': 'crimson', 'width': COLS, 'height': ROWS, 'til
               "COOLED STANDING UP. YOUR REFLECTION IN IT IS RED."),
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=[], scene_id=WID, scene_extra={'backdrop': True, 'smoke': SMOKE})
+apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=[], scene_id=WID, scene_extra={'smoke': SMOKE})
 w = json.load(open(WORLD))
 for r in range(ROWS):
     for c in range(COLS):
         if (c, r) not in walk:
             w['collisions'][r][c] = 1
             w['tiles'][r][c] = 1
-w['view'] = [-0.5, -2.0, COLS + 0.5, ROWS + 1.0]
+w['view'] = [0.0, -1.0, COLS, ROWS]                 # the crater's own rim all round: no sea past its edge
 w['onFaint'] = {'world': 'lumar-cinder', 'spawn': [28, 23], 'who': 'SCARLET DEE',
                 'line': "YOU COME ROUND ON TORTUGA'S BOARDWALK, SINGED, SOMEBODY'S COAT UNDER YOUR HEAD.\n\n\"THE PIRATES CARRIED YOU "
                         "DOWN,\" SAYS SCARLET DEE. \"THEY'LL WANT A DRINK FOR IT. THE IMPS THROW FIRE - STEP OFF THE LINE. THE CRABS "

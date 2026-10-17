@@ -1,5 +1,6 @@
 {
   "name": "Cinder Key",
+  "sea": "crimson",
   "width": 56,
   "height": 42,
   "tileSize": 16,
@@ -1315,7 +1316,7 @@
       2,
       4,
       4,
-      2,
+      4,
       2,
       4,
       2,
@@ -1374,15 +1375,15 @@
       2,
       2,
       4,
-      2,
+      4,
       2,
       2,
       2,
       4,
       2,
-      2,
-      2,
-      2,
+      4,
+      4,
+      4,
       4,
       2,
       2,
@@ -3753,7 +3754,7 @@
       0,
       1,
       1,
-      0,
+      1,
       0,
       1,
       0,
@@ -3812,15 +3813,15 @@
       0,
       0,
       1,
-      0,
+      1,
       0,
       0,
       0,
       1,
       0,
-      0,
-      0,
-      0,
+      1,
+      1,
+      1,
       1,
       0,
       0,
@@ -4934,8 +4935,8 @@
       "type": "enter_world",
       "target": "lumar-cinder-volcano",
       "spawn": [
-        24,
-        37
+        22,
+        35
       ],
       "label": "THE CRATER TRAIL",
       "prompt": "PRESS E TO CLIMB"
@@ -4946,8 +4947,8 @@
       "type": "enter_world",
       "target": "lumar-cinder-volcano",
       "spawn": [
-        24,
-        37
+        22,
+        35
       ],
       "label": "THE CRATER TRAIL",
       "prompt": "PRESS E TO CLIMB"
@@ -4969,16 +4970,16 @@
       "dialog": "A BIG MAN IN A BLUE BANDANA, PITCH TO THE ELBOWS, LOOKING AT HIS RAIDER LIKE SHE OWES HIM MONEY."
     },
     {
-      "x": 20,
-      "y": 29,
+      "x": 18,
+      "y": 26,
       "type": "dialog",
       "label": "THE WRECK",
       "prompt": "PRESS E TO LOOK",
       "dialog": "A GALLEON ON HER SIDE IN THE SHALLOWS, HER MASTS SNAPPED, HER GUNPORTS FULL OF WEED.\n\nTHE CROWN'S NAVY SANK HER HERE TWENTY YEARS AGO TO CLOSE THE COVE. THE PIRATES MOVED IN THE FOLLOWING WEEK."
     },
     {
-      "x": 36,
-      "y": 31,
+      "x": 39,
+      "y": 28,
       "type": "dialog",
       "label": "OLD MAST",
       "prompt": "PRESS E TO LOOK",

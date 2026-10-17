@@ -3615,7 +3615,6 @@
       "to": "full"
     },
     "actors": [],
-    "backdrop": true,
     "smoke": [
       [
         9.5,
@@ -3636,10 +3635,10 @@
     ]
   },
   "view": [
-    -0.5,
-    -2.0,
-    44.5,
-    39.0
+    0.0,
+    -1.0,
+    44,
+    38
   ],
   "onFaint": {
     "world": "lumar-cinder",

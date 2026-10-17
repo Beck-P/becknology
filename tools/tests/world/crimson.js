@@ -88,7 +88,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   const board = await dialog();
   console.log('board:', board.slice(0, 260));
   expect('the board says what the sea will do', /NOW:/.test(board) && /COMING:/.test(board));
-  await btn(/storm glass/i); await wait(800);
+  await ev(() => { const r = [...document.querySelectorAll('.wd-chooser .wd-sell-row')].find(e => /storm glass/i.test(e.textContent)); if (r) r.click(); }); await wait(1200);
   expect('a storm glass bought, carried, working', await ev(() => BridgeInventory.getCount('storm_glass') === 1 && BridgeCrimson.stormGlass()));
   await shut();
   await use('DOOR'); await wait(3000);
