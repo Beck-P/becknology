@@ -15,7 +15,7 @@ only partly done, the rest stays here as open.
 The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-denser-worlds.md`.
 | Ask | Status | Where / notes |
 |---|---|---|
-| Crowds of background people, "lots of people" | open (agreed) | Varied extras by planet wardrobe, going door to door, by clock and weather, the same for every pilot; never blocking doors, not in lonely places. Pairs with the other session's daily routines. |
+| Crowds of background people, "lots of people" | **done** | js/crowd.js + assets/crowds.json: 30 places, 17 bodies recoloured per planet, the same crowd for everyone, umbrellas in the rain, a word and now and then a favour. Pairs with the routines. |
 | Small events on the hour | open (agreed) | A few minutes each, shared by the clock. |
 | Race anyone who's there ("I want to be able to race Alyssa"): sailing, skiing, climbing; and the seas a little larger | open (agreed) | Today only against Liv, Ysolde or your ghost. Seas about a fifth bigger (`K` 600 → ~720). |
 | A party for playing together: travel waits for both of you (ready check), ride along on jumps, come aboard each other's Wayfarer | discuss | Beck's idea; details proposed in the spec. |
