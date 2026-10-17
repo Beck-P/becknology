@@ -72,8 +72,8 @@ in particular places, and the path from "I have money" to "I have something wond
   see and manage all of it — from the office above all.
 - **Crafting is central**: more materials, mining feeding upgrades, building more things; it all feeds the economy and
   your base. Build out bases in several of the places you've been.
-- **Earn the best things yourself.** Hired warriors/expeditions bring loot and monster trophies, but the rarest magic
-  items you have to go and find on your own. Keep it cute and personal.
+- **Earn the best things yourself.** No hired warriors or loot expeditions (dropped, October 17): monster trophies and
+  the rarest magic items you go and find on your own. Keep it cute and personal.
 - **Upgrades have a place**: buy them where they're made (sail your ship there), or bring parts home to your own yard
   and hire smiths to build custom things. Build your own ship from enough timber and iron; long term, design it and
   add to it.
@@ -89,8 +89,9 @@ in particular places, and the path from "I have money" to "I have something wond
    figurehead. Later: a designer to lay out decks, guns and holds.
 3. **Running it from the office** — standing orders and captains (trade loops, supply runs between your holdings),
    the Workshop's queue, the fleet's chart, the treasury, the daily dispatch: one desk for the whole empire.
-4. **Expeditions and trophies** — warriors you hire to hunt the Midnight Sea's monsters and clear wild places for
-   loot and trophies; a trophy hall. The rarest finds stay personal: relics only you can reach.
+4. **Trophies and your own finds** — no hired warriors (Beck: "I don't know if I like the hired warriors hunt monsters
+   and bring back the loot… fine to leave out"). The monsters you beat yourself and the relics you dig up yourself go
+   in a trophy hall at your base; the rarest finds are always yours to go and get.
 5. **Magic things** — the Workshop's highest tier: rare materials you found yourself + trophies → wondrous items with
    real effects; the Cabinet of Wonders' set bonuses.
 6. **Across worlds** — bases beyond Lumar (the farm on Verdance, a lodge on Hoarfell, a front in Arcadia), freight by

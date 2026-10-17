@@ -15,7 +15,8 @@ only partly done, the rest stays here as open.
 | Empire: economic engine across worlds, hire and automate, manage it all from the office | in progress | Agreed plan in `_claude_docs/spec-empire.md`, six chunks. |
 | Crafting: more materials, mining feeding upgrades, build things, build out your base | in progress | Chunk 1 (materials and the Workshop) on a branch now. |
 | Buy upgrades where they're made (sail there), or build them at your own yard with hired smiths; build your own ship from timber etc.; later design it | open | Chunk 1 (workshop, smiths, crafted fittings) then chunk 2 (your own slipway, building and painting a ship; a designer later). |
-| Rarest magic items found yourself; hired warriors bring loot and monster trophies; a trophy hall; keep it cute | open | Chunks 4 and 5. |
+| Rarest magic items found yourself; a trophy hall; keep it cute | open | Chunks 4 and 5. |
+| Hired warriors hunting monsters for loot | dropped | Beck: "fine to leave out". |
 | Progression must feel natural, a real game to work up through | standing rule | Each chunk unlocks gradually (recipes learnt, plans bought, tiers by material). |
 | Title page: the ship over its planet, but keep the technology feel | in progress | Branch (worktree agent). |
 | Update the title page (the Becknology start screen) | in progress | Proposal in chat: the mothership over the planet it's parked at (real day/night), a crafted pixel BECKNOLOGY logo, a real menu (Continue as Beck with portrait/where/coins, settings, who's online), later postcards of the worlds. Waiting on Beck's pick. |
