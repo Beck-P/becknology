@@ -86,7 +86,7 @@
     { "sheet": "npc-elf-child", "talk": "YOUNG ELF", "path": [[4, 21.5], [9.5, 22.4], [12.2, 20], [12.4, 15.6], [10, 13.4]], "speed": 1.6, "pause": 2500, "rest": "down" }
   ],
   "lumar-saltmere": [
-    { "sheet": "npc-ghost-fisher", "ghost": true, "path": [[17, 23], [21, 23], [27, 23]], "speed": 0.45, "pause": 7000, "rest": "down" },
+    { "sheet": "npc-ghost-fisher", "ghost": true, "path": [[16, 24], [21, 24], [27, 24]], "speed": 0.45, "pause": 7000, "rest": "down" },
     { "sheet": "npc-ghost-child", "ghost": true, "path": [[20, 11], [23, 12], [26, 11]], "speed": 0.7, "pause": 4000, "rest": "down" },
     { "sheet": "npc-ghost-fisher", "ghost": true, "path": [[22, 21], [22, 15]], "speed": 0.4, "pause": 9000, "rest": "up" }
   ],

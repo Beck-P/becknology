@@ -26,7 +26,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   const shut = async () => { await ev(() => document.querySelectorAll('.world-dialog, .ki-card, #keyitem-card').forEach(x => x.remove())); await wait(200); };
   const use = (label) => ev((l) => { const i = BridgeWorld.getWorld().interactions.find(x => x.label === l); if (!i) return false; BridgeInteractions.execute(i); return true; }, label);
   const here = () => ev(() => BridgeWorld.getWorldId());
-  const clues = () => ev(() => (BridgeQuests.progress('gloaming-light') || {}).found || []);
+  const clues = () => ev(() => ['idris', 'tobiah', 'pool', 'captain', 'lantern', 'home'].filter(c => BridgeQuests.has('gloaming-light/' + c)));
   let errors = 0;
   const expect = (what, ok) => { console.log((ok ? 'ok  ' : 'BAD ') + what); if (!ok) errors++; };
 
@@ -49,6 +49,11 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   const c1 = await clues();
   console.log('clues:', JSON.stringify(c1));
   expect('Idris and Tobiah tell you about the Gloaming', c1.includes('idris') && c1.includes('tobiah'));
+  await go('lumar-midnight-tower-3'); await wait(2500);
+  await use('SCRYING POOL'); await wait(1500);
+  console.log('pool:', (await dialog()).slice(0, 160));
+  await shut();
+  expect('the scrying pool shows where she is', (await clues()).includes('pool'));
 
   // ---- the Gloaming at sea: where the clock has her; alongside; aboard --------------------------------------------------------
   await ev(() => new Promise(r => { BridgeSloop.start('lumar-saltmere'); r(); }));
@@ -58,7 +63,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   expect('she sails in the Midnight Sea', g && g.cx > 0.02 && g.cx < 0.18 && g.cy > 0.15 && g.cy < 0.4);
   const same = await ev(() => { const a = BridgeSloop._ghostChart(1000000), b2 = BridgeSloop._ghostChart(1000000); return a.cx === b2.cx && a.cy === b2.cy; });
   expect('her place comes from the clock (the same for everyone)', same);
-  await ev((g) => { const w = BridgeSloop._toWorld(g.cx, g.cy), bt = BridgeSloop._boat(); bt.x = w.x + 1.5; bt.r = w.r + 3.4; bt.v = 0; bt.h = 0; BridgeSloop._snap(); }, g);
+  await ev((g) => { const w = BridgeSloop._toWorld(g.cx, g.cy), bt = BridgeSloop._boat(); bt.x = w.x + 1.5; bt.r = w.r + 3.4; bt.v = 0; bt.h = 0; bt.reef = 0; BridgeSloop._snap(); }, g);
   await wait(1800);
   const pr = await ev(() => { const o = BridgeSloop._prompt(); return o && o.text; });
   console.log('prompt beside her:', pr);
