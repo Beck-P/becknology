@@ -214,7 +214,7 @@ build on top of it.**
 | Starling Holm (`claude/holm-rebuild`) | `lumar_holm.py` (+ `assets_yard.py` variants) | — |
 | Hoarfell (`claude/hoarfell-rebuild`) | `hoarfell.py` and the six sport worlds | E |
 | Sylvara (`claude/sylvara-rebuild`) | `sylvara.py` (`sylvara`) | F |
-| Arcadia (`claude/arcadia-rebuild`) | `arcadia_street.py`, `arcadia_alley.py`, `arcadia_skywalk.py`, `arcadia_skypad.py` | C (ways down), D (lifts, the Loop, the Mid-Levels) |
+| Arcadia (`claude/arcadia-rebuild`) | `arcadia_street.py`, `arcadia_alley.py`, `arcadia_skywalk.py`, `arcadia_skypad.py` | C (the Backs' way down), D (the street, the Skywalk, Skyport 7) |
 
 - **Until a place's rebuild is on `main`** (its row in `requests.md`'s new-look backlog says Done, or
   `git log origin/main -- tools/bridge-art/scenes/<script>.py` shows it), don't edit its scene script, its world JSON or
@@ -227,9 +227,10 @@ build on top of it.**
   at the edge): merge `main`, add to *their* rebuilt script (never put back the old art), keep every interaction where
   the rebuild left it, and re-render once with all of it.
 - **One of us edits each rebuilt script after it lands**: A — `lumar_harbor`, `lumar_square`, `lumar_crown`,
-  `lumar_tern`; B1 — `lumar_sapphire`, `lumar_rose`; B2 — `lumar_crimson`, `lumar_midnight`; C and D share Arcadia's four
-  (C the ways down from the street and the Backs, D the lifts, stations and the Mid-Levels round the Skywalk and Skyport
-  — merge `main` before each, never render the same script at once). A's working-harbour pieces for B1's and B2's
+  `lumar_tern`; B1 — `lumar_sapphire`, `lumar_rose`; B2 — `lumar_crimson`, `lumar_midnight`; C — `arcadia_alley` (the
+  Backs: the way down to the Undercity); D — `arcadia_street`, `arcadia_skywalk`, `arcadia_skypad` (the lift lobbies,
+  the Loop's stations, the ways up; the street's way down is an express lift, whose Undercity lobby C adds to
+  `assets/arcadia-lifts.json`). A's working-harbour pieces for B1's and B2's
   islands are live JS plus builders in A's own kit (`assets_harbour.py`); B1 and B2 place them in their scripts.
 - **Shared kits** (`assets_town`, `assets_isle`, `assets_coast`, `assets_house`, `assets_lumar`, `assets_snow`,
   `assets_elves`, `assets_district`, `scenekit.py`, `scene_post.py`…): additive and backward compatible only — every
