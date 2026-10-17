@@ -487,14 +487,15 @@ smoke(Q.harbour_house(k, 46.8, 50.4, FQ, 26.0, 3.3, 1.5, W.ROOF_SLATE, '#d4dccc'
 Q.net_rack(k, 49.3, 50.7, FQ + 0.65)
 # against the fronts: sacks, barrels, crates, rope and floats, tubs of flowers (each on its own tile; the quay stays open)
 Q.sacks(k, 11.95, FQ + 0.25)
-Q.barrel_group(k, 15.35, FQ + 0.2)
-Q.rope_coils(k, 16.95, FQ + 0.45)
-Q.floats(k, 17.55, FQ + 0.3)
-Q.tub(k, 20.0, FQ + 0.4, ('#e07030', '#f0d040'))
+A.barrel(k, 15.4, FQ + 0.24, h=0.72, radius=0.24)          # (the sailor's beat along the fronts stays open)
+A.barrel(k, 15.92, FQ + 0.22, h=0.62, radius=0.22, tone=shade(A.WOOD, 0.85))
+Q.rope_coils(k, 16.95, FQ + 0.3)
+Q.floats(k, 17.55, FQ + 0.12)
+Q.tub(k, 20.0, FQ + 0.26, ('#e07030', '#f0d040'))
 Q.tub(k, 23.75, FQ + 0.42, ('#e04060', '#f0d040'))
 Q.tub(k, 26.25, FQ + 0.42, ('#a060d0', '#f0f0f0'))
 Q.crate_stack(k, 47.0, FQ + 0.2)
-for (x, r) in ((17.3, 30.0), (20.0, 30.0), (23.75, 30.0), (26.25, 30.0)):
+for (x, r) in ((23.75, 30.0), (26.25, 30.0)):
     k.solid(x - 0.24, r - 0.3, x + 0.24, r + 0.4)
 # the avenue up from the quay: its sides stacked with the waterfront's trade (one tile in on each side), the way open
 for (x, r, what) in ((27.55, 26.2, 'barrels'), (27.6, 27.55, 'crates'), (27.75, 28.8, 'sacks'), (36.65, 26.1, 'crates'),
@@ -510,9 +511,6 @@ for (x, r, what) in ((27.55, 26.2, 'barrels'), (27.6, 27.55, 'crates'), (27.75, 
         Q.tub(k, x, r, ('#e04060', '#f0d040'))
     k.solid(x - 0.1 if x < 30 else x - 0.2, r - 0.25, x + 0.8 if x < 30 else x + 0.3, r + 0.6)
 Q.cat(k, 27.95, 27.75, 0.38)                          # asleep on the crates
-W.cart(k, 30.3, 24.2)                                 # a barrow of fish boxes waiting at the top of the avenue
-for (bx, br) in ((29.7, 24.0), (30.0, 24.3)):
-    A.crate(k, bx, br - 0.1, s=0.32, z0=0.65, tone=A.WOOD_L, solid=False)
 Q.lobster_pots(k, [(28.9, 25.65)])
 k.solid(28.6, 25.4, 29.2, 25.9)
 
