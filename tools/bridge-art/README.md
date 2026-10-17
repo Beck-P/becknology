@@ -2,7 +2,7 @@
 
 Offline art tools for the bridge game (`apps/bridge`). Their output is
 committed; nothing here runs at deploy time. See `apps/bridge/CLAUDE.md` for
-the art direction these follow.
+the art direction these follow (and `CLAUDE.md` here for the house style in brief).
 
 | Tool | What it does |
 |---|---|
@@ -19,7 +19,10 @@ the art direction these follow.
 | `assets_casino.py` | The Neon Royale (Arcadia's casino): Art Deco walls, carpet and marble, chandeliers, blackjack / roulette / craps / poker tables, slot banks, video walls, the cage, the island bar, the stage, Runouts cabinets, the restaurant's fittings, and the street frontage. Reports the live parts (wheels, screens, slot chases) for `js/worlds/casino.js`. |
 | `assets_cave.py` | Cave builders: rock faces and floors, lava pools and fissures, stalagmites, mine timbers and rails, the dragon, the hoard. |
 | `scenes/*.py` | One script per pre-rendered world: builds, renders, and updates that world's JSON. |
-| `scene_post.py` | Turns scene passes into the dithered, lit render + packed depth + `scene.json` (`apps/bridge/assets/scenes/<id>/`). |
+| `scene_post.py` | Turns scene passes into the lit render in the toy finish + packed depth + the live-light passes + `scene.json` (`apps/bridge/assets/scenes/<id>/`). |
+| `assets_house.py` | The richer house kit (Look Book 2): `rich_house` (thatch, pantile or shingle roofs, eaves, jetties, porches, framed windows with shutters and flower boxes), `bay_shop`, `street`, `garden`, `pump`, `tub`, `barrels`, `crate_stack`. |
+| `dioramas/` | Look Book 2's five reference places (scripts) and `ref/` — how they look in the toy finish: the bar for any place built or rebuilt. |
+| `portraits.py` | Stardew-style talk portraits (64 × 64, five expressions) for every NPC, crowd body and pilot head (`apps/bridge/assets/portraits/`). |
 
 ```sh
 # Building / prop sprites (all, or just the keys you name)
