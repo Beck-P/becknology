@@ -4,12 +4,12 @@ Everything asked for, so nothing slips. Newest batch first. Status: **done** (li
 now — a branch or a render queue), **open** (not started), **discuss** (needs a decision with Beck). When something is
 only partly done, the rest stays here as open.
 
-## October 17 (ideas Beck picked)
+## October 17 (ideas Beck picked — "not super pressing… good options to start working on")
 | Ask | Status | Where / notes |
 |---|---|---|
-| Festivals: one per planet per season, on its own clock — the place dresses up, limited stock, contests | open | Ideas: Lumar's lanterns on the water and a fishing derby, Arcadia's blackout night, Hoarfell's ice fair and ski race, Verdance's harvest fair judging your best crop. Builds on js/clock.js, js/seasons.js, js/weather.js, js/hours.js. |
-| A dungeon that resets every night | open | Generated floors under Midnight Isle on js/mine.js + js/combat.js: new layout each night, deeper is richer, a best-run board for Beck and Alyssa. |
-| Music that changes with the moment | open | js/audio.js layered by time of day, weather and place; a tavern band when you sit; a jukebox for your homes. |
+| Festivals: one per planet per season, on its own clock — the place dresses up, limited stock, contests | queued (second) | Ideas: Lumar's lanterns on the water and a fishing derby, Arcadia's blackout night, Hoarfell's ice fair and ski race, Verdance's harvest fair judging your best crop. Builds on js/clock.js, js/seasons.js, js/weather.js, js/hours.js. |
+| A dungeon that resets every night | queued (third) | Generated floors under Midnight Isle on js/mine.js + js/combat.js: new layout each night, deeper is richer, a best-run board for Beck and Alyssa. |
+| Music that changes with the moment | queued (first) | js/audio.js layered by time of day, weather and place; a tavern band when you sit; a jukebox for your homes. |
 | A guided first hour | open (later) | One character walks a new pilot through fish → sell → buy → sail, so a friend visiting cold isn't lost. |
 | Secrets in every world | open (later) | Hidden rooms, things only there at certain hours or weather, glyphs that are ciphers (cipher-room, typist); a count per world on the Map tab. Shape to be worked out with Beck. |
 | A main story that ties the quests together and ends at the Singularity | discuss | Beck wants one "at some point"; think it through first. The quests already hint at a thread (the ship mark, the Listeners, Forty-Seven Point Three, the Brink). |
@@ -58,13 +58,6 @@ only partly done, the rest stays here as open.
 | Penthouse: more space; an outdoor deck with the pool out there and views of the city all round | in progress | Pool moves from inside to a roof deck (glass rail, the skyline, traffic and holo-ads round it, loungers, a fire pit, planters, string lights); a bigger interior. |
 | Ashcombe House should be big — "super bougie and gorgeous" | in progress | Great hall as the entry; rooms off it (drawing room, library, dining room, upstairs gallery and master bedroom) as places within places. |
 | All of them customisable | in progress | Every room and the deck furnishable with the homes' furniture system, with open floor left for it. |
-
-## Next up (Beck: "good options to start working on", not pressing)
-| Ask | Status | Notes |
-|---|---|---|
-| **Music that changes with the moment**: slower at night, moodier in a storm, louder in a busy tavern; a tavern band that strikes up when you sit; a jukebox for your homes that plays the songs you've heard | queued (first) | Engine only (js/audio.js already generates the music from themes): no renders, light on the machine — starts first when a slot frees. |
-| **Festivals**: one per planet per season on its own clock; for a day the place dresses up, its own music, things only sold then, a contest — Lumar's floating lanterns and fishing derby, Arcadia's blackout night, Hoarfell's ice fair with a ski race against the locals, Verdance's harvest fair judging your best crop | queued (second) | Decorations drawn live by the engine over the renders (no re-render), the clock's seasons, the existing fishing, skiing and farm systems for the contests. |
-| **A dungeon that resets every night** under Midnight Isle: a new layout each night, deeper floors better loot, leave with what you've found or push on and risk it; the mine's rock-breaking and the combat you have; a best-run board to beat Alyssa | queued (third) | Most of the work is the layouts (generated, seeded by the night); the board through the cloud save / presence. |
 
 ## Sleep
 | Ask | Status | Notes |
