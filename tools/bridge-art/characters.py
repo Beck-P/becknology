@@ -484,6 +484,12 @@ EXTRAS = {
     'gown':      dict(_X, skirt=XKEYS['bot'], gown=True, sequin=True, sleeve='xskin', long_hair='flowing', stole=XKEYS['out']),
     'elf':       dict(_X, long_hair=True, elf_ears=True, tunic=XKEYS['out'], tall_boots=True, bracers=True),
     'elf-braid': dict(_X, skirt=XKEYS['bot'], braid='side', elf_ears=True, shawl=XKEYS['out']),
+    # Lumar's other seas (workstream B1): Sapphire's merchants in waistcoats and sashes, its market women in shawls;
+    # Rose's mystics in long robes with flaring sleeves, the cowl fallen back
+    'merchant':  dict(_X, waistcoat=XKEYS['out'], sash=XKEYS['hat'], mustache=True),
+    'woman-shawl': dict(_X, skirt=XKEYS['bot'], shawl=XKEYS['out'], bun=True),
+    'mystic':    dict(_X, skirt=XKEYS['bot'], gown=True, bell_sleeves=True, cowl=XKEYS['out'], long_hair=True),
+    'mystic-m':  dict(_X, skirt=XKEYS['bot'], gown=True, bell_sleeves=True, cowl=XKEYS['out'], beard=True),
 }
 for _n, _s in EXTRAS.items():
     NPCS['extra-' + _n] = dict(_s, pose='stand')
