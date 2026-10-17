@@ -331,7 +331,22 @@ def footprints(k, pts, z_at, tone, every=0.32, seed=0):
             i += 1
 
 
-# ---- test renders ----------------------------------------------------------------------------------------------------
+# ---- test renders ---
+_T0 = [None]
+
+
+def tick(label):
+    """Print how long the build has taken so far (SCENE_TICK=1): where a slow scene spends its time."""
+    import os
+    import time
+    if not os.environ.get('SCENE_TICK'):
+        return
+    if _T0[0] is None:
+        _T0[0] = time.time()
+    print('[%6.1fs] %s' % (time.time() - _T0[0], label), flush=True)
+
+
+# ---- (the crop and sample cap) ----------------------------------------------------------------------------------------------------
 def test_hooks(k):
     """For quick looks while building: SCENE_CROP='x0,r0,x1,r1' (tiles) renders only that window of the frame (every
     pass, so scene_post finishes the crop on its own); SCENE_SAMPLES caps the light samples. Off unless set."""

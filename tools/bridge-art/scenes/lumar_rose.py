@@ -33,6 +33,7 @@ COLS, ROWS = 56, 42
 k = Kit(COLS, ROWS, margin_top=1.5, margin_bottom=1.0, margin_x=0.5, seed=923)
 WL.test_hooks(k)
 CRYSTAL = ('#6a2a4a', '#f080b0')
+GEM = '#c05a90'                    # roseite's own colour by day (CRYSTAL[0] is its night body)
 ROSE = '#f070a8'
 GREEN = '#4f7a3c'
 ROOF = '#6a2e48'
@@ -99,9 +100,10 @@ def pd(x, r):
     return I.path_dist(PATHS, x, r)
 
 
+WL.tick('the terraces: three stone-faced s')
 # ---- the terraces: three stone-faced steps up the slope each side of the path north -------------------------------
 TER = [(19.0, 26.75), (29.25, 37.0)]                                 # x spans (the block is solid in the map)
-STEPS = [(11.3, 0.24), (9.5, 0.48), (7.7, 0.72)]                     # (front row, height) low to high
+STEPS = [(11.3, 0.38), (9.5, 0.74), (7.7, 1.08)]                     # (front row, height) low to high
 TER_BACK = 6.75
 
 
@@ -158,7 +160,8 @@ ALB = {'path': ('#a48c74', 0.3), 'path_edge': ('#8e7a64', 0.3),
        'meadow': ('#557c3e', 0.3), 'meadow_dark': ('#4a6e38', 0.3), 'grass': (GREEN, 0.3), 'grass_dark': ('#44683a', 0.3),
        'gravel': ('#9a8e86', 0.25), 'sinter': ('#d8ccb4', 0.2), 'sinter_ochre': ('#cfae7c', 0.2),
        'sinter_rust': ('#b0704a', 0.2), 'pool_bed': ('#3e6a6a', 0.3)}
-I.ground(k, land, material, ALB, height=height)
+I.ground(k, land, material, ALB, height=height, step=0.0625, dither=0.04)
+WL.tick('ground laid')
 
 terrain = C.coast(k, land, ground=(material, ALB), palette='rose', grass=GREEN, rock='#6a5e62', seed=31, beachiness=0.1,
                   beach_bias=lambda x, r: 0.8 * I.smooth(3.0, 0.0, abs(x - 28.0) - 6.5) * I.smooth(16.0, 20.0, r),
@@ -167,6 +170,7 @@ terrain = C.coast(k, land, ground=(material, ALB), palette='rose', grass=GREEN, 
                               (FJ[0] - 0.4, FJ[1] - 0.6, FJ[0] + FLEN + 1.4, FJ[1] + 1.6)])
 rng = random.Random(4417)          # this rebuild's own dice (the kit's dice still place what they always placed)
 
+WL.tick('the pier into the cove, your sloo')
 # ---- the pier into the cove, your sloop's berth ----------------------------------------------------------------------
 W.dock(k, PX + 0.05, PX + 0.95, pier_top - 0.4, SHIP_R + 0.0, z=0.02)
 # no galleon at the pier any more: your own sloop ties up at its end (js/sloop.js draws it, MOORINGS)
@@ -181,6 +185,7 @@ WL.basket(k, PX + 0.3, pier_top + 4.4, fill=ROSE, glow=CRYSTAL[1], s=0.15)
 # at the pier's foot: a cart of crates waiting for the boat, a lamp
 HK.barrels(k, PX + 2.1, pier_top - 1.2)
 
+WL.tick('north: the terraces -------------')
 # ---- north: the terraces ------------------------------------------------------------------------------------------
 FACE = ('#9a8e84', '#8a8078', '#a89c90', '#7e766e')
 
@@ -246,21 +251,23 @@ def trellis(x0, x1, r, z, seed):
         x += 1.2
     for wz in (0.3, 0.55):
         k.tube((posts[0], r, z + wz), (posts[-1], r, z + wz), 0.007, '#9a9aa4', 'trellis_wire', verts=4)
-    x = x0 + 0.35
-    while x < x1 - 0.25:
-        n = rr.randint(2, 4)
+    x = x0 + 0.3
+    while x < x1 - 0.2:                                          # clumps of six-sided points, pink and glassy
+        n = rr.randint(3, 5)
         for j in range(n):
-            a = rr.uniform(-0.7, 0.7)
-            h = rr.uniform(0.18, 0.55)
-            lit = rr.uniform(0.85, 1.15)
-            base = (x + rr.uniform(-0.05, 0.05), r + rr.uniform(-0.04, 0.04), z + 0.05)
-            top = (base[0] + math.sin(a) * h * 0.45, base[1] + rr.uniform(-0.06, 0.06), base[2] + h)
-            k.tube(base, top, rr.uniform(0.022, 0.04), shade(CRYSTAL[0], lit), 'crystal', rb=0.003,
-                   emit=(CRYSTAL[1], 0.55 * lit), verts=6, smooth=False)
-        if rr.random() < 0.5:                                    # a sprig along the wire
-            k.tube((x, r + 0.02, z + 0.55), (x + rr.uniform(0.15, 0.3), r + 0.02, z + 0.62), 0.02, CRYSTAL[0], 'crystal',
-                   rb=0.003, emit=(CRYSTAL[1], 0.5), verts=5, smooth=False)
-        x += rr.uniform(0.22, 0.34)
+            a = rr.uniform(-0.8, 0.8)
+            h = rr.uniform(0.22, 0.58) * (1.0 if j else 1.15)
+            lit = rr.uniform(0.85, 1.2)
+            rad = rr.uniform(0.04, 0.065)
+            base = (x + rr.uniform(-0.06, 0.06), r + rr.uniform(-0.05, 0.05), z + 0.06)
+            body = (base[0] + math.sin(a) * h * 0.32, base[1] + rr.uniform(-0.05, 0.05), base[2] + h * 0.75)
+            top = (base[0] + math.sin(a) * h * 0.42, body[1], base[2] + h)
+            k.tube(base, body, rad, shade(GEM, lit), 'crystal', rb=rad * 0.9, emit=(CRYSTAL[1], 0.42 * lit), verts=6, smooth=False)
+            k.tube(body, top, rad * 0.9, shade(GEM, lit * 1.2), 'crystal', rb=0.004, emit=(CRYSTAL[1], 0.5 * lit), verts=6, smooth=False)
+        if rr.random() < 0.45:                                   # a sprig grown along the wire
+            k.tube((x, r + 0.02, z + 0.55), (x + rr.uniform(0.15, 0.3), r + 0.02, z + 0.6), 0.03, GEM, 'crystal',
+                   rb=0.004, emit=(CRYSTAL[1], 0.45), verts=6, smooth=False)
+        x += rr.uniform(0.2, 0.3)
     k.point_light((x0 + x1) / 2, r + 0.5, z + 0.4, CRYSTAL[1], 6 * (x1 - x0) / 3, radius=0.4, group='flicker')
 
 
@@ -281,6 +288,7 @@ for (x, r) in ((30.0, 11.8), (35.6, 11.7)):
     k.cyl(x, r, 0.0, 0.24, 0.11, ('#6a7480', 0.25), 'bucket', verts=10)
     k.cyl(x, r, 0.2, 0.23, 0.095, '#3a6a7a', 'bucket_water', verts=10)
 
+WL.tick('the workshop, its yard ----------')
 # ---- the workshop, its yard ------------------------------------------------------------------------------------------
 HK.rich_house(k, 9.6, 13.9, 7.4, 10.0, wall_h=1.7, rise=0.9, roof=ROOF, wall='#b4a8a8', door_x=WORKSHOP_DOOR[0],
               windows=[(10.35, 0.8)], stone=True, chimney=13.2)
@@ -298,6 +306,7 @@ for j in range(3):
                CRYSTAL[0], 'crystal', rb=0.003, emit=(CRYSTAL[1], 0.5), verts=5, smooth=False)
 k.solid(8.35, 8.0, 9.45, 9.6)
 
+WL.tick('the glasshouse ------------------')
 # ---- the glasshouse -------------------------------------------------------------------------------------------------
 def glasshouse(x0, x1, r0, r1, h=1.55, frame='#e8e4e8', glow='#f080b0'):
     """A white iron glasshouse on a brick dwarf wall: glazing bars every few tenths, panes glowing faintly pink from the
@@ -366,12 +375,13 @@ k.cyl(44.8, 10.6, 0.0, 0.12, 0.04, '#e8d0e0', 'vial', emit=('#f080b0', 0.4), ver
 for (x, r, s) in ((40.6, 10.2, 0.13), (43.5, 10.25, 0.12)):
     k.cyl(x, r, 0.0, 0.2, s, ('#a0583a', 0.2), 'pot', verts=10)
     k.cyl(x, r, 0.19, 0.22, s + 0.015, ('#b06a48', 0.2), 'pot', verts=10)
-    WL.crystal_cluster(k, x, r, s=0.45, col=CRYSTAL, z=0.21, energy=0, glow=0.6, seed=int(x * 10))
+    WL.crystal_cluster(k, x, r, s=0.45, col=(GEM, CRYSTAL[1]), z=0.21, energy=0, glow=0.6, seed=int(x * 10))
 A.barrel(k, 39.55, 8.3, h=0.7, radius=0.26, tone='#6a5a4a')
 k.cyl(39.55, 8.3, 0.62, 0.66, 0.22, '#3a6a7a', 'butt_water', verts=12)
 for j in range(4):
     k.cone(44.55, 8.0, j * 0.07, j * 0.07 + 0.16, 0.11, 0.14, ('#a0583a', 0.2), 'pot', verts=10)
 
+WL.tick('lamps and trees -----------------')
 # ---- lamps and trees ---------------------------------------------------------------------------------------------
 for (x, r) in ((27.0, 13.6), (30.2, 16.6), (20.4, 15.4), (36.4, 15.4), (13.2, 18.6), (44.6, 18.0)):
     W.lantern_post(k, x, r, energy=16)
@@ -381,6 +391,7 @@ for (x, r) in TREES:
     W.tree(k, x, r, h=rng.uniform(2.3, 2.9), tone=rng.choice(('#3e6a38', '#46723c', '#3a6034')))
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
 
+WL.tick('west: the meadow, the tower mill,')
 # ---- west: the meadow, the tower mill, the memorial, a jetty on the cove ----------------------------------------------
 MILL = (10.8, 22.4)
 
@@ -479,6 +490,7 @@ for (x0, r0, x1, r1) in ((JX - 2.6, 24.3, JX - 1.2, 24.25),):
     k.solid_post(x0, r0)
     k.solid_post(x1, r0)
 
+WL.tick('east: the hot springs, the bathho')
 # ---- east: the hot springs, the bathhouse, the old mine ----------------------------------------------------------------
 for i, (cx, cr, rx, ry) in enumerate(POOLS):
     R, d_, edge = SPRINGS[i]
@@ -603,8 +615,9 @@ def mine_head(cx, r_face, w=1.4, h=1.5, wood='#5a3a22', glow='#f080b0'):
 
 mine_head(MINE[0], MINE[1])
 for (x, r) in ((39.0, 20.0), (48.6, 22.6), (38.8, 28.6)):        # between the pools: small, walk past them
-    WL.crystal_cluster(k, x, r, s=0.8, col=CRYSTAL, energy=10)
+    WL.crystal_cluster(k, x, r, s=0.8, col=(GEM, CRYSTAL[1]), energy=10)
 
+WL.tick('the meadow: rose drifts, wildflow')
 # ---- the meadow: rose drifts, wildflowers, walls, boulders ----------------------------------------------------------
 busy = lambda x, r: pd(x, r) < 0.75
 meadow_cells = [c for c in walk if c[0] < 20 and c[1] > 14]
@@ -625,7 +638,7 @@ for (dx, dr) in drift_c:
             WL.shrub(k, x, r, s=rng.uniform(0.22, 0.32), tone=rng.choice(('#365a30', '#3e6234', '#30502c')), blooms=ROSE,
                      bloom_glow='#ff80c0')
 # wildflower clumps and heather over the whole island's turf
-for _ in range(150):
+for _ in range(420):
     x, r = rng.uniform(3, 53), rng.uniform(5, 38)
     if clear_of_things(x, r, 0.1) and terrace_h(x, r) is None and terrain.z(x, r) > -0.04 \
             and material(x, r) in ('grass', 'grass_dark', 'meadow', 'meadow_dark'):
@@ -660,21 +673,26 @@ for (x, r) in TREES + ((MINE[0] - 2.0, MINE[1] - 0.6), (MINE[0] + 2.2, MINE[1] -
         if pd(fx, fr) > 0.8:
             WL.fern(k, fx, fr, s=rng.uniform(0.3, 0.42), tone=rng.choice(('#4a7a34', '#3e6a30')))
 
+WL.tick('scatter -------------------------')
 # ---- scatter --------------------------------------------------------------------------------------------------------
 I.tufts(k, [c for c in walk if material(c[0] + 0.5, c[1] + 0.5) in ('meadow', 'meadow_dark', 'grass', 'grass_dark')],
         '#5a8040', per_cell=1.0, avoid=busy)
 k.later.append(lambda: W.meadow(k, GREEN, cells=TERRACE_CELLS, ok=('grass',), density=0.9, flowers=0.6, h=(0.07, 0.13)))
 I.pebbles(k, walk, '#8a7e78', per_cell=0.2, avoid=lambda x, r: pd(x, r) > 0.6)
 for (x, r) in ((7.4, 17.0), (17.2, 26.6), (35.0, 5.6), (21.4, 6.0), (47.6, 28.4), (38.8, 24.4)):
-    WL.crystal_cluster(k, x, r, s=rng.uniform(0.6, 1.0), col=CRYSTAL, energy=8)
+    WL.crystal_cluster(k, x, r, s=rng.uniform(0.6, 1.0), col=(GEM, CRYSTAL[1]), energy=8)
 
+WL.tick('light ---------------------------')
 # ---- light ----------------------------------------------------------------------------------------------------------
 k.area_light(28.0, 18.0, 16.0, '#9a90c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))         # moonlight
 k.point_light(28.0, 14.0, 4.0, '#ffd8e0', 60, radius=1.5)
 
+WL.tick('render')
+k.later.insert(0, lambda: WL.tick('later: grass'))
 k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=96,
          world_light=('#3a2a40', 0.75))
 
+WL.tick('the world -----------------------')
 # ---- the world ------------------------------------------------------------------------------------------------
 old = json.load(open(WORLD))
 byl = {i.get('label'): i for i in old['interactions']}
