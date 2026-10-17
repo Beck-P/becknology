@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import bpy  # noqa: E402,F401
 from scenekit import Kit, apply_world, shade  # noqa: E402
 import assets_coast as C               # noqa: E402
+import assets_crown as Q               # noqa: E402
 import assets_house as HK              # noqa: E402
 import assets_isle as I                # noqa: E402
 import assets_lumar as A               # noqa: E402
@@ -366,11 +367,14 @@ def line(a, b, sag=0.15, n=4):
 
 
 for (x0, x1, cr, hull, ring) in ((25.0, 27.0, QF + 0.75, '#2a4a6a', 26.2), (34.4, 36.3, QF + 0.8, '#6a3a2a', 35.8),
-                                 (40.3, 42.3, QF + 0.72, '#3a5a3a', 41.6), (47.6, 49.5, QF + 0.85, '#7a6a4a', 48.8)):
+                                 (47.6, 49.5, QF + 0.85, '#7a6a4a', 48.8)):
     since, lsince = len(k.parts), len(k.lights)
     W.rowboat(k, x0, x1, cr, beam=0.8, hull=hull, inside=A.WOOD_DD)
     C.sink(k, since, C.WZ + 0.12, lights_since=lsince)
     line((x1 - 0.05, cr, C.WZ + 0.42), (ring, QF + 0.06, -0.2), sag=0.1)
+Q.sloop(k, 37.6, 42.3, QF + 1.1, C.WZ, beam=1.08)          # a sloop alongside, her sail furled on the boom
+line((42.3, QF + 1.1, C.WZ + 0.65), (43.0, QUAY + 0.75, 0.38), sag=0.2)
+line((37.6, QF + 1.1, C.WZ + 0.65), (38.5, QUAY + 0.75, 0.38), sag=0.2)
 k.cyl(9.2, QUAY + 3.4, C.WZ - 0.1, C.WZ + 0.22, 0.16, '#c03a2e', 'buoy', verts=14)          # a buoy off the point
 k.cyl(9.2, QUAY + 3.4, C.WZ + 0.08, C.WZ + 0.16, 0.165, '#ece4d4', 'buoy', verts=14)
 k.cone(9.2, QUAY + 3.4, C.WZ + 0.22, C.WZ + 0.38, 0.08, 0.02, '#2e2e34', 'buoy', verts=10)
@@ -444,82 +448,74 @@ def coursed(x0, x1, z0, z1, rf, tone, skip=(), hrange=(0.2, 0.26), wrange=(0.36,
         i += 1
 
 
-def warehouse(x0, x1, r0, r1, name, wall='#6e5a44', roof=SLATE, font='AlegreyaSC-Bold'):
-    """Stone below, weatherboards above, a hoist over the loft door, big plank doors on strap hinges."""
-    wall_h, rise, zj = 2.9, 1.25, 1.55
-    cx = (x0 + x1) / 2
-    k.box(x0, r0, -0.02, x1, r1, 0.3, (shade(STONE, 0.8), 0.16), 'footing', bevel=0.02)
-    k.box(x0 + 0.04, r0 + 0.04, 0.3, x1 - 0.04, r1 - 0.02, zj, (STONE, 0.14), 'house_wall')
-    coursed(x0 + 0.04, x1 - 0.04, 0.3, zj - 0.06, r1, STONE, skip=[(cx - 1.0, cx + 1.0, 0.0, 1.5)])
-    k.box(x0 + 0.02, r0 + 0.04, zj, x1 - 0.02, r1 - 0.02, wall_h, (wall, 0.12), 'house_wall')
-    k.box(x0, r1 - 0.06, zj - 0.08, x1, r1 + 0.04, zj + 0.05, (A.WOOD_DD, 0.1), 'timber')
-    zz = zj + 0.05                                   # weatherboards, each lapping the one below
-    while zz < wall_h - 0.05:
-        k.box(x0 + 0.02, r1 - 0.01, zz, x1 - 0.02, r1 + 0.025, zz + 0.16, (shade(wall, rng.uniform(0.86, 1.08)), 0.14), 'boards')
-        k.box(x0 + 0.02, r1 + 0.018, zz, x1 - 0.02, r1 + 0.032, zz + 0.022, shade(wall, 0.55), 'board_shadow')
-        zz += 0.17
-    for xc in (x0 + 0.02, x1 - 0.14):                # corner boards
-        k.box(xc, r1 - 0.01, zj, xc + 0.12, r1 + 0.045, wall_h, (A.WOOD_DD, 0.1), 'timber')
-    # the doors: two leaves of planks under a stone lintel, strap hinges, a wicket in one
-    k.box(cx - 0.95, r1 - 0.02, 0.0, cx + 0.95, r1 + 0.04, 1.42, '#1e1610', 'door_frame')
-    for s in (-1, 1):
-        xa, xb = (cx - 0.88, cx - 0.02) if s < 0 else (cx + 0.02, cx + 0.88)
-        x = xa
-        while x < xb - 0.02:
-            k.box(x + 0.008, r1 + 0.03, 0.02, min(xb, x + 0.17) - 0.008, r1 + 0.07, 1.36, (shade('#5a3e24', rng.uniform(0.85, 1.1)), 0.14), 'door_plank')
-            x += 0.17
-        for zh in (0.3, 1.05):
-            k.box(xa + 0.04, r1 + 0.07, zh, xb - 0.04, r1 + 0.09, zh + 0.06, '#2a2a2e', 'strap_hinge')
-    k.box(cx - 1.08, r1 - 0.01, 1.4, cx + 1.08, r1 + 0.08, 1.56, (shade(STONE, 1.12), 0.12), 'lintel', bevel=0.012)
-    k.box(cx - 0.11, r1 + 0.02, 1.38, cx + 0.11, r1 + 0.1, 1.6, (shade(STONE, 1.2), 0.12), 'keystone')
-    # upstairs: the loft door, the hoist beam and pulley, a crate on the rope; a shuttered window each side
-    k.box(cx - 0.45, r1 + 0.02, zj + 0.12, cx + 0.45, r1 + 0.08, wall_h - 0.12, (A.WOOD_D, 0.16), 'loft_door')
-    for xx in (cx - 0.2, cx + 0.2):
-        k.box(xx - 0.01, r1 + 0.08, zj + 0.12, xx + 0.01, r1 + 0.09, wall_h - 0.12, A.WOOD_DD, 'door_plank')
-    k.box(cx - 0.5, r1 + 0.01, zj + 0.08, cx + 0.5, r1 + 0.07, zj + 0.13, A.WOOD_DD, 'door_frame')
-    k.box(cx - 0.07, r1 - 0.3, wall_h + 0.08, cx + 0.07, r1 + 0.9, wall_h + 0.22, (A.WOOD_D, 0.12), 'hoist_beam')
-    k.cyl_x(cx - 0.06, cx + 0.06, r1 + 0.78, wall_h - 0.02, 0.09, 0.09, A.IRON, 'pulley', verts=10)
-    k.tube((cx, r1 + 0.78, wall_h - 0.1), (cx, r1 + 0.78, 1.95), 0.014, '#a08a60', 'rope', verts=5)
-    A.crate(k, cx - 0.24, r1 + 0.54, s=0.48, z0=1.48, tone=A.WOOD_L, solid=False)
-    for wx in (x0 + 0.85, x1 - 0.85):
-        HK.rich_window(k, wx, r1 + 0.03, zj + 0.35, w=0.5, h=0.56, shutters='#3a4a3a', box=False, stone='#a89c88')
-    rm, zr = W._gable_roof(k, x0, x1, r0, r1, wall_h, rise, roof, over=0.3)
-    HK.rafter_ends(k, x0 - 0.3, x1 + 0.3, r1, 0.3, wall_h, A.WOOD_DD)
-    V.board_sign(k, name, font, cx, r1 + 0.04, 1.62 + 0.02, size=0.2)
-    W.wall_lantern(k, cx + 1.25, r1 + 0.02, z=1.2, energy=8)
-    k.solid(x0, r0, x1, r1)
-    return rm, zr
-
-
-warehouse(11.6, 16.4, 25.4, 29.6, 'BONDED STORE')
-V.sacks(k, 12.35, 29.78, n=3)                                    # sacks and casks against its front
-A.barrel(k, 15.75, 29.8, h=0.66, radius=0.22, tone=shade(A.WOOD, 0.9))
-warehouse(16.8, 21.0, 25.8, 29.6, 'TALLOW & SONS', wall='#5a4a3c', font='IMFellEnglishSC-Regular')
-A.crate(k, 17.05, 29.62, s=0.42, tone=shade(A.WOOD_L, 0.95), solid=False)
-A.crate(k, 17.1, 29.66, s=0.36, z0=0.42, tone=shade(A.WOOD_L, 1.05), solid=False)
-smoke(rich_house(k, 22.6, 27.4, 25.4, 29.6, wall_h=2.6, rise=1.4, roof=GREEN_ROOF, wall='#e0d8c4', door_x=25.0,
-                 windows=[(23.2, 0.95), (26.8, 0.95)], chimney=26.9, stone=True), 26.9)
-for wx in (23.2, 26.8):                                         # its upper floor (the kit puts a stone house's high)
-    HK.rich_window(k, wx, 29.62, 1.92, w=0.5, h=0.52, shutters='#2a4a3a', box=True, stone='#c8c0b0')
-V.board_sign(k, 'HARBOUR OFFICE', 'IMFellEnglishSC-Regular', 25.0, 29.92, 2.06, size=0.15, board='#1e3a2e', pad=0.08)   # on its porch bay
-smoke(rich_house(k, 37.4, 42.6, 25.0, 29.6, wall_h=2.7, rise=1.5, roof='#6a2a22', wall='#d8c8a8', door_x=40.0,
-                 windows=[(38.2, 0.95), (41.8, 0.95)], windows_up=[(38.1, 2.0), (41.9, 2.0)], chimney=38.0,
-                 sign=(42.45, 1.95, 'mug')), 38.0)
-V.board_sign(k, 'THE CROWN & ANCHOR', 'Rye-Regular', 40.0, 29.62, 2.12, size=0.18)
+FQ = 29.6                                            # the waterfront's ground-floor fronts
+# the west terrace: the bonded store (a warehouse, weatherboarded, its hoist over the loft door), Tallow & Sons the
+# chandlers under their bay of glass, a tall narrow house by the lane
+Q.harbour_house(k, 11.6, 16.4, FQ, 25.4, 3.35, 1.5, '#3a4256', '#7a5a3e', door_x=14.0, door_w=1.3, boards=True, hoist=14.9,
+                win_down=[(15.7, 0.62)], chimney=None)
+V.board_sign(k, 'BONDED STORE', 'AlegreyaSC-Bold', 12.85, FQ + Q.J + 0.04, 2.1, size=0.2)
+smoke(Q.harbour_house(k, 16.4, 18.75, FQ, 25.8, 3.25, 1.55, W.ROOF_PURPLE, '#d4dccc', door_x=18.35, door_w=0.62, shop=(16.7, 17.85),
+                      win_up=[(17.0, 1.92), (18.15, 1.92)], win_up2=[(17.55, 2.62)], chimney=16.9, sign=(16.55, 2.15, 'compass'),
+                      lanterns=(18.0,)), 16.9)
+V.board_sign(k, 'TALLOW & SONS', 'IMFellEnglishSC-Regular', 17.3, FQ + 0.03, 1.64, size=0.13, pad=0.06)
+smoke(Q.harbour_house(k, 18.75, 21.0, FQ, 25.8, 3.75, 1.7, '#2e5a4a', '#ecdcbc', ground='plaster', door_x=20.4,
+                      win_down=[(19.35, 0.62)], win_up=[(19.4, 1.92), (20.45, 1.92)], win_up2=[(19.9, 2.9)], chimney=19.1), 19.1)
+# the harbour office: dressed stone below, three floors, its board between the first-floor windows
+smoke(Q.harbour_house(k, 22.6, 27.4, FQ, 25.4, 3.65, 1.6, W.ROOF_GREEN, '#e2c88e', door_x=25.0, door_w=0.95,
+                      win_down=[(23.5, 0.62), (26.5, 0.62)], win_up=[(23.3, 1.92), (26.7, 1.92)],
+                      win_up2=[(23.5, 2.82), (25.0, 2.82), (26.5, 2.82)], chimney=26.9, lanterns=(24.3, 25.7), dormers=(25.0,)), 26.9)
+V.board_sign(k, 'HARBOUR OFFICE', 'IMFellEnglishSC-Regular', 25.0, FQ + Q.J + 0.04, 1.98, size=0.17, board='#1e3a2e')
+# the east terrace: the Crown & Anchor (tall, its sign out, benches either side of the door), the fishmonger under a
+# striped awning, a narrow house with nets drying in front
+smoke(Q.harbour_house(k, 37.4, 42.6, FQ, 25.0, 3.65, 1.6, '#6a2a22', '#e6d6b4', door_x=40.0, door_w=0.95,
+                      win_down=[(38.3, 0.62), (41.7, 0.62)], win_up=[(38.1, 1.92), (41.9, 1.92)],
+                      win_up2=[(38.3, 2.82), (40.0, 2.82), (41.7, 2.82)], chimney=38.0, sign=(42.35, 2.25, 'mug'),
+                      lanterns=(39.4, 40.6), dormers=(40.0,)), 38.0)
+V.board_sign(k, 'THE CROWN & ANCHOR', 'Rye-Regular', 40.0, FQ + Q.J + 0.04, 1.98, size=0.17)
 W.bench(k, 37.4, 38.6, 30.4)                       # benches out front at the corners, the door clear between them
 W.bench(k, 41.4, 42.6, 30.4)
 k.solid(37.4, 30.2, 38.6, 30.7)
 k.solid(41.4, 30.2, 42.6, 30.7)
-k.bar(39.0, 29.75, 39.22, 29.86, 0.0, 0.7, 0.04, (A.WOOD_D, 0.1), 'chalkboard_leg')            # the day's board by the door
-k.box(39.0, 29.76, 0.32, 39.3, 29.84, 0.72, '#2a2e2a', 'chalkboard')
-k.boxes([(39.04, 29.84, 0.62, 39.24, 29.85, 0.635), (39.04, 29.84, 0.55, 39.2, 29.85, 0.565), (39.04, 29.84, 0.48, 39.26, 29.85, 0.495)], '#e8e4d8', 'chalk')
-smoke(rich_house(k, 43.2, 46.8, 25.6, 29.6, wall_h=2.3, rise=1.2, roof=SLATE, wall='#c8c0b0', door_x=45.0,
-                 windows=[(43.9, 0.9), (46.1, 0.9)], windows_up=[(45.0, 1.7)], chimney=46.3), 46.3)
-rich_house(k, 47.2, 50.4, 26.0, 29.6, wall_h=2.0, rise=1.0, roof='#b85a3a', wall='#e8dcc8', door_x=48.8,
-           windows=[(47.9, 0.85), (49.7, 0.85)])
-HK.tub(k, 43.45, 29.8)
-HK.tub(k, 50.15, 29.8)
-W.planter(k, 22.8, 23.8, 29.85)
+Q.chalkboard(k, 38.85, FQ + 0.2)
+smoke(Q.harbour_house(k, 42.6, 46.8, FQ, 25.6, 2.85, 1.35, W.ROOF_RED, '#e4c4ac', ground='plaster', door_x=46.15,
+                      shop=(42.95, 45.25), awning=('#b23a34', '#ece0c8'), win_up=[(43.4, 1.92), (44.6, 1.92), (45.9, 1.92)],
+                      chimney=43.3), 43.3)
+Q.fish_stall(k, 42.95, 45.25, FQ + 0.12)
+Q.fish_baskets(k, 45.55, FQ + 0.45)
+smoke(Q.harbour_house(k, 46.8, 50.4, FQ, 26.0, 3.3, 1.5, W.ROOF_SLATE, '#d4dccc', door_x=48.8, win_down=[(47.6, 0.62)],
+                      win_up=[(47.6, 1.92), (49.7, 1.92)], win_up2=[(48.65, 2.62)], chimney=50.0, sign=(50.2, 2.15, 'compass')), 50.0)
+Q.net_rack(k, 49.3, 50.7, FQ + 0.65)
+# against the fronts: sacks, barrels, crates, rope and floats, tubs of flowers (each on its own tile; the quay stays open)
+Q.sacks(k, 11.95, FQ + 0.25)
+Q.barrel_group(k, 15.35, FQ + 0.2)
+Q.rope_coils(k, 16.95, FQ + 0.45)
+Q.floats(k, 17.55, FQ + 0.3)
+Q.tub(k, 20.0, FQ + 0.4, ('#e07030', '#f0d040'))
+Q.tub(k, 23.75, FQ + 0.42, ('#e04060', '#f0d040'))
+Q.tub(k, 26.25, FQ + 0.42, ('#a060d0', '#f0f0f0'))
+Q.crate_stack(k, 47.0, FQ + 0.2)
+for (x, r) in ((17.3, 30.0), (20.0, 30.0), (23.75, 30.0), (26.25, 30.0)):
+    k.solid(x - 0.24, r - 0.3, x + 0.24, r + 0.4)
+# the avenue up from the quay: its sides stacked with the waterfront's trade (one tile in on each side), the way open
+for (x, r, what) in ((27.55, 26.2, 'barrels'), (27.6, 27.55, 'crates'), (27.75, 28.8, 'sacks'), (36.65, 26.1, 'crates'),
+                     (36.6, 27.4, 'barrels'), (36.95, 28.75, 'tub')):
+    if what == 'barrels':
+        Q.barrel_group(k, x, r)
+    elif what == 'crates':
+        Q.crate_stack(k, x, r)
+    elif what == 'sacks':
+        Q.sacks(k, x + 0.3, r, n=4)
+        A.barrel(k, x + 0.25, r + 0.55, h=0.66, radius=0.22, tone=shade(A.WOOD, 0.9))
+    else:
+        Q.tub(k, x, r, ('#e04060', '#f0d040'))
+    k.solid(x - 0.1 if x < 30 else x - 0.2, r - 0.25, x + 0.8 if x < 30 else x + 0.3, r + 0.6)
+Q.cat(k, 27.95, 27.75, 0.38)                          # asleep on the crates
+W.cart(k, 30.3, 24.2)                                 # a barrow of fish boxes waiting at the top of the avenue
+for (bx, br) in ((29.7, 24.0), (30.0, 24.3)):
+    A.crate(k, bx, br - 0.1, s=0.32, z0=0.65, tone=A.WOOD_L, solid=False)
+Q.lobster_pots(k, [(28.9, 25.65)])
+k.solid(28.6, 25.4, 29.2, 25.9)
+
 # Market Row, the street behind the waterfront: carts and barrels, lanterns, washing across the lane
 for (x, r) in ((13.5, 22.6), (21.0, 22.6), (44.5, 22.6)):
     W.lantern_post(k, x, r, h=2.3, energy=20)
@@ -601,6 +597,26 @@ for (x, r) in ((24.4, 15.2), (39.6, 15.2), (24.4, 19.6), (39.6, 19.6)):
     k.solid(x - 0.45, r - 0.45, x + 0.45, r + 0.45)
 W.cart(k, 34.6, 24.2)
 k.solid(33.4, 23.8, 35.2, 24.6)
+# more life round the square's edges: a flower stall before the Exchange, a candle-seller by St Brendan's, a cart of
+# flowers by the palace gate, tubs, a bench outside the church
+W.market_stall(k, 12.0, 13.8, 19.35, 19.95, awning=('#e8e4d0', '#c84a6a'), goods='produce')
+W.market_stall(k, 49.6, 51.6, 21.35, 21.95, awning=('#2a4a6a', '#e8e4d0'), goods=None)
+for i in range(10):                                   # candles and posies on the candle-seller's counter
+    cx_ = 49.8 + (i % 5) * 0.36
+    cr_ = 21.48 + (i // 5) * 0.26
+    if i % 2:
+        k.cyl(cx_, cr_, 0.86, 0.86 + rng.uniform(0.12, 0.22), 0.04, '#f0e8d0', 'candle', verts=8)
+    else:
+        k.sphere(cx_, cr_, 0.93, 0.07, 0.06, rng.choice(('#e05a8a', '#f0d040', '#e8e8f0')), 'flower', segs=6)
+W.bench(k, 44.0, 45.4, 22.4)
+k.solid(44.0, 22.2, 45.4, 22.7)
+W.cart(k, 26.6, 13.0)
+for i in range(8):                                    # heaped with flowers
+    k.sphere(26.3 + rng.uniform(-0.4, 0.4), 13.0 + rng.uniform(-0.2, 0.2), 0.7, 0.08, 0.07, rng.choice(('#e05a8a', '#f0d040', '#e8e8f0', '#a070d0')), 'flower', segs=6)
+for (x, r, fl) in ((14.5, 19.45, ('#e04060', '#f0d040')), (18.6, 19.45, ('#a060d0', '#f0f0f0')), (43.6, 19.4, ('#e07030', '#f0d040')),
+                   (51.3, 19.4, ('#e04060', '#f0f0f0')), (36.7, 12.7, ('#e04060', '#f0d040')), (22.3, 12.7, ('#a060d0', '#f0f0f0'))):
+    Q.tub(k, x, r, fl)
+    k.solid(x - 0.2, r - 0.2, x + 0.2, r + 0.2)
 W.street_clutter(k, (21.8, 12.4, 42.8, 23.4), seed=811, straw=[(23.0, 22.0, 29.0, 22.9), (35.4, 22.0, 41.0, 22.9)],
                  chalk=(29.0, 20.4))           # weeds, drains, a cracked flag, straw by the stalls, hopscotch
 W.street_clutter(k, (11.2, 23.2, 52.8, 33.5), seed=812, density=0.6)
