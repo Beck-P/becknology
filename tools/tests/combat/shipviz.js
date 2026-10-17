@@ -41,6 +41,9 @@ const FLEET = {
   await p.waitForTimeout(3500);
   // the fleet at the pier, and each ship's card in the harbourmaster's book (her portrait as she's fitted)
   await p.screenshot({ path: `${SHOTS}/shipviz_pier.png` });
+  await p.evaluate(() => BridgeClock._at('2026-10-16T12:00')); await p.waitForTimeout(1500);   // and by day (Lumar's noon)
+  await p.screenshot({ path: `${SHOTS}/shipviz_pier_day.png` });
+  await p.evaluate((at) => BridgeClock._at(at), at); await p.waitForTimeout(800);
   for (const id of ['galleon1', 'cutter1', 'gull']) {
     await p.evaluate((id) => BridgeHarbour.card('lumar-tern', BridgeFleet.get(id)), id);
     await p.waitForTimeout(900);
@@ -73,7 +76,7 @@ const FLEET = {
   for (let k = 0; k < 8; k++) {
     await p.evaluate((k) => { const bt = BridgeSloop._boat(); bt.h = k * Math.PI / 4; bt.v = 0; BridgeSloop._snap(); }, k);
     await p.waitForTimeout(350);
-    await p.screenshot({ path: `${SHOTS}/shipviz_galleon_h${k}.png`, clip: await around(640, 600) });
+    await p.screenshot({ path: `${SHOTS}/shipviz_galleon_h${k}.png`, clip: await around(760, 680) });
   }
   // every frame of the next second or so caught in the page (a screenshot takes longer than a muzzle flash lasts), after
   // `setup` (a string run in the page) - written as <name>_00.png ...
@@ -140,7 +143,7 @@ const FLEET = {
   await p.evaluate(() => { const c = BridgeVoyage._isles['lumar-midnight'], w = BridgeSloop._toWorld(c.x, c.y), bt = BridgeSloop._boat(); bt.x = w.x + 6; bt.r = w.r + 34; bt.v = 0; bt.reef = 0; bt.h = 0.4; BridgeSloop._snap(); });
   await p.waitForTimeout(2500);
   console.log('the sloop out on the', await p.evaluate(() => { const bt = BridgeSloop._boat(); return BridgeSloop._sea(bt.x, bt.r); }), 'sea');
-  await p.screenshot({ path: `${SHOTS}/shipviz_moonlantern.png`, clip: await around(520, 440) });
+  await p.screenshot({ path: `${SHOTS}/shipviz_moonlantern.png`, clip: await around(560, 480) });
   await stop();
 
   for (const id of ['cutter1', 'raider1', 'brig1']) {
@@ -148,7 +151,7 @@ const FLEET = {
     for (const k of [1, 3, 6]) {
       await p.evaluate((k) => { const bt = BridgeSloop._boat(); bt.h = k * Math.PI / 4; bt.v = 0; BridgeSloop._snap(); }, k);
       await p.waitForTimeout(350);
-      await p.screenshot({ path: `${SHOTS}/shipviz_${id}_h${k}.png`, clip: await around(460, 460) });
+      await p.screenshot({ path: `${SHOTS}/shipviz_${id}_h${k}.png`, clip: await around(560, 520) });
     }
     await stop();
   }

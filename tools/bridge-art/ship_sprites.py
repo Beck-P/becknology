@@ -6,6 +6,9 @@ dithered shading, no floor. One sheet a ship, her hull at 32 headings, 8 to a ro
   python3 tools/bridge-art/scene_post.py RENDER_DIR apps/bridge/assets/scenes/ship-TYPE
 
 Cells are CELL × CELL tiles, the hull's centre at (CELL/2, CY) in its cell - HULLS in js/sloop.js says the same.
+Each ship is built to her old lines (L, beam and every height below) and then grown by S as a whole (`frame`): the
+cutter to 4.2 tiles long, the raider 4.8, the brigantine 6.0, the galleon 8.2 (Beck: "a little bit bigger, not
+crazy"). js/shipkit.js LINES and js/sloop.js RIGS take the same S, so her guns, bands and rig stay on her.
 Heading i → angle i/32 of a turn (0 = bow to +x, then turning toward +row). `preview` renders four headings only.
 
 The hull, decks, castles, hatches, guns, lanterns and the mast steps are here; js/sloop.js draws the masts, yards,
@@ -26,17 +29,17 @@ PREVIEW = len(sys.argv) > 3 and sys.argv[3] == 'preview'
 
 # L, beam; the main deck's height; the quarterdeck's (where the wheel is) and where it ends; the forecastle's; colours
 SHIPS = {
-    'cutter':     dict(cell=5, cy=3.2, L=3.4, beam=1.25, deck=0.42, qd=None, qd_t=0.0, fc=None,
+    'cutter':     dict(S=4.2 / 3.4, cell=6, cy=3.3, L=3.4, beam=1.25, deck=0.42, qd=None, qd_t=0.0, fc=None,
                        paint='#e6e0d0', band='#2a4a8a', wale='#a08040', deckc='#a87a44', trim='#3a2410'),
-    'raider':     dict(cell=6, cy=3.8, L=4.4, beam=1.3, deck=0.42, qd=0.5, qd_t=0.24, fc=None,
+    'raider':     dict(S=4.8 / 4.4, cell=6, cy=3.55, L=4.4, beam=1.3, deck=0.42, qd=0.5, qd_t=0.24, fc=None,
                        paint='#1e1c24', band='#8a1e22', wale='#7a6a48', deckc='#5e4430', trim='#120e12'),
-    'brigantine': dict(cell=7, cy=4.4, L=5.0, beam=1.6, deck=0.5, qd=0.78, qd_t=0.26, fc=0.66,
+    'brigantine': dict(S=6.0 / 5.0, cell=8, cy=4.7, L=5.0, beam=1.6, deck=0.5, qd=0.78, qd_t=0.26, fc=0.66,
                        paint='#5e4028', band='#c8a040', wale='#2a1a0c', deckc='#9a6a38', trim='#2a1808'),
-    'galleon':    dict(cell=9, cy=5.6, L=7.0, beam=2.2, deck=0.72, qd=1.18, qd_t=0.28, fc=1.0,
+    'galleon':    dict(S=8.2 / 7.0, cell=11, cy=6.5, L=7.0, beam=2.2, deck=0.72, qd=1.18, qd_t=0.28, fc=1.0,
                        paint='#4a2c18', band='#2a6a58', wale='#c8a040', deckc='#9a6a38', trim='#2a1808'),
 }
 SH = SHIPS[TYPE]
-CELL, CY, L, BEAM = SH['cell'], SH['cy'], SH['L'], SH['beam']
+CELL, CY, L, BEAM, S = SH['cell'], SH['cy'], SH['L'], SH['beam'], SH['S']
 HEADINGS = [4, 12, 20, 28] if PREVIEW else list(range(32))
 k = Kit(8 * CELL, 4 * CELL if not PREVIEW else CELL, margin_top=0.6, margin_bottom=0.2, seed=23)
 k.water_z = 0.0
@@ -48,8 +51,14 @@ PORT = '#160e08'
 
 
 def frame(cx, cr, th):
-    c, s = math.cos(th), math.sin(th)
-    return lambda u, v, z: (cx + u * c - v * s, cr + u * s + v * c, z)
+    """Her own frame (u along the keel, v to starboard, z up, at her old size) → the sheet, grown by S."""
+    c, s = math.cos(th) * S, math.sin(th) * S
+    return lambda u, v, z: (cx + u * c - v * s, cr + u * s + v * c, z * S)
+
+
+def Z(z):
+    """A height (or a size) given at her old size, as built."""
+    return z * S
 
 
 # her lines: half-breadth and sheer (the top of the rail) along her, t = 0 at the transom, 1 at the stem
@@ -190,14 +199,14 @@ def swivel(P, t, s):
 
 def hatch(P, t0, t1, z, width, h=0.08, grate=True):
     a, b = P(u_of(t0), 0, 0), P(u_of(t1), 0, 0)
-    k.bar(a[0], a[1], b[0], b[1], z, z + h, width, (shade(SH['deckc'], 0.8), 0.06), 'hatch')
+    k.bar(a[0], a[1], b[0], b[1], Z(z), Z(z + h), Z(width), (shade(SH['deckc'], 0.8), 0.06), 'hatch')
     if grate:
-        k.bar(a[0], a[1], b[0], b[1], z + h, z + h + 0.01, width * 0.8, ('#2a1a0c', 0.1), 'grate')
+        k.bar(a[0], a[1], b[0], b[1], Z(z + h), Z(z + h) + 0.01, Z(width * 0.8), ('#2a1a0c', 0.1), 'grate')
 
 
 def step(P, t, z):
     x, r, _ = P(u_of(t), 0, 0)
-    k.cyl(x, r, z - 0.02, z + 0.06, 0.07 * (BEAM / 1.25) ** 0.5, (SH['wale'], 0.05), 'mast_step', verts=10)
+    k.cyl(x, r, Z(z - 0.02), Z(z + 0.06), Z(0.07 * (BEAM / 1.25) ** 0.5), (SH['wale'], 0.05), 'mast_step', verts=10)
 
 
 def lantern(P, u, v, z, size=1.0, energy=7):
@@ -234,11 +243,11 @@ def cutter(P):
                'coaming', verts=5, smooth=False)
         k.tube(P(u_of(0.08), s * 0.3, d - 0.06), P(u_of(0.28), s * 0.32, d - 0.06), 0.05, (SH['deckc'], 0.06), 'bench', verts=6, smooth=False)
     a, b = P(u_of(0.31), 0, 0), P(u_of(0.5), 0, 0)
-    k.bar(a[0], a[1], b[0], b[1], d, d + 0.2, BEAM * 0.55, (SH['paint'], 0.06), 'cabin')
-    k.bar(a[0], a[1], b[0], b[1], d + 0.2, d + 0.24, BEAM * 0.6, (SH['deckc'], 0.06), 'cabin_top')
+    k.bar(a[0], a[1], b[0], b[1], Z(d), Z(d + 0.2), Z(BEAM * 0.55), (SH['paint'], 0.06), 'cabin')
+    k.bar(a[0], a[1], b[0], b[1], Z(d + 0.2), Z(d + 0.24), Z(BEAM * 0.6), (SH['deckc'], 0.06), 'cabin_top')
     for t in (0.36, 0.42, 0.48):
         for s in (-1, 1):
-            k.blob(*P(u_of(t), s * BEAM * 0.276, d + 0.11), 0.03, 0.01, 0.03, '#2a1a08', 'porthole', emit=(GLASS, 0.7), segs=6)
+            k.blob(*P(u_of(t), s * BEAM * 0.276, d + 0.11), Z(0.03), 0.01, Z(0.03), '#2a1a08', 'porthole', emit=(GLASS, 0.7), segs=6)
     hatch(P, 0.62, 0.7, d, 0.3, grate=False)
     step(P, 0.56, d)
     for t in (0.2, 0.85):                                                                # cleats and a pair of fenders
@@ -246,7 +255,7 @@ def cutter(P):
             k.blob(*P(u_of(t), s * (half(t) + 0.03), sheer(t) - 0.12), 0.05, 0.04, 0.08, ('#c8c0a8', 0.08), 'fender', segs=6)
     swivel(P, 0.9, 1)
     ra, rb = P(u_of(0) - 0.05, 0, 0), P(u_of(0) + 0.03, 0, 0)
-    k.bar(ra[0], ra[1], rb[0], rb[1], 0.1, 0.48, 0.07, (WOOD_D, 0.06), 'rudder')
+    k.bar(ra[0], ra[1], rb[0], rb[1], Z(0.1), Z(0.48), Z(0.07), (WOOD_D, 0.06), 'rudder')
     lantern(P, u_of(0.04), -half(0.04) + 0.12, sheer(0.04))
 
 
@@ -256,10 +265,10 @@ def raider(P):
     deck(P, 0.0, 0.99, d)
     deck(P, 0.0, SH['qd_t'], SH['qd'], inset=0.06, part='qd', n=6)                    # a low poop for the wheel
     a, b = P(u_of(SH['qd_t']), -half(SH['qd_t']) + 0.06, 0), P(u_of(SH['qd_t']), half(SH['qd_t']) - 0.06, 0)
-    k.bar(a[0], a[1], b[0], b[1], d, SH['qd'], 0.03, (shade(SH['paint'], 0.85), 0.06), 'bulkhead')
+    k.bar(a[0], a[1], b[0], b[1], Z(d), Z(SH['qd']), Z(0.03), (shade(SH['paint'], 0.85), 0.06), 'bulkhead')
     a, b = P(u_of(0.42), 0, 0), P(u_of(0.56), 0, 0)                                      # a low deckhouse, a skull on its door
-    k.bar(a[0], a[1], b[0], b[1], d, d + 0.18, BEAM * 0.45, (SH['paint'], 0.06), 'house')
-    k.bar(a[0], a[1], b[0], b[1], d + 0.18, d + 0.21, BEAM * 0.5, (SH['deckc'], 0.06), 'house_top')
+    k.bar(a[0], a[1], b[0], b[1], Z(d), Z(d + 0.18), Z(BEAM * 0.45), (SH['paint'], 0.06), 'house')
+    k.bar(a[0], a[1], b[0], b[1], Z(d + 0.18), Z(d + 0.21), Z(BEAM * 0.5), (SH['deckc'], 0.06), 'house_top')
     hatch(P, 0.66, 0.74, d, 0.34)
     hatch(P, 0.26, 0.32, d, 0.3)
     step(P, 0.66, d)
@@ -268,7 +277,7 @@ def raider(P):
         swivel(P, t, s)
     ports(P, (0.5, 0.6), sheer(0.55) - 0.16, size=0.06, guns=True)
     ra, rb = P(u_of(0) - 0.05, 0, 0), P(u_of(0) + 0.03, 0, 0)
-    k.bar(ra[0], ra[1], rb[0], rb[1], 0.1, 0.5, 0.08, (WOOD_D, 0.06), 'rudder')
+    k.bar(ra[0], ra[1], rb[0], rb[1], Z(0.1), Z(0.5), Z(0.08), (WOOD_D, 0.06), 'rudder')
     lantern(P, u_of(0.03), 0, SH['qd'], size=1.1)
 
 
@@ -284,7 +293,7 @@ def brigantine(P):
     boat_on_deck(P, 0.47, d + 0.09)
     step(P, 0.7, d)
     step(P, 0.36, d)
-    k.cyl(*P(u_of(0.11), 0, 0)[:2], SH['qd'], SH['qd'] + 0.18, 0.05, ('#a08040', 0.05), 'binnacle', verts=8)
+    k.cyl(*P(u_of(0.11), 0, 0)[:2], Z(SH['qd']), Z(SH['qd'] + 0.18), Z(0.05), ('#a08040', 0.05), 'binnacle', verts=8)
     # the stern: lit windows across the transom
     tw = half(0.0)
     for v in (-0.5, -0.17, 0.17, 0.5):
@@ -292,7 +301,7 @@ def brigantine(P):
                 P(u_of(0) - 0.01, v * tw * 1.6 + 0.07, sheer(0) - 0.08), P(u_of(0) - 0.01, v * tw * 1.6 + 0.07, sheer(0) - 0.24)],
                '#2a1a08', 'stern_window', emit=(GLASS, 0.85))
     ra, rb = P(u_of(0) - 0.06, 0, 0), P(u_of(0) + 0.03, 0, 0)
-    k.bar(ra[0], ra[1], rb[0], rb[1], 0.08, 0.6, 0.09, (WOOD_D, 0.06), 'rudder')
+    k.bar(ra[0], ra[1], rb[0], rb[1], Z(0.08), Z(0.6), Z(0.09), (WOOD_D, 0.06), 'rudder')
     lantern(P, u_of(0.02), 0, max(sheer(0.02), SH['qd'] + 0.14), size=1.25, energy=9)
 
 
@@ -310,7 +319,7 @@ def galleon(P):
     boat_on_deck(P, 0.41, d + 0.09)
     for t in (0.74, 0.5, 0.22):
         step(P, t, d if 0.28 < t < 0.82 else SH['qd'])
-    k.cyl(*P(u_of(0.13), 0, 0)[:2], SH['qd'], SH['qd'] + 0.2, 0.06, ('#a08040', 0.05), 'binnacle', verts=8)
+    k.cyl(*P(u_of(0.13), 0, 0)[:2], Z(SH['qd']), Z(SH['qd'] + 0.2), Z(0.06), ('#a08040', 0.05), 'binnacle', verts=8)
     # the great cabin's windows across her stern, two tiers, and the quarter galleries
     tw = half(0.0)
     for z0 in (sheer(0) - 0.3, SH['qd'] + 0.04):
@@ -322,12 +331,12 @@ def galleon(P):
             P(u_of(0) - 0.012, tw * 0.95, SH['qd'] + 0.36), P(u_of(0) - 0.012, -tw * 0.95, SH['qd'] + 0.36)], (SH['wale'], 0.05), 'stern_gilt')
     for s in (-1, 1):
         u = u_of(0.08)
-        k.blob(*P(u, s * (half(0.08) + 0.06), SH['qd'] - 0.05), 0.2, 0.1, 0.22, (shade(SH['paint'], 1.1), 0.06), 'gallery', segs=10)
-        k.blob(*P(u, s * (half(0.08) + 0.15), SH['qd'] - 0.02), 0.06, 0.02, 0.06, '#2a1a08', 'gallery_window', emit=(GLASS, 0.8), segs=6)
+        k.blob(*P(u, s * (half(0.08) + 0.06), SH['qd'] - 0.05), Z(0.2), Z(0.1), Z(0.22), (shade(SH['paint'], 1.1), 0.06), 'gallery', segs=10)
+        k.blob(*P(u, s * (half(0.08) + 0.15), SH['qd'] - 0.02), Z(0.06), 0.02, Z(0.06), '#2a1a08', 'gallery_window', emit=(GLASS, 0.8), segs=6)
     # a gilded figurehead under the bowsprit
-    k.blob(*P(u_of(0.995) + 0.06, 0, sheer(0.99) - 0.18), 0.12, 0.07, 0.14, (SH['wale'], 0.05), 'figurehead', segs=10)
+    k.blob(*P(u_of(0.995) + 0.06, 0, sheer(0.99) - 0.18), Z(0.12), Z(0.07), Z(0.14), (SH['wale'], 0.05), 'figurehead', segs=10)
     ra, rb = P(u_of(0) - 0.07, 0, 0), P(u_of(0) + 0.03, 0, 0)
-    k.bar(ra[0], ra[1], rb[0], rb[1], 0.06, 0.8, 0.11, (WOOD_D, 0.06), 'rudder')
+    k.bar(ra[0], ra[1], rb[0], rb[1], Z(0.06), Z(0.8), Z(0.11), (WOOD_D, 0.06), 'rudder')
     for v in (-0.6, 0.0, 0.6):                                                            # three stern lanterns
         lantern(P, u_of(0.01), v * tw * 0.8, SH['qd'] + 0.48, size=1.4 if v == 0 else 1.1, energy=10 if v == 0 else 6)
 
@@ -339,6 +348,11 @@ for j, i in enumerate(HEADINGS):
 
 W, R = 8 * CELL, (CELL if PREVIEW else 4 * CELL)
 F = max(W / 32, R / 24)
-k.area_light(W / 2, R / 2, 16.0, '#9a90c8', 2600 * F * F, 40.0 * F, rot=(math.radians(-35), 0, 0))
+# the moonlight's plane is tilted: anything north of where it meets the decks is behind it, unlit. Over a tall sheet (the
+# galleon's) that line comes down into the top row, so the light goes up as the sheet grows past 32 rows - its power
+# raised to light the decks as brightly as before (an area light this big lights like a disc: a² / (a² + z²))
+LZ = 16.0 + 1.5 * max(0.0, R / 2 - 16)
+HA = 20.0 * F
+k.area_light(W / 2, R / 2, LZ, '#9a90c8', 2600 * F * F * (HA * HA + LZ * LZ) / (HA * HA + 256.0), 40.0 * F, rot=(math.radians(-35), 0, 0))
 k.render(OUT, light_states={'full': {}}, light_samples=96, world_light=('#3a3048', 0.75))
 print('ship sheet', TYPE)

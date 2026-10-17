@@ -28,14 +28,19 @@
 var BridgeShipKit = (function () {
   var TS = 32, C45 = Math.SQRT1_2, TAU = Math.PI * 2;
   // her lines: length, beam, the half-breadth (beam/2 · sin(π·min(1, a + b·t))^p, t = 0 at the transom, 1 at the stem),
-  // the main deck and the rail above it, a quarterdeck [to t, height], a forecastle [from t, height]
+  // the main deck and the rail above it, a quarterdeck [to t, height], a forecastle [from t, height] - all at her old
+  // size, then grown by `s` as a whole, as the generators grow her (`S` in ship_sprites.py / sloop_sprites.py)
   var LINES = {
-    sloop:      { L: 2.6, beam: 1.0, full: [0.22, 0.86, 0.7], deck: 0.3, sloop: true },
-    cutter:     { L: 3.4, beam: 1.25, full: [0.22, 0.86, 0.62], deck: 0.42, rail: 0.08 },
-    raider:     { L: 4.4, beam: 1.3, full: [0.2, 0.86, 0.75], deck: 0.42, rail: 0.08, qd: [0.24, 0.5] },
-    brigantine: { L: 5.0, beam: 1.6, full: [0.3, 0.8, 0.55], deck: 0.5, rail: 0.14, qd: [0.26, 0.78], fc: [0.86, 0.66] },
-    galleon:    { L: 7.0, beam: 2.2, full: [0.38, 0.72, 0.5], deck: 0.72, rail: 0.14, qd: [0.28, 1.18], fc: [0.82, 1.0] }
+    sloop:      { s: 3.2 / 2.6, L: 2.6, beam: 1.0, full: [0.22, 0.86, 0.7], deck: 0.3, sloop: true },
+    cutter:     { s: 4.2 / 3.4, L: 3.4, beam: 1.25, full: [0.22, 0.86, 0.62], deck: 0.42, rail: 0.08 },
+    raider:     { s: 4.8 / 4.4, L: 4.4, beam: 1.3, full: [0.2, 0.86, 0.75], deck: 0.42, rail: 0.08, qd: [0.24, 0.5] },
+    brigantine: { s: 6.0 / 5.0, L: 5.0, beam: 1.6, full: [0.3, 0.8, 0.55], deck: 0.5, rail: 0.14, qd: [0.26, 0.78], fc: [0.86, 0.66] },
+    galleon:    { s: 8.2 / 7.0, L: 7.0, beam: 2.2, full: [0.38, 0.72, 0.5], deck: 0.72, rail: 0.14, qd: [0.28, 1.18], fc: [0.82, 1.0] }
   };
+  /** How much a sheet's hull was grown from her old lines (js/sloop.js grows her rig by the same). */
+  function scale(sheet) { var Ln = LINES[sheet]; return Ln ? Ln.s : 1; }
+  /** Her length as drawn on her sheet (tiles). */
+  function length(sheet) { var Ln = LINES[sheet] || LINES.sloop; return Ln.L * Ln.s; }
   // where guns stand (t along her): side guns in the order they're mounted, clear of the masts and their shrouds; bow
   // chasers [t, across] in her bows
   var STATIONS = {
@@ -48,16 +53,16 @@ var BridgeShipKit = (function () {
   function lines(sheet) { return LINES[sheet] || LINES.sloop; }
   function half(Ln, t) {
     var f = Ln.full;
-    return t >= 0.999 ? 0.015 : Math.max(0.015, Ln.beam / 2 * Math.pow(Math.max(0, Math.sin(Math.PI * Math.min(1, f[0] + f[1] * t))), f[2]));
+    return t >= 0.999 ? 0.015 * Ln.s : Ln.s * Math.max(0.015, Ln.beam / 2 * Math.pow(Math.max(0, Math.sin(Math.PI * Math.min(1, f[0] + f[1] * t))), f[2]));
   }
   function sheer(Ln, t) {
-    if (Ln.sloop) return 0.38 + 0.03 * (1 - t) + 0.13 * Math.pow(Math.max(0, t - 0.55), 2) / 0.2;
-    return Ln.deck + Ln.rail + 0.04 * (1 - t) + 0.16 * Math.pow(Math.max(0, t - 0.6), 2) / 0.16;
+    if (Ln.sloop) return Ln.s * (0.38 + 0.03 * (1 - t) + 0.13 * Math.pow(Math.max(0, t - 0.55), 2) / 0.2);
+    return Ln.s * (Ln.deck + Ln.rail + 0.04 * (1 - t) + 0.16 * Math.pow(Math.max(0, t - 0.6), 2) / 0.16);
   }
-  function deckAt(Ln, t) { return Ln.qd && t < Ln.qd[0] ? Ln.qd[1] : Ln.fc && t > Ln.fc[0] ? Ln.fc[1] : Ln.deck; }
-  function uOf(Ln, t) { return -Ln.L / 2 + t * Ln.L; }
+  function deckAt(Ln, t) { return Ln.s * (Ln.qd && t < Ln.qd[0] ? Ln.qd[1] : Ln.fc && t > Ln.fc[0] ? Ln.fc[1] : Ln.deck); }
+  function uOf(Ln, t) { return Ln.s * (-Ln.L / 2 + t * Ln.L); }
   // her side at height z: the sections run from the rail, out over the topsides' turn halfway up, in to the bilge
-  function bilge(Ln) { return Ln.sloop ? [0.72, 0.05, 0.96, 0.55] : [0.74, 0.06, 0.97, 0.5]; }
+  function bilge(Ln) { return Ln.sloop ? [0.72, 0.05 * Ln.s, 0.96, 0.55] : [0.74, 0.06 * Ln.s, 0.97, 0.5]; }
   function sideV(Ln, t, z) {
     var w = half(Ln, t), top = sheer(Ln, t), B = bilge(Ln), mid = top * B[3];
     if (z >= mid) return w * (B[2] + (1 - B[2]) * Math.min(1, (z - mid) / Math.max(0.01, top - mid)));
@@ -256,20 +261,20 @@ var BridgeShipKit = (function () {
     function put(x, y, col) { px[x + ',' + y] = col; }
     var tEnd = 0;
     for (var t0 = 0; t0 < 1; t0 += 0.005) if (half(Ln, t0) > 0.03) tEnd = t0;
-    var step = 1 / (Ln.L * TS * 2);
+    var LL = Ln.L * Ln.s, step = 1 / (LL * TS * 2);
     [-1, 1].forEach(function (s) {
       var lastX = null, lastY = null;
       for (var t = 0; t <= tEnd; t += step) {
-        var u = uOf(Ln, t), w = half(Ln, t), dw = (half(Ln, Math.min(1, t + 0.01)) - half(Ln, Math.max(0, t - 0.01))) / (0.02 * Ln.L);
+        var u = uOf(Ln, t), w = half(Ln, t), dw = (half(Ln, Math.min(1, t + 0.01)) - half(Ln, Math.max(0, t - 0.01))) / (0.02 * LL);
         var nu = -s * dw, nv = s, nn = Math.hypot(nu, nv), facing = (nu * sn + nv * c) / nn;      // her side's facing: toward you +
         if (facing < -0.04) { lastX = null; continue; }
         var bz = B[1] + 0.01, p = scr(u, s * sideV(Ln, t, bz), bz), j = Math.round(t * 400);
         if (oak) {                                                   // a second skin of oak over her topsides, a pixel proud of them
-          var top = sheer(Ln, t), za = B[1] + 0.03, zb = Ln.sloop ? top - 0.15 : top - 0.27 * Math.sqrt(Ln.beam / 1.6) - 0.03;
+          var top = sheer(Ln, t), za = B[1] + 0.03, zb = Ln.sloop ? top - 0.15 * Ln.s : top - Ln.s * 0.27 * Math.sqrt(Ln.beam / 1.6) - 0.03;
           var pa = scr(u, s * (sideV(Ln, t, za) + 0.02), za), pb = scr(u, s * (sideV(Ln, t, zb) + 0.02), zb);
           var y0 = Math.min(pa[1], pb[1]), y1 = Math.max(pa[1], pb[1]) + 1;
           if (y1 - y0 < 4) y0 = y1 - 4;
-          var seam = Math.floor(t * Ln.L * 4.5), butt = (t * Ln.L * 4.5) % 1 < 0.09;
+          var seam = Math.floor(t * LL * 4.5), butt = (t * LL * 4.5) % 1 < 0.09;
           for (var y = y0; y <= y1; y++) {
             var row = y - y0, col = row === 0 ? OAK[4] : row === 1 ? OAK[0] : y === y1 ? OAK[3] : (row % 2 === 0 ? OAK[2] : OAK[1]);
             if (butt && row > 1 && y < y1 && hash(seam * 3 + row + s * 17) < 0.6) col = OAK[3];             // the butts of the planks
@@ -281,7 +286,7 @@ var BridgeShipKit = (function () {
           var P = ros ? ROSE : COPPER;
           put(p[0], p[1] + 1, P[3]);
           if (ros) {                                                 // roseite: faceted crystal, light and dark by turns
-            var fc = Math.floor(t * Ln.L * 9) * 7 + (s > 0 ? 3 : 0);           // (a facet every few pixels)
+            var fc = Math.floor(t * LL * 9) * 7 + (s > 0 ? 3 : 0);           // (a facet every few pixels)
             put(p[0], p[1], hash(fc * 3) < 0.45 ? P[1] : P[2]); put(p[0], p[1] - 1, hash(fc * 5) < 0.3 ? P[0] : hash(fc * 5) < 0.75 ? P[1] : P[2]);
             if (hash(fc * 9) < 0.55) put(p[0], p[1] - 2, hash(fc * 13) < 0.5 ? P[1] : P[2]);
           } else { put(p[0], p[1], P[2]); put(p[0], p[1] - 1, hash(j * 7) < 0.1 ? P[0] : P[1]); }
@@ -340,6 +345,6 @@ var BridgeShipKit = (function () {
     });
   }
 
-  return { LINES: LINES, STATIONS: STATIONS, LOOK: LOOK, lines: lines, half: half, sheer: sheer, deckAt: deckAt,
+  return { LINES: LINES, STATIONS: STATIONS, LOOK: LOOK, lines: lines, scale: scale, length: length, half: half, sheer: sheer, deckAt: deckAt,
            kitOf: kitOf, sig: sig, mounts: mounts, guns: guns, hull: hull, muzzle: muzzle, fired: fired, mountOf: mountOf, flash: flash };
 })();
