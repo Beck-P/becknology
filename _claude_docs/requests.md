@@ -138,13 +138,11 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 | The farm's field soil | **done** | Crumbly earth, in the farm's re-render. |
 
 ## Render queue (every outdoor scene, once, with everything: meadow, drawn grass, trees and seasons, grass/water marks, the new roofs and house fronts)
-Shipped: every outdoor scene once — Crownhaven, Tern Holm, Brambleford, Starling Holm, Diggen's Point, the farm, Midnight
-Isle (with the Undercroft's way in), Sylvara, Sapphire, Crimson, Rose Cove, the market square, Hoarfell town. Since: Crownhaven
-again (street clutter); Brambleford and the market square again (their hopscotch); Starling Holm again (the slipway, a hull at
-each stage, the hall of finds); and all six of Hoarfell's sport worlds by day, dusk and night (the summit, the pistes, the Park,
-the face, the Last Ridge, the Ice Step). Two fixes on the way: the moon over daylit places stood too close to a long map (a
-straight-edged wedge at the top had no moonlight), and on a wall facing you it came from behind; both fixed in the kit.
-Running: Sapphire and Crownhaven (their hopscotch), then Fellhaven, Sylvara and the farm (the moon). Each ships as it finishes.
+Stopped: the old-finish queue is done with. Every outdoor scene got one re-render in the old (dithered) finish, plus
+Crownhaven, Brambleford and the market square again (street clutter, hopscotch), Starling Holm again (slipway, hull stages, the
+hall of finds) and Hoarfell's six sport worlds by day, dusk and night. Bringing places into the new look (toy finish + live
+light) is the backlog in the October 17 new-look section above; its re-renders pick up the kit fixes made here on the way (the
+moon set back from long maps and from in front on walls, the hopscotch finding clear paving, the slip laid on the bank).
 
 ## Older threads still open (from before this session; check what's left before calling them done)
 - Two ships: mothership home base + landing shuttle (#18)
