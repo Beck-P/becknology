@@ -692,9 +692,10 @@ var BridgeVoyage = (function () {
       bctx.fillStyle = '#5a3a1a'; bctx.fillRect(x - 3, y, 6, 1);
       bctx.fillStyle = 'rgba(220,250,240,0.6)'; bctx.fillRect(x - 5, y + 3, 10, 1);
     });
-    // wake under the hulls
+    // wake under the hulls (lit by the spore bloom on its nights, js/bloom.js)
+    var bk = typeof BridgeBloom !== 'undefined' ? BridgeBloom.on() : 0, wf = bk > 0.01 ? BridgeBloom.foam(seaNow || 'emerald', '214,250,236', bk) : '214,250,236';
     wake.forEach(function (p) {
-      bctx.fillStyle = 'rgba(214,250,236,' + (0.45 * p.life).toFixed(2) + ')';
+      bctx.fillStyle = 'rgba(' + wf + ',' + Math.min(1, 0.45 * p.life * (1 + bk)).toFixed(2) + ')';
       var r = Math.round(p.s);
       bctx.fillRect(Math.round(p.x - camX - r), Math.round(p.y - camY), r * 2, 1);
     });
