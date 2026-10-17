@@ -531,6 +531,62 @@ Three more places on the Emerald Sea (`ISLES` in js/voyage.js; moorings in js/sl
 - **Tern Holm** (`lumar-tern`, `scenes/lumar_tern.py`): a fishing village round a shingle cove — whitewashed cottages, the Tern's Rest, a chapel with a lantern in its tower for the boats, the smokehouse, nets on poles, drying racks, boats drawn up. **Old Pell** keeps the pier (people.json `tern_pell`, `npc-hm-pell`); **Maud Tull** at the fish stall buys your catch. Salt fish is cheapest here. **The Tern's Rest** (`lumar-tern-inn`, `scenes/lumar_tern_inn.py`) opens: Bryony Kettle (`bryony`, `npc-bryony`) and her stew (the pot hung in a deep inglenook, settles either side — sit there), a counter of blue-and-white plates, the fishermen's long table (`npc-fisher-a/b`), the record silverfin on its board, the window on the cove, and the spare room (sleep, free).
 - **Starling Holm** (`lumar-holm`, `scenes/lumar_holm.py`, `js/holm.js`, BridgeHolm; localStorage `bridge_holm`): **an island of your own**, tucked away south-east of the capital. FOR SALE on the post at the old jetty (the deed, 2500); then build it up a piece at a time from its ledger — **the cottage** (a ruin until then: rest by the fire, the ledger on the table), **the dock** (new planking, lamps, a crane, your flag — and the holm becomes a home port), **the garden** (the brambles cleared inside the old wall: `farm.plot`, farmed with js/farm.js — which now keys tiles by world, `"<world>|x,y"` off Verdance), **a warehouse** (cargo ashore between ships), **quarters** (hands ashore between voyages, `ship: 'holm'`), **the workshop** (once the dock's rebuilt: see *The Workshop* below). Each is a scene variant (`k.variant(slot, key)`; holm.js sets `scene.layers`, the chimneys' smoke and, for the two lots, their walls — `holm.lots` in the world JSON — as the island loads). Variants only ever build on ground or the old pier's own footprint: the water's mask (`shore.png`) comes from the base render. **Voyages**: with the dock built, a ship based here with her hands aboard can be sent out on one of the day's best runs (`routes()`: buy where it's made, sell where it's wanted, from js/trade.js prices); she's away a while (`ship.away`) and comes home with the profit in the strongbox — or a story: on the Crimson and Midnight runs pirates may come at her, and guns and fighters decide it. Or a **circuit** (`BridgeTrade.circuits`: the best run, then the best run on from where she lands, and a third leg if it pays): she trades her way round two or three ports — about twice a single run's profit for one send, a little quicker than sailing the legs one by one (`× 0.85`), every leg rolling its own trouble (`away.legs`). Name the island what you like (it renames it on the chart). **The cottage, rebuilt, is a home**: its door leads inside (`lumar-holm-home`, `scenes/lumar_holm_home.py`: whitewash over a sea-green wainscot, the hearth with your first sloop's model on the mantel — *rest* there — windows on the cove, the table with your ledger, a sea chest, nets and floats, an oar), furnished with js/home.js like the White House (`holm` in HOMES: owned once `BridgeHolm.built('house')`; the joiners leave a bed and an armchair).
 
+### Crownhaven, the capital of districts (Lumar)
+Beck: "making the capital city a lot bigger and cooler… each one should feel large but connected and unique" (Denser
+Worlds, Workstream A; `_claude_docs/spec-denser-worlds.md`). The island (`lumar-crown`: the quay, the grand square, the
+Exchange, St Brendan's, the palace gate, the Royal Yard) is the middle of the city; its districts are worlds of their own
+joined by streets you walk, each built in the house style from one kit, `tools/bridge-art/assets_capital.py`
+(`town_house` — a tall jettied townhouse: coursed stone or plaster below, oversailing timber-framed floors above,
+shuttered windows with flower boxes, shop windows under striped awnings, gable fronts for the merchants; `row` — a run
+of them, each its own, `jitter` stepping their fronts so a lane winds; `town_wall`, `wall_ns`, `tower`, `gatehouse`;
+`yard_life` — the back yards glimpsed past the roofs and down the alleys; `arch_house` over an alley; `chapel`;
+`theatre`; `canal`, `humpback`, `barge`, `gondola`, `mooring_pole`; `ropewalk`, `treadwheel_crane`, `hull_in_frame`,
+`cannon`, `shot_pyramid`, `anchor`, `timber_stack`; `boardwalk`, `shack`; `washing`, `balustrade`, `flagged`, `lane`).
+Every street is laid out in bands — a lane, the strip of yards behind the next row (hidden by its roofs, never walkable)
+and that row of houses facing the camera — because at 45° a row of houses hides about two rows of ground behind it: keep
+lanes three rows or more and the houses south of a lane mostly two storeys.
+- **The Old Town** (`lumar-crown-oldtown`, `scenes/lumar_crown_oldtown.py`): the walled town on the point west of the
+  harbour, the oldest stones in the city. Five rows of tall houses with lanes between that jog and pinch, alleys through
+  each row staggered so the way down winds, washing strung across them, the Arch House over one; the Old Keep in the
+  north-west corner; the Lantern Theatre on the north lane (`js/capital.js`: a different play every Lumar evening, a
+  ticket, the play in three cards, a lift the first time each day); Well Square with the old well, two limes, a stall and
+  Barnaby Toll the town crier (`crier`, `npc-crier`); St Elmo's chapel and its spire; Harbour Lane along the sea wall with
+  the fish market, nets and pots, and the Sea Steps down to a landing stage; round towers on the corners. Ways: the LAND
+  GATE (east) into Crownhaven, the NORTH GATE to the canal quarter, the BRIDGE GATE (south-east) onto the Old Bridge.
+- **The canal quarter and Guild Row** (`lumar-crown-canals`, `scenes/lumar_crown_canals.py`): two canals off the harbour,
+  each with a quay on its north side and houses fronting it — gable-fronted merchant houses with hoist beams on
+  Merchants' Quay (Ashgrove & Vane's counting house), the guilds' working shops on Guild Row: Rigg & Daughters,
+  sailmakers (`rigg`, `npc-sailmaker`: sailcloth and rope for your workshop — js/workshop.js `SHOPS.rigg`), Penn the
+  chartmaker (`penn`, `npc-chartmaker`: the sea charts), Brassworth's instruments (`brassworth`, `npc-instrument`: the
+  **Ship's Chronometer**, the one timepiece that keeps Lumar's hours — js/gear.js `TIMES.chronometer`, shop
+  `brassworth`), the Guild Hall; humpbacked bridges, barges and canal boats at striped poles, the Canal Market by the
+  water stairs; the funicular's lower station under the hill. Ways: the SOUTH GATE (the Old Town), the FUNICULAR up.
+- **The Hill** (`lumar-crown-hill`, `scenes/lumar_crown_hill.py`): the palace's garden front and its dome, the palace
+  gardens (parterres of clipped box, a fountain, topiary, statues), the Royal Naval Academy on its parade ground with the
+  training mast, the Observatory under its green copper dome (the terrace telescope looks at the stars), the lime walk
+  and the Belvedere over the drop to the city's roofs, the funicular's top station and car. The GARDEN DOOR is a
+  `palace_gate` (js/crown.js decides who may go in, as at the front gate).
+- **The Old Bridge** (`lumar-crown-bridge`, `scenes/lumar_crown_bridge.py`): Crownhaven's Ponte Vecchio over the harbour
+  mouth — four arches on cutwater piers, a row of shops and houses along its north side hung out over the harbour on
+  brackets (goldsmiths, pies, lenses, a bookbinder…), booths along the south parapet and the loggia in the middle with
+  the builder in bronze. Ways: WEST GATE (the Old Town), EAST GATE (the Arsenal).
+- **The Arsenal** (`lumar-crown-arsenal`, `scenes/lumar_crown_arsenal.py`): the Royal Yard grown into the Crown's
+  dockyard — the ropewalk the width of the yard, the sail loft, the gun foundry (its furnace glowing through the door,
+  its stack smoking), the mast house, the Arsenal office and its clock; oak seasoning, guns, shot, anchors; No. 1 Dock
+  with a man-of-war in frame on her blocks; the Sovereign II on the stocks under sheer-legs; the fitting-out quay with a
+  warship alongside and a treadwheel crane. Ways: the YARD GATE (Crownhaven's east), the BRIDGE ROAD (the Old Bridge).
+- **The Stilts** (`lumar-crown-stilts`, `scenes/lumar_crown_stilts.py`): the slums under the quays, down the QUAY STAIRS —
+  the quay wall towering at the back with families in its old vaults, shacks of odd planks and tin on stilts over the
+  water joined by boardwalks and a rope bridge, paper lanterns strung between, the mudlark and her heap of finds, the
+  Undertow (a tavern on an old barge), boats tied up everywhere.
+- **The doors** are `js/capital.js` (BridgeCapital), never the island's own scene or world JSON (another session rebuilds
+  those): `BUILT` lists the districts on main — a way into one that isn't is left a closed `dialog` with a word on why;
+  `GATES` turns a district's labelled way into a door once the far side exists; `CROWN` adds Crownhaven's own three (THE
+  OLD TOWN on its west edge, THE ARSENAL on its east, QUAY STAIRS on the quay), each placed on the walkable tile its
+  `find` scores best in the island's collisions as it loads, so a re-render of the island moves them with it; `BACK`
+  points each district's way home at that tile. Re-run `python3 tools/bridge-art/atlas.py` after adding one (its
+  `EXTRA` lists Crownhaven's).
+
 ### The Workshop: materials, smiths and making things (Lumar)
 Beck: "move toward crafting… more materials and mining… you can buy upgrades at certain places, but you have to go there with your ship, or take it to your courtyard and hire smiths… progression should feel natural". The plan is `_claude_docs/spec-empire.md`, chunk 1. `js/workshop.js` (BridgeWorkshop; localStorage `bridge_workshop`).
 - **The building**: `workshop` in the holm's `BUILD` (9,000, `needs: 'dock'`), built from the holm's ledger or the WORKSHOP interaction on its lot by the well (`LOTS['workshop'] = (10, 6, 15, 9)` in `scenes/lumar_holm.py`; door at (13, 9)): an open forge under its chimney and a timber shop (`k.variant('workshop', 'built')`). It's in the holm's render now (the forge under the roof's west wing, glowing at night). Before it was, js/holm.js stood the quarters' bunkhouse on the lot (`BridgeScene.standIn(id, slot, key, [fromSlot, fromKey], dx, dy)` in js/scene.js — another variant's art and depth moved by whole tiles, used only while the scene has no layer of its own for that slot/key) and added the lot (`holm.lots.workshop`) and the interaction if the world JSON lacked them; that's still how a building can go in before its render does.

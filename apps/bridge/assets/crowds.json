@@ -8,6 +8,7 @@
   "lumar-tern":             { "n": 7,  "wardrobe": "lumar",   "busy": "day" },
   "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
   "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day" },
+  "lumar-crown-oldtown":    { "n": 24, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
   "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
   "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },
   "lumar-crown-pub":        { "n": 9,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
