@@ -544,9 +544,9 @@ var BridgeLit = (function () {
     if (job.y >= G.h) { finish(job); job = null; }
   }
 
-  // Only the place being drawn keeps its passes (a big outdoor scene's are ~100 MB decoded): the last one's go as you
-  // leave it, and come back from the browser's cache if you return
-  var shown = null;
+  // Only places being drawn keep their passes (a big outdoor scene's are ~100 MB decoded): one not drawn for KEEP ms
+  // lets them go (they come back from the browser's cache if you return). Two drawn in the same frame both keep theirs.
+  var lit = [], KEEP = 8000;
   function drop(sc) {
     var L = sc.lit;
     if (!L || L.dropped) return;
@@ -557,8 +557,13 @@ var BridgeLit = (function () {
   /** What to draw for a scene this frame: { canvas, prev, a } (prev null: the baked states under it), or null. */
   function frame(sc) {
     if (!sc.lit) return null;
-    if (shown && shown !== sc) drop(shown);
-    shown = sc;
+    var t = performance.now();
+    sc.litSeen = t;
+    if (lit.indexOf(sc) < 0) lit.push(sc);
+    lit = lit.filter(function (o) {                    // what hasn't been drawn for a while lets its passes go
+      if (o === sc || t - (o.litSeen || 0) < KEEP) return true;
+      drop(o); return false;
+    });
     if (sc.lit.dropped) { load(sc); return null; }
     step(sc);
     var L = sc.lit;
@@ -664,38 +669,58 @@ var BridgeLit = (function () {
     ctx.restore();
   }
 
-  // ---- the light on a character standing at (col, row): the passes at their feet ----
+  // ---- the light on a character standing at (col, row) ----
+  // Worked out once a composition for every tile — the light over the floor round its foot point, averaged — then
+  // blended between the four nearest tiles as someone walks, so they pass smoothly into shade and out again. (Sampled
+  // from a few pixels at the feet, it jumped from cobble to crevice as you walked: a flicker.)
+  function grid(sc) {
+    var L = sc.lit, C = L.cur;
+    if (C.grid) return C.grid;
+    var G = L.G, m = sc.meta, Lt = C.Lt, W = G.w, H = G.h;
+    var cols = Math.max(1, Math.floor((W - m.originX) / 32)), rows = Math.max(1, Math.floor((H - m.originY) / 32));
+    var out = new Float32Array(cols * rows * 3).fill(NaN);
+    function sunAt(i, p) { return i < 2 ? G.lit_a[p + i + 1] : i < 5 ? G.lit_b[p + i - 2] : G.lit_c[p]; }
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      var sk = 0, sn = 0, mo = 0, lr = 0, lg = 0, lb = 0, n = 0;
+      for (var y = Math.round(m.originY + (r + 0.45) * 32); y < Math.round(m.originY + (r + 1.25) * 32); y += 3) {
+        if (y < 0 || y >= H) continue;
+        for (var x = Math.round(m.originX + c * 32 - 6); x < Math.round(m.originX + c * 32 + 38); x += 3) {
+          if (x < 0 || x >= W) continue;
+          var p = (y * W + x) * 4;
+          if (G.lit_albedo[p + 3] < 8) continue;
+          sk += DEC[G.lit_a[p]];
+          var a0 = DEC[sunAt(Lt.i0, p)], a1 = DEC[sunAt(Lt.i1, p)];
+          sn += a0 + (a1 - a0) * Lt.f;
+          mo += DEC[G.lit_b[p]];
+          if (G.lit_lamps) { lr += DEC[G.lit_lamps[p]]; lg += DEC[G.lit_lamps[p + 1]]; lb += DEC[G.lit_lamps[p + 2]]; }
+          n++;
+        }
+      }
+      if (!n) continue;
+      var Lc = [lr / n, lg / n, lb / n].map(function (lamp, k) {
+        return Lt.sky * Lt.skyC[k] * sk / n + Lt.sunC[k] * sn / n * Lt.sun * 0.85 + Lt.moonC[k] * mo / n * Lt.moon + lamp * Lt.lamp * 0.8;
+      });
+      var lum = luma(Lc) + 1e-5, bb = 1.1 * (1 - Math.exp(-lum)) / 0.9 * (1 - 0.25 * Lt.night), q = (r * cols + c) * 3;
+      for (var k = 0; k < 3; k++) out[q + k] = clamp(bb * (1 + (Lc[k] / lum - 1) * 0.7), 0.22, 1);
+    }
+    C.grid = { cols: cols, rows: rows, v: out };
+    return C.grid;
+  }
   function tint(sc, col, row) {
     var L = sc.lit;
     if (!L || !L.cur || !L.G) return null;
-    var G = L.G, m = sc.meta, Lt = L.cur.Lt, W = G.w;
-    var ck = Math.round(col * 4) + ',' + Math.round(row * 4);           // a quarter tile is close enough; kept per composition
+    var g = grid(sc), ck = Math.round(col * 8) + ',' + Math.round(row * 8);
     if (L.tintFor !== L.cur) { L.tintFor = L.cur; L.tints = {}; }
     if (L.tints[ck] !== undefined) return L.tints[ck];
-    var cx = Math.round(m.originX + (col + 0.5) * 32), cy = Math.round(m.originY + (row + 0.85) * 32);
-    var s0 = Lt.i0, s1 = Lt.i1;
-    function sunAt(i, p) { return i < 2 ? G.lit_a[p + i + 1] : i < 5 ? G.lit_b[p + i - 2] : G.lit_c[p]; }
-    var sk = 0, sn = 0, mo = 0, lr = 0, lg = 0, lb = 0, n = 0;
-    for (var dy = -1; dy <= 1; dy++) for (var dx = -3; dx <= 3; dx++) {
-      var x = cx + dx, y = cy + dy;
-      if (x < 0 || y < 0 || x >= W || y >= G.h) continue;
-      var p = (y * W + x) * 4;
-      if (G.lit_albedo[p + 3] < 8) continue;
-      sk += DEC[G.lit_a[p]];
-      var a0 = DEC[sunAt(s0, p)], a1 = DEC[sunAt(s1, p)];
-      sn += a0 + (a1 - a0) * Lt.f;
-      mo += DEC[G.lit_b[p]];
-      if (G.lit_lamps) { lr += DEC[G.lit_lamps[p]]; lg += DEC[G.lit_lamps[p + 1]]; lb += DEC[G.lit_lamps[p + 2]]; }
-      n++;
-    }
-    if (!n) return (L.tints[ck] = null);
-    sk /= n; sn /= n; mo /= n; lr /= n; lg /= n; lb /= n;
-    var Lc = [0, 1, 2].map(function (c) {
-      return Lt.sky * Lt.skyC[c] * sk + Lt.sunC[c] * sn * Lt.sun * 0.85 + Lt.moonC[c] * mo * Lt.moon + [lr, lg, lb][c] * Lt.lamp * 0.8;
+    var fx = clamp(col, 0, g.cols - 1), fy = clamp(row, 0, g.rows - 1), c0 = Math.floor(fx), r0 = Math.floor(fy);
+    var tx = fx - c0, ty = fy - r0, acc = [0, 0, 0], wsum = 0;
+    [[c0, r0, (1 - tx) * (1 - ty)], [c0 + 1, r0, tx * (1 - ty)], [c0, r0 + 1, (1 - tx) * ty], [c0 + 1, r0 + 1, tx * ty]].forEach(function (t) {
+      if (t[2] <= 0 || t[0] >= g.cols || t[1] >= g.rows) return;
+      var q = (t[1] * g.cols + t[0]) * 3;
+      if (isNaN(g.v[q])) return;
+      acc[0] += g.v[q] * t[2]; acc[1] += g.v[q + 1] * t[2]; acc[2] += g.v[q + 2] * t[2]; wsum += t[2];
     });
-    var lum = luma(Lc) + 1e-5;
-    var bb = 1.1 * (1 - Math.exp(-lum)) / 0.9 * (1 - 0.25 * Lt.night);
-    return (L.tints[ck] = css(Lc.map(function (v) { return clamp(bb * (1 + (v / lum - 1) * 0.7), 0.22, 1); })));
+    return (L.tints[ck] = wsum > 0 ? css([acc[0] / wsum, acc[1] / wsum, acc[2] / wsum]) : null);
   }
 
   return {
