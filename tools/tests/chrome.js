@@ -9,7 +9,12 @@ module.exports = process.env.CHROME || (fs.existsSync(BUILT_IN) ? BUILT_IN : und
 const PORT = process.env.BRIDGE_PORT;
 if (PORT && PORT !== '8766') {
   const pw = require('playwright');
-  const swap = (r) => r.continue({ url: r.request().url().replace('127.0.0.1:8766', '127.0.0.1:' + PORT) });
+  // fetched from that port and handed to the page as if from :8766 (a `continue` with the new URL is blocked by Chromium
+  // for everything but the page itself: a cross-origin swap under a same-origin request)
+  const swap = async (r) => {
+    try { await r.fulfill({ response: await r.fetch({ url: r.request().url().replace('127.0.0.1:8766', '127.0.0.1:' + PORT) }) }); }
+    catch (e) { try { await r.abort(); } catch (e2) { /* the page has gone */ } }
+  };
   const launch = pw.chromium.launch.bind(pw.chromium);
   pw.chromium.launch = async (...a) => {
     const b = await launch(...a);

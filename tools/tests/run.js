@@ -62,7 +62,9 @@ for (const n of names) {
   for (const [file, ...args] of SUITES[n]) {
     const t0 = Date.now();
     let out = '', ok = true;
-    try { out = execFileSync('node', [path.join(D, file), ...args], { env, cwd: D, timeout: 300000, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
+    // (another port: chrome.js is loaded first, so its reroute is in place before a test calls chromium.launch)
+    const pre = PORT !== 8766 ? ['-r', path.join(D, 'chrome.js')] : [];
+    try { out = execFileSync('node', [...pre, path.join(D, file), ...args], { env, cwd: D, timeout: 300000, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
     catch (e) { ok = false; out = (e.stdout || '') + '\nFAILED: ' + String(e.stderr || e.message).split('\n').filter((l) => l.trim() && !/^\s+at /.test(l)).slice(0, 4).join(' | '); }
     if (BAD.test(out)) ok = false;
     const label = [file, ...args.filter((a) => !a.startsWith('/'))].join(' ');
