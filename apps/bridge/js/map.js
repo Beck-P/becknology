@@ -26,7 +26,7 @@ var BridgeMap = (function () {
                 singularity: 'Black hole · the Brink', verdance: 'Garden world · two small moons', hoarfell: 'Ice world · the Hoarspire',
                 sylvara: 'Forest world · the wood elves' };
   var PLANET = { lumar: 'lumar', arcadia: 'arcadia', enigma: 'enigma', singularity: 'singularity', verdance: 'verdance', hoarfell: 'hoarfell', sylvara: 'sylvara' };
-  var SYS_RX = { ship: /^(bridge|quarters|hangar|gameroom)$/, lumar: /^lumar/, arcadia: /^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair|null-den)/,
+  var SYS_RX = { ship: /^(bridge|quarters|hangar|gameroom|office)$/, lumar: /^lumar/, arcadia: /^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair|null-den)/,
                  enigma: /^enigma/, singularity: /^singularity/, verdance: /^verdance/, hoarfell: /^hoarfell/, sylvara: /^sylvara/ };
   var MERGE = { 'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a' };
 
@@ -243,7 +243,7 @@ var BridgeMap = (function () {
         cb(t);
       };
       im.onerror = function () { cb(null); };
-      im.src = '/bridge/assets/scenes/' + sceneId + '/' + (meta.states && meta.states[0] || 'full') + '.png?v=' + (meta.rev || Date.now());
+      im.src = '/bridge/assets/scenes/' + sceneId + '/' + (meta.states && meta.states[0] || 'full') + '.' + (meta.ext || 'png') + '?v=' + (meta.rev || Date.now());
     }).catch(function () { cb(null); });
   }
   // a world's data: where you are, the live one; anywhere else its JSON with what the JS would add (fish, forage, shops)
@@ -258,6 +258,7 @@ var BridgeMap = (function () {
         if (typeof BridgeGear !== 'undefined') BridgeGear.decorate(wid, d);
         if (typeof BridgeStorage !== 'undefined') BridgeStorage.decorate(wid, d);
         if (typeof BridgeScene !== 'undefined' && BridgeScene.walkerInteractions) d.interactions = d.interactions.concat(BridgeScene.walkerInteractions(wid));   // people out walking
+        if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.adjust(wid, d);       // who's here at this hour
       } catch (e) { /* the map does without */ }
       cb(d, false);
     }).catch(function () { cb(null, false); });

@@ -69,12 +69,13 @@ var BridgeTreasure = (function () {
     M.loot.forEach(function (l) { if (typeof BridgeLoot !== 'undefined') BridgeLoot.spawn(M.x, M.y, l[0], l[1]); });
     var next = M.next && !state.dug[M.next] && !has(M.next) ? M.next : null;
     if (next && typeof BridgeLoot !== 'undefined') BridgeLoot.spawn(M.x, M.y, 'tmap_' + next, 1);
-    var paid = typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins ? BridgeProgression.awardCoins(M.coins, 'treasure:' + id) : null;
+    var coins = Math.round(M.coins * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('finds') ? 1.2 : 1));   // the Collection's treasures, all found: a fifth more
+    var paid = typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins ? BridgeProgression.awardCoins(coins, 'treasure:' + id) : null;
     if (paid && paid.catch) paid.catch(function () {});
     setTimeout(function () {
       if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('quest');
-      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Treasure', M.title.charAt(0) + M.title.slice(1).toLowerCase(), '+' + M.coins + ' coins');
-      say('X MARKS THE SPOT', 'A FOOT DOWN, YOUR HANDS FIND WOOD: A SMALL IRON-BOUND CHEST. INSIDE, ' + M.coins + ' COINS AND WHAT YOU SEE SPILLING OUT.' +
+      if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('Treasure', M.title.charAt(0) + M.title.slice(1).toLowerCase(), '+' + coins + ' coins');
+      say('X MARKS THE SPOT', 'A FOOT DOWN, YOUR HANDS FIND WOOD: A SMALL IRON-BOUND CHEST. INSIDE, ' + coins + ' COINS AND WHAT YOU SEE SPILLING OUT.' +
           (next ? '\n\nAND UNDER IT ALL, FOLDED SMALL, ANOTHER MAP.' : ''));
     }, 500);
   }
@@ -115,7 +116,7 @@ var BridgeTreasure = (function () {
         sketches[id] = c;
         cb(c);
       };
-      im.src = '/bridge/assets/scenes/' + M.world + '/full.png?v=' + meta.rev;
+      im.src = '/bridge/assets/scenes/' + M.world + '/full.' + (meta.ext || 'png') + '?v=' + meta.rev;
     }).catch(function () { cb(null); });
   }
 
@@ -151,9 +152,11 @@ var BridgeTreasure = (function () {
   }
 
   // ---- Ilsa's maps, and maps under rocks ---------------------------------------------------------------
+  // her price: a quarter off once the Collection's treasure maps are all found
+  function price(id) { return Math.round(MAPS[id].price * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('maps') ? 0.75 : 1)); }
   function shop(who) {
     var opts = SHOP.filter(function (id) { return !state.dug[id] && !has(id); }).map(function (id) {
-      return { label: MAPS[id].title + ' - ' + MAPS[id].price + ' COINS', action: 'treasure_buy', map: id };
+      return { label: MAPS[id].title + ' - ' + price(id) + ' COINS', action: 'treasure_buy', map: id };
     });
     if (!opts.length) return say(who.toUpperCase(), '"THAT\'S ALL I HAVE THAT ISN\'T DUG UP OR IN YOUR POCKET. THE MINE TURNS UP OLD ONES, THEY SAY."');
     BridgeInteractions.execute({ type: 'menu', label: who.toUpperCase(), dialog: '"COPIES OF OLD ONES - THE LANDMARKS ARE TRUE, THE REST IS UP TO YOU. NO REFUNDS IF SOMEONE GOT THERE FIRST."',
@@ -161,8 +164,8 @@ var BridgeTreasure = (function () {
   }
   function buy(id) {
     var M = MAPS[id];
-    BridgeProgression.wagerCoins(M.price, 'treasure_map:' + id).then(function (res) {
-      if (!res || !res.ok) return say('ILSA', res && (res.reason === 'insufficient' || res.reason === 'no_balance') ? '"' + M.price + ' COINS, NOT A COPPER LESS."' : '"THE TILL\'S STUCK. COME BACK."');
+    BridgeProgression.wagerCoins(price(id), 'treasure_map:' + id).then(function (res) {
+      if (!res || !res.ok) return say('ILSA', res && (res.reason === 'insufficient' || res.reason === 'no_balance') ? '"' + price(id) + ' COINS, NOT A COPPER LESS."' : '"THE TILL\'S STUCK. COME BACK."');
       BridgeInventory.give('tmap_' + id, 1);
       if (typeof BridgeAudio !== 'undefined') BridgeAudio.sfx('pickup');
       say('ILSA', '"' + M.title + '. USE IT FROM YOUR PACK TO LOOK AT IT - AND LOOK HARD AT THE LANDMARKS."');

@@ -5,16 +5,22 @@
  * capsule apartment over the District's Capsule Hotel (arcadia-home), each
  * an empty Blender-rendered room (tools/bridge-art/scenes/lumar_home.py,
  * arcadia_home.py); at the top of the ramp (js/legacy.js) the Penthouse on
- * Skyport 7, its brass door on the roof pad (arcadia-penthouse, 250,000),
- * and Ashcombe House on Crownhaven's waterfront (lumar-manor, 400,000) —
- * and aboard the Wayfarer, your quarters and the bridge,
- * which are yours already. Their doors are `home_door` interactions put on
+ * Skyport 7, its brass door on the roof pad (arcadia-penthouse, 250,000: the
+ * whole top floor, inside and the roof deck), and Ashcombe House on
+ * Crownhaven's waterfront (lumar-manor, 400,000: the great hall, and off it
+ * the drawing room, the library, the dining room and up the stairs the master
+ * bedroom — `part` of the house, yours with it, each furnished on its own); the
+ * Starling's lobby once it's built (js/holm.js); and aboard the Wayfarer, your
+ * quarters and the bridge, which are yours already. Their doors are `home_door` interactions put on
  * the street as worlds load: the first time, the door offers the place for
  * sale (wagerCoins); after that it lets you in.
  *
  * Furniture: thirty-six pieces rendered by tools/bridge-art/furniture_sprites.py
  * into one sheet (assets/scenes/furniture) with assets/furniture.json (id,
- * name, price, footprint w x d, walk for rugs, where each sits on the sheet).
+ * name, price, footprint w x d, walk for rugs, where each sits on the sheet),
+ * and pieces drawn live by the modules that run them (`add`: the fish tanks,
+ * js/aquarium.js — a picture each frame, `live(entry, now, theme)`, and
+ * optionally a light laid over it, `glow`).
  * Pieces are drawn through the global scene hooks ('*') and depth-tested
  * against the room's render like the characters; they block their tiles
  * (rugs don't), and the useful ones work: beds to sleep in, seats to sit on,
@@ -48,15 +54,22 @@ var BridgeHome = (function () {
     // the legacy homes (js/legacy.js): the top of Skyport 7's tower, its private lift from the roof pad; and the
     // Ashcombes' house on Crownhaven's waterfront, beside the Crown & Anchor
     'arcadia-penthouse': { name: 'The Penthouse', price: 250000, theme: 'neon', gift: ['sofa', 'arcade_cabinet', 'nebula_tank', 'telescope'],
-                           door: { world: 'arcadia-skypad', x: 11, y: 3, label: 'PENTHOUSE', spawn: [10, 10] },
+                           door: { world: 'arcadia-skypad', x: 11, y: 3, label: 'PENTHOUSE', spawn: [11, 15] },
                            shop: 'ARCADIAMART LIVING',
-                           pitch: 'A BRASS DOOR ON THE ROOF, A LIFT THAT GOES ONE FLOOR DOWN. THE LISTING ON ITS GLASS: "THE TOP OF THE TOWER. THE WHOLE CITY THROUGH ONE WINDOW. A POOL. A BAR. DISCRETION INCLUDED."',
+                           pitch: 'A BRASS DOOR ON THE ROOF, A LIFT THAT GOES ONE FLOOR DOWN. THE LISTING ON ITS GLASS: "THE WHOLE TOP FLOOR OF THE TOWER. THE CITY THROUGH A WALL OF GLASS, AND ALL ROUND A ROOF DECK. A POOL UNDER THE SKY. A BAR. DISCRETION INCLUDED."',
                            bought: 'THE BRASS DOOR KNOWS YOUR HAND NOW. THE LIFT HUMS DOWN ONE FLOOR AND OPENS ON THE CITY. THE AGENT LEFT A SOFA, A CABINET, A NEBULA IN A JAR AND A TELESCOPE, "TO GET YOU STARTED".' },
     'lumar-manor': { name: 'Ashcombe House', price: 400000, theme: 'parchment', gift: ['wingback', 'chess_table', 'orrery', 'clock'],
-                     door: { world: 'lumar-crown', x: 45, y: 29, label: 'ASHCOMBE HOUSE', spawn: [10, 11] },
+                     door: { world: 'lumar-crown', x: 45, y: 29, label: 'ASHCOMBE HOUSE', spawn: [12, 13] },
                      shop: 'WEXLEY & DAUGHTERS, JOINERS',
                      pitch: 'THE TALL HOUSE ON THE WATERFRONT, SHUTTERED SINCE THE LAST ADMIRAL ASHCOMBE DIED. A BRASS PLATE BY THE DOOR: "FOR SALE BY ORDER OF THE CROWN. A GREAT HALL, A GALLERY, EIGHT BEDROOMS, A VIEW OF EVERY SHIP IN THE CAPITAL."',
                      bought: 'THE REGISTRAR HANDS YOU A KEY AS LONG AS YOUR HAND. INSIDE, THE DUST SHEETS ARE OFF: A HALL, A FIRE ALREADY LIT, AND THE ASHCOMBES\' OWN WINGBACK, CHESS TABLE, ORRERY AND CLOCK, LEFT FOR THE NEXT CAPTAIN.' },
+    // Ashcombe House's other rooms, off the great hall (places within places): yours with the house, each furnished on its own
+    'lumar-manor-drawing': { name: 'The Drawing Room', part: 'lumar-manor', theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
+    'lumar-manor-library': { name: 'The Library', part: 'lumar-manor', theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
+    'lumar-manor-dining': { name: 'The Dining Room', part: 'lumar-manor', theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
+    'lumar-manor-bedroom': { name: 'The Master Bedroom', part: 'lumar-manor', theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
+    // the Starling's lobby, bar and terrace (js/holm.js): a venue, and yours to furnish once it's built
+    'lumar-holm-resort': { name: 'The Starling', resort: true, theme: 'parchment', shop: 'WEXLEY & DAUGHTERS, JOINERS' },
     // Edda's farmhouse on Verdance: it comes with the farm's deed (js/homestead.js), its door is the farm's own
     'verdance-home': { name: 'The Farmhouse', farm: true, theme: 'parchment', gift: ['rocking_chair', 'bed'], shop: 'HOLLIN\'S MAIL-ORDER' },
     // the cottage on Starling Holm: yours once it's rebuilt (js/holm.js), its door the island's own
@@ -87,7 +100,12 @@ var BridgeHome = (function () {
     trunk: { type: 'chest', label: 'OLD TRUNK', prompt: 'PRESS E TO OPEN' },
     strongbox: { type: 'chest', label: 'STRONGBOX', prompt: 'PRESS E TO OPEN' }
   };
-  function full(q) { return !!(q && q.items && q.items.some(function (s) { return s && s.count > 0; })); }
+  // a chest with things in it, or a tank with fish in it: empty it before it's put away
+  function full(q) { return !!(q && ((q.items && q.items.some(function (s) { return s && s.count > 0; })) || (q.fish && q.fish.length))); }
+  function emptyFirst(q, held) {
+    if (q.fish && q.fish.length) return 'TAKE THE FISH OUT FIRST' + (held ? ': PUT IT DOWN, PRESS E AT IT AND TAKE THEM OUT.' : ': PRESS E AT THE TANK AND TAKE THEM OUT.');
+    return held ? 'EMPTY IT FIRST: PUT IT DOWN, OPEN IT AND TAKE WHAT\'S INSIDE.' : 'EMPTY IT FIRST: OPEN IT AND TAKE WHAT\'S INSIDE.';
+  }
   var BOOKS = ['"THE SPORE SEAS, A NATURAL HISTORY" - THE PAGE ON MIDNIGHT IS MISSING.',
                '"KNOTS FOR THE NERVOUS SAILOR." SOMEONE HAS PRACTISED THE NOOSE.',
                '"WHAT THE LIGHTHOUSE SAW," A NOVEL. THE KEEPER DID IT.',
@@ -111,6 +129,8 @@ var BridgeHome = (function () {
   function owns(id) {
     if (HOMES[id] && HOMES[id].farm) return typeof BridgeHomestead !== 'undefined' && BridgeHomestead.owned();
     if (HOMES[id] && HOMES[id].holm) return typeof BridgeHolm !== 'undefined' && BridgeHolm.built('house');
+    if (HOMES[id] && HOMES[id].resort) return typeof BridgeHolm !== 'undefined' && BridgeHolm.built('resort');
+    if (HOMES[id] && HOMES[id].part) return owns(HOMES[id].part);
     return !!(HOMES[id] && (HOMES[id].ship || save.owned[id]));
   }
   function layout(id) { return save.layout[id] || (save.layout[id] = []); }
@@ -123,7 +143,19 @@ var BridgeHome = (function () {
 
   // ---- the furniture sheet ----------------------------------------------------------------------------
   var pieces = [], byId = {}, sheet = null, meta = null, ready = false, waiting = [];
+  var made = [];            // pieces another module draws itself (add): they have their spr already, img and all
   function whenReady(fn) { if (ready) fn(); else waiting.push(fn); }
+  function merge(P) {       // into the catalogue, beside the piece named in `after` (or at the end)
+    if (byId[P.id]) return;
+    var at = P.after && byId[P.after] ? pieces.indexOf(byId[P.after]) + 1 : pieces.length;
+    while (at < pieces.length && made.indexOf(pieces[at]) >= 0) at++;          // after the ones added before it
+    pieces.splice(at, 0, P); byId[P.id] = P;
+  }
+  /** A piece drawn live: {id, name, price, w, d, spr: {img, sx, sy, sw, sh, ax, ay}, live(q, now, theme), glow?, use?, after?}. */
+  function add(P) {
+    made.push(P);
+    if (meta) merge(P);
+  }
   (function loadSheet() {
     Promise.all([
       fetch('/bridge/assets/furniture.json?v=' + Date.now()).then(function (r) { return r.json(); }),
@@ -131,6 +163,7 @@ var BridgeHome = (function () {
     ]).then(function (res) {
       pieces = res[0].pieces; meta = res[1];
       pieces.forEach(function (p) { byId[p.id] = p; });
+      made.forEach(merge);
       sheet = new Image();
       sheet.onload = function () {
         cut();
@@ -138,7 +171,7 @@ var BridgeHome = (function () {
         var w = waiting; waiting = [];
         w.forEach(function (f) { f(); });
       };
-      sheet.src = '/bridge/assets/scenes/furniture/full.png?v=' + meta.rev;
+      sheet.src = '/bridge/assets/scenes/furniture/full.' + (meta.ext || 'png') + '?v=' + meta.rev;
     }).catch(function () { /* no furniture: homes still open, just bare */ });
   })();
 
@@ -151,6 +184,7 @@ var BridgeHome = (function () {
     var data = c.getImageData(0, 0, cv.width, cv.height).data, W = cv.width;
     var ox = meta.originX || 0, oy = meta.originY || 0;
     pieces.forEach(function (p) {
+      if (p.spr) return;                                   // drawn live, cut already
       var cx0 = Math.floor(p.x / 3) * 3 * 32 + ox, cy0 = Math.floor(p.y / 4) * 4 * 32 + oy;
       var x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
       for (var y = cy0; y < cy0 + 128 && y < cv.height; y++) for (var x = cx0; x < cx0 + 96 && x < W; x++) {
@@ -171,7 +205,7 @@ var BridgeHome = (function () {
     if (k >= 1) k = Math.floor(k);
     c.imageSmoothingEnabled = false;
     var w = Math.round(s.sw * k), h = Math.round(s.sh * k);
-    c.drawImage(sheet, s.sx, s.sy, s.sw, s.sh, Math.round((box - w) / 2), Math.round(box - h - (box - h) / 4), w, h);
+    c.drawImage(s.img || sheet, s.sx, s.sy, s.sw, s.sh, Math.round((box - w) / 2), Math.round(box - h - (box - h) / 4), w, h);
     return cv;
   }
 
@@ -191,7 +225,7 @@ var BridgeHome = (function () {
     if (!HOMES[worldId] || !data.collisions) return;
     cur = { id: worldId, data: data, base: data.collisions.map(function (r) { return r.slice(); }) };
     whenReady(function () { if (cur && cur.data === data) apply(); });
-    if (!HOMES[worldId].ship && owns(worldId) && !save.seen[worldId]) {
+    if (!HOMES[worldId].ship && !HOMES[worldId].part && owns(worldId) && !save.seen[worldId]) {
       save.seen[worldId] = Date.now();
       if (HOMES[worldId].farm || HOMES[worldId].holm) (HOMES[worldId].gift || []).forEach(function (g) { save.have[g] = (save.have[g] || 0) + 1; });   // Edda (or the joiners) left you a start
       store();
@@ -228,9 +262,9 @@ var BridgeHome = (function () {
       }
       return out;
     }
-    var U = USES[P.id];
+    var U = USES[P.id] || P.use;
     if (!U) return [];
-    var it = { x: q.x, y: q.y + P.d - 1, _piece: q, piece: P.id };
+    var it = { x: q.x + (P.use ? Math.floor((P.w - 1) / 2) : 0), y: q.y + P.d - 1, _piece: q, piece: P.id };
     Object.keys(U).forEach(function (k) { it[k] = U[k]; });
     if (P.id === 'chess_table') it.target = '/chess?theme=' + (HOMES[cur.id].theme === 'parchment' ? 'lumar' : HOMES[cur.id].ship ? 'ship' : 'arcadia');
     return [it];
@@ -501,7 +535,7 @@ var BridgeHome = (function () {
     if (q) {
       var L = layout(cur.id);
       L.splice(L.indexOf(q), 1);
-      ed.held = { id: q.id, from: { x: q.x, y: q.y }, items: q.items };          // a chest takes its things with it
+      ed.held = { id: q.id, from: { x: q.x, y: q.y }, items: q.items, fish: q.fish };   // a chest takes its things with it, a tank its fish
       apply(); sfx('pickup');
       return note('');
     }
@@ -511,19 +545,20 @@ var BridgeHome = (function () {
   }
   function putAway() {
     if (!ed) return;
-    if (ed.held && full(ed.held)) return note('EMPTY IT FIRST: PUT IT DOWN, OPEN IT AND TAKE WHAT\'S INSIDE.', true);
+    if (ed.held && full(ed.held)) return note(emptyFirst(ed.held, true), true);
     if (ed.held) { ed.held = null; store(); sfx('close'); return note('PUT AWAY. IT\'S IN YOUR TRAY WHEN YOU WANT IT.'); }
     var q = under(ed.cx, ed.cy);
     if (!q) return note('NOTHING THERE TO PUT AWAY.', true);
-    if (full(q)) return note('EMPTY IT FIRST: OPEN IT AND TAKE WHAT\'S INSIDE.', true);
+    if (full(q)) return note(emptyFirst(q), true);
     var L = layout(cur.id);
     L.splice(L.indexOf(q), 1);
     apply(); store(); sfx('close');
     note('PUT AWAY.');
   }
-  function entry(held, x, y) {     // a layout entry for the piece in hand (a chest keeps what's in it)
+  function entry(held, x, y) {     // a layout entry for the piece in hand (a chest keeps what's in it, a tank its fish)
     var e = { id: held.id, x: x, y: y };
     if (held.items) e.items = held.items;
+    if (held.fish) e.fish = held.fish;
     return e;
   }
   function under(x, y) {          // the piece on a tile; furniture before the rug it stands on
@@ -640,18 +675,21 @@ var BridgeHome = (function () {
     if (!m) return null;
     return 'rgb(' + [m[1], m[2], m[3]].map(function (v) { return Math.min(255, Math.round(80 + 0.85 * v)); }).join(',') + ')';
   }
-  function drawPiece(ctx, sc, world, P, x, y, offX, offY, ts, now, alpha) {
+  function drawPiece(ctx, sc, world, P, x, y, offX, offY, ts, now, alpha, q) {
     var s = P.spr, dx = Math.round(offX + x * ts + (s.sx - s.ax)), dy = Math.round(offY + y * ts + (s.sy - s.ay));
-    var foot = y + P.d - 0.04;
-    if (alpha != null) {
+    var foot = y + P.d - 0.04, theme = cur && HOMES[cur.id] ? HOMES[cur.id].theme : 'parchment';
+    if (alpha != null) {                                   // the one in your hands while furnishing (a tank with its own fish)
       ctx.save(); ctx.globalAlpha = alpha;
-      ctx.drawImage(sheet, s.sx, s.sy, s.sw, s.sh, dx, dy, s.sw, s.sh);
+      ctx.drawImage(P.live && q ? P.live(q, now, theme) : s.img || sheet, s.sx, s.sy, s.sw, s.sh, dx, dy, s.sw, s.sh);
       ctx.restore();
       return;
     }
+    var img = P.live ? P.live(q, now, theme) : sheet;      // a piece that moves: this frame of it
     var tint = soften(BridgeScene.tintAt(sc, world, x + (P.w - 1) / 2, y + P.d - 1, now));
     var shadow = P.walk ? null : { x: Math.round(offX + (x + P.w / 2) * ts), y: Math.round(offY + (y + P.d) * ts) - 5, rx: Math.round(P.w * 12), ry: 4 };
-    BridgeScene.drawOccluded(ctx, sc, sheet, s.sx, s.sy, s.sw, s.sh, dx, dy, foot, offX, offY, tint, shadow);
+    BridgeScene.drawOccluded(ctx, sc, img, s.sx, s.sy, s.sw, s.sh, dx, dy, foot, offX, offY, tint, shadow);
+    var lit = P.glow && P.glow(q, now, theme);                // its own light, added over the room's
+    if (lit) BridgeScene.drawOccluded(ctx, sc, lit, s.sx, s.sy, s.sw, s.sh, dx, dy, foot, offX, offY, null, null, 'lighter');
   }
   function items(world, offX, offY, ts, now, sc) {
     if (!ready || !cur || cur.data !== world) return [];
@@ -665,7 +703,7 @@ var BridgeHome = (function () {
       if (!P || !P.spr) return;
       var key = P.walk ? -100 + q.y : q.y + P.d - 0.04;        // rugs under everyone
       if (seatedOn && seatedOn.x >= q.x && seatedOn.x < q.x + P.w && seatedOn.y >= q.y && seatedOn.y < q.y + P.d) key = seatedOn.foot - 0.01;
-      out.push({ footRow: key, draw: function (ctx) { drawPiece(ctx, sc, world, P, q.x, q.y, offX, offY, ts, now); } });
+      out.push({ footRow: key, draw: function (ctx) { drawPiece(ctx, sc, world, P, q.x, q.y, offX, offY, ts, now, null, q); } });
     });
     return out;
   }
@@ -686,7 +724,7 @@ var BridgeHome = (function () {
         ctx.fillStyle = ok ? 'rgba(90,230,140,0.28)' : 'rgba(240,80,80,0.32)';
         ctx.fillRect(Math.round(offX + c[0] * ts), Math.round(offY + c[1] * ts), ts, ts);
       });
-      drawPiece(ctx, null, world, P, ed.cx, ed.cy, offX, offY, ts, now, 0.55 + 0.25 * pulse);
+      drawPiece(ctx, null, world, P, ed.cx, ed.cy, offX, offY, ts, now, 0.55 + 0.25 * pulse, ed.held.fish ? ed.held : null);
     }
     // the cursor
     var cx = Math.round(offX + ed.cx * ts), cy = Math.round(offY + ed.cy * ts), w = (P ? P.w : 1) * ts, h = (P ? P.d : 1) * ts;
@@ -748,7 +786,12 @@ var BridgeHome = (function () {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
-  return { decorate: decorate, use: use, buy: buy, edit: edit, done: finish, owns: owns, editing: function () { return !!ed; }, reload: function () { save = load(); },
-           pieces: function () { return pieces; }, piece: function (id) { return byId[id] || null; }, spare: spare, buyPiece: buyPiece, persist: store,
+  return { decorate: decorate, use: use, buy: buy, edit: edit, done: finish, owns: owns, editing: function () { return !!ed; },
+           reload: function () { save = load(); if (cur && ready) apply(); },      // (a partner's change: its pieces and what they do, afresh)
+           pieces: function () { return pieces; }, piece: function (id) { return byId[id] || null; }, spare: spare, buyPiece: buyPiece, persist: store, add: add,
+           // the piece of this kind on this spot in the place you're in, as saved now (an interaction's may be an old copy)
+           at: function (pid, x, y) { return cur ? layout(cur.id).filter(function (q) { return q.id === pid && q.x === x && q.y === y; })[0] || null : null; },
+           // a piece made at your workshop (js/workshop.js): into your tray, to put down with H
+           givePiece: function (pid, n) { save.have[pid] = (save.have[pid] || 0) + (n || 1); store(); },
            HOMES: HOMES, _save: function () { return save; }, _check: function (pid, x, y) { return check(pid, x, y); } };
 })();

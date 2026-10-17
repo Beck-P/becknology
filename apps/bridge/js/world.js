@@ -424,6 +424,8 @@ var BridgeWorld = (function () {
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.decorate(worldId, data);
         if (typeof BridgeHolm !== 'undefined') BridgeHolm.decorate(worldId, data);
+        if (typeof BridgeTrophies !== 'undefined') BridgeTrophies.decorate(worldId, data);   // the hall of finds
+        if (typeof BridgeWorkshop !== 'undefined') BridgeWorkshop.decorate(worldId, data);   // flax seed wherever seed is sold
         if (typeof BridgeChart !== 'undefined') BridgeChart.decorate(worldId, data);
         if (typeof BridgeGear !== 'undefined') BridgeGear.decorate(worldId, data);
         if (typeof BridgeMine !== 'undefined') BridgeMine.decorate(worldId, data);
@@ -445,7 +447,10 @@ var BridgeWorld = (function () {
         if (typeof BridgeFishing !== 'undefined') BridgeFishing.decorate(worldId, data);
         if (typeof BridgeActions !== 'undefined') BridgeActions.decorate(worldId, data);
         if (typeof BridgeSylvara !== 'undefined' && BridgeSylvara.decorate) BridgeSylvara.decorate(worldId, data);   // the willow, once the first sword has said it
-        if (typeof BridgeLedger !== 'undefined' && BridgeLedger.decorate) BridgeLedger.decorate(worldId, data);   // the captain's desk aboard
+        if (typeof BridgeDungeon !== 'undefined') BridgeDungeon.decorate(worldId, data);     // the Undercroft: tonight's crypt
+        if (typeof BridgeFestivals !== 'undefined') BridgeFestivals.decorate(worldId, data); // a festival's props, stall and contest
+        if (typeof BridgeEvents !== 'undefined') BridgeEvents.decorate(worldId, data);       // small happenings on the hour
+        if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.decorate(worldId, data);   // the cast keep their day
         if (typeof BridgeHome !== 'undefined') BridgeHome.decorate(worldId, data);       // last: it keeps the rest clear
         if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);
         var finish = function () {
@@ -870,7 +875,8 @@ var BridgeWorld = (function () {
     var post = world.scene && SCENE_HOOKS[world.tileset] && SCENE_HOOKS[world.tileset].post;
     if (post) post(bctx, buf, nw, nh, offX, offY, ts, now);
     // the finished frame through the graphics card (js/gpu.js: the glow), or as it is when there's no card to help
-    var out = (typeof BridgeGPU !== 'undefined' && BridgeGPU.present(buf, nw, nh, { glow: glowNow })) || buf;
+    var gsc = world.scene && typeof BridgeScene !== 'undefined' ? BridgeScene.get(world.scene.id) : null;
+    var out = (typeof BridgeGPU !== 'undefined' && BridgeGPU.present(buf, nw, nh, { glow: glowNow, guess: glowGuess, scene: gsc, offX: offX, offY: offY })) || buf;
 
     // ---- Blit: integer upscale onto the device-pixel canvas ----
     var blitX = Math.round(dw / 2 - (nw * zoom) / 2 + (offXf - offX) * zoom);
@@ -889,13 +895,18 @@ var BridgeWorld = (function () {
     drawScreenLayer(ctx, w, h, soffX, soffY, sts, now);
   }
 
-  // How much a place glows (js/gpu.js): its JSON's "glow" if it says, else outdoors and all of Arcadia do. Indoors
-  // waits for its own say: a brightly lit room's pale things (piano keys in the tavern's firelight) read as lights.
-  var glowNow = 0;
+  // How much a place glows (js/gpu.js): its JSON's "glow" if it says, else outdoors and all of Arcadia, and anywhere
+  // whose scene was rendered with its glow image (what gives off light, exactly). Indoors without one waits for its
+  // own say: a brightly lit room's pale things (piano keys in the tavern's firelight) pass for lights by eye — and
+  // with one, the eye isn't asked (glowGuess 0).
+  var glowNow = 0, glowGuess = 1;
   function glowOf(w) {
-    if (w.glow != null) return w.glow;
     var C = typeof BridgeClock !== 'undefined' ? BridgeClock : null;
-    return C && (C.outdoor(currentWorldId) || C.planet(currentWorldId) === 'arcadia') ? 1 : 0;
+    var sc = w.scene && typeof BridgeScene !== 'undefined' ? BridgeScene.get(w.scene.id) : null, img = !!(sc && sc.meta && sc.meta.glow);
+    var open = C && (C.outdoor(currentWorldId) || C.planet(currentWorldId) === 'arcadia');
+    glowGuess = open || !img ? 1 : 0;
+    if (w.glow != null) return w.glow;
+    return open || img ? 1 : 0;
   }
 
   // Everything that lives in the world: tiles, glow, entities, character,

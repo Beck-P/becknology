@@ -47,7 +47,7 @@ var BridgeClock = (function () {
   var RX = [
     [/^lumar/, 'lumar'], [/^verdance/, 'verdance'], [/^hoarfell/, 'hoarfell'], [/^sylvara/, 'sylvara'],
     [/^(arcadia|cyber-noodle-bar|chrome-clinic|junk-pawn-shop|tech-repair-shop|null-den)/, 'arcadia'],
-    [/^enigma/, 'enigma'], [/^singularity/, 'singularity'], [/^(bridge|quarters|hangar|gameroom)$/, 'ship']
+    [/^enigma/, 'enigma'], [/^singularity/, 'singularity'], [/^(bridge|quarters|hangar|gameroom|office)$/, 'ship']
   ];
   // under the open sky (the rest are indoors: their windows follow the time, their light doesn't)
   var OUTDOOR = ['lumar', 'lumar-crimson', 'lumar-rose', 'lumar-sapphire', 'lumar-midnight', 'lumar-crown', 'lumar-holm',
@@ -226,7 +226,7 @@ var BridgeClock = (function () {
   })();
 
   return {
-    PLANETS: PLANETS, sky: sky, weights: weights, etAt: etAt, hoursAt: hoursAt, bustleAt: bustleAt, planet: planetOf, outdoor: outdoor, time: time, season: season, daylight: daylight, moon: moon,
+    PLANETS: PLANETS, now: realNow, sky: sky, weights: weights, etAt: etAt, hoursAt: hoursAt, bustleAt: bustleAt, planet: planetOf, outdoor: outdoor, time: time, season: season, daylight: daylight, moon: moon,
     etNow: etNow, etParts: etParts, now: realNow, fmtHours: fmtHours, until: until, dayLen: dayLen, bustle: bustle,
     _at: setAt
   };

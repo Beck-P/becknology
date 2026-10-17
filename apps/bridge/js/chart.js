@@ -59,6 +59,7 @@ var BridgeChart = (function () {
     if (!worldId) return null;
     if (I[worldId]) return worldId;
     if (INSIDE[worldId]) return INSIDE[worldId];
+    if (/^lumar-manor-/.test(worldId)) return 'lumar-crown';                 // Ashcombe House's other rooms
     for (var id in I) if (worldId.indexOf(id + '-') === 0 && (!best || id.length > best.length)) best = id;   // the longest: lumar-rose-mine is Rose's
     return best;
   }
@@ -165,7 +166,7 @@ var BridgeChart = (function () {
     function img(src) { return new Promise(function (ok, no) { var im = new Image(); im.onload = function () { ok(im); }; im.onerror = no; im.src = src; }); }
     var base = '/bridge/assets/scenes/' + id + '/';
     fetch(base + 'scene.json').then(function (r) { return r.json(); }).then(function (meta) {
-      return Promise.all([img(base + 'full.png?v=' + meta.rev), img(base + 'shore.png?v=' + meta.rev)]);
+      return Promise.all([img(base + 'full.' + (meta.ext || 'png') + '?v=' + meta.rev), img(base + 'shore.' + (meta.ext || 'png') + '?v=' + meta.rev)]);
     }).then(function (res) {
       var full = res[0], shore = res[1], q = 4, w = Math.ceil(full.width / q), h = Math.ceil(full.height / q);
       function px(im) {

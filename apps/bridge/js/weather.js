@@ -147,8 +147,8 @@ var BridgeWeather = (function () {
   // ---- what it does to the rest of the game ----------------------------------------------------------------------------
   function lerp(a, b, k) { return a + (b - a) * k; }
   /** The sea, for the sloop: how thick its squalls and fog come, the wind, and a storm's or a fog's grip on the whole sea. */
-  function sea() {
-    var w = at('lumar'), K = w.kind, k = w.k;
+  function sea(ms) {                                       // (at a given moment: a race's gun, js/race.js)
+    var w = at('lumar', ms), K = w.kind, k = w.k;
     return { kind: K, k: k,
              squall: lerp(1, { fair: 0.5, breezy: 0.9, rain: 1.7, fog: 0.6, storm: 2.8, gale: 1.4 }[K] || 1, k),
              fog: lerp(1, { fair: 0.5, breezy: 0.6, rain: 1, fog: 3.5, storm: 1, gale: 0.4 }[K] || 1, k),

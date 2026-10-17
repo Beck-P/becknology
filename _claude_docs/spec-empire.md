@@ -83,17 +83,39 @@ in particular places, and the path from "I have money" to "I have something wond
 1. **Materials and the Workshop** — every material with a clear source (mining, forage, farm, markets, salvage,
    monsters); a Workshop you build at your base, smiths you hire to work it while you're away; recipes on the clock:
    processing (timber → planks, ore → bars), ship fittings and guns (cheaper than the yards, and some only craftable),
-   tools (better pick, rod), things for your homes. *(in progress)*
+   tools (better pick, rod), things for your homes. *(built, October 17: js/workshop.js — fourteen new materials,
+   29 recipes, smiths on the payroll, plans bought, found or taught for a favour, parts fitted by a harbourmaster;
+   the Bridge's CLAUDE.md, "The Workshop". Its building is in the holm's render.)*
 2. **Your own shipyard** — a slipway at the holm: fit the parts you've made to ships lying there; build a ship from
    plans you've bought at a yard plus timber, iron, rope and canvas, over days; choose her paint, sails and
    figurehead. Later: a designer to lay out decks, guns and holds.
+   *(built, October 17: js/shipyard.js — the slipway on the holm (12,000, after the workshop), hull plans from the
+   yards (cutter, brigantine, raider, galleon), a keel laid and named, three stages each with its own materials and
+   hours, shipwrights on the payroll, launched into the fleet; paint, sails and figurehead on any ship lying at the holm;
+   parts fitted for nothing. The Bridge's CLAUDE.md, "Your own shipyard". Her colours are drawn wherever she is; the slip
+   is in the holm's scene script (assets_yard.py) and the holm is queued to render with it.)*
 3. **Running it from the office** — standing orders and captains (trade loops, supply runs between your holdings),
    the Workshop's queue, the fleet's chart, the treasury, the daily dispatch: one desk for the whole empire.
+   *(built, October 17: js/orders.js — captains in three grades on the payroll, trade loops of two to four ports and
+   supply runs from the holm's warehouse to your businesses' stock (and materials home for the Workshop), worked out on
+   the clock with risk by sea and a profit per run; js/dispatch.js — two to four seeded opportunities and troubles each
+   ET morning, each a choice with a safe default; js/treasury.js — money in and out by source over seven days, with
+   hints; the office's desk, workshop book, chart-table route lines and counting table, and the ledger's Today, Treasury
+   and Standing orders. The Bridge's CLAUDE.md, "Running it from the office".)*
 4. **Trophies and your own finds** — no hired warriors (Beck: "I don't know if I like the hired warriors hunt monsters
    and bring back the loot… fine to leave out"). The monsters you beat yourself and the relics you dig up yourself go
    in a trophy hall at your base; the rarest finds are always yours to go and get.
+   *(built, October 17: js/trophies.js — the hall of finds on the holm (7,500, after the cottage), its own render with
+   oak boards for the five sea legends, plinths and glass cases; eighteen finds drawn on their spots once you have them
+   (relics from the Undercroft, the deep's monster trophies, the Lantern Beyond, the Heartsong, the Regatta Cup…), each
+   with a plate; the empty ones say where to look. The Bridge's CLAUDE.md, "The hall of finds".)*
 5. **Magic things** — the Workshop's highest tier: rare materials you found yourself + trophies → wondrous items with
    real effects; the Cabinet of Wonders' set bonuses.
+   *(built, October 17: js/wonders.js — six wonders made at the Workshop from things you found yourself: the Storm
+   Compass, the Gilded Ledger, the Tidecaller's Pearl, and three Undercroft relics woken (the Ferryman's Bell, the Barrow
+   Crown, the Ferryman's Coin); each into the Cabinet of Wonders in the hall of finds, working for good (fog, takings,
+   fishing, the deep, wages, repairs). The Bridge's CLAUDE.md, "The Cabinet of Wonders". And every completed set in the
+   Collection gives a lasting bonus in its own line of work (js/codex.js `BONUS`).)*
 6. **Across worlds** — bases beyond Lumar (the farm on Verdance, a lodge on Hoarfell, a front in Arcadia), freight by
    the mothership, ranks and licences.
 

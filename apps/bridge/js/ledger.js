@@ -8,15 +8,20 @@
  *                 you've found but don't own with their price; the rest blocked out until you've been where they are
  *   Staff         everyone working for you — business staff, ship's hands, crew, farm hands — with their faces, what
  *                 each does and costs a day, what their workplace made today, what's owed (and a button to pay it);
- *                 tap someone to move them or let them go. The captain's desk on the bridge opens the book here.
+ *                 tap someone to move them or let them go. The staff board in the captain's office opens the book
+ *                 here (js/worlds/office.js, which pins the same people's faces to it: `roster`)
  *   People        who you can hire: your crew (where they stand, what they do for you), the farm's hands, the hands
  *                 aboard your ships; anyone you haven't met yet is a shadow with a hint where to look
+ *   Today         the morning dispatch (js/dispatch.js): what's on the desk this morning, decided or not
+ *   Orders        your captains and their ships' standing orders (js/orders.js): each loop, where she is on it, what
+ *                 her runs have made; captains ashore; captains for hire
+ *   Treasury      the last seven days' money in and out by source, as little bars a day (js/treasury.js), and the hints
  *   Fleet         every ship: where she lies (or how long till she's home), hull, hold, fish hold, hands
- *   Places        your homes, the farm, the holm and what's built on it
+ *   Places        your homes, the farm, the holm and what's built on it, the Workshop and what's being made there
  *   Contracts     what you've promised to carry, where, by when
  *
  * It only reads: each module keeps its own state (js/business.js, crew.js, fleet.js, holm.js, homestead.js, farm.js,
- * animals.js, trade.js, home.js). Registered as a page with BridgeMenu.
+ * animals.js, trade.js, home.js, workshop.js). Registered as a page with BridgeMenu.
  */
 var BridgeLedger = (function () {
   var page = null;
@@ -64,6 +69,16 @@ var BridgeLedger = (function () {
       var chest = BridgeHolm._state().chest || 0;
       if (chest > 0) out.push({ name: 'The strongbox on ' + BridgeHolm.name(), sub: 'What your ships brought home', fig: coins(chest), world: 'lumar-holm-home' });
     }
+    if (has('BridgeWorkshop') && BridgeWorkshop.built()) {
+      var ws = BridgeWorkshop.summary();
+      if (ws.since) out.push({ name: 'Made at the workshop', sub: ws.since + ' thing' + (ws.since === 1 ? '' : 's') + ' since you last looked — on the racks on ' + BridgeHolm.name(), world: 'lumar-holm' });
+      if (ws.idle) out.push({ name: 'Idle at the forge', sub: ws.idle + ' smith' + (ws.idle === 1 ? '' : 's') + ' with nothing to make — queue something at the workshop', world: 'lumar-holm', alert: true });
+    }
+    if (has('BridgeShipyard') && BridgeShipyard.built()) {
+      var sy = BridgeShipyard.summary();
+      if (sy.job && sy.job.ready) out.push({ name: 'The ' + sy.job.name + ' is finished', sub: 'On the slipway on ' + BridgeHolm.name() + ' — launch her', world: 'lumar-holm', alert: true });
+      else if (sy.job && sy.job.waiting) out.push({ name: 'The ' + sy.job.name + ' on the slip', sub: sy.job.waiting === 'materials' ? 'Waiting on materials — put them in at the slipway' : 'Nobody working her — hire a shipwright', world: 'lumar-holm' });
+    }
     if (has('BridgeFleet')) BridgeFleet.all().forEach(function (s) {
       if (s.away) return;
       if (s.hull < 0.5) out.push({ name: s.name, sub: 'Hull at ' + Math.round(s.hull * 100) + '% — any harbourmaster mends her', world: worldOfShip(s), alert: s.hull < 0.25 });
@@ -76,6 +91,11 @@ var BridgeLedger = (function () {
     if (dry && !(has('BridgeHomestead') && BridgeHomestead.active && BridgeHomestead.active('tam'))) out.push({ name: 'Thirsty rows', sub: dry + ' planted tiles have dried out — water them, or hire Tam', world: 'verdance' });
     var herd = has('BridgeAnimals') ? BridgeAnimals.journal() : [], ready = herd.filter(function (a) { return a.ready; }).length;
     if (ready) out.push({ name: 'In the barnyard', sub: ready + (ready === 1 ? ' animal has' : ' animals have') + ' eggs or milk for you', world: 'verdance' });
+    if (has('BridgeOrders')) out = out.concat(BridgeOrders.needs());
+    if (has('BridgeDispatch') && BridgeDispatch.undecided()) {
+      var und = BridgeDispatch.undecided();
+      out.push({ name: 'The morning dispatch', sub: und + ' thing' + (und === 1 ? '' : 's') + ' to decide — on your desk in the office, or under Today here (none of it has to be)', act: function () { closeMenu(); BridgeDispatch.open(); } });
+    }
     if (has('BridgeTrade')) {
       var d0 = BridgeTrade.today();
       BridgeTrade.mine().forEach(function (c) {
@@ -105,7 +125,7 @@ var BridgeLedger = (function () {
                  (st.banks ? ' · banked to you' : full ? ' · FULL' : p ? ' · ' + p + ' waiting' : ''),
                  fig: st.banks ? coins(st.banked) : coins(p), world: d.world, alert: full || !st.running };
       }
-      if (d.built === 'holm' && been(d.world)) return { name: d.name, sub: 'Build it from your island\'s ledger · ~' + d.rate + ' an open hour', fig: coins(d.price), world: d.world };
+      if (d.built === 'holm' && been('lumar-holm')) return { name: d.name, sub: 'Build it from your island\'s ledger · ~' + d.rate + ' an open hour', fig: coins(d.price), world: 'lumar-holm' };   // (it stands on the holm)
       if (been(d.world)) return { name: d.name, sub: 'For sale · ' + placeOf(d.world) + ' · ' + BridgeBusiness.hoursText(d.id) + ' · ~' + d.rate + ' an open hour' +
                                   (d.owner && has('BridgePeople') && BridgePeople.all()[d.owner] ? ' · ask ' + BridgePeople.all()[d.owner].name : ''), fig: coins(d.price), world: d.world };
       var reg = regionOf(d.world);
@@ -127,13 +147,74 @@ var BridgeLedger = (function () {
 
   // ---- staff and payroll: everyone working for you, what they cost and what they bring in ---------------------------
   function closeMenu() { if (has('BridgeMenu') && BridgeMenu.close) BridgeMenu.close(); }
+  var HAND_COLOUR = { deckhand: 'white', gunner: 'red', navigator: 'cyan', rigger: 'green', fighter: 'purple', purser: 'gold' };
+  function handFace(c) { return { seed: c.name + ':' + c.id, style: 'coat', colour: HAND_COLOUR[c.role] || 'white' }; }
+  /** What everyone working for you costs a day, what your businesses made today and what's owed (here, and the office's
+   *  strongbox). */
+  function payroll() {
+    var B = has('BridgeBusiness') ? BridgeBusiness : null, F = has('BridgeFleet') ? BridgeFleet : null, wages = 0;
+    if (B && B.staff) B.staff().forEach(function (x) { wages += x.wage; });
+    if (F && F.crew && F.wage) F.crew().forEach(function (c) { wages += F.wage(c); });
+    if (B && B.crewWage && has('BridgeCrew')) BridgeCrew.list().forEach(function (c) { wages += B.crewWage(c.id); });
+    return { wages: wages, made: B ? B.summary().reduce(function (a, b) { return a + b.status.today; }, 0) : 0,
+             owed: B && B.owing ? B.owing() : { total: 0, people: [] } };
+  }
+  /** Everyone working for you, for the staff board in the captain's office (js/worlds/office.js): their name, how to draw
+   *  their face (`face` for js/look.js, or the `sheet` of a crew member), and how they are — 'on' at work, 'off' (shut,
+   *  on their way there, or ashore between ships), 'sea' (aboard a ship that's out), 'owed' (a payday missed). */
+  function roster() {
+    var out = [], B = has('BridgeBusiness') ? BridgeBusiness : null, F = has('BridgeFleet') ? BridgeFleet : null;
+    if (B && B.staff) B.staff().forEach(function (x) {
+      if (x.at === 'captain' && has('BridgeOrders')) {             // a captain (js/orders.js): at sea, lying somewhere, ashore
+        var c = BridgeOrders.captainRow(x);
+        out.push({ name: x.name, face: c.face, state: c.state });
+        return;
+      }
+      if (!B.get(x.at)) {                                         // a smith at your workshop (js/workshop.js), a shipwright on your slip (js/shipyard.js): no opening hours
+        var w = x.at === 'slipway' ? (has('BridgeShipyard') ? BridgeShipyard.wrightRow(x) : {}) : has('BridgeWorkshop') ? BridgeWorkshop.smithRow(x) : {};
+        out.push({ name: x.name, face: w.face || B.faceOf(x, x.at), state: x.missed > 0 ? 'owed' : 'on' });
+        return;
+      }
+      out.push({ name: x.name, face: B.faceOf(x, x.at), state: x.missed > 0 ? 'owed' : (x.arrives && x.arrives > Date.now()) || !B.openNow(x.at) ? 'off' : 'on' });
+    });
+    if (F && F.crew) F.crew().forEach(function (c) {
+      var s = F.get ? F.get(c.ship) : null, o = B && B.handOwed ? B.handOwed(c.id) : { missed: 0 };
+      out.push({ name: c.name, face: handFace(c), state: o.missed > 0 ? 'owed' : !s ? 'off' : s.away ? 'sea' : 'on' });
+    });
+    var all = has('BridgePeople') ? BridgePeople.all() : {};
+    if (has('BridgeCrew')) BridgeCrew.list().forEach(function (c) {
+      out.push({ name: c.name, sheet: all[c.id] && all[c.id].sheet, state: B && B.unpaid(c.id) ? 'owed' : 'on' });
+    });
+    if (has('BridgeHomestead') && BridgeHomestead.HANDS) Object.keys(BridgeHomestead.HANDS).forEach(function (id) {
+      var H = BridgeHomestead.HANDS[id];
+      if (BridgeHomestead.active(id)) out.push({ name: H.name, face: { seed: H.name, style: 'ranger', colour: 'green' }, state: 'on' });
+    });
+    return out;
+  }
   function staff() {
-    var rows = [], wages = 0, owed = has('BridgeBusiness') && BridgeBusiness.owing ? BridgeBusiness.owing() : { total: 0, people: [] };
+    var rows = [], pr = payroll();
     var B = has('BridgeBusiness') ? BridgeBusiness : null, F = has('BridgeFleet') ? BridgeFleet : null;
     // at your businesses
     if (B && B.staff) B.staff().forEach(function (x) {
       var d = B.get(x.at), on = d && B.openNow(x.at), coming = x.arrives && x.arrives > Date.now(), st = d ? B.status(x.at) : null;
-      wages += x.wage;
+      if (x.at === 'captain' && has('BridgeOrders')) {             // a captain, on the same payroll (js/orders.js)
+        var c = BridgeOrders.captainRow(x);
+        rows.push({ name: x.name + ' · ' + String(x.title || 'captain').toLowerCase(), face: c.face, sub: c.sub + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
+                    fig: coins(x.wage) + '<small>/day</small>', alert: x.missed > 0, act: function () { closeMenu(); BridgeOrders.captain(x.id); } });
+        return;
+      }
+      if (!d && x.at === 'slipway') {                               // a shipwright on your slip (js/shipyard.js), on the same payroll
+        var sw = has('BridgeShipyard') ? BridgeShipyard.wrightRow(x) : { sub: '' };
+        rows.push({ name: x.name + ' · ' + (x.title || 'shipwright').toLowerCase() + ' on the slipway', face: sw.face, sub: sw.sub + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
+                    fig: coins(x.wage) + '<small>/day</small>', alert: x.missed > 0, act: has('BridgeShipyard') ? function () { closeMenu(); BridgeShipyard.wrightCard(x.id); } : null });
+        return;
+      }
+      if (!d) {                                                     // a smith at your workshop (js/workshop.js), on the same payroll
+        var w = has('BridgeWorkshop') ? BridgeWorkshop.smithRow(x) : { sub: '' };
+        rows.push({ name: x.name + ' · ' + (x.title || 'smith').toLowerCase() + ' at the workshop', face: w.face, sub: w.sub + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
+                    fig: coins(x.wage) + '<small>/day</small>', alert: x.missed > 0, act: has('BridgeWorkshop') ? function () { closeMenu(); BridgeWorkshop.smithCard(x.id); } : null });
+        return;
+      }
       rows.push({ name: x.name + ' · ' + x.title.toLowerCase() + (d ? ' at ' + d.name : ''), face: B.faceOf(x, x.at),
                   sub: B.perkOf(x, x.at) + ' · ' + (coming ? 'on the way there' : on ? 'on shift now' : 'off till it opens') +
                        (st ? ' · it made ' + st.today.toLocaleString() + ' today' : '') + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
@@ -143,8 +224,7 @@ var BridgeLedger = (function () {
     // aboard your ships
     if (F && F.crew && F.wage) F.crew().forEach(function (c) {
       var s = F.get ? F.get(c.ship) : null, w = F.wage(c), o = B && B.handOwed ? B.handOwed(c.id) : { owe: 0, missed: 0 };
-      wages += w;
-      rows.push({ name: c.name + ' · ' + F.ROLES[c.role].name.toLowerCase() + ', ' + F.GRADES[c.skill], face: { seed: c.name + ':' + c.id, style: 'coat', colour: { deckhand: 'white', gunner: 'red', navigator: 'cyan', rigger: 'green', fighter: 'purple', purser: 'gold' }[c.role] || 'white' },
+      rows.push({ name: c.name + ' · ' + F.ROLES[c.role].name.toLowerCase() + ', ' + F.GRADES[c.skill], face: handFace(c),
                   sub: F.perk(c.role, c.skill) + (s ? ' · aboard the ' + s.name : '') + (o.owe > 0 ? ' · owed ' + Math.ceil(o.owe) : ''),
                   fig: coins(w) + '<small>/day</small>', alert: o.missed > 0, act: function () { closeMenu(); handCard(c); } });
     });
@@ -152,7 +232,6 @@ var BridgeLedger = (function () {
     var all = has('BridgePeople') ? BridgePeople.all() : {};
     if (has('BridgeCrew')) BridgeCrew.list().forEach(function (c) {
       var w = B && B.crewWage ? B.crewWage(c.id) : 0;
-      wages += w;
       rows.push({ name: c.name + ' · ' + c.role.toLowerCase() + ' (crew)', sub: (all[c.id] && all[c.id].crew ? all[c.id].crew.perkText : c.perkText) + (B && B.unpaid(c.id) ? ' · UNPAID: not working' : ''),
                   fig: coins(w) + '<small>/day</small>', alert: B && B.unpaid(c.id), world: 'bridge' });
     });
@@ -162,9 +241,8 @@ var BridgeLedger = (function () {
       if (!BridgeHomestead.active(id)) return;
       rows.push({ name: H.name + ' · farm hand', face: { seed: H.name, style: 'ranger', colour: 'green' }, sub: H.does + ' · paid up for the days you hired', fig: '<span class="lg-ok">paid</span>', world: 'verdance' });
     });
-    var made = B ? B.summary().reduce(function (a, b) { return a + b.status.today; }, 0) : 0;
-    var head = '<div class="lg-total">Wages ' + wages.toLocaleString() + ' a day · your businesses made ' + made.toLocaleString() + ' today' +
-      (owed.total ? ' · <b>owed ' + owed.total.toLocaleString() + '</b> <button type="button" class="gm-btn gm-btn-sm lg-pay">Pay it</button>' : '') + '</div>';
+    var head = '<div class="lg-total">Wages ' + pr.wages.toLocaleString() + ' a day · your businesses made ' + pr.made.toLocaleString() + ' today' +
+      (pr.owed.total ? ' · <b>owed ' + pr.owed.total.toLocaleString() + '</b> <button type="button" class="gm-btn gm-btn-sm lg-pay">Pay it</button>' : '') + '</div>';
     return { html: rows.length ? head + list(rows) : '', n: rows.length ? rows.length + ' working' : '' };
   }
   // one of your ships' hands: move them to another of your ships, or pay them off
@@ -191,6 +269,12 @@ var BridgeLedger = (function () {
       var H = BridgeHomestead.HANDS[id], on = BridgeHomestead.active(id);
       rows.push({ name: H.name + ' · farm hand', sub: (on ? 'Working the farm today — ' : 'By the day, at the notice board on the farm — ') + H.does, fig: on ? '<span class="lg-ok">today</span>' : coins(H.wage) + '<small>/day</small>', world: 'verdance' });
     });
+    if (has('BridgeOrders')) {
+      var caps = BridgeOrders.captains(), fresh = BridgeOrders.candidates().filter(function (c) { return !c.taken && !c.locked; });
+      rows.push({ name: 'Captains for your ships', sub: (caps.length ? caps.length + ' working for you · ' : '') + 'three look for a ship each day: ' + BridgeOrders.candidates().map(function (c) { return c.name + ' (' + c.title.toLowerCase() + (c.locked ? ', not yet' : '') + ')'; }).join(', ') +
+                 ' — at the chart table in your office, or here', fig: fresh.length ? coins(fresh[0].wage) + '<small>/day</small>' : '', dim: !BridgeFleet.all().some(function (s) { return s.type !== 'sloop'; }),
+                 act: function () { closeMenu(); BridgeOrders.hireView(null); } });
+    }
     if (has('BridgeFleet')) {
       var hands = BridgeFleet._state().crew || [];
       if (hands.length) rows.push({ name: hands.length + ' hand' + (hands.length === 1 ? '' : 's') + ' aboard your ships', sub: hands.map(function (h) { return h.name + ' (' + h.role + ')'; }).join(', ') });
@@ -209,6 +293,7 @@ var BridgeLedger = (function () {
       var sp = BridgeFleet.spec(s.type), hold = 0;
       Object.keys(s.hold || {}).forEach(function (k) { hold += s.hold[k]; });
       var where = s.away && s.away.passage ? 'Sailing for ' + portName(s.away.to) + ' — arrives in ' + ago(Math.max(0, s.away.back - Date.now()))
+                : s.away && s.away.order ? BridgeFleet.where(s).replace(/^./, function (c) { return c.toUpperCase(); })
                 : s.away ? 'Away on a voyage — home in ' + ago(Math.max(0, s.away.back - Date.now())) : s.at ? 'Lying at ' + portName(s.at) : 'At whichever pier you\'re at';
       var crew = BridgeFleet.crewOn(s.id).length, fish = BridgeFleet.catchCount ? BridgeFleet.catchCount(s) : 0;
       // tap a ship lying somewhere to send her anywhere, from wherever you are (js/fleet.js order)
@@ -219,6 +304,56 @@ var BridgeLedger = (function () {
                act: sendable ? function () { closeMenu(); BridgeHarbour.send(s, function (msg) { if (msg) BridgeInteractions.choose({ title: 'Orders given', text: msg, closeLabel: 'Done' }); }); } : null };
     });
     return { html: list(rows), n: ships.length };
+  }
+
+  // ---- today's dispatch, standing orders, the treasury (js/dispatch.js, orders.js, treasury.js) -----------------------
+  function today() {
+    if (!has('BridgeDispatch')) return { html: '', n: '' };
+    var items = BridgeDispatch.today();
+    var rows = items.map(function (it) {
+      var k = BridgeDispatch.decided(it.id);
+      return { name: it.title, sub: k ? 'Decided: ' + BridgeDispatch.choiceLabel(it, k).replace(/ \(.*\)$/, '') : it.dfltText ? 'Left alone, ' + it.dfltText + ' — tap to read it' : 'Yours to decide — tap to read it',
+               fig: k ? '<span class="lg-ok">done</span>' : '', act: function () { closeMenu(); BridgeDispatch.view(it.id); } };
+    });
+    return { html: rows.length ? '<div class="lg-total lg-left">' + esc(BridgeDispatch.dateline()) + ' — the morning dispatch</div>' + list(rows) : '', n: rows.length ? BridgeDispatch.undecided() + ' to decide' : '' };
+  }
+  function orders() {
+    if (!has('BridgeOrders') || !has('BridgeFleet') || !BridgeFleet.all().some(function (s) { return s.type !== 'sloop'; })) return { html: '', n: '' };
+    var rows = [], sum = BridgeOrders.summary();
+    BridgeOrders.list().forEach(function (x) {
+      var s = x.ship, o = x.order;
+      rows.push({ name: s.name + (x.captain ? ' · ' + x.captain.name : ' · no captain'), sub: o ? x.name + ' · ' + x.line.replace(/^on standing orders(: |, )/, '') + (o.last[0] ? ' · last run: ' + o.last[0].story : '')
+                                                                                             : x.captain ? 'No standing orders yet — tap to give her some' : 'No captain — tap to hire one',
+                  fig: o && o.made ? coins(o.made) : '', alert: !!(o && o.wait && ['nocap', 'unpaid', 'gone', 'nodock', 'off', 'away'].indexOf(o.wait.code) >= 0),
+                  act: function () { closeMenu(); BridgeOrders.ship(s.id); } });
+    });
+    BridgeOrders.captains().forEach(function (p) {
+      var c = BridgeOrders.captainRow(p);
+      if (c.state === 'off' && /ashore/.test(c.sub)) rows.push({ name: p.name + ' · ' + String(p.title || 'captain').toLowerCase(), face: c.face, sub: 'Ashore, waiting for a ship', act: function () { closeMenu(); BridgeOrders.captain(p.id); } });
+    });
+    return { html: list(rows) + (sum.runs ? '<div class="lg-total">' + sum.runs + ' runs in all · ' + sum.made.toLocaleString() + ' coins made · ' + sum.day.toLocaleString() + ' in the last day</div>' : ''), n: sum.orders ? sum.orders + ' on orders' : '' };
+  }
+  function bars(series, col) {                                   // a bar a day: up for what came in clear, down for what went out
+    var max = 1;
+    series.forEach(function (v) { max = Math.max(max, Math.abs(v.in - v.out)); });
+    return '<span class="lg-bars">' + series.map(function (v) {
+      var net = v.in - v.out, h = Math.round(Math.abs(net) / max * 8);
+      if (net && !h) h = 1;
+      return '<i style="--c:' + (net >= 0 ? col : '#c04030') + ';--u:' + (net > 0 ? h : 0) + 'px;--d:' + (net < 0 ? h : 0) + 'px"></i>';
+    }).join('') + '</span>';
+  }
+  function treasury() {
+    if (!has('BridgeTreasury')) return { html: '', n: '' };
+    var Tr = BridgeTreasury, w = Tr.week();
+    if (!w.inAll && !w.outAll) return { html: '', n: '' };
+    var rows = Tr.CATS.filter(function (c) { return w.tot[c.id].in || w.tot[c.id].out; }).map(function (c) {
+      var t = w.tot[c.id], tw = Tr.trendWord(c.id, w);
+      return { name: c.name, sub: (t.in ? 'in ' + t.in.toLocaleString() : '') + (t.in && t.out ? ' · ' : '') + (t.out ? 'out ' + t.out.toLocaleString() : '') + (tw ? ' · ' + tw : ''),
+               fig: bars(w.series[c.id], c.col) + (t.net < 0 ? '−' : '') + coins(Math.abs(t.net)), alert: t.net < 0 && c.id !== 'wages' && c.id !== 'build' };
+    });
+    Tr.hints().forEach(function (h) { rows.push({ name: h.kind === 'up' ? 'Growing' : h.kind === 'down' ? 'Losing' : 'The next coin', sub: h.text, world: h.world && h.world !== 'office' ? h.world : null }); });
+    return { html: '<div class="lg-total lg-left">The last seven days: in ' + w.inAll.toLocaleString() + ' · out ' + w.outAll.toLocaleString() + ' · ' + (w.net >= 0 ? w.net.toLocaleString() + ' to the good' : (-w.net).toLocaleString() + ' down') + '</div>' + list(rows),
+             n: (w.net >= 0 ? '+' : '−') + Math.abs(w.net).toLocaleString() };
   }
 
   // ---- places of your own -------------------------------------------------------------------------------------------
@@ -236,6 +371,28 @@ var BridgeLedger = (function () {
     if (has('BridgeHolm') && BridgeHolm.owned && BridgeHolm.owned()) {
       var st = BridgeHolm._state(), b = Object.keys(st.built || {}).filter(function (k) { return st.built[k]; });
       rows.push({ name: BridgeHolm.name(), sub: 'Your island · built: ' + (b.length ? b.join(', ') : 'nothing yet') + (st.chest ? ' · ' + st.chest + ' in the strongbox' : ''), fig: '<span class="lg-ok">yours</span>', world: 'lumar-holm' });
+      // the slipway: the ship on it (js/shipyard.js)
+      if (has('BridgeShipyard') && BridgeShipyard.built()) {
+        var syd = BridgeShipyard.summary();
+        rows.push({ name: 'The slipway on ' + BridgeHolm.name(), sub: syd.wrights.length + ' shipwright' + (syd.wrights.length === 1 ? '' : 's') + ' · ' + syd.launched + ' launched · ' + syd.line,
+                    fig: syd.job ? (syd.job.ready ? '<span class="lg-ok">ready</span>' : Math.floor(syd.job.whole * 100) + '%') : 'empty', world: 'lumar-holm' });
+      }
+      // the hall of finds: how much of it is filled (js/trophies.js)
+      if (has('BridgeTrophies') && BridgeHolm.built('hall')) {
+        var tc = BridgeTrophies.count();
+        rows.push({ name: 'The hall of finds on ' + BridgeHolm.name(), sub: tc.n + ' of ' + tc.of + ' places filled - what you find yourself goes on show',
+                    fig: tc.n + '/' + tc.of, world: 'lumar-holm' });
+      }
+      // the workshop: who's making what, and when it's done (js/workshop.js)
+      if (has('BridgeWorkshop') && BridgeWorkshop.built()) {
+        var ws = BridgeWorkshop.summary();
+        rows.push({ name: 'The workshop on ' + BridgeHolm.name(), sub: ws.smiths.length + ' smith' + (ws.smiths.length === 1 ? '' : 's') + ' · ' + ws.made + ' made in all · ' + ws.line,
+                    fig: ws.working ? '<span class="lg-ok">at work</span>' : 'idle', world: 'lumar-holm' });
+        ws.jobs.forEach(function (j) {
+          rows.push({ name: '· ' + j.name, sub: j.working ? (j.by === 'you' ? 'At your bench' : j.by) + ' · ' + Math.floor(j.done * 100) + '% done' : 'Waiting for a free smith',
+                      fig: j.working ? 'in ' + ago(Math.max(60000, j.left)) : '' });
+        });
+      }
     }
     return { html: rows.length ? list(rows) : '', n: rows.length };
   }
@@ -255,13 +412,16 @@ var BridgeLedger = (function () {
     page = el || page;
     if (!page) return;
     acts = [];
-    var nd = needs(), bz = businesses(), sf = staff(), pp = people(), fl = fleet(), pl = places(), ct = contracts(), lg = legacy();
+    var nd = needs(), bz = businesses(), sf = staff(), pp = people(), fl = fleet(), pl = places(), ct = contracts(), lg = legacy(), td = today(), od = orders(), tr = treasury();
     var left = section('Needs you', nd.length || '', nd.length ? list(nd) : '<div class="jn-empty">Nothing needs you right now.</div>', 'jn-first') +
+               (td.html ? section('Today', td.n, td.html, 'lg-today') : '') +
+               (tr.html ? section('Treasury', tr.n, tr.html, 'lg-treasury') : '') +
                section('Businesses', bz.n, bz.html || '<div class="jn-empty">No businesses known yet.</div>') +
                (pl.html ? section('Your places', pl.n, pl.html) : '');
     var right = (sf.html ? section('Staff & payroll', sf.n, sf.html, 'lg-staff') : '') +
                 section('People you can hire', pp.n, pp.html || '<div class="jn-empty">Nobody yet.</div>') +
-                (fl.html ? section('Your fleet', fl.n, fl.html) : '') + (ct.html ? section('Contracts', ct.n, ct.html) : '') +
+                (od.html ? section('Standing orders', od.n, od.html, 'lg-orders') : '') +
+                (fl.html ? section('Your fleet', fl.n, fl.html, 'lg-fleet') : '') + (ct.html ? section('Contracts', ct.n, ct.html) : '') +
                 (lg.html ? section('Legacy', lg.n, lg.html) : '');
     page.innerHTML = '<div class="jn lg"><div class="jn-col">' + left + '</div><div class="jn-col">' + right + '</div></div>';
     page.querySelectorAll('.lg-go').forEach(function (b) {
@@ -277,19 +437,11 @@ var BridgeLedger = (function () {
     });
   }
 
-  // the office aboard: the captain's desk on the bridge (the side table by the chair) opens the books at the staff
-  function decorate(worldId, data) {
-    if (worldId !== 'bridge' || !data || !data.interactions) return;
-    data.interactions.forEach(function (it) {
-      if (it.label !== 'SIDE TABLE') return;
-      it.type = 'deck'; it.action = 'office'; it.label = "CAPTAIN'S DESK"; it.prompt = 'PRESS E FOR THE BOOKS';
-    });
-  }
-  function focusStaff() {
-    var sec = page && page.querySelector('.lg-staff');
+  function focus(which) {
+    var sec = page && page.querySelector('.lg-' + which);
     if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: 'start' });
   }
 
-  if (has('BridgeMenu') && BridgeMenu.page) BridgeMenu.page('ledger', { render: function (el, opts) { render(el); if (opts && opts.focus === 'staff') focusStaff(); }, leave: function () { page = null; } });
-  return { render: render, needs: needs, decorate: decorate };
+  if (has('BridgeMenu') && BridgeMenu.page) BridgeMenu.page('ledger', { render: function (el, opts) { render(el); if (opts && opts.focus) focus(opts.focus); }, leave: function () { page = null; } });
+  return { render: render, needs: needs, roster: roster, payroll: payroll };
 })();

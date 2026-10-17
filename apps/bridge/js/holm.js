@@ -9,7 +9,13 @@
  *     sent out trading with their crews (ROUTES), and repairs are done on your own slip;
  *   - THE GARDEN cleared and dug: a field of your own (js/farm.js farms any world with a `farm.plot`);
  *   - A WAREHOUSE: cargo kept ashore between ships (move it to and from a hold);
- *   - QUARTERS: a bunkhouse where your hands live between voyages (crew `ship: 'holm'`), up to eight.
+ *   - QUARTERS: a bunkhouse where your hands live between voyages (crew `ship: 'holm'`), up to eight;
+ *   - THE WORKSHOP (once the dock's rebuilt): a forge, a saw-pit and benches — materials made into planks and bars,
+ *     guns, fittings, tools, things for your homes, by your own hand or by smiths you hire (js/workshop.js). What it
+ *     makes goes into the store (`store`, the warehouse's too: `stored`, `storeAdd`, `storeTake`).
+ * Built up as a resort (js/legacy.js), the old boathouse becomes the Starling, a hotel you walk into (lumar-holm-resort,
+ * scenes/lumar_holm_resort.py): its front desk runs the business, its staff stand at their posts as you hire them and
+ * guests fill it while it's open.
  * Ships sent trading are away a while (`away`) and come back with the profit in the strongbox, or with a story: the
  * Crimson and Midnight seas are dangerous, and a ship with guns and fighters comes off better. Name the island what you
  * like. Kept in localStorage bridge_holm.
@@ -23,11 +29,27 @@ var BridgeHolm = (function () {
     garden:    { name: 'The garden', price: 1000, what: 'THE BRAMBLES GRUBBED OUT, THE GROUND DUG OVER. A FIELD OF YOUR OWN WITHIN THE OLD WALL.' },
     warehouse: { name: 'A warehouse', price: 6000, what: 'TIMBER, ON STONE FOOTINGS. CARGO KEPT ASHORE BETWEEN SHIPS - AS MUCH AS YOU LIKE.' },
     quarters:  { name: 'Quarters for your hands', price: 4000, what: 'A BUNKHOUSE. YOUR HANDS CAN LIVE ASHORE BETWEEN VOYAGES, EIGHT OF THEM.' },
+    // the Workshop (js/workshop.js): timber and iron come by sea, so the dock first
+    workshop:  { name: 'The workshop', price: 9000, needs: 'dock', because: 'TIMBER AND IRON COME BY SEA',
+                 what: 'A WORKSHOP ON THE LEVEL GROUND BY THE WELL: A FORGE AND ITS CHIMNEY, A SAW-PIT, BENCHES AND RACKS. MAKE THINGS WITH YOUR OWN HANDS - PLANKS AND BARS, GUNS AND FITTINGS, TOOLS - OR HIRE SMITHS TO MAKE THEM WHILE YOU\'RE AWAY.' },
+    // the slipway (js/shipyard.js): build your own ships; the timber and iron are worked at the workshop first
+    slipway:   { name: 'The slipway', price: 12000, needs: 'workshop', because: 'THE TIMBER AND IRON ARE WORKED THERE FIRST',
+                 what: 'THE OLD SLIP BELOW THE GARDEN WALL RELAID: OAK SLEEPERS RUNNING DOWN INTO THE WATER, A CRADLE, SHEER-LEGS AND A SHIPWRIGHT\'S SHED. LAY A KEEL FROM PLANS YOU\'VE BOUGHT AND BUILD A SHIP OF YOUR OWN OVER DAYS - HER NAME, HER PAINT, HER SAILS AND FIGUREHEAD YOURS TO CHOOSE - AND FIT WHAT YOUR WORKSHOP MAKES TO SHIPS LYING HERE, FOR NOTHING.' },
+    // the hall of finds (js/trophies.js): what you've found yourself, on show
+    hall:      { name: 'A hall of finds', price: 7500, needs: 'house', because: 'SOMEONE HAS TO LIVE HERE TO KEEP IT',
+                 what: 'A STONE HALL ON THE EAST LOT: OAK BOARDS ON THE WALL FOR THE SEA\'S LEGENDS, PLINTHS FOR WHAT YOU TAKE OFF THE DEEP\'S MONSTERS AND THE RAREST THINGS YOU DIG UP, GLASS CASES FOR THE SMALL PRECIOUS ONES. EVERYTHING YOU FIND YOURSELF GOES ON SHOW, WITH WHERE AND WHEN.' },
     // the holm as a resort (js/legacy.js): the old boathouse rebuilt as a hotel, run as a venue (js/business.js `holm-resort`)
-    resort:    { name: 'The Starling, a seaside hotel', price: 150000, needs: 'dock',
+    resort:    { name: 'The Starling, a seaside hotel', price: 150000, needs: 'dock', because: 'THE GUESTS COME BY SEA',
                  what: 'THE OLD BOATHOUSE DOWN, A HOTEL UP IN ITS PLACE: TWELVE ROOMS ON THE WATER, PARASOLS ON THE LAWN, GUESTS OFF EVERY PACKET FROM THE CAPITAL. IT RUNS LIKE ANY VENUE: PUT A MANAGER IN AND IT EARNS, NIGHT AND DAY.' }
   };
   var QUARTERS = 8;
+  // the Workshop's lot, by the well (scenes/lumar_holm.py LOTS; the world JSON's `holm.lots` once it's rendered), and
+  // till then its stand-in: the quarters' bunkhouse moved sixteen tiles west onto it (BridgeScene.standIn), smoking
+  // from its own chimney — a forge, as far as anyone can tell
+  var WORKSHOP_LOT = [10, 6, 15, 9], WORKSHOP_AT = [13, 9], STAND_IN_SMOKE = [15.28, 5.294];
+  var SLIPWAY_AT = [10, 19];                // the head of the old slip below the garden wall (scenes/lumar_holm.py)
+  var HALL_LOT = [33, 10, 37, 13], HALL_AT = [35, 13];   // the hall of finds' lot east of the warehouse, its door (ditto)
+  if (typeof BridgeScene !== 'undefined' && BridgeScene.standIn) BridgeScene.standIn(WID, 'workshop', 'built', ['quarters', 'built'], -16, 0);
 
   var st = { owned: false, name: 'Starling Holm', built: {}, store: {}, chest: 0, log: [] };
   try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* fresh */ }
@@ -52,33 +74,74 @@ var BridgeHolm = (function () {
 
   // ---- as the island loads: what's built, what smokes, which lots are walls now -------------------------------------
   function decorate(worldId, data) {
+    if (worldId === WID + '-resort' && data) return starling(data);
     if (worldId !== WID || !data) return;
     returns();
     data.name = st.name;
+    data.holm = data.holm || {};
+    data.holm.lots = data.holm.lots || {};
+    if (!data.holm.lots.workshop) { data.holm.lots.workshop = WORKSHOP_LOT.slice(); data.holm.standIn = true; }
+    var rendered = !data.holm.standIn;                       // the island's render lays the workshop out (else the stand-in)
     if (data.scene) {
       data.scene.layers = { house: built('house') ? 'cottage' : 'ruin', garden: built('garden') ? 'tilled' : 'wild',
                             dock: built('dock') ? 'built' : null, warehouse: built('warehouse') ? 'built' : null, quarters: built('quarters') ? 'built' : null,
-                            resort: built('resort') ? 'built' : 'old' };
-      var sm = (data.holm && data.holm.smoke) || {};
-      data.scene.smoke = ['house', 'quarters'].filter(function (k) { return built(k) && sm[k]; }).map(function (k) { return sm[k]; });
+                            workshop: built('workshop') ? 'built' : null, resort: built('resort') ? 'built' : 'old',
+                            slipway: built('slipway') ? 'built' : 'old', hall: built('hall') ? 'built' : null,
+                            hull: built('slipway') && typeof BridgeShipyard !== 'undefined' ? BridgeShipyard.stage() : null };
+      var sm = Object.assign({}, data.holm.smoke || {});
+      if (!sm.workshop && !rendered) sm.workshop = STAND_IN_SMOKE;
+      data.scene.smoke = ['house', 'quarters', 'workshop'].filter(function (k) { return built(k) && sm[k]; }).map(function (k) { return sm[k]; });
     }
-    var lots = (data.holm && data.holm.lots) || {};
+    if (!(data.interactions || []).some(function (it) { return it.type === 'holm' && it.act === 'workshop'; }))
+      (data.interactions = data.interactions || []).push({ x: WORKSHOP_AT[0], y: WORKSHOP_AT[1], type: 'holm', act: 'workshop', label: 'WORKSHOP', prompt: 'PRESS E TO LOOK' });
+    if (!(data.interactions || []).some(function (it) { return it.type === 'holm' && it.act === 'slipway'; }))
+      data.interactions.push({ x: SLIPWAY_AT[0], y: SLIPWAY_AT[1], type: 'holm', act: 'slipway', label: 'SLIPWAY', prompt: 'PRESS E TO LOOK' });
+    if (!(data.interactions || []).some(function (it) { return it.type === 'holm' && it.act === 'hall'; }))
+      data.interactions.push({ x: HALL_AT[0], y: HALL_AT[1], type: 'holm', act: 'hall', label: 'THE HALL', prompt: 'PRESS E TO LOOK' });
+    if (!data.holm.lots.hall) data.holm.lots.hall = HALL_LOT.slice();
+    var lots = data.holm.lots;
     Object.keys(lots).forEach(function (k) {
       if (!built(k)) return;
       var L = lots[k];
       for (var y = L[1]; y <= L[3]; y++) for (var x = L[0]; x <= L[2]; x++) if (data.collisions[y]) data.collisions[y][x] = 1;
     });
-    // the resort built: the boathouse is the Starling now, its door the business's (js/business.js)
+    // the resort built: the boathouse is the Starling now, its door into the lobby (scenes/lumar_holm_resort.py), where
+    // the front desk is the business's (js/business.js `holm-resort`)
     if (built('resort')) {
       data.interactions = (data.interactions || []).filter(function (it) { return it.label !== 'BOATHOUSE'; });
       if (!data.interactions.some(function (it) { return it.label === 'THE STARLING'; }))
-        data.interactions.push({ x: 35, y: 20, type: 'dialog', label: 'THE STARLING', prompt: 'PRESS E TO GO IN',
-                                 dialog: 'THE STARLING: TWELVE ROOMS ON THE WATER. THE BELL ON THE DESK SAYS "RING FOR THE MANAGER".' });
+        data.interactions.push({ x: 35, y: 20, type: 'enter_world', target: WID + '-resort', spawn: [11, 13], label: 'THE STARLING', prompt: 'PRESS E TO GO IN' });
+      // the strip of sand along its front, walkable now, so you can reach its door from the parasols
+      for (var bx = 29; bx <= 36; bx++) if (data.collisions[21]) data.collisions[21][bx] = 0;
     }
     (data.interactions || []).forEach(function (it) {
       if (it.type !== 'holm') return;
       if (it.act === 'deed') { it.label = owned() ? st.name.toUpperCase() : 'FOR SALE'; it.prompt = owned() ? 'PRESS E FOR THE LEDGER' : 'PRESS E TO READ'; }
       if (it.act === 'house') it.prompt = built('house') ? 'PRESS E TO GO IN' : 'PRESS E TO LOOK';
+      if (it.act === 'workshop') it.prompt = built('workshop') ? 'PRESS E FOR THE WORKSHOP' : 'PRESS E TO LOOK';
+      if (it.act === 'slipway') it.prompt = built('slipway') ? 'PRESS E FOR THE SLIPWAY' : 'PRESS E TO LOOK';
+      if (it.act === 'hall') { it.label = built('hall') ? 'THE HALL OF FINDS' : 'THE HALL'; it.prompt = built('hall') ? 'PRESS E TO GO IN' : 'PRESS E TO LOOK'; }
+    });
+  }
+
+  // The Starling inside: its staff at their posts as you hire them (the desk first, then the bar, then the terrace), and
+  // guests about the place while it's open and running (scene actors with a `role`: desk, bar, floor, guest).
+  function starling(data) {
+    var sc = data.scene, B = typeof BridgeBusiness !== 'undefined' ? BridgeBusiness : null, id = 'holm-resort';
+    if (!sc || !sc.actors) return;
+    var n = 0, open = false;
+    try {
+      if (B && B.owned(id) && B.get(id)) {
+        var s = B.status(id), b = B.state(id);
+        n = s.staff.length + (b && b.manager ? 1 : 0);
+        open = !!s.running;
+      }
+    } catch (e) { n = 0; open = false; }
+    var posts = ['desk', 'bar', 'floor'];
+    sc.actors = sc.actors.filter(function (a) {
+      if (a.role === 'guest') return open;
+      var i = posts.indexOf(a.role);
+      return i < 0 || i < n;
     });
   }
 
@@ -90,7 +153,25 @@ var BridgeHolm = (function () {
       return say({ house: 'THE COTTAGE IS A SHELL: NO ROOF, IVY THROUGH THE WINDOWS, A BIRD\'S NEST IN THE GRATE. IT MUST HAVE BEEN LOVELY ONCE.',
                    garden: 'AN OLD WALLED GARDEN, LOST UNDER BRAMBLES. THE BLACKBERRIES ARE GOOD.',
                    warehouse: 'FOUR STAKES IN THE GRASS, AND A ROTTED SIGN: "STORE".',
-                   quarters: 'STAKES MARKING OUT A PLOT. NOBODY BUILT ON IT.' }[a] || 'NOTHING HERE YET.', it.label);
+                   quarters: 'STAKES MARKING OUT A PLOT. NOBODY BUILT ON IT.',
+                   workshop: 'LEVEL GROUND BY THE WELL, AND A RUSTED ANVIL HALF SUNK IN THE GRASS. SOMEBODY MEANT TO WORK HERE.',
+                   slipway: 'AN OLD SLIP OF ROTTEN SLEEPERS RUNS DOWN INTO THE WATER BELOW THE GARDEN WALL. SHIPS WERE BUILT HERE ONCE.',
+                   hall: 'LEVEL GROUND ON THE EAST SIDE, STAKED OUT, A VIEW BACK TOWARD THE CAPITAL. A GOOD PLACE TO SHOW THINGS OFF.' }[a] || 'NOTHING HERE YET.', it.label);
+    }
+    if (a === 'workshop') {                            // the forge and the benches (js/workshop.js)
+      if (!built('workshop')) return offer('workshop');
+      if (typeof BridgeWorkshop !== 'undefined') return BridgeWorkshop.open();
+      return say('THE FORGE IS COLD.', 'The workshop');
+    }
+    if (a === 'slipway') {                             // build your own ships (js/shipyard.js)
+      if (!built('slipway')) return offer('slipway');
+      if (typeof BridgeShipyard !== 'undefined') return BridgeShipyard.open();
+      return say('THE SLIP IS EMPTY.', 'The slipway');
+    }
+    if (a === 'hall') {                                // what you've found yourself, on show (js/trophies.js)
+      if (!built('hall')) return offer('hall');
+      if (typeof BridgeWorld !== 'undefined' && BridgeWorld.enterWorld) return BridgeWorld.enterWorld('lumar-holm-hall', [8, 9]);
+      return say('THE HALL IS LOCKED.', 'The hall of finds');
     }
     if (a === 'house') {                               // the rebuilt cottage is a home to walk into (scenes/lumar_holm_home.py)
       if (!built('house')) return offer('house');
@@ -131,7 +212,7 @@ var BridgeHolm = (function () {
   }
   function offer(k) {
     var B = BUILD[k];
-    if (B.needs && !built(B.needs)) return say('REBUILD THE ' + BUILD[B.needs].name.replace(/^The /, '').toUpperCase() + ' FIRST: THE GUESTS COME BY SEA.', B.name);
+    if (B.needs && !built(B.needs)) return say('REBUILD THE ' + BUILD[B.needs].name.replace(/^The /, '').toUpperCase() + ' FIRST: ' + B.because + '.', B.name);
     choose({ title: B.name, text: B.what, buttons: [{ label: 'Build it (' + B.price.toLocaleString() + ')', act: function () {
       pay(B.price, 'holm:' + k).then(function (r) {
         if (!r || !r.ok) { say(why(r), B.name); return; }
@@ -204,6 +285,15 @@ var BridgeHolm = (function () {
                     } });
       });
     });
+    // what your businesses sell, from your pack into the store: a supply run takes it out to them (js/orders.js)
+    var sells = forBusinesses();
+    if (sells.length) rows.unshift({ label: 'Put away stock for your businesses', sub: sells.map(function (x) { return x.n + ' ' + t.name(x.id).toLowerCase(); }).join(', '), note: 'put away',
+      pick: function () {
+        var n = 0;
+        sells.forEach(function (x) { if (BridgeInventory.removeItem(x.id, x.n) !== false) { st.store[x.id] = (st.store[x.id] || 0) + x.n; n += x.n; } });
+        store(); sfx('pickup');
+        warehouse(n + ' PUT AWAY. A SHIP ON A SUPPLY RUN TAKES THEM OUT TO YOUR BUSINESSES.');
+      } });
     choose({ title: 'The warehouse', text: note || 'CARGO ASHORE, AND IN YOUR SHIPS AT THE JETTY. PICK ONE TO MOVE IT.', rows: rows, closeLabel: 'Done' });
     function pickShip(title, then) {
       if (ships.length === 1) { then(ships[0]); return; }
@@ -212,6 +302,13 @@ var BridgeHolm = (function () {
   }
 
   // ---- quarters: hands ashore -------------------------------------------------------------------------------------
+  // what you carry that any business of yours sells (fish, eggs, milk, fruit…)
+  function forBusinesses() {
+    var B = typeof BridgeBusiness !== 'undefined' ? BridgeBusiness : null, want = {};
+    if (!B || typeof BridgeInventory === 'undefined') return [];
+    B.all().forEach(function (d) { if (B.owned(d.id) && d.stock) d.stock.forEach(function (id) { want[id] = 1; }); });
+    return Object.keys(want).map(function (id) { return { id: id, n: BridgeInventory.getCount(id) }; }).filter(function (x) { return x.n > 0; });
+  }
   function quarters(note) {
     var f = F();
     if (!f) return;
@@ -268,7 +365,7 @@ var BridgeHolm = (function () {
     if (!f) return [];
     var back = [];
     f.all().forEach(function (s) {
-      if (!s.away || s.away.passage || Date.now() < s.away.back) return;    // (a passage you ordered: js/fleet.js arrivals)
+      if (!s.away || s.away.passage || s.away.order || Date.now() < s.away.back) return;    // (a passage you ordered: js/fleet.js arrivals; standing orders: js/orders.js)
       var a = s.away, sp = f.effective(s), hops = a.legs || [[a.from, a.to]];
       var profit = Math.round((a.profit || 0) * 0.6 * (1 + (f.crewOn(s.id).some(function (c) { return c.role === 'navigator'; }) ? 0.15 : 0)));   // wages and wear
       var story = hops.length > 1 ? 'a fair circuit' : 'a fair passage';
@@ -300,6 +397,16 @@ var BridgeHolm = (function () {
       var B = BUILD[k];
       rows.push({ label: B.name, sub: built(k) ? 'built' : B.price.toLocaleString() + ' coins', note: built(k) ? '✓' : 'build', disabled: built(k), pick: function () { offer(k); } });
     });
+    if (built('workshop') && typeof BridgeWorkshop !== 'undefined') {
+      var ws = BridgeWorkshop.summary();
+      rows.push({ label: 'The workshop', sub: (ws.smiths.length ? ws.smiths.map(function (p) { return p.name; }).join(', ') : 'no smiths') + ' · ' + ws.line,
+                  note: ws.working ? 'at work' : 'idle', pick: function () { BridgeWorkshop.open(); } });
+    }
+    if (built('slipway') && typeof BridgeShipyard !== 'undefined') {
+      var sy = BridgeShipyard.summary();
+      rows.push({ label: 'The slipway', sub: (sy.wrights.length ? sy.wrights.map(function (p) { return p.name; }).join(', ') : 'no shipwrights') + ' · ' + sy.line,
+                  note: sy.job ? (sy.job.ready ? 'launch' : Math.floor(sy.job.whole * 100) + '%') : 'empty', pick: function () { BridgeShipyard.open(); } });
+    }
     rows.push({ label: 'Send a ship trading', sub: built('dock') ? 'a ship based here, with her hands' : 'rebuild the dock first', disabled: !built('dock'), pick: voyage });
     rows.push({ label: 'Your ships', sub: f ? f.all().length + ' in all' : '', pick: function () { if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.ledger(WID); } });
     if (built('dock') && f && f.here(WID).some(function (x) { return f.repairCost(x) > 0; }))
@@ -342,8 +449,18 @@ var BridgeHolm = (function () {
              rows: rows, closeLabel: 'Back' });
   }
 
+  // ---- the store: cargo ashore (the warehouse) and what the workshop makes, by id ----------------------------------
+  function stored(id) { return id ? st.store[id] || 0 : Object.assign({}, st.store); }
+  function storeAdd(id, n) { if (n > 0) { st.store[id] = (st.store[id] || 0) + n; store(); } }
+  function storeTake(id, n) {
+    n = Math.min(n, st.store[id] || 0);
+    if (n > 0) { st.store[id] -= n; if (st.store[id] <= 0) delete st.store[id]; store(); }
+    return n;
+  }
+
   return { reload: function () { st = { owned: false, name: 'Starling Holm', built: {}, store: {}, chest: 0, log: [] };
                                 try { st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* fresh */ } },
            decorate: decorate, use: use, owned: owned, built: built, canFarm: canFarm, returns: returns, ledger: ledger,
+           stored: stored, storeAdd: storeAdd, storeTake: storeTake, BUILD: BUILD, DANGER: DANGER,
            name: function () { return st.name; }, _state: function () { return st; } };
 })();

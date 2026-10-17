@@ -138,13 +138,17 @@ var BridgeFishing = (function () {
     var sky = typeof BridgeWeather !== 'undefined' && BridgeWeather.fishLuck ? BridgeWeather.fishLuck(pool) : 1;   // they bite in the rain and the storm
     var list = (POOLS[pool] || POOLS.harbour).map(function (e) {
       var rare = tierOf(e[0]) >= 2;
-      return [e[0], e[1] * (rare && power > 0.7 ? 1.6 : 1) * (rare && lucky ? 1.2 : 1) * (rare ? sky : 1)];
+      return [e[0], e[1] * (rare && power > 0.7 ? 1.6 : 1) * (rare && lucky ? 1.2 : 1) * (rare && rod() ? 1.1 : 1) * (rare ? sky : 1) * (rare && pearl() ? 1.3 : 1) * (rare && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('legends') ? 1.15 : 1)];
     });
     var total = list.reduce(function (a, e) { return a + e[1]; }, 0), r = Math.random() * total;
     for (var i = 0; i < list.length; i++) { r -= list[i][1]; if (r <= 0) return list[i][0]; }
     return list[0][0];
   }
   function sfx(n) { if (n && typeof BridgeAudio !== 'undefined') BridgeAudio.sfx(n); }
+  // the greenheart rod (made at your workshop, js/workshop.js), carried: a quicker bite, more room on the reel
+  function rod() { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('greenheart_rod') > 0; }
+  // the Tidecaller's Pearl in your Cabinet of Wonders (js/wonders.js): the rare ones come up more often
+  function pearl() { return typeof BridgeWonders !== 'undefined' && BridgeWonders.rare(); }
   function touch() { return document.documentElement.classList.contains('touch'); }
 
   function set(phase, extra) {
@@ -185,7 +189,7 @@ var BridgeFishing = (function () {
       log.casts += 1; store();
       if (fishes[0]) { fishes[0].s = 3 + Math.floor(Math.random() * 3); fishes[0].x = Math.random() < 0.5 ? -10 : NW + 10; }   // a new one to come for it
       var lucky = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('lucky_horseshoe') > 0;
-      var wait = (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1) * (perfect ? 0.8 : 1);   // the horseshoe: they bite sooner
+      var wait = (1500 + Math.random() * 3500) * (lucky ? 0.6 : 1) * (rod() ? 0.85 : 1) * (perfect ? 0.8 : 1) * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.bite() : 1) * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('fish') ? 0.85 : 1);   // the horseshoe (and the rod, and the Tidecaller's Pearl): they bite sooner
       // what takes the hook is decided as it lands (so its shadow can come for it, bigger for a rarer fish)
       set('wait', { power: power, perfect: perfect, wait: wait, nibbles: [], catchId: pick(st.pool, power), treasure: null, snap: false, hooked: false });
       var n = Math.floor(Math.random() * 3);
@@ -200,7 +204,7 @@ var BridgeFishing = (function () {
     // now and then something else is down there too: a chest, drifting in the reel - hold the bar on it to bring it up
     var lucky = typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount && BridgeInventory.getCount('lucky_horseshoe') > 0;
     var chest = Math.random() < 0.1 + 0.1 * (st.power || 0) + (lucky ? 0.05 : 0) ? { at: 1200 + Math.random() * 2200, y: 0.15 + Math.random() * 0.65, got: 0, done: false, shown: false } : null;
-    set('reel', { catchId: id, fight: f, tune: F, zoneH: F.zone, zone: 0.1, zv: 0, fish: 0.5, ft: 0.5, progress: Math.min(0.6, F.start + (fast ? 0.12 : 0)),
+    set('reel', { catchId: id, fight: f, tune: F, zoneH: F.zone * (rod() ? 1.12 : 1), zone: 0.1, zv: 0, fish: 0.5, ft: 0.5, progress: Math.min(0.6, F.start + (fast ? 0.12 : 0)),
                   last: performance.now(), treasure: chest, hooked: true, out: 0 });
   }
 
@@ -212,6 +216,8 @@ var BridgeFishing = (function () {
     else if (r < 0.8) { it = 'silver_nail'; n = 1 + Math.floor(Math.random() * 2); }
     else if (r < 0.93) it = 'heron_coin';
     else it = 'star_pearl';
+    var plan = typeof BridgeWorkshop !== 'undefined' && BridgeWorkshop.chestFind ? BridgeWorkshop.chestFind() : null;   // a rod-maker's plan, in an oilskin tube
+    if (plan) { it = plan; n = 1; coins = 0; }
     if (it && typeof BridgeInventory !== 'undefined' && BridgeInventory.addItem(it, n) === false) {   // no room: what it's worth instead
       var v = (BridgeItems.get(it) || {}).value || 10;
       coins = v * n; it = null;
@@ -236,6 +242,7 @@ var BridgeFishing = (function () {
       c.n += 1;
       best = !junk && size > c.best;
       if (best) c.best = size;
+      if (!junk && typeof BridgeFestivals !== 'undefined') BridgeFestivals.caught(id, size);     // a derby on? (js/festivals.js)
       var hold = st.hold && !junk ? st.hold : null;                       // at sea, fish go in her fish hold
       if (hold) {
         if (hold.room()) { hold.put(id); var hc = hold.count(); where = 'Into the fish hold · ' + hc[0] + ' / ' + hc[1]; }
@@ -811,6 +818,7 @@ var BridgeFishing = (function () {
   }
 
   return { decorate: decorate, open: open, close: close, journal: journal, _state: function () { return st; }, _cast: function () { return cast; },
+           size: function (id) { var f = FIGHT[id]; return f ? [f[2], f[3]] : null; },       // the sizes it comes in, cm (js/aquarium.js)
            drawLine: function (c, k, hand, offX, offY, ts, now, bang) { if (st && st.t0 != null) drawLine(c, k, hand, offX, offY, ts, now, bang); },
            isOpen: function () { return !!st; } };
 })();

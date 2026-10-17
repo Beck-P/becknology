@@ -43,7 +43,7 @@ const tot = (cards) => { let t = 0, a = 0; for (const c of cards) { if (!c.r) co
 const ready = (f) => f.waitForFunction(() => window.__wallet && window.__wallet.kind === 'bridge' && window.__table && window.__table.view(), null, { timeout: 9000 });
 
 (async () => {
-  await fetch('http://127.0.0.1:8767/admin', { method: 'POST', body: JSON.stringify({ reset: true, missing: [] }) });
+  await fetch('http://127.0.0.1:' + (process.env.SUPA_PORT || 8767) + '/admin', { method: 'POST', body: JSON.stringify({ reset: true, missing: [] }) });
   const b = await chromium.launch({ executablePath: require(__dirname + '/../chrome.js') });
   const ctx = await b.newContext({ viewport: { width: +W, height: +H }, hasTouch: +W < 600 });
   await ctx.addInitScript({ path: __dirname + '/../fakesupa.js' });

@@ -3,7 +3,8 @@
  *
  *   BridgeSkyline.draw(ctx, w, h, now, opts)   the backdrop (registered as the
  *                                              arcadia background for street worlds)
- *   BridgeSkyline.rain(ctx, w, h, now, opts)   rain over everything (scene `over` hook)
+ *   BridgeSkyline.rain(ctx, w, h, now, opts)   rain over everything (scene `over` hook); opts.dry: rects
+ *                                              (world tiles) under a roof, left dry (the Penthouse indoors)
  *
  * Three Blender-rendered layers (tools/bridge-art/skyline.py → assets/
  * backdrops/arcadia/): `far` towers fading into smog, `mid` towers with
@@ -292,6 +293,7 @@ var BridgeSkyline = (function () {
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), 1);
   }
 
+  function hijacked() { return typeof BridgeEvents !== 'undefined' && BridgeEvents.screens && BridgeEvents.screens() === 'null'; }
   function ads(ctx, P, now) {
     var a = P.m.anchors, i = 0;
     while (a['ad' + i + '_a']) {
@@ -300,6 +302,7 @@ var BridgeSkyline = (function () {
       if (w > 4 && h > 4) {
         // every third tower screen takes the Neon Royale's ad now and then (the casino on the District street)
         var kind = i % 3 === 1 && Math.floor(now / 9000 + i) % 2 ? 'royale' : (i * 5 + 1) % 6;
+        if (hijacked()) kind = 'null';                 // NULL has every screen in the city (js/events.js)
         ad(ctx, kind, Math.round(x), Math.round(y), Math.round(w), Math.round(h), now + i * 777, i * 13);
         // its light spilling round the screen
         ctx.save();
@@ -369,6 +372,7 @@ var BridgeSkyline = (function () {
       var w = Math.round((a[2] - a[0]) * ts), h = Math.round((a[3] - a[1]) * ts);
       var kind = a[4] != null ? a[4] : i % 6;
       if (jobs && hash(Math.floor(now / 7000) * 31 + i * 17) < Math.min(0.45, 0.07 * jobs)) kind = 'null';
+      if (hijacked()) kind = 'null';
       ad(ctx, kind, x, y, w, h, now + i * 1311, i * 7 + 3);
     });
     // marquee bulbs chasing: every third one bright, stepping along
@@ -403,6 +407,13 @@ var BridgeSkyline = (function () {
   function rain(ctx, w, h, now, opts) {
     var n = (opts && opts.drops) || 140;
     ctx.save();
+    if (opts && opts.dry) {                                 // under a roof (world tiles, screen rows): no rain falls there
+      var vd = BridgeWorld.getView();
+      ctx.beginPath();
+      ctx.rect(0, 0, w, h);
+      opts.dry.forEach(function (d) { ctx.rect(vd.offX + d[0] * vd.ts, vd.offY + d[1] * vd.ts, (d[2] - d[0]) * vd.ts, (d[3] - d[1]) * vd.ts); });
+      ctx.clip('evenodd');
+    }
     for (var i = 0; i < n; i++) {
       var sp = 0.32 + hash(i) * 0.18;
       var x = (hash(i * 3) * (w + 60) - now * sp * 0.35) % (w + 60);

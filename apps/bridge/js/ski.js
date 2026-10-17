@@ -31,7 +31,12 @@
  *
  * Kept in localStorage bridge_ski: per run {runs, best, paid, firstPaid, ghost}, rival wins, park {best, runs, paid, juno}.
  *
+ * Racing someone else (js/race.js): the same run side by side from the gate — the two of you a little apart, no ghost,
+ * no Liv — the gate waiting till you're both in it, then 3-2-1 on one clock; the quicker time takes it. You see each
+ * other skiing as you go (js/multi.js draws the other's pose).
+ *
  *   BridgeSki.start(runId | null, {rival: true})   // null: free skiing (from where you are, or the top)
+ *   BridgeSki.start(runId, {race: R})              // R: { lane, at (the gun, Date.now() ms, set by js/race.js), ready(), finish(t), quit() }
  *   BridgeSki.park()                                // a scored run down the Park
  *   BridgeSki.RUNS, .best(id), .unlocked(id), .isOpen()
  *   BridgeSki.items / ground / over    // the hoarfell tileset's scene hooks call these (js/worlds/hoarfell.js)
@@ -156,6 +161,7 @@ var BridgeSki = (function () {
     if (!w) return;
     var R = id ? w.ski.runs[id] : null, P = opts.park && w.ski.park;
     var px = R ? R.start[0] : P ? P.start[0] : BridgeCharacter.getX() + 0.5, py = R ? R.start[1] : P ? P.start[1] : BridgeCharacter.getY() + 0.9;
+    if (R && opts.race) px += opts.race.lane ? 0.75 : -0.75;            // two in the gate: side by side
     s = { id: id, x: px, y: py, a: 0, v: 0, z: 0, vz: 0, air: false, spin: 0, spinTo: 0, down: 0, crashFlip: false,
           t: 0, pen: 0, phase: id || P ? 'count' : 'free', count: 3.4, grind: null, grabT: 0,
           park: P ? { score: 0, chain: [], chainT: 0, tricks: [], bestCombo: 0 } : null, gate: 0, passed: 0, missed: 0, tricks: 0, falls: 0,
@@ -164,6 +170,7 @@ var BridgeSki = (function () {
       var r = rec(id);
       s.ghost = r.ghost && r.ghost.length ? r.ghost : null;
       if (opts.rival) { s.rival = rivalLine(w, id); s.rivalTime = s.rival.time; }
+      if (opts.race) { s.race = opts.race; s.ghost = null; s.count = 1e9; }      // the gate waits for you both
     }
     if (trailWorld !== w) { trail = []; trailWorld = w; }
     BridgeWorld.setMode({ update: update, focus: focus, solo: true, end: function () { quit(true); } });
@@ -181,7 +188,9 @@ var BridgeSki = (function () {
       say(save.park.best ? 'YOUR BEST ' + save.park.best + ' - JUNO\'S ' + JUNO : 'JUNO\'S SCORE TO BEAT: ' + JUNO);
     } else if (id) {
       var best = rec(id).best;
-      say((s.rival ? 'LIV BESIDE YOU: ' + fmt(s.rivalTime) + ' TO BEAT. ' : '') + (best ? 'YOUR BEST ' + fmt(best) : R.gates.length + ' GATES'));
+      say(s.race ? 'IN THE GATE. WAITING FOR ' + String(s.race.vs || 'THEM').toUpperCase() + '…'
+                 : (s.rival ? 'LIV BESIDE YOU: ' + fmt(s.rivalTime) + ' TO BEAT. ' : '') + (best ? 'YOUR BEST ' + fmt(best) : R.gates.length + ' GATES'));
+      if (s.race && s.race.ready) s.race.ready();
     } else {
       say(w.ski.hello || 'FREE SKIING. THE WHOLE MOUNTAIN.');
     }
@@ -202,7 +211,8 @@ var BridgeSki = (function () {
     s.held = held;
     if (s.phase === 'count') {
       var before = Math.ceil(s.count);
-      s.count -= dt;
+      if (s.race) s.count = s.race.at ? (s.race.at - Date.now()) / 1000 : 1e9;   // one clock for the two of you
+      else s.count -= dt;
       if (Math.ceil(s.count) !== before && s.count > 0 && before <= 3) { sfx('blip'); bigText(String(Math.ceil(s.count))); }
       if (s.count <= 0) { s.phase = s.park ? 'park' : 'run'; s.v = 2.6; s.push = 0.4; sfx('success'); bigText(s.park ? 'DROP IN' : 'GO'); }
       pose(now);
@@ -520,6 +530,7 @@ var BridgeSki = (function () {
   // through the finish and stopped: the result, the pay, the ghost
   function end(w) {
     var id = s.id, D = RUNS[id], r = rec(id), total = s.final;
+    var R = s.race;
     var first = !r.firstPaid, nb = !r.best || total < r.best;
     r.runs = (r.runs || 0) + 1;
     if (nb) { r.best = total; r.ghost = s.rec; }
@@ -543,6 +554,13 @@ var BridgeSki = (function () {
                                 : 'LIV TOOK IT IN ' + fmt(s.rivalTime) + '. "AGAIN?"');
     if (pay) lines.push(pay + ' COINS.');
     var again = !!s.rival;
+    if (R) {                                                      // a race: the verdict comes from js/together.js once you're both down
+      s.race = null;
+      quit(true);
+      say(D.name + ' IN ' + fmt(total) + (pay ? ' · ' + pay + ' COINS' : '') + '. WAITING FOR ' + String(R.vs || 'THEM').toUpperCase() + '…');
+      if (R.finish) R.finish(total);
+      return;
+    }
     quit(true);
     BridgeInteractions.execute({ type: 'menu', label: 'FINISH', dialog: lines.join('\n\n'), options: [
       { label: again ? 'Race Liv again' : 'Ride up and go again', action: 'ski_run', run: id, rival: again },
@@ -562,8 +580,9 @@ var BridgeSki = (function () {
   function takeOff() { say('SKIS OFF.'); sfx('pickup'); quit(true); }
   function quit(quiet) {
     if (!s) return;
-    var w = data(), x = s.x, y = s.y;
+    var w = data(), x = s.x, y = s.y, R = s.race;
     s = null;
+    if (R && R.quit) R.quit();                                    // out of a race before the line
     document.removeEventListener('keydown', onKey, true);
     if (hud) hud.classList.remove('on');
     if (BridgeWorld.getMode()) BridgeWorld.setMode(null);
@@ -805,6 +824,7 @@ var BridgeSki = (function () {
       var n = w.ski.runs[s.id].gates.length;
       sub = kmh + ' km/h · gate ' + Math.min(s.gate + 1, n) + '/' + n;
       if (s.rival && s.phase === 'run') sub += ' · Liv ' + (s.y >= sampleAt(s.rival.line, s.t)[1] / 20 ? 'behind' : 'ahead');
+      if (s.race && s.phase === 'run' && s.race.where) { var o = s.race.where(); if (o) sub += ' · ' + s.race.vs + ' ' + (o.done ? 'down' : s.y >= o.y ? 'behind' : 'ahead'); }
     } else if (s.still > 0.6) {
       sub = 'E: skis off';
     }

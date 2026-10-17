@@ -15,7 +15,8 @@
  *
  * GUNS go in a ship's slots; FITS (sheathing, sails, rigging, lanterns) are fitted once each. Harbourmasters
  * (js/harbour.js) sell both, and each port has its own (Crimson the heavy guns, Rose the crystal sails, Midnight the
- * Ferryman's moonglass).
+ * Ferryman's moonglass). Your Workshop (js/workshop.js) makes them too, and two no yard sells (`craft`: ironwood
+ * doubling, gloamscale sheathing — each `replaces` what it betters); a part you made is fitted with `mount`.
  *
  * CREW: hands you sign on at a port (each sea has its own people: `recruits(port)`, a fresh three a day). Each has a
  * ROLE and a skill (1-3: green, able, old hand) and lives aboard one of your ships. A ship needs `crew` hands to sail;
@@ -34,24 +35,26 @@
  */
 var BridgeFleet = (function () {
   var KEY = 'bridge_fleet';
+  // L, beam: tiles - each a step bigger than the last (Beck: "a little bit bigger, not crazy"), and drawn at that size
+  // (tools/bridge-art/ship_sprites.py and sloop_sprites.py grow each hull to it; the sovereign is drawn on the galleon's)
   var SHIPS = {
-    sloop:      { name: 'Sloop', price: 0, L: 2.6, beam: 1.0, vmax: 4.4, turn: 1.0, accel: 1.0, nogo: 0.7, hold: 12, fish: 8, hull: 40, slots: 0, crew: 0,
+    sloop:      { name: 'Sloop', price: 0, L: 3.2, beam: 1.23, vmax: 4.4, turn: 1.0, accel: 1.0, nogo: 0.7, hold: 12, fish: 8, hull: 40, slots: 0, crew: 0,
                   storm: 1.0, rocks: 1.0, sheet: 'sloop',
                   blurb: 'Your first boat. Light on her feet and quick to turn, with room for a few crates.' },
-    cutter:     { name: 'Cutter', price: 3000, L: 3.4, beam: 1.25, vmax: 5.0, turn: 0.9, accel: 0.85, nogo: 0.72, hold: 40, fish: 16, hull: 70, slots: 1, crew: 1,
+    cutter:     { name: 'Cutter', price: 3000, L: 4.2, beam: 1.54, vmax: 5.0, turn: 0.9, accel: 0.85, nogo: 0.72, hold: 40, fish: 16, hull: 70, slots: 1, crew: 1,
                   storm: 0.8, rocks: 0.8, sheet: 'cutter',
                   blurb: 'A bigger single-master with two headsails: the quickest thing on the Emerald, a hold for real cargo and a mount for one gun.' },
-    brigantine: { name: 'Brigantine', price: 15000, L: 5.0, beam: 1.6, vmax: 4.6, turn: 0.62, accel: 0.6, nogo: 0.86, hold: 120, fish: 30, hull: 150, slots: 3, crew: 3,
+    brigantine: { name: 'Brigantine', price: 15000, L: 6.0, beam: 1.92, vmax: 4.6, turn: 0.62, accel: 0.6, nogo: 0.86, hold: 120, fish: 30, hull: 150, slots: 3, crew: 3,
                   storm: 0.35, rocks: 0.55, sheet: 'brigantine',
                   blurb: 'Square sails forward, a big main aft. Slower through a turn and no good close to the wind, but she shrugs off a Crimson squall and carries a proper cargo.' },
-    galleon:    { name: 'Galleon', price: 60000, L: 7.0, beam: 2.2, vmax: 4.2, turn: 0.42, accel: 0.4, nogo: 1.0, hold: 300, fish: 50, hull: 280, slots: 5, crew: 5,
+    galleon:    { name: 'Galleon', price: 60000, L: 8.2, beam: 2.58, vmax: 4.2, turn: 0.42, accel: 0.4, nogo: 1.0, hold: 300, fish: 50, hull: 280, slots: 5, crew: 5,
                   storm: 0.15, rocks: 0.3, sheet: 'galleon',
                   blurb: 'Three masts of square sail and a hold like a warehouse. She sails like a cathedral, and nothing on the Midnight Sea frightens her hull.' },
     // the legendary ship (js/legacy.js): built to order at the Royal Yard, on the galleon's lines but lighter and finer
-    sovereign:  { name: 'Sovereign', price: 300000, L: 7.0, beam: 2.1, vmax: 4.9, turn: 0.55, accel: 0.55, nogo: 0.9, hold: 400, fish: 70, hull: 420, slots: 6, crew: 6,
+    sovereign:  { name: 'Sovereign', price: 300000, L: 8.4, beam: 2.5, vmax: 4.9, turn: 0.55, accel: 0.55, nogo: 0.9, hold: 400, fish: 70, hull: 420, slots: 6, crew: 6,
                   storm: 0.1, rocks: 0.2, sheet: 'galleon',
                   blurb: 'A legend, built to order: gilded stern, a Crown commission in her papers. Quicker and handier than any galleon, a hold like a cathedral, six guns, and she fears nothing that swims.' },
-    raider:     { name: 'Raider', price: 22000, L: 4.4, beam: 1.3, vmax: 5.6, turn: 0.85, accel: 0.8, nogo: 0.74, hold: 50, fish: 12, hull: 110, slots: 4, crew: 3,
+    raider:     { name: 'Raider', price: 22000, L: 4.8, beam: 1.42, vmax: 5.6, turn: 0.85, accel: 0.8, nogo: 0.74, hold: 50, fish: 12, hull: 110, slots: 4, crew: 3,
                   storm: 0.5, rocks: 0.7, sheet: 'raider',
                   blurb: 'A black-hulled Crimson schooner, no questions asked. The fastest hull on the five seas, and teeth to match.' }
   };
@@ -74,7 +77,13 @@ var BridgeFleet = (function () {
     crystal_sails:{ name: 'Crystal-weave Sails', price: 940, vmax: 1.08, nogo: -0.06, blurb: 'Rose Cove spore-silk with crystal woven through. Quicker, and she points higher.' },
     roseite:      { name: 'Roseite Sheathing', price: 820, rocks: 0.5, blurb: 'Roseite grown over her bilges. Rocks and reefs do half the harm.' },
     storm_rig:    { name: 'Storm Rigging', price: 720, storm: 0.55, turn: 1.04, blurb: 'Crimson rigging: doubled shrouds, storm sails. Squalls do half the harm.' },
-    moon_lantern: { name: 'Moon Lantern', price: 1250, ward: true, blurb: 'A lantern of moonglass at the masthead. The Midnight Sea\'s things keep off its light, and rocks show through the mist.' }
+    moon_lantern: { name: 'Moon Lantern', price: 1250, ward: true, blurb: 'A lantern of moonglass at the masthead. The Midnight Sea\'s things keep off its light, and rocks show through the mist.' },
+    // no yard sells these: they're made at your own Workshop (js/workshop.js), from a plan and things found far out.
+    // Each takes the place of what it betters (`replaces`); `price` is what the work's worth (the yard's labour to fit it)
+    ironwood:     { name: 'Ironwood Doubling', price: 1600, hull: 1.6, replaces: ['oak'], craft: true,
+                    blurb: 'Oak through-bolted with star iron, a skin no yard on the five seas will sell you. Takes over half as much again in punishment.' },
+    gloamscale:   { name: 'Gloamscale Sheathing', price: 2400, vmax: 1.07, rocks: 0.45, replaces: ['sheathing', 'roseite'], craft: true,
+                    blurb: 'The Gloamserpent\'s own scales, lapped over her bottom like a fish\'s: she slips through the water, and rocks glance off her.' }
   };
   var ROLES = {
     deckhand:  { name: 'Deckhand', fee: 60, blurb: 'Hauls, reefs and coils. Counts toward the hands a ship needs.' },
@@ -144,6 +153,7 @@ var BridgeFleet = (function () {
       return Object.assign({ id: g, manned: i < sp.gunners, skill: gunSkills[i] || 0 }, GUNS[g]);
     });
     sp.berths = berths(ship);
+    sp.fits = ship.fits.filter(function (f) { return FITS[f]; });          // (what's fitted, as js/shipkit.js draws her)
     return sp;
   }
   /** The ship you're sailing now (the sloop if she's been sold or lost), as she sails. */
@@ -161,7 +171,7 @@ var BridgeFleet = (function () {
     if (!I || !worldId) return worldId;
     if (I[worldId]) return worldId;
     if (worldId === 'lumar-home') return 'lumar-sapphire';                 // the White House is on Sapphire's square
-    if (worldId === 'lumar-manor') return 'lumar-crown';                   // Ashcombe House, on Crownhaven's waterfront
+    if (/^lumar-manor(-|$)/.test(worldId)) return 'lumar-crown';           // Ashcombe House and its rooms, on Crownhaven's waterfront
     var best = null;                                                        // a room on an island: the longest match wins
     for (var id in I) if (worldId.indexOf(id + '-') === 0 && (!best || id.length > best.length)) best = id;
     return best || worldId;
@@ -252,6 +262,19 @@ var BridgeFleet = (function () {
       return { ok: true, ship: s };
     });
   }
+  /** A ship you built on your own slipway (js/shipyard.js): no price, lying where she was launched, her own name and
+   *  colours (`look`: paint, sails, figurehead — js/sloop.js draws them). A yard gives a quarter of her price for her. */
+  function launch(type, worldId, o) {
+    var sp = SHIPS[type];
+    if (!sp || type === 'sloop') return null;
+    o = o || {};
+    var s = { id: type + (++st.n), type: type, name: String(o.name || sp.name).slice(0, 24), at: islandOf(worldId), hull: 1, hold: {}, guns: [], fits: [],
+              bought: Date.now(), paid: Math.round(sp.price / 2), built: true, look: o.look || null };
+    st.ships.push(s);
+    store();
+    return s;
+  }
+  function setLook(id, look) { var s = get(id); if (s) { s.look = look ? { paint: look.paint, sails: look.sails, figure: look.figure } : null; store(); } }
   /** What a yard gives for her: half what you paid, less for a battered hull (ships bought before the October 2026
    *  prices went up are worth half their old price, not the new one). */
   var OLD_PRICE = { cutter: 1400, brigantine: 4200, galleon: 11000, raider: 6500 };
@@ -271,17 +294,39 @@ var BridgeFleet = (function () {
   }
 
   // ---- guns and fittings --------------------------------------------------------------------------------------------
+  /** Can she take it? null if so, else why not: 'slots' (her gun ports are full), 'fitted' (she has one), 'better' (she
+   *  has what replaces it). */
+  function canFit(s, what) {
+    var G = GUNS[what], F = FITS[what];
+    if (!s || (!G && !F)) return 'no';
+    if (G) return s.guns.length >= spec(s.type).slots ? 'slots' : null;
+    if (s.fits.indexOf(what) >= 0) return 'fitted';
+    if (s.fits.some(function (f) { return FITS[f] && (FITS[f].replaces || []).indexOf(what) >= 0; })) return 'better';
+    return null;
+  }
+  function apply(s, what) {
+    if (GUNS[what]) { s.guns.push(what); return; }
+    var gone = FITS[what].replaces || [];
+    s.fits = s.fits.filter(function (f) { return gone.indexOf(f) < 0; }).concat([what]);
+  }
   function fit(shipId, what) {
-    var s = get(shipId), G = GUNS[what], F = FITS[what];
-    if (!s || (!G && !F)) return Promise.resolve({ ok: false, reason: 'no' });
-    if (G && s.guns.length >= spec(s.type).slots) return Promise.resolve({ ok: false, reason: 'slots' });
-    if (F && s.fits.indexOf(what) >= 0) return Promise.resolve({ ok: false, reason: 'fitted' });
-    return pay((G || F).price, 'fit:' + what).then(function (r) {
+    var s = get(shipId), no = canFit(s, what);
+    if (no) return Promise.resolve({ ok: false, reason: no });
+    return pay((GUNS[what] || FITS[what]).price, 'fit:' + what).then(function (r) {
       if (!r || !r.ok) return { ok: false, reason: (r && r.reason) || 'coins' };
-      (G ? s.guns : s.fits).push(what);
+      apply(s, what);
       store();
       return { ok: true };
     });
+  }
+  /** Fit something you made yourself (js/workshop.js): no yard's price, the part's yours already — the harbourmaster's
+   *  labour is paid by the caller (js/harbour.js), and your own slipway at the holm will fit them too. {ok, reason} */
+  function mount(shipId, what) {
+    var s = get(shipId), no = canFit(s, what);
+    if (no) return { ok: false, reason: no };
+    apply(s, what);
+    store();
+    return { ok: true };
   }
   function unmount(shipId, idx) { var s = get(shipId); if (s && s.guns[idx]) { s.guns.splice(idx, 1); store(); } }
 
@@ -295,7 +340,7 @@ var BridgeFleet = (function () {
     return s.hull;
   }
   function repairCost(s) {                               // the Crown's captain pays the yards a quarter less
-    var royal = typeof BridgeCrown !== 'undefined' && BridgeCrown.captain() ? 0.75 : 1;
+    var royal = (typeof BridgeCrown !== 'undefined' && BridgeCrown.captain() ? 0.75 : 1) * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.repairs() : 1);   // (and the Ferryman's Coin, woken)
     return s.hull >= 0.999 ? 0 : Math.max(20, Math.round((1 - s.hull) * (spec(s.type).price || 160) * 0.22 * royal));
   }
   function repair(shipId) {
@@ -393,6 +438,7 @@ var BridgeFleet = (function () {
   function where(s) {
     if (s.type === 'sloop') return 'at whichever pier you are';
     if (s.away && s.away.passage) return 'sailing for ' + isleName(s.away.to) + ', in about ' + Math.max(1, Math.ceil((s.away.back - Date.now()) / 60000)) + ' min';
+    if (s.away && s.away.order && typeof BridgeOrders !== 'undefined') return BridgeOrders.line(s) || 'on standing orders';
     if (s.away) return 'away on a voyage';
     var I = typeof BridgeVoyage !== 'undefined' && BridgeVoyage._isles;
     return 'at ' + (I && I[s.at] ? I[s.at].name : s.at || 'sea');
@@ -405,7 +451,7 @@ var BridgeFleet = (function () {
 
   return { SHIPS: SHIPS, GUNS: GUNS, FITS: FITS, ROLES: ROLES, SEAS: SEAS,
            spec: spec, get: get, all: all, active: active, effective: effective, here: here, islandOf: islandOf, sail: sail, moored: moored,
-           line: line, where: where, rename: rename, order: order, canOrder: canOrder, passage: passage, arrivals: arrivals, buy: buy, value: value, sellShip: sellShip, fit: fit, unmount: unmount,
+           line: line, where: where, rename: rename, order: order, canOrder: canOrder, passage: passage, arrivals: arrivals, buy: buy, launch: launch, setLook: setLook, value: value, sellShip: sellShip, fit: fit, canFit: canFit, mount: mount, unmount: unmount,
            damage: damage, repairCost: repairCost, repair: repair, wreck: wreck,
            fishCap: fishCap, catchOf: catchOf, catchCount: catchCount, stowFish: stowFish, takeFish: takeFish,
            recruits: recruits, hire: hire, assign: assign, dismiss: dismiss, crew: crew, crewOn: crewOn, crewHas: crewHas, crewBest: crewBest, perk: perk, wage: wageOf, GRADES: GRADES, berths: berths,

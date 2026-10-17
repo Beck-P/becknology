@@ -32,6 +32,10 @@ portholes. Home, not a cockpit.
   workbench where found parts become upgrades.
 - **Game room** — every mini-game you've found lands here as a cabinet,
   board or table: the place to replay them, a trophy wall of high scores.
+- **Captain's office** — the headquarters of everything you run: the desk
+  with the books, a board with the face of everyone working for you, a
+  chart table with your ships pinned where they sail (send them anywhere),
+  the strongbox and the accounts, a window onto space.
 - **Observatory** (later) — the codex: creatures, people, places discovered.
 
 ## Lumar — the spore sea

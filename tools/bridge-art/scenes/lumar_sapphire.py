@@ -138,6 +138,7 @@ for (x, r) in ((18.0, 15.6), (27.0, 21.6), (32.0, 21.6), (40.4, 15.6), (14.5, 22
 W.bunting(k, (18.0, 15.6, 2.0), (40.4, 15.6, 2.0), sag=0.5, cols=('#2a4a9a', '#e8e8f0', '#c0a040', '#4080f0'))
 for (x, r) in ((18.9, 16.75), (39.0, 16.75), (26.2, 22.0)):          # stock beside the stalls, the square left open
     A.crate(k, x, r, s=0.6, tone=A.WOOD_L)
+W.street_clutter(k, (14.0, 15.0, 44.0, 23.0), seed=905, straw=[(19.4, 17.2, 25.6, 18.0), (32.4, 17.2, 38.6, 18.0)], chalk=(27.5, 21.2))
 A.barrel(k, 22.5, 16.8, h=0.8, radius=0.3)                                  # in the gaps between the stalls
 A.barrel(k, 35.5, 16.8, h=0.8, radius=0.3)
 k.box(14.45, 16.45, 0.0, 14.55, 16.55, 1.3, A.WOOD_D, 'note_post')                           # the trader's note

@@ -1,11 +1,23 @@
-"""The Penthouse — the top of Skyport 7's tower, yours for 250,000 (world id "arcadia-penthouse"; js/home.js, js/legacy.js).
+"""The Penthouse — the top of Skyport 7's tower, yours for 250,000 (world id "arcadia-penthouse"; js/home.js,
+js/legacy.js, js/estate.js).
 Usage: BVENV/bin/python arcadia_penthouse.py RENDER_DIR
 
-A private lift from the roof pad opens on one long room under the city's lights: the whole back wall is glass onto the
-skyline (holdout glass; js/home.js draws the live towers and rain through it), a sunken lounge facing it with a glass
-table, a bar on the left with its stools and a wall of bottles lit from below, a bed on a raised platform on the right
-under a neon halo, and a plunge pool glowing by the lift. The floor between is polished stone, bare for the furniture you
-buy (the furniture sheet from tools/bridge-art/furniture_sprites.py).
+Beck: "the penthouse has like an outdoor deck area… that's where the pool is too instead of inside… a cool deck, a
+little pool there, cool views of the city… more space." The whole top of the tower, one floor: inside on the left,
+the roof deck on the right through a wall of sliding glass, the city all round it (a backdrop world: js/skyline.js
+draws the towers, the traffic and the holo-ads behind everything, through the glass and past the balustrade; rain
+falls on the deck and not indoors, `skyline.rain.dry`).
+
+Inside, under a black marble floor veined with gold: glass to the ceiling along the back; the bed on its plinth with
+its head to the city and a stone egg of a bath beside it; a bathroom glimpsed behind its vanity wall (twin basins,
+round mirrors lit from behind, a rain shower); the lounge — a velvet sectional facing the glass round a marble table;
+a white grand piano; the bar against the core, a back bar of lit bottles under HALCYON in pink neon, its stools in a
+row; the kitchen beside it (black units, an oven clock glowing, a waterfall island under glass pendants); a marble
+dining table with velvet tub chairs; the lift in the front wall. Outside, on teak: the plunge pool glowing cyan with
+its infinity edge toward the towers, three loungers with towels and drinks, a drinks counter, a fire pit in a ring
+of cushions, planters of grasses, clipped box and an olive tree, festoon lights strung corner to corner over it all,
+the glass balustrade (the front panes drawn as glass over the drop by js/estate.js, `penthouse.glass`).
+Open floor everywhere between, for the furniture you buy (tools/bridge-art/furniture_sprites.py).
 """
 import json
 import math
@@ -13,137 +25,196 @@ import os
 import sys
 
 from _cyber_room import Y, P, ROOT, Kit, THETA, apply_world  # noqa: F401
-from scenekit import shade  # noqa: E402
+import assets_casino as CA                                  # noqa: E402
+import assets_estate as E                                   # noqa: E402
+import assets_penthouse as PH                               # noqa: E402
+from scenekit import shade                                  # noqa: E402
+from _manor import preview                                  # noqa: E402
 
 OUT = sys.argv[1]
 WID = 'arcadia-penthouse'
 WORLD = os.path.join(ROOT, 'apps', 'bridge', 'assets', 'worlds', WID + '.json')
-COLS, ROWS = 22, 13
-H = 2.8 / math.cos(THETA)
+COLS, ROWS = 36, 19
 C = math.cos(THETA)
-FLOOR = (1, 2, 20, 10)
-DOORS = [(10, 11), (11, 11)]
-RF = 2.0                                                    # the glass wall's face
-WIN = (1.3, 20.7, 0.25, 2.55)
-GOLD = '#d8b060'
+H = 3.4
+RF = 2.0                                    # the back of the floor: glass, the core, the deck's balustrade
+FRONT = 16.0                                # the front edge: the low front wall indoors, the balustrade outside
+PX = 20.97                                  # the sliding glass between inside and the deck (it blocks the last column indoors)
+DOOR_R = (8.0, 11.0)                        # where it's open
+FLOOR = (1, 2, 34, 15)
+DOORS = [(10, 16), (11, 16)]
+WARM = PH.WARM
 
-k = Kit(COLS, ROWS, margin_top=1.0, margin_bottom=0.5, seed=2501)
-Y.tile_floor(k, 1, 2, 21, 11, tones=('#1c1a26', '#23212f'), size=1.0, seam='#0e0c16')
-P.ship_back_wall(k, 0.4, 21.6, RF, H, win=WIN, mullions=(4.6, 7.9, 11.0, 14.1, 17.4), pal=Y.WALL, trim=shade(GOLD, 0.7))
-P.ship_side_wall(k, 0.4, 1.0, RF - 0.5, 11, H, pal=Y.WALL)
-P.ship_side_wall(k, 21.0, 21.6, RF - 0.5, 11, H, pal=Y.WALL)
-P.ship_front_wall(k, 0.4, 21.6, 11, door=(10.0, 12.0), pal=Y.WALL)
-k.box(1.0, RF + 0.02, 0.0, 21.0, RF + 0.1, 0.06, '#0c1418', 'glass_foot', emit=(Y.CYAN, 0.5))     # the floor's edge lit at the glass
-P.led_strip(k, 1.0, 21.0, RF + 0.11, z=H - 0.3, col=Y.PURP, group='flicker')
+k = Kit(COLS, ROWS, margin_top=1.3, margin_bottom=1.6, margin_x=0.6, seed=2502)
 
-# ---- the bar, on the left ------------------------------------------------------------------------------------------
-BX0, BX1, BR0, BR1 = 1.2, 2.0, 3.6, 8.2                     # the counter runs front to back along the left wall
-k.box(BX0, BR0, 0.0, BX1, BR1, 1.0, ('#16141e', 0.08), 'bar_body')
-k.box(BX0 - 0.04, BR0 - 0.04, 1.0, BX1 + 0.12, BR1 + 0.04, 1.04, ('#2a2632', 0.25), 'bar_top')
-k.box(BX1 + 0.08, BR0 - 0.04, 1.0, BX1 + 0.12, BR1 + 0.04, 1.04, (GOLD, 0.3), 'bar_edge')
-k.box(BX1 + 0.01, BR0 + 0.1, 0.08, BX1 + 0.03, BR1 - 0.1, 0.12, '#200818', 'bar_neon', emit=(Y.PINK, 0.9))
-for i, r in enumerate((4.0, 4.5, 5.0, 5.6, 6.1, 6.7, 7.3, 7.8)):          # bottles along the counter
-    tone = (Y.CYAN, Y.PINK, Y.YEL, '#a0f080')[i % 4]
-    k.cyl(BX0 + 0.3, r, 1.06, 1.36 + (i % 3) * 0.05, 0.05, (shade(tone, 0.45), 0.05), 'bottle', verts=8)
-    k.cyl(BX0 + 0.3, r, 1.36 + (i % 3) * 0.05, 1.44 + (i % 3) * 0.05, 0.02, '#1a1a1a', 'bottle_neck', verts=6)
-for r in (4.4, 5.8, 7.2):                                    # stools
-    k.cyl(BX1 + 0.55, r, 0.0, 0.66, 0.04, '#3a3a48', 'stool_leg', verts=8)
-    k.cyl(BX1 + 0.55, r, 0.66, 0.74, 0.2, (GOLD, 0.3), 'stool_seat', verts=12)
-k.point_light(BX0 + 0.6, (BR0 + BR1) / 2, 1.6, '#f0a0c8', 18, radius=0.3)
-k.solid(1.0, BR0, 2.1, BR1)
-Y.neon_text(k, 'HALCYON', 3.2, RF, 2.2, h=0.26, col=Y.PINK, energy=4)
+# ---- the floor, the walls, the glass -------------------------------------------------------------------------------
+PH.black_marble(k, 1.0, RF, PX, FRONT)
+POOL_AT = (30.3, 3.25, 34.45, 7.75)
+PH.decking(k, PX, RF, 35.0, FRONT, holes=[(POOL_AT[0] - 0.18, POOL_AT[1] - 0.18, POOL_AT[2] + 0.18, POOL_AT[3] + 0.18)])
+k.box(0.4, FRONT, -0.32, 35.4, FRONT + 0.62, -0.002, ('#1e1a26', 0.05), 'roof_edge')
+PH.tower_face(k, 0.4, 35.4, FRONT + 0.62, depth=6.5)
+P.ship_side_wall(k, 0.4, 1.0, RF - 0.4, FRONT, H, pal=Y.WALL)
+GLASS = PH.glass_wall(k, 1.0, 13.6, RF, H, mullions=(3.6, 6.2, 8.8, 11.2))
+# the core: the lift shaft and the services, walnut slats over black, a cove of light under the bulkhead
+k.box(13.6, RF - 0.5, 0, PX, RF, H, (PH.BLACK_L, 0.04), 'core')
+slats = []
+x = 13.65
+while x < PX - 0.05:
+    slats.append((x, RF, 2.5, x + 0.07, RF + 0.04, H - 0.3))
+    x += 0.12
+k.boxes(slats, (PH.TEAK_D, 0.06), 'core_slats')
+k.box(13.6, RF - 0.3, H - 0.3, PX, RF + 0.3, H, (PH.BLACK_L, 0.05), 'bulkhead')
+k.box(13.6, RF + 0.3, H - 0.32, PX, RF + 0.32, H - 0.28, shade(Y.PINK, 0.4), 'cove', emit=(Y.PINK, 0.8))
+P.ship_front_wall(k, 0.4, PX, FRONT, door=(10.0, 12.0), pal=Y.WALL)
+k.box(10.05, FRONT + 0.6, 0.62, 11.95, FRONT + 0.62, 0.78, '#0c1418', 'lift_sign', emit=(Y.CYAN, 0.6))
+PH.sliding_doors(k, PX, RF, FRONT, H, open_r=DOOR_R)
 
-# ---- the sunken lounge, facing the glass ----------------------------------------------------------------------------
-LX0, LX1, LR0, LR1 = 7.2, 14.8, 3.0, 5.6
-k.box(LX0, LR0, -0.22, LX1, LR1, -0.02, ('#141220', 0.05), 'pit_floor')                        # the step down
-k.box(LX0 - 0.1, LR1, -0.02, LX1 + 0.1, LR1 + 0.1, 0.0, (GOLD, 0.3), 'pit_edge')
-SOFA = '#3a2a5a'
-k.box(LX0, LR1 - 0.75, -0.02, LX1, LR1, 0.42, (SOFA, 0.12), 'sofa_seat', bevel=0.04)          # the long seat, its back to you
-k.box(LX0, LR1 - 0.25, 0.42, LX1, LR1, 0.95, (shade(SOFA, 0.85), 0.12), 'sofa_back', bevel=0.05)
-for x0 in (LX0, LX1 - 0.75):                                 # the arms of the U, down the sides
-    k.box(x0, LR0 + 0.2, -0.02, x0 + 0.75, LR1 - 0.75, 0.42, (SOFA, 0.12), 'sofa_side', bevel=0.04)
-    k.box(x0 + (0.0 if x0 == LX0 else 0.5), LR0 + 0.2, 0.42, x0 + (0.25 if x0 == LX0 else 0.75), LR1 - 0.75, 0.85, (shade(SOFA, 0.85), 0.12), 'sofa_back', bevel=0.04)
-for x in (8.6, 10.2, 11.8, 13.4):                            # cushions
-    k.box(x - 0.3, LR1 - 0.62, 0.42, x + 0.3, LR1 - 0.3, 0.7, (('#c86a9a', '#5ac8d0')[int(x) % 2], 0.15), 'cushion', bevel=0.05)
-k.box(LX0 + 0.1, LR1 - 0.04, 0.02, LX1 - 0.1, LR1, 0.06, '#082028', 'sofa_glow', emit=(Y.CYAN, 0.8))
-k.box(9.6, 3.6, -0.02, 12.4, 4.4, 0.36, ('#a0c8e0', 0.02), 'table_glass')                     # the glass table
-k.box(9.7, 3.7, 0.0, 12.3, 4.3, 0.04, '#0c1820', 'table_glow', emit=(Y.CYAN, 0.4))
-k.cyl(10.4, 4.0, 0.36, 0.44, 0.08, '#e8e0d0', 'cup', verts=10)
-k.box(11.2, 3.85, 0.36, 11.8, 4.15, 0.42, '#2a2a3a', 'tablet', emit=('#3a6a9a', 0.5))
-k.point_light(11.0, 4.4, 1.4, '#a0e0f0', 14, radius=0.4)
-k.solid(LX0, LR0, LX1, LR1)
+# ---- the bedroom: the bed facing nothing but city, the bath beside it ------------------------------------------------
+PH.geo_rug(k, 1.6, 3.4, 6.6, 7.0)
+PH.platform_bed(k, 2.7, 5.3, 2.5, 5.4)
+PH.egg_tub(k, 7.35, 3.45, rad=0.62)
+E.potted_palm(k, 8.55, 6.9, h=1.7, pot='#1a1820', leaf='#3a6a3a', fronds=10)
+k.box(5.8, 6.2, 0.0, 6.5, 6.7, 0.04, '#e8e0f0', 'slippers')
+k.box(6.55, 6.2, 0.0, 7.0, 6.7, 0.04, '#e8e0f0', 'slippers')
 
-# ---- the bed on its platform, right -------------------------------------------------------------------------------
-PX0, PX1, PR0, PR1 = 15.8, 21.0, 2.0, 6.2
-k.box(PX0, PR0, 0.0, PX1, PR1, 0.24, ('#24202e', 0.06), 'platform', bevel=0.02)
-k.box(PX0, PR1 - 0.03, 0.02, PX1, PR1 + 0.01, 0.06, '#200818', 'platform_neon', emit=(Y.PINK, 0.8))
-BX, BR = 17.0, 2.5                                            # the bed: its head to the glass, foot towards you
-k.box(BX, BR + 0.1, 0.24, BX + 2.6, BR + 3.0, 0.62, ('#2a2638', 0.08), 'bed_base', bevel=0.04)
-k.box(BX + 0.05, BR + 0.15, 0.62, BX + 2.55, BR + 2.95, 0.78, ('#e8e4f0', 0.12), 'bed_sheet', bevel=0.05)
-k.box(BX + 0.05, BR + 1.3, 0.78, BX + 2.55, BR + 2.95, 0.84, ('#5a3a8a', 0.12), 'bed_throw', bevel=0.04)
-for x in (BX + 0.35, BX + 1.4):
-    k.box(x, BR + 0.25, 0.78, x + 0.85, BR + 0.7, 0.92, ('#f4f0f8', 0.15), 'pillow', bevel=0.05)
-k.box(BX - 0.1, BR, 0.24, BX + 2.7, BR + 0.12, 1.25, ('#1a1626', 0.08), 'headboard', bevel=0.03)
-Y.neon_shape(k, [(BX + 0.3, 1.3), (BX + 1.3, 1.6), (BX + 2.3, 1.3)], BR + 0.13, Y.PINK, closed=False)
-k.point_light(BX + 1.3, BR + 1.0, 1.5, '#f090c0', 16, radius=0.4)
-for x in (BX - 0.55, BX + 3.15):                             # night stands
-    k.box(x, BR + 0.2, 0.24, x + 0.45, BR + 0.65, 0.66, ('#2a2638', 0.08), 'nightstand')
-    k.cyl(x + 0.22, BR + 0.42, 0.66, 0.9, 0.08, '#fff0d0', 'lamp', emit=('#ffd8a0', 0.8), verts=10)
-k.solid(BX - 0.6, BR, BX + 3.7, BR + 3.0)
+# ---- the bathroom, glimpsed: the vanity on its wall, a rain shower, slate underfoot ----------------------------------
+BR0, BR1, BX1 = 7.4, 11.6, 4.7
+k.box(1.0, BR0 - 0.3, 0, BX1, BR0, 1.65, ('#2a2830', 0.04), 'bath_wall')
+k.box(1.0, BR0 - 0.32, 1.65, BX1, BR0 + 0.02, 1.7, (PH.GOLD, 0.03), 'bath_wall_cap')
+tiles = [E.rect(x + 0.01, r + 0.01, x + 0.49, r + 0.49) for x in [1.0 + 0.5 * i for i in range(7)] for r in [BR0 + 0.5 * j for j in range(8)]
+         if x < BX1 - 0.1 and r < BR1]
+E.flats(k, tiles, 0.001, ('#3a3a44', 0.06), 'bath_floor')
+PH.vanity(k, 1.25, 4.45, BR0, mz=1.22, mr=0.24)
+PH.rain_shower(k, 1.05, 9.7, 2.6, BR1, H)
+PH.sliding_doors(k, BX1, BR0, BR1, 2.4, open_r=(9.0, 10.0))
+k.box(3.2, 10.9, 0.0, 4.3, 11.4, 0.02, ('#e8e0d8', 0.08), 'bath_mat')
 
-# ---- the plunge pool by the lift, right front --------------------------------------------------------------------
-QX0, QX1, QR0, QR1 = 15.6, 19.8, 7.6, 10.0
-for (a, b, c, d) in ((QX0 - 0.15, QR0 - 0.15, QX1 + 0.15, QR0), (QX0 - 0.15, QR1, QX1 + 0.15, QR1 + 0.15),
-                     (QX0 - 0.15, QR0, QX0, QR1), (QX1, QR0, QX1 + 0.15, QR1)):         # the rim, round the water
-    k.box(a, b, -0.02, c, d, 0.08, ('#e8e4e0', 0.12), 'pool_rim', bevel=0.01)
-k.box(QX0, QR0, 0.0, QX1, QR1, 0.03, '#06303c', 'pool_water', emit=('#1a98b0', 0.5))     # (over the floor's tiles)
-k.box(QX0 + 1.6, QR0 + 0.3, 0.03, QX1 - 0.3, QR1 - 0.3, 0.031, '#042630', 'pool_deep', emit=('#0e7088', 0.46))   # the deep end
-for i in range(1, 8):                                        # the tiled bottom, seen through the water
-    x = QX0 + i * (QX1 - QX0) / 8
-    k.box(x - 0.01, QR0 + 0.05, 0.031, x + 0.01, QR1 - 0.05, 0.032, '#0a4858', 'pool_tile', emit=('#38b8d0', 0.4))
-for i in range(1, 5):
-    r = QR0 + i * (QR1 - QR0) / 5
-    k.box(QX0 + 0.05, r - 0.01, 0.031, QX1 - 0.05, r + 0.01, 0.032, '#0a4858', 'pool_tile', emit=('#38b8d0', 0.4))
-for i in range(6):                                           # ripples of light on it
-    x = QX0 + 0.4 + k.rng.random() * (QX1 - QX0 - 0.8)
-    r = QR0 + 0.3 + k.rng.random() * (QR1 - QR0 - 0.6)
-    k.box(x - 0.25, r - 0.02, 0.03, x + 0.25, r + 0.02, 0.036, '#60c8e0', 'pool_glint', emit=('#a8f0ff', 0.55))
-k.point_light((QX0 + QX1) / 2, (QR0 + QR1) / 2, 0.6, '#60e0f0', 30, radius=1.0)
-k.solid(QX0 - 0.15, QR0 - 0.15, QX1 + 0.15, QR1 + 0.15)
+# ---- the lounge, facing the glass ------------------------------------------------------------------------------------
+PH.geo_rug(k, 8.9, 2.7, 13.9, 7.4, base='#241e30', accent='#5a8ac8')
+PH.sectional(k, 9.3, 13.5, 3.0, 6.9, depth=0.85, arms=('left', 'right', 'front'))
+PH.coffee_table(k, 10.5, 3.7, 12.3, 4.7)
+PH.arc_lamp(k, 14.15, 6.5, 12.6, 5.0, h=2.1)
+PH.sculpture(k, 8.3, 9.0)
+CA.grand_piano(k, 7.2, 13.0, col='#ece8e2', facing='right')
+k.solid(6.2, 12.5, 8.1, 13.5)
 
-# ---- the lift doors in the front wall, plants, light ------------------------------------------------------------
-for (x, r) in ((1.6, 9.8), (20.4, 6.8), (6.4, 3.0), (15.2, 3.0)):
-    k.cyl(x, r, 0.0, 0.42, 0.24, ('#1a1626', 0.06), 'planter', verts=12)
-    P.houseplant(k, x, r, 0.42)
-for x in (2.6, 6.4, 11.0, 15.6, 19.4):
-    k.point_light(x, 6.5, 3.0, '#d8c8f0', 115, radius=0.8)
-k.area_light(11.0, RF + 0.5, 2.0, '#7060d0', 160, 18.0, rot=(math.radians(-75), 0, 0))     # the city's glow through the glass
-k.point_light(11.0, 9.6, 1.0, '#ffd8a0', 12, radius=0.3)                                     # by the lift
+# ---- the bar and the kitchen against the core -----------------------------------------------------------------------
+PH.back_bar(k, 13.75, 17.35, RF, H)
+Y.neon_text(k, 'HALCYON', 15.55, RF + 0.04, 2.36, h=0.26, col=Y.PINK, energy=5)
+PH.bar_counter(k, 14.06, 16.94, 3.45, 4.05, stools=(14.45, 15.15, 15.85, 16.55), stool_r=4.72)
+PH.drinks(k, 14.2, 16.9, 3.75, 1.06, n=4)
+PH.espresso_machine(k, 16.6, RF + 0.2, 0.95)
+PH.kitchen_run(k, 17.5, 20.9, RF, H)
+PH.kitchen_island(k, 18.0, 20.6, 4.5, 5.5, stools=(18.45, 19.3, 20.15), stool_r=5.95, H=H)
+PH.dining_set(k, 14.2, 18.4, 10.2, d=1.0)
+PH.robot_vacuum(k, 12.6, 9.6)
+for (x, r) in ((9.25, 15.2), (12.75, 15.2)):               # tall plants either side of the lift
+    E.potted_palm(k, x, r, h=1.5, pot='#1a1820', leaf='#4a7a3a', fronds=8, s=0.85)
+PH.geo_rug(k, 5.4, 9.2, 13.6, 14.4, base='#2a2232', lines=PH.GOLD, accent='#c86a9a')      # the open floor at the front, a rug on it
+E.wingback(k, 2.3, 13.3, facing='right', col='#4a2a6a', legs=PH.GOLD)                      # a reading corner
+k.cyl(3.15, 12.55, 0, 0.5, 0.2, (PH.BLACK_L, 0.04), 'side_table', verts=14)
+k.cyl(3.15, 12.55, 0.5, 0.53, 0.22, (PH.GOLD, 0.03), 'side_table', verts=14)
+E.stack_of_books(k, 3.15, 12.55, 0.53, n=3)
+k.solid(2.95, 12.35, 3.35, 12.75)
+PH.arc_lamp(k, 1.55, 12.3, 2.4, 13.1, h=1.95, energy=12)
+E.potted_palm(k, 1.7, 14.9, h=2.0, pot='#1a1820', leaf='#3a6a3a', fronds=11)
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.8}}, light_samples=128, world_light=('#2a2448', 0.7))
+# ---- out on the deck ----------------------------------------------------------------------------------------------
+PANES = [PH.glass_balustrade(k, (PX + 0.1, FRONT), (35.0, FRONT))]
+PH.glass_balustrade(k, (PX + 0.1, RF), (35.0, RF), holdout=True)
+PH.glass_balustrade(k, (35.0, RF), (35.0, FRONT))
+POOL = PH.plunge_pool(k, *POOL_AT, infinity='right')
+import assets_casino as CA2                                  # a float drifting on the water, a towel and sandals by it
+CA2.rim(k, E.ell(32.9, 6.3, 0.34, 0.26, 18), E.ell(32.9, 6.3, 0.16, 0.12, 18), -0.07, 0.01, ('#f070a0', 0.04), 'pool_float')
+k.box(29.2, 8.3, 0.0, 29.9, 8.75, 0.03, (Y.CYAN, 0.08), 'towel')
+for dx in (0.0, 0.14):
+    k.box(30.4 + dx, 8.45, 0.0, 30.5 + dx, 8.7, 0.025, '#e8e0d0', 'sandals')
+k.cyl(30.15, 7.95, 0.05, 0.11, 0.006, '#d8e8f0', 'glass', verts=5)
+k.cyl(30.15, 7.95, 0.11, 0.17, 0.025, '#e8d890', 'glass', emit=('#a09040', 0.3), verts=8)
+for x, towel in ((25.3, Y.PINK), (26.8, Y.CYAN), (28.3, '#e8c040')):
+    PH.lounger(k, x, 3.05, towel=towel)
+PH.planter(k, 22.1, 2.12, 24.2, 2.62, kind='grass', h=0.5)
+PH.outdoor_bar(k, 22.1, 23.9, 4.1, 4.7)
+PH.planter(k, 33.55, 9.35, 34.75, 10.65, kind='olive', h=0.55)
+PH.planter(k, 21.4, 15.15, 26.6, 15.75, kind='grass', h=0.45)
+PH.planter(k, 33.3, 14.9, 34.8, 15.7, kind='box', h=0.45)
+PH.fire_pit(k, 29.6, 12.6, rad=0.55, seat_rad=1.62, arc=(196, 344))
+PH.geo_rug(k, 22.4, 10.6, 26.0, 13.6, base='#3a3430', lines='#c8a060', accent='#c86a3a')
+for (x, r, f) in ((23.0, 11.3, 'right'), (25.4, 11.3, 'left')):
+    E.rattan_chair(k, x, r, facing=f, cushion='#e8e0d8', stripe='#3a3448')
+k.cyl(24.2, 11.6, 0, 0.36, 0.3, ('#4a4650', 0.05), 'deck_table', verts=16)
+k.cyl(24.2, 11.6, 0.36, 0.4, 0.34, (PH.TEAK_L, 0.07), 'deck_table', verts=16)
+E.hurricane_lamp(k, 24.1, 11.55, 0.4, energy=2.5)
+k.solid(23.9, 11.3, 24.5, 11.9)
+# the festoons, corner to corner over the deck
+posts = {n: PH.light_post(k, x, r) for n, (x, r) in {'nw': (21.45, 2.32), 'n': (28.6, 2.28), 'ne': (34.7, 2.32),
+                                                     'sw': (21.45, 15.62), 's': (28.6, 15.66), 'se': (34.7, 15.62)}.items()}
+BULBS = []
+for (a, b) in (('nw', 's'), ('s', 'ne'), ('sw', 'n'), ('n', 'se'), ('nw', 'n'), ('n', 'ne')):
+    BULBS += PH.festoon(k, posts[a], posts[b], sag=0.42 if a[0] != b[0] else 0.25, n=12, light_every=4, energy=2.6)
+
+# ---- light ---------------------------------------------------------------------------------------------------------
+for x in (2.8, 6.8, 10.8, 15.6, 19.2):                     # downlights inside, warm
+    for r in (4.5, 8.5, 12.5):
+        k.point_light(x, r, H - 0.2, '#ffd8b0', 40, radius=0.4, group='lamp')
+k.area_light(7.0, RF + 0.6, 2.2, '#7a60d0', 120, 10.0, rot=(math.radians(-70), 0, 0))       # the city's glow through the glass
+k.area_light(28.0, 9.0, 9.0, '#6a58c0', 1400, 18.0, rot=(math.radians(-30), 0, 0))          # the sky over the deck
+k.point_light(3.8, 4.2, 1.6, '#f090c0', 10, radius=0.4)
+k.point_light(18.9, 5.0, 2.2, WARM, 10, radius=0.3)
+k.point_light(10.8, 15.0, 1.4, '#a0e0f0', 8, radius=0.3)
+
+preview(k)
+k.render(OUT, light_states={'full': {'flicker': 1.0, 'lamp': 1.0}, 'dim': {'flicker': 0.72, 'lamp': 1.0}},
+         light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#2a2448', 0.6))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
-w.update({'name': 'The Penthouse', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia', 'interior': True,
-          'spawns': {'player': [10, 10]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
+w.pop('interior', None)
+w.update({'name': 'The Penthouse', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',
+          'spawns': {'player': [11, 15]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
           'shipExit': False})
+
+
+def look(label, x, y, text, **kw):
+    it = {'x': x, 'y': y, 'type': 'dialog', 'label': label, 'prompt': 'PRESS E TO LOOK', 'dialog': text}
+    it.update(kw)
+    return it
+
+
 w['interactions'] = [
     {'x': x, 'y': y, 'type': 'leave_world', 'leaveTo': 'arcadia-skypad', 'leaveSpawn': [11, 4], 'label': 'THE LIFT', 'prompt': 'PRESS E TO GO UP TO THE ROOF'}
     for (x, y) in DOORS] + [
-    {'x': 4, 'y': 2, 'type': 'dialog', 'label': 'THE GLASS', 'prompt': 'PRESS E TO LOOK', 'action': 'view', 'view': 'skyline',
-     'dialog': 'THE WHOLE CITY, AND YOU ABOVE IT. THE TRAFFIC LANES RUN LIKE RIVERS OF LIGHT BETWEEN THE TOWERS.'},
-    {'x': 10, 'y': 6, 'type': 'dialog', 'label': 'THE LOUNGE', 'prompt': 'PRESS E TO LOOK',
-     'dialog': 'A SOFA YOU COULD LOSE A PARTY IN, SUNK INTO THE FLOOR, FACING THE GLASS. ON THE TABLE, A CUP STILL WARM AND A TABLET THAT SAYS WELCOME HOME.'},
-    {'x': 2, 'y': 5, 'type': 'dialog', 'label': 'THE BAR', 'prompt': 'PRESS E TO LOOK',
-     'dialog': 'EVERY BOTTLE THE CITY MAKES, AND A FEW IT DOESN\'T. THE DUCHESS SENT UP A CASE OF HALCYON \'01 "FOR THE NEW NEIGHBOUR."'},
-    {'x': 18, 'y': 6, 'type': 'dialog', 'label': 'BED', 'prompt': 'PRESS E TO SLEEP', 'action': 'sleep',
-     'dialog': 'YOU SLEEP ABOVE THE CITY, UNDER A PINK HALO, AND DREAM OF NOTHING AT ALL.'},
-    {'x': 17, 'y': 7, 'type': 'dialog', 'label': 'THE POOL', 'prompt': 'PRESS E TO LOOK',
-     'dialog': 'A PLUNGE POOL, LIT FROM BELOW. THE WATER IS WARM AND SMELLS FAINTLY OF THE SEA ON LUMAR. SOMEBODY IMPORTED IT.'},
-    {'x': 16, 'y': 2, 'type': 'dialog', 'label': 'THE GLASS', 'prompt': 'PRESS E TO LOOK', 'action': 'view', 'view': 'skyline',
-     'dialog': 'THE NEON ROYALE\'S CROWN, LEVEL WITH YOUR WINDOW. FROM HERE THE WHALES LOOK LIKE ANYONE ELSE.'},
+    look('THE GLASS', 1, 2, 'THE WHOLE CITY, AND YOU ABOVE IT. THE TRAFFIC LANES RUN LIKE RIVERS OF LIGHT BETWEEN THE TOWERS.', action='view', view='skyline'),
+    look('BED', 4, 5, 'YOU SLEEP ABOVE THE CITY WITH THE TOWERS FOR A NIGHT LIGHT, AND DREAM OF NOTHING AT ALL.', prompt='PRESS E TO SLEEP', action='sleep'),
+    look('THE BATH', 7, 3, 'A BATH CUT FROM ONE STONE, BY THE GLASS. YOU SINK IN TO THE CHIN WITH THE CITY AT YOUR ELBOW AND A GLASS OF SOMETHING COLD.',
+         prompt='PRESS E TO BATHE', action='sleep', rest=1.6),
+    look('VANITY', 3, 7, 'TWIN BASINS, TWO MIRRORS RINGED WITH LIGHT. IN BOTH OF THEM YOU LOOK LIKE SOMEBODY WHO OWNS A PENTHOUSE.'),
+    look('THE LOUNGE', 11, 6, 'A SOFA YOU COULD LOSE A PARTY IN, FACING THE GLASS. ON THE TABLE, A BOWL OF GLOWING STONES AND A TABLET THAT SAYS WELCOME HOME.',
+         prompt='PRESS E TO SIT', action='sit', seat=[11.5, 6.55], facing='up'),
+    look('PIANO', 7, 13, 'A WHITE GRAND, TUNED THIS MORNING BY SOMEONE YOU NEVER SAW. YOU PLAY THE FOUR NOTES YOU KNOW; THE ROOM MAKES THEM SOUND EXPENSIVE.'),
+    look('THE BAR', 15, 3, 'EVERY BOTTLE THE CITY MAKES, AND A FEW IT DOESN\'T. THE DUCHESS SENT UP A CASE OF HALCYON \'01 "FOR THE NEW NEIGHBOUR."'),
+    look('THE KITCHEN', 19, 5, 'A KITCHEN NOBODY HAS COOKED IN. THE OVEN KNOWS FOUR HUNDRED RECIPES AND YOUR NAME. THE LEMONS ARE REAL, WHICH IN ARCADIA IS A FLEX.'),
+    look('THE GLASS', 9, 2, 'THE NEON ROYALE\'S CROWN, LEVEL WITH YOUR WINDOW. FROM HERE THE WHALES LOOK LIKE ANYONE ELSE.', action='view', view='skyline'),
+    look('THE POOL', 30, 8, 'A PLUNGE POOL LIT FROM BELOW, WARM AS A BATH, ITS FAR EDGE SPILLING AWAY TOWARD THE TOWERS. THE WATER SMELLS FAINTLY OF THE SEA ON LUMAR. SOMEBODY IMPORTED IT.',
+         prompt='PRESS E TO SWIM', action='sleep', rest=1.4),
+    look('LOUNGER', 25, 4, 'WARM CUSHIONS, A TOWEL ROLLED UNDER YOUR NECK, THE TRAFFIC SLIDING PAST TWO HUNDRED FLOORS DOWN.', prompt='PRESS E TO LIE BACK',
+         action='sit', seat=[25.3, 4.3], facing='down', view='skyline'),
+    look('LOUNGER', 26, 4, 'THE RAIN NEVER QUITE REACHES THIS FAR UP. IT JUST GLITTERS ON THE GLASS.', prompt='PRESS E TO LIE BACK',
+         action='sit', seat=[26.8, 4.3], facing='down', view='skyline'),
+    look('LOUNGER', 28, 4, 'A DRINK WITH AN UMBRELLA IN IT, MELTING. NOBODY WILL ASK YOU TO DO ANYTHING FOR HOURS.', prompt='PRESS E TO LIE BACK',
+         action='sit', seat=[28.3, 4.3], facing='down', view='skyline'),
+    look('THE FIRE PIT', 29, 11, 'FLAMES STANDING UP OUT OF BLUE GLASS, CUSHIONS ALL ROUND. THE BEST SEAT IN ARCADIA, AND IT\'S YOURS.', prompt='PRESS E TO SIT',
+         action='sit', seat=[29.6, 11.5], facing='down'),
+    look('DRINKS', 23, 4, 'A COUNTER OF ICE AND BOTTLES BY THE POOL, AND A STACK OF TOWELS IN YOUR COLOURS.'),
+    look('THE EDGE', 34, 13, 'GLASS, THEN NOTHING, THEN THE CITY. A HOVER-CAB DRIFTS PAST AT EYE LEVEL; THE PASSENGER WAVES. YOU WAVE BACK.', action='view', view='skyline'),
+    look('THE EDGE', 30, 15, 'STRAIGHT DOWN: THE SKYWALK, THE DISTRICT, THE STREET, ALL OF IT SMALL AND LIT AND BUSY. UP HERE IT\'S QUIET.', action='view', view='skyline'),
 ]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
-apply_world(WORLD, k, FLOOR, doors=DOORS, scene_id=WID, scene_extra={
-    'flicker': {'mode': 'pulse'},
-    'sky': [WIN[0], round(RF - WIN[3] * C, 3), WIN[1], round(RF - WIN[2] * C, 3)]})
-print('penthouse done')
+apply_world(WORLD, k, FLOOR, doors=DOORS, scene_id=WID, scene_extra={'backdrop': True})
+w = json.load(open(WORLD))
+w['skyline'] = {'baseRow': 3.6, 'railRow': FRONT + 1.4, 'centerCol': COLS / 2,
+                'rain': {'drops': 150, 'splash': [PX + 0.4, RF + 0.3, 34.7, FRONT - 0.3],
+                         'dry': [[0.3, round(RF - H * C - 0.6, 3), PX + 0.15, FRONT + 0.7]]}}
+w['view'] = [-0.6, -1.4, COLS + 0.6, ROWS + 0.6]
+w['penthouse'] = {'glass': [p for p in PANES if p], 'pool': POOL, 'bulbs': BULBS, 'fire': [29.6, round(12.6 - 0.9 * C, 3)]}
+open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
+print('penthouse done; glass', GLASS)

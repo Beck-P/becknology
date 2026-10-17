@@ -153,7 +153,7 @@ var BridgeBusiness = (function () {
           b.stock = (b.stock || 0) - used;
           f = need > 0 ? (used + (need - used) * BOUGHT) / need : 1;
         }
-        var earn = d.rate * c.run * o * f * dt / 3600000;
+        var earn = d.rate * c.run * o * f * dt / 3600000 * lift(id, mid) * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.takings() : 1);   // the Gilded Ledger
         if (c.banks) bank += earn; else held = Math.min(limit, held + earn);
         made += earn;
         b.today = (b.dayKey === dayOf(mid) ? b.today || 0 : 0) + earn; b.dayKey = dayOf(mid);
@@ -163,6 +163,8 @@ var BridgeBusiness = (function () {
     b.held = held; b.bank = bank; b.last = now; b.made = (b.made || 0) + made;
   }
   function pending(id) { if (!owned(id)) return 0; accrue(id, Date.now()); return Math.floor(B(id).held || 0); }
+  // a day's trade lifted by the morning dispatch (js/dispatch.js): a market day, staff who heard a rival wanted the place
+  function lift(id, ms) { return typeof BridgeDispatch !== 'undefined' && BridgeDispatch.lift ? BridgeDispatch.lift(id, ms) : 1; }
 
   // ---- payroll ---------------------------------------------------------------------------------------------------
   // Wages are paid a day ahead: the first on hiring, then one at each Eastern-time midnight (`state.paid` is the last
@@ -193,7 +195,7 @@ var BridgeBusiness = (function () {
           }
           toast('Wages', p.name + ' wasn\'t paid', 'Pay them before the next payday or they walk');
         }
-        p.owe = (p.owe || 0) + p.wage * days;
+        p.owe = (p.owe || 0) + p.wage * days * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.wages() : 1);   // (the Barrow Crown, woken)
       });
       if (typeof BridgeCrew !== 'undefined') BridgeCrew.list().forEach(function (c) {
         var w = crewWage(c.id), o = crewOwed(c.id);
@@ -214,7 +216,7 @@ var BridgeBusiness = (function () {
           }
           toast('Wages', c.name + ' wasn\'t paid', 'Pay them before the next payday or they go ashore');
         }
-        o.owe += BridgeFleet.wage(c) * days;
+        o.owe += BridgeFleet.wage(c) * days * (typeof BridgeWonders !== 'undefined' ? BridgeWonders.wages() : 1);
       });
       save();
     }
@@ -231,7 +233,8 @@ var BridgeBusiness = (function () {
       var b = x.p.at ? B(x.p.at) : null;
       if (!b) return;
       var t = Math.min(x.p.owe, b.bank || 0); b.bank = (b.bank || 0) - t; x.p.owe -= t;
-      t = Math.min(x.p.owe, b.held || 0); b.held = (b.held || 0) - t; x.p.owe -= t;
+      var t2 = Math.min(x.p.owe, b.held || 0); b.held = (b.held || 0) - t2; x.p.owe -= t2;
+      if (t + t2 > 0 && typeof BridgeTreasury !== 'undefined' && BridgeTreasury.internal) BridgeTreasury.internal(t + t2);
       if (x.p.owe < 0.5) { x.p.owe = 0; x.p.missed = 0; }
     });
     save();
@@ -313,7 +316,7 @@ var BridgeBusiness = (function () {
   setInterval(tick, 60000);
 
   // ---- hiring ----------------------------------------------------------------------------------------------------
-  function region(id) { var p = planetOf(id) || defs[id].loc; return NAMES[p] ? p : defs[id].loc === 'singularity' ? 'singularity' : 'lumar'; }
+  function region(id) { var d = defs[id]; if (!d) return 'lumar'; var p = planetOf(id) || d.loc; return NAMES[p] ? p : d.loc === 'singularity' ? 'singularity' : 'lumar'; }
   /** Today's people looking for work at this business: a hand, a manager (where there's room for one) and a specialist. */
   function candidates(id) {
     var d = defs[id], day = today(), out = [], names = NAMES[region(id)];
@@ -356,6 +359,23 @@ var BridgeBusiness = (function () {
       state.staff.push(p);
       if (!state.paid) state.paid = today();
       note(p.name + ' hired at ' + defs[id].name + ' (' + p.title.toLowerCase() + ', ' + p.wage + ' a day)');
+      save();
+      return { ok: true, staff: p };
+    });
+  }
+  /** Someone working for you somewhere that isn't a business — the smiths at your Workshop (js/workshop.js, `at:
+   *  'workshop'`): on the same payroll as everyone else, their first day's wage now and one each Eastern-time day; two
+   *  paydays unpaid and they walk out. Resolves { ok, staff | reason }. */
+  function engage(place, cand) {
+    if (state.staff.some(function (p) { return p.key === cand.key; })) return Promise.resolve({ ok: false, reason: 'taken' });
+    payroll();
+    return pay(cand.wage, 'wages:hire').then(function (r) {
+      if (!r.ok) return r;
+      var p = { id: 's' + (++state.n), key: cand.key, name: cand.name, tier: cand.tier, title: cand.title, grade: cand.grade, wage: cand.wage,
+                skill: cand.skill || 1, at: place, hired: Date.now(), missed: 0, owe: 0 };
+      state.staff.push(p);
+      if (!state.paid) state.paid = today();
+      note(p.name + ' taken on (' + p.title.toLowerCase() + ', ' + p.wage + ' a day)');
       save();
       return { ok: true, staff: p };
     });
@@ -437,6 +457,35 @@ var BridgeBusiness = (function () {
     save();
     return { units: units, items: list };
   }
+  /** Stock brought in by one of your ships (js/orders.js, a supply run): [{ id, n }] into its stock. Returns the units. */
+  function supply(id, items) {
+    var b = B(id), d = defs[id];
+    if (!b || !d || !d.stock) return 0;
+    accrue(id, Date.now());
+    var units = 0;
+    (items || []).forEach(function (x) { units += (x.n || 0) * unitsOf(x.id); });
+    b.stock = (b.stock || 0) + units;
+    b.supplied = (b.supplied || 0) + units;
+    note(d.name + ' stocked by a supply run: ' + units + ' units');
+    save();
+    return units;
+  }
+  /** Sold to someone who asked (the morning dispatch, js/dispatch.js): the staff there let go, what's waiting paid out
+   *  with the price. Resolves { ok, amount }. */
+  function sellTo(id, price) {
+    if (!owned(id)) return Promise.resolve({ ok: false, reason: 'not_yours' });
+    accrue(id, Date.now());
+    var b = B(id), amount = Math.floor(price + (b.held || 0) + (b.bank || 0));
+    var paid = P() && P().awardCoins ? P().awardCoins(amount, 'business-sold:' + id) : Promise.resolve(null);
+    return paid.then(function (bal) {
+      if (bal === null || bal === undefined) return { ok: false, reason: 'offline' };
+      state.staff.filter(function (p) { return p.at === id; }).forEach(function (p) { state.staff = state.staff.filter(function (x) { return x !== p; }); });
+      delete state.biz[id];
+      note('Sold ' + defs[id].name + ' for ' + amount);
+      save();
+      return { ok: true, amount: amount };
+    }, function () { return { ok: false, reason: 'offline' }; });
+  }
   /** Its stock now: { units, hours (open hours it lasts) } — null if it sells nothing you could stock. */
   function stockOf(id) { var d = defs[id], b = B(id); if (!d || !d.stock) return null; var u = Math.floor((b && b.stock) || 0); return { units: u, hours: Math.floor(u / (PER[d.kind] || 2)), per: PER[d.kind] || 2 }; }
 
@@ -469,8 +518,8 @@ var BridgeBusiness = (function () {
 
   return { find: find, owned: owned, pending: pending, cap: cap, perHour: perHour, nextUpgrade: nextUpgrade, buy: buy, grant: grant,
            upgrade: upgrade, collect: collect, freeCrew: freeCrew, assign: assign, summary: summary, status: status,
-           candidates: candidates, hire: hire, dismiss: dismiss, move: move, room: room, staff: function (id) { return id ? staffAll(id) : state.staff.slice(); },
-           openNow: function (id) { return openAt(id, Date.now()) > 0; }, hoursText: hoursText, stockable: stockable, restock: restock, stockOf: stockOf, BOUGHT: BOUGHT, perkOf: perkOf, faceOf: faceOf, unpaid: unpaid, owing: owing, payAll: payAll, handOwed: handOwed, crewWage: crewWage,
+           candidates: candidates, hire: hire, engage: engage, dismiss: dismiss, move: move, room: room, staff: function (id) { return id ? staffAll(id) : state.staff.slice(); },
+           openNow: function (id) { return openAt(id, Date.now()) > 0; }, hoursText: hoursText, stockable: stockable, restock: restock, stockOf: stockOf, supply: supply, sellTo: sellTo, unitsOf: unitsOf, PER: PER, BOUGHT: BOUGHT, perkOf: perkOf, faceOf: faceOf, unpaid: unpaid, owing: owing, payAll: payAll, handOwed: handOwed, crewWage: crewWage,
            get: function (id) { return defs[id] || null; }, ofOwner: ofOwner, TIERS: TIERS, SLOTS: SLOTS, log: function () { return state.log; },
            state: function (id) { return state.biz[id] || null; }, _tick: tick, _state: function () { return state; },
            all: function () { return Object.keys(defs).map(function (id) { return defs[id]; }); } };     // every business there is (js/ledger.js)

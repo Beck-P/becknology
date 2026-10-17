@@ -103,6 +103,11 @@
         "q": "Sea charts",
         "a": "EVERY SOUNDING, EVERY SHOAL, EVERY HARBOUR MOUTH. THE EMERALD YOU KNOW ALREADY - EVERYONE DOES. THE OTHERS I SELL BY THE SEA.",
         "charts": true
+      },
+      {
+        "q": "Your telescope?",
+        "a": "MY OWN DESIGN: TWO GOOD SAPPHIRE LENSES, A BRASS TUBE, A LITTLE COPPER. I'LL SELL YOU THE DRAWING. EVERY CAPTAIN SHOULD HAVE ONE AT HOME, POINTED AT THE SEA THEY'RE NOT ON.",
+        "workshop": "ilsa"
       }
     ]
   },
@@ -829,6 +834,11 @@
       {
         "q": "Heard anything?",
         "a": "SOMEONE'S BURNING A LAMP ON MIDNIGHT. NORTH BY EAST, PAST THE ABBEY. READ THE LOG DOWNSTAIRS IF YOU WANT TO KNOW MORE - IT'LL TELL YOU MORE THAN I WILL."
+      },
+      {
+        "q": "A compass for fog?",
+        "a": "MY GRANDMOTHER MADE ONE, ONCE, FOR A CAPTAIN WHO KEPT LOSING HIS WAY TO HER. BOUND TO THE LIGHT, NOT THE STARS. IT NEVER LOST A SHIP. THE PLAN'S IN HER LOG - I'LL DRAW IT FOR YOU, IF YOU'LL DO SOMETHING FOR THE LENS.",
+        "workshop": "keeper"
       }
     ]
   },
@@ -939,6 +949,11 @@
             "price": 70
           }
         ]
+      },
+      {
+        "q": "Copper, and plans?",
+        "a": "THERE'S A CART OF GREEN-STREAKED ORE BY THE LIFT NOBODY'S TAKEN. YOURS, FOR A FEW COINS. AND IF YOU'VE A FORGE OF YOUR OWN, I'LL DRAW YOU HOW I MAKE A STAR PICK. THE OTHER ONE - THE ONE THAT LISTENS - I'LL SHOW YOU WHEN YOU'VE BEEN WHERE IT SINGS.",
+        "workshop": "hob"
       }
     ]
   },
@@ -1754,6 +1769,11 @@
       {
         "q": "Islands for sale?",
         "a": "THERE'S STARLING HOLM, OUT PAST TERN HOLM ON THE WAY TO THE CAPITAL. A COTTAGE GONE TO RUIN, A JETTY, A WALLED GARDEN UNDER BRAMBLES. THE PRICE IS ON THE SIGN AT THE JETTY. MAKE IT A HOME PORT - YOUR SHIPS CAN TRADE FROM IT WHILE YOU'RE BUSY."
+      },
+      {
+        "q": "Pine, pitch and rope?",
+        "a": "OFF THE POINT'S OWN HILLS. LOGS FOR THE SAW, PITCH FOR THE SEAMS, ROPE BY THE COIL. IF YOU'RE BUILDING SOMETHING OF YOUR OWN OUT ON THAT HOLM, YOU'LL WANT ALL THREE.",
+        "workshop": "bess"
       }
     ]
   },
@@ -1786,6 +1806,11 @@
       {
         "q": "Guns?",
         "a": "SWIVELS, LONG NINES, CARRONADES. A LONG NINE REACHES; A CARRONADE SMASHES BUT ONLY CLOSE. GUNS FIRE ABEAM - PUT THE ENEMY ON YOUR SIDE, NOT YOUR BOW. AND A GUN WITH A GUNNER ON IT FIRES TWICE AS OFTEN."
+      },
+      {
+        "q": "Glass and copper?",
+        "a": "PANES FROM THE KILNS, A FEW AT A TIME, AND COPPER SHEET FROM THE GREAT YARD'S OWN STORE. BUILDING SOMETHING, CAPTAIN? GOOD. THE SEAS COULD DO WITH MORE PEOPLE MAKING THINGS.",
+        "workshop": "aldous"
       }
     ]
   },
@@ -1818,6 +1843,11 @@
       {
         "q": "What sells here?",
         "a": "SILK AND ROSEITE ARE CHEAP - THEY'RE OURS. WE'RE SHORT OF SALT FISH, TIMBER AND GLASS. AND THE COVE'S NAVIGATORS READ THE SPORE CURRENTS LIKE PRINT: SIGN ONE ON."
+      },
+      {
+        "q": "Sailcloth?",
+        "a": "BOLTS OF IT, OFF MY OWN LOOM. AND IF YOU WANT TO GROW ROSEITE ON A HULL YOURSELF, I'LL SELL YOU THE WAY OF IT. THE CRYSTAL SAILS... THOSE I TEACH. FOR A FAVOUR.",
+        "workshop": "mira"
       }
     ]
   },
@@ -1850,6 +1880,11 @@
       {
         "q": "Pirates?",
         "a": "MY OLD FRIENDS. THEY'LL HAIL YOU: PAY AND THEY'LL LET YOU BY, MOSTLY. FIGHT AND THEY'LL TRY TO BOARD - HAVE FIGHTERS ABOARD. RUN, IF YOU'RE QUICKER THAN THEM. EMBER RUM AND BLACK POWDER ARE CHEAP HERE, BY THE WAY. EVERYTHING ELSE IS DEAR."
+      },
+      {
+        "q": "Powder?",
+        "a": "BY THE HORN, IF YOU'RE CASTING YOUR OWN GUNS. NO QUESTIONS. AND FOR COIN I'LL DRAW YOU A CARRONADE, OR HOW WE RIG FOR A CRIMSON BLOW.",
+        "workshop": "garro"
       }
     ]
   },
@@ -1904,6 +1939,11 @@
             "price": 520
           }
         ]
+      },
+      {
+        "q": "Moonglass, by the shard?",
+        "a": "...A FEW SHARDS A DAY. NO MORE. THE LANTERN AND THE HARPOON I WILL DRAW FOR COIN. THE GRINDING OF THE GLASS, AND THE SERPENT'S SCALES, I TEACH ONLY FOR WHAT THE SEA KEEPS.",
+        "workshop": "ferryman"
       }
     ]
   },
@@ -2069,6 +2109,11 @@
       {
         "q": "The island over there?",
         "a": "STARLING HOLM? NICE LITTLE PLACE ONCE. THE COTTAGE IS A SHELL NOW. SOMEBODY OUGHT TO TAKE IT ON."
+      },
+      {
+        "q": "A better rod?",
+        "a": "GREENHEART. SPRINGS LIKE A WILLOW AND NEVER BREAKS. MY FATHER DREW THE PLAN FOR IT ON THE BACK OF A TIDE TABLE - I'LL SELL YOU A COPY. AND ROPE, IF YOU WANT IT. WE'VE MORE ROPE THAN SENSE HERE. AND IF YOU EVER LAND BOTH PEARLS - THE MOON POOL'S AND THE ONE OUT OF THAT THING IN THE DEEP - I'VE MY GRANDFATHER'S WAY OF SETTING THEM. THE FISH COME TO IT LIKE CHILDREN TO A BELL.",
+        "workshop": "tern_pell"
       }
     ]
   },
@@ -2123,6 +2168,11 @@
       {
         "q": "Upkeep?",
         "a": "EVERY KNOCK COSTS. ROCKS, SQUALLS, PIRATE SHOT. ANY HARBOURMASTER CAN PATCH HER, AND IF YOU'VE A DOCK OF YOUR OWN, YOU CAN DO IT THERE."
+      },
+      {
+        "q": "Plans from the Royal Yard?",
+        "a": "I DON'T SELL SHIPS. I SELL WHAT'S IN MY HEAD, INKED ON PAPER: HOW TO CAST A LONG NINE, A BOW CHASER, HOW TO COPPER A BOTTOM. AND OAK, IF YOU'VE A SAW. WHAT YOU BUILD WITH IT IS YOUR AFFAIR.",
+        "workshop": "wright"
       }
     ]
   },
@@ -2258,6 +2308,11 @@
       {
         "q": "Advice",
         "a": "BUY WHERE A THING IS MADE. SELL WHERE IT IS WANTED. DO NOT SELL A WHOLE HOLD OF ANYTHING IN ONE PORT - THE PRICE FALLS WITH EVERY CRATE. THE BOARD SHOWS THE DAY'S BEST RUNS, IF YOU CAN READ."
+      },
+      {
+        "q": "A ledger that keeps itself?",
+        "a": "THE GILDED LEDGER. THE GUILD'S OLDEST HOUSES KEEP ONE EACH: GILT ON THE EDGES, A HERON'S SILVER IN THE CLASP, AND THE BOOKS SOMEHOW ALWAYS BALANCE IN YOUR FAVOUR. THE PATTERN IS FOR SALE, TO A MEMBER IN GOOD STANDING. YOU'LL DO.",
+        "workshop": "registrar"
       }
     ]
   },

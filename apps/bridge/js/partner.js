@@ -21,15 +21,27 @@ var BridgePartner = (function () {
   var KEYS = { bridge_homes: 'BridgeHome', bridge_holm: 'BridgeHolm', bridge_farm: 'BridgeFarm', bridge_homestead: 'BridgeHomestead', bridge_animals: 'BridgeAnimals' };
   // which keys each place needs, and the set of worlds a visit covers (leave them and the visit ends)
   var PLACES = {
-    'lumar-holm':      { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home'], name: 'Starling Holm' },
-    'lumar-holm-home': { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home'], name: 'the cottage on the holm' },
+    'lumar-holm':      { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home', 'lumar-holm-resort'], name: 'Starling Holm' },
+    'lumar-holm-home': { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home', 'lumar-holm-resort'], name: 'the cottage on the holm' },
+    'lumar-holm-resort': { keys: ['bridge_holm', 'bridge_homes'], worlds: ['lumar-holm', 'lumar-holm-home', 'lumar-holm-resort'], name: 'the Starling' },
     'lumar-home':      { keys: ['bridge_homes'], worlds: ['lumar-home'], name: 'the house in Lumar' },
     'arcadia-home':    { keys: ['bridge_homes'], worlds: ['arcadia-home'], name: 'the flat in Arcadia' },
     'arcadia-penthouse': { keys: ['bridge_homes'], worlds: ['arcadia-penthouse'], name: 'the penthouse in Arcadia' },
-    'lumar-manor':     { keys: ['bridge_homes'], worlds: ['lumar-manor'], name: 'Ashcombe House' },
+    'lumar-manor':     { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
+    'lumar-manor-drawing': { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
+    'lumar-manor-library': { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
+    'lumar-manor-dining': { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
+    'lumar-manor-bedroom': { keys: ['bridge_homes'], worlds: ['lumar-manor', 'lumar-manor-drawing', 'lumar-manor-library', 'lumar-manor-dining', 'lumar-manor-bedroom'], name: 'Ashcombe House' },
     'verdance-home':   { keys: ['bridge_homes', 'bridge_farm', 'bridge_homestead', 'bridge_animals'], worlds: ['verdance', 'verdance-home'], name: 'the farmhouse' },
     'verdance':        { keys: ['bridge_farm', 'bridge_homestead', 'bridge_animals', 'bridge_homes'], worlds: ['verdance', 'verdance-home'], name: 'the farm on Verdance' }
   };
+  // the Wayfarer: open to whoever you're playing with (js/party.js), not to partners as such. Its furniture, chests and
+  // tanks go through the lens like a home's; its decor, crew and game room are shown from the owner's (js/party.js)
+  var SHIP = { keys: ['bridge_homes'], worlds: ['bridge', 'quarters', 'gameroom', 'hangar', 'office'], name: 'the Wayfarer', ship: true };
+  SHIP.worlds.forEach(function (w) { PLACES[w] = SHIP; });
+  function party(id) { return typeof BridgeParty !== 'undefined' && BridgeParty.has && BridgeParty.has(id); }
+  function allowed(id, world) { var P = PLACES[world]; return !!P && (P.ship ? party(id) : is(id)); }
+  function trusted(id) { return is(id) || party(id); }
 
   function N() { return typeof BridgeNet !== 'undefined' ? BridgeNet : null; }
   function M() { return typeof BridgeMulti !== 'undefined' ? BridgeMulti : null; }
@@ -147,30 +159,31 @@ var BridgePartner = (function () {
   function visit(owner, world, then) {
     var P = PLACES[world];
     if (!P) { if (then) then(); return; }
-    if (!is(owner)) { toast('Visiting', 'Not yet', 'Be partners first - then their places are open to you'); return; }
+    if (!allowed(owner, world)) { toast('Visiting', 'Not yet', P.ship ? 'Play together first - then you can come aboard' : 'Be partners first - then their places are open to you'); return; }
     var keys = P.keys;
     fetchTheirs(owner, keys).then(function (data) {
       if (V) leave(true);
       V = { owner: owner, name: nameOf(owner), keys: {}, data: {}, worlds: {}, place: P.name, arriving: Date.now() };
       keys.forEach(function (k) { V.keys[k] = 1; V.data[k] = data && data[k] != null ? data[k] : null; });
       P.worlds.forEach(function (w) { V.worlds[w] = 1; });
+      V.ship = !!P.ship;
       if (M()) M().setVisiting(owner);
       if (N()) N().set({ visiting: owner });
       reload(keys);
-      toast('Visiting', nameOf(owner) + '\'s ' + P.name.replace(/^the /, ''), 'It\'s theirs - you\'re welcome any time');
+      toast(P.ship ? 'Aboard' : 'Visiting', nameOf(owner) + '\'s ' + P.name.replace(/^the /, ''), P.ship ? 'Their ship - make yourself at home' : 'It\'s theirs - you\'re welcome any time');
       if (then) then();
     });
   }
   /** Back to your own (leaving their place). */
   function leave(quiet) {
     if (!V) return;
-    var keys = Object.keys(V.keys), owner = V.owner, name = V.name;
+    var keys = Object.keys(V.keys), owner = V.owner, name = V.name, ship = V.ship;
     flushLater(owner);
     V = null;
     if (M()) M().setVisiting(null);
     if (N()) N().set({ visiting: null });
     reload(keys);
-    if (!quiet) toast('Home again', 'Your own places', 'You left ' + name + '\'s');
+    if (!quiet && !ship) toast('Home again', 'Your own places', 'You left ' + name + '\'s');
   }
   // leaving their place (by any door, any boat) ends the visit
   setInterval(function () {
@@ -206,7 +219,7 @@ var BridgePartner = (function () {
     n.on('partner-yes', function (d, from) { link(from, d && d.name || nameOf(from)); toast('Partners ♥', nameOf(from), 'Your places are open to each other'); sfx('quest'); });
     n.on('partner-no', function (d, from) { toast('Partners', nameOf(from) + ' said not now', ''); });
     n.on('pget', function (d, from) {
-      if (!d || !is(from)) return;
+      if (!d || !trusted(from)) return;
       var out = {};
       (d.keys || []).forEach(function (k) { if (KEYS[k]) out[k] = get0.call(localStorage, k); });
       n.send('pval', { rid: d.rid, data: out }, from);
@@ -215,7 +228,7 @@ var BridgePartner = (function () {
     n.on('pset', function (d, from) {
       if (!d || !KEYS[d.k]) return;
       var m = me();
-      if (m && d.owner === m.id && is(from)) {                        // a partner changed something in your place
+      if (m && d.owner === m.id && trusted(from)) {                   // a partner (or your party, aboard) changed something in your place
         set0.call(localStorage, d.k, d.v);
         if (!V || !V.keys[d.k]) reload([d.k]);
       } else if (V && V.owner === from && d.owner === from && V.keys[d.k]) {   // the owner changed something where you are
@@ -240,8 +253,8 @@ var BridgePartner = (function () {
       } else if (!remote && p) out.push({ label: 'Be partners', act: function () { ask(id); } });
       return out;
     });
-    BridgeMulti.guard.personal = function (p) { return is(p.id) && PLACES[p.world] ? '' : PLACES[p.world] ? 'be partners first' : 'their ship'; };
-    BridgeMulti.guard.visit = function (owner, world, go) { if (PLACES[world] && is(owner)) visit(owner, world, go); else toast('Visiting', 'Not yet', 'Be partners first'); };
+    BridgeMulti.guard.personal = function (p) { var P = PLACES[p.world]; return allowed(p.id, p.world) ? '' : P && P.ship ? 'play together first' : P ? 'be partners first' : 'their place'; };
+    BridgeMulti.guard.visit = function (owner, world, go) { if (allowed(owner, world)) visit(owner, world, go); else toast('Visiting', 'Not yet', PLACES[world] && PLACES[world].ship ? 'Play together first' : 'Be partners first'); };
     BridgeMulti.friends = function () { return list(); };
   }
   wire();

@@ -273,6 +273,131 @@ var BridgeOrbit = (function () {
     return c.canvas;
   }
 
+  // ---- a world seen from the ship parked over it (the title page, js/intro.js) ------------------------
+  // drawPlanet below is a whole disc lit from a fixed side. globe() is one seen close: a big disc of which only what's
+  // inside `clip` is worked out, its axis tilted so the face below shows the middle latitudes, lit by a sun the caller
+  // places (in the planet's own frame: x east, y down, z out of the face below — js/intro.js puts it where the planet's
+  // clock says), the surface turning slowly. Magnified, the texture is sampled through a 4×4 dither so coastlines and
+  // fields break up into pixel clusters instead of blocks; the same shading as the windows' planets (cloud shadows,
+  // the dithered terminator, the warm band along it, glints on the water, lights after dark, the rim), and the air
+  // past the limb glows, dithered, where the sun reaches it. One geometry is kept (per-pixel normals, texture rows),
+  // made again only when the size changes; the picture is redrawn every `every` ms.
+  var globeG = null, globeC = {};
+  function globeGeom(cx, cy, R, tilt, clip, halo) {
+    var key = [cx, cy, R, tilt, clip.join(','), halo].join('|');
+    if (globeG && globeG.key === key) return globeG;
+    var Rh = R * (1 + halo);
+    var bx0 = Math.max(clip[0], Math.floor(cx - Rh)), by0 = Math.max(clip[1], Math.floor(cy - Rh));
+    var bx1 = Math.min(clip[0] + clip[2], Math.ceil(cx + Rh)), by1 = Math.min(clip[1] + clip[3], Math.ceil(cy + Rh));
+    var W = Math.max(1, bx1 - bx0), H = Math.max(1, by1 - by0), n = W * H;
+    var what = new Uint8Array(n), P = new Float32Array(n * 3), U = new Float32Array(n), ROW = new Int32Array(n), K = new Float32Array(n);
+    var ct = Math.cos(tilt), st = Math.sin(tilt), out = (1 + halo) * (1 + halo);
+    for (var y = 0; y < H; y++) {
+      for (var x = 0; x < W; x++) {
+        var dx = (bx0 + x + 0.5 - cx) / R, dy = (by0 + y + 0.5 - cy) / R, rr = dx * dx + dy * dy, k = y * W + x;
+        if (rr <= 1) {
+          var nz = Math.sqrt(1 - rr);
+          var px = dx, py = dy * ct - nz * st, pz = dy * st + nz * ct;          // tilted about the screen's x axis
+          P[k * 3] = px; P[k * 3 + 1] = py; P[k * 3 + 2] = pz;
+          var lat = Math.asin(Math.max(-1, Math.min(1, -py))), lon = Math.atan2(px, pz);
+          var bu = BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.47, bv = BAYER[((y + 2) & 3) * 4 + ((x + 1) & 3)] / 16 - 0.47;
+          ROW[k] = Math.max(0, Math.min(TH - 1, Math.floor((0.5 - lat / Math.PI) * TH + bv * 0.95))) * TW;
+          U[k] = lon / (Math.PI * 2) + 0.5 + bu * 0.95 / TW;
+          K[k] = Math.pow(1 - nz, 4);                                          // the rim
+          what[k] = 1;
+        } else if (rr <= out) {
+          var r = Math.sqrt(rr), lx = dx / r, ly = dy / r;                      // the limb under this bit of air
+          P[k * 3] = lx; P[k * 3 + 1] = ly * ct; P[k * 3 + 2] = ly * st;
+          K[k] = 1 - (r - 1) / halo;
+          what[k] = 2;
+        }
+      }
+    }
+    globeC = {};
+    globeG = { key: key, x: bx0, y: by0, W: W, H: H, what: what, P: P, U: U, ROW: ROW, K: K, view: [0, -st, ct] };
+    return globeG;
+  }
+
+  /** Draw a close planet: opts { sun [x,y,z] (planet frame, unit), tilt (radians), spin (turns a ms), clip [x,y,w,h],
+   *  halo (the air's depth past the limb, a share of R), clouds (0..1, more cover), every (ms between redraws),
+   *  spread (once drawn, redo a band of rows every frame instead of the whole thing every `every` ms), ambient (the
+   *  night side's least light, 0.07) }. */
+  function globe(ctx, kind, cx, cy, R, now, opts) {
+    opts = opts || {};
+    var clip = opts.clip || [0, 0, ctx.canvas.width, ctx.canvas.height], halo = opts.halo || 0.1;
+    var g = globeGeom(Math.round(cx), Math.round(cy), Math.round(R), opts.tilt || 0, clip, halo);
+    var s = opts.sun || [-0.6, -0.4, 0.7], cover = opts.clouds || 0;
+    var step = Math.floor(now / (opts.every || 150)), sk = kind + ':' + s.map(function (v) { return v.toFixed(3); }).join(',') + ':' + cover.toFixed(2);
+    var c = globeC[kind], y0 = 0, y1 = g.H;
+    if (!c) {
+      var cv = document.createElement('canvas');
+      cv.width = g.W; cv.height = g.H;
+      c = globeC[kind] = { canvas: cv, ctx: cv.getContext('2d'), step: -1, sk: '', row: -1 };
+      c.img = c.ctx.createImageData(g.W, g.H);
+    }
+    // once whole, it's worked out a band of rows a frame (all of it every `every` ms), so no one frame carries it
+    if (c.row >= 0 && opts.spread) {
+      var band = Math.ceil(g.H / Math.max(1, (opts.every || 150) / 16.7));
+      y0 = c.row; y1 = Math.min(g.H, y0 + band);
+      c.row = y1 >= g.H ? 0 : y1;
+    }
+    if (c.step !== step || c.sk !== sk || (c.row >= 0 && opts.spread)) {
+      c.step = step; c.sk = sk;
+      if (c.row < 0) c.row = 0;
+      var tex = texture(kind), atmo = ATMO[kind] || [200, 200, 220], d = c.img.data;
+      var spin = opts.spin || 0, rot = ((now * spin) % 1 + 1) % 1, crot = ((now * spin * 1.35) % 1 + 1) % 1;
+      var s0 = s[0], s1 = s[1], s2 = s[2], v = g.view;
+      var h0 = s0 + v[0], h1 = s1 + v[1], h2 = s2 + v[2], hl = Math.sqrt(h0 * h0 + h1 * h1 + h2 * h2) || 1;
+      h0 /= hl; h1 /= hl; h2 /= hl;
+      var W = g.W, P = g.P, U = g.U, ROW = g.ROW, K = g.K, what = g.what;
+      var TC = tex.col, TCL = tex.cloud, TG = tex.glow, TW8 = tex.water, A0 = atmo[0], A1 = atmo[1], A2 = atmo[2];
+      var cm = 1 + cover * 1.6, ca = cover * 0.12, amb = opts.ambient || 0.07;
+      for (var y = y0; y < y1; y++) for (var x = 0; x < W; x++) {
+        var k = y * W + x, o = k * 4, w = what[k];
+        if (!w) { d[o + 3] = 0; continue; }
+        var bay = BAYER[(y & 3) * 4 + (x & 3)] / 16 - 0.5;
+        var px = P[k * 3], py = P[k * 3 + 1], pz = P[k * 3 + 2], L = px * s0 + py * s1 + pz * s2;
+        if (w === 2) {                                 // the air past the limb: bright where it's lit, a thread round the night
+          var f = K[k], lit = L * 1.4 + 0.3, a = f * f * (0.05 + (lit < 0 ? 0 : lit > 1 ? 1 : lit) * 0.95);
+          a = ((a * 6 + bay + 0.5) | 0) / 6; if (a < 0) a = 0;
+          d[o] = atmo[0]; d[o + 1] = atmo[1]; d[o + 2] = atmo[2]; d[o + 3] = a * 190;
+          continue;
+        }
+        var row = ROW[k], uu = U[k] + rot, cu = U[k] + crot;
+        var ti = row + ((uu - Math.floor(uu)) * TW | 0), t3 = ti * 3;
+        var r = TC[t3], gg = TC[t3 + 1], b = TC[t3 + 2];
+        var cf = cu - Math.floor(cu), sf = cf + 0.006;
+        var cl = TCL[row + (cf * TW | 0)] * cm + ca; if (cl > 1) cl = 1;
+        var sh = TCL[row + ((sf - Math.floor(sf)) * TW | 0)] * cm; if (sh > 1) sh = 1;   // the cloud's shadow, offset
+        var dk = 1 - sh * 0.35;
+        r *= dk; gg *= dk; b *= dk;
+        r += (235 - r) * cl; gg += (240 - gg) * cl; b += (245 - b) * cl;
+        // light: a smooth terminator quantized into small dithered steps
+        var lv = L * 1.5 + 0.14;                     // (the night side flat at its least light, no dither in it)
+        if (lv <= amb) lv = amb; else { lv = (((lv > 1 ? 1 : lv) * 7 + bay + 0.5) | 0) / 7; if (lv < amb) lv = amb; }
+        r *= lv; gg *= lv; b *= lv;
+        var dusk = 1 - (L > 0.03 ? L - 0.03 : 0.03 - L) * 10;                // a sunset along the terminator, a cool blue night
+        if (dusk > 0) { r += dusk * 74; gg += dusk * 26; b -= dusk * 6; }
+        if (L < 0.1) { var dark = (0.1 - L) * 5; if (dark > 1) dark = 1; r += dark * 6; gg += dark * 10; b += dark * 22; }
+        if (L > 0 && TW8[ti]) {                        // the sun glinting off open water
+          var hd = px * h0 + py * h1 + pz * h2;
+          if (hd > 0.93) { var sp = Math.pow(hd, 70) * (1 - cl); r += 255 * sp; gg += 240 * sp; b += 210 * sp; }
+        }
+        if (L < 0.12 && (TG[t3] || TG[t3 + 1])) {     // lights after dark: points of light, not blocks
+          var night = (0.12 - L) * 6; if (night > 1) night = 1;
+          night *= (1 - cl * 0.8) * (((x * 7 + y * 13) % 5) < 3 ? 1 : 0.35);
+          r += TG[t3] * night; gg += TG[t3 + 1] * night; b += TG[t3 + 2] * night;
+        }
+        var ra = K[k] * (0.35 + (L > 0 ? L : 0) * 0.9);                       // the atmosphere's rim, brighter where lit
+        r += A0 * ra; gg += A1 * ra; b += A2 * ra;
+        d[o] = r; d[o + 1] = gg; d[o + 2] = b; d[o + 3] = 255;
+      }
+      c.ctx.putImageData(c.img, 0, 0, 0, y0, W, y1 - y0);
+    }
+    ctx.drawImage(c.canvas, g.x, g.y);
+  }
+  function globeFree() { globeG = null; globeC = {}; }
+
   /** A planet with its atmosphere glowing past the limb. */
   function drawPlanet(ctx, kind, cx, cy, R, now) {
     var atmo = ATMO[kind];
@@ -472,6 +597,8 @@ var BridgeOrbit = (function () {
     } else if (P.planet === 'hole') {
       drawHole(ctx, x + w * 0.5, y + h * 0.5, Math.max(8, Math.round(h * 0.16)), now);
     }
+    // playing together: the others' galleons parked here too (js/party.js)
+    if (opts.ships !== false && typeof BridgeParty !== 'undefined' && BridgeParty.drawShips) BridgeParty.drawShips(ctx, x, y, w, h, now, loc);
     ctx.restore();
   }
 
@@ -487,5 +614,5 @@ var BridgeOrbit = (function () {
 
   return { draw: draw, getLocation: getLocation, setLocation: setLocation, placeName: placeName, kindOf: kindOf,
            planet: planetCanvas, drawPlanet: drawPlanet, drawHole: drawHole, drawStation: drawStation, drawStars: drawStars,
-           drawGiant: drawGiant };
+           drawGiant: drawGiant, globe: globe, globeFree: globeFree };
 })();

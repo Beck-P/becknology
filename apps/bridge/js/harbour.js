@@ -45,7 +45,8 @@ var BridgeHarbour = (function () {
   function why(r) {
     var x = r && r.reason;
     return x === 'offline' || x === 'no_client' || x === 'no_pilot' || x === 'error' ? 'NO WAY TO MOVE COINS RIGHT NOW.' :
-           x === 'slots' ? 'EVERY GUN PORT SHE HAS IS FULL.' : x === 'fitted' ? 'SHE HAS ONE ALREADY.' :
+           x === 'slots' ? 'EVERY GUN PORT SHE HAS IS FULL.' : x === 'fitted' ? 'SHE HAS ONE ALREADY.' : x === 'better' ? 'SHE HAS BETTER THAN THAT ALREADY.' :
+           x === 'part' ? 'THE PART ISN\'T THERE ANY MORE.' :
            x === 'berths' ? 'NO BERTH FREE ON ANY SHIP OF YOURS HERE.' : x === 'full' ? 'HER HOLD IS FULL.' :
            x === 'sold_out' ? 'SOLD OUT FOR TODAY.' : x === 'cargo' ? 'EMPTY HER HOLD FIRST.' : 'NOT ENOUGH COINS.';
   }
@@ -111,6 +112,10 @@ var BridgeHarbour = (function () {
         choose({ title: 'The weather board', text: 'CHALKED UP BY THE DOOR, EASTERN TIME:\n\n' + lines.join('\n'), rows: [{ label: 'Back', sub: '', pick: function () { menu(worldId); } }], closeLabel: 'Done' });
       } });
     }
+    if (typeof BridgeRace !== 'undefined' && BridgeRace.bookRow) {             // the Emerald Regatta (js/race.js): Fridays off Crownhaven
+      var rr = BridgeRace.bookRow(worldId, function () { menu(worldId); });
+      if (rr) rows.push(rr);
+    }
     if (typeof BridgeChart !== 'undefined') {
       var unc = ['sapphire', 'rose', 'crimson', 'midnight'].filter(function (s) { return !BridgeChart.charted(s); }).length;
       rows.push({ label: 'Charts', sub: unc ? unc + ' sea' + (unc > 1 ? 's' : '') + ' still uncharted' : 'every sea charted', pick: function () { BridgeChart.shop(worldId, null, function () { menu(worldId); }); } });
@@ -171,7 +176,8 @@ var BridgeHarbour = (function () {
     buttons.push({ label: 'Rename', act: function () { rename(worldId, s); } });
     if (hereNow && s.type !== 'sloop' && Pd.yard.length) buttons.push({ label: 'Sell (' + f.value(s) + ')', act: function () { sellShip(worldId, s); } });
     buttons.push({ label: 'Back', act: function () { ledger(worldId); } });
-    choose({ title: s.name + ', ' + base.name.toLowerCase(), text: note || base.blurb.toUpperCase(), rows: rows, buttons: buttons, closeLabel: 'Done' });
+    choose({ title: s.name + ', ' + base.name.toLowerCase(), text: note || base.blurb.toUpperCase(), rows: rows, buttons: buttons, closeLabel: 'Done',
+             art: typeof BridgeSloop !== 'undefined' && BridgeSloop.portrait ? function (cv) { BridgeSloop.portrait(cv, s); } : null });   // her, as she's fitted
   }
   // Send a ship to any island from wherever you are (js/fleet.js order): her crew sail her there while you get on with
   // things. then(note) is called after (or with nothing on Back).
@@ -270,7 +276,7 @@ var BridgeHarbour = (function () {
   }
 
   // ---- fitting out ------------------------------------------------------------------------------------------------
-  function fitOut(worldId, s, note) {
+  function fitOut(worldId, s, note, fresh) {                        // fresh: something's just gone aboard - show her with it
     var f = F(), Pd = PORTS[portOf(worldId)], base = f.spec(s.type);
     var rows = Pd.guns.map(function (g) {
       var G = f.GUNS[g], full = s.guns.length >= base.slots;
@@ -278,9 +284,17 @@ var BridgeHarbour = (function () {
       return { label: G.name, sub: sub, note: base.slots ? (full ? 'ports full' : G.price + ' coins') : 'no gun ports', disabled: !base.slots || full,
                pick: function () { confirmFit(worldId, s, g, G, sub, 'Mount it'); } };
     }).concat(Pd.fits.map(function (k) {
-      var X = f.FITS[k], has = s.fits.indexOf(k) >= 0;
-      return { label: X.name, sub: 'fitting', note: has ? 'fitted' : X.price + ' coins', disabled: has,
+      var X = f.FITS[k], has = s.fits.indexOf(k) >= 0, better = f.canFit(s, k) === 'better';
+      return { label: X.name, sub: 'fitting', note: has ? 'fitted' : better ? 'has better' : X.price + ' coins', disabled: has || better,
                pick: function () { confirmFit(worldId, s, k, X, 'fitting', 'Fit it'); } };
+    }));
+    // your own work, from your Workshop (js/workshop.js): in your pack or her hold, fitted here for the yard's labour
+    // (never by the Ferryman: the sea does not mend ships)
+    if (!Pd.ferry && typeof BridgeWorkshop !== 'undefined') rows = rows.concat(BridgeWorkshop.partsFor(s).map(function (p) {
+      var no = f.canFit(s, p.what);
+      return { label: p.name + ' (your own)', icon: 'part_' + p.what, sub: 'made at your workshop · ' + (p.where === 'hold' ? 'in her hold' : 'in your pack') + (p.n > 1 ? ' · ' + p.n : ''),
+               note: no ? (no === 'slots' ? 'ports full' : no === 'better' ? 'has better' : 'fitted') : 'labour ' + p.fee, disabled: !!no,
+               pick: function () { confirmOwn(worldId, s, p); } };
     }));
     var buttons = [];
     if (s.guns.length) buttons.push({ label: 'Unmount a gun', act: function () {
@@ -289,14 +303,34 @@ var BridgeHarbour = (function () {
     } });
     buttons.push({ label: 'Back', act: function () { menu(worldId); } });
     choose({ title: 'Fit out the ' + s.name, text: note || (base.slots ? s.guns.length + ' OF ' + base.slots + ' GUN PORTS FILLED.' : 'NO GUN PORTS ON A ' + base.name.toUpperCase() + '.'),
-             rows: rows, buttons: buttons, closeLabel: 'Done' });
+             rows: rows, buttons: buttons, closeLabel: 'Done',
+             art: fresh && typeof BridgeSloop !== 'undefined' && BridgeSloop.portrait ? function (cv) { BridgeSloop.portrait(cv, s); } : null });
   }
 
   function confirmFit(worldId, s, id, X, sub, verb) {
     var f = F();
     choose({ title: X.name, text: X.blurb.toUpperCase(), rows: [{ label: X.name, sub: sub, note: X.price + ' coins', disabled: true }],
              buttons: [{ label: verb + ' (' + X.price + ')', act: function () {
-               f.fit(s.id, id).then(function (r) { if (r.ok) sfx('coin'); fitOut(worldId, s, r.ok ? X.name.toUpperCase() + (f.GUNS[id] ? ' MOUNTED.' : ' FITTED.') : why(r)); });
+               f.fit(s.id, id).then(function (r) { if (r.ok) sfx('coin'); fitOut(worldId, s, r.ok ? X.name.toUpperCase() + (f.GUNS[id] ? ' MOUNTED.' : ' FITTED.') : why(r), r.ok); });
+             } }, { label: 'Back', act: function () { fitOut(worldId, s); } }] });
+  }
+
+  // a part you made: the yard fits it for their labour only (the part comes out of your pack or her hold once it's paid)
+  function confirmOwn(worldId, s, p) {
+    var f = F(), G = f.GUNS[p.what], X = G || f.FITS[p.what];
+    choose({ title: X.name, text: ('Your own ' + X.name + ', from your workshop. ' + X.blurb + ' The yard fits it for their labour: ' + p.fee + ' coins.').toUpperCase(),
+             rows: [{ label: X.name + ' (your own)', icon: 'part_' + p.what, sub: G ? G.dmg + ' a shot · ' + G.range + ' tiles · ' + (G.arc === 'bow' ? 'ahead' : 'abeam') : 'fitting', note: 'labour ' + p.fee, disabled: true }],
+             buttons: [{ label: (G ? 'Mount it' : 'Fit it') + ' (' + p.fee + ')', act: function () {
+               if (f.canFit(s, p.what)) { fitOut(worldId, s, why({ reason: f.canFit(s, p.what) })); return; }
+               if (!BridgeWorkshop.partsFor(s).some(function (x) { return x.what === p.what; })) { fitOut(worldId, s, why({ reason: 'part' })); return; }
+               var pay = typeof BridgeProgression !== 'undefined' && BridgeProgression.wagerCoins ? BridgeProgression.wagerCoins(p.fee, 'fit-own:' + p.what) : Promise.resolve({ ok: false, reason: 'offline' });
+               pay.then(function (r) {
+                 if (!r || !r.ok) { fitOut(worldId, s, why(r)); return; }
+                 if (!BridgeWorkshop.usePart(p.what, s)) { fitOut(worldId, s, why({ reason: 'part' })); return; }
+                 var m = f.mount(s.id, p.what);
+                 if (m.ok) sfx('coin');
+                 fitOut(worldId, s, m.ok ? 'YOUR OWN ' + X.name.toUpperCase() + (G ? ', MOUNTED.' : ', FITTED.') + ' GOOD WORK, THAT.' : why(m));
+               });
              } }, { label: 'Back', act: function () { fitOut(worldId, s); } }] });
   }
 
@@ -431,7 +465,7 @@ var BridgeHarbour = (function () {
              rows: rows, closeLabel: 'Done' });
   }
 
-  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs, exchange: exchange, send: send,
+  return { PORTS: PORTS, decorate: decorate, open: open, ledger: ledger, yard: yard, repairs: repairs, exchange: exchange, send: send, card: shipCard,
            hands: function (worldId, note) { hands(worldId, note, true); },
            registry: function (worldId) { registry = true; ledger(worldId); } };
 })();

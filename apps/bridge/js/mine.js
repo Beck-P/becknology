@@ -10,7 +10,9 @@
  * follow the depth: stone and iron near the top, roseite and silver, then
  * sapphire, moonstone geodes and star iron, and songstone at the bottom,
  * where the great songstone sings (floor 20). Swinging costs energy;
- * pickaxes hit harder the better they are (old: 1, iron: 2, star: 3). The
+ * pickaxes hit harder the better they are (old: 1, iron: 2, star: 3; the
+ * prospector's pick from your workshop finds more). Copper ore comes out
+ * of the iron and silver seams (js/workshop.js beats it into sheet). The
  * lift remembers every fifth floor you reach. Rocks are sprites cut from
  * assets/scenes/mine-rocks (tools/bridge-art/mine_sprites.py), depth-tested
  * like the characters.
@@ -27,11 +29,11 @@ var BridgeMine = (function () {
   var ROCKS = {
     stone:    { name: 'ROCK', spr: ['stone_a', 'stone_b', 'stone_c'], hp: 2, drops: [['stone', 1, 2, 1]],
                 w: function (f) { return 10 - f * 0.3; } },
-    iron:     { name: 'IRON ORE', spr: ['iron_a', 'iron_b'], hp: 3, drops: [['iron_ore', 1, 2, 1], ['stone', 1, 1, 0.4]],
+    iron:     { name: 'IRON ORE', spr: ['iron_a', 'iron_b'], hp: 3, drops: [['iron_ore', 1, 2, 1], ['copper_ore', 1, 1, 0.35], ['stone', 1, 1, 0.4]],
                 w: function (f) { return f <= 12 ? 3.2 : 1.5; } },
     rose:     { name: 'ROSEITE', spr: ['rose_a', 'rose_b'], hp: 3, drops: [['roseite', 1, 2, 1]],
                 w: function (f) { return f <= 8 ? 2.4 : 0.6; } },
-    silver:   { name: 'SILVER ORE', spr: ['silver_a', 'silver_b'], hp: 4, drops: [['silver_ore', 1, 2, 1]],
+    silver:   { name: 'SILVER ORE', spr: ['silver_a', 'silver_b'], hp: 4, drops: [['silver_ore', 1, 2, 1], ['copper_ore', 1, 1, 0.25]],
                 w: function (f) { return f >= 4 ? 2.2 : 0; } },
     sapphire: { name: 'SAPPHIRE', spr: ['sapphire_a', 'sapphire_b'], hp: 4, drops: [['sapphire_crystal', 1, 2, 1]],
                 w: function (f) { return f >= 6 && f <= 16 ? 2.0 : 0; } },
@@ -43,7 +45,12 @@ var BridgeMine = (function () {
                 w: function (f) { return f >= 17 ? 0.9 : 0; } },
     heart:    { name: 'THE GREAT SONGSTONE', spr: ['heart'], hp: 14, drops: [['songstone', 3, 4, 1]], w: function () { return 0; } }
   };
-  var PICKS = [['star_pickaxe', 3, 1], ['iron_pickaxe', 2, 2], ['old_pickaxe', 1, 2]];      // id, power, energy a swing
+  var PICKS = [['prospector_pick', 3, 1], ['star_pickaxe', 3, 1], ['iron_pickaxe', 2, 2], ['old_pickaxe', 1, 2]];      // id, power, energy a swing
+  // the prospector's pick (made at your workshop, js/workshop.js) hums near the good stuff: a broken rock now and then
+  // gives up a piece more, and plain rock sometimes hides something rarer — the best the depth has (the floors
+  // themselves stay as they are, so a floor shared with someone else is the same floor)
+  function prospecting() { return typeof BridgeInventory !== 'undefined' && BridgeInventory.getCount('prospector_pick') > 0; }
+  function hidden(f) { return f >= 13 ? 'star_iron' : f >= 10 ? 'moonstone' : f >= 6 ? 'sapphire_crystal' : f >= 4 ? 'silver_ore' : 'roseite'; }
   var BANDS = [[1, 6, '#f070b0'], [7, 13, '#4080ff'], [14, 20, '#b080ff']];
 
   var save = load();
@@ -69,7 +76,7 @@ var BridgeMine = (function () {
     if (sheet) return;
     sheet = new Image();
     fetch('/bridge/assets/scenes/mine-rocks/scene.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (m) {
-      meta = m; sheet.src = '/bridge/assets/scenes/mine-rocks/full.png?v=' + m.rev;
+      meta = m; sheet.src = '/bridge/assets/scenes/mine-rocks/full.' + (m.ext || 'png') + '?v=' + m.rev;
     }).catch(function () { /* drawn as plain stones */ });
   }
   function sprRect(name) {                    // the tile's column, from a little above the tile to its bottom edge
@@ -191,9 +198,13 @@ var BridgeMine = (function () {
     return null;
   }
 
-  // v: following someone down — their dig's seed
-  function goFloor(n, v) {
+  // v: following someone down — their dig's seed. Playing together (js/party.js) the others are asked first, wherever
+  // they are, and climb down after you with the same seed
+  function goFloor(n, v, go) {
     var to = Math.max(1, Math.min(DEEPEST, n)), seed = v != null ? v : visits + 1 + Math.floor(Math.random() * 1000);
+    if (v == null && !go && typeof BridgeParty !== 'undefined' &&
+        BridgeParty.depart({ kind: 'mine', f: to, v: seed }, function () { goFloor(to, null, seed); })) return;
+    if (go) seed = go;
     if (v == null) tell('delve', { f: to, v: seed });
     floor = to; nextVisits = seed;
     var layout = 'abc'[(floor * 7 + Math.floor(floor / 3)) % 3];
@@ -219,7 +230,7 @@ var BridgeMine = (function () {
   }
   if (typeof BridgeNet !== 'undefined') {
     BridgeNet.on('delve', function (d, from) {
-      if (!mine_here(d)) return;
+      if (!mine_here(d) || (typeof BridgeParty !== 'undefined' && BridgeParty.has(from))) return;   // your party asked you already
       var p = BridgeNet.peer(from), who = p ? p.name : 'SOMEONE';
       BridgeInteractions.choose({ title: 'Down the ladder', text: (who + ' climbs down to floor ' + d.f + '.').toUpperCase(),
         buttons: [{ label: 'Follow them down', act: function () { goFloor(d.f, d.v); } }], closeLabel: 'Stay here' });
@@ -240,7 +251,7 @@ var BridgeMine = (function () {
       case 'mine_up': sfx('door'); return BridgeWorld.enterWorld('lumar-rose-mine', [8, 4]);
       case 'mine_lift': return liftMenu();
       case 'mine_rack':
-        if (BridgeInventory.getCount('old_pickaxe') + BridgeInventory.getCount('iron_pickaxe') + BridgeInventory.getCount('star_pickaxe') > 0) {
+        if (PICKS.some(function (P) { return BridgeInventory.getCount(P[0]) > 0; })) {
           return say('PICKAXE RACK', 'THREE OLD PICKAXES AND AN EMPTY PEG - YOURS.\n\nHOB CAN PUT A BETTER EDGE ON ONE, IF YOU BRING HIM THE ORE.');
         }
         if (!BridgeInventory.addItem('old_pickaxe', 1)) return say('PICKAXE RACK', 'YOUR PACK IS FULL. MAKE ROOM AND TAKE ONE.');
@@ -292,16 +303,19 @@ var BridgeMine = (function () {
     w.collisions[r.y][r.x] = 0;
     var ix = inter ? w.interactions.indexOf(inter) : -1;
     if (ix >= 0) w.interactions.splice(ix, 1);
-    if (yours) ROCKS[r.kind].drops.forEach(function (d) {
+    var pro = yours && prospecting(), more = r.kind !== 'stone' && r.kind !== 'heart' && ((pro && Math.random() < 0.3) || (yours && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('stones') && Math.random() < 0.12));
+    if (yours) ROCKS[r.kind].drops.forEach(function (d, i) {
       if (Math.random() > d[3]) return;
-      var n = d[1] + Math.floor(Math.random() * (d[2] - d[1] + 1));
+      var n = d[1] + Math.floor(Math.random() * (d[2] - d[1] + 1)) + (more && i === 0 ? 1 : 0);
       if (n > 0 && typeof BridgeLoot !== 'undefined') BridgeLoot.spawn(r.x, r.y, d[0], n);
     });
+    if (pro && (r.kind === 'stone' || r.kind === 'iron') && Math.random() < 0.12 && typeof BridgeLoot !== 'undefined') BridgeLoot.spawn(r.x, r.y, hidden(floor), 1);
     if (r.kind === 'heart') {
       if (typeof BridgeLoot !== 'undefined' && BridgeInventory.getCount('heartsong') === 0) BridgeLoot.spawn(r.x, r.y, 'heartsong', 1);
       say('THE GREAT SONGSTONE', 'THE STONE OPENS LIKE A HAND. INSIDE, A CRYSTAL THE SIZE OF A HEART, STILL SINGING - AND ALL AROUND YOU, FAINTLY, THE WHOLE MINE SINGS BACK.');
     }
     if (yours && typeof BridgeTreasure !== 'undefined') BridgeTreasure.maybeFind(floor, r.x, r.y);     // now and then, an old map
+    if (yours && typeof BridgeWorkshop !== 'undefined') BridgeWorkshop.maybeFind(floor, r.x, r.y);     // deep down, a lost plan
     if (r.ladder) {
       r.kind = 'ladder'; r.spr = 'ladder';
       w.interactions.push({ x: r.x, y: r.y, type: 'mine_down', label: 'LADDER DOWN', prompt: 'PRESS E TO CLIMB DOWN' });

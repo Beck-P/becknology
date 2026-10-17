@@ -37,7 +37,9 @@ var BridgeFarm = (function () {
     strawberry: { name: 'STRAWBERRY', days: 3, again: 2, out: [['strawberry', 2, 3]] },
     sunflower:  { name: 'SUNFLOWER', days: 3, out: [['sunflower', 1, 1], ['seed_sunflower', 1, 2]] },
     pumpkin:    { name: 'PUMPKIN', days: 6, out: [['pumpkin', 1, 1]] },
-    starfruit:  { name: 'STARFRUIT', days: 12, out: [['starfruit', 1, 1]] }
+    starfruit:  { name: 'STARFRUIT', days: 12, out: [['starfruit', 1, 1]] },
+    // flax for rope and plain sailcloth at your workshop (js/workshop.js)
+    flax:       { name: 'FLAX', days: 2, out: [['flax', 2, 3]] }
   };
   function vday() { return typeof BridgeClock !== 'undefined' ? BridgeClock.dayLen('verdance') : 6 * 3600000; }
   function growMs(days) { return days * vday(); }
@@ -50,7 +52,7 @@ var BridgeFarm = (function () {
   }
   function hash01(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10007) / 10007; }
   var WET = 2 * 3600000;             // the least a watering (or a hand's) wet lasts
-  var ORDER = ['turnip', 'carrot', 'strawberry', 'sunflower', 'pumpkin', 'starfruit'];
+  var ORDER = ['turnip', 'carrot', 'strawberry', 'sunflower', 'pumpkin', 'starfruit', 'flax'];
 
   var save = load();
   var cur = null;                    // the field interaction in front of you: {inter, sig}
@@ -110,7 +112,7 @@ var BridgeFarm = (function () {
       });
     }
     var until = c.flat ? Math.min(now, c.flat) : now;
-    var pace = typeof BridgeSeasons !== 'undefined' ? BridgeSeasons.growth(c.k) : 1;   // the season favours some crops; winter slows all
+    var pace = (typeof BridgeSeasons !== 'undefined' ? BridgeSeasons.growth(c.k) : 1) * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('farm') ? 1.1 : 1);   // the season favours some crops; winter slows all (the farm's set in the Collection: a tenth quicker)
     if (wetTo > from && until > from) c.g = Math.min(c.need, c.g + (Math.min(until, wetTo) - from) * pace);
     if (c.g >= c.need && !c.ripeAt) c.ripeAt = now;
     c.t = now;
@@ -439,7 +441,7 @@ var BridgeFarm = (function () {
     k: '#1c2c12', g: '#4a8a2a', G: '#7ac040', d: '#2e5a1c', s: '#3a6a20', b: '#4a2c16', B: '#6a4422',
     p: '#a050a0', w: '#f0eaf0', o: '#f08020', O: '#b85a10', r: '#e02a3a', R: '#8a1020', y: '#f8c820',
     Y: '#fff080', n: '#7a4a18', N: '#3a1a08', f: '#fff8f0', P: '#f08a20', Q: '#b05a10', h: '#ffb860',
-    S: '#ffe040', T: '#fff8c0', X: '#2a1608'
+    S: '#ffe040', T: '#fff8c0', X: '#2a1608', L: '#5a7ae0', l: '#c8d4ff', U: '#d8b860', u: '#a08030'
   };
   var SEEDED = ['......bBBb......', '.....bBwBBb.....', '....bBBBBwBb....'];
   var SPROUT = ['....kk....kk....', '...kGGk..kGGk...', '...kgGGkkGGgk...', '....kkgssgkk....', '......kssk......', '.....bBBBBb.....'];
@@ -452,6 +454,7 @@ var BridgeFarm = (function () {
                    '..kkgggsskkGGk..', '....kk.sggGgk...', '.......sskkk....', '......kssk......', '.....bBBBBb.....'];
   var PUMP_LEAVES = ['...kk.......kk..', '..kGGk.kk..kGGk.', '..kgGGkGGkkGgk..', '.kkkgggGgggkkkk.'];
   var STAR_TRUNK = ['....kkksskk.....', '......kssk......', '......kssk......', '.....bBBBBb.....'];
+  var FLAX_STEMS = ['..ks..ks.ks..k..', '..ks.ks..ks.ks..', '...kskskkskks...', '....ksksksks....', '.....kssssk.....', '.....bBBBBb.....'];
   var ART = {
     turnip: [null, null, null,
       ['...kk......kk...', '..kGGk.kk.kGGk..', '..kgGGkGGkGGgk..', '.kkgdGGgGGGdgkk.', 'kGGkgdGGGGdgkGGk', 'kgGGkgdgGdgkGGgk',
@@ -475,6 +478,9 @@ var BridgeFarm = (function () {
                           '...kkkkkkkkkkk..']),
       PUMP_LEAVES.concat(['kGGkkkkXsXkkGGk.', 'kgGkXXXXsXXXXk..', '.kkXPPQPPPQPPX..', '..XPhQPPPPQPPPX.', '..XPQPPPPPPQPPX.',
                           '..XPQPPPPPPQPPX.', '..XQPQPPPPQPQQX.', '...XQQQQQQQQQX..', '....XXXXXXXXX...'])],
+    flax: [null, null, null,
+      ['..k...k..k...k..', '.kGk.kGk.kGk.kGk', '..g...g..g...g..'].concat(['..g..g...g..g...', '..s..s..s...s...']).concat(FLAX_STEMS),
+      ['.kLk..kLk.kLk...', 'kLlLk.LlL.LlLkLk', '.kLk..kLkkkLkLlL', '..s...s..s..kLk.', '..s..s...s...s..', '..s..s..s...s...'].concat(FLAX_STEMS)],
     starfruit: [null, null, null,
       ['.....kkkkk......', '...kkGGgGGkk....', '..kGGgfGgGGgk...', '.kGgGGgGGfGGgk..', '.kgGfGGgGGGgGk..', '.kggGGgdgGfggk..',
        '..kkggdddggkk...'].concat(STAR_TRUNK),

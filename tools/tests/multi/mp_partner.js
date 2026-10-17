@@ -61,7 +61,7 @@ const aid = '22222222-2222-2222-2222-222222222222', bid = '11111111-1111-1111-11
   console.log('offline visit: in', await beck.evaluate(() => BridgeWorld.getWorldId()), 'built', await beck.evaluate(() => BridgeHolm.built('warehouse')));
   await beck.evaluate(() => { const h = JSON.parse(localStorage.getItem('bridge_holm')); h.built.quarters = 1; localStorage.setItem('bridge_holm', JSON.stringify(h)); });
   await beck.waitForTimeout(2500);
-  const dump = await (await fetch('http://127.0.0.1:8767/dump')).json();
+  const dump = await (await fetch('http://127.0.0.1:' + (process.env.SUPA_PORT || 8767) + '/dump')).json();
   const row = dump.tables.pilot_saves.find(r => r.pilot_id === aid);
   console.log('her cloud save now:', JSON.parse(row.data.bridge_holm).built, 'rev', row.rev);
   // farm on Verdance: tend hers

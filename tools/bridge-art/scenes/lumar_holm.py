@@ -12,13 +12,16 @@ own light and switched on as you build it:
   garden     tilled                the walled garden cleared and dug (the farm's plot: `farm.plot`)
   warehouse  built                 a timber warehouse on its lot (cargo kept ashore between ships)
   quarters   built                 a bunkhouse for your hands
+  workshop   built                 an open forge under its chimney and a timber workshop by the well (js/workshop.js)
   resort     old | built           the old boathouse, or the Starling, a seaside hotel in its place (a venue that earns)
-Lots that are open ground until you build on them (warehouse, quarters) are left walkable here and listed in the world
-JSON's `holm.lots`; js/holm.js blocks their tiles once built.
+Lots that are open ground until you build on them (warehouse, quarters, workshop) are left walkable here and listed in
+the world JSON's `holm.lots`; js/holm.js blocks their tiles once built. (Until this script's been rendered with the
+workshop, js/holm.js stands the quarters' bunkhouse on its lot in its place: BridgeScene.standIn.)
 """
 import json
 import math
 import os
+import random
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -29,6 +32,7 @@ import assets_isle as I                # noqa: E402
 import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
 import assets_village as V             # noqa: E402
+import assets_yard as Y                # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -50,7 +54,7 @@ SHIP_R = QUAY + 4
 
 HOUSE = (16.8, 24.2, 6.4, 10.6)
 GARDEN = (5, 11, 11, 17)                           # the plot, tiles inclusive (the wall round it is outside)
-LOTS = {'warehouse': (27, 13, 32, 17), 'quarters': (26, 6, 31, 9)}
+LOTS = {'warehouse': (27, 13, 32, 17), 'quarters': (26, 6, 31, 9), 'workshop': (10, 6, 15, 9), 'hall': (33, 10, 37, 13)}
 
 
 # ---- ground ---------------------------------------------------------------------------------------------------------
@@ -72,7 +76,7 @@ def material(x, r):
 
 ALB = {'path': ('#7a6a50', 0.3), 'grass': ('#3e5e38', 0.3), 'grass_dark': ('#30503a', 0.3), 'stone': ('#6a6a62', 0.25)}
 I.ground(k, land, material, ALB)
-C.coast(k, land, ground=(material, ALB), palette='emerald', grass='#3e5e38', rock='#5a5a54', seed=71, beachiness=0.25,
+TERRAIN = C.coast(k, land, ground=(material, ALB), palette='emerald', grass='#3e5e38', rock='#5a5a54', seed=71, beachiness=0.25,
         beach_bias=lambda x, r: 0.9 * I.smooth(QUAY - 2.0, QUAY + 0.5, r) * (1 - I.smooth(13.0, 15.0, x) * (1 - I.smooth(28.0, 30.0, x))),
         keep_clear=[(PX - 0.4, QUAY - 0.2, PX + 1.4, SHIP_R + 0.2), (PX - 14.0, SHIP_R - 0.6, PX + 16.0, SHIP_R + 3.0),
                     (14.0, QUAY + 0.6, 29.0, QUAY + 1.6)],
@@ -167,6 +171,18 @@ with k.variant('quarters', 'built'):
     q = W.house(k, c0 + 0.1, c1 + 0.9, r0 + 0.1, r1 + 0.95, wall_h=1.9, rise=1.1, roof='#5a3a2a', wall='#d8ccb0', door_x=(c0 + c1 + 1) / 2,
                 windows=[(c0 + 1.0, 0.8), (c1 - 0.0, 0.8)], chimney=c1 + 0.4)
     SMOKE['quarters'] = [round(c1 + 0.4 - 0.12, 3), round(q[0] - 0.15 - (q[1] + 1.05) * C45, 3)]
+with k.variant('workshop', 'built'):
+    # the workshop by the well: an open forge at the west end, its hearth's chimney through the roof, and a timber shop
+    # with its door on the lot's front row (js/holm.js puts the WORKSHOP interaction there), a log pile by it
+    c0, r0, c1, r1 = LOTS['workshop']
+    V.forge(k, c0 + 0.1, c0 + 2.5, r0 + 0.1, r1 + 0.95, wall='#7a7268', roof='#4a3e36', energy=70)
+    hx = c0 + 0.1 + 2.4 * 0.32
+    W.chimney_stack(k, hx, r0 + 0.3, r0 + 0.8, 0.0, 3.8, pots=1, roof_z=2.5)
+    SMOKE['workshop'] = [round(hx - 0.12, 3), round(r0 + 0.55 - 0.15 - 4.1 * C45, 3)]
+    W.house(k, c0 + 2.6, c1 + 0.9, r0 + 0.1, r1 - 0.05, wall_h=2.3, rise=1.2, roof='#5a4a3a', wall='#8a6a48', timber='#3a2618',
+            door_x=13.5, windows=[(14.9, 0.9)])
+    W.wall_lantern(k, 12.95, r1 - 0.05, z=1.6, energy=8)
+    F.log_pile(k, 15.4, r1 + 0.5)
 k.blocked -= {(c, r) for nm, (c0, r0, c1, r1) in LOTS.items() for c in range(c0, c1 + 1) for r in range(r0, r1 + 1)}
 
 # ---- the rebuilt dock -------------------------------------------------------------------------------------------
@@ -221,7 +237,7 @@ with k.variant('resort', 'built'):
 k.solid(BH[0], BH[2], BH[1], BH[3])
 W.bench(k, 4.0, 5.4, 9.4)
 k.solid(4.0, 9.2, 5.4, 9.7)
-for (x, r) in ((10.0, 7.8), (31.6, 10.6), (36.4, 12.2), (7.2, 19.6), (34.6, 8.6)):
+for (x, r) in ((8.3, 8.1), (31.6, 10.6), (38.4, 14.7), (7.2, 19.6), (34.6, 8.6)):          # (the first moved off the workshop's lot, the third off the hall's)
     W.pine(k, x, r, h=2.3)
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
 F.wildflowers(k, 22.0, 15.0, 26.0, 19.5, 26)
@@ -232,6 +248,33 @@ k.box(PX + 1.45, QUAY - 0.55, 0.0, PX + 1.55, QUAY - 0.45, 1.2, A.WOOD_D, 'sign_
 busy = lambda x, r: pd(x, r) < 0.6
 I.tufts(k, [c for c in land if material(c[0] + 0.5, c[1] + 0.5) in ('grass', 'grass_dark')], '#4e6e44', per_cell=1.3, avoid=busy)
 I.pebbles(k, land, '#6a6a62', per_cell=0.2, avoid=busy)
+
+# ---- the slipway below the garden wall (js/shipyard.js) --------------------------------------------------------------
+# The old slip's bed on its piles is always there (dry to the sea's mask, so the hull built on it is never drawn under
+# water); built, the slip is relaid over it, sheer-legs over its head and timber stacked by it; and a hull on it as she's
+# built (`hull`: keel | frame | planked). Its own dice, laid last, so nothing else on the island moves.
+SLIP = (8.6, 12.4, 19.8, 25.6)
+SLIP_Z = (0.0, C.WZ + 0.06)
+Y.clear_parts(k, (SLIP[0] - 0.3, SLIP[1] + 0.3, SLIP[2], SLIP[3] + 0.6), ('coast_rock', 'coast_weed', 'kelp', 'spore_clump', 'shell', 'driftwood', 'rim_rock'))
+Y.slip_bed(k, SLIP[0], SLIP[1], SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], random.Random(9091))
+with k.variant('slipway', 'built'):
+    yr = random.Random(9092)
+    Y.slip_new(k, SLIP[0], SLIP[1], SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], yr, ground=TERRAIN.z)
+    Y.lumber(k, 5.2, 6.8, 19.15, 19.85, yr, solid=False)                 # (js/holm.js walls its lot once it's built)
+for stage in ('keel', 'frame', 'planked'):
+    with k.variant('hull', stage):
+        Y.hull_on_slip(k, 10.5, 20.6, 24.8, 1.5, 0.55, 1.15, stage, SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], random.Random(9093))
+LOTS['slipway'] = (5, 19, 6, 19)
+
+# ---- the hall of finds (js/trophies.js): stone and slate on the east lot, tall windows, its name over the door; its
+# own dice (the house's character draws from the scene's, so they're put back after), laid last like the slip
+with k.variant('hall', 'built'):
+    keep = k.rng.getstate()
+    c0, r0, c1, r1 = LOTS['hall']
+    W.house(k, c0 + 0.1, c1 + 0.9, r0 + 0.1, r1 + 0.95, wall_h=2.6, rise=1.4, roof='#3a4250', wall='#b4ac9c', stone=True,
+            door_x=35.5, windows=[(33.9, 0.8), (37.1, 0.8)], lanterns=(34.75, 36.25))
+    V.board_sign(k, 'THE HALL OF FINDS', 'CinzelDecorative-Bold', 35.5, r1 + 0.95, 2.02, size=0.17, board='#24303e', ink='#e8d8a8')
+    k.rng.setstate(keep)
 
 k.area_light(21.0, 14.0, 16.0, '#90a8c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))       # moonlight
 k.point_light(21.0, 13.0, 4.0, '#e0f0e8', 40, radius=1.5)
@@ -254,6 +297,9 @@ w = {'name': 'Starling Holm', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'ti
          {'x': 20, 'y': 10, 'type': 'holm', 'act': 'house', 'label': 'THE COTTAGE', 'prompt': 'PRESS E TO GO IN'},
          {'x': 29, 'y': 17, 'type': 'holm', 'act': 'warehouse', 'label': 'WAREHOUSE', 'prompt': 'PRESS E TO LOOK'},
          {'x': 28, 'y': 9, 'type': 'holm', 'act': 'quarters', 'label': 'QUARTERS', 'prompt': 'PRESS E TO LOOK'},
+         {'x': 13, 'y': 9, 'type': 'holm', 'act': 'workshop', 'label': 'WORKSHOP', 'prompt': 'PRESS E TO LOOK'},
+         {'x': 10, 'y': 19, 'type': 'holm', 'act': 'slipway', 'label': 'SLIPWAY', 'prompt': 'PRESS E TO LOOK'},
+         {'x': 35, 'y': 13, 'type': 'holm', 'act': 'hall', 'label': 'THE HALL', 'prompt': 'PRESS E TO LOOK'},
          {'x': 12, 'y': 14, 'type': 'holm', 'act': 'garden', 'label': 'THE GARDEN', 'prompt': 'PRESS E TO LOOK'},
          {'x': 13, 'y': 12, 'type': 'farm_well', 'label': 'WELL', 'prompt': 'PRESS E TO DRAW WATER'},
          look('BOATHOUSE', 33, 18, 'THE OLD BOATHOUSE, ITS ROOF SAGGING. INSIDE, A ROWING BOAT WITH NO BOTTOM AND A NAME YOU CAN\'T READ.'),

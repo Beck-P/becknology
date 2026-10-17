@@ -257,7 +257,8 @@ k.solid(COLS - 1, 0, COLS, ROWS)
 
 # ---- the light: the village's alpenglow ----------------------------------------------------------------------------------------------
 k.sun((0.55, -0.62, -0.56), '#ffc4a4', 3.4, angle=3.0)      # the face catches the last of the sun, full on (row -: away from you)
-k.render(OUT, light_states={'full': {}}, light_samples=64, world_light=('#8a96cc', 0.8))
+# by night the moon from in front too (from behind, the face was in its own shadow all night)
+k.render(OUT, cycle={'base': 'day', 'moon': ((0.3, -0.6, -0.74), '#8a98d0', 1.0)}, light_states={'full': {}}, light_samples=64, world_light=('#8a96cc', 0.8))
 
 FOOT = int(FACE_R) + 1
 CLIMB = {

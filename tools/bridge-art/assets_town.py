@@ -6,6 +6,7 @@ front slope of the roof read at the 45° camera — the Stardew-style high
 oblique view. Water is left out: the world's own animated sea shows through.
 """
 import math
+import random
 
 from scenekit import S, shade
 from assets_lumar import (BRASS, FIRE, FIRE_HOT, IRON, PLASTER, STONE, STONE_D, WOOD, WOOD_D, WOOD_DD, WOOD_L,
@@ -340,9 +341,11 @@ def _gable_roof(k, x0, x1, r_back, r_front, z_eave, rise, col, over=0.25, strips
         k.tube((xa, ra + 0.04, ze + 0.02), (xb, ra + 0.04, ze + 0.02), 0.07, shade(col, 0.97), 'cornice', verts=8)
     else:
         k.tube((xa + 0.05, ra + 0.07, z_eave - 0.12), (xb - 0.05, ra + 0.07, z_eave - 0.12), 0.035, '#4a4a4c', 'gutter', verts=6)
-        dx = xb - 0.12
+        dx = x1 - 0.1                                    # down the wall's corner, into a water butt (house: wall_foot)
         k.tube((dx, ra + 0.07, z_eave - 0.12), (dx, r_front + 0.08, z_eave - 0.3), 0.025, '#4a4a4c', 'downpipe', verts=6)
         k.tube((dx, r_front + 0.08, z_eave - 0.3), (dx, r_front + 0.08, 0.08), 0.025, '#4a4a4c', 'downpipe', verts=6)
+        for zz in (0.5, z_eave - 0.55):                  # its brackets
+            k.box(dx - 0.04, r_front + 0.0, zz, dx + 0.04, r_front + 0.1, zz + 0.03, '#3a3a3c', 'downpipe')
         # moss and lichen, thicker toward the eaves and on the back (shaded) slope
         dots = {}
         for _ in range(int((xb - xa) * 9 * moss)):
@@ -500,7 +503,9 @@ def house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=ROOF_GREEN, wal
     if timber == WOOD_DD:
         timber = k.rng.choice((WOOD_DD, WOOD_DD, '#2a2220', '#5a4a3c', '#3a3028'))
     shutters = k.rng.choice(('#2a4a3a', '#3a4a6a', '#6a2a2a', '#4a5a3a', '#5a4a3a', '#2a3a4a', '#7a6a3a'))
-    k.box(x0, r_back, 0, x1, r_front, 0.35, (base, 0.16), 'footing', bevel=0.02)
+    k.box(x0, r_back, 0, x1, r_front, 0.35, (shade(base, 0.72), 0.16), 'footing', bevel=0.02)
+    rr = random.Random(int(x0 * 7919 + r_front * 104729) & 0xffffff)   # its own dice: the scene's stay as they were
+    footing_face(k, x0, x1, r_front, 0.35, base, rr, skip=[(door_x - 0.5, door_x + 0.5)] if door_x is not None else ())
     wall_alb = (wall, 0.16 if stone else 0.08)
     k.box(x0 + 0.04, r_back + 0.04, 0.35, x1 - 0.04, r_front - 0.02, wall_h, wall_alb, 'house_wall')
     if stone:   # coursed blocks on the facade
@@ -520,6 +525,11 @@ def house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=ROOF_GREEN, wal
             k.box(x0 + 0.04, r_front - 0.02, zz, x1 - 0.04, r_front + 0.03, zz + 0.12, (timber, 0.1), 'timber')
         for xx in (x0 + 0.04, x1 - 0.16):   # timber on the visible gable-side corners
             k.box(xx, r_back + 0.04, 0.35, xx + 0.12, r_front, 0.47, (timber, 0.1), 'timber')
+    if not stone:   # above the sill rail, clear of the posts and the middle rail
+        posts = [x0 + 0.04, x0 + (x1 - x0) * 0.33, x0 + (x1 - x0) * 0.66, x1 - 0.16]
+        weather_wall(k, x0 + 0.04, x1 - 0.04, r_front - 0.02, 0.47, wall_h, wall, rr, door_x=door_x,
+                     windows=[(w[0], w[1], 0.55) for w in windows] + [(w[0], w[1], 0.45) for w in windows_up],
+                     posts=[(p_ - 0.05, p_ + 0.17) for p_ in posts], patch_top=wall_h * 0.58)
     if door_x is not None:
         door(k, door_x, r_front)
     for (wx, wz) in windows:
@@ -547,12 +557,257 @@ def house(k, x0, x1, r_back, r_front, wall_h=2.0, rise=1.3, roof=ROOF_GREEN, wal
         rz = zr - (zr - wall_h + 0.06) * ((rm + 0.05) - rm) / max(0.1, ra_ - rm)
         chimney_stack(k, chimney, rm - 0.35, rm + 0.05, wall_h, zr + 0.8, roof_z=rz)
     dress_front(k, x0, x1, r_front, wall_h, door_x, [w[0] for w in windows] + [w[0] for w in windows_up])
+    wall_foot(k, x0, x1, r_front, door_x, rr, butt=roof.lower() != '#f2f5fa')
     if sign:
         hanging_sign(k, sign[0], r_front, sign[1], icon=sign[2])
     for lx in lanterns:
         wall_lantern(k, lx, r_front + 0.02)
     k.solid(x0, r_back, x1, r_front)
     return rm, zr
+
+
+def footing_face(k, x0, x1, r_face, h, base, rr, skip=()):
+    """The footing's face in dressed stone: two courses of blocks of uneven length, each its own tone, a pixel of dark
+    joint round every one (the footing behind shows through), the odd one chipped or mossy at its foot."""
+    ch = h / 2
+    for i in range(2):
+        z = i * ch
+        x = x0 - (rr.uniform(0.1, 0.3) if i % 2 else 0.0)
+        while x < x1 - 0.02:
+            L = rr.uniform(0.3, 0.58)
+            xa, xb = max(x, x0), min(x + L, x1)
+            x += L
+            if xb - xa < 0.08 or any(a < (xa + xb) / 2 < b for a, b in skip):
+                continue
+            c = shade(base, rr.uniform(0.92, 1.22))
+            if i == 0 and rr.random() < 0.18:
+                c = _mix(c, '#4a6a3a', 0.35)                 # moss low down
+            k.box(xa + 0.016, r_face - 0.01, z + 0.016, xb - 0.016, r_face + 0.016, z + ch - 0.012, (c, 0.12), 'footing')
+
+
+def weather_wall(k, x0, x1, r_face, z0, wall_h, wall, rr, door_x=None, windows=(), posts=(), patch_top=None):
+    """Weather on a plaster wall, as the wall's own colour so no line work rings it: rising damp along its foot (a
+    darker, greener band, ragged on top), rain streaks under the sills, and now and then a patch where the plaster's
+    fallen and the brick shows."""
+    damp = _mix(shade(wall, 0.84), '#6a7a5a', 0.2)
+    x = x0
+    while x < x1 - 0.02:
+        w = rr.uniform(0.14, 0.34)
+        k.box(x, r_face - 0.004, z0, min(x + w, x1), r_face + 0.006, z0 + rr.uniform(0.06, 0.2), (damp, 0.1), 'house_wall')
+        x += w
+    for (wx, wz, ww) in windows:                             # streaks under each sill
+        for _ in range(rr.choice((1, 2, 2, 3))):
+            sx = wx + rr.uniform(-ww / 2, ww / 2)
+            L = rr.uniform(0.18, 0.42)
+            k.box(sx - 0.016, r_face - 0.004, max(z0 + 0.1, wz - 0.12 - L), sx + 0.016, r_face + 0.007, wz - 0.12,
+                  (shade(wall, rr.uniform(0.86, 0.92)), 0.06), 'house_wall')
+    if rr.random() < 0.45:                                   # fallen plaster, brick behind
+        busy = [(door_x - 0.6, door_x + 0.6)] if door_x is not None else []
+        busy += [(wx - ww / 2 - 0.2, wx + ww / 2 + 0.2) for (wx, wz, ww) in windows]
+        pw, ph = rr.uniform(0.16, 0.26), rr.uniform(0.12, 0.2)
+        busy = [(a - pw, b + pw) for a, b in busy] + [(a - pw, b + pw) for a, b in posts]
+        for _ in range(12):
+            cx = rr.uniform(x0 + 0.3, x1 - 0.3)
+            if not any(a < cx < b for a, b in busy):
+                break
+        else:
+            return
+        top = (patch_top if patch_top else wall_h - 0.3) - ph - 0.04
+        if top < z0 + ph + 0.04:
+            return
+        cz = rr.uniform(z0 + ph + 0.04, top)
+        k.box(cx - pw, r_face - 0.004, cz - ph, cx + pw, r_face + 0.009, cz + ph, ('#6a4a3a', 0.0), 'house_wall')
+        bh, bw, row = 0.085, 0.19, 0
+        z = cz - ph
+        while z < cz + ph - 0.03:
+            half = ph * (1 - ((z + bh / 2 - cz) / ph) ** 2) ** 0.5    # ragged oval edge
+            x = cx - pw * half / ph - (bw / 2 if row % 2 else 0)
+            while x < cx + pw * half / ph:
+                xa, xb = max(x, cx - pw * half / ph), min(x + bw, cx + pw * half / ph)
+                if xb - xa > 0.05:
+                    k.box(xa + 0.01, r_face + 0.006, z + 0.01, xb - 0.01, r_face + 0.016, z + bh - 0.006,
+                          (shade('#9a5a44', rr.uniform(0.8, 1.12)), 0.0), 'house_wall')
+                x += bw
+            z += bh
+            row += 1
+
+
+def _clear_round(k, x, r, rad):
+    """Nothing standing round (x, r) but the ground: rays straight down from under the eaves (1.2 up) at its middle
+    and four points round it all land below 0.2 — so the bits at a house's foot never go through a bench, a stall
+    or a barrel a scene put there. Asked once the scene is laid out (k.later)."""
+    from mathutils import Vector
+    k.top(x, r)                                          # (sets up the evaluated scene to cast into)
+    for dx, dr in ((0, 0), (rad, 0), (-rad, 0), (0, rad), (0, -rad)):
+        hit, loc, _n, _i, _ob, _m = k.scene.ray_cast(k._dg, Vector((x + dx, -(r + dr) * S, 1.2)), Vector((0, 0, -1)))
+        if hit and loc.z > 0.2:
+            return False
+    return True
+
+
+def wall_foot(k, x0, x1, r_face, door_x, rr, butt=True):
+    """Small life at a house's foot, inside its own frontage: a water butt under the downpipe (it comes down the
+    wall's right-hand corner), and now and then a barrel, a pair of crates or a broom at the other end — clear of
+    the door, the pots beside it and the step, and of anything the scene has already stood there."""
+    free = lambda x, w: door_x is None or abs(x - door_x) > 0.75 + w       # noqa: E731
+    want_butt = butt and free(x1 - 0.24, 0.2) and rr.random() < 0.7
+    tone_b = shade('#6a4628', rr.uniform(0.9, 1.1))
+    x = x0 + 0.28
+    pick = rr.random() if free(x, 0.2) else 1.0
+    tones = [rr.uniform(0.88, 1.1) for _ in range(3)]
+    second = rr.random() < 0.6
+
+    def build():
+        if want_butt and _clear_round(k, x1 - 0.24, r_face + 0.2, 0.17):
+            bx, br = x1 - 0.24, r_face + 0.2
+            k.cyl(bx, br, 0.0, 0.52, 0.17, (tone_b, 0.14), 'water_butt', verts=14)
+            for zz in (0.08, 0.42):
+                k.cyl(bx, br, zz, zz + 0.04, 0.178, '#3a3a3c', 'water_butt', verts=14)
+            k.cyl(bx, br, 0.5, 0.525, 0.15, ('#1e2a30', 0.0), 'butt_water', verts=14)
+        if pick >= 0.58 or not _clear_round(k, x, r_face + 0.24, 0.18):    # (its back point clear of the footing)
+            return
+        if pick < 0.25:                                     # a barrel
+            k.cyl(x, r_face + 0.2, 0.0, 0.46, 0.16, (shade('#7a5230', tones[0]), 0.14), 'barrel', verts=14)
+            for zz in (0.06, 0.36):
+                k.cyl(x, r_face + 0.2, zz, zz + 0.035, 0.168, '#3a3a3c', 'barrel', verts=14)
+        elif pick < 0.45:                                   # slatted crates, one on another
+            crate(k, x - 0.2, r_face + 0.0, s=0.4, tone=shade('#9a7448', tones[1]), solid=False)
+            if second:
+                crate(k, x - 0.15, r_face + 0.06, s=0.3, z0=0.34, tone=shade('#a8844e', tones[2]), solid=False)
+        else:                                               # a broom leant on the wall
+            k.tube((x, r_face + 0.22, 0.02), (x + 0.12, r_face + 0.04, 1.0), 0.018, '#8a6a40', 'broom', verts=5)
+            k.cone(x, r_face + 0.22, 0.0, 0.26, 0.07, 0.03, ('#b89a58', 0.2), 'broom', verts=8)
+    k.later.append(build)
+
+
+PAVING = ('flagstone', 'cobble', 'grout')
+
+
+def street_clutter(k, area, seed, density=1.0, straw=(), chalk=None):
+    """Small life on a square's paving (Beck: walls and clutter, then "street clutter in the open squares"): an iron
+    drain with a damp stain running to it, weeds and a dandelion in the joints, a cracked stone with its chips, a
+    stone sunk dark, a fallen leaf or a feather; straw and a dropped apple round the stalls (`straw`: rects), chalk
+    hopscotch where children play (`chalk`: (x, r) of its foot, running up the screen). All of it flat - nothing to
+    walk round - and placed once the scene is laid out (k.later), only where paving is what's on top, with its own
+    dice (seeded), so the scene's dice and everything else they place stay as they were."""
+    def paving(x, r):
+        name, z = k.top(x, r)
+        if name in PAVING and z is not None and z < 0.08:
+            on[0] = name                                                     # flat bits take the paving's own part:
+            return z                                                         # no line work round a speck
+        return None
+    on = ['flagstone']
+
+    def damp(rr, x, r, z, rad):
+        for _ in range(rr.randint(6, 11)):
+            k.cyl(x + rr.uniform(-rad, rad), r + rr.uniform(-rad * 0.7, rad * 0.7), z - 0.01, z + 0.004, rr.uniform(0.04, 0.09),
+                  ('#57534a', 0.3), on[0], ry=rr.uniform(0.03, 0.07), verts=8)
+
+    def weeds(rr, x, r, z):
+        items = []
+        a = rr.uniform(0, math.pi)                                          # along a joint
+        for _ in range(rr.randint(7, 14)):
+            t, h = rr.uniform(-0.12, 0.12), rr.uniform(0.08, 0.17)
+            items.append((x + math.cos(a) * t, r + math.sin(a) * t * 0.7, z, h, rr.uniform(0.012, 0.02),
+                          rr.uniform(-0.06, 0.06), rr.uniform(-0.04, 0.02)))
+        k.blades(items, (shade('#4e8a36', rr.uniform(0.85, 1.2)), 0.3), on[0])
+        if rr.random() < 0.35:
+            k.sphere(x + rr.uniform(-0.04, 0.04), r, z + 0.12, 0.03, 0.022, ('#f0c830', 0.2), 'weed_flower', segs=6)
+
+    def run():
+        rr = random.Random(seed)
+        x0, r0, x1, r1 = area
+        for _ in range(int((x1 - x0) * (r1 - r0) * 0.3 * density)):
+            x, r = rr.uniform(x0 + 0.3, x1 - 0.3), rr.uniform(r0 + 0.3, r1 - 0.3)
+            z = paving(x, r)
+            roll = rr.random()
+            if z is None:
+                continue
+            if roll < 0.07:                                                   # an iron drain, damp running to it
+                if any(paving(x + dx, r + dr) is None for dx, dr in ((-0.25, -0.18), (0.25, -0.18), (-0.25, 0.18), (0.25, 0.18))):
+                    continue
+                damp(rr, x, r + 0.22, z, 0.2)
+                k.box(x - 0.22, r - 0.15, z - 0.03, x + 0.22, r + 0.15, z + 0.006, '#0c0c0e', 'drain')
+                for a, b, c, d in ((-0.22, -0.15, 0.22, -0.11), (-0.22, 0.11, 0.22, 0.15), (-0.22, -0.15, -0.18, 0.15), (0.18, -0.15, 0.22, 0.15)):
+                    k.box(x + a, r + b, z + 0.004, x + c, r + d, z + 0.016, ('#34343a', 0.12), 'drain_grate')
+                for i in range(5):
+                    gx = x - 0.14 + i * 0.07
+                    k.box(gx - 0.012, r - 0.12, z + 0.004, gx + 0.012, r + 0.12, z + 0.014, ('#3c3c42', 0.12), 'drain_grate')
+            elif roll < 0.42:
+                weeds(rr, x, r, z)
+            elif roll < 0.55:
+                damp(rr, x, r, z, rr.uniform(0.12, 0.22))
+            elif roll < 0.68:                                                 # a cracked stone, its chips beside it
+                a = rr.uniform(0, math.pi)
+                k.bar(x - math.cos(a) * 0.14, r - math.sin(a) * 0.1, x + math.cos(a) * 0.14, r + math.sin(a) * 0.1, z - 0.004, z + 0.003,
+                      0.016, '#3a3630', on[0])
+                for _ in range(rr.randint(2, 3)):
+                    rad = rr.uniform(0.025, 0.045)
+                    k.rock(x + rr.uniform(-0.18, 0.18), r + rr.uniform(-0.12, 0.12), z + 0.01, rad, rad * 0.8, rad * 0.6,
+                           (shade('#9a9488', rr.uniform(0.85, 1.1)), 0.2), part=on[0], seed=rr.randint(0, 1 << 30))
+            elif roll < 0.78:                                                 # a stone sunk and dark, water standing in it
+                k.cyl(x, r, z - 0.012, z + 0.002, rr.uniform(0.1, 0.15), ('#4a4c52', 0.04), on[0], ry=rr.uniform(0.07, 0.1), verts=7)
+            else:                                                             # a fallen leaf, a feather
+                if rr.random() < 0.7:
+                    k.cyl(x, r, z, z + 0.006, rr.uniform(0.035, 0.05), (rr.choice(('#8a6a2a', '#a0782e', '#6a7a2e', '#7a4a22')), 0.3),
+                          on[0], ry=rr.uniform(0.018, 0.026), verts=6)
+                else:
+                    a = rr.uniform(0, math.pi)
+                    k.bar(x, r, x + math.cos(a) * 0.12, r + math.sin(a) * 0.06, z, z + 0.008, 0.016, ('#e8e4dc', 0.2), on[0])
+        for (a0, b0, a1, b1) in straw:                                        # round the stalls: straw, a dropped apple
+            for _ in range(int((a1 - a0) * (b1 - b0) * 22)):
+                x, r = rr.uniform(a0, a1), rr.uniform(b0, b1)
+                z = paving(x, r)
+                if z is None:
+                    continue
+                a, l = rr.uniform(0, math.pi), rr.uniform(0.06, 0.14)
+                k.bar(x, r, x + math.cos(a) * l, r + math.sin(a) * l * 0.7, z, z + 0.006, 0.012,
+                      (shade('#c8a858', rr.uniform(0.8, 1.15)), 0.3), on[0])
+            for _ in range(rr.randint(0, 2)):
+                x, r = rr.uniform(a0, a1), rr.uniform(b0, b1)
+                z = paving(x, r)
+                if z is not None:
+                    k.sphere(x, r, z + 0.035, 0.038, 0.035, (rr.choice(('#b02a22', '#c8a028', '#5a8a2a')), 0.2), 'apple', segs=8)
+        if chalk:                                                             # hopscotch: 1, 2, 1, 2, 1, and the round home
+            s, rows = 0.3, (1, 2, 1, 2, 1)
+
+            def clear(x, r):                                                  # bare paving under all of it, with a margin
+                return all(paving(x + dx, r - dy) is not None for dx in (-0.42, -0.2, 0.0, 0.2, 0.42)
+                           for dy in [i * 0.15 - 0.1 for i in range(int((s * 5 + 0.55) / 0.15) + 1)])
+            # the nearest clear spot to the one asked for (a stall, a lamp post or a planter is often just where it was
+            # asked: then the next one along, never on top of it)
+            cx, cr = chalk
+            spots = sorted(((dx * 0.25, dy * 0.25) for dx in range(-16, 17) for dy in range(-16, 17)),
+                           key=lambda d: (d[0] ** 2 + d[1] ** 2, d))
+            found = next(((cx + dx, cr + dy) for dx, dy in spots
+                          if x0 + 0.4 <= cx + dx <= x1 - 0.4 and r0 + s * 5 + 0.5 <= cr + dy <= r1 and clear(cx + dx, cr + dy)), None)
+            print('street clutter: hopscotch', 'at (%.2f, %.2f)' % found if found else 'nowhere clear near (%.2f, %.2f)' % (cx, cr))
+            if found:
+                cx, cr = found
+                c, w = ('#e4e0d4', 0.3), 0.036
+
+                def line(p, q, u, v):                                         # chalk follows the stones' own tops in short
+                    across = u - p > v - q                                    # pieces (over cobbles' humps and into their
+                    n = max(1, int(((u - p) if across else (v - q)) / 0.05 + 0.5))   # joints), and takes their part, so no
+                    for i in range(n):                                        # line work rings it
+                        if across:
+                            a, b, e, f = p + (u - p) * i / n, q, p + (u - p) * (i + 1) / n, v
+                        else:
+                            a, b, e, f = p, q + (v - q) * i / n, u, q + (v - q) * (i + 1) / n
+                        z = paving((a + e) / 2, (b + f) / 2)
+                        if z is not None:
+                            k.box(a, b, z - 0.02, e, f, z + 0.004, c, on[0])
+                for i, n in enumerate(rows):
+                    y1 = cr - i * s
+                    for j in range(n):
+                        xa = cx - n * s / 2 + j * s
+                        for (p, q, u, v) in ((xa, y1 - s, xa + s, y1 - s + w), (xa, y1 - w, xa + s, y1),   # a pixel wide
+                                             (xa, y1 - s, xa + w, y1), (xa + s - w, y1 - s, xa + s, y1)):
+                            line(p, q, u, v)
+                hz = paving(cx, cr - 5 * s - 0.2)
+                if hz is not None:
+                    annulus(k, cx, cr - 5 * s - 0.2, 0.16, 0.196, hz - 0.02, hz + 0.004, c, on[0], segs=20)
+    k.later.append(run)
 
 
 def dormer(k, cx, ra, rm, ze, zr, roof, wall, shutters, w=0.95):
@@ -631,6 +886,8 @@ def lantern_post(k, cx, cr, h=2.2, energy=40):
     lx = cx + 0.28
     k.cone(lx, cr, h - 0.2, h - 0.1, 0.03, 0.01, IRON, 'post_hook', verts=4)
     lantern(k, lx, cr, h - 0.5, h - 0.24, s=0.1, energy=energy)
+    if energy:      # its pool on the ground: a lamp up a post alone lights the ground no more than the moon does
+        k.point_light(lx, cr + 0.12, 0.85, '#ffb060', energy * 1.6, radius=0.3, group='flicker')
     k.solid_post(cx, cr)
 
 
@@ -1329,6 +1586,24 @@ def tree_bed(k, cx, cr, rad=0.55, grass='#34462e'):
         x, r = cx + k.rng.uniform(-rad, rad) * 0.7, cr + k.rng.uniform(-rad, rad) * 0.7
         k.cone(x, r, 0.0, k.rng.uniform(0.08, 0.14), 0.025, 0.002, shade(grass, 1.4), 'tuft', verts=3)
     k.solid(cx - 0.4, cr - 0.4, cx + 0.4, cr + 0.4)
+
+
+def round_bench(k, cx, cr, r_in=0.55, r_out=0.88, h=0.4, tone=WOOD, sides=8):
+    """A bench round a tree: eight sides of three planks each, a pixel's gap between them so the seat reads as slats
+    (a solid ring read as an orange doughnut), on legs at every corner."""
+    angs = [2 * math.pi * (i + 0.5) / sides for i in range(sides)]
+    span = (r_out - r_in) / 3
+    for i in range(sides):
+        a0, a1 = angs[i], angs[(i + 1) % sides]
+        for j in range(3):
+            rr = r_in + span * (j + 0.5)
+            p0 = (cx + math.cos(a0) * rr, cr + math.sin(a0) * rr * 0.92)
+            p1 = (cx + math.cos(a1) * rr, cr + math.sin(a1) * rr * 0.92)
+            k.bar(p0[0], p0[1], p1[0], p1[1], h - 0.05, h, span * 0.6, (shade(tone, k.rng.uniform(0.72, 0.95)), 0.18), 'bench_plank')
+        for rr in (r_in + 0.04, r_out - 0.04):
+            x, y = cx + math.cos(a0) * rr, cr + math.sin(a0) * rr * 0.92
+            k.box(x - 0.03, y - 0.03, 0.0, x + 0.03, y + 0.03, h - 0.05, shade(tone, 0.6), 'bench_leg')
+    # (the scene marks its tiles solid: a ring round a tree sits across tile lines however it's placed)
 
 
 def bench(k, x0, x1, cr, tone=WOOD):

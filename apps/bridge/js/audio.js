@@ -179,6 +179,13 @@ var BridgeAudio = (function () {
       voice(d, t, 0.03, { type: 'sine', freq: hz(m) * 2, gain: 0.04 * v, a: 0.002, d: 0.06, s: 0, r: 0.05 });
     },
     brush: function (d, t, m, dur, v) { noiseHit(d, t, 0.22, { freq: 3200, ftype: 'bandpass', q: 0.6, gain: 0.035 * v, rev: 0.2 }); },
+    // the folk band (the fair, a tavern when you sit down): a bowed fiddle, a squeezebox, a tambourine
+    fiddle: function (d, t, m, dur, v) {
+      voice(d, t, dur, { type: 'sawtooth', freq: hz(m), unison: [-5, 5], gain: 0.036 * v, a: 0.045, d: 0.2, s: 0.75, r: 0.18, cutoff: 2600, q: 1.1, vib: [6, 12], rev: 0.35, dly: 0.1 });
+      noiseHit(d, t, Math.min(0.12, dur), { freq: 2600, ftype: 'bandpass', q: 2, gain: 0.008 * v });
+    },
+    squeeze: function (d, t, m, dur, v) { voice(d, t, dur, { type: 'square', freq: hz(m), unison: [-8, 0, 8], gain: 0.02 * v, a: 0.12, d: 0.4, s: 0.85, r: 0.35, cutoff: 1800, vib: [4.5, 4], rev: 0.3 }); },
+    tamb:  function (d, t, m, dur, v) { noiseHit(d, t, 0.16, { freq: 7000, ftype: 'bandpass', q: 3, gain: 0.045 * v, rev: 0.15 }); noiseHit(d, t + 0.03, 0.1, { freq: 9500, gain: 0.02 * v }); },
     ride:  function (d, t, m, dur, v) {
       noiseHit(d, t, 0.35, { freq: 7000, ftype: 'highpass', gain: 0.022 * v, rev: 0.25 });
       voice(d, t, 0.02, { type: 'sine', freq: 5200, gain: 0.006 * v, a: 0.001, d: 0.4, s: 0, r: 0.3 });
@@ -241,6 +248,18 @@ var BridgeAudio = (function () {
     casino:   { bpm: 92, root: 50, mode: 'ionian', chords: [1, 4, 0, 5, 1, 4, 0, 0], swing: 0.2, pad: 'warm',
                 arp: { inst: 'keys', steps: [3, 10], oct: 12, chord: true }, bass: { inst: 'upright', steps: [0, 4, 8, 12], walk: true },
                 lead: { inst: 'sax', oct: 12, density: 0.38 }, perc: [['ride', [0, 4, 7, 8, 12, 15]], ['brush', [4, 12]]] },
+    // the Harvest Fair: a jig, the fiddle leading, guitar strummed on the off-beats, a tambourine
+    fair:     { bpm: 116, root: 55, mode: 'ionian', chords: [0, 4, 0, 4, 3, 0, 4, 0], swing: 0.18, pad: 'squeeze',
+                arp: { inst: 'pluck', steps: [4, 12], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 8] },
+                lead: { inst: 'fiddle', oct: 24, density: 0.72 }, perc: [['tom', [0, 8]], ['tamb', [4, 12]], ['shaker', [2, 6, 10, 14]]] },
+    // Lantern Tide: a slow hymn with a lilt, bells like the harbour's, a flute for the ones the sea kept
+    tide:     { bpm: 58, root: 50, mode: 'dorian', chords: [0, 5, 3, 4, 0, 5, 6, 0], swing: 0.24, pad: 'warm',
+                arp: { inst: 'bell', steps: [0, 6, 12], oct: 24 }, bass: { inst: 'bass', steps: [0] },
+                lead: { inst: 'flute', oct: 24, density: 0.3 } },
+    // a tavern when you've sat down: the band strikes up — squeezebox, fiddle, a drum and a shaker
+    band:     { bpm: 108, root: 52, mode: 'mixolydian', chords: [0, 6, 3, 0, 0, 6, 4, 0], swing: 0.2, pad: 'squeeze',
+                arp: { inst: 'pluck', steps: [4, 12], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 6, 8] },
+                lead: { inst: 'fiddle', oct: 24, density: 0.62 }, perc: [['tom', [0, 8]], ['shaker', [2, 6, 10, 14]], ['tamb', [12]]] },
     ship:     { bpm: 66, root: 53, mode: 'lydian', chords: [0, 1, 5, 4], pad: 'warm',
                 arp: { inst: 'box', steps: [0, 3, 6, 8, 11, 14], oct: 12 }, bass: { inst: 'bass', steps: [0], oct: -12 },
                 lead: { inst: 'box', oct: 24, density: 0.25 } }
@@ -256,7 +275,7 @@ var BridgeAudio = (function () {
     id = id || '';
     var ts = (w && w.tileset) || '';
     var amb;
-    if (/^(bridge|quarters|hangar|gameroom)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
+    if (/^(bridge|quarters|hangar|gameroom|office)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
     if (id === 'arcadia' || id === 'arcadia-lucky-7') return { theme: 'arcade', amb: ['crowd', 'bleeps'] };
     if (id === 'arcadia-club') return { theme: 'club', amb: ['crowd'] };
     if (id === 'arcadia-casino') return { theme: 'casino', amb: ['crowd', 'slots'] };            // the Neon Royale's floor
@@ -287,9 +306,10 @@ var BridgeAudio = (function () {
     if (id === 'lumar-crown-chapel') return { theme: 'chapel', amb: ['wind'] };
     if (id === 'lumar-crown-exchange') return { theme: 'lumar-in', amb: ['crowd', 'murmur'] };
     if (id === 'lumar-crown-office') return { theme: 'lumar-in', amb: ['murmur'] };
+    if (id === 'lumar-holm-resort') return { theme: 'lumar-in', amb: ['sea', 'murmur'] };                // the Starling: the sea past the terrace
     if (/^lumar/.test(id)) {
       var inside = w && w.scene && !w.scene.backdrop && !/^lumar(-square|-crimson|-rose|-sapphire|-midnight)?$/.test(id);
-      if (inside) return { theme: 'lumar-in', amb: id === 'lumar-home' || id === 'lumar-holm-home' || id === 'lumar-manor' ? ['fire'] : ['fire', 'murmur'] };     // your own house is quiet
+      if (inside) return { theme: 'lumar-in', amb: id === 'lumar-home' || id === 'lumar-holm-home' || /^lumar-manor/.test(id) ? ['fire'] : ['fire', 'murmur'] };     // your own house is quiet
       return { theme: 'lumar', amb: id === 'lumar-square' ? ['wind', 'murmur'] : ['sea', 'wind'] };
     }
     return { theme: 'ship', amb: ['engine'] };
@@ -340,13 +360,16 @@ var BridgeAudio = (function () {
     stopSong();
     var th = THEMES[themeName];
     if (!th) return;
-    var bus = ac.createGain();
+    var m = moodNow(themeName);
+    th = moodTheme(th, m.mood);
+    var bus = ac.createGain(), lp = ac.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = m.cutoff; lp.Q.value = 0.5;
     bus.gain.setValueAtTime(0.0001, ac.currentTime);
     bus.gain.linearRampToValueAtTime(1, ac.currentTime + 2.5);
-    bus.connect(musicBus);
+    bus.connect(lp); lp.connect(musicBus);
     var seed = 1;
     for (var i = 0; i < themeName.length; i++) seed = (seed * 31 + themeName.charCodeAt(i)) % 2147483647;
-    song = { name: themeName, th: th, bus: bus, step: 0, next: ac.currentTime + 0.15, r: rng(seed + Math.floor(Date.now() / 600000)),
+    song = { name: themeName, th: th, bus: bus, lp: lp, mood: m.mood, step: 0, next: ac.currentTime + 0.15, r: rng(seed + Math.floor(Date.now() / 600000)),
              phrases: {}, spb: 60 / th.bpm / 4 };
     clearInterval(timer);
     timer = setInterval(schedule, 25);
@@ -364,6 +387,7 @@ var BridgeAudio = (function () {
 
   function schedule() {
     if (!song || !ac) return;
+    if (ac.currentTime - retuned > 4) { retuned = ac.currentTime; retune(); if (!song) return; }
     while (song.next < ac.currentTime + 0.12) {
       playStep(song, song.step, song.next);
       var swing = song.th.swing && song.step % 2 === 0 ? song.th.swing : (song.th.swing ? -song.th.swing : 0);
@@ -373,6 +397,7 @@ var BridgeAudio = (function () {
   }
 
   function playStep(s, n, t) {
+    if (s.nextTh && n % 16 === 0) { s.th = s.nextTh; s.nextTh = null; s.spb = 60 / s.th.bpm / 4; s.phrases = {}; }   // a new mood at the bar line
     var th = s.th, st = n % 16, bar = Math.floor(n / 16), d = s.bus;
     var deg = th.chords[bar % th.chords.length], tones = chordTones(th, deg);
     var section = Math.floor(bar / 8) % 4;                  // 0 sparse, 1 full, 2 full, 3 thinner
@@ -415,6 +440,55 @@ var BridgeAudio = (function () {
         if (x.bar === b && x.step === st) INST[th.lead.inst](d, t, scaleNote(th, x.deg) + th.lead.oct - 12, s.spb * x.len, 0.9);
       });
     }
+  }
+
+  // ---- the moment: the hour, the weather, a festival, a seat in a tavern ---------------------------------
+  // Outdoors the band follows the sky: hushed at dawn, itself by day, slower at dusk, sparse and low at night;
+  // rain or snow softens it (a filter over the song), a storm darkens the key. A festival open where you are plays
+  // its own tune (assets/festivals.json `music`), and sitting down in a tavern starts the band. Checked every few
+  // seconds; a new mood comes in at the next bar line, a new tune crossfades.
+  var MOODY = { lumar: 1, verdance: 1, hoarfell: 1, sylvara: 1, summit: 1 };
+  var TAVERNS = /^(lumar-tavern|lumar-crown-pub|lumar-tern-inn|hoarfell-lodge)$/;
+  var placeId = '', retuned = 0;
+  function moodTheme(th, mood) {
+    if (!mood || mood === 'day') return th;
+    var o = Object.assign({}, th), k = { dawn: [0.9, 0.6], dusk: [0.92, 0.7], night: [0.84, 0.45], wet: [0.94, 0.7], storm: [1.04, 0.8] }[mood] || [1, 1];
+    o.bpm = Math.round(th.bpm * k[0]);
+    if (th.lead) o.lead = Object.assign({}, th.lead, { density: th.lead.density * k[1], oct: th.lead.oct - (mood === 'night' ? 12 : 0) });
+    if (mood === 'night' || mood === 'dawn') { o.perc = null; if (th.arp) o.arp = Object.assign({}, th.arp, { sparse: Math.max(th.arp.sparse || 0, 0.35) }); }
+    if (mood === 'dusk' && th.perc) o.perc = th.perc.filter(function (x) { return x[0] === 'shaker'; });
+    if (mood === 'storm') {
+      o.mode = th.mode === 'ionian' || th.mode === 'mixolydian' ? 'dorian' : th.mode === 'lydian' ? 'aeolian' : th.mode;
+      o.perc = [['tom', [0, 6, 8, 14]]].concat(th.perc || []);
+    }
+    return o;
+  }
+  // { mood, cutoff } for a tune where you are now
+  function moodNow(themeName) {
+    var out = { mood: 'day', cutoff: 18000 };
+    if (!MOODY[themeName] || !placeId) return out;
+    var W = typeof BridgeWeather !== 'undefined' && BridgeWeather.here ? BridgeWeather.here(placeId) : null;
+    var wet = !!(W && W.def && W.def.wet && W.k > 0.3), storm = !!(W && (W.kind === 'storm' || W.kind === 'blizzard') && W.k > 0.3);
+    var k = typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky(placeId) : null, part = k ? k.part : 'day';
+    out.mood = storm ? 'storm' : part === 'night' ? 'night' : part === 'dawn' ? 'dawn' : part === 'dusk' ? 'dusk' : wet ? 'wet' : 'day';
+    if (wet) out.cutoff = W.kind === 'snow' ? 2600 : 1500;
+    return out;
+  }
+  // which tune this moment wants: a festival's, the tavern band, or the place's own
+  function tuneNow() {
+    if (!place) return null;
+    var F = typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on ? BridgeFestivals.on() : [];
+    for (var i = 0; i < F.length; i++) if (F[i].world === placeId && F[i].music && BridgeFestivals.open(F[i])) return { theme: F[i].music, amb: place.amb.concat(['murmur']) };
+    if (TAVERNS.test(placeId) && typeof BridgeCharacter !== 'undefined' && BridgeCharacter.isSeated && BridgeCharacter.isSeated()) return { theme: 'band', amb: place.amb };
+    return place;
+  }
+  function retune() {
+    var want = tuneNow();
+    if (!want || !song) return;
+    if (want.theme !== song.name) { start(want.theme, want.amb); return; }
+    var m = moodNow(song.name);
+    song.lp.frequency.setTargetAtTime(m.cutoff, ac.currentTime, 1.5);
+    if (m.mood !== song.mood) { song.mood = m.mood; song.nextTh = moodTheme(THEMES[song.name], m.mood); }
   }
 
   // ---- ambience ---------------------------------------------------------------------------------------
@@ -795,7 +869,39 @@ var BridgeAudio = (function () {
     roll:    function (t) { whoosh(t, 0.26, 500, 1500, 0.09, 0.7); noiseHit(sfxBus, t + 0.3, 0.12, { freq: 260, ftype: 'lowpass', gain: 0.14 }); },
     dodge:   function (t) { whoosh(t, 0.14, 3000, 1200, 0.07, 1.2); },
     charge:  function (t) { voice(sfxBus, t, 0.18, { type: 'sine', freq: hz(79), glide: 0.5, glideT: 0.15, gain: 0.06, a: 0.01, d: 0.2, s: 0.2, r: 0.2, rev: 0.4 }); INST.bell(sfxBus, t + 0.12, 91, 0.2, 0.7); },
-    charged: function (t) { whoosh(t, 0.28, 600, 3600, 0.16, 0.9); [60, 67, 72].forEach(function (m) { voice(sfxBus, t, 0.2, { type: 'sawtooth', freq: hz(m), gain: 0.025, a: 0.005, d: 0.25, s: 0.2, r: 0.2, cutoff: 1800, rev: 0.4 }); }); }
+    charged: function (t) { whoosh(t, 0.28, 600, 3600, 0.16, 0.9); [60, 67, 72].forEach(function (m) { voice(sfxBus, t, 0.2, { type: 'sawtooth', freq: hz(m), gain: 0.025, a: 0.005, d: 0.25, s: 0.2, r: 0.2, cutoff: 1800, rev: 0.4 }); }); },
+    // small happenings (js/events.js)
+    fiddle:  function (t) {                                // a reel on the fiddle: two bars, bowed and bright
+      [74, 78, 81, 78, 76, 79, 83, 79, 74, 78, 81, 86, 85, 81, 76, 81].forEach(function (m, i) {
+        voice(sfxBus, t + i * 0.15, 0.13, { type: 'sawtooth', freq: hz(m), gain: 0.03, a: 0.012, d: 0.1, s: 0.7, r: 0.06, cutoff: 2400, q: 1.2, vib: [6, 8], rev: 0.25 });
+      });
+    },
+    harp:    function (t) { [65, 69, 72, 76, 79, 83, 84, 79, 76, 72].forEach(function (m, i) { INST.lute(sfxBus, t + i * 0.24, m, 0.3, 0.8); }); },
+    peal:    function (t) { [84, 83, 81, 79, 77, 76, 74, 72].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.24, m - 12, 0.3, 1.1); }); },
+    chime:   function (t) { [88, 91, 95, 100].forEach(function (m, i) { INST.bell(sfxBus, t + i * 0.11, m - 12, 0.2, 0.7); }); },
+    gavel:   function (t) { [0, 0.16].forEach(function (d) { noiseHit(sfxBus, t + d, 0.08, { freq: 500, ftype: 'lowpass', gain: 0.26, rev: 0.2 }); voice(sfxBus, t + d, 0.03, { type: 'sine', freq: 180, glide: 0.6, gain: 0.12, a: 0.001, d: 0.06, s: 0, r: 0.04 }); }); },
+    flash:   function (t) { noiseHit(sfxBus, t, 0.03, { freq: 6000, ftype: 'highpass', gain: 0.06 }); voice(sfxBus, t + 0.02, 0.2, { type: 'sine', freq: 2600, glide: 0.6, glideT: 0.2, gain: 0.012, a: 0.01, d: 0.2, s: 0, r: 0.1 }); },
+    drone:   function (t) { voice(sfxBus, t, 1.2, { type: 'sawtooth', freq: 190, gain: 0.02, a: 0.1, d: 0.3, s: 0.8, r: 0.3, cutoff: 1400, vib: [21, 40] }); },
+    thud:    function (t) { noiseHit(sfxBus, t, 0.14, { freq: 380, ftype: 'lowpass', gain: 0.22 }); voice(sfxBus, t, 0.05, { type: 'sine', freq: 90, glide: 0.6, gain: 0.12, a: 0.001, d: 0.1, s: 0, r: 0.06 }); },
+    powerdown: function (t) { voice(sfxBus, t, 0.7, { type: 'sine', freq: 420, glide: 0.15, glideT: 0.7, gain: 0.05, a: 0.005, d: 0.7, s: 0.3, r: 0.2 }); noiseHit(sfxBus, t, 0.05, { freq: 3000, ftype: 'bandpass', gain: 0.05 }); },
+    glitch:  function (t) { for (var i = 0; i < 9; i++) voice(sfxBus, t + i * 0.055, 0.04, { type: 'square', freq: 200 + Math.random() * 1600, gain: 0.03, a: 0.001, d: 0.04, s: 0.3, r: 0.02, cutoff: 5000 }); },
+    siren:   function (t) { for (var i = 0; i < 4; i++) voice(sfxBus, t + i * 0.42, 0.38, { type: 'square', freq: i % 2 ? 770 : 960, gain: 0.018, a: 0.02, d: 0.2, s: 0.8, r: 0.06, cutoff: 1800, rev: 0.3 }); },
+    cluck:   function (t) { [0, 0.11, 0.2].forEach(function (d, i) { voice(sfxBus, t + d, 0.05, { type: 'triangle', freq: 700 - i * 60, glide: 0.65, glideT: 0.05, gain: 0.05, a: 0.002, d: 0.06, s: 0, r: 0.03, cutoff: 2500 }); }); },
+    horn:    function (t) { [[67, 0, 0.3], [72, 0.34, 0.3], [79, 0.7, 0.6]].forEach(function (n) { voice(sfxBus, t + n[1], n[2], { type: 'sawtooth', freq: hz(n[0]), gain: 0.035, a: 0.03, d: 0.2, s: 0.8, r: 0.15, cutoff: 1600, rev: 0.35 }); }); },
+    jingle:  function (t) { for (var i = 0; i < 8; i++) { noiseHit(sfxBus, t + i * 0.06 + Math.random() * 0.02, 0.06, { freq: 6500, ftype: 'bandpass', q: 6, gain: 0.05 }); voice(sfxBus, t + i * 0.06, 0.03, { type: 'sine', freq: 3000 + Math.random() * 1200, gain: 0.012, a: 0.001, d: 0.08, s: 0, r: 0.06 }); } },
+    blast:   function (t) {                                // a charge on the far slope: the crack, then the boom rolling down the valley
+      noiseHit(sfxBus, t, 0.08, { freq: 2200, ftype: 'highpass', gain: 0.05 });
+      noiseHit(sfxBus, t + 0.05, 1.6, { freq: 120, ftype: 'lowpass', gain: 0.34, rev: 0.7 });
+      voice(sfxBus, t + 0.05, 0.1, { type: 'sine', freq: 50, glide: 0.5, glideT: 0.4, gain: 0.2, a: 0.002, d: 0.4, s: 0, r: 0.2 });
+      noiseHit(sfxBus, t + 0.9, 1.4, { freq: 90, ftype: 'lowpass', gain: 0.16, rev: 0.7 });
+    },
+    whistle: function (t) { [0, 0.32].forEach(function (d) { voice(sfxBus, t + d, 0.22, { type: 'sine', freq: 2300, gain: 0.03, a: 0.01, d: 0.2, s: 0.8, r: 0.05, vib: [28, 60] }); }); },
+    splat:   function (t) { noiseHit(sfxBus, t, 0.12, { freq: 900, ftype: 'lowpass', gain: 0.18 }); },
+    buzz:    function (t) { voice(sfxBus, t, 0.5, { type: 'square', freq: 60, gain: 0.03, a: 0.01, d: 0.3, s: 0.6, r: 0.1, cutoff: 700 }); noiseHit(sfxBus, t, 0.4, { freq: 3500, ftype: 'bandpass', q: 2, gain: 0.025 }); },
+    crackle: function (t) {                                // static, and something like a voice under it
+      for (var i = 0; i < 10; i++) noiseHit(sfxBus, t + Math.random() * 1.1, 0.03, { freq: 2000 + Math.random() * 3000, ftype: 'bandpass', q: 3, gain: 0.05 });
+      voice(sfxBus, t + 0.2, 0.8, { type: 'sawtooth', freq: 160, glide: 1.3, glideT: 0.6, gain: 0.012, a: 0.05, d: 0.4, s: 0.6, r: 0.2, cutoff: 900, q: 6, vib: [7, 50] });
+    }
   };
 
   function sfx(name) {
@@ -807,9 +913,11 @@ var BridgeAudio = (function () {
   // ---- places ---------------------------------------------------------------------------------------
   var place = null;
   function setWorld(id, w) {
+    placeId = id;
     place = themeFor(id, w);
-    if (!ac) { wanted = place; return; }
-    start(place.theme, place.amb);
+    var t = tuneNow() || place;
+    if (!ac) { wanted = t; return; }
+    start(t.theme, t.amb);
   }
 
   // ---- the ♪ pill -------------------------------------------------------------------------------------
@@ -852,7 +960,7 @@ var BridgeAudio = (function () {
   }
 
   return { setWorld: setWorld, sfx: sfx, cycle: cycle, clock: clock, mode: function () { return prefs.mode; },
-           _state: function () { return { ctx: ac && ac.state, song: song && song.name, amb: ambKey, place: place }; },
+           _state: function () { return { ctx: ac && ac.state, song: song && song.name, mood: song && song.mood, bpm: song && Math.round(60 / song.spb / 4), cutoff: song && Math.round(song.lp.frequency.value), amb: ambKey, place: place }; },
            _level: function () {                    // peak and rms of what's playing (tests)
              if (!meter) return null;
              var a = new Float32Array(meter.fftSize); meter.getFloatTimeDomainData(a);

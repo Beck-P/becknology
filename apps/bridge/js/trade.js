@@ -53,7 +53,12 @@ var BridgeTrade = (function () {
     sapphire_ray: { per: 4, kind: 'fish' }, spore_tuna: { per: 3, kind: 'fish' }, lantern_angler: { per: 3, kind: 'fish' }, rose_shrimp: { per: 8, kind: 'fish' }, harbour_crab: { per: 6, kind: 'fish' }, fresh_fish: { per: 6, kind: 'fish' },
     glowtail: { per: 6, kind: 'fish' }, coral_dragonet: { per: 6, kind: 'fish' }, cinder_grouper: { per: 2, kind: 'fish' }, starfin: { per: 3, kind: 'fish' },
     jade_marlin: { per: 1, kind: 'fish' }, glass_swordfish: { per: 1, kind: 'fish' }, old_mossback: { per: 1, kind: 'fish' }, dawnveil: { per: 1, kind: 'fish' },
-    emberjaw: { per: 1, kind: 'fish' }, crownfin: { per: 1, kind: 'fish' }, nightglass: { per: 1, kind: 'fish' }
+    emberjaw: { per: 1, kind: 'fish' }, crownfin: { per: 1, kind: 'fish' }, nightglass: { per: 1, kind: 'fish' },
+    // the workshop's materials (js/workshop.js), a ship's stores: they sell anywhere at what they're worth
+    pine_log: { per: 10, kind: 'stores' }, oak_log: { per: 6, kind: 'stores' }, plank: { per: 20, kind: 'stores' }, oak_plank: { per: 12, kind: 'stores' },
+    copper_ore: { per: 5, kind: 'ore' }, iron_bar: { per: 10, kind: 'stores' }, copper_sheet: { per: 10, kind: 'stores' }, flax: { per: 20, kind: 'stores' },
+    rope: { per: 10, kind: 'stores' }, pitch: { per: 10, kind: 'stores' }, sailcloth: { per: 4, kind: 'stores' }, glass: { per: 6, kind: 'stores' },
+    powder: { per: 6, kind: 'stores' }, moonglass: { per: 6, kind: 'stores' }
   };
   // each port's appetite: < 1 made here (cheap), > 1 wanted here (dear). Your own haul by kind.
   var MARKET = {
@@ -343,6 +348,8 @@ var BridgeTrade = (function () {
     return st.taken.slice();
   }
   function takeContract(c) { if (!mine().filter(function (x) { return x.id === c.id; })[0]) { st.taken.push(c); store(); } }
+  /** A contract delivered out of sight — by a captain on standing orders (js/orders.js), who's paid the fee. */
+  function complete(id) { st.done[id] = Date.now(); store(); }
   /** Hand over every contract due at this port that the ship has the goods for. Resolves [{contract, ok}] */
   function deliver(ship, P) {
     P = port(P);
@@ -417,6 +424,6 @@ var BridgeTrade = (function () {
   return { GOODS: GOODS, HAUL: HAUL, MARKET: MARKET, PORTS: PORTS, isGood: isGood, name: name, per: per, port: port, price: price,
            catchValue: catchValue, sellCatch: sellCatch, carryCatch: carryCatch, catchList: catchList,
            stock: stock, supply: supply, crates: crates, capacity: capacity, room: room, fits: fits, load: load, unload: unload,
-           buy: buy, sell: sell, noteSold: noteSold, bestRun: bestRun, routes: routes, circuits: circuits, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver,
+           buy: buy, sell: sell, noteSold: noteSold, bestRun: bestRun, routes: routes, circuits: circuits, depth: depth, contracts: contracts, charters: charters, today: today, mine: mine, take: takeContract, deliver: deliver, complete: complete,
            _state: function () { return st; } };
 })();

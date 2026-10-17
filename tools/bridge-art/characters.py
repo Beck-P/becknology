@@ -333,6 +333,32 @@ NPCS = {
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), beard=True, straw_hat=('#a8843a', '#d8b058', '#f0d080'), pose='stand'),
     'npc-vschool':   dict(skin='skin3', shirt=('#3a2a5a', '#54407e', '#7058a0'), hair=('#7a7a80', '#a8a8b0', '#d0d0d8'),
                           bun=True, pose='stand'),
+    # small events (js/events.js): two children (toy boats in the fountain, the snowball fight, the hen chase), a bride and
+    # her groom on St Brendan's steps
+    'npc-kid-a':     dict(skin='skin2', shirt=('#1e3a6a', '#2e5a9a', '#4a7ac0'), hair=('#4a2a14', '#7a4a24', '#a06a38'),
+                          cap=('#8a1e1e', '#c03232', '#e05050'), young=True, pose='stand'),
+    'npc-kid-b':     dict(skin='skin', shirt=('#7a5a10', '#c09a28', '#e8c850'), skirt=('#2a4a6a', '#3e6a92', '#5a8ab8'),
+                          hair=('#6a2a14', '#a04a22', '#d0703a'), ponytail=True, young=True, pose='stand'),
+    'npc-bride':     dict(skin='skin', shirt=('#bcb8b0', '#e6e2da', '#fcfaf6'), skirt=('#bcb8b0', '#e6e2da', '#fcfaf6'), gown=True,
+                          veil=('#c8c4bc', '#ece8e0', '#fcfaf6'), hair=('#8a6a2a', '#c8a050', '#f0d488'), long_hair='flowing',
+                          flower_crown=('#2e5424', '#3e6e34', '#5a8e40'), flower=('#c8c4bc', '#f0ece4', '#ffffff'),
+                          flower2=('#a04a6a', '#d87a9a', '#f0a8c0'), pose='stand'),
+    'npc-groom':     dict(skin='skin3', shirt=('#141820', '#222a36', '#36404e'), bib=True, bowtie=('#0a0a0e', '#18181e', '#2e2e3a'),
+                          hair=('#141010', '#241c1a', '#362a26'), pose='stand'),
+    # four of Elderglade's folk, for the lantern procession and Thaelin's listeners (js/events.js)
+    'npc-elf-folk-a': dict(skin='skin', shirt=('#2a4a22', '#3e6a32', '#5a8a44'), tunic=('#2a4a22', '#3e6a32', '#5a8a44'),
+                           hair=('#8a6a2a', '#c8a050', '#f0d488'), long_hair='flowing', elf_ears=True, tall_boots=True,
+                           shoes=('#3a2a20', '#5a4232', '#7a5c44'), belt=('#8a6a20', '#d0a040', '#f0d070'), pose='stand'),
+    'npc-elf-folk-b': dict(skin='skin2', shirt=('#3a4a2a', '#56683e', '#748a56'), skirt=('#3a4a2a', '#56683e', '#748a56'), gown=True,
+                           trim=('#8a6a20', '#d0a040', '#f0d070'), hair=('#5a2a14', '#8a4422', '#b0663a'), braid='side',
+                           braid_tie=('#4a7a72', '#78b0a6', '#a8e0d8'), flower_crown=('#2e5424', '#3e6e34', '#5a8e40'),
+                           flower=('#c8c4bc', '#f0ece4', '#ffffff'), flower2=('#8a6ab8', '#c8a8f0', '#e4d4ff'), elf_ears=True, pose='stand'),
+    'npc-elf-folk-c': dict(skin='skin0', shirt=('#24384e', '#3a5a7a', '#5a7c9c'), skirt=('#24384e', '#3a5a7a', '#5a7c9c'), gown=True,
+                           cowl=('#4a3a6a', '#6a5690', '#9480b8'), hair=('#8a8a98', '#c0c0cc', '#e2e2ec'), long_hair='flowing',
+                           elf_ears=True, shoes=('#3a2a20', '#5a4232', '#7a5c44'), pose='stand'),
+    'npc-elf-folk-d': dict(skin='skin3', shirt=('#6a2a14', '#a04a22', '#c8703a'), tunic=('#4a3020', '#6e4a30', '#8e6a48'),
+                           hair=('#1a1410', '#2e2218', '#44342a'), ponytail=True, elf_ears=True, tall_boots=True,
+                           bracers=('#3a2416', '#5e3a22', '#7e5232'), pose='stand'),
     # Arcadia: a courier in hi-vis neon, a street samurai with a mohawk and a mask
     'npc-courier':   dict(skin='skin2', shirt=('#6a7a10', '#a8c020', '#e0f040'), vest=('#101014', '#1e1e26', '#30303c'),
                           hair=('#1a1410', '#2e2218', '#44342a'), visor_band=True, pose='stand'),
@@ -415,6 +441,45 @@ NPCS = {
                           circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#6a0a3a', '#c0186a', '#ff70b0'),
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), long_hair='flowing', pose='sit'),
 }
+# ---- the crowd: passers-by (js/crowd.js) -----------------------------------------------------------------------
+# A few bodies and outfits, every colour on them a KEY (XKEYS) that js/crowd.js swaps for the planet's wardrobe as a
+# sheet loads (as js/look.js does the pilot's) — so a handful of renders make hundreds of different people. Each
+# renders standing and seated (extra-<name>, extra-<name>-sit) and packs to assets/characters/crowd/<name>[-sit].png:
+#   BVENV/bin/python tools/bridge-art/characters.py /tmp/crowd/man extra-man
+#   python3 tools/bridge-art/sprites_post.py man /tmp/crowd/man apps/bridge/assets/characters/crowd
+# (tools/bridge-art/crowd.sh does them all.) Keep XKEYS in step with XKEYS in js/crowd.js.
+XKEYS = {
+    'skin': ('#704000', '#b06000', '#f08000'),
+    'hair': ('#007060', '#00b090', '#00f0c0'),
+    'top':  ('#700060', '#b00090', '#f000c0'),
+    'bot':  ('#606000', '#909000', '#c0c000'),
+    'out':  ('#305070', '#4878b0', '#60a0f0'),
+    'hat':  ('#407000', '#60b000', '#80f000'),
+}
+FIXED['xskin'] = XKEYS['skin']
+_X = dict(skin='xskin', shirt=XKEYS['top'], pants=XKEYS['bot'], hair=XKEYS['hair'])
+EXTRAS = {
+    'man':       dict(_X),
+    'man-cap':   dict(_X, cap=XKEYS['hat'], beard=True),
+    'vest':      dict(_X, vest=XKEYS['out'], beanie=XKEYS['hat'], mustache=True),
+    'worker':    dict(_X, apron=XKEYS['out'], beanie=XKEYS['hat'], beard=True, brawny=True),
+    'elder':     dict(_X, vest=XKEYS['out'], bald=True, beard=True),
+    'traveller': dict(_X, hood=XKEYS['out'], cloak=XKEYS['out']),
+    'woman':     dict(_X, skirt=XKEYS['bot'], long_hair=True),
+    'woman-bun': dict(_X, skirt=XKEYS['bot'], apron=XKEYS['out'], bun=True),
+    'woman-hat': dict(_X, skirt=XKEYS['bot'], straw_hat=XKEYS['hat'], ponytail=True),
+    'woman-hood': dict(_X, skirt=XKEYS['bot'], hood=XKEYS['out']),
+    'child':     dict(_X, ponytail=True, young=True),
+    'child-cap': dict(_X, cap=XKEYS['hat'], young=True),
+    'skier':     dict(_X, beanie=XKEYS['hat'], goggles=True, vest=XKEYS['out']),
+    'suit':      dict(_X, bib=True, bowtie=XKEYS['out'], mustache=True),
+    'gown':      dict(_X, skirt=XKEYS['bot'], gown=True, sequin=True, sleeve='xskin', long_hair='flowing', stole=XKEYS['out']),
+    'elf':       dict(_X, long_hair=True, elf_ears=True, tunic=XKEYS['out'], tall_boots=True, bracers=True),
+    'elf-braid': dict(_X, skirt=XKEYS['bot'], braid='side', elf_ears=True, shawl=XKEYS['out']),
+}
+for _n, _s in EXTRAS.items():
+    NPCS['extra-' + _n] = dict(_s, pose='stand')
+    NPCS['extra-' + _n + '-sit'] = dict(_s, pose='sit')
 LIGHT_DIR = Vector((-0.5, -0.35, 0.8)).normalized()
 
 
@@ -1308,7 +1373,7 @@ else:
     for key, tone in (('bib', 'bib'), ('gloves', 'glove'), ('sequin', 'sequin')):   # True: the stock colour; a tuple: its own
         if isinstance(spec.get(key), tuple):
             tones[tone] = spec[key]
-    VARIANTS = {WHO.replace('npc-', ''): tones}
+    VARIANTS = {'key': tones} if WHO.startswith('extra-') else {WHO.replace('npc-', ''): tones}   # extras: key colours, swapped in js/crowd.js
     POSE = spec['pose']
 
 # ---- skis and poles (pilot-ski-*): skis on the root so they stay on the snow however the legs bend ----

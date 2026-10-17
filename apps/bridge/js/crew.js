@@ -76,10 +76,11 @@ var BridgeCrew = (function () {
   // Hired hands leave their old spot and stand at a post on the bridge (the
   // world JSON's `crewPosts`: tile, facing, pose). Talking to them aboard
   // still counts for any quest that sends you to them at home (`home`).
-  function decorate(worldId, data) {
+  // `over`: whose crew to stand at their posts (aboard someone else's Wayfarer, theirs — js/party.js)
+  function decorate(worldId, data, over) {
     if (typeof BridgePeople === 'undefined') return;
     var all = BridgePeople.all();
-    Object.keys(hired).forEach(function (id) {
+    Object.keys(over || hired).forEach(function (id) {
       var p = all[id];
       if (!p || !p.crew || !p.sheet) return;
       var home = p.at.filter(function (e) { return e.world !== 'bridge'; })[0];

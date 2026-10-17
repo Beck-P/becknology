@@ -1,6 +1,6 @@
 // A fake supabase-js (createClient) talking to fakesupa.py on :8767 — injected by the tests before the page's scripts.
 (function () {
-  var BASE = 'http://127.0.0.1:8767';
+  var BASE = 'http://127.0.0.1:' + (window.__SUPA_PORT || 8767);   // SUPA_PORT (chrome.js) for a second checkout
   function post(path, body) {
     return fetch(BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (r) { return r.json(); });
   }

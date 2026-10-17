@@ -48,8 +48,8 @@ var BridgeVoyage = (function () {
     I.cx = I.x * CW; I.cy = I.y * CH;
     fetch('/bridge/assets/scenes/' + id + '/scene.json?v=' + Date.now()).then(function (r) { return r.json(); }).then(function (meta) {
       return Promise.all([fetch('/bridge/assets/worlds/' + id + '.json?v=' + Date.now()).then(function (r) { return r.json(); }),
-                          img('/bridge/assets/scenes/' + id + '/full.png?v=' + meta.rev),
-                          img('/bridge/assets/scenes/' + id + '/shore.png?v=' + meta.rev)]).then(function (res) {
+                          img('/bridge/assets/scenes/' + id + '/full.' + (meta.ext || 'png') + '?v=' + meta.rev),
+                          img('/bridge/assets/scenes/' + id + '/shore.' + (meta.ext || 'png') + '?v=' + meta.rev)]).then(function (res) {
         var world = res[0], full = res[1], shore = res[2];
         var w0 = full.width, h0 = full.height;
         var c = document.createElement('canvas'); c.width = w0; c.height = h0;
