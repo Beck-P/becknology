@@ -377,6 +377,12 @@ var BridgeLedger = (function () {
         rows.push({ name: 'The slipway on ' + BridgeHolm.name(), sub: syd.wrights.length + ' shipwright' + (syd.wrights.length === 1 ? '' : 's') + ' · ' + syd.launched + ' launched · ' + syd.line,
                     fig: syd.job ? (syd.job.ready ? '<span class="lg-ok">ready</span>' : Math.floor(syd.job.whole * 100) + '%') : 'empty', world: 'lumar-holm' });
       }
+      // the hall of finds: how much of it is filled (js/trophies.js)
+      if (has('BridgeTrophies') && BridgeHolm.built('hall')) {
+        var tc = BridgeTrophies.count();
+        rows.push({ name: 'The hall of finds on ' + BridgeHolm.name(), sub: tc.n + ' of ' + tc.of + ' places filled - what you find yourself goes on show',
+                    fig: tc.n + '/' + tc.of, world: 'lumar-holm' });
+      }
       // the workshop: who's making what, and when it's done (js/workshop.js)
       if (has('BridgeWorkshop') && BridgeWorkshop.built()) {
         var ws = BridgeWorkshop.summary();

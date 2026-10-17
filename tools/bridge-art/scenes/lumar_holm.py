@@ -54,7 +54,7 @@ SHIP_R = QUAY + 4
 
 HOUSE = (16.8, 24.2, 6.4, 10.6)
 GARDEN = (5, 11, 11, 17)                           # the plot, tiles inclusive (the wall round it is outside)
-LOTS = {'warehouse': (27, 13, 32, 17), 'quarters': (26, 6, 31, 9), 'workshop': (10, 6, 15, 9)}
+LOTS = {'warehouse': (27, 13, 32, 17), 'quarters': (26, 6, 31, 9), 'workshop': (10, 6, 15, 9), 'hall': (33, 10, 37, 13)}
 
 
 # ---- ground ---------------------------------------------------------------------------------------------------------
@@ -237,7 +237,7 @@ with k.variant('resort', 'built'):
 k.solid(BH[0], BH[2], BH[1], BH[3])
 W.bench(k, 4.0, 5.4, 9.4)
 k.solid(4.0, 9.2, 5.4, 9.7)
-for (x, r) in ((8.3, 8.1), (31.6, 10.6), (36.4, 12.2), (7.2, 19.6), (34.6, 8.6)):          # (the first moved off the workshop's lot)
+for (x, r) in ((8.3, 8.1), (31.6, 10.6), (38.4, 14.7), (7.2, 19.6), (34.6, 8.6)):          # (the first moved off the workshop's lot, the third off the hall's)
     W.pine(k, x, r, h=2.3)
     k.solid(x - 0.35, r - 0.35, x + 0.35, r + 0.35)
 F.wildflowers(k, 22.0, 15.0, 26.0, 19.5, 26)
@@ -266,6 +266,16 @@ for stage in ('keel', 'frame', 'planked'):
         Y.hull_on_slip(k, 10.5, 20.6, 24.8, 1.5, 0.55, 1.15, stage, SLIP[2], SLIP[3], SLIP_Z[0], SLIP_Z[1], random.Random(9093))
 LOTS['slipway'] = (5, 19, 6, 19)
 
+# ---- the hall of finds (js/trophies.js): stone and slate on the east lot, tall windows, its name over the door; its
+# own dice (the house's character draws from the scene's, so they're put back after), laid last like the slip
+with k.variant('hall', 'built'):
+    keep = k.rng.getstate()
+    c0, r0, c1, r1 = LOTS['hall']
+    W.house(k, c0 + 0.1, c1 + 0.9, r0 + 0.1, r1 + 0.95, wall_h=2.6, rise=1.4, roof='#3a4250', wall='#b4ac9c', stone=True,
+            door_x=35.5, windows=[(33.9, 0.8), (37.1, 0.8)], lanterns=(34.75, 36.25))
+    V.board_sign(k, 'THE HALL OF FINDS', 'CinzelDecorative-Bold', 35.5, r1 + 0.95, 2.02, size=0.17, board='#24303e', ink='#e8d8a8')
+    k.rng.setstate(keep)
+
 k.area_light(21.0, 14.0, 16.0, '#90a8c8', 2600, 40.0, rot=(math.radians(-35), 0, 0))       # moonlight
 k.point_light(21.0, 13.0, 4.0, '#e0f0e8', 40, radius=1.5)
 
@@ -289,6 +299,7 @@ w = {'name': 'Starling Holm', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'ti
          {'x': 28, 'y': 9, 'type': 'holm', 'act': 'quarters', 'label': 'QUARTERS', 'prompt': 'PRESS E TO LOOK'},
          {'x': 13, 'y': 9, 'type': 'holm', 'act': 'workshop', 'label': 'WORKSHOP', 'prompt': 'PRESS E TO LOOK'},
          {'x': 10, 'y': 19, 'type': 'holm', 'act': 'slipway', 'label': 'SLIPWAY', 'prompt': 'PRESS E TO LOOK'},
+         {'x': 35, 'y': 13, 'type': 'holm', 'act': 'hall', 'label': 'THE HALL', 'prompt': 'PRESS E TO LOOK'},
          {'x': 12, 'y': 14, 'type': 'holm', 'act': 'garden', 'label': 'THE GARDEN', 'prompt': 'PRESS E TO LOOK'},
          {'x': 13, 'y': 12, 'type': 'farm_well', 'label': 'WELL', 'prompt': 'PRESS E TO DRAW WATER'},
          look('BOATHOUSE', 33, 18, 'THE OLD BOATHOUSE, ITS ROOF SAGGING. INSIDE, A ROWING BOAT WITH NO BOTTOM AND A NAME YOU CAN\'T READ.'),

@@ -35,6 +35,9 @@ var BridgeHolm = (function () {
     // the slipway (js/shipyard.js): build your own ships; the timber and iron are worked at the workshop first
     slipway:   { name: 'The slipway', price: 12000, needs: 'workshop', because: 'THE TIMBER AND IRON ARE WORKED THERE FIRST',
                  what: 'THE OLD SLIP BELOW THE GARDEN WALL RELAID: OAK SLEEPERS RUNNING DOWN INTO THE WATER, A CRADLE, SHEER-LEGS AND A SHIPWRIGHT\'S SHED. LAY A KEEL FROM PLANS YOU\'VE BOUGHT AND BUILD A SHIP OF YOUR OWN OVER DAYS - HER NAME, HER PAINT, HER SAILS AND FIGUREHEAD YOURS TO CHOOSE - AND FIT WHAT YOUR WORKSHOP MAKES TO SHIPS LYING HERE, FOR NOTHING.' },
+    // the hall of finds (js/trophies.js): what you've found yourself, on show
+    hall:      { name: 'A hall of finds', price: 7500, needs: 'house', because: 'SOMEONE HAS TO LIVE HERE TO KEEP IT',
+                 what: 'A STONE HALL ON THE EAST LOT: OAK BOARDS ON THE WALL FOR THE SEA\'S LEGENDS, PLINTHS FOR WHAT YOU TAKE OFF THE DEEP\'S MONSTERS AND THE RAREST THINGS YOU DIG UP, GLASS CASES FOR THE SMALL PRECIOUS ONES. EVERYTHING YOU FIND YOURSELF GOES ON SHOW, WITH WHERE AND WHEN.' },
     // the holm as a resort (js/legacy.js): the old boathouse rebuilt as a hotel, run as a venue (js/business.js `holm-resort`)
     resort:    { name: 'The Starling, a seaside hotel', price: 150000, needs: 'dock', because: 'THE GUESTS COME BY SEA',
                  what: 'THE OLD BOATHOUSE DOWN, A HOTEL UP IN ITS PLACE: TWELVE ROOMS ON THE WATER, PARASOLS ON THE LAWN, GUESTS OFF EVERY PACKET FROM THE CAPITAL. IT RUNS LIKE ANY VENUE: PUT A MANAGER IN AND IT EARNS, NIGHT AND DAY.' }
@@ -45,6 +48,7 @@ var BridgeHolm = (function () {
   // from its own chimney — a forge, as far as anyone can tell
   var WORKSHOP_LOT = [10, 6, 15, 9], WORKSHOP_AT = [13, 9], STAND_IN_SMOKE = [15.28, 5.294];
   var SLIPWAY_AT = [10, 19];                // the head of the old slip below the garden wall (scenes/lumar_holm.py)
+  var HALL_LOT = [33, 10, 37, 13], HALL_AT = [35, 13];   // the hall of finds' lot east of the warehouse, its door (ditto)
   if (typeof BridgeScene !== 'undefined' && BridgeScene.standIn) BridgeScene.standIn(WID, 'workshop', 'built', ['quarters', 'built'], -16, 0);
 
   var st = { owned: false, name: 'Starling Holm', built: {}, store: {}, chest: 0, log: [] };
@@ -82,7 +86,7 @@ var BridgeHolm = (function () {
       data.scene.layers = { house: built('house') ? 'cottage' : 'ruin', garden: built('garden') ? 'tilled' : 'wild',
                             dock: built('dock') ? 'built' : null, warehouse: built('warehouse') ? 'built' : null, quarters: built('quarters') ? 'built' : null,
                             workshop: built('workshop') ? 'built' : null, resort: built('resort') ? 'built' : 'old',
-                            slipway: built('slipway') ? 'built' : 'old',
+                            slipway: built('slipway') ? 'built' : 'old', hall: built('hall') ? 'built' : null,
                             hull: built('slipway') && typeof BridgeShipyard !== 'undefined' ? BridgeShipyard.stage() : null };
       var sm = Object.assign({}, data.holm.smoke || {});
       if (!sm.workshop && !rendered) sm.workshop = STAND_IN_SMOKE;
@@ -92,6 +96,9 @@ var BridgeHolm = (function () {
       (data.interactions = data.interactions || []).push({ x: WORKSHOP_AT[0], y: WORKSHOP_AT[1], type: 'holm', act: 'workshop', label: 'WORKSHOP', prompt: 'PRESS E TO LOOK' });
     if (!(data.interactions || []).some(function (it) { return it.type === 'holm' && it.act === 'slipway'; }))
       data.interactions.push({ x: SLIPWAY_AT[0], y: SLIPWAY_AT[1], type: 'holm', act: 'slipway', label: 'SLIPWAY', prompt: 'PRESS E TO LOOK' });
+    if (!(data.interactions || []).some(function (it) { return it.type === 'holm' && it.act === 'hall'; }))
+      data.interactions.push({ x: HALL_AT[0], y: HALL_AT[1], type: 'holm', act: 'hall', label: 'THE HALL', prompt: 'PRESS E TO LOOK' });
+    if (!data.holm.lots.hall) data.holm.lots.hall = HALL_LOT.slice();
     var lots = data.holm.lots;
     Object.keys(lots).forEach(function (k) {
       if (!built(k)) return;
@@ -113,6 +120,7 @@ var BridgeHolm = (function () {
       if (it.act === 'house') it.prompt = built('house') ? 'PRESS E TO GO IN' : 'PRESS E TO LOOK';
       if (it.act === 'workshop') it.prompt = built('workshop') ? 'PRESS E FOR THE WORKSHOP' : 'PRESS E TO LOOK';
       if (it.act === 'slipway') it.prompt = built('slipway') ? 'PRESS E FOR THE SLIPWAY' : 'PRESS E TO LOOK';
+      if (it.act === 'hall') { it.label = built('hall') ? 'THE HALL OF FINDS' : 'THE HALL'; it.prompt = built('hall') ? 'PRESS E TO GO IN' : 'PRESS E TO LOOK'; }
     });
   }
 
@@ -147,7 +155,8 @@ var BridgeHolm = (function () {
                    warehouse: 'FOUR STAKES IN THE GRASS, AND A ROTTED SIGN: "STORE".',
                    quarters: 'STAKES MARKING OUT A PLOT. NOBODY BUILT ON IT.',
                    workshop: 'LEVEL GROUND BY THE WELL, AND A RUSTED ANVIL HALF SUNK IN THE GRASS. SOMEBODY MEANT TO WORK HERE.',
-                   slipway: 'AN OLD SLIP OF ROTTEN SLEEPERS RUNS DOWN INTO THE WATER BELOW THE GARDEN WALL. SHIPS WERE BUILT HERE ONCE.' }[a] || 'NOTHING HERE YET.', it.label);
+                   slipway: 'AN OLD SLIP OF ROTTEN SLEEPERS RUNS DOWN INTO THE WATER BELOW THE GARDEN WALL. SHIPS WERE BUILT HERE ONCE.',
+                   hall: 'LEVEL GROUND ON THE EAST SIDE, STAKED OUT, A VIEW BACK TOWARD THE CAPITAL. A GOOD PLACE TO SHOW THINGS OFF.' }[a] || 'NOTHING HERE YET.', it.label);
     }
     if (a === 'workshop') {                            // the forge and the benches (js/workshop.js)
       if (!built('workshop')) return offer('workshop');
@@ -158,6 +167,11 @@ var BridgeHolm = (function () {
       if (!built('slipway')) return offer('slipway');
       if (typeof BridgeShipyard !== 'undefined') return BridgeShipyard.open();
       return say('THE SLIP IS EMPTY.', 'The slipway');
+    }
+    if (a === 'hall') {                                // what you've found yourself, on show (js/trophies.js)
+      if (!built('hall')) return offer('hall');
+      if (typeof BridgeWorld !== 'undefined' && BridgeWorld.enterWorld) return BridgeWorld.enterWorld('lumar-holm-hall', [8, 9]);
+      return say('THE HALL IS LOCKED.', 'The hall of finds');
     }
     if (a === 'house') {                               // the rebuilt cottage is a home to walk into (scenes/lumar_holm_home.py)
       if (!built('house')) return offer('house');

@@ -424,6 +424,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeVoyage !== 'undefined') BridgeVoyage.decorate(worldId, data);
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.decorate(worldId, data);
         if (typeof BridgeHolm !== 'undefined') BridgeHolm.decorate(worldId, data);
+        if (typeof BridgeTrophies !== 'undefined') BridgeTrophies.decorate(worldId, data);   // the hall of finds
         if (typeof BridgeWorkshop !== 'undefined') BridgeWorkshop.decorate(worldId, data);   // flax seed wherever seed is sold
         if (typeof BridgeChart !== 'undefined') BridgeChart.decorate(worldId, data);
         if (typeof BridgeGear !== 'undefined') BridgeGear.decorate(worldId, data);
