@@ -895,6 +895,47 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#8a8a94', [[10, 1, 1, 7]]); px(ctx, x, y, u, '#d8b070', [[9, 1, 3, 2]]);
     px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[5, 3, 1, 3], [7, 2, 1, 3]]);
   }
+  // Hoarfell's grander side (js/alpine.js): Aurelle's bars, the pâtisserie, the stübli
+  function vinIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1018', [[4, 5, 7, 9], [11, 7, 2, 4]]); px(ctx, x, y, u, '#8a1a2a', [[5, 6, 5, 7]]);
+    px(ctx, x, y, u, '#c84a3a', [[5, 6, 2, 3]]); px(ctx, x, y, u, '#e8a040', [[8, 5, 2, 2]]); px(ctx, x, y, u, '#5a3a10', [[9, 3, 1, 3]]);
+    px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[6, 1, 1, 3], [10, 1, 1, 2]]);
+  }
+  function champagneIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2a10', [[3, 3, 10, 1], [3, 3, 1, 4], [12, 3, 1, 4], [4, 7, 8, 1], [7, 8, 2, 5], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#f0d070', [[4, 4, 8, 3]]); px(ctx, x, y, u, '#fff4c0', [[5, 4, 3, 1]]);
+    px(ctx, x, y, u, '#e8eef4', [[8, 8, 1, 5], [6, 13, 4, 1]]); px(ctx, x, y, u, '#ffffff', [[6, 5, 1, 1], [9, 5, 1, 1], [10, 4, 1, 1]]);
+  }
+  function macaronIcon(ctx, x, y, s) {
+    var u = s / 16;
+    [[2, 8, '#e898b0', '#f8c8d8'], [6, 5, '#a8d878', '#d0f0a8'], [9, 9, '#c8a0e0', '#e8d0f8']].forEach(function (m) {
+      px(ctx, x, y, u, '#3a2028', [[m[0], m[1], 6, 5]]); px(ctx, x, y, u, m[2], [[m[0] + 1, m[1], 4, 2], [m[0] + 1, m[1] + 3, 4, 1]]);
+      px(ctx, x, y, u, m[3], [[m[0] + 1, m[1], 2, 1]]); px(ctx, x, y, u, '#f8f0e8', [[m[0] + 1, m[1] + 2, 4, 1]]);
+    });
+  }
+  function millefeuilleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2410', [[2, 5, 12, 9]]); px(ctx, x, y, u, '#d8a050', [[3, 12, 10, 1], [3, 9, 10, 1]]);
+    px(ctx, x, y, u, '#f8ecd0', [[3, 10, 10, 2], [3, 7, 10, 2]]); px(ctx, x, y, u, '#f8f8f8', [[3, 5, 10, 2]]);
+    px(ctx, x, y, u, '#6a3a20', [[4, 5, 1, 2], [7, 5, 1, 2], [10, 5, 1, 2]]);
+  }
+  function truffleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#d8b060', [[1, 9, 14, 6]]); px(ctx, x, y, u, '#8a1a2a', [[2, 10, 12, 4]]);
+    [[3, 6], [7, 5], [11, 6]].forEach(function (c) { px(ctx, x, y, u, '#1a0e08', [[c[0], c[1], 3, 4]]); px(ctx, x, y, u, '#5a3018', [[c[0], c[1], 2, 2]]); });
+  }
+  function rostiIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a2a30', [[1, 8, 14, 5], [13, 9, 3, 2]]); px(ctx, x, y, u, '#c88a30', [[2, 8, 11, 3]]);
+    px(ctx, x, y, u, '#f0c060', [[3, 8, 4, 1], [8, 9, 3, 1]]); px(ctx, x, y, u, '#f8f0e0', [[6, 6, 3, 2]]); px(ctx, x, y, u, '#f0c030', [[7, 6, 1, 1]]);
+  }
+  function racletteIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#f0f0f0', [[1, 10, 14, 4]]); px(ctx, x, y, u, '#c8a060', [[3, 9, 3, 2], [9, 9, 3, 2]]);
+    px(ctx, x, y, u, '#f8d050', [[3, 7, 10, 3]]); px(ctx, x, y, u, '#fff0a0', [[4, 7, 4, 1]]); px(ctx, x, y, u, '#5a7a2a', [[12, 9, 2, 2]]);
+  }
   function ciderIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#4a2a10', [[4, 5, 7, 10], [11, 7, 2, 5]]); px(ctx, x, y, u, '#c87a20', [[5, 7, 5, 7]]);
@@ -1424,6 +1465,23 @@ var BridgeItems = (function () {
     mulled_cider:  { id: 'mulled_cider', name: 'Mulled Cider', desc: 'Hot apple cider with a cinnamon stick in it, and something else Mette won\'t name. Warm for eight minutes.', type: 'drink',
                      stackable: true, draw: ciderIcon, effects: { energy: 25 }, value: 4,
                      onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(8); return consumableUse.call(this, inv); } },
+    // Hoarfell's grander side (js/alpine.js): Aurelle's bars and pâtisserie, the promenade's stübli
+    vin_chaud:     { id: 'vin_chaud', name: 'Vin Chaud', desc: 'Hot red wine with orange peel and cloves, in a glass with a handle. The après-ski\'s whole personality. Warm for ten minutes.', type: 'drink',
+                     stackable: true, draw: vinIcon, effects: { energy: 25 }, value: 4,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10); return consumableUse.call(this, inv); } },
+    champagne:     { id: 'champagne', name: 'Coupe of Champagne', desc: 'From Bar Étoile, in a coupe they say was modelled on somebody\'s shoulder. Fizz, gold, and a lift to the spirits.', type: 'drink',
+                     stackable: true, draw: champagneIcon, effects: { energy: 40 }, onUse: consumableUse, value: 20 },
+    macarons:      { id: 'macarons', name: 'Macarons', desc: 'A pink box of them from the pâtisserie: rose, pistachio, violet. Almost too pretty to eat. Almost.', type: 'food',
+                     stackable: true, draw: macaronIcon, effects: { hp: 6, energy: 18 }, onUse: consumableUse, value: 9 },
+    mille_feuille: { id: 'mille_feuille', name: 'Mille-Feuille', desc: 'A thousand layers of pastry and cream, iced in feathered stripes. Impossible to eat with dignity.', type: 'food',
+                     stackable: true, draw: millefeuilleIcon, effects: { hp: 10, energy: 16 }, onUse: consumableUse, value: 7 },
+    truffles:      { id: 'truffles', name: 'Chocolate Truffles', desc: 'Six in a gilt box, dusted in cocoa. A gift that says you went to Aurelle and thought of them.', type: 'food',
+                     stackable: true, draw: truffleIcon, effects: { hp: 4, energy: 22 }, onUse: consumableUse, value: 12 },
+    rosti:         { id: 'rosti', name: 'Rösti', desc: 'Grated potato fried crisp in a pan, an egg on top. Built for people who have skied all morning.', type: 'food',
+                     stackable: true, draw: rostiIcon, effects: { hp: 22, energy: 22 }, onUse: consumableUse, value: 6 },
+    raclette:      { id: 'raclette', name: 'Raclette', desc: 'The cut face of a wheel melted under the grill and scraped over potatoes, a gherkin on the side. Warm for ten minutes.', type: 'food',
+                     stackable: true, draw: racletteIcon, effects: { hp: 26, energy: 26 }, value: 8,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10); return consumableUse.call(this, inv); } },
     edelweiss:     { id: 'edelweiss', name: 'Edelweiss', desc: 'A woolly white star from the top of the Staircase. Ysolde says you have to climb for your own.', type: 'material',
                      stackable: true, draw: edelweissIcon, value: 30 },
     hoar_crystal:  { id: 'hoar_crystal', name: 'Hoar Crystal', desc: 'Frost that never melts, grown in the Hoarspire\'s rock. Cold enough to burn.', type: 'material',
