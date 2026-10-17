@@ -16,6 +16,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   const real = (await (await ctx.request.get('http://127.0.0.1:8766/bridge/assets/worlds/lumar-undercroft.json')).status()) === 200;
   if (!real) {
     await p.route(/\/assets\/worlds\/lumar-undercroft(-[abc])?\.json/, async r => {
+      if (r.request().method() === 'HEAD') return r.fulfill({ status: 200, body: '' });      // is the hall there? (the way in asks)
       const m = r.request().url().match(/lumar-undercroft(?:-([abc]))?\.json/), layout = m[1];
       const res = await r.fetch({ url: 'http://127.0.0.1:8766/bridge/assets/worlds/lumar-rose-mine' + (layout ? '-' + layout : '') + '.json' });
       const d = await res.json();
@@ -56,6 +57,14 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
     return { name: w.name, layout: w.dungeon.layout, stair: H.stair && H.stair.join(','), chests: H.chests.map(c => c.x + ',' + c.y).join(' '), traps: H.traps.length,
              creatures: w.interactions.filter(i => i.type === 'hostile').map(i => i.creature).join(','), guardian: !!H.guardian, walledOff: open - reached };
   });
+
+  // the way in from Midnight's graveyard (put there until Midnight's render has its own)
+  await go('lumar-midnight'); await p.waitForTimeout(1200);
+  const portal = await ev(() => { const i = BridgeWorld.getWorld().interactions.find(x => x.target === 'lumar-undercroft'); return i ? i.label + '@' + i.x + ',' + i.y : null; });
+  console.log('the way in on Midnight:', portal);
+  await ev(() => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(x => x.target === 'lumar-undercroft')));
+  await p.waitForFunction(() => BridgeWorld.getWorldId() === 'lumar-undercroft', null, { timeout: 15000 }).catch(() => {});
+  console.log('through it:', await ev(() => BridgeWorld.getWorldId()));
 
   await go('lumar-undercroft'); await p.waitForTimeout(1200);
   console.log('the hall:', await ev(() => BridgeWorld.getWorld().name), '·', JSON.stringify(await ev(() => BridgeWorld.getWorld().interactions.filter(i => /^dungeon_/.test(i.type)).map(i => i.label + ':' + i.type))));
