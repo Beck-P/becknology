@@ -80,6 +80,14 @@ const BASE = 'http://127.0.0.1:8766/';
     console.log('stepped off at', JSON.stringify(await where()));
   }
 
+  // ---- the carriage itself, with or without stations: she runs, the city streams past, she comes in ----
+  await go('arcadia-loop'); await p.waitForTimeout(2500);
+  console.log('aboard (no journey):', JSON.stringify(await p.evaluate(() => BridgeTransit._trip())));
+  await p.evaluate(() => BridgeTransit._skipLeg()); await p.waitForTimeout(7000);
+  const run = await p.evaluate(() => BridgeTransit._trip());
+  console.log('aboard, running:', run.phase, Math.round(run.dist) > 0);
+  await p.screenshot({ path: OUT + '/transit_loop_carriage.png' });
+
   // ---- the Loop's train over the street ----
   await go('arcadia-street'); await p.waitForTimeout(1500);
   if (await p.evaluate(() => !!(BridgeWorld.getWorld().skyline || {}).loop)) {

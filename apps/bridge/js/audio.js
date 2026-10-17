@@ -28,7 +28,7 @@ var BridgeAudio = (function () {
   try { prefs = Object.assign(prefs, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* defaults */ }
   function savePrefs() { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) { /* private mode */ } }
 
-  var ac = null, master, musicBus, ambBus, sfxBus, revIn, dlyIn, noiseBuf = null, meter = null;
+  var ac = null, master, musicBus, ambBus, sfxBus, wetBus, revIn, dlyIn, noiseBuf = null, meter = null;
   var wanted = null;            // { theme, amb } waiting for the context
 
   // ---- the graph -----------------------------------------------------------------------------
@@ -44,16 +44,19 @@ var BridgeAudio = (function () {
     meter = ac.createAnalyser(); meter.fftSize = 2048; comp.connect(meter);
     musicBus = ac.createGain(); ambBus = ac.createGain(); sfxBus = ac.createGain();
     musicBus.connect(master); ambBus.connect(master); sfxBus.connect(master);
+    // the reverb and echo come back through their own bus: every note sends to them directly, not through the music's
+    // bus, so without this turning the music off left its echoes playing (Alyssa: "the mute button doesn't mute")
+    wetBus = ac.createGain(); wetBus.connect(master);
     // a reverb (a decaying burst of noise as the room) and a filtered echo
     var conv = ac.createConvolver();
     conv.buffer = impulse(2.8, 2.4);
     revIn = ac.createGain(); revIn.gain.value = 1;
     var revOut = ac.createGain(); revOut.gain.value = 0.55;
-    revIn.connect(conv); conv.connect(revOut); revOut.connect(master);
+    revIn.connect(conv); conv.connect(revOut); revOut.connect(wetBus);
     dlyIn = ac.createGain();
     var dl = ac.createDelay(2), fb = ac.createGain(), lp = ac.createBiquadFilter();
     dl.delayTime.value = 0.42; fb.gain.value = 0.32; lp.type = 'lowpass'; lp.frequency.value = 2200;
-    dlyIn.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(revIn); lp.connect(master);
+    dlyIn.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(revIn); lp.connect(wetBus);
     noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
     var nd = noiseBuf.getChannelData(0);
     for (var i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
@@ -80,6 +83,8 @@ var BridgeAudio = (function () {
     musicBus.gain.setTargetAtTime(prefs.mode === 'all' ? prefs.music * 0.5 : 0, t, 0.4);
     ambBus.gain.setTargetAtTime(prefs.mode === 'all' ? prefs.amb * 0.5 : 0, t, 0.4);
     sfxBus.gain.setTargetAtTime(prefs.mode === 'off' ? 0 : prefs.sfx * 0.6, t, 0.05);
+    wetBus.gain.setTargetAtTime(prefs.mode === 'all' ? 1 : 0, t, 0.05);          // the room's echo is the music's (effects play dry)
+    master.gain.setTargetAtTime(prefs.mode === 'off' ? 0 : 0.9, t, 0.05);         // off is off: nothing gets out
   }
 
   function unlock() {
@@ -279,7 +284,7 @@ var BridgeAudio = (function () {
     id = id || '';
     var ts = (w && w.tileset) || '';
     var amb;
-    if (/^(bridge|quarters|hangar|gameroom|office)$/.test(id)) return { theme: 'ship', amb: ['engine', 'creak'] };
+    if (/^(bridge|quarters|hangar|gameroom|office|ship-[a-z]+)$/.test(id)) return { theme: 'ship', amb: id === 'ship-galley' ? ['engine', 'creak', 'fire'] : ['engine', 'creak'] };
     if (id === 'arcadia' || id === 'arcadia-lucky-7') return { theme: 'arcade', amb: ['crowd', 'bleeps'] };
     if (id === 'arcadia-club') return { theme: 'club', amb: ['crowd'] };
     if (id === 'arcadia-casino') return { theme: 'casino', amb: ['crowd', 'slots'] };            // the Neon Royale's floor
@@ -735,6 +740,7 @@ var BridgeAudio = (function () {
     pickup:  function (t) { [76, 83, 88].forEach(function (m, i) { voice(sfxBus, t + i * 0.045, 0.05, { type: 'triangle', freq: hz(m), gain: 0.07, a: 0.002, d: 0.08, s: 0.2, r: 0.08 }); }); },
     step:    function (t) { noiseHit(sfxBus, t, 0.05, { freq: 420 + Math.random() * 200, ftype: 'bandpass', q: 1.2, gain: 0.035 }); },
     sit:     function (t) { noiseHit(sfxBus, t, 0.18, { freq: 300, ftype: 'lowpass', gain: 0.12 }); },
+    card:    function (t) { noiseHit(sfxBus, t, 0.04, { freq: 2600, ftype: 'highpass', gain: 0.06 }); noiseHit(sfxBus, t + 0.03, 0.03, { freq: 900, ftype: 'bandpass', q: 2, gain: 0.04 }); },   // a card laid on baize (js/eights.js)
     sleep:   function (t) { [79, 76, 72, 67].forEach(function (m, i) { INST.box(sfxBus, t + i * 0.32, m - 12, 0.3, 1); }); },
     splash:  function (t) { noiseHit(sfxBus, t, 0.5, { freq: 1200, ftype: 'lowpass', gain: 0.18, rev: 0.3 }); },
     plop:    function (t) { voice(sfxBus, t, 0.05, { type: 'sine', freq: 300, glide: 2.4, glideT: 0.08, gain: 0.14, a: 0.002, d: 0.12, s: 0, r: 0.1, rev: 0.3 }); },

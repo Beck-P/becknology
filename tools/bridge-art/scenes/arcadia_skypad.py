@@ -21,6 +21,8 @@ import assets_district as D            # noqa: E402
 import assets_signs as S               # noqa: E402
 import assets_ship as P                # noqa: E402
 import assets_lumar as A               # noqa: E402
+import assets_arcadia_rich as AR       # noqa: E402
+import random                          # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -31,8 +33,18 @@ st = D.Street()
 RX0, RX1, RR0, RR1 = 1.0, 23.0, 2.0, 14.0          # the roof
 
 # ---- the roof deck ------------------------------------------------------------------------------------
-Y.tile_floor(k, RX0, RR0, RX1, RR1, tones=('#34303e', '#2e2a38'), size=1.0, seam='#14101c')
-k.box(RX0 - 0.15, RR0 - 0.15, -6.0, RX1 + 0.15, RR1 + 0.15, -0.04, ('#1e1a2a', 0.08), 'tower_top')
+gr = random.Random(2410)                                    # the roof's own dice
+k.wet = dict(AR.WET, paving=0.3)
+AR.paving(k, RX0, RR0, RX1, RR1, size=1.0, rng=gr, tones=('#36323f', '#302c3a', '#3a3644', '#2e2a38'), seam='#24202d', crack=0.06,
+          sunk=0.03, stain=0.1)
+k.box(RX0 - 0.15, RR0 - 0.15, -6.0, RX1 + 0.15, RR1 + 0.15, -0.1, ('#1e1a2a', 0.08), 'tower_top')
+# painted on the roof: a walkway from the lift to the pad and on to the booth, keep-clear hatching round the machinery
+AR.hazard_stripes(k, 1.45, 10.75, 4.15, 12.25)
+AR.hazard_stripes(k, 20.35, 10.85, 21.65, 12.35)
+AR.hazard_stripes(k, 10.45, 12.05, 13.55, 12.25)
+for x in range(3, 22, 4):                                                       # roof drains
+    k.box(x - 0.15, RR1 - 0.35, 0.0, x + 0.15, RR1 - 0.15, 0.004, '#120e18', 'drain')
+    k.boxes([(x - 0.13 + i * 0.05, RR1 - 0.33, 0.004, x - 0.11 + i * 0.05, RR1 - 0.17, 0.008) for i in range(6)], '#2e2a38', 'drain_grate')
 # the tower's face falling away below the front edge, windows lit
 rects = []
 for i in range(int((RX1 - RX0) / 0.5)):
@@ -41,6 +53,7 @@ for i in range(int((RX1 - RX0) / 0.5)):
             x = RX0 + 0.15 + i * 0.5
             rects.append((x, RR1 + 0.15, -0.6 - j * 0.9, x + 0.25, RR1 + 0.17, -0.25 - j * 0.9))
 k.boxes(rects, shade('#ffd890', 0.5), 'tower_window', emit=('#ffd890', 0.7))
+k.boxes([(RX0 - 0.15, RR1 + 0.15, -0.95 - j * 0.9, RX1 + 0.15, RR1 + 0.22, -0.88 - j * 0.9) for j in range(5)], '#2e2a40', 'tower_band')
 # parapet + rail round the edge, with a neon strip
 for (a, b, c, d) in ((RX0 - 0.15, RR1, RX1 + 0.15, RR1 + 0.15), (RX0 - 0.15, RR0 - 0.15, RX0, RR1), (RX1, RR0 - 0.15, RX1 + 0.15, RR1)):
     k.box(a, b, 0.0, c, d, 0.35, ('#3a3644', 0.06), 'parapet')
@@ -62,6 +75,15 @@ for i in range(32):
 for (dx0, dx1) in ((-0.9, -0.6), (0.6, 0.9)):                  # the H
     k.box(PX + dx0, PR - 1.0, 0.035, PX + dx1, PR + 1.0, 0.04, '#e8e0c0', 'pad_mark')
 k.box(PX - 0.6, PR - 0.15, 0.035, PX + 0.6, PR + 0.15, 0.04, '#e8e0c0', 'pad_mark')
+pts = [(PX + math.cos(i * math.tau / 48) * 2.3, PR + math.sin(i * math.tau / 48) * 2.3) for i in range(49)]
+for a, b in zip(pts, pts[1:]):                                                  # the touchdown ring, dashed
+    if pts.index(a) % 3 != 2:
+        k.bar(a[0], a[1], b[0], b[1], 0.035, 0.04, 0.09, '#d8b030', 'pad_mark')
+for (a, b) in (((PX + 1.75, PR - 3.05), (PX + 2.55, PR - 3.05)), ((PX + 2.55, PR - 3.05), (PX + 2.0, PR - 2.25))):
+    k.bar(a[0], a[1], b[0], b[1], 0.035, 0.04, 0.1, '#e8e0c0', 'pad_mark')            # a big 7 by the ring
+for i in range(8):                                                              # tie-down rings round the pad
+    a = i * math.tau / 8 + 0.2
+    k.cyl(PX + math.cos(a) * 2.7, PR + math.sin(a) * 2.7, 0.03, 0.05, 0.05, '#5a5a66', 'tiedown', verts=8)
 with k.variant('shuttle', 'parked'):
     P.shuttle(k, PX - 1.7, PR - 0.1)
 k.solid(PX - 1.8, PR - 1.1, PX + 2.0, PR + 0.9)
@@ -80,6 +102,13 @@ k.box(BX0 + 0.3, BR1, 0.9, BX1 - 0.3, BR1 + 0.02, 1.8, '#0c2030', 'booth_glass',
 k.box(BX0 - 0.1, BR0 - 0.1, 2.2, BX1 + 0.1, BR1 + 0.3, 2.35, ('#3a3a48', 0.06), 'booth_roof')
 S.lightbox(k, 'SKYPORT 7', 'RussoOne', (BX0 + BX1) / 2, BR1 + 0.3, 2.0, 2.6, 0.38, bg='#f0e8c0', ink='#1a1a3a', glow='#ffe0a0')
 k.blob((BX0 + BX1) / 2 - 0.6, BR1 - 0.1, 1.25, 0.15, 0.05, 0.25, '#14101c', 'marshal_silhouette', segs=8)
+k.boxes([(x - 0.02, BR1, 0.9, x + 0.02, BR1 + 0.04, 1.8) for x in (BX0 + 1.1, BX0 + 2.0, BX0 + 2.9)], '#3a3a48', 'booth_mullion')
+D.ac_unit(k, BX0 + 0.35, BR1, 1.95)
+D.dish(k, BX1 - 0.5, BR0 + 0.6, 2.35)
+AR.pipe(k, BX1 - 0.1, BR1, 0.0, 2.2)
+for (x, col) in ((BX1 - 0.25, '#ff8030'), (BX1 - 0.12, '#ff8030')):            # the marshal's light wands in their rack
+    k.cyl(x, BR1 + 0.1, 0.8, 1.25, 0.02, shade(col, 0.5), 'wand', emit=(col, 0.9), verts=6)
+k.box(BX1 - 0.32, BR1 + 0.02, 0.7, BX1 - 0.05, BR1 + 0.18, 0.8, '#2a2832', 'wand_rack')
 A.crate(k, BX1 + 0.3, BR1 - 0.3, s=0.55, tone='#4a5468')
 A.crate(k, BX1 + 0.9, BR1 - 0.1, s=0.5, tone='#5a4a38')
 k.solid(BX0, BR0, BX1, BR1)
@@ -123,28 +152,73 @@ for x in (14.0, 16.5):
 k.solid(13.5, 2.2, 17.0, 3.0)
 D.cable(k, (8.0, 3.0, 4.2), (13.5, 2.4, 3.0), sag=0.4, lights=(Y.PINK, Y.CYAN, Y.YEL), n=12)
 D.cable(k, (8.0, 3.0, 3.6), (2.2, 2.4, 2.2), sag=0.3, lights=(Y.YEL, Y.PINK), n=10)
-for (x, r, rx, ry, c) in ((6.0, 12.4, 0.8, 0.3, Y.CYAN), (17.5, 12.6, 0.6, 0.25, Y.PINK), (14.6, 11.5, 0.5, 0.2, Y.PURP)):
-    Y.puddle(k, x, r, rx, ry, tint=c)
+AR.puddles(k, ((6.0, 12.4, 0.8, 0.3, Y.CYAN), (18.5, 12.9, 0.6, 0.25, Y.PINK), (14.6, 11.5, 0.5, 0.2, Y.PURP)))
 k.box(10.6, 12.2, 0.0, 13.4, 13.6, 0.05, '#1a1a24', 'fuel_mat')
 k.cyl(11.0, 12.8, 0.0, 0.9, 0.28, ('#c8a020', 0.08), 'fuel_tank', verts=12)
 k.tube((11.2, 12.6, 0.6), (11.9, 10.4, 0.05), 0.04, '#1a1a1a', 'fuel_hose', verts=6)
 k.solid(10.6, 12.4, 11.6, 13.4)
 
+AR.planter(k, 8.2, 4.4, glow=Y.YEL)                                     # a little garden by the penthouse's door
+AR.planter(k, 13.8, 4.4, leaf='#3a6048', glow=Y.PINK)
+AR.windsock(k, 22.2, 2.8)
+for (x, r0, r1) in ((1.35, 5.2, 10.2), (22.65, 4.8, 6.3)):                      # ducts along the parapets on stands (the east one short: the way to the Terraces)
+    k.box(x - 0.25, r0, 0.35, x + 0.25, r1, 0.75, ('#6a6a76', 0.08), 'duct', bevel=0.02)
+    k.boxes([(x - 0.27, r, 0.33, x + 0.27, r + 0.06, 0.77) for r in [r0 + 0.2 + i * 0.8 for i in range(int((r1 - r0) / 0.8) + 1)] if r < r1],
+            '#4a4a56', 'duct_band')
+    for r in [r0 + 0.5 + i * 1.6 for i in range(int((r1 - r0) / 1.6) + 1)]:
+        if r < r1:
+            k.box(x - 0.2, r - 0.04, 0.0, x + 0.2, r + 0.04, 0.35, '#3a3a44', 'duct_stand')
+    k.solid(x - 0.3, r0, x + 0.3, r1)
+CX0, CX1, CR0, CR1 = 2.0, 3.7, 7.7, 9.5                                          # a cargo container, waiting for a lifter
+k.box(CX0, CR0, 0.0, CX1, CR1, 1.6, ('#2a5a8a', 0.1), 'container')
+k.boxes([(x, CR1, 0.1, x + 0.05, CR1 + 0.03, 1.52) for x in [CX0 + 0.12 + i * 0.16 for i in range(10)]], '#3a6a9a', 'corrugation')
+k.box(CX0 - 0.02, CR0, 1.56, CX1 + 0.02, CR1 + 0.03, 1.62, '#1e4064', 'container_rail')
+k.box(CX0 + 0.3, CR1 + 0.03, 0.9, CX1 - 0.3, CR1 + 0.04, 1.25, '#e8e0d0', 'container_label')
+k.box(CX0 + 0.4, CR1 + 0.04, 1.0, CX1 - 0.4, CR1 + 0.045, 1.15, '#1a1a1a', 'container_label_text')
+k.solid(CX0, CR0, CX1, CR1)
+for (x, r) in ((6.8, 11.0), (17.2, 11.0)):
+    AR.floodlight(k, x, r, aim=-1)
+B_X = 7.5                                                                       # cargo waiting for a skiff
+A.crate(k, B_X, 12.6, s=0.6, tone='#4a5468')
+A.crate(k, B_X + 0.7, 12.7, s=0.55, tone='#5a4a38')
+A.crate(k, B_X + 0.3, 12.65, s=0.45, tone='#3a4a5a')
+AR.gas_bottles(k, 13.95, 12.75, n=2, col='#d8b030')
+AR.puddles(k, ((4.6, 10.0, 0.6, 0.22, Y.CYAN), (20.2, 8.6, 0.5, 0.2, Y.PINK), (9.6, 12.95, 0.4, 0.16, Y.YEL)))
+AR.pigeons(k, 5.0, 9.5, n=3, rng=gr)
+AR.pigeons(k, 19.0, 9.8, n=2, rng=gr)
+AR.chairs_and_crate(k, 4.2, 6.3, rng=gr)                                       # where the marshal takes a break
+Y.metal_bench(k, 2.4, 4.2, 13.35, neon=Y.PINK)                                  # a bench at the edge, facing the drop
+AR.planter(k, 21.3, 13.05, leaf='#2a5a48', glow=Y.CYAN)
+# a baggage tug and its trailer, parked by the pad
+TX, TR = 5.6, 8.4
+k.box(TX - 0.45, TR - 0.3, 0.12, TX + 0.45, TR + 0.3, 0.55, ('#d8a020', 0.06), 'tug_body', bevel=0.05)
+k.box(TX - 0.2, TR - 0.26, 0.55, TX + 0.35, TR + 0.26, 0.95, '#141c2c', 'tug_cab', emit=('#2a4060', 0.3), bevel=0.04)
+k.box(TX - 0.22, TR - 0.28, 0.95, TX + 0.37, TR + 0.28, 1.0, ('#d8a020', 0.06), 'tug_roof')
+k.sphere(TX - 0.08, TR, 1.04, 0.05, 0.04, '#ff8030', 'tug_beacon', emit=('#ff8030', 1.0), segs=6)
+for (dx, dr) in ((-0.3, -0.3), (0.3, -0.3), (-0.3, 0.3), (0.3, 0.3)):
+    k.cyl_y(TX + dx, TR + dr - 0.04, TR + dr + 0.04, 0.12, 0.12, 0.12, '#141418', 'tug_wheel', verts=10)
+k.box(TX - 1.55, TR - 0.3, 0.2, TX - 0.6, TR + 0.3, 0.28, '#4a4a56', 'trailer')
+for (dx, h, col) in ((-1.4, 0.3, '#3a5a8a'), (-1.08, 0.4, '#8a3a3a'), (-0.78, 0.26, '#4a6a3a')):
+    k.box(TX + dx - 0.13, TR - 0.22, 0.28, TX + dx + 0.13, TR + 0.2, 0.28 + h, (col, 0.1), 'luggage', bevel=0.02)
+k.tube((TX - 0.6, TR, 0.24), (TX - 0.45, TR, 0.24), 0.02, '#2a2a30', 'trailer_bar', verts=4)
+k.solid(TX - 1.6, TR - 0.32, TX + 0.47, TR + 0.32)
+AR.coffee_cup(k, 7.4, 4.75)
+AR.flyers(k, RX0 + 0.3, RR0 + 2.5, RX1 - 0.3, RR1 - 0.4, 16, rng=gr)
 k.area_light(12.0, 2.0, 10.0, '#7058b8', 700, 30.0, rot=(math.radians(-35), 0, 0))
 for (x, r, c) in ((12.0, 8.0, '#80c0ff'), (4.0, 6.0, '#ffd890'), (19.5, 6.0, '#80e0e8')):
     k.point_light(x, r, 3.0, c, 25, radius=1.0)
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=128,
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=int(os.environ.get('ARC_SAMPLES', 128)),
          world_light=('#241a40', 0.5))
 
 w = {'name': 'Skyport 7', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',
      'spawns': {'player': [12, 11]}, 'shipExit': False, 'tiles': [], 'collisions': [], 'tileNames': {},
      'interactions': [
          {'x': 12, 'y': 9, 'type': 'shuttle', 'label': 'SHUTTLE', 'prompt': 'PRESS E TO BOARD'},
-         {'x': 19, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-skywalk', 'spawn': [28, 5], 'label': 'LIFT',
-          'prompt': 'PRESS E TO RIDE DOWN'},
-         {'x': 20, 'y': 4, 'type': 'enter_world', 'target': 'arcadia-skywalk', 'spawn': [28, 5], 'label': 'LIFT',
-          'prompt': 'PRESS E TO RIDE DOWN'},
+         {'x': 19, 'y': 4, 'type': 'express_lift', 'label': 'LIFT', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skyport',
+          'lobby': 'skypad'},   # js/transit.js
+         {'x': 20, 'y': 4, 'type': 'express_lift', 'label': 'LIFT', 'prompt': 'PRESS E TO CALL THE LIFT', 'shaft': 'skyport',
+          'lobby': 'skypad'},
          {'x': 4, 'y': 4, 'type': 'dialog', 'label': 'MARSHAL', 'prompt': 'PRESS E TO TALK',
           'dialog': 'SKYPORT 7, PAD ONE.\n\nYOUR SKIFF IS LOGGED. NOBODY TOUCHES IT ON MY ROOF.\n\nLIFT\'S ON THE FAR SIDE - TAKES YOU DOWN TO THE SKYWALK.'},
          {'x': 11, 'y': 13, 'type': 'dialog', 'label': 'FUEL LINE', 'prompt': 'PRESS E TO LOOK',

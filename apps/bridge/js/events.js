@@ -304,6 +304,30 @@ var BridgeEvents = (function () {
   // a talk that gives something once per happening
   function once(L, what, fn) { if (got(L, what)) return false; mark(L, what); fn(); return true; }
 
+  // the catch auction on a quay: the auctioneer by a chalkboard, boxes of the catch, a crowd; a lot a minute. Due once a day
+  // as the fleet comes in (js/harbourlife.js `auctionAt`), in the slot that holds it (or the next, if it falls too late)
+  function catchAuction(world, o) {
+    var E = {
+      world: world, name: 'The catch auctioned', len: 6, w: 3, at: o.at, haul: o.haul,
+      hint: 'The boats are in — the catch is up for auction', sfx: 'gavel',
+      props: [{ art: 'board', x: o.board[0], y: o.board[1], solid: [o.board] }].concat(o.boxes.map(function (b) { return { art: 'fishbox', x: b[0], y: b[1], foot: b[2] }; })),
+      cast: [{ sheet: o.who, x: o.at[0], y: o.at[1], f: 'down' }],
+      gather: { x: o.gather.x, y: o.gather.y, r: o.gather.r, n: o.gather.n, face: o.at },
+      talk: [{ x: o.talk[0], y: o.talk[1], label: 'THE CATCH AUCTION', prompt: 'PRESS E TO BID', on: function (L) { auctionBid(L); } }],
+      tick: function (L) { auctionTick(L); },
+      when: function () { return false; },                         // (not drawn at random: due)
+      note: o.note
+    };
+    E.due = function (slot) {
+      var HL = typeof BridgeHarbourLife !== 'undefined' ? BridgeHarbourLife : null;
+      if (!HL) return null;
+      var t = HL.auctionAt(world, slot * SLOT + SLOT / 2), s = Math.floor(t / SLOT);
+      if (t - s * SLOT > SLOT - E.len - MIN) { s++; t = s * SLOT + MIN; }
+      return s === slot ? t : null;
+    };
+    return E;
+  }
+
   var EV = {
     // ---- Lumar ----
     trader: {
@@ -361,16 +385,20 @@ var BridgeEvents = (function () {
       tick: function (L) { brawlEnd(L); },
       note: 'A fight spilled out of Diggen\'s Tavern'
     },
-    auction: {
-      world: 'lumar-tern', name: 'The catch auctioned', len: 6, w: 3, at: [30, 16],
-      hint: 'The boats are in — the catch is up for auction', sfx: 'gavel',
-      props: [{ art: 'board', x: 31, y: 16, solid: [[31, 16]] }, { art: 'fishbox', x: 29, y: 17 }, { art: 'fishbox', x: 30, y: 17, foot: 0.6 }],
-      cast: [{ sheet: 'npc-fishmonger', x: 30, y: 16, f: 'down' }],
-      gather: { x: 30.5, y: 18.6, r: 2.4, n: 7, face: [30, 16] },
-      talk: [{ x: 31, y: 17, label: 'THE CATCH AUCTION', prompt: 'PRESS E TO BID', on: function (L) { auctionBid(L); } }],
-      tick: function (L) { auctionTick(L); },
-      note: 'The catch went under the hammer on Tern Holm'
-    },
+    // the day's catch auctioned on each fishing harbour's quay as the boats come in at dusk (js/harbourlife.js: the fleet's
+    // day) - never at random, always that once a day (`due`)
+    auction: catchAuction('lumar-tern', { at: [30, 16], board: [31, 16], boxes: [[29, 17], [30, 17, 0.6]], talk: [31, 17], who: 'npc-fishmonger',
+      gather: { x: 30.5, y: 18.6, r: 2.4, n: 7 }, haul: 'OLD PELL\'S BOYS ARE STILL HAULING BOXES UP THE SHINGLE.', note: 'The catch went under the hammer on Tern Holm' }),
+    auction_crown: catchAuction('lumar-crown', { at: [15, 31], board: [14, 31], boxes: [[16, 32], [17, 32, 0.6]], talk: [15, 32], who: 'npc-fishmonger',
+      gather: { x: 15.5, y: 32.4, r: 2.4, n: 8 }, haul: 'THE TRAWLERS ARE IN UNDER THE FISHING JETTY AND THE BOXES ARE COMING UP THE STEPS.', note: 'The catch went under the hammer on Crownhaven quay' }),
+    auction_diggen: catchAuction('lumar', { at: [7, 11], board: [6, 11], boxes: [[8, 11, 0.6]], talk: [7, 12], who: 'npc-fishwife',
+      gather: { x: 7.5, y: 13, r: 2, n: 5 }, haul: 'THE BOATS ARE DRAWN UP AND THE BOXES ARE STACKED ON THE SAND.', note: 'The catch went under the hammer on Diggen\'s Point' }),
+    auction_sapphire: catchAuction('lumar-sapphire', { at: [37, 22], board: [36, 22], boxes: [[38, 22], [36, 23, 0.6]], talk: [37, 23], who: 'npc-fishmonger',
+      gather: { x: 37.5, y: 23.6, r: 2.2, n: 7 }, haul: 'THE BOATS ARE IN AT THE FISHING PIER AND THE GLASSWORKS\' COOKS ARE ALREADY ELBOWING FOR THE FRONT.', note: 'The catch went under the hammer in Sapphire Port' }),
+    auction_rose: catchAuction('lumar-rose', { at: [24, 16], board: [23, 16], boxes: [[25, 17], [23, 17, 0.6]], talk: [24, 17], who: 'npc-fishwife',
+      gather: { x: 24.5, y: 17.8, r: 2.2, n: 6 }, haul: 'THE BOATS ARE IN UNDER THE CRYSTAL TERRACES, THE CATCH STILL GLITTERING WITH SPORE.', note: 'The catch went under the hammer in Rose Cove' }),
+    auction_crimson: catchAuction('lumar-crimson', { at: [33, 32], board: [32, 32], boxes: [[34, 33], [32, 33, 0.6]], talk: [33, 33], who: 'npc-sailor',
+      gather: { x: 33.5, y: 33.8, r: 2.2, n: 6 }, haul: 'WHATEVER CAME UP IN THE NETS - AND OFF A FEW OTHER PEOPLE\'S BOATS - SOLD OFF A BARREL HEAD. NO QUESTIONS.', note: 'The catch went under the hammer at Crimson Reach' }),
 
     // ---- Arcadia ----
     celebrity: {
@@ -638,6 +666,10 @@ var BridgeEvents = (function () {
   /** What happens in a stream's slot: { E, start, end, key } or null. */
   function plan(stream, slot) {
     var list = STREAMS[stream], chance = CHANCE[stream] != null ? CHANCE[stream] : 0.7;
+    for (var d = 0; list && d < list.length; d++) {                // something due in this slot (the catch auction as the boats come in)
+      var due = list[d].due && list[d].due(slot);
+      if (due != null) return { E: list[d], start: due, end: due + list[d].len, key: list[d].id + '@' + slot };
+    }
     if (!list || H(stream + '|' + slot) >= chance) return null;
     var mid = slot * SLOT + SLOT / 2;
     var cands = list.filter(function (E) { return usable(E, mid); });
@@ -1056,11 +1088,11 @@ var BridgeEvents = (function () {
     if (lot.k === L.lotK) return;
     L.lotK = lot.k;
     if (L.t > 2500) sfx('gavel');
-    bubbleAt(L, [30, 16], 'LOT ' + (lot.k + 1) + ' — ' + itemName(lot.fish).toUpperCase() + ', FROM ' + lot.price + '!', 4200, false);
+    bubbleAt(L, L.E.at, 'LOT ' + (lot.k + 1) + ' — ' + itemName(lot.fish).toUpperCase() + ', FROM ' + lot.price + '!', 4200, false);
   }
   function auctionBid(L) {
     var lot = lotOf(L), done = mem.got[L.key + ':lot' + lot.k];
-    var text = 'OLD PELL\'S BOYS ARE STILL HAULING BOXES UP THE SHINGLE. ON THE BLOCK NOW: ' + itemName(lot.fish).toUpperCase() + ', BIDDING FROM ' + lot.price + ' COINS.';
+    var text = (L.E.haul || '') + ' ON THE BLOCK NOW: ' + itemName(lot.fish).toUpperCase() + ', BIDDING FROM ' + lot.price + ' COINS.';
     if (done) { say('THE CATCH AUCTION', text + '\n\n' + (done === 1 ? 'YOU WON THIS ONE.' : 'YOU\'VE HAD YOUR BID ON THIS ONE.') + ' WAIT FOR THE NEXT LOT.'); return; }
     choose({ title: 'The catch auction', text: text, rows: [{ label: 'Bid ' + lot.price, icon: lot.fish, note: 'lot ' + (lot.k + 1), pick: function () {
       if (H(L.key + ':you:' + lot.k + ':' + (typeof BridgeState !== 'undefined' && BridgeState.getPilot && (BridgeState.getPilot() || {}).id)) > lot.odds) {

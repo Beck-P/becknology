@@ -18,7 +18,7 @@ W = {os.path.basename(f)[:-5]: json.load(open(f)) for f in glob.glob(os.path.joi
 
 # where the shuttle sets down in each system (js/ship.js LANDING) - the root of its tree; the ship's is the bridge
 SYSTEMS = [
-    ('ship', 'The Wayfarer', 'bridge', r'^(bridge|quarters|hangar|gameroom|office)$'),
+    ('ship', 'The Wayfarer', 'bridge', r'^(bridge|quarters|hangar|gameroom|office|ship-[a-z]+)$'),
     ('lumar', 'Lumar', 'lumar', r'^lumar'),
     ('arcadia', 'Arcadia', 'arcadia-skypad', r'^(arcadia|cyber-noodle|chrome-clinic|junk-pawn|tech-repair|null-den)'),
     ('enigma', 'Enigma Station', 'enigma-dock', r'^enigma'),
