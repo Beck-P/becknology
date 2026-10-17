@@ -4,6 +4,19 @@ Everything asked for, so nothing slips. Newest batch first. Status: **done** (li
 now — a branch or a render queue), **open** (not started), **discuss** (needs a decision with Beck). When something is
 only partly done, the rest stays here as open.
 
+## October 17 (denser, more alive worlds — Beck's picks from the brainstorm, still being shaped)
+| Ask | Status | Where / notes |
+|---|---|---|
+| Crowds of background people, "lots of people" | discuss | Varied extras recoloured from each planet's wardrobe (as js/look.js does the pilot), going door to door, by the clock and weather, groups, the same for every pilot (seeded like the sloop traffic). Not in lonely places (Midnight, the Last Ridge, the Singularity, Enigma until woken); never blocking doors or paths; capped on phones. Pairs with the other session's daily routines. |
+| Small events on the hour | discuss | A few minutes each, shared by the clock: a trader in at the quay, NULL hijacking the screens, a hen loose in Brambleford, avalanche blasting… |
+| Enigma: restore the station, a zero-g spine | discuss | Beck likes the spine; question: what each player sees together. Proposal: your station once you start restoring (like the farm), partners in one copy, sections restored together count for both. Poses already ride with position, so drifting shows. |
+| Arcadia: up, down and out — layers ritzier going up, poorer going down; trains, a sky-level loop; the Undercity; implants | discuss | Beck wants the structure fleshed out (Coruscant, but darker and neon). Proposal in chat: Sump → Undercity → District → Mid-Levels → Spires; a sky-train loop, express lifts, a funicular, air cabs; implants tiered by level. Heist: not now. |
+| Lumar: harbours that work | discuss | Fleet out at dawn and back at dusk, a fish auction, ships unloading, a crane. More Lumar ideas offered (tides and a causeway, a wandering turtle isle, a cliff town, ferry work). Under the spore sea and the dragon egg: not now. |
+| Sylvara: a city in the canopy, rivers and lakes, the Deepwood, brewing with Mirelle, bows | discuss | "A really pretty nature planet" with a really cool city. How bows would work offered in chat. |
+| Verdance: more town, the countryside, horse and buggy; a cosy café, local makers — "not a one-to-one Stardew replica" | discuss | More ideas offered: market day at your own stall, a village that grows with you, crops by the two moons, a vineyard. |
+| Hoarfell: Fellhaven busier, bigger and bougier; a big trip out (sled, hut-to-hut touring or a mountain railway); the hidden valley | discuss | Guiding jobs: not now. |
+| The Wayfarer grows with your crew | discuss | Beck: think about playing together first. Proposal: a ship each, partners can come aboard, ride along on a jump, see each other's ship in orbit. |
+
 ## October 17 (ideas Beck picked — "not super pressing… good options to start working on")
 | Ask | Status | Where / notes |
 |---|---|---|
