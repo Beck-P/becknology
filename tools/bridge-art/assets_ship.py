@@ -691,6 +691,7 @@ GOLD = '#c8a040'
 GOLD_D = '#8a6a28'
 RUNE = '#40e0d0'
 AETHER = '#8a7aff'
+COPPER = '#b8683a'
 INDIGO = '#22304a'
 INDIGO_D = '#161f33'
 
@@ -831,15 +832,27 @@ def shuttle(k, x0, rc, length=3.4, ramp=True, landed=True, hull=IVORY, trim=GOLD
     return (x0 - 0.6, rc - 1.6, x0 + L + 0.4, rc + 1.6)
 
 
-def mothership(k, x0, rc=0.0, L=18.0):
+def mothership(k, x0, rc=0.0, L=18.0, mods=()):
     """The Wayfarer, the pilot's home ship — a sky-galleon: an indigo hull
     with gold wales and rows of warm portholes, a rune band along the keel,
     a tiered stern castle with the bridge windows, three gold masts carrying
     glowing light-sails and a jib to the prow spire, a glowing keel fin, the
-    hangar bay open on the flank and ring thrusters astern. Nose to the right."""
+    hangar bay open on the flank and ring thrusters astern. Nose to the right.
+
+    mods: the rooms fitted aft of the bridge (js/wayfarer.js), in her order — each makes her a section longer, inserted
+    amidships just abaft the mainmast (MOD_AT of her length), with its own look (module_section)."""
+    M = MOD_LEN * len(mods)
+
+    def X(t):                      # where t of her original length lies now, the new sections let in at MOD_AT
+        return x0 + t * L + (M if t > MOD_AT else 0.0)
     prof = [(0.0, 1.5, 0.85, 1.25, 2.45), (0.08, 1.85, 0.95, 1.55, 2.5), (0.4, 1.95, 1.0, 1.75, 2.55),
             (0.7, 1.75, 0.9, 1.55, 2.55), (0.86, 1.15, 0.7, 1.15, 2.6), (0.95, 0.55, 0.42, 0.65, 2.68), (1.0, 0.1, 0.1, 0.12, 2.78)]
-    k.loft([_ring(x0 + t * L, rc, hw, ht, hb, zc, n=20, p=0.7) for (t, hw, ht, hb, zc) in prof], (INDIGO, 0.08), 'wf_hull', closed=True)
+    rings = [_ring(X(t), rc, hw, ht, hb, zc, n=20, p=0.7) for (t, hw, ht, hb, zc) in prof if t <= MOD_AT]
+    if M:                          # the parallel midbody where the new sections are let in
+        hw, ht, hb, zc = _along(prof, MOD_AT)
+        rings += [_ring(x0 + MOD_AT * L, rc, hw, ht, hb, zc, n=20, p=0.7), _ring(x0 + MOD_AT * L + M, rc, hw, ht, hb, zc, n=20, p=0.7)]
+    rings += [_ring(X(t), rc, hw, ht, hb, zc, n=20, p=0.7) for (t, hw, ht, hb, zc) in prof if t > MOD_AT]
+    k.loft(rings, (INDIGO, 0.08), 'wf_hull', closed=True)
     k.cyl_x(x0 - 0.06, x0 + 0.02, rc, 2.45, 1.5, 1.05, (INDIGO_D, 0.06), 'wf_stern', verts=20)
     # gold wales, ivory deck, portholes, the rune band
     for (zf, rad) in ((0.55, 0.035), (-0.15, 0.045), (-0.75, 0.03)):
@@ -849,13 +862,13 @@ def mothership(k, x0, rc=0.0, L=18.0):
             hw, ht, hb, zc = _along(prof, t)
             hh = ht if zf >= 0 else hb
             sv = abs(zf) ** 0.7
-            pts.append((x0 + t * L, rc + hw * (1 - sv * 0.12), zc + zf * hh))
+            pts.append((X(t), rc + hw * (1 - sv * 0.12), zc + zf * hh))
         _trace(k, pts, rad, GOLD, 'wf_wale')
     deck = []
     for i in range(13):
         t = 0.03 + i * 0.85 / 12
         hw, ht, hb, zc = _along(prof, t)
-        deck.append([(x0 + t * L, rc - hw * 0.7, zc + ht * 0.98), (x0 + t * L, rc + hw * 0.7, zc + ht * 0.98)])
+        deck.append([(X(t), rc - hw * 0.7, zc + ht * 0.98), (X(t), rc + hw * 0.7, zc + ht * 0.98)])
     k.loft(deck, (IVORY, 0.06), 'wf_deck')
     t = 0.3
     while t < 0.82:
@@ -863,24 +876,24 @@ def mothership(k, x0, rc=0.0, L=18.0):
         for zf in (0.2, -0.45):
             hh = ht if zf >= 0 else hb
             lit = k.rng.random() < 0.85
-            k.cyl_y(x0 + t * L, rc + hw * 0.95, rc + hw + 0.04, zc + zf * hh, 0.1, 0.1, '#3a2a14' if lit else '#10141c',
+            k.cyl_y(X(t), rc + hw * 0.95, rc + hw + 0.04, zc + zf * hh, 0.1, 0.1, '#3a2a14' if lit else '#10141c',
                     'wf_porthole', emit=('#ffcf80', 0.9) if lit else None, verts=10)
-            k.cyl_y(x0 + t * L, rc + hw * 0.94, rc + hw + 0.03, zc + zf * hh, 0.13, 0.13, GOLD_D, 'wf_porthole_rim', verts=10)
+            k.cyl_y(X(t), rc + hw * 0.94, rc + hw + 0.03, zc + zf * hh, 0.13, 0.13, GOLD_D, 'wf_porthole_rim', verts=10)
         t += 0.028
     t = 0.08
     while t < 0.85:
         hw, ht, hb, zc = _along(prof, t)
-        x, z = x0 + t * L, zc - hb * 0.62
+        x, z = X(t), zc - hb * 0.62
         k.box(x - 0.08, rc + hw * 0.86, z - 0.05, x + 0.08, rc + hw * 0.88, z + 0.05, '#0a2a2a', 'wf_rune', emit=(RUNE, 0.85))
         t += 0.03
     # the glowing keel fin
     hw, ht, hb, zc = _along(prof, 0.5)
     kz = zc - hb * 0.95
-    k.loft([[(x0 + 0.25 * L, rc - 0.06, kz), (x0 + 0.72 * L, rc - 0.06, kz), (x0 + 0.72 * L, rc + 0.06, kz), (x0 + 0.25 * L, rc + 0.06, kz)],
-            [(x0 + 0.34 * L, rc - 0.04, kz - 0.9), (x0 + 0.56 * L, rc - 0.04, kz - 0.9), (x0 + 0.56 * L, rc + 0.04, kz - 0.9),
-             (x0 + 0.34 * L, rc + 0.04, kz - 0.9)]], (INDIGO_D, 0.06), 'wf_keel', closed=True, smooth=False)
-    _trace(k, [(x0 + 0.27 * L, rc + 0.07, kz - 0.05), (x0 + 0.35 * L, rc + 0.05, kz - 0.88), (x0 + 0.55 * L, rc + 0.05, kz - 0.88),
-               (x0 + 0.7 * L, rc + 0.07, kz - 0.05)], 0.03, '#0a2a2a', 'wf_keel_glow', emit=(RUNE, 0.9))
+    k.loft([[(X(0.25), rc - 0.06, kz), (X(0.72), rc - 0.06, kz), (X(0.72), rc + 0.06, kz), (X(0.25), rc + 0.06, kz)],
+            [(X(0.34), rc - 0.04, kz - 0.9), (X(0.56), rc - 0.04, kz - 0.9), (X(0.56), rc + 0.04, kz - 0.9),
+             (X(0.34), rc + 0.04, kz - 0.9)]], (INDIGO_D, 0.06), 'wf_keel', closed=True, smooth=False)
+    _trace(k, [(X(0.27), rc + 0.07, kz - 0.05), (X(0.35), rc + 0.05, kz - 0.88), (X(0.55), rc + 0.05, kz - 0.88),
+               (X(0.7), rc + 0.07, kz - 0.05)], 0.03, '#0a2a2a', 'wf_keel_glow', emit=(RUNE, 0.9))
     # stern castle: two tiers, the bridge windows on top, gold balconies
     hw, ht, hb, zc = _along(prof, 0.12)
     top = zc + ht
@@ -888,19 +901,19 @@ def mothership(k, x0, rc=0.0, L=18.0):
         k.box(x0 + ta * L, rc - w_, z0_, x0 + tb * L, rc + w_, z1_, (INDIGO, 0.08), 'wf_castle', bevel=0.04)
         k.box(x0 + ta * L - 0.06, rc - w_ - 0.06, z1_, x0 + tb * L + 0.06, rc + w_ + 0.06, z1_ + 0.08, GOLD, 'wf_castle_trim')
     for i in range(6):
-        wx = x0 + 0.03 * L + i * 0.35
+        wx = X(0.03) + i * 0.35
         k.box(wx, rc + 1.3, top + 0.25, wx + 0.26, rc + 1.34, top + 0.7, '#3a2a14', 'wf_cabin_window', emit=('#ffcf80', 0.9))
-    k.box(x0 + 0.04 * L, rc + 1.0, top + 1.05, x0 + 0.155 * L, rc + 1.04, top + 1.5, '#0e2a30', 'wf_bridge_window', emit=('#60e0f0', 0.9))
+    k.box(X(0.04), rc + 1.0, top + 1.05, X(0.155), rc + 1.04, top + 1.5, '#0e2a30', 'wf_bridge_window', emit=('#60e0f0', 0.9))
     for i in range(9):
-        bx = x0 + 0.01 * L + i * 0.5
+        bx = X(0.01) + i * 0.5
         k.tube((bx, rc + 1.36, top + 0.9), (bx, rc + 1.36, top + 1.12), 0.015, GOLD, 'wf_rail', verts=4)
-    k.tube((x0 + 0.01 * L, rc + 1.36, top + 1.12), (x0 + 0.24 * L, rc + 1.36, top + 1.12), 0.02, GOLD, 'wf_rail', verts=4)
+    k.tube((X(0.01), rc + 1.36, top + 1.12), (X(0.24), rc + 1.36, top + 1.12), 0.02, GOLD, 'wf_rail', verts=4)
     k.sphere(x0 - 0.2, rc + 0.8, top + 1.0, 0.12, 0.12, '#ffd080', 'wf_stern_lantern', emit=('#ffb050', 1.0), segs=10)
     # masts with light-sails, and a jib out to the prow spire
     tops = []
     for (t, h, span) in ((0.36, 4.6, 1.5), (0.56, 5.2, 1.65), (0.75, 4.2, 1.3)):
         hw, ht, hb, zc = _along(prof, t)
-        mx, mz = x0 + t * L, zc + ht
+        mx, mz = X(t), zc + ht
         k.cyl(mx, rc, mz - 0.2, mz + h, 0.07, (GOLD, 0.08), 'wf_mast', verts=10)
         k.sphere(mx, rc, mz + h + 0.08, 0.1, 0.1, '#0a2a2a', 'wf_mast_orb', emit=(RUNE, 1.0), segs=10)
         tops.append((mx, rc, mz + h))
@@ -922,10 +935,10 @@ def mothership(k, x0, rc=0.0, L=18.0):
             _trace(k, [rows[j][4] for j in range(4)], 0.016, GOLD, 'wf_sail_edge')
     # prow spire with gold wings, and the jib of light
     hw, ht, hb, zc = _along(prof, 1.0)
-    tip = (x0 + L + 2.4, rc, zc + 0.7)
-    k.tube((x0 + L - 0.3, rc, zc), tip, 0.14, GOLD, 'wf_spire', rb=0.01, verts=10)
+    tip = (x0 + L + M + 2.4, rc, zc + 0.7)
+    k.tube((x0 + L + M - 0.3, rc, zc), tip, 0.14, GOLD, 'wf_spire', rb=0.01, verts=10)
     for sd in (1, -1):
-        k.poly([(x0 + L + 0.2, rc + sd * 0.05, zc + 0.2), (x0 + L - 0.9, rc + sd * 0.7, zc + 1.0), (x0 + L - 0.2, rc + sd * 0.1, zc + 0.05)],
+        k.poly([(x0 + L + M + 0.2, rc + sd * 0.05, zc + 0.2), (x0 + L + M - 0.9, rc + sd * 0.7, zc + 1.0), (x0 + L + M - 0.2, rc + sd * 0.1, zc + 0.05)],
                GOLD, 'wf_prow_wing')
     fm = tops[-1]
     k.poly([(fm[0] + 0.1, rc + 0.05, fm[2] - 0.2), (tip[0] - 0.3, rc + 0.05, tip[2] + 0.1), (fm[0] + 0.4, rc + 0.05, zc + ht + 0.4)],
@@ -935,7 +948,7 @@ def mothership(k, x0, rc=0.0, L=18.0):
         _trace(k, [a, (b[0], b[1], b[2] * 0.6)], 0.012, GOLD_D, 'wf_stay')
     # the hangar bay, open and lit, in a gold frame
     hw, ht, hb, zc = _along(prof, 0.47)
-    bx0, bx1 = x0 + 0.4 * L, x0 + 0.54 * L
+    bx0, bx1 = X(0.4), X(0.54)
     bf = rc + hw * 0.94
     bz0, bz1 = zc - hb * 0.62, zc - hb * 0.05
     k.box(bx0 - 0.12, bf - 0.05, bz0 - 0.1, bx1 + 0.12, bf + 0.08, bz1 + 0.1, GOLD, 'wf_bay_frame')
@@ -952,12 +965,78 @@ def mothership(k, x0, rc=0.0, L=18.0):
             k.cyl_x(xx - 0.06, xx + 0.06, rc, z, rr * 1.04, rr * 1.04, '#0a2a2a', 'wf_thruster_ring', emit=(RUNE, 0.9), verts=20)
         k.cyl_x(x0 - 1.45, x0 - 1.4, rc, z, rr * 0.7, rr * 0.7, '#1a1440', 'wf_thruster_core', emit=(AETHER, 1.0), verts=18)
     for sd in (1, -1):
-        k.loft([[(x0 + 0.02 * L, rc + sd * 1.4, 1.3), (x0 + 0.2 * L, rc + sd * 1.4, 1.3), (x0 + 0.2 * L, rc + sd * 1.4, 1.45),
-                 (x0 + 0.02 * L, rc + sd * 1.4, 1.45)],
-                [(x0 - 0.06 * L, rc + sd * 2.8, 0.5), (x0 + 0.06 * L, rc + sd * 2.8, 0.5), (x0 + 0.06 * L, rc + sd * 2.8, 0.6),
+        k.loft([[(X(0.02), rc + sd * 1.4, 1.3), (X(0.2), rc + sd * 1.4, 1.3), (X(0.2), rc + sd * 1.4, 1.45),
+                 (X(0.02), rc + sd * 1.4, 1.45)],
+                [(x0 - 0.06 * L, rc + sd * 2.8, 0.5), (X(0.06), rc + sd * 2.8, 0.5), (X(0.06), rc + sd * 2.8, 0.6),
                  (x0 - 0.06 * L, rc + sd * 2.8, 0.6)]], (INDIGO, 0.08), 'wf_fin', closed=True, smooth=False)
-    k.sphere(x0 + L + 2.4, rc, zc + 0.7, 0.08, 0.08, '#e8e8f0', 'wf_strobe', emit=('#ffffff', 1.0), segs=8)
-    return {'bay': ((bx0 + bx1) / 2, bf + 0.1, (bz0 + bz1) / 2)}
+    k.sphere(x0 + L + M + 2.4, rc, zc + 0.7, 0.08, 0.08, '#e8e8f0', 'wf_strobe', emit=('#ffffff', 1.0), segs=8)
+    # the fitted rooms, a section each
+    hw, ht, hb, zc = _along(prof, MOD_AT)
+    for i, mod in enumerate(mods):
+        module_section(k, x0 + MOD_AT * L + i * MOD_LEN, rc, hw, ht, hb, zc, mod)
+    return {'bay': ((bx0 + bx1) / 2, bf + 0.1, (bz0 + bz1) / 2), 'length': L + M}
+
+
+MOD_AT = 0.6          # where the fitted rooms are let into her length (just abaft the mainmast)
+MOD_LEN = 2.6         # a room's section, in tiles of the sprite
+
+
+def module_section(k, xs, rc, hw, ht, hb, zc, mod):
+    """One fitted room's section of the Wayfarer's hull, seen from her near side: gold seams where she was let out, and
+    the room's own look — the galley's big warm mess windows and its brass stove funnel on deck; the observatory's glass
+    dome with a telescope looking out of its slot, cool blue ports; the greenhouse's glasshouse along the deck glowing
+    green, green-lit ports."""
+    xe, near, deck = xs + MOD_LEN, rc + hw, zc + ht * 0.98
+    for x in (xs, xe):                                        # the seams, a gold strap round her each side
+        k.box(x - 0.05, near * 0.92 + rc * 0.08, zc - hb * 0.75, x + 0.05, near + 0.07, deck - 0.02, GOLD, 'wf_seam')
+        k.box(x - 0.08, near * 0.9 + rc * 0.1, deck - 0.06, x + 0.08, near + 0.08, deck + 0.04, GOLD_D, 'wf_seam')
+    xm = (xs + xe) / 2
+    if mod == 'galley':
+        for j in range(3):                                    # the mess's windows: square, warm, gold-framed
+            wx = xs + 0.35 + j * 0.68
+            k.box(wx - 0.04, near - 0.02, zc + 0.02, wx + 0.38, near + 0.06, zc + ht * 0.62, GOLD_D, 'wf_mess_frame')
+            k.box(wx, near + 0.02, zc + 0.06, wx + 0.34, near + 0.07, zc + ht * 0.58, '#3a2a14', 'wf_mess_window', emit=('#ffc070', 0.95))
+            k.box(wx + 0.155, near + 0.07, zc + 0.06, wx + 0.185, near + 0.08, zc + ht * 0.58, GOLD_D, 'wf_mess_bar')
+        for j in range(4):                                    # a row of small ports below
+            k.cyl_y(xs + 0.4 + j * 0.6, near * 0.97 + rc * 0.03, near + 0.04, zc - hb * 0.4, 0.08, 0.08, '#3a2a14', 'wf_porthole', emit=('#ffcf80', 0.9), verts=10)
+        fx = xs + 1.75                                        # the stove's funnel and its cap, a skylight
+        k.cyl(fx, rc + 0.3, deck - 0.05, deck + 1.05, 0.17, (COPPER, 0.06), 'wf_funnel', verts=14)
+        k.cyl(fx, rc + 0.3, deck + 0.95, deck + 1.0, 0.21, GOLD, 'wf_funnel_band', verts=14)
+        k.cone(fx, rc + 0.3, deck + 1.05, deck + 1.28, 0.3, 0.05, GOLD_D, 'wf_funnel_cap', verts=14)
+        k.box(xs + 0.4, rc - 0.4, deck - 0.02, xs + 1.2, rc + 0.6, deck + 0.24, (INDIGO_D, 0.06), 'wf_skylight')
+        k.box(xs + 0.45, rc + 0.6, deck + 0.04, xs + 1.15, rc + 0.62, deck + 0.2, '#3a2a14', 'wf_skylight_glass', emit=('#ffc070', 0.8))
+    elif mod == 'observatory':
+        for j in range(4):
+            k.cyl_y(xs + 0.4 + j * 0.6, near * 0.97 + rc * 0.03, near + 0.04, zc + ht * 0.2, 0.1, 0.1, '#14203a', 'wf_porthole', emit=('#a8c4ff', 0.8), verts=10)
+            k.cyl_y(xs + 0.4 + j * 0.6, near * 0.96 + rc * 0.04, near + 0.03, zc + ht * 0.2, 0.13, 0.13, GOLD_D, 'wf_porthole_rim', verts=10)
+        k.cyl(xm, rc, deck - 0.05, deck + 0.22, 1.05, (INDIGO_D, 0.06), 'wf_dome_drum', verts=24)        # the drum
+        k.cyl(xm, rc, deck + 0.18, deck + 0.24, 1.08, GOLD, 'wf_dome_ring', verts=24)
+        k.sphere(xm, rc, deck + 0.22, 1.0, 0.95, '#101c34', 'wf_dome', emit=('#7a9cff', 0.4), segs=24)
+        for a in range(-3, 4):                                # its ribs, meridians seen from the side
+            ang = a * math.pi / 8
+            pts = [(xm + math.sin(ang) * math.cos(e) * 1.02, rc + math.cos(ang) * math.cos(e) * 1.02, deck + 0.22 + math.sin(e) * 0.97)
+                   for e in [j * math.pi / 2 / 6 for j in range(7)]]
+            _trace(k, pts, 0.025, GOLD, 'wf_dome_rib')
+        k.tube((xm + 0.1, rc + 0.3, deck + 0.75), (xm + 1.15, rc + 0.3, deck + 1.55), 0.12, GOLD, 'wf_telescope', rb=0.09, verts=12)
+        k.cyl(xm + 1.15, rc + 0.3, deck + 1.5, deck + 1.6, 0.13, '#1a2a4a', 'wf_telescope_lens', emit=('#c8e0ff', 0.6), verts=12)
+    elif mod == 'greenhouse':
+        for j in range(4):
+            k.cyl_y(xs + 0.4 + j * 0.6, near * 0.97 + rc * 0.03, near + 0.04, zc + ht * 0.2, 0.1, 0.1, '#10241a', 'wf_porthole', emit=('#b0f080', 0.85), verts=10)
+            k.cyl_y(xs + 0.4 + j * 0.6, near * 0.96 + rc * 0.04, near + 0.03, zc + ht * 0.2, 0.13, 0.13, GOLD_D, 'wf_porthole_rim', verts=10)
+        gx0, gx1, gw, gh = xs + 0.2, xe - 0.2, 0.95, 0.75     # the glasshouse: low walls, a pitched glass roof
+        k.box(gx0, rc - gw, deck - 0.02, gx1, rc + gw, deck + 0.15, (INDIGO_D, 0.06), 'wf_glass_sill')
+        k.box(gx0, rc - gw + 0.05, deck + 0.15, gx1, rc + gw - 0.05, deck + gh, '#10241a', 'wf_glass', emit=('#a8f070', 0.42))
+        k.loft([[(gx0, rc - gw + 0.05, deck + gh), (gx1, rc - gw + 0.05, deck + gh)], [(gx0, rc, deck + gh + 0.55), (gx1, rc, deck + gh + 0.55)],
+                [(gx0, rc + gw - 0.05, deck + gh), (gx1, rc + gw - 0.05, deck + gh)]], '#10241a', 'wf_glass_roof', emit=('#c8f890', 0.36), smooth=False)
+        k.tube((gx0, rc, deck + gh + 0.56), (gx1, rc, deck + gh + 0.56), 0.03, GOLD, 'wf_glass_ridge', verts=6)
+        x = gx0
+        while x <= gx1 + 1e-6:                                # glazing bars, up the wall and over the roof
+            _trace(k, [(x, rc + gw - 0.03, deck + 0.15), (x, rc + gw - 0.03, deck + gh), (x, rc, deck + gh + 0.56)], 0.02, GOLD_D, 'wf_glass_bar')
+            x += (gx1 - gx0) / 6
+        for j in range(5):                                    # leaves pressed to the glass
+            k.blob(gx0 + 0.25 + j * 0.42, rc + gw - 0.02, deck + 0.3 + (j % 2) * 0.15, 0.16, 0.04, 0.14,
+                   ('#3a8a3a' if j % 2 else '#5aa840', 0.1), 'wf_leaves', segs=8)
+        k.sphere(xm + 0.4, rc + gw - 0.03, deck + 0.42, 0.05, 0.05, '#f0d040', 'wf_lemon', segs=6)
 
 
 # ---- the captain's office (scenes/office.py) ---------------------------------------------------------------------

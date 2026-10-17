@@ -28,6 +28,7 @@ import assets_cyber as Y               # noqa: E402
 import assets_district as D            # noqa: E402
 import assets_signs as S               # noqa: E402
 import assets_casino as CAS            # noqa: E402
+import assets_arcadia_rich as AR       # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -44,11 +45,25 @@ def front(x0, x1, **kw):
     return D.frontage(k, st, x0, x1, kw.pop('r', RF), **kw)
 
 
-# ---- the lane ---------------------------------------------------------------------------------------
-Y.tile_floor(k, -0.5, RF, COLS + 0.5, 14.0, tones=('#2e2a40', '#2a263a'), size=1.0, seam='#100c1a')
-k.box(-0.5, 12.0, 0.0, COLS + 0.5, 12.06, 0.004, '#24203a', 'gutter')
-for x in range(0, COLS, 6):                                    # drains along the gutter
-    k.boxes([(x + 2.7 + i * 0.1, 11.96, 0.004, x + 2.74 + i * 0.1, 12.1, 0.006) for i in range(6)], '#16121e', 'drain')
+# ---- the lane: paving along the shops, a kerb, the hover lane sunk between, a kerb, paving to the railing ---------------
+# (the Royale's forecourt from x 44 is its own marble, the lane stopping at a raised crossing before it)
+PAV1, KRB1, KRB2, PAV2, RX1 = 9.55, 9.7, 11.85, 12.0, 44.2
+gr = random.Random(2270)                                       # the ground's own dice: the frontages keep theirs
+k.wet = AR.WET
+AR.paving(k, -0.5, RF, RX1, PAV1, rng=gr)
+AR.kerb(k, -0.5, RX1, PAV1, KRB1, line='#c8a838', drains=[x + 2.7 for x in range(0, 44, 6)])
+AR.road(k, -0.5, KRB1, RX1, KRB2, rng=gr)
+AR.kerb(k, -0.5, RX1, KRB2, PAV2, drains=[x + 5.2 for x in range(0, 40, 7)])
+AR.paving(k, -0.5, PAV2, RX1, 14.0, rng=gr)
+for (x0, x1) in ((5.2, 6.8), (24.3, 25.9), (38.2, 39.8)):        # crossings, tactile paving at both kerbs
+    AR.crosswalk(k, x0, x1, KRB1, KRB2)
+    AR.tactile(k, x0 + 0.1, x1 - 0.1, PAV1 - 0.32, PAV1 - 0.04)
+    AR.tactile(k, x0 + 0.1, x1 - 0.1, PAV2 + 0.04, PAV2 + 0.32)
+k.box(RX1 - 0.1, KRB1, -0.06, RX1 + 0.2, KRB2, 0.07, ('#57536a', 0.06), 'kerb')       # the lane's end: a ramp up
+AR.paving(k, RX1 + 0.2, RF, COLS + 0.5, 14.0, size=1.0, tones=('#26222e', '#2a2632', '#221e2a', '#2c2834'), seam='#0c0a10',
+          rng=random.Random(1956), crack=0.0, sunk=0.0, stain=0.0, part='marble')      # the Royale's polished forecourt
+k.boxes([(x - 0.02, RF, 0.0, x + 0.02, 14.0, 0.004) for x in (45.2, 47.2, 54.8, 56.8, 58.8)] +
+        [(RX1 + 0.2, rr - 0.02, 0.0, COLS + 0.5, rr + 0.02, 0.004) for rr in (10.0, 12.0)], (CAS.GOLD_D, 0.05), 'marble_inlay')
 for x in range(0, COLS, 3):                                    # kerb lights by the railing
     k.box(x + 1.4, 13.82, 0.0, x + 1.6, 13.9, 0.01, '#0c2a30', 'kerb_light', emit=(Y.CYAN, 0.8))
 
@@ -181,36 +196,81 @@ for (xa, xb, za, zb, lights) in ((3.6, 7.0, 3.3, 3.2, (Y.YEL, Y.PINK, Y.CYAN)), 
 for (xa, xb, za) in ((3.0, 13.5, 3.4), (16.5, 25.0, 2.45), (26.0, 36.5, 2.45), (38.6, 43.5, 2.45)):    # across to the lamps
     D.cable(k, (xa, RF + 0.08, za), (xb, 12.7, 2.45), sag=0.3, lights=(Y.YEL, Y.PINK, Y.CYAN, Y.PURP), n=14)
 
-# ---- on the lane: the shopfront row stays clear; furniture lines the kerb -------------------------
+# ---- on the lane: the shopfront row stays clear; furniture lines the kerb; the walkers' row (13) stays clear ----------
 for (x, r, col) in ((3.0, 12.7, Y.CYAN), (13.5, 12.7, Y.PURP), (25.0, 12.7, Y.PINK), (36.5, 12.7, Y.CYAN)):
     Y.street_lamp(k, x, r, col=col)
 Y.metal_bench(k, 4.4, 5.8, 12.55)
-Y.street_planter(k, 7.6, 12.55, glow=Y.CYAN)
+AR.planter(k, 7.6, 12.55, glow=Y.CYAN)
 Y.trash_can(k, 9.6, 12.6)
 Y.vending_machine(k, 11.45, 8.55)
 Y.vending_machine(k, 34.45, 8.55, body='#183040')
-Y.holo_kiosk(k, 14.5, 10.6)
+AR.island(k, 13.75, 10.05, 15.25, 11.45, rng=gr)                 # the holo-billboard on a refuge in the lane
+Y.holo_kiosk(k, 14.5, 10.7)
 D.food_cart(k, 18.0, 12.4)
-Y.street_planter(k, 21.5, 12.55, leaf='#3a2a50', glow=Y.PINK)
+AR.planter(k, 21.5, 12.55, leaf='#3a5a40', glow=Y.PINK)
 Y.metal_bench(k, 27.2, 28.6, 12.55)
 D.food_cart(k, 31.5, 12.4, col='#40c8d8')
-Y.street_planter(k, 39.5, 12.55, glow=Y.YEL)
+AR.planter(k, 39.5, 12.55, glow=Y.YEL)
 Y.street_lamp(k, 46.5, 12.7, col=Y.YEL)
 Y.street_lamp(k, 55.5, 12.7, col=Y.YEL)
 D.drone_parked(k, 41.8, 12.6)
 k.solid(41, 12, 43, 13)
 D.trash_pile(k, 32.95, 8.3)
 D.dumpster(k, 43.2, 8.5)
-D.steam_grate(k, st, 6.5, 10.6)
-D.steam_grate(k, st, 22.5, 10.4)
-D.steam_grate(k, st, 35.5, 10.8)
-Y.manhole(k, 16.5, 10.3)
-Y.manhole(k, 40.0, 10.4)
-for (x, r, rx, ry, c) in ((4.8, 11.0, 0.7, 0.35, Y.CYAN), (10.8, 10.2, 0.5, 0.25, Y.PINK), (19.2, 10.0, 0.8, 0.3, Y.PURP),
-                          (24.6, 11.0, 0.6, 0.3, Y.YEL), (29.6, 10.6, 0.7, 0.28, '#ff5050'), (33.6, 10.4, 0.5, 0.25, Y.CYAN),
-                          (41.6, 11.2, 0.8, 0.3, Y.MAG), (1.4, 11.4, 0.4, 0.2, Y.YEL), (15.4, 13.2, 0.5, 0.2, Y.PINK),
-                          (47.6, 11.0, 0.7, 0.3, '#ffd060'), (56.2, 10.4, 0.6, 0.25, Y.PINK)):
-    Y.puddle(k, x, r, rx, ry, tint=c)
+AR.cat(k, 43.45, 8.45, z=0.92)
+LZ = -0.06                                                     # the lane's surface
+AR.grate(k, st, 8.2, 10.6, z=LZ)
+AR.grate(k, st, 22.5, 10.4, z=LZ)
+AR.grate(k, st, 33.4, 11.0, z=LZ)
+AR.manhole(k, 16.6, 10.5, z=LZ)
+AR.manhole(k, 41.2, 10.5, z=LZ)
+AR.cones(k, ((21.9, 10.05), (23.15, 10.15), (22.6, 11.05)))   # round the steaming grate
+AR.puddles(k, ((4.8, 11.15, 0.7, 0.3, Y.CYAN), (19.2, 10.2, 0.8, 0.3, Y.PURP), (24.6, 11.2, 0.6, 0.28, Y.YEL),
+               (29.6, 10.6, 0.7, 0.28, '#ff5050'), (41.6, 11.25, 0.8, 0.28, Y.MAG), (1.4, 11.3, 0.4, 0.2, Y.YEL),
+               (12.1, 10.9, 0.45, 0.2, Y.PINK)), z=LZ)
+for (x, r, rx, ry, c) in ((15.4, 13.2, 0.5, 0.2, Y.PINK),
+                          (2.2, 9.0, 0.4, 0.16, Y.CYAN), (27.8, 13.5, 0.45, 0.16, Y.PURP)):
+    AR.puddle(k, x, r, rx, ry, tint=c)
+for (x, r, rx, ry, c) in ((10.6, 10.95, 0.35, 0.16, Y.PINK), (36.8, 11.3, 0.4, 0.18, Y.CYAN)):
+    AR.puddle(k, x, r, rx, ry, tint=c, z=LZ)
+# waiting in the lane: a hover taxi by the hotels, a van unloading at the noodle bar
+AR.hover_taxi(k, 36.0, 10.75, z=LZ)
+AR.hover_van(k, 10.0, 10.72, z=LZ)
+# on the far pavement, against the walls (clear of the doors, nothing that blocks)
+AR.bicycle(k, 0.55, RF + 0.3)
+AR.newsbox(k, 2.65, RF)
+AR.fruit_crates(k, 5.15, RF, n=3, rng=gr)
+AR.newsbox(k, 6.85, RF, col='#8a2a3a')
+AR.a_board(k, 9.6, RF + 0.35)
+AR.delivery_bot(k, 15.4, RF + 0.35)
+AR.cones(k, ((17.75, RF + 0.3),))
+AR.meter_box(k, 20.85, RF, 0.35)
+AR.a_board(k, 28.0, RF + 0.3, col='#3a1418', glow='#ffb070')
+AR.bicycle(k, 35.25, RF + 0.3, col='#2a8ad0')
+AR.bicycle(k, 38.25, RF + 0.3, col='#e0c040')
+AR.umbrella_dropped(k, 30.2, 9.2, col='#e84a80')
+AR.pigeons(k, 10.8, 13.4, n=4, rng=gr)
+AR.pigeons(k, 33.0, 9.05, n=3, rng=gr)
+AR.flyers(k, -0.3, RF + 0.2, RX1, PAV1 - 0.1, 30, rng=gr)
+AR.flyers(k, -0.3, PAV2 + 0.1, RX1, 13.8, 22, rng=gr)
+AR.flyers(k, -0.3, KRB1 + 0.1, RX1, KRB2 - 0.1, 14, rng=gr, z=LZ)
+
+# ---- up the faces: pipes, more AC units, small signs, plants on the sills, meters ------------------------------------
+for (x, z1) in ((3.25, 3.9), (7.15, 4.5), (11.05, 5.0), (18.25, 3.6), (23.65, 4.0), (29.65, 6.0), (38.85, 2.4), (21.15, 5.0)):
+    AR.pipe(k, x, RF, 0.0, z1)
+for (x, z) in ((0.6, 2.6), (2.4, 3.75), (4.0, 4.85), (6.6, 2.6), (8.0, 3.75), (10.4, 2.55), (17.6, 2.55), (19.0, 3.7),
+               (20.6, 4.85), (24.2, 3.7), (26.0, 2.55), (30.0, 3.7), (32.2, 4.85), (33.4, 2.55), (37.9, 4.85)):
+    D.ac_unit(k, x, RF, z)
+D.side_signs(k, 3.05, RF + 0.05, 2.5, gr)
+D.side_signs(k, 18.4, RF + 0.05, 2.45, gr, cols=(Y.CYAN, Y.GREEN))
+D.side_signs(k, 26.25, RF + 0.05, 2.5, gr, cols=(Y.YEL, Y.PINK))
+D.side_signs(k, 29.8, RF + 0.05, 3.1, gr, cols=(Y.CYAN, Y.PURP))
+AR.sill_plants(k, (0.9, 2.3), RF, 2.6 - 0.03, rng=gr)
+AR.sill_plants(k, (8.6, 10.1), RF, 2.75, rng=gr)
+AR.sill_plants(k, (24.9, 25.8), RF, 2.75, rng=gr)
+AR.wall_sign(k, 6.55, RF + 0.04, 0.45, 0.42, 0.3, Y.PINK, rng=gr)
+AR.wall_sign(k, 16.0, RF + 0.04, 2.05, 0.38, 0.28, Y.YEL, rng=gr)
+AR.meter_box(k, 34.0, RF, 1.4)
 Y.street_railing(k, -0.5, 49.6, 14.0)                        # a gap at the Royale's carpet: the limo dock
 Y.street_railing(k, 52.4, COLS + 0.5, 14.0)
 for x in (49.45, 52.4):
@@ -227,7 +287,7 @@ for (x, c) in ((5.0, '#a060ff'), (13.0, '#ff60c0'), (21.0, '#60c0ff'), (29.0, '#
     k.point_light(x, 10.5, 3.0, c, 40, radius=1.0)
 k.area_light(COLS / 2, 6.0, 12.0, '#7058b8', 1100 * COLS / 44, COLS + 2.0, rot=(math.radians(-35), 0, 0))     # sky glow on the roofs
 
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.8}}, light_samples=128,
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.8}}, light_samples=int(os.environ.get('ARC_SAMPLES', 128)),
          world_light=('#241a40', 0.5))
 
 # ---- the world -----------------------------------------------------------------------------------------

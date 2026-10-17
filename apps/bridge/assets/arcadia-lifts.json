@@ -35,6 +35,7 @@
     { "id": "spaceport", "name": "Spaceport", "world": "arcadia-spaceport", "spawn": [41, 10] }
   ] },
   "cabs": { "pads": [
+    { "id": "skyport", "name": "Skyport 7", "world": "arcadia-skypad", "spawn": [19, 11], "level": "midlevels" },
     { "id": "spaceport", "name": "The spaceport", "world": "arcadia-spaceport", "spawn": [57, 18], "level": "district" }
   ] }
 }
