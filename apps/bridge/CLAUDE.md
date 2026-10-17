@@ -699,6 +699,58 @@ Beck: "instead of Runouts being like a game or a casino game, it's an actual int
 ### The Rose Mine (mining)
 Rose Cove's OLD MINE leads into **the hall** (`lumar-rose-mine`, `scenes/lumar_rose_mine.py`): the lift under its headframe, rails, a cart of roseite on a siding, the pickaxe rack (take an Old Pickaxe), the foreman's slate (your deepest floor), and Hob Dunmore (`npc-miner`), the last miner — he buys ore and stone and forges better picks (Iron: 5 iron ore + 150 coins; Star: 3 star iron + 400). Iron rock gives copper ore a third of the time, silver rock a quarter, for the workshop; the workshop's prospector's pick gets a piece more now and then, and finds the depth's best hidden in plain rock (the floors stay the same for everyone on them). **Floors** are three cave layouts (`lumar-rose-mine-a/b/c`, `scenes/lumar_rose_mine_floor.py <a|b|c>`, rendered without rocks) reused for all twenty floors. `js/mine.js` (BridgeMine) scatters rocks over a floor's open ground as it loads (seeded by floor and day; a rock is only placed if every open cell stays reachable), one of them over the ladder down. Rocks by depth: stone and iron at the top, roseite (to 8) and silver (from 4), sapphire (6-16), moonstone geodes (from 10), star iron (from 13), songstone (from 17); floor 20 holds **the great songstone** (its heart is the `singing-deep` quest's last clue). Swinging costs energy (`BridgeInventory.useEnergy`); a pick's power is its bite (old 1, iron 2, star 3). The lift stops at every fifth floor you've reached (`bridge_mine`). Rock sprites are a sheet rendered like a scene with no floor (`tools/bridge-art/mine_sprites.py` → `assets/scenes/mine-rocks`, KINDS order = `SPRITES` in mine.js), drawn depth-tested through the cave tileset's scene hooks (only in worlds with a `mine` block); the light takes on the depth band's colour (rose, sapphire, violet). Quest clue worlds may end in `*` to match any floor.
 
+### The Mid-Levels: the Terraces (Arcadia)
+Workstream D's Mid-Levels east (`_claude_docs/spec-arcadia-above.md`), L200: glass and cyan, two hundred floors over
+the District. Beck: "each part definitely unique and alive… spacing where you can go side to side and see different
+places, and up, down… really cool views". Kit: the cyber, District, penthouse, casino and estate kits; the toy finish,
+Arcadia's night (`full` / `dim`).
+- **The Terraces** (`arcadia-terraces`, `scenes/arcadia_terraces.py`, 88 × 42, a backdrop world with the skyline and
+  rain): a deck of smoked glass the width of a block on the shoulder of **Cascade Tower**, whose foot rises behind it in a
+  curtain wall of lit floors (CASCADE up its face, L200 in neon, two facade ads). West, **the skybridge** to Skyport 7
+  (a glass tube, `SKYBRIDGE · SKYPORT 7` at (0, 19–20) → `arcadia-skypad` [27, 8]; you come in at [2, 19]) and, across
+  the gap, the next tower's flats lit close enough to see into. Along the tower's foot: **Moonglow**'s door (15, 12)
+  under a blue script and a canopy, **TSURU** noodles (vendor (21, 13)), the **Atrium**'s great glass front (three storeys
+  of galleries glimpsed behind open glass; doors (31, 12)), the **express lobby** — the Spire Express (43, 11) and the
+  Core Express (48, 11), brass doors under their indicators, Augustin the lift attendant — and **Glass & Steam** the café
+  (vendor (54, 13)). East, the Loop's **TERRACES station** (`loop_station` (73, 9); platform rows 8–11): a platform under
+  an open lattice canopy, roundels, a departure board, the track on its viaduct coming out of a portal in the tower's
+  flank (x 56) and running into the next tower's (x 86) — the world JSON's `loop.track` (`[58, 86.4, 6.2, −0.28]`) is
+  where js/transit.js stops the train. Down the deck: a promenade, glass floor panels with the city under them, four
+  real trees in round steel planters (a sky garden), the Halo (a steel ring sculpture lit from inside), signposts to
+  everywhere, a newsstand, a scooter dock, benches, lamps, bollards. Out over the drop, cantilevered terraces with glass
+  balustrades (drawn as glass over the drop live, `terraces.glass`) and steel brackets under them: **HALO** (Chef Bastien's
+  grill, tables under festoons, heaters; vendor (8, 29)), **LUMEN** (Hiro's izakaya: a counter of stools, low tables,
+  lanterns on a line; vendor (31, 30)), **CIRRUS** (the rooftop cocktail bar: a round bar with Nadia inside it, a lounge
+  round a fire table, loungers along the rail, festoons; vendor (59, 32)), and the **air cab pad** (`air_cab` (79, 31),
+  Dove leaning on her cab). Below them more terraces step down the tower's face, lit and laid, out of reach.
+- **Moonglow** (`arcadia-jazz`, `scenes/arcadia_jazz.py`, 22 × 14): the jazz bar — navy silk over walnut, a dark chevron
+  floor, small round tables each with a candle in red glass, a low stage under a great round window where the moon
+  hangs in the smog (a hole: js/worlds/terraces.js draws the skyline and the moon in it, `midlevels.sky` / `moon`), the
+  long bar down the left wall with Sol before a wall of lit bottles, velvet booths down the right, the old players in
+  gilt frames, the coat check. The **Odette Lark Quartet** on the stage (actors with `lift` 0.36): Odette at the mic, Ray at
+  the piano, Mingo on the bass, Lou-Lou on the drums. THE BAR sells the Blue Note and the Moonglow Old Fashioned.
+- **The Atrium** (`arcadia-atrium`, `scenes/arcadia_atrium.py`, 32 × 20): the tower's mall — the back wall rising gallery
+  over gallery of lit shops behind glass rails out of sight, escalators climbing across the void, two glass lifts riding
+  their shafts (drawn live, `atrium.lifts`) and people on the escalators (`atrium.escalators`), a fountain under a
+  chandelier of light-rods, palms, benches, a florist's cart and a coffee kiosk; on the ground floor NOVA (stims and
+  med-kits), PETAL & WIRE (posies), PAGES, a shop coming soon (the Spires' chrome boutique coming down), and **Iris** the
+  concierge at her desk, who knows the way to everywhere (the levels, the Loop, the lifts, the cabs).
+- **People** (`characters.py`, portraits, people.json, gifts.js): Nadia (`npc-mixologist`), Chef Bastien (`npc-grill-chef`),
+  Hiro (`npc-izakaya`), Dove (`npc-cabbie`), Augustin (`npc-liftman`), Odette (`npc-jazz-singer`), Ray (`npc-jazz-pianist`),
+  Mingo (`npc-jazz-bassist`), Lou-Lou (`npc-jazz-drummer`), Sol (`npc-jazz-bartender`), Iris (`npc-concierge`). Items
+  (js/items.js): cloud espresso, glass cake, Halo skewers, Lumen yakitori, warm sake, the Cirrus Sour, the Skyline Spritz,
+  the Blue Note, the Moonglow Old Fashioned.
+- **Life**: the `midlevels` crowd wardrobe (js/crowd.js: office money out for the evening — suits and smart coats in
+  glass, ice and slate; its own lines and wants in crowds.json) on the Terraces, in the Atrium and seated at Moonglow;
+  seats in actions.json at Halo's tables, Lumen's counter, Cirrus's bar, Moonglow's tables, bar and booths; the chase and
+  NULL's hijack come to the Terraces' sky too; two happenings (js/events.js): **a proposal at Halo** (the deck goes quiet,
+  he asks, she says yes, the deck cheers and petals fall; congratulate them for a flute of champagne) and **a jam at
+  Moonglow** (a guest sits in; listen for energy and a note in the journal). Music (js/audio.js): `midlevels` on the
+  decks and in the Atrium (the street's synthwave lifted, airier, bells over a soft pulse), `jazz` at Moonglow (a slow
+  minor ballad, brushes and a walking upright — the Royale's `casino` is brighter and quicker).
+- **Getting there** (`assets/arcadia-lifts.json`): the Spire Express and the Core Express lobbies `terraces`, the Loop's
+  `terraces` station, the `terraces` cab pad. Test: `world/arcadia_terraces.js`.
+
 ### Treasure maps
 `js/treasure.js` (BridgeTreasure): a map is an item (`tmap_<id>`); using it unfolds the sketch — the spot cut from its island's own scene render (14 × 10 tiles round it), inked onto parchment (luminance in five sepia tones, dark edges, the sea left as bare paper) with a red X and a line in the finder's hand. The map never names the island; you know it by the landmarks. Holding the map, an **X MARKS THE SPOT** dig appears at the place (`decorate`); digging (6 energy) brings up a chest: coins, goods, and on some maps the next map in a chain (the old light → the Heron's strongbox → the Crimson watch; the drowned → the abbey). Ilsa Venn the cartographer sells three (a topic with `treasure: 'shop'`); others turn up under rocks in the Rose Mine from floor 4. `MAPS` holds each spot (world, tile, reward); dug spots are kept in `bridge_treasure`.
 

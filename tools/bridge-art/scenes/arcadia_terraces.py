@@ -808,10 +808,10 @@ def talk(label, x, y, text):
 
 
 w['interactions'] = [
-    {'x': 0, 'y': y, 'type': 'enter_world', 'target': 'arcadia-skypad', 'spawn': [21, 8], 'label': 'SKYBRIDGE · SKYPORT 7',
+    {'x': 0, 'y': y, 'type': 'enter_world', 'target': 'arcadia-skypad', 'spawn': [27, 8], 'label': 'SKYBRIDGE · SKYPORT 7',
      'prompt': 'PRESS E TO CROSS'} for y in (19, 20)] + [
     {'x': 15, 'y': 12, 'type': 'enter_world', 'target': 'arcadia-jazz', 'spawn': [11, 11], 'label': 'MOONGLOW', 'prompt': 'PRESS E TO GO IN'},
-    {'x': 31, 'y': 12, 'type': 'enter_world', 'target': 'arcadia-atrium', 'spawn': [16, 18], 'label': 'THE ATRIUM', 'prompt': 'PRESS E TO GO IN'},
+    {'x': 31, 'y': 12, 'type': 'enter_world', 'target': 'arcadia-atrium', 'spawn': [16, 17], 'label': 'THE ATRIUM', 'prompt': 'PRESS E TO GO IN'},
     {'x': 43, 'y': 11, 'type': 'express_lift', 'shaft': 'spire', 'lobby': 'terraces', 'label': 'SPIRE EXPRESS', 'prompt': 'PRESS E TO CALL THE LIFT'},
     {'x': 48, 'y': 11, 'type': 'express_lift', 'shaft': 'core', 'lobby': 'terraces', 'label': 'CORE EXPRESS', 'prompt': 'PRESS E TO CALL THE LIFT'},
     {'x': 73, 'y': 9, 'type': 'loop_station', 'station': 'terraces', 'label': 'THE LOOP', 'prompt': 'PRESS E TO TAKE THE LOOP'},

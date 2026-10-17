@@ -117,7 +117,8 @@ k.cyl(16.6, 4.6, 0.36, 1.0, 0.02, '#9a9aa4', 'sax_stand', verts=4)              
 k.tube((16.6, 4.62, 0.75), (16.68, 4.62, 1.35), 0.05, ('#d0a040', 0.03), 'sax', verts=8)
 k.tube((16.6, 4.62, 0.75), (16.48, 4.66, 0.62), 0.07, ('#d0a040', 0.03), 'sax', verts=8)
 k.cone(16.48, 4.66, 0.62, 0.85, 0.07, 0.13, ('#d0a040', 0.03), 'sax_bell', verts=10)
-k.area_light(14.6, 5.4, 3.6, '#fff0d0', 60, 1.0, rot=(math.radians(-20), 0, 0))
+k.area_light(14.6, 5.4, 3.6, '#fff0d0', 120, 1.2, rot=(math.radians(-20), 0, 0))
+k.area_light(11.0, 8.0, 4.5, '#ffb878', 160, 10.0)
 k.point_light(12.4, 4.2, 2.6, WARM, 10, radius=0.4, group='lamp')
 k.point_light(18.2, 4.0, 2.6, '#a0b0ff', 8, radius=0.4, group='lamp')
 S.neon(k, 'Moonglow', 'Pacifico', 7.0, RF + 0.08, 2.75, size=0.62, col='#8aa8ff', energy=10)
@@ -159,7 +160,8 @@ for r0 in (6.0, 8.1, 10.2):
     k.box(19.5, r0, 0.0, 20.3, r0 + 0.35, 1.0, ('#3a1a4a', 0.1), 'booth_arm', bevel=0.04)
     k.box(19.6, r0 + 0.35, 0.0, 20.3, r0 + 1.7, 0.45, ('#4a2458', 0.1), 'booth_seat', bevel=0.04)
     k.box(18.4, r0 + 0.5, 0.0, 19.3, r0 + 1.4, 0.72, ('#2a160e', 0.08), 'booth_table', bevel=0.02)
-    k.box(18.36, r0 + 0.46, 0.72, 19.34, r0 + 1.44, 0.76, ('#c8a050', 0.06), 'booth_table_top')
+    k.box(18.36, r0 + 0.46, 0.72, 19.34, r0 + 1.44, 0.76, ('#3a2216', 0.08), 'booth_table_top')
+    k.box(18.36, r0 + 0.46, 0.7, 19.34, r0 + 0.5, 0.76, (GOLD, 0.04), 'booth_table_edge')
     k.cyl(18.85, r0 + 0.95, 0.76, 0.86, 0.05, '#7a1a1a', 'candle_glass', emit=('#ff6030', 0.8), verts=8)
     k.point_light(18.85, r0 + 0.95, 1.0, '#ff9050', 3, radius=0.06, group='flicker')
     k.solid(19.5, r0, 21.0, r0 + 1.7)
@@ -196,10 +198,10 @@ E.potted_palm(k, 13.4, 11.3, h=1.5, pot='#1a1820', leaf='#3a6a3a', fronds=9)
 
 # ---- light: low and warm, the moon blue through the window --------------------------------------------------------------
 for (x, r) in ((7.0, 6.0), (12.0, 8.0), (7.0, 10.0), (17.0, 9.5)):
-    k.point_light(x, r, 2.8, '#ffb070', 14, radius=0.5, group='lamp')
+    k.point_light(x, r, 2.8, '#ffb070', 34, radius=0.5, group='lamp')
 k.area_light(CX, RF + 0.6, 3.0, '#6a80e0', 60, 3.0, rot=(math.radians(-80), 0, 0))
 k.render(OUT, light_states={'full': {'flicker': 1.0, 'lamp': 1.0}, 'dim': {'flicker': 0.7, 'lamp': 0.95}},
-         light_samples=int(os.environ.get('SAMPLES', 128)), world_light=('#1a1830', 0.35))
+         light_samples=int(os.environ.get('SAMPLES', 128)), world_light=('#241e3a', 0.5))
 
 # ---- the world -----------------------------------------------------------------------------------------------------------
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
@@ -226,7 +228,7 @@ w['interactions'] = [
     talk('SOL', 2, 6, 'SOL POLISHES A GLASS THAT IS ALREADY CLEAN AND LISTENS TO THE PIANO.'),
     talk('ODETTE', 14, 4, 'ODETTE LARK HOLDS THE LAST NOTE UNTIL THE ROOM FORGETS TO BREATHE.'),
     talk('RAY', 11, 4, 'RAY PLAYS WITH HIS EYES SHUT AND A CIGARETTE HE NEVER LIGHTS.'),
-    talk('MINGO', 15, 4, 'MINGO NODS ALONG WITH THE BASS LIKE THEY ARE HAVING A CONVERSATION.'),
+    talk('MINGO', 16, 4, 'MINGO NODS ALONG WITH THE BASS LIKE THEY ARE HAVING A CONVERSATION.'),
     look('THE MOON WINDOW', 17, 4, 'THE MOON HANGS IN THE SMOG LIKE A LAMP IN A FISH TANK. BELOW IT THE TOWERS GO ON FOR EVER.',
          action='view', view='skyline'),
     look('PHOTOGRAPHS', 6, 3, 'OLD PLAYERS IN GILT FRAMES: A TRUMPETER WITH HIS EYES CLOSED, A WOMAN AT A PIANO LAUGHING, ODETTE AT NINETEEN, ALREADY WEARING THAT DRESS.'),

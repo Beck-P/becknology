@@ -25,9 +25,17 @@
       { "id": "skywalk", "world": "arcadia-skywalk", "floor": 200, "spawn": [28, 5] },
       { "id": "skypad", "world": "arcadia-skypad", "floor": 212, "spawn": [19, 5] }
     ] },
-    "spire": { "name": "Spire Express", "x": 0.66, "lobbies": [] },
-    "core": { "name": "The Core Express", "x": 0.92, "lobbies": [] }
+    "spire": { "name": "Spire Express", "x": 0.66, "lobbies": [
+      { "id": "terraces", "world": "arcadia-terraces", "floor": 208, "spawn": [43, 11] }
+    ] },
+    "core": { "name": "The Core Express", "x": 0.92, "lobbies": [
+      { "id": "terraces", "world": "arcadia-terraces", "floor": 208, "spawn": [48, 11] }
+    ] }
   },
-  "loop": { "name": "The Loop", "stations": [] },
-  "cabs": { "pads": [] }
+  "loop": { "name": "The Loop", "stations": [
+    { "id": "terraces", "name": "Terraces", "world": "arcadia-terraces", "spawn": [73, 10] }
+  ] },
+  "cabs": { "pads": [
+    { "id": "terraces", "name": "The Terraces", "world": "arcadia-terraces", "spawn": [79, 30], "level": "midlevels" }
+  ] }
 }

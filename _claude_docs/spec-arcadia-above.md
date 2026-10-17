@@ -34,7 +34,7 @@ Ritzier as you go up. Each level has a tag on its signs (`L480`, `L200`, `L0`, `
   just those two interactions; Return to ship works anywhere). Street side spawns: from the old quarter `[1, 10]`, from
   the spaceport `[58, 10]`.
 - `arcadia-skypad` east edge door (22, 8) `SKYBRIDGE · THE TERRACES` ⇄ `arcadia-terraces` west edge
-  (`SKYBRIDGE · SKYPORT 7`, back to `arcadia-skypad` `[21, 8]`). D re-renders Skyport 7 with the bridge.
+  (`SKYBRIDGE · SKYPORT 7`, back to `arcadia-skypad` `[27, 8]`). D re-renders Skyport 7 with the bridge. Fork B: the Terraces end is at (0, 19–20); arriving from Skyport 7, spawn `[2, 19]`.
 - Everything else by the transit below.
 
 ## Getting around (js/transit.js, D)
