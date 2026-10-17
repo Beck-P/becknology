@@ -108,9 +108,10 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 ## Render queue (every outdoor scene, once, with everything: meadow, drawn grass, trees and seasons, grass/water marks, the new roofs and house fronts)
 Shipped: every outdoor scene once — Crownhaven, Tern Holm, Brambleford, Starling Holm (with the workshop), Diggen's Point,
 the farm, Midnight Isle (with the Undercroft's way in), Sylvara, Sapphire, Crimson, Rose Cove, the market square, Hoarfell town;
-Crownhaven again (street clutter); the Hoarspire's summit and the pistes by day, dusk and night. Running: Brambleford again
-(street clutter), the Park, then the face, the Last Ridge and the Ice Step (nights), and Starling Holm again (the slipway and
-the hall of finds). Each ships as it finishes.
+Crownhaven again (street clutter); the Hoarspire's summit and the pistes by day, dusk and night. Brambleford again
+(street clutter) is live too. Running: the Park, then the face, the Last Ridge and the Ice Step (nights), and Starling Holm again
+(the slipway and the hall of finds); then the four squares once more for their hopscotch (Brambleford, the market square,
+Sapphire, Crownhaven: every one's spot had a stall, a post or a planter on it, so none was drawn). Each ships as it finishes.
 
 ## Older threads still open (from before this session; check what's left before calling them done)
 - Two ships: mothership home base + landing shuttle (#18)
