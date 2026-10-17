@@ -1,6 +1,6 @@
 """A stand-in for Supabase on 127.0.0.1:8767, for testing multiplayer locally: a few tables (PostgREST-ish ops over
 POST /db) and Realtime broadcast + presence (SSE stream per client, POST to join/track/send)."""
-import http.server, json, queue, socketserver, threading, uuid, time
+import http.server, json, os, queue, socketserver, sys, threading, uuid, time
 
 LOCK = threading.Lock()
 TABLES = {
@@ -166,4 +166,5 @@ class H(http.server.BaseHTTPRequestHandler):
 
 socketserver.ThreadingTCPServer.allow_reuse_address = True
 socketserver.ThreadingTCPServer.daemon_threads = True
-with socketserver.ThreadingTCPServer(('127.0.0.1', 8767), H) as s: s.serve_forever()
+PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get('SUPA_PORT', 8767))   # a second checkout's tests: SUPA_PORT
+with socketserver.ThreadingTCPServer(('127.0.0.1', PORT), H) as s: s.serve_forever()

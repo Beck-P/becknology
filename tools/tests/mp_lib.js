@@ -20,5 +20,6 @@ async function enter(p, world, spawn) {
   await p.evaluate(([w, s]) => new Promise(r => BridgeWorld.load(w, () => { BridgeState.transition('world', { worldId: w, spawn: s }); r(); })), [world, spawn || null]);
   await p.waitForTimeout(800);
 }
-async function reset() { await fetch('http://127.0.0.1:8767/admin', { method: 'POST', body: JSON.stringify({ reset: true, missing: [] }) }); }
+const SUPA = 'http://127.0.0.1:' + (process.env.SUPA_PORT || 8767);
+async function reset() { await fetch(SUPA + '/admin', { method: 'POST', body: JSON.stringify({ reset: true, missing: [] }) }); }
 module.exports = { chromium, BECK, ALY, player, enter, reset };
