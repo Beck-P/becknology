@@ -49,6 +49,13 @@ only partly done, the rest stays here as open.
 | Ashcombe House should be big — "super bougie and gorgeous" | in progress | Great hall as the entry; rooms off it (drawing room, library, dining room, upstairs gallery and master bedroom) as places within places. |
 | All of them customisable | in progress | Every room and the deck furnishable with the homes' furniture system, with open floor left for it. |
 
+## Next up (Beck: "good options to start working on", not pressing)
+| Ask | Status | Notes |
+|---|---|---|
+| **Music that changes with the moment**: slower at night, moodier in a storm, louder in a busy tavern; a tavern band that strikes up when you sit; a jukebox for your homes that plays the songs you've heard | queued (first) | Engine only (js/audio.js already generates the music from themes): no renders, light on the machine — starts first when a slot frees. |
+| **Festivals**: one per planet per season on its own clock; for a day the place dresses up, its own music, things only sold then, a contest — Lumar's floating lanterns and fishing derby, Arcadia's blackout night, Hoarfell's ice fair with a ski race against the locals, Verdance's harvest fair judging your best crop | queued (second) | Decorations drawn live by the engine over the renders (no re-render), the clock's seasons, the existing fishing, skiing and farm systems for the contests. |
+| **A dungeon that resets every night** under Midnight Isle: a new layout each night, deeper floors better loot, leave with what you've found or push on and risk it; the mine's rock-breaking and the combat you have; a best-run board to beat Alyssa | queued (third) | Most of the work is the layouts (generated, seeded by the night); the board through the cloud save / presence. |
+
 ## Sleep
 | Ask | Status | Notes |
 |---|---|---|
