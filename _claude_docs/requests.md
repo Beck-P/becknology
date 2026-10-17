@@ -4,6 +4,13 @@ Everything asked for, so nothing slips. Newest batch first. Status: **done** (li
 now — a branch or a render queue), **open** (not started), **discuss** (needs a decision with Beck). When something is
 only partly done, the rest stays here as open.
 
+## October 17 (the art direction: "more like Stardew… gorgeous landscapes… high-def pixel")
+| Ask | Status | Where / notes |
+|---|---|---|
+| Show examples of how the worlds, buildings and people could look; a handful of styles; what's realistic | **done** | The Look Book: https://claude.ai/artifact/XBv6zdjx4M9oJ2NwEgonG7 (source in `_claude_docs/lookbook/`). Three styles side by side (16-bit, hi-res, hi-res + HD-2D), five places (Verdance millpond, Lumar quay, Sylvara brook, Hoarfell tarn, Arcadia rain street), a side-view postcard lake, a five-world building street, the hand-drawn cast; every scene follows the hour, season, weather and finish. |
+| Pick the direction: between Stardew and Octopath (hi-res pixel + HD-2D light), Cast n Chill's water | discuss | Beck leaned to Octopath / in between. Proposed order: engine light and finish → water → a nature test scene then the outdoor re-renders (shaping the land) → people (layered sprites) → buildings → postcard views. |
+| Hand-drawn sprites instead of 3D for people (and trees, buildings) | discuss | Beck: "fine with moving to hand-drawn sprites". The look book's people.js and buildings.js are drawn in code, so this can be done in the repo. |
+
 ## October 17 (denser, more alive worlds — Beck's picks from the brainstorm, still being shaped)
 | Ask | Status | Where / notes |
 |---|---|---|
