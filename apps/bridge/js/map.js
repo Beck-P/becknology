@@ -85,6 +85,7 @@ var BridgeMap = (function () {
     game:   { name: 'Games', col: '#d24f96', g: ['...#...', '..###..', '#######', '.#####.', '..###..', '.##.##.', '##...##'] },
     home:   { name: 'Yours', col: '#d8643a', g: ['...#...', '..###..', '.#####.', '#######', '.#...#.', '.#.#.#.', '.#.#.#.'] },
     use:    { name: 'Useful things', col: '#8a7a5a', g: ['.......', '.#####.', '.#...#.', '.#####.', '.#...#.', '.#####.', '.......'] },
+    start:  { name: 'Quests to start', col: '#f2a020', g: ['..###..', '..###..', '..###..', '..###..', '..###..', '.......', '..###..'] },
     clue:   { name: 'Clues you\'ve found', col: '#e2b632', g: ['..###..', '..###..', '..###..', '..###..', '...#...', '.......', '..###..'] }
   };
   var UNKNOWN = ['..###..', '.#...#.', '.....#.', '....#..', '...#...', '.......', '...#...'];
@@ -197,10 +198,14 @@ var BridgeMap = (function () {
 
   // the markers for a world: one per thing (a door three tiles wide is one door)
   function markersFor(wid, data) {
-    var clues = cluesHere(wid), out = [];
+    var clues = cluesHere(wid), out = [], starts = typeof BridgeQuests !== 'undefined' && BridgeQuests.startsHere ? BridgeQuests.startsHere(wid) : {}, started = {};
     (data.interactions || []).forEach(function (it) {
       if (typeof it.x !== 'number') return;
       var m = classify(it, wid, clues);
+      if (it.label && starts[it.label] && !started[it.label]) {          // a quest you haven't begun starts here (the world's gold !)
+        started[it.label] = 1;
+        m = { cat: 'start', name: m ? m.name : title(it.label), sub: 'A quest starts here' + (m && m.sub ? ' · ' + m.sub : '') };
+      }
       if (!m) return;
       var same = out.filter(function (o) { return o.cat === m.cat && o.name === m.name && o.target === m.target && Math.abs(o.x - it.x) <= 2 && Math.abs(o.y - it.y) <= 2 &&
                                                    (m.cat !== 'person' || o.lab === it.label); })[0];   // two people you haven't met are two "Someone"s
