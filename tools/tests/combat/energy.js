@@ -1,7 +1,10 @@
 // What a fight takes out of you (js/arms.js): a roll, each class's charged blow, a staff's bolt; the second wind (three
 // quarters of it back once you stop for a breath, none while you keep swinging); energy spent off the fight (the mine,
-// the cold) not coming back; too tired to roll. node combat/energy.js
+// the cold) not coming back; too tired to roll. Costs are read the moment they're paid, and a check that needs the
+// page's timers to keep up is only made when they did (headless under load, a 300 ms wait can run past a second).
+// node combat/energy.js
 const { chromium } = require('playwright');
+const CHARGED = { iron_dagger: 2, cutlass: 3, emberbrand: 3, boarding_pike: 3, war_maul: 4, tidebreaker: 4, wispcaller: 2, old_pickaxe: 3 };
 (async () => {
   const b = await chromium.launch({ executablePath: require(__dirname + '/../chrome.js') });
   const ctx = await b.newContext({ viewport: { width: 1100, height: 720 } });
@@ -15,46 +18,52 @@ const { chromium } = require('playwright');
   await p.waitForTimeout(600);
   await p.evaluate(() => new Promise(r => BridgeWorld.load('lumar-midnight', () => { BridgeState.transition('world', { worldId: 'lumar-midnight', spawn: { x: 24, y: 30 } }); r(); })));
   await p.waitForTimeout(1500);
-  const r = await p.evaluate(async () => {
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms)), en = () => BridgeInventory.getStats().energy;
+  const r = await p.evaluate(async (W) => {
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms)), en = () => BridgeInventory.getStats().energy, now = () => performance.now();
     const w = BridgeWorld.getWorld();
     w.interactions.filter(h => h.type === 'hostile').forEach(h => { w.collisions[h.y][h.x] = 0; });
     w.interactions = w.interactions.filter(h => h.type !== 'hostile');
-    const W = ['iron_dagger', 'cutlass', 'emberbrand', 'boarding_pike', 'war_maul', 'tidebreaker', 'wispcaller', 'old_pickaxe'];
     W.forEach(id => BridgeInventory.addItem(id, 1));
     const hold = (id) => { for (let i = 0; i < 10; i++) { BridgeInventory.selectSlot(i); if (BridgeInventory.getSelectedItemId() === id) return; } };
+    const settle = async () => { for (let i = 0; i < 200 && BridgeArms.state(); i++) await sleep(16); };
+    const full = async () => { await settle(); BridgeInventory.restoreAll(); await sleep(50); };
+    const rested = async () => { await full(); await sleep(1500); };   // and anything still owed from before let go (full: it's dropped)
+    const spend3 = () => BridgeArms.spend ? BridgeArms.spend(3) : BridgeInventory.useEnergy(3);
     const out = {};
-    const full = async () => { BridgeInventory.restoreAll(); await sleep(50); };
     // a roll, straight up the open path and back
-    await full(); let e0 = en(); BridgeCharacter.setFacing('up'); BridgeArms.roll(); out.roll = e0 - en(); await sleep(700);
-    BridgeCharacter.setFacing('down'); BridgeArms.roll(); await sleep(700);
-    // each class's charged blow: hold through a swing, a beat more, let go (into the air)
+    await full(); let e0 = en(); BridgeCharacter.setFacing('up'); BridgeArms.roll(); out.roll = e0 - en();
+    await settle(); await sleep(200); BridgeCharacter.setFacing('down'); BridgeArms.roll();
+    // each class's charged blow: hold through a swing, a beat more, let go (into the air); paid as you let go
     out.charged = {};
     for (const id of W) {
-      await full(); hold(id); BridgeCharacter.setFacing('right'); e0 = en();
+      await full(); hold(id); BridgeCharacter.setFacing('right');
       BridgeArms.keyDown(); BridgeInventory.useSelected();
-      for (let i = 0; i < 150 && !(BridgeArms.state() || {}).full; i++) await sleep(16);
+      for (let i = 0; i < 200 && !(BridgeArms.state() || {}).full; i++) await sleep(16);
       const wasFull = !!(BridgeArms.state() || {}).full, e1 = en();          // (a staff's opening swing threw a bolt already)
-      BridgeArms.keyUp(); await sleep(60);
+      BridgeArms.keyUp();
       out.charged[id] = wasFull ? e1 - en() : 'never charged';
-      await sleep(900);
     }
-    // a plain bolt from the staff
-    await sleep(1500); await full(); hold('wispcaller'); e0 = en(); BridgeInventory.useSelected(); await sleep(400); out.bolt = e0 - en();
-    await sleep(1500);
-    // the second wind: five rolls (up and down the path), then nothing for a moment, then a breath
-    await full(); e0 = en();
-    for (let k = 0; k < 5; k++) { if (k) await sleep(560); BridgeCharacter.setFacing(k % 2 ? 'down' : 'up'); BridgeArms.roll(); }
-    const spent = e0 - en(); await sleep(600); const early = en();
-    await sleep(3000); const later = en();
-    out.wind = { spent, after5rolls: e0 - spent, half_second_on: early, three_seconds_on: later, came_back: later - (e0 - spent) };
+    // a plain bolt from the staff: paid on the swing's landing frame
+    await full(); hold('wispcaller'); e0 = en(); const tb = now(); BridgeInventory.useSelected();
+    const swung = (BridgeArms.state() || {}).kind || 'none';
+    for (let i = 0; i < 150 && en() === e0; i++) await sleep(16);
+    out.bolt = e0 - en();
+    if (!out.bolt) out.boltWhy = { held: BridgeInventory.getSelectedItemId(), swung, now: (BridgeArms.state() || {}).kind || 'none', ms: Math.round(now() - tb) };
+    // the second wind: five rolls' worth spent on the fight, a moment with nothing, then a breath
+    await rested(); e0 = en();
+    for (let k = 0; k < 5; k++) spend3();
+    const spent = e0 - en(), t0 = now();
+    await sleep(500); const early = en(), earlyMs = Math.round(now() - t0);
+    while (now() - t0 < 4500) await sleep(100);
+    out.wind = { spent, low: e0 - spent, early, early_ms: earlyMs, later: en(), came_back: en() - (e0 - spent) };
     // keep swinging and nothing comes back; stop and it does
-    await full(); e0 = en();
-    for (let k = 0; k < 4; k++) { BridgeCharacter.setFacing(k % 2 ? 'down' : 'up'); BridgeArms.roll(); await sleep(560); }
+    await rested(); for (let k = 0; k < 4; k++) spend3();
     const low = en(); hold('cutlass'); BridgeCharacter.setFacing('right');
-    for (let k = 0; k < 10; k++) { BridgeInventory.useSelected(); await sleep(300); }
-    const whileSwinging = en(); await sleep(3000);
-    out.swinging = { after_rolls: low, after_3s_of_swings: whileSwinging, after_3s_still: en() };
+    let gap = 0, last = now();
+    for (const t1 = now(); now() - t1 < 3000;) { BridgeInventory.useSelected(); await sleep(250); gap = Math.max(gap, now() - last); last = now(); }
+    const whileSwinging = en(); await settle();
+    const t2 = now(); while (now() - t2 < 4000) await sleep(100);
+    out.swinging = { low, after_3s_of_swings: whileSwinging, longest_gap_ms: Math.round(gap), after_a_breath: en() };
     // spent off the fight (a pick on rock, the cold): it doesn't come back
     await full(); BridgeInventory.useEnergy(10); const offFight = en(); await sleep(3000);
     out.offFight = { after: offFight, three_seconds_on: en() };
@@ -63,8 +72,8 @@ const { chromium } = require('playwright');
     out.tired = { energy: en(), rolled: BridgeArms.roll() };
     BridgeInventory.restoreAll();
     return out;
-  });
-  console.log('energy a roll: ' + r.roll + ' · a bolt: ' + r.bolt);
+  }, Object.keys(CHARGED));
+  console.log('energy a roll: ' + r.roll + ' · a bolt: ' + r.bolt + (r.boltWhy ? ' ' + JSON.stringify(r.boltWhy) : ''));
   console.log('energy charged: ' + Object.entries(r.charged).map(([k, v]) => k + ' ' + v).join(' · '));
   console.log('energy second wind: ' + JSON.stringify(r.wind));
   console.log('energy while swinging: ' + JSON.stringify(r.swinging));
@@ -73,10 +82,11 @@ const { chromium } = require('playwright');
   const bad = [];
   if (r.roll !== 3) bad.push('roll ' + r.roll);
   if (r.bolt !== 2) bad.push('bolt ' + r.bolt);
-  if (!(r.wind.came_back >= Math.floor(r.wind.spent * 0.75) - 1 && r.wind.came_back <= Math.ceil(r.wind.spent * 0.75))) bad.push('second wind ' + r.wind.came_back + ' of ' + r.wind.spent);
-  if (r.wind.half_second_on !== r.wind.after5rolls) bad.push('came back too soon');
-  if (r.swinging.after_3s_of_swings !== r.swinging.after_rolls) bad.push('came back while swinging');
-  if (!(r.swinging.after_3s_still > r.swinging.after_rolls)) bad.push('never came back after swinging');
+  Object.keys(CHARGED).forEach(id => { if (r.charged[id] !== CHARGED[id]) bad.push(id + ' charged ' + r.charged[id]); });
+  if (r.wind.came_back !== Math.floor(r.wind.spent * 0.75)) bad.push('second wind ' + r.wind.came_back + ' of ' + r.wind.spent);
+  if (r.wind.early_ms < 1100 && r.wind.early !== r.wind.low) bad.push('came back too soon');
+  if (r.swinging.longest_gap_ms < 1100 && r.swinging.after_3s_of_swings !== r.swinging.low) bad.push('came back while swinging');
+  if (r.swinging.after_a_breath !== r.swinging.low + 9) bad.push('after swinging ' + (r.swinging.after_a_breath - r.swinging.low) + ' came back, not 9');
   if (r.offFight.three_seconds_on !== r.offFight.after) bad.push('off-fight energy came back');
   if (r.tired.rolled) bad.push('rolled when too tired');
   console.log('energy errors: ' + bad.length + (bad.length ? ' ' + bad.join(' · ') : ''));

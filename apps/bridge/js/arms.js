@@ -179,13 +179,17 @@ var BridgeArms = (function () {
     BridgeInventory.useEnergy(n);
     return true;
   }
-  // each frame: once you've stopped a moment, what the fight took comes back a point at a time
+  // each frame: once you've stopped a moment, what the fight took comes back a point every WIND_EVERY ms (by the clock,
+  // so a slow frame gets the points it missed)
   function breathe(t) {
-    if (owed < 1 || st || t - lastAct < WIND_DELAY || t - windAt < WIND_EVERY || typeof BridgeInventory === 'undefined') return;
+    if (owed <= 0 || st || t - lastAct < WIND_DELAY || typeof BridgeInventory === 'undefined') return;
     var e = BridgeInventory.getStats();
-    if (e.energy >= e.maxEnergy) { owed = 0; return; }           // filled up some other way (food, sleep)
-    windAt = t; owed -= 1;
-    BridgeInventory.restoreEnergy(1);
+    if (e.energy >= e.maxEnergy || owed < 1) { owed = 0; return; }   // filled up some other way (food, sleep), or a crumb left
+    windAt = Math.max(windAt, lastAct + WIND_DELAY - WIND_EVERY);      // this breath began then, its first point at once
+    var n = Math.min(Math.floor(owed), Math.floor((t - windAt) / WIND_EVERY));
+    if (n < 1) return;
+    windAt += n * WIND_EVERY; owed -= n;
+    BridgeInventory.restoreEnergy(n);
   }
   /** What's still to come back (the pale end of the energy bar, js/inventory.js). */
   function winded() { return Math.floor(owed); }
@@ -245,6 +249,9 @@ var BridgeArms = (function () {
     }
     var e = clock(st, t), s = stepAt(st.sw.steps, st.speed, e);
     if (s && s.hitPast && !st.hit) { st.hit = true; land(st); }
+    // a frame that came late enough to skip the whole swing (a quick blade's is ~120 ms) still lands it, and finishes
+    // it on the next frame, after its hit-stop
+    if (!s && !st.hit) { st.hit = true; land(st); return; }
     if (!s) {                                                  // done
       var was = st;
       chain = { cls: was.cls, idx: was.sw.fin || was.charged ? 0 : was.idx + 1, at: t };
