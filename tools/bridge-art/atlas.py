@@ -57,6 +57,7 @@ EXTRA = [
     ('hoarfell-summit', 'hoarfell-ridge', ['THE LAST RIDGE'], 'climb', 24, 9),   # js/expedition.js
     ('hoarfell-ridge', 'hoarfell-icestep', ['THE ICE STEP'], 'climb'),
     ('hoarfell-ridge', 'hoarfell-hollow', ['THE ICE DOOR'], 'door'),
+    ('verdance-village', 'verdance-east', ['STATION ROAD'], 'door', 45, 11),   # js/village.js: Brambleford's street runs on east
 ]
 # mine floors are one place on the map (the same three caves, twenty floors)
 MERGE = {'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a'}

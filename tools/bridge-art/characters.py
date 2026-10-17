@@ -341,6 +341,40 @@ NPCS = {
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), beard=True, straw_hat=('#a8843a', '#d8b058', '#f0d080'), pose='stand'),
     'npc-vschool':   dict(skin='skin3', shirt=('#3a2a5a', '#54407e', '#7058a0'), hair=('#7a7a80', '#a8a8b0', '#d0d0d8'),
                           bun=True, pose='stand'),
+    # Station Road (Brambleford's east end, js/village.js): Hobb at the livery, and the people the village fund brings —
+    # Juniper who runs the Kettle & Crumb, Hester Wold the cheesemaker, Mr Pike the stationmaster
+    'npc-hobb':      dict(skin='skin2', shirt=('#6a5a3a', '#8a7a52', '#aa9a6e'), waistcoat=('#2a3a2a', '#3e5a3e', '#5a7a52'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), cap=('#4a3a2a', '#6a5a40', '#8a7a58'), beard=True, pose='stand'),
+    'npc-juniper':   dict(skin='skin', shirt=('#a8a49a', '#e4e0d4', '#fbf8f0'), apron=('#1e4a32', '#2e6a4a', '#4a8a64'),
+                          hair=('#5a2a14', '#8a4422', '#b0602e'), ponytail=True, blush=True, pose='stand'),
+    'npc-hester':    dict(skin='skin3', shirt=('#3a4a6a', '#4e6a92', '#6a88b0'), apron=('#a8a49a', '#e4e0d4', '#fbf8f0'),
+                          hair=('#2a1a10', '#4a2e1a', '#6a4428'), bun=True, brawny=True, pose='stand'),
+    'npc-pike':      dict(skin='skin', shirt=('#1a2236', '#28324e', '#3a466a'), waistcoat=('#1a2236', '#28324e', '#3a466a'),
+                          hair=('#6a6a70', '#a0a0a8', '#c8c8d0'), cap=('#1a2236', '#28324e', '#3a466a'), mustache=True, pose='stand'),
+    # the Downs (js/makers.js): Marigold Larkin of Larkspur Flowers, Ezra Cobb who presses the cider
+    'npc-marigold':  dict(skin='skin', shirt=('#8a3a5a', '#b85a7a', '#e080a0'), apron=('#3a5a32', '#4e7a44', '#6a9a5a'),
+                          hair=('#a8843a', '#d8b058', '#f0d080'), long_hair=True, straw_hat=('#a8843a', '#d8b058', '#f0d080'), blush=True, pose='stand'),
+    'npc-ezra':      dict(skin='skin2', shirt=('#8a8070', '#c4b8a0', '#e4dac4'), vest=('#4a3018', '#6a4828', '#8a6238'),
+                          hair=('#6a6a70', '#a0a0a8', '#c8c8d0'), beard=True, brawny=True, cap=('#3a3a2a', '#5a5a40', '#7a7a58'), pose='stand'),
+    # Thistlecombe (js/makers.js): Ada Ember the roaster, Wren Potts the potter, Silas Wick the chandler, Ms Okoro who
+    # packs for Arcadia, Old Rudd on the ferry, and Effie Bright, who'll keep your market stall
+    'npc-ada':       dict(skin='skin3', shirt=('#6a2a1e', '#9a3e2c', '#c05a40'), apron=('#2a1a10', '#4a2e1a', '#6a4428'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), bun=True, pose='stand'),
+    'npc-wren':      dict(skin='skin', shirt=('#3a5a6a', '#4e7a8e', '#6a9ab0'), apron=('#8a7a62', '#b8a888', '#d8ccb0'),
+                          hair=('#6a3a1a', '#9a5a2a', '#c07a3a'), ponytail=True, blush=True, pose='stand'),
+    'npc-silas':     dict(skin='skin2', shirt=('#5a4a2a', '#7a6a3e', '#9a8a58'), waistcoat=('#3a2a10', '#5a4220', '#7a5a30'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), mustache=True, pose='stand'),
+    'npc-okoro':     dict(skin='skin3', shirt=('#1a2a3a', '#2a4058', '#3e5a78'), bib=('#b8c8d8', '#e0ecf4', '#ffffff'),
+                          hair=('#1a1410', '#2e2218', '#44342a'), bun=True, earpiece=True, pose='stand'),
+    'npc-rudd':      dict(skin='skin2', shirt=('#2a3a5a', '#3e5680', '#5a78a8'), hair=('#9a9aa0', '#c8c8d0', '#ececf2'),
+                          beanie=('#6a1e1e', '#a83232', '#c85050'), beard=True, pose='stand'),
+    'npc-effie':     dict(skin='skin', shirt=('#c8a040', '#e8c860', '#f8e088'), apron=('#3a5a32', '#4e7a44', '#6a9a5a'),
+                          hair=('#8a3a10', '#b85a1a', '#d87a2a'), long_hair=True, blush=True, young=True, pose='stand'),
+    # Vinehallow and Wendmill (js/makers.js): Rosalind Vane of the Vane estate, Tobias Ludd the miller (Old Ludd's son)
+    'npc-rosalind':  dict(skin='skin', shirt=('#4a1a2a', '#6e2a40', '#904060'), vest=('#2a2a22', '#3e3e32', '#545444'),
+                          hair=('#8a8a90', '#b8b8c0', '#dcdce4'), bun=True, pose='stand'),
+    'npc-tobias':    dict(skin='skin2', shirt=('#a8a49a', '#e4e0d4', '#fbf8f0'), apron=('#8a7a62', '#b8a888', '#d8ccb0'),
+                          hair=('#6a3a1a', '#9a5a2a', '#c07a3a'), cap=('#a8a49a', '#e4e0d4', '#fbf8f0'), beard=True, brawny=True, pose='stand'),
     # small events (js/events.js): two children (toy boats in the fountain, the snowball fight, the hen chase), a bride and
     # her groom on St Brendan's steps
     'npc-kid-a':     dict(skin='skin2', shirt=('#1e3a6a', '#2e5a9a', '#4a7ac0'), hair=('#4a2a14', '#7a4a24', '#a06a38'),

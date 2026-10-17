@@ -28,6 +28,11 @@
   "arcadia-casino-dining":  { "n": 6,  "wardrobe": "casino",  "busy": "bustle", "sit": 0.9 },
 
   "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
+  "verdance-east":          { "n": 7,  "wardrobe": "verdance", "busy": "day", "sit": 0.3 },
+  "verdance-downs":         { "n": 5,  "wardrobe": "verdance", "busy": "day" },
+  "verdance-market":        { "n": 16, "wardrobe": "verdance", "busy": "day", "sit": 0.3 },
+  "verdance-hill":          { "n": 7,  "wardrobe": "verdance", "busy": "day", "sit": 0.4 },
+  "verdance-mill":          { "n": 5,  "wardrobe": "verdance", "busy": "day" },
 
   "hoarfell":               { "n": 14, "wardrobe": "hoarfell", "busy": "day" },
   "hoarfell-lodge":         { "n": 7,  "wardrobe": "hoarfell", "busy": "night", "sit": 0.8 },

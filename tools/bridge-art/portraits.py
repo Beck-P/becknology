@@ -272,7 +272,7 @@ MOODS = {
 }
 MOOD = {name: mood for mood, names in MOODS.items() for name in names}
 YOUNG = {'npc-elf-child'}                                          # children who aren't built `young`
-ROSY = {'npc-baker', 'npc-innkeeper', 'npc-fisher-gran', 'npc-hetty', 'npc-bartender', 'npc-vbaker'}   # ruddy cheeks
+ROSY = {'npc-baker', 'npc-innkeeper', 'npc-fisher-gran', 'npc-hetty', 'npc-bartender', 'npc-vbaker', 'npc-hester', 'npc-hobb'}   # ruddy cheeks
 IRISES = {   # natural eye colours (dark, mid, light); an NPC gets one from its name unless it has its own `eye`
     'brown': ('#2e1a10', '#5a3420', '#8a5a34'), 'hazel': ('#3a2a12', '#6a5226', '#9a8040'),
     'green': ('#1a3a24', '#2e6a3e', '#5a9a5a'), 'blue': ('#1a2e5a', '#2e5aa0', '#5a8ad0'),

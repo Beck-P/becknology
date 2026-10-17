@@ -56,6 +56,12 @@ var BridgeCharacter = (function () {
     return true;
   }
   function stand() { seat = null; }
+  // ---- riding (js/countryside.js): something carries you — a horse, the buggy. m: { speed (× walking pace), item(o) → a
+  // scene item drawing it and you on it }; o gives it what it needs (where, which way, walking, stride, the rider's sit
+  // frame to draw at an offset). null: on your own feet again.
+  var mount = null;
+  function setMount(m) { mount = m || null; seat = null; }
+  function getMount() { return mount; }
   function isSeated() { return !!seat; }
 
   // ---- a pose (js/ski.js) ------------------------------------------------------------------------
@@ -164,7 +170,7 @@ var BridgeCharacter = (function () {
     }
     if (typeof BridgeArms !== 'undefined') BridgeArms.update();
     if (player.moveProgress < 1) {
-      var step = player.moveSpeed * (typeof BridgeGear !== 'undefined' ? BridgeGear.speed() : 1) * dt;
+      var step = player.moveSpeed * (mount ? mount.speed : typeof BridgeGear !== 'undefined' ? BridgeGear.speed() : 1) * dt;
       player.moveProgress += step;
       player.stride += step;
       if (player.moveProgress >= 1) {
@@ -298,6 +304,17 @@ var BridgeCharacter = (function () {
     var sheet = liveSheet(sheetKey());
     var pos = getRenderPos();
     var footRow = pos.y + 1 - 3 / 32;
+    if (mount && !seat) {
+      var rider = liveSheet(sheetKey('sit'));
+      return mount.item({ sc: sc, world: world, offX: offX, offY: offY, ts: ts, now: now, x: pos.x, y: pos.y, footRow: footRow,
+                          facing: player.facing, walking: player.moveProgress < 1, stride: player.stride,
+                          rider: function (ctx, dx, dy, tint) {           // the seated frame, its seat point at (dx, dy)
+                            if (!rider.ready) return;
+                            var row = DIR_ROW[player.facing] || 0, col = idleCol(Date.now());
+                            BridgeScene.drawOccluded(ctx, sc, rider.img, col * FRAME_W, row * FRAME_H, FRAME_W, FRAME_H, Math.round(dx) - FRAME_W / 2,
+                              Math.round(dy) - (FRAME_H - 3), footRow, offX, offY, tint, null, null, 'auto');
+                          } });
+    }
     var fit = fightLook();
     if (fit) {
       return { footRow: footRow, draw: function (ctx) {
@@ -585,6 +602,8 @@ var BridgeCharacter = (function () {
     sit: sit,
     stand: stand,
     setPose: setPose,
+    setMount: setMount,
+    getMount: getMount,
     getPose: getPose,
     sportImage: sportImage,
     sportKey: sheetKey,
