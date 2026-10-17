@@ -1,4 +1,4 @@
-// The captain's office (js/worlds/office.js): through its door in the bridge's south wall; the desk (the ledger), the
+// The captain's office (js/worlds/office.js): through its door in the bridge's south wall; the desk (its menu: the ledger), the
 // staff board (a face for everyone working for you, pinned live), the chart table (your ships as pins, one under way;
 // orders: send one anywhere), the strongbox (the accounts: pay what's owed, a business's books), sitting at the desk,
 // the window. node world/office.js [shots]
@@ -70,6 +70,9 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   await p.keyboard.down('ArrowUp'); await wait(1600); await p.keyboard.up('ArrowUp'); await wait(300);
   console.log('walked up to:', JSON.stringify(await ev(() => [BridgeCharacter.getX(), BridgeCharacter.getY(), (BridgeInteractions.getTarget() || {}).label])));
   await p.keyboard.press('e'); await wait(1200);
+  console.log('the desk:', (await text()).replace(/\n+/g, ' | ').slice(0, 160));
+  await ev(() => { const r = [...document.querySelectorAll('.world-dialog .wd-sell-row.pick')].find(x => /whole ledger/.test(x.textContent)); if (r) r.click(); });
+  await wait(1000);
   console.log('the desk opens:', JSON.stringify(await ev(() => { const m = document.getElementById('game-menu'); return m && m.classList.contains('open') ? m.dataset.tab : 'closed'; })));
   await p.screenshot({ path: SHOTS + '/office_desk.png' });
   await p.keyboard.press('Escape'); await wait(500);
@@ -100,6 +103,9 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   console.log('orders:', flat(await text()).slice(0, 400));
   await p.screenshot({ path: SHOTS + '/office_orders.png' });
   await ev(() => [...document.querySelectorAll('.world-dialog .wd-sell-row.pick')].filter(x => !x.classList.contains('none'))[0].click());
+  await wait(600);
+  console.log('her screen:', flat(await text()).slice(0, 200));     // (js/orders.js: her captain, her orders, or send her once)
+  await ev(() => [...document.querySelectorAll('.world-dialog .wd-sell-row.pick')].find(x => /Send her somewhere/.test(x.textContent)).click());
   await wait(600);
   console.log('send screen:', flat(await text()).slice(0, 200));
   await ev(() => [...document.querySelectorAll('.world-dialog .wd-sell-row.pick')].find(x => /Sapphire/.test(x.textContent)).click());

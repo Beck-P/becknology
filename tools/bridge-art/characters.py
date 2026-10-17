@@ -441,6 +441,45 @@ NPCS = {
                           circlet=('#8a6a10', '#c89a20', '#f0d060'), gem=('#6a0a3a', '#c0186a', '#ff70b0'),
                           hair=('#9a9aa0', '#c8c8d0', '#ececf2'), long_hair='flowing', pose='sit'),
 }
+# ---- the crowd: passers-by (js/crowd.js) -----------------------------------------------------------------------
+# A few bodies and outfits, every colour on them a KEY (XKEYS) that js/crowd.js swaps for the planet's wardrobe as a
+# sheet loads (as js/look.js does the pilot's) — so a handful of renders make hundreds of different people. Each
+# renders standing and seated (extra-<name>, extra-<name>-sit) and packs to assets/characters/crowd/<name>[-sit].png:
+#   BVENV/bin/python tools/bridge-art/characters.py /tmp/crowd/man extra-man
+#   python3 tools/bridge-art/sprites_post.py man /tmp/crowd/man apps/bridge/assets/characters/crowd
+# (tools/bridge-art/crowd.sh does them all.) Keep XKEYS in step with XKEYS in js/crowd.js.
+XKEYS = {
+    'skin': ('#704000', '#b06000', '#f08000'),
+    'hair': ('#007060', '#00b090', '#00f0c0'),
+    'top':  ('#700060', '#b00090', '#f000c0'),
+    'bot':  ('#606000', '#909000', '#c0c000'),
+    'out':  ('#305070', '#4878b0', '#60a0f0'),
+    'hat':  ('#407000', '#60b000', '#80f000'),
+}
+FIXED['xskin'] = XKEYS['skin']
+_X = dict(skin='xskin', shirt=XKEYS['top'], pants=XKEYS['bot'], hair=XKEYS['hair'])
+EXTRAS = {
+    'man':       dict(_X),
+    'man-cap':   dict(_X, cap=XKEYS['hat'], beard=True),
+    'vest':      dict(_X, vest=XKEYS['out'], beanie=XKEYS['hat'], mustache=True),
+    'worker':    dict(_X, apron=XKEYS['out'], beanie=XKEYS['hat'], beard=True, brawny=True),
+    'elder':     dict(_X, vest=XKEYS['out'], bald=True, beard=True),
+    'traveller': dict(_X, hood=XKEYS['out'], cloak=XKEYS['out']),
+    'woman':     dict(_X, skirt=XKEYS['bot'], long_hair=True),
+    'woman-bun': dict(_X, skirt=XKEYS['bot'], apron=XKEYS['out'], bun=True),
+    'woman-hat': dict(_X, skirt=XKEYS['bot'], straw_hat=XKEYS['hat'], ponytail=True),
+    'woman-hood': dict(_X, skirt=XKEYS['bot'], hood=XKEYS['out']),
+    'child':     dict(_X, ponytail=True, young=True),
+    'child-cap': dict(_X, cap=XKEYS['hat'], young=True),
+    'skier':     dict(_X, beanie=XKEYS['hat'], goggles=True, vest=XKEYS['out']),
+    'suit':      dict(_X, bib=True, bowtie=XKEYS['out'], mustache=True),
+    'gown':      dict(_X, skirt=XKEYS['bot'], gown=True, sequin=True, sleeve='xskin', long_hair='flowing', stole=XKEYS['out']),
+    'elf':       dict(_X, long_hair=True, elf_ears=True, tunic=XKEYS['out'], tall_boots=True, bracers=True),
+    'elf-braid': dict(_X, skirt=XKEYS['bot'], braid='side', elf_ears=True, shawl=XKEYS['out']),
+}
+for _n, _s in EXTRAS.items():
+    NPCS['extra-' + _n] = dict(_s, pose='stand')
+    NPCS['extra-' + _n + '-sit'] = dict(_s, pose='sit')
 LIGHT_DIR = Vector((-0.5, -0.35, 0.8)).normalized()
 
 
@@ -1334,7 +1373,7 @@ else:
     for key, tone in (('bib', 'bib'), ('gloves', 'glove'), ('sequin', 'sequin')):   # True: the stock colour; a tuple: its own
         if isinstance(spec.get(key), tuple):
             tones[tone] = spec[key]
-    VARIANTS = {WHO.replace('npc-', ''): tones}
+    VARIANTS = {'key': tones} if WHO.startswith('extra-') else {WHO.replace('npc-', ''): tones}   # extras: key colours, swapped in js/crowd.js
     POSE = spec['pose']
 
 # ---- skis and poles (pilot-ski-*): skis on the root so they stay on the snow however the legs bend ----

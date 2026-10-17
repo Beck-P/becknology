@@ -179,6 +179,13 @@ var BridgeAudio = (function () {
       voice(d, t, 0.03, { type: 'sine', freq: hz(m) * 2, gain: 0.04 * v, a: 0.002, d: 0.06, s: 0, r: 0.05 });
     },
     brush: function (d, t, m, dur, v) { noiseHit(d, t, 0.22, { freq: 3200, ftype: 'bandpass', q: 0.6, gain: 0.035 * v, rev: 0.2 }); },
+    // the folk band (the fair, a tavern when you sit down): a bowed fiddle, a squeezebox, a tambourine
+    fiddle: function (d, t, m, dur, v) {
+      voice(d, t, dur, { type: 'sawtooth', freq: hz(m), unison: [-5, 5], gain: 0.036 * v, a: 0.045, d: 0.2, s: 0.75, r: 0.18, cutoff: 2600, q: 1.1, vib: [6, 12], rev: 0.35, dly: 0.1 });
+      noiseHit(d, t, Math.min(0.12, dur), { freq: 2600, ftype: 'bandpass', q: 2, gain: 0.008 * v });
+    },
+    squeeze: function (d, t, m, dur, v) { voice(d, t, dur, { type: 'square', freq: hz(m), unison: [-8, 0, 8], gain: 0.02 * v, a: 0.12, d: 0.4, s: 0.85, r: 0.35, cutoff: 1800, vib: [4.5, 4], rev: 0.3 }); },
+    tamb:  function (d, t, m, dur, v) { noiseHit(d, t, 0.16, { freq: 7000, ftype: 'bandpass', q: 3, gain: 0.045 * v, rev: 0.15 }); noiseHit(d, t + 0.03, 0.1, { freq: 9500, gain: 0.02 * v }); },
     ride:  function (d, t, m, dur, v) {
       noiseHit(d, t, 0.35, { freq: 7000, ftype: 'highpass', gain: 0.022 * v, rev: 0.25 });
       voice(d, t, 0.02, { type: 'sine', freq: 5200, gain: 0.006 * v, a: 0.001, d: 0.4, s: 0, r: 0.3 });
@@ -241,6 +248,18 @@ var BridgeAudio = (function () {
     casino:   { bpm: 92, root: 50, mode: 'ionian', chords: [1, 4, 0, 5, 1, 4, 0, 0], swing: 0.2, pad: 'warm',
                 arp: { inst: 'keys', steps: [3, 10], oct: 12, chord: true }, bass: { inst: 'upright', steps: [0, 4, 8, 12], walk: true },
                 lead: { inst: 'sax', oct: 12, density: 0.38 }, perc: [['ride', [0, 4, 7, 8, 12, 15]], ['brush', [4, 12]]] },
+    // the Harvest Fair: a jig, the fiddle leading, guitar strummed on the off-beats, a tambourine
+    fair:     { bpm: 116, root: 55, mode: 'ionian', chords: [0, 4, 0, 4, 3, 0, 4, 0], swing: 0.18, pad: 'squeeze',
+                arp: { inst: 'pluck', steps: [4, 12], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 8] },
+                lead: { inst: 'fiddle', oct: 24, density: 0.72 }, perc: [['tom', [0, 8]], ['tamb', [4, 12]], ['shaker', [2, 6, 10, 14]]] },
+    // Lantern Tide: a slow hymn with a lilt, bells like the harbour's, a flute for the ones the sea kept
+    tide:     { bpm: 58, root: 50, mode: 'dorian', chords: [0, 5, 3, 4, 0, 5, 6, 0], swing: 0.24, pad: 'warm',
+                arp: { inst: 'bell', steps: [0, 6, 12], oct: 24 }, bass: { inst: 'bass', steps: [0] },
+                lead: { inst: 'flute', oct: 24, density: 0.3 } },
+    // a tavern when you've sat down: the band strikes up — squeezebox, fiddle, a drum and a shaker
+    band:     { bpm: 108, root: 52, mode: 'mixolydian', chords: [0, 6, 3, 0, 0, 6, 4, 0], swing: 0.2, pad: 'squeeze',
+                arp: { inst: 'pluck', steps: [4, 12], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 6, 8] },
+                lead: { inst: 'fiddle', oct: 24, density: 0.62 }, perc: [['tom', [0, 8]], ['shaker', [2, 6, 10, 14]], ['tamb', [12]]] },
     ship:     { bpm: 66, root: 53, mode: 'lydian', chords: [0, 1, 5, 4], pad: 'warm',
                 arp: { inst: 'box', steps: [0, 3, 6, 8, 11, 14], oct: 12 }, bass: { inst: 'bass', steps: [0], oct: -12 },
                 lead: { inst: 'box', oct: 24, density: 0.25 } }
@@ -340,13 +359,16 @@ var BridgeAudio = (function () {
     stopSong();
     var th = THEMES[themeName];
     if (!th) return;
-    var bus = ac.createGain();
+    var m = moodNow(themeName);
+    th = moodTheme(th, m.mood);
+    var bus = ac.createGain(), lp = ac.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = m.cutoff; lp.Q.value = 0.5;
     bus.gain.setValueAtTime(0.0001, ac.currentTime);
     bus.gain.linearRampToValueAtTime(1, ac.currentTime + 2.5);
-    bus.connect(musicBus);
+    bus.connect(lp); lp.connect(musicBus);
     var seed = 1;
     for (var i = 0; i < themeName.length; i++) seed = (seed * 31 + themeName.charCodeAt(i)) % 2147483647;
-    song = { name: themeName, th: th, bus: bus, step: 0, next: ac.currentTime + 0.15, r: rng(seed + Math.floor(Date.now() / 600000)),
+    song = { name: themeName, th: th, bus: bus, lp: lp, mood: m.mood, step: 0, next: ac.currentTime + 0.15, r: rng(seed + Math.floor(Date.now() / 600000)),
              phrases: {}, spb: 60 / th.bpm / 4 };
     clearInterval(timer);
     timer = setInterval(schedule, 25);
@@ -364,6 +386,7 @@ var BridgeAudio = (function () {
 
   function schedule() {
     if (!song || !ac) return;
+    if (ac.currentTime - retuned > 4) { retuned = ac.currentTime; retune(); if (!song) return; }
     while (song.next < ac.currentTime + 0.12) {
       playStep(song, song.step, song.next);
       var swing = song.th.swing && song.step % 2 === 0 ? song.th.swing : (song.th.swing ? -song.th.swing : 0);
@@ -373,6 +396,7 @@ var BridgeAudio = (function () {
   }
 
   function playStep(s, n, t) {
+    if (s.nextTh && n % 16 === 0) { s.th = s.nextTh; s.nextTh = null; s.spb = 60 / s.th.bpm / 4; s.phrases = {}; }   // a new mood at the bar line
     var th = s.th, st = n % 16, bar = Math.floor(n / 16), d = s.bus;
     var deg = th.chords[bar % th.chords.length], tones = chordTones(th, deg);
     var section = Math.floor(bar / 8) % 4;                  // 0 sparse, 1 full, 2 full, 3 thinner
@@ -415,6 +439,55 @@ var BridgeAudio = (function () {
         if (x.bar === b && x.step === st) INST[th.lead.inst](d, t, scaleNote(th, x.deg) + th.lead.oct - 12, s.spb * x.len, 0.9);
       });
     }
+  }
+
+  // ---- the moment: the hour, the weather, a festival, a seat in a tavern ---------------------------------
+  // Outdoors the band follows the sky: hushed at dawn, itself by day, slower at dusk, sparse and low at night;
+  // rain or snow softens it (a filter over the song), a storm darkens the key. A festival open where you are plays
+  // its own tune (assets/festivals.json `music`), and sitting down in a tavern starts the band. Checked every few
+  // seconds; a new mood comes in at the next bar line, a new tune crossfades.
+  var MOODY = { lumar: 1, verdance: 1, hoarfell: 1, sylvara: 1, summit: 1 };
+  var TAVERNS = /^(lumar-tavern|lumar-crown-pub|lumar-tern-inn|hoarfell-lodge)$/;
+  var placeId = '', retuned = 0;
+  function moodTheme(th, mood) {
+    if (!mood || mood === 'day') return th;
+    var o = Object.assign({}, th), k = { dawn: [0.9, 0.6], dusk: [0.92, 0.7], night: [0.84, 0.45], wet: [0.94, 0.7], storm: [1.04, 0.8] }[mood] || [1, 1];
+    o.bpm = Math.round(th.bpm * k[0]);
+    if (th.lead) o.lead = Object.assign({}, th.lead, { density: th.lead.density * k[1], oct: th.lead.oct - (mood === 'night' ? 12 : 0) });
+    if (mood === 'night' || mood === 'dawn') { o.perc = null; if (th.arp) o.arp = Object.assign({}, th.arp, { sparse: Math.max(th.arp.sparse || 0, 0.35) }); }
+    if (mood === 'dusk' && th.perc) o.perc = th.perc.filter(function (x) { return x[0] === 'shaker'; });
+    if (mood === 'storm') {
+      o.mode = th.mode === 'ionian' || th.mode === 'mixolydian' ? 'dorian' : th.mode === 'lydian' ? 'aeolian' : th.mode;
+      o.perc = [['tom', [0, 6, 8, 14]]].concat(th.perc || []);
+    }
+    return o;
+  }
+  // { mood, cutoff } for a tune where you are now
+  function moodNow(themeName) {
+    var out = { mood: 'day', cutoff: 18000 };
+    if (!MOODY[themeName] || !placeId) return out;
+    var W = typeof BridgeWeather !== 'undefined' && BridgeWeather.here ? BridgeWeather.here(placeId) : null;
+    var wet = !!(W && W.def && W.def.wet && W.k > 0.3), storm = !!(W && (W.kind === 'storm' || W.kind === 'blizzard') && W.k > 0.3);
+    var k = typeof BridgeClock !== 'undefined' && BridgeClock.sky ? BridgeClock.sky(placeId) : null, part = k ? k.part : 'day';
+    out.mood = storm ? 'storm' : part === 'night' ? 'night' : part === 'dawn' ? 'dawn' : part === 'dusk' ? 'dusk' : wet ? 'wet' : 'day';
+    if (wet) out.cutoff = W.kind === 'snow' ? 2600 : 1500;
+    return out;
+  }
+  // which tune this moment wants: a festival's, the tavern band, or the place's own
+  function tuneNow() {
+    if (!place) return null;
+    var F = typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on ? BridgeFestivals.on() : [];
+    for (var i = 0; i < F.length; i++) if (F[i].world === placeId && F[i].music && BridgeFestivals.open(F[i])) return { theme: F[i].music, amb: place.amb.concat(['murmur']) };
+    if (TAVERNS.test(placeId) && typeof BridgeCharacter !== 'undefined' && BridgeCharacter.isSeated && BridgeCharacter.isSeated()) return { theme: 'band', amb: place.amb };
+    return place;
+  }
+  function retune() {
+    var want = tuneNow();
+    if (!want || !song) return;
+    if (want.theme !== song.name) { start(want.theme, want.amb); return; }
+    var m = moodNow(song.name);
+    song.lp.frequency.setTargetAtTime(m.cutoff, ac.currentTime, 1.5);
+    if (m.mood !== song.mood) { song.mood = m.mood; song.nextTh = moodTheme(THEMES[song.name], m.mood); }
   }
 
   // ---- ambience ---------------------------------------------------------------------------------------
@@ -839,9 +912,11 @@ var BridgeAudio = (function () {
   // ---- places ---------------------------------------------------------------------------------------
   var place = null;
   function setWorld(id, w) {
+    placeId = id;
     place = themeFor(id, w);
-    if (!ac) { wanted = place; return; }
-    start(place.theme, place.amb);
+    var t = tuneNow() || place;
+    if (!ac) { wanted = t; return; }
+    start(t.theme, t.amb);
   }
 
   // ---- the ♪ pill -------------------------------------------------------------------------------------
@@ -884,7 +959,7 @@ var BridgeAudio = (function () {
   }
 
   return { setWorld: setWorld, sfx: sfx, cycle: cycle, clock: clock, mode: function () { return prefs.mode; },
-           _state: function () { return { ctx: ac && ac.state, song: song && song.name, amb: ambKey, place: place }; },
+           _state: function () { return { ctx: ac && ac.state, song: song && song.name, mood: song && song.mood, bpm: song && Math.round(60 / song.spb / 4), cutoff: song && Math.round(song.lp.frequency.value), amb: ambKey, place: place }; },
            _level: function () {                    // peak and rms of what's playing (tests)
              if (!meter) return null;
              var a = new Float32Array(meter.fftSize); meter.getFloatTimeDomainData(a);

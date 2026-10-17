@@ -4,10 +4,13 @@
  * The world is still painted in 2D into its native buffer (js/world.js); on its way to the screen the finished
  * frame goes through the card, which adds what's cheap there and dear on the CPU:
  *
- *   glow   light that spills: anything in the place much brighter than what's round it (a lamp after dark, a lit
- *          window, neon, a fire, the moon on foam) throws a soft halo over its surroundings, more after dark than by
- *          day. It's taken from the place before anyone is drawn in it (BridgeGPU.source, js/world.js), so a pale
- *          helmet or a white shirt never glows; the halo is then laid over everything.
+ *   glow   light that spills: what gives off light throws a soft halo over its surroundings, more after dark than
+ *          by day. A scene rendered with its glow image (scene.json "glow": the render's emission pass, alone) says
+ *          exactly what that is, lined up with the scene as the camera moves; anything else — lanterns on the water,
+ *          neon drawn in code — is found by eye: much brighter than what's round it, and coloured or blazing (a
+ *          guess, used outdoors; indoors only without a glow image, where a firelit pale thing can pass for a lamp).
+ *          The guess is taken from the place before anyone is drawn in it (BridgeGPU.source, js/world.js), so a pale
+ *          helmet never glows; the halo is then laid over everything.
  *          Worked at half, quarter and eighth size, then laid over the frame (a screen blend) at native resolution, so it
  *          lands on the same pixel grid as the art; the art's own pixels are read exactly, never resampled.
  *
@@ -16,14 +19,15 @@
  * BridgeGPU.present(buf, w, h, opts) → a canvas holding the finished frame, or null when the card isn't there to
  *   help (no WebGL2, the context lost, graphics drawn in software, or turned off: ?gpu=0 in the URL, or localStorage
  *   bridge_gpu = 'off') — the caller then draws buf as before. ?gpu=1 keeps it on even in software (the tests).
- *   opts.glow scales the glow (0 none, 1 as tuned; a world's JSON may set "glow").
+ *   opts.glow scales the glow (0 none, 1 as tuned; a world's JSON may set "glow"); opts.scene / offX / offY: the
+ *   scene drawn and where (its glow image); opts.guess: how much to trust the eye (0..1).
  */
 var BridgeGPU = (function () {
   var off = /[?&]gpu=0(&|$)/.test(location.search), force = /[?&]gpu=1(&|$)/.test(location.search);
   try { if (localStorage.getItem('bridge_gpu') === 'off') off = true; } catch (e) { /* private mode */ }
 
   var cv = null, gl = null, failed = false, lost = false, frames = 0;
-  var prog = {}, frame = null, src = null, sourced = false, T = {}, vao = null;
+  var prog = {}, frame = null, src = null, sourced = false, T = {}, vao = null, none = null, glows = {};
 
   var VS = '#version 300 es\nin vec2 p;\nvoid main() { gl_Position = vec4(p, 0.0, 1.0); }\n';
   var HEAD = '#version 300 es\nprecision highp float;\nout vec4 o;\n' +
@@ -33,6 +37,7 @@ var BridgeGPU = (function () {
     // and brighter than their neighbourhood, so a sunlit wall or a lit room's floor doesn't, a lamp in the dark does
     bright: HEAD +
       'uniform sampler2D frame; uniform vec2 size; uniform float gain;\n' +
+      'uniform sampler2D glowTex; uniform vec4 glowAt; uniform vec2 full; uniform float glowK; uniform float guess;\n' +
       'float val(vec3 c) { return max(c.r, max(c.g, c.b)); }\n' +
       'void main() {\n' +
       '  vec2 uv = gl_FragCoord.xy / size;\n' +
@@ -41,9 +46,11 @@ var BridgeGPU = (function () {
       '  float near = val(textureLod(frame, uv, 3.0).rgb);\n' +        // the neighbourhood, ~8 px round
       '  float all = luma(textureLod(frame, vec2(0.5), 12.0).rgb);\n' + // the whole frame
       '  float light = max(smoothstep(0.3, 0.55, sat), 0.6 * smoothstep(0.9, 0.98, v));\n' +
-      '  float k = light * smoothstep(0.6, 0.9, v) * smoothstep(0.15, 0.4, v - near);\n' +
+      '  float k = guess * light * smoothstep(0.6, 0.9, v) * smoothstep(0.15, 0.4, v - near);\n' +
       '  float dark = 1.0 - smoothstep(0.12, 0.5, all);\n' +
-      '  o = vec4(c * k * gain * mix(0.25, 1.0, dark), 1.0);\n' +
+      '  vec2 su = (uv * full - glowAt.xy) / glowAt.zw;\n' +              // where this falls on the scene's glow image
+      '  vec3 e = (glowK > 0.0 && su.x >= 0.0 && su.y >= 0.0 && su.x <= 1.0 && su.y <= 1.0) ? texture(glowTex, su).rgb * glowK : vec3(0.0);\n' +
+      '  o = vec4(max(c * k * gain * mix(0.25, 1.0, dark), e * gain * 0.8), 1.0);\n' +
       '}\n',
     // a 9-tap gaussian along dir, from five linear reads
     blur: HEAD +
@@ -141,6 +148,9 @@ var BridgeGPU = (function () {
       for (var k in FS) prog[k] = program(FS[k]);
       frame = texture(gl.NEAREST);               // the finished frame, read exactly
       src = texture(gl.LINEAR_MIPMAP_LINEAR);    // what glows, with its averages
+      none = texture(gl.NEAREST);                // no glow image: black
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+      glows = {};
       vao = gl.createVertexArray();
       gl.bindVertexArray(vao);
       gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
@@ -176,7 +186,25 @@ var BridgeGPU = (function () {
     if (mips) gl.generateMipmap(gl.TEXTURE_2D);
   }
 
-  function glow(buf, w, h, amt, sourced) {
+  // a scene's glow image, as a texture once it's loaded (null till then, or if it has none)
+  function sceneGlow(sc) {
+    if (!sc || !sc.meta || !sc.meta.glow) return null;
+    var key = sc.id + (sc.q || ''), G = glows[key];
+    if (!G) {
+      G = glows[key] = { ready: false, tex: null, img: new Image() };
+      G.img.onload = function () {
+        if (!gl || lost) return;
+        G.tex = texture(gl.LINEAR);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, G.img);
+        G.w = G.img.width; G.h = G.img.height; G.ready = true;
+      };
+      G.img.src = '/bridge/assets/scenes/' + sc.id + '/glow' + (sc.ext || '.png') + (sc.q || '');
+    }
+    return G.ready ? G : null;
+  }
+
+  function glow(buf, w, h, amt, sourced, o) {
     upload(frame, buf, false);
     if (!sourced) upload(src, buf, true);         // no source taken this frame: the whole frame is what glows
     bind(0, src);
@@ -184,8 +212,16 @@ var BridgeGPU = (function () {
     for (var i = 0; i < LEVELS.length; i++) {
       lw = Math.max(1, Math.ceil(lw / 2)); lh = Math.max(1, Math.ceil(lh / 2));
       var a = target('a' + i, lw, lh), b = target('b' + i, lw, lh);
-      if (i === 0) pass('bright', a, lw, lh, function (u) { gl.uniform1i(u.frame, 0); gl.uniform1f(u.gain, GAIN); });
-      else { bind(0, outs[i - 1].tex); pass('copy', a, lw, lh, function (u) { gl.uniform1i(u.src, 0); }); }
+      if (i === 0) {
+        var G = sceneGlow(o.scene), sky = G && typeof BridgeScene !== 'undefined' && BridgeScene.skyOf ? BridgeScene.skyOf(o.scene) : null;
+        bind(1, G ? G.tex : none);
+        pass('bright', a, lw, lh, function (u) {
+          gl.uniform1i(u.frame, 0); gl.uniform1f(u.gain, GAIN); gl.uniform1i(u.glowTex, 1); gl.uniform2f(u.full, w, h);
+          gl.uniform4f(u.glowAt, G ? o.offX - o.scene.meta.originX : 0, G ? o.offY - o.scene.meta.originY : 0, G ? G.w : 1, G ? G.h : 1);
+          gl.uniform1f(u.glowK, G ? (sky ? 1 - 0.85 * sky.day : 1) : 0);              // a lamp by day hardly glows
+          gl.uniform1f(u.guess, o.guess != null ? o.guess : 1);
+        });
+      } else { bind(0, outs[i - 1].tex); pass('copy', a, lw, lh, function (u) { gl.uniform1i(u.src, 0); }); }
       bind(0, a.tex); pass('blur', b, lw, lh, function (u) { gl.uniform1i(u.src, 0); gl.uniform2f(u.dir, 1, 0); });
       bind(0, b.tex); pass('blur', a, lw, lh, function (u) { gl.uniform1i(u.src, 0); gl.uniform2f(u.dir, 0, 1); });
       outs.push(a);
@@ -218,7 +254,7 @@ var BridgeGPU = (function () {
     var amt = opts && opts.glow != null ? +opts.glow : 1, use = sourced;
     sourced = false;                               // a source is for this frame only
     if (!(amt > 0) || !ready()) return null;
-    try { glow(buf, w, h, amt, use); } catch (e) { fail(e); return null; }
+    try { glow(buf, w, h, amt, use, opts || {}); } catch (e) { fail(e); return null; }
     frames++;
     return cv;
   }

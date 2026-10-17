@@ -21,6 +21,7 @@ const SUITES = {
     ['world/hands.js'],
     ['world/staff.js', SHOTS],
     ['world/office.js', SHOTS],
+    ['world/empire.js', SHOTS],
     ['world/aquarium.js', SHOTS],
     ['world/foliage.js', SHOTS],
     ['world/nature.js', SHOTS],
@@ -29,7 +30,9 @@ const SUITES = {
     ['world/workshop.js', SHOTS],
     ['world/gpu.js', SHOTS],
     ['world/routines.js', SHOTS],
+    ['world/crowd.js', SHOTS],
     ['world/festivals.js', SHOTS],
+    ['world/music.js'],
     ['world/events.js', SHOTS],
     ['world/landings.js', SHOTS + '/landings'],
     ['world/arrive.js', SHOTS + '/arrive'],
@@ -72,6 +75,7 @@ const KEEP = new RegExp([
   /specialist|move|screen|topics|CONSOLE|FAILED|Error|errors?\b|worlds|same|coins|verdict|bar /,
   /status|mate:|settled|beck:|aly:|chat|heard|unread|after|typed|my turn|sunk|crew|things match/,
   /hp|down|up:|roll|chain|energy|boxes/,
+  /contract|dispatch|orders away|route lines|treasury/,
 ].map((r) => r.source).join('|'), 'i');
 const BAD = /PAGEERR|CONSOLE-ERR|^CONSOLE (?!log |info |warning |debug )|FAILED|\berrors?:? [1-9]|TypeError|ReferenceError|Cannot read/m;
 
