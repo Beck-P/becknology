@@ -1,0 +1,370 @@
+<meta charset="utf-8">
+<title>Becknology Look Book 2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a dark gallery wall — the scenes are the paintings, full width; a sticky "sky dial" bar runs the hour,
+   season, weather and finish for every scene at once; plain notes sit under each. Single dark theme by choice. */
+:root {
+  --ink: #0f1018;          /* the wall */
+  --panel: #171926;       /* raised strips: the control bar, notes */
+  --line: #2a2d40;
+  --parchment: #ece4d2;   /* text */
+  --dust: #a49fb2;        /* secondary text */
+  --lantern: #f0b45a;     /* the one accent: lamplight */
+  --tarn: #7cc6c2;        /* water — used only for "in the game today" labels */
+  --display: "Pixelify Sans", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --max: 1120px;
+  color-scheme: dark;
+}
+html { background: var(--ink); }
+body { background: var(--ink); color: var(--parchment); font: 17px/1.6 var(--body); margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+.wrap { max-width: var(--max); margin: 0 auto; }
+a { color: var(--lantern); }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; text-wrap: balance; line-height: 1.15; margin: 0; letter-spacing: .01em; }
+h1 { font-size: clamp(2.4rem, 6vw, 4rem); }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); }
+h3 { font-size: 1.35rem; }
+h4 { font: 700 .78rem/1.2 var(--body); text-transform: uppercase; letter-spacing: .09em; color: var(--dust); margin: 0 0 .5rem; }
+p { margin: 0; }
+.eyebrow { font: 700 .78rem/1.2 var(--body); text-transform: uppercase; letter-spacing: .12em; color: var(--lantern); }
+.lead { font-size: 1.15rem; max-width: 64ch; color: var(--parchment); }
+.muted { color: var(--dust); }
+
+/* header */
+.top { padding-block: 48px 28px; display: grid; gap: 16px; }
+.top nav { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .95rem; }
+.top nav a { color: var(--dust); text-decoration: none; border-bottom: 1px solid var(--line); }
+.top nav a:hover, .top nav a:focus-visible { color: var(--parchment); border-color: var(--lantern); }
+
+/* the sky dial */
+.dial { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--panel) 94%, transparent);
+  backdrop-filter: blur(6px); border-block: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
+.dial-in { max-width: var(--max); margin: 0 auto; padding: 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+.ctl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ctl > .lbl { font: 700 .72rem/1 var(--body); text-transform: uppercase; letter-spacing: .1em; color: var(--dust); }
+.time { flex: 1 1 100%; min-width: 0; }
+.time input[type=range] { flex: 1 1 140px; min-width: 120px; accent-color: var(--lantern); }
+.clock { font: 500 .95rem/1 var(--mono); min-width: 12.5ch; color: var(--parchment); font-variant-numeric: tabular-nums; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button, .btn { font: 600 .85rem/1 var(--body); color: var(--dust); background: transparent; border: 0; padding: 8px 10px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--lantern); color: #1a1208; }
+.seg button:hover:not([aria-pressed="true"]), .btn:hover { color: var(--parchment); }
+.btn { border: 1px solid var(--line); border-radius: 6px; }
+.btn[aria-pressed="true"] { border-color: var(--lantern); color: var(--lantern); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--lantern); outline-offset: 2px; }
+.presets { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.presets button { font: 600 .78rem/1 var(--body); color: var(--dust); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 9px; cursor: pointer; }
+.presets button:hover { color: var(--parchment); border-color: var(--dust); }
+
+/* sections */
+section { padding-block: 56px 8px; }
+.sec-head { display: grid; gap: 10px; margin-bottom: 26px; max-width: 70ch; }
+.ladder { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.vgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 18px; }
+.rung { margin: 0; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.rung figcaption { display: grid; gap: 8px; }
+.rung .rec { justify-self: start; font: 700 .7rem/1 var(--body); letter-spacing: .1em; text-transform: uppercase; color: #1a1208; background: var(--lantern); padding: 5px 7px; border-radius: 3px; }
+.rung ul, .place ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+.rung .build { color: var(--dust); font-size: .95rem; }
+.place { display: grid; gap: 18px; margin-bottom: 64px; }
+.place-text { display: grid; gap: 16px; }
+.place-text header { display: grid; gap: 6px; }
+.blurb { max-width: 68ch; font-size: 1.05rem; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 260px); gap: 26px; align-items: start; }
+.cols > * { min-width: 0; }
+.cols p { color: var(--parchment); }
+.now { margin: 0; display: grid; gap: 6px; }
+.now img { width: 100%; border: 1px solid var(--line); border-radius: 4px; display: block; image-rendering: auto; }
+.now figcaption { font: 700 .72rem/1.2 var(--body); text-transform: uppercase; letter-spacing: .1em; color: var(--tarn); }
+.stage { border-radius: 4px; box-shadow: 0 0 0 1px var(--line); }
+.now-btn { padding: 0; border: 0; background: none; cursor: zoom-in; display: block; width: 100%; }
+.lightbox { position: fixed; inset: 0; z-index: 20; background: rgba(6, 7, 12, .92); display: grid; place-items: center; align-content: center; gap: 10px;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); cursor: zoom-out; }
+.lightbox[hidden] { display: none; }
+.lightbox img { max-width: min(100%, 1280px); max-height: 82vh; border-radius: 4px; }
+.lightbox p { color: var(--dust); font-size: .9rem; }
+
+/* what it takes */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .97rem; }
+th, td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+th { font: 700 .74rem/1.2 var(--body); text-transform: uppercase; letter-spacing: .09em; color: var(--dust); background: var(--panel); }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+.size { font: 500 .85rem/1.3 var(--mono); color: var(--lantern); white-space: nowrap; }
+.steps { margin: 0; padding-left: 1.3em; display: grid; gap: 10px; max-width: 72ch; }
+.steps li::marker { color: var(--lantern); font-weight: 700; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; margin-top: 32px; }
+.two > * { min-width: 0; display: grid; gap: 12px; align-content: start; }
+footer { padding-block: 56px 64px; color: var(--dust); font-size: .9rem; }
+
+@media (max-width: 900px) {
+  .ladder, .vgrid { grid-template-columns: minmax(0, 1fr); }
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .now { max-width: 360px; }
+  .two { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .dial-in { gap: 8px 14px; }
+  .presets { display: none; }
+  .seg button { padding: 7px 8px; font-size: .8rem; }
+}
+</style>
+<style id="stage-css">
+/* the stage: one native-resolution canvas scaled up nearest-neighbour, plus the finish layers over it */
+.stage { position: relative; width: 100%; max-width: 100%; background: #07080c; overflow: hidden; }
+.stage .layer { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.stage .dof, .stage .bloom, .stage .vig { display: none; pointer-events: none; }
+.stage[data-finish="soft"] .bloom, .stage[data-finish="hd2d"] .bloom { display: block; filter: blur(7px) brightness(1.2); mix-blend-mode: screen; opacity: .9; image-rendering: auto; }
+.stage[data-finish="hd2d"] .bloom { filter: blur(9px) brightness(1.35); }
+.stage[data-finish="hd2d"] .dof { display: block; filter: blur(2.6px) saturate(1.05);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.7) 12%, transparent 34%, transparent 66%, rgba(0,0,0,.7) 88%, #000 100%);
+          mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.7) 12%, transparent 34%, transparent 66%, rgba(0,0,0,.7) 88%, #000 100%); }
+.stage[data-finish="soft"] .vig { display: block; background: radial-gradient(ellipse at center, transparent 62%, rgba(8, 6, 18, .26) 100%); }
+.stage[data-finish="hd2d"] .vig { display: block; background: radial-gradient(ellipse at center, transparent 48%, rgba(8, 6, 18, .5) 100%); }
+.stage[data-finish="hd2d"] .main { filter: contrast(1.07) saturate(1.1); }
+.stage-tag { position: absolute; left: 8px; bottom: 8px; font: 600 11px/1.2 system-ui, sans-serif; color: #f4ead6; background: rgba(10, 10, 16, .72); padding: 4px 7px; border-radius: 3px; letter-spacing: .02em; }
+.stage-err { position: absolute; left: 0; right: 0; top: 0; font: 12px/1.3 monospace; color: #fff; background: #a01c2c; padding: 6px 8px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Becknology · where the art could go, take two</p>
+    <h1>Look Book 2</h1>
+    <p class="lead">This time everything is built in the game's own 3D kit: the same Blender models, the same 45° view, the same chibis. Each place is rebuilt as a fuller little diorama with the first look book's compositions, and lit live: light by the hour, shadows that move with the sun, water with reflections, weather, and the soft glow. Pick a version to compare four finishes of the same models.</p>
+    <nav aria-label="Sections">
+      <a href="#versions">Four versions</a><a href="#places">Places</a><a href="#buildings">Buildings</a><a href="#people">People</a><a href="#postcards">Postcard view</a><a href="#realistic">What it takes</a>
+    </nav>
+  </header>
+</div>
+
+<div class="dial" role="region" aria-label="Scene controls">
+  <div class="dial-in">
+    <div class="ctl time">
+      <span class="lbl">Hour</span>
+      <input id="time" type="range" min="0" max="23.95" step="0.05" value="18.2" aria-label="Time of day">
+      <span class="clock" id="clock">18:12 Golden</span>
+      <button class="btn" id="play" aria-pressed="false" title="Run the day">Run the day</button>
+      <span class="presets" aria-label="Jump to">
+        <button data-h="6.6">Dawn</button><button data-h="12.5">Noon</button><button data-h="18.2">Golden</button><button data-h="20.1">Dusk</button><button data-h="23">Night</button>
+      </span>
+    </div>
+    <div class="ctl"><span class="lbl">Season</span>
+      <span class="seg" id="season"><button data-v="spring">Spring</button><button data-v="summer">Summer</button><button data-v="autumn">Autumn</button><button data-v="winter">Winter</button></span>
+    </div>
+    <div class="ctl"><span class="lbl">Weather</span>
+      <span class="seg" id="weather"><button data-v="clear">Clear</button><button data-v="rain">Rain</button><button data-v="snow">Snow</button><button data-v="fog">Fog</button></span>
+    </div>
+    <div class="ctl"><span class="lbl">Version</span>
+      <span class="seg" id="version"><button data-v="model" title="32 px a tile, smooth light">Model</button><button data-v="toy" title="32 px a tile, toy light and outlines">Toy</button><button data-v="modelhd" title="48 px a tile, smooth light">Model HD</button><button data-v="toyhd" title="48 px a tile, toy light and outlines">Toy HD</button></span>
+    </div>
+    <div class="ctl"><span class="lbl">Finish</span>
+      <span class="seg" id="finish"><button data-v="clean" title="Pure pixels">Clean</button><button data-v="soft" title="Pixels with glow — recommended">Soft light</button><button data-v="hd2d" title="Octopath: glow, depth of field, vignette">HD-2D</button></span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section id="versions">
+    <div class="sec-head">
+      <p class="eyebrow">Four versions</p>
+      <h2>The same farm, four finishes</h2>
+      <p class="muted">One Blender render of Millpond Farm, finished four ways: at today's 32 pixels a tile or a finer 48, with smooth light or a cuter toy-like light with outlines. The bar at the top switches every scene on the page between them.</p>
+    </div>
+    <div class="vgrid" id="vgrid"></div>
+  </section>
+
+  <section id="places">
+    <div class="sec-head">
+      <p class="eyebrow">Places</p>
+      <h2>Five places, rebuilt in 3D</h2>
+      <p class="muted">Each place is a new scene made with the game's Blender kit plus richer pieces: shaped land, layered plants, buildings with depth, clutter at human scale. Try golden hour, then night, then winter, and switch the version and the finish. The screenshot beside the notes is the same world in the game today.</p>
+    </div>
+    <div id="place-list"></div>
+  </section>
+
+  <section id="buildings">
+    <div class="sec-head">
+      <p class="eyebrow">Buildings</p>
+      <h2>Brambleford, today's kit and a richer one</h2>
+      <p class="muted">The village as the game builds it, next to the same street built with a richer kit of house parts.</p>
+    </div>
+    <div id="building-list"></div>
+  </section>
+
+  <section id="people">
+    <div class="sec-head">
+      <p class="eyebrow">People</p>
+      <h2>The same chibis, with faces</h2>
+    </div>
+    <div id="people-list"></div>
+  </section>
+
+  <section id="postcards">
+    <div class="sec-head">
+      <p class="eyebrow">Postcard view</p>
+      <h2>The farm from the side, for the big moments</h2>
+      <p class="muted">The same 3D farm seen from low down, so a postcard matches the world. Click it to play the camera moving down from the game's view.</p>
+    </div>
+    <div id="vista-list"></div>
+  </section>
+
+  <section id="realistic">
+    <div class="sec-head">
+      <p class="eyebrow">What it takes</p>
+      <h2>What's realistic, and in what order</h2>
+      <p>All of this can be built. Some of it is engine work, done once and every world gets it. The rest is art, done for each thing. Here is how the pieces break down.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Piece</th><th>What it takes</th><th>Size</th></tr></thead>
+        <tbody>
+          <tr><td>Rebuilt places</td><td>Each place's scene script remade the way these were: shaped terrain instead of flat ground, richer kit pieces (houses, walls, trees, ferns, rocks, banks), more small things. This is the main art job, world by world.</td><td class="size">Large</td></tr>
+          <tr><td>Live light</td><td>Each scene is rendered once with a few extra passes: six suns through the day, the sky, the lamps, and flat colour. The game mixes them for the hour, the season and the weather instead of showing one baked picture.</td><td class="size">Medium</td></tr>
+          <tr><td>Finish</td><td>The version you pick: tile size, smooth or toy light, outlines only where one thing stands in front of another, no dot-grid dither. It's a setting on the same passes.</td><td class="size">Small</td></tr>
+          <tr><td>Water</td><td>A mirror pass from Blender, and the engine adds depth colour, the lap line, drifting light, glints, rings, ice, and light streaking across the water after dark.</td><td class="size">Medium</td></tr>
+          <tr><td>Weather and seasons</td><td>Snow settling on whatever faces up, grass and leaves turning, rain and fog, clouds drifting over the sunlit parts.</td><td class="size">Small</td></tr>
+          <tr><td>Glow</td><td>Soft light and HD-2D: bloom on lit windows and lamps, depth of field, vignette. Screen effects over the finished frame.</td><td class="size">Small</td></tr>
+          <tr><td>People</td><td>The round chibis: the same Blender models with rounder heads and faces painted after the render. Every sheet, the pilot's included, re-renders with them.</td><td class="size">Medium</td></tr>
+          <tr><td>Buildings</td><td>The richer house kit, then each village re-rendered.</td><td class="size">Medium</td></tr>
+          <tr><td>Postcard views</td><td>A low side camera on the same scene, the sky painted behind, and the camera move as a short cutscene.</td><td class="size">Medium</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="two">
+      <div>
+        <h3>The order I'd do it in</h3>
+        <ol class="steps">
+          <li>Pick a version: tile size, and smooth or toy light.</li>
+          <li>Live light, finish, glow and water in the engine, with Millpond Farm as the first scene.</li>
+          <li>Rebuild the places world by world with the richer kit, starting with Verdance.</li>
+          <li>The round people.</li>
+          <li>The richer building kit, world by world.</li>
+          <li>Postcard views and their camera moves, starting with fishing.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>How close this is to the game</h3>
+        <p>Close. These are made with the game's own Blender kit and models, and rendered the same way. The new parts are the richer kit pieces, the extra light passes, and the code that lights them, which would move into the game's renderer.</p>
+        <p class="muted">The frames here are one screen each; a game world is many screens, so rebuilding a whole world is bigger than one of these.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="lightbox" id="lightbox" hidden tabindex="-1" role="dialog" aria-label="The game today"><img alt="The game today, larger"><p>Tap anywhere to close</p></div>
+  <footer>Drawn for Beck · rendered in Blender from the game's own scenes, lit live in your browser.</footer>
+</div>
+
+<script src="kit.js"></script>
+<script src="relight.js"></script>
+<script src="chibi.js"></script>
+<script src="scenes/versions.js"></script>
+<script src="scenes/verdance.js"></script>
+<script src="scenes/lumar.js"></script>
+<script src="scenes/sylvara.js"></script>
+<script src="scenes/hoarfell.js"></script>
+<script src="scenes/arcadia.js"></script>
+<script src="scenes/village.js"></script>
+<script src="scenes/people.js"></script>
+<script src="scenes/postcard.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  const LB = window.LB, st = LB.state;
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const list = (items) => { const ul = el('ul'); for (const s of items || []) ul.appendChild(el('li', null, s)); return ul; };
+
+  LB.buildPage = function (panels) {
+    for (const def of LB.scenes) {
+      if (!def.section || def.section === 'test') continue;
+      if (def.section === 'versions') {
+        const fig = el('figure', 'rung');
+        const host = el('div'); fig.appendChild(host);
+        const cap = el('figcaption');
+        if (def.recommended) cap.appendChild(el('span', 'rec', 'My pick'));
+        cap.appendChild(el('h3', null, def.name));
+        if (def.blurb) cap.appendChild(el('p', null, def.blurb));
+        fig.appendChild(cap);
+        document.getElementById('vgrid').appendChild(fig);
+        panels.push(LB.mount(host, def));
+        continue;
+      }
+      if (def.section === 'ladder') {
+        const fig = el('figure', 'rung');
+        const host = el('div'); fig.appendChild(host);
+        const cap = el('figcaption');
+        if (def.recommended || def.id === 'ladder-hd') cap.appendChild(el('span', 'rec', 'Recommended'));
+        cap.appendChild(el('h3', null, def.name));
+        if (def.blurb) cap.appendChild(el('p', null, def.blurb));
+        if (def.see) cap.appendChild(list(def.see));
+        if (def.build) cap.appendChild(el('p', 'build', def.build));
+        fig.appendChild(cap);
+        document.getElementById('ladder').appendChild(fig);
+        panels.push(LB.mount(host, def));
+        continue;
+      }
+      const target = { place: 'place-list', vista: 'vista-list', building: 'building-list', people: 'people-list' }[def.section] || 'place-list';
+      const art = el('article', 'place'); art.id = 'scene-' + def.id;
+      const host = el('div'); art.appendChild(host);
+      const text = el('div', 'place-text');
+      const head = el('header');
+      if (def.world) head.appendChild(el('p', 'eyebrow', def.world));
+      head.appendChild(el('h3', null, def.name));
+      text.appendChild(head);
+      if (def.blurb) text.appendChild(el('p', 'blurb', def.blurb));
+      const cols = el('div', 'cols');
+      const a = el('div'); a.appendChild(el('h4', null, 'Look for')); a.appendChild(list(def.see)); cols.appendChild(a);
+      const b = el('div'); b.appendChild(el('h4', null, 'Getting it into the game')); b.appendChild(el('p', null, def.build || '')); cols.appendChild(b);
+      if (def.now) {
+        const f = el('figure', 'now'); const btn = el('button', 'now-btn'); const img = el('img');
+        img.src = 'now/' + def.now.replace(/\.png$/, '.jpg'); img.alt = 'The same kind of place in the game today';
+        btn.type = 'button'; btn.setAttribute('aria-label', 'Show the game today, larger'); btn.appendChild(img);
+        btn.addEventListener('click', () => openBox(img.src));
+        f.appendChild(btn); f.appendChild(el('figcaption', null, 'In the game today · tap to enlarge'));
+        cols.appendChild(f);
+      }
+      text.appendChild(cols);
+      art.appendChild(text);
+      document.getElementById(target).appendChild(art);
+      panels.push(LB.mount(host, def));
+    }
+  };
+
+  // ---- the enlarged "game today" view ----
+  const box = document.getElementById('lightbox'), boxImg = box.querySelector('img');
+  function openBox(src) { boxImg.src = src; box.hidden = false; box.focus(); }
+  box.addEventListener('click', () => { box.hidden = true; });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') box.hidden = true; });
+
+  // ---- the dial ----
+  const time = document.getElementById('time'), clock = document.getElementById('clock'), play = document.getElementById('play');
+  const phase = (h) => h < 5 ? 'Night' : h < 6.2 ? 'Before dawn' : h < 7.6 ? 'Dawn' : h < 11 ? 'Morning' : h < 14 ? 'Noon' : h < 17.4 ? 'Afternoon' : h < 18.9 ? 'Golden' : h < 19.7 ? 'Sunset' : h < 21 ? 'Dusk' : 'Night';
+  const showTime = () => {
+    const h = Math.floor(st.time), m = Math.floor((st.time - h) * 60);
+    clock.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' ' + phase(st.time);
+    time.value = st.time.toFixed(2);
+  };
+  LB.onTime = showTime;
+  time.addEventListener('input', () => { st.time = +time.value; showTime(); LB.redraw(); });
+  document.querySelectorAll('.presets button').forEach((b) => b.addEventListener('click', () => { st.time = +b.dataset.h; showTime(); LB.redraw(); }));
+  play.addEventListener('click', () => { st.playing = !st.playing; play.setAttribute('aria-pressed', String(st.playing)); play.textContent = st.playing ? 'Stop the day' : 'Run the day'; });
+  function seg(id, keyName) {
+    const box = document.getElementById(id);
+    const sync = () => box.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === st[keyName])));
+    box.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; st[keyName] = b.dataset.v; sync(); LB.redraw(); });
+    sync();
+  }
+  seg('season', 'season'); seg('weather', 'weather'); seg('finish', 'finish'); seg('version', 'version');
+  showTime();
+  LB.start();
+})();
+</script>

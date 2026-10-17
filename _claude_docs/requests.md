@@ -4,6 +4,16 @@ Everything asked for, so nothing slips. Newest batch first. Status: **done** (li
 now — a branch or a render queue), **open** (not started), **discuss** (needs a decision with Beck). When something is
 only partly done, the rest stays here as open.
 
+## October 17 (Look Book 2: "somewhere in between" — keep our 3D model world, swing bigger)
+| Ask | Status | Where / notes |
+|---|---|---|
+| Keep the 3D model look (cohesive, the 45° angle, the chibis) but tie it together: more detail, more realistic, less boxy | **done** (examples) | Look Book 2: https://claude.ai/artifact/8aQQzX3EuZ7x4q5xsTyEjx (source `_claude_docs/lookbook2/`). Five places rebuilt as new Blender dioramas from our kit (Millpond Farm, Lantern Quay, Elderglade Brook, Fellhaven Tarn, Rainline Street), a richer house kit (Brambleford today vs richer), all lit live. |
+| The light, soft light / HD-2D, shadows moving with the sun, weather | **done** (examples) | relight.js: six sun passes, sky, lamps, flat colour, mixed per hour/season/weather; four finishes (Model, Toy, Model HD, Toy HD). |
+| Water like Look Book 1: reflections, natural, not rings; ponds that belong to the land | **done** (examples) | Far-bank mirrored reflections, organic depth patches, lap line on the near shore, glitter path, stars, shore ice in winter, light streaks at night. Millpond's pond is irregular, sunk into the land. |
+| People: rounder, cuter, Stardew-like faces, not realistic | **done** (examples) | "Round" chibis: the game's 3D models with rounder heads and faces painted after the render (chars/). Beck's pick. |
+| Postcard view with smooth transitions into cutscenes | **done** (example) | The farm from a low side camera, painted sky behind, a click plays the camera tilting down from the game view. |
+| Pick a version and bring it into the game | discuss | Next: Beck's pick of version, then the engine work (live light, finish, water, people) with Millpond Farm first, then rebuild the places world by world. |
+
 ## October 17 (the art direction: "more like Stardew… gorgeous landscapes… high-def pixel")
 | Ask | Status | Where / notes |
 |---|---|---|
