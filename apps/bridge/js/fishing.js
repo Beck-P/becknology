@@ -236,6 +236,7 @@ var BridgeFishing = (function () {
       c.n += 1;
       best = !junk && size > c.best;
       if (best) c.best = size;
+      if (!junk && typeof BridgeFestivals !== 'undefined') BridgeFestivals.caught(id, size);     // a derby on? (js/festivals.js)
       var hold = st.hold && !junk ? st.hold : null;                       // at sea, fish go in her fish hold
       if (hold) {
         if (hold.room()) { hold.put(id); var hc = hold.count(); where = 'Into the fish hold · ' + hc[0] + ' / ' + hc[1]; }
