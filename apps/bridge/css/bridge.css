@@ -2052,6 +2052,25 @@ html #fishing.fi-top, html.touch #fishing.fi-top { top: 64px; bottom: auto; }   
 .mp-heart { color: #e0405a; font-size: 20px; }
 .mp-tag.targeted .mp-name { visibility: hidden; }
 @keyframes mp-pop { from { transform: scale(0.4); opacity: 0; } }
+/* small happenings (js/events.js): a word overheard over whoever said it; at the screen's edge, pointing, when it's off it */
+#ev-layer { position: fixed; inset: 0; pointer-events: none; z-index: 21; overflow: hidden; }
+.ev-bubble { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 5px; max-width: 230px; will-change: transform;
+  font-family: 'Pixelify Sans', 'Courier New', monospace; font-size: 13px; line-height: 1.25; color: #1a1610; background: #f6f0e0;
+  border-radius: 8px; padding: 4px 9px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35); text-align: center; animation: mp-pop 0.25s cubic-bezier(.2, 1.6, .4, 1); }
+.ev-bubble::after { content: ''; position: absolute; left: 50%; bottom: -5px; margin-left: -5px; border: 5px solid transparent; border-bottom: 0; border-top-color: #f6f0e0; }
+.ev-bubble.hint { background: rgba(14, 12, 22, 0.82); color: #f2eee6; border: 1px solid rgba(255, 220, 150, 0.45); font-style: italic; }
+.ev-bubble.hint::after { border-top-color: rgba(14, 12, 22, 0.82); }
+.ev-bubble[data-edge]:not([data-edge=""])::after { display: none; }
+.ev-arrow { display: none; color: #ffd890; font-style: normal; }
+.ev-bubble[data-edge="l"] .ev-arrow, .ev-bubble[data-edge="lu"] .ev-arrow, .ev-bubble[data-edge="ld"] .ev-arrow,
+.ev-bubble[data-edge="r"] .ev-arrow, .ev-bubble[data-edge="ru"] .ev-arrow, .ev-bubble[data-edge="rd"] .ev-arrow,
+.ev-bubble[data-edge="u"] .ev-arrow, .ev-bubble[data-edge="d"] .ev-arrow { display: inline; }
+.ev-bubble[data-edge="l"] .ev-arrow::before { content: '◀'; } .ev-bubble[data-edge="r"] .ev-arrow::before { content: '▶'; }
+.ev-bubble[data-edge="u"] .ev-arrow::before { content: '▲'; } .ev-bubble[data-edge="d"] .ev-arrow::before { content: '▼'; }
+.ev-bubble[data-edge="lu"] .ev-arrow::before { content: '◤'; } .ev-bubble[data-edge="ld"] .ev-arrow::before { content: '◣'; }
+.ev-bubble[data-edge="ru"] .ev-arrow::before { content: '◥'; } .ev-bubble[data-edge="rd"] .ev-arrow::before { content: '◢'; }
+.ev-bubble[data-edge="r"], .ev-bubble[data-edge="ru"], .ev-bubble[data-edge="rd"] { flex-direction: row-reverse; }
+html.menu-open #ev-layer { display: none; }
 /* fighting together (js/fight.js): a partner who's down, and your own banner while you are */
 .mp-tag.down .mp-name { color: #ffd0c8; border-color: rgba(255, 110, 90, 0.75); background: rgba(70, 14, 14, 0.8); animation: mp-down 0.9s ease-in-out infinite alternate; }
 .mp-tag.down .mp-name::after { content: ' · DOWN'; color: #ff8a70; }
