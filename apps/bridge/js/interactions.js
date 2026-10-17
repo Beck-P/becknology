@@ -65,7 +65,7 @@ var BridgeInteractions = (function () {
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
-                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters',
+                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters', 'office': 'the Office',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'arcadia-penthouse': 'the Penthouse', 'lumar-manor': 'Ashcombe House', 'lumar-sapphire': 'Sapphire Port',
                       'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void',
                       'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall',

@@ -958,3 +958,383 @@ def mothership(k, x0, rc=0.0, L=18.0):
                  (x0 - 0.06 * L, rc + sd * 2.8, 0.6)]], (INDIGO, 0.08), 'wf_fin', closed=True, smooth=False)
     k.sphere(x0 + L + 2.4, rc, zc + 0.7, 0.08, 0.08, '#e8e8f0', 'wf_strobe', emit=('#ffffff', 1.0), segs=8)
     return {'bay': ((bx0 + bx1) / 2, bf + 0.1, (bz0 + bz1) / 2)}
+
+
+# ---- the captain's office (scenes/office.py) ---------------------------------------------------------------------
+# Wood and brass like the bridge (assets_deck): a partner's desk under a window onto space, the staff board and the
+# chart table (HOLDOUT panels: the engine pins the faces of everyone working for you to the one and your ships to the
+# other, live), the strongbox and its counting table, the Wayfarer in miniature in a glass case.
+LEATHER = '#6a2a22'
+LEATHER_G = '#24442e'
+IRON_D = '#26282e'
+PARCH = '#d8c8a0'
+INK = '#3a2a1a'
+COIN = '#e0b040'
+
+
+def banker_lamp(k, cx, cr, z, energy=6.0):
+    """A banker's lamp: a brass stand, its green glass shade glowing over the desk."""
+    k.cyl(cx, cr, z, z + 0.03, 0.1, BRASS, 'lamp_base', verts=12)
+    k.tube((cx, cr - 0.05, z + 0.03), (cx, cr - 0.05, z + 0.3), 0.014, BRASS, 'lamp_stem', verts=6)
+    k.tube((cx, cr - 0.05, z + 0.3), (cx, cr + 0.01, z + 0.33), 0.012, BRASS, 'lamp_stem', verts=6)
+    k.cyl_x(cx - 0.2, cx + 0.2, cr + 0.02, z + 0.35, 0.1, 0.07, '#0e3020', 'lamp_shade', emit=('#3ab070', 0.75), verts=14)
+    for xx in (cx - 0.21, cx + 0.2):
+        k.cyl_x(xx, xx + 0.012, cr + 0.02, z + 0.35, 0.105, 0.075, BRASS, 'lamp_cap', verts=14)
+    k.point_light(cx, cr + 0.25, z + 0.32, '#ffd890', energy, radius=0.06, group='flicker')
+
+
+def partners_desk(k, x0, x1, r0, r1, h=0.8):
+    """The captain's desk, its front to the room: two pedestals of drawers either side of a kneehole, a green leather
+    top tooled in brass, bun feet. On it the banker's lamp, the open book, ink and quill, the ledgers, a spyglass.
+    Returns the top's height."""
+    pw = min(1.15, (x1 - x0) * 0.3)
+    cx = (x0 + x1) / 2
+    for a, b in ((x0, x0 + pw), (x1 - pw, x1)):
+        for xx in (a + 0.12, b - 0.12):
+            for rr in (r0 + 0.12, r1 - 0.12):
+                k.sphere(xx, rr, 0.04, 0.07, 0.05, (WOOD_DD, 0.1), 'desk_foot', segs=8)
+        k.box(a, r0, 0.07, b, r1, 0.15, (WOOD_DD, 0.08), 'desk_plinth', bevel=0.01)
+        k.box(a + 0.02, r0 + 0.02, 0.15, b - 0.02, r1 - 0.02, h - 0.07, (WOOD_D, 0.1), 'desk_pedestal', bevel=0.015)
+        zs = (0.18, 0.36, 0.53, h - 0.1)
+        for za, zb in zip(zs, zs[1:]):
+            k.box(a + 0.07, r1 - 0.02, za + 0.015, b - 0.07, r1 + 0.005, zb - 0.015, (WOOD, 0.1), 'desk_drawer')
+            m = (a + b) / 2
+            k.box(m - 0.1, r1 + 0.005, (za + zb) / 2 - 0.015, m + 0.1, r1 + 0.025, (za + zb) / 2 + 0.015, BRASS, 'desk_pull')
+    # the kneehole: a back panel, and a wide drawer across its top
+    k.box(x0 + pw, r0 + 0.02, 0.0, x1 - pw, r0 + 0.1, h - 0.07, (WOOD_DD, 0.1), 'desk_back')
+    k.box(x0 + pw, r0 + 0.02, h - 0.22, x1 - pw, r1 - 0.04, h - 0.07, (WOOD_D, 0.1), 'desk_apron')
+    k.box(x0 + pw + 0.08, r1 - 0.045, h - 0.2, x1 - pw - 0.08, r1 - 0.02, h - 0.09, (WOOD, 0.1), 'desk_drawer')
+    k.box(cx - 0.14, r1 - 0.02, h - 0.16, cx + 0.14, r1, h - 0.13, BRASS, 'desk_pull')
+    # the top: oak, green leather inlaid, a brass edge along the front
+    k.box(x0 - 0.05, r0 - 0.04, h - 0.07, x1 + 0.05, r1 + 0.05, h, (WOOD, 0.08), 'desk_top', bevel=0.012)
+    k.box(x0 - 0.05, r1 + 0.05, h - 0.05, x1 + 0.05, r1 + 0.065, h - 0.02, BRASS_D, 'desk_edge')
+    zt = h + 0.006
+    k.box(x0 + 0.12, r0 + 0.08, h, x1 - 0.12, r1 - 0.08, zt, BRASS_D, 'desk_tooling')
+    k.box(x0 + 0.15, r0 + 0.11, zt, x1 - 0.15, r1 - 0.11, zt + 0.003, (LEATHER_G, 0.1), 'desk_leather')
+    zt += 0.003
+    # what's on it
+    banker_lamp(k, x0 + 0.5, r0 + 0.3, zt)
+    k.box(cx - 0.47, r1 - 0.64, zt, cx + 0.47, r1 - 0.22, zt + 0.007, ('#5a1a14', 0.08), 'book_cover')
+    for s_ in (-1, 1):                                     # the open book: two pages, ruled, a ribbon
+        xa, xb = (cx - 0.44, cx - 0.01) if s_ < 0 else (cx + 0.01, cx + 0.44)
+        k.box(xa, r1 - 0.62, zt + 0.007, xb, r1 - 0.24, zt + 0.022, (CANDLE, 0.04), 'book_page')
+        for i in range(6):
+            rr = r1 - 0.57 + i * 0.055
+            k.box(xa + 0.05, rr, zt + 0.022, xb - 0.05 - 0.05 * ((i * 7 + (s_ > 0)) % 3), rr + 0.012, zt + 0.025, INK, 'book_line')
+    k.box(cx - 0.015, r1 - 0.25, zt + 0.022, cx + 0.015, r1 - 0.12, zt + 0.028, '#a02a20', 'book_ribbon')
+    ix = cx + 0.72
+    k.cyl(ix, r0 + 0.3, zt, zt + 0.09, 0.06, '#1a2430', 'inkwell', verts=10)
+    k.cyl(ix, r0 + 0.3, zt + 0.09, zt + 0.11, 0.035, BRASS, 'inkwell_cap', verts=8)
+    k.tube((ix + 0.02, r0 + 0.3, zt + 0.1), (ix + 0.2, r0 + 0.2, zt + 0.42), 0.012, '#f0ece0', 'quill', rb=0.035, verts=6)
+    z = zt
+    for i, col in enumerate(('#2a3a5a', '#5a1a14', '#3a4a2a', '#5a3a1a')):   # the ledgers, stacked
+        t = 0.07 + 0.01 * (i % 2)
+        a = 0.03 * (i % 2) - 0.015
+        k.box(x1 - 0.72 + a, r0 + 0.16, z, x1 - 0.3 + a, r0 + 0.5, z + t, (col, 0.08), 'ledger')
+        k.box(x1 - 0.72 + a, r0 + 0.5, z + 0.01, x1 - 0.3 + a, r0 + 0.505, z + t - 0.01, '#e8dcc0', 'ledger_pages')
+        z += t
+    k.tube((x1 - 0.85, r1 - 0.24, zt + 0.04), (x1 - 0.3, r1 - 0.36, zt + 0.04), 0.035, BRASS, 'spyglass', rb=0.025, verts=10)
+    k.box(x0 + 0.25, r1 - 0.5, zt, x0 + 0.75, r1 - 0.2, zt + 0.012, (PARCH, 0.05), 'papers')
+    k.cyl(x0 + 0.95, r1 - 0.32, zt, zt + 0.03, 0.06, BRASS, 'seal', verts=10)
+    k.tube((x0 + 0.95, r1 - 0.32, zt + 0.03), (x0 + 0.95, r1 - 0.32, zt + 0.12), 0.02, '#2a1a10', 'seal', verts=6)
+    k.solid(x0, r0, x1, r1)
+    return zt
+
+
+def captains_chair(k, cx, cr, tone=LEATHER):
+    """The captain's chair behind the desk, facing the room: a tall buttoned leather back, wings, rolled arms, brass
+    nailheads, claw feet (assets_deck.wingback, turned round)."""
+    lt = (tone, 0.08)
+    for dx, dr in ((-0.36, -0.26), (0.36, -0.26), (-0.36, 0.28), (0.36, 0.28)):
+        k.cyl(cx + dx, cr + dr, 0, 0.16, 0.05, (WOOD_DD, 0.1), 'chair_leg', verts=8)
+        k.sphere(cx + dx, cr + dr, 0.03, 0.05, 0.03, BRASS, 'chair_foot', segs=8)
+    k.box(cx - 0.42, cr - 0.32, 0.16, cx + 0.42, cr + 0.34, 0.46, lt, 'chair_base', bevel=0.04)
+    k.box(cx - 0.34, cr - 0.14, 0.46, cx + 0.34, cr + 0.34, 0.56, (shade(tone, 1.15), 0.08), 'chair_cushion', bevel=0.04)
+    k.box(cx - 0.42, cr - 0.34, 0.46, cx + 0.42, cr - 0.12, 1.42, lt, 'chair_back', bevel=0.06)
+    k.cyl_y(cx, cr - 0.34, cr - 0.12, 1.42, 0.42, 0.15, lt, 'chair_crest', verts=16)
+    for s_ in (-1, 1):
+        k.box(cx + s_ * 0.42 - 0.07, cr - 0.34, 0.7, cx + s_ * 0.42 + 0.07, cr + 0.06, 1.38, lt, 'chair_wing', bevel=0.04)
+        k.box(cx + s_ * 0.42 - 0.08, cr - 0.1, 0.46, cx + s_ * 0.42 + 0.08, cr + 0.34, 0.66, lt, 'chair_arm', bevel=0.04)
+        k.cyl_y(cx + s_ * 0.42, cr - 0.1, cr + 0.36, 0.68, 0.09, 0.07, (shade(tone, 1.1), 0.08), 'chair_roll', verts=12)
+    for z in (0.8, 1.04, 1.26):                            # buttons down the back's face
+        for dx in (-0.2, 0.0, 0.2):
+            k.sphere(cx + dx + (0.1 if z == 1.04 else 0), cr - 0.115, z, 0.025, 0.025, shade(tone, 0.6), 'chair_button', segs=6)
+    x = cx - 0.38
+    while x <= cx + 0.38:
+        k.sphere(x, cr + 0.35, 0.42, 0.018, 0.018, BRASS, 'nailhead', segs=6)
+        x += 0.07
+    k.solid(cx - 0.45, cr - 0.35, cx + 0.45, cr + 0.35)
+
+
+def club_chair(k, cx, cr, tone=LEATHER):
+    """A low leather club chair drawn up to the desk, its back to the room: rolled arms, a row of nailheads."""
+    lt = (tone, 0.08)
+    for dx, dr in ((-0.26, -0.22), (0.26, -0.22), (-0.26, 0.22), (0.26, 0.22)):
+        k.cyl(cx + dx, cr + dr, 0, 0.07, 0.04, (WOOD_DD, 0.1), 'club_leg', verts=8)
+    k.box(cx - 0.32, cr - 0.28, 0.07, cx + 0.32, cr + 0.28, 0.36, lt, 'club_base', bevel=0.04)
+    k.box(cx - 0.24, cr - 0.28, 0.36, cx + 0.24, cr + 0.1, 0.44, (shade(tone, 1.15), 0.08), 'club_cushion', bevel=0.03)
+    k.box(cx - 0.32, cr + 0.08, 0.36, cx + 0.32, cr + 0.28, 0.84, lt, 'club_back', bevel=0.05)
+    k.cyl_y(cx, cr + 0.08, cr + 0.28, 0.84, 0.32, 0.08, lt, 'club_crest', verts=14)
+    for s_ in (-1, 1):
+        k.box(cx + s_ * 0.3 - 0.07, cr - 0.28, 0.36, cx + s_ * 0.3 + 0.07, cr + 0.2, 0.56, lt, 'club_arm', bevel=0.03)
+        k.cyl_y(cx + s_ * 0.3, cr - 0.3, cr + 0.2, 0.58, 0.08, 0.06, (shade(tone, 1.1), 0.08), 'club_roll', verts=12)
+    x = cx - 0.28
+    while x <= cx + 0.29:
+        k.sphere(x, cr + 0.29, 0.4, 0.016, 0.016, BRASS, 'nailhead', segs=6)
+        x += 0.07
+    k.solid(cx - 0.34, cr - 0.3, cx + 0.34, cr + 0.3)
+
+
+def staff_board(k, x0, x1, r_face, z0, z1, fw=0.1):
+    """The board of everyone working for you, framed on the wall: its face is a HOLDOUT (the engine pins their
+    portraits to it, live) in an oak frame with brass beading and corners, a brass plate over it and a picture lamp.
+    Returns the face inside the beading (x0, z0, x1, z1) and the row it stands at."""
+    rb = r_face + 0.04
+    k.box(x0, r_face + 0.01, z0, x1, rb, z1, 'HOLDOUT', 'board')
+    for (a, b, c, d) in ((x0 - fw, z0 - fw, x1 + fw, z0), (x0 - fw, z1, x1 + fw, z1 + fw), (x0 - fw, z0, x0, z1), (x1, z0, x1 + fw, z1)):
+        k.box(a, r_face, b, c, rb + 0.05, d, (WOOD_D, 0.1), 'board_frame')
+    bd = 0.03
+    for (a, b, c, d) in ((x0, z0, x1, z0 + bd), (x0, z1 - bd, x1, z1), (x0, z0 + bd, x0 + bd, z1 - bd), (x1 - bd, z0 + bd, x1, z1 - bd)):
+        k.box(a, rb, b, c, rb + 0.02, d, BRASS_D, 'board_bead')
+    for (xx, zz) in ((x0 - fw, z0 - fw), (x1, z0 - fw), (x0 - fw, z1), (x1, z1)):
+        k.box(xx - 0.01, rb + 0.05, zz - 0.01, xx + fw + 0.01, rb + 0.065, zz + fw + 0.01, BRASS, 'board_corner')
+    cx = (x0 + x1) / 2
+    pz = z1 + fw + 0.04
+    k.box(cx - 0.62, r_face, pz, cx + 0.62, r_face + 0.06, pz + 0.18, BRASS, 'board_plate')
+    k.box(cx - 0.56, r_face + 0.06, pz + 0.03, cx + 0.56, r_face + 0.065, pz + 0.15, shade(BRASS, 0.8), 'board_plate')
+    for i in range(9):                                     # the engraving: a line of letters, small
+        xx = cx - 0.5 + i * 0.12
+        k.box(xx, r_face + 0.065, pz + 0.06, xx + 0.07, r_face + 0.07, pz + 0.12, '#4a3418', 'board_letter')
+    lz = pz + 0.32                                         # the picture lamp
+    for xx in (cx - 0.5, cx + 0.5):
+        k.tube((xx, r_face, lz + 0.1), (xx, r_face + 0.3, lz), 0.014, BRASS, 'board_lamp_arm', verts=6)
+    k.cyl_x(cx - 0.7, cx + 0.7, r_face + 0.32, lz, 0.05, 0.035, BRASS, 'board_lamp', verts=12)
+    k.box(cx - 0.66, r_face + 0.3, lz - 0.05, cx + 0.66, r_face + 0.36, lz - 0.03, '#3a2a10', 'board_lamp_glow', emit=('#ffd890', 1.0))
+    k.point_light(cx, r_face + 0.55, lz - 0.2, '#ffc880', 18, radius=0.1, group='flicker')
+    return (x0 + bd, z0 + bd, x1 - bd, z1 - bd, rb)
+
+
+def card_cabinet(k, x0, x1, r_face, h=0.84, d=0.5):
+    """A low cabinet of card drawers under the staff board — a file on everyone — brass label frames and pulls; an
+    in-tray, files and a bell on top. Returns its top's height."""
+    r1 = r_face + d
+    k.box(x0, r_face, 0.0, x1, r1, 0.08, (WOOD_DD, 0.08), 'cab_plinth')
+    k.box(x0 + 0.02, r_face, 0.08, x1 - 0.02, r1 - 0.02, h - 0.05, (WOOD_D, 0.1), 'cab_body', bevel=0.01)
+    k.box(x0 - 0.03, r_face, h - 0.05, x1 + 0.03, r1 + 0.03, h, (WOOD, 0.08), 'cab_top', bevel=0.01)
+    cols, rows = max(2, int(round((x1 - x0) / 0.5))), 3
+    cw, rh = (x1 - x0 - 0.1) / cols, (h - 0.2) / rows
+    for i in range(cols):
+        for j in range(rows):
+            a, zb = x0 + 0.05 + i * cw, 0.12 + j * rh
+            k.box(a + 0.025, r1 - 0.02, zb + 0.02, a + cw - 0.025, r1 + 0.005, zb + rh - 0.02, (WOOD, 0.1), 'cab_drawer')
+            m = a + cw / 2
+            k.box(m - 0.08, r1 + 0.005, zb + rh * 0.52, m + 0.08, r1 + 0.012, zb + rh * 0.84, BRASS_D, 'cab_label')
+            k.box(m - 0.06, r1 + 0.012, zb + rh * 0.57, m + 0.06, r1 + 0.016, zb + rh * 0.79, CANDLE, 'cab_card')
+            k.box(m - 0.04, r1 + 0.005, zb + rh * 0.18, m + 0.04, r1 + 0.03, zb + rh * 0.36, BRASS, 'cab_pull')
+    k.box(x0 + 0.2, r_face + 0.1, h, x0 + 0.7, r1 - 0.08, h + 0.08, (WOOD_D, 0.1), 'in_tray')
+    k.box(x0 + 0.24, r_face + 0.14, h + 0.02, x0 + 0.66, r1 - 0.12, h + 0.09, (PARCH, 0.05), 'papers')
+    for i in range(3):                                     # files, stacked
+        k.box(x1 - 0.8 + 0.02 * i, r_face + 0.1, h + i * 0.05, x1 - 0.35 + 0.02 * i, r1 - 0.1, h + i * 0.05 + 0.045,
+              (('#7a5a2a', '#a08050', '#6a4a2a')[i], 0.08), 'file')
+    k.cyl((x0 + x1) / 2, r_face + 0.28, h, h + 0.02, 0.07, WOOD_DD, 'bell_base', verts=10)
+    k.sphere((x0 + x1) / 2, r_face + 0.28, h + 0.05, 0.06, 0.05, BRASS, 'bell', segs=10)
+    k.solid(x0, r_face, x1, r1)
+    return h
+
+
+def map_table(k, x0, r0, x1, r1, h=0.84):
+    """The chart table: a heavy oak table on turned legs, a brass rail round its top, and a chart under glass let
+    into it — a HOLDOUT the engine draws the seas and your ships on, live. Dividers and a rolled chart on the rim.
+    Returns the chart's rect (x0, r0, x1, r1, z)."""
+    legs = ((x0 + 0.18, r0 + 0.18), (x1 - 0.18, r0 + 0.18), (x0 + 0.18, r1 - 0.18), (x1 - 0.18, r1 - 0.18))
+    for (lx, lr) in legs:
+        k.cyl(lx, lr, 0.0, 0.06, 0.09, (WOOD_DD, 0.1), 'table_foot', verts=10)
+        k.cyl(lx, lr, 0.06, 0.24, 0.055, (WOOD_D, 0.1), 'table_leg', verts=10)
+        k.sphere(lx, lr, 0.31, 0.09, 0.08, (WOOD_D, 0.1), 'table_leg', segs=10)
+        k.cyl(lx, lr, 0.37, h - 0.14, 0.055, (WOOD_D, 0.1), 'table_leg', verts=10)
+        k.cyl(lx, lr, h - 0.2, h - 0.16, 0.07, BRASS_D, 'table_band', verts=10)
+    rm = (r0 + r1) / 2
+    k.box(x0 + 0.18, rm - 0.035, 0.14, x1 - 0.18, rm + 0.035, 0.2, (WOOD_D, 0.1), 'table_stretcher')
+    for lx in (x0 + 0.18, x1 - 0.18):
+        k.box(lx - 0.035, r0 + 0.18, 0.14, lx + 0.035, rm - 0.035, 0.2, (WOOD_D, 0.1), 'table_stretcher')
+        k.box(lx - 0.035, rm + 0.035, 0.14, lx + 0.035, r1 - 0.18, 0.2, (WOOD_D, 0.1), 'table_stretcher')
+    k.box(x0 + 0.08, r0 + 0.08, h - 0.17, x1 - 0.08, r1 - 0.08, h - 0.06, (WOOD_D, 0.1), 'table_apron')
+    k.box(x0 + 0.08, r1 - 0.085, h - 0.14, x1 - 0.08, r1 - 0.075, h - 0.12, BRASS_D, 'table_apron_band')
+    k.box(x0, r0, h - 0.06, x1, r1, h, (WOOD, 0.08), 'table_top', bevel=0.01)
+    m = 0.15
+    zc = h + 0.004
+    k.box(x0 + m, r0 + m, h, x1 - m, r1 - m, zc, 'HOLDOUT', 'chart')
+    rail = 0.035
+    for (a, b, c, d) in ((x0, r0, x1, r0 + rail), (x0, r1 - rail, x1, r1), (x0, r0 + rail, x0 + rail, r1 - rail),
+                         (x1 - rail, r0 + rail, x1, r1 - rail)):
+        k.box(a, b, h, c, d, h + 0.05, BRASS, 'table_rail')
+    for (cx_, cr_) in ((x0 + 0.02, r0 + 0.02), (x1 - 0.02, r0 + 0.02), (x0 + 0.02, r1 - 0.02), (x1 - 0.02, r1 - 0.02)):
+        k.cyl(cx_, cr_, h + 0.05, h + 0.09, 0.035, BRASS, 'rail_knob', verts=8)
+    # on the rim: brass dividers, and a chart rolled up along the back
+    k.tube((x0 + 0.05, r1 - 0.1, h + 0.006), (x0 + 0.42, r1 - 0.08, h + 0.006), 0.008, BRASS, 'dividers', verts=4)
+    k.tube((x0 + 0.05, r1 - 0.1, h + 0.006), (x0 + 0.4, r1 - 0.12, h + 0.006), 0.008, BRASS, 'dividers', verts=4)
+    k.cyl_x(x1 - 0.95, x1 - 0.12, r0 + 0.08, h + 0.05, 0.045, 0.045, (PARCH, 0.05), 'chart_roll', verts=10)
+    k.solid(x0, r0, x1, r1)
+    return (x0 + m, r0 + m, x1 - m, r1 - m, zc)
+
+
+def strongbox(k, cx, cr, w=1.0, d=0.78, h=1.15):
+    """The strongbox: an iron safe on a low oak plinth, its door to the room — studded round, a brass combination
+    dial and a spoked handle, the maker's plate — with the account book and a lamp on top. Returns its top's height."""
+    x0, x1, r0, r1 = cx - w / 2, cx + w / 2, cr - d / 2, cr + d / 2
+    k.box(x0 - 0.05, r0 - 0.05, 0, x1 + 0.05, r1 + 0.05, 0.1, (WOOD_DD, 0.08), 'safe_plinth', bevel=0.01)
+    k.box(x0, r0, 0.1, x1, r1, h, (IRON_D, 0.12), 'safe', bevel=0.03)
+    dz0, dz1 = 0.2, h - 0.1
+    k.box(x0 + 0.09, r1, dz0, x1 - 0.09, r1 + 0.03, dz1, ('#32353c', 0.1), 'safe_door', bevel=0.01)
+    k.box(x0 + 0.15, r1 + 0.03, dz0 + 0.06, x1 - 0.15, r1 + 0.035, dz1 - 0.06, ('#2a2c32', 0.1), 'safe_panel')
+    n = 7
+    for i in range(n):                                     # studs round the door
+        t = i / (n - 1)
+        for zz in (dz0 + 0.03, dz1 - 0.03):
+            k.sphere(x0 + 0.12 + t * (w - 0.24), r1 + 0.035, zz, 0.018, 0.018, '#6a6c72', 'safe_stud', segs=6)
+        zz = dz0 + 0.03 + t * (dz1 - dz0 - 0.06)
+        for xx in (x0 + 0.12, x1 - 0.12):
+            k.sphere(xx, r1 + 0.035, zz, 0.018, 0.018, '#6a6c72', 'safe_stud', segs=6)
+    for zz in (dz0 + 0.18, dz1 - 0.18):                   # hinges
+        k.cyl(x0 + 0.06, r1 + 0.02, zz - 0.07, zz + 0.07, 0.03, '#4a4c52', 'safe_hinge', verts=8)
+    dx, dzc = cx - 0.12, (dz0 + dz1) / 2 + 0.1
+    k.cyl_y(dx, r1 + 0.035, r1 + 0.07, dzc, 0.14, 0.14, BRASS, 'safe_dial', verts=20)
+    k.cyl_y(dx, r1 + 0.07, r1 + 0.075, dzc, 0.115, 0.115, '#e8dcc0', 'safe_dial_face', verts=20)
+    for i in range(12):
+        a = i * math.pi / 6
+        k.box(dx + math.cos(a) * 0.095 - 0.008, r1 + 0.075, dzc + math.sin(a) * 0.095 - 0.008,
+              dx + math.cos(a) * 0.095 + 0.008, r1 + 0.08, dzc + math.sin(a) * 0.095 + 0.008, INK, 'safe_dial_tick')
+    k.cyl_y(dx, r1 + 0.075, r1 + 0.11, dzc, 0.05, 0.05, shade(BRASS, 0.8), 'safe_dial_knob', verts=12)
+    hx, hz = cx + 0.22, dzc - 0.08
+    k.cyl_y(hx, r1 + 0.035, r1 + 0.09, hz, 0.045, 0.045, BRASS, 'safe_hub', verts=10)
+    for i in range(4):
+        a = i * math.pi / 2 + math.pi / 4
+        tip = (hx + math.cos(a) * 0.15, r1 + 0.08, hz + math.sin(a) * 0.15)
+        k.tube((hx, r1 + 0.08, hz), tip, 0.014, BRASS, 'safe_spoke', verts=6)
+        k.sphere(tip[0], tip[1], tip[2], 0.025, 0.025, BRASS, 'safe_spoke_knob', segs=8)
+    k.box(cx - 0.2, r1 + 0.035, dz0 + 0.1, cx + 0.2, r1 + 0.045, dz0 + 0.18, BRASS, 'safe_plate')
+    for xx in (x0 + 0.03, x1 - 0.06):                      # the corners strapped in brass
+        k.box(xx, r1 - 0.03, 0.1, xx + 0.03, r1 + 0.005, h, BRASS_D, 'safe_strap')
+    # on top: the account book, a brass lamp
+    k.box(x0 + 0.12, r0 + 0.14, h, x0 + 0.56, r0 + 0.52, h + 0.06, ('#3a2a5a', 0.08), 'ledger')
+    k.box(x0 + 0.12, r0 + 0.52, h + 0.008, x0 + 0.56, r0 + 0.525, h + 0.052, '#e8dcc0', 'ledger_pages')
+    k.cyl(x1 - 0.22, cr - 0.05, h, h + 0.03, 0.08, BRASS, 'lamp_base', verts=10)
+    k.cyl(x1 - 0.22, cr - 0.05, h + 0.03, h + 0.22, 0.055, '#ffd890', 'lamp_glass', emit=('#ffcf80', 1.5), verts=10)
+    k.cyl(x1 - 0.22, cr - 0.05, h + 0.22, h + 0.26, 0.04, BRASS, 'lamp_cap', verts=8)
+    k.point_light(x1 - 0.22, cr + 0.2, h + 0.35, '#ffc078', 8, radius=0.06, group='flicker')
+    k.solid(x0 - 0.05, r0 - 0.05, x1 + 0.05, r1 + 0.05)
+    return h
+
+
+def counting_table(k, x0, x1, r0, r1, h=0.8):
+    """The counting table beside the strongbox: the day's takings in stacks of gold, a brass balance, an account book
+    open at today, money bags."""
+    for (lx, lr) in ((x0 + 0.08, r0 + 0.08), (x1 - 0.08, r0 + 0.08), (x0 + 0.08, r1 - 0.08), (x1 - 0.08, r1 - 0.08)):
+        k.box(lx - 0.045, lr - 0.045, 0.0, lx + 0.045, lr + 0.045, h - 0.06, (WOOD_D, 0.1), 'table_leg')
+    k.box(x0 + 0.04, r0 + 0.04, h - 0.16, x1 - 0.04, r1 - 0.04, h - 0.06, (WOOD_D, 0.1), 'table_apron')
+    k.box(x0 + 0.12, r1 - 0.045, h - 0.14, x1 - 0.12, r1 - 0.035, h - 0.08, (WOOD, 0.1), 'table_drawer')
+    k.box(x0 - 0.03, r0 - 0.03, h - 0.06, x1 + 0.03, r1 + 0.03, h, (WOOD, 0.08), 'table_top', bevel=0.01)
+    k.box(x0 + 0.08, r0 + 0.08, h, x1 - 0.08, r1 - 0.08, h + 0.004, ('#3a2a3a', 0.1), 'table_baize')
+    zt = h + 0.004
+    bx = x0 + 0.2                                          # the account book, open
+    k.box(bx, r1 - 0.42, zt, bx + 0.62, r1 - 0.12, zt + 0.015, (CANDLE, 0.04), 'book_page')
+    for i in range(5):
+        rr = r1 - 0.38 + i * 0.05
+        k.box(bx + 0.05, rr, zt + 0.015, bx + 0.29, rr + 0.01, zt + 0.018, INK, 'book_line')
+        k.box(bx + 0.4, rr, zt + 0.015, bx + 0.56, rr + 0.01, zt + 0.018, '#7a1a14', 'book_line')
+    sx, sr = (x0 + x1) / 2 + 0.15, r0 + 0.32             # the balance: a post, a beam, two pans
+    k.cyl(sx, sr, zt, zt + 0.03, 0.08, BRASS_D, 'scale_foot', verts=10)
+    k.tube((sx, sr, zt + 0.03), (sx, sr, zt + 0.42), 0.015, BRASS, 'scale_post', verts=6)
+    k.tube((sx - 0.24, sr, zt + 0.42), (sx + 0.24, sr, zt + 0.4), 0.012, BRASS, 'scale_beam', verts=6)
+    for s_, zz in ((-1, zt + 0.42), (1, zt + 0.4)):
+        for dr in (-0.05, 0.05):
+            k.tube((sx + s_ * 0.24, sr, zz), (sx + s_ * 0.24 + dr * 0.6, sr + dr, zz - 0.2), 0.004, BRASS_D, 'scale_chain', verts=4)
+        k.cyl(sx + s_ * 0.24, sr, zz - 0.22, zz - 0.2, 0.09, BRASS, 'scale_pan', verts=12)
+    k.cyl(sx - 0.24, sr, zt + 0.22, zt + 0.25, 0.04, COIN, 'coin', verts=8)
+    for (dx, dr, n) in ((0.0, 0.0, 6), (0.12, 0.04, 4), (0.05, 0.14, 8), (0.2, 0.15, 3), (-0.1, 0.12, 5)):   # the takings
+        k.cyl(x1 - 0.42 + dx, r1 - 0.38 + dr, zt, zt + n * 0.018, 0.045, (COIN, 0.06), 'coins', verts=10)
+    for (bx_, br_, s) in ((x1 - 0.2, r0 + 0.25, 0.13), (x0 + 0.18, r0 + 0.22, 0.11)):
+        k.blob(bx_, br_, zt + s * 0.8, s, s * 0.9, s * 0.85, ('#8a6a40', 0.12), 'money_bag', segs=10)
+        k.cyl(bx_, br_, zt + s * 1.55, zt + s * 1.75, s * 0.35, ('#8a6a40', 0.12), 'money_bag', verts=8)
+        k.cyl(bx_, br_, zt + s * 1.5, zt + s * 1.56, s * 0.38, '#a02a20', 'money_bag_tie', verts=8)
+    k.solid(x0, r0, x1, r1)
+    return zt
+
+
+def sideboard(k, x0, x1, r_face, h=0.86, d=0.5):
+    """A low cabinet against the wall: panelled doors, brass handles. Returns its top's height."""
+    r1 = r_face + d
+    k.box(x0, r_face, 0.0, x1, r1, 0.08, (WOOD_DD, 0.08), 'sb_plinth')
+    k.box(x0 + 0.02, r_face, 0.08, x1 - 0.02, r1 - 0.02, h - 0.05, (WOOD_D, 0.1), 'sb_body', bevel=0.01)
+    k.box(x0 - 0.03, r_face, h - 0.05, x1 + 0.03, r1 + 0.03, h, (WOOD, 0.08), 'sb_top', bevel=0.01)
+    n = max(2, int(round((x1 - x0) / 0.6)))
+    dw = (x1 - x0 - 0.12) / n
+    for i in range(n):
+        a = x0 + 0.06 + i * dw
+        k.box(a + 0.03, r1 - 0.02, 0.14, a + dw - 0.03, r1 + 0.005, h - 0.1, (WOOD, 0.1), 'sb_door')
+        k.box(a + 0.09, r1 + 0.005, 0.22, a + dw - 0.09, r1 + 0.012, h - 0.18, (WOOD_D, 0.1), 'sb_panel')
+        hx = a + dw - 0.1 if i % 2 == 0 else a + 0.1
+        k.box(hx - 0.015, r1 + 0.005, h * 0.45, hx + 0.015, r1 + 0.03, h * 0.6, BRASS, 'sb_handle')
+    k.solid(x0, r_face, x1, r1)
+    return h
+
+
+def model_ship(k, x0, rc, z, L=1.35, case=True):
+    """The Wayfarer in miniature on a brass cradle (mothership, a model's worth of her): the indigo hull and its gold
+    wale, a row of lit ports, the stern castle, three gilt masts of glowing light-sails, the keel fin. Nose to the
+    right. case=True: in a glass case — a brass frame on an oak base."""
+    s = L / 18.0
+    prof = [(0.0, 1.5, 0.85, 1.25, 0.0), (0.08, 1.85, 0.95, 1.55, 0.05), (0.4, 1.95, 1.0, 1.75, 0.1),
+            (0.7, 1.75, 0.9, 1.55, 0.1), (0.86, 1.15, 0.7, 1.15, 0.15), (0.95, 0.55, 0.42, 0.65, 0.23), (1.0, 0.1, 0.1, 0.12, 0.33)]
+    zb = z + 0.06 + 2.2 * s                                # the hull's centre line, the keel clear of the cradle
+
+    def zc(dz):
+        return zb + dz * s * 3
+    if case:
+        k.box(x0 - 0.12, rc - 0.2, z, x0 + L + 0.32, rc + 0.2, z + 0.06, (WOOD_DD, 0.08), 'case_base', bevel=0.01)
+        top = zb + 7.2 * s
+        for xx in (x0 - 0.1, x0 + L + 0.28):
+            for rr in (rc - 0.18, rc + 0.16):
+                k.box(xx, rr, z + 0.06, xx + 0.02, rr + 0.02, top, BRASS_D, 'case_frame')
+        for zz in (z + 0.06, top):
+            for rr in (rc - 0.18, rc + 0.16):
+                k.box(x0 - 0.1, rr, zz - 0.01, x0 + L + 0.3, rr + 0.02, zz + 0.01, BRASS_D, 'case_frame')
+            for xx in (x0 - 0.1, x0 + L + 0.28):
+                k.box(xx, rc - 0.18, zz - 0.01, xx + 0.02, rc + 0.18, zz + 0.01, BRASS_D, 'case_frame')
+        k.box(x0 + L * 0.3, rc + 0.2, z + 0.015, x0 + L * 0.7, rc + 0.21, z + 0.045, BRASS, 'case_plate')
+    for t in (0.3, 0.7):                                   # the cradle
+        xx = x0 + t * L
+        k.box(xx - 0.02, rc - 0.06, z + 0.06, xx + 0.02, rc + 0.06, zb - 1.4 * s, BRASS, 'cradle')
+    k.loft([_ring(x0 + t * L, rc, hw * s, ht * s, hb * s, zc(dz), n=16, p=0.7) for (t, hw, ht, hb, dz) in prof],
+           (INDIGO, 0.08), 'model_hull', closed=True)
+    pts = []
+    for i in range(13):
+        t = 0.02 + i * 0.92 / 12
+        hw, ht, hb, dz = _along(prof, t)
+        pts.append((x0 + t * L, rc + hw * s * 0.98, zc(dz) - 0.15 * hb * s))
+    _trace(k, pts, 0.008, GOLD, 'model_wale')
+    t = 0.3
+    while t < 0.8:                                         # lit ports
+        hw, ht, hb, dz = _along(prof, t)
+        k.box(x0 + t * L - 0.008, rc + hw * s * 0.95, zc(dz) + 0.2 * ht * s, x0 + t * L + 0.008, rc + hw * s + 0.004,
+              zc(dz) + 0.2 * ht * s + 0.014, '#3a2a14', 'model_port', emit=('#ffcf80', 0.9))
+        t += 0.07
+    hw, ht, hb, dz = _along(prof, 0.12)
+    ztop = zc(dz) + ht * s
+    k.box(x0, rc - 1.3 * s, ztop - 0.005, x0 + 0.24 * L, rc + 1.3 * s, ztop + 0.9 * s, (INDIGO, 0.08), 'model_castle')
+    k.box(x0 - 0.005, rc - 1.35 * s, ztop + 0.9 * s, x0 + 0.24 * L + 0.005, rc + 1.35 * s, ztop + 1.05 * s, GOLD, 'model_castle_trim')
+    k.box(x0 + 0.04 * L, rc + 1.3 * s, ztop + 0.25 * s, x0 + 0.2 * L, rc + 1.32 * s, ztop + 0.6 * s, '#3a2a14', 'model_window',
+          emit=('#ffcf80', 0.9))
+    for (t, hgt, span) in ((0.36, 4.6, 1.5), (0.56, 5.2, 1.65), (0.75, 4.2, 1.3)):
+        hw, ht, hb, dz = _along(prof, t)
+        mx, mz = x0 + t * L, zc(dz) + ht * s
+        k.cyl(mx, rc, mz - 0.01, mz + hgt * s, 0.007, GOLD, 'model_mast', verts=6)
+        for (zt_, zb_, w_) in ((mz + hgt * s * 0.95, mz + hgt * s * 0.55, span * s * 0.7), (mz + hgt * s * 0.52, mz + 0.5 * s, span * s)):
+            k.box(mx - w_, rc + 0.004, zb_, mx + w_, rc + 0.012, zt_, '#0a2430', 'model_sail', emit=('#4ad8d0', 0.4))
+            k.box(mx - w_ - 0.01, rc - 0.004, zt_ - 0.005, mx + w_ + 0.01, rc + 0.004, zt_ + 0.005, GOLD, 'model_yard')
+        k.sphere(mx, rc, mz + hgt * s + 0.012, 0.012, 0.012, '#0a2a2a', 'model_mast_orb', emit=(RUNE, 1.0), segs=6)
+    hw, ht, hb, dz = _along(prof, 1.0)
+    k.tube((x0 + L - 0.02, rc, zc(dz)), (x0 + L + 2.0 * s, rc, zc(dz) + 0.6 * s), 0.012, GOLD, 'model_spire', rb=0.002, verts=6)
+    hw, ht, hb, dz = _along(prof, 0.5)
+    kz = zc(dz) - hb * s * 0.95
+    k.box(x0 + 0.34 * L, rc - 0.006, kz - 0.6 * s, x0 + 0.62 * L, rc + 0.006, kz + 0.01, '#0a2a2a', 'model_keel', emit=(RUNE, 0.6))

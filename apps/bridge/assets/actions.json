@@ -730,5 +730,21 @@
       "prompt": "PRESS E TO LOOK OUT",
       "dialog": "THE CROWN ROOM'S WINDOW: THE WHOLE OF ARCADIA, TOWER AFTER TOWER, THE TRAFFIC LANES LIKE STRINGS OF PEARLS."
     }
+  ],
+  "office": [
+    {
+      "label": "CAPTAIN'S CHAIR",
+      "action": "sit",
+      "seat": [
+        8.5,
+        4.95
+      ],
+      "facing": "down"
+    },
+    {
+      "label": "WINDOW",
+      "action": "view",
+      "view": "orbit"
+    }
   ]
 }
