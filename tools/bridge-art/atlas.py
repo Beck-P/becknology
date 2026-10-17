@@ -58,6 +58,37 @@ EXTRA = [
     ('hoarfell-ridge', 'hoarfell-icestep', ['THE ICE STEP'], 'climb'),
     ('hoarfell-ridge', 'hoarfell-hollow', ['THE ICE DOOR'], 'door'),
 ]
+# Arcadia's lifts, the Loop and the air cabs (assets/arcadia-lifts.json, js/transit.js): every stop leads to every
+# other stop on the same shaft, ring or rank
+LIFTS = json.load(open(os.path.join(ROOT, 'arcadia-lifts.json')))
+
+
+def transit_exits(wid, w):
+    out = []
+
+    def at(kind, key, val):
+        hit = [i for i in w.get('interactions', []) if i.get('type') == kind and all(i.get(k) == v for k, v in zip(key, val))]
+        return hit[0] if hit else None
+    for sid, sh in LIFTS.get('shafts', {}).items():
+        for a in sh.get('lobbies', []):
+            if a['world'] != wid:
+                continue
+            it = at('express_lift', ('shaft', 'lobby'), (sid, a['id']))
+            for b in sh['lobbies']:
+                if b is not a and b['world'] in W and b['world'] != wid:
+                    out.append((b['world'], it, sh['name'], 'lift'))
+    for kind, key, group, name in (('loop_station', 'station', LIFTS.get('loop', {}).get('stations', []), 'THE LOOP'),
+                                   ('air_cab', 'pad', LIFTS.get('cabs', {}).get('pads', []), 'AIR CAB')):
+        for a in group:
+            if a['world'] != wid:
+                continue
+            it = at(kind, (key,), (a['id'],))
+            for b in group:
+                if b is not a and b['world'] in W and b['world'] != wid:
+                    out.append((b['world'], it, name, 'loop' if kind == 'loop_station' else 'cab'))
+    return out
+
+
 # mine floors are one place on the map (the same three caves, twenty floors)
 MERGE = {'lumar-rose-mine-b': 'lumar-rose-mine-a', 'lumar-rose-mine-c': 'lumar-rose-mine-a'}
 NAMES = {'lumar-rose-mine-a': 'The Mine Floors', 'lumar': "Diggen's Point Harbour"}
@@ -127,6 +158,15 @@ for wid in sorted(W):
             elif len(ex) > 4:
                 e['x'], e['y'] = ex[4], ex[5]
             exits.append(e)
+    for to, it, name, kind in transit_exits(wid, w):
+        label = it.get('label') if it else name
+        if (to, label) in seen:
+            continue
+        seen.add((to, label))
+        e = {'to': to, 'label': label, 'kind': kind}
+        if it:
+            e['x'], e['y'] = it['x'], it['y']
+        exits.append(e)
     rec = {'name': NAMES.get(wid, w.get('name') or wid), 'sys': sid, 'w': w.get('width'), 'h': w.get('height'), 'exits': exits}
     if sid == 'lumar':
         rec['isle'] = isle_of(wid)

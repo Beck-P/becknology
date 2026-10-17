@@ -553,6 +553,7 @@ class WizardAudio {
 
   ensureCtx() {
     if (!this.enabled) return null;
+    if ((function () { try { return (JSON.parse(localStorage.getItem('bridge_audio') || '{}') || {}).mode === 'off'; } catch (e) { return false; } })()) return null;   // the Bridge's sound switch is off
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) this.ctx = new AudioCtx();
