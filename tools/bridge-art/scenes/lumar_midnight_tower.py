@@ -3,12 +3,14 @@
   BVENV/bin/python tools/bridge-art/scenes/lumar_midnight_tower.py RENDER_DIR
   python3 tools/bridge-art/scene_post.py RENDER_DIR apps/bridge/assets/scenes/lumar-midnight-tower
 
-An octagonal stone room: rose window and bookshelves on the back wall,
+An octagonal stone room: rose window, a bookshelf and the iron stair up to the floors above
+(lumar-midnight-tower-2, the stillroom; -3, the star chamber) on the back wall,
 moonlit windows on the angled walls, a crystal floating over its altar in
 the middle of a glowing summoning circle, candelabras, floating candles,
 the cauldron, the scroll desk, the alchemy table, the telescope and the
 familiar.
 """
+import json
 import math
 import os
 import sys
@@ -30,7 +32,14 @@ P, C = M.octagon_room(k, 2, 2, 10, 11, 2, H, door=(5.0, 7.0))
 
 # ---- back wall: shelves either side of the rose window ----------------------------
 A.bookshelf(k, 4.05, 5.55, 2.0, top=2.2)
-A.bookshelf(k, 6.45, 7.95, 2.0, top=2.2)
+import assets_light as L                       # noqa: E402
+# the stair up to the stillroom and the star chamber, winding against the back wall where the second bookshelf stood
+SX, SR = 7.0, 3.05
+top = L.spiral_stair(k, SX, SR, 1.0, tone='#4a4458')
+k.box(SX - 0.48, 1.98, top, SX + 0.48, 2.06, top + 1.35, A.WOOD_DD, 'upstairs_frame')
+k.box(SX - 0.4, 2.06, top, SX + 0.4, 2.065, top + 1.27, '#120c20', 'upstairs_dark', emit=(M.ARCANE, 0.14))
+k.point_light(SX, 2.4, top + 0.9, M.ARCANE, 6, radius=0.2, group='flicker')
+k.solid(SX - 1.0, SR - 1.0, SX + 0.4, SR + 0.9)
 M.rose_window(k, 6.0, 2.0, 2.75, 0.45)
 k.point_light(6.0, 2.6, 2.6, '#7a5ad0', 10, radius=0.4)
 
@@ -53,7 +62,7 @@ M.familiar(k, 4.35, 5.35)
 # ---- candles -------------------------------------------------------------------------------
 for (x, r) in ((2.5, 4.6), (9.5, 4.6), (2.5, 8.4), (9.5, 8.4)):
     M.candelabra(k, x, r)
-for (x, r, z) in ((4.0, 3.3, 2.15), (5.2, 3.8, 2.5), (6.9, 3.5, 2.3), (8.0, 4.5, 2.2), (3.1, 6.6, 2.4), (9.0, 6.4, 2.35)):
+for (x, r, z) in ((4.0, 3.3, 2.15), (5.2, 3.8, 2.5), (6.3, 4.6, 2.3), (8.0, 4.5, 2.2), (3.1, 6.6, 2.4), (9.0, 6.4, 2.35)):
     M.floating_candle(k, x, r, z)
 
 # ---- crystals growing out of the floor by the left wall --------------------------------
@@ -77,4 +86,9 @@ apply_world(WORLD, k, (2, 2, 9, 10), doors=[(5, 11), (6, 11)], scene_id='lumar-m
     'SORCERESS': (5, 5), 'CRYSTAL': (5, 6), 'ALCHEMY TABLE': (3, 9), 'TELESCOPE': (8, 9),
     'CAULDRON': (3, 3), 'FAMILIAR': (4, 5), 'SCROLLS': (8, 3), 'SPELL CIRCLE': (4, 7)},
     actors=[{'sheet': 'npc-sorceress', 'x': 5, 'y': 5, 'facing': 'down'}])
+w = json.load(open(WORLD))                    # the stair up (its interactions kept whatever apply_world moves)
+w['interactions'] = [i for i in w['interactions'] if i.get('label') != 'STAIRS UP'] + [
+    {'x': x, 'y': 3, 'type': 'enter_world', 'target': 'lumar-midnight-tower-2', 'spawn': [5, 8], 'label': 'STAIRS UP',
+     'prompt': 'PRESS E TO CLIMB'} for x in (6, 7)]
+open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 print('tower done')

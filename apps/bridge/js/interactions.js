@@ -65,12 +65,15 @@ var BridgeInteractions = (function () {
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
-                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters', 'office': 'the Office',
+                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters', 'office': 'the Office', 'ship-passage': 'the Passage', 'ship-galley': 'the Galley',
+                      'ship-observatory': 'the Observatory', 'ship-greenhouse': 'the Greenhouse',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'arcadia-penthouse': 'the Penthouse', 'lumar-manor': 'Ashcombe House', 'lumar-sapphire': 'Sapphire Port',
                       'lumar-manor-drawing': 'the drawing room', 'lumar-manor-library': 'the library', 'lumar-manor-dining': 'the dining room',
                       'lumar-manor-bedroom': 'the master bedroom', 'lumar-holm-resort': 'the Starling',
                       'verdance': 'the farm', 'verdance-home': 'the farmhouse', 'hoarfell': 'Fellhaven', 'hoarfell-summit': 'the summit', 'hoarfell-ridge': 'the Last Ridge', 'hoarfell-hollow': 'the Hollow', 'hoarfell-park': 'the Park', 'arcadia-club': 'Club Void',
                       'sylvara': 'Elderglade', 'sylvara-hall': 'the Heartwood Hall',
+                      'sylvara-roots': 'the Rootmarket', 'sylvara-boughs': 'the Boughs', 'sylvara-crown': 'the Crown', 'sylvara-river': 'the Silverrun',
+                      'sylvara-falls': 'the Falls', 'sylvara-lake': 'Mirror Lake', 'sylvara-deepwood': 'the Deepwood', 'sylvara-fallcave': 'the cave behind the falls',
                       'arcadia-casino': 'the casino floor', 'arcadia-casino-cards': 'the Card Room', 'arcadia-casino-vip': 'the Crown Room',
                       'arcadia-casino-dining': 'Aurum' };
 
@@ -340,6 +343,7 @@ var BridgeInteractions = (function () {
       }
       if (landed) {
         var dmg = C && C.attackDamage && hostile.creature ? C.attackDamage(hostile) : hostile.damage || 5;
+        if (typeof BridgeImplants !== 'undefined') dmg = BridgeImplants.absorb(dmg);   // dermal plate (js/implants.js)
         if (C && C.shake) C.shake(dmg >= 12 ? 4 : 2);
         if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
           BridgeInventory.takeDamage(dmg);
@@ -477,6 +481,10 @@ var BridgeInteractions = (function () {
 
       case 'clinic': case 'rummage': case 'fortune': case 'busker':     // the District's shops and the Skywalk (js/district.js)
         if (typeof BridgeDistrict !== 'undefined') BridgeDistrict.use(inter);
+        break;
+
+      case 'implants':                                                  // chrome: the clinic, the chop shop, the boutique (js/implants.js)
+        if (typeof BridgeImplants !== 'undefined') BridgeImplants.open({ shop: inter.shop });
         break;
 
       case 'companion':                                                 // your pet, following you (js/pet.js)
@@ -1486,6 +1494,7 @@ var BridgeInteractions = (function () {
       you.textContent = '';
       if (face) face.set('neutral');
       say(t.a);
+      if (t.rumour && typeof BridgeQuests !== 'undefined' && BridgeQuests.hear) BridgeQuests.hear(t.rumour, person.name);   // gossip about a quest: into the journal
     }
     function close() {
       closed = true;

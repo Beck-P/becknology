@@ -345,8 +345,8 @@
       3,
       3,
       1,
-      1,
-      1,
+      3,
+      3,
       1,
       1,
       1,
@@ -669,8 +669,8 @@
       0,
       0,
       1,
-      1,
-      1,
+      0,
+      0,
       1,
       1,
       1,
@@ -1032,6 +1032,30 @@
       ],
       "label": "GAME ROOM",
       "prompt": "PRESS E TO ENTER"
+    },
+    {
+      "x": 13,
+      "y": 13,
+      "type": "enter_world",
+      "target": "ship-passage",
+      "spawn": [
+        1,
+        5
+      ],
+      "label": "THE PASSAGE",
+      "prompt": "PRESS E TO GO AFT"
+    },
+    {
+      "x": 14,
+      "y": 13,
+      "type": "enter_world",
+      "target": "ship-passage",
+      "spawn": [
+        1,
+        5
+      ],
+      "label": "THE PASSAGE",
+      "prompt": "PRESS E TO GO AFT"
     }
   ],
   "scene": {
