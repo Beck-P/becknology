@@ -149,9 +149,9 @@ def material(x, r):
 
 
 cells = [(c, r) for c in range(-1, COLS + 1) for r in range(4, ROWS + 2)]
-I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'path': (N.PACKED, 0.06), 'path_edge': ('#cbd5e6', 0.05),
-                              'snow_ploughed': ('#d8e0ec', 0.05), 'ice_bank': ('#a8c4d8', 0.06), 'stream_bed': ('#7a8ca0', 0.08)},
-         step=0.125, bump=0.01, seed=7, height=height, dither=0.06)
+I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'path': ('#c6d0e2', 0.06), 'path_edge': ('#d8e0ee', 0.05),
+                              'snow_ploughed': ('#dce4ef', 0.05), 'ice_bank': ('#d2deec', 0.06), 'stream_bed': ('#8a9cb0', 0.08)},
+         step=0.0625, bump=0.01, seed=7, height=height, dither=0.07)
 
 # ---- the massif: tiers of rock stepping back, the icefall in its recess ---------------------------------------------------
 TIERS = [(1.15, 7.0), (2.3, 6.45), (3.45, 5.9), (4.6, 5.3), (6.0, 4.5), (7.4, 3.55), (8.8, 2.5), (10.2, 1.3), (11.6, 0.0)]
@@ -200,13 +200,15 @@ for i, ((ax, ar), (bx, br)) in enumerate(zip(seg, seg[1:])):
     if abs((ar + br) / 2 - 15.7) < 1.0:
         continue
     z = -0.115
-    wdt = 0.3 + 0.05 * math.sin(i * 0.9)
+    wdt = 0.2 + 0.05 * math.sin(i * 0.9)
     L = math.hypot(bx - ax, br - ar)
     nx, nr = -(br - ar) / L * wdt, (bx - ax) / L * wdt
     k.quads([((ax - nx, ar - nr, z), (ax + nx, ar + nr, z), (bx + nx, br + nr, z), (bx - nx, br - nr, z))], ('#2e5a72', 0.05), 'stream_water')
-    if i % 3 == 1:                                                                 # ice shelving out from the banks
-        s_ = 1 if (i // 3) % 2 else -1
-        k.blob(ax + nx * s_ * 0.8, ar + nr * s_ * 0.8, -0.1, 0.24, 0.2, 0.025, ('#c6dcea', 0.06), 'ice', segs=8)
+    if i % 5 in (1, 2, 3):                                                         # ice over most of it, open water between
+        k.blob((ax + bx) / 2, (ar + br) / 2, -0.105, 0.3, 0.26, 0.02, ('#d0e2ee', 0.06), 'ice', segs=10)
+    elif i % 5 == 4:                                                               # snow shelving out from a bank
+        s_ = 1 if (i // 5) % 2 else -1
+        k.blob(ax + nx * s_ * 1.2, ar + nr * s_ * 1.2, -0.08, 0.28, 0.2, 0.05, (N.SNOW, 0.05), 'drift', segs=8)
     if i % 4 == 2:                                                                 # a stone with a cap of snow
         HR.rock(k, ax + nx * rr.uniform(-0.6, 0.6), ar + nr * rr.uniform(-0.6, 0.6), rr.uniform(0.1, 0.16), z=-0.12, rr=rr, part='stream_stone')
 for rf_ in (14.92, 16.5):                                                          # the culvert's stone headwalls
@@ -423,11 +425,17 @@ k.solid(35, 26, 36, 27)
 # ---- trees in layers: firs in clusters, saplings, bare birches, shrubs under the snow -----------------------------------------------
 FIRS = [(0.6, 8.6 + i * 2.1, rr.uniform(2.4, 3.2)) for i in range(12)]
 FIRS += [(45.4, 8.6 + i * 2.1, rr.uniform(2.4, 3.2)) for i in range(12) if 8.6 + i * 2.1 < 10 or 8.6 + i * 2.1 > 16.5]
-FIRS += [(1.5 + i * 2.2, 32.6 + rr.uniform(-0.3, 0.3), rr.uniform(2.4, 3.3)) for i in range(20) if not 34.5 < 1.5 + i * 2.2 < 43.5]
-FIRS += [(3.0, 25.5, 2.7), (5.2, 28.0, 2.9), (2.2, 29.6, 2.6), (3.8, 30.6, 2.2), (6.6, 30.2, 2.5),             # bottom-left wood
-         (21.0, 27.4, 2.6), (23.6, 28.6, 2.9), (19.2, 29.8, 2.4), (26.4, 30.4, 2.7), (24.6, 31.0, 2.1), (22.0, 30.6, 2.2),
-         (44.0, 22.0, 2.8), (43.2, 25.0, 2.4), (44.4, 28.8, 2.9), (30.6, 28.8, 2.5), (32.0, 30.4, 2.2), (8.6, 27.6, 2.4),
-         (10.6, 29.6, 2.6), (13.6, 30.2, 2.3), (12.0, 28.2, 2.0), (28.6, 29.8, 2.1), (16.4, 29.4, 2.2),
+x = 1.0
+while x < 46:                                                                       # the wood along the bottom, ragged
+    if not 34.2 < x < 43.8:
+        FIRS.append((x, 32.4 + rr.uniform(-0.6, 0.7), rr.uniform(2.0, 3.4)))
+        if rr.random() < 0.45:
+            FIRS.append((x + rr.uniform(-0.6, 0.6), 31.0 + rr.uniform(-0.4, 0.4), rr.uniform(1.6, 2.4)))
+    x += rr.uniform(1.3, 2.6)
+FIRS += [(3.0, 25.5, 2.7), (5.2, 28.0, 2.9), (2.2, 28.9, 2.6), (3.8, 29.8, 1.9), (6.4, 29.4, 2.3),             # bottom-left wood
+         (21.0, 27.4, 2.6), (23.6, 28.6, 2.9), (19.6, 28.9, 2.0), (25.9, 29.4, 2.5), (22.6, 29.9, 1.8),
+         (44.0, 22.0, 2.8), (43.2, 25.0, 2.4), (44.4, 28.8, 2.9), (30.6, 28.8, 2.5), (31.8, 29.6, 1.9), (8.6, 27.6, 2.4),
+         (10.6, 29.2, 2.6), (12.0, 28.0, 1.8), (28.6, 29.5, 2.0), (16.4, 29.2, 2.2),
          (44.6, 11.0, 2.6), (43.8, 18.2, 2.3)]
 for (x, r, h) in FIRS:
     HR.fir(k, x, r, h, rr=rr, solid=1.2 < x < 44.6 and r < 31.5)
@@ -461,7 +469,17 @@ k.solid(44, ROWS - 2, COLS, ROWS)
 
 # ---- the light: alpenglow — a low pink sun from the west, the sky's violet-blue in the shadows -------------------------------------
 k.sun((0.8, 0.25, -0.38), '#ffc4a4', 3.2, angle=3.0)
-k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=int(os.environ.get('SCENE_SAMPLES', 96)), world_light=('#8a96cc', 0.95))
+if os.environ.get('HF_CROP'):                     # previews: render only a window of the frame (fractions x0,y0,x1,y1)
+    _bx = [float(v) for v in os.environ['HF_CROP'].split(',')]
+    _st = k._settings
+
+    def _settings(*a, **kw):
+        _st(*a, **kw)
+        r = k.scene.render
+        r.use_border, r.use_crop_to_border = True, False
+        r.border_min_x, r.border_max_x, r.border_min_y, r.border_max_y = _bx[0], _bx[2], 1 - _bx[3], 1 - _bx[1]
+    k._settings = _settings
+k.render(OUT, cycle=None if os.environ.get('HF_FAST') else 'day', light_states={'full': {}}, light_samples=int(os.environ.get('SCENE_SAMPLES', 96)), world_light=('#8a96cc', 0.95))
 
 w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
 w.update({'name': 'Fellhaven', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'hoarfell',

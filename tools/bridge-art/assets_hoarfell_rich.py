@@ -71,7 +71,7 @@ def _block(k, x0, x1, rf, rback, z_top, lean, col, rr, icicles=0.5, z_base=0.0):
     return tops
 
 
-def crag(k, x0, x1, tiers, seed=7, recess=(), shelf_firs=0.25, firs=True, rr=None):
+def crag(k, x0, x1, tiers, seed=7, recess=(), shelf_firs=0.08, firs=True, rr=None, wave=0.45):
     """A rock face in tiers: tiers = [(z_top, front_row)] front to back. Blocks of rock along each tier (a dark face,
     a bedding seam, cracks, icicles off the lip, snow lying on top), a solid core behind so nothing shows through
     the cracks, boulders and drifts along the foot, the odd small fir on a wide ledge. recess: (xa, xb) spans where
@@ -83,15 +83,17 @@ def crag(k, x0, x1, tiers, seed=7, recess=(), shelf_firs=0.25, firs=True, rr=Non
         rf_next = tiers[ti + 1][1] if ti + 1 < len(tiers) else rf - 0.9
         x = x0 - rr.uniform(0.0, 0.5)
         while x < x1:
-            w = rr.uniform(0.5, 1.7) if ti < 3 else rr.uniform(0.9, 2.2)
+            w = rr.uniform(0.5, 1.7) if ti < 3 else rr.uniform(1.0, 2.6) if ti < 5 else rr.uniform(1.6, 3.4)
             xb = min(x1, x + w)
             cut = any(a < (x + xb) / 2 < b for (a, b) in recess) and ti < 3
             if cut:
                 x = xb
                 continue
             gap = rr.uniform(0.03, 0.08)
-            front = rf + rr.uniform(-0.12, 0.1)
-            top = zt + rr.uniform(-0.18, 0.12)
+            xm_ = (x + xb) / 2                       # the beds rise and fall along the face, not ruled straight
+            wv = wave * (math.sin(xm_ * 0.23 + ti * 1.7 + seed) * 0.6 + math.sin(xm_ * 0.61 + ti * 0.9) * 0.4) * min(1.0, ti / 2 + 0.3)
+            front = rf + rr.uniform(-0.12, 0.1) - wv * 0.35
+            top = zt + rr.uniform(-0.18, 0.12) + wv
             _block(k, x + gap / 2, xb - gap / 2, front, rf_next - 0.05, top, rr.uniform(0.06, 0.2), FACE[rr.randrange(len(FACE))], rr)
             k.box(x, rf_next - 0.3, 0.0, xb, front - 0.25, top - 0.15, ('#3c4252', 0.05), 'crag_core')
             fronts.append((ti, x, xb, front, top))
@@ -252,10 +254,28 @@ def alpine_door(k, cx, r_face, col=None, wreath=True, lamp=1, canopy=True, rr=No
     k.box(cx + 0.5 * (-lamp or 1), r_face + 0.42, 0.0, cx + 0.5 * (-lamp or 1) + 0.12, r_face + 0.48, 0.16, ('#2e3038', 0.1), 'boot_scraper')
 
 
+def snow_sheet(k, a, b, c, d, nu, nv, amp=0.035, seed=0, part='roof_snow'):
+    """A blanket of snow over the quad a-b-c-d (corners (x, r, z); a-b along u, a-d along v), gently lumpy, so the
+    light finds soft hollows in it instead of one flat slab."""
+    def at(u, v):
+        p = [a[i] + (b[i] - a[i]) * u + (d[i] - a[i]) * v + (a[i] - b[i] + c[i] - d[i]) * u * v for i in range(3)]
+        edge = min(u, 1 - u, v, 1 - v)
+        f = min(1.0, edge * 6)
+        p[2] += amp * f * (math.sin(u * 7.3 + seed) * math.sin(v * 5.1 + seed * 0.7) * 0.6 + math.sin(u * 17.0 + v * 9.0 + seed) * 0.4)
+        return tuple(p)
+    q = []
+    for i in range(nu):
+        for j in range(nv):
+            u0, u1, v0, v1 = i / nu, (i + 1) / nu, j / nv, (j + 1) / nv
+            q.append((at(u0, v0), at(u1, v0), at(u1, v1), at(u0, v1)))
+    k.quads(q, (ROOF_SNOW, 0.03), part)
+
+
 def _snow_slope(k, xa, xb, ra, rb, za, zb, s_, rr, n_drift=2):
     """Snow on one slope of a roof between the ridge (x=xa, z=za) and the eave (x=xb, z=zb) from row ra to rb:
     a blanket, long low drifts down it."""
-    k.poly([(xa, ra, za + 0.14), (xa, rb, za + 0.14), (xb, rb, zb + 0.1), (xb, ra, zb + 0.1)], (ROOF_SNOW, 0.03), 'roof_snow')
+    snow_sheet(k, (xa, ra, za + 0.14), (xb, ra, zb + 0.1), (xb, rb, zb + 0.1), (xa, rb, za + 0.14), max(3, int(abs(xb - xa) / 0.25)),
+               max(3, int((rb - ra) / 0.25)), seed=xa + ra)
     ang = math.degrees(math.atan2(za - zb, abs(xb - xa)))
     for j in range(n_drift):
         r = ra + (0.25 + 0.5 * j / max(1, n_drift - 1)) * (rb - ra) + rr.uniform(-0.15, 0.15)
@@ -296,7 +316,8 @@ def dormer(k, dx, rm, rs, zt, zs, rr, w=0.9):
     rd = rm + (rs - rm) * t                       # its face
     zb = zt + (zs - zt) * t                       # the slope's height there
     h = 0.62
-    k.box(dx - w / 2, rd - 0.9, zb - 0.25, dx + w / 2, rd, zb + h, (LOG, 0.1), 'dormer_wall')
+    D = 0.55
+    k.box(dx - w / 2, rd - D, zb - 0.25, dx + w / 2, rd, zb + h, (LOG, 0.1), 'dormer_wall')
     k.box(dx - w / 2 - 0.05, rd - 0.02, zb - 0.05, dx + w / 2 + 0.05, rd + 0.06, zb + 0.06, (LOG_D, 0.1), 'dormer_sill')
     k.box(dx - 0.2, rd, zb + 0.1, dx + 0.2, rd + 0.05, zb + 0.5, '#5a3a18', 'window_glass', emit=(W.GLOW, 0.9))
     k.box(dx - 0.26, rd + 0.01, zb + 0.06, dx + 0.26, rd + 0.06, zb + 0.54, W.WOOD_DD, 'window_frame')
@@ -307,14 +328,13 @@ def dormer(k, dx, rm, rs, zt, zs, rr, w=0.9):
     zr = zb + h + 0.38
     for s_ in (-1, 1):
         xe = dx + s_ * (w / 2 + 0.14)
-        k.poly([(dx, rd - 0.9, zr), (dx, rf_, zr), (xe, rf_, zb + h - 0.06), (xe, rd - 0.9, zb + h - 0.06)], (LOG_D, 0.08), 'roof_deck')
-        k.poly([(dx, rd - 0.9, zr + 0.1), (dx, rf_ - 0.03, zr + 0.1), (xe - s_ * 0.04, rf_ - 0.03, zb + h + 0.02), (xe - s_ * 0.04, rd - 0.9, zb + h + 0.02)],
+        k.poly([(dx, rd - D, zr), (dx, rf_, zr), (xe, rf_, zb + h - 0.06), (xe, rd - D, zb + h - 0.06)], (LOG_D, 0.08), 'roof_deck')
+        k.poly([(dx, rd - D, zr + 0.1), (dx, rf_ - 0.03, zr + 0.1), (xe - s_ * 0.04, rf_ - 0.03, zb + h + 0.02), (xe - s_ * 0.04, rd - D, zb + h + 0.02)],
                (ROOF_SNOW, 0.03), 'roof_snow')
-        k.tube((xe - s_ * 0.02, rd - 0.85, zb + h + 0.03), (xe - s_ * 0.02, rf_ - 0.02, zb + h + 0.03), 0.09, (ROOF_SNOW, 0.03), 'cornice', verts=10)
         for j in range(3):
             L = rr.uniform(0.06, 0.18)
             k.cone(xe, rd - 0.6 + j * 0.3, zb + h - 0.06 - L, zb + h - 0.06, 0.02, 0.004, (ICE, 0.06), 'icicle', verts=5)
-    k.tube((dx, rd - 0.9, zr + 0.12), (dx, rf_ - 0.03, zr + 0.12), 0.09, (ROOF_SNOW, 0.03), 'ridge_snow', verts=10)
+    k.tube((dx, rd - D, zr + 0.12), (dx, rf_ - 0.03, zr + 0.12), 0.09, (ROOF_SNOW, 0.03), 'ridge_snow', verts=10)
     k.tube((dx - w / 2 - 0.14, rf_ + 0.01, zb + h - 0.08), (dx, rf_ + 0.01, zr), 0.04, (LOG_D, 0.08), 'bargeboard', verts=6)
     k.tube((dx + w / 2 + 0.14, rf_ + 0.01, zb + h - 0.08), (dx, rf_ + 0.01, zr), 0.04, (LOG_D, 0.08), 'bargeboard', verts=6)
     k.poly([(dx - w / 2, rd + 0.0, zb + h), (dx + w / 2, rd + 0.0, zb + h), (dx, rd + 0.0, zr - 0.04)], (LOG_L, 0.08), 'gable')
@@ -385,7 +405,8 @@ def side_gable_roof(k, x0, x1, r_back, r_front, wall_h, rise, over=0.4, side_ove
         k.poly([(xa, rm, zt), (xb, rm, zt), (xb, re_, ze), (xa, re_, ze)], (LOG_D, 0.08), 'roof_deck')
     SN = 0.9
     rs, zs = rm + (rfe - rm) * SN, zt + (ze - zt) * SN
-    k.poly([(xa + 0.05, rm, zt + 0.14), (xb - 0.05, rm, zt + 0.14), (xb - 0.05, rs, zs + 0.1), (xa + 0.05, rs, zs + 0.1)], (ROOF_SNOW, 0.03), 'roof_snow')
+    snow_sheet(k, (xa + 0.05, rm, zt + 0.14), (xb - 0.05, rm, zt + 0.14), (xb - 0.05, rs, zs + 0.1), (xa + 0.05, rs, zs + 0.1),
+               max(4, int((xb - xa) / 0.25)), max(3, int((rs - rm) / 0.25)), seed=xa + rm)
     k.poly([(xa + 0.05, rm, zt + 0.14), (xb - 0.05, rm, zt + 0.14), (xb - 0.05, rbe + 0.1, ze + 0.1), (xa + 0.05, rbe + 0.1, ze + 0.1)],
            (ROOF_SNOW, 0.03), 'roof_snow')
     ang = math.degrees(math.atan2(rise, depth))
@@ -621,7 +642,12 @@ def prints(k, pts, height=None, step=0.42, rr=None, col='#a8b6ce', part='print')
 def sled_tracks(k, pts, height=None):
     """Two runner tracks along a polyline."""
     hz = height or (lambda x, r: 0.0)
+    fine = []
     for (ax, ar), (bx, br) in zip(pts, pts[1:]):
+        n = max(1, int(math.hypot(bx - ax, br - ar) / 0.25))
+        fine += [(ax + (bx - ax) * t / n, ar + (br - ar) * t / n) for t in range(n)]
+    fine.append(pts[-1])
+    for (ax, ar), (bx, br) in zip(fine, fine[1:]):
         L = math.hypot(bx - ax, br - ar)
         nx, nr = -(br - ar) / L, (bx - ax) / L
         for s in (-0.13, 0.13):
