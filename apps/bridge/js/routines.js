@@ -44,9 +44,12 @@ var BridgeRoutines = (function () {
   /** { cur, prev, since (ms into the stop), len } for someone, or null (no clock there, or no day kept). */
   function stopNow(id) {
     var day = R && R[id], p = cast() && cast()[id], home = homeOf(p);
-    if (!day || !day.length || !home || typeof BridgeClock === 'undefined' || typeof BridgeHours === 'undefined') return null;
+    if (!home || typeof BridgeClock === 'undefined' || typeof BridgeHours === 'undefined') return null;
     var planet = BridgeClock.planet(home.world), T = BridgeClock.time(planet);
     if (!T) return null;
+    var fest = festDay(id, day, planet);                        // a festival on: its hours given over to it
+    if (fest) day = fest;
+    if (!day || !day.length) return null;
     // off to their own spot a little before its anchor, anywhere else a little after: a shopkeeper is in before the
     // shop opens and doesn't leave till it's shut
     var A = BridgeHours.anchors(planet), H = 3600000, lag = hashFrac(id) * STAGGER * T.len;
@@ -58,6 +61,25 @@ var BridgeRoutines = (function () {
     if (i < 0) { i = day.length - 1; since = T.t + T.len - starts[i]; }       // still last night's stop
     else since = T.t - starts[i];
     return { cur: day[i], prev: day[(i - 1 + day.length) % day.length], since: since, len: T.len, index: i };
+  }
+
+  function festDay(id, day, planet) {
+    return typeof BridgeFestivals !== 'undefined' && BridgeFestivals.timetable ? BridgeFestivals.timetable(id, day || [[0, 'home']], planet) : null;
+  }
+  // everyone who keeps a day: their routines, and whoever a festival on today gathers
+  function ids() {
+    var out = Object.keys(R || {}).filter(function (id) { return id.charAt(0) !== '_'; });
+    if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on) BridgeFestivals.on().forEach(function (f) {
+      Object.keys(f.crowd || {}).forEach(function (id) { if (out.indexOf(id) < 0) out.push(id); });
+    });
+    return out;
+  }
+  // the places someone's day takes them today (beyond their own)
+  function visits(id) {
+    var out = [];
+    ((R && R[id]) || []).forEach(function (e) { if (e[1] && e[1].world) out.push(e[1].world); });
+    if (typeof BridgeFestivals !== 'undefined' && BridgeFestivals.on) BridgeFestivals.on().forEach(function (f) { if (f.crowd && f.crowd[id]) out.push(f.world); });
+    return out;
   }
 
   // a stop's place: { world, x, y, facing, pose } or null (away); `spot` is their own spot (in their own place)
@@ -193,12 +215,10 @@ var BridgeRoutines = (function () {
     W.people = [];
     if (!C || !R || !data.scene || !data.collisions) return;
     W.base = data.collisions.map(function (row) { return row.slice(); });
-    Object.keys(R).forEach(function (id) {
-      if (id.charAt(0) === '_') return;
+    ids().forEach(function (id) {
       var p = C[id], home = homeOf(p);
       if (!p || !home) return;
-      var visits = R[id].some(function (e) { return e[1] && e[1].world === W.id; });
-      if (home.world !== W.id && !visits) return;
+      if (home.world !== W.id && visits(id).indexOf(W.id) < 0) return;
       var m = { id: id, p: p, homeHere: home.world === W.id };
       if (m.homeHere) {
         var it = data.interactions.filter(function (i) { return i.label === home.label; })[0];
@@ -267,9 +287,9 @@ var BridgeRoutines = (function () {
   function adjust(worldId, data) {
     var C = cast();
     if (!R || !C || !data || !data.interactions) return data;
-    Object.keys(R).forEach(function (id) {
+    ids().forEach(function (id) {
       var p = C[id], home = homeOf(p);
-      if (!p || !home || id.charAt(0) === '_') return;
+      if (!p || !home) return;
       var w = where(id);
       if (home.world === worldId && !(w && w.world === worldId))
         data.interactions = data.interactions.filter(function (i) { return i.label !== home.label; });

@@ -1,0 +1,39 @@
+{
+  "_doc": "One festival a season on a planet (js/festivals.js), on the weekend (Saturday and Sunday, Eastern time) of that season's last week. hours: [from, to] anchors (js/hours.js) of each planet-day the fair is open. crowd: who gathers where while it's open (js/routines.js) [x, y, facing, pose?]. props: what's put up [kind, x, y] (solid while the festival's on). contest: show (hand the judge produce) or derby (the biggest fish caught on the planet while it's on).",
+
+  "harvest_fair": {
+    "name": "The Harvest Fair",
+    "planet": "verdance", "season": "autumn", "world": "verdance-village", "place": "Brambleford square",
+    "line": "Bunting and pies, and Old Ludd judging the produce",
+    "hours": ["morning", "evening"],
+    "props": [["show_table", 12, 16], ["show_table", 13, 16], ["stall", 19, 13], ["stall", 20, 13], ["hay", 9, 16], ["pumpkins", 10, 16], ["hay", 16, 16], ["pumpkins", 21, 14], ["hay", 8, 18]],
+    "contest": {
+      "kind": "show", "at": [12, 16], "label": "JUDGING TABLE", "judge": "Old Ludd",
+      "entries": { "pumpkin": 9, "starfruit": 10, "sunflower": 7, "strawberry": 6, "carrot": 5, "turnip": 4, "apple": 5, "honey": 6, "egg": 4, "milk": 4 },
+      "rivals": [["Percy Pennyworth", "pumpkin"], ["Nell Ashby", "sunflower"], ["Hollin Ashby", "carrot"], ["Wat Coldridge", "turnip"]],
+      "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+    },
+    "stall": { "at": [19, 13], "label": "FAIR STALL", "items": [{ "id": "apple_pie", "price": 6 }, { "id": "cider", "price": 4 }, { "id": "toffee_apple", "price": 3 }] },
+    "crowd": {
+      "ludd": [12, 15, "down"], "bridget": [19, 12, "down"], "percy": [14, 18, "up"], "nell": [11, 18, "up"], "wat": [15, 17, "left"]
+    }
+  },
+
+  "lantern_tide": {
+    "name": "Lantern Tide",
+    "planet": "lumar", "season": "autumn", "world": "lumar-crown", "place": "Crownhaven quay",
+    "line": "Lanterns on the water for everyone the sea has kept",
+    "hours": ["sunset", "small"],
+    "props": [["derby_board", 11, 32], ["stall", 44, 31], ["stall", 45, 31]],
+    "lanterns": { "x": [6, 50], "y": [34.6, 45], "skip": [[12, 17], [21, 24]], "n": 72 },
+    "contest": {
+      "kind": "derby", "at": [11, 32], "label": "DERBY BOARD", "judge": "the Bosun",
+      "rivals": [["Old Pell", "moon_eel", 80, 132], ["Salt Annie", "bluefin", 55, 88], ["Cutter Joss", "spore_tuna", 70, 124]],
+      "prizes": [[600, "blue_rosette"], [250, "red_rosette"], [100, "yellow_rosette"]]
+    },
+    "stall": { "at": [44, 31], "label": "LANTERN STALL", "items": [{ "id": "paper_lantern", "price": 5 }, { "id": "lantern_cake", "price": 6 }, { "id": "cider", "price": 4 }] },
+    "crowd": {
+      "bosun": [12, 31, "down"], "annie": [27, 32, "down"], "joss": [29, 32, "down"], "wright": [36, 32, "down"]
+    }
+  }
+}

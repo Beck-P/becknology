@@ -226,7 +226,7 @@ var BridgeClock = (function () {
   })();
 
   return {
-    PLANETS: PLANETS, sky: sky, weights: weights, etAt: etAt, hoursAt: hoursAt, bustleAt: bustleAt, planet: planetOf, outdoor: outdoor, time: time, season: season, daylight: daylight, moon: moon,
+    PLANETS: PLANETS, now: realNow, sky: sky, weights: weights, etAt: etAt, hoursAt: hoursAt, bustleAt: bustleAt, planet: planetOf, outdoor: outdoor, time: time, season: season, daylight: daylight, moon: moon,
     etNow: etNow, etParts: etParts, now: realNow, fmtHours: fmtHours, until: until, dayLen: dayLen, bustle: bustle,
     _at: setAt
   };

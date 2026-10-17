@@ -17,11 +17,11 @@ The plan, item by item (agreed, proposed, parked, out): `_claude_docs/spec-dense
 |---|---|---|
 | Crowds of background people, "lots of people" | open (agreed) | Varied extras by planet wardrobe, going door to door, by clock and weather, the same for every pilot; never blocking doors, not in lonely places. Pairs with the other session's daily routines. |
 | Small events on the hour | open (agreed) | A few minutes each, shared by the clock. |
-| Races against whoever you're playing with: sailing, skiing, climbing | open (agreed) | Today only against Liv, Ysolde or your ghost. |
+| Race anyone who's there ("I want to be able to race Alyssa"): sailing, skiing, climbing; and the seas a little larger | open (agreed) | Today only against Liv, Ysolde or your ghost. Seas about a fifth bigger (`K` 600 → ~720). |
 | A party for playing together: travel waits for both of you (ready check), ride along on jumps, come aboard each other's Wayfarer | discuss | Beck's idea; details proposed in the spec. |
 | The Wayfarer grows with your crew | discuss | Galley and cook, the mess, crew walking about, modules. |
 | Enigma: restore the station, a zero-g spine | parked | Beck likes it; a note for later (the playing-together question). |
-| Arcadia: up, down and out — ritzier up, poorer down; the Undercity; trains and a sky loop; implants; restaurants on every level; large but connected, room to go side to side | discuss | Layout proposed in the spec (levels × districts). Heist out; rooftop running undecided. |
+| Arcadia: up, down and out — ritzier up, poorer down; the Undercity; trains and a sky loop; implants; restaurants on every level; large but connected, room to go side to side | discuss | Layout in the spec (levels × districts), agreed. The bottom dangerous, with fighting. Heist and rooftop running out. |
 | Lumar: harbours that work; a cliff town; the spore bloom; a weekly regatta; each sea's towns, people and ships their own; Crownhaven much bigger | discuss | Per-sea ideas in the spec (Beck likes them). Tides, ferry work maybe; diving, the dragon egg out. |
 | Sylvara: canopy city, the river by canoe to Mirror Lake with places along it, the falls, the Deepwood, brewing, bows | discuss | |
 | Verdance: the village grows with you, the countryside by horse and buggy, small towns, makers and a café, produce shipped to Arcadia, night-blooming flowers | discuss | Market day only if someone else runs the stall. |
