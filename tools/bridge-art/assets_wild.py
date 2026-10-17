@@ -327,12 +327,24 @@ def test_hooks(k):
 
 
 # ---- fewer objects ---------------------------------------------------------------------------------------------------
+def _q(spec, step=6):
+    """A colour spec with each channel rounded to a few levels (invisible once the toy finish has banded it): parts a
+    shade apart can then share one mesh."""
+    if not isinstance(spec, (str, tuple)) or spec == 'HOLDOUT':
+        return spec
+    hx, rest = (spec, None) if isinstance(spec, str) else (spec[0], spec[1:])
+    if not (isinstance(hx, str) and hx.startswith('#') and len(hx) == 7):
+        return spec
+    c = '#' + ''.join('%02x' % min(255, int(round(int(hx[i:i + 2], 16) / step) * step)) for i in (1, 3, 5))
+    return c if rest is None else (c,) + tuple(rest)
+
+
 def merge_parts(k, block=3.0):
-    """Join the scene's many small parts into a few meshes before it renders: parts alike (the same name, colour, glow,
-    tree, variant) within the same block × block tiles become one object. A rich island is tens of thousands of blobs
-    (every leaf clump, flower and fern frond its own object) and Blender pays for each one on every pass; joined, a
-    full render takes a fraction of the time and looks the same. The ground and coast (already a few big meshes whose
-    grain is laid in tile units by their size) are left as they are. Run last in k.later (after the grass)."""
+    """Join the scene's many small parts into a few meshes before it renders: parts alike (the same name, colour to a
+    few levels, glow, tree, variant) within the same block × block tiles become one object. A rich island is tens of
+    thousands of blobs (every leaf clump, flower and fern frond its own object) and Blender pays for each one on every
+    pass; joined, a render takes a fraction of the time and looks the same. The ground and coast (already a few big
+    meshes whose grain is laid in tile units by their size) are left as they are. Run in k.later (before the grass)."""
     import bmesh
     import bpy
     from collections import defaultdict
@@ -347,21 +359,22 @@ def merge_parts(k, block=3.0):
             continue
         o = p['obj']
         c = o.matrix_world @ (sum((Vector(b) for b in o.bound_box), Vector()) / 8)
-        key = (n, repr(p['albedo']), repr(p['emit']), p.get('fol'), p.get('tree', 0), id(p['var']) if p['var'] else 0,
+        key = (n, repr(_q(p['albedo'])), repr(_q(p['emit'])), p.get('fol'), p.get('tree', 0), id(p['var']) if p['var'] else 0,
                p.get('nature'), int(c.x // block), int((-c.y / S) // block))
         groups[key].append(p)
     before = len(k.parts)
-    gone = set()
+    gone, dead = set(), []
     for key, ps in groups.items():
         if len(ps) < 2:
             continue
         bm = bmesh.new()
         for p in ps:
             o = p['obj']
-            me = o.evaluated_get(dg).to_mesh()
+            ev = o.evaluated_get(dg)
+            me = ev.to_mesh()
             me.transform(o.matrix_world)
             bm.from_mesh(me)
-            o.evaluated_get(dg).to_mesh_clear()
+            ev.to_mesh_clear()
         me = bpy.data.meshes.new('merged')
         bm.to_mesh(me)
         bm.free()
@@ -369,205 +382,18 @@ def merge_parts(k, block=3.0):
         k.scene.collection.objects.link(ob)
         ob.data.materials.append(bpy.data.materials.new('tmp'))
         d = {kk: v for kk, v in ps[0].items() if kk != 'obj'}
-        d['obj'] = ob
+        d['obj'], d['albedo'], d['emit'] = ob, _q(d['albedo']), _q(d['emit'])
         for p in ps:
             gone.add(id(p))
-            bpy.data.objects.remove(p['obj'], do_unlink=True)
+            dead.append(p['obj'])
         k.parts.append(d)
-        if d['var'] is not None:
-            d['var']['parts'] = [q for q in d['var']['parts'] if id(q) not in gone] + [d]
+    meshes = [o.data for o in dead]
+    bpy.data.batch_remove(dead)                      # one at a time costs more the bigger the scene: all at once
+    bpy.data.batch_remove([m for m in meshes if m.users == 0])
     k.parts = [p for p in k.parts if id(p) not in gone]
     for v in k.variants:
-        v['parts'] = [q for q in v['parts'] if id(q) not in gone]
-        for p in k.parts:
-            if p['var'] is v and p not in v['parts']:
-                v['parts'].append(p)
+        v['parts'] = [p for p in k.parts if p['var'] is v]
     print('merge_parts: %d parts -> %d' % (before, len(k.parts)), flush=True)
-
-
-
-# ---- the Look Book's own small things (dioramas/sylvara_brook.py), lifted as they are --------------------------------------
-# Elderglade Brook's builders, fitted to an island: the ground's height comes from z (a function (x, r) -> z, default
-# flat), the scene's dice are left alone (each call rolls its own: own_dice), and the colours default to the brook's.
-BARK, MOSS, MOSS_L, STONE_LB, LEAF = '#5e4430', '#4f7a34', '#76a048', '#7e7c6c', '#3f6e30'
-_flat = lambda x, r: 0.0
-
-
-def fern(k, cx, cr, s=0.5, fronds=8, tone='#4a8a3a', z=None, z_at=_flat, seed=None):
-    """A fern: arching fronds, each a stem with leaflets either side, as one mesh (sylvara_brook.fern)."""
-    rng = _rng(cx, cr, 5) if seed is None else random.Random(seed)
-    z0 = z_at(cx, cr) if z is None else z
-    quads = []
-    for i in range(fronds):
-        a = i / fronds * math.tau + rng.uniform(-0.25, 0.25)
-        L = s * rng.uniform(0.75, 1.1)
-        rise = s * rng.uniform(0.45, 0.65)
-        prev = None
-        for j in range(9):
-            t = j / 8
-            x = cx + math.cos(a) * L * t
-            r = cr + math.sin(a) * L * t * 0.85
-            zz = z0 + 0.02 + rise * math.sin(t * math.pi * 0.85) * (1 - 0.3 * t)
-            if prev:
-                leaf = s * 0.16 * (1 - t * 0.7)
-                nx, nr = -math.sin(a), math.cos(a) * 0.85
-                for side in (-1, 1):
-                    tip = (x + nx * leaf * side + math.cos(a) * leaf * 0.4, r + nr * leaf * side, zz - leaf * 0.35)
-                    quads.append(((prev[0], prev[1], prev[2]), (x, r, zz), tip,
-                                  ((prev[0] + tip[0]) / 2, (prev[1] + tip[1]) / 2, (prev[2] + tip[2]) / 2)))
-            prev = (x, r, zz)
-    with k.foliage('leaf'):
-        k.quads(quads, (shade(tone, rng.uniform(0.85, 1.1)), 0.25), 'fern')
-
-
-def boulder(k, cx, cr, s=0.5, tone=STONE_LB, moss=MOSS_L, z=None, z_at=_flat, tufts=None, solid=True, seed=None):
-    """A mossy boulder with a smaller stone at its foot (sylvara_brook.boulder); tufts: grass round its foot (a colour);
-    solid: blocks the tile under it."""
-    rng = _rng(cx, cr, 3) if seed is None else random.Random(seed)
-    z0 = z_at(cx, cr) if z is None else z
-    with own_dice(k, rng.randrange(10 ** 6)):
-        k.rock(cx, cr, z0 + s * 0.15, s, s * 0.8, s * 0.62, (tone, 0.35), part='rock', segs=10)
-        k.rock(cx + s * 0.55, cr + s * 0.3, z0 + s * 0.05, s * 0.4, s * 0.34, s * 0.3, (shade(tone, 0.9), 0.35), part='rock', segs=8)
-    if moss:
-        k.blob(cx - s * 0.1, cr - s * 0.1, z0 + s * 0.7, s * 0.75, s * 0.55, s * 0.18, (moss, 0.4), 'rock_moss', segs=10)
-        for _ in range(3):
-            k.blob(cx + rng.uniform(-s, s) * 0.6, cr + s * 0.3, z0 + s * rng.uniform(0.35, 0.6), s * 0.25, s * 0.15, s * 0.12,
-                   (shade(moss, 0.95), 0.4), 'rock_moss', segs=7)
-    if tufts:
-        k.blades([(cx + math.cos(a) * s * rng.uniform(0.9, 1.2), cr + math.sin(a) * s * rng.uniform(0.7, 1.0), z0,
-                   rng.uniform(0.08, 0.18), 0.022, rng.uniform(-0.06, 0.06), rng.uniform(-0.04, 0.04))
-                  for a in [rng.uniform(0, math.tau) for _ in range(int(10 + 14 * s))]], (tufts, 0.25), 'tuft')
-    if solid:
-        k.solid(cx - s * 0.6, cr - s * 0.5, cx + s * 0.6, cr + s * 0.5)
-
-
-def pebbles(k, x0, r0, x1, r1, n, tone=STONE_LB, z_at=_flat, ok=lambda x, r: True, seed=0):
-    rng = random.Random(seed)
-    with own_dice(k, seed + 1):
-        for _ in range(n):
-            x, r = rng.uniform(x0, x1), rng.uniform(r0, r1)
-            if not ok(x, r):
-                continue
-            s = rng.uniform(0.04, 0.1)
-            k.rock(x, r, z_at(x, r) + s * 0.2, s, s * 0.8, s * 0.5, (shade(tone, rng.uniform(0.8, 1.2)), 0.25), part='pebble', segs=6)
-
-
-def flowers(k, x, r, n=8, cols=('#f0e0a0', '#f0f0f0', '#c8a8f0', '#f0b0c8'), spread=0.35, z_at=_flat, seed=None):
-    """Small flowers on stems over a patch (sylvara_brook.flowers): n of them within spread of (x, r)."""
-    rng = _rng(x, r, 13) if seed is None else random.Random(seed)
-    for _ in range(n):
-        fx, fr = x + rng.uniform(-spread, spread), r + rng.uniform(-spread, spread) * 0.8
-        z0, h = z_at(fx, fr), rng.uniform(0.06, 0.18)
-        k.cone(fx, fr, z0, z0 + h, 0.012, 0.004, '#3a6a2a', 'stem', verts=3)
-        k.sphere(fx, fr, z0 + h, 0.035, 0.03, rng.choice(cols), 'flower', segs=5)
-
-
-def leaf_litter(k, x0, r0, x1, r1, n, ok=lambda x, r: True, z_at=_flat, cols=('#a0682a', '#c08a30', '#7a4a22', '#8a9a3a', '#b05a2a'),
-                seed=0):
-    rng = random.Random(seed)
-    for _ in range(n):
-        x, r = rng.uniform(x0, x1), rng.uniform(r0, r1)
-        if not ok(x, r):
-            continue
-        k.blob(x, r, z_at(x, r) + 0.004, 0.06, 0.04, 0.008, (rng.choice(cols), 0.25), 'leaf_litter', rot=(0, 0, rng.uniform(0, 360)), segs=5)
-
-
-def mushroom_ring(k, cx, cr, n=4, glow=False, col='#86f2d6', cap='#b8402e', z_at=_flat, light=3.0, seed=None):
-    rng = _rng(cx, cr, 29) if seed is None else random.Random(seed)
-    for _ in range(n):
-        x, r = cx + rng.uniform(-0.22, 0.22), cr + rng.uniform(-0.16, 0.16)
-        z0 = z_at(x, r)
-        h = rng.uniform(0.08, 0.2)
-        k.cyl(x, r, z0, z0 + h, 0.024, '#ece2d0', 'mushroom_stem', verts=7)
-        rad = rng.uniform(0.055, 0.09)
-        if glow:
-            k.sphere(x, r, z0 + h, rad, rad * 0.55, col, 'mushroom_cap', emit=(col, 1.5), segs=10)
-        else:
-            k.sphere(x, r, z0 + h, rad, rad * 0.6, (cap, 0.25), 'mushroom_cap', segs=10)
-            for d in range(3):                                            # white spots
-                aa = rng.uniform(0, math.tau)
-                k.sphere(x + math.cos(aa) * rad * 0.5, r + math.sin(aa) * rad * 0.4, z0 + h + rad * 0.42, 0.014, 0.008, '#f4ece0',
-                         'mushroom_spot', segs=5)
-    if glow and light:
-        k.point_light(cx, cr + 0.1, z_at(cx, cr) + 0.3, col, light, radius=0.1)
-
-
-def glow_spores(k, cx, cr, n=6, spread=0.35, col='#86f2d6', z_at=_flat, seed=None):
-    rng = _rng(cx, cr, 31) if seed is None else random.Random(seed)
-    for _ in range(n):
-        x, r = cx + rng.uniform(-spread, spread), cr + rng.uniform(-spread, spread) * 0.8
-        k.sphere(x, r, z_at(x, r) + rng.uniform(0.02, 0.12), 0.03, 0.03, col, 'spore', emit=(col, 1.3), segs=6)
-
-
-def log(k, x0, x1, cr, rad, bark=BARK, moss=MOSS_L, z_at=_flat, fungi=True, seed=4):
-    """A fallen log (sylvara_brook.log): lofted with a bumpy section, pale cut ends with a darker ring, bark ridges, a
-    broken branch stub, moss along its top, bracket fungi on its side. Blocks the tiles under it."""
-    rng = random.Random(seed)
-    rings = []
-    n = 16
-    for i in range(12):
-        t = i / 11
-        x = x0 + (x1 - x0) * t
-        rr = rad * (1.06 - 0.16 * t) * (1 + 0.08 * math.sin(t * 9 + seed))
-        cz = z_at(x, cr) + rr * 0.85
-        ring = []
-        for j in range(n):
-            a = j / n * math.tau
-            bump = 1 + 0.07 * math.cos(5 * a + seed) + 0.04 * math.cos(9 * a)
-            ring.append((x, cr + math.cos(a) * rr * bump * 0.95, cz + math.sin(a) * rr * bump))
-        rings.append(ring)
-    k.loft(rings, (bark, 0.36), 'log', closed=True)
-    for end, rr in ((rings[0], rad * 1.06), (rings[-1], rad * 0.9)):
-        x = end[0][0]
-        cz = z_at(x, cr) + rr * 0.85
-        k.cyl_x(x - 0.012, x + 0.012, cr, cz, rr * 0.92, rr * 0.92, ('#c09a6c', 0.3), 'log_end', verts=16)
-        k.cyl_x(x - 0.016, x + 0.016, cr, cz, rr * 0.45, rr * 0.45, ('#9a7448', 0.3), 'log_end', verts=12)
-    for i in range(9):
-        a = rng.uniform(0.2, math.pi - 0.2)
-        z = z_at((x0 + x1) / 2, cr) + rad * 0.85 + math.sin(a) * rad
-        k.tube((x0 + 0.15, cr + math.cos(a) * rad * 0.95, z), (x1 - 0.15, cr + math.cos(a) * rad * 0.85, z - 0.03), 0.025,
-               (shade(bark, rng.choice((0.75, 1.2))), 0.3), 'bark_ridge', verts=4, smooth=False)
-    bx = x0 + (x1 - x0) * 0.62
-    k.tube((bx, cr - 0.1, z_at(bx, cr) + rad * 1.5), (bx + 0.2, cr - 0.35, z_at(bx, cr) + rad * 2.2), 0.07, (bark, 0.3), 'branch', rb=0.04, verts=7)
-    for _ in range(6):
-        x = rng.uniform(x0 + 0.2, x1 - 0.2)
-        k.blob(x, cr - 0.05, z_at(x, cr) + rad * 1.75, rad, rad * 0.65, rad * 0.25, (shade(moss, rng.uniform(0.9, 1.1)), 0.4), 'log_moss', segs=8)
-    if fungi:
-        for _ in range(4):
-            x = rng.uniform(x0 + 0.3, x1 - 0.3)
-            z = z_at(x, cr) + rng.uniform(0.15, 0.35) * rad / 0.28
-            k.cyl_y(x, cr + rad * 0.78, cr + rad * 1.2, z, 0.09, 0.03, ('#d8b880', 0.25), 'fungus', verts=10)
-    k.solid(min(x0, x1), cr - rad, max(x0, x1), cr + rad)
-
-
-def moss_mound(k, x, r, s, moss=MOSS_L, z_at=_flat, seed=None):
-    rng = _rng(x, r, 37) if seed is None else random.Random(seed)
-    k.blob(x, r, z_at(x, r) + 0.01, s, s * 0.8, s * 0.38, (shade(moss, rng.uniform(0.85, 1.12)), 0.4), 'moss_mound', segs=9)
-
-
-def twig(k, x, r, z_at=_flat, seed=None):
-    rng = _rng(x, r, 41) if seed is None else random.Random(seed)
-    a = rng.uniform(0, math.pi)
-    L = rng.uniform(0.25, 0.5)
-    z = z_at(x, r) + 0.02
-    k.tube((x, r, z), (x + math.cos(a) * L, r + math.sin(a) * L * 0.8, z + 0.01), 0.018, ('#5a4030', 0.3), 'twig', rb=0.01, verts=4)
-
-
-def path_stones(k, path, z_at=_flat, tone=STONE_LB, half=0.46, every=0.55, seed=0):
-    """Stones edging a path (sylvara_brook's), one side or the other every `every` tiles."""
-    rng = random.Random(seed)
-    with own_dice(k, seed + 7):
-        for a, b in zip(path, path[1:]):
-            L = math.hypot(b[0] - a[0], b[1] - a[1])
-            for i in range(int(L / every)):
-                t = (i + rng.uniform(0, 0.6)) / max(1, int(L / every))
-                x, r = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
-                nx, nr = -(b[1] - a[1]) / L, (b[0] - a[0]) / L
-                side = rng.choice((-1, 1))
-                px, pr = x + nx * half * side, r + nr * half * side
-                s = rng.uniform(0.07, 0.13)
-                k.rock(px, pr, z_at(px, pr) + s * 0.25, s, s * 0.8, s * 0.55, (shade(tone, rng.uniform(0.8, 1.15)), 0.3), part='path_stone',
-                       segs=7)
 
 
 def fast_top(k):
