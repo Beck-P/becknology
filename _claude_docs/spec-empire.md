@@ -90,6 +90,11 @@ in particular places, and the path from "I have money" to "I have something wond
 2. **Your own shipyard** — a slipway at the holm: fit the parts you've made to ships lying there; build a ship from
    plans you've bought at a yard plus timber, iron, rope and canvas, over days; choose her paint, sails and
    figurehead. Later: a designer to lay out decks, guns and holds.
+   *(built, October 17: js/shipyard.js — the slipway on the holm (12,000, after the workshop), hull plans from the
+   yards (cutter, brigantine, raider, galleon), a keel laid and named, three stages each with its own materials and
+   hours, shipwrights on the payroll, launched into the fleet; paint, sails and figurehead on any ship lying at the holm;
+   parts fitted for nothing. The Bridge's CLAUDE.md, "Your own shipyard". Still to do: the slip in the holm's render,
+   her colours drawn at sea.)*
 3. **Running it from the office** — standing orders and captains (trade loops, supply runs between your holdings),
    the Workshop's queue, the fleet's chart, the treasury, the daily dispatch: one desk for the whole empire.
    *(built, October 17: js/orders.js — captains in three grades on the payroll, trade loops of two to four ports and

@@ -260,6 +260,19 @@ var BridgeFleet = (function () {
       return { ok: true, ship: s };
     });
   }
+  /** A ship you built on your own slipway (js/shipyard.js): no price, lying where she was launched, her own name and
+   *  colours (`look`: paint, sails, figurehead — js/sloop.js draws them). A yard gives a quarter of her price for her. */
+  function launch(type, worldId, o) {
+    var sp = SHIPS[type];
+    if (!sp || type === 'sloop') return null;
+    o = o || {};
+    var s = { id: type + (++st.n), type: type, name: String(o.name || sp.name).slice(0, 24), at: islandOf(worldId), hull: 1, hold: {}, guns: [], fits: [],
+              bought: Date.now(), paid: Math.round(sp.price / 2), built: true, look: o.look || null };
+    st.ships.push(s);
+    store();
+    return s;
+  }
+  function setLook(id, look) { var s = get(id); if (s) { s.look = look ? { paint: look.paint, sails: look.sails, figure: look.figure } : null; store(); } }
   /** What a yard gives for her: half what you paid, less for a battered hull (ships bought before the October 2026
    *  prices went up are worth half their old price, not the new one). */
   var OLD_PRICE = { cutter: 1400, brigantine: 4200, galleon: 11000, raider: 6500 };
@@ -436,7 +449,7 @@ var BridgeFleet = (function () {
 
   return { SHIPS: SHIPS, GUNS: GUNS, FITS: FITS, ROLES: ROLES, SEAS: SEAS,
            spec: spec, get: get, all: all, active: active, effective: effective, here: here, islandOf: islandOf, sail: sail, moored: moored,
-           line: line, where: where, rename: rename, order: order, canOrder: canOrder, passage: passage, arrivals: arrivals, buy: buy, value: value, sellShip: sellShip, fit: fit, canFit: canFit, mount: mount, unmount: unmount,
+           line: line, where: where, rename: rename, order: order, canOrder: canOrder, passage: passage, arrivals: arrivals, buy: buy, launch: launch, setLook: setLook, value: value, sellShip: sellShip, fit: fit, canFit: canFit, mount: mount, unmount: unmount,
            damage: damage, repairCost: repairCost, repair: repair, wreck: wreck,
            fishCap: fishCap, catchOf: catchOf, catchCount: catchCount, stowFish: stowFish, takeFish: takeFish,
            recruits: recruits, hire: hire, assign: assign, dismiss: dismiss, crew: crew, crewOn: crewOn, crewHas: crewHas, crewBest: crewBest, perk: perk, wage: wageOf, GRADES: GRADES, berths: berths,

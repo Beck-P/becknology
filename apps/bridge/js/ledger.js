@@ -74,6 +74,11 @@ var BridgeLedger = (function () {
       if (ws.since) out.push({ name: 'Made at the workshop', sub: ws.since + ' thing' + (ws.since === 1 ? '' : 's') + ' since you last looked — on the racks on ' + BridgeHolm.name(), world: 'lumar-holm' });
       if (ws.idle) out.push({ name: 'Idle at the forge', sub: ws.idle + ' smith' + (ws.idle === 1 ? '' : 's') + ' with nothing to make — queue something at the workshop', world: 'lumar-holm', alert: true });
     }
+    if (has('BridgeShipyard') && BridgeShipyard.built()) {
+      var sy = BridgeShipyard.summary();
+      if (sy.job && sy.job.ready) out.push({ name: 'The ' + sy.job.name + ' is finished', sub: 'On the slipway on ' + BridgeHolm.name() + ' — launch her', world: 'lumar-holm', alert: true });
+      else if (sy.job && sy.job.waiting) out.push({ name: 'The ' + sy.job.name + ' on the slip', sub: sy.job.waiting === 'materials' ? 'Waiting on materials — put them in at the slipway' : 'Nobody working her — hire a shipwright', world: 'lumar-holm' });
+    }
     if (has('BridgeFleet')) BridgeFleet.all().forEach(function (s) {
       if (s.away) return;
       if (s.hull < 0.5) out.push({ name: s.name, sub: 'Hull at ' + Math.round(s.hull * 100) + '% — any harbourmaster mends her', world: worldOfShip(s), alert: s.hull < 0.25 });
@@ -165,8 +170,8 @@ var BridgeLedger = (function () {
         out.push({ name: x.name, face: c.face, state: c.state });
         return;
       }
-      if (!B.get(x.at)) {                                         // a smith at your workshop (js/workshop.js): no opening hours
-        var w = has('BridgeWorkshop') ? BridgeWorkshop.smithRow(x) : {};
+      if (!B.get(x.at)) {                                         // a smith at your workshop (js/workshop.js), a shipwright on your slip (js/shipyard.js): no opening hours
+        var w = x.at === 'slipway' ? (has('BridgeShipyard') ? BridgeShipyard.wrightRow(x) : {}) : has('BridgeWorkshop') ? BridgeWorkshop.smithRow(x) : {};
         out.push({ name: x.name, face: w.face || B.faceOf(x, x.at), state: x.missed > 0 ? 'owed' : 'on' });
         return;
       }
@@ -196,6 +201,12 @@ var BridgeLedger = (function () {
         var c = BridgeOrders.captainRow(x);
         rows.push({ name: x.name + ' · ' + String(x.title || 'captain').toLowerCase(), face: c.face, sub: c.sub + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
                     fig: coins(x.wage) + '<small>/day</small>', alert: x.missed > 0, act: function () { closeMenu(); BridgeOrders.captain(x.id); } });
+        return;
+      }
+      if (!d && x.at === 'slipway') {                               // a shipwright on your slip (js/shipyard.js), on the same payroll
+        var sw = has('BridgeShipyard') ? BridgeShipyard.wrightRow(x) : { sub: '' };
+        rows.push({ name: x.name + ' · ' + (x.title || 'shipwright').toLowerCase() + ' on the slipway', face: sw.face, sub: sw.sub + (x.owe > 0 ? ' · owed ' + Math.ceil(x.owe) : ''),
+                    fig: coins(x.wage) + '<small>/day</small>', alert: x.missed > 0, act: has('BridgeShipyard') ? function () { closeMenu(); BridgeShipyard.wrightCard(x.id); } : null });
         return;
       }
       if (!d) {                                                     // a smith at your workshop (js/workshop.js), on the same payroll
@@ -360,6 +371,12 @@ var BridgeLedger = (function () {
     if (has('BridgeHolm') && BridgeHolm.owned && BridgeHolm.owned()) {
       var st = BridgeHolm._state(), b = Object.keys(st.built || {}).filter(function (k) { return st.built[k]; });
       rows.push({ name: BridgeHolm.name(), sub: 'Your island · built: ' + (b.length ? b.join(', ') : 'nothing yet') + (st.chest ? ' · ' + st.chest + ' in the strongbox' : ''), fig: '<span class="lg-ok">yours</span>', world: 'lumar-holm' });
+      // the slipway: the ship on it (js/shipyard.js)
+      if (has('BridgeShipyard') && BridgeShipyard.built()) {
+        var syd = BridgeShipyard.summary();
+        rows.push({ name: 'The slipway on ' + BridgeHolm.name(), sub: syd.wrights.length + ' shipwright' + (syd.wrights.length === 1 ? '' : 's') + ' · ' + syd.launched + ' launched · ' + syd.line,
+                    fig: syd.job ? (syd.job.ready ? '<span class="lg-ok">ready</span>' : Math.floor(syd.job.whole * 100) + '%') : 'empty', world: 'lumar-holm' });
+      }
       // the workshop: who's making what, and when it's done (js/workshop.js)
       if (has('BridgeWorkshop') && BridgeWorkshop.built()) {
         var ws = BridgeWorkshop.summary();
