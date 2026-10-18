@@ -42,11 +42,6 @@
   "sylvara":                { "n": 7,  "wardrobe": "sylvara", "busy": "always", "emerge": 4 },
   "sylvara-hall":           { "n": 4,  "wardrobe": "sylvara", "busy": "always" },
   "sylvara-roots":          { "n": 16, "wardrobe": "sylvara", "busy": "day", "emerge": 3 },
-  "sylvara-boughs":         { "n": 9,  "wardrobe": "sylvara", "busy": "always" },
-  "sylvara-tavern":         { "n": 6,  "wardrobe": "sylvara", "busy": "night" },
-  "sylvara-crown":          { "n": 3,  "wardrobe": "sylvara", "busy": "night" },
-  "sylvara-river":          { "n": 6,  "wardrobe": "sylvara", "busy": "day", "emerge": 2 },
-  "sylvara-lake":           { "n": 2,  "wardrobe": "sylvara", "busy": "night", "emerge": 2 },
 
   "arcadia-oldquarter":     { "n": 18, "wardrobe": "lantern", "busy": "bustle", "sit": 0.5 },
   "arcadia-oldquarter-shrine": { "n": 3, "wardrobe": "lantern", "busy": "night" },
