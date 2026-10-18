@@ -471,6 +471,23 @@ A.bucket(k, 9.5, 14.35)
 W.annulus(k, 9.75, 13.9, 0.06, 0.2, 0.0, 0.07, (R.ROPE, 0.25), 'rope', segs=16)
 R.gull(k, 7.06, 16.82, 0.42, facing=1)
 
+# ---- life along the lane (clear of the dockhand's walk on row 9, the forage, the treasure and the landing) -----------
+I.drying_rack(k, 9.25, 10.45, 7.45)                             # fish drying under the cliff
+R.fish_boxes(k, 9.35, 6.55, n=2, fish=False)
+W.cart(k, 13.75, 8.45)                                          # the fish cart, waiting to go up to the square
+for (bx, br) in ((14.45, 8.0), (14.6, 8.55)):
+    k.cyl(bx, br, 0.0, 0.28, 0.2, ('#a88a58', 0.3), 'basket', verts=12)
+    k.cyl(bx, br, 0.26, 0.29, 0.205, '#7a603a', 'basket_rim', verts=12)
+    for i in range(4):
+        k.blob(bx + rng.uniform(-0.1, 0.1), br + rng.uniform(-0.08, 0.08), 0.31, 0.08, 0.035, 0.025, '#a4b8bc', 'fish', segs=8)
+W.bench(k, 12.0, 13.25, 10.45)                                  # a bench looking out over the harbour
+A.barrel(k, 6.4, 11.35, h=0.66, radius=0.22)                    # by the shed yard's wall: barrels and a crate
+A.barrel(k, 6.75, 11.7, h=0.6, radius=0.21, tone=shade(A.WOOD, 0.85))
+A.crate(k, 6.3, 11.85, s=0.38, tone=shade(A.WOOD_L, 0.95), solid=False)
+k.solid(6, 11, 7, 12)
+for (gx, gr) in ((12.6, 11.4), (11.1, 8.4)):                    # gulls on the grass
+    R.gull(k, gx, gr, 0.0, facing=1 if gx > 12 else -1)
+
 # ---- the pier ---------------------------------------------------------------------------------------------
 R.pier(k, 7.0, 9.0, 13.6, 16.95, z=0.05, bollards=False)
 for (x, r) in ((7.1, 16.5), (8.9, 16.5)):
