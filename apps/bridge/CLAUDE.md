@@ -890,7 +890,9 @@ Beck: "instead of Runouts being like a game or a casino game, it's an actual int
 The top of Arcadia (L480; the plan is `_claude_docs/spec-arcadia-above.md`, Workstream D): above the smog, the only place
 in the city with real stars — white stone, gold and soft pastel neon, quiet. Beck: "really cool views and stuff as you get
 up above the ground". `js/spires.js` (BridgeSpires) is what its places do; the kit is `tools/bridge-art/assets_spires.py`.
-- **The crown plaza** (`arcadia-spires`, `scenes/arcadia_spires.py`, 96 × 46): a platform of white stone hung on the side of
+- **The crown plaza** (`arcadia-spires`, `scenes/arcadia_spires.py`, 96 × 46; the paving one surface — `assets_spires.flagstones`,
+  flags in running bond, no tile grid — under even starlight with small lamp pools and few bounces, so the toy finish
+  draws no blotches): a platform of white stone hung on the side of
   Halcyon's tower, a backdrop world in the skyline's **spires mode** (js/skyline.js `drawSpires`, the world JSON's
   `skyline.mode: 'spires'`: a clear sky of real stars, a galaxy band, a white moon and the odd shooting star; the other
   spires — the `peaks` layer, white stone and gold rendered by `tools/bridge-art/spires_backdrop.py` into its own
@@ -904,8 +906,10 @@ up above the ground". `js/spires.js` (BridgeSpires) is what its places do; the k
   Halcyon's crown fountain (a gilt crown spilling falls of water into a bowl), winged statues, lamps, benches, a flower
   cart; the foot of **Halcyon's tower** (HALCYON in gold, `L480 · THE SPIRES`): LUMEN's jewel-box windows, the **Spire
   Express** (`express_lift`, shaft `spire`, at 40, 9), the great doors (by appointment; Aurelio the concierge), the **Core
-  Express** (shaft `core`, 54, 9), the Orrery's bronze door. East, **the Lyra** (the opera) up its steps behind a colonnade,
-  **Aurelle** behind its round windows and velvet ropes, and **the sky docks** out over the drop: teak decking, the **air
+  Express** (shaft `core`, 54, 9), the Orrery's bronze door. East, **the Lyra** (the opera) up its steps behind a colonnade
+  and its forecourt (a red carpet between velvet ropes and gilt candelabra, bill columns, a flower kiosk, benches looking
+  over the docks), **Aurelle** behind its round windows and velvet ropes with its terrace (tables under pastel parasols,
+  festoons), and **the sky docks** out over the drop: teak decking, the **air
   cab** pad (`air_cab` pad `spires`, 70, 34), Harlan Quay's dockmaster's kiosk, luggage trolleys, champagne crates, and the
   yacht *Lumière* lying alongside on her lift fields with her steward at the gangway. A white balustrade round it all, frosted
   globes on its piers, a telescope at the front (`spires` view: js/actions.js draws the skyline's spires mode in it; seats
