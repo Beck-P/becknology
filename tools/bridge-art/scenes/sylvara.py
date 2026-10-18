@@ -242,8 +242,8 @@ def great_tree(cx, cr, rad=3.0, h=8.4, door_w=1.3, door_h=2.0):
     front = cr + rad
     k.box(cx - door_w / 2 - 0.2, front - 0.35, -0.05, cx + door_w / 2 + 0.2, front + 0.06, door_h + 0.12, (R.BARK_D, 0.3), 'door_frame')
     k.cyl_y(cx, front - 0.35, front + 0.06, door_h - door_w / 2, door_w / 2 + 0.2, door_w / 2 + 0.2, (R.BARK_D, 0.3), 'door_frame', verts=24)
-    k.box(cx - door_w / 2, front - 0.25, 0.0, cx + door_w / 2, front + 0.08, door_h - door_w / 2, '#ffd890', 'door_light', emit=('#ffc870', 1.8))
-    k.cyl_y(cx, front - 0.25, front + 0.08, door_h - door_w / 2, door_w / 2, door_w / 2, '#ffd890', 'door_light', emit=('#ffc870', 1.8), verts=24)
+    k.box(cx - door_w / 2, front - 0.25, 0.0, cx + door_w / 2, front + 0.08, door_h - door_w / 2, '#6a4418', 'door_light', emit=('#ffc060', 1.8))
+    k.cyl_y(cx, front - 0.25, front + 0.08, door_h - door_w / 2, door_w / 2, door_w / 2, '#6a4418', 'door_light', emit=('#ffc060', 1.8), verts=24)
     for i in range(3):                                              # the doors themselves, swung open inward: their edges
         for sx in (-1, 1):
             x = cx + sx * (door_w / 2 - 0.08)
@@ -276,7 +276,7 @@ def great_tree(cx, cr, rad=3.0, h=8.4, door_w=1.3, door_h=2.0):
         a = math.asin(max(-0.99, min(0.99, dx / rad)))
         wr = cr + math.cos(a) * rad * (1 - 0.05 * z / h)
         k.cyl_y(cx + dx, wr - 0.1, wr + 0.08, z, 0.32, 0.32, (R.BARK_D, 0.3), 'window_frame', verts=16)
-        k.cyl_y(cx + dx, wr - 0.08, wr + 0.1, z, 0.23, 0.23, '#ffd890', 'window_light', emit=('#ffc870', 1.3), verts=16)
+        k.cyl_y(cx + dx, wr - 0.08, wr + 0.1, z, 0.23, 0.23, '#7a5420', 'window_light', emit=('#ffc870', 1.3), verts=16)
         k.box(cx + dx - 0.012, wr + 0.09, z - 0.23, cx + dx + 0.012, wr + 0.12, z + 0.23, (R.BARK_D, 0.3), 'window_bar')
         k.box(cx + dx - 0.23, wr + 0.09, z - 0.012, cx + dx + 0.23, wr + 0.12, z + 0.012, (R.BARK_D, 0.3), 'window_bar')
     k.cyl(cx, cr, 2.5, 2.62, rad + 0.7, (E.WOOD, 0.2), 'walkway', verts=48)   # the ring walkway, its rail, lanterns under it
@@ -332,7 +332,7 @@ def elf_door(cx, cr, rad, col='#7a5232', note=False):
         k.box(cx - DW / 2, front + 0.0, zz, cx + DW / 2, front + 0.05, zz + 0.045, ('#3a3430', 0.2), 'door_band')
     k.cyl_y(cx + DW * 0.28, front + 0.02, front + 0.07, 0.62, 0.045, 0.045, (E.GOLD, 0.2), 'door_knob', verts=10)
     k.cyl_y(cx, front - 0.25, front + 0.02, DH + 0.36, 0.2, 0.2, (R.BARK_D, 0.3), 'window_frame', verts=16)
-    k.cyl_y(cx, front - 0.2, front + 0.04, DH + 0.36, 0.14, 0.14, '#ffd890', 'window_glow', emit=('#ffc870', 1.4), verts=16)
+    k.cyl_y(cx, front - 0.2, front + 0.04, DH + 0.36, 0.14, 0.14, '#7a5420', 'window_glow', emit=('#ffc870', 1.4), verts=16)
     k.box(cx - 0.012, front + 0.03, DH + 0.22, cx + 0.012, front + 0.06, DH + 0.5, (R.BARK_D, 0.3), 'window_bar')
     k.box(cx - 0.14, front + 0.03, DH + 0.345, cx + 0.14, front + 0.06, DH + 0.375, (R.BARK_D, 0.3), 'window_bar')
     k.box(cx - DW / 2 - 0.12, front - 0.05, -0.06, cx + DW / 2 + 0.12, front + 0.3, 0.08, (shade(R.STONE, 0.98), 0.3), 'step')
@@ -387,8 +387,8 @@ def moonwell(cx, cr, rad=1.3, spill=3 * math.pi / 4):
     W.annulus(k, cx, cr, rad - 0.02, rad + 0.3, -0.3, 0.2, (shade(E.STONE, 1.1), 0.25), 'well_wall', segs=40)
     for c in range(2):                                              # courses of the wall: a dark joint
         k.cyl(cx, cr, 0.04 + c * 0.08, 0.05 + c * 0.08, rad + 0.305, (shade(E.STONE, 0.7), 0.3), 'well_joint', verts=40)
-    k.cyl(cx, cr, -0.3, 0.24, rad, '#163c3a', 'well_water', emit=(E.MOON, 0.5), verts=40)
-    k.cyl(cx, cr, 0.24, 0.245, rad * 0.55, '#2a6058', 'well_glow', emit=(E.MOON, 0.9), verts=28)
+    k.cyl(cx, cr, -0.3, 0.24, rad, '#1e4c48', 'well_water', verts=40)               # Look Book water: the willow, the stars, the lamps in it
+    k.cyl(cx, cr, 0.24, 0.246, rad * 0.22, '#1e4a44', 'well_glow', emit=(E.MOON, 0.45), verts=24)   # its heart (small: a wide glow blooms white)
     n = 16
     for i in range(n):
         a0, a1 = (i + 0.04) / n * math.tau, (i + 0.96) / n * math.tau
@@ -421,7 +421,7 @@ def moonwell(cx, cr, rad=1.3, spill=3 * math.pi / 4):
     for _ in range(10):
         s = rng.uniform(0.04, 0.09)
         k.blob(tx + rng.uniform(-0.2, 0.2), tr + rng.uniform(-0.1, 0.2), WZ + 0.01, s, s * 0.8, 0.02, ('#eef6f6', 0.15), 'foam', segs=7)
-    k.point_light(cx, cr, 1.1, E.MOON, 28, radius=0.6)
+    k.point_light(cx, cr, 1.1, E.MOON, 16, radius=0.6)
     k.solid(cx - rad - 0.25, cr - rad - 0.25, cx + rad + 0.25, cr + rad + 0.25)
 
 
