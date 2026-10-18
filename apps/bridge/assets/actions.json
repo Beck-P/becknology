@@ -748,5 +748,948 @@
       "action": "view",
       "view": "orbit"
     }
+  ],
+  "arcadia-oldquarter": [
+    {
+      "label": "STOOL",
+      "x": 20,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        20.5,
+        10.1
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A STOOL AT HOSHI'S COUNTER. THE STEAM OFF THE POT, THE RAIN ON THE NOREN."
+    },
+    {
+      "label": "STOOL",
+      "x": 21,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        21.5,
+        10.1
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A STOOL AT HOSHI'S COUNTER. THE STEAM OFF THE POT, THE RAIN ON THE NOREN."
+    },
+    {
+      "label": "STOOL",
+      "x": 22,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        22.5,
+        10.1
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A STOOL AT HOSHI'S COUNTER. THE STEAM OFF THE POT, THE RAIN ON THE NOREN."
+    },
+    {
+      "label": "STOOL",
+      "x": 23,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        23.5,
+        10.1
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A STOOL AT HOSHI'S COUNTER. THE STEAM OFF THE POT, THE RAIN ON THE NOREN."
+    },
+    {
+      "label": "STOOL",
+      "x": 24,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        24.5,
+        10.1
+      ],
+      "facing": "up",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A STOOL AT HOSHI'S COUNTER. THE STEAM OFF THE POT, THE RAIN ON THE NOREN."
+    },
+    {
+      "label": "BENCH",
+      "x": 8,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        8.5,
+        16.6
+      ],
+      "facing": "down",
+      "view": "skyline",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "A BENCH ON LANTERN ROW.\n\nTHE LANTERNS OVER THE LANE, THE CITY UNDER THE RAILING, THE TOWERS OVER EVERYTHING."
+    },
+    {
+      "label": "BENCH",
+      "x": 23,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        23.5,
+        16.6
+      ],
+      "facing": "down",
+      "view": "skyline",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "A BENCH ON LANTERN ROW.\n\nTHE LOOP RUMBLES OVER THE ROOFS BEHIND YOU. THE LANTERNS SWAY A LITTLE AND SETTLE."
+    },
+    {
+      "label": "BENCH",
+      "x": 42,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        42.5,
+        16.6
+      ],
+      "facing": "down",
+      "view": "skyline",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "A BENCH ON LANTERN ROW.\n\nMAMA KEIKO'S REGULARS SINGING BEHIND YOU. BADLY. HAPPILY."
+    },
+    {
+      "label": "BENCH",
+      "x": 58,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        58.5,
+        16.6
+      ],
+      "facing": "down",
+      "view": "skyline",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "A BENCH ON LANTERN ROW.\n\nTHE NEON STREET'S GLOW ROUND THE CORNER, PINK ON THE WET SETTS."
+    },
+    {
+      "label": "RED BENCH",
+      "x": 16,
+      "y": 14,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        16.2,
+        15.0
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT",
+      "caption": "UNDER THE RED PARASOL, ON THE TEA HOUSE'S BENCH."
+    },
+    {
+      "label": "VIEWER",
+      "action": "view",
+      "view": "skyline",
+      "prompt": "PRESS E TO LOOK THROUGH"
+    }
+  ],
+  "arcadia-spaceport": [
+    {
+      "label": "CRATE",
+      "x": 14,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        14.45,
+        10.7
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A CARGO CRATE OUTSIDE THE LAST BURN. SOMEONE'S CARVED NINE PLANETS' NAMES IN IT."
+    },
+    {
+      "label": "CRATE",
+      "x": 15,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        15.45,
+        10.7
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A CARGO CRATE OUTSIDE THE LAST BURN. SOMEONE'S CARVED NINE PLANETS' NAMES IN IT."
+    },
+    {
+      "label": "CRATE",
+      "x": 18,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        18.45,
+        10.7
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A CARGO CRATE OUTSIDE THE LAST BURN. SOMEONE'S CARVED NINE PLANETS' NAMES IN IT."
+    },
+    {
+      "label": "CRATE",
+      "x": 20,
+      "y": 10,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        20.45,
+        10.7
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT",
+      "caption": "A CARGO CRATE OUTSIDE THE LAST BURN. SOMEONE'S CARVED NINE PLANETS' NAMES IN IT."
+    }
+  ],
+  "arcadia-terraces": [
+    {
+      "label": "HALO TABLE",
+      "x": 11,
+      "y": 30,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        11.5,
+        30.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 13,
+      "y": 30,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        13.5,
+        30.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 15,
+      "y": 30,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        15.5,
+        30.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 17,
+      "y": 30,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        17.5,
+        30.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 19,
+      "y": 30,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        19.5,
+        30.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 21,
+      "y": 30,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        21.5,
+        30.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 7,
+      "y": 33,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        7.5,
+        33.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 9,
+      "y": 33,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        9.5,
+        33.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 11,
+      "y": 34,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        11.5,
+        34.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 13,
+      "y": 34,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        13.5,
+        34.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 15,
+      "y": 34,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        15.5,
+        34.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 17,
+      "y": 34,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        17.5,
+        34.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 19,
+      "y": 34,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        19.5,
+        34.55
+      ],
+      "facing": "right",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "HALO TABLE",
+      "x": 21,
+      "y": 34,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        21.5,
+        34.55
+      ],
+      "facing": "left",
+      "dialog": "A TABLE ON HALO'S DECK UNDER THE FESTOONS, A CANDLE, THE GRILL SMOKE DRIFTING OFF OVER THE DROP.",
+      "view": "skyline"
+    },
+    {
+      "label": "LUMEN COUNTER",
+      "x": 29,
+      "y": 29,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        29.4,
+        29.75
+      ],
+      "facing": "up",
+      "dialog": "A STOOL AT LUMEN'S COUNTER. THE COALS TICK. HIRO TURNS A SKEWER WITHOUT LOOKING AT IT."
+    },
+    {
+      "label": "LUMEN COUNTER",
+      "x": 30,
+      "y": 29,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        30.6,
+        29.75
+      ],
+      "facing": "up",
+      "dialog": "A STOOL AT LUMEN'S COUNTER. THE COALS TICK. HIRO TURNS A SKEWER WITHOUT LOOKING AT IT."
+    },
+    {
+      "label": "LUMEN COUNTER",
+      "x": 31,
+      "y": 29,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        31.8,
+        29.75
+      ],
+      "facing": "up",
+      "dialog": "A STOOL AT LUMEN'S COUNTER. THE COALS TICK. HIRO TURNS A SKEWER WITHOUT LOOKING AT IT."
+    },
+    {
+      "label": "LUMEN COUNTER",
+      "x": 33,
+      "y": 29,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        33.0,
+        29.75
+      ],
+      "facing": "up",
+      "dialog": "A STOOL AT LUMEN'S COUNTER. THE COALS TICK. HIRO TURNS A SKEWER WITHOUT LOOKING AT IT."
+    },
+    {
+      "label": "CIRRUS BAR",
+      "x": 55,
+      "y": 31,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        55.69,
+        31.65
+      ],
+      "facing": "right",
+      "dialog": "A STOOL AT CIRRUS'S ROUND BAR. THE PINK OF THE SIGN ON EVERYONE'S FACE, THE CITY ALL ROUND."
+    },
+    {
+      "label": "CIRRUS BAR",
+      "x": 56,
+      "y": 32,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        56.11,
+        32.23
+      ],
+      "facing": "right",
+      "dialog": "A STOOL AT CIRRUS'S ROUND BAR. THE PINK OF THE SIGN ON EVERYONE'S FACE, THE CITY ALL ROUND."
+    },
+    {
+      "label": "CIRRUS BAR",
+      "x": 56,
+      "y": 32,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        56.77,
+        32.7
+      ],
+      "facing": "right",
+      "dialog": "A STOOL AT CIRRUS'S ROUND BAR. THE PINK OF THE SIGN ON EVERYONE'S FACE, THE CITY ALL ROUND."
+    },
+    {
+      "label": "CIRRUS BAR",
+      "x": 60,
+      "y": 32,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        60.23,
+        32.7
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT CIRRUS'S ROUND BAR. THE PINK OF THE SIGN ON EVERYONE'S FACE, THE CITY ALL ROUND."
+    },
+    {
+      "label": "CIRRUS BAR",
+      "x": 60,
+      "y": 32,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        60.89,
+        32.23
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT CIRRUS'S ROUND BAR. THE PINK OF THE SIGN ON EVERYONE'S FACE, THE CITY ALL ROUND."
+    },
+    {
+      "label": "CIRRUS BAR",
+      "x": 61,
+      "y": 31,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        61.31,
+        31.65
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT CIRRUS'S ROUND BAR. THE PINK OF THE SIGN ON EVERYONE'S FACE, THE CITY ALL ROUND."
+    }
+  ],
+  "arcadia-jazz": [
+    {
+      "label": "A TABLE",
+      "x": 5,
+      "y": 6,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        5.5,
+        6.5
+      ],
+      "facing": "right",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 7,
+      "y": 6,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        7.5,
+        6.5
+      ],
+      "facing": "left",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 8,
+      "y": 6,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        8.5,
+        6.5
+      ],
+      "facing": "right",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 10,
+      "y": 6,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        10.5,
+        6.5
+      ],
+      "facing": "left",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 11,
+      "y": 7,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        11.5,
+        7.0
+      ],
+      "facing": "right",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 13,
+      "y": 7,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        13.5,
+        7.0
+      ],
+      "facing": "left",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 14,
+      "y": 7,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        14.5,
+        7.0
+      ],
+      "facing": "right",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 16,
+      "y": 7,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        16.5,
+        7.0
+      ],
+      "facing": "left",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 5,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        5.5,
+        9.5
+      ],
+      "facing": "right",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 7,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        7.5,
+        9.5
+      ],
+      "facing": "left",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 8,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        8.5,
+        9.5
+      ],
+      "facing": "right",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 10,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        10.5,
+        9.5
+      ],
+      "facing": "left",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 12,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        12.5,
+        9.5
+      ],
+      "facing": "right",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "A TABLE",
+      "x": 14,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        14.5,
+        9.5
+      ],
+      "facing": "left",
+      "dialog": "A LITTLE ROUND TABLE, A CANDLE IN RED GLASS, THE BAND CLOSE ENOUGH TO TOUCH."
+    },
+    {
+      "label": "BAR STOOL",
+      "x": 4,
+      "y": 3,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        4.0,
+        3.5
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT MOONGLOW'S LONG BAR. SOL SLIDES A NAPKIN IN FRONT OF YOU WITHOUT BEING ASKED."
+    },
+    {
+      "label": "BAR STOOL",
+      "x": 4,
+      "y": 4,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        4.0,
+        4.6
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT MOONGLOW'S LONG BAR. SOL SLIDES A NAPKIN IN FRONT OF YOU WITHOUT BEING ASKED."
+    },
+    {
+      "label": "BAR STOOL",
+      "x": 4,
+      "y": 5,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        4.0,
+        5.7
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT MOONGLOW'S LONG BAR. SOL SLIDES A NAPKIN IN FRONT OF YOU WITHOUT BEING ASKED."
+    },
+    {
+      "label": "BAR STOOL",
+      "x": 4,
+      "y": 6,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        4.0,
+        6.8
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT MOONGLOW'S LONG BAR. SOL SLIDES A NAPKIN IN FRONT OF YOU WITHOUT BEING ASKED."
+    },
+    {
+      "label": "BAR STOOL",
+      "x": 4,
+      "y": 7,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        4.0,
+        7.9
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT MOONGLOW'S LONG BAR. SOL SLIDES A NAPKIN IN FRONT OF YOU WITHOUT BEING ASKED."
+    },
+    {
+      "label": "BAR STOOL",
+      "x": 4,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        4.0,
+        9.0
+      ],
+      "facing": "left",
+      "dialog": "A STOOL AT MOONGLOW'S LONG BAR. SOL SLIDES A NAPKIN IN FRONT OF YOU WITHOUT BEING ASKED."
+    },
+    {
+      "label": "BOOTH",
+      "x": 19,
+      "y": 7,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        19.9,
+        7.0
+      ],
+      "facing": "left",
+      "dialog": "A VELVET BOOTH IN THE CORNER, A CANDLE, A VIEW OF THE STAGE OVER EVERYONE'S HEADS."
+    },
+    {
+      "label": "BOOTH",
+      "x": 19,
+      "y": 9,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        19.9,
+        9.1
+      ],
+      "facing": "left",
+      "dialog": "A VELVET BOOTH IN THE CORNER, A CANDLE, A VIEW OF THE STAGE OVER EVERYONE'S HEADS."
+    },
+    {
+      "label": "BOOTH",
+      "x": 19,
+      "y": 11,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        19.9,
+        11.2
+      ],
+      "facing": "left",
+      "dialog": "A VELVET BOOTH IN THE CORNER, A CANDLE, A VIEW OF THE STAGE OVER EVERYONE'S HEADS."
+    }
+  ],
+  "arcadia-spires": [
+    {
+      "label": "BENCH",
+      "x": 5,
+      "y": 33,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        5.5,
+        33.4
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "BENCH",
+      "x": 25,
+      "y": 33,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        24.9,
+        33.4
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "BENCH",
+      "x": 45,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        45.0,
+        16.2
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT",
+      "caption": "THE CROWN FOUNTAIN PLAYS. WATER FALLS FROM GOLD INTO STONE, AND THE ONLY OTHER SOUND IS A LOOP TRAIN, VERY FAR BELOW, LIKE THE SEA."
+    },
+    {
+      "label": "BENCH",
+      "x": 50,
+      "y": 16,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        50.0,
+        16.2
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "BENCH",
+      "x": 45,
+      "y": 38,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        45.3,
+        38.3
+      ],
+      "facing": "down",
+      "view": "spires",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "THE SMOG LIES BELOW LIKE A SEA AT NIGHT, LIT FROM UNDERNEATH. THE TOPS OF THE MID-LEVELS STAND OUT OF IT. ABOVE, THE STARS. REAL ONES."
+    },
+    {
+      "label": "BENCH",
+      "x": 50,
+      "y": 38,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        49.7,
+        38.3
+      ],
+      "facing": "down",
+      "view": "spires",
+      "prompt": "PRESS E TO SIT AND LOOK",
+      "caption": "FAR OFF, ANOTHER SPIRE'S GOLD NEEDLE CATCHES THE MOON. SOMEONE OVER THERE IS PROBABLY LOOKING BACK."
+    },
+    {
+      "label": "BENCH",
+      "x": 67,
+      "y": 31,
+      "add": true,
+      "action": "sit",
+      "seat": [
+        67.1,
+        31.0
+      ],
+      "facing": "down",
+      "prompt": "PRESS E TO SIT"
+    },
+    {
+      "label": "TELESCOPE",
+      "action": "view",
+      "view": "spires",
+      "prompt": "PRESS E TO LOOK THROUGH"
+    }
   ]
 }

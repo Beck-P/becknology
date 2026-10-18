@@ -735,6 +735,22 @@ var BridgeTransit = (function () {
     ctx.restore();
     if (Date.now() - rumbled > (PASS / 2 - 5) * 1000) { rumbled = Date.now(); sfx('train'); }
   }
+  // over the street as she passes: her underglow sweeping along the tops of the buildings, the street shivering a pixel
+  function streetOver(ctx, world, offX, offY, ts, now) {
+    var L = world.skyline && world.skyline.loop, c = L && crossing(now);
+    if (!c) return;
+    var x0 = offX + (L.from != null ? L.from : -10) * ts, x1 = offX + (L.to != null ? L.to : world.width + 10) * ts;
+    var u = c.dir > 0 ? c.u : 1 - c.u, x = x0 + (x1 - x0) * u, y = offY + L.row * ts;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    var g = ctx.createRadialGradient(x, y, 4, x, y, ts * 9);
+    g.addColorStop(0, 'rgba(110,220,235,0.32)'); g.addColorStop(0.5, 'rgba(110,220,235,0.1)'); g.addColorStop(1, 'rgba(110,220,235,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - ts * 9, y - ts * 4, ts * 18, ts * 9);
+    ctx.restore();
+    var near = Math.sin(Math.PI * c.u);                       // the rumble through your feet as she goes over
+    if (near > 0.6 && Math.floor(now / 70) % 3 === 0) { ctx.drawImage(ctx.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height, 0, 1, ctx.canvas.width, ctx.canvas.height); }
+  }
   // at a station: in, the doors, out (screen-tracked by the track's row so she's drawn among the people)
   function stationItems(world, offX, offY, ts, now, sc) {
     var L = world.loop;
@@ -761,7 +777,8 @@ var BridgeTransit = (function () {
   if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) {
     BridgeWorld.registerSceneHooks('arcadia', {
       behind: function (ctx, world, offX, offY, ts, now) { carriageBehind(ctx, world, offX, offY, ts, now); streetBehind(ctx, world, offX, offY, ts, now); },
-      items: stationItems
+      items: stationItems,
+      over: streetOver
     });
   }
   // the carriage sways and hums at speed (its own little shake, never more than a pixel)
@@ -789,6 +806,6 @@ var BridgeTransit = (function () {
   return { ready: ready, data: function () { return D; }, links: links, level: level, levelOf: levelOf, tag: tag, placeName: placeName,
            ride: ride, built: built, fare: fare, stations: stations,
            _trip: function () { return trip ? { at: trip.at, dest: trip.dest, phase: trip.phase, station: stationAt(trip.at) && stationAt(trip.at).id, dist: motion(performance.now()) } : null; },
-           _skipLeg: function () { if (trip) trip.t0 -= trip.phase === 'run' ? RUN : (trip.boarding ? 4500 : DWELL); },
+           _skipLeg: function () { if (trip) trip.t0 = performance.now() - (trip.phase === 'run' ? RUN : (trip.boarding ? 4500 : DWELL)); },   // to the end of this leg or stop, now
            _crossing: crossing, _close: closeRide };
 })();
