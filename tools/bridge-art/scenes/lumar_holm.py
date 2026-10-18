@@ -719,18 +719,32 @@ W.lantern(k, PX + 1.15, SHIP_R - 0.1, 0.0, 0.2, s=0.07, energy=10)
 k.cyl_x(PX + 1.5, PX + 1.8, QUAY - 0.5, 1.12, 0.015, 0.015, A.IRON, 'lantern_arm', verts=4)
 W.lantern(k, PX + 1.78, QUAY - 0.5, 0.82, 1.06, s=0.08, energy=14)
 # the west shingle below the slip: a boat drawn up, fish drying on a rack, crab pots
-for (x0, x1, r_) in ((5.2, 7.0, 21.6), (4.8, 6.6, 21.2), (5.6, 7.4, 22.0)):
-    if all(on_lip(x, r_, C.WZ + 0.12) for x in (x0, (x0 + x1) / 2, x1)):
-        sp, sl = len(k.parts), len(k.lights)
-        W.rowboat(k, x0, x1, r_, beam=0.8, hull='#4a6a5a', inside=A.WOOD_D)
-        I.pose(k, sp, ((x0 + x1) / 2, r_, 0), yaw=12, roll=6, dz=TERRAIN.z((x0 + x1) / 2, r_) + 0.04, lights_since=sl)
-        break
-for (x0, x1, r_) in ((3.4, 4.9, 19.4), (3.0, 4.5, 18.6), (2.6, 4.1, 17.8)):
-    if all(on_lip(x, r_, C.WZ + 0.15) for x in (x0 - 0.2, x1 + 0.2)):
-        sp = len(k.parts)
-        I.drying_rack(k, x0, x1, r_)
-        I.pose(k, sp, ((x0 + x1) / 2, r_, 0), dz=TERRAIN.z((x0 + x1) / 2, r_))
-        break
+def shingle_spot(xs, rs, w, keep=(), top=-0.03):
+    """The first place along the west shingle where something w long lies on dry beach, clear of what's there."""
+    for r_ in rs:
+        for x0 in xs:
+            pts = [(x0 + w * t, r_ + dr) for t in (0.0, 0.5, 1.0) for dr in (-0.25, 0.25)]
+            if all(on_lip(x, rr, C.WZ + 0.12) and TERRAIN.z(x, rr) < top for (x, rr) in pts) and \
+               all(abs(x0 + w / 2 - kx) > w / 2 + 0.6 or abs(r_ - kr) > 0.9 for (kx, kr) in keep):
+                return x0, r_
+    return None
+
+
+xs = [1.0 + 0.25 * i for i in range(30)]
+rs = [17.0 + 0.25 * i for i in range(26)]
+boat = shingle_spot(xs, rs, 1.8)
+if boat:
+    x0, r_ = boat
+    sp, sl = len(k.parts), len(k.lights)
+    W.rowboat(k, x0, x0 + 1.8, r_, beam=0.8, hull='#4a6a5a', inside=A.WOOD_D)
+    I.pose(k, sp, (x0 + 0.9, r_, 0), yaw=12, roll=6, dz=TERRAIN.z(x0 + 0.9, r_) + 0.04, lights_since=sl)
+rack = shingle_spot(xs, rs, 1.5, keep=[(boat[0] + 0.9, boat[1])] if boat else [], top=1.0)
+if rack:
+    x0, r_ = rack
+    sp = len(k.parts)
+    I.drying_rack(k, x0, x0 + 1.5, r_)
+    I.pose(k, sp, (x0 + 0.75, r_, 0), dz=TERRAIN.z(x0 + 0.75, r_))
+print('holm shingle: boat', boat, 'rack', rack)
 for (x, r_) in ((7.6, 20.9), (7.9, 21.4), (4.2, 20.4)):
     if on_lip(x, r_, C.WZ + 0.12):
         sp = len(k.parts)
