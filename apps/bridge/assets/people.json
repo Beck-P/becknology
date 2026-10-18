@@ -1708,6 +1708,33 @@
     ]
   },
   "nell": {
+    "name": "Nell Ashby",
+    "role": "Keeps the flower stall on the square",
+    "sheet": "npc-vfolk-a",
+    "at": [
+      {
+        "world": "verdance-village",
+        "label": "NELL"
+      }
+    ],
+    "greet": "HELLO! A POSY? FOR SOMEONE SPECIAL, OR FOR YOU? BOTH ARE ALLOWED. NAN SAYS EVERYONE SHOULD HAVE FLOWERS AT LEAST ONCE A WEEK.",
+    "again": "YOU AGAIN! I'VE KEPT YOU THE BEST SUNFLOWER. DON'T TELL PERCY.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "NAN GROWS THEM OVER THE BRIDGE, I SELL THEM ON THE SQUARE, THE BEES DO MOST OF THE WORK. NAN'S COTTAGE IS THE ONE WITH THE APPLE TREES."
+      },
+      {
+        "q": "Gifts",
+        "a": "EVERYONE HAS SOMETHING THEY LOVE. BRIDGET LOVES HONEY. WAT PRETENDS HE DOESN'T LIKE FLOWERS BUT HE KEEPS THE LAST ONE I GAVE HIM IN A JAR ON THE ANVIL. LUDD LOVES A GOOD PUMPKIN."
+      },
+      {
+        "q": "The goat",
+        "a": "NOBODY KNOWS WHOSE IT IS. IT TURNS UP, EATS SOMETHING IMPORTANT, AND LEAVES. WE PUT UP NOTICES. IT EATS THE NOTICES."
+      }
+    ]
+  },
+  "drip_nell": {
     "name": "Nell",
     "role": "Behind the bar at The Drip",
     "sheet": "npc-nell",
