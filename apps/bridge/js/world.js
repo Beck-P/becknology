@@ -460,6 +460,8 @@ var BridgeWorld = (function () {
         if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.decorate(worldId, data);
         if (typeof BridgeMagic !== 'undefined') BridgeMagic.decorate(worldId, data);
         if (typeof BridgeExpedition !== 'undefined') BridgeExpedition.decorate(worldId, data);
+        if (typeof BridgeAlpine !== 'undefined') BridgeAlpine.decorate(worldId, data);       // Aurelle, the promenade, the way down to it
+        if (typeof BridgeTouring !== 'undefined') BridgeTouring.decorate(worldId, data);     // the High Route: the guides, the huts
         if (typeof BridgeSki !== 'undefined' && BridgeSki.decorate) BridgeSki.decorate(worldId, data);
         if (typeof BridgeDance !== 'undefined') BridgeDance.decorate(worldId, data);
         if (typeof BridgeAnimals !== 'undefined') BridgeAnimals.decorate(worldId, data);
@@ -470,6 +472,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeFoliage !== 'undefined') BridgeFoliage.apply(worldId);        // the trees turn with the seasons
         if (typeof BridgeWeather !== 'undefined') BridgeWeather.decorate(worldId, data);
         if (typeof BridgeCombat !== 'undefined') BridgeCombat.decorate(worldId, data);
+        if (typeof BridgeValley !== 'undefined') BridgeValley.decorate(worldId, data);       // the hidden valley's creatures and yetis
         if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
         if (typeof BridgeWayfarer !== 'undefined') BridgeWayfarer.decorate(worldId, data);   // the bays as fitted
