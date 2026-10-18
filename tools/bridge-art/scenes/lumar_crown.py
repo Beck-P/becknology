@@ -358,7 +358,7 @@ for i in range(5):
     k.cyl(SX0 + 2.06 - i * 0.44, QF + 0.6, -0.12 - i * 0.12 * 1.2 * 0.85, 0.42 - i * 0.12 * 1.2 * 0.85, 0.02, A.IRON, 'rail', verts=6)
 k.tube((SX0 + 2.06, QF + 0.6, 0.42), (SX0 + 2.06 - 4 * 0.44, QF + 0.6, 0.42 - 4 * 0.122), 0.022, A.IRON, 'rail', verts=6)
 k.tube((SX0 + 2.06, QF + 0.6, 0.42), (SX0 + 2.3, QF + 0.1, 0.42), 0.022, A.IRON, 'rail', verts=6)
-W.lantern_post(k, 46.75, QUAY + 0.45, h=2.2, energy=24)     # a lamp at the stair head (on the tile line: it blocks nothing)
+W.lantern_post(k, 46.98, QUAY + 0.45, h=2.2, energy=24)     # a lamp at the stair head (on the tile line: it blocks nothing)
 for LX in (18.6, 30.6):                             # iron ladders down the wall
     for dx in (-0.16, 0.16):
         k.tube((LX + dx, QF + 0.1, 0.32), (LX + dx, QF + 0.1, C.WZ - 0.4), 0.022, A.IRON, 'ladder', verts=6)
@@ -1312,7 +1312,6 @@ def footed(fn, *a, foot=-1.2, x0=None, r0=None, x1=None, r1=None, **kw):
 footed(CAP.gatehouse, k, 4.2, 20.9, w=1.8, h=2.5, depth=1.3, name='THE OLD TOWN', banner='#1e6a42', x0=2.3, r0=19.5, x1=6.1, r1=20.9)
 footed(CAP.town_wall, k, -0.6, 2.3, 20.6, h=1.9, thick=0.9, seed=7, x0=-0.6, r0=19.6, x1=2.3, r1=20.6)
 footed(CAP.tower, k, 0.2, 19.6, R=1.0, h=3.3, roof='#44567a', flag='#1e6a42', x0=-0.9, r0=18.5, x1=1.3, r1=20.6)
-footed(CAP.wall_ns, k, 6.6, 15.6, 19.6, h=1.9, seed=8, x0=6.1, r0=15.6, x1=7.1, r1=19.6)
 for (x0_, x1_, rb, rf, st) in ((-0.6, 1.8, 15.2, 17.6, 3), (1.8, 3.9, 15.6, 17.9, 2), (3.9, 6.0, 15.0, 17.6, 3)):   # the old town beyond
     footed(CAP.town_house, k, x0_, x1_, rb, rf, storeys=st, rng=rng, solid=False, x0=x0_, r0=rb, x1=x1_, r1=rf + 0.1)
 footed(CAP.tower, k, 2.6, 13.6, R=1.25, h=4.6, roof='#3a4256', flag=GOLD, x0=1.2, r0=12.2, x1=4.0, r1=15.0)      # the Old Keep
