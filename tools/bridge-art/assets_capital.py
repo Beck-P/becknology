@@ -1171,15 +1171,59 @@ def shack(k, x0, x1, r_back, r_front, rng=None, roof=None, lit=True, pipe=True, 
     if lit:
         k.box(wx - 0.16, r_front + 0.02, 0.6, wx + 0.16, r_front + 0.05, 0.92, '#5a3a18', 'window_glass', emit=(W.GLOW, 0.8))
         k.box(wx - 0.2, r_front + 0.02, 0.56, wx + 0.2, r_front + 0.07, 0.6, '#3a2a1c', 'sill')
-    # the lean-to roof: tarred boards, a sheet or two of tin
-    k.quads([((x0 - 0.12, r_back - 0.1, H + 0.32), (x1 + 0.12, r_back - 0.1, H + 0.32), (x1 + 0.12, r_front + 0.3, H - 0.05), (x0 - 0.12, r_front + 0.3, H - 0.05))],
+    # the lean-to roof: tarred boards laid down the slope, each its own, sheets of corrugated tin over the worst of it,
+    # held down with stones; now and then something left up there
+    zb, zf = H + 0.32, H - 0.05
+    rb_, rf_ = r_back - 0.1, r_front + 0.3
+
+    def at(t, lift=0.0):                                          # (row, z) a share t of the way down the slope
+        return rb_ + t * (rf_ - rb_), zb + t * (zf - zb) + lift
+    k.quads([((x0 - 0.12, rb_, zb), (x1 + 0.12, rb_, zb), (x1 + 0.12, rf_, zf), (x0 - 0.12, rf_, zf))],
             (roof or rng.choice(('#2e2a28', '#3a3430', '#4a4038')), 0.16), 'roof_tar')
-    for _ in range(rng.randint(1, 3)):
-        a = rng.uniform(x0, x1 - 0.6)
-        t0 = rng.uniform(0.0, 0.5)
-        k.quads([((a, r_back + t0 * (r_front - r_back), H + 0.33 - t0 * 0.37), (a + 0.6, r_back + t0 * (r_front - r_back), H + 0.33 - t0 * 0.37),
-                  (a + 0.6, r_back + (t0 + 0.4) * (r_front - r_back), H + 0.33 - (t0 + 0.4) * 0.37), (a, r_back + (t0 + 0.4) * (r_front - r_back), H + 0.33 - (t0 + 0.4) * 0.37))],
-                (rng.choice(('#7a7e84', '#8a6a5a', '#6a7070')), 0.12), 'roof_tin')
+    for _ in range(rng.randint(1, 3)):                             # (the dice as the plain roof drew them: the layout stays put)
+        rng.uniform(x0, x1 - 0.6), rng.uniform(0.0, 0.5), rng.choice((1, 2, 3))
+    main, rng = rng, random.Random(int(x0 * 97 + r_back * 31))     # the roof's detail on dice of its own
+    x = x0 - 0.12
+    boards = []
+    while x < x1 + 0.1:
+        w = rng.uniform(0.16, 0.26)
+        t0, t1 = rng.uniform(0.0, 0.05), rng.uniform(0.95, 1.0)
+        (ra, za), (rb2, zb2) = at(t0, 0.012), at(t1, 0.012)
+        boards.append(((x + 0.008, ra, za), (min(x1 + 0.12, x + w) - 0.008, ra, za), (min(x1 + 0.12, x + w) - 0.008, rb2, zb2), (x + 0.008, rb2, zb2)))
+        x += w
+    for tone in ('#2a2624', '#3a332e', '#4a4038', '#352e2a'):     # a few meshes, one per tone
+        mine = [q for i, q in enumerate(boards) if i % 4 == ('#2a2624', '#3a332e', '#4a4038', '#352e2a').index(tone)]
+        if mine:
+            k.quads(mine, (tone, 0.2), 'roof_tar')
+    for _ in range(rng.randint(1, 3)):                             # tin sheets, ribbed
+        sw = rng.uniform(0.5, 0.8)
+        a = rng.uniform(x0 - 0.05, x1 - sw + 0.05)
+        t0 = rng.uniform(0.0, 0.45)
+        t1 = min(1.0, t0 + rng.uniform(0.4, 0.6))
+        tin = rng.choice(('#7a7e84', '#8a6a5a', '#6a7070', '#8a8a7e'))
+        (ra, za), (rb2, zb2) = at(t0, 0.03), at(t1, 0.03)
+        k.quads([((a, ra, za), (a + sw, ra, za), (a + sw, rb2, zb2), (a, rb2, zb2))], (tin, 0.12), 'roof_tin')
+        rib = a + 0.05
+        while rib < a + sw - 0.02:
+            k.quads([((rib, ra, za + 0.012), (rib + 0.025, ra, za + 0.012), (rib + 0.025, rb2, zb2 + 0.012), (rib, rb2, zb2 + 0.012))],
+                    (shade(tin, 1.18), 0.12), 'roof_tin')
+            rib += 0.09
+        if rng.random() < 0.5:                                     # a streak of rust down it
+            ru = rng.uniform(a + 0.05, a + sw - 0.12)
+            k.quads([((ru, ra, za + 0.016), (ru + 0.07, ra, za + 0.016), (ru + 0.07, rb2, zb2 + 0.016), (ru, rb2, zb2 + 0.016))], ('#8a4a2a', 0.2), 'roof_tin')
+        for _ in range(rng.randint(1, 2)):                         # stones to hold it down
+            st = rng.uniform(t0 + 0.05, t1 - 0.05)
+            rr, zz = at(st, 0.07)
+            k.rock(rng.uniform(a + 0.08, a + sw - 0.08), rr, zz, 0.07, 0.06, 0.05, ('#6a6a62', 0.3), 'stone', seed=rng.randint(0, 999), segs=6)
+    if rng.random() < 0.35:                                        # something left up there: a crate, a pot of geraniums
+        ox = rng.uniform(x0 + 0.2, x1 - 0.5)
+        rr, zz = at(0.35, 0.02)
+        if rng.random() < 0.5:
+            k.box(ox, rr - 0.12, zz, ox + 0.26, rr + 0.12, zz + 0.22, (A.WOOD_L, 0.14), 'crate', bevel=0.015)
+        else:
+            k.cyl(ox + 0.12, rr, zz, zz + 0.16, 0.1, ('#a0583a', 0.2), 'pot', verts=10)
+            k.sphere(ox + 0.12, rr, zz + 0.22, 0.11, 0.08, ('#c83a3a', 0.3), 'flowers', segs=8)
+    rng = main
     top = None
     if pipe:
         px, pr = x1 - 0.3, r_back + 0.3
