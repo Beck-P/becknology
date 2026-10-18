@@ -725,6 +725,13 @@ lanes three rows or more and the houses south of a lane mostly two storeys.
   `find` scores best in the island's collisions as it loads, so a re-render of the island moves them with it; `BACK`
   points each district's way home at that tile. Re-run `python3 tools/bridge-art/atlas.py` after adding one (its
   `EXTRA` lists Crownhaven's).
+- **Walking the map:** a solid longer than a tile blocks every cell it touches, so beds, parterres, canal walls and bridge
+  parapets are laid on whole tiles with whole-tile walks between (the Hill's garden and the canal bridges were walled
+  shut until they were). Nothing a district stands on may lie below the sea's level (`assets_coast.WZ` and its foam band)
+  unless it's meant to be water — the game draws seawater over anything lower (the Arsenal's dry dock came out flooded).
+- Test: `world/capital.js` — every district in `BUILT` loads, its spawn and every interaction can be reached (across a
+  counter too, as js/interactions.js allows), each door and gate both ways, Crownhaven's three doors, the theatre, the
+  cast's words, live light; shots `capital_<id>_{noon,golden,night}.png`.
 
 ### The Sapphire and Rose seas: Lanternfall, the floating market, Rosewell (Lumar)
 Workstream B1 of the denser worlds (`_claude_docs/spec-denser-worlds.md`; Beck: "the Emerald, Sapphire and Rose seas are your different places… each of their people and cities should probably be a little bit more unique"). What each sea's places do is `js/sapphire.js` (BridgeSapphire, interaction types `lanternfall` and `sapphire`) and `js/rose.js` (BridgeRose, type `rose`).
@@ -883,7 +890,9 @@ Beck: "instead of Runouts being like a game or a casino game, it's an actual int
 The top of Arcadia (L480; the plan is `_claude_docs/spec-arcadia-above.md`, Workstream D): above the smog, the only place
 in the city with real stars — white stone, gold and soft pastel neon, quiet. Beck: "really cool views and stuff as you get
 up above the ground". `js/spires.js` (BridgeSpires) is what its places do; the kit is `tools/bridge-art/assets_spires.py`.
-- **The crown plaza** (`arcadia-spires`, `scenes/arcadia_spires.py`, 96 × 46): a platform of white stone hung on the side of
+- **The crown plaza** (`arcadia-spires`, `scenes/arcadia_spires.py`, 96 × 46; the paving one surface — `assets_spires.flagstones`,
+  flags in running bond, no tile grid — under even starlight with small lamp pools and few bounces, so the toy finish
+  draws no blotches): a platform of white stone hung on the side of
   Halcyon's tower, a backdrop world in the skyline's **spires mode** (js/skyline.js `drawSpires`, the world JSON's
   `skyline.mode: 'spires'`: a clear sky of real stars, a galaxy band, a white moon and the odd shooting star; the other
   spires — the `peaks` layer, white stone and gold rendered by `tools/bridge-art/spires_backdrop.py` into its own
@@ -897,8 +906,10 @@ up above the ground". `js/spires.js` (BridgeSpires) is what its places do; the k
   Halcyon's crown fountain (a gilt crown spilling falls of water into a bowl), winged statues, lamps, benches, a flower
   cart; the foot of **Halcyon's tower** (HALCYON in gold, `L480 · THE SPIRES`): LUMEN's jewel-box windows, the **Spire
   Express** (`express_lift`, shaft `spire`, at 40, 9), the great doors (by appointment; Aurelio the concierge), the **Core
-  Express** (shaft `core`, 54, 9), the Orrery's bronze door. East, **the Lyra** (the opera) up its steps behind a colonnade,
-  **Aurelle** behind its round windows and velvet ropes, and **the sky docks** out over the drop: teak decking, the **air
+  Express** (shaft `core`, 54, 9), the Orrery's bronze door. East, **the Lyra** (the opera) up its steps behind a colonnade
+  and its forecourt (a red carpet between velvet ropes and gilt candelabra, bill columns, a flower kiosk, benches looking
+  over the docks), **Aurelle** behind its round windows and velvet ropes with its terrace (tables under pastel parasols,
+  festoons), and **the sky docks** out over the drop: teak decking, the **air
   cab** pad (`air_cab` pad `spires`, 70, 34), Harlan Quay's dockmaster's kiosk, luggage trolleys, champagne crates, and the
   yacht *Lumière* lying alongside on her lift fields with her steward at the gangway. A white balustrade round it all, frosted
   globes on its piers, a telescope at the front (`spires` view: js/actions.js draws the skyline's spires mode in it; seats

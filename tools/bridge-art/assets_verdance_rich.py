@@ -587,6 +587,79 @@ def hay_cart(k, cx, cr, hay=True):
     k.solid(cx - 1.0, cr - 0.45, cx + 0.9, cr + 0.45)
 
 
+def field_shelter(k, x0, x1, r_back, r_front, roof='#6a6a66'):
+    """An open-fronted field shelter for the stock: a plank back and sides on oak posts, a shingled lean-to roof, a hay
+    rack along the back wall with hay in it, straw on the floor."""
+    h = 1.35
+    k.box(x0, r_back, 0.0, x1, r_front, 0.02, ('#c8b070', 0.3), 'path_straw')
+    k.box(x0, r_back, 0.0, x1, r_back + 0.1, h + 0.25, (shade(WOOD, 0.9), 0.2), 'shelter_wall')
+    for xa in (x0, x1 - 0.1):
+        k.box(xa, r_back, 0.0, xa + 0.1, r_front - 0.3, h + 0.1, (shade(WOOD, 0.85), 0.2), 'shelter_wall')
+    x = x0
+    while x < x1 - 0.05:                                                    # the back's boards
+        k.box(x, r_back + 0.1, 0.02, min(x1, x + 0.2) - 0.012, r_back + 0.12, h + 0.2, (shade(WOOD, k.rng.uniform(0.82, 1.05)), 0.2), 'shelter_board')
+        x += 0.2
+    for xa in (x0 + 0.02, (x0 + x1) / 2 - 0.05, x1 - 0.12):
+        k.box(xa, r_front - 0.12, 0.0, xa + 0.1, r_front - 0.02, h, (WOOD_D, 0.15), 'shelter_post')
+    k.quads([((x0 - 0.15, r_back - 0.2, h + 0.35), (x1 + 0.15, r_back - 0.2, h + 0.35),
+              (x1 + 0.15, r_front + 0.2, h - 0.05), (x0 - 0.15, r_front + 0.2, h - 0.05))], (roof, 0.15), 'roof_shelter')
+    r = r_front + 0.2
+    while r > r_back - 0.2:                                                # its shingle courses, a dark line under each butt
+        z = h - 0.05 + (r_front + 0.2 - r) / (r_front - r_back + 0.4) * 0.4
+        k.box(x0 - 0.15, r - 0.02, z + 0.005, x1 + 0.15, r, z + 0.03, shade(roof, 0.7), 'roof_shelter')
+        r -= 0.2
+    k.box(x0 + 0.2, r_back + 0.12, 0.55, x1 - 0.2, r_back + 0.4, 0.95, (WOOD_D, 0.2), 'hay_rack')
+    for _ in range(14):
+        k.blob(k.rng.uniform(x0 + 0.3, x1 - 0.3), r_back + 0.28, k.rng.uniform(0.85, 1.0), 0.14, 0.1, 0.07,
+               (shade('#d8b858', k.rng.uniform(0.85, 1.1)), 0.35), 'hay', segs=6)
+    k.solid(x0, r_back, x1, r_back + 0.6)
+
+
+def hen_coop(k, cx, cr):
+    """A little hen house on legs: plank walls, a pitched felt roof, a pop-hole with its ramp, a nest box on the side."""
+    w, d, z0 = 0.55, 0.42, 0.3
+    for (dx, dr) in ((-w, -d), (w - 0.06, -d), (-w, d - 0.06), (w - 0.06, d - 0.06)):
+        k.box(cx + dx, cr + dr, 0.0, cx + dx + 0.06, cr + dr + 0.06, z0, WOOD_D, 'coop_leg')
+    k.box(cx - w, cr - d, z0, cx + w, cr + d, z0 + 0.6, ('#b8a080', 0.2), 'coop_wall')
+    x = cx - w
+    while x < cx + w - 0.02:
+        k.box(x, cr + d, z0, x + 0.13, cr + d + 0.015, z0 + 0.6, (shade('#b8a080', k.rng.uniform(0.85, 1.05)), 0.2), 'coop_board')
+        x += 0.15
+    k.box(cx - 0.1, cr + d + 0.01, z0 + 0.02, cx + 0.1, cr + d + 0.03, z0 + 0.25, '#2a1a10', 'coop_door')
+    k.tube((cx, cr + d + 0.02, z0), (cx, cr + d + 0.5, 0.0), 0.05, WOOD, 'coop_ramp', verts=4)
+    W._gable_roof(k, cx - w, cx + w, cr - d, cr + d, z0 + 0.6, 0.32, '#3a3a40', over=0.1, moss=0.2)
+    k.box(cx + w, cr - 0.2, z0 + 0.1, cx + w + 0.22, cr + 0.2, z0 + 0.4, ('#b8a080', 0.2), 'coop_wall')
+    k.solid(cx - w, cr - d, cx + w, cr + d)
+
+
+def woodpile(k, x0, x1, cr, h=0.6):
+    """Split logs stacked between two stakes, their ends toward you, a board on top."""
+    for x in (x0, x1):
+        k.box(x - 0.04, cr - 0.04, 0.0, x + 0.04, cr + 0.04, h + 0.08, WOOD_D, 'stake')
+    z, i = 0.06, 0
+    while z < h:
+        x = x0 + 0.08 + (0.06 if i % 2 else 0)
+        while x < x1 - 0.08:
+            r_ = k.rng.uniform(0.06, 0.08)
+            k.cyl_y(x, cr - 0.25, cr + 0.25, z, r_, r_, ('#7a5030', 0.25), 'log', verts=7)
+            k.cyl_y(x, cr + 0.25, cr + 0.26, z, r_ * 0.85, r_ * 0.85, shade('#c89a68', k.rng.uniform(0.88, 1.08)), 'log_end', verts=7)
+            x += 0.15
+        z += 0.13
+        i += 1
+    k.box(x0 - 0.05, cr - 0.3, h + 0.02, x1 + 0.05, cr + 0.3, h + 0.06, (WOOD, 0.2), 'woodpile_board')
+    k.solid(x0, cr - 0.3, x1, cr + 0.3)
+
+
+def picnic(k, cx, cr):
+    """A checked cloth spread on the grass, a basket, a jug and bread (flat: walk over it)."""
+    k.box(cx - 0.45, cr - 0.32, 0.0, cx + 0.45, cr + 0.32, 0.012, ('#e8e0d0', 0.3), 'path_cloth')
+    for i in range(5):
+        k.box(cx - 0.45 + i * 0.18 + 0.03, cr - 0.32, 0.012, cx - 0.45 + i * 0.18 + 0.12, cr + 0.32, 0.014, '#c84a4a', 'path_cloth')
+    basket(k, cx - 0.22, cr - 0.05, fruit='#d02a2a', n=5)
+    k.cyl(cx + 0.18, cr + 0.05, 0.0, 0.2, 0.06, ('#c8a070', 0.2), 'jug', verts=8)
+    k.blob(cx + 0.05, cr + 0.18, 0.04, 0.1, 0.06, 0.04, ('#c89048', 0.3), 'bread', segs=8)
+
+
 def bee_bench(k, x0, x1, cr):
     """A low plank bench the skeps stand on (they go on it at z 0.3), a little thatched hood behind."""
     k.box(x0, cr - 0.24, 0.24, x1, cr + 0.24, 0.3, (WOOD, 0.16), 'bee_bench')
