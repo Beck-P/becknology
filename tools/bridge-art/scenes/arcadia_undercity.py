@@ -475,8 +475,8 @@ def door(x, y, target, spawn, label, prompt='PRESS E TO ENTER'):
 
 
 w['interactions'] = [
-    {'x': 1, 'y': 9, 'type': 'leave_world', 'label': 'STAIRS UP', 'prompt': 'UP TO THE BACKS', 'leaveTo': 'arcadia-alley', 'leaveSpawn': [11, 8]},
-    {'x': 2, 'y': 9, 'type': 'leave_world', 'label': 'STAIRS UP', 'prompt': 'UP TO THE BACKS', 'leaveTo': 'arcadia-alley', 'leaveSpawn': [11, 8]},
+    {'x': 1, 'y': 9, 'type': 'leave_world', 'label': 'STAIRS UP', 'prompt': 'UP TO THE BACKS', 'leaveTo': 'arcadia-alley', 'leaveSpawn': [1, 10]},
+    {'x': 2, 'y': 9, 'type': 'leave_world', 'label': 'STAIRS UP', 'prompt': 'UP TO THE BACKS', 'leaveTo': 'arcadia-alley', 'leaveSpawn': [1, 10]},
     {'x': 10, 'y': 9, 'type': 'dialog', 'label': 'NOODLE COUNTER', 'prompt': 'PRESS E TO ORDER',
      'dialog': "MAMA ROO'S. THE BROTH HAS BEEN ON SINCE BEFORE THE DISTRICT WAS BUILT ON TOP OF IT."},
     door(16, 9, 'arcadia-hawker', [19, 22], 'HAWKER HALL'),

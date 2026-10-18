@@ -122,8 +122,8 @@ var BridgeUndercity = (function () {
     if (R && R.boss && U.boss && save[R.boss] !== today() && walkable(data, U.boss[0], U.boss[1])) BridgeCombat.spawn(data, R.boss, U.boss[0], U.boss[1]);
   }
 
-  // the Backs: until the Backs' rebuild lands (tools/bridge-art/scenes/arcadia_alley.py is the rebuild session's), the
-  // way down is the manhole in the lane, its cover off and a ladder going down
+  // the Backs: the way down is the stairwell at the lane's west end (STAIRS DOWN, tools/bridge-art/scenes/arcadia_alley.py);
+  // a Backs world JSON without it (an older render) gets the manhole in the lane instead
   function backs(data) {
     if ((data.interactions || []).some(function (i) { return i.target === 'arcadia-undercity'; })) return;
     data.interactions.push({ x: 12, y: 10, type: 'enter_world', target: 'arcadia-undercity', spawn: [3, 10], label: 'MANHOLE',
