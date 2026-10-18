@@ -222,7 +222,7 @@ var BridgeGifts = (function () {
             loveLine: 'CIDER FROM YOUR OWN APPLES? WELL NOW. THAT\'S THE CROSSING PAID FOR THE REST OF THE YEAR, THAT IS.' },
     rosalind: { love: ['wine_grand', 'wine_fine', 'farm_cheese'], like: ['grapes', 'honey', 'country_loaf'], hate: ['mug_of_ale'],
                 loveLine: 'YOUR GRAND CRU. YOU WAITED SIX WEEKS AND THEN GAVE IT AWAY. THAT\'S EITHER VERY KIND OR VERY FOOLISH. I\'LL DRINK TO BOTH.' },
-    ludd: { love: ['wheat', 'pumpkin_pie', 'farm_cider'], like: ['country_loaf', 'honey', 'apple'], hate: ['old_boot'],
+    tobias_ludd: { love: ['wheat', 'pumpkin_pie', 'farm_cider'], like: ['country_loaf', 'honey', 'apple'], hate: ['old_boot'],
               loveLine: 'NOW THAT\'S A GOOD HEAVY SHEAF. YOU CAN HEAR THE FLOUR IN IT. DAD WOULD BE PROUD OF YOU, AND HE\'S NEVER PROUD OF ANYONE.' },
     marigold: { love: ['moonflower', 'sunflower', 'posy'], like: ['honey', 'strawberry', 'jam'], hate: ['old_boot'],
                 loveLine: 'A MOONFLOWER! STILL GLOWING. YOU PICKED THIS AT NIGHT FOR ME? I MIGHT CRY. I WON\'T. I MIGHT.' },
