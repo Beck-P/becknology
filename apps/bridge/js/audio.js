@@ -877,6 +877,15 @@ var BridgeAudio = (function () {
       noiseHit(sfxBus, t + 0.18, 0.08, { freq: 420, ftype: 'lowpass', gain: 0.14, rev: 0.2 });
     },
     frost:   function (t) { [0, 0.04, 0.09].forEach(function (d, i) { voice(sfxBus, t + d, 0.05, { type: 'sine', freq: 2400 + i * 520, gain: 0.04, a: 0.001, d: 0.12, s: 0, r: 0.1 }); }); },
+    // Hoarfell's hidden valley (js/valley.js): a wolf calling the pack, a bat's screech, ice cracking, the wyrm breaking
+    // up through the snow, a yeti's low hoot
+    howl:    function (t) { voice(sfxBus, t, 1.4, { type: 'sine', freq: 330, glide: 1.6, glideT: 0.5, gain: 0.07, a: 0.25, d: 0.6, s: 0.6, r: 0.6, rev: 0.7 });
+                            voice(sfxBus, t + 0.6, 0.9, { type: 'sine', freq: 520, glide: 0.62, glideT: 0.8, gain: 0.05, a: 0.1, d: 0.5, s: 0.5, r: 0.5, rev: 0.7 }); },
+    screech: function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 2600, glide: 1.5, glideT: 0.1, gain: 0.03, a: 0.002, d: 0.1, s: 0.2, r: 0.05, cutoff: 6000 }); },
+    icecrack: function (t) { noiseHit(sfxBus, t, 0.12, { freq: 3800, ftype: 'highpass', gain: 0.08 }); noiseHit(sfxBus, t + 0.05, 0.3, { freq: 900, ftype: 'bandpass', q: 1.1, gain: 0.07, rev: 0.3 }); },
+    breach:  function (t) { noiseHit(sfxBus, t, 0.9, { freq: 320, ftype: 'lowpass', gain: 0.2, rev: 0.5 }); noiseHit(sfxBus, t + 0.02, 0.4, { freq: 2800, ftype: 'bandpass', q: 0.7, gain: 0.06 });
+                            voice(sfxBus, t, 0.8, { type: 'sawtooth', freq: 60, glide: 0.6, glideT: 0.6, gain: 0.1, a: 0.02, d: 0.5, s: 0.3, r: 0.3, cutoff: 500, rev: 0.5 }); },
+    hoot:    function (t) { [0, 0.32].forEach(function (d) { voice(sfxBus, t + d, 0.22, { type: 'sine', freq: 190, glide: 0.85, glideT: 0.2, gain: 0.07, a: 0.04, d: 0.2, s: 0.4, r: 0.12, rev: 0.5 }); }); },
     error:   function (t) { voice(sfxBus, t, 0.12, { type: 'square', freq: 140, gain: 0.04, a: 0.002, d: 0.1, s: 0.6, r: 0.05, cutoff: 900 }); },
     // fighting (js/arms.js): each kind of weapon its own swing and its own blow
     swing_blade: function (t) { whoosh(t, 0.09, 5200, 3000, 0.09, 1.6); },

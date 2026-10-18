@@ -640,6 +640,46 @@ var BridgeEvents = (function () {
       note: 'All Fellhaven out in the street for the aurora'
     },
 
+    // ---- Hoarfell's grander side (Workstream E: js/alpine.js) ----
+    fireworks: {
+      world: 'hoarfell-aurelle', name: 'Fireworks over the château', len: 5, w: 5, at: [28, 17],
+      when: function (ms, E) { return skyAt(E.worlds[0], ms).sun < 0.2 && wxAt(E.worlds[0], ms).kind === 'clear'; },
+      hint: 'Fireworks over the château!', react: 'look', loop: { name: 'blast', every: 2.2, near: 40 },
+      gather: { x: 28, y: 17.5, r: 5, n: 14, face: [28, 2] },
+      say: [[4, 'at', 'OOH — THE GOLD ONES!'], [40, 'at', 'THE CHATEAU DOES THIS FOR ANYTHING. A BIRTHDAY. A TUESDAY.'], [120, 'at', 'THAT ONE WAS SHAPED LIKE A HEART!']],
+      talk: [{ x: 24, y: 11, label: 'CHAMPAGNE TRAY', prompt: 'PRESS E TO TAKE A COUPE', on: function (L) {
+        if (once(L, 'coupe', function () { give('champagne', 1); })) say('CHAMPAGNE TRAY', 'A WAITER IN WHITE GLOVES OFFERS THE TRAY WITHOUT A WORD. THE CHATEAU POURS FOR EVERYONE IN THE PLACE ON A FIREWORK NIGHT.');
+        else say('CHAMPAGNE TRAY', 'THE WAITER RAISES ONE EYEBROW EXACTLY ONE MILLIMETRE.');
+      } }],
+      over: function (L, ctx, offX, offY, ts, ms) { fireworks(L, ctx, offX, offY, ts, ms); },
+      note: 'Fireworks over Château Aurelle'
+    },
+    aurelle_sleigh: {
+      world: 'hoarfell-aurelle', name: 'A sleigh across the Place', len: 2, w: 2, at: [28, 12], when: function (ms, E) { return skyAt(E.worlds[0], ms).sun > 0.15; },
+      hint: 'Sleigh bells', loop: { name: 'jingle', every: 1.3, near: 18 },
+      items: function (L, world, offX, offY, ts, ms, sc) { return vehicle(L, 'sleigh', [[58, 12.4], [-4, 12.4]], 2.2, 5, world, offX, offY, ts, ms, sc); },
+      note: 'A sleigh jingled across Aurelle\'s Place'
+    },
+    nightskate: {
+      world: 'hoarfell-promenade', name: 'A torchlit skate on the rink', len: 6, w: 4, at: [17, 11],
+      when: function (ms, E) { return skyAt(E.worlds[0], ms).sun < 0.55 && wxAt(E.worlds[0], ms).kind !== 'blizzard'; },
+      hint: 'Torches round the rink — a night skate', loop: { name: 'jingle', every: 2.6, near: 16 },
+      gather: { x: 17, y: 15.4, r: 3, n: 8, face: [17, 10] },
+      cast: [0, 1, 2, 3].map(function (i) {
+        var loop = [[14, 10], [20, 10], [20, 12], [14, 12]], path = [];
+        for (var j = 0; j < 14; j++) path.push(loop[(j + i) % 4]);
+        return { sheet: ['npc-skier-a', 'npc-skier-b', 'npc-kid-a', 'npc-skier-a'][i], path: path, speed: 1.1, from: 1 + i * 1.5, end: 'down', seed: i + 3 };
+      }),
+      say: [[6, 0, 'ROUND AGAIN!'], [50, 2, 'WAIT FOR ME!']],
+      talk: [{ x: 17, y: 14, label: 'THE RINK', prompt: 'PRESS E TO SKATE WITH THEM', on: function (L) {
+        if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10);
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.restoreEnergy(15);
+        say('THE RINK', 'YOU LACE UP AND JOIN THE LINE, ROUND AND ROUND UNDER THE TORCHES, A STRANGER\'S HAND ON YOUR SHOULDER. NOBODY FALLS. NEARLY NOBODY.');
+      } }],
+      over: function (L, ctx, offX, offY, ts, ms) { torches(L, ctx, offX, offY, ts, ms); },
+      note: 'Skated by torchlight on Fellhaven\'s promenade'
+    },
+
     // ---- Sylvara ----
     lanterns: {
       world: 'sylvara', name: 'The lantern procession', len: 5, w: 4, at: [16, 18],
@@ -1524,6 +1564,53 @@ var BridgeEvents = (function () {
       if (s < b || L.said['blast' + i]) return;
       L.said['blast' + i] = 1;
       if (s < b + 4) { sfx('blast'); if (typeof BridgeWorld !== 'undefined' && BridgeWorld.kick) BridgeWorld.kick(0, 1, 2); }
+    });
+  }
+  // fireworks over Aurelle: rockets up from the forecourt, bursts high over the château's roofs, sparks falling and fading
+  var FW_COLS = ['255,220,120', '255,120,150', '140,210,255', '190,255,160', '255,255,255', '255,170,80'];
+  function fireworks(L, ctx, offX, offY, ts, ms) {
+    var s = L.t / 1000;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var i = 0; i < 60; i++) {
+      var t0 = 2 + i * 4.6 + H(L.key + 'fw' + i) * 3, age = s - t0;
+      if (age < 0 || age > 4.2) continue;
+      var bx = 28 + (H(L.key + 'x' + i) - 0.5) * 22, by = -4 - H(L.key + 'y' + i) * 6, sx = 28 + (H(L.key + 'sx' + i) - 0.5) * 8, sy = 10;
+      var col = FW_COLS[Math.floor(H(L.key + 'c' + i) * FW_COLS.length)];
+      if (age < 1.1) {                                                  // the rocket going up, a trail behind it
+        var f = age / 1.1, x = sx + (bx - sx) * f, y = sy + (by - sy) * (1 - (1 - f) * (1 - f));
+        for (var q = 0; q < 6; q++) {
+          var fq = Math.max(0, f - q * 0.03), xq = sx + (bx - sx) * fq, yq = sy + (by - sy) * (1 - (1 - fq) * (1 - fq));
+          ctx.fillStyle = 'rgba(255,220,170,' + (0.8 - q * 0.13).toFixed(2) + ')';
+          ctx.fillRect(Math.round(offX + xq * ts), Math.round(offY + yq * ts), 1, 1);
+        }
+        continue;
+      }
+      var b = age - 1.1, n = 26, R = ts * (1.4 + H(L.key + 'r' + i) * 1.6) * Math.min(1, b * 1.6), a = Math.max(0, 1 - b / 3.1);
+      for (var j = 0; j < n; j++) {
+        var ang = j / n * Math.PI * 2 + H(L.key + 'a' + i), px = offX + bx * ts + Math.cos(ang) * R, py = offY + by * ts + Math.sin(ang) * R + b * b * ts * 0.35;
+        ctx.fillStyle = 'rgba(' + col + ',' + a.toFixed(2) + ')';
+        ctx.fillRect(Math.round(px), Math.round(py), 2, 2);
+        ctx.fillStyle = 'rgba(' + col + ',' + (a * 0.4).toFixed(2) + ')';
+        ctx.fillRect(Math.round(px - Math.cos(ang) * 3), Math.round(py - Math.sin(ang) * 3), 1, 1);
+      }
+      if (b < 0.25) {                                                   // the flash
+        var g = ctx.createRadialGradient(offX + bx * ts, offY + by * ts, 0, offX + bx * ts, offY + by * ts, ts * 3);
+        g.addColorStop(0, 'rgba(' + col + ',' + (0.35 * (1 - b / 0.25)).toFixed(2) + ')'); g.addColorStop(1, 'rgba(' + col + ',0)');
+        ctx.fillStyle = g; ctx.fillRect(offX + (bx - 3) * ts, offY + (by - 3) * ts, ts * 6, ts * 6);
+      }
+    }
+    ctx.restore();
+  }
+  // torches on poles round the promenade's rink, flickering
+  function torches(L, ctx, offX, offY, ts, ms) {
+    var P = [[12.2, 8.0], [17.2, 7.8], [22.2, 8.0], [12.2, 14.2], [17.2, 14.4], [22.2, 14.2]];
+    P.forEach(function (p, i) {
+      var x = Math.round(offX + p[0] * ts), y = Math.round(offY + p[1] * ts) - 30, fl = 0.75 + 0.25 * Math.sin(ms / 90 + i * 1.7);
+      glow(ctx, x, y, 22, '255,170,80', 0.35 * fl);
+      ctx.fillStyle = '#3a2416'; ctx.fillRect(x, y + 2, 2, 30);
+      ctx.fillStyle = 'rgba(255,200,90,' + fl.toFixed(2) + ')'; ctx.fillRect(x - 1, y - 2, 4, 4);
+      ctx.fillStyle = 'rgba(255,240,180,' + fl.toFixed(2) + ')'; ctx.fillRect(x, y - 1, 2, 2);
     });
   }
   function blastPuffs(L, ctx, offX, offY, ts, ms) {
