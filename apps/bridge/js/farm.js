@@ -39,8 +39,36 @@ var BridgeFarm = (function () {
     pumpkin:    { name: 'PUMPKIN', days: 6, out: [['pumpkin', 1, 1]] },
     starfruit:  { name: 'STARFRUIT', days: 12, out: [['starfruit', 1, 1]] },
     // flax for rope and plain sailcloth at your workshop (js/workshop.js)
-    flax:       { name: 'FLAX', days: 2, out: [['flax', 2, 3]] }
+    flax:       { name: 'FLAX', days: 2, out: [['flax', 2, 3]] },
+    // the countryside's (js/countryside.js, js/makers.js): wheat for Ludd's mill (flour for the bakery); the moonflower,
+    // which grows like anything but opens only after dark (harvest it by night); the twin-moon melon, which grows only
+    // in moonlight — the brighter Verdance's two moons, the quicker, and on a night they're both full, three times over
+    wheat:      { name: 'WHEAT', days: 2, out: [['wheat', 3, 5]] },
+    moonflower: { name: 'MOONFLOWER', days: 3, again: 2, night: true, out: [['moonflower', 1, 2]] },
+    moonmelon:  { name: 'TWIN-MOON MELON', days: 2, moons: true, out: [['moonmelon', 1, 1]] }
   };
+  // Verdance's two small moons, the Lantern and the Button (on their own real-day cycles): light 0..1, and whether it's
+  // night on Verdance at a moment (outside its daylight)
+  var MOONS = [{ name: 'the Lantern', days: 4, at: Date.UTC(2026, 9, 2) }, { name: 'the Button', days: 7, at: Date.UTC(2026, 9, 5) }];
+  function moonLight(i, t) { var M = MOONS[i], ph = (((t - M.at) / (M.days * 86400000)) % 1 + 1) % 1; return (1 - Math.cos(2 * Math.PI * ph)) / 2; }
+  function nightAt(t) {
+    var C = typeof BridgeClock !== 'undefined' ? BridgeClock : null;
+    if (!C || !C.hoursAt) return false;
+    var P = C.PLANETS.verdance, x = C.hoursAt('verdance', t) / P.day, D = C.daylight('verdance');
+    return Math.abs(x - 0.5) > D / 2;
+  }
+  function twoMoons(t) { return moonLight(0, t) > 0.85 && moonLight(1, t) > 0.85; }
+  /** How much a moon-grown crop grows between a and b: the night's moonlight, a ten-minute step at a time. */
+  function moonGrow(a, b) {
+    var g = 0, STEPM = 600000;
+    for (var t = a; t < b; t += STEPM) {
+      var d = Math.min(STEPM, b - t), m = t + d / 2;
+      if (!nightAt(m)) continue;
+      var L = (moonLight(0, m) + moonLight(1, m)) / 2;
+      g += d * (0.4 + 1.6 * L) * (twoMoons(m) ? 3 : 1);
+    }
+    return g;
+  }
   function vday() { return typeof BridgeClock !== 'undefined' ? BridgeClock.dayLen('verdance') : 6 * 3600000; }
   function growMs(days) { return days * vday(); }
   /** Until when a watering given now keeps the ground wet: the end of this Verdance day, or two hours. */
@@ -52,7 +80,7 @@ var BridgeFarm = (function () {
   }
   function hash01(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10007) / 10007; }
   var WET = 2 * 3600000;             // the least a watering (or a hand's) wet lasts
-  var ORDER = ['turnip', 'carrot', 'strawberry', 'sunflower', 'pumpkin', 'starfruit', 'flax'];
+  var ORDER = ['turnip', 'carrot', 'strawberry', 'sunflower', 'pumpkin', 'starfruit', 'flax', 'wheat', 'moonflower', 'moonmelon'];
 
   var save = load();
   var cur = null;                    // the field interaction in front of you: {inter, sig}
@@ -113,7 +141,10 @@ var BridgeFarm = (function () {
     }
     var until = c.flat ? Math.min(now, c.flat) : now;
     var pace = (typeof BridgeSeasons !== 'undefined' ? BridgeSeasons.growth(c.k) : 1) * (typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('farm') ? 1.1 : 1);   // the season favours some crops; winter slows all (the farm's set in the Collection: a tenth quicker)
-    if (wetTo > from && until > from) c.g = Math.min(c.need, c.g + (Math.min(until, wetTo) - from) * pace);
+    if (wetTo > from && until > from) {
+      var to = Math.min(until, wetTo);
+      c.g = Math.min(c.need, c.g + (CROPS[c.k] && CROPS[c.k].moons ? moonGrow(from, to) : to - from) * pace);
+    }
     if (c.g >= c.need && !c.ripeAt) c.ripeAt = now;
     c.t = now;
   }
@@ -205,6 +236,7 @@ var BridgeFarm = (function () {
     }
     var C = CROPS[t.crop.k];
     if (t.crop.flat && t.crop.flat <= now) return { act: 'stake', verb: 'STAKE IT UP', label: C.name + ' (FLATTENED)' };
+    if (ripe(t.crop) && C.night && !nightAt(now)) return { act: 'look', verb: 'LOOK', label: C.name + ' (CLOSED TILL DARK)' };
     if (ripe(t.crop)) return { act: 'harvest', verb: 'HARVEST', label: C.name };
     if (!wet(t, now) && canReady()) return { act: 'water', verb: 'WATER', label: C.name };
     return { act: 'look', verb: 'LOOK', label: C.name };
@@ -333,6 +365,9 @@ var BridgeFarm = (function () {
                                                       : 'THE EARTH IS DRY. THE WATERING CAN IS IN THE TOOL SHED.');
     if (!t.crop) return say('TILLED EARTH', 'A TILLED ROW, READY FOR SEED. HOLLIN SELLS THEM AT THE STALL DOWN THE LANE.\n\n' + wetLine);
     var c = t.crop, C = CROPS[c.k];
+    if (C.night && ripe(c) && !nightAt(now)) return say(C.name, 'IN BUD, EVERY FLOWER FOLDED TIGHT. MOONFLOWERS OPEN AFTER DARK - COME BACK AT NIGHT AND PICK THEM WHILE THEY GLOW.');
+    if (C.moons && !ripe(c)) return say(C.name, 'IT GROWS ONLY BY MOONLIGHT. TONIGHT: THE LANTERN ' + Math.round(moonLight(0, now) * 100) + '%, THE BUTTON ' +
+      Math.round(moonLight(1, now) * 100) + '%' + (twoMoons(now) ? ' - BOTH FULL! A TWO-MOON NIGHT: IT\'LL SHOOT UP.' : '.') + '\n\nKEEP IT WATERED; ' + (wet(t, now) ? 'THE EARTH IS WET.' : 'THE EARTH IS DRY.'));
     var growing = wet(t, now) ? 'GROWING - READY IN ' + minutes(c.need - c.g) + ' OF WET GROUND.'
                               : 'WAITING FOR WATER. IT NEEDS ' + minutes(c.need - c.g) + ' MORE OF WET GROUND.';
     say(C.name, (c.again ? 'FLOWERING AGAIN. ' : '') + growing + '\n\n' + wetLine);
@@ -455,7 +490,19 @@ var BridgeFarm = (function () {
   var PUMP_LEAVES = ['...kk.......kk..', '..kGGk.kk..kGGk.', '..kgGGkGGkkGgk..', '.kkkgggGgggkkkk.'];
   var STAR_TRUNK = ['....kkksskk.....', '......kssk......', '......kssk......', '.....bBBBBb.....'];
   var FLAX_STEMS = ['..ks..ks.ks..k..', '..ks.ks..ks.ks..', '...kskskkskks...', '....ksksksks....', '.....kssssk.....', '.....bBBBBb.....'];
+  var WHEAT_STEMS = ['..s..s..s..s.s..', '..s.ks..s.ks.s..', '..sks..ks.ks.s..', '...s..s.s..s....', '...ks.s.s.sk....', '....kssssk......', '.....bBBBBb.....'];
+  var MOON_LEAVES = ['.kGGk.kk..kGGk..', '.kgGGkGGk.kgGgk.', '..kkggGgkkggkk..', '....kkssskk.....', '......kssk......', '.....bBBBBb.....'];
+  var MELON_LEAVES = ['..kk........kk..', '.kGGk.kkkk.kGGk.', '.kgGGkGGGGkGGgk.', '..kkkgggggggkk..'];
   var ART = {
+    wheat: [null, null, null,
+      ['..k..k..k..k.k..', '..g.kg..g.kg.g..', '..gkg..kg.kg.g..', '..g..g..g..g.g..'].concat(WHEAT_STEMS),
+      ['..U..U..U..U.U..', '.UuU.UuUUuUUuUU.', '.uUu.uUuuUuuUuu.', '..u..U..U..U.u..', '..UuUu.UuU.U.U..', '..u..u..u..u.u..'].concat(WHEAT_STEMS)],
+    moonflower: [null, null, null,
+      ['...kk.....kk....', '..kgGk...kgGk...', '..kGgk...kGgk...', '...kk..k..kk....', '......kgk.......'].concat(MOON_LEAVES),
+      ['..XXX.....XXX...', '.XlflX...XlflX..', '.XfTfX...XfTfX..', '.XlflX.X.XlflX..', '..XXX.XfX.XXX...', '......XlX.......'].concat(MOON_LEAVES)],
+    moonmelon: [null, null, null,
+      MELON_LEAVES.concat(['..kGGkkLLkkGGk..', '..kgGkLlLLkggk..', '...kkkkLLkkkk...', '.....kkkkkk.....']),
+      MELON_LEAVES.concat(['..kGXXXXXXXXGk..', '..XLlLLlLLlLLX..', '.XLlTlLLlLlTlLX.', '.XLLlLLlLLlLLLX.', '.XLlLLlLlLLlLLX.', '..XLLLLLLLLLLX..', '...XXXXXXXXXX...'])],
     turnip: [null, null, null,
       ['...kk......kk...', '..kGGk.kk.kGGk..', '..kgGGkGGkGGgk..', '.kkgdGGgGGGdgkk.', 'kGGkgdGGGGdgkGGk', 'kgGGkgdgGdgkGGgk',
        '.kgggkkdddkkgggk', '..kkkkdssdkkkk..', '.....bBBBBBb....'],
@@ -570,7 +617,7 @@ var BridgeFarm = (function () {
           if (flat) c.drawImage(img, dx - 4, dy + 44, img.width + 8, 20);     // laid flat by the storm
           else c.drawImage(img, dx, dy);
         } });
-      })(sprite(t.crop.k, stage(t.crop)), Math.round(offX + x * ts), Math.round(offY + (y + 1) * ts) - 64, y + 0.82, t.crop.flat && t.crop.flat <= now);
+      })(sprite(t.crop.k, stage(t.crop) === 4 && CROPS[t.crop.k].night && !nightAt(now) ? 3 : stage(t.crop)), Math.round(offX + x * ts), Math.round(offY + (y + 1) * ts) - 64, y + 0.82, t.crop.flat && t.crop.flat <= now);
     }
     return out;
   }
@@ -622,7 +669,8 @@ var BridgeFarm = (function () {
     }
     var still = typeof BridgeSeasons !== 'undefined' && BridgeSeasons.quiet();   // nothing on the wing in winter
     // bees at the skeps
-    for (var b = 0; b < (still ? 0 : 7); b++) {
+    var skeps = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorldId && BridgeWorld.getWorldId() === 'verdance';   // the farm's skeps (not the other places')
+    for (var b = 0; b < (still || !skeps ? 0 : 7); b++) {
       var ba = now / (300 + b * 40) + b * 2.1, hx = b < 4 ? 41.4 : 42.4;
       var bx = offX + (hx + Math.cos(ba) * (0.4 + (b % 3) * 0.25)) * ts, by = offY + (18.0 + Math.sin(ba * 1.3) * 0.35 - 0.4) * ts;
       ctx.fillStyle = '#1a1408'; ctx.fillRect(Math.round(bx), Math.round(by), 2, 1);
@@ -648,10 +696,11 @@ var BridgeFarm = (function () {
       if (!tt.crop || !ripe(tt.crop) || !here(k)) continue;
       var xy = xyOf(k), px = +xy[0], py = +xy[1];
       var ph = (now / 1300 + (px * 7 + py * 13) % 10 / 10) % 1, s = Math.max(0, Math.sin(ph * Math.PI * 2));
-      if (tt.crop.k === 'starfruit') {                          // starfruit glows
+      if (tt.crop.k === 'starfruit' || tt.crop.k === 'moonmelon' || (tt.crop.k === 'moonflower' && nightAt(now))) {   // starfruit glows; so do the moon crops
         var gx = offX + (px + 0.5) * ts, gy = offY + (py + 0.2) * ts;
         var gg = ctx.createRadialGradient(gx, gy, 0, gx, gy, ts * 0.8);
-        gg.addColorStop(0, 'rgba(255,240,140,' + (0.18 + 0.1 * s).toFixed(2) + ')'); gg.addColorStop(1, 'rgba(255,240,140,0)');
+        var gc = tt.crop.k === 'starfruit' ? '255,240,140' : '200,220,255';
+        gg.addColorStop(0, 'rgba(' + gc + ',' + (0.18 + 0.1 * s).toFixed(2) + ')'); gg.addColorStop(1, 'rgba(' + gc + ',0)');
         ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = gg; ctx.fillRect(gx - ts, gy - ts, ts * 2, ts * 2); ctx.restore();
       }
       if (s < 0.1) continue;
@@ -695,6 +744,6 @@ var BridgeFarm = (function () {
     return { rows: rows, tilled: Object.keys(save.tiles).length, can: save.can };
   }
 
-  return { reload: function () { save = load(); }, decorate: decorate, use: use, useItem: useItem, journal: journal, CROPS: CROPS, pickFor: pickFor,
+  return { nightAt: nightAt, moonLight: moonLight, twoMoons: twoMoons, MOONS: MOONS, reload: function () { save = load(); }, decorate: decorate, use: use, useItem: useItem, journal: journal, CROPS: CROPS, pickFor: pickFor,
            _save: function () { return save; }, _plan: plan, _sprite: sprite };
 })();

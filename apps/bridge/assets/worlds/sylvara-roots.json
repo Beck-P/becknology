@@ -3676,6 +3676,18 @@
       ]
     },
     {
+      "x": 23,
+      "y": 34,
+      "type": "enter_world",
+      "label": "THE SILVERRUN",
+      "prompt": "PRESS E TO WALK DOWN TO THE RIVER",
+      "target": "sylvara-river",
+      "spawn": [
+        24,
+        1
+      ]
+    },
+    {
       "x": 12,
       "y": 7,
       "type": "dialog",

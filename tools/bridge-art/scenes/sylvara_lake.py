@@ -18,7 +18,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
-import assets_sylvan as A                          # noqa: E402
+import assets_sylvan as A
+import assets_sylvara_rich as R                    # noqa: E402                          # noqa: E402
 import assets_town as W                            # noqa: E402
 
 OUT = sys.argv[1]
@@ -75,7 +76,10 @@ def path_d(x, r):
 
 
 def meadow(x, r):
-    return x > 36.0 and 10.0 < r < 32.0 and lake_d(x, r) < -0.8
+    """The meadow running down to the east shore: its edge wanders (no straight lines in a wood)."""
+    w = 2.2 * (A.noise(x, r, 0.35, 41) - 0.5)
+    inside = A.smooth(35.0, 38.5, x + w) * A.smooth(9.0, 12.5, r + w) * A.smooth(33.5, 30.0, r - w)
+    return inside > 0.5 and lake_d(x, r) < -0.8
 
 
 def mat(x, r):
@@ -247,6 +251,7 @@ for c in range(COLS):
             k.solid(c, rr, c + 1, rr + 1)
 
 k.sun((0.62, 0.42, -0.62), '#fff0c8', 3.4, angle=3.0)
+R.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
 k.render(OUT, cycle={'base': 'day', 'dusk_sun': ((0.78, 0.3, -0.36), '#ffb070', 1.8), 'dusk_sky': ('#3a5a7a', 0.55),
                      'night_sky': ('#1e3040', 0.55), 'lamps_day': 0.3},
          light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#86aac0', 0.8))

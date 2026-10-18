@@ -19,7 +19,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
-import assets_sylvan as A                          # noqa: E402
+import assets_sylvan as A
+import assets_sylvara_rich as R                    # noqa: E402                          # noqa: E402
 import assets_town as W                            # noqa: E402
 
 OUT = sys.argv[1]
@@ -48,11 +49,14 @@ def wet(x, r, pad=0.0):
 
 
 def in_meadow(x, r):
-    return ((x - MEADOW[0]) / MEADOW[2]) ** 2 + ((r - MEADOW[1]) / MEADOW[3]) ** 2 < 1.0
+    """An open meadow in the wood, its edge wandering in and out among the trees (never an ellipse in a field)."""
+    e = ((x - MEADOW[0]) / MEADOW[2]) ** 2 + ((r - MEADOW[1]) / MEADOW[3]) ** 2
+    return e < 1.0 + 0.55 * (A.noise(x, r, 0.45, 43) - 0.5) + 0.25 * (A.noise(x, r, 1.3, 44) - 0.5)
 
 
 def in_grove(x, r):
-    return ((x - GROVE[0]) / GROVE[2]) ** 2 + ((r - GROVE[1]) / GROVE[3]) ** 2 < 1.0
+    e = ((x - GROVE[0]) / GROVE[2]) ** 2 + ((r - GROVE[1]) / GROVE[3]) ** 2
+    return e < 1.0 + 0.5 * (A.noise(x, r, 0.5, 45) - 0.5)
 
 
 def zfn(x, r):
@@ -297,6 +301,7 @@ for c in range(COLS):
             k.solid(c, rr, c + 1, rr + 1)
 
 k.sun((0.62, 0.42, -0.62), '#fff0c8', 3.4, angle=3.0)
+R.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
 k.render(OUT, cycle={'base': 'day', 'dusk_sun': ((0.78, 0.3, -0.36), '#ffb070', 1.8), 'dusk_sky': ('#3a5a7a', 0.55),
                      'night_sky': ('#1e3040', 0.55), 'lamps_day': 0.3},
          light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#86aac0', 0.8))

@@ -19,7 +19,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
-import assets_sylvan as A                          # noqa: E402
+import assets_sylvan as A
+import assets_sylvara_rich as R                    # noqa: E402                          # noqa: E402
 import assets_town as W                            # noqa: E402
 
 OUT = sys.argv[1]
@@ -156,7 +157,7 @@ for x in (bx0, bx1):                                             # steps down to
     k.box(x - (0.9 if x == bx0 else -0.1), br0 + 0.2, L.z(x, br0) - 0.05, x + (0.1 if x == bx0 else 0.9), br1 - 0.2, BZ - 0.06,
           (shade(A.ELFWOOD, 0.82), 0.3), 'stair_step')
 VHOUSES = []
-for (x, side, roof) in ((22.2, -1, '#5a8a3a'), (26.2, 1, '#a0703a'), (29.8, -1, '#4a7a6a'), (33.4, 1, '#6a5690')):
+for (x, side, roof) in ((22.2, -1, '#b07a3c'), (26.2, 1, '#a0703a'), (29.8, -1, '#6a7c8a'), (33.4, 1, '#6a5690')):
     r = br0 - 0.65 if side < 0 else br1 + 0.6
     VHOUSES.append(A.pod_house(k, x, r, z=BZ, rad=0.62, h=1.1, roof=roof, door_ang=math.pi / 2 if side < 0 else -math.pi / 2, lit=True))
     # the house's own platform hanging over the water
@@ -317,6 +318,7 @@ for c in range(COLS):
             k.solid(c, rr, c + 1, rr + 1)
 
 k.sun((0.62, 0.42, -0.62), '#fff0c8', 3.4, angle=3.0)
+R.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
 k.render(OUT, cycle={'base': 'day', 'dusk_sun': ((0.78, 0.3, -0.36), '#ffb070', 1.8), 'dusk_sky': ('#3a5a7a', 0.55),
                      'night_sky': ('#1e3040', 0.55), 'lamps_day': 0.3},
          light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#86aac0', 0.8))

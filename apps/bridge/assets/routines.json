@@ -16,5 +16,10 @@
   "regular": [["small", "away"], ["morning", { "world": "lumar-square", "x": 10, "y": 12, "facing": "up" }], ["noon", "home"]],
   "merchant": [["small", "away"], ["sunrise", { "world": "lumar-square", "x": 18, "y": 12, "facing": "up" }], ["sunset", "home"]],
   "gran-wilde": [["morning", "home"], ["afternoon", { "world": "lumar-square", "x": 2, "y": 5, "facing": "down" }], ["sunset", "home"]],
-  "ilsa": [["morning", "home"], ["sunset", { "world": "lumar-tavern", "x": 10, "y": 3, "facing": "up" }], ["late", "away"]]
+  "ilsa": [["morning", "home"], ["sunset", { "world": "lumar-tavern", "x": 10, "y": 3, "facing": "up" }], ["late", "away"]],
+
+  "juniper": [["dawn", "home"], ["evening", { "world": "verdance-village", "x": 11, "y": 15, "facing": "up" }], ["late", "away", { "via": [9, 10] }]],
+  "hester": [["sunrise", "home"], ["sunset", { "world": "verdance-village", "x": 20, "y": 14, "facing": "down" }], ["late", "away", { "via": [24, 10] }]],
+  "pike": [["dawn", "home"], ["evening", { "world": "verdance-village", "x": 15, "y": 16, "facing": "up" }], ["late", "away", { "via": [32, 10] }]],
+  "hobb": [["sunrise", "home"], ["evening", { "world": "verdance-village", "x": 34, "y": 15, "facing": "down" }], ["late", "away", { "via": [29, 17] }]]
 }

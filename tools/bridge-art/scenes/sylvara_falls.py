@@ -23,7 +23,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, apply_world, shade  # noqa: E402
-import assets_sylvan as A                          # noqa: E402
+import assets_sylvan as A
+import assets_sylvara_rich as R                    # noqa: E402                          # noqa: E402
 import assets_town as W                            # noqa: E402
 
 OUT = sys.argv[1]
@@ -35,7 +36,7 @@ k = Kit(COLS, ROWS, margin_top=3.0, margin_bottom=0.8, seed=8823)
 rng = k.rng
 C45 = math.cos(math.pi / 4)
 WZ = -0.28                                                       # the river above the falls
-DROP = 1.9                                                       # how far the falls fall
+DROP = 2.8                                                       # how far the falls fall (a face you can see: ~2.5 rows on screen)
 LZ = -DROP                                                       # the gorge's ground
 LWZ = LZ + WZ                                                    # the pool's surface
 LIP = 19.0                                                       # world row of the falls' lip
@@ -147,6 +148,7 @@ L.field(-1.5, -3.5, COLS + 1.5, ROWS + 1.5, 0.11)
 A.water(k, -1.5, -3.5, COLS + 1.5, LIP + 0.3, lambda x, r: wet_up(x, r, 0.55) and cliff(x, r) < 0.1, WZ, part='stream_water')
 A.water(k, -1.5, FOOT - 0.1, COLS + 1.5, ROWS + 1.5, lambda x, r: wet_low(x, r, 0.55) and cliff(x, r) > 0.9, LWZ, part='pond_water')
 
+fx0_, fx1_ = 20.7, 25.9                                          # the falls' width at the lip
 # ---- the cliff: rock faces either side of the falls, mossy, ferns in the cracks ---------------------------------------------
 for i in range(70):
     x = rng.uniform(-1.0, COLS + 1.0)
@@ -158,6 +160,33 @@ for i in range(70):
     k.rock(x, r + 0.05, z, s, s * 0.45, s * 0.7, (shade('#6e6c5c', rng.uniform(0.82, 1.12)), 0.35), part='cliff_rock', segs=9)
     if rng.random() < 0.4:
         k.blob(x, r + 0.1, z + s * 0.6, s * 0.7, s * 0.3, s * 0.15, (shade(A.MOSS_L, rng.uniform(0.85, 1.1)), 0.4), 'rock_moss', segs=8)
+# strata: ledges of rock across the face, each band its own tone, moss along their tops, dark where water seeps down
+def face_r(z):
+    """Where the face is at height z (it falls from the lip's top to the gorge's floor between LIP + 0.1 and FOOT)."""
+    t = min(1.0, max(0.0, (0.15 - z) / (0.15 - LZ)))
+    return LIP + 0.1 + (FOOT - LIP - 0.1) * t
+
+
+BANDS = ['#7a7464', '#68645a', '#857c68', '#5e5a50', '#746e60']
+zb = 0.05
+bi = 0
+while zb > LZ + 0.15:
+    tone = BANDS[bi % len(BANDS)]
+    x = -1.2
+    while x < COLS + 1.2:
+        w = rng.uniform(0.6, 1.6)
+        if not (15.4 < x + w / 2 < 18.6) and not (fx0_ - 0.3 < x + w / 2 < fx1_ + 0.3):
+            rr = face_r(zb)
+            h = rng.uniform(0.2, 0.32)
+            k.box(x, rr - 0.05, zb - h, x + w * 0.96, rr + rng.uniform(0.08, 0.16), zb, (shade(tone, rng.uniform(0.9, 1.08)), 0.38), 'cliff_ledge')
+            if rng.random() < 0.45:                                  # moss along the ledge's top
+                k.box(x + 0.05, rr - 0.04, zb, x + w * 0.9, rr + 0.1, zb + 0.03, (shade(A.MOSS_L, rng.uniform(0.85, 1.1)), 0.4), 'cliff_moss')
+            if rng.random() < 0.18:                                  # a dark wet streak down it
+                sx = x + rng.uniform(0.1, w * 0.8)
+                k.box(sx, rr + 0.1, zb - h - 0.4, sx + 0.08, rr + 0.12, zb, ('#3a3c38', 0.3), 'cliff_streak')
+        x += w
+    zb -= rng.uniform(0.32, 0.42)
+    bi += 1
 for i in range(16):                                              # ferns hanging from the cliff
     x = rng.uniform(0, COLS)
     if 15.4 < x < 18.6 or 20.6 < x < 26.0:
@@ -165,29 +194,29 @@ for i in range(16):                                              # ferns hanging
     A.fern(k, L, x, LIP + 0.25, s=rng.uniform(0.5, 0.7), z=rng.uniform(LZ * 0.5, -0.1), tone='#4a8a3a')
 
 # ---- the falls: the lip, the water pouring over it in strands, foam and spray at the foot ----------------------------------
-fx0, fx1 = 21.2, 25.4
+fx0, fx1 = fx0_, fx1_
 for _ in range(10):                                              # the lip's rocks
     x = rng.uniform(fx0 - 0.6, fx1 + 0.6)
     s = rng.uniform(0.25, 0.45)
     k.rock(x, LIP - 0.15, WZ + 0.05, s, s * 0.6, s * 0.35, (shade('#7a786a', rng.uniform(0.85, 1.1)), 0.35), part='rock', segs=8)
 strands = [[], []]
-n = 22
+n = 40
 for i in range(n):
     x = fx0 + (fx1 - fx0) * (i + 0.5) / n + rng.uniform(-0.03, 0.03)
     w_ = (fx1 - fx0) / n * rng.uniform(0.32, 0.48)
     top, bot = (LIP, WZ + 0.02), (FOOT + 0.05, LWZ + 0.02)
-    mid = (LIP + 0.18, WZ - 0.6)
+    mid = (LIP + 0.22, WZ - 0.9)
     q1 = ((x - w_, top[0], top[1]), (x + w_, top[0], top[1]), (x + w_ * 1.1, mid[0], mid[1]), (x - w_ * 1.1, mid[0], mid[1]))
     q2 = ((x - w_ * 1.1, mid[0], mid[1]), (x + w_ * 1.1, mid[0], mid[1]), (x + w_ * 1.3, bot[0], bot[1]), (x - w_ * 1.3, bot[0], bot[1]))
     strands[i % 2] += [q1, q2]
 k.quads(strands[0], ('#e2f2f4', 0.15), 'falls')
 k.quads(strands[1], ('#a4d0dc', 0.15), 'falls_shade')
-for _ in range(60):
-    x = rng.uniform(fx0 - 0.4, fx1 + 0.4)
-    r = rng.uniform(FOOT, FOOT + 1.4)
+for _ in range(110):
+    x = rng.uniform(fx0 - 0.5, fx1 + 0.5)
+    r = rng.uniform(FOOT, FOOT + 1.8)
     s = rng.uniform(0.07, 0.18)
     k.blob(x, r, LWZ + 0.02, s, s * 0.8, 0.03, ('#eef6f6', 0.15), 'foam', segs=7)
-for _ in range(14):                                              # spray clouds over the pool
+for _ in range(24):                                              # spray clouds over the pool
     x = rng.uniform(fx0, fx1)
     k.blob(x, FOOT + rng.uniform(0.2, 0.9), LWZ + rng.uniform(0.2, 0.7), rng.uniform(0.25, 0.45), 0.2, rng.uniform(0.15, 0.3), ('#e8f4f6', 0.1), 'spray', segs=8)
 # the cave behind the curtain: a dark arch in the cliff, the ledge to it
@@ -347,6 +376,7 @@ for c in range(COLS):
             k.solid(c, t, c + 1, t + 1)
 
 k.sun((0.62, 0.42, -0.62), '#fff0c8', 3.4, angle=3.0)
+R.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
 k.render(OUT, cycle={'base': 'day', 'dusk_sun': ((0.78, 0.3, -0.36), '#ffb070', 1.8), 'dusk_sky': ('#3a5a7a', 0.55),
                      'night_sky': ('#1e3040', 0.55), 'lamps_day': 0.3},
          light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#86aac0', 0.8))

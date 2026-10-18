@@ -1955,6 +1955,15 @@ var BridgeItems = (function () {
 
   function get(id) { return ITEMS[id] || null; }
   function all() { return ITEMS; }
+  // a module's own goods (js/verdance-goods.js): defined there, kept here; anything with effects eats or drinks as usual
+  function add(defs) {
+    for (var id in defs) {
+      var d = defs[id];
+      d.id = id;
+      if (d.effects && !d.onUse) d.onUse = consumableUse;
+      ITEMS[id] = d;
+    }
+  }
 
-  return { get: get, all: all, effectsText: effectsText, typeColor: typeColor, strike: strike };
+  return { get: get, all: all, add: add, px: px, effectsText: effectsText, typeColor: typeColor, strike: strike };
 })();

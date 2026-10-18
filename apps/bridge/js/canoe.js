@@ -132,9 +132,9 @@ var BridgeCanoe = (function () {
     if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnFloatingText && st) BridgeFX.spawnFloatingText(st.x - 0.5, st.y - 1.2, t, '#d8f0f0');
   }
   // the interactions for taking a canoe out: the racks, and where yours is moored
-  function refresh(w) {
+  function refresh(w, wid) {
     if (!w) return;
-    var wid = BridgeWorld.getWorldId && BridgeWorld.getWorldId();
+    wid = wid || (BridgeWorld.getWorldId && BridgeWorld.getWorldId());
     w.interactions = (w.interactions || []).filter(function (it) { return !it._canoe; });
     if (st) return;
     var R = w.river || {};
@@ -176,7 +176,7 @@ var BridgeCanoe = (function () {
       pending = null;
       setTimeout(function () { if (BridgeWorld.getWorldId() === worldId) board(p.at[0] + 0.5, p.at[1] + 0.5, p.th); }, 0);
     }
-    setTimeout(function () { if (BridgeWorld.getWorldId() === worldId) refresh(world()); }, 0);
+    refresh(data, worldId);                          // its racks (and your moored canoe) as it loads
   }
 
   // ---- each frame: paddling, the current, the banks, the edges -----------------------------------------------------

@@ -240,7 +240,7 @@ var BridgeSylvara = (function () {
 
   // The city's new places go live one at a time, as each one's render ships: a way into one that isn't here yet stays
   // hidden (a door, a lift, a stair, the canoe's way on). Add a place's id as its scene goes in.
-  var OPEN = ['sylvara-roots'];
+  var OPEN = ['sylvara-roots', 'sylvara-river', 'sylvara-crown'];
   var NEW = /^sylvara-(roots|boughs|crown|tavern|river|falls|fallcave|lake|deepwood)$/;
   function isOpen(id) { return !NEW.test(id) || OPEN.indexOf(id) >= 0; }
   function decorate(worldId, data) {                 // js/world.js, as each world loads

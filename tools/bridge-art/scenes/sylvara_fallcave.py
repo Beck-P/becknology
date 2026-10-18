@@ -14,7 +14,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, THETA, apply_world, shade  # noqa: E402
-import assets_sylvan as A                              # noqa: E402
+import assets_sylvan as A
+import assets_sylvara_rich as RICH                  # noqa: E402                              # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 OUT = sys.argv[1]
@@ -102,7 +103,7 @@ for (a, b) in zip(pts, pts[1:]):
     k.tube((a[0], 2.47, a[1]), (b[0], 2.47, b[1]), 0.05, ('#d8e8f0', 0.2), 'carving_river', emit=('#a8c8d8', 0.5), verts=5)
 for (x, z) in ((7.4, 1.9), (9.0, 2.0), (12.4, 1.9), (14.0, 2.0)):              # trees along it
     k.cone(x, 2.47, z - 0.2, z + 0.2, 0.15, 0.0, ('#a8c0a8', 0.3), 'carving_tree', verts=6)
-k.box(11.0, 2.46, 0.8, 11.2, 2.49, 1.2, ('#d8e8f0', 0.2), 'carving_falls', emit=('#a8c8d8', 0.6))
+k.box(11.0, 2.46, 0.8, 11.2, 2.49, 1.2, ('#d8e8f0', 0.2), 'carving_drop', emit=('#a8c8d8', 0.6))
 # the dry niche and the box in it
 k.box(14.8, 2.5, 0.0, 16.4, 3.6, 0.9, (ROCK_D, 0.4), 'niche')
 k.box(15.1, 2.9, 0.02, 16.0, 3.4, 0.4, ('#7a5a38', 0.3), 'chest')
@@ -110,6 +111,7 @@ k.box(15.08, 2.88, 0.4, 16.02, 3.42, 0.46, (A.GOLD, 0.25), 'chest_lid')
 k.solid(14.8, 2.5, 16.4, 3.6)
 k.solid(POOL[0] - POOL[2], POOL[1] - POOL[3], POOL[0] + POOL[2], POOL[1] + POOL[3])
 
+RICH.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
 k.render(OUT, light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 128)), world_light=('#1e2a30', 0.35))
 
 walk = [(c, rr) for c in range(COLS) for rr in range(ROWS) if (cave(c + 0.5, rr + 0.7) and rr < 14) or (rr == 13 and 8 <= c <= 10)]
