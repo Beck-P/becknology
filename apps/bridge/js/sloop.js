@@ -164,7 +164,7 @@ var BridgeSloop = (function () {
   // each island's land and shallows round its map's centre, tiles [x0, x1, r0, r1] (measured from the renders'
   // shore.png): to steer round it and keep what's adrift off its coast before it's loaded
   var EXT = {
-    'lumar': [-15.7, 16.1, -19.7, 7.1], 'lumar-crown': [-31.3, 32.4, -25.0, 17.5], 'lumar-tern': [-19.2, 19.3, -12.7, 9.5],
+    'lumar': [-15.7, 16.1, -19.7, 7.1], 'lumar-crown': [-32.5, 32.5, -25.0, 17.5], 'lumar-tern': [-19.2, 19.3, -12.7, 9.5],
     'lumar-holm': [-20.8, 20.5, -14.5, 9.3], 'lumar-sapphire': [-28.2, 29.0, -14.5, 13.5], 'lumar-rose': [-27.9, 27.7, -18.4, 21.0],
     'lumar-crimson': [-26.4, 27.1, -19.2, 18.3], 'lumar-midnight': [-24.8, 24.3, -17.6, 18.1],
     'lumar-cliff': [-29.5, 29.7, -25.5, 22.4],
