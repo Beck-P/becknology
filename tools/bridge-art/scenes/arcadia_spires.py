@@ -39,17 +39,27 @@ k = Kit(COLS, ROWS, margin_top=4.5, margin_bottom=0.6, margin_x=0.5, seed=4801)
 SAMPLES = int(os.environ.get('SAMPLES', 64))
 from _manor import preview  # noqa: E402
 preview(k)                       # PREVIEW=n: every pass at no more than n samples, for a quick look
+_settings = k._settings          # a hundred small lamps over open stone: few bounces, or their scattered light comes out
+def _few_bounces(samples, **kw):  # of the denoiser as blotches the toy finish turns into rings
+    _settings(samples, **kw)
+    k.scene.cycles.max_bounces, k.scene.cycles.diffuse_bounces = 3, 2
+k._settings = _few_bounces
 
 # ---- the ground ------------------------------------------------------------------------------------------------------------
 # the gardens' lawns and walks (west), the plaza's paving (middle and in front of the opera), the docks' teak (east front)
-T.grass(k, 0.8, RB, 31.0, FRONT, tone='#2c4a34', tufts=0.4)
+for (x0, r0, x1, r1) in ((0.8, RB, 31.0, 21.78), (0.8, 25.42, 31.0, FRONT),          # the lawns, round the pool
+                         (0.8, 21.78, 4.78, 25.42), (25.22, 21.78, 31.0, 25.42)):  # (its water lies below them)
+    T.grass(k, x0, r0, x1, r1, tone='#2c4a34', tufts=0.4)
 SP.gravel(k, 0.8, 16.5, 31.0, 18.0)                       # the long walk across the gardens
 SP.gravel(k, 0.8, 30.5, 31.0, 32.0)
 SP.gravel(k, 14.5, 18.0, 16.0, 30.5)                      # and down the middle, past the pool
 SP.gravel(k, 14.5, 32.0, 16.0, FRONT)
 SP.gravel(k, 2.0, RB, 18.5, 15.0)                          # the tea terrace under the pergola
-SP.paving(k, 31.0, RB, DX0, FRONT, size=1.0, strip=4)
-SP.paving(k, DX0, RB, 95.2, 28.0, size=1.0, strip=4)
+SP.flagstones(k, 31.0, RB, DX0, FRONT, seed=48)          # one paved surface, flags in running bond (no tile grid)
+SP.flagstones(k, DX0, RB, 95.2, 28.0, seed=49)
+SP.gold_inlay(k, [(31.3, 15.0, 63.7, 15.06), (31.3, 35.0, 63.7, 35.06),            # gold strips framing the plaza
+                  (37.0, 15.0, 37.06, 35.06), (57.94, 15.0, 58.0, 35.06),
+                  (47.47, 11.0, 47.53, 15.0), (64.3, 21.0, 94.8, 21.06)])
 PH.decking(k, DX0, 28.0, 95.2, DOCK_FRONT)
 k.box(DX0, 27.92, -0.005, 95.2, 28.08, 0.006, (SP.GOLD, 0.2), 'deck_gold')
 SP.star_inlay(k, 47.5, 31.0, 2.4)
@@ -111,7 +121,7 @@ SP.flower_border(k, 16.8, 30.2, 19.6)
 SP.flower_border(k, 2.0, 13.8, 29.0)
 SP.flower_border(k, 16.8, 30.2, 29.0)
 for x in (9.0, 21.0):                                                   # benches along the pool
-    SP.bench(k, x - 0.9, x + 0.9, 26.4, back=1)
+    SP.bench(k, x - 0.9, x + 0.9, 26.4, back=None)
 SP.bench(k, 4.6, 6.4, 33.4, back=-1)
 SP.bench(k, 24.0, 25.8, 33.4, back=-1)
 for (x, r) in ((15.25, 21.0), (15.25, 27.0)):
@@ -121,6 +131,29 @@ for x in (2.0, 29.0):
     SP.lamp(k, x, 31.2, glow=SP.WARM)
 SP.lamp(k, 13.8, 38.0)
 SP.lamp(k, 16.7, 38.0)
+import random as _r
+G = _r.Random(4802)                                                     # the gardens' own dice: nothing else moves
+for (x0, r0, x1, r1) in ((19.2, RB + 0.9, 30.4, RB + 1.9), (10.0, 20.2, 13.6, 21.3), (17.0, 20.2, 20.6, 21.3),
+                         (10.8, 26.0, 14.0, 27.1), (16.6, 26.0, 19.6, 27.1), (2.0, 37.4, 5.4, 39.0), (25.6, 37.4, 29.8, 39.0),
+                         (8.0, 32.6, 12.0, 33.5), (18.2, 32.6, 22.4, 33.5)):
+    SP.shrub_bed(k, x0, r0, x1, r1, G)
+    k.solid(x0, r0, x1, r1)
+for (x, r, h, b) in ((21.0, 12.8, 2.9, SP.PINK), (28.2, 12.6, 3.1, None)):
+    SP.garden_tree(k, x, r, h=h, tone=G.choice(('#2e5a3a', '#2a5240')), bloom=b)
+for (x, r) in ((19.6, 15.0), (30.0, 15.0), (1.9, 24.0), (29.6, 24.0), (12.4, 39.1), (18.2, 39.1)):
+    SP.cypress(k, x, r, h=G.uniform(2.3, 2.9))
+for x in (4.0, 8.0, 12.0, 19.0, 23.0, 27.0):                           # lights along the walks
+    SP.path_light(k, x, 16.2)
+    SP.path_light(k, x, 32.4)
+for r in (22.0, 25.0, 34.5, 37.0):
+    SP.path_light(k, 14.1, r)
+    SP.path_light(k, 16.4, r)
+for (x, r, c) in ((5.0, 21.4, SP.PEACH), (25.0, 21.4, SP.PINK), (5.0, 26.2, SP.LILAC), (25.0, 26.2, SP.PEACH)):
+    SP.lantern_post(k, x, r, glow=c)                                    # pastel lanterns at the pool's corners
+# the tea salon's glow: festoons along the pergola's beams, the counter's lamp
+PH.festoon(k, (3.2, 11.1, 2.38), (17.3, 11.1, 2.38), sag=0.25, n=14, bulb='#ffe0b8', light_every=3, energy=2.5)
+PH.festoon(k, (3.2, 14.1, 2.38), (17.3, 14.1, 2.38), sag=0.25, n=14, bulb='#ffd0e0', light_every=3, energy=2.5)
+k.point_light(8.5, RB + 2.4, 1.9, '#ffd8b0', 16, radius=0.5, group='flicker')
 # the gardener's barrow and her watering can, by the far hedge
 k.box(26.0, 33.6, 0.25, 27.2, 34.4, 0.6, ('#3a5a4a', 0.1), 'barrow')
 k.cyl_y(25.8, 33.7, 34.3, 0.2, 0.18, 0.18, '#2a2a2a', 'barrow_wheel', verts=10)
@@ -174,7 +207,7 @@ for (x, r) in ((38.0, 26.5), (57.0, 26.5)):
     SP.statue(k, x, r)
 for (x, r) in ((42.0, 17.0), (53.0, 17.0), (42.0, 26.5), (53.0, 26.5), (35.0, 34.5), (60.0, 34.5), (33.6, 14.0), (61.4, 14.0)):
     SP.lamp(k, x, r, glow=(SP.WARM if (x + r) % 2 < 1 else SP.LILAC))
-for (x0, x1, r, b) in ((44.0, 46.0, 16.2, -1), (49.0, 51.0, 16.2, -1), (44.0, 46.0, 27.2, 1), (49.0, 51.0, 27.2, 1)):
+for (x0, x1, r, b) in ((44.0, 46.0, 16.2, -1), (49.0, 51.0, 16.2, -1), (44.0, 46.0, 27.2, None), (49.0, 51.0, 27.2, None)):
     SP.bench(k, x0, x1, r, back=b)
 for x in (36.0, 42.0, 53.0, 59.0):
     SP.planter(k, x, 36.0, kind='flowers', w=1.4, d=0.7)
@@ -242,6 +275,39 @@ for x in (87.6, 91.4):                                                 # a velve
 for x in (85.0, 94.2):
     SP.planter(k, x, RB + 1.0, kind='tree', tone='#2a5240', bloom=SP.PEACH)
 
+# ---- east: the Lyra's forecourt and Aurelle's terrace ---------------------------------------------------------------------
+E2 = _r.Random(4803)
+SP.runner(k, 71.0, RB + 1.75, 74.5, 16.0)                               # the red carpet down the steps' foot
+SP.rope_line(k, 70.6, 11.0, 15.4)
+SP.rope_line(k, 74.9, 11.0, 15.4)
+for x in (69.4, 76.1):
+    SP.candelabra(k, x, 12.0)
+for x in (66.4, 79.2):
+    SP.poster_column(k, x, 16.0)
+for (x, r) in ((64.4, 18.4), (81.2, 18.4)):
+    SP.planter(k, x, r, kind='flowers', w=1.4, d=0.7)
+for (x, r) in ((64.6, 24.6), (82.4, 24.6)):
+    SP.cypress(k, x, r, h=2.7)
+for (x, r, c) in ((68.0, 19.2, SP.LILAC), (77.4, 19.2, SP.PINK), (73.0, 25.4, SP.PEACH)):
+    SP.lamp(k, x, r, glow=c)
+for (x0, x1) in ((66.4, 68.2), (77.4, 79.2)):                         # benches looking out over the docks
+    SP.bench(k, x0, x1, 22.6, back=-1)
+SP.flower_kiosk(k, 72.8, 21.4)
+for (x, r) in ((75.2, 24.9), (75.6, 25.3), (70.4, 25.0)):              # white doves on the stone
+    k.blob(x, r, 0.1, 0.09, 0.06, 0.07, ('#f4f2ee', 0.04), 'dove', segs=8)
+    k.sphere(x + 0.08, r - 0.02, 0.19, 0.045, 0.045, ('#f4f2ee', 0.04), 'dove', segs=6)
+# Aurelle's terrace: tables under pastel parasols, festoons strung between gold posts, a low hedge along its front
+for (x, r, c) in ((85.7, 13.4, SP.PINK), (92.9, 13.4, SP.LILAC), (85.7, 16.6, SP.PEACH), (92.9, 16.6, SP.MINT),
+                  (86.6, 19.4, SP.BLUE), (92.0, 19.4, SP.PINK)):
+    SP.parasol_table(k, x, r, canopy=c)
+posts = [PH.light_post(k, x, r, h=2.7, col=SP.GOLD_D) for (x, r) in ((84.3, 11.4), (94.7, 11.4), (84.3, 20.9), (94.7, 20.9))]
+for a, b in ((posts[0], posts[1]), (posts[2], posts[3]), (posts[0], posts[2]), (posts[1], posts[3])):
+    PH.festoon(k, a, b, sag=0.3, n=12, bulb=E2.choice(('#ffe0b8', '#ffd0e8', '#e0e8ff')), light_every=4, energy=2.0)
+SP.hedge(k, 84.6, 88.3, 21.4, h=0.55)
+SP.hedge(k, 90.7, 94.6, 21.4, h=0.55)
+SP.flower_border(k, 84.6, 88.3, 21.9)
+SP.flower_border(k, 90.7, 94.6, 21.9)
+
 # ---- east: the sky docks ------------------------------------------------------------------------------------------------------
 SP.cab_pad(k, 70.0, 34.0, rad=1.7)
 k.cyl(72.2, 32.2, 0.0, 2.3, 0.05, (SP.GOLD, 0.2), 'cab_sign_post', verts=8)
@@ -278,9 +344,10 @@ for x in (79.4, 81.2):
 k.solid(79.0, DOCK_FRONT - 0.4, 81.6, DOCK_FRONT)
 
 # ---- light: starlight from above, the city's glow coming up through the smog, the lamps ---------------------------------------
-k.area_light(48.0, 18.0, 30.0, '#c8d4ff', 1500, 80.0, rot=(math.radians(-25), 0, 0))
+k.area_light(48.0, 23.0, 40.0, '#c8d4ff', 34000, 300.0, rot=(math.radians(-25), 0, 0))   # wide and even: no band edge across the stone
 k.area_light(48.0, 60.0, -10.0, '#ff9ad0', 260, 90.0, rot=(math.radians(140), 0, 0))
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.82}}, light_samples=SAMPLES, world_light=('#2a3058', 0.55))
+k.area_light(16.0, 24.0, 14.0, '#a8b8ff', 420, 30.0)                  # a little more starlight on the gardens
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.82}}, light_samples=SAMPLES, world_light=('#20284c', 0.42))
 
 w = {'name': 'The Spires', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'arcadia',
      'spawns': {'player': [40, 10]}, 'shipExit': False, 'tiles': [], 'collisions': [], 'tileNames': {},

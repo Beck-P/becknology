@@ -605,6 +605,21 @@ var BridgeFarm = (function () {
       ctx.fillStyle = 'rgba(255,255,240,' + ((a - 0.6) * 2).toFixed(2) + ')';
       ctx.fillRect(Math.round(offX + (25.6 + (gl * 0.83) % 4.8) * ts), Math.round(offY + (18.3 + (gl * 0.61) % 2.2) * ts), 3, 1);
     }
+    // dawn mist lying low on the millpond (Look Book 2's farm): soft banks drifting over the water round sunrise
+    var Lt = sc.id === 'verdance' && typeof BridgeLit !== 'undefined' && BridgeLit.light ? BridgeLit.light('verdance') : null;
+    var dawn = Lt && Lt.M ? Math.max(0, 1 - Math.abs(Lt.M.h - 6.8) / 1.6) * (Lt.M.wx === 'clear' ? 1 : 0.4) : 0;
+    if (dawn > 0.02) {
+      var px = offX + 28.0 * ts, py = offY + 19.4 * ts, pw = 6.4 * ts, t = now / 1000;
+      ctx.save();
+      for (var m = 0; m < 7; m++) {
+        var mx = px + Math.sin(t * 0.08 + m * 2.1) * pw * 0.3, my = py + (m - 3) * ts * 0.3;
+        ctx.globalAlpha = dawn * 0.16; ctx.fillStyle = '#eef2f4';
+        ctx.beginPath(); ctx.ellipse(mx, my, pw * (0.22 + 0.06 * Math.sin(m)), ts * 0.32, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = dawn * 0.12; ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.ellipse(mx + ts * 0.5, my - ts * 0.12, pw * 0.14, ts * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
     var still = typeof BridgeSeasons !== 'undefined' && BridgeSeasons.quiet();   // nothing on the wing in winter
     // bees at the skeps
     for (var b = 0; b < (still ? 0 : 7); b++) {
