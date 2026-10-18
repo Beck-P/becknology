@@ -38,6 +38,8 @@ var BridgeKeyItems = (function () {
       px(ctx, x, y, u, '#ffffff', [[6, 3, 1, 1]]);
     },
     // anything without its own art: a gold star
+    // the Gloaming's stern lantern (Midnight, js/midnight.js): an iron cage, cracked glass, a cold green flame still in it
+    lantern: function (ctx, x, y, u) { grid(ctx, x, y, u, LANTERN, { o: '#0a0e10', I: '#3a4048', i: '#5a6470', G: '#2a6a5a', g: '#7ad0c8', w: '#e0fff8' }); },
     star: function (ctx, x, y, u) {
       px(ctx, x, y, u, '#3a2a10', [[7, 1, 2, 14], [1, 6, 14, 3], [4, 4, 8, 8]]);
       px(ctx, x, y, u, '#d0a040', [[7, 2, 2, 12], [2, 7, 12, 1], [5, 5, 6, 6]]);
@@ -51,6 +53,24 @@ var BridgeKeyItems = (function () {
       if (c) { ctx.fillStyle = c; ctx.fillRect(x + i * u, y + j * u, u, u); }
     }
   }
+  var LANTERN = [
+    '......oooo......',
+    '.....oIiIo......',
+    '......oIo.......',
+    '....oooooooo....',
+    '....oIiiiiIo....',
+    '...oIGGGGGGIo...',
+    '...oIGggggGIo...',
+    '...oiGgwwgGio...',
+    '...oiGgwwgGio...',
+    '...oIGggggGIo...',
+    '...oIGGgGGGIo...',
+    '...oIGGGGGGIo...',
+    '....oIiiiiIo....',
+    '....oooooooo....',
+    '.....oIIIIo.....',
+    '......oooo......'
+  ];
   var RIBBON = [
     '................',
     '.oo..........oo.',

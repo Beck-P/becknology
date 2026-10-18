@@ -7,6 +7,8 @@
   "lumar-rose":             { "n": 9,  "wardrobe": "rose",    "busy": "day" },
   "lumar-tern":             { "n": 7,  "wardrobe": "lumar",   "busy": "day", "spots": [[25, 14, "up"], [12, 17, "up"]] },
   "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
+  "lumar-cinder":           { "n": 14, "wardrobe": "pirates", "busy": "always" },
+  "lumar-cinder-tavern":    { "n": 6,  "wardrobe": "pirates", "busy": "night", "sit": 0.7 },
   "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day", "spots": [[30, 32, "down"], [26, 31, "down"], [39, 31, "down"], [47, 31, "down"]] },
   "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
   "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },

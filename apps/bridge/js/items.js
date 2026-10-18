@@ -999,6 +999,57 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#a080ff'; ctx.fillRect(x + 9*u, y + 9*u, 1*u, 1*u); ctx.fillRect(x + 3*u, y + 3*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 4*u, 1*u, 1*u);
   }
 
+  // the fence's goods (Cinder Key): a silver plate, a purse of rings, a gold idol, a drowned locket, ember glass
+  function plateIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[3, 3, 10, 10], [2, 4, 12, 8], [4, 2, 8, 12]]);
+    px(ctx, x, y, u, '#a8acb8', [[4, 3, 8, 10], [3, 4, 10, 8]]);
+    px(ctx, x, y, u, '#d8dce6', [[5, 5, 6, 6]]);
+    px(ctx, x, y, u, '#7a7e8a', [[7, 6, 2, 1], [6, 7, 1, 2], [8, 8, 2, 1]]);
+    px(ctx, x, y, u, '#ffffff', [[5, 4, 2, 1]]);
+  }
+  function ringsIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[4, 5, 8, 9], [3, 7, 10, 6], [6, 3, 4, 3]]);
+    px(ctx, x, y, u, '#6a3a2a', [[5, 6, 6, 7], [4, 8, 8, 4]]);
+    px(ctx, x, y, u, '#8a5a3a', [[5, 7, 3, 3]]);
+    px(ctx, x, y, u, '#c8a040', [[6, 4, 4, 1], [7, 3, 2, 1]]);
+    px(ctx, x, y, u, '#f0d070', [[10, 2, 2, 2], [4, 2, 2, 2]]);
+    px(ctx, x, y, u, '#e04060', [[11, 2, 1, 1]]);
+  }
+  function idolIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[4, 2, 8, 13], [3, 4, 10, 6]]);
+    px(ctx, x, y, u, '#a07818', [[5, 3, 6, 11], [4, 5, 8, 4]]);
+    px(ctx, x, y, u, '#e8c040', [[5, 3, 3, 5], [6, 10, 2, 3]]);
+    px(ctx, x, y, u, '#ff4030', [[6, 5, 1, 1], [9, 5, 1, 1]]);
+    px(ctx, x, y, u, '#2a1a08', [[6, 7, 4, 1]]);
+  }
+  function locketIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[4, 6, 8, 8], [3, 7, 10, 6], [7, 2, 2, 5]]);
+    px(ctx, x, y, u, '#4a7a5a', [[5, 7, 6, 6], [4, 8, 8, 4]]);
+    px(ctx, x, y, u, '#8ac0a0', [[5, 8, 2, 2]]);
+    px(ctx, x, y, u, '#2a4a3a', [[7, 8, 2, 4]]);
+    px(ctx, x, y, u, '#9a9a8a', [[7, 3, 2, 1], [8, 4, 1, 2]]);
+  }
+  function stormGlassIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[5, 1, 6, 3], [4, 4, 8, 11]]);
+    px(ctx, x, y, u, '#c8a040', [[6, 1, 4, 2], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#a8c8d8', [[5, 4, 6, 9]]);
+    px(ctx, x, y, u, '#e8f0f4', [[6, 5, 1, 6]]);
+    px(ctx, x, y, u, '#5a6a7a', [[7, 9, 3, 3], [8, 7, 2, 2]]);
+  }
+  function emberGlassIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#000000', [[5, 3, 6, 11], [3, 6, 10, 6], [7, 2, 3, 2]]);
+    px(ctx, x, y, u, '#1a1418', [[6, 4, 4, 9], [4, 7, 8, 4]]);
+    px(ctx, x, y, u, '#3a3040', [[6, 4, 2, 4]]);
+    px(ctx, x, y, u, '#ff5a24', [[8, 9, 2, 2], [5, 10, 1, 1]]);
+    px(ctx, x, y, u, '#ffc060', [[8, 9, 1, 1]]);
+  }
+
   // the Regatta Cup (js/race.js): a silver cup with two handles on a dark plinth
   function cupIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -1309,6 +1360,20 @@ var BridgeItems = (function () {
                      draw: cupIcon, value: 0 },
     fallen_star:   { id: 'fallen_star', name: 'Fallen Star', desc: 'It came down by you on a starfall night on Sylvara. Still warm, and humming to itself. Mirelle the herbalist buys them.', type: 'material', stackable: true,
                      draw: fallenStarIcon, value: 150 },
+    // the Crimson and Midnight seas (Workstream B2): plunder off pirates you beat and trinkets off the drowned - hot goods,
+    // worth nothing to an honest trader (value 0) and a fair bit to Vesper Quick, the fence on Cinder Key (`fence`: her price)
+    plunder_plate: { id: 'plunder_plate', name: 'Somebody\'s Silver', desc: 'A silver plate with a merchant house\'s crest scratched off it, not very well. Off a pirate you beat. No honest trader will touch it; the fence on Cinder Key will.', type: 'material', stackable: true,
+                     draw: plateIcon, value: 0, fence: 70 },
+    plunder_rings: { id: 'plunder_rings', name: 'A Purse of Rings', desc: 'Other people\'s rings, a dozen of them, in a purse that isn\'t yours either. The fence on Cinder Key asks no questions.', type: 'material', stackable: true,
+                     draw: ringsIcon, value: 0, fence: 120 },
+    plunder_idol:  { id: 'plunder_idol', name: 'A Gold Idol, Probably Cursed', desc: 'Squat, gold, grinning, warm in the hand when it shouldn\'t be. Pirates keep passing it on. The fence on Cinder Key pays well, and passes it on too.', type: 'material', stackable: true,
+                     draw: idolIcon, value: 0, fence: 280 },
+    drowned_locket: { id: 'drowned_locket', name: 'A Drowned Locket', desc: 'Green with the sea, a lock of hair still inside. Off a ship of the drowned, or out of Saltmere. The fence buys them; the dead might rather have them back.', type: 'material', stackable: true,
+                     draw: locketIcon, value: 0, fence: 90 },
+    storm_glass:   { id: 'storm_glass', name: 'Storm Glass', desc: 'A sealed glass of cloudy liquid on a brass hook, from Old Wick at the stormwatch on Cinder Key. It clouds before a squall. Carried, squalls and lightning do your boat less harm.',
+                     type: 'tool', stackable: false, draw: stormGlassIcon, value: 120, onUse: charmUse },
+    ember_glass:   { id: 'ember_glass', name: 'Ember Glass', desc: 'Black volcanic glass from the crater on Cinder Key, a red glow deep in it. The fence buys it; so does any trader, cheaper.', type: 'material', stackable: true,
+                     draw: emberGlassIcon, value: 40, fence: 55 },
     // treasure maps (js/treasure.js)
     tmap_lighthouse: { id: 'tmap_lighthouse', name: 'Map: Under the Old Light', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
                 stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('lighthouse'); return false; } },
