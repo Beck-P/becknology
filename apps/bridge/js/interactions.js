@@ -1252,6 +1252,7 @@ var BridgeInteractions = (function () {
       if (item && item.draw) { var g = cv.getContext('2d'); g.imageSmoothingEnabled = false; item.draw(g, 0, 0, 24); }
       else if (r.draw) { var g2 = cv.getContext('2d'); g2.imageSmoothingEnabled = false; r.draw(g2, 24); }
       else if (r.face && typeof BridgeLook !== 'undefined' && BridgeLook.face) { cv.classList.add('sp-face'); BridgeLook.face(cv, r.face.seed, r.face.style, r.face.colour, r.face.wild); }   // someone you'd hire
+      else if (r.sheet && typeof BridgeLook !== 'undefined' && BridgeLook.npcFace) { cv.classList.add('sp-face'); BridgeLook.npcFace(cv, r.sheet); }   // someone in the cast: their portrait
       else cv.style.visibility = 'hidden';
     });
     var rowEls = [].slice.call(dialogEl.querySelectorAll('.wd-sell-row.pick')).filter(function (e) { var r = rows[+e.getAttribute('data-r')]; return !r.disabled && !r.info; });

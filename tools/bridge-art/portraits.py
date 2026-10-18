@@ -3,8 +3,16 @@
 
   python3 tools/bridge-art/portraits.py npc-baker [npc-…]      one NPC or a few (any NPCS name in characters.py)
   python3 tools/bridge-art/portraits.py npcs | crowd | pilots  every NPC / every crowd body / every pilot head
-  python3 tools/bridge-art/portraits.py all                    the lot (358 files, a minute or so)
+  python3 tools/bridge-art/portraits.py all                    the lot (~460 files, under half a minute)
+  python3 tools/bridge-art/portraits.py stale                  just the ones out of date or missing (see below)
+  python3 tools/bridge-art/portraits.py check                  list those and exit 1 if there are any — draws nothing
       [--look FILE]  a ×4 contact sheet of what was made — look at it before it goes in
+
+Every file carries a stamp (a PNG text chunk, STAMP_KEY): a fingerprint of the painter's code and of what that person
+was drawn from (their characters.py entry, FIXED). `check` compares each file's stamp with what it would be now, so a
+portrait drawn some other way (the old Blender pass, a hand edit, an older painter), or not redrawn after someone's
+entry changed, or not drawn at all (a new NPC), is caught. tools/tests/world/portraits.js runs it, and so does the
+project's Claude Code hook (.claude/hooks/portraits.py) before a commit or a push.
 
 Drawn the way a pixel artist would draw a portrait (Beck, October 2026: the Blender ones — the toy models seen from the
 front — were "too just blob like"; he picked the Stardew proportions with the slightly bigger eyes of the in-between
@@ -31,6 +39,8 @@ OUTLINE, as the game's), plus two keys of their own, the iris (IRIS_KEY, a colou
 whites and lids, the mouth, brass, steel, glass).
 """
 import ast
+import hashlib
+import json
 import math
 import os
 import sys
@@ -61,6 +71,7 @@ P = dict(top=11.0, rx=13.4, ry=14.0, cy=26.5, cheek_y=32.5, jaw_w=11.3, jaw_y=41
 SIL, INNER = 0.72, 0.25   # how far toward INK an NPC's lines go: round the figure, and where one thing lies over another
 
 NP = None                 # numpy, imported in main
+STAMP_KEY = 'bridge-portrait'   # the PNG text chunk holding what a file was drawn from (stamp())
 
 
 # =====================================================================================================================
@@ -118,6 +129,8 @@ def ramp(tones, kind='cloth'):
     d, m, l = (rgb(t) for t in tones)
     if C.keyed:
         return [d, d, m, l, l]
+    if kind == 'skin' and m[2] > m[0]:          # a cold light, not flesh (the drowned): shadows lean deeper teal, not red
+        return [mix(d, (14, 34, 52), 0.4), mix(d, (40, 90, 110), 0.12), m, l, mix(l, (240, 255, 255), 0.4)]
     if kind == 'skin':
         return [mix(mix(d, (120, 40, 50), 0.35), (0, 0, 0), 0.18), mix(d, (176, 82, 80), 0.18), m, l,
                 mix(l, (255, 240, 220), 0.4)]
@@ -363,6 +376,15 @@ def straw_tex():
         t = t.copy()
         w = ((NP.floor(g.X / 2) + NP.floor(g.Y / 2)) % 2 == 0) & (NP.floor(g.Y) % 2 == 0)
         t[w & (t >= 2)] -= 1
+        return t
+    return tex
+
+
+def fold_tex(cx):
+    """A tied scarf's folds: a few creases running from the knot round the head."""
+    def tex(g, t, own):
+        t = t.copy()
+        t[(NP.abs(NP.sin((g.X - cx) * 0.35 + (g.Y - 20) * 0.55)) < 0.12) & (t >= 2)] -= 1
         return t
     return tex
 
@@ -810,6 +832,8 @@ def npc_body(g, L, sp, me, cloth, arm_of, strap, cx, nw, sh_y, sh_w, body):
             for k in range(3):
                 L.append(Layer('pauldron', ell(g, cx + s * (sh_w * 0.66 + k * 2.4), sh_y + 1.5 + k * 3.0, 6.0 - k * 0.6, 3.0),
                                (sp.get('leaf_light') if k % 2 else None) or sp['armour'], R=2.5, group='pauldron%d' % k))
+    if sp.get('sash'):                                    # a sash from the shoulder across to the other hip
+        cloth('sash', capsule(g, cx - sh_w * 0.5, sh_y + 0.5, cx + sh_w * 0.55, 72, 2.4), sp['sash'], R=3, form=None, bias=0.1)
     if sp.get('quiver') or sp.get('satchel') or sp.get('bow') is True:
         strap(cx - sh_w * 0.55, sh_y + 0.5, cx + sh_w * 0.4, 70, tone('leather'))
 
@@ -1022,6 +1046,32 @@ def hats(g, L, sp, cx, rx, cy, top, hl):
             t_ = sp['flower_crown'] if k % 2 else (sp.get('flower') if k % 4 == 0 else sp.get('flower2') or sp.get('flower'))
             L.append(Layer('flower', ell(g, x, y - math.sin(a) * 3.2 + 1.2, 2.3, 2.0), t_ or sp['flower_crown'], R=1.5,
                            group='flower%d' % k, bias=0.15))
+    if sp.get('bandana'):                                 # a scarf knotted round the head, its tails at the side
+        tones = sp['bandana']
+        L.append(Layer('hat', I(ell(g, cx, cy - 1.0, rx + 1.7, P['ry'] + 1.6), box(g, 0, 0, 64, hl + 2.2)), tones, R=6, group='hat',
+                       tex=fold_tex(cx), casts=shadow))
+        L.append(Layer('tails', U(capsule(g, cx + rx + 1.0, hl - 1.5, cx + rx + 3.6, hl + 7.5, 1.2),
+                                  capsule(g, cx + rx + 1.0, hl - 1.5, cx + rx + 5.4, hl + 4.5, 1.1)), tones, R=1.5, group='tails',
+                       bias=-0.2))
+        L.append(Layer('knot', ell(g, cx + rx + 0.8, hl - 1.8, 2.2, 1.9), tones, R=1.5, group='knot'))
+    if sp.get('tricorn'):                                 # three-cornered: a point over the brow, the sides cocked up, gold-edged
+        tones = sp['tricorn']
+        hat = poly(g, [(cx - rx - 6.5, hl - 6.5), (cx - rx + 1, hl - 9.5), (cx - 6, top - 3.5), (cx + 6, top - 3.5),
+                       (cx + rx - 1, hl - 9.5), (cx + rx + 6.5, hl - 6.5), (cx + rx + 1.5, hl - 1.5), (cx + 4, hl + 0.2),
+                       (cx, hl + 2.6), (cx - 4, hl + 0.2), (cx - rx - 1.5, hl - 1.5)])
+        L.append(Layer('hat', hat, tones, R=5, group='hat', casts=(1, 3, ('face', 'hair', 'skin'))))
+        edge = S(hat, poly(g, [(cx - rx - 9, hl - 9.5), (cx - rx - 1, hl - 3.8), (cx - 4, hl - 2.2), (cx, hl - 0.2), (cx + 4, hl - 2.2),
+                               (cx + rx + 1, hl - 3.8), (cx + rx + 9, hl - 9.5), (cx, top - 12)]))
+        L.append(Layer('trim', edge, tone('brass'), R=1, group='hattrim', bias=0.2, line=False))
+    if sp.get('eyepatch'):                                # a black patch over one eye, its string round the head
+        ex = cx + P['eye_dx']
+        L.append(Layer('string', U(capsule(g, ex + 1.5, P['eye_y'] - 2.0, cx - rx + 0.5, P['brow_y'] - 5.5, 0.45),
+                                   capsule(g, ex + 2.5, P['eye_y'] - 0.5, cx + rx + 0.2, P['eye_y'] - 1.5, 0.45)),
+                       tone('boot'), R=1, group='string', line=False))
+        L.append(Layer('patch', ell(g, ex, P['eye_y'] + 0.2, 3.4, 2.9), tone('boot'), R=2, group='patch', bias=0.1))
+    if sp.get('earring'):                                 # a gold ring in the ear
+        ring = S(ell(g, cx - rx - 0.3, P['ear_y'] + 4.4, 1.5, 1.6), ell(g, cx - rx - 0.3, P['ear_y'] + 4.4, 0.6, 0.7))
+        L.append(Layer('earring', ring, tone('brass'), R=1, group='earring', bias=0.3, line=False))
     if sp.get('earpiece'):
         L.append(Layer('earpiece', ell(g, cx + rx - 0.2, P['ear_y'], 1.6, 1.9), tone('shades'), R=1, group='earpiece'))
         L.append(Layer('mic', capsule(g, cx + rx - 0.8, P['ear_y'] + 1.5, cx + rx - 4.0, P['mouth_y'] - 1.5, 0.45), tone('shades'),
@@ -1272,6 +1322,61 @@ def allowed(T, who):
     return ok
 
 
+_PAINTER = []
+
+
+def painter():
+    """A fingerprint of this file's code — comments, docstrings and layout don't count: change how anyone is drawn and
+    every portrait is out of date."""
+    if not _PAINTER:
+        tree = ast.parse(open(os.path.abspath(__file__)).read())
+        for n in ast.walk(tree):
+            body = getattr(n, 'body', None)
+            if isinstance(body, list) and body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+                    and isinstance(body[0].value.value, str):
+                n.body = body[1:] or [ast.Pass()]
+        _PAINTER.append(hashlib.sha1(ast.dump(tree).encode()).hexdigest())
+    return _PAINTER[0]
+
+
+def stamp(T, who, spec, keyed):
+    """What a portrait is drawn from: the painter, who it is, their entry and the fixed colours every portrait reads."""
+    blob = json.dumps([painter(), who, spec, bool(keyed), T['FIXED']], sort_keys=True, default=repr)
+    return hashlib.sha1(blob.encode()).hexdigest()[:20]
+
+
+def stamp_of(path):
+    """The stamp a file on disk carries ('' for one drawn before stamps, or not by this painter; None: no file)."""
+    from PIL import Image
+    if not os.path.exists(path):
+        return None
+    try:
+        with Image.open(path) as im:
+            return im.info.get(STAMP_KEY) or ''
+    except Exception:
+        return ''
+
+
+def audit(T):
+    """Every portrait the game has a face for, and how its file stands: (missing, old, spare) — `missing` has no file,
+    `old` one drawn from something else (another painter, a changed entry, by hand), `spare` a file nobody's drawn
+    from any more (an NPC taken out of characters.py; harmless). missing and old are (path, job)."""
+    jobs = jobs_for(['all'], T)
+    missing, old, known = [], [], set()
+    for job in jobs:
+        path, who, spec, keyed = job
+        known.add(os.path.abspath(path))
+        have = stamp_of(path)
+        if have is None:
+            missing.append((path, job))
+        elif have != stamp(T, who, spec, keyed):
+            old.append((path, job))
+    spare = []
+    for dp, _, files in os.walk(OUTDIR):
+        spare += [os.path.join(dp, f) for f in files if f.endswith('.png') and os.path.abspath(os.path.join(dp, f)) not in known]
+    return missing, old, sorted(spare)
+
+
 def main(argv):
     global NP
     import numpy
@@ -1291,15 +1396,38 @@ def main(argv):
         sys.exit(1)
     T = tables()
     C.fixed = T['FIXED']
+    if args == ['check']:
+        missing, old, spare = audit(T)
+        rel = lambda p: os.path.relpath(p, ROOT)
+        for p, _ in missing:
+            print('missing:', rel(p))
+        for p, _ in old:
+            print('out of date:', rel(p), '' if stamp_of(p) else '(not drawn by this painter)')
+        for p in spare:
+            print('spare (no one to draw it from):', rel(p))
+        if missing or old:
+            print('portraits: %d to draw — python3 tools/bridge-art/portraits.py stale --look /tmp/faces.png, then look at '
+                  'them' % (len(missing) + len(old)))
+            sys.exit(1)
+        print('portraits: all', len(jobs_for(['all'], T)), 'up to date')
+        return
+    if args == ['stale']:
+        missing, old, _ = audit(T)
+        jobs = [j for _, j in missing + old]
+    else:
+        jobs = jobs_for(args, T)
+    from PIL import PngImagePlugin
     made = []
-    for path, who, spec, keyed in jobs_for(args, T):
+    for path, who, spec, keyed in jobs:
         strip = portrait(who, spec, keyed)
         if keyed:
             stray = set(map(tuple, strip[strip[..., 3] > 0][:, :3].tolist())) - allowed(T, who)
             if stray:
                 print('portraits.py: %s has colours the game won\'t swap: %s' % (who, sorted(stray)[:6]))
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        Image.fromarray(strip, 'RGBA').save(path, optimize=True)
+        info = PngImagePlugin.PngInfo()
+        info.add_text(STAMP_KEY, stamp(T, who, spec, keyed))
+        Image.fromarray(strip, 'RGBA').save(path, optimize=True, pnginfo=info)
         made.append(path)
     print('portraits:', len(made), 'written under', os.path.relpath(OUTDIR, ROOT))
     if look:
