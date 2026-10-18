@@ -300,6 +300,7 @@ var BridgeCharacter = (function () {
 
   function sceneItem(offX, offY, ts, sc, world, now) {
     if (hidden) return { footRow: 0, draw: function () {} };
+    if (pose && pose.item) return pose.item(offX, offY, ts, sc, world, now);      // a mode that draws you itself (the canoe, js/canoe.js)
     if (pose) return posedItem(offX, offY, ts, sc, world, now);
     var sheet = liveSheet(sheetKey());
     var pos = getRenderPos();

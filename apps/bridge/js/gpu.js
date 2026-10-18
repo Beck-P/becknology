@@ -185,8 +185,10 @@ var BridgeGPU = (function () {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
-  // how much of each width of halo goes into the glow (the tight one, the wider, the widest)
-  var LEVELS = [0.9, 1.3, 1.6], GAIN = 2.0;
+  // how much of each width of halo goes into the glow (the tight one, the wider, the widest): mostly tight, as Look Book
+  // 2's soft light was (a blur of a few pixels) — the widest weighed most once and hung a haze over Arcadia's whole
+  // street (Beck: "is it foggy?")
+  var LEVELS = [1.0, 0.55, 0.12], GAIN = 2.0;
 
   // a canvas into a texture; mips: with its chain (the neighbourhood and whole-frame averages the bright pass reads)
   function upload(tex, canvas, mips) {

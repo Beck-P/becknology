@@ -64,6 +64,7 @@ var BridgeDistrict = (function () {
         first.cab = true; it.type = 'vendor'; it.prompt = 'PRESS E TO BUY';
         it.items = [{ id: 'medkit', price: 30 }, { id: 'stim_pack', price: 25 }];
       }
+      if (worldId === 'chrome-clinic' && k === 'HOLO-DISPLAY') { it.type = 'implants'; it.shop = 'clinic'; it.label = 'IMPLANT SUITE'; it.prompt = 'PRESS E FOR IMPLANTS'; }
       if (worldId === 'junk-pawn-shop' && k === 'JUNK PILE' && !first.junk) { first.junk = true; it.type = 'rummage'; it.prompt = 'PRESS E TO RUMMAGE'; }
     });
   }

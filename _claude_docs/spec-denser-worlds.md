@@ -215,7 +215,7 @@ build on top of it.**
 | Hoarfell (`claude/hoarfell-rebuild`) | `hoarfell.py` and the six sport worlds | E |
 | Sylvara (`claude/sylvara-rebuild`) | `sylvara.py` (`sylvara`) | F |
 | Arcadia (`claude/arcadia-rebuild`) | `arcadia_street.py`, `arcadia_alley.py`, `arcadia_skywalk.py`, `arcadia_skypad.py` | C (the Backs' way down), D (the street, the Skywalk, Skyport 7) |
-| Arcadia, also its skyline backdrop | `skyline.py`, `assets_city.py`, `assets/backdrops/arcadia/*`, the drawing in `js/skyline.js` | C, D: additive `skyline.js` changes only until it lands (it keeps the Loop and the lifts) |
+| Arcadia, also its skyline backdrop — **landed** (Oct 18) | `skyline.py`, `assets_city.py`, `assets/backdrops/arcadia/*`, the drawing in `js/skyline.js` | C, D: `skyline.js` open again (additive); the layers are a little taller and the ads' anchors moved |
 | Hoarfell, also its sky | the sky, far range and cloud sea in `js/worlds/hoarfell.js` | E: additive only until it lands |
 | Lumar's open sea (a session of its own) — **landed** (d90fbba7) | `js/sea.js` | A, B1, B2: free again (additive); new islands only need a good `shore.png` for the reflections |
 
@@ -238,5 +238,7 @@ build on top of it.**
 - **Shared kits** (`assets_town`, `assets_isle`, `assets_coast`, `assets_house`, `assets_lumar`, `assets_snow`,
   `assets_elves`, `assets_district`, `scenekit.py`, `scene_post.py`…): additive and backward compatible only — every
   place still renders the same with your change. The engine (`js/litscene.js`, `js/scene.js`) only if something's broken.
-- **Faces**: a separate session is working on the face pipeline (`characters.py`'s faces, `sprites_post.py`,
-  `portraits.py`). Add your people as `NPCS` entries and render their sheets and portraits; leave the pipeline to it.
+- **Faces**: add your people as `NPCS` entries and render their sheets; their talk-card portraits are drawn (not
+  rendered — no Blender) by `python3 tools/bridge-art/portraits.py stale`, which draws every portrait that's missing or
+  out of date (apps/bridge/CLAUDE.md, *Portraits*). A commit or push with portraits out of date is stopped by the
+  project's hook, and `world/portraits.js` fails on them. Leave the pipelines (`sprites_post.py`, `portraits.py`) alone.

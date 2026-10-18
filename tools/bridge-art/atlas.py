@@ -28,9 +28,10 @@ SYSTEMS = [
     ('sylvara', 'Sylvara', 'sylvara', r'^sylvara'),
 ]
 # Lumar's islands (js/voyage.js ISLES), each its own tree from its pier; rooms whose ids don't start with their island's
-ISLES = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-holm', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight']
+ISLES = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-holm', 'lumar-sapphire', 'lumar-rose', 'lumar-cliff', 'lumar-crimson', 'lumar-cinder', 'lumar-midnight', 'lumar-saltmere']
 INSIDE = {'lumar-home': 'lumar-sapphire', 'lumar-manor': 'lumar-crown', 'lumar-manor-drawing': 'lumar-crown', 'lumar-manor-library': 'lumar-crown',
-          'lumar-manor-dining': 'lumar-crown', 'lumar-manor-bedroom': 'lumar-crown'}
+          'lumar-manor-dining': 'lumar-crown', 'lumar-manor-bedroom': 'lumar-crown',
+          'lumar-gloaming': 'lumar-saltmere'}       # the ghost ship, boarded at sea (js/sloop.js): Saltmere's own
 # ways between places that the JS makes or opens, not the world JSON: (from, to, the interactions' labels, kind[, x, y])
 # - x, y only for one the JS adds as the world loads (the rest are found by label, so the map can mark them)
 EXTRA = [
@@ -43,8 +44,12 @@ EXTRA = [
     ('lumar-holm', 'lumar-holm-resort', ['THE STARLING'], 'door', 35, 20),          # js/holm.js, once it's built
     ('lumar-holm', 'lumar-holm-hall', ['THE HALL OF FINDS'], 'door', 35, 13),       # js/holm.js, once it's built
     ('arcadia-street', 'arcadia-club', ['CLUB VOID'], 'door'),                # js/dance.js
+    ('arcadia-spires', 'arcadia-members', ['THE ORRERY'], 'door'),            # js/spires.js: members, by introduction or bought
     ('arcadia-casino', 'arcadia-casino-vip', ['THE CROWN ROOM'], 'door'),     # js/worlds/casino.js: the rope opens for poker winners
     ('lumar-crown', 'lumar-crown-palace', ['PALACE GATE'], 'door'),           # js/crown.js
+    ('lumar-crown', 'lumar-crown-oldtown', ['THE OLD TOWN'], 'door', 3, 21),   # js/capital.js: Crownhaven's districts
+    ('lumar-sapphire', 'lumar-sapphire-market', ['FLOATING MARKET'], 'door', 44, 22),   # js/sapphire.js
+    ('lumar-rose', 'lumar-rose-springs', ['ROSEWELL'], 'door', 52, 22),            # js/rose.js
     ('lumar-rose-mine', 'lumar-rose-mine-a', ['THE LIFT'], 'lift'),           # js/mine.js: the floors below
     ('lumar-rose-mine-a', 'lumar-rose-mine', ['LADDER UP'], 'lift'),
     ('hoarfell', 'hoarfell-summit', ['CHAIRLIFT'], 'lift'),                   # js/worlds/hoarfell.js

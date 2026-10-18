@@ -205,6 +205,24 @@ k.box(TX - 0.8, 77.0, 0, TX + 0.4, 78.6, 1.4, (N.LOG, 0.14), 'tow_hut', bevel=0.
 k.box(TX - 0.9, 76.9, 1.4, TX + 0.5, 78.7, 1.55, (N.ROOF_SNOW, 0.1), 'tow_hut_roof')
 k.solid(TX - 0.8, 77.0, TX + 0.4, 78.6)
 
+# ---- the surroundings, enriched (Oct 2026, on their own dice: nothing above moves, nothing here is solid or in the ski data) ------
+import random  # noqa: E402
+import assets_hoarfell_rich as HR  # noqa: E402
+er = random.Random(6132)
+for side in (0, 1):                                   # old carves down the margins of the cut, clear of the features
+    pts = []
+    r = DECK_R + 4.0
+    while r < FINISH_R - 3.0:
+        a, b = edge(r)
+        pts.append(((a + 1.2 + 0.5 * math.sin(r * 0.8)) if side == 0 else (b - 1.2 - 0.5 * math.sin(r * 0.8 + 1)), r))
+        r += 0.7
+    for (ax, ar), (bx, br) in zip(pts, pts[1:]):
+        if jump_at(ax, ar) or jump_at(bx, br):
+            continue
+        for o in (-0.06, 0.06):
+            k.tube((ax + o, ar, 0.008), (bx + o, br, 0.008), 0.014, ('#cdd2da', 0.05), 'print', verts=4, smooth=False)
+HR.windswept(k, 2.0, BOTTOM_R, 38.0, ROWS - 0.5, 18, er, ok=lambda x, r: not 17.5 < x < 22.5)
+
 # ---- the light: the alpenglow --------------------------------------------------------------------------------------------------
 k.sun((0.8, 0.25, -0.38), '#ffc4a4', 3.2, angle=3.0)
 k.render(OUT, cycle='day', light_states={'full': {}}, light_samples=64, world_light=('#8a96cc', 0.95))

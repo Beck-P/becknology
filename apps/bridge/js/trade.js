@@ -70,6 +70,9 @@ var BridgeTrade = (function () {
                         ore: 1.1, gem: 0.9, crystal: 0.7, fish: 1.2, stone: 1.0 },
     'lumar-crimson':  { salt_fish: 1.4, lamp_oil: 1.35, timber: 1.45, glassware: 1.35, spore_silk: 1.1, roseite: 1.2, ember_rum: 0.6, blackpowder: 0.62, moon_salt: 1.6,
                         ore: 1.3, gem: 1.15, crystal: 1.0, fish: 1.3, stone: 1.1 },
+    // Tortuga: the pirates' port - rum and powder cheap, everything respectable dear
+    'lumar-cinder':   { salt_fish: 1.35, lamp_oil: 1.4, timber: 1.5, glassware: 1.45, spore_silk: 1.2, roseite: 1.25, ember_rum: 0.55, blackpowder: 0.7, moon_salt: 1.7,
+                        ore: 1.25, gem: 1.3, crystal: 1.05, fish: 1.2, stone: 1.0 },
     'lumar-midnight': { salt_fish: 1.6, lamp_oil: 1.7, timber: 1.2, glassware: 1.0, spore_silk: 0.9, roseite: 1.0, ember_rum: 1.5, blackpowder: 0.8, moon_salt: 0.45,
                         ore: 0.8, gem: 1.4, crystal: 1.3, fish: 0.7, stone: 0.6 },
     // the capital buys everything, and pays best for the luxuries; Tern Holm lives on fish
@@ -85,6 +88,7 @@ var BridgeTrade = (function () {
     'lumar-rose': ['spore_silk', 'roseite', 'lamp_oil'],
     'lumar-crimson': ['ember_rum', 'blackpowder', 'salt_fish'],
     'lumar-midnight': ['moon_salt'],
+    'lumar-cinder': ['ember_rum', 'blackpowder'],
     'lumar-crown': ['salt_fish', 'lamp_oil', 'timber', 'glassware', 'spore_silk', 'ember_rum'],
     'lumar-tern': ['salt_fish', 'lamp_oil']
   };
@@ -303,7 +307,7 @@ var BridgeTrade = (function () {
   }
 
   // ---- contracts --------------------------------------------------------------------------------------------------
-  var PORTS = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-midnight'];
+  var PORTS = ['lumar', 'lumar-crown', 'lumar-tern', 'lumar-sapphire', 'lumar-rose', 'lumar-crimson', 'lumar-cinder', 'lumar-midnight'];
   function contracts(P) {
     P = port(P);
     if (!P) return [];
