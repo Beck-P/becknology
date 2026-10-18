@@ -463,6 +463,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeAnimals !== 'undefined') BridgeAnimals.decorate(worldId, data);
         if (typeof BridgePet !== 'undefined') BridgePet.decorate(worldId, data);
         if (typeof BridgeDistrict !== 'undefined') BridgeDistrict.decorate(worldId, data);
+        if (typeof BridgeUndercity !== 'undefined') BridgeUndercity.decorate(worldId, data);   // Arcadia below: shops, fights, bosses
         if (typeof BridgeSeasons !== 'undefined') BridgeSeasons.decorate(worldId, data);
         if (typeof BridgeFoliage !== 'undefined') BridgeFoliage.apply(worldId);        // the trees turn with the seasons
         if (typeof BridgeWeather !== 'undefined') BridgeWeather.decorate(worldId, data);

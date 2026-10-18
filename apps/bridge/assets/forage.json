@@ -63,5 +63,32 @@
     { "x": 28, "y": 7, "label": "HOAR CRYSTALS", "item": "hoar_crystal", "min": 1, "max": 1, "regrow": 40 },
     { "x": 38, "y": 7, "label": "HOAR CRYSTALS", "item": "hoar_crystal", "min": 1, "max": 1, "regrow": 40 },
     { "x": 3, "y": 7, "label": "HOAR CRYSTALS", "item": "hoar_crystal", "min": 1, "max": 1, "regrow": 40 }
+  ],
+  "sylvara-deepwood": [
+    { "x": 31, "y": 7, "label": "EMBERROOT", "item": "emberroot", "min": 1, "max": 2, "regrow": 40 },
+    { "x": 44, "y": 9, "label": "EMBERROOT", "item": "emberroot", "min": 1, "max": 2, "regrow": 40 },
+    { "x": 31, "y": 15, "label": "EMBERROOT", "item": "emberroot", "min": 1, "max": 1, "regrow": 40 },
+    { "x": 37, "y": 13, "label": "OWLMOSS", "item": "owlmoss", "min": 1, "max": 2, "regrow": 35 },
+    { "x": 43, "y": 9, "label": "OWLMOSS", "item": "owlmoss", "min": 1, "max": 2, "regrow": 35 },
+    { "x": 39, "y": 11, "label": "DREAMCAPS", "item": "dreamcap", "min": 1, "max": 2, "regrow": 45 },
+    { "x": 30, "y": 11, "label": "DREAMCAPS", "item": "dreamcap", "min": 1, "max": 1, "regrow": 45 },
+    { "x": 22, "y": 27, "label": "WINDTHISTLE", "item": "windthistle", "min": 1, "max": 2, "regrow": 30 },
+    { "x": 28, "y": 30, "label": "WINDTHISTLE", "item": "windthistle", "min": 1, "max": 2, "regrow": 30 },
+    { "x": 18, "y": 25, "label": "WINDTHISTLE", "item": "windthistle", "min": 1, "max": 1, "regrow": 30 }
+  ],
+  "sylvara-lake": [
+    { "x": 7, "y": 16, "label": "MOONPETALS", "item": "moonpetal", "min": 1, "max": 2, "regrow": 40 },
+    { "x": 8, "y": 21, "label": "MOONPETALS", "item": "moonpetal", "min": 1, "max": 1, "regrow": 40 },
+    { "x": 42, "y": 16, "label": "WINDTHISTLE", "item": "windthistle", "min": 1, "max": 2, "regrow": 30 },
+    { "x": 43, "y": 26, "label": "WINDTHISTLE", "item": "windthistle", "min": 1, "max": 2, "regrow": 30 },
+    { "x": 14, "y": 28, "label": "SILVERLEAF", "item": "silverleaf", "min": 1, "max": 2, "regrow": 25 }
+  ],
+  "sylvara-river": [
+    { "x": 12, "y": 8, "label": "SILVERLEAF", "item": "silverleaf", "min": 1, "max": 2, "regrow": 25 },
+    { "x": 23, "y": 24, "label": "SILVERLEAF", "item": "silverleaf", "min": 1, "max": 2, "regrow": 25 },
+    { "x": 34, "y": 20, "label": "SILVERLEAF", "item": "silverleaf", "min": 1, "max": 1, "regrow": 25 }
+  ],
+  "sylvara-falls": [
+    { "x": 20, "y": 8, "label": "SILVERLEAF", "item": "silverleaf", "min": 1, "max": 2, "regrow": 25 }
   ]
 }

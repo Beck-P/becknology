@@ -143,6 +143,17 @@ var BridgeCrowd = (function () {
       names: { m: ['Vosk', 'Tibor', 'Okoro', 'Lenz', 'Ruk', 'Marten', 'Abe', 'Sol', 'Corvin', 'Dag'],
                f: ['Ines', 'Petra', 'Yara', 'Ondine', 'Kass', 'Mags', 'Lior', 'Seren', 'Bex', 'Noor'], c: ['Sprocket'] }
     },
+    spires: {     // Arcadia above the smog (L480): white, gold and pastel, old money and new eyes
+      bodies: { suit: 4, gown: 4, woman: 1.5, 'woman-bun': 1.5, elder: 1.5, vest: 1, man: 1, child: 0.4 },
+      top: ['#f4f0e8', '#e8dce8', '#d8c8f0', '#c8e8e0', '#1c1c26', '#c89a28', '#f0c8d8', '#22304a'],
+      bot: ['#e4e0d4', '#1c1c26', '#c8c2d4', '#22304a', '#5a2a44', '#2e2a30'],
+      out: ['#f4f0e8', '#c89a28', '#d8c8f0', '#e2d8c8', '#1a2a5a', '#f0c8d8'],
+      hat: ['#f4f0e8', '#c89a28', '#1c1c26'],
+      umbrella: null,
+      wild: 0.25,
+      names: { m: ['Aurelien', 'Caspian', 'Lucan', 'Sebastien', 'Orion', 'Ambrose', 'Felix', 'Ravel'],
+               f: ['Celestine', 'Isolde', 'Valentina', 'Seraphine', 'Ondine', 'Perpetua', 'Lux', 'Vesper'], c: ['Clio', 'Teddy', 'Bijou'] }
+    },
     casino: {
       bodies: { suit: 5, gown: 5, vest: 1, man: 1, woman: 1 },
       top: ['#1c1c26', '#22304a', '#34164a', '#c89a28', '#8a1022', '#e4e0d4', '#0e0e14'],
@@ -182,6 +193,29 @@ var BridgeCrowd = (function () {
       hairs: ['blond', 'silver', 'white', 'auburn', 'dark', 'brown', 'black', 'ginger'],
       skins: [0, 3, 1],
       names: { m: ['Eldrin', 'Calael', 'Thoren', 'Ilvar', 'Saelith', 'Vaeron'], f: ['Lirael', 'Ysmir', 'Naeva', 'Aelin', 'Seraphel', 'Thalia'], c: ['Fenwick'] }
+    },
+    // Arcadia below (js/undercity.js): the Undercity in work clothes, hoods and patched jackets, colour coming off
+    // them; the Sump in grey, oilskin and teal, fewer and older
+    undercity: {
+      bodies: { worker: 3, 'man-cap': 3, vest: 3, traveller: 2, man: 2, 'woman-hood': 3, woman: 2, 'woman-bun': 1, elder: 1.5, 'child-cap': 0.5 },
+      top: ['#3a3a30', '#5a4a3a', '#2e3438', '#6a2a24', '#3a4a3a', '#4a3a5a', '#7a6a4a', '#2a2a30'],
+      bot: ['#2a2a30', '#3a3226', '#1e2a38', '#141418', '#3a3a3a'],
+      out: ['#4a4a40', '#5a3a2a', '#2a3a4a', '#c06020', '#3a2e3a', '#1e1e24'],
+      hat: ['#3a3a40', '#6a2a24', '#c8a030', '#2a3a4a'],
+      umbrella: null,
+      wild: 0.15,
+      names: { m: ['Bao', 'Rusty', 'Tok', 'Wen', 'Ash', 'Kip', 'Mung', 'Lazlo', 'Ox', 'Sid'],
+               f: ['Mei', 'Rook', 'Dot', 'Suki', 'Vee', 'Lin', 'Pell', 'Moth', 'Kass', 'June'], c: ['Nib', 'Squeak', 'Pip'] }
+    },
+    sump: {
+      bodies: { traveller: 3, worker: 2, 'woman-hood': 3, elder: 2, 'man-cap': 1, vest: 1 },
+      top: ['#2a3034', '#3a4040', '#1e2a2a', '#3a3a34', '#2a2a30', '#1a4a44'],
+      bot: ['#1e2424', '#2a2a26', '#141818', '#30302a'],
+      out: ['#3a4a44', '#2a3a3a', '#4a4a3a', '#1a3a3a', '#5a5a4a'],
+      hat: ['#2a3a3a', '#3a3a34', '#1a4a44'],
+      umbrella: null,
+      wild: 0.25,
+      names: { m: ['Grey Tam', 'Silt', 'Old Fen', 'Wick', 'Dredger', 'Lom'], f: ['Mire', 'Weed', 'Nan Teal', 'Brack', 'Hush'], c: ['Tadpole'] }
     }
   };
   // Lumar's other seas look their own (Beck: "each of their people and cities should probably be a little bit more
@@ -310,8 +344,9 @@ var BridgeCrowd = (function () {
   var W = null;                                 // the place you're in: { id, data, cfg, grid, w, h, sources, spots, seats, wander, … }
   var NOT_SPOT = { enter_world: 1, leave_world: 1, password_gate: 1, shuttle: 1, go_sailing: 1, climb: 1, climb_board: 1, lift: 1,
                    hostile: 1, player: 1, curio: 1, home_door: 1, crowd: 1, palace_gate: 1, royale_vip: 1, companion: 1, farm_plot: 1,
-                   farm_animal: 1, ski: 1, ski_here: 1, treasure_dig: 1 };
+                   farm_animal: 1, ski: 1, ski_here: 1, treasure_dig: 1, express_lift: 1, loop_station: 1, air_cab: 1, loop_doors: 1 };
 
+  var TRANSIT = { express_lift: 1, loop_station: 1, air_cab: 1 };   // Arcadia's lifts, the Loop, the cabs (js/transit.js): ways in and out too
   function analyse(id, data, cfg) {
     var w = data.width, h = data.height, C = data.collisions;
     var solid = new Uint8Array(w * h), reach = new Uint8Array(w * h);
@@ -320,7 +355,7 @@ var BridgeCrowd = (function () {
     // everywhere you can walk from where you come in
     var starts = [], sp = data.spawns && data.spawns.player;
     if (sp) starts.push(sp);
-    (data.interactions || []).forEach(function (it) { if (it.type === 'leave_world' || it.type === 'enter_world' || it.type === 'shuttle') starts.push([it.x, it.y]); });
+    (data.interactions || []).forEach(function (it) { if (it.type === 'leave_world' || it.type === 'enter_world' || it.type === 'shuttle' || TRANSIT[it.type]) starts.push([it.x, it.y]); });
     var q = [];
     starts.forEach(function (s) {
       for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
@@ -352,7 +387,7 @@ var BridgeCrowd = (function () {
     // ways in and out: the doors, the dock, the map's open edges, and any the place adds
     var sources = [];
     (data.interactions || []).forEach(function (it) {
-      if (it.type !== 'enter_world' && it.type !== 'leave_world' && !/DOCK|PIER/.test(it.label || '')) return;
+      if (it.type !== 'enter_world' && it.type !== 'leave_world' && !TRANSIT[it.type] && !/DOCK|PIER/.test(it.label || '')) return;
       var o = nearOpen(it.x, it.y, 2);
       if (o && !sources.some(function (s) { return Math.abs(s.at[0] - o[0]) + Math.abs(s.at[1] - o[1]) < 2; })) sources.push({ at: o, door: [it.x, it.y], fade: true });
     });
