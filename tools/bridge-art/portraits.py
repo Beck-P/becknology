@@ -3,7 +3,7 @@
 
   python3 tools/bridge-art/portraits.py npc-baker [npc-…]      one NPC or a few (any NPCS name in characters.py)
   python3 tools/bridge-art/portraits.py npcs | crowd | pilots  every NPC / every crowd body / every pilot head
-  python3 tools/bridge-art/portraits.py all                    the lot (454 files, a minute or so)
+  python3 tools/bridge-art/portraits.py all                    the lot (~460 files, under half a minute)
   python3 tools/bridge-art/portraits.py stale                  just the ones out of date or missing (see below)
   python3 tools/bridge-art/portraits.py check                  list those and exit 1 if there are any — draws nothing
       [--look FILE]  a ×4 contact sheet of what was made — look at it before it goes in
@@ -1326,10 +1326,16 @@ _PAINTER = []
 
 
 def painter():
-    """A fingerprint of this file's code — comments and layout don't count: change how anyone is drawn and every
-    portrait is out of date."""
+    """A fingerprint of this file's code — comments, docstrings and layout don't count: change how anyone is drawn and
+    every portrait is out of date."""
     if not _PAINTER:
-        _PAINTER.append(hashlib.sha1(ast.dump(ast.parse(open(os.path.abspath(__file__)).read())).encode()).hexdigest())
+        tree = ast.parse(open(os.path.abspath(__file__)).read())
+        for n in ast.walk(tree):
+            body = getattr(n, 'body', None)
+            if isinstance(body, list) and body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+                    and isinstance(body[0].value.value, str):
+                n.body = body[1:] or [ast.Pass()]
+        _PAINTER.append(hashlib.sha1(ast.dump(tree).encode()).hexdigest())
     return _PAINTER[0]
 
 
