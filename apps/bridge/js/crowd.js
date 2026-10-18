@@ -108,6 +108,52 @@ var BridgeCrowd = (function () {
       names: { m: ['Kade', 'Jin', 'Rook', 'Dex', 'Hiro', 'Vasco', 'Ozu', 'Kenji', 'Lio', 'Marz'],
                f: ['Nyx', 'Kiri', 'Juno', 'Mika', 'Sable', 'Reya', 'Tamsin', 'Yuki', 'Zara', 'Echo'], c: ['Bit', 'Pixel', 'Zip'] }
     },
+    // the Mid-Levels (the Terraces, L200): office money out for the evening — suits and smart coats in glass and cyan,
+    // ice and slate, a dash of pink; fewer children, nobody in work clothes
+    midlevels: {
+      bodies: { suit: 3, man: 2, vest: 1, traveller: 1, woman: 2, 'woman-bun': 2, gown: 1, 'woman-hat': 1, child: 0.2 },
+      top: ['#2a3a4e', '#5cc8d0', '#e8f0f4', '#3a4a6a', '#a8dce8', '#1e2430', '#e870c0', '#7080e8', '#c8ccd4'],
+      bot: ['#141820', '#1e2430', '#2a3040', '#3a4258', '#101014'],
+      out: ['#1e2430', '#5cc8d0', '#e8f0f4', '#3a4a6a', '#c8ccd4', '#2a3a4e'],
+      hat: ['#1e2430', '#c8ccd4', '#5cc8d0', '#e870c0'],
+      umbrella: ['#5cc8d0', '#e8f0f4', '#1e2430', '#7080e8', '#a8dce8'],
+      wild: 0.15,
+      names: { m: ['Aurel', 'Kenzo', 'Felix', 'Idris', 'Mateo', 'Sven', 'Ravi', 'Jules', 'Teo', 'Caspian'],
+               f: ['Celeste', 'Mira', 'Noor', 'Ines', 'Saskia', 'Lena', 'Yara', 'Ottilie', 'Rin', 'Paloma'], c: ['Pip', 'Lumi'] }
+    },
+    lantern: {    // Lantern Row, the old quarter: older folk, plainer cloth, indigo and rust, paper umbrellas
+      bodies: { man: 2, 'man-cap': 1, vest: 2, elder: 3, worker: 1, woman: 2, 'woman-bun': 3, 'woman-hood': 1, child: 0.6, 'child-cap': 0.4 },
+      top: ['#2e3e6a', '#7a3a2a', '#d8ccb0', '#3a4a3a', '#5a2048', '#a02a1e', '#1e2a4a', '#8a7a5a'],
+      bot: ['#1e2a4a', '#2e2a30', '#3e3646', '#4a3a28', '#141418'],
+      out: ['#1e2a4a', '#7a3a2a', '#3a2416', '#2a4a3a', '#d4c8ae'],
+      hat: ['#1e2a4a', '#d4c8ae', '#7a3a2a', '#2a2a30'],
+      umbrella: ['#c8301e', '#e8d8b0', '#1e2a4a', '#d89a30', '#3a6a4a'],
+      wild: 0.08,
+      names: { m: ['Taro', 'Genji', 'Ikki', 'Shun', 'Bo', 'Ren', 'Haru', 'Old Sato', 'Kaito', 'Yoshi'],
+               f: ['Hana', 'Aiko', 'Sumi', 'Nori', 'Fumi', 'Rin', 'Old Mitsu', 'Chiyo', 'Asa', 'Mei'], c: ['Tama', 'Koji', 'Momo'] }
+    },
+    spacers: {    // the spaceport: freighter crews off nine worlds, dockers, a customs clerk or two
+      bodies: { worker: 4, 'man-cap': 3, vest: 3, traveller: 3, man: 1, 'woman-hood': 2, woman: 1, 'woman-bun': 1 },
+      top: ['#d86a1a', '#3a4a3a', '#5a5a64', '#2a3a5a', '#a8c020', '#7a3a2a', '#1e1e26', '#c8a050'],
+      bot: ['#2a2a30', '#3a3a2a', '#1e2a38', '#4a3a28', '#141418'],
+      out: ['#d86a1a', '#3a3a2a', '#5e3a22', '#2a2a30', '#e0b020'],
+      hat: ['#e0b020', '#d86a1a', '#2a2a30', '#5e3a22', '#3a4a3a'],
+      umbrella: ['#2a2a30', '#d86a1a', '#e0b020'],
+      wild: 0.3,
+      names: { m: ['Vosk', 'Tibor', 'Okoro', 'Lenz', 'Ruk', 'Marten', 'Abe', 'Sol', 'Corvin', 'Dag'],
+               f: ['Ines', 'Petra', 'Yara', 'Ondine', 'Kass', 'Mags', 'Lior', 'Seren', 'Bex', 'Noor'], c: ['Sprocket'] }
+    },
+    spires: {     // Arcadia above the smog (L480): white, gold and pastel, old money and new eyes
+      bodies: { suit: 4, gown: 4, woman: 1.5, 'woman-bun': 1.5, elder: 1.5, vest: 1, man: 1, child: 0.4 },
+      top: ['#f4f0e8', '#e8dce8', '#d8c8f0', '#c8e8e0', '#1c1c26', '#c89a28', '#f0c8d8', '#22304a'],
+      bot: ['#e4e0d4', '#1c1c26', '#c8c2d4', '#22304a', '#5a2a44', '#2e2a30'],
+      out: ['#f4f0e8', '#c89a28', '#d8c8f0', '#e2d8c8', '#1a2a5a', '#f0c8d8'],
+      hat: ['#f4f0e8', '#c89a28', '#1c1c26'],
+      umbrella: null,
+      wild: 0.25,
+      names: { m: ['Aurelien', 'Caspian', 'Lucan', 'Sebastien', 'Orion', 'Ambrose', 'Felix', 'Ravel'],
+               f: ['Celestine', 'Isolde', 'Valentina', 'Seraphine', 'Ondine', 'Perpetua', 'Lux', 'Vesper'], c: ['Clio', 'Teddy', 'Bijou'] }
+    },
     casino: {
       bodies: { suit: 5, gown: 5, vest: 1, man: 1, woman: 1 },
       top: ['#1c1c26', '#22304a', '#34164a', '#c89a28', '#8a1022', '#e4e0d4', '#0e0e14'],
@@ -275,8 +321,9 @@ var BridgeCrowd = (function () {
   var W = null;                                 // the place you're in: { id, data, cfg, grid, w, h, sources, spots, seats, wander, … }
   var NOT_SPOT = { enter_world: 1, leave_world: 1, password_gate: 1, shuttle: 1, go_sailing: 1, climb: 1, climb_board: 1, lift: 1,
                    hostile: 1, player: 1, curio: 1, home_door: 1, crowd: 1, palace_gate: 1, royale_vip: 1, companion: 1, farm_plot: 1,
-                   farm_animal: 1, ski: 1, ski_here: 1, treasure_dig: 1 };
+                   farm_animal: 1, ski: 1, ski_here: 1, treasure_dig: 1, express_lift: 1, loop_station: 1, air_cab: 1, loop_doors: 1 };
 
+  var TRANSIT = { express_lift: 1, loop_station: 1, air_cab: 1 };   // Arcadia's lifts, the Loop, the cabs (js/transit.js): ways in and out too
   function analyse(id, data, cfg) {
     var w = data.width, h = data.height, C = data.collisions;
     var solid = new Uint8Array(w * h), reach = new Uint8Array(w * h);
@@ -285,7 +332,7 @@ var BridgeCrowd = (function () {
     // everywhere you can walk from where you come in
     var starts = [], sp = data.spawns && data.spawns.player;
     if (sp) starts.push(sp);
-    (data.interactions || []).forEach(function (it) { if (it.type === 'leave_world' || it.type === 'enter_world' || it.type === 'shuttle') starts.push([it.x, it.y]); });
+    (data.interactions || []).forEach(function (it) { if (it.type === 'leave_world' || it.type === 'enter_world' || it.type === 'shuttle' || TRANSIT[it.type]) starts.push([it.x, it.y]); });
     var q = [];
     starts.forEach(function (s) {
       for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) {
@@ -317,7 +364,7 @@ var BridgeCrowd = (function () {
     // ways in and out: the doors, the dock, the map's open edges, and any the place adds
     var sources = [];
     (data.interactions || []).forEach(function (it) {
-      if (it.type !== 'enter_world' && it.type !== 'leave_world' && !/DOCK|PIER/.test(it.label || '')) return;
+      if (it.type !== 'enter_world' && it.type !== 'leave_world' && !TRANSIT[it.type] && !/DOCK|PIER/.test(it.label || '')) return;
       var o = nearOpen(it.x, it.y, 2);
       if (o && !sources.some(function (s) { return Math.abs(s.at[0] - o[0]) + Math.abs(s.at[1] - o[1]) < 2; })) sources.push({ at: o, door: [it.x, it.y], fade: true });
     });

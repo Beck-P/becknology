@@ -1,4 +1,11 @@
 {
+  "lumar-cinder-volcano": [
+    { "x": 10, "y": 19, "label": "EMBER GLASS", "item": "ember_glass", "min": 1, "max": 2, "regrow": 35 },
+    { "x": 30, "y": 24, "label": "EMBER GLASS", "item": "ember_glass", "min": 1, "max": 2, "regrow": 35 },
+    { "x": 35, "y": 12, "label": "EMBER GLASS", "item": "ember_glass", "min": 1, "max": 2, "regrow": 35 },
+    { "x": 15, "y": 9, "label": "EMBER GLASS", "item": "ember_glass", "min": 1, "max": 2, "regrow": 35 },
+    { "x": 26, "y": 26, "label": "EMBER GLASS", "item": "ember_glass", "min": 1, "max": 2, "regrow": 35 }
+  ],
   "lumar-crimson": [
     { "x": 13, "y": 18, "label": "CRIMSON CRYSTALS", "item": "crimson_crystal", "min": 1, "max": 2, "regrow": 30 },
     { "x": 16, "y": 23, "label": "CRIMSON CRYSTALS", "item": "crimson_crystal", "min": 1, "max": 2, "regrow": 30 },

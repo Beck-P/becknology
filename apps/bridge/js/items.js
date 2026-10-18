@@ -708,12 +708,57 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#2a1a10', [[5, 8, 2, 1]]); px(ctx, x, y, u, '#d83a2e', [[4, 2, 1, 2], [5, 1, 3, 1]]);
   }
   // ---- the Neon Royale (the casino in Arcadia): the bar, Aurum's kitchen, the boutique ----
+  // the Spires (Arcadia L480): the tea salon's pot and its petit fours, Aurelle's glass of starlight
+  function teaPotIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a1a2a', [[4, 5, 8, 8], [3, 6, 1, 6], [12, 6, 1, 6], [13, 7, 2, 1], [14, 8, 1, 2], [1, 7, 2, 1], [1, 8, 1, 3], [6, 3, 4, 2], [7, 2, 2, 1]]);
+    px(ctx, x, y, u, '#f4eef4', [[4, 6, 8, 6], [7, 3, 2, 2]]); px(ctx, x, y, u, '#d8c8dc', [[9, 7, 3, 5]]);
+    px(ctx, x, y, u, '#e8a8cc', [[5, 8, 6, 1]]); px(ctx, x, y, u, '#d8b060', [[4, 5, 8, 1], [7, 2, 2, 1]]);
+    px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[2, 4, 1, 2], [1, 2, 1, 2]]);
+  }
+  function petitFourIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1a22', [[1, 11, 14, 2]]); px(ctx, x, y, u, '#f4f4f8', [[2, 11, 12, 1]]);
+    [[2, 7, '#f4a8d0'], [6, 6, '#a8e8d0'], [10, 7, '#c8b0f8']].forEach(function (c) {
+      px(ctx, x, y, u, '#2a1a2a', [[c[0], c[1], 4, 4]]); px(ctx, x, y, u, c[2], [[c[0], c[1], 4, 3]]);
+      px(ctx, x, y, u, '#fffaf2', [[c[0], c[1], 4, 1]]); px(ctx, x, y, u, '#d8b060', [[c[0] + 1, c[1] - 1, 2, 1]]);
+    });
+  }
+  function starlightIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1430', [[5, 1, 6, 1], [4, 2, 1, 6], [11, 2, 1, 6], [5, 8, 6, 1], [7, 9, 2, 4], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#3a3a8a', [[5, 2, 6, 6]]); px(ctx, x, y, u, '#c8b0f8', [[5, 5, 6, 3]]);
+    px(ctx, x, y, u, '#fff8d0', [[6, 3, 1, 1], [9, 4, 1, 1], [7, 6, 1, 1]]); px(ctx, x, y, u, '#d8d8e8', [[7, 9, 1, 4], [6, 13, 4, 1]]);
+  }
   function coupeIcon(drink) {                       // a cocktail coupe on a stem
     return function (ctx, x, y, s) {
       var u = s / 16;
       px(ctx, x, y, u, '#2a1a3a', [[2, 3, 12, 1], [2, 4, 1, 2], [13, 4, 1, 2], [3, 6, 1, 1], [12, 6, 1, 1], [4, 7, 8, 1], [7, 8, 2, 4], [4, 12, 8, 1]]);
       px(ctx, x, y, u, drink, [[3, 4, 10, 2], [4, 6, 8, 1]]); px(ctx, x, y, u, '#ffffff', [[4, 4, 2, 1]]);
       px(ctx, x, y, u, '#d8d8e8', [[7, 8, 1, 4], [5, 12, 6, 1]]);
+    };
+  }
+  // the Mid-Levels' Terraces (L200): an espresso, a skewer off the grill, a tumbler on the rocks, a flask of sake
+  function espressoIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1418', [[3, 6, 9, 6], [12, 7, 2, 3], [2, 12, 12, 2]]);
+    px(ctx, x, y, u, '#f0ece4', [[4, 7, 7, 4], [12, 8, 1, 1], [3, 12, 10, 1]]); px(ctx, x, y, u, '#5a3018', [[4, 7, 7, 1]]);
+    px(ctx, x, y, u, '#c87a40', [[5, 7, 3, 1]]); px(ctx, x, y, u, 'rgba(240,240,255,0.6)', [[6, 2, 1, 3], [8, 3, 1, 3]]);
+  }
+  function grillIcon(meat, glaze) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#6a4a2a', [[1, 13, 2, 1], [3, 12, 1, 1], [13, 2, 2, 1]]);
+      px(ctx, x, y, u, '#2a1608', [[3, 9, 4, 4], [6, 6, 4, 4], [9, 3, 4, 4]]);
+      px(ctx, x, y, u, meat, [[4, 10, 2, 2], [7, 7, 2, 2], [10, 4, 2, 2]]); px(ctx, x, y, u, glaze, [[4, 10, 1, 1], [7, 7, 1, 1], [10, 4, 1, 1]]);
+    };
+  }
+  function tumblerIcon(drink, peel) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#1a1a2a', [[3, 4, 10, 10]]);
+      px(ctx, x, y, u, '#d8e8f0', [[4, 5, 8, 8]]); px(ctx, x, y, u, drink, [[4, 8, 8, 5]]);
+      px(ctx, x, y, u, '#f0f8ff', [[5, 8, 3, 3]]); px(ctx, x, y, u, peel, [[9, 3, 2, 4]]); px(ctx, x, y, u, '#ffffff', [[4, 5, 1, 3]]);
     };
   }
   function martiniIcon(ctx, x, y, s) {
@@ -774,6 +819,65 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#7a40e0', [[5, 6, 6, 7]]); px(ctx, x, y, u, '#c090ff', [[5, 6, 6, 1]]);
     px(ctx, x, y, u, '#ffffff', [[6, 9, 1, 1], [9, 8, 1, 1], [8, 11, 1, 1], [7, 4, 1, 1]]);
     px(ctx, x, y, u, '#40c8d8', [[10, 1, 1, 5]]);
+  }
+  // Lantern Row and the spaceport (the District grown out)
+  function teaIcon(tea) {                          // a handleless cup, steam off it
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#2a2420', [[4, 7, 8, 1], [4, 8, 1, 5], [11, 8, 1, 5], [5, 13, 6, 1]]);
+      px(ctx, x, y, u, '#e8e0d0', [[5, 8, 6, 5]]); px(ctx, x, y, u, tea, [[5, 8, 6, 2]]);
+      px(ctx, x, y, u, '#c8c0b0', [[5, 11, 6, 1]]);
+      px(ctx, x, y, u, '#d0d4e0', [[6, 3, 1, 3], [9, 2, 1, 3]]);
+    };
+  }
+  function mochiIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2a2a', [[3, 10, 10, 1]]);
+    px(ctx, x, y, u, '#f4d8e0', [[3, 6, 4, 4]]); px(ctx, x, y, u, '#e8f0d8', [[7, 5, 4, 5]]); px(ctx, x, y, u, '#f8f4ec', [[10, 6, 3, 4]]);
+    px(ctx, x, y, u, '#ffffff', [[4, 6, 1, 1], [8, 5, 1, 1], [11, 6, 1, 1]]);
+  }
+  function skewerIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#c8a060', [[2, 13, 1, 1], [3, 12, 1, 1], [4, 11, 1, 1], [12, 3, 1, 1], [13, 2, 1, 1]]);
+    px(ctx, x, y, u, '#7a3a1a', [[4, 8, 3, 3], [7, 6, 3, 3], [10, 4, 3, 3]]);
+    px(ctx, x, y, u, '#c8702a', [[4, 8, 2, 1], [7, 6, 2, 1], [10, 4, 2, 1]]);
+  }
+  function sakeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a2a3a', [[6, 2, 3, 1], [5, 3, 1, 2], [9, 3, 1, 2], [4, 5, 1, 8], [10, 5, 1, 8], [5, 13, 5, 1]]);
+    px(ctx, x, y, u, '#e8e4dc', [[6, 3, 3, 2], [5, 5, 5, 8]]); px(ctx, x, y, u, '#3a5aa0', [[5, 8, 5, 2]]);
+    px(ctx, x, y, u, '#ffffff', [[6, 6, 1, 1]]);
+  }
+  function lanternItemIcon(ctx, x, y, s) {         // a red paper lantern, black caps, a tassel
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1a1a', [[6, 2, 4, 1], [6, 12, 4, 1]]);
+    px(ctx, x, y, u, '#c82a1e', [[5, 3, 6, 9], [4, 5, 8, 5]]); px(ctx, x, y, u, '#ff8a5a', [[6, 4, 2, 6]]);
+    px(ctx, x, y, u, '#6a0e0a', [[4, 7, 8, 1], [5, 5, 6, 1], [5, 9, 6, 1]]);
+    px(ctx, x, y, u, '#e8c040', [[7, 13, 2, 2]]);
+  }
+  function omamoriIcon(ctx, x, y, s) {             // a little brocade charm bag on a cord
+    var u = s / 16;
+    px(ctx, x, y, u, '#e8c040', [[7, 1, 2, 3]]);
+    px(ctx, x, y, u, '#5a0e14', [[4, 4, 8, 10]]); px(ctx, x, y, u, '#c8301e', [[5, 5, 6, 8]]);
+    px(ctx, x, y, u, '#e8c040', [[6, 7, 4, 1], [7, 8, 2, 3]]); px(ctx, x, y, u, '#f4f0e6', [[7, 11, 2, 1]]);
+  }
+  function tonicIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2a1a', [[6, 1, 4, 2]]);
+    px(ctx, x, y, u, '#2a3a2a', [[5, 3, 6, 1], [4, 4, 1, 9], [11, 4, 1, 9], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#6a8a3a', [[5, 6, 6, 7]]); px(ctx, x, y, u, '#a8c870', [[6, 6, 1, 5]]);
+    px(ctx, x, y, u, '#e8dcc0', [[5, 8, 6, 2]]);
+  }
+  function goldfishIcon(ctx, x, y, s) {            // a goldfish in a knotted bag of water
+    var u = s / 16;
+    px(ctx, x, y, u, '#c8302a', [[7, 1, 2, 2]]);
+    px(ctx, x, y, u, '#a0c8e0', [[5, 3, 6, 1], [4, 4, 8, 9], [5, 13, 6, 1]]); px(ctx, x, y, u, '#5a9ac8', [[4, 6, 8, 7]]);
+    px(ctx, x, y, u, '#ff7a20', [[6, 8, 3, 2], [9, 7, 2, 1], [9, 10, 2, 1]]); px(ctx, x, y, u, '#ffffff', [[5, 4, 1, 2]]);
+  }
+  function stoutIcon(ctx, x, y, s) {               // a dented steel mug of dark beer, a head of foam
+    var u = s / 16;
+    px(ctx, x, y, u, '#4a4a54', [[3, 4, 1, 10], [10, 4, 1, 10], [3, 13, 8, 1], [11, 6, 2, 1], [12, 7, 1, 4], [11, 10, 2, 1]]);
+    px(ctx, x, y, u, '#2a1a10', [[4, 6, 6, 7]]); px(ctx, x, y, u, '#e8dcc0', [[4, 4, 6, 2]]); px(ctx, x, y, u, '#8a8a96', [[4, 6, 1, 7]]);
   }
   function charmUse() {
     var it = this;
@@ -915,6 +1019,57 @@ var BridgeItems = (function () {
     ctx.fillStyle = '#e8e0ff'; ctx.fillRect(x + 6*u, y + 6*u, 4*u, 4*u);
     ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 6*u, y + 6*u, 1*u, 1*u);
     ctx.fillStyle = '#a080ff'; ctx.fillRect(x + 9*u, y + 9*u, 1*u, 1*u); ctx.fillRect(x + 3*u, y + 3*u, 1*u, 1*u); ctx.fillRect(x + 12*u, y + 4*u, 1*u, 1*u);
+  }
+
+  // the fence's goods (Cinder Key): a silver plate, a purse of rings, a gold idol, a drowned locket, ember glass
+  function plateIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[3, 3, 10, 10], [2, 4, 12, 8], [4, 2, 8, 12]]);
+    px(ctx, x, y, u, '#a8acb8', [[4, 3, 8, 10], [3, 4, 10, 8]]);
+    px(ctx, x, y, u, '#d8dce6', [[5, 5, 6, 6]]);
+    px(ctx, x, y, u, '#7a7e8a', [[7, 6, 2, 1], [6, 7, 1, 2], [8, 8, 2, 1]]);
+    px(ctx, x, y, u, '#ffffff', [[5, 4, 2, 1]]);
+  }
+  function ringsIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[4, 5, 8, 9], [3, 7, 10, 6], [6, 3, 4, 3]]);
+    px(ctx, x, y, u, '#6a3a2a', [[5, 6, 6, 7], [4, 8, 8, 4]]);
+    px(ctx, x, y, u, '#8a5a3a', [[5, 7, 3, 3]]);
+    px(ctx, x, y, u, '#c8a040', [[6, 4, 4, 1], [7, 3, 2, 1]]);
+    px(ctx, x, y, u, '#f0d070', [[10, 2, 2, 2], [4, 2, 2, 2]]);
+    px(ctx, x, y, u, '#e04060', [[11, 2, 1, 1]]);
+  }
+  function idolIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[4, 2, 8, 13], [3, 4, 10, 6]]);
+    px(ctx, x, y, u, '#a07818', [[5, 3, 6, 11], [4, 5, 8, 4]]);
+    px(ctx, x, y, u, '#e8c040', [[5, 3, 3, 5], [6, 10, 2, 3]]);
+    px(ctx, x, y, u, '#ff4030', [[6, 5, 1, 1], [9, 5, 1, 1]]);
+    px(ctx, x, y, u, '#2a1a08', [[6, 7, 4, 1]]);
+  }
+  function locketIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[4, 6, 8, 8], [3, 7, 10, 6], [7, 2, 2, 5]]);
+    px(ctx, x, y, u, '#4a7a5a', [[5, 7, 6, 6], [4, 8, 8, 4]]);
+    px(ctx, x, y, u, '#8ac0a0', [[5, 8, 2, 2]]);
+    px(ctx, x, y, u, '#2a4a3a', [[7, 8, 2, 4]]);
+    px(ctx, x, y, u, '#9a9a8a', [[7, 3, 2, 1], [8, 4, 1, 2]]);
+  }
+  function stormGlassIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a0810', [[5, 1, 6, 3], [4, 4, 8, 11]]);
+    px(ctx, x, y, u, '#c8a040', [[6, 1, 4, 2], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#a8c8d8', [[5, 4, 6, 9]]);
+    px(ctx, x, y, u, '#e8f0f4', [[6, 5, 1, 6]]);
+    px(ctx, x, y, u, '#5a6a7a', [[7, 9, 3, 3], [8, 7, 2, 2]]);
+  }
+  function emberGlassIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#000000', [[5, 3, 6, 11], [3, 6, 10, 6], [7, 2, 3, 2]]);
+    px(ctx, x, y, u, '#1a1418', [[6, 4, 4, 9], [4, 7, 8, 4]]);
+    px(ctx, x, y, u, '#3a3040', [[6, 4, 2, 4]]);
+    px(ctx, x, y, u, '#ff5a24', [[8, 9, 2, 2], [5, 10, 1, 1]]);
+    px(ctx, x, y, u, '#ffc060', [[8, 9, 1, 1]]);
   }
 
   // the Regatta Cup (js/race.js): a silver cup with two handles on a dark plinth
@@ -1227,6 +1382,20 @@ var BridgeItems = (function () {
                      draw: cupIcon, value: 0 },
     fallen_star:   { id: 'fallen_star', name: 'Fallen Star', desc: 'It came down by you on a starfall night on Sylvara. Still warm, and humming to itself. Mirelle the herbalist buys them.', type: 'material', stackable: true,
                      draw: fallenStarIcon, value: 150 },
+    // the Crimson and Midnight seas (Workstream B2): plunder off pirates you beat and trinkets off the drowned - hot goods,
+    // worth nothing to an honest trader (value 0) and a fair bit to Vesper Quick, the fence on Cinder Key (`fence`: her price)
+    plunder_plate: { id: 'plunder_plate', name: 'Somebody\'s Silver', desc: 'A silver plate with a merchant house\'s crest scratched off it, not very well. Off a pirate you beat. No honest trader will touch it; the fence on Cinder Key will.', type: 'material', stackable: true,
+                     draw: plateIcon, value: 0, fence: 70 },
+    plunder_rings: { id: 'plunder_rings', name: 'A Purse of Rings', desc: 'Other people\'s rings, a dozen of them, in a purse that isn\'t yours either. The fence on Cinder Key asks no questions.', type: 'material', stackable: true,
+                     draw: ringsIcon, value: 0, fence: 120 },
+    plunder_idol:  { id: 'plunder_idol', name: 'A Gold Idol, Probably Cursed', desc: 'Squat, gold, grinning, warm in the hand when it shouldn\'t be. Pirates keep passing it on. The fence on Cinder Key pays well, and passes it on too.', type: 'material', stackable: true,
+                     draw: idolIcon, value: 0, fence: 280 },
+    drowned_locket: { id: 'drowned_locket', name: 'A Drowned Locket', desc: 'Green with the sea, a lock of hair still inside. Off a ship of the drowned, or out of Saltmere. The fence buys them; the dead might rather have them back.', type: 'material', stackable: true,
+                     draw: locketIcon, value: 0, fence: 90 },
+    storm_glass:   { id: 'storm_glass', name: 'Storm Glass', desc: 'A sealed glass of cloudy liquid on a brass hook, from Old Wick at the stormwatch on Cinder Key. It clouds before a squall. Carried, squalls and lightning do your boat less harm.',
+                     type: 'tool', stackable: false, draw: stormGlassIcon, value: 120, onUse: charmUse },
+    ember_glass:   { id: 'ember_glass', name: 'Ember Glass', desc: 'Black volcanic glass from the crater on Cinder Key, a red glow deep in it. The fence buys it; so does any trader, cheaper.', type: 'material', stackable: true,
+                     draw: emberGlassIcon, value: 40, fence: 55 },
     // treasure maps (js/treasure.js)
     tmap_lighthouse: { id: 'tmap_lighthouse', name: 'Map: Under the Old Light', desc: 'A treasure map. Use it to unfold the sketch - the landmarks are real. Somewhere on Lumar.', type: 'map',
                 stackable: false, draw: mapIcon, onUse: function () { if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.view('lighthouse'); return false; } },
@@ -1344,6 +1513,15 @@ var BridgeItems = (function () {
     // Club Void's bar (js/dance.js)
     void_fizz:     { id: 'void_fizz', name: 'Void Fizz', desc: 'Purple, fizzing, faintly glowing under the lights. Tastes like a bassline. Energy.', type: 'drink',
                      stackable: true, draw: fizzIcon, effects: { energy: 30 }, value: 4, onUse: consumableUse },
+    // the Spires (Arcadia L480): the tea salon, Aurelle
+    jasmine_pearls: { id: 'jasmine_pearls', name: 'Jasmine Pearls', desc: 'A pot of rolled jasmine tea from the Spires\' tea salon: the pearls open as you watch. Energy, and calm.', type: 'drink',
+                     stackable: true, draw: teaPotIcon, effects: { energy: 30, hp: 10 }, value: 8, onUse: consumableUse },
+    petit_fours:   { id: 'petit_fours', name: 'Petit Fours', desc: 'Three little cakes in pastel icing, a gold dot on each. Clemence makes them. Health and energy.', type: 'food',
+                     stackable: true, draw: petitFourIcon, effects: { hp: 20, energy: 25 }, value: 10, onUse: consumableUse },
+    starlight:     { id: 'starlight', name: 'Starlight', desc: 'Aurelle\'s own: champagne over a violet liqueur that glitters, served under the only real stars in Arcadia. Energy.', type: 'drink',
+                     stackable: true, draw: starlightIcon, effects: { energy: 50 }, value: 14, onUse: consumableUse },
+    sky_oysters:   { id: 'sky_oysters', name: 'Sky Oysters', desc: 'Six Lumar oysters on crushed ice, a pearl of caviar on each. Aurelle\'s. Health.', type: 'food',
+                     stackable: true, draw: coupeIcon('#e8e0d0'), effects: { hp: 45, energy: 15 }, value: 15, onUse: consumableUse },
     // the Neon Royale: its bar, Aurum (the restaurant), its boutique
     gold_rush:     { id: 'gold_rush', name: 'Gold Rush', desc: 'The Royale\'s own: honey, lemon, rye and a flake of gold leaf, in a coupe. Energy.', type: 'drink',
                      stackable: true, draw: coupeIcon('#e8b030'), effects: { energy: 35 }, value: 6, onUse: consumableUse },
@@ -1365,6 +1543,48 @@ var BridgeItems = (function () {
                      type: 'material', stackable: true, draw: chipIcon, value: 60 },
     lucky_dice:    { id: 'lucky_dice', name: 'Lucky Dice', desc: 'A pair of the Royale\'s retired craps dice, drilled and sealed. They have seen a lot of sevens.',
                      type: 'material', stackable: true, draw: diceIcon, value: 25 },
+    // the Mid-Levels' Terraces: the café, Halo's grill, Lumen, Cirrus's bar and Moonglow's
+    cloud_espresso: { id: 'cloud_espresso', name: 'Cloud Espresso', desc: 'Glass & Steam\'s house shot, crema like a smog bank. Energy.', type: 'drink',
+                     stackable: true, draw: espressoIcon, effects: { energy: 25 }, value: 4, onUse: consumableUse },
+    glass_cake:    { id: 'glass_cake', name: 'Glass Cake', desc: 'A slice of sponge under a sugar pane you can see the city through. Energy and health.', type: 'food',
+                     stackable: true, draw: cakeIcon, effects: { energy: 25, hp: 10 }, value: 6, onUse: consumableUse },
+    halo_skewers:  { id: 'halo_skewers', name: 'Halo Skewers', desc: 'Vat beef off Bastien\'s grill, charred, glazed and salted with Lumar sea salt. Health and energy.', type: 'food',
+                     stackable: true, draw: grillIcon('#8a3a1e', '#e8a050'), effects: { hp: 35, energy: 30 }, value: 8, onUse: consumableUse },
+    lumen_yakitori: { id: 'lumen_yakitori', name: 'Lumen Yakitori', desc: 'Hiro\'s skewers over binchotan: chicken, a little smoke, a lot of tare. Energy and health.', type: 'food',
+                     stackable: true, draw: grillIcon('#c88a40', '#5a2a10'), effects: { energy: 30, hp: 20 }, value: 7, onUse: consumableUse },
+    cirrus_sour:   { id: 'cirrus_sour', name: 'Cirrus Sour', desc: 'Nadia\'s own: yuzu, gin, a cloud of egg white with the bar\'s neon in it. Energy.', type: 'drink',
+                     stackable: true, draw: coupeIcon('#f0c8e8'), effects: { energy: 40 }, value: 7, onUse: consumableUse },
+    skyline_spritz: { id: 'skyline_spritz', name: 'Skyline Spritz', desc: 'Pink bitters and bubbles over ice, a sliver of blood orange. Energy.', type: 'drink',
+                     stackable: true, draw: tumblerIcon('#e86a8a', '#e8902a'), effects: { energy: 32 }, value: 6, onUse: consumableUse },
+    blue_note:     { id: 'blue_note', name: 'Blue Note', desc: 'Moonglow\'s house cocktail: blue, cold, and a little sad in the best way. Energy.', type: 'drink',
+                     stackable: true, draw: coupeIcon('#4a6ae0'), effects: { energy: 38 }, value: 7, onUse: consumableUse },
+    moonglow_old_fashioned: { id: 'moonglow_old_fashioned', name: 'Moonglow Old Fashioned', desc: 'Rye, a sugar cube, bitters, one big ice moon. Sol stirs it for exactly as long as a ballad. Energy and health.',
+                     type: 'drink', stackable: true, draw: tumblerIcon('#c87a30', '#e8902a'), effects: { energy: 35, hp: 10 }, value: 8, onUse: consumableUse },
+    // Lantern Row (arcadia-oldquarter) and the spaceport (arcadia-spaceport)
+    green_tea:     { id: 'green_tea', name: 'Green Tea', desc: 'Granny Ume\'s everyday tea, poured from high so it froths. Calms you right down. Energy.',
+                     type: 'drink', stackable: true, draw: teaIcon('#8ab050'), effects: { energy: 14 }, value: 2, onUse: consumableUse },
+    matcha:        { id: 'matcha', name: 'Matcha', desc: 'Whisked bright green in a rough clay bowl, bitter and then sweet. Energy and health.',
+                     type: 'drink', stackable: true, draw: teaIcon('#5ac040'), effects: { energy: 26, hp: 8 }, value: 4, onUse: consumableUse },
+    mochi:         { id: 'mochi', name: 'Mochi', desc: 'Three rice cakes, pink, green and white, soft as anything. A fine gift. Energy.',
+                     type: 'food', stackable: true, draw: mochiIcon, effects: { energy: 18, hp: 6 }, value: 3, onUse: consumableUse },
+    shoyu_ramen:   { id: 'shoyu_ramen', name: 'Hoshi\'s Shoyu Ramen', desc: 'Old Hoshi\'s bowl: a dark soy broth he has kept going for forty years, noodles, pork, half an egg. Health and energy.',
+                     type: 'food', stackable: true, draw: bowlIcon('#8a4a1a', '#f0d070'), effects: { hp: 35, energy: 35 }, value: 5, onUse: consumableUse },
+    yakitori:      { id: 'yakitori', name: 'Yakitori', desc: 'Chicken on a skewer over charcoal, brushed with sweet sauce. Energy.',
+                     type: 'food', stackable: true, draw: skewerIcon, effects: { energy: 20, hp: 10 }, value: 3, onUse: consumableUse },
+    warm_sake:     { id: 'warm_sake', name: 'Warm Sake', desc: 'A little flask of it, warmed in water, from Mama Keiko\'s casks. Energy.',
+                     type: 'drink', stackable: true, draw: sakeIcon, effects: { energy: 30 }, value: 4, onUse: consumableUse },
+    herbal_tonic:  { id: 'herbal_tonic', name: 'Kampo Tonic', desc: 'A brown bottle from the herbalist on Lantern Row: roots, bark and something that might be a lizard. Health.',
+                     type: 'drink', stackable: true, draw: tonicIcon, effects: { hp: 45 }, value: 8, onUse: consumableUse },
+    paper_lantern: { id: 'paper_lantern', name: 'Paper Lantern', desc: 'A red paper lantern from the lantern maker on Lantern Row, folded flat. Somebody will love it.',
+                     type: 'gift', stackable: true, draw: lanternItemIcon, value: 12 },
+    omamori:       { id: 'omamori', name: 'Omamori', desc: 'A little brocade charm bag from Lantern Row, for luck on the road. A kind thing to give someone.',
+                     type: 'gift', stackable: true, draw: omamoriIcon, value: 8 },
+    goldfish_bag:  { id: 'goldfish_bag', name: 'Goldfish in a Bag', desc: 'Scooped out of a tub on Lantern Row with a paper net. Children think it\'s the best present in the world.',
+                     type: 'gift', stackable: true, draw: goldfishIcon, value: 6 },
+    reactor_stout: { id: 'reactor_stout', name: 'Reactor Stout', desc: 'The Last Burn\'s own: black, thick and served in a dented steel mug. Spacers swear by it. Energy.',
+                     type: 'drink', stackable: true, draw: stoutIcon, effects: { energy: 34 }, value: 4, onUse: consumableUse },
+    spacer_stew:   { id: 'spacer_stew', name: 'Spacer\'s Stew', desc: 'Whatever came off the last three freighters, in a pot that has never been empty. Fills you up.',
+                     type: 'food', stackable: true, draw: bowlIcon('#7a4a2a', '#c8a050'), effects: { hp: 45, energy: 40 }, value: 6, onUse: consumableUse },
     // past the Hoarspire (js/expedition.js)
     probe:         { id: 'probe', name: 'Avalanche Probe', desc: 'A folding pole, three paces long. On the Last Ridge, F pushes it into the snow ahead of you: hollow, or solid.',
                      type: 'tool', stackable: false, draw: probeIcon, value: 20,

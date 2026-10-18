@@ -166,7 +166,8 @@ var BridgeSloop = (function () {
   var EXT = {
     'lumar': [-15.7, 16.1, -19.7, 7.1], 'lumar-crown': [-31.3, 32.4, -25.0, 17.5], 'lumar-tern': [-19.2, 19.3, -12.7, 9.5],
     'lumar-holm': [-20.8, 20.5, -14.5, 9.3], 'lumar-sapphire': [-28.2, 29.0, -14.5, 13.5], 'lumar-rose': [-27.9, 27.7, -18.4, 21.0],
-    'lumar-crimson': [-26.4, 27.1, -19.2, 18.3], 'lumar-midnight': [-24.8, 24.3, -17.6, 18.1]
+    'lumar-crimson': [-26.4, 27.1, -19.2, 18.3], 'lumar-midnight': [-24.8, 24.3, -17.6, 18.1],
+    'lumar-saltmere': [-21.0, 21.3, -15.0, 10.1], 'lumar-cinder': [-27.9, 28.1, -22.9, 17.4]
   };
   var LINES = [                                         // what the fisherman says when you hail him
     "Wind's been backing all evening. Ease her out past the reef or she'll stall on you.",
@@ -436,7 +437,8 @@ var BridgeSloop = (function () {
   var MOORINGS = {
     'lumar': [8.0, 17.75, 0], 'lumar-sapphire': [28.5, 28.75, 0], 'lumar-rose': [28.5, 25.75, 0],
     'lumar-crimson': [28.5, 38.75, 0], 'lumar-midnight': [24.5, 39.75, 0],
-    'lumar-crown': [22.5, 37.75, 0], 'lumar-tern': [19.5, 21.75, 0], 'lumar-holm': [21.5, 25.75, 0]
+    'lumar-crown': [22.5, 37.75, 0], 'lumar-tern': [19.5, 21.75, 0], 'lumar-holm': [21.5, 25.75, 0],
+    'lumar-cinder': [28.5, 31.75, 0], 'lumar-saltmere': [22.5, 28.75, 0]
   };
   function afloat(I, x, r, rad) {                     // nothing standing out of the water here (shallows will do)
     if (ground(I, x, r) === 1) return false;
@@ -904,7 +906,8 @@ var BridgeSloop = (function () {
   // the sloops on their loops). Nobody sails the Midnight Sea. They all keep clear of you, of the harbour mouths (every
   // Lumar harbour opens to the south: MOUTH is the pier's end from the map's centre) and of each other.
   var MOUTH = { 'lumar': [0, 7.75], 'lumar-crown': [-9.5, 14.75], 'lumar-tern': [0.5, 7.75], 'lumar-holm': [0.5, 9.75],
-                'lumar-sapphire': [-0.5, 9.75], 'lumar-rose': [0.5, 4.75], 'lumar-crimson': [0.5, 17.75], 'lumar-midnight': [-1.5, 18.75] };
+                'lumar-sapphire': [-0.5, 9.75], 'lumar-rose': [0.5, 4.75], 'lumar-crimson': [0.5, 17.75], 'lumar-midnight': [-1.5, 18.75],
+                'lumar-cinder': [0.5, 10.75], 'lumar-saltmere': [-0.5, 10.75] };
   var LANES = [['lumar', 'lumar-crown'], ['lumar', 'lumar-tern'], ['lumar-tern', 'lumar-crown'], ['lumar', 'lumar-sapphire'],
                ['lumar', 'lumar-rose'], ['lumar-crown', 'lumar-rose'], ['lumar-sapphire', 'lumar-rose']];
   var BEATS = [                                         // [role, chart from, chart to, the ships in company, line astern]
@@ -1371,7 +1374,50 @@ var BridgeSloop = (function () {
         });
       }
     });
+    var gs = ghostShip(dt);
+    if (gs) out.push(gs);
     traffic = out;
+  }
+  // ---- the Gloaming: Saltmere's ghost ship, drifting round the Midnight Sea (Workstream B2) -------------------------------
+  // Where she is comes from the clock (the same for everyone): once round a loop south-west of the Midnight Isle every
+  // GHOST_LAP seconds, sailing against the wind, sails like torn lace. Come alongside with the sail down and you can board
+  // her: the passage stops where you are, her deck loads (world `lumar-gloaming`), and going back down to your boat
+  // (`resume`, js/midnight.js `ghost_return`) puts you back on the water where you left it.
+  var GHOST_LOOP = { cx: 0.09, cy: 0.27, rx: 0.05, ry: 0.065 }, GHOST_LAP = 1500, GHOST_KEY = 'bridge_gloaming';
+  function ghostChart(T) {                                         // her place on the chart and her heading (chart frame) at T seconds
+    var a = (T / GHOST_LAP) * Math.PI * 2, L = GHOST_LOOP;
+    var x = L.cx + Math.cos(a) * L.rx, y = L.cy + Math.sin(a) * L.ry;
+    return { cx: x, cy: y, h: Math.atan2(Math.cos(a) * L.ry * KY, -Math.sin(a) * L.rx * K) };
+  }
+  var ghostBoat = null;
+  function ghostShip(dt) {
+    if (!pa || !A || captainOf) return null;
+    var g = ghostChart(Date.now() / 1000), w = toWorld(g.cx, g.cy);
+    if (Math.abs(w.x - boat.x) > 70 || Math.abs(w.r - boat.r) > 55) { ghostBoat = null; return null; }
+    if (!ghostBoat) {
+      var sp = typeof BridgeFleet !== 'undefined' && BridgeFleet.spec ? BridgeFleet.spec('galleon') : SLOOP;
+      ghostBoat = { x: w.x, r: w.r, h: g.h, v: 0.4, sheet: 1.2, boom: 0.5, side: 1, heel: 0, rudder: 0, bump: 0, hoist: 1, eff: 1, off: 1.6,
+                    luff: false, empty: true, crew: false, seed: 7, spec: sp, cloth: ['#b8d8c8', '#90b0a0', '#68887a'],
+                    tint: 'rgba(150,220,190,0.55)', kit: { guns: ['ghostfire', 'ghostfire', 'ghostfire', 'ghostfire'], fits: ['moon_lantern'] },
+                    ghostShip: true, label: 'the Gloaming', role: 'ghost' };
+    }
+    ghostBoat.x = w.x; ghostBoat.r = w.r; ghostBoat.h = g.h; ghostBoat.heel = Math.sin(Date.now() / 2100) * 0.04;
+    return ghostBoat;
+  }
+  function boardGhost() {
+    if (!running || captainOf || crewOf || raceOn()) return;
+    var c = toChart(boat.x, boat.r);
+    try { localStorage.setItem(GHOST_KEY, JSON.stringify({ from: A.id, cx: c.x, cy: c.y, h: boat.h, at: Date.now() })); } catch (e) { /* private mode */ }
+    say('You come alongside the Gloaming. A rope ladder drops down her side, though nobody threw it', 2400);
+    sfx('bell');
+    setTimeout(function () { if (running) stop('lumar-gloaming'); }, 900);
+  }
+  /** Back down to your boat from the Gloaming's deck: the passage again, where you left it. */
+  function resume() {
+    var o = null;
+    try { o = JSON.parse(localStorage.getItem(GHOST_KEY) || 'null'); } catch (e) { /* none */ }
+    if (!o || !o.from) return false;
+    return start(o.from, null, { aboard: true, at: o });
   }
   // (tests) every route's ship at T (seconds of Date.now()), in the chart's frame; and how the routes lie
   function shipsAt(T) {
@@ -1457,6 +1503,7 @@ var BridgeSloop = (function () {
     sloop: ['"Fair winds!"', '"Lovely evening for it. Watch the reef off the point."']
   };
   function hailShip(o) {
+    if (o && o.ghostShip) { say('You hail her. Nobody answers. A bell rings somewhere aboard, once, and stops', 3200); return; }
     var turn = (o.seed || 0) + Math.floor(Date.now() / 45000), role = o.role || 'sloop', line;
     if (role === 'fisher' && turn % 3 === 0) line = '"' + (LEGEND[seaHere()] || LINES[turn % LINES.length]) + '"';
     else if ((role === 'fisher' || role === 'sloop') && turn % 3 === 1) line = '"' + LINES[turn % LINES.length] + '"';
@@ -1582,6 +1629,9 @@ var BridgeSloop = (function () {
   // passage follows their boat (`mirror`, their helm ten times a second) instead of sailing itself
   var crewOf = null, captainOf = null, mirror = null, helmAt = 0, seaAt = 0, seaPeers = {};
   function mercy() { return blessing ? 0.5 : 1; }                  // a candle lit at St Brendan's (js/crown.js): half the harm
+  function stormGlass() {                                           // Old Wick's storm glass, carried (js/crimson.js): squalls bite less
+    return typeof BridgeCrimson !== 'undefined' && BridgeCrimson.stormGlass && BridgeCrimson.stormGlass() ? 0.6 : 1;
+  }
   function start(fromId, toId, opts) {
     var crewing = !!(opts && opts.crew);
     var plotted = !crewing && typeof BridgeChart !== 'undefined' ? BridgeChart.dest() : null;     // a course set on the chart ashore
@@ -1663,6 +1713,13 @@ var BridgeSloop = (function () {
       coverAt = performance.now();
       setTimeout(function () { if (handoff) { var h = handoff; handoff = null; h(); } }, 600);
       if (aboardStart) { phaseAt -= CAST.board; said.board = 1; boat.empty = false; }   // you walked aboard in the world: already sat
+      if (opts && opts.at && opts.at.cx != null) {                     // back from the Gloaming's deck: on the water where you left it
+        var w0 = toWorld(opts.at.cx, opts.at.cy);
+        boat.x = w0.x; boat.r = w0.r; boat.h = opts.at.h || 0; boat.reef = 0.2; boat.empty = false;
+        phase = 'sail'; phaseAt = performance.now(); cam = null; said.board = said.lines = said.push = said.hoist = 1;
+        ensureIslands(); updateCells(performance.now() + 1e6);
+        say('You climb back down into the ' + shipName + '. The Gloaming slides away into the mist', 3000);
+      }
       canvas.style.opacity = '1';
     }
     loadSheet(function (err) {
@@ -2051,7 +2108,7 @@ var BridgeSloop = (function () {
         // what it does to her depends on how much sail you're carrying when it hits: eased, she rides it out
         var press = phase === 'sail' ? clamp((boat.eff || 0) * (boat.hoist || 0) * (boat.reef == null ? 1 : boat.reef), 0, 1) : 0;
         if (phase === 'sail') {
-          var dmg = (1.5 + 7.5 * press) * (SP.storm || 1) * mercy(), left = hullHit(dmg);
+          var dmg = (1.5 + 7.5 * press) * (SP.storm || 1) * mercy() * stormGlass(), left = hullHit(dmg);
           say(press > 0.5 ? 'Knocked flat! Green water pours over the rail and the hull groans (' + Math.round(left * 100) + '%)' : 'The squall hits - you spill the wind and she rides it out', 3200);
           if (left <= 0) wreck('The squall rolls her over');
         } else say('A squall! The wind jumps round - watch your sheet', 2600);
@@ -2059,7 +2116,7 @@ var BridgeSloop = (function () {
       if (now > storm.nextFlash) {
         storm.flash = now; storm.nextFlash = now + 6000 + hash(Math.floor(now / 7)) * 9000; storm.thunderAt = now + 300 + hash(Math.floor(now / 11)) * 1400;
         if (phase === 'sail' && hash(Math.floor(now / 3)) < 0.1) {      // now and then the masthead takes it
-          storm.thunderAt = now + 60; var lh = hullHit(4 * (SP.storm || 1) * mercy());
+          storm.thunderAt = now + 60; var lh = hullHit(4 * (SP.storm || 1) * mercy() * stormGlass());
           say('Lightning strikes the masthead! Splinters everywhere (' + Math.round(lh * 100) + '%)', 3000);
           if (lh <= 0) wreck('Lightning splits her open');
         }
@@ -2244,6 +2301,12 @@ var BridgeSloop = (function () {
                                                          : { text: 'Lower the sail (↓) to grab the ' + o.kind, act: function () {} };
         else if (o.kind === 'dory' && d < 4.2) prompt = { text: 'Hail the fisherman', act: function () { hail(o); } };
       });
+      if (!prompt && ghostBoat && !crewOf && !raceOn()) {                // the Gloaming alongside: board her, sail down
+        var gd = apart({ x: b.x, r: b.r, h: b.h, spec: SP }, ghostBoat)[0];
+        if (gd < (ghostBoat.spec.beam + (SP.beam || 1)) / 2 + 3.2) {
+          prompt = Math.abs(b.v) < 1.6 ? { text: 'Board the Gloaming', act: boardGhost } : { text: 'Lower the sail (↓) to come alongside the Gloaming', act: function () {} };
+        }
+      }
       if (!prompt) { var hs = hailable(); if (hs) prompt = { text: 'Hail the ' + hs.label, act: function () { hailShip(hs); } }; }
       // stopped out on the water (rounded up into the wind, say): a line over the side
       if (!prompt && Math.abs(b.v) < 0.6 && now - began > 6000 && !raceOn() && !(fight() && fight().busy()) && typeof BridgeFishing !== 'undefined')
@@ -2975,6 +3038,7 @@ var BridgeSloop = (function () {
     b.paint = look && look.paint || null;
     var tallest = rg.masts.reduce(function (m, x) { return x.h > m.h ? x : m; }, rg.masts[0]);
     if (kit ? kit.moon : sp.ward) moonPool(b, P(-L2 + tallest.f * sp.L, 0, 0), sp, now);
+    mirrored(b, P, rg, sp, bw, lx, now, b.cloth || (kit && kit.crystal ? CRYSTAL : null) || (look && SAILCLOTH[look.sails]) || null);
     if (b.traffic && b.v > 0.3) trafficWake(b, now);
     if (b.nets) drawNet(b, now);
     if (H && H.img) {
@@ -3065,6 +3129,108 @@ var BridgeSloop = (function () {
       var tz = typeof BridgeShipKit !== 'undefined' ? BridgeShipKit.sheer(BridgeShipKit.lines(sp.sheet), 0) : 0.42 * k, tlen = 0.55 * Math.sqrt(k);
       var tl = P(-L2, 0, tz), tr = P(-L2 + Math.cos(b.rudder * 0.6) * tlen, -Math.sin(b.rudder * 0.6) * tlen, tz + 0.03);
       line(tl, tr, '#5a3a1a', 1);
+    }
+  }
+  // ---- her reflection (the toy water's mirror, as js/sea.js gives the islands): her hull's side, her masts and her sails
+  // upside down under her, in rows nudged sideways on a slow wave, the hull dark and the sails pale in the water's tone,
+  // fading down; her stern lantern streaking down the water after dark. Broken up and fainter in rough weather.
+  var seaWx = { at: 0, k: 1 };
+  function calmNow() {
+    var t = Date.now();
+    if (t - seaWx.at > 1000) {
+      seaWx.at = t;
+      var w = typeof BridgeWeather !== 'undefined' && BridgeWeather.at ? BridgeWeather.at('lumar') : null;
+      seaWx.k = !w ? 1 : 1 - w.k * ({ storm: 0.75, gale: 0.6, rain: 0.4, fog: 0.5 }[w.kind] || 0);
+    }
+    return seaWx.k;
+  }
+  // fill a convex outline a row at a time (fn(y, x0, x1)): the rows of a reflection, each one nudged on its own
+  function spans(pts, fn) {
+    var y0 = Infinity, y1 = -Infinity;
+    pts.forEach(function (p) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); });
+    for (var y = Math.ceil(y0); y <= Math.floor(y1); y++) {
+      var xl = Infinity, xr = -Infinity;
+      for (var i = 0; i < pts.length; i++) {
+        var a = pts[i], c = pts[(i + 1) % pts.length];
+        if ((a[1] <= y && c[1] >= y) || (c[1] <= y && a[1] >= y)) {
+          var x = a[1] === c[1] ? Math.min(a[0], c[0]) : a[0] + (c[0] - a[0]) * (y - a[1]) / (c[1] - a[1]), x2 = a[1] === c[1] ? Math.max(a[0], c[0]) : x;
+          xl = Math.min(xl, x); xr = Math.max(xr, x2);
+        }
+      }
+      if (xr >= xl) fn(y, xl, xr);
+    }
+  }
+  function hullOf(pts) {                                             // the convex outline round some points
+    pts = pts.slice().sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+    function cross(o, a, b) { return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); }
+    var lo = [], up = [];
+    pts.forEach(function (p) { while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); });
+    for (var i = pts.length - 1; i >= 0; i--) { var p = pts[i]; while (up.length >= 2 && cross(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+    return lo.slice(0, -1).concat(up.slice(0, -1));
+  }
+  function mirrored(b, P, rg, sp, bw, lx, now, cloth) {
+    var calm = calmNow(), t = now / 1000, L2 = sp.L / 2, k = sp.L / 2.6;
+    if (calm < 0.2) return;
+    var Pal = BridgeSea.palettes[palAt(b.x, b.r)] || BridgeSea.palettes.emerald, deep = Pal.deep, W = skyNow(), day = W ? W.day : 0;
+    var dark = 'rgb(' + deep.map(function (c) { return Math.round(c * 0.55); }).join(',') + ')';
+    var cl = cloth || CLOTH[2], pale = cl[0];
+    var M = function (u, v, z) { return P(u, v, -z); };              // mirrored in the water
+    var cy = Math.round(cam.y);
+    function rows(pts, col, a, skip) {
+      var top = Infinity;
+      pts.forEach(function (p) { top = Math.min(top, p[1]); });
+      bctx.fillStyle = col;
+      spans(pts, function (y, x0, x1) {
+        var wy = y + cy, d = y - top;
+        if (skip && (wy % skip) === 0) return;
+        if (calm < 0.7 && (wy * 7 + Math.floor(t * 3)) % 3 === 0) return;      // broken up by the chop
+        var off = Math.round(Math.sin(wy * 0.8 + t * 1.8) + 0.5 * Math.sin(wy * 2.1 - t * 2.4));
+        bctx.globalAlpha = a * calm * (d < 8 ? 1 : d < 18 ? 0.6 : 0.3);
+        bctx.fillRect(Math.round(x0) + off, y, Math.max(1, Math.round(x1 - x0) + 1), 1);
+      });
+      bctx.globalAlpha = 1;
+    }
+    // the hull's side under her waterline
+    var fb = 0.38 * k, pts = [];
+    for (var i = 0; i <= 8; i++) {
+      var u = -L2 + sp.L * i / 8, w = bw * Math.sin(Math.PI * Math.min(1, 0.22 + 0.86 * i / 8)) + 0.05;
+      pts.push(P(u, w, 0), P(u, -w, 0), M(u, w * 0.9, fb), M(u, -w * 0.9, fb));
+    }
+    rows(hullOf(pts), dark, 0.42);
+    // the masts and the sails
+    rg.masts.forEach(function (m) {
+      var mu = -L2 + m.f * sp.L, deck = m.z != null ? m.z + 0.3 : rg.deck, top = deck + m.h;
+      if (b.hoist > 0.05 && !m.square) {
+        var clew = [mu - Math.cos(b.boom) * m.boom, b.side * Math.sin(b.boom) * m.boom, deck + 0.08];
+        rows([M(mu, 0, deck), M(mu, 0, deck + m.sail * b.hoist), M(clew[0], clew[1], clew[2])], pale, 0.16 + 0.08 * day, 3);
+      }
+      if (b.hoist > 0.05 && m.square) m.square.forEach(function (y) {
+        var phi = 0.62 + (Math.PI / 2 - 0.62) * clamp(b.boom / 1.3, 0, 1), w = y[0], zt = deck + y[2], zb = deck + y[2] - (y[2] - y[1]) * b.hoist;
+        var cu = Math.cos(phi) * w, cv = Math.sin(phi) * w * b.side;
+        rows([M(mu + cu, -cv, zt), M(mu - cu, cv, zt), M(mu - cu, cv, zb), M(mu + cu, -cv, zb)], pale, 0.14 + 0.08 * day, 3);
+      });
+      var f0 = M(mu, 0, 0.2), f1 = M(mu, 0, top), n = Math.round(Math.abs(f1[1] - f0[1]));
+      bctx.fillStyle = dark;
+      for (var j = 0; j <= n; j++) {
+        var y = Math.round(f0[1] + (f1[1] - f0[1]) * j / Math.max(1, n)), wy = y + cy;
+        if ((wy % 4) === 0 || (calm < 0.7 && (wy + Math.floor(t * 3)) % 3 === 0)) continue;
+        bctx.globalAlpha = 0.5 * calm * (1 - 0.7 * j / Math.max(1, n));
+        bctx.fillRect(Math.round(f0[0] + (f1[0] - f0[0]) * j / Math.max(1, n)) + Math.round(Math.sin(wy * 0.8 + t * 1.8)), y, m.h > 4 ? 2 : 1, 1);
+      }
+      bctx.globalAlpha = 1;
+    });
+    // her stern lantern streaking down the water after dark
+    var night = W ? W.night + 0.5 * W.dusk : 1;
+    if (night > 0.3) {
+      bctx.save(); bctx.globalCompositeOperation = 'lighter';
+      bctx.fillStyle = 'rgb(255,196,120)';
+      for (var r = 3; r < 22; r += 2) {
+        var wy2 = Math.round(lx[1]) + r + cy;
+        if (Math.sin(wy2 * 1.3 + t * 3.1) < -0.2) continue;
+        bctx.globalAlpha = (night - 0.3) / 0.7 * calm * (r < 9 ? 0.5 : r < 15 ? 0.3 : 0.16);
+        bctx.fillRect(Math.round(lx[0]) - 1 + Math.round(Math.sin(wy2 * 0.8 + t * 1.8)), Math.round(lx[1]) + r, r < 9 ? 3 : 2, 1);
+      }
+      bctx.restore();
     }
   }
   // a hull sheet washed with a colour (a pirate's tarred black, a drowned ship's pale green), made once and kept
@@ -4281,7 +4447,12 @@ var BridgeSloop = (function () {
   }
 
   return {
-    start: start, stop: stop, knows: knows, board: board, _disembark: disembark, portrait: portrait,
+    start: start, stop: stop, knows: knows, board: board, _disembark: disembark, portrait: portrait, resume: resume,
+    ghostShip: function () {                                         // where the Gloaming is now (chart frame), for the scrying pool
+      var g = ghostChart(Date.now() / 1000), near = running && ghostBoat ? Math.hypot(ghostBoat.x - boat.x, ghostBoat.r - boat.r) : null;
+      return { name: 'Gloaming', cx: g.cx, cy: g.cy, h: g.h, near: near };
+    },
+    _ghostChart: ghostChart, _ghost: function () { return ghostBoat; }, _boardGhost: boardGhost,
     isRunning: function () { return running; },
     covers: function () { return running && phase !== 'load'; },
     _boat: function () { return boat; }, _phase: function () { return phase; }, _wind: function () { return wind; }, _isles: function () { return [A, B]; },

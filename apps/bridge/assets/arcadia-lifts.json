@@ -25,9 +25,25 @@
       { "id": "skywalk", "world": "arcadia-skywalk", "floor": 200, "spawn": [28, 5] },
       { "id": "skypad", "world": "arcadia-skypad", "floor": 212, "spawn": [19, 5] }
     ] },
-    "spire": { "name": "Spire Express", "x": 0.66, "lobbies": [] },
-    "core": { "name": "The Core Express", "x": 0.92, "lobbies": [] }
+    "spire": { "name": "Spire Express", "x": 0.66, "lobbies": [
+      { "id": "spires", "world": "arcadia-spires", "floor": 480, "spawn": [40, 10] },
+      { "id": "terraces", "world": "arcadia-terraces", "floor": 208, "spawn": [43, 11] }
+    ] },
+    "core": { "name": "The Core Express", "x": 0.92, "lobbies": [
+      { "id": "spires", "world": "arcadia-spires", "floor": 480, "spawn": [54, 10] },
+      { "id": "terraces", "world": "arcadia-terraces", "floor": 208, "spawn": [48, 11] },
+      { "id": "spaceport", "world": "arcadia-spaceport", "floor": 0, "spawn": [25, 10] }
+    ] }
   },
-  "loop": { "name": "The Loop", "stations": [] },
-  "cabs": { "pads": [] }
+  "loop": { "name": "The Loop", "stations": [
+    { "id": "lantern", "name": "Lantern Row", "world": "arcadia-oldquarter", "spawn": [33, 10] },
+    { "id": "terraces", "name": "Terraces", "world": "arcadia-terraces", "spawn": [73, 10] },
+    { "id": "spaceport", "name": "Spaceport", "world": "arcadia-spaceport", "spawn": [41, 10] }
+  ] },
+  "cabs": { "pads": [
+    { "id": "skyport", "name": "Skyport 7", "world": "arcadia-skypad", "spawn": [19, 11], "level": "midlevels" },
+    { "id": "terraces", "name": "The Terraces", "world": "arcadia-terraces", "spawn": [79, 30], "level": "midlevels" },
+    { "id": "spaceport", "name": "The spaceport", "world": "arcadia-spaceport", "spawn": [57, 18], "level": "district" },
+    { "id": "spires", "name": "The sky docks", "world": "arcadia-spires", "spawn": [71, 36], "level": "spires" }
+  ] }
 }
