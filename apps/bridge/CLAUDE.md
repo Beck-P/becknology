@@ -926,14 +926,29 @@ Arcadia's night (`full` / `dim`).
 Workstream D of `_claude_docs/spec-denser-worlds.md` (the plan: `_claude_docs/spec-arcadia-above.md`): the District
 (tag L0 on the signs) runs on past both ends of the neon street: Lantern Row west, the spaceport east. Each comes
 back to the street by `THE NEON STREET` (Lantern Row's at (63, 11) to the street's [1, 10], the spaceport's at (0, 11) to
-[58, 10]); the street's own two edges (0, 10) and (59, 10) are wired to them — arriving at [62, 11] and [1, 11] — once
-the street's rebuild lands (it owns `scenes/arcadia_street.py` until then). Kits: `assets_oldquarter.py` (the old quarter: `shophouse` — a timber
+[58, 10]); the street's own two edges (0, 10) and (59, 10) lead to them, arriving at [62, 11] and [1, 11]. The ground is
+the rebuilt street's own (`assets_arcadia_rich.py`: `paving`, `kerb`, `bollard`, `tactile`, `hazard_stripes`,
+`floodlight`, `windsock`, and wet after the rain, `k.wet`), so the seams with the street match: Lantern Row's setts are
+`paving` slabs of warm stone in a running bond, the street's own paving where its east end meets it; the spaceport's
+concourse starts in the forecourt's big dark slabs and runs on in the street's paving. Kits: `assets_oldquarter.py` (the old quarter: `shophouse` — a timber
 ground floor `lattice` / `open` / `shutter`, a tiled pent over it, a framed or slatted upper floor, a **front gable**
 `gable_roof` toward the lane, because a roof whose eave faces the camera hides the whole facade at 45° — `tile_roof` for
 the eave-on kind where nothing's behind it, `pent`, `noren`, `lattice`, `stone_lantern`, `torii`, `shimenawa`,
-`goldfish_stall`, `market_stall`, `sake_barrels`, `potted_plant`, `cat`, `bicycle`, and the Loop's `viaduct` and
+`goldfish_stall`, `market_stall`, `awning` — stripes that sag into folds between the ribs, rolled at the back, a
+scalloped valance along the front — `sake_barrels`, `potted_plant`, `cat`, `bicycle`, and the Loop's `viaduct` and
 `station_block`, shared with the spaceport) and `assets_spaceport.py` (`apron` slabs and stains, `bay_marks`, `hauler`
-and `container_ship` freighters on their legs, `floodlight` masts, the air cab and its `cab_pad`).
+and `container_ship` freighters on their legs — plated flanks and backs (`plates_side`, `plates_top`), `hatch`es, grime
+and rust run down them (`streaks`), soot round the engines (`scorch`), their names painted on the flank and across the
+back, cargo spilled off the ramp (`spill`) — `floodlight` masts with a beacon, `beacon`, `landing_lights` round each
+berth, the air cab and its `cab_pad`). **The viaduct** is the thing it is: a deck poured in spans between deep edge beams
+with stiffeners and a drip line, a strip of cyan light under the front beam pooling down onto the roofs, ballast,
+sleepers and two rails, a low front parapet so the train shows over it, catenary masts, cantilevers, wires and droppers,
+and piers of twin columns with a hammerhead and cross-bracing standing behind the houses (`gaps` leaves a station's own
+deck to `station_block`). It runs at z 5, low over the roofs, and each place frames above you (`cameraLead` −4), so the
+Loop's train is seen pulling into the station from the lane: the station's platform is out in front of the track — its
+yellow line and tactile strip, benches, lamps, the name board and a light canopy over the platform only — and its
+`loop.track` z is where the train sprite's rails land on ours (0.3625 + 0.7071 × the rails' z: the sprite is drawn by
+screen rows, the scene by world height).
 - **Lantern Row** (`arcadia-oldquarter`, `scenes/arcadia_oldquarter.py`, 64 × 20, a backdrop world under the skyline):
   the District before the towers — wet stone setts under strings of paper lanterns, two-storey shophouses under curved
   tile roofs: Granny Ume's tea house open to the lane (a raised tatami floor, low tables, the kettle steaming; TEA HOUSE
@@ -945,7 +960,7 @@ and `container_ship` freighters on their legs, `floodlight` masts, the air cab a
   (`goldfish`, js/oldquarter.js: 5 coins a paper net, now and then a goldfish in a bag, a gift), greens, dried goods,
   the charm stall, a yakitori cart, fruit — a red parasol over the tea house's bench, a little Jizo between two stone
   lanterns; along the railing a promenade of benches over the drop (seats with the skyline view) and a coin viewer. The
-  Loop's viaduct strides over the roofs the whole width (`loop.track` [29.2, 37.2, 6.2, 6.0]: js/transit.js stops the
+  Loop's viaduct strides over the roofs the whole width (`loop.track` [29.2, 37.2, 6.2, 4.02]: js/transit.js stops the
   train between the station's portals). People: `ume`, `lanternmaker`, `hoshi`, `keiko` (sheets `npc-*`, portraits,
   gifts.js). Crowd: the `lantern` wardrobe (older folk, indigo and rust, paper umbrellas). Music: the `lantern` theme
   (a slow plucked line over a warm pad) over rain and murmur.
@@ -964,7 +979,7 @@ and `container_ship` freighters on their legs, `floodlight` masts, the air cab a
   **the Core Express** — the deep lift's tower, as wide as a street, rising out of sight, passenger doors and a striped
   freight door (`express_lift` shaft `core` lobby `spaceport` at (25, 8), spawn [25, 10]; Workstream C adds the
   Undercity and Sump stops to `core` in `assets/arcadia-lifts.json`), Halcyon Freight and its departures board, the Loop's
-  **Spaceport station** (`loop_station` `spaceport` at (41, 8), spawn [41, 10]; `loop.track` [37.2, 45.2, 6.2, 6.0]), the
+  **Spaceport station** (`loop_station` `spaceport` at (41, 8), spawn [41, 10]; `loop.track` [37.2, 45.2, 6.2, 4.02]), the
   Spacer's Rest (capsule bunks), the engine shop — then the crew line and the apron: **the Old Mercy** (a battered bulk
   hauler on her legs, her ramp down and crates spilling off it; Captain Desh, `desh`, by it), **the Halcyon IX** (a
   corporate container carrier under a gantry crane), **the Slow Hazard** (small, rusty, destination ???), and **the air
