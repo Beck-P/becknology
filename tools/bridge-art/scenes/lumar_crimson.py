@@ -178,7 +178,7 @@ def hammock(a, b, col='#c8b48a'):
 
 hammock((38.3, 28.6), (39.9, 28.9))
 # a cannon dragged up the beach, pointing out to sea, a pyramid of shot beside it
-CAN = (33.9, 33.1)
+CAN = (37.4, 32.9)                       # (off the fish auction's boxes and the sea glass at (34, 33))
 k.box(CAN[0] - 0.32, CAN[1] - 0.22, 0.08, CAN[0] + 0.32, CAN[1] + 0.22, 0.28, ('#5a3418', 0.2), 'gun_carriage')
 for (dx, dr) in ((-0.22, -0.24), (0.22, -0.24), (-0.22, 0.24), (0.22, 0.24)):
     k.cyl_x(CAN[0] + dx - 0.03, CAN[0] + dx + 0.03, CAN[1] + dr, 0.12, 0.12, 0.12, ('#3a2410', 0.2), 'gun_wheel', verts=10)
@@ -358,11 +358,12 @@ for _ in range(90):
             k.sphere(mx, mr, hh, 0.05, 0.03, ('#c03028', 0.3), 'toadstool', segs=8)
     else:
         WL.heather(k, x, r, s=0.2, tone='#a03048')
-for (x0, x1, r) in ((39.0, 40.6, 24.2), (47.2, 48.5, 13.8)):
-    k.cyl_x(x0, x1, r, 0.14, 0.14, 0.13, ('#4a2e22', 0.25), 'fallen_log', verts=10)
-    k.cyl_x(x0 - 0.01, x0, r, 0.14, 0.12, 0.11, '#a07a54', 'log_end', verts=10)
-    k.blob((x0 + x1) / 2, r, 0.25, (x1 - x0) * 0.3, 0.1, 0.04, ('#5a4a2a', 0.3), 'log_moss', segs=8)
-    k.solid(x0, r - 0.15, x1, r + 0.15)
+for (x0, x1, r) in ((39.0, 40.6, 24.2), (47.2, 48.5, 13.8)):            # fallen pines (the Look Book's log)
+    WL.log(k, x0, x1, r, 0.2, bark='#4a2e22', moss='#7a5a3a', seed=int(x0))
+WL.leaf_litter(k, 37.5, 11.5, 50.5, 25.5, 260, ok=lambda x, r: (int(x), int(r)) in walk and pd(x, r) > 0.6,
+               cols=('#7a3a24', '#8a4a2a', '#5a2e1e', '#9a5a32'), seed=812)                # needles and cones under the pines
+for i, path in enumerate(PATHS):                                            # stones edging the paths
+    WL.path_stones(k, path, tone='#5a5054', seed=820 + i)
 SHRINE = (44.0, 16.5)
 k.box(SHRINE[0] - 0.5, SHRINE[1] - 0.4, 0.0, SHRINE[0] + 0.5, SHRINE[1] + 0.4, 0.5, ('#5a5458', 0.22), 'shrine_base', bevel=0.03)
 for zz in (0.12, 0.26, 0.4):                          # its stone courses
@@ -405,7 +406,11 @@ placed = []
 for (x, r) in LIP:
     if len(placed) < 34 and all(math.hypot(x - a, r - b) > 2.3 for (a, b) in placed):
         placed.append((x, r))
-        WL.boulder(k, x, r, s=rng.uniform(0.22, 0.42), tone='#4a4044', moss='#6a3a2e', z=-0.03, tufts='#8a4a3a')
+        WL.boulder(k, x, r, s=rng.uniform(0.22, 0.42), tone='#4a4044', moss='#6a3a2e', z=-0.03, tufts='#8a4a3a', solid=False)
+
+k.later.insert(0, lambda: WL.merge_parts(k))               # before the grass
+k.later.append(lambda: WL.merge_parts(k))                  # and after it
+WL.fast_top(k)                                             # the grass's rays: one BVH tree, not every object in turn
 
 # ---- scatter: tufts and pebbles over the open ground --------------------------------------------------------------------
 busy = lambda x, r: pd(x, r) < 0.6

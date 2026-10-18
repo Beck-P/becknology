@@ -302,9 +302,10 @@ with WL.own_dice(k, 2201) as kr:
                 x = xe
             z = zt
         k.blob((x0 + x1) / 2, 18.2, top, (x1 - x0) * 0.45, 0.16, 0.05, ('#3e5240', 0.3), 'wall_moss', segs=8)
-    for i, (x, r) in enumerate(((39.6, 20.6), (40.2, 20.9), (40.85, 21.1))):          # the fallen column, drum by drum
+    for i, (x, r) in enumerate(((43.3, 21.75), (43.9, 22.0), (44.5, 22.15))):         # the fallen column, drum by drum (clear of the
+                                                                                      # abbot's tithe at (41, 21), js/treasure.js)
         k.cyl_x(x - 0.24, x + 0.24, r, 0.2, 0.2, 0.2, (shade('#625c74', kr.uniform(0.9, 1.08)), 0.15), 'column_drum', verts=12)
-    k.solid(39.3, 20.45, 41.05, 21.2)
+    k.solid(43.06, 21.6, 44.74, 22.35)
     k.cyl(44.8, 20.4, 0.0, 0.45, 0.28, ('#5e5870', 0.15), 'font', verts=10)
     k.cyl(44.8, 20.4, 0.42, 0.47, 0.24, ('#141026', 0.1), 'font_water', verts=10)
     k.solid(44.5, 20.1, 45.1, 20.7)
@@ -378,9 +379,17 @@ with WL.own_dice(k, 2301) as kr:
                 and not (FJ[0] - 1 < x < FJ[0] + FLEN + 1 and FJ[1] - 1 < r < FJ[1] + 2) \
                 and len(placed) < 30 and all(math.hypot(x - a, r - b) > 2.3 for (a, b) in placed):
             placed.append((x, r))
-            WL.boulder(k, x, r, s=kr.uniform(0.22, 0.42), tone='#4a4658', moss='#30403a', z=-0.03, tufts='#3e4a48')
+            WL.boulder(k, x, r, s=kr.uniform(0.22, 0.42), tone='#4a4658', moss='#30403a', z=-0.03, tufts='#3e4a48', solid=False)
     for (x, r) in trees:                                # moss and lichen at the trees' feet
         k.blob(x + 0.15, r + 0.2, 0.0, 0.3, 0.2, 0.03, ('#30403a', 0.3), 'moss', segs=8)
+for i, path in enumerate(PATHS):                           # the Look Book's stones along the paths, litter under the trees
+    WL.path_stones(k, path, tone='#5a5668', seed=2600 + i)
+WL.leaf_litter(k, 4, 6, 48, 31, 220, ok=lambda x, r: (int(x), int(r)) in walk and pd(x, r) > 0.7 and not on_way(x, r, 0.3)
+               and any(math.hypot(x - a, r - b) < 1.3 for (a, b) in trees), cols=('#4a3a3a', '#5a4a40', '#3a3040', '#6a5a4a'), seed=2610)
+k.later.insert(0, lambda: WL.merge_parts(k))               # before the grass
+k.later.append(lambda: WL.merge_parts(k))                  # and after it
+WL.fast_top(k)                                             # the grass's rays: one BVH tree, not every object in turn
+
 k.area_light(26.0, 16.0, 16.0, '#7a78b8', 2000, 40.0, rot=(math.radians(-35), 0, 0))     # a thin moon
 k.point_light(24.5, 18.0, 4.0, '#c0b0ff', 40, radius=1.5)
 
