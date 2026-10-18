@@ -813,6 +813,66 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#f4f0e8', [[2, 6, 6, 6], [9, 3, 5, 5]]);
     px(ctx, x, y, u, '#c01a24', [[3, 7, 1, 1], [6, 10, 1, 1], [4, 9, 1, 1], [11, 5, 1, 1], [10, 4, 1, 1], [12, 6, 1, 1]]);
   }
+  // ---- Arcadia below (js/undercity.js): skewers, a cup, a glass, scrap, a board, chrome, a pearl ----------------------------
+  function underSkewerIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#c8b890', [[2, 13, 12, 1], [3, 12, 1, 1]]);
+    px(ctx, x, y, u, '#2a1a10', [[3, 9, 3, 3], [7, 8, 3, 3], [11, 7, 3, 3]]);
+    px(ctx, x, y, u, '#a05a30', [[4, 9, 2, 2], [8, 8, 2, 2], [12, 7, 2, 2]]); px(ctx, x, y, u, '#e0a050', [[4, 9, 1, 1], [8, 8, 1, 1], [12, 7, 1, 1]]);
+    px(ctx, x, y, u, '#c8b890', [[2, 12, 1, 1], [6, 11, 1, 1], [10, 10, 1, 1], [14, 8, 1, 1]]);
+  }
+  function underCupIcon(liquid, cup) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#2a1a10', [[3, 5, 9, 1], [3, 6, 1, 7], [11, 6, 1, 7], [4, 13, 7, 1], [12, 7, 2, 1], [13, 8, 1, 3], [12, 11, 2, 1]]);
+      px(ctx, x, y, u, cup, [[4, 6, 7, 7]]); px(ctx, x, y, u, liquid, [[4, 6, 7, 2]]);
+      px(ctx, x, y, u, 'rgba(240,240,255,0.6)', [[6, 1, 1, 3], [9, 2, 1, 2]]);
+    };
+  }
+  function underGlassIcon(drink, foam) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#2a1a10', [[4, 2, 1, 12], [11, 2, 1, 12], [5, 14, 6, 1]]);
+      px(ctx, x, y, u, drink, [[5, 4, 6, 10]]); px(ctx, x, y, u, foam, [[5, 2, 6, 2]]);
+      px(ctx, x, y, u, 'rgba(255,255,255,0.5)', [[6, 5, 1, 7]]);
+    };
+  }
+  function scrapIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1410', [[2, 6, 9, 7], [8, 3, 6, 6]]);
+    px(ctx, x, y, u, '#6a3a22', [[3, 7, 7, 5]]); px(ctx, x, y, u, '#8a8a90', [[9, 4, 4, 4]]); px(ctx, x, y, u, '#b0b0b8', [[9, 4, 4, 1]]);
+    px(ctx, x, y, u, '#c87a40', [[4, 8, 2, 1], [7, 10, 2, 1]]);
+  }
+  function circuitIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1a10', [[2, 3, 12, 10]]); px(ctx, x, y, u, '#1e6a3a', [[3, 4, 10, 8]]);
+    px(ctx, x, y, u, '#141418', [[6, 6, 4, 4]]); px(ctx, x, y, u, '#e8c040', [[4, 5, 2, 1], [10, 9, 2, 1], [4, 10, 1, 1], [11, 5, 1, 1], [5, 7, 1, 2]]);
+  }
+  function chromeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#14161a', [[3, 4, 10, 4], [10, 3, 4, 10]]);
+    px(ctx, x, y, u, '#a8b0b8', [[4, 5, 8, 2], [11, 4, 2, 8]]); px(ctx, x, y, u, '#e8f0f8', [[4, 5, 8, 1], [11, 4, 1, 8]]);
+    px(ctx, x, y, u, '#5a6068', [[10, 5, 2, 2]]);
+  }
+  function sumpPearlIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a2020', [[5, 4, 6, 8], [4, 5, 8, 6]]);
+    px(ctx, x, y, u, '#60c0b0', [[5, 5, 6, 6]]); px(ctx, x, y, u, '#a8f0e0', [[6, 5, 3, 2]]); px(ctx, x, y, u, '#ffffff', [[6, 5, 1, 1]]);
+  }
+  function filletIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1a18', [[2, 6, 12, 5]]); px(ctx, x, y, u, '#3a8a7a', [[3, 7, 10, 3]]); px(ctx, x, y, u, '#e8a0a0', [[4, 8, 8, 1]]);
+  }
+  function knuckleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#14100c', [[2, 5, 12, 6]]); px(ctx, x, y, u, '#b8c0c8', [[3, 6, 10, 4]]);
+    px(ctx, x, y, u, '#e8f0f8', [[3, 6, 2, 1], [6, 6, 2, 1], [9, 6, 2, 1]]); px(ctx, x, y, u, '#ff7a2a', [[12, 9, 1, 1]]);
+  }
+  function heartIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#14100c', [[3, 4, 4, 2], [9, 4, 4, 2], [2, 5, 12, 4], [3, 9, 10, 2], [5, 11, 6, 2], [7, 13, 2, 1]]);
+    px(ctx, x, y, u, '#c89a30', [[4, 5, 3, 1], [9, 5, 3, 1], [3, 6, 10, 3], [4, 9, 8, 2], [6, 11, 4, 1]]); px(ctx, x, y, u, '#60ffd0', [[7, 7, 2, 2]]);
+  }
   function fizzIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1a3a', [[4, 3, 8, 1], [4, 4, 1, 9], [11, 4, 1, 9], [5, 13, 6, 1]]);
@@ -1513,6 +1573,39 @@ var BridgeItems = (function () {
     // Club Void's bar (js/dance.js)
     void_fizz:     { id: 'void_fizz', name: 'Void Fizz', desc: 'Purple, fizzing, faintly glowing under the lights. Tastes like a bassline. Energy.', type: 'drink',
                      stackable: true, draw: fizzIcon, effects: { energy: 30 }, value: 4, onUse: consumableUse },
+    // Arcadia below (js/undercity.js): what the Undercity and the Sump cook and pour, and what you take off what you fight
+    roo_broth:     { id: 'roo_broth', name: "Mama Roo's Broth", desc: 'Bone broth that has been on the boil since before the District was built on top of it. Noodles, greens, an egg. Energy and health.', type: 'food',
+                     stackable: true, draw: bowlIcon('#a86a30', '#e8d070'), effects: { energy: 35, hp: 20 }, value: 4, onUse: consumableUse },
+    char_skewers:  { id: 'char_skewers', name: 'Char Skewers', desc: 'Three skewers off the coals, glazed and blackened at the edges. Do not ask what. Energy.', type: 'food',
+                     stackable: true, draw: underSkewerIcon, effects: { energy: 30 }, value: 3, onUse: consumableUse },
+    steam_dumplings: { id: 'steam_dumplings', name: 'Steam Dumplings', desc: 'Six to a basket, thin skins, hot broth inside. Energy and a little health.', type: 'food',
+                     stackable: true, draw: bowlIcon('#e8d8b0', '#f8f0e0'), effects: { energy: 25, hp: 10 }, value: 3, onUse: consumableUse },
+    kopi:          { id: 'kopi', name: 'Kopi', desc: 'Black coffee pulled through a sock, sweet with condensed milk. Energy.', type: 'drink',
+                     stackable: true, draw: underCupIcon('#5a3018', '#e8e0d0'), effects: { energy: 20 }, value: 2, onUse: consumableUse },
+    sump_laksa:    { id: 'sump_laksa', name: "Teo's Laksa", desc: 'Old Teo\'s curry noodles, cooked on his boat on the black water. Hot enough to see by. Energy and health.', type: 'food',
+                     stackable: true, draw: bowlIcon('#d8701a', '#f0c040'), effects: { energy: 45, hp: 30 }, value: 6, onUse: consumableUse },
+    drip_lager:    { id: 'drip_lager', name: 'Drip Lager', desc: 'The Drip\'s own, brewed somewhere you would rather not know. Cold, at least. Energy.', type: 'drink',
+                     stackable: true, draw: underGlassIcon('#d8a030', '#f8f0e0'), effects: { energy: 15 }, value: 2, onUse: consumableUse },
+    foundry_tonic: { id: 'foundry_tonic', name: 'Foundry Tonic', desc: 'Orange, bitter, it glows under the red lights. The Foundry\'s dancers live on it. Energy.', type: 'drink',
+                     stackable: true, draw: underGlassIcon('#ff6a20', '#ffd0a0'), effects: { energy: 35 }, value: 4, onUse: consumableUse },
+    pit_rotgut:    { id: 'pit_rotgut', name: 'Pit Rotgut', desc: 'A short glass of something brown from the bar over the Pit. It burns all the way down and then you feel fine. Health and energy.', type: 'drink',
+                     stackable: true, draw: underGlassIcon('#7a4010', '#a86a30'), effects: { energy: 15, hp: 20 }, value: 3, onUse: consumableUse },
+    glow_shot:     { id: 'glow_shot', name: 'Glow Shot', desc: 'From the rave in the drowned station: a test tube of teal light. Energy, a lot of it.', type: 'drink',
+                     stackable: true, draw: stimIcon, effects: { energy: 60 }, value: 6, onUse: consumableUse },
+    scrap_metal:   { id: 'scrap_metal', name: 'Scrap Metal', desc: 'A rusted plate, a bent bracket, a fistful of bolts. Gage at the scrap trader\'s buys it by the piece.', type: 'material',
+                     stackable: true, draw: scrapIcon, value: 3 },
+    circuit:       { id: 'circuit', name: 'Circuit Board', desc: 'Pulled out of something that used to think. Gage pays for them; Doc Sallow wants them.', type: 'material',
+                     stackable: true, draw: circuitIcon, value: 12 },
+    chrome_part:   { id: 'chrome_part', name: 'Chrome Part', desc: 'A servo, a joint, a length of artificial tendon. Somebody\'s, once. Gage pays well; Sallow pays better in trade.', type: 'material',
+                     stackable: true, draw: chromeIcon, value: 25 },
+    sump_pearl:    { id: 'sump_pearl', name: 'Sump Pearl', desc: 'A pearl grown in the Sump\'s black water round a grain of something that glows. Teal all the way through.', type: 'material',
+                     stackable: true, draw: sumpPearlIcon, value: 90 },
+    eel_fillet:    { id: 'eel_fillet', name: 'Eel Fillet', desc: 'A sump eel\'s, faintly luminous. Old Teo will take it off you for the pot.', type: 'material',
+                     stackable: true, draw: filletIcon, value: 8 },
+    ruin_knuckles: { id: 'ruin_knuckles', name: "Ruin's Knuckles", desc: 'Saint Ruin\'s chrome fist, still warm. Doc Sallow can fit it to your own arm: it hits like his did, and it never glitches.', type: 'material',
+                     stackable: true, draw: knuckleIcon, value: 300 },
+    dredge_heart:  { id: 'dredge_heart', name: "The Dredge's Heart", desc: 'The dredger\'s core, a sealed gold housing that still hums. Doc Sallow can put it in you.', type: 'material',
+                     stackable: true, draw: heartIcon, value: 500 },
     // the Spires (Arcadia L480): the tea salon, Aurelle
     jasmine_pearls: { id: 'jasmine_pearls', name: 'Jasmine Pearls', desc: 'A pot of rolled jasmine tea from the Spires\' tea salon: the pearls open as you watch. Energy, and calm.', type: 'drink',
                      stackable: true, draw: teaPotIcon, effects: { energy: 30, hp: 10 }, value: 8, onUse: consumableUse },

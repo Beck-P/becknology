@@ -56,6 +56,28 @@ var BridgeCombat = (function () {
                 drops: [{ id: 'stone_shard', min: 1, max: 1, chance: 0.5 }] },
     warden:   { label: 'THE BELL WARDEN', hp: 420, damage: 15, move: 1100, aggro: 7, windup: 820, recover: 1000, reach: 2, reward: 120, boss: true,
                 drops: [{ id: 'moonstone', min: 1, max: 2 }, { id: 'songstone', min: 1, max: 1, chance: 0.5 }] },
+    // Arcadia below (js/undercity.js spawns them): tougher the lower you go. The Undercity — the Rust Saints on their
+    // turf and in the scrapyards (people, drawn from their own sheets with a pipe or a knife), scrap rats in the heaps,
+    // Saint Ruin their boss once a day. The Sump — scavenger drones (a bolt down a line), sump eels out of the black
+    // water, husks (chromed-over drifters that blink), and once a day the Dredge, a dredger gone feral.
+    saint:      { label: 'RUST SAINT', hp: 70, damage: 9, move: 720, aggro: 6, windup: 460, recover: 700, reward: 9, sheet: 'npc-saint-a', arm: 'pipe',
+                  drops: [{ id: 'scrap_metal', min: 1, max: 2, chance: 0.7 }, { id: 'circuit', min: 1, max: 1, chance: 0.2 }] },
+    shiv:       { label: 'RUST SAINT', hp: 54, damage: 8, move: 420, aggro: 7, windup: 330, recover: 560, reward: 8, sheet: 'npc-saint-b', arm: 'knife',
+                  drops: [{ id: 'scrap_metal', min: 1, max: 1, chance: 0.5 }, { id: 'chrome_part', min: 1, max: 1, chance: 0.15 }] },
+    scraprat:   { label: 'SCRAP RAT', hp: 30, damage: 6, move: 330, aggro: 6, windup: 300, recover: 500, reward: 4,
+                  drops: [{ id: 'scrap_metal', min: 1, max: 1, chance: 0.5 }] },
+    ruin:       { label: 'SAINT RUIN', hp: 560, damage: 17, move: 900, aggro: 7, windup: 760, recover: 900, reach: 2, reward: 150, boss: true,
+                  sheet: 'npc-saint-boss', arm: 'fist', slam: true, calls: 'saint', title: ['Saint Ruin', 'The Rust Saints\' boss cracks his chrome knuckles', 'Watch the ground round where he looks'],
+                  drops: [{ id: 'chrome_part', min: 2, max: 3 }, { id: 'circuit', min: 1, max: 2 }] },
+    drone:      { label: 'SCAV DRONE', hp: 62, damage: 12, move: 520, aggro: 8, windup: 520, strike: 360, recover: 760, range: 4, reward: 12, fly: true,
+                  drops: [{ id: 'circuit', min: 1, max: 1, chance: 0.6 }, { id: 'chrome_part', min: 1, max: 1, chance: 0.2 }] },
+    eel:        { label: 'SUMP EEL', hp: 120, damage: 15, move: 640, aggro: 6, windup: 420, recover: 780, reward: 14,
+                  drops: [{ id: 'eel_fillet', min: 1, max: 1, chance: 0.6 }, { id: 'sump_pearl', min: 1, max: 1, chance: 0.12 }] },
+    husk:       { label: 'HUSK', hp: 150, damage: 16, move: 820, aggro: 6, windup: 560, recover: 820, blink: 0.25, reward: 16, sheet: 'npc-husk', arm: 'claw',
+                  drops: [{ id: 'chrome_part', min: 1, max: 2, chance: 0.6 }, { id: 'circuit', min: 1, max: 1, chance: 0.3 }] },
+    dredge:     { label: 'THE DREDGE', hp: 900, damage: 22, move: 1100, aggro: 8, windup: 880, recover: 1000, reach: 2, reward: 260, boss: true,
+                  slam: true, calls: 'drone', title: ['The Dredge', 'A dredger the size of a room hauls itself out of the black water', 'Its scoop comes down over three tiles: read the ground'],
+                  drops: [{ id: 'sump_pearl', min: 1, max: 2 }, { id: 'chrome_part', min: 2, max: 4 }, { id: 'circuit', min: 2, max: 3 }] },
     // the Crimson and Midnight seas, grown (Workstream B2): the volcano on Cinder Key, drowned Saltmere, the ghost ship
     imp:      { label: 'EMBER IMP', hp: 34, damage: 7, move: 360, aggro: 8, windup: 420, strike: 340, recover: 700, range: 3, reward: 7,
                 drops: [{ id: 'ember_glass', min: 1, max: 1, chance: 0.45 }] },
@@ -74,6 +96,7 @@ var BridgeCombat = (function () {
               moveCooldown: C.move, aggroRange: C.aggro, windupMs: C.windup, strikeMs: C.strike || 180, recoverMs: C.recover || 650,
               range: C.range || 0, reach: C.reach || 1, blink: C.blink || 0, boss: !!C.boss,
               reward: C.reward, drops: C.drops, _rx: x, _ry: y, seed: Math.random() * 100 };
+    if (C.slam) h.slams = true;
     // its name on the wire (js/fight.js): kind and where it first stood, the same in everyone's copy of the place
     h.fid = kind + '@' + x + ',' + y;
     for (var n = 2; world.interactions.some(function (o) { return o.fid === h.fid; }); n++) h.fid = kind + '@' + x + ',' + y + '#' + n;
@@ -96,6 +119,7 @@ var BridgeCombat = (function () {
 
   // the shadow under a creature: an oval of whole pixels on the ground ([half its width in u, how dark])
   var SHADOW = { mite: [5, 0.3], crab: [7, 0.3], shade: [5, 0.25], sentinel: [7, 0.35], wisp: [3, 0.18], wight: [5, 0.3], hound: [7, 0.3], warden: [10, 0.4],
+                 saint: [6, 0.32], shiv: [6, 0.32], scraprat: [5, 0.3], ruin: [9, 0.4], drone: [4, 0.2], eel: [7, 0.3], husk: [6, 0.32], dredge: [14, 0.45],
                  imp: [3, 0.2], magma: [9, 0.4], drowned: [5, 0.3], spectre: [5, 0.15] };
   function feet(ctx, h, cx, footY, ts) {
     var s = SHADOW[h.creature];
@@ -104,6 +128,43 @@ var BridgeCombat = (function () {
     var bl = h._blinkAt ? Math.min(1, (performance.now() - h._blinkAt) / 350) : 1;
     ctx.fillStyle = 'rgba(0,0,0,' + (s[1] * bl).toFixed(3) + ')';
     BridgeFX.disc(ctx, Math.round(cx) + (lunge ? Math.round((t.x - h.x) * 3 * u) : 0), Math.round(footY) - u + (lunge ? Math.round((t.y - h.y) * 3 * u) : 0), r, 2 / r);
+  }
+
+  // ---- people who fight (the Rust Saints, the husks): their own painted sheets (characters.py), walking when they move,
+  // leaning into a wind-up, and what's in their hand drawn over them — a pipe, a knife, a fist of chrome, a claw
+  var SHEETS = {}, FW = 32, FH = 48, ROW = { down: 0, right: 1, up: 2, left: 3 };
+  function sheetImg(n) {
+    if (!SHEETS[n]) { var e = SHEETS[n] = { img: new Image(), ready: false }; e.img.onload = function () { e.ready = true; }; e.img.src = '/bridge/assets/characters/' + n + '.png'; }
+    return SHEETS[n];
+  }
+  function person(ctx, h, u, t, wind, strike, ts) {
+    var C = CREATURES[h.creature], sh = sheetImg(C.sheet), dir = h._dir || 'down', k = ts / 32;
+    var moving = h._ry !== h.y || h._rx !== h.x;
+    var col = moving ? 4 + Math.floor(t * 9) % 8 : [0, 1, 2, 1][Math.floor(t * 2.8) % 4];
+    var lean = wind ? -1 : strike ? 2 : 0, side = dir === 'left' ? -1 : 1;
+    if (sh.ready) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(sh.img, col * FW, ROW[dir] * FH, FW, FH, Math.round(-16 * k + (dir === 'left' || dir === 'right' ? lean * side * u : 0)),
+                    Math.round(-45 * k + (dir === 'down' ? lean * u : dir === 'up' ? -lean * u : 0)), FW * k, FH * k);
+    } else { px(ctx, -4 * u, -16 * u, 8 * u, 16 * u, '#2a1a14'); }
+    if (dir === 'up') return;                                                   // from behind, the weapon's hidden by them
+    var hx = (dir === 'down' ? 6 : dir === 'right' ? 4 : -5) * u, hy = -9 * u, OL = '#0a0808';
+    var raise = wind ? -8 : strike ? 3 : 0;
+    if (C.arm === 'pipe') {
+      var top = hy + (raise - 8) * u;
+      px(ctx, hx - 1 * u, top, 3 * u, hy - top + 2 * u, OL); px(ctx, hx, top + 1 * u, 1 * u, hy - top, '#8a8a90');
+      px(ctx, hx - 2 * u, top - 1 * u, 5 * u, 3 * u, OL); px(ctx, hx - 1 * u, top, 3 * u, 1 * u, '#b07a40');
+    } else if (C.arm === 'knife') {
+      var ky = hy + raise * u;
+      px(ctx, hx - 1 * u, ky - 5 * u, 3 * u, 7 * u, OL); px(ctx, hx, ky - 4 * u, 1 * u, 4 * u, '#e8e8f0'); px(ctx, hx, ky, 1 * u, 2 * u, '#5a3a20');
+    } else if (C.arm === 'fist') {
+      var fy = hy + raise * u;
+      px(ctx, hx - 2 * u, fy - 1 * u, 5 * u, 5 * u, OL); px(ctx, hx - 1 * u, fy, 3 * u, 3 * u, '#b8c0c8'); px(ctx, hx - 1 * u, fy, 3 * u, 1 * u, '#e8f0f8');
+      if (wind) { ctx.globalAlpha = 0.6; px(ctx, hx - 1 * u, fy - 3 * u, 3 * u, 1 * u, '#ff7a2a'); ctx.globalAlpha = 1; }
+    } else if (C.arm === 'claw') {
+      var cy = hy + raise * u;
+      for (var c = 0; c < 3; c++) { px(ctx, hx + (c - 1) * 2 * u, cy, 1 * u, 4 * u, OL); px(ctx, hx + (c - 1) * 2 * u, cy, 1 * u, 3 * u, '#a0c8ff'); }
+    }
   }
 
   // draws one creature into ctx with its feet at (cx, footY), u = one 16th of a tile; bare: leave its shadow and health
@@ -230,6 +291,62 @@ var BridgeCombat = (function () {
       px(ctx, 5 * u, hy - 2 * u, 1 * u, 2 * u, OL); px(ctx, 7 * u, hy - 2 * u, 1 * u, 2 * u, OL);               // ears up
       px(ctx, 7 * u, hy + 1 * u, 1 * u, 1 * u, eye || '#c080ff');
       px(ctx, -9 * u, -9 * u + cr + Math.round(st) * u, 2 * u, 1 * u, OL); px(ctx, -10 * u, -10 * u + cr + Math.round(st) * u, 1 * u, 1 * u, OL);   // tail
+    } else if (CREATURES[h.creature] && CREATURES[h.creature].sheet) {
+      person(ctx, h, u, t, wind, strike, ts);
+    } else if (h.creature === 'scraprat') {
+      ctx.scale(h._face || 1, 1);
+      var rmv = h._ry !== h.y || h._rx !== h.x, rs = rmv ? Math.round(Math.sin(t * 26)) : 0, RO = '#0c0a0a', RB = '#5a4a3a', RM = '#8a8070';
+      px(ctx, -6 * u, -5 * u, 11 * u, 4 * u, RO); px(ctx, -5 * u, -5 * u, 9 * u, 3 * u, RB); px(ctx, -5 * u, -5 * u, 9 * u, 1 * u, RM);   // a body of scrap plates
+      px(ctx, -2 * u, -6 * u, 1 * u, 1 * u, RM); px(ctx, 1 * u, -6 * u, 1 * u, 1 * u, RM);                                               // rivets
+      px(ctx, 4 * u, -6 * u + (wind ? -1 * u : 0), 4 * u, 3 * u, RO); px(ctx, 5 * u, -5 * u + (wind ? -1 * u : 0), 2 * u, 1 * u, RB);     // the head
+      px(ctx, 6 * u, -5 * u + (wind ? -1 * u : 0), 1 * u, 1 * u, eye || '#ff9030');
+      if (wind || strike) px(ctx, 8 * u, -4 * u, 1 * u, 1 * u, '#e8e0d0');
+      px(ctx, -9 * u, -4 * u, 3 * u, 1 * u, RO); px(ctx, -10 * u, -5 * u, 1 * u, 1 * u, RO);                                              // a cable tail
+      px(ctx, -4 * u + rs * u, -1 * u, 1 * u, 1 * u, RO); px(ctx, 2 * u - rs * u, -1 * u, 1 * u, 1 * u, RO);
+    } else if (h.creature === 'drone') {
+      var dz = -16 * u + Math.round(Math.sin(t * 3.2) * 1.5) * u, sp = Math.floor(t * 30) % 2;
+      var DO = '#08080c', DB = '#4a4e58', DL = '#7a808c';
+      px(ctx, -7 * u, dz - 1 * u, 14 * u, 4 * u, DO); px(ctx, -6 * u, dz - 1 * u, 12 * u, 3 * u, DB); px(ctx, -6 * u, dz - 1 * u, 12 * u, 1 * u, DL);   // the hull
+      px(ctx, -3 * u, dz + 2 * u, 6 * u, 2 * u, DO); px(ctx, -2 * u, dz + 2 * u, 4 * u, 1 * u, DB);
+      px(ctx, -1 * u, dz + 2 * u, 2 * u, 1 * u, eye || (wind ? '#ffffff' : '#ff3050'));                                                      // the lens
+      [-8, 6].forEach(function (rx) {                                                                                                         // rotors, blurred
+        px(ctx, rx * u, dz - 3 * u, 2 * u, 2 * u, DO);
+        ctx.globalAlpha = 0.5; px(ctx, (rx - 3 + sp) * u, dz - 4 * u, 7 * u, 1 * u, '#a0a8b8'); ctx.globalAlpha = 1;
+      });
+      px(ctx, -5 * u, dz + 3 * u, 1 * u, 3 * u, DO); px(ctx, 4 * u, dz + 3 * u, 1 * u, 3 * u, DO);                                           // grabber arms
+      px(ctx, -6 * u, dz + 5 * u, 2 * u, 1 * u, DO); px(ctx, 4 * u, dz + 5 * u, 2 * u, 1 * u, DO);
+      if (Math.floor(t * 2) % 2) px(ctx, 5 * u, dz - 1 * u, 1 * u, 1 * u, '#ff4060');                                                       // the blink of its running light
+    } else if (h.creature === 'eel') {
+      var EO = '#04100e', EB = '#1a4a44', EL = '#3a8a7a', rise = wind ? 4 : strike ? 7 : 2;
+      for (var es = 0; es < 7; es++) {                                                                                                         // coils on the ground, rising to the head
+        var ex = Math.round(Math.sin(t * 4 + es * 0.9) * 2) + (es - 3) * 2, ey = -2 - (es >= 4 ? (es - 3) * rise / 1.5 : 0);
+        px(ctx, (ex - 2) * u, Math.round(ey - 2) * u, 5 * u, 3 * u, EO); px(ctx, (ex - 1) * u, Math.round(ey - 2) * u, 3 * u, 2 * u, es % 2 ? EB : EL);
+      }
+      var hy2 = Math.round(-4 - 4 * rise / 1.5), hx2 = Math.round(Math.sin(t * 4 + 6 * 0.9) * 2) + 6;
+      px(ctx, (hx2 - 3) * u, (hy2 - 3) * u, 7 * u, 5 * u, EO); px(ctx, (hx2 - 2) * u, (hy2 - 3) * u, 5 * u, 4 * u, EB);
+      px(ctx, (hx2 - 2) * u, (hy2 - 3) * u, 5 * u, 1 * u, EL);
+      px(ctx, (hx2 - 1) * u, (hy2 - 2) * u, 1 * u, 1 * u, eye || '#60ffd0'); px(ctx, (hx2 + 1) * u, (hy2 - 2) * u, 1 * u, 1 * u, eye || '#60ffd0');
+      if (wind || strike) { px(ctx, (hx2 - 2) * u, (hy2 + 1) * u, 5 * u, 2 * u, '#000'); px(ctx, (hx2 - 1) * u, (hy2 + 1) * u, 1 * u, 1 * u, '#e8f0e0'); px(ctx, (hx2 + 1) * u, (hy2 + 1) * u, 1 * u, 1 * u, '#e8f0e0'); }
+      ctx.globalAlpha = 0.6; for (var ed = 0; ed < 3; ed++) { var dp2 = (t * 1.5 + ed / 3) % 1; px(ctx, (ed * 3 - 3) * u, Math.round(-3 - dp2 * 3) * u, 1 * u, 1 * u, '#80ffe0'); } ctx.globalAlpha = 1;
+    } else if (h.creature === 'dredge') {
+      var DK = '#0a0806', HB = '#7a5a18', HL = '#c89a30', HD = '#4a3410', sc2 = wind ? -6 : strike ? 4 : 0, gl = 0.5 + 0.5 * Math.abs(Math.sin(t * 2));
+      for (var tr = 0; tr < 2; tr++) {                                                                                                         // two tracks, crawling
+        var ty = tr ? -4 : -10, off2 = Math.floor(t * 12) % 3;
+        px(ctx, -20 * u, ty * u, 34 * u, 5 * u, DK); px(ctx, -19 * u, (ty + 1) * u, 32 * u, 3 * u, '#2a2a2a');
+        for (var tp = 0; tp < 11; tp++) px(ctx, (-19 + tp * 3 + off2) * u, (ty + 1) * u, 1 * u, 3 * u, '#4a4a48');
+      }
+      px(ctx, -16 * u, -26 * u, 26 * u, 16 * u, DK); px(ctx, -15 * u, -26 * u, 24 * u, 15 * u, HB); px(ctx, -15 * u, -26 * u, 24 * u, 2 * u, HL);   // the hull, hazard yellow gone brown
+      for (var hz = 0; hz < 6; hz++) px(ctx, (-14 + hz * 4) * u, -14 * u, 2 * u, 2 * u, DK);
+      px(ctx, -12 * u, -32 * u, 10 * u, 7 * u, DK); px(ctx, -11 * u, -31 * u, 8 * u, 5 * u, HD);                                            // the cab, its glass gone, eyes in the dark
+      px(ctx, -9 * u, -29 * u, 2 * u, 1 * u, eye || '#ffd040'); px(ctx, -6 * u, -29 * u, 2 * u, 1 * u, eye || '#ffd040');
+      [[-2, -22], [3, -18], [-10, -19], [6, -24]].forEach(function (b) { px(ctx, b[0] * u, b[1] * u, 2 * u, 1 * u, '#3a5a3a'); });          // weed hanging off it
+      px(ctx, 6 * u, (-30 + sc2) * u, 3 * u, 14 * u, DK); px(ctx, 7 * u, (-29 + sc2) * u, 1 * u, 12 * u, HL);                                 // the boom
+      px(ctx, 9 * u, (-34 + sc2) * u, 12 * u, 3 * u, DK); px(ctx, 10 * u, (-33 + sc2) * u, 10 * u, 1 * u, HL);
+      var sy = strike ? -6 : -22 + sc2;                                                                                                        // the scoop
+      px(ctx, 16 * u, sy * u, 9 * u, 8 * u, DK); px(ctx, 17 * u, (sy + 1) * u, 7 * u, 6 * u, '#5a5a58');
+      for (var st2 = 0; st2 < 4; st2++) px(ctx, (17 + st2 * 2) * u, (sy + 8) * u, 1 * u, 2 * u, '#c8c8c0');
+      ctx.globalAlpha = gl * 0.8; px(ctx, -14 * u, -12 * u, 2 * u, 2 * u, '#60ffd0'); px(ctx, 6 * u, -12 * u, 2 * u, 2 * u, '#60ffd0'); ctx.globalAlpha = 1;
+      var dd2 = (t * 2) % 1; ctx.globalAlpha = 0.7 * (1 - dd2); px(ctx, 20 * u, Math.round(sy + 9 + dd2 * 8) * u, 1 * u, 1 * u, '#80c0b0'); ctx.globalAlpha = 1;
     } else if (h.creature === 'imp') {                     // an ember imp: a hot coal with wings, flitting, a tail of sparks
       ctx.scale(h._face || 1, 1);
       var iy = -14 * u + Math.round(Math.sin(t * 7) * 2) * u, wf = Math.sin(t * 24) > 0 ? 1 : 0, IO = '#1a0804';
@@ -382,6 +499,7 @@ var BridgeCombat = (function () {
     h._kind = 'hit';
     if (h.range && d > 1) h._kind = 'bolt';
     if ((h.creature === 'sentinel' || h.creature === 'magma') && h._hp < h.maxHP * 0.5) h._kind = 'slam';
+    if (h.slams && (h._swings = (h._swings || 0) + 1) % 2 === 0) h._kind = 'slam';     // every other blow from Saint Ruin or the Dredge
     if (h.creature === 'warden') {
       h._swings = (h._swings || 0) + 1;
       h._kind = d >= 2 || h._swings % 3 === 0 ? 'toll' : 'slam';
@@ -399,19 +517,20 @@ var BridgeCombat = (function () {
     }
     if (h._kind === 'slam') {
       var cells = [[t.x, t.y], [t.x + 1, t.y], [t.x - 1, t.y], [t.x, t.y + 1], [t.x, t.y - 1]];
-      if (h.creature === 'warden') cells.push([t.x + 1, t.y + 1], [t.x - 1, t.y - 1], [t.x + 1, t.y - 1], [t.x - 1, t.y + 1]);
+      if (h.creature === 'warden' || h.creature === 'dredge') cells.push([t.x + 1, t.y + 1], [t.x - 1, t.y - 1], [t.x + 1, t.y - 1], [t.x - 1, t.y + 1]);
       return cells.filter(function (c) { return c[0] !== h.x || c[1] !== h.y; });
     }
     return [[t.x, t.y]];
   }
   function dangerAt(h, x, y) { return dangerCells(h).some(function (c) { return c[0] === x && c[1] === y; }); }
-  function attackDamage(h) { return Math.round((h.damage || 5) * (h._kind === 'toll' ? 0.85 : h._kind === 'slam' && h.creature === 'sentinel' ? 1.2 : 1)); }
+  function attackDamage(h) { return Math.round((h.damage || 5) * (h._kind === 'toll' ? 0.85 : h._kind === 'slam' && h.creature === 'sentinel' ? 1.2 : h._kind === 'slam' && h.slams ? 0.9 : 1)); }
   // the strike leaves the creature: a bolt flies, a slam shakes the ground, the bell rings out, a bite or a blow rakes
   // the tile it locked onto (js/fx.js spawnStrike, in its own colour)
   var bolts = [], rings = [];
   var RAKE = { mite: '#f070b0', crab: '#80b0ff', shade: '#c090ff', sentinel: '#c49cff', wisp: '#c8a8ff', wight: '#70fff0', hound: '#e8e0d0', warden: '#ffd070',
-               imp: '#ff9040', magma: '#ff6a20', drowned: '#a0ffd0', spectre: '#c0ffff' };
-  var BOLT = { imp: [255, 140, 60] };                     // a bolt's colour by who threw it (the wisps' violet, else)
+               imp: '#ff9040', magma: '#ff6a20', drowned: '#a0ffd0', spectre: '#c0ffff',
+               saint: '#ff9a40', shiv: '#ffe0b0', scraprat: '#ffb060', ruin: '#ff7a2a', drone: '#ff4060', eel: '#60ffd0', husk: '#a0c8ff', dredge: '#ffd040' };
+  var BOLT = { imp: [255, 140, 60], drone: [255, 70, 90] };                     // a bolt's colour by who threw it (the wisps' violet, else)
   function strikeFx(h, now) {
     var t = h._attackTarget;
     if (h._kind === 'bolt') { bolts.push({ x0: h.x + 0.5, y0: h.y - 0.1, x1: t.x + 0.5, y1: t.y + 0.4, at: now, dur: h.strikeMs || 380, col: BOLT[h.creature] }); sfx('zap'); return true; }
@@ -529,6 +648,23 @@ var BridgeCombat = (function () {
       if (f < 0.66 && !h._called1) { h._called1 = true; call(world, h); }
       if (f < 0.33 && !h._called2) { h._called2 = true; call(world, h); h.windupMs = Math.round(h.windupMs * 0.8); h.moveCooldown = Math.round(h.moveCooldown * 0.8); }
     }
+    var BC = CREATURES[h.creature];
+    if (BC && BC.calls && h.boss && player) {                        // Saint Ruin, the Dredge: wake as you come near, call help at 2/3 and 1/3
+      var dd = Math.abs(player.getX() - h.x) + Math.abs(player.getY() - h.y);
+      if (!h._engaged && dd <= h.aggroRange) {
+        h._engaged = true; sfx('slam'); shake(3);
+        var co = typeof BridgeFight !== 'undefined' ? BridgeFight.company() : 1;
+        if (co > 1) { var kk = 1 + 0.6 * (co - 1); h._hp = Math.round(h._hp * kk); h.maxHP = Math.round(h.maxHP * kk); }
+        if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast(BC.title[0], BC.title[1], BC.title[2]);
+      }
+      var ff = h._hp / h.maxHP;
+      if (ff < 0.66 && !h._called1) { h._called1 = true; call(world, h, BC.calls); }
+      if (ff < 0.33 && !h._called2) { h._called2 = true; call(world, h, BC.calls); h.windupMs = Math.round(h.windupMs * 0.85); }
+    }
+    if (player && (h.x !== player.getX() || h.y !== player.getY())) {    // which way a person-creature looks (its sheet's row)
+      var lx = player.getX() - h.x, ly = player.getY() - h.y;
+      h._dir = Math.abs(lx) > Math.abs(ly) ? (lx > 0 ? 'right' : 'left') : (ly > 0 ? 'down' : 'up');
+    }
     return h._frostUntil > now ? 1.7 : 1;
   }
   // the warden wakes: with company (others fighting beside you, js/fight.js) it's tougher — half again for each
@@ -543,15 +679,16 @@ var BridgeCombat = (function () {
     if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('The Bell Warden', 'It turns from the arches, and the bell where its head should be begins to sway',
       company > 1 ? 'It rings louder for the two of you' : 'Close in, or keep clear of the ring');
   }
-  function call(world, h) {                                        // the bell calls wisps out of the dark
-    sfx('toll'); shake(3);
+  function call(world, h, kind) {                                  // the bell calls wisps out of the dark (Ruin his Saints, the Dredge its drones)
+    kind = kind || 'wisp';
+    sfx(kind === 'wisp' ? 'toll' : 'slam'); shake(3);
     var n = 0;
     [[2, 0], [-2, 0], [0, 2], [0, -2], [2, 2], [-2, -2], [2, -2], [-2, 2]].forEach(function (o) {
       if (n >= 2) return;
       var x = h.x + o[0], y = h.y + o[1];
       if (world.collisions[y] && world.collisions[y][x] === 0 && !(typeof BridgeCharacter !== 'undefined' && BridgeCharacter.getX() === x && BridgeCharacter.getY() === y)) {
-        var w = spawn(world, 'wisp', x, y); w._blinkAt = performance.now(); n++;
-        if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnSparks) BridgeFX.spawnSparks(x, y, '#c8a8ff', 10);
+        var w = spawn(world, kind, x, y); w._blinkAt = performance.now(); w.reward = Math.round(w.reward / 2); n++;
+        if (typeof BridgeFX !== 'undefined' && BridgeFX.spawnSparks) BridgeFX.spawnSparks(x, y, RAKE[kind] || '#c8a8ff', 10);
       }
     });
   }
@@ -609,6 +746,7 @@ var BridgeCombat = (function () {
     sfx('zap');
   }
   function onKill(world, h) {
+    if (typeof BridgeUndercity !== 'undefined' && BridgeUndercity.onKill) BridgeUndercity.onKill(world, h);
     if (h.creature === 'warden') {
       save.day = today();
       var first = !save.staff;
@@ -754,6 +892,6 @@ var BridgeCombat = (function () {
 
   return { CREATURES: CREATURES, spawn: spawn, drawCreature: drawCreature, sceneItems: sceneItems, faint: faint, decorate: decorate,
            tick: tick, attackStart: attackStart, dangerAt: dangerAt, dangerCells: dangerCells, attackDamage: attackDamage, strikeFx: strikeFx,
-           onHit: onHit, onKill: onKill, damageFor: damageFor, shake: shake, tomb: tomb, engage: engage, ROSTERS: ROSTERS, populate: populate,
+           onHit: onHit, onKill: onKill, damageFor: damageFor, shake: shake, tomb: tomb, engage: engage, ground: ground, over: over, ROSTERS: ROSTERS, populate: populate,
            _save: function () { return save; } };
 })();

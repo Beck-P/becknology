@@ -487,6 +487,10 @@ var BridgeInteractions = (function () {
         if (typeof BridgeImplants !== 'undefined') BridgeImplants.open({ shop: inter.shop });
         break;
 
+      case 'under':                                                     // the Undercity and the Sump (js/undercity.js)
+        if (typeof BridgeUndercity !== 'undefined') BridgeUndercity.use(inter);
+        break;
+
       case 'companion':                                                 // your pet, following you (js/pet.js)
         if (typeof BridgePet !== 'undefined') BridgePet.use(inter);
         break;
@@ -1418,6 +1422,11 @@ var BridgeInteractions = (function () {
       if (t.harbour && typeof BridgeHarbour !== 'undefined') {        // a harbourmaster's book: ships, yard, hands, hold, market
         close();
         BridgeHarbour.open(BridgeWorld.getWorldId(), t.a);
+        return;
+      }
+      if (t.sylvan && typeof BridgeSylvara !== 'undefined' && BridgeSylvara.topic) {   // Sylvara's: a shop, brewing, the range, a canoe (js/worlds/sylvara.js)
+        close();
+        BridgeSylvara.topic(t.sylvan, Object.getPrototypeOf(person), t.a);
         return;
       }
       if (t.peddler && typeof BridgeMagic !== 'undefined') {          // Wendel's wares (js/magic.js)
