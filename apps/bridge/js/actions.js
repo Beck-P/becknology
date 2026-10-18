@@ -207,7 +207,8 @@ var BridgeActions = (function () {
   }
 
   function seaPalette() {
-    var id = BridgeWorld.getWorldId() || '';
+    var id = BridgeWorld.getWorldId() || '', W = BridgeWorld.getWorld && BridgeWorld.getWorld();
+    if (W && W.sea) return W.sea;
     var m = id.match(/^lumar-(crimson|rose|sapphire|midnight)/);
     return m ? m[1] : 'emerald';
   }
