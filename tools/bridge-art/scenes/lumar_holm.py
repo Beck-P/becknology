@@ -46,6 +46,7 @@ import assets_lumar as A               # noqa: E402
 import assets_town as W                # noqa: E402
 import assets_village as V             # noqa: E402
 import assets_yard as Y                # noqa: E402
+import assets_wild as WL               # noqa: E402
 
 HK.install()                           # every house below is the richer kit's
 
@@ -56,6 +57,7 @@ WORLD = os.path.join(ROOT, 'apps', 'bridge', 'assets', 'worlds', 'lumar-holm.jso
 WID = 'lumar-holm'
 COLS, ROWS = 42, 32
 k = Kit(COLS, ROWS, margin_top=2.0, margin_bottom=1.0, margin_x=0.5, seed=7707)
+WL.fast_top(k)                         # the grass's rays: one BVH tree (it leaves the variants out), not every object in turn
 rng = k.rng
 C45 = math.cos(math.radians(45))
 
@@ -71,7 +73,7 @@ SHIP_R = QUAY + 4
 
 HOUSE = (16.8, 24.2, 6.4, 10.6)
 GARDEN = (5, 11, 11, 17)                           # the plot, tiles inclusive (the wall round it is outside)
-LOTS = {'warehouse': (27, 13, 32, 17), 'quarters': (26, 6, 31, 9), 'workshop': (10, 6, 15, 9), 'hall': (33, 10, 37, 13)}
+LOTS = {'warehouse': (27, 13, 31, 17), 'quarters': (26, 6, 31, 9), 'workshop': (10, 6, 15, 9), 'hall': (33, 10, 37, 13)}
 BH = (33.0, 37.4, 17.4, 20.2)                      # the boathouse / the Starling
 SLIP = (8.6, 12.4, 19.8, 25.6)
 POND = (18.2, 12.95, 1.45, 0.62)                   # the pond below the cottage: centre x, row, radii (its outline wanders)
@@ -707,11 +709,39 @@ for (x, r) in ((29.6, 21.8), (31.0, 22.0), (32.4, 21.9)):
 if all(TERRAIN.z(x, r) > C.WZ + 0.08 for (x, r) in ((29.6, 21.8), (32.4, 21.9))):
     H.net_rack(k, 29.6, 31.0, 21.85, LF, h=1.15)
 k.blob(30.6, 21.5, TERRAIN.z(30.6, 21.5) + 0.03, 0.06, 0.045, 0.025, '#c8502a', 'crab', segs=8)
+# a fisherman's net shed on the north-east head, its lantern lit (behind the hall's lot, clear of it)
+H.tarred_shed(k, 32.05, 34.15, 7.05, 8.55, LF, door_x=32.75)
+I.crab_pots(k, 33.5, 9.05, n=2)
+H.gull(k, 33.6, 7.6, 2.05, yaw=170)
+# lights for the night before anything's built: a lantern hung on the jetty's end pile and one on the sale post's arm
+k.cyl_x(PX + 0.95, PX + 1.15, SHIP_R - 0.1, 0.24, 0.015, 0.015, A.IRON, 'lantern_arm', verts=4)
+W.lantern(k, PX + 1.15, SHIP_R - 0.1, 0.0, 0.2, s=0.07, energy=10)
+k.cyl_x(PX + 1.5, PX + 1.8, QUAY - 0.5, 1.12, 0.015, 0.015, A.IRON, 'lantern_arm', verts=4)
+W.lantern(k, PX + 1.78, QUAY - 0.5, 0.82, 1.06, s=0.08, energy=14)
+# the west shingle below the slip: a boat drawn up, fish drying on a rack, crab pots
+for (x0, x1, r_) in ((5.2, 7.0, 21.6), (4.8, 6.6, 21.2), (5.6, 7.4, 22.0)):
+    if all(on_lip(x, r_, C.WZ + 0.12) for x in (x0, (x0 + x1) / 2, x1)):
+        sp, sl = len(k.parts), len(k.lights)
+        W.rowboat(k, x0, x1, r_, beam=0.8, hull='#4a6a5a', inside=A.WOOD_D)
+        I.pose(k, sp, ((x0 + x1) / 2, r_, 0), yaw=12, roll=6, dz=TERRAIN.z((x0 + x1) / 2, r_) + 0.04, lights_since=sl)
+        break
+for (x0, x1, r_) in ((3.4, 4.9, 19.4), (3.0, 4.5, 18.6), (2.6, 4.1, 17.8)):
+    if all(on_lip(x, r_, C.WZ + 0.15) for x in (x0 - 0.2, x1 + 0.2)):
+        sp = len(k.parts)
+        I.drying_rack(k, x0, x1, r_)
+        I.pose(k, sp, ((x0 + x1) / 2, r_, 0), dz=TERRAIN.z((x0 + x1) / 2, r_))
+        break
+for (x, r_) in ((7.6, 20.9), (7.9, 21.4), (4.2, 20.4)):
+    if on_lip(x, r_, C.WZ + 0.12):
+        sp = len(k.parts)
+        I.crab_pots(k, x, r_, n=3)
+        I.pose(k, sp, (x, r_, 0), dz=TERRAIN.z(x, r_))
+        break
 # the empty lots: the footings of something older on one, old timbers heaped on another, nettles round them
 H.footings(k, 33.4, 10.5, 37.6, 13.7, LF, z=0.0)
-H.timber_heap(k, 31.4, 14.2, LF)
+H.timber_heap(k, 30.4, 14.2, LF)
 H.timber_heap(k, 26.9, 7.0, LF)
-H.nettles(k, [(32.2, 13.6), (26.4, 6.6), (33.6, 10.7)], LF)
+H.nettles(k, [(31.2, 13.6), (26.4, 6.6), (33.6, 10.7)], LF)
 H.ferns(k, [(37.2, 13.5), (29.8, 15.2), (11.0, 6.5), (14.8, 6.4)], LF)
 # the lookout's cairn, on the head past the bench
 for (x, r) in ((3.4, 8.6), (3.6, 9.2), (4.0, 8.4)):
@@ -751,26 +781,14 @@ with k.variant('hall', 'built'):
     k.rng.setstate(keep)
 
 # ---- the grass, over everything, once it's all in place --------------------------------------------------------------
-# It grows wherever the turf is what's on top — looking down past the variants (a lot's open ground is grass until it's
-# built on; the building, composited over it, hides it).
+# It grows wherever the turf is what's on top — looking down past the variants (fast_top leaves them out: a lot's open
+# ground is grass until it's built on, and the building, composited over it, hides it).
 MEADOW = sorted(set(land) | {(c + dc, r + dr) for (c, r) in land for dc in (-1, 0, 1) for dr in (-1, 0, 1)})
 
 
 def grow():
-    hidden = [p for p in k.parts if p['var'] is not None]
-    for p in hidden:
-        p['obj'].hide_viewport = True
-    for a in ('_dg', '_names'):
-        if hasattr(k, a):
-            delattr(k, a)
     W.meadow(k, GRASS, cells=MEADOW, ok=('ground_grass', 'coast_g:grass'), density=1.0, flowers=0.8,
              avoid=lambda x, r: pd(x, r) < 0.42 or pond_d(x, r) < 1.08)
-    for p in hidden:
-        p['obj'].hide_viewport = False
-    for a in ('_dg', '_names'):
-        if hasattr(k, a):
-            delattr(k, a)
-    bpy.context.view_layer.update()
 
 
 k.later.append(grow)

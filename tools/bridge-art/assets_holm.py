@@ -499,3 +499,39 @@ def cairn(k, x, r, rng, z=0.0, h=0.9):
                    (shade(rng.choice(STONES), rng.uniform(0.8, 1.05)), 0.2), part='cairn', segs=7)
         zz += 0.13
         s *= 0.8
+
+
+def tarred_shed(k, x0, x1, r0, r1, rng, door_x=None, wall_h=1.45, roof='#4a4a46'):
+    """A fisherman's net shed: black tarred weatherboards over a stone footing, a shingled roof, a plank door with a
+    lantern beside it, a small lit window, nets and floats hung on its front, oars leant against it."""
+    door_x = door_x if door_x is not None else x0 + (x1 - x0) * 0.4
+    k.box(x0, r0, 0.0, x1, r1, 0.16, ('#7a746a', 0.2), 'footing', bevel=0.02)
+    k.box(x0 + 0.04, r0 + 0.04, 0.16, x1 - 0.04, r1 - 0.03, wall_h, ('#2a2624', 0.2), 'shed_wall')
+    z = 0.16
+    while z < wall_h - 0.02:                                             # weatherboards, each lapping the one below
+        k.box(x0 + 0.02, r1 - 0.04, z, x1 - 0.02, r1 + 0.005 + (z % 0.3) * 0.02, min(wall_h, z + 0.13),
+              (shade('#2e2a26', rng.uniform(0.85, 1.15)), 0.22), 'shed_board')
+        z += 0.12
+    W._gable_roof(k, x0, x1, r0, r1, wall_h, 0.75, roof)
+    k.box(door_x - 0.32, r1, 0.16, door_x + 0.32, r1 + 0.05, 1.2, ('#5a4632', 0.18), 'shed_door')
+    for zz in (0.35, 0.95):
+        k.box(door_x - 0.3, r1 + 0.05, zz, door_x + 0.3, r1 + 0.07, zz + 0.05, A.IRON, 'hinge')
+    W.wall_lantern(k, door_x + 0.5, r1 + 0.02, z=1.05, energy=9)
+    wx = x1 - 0.55
+    k.box(wx - 0.22, r1, 0.62, wx + 0.22, r1 + 0.05, 1.0, '#2a1e14', 'window_frame')
+    k.box(wx - 0.17, r1 + 0.02, 0.66, wx + 0.17, r1 + 0.07, 0.96, '#5a3a18', 'window_glass', emit=(W.GLOW, 0.8))
+    cords = []                                                           # a net hung on the wall by the door
+    nx0, nx1 = x0 + 0.15, door_x - 0.42
+    for i in range(int((nx1 - nx0) / 0.1) + 1):
+        x = nx0 + i * 0.1
+        cords.append((x - 0.006, r1 + 0.06, 0.3 + 0.04 * math.sin(i), x + 0.006, r1 + 0.075, 1.15))
+    z = 0.35
+    while z < 1.12:
+        cords.append((nx0, r1 + 0.06, z - 0.006, nx1, r1 + 0.075, z + 0.006))
+        z += 0.1
+    k.boxes(cords, '#4a5a52', 'net')
+    for i in range(int((nx1 - nx0) / 0.2)):
+        k.sphere(nx0 + 0.1 + i * 0.2, r1 + 0.09, 1.12, 0.045, 0.045, rng.choice(('#e8a040', '#e05a30')), 'float', segs=8)
+    for (ox, lean) in ((x1 + 0.1, 0.25), (x1 + 0.22, 0.32)):           # oars leant on its end
+        k.tube((ox, r1 - 0.2, 0.0), (ox - lean, r1 - 0.3, 1.3), 0.025, A.WOOD_L, 'oar', verts=5)
+    k.solid(x0, r0, x1, r1)
