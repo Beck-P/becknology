@@ -430,17 +430,119 @@ var BridgeEvents = (function () {
       note: 'A brownout rolled down the District street'
     },
     chase: {
-      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley'], name: 'A chase in the sky lanes',
+      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-oldquarter', 'arcadia-spaceport', 'arcadia-terraces'], name: 'A chase in the sky lanes',
       len: 1.5, w: 2, at: null, hint: 'Sirens — a chase through the sky lanes!', sfx: 'siren', loop: { name: 'siren', every: 2.2, near: 999 },
       behind: function (L, ctx, offX, offY, ts, ms) { chaseSky(L, ctx, ms); },
       over: function (L, ctx, offX, offY, ts, ms) { chaseLights(L, ctx, ms); },
       react: 'look', note: 'A police chase tore through Arcadia\'s sky lanes'
     },
     hijack: {
-      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-home', 'arcadia-penthouse'],
+      stream: 'arcadia-sky', worlds: ['arcadia-street', 'arcadia-skywalk', 'arcadia-skypad', 'arcadia-alley', 'arcadia-home', 'arcadia-penthouse', 'arcadia-oldquarter', 'arcadia-spaceport', 'arcadia-terraces'],
       name: 'NULL takes the screens', len: 1, w: 1, at: null, hint: 'Every screen in the city — NULL\'s mark', sfx: 'glitch', loop: { name: 'glitch', every: 7, near: 999 },
       react: 'look', note: function (L) { return 'NULL had every screen in Arcadia: "' + pick(NULL_SAYS, L.key) + '"'; },
       over: function (L, ctx, offX, offY, ts, ms) { scanlines(L, ctx, ms); }
+    },
+    // Arcadia below (js/undercity.js): the Saints collecting down the market, a downpour through the grates, the Sump stirring
+    collection: {
+      world: 'arcadia-undercity', name: 'The Saints come collecting', len: 3, w: 3, at: [20, 15],
+      hint: 'Two Rust Saints are working down the stalls, collecting', sfx: 'thud',
+      cast: [{ sheet: 'npc-saint-a', path: [[58, 15.4], [40, 15.4], [21, 15.2], [15, 15.2]], speed: 0.5, from: 1, end: 'up' },
+             { sheet: 'npc-saint-b', path: [[59, 16.0], [41, 16.0], [22, 15.9], [16, 15.9]], speed: 0.5, from: 2, end: 'up' }],
+      say: [[6, 0, 'DUES, GRANDAD. SAME AS EVERY WEEK.'], [50, 1, 'THE SAINTS SAY THANK YOU.'], [96, 0, 'NEXT!'], [120, 'at', 'NOT AGAIN...']],
+      react: 'look',
+      talk: [{ x: 16, y: 14, label: 'THE SAINTS', prompt: 'PRESS E TO STAND UP TO THEM', on: function (L) { saintsStand(L); } }],
+      note: 'The Rust Saints came collecting in the Warrens'
+    },
+    surge: {
+      world: 'arcadia-undercity', name: 'A downpour through the grates', len: 2, w: 2, at: [40, 22],
+      hint: 'A downpour up on the District — every grate in the Warrens is pouring', sfx: 'splat', loop: { name: 'splat', every: 3, near: 999 },
+      over: function (L, ctx, offX, offY, ts, ms, w, h) { downpour(L, ctx, w, h); },
+      react: 'look', note: 'A downpour came through the Warrens\' grates'
+    },
+    stirring: {
+      world: 'arcadia-sump', name: 'Something moving in the canal', len: 1.5, w: 2, at: [60, 33],
+      hint: 'The water in the south basin is moving — something big under it', sfx: 'horn',
+      over: function (L, ctx, offX, offY, ts, ms) { stirring(L, ctx, offX, offY, ts); },
+      say: [[4, 'at', 'DID YOU HEAR THAT?'], [30, 'at', 'GET AWAY FROM THE EDGE.']],
+      react: 'flee', note: 'Something moved under the water of the Sump'
+    },
+    // the Spires (arcadia-spires, L480: js/spires.js)
+    operaout: {
+      world: 'arcadia-spires', name: 'The Lyra lets out', len: 4, w: 3, at: [72.5, 12],
+      hint: 'The interval — the Lyra empties onto the plaza', sfx: 'chime',
+      cast: [{ sheet: 'npc-diva', path: [[72.5, 10.2], [71.0, 13.0], [69.5, 14.5]], speed: 0.05, from: 20, until: 220, end: 'down' },
+             { sheet: 'npc-usher', x: 74, y: 11, f: 'down' },
+             { sheet: 'npc-member-b', path: [[73.5, 10.2], [76.0, 14.0]], speed: 0.05, from: 6, end: 'down' }],
+      gather: { x: 71, y: 15.5, r: 3.6, n: 12, face: [72.5, 10] },
+      say: [[8, 'at', 'BRAVA! BRAVA!'], [26, 0, 'THANK YOU, DARLINGS. THE THIRD ACT IS WORSE. FOR ME.'], [60, 'at', 'IS THAT SERAPHINE?'],
+            [110, 1, 'THE SECOND ACT, LADIES AND GENTLEMEN, IN FIVE MINUTES.']],
+      note: 'The Lyra let out for the interval and Seraphine came down the steps'
+    },
+    fireworks: {
+      world: 'arcadia-spires', name: 'Fireworks over the sky docks', len: 3, w: 2, at: [80, 38],
+      hint: 'Fireworks off the Lumière — a party aboard', sfx: 'blast', loop: { name: 'blast', every: 2.4, near: 60 },
+      gather: { x: 78, y: 39, r: 4.2, n: 14, face: [80, 44] },
+      say: [[10, 'at', 'OOOH.'], [40, 'at', 'WHOSE PARTY IS IT?'], [90, 'at', 'NOBODY KNOWS. NOBODY EVER KNOWS.']],
+      over: function (L, ctx, offX, offY, ts, ms) { spireFireworks(L, ctx, offX, offY, ts, ms); },
+      note: 'Fireworks went up off the yacht at the sky docks'
+    },
+
+    // the Mid-Levels' Terraces (L200): a proposal at Halo, a jam at Moonglow
+    proposal: {
+      world: 'arcadia-terraces', name: 'A proposal at Halo', len: 4, w: 2, at: [16.5, 32],
+      hint: 'Everyone on Halo\'s deck has gone quiet — someone\'s on one knee', sfx: 'chime',
+      cast: [{ sheet: 'npc-highroller', x: 15, y: 32, f: 'right' }, { sheet: 'npc-gambler-a', x: 17, y: 32, f: 'left' }],
+      gather: { x: 16, y: 33.4, r: 3, n: 8, face: [16, 32] },
+      say: [[4, 0, 'I HAD A WHOLE SPEECH…'], [16, 0, 'WILL YOU…?'], [22, 1, 'YES! OBVIOUSLY YES!'], [26, 'at', 'SHE SAID YES!'], [90, 'at', 'CHAMPAGNE FOR THE DECK!']],
+      talk: [{ x: 16, y: 33, label: 'THE HAPPY COUPLE', prompt: 'PRESS E TO CONGRATULATE THEM', on: function (L) {
+        if (L.t < 22000) { say('THE HAPPY COUPLE', 'NOT YET - HE HASN\'T ASKED. EVERYONE ON THE DECK IS HOLDING THEIR BREATH.'); return; }
+        if (once(L, 'fizz', function () { give('champagne', 1); }))
+          say('THE HAPPY COUPLE', 'HE SHAKES YOUR HAND TWICE. SHE PUTS A FLUTE OF CHAMPAGNE IN YOUR OTHER ONE. "WE MET DOWN IN THE DISTRICT. LOOK AT US NOW."');
+        else say('THE HAPPY COUPLE', '"THANK YOU! WE\'RE GOING TO TELL EVERYONE ABOUT THE STRANGER WHO CLAPPED LOUDEST."');
+      } }],
+      tick: function (L) {
+        if (L.t > 22000 && !L.cheered) {
+          L.cheered = 1;
+          if (typeof BridgeCrowd !== 'undefined' && BridgeCrowd.react) try { BridgeCrowd.react('arcadia-terraces', { x: 16, y: 32, r: 8, kind: 'cheer', ms: 5000 }); } catch (e) { /* no crowd */ }
+        }
+      },
+      over: function (L, ctx, offX, offY, ts, ms) { if (L.t > 22000) petals(L, ctx, offX, offY, ts, ms, [12, 27, 21, 36]); },
+      note: 'A proposal on Halo\'s deck, two hundred floors up'
+    },
+    jam: {
+      world: 'arcadia-jazz', name: 'A jam at Moonglow', len: 5, w: 3, at: [14, 6],
+      hint: 'Ray\'s waved someone up from the floor — a jam session', loop: { name: 'chime', every: 6, near: 18 },
+      cast: [{ sheet: 'npc-highroller', x: 16, y: 6, f: 'up' }, { sheet: 'npc-gambler-c', x: 9, y: 5, f: 'right' }],
+      gather: { x: 14, y: 8, r: 2.6, n: 6, face: [14, 4] },
+      say: [[3, 'at', 'RAY CALLS A TUNE NOBODY KNOWS'], [30, 0, 'TAKE IT, ODETTE'], [80, 'at', 'ONE MORE CHORUS!']],
+      talk: [{ x: 14, y: 7, label: 'THE JAM', prompt: 'PRESS E TO LISTEN', on: function (L) {
+        if (once(L, 'listen', function () { if (typeof BridgeInventory !== 'undefined' && BridgeInventory.restoreEnergy) BridgeInventory.restoreEnergy(25); }))
+          note('A jam at Moonglow', 'Odette scatted over Ray\'s chords until the moon went behind the smog.');
+        say('THE JAM', 'YOU STAND AT THE BACK WITH YOUR EYES SHUT. THE PIANO ASKS, THE SAX ANSWERS, THE BASS AGREES WITH BOTH OF THEM. NOBODY IS LOOKING AT THEIR WRIST.');
+      } }],
+      over: function (L, ctx, offX, offY, ts, ms) { notes(ctx, offX, offY, ts, ms, 14, 4, 1); notes(ctx, offX, offY, ts, ms, 11, 4, 2); },
+      note: 'Sat in on a jam session at Moonglow'
+    },
+    liftoff: {
+      world: 'arcadia-spaceport', name: 'A freighter lifts off', len: 1.5, w: 3, at: [36, 26],
+      hint: 'Engines lighting past the railing — a freighter\'s lifting off', sfx: 'blast', loop: { name: 'thunder', every: 6, near: 40 },
+      gather: { x: 36, y: 26.4, r: 4.5, n: 12, face: [36, 29] },
+      say: [[4, 'at', 'THERE SHE GOES!'], [30, 'at', 'WHERE\'S SHE BOUND?'], [60, 'at', 'SAFE ROAD, SPACER.']],
+      over: function (L, ctx, offX, offY, ts, ms) { liftoff(L, ctx, offX, offY, ts, ms); },
+      react: 'look', note: function (L) { return 'Watched the ' + pick(SHIPS_OUT, L.key) + ' lift off from the spaceport'; }
+    },
+    skylanterns: {
+      world: 'arcadia-oldquarter', name: 'Sky lanterns from the roof shrine', len: 4, w: 3, at: [5, 12],
+      hint: 'Paper lanterns rising off the shrine roof', sfx: 'chime', loop: { name: 'chime', every: 9, near: 26 },
+      gather: { x: 6, y: 11.5, r: 3.2, n: 10, face: [3, 6] },
+      say: [[5, 'at', 'MAKE A WISH!'], [50, 'at', 'THAT ONE\'S MINE, THE BIG ONE'], [120, 'at', 'LOOK HOW HIGH…']],
+      talk: [{ x: 8, y: 10, label: 'A SKY LANTERN', prompt: 'PRESS E TO LET ONE GO', on: function (L) {
+        if (once(L, 'wish', function () { if (typeof BridgeInventory !== 'undefined') BridgeInventory.restoreEnergy(20); }))
+          say('A SKY LANTERN', 'A CHILD HANDS YOU A LANTERN, ALREADY LIT. YOU HOLD IT TILL IT TUGS, AND LET GO. IT CLIMBS PAST THE ROOFS, PAST THE LOOP, UP TOWARD THE TOWERS, AND YOU LOSE IT AMONG THEIR WINDOWS.');
+        else say('A SKY LANTERN', 'YOURS IS UP THERE SOMEWHERE, AMONG THE TOWERS\' LIGHTS.');
+      } }],
+      over: function (L, ctx, offX, offY, ts, ms) { skyLanterns(L, ctx, offX, offY, ts, ms); },
+      note: 'Let a sky lantern go from Lantern Row'
     },
 
     // ---- Verdance ----
@@ -933,6 +1035,32 @@ var BridgeEvents = (function () {
     ctx.fillStyle = '#e8dcc0';
     for (var i = 0; i < 5; i++) ctx.fillRect(cx - 8 + bow + i * 2, footY - 18 - i * 2, 2, 2);
   }
+  // the Spires: shells bursting in pastel over the yacht at the sky docks, a few at a time, falling as sparks
+  function spireFireworks(L, ctx, offX, offY, ts, ms) {
+    var cols = ['#f4a8d0', '#9ad8f0', '#c8b0f8', '#a8f0d0', '#ffd890'];
+    var bx = offX + 80 * ts, by = offY + 30 * ts;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var s = 0; s < 4; s++) {
+      var k = Math.floor(L.t / 2400) - s, life = (L.t - k * 2400) / 2400;
+      if (k < 0 || life > 1.6) continue;
+      var h = Math.sin(k * 12.9898) * 43758.5453, r1 = h - Math.floor(h);
+      var cx = Math.round(bx + (r1 - 0.5) * ts * 14), cy = Math.round(by - ts * (4 + r1 * 5)), col = cols[k % cols.length];
+      if (life < 0.35) {                                       // the shell climbing
+        ctx.fillStyle = '#fff4d0';
+        ctx.fillRect(cx, Math.round(cy + (0.35 - life) * ts * 18), 1, 2);
+        continue;
+      }
+      var p = (life - 0.35) / 1.25, R = Math.sqrt(p) * ts * 2.4;
+      ctx.globalAlpha = Math.max(0, 1 - p);
+      ctx.fillStyle = col;
+      for (var i = 0; i < 24; i++) {
+        var a = i / 24 * Math.PI * 2;
+        ctx.fillRect(Math.round(cx + Math.cos(a) * R), Math.round(cy + Math.sin(a) * R + p * p * ts * 1.5), p < 0.4 ? 2 : 1, p < 0.4 ? 2 : 1);
+      }
+    }
+    ctx.restore();
+  }
   function notes(ctx, offX, offY, ts, ms, x, y, kind) {
     var n = ART.note();
     for (var i = 0; i < 3; i++) {
@@ -990,6 +1118,38 @@ var BridgeEvents = (function () {
     mark(L, 'settled');
     if (bet - 1 === win) { coins(15, 'toyboats'); sfx('coin'); toast('TOY BOATS', BOATS[win][0].charAt(0) + BOATS[win][0].slice(1).toLowerCase() + ' won!', '15 coins from the kids', false); }
   }
+  // the Saints collecting: stand between them and the stall, once a happening
+  function saintsStand(L) {
+    var say = function (t) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say('THE SAINTS', t); };
+    if (!once(L, 'stood', function () { give('roo_broth', 1); coins(20, 'saints'); sfx('slam'); }))
+      return say('THEY\'VE MOVED ON, MUTTERING. THE STALLHOLDER IS STILL THANKING YOU.');
+    say('YOU STEP BETWEEN THE SAINTS AND THE STALL. THE BIG ONE LOOKS AT YOU, AT YOUR HANDS, AT THE CROWD STARTING TO WATCH, AND DECIDES IT ISN\'T WORTH IT TODAY.\n\n' +
+        'THE STALLHOLDER PRESSES A BOWL OF BROTH AND TWENTY COINS ON YOU. "DON\'T GO PAST THE FENCE TONIGHT," SHE SAYS. "THEY\'LL REMEMBER YOUR FACE."');
+  }
+  // the downpour: rain falling in sheets over the whole Warrens, thickening and thinning again
+  function downpour(L, ctx, w, h) {
+    var f = Math.min(1, L.t / 8000, (L.end - L.start - L.t) / 8000), now = L.t;
+    if (f <= 0) return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(150,175,210,' + (0.35 * f).toFixed(3) + ')';
+    for (var i = 0; i < 260 * f; i++) {
+      var x = (i * 97.13 + Math.floor(i / 7) * 13) % w, sp = 0.9 + (i % 5) * 0.12, y = ((now * sp * 0.6) + i * 53.7) % (h + 40) - 20;
+      ctx.fillRect(Math.round(x), Math.round(y), 1, 7 + (i % 3) * 3);
+    }
+    ctx.restore();
+  }
+  // the Sump stirring: wide rings going out over the basin from something under it
+  function stirring(L, ctx, offX, offY, ts) {
+    var cx = offX + 60.5 * ts, cy = offY + 37.5 * ts;
+    ctx.save();
+    for (var i = 0; i < 4; i++) {
+      var k = ((L.t / 2600) + i / 4) % 1;
+      ctx.strokeStyle = 'rgba(120,240,210,' + (0.45 * (1 - k)).toFixed(2) + ')'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(Math.round(cx), Math.round(cy), 6 + k * ts * 6, 2 + k * ts * 2, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // the brawl: break it up or have a bet on it
   var BRAWLERS = ['THE SAILOR', 'THE DOCKHAND'];
   function brawlStep(L) {
@@ -1159,6 +1319,54 @@ var BridgeEvents = (function () {
     ctx.fillStyle = 'rgba(40,255,120,0.035)';
     for (var y = (Math.floor(ms / 40) % 4); y < Hh; y += 4) ctx.fillRect(0, y, Wd, 1);
     if (Math.sin(ms / 70) > 0.96) { ctx.fillStyle = 'rgba(40,255,120,0.08)'; ctx.fillRect(0, Math.round(H(ms) * Hh), Wd, 6); }
+  }
+  // the spaceport: a freighter lifting off from a berth past the railing, rising up through the view on her engines
+  var SHIPS_OUT = ['Kestrel Run', 'Tolliver\'s Pride', 'Saltwind', 'Long Odds', 'Margery Fane', 'Ninth Wave'];
+  function freighterArt() { return sprite('freighter', 30, 12, function (P) {
+    P(O, [[2, 2, 24, 8], [0, 4, 3, 4], [26, 3, 4, 6], [6, 0, 6, 3], [8, 10, 3, 2], [19, 10, 3, 2]]);
+    P('#8a5a3a', [[3, 3, 22, 6]]); P('#a8744a', [[3, 3, 22, 2]]); P('#5a3a2a', [[3, 8, 22, 1]]);
+    P('#4a4a54', [[26, 4, 3, 4]]); P('#7ad0f0', [[1, 5, 2, 2]]); P('#5a5e68', [[7, 1, 4, 2]]);
+    P('#e0b020', [[12, 6, 6, 1]]); P('#3a2a20', [[9, 9, 1, 2], [20, 9, 1, 2]]);
+    P('#ff4040', [[4, 3, 1, 1]]); P('#40e080', [[24, 3, 1, 1]]);
+  }); }
+  function liftoff(L, ctx, offX, offY, ts, ms) {
+    var s = L.t / 1000, W2 = ctx.canvas.width, H2 = ctx.canvas.height;
+    var x = Math.round(offX + 36 * ts), base = H2 + 40;
+    var warm = Math.min(1, s / 6);
+    if (s < 10) glow(ctx, x, H2, 140, '255,180,90', 0.35 * warm * (0.8 + 0.2 * Math.sin(ms / 60)));
+    if (s < 8) return;
+    var u = Math.min(1, (s - 8) / 60), y = Math.round(base - Math.pow(u, 1.5) * (H2 + 240));
+    if (y < -120) return;
+    var art = freighterArt(), k = 2;
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    glow(ctx, x, y + 34, 70, '120,170,255', 0.55);
+    ctx.fillStyle = 'rgba(200,225,255,0.85)';
+    for (var i = 0; i < 3; i++) {                                   // three plumes of thrust, flickering
+      var fx = x - 30 + i * 30, len = 26 + Math.round(Math.sin(ms / 45 + i) * 6);
+      ctx.fillRect(fx - 3, y + 18, 6, len); ctx.fillStyle = 'rgba(120,170,255,0.6)'; ctx.fillRect(fx - 5, y + 18 + len, 10, 10);
+      ctx.fillStyle = 'rgba(200,225,255,0.85)';
+    }
+    ctx.drawImage(art, Math.round(x - art.width * k / 2), Math.round(y - art.height * k / 2), art.width * k, art.height * k);
+    ctx.restore();
+  }
+  // Lantern Row: paper sky lanterns let go from the roof shrine, rising and drifting up between the towers
+  function skyLanternArt() { return sprite('skylantern', 4, 5, function (P) {
+    P('#6a1a0a', [[0, 0, 4, 5]]); P('#e8702a', [[1, 0, 2, 4]]); P('#ffd890', [[1, 1, 2, 2]]); P('#fff4c8', [[1, 3, 2, 1]]);
+  }); }
+  function skyLanterns(L, ctx, offX, offY, ts, ms) {
+    var s = L.t / 1000, art = skyLanternArt();
+    for (var i = 0; i < 26; i++) {
+      var born = 3 + i * 7 + H(L.key + 'b' + i) * 4, age = s - born;
+      if (age < 0 || age > 70) continue;
+      var x0 = 1.5 + H(L.key + 'x' + i) * 5.5, rise = age * (0.12 + H(L.key + 'r' + i) * 0.06);
+      var x = offX + (x0 + Math.sin(age / 6 + i) * 0.6 + age * 0.03) * ts, y = offY + (5.6 - rise) * ts;
+      var a = Math.min(1, age / 2) * Math.min(1, (70 - age) / 10);
+      ctx.globalAlpha = a;
+      glow(ctx, x + 4, y + 5, 14, '255,170,80', 0.35 * a);
+      ctx.drawImage(art, Math.round(x), Math.round(y));
+    }
+    ctx.globalAlpha = 1;
   }
   /** What every screen in Arcadia shows while NULL has them (js/skyline.js), else null. */
   var scr = { at: 0, v: null };
