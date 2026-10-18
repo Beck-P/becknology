@@ -66,12 +66,23 @@ for i in range(140):
         s = rng.uniform(0.55, 0.9)
         k.rock(x + rng.uniform(-0.2, 0.2), r - z * 0.25, z, s, s * 0.7, s * 0.8, (shade(ROCK, rng.uniform(0.75, 1.1)), 0.35), part='cave_wall', segs=8)
 k.box(-1, -1, 0.0, COLS + 1, 2.4, H + 0.5, (ROCK_D, 0.4), 'cave_wall')        # the back, into the dark
+# solid rock everywhere outside the cave (so the render has no empty edges): a dark mass under the walls' heaps
+OUT_CELLS = []
+for c in range(-1, COLS + 1):
+    for rr in range(-1, ROWS + 1):
+        if not cave(c + 0.5, rr + 0.5) and rr < 14:
+            OUT_CELLS.append((c, rr))
+for (c, rr) in OUT_CELLS:
+    k.box(c, rr, 0.0, c + 1, rr + 1, H * 0.85, (shade(ROCK_D, rng.uniform(0.85, 1.05)), 0.4), 'cave_wall')
 # the falls across the mouth: a curtain of water lit from outside
-for i in range(40):
-    x = 4.0 + i * 0.32
-    w = rng.uniform(0.06, 0.12)
-    col = rng.choice(('#c8e4ec', '#9ccad6', '#e2f2f4'))
-    k.poly([(x - w, 14.6, 3.2), (x + w, 14.6, 3.2), (x + w * 1.4, 14.7, 0.0), (x - w * 1.4, 14.7, 0.0)], col, 'falls', emit=(col, 0.55))
+# a continuous sheet of falling water, strands overlapping (no gaps), daylight through it — not white bars
+x = 3.6
+while x < 16.8:
+    w = rng.uniform(0.12, 0.22)
+    col = rng.choice(('#8ab8c8', '#a4ccd8', '#bcdce4', '#7aa8b8'))
+    k.poly([(x - w, 14.6 + rng.uniform(0, 0.03), 3.2), (x + w, 14.6, 3.2), (x + w * 1.25, 14.7, 0.0), (x - w * 1.25, 14.72, 0.0)],
+           col, 'falls', emit=(col, 0.28))
+    x += w * rng.uniform(1.1, 1.5)
 k.box(3.6, 14.75, -0.1, 16.8, 15.2, 0.05, ('#2a5a6a', 0.1), 'falls_foot', emit=('#6a9aaa', 0.4))
 for _ in range(40):
     k.blob(rng.uniform(4, 16), rng.uniform(13.9, 14.6), 0.02, rng.uniform(0.08, 0.16), 0.08, 0.02, ('#eef6f6', 0.15), 'foam', segs=6)
