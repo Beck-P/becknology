@@ -54,6 +54,7 @@ const SUITES = {
     ['world/hoarfell_e.js', SHOTS],
     ['world/railway.js', SHOTS + '/railway'],
     ['world/regatta.js', SHOTS],
+    ['world/capital.js', SHOTS],
     ['world/arcadia_transit.js', SHOTS],
     ['world/arcadia_terraces.js', SHOTS],
     ['world/arcadia_district.js', SHOTS],

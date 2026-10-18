@@ -300,17 +300,38 @@ def goldfish_stall(k, x0, x1, r0, r1):
         k.cyl(x1 - 0.2, r0 + 0.1 + i * 0.07, 0.5, 0.52, 0.06, '#f4f0e6', 'scoop', verts=10)
     for x in (x0, x1):
         k.box(x - 0.04, r0 - 0.04, 0.0, x + 0.04, r0 + 0.04, 1.9, TIMBER, 'stall_post')
-    stripes = int((x1 - x0) / 0.3)
-    for i in range(stripes):
-        a = x0 - 0.1 + i * (x1 - x0 + 0.2) / stripes
-        b = a + (x1 - x0 + 0.2) / stripes
-        k.poly([(a, r1 + 0.25, 1.65), (b, r1 + 0.25, 1.65), (b, r0 - 0.1, 2.0), (a, r0 - 0.1, 2.0)],
-               (('#d83a3a' if i % 2 == 0 else '#f0ece0'), 0.1), 'awning')
+    awning(k, x0 - 0.1, x1 + 0.1, r0 - 0.1, r1 + 0.25, 2.0, 1.65)
     SG.letters(k, '金魚', 'DelaGothicOne', (x0 + x1) / 2, r1 + 0.01, 0.12, size=0.2, col='#ffd060', energy=3)
     k.solid(x0, r0 - 0.1, x1, r1)
 
 
+def awning(k, x0, x1, r_back, r_front, z_back, z_front, cols=('#d83a3a', '#f0ece0'), stripe=0.3, valance=0.2):
+    """A cloth awning: stripes that sag a little between the frame's ribs (each stripe a shallow fold, its middle lower
+    than its edges), the cloth rolled over a bar at the back and, along the front, a valance hanging in scallops."""
+    n = max(2, int((x1 - x0) / stripe))
+    wdt = (x1 - x0) / n
+    sag = 0.05
+    for i in range(n):
+        a, b = x0 + i * wdt, x0 + (i + 1) * wdt
+        m = (a + b) / 2
+        c = cols[i % len(cols)]
+        for (p, q, ds) in ((a, m, (0.0, sag)), (m, b, (sag, 0.0))):       # two faces: the fold dips to the middle
+            k.poly([(p, r_front, z_front - ds[0]), (q, r_front, z_front - ds[1]),
+                    (q, r_back, z_back - ds[1] * 0.6), (p, r_back, z_back - ds[0] * 0.6)],
+                   (shade(c, 0.92 if p == a else 1.0), 0.1), 'awning')
+        pts = [(a, r_front + 0.005, z_front - 0.01), (b, r_front + 0.005, z_front - 0.01)]   # the scallop under it
+        for j in range(7):
+            t = j / 6
+            pts.append((b - t * wdt, r_front + 0.005, z_front - valance + 0.06 - math.sin(t * math.pi) * 0.07))
+        k.poly(pts, (shade(c, 0.85), 0.1), 'awning_valance')
+    k.cyl_x(x0 - 0.05, x1 + 0.05, r_back, z_back + 0.03, 0.05, 0.05, ('#5a3a24', 0.1), 'awning_roll', verts=8)
+    k.cyl_x(x0 - 0.05, x1 + 0.05, r_front, z_front, 0.025, 0.025, '#3a2418', 'awning_bar', verts=6)
+    for xx in [x0 + (i + 0.5) * (x1 - x0) / 3 for i in range(3)]:                           # ribs under the cloth
+        k.tube((xx, r_back, z_back - 0.05), (xx, r_front, z_front - 0.05), 0.012, '#3a2418', 'awning_rib', verts=4)
+
+
 def market_stall(k, x0, x1, r0, r1, goods='veg', awning=('#2a5a8a', '#e8e0d0'), lanterns=True):
+    awning_ = globals()['awning']
     """A lane stall: a timber counter under a striped awning, its goods heaped in baskets and trays."""
     rng = k.rng
     k.box(x0, r0, 0.0, x1, r1, 0.75, ('#4a3020', 0.12), 'stall_counter', bevel=0.01)
@@ -333,12 +354,7 @@ def market_stall(k, x0, x1, r0, r1, goods='veg', awning=('#2a5a8a', '#e8e0d0'), 
                          shade(c, rng.uniform(0.85, 1.1)), 'produce', segs=6)
     for x in (x0, x1):
         k.box(x - 0.04, r0 - 0.04, 0.0, x + 0.04, r0 + 0.04, 2.0, TIMBER, 'stall_post')
-    stripes = int((x1 - x0) / 0.3)
-    for i in range(stripes):
-        a = x0 - 0.1 + i * (x1 - x0 + 0.2) / stripes
-        b = a + (x1 - x0 + 0.2) / stripes
-        k.poly([(a, r1 + 0.3, 1.7), (b, r1 + 0.3, 1.7), (b, r0 - 0.1, 2.08), (a, r0 - 0.1, 2.08)],
-               ((awning[i % 2]), 0.1), 'awning')
+    awning_(k, x0 - 0.1, x1 + 0.1, r0 - 0.1, r1 + 0.3, 2.08, 1.7, cols=awning)
     if lanterns:
         for x in (x0 + 0.2, x1 - 0.2):
             Y.paper_lantern(k, x, r1 + 0.32, 1.42, col='#e83a2a', s=0.42, top=1.68)
@@ -346,28 +362,85 @@ def market_stall(k, x0, x1, r0, r1, goods='veg', awning=('#2a5a8a', '#e8e0d0'), 
 
 
 # ---- the Loop's viaduct ------------------------------------------------------------------------------------------
-def viaduct(k, x0, x1, r, z, piers=(), w=1.5):
-    """The Loop's track on its viaduct high over the quarter: a deck with parapets lit cyan underneath, rails and
-    power posts on top, piers down behind the roofs."""
+def viaduct(k, x0, x1, r, z, piers=(), w=1.5, gaps=()):
+    """The Loop's track on its viaduct over the quarter, built as the thing it is: a concrete deck poured in spans (each
+    its own tone, a dark joint between), deep edge beams along both sides with stiffeners under them and a drip line, a
+    strip of cyan light under the front beam throwing pools down onto the roofs; on top a ballast bed, sleepers, two
+    rails, a low front parapet (so the train shows over it), catenary masts with their cantilevers, the contact and
+    messenger wires and the droppers between; under it piers of twin columns with a hammerhead cap and cross-bracing.
+    `gaps`: (xa, xb) stretches the deck leaves out (a station's own platform deck goes there)."""
+    rng = k.rng
     rb, rf = r - w / 2, r + w / 2
-    k.box(x0, rb, z - 0.55, x1, rf, z, ('#3a3a46', 0.08), 'viaduct_deck')
-    k.box(x0, rf - 0.02, z - 0.55, x1, rf + 0.03, z - 0.5, shade(Y.CYAN, 0.4), 'viaduct_led', emit=(Y.CYAN, 0.8))
-    k.boxes([(x, rf, z - 0.5, x + 0.05, rf + 0.02, z - 0.05) for x in [x0 + 0.5 + i * 1.0 for i in range(int(x1 - x0))]],
-            '#2a2a34', 'viaduct_rib')
-    for rr in (rb + 0.05, rf - 0.12):
-        k.box(x0, rr, z, x1, rr + 0.07, z + 0.32, ('#4a4a56', 0.08), 'viaduct_parapet')
-    for rr in (r - 0.3, r + 0.3):
-        k.box(x0, rr - 0.03, z, x1, rr + 0.03, z + 0.06, '#8a8a96', 'viaduct_rail')
-    for x in [x0 + 1.5 + i * 4.0 for i in range(int((x1 - x0) / 4.0))]:      # power posts with a lamp
-        k.cyl(x, rb + 0.15, z, z + 1.1, 0.04, '#4a4a56', 'viaduct_mast', verts=6)
-        k.box(x - 0.03, rb + 0.15, z + 1.05, x + 0.03, r + 0.1, z + 1.1, '#4a4a56', 'viaduct_mast_arm')
-        k.sphere(x, rb + 0.15, z + 1.15, 0.045, 0.045, Y.RED, 'viaduct_beacon', emit=(Y.RED, 1.0), segs=6)
-    k.box(x0, r - 0.02, z + 1.02, x1, r + 0.02, z + 1.05, '#2a2a30', 'catenary')
-    for px in piers:
-        k.box(px - 0.35, rb + 0.2, 0.0, px + 0.35, rb + 0.9, z - 0.55, ('#3a3a46', 0.1), 'viaduct_pier')
+    zd = z - 0.42                                                      # the slab's soffit
+
+    def spans(xa, xb):
+        out, x = [], xa
+        for (ga, gb) in sorted(gaps):
+            if gb <= x or ga >= xb:
+                continue
+            if ga > x:
+                out.append((x, ga))
+            x = max(x, gb)
+        if x < xb:
+            out.append((x, xb))
+        return out
+    for (sa, sb) in spans(x0, x1):
+        x = sa
+        while x < sb - 1e-6:                                           # the deck, span by span
+            xe = min(sb, x + 2.0)
+            t = shade(rng.choice(('#4a4854', '#44424e', '#4e4c58')), rng.uniform(0.94, 1.05))
+            k.box(x + 0.01, rb + 0.12, zd, xe - 0.01, rf - 0.12, z - 0.02, (t, 0.08), 'viaduct_deck')
+            x = xe
+        for (ra, rb_) in ((rb, rb + 0.14), (rf - 0.14, rf)):           # edge beams, deeper than the slab
+            k.box(sa, ra, zd - 0.22, sb, rb_, z + 0.04, ('#55535e', 0.06), 'viaduct_beam')
+        k.box(sa, rf, zd - 0.2, sb, rf + 0.03, zd - 0.16, '#2a2832', 'viaduct_drip')
+        k.boxes([(xx, rf - 0.02, zd - 0.2, xx + 0.06, rf + 0.04, z - 0.04) for xx in [sa + 0.45 + i * 0.9 for i in range(int((sb - sa) / 0.9))]],
+                '#3e3c48', 'viaduct_stiffener')
+        k.box(sa, rf - 0.1, zd - 0.24, sb, rf - 0.02, zd - 0.21, shade(Y.CYAN, 0.45), 'viaduct_led', emit=(Y.CYAN, 0.95))
+        for xx in [sa + 2.0 + i * 5.0 for i in range(int((sb - sa - 1.0) / 5.0) + 1)]:
+            if xx < sb - 0.5:
+                k.point_light(xx, rf + 0.3, zd - 0.5, Y.CYAN, 14, radius=0.3)
+        # the bed: ballast, sleepers, two rails
+        k.box(sa, r - 0.55, z - 0.02, sb, r + 0.55, z + 0.06, ('#2e2c34', 0.14), 'viaduct_ballast')
+        k.boxes([(xx, r - 0.48, z + 0.06, xx + 0.12, r + 0.48, z + 0.1) for xx in [sa + 0.1 + i * 0.32 for i in range(int((sb - sa) / 0.32))]],
+                ('#4a4038', 0.1), 'viaduct_sleeper')
+        for rr in (r - 0.3, r + 0.3):
+            k.box(sa, rr - 0.035, z + 0.1, sb, rr + 0.035, z + 0.17, '#6a6a76', 'viaduct_rail')
+            k.box(sa, rr - 0.02, z + 0.17, sb, rr + 0.02, z + 0.18, '#c8ccd8', 'viaduct_rail_head')
+        # parapets: a low wall at the front (the train rides over it), a taller one at the back
+        k.box(sa, rf - 0.12, z + 0.04, sb, rf - 0.02, z + 0.24, ('#5a5864', 0.06), 'viaduct_parapet')
+        k.box(sa, rb + 0.02, z + 0.04, sb, rb + 0.12, z + 0.4, ('#5a5864', 0.06), 'viaduct_parapet')
+        k.boxes([(xx, rf - 0.13, z + 0.04, xx + 0.03, rf - 0.01, z + 0.25) for xx in [sa + 1.0 + i * 2.0 for i in range(int((sb - sa) / 2.0))]],
+                '#2e2c36', 'viaduct_joint')
+        # catenary: masts at the back, a cantilever out over the track, the messenger and contact wires, droppers
+        for xx in [sa + 1.2 + i * 3.0 for i in range(int((sb - sa - 0.6) / 3.0))]:
+            k.box(xx - 0.05, rb + 0.06, z + 0.04, xx + 0.05, rb + 0.16, z + 1.45, ('#5a5a66', 0.06), 'catenary_mast')
+            k.tube((xx, rb + 0.12, z + 1.35), (xx, r + 0.08, z + 1.3), 0.02, '#6a6a76', 'catenary_arm', verts=5)
+            k.tube((xx, rb + 0.12, z + 1.05), (xx, r + 0.08, z + 1.24), 0.015, '#6a6a76', 'catenary_arm', verts=5)
+            k.box(xx - 0.03, r + 0.02, z + 1.18, xx + 0.03, r + 0.12, z + 1.3, '#8a8a96', 'catenary_insulator')
+        k.tube((sa, r + 0.05, z + 1.3), (sb, r + 0.05, z + 1.3), 0.012, '#24242a', 'catenary_wire', verts=4)
+        k.tube((sa, r + 0.05, z + 1.08), (sb, r + 0.05, z + 1.08), 0.01, '#24242a', 'catenary_wire', verts=4)
+        k.boxes([(xx, r + 0.04, z + 1.08, xx + 0.012, r + 0.06, z + 1.3) for xx in [sa + 0.5 + i * 0.75 for i in range(int((sb - sa) / 0.75))]],
+                '#24242a', 'catenary_dropper')
+        for xx in [sa + 2.7 + i * 6.0 for i in range(int((sb - sa) / 6.0))]:              # a red beacon now and then
+            k.sphere(xx, rb + 0.11, z + 1.5, 0.045, 0.045, Y.RED, 'viaduct_beacon', emit=(Y.RED, 1.0), segs=6)
+    for px in piers:          # twin columns side by side at the back (clear of the houses), a hammerhead, cross-bracing
+        cb = zd - 0.22
+        k.box(px - 0.9, rb + 0.0, cb - 0.4, px + 0.9, rf - 0.1, cb, ('#4e4c58', 0.06), 'viaduct_pier_cap', bevel=0.04)
+        k.box(px - 0.9, rb + 0.0, cb - 0.55, px + 0.9, rb + 0.55, cb - 0.4, ('#46444f', 0.06), 'viaduct_pier_cap')
+        for cx in (px - 0.62, px + 0.62):
+            k.box(cx - 0.18, rb + 0.08, 0.0, cx + 0.18, rb + 0.5, cb - 0.55, ('#4a4854', 0.08), 'viaduct_pier')
+            k.boxes([(cx - 0.185, rb + 0.075, zz, cx + 0.185, rb + 0.505, zz + 0.03) for zz in [0.6 + i * 0.8 for i in range(int((cb - 1.2) / 0.8))]],
+                    '#3a3844', 'viaduct_pier_band')
+            k.solid(cx - 0.2, rb + 0.1, cx + 0.2, rb + 0.5)
+        y0, y1 = 0.9, cb - 0.8
+        for (za, zb_) in ((y0, y1), (y1, y0)):
+            k.tube((px - 0.44, rb + 0.3, za), (px + 0.44, rb + 0.3, zb_), 0.04, '#5a5a66', 'viaduct_brace', verts=6)
+        for zz in (y0, y1):
+            k.box(px - 0.44, rb + 0.26, zz - 0.03, px + 0.44, rb + 0.34, zz + 0.03, '#5a5a66', 'viaduct_brace')
 
 
-def station_block(k, x0, x1, r_front, z_deck, name='LANTERN ROW', depth=2.4, tag='L0'):
+def station_block(k, x0, x1, r_front, z_deck, name='LANTERN ROW', depth=2.4, tag='L0', vr_=None):
     """A Loop station at street level under the viaduct: concrete and steel, a wide stair going up behind glass
     doors and gates, the Loop's roundel, the station's name and the departures board."""
     rb = r_front - depth
@@ -397,17 +470,48 @@ def station_block(k, x0, x1, r_front, z_deck, name='LANTERN ROW', depth=2.4, tag
         k.box(x0 + 0.5, r_front + 0.01, z, x1 - 0.5, r_front + 0.05, z + 0.42, '#c8e8f0', 'station_window', emit=('#a8e0f0', 0.55))
         k.boxes([(x, r_front + 0.05, z, x + 0.04, r_front + 0.07, z + 0.42) for x in [x0 + 0.5 + i * 0.7 for i in range(int((x1 - x0 - 1.0) / 0.7) + 1)]],
                 '#2a2a34', 'station_mullion')
-    # canopy and the platform up on the viaduct
-    k.box(x0 - 0.3, rb - 0.6, z_deck + 1.3, x1 + 0.3, r_front + 0.2, z_deck + 1.42, ('#2a2a34', 0.08), 'station_roof')
-    k.box(x0 - 0.3, r_front + 0.17, z_deck + 1.24, x1 + 0.3, r_front + 0.21, z_deck + 1.3, shade(Y.CYAN, 0.4), 'station_led',
-          emit=(Y.CYAN, 0.9))
-    for xp in (x0, (x0 + x1) / 2, x1):
-        k.cyl(xp, r_front, z_deck, z_deck + 1.3, 0.05, '#5a5a68', 'station_column', verts=8)
+    # the platform up on the viaduct: its own deck in front of the track (the viaduct leaves a gap for it), a yellow
+    # safety line and tactile strip along its edge, benches, lamps and the name boards; a light canopy over the platform
+    # only, never over the track, so the train shows from the lane as she runs in
+    vr = rb + 0.75 if vr_ is None else vr_
+    pr0, pr1 = vr + 0.62, vr + 1.9
+    k.box(x0 - 0.3, vr - 0.75, z_deck - 0.64, x1 + 0.3, pr1, z_deck - 0.02, ('#4e4c58', 0.06), 'viaduct_deck')
+    k.box(x0 - 0.3, pr1 - 0.02, z_deck - 0.86, x1 + 0.3, pr1 + 0.02, z_deck + 0.04, ('#55535e', 0.06), 'viaduct_beam')
+    k.box(x0 - 0.3, pr1 - 0.1, z_deck - 0.9, x1 + 0.3, pr1 - 0.02, z_deck - 0.86, shade(Y.CYAN, 0.45), 'station_led', emit=(Y.CYAN, 0.95))
+    k.box(x0, vr - 0.55, z_deck - 0.02, x1, vr + 0.55, z_deck + 0.06, ('#2e2c34', 0.14), 'viaduct_ballast')
+    k.boxes([(xx, vr - 0.48, z_deck + 0.06, xx + 0.12, vr + 0.48, z_deck + 0.1) for xx in [x0 + 0.1 + i * 0.32 for i in range(int((x1 - x0) / 0.32))]],
+            ('#4a4038', 0.1), 'viaduct_sleeper')
+    for rr in (vr - 0.3, vr + 0.3):
+        k.box(x0, rr - 0.035, z_deck + 0.1, x1, rr + 0.035, z_deck + 0.17, '#6a6a76', 'viaduct_rail')
+        k.box(x0, rr - 0.02, z_deck + 0.17, x1, rr + 0.02, z_deck + 0.18, '#c8ccd8', 'viaduct_rail_head')
+    k.box(x0, vr - 0.75, z_deck - 0.02, x1, vr - 0.62, z_deck + 0.4, ('#5a5864', 0.06), 'viaduct_parapet')
+    k.box(x0, pr0, z_deck - 0.02, x1, pr1, z_deck + 0.3, ('#6a6874', 0.06), 'floor_platform')
+    k.box(x0, pr0 - 0.02, z_deck + 0.3, x1, pr0 + 0.1, z_deck + 0.305, '#e8c030', 'floor_platform_line')
+    k.boxes([(xx, pr0 + 0.12, z_deck + 0.3, xx + 0.07, pr0 + 0.3, z_deck + 0.304) for xx in [x0 + 0.05 + i * 0.12 for i in range(int((x1 - x0) / 0.12))]],
+            '#c8a828', 'floor_platform_tactile')
+    k.box(x0, pr0 - 0.03, z_deck + 0.1, x1, pr0, z_deck + 0.3, '#3a3844', 'platform_edge')
+    for bx_ in (x0 + 1.6, x1 - 2.4):                                       # benches
+        k.box(bx_, pr1 - 0.55, z_deck + 0.3, bx_ + 0.8, pr1 - 0.3, z_deck + 0.52, ('#2a6a7a', 0.06), 'bench', bevel=0.02)
+        k.box(bx_, pr1 - 0.32, z_deck + 0.52, bx_ + 0.8, pr1 - 0.28, z_deck + 0.78, ('#2a6a7a', 0.06), 'bench_back')
+    for xp in [x0 + 0.5 + i * 2.0 for i in range(int((x1 - x0) / 2.0) + 1)]:        # canopy columns along the back of it
+        k.cyl(xp, pr1 - 0.15, z_deck + 0.3, z_deck + 1.5, 0.045, '#5a5a68', 'station_column', verts=8)
+    k.box(x0 - 0.3, pr0 + 0.25, z_deck + 1.5, x1 + 0.3, pr1 + 0.05, z_deck + 1.56, ('#2a2a34', 0.08), 'station_roof')
+    k.boxes([(xx, pr0 + 0.25, z_deck + 1.56, xx + 0.04, pr1 + 0.05, z_deck + 1.62) for xx in [x0 + 0.2 + i * 0.5 for i in range(int((x1 - x0) / 0.5) + 1)]],
+            '#3a3a46', 'station_roof_rib')
+    k.box(x0 - 0.3, pr1 + 0.02, z_deck + 1.44, x1 + 0.3, pr1 + 0.06, z_deck + 1.5, shade(Y.CYAN, 0.4), 'station_led', emit=(Y.CYAN, 0.9))
+    for xx in (x0 + 1.2, (x0 + x1) / 2, x1 - 1.2):                        # lamps under the canopy, pooling on the platform
+        k.box(xx - 0.25, pr0 + 0.6, z_deck + 1.42, xx + 0.25, pr0 + 0.75, z_deck + 1.5, '#e8f4ff', 'station_lamp', emit=('#e0f4ff', 1.0))
+        k.point_light(xx, pr0 + 0.6, z_deck + 1.2, '#d0ecff', 16, radius=0.3)
+    SG.lightbox(k, name, 'RussoOne', (x0 + x1) / 2, pr1 + 0.06, z_deck + 0.95, 2.8, 0.34, bg='#e8f4ff', ink='#0c2a50', glow='#a0e0ff')
+    for xx in (x0 + 0.7, x1 - 0.7):                                       # the roundel on the platform too
+        k.cyl_y(xx, pr1 + 0.04, pr1 + 0.08, z_deck + 1.0, 0.22, 0.22, '#0c2a30', 'roundel', emit=(Y.CYAN, 0.9), verts=20)
+        k.cyl_y(xx, pr1 + 0.08, pr1 + 0.1, z_deck + 1.0, 0.14, 0.14, '#e8f4ff', 'roundel_face', verts=20)
     # the platform's ends: a portal at either end over the track, so the Loop's train comes out of them (js/transit.js
     # draws it on the track between them; the world's `loop.track`)
     for (a, b) in ((x0 - 0.7, x0), (x1, x1 + 0.7)):
-        k.box(a, rb - 0.75, z_deck - 0.6, b, rb + 2.3, z_deck + 1.42, ('#4a4a58', 0.08), 'station_portal')
-        k.box(a, rb + 2.3, z_deck + 1.0, b, rb + 2.34, z_deck + 1.06, shade(Y.CYAN, 0.4), 'station_led', emit=(Y.CYAN, 0.9))
+        k.box(a, vr - 0.8, z_deck - 0.64, b, vr - 0.45, z_deck + 1.62, ('#4a4a58', 0.08), 'station_portal')
+        k.box(a, vr - 0.8, z_deck + 1.3, b, pr1 + 0.1, z_deck + 1.62, ('#4a4a58', 0.08), 'station_portal')
+        k.box(a, pr1 + 0.1, z_deck + 1.3, b, pr1 + 0.14, z_deck + 1.36, shade(Y.CYAN, 0.4), 'station_led', emit=(Y.CYAN, 0.9))
     # the roundel: a cyan ring with a bar across it
     cx, cz = x0 + 0.9, 2.5
     k.cyl_y(cx, r_front + 0.02, r_front + 0.08, cz, 0.42, 0.42, '#0c2a30', 'roundel', emit=(Y.CYAN, 0.9), verts=24)

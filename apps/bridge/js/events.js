@@ -391,7 +391,7 @@ var BridgeEvents = (function () {
       gather: { x: 30.5, y: 18.6, r: 2.4, n: 7 }, haul: 'OLD PELL\'S BOYS ARE STILL HAULING BOXES UP THE SHINGLE.', note: 'The catch went under the hammer on Tern Holm' }),
     auction_crown: catchAuction('lumar-crown', { at: [15, 31], board: [14, 31], boxes: [[16, 32], [17, 32, 0.6]], talk: [15, 32], who: 'npc-fishmonger',
       gather: { x: 15.5, y: 32.4, r: 2.4, n: 8 }, haul: 'THE TRAWLERS ARE IN UNDER THE FISHING JETTY AND THE BOXES ARE COMING UP THE STEPS.', note: 'The catch went under the hammer on Crownhaven quay' }),
-    auction_diggen: catchAuction('lumar', { at: [7, 11], board: [6, 11], boxes: [[8, 11, 0.6]], talk: [7, 12], who: 'npc-fishwife',
+    auction_diggen: catchAuction('lumar', { at: [7, 11], board: [6, 10], boxes: [[8, 11, 0.6]], talk: [7, 12], who: 'npc-fishwife',
       gather: { x: 7.5, y: 13, r: 2, n: 5 }, haul: 'THE BOATS ARE DRAWN UP AND THE BOXES ARE STACKED ON THE SAND.', note: 'The catch went under the hammer on Diggen\'s Point' }),
     auction_sapphire: catchAuction('lumar-sapphire', { at: [37, 22], board: [36, 22], boxes: [[38, 22], [36, 23, 0.6]], talk: [37, 23], who: 'npc-fishmonger',
       gather: { x: 37.5, y: 23.6, r: 2.2, n: 7 }, haul: 'THE BOATS ARE IN AT THE FISHING PIER AND THE GLASSWORKS\' COOKS ARE ALREADY ELBOWING FOR THE FRONT.', note: 'The catch went under the hammer in Sapphire Port' }),
