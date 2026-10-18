@@ -97,7 +97,7 @@ class Land:
         'flag': ('#7e7c6c', 0.25), 'deep_moss': ('#3a5a2c', 0.3), 'gloom': ('#2e3a2a', 0.36),
     }
 
-    TURF = ('moss', 'moss_dark', 'deep_moss', 'grass', 'meadow')
+    TURF = ('moss', 'moss_dark', 'deep_moss', 'gloom', 'grass', 'meadow')
 
     def __init__(self, k, zfn, matfn, alb=None):
         self.k, self.zf, self.mf = k, zfn, matfn

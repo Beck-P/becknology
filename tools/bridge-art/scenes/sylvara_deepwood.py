@@ -49,11 +49,14 @@ def wet(x, r, pad=0.0):
 
 
 def in_meadow(x, r):
-    return ((x - MEADOW[0]) / MEADOW[2]) ** 2 + ((r - MEADOW[1]) / MEADOW[3]) ** 2 < 1.0
+    """An open meadow in the wood, its edge wandering in and out among the trees (never an ellipse in a field)."""
+    e = ((x - MEADOW[0]) / MEADOW[2]) ** 2 + ((r - MEADOW[1]) / MEADOW[3]) ** 2
+    return e < 1.0 + 0.55 * (A.noise(x, r, 0.45, 43) - 0.5) + 0.25 * (A.noise(x, r, 1.3, 44) - 0.5)
 
 
 def in_grove(x, r):
-    return ((x - GROVE[0]) / GROVE[2]) ** 2 + ((r - GROVE[1]) / GROVE[3]) ** 2 < 1.0
+    e = ((x - GROVE[0]) / GROVE[2]) ** 2 + ((r - GROVE[1]) / GROVE[3]) ** 2
+    return e < 1.0 + 0.5 * (A.noise(x, r, 0.5, 45) - 0.5)
 
 
 def zfn(x, r):

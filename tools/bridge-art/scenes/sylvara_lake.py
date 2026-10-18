@@ -76,7 +76,10 @@ def path_d(x, r):
 
 
 def meadow(x, r):
-    return x > 36.0 and 10.0 < r < 32.0 and lake_d(x, r) < -0.8
+    """The meadow running down to the east shore: its edge wanders (no straight lines in a wood)."""
+    w = 2.2 * (A.noise(x, r, 0.35, 41) - 0.5)
+    inside = A.smooth(35.0, 38.5, x + w) * A.smooth(9.0, 12.5, r + w) * A.smooth(33.5, 30.0, r - w)
+    return inside > 0.5 and lake_d(x, r) < -0.8
 
 
 def mat(x, r):

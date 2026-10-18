@@ -15,7 +15,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from scenekit import Kit, THETA, apply_world, shade  # noqa: E402
 import assets_sylvan as A
-import assets_sylvara_rich as R                    # noqa: E402                              # noqa: E402
+import assets_sylvara_rich as RICH                  # noqa: E402                              # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 OUT = sys.argv[1]
@@ -111,7 +111,7 @@ k.box(15.08, 2.88, 0.4, 16.02, 3.42, 0.46, (A.GOLD, 0.25), 'chest_lid')
 k.solid(14.8, 2.5, 16.4, 3.6)
 k.solid(POOL[0] - POOL[2], POOL[1] - POOL[3], POOL[0] + POOL[2], POOL[1] + POOL[3])
 
-R.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
+RICH.merge_parts(k)                                                  # one mesh per look: each render pass quick (assets_sylvara_rich)
 k.render(OUT, light_states={'full': {}}, light_samples=int(os.environ.get('SAMPLES', 128)), world_light=('#1e2a30', 0.35))
 
 walk = [(c, rr) for c in range(COLS) for rr in range(ROWS) if (cave(c + 0.5, rr + 0.7) and rr < 14) or (rr == 13 and 8 <= c <= 10)]
