@@ -65,7 +65,8 @@ var BridgeInteractions = (function () {
 
   var PLACE_NAMES = { 'lumar-square': 'Market Square', 'lumar': 'the Harbor', 'arcadia-street': 'the Street',
                       'arcadia-skypad': 'Skyport 7', 'enigma-dock': 'Docking Bay 3', 'enigma': 'the Relay Deck', 'enigma-hydro': 'Hydroponics',
-                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters', 'office': 'the Office',
+                      'arcadia': 'the Arcade', 'bridge': 'the Bridge', 'quarters': 'Quarters', 'office': 'the Office', 'ship-passage': 'the Passage', 'ship-galley': 'the Galley',
+                      'ship-observatory': 'the Observatory', 'ship-greenhouse': 'the Greenhouse',
                       'lumar-home': 'your house', 'arcadia-home': 'your apartment', 'arcadia-penthouse': 'the Penthouse', 'lumar-manor': 'Ashcombe House', 'lumar-sapphire': 'Sapphire Port',
                       'lumar-manor-drawing': 'the drawing room', 'lumar-manor-library': 'the library', 'lumar-manor-dining': 'the dining room',
                       'lumar-manor-bedroom': 'the master bedroom', 'lumar-holm-resort': 'the Starling',
@@ -154,6 +155,9 @@ var BridgeInteractions = (function () {
     }
     var cx = view.offX + (t.x + 0.5) * view.ts;
     var cy = view.offY + (t.y - promptLift(t)) * view.ts;
+    var lw = typeof BridgeWorld !== 'undefined' && BridgeWorld.getWorld && BridgeWorld.getWorld();
+    var lsc = lw && lw.scene && Array.isArray(lw.scene.heights) && typeof BridgeScene !== 'undefined' && BridgeScene.get(lw.scene.id);
+    if (lsc) cy -= BridgeScene.liftAt(lsc, t.x + 0.5, t.y + 0.5) * Math.SQRT1_2 * view.ts;   // on raised ground, over it there
     var w = el.offsetWidth || 120, h = el.offsetHeight || 28;
     var x = Math.round(Math.max(8, Math.min(window.innerWidth - w - 8, cx - w / 2)));
     var y = Math.round(Math.max(56, Math.min(window.innerHeight - h - 70, cy - h - 6)));
@@ -342,6 +346,7 @@ var BridgeInteractions = (function () {
       }
       if (landed) {
         var dmg = C && C.attackDamage && hostile.creature ? C.attackDamage(hostile) : hostile.damage || 5;
+        if (typeof BridgeImplants !== 'undefined') dmg = BridgeImplants.absorb(dmg);   // dermal plate (js/implants.js)
         if (C && C.shake) C.shake(dmg >= 12 ? 4 : 2);
         if (typeof BridgeInventory !== 'undefined' && BridgeInventory.takeDamage) {
           BridgeInventory.takeDamage(dmg);
@@ -484,6 +489,14 @@ var BridgeInteractions = (function () {
         if (typeof BridgeDistrict !== 'undefined') BridgeDistrict.use(inter);
         break;
 
+      case 'implants':                                                  // chrome: the clinic, the chop shop, the boutique (js/implants.js)
+        if (typeof BridgeImplants !== 'undefined') BridgeImplants.open({ shop: inter.shop });
+        break;
+
+      case 'under':                                                     // the Undercity and the Sump (js/undercity.js)
+        if (typeof BridgeUndercity !== 'undefined') BridgeUndercity.use(inter);
+        break;
+
       case 'companion':                                                 // your pet, following you (js/pet.js)
         if (typeof BridgePet !== 'undefined') BridgePet.use(inter);
         break;
@@ -595,6 +608,13 @@ var BridgeInteractions = (function () {
         break;
       case 'exchange':                                                   // the Merchants' Exchange board (js/harbour.js)
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.exchange();
+        break;
+      case 'lanternfall':                                                // the cliff town on the Sapphire Sea (js/sapphire.js)
+      case 'sapphire':                                                   // the floating market's glassworks
+        if (typeof BridgeSapphire !== 'undefined') BridgeSapphire.use(inter);
+        break;
+      case 'rose':                                                       // Rosewell, the bathhouse town on Rose Cove's springs (js/rose.js)
+        if (typeof BridgeRose !== 'undefined') BridgeRose.use(inter);
         break;
       case 'holm':                                                       // your own island (js/holm.js)
         if (typeof BridgeHolm !== 'undefined') BridgeHolm.use(inter);
@@ -1415,6 +1435,11 @@ var BridgeInteractions = (function () {
       if (t.harbour && typeof BridgeHarbour !== 'undefined') {        // a harbourmaster's book: ships, yard, hands, hold, market
         close();
         BridgeHarbour.open(BridgeWorld.getWorldId(), t.a);
+        return;
+      }
+      if (t.sylvan && typeof BridgeSylvara !== 'undefined' && BridgeSylvara.topic) {   // Sylvara's: a shop, brewing, the range, a canoe (js/worlds/sylvara.js)
+        close();
+        BridgeSylvara.topic(t.sylvan, Object.getPrototypeOf(person), t.a);
         return;
       }
       if (t.peddler && typeof BridgeMagic !== 'undefined') {          // Wendel's wares (js/magic.js)

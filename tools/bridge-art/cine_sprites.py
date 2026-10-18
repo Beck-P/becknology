@@ -1,5 +1,7 @@
 """Render the cutscene sprites (bpy): the mothership, the shuttle level / nose
-down / nose up, each side-on, with anchor points for the engine code.
+down / nose up, each side-on, with anchor points for the engine code. The
+mothership comes as fitted too: `mothership-<module>[-<module>…]` for every
+set of rooms fitted aft of her bridge (js/wayfarer.js), each a section longer.
 
   BVENV/bin/python tools/bridge-art/cine_sprites.py RENDER_DIR [name ...]
   python3 tools/bridge-art/cine_post.py RENDER_DIR apps/bridge/assets/cine
@@ -36,16 +38,20 @@ def shuttle(name, deg):
     k.render(os.path.join(OUT, name), light_states={'full': {}}, light_samples=64, world_light=('#202838', 0.35))
 
 
-def mothership():
-    L = 18.0
-    k = CineKit((-1.8, 20.8, -3.2, 3.2, -0.3, 9.2), elev=12, ppt=14)
-    bay = P.mothership(k, 0.0, 0.0, L=L)['bay']
+def mothership(mods=()):
+    L, M = 18.0, P.MOD_LEN * len(mods)
+    k = CineKit((-1.8, 20.8 + M, -3.2, 3.2, -0.3, 9.2), elev=12, ppt=14)
+    bay = P.mothership(k, 0.0, 0.0, L=L, mods=mods)['bay']
     for i, z in enumerate((2.95, 1.95)):
         k.anchor('exhaust_%d' % i, -1.45, 0.0, z)
     k.anchor('bay', *bay)
-    k.anchor('nose', L + 2.4, 0.0, 3.5)
+    k.anchor('nose', L + M + 2.4, 0.0, 3.5)
     lights(k, 2.6)
-    k.render(os.path.join(OUT, 'mothership'), light_states={'full': {}}, light_samples=64, world_light=('#202838', 0.35))
+    k.render(os.path.join(OUT, '-'.join(('mothership',) + tuple(mods))), light_states={'full': {}}, light_samples=64,
+             world_light=('#202838', 0.35))
+
+
+MODULES = ('galley', 'observatory', 'greenhouse')       # her order, stern to bow (js/wayfarer.js ORDER)
 
 
 def galleon():
@@ -90,6 +96,9 @@ JOBS = {
     'shuttle-up': lambda: shuttle('shuttle-up', 16),
     'mothership': mothership,
 }
+for _n in range(1, 1 << len(MODULES)):                  # every set of fitted rooms
+    _m = tuple(m for i, m in enumerate(MODULES) if _n >> i & 1)
+    JOBS['-'.join(('mothership',) + _m)] = (lambda m: lambda: mothership(m))(_m)
 for name, job in JOBS.items():
     if not ONLY or name in ONLY:
         job()

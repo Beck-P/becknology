@@ -72,6 +72,9 @@ var BridgeCine = (function () {
     if (alpha !== undefined && alpha < 1) b.restore();
   }
 
+  // a sprite name if it's loaded, else the Wayfarer as built (a fitted one not rendered yet)
+  function shipKey(name) { return name && meta && meta[name] && imgs[name] ? name : 'mothership'; }
+
   function anchor(name, key) {
     var a = meta && meta[name] && meta[name].anchors[key];
     return a || [0, 0];
@@ -378,10 +381,12 @@ var BridgeCine = (function () {
   }
 
   // ---- player ---------------------------------------------------------------------
+  var minW = 0;                 // the buffer's least width for these shots (the ship and a margin), native px
   function play(makeShots, opts) {
     setup();
     return load().then(function () {
       if (!meta || !meta.shuttle || !meta.galleon || typeof BridgeOrbit === 'undefined') return;
+      minW = 0;
       var shots = makeShots();
       return new Promise(function (resolve) {
         var total = shots.reduce(function (a, s) { return a + s.dur; }, 0);
@@ -417,6 +422,7 @@ var BridgeCine = (function () {
           var dpr = window.devicePixelRatio || 1;
           var sw = Math.round(window.innerWidth * dpr), sh = Math.round(window.innerHeight * dpr);
           var zoom = Math.max(1, Math.round(sw / 480));
+          while (zoom > 1 && sw / zoom < minW) zoom--;          // room for the whole ship (a long one, fitted: js/wayfarer.js)
           var W = Math.ceil(sw / zoom), H = Math.ceil(sh / zoom);
           if (canvas.width !== sw || canvas.height !== sh) { canvas.width = sw; canvas.height = sh; }
           if (buf.width !== W || buf.height !== H) { buf.width = W; buf.height = H; }
@@ -541,10 +547,11 @@ var BridgeCine = (function () {
 
   // a galleon further off (jumping with someone: js/party.js): the sprite shrunk once, its edge kept hard
   var farCache = {};
-  function farShip(k) {
-    var key = Math.round(k * 100);
+  function farShip(k, name) {
+    name = shipKey(name);
+    var key = name + ':' + Math.round(k * 100);
     if (farCache[key]) return farCache[key];
-    var m = meta.mothership, im = imgs.mothership, c = document.createElement('canvas');
+    var m = meta[name], im = imgs[name], c = document.createElement('canvas');
     c.width = Math.max(1, Math.round(m.w * k)); c.height = Math.max(1, Math.round(m.h * k));
     var g = c.getContext('2d');
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
@@ -562,14 +569,18 @@ var BridgeCine = (function () {
   function jumpShots(from, to, opts) {
     opts = opts || {};
     var shots = [];
+    // her as fitted (js/wayfarer.js: a section longer for each room aft of the bridge), and the other galleon as hers is
+    var SHIP = shipKey(opts.ship || (typeof BridgeWayfarer !== 'undefined' ? BridgeWayfarer.key() : 'mothership'));
+    var WSHIP = shipKey(typeof opts.wing === 'string' ? opts.wing : 'mothership');
+    minW = meta[SHIP].w + 80;
     function shipAt(W, H, dx, dy, shake, now) {
-      var m = meta.mothership;
+      var m = meta[SHIP];
       var j = shake ? (hash(Math.floor(now / 30)) - 0.5) * shake : 0, k = shake ? (hash(Math.floor(now / 30) + 7) - 0.5) * shake : 0;
       return [Math.round(W * 0.5 - m.w * 0.5 + dx + j), Math.round(H * 0.5 - m.h * 0.55 + dy + k), m];
     }
     // the other ship, keeping station off your bow quarter, higher and further off; drawn before yours
     function wingAt(W, H, dx, dy, shake, now) {
-      var f = farShip(WING), m = meta.mothership;
+      var f = farShip(WING, WSHIP), m = meta[SHIP];
       var j = shake ? (hash(Math.floor(now / 30) + 3) - 0.5) * shake : 0;
       return [Math.round(W * 0.5 - m.w * 0.5 + m.w * 0.62 + dx * WING + j), Math.round(H * 0.5 - m.h * 0.55 - m.h * 0.42 + dy * WING + Math.sin(now / 900) * 2), f];
     }
@@ -617,14 +628,14 @@ var BridgeCine = (function () {
       b.restore();
       wing(b, W, H, -t * 14, 0, t * t * 3, now, 12 + t * 36);
       engines(b, p, now, 12 + t * 36);
-      sprite(b, 'mothership', p[0], p[1]);
+      sprite(b, SHIP, p[0], p[1]);
       b.save(); b.globalCompositeOperation = 'lighter'; b.globalAlpha = t * 0.35;          // the hull itself starting to glow
-      sprite(b, 'mothership', p[0], p[1]); b.restore();
+      sprite(b, SHIP, p[0], p[1]); b.restore();
     } });
     // 2 · the leap: the ship stretching away into the distance, a shock ring where it was, a white-out
     shots.push({ dur: 480, dip: false, sfx: 'leap', draw: function (b, W, H, t, now) {
       spaceShot(b, W, H, now, from);
-      var m = meta.mothership, e = t * t;
+      var m = meta[SHIP], e = t * t;
       var cx = W * 0.5 - 14, cy = H * 0.5;
       b.save();
       b.globalCompositeOperation = 'lighter';
@@ -638,7 +649,7 @@ var BridgeCine = (function () {
       b.beginPath(); b.ellipse(cx, cy, 20 + t * W * 0.6, (20 + t * W * 0.6) * 0.3, 0, 0, Math.PI * 2); b.stroke();
       var stretch = 1 + e * 7, x0 = cx - m.w * 0.5 + e * W * 0.9;
       if (opts.wing) {                                        // the other ship leaps a beat ahead of yours
-        var f = farShip(WING), e2 = Math.min(1, e * 1.25), st2 = 1 + e2 * 7, wy = cy - m.h * 0.55 - m.h * 0.42;
+        var f = farShip(WING, WSHIP), e2 = Math.min(1, e * 1.25), st2 = 1 + e2 * 7, wy = cy - m.h * 0.55 - m.h * 0.42;
         for (var g2 = 2; g2 >= 0; g2--) {
           b.globalAlpha = g2 === 0 ? 1 : 0.22 / g2;
           b.drawImage(f.img, Math.round(cx - m.w * 0.5 + m.w * 0.62 + e2 * W * 0.9 - g2 * 20 * e2 - f.w * (st2 - 1)), Math.round(wy), Math.round(f.w * st2), f.h);
@@ -647,7 +658,7 @@ var BridgeCine = (function () {
       }
       for (var gh = 3; gh >= 0; gh--) {                       // after-images along its path
         b.globalAlpha = gh === 0 ? 1 : 0.25 / gh;
-        b.drawImage(imgs.mothership, Math.round(x0 - gh * 30 * e - m.w * (stretch - 1)), Math.round(cy - m.h * 0.55),
+        b.drawImage(imgs[SHIP], Math.round(x0 - gh * 30 * e - m.w * (stretch - 1)), Math.round(cy - m.h * 0.55),
                     Math.round(m.w * stretch), m.h);
       }
       b.restore();
@@ -687,7 +698,7 @@ var BridgeCine = (function () {
       var nose = p[2].anchors.nose;
       if (nose) flame(b, p[0] + nose[0], p[1] + nose[1], 8 + (1 - u) * 26, 1, 0, now, AETHER, 4);   // braking off the bow
       engines(b, p, now, 6 + (1 - u) * 18);
-      sprite(b, 'mothership', p[0], p[1]);
+      sprite(b, SHIP, p[0], p[1]);
       b.fillStyle = 'rgba(255,255,255,' + Math.max(0, 1 - t * 5).toFixed(2) + ')';
       b.fillRect(0, 0, W, H);
     } });
@@ -698,7 +709,7 @@ var BridgeCine = (function () {
         wing(b, W, H, -t * 10, 0, 0, now, 6);
         var p = shipAt(W, H, -t * 10, 0, 0, now);
         engines(b, p, now, 6);
-        sprite(b, 'mothership', p[0], p[1]);
+        sprite(b, SHIP, p[0], p[1]);
       } });
     }
     // 6 · the shuttle drops out of the bay and dives for the planet, a streak of re-entry behind it
@@ -707,7 +718,7 @@ var BridgeCine = (function () {
       wing(b, W, H, -(opts.first ? 10 : 0) - t * 8, 0, 0, now, 6);
       var p = shipAt(W, H, -(opts.first ? 10 : 0) - t * 8, 0, 0, now), m = p[2];
       engines(b, p, now, 6);
-      sprite(b, 'mothership', p[0], p[1]);
+      sprite(b, SHIP, p[0], p[1]);
       var bay = m.anchors.bay || [m.w * 0.5, m.h * 0.7], sm = meta['shuttle-down'];
       var e = t * t, sc = 1 - e * 0.85;
       var sx = p[0] + bay[0] + e * W * 0.25, sy = p[1] + bay[1] + e * H * 0.55;
@@ -744,7 +755,9 @@ var BridgeCine = (function () {
   function has(name) { return !!(meta && meta[name] && imgs[name]); }
   /** A loaded sprite with its size and anchors ({ img, w, h, anchors }), or null — the title page (js/intro.js) draws the
    *  Wayfarer and the skiff from these, with the same nebulae and engine flames. */
-  function get(name) { return has(name) ? { img: imgs[name], w: meta[name].w, h: meta[name].h, anchors: meta[name].anchors || {} } : null; }
+  function get(name) { return has(name) ? { img: imgs[name], w: meta[name].w, h: meta[name].h, anchors: meta[name].anchors || {}, name: name } : null; }
+  /** The Wayfarer as fitted (`key`: BridgeWayfarer.key(); yours if not given), falling back on her as built. */
+  function ship(key) { return get(shipKey(key || (typeof BridgeWayfarer !== 'undefined' ? BridgeWayfarer.key() : null))); }
 
-  return { sail: sail, jump: jump, play: play, load: load, has: has, get: get, nebula: nebula, flame: flame };
+  return { sail: sail, jump: jump, play: play, load: load, has: has, get: get, ship: ship, nebula: nebula, flame: flame };
 })();

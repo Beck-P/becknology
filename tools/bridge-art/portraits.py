@@ -396,9 +396,10 @@ MOODS = {    # a face's temperament: its resting mouth and brows. Most of the ca
                'npc-elf-warden', 'npc-registrar', 'npc-dealer-b', 'npc-vex', 'npc-sev', 'npc-aubert'],
     'flat':   ['npc-ferryman', 'npc-quiet', 'npc-stranger', 'npc-traveler', 'npc-keeper', 'npc-miner', 'npc-scholar',
                'npc-croupier', 'npc-dealer', 'npc-dealer-c', 'npc-clerk', 'npc-courier', 'npc-technician', 'npc-waiting',
-               'npc-gambler-b', 'npc-queen', 'npc-duchess', 'npc-sorceress', 'npc-steward', 'npc-broker'],
+               'npc-gambler-b', 'npc-queen', 'npc-duchess', 'npc-sorceress', 'npc-steward', 'npc-broker', 'npc-cabbie',
+               'npc-jazz-bassist'],
     'smirk':  ['npc-pawnbroker', 'npc-highroller', 'npc-dj', 'npc-mixer', 'npc-gambler-a', 'npc-peddler', 'npc-hm-mira',
-               'npc-beckolas', 'npc-singer', 'npc-runouts-host'],
+               'npc-beckolas', 'npc-singer', 'npc-runouts-host', 'npc-mixologist', 'npc-jazz-singer', 'npc-jazz-drummer'],
 }
 MOOD = {name: mood for mood, names in MOODS.items() for name in names}
 YOUNG = {'npc-elf-child'}                                          # children who aren't built `young`

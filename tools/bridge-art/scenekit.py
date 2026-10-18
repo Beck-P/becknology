@@ -67,6 +67,12 @@ def _scale(x, y, z):
     return Matrix.Diagonal((x, y, z, 1.0))
 
 
+def id_rgb(pid):
+    """A part's colour in the id pass. Unique for any number of parts: the first 250 as they always were, then each block
+    of 251 with its blue turned on (the red alone tells pids within a block apart)."""
+    return ((pid * 37) % 251, (pid * 91) % 251, (pid * 53 + 101 * (pid // 251)) % 251)
+
+
 def hexc(h):
     h = h.lstrip('#')
     return [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
@@ -100,6 +106,7 @@ class Kit:
         self._fol = None      # foliage being built (see foliage()): 'leaf' or 'needle'
         self._tree = 0        # which tree it belongs to
         self.later = []       # built once everything else is placed, just before the render (the grass: see top())
+        self.wet = None       # {word: strength}: parts with that word in their name are wet and mirror the scene (_wet_mirror)
         self.scene.world = bpy.data.worlds.new('w')
 
     # ---- ids / materials -------------------------------------------------
@@ -152,7 +159,7 @@ class Kit:
     # by part name (less a 'ground_' / 'coast_' prefix) or a part's own 'nature' — for the seasons on the ground and the
     # wind and ripples the engine draws (js/foliage.js, js/nature.js)
     GRASS_PARTS = ('grass', 'grass_dark', 'meadow', 'meadow_dark', 'meadow_flower', 'lip_grass', 'turf')
-    WATER_PARTS = ('pond_water', 'pond_deep', 'stream_water', 'stream_deep', 'basin_water')
+    WATER_PARTS = ('pond_water', 'pond_deep', 'stream_water', 'stream_deep', 'basin_water', 'well_water', 'trough_water')
 
     def _nature(self, p):
         if p.get('nature'):
@@ -608,7 +615,7 @@ class Kit:
                 pid = p['pid']
                 key = ('i', pid)
                 if key not in cache:
-                    cache[key] = self._flat_rgb((((pid * 37) % 251) / 255, ((pid * 91) % 251) / 255, ((pid * 53) % 251) / 255))
+                    cache[key] = self._flat_rgb(tuple(v / 255 for v in id_rgb(pid)))
                 m = cache[key]
             elif kind == 'depth':
                 if 'depth' not in cache:
@@ -918,9 +925,40 @@ class Kit:
         sc.cycles.glossy_bounces = 4
         return True
 
+    def _wet_word(self, p):
+        w = set((p.get('pname') or '').lower().split('_'))
+        hits = [v for k_, v in self.wet.items() if k_ in w]
+        return max(hits) if hits else 0.0
+
+    def _wet_mirror(self, out):
+        """A wet street (Arcadia after the rain; `k.wet = {word: strength}`): the parts named with one of those words —
+        the road, the paving, puddles — as a perfect mirror, once of the flat colours (wet.png, the sky keyed magenta) and
+        once of what glows alone (wet_glow.png). scene_post lays them over each light state, the neon smeared down the
+        wet ground, as strong as each part's strength (render.json `wet`: {part name: strength})."""
+        wet = [p for p in self.parts if p['var'] is None and self._wet_word(p) > 0]
+        if not wet:
+            return None
+        sc = self.scene
+        mm = self._mirror_mat()
+        for name, kind, world in (('wet.png', 'albedo', ('#ff00ff', 1.0)), ('wet_glow.png', 'emission', ('#000000', 0.0))):
+            self._sky({'_world': world})
+            self._assign(kind)
+            for p in wet:
+                p['obj'].data.materials[0] = mm
+            for L in self.lights:
+                L['obj'].hide_render = True
+            self._settings(16)
+            sc.cycles.use_denoising = False
+            sc.cycles.max_bounces = 2
+            sc.cycles.glossy_bounces = 2
+            self._render(os.path.join(out, name))
+        sc.cycles.max_bounces = 12
+        sc.cycles.glossy_bounces = 4
+        return {p['pname']: self._wet_word(p) for p in wet}
+
     def _id_names(self):
         """The id pass's colour of each part name (as rendered: raw, so the values themselves)."""
-        return {'%d,%d,%d' % ((pid * 37) % 251, (pid * 91) % 251, (pid * 53) % 251): name for name, pid in self.pid_names.items()}
+        return {'%d,%d,%d' % id_rgb(pid): name for name, pid in self.pid_names.items()}
 
     def render(self, out, light_states=None, probe_z=0.9, light_samples=160, world_light=('#202838', 0.25), cycle=None):
         """light_states: {'name': {group: multiplier}} — one light pass each (keys starting `_` are the cycle's:
@@ -934,6 +972,9 @@ class Kit:
             return
         os.makedirs(out, exist_ok=True)
         light_samples = int(os.environ.get('SCENE_SAMPLES', light_samples))     # a quick look: SCENE_SAMPLES=16
+        if os.environ.get('SCENE_QUICK'):                                        # a quicker look: its own light only, no day
+            cycle = None
+            os.environ['SCENE_NOLIT'] = '1'
         light_states = light_states or {'full': {}}
         self._world_default = world_light
         cmap = None
@@ -975,12 +1016,14 @@ class Kit:
         for name, state in light_states.items():
             self._sky(state)
             self._assign('light', state)
-            self._settings(64, raw=True, sixteen=True)
+            probe_n = os.environ.get('SCENE_PROBE_SAMPLES')                  # fewer for a quick look
+            self._settings(int(probe_n) if probe_n else (min(64, light_samples) if os.environ.get('SCENE_QUICK') else 64), raw=True, sixteen=True)
             self._render(os.path.join(out, 'probe_' + name + '.png'))
         bpy.data.objects.remove(pl)
         for p in self.parts:
             p['obj'].visible_camera = True
 
+        wet = self._wet_mirror(out) if self.wet else None
         refl = False
         if lit:
             self._lit_passes(out, light_states, self._lit_samples)
@@ -1009,6 +1052,8 @@ class Kit:
         if self.water_z is not None:
             meta['waterZ'] = self.water_z
             meta['heightRange'] = HEIGHT_RANGE
+        if wet:
+            meta['wet'] = wet
         json.dump(meta, open(os.path.join(out, 'render.json'), 'w'), indent=1)
         return meta
 

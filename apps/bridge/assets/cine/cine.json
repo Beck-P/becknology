@@ -2,6 +2,7 @@
  "mothership": {
   "w": 307,
   "h": 126,
+  "rev": "08a57ee6ea",
   "anchors": {
    "exhaust_0": [
     -0.1,
@@ -19,8 +20,7 @@
     306.4,
     73.5
    ]
-  },
-  "rev": "de14c5ecdc"
+  }
  },
  "shuttle": {
   "w": 104,
@@ -109,6 +109,167 @@
    ]
   },
   "rev": "3d13c984c3"
+ },
+ "mothership-galley": {
+  "w": 343,
+  "h": 126,
+  "rev": "e6b4bc934d",
+  "anchors": {
+   "exhaust_0": [
+    -0.1,
+    81.1
+   ],
+   "exhaust_1": [
+    -0.1,
+    94.8
+   ],
+   "bay": [
+    138.7,
+    102.1
+   ],
+   "nose": [
+    342.4,
+    73.5
+   ]
+  }
+ },
+ "mothership-galley-greenhouse": {
+  "w": 380,
+  "h": 126,
+  "rev": "61cac68826",
+  "anchors": {
+   "exhaust_0": [
+    -0.1,
+    81.1
+   ],
+   "exhaust_1": [
+    -0.1,
+    94.8
+   ],
+   "bay": [
+    138.9,
+    102.2
+   ],
+   "nose": [
+    379.4,
+    73.5
+   ]
+  }
+ },
+ "mothership-galley-observatory": {
+  "w": 380,
+  "h": 126,
+  "rev": "dc4fb40945",
+  "anchors": {
+   "exhaust_0": [
+    -0.1,
+    81.1
+   ],
+   "exhaust_1": [
+    -0.1,
+    94.8
+   ],
+   "bay": [
+    138.9,
+    102.2
+   ],
+   "nose": [
+    379.4,
+    73.5
+   ]
+  }
+ },
+ "mothership-galley-observatory-greenhouse": {
+  "w": 416,
+  "h": 126,
+  "rev": "9758679f49",
+  "anchors": {
+   "exhaust_0": [
+    -0.1,
+    81.1
+   ],
+   "exhaust_1": [
+    -0.1,
+    94.8
+   ],
+   "bay": [
+    138.8,
+    102.1
+   ],
+   "nose": [
+    415.4,
+    73.5
+   ]
+  }
+ },
+ "mothership-greenhouse": {
+  "w": 343,
+  "h": 126,
+  "rev": "4c4534b122",
+  "anchors": {
+   "exhaust_0": [
+    -0.1,
+    81.1
+   ],
+   "exhaust_1": [
+    -0.1,
+    94.8
+   ],
+   "bay": [
+    138.7,
+    102.1
+   ],
+   "nose": [
+    342.4,
+    73.5
+   ]
+  }
+ },
+ "mothership-observatory": {
+  "w": 343,
+  "h": 126,
+  "rev": "2d7f1ec06b",
+  "anchors": {
+   "exhaust_0": [
+    -0.1,
+    81.1
+   ],
+   "exhaust_1": [
+    -0.1,
+    94.8
+   ],
+   "bay": [
+    138.7,
+    102.1
+   ],
+   "nose": [
+    342.4,
+    73.5
+   ]
+  }
+ },
+ "mothership-observatory-greenhouse": {
+  "w": 380,
+  "h": 126,
+  "rev": "37c3891d8f",
+  "anchors": {
+   "exhaust_0": [
+    -0.1,
+    81.1
+   ],
+   "exhaust_1": [
+    -0.1,
+    94.8
+   ],
+   "bay": [
+    138.9,
+    102.2
+   ],
+   "nose": [
+    379.4,
+    73.5
+   ]
+  }
  },
  "train": {
   "w": 148,
