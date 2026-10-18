@@ -20,7 +20,7 @@
  *   BridgeCapital.BUILT, BridgeCapital.play(ms)
  */
 var BridgeCapital = (function () {
-  var BUILT = { 'lumar-crown-oldtown': true, 'lumar-crown-canals': true };
+  var BUILT = { 'lumar-crown-oldtown': true, 'lumar-crown-canals': true, 'lumar-crown-bridge': true };
   // the ways between the districts: on the district's side a label of its own (a 'dialog' in its world JSON until the
   // far side exists) and where it lands you
   var GATES = {
