@@ -702,9 +702,13 @@ def stair_up(k, x0, x1, rf, z_top, steps=None, col='#3a3842', rail=SODIUM):
     k.box(x1, rf - 0.1, z_top - 0.06, x1 + 1.2, rf + 0.85, z_top, (col, 0.08), 'stair_landing')
 
 
-def stair_down(k, dr, x0, x1, r0, r1, depth=3.0, glow=TUBE_G, label=None):
+def stair_down(k, dr, x0, x1, r0, r1, depth=3.0, glow=TUBE_G, label=None, away=False):
     """A stairwell going down through the floor: concrete side walls falling away, treads descending toward the camera
-    into the dark, a rail round the opening, a tube light half way down and a lit sign at the top."""
+    into the dark, a rail round the opening, a tube light half way down and a lit sign at the top. `away`: the treads go
+    down away from the camera instead, so the well's depth stays inside its opening — for a stairwell with nothing in
+    front of it (at the 45° camera a deep well near the front shows its bottom past whatever's in front)."""
+    if away:
+        return _stair_away(k, x0, x1, r0, r1, depth, glow, label)
     n = int((r1 - r0) / 0.3)
     k.box(x0 - 0.2, r0 - 0.2, -depth - 0.2, x1 + 0.2, r0, 0.0, '#2a2830', 'stairwell_wall')
     for s in (x0 - 0.2, x1):
@@ -727,6 +731,35 @@ def stair_down(k, dr, x0, x1, r0, r1, depth=3.0, glow=TUBE_G, label=None):
     if label:
         import assets_signs as SG
         SG.lightbox(k, label, 'RussoOne', (x0 + x1) / 2, r0 - 0.15, 1.25, max(2.2, (x1 - x0) + 0.4), 0.6, bg='#0c1a12', ink=glow, size=0.42, energy=6)
+        for s in (x0 - 0.12, x1 + 0.12):
+            k.tube((s, r0 - 0.12, 0.95), (s, r0 - 0.12, 1.25), 0.02, '#5a5a64', 'sign_post', verts=5)
+
+
+def _stair_away(k, x0, x1, r0, r1, depth, glow, label):
+    n = int((r1 - r0) / 0.3)
+    step = (r1 - r0) / n
+    for s in (x0 - 0.2, x1):                                         # the side walls, their tops a kerb round the opening
+        k.box(s, r0, -depth, s + 0.2, r1, 0.05, ('#3a3840', 0.1), 'stairwell_wall')
+    k.box(x0 - 0.2, r1, -0.2, x1 + 0.2, r1 + 0.2, 0.05, ('#3a3840', 0.1), 'stairwell_wall')     # the near kerb
+    k.box(x0 - 0.2, r0 - 0.2, -depth - 0.2, x1 + 0.2, r0, 0.05, '#1a1820', 'stairwell_wall')  # the far wall, facing you
+    for i in range(n):                                               # treads stepping down from the near edge to the far
+        r = r1 - (i + 1) * step
+        z = -(i + 1) * depth / n
+        k.box(x0, r, z - 0.1, x1, r + step + 0.01, z, (shade('#3a3840', 1 - i / (n * 1.6)), 0.08), 'floor_stair')
+        k.box(x0, r + step - 0.02, z - 0.005, x1, r + step, z + 0.005, '#c8a030', 'floor_nosing')
+    k.box(x0, r0 - 0.01, -depth - 0.2, x1, r0 + 0.25, -depth + 0.02, '#0a0a0e', 'stairwell_dark')
+    for s in (x0 - 0.12, x1 + 0.12):                                 # rails down either side, and across the far end
+        k.tube((s, r0 + 0.1, 0.95), (s, r1 + 0.05, 0.95), 0.025, '#5a5a64', 'stair_rail', verts=6)
+        for rr in (r0 + 0.1, r1 + 0.05):
+            k.tube((s, rr, 0.0), (s, rr, 0.95), 0.025, '#5a5a64', 'stair_rail', verts=6)
+    k.tube((x0 - 0.12, r0 + 0.1, 0.95), (x1 + 0.12, r0 + 0.1, 0.95), 0.025, '#5a5a64', 'stair_rail', verts=6)
+    k.box((x0 + x1) / 2 - 0.4, r0 - 0.05, -depth * 0.5, (x0 + x1) / 2 + 0.4, r0, -depth * 0.5 + 0.06,
+          shade(glow, 0.5), 'fluoro_tube', emit=(glow, 1.0))
+    k.point_light((x0 + x1) / 2, r0 + 0.4, -depth * 0.5, glow, 60, radius=0.3, group='flicker')
+    k.point_light((x0 + x1) / 2, r1 - 0.4, 0.6, glow, 25, radius=0.3, group='flicker')
+    if label:
+        import assets_signs as SG
+        SG.lightbox(k, label, 'RussoOne', (x0 + x1) / 2, r0 - 0.15, 1.25, max(2.2, (x1 - x0) + 0.4), 0.6, bg='#0c1a12', ink=glow, size=0.36, energy=6)
         for s in (x0 - 0.12, x1 + 0.12):
             k.tube((s, r0 - 0.12, 0.95), (s, r0 - 0.12, 1.25), 0.02, '#5a5a64', 'sign_post', verts=5)
 
