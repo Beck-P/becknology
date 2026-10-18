@@ -463,6 +463,47 @@ def lit_refl(rd, od, water):
     return out
 
 
+# ---- a wet street (scenekit `k.wet`, Arcadia after the rain): the mirror passes laid over each light state ---------------
+WET_SMEAR = 7         # steps of the neon smeared down the wet ground, 2 px each
+WET_DARK = 0.5        # the mirrored flat colours, darkened (the street at night: a dark, coloured reflection)
+WET_MIX = 0.25        # how far a fully wet surface turns to that reflection
+WET_GLOW = 0.75       # how strongly what glows shows in it
+
+
+def wet_layer(rd, meta, ids, alpha):
+    """(strength per pixel, mirrored colours, their weight, mirrored glow smeared down) — or None."""
+    wet = meta.get('wet')
+    if not wet or not os.path.exists(os.path.join(rd, 'wet.png')):
+        return None
+    m = np.zeros(ids.shape[:2], np.float32)
+    key = ids[..., 0].astype(np.int32) * 65536 + ids[..., 1].astype(np.int32) * 256 + ids[..., 2]
+    for col, name in (meta.get('ids') or {}).items():
+        if wet.get(name):
+            r, g, b = map(int, col.split(','))
+            m = np.where(key == r * 65536 + g * 256 + b, float(wet[name]), m)
+    m *= alpha
+    wa = load(os.path.join(rd, 'wet.png'), 'RGBA').astype(np.float32)
+    sky = (wa[..., 0] > 200) & (wa[..., 1] < 60) & (wa[..., 2] > 200) | (wa[..., 3] < 128)
+    wa_w = np.where(sky, 0.0, 1.0).astype(np.float32)
+    bw = _blur(wa_w, 1)                                   # soft, as water is: a pixel's blur, the sky left out of it
+    wa = np.concatenate([_blur(wa[..., :3] * wa_w[..., None], 1) / np.maximum(bw, 1e-3)[..., None], wa[..., 3:]], -1)
+    wa_w = bw
+    g = load(os.path.join(rd, 'wet_glow.png'), 'RGB').astype(np.float32) / 255
+    sm = g * 0.85
+    for i in range(1, WET_SMEAR + 1):
+        sh = np.zeros_like(g)
+        sh[2 * i:] = g[:-2 * i]
+        sm = np.maximum(sm, sh * 0.55 * (1 - i / (WET_SMEAR + 1)))
+    return m, wa[..., :3] / 255, wa_w, sm
+
+
+def wet_over(img, wl, k_emit=1.0):
+    m, wa, wa_w, sm = wl
+    a = (m * WET_MIX * wa_w)[..., None]
+    out = img * (1 - a) + wa * WET_DARK * a
+    return np.clip(out + sm * m[..., None] * k_emit * WET_GLOW, 0, 1)
+
+
 def main():
     rd, od = sys.argv[1], sys.argv[2]
     os.makedirs(od, exist_ok=True)
@@ -502,9 +543,12 @@ def main():
         if grass.any():
             albedo = grass_detail(albedo.copy(), grass, seed=sum(map(ord, os.path.basename(os.path.normpath(od)))))
 
+    wl = wet_layer(rd, meta, ids, alpha)
     for state in meta['lightStates']:
         light = load16(os.path.join(rd, 'light_' + state + '.png'))
         img = toon(albedo, light, emit(state, emission))
+        if wl is not None:
+            img = wet_over(img, wl, (meta.get('stateOpts') or {}).get(state, {}).get('emit', 1.0))
         img = finish(img, ids, depth, alpha, base_line)
         rgba = np.zeros(albedo.shape, np.uint8)
         rgba[..., :3] = (img * 255 + 0.5).astype(np.uint8)
