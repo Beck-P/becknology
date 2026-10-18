@@ -143,8 +143,8 @@ D.cable(k, (0.0, RF + 0.3, 3.3), (9.0, RF + 0.3, 3.0), sag=0.3, n=8)
 D.cable(k, (19.0, RF + 0.3, 4.5), (27.4, RF + 0.3, 4.1), sag=0.35, lights=(Y.CYAN, Y.PINK), n=10)
 
 # the way down to the Undercity: a stairwell sunk in the lane's west end, a green tube half way down (js/undercity.js)
-U.stair_down(k, None, 0.6, 2.2, 11.0, 12.9, depth=2.6, label='DOWN: THE UNDERCITY')
-k.solid(0.4, 10.9, 2.4, 12.9)
+U.stair_down(k, None, 0.9, 2.5, 10.9, 12.6, depth=1.4, label='UNDERCITY', away=True)
+k.solid(0.75, 10.95, 2.65, 12.8)
 
 # the low wall at the front, the gate open onto the street
 B.low_wall(k, -0.5, 15.64, 13.0)
