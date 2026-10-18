@@ -39,5 +39,9 @@ rebuild should stand next to those and look like it belongs.
   where it lands, by name.
 - **Look at it before it ships:** the render at 2×, then in the game at dawn, noon, golden hour and night and in each
   season (`BridgeLit._force({ hour, season, weather })` in the console or a test), next to the reference images.
-- People: painted faces come from `characters.py` + `sprites_post.py`; talk portraits from `portraits.py` (re-run
-  `python3 tools/bridge-art/portraits.py npc-<name>` for a new NPC).
+- People: painted faces come from `characters.py` + `sprites_post.py`; talk portraits are **drawn** by `portraits.py`
+  (2D, no Blender — Beck's pick of the Stardew style; the old Blender-rendered portraits are gone). After adding or
+  changing anyone in characters.py run `python3 tools/bridge-art/portraits.py stale --look /tmp/faces.png` (it draws
+  just what's missing or out of date) and look at the sheet. Every file is stamped with what it was drawn from;
+  `portraits.py check` lists any that aren't current, `world/portraits.js` fails on them and the project's Claude Code
+  hook (`.claude/hooks/portraits.py`) stops a commit or push until they're drawn. Never hand-edit or copy one in.

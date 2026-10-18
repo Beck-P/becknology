@@ -66,7 +66,7 @@ const AUCTIONS = { 'lumar': 'auction_diggen', 'lumar-crown': 'auction_crown', 'l
     // dawn: the first boat to cast off, a little way out
     const T = await ev(([id, n]) => { const out = []; for (let i = 0; i < n; i++) { const h = BridgeSloop.harbour(id).boats[i]; out.push(Object.assign(BridgeHarbourLife.times(id, h.fi, BridgeClock.now()), { fi: h.fi })); } return out; }, [id, H.n]);
     const first = T.slice().sort((a, b) => a.dep - b.dep)[0], last = T.slice().sort((a, b) => b.arr - a.arr)[0];
-    await at(first.dep + 9000);
+    await at(first.dep + 2500);                                        // (a berth near the map's edge is out of sight in seconds)
     await p.waitForTimeout(400);
     L = await boats(id);
     console.log(id + ' dawn ' + et(first.dep) + ': leaving ' + count(L, 'leaving') + ', home ' + count(L, 'home'));
@@ -74,7 +74,7 @@ const AUCTIONS = { 'lumar': 'auction_diggen', 'lumar-crown': 'auction_crown', 'l
     const lv = L.find(o => o.state === 'leaving');
     if (lv) await look(lv.x, lv.r - 2);
     await shot(id + '_dawn');
-    await at(first.dep + 22000); await p.waitForTimeout(300);
+    await at(first.dep + 6000); await p.waitForTimeout(300);
     await shot(id + '_dawn2');
     // by day: all out
     await at(Math.round((rise + set) / 2));

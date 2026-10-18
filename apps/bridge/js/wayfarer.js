@@ -195,21 +195,14 @@ var BridgeWayfarer = (function () {
   function watchBill() {
     var c = clock(), rows = [];
     var crew = has('BridgeAboard') && BridgeAboard.roster ? BridgeAboard.roster() : (has('BridgeCrew') ? BridgeCrew.list().map(function (p) { return { id: p.id, name: p.name, role: p.role, doing: 'at their post', where: 'the bridge' }; }) : []);
-    crew.forEach(function (p) { rows.push({ label: p.name, sub: p.role + ' · ' + p.doing, note: p.where, info: true, draw: faceDraw(p.id) }); });
+    crew.forEach(function (p) {
+      var who = !p.face && has('BridgePeople') && BridgePeople.all()[p.id];
+      rows.push({ label: p.name, sub: p.role + ' · ' + p.doing, note: p.where, info: true, sheet: p.face || (who && who.sheet) });   // their portrait
+    });
     BridgeInteractions.choose({ title: 'The watch bill', text: 'SHIP\'S TIME ' + c.text + ', THE ' + c.watch.toUpperCase() + '. ' +
         (rows.length ? 'WHO\'S WHERE, CHALKED UP AND RUBBED OUT ALL DAY:' : 'THE BOARD IS BARE: NOBODY ABOARD BUT YOU. HIRE CREW AND THEY\'LL KEEP THEIR WATCHES HERE.'),
       rows: rows, closeLabel: 'Done' });
   }
-  function faceDraw(id) {
-    return function (g, s) {
-      var p = has('BridgePeople') && BridgePeople.all()[id];
-      if (!p || !p.sheet) return;
-      var im = new Image();
-      im.onload = function () { g.imageSmoothingEnabled = false; g.drawImage(im, 8, 2, 16, 16, 0, 0, s, s); };
-      im.src = '/bridge/assets/characters/' + p.sheet + '.png';
-    };
-  }
-
   var LAST_DRINK = 'bridge_wayfarer_butt';
   function butt() {
     var c = clock(), said = has('BridgeAboard') && BridgeAboard.gossip ? BridgeAboard.gossip() : null, last = 0;

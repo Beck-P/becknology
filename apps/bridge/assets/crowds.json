@@ -5,11 +5,18 @@
   "lumar-square":           { "n": 13, "wardrobe": "lumar",   "busy": "day" },
   "lumar-sapphire":         { "n": 14, "wardrobe": "sapphire", "busy": "day", "spots": [[21, 23, "down"], [17, 22, "down"], [46, 23, "up"]] },
   "lumar-rose":             { "n": 9,  "wardrobe": "rose",    "busy": "day" },
+  "lumar-sapphire-market":  { "n": 12, "wardrobe": "sapphire", "busy": "night" },
+  "lumar-cliff":            { "n": 14, "wardrobe": "sapphire", "busy": "day" },
+  "lumar-sapphire-market":  { "n": 12, "wardrobe": "sapphire", "busy": "night" },
+  "lumar-rose-springs":     { "n": 10, "wardrobe": "rose",    "busy": "always" },
+  "lumar-rose-teahouse":    { "n": 3,  "wardrobe": "rose",    "busy": "always", "sit": 0.8 },
   "lumar-tern":             { "n": 7,  "wardrobe": "lumar",   "busy": "day", "spots": [[25, 14, "up"], [12, 17, "up"]] },
   "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
   "lumar-cinder":           { "n": 14, "wardrobe": "pirates", "busy": "always" },
   "lumar-cinder-tavern":    { "n": 6,  "wardrobe": "pirates", "busy": "night", "sit": 0.7 },
   "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day", "spots": [[30, 32, "down"], [26, 31, "down"], [39, 31, "down"], [47, 31, "down"]] },
+  "lumar-crown-oldtown":    { "n": 24, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
+  "lumar-crown-canals":     { "n": 22, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
   "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
   "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },
   "lumar-crown-pub":        { "n": 9,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
@@ -31,20 +38,48 @@
   "arcadia-casino":         { "n": 14, "wardrobe": "casino",  "busy": "bustle" },
   "arcadia-casino-cards":   { "n": 6,  "wardrobe": "casino",  "busy": "bustle" },
   "arcadia-casino-dining":  { "n": 6,  "wardrobe": "casino",  "busy": "bustle", "sit": 0.9 },
+  "arcadia-undercity":      { "n": 30, "wardrobe": "undercity", "busy": "always", "pass": 0.45, "avoid": [[63, 17, 79, 29]] },
+  "arcadia-hawker":         { "n": 22, "wardrobe": "undercity", "busy": "always" },
+  "arcadia-dive":           { "n": 7,  "wardrobe": "undercity", "busy": "always", "adults": true },
+  "arcadia-foundry":        { "n": 16, "wardrobe": "undercity", "busy": "bustle", "adults": true },
+  "arcadia-pit":            { "n": 18, "wardrobe": "undercity", "busy": "always", "adults": true, "avoid": [[12, 9, 23, 16]] },
+  "arcadia-sump":           { "n": 8,  "wardrobe": "sump", "busy": "always", "pass": 0.5, "adults": true },
+  "arcadia-sump-rave":      { "n": 20, "wardrobe": "sump", "busy": "always", "adults": true },
+  "arcadia-spires":         { "n": 18, "wardrobe": "spires",  "busy": "bustle", "sit": 0.35, "pass": 0.3 },
 
   "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
 
   "hoarfell":               { "n": 14, "wardrobe": "hoarfell", "busy": "day" },
   "hoarfell-lodge":         { "n": 7,  "wardrobe": "hoarfell", "busy": "night", "sit": 0.8 },
   "hoarfell-skihire":       { "n": 3,  "wardrobe": "hoarfell", "busy": "day" },
+  "hoarfell-promenade":     { "n": 16, "wardrobe": "aurelle", "busy": "day" },
+  "hoarfell-aurelle":       { "n": 18, "wardrobe": "aurelle", "busy": "day" },
+  "hoarfell-chateau":       { "n": 9,  "wardrobe": "aurelle", "busy": "night", "sit": 0.5 },
 
   "sylvara":                { "n": 7,  "wardrobe": "sylvara", "busy": "always", "emerge": 4 },
   "sylvara-hall":           { "n": 4,  "wardrobe": "sylvara", "busy": "always" },
+  "sylvara-roots":          { "n": 16, "wardrobe": "sylvara", "busy": "day", "emerge": 3 },
 
   "arcadia-oldquarter":     { "n": 18, "wardrobe": "lantern", "busy": "bustle", "sit": 0.5 },
   "arcadia-oldquarter-shrine": { "n": 3, "wardrobe": "lantern", "busy": "night" },
   "arcadia-spaceport":      { "n": 20, "wardrobe": "spacers", "busy": "always" },
   "_lines": {
+    "undercity": [
+      "THE SAINTS RUN THE YARD. YOU PAY THEM OR YOU FIGHT THEM. MOSTLY YOU PAY THEM.",
+      "MAMA ROO'S BROTH HAS BEEN ON THE BOIL FOR FORTY YEARS. SAME POT.",
+      "YOU CAN SEE THE DISTRICT'S LIGHTS THROUGH THE GRATES WHEN IT STOPS RAINING. IT NEVER STOPS RAINING.",
+      "SALLOW'S CHROME IS CHEAP. CHEAP CHROME HICCUPS. ASK ME HOW I KNOW.",
+      "DON'T GO DOWN TO THE SUMP WITHOUT A FULL BELLY AND A GOOD BLADE.",
+      "BET ON IRON MAE. EVERYONE BETS ON IRON MAE.",
+      "THE LIFT GOES ALL THE WAY UP, THEY SAY. NOBODY I KNOW HAS TAKEN IT."
+    ],
+    "sump": [
+      "THE WATER REMEMBERS. THAT'S WHAT WEN SAYS.",
+      "THE DRONES COME OUT OF THE OLD BILLBOARD. KILL THEM FAST, BEFORE THEY CALL THE OTHERS.",
+      "I HEARD THE DREDGE MOVE LAST NIGHT. THE WHOLE CANAL SLOSHED.",
+      "TEO'S LAKSA IS THE ONLY WARM THING DOWN HERE.",
+      "THE RAVE NEVER STOPS. IT JUST CHANGES WHO'S DANCING."
+    ],
     "lantern": [
       "HOSHI'S POT HAS BEEN ON SINCE BEFORE I WAS BORN. I'M SEVENTY.",
       "THE TOWERS WANT THIS STREET. THE STREET SAYS NO. THE STREET IS VERY OLD.",
@@ -122,6 +157,16 @@
       "DON'T STAND ON THE GLASS PANELS IF YOU'VE HAD A SOUR. TRUST ME.",
       "THE ATRIUM'S GOT A SHOP THAT ONLY SELLS UMBRELLAS. IT'S THE RICHEST SHOP IN THE TOWER."
     ],
+    "spires": [
+      "DARLING, I HAVEN'T BEEN BELOW THE SMOG SINCE THE CORONATION. WHOSE? DOES IT MATTER?",
+      "THEY SAY THE STARS ARE REAL. I PAY FOR THEM EITHER WAY.",
+      "MY NEW EYES SEE ULTRAVIOLET. THE OPERA IS ASTONISHING. THE PEOPLE ARE NOT.",
+      "THE LYRA'S SOPRANO HIT A NOTE LAST NIGHT THAT CRACKED A CHAMPAGNE FLUTE. WE APPLAUDED THE FLUTE.",
+      "IS IT TRUE THEY HAVE RAIN DOWN THERE? EVERY DAY? HOW DO THEY BEAR IT?",
+      "THE ORRERY TURNED ME DOWN. THIRD TIME. I'M BUILDING MY OWN ORRERY. WITH BLACKJACK.",
+      "LOOK - THE LOOP'S LIGHTS, THROUGH THE SMOG. LIKE A NECKLACE SOMEBODY DROPPED.",
+      "CLEMENCE'S PETIT FOURS ARE THE ONLY HONEST THING ON THIS PLATFORM."
+    ],
     "casino": [
       "DARLING, NOBODY WALKS INTO THE ROYALE BY ACCIDENT.",
       "I'M UP TWELVE HUNDRED. DON'T TELL MY HUSBAND. OR DO - HE'S DOWN THREE THOUSAND.",
@@ -149,6 +194,15 @@
       "THEY SAY THERE'S A LIGHT PAST THE HOARSPIRE. I SAY THERE'S A BAR AT THE BOTTOM.",
       "YOU'LL WANT A THERMAL SUIT IF YOU'RE GOING UP. TRUST ME ON THIS."
     ],
+    "aurelle": [
+      "DARLING, THE SNOW IS SIMPLY TOO WHITE TODAY. I'VE HAD TO WEAR THE DARK GLASSES.",
+      "WE CAME UP ON THE TRAIN. THE VIADUCT! I SCREAMED, QUITE SINCERELY.",
+      "LOST A SMALL FORTUNE AT THE ROULETTE. WON A LARGER ONE AT THE CRAPS. DON'T TELL MOTHER EITHER.",
+      "THE THERMES BEFORE LUNCH, THE TERRACE AFTER. SKIING? OH, AT SOME POINT.",
+      "MAISON VAUTRIN HAS A SABLE IN THE WINDOW. I'VE VISITED IT EVERY DAY. LIKE A PET.",
+      "THEY SAY THE GUIDES CROSS THE GLACIER TO SOMEWHERE WARM. I SAY THE CHAMPAGNE BAR IS WARM.",
+      "THE CONCIERGE KNOWS EVERYTHING. I ASKED HIM WHAT HE DIDN'T KNOW AND HE SIMPLY SMILED."
+    ],
     "sylvara": [
       "THE LANTERNS ARE LIT. THE WOOD IS LISTENING.",
       "THE QUEEN WALKED THE MOONWELL PATH AT DAWN. THE FLOWERS TURNED TO WATCH HER.",
@@ -170,6 +224,8 @@
   },
 
   "_wants": {
+    "undercity": [{ "id": "scrap_metal", "pay": 6 }, { "id": "roo_broth", "pay": 16 }, { "id": "medkit", "pay": 40 }],
+    "sump":     [{ "id": "sump_laksa", "pay": 24 }, { "id": "circuit", "pay": 18 }],
     "sapphire": [{"id": "roseite", "pay": 44}, {"id": "sea_glass", "pay": 28}],
     "rose": [{"id": "sea_glass", "pay": 26, "ask": "IS THAT {item}? THE SEA'S OWN GLASS - IT HELPS A READING. I'D GIVE {pay} FOR IT."}, {"id": "bread", "pay": 14}],
     "lumar":    [{ "id": "sea_glass", "pay": 22 }, { "id": "bread", "pay": 12 }, { "id": "silver_nail", "pay": 18 }],
@@ -179,6 +235,7 @@
     "midlevels": [{ "id": "honey", "pay": 30, "ask": "IS THAT REAL {item}? FROM A FARM? I'D PAY {pay}. NOBODY UP HERE HAS SEEN A BEE." }, { "id": "sea_glass", "pay": 34 }],
     "verdance": [{ "id": "bread", "pay": 14 }, { "id": "sea_glass", "pay": 24 }],
     "hoarfell": [{ "id": "roast_chestnuts", "pay": 20 }, { "id": "summit_crystal", "pay": 90 }],
+    "aurelle":  [{ "id": "edelweiss", "pay": 60, "ask": "IS THAT AN {item}? A REAL ONE, FROM THE ROCK? {pay} - FOR MY HAT." }, { "id": "hoar_crystal", "pay": 45 }],
     "sylvara":  [{ "id": "sea_glass", "pay": 30, "ask": "THE {item} FROM THE SPORE SEA - YOU WOULDN'T HAVE ONE? I'D TRADE {pay} FOR ITS LIGHT." }]
   }
 }

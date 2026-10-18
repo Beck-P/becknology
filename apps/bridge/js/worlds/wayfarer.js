@@ -32,9 +32,13 @@
 
   // ---- the watch bill: a card for each of the crew, their face, a lamp under it ----------------------------------------
   var heads = {};
-  function head(sheet) {
-    if (!heads[sheet]) { var im = new Image(); heads[sheet] = im; im.src = '/bridge/assets/characters/' + sheet + '.png'; }
-    return heads[sheet].complete && heads[sheet].naturalWidth ? heads[sheet] : null;
+  function head(sheet) {                                  // their portrait's head at a quarter size (js/look.js), 11 × 10
+    if (!heads[sheet] && has('BridgeLook') && BridgeLook.npcFace) {
+      var cv = document.createElement('canvas'); cv.width = 11; cv.height = 10;
+      heads[sheet] = cv;
+      BridgeLook.npcFace(cv, sheet);
+    }
+    return heads[sheet] || null;
   }
   var LAMP = { post: '#58e070', off: '#f0b040', below: '#3a2a1a', ashore: '#3a2a1a' };
   function drawBill(ctx, rect, offX, offY, ts, now) {
@@ -51,8 +55,9 @@
       ctx.fillStyle = '#e8dcc0'; ctx.fillRect(cx, cy, cw, chh);
       ctx.fillStyle = '#c8b890'; ctx.fillRect(cx, cy + chh - 1, cw, 1);
       ctx.fillStyle = '#a02a20'; ctx.fillRect(cx + 5, cy - 1, 1, 2);                   // its pin
-      var im = p.sheet && head(p.sheet);
-      if (im) { ctx.imageSmoothingEnabled = false; ctx.drawImage(im, 10, 4, 12, 10, cx, cy + 1, 11, 9); }
+      var im = (p.face || p.sheet) && head(p.face || p.sheet);
+      ctx.fillStyle = '#3a3028'; ctx.fillRect(cx, cy + 1, cw, 10);                     // the face, on a dark ground
+      if (im) { ctx.imageSmoothingEnabled = false; ctx.drawImage(im, cx, cy + 1); }
       var col = LAMP[p.state] || LAMP.off;
       ctx.fillStyle = col; ctx.fillRect(cx + 4, cy + chh - 3, 3, 2);
       if (p.state === 'post' || p.state === 'off') {
