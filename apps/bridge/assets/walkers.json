@@ -86,9 +86,9 @@
     { "sheet": "npc-elf-child", "talk": "YOUNG ELF", "path": [[4, 21.5], [9.5, 22.4], [12.2, 20], [12.4, 15.6], [10, 13.4]], "speed": 1.6, "pause": 2500, "rest": "down" }
   ],
   "lumar-cliff": [
-    { "sheet": "npc-fishwife", "path": [[49, 30], [49, 28], [43, 28], [43, 26], [49, 26], [49, 24], [43, 24], [43, 22], [49, 22], [49, 20], [40, 20]], "speed": 0.7, "pause": 6000, "rest": "down" },
-    { "sheet": "npc-sailor", "path": [[13, 30], [44, 30]], "speed": 0.9, "pause": 5000, "rest": "down" },
-    { "sheet": "npc-passerby", "path": [[12, 19], [24, 19], [24, 15], [33, 15], [33, 12], [47, 12]], "speed": 0.8, "pause": 5000, "rest": "down" },
+    { "sheet": "npc-fishwife", "path": [[49, 30], [49, 28], [43, 28], [43, 26], [49, 26], [49, 24], [43, 24], [43, 22], [49, 22], [49, 20], [49, 19], [40, 19]], "speed": 0.7, "pause": 6000, "rest": "down" },
+    { "sheet": "npc-sailor", "path": [[16, 29], [19, 29], [19, 31], [44, 31]], "speed": 0.9, "pause": 5000, "rest": "down" },
+    { "sheet": "npc-passerby", "path": [[13, 19], [22, 19], [22, 20], [24, 20], [24, 15], [34, 15], [34, 11], [47, 11]], "speed": 0.8, "pause": 5000, "rest": "down" },
     { "sheet": "npc-shopper", "path": [[14, 15], [44, 15]], "speed": 0.6, "pause": 7000, "rest": "down" }
   ],
   "lumar-sapphire-market": [

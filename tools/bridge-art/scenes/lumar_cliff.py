@@ -297,10 +297,9 @@ while x < QX1:                                         # the coping, whitewashed
 for i in range(80):                                    # weed and barnacles at the tide line
     k.blob(rng.uniform(QX0, QX1), QUAY + 1.13, C.WZ + rng.uniform(0.02, 0.14), rng.uniform(0.06, 0.15), 0.03, rng.uniform(0.03, 0.06),
            (rng.choice(('#2a3a3a', '#2e4040', '#3e4a40', '#5a5a52')), 0.2), 'weed', segs=6)
-for bx in (14.5, 23.5, 27.0, 34.0, 37.5, 45.5):
-    k.cyl(bx, QUAY + 0.6, 0.0, 0.33, 0.12, ('#2a2a30', 0.1), 'bollard', verts=10)
-    k.cyl(bx, QUAY + 0.6, 0.33, 0.38, 0.15, '#2a2a30', 'bollard_cap', verts=10)
-    k.solid(bx - 0.2, QUAY + 0.4, bx + 0.2, QUAY + 0.8)
+for bx in (14.5, 23.5, 27.0, 34.0, 37.5, 45.5):              # on the coping's lip, out of the way of the quay's front row
+    k.cyl(bx, QUAY + 0.86, 0.04, 0.37, 0.12, ('#2a2a30', 0.1), 'bollard', verts=10)
+    k.cyl(bx, QUAY + 0.86, 0.37, 0.42, 0.15, '#2a2a30', 'bollard_cap', verts=10)
 
 # the face's foot: a band of dressed stone where the quay meets the rock, boathouse arches cut into it
 CL.retaining(k, QX0, QX1, QUAY0 + 0.02, -0.02, 0.9, stone=True, seed=3)
@@ -351,10 +350,10 @@ for (dx_, dr_, f) in DONKEYS:
     CL.donkey(k, dx_, dr_, facing=f)
 k.box(44.6, 30.95, 0.0, 45.6, 31.25, 0.26, ('#8a8278', 0.2), 'trough', bevel=0.03)
 k.box(44.66, 31.0, 0.2, 45.54, 31.2, 0.24, '#2a4a5a', 'basin_water')
-k.solid(45, 30, 49, 31)
+k.solid(45, 30, 49, 31)                                   # (Yannis stands among them)
 
 # nets, pots, crates and a caique drawn up by the boathouses
-for (cx_, cr_) in ((15.0, 30.2), (34.5, 30.1)):
+for (cx_, cr_) in ((18.3, 30.2), (34.5, 30.1)):
     k.blob(cx_, cr_, 0.06, 0.45, 0.3, 0.08, ('#a8946a', 0.4), 'net_pile', segs=10)
     k.solid(cx_ - 0.4, cr_ - 0.3, cx_ + 0.4, cr_ + 0.3)
 I.crab_pots(k, 37.8, 30.0)
@@ -404,7 +403,7 @@ for (c, r), z in ZIG_BACK.items():                   # the ledges themselves: st
     CL.paving(k, c, r, c + 1.0, r + 1.0, z=z + 0.01, seed=c * 7 + r)
     if (c * 3 + r) % 5 == 0:
         CL.pots(k, c + 0.5, r + 0.5, n=2, seed=c + r, z=z)
-ZIG_LAMPS = [(ZZ0 + 0.2, 27.3), (ZZ1 + 0.8, 25.3), (ZZ0 + 0.2, 23.3), (ZZ1 + 0.8, 21.3), (46.5, 28.2), (46.5, 26.2), (46.5, 24.2), (46.5, 22.2)]
+ZIG_LAMPS = [(ZZ0 - 0.25, 27.6), (ZZ1 + 1.25, 25.6), (ZZ0 - 0.25, 23.6), (ZZ1 + 1.25, 21.6), (46.5, 28.2), (46.5, 26.2), (46.5, 24.2), (46.5, 22.2)]
 for (lx, lr) in ZIG_LAMPS:
     CL.lift(k, H(lx, lr) + 0.05, W.lantern_post, k, lx, lr, h=1.4, energy=18)
 
@@ -710,7 +709,7 @@ k.solid(13.6, QUAY0, 15.2, QUAY0 + 0.6)
 k.area_light(30.0, 18.0, 18.0, '#8a98d0', 2800, 44.0, rot=(math.radians(-35), 0, 0))       # moonlight
 k.point_light(30.0, 24.0, 6.0, '#d8e0ff', 60, radius=1.5)
 
-for (ax, ay) in ((22, 30), (45, 29), (32, 11), (23, 11), (26, 19)):     # where the people stand
+for (ax, ay) in ((22, 30), (45, 30), (32, 11), (23, 11), (26, 19)):     # where the people stand
     k.solid(ax, ay, ax + 1, ay + 1)
 k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}},
          light_samples=int(os.environ.get('CLIFF_SAMPLES', 96)),
@@ -732,7 +731,7 @@ w = {'name': 'Lanternfall', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tile
      'tiles': [], 'collisions': [], 'tileNames': {}, 'interactions': [
          DOCK,
          {'x': 22, 'y': 30, 'type': 'dialog', 'label': 'MARINA', 'prompt': 'PRESS E TO TALK', 'dialog': ''},
-         {'x': 45, 'y': 29, 'type': 'dialog', 'label': 'YANNIS', 'prompt': 'PRESS E TO TALK', 'dialog': ''},
+         {'x': 45, 'y': 30, 'type': 'dialog', 'label': 'YANNIS', 'prompt': 'PRESS E TO TALK', 'dialog': ''},
          {'x': 32, 'y': 11, 'type': 'dialog', 'label': 'DESPINA', 'prompt': 'PRESS E TO TALK', 'dialog': ''},
          {'x': 23, 'y': 11, 'type': 'dialog', 'label': 'FATHER ILIAS', 'prompt': 'PRESS E TO TALK', 'dialog': ''},
          {'x': 26, 'y': 19, 'type': 'dialog', 'label': 'ARIS', 'prompt': 'PRESS E TO TALK', 'dialog': ''},
@@ -760,7 +759,7 @@ for (a, b) in ((22, 24), (35, 37)):                                # you stand o
         LIFT[21][c] = L1_Z
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + FPIER, scene_id='lumar-cliff',
             actors=[{'sheet': 'npc-cliff-marina', 'x': 22, 'y': 30, 'facing': 'down'},
-                    {'sheet': 'npc-cliff-yannis', 'x': 45, 'y': 29, 'facing': 'down'},
+                    {'sheet': 'npc-cliff-yannis', 'x': 45, 'y': 30, 'facing': 'down'},
                     {'sheet': 'npc-cliff-despina', 'x': 32, 'y': 11, 'facing': 'down'},
                     {'sheet': 'npc-cliff-ilias', 'x': 23, 'y': 11, 'facing': 'down'},
                     {'sheet': 'npc-cliff-aris', 'x': 26, 'y': 19, 'facing': 'down'}],
