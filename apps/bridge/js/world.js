@@ -460,6 +460,8 @@ var BridgeWorld = (function () {
         if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.decorate(worldId, data);
         if (typeof BridgeMagic !== 'undefined') BridgeMagic.decorate(worldId, data);
         if (typeof BridgeExpedition !== 'undefined') BridgeExpedition.decorate(worldId, data);
+        if (typeof BridgeAlpine !== 'undefined') BridgeAlpine.decorate(worldId, data);       // Aurelle, the promenade, the way down to it
+        if (typeof BridgeTouring !== 'undefined') BridgeTouring.decorate(worldId, data);     // the High Route: the guides, the huts
         if (typeof BridgeSki !== 'undefined' && BridgeSki.decorate) BridgeSki.decorate(worldId, data);
         if (typeof BridgeDance !== 'undefined') BridgeDance.decorate(worldId, data);
         if (typeof BridgeAnimals !== 'undefined') BridgeAnimals.decorate(worldId, data);
@@ -470,6 +472,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeFoliage !== 'undefined') BridgeFoliage.apply(worldId);        // the trees turn with the seasons
         if (typeof BridgeWeather !== 'undefined') BridgeWeather.decorate(worldId, data);
         if (typeof BridgeCombat !== 'undefined') BridgeCombat.decorate(worldId, data);
+        if (typeof BridgeValley !== 'undefined') BridgeValley.decorate(worldId, data);       // the hidden valley's creatures and yetis
         if (typeof BridgeTreasure !== 'undefined') BridgeTreasure.decorate(worldId, data);
         if (typeof BridgeCrew !== 'undefined') BridgeCrew.decorate(worldId, data);
         if (typeof BridgeWayfarer !== 'undefined') BridgeWayfarer.decorate(worldId, data);   // the bays as fitted
@@ -480,6 +483,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeDungeon !== 'undefined') BridgeDungeon.decorate(worldId, data);     // the Undercroft: tonight's crypt
         if (typeof BridgeFestivals !== 'undefined') BridgeFestivals.decorate(worldId, data); // a festival's props, stall and contest
         if (typeof BridgeEvents !== 'undefined') BridgeEvents.decorate(worldId, data);       // small happenings on the hour
+        if (typeof BridgeCapital !== 'undefined') BridgeCapital.decorate(worldId, data);     // Crownhaven's districts and their gates
         if (typeof BridgeMidnight !== 'undefined') BridgeMidnight.decorate(worldId, data);   // the haunted sea: the tower, Saltmere
         if (typeof BridgeCrimson !== 'undefined') BridgeCrimson.decorate(worldId, data);     // the dangerous sea: Cinder Key
         if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.decorate(worldId, data);   // the cast keep their day

@@ -95,7 +95,8 @@ var BridgeHoarfell = (function () {
   // the lift: Fellhaven's bottom station, the summit's top one, the pistes' own at the finish
   function lift(inter) {
     var opts;
-    if (inter.down) opts = [{ label: 'Ride down to Fellhaven', action: 'enter_world', target: 'hoarfell', spawn: [41, 14] }];
+    if (inter.down) opts = [{ label: 'Ride down to Fellhaven', action: 'enter_world', target: 'hoarfell', spawn: [41, 14] },
+                            { label: 'Ride down the far side to Aurelle', action: 'enter_world', target: 'hoarfell-aurelle', spawn: [7, 24] }];
     else opts = [{ label: 'Ride up to the summit', action: 'enter_world', target: 'hoarfell-summit', spawn: [20, 15] }];
     opts = opts.concat(runOptions()).concat([{ label: 'Not now', action: 'close' }]);
     BridgeInteractions.execute({ type: 'menu', label: 'CHAIRLIFT', options: opts,
