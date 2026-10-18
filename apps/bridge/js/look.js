@@ -259,32 +259,35 @@ var BridgeLook = (function () {
     }
     return pColoured[id];
   }
-  // a frame at half size for a small face (a list's 24 × 24): each pixel the average of four, the silhouette kept crisp
-  function half(src, id, f, S) {
+  // a frame shrunk for a small face — half size for a list's 24 × 24, a quarter for a face on a pinned card in the world
+  // (n: 2 or 4): each pixel the average of the n × n under it, the silhouette kept crisp
+  function half(src, id, f, S, n) {
+    n = n || 2;
     var hs = pHalves[id] || (pHalves[id] = {});
-    if (hs[f]) return hs[f];
+    if (hs[n + ':' + f]) return hs[n + ':' + f];
     var t = document.createElement('canvas');
     t.width = S; t.height = S;
     var tg = t.getContext('2d');
     tg.drawImage(src, f * S, 0, S, S, 0, 0, S, S);
-    var a = tg.getImageData(0, 0, S, S).data, H = S >> 1;
+    var a = tg.getImageData(0, 0, S, S).data, H = Math.floor(S / n);
     var c = document.createElement('canvas');
     c.width = H; c.height = H;
     var cg = c.getContext('2d'), out = cg.createImageData(H, H), o = out.data;
     for (var y = 0; y < H; y++) for (var x = 0; x < H; x++) {
       var r = 0, g = 0, b = 0, al = 0;
-      for (var j = 0; j < 4; j++) {
-        var i = ((2 * y + (j >> 1)) * S + 2 * x + (j & 1)) * 4, w = a[i + 3];
+      for (var j = 0; j < n * n; j++) {
+        var i = ((n * y + Math.floor(j / n)) * S + n * x + j % n) * 4, w = a[i + 3];
         r += a[i] * w; g += a[i + 1] * w; b += a[i + 2] * w; al += w;
       }
       var q = (y * H + x) * 4;
-      if (al >= 510) { o[q] = r / al; o[q + 1] = g / al; o[q + 2] = b / al; o[q + 3] = 255; }
+      if (al >= n * n * 127.5) { o[q] = r / al; o[q + 1] = g / al; o[q + 2] = b / al; o[q + 3] = 255; }
     }
     cg.putImageData(out, 0, 0);
-    return (hs[f] = c);
+    return (hs[n + ':' + f] = c);
   }
   /** A portrait drawn into a canvas. A canvas the portrait's size (64) or a whole multiple of it shows it whole; a
-   *  smaller one (a 24 × 24 face in a list) shows the head and shoulders at half size. path: under assets/portraits/,
+   *  smaller one (a 24 × 24 face in a list) shows the head and shoulders at half size, one under a third of it (a card
+   *  pinned up in the world, 11 across) the head at a quarter. path: under assets/portraits/,
    *  no '.png' ('npc-baker', 'crowd/man'). opts: map + key (key colours to swap, and a name for that recolouring),
    *  expr ('neutral' · 'happy' · 'surprised' · 'sad'), blink (now and then, while the canvas is on the page),
    *  fallback() (called when there's no portrait file). Returns a handle: set(expr) changes the face; ok is true once
@@ -303,7 +306,7 @@ var BridgeLook = (function () {
         var k = Math.floor(Math.min(canvas.width, canvas.height) / S) || 1;
         g.drawImage(src, f * S, 0, S, S, (canvas.width - S * k) >> 1, (canvas.height - S * k) >> 1, S * k, S * k);
       } else {
-        var hf = half(src, id, f, S), H = S >> 1;
+        var n = canvas.width >= S / 3 ? 2 : 4, hf = half(src, id, f, S, n), H = Math.floor(S / n);
         g.drawImage(hf, (H - canvas.width) >> 1, Math.max(0, Math.min(2, H - canvas.height)), canvas.width, canvas.height,
                     0, 0, canvas.width, canvas.height);
       }

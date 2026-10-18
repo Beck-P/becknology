@@ -690,6 +690,9 @@ class Kit:
         sc = self.scene
         sc.render.engine = 'CYCLES'
         sc.cycles.device = 'CPU'
+        # SCENE_PERSIST=1 keeps the scene's geometry (its BVH) from pass to pass: only the materials change between the
+        # passes, so a scene of thousands of parts stops rebuilding it every time (off by default)
+        sc.render.use_persistent_data = bool(os.environ.get('SCENE_PERSIST'))
         sc.cycles.samples = samples
         sc.cycles.use_denoising = samples > 1
         sc.cycles.filter_width = 0.01 if samples == 1 else 1.0
@@ -960,6 +963,58 @@ class Kit:
         """The id pass's colour of each part name (as rendered: raw, so the values themselves)."""
         return {'%d,%d,%d' % id_rgb(pid): name for name, pid in self.pid_names.items()}
 
+    def _merge(self):
+        """SCENE_MERGE=1: before the passes, parts that render alike (the same albedo, glow, part, variant, foliage and
+        tree, ground or not) are joined into one object each, their modifiers applied — the same pixels in every pass,
+        but a district of twenty thousand parts syncs a few thousand objects a pass instead. Ground parts keep their
+        own objects (their grain is in their own coordinates)."""
+        bpy.context.view_layer.update()
+        dg = bpy.context.evaluated_depsgraph_get()
+        groups, order = {}, []
+        for p in self.parts:
+            if p['albedo'] == 'HOLDOUT' or self._ground(p):
+                key = ('own', id(p))
+            else:
+                v = p.get('var')
+                key = (str(p['albedo']), str(p.get('emit')), p['pid'], id(v) if v is not None else None, p.get('fol'),
+                       p.get('tree', 0), p.get('nature'))
+            if key not in groups:
+                groups[key] = []
+                order.append(key)
+            groups[key].append(p)
+        out, before, dead = [], len(self.parts), []
+        for key in order:
+            ps = groups[key]
+            if len(ps) == 1:
+                out.append(ps[0])
+                continue
+            bm = bmesh.new()
+            for p in ps:
+                eo = p['obj'].evaluated_get(dg)
+                me = eo.to_mesh()
+                me.transform(p['obj'].matrix_world)
+                bm.from_mesh(me)
+                eo.to_mesh_clear()
+            me = bpy.data.meshes.new('merged')
+            bm.to_mesh(me)
+            bm.free()
+            o = bpy.data.objects.new('merged', me)
+            self.scene.collection.objects.link(o)
+            o.data.materials.append(bpy.data.materials.new('tmp'))
+            dead += [p['obj'] for p in ps]
+            q = dict(ps[0])
+            q['obj'] = o
+            out.append(q)
+            v = q.get('var')
+            if v is not None:
+                gone = set(map(id, ps))
+                v['parts'] = [x for x in v['parts'] if id(x) not in gone] + [q]
+        bpy.data.batch_remove(dead)                    # (one by one, twenty thousand removals take most of an hour)
+        self.parts = out
+        if hasattr(self, '_names'):
+            del self._names
+        print('scenekit: merged %d parts into %d objects' % (before, len(self.parts)), flush=True)
+
     def render(self, out, light_states=None, probe_z=0.9, light_samples=160, world_light=('#202838', 0.25), cycle=None):
         """light_states: {'name': {group: multiplier}} — one light pass each (keys starting `_` are the cycle's:
         `_sky`, `_art`, `_emit`, `_world`; see _cycle_states). cycle: derive the other times of day (js/clock.js).
@@ -968,6 +1023,8 @@ class Kit:
         for fn in self.later:                              # what grows over the finished layout (the grass)
             fn()
         self.later = []
+        if os.environ.get('SCENE_MERGE'):
+            self._merge()
         if os.environ.get('SCENE_NORENDER'):
             return
         os.makedirs(out, exist_ok=True)
@@ -984,6 +1041,7 @@ class Kit:
         if lit:
             self._lit_lights()
         self._lit_samples = min(light_samples, int(os.environ.get('SCENE_LIT_SAMPLES', 64)))
+        print('scenekit: %d parts, %d lights' % (len(self.parts), len(self.lights)), flush=True)
         self._camera()
         sc = self.scene
         # Dim ambient sky so unlit corners aren't pure black

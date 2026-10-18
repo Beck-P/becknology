@@ -183,6 +183,17 @@ var BridgeCrowd = (function () {
       umbrella: null,
       names: { m: ['Lars', 'Anders', 'Piet', 'Mattias', 'Henrik', 'Sven', 'Olaf'], f: ['Ingrid', 'Freya', 'Solveig', 'Astrid', 'Kaja', 'Liv'], c: ['Elsi', 'Bo'] }
     },
+    aurelle: {    // Hoarfell's château town (js/alpine.js): skiers with money, people in furs
+      bodies: { suit: 3, gown: 2.5, 'woman-hat': 2, 'woman-hood': 2, skier: 3, elder: 1, man: 1, woman: 1, 'child-cap': 0.5 },
+      top: ['#e8dcc8', '#1e2a4a', '#8a1a2a', '#f4f0ea', '#1e3a36', '#2a2420', '#d8b060', '#e8e8f0'],
+      bot: ['#1e1e26', '#2a2420', '#e8e8f0', '#1e2a4a', '#3a2a24'],
+      out: ['#e8dcc8', '#6a4a32', '#f4f0ea', '#2a2420', '#a8865a', '#1e2a4a', '#8a1a2a'],
+      hat: ['#f4f0ea', '#6a4a32', '#2a2420', '#e8dcc8', '#8a1a2a'],
+      umbrella: null,
+      wild: 0.1,
+      names: { m: ['Aurelien', 'Gaspard', 'Lucien', 'Theo', 'Benedikt', 'Raoul', 'Felix', 'Maxence'],
+               f: ['Celestine', 'Margaux', 'Ines', 'Liesl', 'Odile', 'Victoire', 'Annick', 'Solene'], c: ['Loulou', 'Pim'] }
+    },
     sylvara: {
       bodies: { elf: 1, 'elf-braid': 1 },
       top: ['#2a5a2e', '#3e5a30', '#a04a22', '#3a5a7a', '#6a5690', '#78b0a6', '#5a8e40'],
