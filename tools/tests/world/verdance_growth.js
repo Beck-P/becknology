@@ -18,7 +18,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
     localStorage.setItem('bridge_ship_location', 'verdance');
     localStorage.removeItem('bridge_village'); localStorage.removeItem('bridge_country');
   });
-  await p.goto('http://127.0.0.1:8766/bridge/?at=2026-10-16T12:00'); await p.waitForTimeout(3000);
+  await p.goto('http://127.0.0.1:8766/bridge/?at=2026-10-16T15:00'); await p.waitForTimeout(3000);       // 3:00 on Verdance's 6-hour day: midday, everyone out
   await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); });
   await p.evaluate(() => BridgeWeather._pin('verdance', 'fair'));
   await p.evaluate(() => {                                  // coins without a server: a purse in the page
