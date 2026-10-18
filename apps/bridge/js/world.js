@@ -107,7 +107,7 @@ var BridgeWorld = (function () {
     var byCoord = {};
     for (var i = 0; i < interactions.length; i++) {
       var inter = interactions[i];
-      if (!types[inter.type] || inter.noBeacon || inter.hidden) continue;
+      if (!(types[inter.type] || (inter.beacon && types[inter.beacon])) || inter.noBeacon || inter.hidden) continue;
       byCoord[inter.x + ',' + inter.y] = inter;
     }
     var visited = {};
@@ -458,6 +458,9 @@ var BridgeWorld = (function () {
         if (typeof BridgeMine !== 'undefined') BridgeMine.decorate(worldId, data);
         if (typeof BridgeFarm !== 'undefined') BridgeFarm.decorate(worldId, data);
         if (typeof BridgeHomestead !== 'undefined') BridgeHomestead.decorate(worldId, data);
+        if (typeof BridgeVillage !== 'undefined') BridgeVillage.decorate(worldId, data);     // Brambleford grows: Station Road's projects
+        if (typeof BridgeCountryside !== 'undefined') BridgeCountryside.decorate(worldId, data);   // riding: your horse, Hobb's paddock
+        if (typeof BridgeMakers !== 'undefined') BridgeMakers.decorate(worldId, data);       // the countryside's makers: the farm stand, the flowers, the cider
         if (typeof BridgeMagic !== 'undefined') BridgeMagic.decorate(worldId, data);
         if (typeof BridgeExpedition !== 'undefined') BridgeExpedition.decorate(worldId, data);
         if (typeof BridgeAlpine !== 'undefined') BridgeAlpine.decorate(worldId, data);       // Aurelle, the promenade, the way down to it
@@ -1157,7 +1160,7 @@ var BridgeWorld = (function () {
     if (world.interactions) {
       var target = (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.getTarget) ? BridgeInteractions.getTarget() : null;
       var px = BridgeCharacter.getX(), py = BridgeCharacter.getY();
-      var kinds = [['game', { app: 1, cabinet: 1, splice: 1, pachinko: 1, casino: 1 }], ['exit', { leave_world: 1 }]];
+      var kinds = [['game', { app: 1, cabinet: 1, splice: 1, pachinko: 1, casino: 1 }], ['exit', { leave_world: 1, exit: 1 }]];
       for (var ki = 0; ki < kinds.length; ki++) {
         var clusters = findAppClusters(world.interactions, kinds[ki][1]);
         for (var ci = 0; ci < clusters.length; ci++) {

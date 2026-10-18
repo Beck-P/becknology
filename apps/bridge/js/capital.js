@@ -20,7 +20,7 @@
  *   BridgeCapital.BUILT, BridgeCapital.play(ms)
  */
 var BridgeCapital = (function () {
-  var BUILT = { 'lumar-crown-oldtown': true, 'lumar-crown-canals': true };
+  var BUILT = { 'lumar-crown-oldtown': true, 'lumar-crown-canals': true, 'lumar-crown-bridge': true, 'lumar-crown-arsenal': true, 'lumar-crown-hill': true, 'lumar-crown-stilts': true };
   // the ways between the districts: on the district's side a label of its own (a 'dialog' in its world JSON until the
   // far side exists) and where it lands you
   var GATES = {
@@ -87,14 +87,14 @@ var BridgeCapital = (function () {
       CROWN.forEach(function (d) {
         var p = crownSpots[d.label];
         if (!BUILT[d.to] || !p || list.some(function (it) { return it.label === d.label; })) return;
-        list.push({ x: p.x, y: p.y, type: 'enter_world', target: d.to, spawn: d.spawn.slice(), label: d.label, prompt: d.prompt });
+        list.push({ x: p.x, y: p.y, type: 'enter_world', target: d.to, spawn: d.spawn.slice(), label: d.label, prompt: d.prompt, beacon: 'exit' });
       });
     }
     var gates = GATES[worldId];
     if (gates) {
       list.forEach(function (it) {
         var g = gates[it.label];
-        if (g && BUILT[g.to]) { it.type = 'enter_world'; it.target = g.to; it.spawn = g.spawn.slice(); delete it.dialog; }
+        if (g && BUILT[g.to]) { it.type = 'enter_world'; it.target = g.to; it.spawn = g.spawn.slice(); it.beacon = 'exit'; delete it.dialog; }
       });
     }
     var back = BACK[worldId];

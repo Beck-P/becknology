@@ -4,6 +4,9 @@
     { "sheet": "npc-vschool", "path": [[34, 19], [44, 19]], "speed": 0.8, "pause": 6000, "rest": "up" },
     { "sheet": "npc-vfolk-b", "path": [[10, 15], [16, 15]], "speed": 0.9, "pause": 4500, "rest": "down" }
   ],
+  "verdance": [
+    { "sheet": "npc-vfarmer", "path": [[11, 9], [19, 9], [19, 10], [28, 10]], "speed": 0.6, "pause": 6000, "rest": "down" }
+  ],
   "hoarfell": [
     { "sheet": "npc-skier-a", "path": [[3, 15], [42, 15]], "speed": 1.1, "pause": 3500, "rest": "up" },
     { "sheet": "npc-skier-b", "path": [[30, 17], [17, 17]], "speed": 0.9, "pause": 5000, "rest": "down" }

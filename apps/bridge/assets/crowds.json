@@ -17,6 +17,10 @@
   "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day", "spots": [[30, 32, "down"], [26, 31, "down"], [39, 31, "down"], [47, 31, "down"]] },
   "lumar-crown-oldtown":    { "n": 24, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
   "lumar-crown-canals":     { "n": 22, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
+  "lumar-crown-bridge":     { "n": 18, "wardrobe": "crown",   "busy": "day", "pass": 0.7 },
+  "lumar-crown-arsenal":    { "n": 14, "wardrobe": "lumar",   "busy": "day", "pass": 0.4, "adults": true },
+  "lumar-crown-hill":       { "n": 12, "wardrobe": "crown",   "busy": "day", "pass": 0.3 },
+  "lumar-crown-stilts":     { "n": 14, "wardrobe": "lumar",   "busy": "always", "pass": 0.3 },
   "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
   "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },
   "lumar-crown-pub":        { "n": 9,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
@@ -48,6 +52,11 @@
   "arcadia-spires":         { "n": 18, "wardrobe": "spires",  "busy": "bustle", "sit": 0.35, "pass": 0.3 },
 
   "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
+  "verdance-east":          { "n": 7,  "wardrobe": "verdance", "busy": "day", "sit": 0.3 },
+  "verdance-downs":         { "n": 5,  "wardrobe": "verdance", "busy": "day" },
+  "verdance-market":        { "n": 16, "wardrobe": "verdance", "busy": "day", "sit": 0.3 },
+  "verdance-hill":          { "n": 7,  "wardrobe": "verdance", "busy": "day", "sit": 0.4 },
+  "verdance-mill":          { "n": 5,  "wardrobe": "verdance", "busy": "day" },
 
   "hoarfell":               { "n": 14, "wardrobe": "hoarfell", "busy": "day" },
   "hoarfell-lodge":         { "n": 7,  "wardrobe": "hoarfell", "busy": "night", "sit": 0.8 },
