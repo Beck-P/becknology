@@ -163,7 +163,7 @@ def town_H(x, r):
     if z is not None:
         return z
     if int(math.floor(r)) == 21 and any(a <= x < b + 1 for (a, b) in ((22, 24), (35, 37))):
-        return L1_Z                                              # a café balcony out over the drop
+        return L1_Z - 0.12                                       # a café balcony out over the drop (its deck sits on this)
     s = stair_at(x, r)
     if s is not None:
         return s
@@ -242,6 +242,8 @@ def material(x, r):
         return 'cinder' if steep(x, r) > 0.9 else ('lava' if I.n2(x, r, 1.6, 31) > -0.25 else 'cinder')
     if (c, rr) in ZIGZ or (c, rr) in ZIG_BACK:
         return 'path_stone'
+    if rr == 21 and any(a <= c <= b for (a, b) in ((22, 24), (35, 37))):
+        return 'grout'
     town = in_town(x, r) and FACE[0] > r >= RIM_LANE[0]
     if town or (TX0 <= x < ZZ1 + 1 and r >= QUAY0):
         return 'grout'
@@ -404,7 +406,7 @@ for (c, r), z in ZIG_BACK.items():                   # the ledges themselves: st
         CL.pots(k, c + 0.5, r + 0.5, n=2, seed=c + r, z=z)
 ZIG_LAMPS = [(ZZ0 + 0.2, 27.3), (ZZ1 + 0.8, 25.3), (ZZ0 + 0.2, 23.3), (ZZ1 + 0.8, 21.3), (46.5, 28.2), (46.5, 26.2), (46.5, 24.2), (46.5, 22.2)]
 for (lx, lr) in ZIG_LAMPS:
-    CL.lift(k, H(lx, lr) + 0.05, W.lantern_post, k, lx, lr, h=1.4, energy=30)
+    CL.lift(k, H(lx, lr) + 0.05, W.lantern_post, k, lx, lr, h=1.4, energy=18)
 
 # ---- the terraces: retaining walls, lanes, parapets -----------------------------------------------------------------
 LANES = [(RIM_LANE, RIM_Z), (L2_LANE, L2_Z), (L1_LANE, L1_Z)]
@@ -753,6 +755,9 @@ w = {'name': 'Lanternfall', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tile
      ]}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 LIFT = [[round(H(c + 0.5, r + 0.5), 2) for c in range(COLS)] for r in range(ROWS)]
+for (a, b) in ((22, 24), (35, 37)):                                # you stand on the balconies' decks, not the rock under them
+    for c in range(a, b + 1):
+        LIFT[21][c] = L1_Z
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), doors=PIER + FPIER, scene_id='lumar-cliff',
             actors=[{'sheet': 'npc-cliff-marina', 'x': 22, 'y': 30, 'facing': 'down'},
                     {'sheet': 'npc-cliff-yannis', 'x': 45, 'y': 29, 'facing': 'down'},

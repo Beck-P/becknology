@@ -196,8 +196,9 @@ var BridgeSapphire = (function () {
   // ---- Sapphire Port: the gate to the floating market, at the east end of the quay ---------------------------------
   var MARKET_GATE = { x: 44, y: 22, type: 'enter_world', target: 'lumar-sapphire-market', spawn: [1, 6], label: 'FLOATING MARKET',
                       prompt: 'PRESS E TO GO' };
+  var MARKET_OPEN = true;                    // (off until the floating market's world is in the game)
   function decorate(worldId, data) {
-    if (worldId !== 'lumar-sapphire' || !data) return;
+    if (!MARKET_OPEN || worldId !== 'lumar-sapphire' || !data) return;
     data.interactions = data.interactions || [];
     if (!data.interactions.some(function (it) { return it.target === MARKET_GATE.target; })) data.interactions.push(Object.assign({}, MARKET_GATE));
   }

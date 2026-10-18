@@ -167,7 +167,7 @@ var BridgeSloop = (function () {
     'lumar': [-15.7, 16.1, -19.7, 7.1], 'lumar-crown': [-31.3, 32.4, -25.0, 17.5], 'lumar-tern': [-19.2, 19.3, -12.7, 9.5],
     'lumar-holm': [-20.8, 20.5, -14.5, 9.3], 'lumar-sapphire': [-28.2, 29.0, -14.5, 13.5], 'lumar-rose': [-27.9, 27.7, -18.4, 21.0],
     'lumar-crimson': [-26.4, 27.1, -19.2, 18.3], 'lumar-midnight': [-24.8, 24.3, -17.6, 18.1],
-    'lumar-cliff': [-27.0, 27.0, -22.0, 22.0]
+    'lumar-cliff': [-29.5, 29.7, -25.5, 22.4]
   };
   var LINES = [                                         // what the fisherman says when you hail him
     "Wind's been backing all evening. Ease her out past the reef or she'll stall on you.",
