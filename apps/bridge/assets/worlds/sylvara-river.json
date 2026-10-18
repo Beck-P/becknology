@@ -4569,6 +4569,18 @@
       ]
     },
     {
+      "x": 21,
+      "y": 39,
+      "type": "enter_world",
+      "label": "THE FALLS",
+      "prompt": "PRESS E TO WALK DOWN TO THE FALLS",
+      "target": "sylvara-falls",
+      "spawn": [
+        16,
+        1
+      ]
+    },
+    {
       "x": 27,
       "y": 4,
       "type": "dialog",
