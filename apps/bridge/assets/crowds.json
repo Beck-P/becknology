@@ -5,6 +5,7 @@
   "lumar-square":           { "n": 13, "wardrobe": "lumar",   "busy": "day" },
   "lumar-sapphire":         { "n": 14, "wardrobe": "sapphire", "busy": "day", "spots": [[21, 23, "down"], [17, 22, "down"], [46, 23, "up"]] },
   "lumar-rose":             { "n": 9,  "wardrobe": "rose",    "busy": "day" },
+  "lumar-sapphire-market":  { "n": 12, "wardrobe": "sapphire", "busy": "night" },
   "lumar-cliff":            { "n": 14, "wardrobe": "sapphire", "busy": "day" },
   "lumar-sapphire-market":  { "n": 12, "wardrobe": "sapphire", "busy": "night" },
   "lumar-rose-springs":     { "n": 10, "wardrobe": "rose",    "busy": "always" },

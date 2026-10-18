@@ -174,6 +174,41 @@ for (px, pr) in ((14.2, 12.4), (14.45, 12.55), (6.2, 8.2)):     # pigeons peckin
     k.sphere(px + 0.06, pr + 0.01, 0.08, 0.035, 0.03, '#6a7080', 'pigeon', segs=6)
     k.blob(px - 0.03, pr, 0.08, 0.05, 0.04, 0.02, '#a8acb4', 'pigeon', segs=6)
 
+# ---- market day: more stalls and their stock on the open cobbles (clear of every spot and walk the game uses) --------
+import assets_village as V  # noqa: E402
+W.market_stall(k, 14.1, 16.3, 13.2, 13.85, awning=('#2e6a4a', '#e8dcc0'), goods='produce')     # the greengrocer
+V.crates(k, 13.75, 13.55)
+V.sacks(k, 16.75, 13.5, n=3)
+k.solid(13, 13, 17, 14)
+W.market_stall(k, 3.0, 4.95, 12.95, 13.6, awning=('#a05a8a', '#f0e6d0'), goods=None)          # the flower seller
+for i in range(6):                                                                              # buckets of cut flowers
+    bx = 3.2 + i * 0.3
+    k.cyl(bx, 13.3, 0.86, 1.06, 0.11, ('#6a6a72', 0.2), 'bucket', verts=10)
+    for j in range(6):
+        k.sphere(bx + rng.uniform(-0.08, 0.08), 13.3 + rng.uniform(-0.06, 0.06), rng.uniform(1.1, 1.24), 0.045, 0.04,
+                 ('#e04060', '#f0d040', '#f0f0f0', '#a060d0', '#f08030', '#f080b0')[i], 'flower', segs=6)
+for (tx, tr) in ((2.95, 14.1), (5.25, 13.95)):
+    HK.tub(k, tx, tr)
+k.solid(3, 13, 5, 14)
+# the cooper's corner by the bell tower: barrels and a crate stack
+for (bx, br, h) in ((20.9, 15.2, 0.7), (21.4, 15.3, 0.66), (21.15, 15.7, 0.6)):
+    A.barrel(k, bx, br, h=h, radius=0.23, tone=rng.choice((A.WOOD, shade(A.WOOD, 0.85))))
+A.crate(k, 22.0, 15.05, s=0.5)
+A.crate(k, 22.05, 15.1, s=0.42, z0=0.5, tone=shade(A.WOOD_L, 1.05))
+A.crate(k, 22.6, 15.35, s=0.44, tone=shade(A.WOOD_L, 0.92), contents='apples')
+# the pump and its trough on the east side of the fountain, a cat on the trough's end
+HK.pump(k, 14.6, 6.4)
+HK.cat(k, 14.85, 6.95, 0.32)
+# a café's two little tables and chairs by the apothecary, clear of the walk to its door
+for (tx, tr) in ((19.6, 7.1), (20.6, 7.4)):
+    k.cyl(tx, tr, 0.0, 0.62, 0.03, A.IRON, 'table_leg', verts=6)
+    k.cyl(tx, tr, 0.62, 0.66, 0.24, ('#e8e0d0', 0.1), 'table_top', verts=12)
+    for (dx, dr) in ((-0.36, 0.0), (0.36, 0.05)):
+        k.cyl(tx + dx, tr + dr, 0.0, 0.4, 0.13, ('#3a5a4a', 0.14), 'chair', verts=8)
+        k.box(tx + dx - 0.12, tr + dr - 0.16, 0.4, tx + dx + 0.12, tr + dr - 0.12, 0.8, ('#3a5a4a', 0.14), 'chair_back')
+    k.cyl(tx + 0.05, tr, 0.66, 0.74, 0.04, '#e8e4dc', 'cup', verts=8)
+k.solid(19, 7, 21, 8)
+
 # ---- the trail down to the harbour, the parapet over the drop ----------------------------------------
 W.stone_steps(k, 13.0, 15.0, 16.0, 18.0)
 built(12.7, 16.0, 15.3, 18.0)
