@@ -60,7 +60,7 @@ for px in PIERS[1:-1]:
     k.box(px - 1.1, N_BACK - 0.4, C.WZ - 1.2, px + 1.1, SOUTH + 0.2, -0.3, (shade(STONE, 0.85), 0.14), 'pier')
     CAP.coursed(k, px - 1.1, px + 1.1, C.WZ - 0.8, -0.3, SOUTH + 0.2, STONE, part='wall_block', **CAP.BIG)
     k.cone(px, SOUTH + 0.2, C.WZ - 0.6, -0.3, 1.1, 0.25, (shade(STONE, 0.9), 0.14), 'cutwater', verts=4)     # the cutwater, pointing out to sea
-    k.solid(px - 1.1, N_BACK, px + 1.1, SOUTH + 0.4)
+    # (under the deck: nothing to walk into up there)
 # the arches' rings and the wall over them on the sea face
 for a, b in zip(PIERS, PIERS[1:]):
     sa, sb = a + (1.1 if a != PIERS[0] else 0.0), b - (1.1 if b != PIERS[-1] else 0.0)
@@ -111,18 +111,46 @@ k.solid(29.4, 10.8, 30.6, 12.0)
 # booths on the south side: little lean-tos against the parapet (a flower seller, a newsvendor, a fishing-tackle man)
 for (bx0, bx1, col, goods) in ((9.5, 11.5, ('#3a6a3a', '#e8dcc0'), 'flowers'), (20.0, 22.0, ('#2e5a8a', '#e8e0d0'), 'papers'),
                                (38.0, 40.0, ('#b23a34', '#ece0c8'), 'tackle'), (48.5, 50.5, ('#c8a040', '#3a2414'), 'sweets')):
-    k.box(bx0, SOUTH - 1.0, 0.0, bx1, SOUTH - 0.22, 0.85, (A.WOOD, 0.12), 'booth', bevel=0.02)
-    k.box(bx0 + 0.08, SOUTH - 1.02, 0.6, bx1 - 0.08, SOUTH - 0.98, 0.8, ('#e8dcc0', 0.1), 'booth_counter')
-    k.quads([((bx0 - 0.1, SOUTH - 1.35, 1.25), (bx1 + 0.1, SOUTH - 1.35, 1.25), (bx1 + 0.1, SOUTH - 0.2, 1.55), (bx0 - 0.1, SOUTH - 0.2, 1.55))],
-            col[0], 'roof_booth')
-    for i in range(6):
-        a = bx0 + (bx1 - bx0) * i / 6
-        k.box(a, SOUTH - 1.36, 1.18, a + (bx1 - bx0) / 12, SOUTH - 1.32, 1.26, col[1], 'awning')
-    for j in range(7):
-        gx = bx0 + 0.2 + j * (bx1 - bx0 - 0.4) / 6
-        tone = {'flowers': rng.choice(('#e04060', '#f0d040', '#a060d0', '#f0f0f0')), 'papers': '#e8e4d8',
-                'tackle': rng.choice(('#e05a30', '#3a5a3a', '#c8a040')), 'sweets': rng.choice(('#f080b0', '#e8c040', '#80c0e0'))}[goods]
-        k.box(gx - 0.08, SOUTH - 0.95, 0.85, gx + 0.08, SOUTH - 0.7, 0.95, tone, 'goods')
+    # the booth: a counter toward the street, a back board against the parapet with its name, a striped canopy over the
+    # back half only (so what's on the counter shows from above), and the goods spilling out in front
+    k.box(bx0, SOUTH - 1.0, 0.0, bx1, SOUTH - 0.55, 0.78, (A.WOOD, 0.12), 'booth', bevel=0.02)
+    k.box(bx0 - 0.04, SOUTH - 1.04, 0.78, bx1 + 0.04, SOUTH - 0.5, 0.84, (A.WOOD_L, 0.12), 'booth_counter', bevel=0.015)
+    k.box(bx0, SOUTH - 0.5, 0.0, bx1, SOUTH - 0.22, 1.9, (shade(A.WOOD, 0.8), 0.12), 'booth_back')
+    for x in (bx0 + 0.04, bx1 - 0.04):
+        k.box(x - 0.04, SOUTH - 1.0, 0.84, x + 0.04, SOUTH - 0.92, 1.75, (A.WOOD_D, 0.12), 'booth_post')
+    CAP.awning(k, bx0 - 0.1, bx1 + 0.1, SOUTH - 0.5, 1.95, cols=col, depth=-0.55, drop=-0.15)
+    q = random.Random(int(bx0 * 13))
+    for j in range(9):                                              # on the counter, in rows
+        gx = bx0 + 0.18 + (j % 5) * (bx1 - bx0 - 0.36) / 4
+        gr = SOUTH - 0.92 + (j // 5) * 0.2
+        if goods == 'flowers':
+            k.cyl(gx, gr, 0.84, 0.98, 0.07, ('#6a7a8a', 0.2), 'bucket', verts=8)
+            for t in range(3):
+                k.sphere(gx + q.uniform(-0.05, 0.05), gr + q.uniform(-0.04, 0.04), 1.02 + q.uniform(0, 0.06), 0.055, 0.2,
+                         q.choice(('#e04060', '#f0d040', '#a060d0', '#f0f0f0', '#f08030')), 'flowers', segs=6)
+        elif goods == 'papers':
+            for t in range(q.randint(2, 5)):
+                k.box(gx - 0.08, gr - 0.06, 0.84 + t * 0.02, gx + 0.08, gr + 0.06, 0.86 + t * 0.02, ('#e8e4d8', 0.3), 'papers')
+            k.box(gx - 0.08, gr - 0.06, 0.86 + t * 0.02, gx + 0.08, gr - 0.03, 0.865 + t * 0.02, '#2a2a2a', 'papers_ink')
+        elif goods == 'tackle':
+            k.box(gx - 0.07, gr - 0.05, 0.84, gx + 0.07, gr + 0.05, 0.9, (q.choice(('#c8a040', '#3a5a3a', '#7a4a2a')), 0.2), 'tackle_box')
+            k.sphere(gx, gr, 0.93, 0.03, 0.03, q.choice(('#e05a30', '#f0f0f0')), 'float', segs=6)
+        else:
+            k.cyl(gx, gr, 0.84, 1.0, 0.06, ('#cfe6ee', 0.05), 'jar', verts=10)
+            k.cyl(gx, gr, 0.86, 0.95, 0.05, q.choice(('#f080b0', '#e8c040', '#80c0e0', '#a0e080')), 'sweets', verts=10)
+            k.cyl(gx, gr, 1.0, 1.03, 0.065, W.BRASS, 'jar_lid', verts=10)
+    if goods == 'flowers':                                          # buckets on the stones in front
+        for gx in (bx0 + 0.3, bx0 + 0.75, bx1 - 0.35):
+            k.cyl(gx, SOUTH - 1.25, 0.0, 0.3, 0.13, ('#6a7a8a', 0.2), 'bucket', verts=10)
+            for t in range(6):
+                k.sphere(gx + q.uniform(-0.09, 0.09), SOUTH - 1.25 + q.uniform(-0.08, 0.08), 0.36 + q.uniform(0, 0.1), 0.07, 0.2,
+                         q.choice(('#e04060', '#f0d040', '#a060d0', '#f0f0f0')), 'flowers', segs=6)
+    elif goods == 'tackle':                                         # rods leaning on the post
+        for t in range(3):
+            k.tube((bx1 + 0.08 + t * 0.06, SOUTH - 0.6, 0.0), (bx1 - 0.1 + t * 0.12, SOUTH - 0.75, 2.2), 0.015, A.WOOD_D, 'rod', verts=4)
+    elif goods == 'papers':                                         # the board: today's headline
+        k.box(bx0 - 0.5, SOUTH - 1.2, 0.0, bx0 - 0.1, SOUTH - 1.1, 0.7, (A.WOOD_D, 0.12), 'a_board')
+        k.box(bx0 - 0.47, SOUTH - 1.21, 0.12, bx0 - 0.13, SOUTH - 1.19, 0.62, ('#ece4cc', 0.2), 'a_board_bill')
     k.solid(bx0, SOUTH - 1.0, bx1, SOUTH - 0.2)
 
 # ---- the shops along the north side -----------------------------------------------------------------------------------------
