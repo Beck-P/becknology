@@ -1166,6 +1166,7 @@ def pod_house(k, cx, cr, z=0.0, rad=0.85, h=1.4, roof='#5a8a3a', door_ang=math.p
         if qs:
             k.quads(qs, (col, 0.25), 'roof_shingle')
     k.cyl(cx, cr, z + h - 0.06, z + h + 0.04, RO + 0.02, (GOLD, 0.25), 'roof_eave', verts=28)            # a gold-trimmed eave
+    k.cone(cx, cr, z + h + RH * 0.5, z + h + RH + 0.04, RO * 0.52, 0.03, (shade(roof, 1.04), 0.25), 'roof_cap', verts=20)   # the top course closed over
     k.tube((cx, cr, z + h + RH - 0.05), (cx + 0.06, cr, z + h + RH + 0.3), 0.05, (shade(roof, 0.8), 0.3), 'roof_tip', rb=0.02, verts=6)
     k.tube((cx + 0.06, cr, z + h + RH + 0.3), (cx + 0.22, cr, z + h + RH + 0.36), 0.03, (shade(roof, 0.8), 0.3), 'roof_tip', rb=0.01, verts=6)
     # the door and windows (on the side toward you)
