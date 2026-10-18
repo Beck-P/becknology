@@ -442,6 +442,50 @@ var BridgeEvents = (function () {
       react: 'look', note: function (L) { return 'NULL had every screen in Arcadia: "' + pick(NULL_SAYS, L.key) + '"'; },
       over: function (L, ctx, offX, offY, ts, ms) { scanlines(L, ctx, ms); }
     },
+    // Arcadia below (js/undercity.js): the Saints collecting down the market, a downpour through the grates, the Sump stirring
+    collection: {
+      world: 'arcadia-undercity', name: 'The Saints come collecting', len: 3, w: 3, at: [20, 15],
+      hint: 'Two Rust Saints are working down the stalls, collecting', sfx: 'thud',
+      cast: [{ sheet: 'npc-saint-a', path: [[58, 15.4], [40, 15.4], [21, 15.2], [15, 15.2]], speed: 0.5, from: 1, end: 'up' },
+             { sheet: 'npc-saint-b', path: [[59, 16.0], [41, 16.0], [22, 15.9], [16, 15.9]], speed: 0.5, from: 2, end: 'up' }],
+      say: [[6, 0, 'DUES, GRANDAD. SAME AS EVERY WEEK.'], [50, 1, 'THE SAINTS SAY THANK YOU.'], [96, 0, 'NEXT!'], [120, 'at', 'NOT AGAIN...']],
+      react: 'look',
+      talk: [{ x: 16, y: 14, label: 'THE SAINTS', prompt: 'PRESS E TO STAND UP TO THEM', on: function (L) { saintsStand(L); } }],
+      note: 'The Rust Saints came collecting in the Warrens'
+    },
+    surge: {
+      world: 'arcadia-undercity', name: 'A downpour through the grates', len: 2, w: 2, at: [40, 22],
+      hint: 'A downpour up on the District — every grate in the Warrens is pouring', sfx: 'splat', loop: { name: 'splat', every: 3, near: 999 },
+      over: function (L, ctx, offX, offY, ts, ms, w, h) { downpour(L, ctx, w, h); },
+      react: 'look', note: 'A downpour came through the Warrens\' grates'
+    },
+    stirring: {
+      world: 'arcadia-sump', name: 'Something moving in the canal', len: 1.5, w: 2, at: [60, 33],
+      hint: 'The water in the south basin is moving — something big under it', sfx: 'horn',
+      over: function (L, ctx, offX, offY, ts, ms) { stirring(L, ctx, offX, offY, ts); },
+      say: [[4, 'at', 'DID YOU HEAR THAT?'], [30, 'at', 'GET AWAY FROM THE EDGE.']],
+      react: 'flee', note: 'Something moved under the water of the Sump'
+    },
+    // the Spires (arcadia-spires, L480: js/spires.js)
+    operaout: {
+      world: 'arcadia-spires', name: 'The Lyra lets out', len: 4, w: 3, at: [72.5, 12],
+      hint: 'The interval — the Lyra empties onto the plaza', sfx: 'chime',
+      cast: [{ sheet: 'npc-diva', path: [[72.5, 10.2], [71.0, 13.0], [69.5, 14.5]], speed: 0.05, from: 20, until: 220, end: 'down' },
+             { sheet: 'npc-usher', x: 74, y: 11, f: 'down' },
+             { sheet: 'npc-member-b', path: [[73.5, 10.2], [76.0, 14.0]], speed: 0.05, from: 6, end: 'down' }],
+      gather: { x: 71, y: 15.5, r: 3.6, n: 12, face: [72.5, 10] },
+      say: [[8, 'at', 'BRAVA! BRAVA!'], [26, 0, 'THANK YOU, DARLINGS. THE THIRD ACT IS WORSE. FOR ME.'], [60, 'at', 'IS THAT SERAPHINE?'],
+            [110, 1, 'THE SECOND ACT, LADIES AND GENTLEMEN, IN FIVE MINUTES.']],
+      note: 'The Lyra let out for the interval and Seraphine came down the steps'
+    },
+    fireworks: {
+      world: 'arcadia-spires', name: 'Fireworks over the sky docks', len: 3, w: 2, at: [80, 38],
+      hint: 'Fireworks off the Lumière — a party aboard', sfx: 'blast', loop: { name: 'blast', every: 2.4, near: 60 },
+      gather: { x: 78, y: 39, r: 4.2, n: 14, face: [80, 44] },
+      say: [[10, 'at', 'OOOH.'], [40, 'at', 'WHOSE PARTY IS IT?'], [90, 'at', 'NOBODY KNOWS. NOBODY EVER KNOWS.']],
+      over: function (L, ctx, offX, offY, ts, ms) { spireFireworks(L, ctx, offX, offY, ts, ms); },
+      note: 'Fireworks went up off the yacht at the sky docks'
+    },
 
     // the Mid-Levels' Terraces (L200): a proposal at Halo, a jam at Moonglow
     proposal: {
@@ -991,6 +1035,32 @@ var BridgeEvents = (function () {
     ctx.fillStyle = '#e8dcc0';
     for (var i = 0; i < 5; i++) ctx.fillRect(cx - 8 + bow + i * 2, footY - 18 - i * 2, 2, 2);
   }
+  // the Spires: shells bursting in pastel over the yacht at the sky docks, a few at a time, falling as sparks
+  function spireFireworks(L, ctx, offX, offY, ts, ms) {
+    var cols = ['#f4a8d0', '#9ad8f0', '#c8b0f8', '#a8f0d0', '#ffd890'];
+    var bx = offX + 80 * ts, by = offY + 30 * ts;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var s = 0; s < 4; s++) {
+      var k = Math.floor(L.t / 2400) - s, life = (L.t - k * 2400) / 2400;
+      if (k < 0 || life > 1.6) continue;
+      var h = Math.sin(k * 12.9898) * 43758.5453, r1 = h - Math.floor(h);
+      var cx = Math.round(bx + (r1 - 0.5) * ts * 14), cy = Math.round(by - ts * (4 + r1 * 5)), col = cols[k % cols.length];
+      if (life < 0.35) {                                       // the shell climbing
+        ctx.fillStyle = '#fff4d0';
+        ctx.fillRect(cx, Math.round(cy + (0.35 - life) * ts * 18), 1, 2);
+        continue;
+      }
+      var p = (life - 0.35) / 1.25, R = Math.sqrt(p) * ts * 2.4;
+      ctx.globalAlpha = Math.max(0, 1 - p);
+      ctx.fillStyle = col;
+      for (var i = 0; i < 24; i++) {
+        var a = i / 24 * Math.PI * 2;
+        ctx.fillRect(Math.round(cx + Math.cos(a) * R), Math.round(cy + Math.sin(a) * R + p * p * ts * 1.5), p < 0.4 ? 2 : 1, p < 0.4 ? 2 : 1);
+      }
+    }
+    ctx.restore();
+  }
   function notes(ctx, offX, offY, ts, ms, x, y, kind) {
     var n = ART.note();
     for (var i = 0; i < 3; i++) {
@@ -1048,6 +1118,38 @@ var BridgeEvents = (function () {
     mark(L, 'settled');
     if (bet - 1 === win) { coins(15, 'toyboats'); sfx('coin'); toast('TOY BOATS', BOATS[win][0].charAt(0) + BOATS[win][0].slice(1).toLowerCase() + ' won!', '15 coins from the kids', false); }
   }
+  // the Saints collecting: stand between them and the stall, once a happening
+  function saintsStand(L) {
+    var say = function (t) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say('THE SAINTS', t); };
+    if (!once(L, 'stood', function () { give('roo_broth', 1); coins(20, 'saints'); sfx('slam'); }))
+      return say('THEY\'VE MOVED ON, MUTTERING. THE STALLHOLDER IS STILL THANKING YOU.');
+    say('YOU STEP BETWEEN THE SAINTS AND THE STALL. THE BIG ONE LOOKS AT YOU, AT YOUR HANDS, AT THE CROWD STARTING TO WATCH, AND DECIDES IT ISN\'T WORTH IT TODAY.\n\n' +
+        'THE STALLHOLDER PRESSES A BOWL OF BROTH AND TWENTY COINS ON YOU. "DON\'T GO PAST THE FENCE TONIGHT," SHE SAYS. "THEY\'LL REMEMBER YOUR FACE."');
+  }
+  // the downpour: rain falling in sheets over the whole Warrens, thickening and thinning again
+  function downpour(L, ctx, w, h) {
+    var f = Math.min(1, L.t / 8000, (L.end - L.start - L.t) / 8000), now = L.t;
+    if (f <= 0) return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(150,175,210,' + (0.35 * f).toFixed(3) + ')';
+    for (var i = 0; i < 260 * f; i++) {
+      var x = (i * 97.13 + Math.floor(i / 7) * 13) % w, sp = 0.9 + (i % 5) * 0.12, y = ((now * sp * 0.6) + i * 53.7) % (h + 40) - 20;
+      ctx.fillRect(Math.round(x), Math.round(y), 1, 7 + (i % 3) * 3);
+    }
+    ctx.restore();
+  }
+  // the Sump stirring: wide rings going out over the basin from something under it
+  function stirring(L, ctx, offX, offY, ts) {
+    var cx = offX + 60.5 * ts, cy = offY + 37.5 * ts;
+    ctx.save();
+    for (var i = 0; i < 4; i++) {
+      var k = ((L.t / 2600) + i / 4) % 1;
+      ctx.strokeStyle = 'rgba(120,240,210,' + (0.45 * (1 - k)).toFixed(2) + ')'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(Math.round(cx), Math.round(cy), 6 + k * ts * 6, 2 + k * ts * 2, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // the brawl: break it up or have a bet on it
   var BRAWLERS = ['THE SAILOR', 'THE DOCKHAND'];
   function brawlStep(L) {

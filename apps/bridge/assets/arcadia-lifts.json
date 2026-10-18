@@ -14,7 +14,10 @@
     "arcadia-terraces": { "level": "midlevels", "x": 0.78, "name": "The Terraces" },
     "arcadia-oldquarter": { "level": "district", "x": 0.15, "name": "Lantern Row" },
     "arcadia-street": { "level": "district", "x": 0.47, "name": "The neon street" },
-    "arcadia-spaceport": { "level": "district", "x": 0.82, "name": "The spaceport" }
+    "arcadia-spaceport": { "level": "district", "x": 0.82, "name": "The spaceport" },
+    "arcadia-undercity": { "level": "undercity", "x": 0.4, "w": 0.6, "name": "The Warrens" },
+    "arcadia-scrapyard": { "level": "undercity", "x": 0.85, "name": "The Scrapyards" },
+    "arcadia-sump": { "level": "sump", "x": 0.5, "w": 0.7, "name": "The Sump" }
   },
   "shafts": {
     "skywalk": { "name": "The Skywalk Lift", "x": 0.3, "lobbies": [
@@ -26,11 +29,15 @@
       { "id": "skypad", "world": "arcadia-skypad", "floor": 212, "spawn": [19, 5] }
     ] },
     "spire": { "name": "Spire Express", "x": 0.66, "lobbies": [
+      { "id": "spires", "world": "arcadia-spires", "floor": 480, "spawn": [40, 10] },
       { "id": "terraces", "world": "arcadia-terraces", "floor": 208, "spawn": [43, 11] }
     ] },
     "core": { "name": "The Core Express", "x": 0.92, "lobbies": [
+      { "id": "spires", "world": "arcadia-spires", "floor": 480, "spawn": [54, 10] },
       { "id": "terraces", "world": "arcadia-terraces", "floor": 208, "spawn": [48, 11] },
-      { "id": "spaceport", "world": "arcadia-spaceport", "floor": 0, "spawn": [25, 10] }
+      { "id": "spaceport", "world": "arcadia-spaceport", "floor": 0, "spawn": [25, 10] },
+      { "id": "undercity", "world": "arcadia-undercity", "floor": -20, "spawn": [72, 10], "name": "The Warrens" },
+      { "id": "sump", "world": "arcadia-sump", "floor": -60, "spawn": [63, 9], "name": "The Sump" }
     ] }
   },
   "loop": { "name": "The Loop", "stations": [
@@ -41,6 +48,7 @@
   "cabs": { "pads": [
     { "id": "skyport", "name": "Skyport 7", "world": "arcadia-skypad", "spawn": [19, 11], "level": "midlevels" },
     { "id": "terraces", "name": "The Terraces", "world": "arcadia-terraces", "spawn": [79, 30], "level": "midlevels" },
-    { "id": "spaceport", "name": "The spaceport", "world": "arcadia-spaceport", "spawn": [57, 18], "level": "district" }
+    { "id": "spaceport", "name": "The spaceport", "world": "arcadia-spaceport", "spawn": [57, 18], "level": "district" },
+    { "id": "spires", "name": "The sky docks", "world": "arcadia-spires", "spawn": [71, 36], "level": "spires" }
   ] }
 }
