@@ -110,7 +110,7 @@ var BridgeGifts = (function () {
            loveLine: 'FRESH! FROM A FARM, WITH SUN ON IT! THIS GOES IN TOMORROW\'S BROTH, AND THE WHOLE WARRENS WILL TASTE IT.' },
     sallow: { love: ['chrome_part', 'circuit'], like: ['medkit', 'sump_pearl'], hate: ['posy', 'honey'],
               loveLine: 'NOW THAT\'S A JOINT. HARDLY USED. SOMEONE WILL WALK BETTER BECAUSE OF YOU. PROBABLY ME.' },
-    nell: { love: ['ember_rum', 'pocket_watch'], like: ['drip_lager', 'mug_of_ale', 'sea_glass'], hate: ['old_boot'] },
+    drip_nell: { love: ['ember_rum', 'pocket_watch'], like: ['drip_lager', 'mug_of_ale', 'sea_glass'], hate: ['old_boot'] },
     tally: { love: ['pocket_watch', 'heron_coin'], like: ['kopi', 'pit_rotgut'], hate: ['posy'] },
     brick: { love: ['roo_broth'], like: ['char_skewers', 'steam_dumplings'], hate: ['glow_shot'] },
     gage: { love: ['sump_pearl', 'chrome_part'], like: ['circuit', 'scrap_metal', 'kopi'], hate: ['posy'] },
