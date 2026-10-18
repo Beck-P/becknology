@@ -108,10 +108,13 @@ let errors = 0;
       const client = { from: q, rpc: () => Promise.resolve({ data: null, error: null }), channel: chan, removeChannel: () => Promise.resolve('ok'), getChannels: () => [] };
       window.supabase = { createClient: () => client };
     } });
+    await p.waitForTimeout(600);
     const r = await p.evaluate(() => ({ card: document.querySelector('.ti-card').innerText.replace(/\s+/g, ' '), wire: document.getElementById('ti-wire').innerText,
-      face: document.getElementById('ti-face').classList.contains('on'), coinsShown: !document.getElementById('ti-coins').hidden }));
-    console.log('records that answer: card "' + r.card + '", face drawn ' + r.face + ', coins shown ' + r.coinsShown + ', wire "' + r.wire + '"');
+      face: document.getElementById('ti-face').classList.contains('on') && document.getElementById('ti-face').getContext('2d').getImageData(12, 12, 1, 1).data[3] > 0,
+      portrait: performance.getEntriesByType('resource').some(e => /\/portraits\/pilots\//.test(e.name)), coinsShown: !document.getElementById('ti-coins').hidden }));
+    console.log('records that answer: card "' + r.card + '", face drawn ' + r.face + ' (portrait ' + r.portrait + '), coins shown ' + r.coinsShown + ', wire "' + r.wire + '"');
     if (!r.coinsShown || !/1,240/.test(r.card) || !/ALYSSA/.test(r.wire) || /BECK/.test(r.wire)) { errors++; console.log('FAILED: coins or the wire missing'); }
+    if (!r.face || !r.portrait) { errors++; console.log('FAILED: the pilot\'s face is not their portrait'); }
     await shot(p, 'wide-records-wire.png');
     await ctx.close();
   }

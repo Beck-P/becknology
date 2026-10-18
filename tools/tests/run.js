@@ -51,7 +51,10 @@ const SUITES = {
     ['world/canoe.js', SHOTS + '/canoe'],
     ['world/quest_tracker.js', SHOTS],
     ['world/events.js', SHOTS],
+    ['world/hoarfell_e.js', SHOTS],
+    ['world/railway.js', SHOTS + '/railway'],
     ['world/regatta.js', SHOTS],
+    ['world/seas_b1.js', SHOTS],
     ['world/capital.js', SHOTS],
     ['world/arcadia_transit.js', SHOTS],
     ['world/arcadia_terraces.js', SHOTS],
@@ -86,11 +89,14 @@ const SUITES = {
     ['combat/energy.js'],
     ['combat/bow.js', SHOTS + '/bow'],
     ['combat/look.js', SHOTS + '/look'],
+    ['combat/valley.js', SHOTS + '/valley'],
     ['combat/shipviz.js', SHOTS + '/shipviz'],
   ]
 };
 // what of each test's output is shown: one group of alternatives a line (add a test's own on a new line)
 const KEEP = new RegExp([
+  /railway:/,
+  /hoarfell-e:/,
   /street lift|skybridge|across|lift offers|now at|aboard|skyport pod|loop stations|loop offers|aboard:|in at:|doors:|stepped off|train crossing|cutaway places/,
   /arrived at|crowd here|tea salon|telescope|-> \[|back out at|collection:|orrery,|spire express|air cab|offers|happening|event check/,
   /PAGEERR|live light|glow shift|light under her|out of reach|signed in|a tap on|hide\(\)|office|through the door|roster/,
@@ -111,6 +117,7 @@ const KEEP = new RegExp([
   /routes \d|busiest|in view|frames a second|traders|navy:|trawler:|privateer:|galleon:|man_of_war|pirate:|on the Midnight|hailed/,
   /party:|waits:|called:|aboard his|jump call|landed:|declined:|stayed aboard|sail call|at the pier|sailing:|mine call|left:|alone again/,
   /schedule|in a storm|the gun:|finished|prizes|at the gate|at the foot|gun: beck|racing:/,
+  /^(ok|FAIL) +|rosters/,
   /harbour spots|night: home|dawn 20|day: in harbour|dusk 20|auction:|crane through|trawlers at sea|steaming home|the \w+ sea:/,
   /ship's clock|passage|bays|bay 1|fit |modules|fitted|galley|Dorrie|breakfast|dinner|broth|fish|special|night|cards|chip|watch bill|below|butt/,
   /full draw|snap shot|close snap|fire arrow|ghost arrow|selected/,

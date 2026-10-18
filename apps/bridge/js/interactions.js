@@ -441,7 +441,10 @@ var BridgeInteractions = (function () {
     var biz = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.find(BridgeWorld.getWorldId(), inter.label);
     if (biz) { showBusiness(biz, inter); return; }
     // sit, sleep, look out of the window (js/actions.js) instead of a text box
-    if (inter.action && typeof BridgeActions !== 'undefined') { BridgeActions.run(inter); return; }
+    // (only its own actions: a module's interaction may carry an `action` of its own — the expedition's, the High Route's)
+    if (inter.action && typeof BridgeActions !== 'undefined' && (/^(sit|sleep|view)$/.test(inter.action) || inter.type === 'deck')) {
+      BridgeActions.run(inter); return;
+    }
     if (OWN[inter.type]) { OWN[inter.type](inter); return; }        // a type some module handles itself (register)
     switch (inter.type) {
       case 'app':
@@ -1249,6 +1252,7 @@ var BridgeInteractions = (function () {
       if (item && item.draw) { var g = cv.getContext('2d'); g.imageSmoothingEnabled = false; item.draw(g, 0, 0, 24); }
       else if (r.draw) { var g2 = cv.getContext('2d'); g2.imageSmoothingEnabled = false; r.draw(g2, 24); }
       else if (r.face && typeof BridgeLook !== 'undefined' && BridgeLook.face) { cv.classList.add('sp-face'); BridgeLook.face(cv, r.face.seed, r.face.style, r.face.colour, r.face.wild); }   // someone you'd hire
+      else if (r.sheet && typeof BridgeLook !== 'undefined' && BridgeLook.npcFace) { cv.classList.add('sp-face'); BridgeLook.npcFace(cv, r.sheet); }   // someone in the cast: their portrait
       else cv.style.visibility = 'hidden';
     });
     var rowEls = [].slice.call(dialogEl.querySelectorAll('.wd-sell-row.pick')).filter(function (e) { var r = rows[+e.getAttribute('data-r')]; return !r.disabled && !r.info; });
@@ -1472,6 +1476,11 @@ var BridgeInteractions = (function () {
       if (t.pet && typeof BridgePet !== 'undefined') {                // a pup, a kitten, a drone (js/pet.js)
         close();
         BridgePet.adopt(t.pet, person.name.split(' ')[0]);
+        return;
+      }
+      if (t.use && OWN[t.use.type]) {                                 // a topic that does what a thing in the world does (a sleigh ride, a room)
+        close();
+        OWN[t.use.type](Object.assign({}, t.use));
         return;
       }
       if (t.climbrace && typeof BridgeHoarfell !== 'undefined') {     // Ysolde: race her up the face (js/climb.js)

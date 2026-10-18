@@ -738,16 +738,10 @@ var BridgeIntro = (function () {
     var G = typeof BridgeGear !== 'undefined' ? BridgeGear : null;
     var colour = (G && G.colour()) || (lookup && lookup._suit) || 'purple';
     if (!BridgeLook.SUITS[colour]) colour = 'purple';
-    var sh = BridgeLook.sheet('', G ? G.style() : 'flight', colour, BridgeLook.get()), tries = 0;
-    (function paint() {
-      if (!cv.isConnected) return;
-      if (!sh.ready) { if (++tries < 80) setTimeout(paint, 80); return; }
-      var g = cv.getContext('2d');
-      g.clearRect(0, 0, 24, 24);
-      g.imageSmoothingEnabled = false;
-      g.drawImage(sh.img, 4, 2, 24, 24, 0, 0, 24, 24);
-      cv.classList.add('on');
-    })();
+    var style = G ? G.style() : 'flight';
+    // their portrait in what they wear (js/look.js; the eyes seeded by their name, as other pilots see them)
+    BridgeLook.pilotFace(cv, (style && style !== 'flight' ? style + '-' : '') + colour + '@' + BridgeLook.code(BridgeLook.get()), pilotName || '');
+    cv.classList.add('on');
   }
 
   // the planet's time and season, for the card and the HUD
