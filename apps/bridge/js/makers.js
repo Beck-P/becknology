@@ -18,7 +18,7 @@
 var BridgeMakers = (function () {
   var KEY = 'bridge_makers';
   var DAY = 86400000;
-  var PLACES = ['verdance-downs'];                             // the places built so far (a lane to anywhere else waits)
+  var PLACES = ['verdance-downs', 'verdance-market', 'verdance-hill', 'verdance-mill'];   // the places built (a lane to anywhere else waits)
   var s = load();
   function load() {
     var d = null;

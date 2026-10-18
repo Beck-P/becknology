@@ -65,6 +65,15 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
       await p.screenshot({ path: SHOTS + '/vc_downs_' + h + '.png' });
     }
     await p.evaluate(() => BridgeLit._force(null));
+    // the lanes on: each built town is a walk away
+    for (const to of ['verdance-market', 'verdance-hill', 'verdance-mill'].filter(w => places.indexOf(w) >= 0)) {
+      await go('verdance-downs', 22, 18);
+      await p.evaluate((to) => BridgeInteractions.execute(BridgeWorld.getWorld().interactions.find(i => i.type === 'lane' && i.to === to)), to);
+      await p.waitForTimeout(2500);
+      const at = await p.evaluate(() => BridgeWorld.getWorldId());
+      console.log('country: the lane to', to, '->', at);
+      if (at !== to) fail('the lane to ' + to + ' goes nowhere');
+    }
   }
 
   // ---- Thistlecombe ----
