@@ -96,6 +96,7 @@ for (a, b) in ((-0.5, 18.4), (22.6, 44.0), (48.2, 69.0), (73.2, COLS + 0.5)):
     k.box(a, RF - 0.05, 1.7, b, RF + 0.2, 1.8, '#1e1c24', 'awning_ledge')
 for cx in (20.5, 46.1, 71.1):
     U.column(k, dr, cx, RF + 0.35, w=3.0, d=2.6, top=13.0, posters=False, rng=rng)
+    k.box(cx - 2.3, RF - 9.5, 0.0, cx + 2.3, RF - 2.3, 13.0, '#0c0b10', 'column_back')     # closes the slits either side of it
     k.box(cx - 1.55, RF + 0.36, 0.0, cx + 1.55, RF + 0.38, 1.2, ('#1e3a2a', 0.35), 'column_slime')
 
 # the stair down from the Warrens, against the back wall at the top left

@@ -4823,6 +4823,145 @@
       }
     ]
   },
+  "cliff_marina": {
+    "name": "Marina Sklavou",
+    "role": "Keeps the fish taverna on Lanternfall's old port",
+    "sheet": "npc-cliff-marina",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "MARINA"
+      }
+    ],
+    "greet": "SIT, SIT. THE BOATS CAME IN AN HOUR AGO - WHATEVER YOU EAT TONIGHT WAS SWIMMING AT TEATIME.",
+    "again": "BACK DOWN ALL THOSE STEPS FOR MY OCTOPUS? I KNEW YOU WOULD.",
+    "topics": [
+      {
+        "q": "About the taverna",
+        "a": "MY FATHER HUNG THE OCTOPUS ON THAT LINE TO DRY, AND HIS FATHER BEFORE HIM. THE VINE OVER THE TABLES IS OLDER THAN ALL OF US. SIT UNDER IT AND I'LL BRING YOU WHAT'S GOOD. PRESS ON THE TABLES - THE MENU'S THERE."
+      },
+      {
+        "q": "About Lanternfall",
+        "a": "UP THERE IS THE TOWN - WHITE HOUSES, BLUE DOMES, A CHURCH FOR EVERY FAMILY THAT EVER HAD A QUARREL. DOWN HERE IS THE PORT. THE TOWN EATS WHAT THE PORT CATCHES AND COMPLAINS ABOUT THE STEPS."
+      },
+      {
+        "q": "The lanterns on the steps",
+        "a": "EVERY TURN OF THE ZIGZAG HAS ITS LAMP. MY GRANDMOTHER SAID THEY'RE FOR THE SAILORS, SO THEY CAN FIND THE WAY UP DRUNK. MY GRANDFATHER SAID THEY'RE FOR THE WIVES, SO THEY CAN SEE THEM COMING."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE ISLET OUT THERE GLOWED BRIGHTER LAST MONTH. FATHER ILIAS RANG THE BELL ALL NIGHT. NOTHING HAPPENED. HE SAYS THAT MEANS IT WORKED."
+      }
+    ]
+  },
+  "cliff_yannis": {
+    "name": "Yannis",
+    "role": "Keeps the donkeys at the foot of the zigzag",
+    "sheet": "npc-cliff-yannis",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "YANNIS"
+      }
+    ],
+    "greet": "UP? FIVE COINS AND STAMATIA TAKES YOU TO THE TOP. SHE KNOWS EVERY STEP. SHE HAS OPINIONS ABOUT MOST OF THEM.",
+    "again": "AH, THE SKY CAPTAIN. STAMATIA REMEMBERS YOU. SHE DOESN'T SAY WHETHER SHE'S PLEASED.",
+    "topics": [
+      {
+        "q": "About the donkeys",
+        "a": "STAMATIA, ZOE AND LITTLE PERICLES. FIVE COINS UP OR DOWN - PRESS ON THEM. MY COUSIN WAITS AT THE TOP WITH THREE MORE. IF YOU WALK IT, COUNT THE STEPS. NOBODY EVER GETS THE SAME NUMBER TWICE."
+      },
+      {
+        "q": "About the zigzag",
+        "a": "BUILT BY THE FIRST SETTLERS, WHO CARRIED EVERY STONE UP ON THEIR BACKS BECAUSE THE DONKEYS HADN'T BEEN INVENTED YET. THAT'S WHAT MY FATHER SAID. I WAS NINE BEFORE I CHECKED."
+      },
+      {
+        "q": "Rumours",
+        "a": "THEY SAY SAPPHIRE PORT'S FLOATING MARKET PAYS DOUBLE FOR WHAT YOU FISH OUT OF THE CALDERA. THEY SAY A LOT OF THINGS IN SAPPHIRE PORT."
+      }
+    ]
+  },
+  "cliff_despina": {
+    "name": "Despina Roussou",
+    "role": "Keeps the taverna on the rim",
+    "sheet": "npc-cliff-despina",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "DESPINA"
+      }
+    ],
+    "greet": "WELCOME TO THE BEST TABLE ON THE FIVE SEAS. DON'T ARGUE - SIT AND LOOK, THEN ARGUE IF YOU STILL WANT TO.",
+    "again": "YOUR TABLE. I KEPT IT. I KEEP IT FOR EVERYONE, BUT TONIGHT IT'S YOURS.",
+    "topics": [
+      {
+        "q": "About the taverna",
+        "a": "AT SUNSET THE WHOLE CALDERA GOES GOLD AND THEN PINK AND THEN THE LAMPS COME ON DOWN THE ZIGZAG, ONE AFTER ANOTHER. PEOPLE SAIL FROM THE CAPITAL TO EAT HERE AND THEN FORGET TO EAT. PRESS ON THE TABLES FOR THE MENU."
+      },
+      {
+        "q": "About the town",
+        "a": "THREE TERRACES AND A RIM. THE RICH LIVE UP HERE WITH THE VIEW, THE FISHERMEN LIVE DOWN THERE WITH THE FISH, AND EVERYONE IN BETWEEN LIVES ON THE STAIRS. ARIS PAINTS IT EVERY DAY AND SAYS HE HASN'T GOT IT RIGHT YET."
+      },
+      {
+        "q": "Rumours",
+        "a": "A MERCHANT FROM THE GLASSWORKS ON SAPPHIRE PORT ATE HERE LAST WEEK. HE SAID THE WINDMILLS COULD BLOW GLASS IF ANYONE BOTHERED TO TRY. NOBODY HAS BOTHERED."
+      }
+    ]
+  },
+  "cliff_ilias": {
+    "name": "Father Ilias",
+    "role": "Keeps the great church on the rim",
+    "sheet": "npc-cliff-ilias",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "FATHER ILIAS"
+      }
+    ],
+    "greet": "PEACE ON YOU, TRAVELLER. LIGHT A LAMP IF YOU LIKE - FOR SOMEONE AT SEA, OR FOR YOURSELF. THE SEA DOESN'T MIND WHICH.",
+    "again": "BACK AGAIN. GOOD. THE LAMPS LIKE TO BE VISITED.",
+    "topics": [
+      {
+        "q": "About the church",
+        "a": "THREE DOMES, BLUE AS THE DEEP WATER, SO THE SEA KNOWS WHOSE HOUSE IT IS. THE BELLS ARE RUNG FOR EVERY BOAT THAT COMES IN THROUGH THE CALDERA'S MOUTH. A LAMP IS A COIN OR TWO. IT KEEPS YOU WARM ON A COLD PASSAGE, THE SAILORS SAY."
+      },
+      {
+        "q": "About the islet",
+        "a": "THE MOUNTAIN SLEEPS. NOW AND THEN IT TURNS OVER IN ITS SLEEP. WE RING THE BELLS SO IT KNOWS WE'RE STILL HERE, AND IT LETS US STAY. THAT IS THE ARRANGEMENT."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE BATHHOUSE MONKS ON THE ROSE SEA SAY THE SAME WATER RUNS UNDER BOTH OUR ISLANDS. I SAY THEIR WATER IS WARMER AND THEIR THEOLOGY IS COLDER."
+      }
+    ]
+  },
+  "cliff_aris": {
+    "name": "Aris Velos",
+    "role": "Paints the caldera from the promenade",
+    "sheet": "npc-cliff-aris",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "ARIS"
+      }
+    ],
+    "greet": "STAND THERE - NO, THERE. YOU'RE IN MY LIGHT. ACTUALLY STAY. THE PICTURE NEEDS A STRANGER IN IT.",
+    "again": "YOU AGAIN. I PUT YOU IN YESTERDAY'S. YOU LOOKED TALLER.",
+    "topics": [
+      {
+        "q": "About the painting",
+        "a": "TWENTY-TWO YEARS I'VE PAINTED THIS VIEW. THE BLUE IS NEVER THE SAME BLUE. TODAY IT'S SAPPHIRE. TOMORROW IT WILL BE SOMETHING THERE IS NO WORD FOR YET, AND I WILL HAVE TO INVENT ONE."
+      },
+      {
+        "q": "About Lanternfall",
+        "a": "LOOK AT IT: EVERY HOUSE WHITE SO THE NEXT ONE SHOWS, EVERY DOOR BLUE SO THE HOUSE SHOWS. EVEN THE PAVING HAS ITS LINES PAINTED IN. A TOWN THAT WANTS TO BE A PICTURE. I'M ONLY TAKING DICTATION."
+      },
+      {
+        "q": "Rumours",
+        "a": "THERE'S A LANTERN MAKER TWO DOORS DOWN WHO SAYS HER LAMPS CAN BE SEEN FROM MIDNIGHT ISLE. I'VE NEVER BEEN TO MIDNIGHT ISLE. NEITHER HAS SHE. NEITHER OF US INTENDS TO."
+      }
+    ]
+  },
   "rigg": {
     "name": "Wenna Rigg",
     "role": "Sailmaker, Guild Row",
@@ -4969,6 +5108,37 @@
       }
     ]
   },
+  "ione": {
+    "name": "Dr Ione Vesper",
+    "role": "Astronomer Royal, the Observatory",
+    "sheet": "npc-astronomer",
+    "at": [
+      {
+        "world": "lumar-crown-hill",
+        "label": "ASTRONOMER"
+      }
+    ],
+    "greet": "SHH. NO - IT'S ALL RIGHT, THE STAR CAN'T HEAR YOU. I JUST LIKE TO BE QUIET WITH THEM. COME AND LOOK.",
+    "again": "AH, MY FELLOW STARGAZER. THE SKY'S CLEAR TONIGHT, OR IT WILL BE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I KEEP THE CROWN'S TIME AND THE CROWN'S STARS. EVERY CHART PENN DRAWS IS FIXED BY A STAR I MEASURED. SHE NEVER THANKS ME. I NEVER THANK HER. IT'S A VERY HAPPY ARRANGEMENT."
+      },
+      {
+        "q": "The spore bloom",
+        "a": "A NIGHT OR TWO EACH MONTH THE SPORES IN THE SEA ALL WAKE AT ONCE AND THE WHOLE OCEAN LIGHTS UP - EMERALD HERE, BLUE OFF SAPPHIRE, ROSE IN THE ROSE ISLES. I TURN THE TELESCOPE DOWN FOR IT. IT'S THE ONLY TIME THE SEA OUTSHINES THE SKY."
+      },
+      {
+        "q": "The telescope",
+        "a": "THE BRASS ONE ON THE TERRACE IS FOR VISITORS. USE IT. THE GREAT ONE IN THE DOME IS FOR ME, AND FOR THE QUEEN-REGENT ON HER BIRTHDAY, AND FOR NOBODY ELSE, EVER, SO DON'T ASK."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMETHING CROSSED THE MOON LAST WEEK THAT WASN'T A BIRD OR A CLOUD. IT WAS SHAPED LIKE A SHIP. THE ADMIRALTY SAYS I'M TIRED. I AM TIRED. IT WAS STILL A SHIP."
+      }
+    ]
+  },
   "mudlark": {
     "name": "Gull Molly",
     "role": "Mudlark, the Stilts",
@@ -4998,37 +5168,6 @@
       {
         "q": "Heard anything?",
         "a": "THE FISHING FLEET COMES IN UNDER THE QUAY AT DUSK AND THE CATCH GOES UP FOR AUCTION. GET THERE EARLY AND YOU'LL SEE THE AUCTIONEER CHEAT. GET THERE LATE AND YOU'LL SEE HIM GET CAUGHT."
-      }
-    ]
-  },
-  "ione": {
-    "name": "Dr Ione Vesper",
-    "role": "Astronomer Royal, the Observatory",
-    "sheet": "npc-astronomer",
-    "at": [
-      {
-        "world": "lumar-crown-hill",
-        "label": "ASTRONOMER"
-      }
-    ],
-    "greet": "SHH. NO - IT'S ALL RIGHT, THE STAR CAN'T HEAR YOU. I JUST LIKE TO BE QUIET WITH THEM. COME AND LOOK.",
-    "again": "AH, MY FELLOW STARGAZER. THE SKY'S CLEAR TONIGHT, OR IT WILL BE.",
-    "topics": [
-      {
-        "q": "About you",
-        "a": "I KEEP THE CROWN'S TIME AND THE CROWN'S STARS. EVERY CHART PENN DRAWS IS FIXED BY A STAR I MEASURED. SHE NEVER THANKS ME. I NEVER THANK HER. IT'S A VERY HAPPY ARRANGEMENT."
-      },
-      {
-        "q": "The spore bloom",
-        "a": "A NIGHT OR TWO EACH MONTH THE SPORES IN THE SEA ALL WAKE AT ONCE AND THE WHOLE OCEAN LIGHTS UP - EMERALD HERE, BLUE OFF SAPPHIRE, ROSE IN THE ROSE ISLES. I TURN THE TELESCOPE DOWN FOR IT. IT'S THE ONLY TIME THE SEA OUTSHINES THE SKY."
-      },
-      {
-        "q": "The telescope",
-        "a": "THE BRASS ONE ON THE TERRACE IS FOR VISITORS. USE IT. THE GREAT ONE IN THE DOME IS FOR ME, AND FOR THE QUEEN-REGENT ON HER BIRTHDAY, AND FOR NOBODY ELSE, EVER, SO DON'T ASK."
-      },
-      {
-        "q": "Heard anything?",
-        "a": "SOMETHING CROSSED THE MOON LAST WEEK THAT WASN'T A BIRD OR A CLOUD. IT WAS SHAPED LIKE A SHIP. THE ADMIRALTY SAYS I'M TIRED. I AM TIRED. IT WAS STILL A SHIP."
       }
     ]
   }

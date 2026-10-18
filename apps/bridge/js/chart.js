@@ -25,8 +25,9 @@ var BridgeChart = (function () {
     'lumar-crown': ['The capital', 'The Royal Yard: up to a galleon', 'The Merchants\' Exchange', 'Buys everything, luxuries dearest'],
     'lumar-tern': ['A fishing village', 'Salt fish cheapest on the seas', 'Maud buys your catch'],
     'lumar-holm': ['A small island, for sale', 'Cottage, jetty, walled garden'],
-    'lumar-sapphire': ['The great trading port', 'Brigantines at the Great Yard', 'Glass cheap; pays well for timber, silk'],
-    'lumar-rose': ['Crystal terraces, the old mine', 'Crystal sails, roseite sheathing', 'Spore silk and roseite cheap'],
+    'lumar-sapphire': ['The great trading port', 'The floating market, the glassworks', 'Brigantines at the Great Yard', 'Glass cheap; pays well for timber, silk'],
+    'lumar-rose': ['Crystal terraces, the old mine', 'Rosewell: the springs, the bathhouse', 'Crystal sails, roseite sheathing', 'Spore silk and roseite cheap'],
+    'lumar-cliff': ['The cliff town in a drowned caldera', 'Tavernas on the rim, donkeys up the zigzag', 'Lamps in the great church'],
     'lumar-crimson': ['The pirate beach, the dragon\'s cave', 'The raider, heavy guns, storm rigging', 'Rum and black powder cheap', 'Squalls: ease your sheet'],
     'lumar-cinder': ['Tortuga, the pirates\' port, on a volcano', 'Vesper Quick buys hot goods', 'The stormwatch: Wick\'s forecast', 'Rum and powder; squalls'],
     'lumar-saltmere': ['The drowned village', 'Its bell rings in the dark of the moon', 'No harbour; the drowned walk'],
@@ -161,7 +162,7 @@ var BridgeChart = (function () {
     return best;
   }
   var shapes = {};
-  var SIZE = { 'lumar-crown': 50, 'lumar': 30, 'lumar-tern': 26, 'lumar-holm': 24 };     // chart px across
+  var SIZE = { 'lumar-crown': 50, 'lumar': 30, 'lumar-tern': 26, 'lumar-holm': 24, 'lumar-cliff': 32 };     // chart px across
   function shapeOf(id) {                                   // the island inked small from its own render (cut at the waterline)
     if (shapes[id]) return shapes[id].ready ? shapes[id] : null;
     shapes[id] = { ready: false };
