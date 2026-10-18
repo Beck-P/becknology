@@ -92,8 +92,8 @@
     { "sheet": "npc-shopper", "path": [[14, 15], [44, 15]], "speed": 0.6, "pause": 7000, "rest": "down" }
   ],
   "lumar-sapphire-market": [
-    { "sheet": "npc-dockhand", "path": [[2, 6], [34, 6]], "speed": 0.9, "pause": 4000, "rest": "down" },
-    { "sheet": "npc-sailor", "path": [[17, 7], [17, 18], [24, 18]], "speed": 0.7, "pause": 6000, "rest": "down" }
+    { "sheet": "npc-dockhand", "path": [[3, 5], [16, 5], [16, 6], [32, 6]], "speed": 0.9, "pause": 4000, "rest": "down" },
+    { "sheet": "npc-sailor", "path": [[17, 7], [17, 18], [21, 18]], "speed": 0.7, "pause": 6000, "rest": "down" }
   ],
   "lumar-rose-springs": [
     { "sheet": "npc-traveler", "path": [[21, 26], [21, 8], [21, 4], [34, 4]], "speed": 0.7, "pause": 6000, "rest": "down" },
