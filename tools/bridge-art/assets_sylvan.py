@@ -1140,22 +1140,34 @@ def pod_house(k, cx, cr, z=0.0, rad=0.85, h=1.4, roof='#5a8a3a', door_ang=math.p
     for i in range(int(h / 0.18)):                                        # the weave: bands a shade apart
         zz = z + 0.08 + i * 0.18
         k.cyl(cx, cr, zz, zz + 0.04, rad + 0.01, (shade(wall, 0.85), 0.25), 'pod_band', verts=24)
-    # the roof: courses of leaf shingles round a cone
-    courses = 6
+    # the roof: a dark deck under courses of flat leaf shingles laid round a cone, each course lapping the one below with a
+    # pixel of shadow under its butt, a lighter eave band, the tip curled over (a roof that reads as a roof, not a bush)
+    RH, RO = 1.0, rad + 0.32
+    k.cone(cx, cr, z + h - 0.02, z + h + RH, RO - 0.04, 0.03, (shade(roof, 0.5), 0.3), 'roof_deck', verts=24)
+    tones = [shade(roof, f) for f in (0.86, 1.0, 1.12)]
+    beds = {t: [] for t in tones}
+    courses = 7
     for c in range(courses):
-        t0, t1 = c / courses, (c + 1) / courses
-        r0_, r1_ = (rad + 0.3) * (1 - t0 * 0.92), (rad + 0.3) * (1 - t1 * 0.92)
-        z0_, z1_ = z + h + t0 * 1.15, z + h + t1 * 1.15
-        m = max(8, int(r0_ * 14))
+        t0, t1 = c / courses, min(1.0, (c + 1.35) / courses)
+        ra, rb = RO * (1 - t0 * 0.94), RO * (1 - t1 * 0.94)
+        za, zb = z + h + t0 * RH, z + h + t1 * RH
+        m = max(6, int(ra * 13))
         for i in range(m):
-            a = i / m * math.tau + (c % 2) * 0.5 / m * math.tau
-            if math.sin(a) < -0.6:
+            a0 = (i + (c % 2) * 0.5) / m * math.tau
+            a1 = a0 + math.tau / m * 1.08
+            if math.sin((a0 + a1) / 2) < -0.7:
                 continue
-            x0_, rr0 = cx + math.cos(a) * r0_, cr + math.sin(a) * r0_ * 0.92
-            k.blob(x0_, rr0, z0_ + 0.02, 0.16 * (1 - t0 * 0.6), 0.1, 0.13, (shade(roof, rng.uniform(0.82, 1.12) * (0.9 + 0.15 * t0)), 0.3), 'roof_leaf',
-                   rot=(0, 25, math.degrees(a)), segs=6)
-        k.cone(cx, cr, z0_ - 0.02, z1_ + 0.02, r0_ - 0.05, max(0.02, r1_ - 0.05), (shade(roof, 0.65), 0.3), 'roof_core', verts=20)
-    k.tube((cx, cr, z + h + 1.15), (cx + 0.15, cr, z + h + 1.45), 0.05, (shade(roof, 0.8), 0.3), 'roof_tip', rb=0.01, verts=6)
+            col = tones[rng.randrange(3)] if rng.random() > 0.1 else tones[0]
+            lift = 0.012
+            q = ((cx + math.cos(a0) * ra, cr + math.sin(a0) * ra * 0.92, za + lift), (cx + math.cos(a1) * ra, cr + math.sin(a1) * ra * 0.92, za + lift),
+                 (cx + math.cos(a1) * rb, cr + math.sin(a1) * rb * 0.92, zb + lift), (cx + math.cos(a0) * rb, cr + math.sin(a0) * rb * 0.92, zb + lift))
+            beds[col].append(q)
+    for col, qs in beds.items():
+        if qs:
+            k.quads(qs, (col, 0.25), 'roof_shingle')
+    k.cyl(cx, cr, z + h - 0.06, z + h + 0.04, RO + 0.02, (GOLD, 0.25), 'roof_eave', verts=28)            # a gold-trimmed eave
+    k.tube((cx, cr, z + h + RH - 0.05), (cx + 0.06, cr, z + h + RH + 0.3), 0.05, (shade(roof, 0.8), 0.3), 'roof_tip', rb=0.02, verts=6)
+    k.tube((cx + 0.06, cr, z + h + RH + 0.3), (cx + 0.22, cr, z + h + RH + 0.36), 0.03, (shade(roof, 0.8), 0.3), 'roof_tip', rb=0.01, verts=6)
     # the door and windows (on the side toward you)
     dx, dr = cx + math.cos(door_ang) * rad, cr + math.sin(door_ang) * rad * 0.92
     k.box(dx - 0.28, dr - 0.1, z, dx + 0.28, dr + 0.04, z + 0.75, ('#5a3a24', 0.3), 'door')
