@@ -415,11 +415,11 @@ k.later.insert(0, lambda: WL.merge_parts(k))               # before the grass
 k.later.append(lambda: WL.merge_parts(k))                  # and after it
 WL.fast_top(k)                                             # the grass's rays: one BVH tree, not every object in turn
 
-k.area_light(26.0, 16.0, 16.0, '#7a78b8', 2000, 40.0, rot=(math.radians(-35), 0, 0))     # a thin moon
+k.area_light(26.0, 16.0, 16.0, '#8a88c8', 3800, 40.0, rot=(math.radians(-35), 0, 0))     # the moon (bright enough to read the place by)
 k.point_light(24.5, 18.0, 4.0, '#c0b0ff', 40, radius=1.5)
 
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=96,
-         world_light=('#1e1e3a', 0.7))
+         world_light=('#2a2a4e', 1.0))
 
 # ---- the world ------------------------------------------------------------------------------------------------------
 old = json.load(open(WORLD))
