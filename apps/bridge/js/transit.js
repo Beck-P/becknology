@@ -789,6 +789,6 @@ var BridgeTransit = (function () {
   return { ready: ready, data: function () { return D; }, links: links, level: level, levelOf: levelOf, tag: tag, placeName: placeName,
            ride: ride, built: built, fare: fare, stations: stations,
            _trip: function () { return trip ? { at: trip.at, dest: trip.dest, phase: trip.phase, station: stationAt(trip.at) && stationAt(trip.at).id, dist: motion(performance.now()) } : null; },
-           _skipLeg: function () { if (trip) trip.t0 -= trip.phase === 'run' ? RUN : (trip.boarding ? 4500 : DWELL); },
+           _skipLeg: function () { if (trip) trip.t0 = performance.now() - (trip.phase === 'run' ? RUN : (trip.boarding ? 4500 : DWELL)); },   // to the end of this leg or stop, now
            _crossing: crossing, _close: closeRide };
 })();

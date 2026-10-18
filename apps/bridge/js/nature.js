@@ -463,7 +463,8 @@ var BridgeNature = (function () {
     var wet = wetOf(world), season = seasonOf(world), planet = BridgeClock.planet(wid()), view = viewOf(ctx, ox, oy);
     d.now = { at: now, dt: dt, sky: sky, light: light, wind: wind, wet: wet, season: season, planet: planet, ox: ox, oy: oy, view: view };
     gusts(ctx, d, ox, oy, now, wind, light);
-    water(ctx, d, ox, oy, now, sky, wet, dt);
+    // (a place in live light has the Look Book's water from js/litscene.js: its glints and rings are drawn there)
+    if (!(sc.lit && typeof BridgeLit !== 'undefined' && BridgeLit.ready(sc))) water(ctx, d, ox, oy, now, sky, wet, dt);
     if (LIFE[planet]) { flock(d, now, sky, wet, planet, view); shadows(ctx, d, ox, oy, now, sky); }
     trees(ctx, d, ox, oy, now, wind);
     feet(d, sc, ox, oy, now, dt, offX, offY, ts);

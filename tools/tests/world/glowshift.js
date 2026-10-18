@@ -57,7 +57,9 @@ const SHOTS = process.argv[2] || __dirname + '/shots', WORLD = process.argv[3] |
   }), KEEP_SCENE);
   console.log('glow shift:', JSON.stringify(r));
   await p.screenshot({ path: SHOTS + '/glowshift_' + WORLD + '.png' });
-  const bad = r.gpu && r.shifts.some((s) => s.meanDiff > 0.05 * Math.max(1, r.glowMean) + 0.02);
+  // a level or two of rounding where the soft glow is shrunk to half and quarter size is invisible (and, where little
+  // glows, all there is to measure); a pulse as you move is many levels somewhere (the flicker Beck saw peaked at 132)
+  const bad = r.gpu && r.shifts.some((s) => s.peak > 8 || s.meanDiff > 0.05 * Math.max(1, r.glowMean) + 0.1);
   console.log('glow shift: ' + (r.gpu ? (bad ? 'ERROR the glow changes as the camera moves' : 'steady as the camera moves') : 'no GPU here (skipped)') + ' · errors ' + errs);
   await b.close();
   process.exit(errs || bad ? 1 : 0);

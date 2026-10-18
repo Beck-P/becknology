@@ -13,7 +13,9 @@ const BASE = 'http://127.0.0.1:8766/';
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|supabase/i.test(m.text())) { errors++; console.log('console', m.text().slice(0, 200)); } });
   await p.route(/supabase-js|supabase\.co|@supabase/, r => r.abort());
   await p.goto(BASE); await p.waitForTimeout(2500);
-  await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); });
+  await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide();
+    window._coins = 500;                                       // the fares (a stand-in purse)
+    BridgeProgression.wagerCoins = (n) => Promise.resolve(window._coins >= n ? (window._coins -= n, { ok: true, balance: window._coins }) : { ok: false, reason: 'insufficient' }); });
   const go = (w, at) => p.evaluate(([w, at]) => new Promise(r => BridgeWorld.load(w, () => { BridgeState.transition('world', { worldId: w, spawn: at ? { x: at[0], y: at[1] } : null }); r(); })), [w, at]);
   const where = () => p.evaluate(() => [BridgeWorld.getWorldId(), BridgeCharacter.getX(), BridgeCharacter.getY()]);
   const use = (pred) => p.evaluate((src) => { const f = new Function('i', 'return ' + src); const it = BridgeWorld.getWorld().interactions.find(f); if (it) BridgeInteractions.execute(it); return it && it.label; }, pred);
@@ -44,6 +46,18 @@ const BASE = 'http://127.0.0.1:8766/';
   await p.waitForTimeout(900); await p.keyboard.press('Space');     // skip the ride
   await waitFor(() => BridgeWorld.getWorldId() === 'arcadia-skywalk' && !document.getElementById('transit-ride'));
   console.log('skipped down, now at', JSON.stringify(await where()));
+
+  // ---- across the skybridge from Skyport 7 to the Terraces and back ----
+  if (await p.evaluate(() => BridgeTransit.built('arcadia-terraces'))) {
+    await go('arcadia-skypad', [27, 8]); await p.waitForTimeout(1200);
+    console.log('skybridge:', await use("/SKYBRIDGE/.test(i.label)"));
+    await waitFor(() => BridgeWorld.getWorldId() === 'arcadia-terraces'); await p.waitForTimeout(900);
+    console.log('across the skybridge, now at', JSON.stringify(await where()));
+    await p.screenshot({ path: OUT + '/transit_terraces_arrive.png' });
+    await use("/SKYBRIDGE/.test(i.label)");
+    await waitFor(() => BridgeWorld.getWorldId() === 'arcadia-skypad'); await p.waitForTimeout(600);
+    console.log('back across, now at', JSON.stringify(await where()));
+  }
 
   // ---- a ride's frames: up through the smog to the Spires, down below the street, a cab across ----
   const film = async (spec, name, n, gap) => {
