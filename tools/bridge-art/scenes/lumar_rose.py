@@ -184,7 +184,7 @@ for j in range(3):
     k.cyl(PX + 0.72, pier_top + 1.2, 0.02 + j * 0.03, 0.05 + j * 0.03, 0.14 - j * 0.03, '#a08a60', 'rope_coil', verts=10)
 WL.basket(k, PX + 0.3, pier_top + 4.4, fill=ROSE, glow=CRYSTAL[1], s=0.15)
 # at the pier's foot: a cart of crates waiting for the boat, a lamp
-HK.barrels(k, PX + 2.1, pier_top - 1.2)
+HK.barrels(k, 31.8, 17.0)
 
 WL.tick('north: the terraces -------------')
 # ---- north: the terraces ------------------------------------------------------------------------------------------
@@ -275,7 +275,7 @@ def trellis(x0, x1, r, z, seed):
 for ti, (x0, x1) in enumerate(TER):
     for si, (rf, z) in enumerate(STEPS):
         trellis(x0 + 0.25, x1 - 0.25, rf - 0.55, z, 500 + 10 * ti + si)
-    k.solid(x0, TER_BACK, x1, STEPS[0][0] - 0.2)
+    k.solid(x0, 7.0, x1, 11.0)                              # rows 7-10, as the beds always blocked: 6 and 11 are walked
 # the harvest: baskets at the terrace foot, a ladder against the wall, buckets, a barrow
 k.solid(24, 12, 25, 13)                                     # the harvester stands at the terrace foot
 for (x, r) in ((22.6, 11.75), (23.05, 11.85), (26.1, 11.7)):
@@ -533,13 +533,10 @@ def bathhouse(x0, x1, r_back, r_front, roof=ROOF):
         k.tube((x, r_front - 0.1, 1.35), (x + (0.4 if x < (x0 + x1) / 2 else -0.4), r_front - 0.1, 1.72), 0.035, '#4a3020',
                'bath_post', verts=4)
     k.box(x0, r_front - 0.16, 1.7, x1, r_front - 0.04, 1.8, ('#4a3020', 0.15), 'bath_beam')
-    W.pyramid(k, x0 - 0.45, r_back - 0.4, x1 + 0.45, r_front + 0.45, 1.8, 2.75, (roof, 0.2), 'roof_bath')
-    over = 0.45                                                            # shingle courses along the front slope
-    for j in range(5):
-        t = j / 5
-        z = 1.8 + 0.95 * t * 0.55
-        rf = r_front + over - (r_front + over - (r_back + r_front) / 2) * t * 0.55
-        k.box(x0 - over + t * 0.9, rf - 0.09, z, x1 + over - t * 0.9, rf + 0.01, z + 0.04, (shade(roof, 0.75), 0.2), 'roof_bath_course')
+    with WL.own_dice(k, 4501):                                          # a shingled gable roof with rafter ends, the trim
+        W._gable_roof(k, x0, x1, r_back, r_front, 1.8, 0.85, roof, over=0.4)
+        HK.rafter_ends(k, x0 - 0.4, x1 + 0.4, r_front, 0.4, 1.8, '#4a3020')
+        HK.scallop_trim(k, x0 - 0.4, x1 + 0.4, r_front + 0.445, 1.8, '#efe6d2')
     for x in (x0 + 0.5, x1 - 0.5):
         k.sphere(x, r_front + 0.05, 1.45, 0.13, 0.17, '#a03050', 'paper_lantern', emit=('#ff8090', 0.8), segs=8)
         k.cyl(x, r_front + 0.05, 1.6, 1.7, 0.01, '#2a2020', 'lantern_cord', verts=4)
@@ -564,7 +561,11 @@ def mine_head(cx, r_face, w=1.4, h=1.5, wood='#5a3a22', glow='#f080b0'):
     roseite, a lamp on the frame, the miner's sign, a spoil heap, a pick and a shovel against the rock."""
     rr = random.Random(91)
     # the outcrop: a heap of big faceted rocks over a core, their tops grassed, smaller rocks at its foot
-    k.box(cx - w / 2 - 0.9, r_face - 1.6, 0.0, cx + w / 2 + 0.9, r_face - 0.1, h + 0.7, ('#6a5e62', 0.25), 'outcrop', bevel=0.12)
+    k.box(cx - w / 2 - 0.9, r_face - 1.6, 0.0, cx + w / 2 + 0.9, r_face - 0.1, h + 0.15, ('#6a5e62', 0.25), 'outcrop', bevel=0.12)
+    for (dx, dr, z, s_) in ((-1.0, -0.4, h + 0.1, 0.6), (1.0, -0.45, h + 0.1, 0.62), (0.0, -0.5, h + 0.35, 0.65), (-1.6, -1.2, h, 0.55),
+                            (1.6, -1.2, h, 0.55)):                       # boulders heaped over its top
+        k.rock(cx + dx, r_face + dr, z, s_, s_ * 0.8, s_ * 0.7, (shade('#766a6e', rr.uniform(0.85, 1.1)), 0.22), part='outcrop_rock',
+               segs=10, jitter=0.15, seed=rr.randrange(10 ** 6))
     for (dx, dr, z, s) in ((-1.35, -0.6, 0.55, 0.75), (1.35, -0.6, 0.55, 0.78), (-0.9, -1.0, 1.55, 0.7), (0.9, -1.05, 1.6, 0.68),
                            (0.0, -1.2, 2.0, 0.8), (-1.6, -0.2, 0.2, 0.5), (1.65, -0.2, 0.2, 0.52), (-0.4, -1.4, 2.3, 0.5),
                            (0.6, -1.3, 2.25, 0.45)):
@@ -621,8 +622,8 @@ for (x, r) in ((39.0, 20.0), (48.6, 22.6), (38.8, 28.6)):        # between the p
 WL.tick('the meadow: rose drifts, wildflow')
 # the way up to Rosewell, the bathhouse town on the hill behind the springs (its own world: js/rose.js puts the door on
 # (52, 22)): stone steps climbing a grassy knoll off the island's east edge, a finger post and a lantern at their foot
-KNOLL = (54.4, 22.3)
-k.blob(KNOLL[0], KNOLL[1], -0.25, 1.6, 1.3, 1.25, (GREEN, 0.3), 'grass', segs=16)
+for (x, r, sz) in ((54.6, 21.5, 0.55), (54.9, 23.3, 0.6), (55.6, 22.2, 0.7), (53.9, 20.9, 0.4), (54.1, 23.9, 0.42)):
+    WL.boulder(k, x, r, s=sz, tone='#8a7e80', moss='#5a8a3c', z=-0.1, solid=False)          # the rocky shoulder the steps climb
 for i in range(6):
     x = 52.75 + i * 0.3
     z = 0.06 + i * 0.17
@@ -637,7 +638,19 @@ busy = lambda x, r: pd(x, r) < 0.75
 meadow_cells = [c for c in walk if c[0] < 20 and c[1] > 14]
 
 
+# cells the game uses on this island (its JS and data): new obstacles keep well clear of them — the harbourmaster
+# (js/harbour.js), the message in a bottle (js/bottle.js), the fish auction (js/events.js), the nets and their mender
+# (js/harbourlife.js), the glass feather (js/magic.js), the treasure spots (js/treasure.js), the forage (assets/forage.json),
+# the fishing spots (assets/fishing.json) and the way up to Rosewell (js/rose.js)
+RESERVED = [(30, 19), (25, 21), (24, 16), (23, 16), (25, 17), (23, 17), (24, 17), (20, 19), (21, 20), (22, 20), (9, 24), (11, 26),
+            (8, 35), (39, 20), (7, 17), (17, 26), (47, 28), (38, 24), (23, 30), (23, 32), (25, 31), (14, 39), (52, 22), (51, 22)]
+WALKER_PATHS = [[(28, 13), (28, 6)], [(21, 14), (27, 14)], [(14, 12), (14, 17), (13, 21), (12, 24), (10, 29)], [(37, 29), (42, 29)]]
+
+
 def clear_of_things(x, r, rad):
+    if any(math.hypot(x - (a + 0.5), r - (b + 0.5)) < 1.2 + rad for (a, b) in RESERVED) \
+            or I.path_dist([[(a + 0.5, b + 0.5) for (a, b) in w] for w in WALKER_PATHS], x, r) < 0.9 + rad:
+        return False
     return (pd(x, r) > 0.7 + rad and math.hypot(x - MILL[0], r - MILL[1]) > 1.4 + rad and math.hypot(x - MEMO[0], r - MEMO[1]) > 1.0 + rad
             and (int(x), int(r)) in walk and pool_d(x, r) > 2.2 and not (JX - 3.0 < x < JX + 2 and 23.5 < r < 27.5)
             and not (FJ[0] - 1 < x < FJ[0] + FLEN + 1 and FJ[1] - 0.8 < r < FJ[1] + 1.6))
@@ -704,7 +717,7 @@ placed = []
 for (x, r) in LIP:
     if len(placed) < 38 and all(math.hypot(x - a, r - b) > 2.2 for (a, b) in placed):
         placed.append((x, r))
-        WL.boulder(k, x, r, s=rng.uniform(0.22, 0.4), tone='#8a7e80', moss='#4e6a34', z=-0.03, tufts='#5a7a3a')
+        WL.boulder(k, x, r, s=rng.uniform(0.22, 0.4), tone='#8a7e80', moss='#4e6a34', z=-0.03, tufts='#5a7a3a', solid=False)
         for _ in range(rng.randint(0, 2)):
             a = rng.uniform(0, math.tau)
             WL.fern(k, x + math.cos(a) * 0.45, r + math.sin(a) * 0.3, s=rng.uniform(0.45, 0.64), tone=rng.choice(('#4a7a34', '#3e6a30')))
@@ -727,20 +740,20 @@ for (x, r) in list(GROVE_TREES) + list(TREES):
         WL.twig(k, x + rng.uniform(-1, 1), r + rng.uniform(0.3, 1.0))
 for (gx, gr) in GROVES[:4]:                                     # a fallen log in some of the groves
     a = gx + rng.uniform(-1.2, 0.4)
-    if all((int(a + t), int(gr + 1.3)) in walk for t in (0.0, 1.4)) and pd(a + 0.7, gr + 1.3) > 1.2:
+    if all((int(a + t), int(gr + 1.3)) in walk for t in (0.0, 1.4)) and pd(a + 0.7, gr + 1.3) > 1.2 and clear_of_things(a + 0.7, gr + 1.3, 0.7):
         WL.log(k, a, a + 1.4, gr + 1.3, 0.2, seed=int(gx))
 for _ in range(60):
     x, r = rng.uniform(4, 52), rng.uniform(6, 37)
     if clear_of_things(x, r, 0.3) and terrace_h(x, r) is None and pool_d(x, r) > 2.5:
         WL.moss_mound(k, x, r, rng.uniform(0.14, 0.26), moss='#5a8a3c')
 # the harvest corner by the pier's foot: crates of roseite, a handcart, a basket, a finger post
-for (x, r) in ((30.4, 18.4), (30.95, 18.55)):
+for (x, r) in ((25.75, 18.2), (26.3, 18.35)):
     A.crate(k, x, r, s=0.5, solid=True)
     for j in range(5):
         k.tube((x + 0.1 + j * 0.07, r + 0.25, 0.42), (x + 0.1 + j * 0.07 + rng.uniform(-0.03, 0.03), r + 0.25, 0.42 + rng.uniform(0.08, 0.16)),
                0.03, GEM, 'crystal', rb=0.004, emit=(CRYSTAL[1], 0.45), verts=6, smooth=False)
-W.cart(k, 32.2, 18.9)
-WL.basket(k, 29.95, 18.95, fill=ROSE, glow=CRYSTAL[1], s=0.16)
+W.cart(k, 24.4, 19.3)
+WL.basket(k, 27.2, 18.95, fill=ROSE, glow=CRYSTAL[1], s=0.16)
 WL.signpost(k, 26.8, 16.2, arms=((-0.6, '#d8c8a0'), (0.6, '#c8b890'), (-0.55, '#d0c098')))
 
 # ---- scatter --------------------------------------------------------------------------------------------------------
