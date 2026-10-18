@@ -49,7 +49,7 @@ const BASE = 'http://127.0.0.1:8766/';
     await close(); await p.waitForTimeout(300);
   }
   await use("i.label === 'CIRRUS BAR'"); await p.waitForTimeout(500);
-  console.log('cirrus menu', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('#world-overlay .sp-name, #world-overlay .vd-name')].map(e => e.textContent))));
+  console.log('cirrus menu', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('#vendor-items .wd-item-name')].map(e => e.textContent))));
   await close(); await p.waitForTimeout(300);
   // a seat at Halo (actions.json)
   const seat = await p.evaluate(() => BridgeWorld.getWorld().interactions.filter(i => i.label === 'HALO TABLE').length);
