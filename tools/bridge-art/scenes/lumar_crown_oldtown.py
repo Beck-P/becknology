@@ -192,11 +192,11 @@ V.board_sign(k, 'THE OLD KEEP', 'IMFellEnglishSC-Regular', 8.5, kr1 + 0.05, 1.78
 SMOKE = []
 for sp in ROWSPEC:
     for i, (a, b) in enumerate(segs(sp)):
-        jog = random.Random(sp['seed'] * 7 + i).choice((-0.4, -0.2, 0.0, 0.2, 0.4))
+        jog = random.Random(sp['seed'] * 7 + i).choice((-0.6, -0.4, 0.0, 0.4, 0.6))
         CAP.row(k, a, b, sp['back'], sp['front'] + jog, seed=sp['seed'] * 10 + i, smoke=SMOKE, storeys=sp['storeys'],
                 signs=sp['signs'], shops=0.4, jitter=0.2, gable_front=0.15)
     CAP.yard_life(k, sp['x0'] - 0.1, EX - 0.4, sp['back'] - YARD, sp['back'], seed=sp['seed'] + 900,
-                  gaps=[g for g in sp['gaps'] if g not in (WELLSQ, CHAPEL)])
+                  gaps=[g for g in sp['gaps'] if g != CHAPEL] + ([(THEATRE[0], THEATRE[1])] if sp['name'] == 'B' else []))
 CAP.theatre(k, THEATRE[0], THEATRE[1], THEATRE[2], THEATRE[3])
 CAP.chapel(k, CHAPEL[0] + 0.3, CHAPEL[1] - 1.5, 21.4, 24.4, tower_side=1)
 CAP.arch_house(k, 29.0, 31.0, 21.8, 24.0)                  # the Arch House over the alley in the fourth row
@@ -208,16 +208,14 @@ WSX = (WELLSQ[0] + WELLSQ[1]) / 2
 I.well(k, WSX, 13.6)
 k.solid(WSX - 0.6, 13.0, WSX + 0.6, 14.0)
 with k.foliage('leaf'):
-    W.tree(k, WELLSQ[0] + 1.2, 15.6, h=2.8, tone='#3a6a34')
-    W.tree(k, WELLSQ[1] - 1.2, 15.4, h=2.6, tone='#2e5a3a')
-k.solid(WELLSQ[0] + 0.9, 15.1, WELLSQ[0] + 1.5, 15.6)
-k.solid(WELLSQ[1] - 1.5, 14.9, WELLSQ[1] - 0.9, 15.4)
+    W.tree(k, WELLSQ[0] + 1.0, 11.4, h=2.8, tone='#3a6a34')
+    W.tree(k, WELLSQ[1] - 1.0, 11.2, h=2.6, tone='#2e5a3a')
+k.solid(WELLSQ[0] + 0.7, 10.9, WELLSQ[0] + 1.3, 11.4)
+k.solid(WELLSQ[1] - 1.3, 10.7, WELLSQ[1] - 0.7, 11.2)
 W.bench(k, WSX - 0.7, WSX + 0.7, 16.4)
 k.solid(WSX - 0.7, 16.2, WSX + 0.7, 16.65)
-W.market_stall(k, WELLSQ[0] + 0.6, WELLSQ[0] + 2.6, 11.4, 12.4, awning=('#3a6a3a', '#e8dcc0'), goods='veg')
-k.solid(WELLSQ[0] + 0.6, 11.4, WELLSQ[0] + 2.6, 12.4)
-W.bulletin_board(k, WELLSQ[1] - 1.4, 11.6)
-k.solid(WELLSQ[1] - 2.1, 11.4, WELLSQ[1] - 0.7, 11.8)
+W.bulletin_board(k, WELLSQ[1] - 1.4, 14.0)
+k.solid(WELLSQ[1] - 2.1, 13.8, WELLSQ[1] - 0.7, 14.2)
 for (tx, tr) in ((WELLSQ[0] + 0.4, 16.8), (WELLSQ[1] - 0.4, 16.8)):
     HK.tub(k, tx, tr)
 
@@ -251,8 +249,8 @@ for (x, r) in LAMPS:
     W.lantern_post(k, x, r, energy=24)
     k.solid_post(x, r)
 # the theatre's forecourt: a poster pillar, a flower seller's barrow
-W.cart(k, 33.0, 12.0)
-k.solid(32.3, 11.4, 33.7, 12.6)
+W.cart(k, WELLSQ[1] - 1.6, 16.2)                       # the flower seller's barrow, at the square's corner
+k.solid(WELLSQ[1] - 2.3, 15.6, WELLSQ[1] - 0.9, 16.8)
 k.cyl(18.6, 12.0, 0.0, 1.6, 0.26, ('#d8ccb4', 0.1), 'poster_pillar', verts=16)
 for j, col in enumerate(('#e8d8b0', '#d0a080', '#c8d0e0', '#e0c0c8')):
     a = math.pi / 2 + (j - 1.5) * 0.55
@@ -320,24 +318,24 @@ inters = [
     gate('BRIDGE GATE', COLS - 1, 33, 'THE BRIDGE GATE, AND PAST IT THE OLD BRIDGE OVER THE HARBOUR MOUTH, SHOPS AND HOUSES ALL ALONG IT. THE WATCH HAS IT SHUT TONIGHT.'),
     look('THE OLD KEEP', 8, 10, 'THE OLD KEEP. CROWNHAVEN WAS THIS AND A WALL ONCE, BEFORE THE HARBOUR, BEFORE THE PALACE. THE FIRST LUMARS SLEPT UP THERE WITH THEIR CHARTS UNDER THEIR PILLOWS.'),
     look('THE OLD WELL', int(WSX), 14, 'THE OLD WELL. THEY SAY IF YOU DROP A COIN AND HEAR IT LAND, THE SEA WILL GIVE IT BACK TWICE. NOBODY HAS EVER HEARD IT LAND.'),
-    look('NOTICE BOARD', int(WELLSQ[1] - 1.4), 12, 'NOTICES: ROOMS TO LET OVER THE CHANDLER\'S. LOST: ONE GREY CAT, ANSWERS TO "ADMIRAL". THE LANTERN THEATRE - A NEW PLAY EVERY NIGHT.'),
+    look('NOTICE BOARD', int(WELLSQ[1] - 1.4), 13, 'NOTICES: ROOMS TO LET OVER THE CHANDLER\'S. LOST: ONE GREY CAT, ANSWERS TO "ADMIRAL". THE LANTERN THEATRE - A NEW PLAY EVERY NIGHT.'),
     {'x': 26, 'y': 11, 'type': 'dialog', 'label': 'THE LANTERN THEATRE', 'prompt': 'PRESS E TO GO IN', 'dialog': 'THE LANTERN THEATRE. THE DOORS ARE OPEN AND SOMEBODY INSIDE IS DECLAIMING AT THE TOP OF THEIR LUNGS.'},
     look('PLAYBILL', 19, 12, 'TONIGHT AT THE LANTERN: "THE LADY OF THE EMERALD SEA". BOX OFFICE BY THE MIDDLE DOOR.'),
     look('SEA STEPS', 43, 36, 'THE SEA STEPS, WORN HOLLOW IN THE MIDDLE BY FIVE HUNDRED YEARS OF FISHERMEN\'S BOOTS.'),
-    {'x': 36, 'y': 14, 'type': 'dialog', 'label': 'TOWN CRIER', 'prompt': 'PRESS E TO TALK', 'dialog': 'OYEZ!'},
-    look('FLOWER BARROW', 33, 13, 'BUNCHES OF SEA PINKS AND THRIFT, A COPPER A BUNCH. THE BARROW-WOMAN HAS GONE FOR HER SUPPER.'),
+    {'x': 36, 'y': 13, 'type': 'dialog', 'label': 'TOWN CRIER', 'prompt': 'PRESS E TO TALK', 'dialog': 'OYEZ!'},
+    look('FLOWER BARROW', int(WELLSQ[1] - 1.6), 17, 'BUNCHES OF SEA PINKS AND THRIFT, A COPPER A BUNCH. THE BARROW-WOMAN HAS GONE FOR HER SUPPER.'),
 ]
 w = {'name': 'The Old Town', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'lumar', 'fixedCamera': True,
-     'spawns': {'player': [EX - 1, 19]}, 'moonColor': '#d8f0e0', 'tiles': [], 'collisions': [], 'tileNames': {}, 'interactions': inters}
+     'spawns': {'player': [int(EX) - 1, 19]}, 'moonColor': '#d8f0e0', 'tiles': [], 'collisions': [], 'tileNames': {}, 'interactions': inters}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 DOORS = [(c, r) for c in (int(EX) - 1, int(EX), int(EX) + 1) for r in range(int(LG[0]) + 1, int(LG[1]))]   # through the Land Gate
 DOORS += [(c, r) for c in (int(EX) - 1, int(EX), int(EX) + 1) for r in range(32, 35)]                      # on to the bridge
 DOORS += [(c, r) for c in (int(NGATE) - 1, int(NGATE)) for r in range(1, 4)]                          # under the North Gate
 DOORS += [(c, r) for c in range(int(SEA_STEPS[0]), int(SEA_STEPS[1])) for r in range(35, 38)]       # down the Sea Steps
 DOORS += [(c, r) for c in range(40, 48) for r in range(36, 38)]                                         # the landing stage
-k.solid(36, 14, 37, 15)                                   # the crier stands by the well
+k.solid(36, 13, 37, 14)                                   # the crier stands by the well
 apply_world(WORLD, k, (int(WX) + 1, int(NR), COLS - 1, 35), doors=DOORS, scene_id=WID,
-            actors=[{'sheet': 'npc-crier', 'x': 36, 'y': 14, 'facing': 'down'}], scene_extra={'backdrop': True, 'smoke': SMOKE})
+            actors=[{'sheet': 'npc-crier', 'x': 36, 'y': 13, 'facing': 'down'}], scene_extra={'backdrop': True, 'smoke': SMOKE})
 w = json.load(open(WORLD))
 for r in range(ROWS):
     for c in range(COLS):

@@ -7,7 +7,7 @@
   "fixedCamera": true,
   "spawns": {
     "player": [
-      53.4,
+      53,
       19
     ]
   },

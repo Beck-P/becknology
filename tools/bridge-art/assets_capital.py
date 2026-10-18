@@ -892,35 +892,44 @@ def chapel(k, x0, x1, r_back, r_front, tower_side=1, tone='#9a9284'):
 
 def yard_life(k, x0, x1, r0, r1, seed, gaps=()):
     """The back yards between two rows (seen past the roofs and down the alleys): plots of earth and grass, a small
-    tree here and there, a shed with a lean-to roof, a water butt, washing, a wall between each plot."""
+    tree here and there, a shed with a lean-to roof, a water butt, a wall between each plot. Only between the gaps (the
+    alleys, a square): those stay open ground, the street's own."""
     rng = random.Random(seed)
-    k.box(x0, r0, -0.05, x1, r1, 0.0, ('#4a4a3a', 0.3), 'yard')
-    x = x0
-    while x < x1 - 0.5:
-        w = rng.uniform(2.0, 3.6)
-        xb = min(x1, x + w)
-        if not any(a - 0.2 < (x + xb) / 2 < b + 0.2 for a, b in gaps):
+    spans, cur = [], x0
+    for (a, b) in sorted(gaps):
+        if a > cur:
+            spans.append((cur, a))
+        cur = max(cur, b)
+    if cur < x1:
+        spans.append((cur, x1))
+    for (sa, sb) in spans:
+        k.box(sa, r0, -0.05, sb, r1, 0.0, ('#4a4a3a', 0.3), 'yard')
+        k.solid(sa, r0, sb, r1)
+        x = sa
+        while x < sb - 0.5:
+            w = rng.uniform(2.0, 3.6)
+            xb = min(sb, x + w)
             p = rng.random()
             mid = (r0 + r1) / 2
-            if p < 0.35:
-                with k.foliage('leaf'):
-                    W.tree(k, (x + xb) / 2, mid + 0.1, h=rng.uniform(1.8, 2.4), tone=rng.choice(('#3a6234', '#2e5a3a', '#4a6a30')))
-            elif p < 0.6:
-                sx0, sx1 = x + 0.3, min(xb - 0.3, x + 1.6)
-                k.box(sx0, r0 + 0.1, 0.0, sx1, r1 - 0.1, 0.8, ('#7a5a3a', 0.14), 'shed', bevel=0.02)
-                k.quads([((sx0 - 0.08, r0, 1.05), (sx1 + 0.08, r0, 1.05), (sx1 + 0.08, r1, 0.75), (sx0 - 0.08, r1, 0.75))], ('#5a4a42', 0.12), 'roof_shed')
-            elif p < 0.8:
-                with k.foliage('leaf'):
-                    for i in range(3):
-                        W.leafy_crown(k, x + 0.5 + i * (xb - x - 1.0) / 2, mid, 0.35, 0.3, 0.25, 0.28, shade('#3a6a30', rng.uniform(0.9, 1.1)), part='hedge')
-            else:
-                k.cyl(x + 0.6, mid, 0.0, 0.7, 0.28, ('#5a4024', 0.14), 'water_butt', verts=12)
-        if xb < x1 - 0.3:
-            k.box(xb - 0.08, r0, 0.0, xb + 0.08, r1, 0.75, (shade('#8a8274', rng.uniform(0.9, 1.05)), 0.14), 'yard_wall', bevel=0.02)
-        x = xb
-    k.solid(x0, r0, x1, r1)
-    for (a, b) in gaps:
-        k.blocked -= {(c, rr) for c in range(int(math.ceil(a)), int(math.floor(b))) for rr in range(int(math.floor(r0)), int(math.ceil(r1)))}
+            if xb - x > 1.0:
+                if p < 0.35:
+                    with k.foliage('leaf'):
+                        W.tree(k, (x + xb) / 2, mid + 0.1, h=rng.uniform(1.8, 2.4), tone=rng.choice(('#3a6234', '#2e5a3a', '#4a6a30')))
+                elif p < 0.6:
+                    sx0, sx1 = x + 0.3, min(xb - 0.3, x + 1.6)
+                    k.box(sx0, r0 + 0.1, 0.0, sx1, r1 - 0.1, 0.8, ('#7a5a3a', 0.14), 'shed', bevel=0.02)
+                    k.quads([((sx0 - 0.08, r0, 1.05), (sx1 + 0.08, r0, 1.05), (sx1 + 0.08, r1, 0.75), (sx0 - 0.08, r1, 0.75))], ('#5a4a42', 0.12), 'roof_shed')
+                elif p < 0.8:
+                    with k.foliage('leaf'):
+                        for i in range(3):
+                            W.leafy_crown(k, x + 0.5 + i * (xb - x - 1.0) / 2, mid, 0.35, 0.3, 0.25, 0.28, shade('#3a6a30', rng.uniform(0.9, 1.1)), part='hedge')
+                else:
+                    k.cyl(x + 0.6, mid, 0.0, 0.7, 0.28, ('#5a4024', 0.14), 'water_butt', verts=12)
+            if xb < sb - 0.3:
+                k.box(xb - 0.08, r0, 0.0, xb + 0.08, r1, 0.75, (shade('#8a8274', rng.uniform(0.9, 1.05)), 0.14), 'yard_wall', bevel=0.02)
+            x = xb
+        for xe in (sa, sb):                                   # a garden wall closing the yard off from the alley
+            k.box(xe - 0.1, r0, 0.0, xe + 0.1, r1, 0.9, (shade('#8a8274', rng.uniform(0.9, 1.05)), 0.14), 'yard_wall', bevel=0.02)
 
 
 # ---- the Arsenal --------------------------------------------------------------------------------------------------------
