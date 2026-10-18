@@ -273,7 +273,7 @@ var BridgeBows = (function () {
     var x = ride.a[0] + (ride.b[0] - ride.a[0]) * e + 0.5, y = ride.a[1] + (ride.b[1] - ride.a[1]) * e + 1;
     var sag = Math.sin(e * Math.PI) * 10;                                  // the line sags in the middle: hanging lower there
     var row = { down: 0, right: 1, up: 2, left: 3 }[ride.facing];
-    BridgeCharacter.setPose({ kind: 'walk', x: x, y: y, row: row, col: 1, lift: 22 - sag });
+    BridgeCharacter.setPose({ kind: 'walk', x: x, y: y, row: row, col: 1, lift: 40 - sag });
     if (k >= 1) {
       BridgeCharacter.setPose(null);
       if (BridgeCharacter.init) {
@@ -370,6 +370,9 @@ var BridgeBows = (function () {
     if (inter.kind === 'range') {
       var world = BridgeWorld.getWorld();
       if (!world || !world.range) return;
+      if (typeof BridgeSylvara !== 'undefined' && BridgeSylvara.rangeOpen && !BridgeSylvara.rangeOpen() && !(rangeGame && rangeGame.on)) {
+        return say('THE RANGE', 'THE MARKS ARE STILL ON THEIR RAILS AND THE PENNANT\'S STILL FLYING, BUT AERIN\'S GONE TO THE LANDING RING. THE RANGE IS HERS FROM THE NINTH HOUR TO THE SEVENTEENTH.');
+      }
       if (rangeGame && rangeGame.on) return say('AERIN', '"' + rangeGame.left + ' ARROWS LEFT. EYES ON THE MARKS."');
       BridgeInteractions.choose({
         title: 'Aerin\'s range', face: 'npc-elf-warden',
@@ -418,7 +421,7 @@ var BridgeBows = (function () {
     // zip lines rigged: the cord from post to tree, sagging
     (world.zips || []).forEach(function (z) {
       if (!st.zips[z.id]) return;
-      var ax = offX + (z.from[0] + 0.5) * ts, ay = offY + (z.from[1] + 1) * ts - 40, bx = offX + (z.to[0] + 0.5) * ts, by = offY + (z.to[1] + 1) * ts - 40;
+      var ax = offX + (z.from[0] + 0.5) * ts, ay = offY + (z.from[1] + 1) * ts - 70, bx = offX + (z.to[0] + 0.5) * ts, by = offY + (z.to[1] + 1) * ts - 70;
       for (var i = 0; i <= 40; i++) {
         var k = i / 40, x = Math.round(ax + (bx - ax) * k), y = Math.round(ay + (by - ay) * k + Math.sin(k * Math.PI) * 10);
         ctx.fillStyle = '#1a1208'; ctx.fillRect(x, y, 1, 2);

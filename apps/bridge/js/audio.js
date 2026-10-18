@@ -888,6 +888,10 @@ var BridgeAudio = (function () {
     swing_great: function (t) { whoosh(t, 0.26, 500, 2400, 0.15, 0.9); },
     swing_pick:  function (t) { whoosh(t, 0.12, 900, 2000, 0.1, 1.0); },
     // the bow (js/arms.js, js/bows.js): the creak of the draw, the string's thrum on the loose, an arrow going home
+    // brewing (js/brewing.js): a bubble and a chime; a drink; a bite
+    brew:        function (t) { for (var i = 0; i < 5; i++) voice(sfxBus, t + i * 0.07, 0.06, { type: 'sine', freq: 300 + Math.random() * 400, glide: 1.8, glideT: 0.05, gain: 0.04, a: 0.002, d: 0.06, s: 0, r: 0.04 }); INST.bell(sfxBus, t + 0.4, 88, 0.2, 0.7); },
+    drink:       function (t) { for (var i = 0; i < 3; i++) noiseHit(sfxBus, t + i * 0.12, 0.08, { freq: 500 + i * 80, ftype: 'bandpass', q: 3, gain: 0.08 }); },
+    eat:         function (t) { for (var i = 0; i < 2; i++) noiseHit(sfxBus, t + i * 0.14, 0.06, { freq: 1800, ftype: 'bandpass', q: 1.5, gain: 0.1 }); },
     bow_draw:    function (t) { voice(sfxBus, t, 0.28, { type: 'sawtooth', freq: 140, glide: 1.6, glideT: 0.3, gain: 0.018, a: 0.05, d: 0.25, s: 0, r: 0.05, cutoff: 900 }); },
     bow_full:    function (t) { voice(sfxBus, t, 0.08, { type: 'triangle', freq: 520, gain: 0.025, a: 0.002, d: 0.08, s: 0, r: 0.05 }); },
     swing_bow:   function (t) { voice(sfxBus, t, 0.14, { type: 'triangle', freq: 196, glide: 0.92, glideT: 0.14, gain: 0.07, a: 0.001, d: 0.14, s: 0, r: 0.08 }); whoosh(t + 0.02, 0.1, 3000, 6000, 0.05, 2.0); },
