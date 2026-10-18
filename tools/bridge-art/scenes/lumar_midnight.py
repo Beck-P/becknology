@@ -158,6 +158,29 @@ while r < pier_top - 0.05:
         x = x1
     r += h
 STATUES = {(22, 17), (27, 23), (22, 26)}
+# cells the game needs open: every fight's spawn (js/combat.js ROSTER, the warden at (42, 21)), the treasure spots (js/treasure.js),
+# the drowned bell clapper (js/magic.js), the Ferryman (js/harbour.js)
+OPEN = {(19, 20), (31, 16), (29, 24), (12, 22), (15, 25), (6, 24), (34, 28), (38, 28), (14, 12), (38, 15), (36, 14), (42, 21),
+        (41, 21), (13, 25), (14, 21), (26, 35)}
+
+
+class keep_open:
+    """with keep_open(k): build a tree or a headstone as ever (the scene's dice roll as they always did), but if it lands
+    on a cell in OPEN, take it away again: a hound's spawn and the graves' treasure spot were under a tree and a stone."""
+    def __init__(self, k_):
+        self.k = k_
+
+    def __enter__(self):
+        self.np, self.nl, self.bl = len(self.k.parts), len(self.k.lights), set(self.k.blocked)
+
+    def __exit__(self, *a):
+        if (self.k.blocked - self.bl) & OPEN:
+            import bpy
+            dead = [p['obj'] for p in self.k.parts[self.np:]] + [L['obj'] for L in self.k.lights[self.nl:]]
+            del self.k.parts[self.np:]
+            del self.k.lights[self.nl:]
+            bpy.data.batch_remove(dead)
+            self.k.blocked = self.bl
 
 
 def sentinel(x, r, face=1, z=0.5, tone='#6e6880'):
@@ -212,7 +235,8 @@ for j, r in enumerate((18.2, 20.0, 22.0, 24.0, 26.0, 27.9)):
         x = 5.4 + i * 1.45 + (0.6 if j % 2 else 0) + k.rng.uniform(-0.3, 0.3)
         rr = r + k.rng.uniform(-0.18, 0.18)
         if (int(x), int(rr)) in walk and pd(x, rr) > 0.7 and grave_d(x, rr) < 0.88 and k.rng.random() > 0.15 and not (UC[0] - 0.5 < x < UC[1] + 0.5 and UC[2] - 0.6 < rr < UC[3] + 0.6):
-            I.headstone(k, x, rr, lean=k.rng.uniform(-14, 14), kind=k.rng.choice((0, 0, 1, 2)))
+            with keep_open(k):
+                I.headstone(k, x, rr, lean=k.rng.uniform(-14, 14), kind=k.rng.choice((0, 0, 1, 2)))
 # an iron railing round the east side of the plot, rusted through in places, the gate hanging open on the path
 fence = []
 for i in range(46):
@@ -325,10 +349,11 @@ for i in range(60):
     if any(math.hypot(x - a, r - b) < 1.3 for (a, b) in trees):
         continue
     trees.append((x, r))
-    if k.rng.random() < 0.55:
-        I.dead_tree(k, x, r, h=k.rng.uniform(1.6, 2.6), tone='#2a2430')
-    else:
-        I.red_pine(k, x, r, h=k.rng.uniform(2.2, 3.0), tone='#2a2a40', trunk='#1a1820')
+    with keep_open(k):
+        if k.rng.random() < 0.55:
+            I.dead_tree(k, x, r, h=k.rng.uniform(1.6, 2.6), tone='#2a2430')
+        else:
+            I.red_pine(k, x, r, h=k.rng.uniform(2.2, 3.0), tone='#2a2a40', trunk='#1a1820')
 
 # ---- scatter -------------------------------------------------------------------------------------------------------
 busy = lambda x, r: pd(x, r) < 0.6 or on_way(x, r, 0.3)
@@ -390,11 +415,11 @@ k.later.insert(0, lambda: WL.merge_parts(k))               # before the grass
 k.later.append(lambda: WL.merge_parts(k))                  # and after it
 WL.fast_top(k)                                             # the grass's rays: one BVH tree, not every object in turn
 
-k.area_light(26.0, 16.0, 16.0, '#7a78b8', 2000, 40.0, rot=(math.radians(-35), 0, 0))     # a thin moon
+k.area_light(26.0, 16.0, 16.0, '#8a88c8', 3800, 40.0, rot=(math.radians(-35), 0, 0))     # the moon (bright enough to read the place by)
 k.point_light(24.5, 18.0, 4.0, '#c0b0ff', 40, radius=1.5)
 
 k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.7}}, light_samples=96,
-         world_light=('#1e1e3a', 0.7))
+         world_light=('#2a2a4e', 1.0))
 
 # ---- the world ------------------------------------------------------------------------------------------------------
 old = json.load(open(WORLD))

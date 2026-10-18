@@ -1,5 +1,7 @@
 # Arcadia above and across — how Workstream D fits together
 
+**Status: built (Oct 18).** Every place below is in the game; the hook-ups are as listed. Docs: `apps/bridge/CLAUDE.md` (*Getting around Arcadia*, *The Spires*, *The Mid-Levels: the Terraces*, *The District grown out*).
+
 Workstream D of `spec-denser-worlds.md` (*Building it*): the Mid-Levels, the Spires, the District grown out, and
 getting around. This is the working plan: the places, their ids, how they join, and the shared interfaces (the lifts
 file, the interaction types). Workstream C (the Undercity, the Sump, implants) hangs off the same interfaces.

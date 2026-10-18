@@ -107,14 +107,14 @@ def material(x, r):
 
 ALB = {'path': ('#9a7a62', 0.3), 'path_ash': ('#5a4a44', 0.3), 'path_edge': ('#7e5e4a', 0.3), 'ash': ('#3a3232', 0.35),
        'ash_moor': ('#4a3432', 0.35), 'sand': ('#b8927c', 0.25),
-       'moor': ('#743832', 0.3), 'moor_dark': ('#5e2e2a', 0.3), 'grass': ('#6a5a38', 0.3),
+       'moor': ('#6e4630', 0.3), 'moor_dark': ('#5a3a2a', 0.3), 'grass': ('#7a6a3c', 0.3),
        'crystal_moss': ('#6e2c42', 0.3), 'needles': ('#5a3428', 0.3)}
 I.ground(k, walk, material, ALB)
 # the ridge massif behind the crag: a gentle fill (the crag's tiers stand in front of it), ash on its crown
 height = I.ridge(k, RIDGE, top=3.0, slope=4.0, seed=6, notches=[(28.6, 7.6, 31.4, 10.05)], foot=0.7, ground=(material, ALB),
                  rock='#3e3436', strata=('#4a3e40', '#3a3032', '#54464a'), moss='#3e3434')
 
-terrain = C.coast(k, land, ground=(material, ALB), palette='crimson', grass='#743832', rock='#3a3034', seed=21, beachiness=-0.15,
+terrain = C.coast(k, land, ground=(material, ALB), palette='crimson', grass='#6e4630', rock='#3a3034', seed=21, beachiness=-0.15,
                   beach_bias=lambda x, r: 0.9 * I.smooth(28.0, 34.0, r) * I.smooth(11.0, 6.0, abs(x - 29.5)) - 0.3 * I.smooth(14.0, 8.0, r),
                   keep_clear=[(PX - 0.4, pier_top - 0.4, PX + 1.4, SHIP_R + 0.2),
                               (PX + 0.5 - 0.45 * SL - 0.8, SHIP_R - 0.2, PX + 0.5 + 0.55 * SL + 1.8, SHIP_R + 1.9),
@@ -202,6 +202,17 @@ for (x, r) in ((29.98, 31.48), (30.3, 31.8)):
 for (x, r) in ((32.4, 30.55), (32.55, 30.62), (32.72, 30.5)):
     k.cyl(x, r, 0.0, 0.16, 0.035, ('#2a5a3a', 0.05), 'bottle', verts=8)
     k.cyl(x, r, 0.16, 0.22, 0.014, ('#2a5a3a', 0.05), 'bottle', verts=6)
+# the beach's life: fish drying on a rack, an old boat's ribs half-buried in the sand, a sea chest by the tents, pennants
+# strung from tent to tent (all clear of the auction's boxes, the sea glass and the nets the harbour folk mend)
+with WL.own_dice(k, 8301):
+    I.drying_rack(k, 21.7, 23.1, 30.65)
+    I.rib_cage(k, 25.6, 32.75, L=1.4, h=0.55, tone='#6a4a30')
+    I.chest(k, 35.6, 29.45)
+    W.bunting(k, (24.8, 28.4, 1.3), (34.4, 27.9, 1.3), sag=0.35, cols=('#2a2226', '#e8dcc8', '#a02028', '#2a2226'))
+    W.bunting(k, (34.4, 27.9, 1.3), (36.0, 30.4, 1.2), sag=0.2, cols=('#2a2226', '#e8dcc8', '#a02028'))
+    for (x, r) in ((24.4, 30.3), (27.1, 29.9), (33.0, 29.4)):
+        k.cyl(x, r, 0.0, 0.28, 0.12, ('#6a4a2a', 0.2), 'keg', verts=10)
+        k.cyl(x, r, 0.08, 0.11, 0.125, A.IRON, 'keg_hoop', verts=10)
 # driftwood and a coil of rope on the sand
 for (x, r, L, a) in ((21.0, 32.4, 1.1, 0.3), (35.6, 34.2, 0.9, -0.4), (25.6, 34.6, 0.7, 0.9)):
     k.tube((x, r, 0.05), (x + math.cos(a) * L, r + math.sin(a) * L * 0.5, 0.06), 0.06, ('#a89480', 0.3), 'driftwood', rb=0.04, verts=6)
@@ -283,7 +294,7 @@ I.lava_vein(k, [(30.6, 12.4), (31.2, 13.1)], w=0.04)
 I.lava_vein(k, [(25.2, 12.2), (24.6, 12.7), (24.9, 13.3)], w=0.035)
 k.point_light(27.6, 11.8, 0.4, '#ff5020', 6, radius=0.2, group='flicker')
 k.point_light(33.0, 12.4, 0.4, '#ff5020', 6, radius=0.2, group='flicker')
-for _ in range(26):                                   # smouldering cinders and charred stumps in the ash
+for _ in range(70):                                   # smouldering cinders and charred stumps in the ash
     x, r = rng.uniform(22.0, 38.0), rng.uniform(10.6, 15.0)
     if scorch(x, r) > 0.95 or pd(x, r) < 0.7:
         continue
@@ -291,8 +302,13 @@ for _ in range(26):                                   # smouldering cinders and 
         s = rng.uniform(0.04, 0.07)
         k.rock(x, r, 0.0, s, s * 0.8, s * 0.5, '#2a0a06', part='cinder', segs=5, seed=rng.randrange(10 ** 6))
         k.sphere(x, r, s * 0.4, s * 0.55, s * 0.4, '#401008', 'cinder_glow', emit=('#ff6020', 0.6), segs=5)
-    else:
-        k.tube((x, r, 0.0), (x + rng.uniform(-0.05, 0.05), r, rng.uniform(0.25, 0.5)), 0.07, '#1e1414', 'charred', rb=0.05, verts=6)
+    else:                                                                # a charred stump, its broken top still glowing
+        h_ = rng.uniform(0.3, 0.6)
+        k.tube((x, r, 0.0), (x + rng.uniform(-0.05, 0.05), r, h_), 0.1, '#1e1414', 'charred', rb=0.07, verts=7)
+        k.sphere(x, r, h_, 0.05, 0.03, '#401008', 'cinder_glow', emit=('#ff6020', 0.7), segs=6)
+        for _ in range(3):
+            a = rng.uniform(0, math.tau)
+            k.tube((x, r, 0.06), (x + math.cos(a) * 0.3, r + math.sin(a) * 0.2, -0.02), 0.04, '#1e1414', 'charred', rb=0.015, verts=5)
 I.rib_cage(k, 24.0, 13.4, L=2.6, h=1.2)
 I.bones(k, 33.6, 14.6)
 I.bones(k, 26.6, 15.2, s=0.8)
@@ -387,14 +403,22 @@ I.dead_tree(k, 52.3, 28.6, h=1.4, lean=-0.2)
 
 # ---- the moor's vegetation: heather in drifts, gorse, boulders on the coast's lip ------------------------------------------
 moor = lambda x, r: material(x, r) in ('moor', 'moor_dark', 'grass')
-for _ in range(240):
+for _ in range(700):
     x, r = rng.uniform(4, 52), rng.uniform(10, 36)
     if (int(x), int(r)) in walk and moor(x, r) and pd(x, r) > 0.8 and math.hypot(x - TEETH[0], (r - TEETH[1]) * 1.2) > 2.6 \
             and math.hypot(x - TOWER[0], r - TOWER[1]) > 2.0 and math.hypot(x - CAMP[0], r - CAMP[1]) > 3.5 and x < 38:
-        if rng.random() < 0.75:
-            WL.heather(k, x, r, s=rng.uniform(0.18, 0.32), tone=rng.choice(('#a83048', '#b8405a', '#8a2a40', '#c05070')))
+        roll = rng.random()
+        if roll < 0.55:                                                  # heather in drifts: a few mounds together
+            for _ in range(rng.randint(2, 4)):
+                WL.heather(k, x + rng.uniform(-0.45, 0.45), r + rng.uniform(-0.3, 0.3), s=rng.uniform(0.2, 0.34),
+                           tone=rng.choice(('#c04878', '#d05a8a', '#a8386a', '#e070a0')))
+        elif roll < 0.72:
+            WL.shrub(k, x, r, s=rng.uniform(0.2, 0.3), tone='#4a5a2a', blooms='#f0c030')        # gorse in flower
+        elif roll < 0.9:
+            WL.fern(k, x, r, s=rng.uniform(0.45, 0.65), tone=rng.choice(('#a0562e', '#8a4a26', '#b06a34')))   # rusty bracken
         else:
-            WL.shrub(k, x, r, s=rng.uniform(0.18, 0.26), tone='#4a4a2a', blooms='#e0b030')        # gorse in flower
+            k.blades([(x + rng.uniform(-0.25, 0.25), r + rng.uniform(-0.15, 0.15), 0.0, rng.uniform(0.25, 0.42), 0.022,
+                       rng.uniform(-0.08, 0.08), rng.uniform(-0.04, 0.04)) for _ in range(18)], ('#c0a060', 0.25), 'tuft')   # tall pale grass
 LIP = []
 for _ in range(500):
     x, r = rng.uniform(1, 55), rng.uniform(3, 40)
