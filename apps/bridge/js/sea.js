@@ -466,6 +466,56 @@ var BridgeSea = (function () {
     if (k > 0.01) bloomWater(ctx, 0, 0, w, h, 0, 0, now, name, k);
     skyLight(ctx, w, h, now, L, C, null);
     glints(ctx, w, h, now, P, null, W, k, name);
+    if (L.rain > 0.02) rainRings(ctx, w, h, now, L, null);
+  }
+
+  // ---- the rain on the water: rings spreading where the drops come down, as Look Book 2's (LB.rings: a pixel
+  // ellipse growing to 4 px and fading, once a second, one to 400 px of water), in cells of the world so they stay
+  // put as the camera moves; a storm's thicker. Each ring is a small sprite made once per size and colour.
+  var ringSprites = {};
+  function ringSprite(r, col) {
+    var key = r + col, c = ringSprites[key];
+    if (c) return c;
+    var ry = Math.max(1, Math.round(r * 0.5));
+    c = ringSprites[key] = document.createElement('canvas');
+    c.width = 2 * r + 1; c.height = 2 * ry + 1;
+    var x = c.getContext('2d'), seen = {};
+    x.fillStyle = col;
+    for (var a = 0; a < 40; a++) {
+      var th = a / 40 * Math.PI * 2, ex = r + Math.round(Math.cos(th) * r), ey = ry + Math.round(Math.sin(th) * ry);
+      if (seen[ex + ',' + ey]) continue;
+      seen[ex + ',' + ey] = 1; x.fillRect(ex, ey, 1, 1);
+    }
+    return c;
+  }
+  function rainRings(ctx, w, h, now, L, isWater) {
+    var D = drift(0), cell = 20, t = now / 1000, k = Math.min(1, L.rain * (1 + 0.6 * L.storm));
+    var col = rgb(mixc([230, 240, 255], [138, 154, 196], L.night));
+    var c0 = Math.floor(D.camX / cell) - 1, r0 = Math.floor(D.camY / cell) - 1;
+    ctx.save();
+    for (var r = r0; r < r0 + h / cell + 3; r++) for (var c = c0; c < c0 + w / cell + 3; c++) {
+      var id = c * 7919 + r * 104729;
+      if (hash(id + 3) > k) continue;
+      var ph = t + hash(id + 2), beat = Math.floor(ph), u = ph - beat;
+      var x = Math.round(c * cell - D.camX + hash(id + beat * 31) * cell), y = Math.round(r * cell - D.camY + hash(id + beat * 57 + 1) * cell);
+      if (x < -6 || y < -4 || x > w + 6 || y > h + 4 || (isWater && !isWater(x, y))) continue;
+      var rr = Math.round(1 + u * 4), S = ringSprite(rr, col);
+      ctx.globalAlpha = (1 - u) * 0.6;
+      ctx.drawImage(S, x - (S.width >> 1), y - (S.height >> 1));
+    }
+    ctx.restore();
+  }
+  /** Whether a pixel of the frame is water, for a scene drawn at the world's offset (offX, offY): its shore's water,
+   *  and past its render the open sea. Null for a scene without water. (js/weather.js lands no splash there: it rings.) */
+  function waterAt(sc, offX, offY) {
+    var S = sc && sc.meta && sc.meta.water ? shores[sc.id] : null;
+    if (!S || !S.ready) return null;
+    var bx = Math.round(offX - sc.meta.originX), by = Math.round(offY - sc.meta.originY);
+    return function (x, y) {
+      var px = x - bx, py = y - by;
+      if (px < 0 || py < 0 || px >= S.W || py >= S.H) return true;
+      return S.water[py * S.W + px] === 1;
+    };
   }
 
   // ---- water over a scene (shore.png) -------------------------------------------------
@@ -474,7 +524,7 @@ var BridgeSea = (function () {
   var SHELF = [34, 72, 118];  // depth bytes where the water steps down a band (wandered by a slow noise: shelves, not rings)
   var BAND_A = [0.4, 0.6, 0.8, 1];      // the water's opacity in each band, shallow to deep
   var BAND_T = [0.3, 0.18, 0.08, 0];    // and the shallows' pale tint over it
-  var MAXR = 26;              // how far down the water a reflection reaches (px)
+  var MAXR = 40;              // how far down the water a reflection reaches (px)
 
   function loadShore(sc) {
     var S = shores[sc.id];
@@ -517,6 +567,7 @@ var BridgeSea = (function () {
         var p = idx[q], bb = band[p], up = p >= W ? band[p - W] : 255, lf = p % W ? band[p - 1] : 255;
         bd.push(bb === 255 ? 255 : bb | ((up !== 255 && up < bb) || (lf !== 255 && lf < bb) ? 16 : 0));
       }
+      S.calm = shelter(water, px, W, H);
       var layer = document.createElement('canvas');
       layer.width = W; layer.height = H;
       var anim = document.createElement('canvas');
@@ -538,6 +589,72 @@ var BridgeSea = (function () {
       gi.src = '/bridge/assets/scenes/' + sc.id + '/glow' + (sc.ext || '.png') + (sc.q || '');
     }
     return null;
+  }
+
+  // ---- sheltered water: harbours, coves and the water along a quay lie still (Look Book 2's harbour: calm and darker,
+  // the swell's bands gone, only a few wavelets; the mirror reads on it). How sheltered each patch is comes from rays
+  // cast toward the land in eight directions on a coarse grid (8 px), at load: land close by on most sides is a harbour,
+  // land close on one side is a quay's edge. Spread to full size with a wandering edge in two flat steps (half, still).
+  // Returns an alpha mask the size of the render, or null when the island has no sheltered water.
+  var CG = 8, RAYS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  function shelter(water, px, W, H) {
+    var gw = Math.ceil(W / CG), gh = Math.ceil(H / CG), land = new Uint8Array(gw * gh), g = new Float32Array(gw * gh), any = false, x, y;
+    for (y = 0; y < gh; y++) for (x = 0; x < gw; x++) {
+      var p = Math.min(H - 1, y * CG + 4) * W + Math.min(W - 1, x * CG + 4);
+      land[y * gw + x] = water[p] ? 0 : 1;
+    }
+    for (y = 0; y < gh; y++) for (x = 0; x < gw; x++) {
+      if (land[y * gw + x]) continue;
+      var hits = 0, near = 99;
+      for (var r = 0; r < 8; r++) {
+        for (var k = 1; k <= 22; k++) {
+          var xx = x + RAYS[r][0] * k, yy = y + RAYS[r][1] * k;
+          if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) break;
+          if (land[yy * gw + xx]) { hits++; near = Math.min(near, k); break; }
+        }
+      }
+      var v = hits >= 5 ? 1 : hits >= 4 ? 0.75 : hits >= 3 ? 0.45 : 0;
+      v = Math.max(v, near <= 2 ? 0.7 : near <= 4 ? 0.4 : 0);
+      g[y * gw + x] = v;
+      if (v > 0) any = true;
+    }
+    if (!any) return null;
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var cx = c.getContext('2d'), img = cx.createImageData(W, H), d = img.data;
+    for (y = 0; y < H; y++) {
+      var fy = y / CG - 0.5, y0 = Math.max(0, Math.floor(fy)), y1 = Math.min(gh - 1, y0 + 1), ty = Math.max(0, Math.min(1, fy - y0));
+      for (x = 0; x < W; x++) {
+        var i = y * W + x;
+        if (!water[i] || !px[i * 4 + 1]) continue;
+        var fx = x / CG - 0.5, x0 = Math.max(0, Math.floor(fx)), x1 = Math.min(gw - 1, x0 + 1), tx = Math.max(0, Math.min(1, fx - x0));
+        var vv = (g[y0 * gw + x0] * (1 - tx) + g[y0 * gw + x1] * tx) * (1 - ty) + (g[y1 * gw + x0] * (1 - tx) + g[y1 * gw + x1] * tx) * ty;
+        vv += (hash((x >> 2) * 131 + (y >> 2) * 977) - 0.5) * 0.18;
+        var a = vv > 0.32 ? 1 : 0;
+        if (a) d[i * 4 + 3] = Math.round(a * 255);
+      }
+    }
+    cx.putImageData(img, 0, 0);
+    return c;
+  }
+  // the still water's flat body over the swell, where it's sheltered: deep's colour with a little of the body's, darker
+  // by night, in step with the light (the colours come from the live light's hour when there is one)
+  var calmC = null, calmX = null;
+  function calmOver(L, S, v, C, Lw) {
+    if (!calmC) { calmC = document.createElement('canvas'); calmX = calmC.getContext('2d'); }
+    if (calmC.width < v[2] || calmC.height < v[3]) { calmC.width = Math.max(calmC.width, v[2]); calmC.height = Math.max(calmC.height, v[3]); }
+    calmX.globalCompositeOperation = 'source-over'; calmX.globalAlpha = 1;
+    calmX.clearRect(0, 0, v[2], v[3]);
+    calmX.drawImage(S.calm, v[0], v[1], v[2], v[3], 0, 0, v[2], v[3]);
+    calmX.globalCompositeOperation = 'source-in';
+    // Look Book 2's still water (js/litscene.js's bands as its harbour shows them): teal-grey by day, a warm grey at
+    // golden hour, a deep blue at night; a fifth of the sea's own body kept so each sea's harbours are still its own
+    var lb = mixc(mixc([24, 32, 56], [92, 98, 104], Lw.aD), [70, 106, 128], Lw.day * (1 - Lw.golden));
+    lb = mixc(lb, [104, 100, 104], Lw.golden * (1 - Lw.night));
+    calmX.fillStyle = rgb(mixc(lb, C.base, 0.2));
+    calmX.fillRect(0, 0, v[2], v[3]);
+    L.globalAlpha = 1 - 0.6 * Math.max(Lw.storm, 0.7 * Lw.gale);      // a storm reaches in even here
+    L.drawImage(calmC, 0, 0, v[2], v[3], v[0], v[1], v[2], v[3]);
+    L.globalAlpha = 1;
   }
 
   // Where the water mirrors what stands above it: in each column, every place the water begins under something that
@@ -599,7 +716,7 @@ var BridgeSea = (function () {
   // margin round it (a canvas the size of the screen, not of the island) whenever the view leaves that, the picture
   // above the water changes (a new live-light composition, or the baked light state that shows most), or the light
   // does; then drawn a dozen times a second with each row nudged sideways on a slow wave (the ripple).
-  var FADE = [[0, 6, 0.85], [6, 14, 0.55], [14, MAXR, 0.28]];
+  var FADE = [[0, 8, 0.9], [8, 20, 0.6], [20, MAXR, 0.3]];
   function mirrorSource(sc) {
     if (sc.lit && sc.lit.cur) return { img: sc.lit.cur.canvas, key: sc.lit.cur };
     var W = typeof BridgeScene !== 'undefined' && BridgeScene.skyOf ? BridgeScene.skyOf(sc) : null, st = sc.meta.states[0];
@@ -766,6 +883,7 @@ var BridgeSea = (function () {
     fillPattern(L, texture(name, 0, C), S.W, S.H, D.ax + bx, D.ay + by, 1);
     L.globalCompositeOperation = 'source-atop';
     fillPattern(L, texture(name, 1, C), S.W, S.H, D.bx + bx, D.by + by, 1);
+    if (S.calm) calmOver(L, S, v, C, Lw);                     // over the swell and its wavelets: still water
     var cap = capAlpha(Lw);
     if (cap) fillPattern(L, texture(name, 2, C), S.W, S.H, D.cx + bx, D.cy + by, cap);
     // the bloom: the open sea's currents carried on over the island's water at its opacity (so it meets the open sea
@@ -792,6 +910,10 @@ var BridgeSea = (function () {
       return S.water[py * S.W + px] === 1 && (b === 255 || b >= 2);
     });
     glints(ctx, ctx.canvas.width, ctx.canvas.height, now, P, isW, W, k, name);
+    if (Lw.rain > 0.02) rainRings(ctx, ctx.canvas.width, ctx.canvas.height, now, Lw, function (x, y) {   // past the render drawSea rang it
+      var px = x - bx, py = y - by;
+      return px >= 0 && py >= 0 && px < S.W && py < S.H && S.water[py * S.W + px] === 1;
+    });
   }
 
   // ---- older scenes: foam round the silhouette ----------------------------------------
@@ -891,5 +1013,5 @@ var BridgeSea = (function () {
   function reset() { tex = {}; shores = {}; bands = {}; gtex = {}; }
 
   return { _light: function (name, id) { var sc = id && typeof BridgeScene !== 'undefined' ? BridgeScene.get(id) : null; var L = lightOn(name || 'emerald', sc); return { L: L, C: colours(name || 'emerald', L) }; },
-           drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
+           drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, waterAt: waterAt, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
 })();

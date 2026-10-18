@@ -108,6 +108,41 @@ var BridgeCrowd = (function () {
       names: { m: ['Kade', 'Jin', 'Rook', 'Dex', 'Hiro', 'Vasco', 'Ozu', 'Kenji', 'Lio', 'Marz'],
                f: ['Nyx', 'Kiri', 'Juno', 'Mika', 'Sable', 'Reya', 'Tamsin', 'Yuki', 'Zara', 'Echo'], c: ['Bit', 'Pixel', 'Zip'] }
     },
+    // the Mid-Levels (the Terraces, L200): office money out for the evening — suits and smart coats in glass and cyan,
+    // ice and slate, a dash of pink; fewer children, nobody in work clothes
+    midlevels: {
+      bodies: { suit: 3, man: 2, vest: 1, traveller: 1, woman: 2, 'woman-bun': 2, gown: 1, 'woman-hat': 1, child: 0.2 },
+      top: ['#2a3a4e', '#5cc8d0', '#e8f0f4', '#3a4a6a', '#a8dce8', '#1e2430', '#e870c0', '#7080e8', '#c8ccd4'],
+      bot: ['#141820', '#1e2430', '#2a3040', '#3a4258', '#101014'],
+      out: ['#1e2430', '#5cc8d0', '#e8f0f4', '#3a4a6a', '#c8ccd4', '#2a3a4e'],
+      hat: ['#1e2430', '#c8ccd4', '#5cc8d0', '#e870c0'],
+      umbrella: ['#5cc8d0', '#e8f0f4', '#1e2430', '#7080e8', '#a8dce8'],
+      wild: 0.15,
+      names: { m: ['Aurel', 'Kenzo', 'Felix', 'Idris', 'Mateo', 'Sven', 'Ravi', 'Jules', 'Teo', 'Caspian'],
+               f: ['Celeste', 'Mira', 'Noor', 'Ines', 'Saskia', 'Lena', 'Yara', 'Ottilie', 'Rin', 'Paloma'], c: ['Pip', 'Lumi'] }
+    },
+    lantern: {    // Lantern Row, the old quarter: older folk, plainer cloth, indigo and rust, paper umbrellas
+      bodies: { man: 2, 'man-cap': 1, vest: 2, elder: 3, worker: 1, woman: 2, 'woman-bun': 3, 'woman-hood': 1, child: 0.6, 'child-cap': 0.4 },
+      top: ['#2e3e6a', '#7a3a2a', '#d8ccb0', '#3a4a3a', '#5a2048', '#a02a1e', '#1e2a4a', '#8a7a5a'],
+      bot: ['#1e2a4a', '#2e2a30', '#3e3646', '#4a3a28', '#141418'],
+      out: ['#1e2a4a', '#7a3a2a', '#3a2416', '#2a4a3a', '#d4c8ae'],
+      hat: ['#1e2a4a', '#d4c8ae', '#7a3a2a', '#2a2a30'],
+      umbrella: ['#c8301e', '#e8d8b0', '#1e2a4a', '#d89a30', '#3a6a4a'],
+      wild: 0.08,
+      names: { m: ['Taro', 'Genji', 'Ikki', 'Shun', 'Bo', 'Ren', 'Haru', 'Old Sato', 'Kaito', 'Yoshi'],
+               f: ['Hana', 'Aiko', 'Sumi', 'Nori', 'Fumi', 'Rin', 'Old Mitsu', 'Chiyo', 'Asa', 'Mei'], c: ['Tama', 'Koji', 'Momo'] }
+    },
+    spacers: {    // the spaceport: freighter crews off nine worlds, dockers, a customs clerk or two
+      bodies: { worker: 4, 'man-cap': 3, vest: 3, traveller: 3, man: 1, 'woman-hood': 2, woman: 1, 'woman-bun': 1 },
+      top: ['#d86a1a', '#3a4a3a', '#5a5a64', '#2a3a5a', '#a8c020', '#7a3a2a', '#1e1e26', '#c8a050'],
+      bot: ['#2a2a30', '#3a3a2a', '#1e2a38', '#4a3a28', '#141418'],
+      out: ['#d86a1a', '#3a3a2a', '#5e3a22', '#2a2a30', '#e0b020'],
+      hat: ['#e0b020', '#d86a1a', '#2a2a30', '#5e3a22', '#3a4a3a'],
+      umbrella: ['#2a2a30', '#d86a1a', '#e0b020'],
+      wild: 0.3,
+      names: { m: ['Vosk', 'Tibor', 'Okoro', 'Lenz', 'Ruk', 'Marten', 'Abe', 'Sol', 'Corvin', 'Dag'],
+               f: ['Ines', 'Petra', 'Yara', 'Ondine', 'Kass', 'Mags', 'Lior', 'Seren', 'Bex', 'Noor'], c: ['Sprocket'] }
+    },
     casino: {
       bodies: { suit: 5, gown: 5, vest: 1, man: 1, woman: 1 },
       top: ['#1c1c26', '#22304a', '#34164a', '#c89a28', '#8a1022', '#e4e0d4', '#0e0e14'],
