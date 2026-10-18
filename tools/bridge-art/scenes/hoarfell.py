@@ -108,11 +108,11 @@ def height(x, r):
     away = sm(0.15, 0.9, pd) * fm
     # drifts: soft wind-shaped mounds, longer across the wind
     n = I.n2(x * 0.42, r * 0.8, 1.0, 41) * 0.6 + I.n2(x * 1.1, r * 1.6, 1.0, 43) * 0.4
-    h += max(0.0, n) * 0.24 * away * (1 - sm(-0.3, 0.0, ins)) * sm(0.5, 1.2, bd)
+    h += max(0.0, n) * 0.36 * away * (1 - sm(-0.3, 0.0, ins)) * sm(0.5, 1.2, bd)
     # snow ploughed into banks along the street
     sd = I.path_dist([PATHS[0][0]], x, r)
     other = min(I.path_dist([p], x, r) - w for (p, w) in PATHS[1:])
-    h += 0.17 * math.exp(-((sd - 1.45) / 0.32) ** 2) * sm(0.05, 0.6, other) * fm * sm(0.6, 1.1, bd)
+    h += 0.26 * math.exp(-((sd - 1.45) / 0.34) ** 2) * sm(0.05, 0.6, other) * fm * sm(0.6, 1.1, bd)
     # the land rising toward the foot of the cliffs: talus under snow
     h += 0.32 * sm(9.2, 7.1, r) * sm(0.05, 0.6, pd)
     # the tarn's basin and the low lip of snow round its shore
@@ -315,7 +315,7 @@ HR.skis(k, 39.4, 10.9, cols=('#2a9a5a', '#e0b030'))
 
 # ---- Ysolde's guide hut and the route board --------------------------------------------------------------------------------
 SMOKE = []
-SMOKE.append(HR.chalet(k, 2.8, 9.2, 7.2, 12.0, wall_h=1.75, rise=1.25, gable='side', door_x=5.0, windows=[(3.75, 0.8), (6.25, 0.8), (8.35, 0.8)],
+SMOKE.append(HR.chalet(k, 2.8, 8.98, 8.0, 12.0, wall_h=1.75, rise=1.25, gable='side', door_x=5.0, windows=[(3.75, 0.8), (6.25, 0.8), (8.35, 0.8)],
                        chimney=3.4, shutters='#2a4a3a', door_col='#6a2a22', dormers=(6.6,), rr=random.Random(3)))
 N.hanging_sign(k, 7.3, 12.02, 0.85, 'axe')                                        # GUIDES: an ice axe and a coil of rope
 W.bulletin_board(k, 10.6, 10.4)
@@ -383,7 +383,7 @@ k.cyl(16.4, 19.6, 0, 1.5, 0.035, (N.LOG_D, 0.1), 'pole', verts=6)
 k.solid_post(16.4, 19.6)
 HR.brazier(k, 25.4, 18.4)
 HR.barrel_table(k, 24.9, 19.7)
-HR.barrel_table(k, 17.2, 18.2, mugs=1)
+HR.barrel_table(k, 17.0, 18.6, mugs=1)
 N.snowman(k, 17.2, 22.4)
 N.sled(k, 16.6, 25.0, col='#2a6ac0')
 
@@ -443,13 +443,13 @@ FIRS += [(3.0, 25.5, 2.7), (5.2, 28.0, 2.9), (2.2, 28.9, 2.6), (3.8, 29.8, 1.9),
          (44.6, 11.0, 2.6), (43.8, 18.2, 2.3)]
 for (x, r, h) in FIRS:
     HR.fir(k, x, r, h, rr=rr, solid=1.2 < x < 44.6 and r < 31.5)
-for (x, r) in ((7.4, 26.4), (14.6, 27.6), (18.0, 28.0), (27.4, 27.6), (33.6, 27.4), (2.0, 23.4), (42.8, 20.4), (6.2, 18.0),
+for (x, r) in ((7.4, 26.4), (14.6, 27.6), (18.0, 28.0), (27.4, 27.6), (33.6, 27.4), (2.0, 23.6), (42.8, 20.4),
                (27.3, 9.4), (36.6, 9.0), (1.8, 14.0), (44.2, 14.4)):
     HR.sapling(k, x, r, rr=rr)
-for (x, r, h) in ((15.2, 21.2, 2.3), (7.2, 24.8, 2.1), (25.6, 26.0, 2.5), (33.4, 18.6, 2.0), (2.2, 21.2, 2.2)):
+for (x, r, h) in ((15.2, 21.2, 2.3), (7.2, 24.8, 2.1), (33.4, 18.6, 2.0), (2.2, 21.2, 2.2)):
     HR.birch(k, x, r, h, rr=rr)
 for (x, r, b) in ((4.6, 26.6, False), (9.8, 26.2, True), (19.6, 26.6, False), (24.0, 25.6, True), (31.0, 27.0, False),
-                  (36.0, 25.2, True), (13.2, 13.4, False), (24.6, 22.2, False), (4.4, 22.6, True), (8.2, 17.6, False),
+                  (36.0, 25.2, True), (13.2, 13.4, False), (24.6, 22.2, False),
                   (34.6, 9.6, False), (37.8, 8.4, True), (16.2, 8.6, False), (27.4, 8.8, True), (6.6, 13.2, False)):
     HR.shrub(k, x, r, s=rr.uniform(0.8, 1.2), rr=rr, berries=b)
 HR.fence(k, [(-0.4, 31.0), (0.4, 30.6), (1.2, 30.3), (2.0, 30.0)], HZ)
@@ -463,6 +463,28 @@ HR.sled_tracks(k, [(9.8, 13.6), (11.0, 17.5), (14.8, 24.0), (16.6, 24.6)], HZ)
 for i in range(14):                                                               # fox tracks across the open snow
     x, r = 18.5 + i * 0.4, 27.0 - i * 0.16 + 0.1 * math.sin(i)
     k.blob(x, r, HZ(x, r) + 0.004, 0.03, 0.04, 0.01, ('#c4c9d2', 0.05), 'print', segs=5)
+
+# ---- the market huts on the street, the skate hut on the tarn, lamps and a fence round the ice ------------------------------------
+HR.market_hut(k, 4.2, 6.4, 17.5, 18.6, 'mulled', rr=random.Random(31))
+HR.market_hut(k, 7.2, 9.4, 17.5, 18.6, 'cheese', rr=random.Random(32))
+HR.market_hut(k, 35.2, 37.4, 17.4, 18.6, 'wreaths', rr=random.Random(33))
+HR.chalet(k, 2.9, 5.5, 21.2, 23.4, wall_h=1.5, rise=0.9, gable='front', door_x=4.2, windows=[], canopy=True, balcony=False,
+          gable_window=False, shutters='#2a4a3a', door_col='#3a5a4a', rr=random.Random(41))
+G.letters(k, 'SKATES', 'Righteous', 4.2, 23.46, 1.5, size=0.16, col='#c83a2e', lit=False)
+for (x, c) in ((3.25, '#e8e4dc'), (5.15, '#c83a2e')):                              # skates hung by their laces beside the door
+    for dx in (-0.07, 0.07):
+        k.box(x + dx - 0.05, 23.45, 0.7, x + dx + 0.05, 23.55, 0.9, (c, 0.1), 'skate_boot')
+        k.box(x + dx - 0.06, 23.47, 0.66, x + dx + 0.06, 23.53, 0.68, ('#c0c4cc', 0.1), 'skate_blade')
+for (x, r) in ((8.0, 19.8), (6.4, 25.4), (15.8, 24.2), (14.6, 18.4)):
+    W.lantern_post(k, x, r, h=1.9, energy=22)
+    k.blob(x + 0.28, r, 1.78, 0.12, 0.12, 0.04, (N.ROOF_SNOW, 0.05), 'lamp_snow', segs=6)
+W.bench(k, 9.0, 10.4, 25.95)
+k.blob(9.7, 26.05, 0.5, 0.55, 0.14, 0.05, (N.ROOF_SNOW, 0.05), 'bench_snow', segs=8)
+HR.fence(k, [(6.6, 25.2), (7.6, 25.55), (8.6, 25.7)], HZ)
+HR.fir(k, 16.0, 20.5, 2.4, rr=rr)
+HR.village_tree(k, 26.0, 25.8, rr=random.Random(51))                            # the village's tree, on the green's edge
+for (x, r) in ((19.0, 23.4), (23.0, 25.4)):                                      # lamps round the green (on tile lines: in nobody's way)
+    W.lantern_post(k, x, r, h=1.9, energy=22)
 
 # ---- the busy places: an après-ski terrace, the ski school, a sleigh waiting, children's things ---------------------------------
 HR.deck(k, 25.8, 17.7, 30.0, 19.9)                                                 # the terrace by the cocoa hut

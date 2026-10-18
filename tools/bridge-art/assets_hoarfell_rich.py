@@ -870,3 +870,73 @@ def deckchair(k, x, r, col='#2a6ac0'):
         k.box(x + dx - 0.02, r + dr - 0.02, 0, x + dx + 0.02, r + dr + 0.02, 0.26, ('#4e2e18', 0.1), 'lounger_leg')
     k.box(x - 0.2, r - 0.1, 0.3, x + 0.2, r + 0.12, 0.36, (col, 0.1), 'blanket')
     k.solid_post(x, r)
+
+
+def market_hut(k, x0, x1, r0, r1, goods='mulled', rr=None):
+    """An alpine market hut: plank walls, a front counter under a shutter propped open, a little gable roof deep in snow
+    with icicles, a garland of fir along the eave with red bows, lanterns, and its wares on the counter."""
+    rr = rr or k.rng
+    k.box(x0, r0, 0, x1, r1, 1.05, (LOG, 0.1), 'kiosk')
+    x = x0 + 0.1
+    while x < x1 - 0.05:                                                        # the planks
+        k.box(x, r1, 0.02, x + 0.015, r1 + 0.01, 1.0, (LOG_D, 0.1), 'plank_joint')
+        x += 0.22
+    k.box(x0 - 0.05, r1 - 0.05, 1.0, x1 + 0.05, r1 + 0.28, 1.08, (LOG_L, 0.1), 'counter')
+    k.box(x0 + 0.05, r1 - 0.02, 1.08, x1 - 0.05, r1 + 0.02, 1.62, ('#2a1808', 0.1), 'hatch')                # the dark inside
+    k.poly([(x0 - 0.05, r1 + 0.02, 1.62), (x1 + 0.05, r1 + 0.02, 1.62), (x1 + 0.05, r1 + 0.55, 1.95), (x0 - 0.05, r1 + 0.55, 1.95)],
+           (LOG_L, 0.1), 'shutter')
+    for xx in (x0 + 0.08, x1 - 0.12):
+        k.box(xx, r1 + 0.02, 1.0, xx + 0.05, r1 + 0.07, 1.65, (LOG_D, 0.1), 'kiosk_post')
+    xc = (x0 + x1) / 2
+    front_gable_roof(k, x0, x1, r0, r1, 1.65, 0.65, over=0.22, front_over=0.35, rr=rr)
+    k.poly([(x0, r1 + 0.03, 1.65), (x1, r1 + 0.03, 1.65), (xc, r1 + 0.03, 2.3)], (LOG_L, 0.08), 'gable')
+    with k.foliage('needle'):                                                  # a garland of fir along the eave
+        x = x0 - 0.1
+        while x < x1 + 0.1:
+            k.blob(x, r1 + 0.42, 1.92, 0.1, 0.07, 0.07, (shade('#2a4a32', rr.uniform(0.85, 1.1)), 0.15), 'garland', segs=6)
+            x += 0.13
+    for xx in (x0 + 0.1, xc, x1 - 0.1):
+        k.sphere(xx, r1 + 0.5, 1.88, 0.05, 0.05, '#c8202a', 'bow', segs=6)
+    W.lantern(k, x0 + 0.2, r1 + 0.45, 1.45, 1.7, s=0.06, energy=3)
+    W.lantern(k, x1 - 0.2, r1 + 0.45, 1.45, 1.7, s=0.06, energy=3)
+    z = 1.08
+    if goods == 'mulled':                                                       # a copper pot steaming, mugs, a jug
+        k.cyl(xc - 0.3, r1 + 0.12, z, z + 0.22, 0.17, ('#b86a3a', 0.1), 'pot', verts=12)
+        for i in range(4):
+            k.cyl(xc + 0.1 + i * 0.16, r1 + 0.14, z, z + 0.1, 0.045, (('#c83a2e', '#e8e4dc')[i % 2], 0.1), 'mug', verts=8)
+    elif goods == 'cheese':                                                     # wheels of cheese, a board, a knife
+        for i in range(3):
+            k.cyl(x0 + 0.35 + i * 0.4, r1 + 0.12, z, z + 0.12, 0.15, ('#e8c060', 0.1), 'cheese', verts=12)
+            k.cyl(x0 + 0.35 + i * 0.4, r1 + 0.12, z + 0.12, z + 0.13, 0.15, ('#c89a40', 0.1), 'cheese_rind', verts=12)
+    else:                                                                       # wreaths and baubles
+        for i in range(3):
+            cx = x0 + 0.35 + i * 0.45
+            for j in range(8):
+                a = j * math.tau / 8
+                k.sphere(cx + math.cos(a) * 0.12, r1 + 0.06, 1.35 + math.sin(a) * 0.12, 0.045, 0.04, ('#2a5a2e', 0.15), 'wreath', segs=6)
+            k.sphere(cx, r1 + 0.08, 1.23, 0.035, 0.035, '#c8202a', 'wreath_bow', segs=5)
+        for i in range(5):
+            k.sphere(x0 + 0.25 + i * 0.3, r1 + 0.14, z + 0.05, 0.05, 0.05, rr.choice(('#c8202a', '#e0b030', '#2a6ac0', '#e8e4dc')), 'bauble', segs=6)
+    k.solid(x0, r0, x1, r1)
+
+
+def village_tree(k, x, r, h=3.6, rr=None):
+    """The village's big fir, dressed: a star on top, baubles and a spiral of lights (they glow), presents under it."""
+    rr = rr or k.rng
+    fir(k, x, r, h, rr=rr)
+    k.cone(x, r, h * 1.0, h * 1.12, 0.12, 0.0, '#a07a10', 'star', emit=('#ffd860', 1.2), verts=5)
+    for i in range(34):                                                         # a spiral of lights down the tiers
+        t = i / 34
+        a = t * math.tau * 4 + 0.6
+        z = h * (0.9 - t * 0.72)
+        R = 0.64 * h / 2.6 * (1 - (z / h) * 0.85) + 0.05
+        k.sphere(x + math.cos(a) * R, r + math.sin(a) * R * 0.85, z, 0.035, 0.035, '#5a3a10', 'bulb', emit=('#ffd070', 1.4), segs=5)
+    for i in range(14):
+        a = rr.uniform(0, math.tau)
+        z = h * rr.uniform(0.2, 0.75)
+        R = 0.64 * h / 2.6 * (1 - (z / h) * 0.85) * 0.92
+        k.sphere(x + math.cos(a) * R, r + math.sin(a) * R * 0.85, z, 0.06, 0.06, (rr.choice(('#c8202a', '#e0b030', '#2a6ac0')), 0.05), 'bauble', segs=6)
+    for (dx, dr, c) in ((-0.5, 0.45, '#c8202a'), (0.35, 0.55, '#2a6ac0'), (0.6, 0.2, '#e0b030')):
+        k.box(x + dx - 0.15, r + dr - 0.12, 0, x + dx + 0.15, r + dr + 0.12, 0.22, (c, 0.1), 'present')
+        k.box(x + dx - 0.02, r + dr - 0.125, 0, x + dx + 0.02, r + dr + 0.125, 0.225, ('#f2ead6', 0.1), 'ribbon')
+    k.point_light(x, r + 0.8, h * 0.5, '#ffc070', 10, radius=0.3, group='flicker')
