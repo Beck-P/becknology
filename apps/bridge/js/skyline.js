@@ -360,13 +360,31 @@ var BridgeSkyline = (function () {
     }
     if (imgs.low) {
       var Lo = place('low', w, h, v, opts, 0.7, 1, railRow, true);
+      // further down and further off, between the towers' feet and the drop: the same roofs again, half the size, sinking
+      // into the haze (only where there's a gap to fill)
+      var gapTop = imgs.mid ? M.y + M.m.h : Lo.y;
+      if (Lo.y - gapTop > 16) {
+        var dh = Math.round(Lo.m.h / 2), dw = Math.round(Lo.m.w / 2);
+        var dy = Math.max(gapTop - 4, Lo.y - dh), dx = (((Math.round(Lo.x * 0.6)) % dw) + dw) % dw - dw;
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.5;
+        for (; dx < w; dx += dw) ctx.drawImage(imgs.low, dx, dy, dw, dh);
+        ctx.restore();
+        var dz = ctx.createLinearGradient(0, dy, 0, Lo.y);
+        dz.addColorStop(0, 'rgba(90,26,90,0.75)');
+        dz.addColorStop(1, 'rgba(40,10,50,0.35)');
+        ctx.fillStyle = dz;
+        ctx.fillRect(0, dy, w, Lo.y - dy);
+        traffic(ctx, w, dy + dh * 0.4, now + 3000, 2, 0.7);
+      }
       // the drop: dark first, then the roofs far below, haze over them
       ctx.fillStyle = '#0a0414';
       ctx.fillRect(0, Lo.y, w, h - Lo.y);
       blit(ctx, imgs.low, { x: Lo.x, y: Lo.y + 6, m: Lo.m, wrap: Lo.wrap }, w);
       var hz = ctx.createLinearGradient(0, Lo.y, 0, Lo.y + 90);
-      hz.addColorStop(0, 'rgba(60,16,70,0.85)');
-      hz.addColorStop(1, 'rgba(60,16,70,0.15)');
+      hz.addColorStop(0, 'rgba(60,16,70,0.6)');
+      hz.addColorStop(1, 'rgba(60,16,70,0.08)');
       ctx.fillStyle = hz;
       ctx.fillRect(0, Lo.y, w, h - Lo.y);
       traffic(ctx, w, Lo.y + 30, now + 9000, 2, 1.0);

@@ -34,8 +34,9 @@ by piece (`apps/bridge/CLAUDE.md`, *The Crimson and the Midnight seas, grown*).
 | Ask | Status | Where / notes |
 |---|---|---|
 | Morwen's tower grown: more floors that climb | **done** | The stillroom (her bed, the still, the black mirror, Idris Thorne's ghost in his ward circle) and the star chamber (the orrery of the seven worlds, the telescope, the scrying pool showing the Midnight Sea tonight). Ghosts drawn see-through (`ghost: true`). |
-| Crimson: a pirate port in a wreck-strewn cove (rogues' tavern, a fence, the pirates' slip), the volcano, a stormwatch tower | in progress | A new island in the Crimson's part of the chart. |
-| Midnight: a drowned village half under the water, a ghost ship to board at sea, more of its creatures | in progress | Saltmere (a new island in the Midnight Sea), the Gloaming. |
+| Crimson: a pirate port in a wreck-strewn cove (rogues' tavern, a fence, the pirates' slip), the volcano, a stormwatch tower | **done** | **Cinder Key** (`lumar-cinder`), its own island in the Crimson: the cove and boardwalk, wrecks, Scarlet Dee's harbour, Kettle's pirates' slip, Vesper Quick the fence (plunder off beaten pirates, sold only to her), a pirate crowd; **the Salt Rat** (Rook, Bones with Red Annis and Gash); **the stormwatch** (Wick's barometer board, the storm glass); **the Crater** up the trail (lava lake, ember imps and magma crabs, ember glass). Test `world/crimson.js`. |
+| Midnight: a drowned village half under the water, a ghost ship to board at sea, more of its creatures | **done** | **Saltmere** (`lumar-saltmere`), the drowned village: roofs out of the sea, plank walks, the chapel, Tobiah's ghost, the drowned who come up out of the water. **The Gloaming**, sailing a loop on the clock: board her alongside, her deck and Captain Marrow, spectres, back to your boat where you left it. The quest *The Gloaming's Light* ties them to Morwen's tower. Test `world/midnight.js`. |
+| Ways into the new places from Crimson Reach and Midnight Isle | open | Waits on the new-look rebuild of those islands (`claude/lumar-wild-rebuild`); added on top once it's on main. Cinder Key and Saltmere are reached by sea meanwhile. |
 
 ## October 17 (Look Book 2: "somewhere in between" — keep our 3D model world, swing bigger)
 | Ask | Status | Where / notes |

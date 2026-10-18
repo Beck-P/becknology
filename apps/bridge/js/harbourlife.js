@@ -42,7 +42,7 @@ var BridgeHarbourLife = (function () {
     'lumar-sapphire': { keep: [[36.4, 25, 37.7, 27.9], [39.3, 25, 40.7, 27.9]], merchant: 'm_brig', crane: [20, 24], stack: [19, 23], pick: [18, 23], store: [12, 21], max: 3,
                         sail: { at: [45, 22, 3, 1], who: [[44, 22, 'right']] }, nets: { at: [40, 23, 3], who: [[41, 22, 'down']] },
                         rope: { from: [20, 19], to: 31 } },
-    'lumar-rose':     { keep: [[19.6, 25.8, 22, 27.4]], max: 3, nets: { at: [20, 19, 2], who: [[21, 20, 'up']] } },
+    'lumar-rose':     { keep: [[19.6, 25.8, 22, 27.4]], max: 3, nets: { at: [23, 20, 2], who: [[22, 20, 'right']] } },   // on the shore by the pier
     'lumar-crimson':  { extra: 2, max: 2, nets: { at: [20, 32, 2], who: [[21, 33, 'up']] } }
   };
 
@@ -156,20 +156,46 @@ var BridgeHarbourLife = (function () {
       P('#9a8e72', [[R + 1, 3, 2, 1], [R + 1, 7, 2, 1], [R + 1, 11, 2, 1]]);
       P('#c8a040', [[6, 7, 1, 1]]); P('#6a6a70', [[9, 4, 3, 1]]);                                                     // a grommet, the palm and needle
     }); },
-    // a net heaped and spread to mend: a low tangle of mesh over the stones, the cork line looping across it, a float
-    net: function (w) { return sprite('net' + w, w * 16, 10, function (P) {
-      var W = w * 16;
+    // a net heaped to mend: a lumpy mound of mesh, lit on its upper left, folds shadowed between the lumps, and the end
+    // of it pulled out flat on the ground with the ground showing through the holes (that's what says "net"); the float
+    // line looping out of the tail and over the heap with its corks, a red-and-white buoy on the far shoulder. (It was a strip of mesh in a black outline, a slab: Beck, "what is this thing?"; then a flat-topped
+    // block of even mesh, still a slab.)
+    net: function (w) { return sprite('net3-' + w, w * 16, 13, function (P) {
+      var W = w * 16, bot = 12, tail = Math.round(W * 0.3), top = [], lo = [];
       for (var x = 0; x < W; x++) {
-        var top = 3 + Math.round(Math.sin(x * 0.42) * 1.2 + Math.sin(x * 1.1) * 0.6), bot = 9 - (x < 2 || x > W - 3 ? 1 : 0);
-        P(O, [[x, top - 1, 1, bot - top + 2]]);
-        if (x > 0 && x < W - 1) {
-          P('#33423a', [[x, top, 1, bot - top]]);
-          for (var y = top + 1; y < bot; y++) if ((x + y) % 3 === 0) P('#5e7464', [[x, y, 1, 1]]);
-          P('#4a5c50', [[x, top, 1, 1]]); P('#222c26', [[x, bot - 1, 1, 1]]);
+        if (x < tail) { top.push(bot - 3 + (Math.sin(x * 1.3) > 0.5 ? 1 : 0) + (x < 2 ? 1 : 0)); lo.push(bot - (Math.sin(x * 0.9 + 2) > 0.6 ? 1 : 0)); continue; }
+        var f = (x - tail + 0.5) / (W - tail), h = 2 + 7.5 * Math.pow(Math.sin(Math.PI * f), 0.8) + 1.3 * Math.sin(f * 11) + 0.6 * Math.sin(f * 23);
+        top.push(Math.round(bot - Math.max(2, h))); lo.push(bot);
+      }
+      var fold = function (x) { return x > tail + 1 && x < W - 2 && top[x] > top[x - 1] && top[x] > top[x + 1] - 0 && top[x] >= top[x + 1]; };
+      for (x = 0; x < W; x++) {
+        var t0 = top[x], heap = x >= tail, ht = Math.max(1, lo[x] - t0);
+        for (var y = t0; y <= lo[x]; y++) {
+          var twine = (x + y) % 3 === 0 || ((x - y) % 3 + 3) % 3 === 0, r = (lo[x] - y) / ht, rim = y === t0;
+          var lit = heap && r > 0.45 && x - tail < (W - tail) * 0.6;
+          if (!heap) {                                          // spread on the ground: twine, and the ground between
+            if (!twine && !rim) continue;
+            P(rim ? '#6e8a74' : '#5e7464', [[x, y, 1, 1]]);
+            continue;
+          }
+          var col = twine ? (rim || lit ? '#8aa48c' : r > 0.25 ? '#5e7464' : '#4a5c50')
+                          : (rim ? '#6e8a74' : r < 0.2 ? '#1e2822' : lit ? '#3a4a40' : '#2c3830');
+          if (fold(x) && !rim && r > 0.2) col = '#1e2620';     // a fold between two lumps
+          if (y === lo[x] && !twine) col = '#1c2420';            // its foot on the ground
+          P(col, [[x, y, 1, 1]]);
         }
       }
-      for (var k = 2; k < W - 2; k += 3) { var cy = 5 + Math.round(Math.sin(k * 0.3) * 1.5); P(O, [[k - 1, cy - 1, 3, 3]]); P(k % 6 === 2 ? '#c8402e' : '#e0c890', [[k, cy, 1, 1]]); }   // the corks
-      P(O, [[W - 6, 1, 5, 5]]); P('#c8402e', [[W - 5, 2, 3, 3]]); P('#e86a50', [[W - 5, 2, 1, 1]]);                       // a float
+      // the float line: out of the tail along the ground, then up and over the heap a unit under its top
+      var line = [];
+      for (x = 1; x < W - 5; x++) line.push([x, x < tail ? lo[x] - 1 : Math.min(bot - 1, top[x] + 1 + (x - tail < 3 ? 2 - (x - tail) * 0.7 : 0))]);
+      line.forEach(function (q) { P('#9a8458', [[q[0], Math.round(q[1]), 1, 1]]); });
+      for (var k = 2; k < line.length; k += 4) {               // the corks
+        var cx = line[k][0], cy = Math.round(line[k][1]);
+        P('#a8884a', [[cx, cy + 1, 2, 1]]); P('#e0c890', [[cx, cy, 2, 1]]); P('#f4e2b0', [[cx, cy, 1, 1]]);
+      }
+      var bx = W - 6, by = Math.min(bot - 4, top[W - 4] - 1);  // the buoy on the far shoulder, red and white
+      P('#3a1a14', [[bx + 1, by - 1, 2, 1], [bx, by, 1, 3], [bx + 3, by, 1, 3], [bx + 1, by + 3, 2, 1]]);
+      P('#c8402e', [[bx + 1, by, 2, 1], [bx + 1, by + 2, 2, 1]]); P('#f0e8dc', [[bx + 1, by + 1, 2, 1]]); P('#e86a50', [[bx + 1, by, 1, 1]]);
     }); },
     // the ropewalk's spinning wheel: a frame, the wheel, the hooks the yarn runs from
     // (f: how far it's turned) a spoked wheel on an A-frame trestle, the hooks the yarn runs from; you see through it

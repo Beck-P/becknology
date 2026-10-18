@@ -36,7 +36,7 @@ Ritzier as you go up. Each level has a tag on its signs (`L480`, `L200`, `L0`, `
   them) Lantern Row's way back is `THE NEON STREET` at (63, 11), arriving at [62, 11]; the spaceport's at
   (0, 11), arriving at [1, 11]. Lantern Row's roof shrine is its own world (`arcadia-oldquarter-shrine`), up `SHRINE STEPS` (8, 8).
 - `arcadia-skypad` east edge door (22, 8) `SKYBRIDGE · THE TERRACES` ⇄ `arcadia-terraces` west edge
-  (`SKYBRIDGE · SKYPORT 7`, back to `arcadia-skypad` `[21, 8]`). D re-renders Skyport 7 with the bridge.
+  (`SKYBRIDGE · SKYPORT 7`, back to `arcadia-skypad` `[27, 8]`). D re-renders Skyport 7 with the bridge. Fork B: the Terraces end is at (0, 19–20); arriving from Skyport 7, spawn `[2, 19]`.
 - Everything else by the transit below.
 
 ## Getting around (js/transit.js, D)

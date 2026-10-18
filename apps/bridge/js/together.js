@@ -175,7 +175,7 @@ var BridgeTogether = (function () {
   // the Royale's games are found together: playing any table (or a Royale Link terminal) finds Royale Link
   function foundKey(k) { return GAMES[k] && GAMES[k].casino ? 'runouts' : k; }
   var ROYALE = Object.keys(GAMES).filter(function (k) { return GAMES[k].casino; });
-  var TABLES = { fell: 'Fell Dice', anchor: 'Bones' };
+  var TABLES = { fell: 'Fell Dice', anchor: 'Bones', rat: 'Bones at the Salt Rat' };
   function stationTitle(k, it) {
     if (k === 'dice') return TABLES[it.table] || TABLES.fell;
     if (k === 'pachinko') { var m = typeof BridgePachinko !== 'undefined' && BridgePachinko.machines()[it.machine]; return 'Pachinko' + (m ? ' · ' + m.title : ''); }

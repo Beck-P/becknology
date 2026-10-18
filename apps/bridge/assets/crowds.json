@@ -7,6 +7,8 @@
   "lumar-rose":             { "n": 9,  "wardrobe": "rose",    "busy": "day" },
   "lumar-tern":             { "n": 7,  "wardrobe": "lumar",   "busy": "day", "spots": [[25, 14, "up"], [12, 17, "up"]] },
   "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
+  "lumar-cinder":           { "n": 14, "wardrobe": "pirates", "busy": "always" },
+  "lumar-cinder-tavern":    { "n": 6,  "wardrobe": "pirates", "busy": "night", "sit": 0.7 },
   "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day", "spots": [[30, 32, "down"], [26, 31, "down"], [39, 31, "down"], [47, 31, "down"]] },
   "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
   "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },
@@ -18,6 +20,9 @@
 
   "arcadia-street":         { "n": 26, "wardrobe": "arcadia", "busy": "bustle" },
   "arcadia-skywalk":        { "n": 12, "wardrobe": "arcadia", "busy": "bustle" },
+  "arcadia-terraces":       { "n": 26, "wardrobe": "midlevels", "busy": "bustle", "sit": 0.45, "pass": 0.4 },
+  "arcadia-atrium":         { "n": 16, "wardrobe": "midlevels", "busy": "bustle" },
+  "arcadia-jazz":           { "n": 10, "wardrobe": "midlevels", "busy": "bustle", "sit": 0.9, "adults": true },
   "arcadia-skypad":         { "n": 4,  "wardrobe": "arcadia", "busy": "bustle" },
   "arcadia-alley":          { "n": 4,  "wardrobe": "arcadia", "busy": "bustle" },
   "arcadia":                { "n": 8,  "wardrobe": "arcadia", "busy": "bustle" },
@@ -106,6 +111,17 @@
       "NICE JACKET. VINTAGE?",
       "THEY SAY THERE'S A WHOLE CITY UNDER THE STREETS. I SAY KEEP IT THERE."
     ],
+    "midlevels": [
+      "TWO HUNDRED FLOORS UP AND THE RENT'S STILL BELOW THE SMOG.",
+      "I TOOK THE LOOP ALL THE WAY ROUND TWICE. I FELL ASLEEP. IT'S VERY RESTFUL.",
+      "CIRRUS DOES A SOUR WITH A CLOUD ON TOP. I'M ON MY THIRD CLOUD.",
+      "ONE DAY I'LL TAKE THE SPIRE EXPRESS ALL THE WAY UP. TODAY I'M LOOKING AT IT.",
+      "THEY SAY YOU CAN SEE STARS ABOVE THE SMOG. I'VE SEEN PICTURES.",
+      "ODETTE'S ON TONIGHT AT MOONGLOW. IF YOU CAN GET IN, GET IN.",
+      "MY OFFICE IS ON TWO-THIRTY. I CAN SEE THE DISTRICT FROM MY DESK. I DON'T LOOK.",
+      "DON'T STAND ON THE GLASS PANELS IF YOU'VE HAD A SOUR. TRUST ME.",
+      "THE ATRIUM'S GOT A SHOP THAT ONLY SELLS UMBRELLAS. IT'S THE RICHEST SHOP IN THE TOWER."
+    ],
     "casino": [
       "DARLING, NOBODY WALKS INTO THE ROYALE BY ACCIDENT.",
       "I'M UP TWELVE HUNDRED. DON'T TELL MY HUSBAND. OR DO - HE'S DOWN THREE THOUSAND.",
@@ -160,6 +176,7 @@
     "crown":    [{ "id": "sea_glass", "pay": 26 }, { "id": "roseite", "pay": 40 }],
     "pirates":  [{ "id": "mug_of_ale", "pay": 14, "ask": "ANY {item}? I'D GIVE {pay} FOR IT. AND I'D OWE YOU." }],
     "arcadia":  [{ "id": "silver_nail", "pay": 20 }, { "id": "sea_glass", "pay": 30 }],
+    "midlevels": [{ "id": "honey", "pay": 30, "ask": "IS THAT REAL {item}? FROM A FARM? I'D PAY {pay}. NOBODY UP HERE HAS SEEN A BEE." }, { "id": "sea_glass", "pay": 34 }],
     "verdance": [{ "id": "bread", "pay": 14 }, { "id": "sea_glass", "pay": 24 }],
     "hoarfell": [{ "id": "roast_chestnuts", "pay": 20 }, { "id": "summit_crystal", "pay": 90 }],
     "sylvara":  [{ "id": "sea_glass", "pay": 30, "ask": "THE {item} FROM THE SPORE SEA - YOU WOULDN'T HAVE ONE? I'D TRADE {pay} FOR ITS LIGHT." }]

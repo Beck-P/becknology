@@ -50,11 +50,11 @@ var BridgeClock = (function () {
     [/^enigma/, 'enigma'], [/^singularity/, 'singularity'], [/^(bridge|quarters|hangar|gameroom|office|ship-[a-z]+)$/, 'ship']
   ];
   // under the open sky (the rest are indoors: their windows follow the time, their light doesn't)
-  var OUTDOOR = ['lumar', 'lumar-crimson', 'lumar-rose', 'lumar-sapphire', 'lumar-midnight', 'lumar-crown', 'lumar-holm',
+  var OUTDOOR = ['lumar', 'lumar-crimson', 'lumar-cinder', 'lumar-cinder-volcano', 'lumar-saltmere', 'lumar-gloaming', 'lumar-rose', 'lumar-sapphire', 'lumar-midnight', 'lumar-crown', 'lumar-holm',
     'lumar-tern', 'lumar-square', 'verdance', 'verdance-village', 'hoarfell', 'hoarfell-face', 'hoarfell-icestep',
     'hoarfell-park', 'hoarfell-piste', 'hoarfell-ridge', 'hoarfell-summit', 'sylvara',
     'arcadia-street', 'arcadia-skypad', 'arcadia-alley', 'arcadia-skywalk'];                // (Arcadia: always night, but it rains)
-  var EVER_NIGHT = /^lumar-midnight/;                         // the Midnight Isle never sees the sun
+  var EVER_NIGHT = /^lumar-(midnight|saltmere|gloaming)/;   // the Midnight Sea never sees the sun (the isle, Saltmere, the ghost ship)
 
   // ---- now, in Eastern time --------------------------------------------------------------------------------------------
   var fixedAt = null, warp = 1, warpFrom = 0;

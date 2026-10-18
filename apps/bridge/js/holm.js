@@ -338,7 +338,7 @@ var BridgeHolm = (function () {
   function legs(r) { return r.legs || [r]; }
   function risky(r) { return legs(r).some(function (l) { return DANGER[l.from] || DANGER[l.to]; }); }
   function path(r) { return [r.from].concat(legs(r).map(function (l) { return l.to; })).map(PORT_NAMES).join(' → '); }
-  var DANGER = { 'lumar-crimson': 0.35, 'lumar-midnight': 0.4, 'lumar-rose': 0.12, 'lumar-sapphire': 0.12 };
+  var DANGER = { 'lumar-crimson': 0.35, 'lumar-cinder': 0.38, 'lumar-midnight': 0.4, 'lumar-rose': 0.12, 'lumar-sapphire': 0.12 };
   // how long she's away: a leg is the better part of an hour and a half at sea, more for a big cargo or bad water
   // (voyages took minutes, and every ship could run the day's best route over and over)
   var VOYAGE = 6;
