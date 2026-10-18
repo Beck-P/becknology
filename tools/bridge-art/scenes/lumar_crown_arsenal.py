@@ -41,7 +41,7 @@ C45 = math.cos(math.radians(45))
 RW = (3.4, 5.0)            # the ropewalk (back, front)
 ROAD = (5.0, 8.6)          # the yard road in front of it
 MID = (10.4, 13.2)         # the middle row: sail loft, foundry, mast house, office
-DOCK = (16.0, 36.0, 20.6, 28.4)      # the dry dock (x0, x1, r0, r1), its floor far below
+DOCK = (16.0, 36.0, 20.6, 28.4)      # the dry dock (x0, x1, r0, r1), its floor sunk (only just: below the sea's level the game draws seawater)
 CHAN = (23.0, 29.0)        # the channel from the dock's caisson down to the harbour
 STOCKS_R = 24.0            # the ship of the line on the stocks
 QUAY = 32.2                # the harbour quay's face
@@ -162,7 +162,7 @@ for (x, r) in ((8.0, 20.0), (15.0, 20.0), (41.0, 20.6), (52.0, 20.4)):
 
 # ---- the dry dock and its man-of-war -----------------------------------------------------------------------------------------
 dx0, dx1, dr0, dr1 = DOCK
-FLOOR = -2.4
+FLOOR = -0.16    # above the sea (assets_coast.WZ, and its foam band): anything lower the game fills with seawater
 k.box(dx0, dr0, FLOOR - 0.1, dx1, dr1, FLOOR, ('#5e5a52', 0.2), 'floor_dock')
 for i in range(6):                                              # the altars: stone steps down the sides, all round
     t = i * 0.32
