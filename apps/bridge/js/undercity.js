@@ -224,6 +224,7 @@ var BridgeUndercity = (function () {
     if (!bout) return;
     var world = BridgeWorld.getWorld(), R = world.undercity && world.undercity.ring, rd = ROUNDS[bout.round];
     if (!R || !rd || BridgeWorld.getWorldId() !== bout.world) { bout = null; return; }
+    bout.waiting = false;
     sfx('bell');
     toast('The Pit', rd.name, 'Round ' + (bout.round + 1) + ' of 3 — ' + rd.pay + ' coins');
     rd.who.forEach(function (w, i) {
@@ -234,10 +235,12 @@ var BridgeUndercity = (function () {
   }
   function onKill(world, h) {
     if (h.pit && bout) {
+      if (bout.waiting) return;                              // this round's already won (a kill can be reported twice)
       var left = (world.interactions || []).filter(function (o) { return o !== h && o.type === 'hostile' && o.pit && o._hp > 0; });
       if (left.length) return;
       var rd = ROUNDS[bout.round];
       bout.paid += rd.pay;
+      bout.waiting = true;
       award(rd.pay, 'pit:round' + (bout.round + 1));
       sfx('coin');
       bout.round++;

@@ -145,7 +145,7 @@ const PLACES = ['arcadia-undercity', 'arcadia-hawker', 'arcadia-dive', 'arcadia-
     const foes = await ev(() => BridgeWorld.getWorld().interactions.filter(i => i.type === 'hostile' && i.pit).map(i => i.creature));
     console.log('the cage, round', round, ':', foes.join(','));
     if (!foes.length) { bad('no fighters in round ' + round); break; }
-    await ev(() => BridgeWorld.getWorld().interactions.filter(i => i.type === 'hostile' && i.pit).forEach(h => { h._hp = 0; BridgeInteractions.killHostile(BridgeWorld.getWorld(), h); BridgeCombat.onKill(BridgeWorld.getWorld(), h); }));
+    await ev(() => BridgeWorld.getWorld().interactions.filter(i => i.type === 'hostile' && i.pit).forEach(h => { h._hp = 0; BridgeInteractions.killHostile(BridgeWorld.getWorld(), h); BridgeCombat.onKill(BridgeWorld.getWorld(), h); }));   // reported twice on purpose: a round is won once
     await p.waitForTimeout(2600);
   }
   console.log('after three rounds: coins', await ev(() => window._coins), '· still in a bout?', await ev(() => !!BridgeUndercity._ring()));
