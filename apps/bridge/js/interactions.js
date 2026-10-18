@@ -436,7 +436,10 @@ var BridgeInteractions = (function () {
     var biz = typeof BridgeBusiness !== 'undefined' && BridgeBusiness.find(BridgeWorld.getWorldId(), inter.label);
     if (biz) { showBusiness(biz, inter); return; }
     // sit, sleep, look out of the window (js/actions.js) instead of a text box
-    if (inter.action && typeof BridgeActions !== 'undefined') { BridgeActions.run(inter); return; }
+    // (only its own actions: a module's interaction may carry an `action` of its own — the expedition's, the High Route's)
+    if (inter.action && typeof BridgeActions !== 'undefined' && (/^(sit|sleep|view)$/.test(inter.action) || inter.type === 'deck')) {
+      BridgeActions.run(inter); return;
+    }
     if (OWN[inter.type]) { OWN[inter.type](inter); return; }        // a type some module handles itself (register)
     switch (inter.type) {
       case 'app':

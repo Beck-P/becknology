@@ -23,6 +23,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   const go = (w, x, y) => ev((a) => new Promise(r => BridgeWorld.load(a[0], () => { BridgeState.transition('world', { worldId: a[0], spawn: a[1] != null ? { x: a[1], y: a[2] } : null }); r(); })), [w, x, y]);
   const here = () => ev(() => BridgeWorld.getWorldId());
   const dialog = () => ev(() => { const d = document.querySelector('.world-dialog'); return d ? d.innerText.replace(/\n+/g, ' / ').slice(0, 160) : 'none'; });
+  const settled = async () => { let a = '', b = await dialog(); for (let i = 0; i < 20 && a !== b; i++) { a = b; await p.waitForTimeout(250); b = await dialog(); } return b; };   // the typewriter done
   const close = async () => { for (let i = 0; i < 4 && await ev(() => !!document.querySelector('.world-dialog')); i++) { await p.keyboard.press('Escape'); await p.waitForTimeout(250); } };
   const pick = async (re) => { const ok = await ev((s) => { const r = [...document.querySelectorAll('.world-dialog .wd-sell-row.pick, .world-dialog button')].find(x => new RegExp(s, 'i').test(x.textContent)); if (r) r.click(); return !!r; }, re); await p.waitForTimeout(600); return ok; };
   const labels = () => ev(() => BridgeWorld.getWorld().interactions.map(i => i.label));
@@ -78,7 +79,7 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   check(await ev(() => (BridgeWorld.getWorld().expedition || {}).crevasses.length > 0), 'the glacier has a crevasse field');
   await use('CABANE BLEUE'); check(await waitWorld('hoarfell-hut-bleue'), 'into the Cabane Bleue');
   await use('ON TO THE COL'); await p.waitForTimeout(400);
-  check((await dialog()).includes('SLEEP'), 'Odile won\'t let you on without sleeping: ' + (await dialog()).slice(0, 50));
+  check((await settled()).includes('SLEEP'), 'Odile won\'t let you on without sleeping: ' + (await dialog()).slice(0, 50));
   await close();
   await ev(() => { BridgeTouring.state().slept['hoarfell-hut-bleue'] = 1; BridgeTouring.state().day = 2; });
   await use('ON TO THE COL'); check(await waitWorld('hoarfell-col'), 'over the Col du Vent (day 2)');
@@ -91,14 +92,14 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
   const hostiles = () => ev(() => BridgeWorld.getWorld().interactions.filter(i => i.type === 'hostile').map(i => i.creature));
   console.log('hoarfell-e: the valley\'s creatures', JSON.stringify(await hostiles()), '· yetis', await ev(() => BridgeWorld.getWorld().interactions.filter(i => i.type === 'yeti').length));
   await use('HOT SPRING'); await p.waitForTimeout(300);
-  check((await dialog()).includes('BATH'), 'a hot spring'); await close();
+  check((await settled()).includes('BATH'), 'a hot spring: ' + (await dialog()).slice(0, 60)); await close();
   for (const w of ['hoarfell-caves', 'hoarfell-monastery', 'hoarfell-heart']) {
     await go(w);
     console.log('hoarfell-e:', w, 'creatures', JSON.stringify(await hostiles()));
   }
   await go('hoarfell-monastery');
   await use('THE ICE GATE'); await p.waitForTimeout(300);
-  check((await dialog()).includes('SEALED'), 'the ice gate is sealed till the bell rings'); await close();
+  check((await settled()).includes('SEALED'), 'the ice gate is sealed till the bell rings'); await close();
   await ev(() => { const w = BridgeWorld.getWorld(); w.interactions = w.interactions.filter(i => i.type !== 'hostile'); });
   await use('THE BELL'); await p.waitForTimeout(300); await close();
   await use('THE ICE GATE'); await p.waitForTimeout(300); await pick('Go through');

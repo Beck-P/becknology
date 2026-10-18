@@ -137,8 +137,8 @@ sm = A.grand_chalet(k, 24.6, 34.4, 3.6, 8.6, wall_h=3.0, rise=1.7, door_x=29.5, 
 SMOKE.append(sm)
 k.box(26.8, 8.62, 3.05, 32.2, 8.66, 3.4, ('#3a2416', 0.05), 'sign_board')
 G.letters(k, 'ALPENHOF', 'CinzelDecorative-Bold', 29.5, 8.66, 3.08, size=0.28, col=A.GILT, lit=True, energy=3)
-for x in (25.4, 33.6):
-    A.urn_planter(k, x, 9.2)
+for x in (27.4, 31.6):                                                  # either side of the door, the way round the pool left open
+    A.urn_planter(k, x, 8.95)
 # the pool sits in a raised stone terrace (the shelf's snow is one sheet at z 0): a plinth round it, the water within
 for (a, b, c, d) in ((24.2, 10.0, 34.8, 10.6), (24.2, 13.6, 34.8, 14.2), (24.2, 10.6, 24.8, 13.6), (34.2, 10.6, 34.8, 13.6)):
     k.box(a, b, 0.0, c, d, 0.5, ('#a8a4ac', 0.12), 'terrace_wall')
@@ -165,9 +165,9 @@ for (x, r) in ((42.6, 6.6), (36.0, 5.0), (43.4, 12.4)):
 # ---- the promenade: lamps, benches facing the view, a coin telescope -------------------------------------------------------------
 for x in (3.0, 11.0, 19.0, 27.0, 35.0, 42.0):
     W.lantern_post(k, x, 15.2, h=2.3, energy=28)
-for (x0, x1) in ((8.0, 9.6), (14.0, 15.6), (31.6, 33.2), (37.6, 39.2)):
-    A.bench_iron(k, x0, x1, 19.0)
-    k.solid(x0, 18.8, x1, 19.2)
+for (x0, x1) in ((9.6, 11.2), (17.6, 19.2), (28.4, 30.0), (40.8, 42.4)):   # backed onto the balustrade, never across a way down
+    A.bench_iron(k, x0, x1, 18.3)
+    k.solid(x0, 18.1, x1, 18.5)
 # a stone balustrade along the promenade's south side, open where the ways go down to the terrace and the station
 for (xa, xb) in ((0.6, 4.6), (7.8, 13.6), (16.0, 21.6), (24.8, 26.0), (27.4, 31.0), (34.8, 37.0), (39.6, 43.6)):
     A.balustrade(k, xa, 18.75, xb, 18.75, h=0.5)
@@ -206,7 +206,7 @@ for xx in (1.5, 6.3):
     k.box(xx - 0.06, 20.85, 0.06, xx + 0.06, 20.97, 2.2, ('#4a2a18', 0.06), 'post')
 k.box(1.6, 20.95, 1.72, 6.2, 21.0, 2.1, ('#3a2416', 0.05), 'sign_board')
 G.letters(k, 'APRES-SKI', 'Righteous', 3.9, 21.0, 1.78, size=0.24, col='#ffd890', lit=True, energy=3)
-k.solid(1.5, 19.8, 6.3, 20.9)
+k.solid(1.5, 20.0, 6.3, 20.9)
 for (x, r) in ((8.0, 21.2), (10.6, 21.4), (8.6, 23.0)):
     A.fondue_table(k, x, r, cloth='#e8dcc8', check=False)
     A.bistro_chair(k, x - 0.55, r - 0.1)
@@ -217,7 +217,7 @@ for x in (6.8, 11.8):
 k.solid(1.2, 23.6, 12.6, 23.8)
 
 # ---- the station ------------------------------------------------------------------------------------------------------------
-rm_s, zr_s = N.chalet(k, 19.6, 26.8, 19.8, 22.6, wall_h=2.0, rise=1.3, door_x=23.2, windows=[(20.6, 0.85), (25.8, 0.85)], chimney=26.0)
+rm_s, zr_s = N.chalet(k, 19.6, 26.8, 20.05, 22.6, wall_h=2.0, rise=1.3, door_x=23.2, windows=[(20.6, 0.85), (25.8, 0.85)], chimney=26.0)
 SMOKE.append(screen(25.9, rm_s - 0.15, zr_s + 0.7))
 k.box(21.0, 22.62, 1.95, 25.4, 22.68, 2.3, ('#2a4a3a', 0.05), 'sign_board')
 G.letters(k, 'FELLHAVEN', 'CinzelDecorative-Bold', 23.2, 22.68, 1.98, size=0.24, col=A.GILT, lit=True, energy=2)

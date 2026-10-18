@@ -179,6 +179,10 @@ var BridgeTouring = (function () {
     if (!data || !data.interactions) return;
     if (worldId === 'hoarfell-aurelle' && !data.interactions.some(function (i) { return i.action === 'guides'; })) {
       data.interactions.push({ x: 9, y: 17, type: 'touring', action: 'guides', label: 'BUREAU DES GUIDES', prompt: 'PRESS E TO ASK' });
+      // Mathis himself, at his door (people.json `mathis`)
+      data.interactions.push({ x: 8, y: 17, type: 'dialog', label: 'MATHIS', prompt: 'PRESS E TO TALK', dialog: 'MATHIS ROUX, GUIDE.' });
+      if (data.scene) (data.scene.actors = data.scene.actors || []).push({ sheet: 'npc-mathis', x: 8, y: 17, facing: 'down' });
+      if (data.collisions && data.collisions[17]) data.collisions[17][8] = 1;
     }
     var H = HUTS[worldId];
     if (H && !data.interactions.some(function (i) { return i.action === 'next'; })) {

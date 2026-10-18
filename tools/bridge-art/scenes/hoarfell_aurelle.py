@@ -388,7 +388,7 @@ w['interactions'] = [
     {'x': 21, 'y': 9, 'type': 'aurelle', 'label': 'LA TERRASSE', 'prompt': 'PRESS E TO SIT'},
     {'x': 35, 'y': 9, 'type': 'aurelle', 'label': 'FIRE PIT', 'prompt': 'PRESS E TO WARM UP'},
     {'x': 20, 'y': 12, 'type': 'aurelle', 'label': 'SLEIGHS', 'prompt': 'PRESS E TO RIDE'},
-    {'x': 28, 'y': 16, 'type': 'aurelle', 'label': 'THE GREAT FIR', 'prompt': 'PRESS E TO LOOK'},
+    {'x': 28, 'y': 19, 'type': 'aurelle', 'label': 'THE GREAT FIR', 'prompt': 'PRESS E TO LOOK'},
     {'x': 28, 'y': 11, 'type': 'aurelle', 'label': 'ICE SWAN', 'prompt': 'PRESS E TO LOOK'},
     {'x': 6, 'y': 12, 'type': 'ski_here', 'label': 'SKI-IN', 'prompt': 'PRESS E TO SKI'},
     {'x': 5, 'y': 22, 'type': 'lift', 'label': 'CHAIRLIFT', 'prompt': 'PRESS E TO RIDE', 'from': 'aurelle'},
