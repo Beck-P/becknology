@@ -122,6 +122,8 @@ var BridgeWorkshop = (function () {
                              thanks: '...FRESH. FOR THAT: THE SERPENT\'S SCALES, LAPPED LIKE A FISH\'S ON A HULL. THE ROCKS SLIDE OFF THEM. SO DOES EVERYTHING ELSE.' }] },
     aldous:    { sells: [['glass', 11], ['copper_sheet', 32]] },
     tern_pell: { sells: [['rope', 12]], plans: [['greenheart_rod', 180], ['tide_pearl', 900]] },
+    rigg:      { sells: [['sailcloth', 30], ['rope', 13]] },
+    mudlark:   { sells: [['sea_glass', 9, 4], ['silver_nail', 7, 6]] },
     keeper:    { favours: [{ r: 'storm_compass', want: { sapphire_crystal: 2 },
                              ask: 'THE LIGHT KNOWS FOG BETTER THAN ANY OF US. THERE\'S A WAY TO BIND A COMPASS TO IT - MY GRANDMOTHER\'S. BRING ME TWO SAPPHIRE CRYSTALS FOR THE LENS AND I\'LL DRAW IT FOR YOU.',
                              thanks: 'CLEAR AS THE NIGHT IT WAS CUT. HERE: MOONGLASS FOR THE NEEDLE, SONGSTONE IN THE BOWL, AND THE CARD READ BY THE LIGHT, NOT THE STARS. FOG WON\'T HOLD YOUR SHIPS AGAIN.' }] },

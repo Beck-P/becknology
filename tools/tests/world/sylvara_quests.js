@@ -33,6 +33,10 @@ const OUT = process.argv[2] || '/tmp';
     const at = await p.evaluate((l) => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === l); return [i.x, i.y]; }, label);
     await talk(at[0], at[1] + 1, want);
   };
+  // what was said, once it's typed out (a fixed wait read it half-typed where the frames run slow: a big wood in a
+  // software-drawn headless browser)
+  const said = async () => { await p.waitForFunction(() => !document.querySelector('.world-dialog.typing'), null, { timeout: 15000 }).catch(() => {});
+    return p.evaluate(() => (document.querySelector('.world-dialog') || {}).innerText || ''); };
   const has = (k) => p.evaluate((k) => BridgeQuests.has(k), k);
   const card = () => p.evaluate(() => !!document.getElementById('item-get'));
   const carried = () => p.evaluate(() => BridgeKeyItems.carried().map(i => i.id).join(','));
@@ -40,7 +44,7 @@ const OUT = process.argv[2] || '/tmp';
   // ---- The Queen's Favour, out of order: the ribbon before anyone's said a word about it ----
   await go('sylvara', [6, 18]);
   await use(6, 18);
-  const found = await p.evaluate(() => (document.querySelector('.world-dialog') || {}).innerText || '');
+  const found = await said();
   if (!/GREEN SILK/.test(found)) fail('the willow didn\'t give up the ribbon first thing: ' + found.slice(0, 80));
   if (await card()) fail('the ribbon card came up over the willow\'s words');
   await shut(); await p.waitForTimeout(900);
@@ -88,8 +92,8 @@ const OUT = process.argv[2] || '/tmp';
   await talk(11, 6, 'Something on your mind?');
   if (!await has('under-the-willow/invite')) fail('the queen wasn\'t told: the Moonwell, at dusk');
   await go('sylvara', [6, 18]);
-  await use(6, 18); await p.waitForTimeout(6000);                  // (the moment types itself out)
-  const moment = await p.evaluate(() => (document.querySelector('.world-dialog') || {}).innerText || '');
+  await use(6, 18);
+  const moment = await said();                                       // (the moment types itself out)
   if (!/FINALLY/.test(moment)) fail('no moment at the willow');
   await shut(); await p.waitForTimeout(800);
   if (!await has('under-the-willow')) fail('Under the Willow not done');

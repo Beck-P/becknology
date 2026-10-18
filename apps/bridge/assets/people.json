@@ -5330,6 +5330,215 @@
       }
     ]
   },
+  "rigg": {
+    "name": "Wenna Rigg",
+    "role": "Sailmaker, Guild Row",
+    "sheet": "npc-sailmaker",
+    "at": [
+      {
+        "world": "lumar-crown-canals",
+        "label": "SAILMAKER"
+      }
+    ],
+    "greet": "MIND THE CANVAS - IT'S A MAINSAIL FOR THE ADMIRALTY AND IT'S ONLY HALF HEMMED. RIGG AND DAUGHTERS. I'M THE DAUGHTERS.",
+    "again": "BACK ON GUILD ROW? SIT ON THE BENCH, NOT THE SAIL.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "MY GRANDFATHER CUT SAILS FOR THE SOVEREIGN. MY MOTHER CUT THEM FOR THE QUEEN-REGENT'S BARGE. I CUT THEM FOR WHOEVER PAYS, WHICH IS MOSTLY FISHERMEN, WHICH IS HOW I LIKE IT. FISHERMEN SAY THANK YOU."
+      },
+      {
+        "q": "Sailcloth and rope",
+        "a": "CANVAS BY THE BOLT, ROPE BY THE COIL, FOR YOUR OWN WORKSHOP. CHEAPER THAN THE ROSE ISLES, AND I WON'T PRETEND IT'S SILK.",
+        "workshop": "rigg"
+      },
+      {
+        "q": "Guild Row",
+        "a": "SAILS, CHARTS, INSTRUMENTS, BARRELS, ROPE. A SHIP NEEDS ALL OF US BEFORE SHE NEEDS A CAPTAIN. TELL THAT TO A CAPTAIN AND WATCH HIS FACE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "OLD BRASSWORTH NEXT DOOR HAS BUILT A CLOCK THAT KEEPS LUMAR'S HOURS AT SEA. EIGHT HOURS ROUND THE FACE. HE WON'T SHUT UP ABOUT IT. GO AND LET HIM TELL YOU, IT'LL MAKE HIS WEEK."
+      }
+    ]
+  },
+  "penn": {
+    "name": "Marisol Penn",
+    "role": "Chartmaker, Guild Row",
+    "sheet": "npc-chartmaker",
+    "at": [
+      {
+        "world": "lumar-crown-canals",
+        "label": "CHARTMAKER"
+      }
+    ],
+    "greet": "DON'T BREATHE ON THAT ONE, THE INK'S WET. A NEW COASTLINE OFF THE SAPPHIRE ISLES - THE SEA MOVED A HEADLAND AGAIN.",
+    "again": "AH, THE CAPTAIN. ANY SOUNDINGS FOR ME?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I TRAINED UNDER ILSA VENN'S AUNT IN THE MARKET SQUARE, AND THEN I CAME TO THE CAPITAL WHERE THE ADMIRALTY PAYS IN GOLD AND COMPLAINS IN WRITING."
+      },
+      {
+        "q": "Sea charts",
+        "a": "EVERY SEA I'VE DRAWN, AND I'VE DRAWN THEM ALL. ONCE A SEA'S ON YOUR CHART, YOU CAN SET A COURSE FOR ANY ISLAND IN IT.",
+        "charts": true
+      },
+      {
+        "q": "The sixth sea",
+        "a": "EVERY CHARTMAKER HAS A DRAWER WITH A SIXTH SEA IN IT. MINE IS EMPTY PAPER WITH A COMPASS ROSE IN THE CORNER. ONE DAY SOMEBODY WILL BRING ME SOMETHING TO PUT ON IT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE FISHING FLEET TELLS ME MORE THAN THE ADMIRALTY. OUT AT DAWN, HOME AT DUSK, AND THEY KNOW EVERY ROCK BY ITS FIRST NAME."
+      }
+    ]
+  },
+  "brassworth": {
+    "name": "Oswin Brassworth",
+    "role": "Instrument maker, Guild Row",
+    "sheet": "npc-instrument",
+    "at": [
+      {
+        "world": "lumar-crown-canals",
+        "label": "INSTRUMENT MAKER"
+      }
+    ],
+    "greet": "COME IN, COME IN, DON'T TOUCH THE ORRERY. SEXTANTS, COMPASSES, TELESCOPES - AND THE FINEST CHRONOMETER ON THE FIVE SEAS, IF I SAY SO MYSELF. I DO SAY SO.",
+    "again": "AH! YOU'RE BACK. HAS IT DRIFTED? IT HASN'T DRIFTED.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "FIFTY YEARS OF BRASS AND GLASS. THE CHAPELS RING LUMAR'S HOURS, YES, BUT A CHAPEL BELL DOESN'T COME TO SEA WITH YOU. SO I MADE ONE THAT DOES."
+      },
+      {
+        "q": "The chronometer",
+        "a": "EIGHT HOURS ROUND THE FACE: LUMAR'S DAY. GIMBALLED IN BRASS, SPRUNG IN SEA-STEEL, WOUND ONCE A WEEK. KEEP IT ON YOU AND YOU'LL ALWAYS KNOW THE HOUR ON THE SEAS.",
+        "outfit": "brassworth"
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE OBSERVATORY ON THE HILL SAYS THE SPORES WILL BLOOM AGAIN SOON. THE WHOLE SEA LIGHTS UP, YOU KNOW. A NIGHT OR TWO A MONTH. I SET MY TELESCOPE ON THE ROOF AND LOOK DOWN INSTEAD OF UP."
+      }
+    ]
+  },
+  "crier": {
+    "name": "Barnaby Toll",
+    "role": "Town crier, the Old Town",
+    "sheet": "npc-crier",
+    "at": [
+      {
+        "world": "lumar-crown-oldtown",
+        "label": "TOWN CRIER"
+      }
+    ],
+    "greet": "OYEZ, OYEZ! HEAR YE - OH, IT'S JUST ONE OF YOU. OYEZ ANYWAY. I'M PAID BY THE OYEZ.",
+    "again": "OYEZ! THE NEWS, THE NEWS, A COPPER FOR THE NEWS! NO? FREE TO YOU, THEN.",
+    "topics": [
+      {
+        "q": "The news",
+        "a": "THE LANTERN THEATRE HAS A NEW PLAY EVERY EVENING! THE CROWN'S REGATTA SAILS ON FRIDAYS! A CAT NAMED ADMIRAL IS MISSING AND IS, I AM TOLD, ON THE ROOF OF THE OLD KEEP, LOOKING SMUG!"
+      },
+      {
+        "q": "The Old Town",
+        "a": "THE OLDEST STONES IN CROWNHAVEN! THE KEEP, THE WALL, THE WELL. THE HARBOUR CAME LATER, THE PALACE LATER STILL. THE NEW TOWN THINKS IT'S VERY GRAND. THE NEW TOWN IS THREE HUNDRED YEARS OLD."
+      },
+      {
+        "q": "The districts",
+        "a": "NORTH GATE FOR THE CANALS AND GUILD ROW, AND THE FUNICULAR UP TO THE HILL! THE BRIDGE GATE FOR THE OLD BRIDGE OVER THE HARBOUR MOUTH! THE LAND GATE FOR THE HARBOUR AND THE GRAND SQUARE! ALL ROADS LEAD TO SOMEWHERE THAT SELLS PIES!"
+      }
+    ]
+  },
+  "harrow": {
+    "name": "Commodore Harrow",
+    "role": "Master of the Royal Naval Academy",
+    "sheet": "npc-academy",
+    "at": [
+      {
+        "world": "lumar-crown-hill",
+        "label": "ACADEMY MASTER"
+      }
+    ],
+    "greet": "STAND STRAIGHT. NO - STRAIGHTER. HMM. YOU HAVE THE LOOK OF SOMEONE WHO'S SAILED HER OWN BOAT. THE CADETS COULD LEARN FROM THAT, THOUGH I WON'T TELL THEM SO.",
+    "again": "BACK ON THE HILL. THE MAST IS THERE IF YOU WANT TO SHOW MY CADETS HOW IT'S DONE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "THIRTY YEARS ON THE CROWN'S QUARTERDECKS, TWELVE TEACHING CHILDREN WHICH END OF A SHIP IS THE FRONT. THE SECOND IS HARDER."
+      },
+      {
+        "q": "The cadets",
+        "a": "UP THE RATLINES AT DAWN, OUT ALONG THE YARDS, DOWN AGAIN BEFORE THE BELL. THEN KNOTS, THEN STARS, THEN GUNNERY, THEN BED. THEY ALL WANT TO SAIL THE CRIMSON. HALF OF THEM WILL."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE ARSENAL HAS A FIRST-RATE ON THE STOCKS. THE SOVEREIGN II. THE QUEEN-REGENT WANTS HER LAUNCHED FOR THE REGATTA. THE SHIPWRIGHTS WANT ANOTHER TWO YEARS. THE SHIPWRIGHTS WILL WIN."
+      }
+    ]
+  },
+  "ione": {
+    "name": "Dr Ione Vesper",
+    "role": "Astronomer Royal, the Observatory",
+    "sheet": "npc-astronomer",
+    "at": [
+      {
+        "world": "lumar-crown-hill",
+        "label": "ASTRONOMER"
+      }
+    ],
+    "greet": "SHH. NO - IT'S ALL RIGHT, THE STAR CAN'T HEAR YOU. I JUST LIKE TO BE QUIET WITH THEM. COME AND LOOK.",
+    "again": "AH, MY FELLOW STARGAZER. THE SKY'S CLEAR TONIGHT, OR IT WILL BE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I KEEP THE CROWN'S TIME AND THE CROWN'S STARS. EVERY CHART PENN DRAWS IS FIXED BY A STAR I MEASURED. SHE NEVER THANKS ME. I NEVER THANK HER. IT'S A VERY HAPPY ARRANGEMENT."
+      },
+      {
+        "q": "The spore bloom",
+        "a": "A NIGHT OR TWO EACH MONTH THE SPORES IN THE SEA ALL WAKE AT ONCE AND THE WHOLE OCEAN LIGHTS UP - EMERALD HERE, BLUE OFF SAPPHIRE, ROSE IN THE ROSE ISLES. I TURN THE TELESCOPE DOWN FOR IT. IT'S THE ONLY TIME THE SEA OUTSHINES THE SKY."
+      },
+      {
+        "q": "The telescope",
+        "a": "THE BRASS ONE ON THE TERRACE IS FOR VISITORS. USE IT. THE GREAT ONE IN THE DOME IS FOR ME, AND FOR THE QUEEN-REGENT ON HER BIRTHDAY, AND FOR NOBODY ELSE, EVER, SO DON'T ASK."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMETHING CROSSED THE MOON LAST WEEK THAT WASN'T A BIRD OR A CLOUD. IT WAS SHAPED LIKE A SHIP. THE ADMIRALTY SAYS I'M TIRED. I AM TIRED. IT WAS STILL A SHIP."
+      }
+    ]
+  },
+  "mudlark": {
+    "name": "Gull Molly",
+    "role": "Mudlark, the Stilts",
+    "sheet": "npc-mudlark",
+    "at": [
+      {
+        "world": "lumar-crown-stilts",
+        "label": "MUDLARK"
+      }
+    ],
+    "greet": "MIND THE HEAP. EVERYTHING IN IT CAME OUT OF THE HARBOUR MUD WITH MY OWN TWO HANDS, AND EVERYTHING IN IT'S FOR SALE. EXCEPT THE BOOT. THE BOOT'S MINE.",
+    "again": "BACK FOR MORE TREASURE? THE TIDE BROUGHT IN SOMETHING SHINY THIS MORNING.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "BORN ON THE STILTS, RAISED ON THE STILTS, WILL DIE ON THE STILTS, PROBABLY FALLING OFF ONE. LOW TIDE I'M IN THE MUD UNDER THE QUAY. HIGH TIDE I'M SELLING WHAT I FOUND."
+      },
+      {
+        "q": "Your finds",
+        "a": "SEA GLASS - THE GREEN'S FROM THE CROWN'S OWN WINDOWS, SMASHED IN THE STORM OF '12. SILVER NAILS OFF A WRECK NOBODY REMEMBERS. GO ON, HAVE A ROOT.",
+        "workshop": "mudlark"
+      },
+      {
+        "q": "The Stilts",
+        "a": "UP THERE THEY'VE GOT THE PALACE AND THE EXCHANGE AND THE THEATRE. DOWN HERE WE'VE GOT THE UNDERTOW, THE BEST FRIED FISH IN CROWNHAVEN, AND NOBODY TELLING US TO WIPE OUR FEET."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE FISHING FLEET COMES IN UNDER THE QUAY AT DUSK AND THE CATCH GOES UP FOR AUCTION. GET THERE EARLY AND YOU'LL SEE THE AUCTIONEER CHEAT. GET THERE LATE AND YOU'LL SEE HIM GET CAUGHT."
+      }
+    ]
+  },
   "rose_seren": {
     "name": "Seren Halloway",
     "role": "Weaves spore silk in Rosewell's groves",

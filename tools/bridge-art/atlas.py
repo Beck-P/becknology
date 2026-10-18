@@ -47,6 +47,7 @@ EXTRA = [
     ('arcadia-spires', 'arcadia-members', ['THE ORRERY'], 'door'),            # js/spires.js: members, by introduction or bought
     ('arcadia-casino', 'arcadia-casino-vip', ['THE CROWN ROOM'], 'door'),     # js/worlds/casino.js: the rope opens for poker winners
     ('lumar-crown', 'lumar-crown-palace', ['PALACE GATE'], 'door'),           # js/crown.js
+    ('lumar-crown', 'lumar-crown-oldtown', ['THE OLD TOWN'], 'door', 3, 21),   # js/capital.js: Crownhaven's districts
     ('lumar-rose-mine', 'lumar-rose-mine-a', ['THE LIFT'], 'lift'),           # js/mine.js: the floors below
     ('lumar-rose-mine-a', 'lumar-rose-mine', ['LADDER UP'], 'lift'),
     ('hoarfell', 'hoarfell-summit', ['CHAIRLIFT'], 'lift'),                   # js/worlds/hoarfell.js
