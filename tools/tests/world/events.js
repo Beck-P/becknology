@@ -13,6 +13,9 @@ const CASES = [
   ['auction', 'lumar-tern', 28, 18, '2026-10-14T03:20', 20],
   ['celebrity', 'arcadia-street', 46, 11, '2026-10-14T21:00', 40],
   ['parcel', 'arcadia-street', 30, 11, '2026-10-14T21:00', 30],
+  ['collection', 'arcadia-undercity', 30, 14, '2026-10-14T21:00', 40],
+  ['surge', 'arcadia-undercity', 40, 23, '2026-10-14T21:00', 30],
+  ['stirring', 'arcadia-sump', 60, 30, '2026-10-14T21:00', 20],
   ['brownout', 'arcadia-street', 20, 11, '2026-10-14T21:00', 22],
   ['chase', 'arcadia-street', 22, 11, '2026-10-14T21:00', 4],
   ['hijack', 'arcadia-street', 22, 11, '2026-10-14T21:00', 6],
@@ -26,6 +29,9 @@ const CASES = [
   ['sleigh', 'hoarfell', 22, 18, '2026-10-14T09:00', 14, ['hoarfell', 'clear']],
   ['snowball', 'hoarfell', 18, 23, '2026-10-14T03:00', 10, ['hoarfell', 'clear']],
   ['aurora', 'hoarfell', 21, 22, '2026-10-14T11:40', 20, ['hoarfell', 'clear']],
+  ['fireworks', 'hoarfell-aurelle', 28, 18, '2026-10-14T11:40', 30, ['hoarfell', 'clear']],
+  ['aurelle_sleigh', 'hoarfell-aurelle', 30, 14, '2026-10-14T03:00', 12, ['hoarfell', 'clear']],
+  ['nightskate', 'hoarfell-promenade', 17, 16, '2026-10-14T11:40', 20, ['hoarfell', 'clear']],
   ['lanterns', 'sylvara', 15, 21, '2026-10-14T18:40', 34, ['sylvara', 'clear']],
   ['stag', 'sylvara', 18, 16, '2026-10-14T22:00', 34, ['sylvara', 'clear']],
   ['bard', 'sylvara', 17, 15, '2026-10-14T15:00', 12, ['sylvara', 'clear']],
@@ -90,6 +96,7 @@ const CASES = [
     if (id === 'brawl') { await use('THE BRAWL'); await pick('Break it up'); did = (await dialog()).slice(0, 100) + ' · ale ' + await ev(() => BridgeInventory.getCount('mug_of_ale')); }
     if (id === 'auction') { await use('THE CATCH AUCTION'); await pick('Bid'); did = (await dialog()).slice(0, 110); }
     if (id === 'celebrity') { did = 'star at ' + await ev(() => JSON.stringify(BridgeWorld.getWorld().interactions.filter(i => i.label === 'THE STAR').map(i => [i.x, i.y]))); await ev(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE STAR'); if (i) BridgeInteractions.execute(i); }); await p.waitForTimeout(500); did += ' ' + (await dialog()).slice(0, 80) + ' · autograph ' + await ev(() => BridgeInventory.getCount('autograph')); }
+    if (id === 'collection') { await use('THE SAINTS'); did = (await dialog()).slice(0, 120) + ' → coins ' + await ev(() => window._coins) + ' · broth ' + await ev(() => BridgeInventory.getCount('roo_broth')); }
     if (id === 'parcel') { await ev(() => BridgeEvents._force('parcel', 95)); await p.waitForTimeout(2200); did = 'loot on the street ' + await ev(() => typeof BridgeLoot !== 'undefined' && BridgeLoot.count ? BridgeLoot.count() : '?'); }
     if (id === 'hen') { const h = await ev(() => { const r = BridgeEvents._running()[0]; return null; }); await ev(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE HEN'); if (i) BridgeCharacter.init(i.x, i.y + 1); }); await p.waitForTimeout(150); await ev(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE HEN'); if (i) BridgeInteractions.execute(i); }); await p.waitForTimeout(500); did = (await dialog()).slice(0, 100) + ' · eggs ' + await ev(() => BridgeInventory.getCount('egg')); }
     if (id === 'mailcoach') { await ev(() => { const i = BridgeWorld.getWorld().interactions.find(i => i.label === 'THE MAIL COACH'); if (i) BridgeInteractions.execute(i); }); await p.waitForTimeout(500); await p.keyboard.press('e'); await p.waitForTimeout(250); did = (await dialog()).slice(0, 120); }

@@ -35,7 +35,7 @@ DOOR = (15.0, 17.0)
 CYAN, ICE = Y.CYAN, '#bff4ff'
 k = Kit(COLS, ROWS, margin_top=10.5, margin_bottom=0.6, margin_x=0.4, seed=4242)
 rng = k.rng
-FLOORS = (0.0, 3.0, 6.0, 9.0, 12.0)
+FLOORS = (0.0, 3.6, 6.6, 9.6, 12.6)        # a tall ground storey, so its shops show under the first gallery
 TOP = 14.6
 
 # ---- the floor: white marble with a dark border and an inlaid star under the fountain --------------------------------
@@ -54,10 +54,15 @@ for (a, b) in ((0.4, DOOR[0]), (DOOR[1], 31.6)):
 k.box(DOOR[0], FR, -0.01, DOOR[1], FR + 0.55, 0.02, ('#3a4258', 0.06), 'threshold')
 
 
-def shop(x0, x1, z, col, sign_col, name=None, font='Righteous', goods=True):
-    """A shopfront on the back wall at height z: a lit window, a doorway, a sign over it."""
+def shop(x0, x1, z, col, sign_col, name=None, font='Righteous', goods=True, rf=None):
+    """A shopfront at height z, its front at row rf (the back wall unless said): a lit window, a doorway, a sign over it.
+    Forward of the wall, the shop's room behind it is a box glowing in its own colour."""
+    RF_ = globals()['RF']                      # (RF below is this front's own row)
+    RF = rf if rf is not None else RF_
+    if RF > RF_:
+        k.box(x0, RF_, z, x1, RF, z + 2.3, shade(col, 0.3), 'shop_room', emit=(col, 0.2))
     k.box(x0, RF, z + 0.05, x1, RF + 0.04, z + 2.2, ('#141822', 0.05), 'shop_frame')
-    k.box(x0 + 0.1, RF + 0.04, z + 0.2, x1 - 0.1, RF + 0.05, z + 2.0, shade(col, 0.5), 'shop_window', emit=(col, 0.75))
+    k.box(x0 + 0.1, RF + 0.04, z + 0.2, x1 - 0.1, RF + 0.05, z + 2.0, shade(col, 0.38), 'shop_window', emit=(col, 0.45))
     dx = (x0 + x1) / 2
     k.box(dx - 0.45, RF + 0.04, z + 0.05, dx + 0.45, RF + 0.06, z + 1.9, shade(col, 0.35), 'shop_door', emit=(col, 0.5))
     if goods:
@@ -74,10 +79,74 @@ def shop(x0, x1, z, col, sign_col, name=None, font='Righteous', goods=True):
 
 
 # ---- the ground floor's shops (the ones you can go up to) ----------------------------------------------------------------
-shop(2.0, 7.4, 0.0, '#a0e0ff', ICE, 'NOVA', 'Audiowide')
-shop(8.0, 12.8, 0.0, '#ffd0e0', '#ff9ac8', 'PETAL & WIRE', 'PoiretOne')
-shop(19.2, 24.0, 0.0, '#ffe0b0', '#ffd890', 'PAGES', 'IMFellEnglishSC')
-shop(24.6, 30.0, 0.0, '#c8f0d8', '#80e0b0', None)
+# The first gallery overhangs the back wall by GD, so from the camera's 45° a front on the wall itself is hidden under it.
+# The ground floor's shops come forward a tile instead, recessed under the gallery: a lit room behind a glass front at
+# SF, its sign a lightbox hung from the gallery's lip, its light spilling out over the marble.
+GD = 1.8                                                                # how far each gallery comes out
+SF = RF + 1.25           # forward enough to show under the gallery's lip, short of row 5 (still walkable)
+
+
+def ground_shop(x0, x1, col, sign_col, name, font, goods, shut=False):
+    dx = (x0 + x1) / 2
+    k.box(x0, RF, 0.0, x1, SF, 0.02, ('#3a3440', 0.06), 'floor_shop')                       # the shop's own floor
+    k.box(x0, RF, 0.0, x1, RF + 0.04, 3.3, shade(col, 0.45), 'shop_back', emit=(col, 0.35 if not shut else 0.08))
+    for xs in (x0, x1 - 0.12):                                                           # piers either side
+        k.box(xs, RF, 0.0, xs + 0.12, SF + 0.06, 3.38, ('#c8ccd4', 0.04), 'shop_pier')
+    k.box(x0, SF - 0.04, 2.3, x1, SF + 0.06, 3.38, ('#141822', 0.05), 'shop_fascia')
+    if shut:                                                                             # a roller shutter, a poster on it
+        for i in range(12):
+            z = 0.1 + i * 0.18
+            k.box(x0 + 0.12, SF - 0.02, z, x1 - 0.12, SF + 0.02, z + 0.15, ('#4a5060', '#444a58')[i % 2], 'shutter')
+        k.box(dx - 0.5, SF + 0.02, 0.7, dx + 0.5, SF + 0.03, 1.7, '#e8e4dc', 'poster', emit=('#c8f0d8', 0.25))
+        S.letters(k, 'SOON', 'RussoOne', dx, SF + 0.04, 1.05, size=0.22, col='#2a8a6a', energy=2)
+    else:
+        for i, gx in enumerate(goods):                                                   # what's in the window
+            g = gx[0]
+            k.box(x0 + g - 0.22, RF + 0.3, 0.0, x0 + g + 0.22, RF + 0.75, 0.55, ('#e8e4dc', 0.04), 'display_plinth')
+            gx[1](x0 + g, RF + 0.52, 0.55)
+        k.box(x0 + 0.12, SF - 0.01, 0.06, x1 - 0.12, SF + 0.01, 2.3, ('#bfe8f8', 0.02), 'shop_glass', emit=(col, 0.06))
+        for xs in [x0 + 0.12 + (x1 - x0 - 0.24) * t / 3 for t in (1, 2)]:               # mullions
+            k.box(xs - 0.02, SF, 0.06, xs + 0.02, SF + 0.04, 2.3, '#c8ccd4', 'mullion')
+        k.box(dx - 0.42, SF, 0.0, dx + 0.42, SF + 0.05, 2.2, shade(col, 0.4), 'shop_door', emit=(col, 0.3))
+        k.box(dx - 0.02, SF + 0.05, 0.9, dx + 0.02, SF + 0.08, 1.3, '#c8a050', 'door_handle')
+    # the sign, hung from the gallery's lip where it shows
+    k.box(dx - 1.6, RF + GD - 0.24, 2.78, dx + 1.6, RF + GD - 0.06, 3.32, ('#0e1018', 0.05), 'shop_sign_box')
+    for xs in (dx - 1.3, dx + 1.3):
+        k.cyl(xs, RF + GD - 0.15, 3.32, 3.4, 0.015, '#c8ccd4', 'sign_hanger', verts=4)
+    k.box(dx - 1.5, RF + GD - 0.06, 2.84, dx + 1.5, RF + GD - 0.05, 3.26, shade(sign_col, 0.25), 'shop_sign_face',
+          emit=(sign_col, 0.25 if not shut else 0.1))
+    if name:
+        S.letters(k, name, font, dx, RF + GD - 0.04, 2.91, size=0.3, col=sign_col, energy=7)
+    k.point_light(dx, RF + 0.5, 1.6, col, 30 if not shut else 4, radius=0.6, group='lamp')    # the shop lit inside
+    k.point_light(dx, SF + 0.9, 0.5, col, 16 if not shut else 0, radius=0.5, group='lamp')     # its light on the marble
+    k.solid(x0, RF, x1, RF + 1.0)                       # the shop's own row; the one in front stays walkable
+
+
+def _tech(x, r, z):
+    k.box(x - 0.16, r - 0.02, z, x + 0.16, r + 0.02, z + 0.26, '#0a1824', 'gadget', emit=('#5cc8d0', 0.7))
+    k.box(x - 0.18, r - 0.08, z, x + 0.18, r + 0.08, z + 0.02, '#c8ccd4', 'gadget_stand')
+
+
+def _visor(x, r, z):
+    k.blob(x, r, z + 0.18, 0.18, 0.1, 0.16, ('#c8ccd4', 0.02), 'gadget_head', segs=10)
+    k.box(x - 0.16, r + 0.06, z + 0.16, x + 0.16, r + 0.1, z + 0.24, '#141018', 'gadget_visor', emit=('#ff70c0', 0.8))
+
+
+def _bouquet(x, r, z):
+    E.vase_of_flowers(k, x, r, z, s=0.7, col='#e8e4dc', kind=('rose', 'white')[int(x * 7) % 2])
+
+
+def _books(x, r, z):
+    for i, c in enumerate(('#8a2a2a', '#2a4a6a', '#c8a050', '#3a5a3a', '#5a2a5a')):
+        h = 0.2 + (i * 37 % 5) * 0.03
+        k.box(x - 0.18 + i * 0.075, r - 0.1, z, x - 0.12 + i * 0.075, r + 0.1, z + h, c, 'book')
+    k.box(x - 0.2, r + 0.1, z, x + 0.2, r + 0.13, z + 0.06, '#e8e0c8', 'book_open')
+
+
+ground_shop(2.0, 7.4, '#a0e0ff', ICE, 'NOVA', 'Audiowide', ((1.2, _tech), (2.2, _visor), (4.3, _tech)))
+ground_shop(8.0, 12.8, '#ffd0e0', '#ff9ac8', 'PETAL & WIRE', 'PoiretOne', ((0.9, _bouquet), (1.8, _bouquet), (3.9, _bouquet)))
+ground_shop(19.2, 24.0, '#ffe0b0', '#ffd890', 'PAGES', 'IMFellEnglishSC', ((0.9, _books), (1.8, _books), (3.9, _books)))
+ground_shop(24.6, 27.9, '#c8f0d8', '#80e0b0', None, None, (), shut=True)
 # the concierge's desk in the middle of the back wall, the directory screen behind it, the level
 k.box(13.2, RF, 0.0, 18.8, RF + 0.04, 2.3, ('#1a1e2a', 0.05), 'concierge_wall')
 k.box(13.6, RF + 0.04, 0.6, 18.4, RF + 0.06, 2.1, '#0a1824', 'directory', emit=('#1a4a6a', 0.6))
@@ -108,7 +177,7 @@ for j, z in enumerate(FLOORS[1:], 1):
             w = 31.0 - x
         if w > 1.6:
             col = ('#ffd890', '#a0e0ff', '#ff9ad0', '#c8f0d8', '#ffc070', '#d0b0ff', '#ffe8c8')[(i + j * 3) % 7]
-            shop(x, x + w - 0.2, z, col, rng.choice((Y.PINK, CYAN, Y.YEL, '#c080ff', ICE)))
+            shop(x, x + w - 0.2, z, col, rng.choice((Y.PINK, CYAN, Y.YEL, '#c080ff', ICE)), rf=RF + GD - 0.45)
         x += w
         i += 1
     for x in (5.0, 11.0, 16.0, 21.0, 27.0):                                # a figure at the rail here and there

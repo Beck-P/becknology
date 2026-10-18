@@ -430,16 +430,22 @@ var BridgeLit = (function () {
   // Snow is shaded from the light passes alone: the sun's share of the light decides lit or shade (measured against the
   // best-lit snow this hour, so a low dawn or evening sun still reads as lit), the sky pass gives the hollows, the hour
   // gives the colours — pink-gold where the sun lands at either end of the day, a cool blue-grey in the shade, white and
-  // blue at noon, blue under the lamps at night. A trodden lane is a touch darker and cooler; ice leans the same colours
-  // toward blue. Everything else keeps its colours with a warm lean where the sun lands and a cool one in the shade.
+  // blue at noon, blue under the lamps at night. The snow keeps its own tones as flat steps (a piste's corduroy in two,
+  // powder a touch cooler); a trodden lane is a step darker and cooler; ice (pale, or blue-green) leans the same colours
+  // toward blue — grey-blue rock is rock. Everything else keeps its colours with a warm lean where the sun lands and a
+  // cool one in the shade.
   var ICE_LIT = rgbn('#c4e2f2'), ICE_SH = rgbn('#6c90b6');
   function snowAt(A, F, p) {                           // the snow's own lightness at a pixel (0: not snow)
     var ar = A[p], ag = A[p + 1], ab = A[p + 2], al = 0.3 * ar + 0.59 * ag + 0.11 * ab;
     if (al < 195 || Math.max(ar, ag, ab) - Math.min(ar, ag, ab) > 46) return 0;    // pale rock stays rock
     var f = F[p + 2];
     if (f & 8) return 0;                                                          // the open water
-    if (f & 48) return ab - ar > 18 ? 0 : al;                                     // the ground and the roofs (ice is bluish: ice)
+    if (f & 48) return ab - ar > 22 ? 0 : al;                                     // the ground and the roofs (ice is bluer: ice)
     return ab - ar < 20 ? al : 0;                                                 // white things on objects, not the bluish ice
+  }
+  function iceAt(A, p) {                               // pale bluish ice, or darker blue-green ice (grey-blue rock isn't)
+    var ar = A[p], ag = A[p + 1], ab = A[p + 2], al = 0.3 * ar + 0.59 * ag + 0.11 * ab;
+    return ab - ar > 18 && al > 120 && (al >= 180 || ag - ar > 14);
   }
   function shareAt(G, Lt, p) {                         // the sun's share of the light at a pixel
     var i0 = Lt.i0, i1 = Lt.i1;
@@ -460,8 +466,19 @@ var BridgeLit = (function () {
         if (al > 190) { sum += al; n++; }
         if (al > 200) bright.push(i);
       }
-      var step = Math.max(1, Math.ceil(bright.length / 40000));
-      G.snow = sn; G.snowRef = n ? sum / n : 230;
+      var step = Math.max(1, Math.ceil(bright.length / 40000)), ref = n ? sum / n : 230;
+      // each snow pixel's own tone against fresh snow, a quarter stronger (sunlit snow is near white, so the paint's own
+      // steps would hardly show), in flat steps of 0.02 from 0.9 to 1.06 — the tones within a shade of fresh snow are
+      // fresh snow — stored as 1 + step + 9 x how much bluer than the palette's snow it is; a trodden lane, under 0.92
+      // of fresh snow, is 255
+      for (i = 0; i < N; i++) {
+        if (!sn[i]) continue;
+        var q = sn[i] / ref, p4 = i * 4, d = q - 1;
+        if (q < 0.92) { sn[i] = 255; continue; }
+        d = Math.abs(d) < 0.012 ? 0 : d * 1.25;
+        sn[i] = 1 + Math.round(clamp(1 + d, 0.9, 1.06) * 50) - 45 + 9 * clamp(A[p4 + 2] - A[p4] - 14, 0, 8);
+      }
+      G.snow = sn; G.snowRef = ref;
       G.snowSample = bright.filter(function (v, k) { return k % step === 0; });
     }
     // the best-lit snow this hour (the 95th percentile of the sun's share)
@@ -591,16 +608,18 @@ var BridgeLit = (function () {
         }
         if (hf) {
           var share = Math.min(1, sunL / lum), sal = G.snow[i], lt = -1, hk;
-          if (sal || (!(fl & 8) && A[p + 2] - A[p] > 18 && 0.3 * A[p] + 0.59 * A[p + 1] + 0.11 * A[p + 2] > 120)) {
+          if (sal || (!(fl & 8) && iceAt(A, p))) {
             lt = smooth(0.3, 0.78, share / hf.norm) * hf.sunUp * (0.35 + 0.65 * hf.wf);
             lt = lt > 0.62 ? 1 : lt > 0.25 ? 0.5 : 0;
           }
-          if (sal) {                                   // snow: fresh or trodden, lit or in shade, the hollows a step down
+          if (sal) {                                   // snow: its own tone or trodden, lit or in shade, the hollows a step down
             var rel = clamp(0.72 + 0.28 * skyL, 0.62, 1.04);
             rel = rel > 0.95 ? 1 : rel > 0.82 ? 0.9 : 0.78;
-            var lane = sal / G.snowRef < 0.92, tone = (lane ? 0.87 : 1) * rel, HL = hf.lit, HS2 = hf.sh;
+            var lane = sal === 255, sk2 = sal - 1, cool = lane ? 0 : (sk2 / 9) | 0;
+            var tone = (lane ? 0.87 : (45 + sk2 % 9) / 50) * rel, HL = hf.lit, HS2 = hf.sh;
             r = (HS2[0] + (HL[0] - HS2[0]) * lt) * tone; g = (HS2[1] + (HL[1] - HS2[1]) * lt) * tone; bl = (HS2[2] + (HL[2] - HS2[2]) * lt) * tone;
             if (lane) { r *= 0.97; bl *= 1.03; }
+            else if (cool) { r *= 1 - 0.003 * cool; bl *= 1 + 0.0035 * cool; }
             if (LP) { hk = Lt.lamp * 0.85; r += DEC[LP[p]] * hk * 0.9; g += DEC[LP[p + 1]] * hk * 0.8; bl += DEC[LP[p + 2]] * hk * 0.55; }
           } else if (lt >= 0) {                        // ice: the snow's colours leaned blue, its marks kept
             var mark = clamp((0.3 * A[p] + 0.59 * A[p + 1] + 0.11 * A[p + 2]) / 205, 0.62, 1.12), IL = hf.iceLit, IS = hf.iceSh;

@@ -261,6 +261,11 @@ var BridgeItems = (function () {
     if (!(w && w.remote) && !(w && w.dot) && typeof BridgeCodex !== 'undefined' && BridgeCodex.bonus('gear')) dmg = Math.round(dmg * 1.05);   // tools and weapons, all found
     var F = typeof BridgeFight !== 'undefined' ? BridgeFight : null, follow = F && !(w && w.remote) && F.follower(target);
     if (typeof target._hp !== 'number') target._hp = target.maxHP || 50;
+    // a creature's own armour (js/combat.js kinds: a rime beetle's shell, the wyrm under the snow) takes its share first
+    if (!(w && (w.remote || w.dot)) && target.creature && typeof BridgeCombat !== 'undefined' && BridgeCombat.guard) {
+      dmg = BridgeCombat.guard(world, target, dmg, w);
+      if (dmg <= 0) return;
+    }
     target._hp -= dmg;
     var dot = w && w.dot;
     if (!dot) target._hitAt = performance.now();
@@ -582,6 +587,40 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#1a1028', [[5, 5, 6, 7], [6, 4, 4, 9]]);
     px(ctx, x, y, u, '#8a60e0', [[6, 6, 4, 5]]); px(ctx, x, y, u, '#d8c8ff', [[7, 7, 2, 2]]); px(ctx, x, y, u, '#c0a0ff', [[7, 2, 1, 2], [9, 3, 1, 1]]);
   }
+  // Hoarfell's hidden valley (js/valley.js): what its creatures leave
+  function peltIcon(ctx, x, y, s) {               // a folded pelt, white-blue fur
+    var u = s / 16;
+    px(ctx, x, y, u, '#121a26', [[2, 5, 12, 8], [4, 4, 8, 1], [3, 13, 3, 1], [10, 13, 3, 1]]);
+    px(ctx, x, y, u, '#8aa0c0', [[3, 6, 10, 6]]); px(ctx, x, y, u, '#c8d8ec', [[3, 6, 10, 3], [4, 12, 2, 1], [10, 12, 2, 1]]);
+    px(ctx, x, y, u, '#f0f8ff', [[4, 6, 3, 1], [9, 7, 2, 1]]);
+  }
+  function shellIcon(ctx, x, y, s) {              // a domed plate of blue shell, rime on its ridge
+    var u = s / 16;
+    px(ctx, x, y, u, '#0e1622', [[3, 5, 10, 8], [5, 4, 6, 1]]);
+    px(ctx, x, y, u, '#2a4a6a', [[4, 6, 8, 6]]); px(ctx, x, y, u, '#4a7aa8', [[5, 6, 6, 3]]); px(ctx, x, y, u, '#e8f8ff', [[7, 5, 2, 1], [6, 7, 1, 1]]);
+    px(ctx, x, y, u, '#1a2a3a', [[7, 9, 2, 3]]);
+  }
+  function wingIcon(ctx, x, y, s) {               // a bat's wing, the membrane between its fingers
+    var u = s / 16;
+    px(ctx, x, y, u, '#0e1220', [[2, 3, 2, 9], [4, 4, 3, 8], [7, 5, 3, 6], [10, 6, 3, 4], [13, 6, 1, 2]]);
+    px(ctx, x, y, u, '#4a6a9a', [[3, 4, 1, 7], [5, 5, 2, 6], [8, 6, 2, 4], [11, 7, 2, 2]]); px(ctx, x, y, u, '#7ab0d8', [[5, 5, 1, 3], [8, 6, 1, 2]]);
+  }
+  function coreIcon(ctx, x, y, s) {               // a golem's heart: a cyan glow in a fist of ice
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1420', [[4, 4, 8, 9], [3, 6, 10, 5]]);
+    px(ctx, x, y, u, '#5a8ab0', [[4, 6, 8, 5], [5, 5, 6, 7]]); px(ctx, x, y, u, '#a8e8ff', [[6, 7, 4, 3]]); px(ctx, x, y, u, '#ffffff', [[7, 8, 2, 1]]);
+  }
+  function essenceIcon(ctx, x, y, s) {            // a stoppered phial of pale cold light
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1018', [[5, 6, 6, 8], [6, 3, 4, 3]]);
+    px(ctx, x, y, u, '#5a4a3a', [[6, 3, 4, 2]]); px(ctx, x, y, u, '#9ae8ff', [[6, 7, 4, 6]]); px(ctx, x, y, u, '#e8fcff', [[7, 8, 1, 3]]);
+  }
+  function scaleIcon(ctx, x, y, s) {              // a great blue-white scale, iridescent at the edge
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1220', [[4, 2, 8, 11], [5, 13, 6, 1], [3, 4, 10, 7]]);
+    px(ctx, x, y, u, '#3a6a9a', [[4, 4, 8, 7], [5, 3, 6, 9]]); px(ctx, x, y, u, '#8ac8ec', [[6, 3, 4, 6]]); px(ctx, x, y, u, '#e8f8ff', [[7, 4, 1, 3]]);
+    px(ctx, x, y, u, '#a080e0', [[11, 6, 1, 3]]);
+  }
   function shellKeyIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#0a1210', [[3, 3, 6, 6], [8, 5, 6, 2], [11, 7, 1, 3], [13, 7, 1, 2]]);
@@ -813,6 +852,66 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#f4f0e8', [[2, 6, 6, 6], [9, 3, 5, 5]]);
     px(ctx, x, y, u, '#c01a24', [[3, 7, 1, 1], [6, 10, 1, 1], [4, 9, 1, 1], [11, 5, 1, 1], [10, 4, 1, 1], [12, 6, 1, 1]]);
   }
+  // ---- Arcadia below (js/undercity.js): skewers, a cup, a glass, scrap, a board, chrome, a pearl ----------------------------
+  function underSkewerIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#c8b890', [[2, 13, 12, 1], [3, 12, 1, 1]]);
+    px(ctx, x, y, u, '#2a1a10', [[3, 9, 3, 3], [7, 8, 3, 3], [11, 7, 3, 3]]);
+    px(ctx, x, y, u, '#a05a30', [[4, 9, 2, 2], [8, 8, 2, 2], [12, 7, 2, 2]]); px(ctx, x, y, u, '#e0a050', [[4, 9, 1, 1], [8, 8, 1, 1], [12, 7, 1, 1]]);
+    px(ctx, x, y, u, '#c8b890', [[2, 12, 1, 1], [6, 11, 1, 1], [10, 10, 1, 1], [14, 8, 1, 1]]);
+  }
+  function underCupIcon(liquid, cup) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#2a1a10', [[3, 5, 9, 1], [3, 6, 1, 7], [11, 6, 1, 7], [4, 13, 7, 1], [12, 7, 2, 1], [13, 8, 1, 3], [12, 11, 2, 1]]);
+      px(ctx, x, y, u, cup, [[4, 6, 7, 7]]); px(ctx, x, y, u, liquid, [[4, 6, 7, 2]]);
+      px(ctx, x, y, u, 'rgba(240,240,255,0.6)', [[6, 1, 1, 3], [9, 2, 1, 2]]);
+    };
+  }
+  function underGlassIcon(drink, foam) {
+    return function (ctx, x, y, s) {
+      var u = s / 16;
+      px(ctx, x, y, u, '#2a1a10', [[4, 2, 1, 12], [11, 2, 1, 12], [5, 14, 6, 1]]);
+      px(ctx, x, y, u, drink, [[5, 4, 6, 10]]); px(ctx, x, y, u, foam, [[5, 2, 6, 2]]);
+      px(ctx, x, y, u, 'rgba(255,255,255,0.5)', [[6, 5, 1, 7]]);
+    };
+  }
+  function scrapIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#1a1410', [[2, 6, 9, 7], [8, 3, 6, 6]]);
+    px(ctx, x, y, u, '#6a3a22', [[3, 7, 7, 5]]); px(ctx, x, y, u, '#8a8a90', [[9, 4, 4, 4]]); px(ctx, x, y, u, '#b0b0b8', [[9, 4, 4, 1]]);
+    px(ctx, x, y, u, '#c87a40', [[4, 8, 2, 1], [7, 10, 2, 1]]);
+  }
+  function circuitIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1a10', [[2, 3, 12, 10]]); px(ctx, x, y, u, '#1e6a3a', [[3, 4, 10, 8]]);
+    px(ctx, x, y, u, '#141418', [[6, 6, 4, 4]]); px(ctx, x, y, u, '#e8c040', [[4, 5, 2, 1], [10, 9, 2, 1], [4, 10, 1, 1], [11, 5, 1, 1], [5, 7, 1, 2]]);
+  }
+  function chromeIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#14161a', [[3, 4, 10, 4], [10, 3, 4, 10]]);
+    px(ctx, x, y, u, '#a8b0b8', [[4, 5, 8, 2], [11, 4, 2, 8]]); px(ctx, x, y, u, '#e8f0f8', [[4, 5, 8, 1], [11, 4, 1, 8]]);
+    px(ctx, x, y, u, '#5a6068', [[10, 5, 2, 2]]);
+  }
+  function sumpPearlIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a2020', [[5, 4, 6, 8], [4, 5, 8, 6]]);
+    px(ctx, x, y, u, '#60c0b0', [[5, 5, 6, 6]]); px(ctx, x, y, u, '#a8f0e0', [[6, 5, 3, 2]]); px(ctx, x, y, u, '#ffffff', [[6, 5, 1, 1]]);
+  }
+  function filletIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0a1a18', [[2, 6, 12, 5]]); px(ctx, x, y, u, '#3a8a7a', [[3, 7, 10, 3]]); px(ctx, x, y, u, '#e8a0a0', [[4, 8, 8, 1]]);
+  }
+  function knuckleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#14100c', [[2, 5, 12, 6]]); px(ctx, x, y, u, '#b8c0c8', [[3, 6, 10, 4]]);
+    px(ctx, x, y, u, '#e8f0f8', [[3, 6, 2, 1], [6, 6, 2, 1], [9, 6, 2, 1]]); px(ctx, x, y, u, '#ff7a2a', [[12, 9, 1, 1]]);
+  }
+  function heartIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#14100c', [[3, 4, 4, 2], [9, 4, 4, 2], [2, 5, 12, 4], [3, 9, 10, 2], [5, 11, 6, 2], [7, 13, 2, 1]]);
+    px(ctx, x, y, u, '#c89a30', [[4, 5, 3, 1], [9, 5, 3, 1], [3, 6, 10, 3], [4, 9, 8, 2], [6, 11, 4, 1]]); px(ctx, x, y, u, '#60ffd0', [[7, 7, 2, 2]]);
+  }
   function fizzIcon(ctx, x, y, s) {
     var u = s / 16;
     px(ctx, x, y, u, '#2a1a3a', [[4, 3, 8, 1], [4, 4, 1, 9], [11, 4, 1, 9], [5, 13, 6, 1]]);
@@ -998,6 +1097,47 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#f0c860', [[3, 7, 10, 1]]); px(ctx, x, y, u, '#ffe8a0', [[5, 7, 3, 1]]);
     px(ctx, x, y, u, '#8a8a94', [[10, 1, 1, 7]]); px(ctx, x, y, u, '#d8b070', [[9, 1, 3, 2]]);
     px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[5, 3, 1, 3], [7, 2, 1, 3]]);
+  }
+  // Hoarfell's grander side (js/alpine.js): Aurelle's bars, the pâtisserie, the stübli
+  function vinIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1018', [[4, 5, 7, 9], [11, 7, 2, 4]]); px(ctx, x, y, u, '#8a1a2a', [[5, 6, 5, 7]]);
+    px(ctx, x, y, u, '#c84a3a', [[5, 6, 2, 3]]); px(ctx, x, y, u, '#e8a040', [[8, 5, 2, 2]]); px(ctx, x, y, u, '#5a3a10', [[9, 3, 1, 3]]);
+    px(ctx, x, y, u, 'rgba(240,240,250,0.7)', [[6, 1, 1, 3], [10, 1, 1, 2]]);
+  }
+  function champagneIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2a10', [[3, 3, 10, 1], [3, 3, 1, 4], [12, 3, 1, 4], [4, 7, 8, 1], [7, 8, 2, 5], [5, 13, 6, 1]]);
+    px(ctx, x, y, u, '#f0d070', [[4, 4, 8, 3]]); px(ctx, x, y, u, '#fff4c0', [[5, 4, 3, 1]]);
+    px(ctx, x, y, u, '#e8eef4', [[8, 8, 1, 5], [6, 13, 4, 1]]); px(ctx, x, y, u, '#ffffff', [[6, 5, 1, 1], [9, 5, 1, 1], [10, 4, 1, 1]]);
+  }
+  function macaronIcon(ctx, x, y, s) {
+    var u = s / 16;
+    [[2, 8, '#e898b0', '#f8c8d8'], [6, 5, '#a8d878', '#d0f0a8'], [9, 9, '#c8a0e0', '#e8d0f8']].forEach(function (m) {
+      px(ctx, x, y, u, '#3a2028', [[m[0], m[1], 6, 5]]); px(ctx, x, y, u, m[2], [[m[0] + 1, m[1], 4, 2], [m[0] + 1, m[1] + 3, 4, 1]]);
+      px(ctx, x, y, u, m[3], [[m[0] + 1, m[1], 2, 1]]); px(ctx, x, y, u, '#f8f0e8', [[m[0] + 1, m[1] + 2, 4, 1]]);
+    });
+  }
+  function millefeuilleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a2410', [[2, 5, 12, 9]]); px(ctx, x, y, u, '#d8a050', [[3, 12, 10, 1], [3, 9, 10, 1]]);
+    px(ctx, x, y, u, '#f8ecd0', [[3, 10, 10, 2], [3, 7, 10, 2]]); px(ctx, x, y, u, '#f8f8f8', [[3, 5, 10, 2]]);
+    px(ctx, x, y, u, '#6a3a20', [[4, 5, 1, 2], [7, 5, 1, 2], [10, 5, 1, 2]]);
+  }
+  function truffleIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#d8b060', [[1, 9, 14, 6]]); px(ctx, x, y, u, '#8a1a2a', [[2, 10, 12, 4]]);
+    [[3, 6], [7, 5], [11, 6]].forEach(function (c) { px(ctx, x, y, u, '#1a0e08', [[c[0], c[1], 3, 4]]); px(ctx, x, y, u, '#5a3018', [[c[0], c[1], 2, 2]]); });
+  }
+  function rostiIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#2a2a30', [[1, 8, 14, 5], [13, 9, 3, 2]]); px(ctx, x, y, u, '#c88a30', [[2, 8, 11, 3]]);
+    px(ctx, x, y, u, '#f0c060', [[3, 8, 4, 1], [8, 9, 3, 1]]); px(ctx, x, y, u, '#f8f0e0', [[6, 6, 3, 2]]); px(ctx, x, y, u, '#f0c030', [[7, 6, 1, 1]]);
+  }
+  function racletteIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#f0f0f0', [[1, 10, 14, 4]]); px(ctx, x, y, u, '#c8a060', [[3, 9, 3, 2], [9, 9, 3, 2]]);
+    px(ctx, x, y, u, '#f8d050', [[3, 7, 10, 3]]); px(ctx, x, y, u, '#fff0a0', [[4, 7, 4, 1]]); px(ctx, x, y, u, '#5a7a2a', [[12, 9, 2, 2]]);
   }
   function ciderIcon(ctx, x, y, s) {
     var u = s / 16;
@@ -1213,6 +1353,31 @@ var BridgeItems = (function () {
     px(ctx, x, y, u, '#a0d0f0', [[5, 4, 2, 4], [7, 3, 1, 2]]);
     px(ctx, x, y, u, '#e8f8ff', [[5, 4, 1, 2]]);
     px(ctx, x, y, u, '#3a6a9a', [[9, 9, 2, 3]]);
+  }
+  // a glowing cocoon from Rosewell's silk groves, and a scarf woven from them
+  function cocoonIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1a2a', [[6, 2, 4, 12], [5, 4, 6, 8]]);
+    px(ctx, x, y, u, '#f0b0d0', [[6, 3, 4, 10], [5, 5, 6, 6]]);
+    px(ctx, x, y, u, '#ffe8f6', [[6, 4, 2, 3], [7, 8, 1, 3]]);
+    px(ctx, x, y, u, '#c87aa0', [[9, 9, 1, 3], [5, 7, 1, 2]]);
+    px(ctx, x, y, u, '#e8e0e8', [[8, 0, 1, 3]]);
+  }
+  function scarfIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#3a1a2a', [[2, 3, 12, 5], [9, 7, 4, 7]]);
+    px(ctx, x, y, u, '#f080b0', [[3, 4, 10, 3], [10, 7, 2, 6]]);
+    px(ctx, x, y, u, '#ffd0e8', [[3, 4, 10, 1], [10, 8, 1, 4]]);
+    px(ctx, x, y, u, '#c8a050', [[10, 12, 2, 1], [3, 6, 1, 1], [6, 6, 1, 1]]);
+  }
+  // a fisherman's glass float from the Sapphire Glassworks: a blue ball in a net of cord
+  function floatIcon(ctx, x, y, s) {
+    var u = s / 16;
+    px(ctx, x, y, u, '#0c1a30', [[4, 3, 8, 10], [3, 4, 10, 8]]);
+    px(ctx, x, y, u, '#2a5ad8', [[4, 4, 8, 8], [5, 3, 6, 10]]);
+    px(ctx, x, y, u, '#6a9af0', [[5, 4, 3, 3]]);
+    px(ctx, x, y, u, '#e8f4ff', [[5, 5, 1, 1]]);
+    px(ctx, x, y, u, '#c8a870', [[3, 8, 10, 1], [8, 3, 1, 10], [5, 11, 6, 1]]);
   }
   // a little powder keg, iron-hooped, a red mark on its head, a spill of powder
   function powderIcon(ctx, x, y, s) {
@@ -1465,6 +1630,21 @@ var BridgeItems = (function () {
                      stackable: true, draw: posyIcon, value: 4 },
     lucky_horseshoe: { id: 'lucky_horseshoe', name: 'Lucky Horseshoe', desc: 'From Wat at the Anvil & Hoof, nail holes and all. Carried, the fish bite sooner.',
                      type: 'tool', stackable: false, draw: horseshoeIcon, value: 30, onUse: charmUse },
+    // the hidden valley under the Hoarspire (js/valley.js): what its creatures leave, and the wyrm's tooth
+    wolf_pelt:     { id: 'wolf_pelt', name: 'Ice Wolf Pelt', desc: 'Thick white fur, blue at the roots, from an ice wolf of the valley\'s outer slopes. Warm even wet.',
+                     type: 'material', stackable: true, draw: peltIcon, value: 24 },
+    rime_shell:    { id: 'rime_shell', name: 'Rime Shell', desc: 'A plate off a rime beetle\'s back, hard as glass and furred with frost that doesn\'t melt.',
+                     type: 'material', stackable: true, draw: shellIcon, value: 30 },
+    bat_wing:      { id: 'bat_wing', name: 'Ice Bat Wing', desc: 'Thin as paper and cold to touch. Held to the light it shows the veins, blue as a glacier.',
+                     type: 'material', stackable: true, draw: wingIcon, value: 16 },
+    golem_core:    { id: 'golem_core', name: 'Golem Core', desc: 'What kept a rime golem walking: a fist of old ice round a cyan glow that beats, very slowly.',
+                     type: 'material', stackable: true, draw: coreIcon, value: 90 },
+    wraith_essence: { id: 'wraith_essence', name: 'Wraith Essence', desc: 'The last of a frost wraith, stoppered in a phial. It mists the glass from the inside.',
+                     type: 'material', stackable: true, draw: essenceIcon, value: 60 },
+    wyrm_scale:    { id: 'wyrm_scale', name: 'Wyrm Scale', desc: 'A scale off the glacier wyrm, as broad as your hand, blue-white with a violet sheen at the edge. Proof, if anyone asks.',
+                     type: 'material', stackable: true, draw: scaleIcon, value: 180 },
+    wyrmfang:      { id: 'wyrmfang', name: 'Wyrmfang', desc: 'A sabre ground from the glacier wyrm\'s own tooth, bound in its hide. Its sweep cuts either side, and what it cuts is rimed and slowed.',
+                     type: 'weapon', stackable: false, draw: bladeIcon('#d8f0ff', '#2a4a6a', true, '#ffffff'), damage: 72, arc: true, frost: true, cls: 'sword', value: 400, onUse: weaponUse },
     wisp_ember:    { id: 'wisp_ember', name: 'Wisp Ember', desc: 'What\'s left of a will-o\'-wisp: a cold violet coal that won\'t go out. Morwen buys them.',
                      type: 'material', stackable: true, draw: emberIcon, value: 15 },
     tomb_key:      { id: 'tomb_key', name: 'Shell Key', desc: 'A key shaped like a cockle shell, green with the sea. A drowned thing in the graveyard on Midnight Isle was carrying it.',
@@ -1479,6 +1659,14 @@ var BridgeItems = (function () {
     moon_wand:     { id: 'moon_wand', name: 'Moonlit Wand', desc: 'Black wood, a white stone at the tip. F casts a bolt of moonlight seven tiles down the way you face. Each cast takes 2 energy.',
                      type: 'weapon', stackable: false, draw: wandIcon, damage: 30, cls: 'cast', value: 200,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.cast(this); return false; } },
+    silk_cocoon:   { id: 'silk_cocoon', name: 'Silk Cocoon', desc: 'An empty cocoon from Rosewell\'s silk groves, still glowing faintly pink. A mile of spore silk wound up inside it.',
+                     type: 'material', stackable: true, draw: cocoonIcon, value: 10 },
+    silk_scarf:    { id: 'silk_scarf', name: 'Spore Silk Scarf', desc: 'Woven for you on Seren\'s loom from five cocoons you gathered. It glows like a lamp turned low. Anyone would love it.',
+                     type: 'material', stackable: true, draw: scarfIcon, value: 90 },
+    glass_float:   { id: 'glass_float', name: 'Glass Float', desc: 'A fisherman\'s float of blue Sapphire glass in a net of cord. Hang one in a window and the light comes through it like the sea.',
+                     type: 'material', stackable: true, draw: floatIcon, value: 18 },
+    caldera_lantern: { id: 'caldera_lantern', name: 'Caldera Lantern', desc: 'Blue Sapphire glass in a tin frame, from the lantern maker at Lanternfall. It has never once blown out, she says.',
+                     type: 'material', stackable: true, draw: lanternIcon, value: 24 },
     glimmer_lantern: { id: 'glimmer_lantern', name: 'Glimmer Lantern', desc: 'A lantern that burns brighter near hidden things. Hold it to see them; use it to ask which way is warmer.',
                      type: 'tool', stackable: false, draw: lanternIcon, value: 80,
                      onUse: function () { if (typeof BridgeMagic !== 'undefined') BridgeMagic.lantern(); return false; } },
@@ -1513,6 +1701,39 @@ var BridgeItems = (function () {
     // Club Void's bar (js/dance.js)
     void_fizz:     { id: 'void_fizz', name: 'Void Fizz', desc: 'Purple, fizzing, faintly glowing under the lights. Tastes like a bassline. Energy.', type: 'drink',
                      stackable: true, draw: fizzIcon, effects: { energy: 30 }, value: 4, onUse: consumableUse },
+    // Arcadia below (js/undercity.js): what the Undercity and the Sump cook and pour, and what you take off what you fight
+    roo_broth:     { id: 'roo_broth', name: "Mama Roo's Broth", desc: 'Bone broth that has been on the boil since before the District was built on top of it. Noodles, greens, an egg. Energy and health.', type: 'food',
+                     stackable: true, draw: bowlIcon('#a86a30', '#e8d070'), effects: { energy: 35, hp: 20 }, value: 4, onUse: consumableUse },
+    char_skewers:  { id: 'char_skewers', name: 'Char Skewers', desc: 'Three skewers off the coals, glazed and blackened at the edges. Do not ask what. Energy.', type: 'food',
+                     stackable: true, draw: underSkewerIcon, effects: { energy: 30 }, value: 3, onUse: consumableUse },
+    steam_dumplings: { id: 'steam_dumplings', name: 'Steam Dumplings', desc: 'Six to a basket, thin skins, hot broth inside. Energy and a little health.', type: 'food',
+                     stackable: true, draw: bowlIcon('#e8d8b0', '#f8f0e0'), effects: { energy: 25, hp: 10 }, value: 3, onUse: consumableUse },
+    kopi:          { id: 'kopi', name: 'Kopi', desc: 'Black coffee pulled through a sock, sweet with condensed milk. Energy.', type: 'drink',
+                     stackable: true, draw: underCupIcon('#5a3018', '#e8e0d0'), effects: { energy: 20 }, value: 2, onUse: consumableUse },
+    sump_laksa:    { id: 'sump_laksa', name: "Teo's Laksa", desc: 'Old Teo\'s curry noodles, cooked on his boat on the black water. Hot enough to see by. Energy and health.', type: 'food',
+                     stackable: true, draw: bowlIcon('#d8701a', '#f0c040'), effects: { energy: 45, hp: 30 }, value: 6, onUse: consumableUse },
+    drip_lager:    { id: 'drip_lager', name: 'Drip Lager', desc: 'The Drip\'s own, brewed somewhere you would rather not know. Cold, at least. Energy.', type: 'drink',
+                     stackable: true, draw: underGlassIcon('#d8a030', '#f8f0e0'), effects: { energy: 15 }, value: 2, onUse: consumableUse },
+    foundry_tonic: { id: 'foundry_tonic', name: 'Foundry Tonic', desc: 'Orange, bitter, it glows under the red lights. The Foundry\'s dancers live on it. Energy.', type: 'drink',
+                     stackable: true, draw: underGlassIcon('#ff6a20', '#ffd0a0'), effects: { energy: 35 }, value: 4, onUse: consumableUse },
+    pit_rotgut:    { id: 'pit_rotgut', name: 'Pit Rotgut', desc: 'A short glass of something brown from the bar over the Pit. It burns all the way down and then you feel fine. Health and energy.', type: 'drink',
+                     stackable: true, draw: underGlassIcon('#7a4010', '#a86a30'), effects: { energy: 15, hp: 20 }, value: 3, onUse: consumableUse },
+    glow_shot:     { id: 'glow_shot', name: 'Glow Shot', desc: 'From the rave in the drowned station: a test tube of teal light. Energy, a lot of it.', type: 'drink',
+                     stackable: true, draw: stimIcon, effects: { energy: 60 }, value: 6, onUse: consumableUse },
+    scrap_metal:   { id: 'scrap_metal', name: 'Scrap Metal', desc: 'A rusted plate, a bent bracket, a fistful of bolts. Gage at the scrap trader\'s buys it by the piece.', type: 'material',
+                     stackable: true, draw: scrapIcon, value: 3 },
+    circuit:       { id: 'circuit', name: 'Circuit Board', desc: 'Pulled out of something that used to think. Gage pays for them; Doc Sallow wants them.', type: 'material',
+                     stackable: true, draw: circuitIcon, value: 12 },
+    chrome_part:   { id: 'chrome_part', name: 'Chrome Part', desc: 'A servo, a joint, a length of artificial tendon. Somebody\'s, once. Gage pays well; Sallow pays better in trade.', type: 'material',
+                     stackable: true, draw: chromeIcon, value: 25 },
+    sump_pearl:    { id: 'sump_pearl', name: 'Sump Pearl', desc: 'A pearl grown in the Sump\'s black water round a grain of something that glows. Teal all the way through.', type: 'material',
+                     stackable: true, draw: sumpPearlIcon, value: 90 },
+    eel_fillet:    { id: 'eel_fillet', name: 'Eel Fillet', desc: 'A sump eel\'s, faintly luminous. Old Teo will take it off you for the pot.', type: 'material',
+                     stackable: true, draw: filletIcon, value: 8 },
+    ruin_knuckles: { id: 'ruin_knuckles', name: "Ruin's Knuckles", desc: 'Saint Ruin\'s chrome fist, still warm. Doc Sallow can fit it to your own arm: it hits like his did, and it never glitches.', type: 'material',
+                     stackable: true, draw: knuckleIcon, value: 300 },
+    dredge_heart:  { id: 'dredge_heart', name: "The Dredge's Heart", desc: 'The dredger\'s core, a sealed gold housing that still hums. Doc Sallow can put it in you.', type: 'material',
+                     stackable: true, draw: heartIcon, value: 500 },
     // the Spires (Arcadia L480): the tea salon, Aurelle
     jasmine_pearls: { id: 'jasmine_pearls', name: 'Jasmine Pearls', desc: 'A pot of rolled jasmine tea from the Spires\' tea salon: the pearls open as you watch. Energy, and calm.', type: 'drink',
                      stackable: true, draw: teaPotIcon, effects: { energy: 30, hp: 10 }, value: 8, onUse: consumableUse },
@@ -1657,6 +1878,23 @@ var BridgeItems = (function () {
     mulled_cider:  { id: 'mulled_cider', name: 'Mulled Cider', desc: 'Hot apple cider with a cinnamon stick in it, and something else Mette won\'t name. Warm for eight minutes.', type: 'drink',
                      stackable: true, draw: ciderIcon, effects: { energy: 25 }, value: 4,
                      onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(8); return consumableUse.call(this, inv); } },
+    // Hoarfell's grander side (js/alpine.js): Aurelle's bars and pâtisserie, the promenade's stübli
+    vin_chaud:     { id: 'vin_chaud', name: 'Vin Chaud', desc: 'Hot red wine with orange peel and cloves, in a glass with a handle. The après-ski\'s whole personality. Warm for ten minutes.', type: 'drink',
+                     stackable: true, draw: vinIcon, effects: { energy: 25 }, value: 4,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10); return consumableUse.call(this, inv); } },
+    champagne:     { id: 'champagne', name: 'Coupe of Champagne', desc: 'From Bar Étoile, in a coupe they say was modelled on somebody\'s shoulder. Fizz, gold, and a lift to the spirits.', type: 'drink',
+                     stackable: true, draw: champagneIcon, effects: { energy: 40 }, onUse: consumableUse, value: 20 },
+    macarons:      { id: 'macarons', name: 'Macarons', desc: 'A pink box of them from the pâtisserie: rose, pistachio, violet. Almost too pretty to eat. Almost.', type: 'food',
+                     stackable: true, draw: macaronIcon, effects: { hp: 6, energy: 18 }, onUse: consumableUse, value: 9 },
+    mille_feuille: { id: 'mille_feuille', name: 'Mille-Feuille', desc: 'A thousand layers of pastry and cream, iced in feathered stripes. Impossible to eat with dignity.', type: 'food',
+                     stackable: true, draw: millefeuilleIcon, effects: { hp: 10, energy: 16 }, onUse: consumableUse, value: 7 },
+    truffles:      { id: 'truffles', name: 'Chocolate Truffles', desc: 'Six in a gilt box, dusted in cocoa. A gift that says you went to Aurelle and thought of them.', type: 'food',
+                     stackable: true, draw: truffleIcon, effects: { hp: 4, energy: 22 }, onUse: consumableUse, value: 12 },
+    rosti:         { id: 'rosti', name: 'Rösti', desc: 'Grated potato fried crisp in a pan, an egg on top. Built for people who have skied all morning.', type: 'food',
+                     stackable: true, draw: rostiIcon, effects: { hp: 22, energy: 22 }, onUse: consumableUse, value: 6 },
+    raclette:      { id: 'raclette', name: 'Raclette', desc: 'The cut face of a wheel melted under the grill and scraped over potatoes, a gherkin on the side. Warm for ten minutes.', type: 'food',
+                     stackable: true, draw: racletteIcon, effects: { hp: 26, energy: 26 }, value: 8,
+                     onUse: function (inv) { if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10); return consumableUse.call(this, inv); } },
     edelweiss:     { id: 'edelweiss', name: 'Edelweiss', desc: 'A woolly white star from the top of the Staircase. Ysolde says you have to climb for your own.', type: 'material',
                      stackable: true, draw: edelweissIcon, value: 30 },
     hoar_crystal:  { id: 'hoar_crystal', name: 'Hoar Crystal', desc: 'Frost that never melts, grown in the Hoarspire\'s rock. Cold enough to burn.', type: 'material',

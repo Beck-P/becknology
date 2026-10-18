@@ -238,5 +238,7 @@ build on top of it.**
 - **Shared kits** (`assets_town`, `assets_isle`, `assets_coast`, `assets_house`, `assets_lumar`, `assets_snow`,
   `assets_elves`, `assets_district`, `scenekit.py`, `scene_post.py`…): additive and backward compatible only — every
   place still renders the same with your change. The engine (`js/litscene.js`, `js/scene.js`) only if something's broken.
-- **Faces**: a separate session is working on the face pipeline (`characters.py`'s faces, `sprites_post.py`,
-  `portraits.py`). Add your people as `NPCS` entries and render their sheets and portraits; leave the pipeline to it.
+- **Faces**: add your people as `NPCS` entries and render their sheets; their talk-card portraits are drawn (not
+  rendered — no Blender) by `python3 tools/bridge-art/portraits.py stale`, which draws every portrait that's missing or
+  out of date (apps/bridge/CLAUDE.md, *Portraits*). A commit or push with portraits out of date is stopped by the
+  project's hook, and `world/portraits.js` fails on them. Leave the pipelines (`sprites_post.py`, `portraits.py`) alone.

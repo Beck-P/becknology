@@ -23,6 +23,8 @@ import assets_cyber as Y               # noqa: E402
 import assets_district as D            # noqa: E402
 import assets_signs as S               # noqa: E402
 import assets_oldquarter as O          # noqa: E402
+import assets_arcadia_rich as AR       # noqa: E402
+import random                          # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -31,14 +33,21 @@ WORLD = os.path.join(ROOT, 'apps', 'bridge', 'assets', 'worlds', WID + '.json')
 COLS, ROWS = 64, 20
 RF = 9.0          # the shophouses' faces; their doors on row 8, the lane rows 9-14
 RAIL = 18.0       # the railing over the drop; the promenade rows 16-17
-VZ, VR = 6.0, 6.2  # the Loop's viaduct: deck height, row
+VZ, VR = 5.0, 6.2  # the Loop's viaduct: deck height, row (low enough over the roofs that her train shows from the lane)
 
 k = Kit(COLS, ROWS, margin_top=2.2, margin_bottom=0.6, seed=1868)
 st = D.Street()
 rng = k.rng
 
 # ---- the ground: wet setts, a stone gutter along the houses, puddles ------------------------------------------------
-Y.tile_floor(k, -0.5, RF, COLS + 0.5, RAIL, tones=('#3c363e', '#353038'), size=0.5, seam='#141016')
+gr = random.Random(18680)                                       # the ground's own dice: the houses keep theirs
+k.wet = dict(AR.WET, setts=0.3, gutter=0.4)
+AR.paving(k, -0.5, RF, 59.4, RAIL, size=0.5, tones=('#4a4046', '#443a40', '#4e444a', '#3e363c'), seam='#18121a', rng=gr,
+          crack=0.06, sunk=0.04, stain=0.08, part='setts', bond=True)
+AR.paving(k, 59.4, RF, COLS + 0.5, RAIL, rng=gr)                 # the neon street's paving, where it comes in
+AR.kerb(k, 59.3, 59.5, RF + 0.8, 15.4, h=0.04)
+for (bx, br) in ((59.4, 10.6), (59.4, 13.4)):
+    AR.bollard(k, bx, br)
 k.box(-0.5, RF + 0.55, -0.01, COLS + 0.5, RF + 0.75, 0.004, '#221e26', 'gutter')
 for x in range(1, COLS, 5):
     k.boxes([(x + i * 0.1, RF + 0.57, 0.004, x + i * 0.1 + 0.05, RF + 0.73, 0.007) for i in range(5)], '#141016', 'drain')
@@ -53,7 +62,7 @@ D.steam_grate(k, st, 14.6, 12.6)
 D.steam_grate(k, st, 47.6, 12.4)
 
 # ---- the Loop's viaduct, high over the roofs ------------------------------------------------------------------------
-O.viaduct(k, -0.5, COLS + 0.5, VR, VZ, piers=(12.0, 27.6, 44.0, 58.4))
+O.viaduct(k, -0.5, COLS + 0.5, VR, VZ, piers=(12.0, 24.4, 41.0, 52.2), gaps=((28.9, 37.5),))
 
 # ---- the west end: an old stone wall closing the lane, the shrine's house and the stair up to the roof -----------------
 k.box(-0.6, RF, 0.0, 0.0, RAIL, 0.9, ('#4e4a54', 0.12), 'stone_wall')
@@ -196,7 +205,7 @@ O.cat(k, 28.3, RF + 0.15, z=0.08)
 O.potted_plant(k, 28.9, RF + 0.3, 'bonsai')
 
 # the Loop's Lantern Row station under the viaduct
-O.station_block(k, 29.2, 37.2, RF, VZ, name='LANTERN ROW', depth=RF - VR + 0.4)
+O.station_block(k, 29.2, 37.2, RF, VZ, name='LANTERN ROW', depth=RF - VR + 0.4, vr_=VR)
 
 # the Akachochin izakaya: red lanterns along its eave, sake casks, crates to sit on
 H = O.shophouse(k, 37.2, 43.0, RF, depth=2.2, ground='lattice', glow='#ff8a50', roof=O.KAWARA[1], upper='frame', rng=rng, door_x=41.2)
@@ -210,9 +219,10 @@ for x in (42.2,):
 
 # the bathhouse: a plain front with the steam's mark on its curtain, its brick chimney behind
 H = O.shophouse(k, 43.0, 48.0, RF, depth=2.2, ground='lattice', glow='#a0d8e0', roof=O.KAWARA[2], upper='slats', rng=rng)
-k.cyl(46.4, RF - 2.6, 0.0, 6.2, 0.32, ('#6a3a2a', 0.12), 'chimney', verts=12)
-k.cyl(46.4, RF - 2.6, 6.2, 6.4, 0.36, '#4a2a20', 'chimney_cap', verts=12)
-st.vent(46.4, RF - 2.6, 6.45)
+k.cyl(46.4, RF - 1.75, 0.0, 5.8, 0.25, ('#6a3a2a', 0.12), 'chimney', verts=12)
+k.boxes([(46.15, RF - 1.51, z, 46.65, RF - 1.49, z + 0.02) for z in [3.4 + i * 0.22 for i in range(11)]], '#4a2418', 'chimney_course')
+k.cyl(46.4, RF - 1.75, 5.8, 6.0, 0.29, '#4a2a20', 'chimney_cap', verts=12)
+st.vent(46.4, RF - 1.75, 6.05)
 O.noren(k, 44.8, 46.2, RF + 0.08, 1.28, col='#1e4a8a', mark='#f0f0f0', n=3)
 S.letters(k, 'ゆ', 'DelaGothicOne', 45.5, RF + 0.11, 1.0, size=0.26, col='#f8f8ff', lit=False)
 
@@ -306,6 +316,7 @@ while x < COLS:
     k.box(x - 0.09, RAIL + 0.06, 0.3, x + 0.09, RAIL + 0.24, 1.0, ('#5a5660', 0.12), 'baluster_post')
     if i % 4 == 0:
         Y.paper_lantern(k, x, RAIL + 0.15, 1.28, col='#f0a030', s=0.38, top=1.52)
+        k.point_light(x, RAIL - 0.3, 0.9, '#ffb060', 5, radius=0.2, group='flicker')
         k.box(x - 0.04, RAIL + 0.13, 1.0, x + 0.04, RAIL + 0.17, 1.55, O.TIMBER, 'lantern_pole')
     x += 1.6
     i += 1
@@ -325,6 +336,8 @@ def lantern_string(xa, xb, n=5, za=2.4, zb=2.25, ra=RF + 0.3, rb=13.85, cols=('#
         t = (j + 1) / (n + 1)
         x, r, z = xa + (xb - xa) * t, ra + (rb - ra) * t, za + (zb - za) * t - 0.35 * math.sin(math.pi * t)
         Y.paper_lantern(k, x, r, z - 0.32, col=cols[j % len(cols)], s=0.52, top=z)
+        if j in (1, 3):
+            k.point_light(x, r + 0.1, z - 0.75, ('#ff8a50', '#ffb060')[j % 2 == 1], 9, radius=0.25, group='flicker')
 
 
 for (xa, xb) in ((4.6, 5.0), (12.0, 11.0), (17.0, 17.6), (26.6, 27.0), (39.2, 39.8), (45.0, 44.4), (50.6, 51.0), (56.2, 55.6)):
@@ -340,7 +353,7 @@ for (x, c) in ((6.0, '#ff9050'), (16.0, '#ffb060'), (25.0, '#ff7a40'), (33.0, '#
                (58.0, '#ff9060')):
     k.point_light(x, 11.5, 2.8, c, 34, radius=1.0)
 k.area_light(COLS / 2, 6.0, 12.0, '#7058b8', 1100 * COLS / 44, COLS + 2.0, rot=(math.radians(-35), 0, 0))     # the city's glow
-k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.78}}, light_samples=96, world_light=('#241a40', 0.45))
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.78}}, light_samples=128, world_light=('#241a40', 0.45))
 
 # ---- the world -------------------------------------------------------------------------------------------------------
 def dialog(x, y, label, prompt, text):
@@ -405,7 +418,8 @@ apply_world(WORLD, k, (0, int(RF), COLS - 1, int(RAIL) - 1), scene_id=WID,
             scene_extra={'backdrop': True, 'steam': st.steam})
 w = json.load(open(WORLD))
 w['view'] = [-0.5, -3.0, COLS + 0.5, ROWS + 0.4]
-w['loop'] = {'track': [29.2, 37.2, VR, VZ]}                     # where js/transit.js stops the Loop's train
+w['loop'] = {'track': [29.2, 37.2, VR, round(0.3625 + 0.7071 * (VZ + 0.17), 2)]}   # js/transit.js: her rails on ours
+w['cameraLead'] = -4.0                                          # frame above you: the viaduct and her train over the roofs
 w['skyline'] = {'baseRow': 4.2, 'railRow': RAIL + 0.3, 'centerCol': COLS / 2,
                 'rain': {'drops': 150, 'splash': [0, RF + 0.3, COLS, RAIL - 0.2]}}
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')

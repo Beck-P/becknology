@@ -444,8 +444,10 @@ var BridgeWeather = (function () {
       case 'smog': ctx.fillStyle = 'rgba(120,100,60,' + (0.22 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh); fogBanks(ctx, W, Hh, t, 0.7 * k, '150,130,80', offX, offY); break;
       case 'blackout': {
         var sputter = t - w.from < 6000 && Math.sin(t / 40) > 0.3 ? 0.3 : 1;     // the neon gutters as it goes
-        veil(ctx, W, Hh, px, py, ts * 1.6, ts * 6.5, '3,3,10', 0.8 * k * sputter);
-        ctx.fillStyle = 'rgba(3,3,10,' + (0.25 * k * sputter).toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh);
+        // night eyes (an Owl's-Eye Tincture, js/brewing.js): the dark gives way round you
+        var eyes = typeof BridgeGear !== 'undefined' && BridgeGear.has('night_eyes') ? 1 : 0;
+        veil(ctx, W, Hh, px, py, ts * (eyes ? 5 : 1.6), ts * (eyes ? 14 : 6.5), '3,3,10', (eyes ? 0.35 : 0.8) * k * sputter);
+        ctx.fillStyle = 'rgba(3,3,10,' + ((eyes ? 0.08 : 0.25) * k * sputter).toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh);
         break;
       }
       case 'heat': ctx.fillStyle = 'rgba(255,170,80,' + (0.08 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, W, Hh); break;

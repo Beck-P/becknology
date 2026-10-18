@@ -55,6 +55,12 @@ Making or changing art for the Bridge (`apps/bridge`, built in `tools/bridge-art
 `tools/bridge-art/CLAUDE.md`). The target looks like `tools/bridge-art/dioramas/ref/*.png` (Look Book 2, the toy finish
 in soft light) — look at them before building a place, and compare against them before shipping it.
 
+**Faces on the talk card** are drawn, never rendered: `python3 tools/bridge-art/portraits.py stale` draws every portrait
+that's missing or out of date (a new or changed NPC in `tools/bridge-art/characters.py`, a new crowd body or suit) — then
+look at it (`--look FILE`). Anywhere the game shows someone's face, use js/look.js (`BridgeLook.npcFace` for a sheet,
+`pilotFace` / `face` for pilots and hired people; a chooser row's `sheet` or `face`) — never a crop of a walking sheet.
+`.claude/hooks/portraits.py` (in `.claude/settings.json`) stops a commit or push while any portrait is out of date.
+
 ## Testing
 `node tools/tests/run.js [world|multi|together|royale|combat]` — headless-Chromium tests for the Bridge and Royale Link (every world loading, two pilots playing together over a stand-in Supabase, every game together, the casino, combat). It starts its own local servers. See `tools/tests/README.md`. Run the suites a change touches before shipping it; add a test there when you build something new.
 

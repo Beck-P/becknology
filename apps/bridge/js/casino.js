@@ -95,10 +95,13 @@ var BridgeCasino = (function () {
     if (inter.stakes === 'high') q += '&stakes=high';
     return '/runouts/' + q;
   }
+  var HOUSES = { royale: { kicker: 'NEON ROYALE', skin: null }, chateau: { kicker: 'CHATEAU AURELLE', skin: 'chateau' } };
   function open(inter) {
     if (typeof BridgeCabinetModal === 'undefined') return;
     var game = inter.game || 'lobby';
-    BridgeCabinetModal.show({ url: urlFor(inter), title: (inter.label || NAMES[game] || 'ROYALE LINK').toUpperCase(), gameKey: 'runouts', frame: 'casino', kicker: 'NEON ROYALE' });
+    var house = HOUSES[inter.house] || HOUSES.royale;          // whose tables: the Neon Royale's, or Château Aurelle's salon (Hoarfell)
+    BridgeCabinetModal.show({ url: urlFor(inter), title: (inter.label || NAMES[game] || 'ROYALE LINK').toUpperCase(), gameKey: 'runouts', frame: 'casino',
+                              kicker: house.kicker, skin: house.skin });
   }
 
   // ---- the cabinet talking ----------------------------------------------------------------------------------------------
@@ -223,7 +226,19 @@ var BridgeCasino = (function () {
       '#cabinet-modal-overlay.cm-casino #cabinet-leave-btn { border-color: #e0c060; color: #fff0a8; background: rgba(90, 18, 56, 0.6); }' +
       '#cabinet-modal-overlay.cm-casino #cabinet-leave-btn:hover { background: rgba(140, 30, 80, 0.7); }' +
       '#cabinet-modal-overlay.cm-casino .cm-screen { background: #0e0618; box-shadow: inset 0 0 0 3px #0c0410, inset 0 0 0 6px #a08040, inset 0 0 0 7px #ffe080, inset 0 0 0 9px #0c0410; }' +
-      '#cabinet-modal-overlay.cm-casino #cabinet-iframe { inset: 9px; width: calc(100% - 18px); height: calc(100% - 18px); background: #0e0618; }';
+      '#cabinet-modal-overlay.cm-casino #cabinet-iframe { inset: 9px; width: calc(100% - 18px); height: calc(100% - 18px); background: #0e0618; }' +
+      // Château Aurelle's salon: cream and verdigris and gilt, a carved frame round the table instead of neon
+      '#cabinet-modal-overlay.cm-casino.cm-chateau { --cm-a: #d8b060; --cm-b: #f6ecd4; --cm-bar: linear-gradient(180deg, #2e524c 0%, #1e3a36 55%, #12241f 100%); background: rgba(10, 18, 16, 0.97); }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau .cm-bar { border-bottom: 3px solid #d8b060; box-shadow: 0 2px 0 #6a5020, 0 5px 0 #0a1210, 0 0 18px rgba(216, 176, 96, 0.25);' +
+        ' background-image: repeating-linear-gradient(90deg, rgba(246, 236, 212, 0.035) 0 1px, transparent 1px 9px), var(--cm-bar); }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau .cm-kicker { color: #f6ecd4; letter-spacing: 3px; text-shadow: 0 1px 0 #0a1210; }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau .cm-title { color: #e8c878; text-shadow: 0 1px 0 #3a2a10; }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau .cm-sep { color: #8a7a50; }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau .cm-coins { border-color: #d8b060; background: rgba(10, 24, 20, 0.7); box-shadow: inset 0 0 0 1px #4a3a18; }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau #cabinet-leave-btn { border-color: #d8b060; color: #f6ecd4; background: rgba(30, 58, 54, 0.7); }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau #cabinet-leave-btn:hover { background: rgba(46, 82, 76, 0.85); }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau .cm-screen { background: #12241f; box-shadow: inset 0 0 0 3px #0a1210, inset 0 0 0 5px #f0e4c8, inset 0 0 0 7px #a88a40, inset 0 0 0 8px #f6dc90, inset 0 0 0 10px #0a1210; }' +
+      '#cabinet-modal-overlay.cm-casino.cm-chateau #cabinet-iframe { inset: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background: #12241f; }';
     document.head.appendChild(s);
   }
 

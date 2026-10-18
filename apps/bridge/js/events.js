@@ -391,7 +391,7 @@ var BridgeEvents = (function () {
       gather: { x: 30.5, y: 18.6, r: 2.4, n: 7 }, haul: 'OLD PELL\'S BOYS ARE STILL HAULING BOXES UP THE SHINGLE.', note: 'The catch went under the hammer on Tern Holm' }),
     auction_crown: catchAuction('lumar-crown', { at: [15, 31], board: [14, 31], boxes: [[16, 32], [17, 32, 0.6]], talk: [15, 32], who: 'npc-fishmonger',
       gather: { x: 15.5, y: 32.4, r: 2.4, n: 8 }, haul: 'THE TRAWLERS ARE IN UNDER THE FISHING JETTY AND THE BOXES ARE COMING UP THE STEPS.', note: 'The catch went under the hammer on Crownhaven quay' }),
-    auction_diggen: catchAuction('lumar', { at: [7, 11], board: [6, 11], boxes: [[8, 11, 0.6]], talk: [7, 12], who: 'npc-fishwife',
+    auction_diggen: catchAuction('lumar', { at: [7, 11], board: [6, 10], boxes: [[8, 11, 0.6]], talk: [7, 12], who: 'npc-fishwife',
       gather: { x: 7.5, y: 13, r: 2, n: 5 }, haul: 'THE BOATS ARE DRAWN UP AND THE BOXES ARE STACKED ON THE SAND.', note: 'The catch went under the hammer on Diggen\'s Point' }),
     auction_sapphire: catchAuction('lumar-sapphire', { at: [37, 22], board: [36, 22], boxes: [[38, 22], [36, 23, 0.6]], talk: [37, 23], who: 'npc-fishmonger',
       gather: { x: 37.5, y: 23.6, r: 2.2, n: 7 }, haul: 'THE BOATS ARE IN AT THE FISHING PIER AND THE GLASSWORKS\' COOKS ARE ALREADY ELBOWING FOR THE FRONT.', note: 'The catch went under the hammer in Sapphire Port' }),
@@ -441,6 +441,30 @@ var BridgeEvents = (function () {
       name: 'NULL takes the screens', len: 1, w: 1, at: null, hint: 'Every screen in the city — NULL\'s mark', sfx: 'glitch', loop: { name: 'glitch', every: 7, near: 999 },
       react: 'look', note: function (L) { return 'NULL had every screen in Arcadia: "' + pick(NULL_SAYS, L.key) + '"'; },
       over: function (L, ctx, offX, offY, ts, ms) { scanlines(L, ctx, ms); }
+    },
+    // Arcadia below (js/undercity.js): the Saints collecting down the market, a downpour through the grates, the Sump stirring
+    collection: {
+      world: 'arcadia-undercity', name: 'The Saints come collecting', len: 3, w: 3, at: [20, 15],
+      hint: 'Two Rust Saints are working down the stalls, collecting', sfx: 'thud',
+      cast: [{ sheet: 'npc-saint-a', path: [[58, 15.4], [40, 15.4], [21, 15.2], [15, 15.2]], speed: 0.5, from: 1, end: 'up' },
+             { sheet: 'npc-saint-b', path: [[59, 16.0], [41, 16.0], [22, 15.9], [16, 15.9]], speed: 0.5, from: 2, end: 'up' }],
+      say: [[6, 0, 'DUES, GRANDAD. SAME AS EVERY WEEK.'], [50, 1, 'THE SAINTS SAY THANK YOU.'], [96, 0, 'NEXT!'], [120, 'at', 'NOT AGAIN...']],
+      react: 'look',
+      talk: [{ x: 16, y: 14, label: 'THE SAINTS', prompt: 'PRESS E TO STAND UP TO THEM', on: function (L) { saintsStand(L); } }],
+      note: 'The Rust Saints came collecting in the Warrens'
+    },
+    surge: {
+      world: 'arcadia-undercity', name: 'A downpour through the grates', len: 2, w: 2, at: [40, 22],
+      hint: 'A downpour up on the District — every grate in the Warrens is pouring', sfx: 'splat', loop: { name: 'splat', every: 3, near: 999 },
+      over: function (L, ctx, offX, offY, ts, ms, w, h) { downpour(L, ctx, w, h); },
+      react: 'look', note: 'A downpour came through the Warrens\' grates'
+    },
+    stirring: {
+      world: 'arcadia-sump', name: 'Something moving in the canal', len: 1.5, w: 2, at: [60, 33],
+      hint: 'The water in the south basin is moving — something big under it', sfx: 'horn',
+      over: function (L, ctx, offX, offY, ts, ms) { stirring(L, ctx, offX, offY, ts); },
+      say: [[4, 'at', 'DID YOU HEAR THAT?'], [30, 'at', 'GET AWAY FROM THE EDGE.']],
+      react: 'flee', note: 'Something moved under the water of the Sump'
     },
     // the Spires (arcadia-spires, L480: js/spires.js)
     operaout: {
@@ -614,6 +638,46 @@ var BridgeEvents = (function () {
         else say('TOVE\'S URN', '"ONE EACH, OR THE KIDS WON\'T SLEEP."');
       } }],
       note: 'All Fellhaven out in the street for the aurora'
+    },
+
+    // ---- Hoarfell's grander side (Workstream E: js/alpine.js) ----
+    fireworks: {
+      world: 'hoarfell-aurelle', name: 'Fireworks over the château', len: 5, w: 5, at: [28, 17],
+      when: function (ms, E) { return skyAt(E.worlds[0], ms).sun < 0.2 && wxAt(E.worlds[0], ms).kind === 'clear'; },
+      hint: 'Fireworks over the château!', react: 'look', loop: { name: 'blast', every: 2.2, near: 40 },
+      gather: { x: 28, y: 17.5, r: 5, n: 14, face: [28, 2] },
+      say: [[4, 'at', 'OOH — THE GOLD ONES!'], [40, 'at', 'THE CHATEAU DOES THIS FOR ANYTHING. A BIRTHDAY. A TUESDAY.'], [120, 'at', 'THAT ONE WAS SHAPED LIKE A HEART!']],
+      talk: [{ x: 24, y: 11, label: 'CHAMPAGNE TRAY', prompt: 'PRESS E TO TAKE A COUPE', on: function (L) {
+        if (once(L, 'coupe', function () { give('champagne', 1); })) say('CHAMPAGNE TRAY', 'A WAITER IN WHITE GLOVES OFFERS THE TRAY WITHOUT A WORD. THE CHATEAU POURS FOR EVERYONE IN THE PLACE ON A FIREWORK NIGHT.');
+        else say('CHAMPAGNE TRAY', 'THE WAITER RAISES ONE EYEBROW EXACTLY ONE MILLIMETRE.');
+      } }],
+      over: function (L, ctx, offX, offY, ts, ms) { fireworks(L, ctx, offX, offY, ts, ms); },
+      note: 'Fireworks over Château Aurelle'
+    },
+    aurelle_sleigh: {
+      world: 'hoarfell-aurelle', name: 'A sleigh across the Place', len: 2, w: 2, at: [28, 12], when: function (ms, E) { return skyAt(E.worlds[0], ms).sun > 0.15; },
+      hint: 'Sleigh bells', loop: { name: 'jingle', every: 1.3, near: 18 },
+      items: function (L, world, offX, offY, ts, ms, sc) { return vehicle(L, 'sleigh', [[58, 12.4], [-4, 12.4]], 2.2, 5, world, offX, offY, ts, ms, sc); },
+      note: 'A sleigh jingled across Aurelle\'s Place'
+    },
+    nightskate: {
+      world: 'hoarfell-promenade', name: 'A torchlit skate on the rink', len: 6, w: 4, at: [17, 11],
+      when: function (ms, E) { return skyAt(E.worlds[0], ms).sun < 0.55 && wxAt(E.worlds[0], ms).kind !== 'blizzard'; },
+      hint: 'Torches round the rink — a night skate', loop: { name: 'jingle', every: 2.6, near: 16 },
+      gather: { x: 17, y: 15.4, r: 3, n: 8, face: [17, 10] },
+      cast: [0, 1, 2, 3].map(function (i) {
+        var loop = [[14, 10], [20, 10], [20, 12], [14, 12]], path = [];
+        for (var j = 0; j < 14; j++) path.push(loop[(j + i) % 4]);
+        return { sheet: ['npc-skier-a', 'npc-skier-b', 'npc-kid-a', 'npc-skier-a'][i], path: path, speed: 1.1, from: 1 + i * 1.5, end: 'down', seed: i + 3 };
+      }),
+      say: [[6, 0, 'ROUND AGAIN!'], [50, 2, 'WAIT FOR ME!']],
+      talk: [{ x: 17, y: 14, label: 'THE RINK', prompt: 'PRESS E TO SKATE WITH THEM', on: function (L) {
+        if (typeof BridgeHoarfell !== 'undefined') BridgeHoarfell.warm(10);
+        if (typeof BridgeInventory !== 'undefined') BridgeInventory.restoreEnergy(15);
+        say('THE RINK', 'YOU LACE UP AND JOIN THE LINE, ROUND AND ROUND UNDER THE TORCHES, A STRANGER\'S HAND ON YOUR SHOULDER. NOBODY FALLS. NEARLY NOBODY.');
+      } }],
+      over: function (L, ctx, offX, offY, ts, ms) { torches(L, ctx, offX, offY, ts, ms); },
+      note: 'Skated by torchlight on Fellhaven\'s promenade'
     },
 
     // ---- Sylvara ----
@@ -1094,6 +1158,38 @@ var BridgeEvents = (function () {
     mark(L, 'settled');
     if (bet - 1 === win) { coins(15, 'toyboats'); sfx('coin'); toast('TOY BOATS', BOATS[win][0].charAt(0) + BOATS[win][0].slice(1).toLowerCase() + ' won!', '15 coins from the kids', false); }
   }
+  // the Saints collecting: stand between them and the stall, once a happening
+  function saintsStand(L) {
+    var say = function (t) { if (typeof BridgeInteractions !== 'undefined') BridgeInteractions.say('THE SAINTS', t); };
+    if (!once(L, 'stood', function () { give('roo_broth', 1); coins(20, 'saints'); sfx('slam'); }))
+      return say('THEY\'VE MOVED ON, MUTTERING. THE STALLHOLDER IS STILL THANKING YOU.');
+    say('YOU STEP BETWEEN THE SAINTS AND THE STALL. THE BIG ONE LOOKS AT YOU, AT YOUR HANDS, AT THE CROWD STARTING TO WATCH, AND DECIDES IT ISN\'T WORTH IT TODAY.\n\n' +
+        'THE STALLHOLDER PRESSES A BOWL OF BROTH AND TWENTY COINS ON YOU. "DON\'T GO PAST THE FENCE TONIGHT," SHE SAYS. "THEY\'LL REMEMBER YOUR FACE."');
+  }
+  // the downpour: rain falling in sheets over the whole Warrens, thickening and thinning again
+  function downpour(L, ctx, w, h) {
+    var f = Math.min(1, L.t / 8000, (L.end - L.start - L.t) / 8000), now = L.t;
+    if (f <= 0) return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(150,175,210,' + (0.35 * f).toFixed(3) + ')';
+    for (var i = 0; i < 260 * f; i++) {
+      var x = (i * 97.13 + Math.floor(i / 7) * 13) % w, sp = 0.9 + (i % 5) * 0.12, y = ((now * sp * 0.6) + i * 53.7) % (h + 40) - 20;
+      ctx.fillRect(Math.round(x), Math.round(y), 1, 7 + (i % 3) * 3);
+    }
+    ctx.restore();
+  }
+  // the Sump stirring: wide rings going out over the basin from something under it
+  function stirring(L, ctx, offX, offY, ts) {
+    var cx = offX + 60.5 * ts, cy = offY + 37.5 * ts;
+    ctx.save();
+    for (var i = 0; i < 4; i++) {
+      var k = ((L.t / 2600) + i / 4) % 1;
+      ctx.strokeStyle = 'rgba(120,240,210,' + (0.45 * (1 - k)).toFixed(2) + ')'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(Math.round(cx), Math.round(cy), 6 + k * ts * 6, 2 + k * ts * 2, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // the brawl: break it up or have a bet on it
   var BRAWLERS = ['THE SAILOR', 'THE DOCKHAND'];
   function brawlStep(L) {
@@ -1468,6 +1564,53 @@ var BridgeEvents = (function () {
       if (s < b || L.said['blast' + i]) return;
       L.said['blast' + i] = 1;
       if (s < b + 4) { sfx('blast'); if (typeof BridgeWorld !== 'undefined' && BridgeWorld.kick) BridgeWorld.kick(0, 1, 2); }
+    });
+  }
+  // fireworks over Aurelle: rockets up from the forecourt, bursts high over the château's roofs, sparks falling and fading
+  var FW_COLS = ['255,220,120', '255,120,150', '140,210,255', '190,255,160', '255,255,255', '255,170,80'];
+  function fireworks(L, ctx, offX, offY, ts, ms) {
+    var s = L.t / 1000;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (var i = 0; i < 60; i++) {
+      var t0 = 2 + i * 4.6 + H(L.key + 'fw' + i) * 3, age = s - t0;
+      if (age < 0 || age > 4.2) continue;
+      var bx = 28 + (H(L.key + 'x' + i) - 0.5) * 22, by = -4 - H(L.key + 'y' + i) * 6, sx = 28 + (H(L.key + 'sx' + i) - 0.5) * 8, sy = 10;
+      var col = FW_COLS[Math.floor(H(L.key + 'c' + i) * FW_COLS.length)];
+      if (age < 1.1) {                                                  // the rocket going up, a trail behind it
+        var f = age / 1.1, x = sx + (bx - sx) * f, y = sy + (by - sy) * (1 - (1 - f) * (1 - f));
+        for (var q = 0; q < 6; q++) {
+          var fq = Math.max(0, f - q * 0.03), xq = sx + (bx - sx) * fq, yq = sy + (by - sy) * (1 - (1 - fq) * (1 - fq));
+          ctx.fillStyle = 'rgba(255,220,170,' + (0.8 - q * 0.13).toFixed(2) + ')';
+          ctx.fillRect(Math.round(offX + xq * ts), Math.round(offY + yq * ts), 1, 1);
+        }
+        continue;
+      }
+      var b = age - 1.1, n = 26, R = ts * (1.4 + H(L.key + 'r' + i) * 1.6) * Math.min(1, b * 1.6), a = Math.max(0, 1 - b / 3.1);
+      for (var j = 0; j < n; j++) {
+        var ang = j / n * Math.PI * 2 + H(L.key + 'a' + i), px = offX + bx * ts + Math.cos(ang) * R, py = offY + by * ts + Math.sin(ang) * R + b * b * ts * 0.35;
+        ctx.fillStyle = 'rgba(' + col + ',' + a.toFixed(2) + ')';
+        ctx.fillRect(Math.round(px), Math.round(py), 2, 2);
+        ctx.fillStyle = 'rgba(' + col + ',' + (a * 0.4).toFixed(2) + ')';
+        ctx.fillRect(Math.round(px - Math.cos(ang) * 3), Math.round(py - Math.sin(ang) * 3), 1, 1);
+      }
+      if (b < 0.25) {                                                   // the flash
+        var g = ctx.createRadialGradient(offX + bx * ts, offY + by * ts, 0, offX + bx * ts, offY + by * ts, ts * 3);
+        g.addColorStop(0, 'rgba(' + col + ',' + (0.35 * (1 - b / 0.25)).toFixed(2) + ')'); g.addColorStop(1, 'rgba(' + col + ',0)');
+        ctx.fillStyle = g; ctx.fillRect(offX + (bx - 3) * ts, offY + (by - 3) * ts, ts * 6, ts * 6);
+      }
+    }
+    ctx.restore();
+  }
+  // torches on poles round the promenade's rink, flickering
+  function torches(L, ctx, offX, offY, ts, ms) {
+    var P = [[12.2, 8.0], [17.2, 7.8], [22.2, 8.0], [12.2, 14.2], [17.2, 14.4], [22.2, 14.2]];
+    P.forEach(function (p, i) {
+      var x = Math.round(offX + p[0] * ts), y = Math.round(offY + p[1] * ts) - 30, fl = 0.75 + 0.25 * Math.sin(ms / 90 + i * 1.7);
+      glow(ctx, x, y, 22, '255,170,80', 0.35 * fl);
+      ctx.fillStyle = '#3a2416'; ctx.fillRect(x, y + 2, 2, 30);
+      ctx.fillStyle = 'rgba(255,200,90,' + fl.toFixed(2) + ')'; ctx.fillRect(x - 1, y - 2, 4, 4);
+      ctx.fillStyle = 'rgba(255,240,180,' + fl.toFixed(2) + ')'; ctx.fillRect(x, y - 1, 2, 2);
     });
   }
   function blastPuffs(L, ctx, offX, offY, ts, ms) {
