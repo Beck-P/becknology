@@ -449,6 +449,8 @@ var BridgeWorld = (function () {
         if (typeof BridgeHarbour !== 'undefined') BridgeHarbour.decorate(worldId, data);
         if (typeof BridgeHarbourLife !== 'undefined') BridgeHarbourLife.decorate(worldId, data);   // the crane's post on the quay
         if (typeof BridgeHolm !== 'undefined') BridgeHolm.decorate(worldId, data);
+        if (typeof BridgeSapphire !== 'undefined') BridgeSapphire.decorate(worldId, data);   // the gate to the floating market
+        if (typeof BridgeRose !== 'undefined') BridgeRose.decorate(worldId, data);           // the path up to Rosewell
         if (typeof BridgeTrophies !== 'undefined') BridgeTrophies.decorate(worldId, data);   // the hall of finds
         if (typeof BridgeWorkshop !== 'undefined') BridgeWorkshop.decorate(worldId, data);   // flax seed wherever seed is sold
         if (typeof BridgeChart !== 'undefined') BridgeChart.decorate(worldId, data);
@@ -463,6 +465,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeAnimals !== 'undefined') BridgeAnimals.decorate(worldId, data);
         if (typeof BridgePet !== 'undefined') BridgePet.decorate(worldId, data);
         if (typeof BridgeDistrict !== 'undefined') BridgeDistrict.decorate(worldId, data);
+        if (typeof BridgeUndercity !== 'undefined') BridgeUndercity.decorate(worldId, data);   // Arcadia below: shops, fights, bosses
         if (typeof BridgeSeasons !== 'undefined') BridgeSeasons.decorate(worldId, data);
         if (typeof BridgeFoliage !== 'undefined') BridgeFoliage.apply(worldId);        // the trees turn with the seasons
         if (typeof BridgeWeather !== 'undefined') BridgeWeather.decorate(worldId, data);
@@ -478,6 +481,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeFestivals !== 'undefined') BridgeFestivals.decorate(worldId, data); // a festival's props, stall and contest
         if (typeof BridgeEvents !== 'undefined') BridgeEvents.decorate(worldId, data);       // small happenings on the hour
         if (typeof BridgeMidnight !== 'undefined') BridgeMidnight.decorate(worldId, data);   // the haunted sea: the tower, Saltmere
+        if (typeof BridgeCrimson !== 'undefined') BridgeCrimson.decorate(worldId, data);     // the dangerous sea: Cinder Key
         if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.decorate(worldId, data);   // the cast keep their day
         if (typeof BridgeHome !== 'undefined') BridgeHome.decorate(worldId, data);       // last: it keeps the rest clear
         if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);
@@ -820,7 +824,10 @@ var BridgeWorld = (function () {
       // cameraLead (tiles, world JSON): frame a little above or below the
       // player — the District looks up so its skyline shows over the shops
       camera.x += (pos.x - camera.x) * follow;
-      camera.y += (pos.y + (world.cameraLead || 0) - camera.y) * follow;
+      // on raised ground (scene.heights) you're drawn up the screen by its height: the camera keeps you framed there
+      var lsc = world.scene && Array.isArray(world.scene.heights) && typeof BridgeScene !== 'undefined' && BridgeScene.get(world.scene.id);
+      var up = lsc ? BridgeScene.liftAt(lsc, pos.x + 0.5, pos.y + 0.5) * Math.SQRT1_2 : 0;
+      camera.y += (pos.y - up + (world.cameraLead || 0) - camera.y) * follow;
 
       // Clamp camera to map edges. When the map is smaller than the viewport
       // (interiors, etc.), the normal min/max clamp inverts and pins the camera
@@ -976,6 +983,8 @@ var BridgeWorld = (function () {
     if (!t) return;
     var cx = offX + (t.x + 0.5) * ts;
     var cy = offY + (t.y + 0.78) * ts;
+    var tsc = world.scene && Array.isArray(world.scene.heights) && BridgeScene.get(world.scene.id);
+    if (tsc) cy -= BridgeScene.liftPx(tsc, t.x + 0.5, t.y + 0.9);           // on raised ground, up there
     var pulse = 0.75 + Math.sin(now / 420) * 0.25;
     ctx.save();
     ctx.globalCompositeOperation = 'screen';

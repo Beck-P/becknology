@@ -524,6 +524,7 @@ var BridgeSeaFight = (function () {
     var s = ship(), T = typeof BridgeTrade !== 'undefined' ? BridgeTrade : null, got = 0, good = K.cargo[Math.floor(Math.random() * K.cargo.length)];
     if (s && T) { var n = Math.min(3 + Math.floor(Math.random() * 5), T.fits(s, good)); if (n > 0) { s.hold[good] = (s.hold[good] || 0) + n; got = n; F().save(); } }
     if (typeof BridgeProgression !== 'undefined' && BridgeProgression.awardCoins) BridgeProgression.awardCoins(coins, K.ghost ? 'sea:drowned' : 'sea:pirates');
+    if (typeof BridgeCrimson !== 'undefined' && BridgeCrimson.prize) BridgeCrimson.prize(K);     // plunder, or a drowned trinket (js/crimson.js)
     say((K.ghost ? 'The drowned ship comes apart into mist and green light. ' : 'She strikes her colours and goes down by the stern. ') + coins + ' coins' +
             (got ? ' and ' + got + ' ' + (T ? T.name(good) : good) + ' hauled aboard' : '') + '!', 5200);
     if (typeof BridgeQuests !== 'undefined' && BridgeQuests.toast) BridgeQuests.toast('At sea', K.ghost ? 'A drowned ship sent home' : 'Pirates beaten', '+' + coins + ' coins' + (C && !K.ghost && C.marque() ? ' (the Crown\'s bounty, doubled)' : ''));

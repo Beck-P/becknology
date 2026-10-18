@@ -107,6 +107,8 @@ var BridgeFleet = (function () {
                         names: ['Edwin Marsh', 'Cass Fairweather', 'Tobias Lane', 'Juniper Holloway', 'Rafe Calloway', 'Ada Pembury', 'Moss Garrick', 'Lettice Vane'] },
     'lumar-tern':     { sea: 'Emerald', roles: ['deckhand', 'deckhand', 'rigger', 'navigator'],
                         names: ['Davy Pell', 'Meg Tull', 'Hob Tull', 'Nan Corran', 'Little Kit'] },
+    'lumar-cinder':   { sea: 'Crimson', roles: ['fighter', 'gunner', 'fighter', 'rigger', 'deckhand'],
+                        names: ['Mad Morrow', 'Silk Annet', 'Tarry Bill', 'Jory Gash', 'Long Meg', 'Peg Sallow', 'Dutch Rennie'] },
     'lumar-midnight': { sea: 'Midnight', roles: ['fighter', 'gunner'],
                         names: ['Silent Odo', 'the Drowned Bosun', 'Pale Merrit', 'Grey Ilse', 'Hollow Tom'] }
   };
