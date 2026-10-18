@@ -485,6 +485,40 @@ rm2, zr2 = HK.rich_house(k, 39.6, 43.8, 23.8, 27.2, wall_h=2.0, rise=1.3, roof='
 SMOKE.append([40.08, round((23.8 + 27.2) / 2 - 0.15 - (zr2 + 0.65) * C, 3)])
 W.planter(k, 34.0, 35.6, 27.2, flowers=('#a070e0', '#f0d040', '#e05070'))
 
+# ---- more life in the open meadows (Look Book density), clear of the animals' wander and the paths -------------------------
+# the pasture south of the field (js/animals.js PEN 3..30 x 23..27): a field shelter, a trough, an oak, tussocks, buttercups
+VR.field_shelter(k, 23.4, 26.0, 23.1, 24.5)
+VR.trough(k, 13.9, 15.1, 24.35, wood=False)
+k.solid(14, 24, 15, 25)
+W.tree(k, 8.6, 25.4, h=3.0, tone='#3e7a34')
+k.solid(8.3, 25.1, 8.9, 25.7)
+VR.verge(k, 2.6, 23.2, 30.0, 27.6, n=40, kinds=('grass', 'grass', 'daisy'))
+for (fx, fr) in ((5.2, 26.6), (11.6, 24.0), (18.8, 26.2), (27.6, 25.6), (21.2, 23.6)):
+    VR.flower_patch(k, fx, fr, rad=rng.uniform(0.5, 0.8), cols=('#f4d040', '#f0e070'), n=rng.randint(30, 44))
+# the middle meadow: hay, a picnic by the pond, a duck house on the bank, a woodpile by the shed corner
+F.haybale(k, 31.6, 11.9)
+F.haybale(k, 32.4, 12.5, rolled=False)
+VR.picnic(k, 25.8, 14.4)
+VR.hen_coop(k, 31.7, 15.9)
+VR.woodpile(k, 22.6, 23.6, 4.4)
+VR.verge(k, 21.6, 10.8, 33.0, 11.3, n=16, kinds=('grass', 'parsley', 'daisy'))
+VR.verge(k, 25.4, 16.2, 27.4, 16.9, n=8, kinds=('grass', 'foxglove'))
+# the top meadow east of the hay: a hen coop, a trough, a stack of crates, a cart wheel against the hedge
+VR.hen_coop(k, 39.6, 4.6)
+VR.trough(k, 41.0, 42.0, 5.6, wood=True)
+k.solid(41, 5, 42, 6)
+V.crates(k, 38.0, 6.6)
+k.solid(37.8, 6.4, 38.3, 6.8)
+k.cyl_y(42.6, 2.55, 2.62, 0.38, 0.38, 0.38, (VR.WOOD_DD, 0.2), 'cart_wheel', verts=16)
+for (fx, fr) in ((40.0, 7.6), (42.2, 8.4), (37.0, 8.2)):
+    VR.flower_patch(k, fx, fr, rad=0.6, n=34)
+# Hollin's yard: crates and sacks by the stall, tubs and a barrel by the cottage, a cat on his step
+V.crates(k, 38.6, 23.3)
+k.solid(38.4, 23.1, 38.9, 23.5)
+HK.tub(k, 34.6, 21.2)
+HK.barrels(k, 38.9, 24.6)
+W.planter(k, 39.8, 41.0, 27.75, flowers=('#e05070', '#f0f0f0', '#f0d040'))
+
 # ---- the edges: hedgerow and trees west and east, a dry-stone wall and hedge along the bottom ------------------------------
 for i, r in enumerate([i * 2.2 + 3.0 for i in range(12)]):                        # oaks with a fir every third
     if r >= 26:
