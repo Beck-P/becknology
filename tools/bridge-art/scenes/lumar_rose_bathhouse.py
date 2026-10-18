@@ -28,8 +28,13 @@ WZ = -0.12
 
 k = Kit(COLS, ROWS, margin_top=1.6, margin_bottom=0.5, seed=4427)
 rng = k.rng
-A.room(k, 1, 3, 17, 11, H, door=(8.0, 10.0), floor='flags', floor_tone='#4a6a8a', plaster='#e8d4d0', wainscot=1.1,
-       wainscot_col='#2a5ad8', beams_every=0)
+# the room's walls without its floor: the bath is sunk through where a floor would be
+A.back_wall(k, 0.4, 17.6, 3, H, plaster='#e8d4d0', wainscot=1.1, wainscot_col='#2a5ad8', beams_every=0)
+A.side_wall(k, 0.4, 1.0, 2.5, 11, H)
+A.side_wall(k, 17.0, 17.6, 2.5, 11, H)
+A.front_wall(k, 0.4, 17.6, 11, gaps=[(8.0, 10.0)])
+A.door_frame(k, 8.0, 10.0, 11)
+k.box(0.4, 2.5, -0.75, 17.6, 11.6, -0.66, ('#1a2a3a', 0.1), 'subfloor')          # deep under everything: the tiles' joints
 
 
 def bath_d(x, r):
@@ -52,9 +57,9 @@ for r10 in range(30, 110, 4):
         if bath_d(x + 0.2, r + 0.2) < 1.16:
             continue
         t = ((x10 // 4) + (r10 // 4)) % 2 * (1 if (x10 // 8 + r10 // 8) % 2 else 2)
-        rects.setdefault(t % 4, []).append((x + 0.015, r + 0.015, -0.01, x + 0.385, r + 0.385, 0.012))
+        rects.setdefault(t % 4, []).append((x + 0.012, r + 0.012, -0.3, x + 0.388, r + 0.388, 0.012))
 for t, rs in rects.items():
-    k.boxes(rs, (TILE[t], 0.08), 'floor_tile')
+    k.boxes(rs, (TILE[t], 0.04), 'floor_tile')
 for ring in range(3):                                 # the steps, three rings of rose stone
     rad = 1.12 - ring * 0.12
     z = -0.18 * (ring + 1)

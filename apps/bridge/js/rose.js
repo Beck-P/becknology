@@ -166,7 +166,7 @@ var BridgeRose = (function () {
   // ---- Rose Cove: the path up to Rosewell ----------------------------------------------------------------------------
   var SPRINGS_PATH = { x: 52, y: 22, type: 'enter_world', target: 'lumar-rose-springs', spawn: [21, 26], label: 'ROSEWELL',
                        prompt: 'PRESS E TO GO UP TO THE SPRINGS' };
-  var SPRINGS_OPEN = false;                  // (off until Rosewell's world is in the game)
+  var SPRINGS_OPEN = true;                   // (off until Rosewell's world is in the game)
   function decorate(worldId, data) {
     if (!SPRINGS_OPEN || worldId !== 'lumar-rose' || !data) return;
     data.interactions = data.interactions || [];

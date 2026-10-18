@@ -64,87 +64,138 @@ def level_at(x, r):
 
 
 # the pools: on each level, a row of irregular basins between the lip above and the lip below
+# the pools: each terrace is cut into basins of its own width, side by side, filling it from the lip above to the lip
+# below with low rims of travertine between — as the springs build them — never ovals laid on a lawn
 POOLS = []
-for i in (1, 2, 3):
+STAIR_GAP = (STAIR_X[0] - 0.7, STAIR_X[1] + 1.7)
+KEEP_OUT = [(BATH_X[0] - 0.4, BATH_X[1] + 0.4, 16.8, 21.0), (TEA_X[0] - 0.6, TEA_X[1] + 0.6, 16.4, 21.0)]
+for i in (1, 2, 3, 4):
     z = TERR[i][1]
-    r0, r1 = TERR[i - 1][0] + 0.55, TERR[i][0] - 0.45
-    xs = [1.5, 7.0, 13.0] if i != 3 else [1.5, 7.5, 24.0]
-    for j, x0 in enumerate([1.0, 6.5, 12.5, 23.5, 29.5, 35.5]):
-        if i == 3 and TEA_X[0] - 1 <= x0 <= TEA_X[1]:
+    x = 0.3
+    while x < COLS - 1.2:
+        w = rng.uniform(2.8, 5.6)
+        a, b = x, min(COLS - 0.3, x + w)
+        x = b + rng.uniform(0.35, 0.6)
+        if b - a < 1.8 or (a < STAIR_GAP[1] and b > STAIR_GAP[0]):
+            if a < STAIR_GAP[1] and b > STAIR_GAP[0]:
+                # split round the stair: the part before it, then carry on after it
+                if STAIR_GAP[0] - 0.4 - a > 1.8:
+                    POOLS.append((a, STAIR_GAP[0] - 0.4, z, i))
+                x = STAIR_GAP[1] + 0.4
             continue
-        x1 = x0 + rng.uniform(4.2, 5.0)
-        if x0 < STAIR_X[1] + 1.4 and x1 > STAIR_X[0] - 0.4:
+        if i == 4 and any(ka < b and kb > a for (ka, kb, kr0, kr1) in KEEP_OUT):
             continue
-        POOLS.append((x0, x1, r0, r1, z, i))
+        POOLS.append((a, b, z, i))
 # the bathing pools (walkable: you wade in): the ones either side of the stair on the middle terrace
-BATHING = [p for p in POOLS if p[5] == 2 and (abs(p[0] - 12.5) < 0.1 or abs(p[0] - 23.5) < 0.1)]
+POOLS.append((TEA_X[0] - 1.2, TEA_X[1] + 1.2, 0.0, 4))         # the tea house's own pool, under its stilts
+BATHING = [p for p in POOLS if p[3] == 2 and (abs(p[1] - (STAIR_GAP[0] - 0.4)) < 0.05 or abs(p[0] - (STAIR_GAP[1] + 0.4)) < 0.05)]
+
+
+def pool_extent(p, x):
+    a, b, z, i = p
+    return lip_r(x, i - 1) + 0.42, lip_r(x, i) - 0.24          # back and front edge at this x
+
+
+def pool_d(p, x, r):
+    """How far inside pool p (x, r) is, in tiles (negative outside): its rounded-box outline, scalloped by the lips."""
+    a, b, z, i = p
+    if not (a - 0.5 < x < b + 0.5):
+        return -1.0
+    back, front = pool_extent(p, x)
+    dx = min(x - a, b - x)
+    dr = min(r - back, front - r)
+    if dx < 0 or dr < 0:
+        return min(dx, dr)
+    k_ = 0.45                                                  # the corners rounded over this much
+    if dx < k_ and dr < k_:
+        return k_ - math.hypot(k_ - dx, k_ - dr)
+    return min(dx, dr) + 0.05 * math.sin(x * 4.1 + r * 2.7)
 
 
 def in_pool(x, r):
     for p in POOLS:
-        x0, x1, r0, r1, z, i = p
-        u = (x - (x0 + x1) / 2) / ((x1 - x0) / 2)
-        v = (r - (r0 + r1) / 2) / ((r1 - r0) / 2)
-        if u * u + v * v < 1.0 + 0.1 * math.sin(x * 3.1 + r * 2.3):
+        if pool_d(p, x, r) > 0:
             return p
     return None
 
 
-TEA_POOL = (30.0, 41.2, 17.6, 20.6)
-
-
 def H(x, r):
-    if TEA_POOL[0] < x < TEA_POOL[1] and TEA_POOL[2] < r < TEA_POOL[3]:
-        return -0.62
     z = level_at(x, r)
-    p = in_pool(x, r)
-    if p:
-        z = p[4] - 0.42
+    for p in POOLS:
+        d = pool_d(p, x, r)
+        if d > 0:
+            return p[2] - 0.08 - 0.36 * I.smooth(0.0, 0.42, d)      # banks shelving down to the bed
     return z
 
 
 def material(x, r):
     if r < lip_r(x, 0) - 0.3:
         return 'grass' if I.n2(x, r, 0.6, 9) > -0.4 else 'grass_dark'
-    if r >= 20.6:
+    if r >= 20.6 and not in_pool(x, r):
         return 'path' if 17.5 < x < 24.5 or I.n2(x, r, 0.4, 2) > 0.5 else 'grass'
-    if in_pool(x, r) or (TEA_POOL[0] < x < TEA_POOL[1] and TEA_POOL[2] < r < TEA_POOL[3]):
-        return 'pool_bed'
+    p = in_pool(x, r)
+    if p:
+        return 'pool_shelf' if pool_d(p, x, r) < 0.35 else 'pool_bed'
+    for i in range(1, len(TERR)):                              # a lip's face: streaked where the water runs over it
+        if abs(r - lip_r(x, i)) < 0.32:
+            return 'trav_streak' if I.n2(x * 3.0, 0.0, 1.0, 17 + i) > 0.0 else 'trav0'
     t = I.n2(x, r, 1.9, 13)
-    return 'trav0' if t > 0.3 else 'trav1' if t > -0.2 else 'trav2'
+    return 'trav0' if t > 0.25 else 'trav1' if t > -0.25 else 'trav2'
 
 
-ALB = {'grass': ('#4a5a42', 0.3), 'grass_dark': ('#3e4c3a', 0.3), 'path': ('#a89890', 0.3), 'pool_bed': ('#c8a8a8', 0.2),
-       'trav0': (TRAV[0], 0.22), 'trav1': (TRAV[1], 0.22), 'trav2': (TRAV[3], 0.22)}
+ALB = {'grass': ('#4a5a42', 0.2), 'grass_dark': ('#3e4c3a', 0.2), 'path': ('#a89890', 0.15), 'pool_bed': ('#a8c8c8', 0.06),
+       'pool_shelf': ('#d8e4e0', 0.06), 'trav0': (TRAV[0], 0.06), 'trav1': (TRAV[1], 0.06), 'trav2': (TRAV[3], 0.06),
+       'trav_streak': ('#f8f2f0', 0.04)}
 CELLS = {(c, r) for c in range(-1, COLS + 1) for r in range(-4, ROWS + 1)}
-I.ground(k, CELLS, material, ALB, height=lambda x, r: H(x, r), dither=0.05)
+I.ground(k, CELLS, material, ALB, height=lambda x, r: H(x, r), dither=0.04, step=0.0833)
 
-# the water in each pool, steaming; the lips' cascades; rims
+# the water in each pool: one surface following its outline exactly (the Look Book water by its name), steaming;
+# crystals of roseite glowing on the beds
 STEAM = []
-for (x0, x1, r0, r1, z, i) in POOLS:
-    cx, cr = (x0 + x1) / 2, (r0 + r1) / 2
-    k.blob(cx, cr, z - 0.06, (x1 - x0) / 2 * 1.02, (r1 - r0) / 2 * 1.02, 0.02, (WATER, 0.05), 'basin_water', segs=24)
-    STEAM.append([round(cx, 2), round(cr - z * C45, 2)])
-    for t in range(14):                                     # the rim: rounded lumps of travertine round the edge
-        a = t / 14 * math.pi * 2
-        k.blob(cx + math.cos(a) * (x1 - x0) / 2 * 1.04, cr + math.sin(a) * (r1 - r0) / 2 * 1.06, z - 0.02, 0.24, 0.14, 0.07,
-               (rng.choice(TRAV), 0.22), 'trav_rim', segs=8)
-for i in range(1, len(TERR) - 1):                           # cascades over each lip: white streaks, drip formations
-    z_top, z_bot = TERR[i - 1][1], TERR[i][1]
-    x = 0.5
-    while x < COLS - 0.5:
-        if STAIR_X[0] - 0.6 < x < STAIR_X[1] + 1.6:
-            x += 1.0
-            continue
-        rr = lip_r(x, i)
-        w_ = rng.uniform(0.25, 0.6)
-        if rng.random() < 0.55:
-            k.quads([((x, rr - 0.05, z_top - 0.02), (x + w_, rr - 0.05, z_top - 0.02), (x + w_, rr + 0.12, z_bot + 0.02), (x, rr + 0.12, z_bot + 0.02))],
-                    (rng.choice(('#f4fbfd', '#cfe8f0', '#e2f2f6')), 0.1), 'cascade')
-        for q in range(3):                                  # the lip's drip stones
-            k.blob(x + rng.uniform(0, w_), rr + 0.05, z_top - rng.uniform(0.15, 0.5), 0.09, 0.06, rng.uniform(0.12, 0.22),
-                   (rng.choice(TRAV), 0.22), 'trav_drip', segs=7)
-        x += w_ + rng.uniform(0.1, 0.5)
+faces = []
+n = 10
+for p in POOLS:
+    a, b, z, i = p
+    back0 = min(pool_extent(p, xx)[0] for xx in (a, (a + b) / 2, b)) - 0.1
+    front0 = max(pool_extent(p, xx)[1] for xx in (a, (a + b) / 2, b)) + 0.1
+    for xi in range(int(a * n), int(b * n) + 1):
+        for ri in range(int(back0 * n), int(front0 * n) + 1):
+            if pool_d(p, (xi + 0.5) / n, (ri + 0.5) / n) > 0.02:
+                faces.append(((xi, ri), (xi + 1, ri), (xi + 1, ri + 1), (xi, ri + 1), z))
+by_z = {}
+for f in faces:
+    by_z.setdefault(f[4], []).append(f[:4])
+for zz, fs in by_z.items():
+    I._mesh(k, {'water': fs}, lambda q, zz=zz: (q[0] / n, q[1] / n, zz - 0.07), {'water': (WATER, 0.04)}, 'basin')
+for p in POOLS:
+    a, b, z, i = p
+    back, front = pool_extent(p, (a + b) / 2)
+    STEAM.append([round((a + b) / 2, 2), round((back + front) / 2 - z * C45, 2)])
+    for q in range(int((b - a) // 2)):
+        if rng.random() < 0.5:
+            cx_, cr_ = rng.uniform(a + 0.5, b - 0.5), rng.uniform(back + 0.4, front - 0.3)
+            k.cone(cx_, cr_, z - 0.44, z - 0.02, 0.07, 0.0, '#3a1428', 'crystal', emit=('#f080b0', 0.7), verts=5)
+            k.cone(cx_ + 0.1, cr_ + 0.05, z - 0.44, z - 0.18, 0.05, 0.0, '#3a1428', 'crystal', emit=('#ff9ad0', 0.6), verts=5)
+# the lips: water spilling over in thin bright sheets in front of the fullest pools
+for p in POOLS:
+    a, b, z, i = p
+    if i == 4 or rng.random() < 0.35:
+        continue
+    zb = TERR[i + 1][1] if i + 1 < len(TERR) else 0.0
+    xx = a + rng.uniform(0.3, 0.8)
+    while xx < b - 0.4:
+        w_ = rng.uniform(0.18, 0.45)
+        rr = lip_r(xx, i)
+        k.quads([((xx, rr - 0.12, z - 0.07), (xx + w_, rr - 0.12, z - 0.07), (xx + w_, rr + 0.2, zb + 0.02), (xx, rr + 0.2, zb + 0.02))],
+                (rng.choice(('#f4fbfd', '#e2f2f6', '#cfe8f0')), 0.05), 'cascade')
+        xx += w_ + rng.uniform(0.4, 1.4)
+# rough grass, ferns and roseite where the terraces meet the hill at either side
+for side in ((0.0, 1.4), (COLS - 1.4, COLS + 0.0)):
+    for q in range(26):
+        x_, r_ = rng.uniform(*side), rng.uniform(8.0, 20.0)
+        with k.foliage('leaf'):
+            k.blob(x_, r_, H(x_, r_) + 0.08, rng.uniform(0.15, 0.3), rng.uniform(0.12, 0.22), 0.14,
+                   (rng.choice(('#5a7a4a', '#4e6e44', '#6a8a52')), 0.2), 'fern', segs=7)
 
 # ---- the stair down the middle: white stone, a landing on each terrace, lamps ---------------------------------------
 for i in range(1, len(TERR)):
@@ -281,8 +332,6 @@ def teahouse():
 CL.lift(k, TERR[4][1], teahouse)
 k.solid(TEA_X[0] - 0.3, 16.6, TEA_X[1] + 0.3, 20.8)
 # the tea house's pool below it, and its little bridge from the stair landing
-k.box(TEA_POOL[0], TEA_POOL[2], -0.5, TEA_POOL[1], TEA_POOL[3], -0.44, (WATER, 0.05), 'basin_water')
-STEAM.append([round((TEA_POOL[0] + TEA_POOL[1]) / 2, 2), round(19.0 + 0.5 * C45, 2)])
 
 # ---- the street at the foot ----------------------------------------------------------------------------------------
 HK.install()
@@ -335,10 +384,11 @@ for c in range(COLS):
 for c in STAIR_X:
     for r in range(7, 21):
         WALK.add((c, r))
-for (x0, x1, r0, r1, z, i) in BATHING:                      # the bathing pools and the terrace between them and the stair
-    cs = range(int(x0) - 1, STAIR_X[0]) if x1 < STAIR_X[0] else range(STAIR_X[1] + 1, int(math.ceil(x1)) + 1)
+for p in BATHING:                                           # the bathing pools and the terrace between them and the stair
+    x0, x1, z, i = p
+    cs = range(int(x0), STAIR_X[0]) if x1 < STAIR_X[0] else range(STAIR_X[1] + 1, int(math.ceil(x1)))
     for c in cs:
-        for r in range(int(r0), int(math.ceil(r1))):
+        for r in range(int(math.ceil(TERR[i - 1][0] + 0.3)), int(TERR[i][0])):
             WALK.add((c, r))
 for c in range(int(STAIR_X[1]) + 1, int(TEA_X[0])):         # the walk along the lowest terrace to the tea house's deck
     WALK.add((c, 20))
@@ -371,10 +421,12 @@ for (ax, ay) in ((21, 5), (25, 24)):
     k.solid(ax, ay, ax + 1, ay + 1)
 LIFT = [[round(H(c + 0.5, r + 0.5), 2) for c in range(COLS)] for r in range(ROWS)]
 BATHERS = []
-for (x0, x1, r0, r1, z, i) in POOLS:
-    if (x0, x1, r0, r1, z, i) in BATHING:
+for p in POOLS:
+    if p in BATHING or p[3] == 4:
         continue
-    cx, cr = int((x0 + x1) / 2), int((r0 + r1) / 2)
+    x0, x1, z, i = p
+    back, front = pool_extent(p, (x0 + x1) / 2)
+    cx, cr = int((x0 + x1) / 2), int((back + front) / 2)
     if rng.random() < 0.6:
         BATHERS.append({'sheet': rng.choice(('npc-rose-bather-a', 'npc-rose-bather-b')), 'x': cx, 'y': cr, 'facing': rng.choice(('down', 'left', 'right'))})
 apply_world(WORLD, k, (0, 0, COLS - 1, ROWS - 1), scene_id=WID,

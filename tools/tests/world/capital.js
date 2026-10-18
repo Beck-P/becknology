@@ -45,7 +45,9 @@ const SHOTS = process.argv[2] || __dirname + '/shots';
     let bad = [];
     if (!walkable(w, sp[0], sp[1])) bad.push('spawn ' + sp);
     for (const i of w.inters) {
-      const near = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].some(([dx, dy]) => walkable(w, i.x + dx, i.y + dy));
+      const beside = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]].some(([dx, dy]) => walkable(w, i.x + dx, i.y + dy));
+      // or across a counter, as js/interactions.js allows: two tiles straight ahead with a solid one between
+      const near = beside || [[2, 0], [-2, 0], [0, 2], [0, -2]].some(([dx, dy]) => walkable(w, i.x + dx, i.y + dy) && !walkable(w, i.x + dx / 2, i.y + dy / 2));
       if (!near) bad.push(i.l + ' at ' + i.x + ',' + i.y + ' has no open tile beside it');
     }
     errs += bad.length;
