@@ -463,6 +463,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeAnimals !== 'undefined') BridgeAnimals.decorate(worldId, data);
         if (typeof BridgePet !== 'undefined') BridgePet.decorate(worldId, data);
         if (typeof BridgeDistrict !== 'undefined') BridgeDistrict.decorate(worldId, data);
+        if (typeof BridgeUndercity !== 'undefined') BridgeUndercity.decorate(worldId, data);   // Arcadia below: shops, fights, bosses
         if (typeof BridgeSeasons !== 'undefined') BridgeSeasons.decorate(worldId, data);
         if (typeof BridgeFoliage !== 'undefined') BridgeFoliage.apply(worldId);        // the trees turn with the seasons
         if (typeof BridgeWeather !== 'undefined') BridgeWeather.decorate(worldId, data);
@@ -479,6 +480,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeEvents !== 'undefined') BridgeEvents.decorate(worldId, data);       // small happenings on the hour
         if (typeof BridgeCapital !== 'undefined') BridgeCapital.decorate(worldId, data);     // Crownhaven's districts and their gates
         if (typeof BridgeMidnight !== 'undefined') BridgeMidnight.decorate(worldId, data);   // the haunted sea: the tower, Saltmere
+        if (typeof BridgeCrimson !== 'undefined') BridgeCrimson.decorate(worldId, data);     // the dangerous sea: Cinder Key
         if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.decorate(worldId, data);   // the cast keep their day
         if (typeof BridgeHome !== 'undefined') BridgeHome.decorate(worldId, data);       // last: it keeps the rest clear
         if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);

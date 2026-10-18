@@ -211,6 +211,59 @@ for (x, r, s) in ((3.6, 16.6, 0.34), (34.6, 15.4, 0.3), (8.4, 6.6, 0.3), (22.0, 
 for (x, r) in ((14.4, 9.8), (22.4, 8.6), (28.2, 12.8), (9.4, 13.0), (17.0, 13.4), (32.0, 13.2)):
     P.wildflowers(k, x, r)
 
+# ---- more life: the shingle's gear, gardens and walls, bushes in clumps (clear of the harbour-life spots, js/harbourlife.js:
+# the nets at 12-14 on row 16, the sail at 24-26 on row 13, the catch auction at 30-32 on row 16; the dockhand's walk on row 16)
+n0 = len(k.parts)                                                       # a boat turned turtle on the shingle for tarring
+W.rowboat(k, 4.6, 6.6, 17.45, beam=0.78, hull='#3a5a4a', oars=False)
+I.pose(k, n0, (5.6, 17.45, 0.0), roll=180, dz=0.44)
+k.solid(4.6, 17.1, 6.6, 17.8)
+for (ox, lean) in ((7.0, 0.2), (7.25, -0.15)):                           # oars stood against it
+    k.tube((ox, 17.2, 0.0), (ox - 0.35 + lean, 17.2, 1.0), 0.025, A.WOOD, 'oar', verts=5)
+k.cyl(8.9, 17.45, 0.0, 0.45, 0.22, (A.WOOD_D, 0.14), 'capstan', verts=10)  # a capstan for hauling the boats up
+k.cyl(8.9, 17.45, 0.45, 0.55, 0.28, (A.WOOD, 0.14), 'capstan', verts=10)
+for a in range(4):
+    t = a * math.pi / 2 + 0.4
+    k.tube((8.9, 17.45, 0.5), (8.9 + 0.55 * math.cos(t), 17.45 + 0.4 * math.sin(t), 0.52), 0.025, A.WOOD_D, 'capstan_bar', verts=4)
+k.solid_post(8.9, 17.45)
+P.line(k, (8.9, 17.6, 0.3), (6.5, 17.6, 0.3), sag=0.08)
+cords = []                                                              # a net spread out on the shingle to mend
+for i in range(10):
+    cords.append((10.0 + i * 0.14, 17.25, 0.0, 10.0 + i * 0.14 + 0.012, 17.95, 0.015))
+for j in range(6):
+    cords.append((10.0, 17.25 + j * 0.13, 0.0, 11.3, 17.25 + j * 0.13 + 0.012, 0.015))
+k.boxes(cords, '#4a5a52', 'net')
+for (cx, cr, s_) in ((33.05, 16.3, 0.45), (33.55, 16.45, 0.4)):          # fish boxes by Maud's
+    A.crate(k, cx, cr, s=s_, tone=shade(A.WOOD_L, k.rng.uniform(0.9, 1.05)), contents=None)
+for i in range(5):
+    k.blob(33.2 + i * 0.07, 16.5, 0.4, 0.09, 0.035, 0.025, '#a4b8bc', 'fish', segs=8)
+P.pot_stack(k, 34.2, 17.25)
+P.gull(k, 11.6, 17.6)
+P.gull(k, 33.4, 16.9, z=0.4, facing=-1)
+# behind the inn, a kitchen garden in a picket fence; a dry-stone wall round the chapel's yard
+V.picket_fence(k, (15.2, 8.0), (17.3, 8.0))
+V.picket_fence(k, (15.2, 8.0), (15.2, 9.5))
+V.picket_fence(k, (15.2, 9.5), (17.3, 9.5))
+k.box(15.3, 8.1, 0.0, 17.2, 9.4, 0.05, ('#5a4028', 0.3), 'earth')
+with k.foliage('leaf'):
+    for rr in (8.4, 8.8, 9.2):
+        x = 15.5
+        while x < 17.1:
+            s_ = k.rng.uniform(0.08, 0.12)
+            k.sphere(x, rr, 0.11, s_, s_ * 0.85, (shade(k.rng.choice(('#6aa04a', '#4a8a3a', '#7ab05a')), k.rng.uniform(0.9, 1.1)), 0.15), 'crop', segs=8)
+            x += 0.3
+k.solid(15.2, 8.0, 17.3, 9.5)
+HK.stone_wall(k, 3.6, 9.2, 7.75)
+# bushes in clumps on the green and round the cottages, a second tree up the north slope, water butts and firewood
+for (x, r, s_, b) in ((9.6, 11.6, 0.3, None), (14.3, 11.2, 0.28, '#c03050'), (22.2, 9.6, 0.3, None), (28.6, 9.4, 0.3, '#c03050'),
+                      (13.9, 7.0, 0.32, None), (26.4, 7.6, 0.28, None), (32.8, 13.9, 0.28, None), (17.4, 12.9, 0.26, None)):
+    W.bush(k, x, r, s=s_, tone=k.rng.choice(('#2e5a2e', '#3a6a34')), berries=b)
+    k.solid(x - 0.25, r - 0.2, x + 0.25, r + 0.2)
+W.tree(k, 31.4, 5.9, h=2.3, tone='#3a6034')
+k.solid(31.05, 5.55, 31.75, 6.25)
+A.wood_pile(k, 9.2, 10.4, 9.0)
+A.barrel(k, 14.0, 9.9, h=0.6, radius=0.22)
+A.barrel(k, 28.0, 9.4, h=0.6, radius=0.22, tone='#7a5a34')
+
 busy = lambda x, r: pd(x, r) < 0.6 or shingle(x, r) > 0.2
 I.tufts(k, [c for c in land if material(c[0] + 0.5, c[1] + 0.5) in ('grass', 'grass_dark')], '#567a4a', per_cell=1.0, avoid=busy)
 I.pebbles(k, land, '#7a7a72', per_cell=0.3, avoid=lambda x, r: pd(x, r) < 0.6)

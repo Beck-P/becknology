@@ -977,6 +977,8 @@
   var bgId = null;
 
   function seaPalette(zoneName) {
+    var w = BridgeWorld.getWorld && BridgeWorld.getWorld();
+    if (w && w.sea && w.name === zoneName) return w.sea;          // a world that says whose sea it's in (Cinder Key, Saltmere)
     return { 'Crimson Reach': 'crimson', 'Sapphire Port': 'sapphire', 'Rose Cove': 'rose',
              'Midnight Isle': 'midnight' }[zoneName] || 'emerald';
   }
