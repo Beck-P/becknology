@@ -3339,6 +3339,119 @@
       }
     ]
   },
+  "elf_starreader": {
+    "name": "Ithil",
+    "role": "Star-reader of the Crown",
+    "sheet": "npc-elf-starreader",
+    "at": [
+      {
+        "world": "sylvara-crown",
+        "label": "STAR-READER"
+      }
+    ],
+    "greet": "HUSH - NO, YOU'RE FINE, THE STARS DON'T MIND TALKING. I'M ITHIL. I READ THEM. THEY'RE VERY SLOW READING, BUT THE PLOT IS EXCELLENT.",
+    "again": "STILL THERE. ALL OF THEM. I COUNTED.",
+    "topics": [
+      {
+        "q": "The moon",
+        "a": "SYLVARA'S MOON KEEPS THE SAME TIME AS YOURS, OUT IN THE DARK WHERE YOU COME FROM - THE SAME FULL, THE SAME NEW. WHEN IT'S NEW THE WOOD GOES INTO THE DIMMING: DAWN AND DUSK STRETCH OVER THE WHOLE DAY AND NOBODY GETS ANYTHING DONE. IT'S MY FAVOURITE WEEK."
+      },
+      {
+        "q": "The dial",
+        "a": "THE CONSTELLATIONS OF THE WOOD, SET IN GOLD AND MOONSTONE: THE HARP, THE STAG, THE TWO SWORDS, THE WILLOW, THE LANTERN, AND THE WANDERER - THAT ONE'S YOU, OR SOMEONE LIKE YOU. IT COMES DOWN OUT OF THE SKY IN THE OLD SONGS AND NOBODY KNOWS WHY."
+      },
+      {
+        "q": "About you",
+        "a": "I WAS A WARDEN ONCE. I LOOKED UP ONE NIGHT ON WATCH AND FORGOT TO LOOK DOWN AGAIN FOR ABOUT A HUNDRED YEARS. AERIN STILL HASN'T FORGIVEN ME. THE QUEEN GAVE ME THE PLATFORM INSTEAD OF THE SACK."
+      },
+      {
+        "q": "Falling stars",
+        "a": "ON A CLEAR NIGHT IN THE STARFALL THEY COME DOWN INTO THE WOOD - LITTLE ONES, STILL WARM. IF YOU FIND ONE, BRING IT UP HERE. I'D LIKE TO SEE IT. I'VE NEVER BEEN QUICK ENOUGH."
+      }
+    ]
+  },
+  "elf_boatwright": {
+    "name": "Tamsin",
+    "role": "Boatwright on the Silverrun",
+    "sheet": "npc-elf-boatwright",
+    "at": [
+      {
+        "world": "sylvara-river",
+        "label": "BOATWRIGHT"
+      }
+    ],
+    "greet": "MIND THE SHAVINGS. YOU WANT A CANOE? THEY'RE ON THE RACK - TAKE ONE, BRING IT BACK, OR LEAVE IT AT THE LAKE AND SOMEONE BRINGS IT UP. THAT'S HOW IT WORKS. MOSTLY.",
+    "again": "THE RIVER'S KIND TODAY. MOSTLY.",
+    "topics": [
+      {
+        "q": "The river",
+        "a": "DOWN FROM HERE: THE BRIDGE VILLAGE - YOU GO UNDER IT, DUCK - THEN THE OTTER WEIR, KEEP TO THE CHUTE IN THE MIDDLE. THE SHRINE ISLAND. THEN THE RAPIDS, AND THE FALLS. LAND ABOVE THE FALLS. I MEAN IT. THERE'S A POST WITH A RED LEAF. THERE'S A RACK AT THE POOL BELOW FOR THE REST OF THE WAY TO MIRROR LAKE."
+      },
+      {
+        "q": "The Deep Run",
+        "a": "BELOW THE RAPIDS A QUIET ARM GOES OFF EAST INTO THE DEEPWOOD. SLOW, DARK, LOVELY. IT ENDS IN A POOL WHERE THE FROGS LIGHT UP. YOU CAN LAND THERE."
+      },
+      {
+        "q": "About you",
+        "a": "I BUILD THEM. BIRCH BARK OVER ASH RIBS, SEWN WITH SPRUCE ROOT, SEALED WITH PINE GUM. SIX WEEKS EACH. SOMEBODY BORROWED THE ONE I WAS PROUDEST OF AND LEFT IT AT THE LAKE. AGAIN."
+      }
+    ]
+  },
+  "elf_hermit": {
+    "name": "Sorrel",
+    "role": "Forager of the Deepwood",
+    "sheet": "npc-elf-hermit",
+    "at": [
+      {
+        "world": "sylvara-deepwood",
+        "label": "FORAGER"
+      }
+    ],
+    "greet": "OH! A VISITOR. I DON'T GET MANY. I DON'T WANT MANY, BUT ONE NOW AND THEN IS NICE. YOU'LL BE AFTER HERBS, THEN. EVERYONE IS, EVENTUALLY.",
+    "again": "THE WOOD SAID YOU'D BE BACK. IT DIDN'T, REALLY. BUT IT LOOKED LIKE IT MIGHT.",
+    "topics": [
+      {
+        "q": "Herbs",
+        "a": "EMBERROOT UNDER THE OLDEST TREES - DIG BY THE ROOTS, IT'S WARM WHEN YOU'RE CLOSE. OWLMOSS ON THE LOGS IN THE GROVE, IT GLOWS. DREAMCAPS IN THE GROVE TOO, THE LITTLE VIOLET ONES. WINDTHISTLE IN THE MEADOW. TAKE THEM TO MIRELLE; SHE KNOWS WHAT TO DO WITH THEM. I JUST KNOW WHERE THEY ARE."
+      },
+      {
+        "q": "The Mossback",
+        "a": "SHE'S BEEN ASLEEP SINCE BEFORE THE CITY. ONCE A HUNDRED YEARS OR SO SHE WAKES, HAS A GOOD LOOK ROUND, EATS AN ENTIRE MEADOW, AND GOES BACK TO SLEEP. ON FULL MOON NIGHTS SHE DREAMS OUT LOUD. IT'S WORTH STAYING UP FOR."
+      },
+      {
+        "q": "About you",
+        "a": "I WAS A WARDEN. I CAME OUT HERE ON PATROL ONE SPRING AND THE MEADOW WAS IN FLOWER AND I THOUGHT, NO. I'M STAYING. AERIN STILL SENDS ME A LETTER EVERY YEAR ASKING WHEN I'M COMING BACK. I SEND HER DREAMCAPS."
+      }
+    ]
+  },
+  "elf_tavernkeeper": {
+    "name": "Fennick",
+    "role": "Keeper of the Hollow Bough",
+    "sheet": "npc-elf-tavernkeeper",
+    "at": [
+      {
+        "world": "sylvara-tavern",
+        "label": "TAVERN KEEPER"
+      }
+    ],
+    "greet": "WELCOME TO THE HOLLOW BOUGH! THE ONLY TAVERN IN ANY WORLD INSIDE A BRANCH. SIT ANYWHERE. NOT THERE, THAT'S THALION. HE'S ASLEEP. HE'S ALWAYS ASLEEP.",
+    "again": "THE USUAL? WE DON'T HAVE A USUAL. I JUST LIKE SAYING IT.",
+    "topics": [
+      {
+        "q": "Something to drink",
+        "a": "STARPEAR CIDER, ELDERFLOWER WINE, A HONEY-CAKE IF YOU'RE PEAKISH. ALL FROM THE CANOPY, EXCEPT THE HONEY, WHICH IS FROM VERDANCE AND COSTS ME A FORTUNE.",
+        "sylvan": "shop:tavern"
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THEY SAY THE HIGH LANTERNS IN THE BOUGHS WENT OUT IN THE BIG WIND AND NOBODY CAN REACH THEM. THEY SAY AERIN COULD. AERIN SAYS SHE'S BUSY. AERIN IS NOT BUSY."
+      },
+      {
+        "q": "About you",
+        "a": "MY GREAT-GRANDMOTHER HOLLOWED THIS BOUGH OUT WITH A SPOON. THAT'S THE STORY. IT WAS PROBABLY A LOT OF SPOONS."
+      }
+    ]
+  },
   "idris": {
     "name": "Idris Thorne",
     "role": "Morwen's old master. Drowned with Saltmere; she didn't let him go",

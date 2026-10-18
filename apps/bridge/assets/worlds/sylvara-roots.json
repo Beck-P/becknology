@@ -3676,6 +3676,55 @@
       ]
     },
     {
+      "x": 23,
+      "y": 34,
+      "type": "enter_world",
+      "label": "THE SILVERRUN",
+      "prompt": "PRESS E TO WALK DOWN TO THE RIVER",
+      "target": "sylvara-river",
+      "spawn": [
+        24,
+        1
+      ]
+    },
+    {
+      "x": 46,
+      "y": 8,
+      "type": "enter_world",
+      "label": "THE DEEPWOOD",
+      "prompt": "PRESS E TO GO INTO THE OLD WOOD",
+      "target": "sylvara-deepwood",
+      "spawn": [
+        1,
+        18
+      ]
+    },
+    {
+      "x": 21,
+      "y": 11,
+      "type": "sylvan",
+      "kind": "lift",
+      "label": "BASKET LIFT",
+      "prompt": "PRESS E TO RIDE UP TO THE BOUGHS",
+      "target": "sylvara-boughs",
+      "spawn": [
+        21,
+        26
+      ]
+    },
+    {
+      "x": 30,
+      "y": 7,
+      "type": "enter_world",
+      "label": "THE STAIR",
+      "prompt": "PRESS E TO CLIMB TO THE BOUGHS",
+      "target": "sylvara-boughs",
+      "spawn": [
+        31,
+        22
+      ]
+    },
+    {
       "x": 12,
       "y": 7,
       "type": "dialog",

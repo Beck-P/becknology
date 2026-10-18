@@ -102,7 +102,7 @@ for (a, b) in zip(pts, pts[1:]):
     k.tube((a[0], 2.47, a[1]), (b[0], 2.47, b[1]), 0.05, ('#d8e8f0', 0.2), 'carving_river', emit=('#a8c8d8', 0.5), verts=5)
 for (x, z) in ((7.4, 1.9), (9.0, 2.0), (12.4, 1.9), (14.0, 2.0)):              # trees along it
     k.cone(x, 2.47, z - 0.2, z + 0.2, 0.15, 0.0, ('#a8c0a8', 0.3), 'carving_tree', verts=6)
-k.box(11.0, 2.46, 0.8, 11.2, 2.49, 1.2, ('#d8e8f0', 0.2), 'carving_falls', emit=('#a8c8d8', 0.6))
+k.box(11.0, 2.46, 0.8, 11.2, 2.49, 1.2, ('#d8e8f0', 0.2), 'carving_drop', emit=('#a8c8d8', 0.6))
 # the dry niche and the box in it
 k.box(14.8, 2.5, 0.0, 16.4, 3.6, 0.9, (ROCK_D, 0.4), 'niche')
 k.box(15.1, 2.9, 0.02, 16.0, 3.4, 0.4, ('#7a5a38', 0.3), 'chest')
