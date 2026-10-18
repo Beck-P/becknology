@@ -77,6 +77,9 @@ def height(x, r):
     n = I.n2(x * 0.5, r * 0.8, 1.0, 91) * 0.6 + I.n2(x * 1.2, r * 1.6, 1.0, 93) * 0.4
     h += max(0.0, n) * 0.18 * (1 - warmth(x, r)) * sm(0.5, 1.5, trail_d(x, r))
     h -= 0.18 * sm(0.7, 0.2, stream_d(x, r))                           # the stream's bed
+    cold = 1 - sm(0.25, 0.5, warmth(x, r))
+    h += 0.32 * cold * max(0.0, I.n2(x * 0.35, r * 0.9, 1.0, 95)) * sm(0.6, 1.6, trail_d(x, r))   # wind-carved drifts
+    h += 0.9 * sm(11.0, 8.0, r) * (0.6 + 0.4 * I.n2(x * 0.7, r, 1.0, 97))  # scree fanning out at the cliff's foot
     return h
 
 
@@ -84,7 +87,9 @@ def material(x, r):
     if stream_d(x, r) < 0.25:
         return 'stream_bed'
     t = trail_d(x, r)
-    w = warmth(x, r) + 0.18 * I.n2(x * 1.3, r * 1.3, 1.0, 17)
+    w = warmth(x, r) + 0.18 * I.n2(x * 1.3, r * 1.3, 1.0, 17) + 0.08 * I.n2(x * 4.1, r * 4.1, 1.0, 19)
+    if r < 10.0 and w < 0.4 and I.n2(x * 1.7, r * 2.2, 1.0, 23) > 0.1 - 0.12 * (10.0 - r):
+        return 'scree'
     if t < 0.45:
         return 'path' if w > 0.45 else 'trodden'
     if w > 0.62:
@@ -98,7 +103,8 @@ def material(x, r):
 
 cells = [(c, r) for c in range(-1, COLS + 1) for r in range(-10, ROWS + 1)]
 I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'thaw': ('#c8d0c4', 0.08), 'moss': ('#5a7a42', 0.14), 'grass': ('#4a7a3a', 0.12),
-                              'path': ('#8a7a5e', 0.12), 'trodden': (N.PACKED, 0.06), 'stream_bed': ('#6a6a5a', 0.12)},
+                              'path': ('#8a7a5e', 0.12), 'trodden': (N.PACKED, 0.06), 'stream_bed': ('#6a6a5a', 0.12),
+                              'scree': ('#8a8c94', 0.2)},
          step=0.25 if QUICK else 0.125, bump=0.012, seed=61, height=height, dither=0.08)
 # the grass and moss grow over the warm ground (the meadow's tufts, flowers where it's warmest)
 warm_cells = [(c, r) for c in range(COLS) for r in range(ROWS) if warmth(c + 0.5, r + 0.5) > 0.55 and stream_d(c + 0.5, r + 0.5) > 0.6]
@@ -174,30 +180,80 @@ k.box(6.6, 34.6, 0.0, 7.4, 35.2, 0.18, ('#7a7a72', 0.12), 'stone', bevel=0.03)
 for i in range(7):
     k.sphere(6.75 + (i % 4) * 0.17, 34.75 + (i // 4) * 0.2, 0.22, 0.05, 0.05, ('#8a1a3a', 0.08), 'berries', segs=6)
 
+# ---- the outer slopes: crags through the snow, drifts in their lee, sastrugi; the scree's stones; juniper in the thaw ----------
+CRAGS = [(15.0, 11.2, 0.7), (38.0, 11.6, 0.8), (44.0, 26.0, 0.6), (16.0, 36.0, 0.5), (14.0, 44.0, 0.5), (40.0, 44.0, 0.7), (33.0, 10.6, 0.5)]
+for (x, r, s) in CRAGS:
+    z = height(x, r)
+    for j in range(3):
+        k.rock(x + (j - 1) * s * 0.7, r + k.rng.uniform(-0.2, 0.2), z + s * 0.3, s * k.rng.uniform(0.5, 0.8), s * 0.5, s * k.rng.uniform(0.6, 1.0),
+               ('#585c68', 0.2), part='crag', segs=7)
+    k.blob(x, r - 0.1, z + s * 0.95, s * 1.1, s * 0.5, s * 0.16, (N.ROOF_SNOW, 0.05), 'crag_snow', segs=9)
+    k.blob(x + s * 1.3, r + 0.3, z, s * 1.0, s * 0.4, s * 0.2, (N.SNOW, 0.04), 'drift', segs=9)
+    k.solid(x - s * 1.2, r - s * 0.5, x + s * 1.2, r + s * 0.5)
+for _ in range(70 if not QUICK else 35):
+    x, r = k.rng.uniform(1, 51), k.rng.uniform(9, 45)
+    if warmth(x, r) < 0.2 and trail_d(x, r) > 1.0:
+        k.blob(x, r, height(x, r), k.rng.uniform(0.5, 1.1), 0.07, 0.03, ('#dce6f2', 0.03), 'drift', rot=(0, 0, k.rng.uniform(-12, 12)), segs=8)
+for _ in range(160 if not QUICK else 80):                               # scree stones
+    x, r = k.rng.uniform(0, 52), k.rng.uniform(7.6, 10.4)
+    if material(x, r) == 'scree' and not (23.0 < x < 31.0):
+        s = k.rng.uniform(0.08, 0.22)
+        k.rock(x, r, height(x, r) + s * 0.3, s, s * 0.8, s * 0.6, (shade('#7a7c86', k.rng.uniform(0.85, 1.1)), 0.2), part='stone', segs=6)
+for _ in range(60 if not QUICK else 30):                                # juniper: low dark mats where the snow gives out
+    x, r = k.rng.uniform(8, 44), k.rng.uniform(12, 44)
+    w = warmth(x, r)
+    if 0.3 < w < 0.7 and trail_d(x, r) > 0.9 and stream_d(x, r) > 0.9 and all(math.hypot(x - px, r - pr) > 2.2 for (px, pr, n) in SPRINGS):
+        with k.foliage('needle'):
+            for j in range(k.rng.randint(3, 6)):
+                k.blob(x + k.rng.uniform(-0.35, 0.35), r + k.rng.uniform(-0.25, 0.25), height(x, r) + 0.08, k.rng.uniform(0.18, 0.3),
+                       k.rng.uniform(0.14, 0.24), 0.12, (shade('#2e4a34', k.rng.uniform(0.85, 1.2)), 0.18), 'juniper', segs=7)
+# a mani wall beside the path to the stair: a long low wall of carved stones, each one a prayer
+for i in range(14):
+    t = i / 13
+    x, r = 27.6 + (30.6 - 27.6) * t, 23.6 + (17.6 - 23.6) * t
+    z = height(x, r)
+    k.box(x - 0.24, r - 0.2, z, x + 0.24, r + 0.2, z + 0.42, (shade('#8a8478', k.rng.uniform(0.9, 1.08)), 0.18), 'mani_wall', bevel=0.03)
+    k.box(x - 0.2, r + 0.2, z + 0.12, x + 0.2, r + 0.22, z + 0.36, (k.rng.choice(('#b0a890', '#9aa6a8', '#a89a84')), 0.15), 'mani_stone')
+    k.box(x - 0.25, r - 0.21, z + 0.42, x + 0.25, r + 0.21, z + 0.5, (N.ROOF_SNOW, 0.05), 'mani_snow')
+    k.solid(x - 0.2, r - 0.2, x + 0.2, r + 0.2)
+
+
 # ---- trees: larches on the west slopes, pines on the east, a few birches by the warm water ---------------------------------
 def larch(x, r, h):
+    """A larch: a slim leaning trunk, airy whorls of soft needles in tufts along drooping boughs (deciduous — they go gold
+    in autumn, so they're leaves, not needles), snow caught in them."""
     z0 = height(x, r)
-    k.cyl(x, r, z0, z0 + h * 0.35, 0.06, ('#5a3a24', 0.12), 'trunk', verts=6)
+    lean = k.rng.uniform(-0.08, 0.08)
+    k.tube((x, r, z0), (x + lean, r, z0 + h), 0.06, ('#5a3a24', 0.12), 'trunk', rb=0.015, verts=6)
+    green = k.rng.choice(('#7a9a4a', '#6a8e44', '#88a452'))
     with k.foliage('leaf'):
-        for i in range(5):
-            t = i / 5
-            zz = z0 + 0.4 + t * (h - 0.6)
-            rad = 0.55 * (1 - t * 0.75)
-            k.cone(x, r, zz, zz + 0.45, rad, 0.05, (shade('#5a8a4a', 1 - 0.05 * i), 0.18), 'larch', verts=8)
-    if warmth(x, r) < 0.35:
-        for i in range(5):
-            t = i / 5
-            zz = z0 + 0.4 + t * (h - 0.6)
-            rad = 0.55 * (1 - t * 0.75)
-            k.blob(x - rad * 0.2, r, zz + 0.3, rad * 0.55, rad * 0.5, 0.06, (N.ROOF_SNOW, 0.08), 'larch_snow', segs=7)
+        n = 7
+        for i in range(n):
+            t = i / n
+            zz = z0 + 0.35 + t * (h - 0.5)
+            rad = 0.6 * (1 - t * 0.8) + 0.08
+            for j in range(5):                                              # tufts round each whorl, drooping at their tips
+                a = j / 5 * math.tau + i * 0.9
+                bx, br = x + lean * t + math.cos(a) * rad, r + math.sin(a) * rad * 0.8
+                k.blob(bx, br, zz - 0.05, rad * 0.45, rad * 0.35, 0.12, (shade(green, k.rng.uniform(0.85, 1.12)), 0.18), 'larch', segs=7)
+            k.blob(x + lean * t, r, zz, rad * 0.55, rad * 0.45, 0.14, (shade(green, 0.8), 0.18), 'larch', segs=7)
+    if warmth(x, r) > 0.35:
+        return
+    for i in range(0, 7, 2):
+        t = i / 7
+        zz = z0 + 0.35 + t * (h - 0.5)
+        rad = 0.6 * (1 - t * 0.8) + 0.08
+        k.blob(x - rad * 0.25, r - 0.05, zz + 0.1, rad * 0.5, rad * 0.4, 0.05, (N.ROOF_SNOW, 0.08), 'larch_snow', segs=7)
 
 
 TREES = []
 for (x, r) in ((2.0, 12.0), (4.4, 14.8), (1.6, 17.6), (7.4, 18.6), (3.0, 21.8), (9.6, 22.4), (5.8, 24.6), (12.4, 21.0), (1.4, 25.8),
-               (8.0, 9.6), (10.6, 12.6), (14.6, 14.0), (2.6, 8.0)):
-    larch(x, r, k.rng.uniform(2.0, 2.8))
+               (8.0, 9.6), (10.6, 12.6), (14.6, 14.0), (2.6, 8.0), (6.0, 16.4), (11.0, 17.2), (3.0, 26.6), (13.4, 25.0), (16.8, 16.6),
+               (0.8, 20.0), (9.0, 27.0)):
+    larch(x, r, k.rng.uniform(2.4, 3.4))
     TREES.append((x, r))
-for (x, r) in ((46.0, 30.0), (48.6, 33.4), (44.4, 35.2), (49.4, 38.4), (46.8, 41.8), (42.0, 40.4), (50.0, 27.0), (40.8, 37.6)):
+for (x, r) in ((46.0, 30.0), (48.6, 33.4), (44.4, 35.2), (49.4, 38.4), (46.8, 41.8), (42.0, 40.4), (50.0, 27.0), (40.8, 37.6), (44.0, 44.0), (50.6, 44.6), (47.6, 25.2),
+               (43.0, 38.6)):
     N.snow_pine(k, x, r, h=k.rng.uniform(2.3, 3.0))
     TREES.append((x, r))
 for (x, r) in ((22.4, 33.8), (29.6, 37.6), (18.0, 30.4), (31.4, 19.4)):

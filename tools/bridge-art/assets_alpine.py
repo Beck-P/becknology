@@ -1263,24 +1263,64 @@ def gompa(k, x0, x1, r_back, r_front, h=2.2, z0=0.0, windows=3, door=None, roof=
         qb(k, door - 0.4, r_front - 0.02, z0 + 0.95, door + 0.4, r_front + 0.08, z0 + 1.05, (MAROON, 0.08), 'lintel')
         for s_ in (-1, 1):
             k.sphere(door + s_ * 0.12, r_front + 0.05, z0 + 0.5, 0.03, 0.03, GILT, 'door_ring', segs=6)
+    xa, xb, ra, rb_ = x0 + lean, x1 - lean, r_back + lean, r_front - lean
+    # the flat roof: a dark parapet round its edge, snow lying inside it, drifted against the back
+    for (a0, a1, b0, b1) in ((xa - 0.06, xb + 0.06, ra - 0.06, ra + 0.08), (xa - 0.06, xb + 0.06, rb_ - 0.08, rb_ + 0.06),
+                             (xa - 0.06, xa + 0.08, ra - 0.06, rb_ + 0.06), (xb - 0.08, xb + 0.06, ra - 0.06, rb_ + 0.06)):
+        qb(k, a0, b0, zt, a1, b1, zt + 0.14, ('#2a1a14', 0.08), 'parapet')
+    qb(k, xa + 0.08, ra + 0.08, zt, xb - 0.08, rb_ - 0.08, zt + 0.06, (SNOW, 0.03), 'roof_snow')
+    x = xa + 0.3
+    while x < xb - 0.3:
+        k.blob(x, ra + 0.25, zt + 0.06, rng.uniform(0.3, 0.6), 0.2, rng.uniform(0.05, 0.1), (SNOW, 0.03), 'roof_snow', segs=8)
+        x += rng.uniform(0.5, 0.9)
     if roof == 'gold':
-        ri = r_back + lean
-        rf2 = r_front - lean
-        hr = 0.6
-        k.quads([((x0 - 0.1, rf2 + 0.25, zt), (x1 + 0.1, rf2 + 0.25, zt), (x1 - 0.4, (ri + rf2) / 2, zt + hr), (x0 + 0.4, (ri + rf2) / 2, zt + hr))],
-                (GILT, 0.06), 'roof_gold')
-        k.quads([((x1 + 0.1, ri - 0.25, zt), (x0 - 0.1, ri - 0.25, zt), (x0 + 0.4, (ri + rf2) / 2, zt + hr), (x1 - 0.4, (ri + rf2) / 2, zt + hr))],
+        # the main hall: a clerestory on the roof under a gilt roof with upturned eaves; the wheel and the deer over the door
+        cx0, cx1 = xa + (xb - xa) * 0.22, xb - (xb - xa) * 0.22
+        cr0, cr1 = ra + (rb_ - ra) * 0.2, rb_ - (rb_ - ra) * 0.3
+        zc = zt + 0.75
+        qb(k, cx0, cr0, zt, cx1, cr1, zc - 0.22, (WHITE, 0.08), 'gompa_wall')
+        qb(k, cx0 - 0.03, cr0 - 0.03, zc - 0.22, cx1 + 0.03, cr1 + 0.03, zc, (MAROON, 0.12), 'penbey')
+        x = cx0 + 0.3
+        while x < cx1 - 0.2:
+            qb(k, x - 0.12, cr1 + 0.005, zt + 0.12, x + 0.12, cr1 + 0.02, zt + 0.42, '#2a1a10', 'window_glass', emit=('#ffb060', 0.6))
+            x += 0.55
+        hr, ov = 0.55, 0.3
+        mr = (cr0 + cr1) / 2
+        k.quads([((cx0 - ov, cr1 + ov, zc), (cx1 + ov, cr1 + ov, zc), (cx1 - 0.3, mr, zc + hr), (cx0 + 0.3, mr, zc + hr))], (GILT, 0.06), 'roof_gold')
+        k.quads([((cx1 + ov, cr0 - ov, zc), (cx0 - ov, cr0 - ov, zc), (cx0 + 0.3, mr, zc + hr), (cx1 - 0.3, mr, zc + hr))],
                 (shade(GILT, 0.85), 0.06), 'roof_gold')
-        for (xa, xb) in ((x0 - 0.1, x0 + 0.4), (x1 + 0.1, x1 - 0.4)):
-            k.poly([(xa, ri - 0.25, zt), (xa, rf2 + 0.25, zt), (xb, (ri + rf2) / 2, zt + hr)], (shade(GILT, 0.9), 0.06), 'roof_gold')
-        k.cone((x0 + x1) / 2, (ri + rf2) / 2, zt + hr, zt + hr + 0.5, 0.12, 0.02, GILT, 'finial', verts=8)
-        for xe in (x0 - 0.1, x1 + 0.1):                              # the upturned eaves
-            k.cone(xe, rf2 + 0.25, zt - 0.05, zt + 0.15, 0.05, 0.005, GILT, 'finial', verts=6)
-    else:
-        qb(k, x0 + lean + 0.04, r_back + lean + 0.04, zt, x1 - lean - 0.04, r_front - lean - 0.04, zt + 0.05, (SNOW, 0.03), 'roof_snow')
-        if gold:
-            for (xe, re_) in ((x0 + lean, r_front - lean), (x1 - lean, r_front - lean)):     # victory banners at the corners
-                k.cyl(xe, re_, zt, zt + 0.42, 0.06, (GILT, 0.05), 'finial', verts=8)
-                k.sphere(xe, re_, zt + 0.46, 0.05, 0.05, GILT, 'finial', segs=6)
+        for (e0, e1) in ((cx0 - ov, cx0 + 0.3), (cx1 + ov, cx1 - 0.3)):
+            k.poly([(e0, cr0 - ov, zc), (e0, cr1 + ov, zc), (e1, mr, zc + hr)], (shade(GILT, 0.92), 0.06), 'roof_gold')
+        for (ex, er) in ((cx0 - ov, cr1 + ov), (cx1 + ov, cr1 + ov), (cx0 - ov, cr0 - ov), (cx1 + ov, cr0 - ov)):
+            k.cone(ex, er, zc - 0.04, zc + 0.16, 0.05, 0.005, GILT, 'finial', verts=6)            # the upturned eaves
+        k.cone((cx0 + cx1) / 2, mr, zc + hr, zc + hr + 0.45, 0.11, 0.02, GILT, 'finial', verts=8)  # the ganjira
+        k.sphere((cx0 + cx1) / 2, mr, zc + hr + 0.5, 0.06, 0.06, GILT, 'finial', segs=8)
+        wx = (xa + xb) / 2
+        k.cyl_y(wx, rb_ - 0.12, rb_ - 0.06, zt + 0.42, 0.22, 0.22, GILT, 'dharma_wheel', verts=14)
+        k.cyl_y(wx, rb_ - 0.13, rb_ - 0.05, zt + 0.42, 0.08, 0.08, (shade(GILT, 0.7), 0.05), 'dharma_wheel', verts=10)
+        for s_ in (-1, 1):                                            # the two deer, kneeling, facing the wheel
+            k.blob(wx + s_ * 0.38, rb_ - 0.1, zt + 0.26, 0.14, 0.08, 0.09, GILT, 'deer', segs=8)
+            k.sphere(wx + s_ * 0.27, rb_ - 0.08, zt + 0.38, 0.05, 0.05, GILT, 'deer', segs=6)
+    elif (xb - xa) > 3.0:
+        # a set-back upper storey on the bigger houses: its own maroon band and snowy roof
+        ux0, ux1 = xa + (xb - xa) * 0.15, xa + (xb - xa) * 0.55
+        ur0, ur1 = ra + 0.15, ra + (rb_ - ra) * 0.5
+        zu = zt + 0.8
+        qb(k, ux0, ur0, zt, ux1, ur1, zu - 0.2, (WHITE, 0.08), 'gompa_wall')
+        qb(k, ux0 - 0.03, ur0 - 0.03, zu - 0.2, ux1 + 0.03, ur1 + 0.03, zu, (MAROON, 0.12), 'penbey')
+        qb(k, ux0 - 0.06, ur0 - 0.06, zu, ux1 + 0.06, ur1 + 0.06, zu + 0.08, ('#2a1a14', 0.08), 'parapet')
+        qb(k, ux0, ur0, zu + 0.08, ux1, ur1, zu + 0.12, (SNOW, 0.03), 'roof_snow')
+        for i in range(2):
+            wx = ux0 + (ux1 - ux0) * (i + 0.5) / 2
+            k.quads([((wx - 0.2, ur1 + 0.01, zt + 0.1), (wx + 0.2, ur1 + 0.01, zt + 0.1), (wx + 0.14, ur1 + 0.01, zt + 0.45), (wx - 0.14, ur1 + 0.01, zt + 0.45))],
+                    ('#14100e', 0.06), 'window_frame')
+        # firewood stacked on the roof, a ladder up to the upper storey
+        qb(k, ux1 + 0.3, ra + 0.2, zt + 0.06, ux1 + 0.9, ra + 0.5, zt + 0.32, ('#7a5a3a', 0.15), 'woodpile')
+        qb(k, ux1 + 0.3, ra + 0.2, zt + 0.32, ux1 + 0.9, ra + 0.5, zt + 0.37, (SNOW, 0.03), 'roof_snow')
+    if gold and roof != 'gold':
+        for (xe, re_) in ((xa, rb_), (xb, rb_)):                       # victory banners at the corners
+            k.cyl(xe, re_, zt + 0.14, zt + 0.56, 0.06, (GILT, 0.05), 'finial', verts=8)
+            k.sphere(xe, re_, zt + 0.6, 0.05, 0.05, GILT, 'finial', segs=6)
+            k.cyl(xe, re_, zt + 0.2, zt + 0.42, 0.075, ('#c83a2e', 0.08), 'banner_cloth', verts=8)
     k.solid(x0, r_back, x1, r_front)
     return zt

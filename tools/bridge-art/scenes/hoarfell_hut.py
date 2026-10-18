@@ -103,6 +103,18 @@ for (x, r) in ((2.0, 8.2),):
     k.box(x - 0.05, r - 0.18, 0.95, x + 0.25, r - 0.02, 1.05, ('#c8ccd4', 0.1), 'axe_head')
 k.solid(1.0, 6.8, 1.8, 9.9)
 A.rug(k, 9.8, 6.0, 12.4, 8.4, col='#7a3a2a')
+# by the door: skis leaning on the wall, rucksacks dropped where people came in, a broom for the snow
+for i, c in enumerate(('#c83a2e', '#2a6ac0', '#e0b030', '#2a9a5a')):
+    x = 12.8 + i * 0.22
+    k.tube((x, 9.75, 0.0), (x + 0.05, 9.5, 1.6), 0.03, (c, 0.1), 'ski', verts=4)
+k.solid(12.6, 9.4, 13.8, 9.9)
+for (x, r, c) in ((15.0, 8.4, '#a83a2e'), (15.8, 8.7, '#2a4a6a'), (3.0, 9.2, '#3a6a3a')):
+    k.blob(x, r, 0.3, 0.26, 0.2, 0.3, (c, 0.12), 'rucksack', segs=10)
+    k.box(x - 0.18, r + 0.12, 0.22, x + 0.18, r + 0.2, 0.5, (shade(c, 0.8), 0.1), 'rucksack_pocket')
+    k.tube((x - 0.2, r, 0.5), (x - 0.25, r, 0.2), 0.03, ('#6a6a72', 0.1), 'axe_shaft', verts=4)
+    k.solid(x - 0.25, r - 0.2, x + 0.25, r + 0.2)
+k.tube((15.2, 9.6, 0.0), (15.4, 9.3, 1.4), 0.025, ('#8a6a3a', 0.1), 'broom', verts=5)
+k.cone(15.2, 9.6, 0.0, 0.35, 0.12, 0.03, ('#c8a050', 0.12), 'broom', verts=8)
 
 # ---- light ------------------------------------------------------------------------------------------------------------------
 A.hanging_lamp(k, 6.8, 6.4, energy=120, visible=True)

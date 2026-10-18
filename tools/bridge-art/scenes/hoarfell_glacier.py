@@ -45,8 +45,8 @@ def sm(a, b, t):
 # ---- the glacier's banks: where the ice runs between the moraines ------------------------------------------------------------
 def banks(r):
     """(west edge, east edge) of the ice at row r: it narrows toward its head and wanders."""
-    w = 0.5 * math.sin(r * 0.31) + 0.3 * math.sin(r * 0.83 + 1.0)
-    return 12.0 + 1.6 * sm(30, 6, r) + w, 39.0 - 3.0 * sm(30, 4, r) + 0.6 * math.sin(r * 0.4 + 2.0)
+    w = 1.3 * math.sin(r * 0.21) + 0.5 * math.sin(r * 0.63 + 1.0)
+    return 12.0 + 1.6 * sm(30, 6, r) + w, 39.0 - 3.0 * sm(30, 4, r) + 1.1 * math.sin(r * 0.27 + 2.0) + w * 0.4
 
 
 def ice_in(x, r):
@@ -100,6 +100,8 @@ def hidden_at(i, x):
 
 # ---- the ground ---------------------------------------------------------------------------------------------------------------
 def height(x, r):
+    if crev(x, r) > -0.04:                                             # the open crevasses: the snow stops at their lips
+        return -3.0
     d = ice_in(x, r)
     h = 0.0
     lo, hi = banks(r)
@@ -118,8 +120,10 @@ def material(x, r):
     if path_d(x, r) < 0.42 and d < 0.3:
         return 'path'
     if d > 0.6:
-        n = I.n2(x * 0.6, r * 0.9, 1.0, 13)
-        return 'ice_blue' if n > 0.55 else 'glacier_snow'
+        lo, hi = banks(r)                                                  # ogives: bands of blue ice bowed down the glacier
+        u = (x - (lo + hi) / 2) / max(1.0, (hi - lo) / 2)
+        band = math.sin((r - 2.2 * u * u) * 0.75 + 0.5 * I.n2(x * 0.3, r * 0.3, 1.0, 13))
+        return 'ice_blue' if band + 0.25 * I.n2(x * 0.5, r * 0.5, 1.0, 14) > 0.55 else 'glacier_snow'
     if d > -0.4:
         return 'ice_edge'
     return 'moraine' if d > -2.4 else 'snow'
@@ -153,8 +157,25 @@ for i in range(26):
 west = [(c, r) for c in range(-1, 7) for r in range(-8, ROWS + 1)]
 east = [(c, r) for c in range(44, COLS + 1) for r in range(-8, ROWS + 1)]
 head = [(c, r) for c in range(-1, COLS + 1) for r in range(-8, 2)]
-for cs, top, sd in ((west, 4.2, 51), (east, 4.6, 53), (head, 6.4, 57)):
-    I.ridge(k, cs, top=top, slope=1.6, seed=sd, rock='#d6dee9', strata=('#6a7284', '#525a6c', '#7c8496'), moss=N.ROOF_SNOW, foot=0.7, patchy=False)
+for cs, top, sd in ((west, 3.0, 51), (east, 3.4, 53), (head, 6.4, 57)):
+    I.ridge(k, cs, top=top, slope=2.4, seed=sd, rock='#d6dee9', strata=('#6a7284', '#525a6c', '#7c8496'), moss=N.ROOF_SNOW, foot=1.2, patchy=False)
+for (x, r, h) in ((2.4, 14.0, 2.4), (4.2, 26.0, 2.0), (1.6, 35.0, 2.6), (45.8, 12.0, 2.2), (46.6, 24.0, 2.8), (45.2, 33.0, 2.0)):
+    z = 3.0                                                            # rock pinnacles standing up out of the ridges
+    for j in range(4):
+        s_ = 0.55 * (1 - j * 0.2)
+        k.rock(x, r, z + j * s_ * 1.1, s_, s_ * 0.8, s_ * 0.9, ('#5a6272', 0.18), part='crag', segs=7)
+    k.blob(x, r, z + 3.6 * 0.55, 0.35, 0.3, 0.15, (N.ROOF_SNOW, 0.06), 'crag_snow', segs=7)
+# surface cracks on the ice, thin and blue, and wind-blown snow lying in streaks
+for _ in range(90 if not QUICK else 40):
+    r = k.rng.uniform(4, 38)
+    lo, hi = banks(r)
+    x = k.rng.uniform(lo + 1, hi - 1)
+    if path_d(x, r) < 0.8 or crev(x, r) > -0.3:
+        continue
+    a = k.rng.uniform(-0.4, 0.4)
+    L = k.rng.uniform(0.6, 1.6)
+    z = height(x, r) + 0.006
+    k.tube((x, r, z), (x + math.cos(a) * L, r + math.sin(a) * L * 0.4, z), 0.014, ('#6a9ac0', 0.04), 'ice_crack', verts=4)
 far = [(c, r) for c in range(-1, COLS + 1) for r in range(-8, -3)]
 I.ridge(k, far, top=10.5, slope=2.8, seed=59, rock='#d6dee9', strata=('#5e6678', '#485062', '#727a8c'), moss=N.ROOF_SNOW, foot=0.9, patchy=False)
 
@@ -187,11 +208,14 @@ for i in range(len(CRACKS)):
 SERACS = [(x, r, s) for (x, r, s) in ((20.0, 9.4, 0.7), (22.6, 8.4, 0.8), (25.4, 9.6, 0.75), (28.0, 8.2, 0.85), (30.8, 9.4, 0.7),
                                       (33.4, 8.6, 0.8), (35.6, 9.8, 0.65), (24.0, 11.2, 0.55), (29.2, 11.0, 0.6), (32.6, 11.4, 0.5),
                                       (36.2, 21.6, 0.5), (14.6, 26.4, 0.45), (34.8, 30.0, 0.5), (17.6, 16.8, 0.45))]
-for (x, r, s) in SERACS:
+for (x, r, s) in SERACS:                                                  # faceted blocks of blue ice, tilted, snow on their tops
     z = height(x, r)
-    k.blob(x, r, z + s * 0.7, s, s * 0.8, s * 0.9, ('#bcdcef', 0.06), 'serac', rot=(k.rng.uniform(-14, 14), k.rng.uniform(-10, 10), k.rng.uniform(0, 90)),
-           segs=6, smooth=False)
-    k.blob(x - 0.05, r - 0.05, z + s * 1.45, s * 0.7, s * 0.55, s * 0.25, (N.ROOF_SNOW, 0.08), 'serac_snow', segs=6)
+    for j in range(k.rng.randint(1, 3)):
+        dx, dr = k.rng.uniform(-0.3, 0.3) * s, k.rng.uniform(-0.2, 0.2) * s
+        h = s * k.rng.uniform(0.9, 1.5)
+        k.rock(x + dx, r + dr, z + h * 0.55, s * 0.7, s * 0.55, h * 0.75, (('#9ccce4', '#bcdcef', '#7ab4d8')[j % 3], 0.05), part='serac',
+               segs=6, jitter=0.25)
+        k.blob(x + dx - 0.05, r + dr - 0.05, z + h * 1.2, s * 0.55, s * 0.45, s * 0.18, (N.ROOF_SNOW, 0.06), 'serac_snow', segs=6)
     k.solid(math.floor(x - s * 0.6), math.floor(r - s * 0.4), math.floor(x + s * 0.6) + 1, math.floor(r + s * 0.4) + 1)
 k.solid(18, 7, 38, 12)                                                  # the icefall: not a way up
 

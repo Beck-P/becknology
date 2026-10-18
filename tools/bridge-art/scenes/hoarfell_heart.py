@@ -44,7 +44,18 @@ def bowl_d(x, r):
     return d * 16 + 0.6 * I.n2(x, r, 0.4, 5)
 
 
+def tarn_rad(a):
+    return 1.0 + 0.14 * math.sin(3 * a + 0.4) + 0.08 * math.sin(5 * a + 1.9) + 0.05 * math.sin(7 * a + 2.6)
+
+
+def in_tarn(x, r, grow=0.0):
+    dx, dr = (x - TARN[0]) / TARN[2], (r - TARN[1]) / TARN[3]
+    return math.hypot(dx, dr) < tarn_rad(math.atan2(dr, dx)) + grow
+
+
 def height(x, r):
+    if in_tarn(x, r, 0.04):                                           # the frozen tarn, sunk a little
+        return -0.12
     d = bowl_d(x, r)
     h = 0.35 * sm(2.0, -1.0, d)
     if d > 2.0:                                                       # wind-carved sastrugi out toward the edge
@@ -58,11 +69,11 @@ TARN = (37.0, 22.0, 3.2, 2.2)
 def material(x, r):
     if bowl_d(x, r) < 0.5:
         return 'snow'
-    return 'snowfield' if I.n2(x * 0.6, r * 0.6, 1.0, 9) > -0.2 else 'windpack'
+    return 'windpack' if I.n2(x * 0.22, r * 0.22, 1.0, 9) > 0.42 else 'snowfield'     # smooth, so the wyrm's ripples show
 
 
 cells = [(c, r) for c in range(-1, COLS + 1) for r in range(-10, ROWS + 1)]
-I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'snowfield': ('#eaf0f8', 0.02), 'windpack': ('#d8e0ec', 0.04)},
+I.ground(k, cells, material, {'snow': (N.SNOW, 0.04), 'snowfield': ('#eaf0f8', 0.02), 'windpack': ('#e2e8f2', 0.03)},
          step=0.25 if QUICK else 0.125, bump=0.006, seed=41, height=height, dither=0.06)
 
 # the ring of ice cliffs and seracs, the peaks over them
@@ -71,30 +82,43 @@ I.ridge(k, ring, top=3.4, slope=1.2, seed=149, rock='#e2ecf6', strata=('#8ab8d8'
         foot=0.5, patchy=False)
 far = [(c, r) for c in range(-2, COLS + 2) for r in range(-10, -2)]
 I.ridge(k, far, top=11.5, slope=2.8, seed=151, rock='#d6dee9', strata=('#5e6678', '#485062', '#727a8c'), moss=N.ROOF_SNOW, foot=0.9, patchy=False)
-for i in range(26):                                                    # seracs along the foot of the ring
-    a = i / 26 * math.tau
-    x, r = 23.0 + math.cos(a) * 19.0, 20.0 + math.sin(a) * 16.0
-    if r > 33 and 18 < x < 28:
+a = 0.0
+while a < math.tau:                                                    # seracs along the foot of the ring, in clusters and gaps
+    a += k.rng.uniform(0.12, 0.42)
+    if k.rng.random() < 0.3:
         continue
-    s = k.rng.uniform(0.5, 0.9)
-    k.blob(x, r, s * 0.7, s, s * 0.8, s * 0.9, (ICE[k.rng.randrange(3)], 0.06), 'serac', rot=(k.rng.uniform(-14, 14), k.rng.uniform(-10, 10), k.rng.uniform(0, 90)),
-           segs=6, smooth=False)
-    k.blob(x - 0.05, r - 0.05, s * 1.45, s * 0.7, s * 0.55, s * 0.25, (N.ROOF_SNOW, 0.08), 'serac_snow', segs=6)
+    for j in range(k.rng.choice((1, 1, 2, 3))):
+        aa = a + j * 0.05
+        rad = k.rng.uniform(0.97, 1.03)
+        x, r = 23.0 + math.cos(aa) * 19.0 * rad, 20.0 + math.sin(aa) * 16.0 * rad
+        if r > 33 and 18 < x < 28:
+            continue
+        s = k.rng.uniform(0.35, 1.0)
+        k.blob(x, r, s * 0.7, s, s * 0.8, s * k.rng.uniform(0.7, 1.3), (ICE[k.rng.randrange(3)], 0.06), 'serac',
+               rot=(k.rng.uniform(-14, 14), k.rng.uniform(-10, 10), k.rng.uniform(0, 90)), segs=6, smooth=False)
+        k.blob(x - 0.05, r - 0.05, s * 1.45, s * 0.7, s * 0.55, s * 0.25, (N.ROOF_SNOW, 0.08), 'serac_snow', segs=6)
 
 # ---- what it has eaten: ribs, a tusk, a sledge -----------------------------------------------------------------------------
 BONE = '#e2dac8'
-for (x0, r0, L, rot) in ((9.0, 12.0, 4.4, 0.3), (33.0, 31.0, 3.6, -0.2)):
+for (x0, r0, L, rot) in ((8.0, 12.0, 6.0, 0.3), (32.0, 31.0, 4.8, -0.2)):
     n = 7
-    for i in range(n):
-        x = x0 + math.cos(rot) * L * i / n
-        r = r0 + math.sin(rot) * L * i / n
-        h = 1.6 * math.sin(math.pi * (i + 0.5) / n) + 0.4
-        k.tube((x, r - 0.6, height(x, r) - 0.1), (x + 0.1, r - 0.2, height(x, r) + h), 0.09, (BONE, 0.08), 'rib', rb=0.06, verts=7)
-        k.tube((x + 0.1, r - 0.2, height(x, r) + h), (x + 0.15, r + 0.5, height(x, r) + h * 0.5), 0.07, (BONE, 0.08), 'rib', rb=0.05, verts=7)
-        k.blob(x, r - 0.6, height(x, r), 0.3, 0.25, 0.12, (N.SNOW, 0.04), 'drift', segs=7)
-    k.tube((x0 - 0.4, r0, height(x0, r0) + 0.3), (x0 + math.cos(rot) * L, r0 + math.sin(rot) * L, height(x0, r0) + 0.25), 0.12, (BONE, 0.08), 'spine',
-           rb=0.08, verts=8)
-    k.solid(x0 - 0.6, r0 - 1.0, x0 + math.cos(rot) * L + 0.6, r0 + math.sin(rot) * L + 0.6)
+    for i in range(n):                                                  # each rib a curve of three bones, arching over the spine
+        x = x0 + math.cos(rot) * L * i / (n - 1)
+        r = r0 + math.sin(rot) * L * i / (n - 1)
+        h = 2.8 * math.sin(math.pi * (i + 0.6) / (n + 0.2)) + 0.6
+        z0 = height(x, r)
+        for side in (-1, 1):
+            pts = [(x, r + side * 1.1, z0 - 0.1), (x + 0.08, r + side * 0.95, z0 + h * 0.55), (x + 0.14, r + side * 0.55, z0 + h * 0.92),
+                   (x + 0.18, r + side * 0.15, z0 + h)]
+            if side > 0:
+                pts = pts[:3]                                           # the near ones broken off
+            for (pa, pb) in zip(pts, pts[1:]):
+                k.tube(pa, pb, 0.13, (BONE, 0.08), 'rib', rb=0.1, verts=8)
+        k.blob(x, r - 1.1, z0, 0.45, 0.35, 0.18, (N.SNOW, 0.04), 'drift', segs=7)
+        k.blob(x + 0.18, r - 0.15, z0 + h + 0.06, 0.18, 0.14, 0.05, (N.ROOF_SNOW, 0.05), 'bone_snow', segs=6)
+    k.tube((x0 - 0.6, r0, height(x0, r0) + 0.3), (x0 + math.cos(rot) * L + 0.4, r0 + math.sin(rot) * L, height(x0, r0) + 0.25), 0.18, (BONE, 0.08),
+           'spine', rb=0.1, verts=8)
+    k.solid(x0 - 0.6, r0 - 1.2, x0 + math.cos(rot) * L + 0.6, r0 + math.sin(rot) * L + 1.2)
 k.tube((13.6, 30.0, 0.0), (15.2, 30.6, 1.1), 0.16, (BONE, 0.08), 'tusk', rb=0.04, verts=8)
 k.solid(13, 29, 16, 31)
 k.box(29.0, 9.0, 0.0, 30.4, 9.4, 0.22, (N.LOG, 0.12), 'sledge', bevel=0.02)
@@ -103,8 +127,12 @@ k.blob(29.4, 9.2, 0.3, 0.6, 0.35, 0.18, (N.SNOW, 0.04), 'drift', segs=8)
 k.solid(28.6, 8.6, 30.8, 9.8)
 
 # ---- the frozen tarn on the east ---------------------------------------------------------------------------------------------
-k.cyl(TARN[0], TARN[1], -0.06, -0.02, TARN[2], ('#1e3a52', 0.04), 'pond_water', verts=32, ry=TARN[3])
-k.cyl(TARN[0], TARN[1], -0.02, 0.0, TARN[2] * 0.96, ('#6a96b8', 0.04), 'ice', verts=32, ry=TARN[3] * 0.94)
+ring_ = [(TARN[0] + math.cos(a) * TARN[2] * tarn_rad(a), TARN[1] + math.sin(a) * TARN[3] * tarn_rad(a)) for a in (i / 40 * math.tau for i in range(40))]
+k.poly([(TARN[0], TARN[1], -0.03)] + [(x, r, -0.03) for (x, r) in ring_] + [(ring_[0][0], ring_[0][1], -0.03)], ('#5a8ab0', 0.04), 'pond_water')
+for i, (x, r) in enumerate(ring_):                                         # snow blown in over its edge, a shelf of clear ice
+    if i % 2 == 0:
+        k.blob(x, r, -0.04, k.rng.uniform(0.3, 0.55), k.rng.uniform(0.2, 0.35), 0.07, (N.SNOW, 0.04) if i % 4 else ('#cfe6f4', 0.04),
+               'tarn_edge', segs=8)
 for i in range(10):
     a = k.rng.uniform(0, math.tau)
     p = [(TARN[0] + math.cos(a) * 0.3, TARN[1] + math.sin(a) * 0.2)]
@@ -112,9 +140,12 @@ for i in range(10):
         a += k.rng.uniform(-0.7, 0.7)
         p.append((p[-1][0] + math.cos(a) * 0.6, p[-1][1] + math.sin(a) * 0.35))
     for (ax, ar), (bx, br) in zip(p, p[1:]):
-        if math.hypot((bx - TARN[0]) / TARN[2], (br - TARN[1]) / TARN[3]) < 0.9:
+        if in_tarn(bx, br, -0.15):
             k.tube((ax, ar, 0.005), (bx, br, 0.005), 0.012, ('#bcdcef', 0.04), 'crack', verts=4)
-k.solid(TARN[0] - TARN[2], TARN[1] - TARN[3], TARN[0] + TARN[2], TARN[1] + TARN[3])
+for r in range(ROWS):
+    for c in range(COLS):
+        if in_tarn(c + 0.5, r + 0.5):
+            k.blocked.add((c, r))
 
 # ---- the monks' shrine to it, on a ledge in the north -----------------------------------------------------------------------
 ledge = [(c, r) for c in range(18, 29) for r in range(3, 7)]
@@ -132,9 +163,7 @@ for (x, r) in ((20.4, 4.8), (25.6, 4.8)):
 k.solid(18, 3, 29, 6)
 
 # ---- the gate back to the monastery (south) ------------------------------------------------------------------------------------
-k.box(20.6, 37.4, 0.0, 25.4, 38.2, 2.4, ('#efeae0', 0.08), 'gompa_wall')
-k.box(20.5, 37.3, 2.0, 25.5, 38.3, 2.4, ('#6a2420', 0.12), 'penbey')
-k.box(22.2, 37.3, 0.0, 23.8, 37.4, 1.8, ('#1a0e08', 0.06), 'doorway', emit=('#ffb060', 0.25))
+A.gompa(k, 20.6, 25.4, 37.4, 39.0, h=2.4, windows=2, gold=False, door=23.0)
 k.solid(20, 37, 26, 39)
 
 # ---- the edges ---------------------------------------------------------------------------------------------------------------

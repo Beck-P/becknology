@@ -64,7 +64,20 @@ def chasm_d(x, r):
     return I.path_dist([CHASM], x, r) - 0.55 - 0.15 * math.sin(r * 1.3)
 
 
+def pool_rad(a):
+    return 1.0 + 0.16 * math.sin(3 * a + 1.0) + 0.09 * math.sin(5 * a + 2.3)
+
+
+def in_pool(x, r, grow=0.0):
+    dx, dr = (x - 27.2) / 2.1, (r - 7.8) / 1.3
+    return math.hypot(dx, dr) < pool_rad(math.atan2(dr, dx)) + grow
+
+
 def height(x, r):
+    if chasm_d(x, r) < 0.05 and abs(r - BRIDGE[1]) > 0.62:               # the chasm: the floor stops at its lips
+        return -3.5
+    if in_pool(x, r, 0.08):                                              # the black pool, sunk
+        return -0.3
     d = floor_d(x, r)
     h = 0.0
     h += 0.08 * max(0.0, I.n2(x * 0.9, r * 0.9, 1.0, 11))
@@ -76,17 +89,28 @@ def height(x, r):
 def material(x, r):
     if floor_d(x, r) < -0.2:
         return 'ice_wall_foot'
-    n = I.n2(x * 1.1, r * 1.1, 1.0, 13)
-    return 'ice_floor' if n > 0.15 else 'rubble'
+    d = floor_d(x, r)
+    n = I.n2(x * 0.45, r * 0.45, 1.0, 13)
+    if d < 0.9 + 0.5 * I.n2(x * 1.4, r * 1.4, 1.0, 15):
+        return 'rubble'                                                   # grit and ice chips along the walls' feet
+    return 'ice_floor' if n > -0.05 else 'frost'
 
 
 cells = [(c, r) for c in range(-1, COLS + 1) for r in range(-6, ROWS + 1) if floor_d(c + 0.5, r + 0.5) > -1.5]
-I.ground(k, cells, material, {'ice_floor': ('#a8cce4', 0.06), 'rubble': ('#8a96a8', 0.16), 'ice_wall_foot': ('#7aa8cc', 0.08)},
+I.ground(k, cells, material, {'ice_floor': ('#a8cce4', 0.04), 'frost': ('#bcd8ec', 0.04), 'rubble': ('#94a2b6', 0.12),
+                              'ice_wall_foot': ('#7aa8cc', 0.08)},
          step=0.25 if QUICK else 0.125, bump=0.012, seed=17, height=height, dither=0.08)
 
 # the walls: blue ice in layers, all round the outline, rising up out of the top of the view
 wall = [(c, r) for c in range(-2, COLS + 2) for r in range(-8, ROWS + 2) if floor_d(c + 0.5, r + 0.5) <= -0.1]
-I.ridge(k, wall, top=4.2, slope=1.0, seed=29, rock='#cfe4f2', strata=ICE, moss='#e2f0f8', foot=0.45, patchy=False)
+I.ridge(k, wall, top=4.2, slope=1.0, seed=29, rock='#24364e', strata=ICE, moss='#2e4462', foot=0.45, patchy=False)
+# blocks of fallen ice along the walls' feet
+for _ in range(90 if not QUICK else 45):
+    x, r = k.rng.uniform(1, COLS - 1), k.rng.uniform(1, ROWS - 1)
+    d = floor_d(x, r)
+    if 0.25 < d < 0.9 and chasm_d(x, r) > 0.8 and not in_pool(x, r, 0.5):
+        s_ = k.rng.uniform(0.12, 0.32)
+        k.rock(x, r, s_ * 0.3, s_, s_ * 0.8, s_ * 0.7, (k.rng.choice(ICE[:3]), 0.06), part='ice_block', segs=6)
 
 # ---- the chasm and its one bridge -------------------------------------------------------------------------------------------
 DEPTH = (('#5a9ac8', 0.0), ('#3a74a8', 0.5), ('#1e4a7a', 1.2), ('#0c2244', 2.0), ('#040a18', 3.0))
@@ -128,10 +152,17 @@ for i in range(14):
     k.tube((x, FR - 0.6, 4.2), (x + k.rng.uniform(-0.04, 0.04), FR + 0.4, 0.2 + (1 - mid) * 0.8), 0.08 + 0.08 * mid,
            (ICE[i % 3], 0.05), 'icefall', rb=0.05, verts=6)
 POOL = (27.2, 7.8, 2.0, 1.2)
-k.cyl(POOL[0], POOL[1], -0.12, -0.08, POOL[2], ('#0e2a40', 0.04), 'pond_water', verts=28, ry=POOL[3])
-k.cyl(POOL[0], POOL[1], -0.2, -0.12, POOL[2] + 0.1, ('#2a4a6a', 0.06), 'pool_floor', verts=28, ry=POOL[3] + 0.08)
+ring = [(POOL[0] + math.cos(a) * POOL[2] * pool_rad(a), POOL[1] + math.sin(a) * POOL[3] * pool_rad(a), -0.1)
+        for a in (i / 36 * math.tau for i in range(36))]
+k.poly([(POOL[0], POOL[1], -0.1)] + ring + [ring[0]], ('#0e2a40', 0.04), 'pond_water')
+for i, (x, r, _) in enumerate(ring):                                     # a rim of clear ice shelving into it
+    if i % 2 == 0:
+        k.blob(x, r, -0.06, k.rng.uniform(0.25, 0.4), k.rng.uniform(0.18, 0.3), 0.07, ('#cfe6f4', 0.04), 'ice_shelf', segs=8)
 k.point_light(POOL[0], POOL[1], 0.3, '#4ab0e0', 10, radius=0.3, group='static')
-k.solid(POOL[0] - POOL[2], POOL[1] - POOL[3], POOL[0] + POOL[2], POOL[1] + POOL[3])
+for r in range(ROWS):
+    for c in range(COLS):
+        if in_pool(c + 0.5, r + 0.5):
+            k.blocked.add((c, r))
 k.solid(FX - 1.4, FR - 1.0, FX + 1.4, FR + 0.6)
 # hoar crystals glowing in clusters along the walls
 CRYST = [(5.0, 21.0), (13.0, 9.6), (21.6, 9.4), (33.4, 13.6), (34.0, 20.4), (22.0, 22.6), (9.6, 26.0), (30.6, 6.4)]

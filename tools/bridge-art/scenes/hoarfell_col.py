@@ -62,8 +62,8 @@ def height(x, r):
     return h
 
 
-ROCKS = [(16.4, 13.2, 0.55), (27.6, 16.0, 0.6), (21.0, 20.8, 0.5), (12.4, 23.4, 0.55), (31.8, 22.6, 0.5), (24.6, 27.0, 0.45),
-         (9.8, 30.0, 0.5), (34.6, 29.6, 0.55)]
+ROCKS = [(16.4, 13.2, 0.95), (27.6, 16.0, 1.1), (21.0, 20.8, 0.8), (12.4, 23.4, 0.9), (31.8, 22.6, 0.85), (24.6, 27.0, 0.7),
+         (9.8, 30.0, 0.8), (34.6, 29.6, 0.9)]
 LARCH = [(8.6, 26.6), (11.0, 28.4), (7.2, 31.6), (13.6, 32.0), (10.4, 34.6), (33.4, 26.2), (36.0, 28.8), (31.6, 31.4), (35.2, 33.2),
          (29.4, 34.2), (16.6, 35.6), (14.4, 29.6), (18.6, 31.0), (27.8, 29.4), (38.2, 31.0), (6.0, 35.0), (37.6, 35.8)]
 
@@ -95,10 +95,10 @@ peaks = [(c, r) for c in range(-1, COLS + 1) for r in range(-10, -1) if abs(c - 
 I.ridge(k, peaks, top=10.0, slope=2.6, seed=83, rock='#d6dee9', strata=('#5e6678', '#485062', '#727a8c'), moss=N.ROOF_SNOW, foot=0.9, patchy=False)
 
 # ---- the col: the cornice, the cairn and its iron cross, prayer flags ---------------------------------------------------
-for i in range(14):                                                # the cornice curling over the saddle's east lip
-    x = 24.6 + i * 0.12
-    r = -0.6 + i * 0.5
-    k.blob(x, r, height(x, r) + 0.15, 0.55, 0.35, 0.22, (N.ROOF_SNOW, 0.03), 'cornice', rot=(0, -18, 0), segs=10)
+for i in range(10):                                                # drifts carved by the wind across the saddle
+    x, r = k.rng.uniform(19.0, 26.0), k.rng.uniform(0.0, 7.0)
+    k.blob(x, r, height(x, r), k.rng.uniform(0.6, 1.2), k.rng.uniform(0.2, 0.35), k.rng.uniform(0.08, 0.16), (N.ROOF_SNOW, 0.03), 'drift',
+           rot=(0, 0, k.rng.uniform(-20, 20)), segs=10)
 for (dx, dr, f) in ((0, 0, 1.0), (0.08, -0.04, 0.78), (-0.04, 0.02, 0.56), (0.02, 0.0, 0.36)):
     s = 0.55 * f
     k.rock(19.6 + dx, 2.4 + dr, 0.18 + (1 - f) * 1.1, s, s * 0.9, s * 0.62, ('#5a6272', 0.18), part='cairn', segs=7)
@@ -116,29 +116,46 @@ k.solid(17.0, 4.5, 18.4, 4.8)
 
 # ---- the bowl: rock outcrops, larches lower down -------------------------------------------------------------------------
 OBST = []
-for (x, r, s) in ROCKS:
+for (x, r, s) in ROCKS:                                                  # crags breaking through: dark rock, snow on their tops, a drift in their lee
     z = height(x, r)
-    k.rock(x, r, z + s * 0.3, s, s * 0.8, s * 0.7, ('#5a6272', 0.2), part='boulder', segs=8)
-    k.blob(x - 0.05, r - 0.05, z + s * 0.75, s * 0.8, s * 0.65, s * 0.3, (N.ROOF_SNOW, 0.08), 'boulder_snow', segs=8)
-    k.solid(math.floor(x), math.floor(r), math.floor(x) + 1, math.floor(r) + 1)
-    OBST.append([x, r, round(s * 0.9, 2), 'rock'])
+    for j in range(3):
+        dx, dr = k.rng.uniform(-0.3, 0.3) * s, k.rng.uniform(-0.2, 0.2) * s
+        ss = s * (1 - j * 0.25)
+        k.rock(x + dx, r + dr, z + ss * 0.35, ss * 0.7, ss * 0.55, ss * 0.65, ('#4e5664', 0.2), part='crag', segs=7, jitter=0.22)
+    k.blob(x - 0.1, r - 0.1, z + s * 0.75, s * 0.55, s * 0.4, s * 0.16, (N.ROOF_SNOW, 0.06), 'crag_snow', segs=8)
+    k.blob(x + s * 0.9, r + 0.2, z, s * 0.9, s * 0.35, s * 0.18, (N.SNOW, 0.04), 'drift', segs=9)
+    k.solid(x - s * 0.5, r - s * 0.4, x + s * 0.5, r + s * 0.4)
+    OBST.append([x, r, round(s * 0.6, 2), 'rock'])
+for _ in range(60 if not QUICK else 30):                                 # sastrugi: wind ripples across the upper bowl
+    x, r = k.rng.uniform(12, 32), k.rng.uniform(7, 22)
+    if inside(x, r) < 1.5:
+        continue
+    k.blob(x, r, height(x, r), k.rng.uniform(0.5, 1.1), 0.07, 0.03, ('#dce6f2', 0.03), 'drift', rot=(0, 0, k.rng.uniform(-10, 10)), segs=8)
 
 
 def larch(x, r, h):
-    """A larch: a slim trunk, airy tiers of soft needles (deciduous — they go gold in autumn, so they're leaves), snow on them."""
+    """A larch: a slim leaning trunk, airy whorls of soft needles in tufts along drooping boughs (deciduous — they go gold
+    in autumn, so they're leaves, not needles), snow caught in them."""
     z0 = height(x, r)
-    k.cyl(x, r, z0, z0 + h * 0.35, 0.06, ('#5a3a24', 0.12), 'trunk', verts=6)
+    lean = k.rng.uniform(-0.08, 0.08)
+    k.tube((x, r, z0), (x + lean, r, z0 + h), 0.06, ('#5a3a24', 0.12), 'trunk', rb=0.015, verts=6)
+    green = k.rng.choice(('#7a9a4a', '#6a8e44', '#88a452'))
     with k.foliage('leaf'):
-        for i in range(5):
-            t = i / 5
-            zz = z0 + 0.4 + t * (h - 0.6)
-            rad = 0.55 * (1 - t * 0.75)
-            k.cone(x, r, zz, zz + 0.45, rad, 0.05, (shade('#5a8a4a', 1 - 0.05 * i), 0.18), 'larch', verts=8)
-    for i in range(5):
-        t = i / 5
-        zz = z0 + 0.4 + t * (h - 0.6)
-        rad = 0.55 * (1 - t * 0.75)
-        k.blob(x - rad * 0.2, r, zz + 0.3, rad * 0.55, rad * 0.5, 0.06, (N.ROOF_SNOW, 0.08), 'larch_snow', segs=7)
+        n = 7
+        for i in range(n):
+            t = i / n
+            zz = z0 + 0.35 + t * (h - 0.5)
+            rad = 0.6 * (1 - t * 0.8) + 0.08
+            for j in range(5):                                              # tufts round each whorl, drooping at their tips
+                a = j / 5 * math.tau + i * 0.9
+                bx, br = x + lean * t + math.cos(a) * rad, r + math.sin(a) * rad * 0.8
+                k.blob(bx, br, zz - 0.05, rad * 0.45, rad * 0.35, 0.12, (shade(green, k.rng.uniform(0.85, 1.12)), 0.18), 'larch', segs=7)
+            k.blob(x + lean * t, r, zz, rad * 0.55, rad * 0.45, 0.14, (shade(green, 0.8), 0.18), 'larch', segs=7)
+    for i in range(0, 7, 2):
+        t = i / 7
+        zz = z0 + 0.35 + t * (h - 0.5)
+        rad = 0.6 * (1 - t * 0.8) + 0.08
+        k.blob(x - rad * 0.25, r - 0.05, zz + 0.1, rad * 0.5, rad * 0.4, 0.05, (N.ROOF_SNOW, 0.08), 'larch_snow', segs=7)
 
 
 for (x, r) in LARCH:

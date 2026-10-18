@@ -84,10 +84,13 @@ for i, (x, r) in enumerate(edge):
         k.blob(x, r - 0.1, 0.0, 0.45, 0.22, 0.1, (N.SNOW, 0.08), 'cornice', segs=8)
 # the courtyard: big flagstones, frost spreading over them from the hall's doors
 A.setts(k, COURT[0], COURT[1], COURT[2], COURT[3], tone='#9a968e', w=(0.6, 1.0), d=0.6, grout='#5a5650', part='flagstones')
-for i in range(140 if not QUICK else 50):
-    x, r = 22.0 + k.rng.gauss(0, 4.5), 15.6 + abs(k.rng.gauss(0, 4.0))
+for i in range(90 if not QUICK else 45):                                 # frost feathering out over the stones from the hall's door
+    a = k.rng.uniform(0.15, math.pi - 0.15)
+    d = abs(k.rng.gauss(0, 4.0)) + 0.6
+    x, r = 22.0 + math.cos(a) * d * 1.4, 14.2 + math.sin(a) * d
     if COURT[0] < x < COURT[2] and COURT[1] < r < COURT[3]:
-        k.blob(x, r, 0.06, k.rng.uniform(0.2, 0.6), k.rng.uniform(0.15, 0.4), 0.012, (RIME, 0.04), 'frost', rot=(0, 0, k.rng.uniform(0, 90)), segs=8)
+        k.blob(x, r, 0.05, k.rng.uniform(0.25, 0.55), 0.07, 0.008, ('#c4ccd4', 0.04), 'frost', rot=(0, 0, math.degrees(a) + k.rng.uniform(-20, 20)),
+               segs=7)
 A.snow_edge(k, COURT[0], COURT[1], COURT[2], COURT[3], every=0.6)
 
 # the mountain behind: the cliff the hall backs onto, and the high snowfield beyond the north-east gate
@@ -155,8 +158,7 @@ for (xa, ra, xb, rb) in ((0.6, 5.0, 0.6, 30.0), (43.4, 5.0, 43.4, 30.0)):
     k.box(xa - 0.25, ra, 0.0, xa + 0.25, rb, 0.9, ('#8a8478', 0.14), 'wall_stone')
     k.box(xa - 0.3, ra, 0.9, xa + 0.3, rb, 1.0, (N.SNOW, 0.04), 'wall_snow')
 # the north-east gate onto the heart: a gatehouse in the wall, its doors sealed in ice
-k.box(35.6, -0.4, 0.0, 41.2, 1.6, 2.8, ('#efeae0', 0.08), 'gompa_wall')
-k.box(35.5, -0.5, 2.4, 41.3, 1.7, 2.8, ('#6a2420', 0.12), 'penbey')
+A.gompa(k, 35.6, 41.2, -0.4, 1.6, h=2.8, windows=0)
 k.box(37.4, 1.6, 0.0, 39.4, 1.66, 2.0, ('#6a1a14', 0.08), 'door')
 k.box(37.2, 1.66, 0.0, 39.6, 1.8, 2.1, ('#c4e2f2', 0.04), 'ice_seal')
 k.solid(35, -1, 42, 2)
@@ -167,6 +169,41 @@ k.box(4.6, 27.0, -0.2, 7.4, 28.6, 0.0, '#140c08', 'doorway', emit=('#4aa8e8', 0.
 for x in (4.6, 7.4):
     k.box(x - 0.15, 26.8, 0.0, x + 0.15, 27.2, 1.4, ('#efeae0', 0.08), 'gompa_wall')
 k.box(4.4, 26.8, 1.4, 7.6, 27.2, 1.6, ('#6a2420', 0.1), 'lintel')
+# the courtyard's life gone cold: drifts against the walls, braziers long out, firewood, a darchen, a stone trough frozen
+for (x0, x1, r) in ((3.0, 9.0, 13.9), (3.0, 8.4, 20.3), (35.0, 41.0, 14.3), (35.6, 41.0, 20.9), (9.6, 14.2, 10.3), (29.8, 34.4, 10.7)):
+    x = x0 + 0.2
+    while x < x1 - 0.2:
+        k.blob(x, r + 0.25, 0.0, k.rng.uniform(0.35, 0.7), k.rng.uniform(0.25, 0.4), k.rng.uniform(0.12, 0.22), (N.SNOW, 0.05), 'drift', segs=8)
+        x += k.rng.uniform(0.5, 0.9)
+for (x, r) in ((16.0, 14.6), (28.0, 14.6)):
+    k.cyl(x, r, 0.0, 0.5, 0.08, ('#3a3430', 0.12), 'brazier', verts=8)
+    W.annulus(k, x, r, 0.24, 0.32, 0.5, 0.72, ('#5a4a3a', 0.12), 'brazier', segs=16)
+    k.cyl(x, r, 0.6, 0.7, 0.25, (RIME, 0.04), 'rime', verts=14)
+    k.solid_post(x, r)
+for (x, r) in ((9.4, 16.4), (34.6, 22.2)):
+    for j in range(3):
+        k.cyl_x(x - 0.45, x + 0.45, r - 0.15 + j * 0.0, 0.12 + j * 0.2, 0.1, 0.1, ('#7a5a3a', 0.15), 'woodpile', verts=8)
+        k.cyl_x(x - 0.45, x + 0.45, r + 0.12, 0.12 + j * 0.2, 0.1, 0.1, ('#6a4a2e', 0.15), 'woodpile', verts=8)
+    k.box(x - 0.5, r - 0.3, 0.6, x + 0.5, r + 0.3, 0.68, (N.SNOW, 0.04), 'wood_snow')
+    k.solid(x - 0.5, r - 0.3, x + 0.5, r + 0.3)
+k.cyl(33.0, 26.4, 0.0, 4.2, 0.07, ('#5a3a24', 0.1), 'darchen', verts=8)              # the great prayer pole, its long flag
+k.sphere(33.0, 26.4, 4.25, 0.08, 0.08, A.GILT, 'finial', segs=8)
+for i, c in enumerate(('#2a6ac0', '#f4f0e8', '#c83a2e', '#3aa060', '#e0b030')):
+    k.box(33.04, 26.36, 3.9 - i * 0.55, 33.08, 26.86, 4.42 - i * 0.55, (c, 0.06), 'darchen_flag')
+k.solid_post(33.0, 26.4)
+k.box(9.4, 25.2, 0.0, 11.0, 25.9, 0.45, ('#8a8478', 0.14), 'trough')
+k.box(9.5, 25.3, 0.45, 10.9, 25.8, 0.48, ('#c4e2f2', 0.04), 'ice')
+k.solid(9.4, 25.2, 11.0, 25.9)
+# along the rim over the valley: small chortens, cairns of carved stones, flags strung between them
+rim_tops = []
+for (x, sc) in ((8.0, 0.6), (36.0, 0.6), (14.6, 0.45), (29.4, 0.45)):
+    rim_tops.append(A.chorten(k, x, 31.0, s=sc))
+for (x, r) in ((11.2, 31.4), (32.8, 31.4), (17.4, 31.2), (26.6, 31.2)):
+    for j, f in enumerate((0.32, 0.24, 0.17)):
+        k.rock(x, r, j * 0.22 + f * 0.6, f, f * 0.9, f * 0.6, ('#7a7c86', 0.18), part='cairn', segs=7)
+    k.solid(x - 0.3, r - 0.3, x + 0.3, r + 0.3)
+A.mani_flags(k, rim_tops[0], rim_tops[2], sag=0.35)
+A.mani_flags(k, rim_tops[3], rim_tops[1], sag=0.35)
 # Brother Anselm's cell: the one warm window, a lamp, smoke from its chimney
 k.box(7.4, 9.0, 2.62, 7.8, 9.4, 3.4, ('#5a5a62', 0.12), 'chimney')
 SMOKE.append(screen(7.6, 9.2, 3.5))
