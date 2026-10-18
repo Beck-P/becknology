@@ -111,6 +111,46 @@ def cobbles(k, x0, r0, x1, r1, tone='#9a9080', size=0.3, skip=None, rng=None):
 
 
 # ---- a townhouse ----------------------------------------------------------------------------------------------------
+def slate_cone(k, cx, cr, z0, z1, r0, col, bands=12, part='roof_cone'):
+    """A conical roof in courses of slate: stacked bands, each a shade off the next and flush with it (no lips to catch
+    the light as rings)."""
+    for i in range(bands):
+        ta, tb = i / bands, (i + 1) / bands
+        ra, rb = r0 * (1 - ta) + 0.04 * ta, r0 * (1 - tb) + 0.04 * tb
+        k.cone(cx, cr, z0 + (z1 - z0) * ta, z0 + (z1 - z0) * tb, ra, rb, (shade(col, (1.0, 0.95, 0.98, 0.93)[i % 4]), 0.1), part, verts=24)
+
+
+def slate_spire(k, x0, r0, x1, r1, z0, z1, col, bands=6, part='roof_spire'):
+    """A square spire in courses of slate (stacked frustums lined up with the walls)."""
+    cx, cr = (x0 + x1) / 2, (r0 + r1) / 2
+    for i in range(bands):
+        ta, tb = i / bands, (i + 1) / bands
+        fa, fb = 1 - ta * 0.97, 1 - tb * 0.97
+        base = [(cx + (x - cx) * fa, cr + (r - cr) * fa, z0 + (z1 - z0) * ta) for (x, r) in ((x0, r0), (x1, r0), (x1, r1), (x0, r1))]
+        top = [(cx + (x - cx) * fb, cr + (r - cr) * fb, z0 + (z1 - z0) * tb) for (x, r) in ((x0, r0), (x1, r0), (x1, r1), (x0, r1))]
+        k.loft([base, top], (shade(col, 1.0 if i % 2 else 0.88), 0.1), part, closed=True, smooth=False)
+
+
+def ns_roof(k, x0, x1, rb, rf, z_eave, z_ridge, col, over=0.15):
+    """A roof whose ridge runs back from the street (a gable end facing the camera): its east and west slopes in
+    courses of slate laid along the eaves, a ridge of half-round tiles; returns (ridge row, ridge z)."""
+    cx, hw = (x0 + x1) / 2, (x1 - x0) / 2 + over
+    for sgn in (-1, 1):
+        xe = cx + sgn * hw
+        k.quads([((cx, rf + 0.1, z_ridge), (xe, rf + 0.1, z_eave - 0.08), (xe, rb - 0.1, z_eave - 0.08), (cx, rb - 0.1, z_ridge))],
+                (shade(col, 0.8), 0.1), 'roof_deck')
+        n = max(4, int(hw / 0.2))
+        for i in range(n):                                   # courses, eave to ridge, each lapping the one above
+            ta, tb = i / n, (i + 1.15) / n
+            xa, xb = xe + (cx - xe) * ta, xe + (cx - xe) * min(1.0, tb)
+            za = z_eave - 0.08 + (z_ridge - z_eave + 0.08) * ta + 0.02
+            zb = z_eave - 0.08 + (z_ridge - z_eave + 0.08) * min(1.0, tb) + 0.02
+            k.quads([((xa, rf + 0.1, za), (xb, rf + 0.1, zb), (xb, rb - 0.1, zb), (xa, rb - 0.1, za))],
+                    (shade(col, (0.92, 1.0, 0.96, 1.05)[i % 4]), 0.08), 'roof_slate')
+    k.cyl_y(cx, rb - 0.12, rf + 0.14, z_ridge + 0.04, 0.06, 0.06, shade(col, 0.75), 'roof_ridge', verts=8)
+    return (rb + rf) / 2, z_ridge
+
+
 def _corbels(k, x0, x1, rf, z):
     x = x0 + 0.25
     while x < x1 - 0.2:
@@ -297,17 +337,7 @@ def _front_gable(k, x0, x1, rb, rf, wall_h, rise, roof, wall, timber, shutters):
     k.tube((x0 - 0.02, rf + 0.03, wall_h), (cx, rf + 0.03, zr), 0.05, timber, 'timber', verts=4)
     k.tube((x1 + 0.02, rf + 0.03, wall_h), (cx, rf + 0.03, zr), 0.05, timber, 'timber', verts=4)
     W.window(k, cx, rf + 0.02, wall_h + 0.18, w=0.38, h=0.42, shutters=shutters)
-    # the two roof slopes running back, east and west (their tops face up: seen from above)
-    for s in (-1, 1):
-        xe = cx + s * hw
-        k.quads([((cx, rf + 0.12, zr + 0.02), (xe, rf + 0.12, wall_h - 0.08), (xe, rb - 0.1, wall_h - 0.08), (cx, rb - 0.1, zr + 0.02))],
-                (roof, 0.1), 'roof_slope')
-        r = rb
-        while r < rf:                               # courses of slates down each slope
-            k.quads([((cx, r + 0.02, zr + 0.035), (xe, r + 0.02, wall_h - 0.055), (xe, r + 0.07, wall_h - 0.055), (cx, r + 0.07, zr + 0.035))],
-                    shade(roof, 0.72), 'roof_course')
-            r += 0.28
-    k.cyl_y(cx, rb - 0.12, rf + 0.14, zr + 0.04, 0.06, 0.06, shade(roof, 0.8), 'roof_ridge', verts=8)
+    ns_roof(k, x0, x1, rb, rf, wall_h, zr, roof, over=0.08)
     return (rb + rf) / 2, zr
 
 
@@ -490,14 +520,9 @@ def tower(k, cx, cr, R=1.2, h=3.6, tone=WALL_STONE, roof='#44567a', crenel=False
         k.cyl(cx, cr, h + 0.16, h + 0.2, R - 0.1, ('#6e685e', 0.25), 'path_towertop', verts=20)
         top = h + 0.6
     else:
-        k.cone(cx, cr, h + 0.18, h + 0.18 + R * 1.5, R + 0.26, 0.04, (roof, 0.12), 'roof_cone', verts=24)
-        for j in range(5):                              # bands of slates round the cone
-            t = (j + 1) / 6
-            zz = h + 0.18 + R * 1.5 * t
-            rr = (R + 0.26) * (1 - t) + 0.04 * t
-            k.cyl(cx, cr, zz - 0.012, zz + 0.012, rr + 0.012, shade(roof, 0.86), 'roof_course', verts=24)
-        k.cyl(cx, cr, h + 0.18 + R * 1.5, h + 0.18 + R * 1.5 + 0.35, 0.025, A.IRON, 'finial', verts=6)
-        top = h + 0.18 + R * 1.5 + 0.35
+        slate_cone(k, cx, cr, h + 0.18, h + 0.18 + R * 1.9, R + 0.26, roof)
+        k.cyl(cx, cr, h + 0.18 + R * 1.9, h + 0.18 + R * 1.9 + 0.35, 0.025, A.IRON, 'finial', verts=6)
+        top = h + 0.18 + R * 1.9 + 0.35
     if flag:
         k.cyl(cx, cr, top - 0.05, top + 0.9, 0.025, A.IRON, 'flagpole', verts=6)
         k.poly([(cx + 0.03, cr, top + 0.88), (cx + 0.75, cr + 0.05, top + 0.72), (cx + 0.03, cr, top + 0.5)], flag, 'flag')
@@ -852,7 +877,9 @@ def chapel(k, x0, x1, r_back, r_front, tower_side=1, tone='#9a9284'):
     k.box(cx - 0.03, r_front + 0.02, H + hw * 0.9, cx + 0.03, r_front + 0.06, H + hw * 0.9 + 0.45, W.BRASS, 'cross')
     k.box(cx - 0.14, r_front + 0.02, H + hw * 0.9 + 0.26, cx + 0.14, r_front + 0.06, H + hw * 0.9 + 0.32, W.BRASS, 'cross')
     # the door in its arch and the rose window over it
-    k.box(cx - 0.42, r_front - 0.04, 0.0, cx + 0.42, r_front + 0.0, 1.3, ('#4a2e18', 0.12), 'door')
+    k.box(cx - 0.42, r_front - 0.02, 0.0, cx + 0.42, r_front + 0.05, 1.3, ('#4a2e18', 0.12), 'door')
+    for zz in (0.35, 0.95):
+        k.box(cx - 0.42, r_front + 0.05, zz, cx + 0.42, r_front + 0.07, zz + 0.05, A.IRON, 'door_strap')
     for i in range(9):
         a0, a1 = math.pi * i / 9, math.pi * (i + 1) / 9
         pts = [(cx - math.cos(a) * rr, r_front + 0.02, 1.3 + math.sin(a) * rr * 0.7) for (a, rr) in ((a0, 0.42), (a1, 0.42), (a1, 0.6), (a0, 0.6))]
@@ -865,11 +892,7 @@ def chapel(k, x0, x1, r_back, r_front, tower_side=1, tone='#9a9284'):
                0.015, STONE_L, 'tracery', verts=4)
     for xx in (x0 - 0.12, x1 - 0.12):                               # buttresses
         k.box(xx, r_front - 0.3, -0.02, xx + 0.26, r_front + 0.18, 1.9, (shade(tone, 0.95), 0.12), 'buttress', bevel=0.02)
-    rm, zr = (r_back + r_front) / 2, H + hw * 0.9
-    # the roof runs back from the gable: two slopes seen from above
-    for s in (-1, 1):
-        k.quads([((cx, r_front - 0.02, zr), (cx + s * (hw + 0.15), r_front - 0.02, H - 0.08), (cx + s * (hw + 0.15), r_back - 0.1, H - 0.08), (cx, r_back - 0.1, zr))],
-                (W.ROOF_SLATE, 0.1), 'roof_slope')
+    rm, zr = ns_roof(k, x0 - 0.05, x1 + 0.05, r_back, r_front - 0.02, H, H + hw * 0.9, W.ROOF_SLATE, over=0.1)
     # the tower and its spire
     tw = 1.3
     tx0 = x1 + 0.05 if tower_side > 0 else x0 - tw - 0.05
@@ -881,7 +904,7 @@ def chapel(k, x0, x1, r_back, r_front, tower_side=1, tone='#9a9284'):
     k.box((tx0 + tx1) / 2 - 0.18, r_front - 0.42, TH - 1.0, (tx0 + tx1) / 2 + 0.18, r_front - 0.38, TH - 0.2, '#1a1a1e', 'belfry_opening')
     k.cone((tx0 + tx1) / 2, tr0 + tw / 2, TH - 0.6, TH - 0.25, 0.04, 0.18, (W.BRASS, 0.06), 'bell', verts=12)
     pyramid_top = TH + 2.2
-    W.pyramid(k, tx0 - 0.08, tr0 - 0.08, tx1 + 0.08, r_front - 0.32, TH, pyramid_top, (W.ROOF_SLATE, 0.14), 'roof_spire')
+    slate_spire(k, tx0 - 0.08, tr0 - 0.08, tx1 + 0.08, r_front - 0.32, TH, pyramid_top, W.ROOF_SLATE)
     k.tube(((tx0 + tx1) / 2, tr0 + tw / 2, pyramid_top), ((tx0 + tx1) / 2, tr0 + tw / 2, pyramid_top + 0.45), 0.02, W.BRASS, 'cross', verts=5)
     k.box((tx0 + tx1) / 2 - 0.12, tr0 + tw / 2 - 0.015, pyramid_top + 0.28, (tx0 + tx1) / 2 + 0.12, tr0 + tw / 2 + 0.015, pyramid_top + 0.33, W.BRASS, 'cross')
     k.point_light(cx, r_front + 0.8, 1.6, '#ffb070', 14, radius=0.4, group='flicker')
