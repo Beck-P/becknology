@@ -66,6 +66,7 @@ for (a, b) in spans:
     U.shanty(k, dr, a, b, RF, 11, top=TOP, base=1.65, rng=rng, lit=0.5)
 for cx in COLUMNS:
     U.column(k, dr, cx, RF + 0.35, w=2.6, d=2.4, top=TOP + 2, rng=rng)
+    k.box(cx - 2.2, RF - 12.0, 0.0, cx + 2.2, RF - 2.1, TOP + 2, '#0c0b10', 'column_back')     # closes the slits either side of it
 k.box(-0.5, RF - 0.05, 1.55, COLS + 0.5, RF + 0.2, 1.65, '#1e1c24', 'awning_ledge')
 for (a0, a1) in spans:                                                             # their signs, crowded up the lower floors
     U.stack_signs(k, a0 + 0.6, a1 - 0.6, RF + 0.3, z0=2.4, z1=7.0, rng=rng)

@@ -42,8 +42,10 @@ for _ in range(60):                                                             
 # ---- the back: the stacks behind, the columns, the Saints' camp --------------------------------------------------------------
 U.shanty(k, dr, -0.5, 20.0, RF, 10, top=12.5, base=1.6, rng=rng, lit=0.35, ground=False)
 U.column(k, dr, 21.6, RF + 0.4, w=2.8, d=2.6, top=14.0, rng=rng)
+k.box(21.6 - 2.2, RF - 10.5, 0.0, 21.6 + 2.2, RF - 2.2, 14.0, '#0c0b10', 'column_back')     # closes the slits either side of it
 U.shanty(k, dr, 23.0, 46.0, RF, 10, top=12.5, base=1.6, rng=rng, lit=0.3, ground=False)
 U.column(k, dr, 47.6, RF + 0.4, w=2.8, d=2.6, top=14.0, rng=rng)
+k.box(47.6 - 2.2, RF - 10.5, 0.0, 47.6 + 2.2, RF - 2.2, 14.0, '#0c0b10', 'column_back')     # closes the slits either side of it
 U.shanty(k, dr, 49.0, COLS + 0.5, RF, 10, top=12.5, base=1.6, rng=rng, lit=0.35, ground=False)
 for (x0, x1) in ((2.0, 8.0), (11.0, 17.0), (25.0, 31.0), (51.0, 57.0)):
     U.tag(k, x0, x1, RF, 0.2, 1.4, SAINT, rng=rng)
