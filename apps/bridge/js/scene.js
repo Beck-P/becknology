@@ -25,7 +25,13 @@
  *                   "facing": "down", "pose": "sit" } ],
  *     "sky": [1, 0.6, 15, 3]          // optional: screen-tile rect behind the
  *                                    // render's transparent holes (windows)
+ *     "heights": [[0, 0, 1.2, …], …] // optional: ground height per tile (tiles of z, at each tile's centre)
  *   }
+ *
+ * Walkable height (scene.heights; the cliff town's terraces): wherever the ground stands up, everyone standing there is
+ * drawn raised by z·cos 45° (the height between tile centres blended), their feet on the terrace. Their foot row stays
+ * their true row, which is what keeps the depth test right — a pixel h tiles above raised feet is h + z tiles up, and
+ * the formula below already gives it that depth. liftAt / liftPx answer how high the ground is anywhere.
  *
  * Live light: a scene.json with "lit" also brings Blender's light passes, and
  * js/litscene.js relights it for the planet's hour, season and weather (the
@@ -333,6 +339,8 @@ var BridgeScene = (function () {
   // then one tile came out blank: a dark rectangle over the room.
   function drawBackground(ctx, sc, world, offX, offY, now) {
     var m = sc.meta;
+    var hz = world.scene && world.scene.heights;                 // (scene.lift is the chairlift's cables on Hoarfell)
+    sc.liftZ = Array.isArray(hz) && hz.length ? hz : null;
     var x = Math.round(offX - m.originX), y = Math.round(offY - m.originY);
     var v = visible(m.width, m.height, x, y, ctx.canvas.width, ctx.canvas.height);
     if (!v) return;
@@ -373,7 +381,7 @@ var BridgeScene = (function () {
   // Light falling on a character standing at (col, row), as a CSS colour
   // used to multiply its sprite. Blends the light states like the flicker.
   function tintAt(sc, world, col, row, now) {
-    if (sc.lit) { var lt = BridgeLit.tint(sc, col, row); if (lt) return lt; }   // live light: the passes at their feet
+    if (sc.lit) { var lt = BridgeLit.tint(sc, col, row - liftAt(sc, col + 0.5, row + 0.5) * Math.SQRT1_2); if (lt) return lt; }   // live light: the passes at their feet (on raised ground, up there)
     var m = sc.meta;
     var c = Math.max(0, Math.min(m.tileLight[m.states[0]][0].length - 1, Math.round(col)));
     var r = Math.max(0, Math.min(m.tileLight[m.states[0]].length - 1, Math.round(row)));
@@ -407,7 +415,23 @@ var BridgeScene = (function () {
    */
   // flat: what's drawn below the foot line lies on the ground in front (a weapon swung down, a pike thrust at you) —
   // tested against the floor at its own row, not hidden as if it were underground
+  // the ground's height (tiles of z) at a point in tile units (x across, r down), blended between tile centres
+  function liftAt(sc, x, r) {
+    var Z = sc && sc.liftZ;
+    if (!Z || !Z.length) return 0;
+    var u = x - 0.5, v = r - 0.5, c0 = Math.floor(u), r0 = Math.floor(v), fu = u - c0, fv = v - r0;
+    function z(c, rr) { var row = Z[Math.max(0, Math.min(Z.length - 1, rr))]; return row ? +row[Math.max(0, Math.min(row.length - 1, c))] || 0 : 0; }
+    return (z(c0, r0) * (1 - fu) + z(c0 + 1, r0) * fu) * (1 - fv) + (z(c0, r0 + 1) * (1 - fu) + z(c0 + 1, r0 + 1) * fu) * fv;
+  }
+  // …in native px up the screen, for a figure whose feet are at foot row fr (a figure stands 0.4 tile below its
+  // tile's centre)
+  function liftPx(sc, x, fr) { return sc && sc.liftZ ? Math.round(liftAt(sc, x, fr - 0.4) * Math.SQRT1_2 * NATIVE_TS) : 0; }
+
   function drawOccluded(ctx, sc, img, sx, sy, sw, sh, dx, dy, footRow, offX, offY, tint, shadow, op, xray, flat) {
+    if (sc && sc.liftZ) {      // standing on raised ground: drawn up by its height, the foot row (and so the depth) its own
+      var lp = liftPx(sc, (dx + sw / 2 - offX) / NATIVE_TS, footRow);
+      if (lp) { dy -= lp; if (shadow) shadow = { x: shadow.x, y: shadow.y - lp, rx: shadow.rx, ry: shadow.ry }; }
+    }
     if (tmp.width < sw || tmp.height < sh) { tmp.width = Math.max(tmp.width, sw); tmp.height = Math.max(tmp.height, sh); }
     tctx.setTransform(1, 0, 0, 1, 0, 0);
     tctx.globalCompositeOperation = 'source-over';
@@ -681,6 +705,8 @@ var BridgeScene = (function () {
     layerImage: layerImage,
     drawBackground: drawBackground,
     drawOccluded: drawOccluded,
+    liftAt: liftAt,
+    liftPx: liftPx,
     restore: function () { for (var k in scenes) if (scenes[k].ready) composite(scenes[k]); },   // after the canvas was lost
     tintAt: tintAt,
     sky: function (id) { var sc = scenes[id]; return sc && sc.ready ? weights(sc) : null; },

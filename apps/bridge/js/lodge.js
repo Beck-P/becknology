@@ -52,6 +52,19 @@ var BridgeLodge = (function () {
         { id: 'joss', name: 'Cutter Joss', call: 0.26, bluff: 0.36,
           win: 'JOSS BITES A COIN WITH HIS GOLD TOOTH. "TOLD YOU. IT\'S THE PLAYERS YOU WATCH."',
           lose: 'JOSS GLARES AT HIS DICE, THEN AT ANNIE, THEN AT YOU. "THAT\'S TWICE. NOBODY TAKES JOSS THREE TIMES."' }
+      ] },
+    // the Salt Rat on Cinder Key (Tortuga's tavern): pirates' Bones, the stakes the same, the company worse
+    rat: { title: 'Bones', where: 'at the Salt Rat', theme: 'fd-anchor',
+      intro: 'RED ANNIS SPINS A COIN ON ITS EDGE AND LETS IT FALL. "BONES. FIVE A CUP, ONES WILD, BID WHAT\'S UNDER ALL THE CUPS, CALL A LIAR AND SOMEBODY BLEEDS A DIE. LAST CUP STANDING TAKES IT."\n\nGASH SMILES WITH HALF HIS MOUTH. "AND IF ANYBODY CHEATS, IT\'S ME."',
+      broke: 'ANNIE TAPS THE KNIFE STUCK IN THE TABLE. "COIN FIRST. WE DON\'T TAKE IOUS. WE TAKE FINGERS."',
+      leave: 'YOU STAND. GASH IS ALREADY SWEEPING YOUR STAKE INTO HIS HAT. "COME BACK ANY TIME," HE SAYS, AND MEANS IT.',
+      rivals: [
+        { id: 'annis', name: 'Red Annis', call: 0.36, bluff: 0.22,
+          win: 'ANNIS RAKES THE POT IN WITH THE FLAT OF HER KNIFE. "THE SEA TAKES WHAT IT WANTS. SO DO I."',
+          lose: 'ANNIS LOOKS AT YOU A LONG MOMENT, THEN LAUGHS. "GOOD. I\'D HATE TO ROB SOMEBODY STUPID."' },
+        { id: 'gash', name: 'Gash', call: 0.22, bluff: 0.45,
+          win: 'GASH KISSES EACH COIN AS IT GOES INTO HIS HAT. "LOVELY. LOVELY. LOVELY."',
+          lose: 'GASH\'S HALF-SMILE GOES. "THAT\'S NOT... HOW DID... AGAIN. NOW."' }
       ] }
   };
   var T = TABLES.fell, RIVALS = T.rivals;

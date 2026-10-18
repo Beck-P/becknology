@@ -51,10 +51,38 @@ var BridgeMidnight = (function () {
     BridgeInteractions.say('SCRYING POOL', text);
   }
 
+  // ---- the Gloaming: back down the rope ladder into your own boat --------------------------------------------------------
+  function ghostReturn() {
+    var ok = typeof BridgeSloop !== 'undefined' && BridgeSloop.resume && BridgeSloop.resume();
+    if (!ok && typeof BridgeWorld !== 'undefined') {                // (nothing to go back to: the Ferryman's pier on Midnight Isle)
+      BridgeInteractions.say('THE GLOAMING', 'YOUR BOAT HAS GONE ADRIFT IN THE MIST. THE GLOAMING PUTS YOU ASHORE AT THE FERRYMAN\'S PIER, AND IS GONE.');
+      BridgeWorld.enterWorld('lumar-midnight', null);
+    }
+  }
+
   function decorate(worldId, data) { /* (the drowned village and the ghost ship add theirs here) */ }
+
+  // Saltmere's harbour light, once the Gloaming's lantern hangs in it (the quest `gloaming-light`): a cold green flame
+  // in the cage and its light on the water round the quay
+  var LIGHT = [16.0, 23.4, 2.75];
+  function lit() { return typeof BridgeQuests !== 'undefined' && BridgeQuests.finished && BridgeQuests.finished().some(function (q) { return q.id === 'gloaming-light'; }); }
+  function over(ctx, world, offX, offY, ts, now) {
+    if (typeof BridgeWorld === 'undefined' || BridgeWorld.getWorldId() !== 'lumar-saltmere' || !lit()) return;
+    var FX = typeof BridgeFX !== 'undefined' && BridgeFX.glow ? BridgeFX : null;
+    if (!FX) return;
+    var x = offX + (LIGHT[0] + 0.0) * ts, y = offY + (LIGHT[1] - LIGHT[2] * Math.SQRT1_2) * ts, f = 0.85 + 0.15 * Math.sin(now / 230) * Math.sin(now / 370);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    FX.glow(ctx, x, y, ts * 3.2, [90, 220, 190], 0.32 * f);
+    FX.glow(ctx, x, y + ts * 2.0, ts * 4.5, [70, 200, 170], 0.14 * f, 0.4);       // its light lying on the water
+    FX.glow(ctx, x, y, ts * 0.7, [200, 255, 240], 0.8 * f);
+    ctx.restore();
+  }
+  if (typeof BridgeWorld !== 'undefined' && BridgeWorld.registerSceneHooks) BridgeWorld.registerSceneHooks('lumar', { over: over });
 
   if (typeof BridgeInteractions !== 'undefined' && BridgeInteractions.register) {
     BridgeInteractions.register('midnight_pool', pool, 'Look in');
+    BridgeInteractions.register('ghost_return', ghostReturn, 'Climb down');
   }
 
   return { decorate: decorate, tonight: tonight, bell: bell };
