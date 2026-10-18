@@ -2492,7 +2492,7 @@
     over: function (ctx, world, offX, offY, ts, time) {
       if (!world.skyline || typeof BridgeSkyline === 'undefined') return;
       BridgeSkyline.steam(ctx, world.scene, offX, offY, ts, time);
-      BridgeSkyline.rain(ctx, ctx.canvas.width, ctx.canvas.height, time, world.skyline.rain || {});
+      if (world.skyline.mode !== 'spires') BridgeSkyline.rain(ctx, ctx.canvas.width, ctx.canvas.height, time, world.skyline.rain || {});   // above the smog it doesn't rain
     }
   });
 
