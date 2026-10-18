@@ -215,7 +215,7 @@ build on top of it.**
 | Hoarfell (`claude/hoarfell-rebuild`) | `hoarfell.py` and the six sport worlds | E |
 | Sylvara (`claude/sylvara-rebuild`) | `sylvara.py` (`sylvara`) | F |
 | Arcadia (`claude/arcadia-rebuild`) | `arcadia_street.py`, `arcadia_alley.py`, `arcadia_skywalk.py`, `arcadia_skypad.py` | C (the Backs' way down), D (the street, the Skywalk, Skyport 7) |
-| Arcadia, also its skyline backdrop | `skyline.py`, `assets_city.py`, `assets/backdrops/arcadia/*`, the drawing in `js/skyline.js` | C, D: additive `skyline.js` changes only until it lands (it keeps the Loop and the lifts) |
+| Arcadia, also its skyline backdrop — **landed** (Oct 18) | `skyline.py`, `assets_city.py`, `assets/backdrops/arcadia/*`, the drawing in `js/skyline.js` | C, D: `skyline.js` open again (additive); the layers are a little taller and the ads' anchors moved |
 | Hoarfell, also its sky | the sky, far range and cloud sea in `js/worlds/hoarfell.js` | E: additive only until it lands |
 | Lumar's open sea (a session of its own) — **landed** (d90fbba7) | `js/sea.js` | A, B1, B2: free again (additive); new islands only need a good `shore.png` for the reflections |
 

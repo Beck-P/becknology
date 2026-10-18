@@ -480,6 +480,7 @@ var BridgeWorld = (function () {
         if (typeof BridgeFestivals !== 'undefined') BridgeFestivals.decorate(worldId, data); // a festival's props, stall and contest
         if (typeof BridgeEvents !== 'undefined') BridgeEvents.decorate(worldId, data);       // small happenings on the hour
         if (typeof BridgeMidnight !== 'undefined') BridgeMidnight.decorate(worldId, data);   // the haunted sea: the tower, Saltmere
+        if (typeof BridgeCrimson !== 'undefined') BridgeCrimson.decorate(worldId, data);     // the dangerous sea: Cinder Key
         if (typeof BridgeRoutines !== 'undefined') BridgeRoutines.decorate(worldId, data);   // the cast keep their day
         if (typeof BridgeHome !== 'undefined') BridgeHome.decorate(worldId, data);       // last: it keeps the rest clear
         if (typeof BridgeAudio !== 'undefined') BridgeAudio.setWorld(worldId, data);

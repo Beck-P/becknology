@@ -29,6 +29,8 @@ var BridgeChart = (function () {
     'lumar-rose': ['Crystal terraces, the old mine', 'Rosewell: the springs, the bathhouse', 'Crystal sails, roseite sheathing', 'Spore silk and roseite cheap'],
     'lumar-cliff': ['The cliff town in a drowned caldera', 'Tavernas on the rim, donkeys up the zigzag', 'Lamps in the great church'],
     'lumar-crimson': ['The pirate beach, the dragon\'s cave', 'The raider, heavy guns, storm rigging', 'Rum and black powder cheap', 'Squalls: ease your sheet'],
+    'lumar-cinder': ['Tortuga, the pirates\' port, on a volcano', 'Vesper Quick buys hot goods', 'The stormwatch: Wick\'s forecast', 'Rum and powder; squalls'],
+    'lumar-saltmere': ['The drowned village', 'Its bell rings in the dark of the moon', 'No harbour; the drowned walk'],
     'lumar-midnight': ['The drowned abbey, the moon pool', 'The Ferryman: moonglass, moon salt', 'Rocks in the mist; drowned ships']
   };
 

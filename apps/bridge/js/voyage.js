@@ -27,6 +27,10 @@ var BridgeVoyage = (function () {
     'lumar-rose': { name: 'Rose Cove', x: 0.82, y: 0.22, pal: 'rose' },
     'lumar-sapphire': { name: 'Sapphire Port', x: 0.82, y: 0.78, pal: 'sapphire' },
     'lumar-crimson': { name: 'Crimson Reach', x: 0.18, y: 0.78, pal: 'crimson' },
+    // the Crimson's pirate port (Workstream B2): Tortuga, on the volcano's cove
+    'lumar-cinder': { name: 'Cinder Key', x: 0.33, y: 0.88, pal: 'crimson' },
+    // the Midnight Sea's drowned village (Workstream B2): Saltmere, south-west of the Isle
+    'lumar-saltmere': { name: 'Saltmere', x: 0.08, y: 0.42, pal: 'midnight' },
     // the capital and the small islands round it, all in the Emerald Sea
     'lumar-crown': { name: 'Crownhaven', x: 0.50, y: 0.16, pal: 'emerald' },
     'lumar-tern': { name: 'Tern Holm', x: 0.39, y: 0.35, pal: 'emerald' },

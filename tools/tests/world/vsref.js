@@ -27,7 +27,8 @@ const MOMENTS = [[12.5, 'summer'], [18.2, 'autumn'], [22.5, 'winter']];
   await p.evaluate(() => { BridgeState.setPilot({ id: 't', name: 'BECK', suit_color: 'gold' }); BridgeIntro.hide(); });
   await p.evaluate(() => ['verdance', 'lumar', 'hoarfell', 'sylvara', 'arcadia'].forEach((r) => BridgeWeather._pin && BridgeWeather._pin(r, 'fair')));
   await p.evaluate((w) => new Promise((r) => BridgeWorld.load(w, () => { BridgeState.transition('world', { worldId: w }); r(); })), WORLD);
-  await p.evaluate((q) => { BridgeCharacter.init(q[0], q[1]); if (BridgeWorld.snapCamera) BridgeWorld.snapCamera(); }, pos);
+  // the pilot where asked, the camera on the middle of the rect (as near as the world's view lets it)
+  await p.evaluate((q) => { BridgeCharacter.init(q[0], q[1]); BridgeWorld.setFocus({ x: q[2], y: q[3] }); if (BridgeWorld.snapCamera) BridgeWorld.snapCamera(); }, [pos[0], pos[1], (x0 + x1) / 2, (y0 + y1) / 2]);
   // hide the HUD so the frame is the place alone
   await p.addStyleTag({ content: 'body *{visibility:hidden!important} #bridge-canvas{visibility:visible!important}' });
   const lit = await p.evaluate((w) => { const sc = BridgeScene.get(w); return !!(sc && sc.lit); }, WORLD);

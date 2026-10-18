@@ -466,6 +466,56 @@ var BridgeSea = (function () {
     if (k > 0.01) bloomWater(ctx, 0, 0, w, h, 0, 0, now, name, k);
     skyLight(ctx, w, h, now, L, C, null);
     glints(ctx, w, h, now, P, null, W, k, name);
+    if (L.rain > 0.02) rainRings(ctx, w, h, now, L, null);
+  }
+
+  // ---- the rain on the water: rings spreading where the drops come down, as Look Book 2's (LB.rings: a pixel
+  // ellipse growing to 4 px and fading, once a second, one to 400 px of water), in cells of the world so they stay
+  // put as the camera moves; a storm's thicker. Each ring is a small sprite made once per size and colour.
+  var ringSprites = {};
+  function ringSprite(r, col) {
+    var key = r + col, c = ringSprites[key];
+    if (c) return c;
+    var ry = Math.max(1, Math.round(r * 0.5));
+    c = ringSprites[key] = document.createElement('canvas');
+    c.width = 2 * r + 1; c.height = 2 * ry + 1;
+    var x = c.getContext('2d'), seen = {};
+    x.fillStyle = col;
+    for (var a = 0; a < 40; a++) {
+      var th = a / 40 * Math.PI * 2, ex = r + Math.round(Math.cos(th) * r), ey = ry + Math.round(Math.sin(th) * ry);
+      if (seen[ex + ',' + ey]) continue;
+      seen[ex + ',' + ey] = 1; x.fillRect(ex, ey, 1, 1);
+    }
+    return c;
+  }
+  function rainRings(ctx, w, h, now, L, isWater) {
+    var D = drift(0), cell = 20, t = now / 1000, k = Math.min(1, L.rain * (1 + 0.6 * L.storm));
+    var col = rgb(mixc([230, 240, 255], [138, 154, 196], L.night));
+    var c0 = Math.floor(D.camX / cell) - 1, r0 = Math.floor(D.camY / cell) - 1;
+    ctx.save();
+    for (var r = r0; r < r0 + h / cell + 3; r++) for (var c = c0; c < c0 + w / cell + 3; c++) {
+      var id = c * 7919 + r * 104729;
+      if (hash(id + 3) > k) continue;
+      var ph = t + hash(id + 2), beat = Math.floor(ph), u = ph - beat;
+      var x = Math.round(c * cell - D.camX + hash(id + beat * 31) * cell), y = Math.round(r * cell - D.camY + hash(id + beat * 57 + 1) * cell);
+      if (x < -6 || y < -4 || x > w + 6 || y > h + 4 || (isWater && !isWater(x, y))) continue;
+      var rr = Math.round(1 + u * 4), S = ringSprite(rr, col);
+      ctx.globalAlpha = (1 - u) * 0.6;
+      ctx.drawImage(S, x - (S.width >> 1), y - (S.height >> 1));
+    }
+    ctx.restore();
+  }
+  /** Whether a pixel of the frame is water, for a scene drawn at the world's offset (offX, offY): its shore's water,
+   *  and past its render the open sea. Null for a scene without water. (js/weather.js lands no splash there: it rings.) */
+  function waterAt(sc, offX, offY) {
+    var S = sc && sc.meta && sc.meta.water ? shores[sc.id] : null;
+    if (!S || !S.ready) return null;
+    var bx = Math.round(offX - sc.meta.originX), by = Math.round(offY - sc.meta.originY);
+    return function (x, y) {
+      var px = x - bx, py = y - by;
+      if (px < 0 || py < 0 || px >= S.W || py >= S.H) return true;
+      return S.water[py * S.W + px] === 1;
+    };
   }
 
   // ---- water over a scene (shore.png) -------------------------------------------------
@@ -579,7 +629,7 @@ var BridgeSea = (function () {
         var fx = x / CG - 0.5, x0 = Math.max(0, Math.floor(fx)), x1 = Math.min(gw - 1, x0 + 1), tx = Math.max(0, Math.min(1, fx - x0));
         var vv = (g[y0 * gw + x0] * (1 - tx) + g[y0 * gw + x1] * tx) * (1 - ty) + (g[y1 * gw + x0] * (1 - tx) + g[y1 * gw + x1] * tx) * ty;
         vv += (hash((x >> 2) * 131 + (y >> 2) * 977) - 0.5) * 0.18;
-        var a = vv > 0.62 ? 1 : vv > 0.32 ? 0.5 : 0;
+        var a = vv > 0.32 ? 1 : 0;
         if (a) d[i * 4 + 3] = Math.round(a * 255);
       }
     }
@@ -596,10 +646,11 @@ var BridgeSea = (function () {
     calmX.clearRect(0, 0, v[2], v[3]);
     calmX.drawImage(S.calm, v[0], v[1], v[2], v[3], 0, 0, v[2], v[3]);
     calmX.globalCompositeOperation = 'source-in';
-    var cc = mixc(C.deep, C.base, 0.35 + 0.25 * Lw.day);
-    cc = mixc(cc, [62, 122, 142], 0.4 * Lw.day * (1 - Lw.golden));                 // Look Book 2's still water by day
-    cc = mixc(cc, [128, 112, 112], 0.35 * Lw.golden * (1 - Lw.night));             // and greyed warm at golden hour
-    calmX.fillStyle = rgb(cc);
+    // Look Book 2's still water (js/litscene.js's bands as its harbour shows them): teal-grey by day, a warm grey at
+    // golden hour, a deep blue at night; a fifth of the sea's own body kept so each sea's harbours are still its own
+    var lb = mixc(mixc([24, 32, 56], [92, 98, 104], Lw.aD), [70, 106, 128], Lw.day * (1 - Lw.golden));
+    lb = mixc(lb, [104, 100, 104], Lw.golden * (1 - Lw.night));
+    calmX.fillStyle = rgb(mixc(lb, C.base, 0.2));
     calmX.fillRect(0, 0, v[2], v[3]);
     L.globalAlpha = 1 - 0.6 * Math.max(Lw.storm, 0.7 * Lw.gale);      // a storm reaches in even here
     L.drawImage(calmC, 0, 0, v[2], v[3], v[0], v[1], v[2], v[3]);
@@ -831,8 +882,8 @@ var BridgeSea = (function () {
     L.globalCompositeOperation = 'source-in';
     fillPattern(L, texture(name, 0, C), S.W, S.H, D.ax + bx, D.ay + by, 1);
     L.globalCompositeOperation = 'source-atop';
-    if (S.calm) calmOver(L, S, v, C, Lw);
     fillPattern(L, texture(name, 1, C), S.W, S.H, D.bx + bx, D.by + by, 1);
+    if (S.calm) calmOver(L, S, v, C, Lw);                     // over the swell and its wavelets: still water
     var cap = capAlpha(Lw);
     if (cap) fillPattern(L, texture(name, 2, C), S.W, S.H, D.cx + bx, D.cy + by, cap);
     // the bloom: the open sea's currents carried on over the island's water at its opacity (so it meets the open sea
@@ -859,6 +910,10 @@ var BridgeSea = (function () {
       return S.water[py * S.W + px] === 1 && (b === 255 || b >= 2);
     });
     glints(ctx, ctx.canvas.width, ctx.canvas.height, now, P, isW, W, k, name);
+    if (Lw.rain > 0.02) rainRings(ctx, ctx.canvas.width, ctx.canvas.height, now, Lw, function (x, y) {   // past the render drawSea rang it
+      var px = x - bx, py = y - by;
+      return px >= 0 && py >= 0 && px < S.W && py < S.H && S.water[py * S.W + px] === 1;
+    });
   }
 
   // ---- older scenes: foam round the silhouette ----------------------------------------
@@ -958,5 +1013,5 @@ var BridgeSea = (function () {
   function reset() { tex = {}; shores = {}; bands = {}; gtex = {}; }
 
   return { _light: function (name, id) { var sc = id && typeof BridgeScene !== 'undefined' ? BridgeScene.get(id) : null; var L = lightOn(name || 'emerald', sc); return { L: L, C: colours(name || 'emerald', L) }; },
-           drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
+           drawSea: drawSea, drawSeaAt: drawSeaAt, drawWater: drawWater, waterAt: waterAt, drawWaterAt: drawWaterAt, palettes: PALETTES, forget: forget, reset: reset, setSeaCycles: setSeaCycles };
 })();

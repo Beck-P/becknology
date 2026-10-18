@@ -98,5 +98,14 @@
   "lumar-rose-springs": [
     { "sheet": "npc-traveler", "path": [[21, 26], [21, 8], [21, 4], [34, 4]], "speed": 0.7, "pause": 6000, "rest": "down" },
     { "sheet": "npc-quiet", "path": [[3, 24], [16, 24]], "speed": 0.6, "pause": 7000, "rest": "up" }
+  ],
+  "lumar-saltmere": [
+    { "sheet": "npc-ghost-fisher", "ghost": true, "path": [[16, 24], [21, 24], [27, 24]], "speed": 0.45, "pause": 7000, "rest": "down" },
+    { "sheet": "npc-ghost-child", "ghost": true, "path": [[20, 11], [23, 12], [26, 11]], "speed": 0.7, "pause": 4000, "rest": "down" },
+    { "sheet": "npc-ghost-fisher", "ghost": true, "path": [[22, 21], [22, 15]], "speed": 0.4, "pause": 9000, "rest": "up" }
+  ],
+  "lumar-gloaming": [
+    { "sheet": "npc-ghost-sailor", "ghost": true, "path": [[10, 6], [17, 6], [24, 6]], "speed": 0.5, "pause": 5000, "rest": "up" },
+    { "sheet": "npc-ghost-sailor", "ghost": true, "path": [[13, 9], [21, 9]], "speed": 0.45, "pause": 6000, "rest": "down" }
   ]
 }

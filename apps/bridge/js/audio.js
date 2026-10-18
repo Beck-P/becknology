@@ -225,6 +225,10 @@ var BridgeAudio = (function () {
                 arp: { inst: 'chip', steps: [0, 2, 4, 6, 8, 10, 12, 14], oct: 12, pattern: [0, 1, 2, 1] },
                 bass: { inst: 'chip', steps: [0, 4, 8, 12], oct: -12 }, lead: { inst: 'chip', oct: 24, density: 0.6 },
                 perc: [['chipdrum', [0, 8], 1], ['chipdrum', [2, 6, 10, 14], 0], ['chipdrum', [4, 12], 1]] },
+    // Lantern Row: a slow plucked line over a warm pad, a flute now and then, a shaker on the off-beats
+    lantern:  { bpm: 68, root: 50, mode: 'aeolian', chords: [0, 5, 3, 4, 0, 5, 6, 4], swing: 0.15, pad: 'warm',
+                arp: { inst: 'pluck', steps: [0, 3, 6, 10, 12], oct: 12, pattern: [0, 2, 3, 1] }, bass: { inst: 'bass', steps: [0, 10] },
+                lead: { inst: 'flute', oct: 24, density: 0.26 }, perc: [['shaker', [4, 12]]] },
     lofi:     { bpm: 74, root: 53, mode: 'dorian', chords: [0, 3, 6, 4], swing: 0.22, pad: null,
                 arp: { inst: 'keys', steps: [0, 7, 10], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 7, 10] },
                 perc: [['kick', [0, 9]], ['snare', [4, 12]], ['hat', [0, 2, 4, 6, 8, 10, 12, 14]]] },
@@ -253,6 +257,16 @@ var BridgeAudio = (function () {
     casino:   { bpm: 92, root: 50, mode: 'ionian', chords: [1, 4, 0, 5, 1, 4, 0, 0], swing: 0.2, pad: 'warm',
                 arp: { inst: 'keys', steps: [3, 10], oct: 12, chord: true }, bass: { inst: 'upright', steps: [0, 4, 8, 12], walk: true },
                 lead: { inst: 'sax', oct: 12, density: 0.38 }, perc: [['ride', [0, 4, 7, 8, 12, 15]], ['brush', [4, 12]]] },
+    // Moonglow, the jazz bar on the Terraces: a slow minor ballad after midnight — brushes, the upright walking
+    // under it, piano comping in the gaps, the sax taking its time (the Royale's is brighter and quicker)
+    jazz:     { bpm: 68, root: 46, mode: 'dorian', chords: [0, 3, 6, 4, 0, 5, 3, 4], swing: 0.3, pad: 'warm',
+                arp: { inst: 'keys', steps: [2, 7, 11], oct: 12, chord: true }, bass: { inst: 'upright', steps: [0, 4, 8, 12], walk: true },
+                lead: { inst: 'sax', oct: 12, density: 0.26 }, perc: [['brush', [4, 12]], ['ride', [0, 6, 8, 14]]] },
+    // the Mid-Levels' open decks: glass and cyan — the street's synthwave lifted, slower and airier, bells over a soft pulse
+    midlevels: { bpm: 84, root: 50, mode: 'lydian', chords: [0, 4, 5, 3], pad: 'pad',
+                arp: { inst: 'bell', steps: [0, 3, 6, 10, 13], oct: 24, pattern: [0, 2, 1, 3] },
+                bass: { inst: 'sub', steps: [0, 6, 8] }, lead: { inst: 'keys', oct: 24, density: 0.22 },
+                perc: [['kick', [0, 8]], ['hat', [4, 12]]] },
     // the Harvest Fair: a jig, the fiddle leading, guitar strummed on the off-beats, a tambourine
     fair:     { bpm: 116, root: 55, mode: 'ionian', chords: [0, 4, 0, 4, 3, 0, 4, 0], swing: 0.18, pad: 'squeeze',
                 arp: { inst: 'pluck', steps: [4, 12], oct: 12, chord: true }, bass: { inst: 'bass', steps: [0, 8] },
@@ -286,6 +300,12 @@ var BridgeAudio = (function () {
     if (id === 'arcadia-casino') return { theme: 'casino', amb: ['crowd', 'slots'] };            // the Neon Royale's floor
     if (id === 'arcadia-casino-cards') return { theme: 'casino', amb: ['murmur', 'chips'] };
     if (/^arcadia-casino-(dining|vip)$/.test(id)) return { theme: 'casino', amb: ['murmur'] };
+    if (id === 'arcadia-jazz') return { theme: 'jazz', amb: ['murmur'] };                       // Moonglow
+    if (id === 'arcadia-terraces') return { theme: 'midlevels', amb: ['rain', 'city', 'murmur'] };  // the Mid-Levels' decks
+    if (id === 'arcadia-atrium') return { theme: 'midlevels', amb: ['murmur', 'crowd'] };
+    if (id === 'arcadia-oldquarter') return { theme: 'lantern', amb: ['rain', 'murmur'] };                 // Lantern Row
+    if (id === 'arcadia-oldquarter-shrine') return { theme: 'lantern', amb: ['rainsoft', 'chimes'] };      // its roof shrine
+    if (id === 'arcadia-spaceport') return { theme: 'arcadia', amb: ['rain', 'city', 'engine'] };
     if (/^arcadia-(street|skypad|alley|skywalk)$/.test(id)) return { theme: 'arcadia', amb: ['rain', 'city'] };
     if (/^(arcadia|cyber|chrome|junk|tech|null)/.test(id)) return { theme: 'lofi', amb: ['rainsoft', 'hum'] };
     if (/^enigma/.test(id)) return { theme: 'enigma', amb: ['hum', 'beeps'] };
