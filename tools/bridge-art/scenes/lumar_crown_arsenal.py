@@ -160,6 +160,31 @@ for (x, r) in ((8.0, 20.0), (15.0, 20.0), (41.0, 20.6), (52.0, 20.4)):
     W.lantern_post(k, x, r, energy=26)
     k.solid_post(x, r)
 
+# the middle of the yard, between the shops and the dock (rows 17-19 kept clear: the way to the dock's edge)
+yr = random.Random(2207)
+CAP.cannon(k, 17.6, 15.2, length=1.8, carriage=False)             # a long gun slung on rollers, fresh from the foundry
+for dx in (-0.6, 0.0, 0.6):
+    k.cyl_x(17.6 + dx - 0.05, 17.6 + dx + 0.05, 15.2, 0.04, 0.05, 0.05, (A.WOOD_D, 0.14), 'roller', verts=8) if hasattr(k, 'cyl_x') else None
+W.cart(k, 20.6, 15.0)                                              # the foundry's hand cart
+k.solid(19.9, 14.6, 21.3, 15.4)
+CX2, CR2 = 23.2, 15.2                                              # a capstan, its bars out, for hauling guns up the yard
+k.cyl(CX2, CR2, 0.0, 0.12, 0.42, ('#6a5a48', 0.14), 'capstan_base', verts=14)
+k.cyl(CX2, CR2, 0.12, 0.72, 0.26, (A.WOOD, 0.14), 'capstan', verts=12)
+k.cyl(CX2, CR2, 0.72, 0.8, 0.32, (A.WOOD_D, 0.14), 'capstan', verts=12)
+for t in range(6):
+    a = t * math.pi / 3
+    k.tube((CX2, CR2, 0.66), (CX2 + 0.75 * math.cos(a), CR2 + 0.75 * math.sin(a), 0.66), 0.03, A.WOOD_L, 'capstan_bar', verts=5)
+k.solid(CX2 - 0.5, CR2 - 0.5, CX2 + 0.5, CR2 + 0.5)
+for (x, r, n) in ((25.4, 14.8, 5), (26.3, 15.5, 4), (27.2, 14.9, 5)):   # coils of cable laid down to dry
+    for j in range(n):
+        k.cyl(x, r, j * 0.06, j * 0.06 + 0.06, 0.34 - j * 0.04, ('#9a8a64' if j % 2 else '#8a7a56', 0.3), 'rope', verts=16)
+k.solid(24.9, 14.4, 27.7, 15.9)
+CAP.shot_pyramid(k, 29.4, 15.0)
+CAP.shot_pyramid(k, 30.4, 15.6, n=3)
+CAP.timber_stack(k, 31.8, 35.6, 15.2, layers=2, tone='#9a7a48')    # planking for her decks
+for (x, r) in ((16.2, 14.4), (34.8, 16.6)):                       # a bucket and a barrel of pitch
+    A.barrel(k, x, r, h=0.6, radius=0.22, tone=shade(A.WOOD, 0.7))
+
 # ---- the dry dock and its man-of-war -----------------------------------------------------------------------------------------
 dx0, dx1, dr0, dr1 = DOCK
 FLOOR = -0.16    # above the sea (assets_coast.WZ, and its foam band): anything lower the game fills with seawater
