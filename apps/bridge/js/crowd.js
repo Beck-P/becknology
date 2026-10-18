@@ -193,6 +193,29 @@ var BridgeCrowd = (function () {
       hairs: ['blond', 'silver', 'white', 'auburn', 'dark', 'brown', 'black', 'ginger'],
       skins: [0, 3, 1],
       names: { m: ['Eldrin', 'Calael', 'Thoren', 'Ilvar', 'Saelith', 'Vaeron'], f: ['Lirael', 'Ysmir', 'Naeva', 'Aelin', 'Seraphel', 'Thalia'], c: ['Fenwick'] }
+    },
+    // Arcadia below (js/undercity.js): the Undercity in work clothes, hoods and patched jackets, colour coming off
+    // them; the Sump in grey, oilskin and teal, fewer and older
+    undercity: {
+      bodies: { worker: 3, 'man-cap': 3, vest: 3, traveller: 2, man: 2, 'woman-hood': 3, woman: 2, 'woman-bun': 1, elder: 1.5, 'child-cap': 0.5 },
+      top: ['#3a3a30', '#5a4a3a', '#2e3438', '#6a2a24', '#3a4a3a', '#4a3a5a', '#7a6a4a', '#2a2a30'],
+      bot: ['#2a2a30', '#3a3226', '#1e2a38', '#141418', '#3a3a3a'],
+      out: ['#4a4a40', '#5a3a2a', '#2a3a4a', '#c06020', '#3a2e3a', '#1e1e24'],
+      hat: ['#3a3a40', '#6a2a24', '#c8a030', '#2a3a4a'],
+      umbrella: null,
+      wild: 0.15,
+      names: { m: ['Bao', 'Rusty', 'Tok', 'Wen', 'Ash', 'Kip', 'Mung', 'Lazlo', 'Ox', 'Sid'],
+               f: ['Mei', 'Rook', 'Dot', 'Suki', 'Vee', 'Lin', 'Pell', 'Moth', 'Kass', 'June'], c: ['Nib', 'Squeak', 'Pip'] }
+    },
+    sump: {
+      bodies: { traveller: 3, worker: 2, 'woman-hood': 3, elder: 2, 'man-cap': 1, vest: 1 },
+      top: ['#2a3034', '#3a4040', '#1e2a2a', '#3a3a34', '#2a2a30', '#1a4a44'],
+      bot: ['#1e2424', '#2a2a26', '#141818', '#30302a'],
+      out: ['#3a4a44', '#2a3a3a', '#4a4a3a', '#1a3a3a', '#5a5a4a'],
+      hat: ['#2a3a3a', '#3a3a34', '#1a4a44'],
+      umbrella: null,
+      wild: 0.25,
+      names: { m: ['Grey Tam', 'Silt', 'Old Fen', 'Wick', 'Dredger', 'Lom'], f: ['Mire', 'Weed', 'Nan Teal', 'Brack', 'Hush'], c: ['Tadpole'] }
     }
   };
   // Lumar's other seas look their own (Beck: "each of their people and cities should probably be a little bit more

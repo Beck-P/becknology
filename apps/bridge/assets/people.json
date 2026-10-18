@@ -1708,29 +1708,29 @@
     ]
   },
   "nell": {
-    "name": "Nell Ashby",
-    "role": "Keeps the flower stall on the square",
-    "sheet": "npc-vfolk-a",
+    "name": "Nell",
+    "role": "Behind the bar at The Drip",
+    "sheet": "npc-nell",
     "at": [
       {
-        "world": "verdance-village",
+        "world": "arcadia-dive",
         "label": "NELL"
       }
     ],
-    "greet": "HELLO! A POSY? FOR SOMEONE SPECIAL, OR FOR YOU? BOTH ARE ALLOWED. NAN SAYS EVERYONE SHOULD HAVE FLOWERS AT LEAST ONCE A WEEK.",
-    "again": "YOU AGAIN! I'VE KEPT YOU THE BEST SUNFLOWER. DON'T TELL PERCY.",
+    "greet": "WHAT'LL IT BE? THE LAGER'S COLD AND THE ROTGUT'S HONEST. DON'T ASK ABOUT THE BUCKET.",
+    "again": "SAME AGAIN?",
     "topics": [
       {
         "q": "About you",
-        "a": "NAN GROWS THEM OVER THE BRIDGE, I SELL THEM ON THE SQUARE, THE BEES DO MOST OF THE WORK. NAN'S COTTAGE IS THE ONE WITH THE APPLE TREES."
+        "a": "I BOUGHT THE DRIP WITH MY WINNINGS FROM THE PIT. FOUGHT SIX ROUNDS, WON FIVE, LOST AN EAR'S WORTH OF HEARING. BEST TRADE I EVER MADE."
       },
       {
-        "q": "Gifts",
-        "a": "EVERYONE HAS SOMETHING THEY LOVE. BRIDGET LOVES HONEY. WAT PRETENDS HE DOESN'T LIKE FLOWERS BUT HE KEEPS THE LAST ONE I GAVE HIM IN A JAR ON THE ANVIL. LUDD LOVES A GOOD PUMPKIN."
+        "q": "The bucket",
+        "a": "THERE'S A LEAK IN THE CEILING. THE WATER COMES FROM THE DISTRICT'S GUTTERS, FOUR FLOORS UP. I EMPTY IT EVERY HOUR. NO, NOT INTO THE LAGER. PROBABLY."
       },
       {
-        "q": "The goat",
-        "a": "NOBODY KNOWS WHOSE IT IS. IT TURNS UP, EATS SOMETHING IMPORTANT, AND LEAVES. WE PUT UP NOTICES. IT EATS THE NOTICES."
+        "q": "Gossip",
+        "a": "THEY SAY THE DREDGE CAME UP OUT OF THE CANAL BY THE OLD STATION LAST WEEK AND TOOK A WHOLE BRIDGE. THEY SAY THE SAINTS ARE SHORT OF MONEY. THEY SAY HALCYON WANTS TO PAVE THE SUMP OVER. THEY SAY A LOT, IN HERE."
       }
     ]
   },
@@ -3491,6 +3491,257 @@
       }
     ]
   },
+  "roo": {
+    "name": "Mama Roo",
+    "role": "Noodles in the Warrens",
+    "sheet": "npc-roo",
+    "at": [
+      {
+        "world": "arcadia-undercity",
+        "label": "MAMA ROO"
+      }
+    ],
+    "greet": "SIT. EAT. YOU LOOK LIKE SOMEONE FROM UP TOP WHO TOOK A WRONG TURN. EVERYONE DOWN HERE TOOK A WRONG TURN ONCE.",
+    "again": "BACK AGAIN. GOOD. THE BROTH REMEMBERS YOU.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "FORTY YEARS AT THIS COUNTER. MY MOTHER BEFORE ME. THE POT IS OLDER THAN BOTH OF US. WHEN THEY BUILT THE DISTRICT ON TOP OF US WE KEPT COOKING. THE STEAM GOES UP THROUGH THE GRATES. THEY SMELL US UP THERE, YOU KNOW. THEY JUST DON'T COME DOWN."
+      },
+      {
+        "q": "The Warrens",
+        "a": "HAWKER HALL FOR FOOD, THE DRIP FOR DRINK, THE FOUNDRY IF YOU WANT YOUR EARS TO BLEED, THE PIT IF YOU WANT THE REST OF YOU TO. SALLOW FOR CHROME, IF YOU MUST. AND KEEP OFF THE SAINTS' SIDE OF THE FENCE UNLESS YOU'RE LOOKING FOR TROUBLE."
+      },
+      {
+        "q": "The Rust Saints",
+        "a": "THE ORANGE VESTS. THEY HOLD THE YARDS PAST THE FENCE AND THEY TAKE A CUT OF EVERYTHING THAT GOES THROUGH. THEIR BOSS CALLS HIMSELF SAINT RUIN. CHROME FIST. SITS ON A THRONE MADE OF A CAR. IF SOMEONE EVER KNOCKED HIM OFF IT I'D GIVE THEM BROTH FOR A YEAR."
+      },
+      {
+        "q": "Further down",
+        "a": "THE STAIRS BY THE CANAL GO DOWN TO THE SUMP: THE OLD STREET, UNDER THE WATER. THERE'S A SHRINE DOWN THERE, AND OLD TEO'S BOAT, AND A PARTY THAT NEVER STOPS. AND THINGS IN THE WATER. EAT FIRST."
+      }
+    ]
+  },
+  "brick": {
+    "name": "Brick",
+    "role": "On the Foundry's door",
+    "sheet": "npc-bouncer",
+    "at": [
+      {
+        "world": "arcadia-undercity",
+        "label": "BRICK"
+      }
+    ],
+    "greet": "...",
+    "again": "...YOU AGAIN.",
+    "topics": [
+      {
+        "q": "Can I go in?",
+        "a": "DOOR'S OPEN. DON'T START ANYTHING. DON'T FINISH ANYTHING EITHER."
+      },
+      {
+        "q": "About you",
+        "a": "I STAND HERE. PEOPLE BEHAVE. THAT'S THE WHOLE JOB."
+      },
+      {
+        "q": "The Foundry",
+        "a": "OLD SMELTING HALL. STATIC LIT THE FURNACE AGAIN WITH LAMPS. DANCE ON THE GRATING, DRINK THE TONIC, DON'T CLIMB THE LADLE. SOMEBODY ALWAYS CLIMBS THE LADLE."
+      }
+    ]
+  },
+  "tally": {
+    "name": "Tally",
+    "role": "The Pit's bookie",
+    "sheet": "npc-bookie",
+    "at": [
+      {
+        "world": "arcadia-undercity",
+        "label": "TALLY"
+      },
+      {
+        "world": "arcadia-pit",
+        "label": "TALLY"
+      }
+    ],
+    "greet": "BETTING OR SIGHTSEEING? SIGHTSEEING'S FREE. BETTING'S WHERE THE FUN IS.",
+    "again": "BACK FOR ANOTHER FLUTTER?",
+    "topics": [
+      {
+        "q": "How the book works",
+        "a": "HOUSE BOUT EVERY TWENTY MINUTES. TWO FIGHTERS, ODDS ON THE BOARD. PICK ONE, PUT YOUR COINS DOWN, THE BELL GOES. SAME BOUT FOR EVERYONE IN THE ROOM, SAME RESULT. I DON'T FIX THEM. MUCH."
+      },
+      {
+        "q": "The cage",
+        "a": "ANYONE CAN CLIMB IN. TWENTY TO GET IN, THREE ROUNDS AGAINST THE HOUSE, EACH ONE PAYS BETTER. THE THIRD ROUND'S A HUSK FROM THE SUMP. NOBODY LIKES THE THIRD ROUND."
+      },
+      {
+        "q": "Tips?",
+        "a": "WATCH THE GROUND. EVERYONE TELEGRAPHS. ROLL OUT OF IT. AND IRON MAE NEVER GOES DOWN IN THE FIRST, SO DON'T BET THAT SHE WILL."
+      }
+    ]
+  },
+  "sallow": {
+    "name": "Doc Sallow",
+    "role": "Back-alley chrome",
+    "sheet": "npc-sallow",
+    "at": [
+      {
+        "world": "arcadia-chopshop",
+        "label": "DOC SALLOW"
+      }
+    ],
+    "greet": "SIT IN THE CHAIR OR DON'T. BUT DON'T TOUCH THE JARS.",
+    "again": "HOW'S THE CHROME? STILL TWITCHING? GOOD. MEANS IT'S ALIVE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I WAS A SURGEON UP TOP ONCE. CLINIC GRADE, LICENCE AND ALL. THEN I PUT A FEW THINGS IN A FEW PEOPLE THAT THE LICENCE DIDN'T COVER. NOW I PUT EVERYTHING IN EVERYONE, AND NOBODY ASKS FOR THE LICENCE."
+      },
+      {
+        "q": "Street chrome",
+        "a": "CHEAP, STRONG, SECOND-HAND. IT GLITCHES. AN ARM THAT FORGETS A SWING, LEGS THAT LOCK, PLATE THAT DROPS OUT FOR A FEW SECONDS. IN A FIGHT, MORE. NAKURI UP ON THE DISTRICT CAN TUNE IT STEADY, IF YOU CAN STAND HER SNIFFING AT MY WORK."
+      },
+      {
+        "q": "Trophies",
+        "a": "BRING ME SAINT RUIN'S FIST AND I'LL PUT IT ON YOUR ARM. BRING ME THE HEART OUT OF THE DREDGE AND I'LL PUT IT IN YOUR CHEST. THAT'S CHROME WORTH HAVING. IT DOESN'T GLITCH: IT WAS PAID FOR IN BLOOD ALREADY."
+      },
+      {
+        "q": "Parts",
+        "a": "MED-KITS AND STIMS ON THE BENCH. THEY'RE THE REAL THING. MOSTLY."
+      }
+    ]
+  },
+  "static": {
+    "name": "Static",
+    "role": "On the Foundry's decks",
+    "sheet": "npc-static",
+    "at": [
+      {
+        "world": "arcadia-foundry",
+        "label": "STATIC"
+      }
+    ],
+    "greet": "CAN'T HEAR YOU. CAN'T HEAR ANYTHING. THAT'S THE POINT.",
+    "again": "STILL STANDING? TURN IT UP THEN.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I MAKE MUSIC OUT OF THE NOISE THE CITY MAKES. HYDRAULICS. PRESSES. THE LIFT CABLES SINGING. I RECORDED THE FOUNDRY THE NIGHT THEY SHUT IT. EVERY TRACK I PLAY HAS THAT IN IT SOMEWHERE."
+      },
+      {
+        "q": "Club Void",
+        "a": "UP TOP? KIRI'S ALL RIGHT. CLEAN SOUND. TOO CLEAN. DOWN HERE IT RATTLES YOUR TEETH. THAT'S HOW YOU KNOW IT'S REAL."
+      },
+      {
+        "q": "The rave",
+        "a": "LUX. DOWN IN THE OLD STATION. NEVER STOPS. I PLAY THERE ON THE NIGHTS I CAN'T SLEEP, WHICH IS MOST NIGHTS."
+      }
+    ]
+  },
+  "gage": {
+    "name": "Gage",
+    "role": "Buys scrap",
+    "sheet": "npc-gage",
+    "at": [
+      {
+        "world": "arcadia-undercity",
+        "label": "GAGE"
+      }
+    ],
+    "greet": "SCRAP? BOARDS? CHROME? I BUY. I DON'T ASK.",
+    "again": "BRING ME SOMETHING HEAVY.",
+    "topics": [
+      {
+        "q": "What do you buy?",
+        "a": "SCRAP BY THE PIECE, CIRCUIT BOARDS BY THE BOARD, CHROME PARTS BY THE POUND. PEARLS OUT OF THE SUMP, IF YOU'VE BEEN THAT FAR. EEL I LEAVE TO TEO."
+      },
+      {
+        "q": "Where's it from?",
+        "a": "THE SAINTS DROP IT WHEN YOU DROP THEM. THE HEAPS IN THE YARD, IF YOU DON'T MIND RATS. THE DRONES IN THE SUMP ARE FULL OF BOARDS. EVERYTHING UP TOP ENDS UP DOWN HERE IN THE END."
+      }
+    ]
+  },
+  "teo": {
+    "name": "Old Teo",
+    "role": "The noodle boat",
+    "sheet": "npc-teo",
+    "at": [
+      {
+        "world": "arcadia-sump",
+        "label": "OLD TEO"
+      }
+    ],
+    "greet": "LAKSA? SIT ON THE QUAY, MIND THE EDGE. THE WATER DOESN'T GIVE BACK WHAT IT TAKES.",
+    "again": "HUNGRY AGAIN. GOOD. THE SUMP MAKES YOU HUNGRY.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I'VE BEEN ON THIS WATER SINCE IT WAS A STREET. MY FATHER HAD A SHOP ON IT. THEN THE CITY CAME DOWN ON TOP OF US AND THE WATER CAME UP UNDERNEATH, AND I BOUGHT A BOAT. YOU MAKE THE BEST OF WHERE YOU ARE."
+      },
+      {
+        "q": "The eels",
+        "a": "THE SUMP EELS COME UP OUT OF THE CANALS. THEY BITE HARD. BUT THE MEAT GLOWS, AND IT MAKES A BROTH YOU WON'T FORGET. BRING ME ONE AND I'LL PAY."
+      },
+      {
+        "q": "The Dredge",
+        "a": "AN OLD DREDGER. THEY LEFT IT RUNNING WHEN THEY ABANDONED THE STREET. IT'S BEEN DREDGING FIFTY YEARS WITH NOBODY AT THE CONTROLS, AND SOMEWHERE IN THERE IT GOT ANGRY. COMES UP BY THE SOUTH BASIN. SISTER WEN SAYS IT'S LONELY. I SAY IT'S A MACHINE."
+      }
+    ]
+  },
+  "wen": {
+    "name": "Sister Wen",
+    "role": "Keeps the drowned shrine",
+    "sheet": "npc-wen",
+    "at": [
+      {
+        "world": "arcadia-sump",
+        "label": "SISTER WEN"
+      }
+    ],
+    "greet": "YOU CAME ALL THE WAY DOWN. SIT ON THE STEP. THE WATER IS QUIET TODAY.",
+    "again": "THE CANDLES LEANED WHEN YOU CAME. THEY DO THAT FOR PEOPLE THEY LIKE.",
+    "topics": [
+      {
+        "q": "The shrine",
+        "a": "IT WAS HERE BEFORE THE CITY. WHEN THEY BUILT OVER THE STREET THEY LEFT IT, AND THE GATE, BECAUSE THE BUILDERS WERE AFRAID TO MOVE THEM. THE WATER CAME UP TO THE THIRD STEP AND STOPPED. IT HAS NEVER COME HIGHER."
+      },
+      {
+        "q": "A blessing",
+        "a": "A COIN FOR THE WATER AND A BOW. ONCE A DAY IT GIVES BACK: YOUR STRENGTH, YOUR BREATH. AND IF YOU FALL DOWN HERE, IT BRINGS YOU TO MY STEPS. IT HAS DONE THAT FOR MANY PEOPLE."
+      },
+      {
+        "q": "The husks",
+        "a": "PEOPLE WHO PUT IN TOO MUCH CHROME AND LET THE CHROME DECIDE. THEY WALK THE QUAYS. THEY DON'T REMEMBER THEIR NAMES. BE GENTLE WITH THEM IF YOU CAN, AND QUICK IF YOU CAN'T."
+      }
+    ]
+  },
+  "lux": {
+    "name": "Lux",
+    "role": "The rave's DJ",
+    "sheet": "npc-lux",
+    "at": [
+      {
+        "world": "arcadia-sump-rave",
+        "label": "LUX"
+      }
+    ],
+    "greet": "WELCOME TO CENTRAL! LAST STOP! EVERYBODY OFF! EVERYBODY DANCE!",
+    "again": "YOU CAME BACK DOWN! NOBODY COMES BACK DOWN!",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I FOUND THIS PLACE WHEN I WAS NINE, CLIMBING DOWN THE OLD VENT SHAFTS. A WHOLE STATION, UNDER THE WATER, AND THE POWER STILL ON IN THE CARRIAGE. I SAID: ONE DAY THIS IS GOING TO BE THE BEST PARTY IN THE CITY. IT IS."
+      },
+      {
+        "q": "Does it ever stop?",
+        "a": "NOT SINCE I STARTED IT. THREE YEARS, FOUR MONTHS. PEOPLE TAKE TURNS ON THE DECKS WHEN I SLEEP. STATIC COMES DOWN SOMETIMES. EVEN TEO DANCED ONCE."
+      },
+      {
+        "q": "Glow shots",
+        "a": "TEAL LIGHT IN A TUBE, FROM THE CARRIAGE BAR. IT'S MOSTLY SUGAR AND SOMETHING THAT GLOWS. YOU'LL DANCE TILL MORNING. THERE IS NO MORNING DOWN HERE, SO, FOREVER."
+      }
+    ]
+  },
   "vesper": {
     "name": "Vesper Quick",
     "role": "The fence on Cinder Key. Buys what others won't",
@@ -4682,6 +4933,722 @@
       {
         "q": "Heard anything?",
         "a": "LADY VELVET AT THE NEON ROYALE AND I WERE ONCE THE SAME GIRL IN THE SAME CHORUS. SHE WENT DOWN; I CAME UP. WE WRITE EVERY MONTH. SHE ALWAYS SAYS SHE HAS THE BETTER AUDIENCE. SHE'S RIGHT."
+      }
+    ]
+  },
+  "cliff_marina": {
+    "name": "Marina Sklavou",
+    "role": "Keeps the fish taverna on Lanternfall's old port",
+    "sheet": "npc-cliff-marina",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "MARINA"
+      }
+    ],
+    "greet": "SIT, SIT. THE BOATS CAME IN AN HOUR AGO - WHATEVER YOU EAT TONIGHT WAS SWIMMING AT TEATIME.",
+    "again": "BACK DOWN ALL THOSE STEPS FOR MY OCTOPUS? I KNEW YOU WOULD.",
+    "topics": [
+      {
+        "q": "About the taverna",
+        "a": "MY FATHER HUNG THE OCTOPUS ON THAT LINE TO DRY, AND HIS FATHER BEFORE HIM. THE VINE OVER THE TABLES IS OLDER THAN ALL OF US. SIT UNDER IT AND I'LL BRING YOU WHAT'S GOOD. PRESS ON THE TABLES - THE MENU'S THERE."
+      },
+      {
+        "q": "About Lanternfall",
+        "a": "UP THERE IS THE TOWN - WHITE HOUSES, BLUE DOMES, A CHURCH FOR EVERY FAMILY THAT EVER HAD A QUARREL. DOWN HERE IS THE PORT. THE TOWN EATS WHAT THE PORT CATCHES AND COMPLAINS ABOUT THE STEPS."
+      },
+      {
+        "q": "The lanterns on the steps",
+        "a": "EVERY TURN OF THE ZIGZAG HAS ITS LAMP. MY GRANDMOTHER SAID THEY'RE FOR THE SAILORS, SO THEY CAN FIND THE WAY UP DRUNK. MY GRANDFATHER SAID THEY'RE FOR THE WIVES, SO THEY CAN SEE THEM COMING."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE ISLET OUT THERE GLOWED BRIGHTER LAST MONTH. FATHER ILIAS RANG THE BELL ALL NIGHT. NOTHING HAPPENED. HE SAYS THAT MEANS IT WORKED."
+      }
+    ]
+  },
+  "cliff_yannis": {
+    "name": "Yannis",
+    "role": "Keeps the donkeys at the foot of the zigzag",
+    "sheet": "npc-cliff-yannis",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "YANNIS"
+      }
+    ],
+    "greet": "UP? FIVE COINS AND STAMATIA TAKES YOU TO THE TOP. SHE KNOWS EVERY STEP. SHE HAS OPINIONS ABOUT MOST OF THEM.",
+    "again": "AH, THE SKY CAPTAIN. STAMATIA REMEMBERS YOU. SHE DOESN'T SAY WHETHER SHE'S PLEASED.",
+    "topics": [
+      {
+        "q": "About the donkeys",
+        "a": "STAMATIA, ZOE AND LITTLE PERICLES. FIVE COINS UP OR DOWN - PRESS ON THEM. MY COUSIN WAITS AT THE TOP WITH THREE MORE. IF YOU WALK IT, COUNT THE STEPS. NOBODY EVER GETS THE SAME NUMBER TWICE."
+      },
+      {
+        "q": "About the zigzag",
+        "a": "BUILT BY THE FIRST SETTLERS, WHO CARRIED EVERY STONE UP ON THEIR BACKS BECAUSE THE DONKEYS HADN'T BEEN INVENTED YET. THAT'S WHAT MY FATHER SAID. I WAS NINE BEFORE I CHECKED."
+      },
+      {
+        "q": "Rumours",
+        "a": "THEY SAY SAPPHIRE PORT'S FLOATING MARKET PAYS DOUBLE FOR WHAT YOU FISH OUT OF THE CALDERA. THEY SAY A LOT OF THINGS IN SAPPHIRE PORT."
+      }
+    ]
+  },
+  "cliff_despina": {
+    "name": "Despina Roussou",
+    "role": "Keeps the taverna on the rim",
+    "sheet": "npc-cliff-despina",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "DESPINA"
+      }
+    ],
+    "greet": "WELCOME TO THE BEST TABLE ON THE FIVE SEAS. DON'T ARGUE - SIT AND LOOK, THEN ARGUE IF YOU STILL WANT TO.",
+    "again": "YOUR TABLE. I KEPT IT. I KEEP IT FOR EVERYONE, BUT TONIGHT IT'S YOURS.",
+    "topics": [
+      {
+        "q": "About the taverna",
+        "a": "AT SUNSET THE WHOLE CALDERA GOES GOLD AND THEN PINK AND THEN THE LAMPS COME ON DOWN THE ZIGZAG, ONE AFTER ANOTHER. PEOPLE SAIL FROM THE CAPITAL TO EAT HERE AND THEN FORGET TO EAT. PRESS ON THE TABLES FOR THE MENU."
+      },
+      {
+        "q": "About the town",
+        "a": "THREE TERRACES AND A RIM. THE RICH LIVE UP HERE WITH THE VIEW, THE FISHERMEN LIVE DOWN THERE WITH THE FISH, AND EVERYONE IN BETWEEN LIVES ON THE STAIRS. ARIS PAINTS IT EVERY DAY AND SAYS HE HASN'T GOT IT RIGHT YET."
+      },
+      {
+        "q": "Rumours",
+        "a": "A MERCHANT FROM THE GLASSWORKS ON SAPPHIRE PORT ATE HERE LAST WEEK. HE SAID THE WINDMILLS COULD BLOW GLASS IF ANYONE BOTHERED TO TRY. NOBODY HAS BOTHERED."
+      }
+    ]
+  },
+  "cliff_ilias": {
+    "name": "Father Ilias",
+    "role": "Keeps the great church on the rim",
+    "sheet": "npc-cliff-ilias",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "FATHER ILIAS"
+      }
+    ],
+    "greet": "PEACE ON YOU, TRAVELLER. LIGHT A LAMP IF YOU LIKE - FOR SOMEONE AT SEA, OR FOR YOURSELF. THE SEA DOESN'T MIND WHICH.",
+    "again": "BACK AGAIN. GOOD. THE LAMPS LIKE TO BE VISITED.",
+    "topics": [
+      {
+        "q": "About the church",
+        "a": "THREE DOMES, BLUE AS THE DEEP WATER, SO THE SEA KNOWS WHOSE HOUSE IT IS. THE BELLS ARE RUNG FOR EVERY BOAT THAT COMES IN THROUGH THE CALDERA'S MOUTH. A LAMP IS A COIN OR TWO. IT KEEPS YOU WARM ON A COLD PASSAGE, THE SAILORS SAY."
+      },
+      {
+        "q": "About the islet",
+        "a": "THE MOUNTAIN SLEEPS. NOW AND THEN IT TURNS OVER IN ITS SLEEP. WE RING THE BELLS SO IT KNOWS WE'RE STILL HERE, AND IT LETS US STAY. THAT IS THE ARRANGEMENT."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE BATHHOUSE MONKS ON THE ROSE SEA SAY THE SAME WATER RUNS UNDER BOTH OUR ISLANDS. I SAY THEIR WATER IS WARMER AND THEIR THEOLOGY IS COLDER."
+      }
+    ]
+  },
+  "cliff_aris": {
+    "name": "Aris Velos",
+    "role": "Paints the caldera from the promenade",
+    "sheet": "npc-cliff-aris",
+    "at": [
+      {
+        "world": "lumar-cliff",
+        "label": "ARIS"
+      }
+    ],
+    "greet": "STAND THERE - NO, THERE. YOU'RE IN MY LIGHT. ACTUALLY STAY. THE PICTURE NEEDS A STRANGER IN IT.",
+    "again": "YOU AGAIN. I PUT YOU IN YESTERDAY'S. YOU LOOKED TALLER.",
+    "topics": [
+      {
+        "q": "About the painting",
+        "a": "TWENTY-TWO YEARS I'VE PAINTED THIS VIEW. THE BLUE IS NEVER THE SAME BLUE. TODAY IT'S SAPPHIRE. TOMORROW IT WILL BE SOMETHING THERE IS NO WORD FOR YET, AND I WILL HAVE TO INVENT ONE."
+      },
+      {
+        "q": "About Lanternfall",
+        "a": "LOOK AT IT: EVERY HOUSE WHITE SO THE NEXT ONE SHOWS, EVERY DOOR BLUE SO THE HOUSE SHOWS. EVEN THE PAVING HAS ITS LINES PAINTED IN. A TOWN THAT WANTS TO BE A PICTURE. I'M ONLY TAKING DICTATION."
+      },
+      {
+        "q": "Rumours",
+        "a": "THERE'S A LANTERN MAKER TWO DOORS DOWN WHO SAYS HER LAMPS CAN BE SEEN FROM MIDNIGHT ISLE. I'VE NEVER BEEN TO MIDNIGHT ISLE. NEITHER HAS SHE. NEITHER OF US INTENDS TO."
+      }
+    ]
+  },
+  "market_nerys": {
+    "name": "Nerys Kalogeri",
+    "role": "Buys fish at the floating market",
+    "sheet": "npc-market-nerys",
+    "at": [
+      {
+        "world": "lumar-sapphire-market",
+        "label": "NERYS"
+      }
+    ],
+    "greet": "FISH? I'LL TAKE IT. SAPPHIRE FISH, I'LL PAY YOU OVER THE ODDS FOR. EVERYTHING ELSE, I'LL PAY YOU THE ODDS.",
+    "again": "BACK WITH A HOLD FULL? GOOD. I'VE A CAPTAIN FROM THE CAPITAL WHO'LL BUY ANYTHING THAT GLITTERS.",
+    "topics": [
+      {
+        "q": "Sell her your catch",
+        "a": "LET'S SEE IT, THEN. GLASS SWORDFISH I PAY BEST FOR ON THE FIVE SEAS - THE GLASSWORKS BUYS THE FINS.",
+        "sell": [
+          {
+            "id": "bluefin",
+            "price": 30
+          },
+          {
+            "id": "sapphire_ray",
+            "price": 62
+          },
+          {
+            "id": "glass_swordfish",
+            "price": 165
+          },
+          {
+            "id": "crownfin",
+            "price": 560
+          },
+          {
+            "id": "silverfin",
+            "price": 15
+          },
+          {
+            "id": "spore_tuna",
+            "price": 50
+          },
+          {
+            "id": "harbour_crab",
+            "price": 19
+          },
+          {
+            "id": "rose_shrimp",
+            "price": 11
+          },
+          {
+            "id": "lantern_angler",
+            "price": 98
+          }
+        ]
+      },
+      {
+        "q": "About the market",
+        "a": "AT DUSK WE ROW IN FROM EVERY COVE ON THE SAPPHIRE AND LASH UP TOGETHER - BOW TO STERN, ROPES CROSSWISE, THE BARGES IN THE MIDDLE FOR SQUARES. IT'S A STREET THAT SINKS IF YOU ARGUE TOO HARD. WE ARGUE ANYWAY."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE CLIFF TOWN DOWN SOUTH - LANTERNFALL - THEIR TAVERNAS BUY FROM ME. THEY SAY THE ISLET IN THEIR BAY GLOWED LAST MONTH AND THE FISH CAME UP COOKED. I'LL BELIEVE IT WHEN I SEE A COOKED FISH."
+      }
+    ]
+  },
+  "market_kassia": {
+    "name": "Kassia Dragoumis",
+    "role": "Buys crystals and ore at the floating market",
+    "sheet": "npc-market-kassia",
+    "at": [
+      {
+        "world": "lumar-sapphire-market",
+        "label": "KASSIA"
+      }
+    ],
+    "greet": "STONES, CRYSTALS, ANYTHING THAT GLOWS. SHOW ME. I CAN TELL A FAKE BY LOOKING AT YOUR FACE.",
+    "again": "YOU AGAIN. YOUR FACE SAYS YOU'VE BROUGHT SOMETHING REAL.",
+    "topics": [
+      {
+        "q": "Sell what you've found",
+        "a": "SAPPHIRE CRYSTAL I PAY BEST FOR - THE GLASSWORKS GRINDS IT INTO THE BLUE. THE REST I SELL ON TO WHOEVER'S FOOLISH.",
+        "sell": [
+          {
+            "id": "sapphire_crystal",
+            "price": 24
+          },
+          {
+            "id": "midnight_crystal",
+            "price": 32
+          },
+          {
+            "id": "crimson_crystal",
+            "price": 20
+          },
+          {
+            "id": "roseite",
+            "price": 14
+          },
+          {
+            "id": "moonstone",
+            "price": 38
+          },
+          {
+            "id": "star_iron",
+            "price": 48
+          },
+          {
+            "id": "songstone",
+            "price": 75
+          },
+          {
+            "id": "summit_crystal",
+            "price": 125
+          }
+        ]
+      },
+      {
+        "q": "About the glass",
+        "a": "SAPPHIRE GLASS IS BLUE BECAUSE OF WHAT'S GROUND INTO IT. THE GLASSWORKS WON'T SAY WHAT. I SELL THEM SAPPHIRE CRYSTAL BY THE SACK. DRAW YOUR OWN CONCLUSIONS."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE ROSE SEA'S MYSTICS HAVE STARTED BUYING SONGSTONE. THEY SAY IT HUMS IN TUNE WITH THEIR HOT SPRINGS. I SAY IT HUMS IN TUNE WITH THEIR PURSES."
+      }
+    ]
+  },
+  "market_theo": {
+    "name": "Theo Marangos",
+    "role": "Spice boat at the floating market",
+    "sheet": "npc-market-theo",
+    "at": [
+      {
+        "world": "lumar-sapphire-market",
+        "label": "THEO"
+      }
+    ],
+    "greet": "SAFFRON, SALT IN SIX COLOURS, SPORE-PEPPER! AND IF YOU'VE EGGS OR HONEY FROM THE FARM WORLD, I'M BUYING.",
+    "again": "MY FAVOURITE CUSTOMER. YOU'RE ALL MY FAVOURITE CUSTOMER.",
+    "topics": [
+      {
+        "q": "Sell him farm goods",
+        "a": "THE COOKS UP AT LANTERNFALL AND THE CAPITAL'S KITCHENS CAN'T GET ENOUGH OF FARM HONEY. I PAY BETTER THAN THE FARM'S OWN BUYER, AND I DON'T SMELL OF GOATS.",
+        "sell": [
+          {
+            "id": "honey",
+            "price": 30
+          },
+          {
+            "id": "egg",
+            "price": 12
+          },
+          {
+            "id": "milk",
+            "price": 33
+          }
+        ]
+      },
+      {
+        "q": "About the spices",
+        "a": "SAPPHIRE SUGAR GLOWS IN THE DARK. SPORE-PEPPER MAKES YOUR EARS RING. THE BLACK SALT IS FROM THE LAVA ISLET AT LANTERNFALL - SCRAPED OFF THE ROCKS BY A MAN WHO WON'T SAY HOW HE GETS THERE."
+      },
+      {
+        "q": "Rumours",
+        "a": "OLD DORAN SAYS HE'S GOT A WATCH THAT RUNS BACKWARDS. IT DOESN'T. I CHECKED. IT JUST RUNS SLOW, LIKE DORAN."
+      }
+    ]
+  },
+  "market_doran": {
+    "name": "Old Doran",
+    "role": "Buys curios and treasures at the floating market",
+    "sheet": "npc-market-doran",
+    "at": [
+      {
+        "world": "lumar-sapphire-market",
+        "label": "OLD DORAN"
+      }
+    ],
+    "greet": "CURIOS, RELICS, ODDMENTS. I BUY THE THINGS NOBODY ELSE KNOWS THE PRICE OF, WHICH MEANS I DECIDE IT.",
+    "again": "AH. YOU. WHAT HAS THE SEA COUGHED UP FOR YOU THIS TIME?",
+    "topics": [
+      {
+        "q": "Sell what you've found",
+        "a": "PEARLS, OLD COIN, A WATCH THAT STILL TICKS. I PAY FAIR. FAIR TO ME, CERTAINLY.",
+        "sell": [
+          {
+            "id": "pocket_watch",
+            "price": 130
+          },
+          {
+            "id": "star_pearl",
+            "price": 90
+          },
+          {
+            "id": "deep_pearl",
+            "price": 540
+          },
+          {
+            "id": "heron_coin",
+            "price": 30
+          },
+          {
+            "id": "sea_glass",
+            "price": 6
+          },
+          {
+            "id": "silver_nail",
+            "price": 7
+          }
+        ]
+      },
+      {
+        "q": "About the market",
+        "a": "FIFTY YEARS I'VE MOORED IN THE SAME SPOT. THE BARGE HAS BEEN REPLACED THREE TIMES. THE ROPES, TWELVE. ME, NOT ONCE. I'M THE ONLY ORIGINAL PART OF THE FLOATING MARKET."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE GLASSWORKS WANTS A BLOWER'S APPRENTICE. THEY TRY EVERYONE ON THE PIPE. MOST PEOPLE BLOW A BUBBLE THAT LOOKS LIKE A POTATO. GO AND LOOK A FOOL - IT'S GOOD FOR YOU."
+      }
+    ]
+  },
+  "market_lyra": {
+    "name": "Lyra Petrou",
+    "role": "Glass trader at the floating market",
+    "sheet": "npc-market-lyra",
+    "at": [
+      {
+        "world": "lumar-sapphire-market",
+        "label": "LYRA"
+      }
+    ],
+    "greet": "GLASS FLOATS, LAMP CHIMNEYS, A BOTTLE FOR EVERY SHIP. AND IF YOU'VE SEA GLASS, I'LL BUY IT - THE SEA DOES THE POLISHING FOR US.",
+    "again": "THE LIGHT THROUGH YOUR POCKETS LOOKS GREEN. SEA GLASS?",
+    "topics": [
+      {
+        "q": "Sell her sea glass",
+        "a": "THE GLASSWORKS MELTS IT INTO THEIR SEA-GREEN BATCH. NOBODY ELSE ON THE SEAS PAYS THIS FOR IT.",
+        "sell": [
+          {
+            "id": "sea_glass",
+            "price": 9
+          },
+          {
+            "id": "glass",
+            "price": 24
+          }
+        ]
+      },
+      {
+        "q": "About the glassworks",
+        "a": "THE CONE ON THE QUAY - YOU CAN'T MISS IT, IT'S THE THING ON FIRE. GO IN, ASK FOR THE MASTER, AND THEY'LL PUT A PIPE IN YOUR HAND. EVERYTHING YOU BLOW YOU KEEP."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE LANTERN MAKER AT LANTERNFALL BUYS ALL OUR BLUE CHIMNEYS. SHE SAYS HER LAMPS HAVE NEVER BLOWN OUT. I SAY THE WIND DOWN THERE IS JUST VERY POLITE."
+      }
+    ]
+  },
+  "market_melina": {
+    "name": "Melina Sava",
+    "role": "Fruit boat at the floating market",
+    "sheet": "npc-market-melina",
+    "at": [
+      {
+        "world": "lumar-sapphire-market",
+        "label": "MELINA"
+      }
+    ],
+    "greet": "FRUIT! FROM EVERYWHERE THE SEA GOES AND A FEW PLACES IT DOESN'T. AND I BUY FROM FARMERS, IF YOU FARM.",
+    "again": "BACK FOR MORE STARFRUIT? EVERYONE COMES BACK FOR THE STARFRUIT.",
+    "topics": [
+      {
+        "q": "Sell her what you've grown",
+        "a": "PUMPKINS FOR THE CAPITAL'S PIES, STARFRUIT FOR THE QUEEN-REGENT'S TABLE, CARROTS FOR THE DONKEYS AT LANTERNFALL. I PAY A LITTLE OVER THE FARM'S OWN BUYER.",
+        "sell": [
+          {
+            "id": "starfruit",
+            "price": 290
+          },
+          {
+            "id": "pumpkin",
+            "price": 100
+          },
+          {
+            "id": "sunflower",
+            "price": 34
+          },
+          {
+            "id": "strawberry",
+            "price": 15
+          },
+          {
+            "id": "carrot",
+            "price": 21
+          },
+          {
+            "id": "turnip",
+            "price": 13
+          },
+          {
+            "id": "apple",
+            "price": 6
+          }
+        ]
+      },
+      {
+        "q": "About the market",
+        "a": "THE RULE IS THAT THE MARKET ISN'T OPEN UNTIL THE LAST BOAT'S LASHED. SO EVERY NIGHT SOMEBODY'S LATE, AND EVERY NIGHT WE ALL SHOUT AT THEM, AND THEN IT'S OPEN. IT'S THE BEST PART."
+      },
+      {
+        "q": "Rumours",
+        "a": "THEY SAY THE ROSE SEA HAS A BATHHOUSE WHERE THE WATER COMES UP HOT FROM THE CRYSTALS AND YOU COME OUT TEN YEARS YOUNGER. I WENT. I CAME OUT A DAY OLDER AND VERY CLEAN."
+      }
+    ]
+  },
+  "glass_stavrou": {
+    "name": "Master Stavrou",
+    "role": "Master of the Sapphire Glassworks",
+    "sheet": "npc-glass-master",
+    "at": [
+      {
+        "world": "lumar-sapphire-glassworks",
+        "label": "MASTER STAVROU"
+      }
+    ],
+    "greet": "MIND THE PIPES, MIND THE BUCKETS, MIND THE FURNACE, AND ABOVE ALL MIND IONE. SHE BITES.",
+    "again": "BACK FOR ANOTHER GO ON THE PIPE? GOOD. THE FIRST HUNDRED ARE ALWAYS POTATOES.",
+    "topics": [
+      {
+        "q": "About the glassworks",
+        "a": "NINETY YEARS THIS FURNACE HAS BURNED. MY GRANDFATHER LIT IT WITH A COAL FROM THE LIGHTHOUSE LAMP AND NOBODY HAS DARED LET IT GO OUT SINCE. EVERY BLUE WINDOW ON THE FIVE SEAS STARTED IN THAT FIRE."
+      },
+      {
+        "q": "How do I blow glass?",
+        "a": "TAKE THE PIPE AT THE BENCH. GATHER FROM THE GLORY HOLE WHEN THE GLASS GLOWS JUST RIGHT - NOT TOO PALE, NOT TOO RED. BLOW WHEN IT'S SOFT. SHAPE IT WHILE IT'S STILL WARM. THREE GOOD MOMENTS AND YOU HAVE A FLOAT. MISS THEM AND YOU HAVE A STORY."
+      },
+      {
+        "q": "The secret of the blue",
+        "a": "THERE IS NO SECRET. THERE IS CRUSHED SAPPHIRE CRYSTAL, A LITTLE COPPER, A LITTLE SEA, AND MY GRANDFATHER'S RECIPE WHICH I AM NOT GOING TO TELL YOU. SO: NO SECRET."
+      }
+    ]
+  },
+  "glass_ione": {
+    "name": "Ione Varga",
+    "role": "Glassblower at the Sapphire Glassworks",
+    "sheet": "npc-glassblower",
+    "at": [
+      {
+        "world": "lumar-sapphire-glassworks",
+        "label": "IONE"
+      }
+    ],
+    "greet": "IF YOU'RE HERE TO WATCH, WATCH FROM THERE. IF YOU'RE HERE TO HELP, HAND ME THAT JACK. NO, THE OTHER ONE.",
+    "again": "YOU AGAIN. YOUR LAST FLOAT WAS NOT TERRIBLE. I'M TOLD THAT COUNTS AS PRAISE FROM ME.",
+    "topics": [
+      {
+        "q": "What are you making?",
+        "a": "A LAMP CHIMNEY FOR LANTERNFALL. THE LANTERN MAKER THERE TAKES FORTY A MONTH. SHE SAYS HER LAMPS NEVER BLOW OUT. THAT'S BECAUSE OF MY GLASS, NOT HER LANTERNS. DON'T TELL HER."
+      },
+      {
+        "q": "About the market",
+        "a": "THE FLOATING MARKET BUYS OUR SECONDS - ANYTHING WITH A BUBBLE IN IT. THE CAPITAL GETS OUR FIRSTS. LYRA'S BOAT SELLS SEA GLASS BACK TO US FOR THE GREEN BATCH. THE SEA DOES HALF THE WORK."
+      },
+      {
+        "q": "Rumours",
+        "a": "THE ROSE SEA'S BATHHOUSE ORDERED A HUNDRED BLUE TILES FOR ITS GREAT POOL. MASTER STAVROU MADE ME DO THEM. A HUNDRED. ALL THE SAME. I DREAM OF THEM."
+      }
+    ]
+  },
+  "rigg": {
+    "name": "Wenna Rigg",
+    "role": "Sailmaker, Guild Row",
+    "sheet": "npc-sailmaker",
+    "at": [
+      {
+        "world": "lumar-crown-canals",
+        "label": "SAILMAKER"
+      }
+    ],
+    "greet": "MIND THE CANVAS - IT'S A MAINSAIL FOR THE ADMIRALTY AND IT'S ONLY HALF HEMMED. RIGG AND DAUGHTERS. I'M THE DAUGHTERS.",
+    "again": "BACK ON GUILD ROW? SIT ON THE BENCH, NOT THE SAIL.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "MY GRANDFATHER CUT SAILS FOR THE SOVEREIGN. MY MOTHER CUT THEM FOR THE QUEEN-REGENT'S BARGE. I CUT THEM FOR WHOEVER PAYS, WHICH IS MOSTLY FISHERMEN, WHICH IS HOW I LIKE IT. FISHERMEN SAY THANK YOU."
+      },
+      {
+        "q": "Sailcloth and rope",
+        "a": "CANVAS BY THE BOLT, ROPE BY THE COIL, FOR YOUR OWN WORKSHOP. CHEAPER THAN THE ROSE ISLES, AND I WON'T PRETEND IT'S SILK.",
+        "workshop": "rigg"
+      },
+      {
+        "q": "Guild Row",
+        "a": "SAILS, CHARTS, INSTRUMENTS, BARRELS, ROPE. A SHIP NEEDS ALL OF US BEFORE SHE NEEDS A CAPTAIN. TELL THAT TO A CAPTAIN AND WATCH HIS FACE."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "OLD BRASSWORTH NEXT DOOR HAS BUILT A CLOCK THAT KEEPS LUMAR'S HOURS AT SEA. EIGHT HOURS ROUND THE FACE. HE WON'T SHUT UP ABOUT IT. GO AND LET HIM TELL YOU, IT'LL MAKE HIS WEEK."
+      }
+    ]
+  },
+  "penn": {
+    "name": "Marisol Penn",
+    "role": "Chartmaker, Guild Row",
+    "sheet": "npc-chartmaker",
+    "at": [
+      {
+        "world": "lumar-crown-canals",
+        "label": "CHARTMAKER"
+      }
+    ],
+    "greet": "DON'T BREATHE ON THAT ONE, THE INK'S WET. A NEW COASTLINE OFF THE SAPPHIRE ISLES - THE SEA MOVED A HEADLAND AGAIN.",
+    "again": "AH, THE CAPTAIN. ANY SOUNDINGS FOR ME?",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I TRAINED UNDER ILSA VENN'S AUNT IN THE MARKET SQUARE, AND THEN I CAME TO THE CAPITAL WHERE THE ADMIRALTY PAYS IN GOLD AND COMPLAINS IN WRITING."
+      },
+      {
+        "q": "Sea charts",
+        "a": "EVERY SEA I'VE DRAWN, AND I'VE DRAWN THEM ALL. ONCE A SEA'S ON YOUR CHART, YOU CAN SET A COURSE FOR ANY ISLAND IN IT.",
+        "charts": true
+      },
+      {
+        "q": "The sixth sea",
+        "a": "EVERY CHARTMAKER HAS A DRAWER WITH A SIXTH SEA IN IT. MINE IS EMPTY PAPER WITH A COMPASS ROSE IN THE CORNER. ONE DAY SOMEBODY WILL BRING ME SOMETHING TO PUT ON IT."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE FISHING FLEET TELLS ME MORE THAN THE ADMIRALTY. OUT AT DAWN, HOME AT DUSK, AND THEY KNOW EVERY ROCK BY ITS FIRST NAME."
+      }
+    ]
+  },
+  "brassworth": {
+    "name": "Oswin Brassworth",
+    "role": "Instrument maker, Guild Row",
+    "sheet": "npc-instrument",
+    "at": [
+      {
+        "world": "lumar-crown-canals",
+        "label": "INSTRUMENT MAKER"
+      }
+    ],
+    "greet": "COME IN, COME IN, DON'T TOUCH THE ORRERY. SEXTANTS, COMPASSES, TELESCOPES - AND THE FINEST CHRONOMETER ON THE FIVE SEAS, IF I SAY SO MYSELF. I DO SAY SO.",
+    "again": "AH! YOU'RE BACK. HAS IT DRIFTED? IT HASN'T DRIFTED.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "FIFTY YEARS OF BRASS AND GLASS. THE CHAPELS RING LUMAR'S HOURS, YES, BUT A CHAPEL BELL DOESN'T COME TO SEA WITH YOU. SO I MADE ONE THAT DOES."
+      },
+      {
+        "q": "The chronometer",
+        "a": "EIGHT HOURS ROUND THE FACE: LUMAR'S DAY. GIMBALLED IN BRASS, SPRUNG IN SEA-STEEL, WOUND ONCE A WEEK. KEEP IT ON YOU AND YOU'LL ALWAYS KNOW THE HOUR ON THE SEAS.",
+        "outfit": "brassworth"
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE OBSERVATORY ON THE HILL SAYS THE SPORES WILL BLOOM AGAIN SOON. THE WHOLE SEA LIGHTS UP, YOU KNOW. A NIGHT OR TWO A MONTH. I SET MY TELESCOPE ON THE ROOF AND LOOK DOWN INSTEAD OF UP."
+      }
+    ]
+  },
+  "crier": {
+    "name": "Barnaby Toll",
+    "role": "Town crier, the Old Town",
+    "sheet": "npc-crier",
+    "at": [
+      {
+        "world": "lumar-crown-oldtown",
+        "label": "TOWN CRIER"
+      }
+    ],
+    "greet": "OYEZ, OYEZ! HEAR YE - OH, IT'S JUST ONE OF YOU. OYEZ ANYWAY. I'M PAID BY THE OYEZ.",
+    "again": "OYEZ! THE NEWS, THE NEWS, A COPPER FOR THE NEWS! NO? FREE TO YOU, THEN.",
+    "topics": [
+      {
+        "q": "The news",
+        "a": "THE LANTERN THEATRE HAS A NEW PLAY EVERY EVENING! THE CROWN'S REGATTA SAILS ON FRIDAYS! A CAT NAMED ADMIRAL IS MISSING AND IS, I AM TOLD, ON THE ROOF OF THE OLD KEEP, LOOKING SMUG!"
+      },
+      {
+        "q": "The Old Town",
+        "a": "THE OLDEST STONES IN CROWNHAVEN! THE KEEP, THE WALL, THE WELL. THE HARBOUR CAME LATER, THE PALACE LATER STILL. THE NEW TOWN THINKS IT'S VERY GRAND. THE NEW TOWN IS THREE HUNDRED YEARS OLD."
+      },
+      {
+        "q": "The districts",
+        "a": "NORTH GATE FOR THE CANALS AND GUILD ROW, AND THE FUNICULAR UP TO THE HILL! THE BRIDGE GATE FOR THE OLD BRIDGE OVER THE HARBOUR MOUTH! THE LAND GATE FOR THE HARBOUR AND THE GRAND SQUARE! ALL ROADS LEAD TO SOMEWHERE THAT SELLS PIES!"
+      }
+    ]
+  },
+  "harrow": {
+    "name": "Commodore Harrow",
+    "role": "Master of the Royal Naval Academy",
+    "sheet": "npc-academy",
+    "at": [
+      {
+        "world": "lumar-crown-hill",
+        "label": "ACADEMY MASTER"
+      }
+    ],
+    "greet": "STAND STRAIGHT. NO - STRAIGHTER. HMM. YOU HAVE THE LOOK OF SOMEONE WHO'S SAILED HER OWN BOAT. THE CADETS COULD LEARN FROM THAT, THOUGH I WON'T TELL THEM SO.",
+    "again": "BACK ON THE HILL. THE MAST IS THERE IF YOU WANT TO SHOW MY CADETS HOW IT'S DONE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "THIRTY YEARS ON THE CROWN'S QUARTERDECKS, TWELVE TEACHING CHILDREN WHICH END OF A SHIP IS THE FRONT. THE SECOND IS HARDER."
+      },
+      {
+        "q": "The cadets",
+        "a": "UP THE RATLINES AT DAWN, OUT ALONG THE YARDS, DOWN AGAIN BEFORE THE BELL. THEN KNOTS, THEN STARS, THEN GUNNERY, THEN BED. THEY ALL WANT TO SAIL THE CRIMSON. HALF OF THEM WILL."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE ARSENAL HAS A FIRST-RATE ON THE STOCKS. THE SOVEREIGN II. THE QUEEN-REGENT WANTS HER LAUNCHED FOR THE REGATTA. THE SHIPWRIGHTS WANT ANOTHER TWO YEARS. THE SHIPWRIGHTS WILL WIN."
+      }
+    ]
+  },
+  "ione": {
+    "name": "Dr Ione Vesper",
+    "role": "Astronomer Royal, the Observatory",
+    "sheet": "npc-astronomer",
+    "at": [
+      {
+        "world": "lumar-crown-hill",
+        "label": "ASTRONOMER"
+      }
+    ],
+    "greet": "SHH. NO - IT'S ALL RIGHT, THE STAR CAN'T HEAR YOU. I JUST LIKE TO BE QUIET WITH THEM. COME AND LOOK.",
+    "again": "AH, MY FELLOW STARGAZER. THE SKY'S CLEAR TONIGHT, OR IT WILL BE.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "I KEEP THE CROWN'S TIME AND THE CROWN'S STARS. EVERY CHART PENN DRAWS IS FIXED BY A STAR I MEASURED. SHE NEVER THANKS ME. I NEVER THANK HER. IT'S A VERY HAPPY ARRANGEMENT."
+      },
+      {
+        "q": "The spore bloom",
+        "a": "A NIGHT OR TWO EACH MONTH THE SPORES IN THE SEA ALL WAKE AT ONCE AND THE WHOLE OCEAN LIGHTS UP - EMERALD HERE, BLUE OFF SAPPHIRE, ROSE IN THE ROSE ISLES. I TURN THE TELESCOPE DOWN FOR IT. IT'S THE ONLY TIME THE SEA OUTSHINES THE SKY."
+      },
+      {
+        "q": "The telescope",
+        "a": "THE BRASS ONE ON THE TERRACE IS FOR VISITORS. USE IT. THE GREAT ONE IN THE DOME IS FOR ME, AND FOR THE QUEEN-REGENT ON HER BIRTHDAY, AND FOR NOBODY ELSE, EVER, SO DON'T ASK."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "SOMETHING CROSSED THE MOON LAST WEEK THAT WASN'T A BIRD OR A CLOUD. IT WAS SHAPED LIKE A SHIP. THE ADMIRALTY SAYS I'M TIRED. I AM TIRED. IT WAS STILL A SHIP."
+      }
+    ]
+  },
+  "mudlark": {
+    "name": "Gull Molly",
+    "role": "Mudlark, the Stilts",
+    "sheet": "npc-mudlark",
+    "at": [
+      {
+        "world": "lumar-crown-stilts",
+        "label": "MUDLARK"
+      }
+    ],
+    "greet": "MIND THE HEAP. EVERYTHING IN IT CAME OUT OF THE HARBOUR MUD WITH MY OWN TWO HANDS, AND EVERYTHING IN IT'S FOR SALE. EXCEPT THE BOOT. THE BOOT'S MINE.",
+    "again": "BACK FOR MORE TREASURE? THE TIDE BROUGHT IN SOMETHING SHINY THIS MORNING.",
+    "topics": [
+      {
+        "q": "About you",
+        "a": "BORN ON THE STILTS, RAISED ON THE STILTS, WILL DIE ON THE STILTS, PROBABLY FALLING OFF ONE. LOW TIDE I'M IN THE MUD UNDER THE QUAY. HIGH TIDE I'M SELLING WHAT I FOUND."
+      },
+      {
+        "q": "Your finds",
+        "a": "SEA GLASS - THE GREEN'S FROM THE CROWN'S OWN WINDOWS, SMASHED IN THE STORM OF '12. SILVER NAILS OFF A WRECK NOBODY REMEMBERS. GO ON, HAVE A ROOT.",
+        "workshop": "mudlark"
+      },
+      {
+        "q": "The Stilts",
+        "a": "UP THERE THEY'VE GOT THE PALACE AND THE EXCHANGE AND THE THEATRE. DOWN HERE WE'VE GOT THE UNDERTOW, THE BEST FRIED FISH IN CROWNHAVEN, AND NOBODY TELLING US TO WIPE OUR FEET."
+      },
+      {
+        "q": "Heard anything?",
+        "a": "THE FISHING FLEET COMES IN UNDER THE QUAY AT DUSK AND THE CATCH GOES UP FOR AUCTION. GET THERE EARLY AND YOU'LL SEE THE AUCTIONEER CHEAT. GET THERE LATE AND YOU'LL SEE HIM GET CAUGHT."
       }
     ]
   }

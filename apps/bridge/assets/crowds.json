@@ -5,11 +5,15 @@
   "lumar-square":           { "n": 13, "wardrobe": "lumar",   "busy": "day" },
   "lumar-sapphire":         { "n": 14, "wardrobe": "sapphire", "busy": "day", "spots": [[21, 23, "down"], [17, 22, "down"], [46, 23, "up"]] },
   "lumar-rose":             { "n": 9,  "wardrobe": "rose",    "busy": "day" },
+  "lumar-sapphire-market":  { "n": 12, "wardrobe": "sapphire", "busy": "night" },
+  "lumar-cliff":            { "n": 14, "wardrobe": "sapphire", "busy": "day" },
   "lumar-tern":             { "n": 7,  "wardrobe": "lumar",   "busy": "day", "spots": [[25, 14, "up"], [12, 17, "up"]] },
   "lumar-crimson":          { "n": 6,  "wardrobe": "pirates", "busy": "always" },
   "lumar-cinder":           { "n": 14, "wardrobe": "pirates", "busy": "always" },
   "lumar-cinder-tavern":    { "n": 6,  "wardrobe": "pirates", "busy": "night", "sit": 0.7 },
   "lumar-crown":            { "n": 22, "wardrobe": "crown",   "busy": "day", "spots": [[30, 32, "down"], [26, 31, "down"], [39, 31, "down"], [47, 31, "down"]] },
+  "lumar-crown-oldtown":    { "n": 24, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
+  "lumar-crown-canals":     { "n": 22, "wardrobe": "crown",   "busy": "day", "pass": 0.5 },
   "lumar-crown-exchange":   { "n": 8,  "wardrobe": "crown",   "busy": "day" },
   "lumar-crown-chapel":     { "n": 4,  "wardrobe": "crown",   "busy": "day", "sit": 0.9 },
   "lumar-crown-pub":        { "n": 9,  "wardrobe": "lumar",   "busy": "night", "sit": 0.8 },
@@ -31,6 +35,13 @@
   "arcadia-casino":         { "n": 14, "wardrobe": "casino",  "busy": "bustle" },
   "arcadia-casino-cards":   { "n": 6,  "wardrobe": "casino",  "busy": "bustle" },
   "arcadia-casino-dining":  { "n": 6,  "wardrobe": "casino",  "busy": "bustle", "sit": 0.9 },
+  "arcadia-undercity":      { "n": 30, "wardrobe": "undercity", "busy": "always", "pass": 0.45, "avoid": [[63, 17, 79, 29]] },
+  "arcadia-hawker":         { "n": 22, "wardrobe": "undercity", "busy": "always" },
+  "arcadia-dive":           { "n": 7,  "wardrobe": "undercity", "busy": "always", "adults": true },
+  "arcadia-foundry":        { "n": 16, "wardrobe": "undercity", "busy": "bustle", "adults": true },
+  "arcadia-pit":            { "n": 18, "wardrobe": "undercity", "busy": "always", "adults": true, "avoid": [[12, 9, 23, 16]] },
+  "arcadia-sump":           { "n": 8,  "wardrobe": "sump", "busy": "always", "pass": 0.5, "adults": true },
+  "arcadia-sump-rave":      { "n": 20, "wardrobe": "sump", "busy": "always", "adults": true },
   "arcadia-spires":         { "n": 18, "wardrobe": "spires",  "busy": "bustle", "sit": 0.35, "pass": 0.3 },
 
   "verdance-village":       { "n": 12, "wardrobe": "verdance", "busy": "day" },
@@ -52,6 +63,22 @@
   "arcadia-oldquarter-shrine": { "n": 3, "wardrobe": "lantern", "busy": "night" },
   "arcadia-spaceport":      { "n": 20, "wardrobe": "spacers", "busy": "always" },
   "_lines": {
+    "undercity": [
+      "THE SAINTS RUN THE YARD. YOU PAY THEM OR YOU FIGHT THEM. MOSTLY YOU PAY THEM.",
+      "MAMA ROO'S BROTH HAS BEEN ON THE BOIL FOR FORTY YEARS. SAME POT.",
+      "YOU CAN SEE THE DISTRICT'S LIGHTS THROUGH THE GRATES WHEN IT STOPS RAINING. IT NEVER STOPS RAINING.",
+      "SALLOW'S CHROME IS CHEAP. CHEAP CHROME HICCUPS. ASK ME HOW I KNOW.",
+      "DON'T GO DOWN TO THE SUMP WITHOUT A FULL BELLY AND A GOOD BLADE.",
+      "BET ON IRON MAE. EVERYONE BETS ON IRON MAE.",
+      "THE LIFT GOES ALL THE WAY UP, THEY SAY. NOBODY I KNOW HAS TAKEN IT."
+    ],
+    "sump": [
+      "THE WATER REMEMBERS. THAT'S WHAT WEN SAYS.",
+      "THE DRONES COME OUT OF THE OLD BILLBOARD. KILL THEM FAST, BEFORE THEY CALL THE OTHERS.",
+      "I HEARD THE DREDGE MOVE LAST NIGHT. THE WHOLE CANAL SLOSHED.",
+      "TEO'S LAKSA IS THE ONLY WARM THING DOWN HERE.",
+      "THE RAVE NEVER STOPS. IT JUST CHANGES WHO'S DANCING."
+    ],
     "lantern": [
       "HOSHI'S POT HAS BEEN ON SINCE BEFORE I WAS BORN. I'M SEVENTY.",
       "THE TOWERS WANT THIS STREET. THE STREET SAYS NO. THE STREET IS VERY OLD.",
@@ -187,6 +214,8 @@
   },
 
   "_wants": {
+    "undercity": [{ "id": "scrap_metal", "pay": 6 }, { "id": "roo_broth", "pay": 16 }, { "id": "medkit", "pay": 40 }],
+    "sump":     [{ "id": "sump_laksa", "pay": 24 }, { "id": "circuit", "pay": 18 }],
     "sapphire": [{"id": "roseite", "pay": 44}, {"id": "sea_glass", "pay": 28}],
     "rose": [{"id": "sea_glass", "pay": 26, "ask": "IS THAT {item}? THE SEA'S OWN GLASS - IT HELPS A READING. I'D GIVE {pay} FOR IT."}, {"id": "bread", "pay": 14}],
     "lumar":    [{ "id": "sea_glass", "pay": 22 }, { "id": "bread", "pay": 12 }, { "id": "silver_nail", "pay": 18 }],

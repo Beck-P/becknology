@@ -25,6 +25,7 @@ import assets_district as D            # noqa: E402
 import assets_signs as S               # noqa: E402
 import assets_arcadia_rich as AR       # noqa: E402
 import random                          # noqa: E402
+import assets_under as U               # noqa: E402
 
 OUT = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -141,6 +142,10 @@ D.cable(k, (27.6, RF + 0.3, 4.0), (33.6, 9.6, 2.7), sag=0.2, lights=('#e040c0', 
 D.cable(k, (0.0, RF + 0.3, 3.3), (9.0, RF + 0.3, 3.0), sag=0.3, n=8)
 D.cable(k, (19.0, RF + 0.3, 4.5), (27.4, RF + 0.3, 4.1), sag=0.35, lights=(Y.CYAN, Y.PINK), n=10)
 
+# the way down to the Undercity: a stairwell sunk in the lane's west end, a green tube half way down (js/undercity.js)
+U.stair_down(k, None, 0.9, 2.5, 10.9, 12.6, depth=1.4, label='UNDERCITY', away=True)
+k.solid(0.75, 10.95, 2.65, 12.8)
+
 # the low wall at the front, the gate open onto the street
 B.low_wall(k, -0.5, 15.64, 13.0)
 B.low_wall(k, 18.36, COLS + 0.5, 13.0)
@@ -174,6 +179,10 @@ w['interactions'] = [
     {'x': 17, 'y': 13, 'type': 'leave_world', 'label': 'STREET', 'prompt': 'RETURN TO STREET', 'leaveTo': 'arcadia-street',
      'leaveSpawn': [33, 8]},
     {'x': 30, 'y': 9, 'type': 'enter_world', 'target': 'null-den', 'spawn': [6, 7], 'label': 'CONTAINER', 'prompt': 'PRESS E TO ENTER'},
+    {'x': 1, 'y': 10, 'type': 'enter_world', 'target': 'arcadia-undercity', 'spawn': [3, 10], 'label': 'STAIRS DOWN',
+     'prompt': 'DOWN TO THE UNDERCITY'},
+    {'x': 2, 'y': 10, 'type': 'enter_world', 'target': 'arcadia-undercity', 'spawn': [3, 10], 'label': 'STAIRS DOWN',
+     'prompt': 'DOWN TO THE UNDERCITY'},
     dialog(6, 8, 'LINE COOK', 'PRESS E TO TALK', "NO."),
     dialog(4, 7, 'KITCHEN DOOR', 'PRESS E TO LOOK',
            "THE BACK OF CYBER NOODLES. STEAM, SHOUTING, SOMETHING SIZZLING.\n\nA SIGN ON THE DOOR: 'STAFF ONLY. THAT MEANS YOU.'"),

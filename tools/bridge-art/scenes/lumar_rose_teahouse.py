@@ -1,0 +1,99 @@
+"""Rosewell's tea house on its stilts over the lowest pool (world id "lumar-rose-teahouse"). Workstream B1.
+Usage: BVENV/bin/python lumar_rose_teahouse.py RENDER_DIR
+
+A room of mats and low tables, paper screens lit from inside, a sunken hearth where the kettle sings on its hook and
+Master Lior kneels beside it, shelves of tea in jars and tins from every sea (and one from a sea nobody's charted), a
+window open on the steaming pools below and the terraces climbing to the silk groves. Sit at a table; ask Lior for a
+pot (`tea`, js/rose.js).
+"""
+import json
+import math
+import os
+import sys
+
+from _lumar_room import A, ROOT, Kit, THETA, apply_world  # noqa: F401
+from scenekit import shade
+import assets_town as W  # noqa: E402
+
+OUT = sys.argv[1]
+WID = 'lumar-rose-teahouse'
+WORLD = os.path.join(ROOT, 'apps', 'bridge', 'assets', 'worlds', WID + '.json')
+COLS, ROWS = 15, 11
+H = 2.2 / math.cos(THETA)
+FLOOR = (1, 2, 13, 8)
+DOORS = [(7, 9)]
+
+k = Kit(COLS, ROWS, margin_top=1.2, margin_bottom=0.5, seed=4433)
+rng = k.rng
+A.room(k, 1, 2, 14, 9, H, door=(7.0, 8.0), floor_tone='#8a6a48', plaster='#ecdcc8', wainscot=0.6, wainscot_col='#4a2a2a', beams_every=1.5,
+       beam='#3a2228')
+# mats over the floor: woven, edged in dark cloth
+for (x0, r0) in [(x, r) for x in (1.2, 4.2, 7.2, 10.2) for r in (2.2, 5.2)]:
+    k.box(x0, r0, 0.0, x0 + 2.9, r0 + 2.9, 0.03, ('#c8b07a', 0.3), 'floor_mat')
+    k.box(x0, r0, 0.03, x0 + 2.9, r0 + 0.08, 0.035, '#3a2228', 'floor_mat_edge')
+    k.box(x0, r0 + 2.82, 0.03, x0 + 2.9, r0 + 2.9, 0.035, '#3a2228', 'floor_mat_edge')
+# the paper screens along the back wall, lit
+for sx in (2.0, 5.0, 10.0, 13.0):
+    k.box(sx - 1.1, 1.99, 0.6, sx + 1.1, 2.04, 2.0, '#3a1a20', 'paper_screen', emit=('#ffd8a8', 0.45))
+    for q in range(6):
+        k.box(sx - 1.1 + q * 0.44, 2.04, 0.6, sx - 1.08 + q * 0.44, 2.07, 2.0, '#3a2228', 'lattice')
+    for zz in (1.0, 1.5):
+        k.box(sx - 1.1, 2.04, zz, sx + 1.1, 2.07, zz + 0.03, '#3a2228', 'lattice')
+# the window over the pools (centre back), dark with the steam beyond
+k.box(6.4, 1.99, 0.8, 8.6, 2.04, 2.0, '#1e2a3a', 'window_glass', emit=('#5a7a9a', 0.35))
+k.box(6.35, 2.0, 0.75, 8.65, 2.08, 0.82, '#3a2228', 'window_frame')
+# the sunken hearth (left): a square pit of ash with a glow, the kettle on its hook, Lior beside it
+HX, HR = 3.4, 4.6
+k.box(HX - 0.6, HR - 0.6, -0.02, HX + 0.6, HR + 0.6, 0.06, ('#3a2a24', 0.2), 'hearth_frame')
+k.box(HX - 0.45, HR - 0.45, 0.02, HX + 0.45, HR + 0.45, 0.07, '#2a1006', 'hearth_coals', emit=('#ff7a30', 0.7))
+k.tube((HX, HR, 1.8), (HX, HR, 0.62), 0.012, '#2a2a30', 'kettle_hook', verts=4)
+k.sphere(HX, HR, 0.48, 0.22, 0.17, ('#2a2a30', 0.15), 'kettle', segs=12)
+k.tube((HX + 0.2, HR, 0.5), (HX + 0.38, HR, 0.6), 0.025, '#2a2a30', 'kettle_spout', verts=5)
+k.point_light(HX, HR, 0.5, '#ff9a50', 40, radius=0.3, group='flicker')
+k.solid(HX - 0.6, HR - 0.6, HX + 0.6, HR + 0.6)
+# low tables with cushions, cups and a pot on each
+TABLES = [(7.6, 5.2), (10.8, 5.2), (7.6, 7.4), (10.8, 7.4)]
+for (tx, tr) in TABLES:
+    k.box(tx - 0.45, tr - 0.3, 0.0, tx + 0.45, tr + 0.3, 0.32, ('#4a2a2a', 0.15), 'tea_table', bevel=0.03)
+    k.sphere(tx, tr, 0.4, 0.09, 0.08, ('#e8e0d8', 0.1), 'teapot', segs=10)
+    for dx in (-0.25, 0.25):
+        k.cyl(tx + dx, tr + 0.1, 0.32, 0.38, 0.05, '#e8e0d8', 'tea_cup', verts=8)
+    for dx in (-0.75, 0.75):
+        k.box(tx + dx - 0.22, tr - 0.22, 0.0, tx + dx + 0.22, tr + 0.22, 0.1, (rng.choice(('#c8607a', '#7a4a8a', '#c8a050')), 0.3), 'cushion', bevel=0.04)
+    k.solid(tx - 0.45, tr - 0.3, tx + 0.45, tr + 0.3)
+# the shelves of tea on the east wall
+for lv, z in enumerate((0.5, 1.0, 1.5)):
+    k.box(12.3, 2.1, z - 0.05, 13.9, 4.4, z, ('#4a2a2a', 0.15), 'shelf')
+    for q in range(6):
+        k.cyl(12.6 + (q % 3) * 0.5, 2.5 + (q // 3) * 1.2, z, z + 0.28, 0.12, (rng.choice(('#c8402e', '#2a5ad8', '#e0b040', '#3a7a4a', '#7a3a6a', '#e8e0d8')), 0.15),
+              'tea_jar', verts=10)
+k.solid(12, 2, 14, 4.5)
+for (lx, lr) in ((5.4, 3.0), (12.0, 7.6)):
+    k.tube((lx, lr, H), (lx, lr, 1.9), 0.006, '#2a2a2c', 'lantern_cord', verts=3)
+    k.sphere(lx, lr, 1.75, 0.16, 0.2, '#3a1408', 'paper_lantern', emit=('#ff9a80', 0.9), segs=10)
+    k.point_light(lx, lr + 0.2, 1.6, '#ffb090', 30, radius=0.2, group='flicker')
+k.render(OUT, light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.8}}, light_samples=int(os.environ.get('TH_SAMPLES', 128)),
+         world_light=('#3a3040', 0.4))
+
+w = json.load(open(WORLD)) if os.path.exists(WORLD) else {}
+w.update({'name': 'The Tea House', 'width': COLS, 'height': ROWS, 'tileSize': 16, 'tileset': 'lumar',
+          'spawns': {'player': [7, 8]}, 'tiles': [[1] * COLS for _ in range(ROWS)], 'collisions': [[1] * COLS for _ in range(ROWS)],
+          'shipExit': False, 'indoors': True})
+w['interactions'] = [
+    {'x': x, 'y': y, 'type': 'leave_world', 'leaveTo': 'lumar-rose-springs', 'leaveSpawn': [29, 20], 'label': 'ROSEWELL', 'prompt': 'PRESS E TO GO OUT'}
+    for (x, y) in DOORS] + [
+    {'x': 3, 'y': 3, 'type': 'dialog', 'label': 'MASTER LIOR', 'prompt': 'PRESS E TO TALK', 'dialog': ''},
+    {'x': 4, 'y': 3, 'type': 'rose', 'act': 'tea', 'label': 'A POT OF TEA', 'prompt': 'PRESS E TO ORDER'},
+    {'x': 7, 'y': 2, 'type': 'dialog', 'label': 'WINDOW', 'prompt': 'PRESS E TO LOOK', 'action': 'view', 'view': 'sea',
+     'dialog': 'BELOW, THE POOLS STEAMING IN THEIR WHITE TERRACES, BATHERS UP TO THEIR SHOULDERS, LANTERNS ON THE STAIR. ABOVE THEM THE SILK GROVES GLOW FAINTLY PINK WHERE THE COCOONS HANG.'},
+    {'x': 12, 'y': 5, 'type': 'dialog', 'label': 'TEA JARS', 'prompt': 'PRESS E TO LOOK',
+     'dialog': 'TEA FROM EVERY SEA. A RED TIN FROM THE CRIMSON MARKED "DO NOT". A BLUE JAR FROM SAPPHIRE. A PLAIN ONE, UNLABELLED, THAT LIOR SAYS CAME FROM A SEA NOBODY HAS CHARTED. IT SMELLS OF RAIN.'},
+] + [{'x': int(tx + 0.75 * dx), 'y': int(tr), 'type': 'dialog', 'label': 'CUSHION', 'prompt': 'PRESS E TO SIT', 'action': 'sit',
+      'seat': [round(tx + 0.75 * dx, 2), round(tr + 0.1, 2)], 'facing': 'left' if dx > 0 else 'right',
+      'dialog': 'YOU KNEEL AT THE LOW TABLE. THE STEAM FROM THE POOLS DRIFTS PAST THE WINDOW.'} for (tx, tr) in TABLES for dx in (-1, 1)]
+open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
+k.solid(3, 3, 4, 4)
+apply_world(WORLD, k, FLOOR, doors=DOORS, scene_id=WID, actors=[
+    {'sheet': 'npc-rose-lior', 'x': 3, 'y': 3, 'facing': 'right', 'pose': 'sit'},
+])
+print('tea house done')

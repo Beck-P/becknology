@@ -82,6 +82,11 @@ stalls, a hum of music. Neon pink/cyan against deep violet.
   the repair shop (drones mid-surgery), the mart (late-night shoppers);
   plus a rooftop bar, ✓ a back-alley hacker den (NULL's), ✓ Lucky 7 (pachinko, the prize counter), an apartment you
   can rent.
+- ✓ **Below the street** — the Undercity (the Warrens: a Kowloon-dense market under the city's columns, the Hawker
+  Hall, The Drip, Sallow's back-alley chrome, the Foundry, the Pit, the scrapyards and the Rust Saints who hold them)
+  and the Sump (the drowned original street: canals, Old Teo's noodle boat, the drowned shrine, the rave in the old
+  station; drones, eels, husks, the Dredge). Fights get tougher the lower you go. Implants by tier: street chrome below,
+  clinic-grade on the District, designer up top. (apps/bridge/CLAUDE.md, *Arcadia below*.)
 - **Purpose**: jobs from the street (deliveries, finding lost drones),
   credits, the arcade's tournament ladder, a hacker side-story.
 

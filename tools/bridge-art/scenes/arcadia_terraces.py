@@ -34,6 +34,7 @@ import assets_penthouse as PH          # noqa: E402
 import assets_casino as CA             # noqa: E402
 import assets_estate as E              # noqa: E402
 import assets_city as CITY             # noqa: E402
+import assets_arcadia_rich as AR      # noqa: E402
 from _manor import preview             # noqa: E402
 
 OUT = sys.argv[1]
@@ -91,19 +92,31 @@ def led_line(x0, r, x1):
 
 
 # the main deck along the tower's foot
-deck(1.0, RF, 87.0, FRONT, edge=False, size=0.5)
+# the main deck is built of pieces, never one board (assets_arcadia_rich, Rainline Street's): warm stone slabs along the
+# shopfronts, a pale promenade either side of the sky garden's steel plates, big smoked slabs out to the edge — and wet,
+# so the signs and the lamps show twice, once lit and once smeared down the deck
+k.wet = AR.WET
+gr = random.Random(2090)                                  # the ground's own dice: everything after it places as before
+k.box(1.0, RF, -1.0, 87.0, FRONT, -0.1, ('#1a1c2a', 0.06), 'deck_slab')
+AR.paving(k, 1.0, RF, 87.0, 16.8, size=0.5, tones=('#4c4654', '#48424f', '#524b58', '#45404c'), rng=gr)
+AR.paving(k, 1.0, 16.8, 87.0, 18.0, size=0.4, tones=('#5a5c70', '#56586c', '#5e6074', '#525468'), rng=gr, bond=True,
+          crack=0.02, sunk=0.0)
+AR.deck_plates(k, 1.0, 18.0, 87.0, 21.0, rng=gr, tones=('#2e3044', '#2a2c40', '#323448', '#282a3c'))
+AR.paving(k, 1.0, 21.0, 87.0, 22.2, size=0.4, tones=('#5a5c70', '#56586c', '#5e6074', '#525468'), rng=gr, bond=True,
+          crack=0.02, sunk=0.0)
+AR.paving(k, 1.0, 22.2, 87.0, FRONT, size=1.0, tones=('#30364a', '#2c3246', '#343a50', '#2a3044'), seam='#10121c', rng=gr,
+          crack=0.04, sunk=0.02)
 walk(1, int(RF), 86, int(FRONT) - 1)
 for x in (8.0, 25.0, 41.0, 57.0, 73.0):
     led_line(x - 4.0, 20.0, x + 4.0)
-# a band of pale stone down the deck's length, the way people walk, with the LED path inlaid in it
-k.box(1.0, 17.0, 0.0, 87.0, 18.0, 0.008, ('#3a4058', 0.06), 'floor_promenade')
-k.box(1.0, 17.46, 0.008, 87.0, 17.54, 0.012, shade(CYAN, 0.4), 'deck_led', emit=(CYAN, 0.6))
-k.box(1.0, 21.0, 0.0, 87.0, 22.0, 0.008, ('#3a4058', 0.06), 'floor_promenade')
+k.box(1.0, 17.38, 0.0, 87.0, 17.46, 0.006, shade(CYAN, 0.4), 'deck_led', emit=(CYAN, 0.6))     # the LED path down it
 for (x, r) in ((12.0, 22.6), (34.5, 23.0), (50.0, 22.6), (66.0, 23.2), (80.0, 22.6)):
     glass_panel(x, r)
-for (x, r, rx, ry, c) in ((6.0, 24.6, 0.7, 0.2, Y.PINK), (22.0, 15.8, 0.5, 0.18, CYAN), (44.6, 25.2, 0.8, 0.22, Y.PURP),
-                          (59.0, 16.2, 0.55, 0.2, CYAN), (70.0, 25.0, 0.6, 0.2, Y.PINK), (31.0, 25.4, 0.45, 0.16, CYAN)):
-    Y.puddle(k, x, r, rx, ry, tint=c)
+# puddles after the rain, each tinted by the sign nearest it
+AR.puddles(k, ((6.0, 24.6, 0.7, 0.24, Y.PINK), (22.0, 15.4, 0.6, 0.2, '#ff9050'), (44.6, 25.2, 0.8, 0.26, Y.PURP),
+               (59.0, 16.2, 0.55, 0.2, CYAN), (70.0, 25.0, 0.6, 0.22, Y.PINK), (31.0, 25.4, 0.5, 0.18, CYAN),
+               (15.6, 14.4, 0.55, 0.2, '#6a80ff'), (45.4, 14.2, 0.7, 0.22, '#ffd890'), (55.6, 15.0, 0.5, 0.18, '#ffb070'),
+               (36.4, 23.0, 0.6, 0.2, '#ff7aa0'), (80.2, 23.6, 0.55, 0.2, '#ffd860'), (11.0, 16.0, 0.4, 0.16, '#ff9ad0')))
 
 
 # ======================================================================================================================
@@ -506,6 +519,10 @@ k.solid(5.0, 27.6, 10.4, 29.1)
 HALO_TABLES = [(12.5, 30.55), (16.5, 30.55), (20.5, 30.55), (8.5, 33.55), (12.5, 34.55), (16.5, 34.55), (20.5, 34.55)]
 for (cx, cr) in HALO_TABLES:
     CA.dining_table(k, cx, cr, rad=0.46, cloth='#e8e2d6', chairs=((-1, 0), (1, 0)), chair_off=1.0, chair_col='#2a3a4a')
+    k.cyl(cx + 0.12, cr, 0.78, 0.9, 0.05, '#7a1a14', 'candle_glass', emit=('#ff6030', 0.6), verts=8)
+    k.sphere(cx + 0.12, cr, 0.93, 0.025, 0.035, '#fff0c0', 'candle', emit=('#ffb040', 1.0), segs=5)
+    k.point_light(cx + 0.12, cr + 0.1, 1.15, '#ffa850', 9, radius=0.1, group='flicker')
+k.point_light(14.2, 32.4, 2.6, '#ffc078', 70, radius=1.4, group='lamp')                   # the festoons' glow over Halo
 for (x, r) in ((10.6, 32.3), (18.6, 32.3)):                             # patio heaters, glowing at the top
     k.cyl(x, r, 0.0, 0.08, 0.22, (STEEL_D, 0.05), 'heater_base', verts=12)
     k.cyl(x, r, 0.08, 2.1, 0.04, (STEEL, 0.05), 'heater_pole', verts=8)
@@ -558,13 +575,17 @@ for (cx, cr) in LUMEN_TABLES:                                            # low t
 for i, x in enumerate([28.6 + i * 1.6 for i in range(10)]):             # lanterns on a line over the terrace
     Y.paper_lantern(k, x, 31.0, 2.5, col=('#e03030' if i % 3 else '#f0a030'), s=0.42, top=2.9)
 k.tube((28.2, 31.0, 2.9), (43.0, 31.0, 2.9), 0.012, '#2a1a12', 'lantern_line', verts=4)
+for x in (29.4, 32.6, 35.8, 39.0, 42.2):                                 # the lanterns light the tables under them
+    k.point_light(x, 31.3, 2.2, '#ff7a48', 16, radius=0.3, group='flicker')
+for (cx, cr) in LUMEN_TABLES:
+    k.point_light(cx + 0.25, cr + 0.1, 0.8, '#ffa050', 5, radius=0.1, group='flicker')
 for x in (28.2, 43.0):
     k.cyl(x, 31.0, 0.0, 2.95, 0.05, ('#3a2414', 0.08), 'lantern_pole', verts=8)
     k.solid_post(x, 31.0)
 E.potted_palm(k, 42.6, 35.4, h=1.2, pot='#2a2a30', leaf='#3a6a3a', fronds=7, s=0.8)
 
 # ---- CIRRUS, the rooftop cocktail bar (x 47..70.5, out to row 39): a round bar, loungers, a fire table ----------------
-GLASS.append(terrace(47.0, 70.5, 39.5, tones=('#2a2e44', '#262a40', '#30344a')))
+GLASS.append(terrace(47.0, 70.5, 39.5, tones=('#3a3450', '#36304a', '#3e3854')))
 lower_terrace(48.0, 69.5, 37.0, 42.5, -3.8, lamps='#c0a0ff')
 BX, BR = 58.5, 31.0
 CA.rim(k, E.ell(BX, BR, 2.4, 1.6, 40), E.ell(BX, BR, 1.85, 1.15, 40), 0.0, 1.0, ('#1a1c2a', 0.06), 'bar')
@@ -600,6 +621,11 @@ posts2 = {n: PH.light_post(k, x, r) for n, (x, r) in {'a': (47.4, 27.4), 'b': (5
 for (a, b) in (('a', 'e'), ('e', 'c'), ('d', 'b'), ('b', 'f')):
     BULBS += PH.festoon(k, posts2[a], posts2[b], sag=0.45, n=14, bulb='#ffd8f0', light_every=4, energy=2.2)
 k.area_light(BX, BR + 4.0, 5.0, '#b080ff', 90, 6.0, rot=(math.radians(-15), 0, 0))
+k.point_light(BX, BR + 2.0, 2.4, '#ffc8e8', 45, radius=0.8, group='lamp')                 # the bar's own glow on its stools
+k.point_light(52.5, 35.6, 2.2, '#ffc890', 30, radius=0.6, group='lamp')                   # the lounge under the festoons
+k.point_light(65.0, 34.8, 2.2, '#ffd8f0', 26, radius=0.6, group='lamp')                   # the loungers
+for (x, r) in ((50.5, 30.0), (66.5, 30.0), (58.5, 37.5)):                                  # the festoons' glow over Cirrus
+    k.point_light(x, r, 2.6, '#ffc8a0', 40, radius=1.0, group='lamp')
 
 # ---- the air cab pad (x 76..84, out to row 39): a round pad on a stem, a cab waiting, the rank sign --------------------
 PX, PR = 80.0, 34.0
@@ -703,8 +729,59 @@ for j in range(9):
 k.solid(0, 0, COLS, 8)
 
 # ---- life along the deck: lamps, planters, benches, a holo-kiosk, a drone parked, bins --------------------------------
-for x in (8.0, 20.0, 38.0, 54.0, 68.0, 84.0):
-    Y.street_lamp(k, x, 25.6, col=CYAN if x < 40 else ICE)
+# lamps in two rows down the deck, warm heads over pink strips, each throwing a pool on the wet deck; string lights
+# zigzag between them over the promenade (Rainline Street's light: warm pools, neon spilling)
+LAMP = '#ffc47a'
+FRONT_L = (8.0, 20.0, 38.0, 54.0, 68.0, 84.0)
+BACK_L = (12.5, 24.5, 36.0, 52.5, 64.5, 82.5)
+for x in FRONT_L:
+    Y.street_lamp(k, x, 25.6, col=LAMP)
+    k.point_light(x, 25.2, 1.0, '#ffb868', 60, radius=0.6, group='lamp')
+for x in BACK_L:
+    Y.street_lamp(k, x, 16.5, col=LAMP)
+    k.point_light(x, 16.9, 1.0, '#ffb868', 60, radius=0.6, group='lamp')
+for (fa, ba) in ((8.0, 12.5), (20.0, 12.5), (20.0, 24.5), (38.0, 36.0), (54.0, 52.5), (54.0, 64.5), (68.0, 64.5), (84.0, 82.5)):
+    d = math.hypot(fa - ba, 9.1)
+    BULBS += PH.festoon(k, (ba, 16.5, 2.3), (fa, 25.6, 2.3), sag=0.5, n=max(8, int(d * 1.3)), light_every=4, energy=2.6)
+# what the shops throw out onto the deck: each front's own light, a pool on the paving in front
+for (x, col, e) in ((6.0, '#ff9ad0', 18), (10.0, '#ff9ad0', 14), (15.0, '#7a90ff', 40), (21.5, '#ffb070', 60),
+                    (27.0, '#d8f4ff', 40), (35.0, '#d8f4ff', 40), (41.0, '#ffd8a0', 40), (45.5, '#ffd8a0', 46),
+                    (50.0, '#ffd8a0', 40), (55.0, '#ffc080', 60)):
+    k.point_light(x, RF + 0.9, 1.3, col, e, radius=0.7, group='lamp')
+    k.point_light(x, RF + 2.6, 0.5, col, e * 0.7, radius=0.6, group='lamp')
+
+# small life: bikes by the shuttered boutique, A-boards, a delivery bot, a cat on a bench, pigeons, cups, flyers, a dropped
+# umbrella, a wet-floor sign by the big puddle, planters lit at the rim, a steaming grate, the cab pad's keep-clear hatch
+AR.bicycle(k, 10.3, RF + 0.45)
+AR.bicycle(k, 11.4, RF + 0.5, col='#2a8ad0')
+AR.newsbox(k, 5.4, RF)
+AR.a_board(k, 19.6, 13.7, col='#3a1418', glow='#ffb070')
+AR.a_board(k, 52.4, 13.7)
+AR.delivery_bot(k, 47.0, 14.8)
+AR.recycler(k, 62.2, 15.0, solid=False)
+AR.cat(k, 14.3, 23.3, z=0.45)
+AR.pigeons(k, 30.0, 24.0, n=4, rng=gr)
+AR.pigeons(k, 60.0, 21.6, n=3, rng=gr)
+AR.coffee_cup(k, 53.3, 23.3, z=0.45)
+AR.coffee_cup(k, 35.0, 24.7, tipped=True)
+AR.umbrella_dropped(k, 63.6, 25.0, col='#e84a80')
+AR.wet_sign(k, 43.2, 24.6)
+AR.flyers(k, 1.2, RF + 0.3, 86.8, 16.6, 30, rng=gr)
+AR.flyers(k, 1.2, 22.4, 86.8, 26.6, 20, rng=gr)
+for (x, r, g) in ((29.0, 23.2, Y.PINK), (48.5, 23.2, CYAN), (73.0, 23.0, Y.YEL)):
+    AR.planter(k, x, r, glow=g)
+AR.grate(k, st, 27.0, 24.8)
+# the garden band: more planters among the trees, benches facing them; out at the edge, benches facing the drop
+for (x, r, g) in ((23.0, 19.5, Y.YEL), (26.0, 19.5, Y.PINK), (55.5, 19.5, CYAN), (75.0, 19.5, Y.PINK), (82.0, 19.5, Y.YEL)):
+    AR.planter(k, x, r, glow=g, leaf=rng.choice(('#2a5a48', '#3a5a2e', '#2a4e3a')))
+for (x0, x1, r, n) in ((31.0, 33.0, 24.4, Y.YEL), (57.5, 59.5, 24.4, CYAN), (78.0, 80.0, 24.0, Y.PINK)):
+    Y.metal_bench(k, x0, x1, r, neon=n)
+# the platform under its canopy: warm light from the kiosk lamps, flyers and a cup left on it
+for x in (63.0, 69.0, 78.0, 84.0):
+    k.point_light(x, PR0 + 2.2, 1.2, '#ffc890', 26, radius=0.5, group='lamp')
+AR.flyers(k, SX0 + 0.5, PR0 + 1.0, SX1 - 0.5, RF - 0.2, 10, rng=gr)
+AR.coffee_cup(k, 80.6, PR0 + 2.6, tipped=True)
+AR.hazard_stripes(k, 77.6, 26.0, 82.4, 26.9)
 for (x, r) in ((3.0, 15.0), (3.0, 24.0), (39.5, 18.6), (86.0, 15.0), (86.0, 24.0)):
     PH.planter(k, x - 0.5, r - 0.5, x + 0.5, r + 0.5, kind='olive', h=0.55)
 for (x0, x1, r, n) in ((13.0, 15.0, 23.4, CYAN), (22.0, 24.0, 23.4, Y.PINK), (52.0, 54.0, 23.4, CYAN), (60.0, 62.0, 18.4, Y.PINK)):
@@ -780,13 +857,13 @@ for x in (6.0, 12.0, 26.0, 37.0, 50.0, 62.0, 77.0, 83.0):            # bollards 
 k.area_light(44.0, 18.0, 14.0, '#5a78c8', 2600, 60.0, rot=(math.radians(-25), 0, 0))       # the Mid-Levels' cool sky glow
 k.area_light(44.0, 34.0, -6.0, '#ff70b0', 900, 60.0, rot=(math.radians(160), 0, 0))       # the District's glow from below
 for (x, r) in ((8.0, 18.0), (30.0, 17.0), (45.0, 15.0), (62.0, 20.0), (78.0, 19.0)):
-    k.point_light(x, r, 3.5, '#c8f0ff', 26, radius=0.6, group='lamp')
+    k.point_light(x, r, 3.5, '#c8f0ff', 18, radius=0.6, group='lamp')
 k.point_light(JX, RF + 1.2, 1.6, '#6080ff', 14, radius=0.3, group='flicker')
 k.point_light(31.0, RF + 1.0, 2.0, '#c8f0ff', 30, radius=0.6, group='lamp')
 
 preview(k)
 k.render(OUT, light_states={'full': {'flicker': 1.0, 'lamp': 1.0}, 'dim': {'flicker': 0.74, 'lamp': 1.0}},
-         light_samples=int(os.environ.get('SAMPLES', 96)), world_light=('#202a48', 0.55))
+         light_samples=int(os.environ.get('SAMPLES', 128)), world_light=('#262c50', 0.62))
 
 # ======================================================================================================================
 # the world
