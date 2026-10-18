@@ -211,16 +211,6 @@ for i, ((ax, ar), (bx, br)) in enumerate(zip(seg, seg[1:])):
         k.blob(ax + nx * s_ * 1.2, ar + nr * s_ * 1.2, -0.08, 0.28, 0.2, 0.05, (N.SNOW, 0.05), 'drift', segs=8)
     if i % 9 == 4:                                                                 # a stone with a cap of snow
         HR.rock(k, ax + nx * rr.uniform(-0.6, 0.6), ar + nr * rr.uniform(-0.6, 0.6), rr.uniform(0.1, 0.16), z=-0.12, rr=rr, part='stream_stone')
-for rf_ in (14.92, 16.5):                                                          # the culvert's stone headwalls
-    sgn = -1 if rf_ < 15.7 else 1
-    k.box(11.3, rf_ - 0.12, -0.14, 12.75, rf_ + 0.06, 0.04, ('#7a7e88', 0.12), 'culvert_wall', bevel=0.02)
-    x = 11.3
-    while x < 12.7:
-        k.box(x + 0.01, rf_ + 0.06 * (1 if sgn > 0 else -1) - 0.005, -0.12, x + 0.22, rf_ + 0.065 * (1 if sgn > 0 else -1), 0.03,
-              (shade('#7a7e88', rr.uniform(0.85, 1.12)), 0.12), 'culvert_stone')
-        x += 0.24
-    k.cyl_y(12.05, rf_ - 0.14, rf_ + 0.08, -0.12, 0.26, 0.2, '#14202a', 'culvert_mouth', verts=12)
-
 # ---- the tarn: an ice sheet over most of it, open water where the brook comes in -------------------------------------------
 SEGS = 80
 
@@ -375,8 +365,8 @@ N.signpost(k, 25.3, 14.4)
 W.bunting(k, (24.9, 13.75, 2.3), (28.1, 13.75, 2.1), sag=0.35)
 
 # ---- the cocoa hut, braziers, barrel tables, the snowman ----------------------------------------------------------------------------
-N.cocoa_hut(k, 20.0, 22.6, 18.3, 19.4)
-N.hanging_sign(k, 22.45, 19.62, 1.3, 'mug')
+HR.market_hut(k, 20.0, 22.6, 18.3, 19.4, 'mulled', rr=random.Random(30))      # Tove's cocoa hut
+N.hanging_sign(k, 22.95, 19.0, 1.25, 'mug')
 k.solid(19, 19, 20, 20)                                                         # Tove, beside her hut
 HR.string_lights(k, (19.8, 19.85, 1.95), (16.4, 19.6, 1.4), sag=0.2)
 k.cyl(16.4, 19.6, 0, 1.5, 0.035, (N.LOG_D, 0.1), 'pole', verts=6)
