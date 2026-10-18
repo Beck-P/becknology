@@ -295,6 +295,7 @@ var BridgeVillage = (function () {
       if (it.site === 'homes') { it.label = 'THE NEW COTTAGES'; }
       if (it.site === 'bridge') { it.label = 'THE BRIDGE'; }
     });
+    if (gate) data.interactions.forEach(function (it) { if (it.target === TOWN) it.spawn = gate.slice(); });
     // the bridge: across it once it's mended, the river in the way till then
     BRIDGE_TILES.forEach(function (t) { if (data.collisions[t[1]]) data.collisions[t[1]][t[0]] = done('bridge') ? 0 : 1; });
     // over it, the road south to the Downs (js/makers.js PLACES: once the Downs are there)
@@ -304,12 +305,21 @@ var BridgeVillage = (function () {
       });
     if (typeof BridgeCrowd !== 'undefined' && BridgeCrowd.more) BridgeCrowd.more(WID, 1 + 0.25 * stage());
   }
+  var gate = null;                                          // where you come back into Brambleford (its east edge)
   // Brambleford: its way east at the end of the main street, and busier for every project done
   function town(data) {
     var ins = data.interactions = data.interactions || [];
     if (!ins.some(function (it) { return it.target === WID; })) {
-      [10, 11, 12].forEach(function (y) {
-        ins.push({ x: data.width - 1, y: y, type: 'enter_world', label: 'STATION ROAD', prompt: 'PRESS E TO WALK ON EAST', target: WID, spawn: [1, 11] });
+      // the open run of the east edge nearest the street (row 11), wherever Brambleford's own render leaves it open
+      var c = data.collisions || [], x = data.width - 1, best = null;
+      for (var d = 0; d < data.height && !best; d++) [11 - d, 11 + d].forEach(function (y) {
+        if (!best && c[y] && c[y][x] === 0 && c[y][x - 1] === 0) best = y;
+      });
+      var y0 = best === null ? 11 : best;
+      gate = [x - 1, y0];
+      [y0 - 1, y0, y0 + 1].forEach(function (y) {
+        if (y === y0 || (c[y] && c[y][x] === 0))
+          ins.push({ x: x, y: y, type: 'enter_world', label: 'STATION ROAD', prompt: 'PRESS E TO WALK ON EAST', target: WID, spawn: [1, 11] });
       });
     }
     if (typeof BridgeCrowd !== 'undefined' && BridgeCrowd.more) BridgeCrowd.more(TOWN, 1 + 0.2 * stage());
