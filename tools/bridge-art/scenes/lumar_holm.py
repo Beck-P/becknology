@@ -838,6 +838,9 @@ def preview():
 if PREVIEW:
     preview()
 SAMPLES = int(os.environ.get('HOLM_SAMPLES', 96))
+if os.environ.get('HOLM_RESUME'):                      # a render cut short: every pass already written is kept, the rest rendered
+    _render_pass = k._render
+    k._render = lambda path: None if os.path.exists(path) else _render_pass(path)
 k.render(OUT, cycle='night', light_states={'full': {'flicker': 1.0}, 'dim': {'flicker': 0.75}}, light_samples=SAMPLES,
          world_light=('#26384a', 0.8))
 if PREVIEW:
