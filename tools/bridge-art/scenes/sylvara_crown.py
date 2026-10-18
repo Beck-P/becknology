@@ -47,6 +47,14 @@ with k.foliage('leaf'):
         z = -1.6 - rng.uniform(0, 1.6) - max(0.0, (SKY_ROWS + 3 - r)) * 0.9   # falling away toward the far edge
         tone = shade(A.LEAF, rng.uniform(0.82, 1.12))
         W.leafy_crown(k, x, r, z, 1.4 * s, 1.15 * s, 0.75 * s, tone, n=int(26 * s * s), part='canopy', sprigs=rng.random() < 0.5)
+    # deeper down, the canopy's darker inner leaves: what a gap between the crowns shows (never the sky)
+    for _ in range(160):
+        x, r = rng.uniform(-3, COLS + 3), rng.uniform(SKY_ROWS + 1.5, ROWS + 8)
+        s = rng.uniform(1.0, 1.8)
+        W.leafy_crown(k, x, r, -4.4 - rng.uniform(0, 1.2), 1.5 * s, 1.2 * s, 0.6 * s, shade(A.LEAF, rng.uniform(0.5, 0.7)), n=int(18 * s * s),
+                      part='canopy_low', sprigs=False)
+k.box(-3, SKY_ROWS + 2.5, -6.2, COLS + 3, ROWS + 10, -6.0, ('#1a2a16', 0.4), 'canopy_gloom')
+with k.foliage('leaf'):
     for (x, r, s) in ((3.0, 6.0, 1.6), (36.0, 22.0, 1.8), (24.0, 26.0, 1.3), (37.5, 4.8, 1.2), (2.0, 27.5, 1.5)):   # crowns of other giants, standing up
         A.crown(k, x, r, -0.2, s * 0.6)
 for (x, r) in ((36.0, 21.2), (3.0, 5.4)):                       # a far platform on another giant, a lantern lit
@@ -56,7 +64,19 @@ for (x, r) in ((36.0, 21.2), (3.0, 5.4)):                       # a far platform
 # ---- the Queen's Bower ----------------------------------------------------------------------------------------------
 bx, br, brad, bro = BOWER
 A.column_trunk(k, bx, br, brad, -9.0, 1.2, seed=7)               # the top of the Great Tree's trunk, through the floor
-k.cyl(bx, br, 1.2, 1.32, brad + 0.05, (shade(A.BARK, 0.9), 0.3), 'trunk_top', verts=24)
+k.cyl(bx, br, 1.2, 1.28, brad + 0.02, (shade(A.BARK, 0.9), 0.3), 'trunk_top', verts=24)
+# the old tree's top grown over: a dome of moss, a young sapling out of it, flowers (no cut stump)
+k.blob(bx, br, 1.28, brad * 1.02, brad * 0.94, 0.42, ('#4a7a36', 0.4), 'trunk_moss', segs=20)
+for _ in range(14):
+    a, d = rng.uniform(0, math.tau), rng.uniform(0, brad * 0.85)
+    k.blob(bx + math.cos(a) * d, br + math.sin(a) * d * 0.92, 1.5 + 0.2 * (1 - d / brad), rng.uniform(0.15, 0.3), 0.12, 0.08,
+           (shade('#5a8a3e', rng.uniform(0.85, 1.15)), 0.35), 'trunk_moss', segs=8)
+k.tube((bx + 0.2, br - 0.1, 1.6), (bx + 0.35, br - 0.25, 2.9), 0.06, (A.BARK_L, 0.3), 'sapling', verts=6)
+with k.foliage('leaf'):
+    W.leafy_crown(k, bx + 0.35, br - 0.25, 3.1, 0.65, 0.55, 0.45, shade(A.LEAF, 1.12), n=40, part='sapling_leaves')
+for _ in range(12):
+    a, d = rng.uniform(0, math.tau), rng.uniform(0.3, brad * 0.9)
+    k.sphere(bx + math.cos(a) * d, br + math.sin(a) * d * 0.92, 1.62, 0.05, 0.045, rng.choice(('#f0f0f0', '#c8a8f0', '#f0d070')), 'flower', segs=6)
 A.ring_platform(k, bx, br, brad + 0.05, bro, gaps=[math.atan2((13.6 - br) / 0.92, 19.8 - bx), math.atan2((18.4 - br) / 0.92, 9.2 - bx)])
 # a stair down into the trunk: a dark arched door with a gold leaf over it
 HDOOR = (int(bx), int(br + brad * 0.92 + 0.4))
@@ -109,6 +129,37 @@ for (x, r) in ((bx - 3.6, br + 2.2), (bx + 3.6, br + 2.2)):          # benches e
 for (x, r) in ((bx - 4.6, br - 1.6), (bx + 4.4, br + 2.0), (bx - 2.6, br + 4.6), (bx + 2.6, br + 4.6)):
     k.cyl(x, r, 0.0, 0.32, 0.24, ('#8a5a3a', 0.3), 'tub', verts=12)
     A.flower_bed(k, FLAT, x, r, 0.26, 0.22, n=5)
+# the garden round the rail: tubs of flowers and little trees, a gold leaf inlaid in a ring in the floor, a low table set
+for i in range(10):
+    a = math.pi * 0.08 + i * (math.pi * 0.84 / 9)
+    x, r = bx + math.cos(a) * (bro - 0.55), br + math.sin(a) * (bro - 0.55) * 0.92
+    if abs(x - (bx + 3.6)) < 1.0 and abs(r - (br + 2.2)) < 0.8 or abs(x - (bx - 3.6)) < 1.0 and abs(r - (br + 2.2)) < 0.8:
+        continue
+    if abs(x - bx) < 1.0 and r > br + brad:                      # keep the way to the trunk door open
+        continue
+    if any(math.hypot(x - ex, r - er) < 2.0 for (ex, er) in ((9.2, 18.4), (19.8, 13.6))):   # and the bridges' landings
+        continue
+    k.cyl(x, r, 0.0, 0.3, 0.2, ('#8a5a3a', 0.3), 'tub', verts=12)
+    if i % 3 == 1:
+        with k.foliage('leaf'):
+            k.tube((x, r, 0.3), (x, r, 0.8), 0.03, (A.BARK_L, 0.3), 'tub_tree', verts=5)
+            W.leafy_crown(k, x, r, 1.0, 0.32, 0.28, 0.3, shade(A.LEAF, rng.uniform(1.0, 1.15)), n=18, part='tub_tree_leaves')
+    else:
+        A.flower_bed(k, FLAT, x, r, 0.18, 0.16, n=4)
+    k.solid(x - 0.2, r - 0.2, x + 0.2, r + 0.2)
+for i in range(48):                                              # the inlay: gold leaves in a ring set into the planks
+    a = i / 48 * math.tau
+    if abs(math.sin(a) - 1) < 0.02:
+        continue
+    x, r = bx + math.cos(a) * (brad + 1.2), br + math.sin(a) * (brad + 1.2) * 0.92
+    k.blob(x, r, 0.012, 0.09, 0.05, 0.006, (A.GOLD, 0.25), 'floor_inlay', rot=(0, 0, math.degrees(a) + 90), segs=6)
+lt = (bx + 2.4, br - 1.3)
+k.cyl(lt[0], lt[1], 0.0, 0.3, 0.32, (A.ELFWOOD, 0.25), 'table', verts=16)
+for j in range(3):
+    a = j * 2.1
+    k.cyl(lt[0] + math.cos(a) * 0.16, lt[1] + math.sin(a) * 0.14, 0.3, 0.38, 0.04, ('#d8d0c0', 0.25), 'cup', verts=8)
+k.cyl(lt[0], lt[1], 0.3, 0.46, 0.06, (A.GOLD, 0.25), 'jug', verts=10)
+k.solid(lt[0] - 0.3, lt[1] - 0.3, lt[0] + 0.3, lt[1] + 0.3)
 # banners of the wood: a gold leaf on green, hung either side of the seat
 for sx in (-1, 1):
     px, pr = tx + sx * 1.6, tr + 0.4

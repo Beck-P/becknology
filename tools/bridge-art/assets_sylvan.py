@@ -33,17 +33,28 @@ def smooth(a, b, t):
     return t * t * (3 - 2 * t)
 
 
-def noise(x, r, f, seed):
-    """Cheap smooth value noise in [0, 1]."""
+def _vn(x, r, seed):
     def h(i, j):
         v = math.sin(i * 127.1 + j * 311.7 + seed * 74.7) * 43758.5453
         return v - math.floor(v)
-    x, r = x * f, r * f
     i, j = math.floor(x), math.floor(r)
     u, v = x - i, r - j
     u, v = u * u * (3 - 2 * u), v * v * (3 - 2 * v)
     a, b, c, d = h(i, j), h(i + 1, j), h(i, j + 1), h(i + 1, j + 1)
     return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v
+
+
+def noise(x, r, f, seed):
+    """Cheap smooth value noise in [0, 1]. The lattice is turned by an angle of the seed's own and the domain warped a
+    little, so its contours wander instead of running square to the tile grid (plain value noise thresholded came out
+    as blocks along the grid)."""
+    a = 0.6 + (seed * 0.618) % 1.0 * 0.9                  # 34°..86°: never near the grid's own angles
+    ca, sa = math.cos(a), math.sin(a)
+    x, r = x * f, r * f
+    xr, rr = x * ca - r * sa, x * sa + r * ca
+    wx = _vn(xr * 1.7 + 11.3, rr * 1.7, seed + 101) - 0.5
+    wr = _vn(xr * 1.7, rr * 1.7 - 7.1, seed + 202) - 0.5
+    return _vn(xr + 0.45 * wx, rr + 0.45 * wr, seed)
 
 
 def seg_dist(x, r, a, b):
@@ -86,6 +97,8 @@ class Land:
         'flag': ('#7e7c6c', 0.25), 'deep_moss': ('#3a5a2c', 0.3), 'gloom': ('#2e3a2a', 0.36),
     }
 
+    TURF = ('moss', 'moss_dark', 'deep_moss', 'grass', 'meadow')
+
     def __init__(self, k, zfn, matfn, alb=None):
         self.k, self.zf, self.mf = k, zfn, matfn
         self.alb = dict(self.ALB)
@@ -125,6 +138,8 @@ class Land:
             for p in o.data.polygons:
                 p.use_smooth = True
             k._finish(o, self.alb[key], prefix + '_' + key)
+            if key in self.TURF:                             # the forest floor is turf to the finish: the leaf pass marks it, so
+                k.parts[-1]['nature'] = 'grass'              # it takes the drawn grass, the seasons and the wind as a meadow does
 
 
 def water(k, x0, r0, x1, r1, inside, z, part='stream_water', tone='#3a7088', step=0.0625):
@@ -492,6 +507,30 @@ def leaf_awning(k, x0, x1, r0, r1, z_back, z_front, col, col2=None, part='awning
         if scallop:                                                          # a leaf point hanging off the front
             xm = (xa + xb) / 2
             k.poly([(xa, r1, z_front), (xb, r1, z_front), (xm, r1 + 0.05, z_front - 0.22)], (shade(c, 0.9), 0.3), part)
+
+
+def leaf_thatch(k, x0, x1, r0, r1, z_back, z_front, tones=('#56723a', '#5c783c', '#628040', '#7a6e3a'), part='roof_thatch'):
+    """A roof thatched with big leaves, sloping toward you: a dark deck, then courses of overlapping leaf shingles from
+    the back down to the eave, each leaf its own tone (now and then a dry one), the eave ragged with leaf tips."""
+    rng = k.rng
+    k.poly([(x0, r0, z_back - 0.03), (x1, r0, z_back - 0.03), (x1, r1, z_front - 0.03), (x0, r1, z_front - 0.03)], ('#2e3a1e', 0.4), part)
+    rows = max(3, int((r1 - r0) / 0.22))
+    for j in range(rows + 1):
+        t = j / rows
+        r, z = r0 + (r1 - r0) * t, z_back + (z_front - z_back) * t
+        x = x0 - rng.uniform(0, 0.2)
+        while x < x1:
+            w = rng.uniform(0.16, 0.24)
+            xa, xb = max(x0, x), min(x1, x + w)
+            col = tones[-1] if rng.random() < 0.03 else rng.choice(tones[:-1])
+            col = shade(col, 0.9 + 0.16 * t + rng.uniform(-0.03, 0.03))   # lighter toward the eave, as the light falls
+            lift = 0.03 + 0.01 * (j % 2)
+            tip = (xa + xb) / 2 + rng.uniform(-0.04, 0.04)
+            dr, dz = (r1 - r0) / rows * 1.6, (z_front - z_back) / rows * 1.6
+            k.poly([(xa, r - dr * 0.25, z - dz * 0.25 + lift), (xb, r - dr * 0.25, z - dz * 0.25 + lift),
+                    (xb - 0.02, r + dr * 0.55, z + dz * 0.55 + lift), (tip, r + dr, z + dz + lift - 0.04),
+                    (xa + 0.02, r + dr * 0.55, z + dz * 0.55 + lift)], (col, 0.32), part)
+            x += w * rng.uniform(0.8, 0.95)
 
 
 def carved_post(k, x, r, z0, z1, rad=0.06, col=ELFWOOD, leaf=True):
@@ -965,6 +1004,7 @@ def column_trunk(k, cx, cr, rad, z0, z1, seed=0, moss=True):
             ring.append((cx + math.cos(a) * rr, cr + math.sin(a) * rr * 0.92, z))
         rings.append(ring)
     k.loft(rings, (BARK, 0.38), 'giant_trunk', closed=True)
+    k.poly([(p[0], p[1], z1) for p in rings[-1]], (shade(BARK, 0.8), 0.38), 'giant_trunk')     # the top closed (a crown sits on it)
     for i in range(int(12 + rad * 6)):
         a = i / (12 + rad * 6) * math.tau + rng.uniform(-0.06, 0.06)
         if math.sin(a) < -0.25:

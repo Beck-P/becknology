@@ -87,6 +87,8 @@ def mat(x, r):
         return 'flag' if e < 0.86 + jit else 'path'
     if path_d(x, r) < 0.62 + jit:
         return 'path'
+    if RANGE['x0'] - 0.2 < x < RANGE['x1'] + 0.2 and abs(r - RANGE['line'] - 0.4) < 0.75 + 2 * jit:
+        return 'path'                                            # the turf trodden bare along the shooting line
     n = A.noise(x, r, 0.8, 7)
     if n > 0.76:
         return 'litter'
@@ -156,7 +158,7 @@ LX0, LX1, LR = 3.4, 9.6, 28.6
 for x in (LX0, (LX0 + LX1) / 2, LX1):
     A.carved_post(k, x, LR - 1.1, L.z(x, LR - 1.1), L.z(x, LR - 1.1) + 2.5)
     A.carved_post(k, x, LR + 0.9, L.z(x, LR + 0.9), L.z(x, LR + 0.9) + 2.0)
-A.leaf_awning(k, LX0 - 0.4, LX1 + 0.4, LR - 1.5, LR + 1.4, L.z(6, LR) + 2.6, L.z(6, LR) + 1.95, '#6a7a3a', '#7a8a44')
+A.leaf_thatch(k, LX0 - 0.4, LX1 + 0.4, LR - 1.5, LR + 1.4, L.z(6, LR) + 2.6, L.z(6, LR) + 1.95)
 z0 = L.z(6.5, LR)
 k.box(LX0 + 0.6, LR - 0.5, z0 + 0.72, LX1 - 0.6, LR + 0.2, z0 + 0.8, (A.ELFWOOD, 0.25), 'workbench')
 for x in (LX0 + 0.7, LX1 - 0.7):
@@ -220,6 +222,31 @@ for r in [11.0 + i * 1.1 for i in range(19)]:                      # a hedge alo
             continue
         A.shrub(k, L, x + rng.uniform(-0.15, 0.15), r, s=rng.uniform(0.38, 0.5), tone=rng.choice(('#3a6a30', '#46763a')),
                 flowers_=rng.choice((None, None, '#f0f0f0', '#f0b0c8')))
+# life round the range, on its own dice (the scene's dice place the wood after it, as before): straw bales and a quiver
+# stand by the line, spent arrows in the turf short of the marks, flowers along the inside of the fence
+rr_ = __import__('random').Random(4747)
+for (x, r) in ((RANGE['x0'] - 0.75, RANGE['line'] - 1.6), (RANGE['x1'] + 0.2, RANGE['line'] - 0.9)):
+    zb = L.z(x, r)
+    k.box(x - 0.32, r - 0.2, zb, x + 0.32, r + 0.2, zb + 0.36, ('#c8a85a', 0.42), 'hay')
+    for i in range(3):
+        k.box(x - 0.33, r - 0.21 + i * 0.14, zb + 0.34, x + 0.33, r - 0.19 + i * 0.14, zb + 0.365, ('#9a7a3a', 0.4), 'hay_band')
+    k.solid(x - 0.32, r - 0.2, x + 0.32, r + 0.2)
+qx, qr = RANGE['x1'] - 0.7, RANGE['line'] + 1.1
+A.carved_post(k, qx, qr, L.z(qx, qr), L.z(qx, qr) + 0.8, rad=0.05, leaf=False)
+k.cyl(qx + 0.1, qr + 0.02, L.z(qx, qr) + 0.35, L.z(qx, qr) + 0.75, 0.08, ('#6a4a2a', 0.35), 'quiver', verts=8)
+for i in range(5):
+    k.tube((qx + 0.06 + i * 0.02, qr + 0.02, L.z(qx, qr) + 0.7), (qx + 0.04 + i * 0.03, qr, L.z(qx, qr) + 0.95), 0.008, '#d8c8a0', 'arrow_shaft', verts=4)
+    k.blob(qx + 0.04 + i * 0.03, qr, L.z(qx, qr) + 0.93, 0.02, 0.01, 0.03, ('#8ab858', 0.4), 'fletch', segs=5)
+k.solid_post(qx, qr)
+for (r, x0, x1, _s) in LANES:
+    for _ in range(3):
+        x, r2 = rr_.uniform(x0, x1 + 1), r + rr_.uniform(0.9, 2.2)
+        z = L.z(x, r2)
+        a = rr_.uniform(-0.3, 0.3)
+        k.tube((x, r2, z - 0.02), (x + a * 0.2, r2 - 0.25, z + 0.22), 0.01, '#c8b088', 'arrow_shaft', verts=4)
+        k.blob(x + a * 0.2, r2 - 0.25, z + 0.22, 0.025, 0.012, 0.035, ('#8ab858', 0.4), 'fletch', segs=5)
+for x in (RANGE['x0'] - 0.1, RANGE['x1'] + 0.35):
+    A.flowers(k, L, x - 0.3, R0 + 0.5, x + 0.3, RANGE['line'] - 2.0, 30, cols=('#f0f0f0', '#f0e0a0', '#c8a8f0'))
 AERIN = (RANGE['x0'] - 1, RANGE['line'])
 for x in (RANGE['x0'] - 0.2, RANGE['x1'] + 0.6):
     A.lantern_post(k, L, x, RANGE['line'] + 1.0)

@@ -41,6 +41,9 @@ const OUT = process.argv[2] || '/tmp';
   const inter = (label) => p.evaluate((l) => BridgeWorld.getWorld().interactions.filter(i => i.label === l).map(i => [i.x, i.y]), label);
   const walkable = (w, x, y) => p.evaluate(([w, x, y]) => fetch('/bridge/assets/worlds/' + w + '.json').then(r => r.json()).then(d => d.collisions[y] && d.collisions[y][x] === 0), [w, x, y]);
 
+  const isOpen = (w) => p.evaluate((w) => BridgeSylvara.isOpen(w), w);   // a place goes live as its render ships (BridgeSylvara.OPEN)
+  const live = async (ws) => { for (const w of ws) if (!await isOpen(w)) { console.log('skipped (not open yet):', w); return false; } return true; };
+
   // ---- the ways between them ----------------------------------------------------------------------------------------
   const WORLDS = ['sylvara-roots', 'sylvara-boughs', 'sylvara-crown', 'sylvara-tavern', 'sylvara-river', 'sylvara-falls', 'sylvara-fallcave', 'sylvara-lake', 'sylvara-deepwood'];
   let exits = 0;
@@ -54,10 +57,11 @@ const OUT = process.argv[2] || '/tmp';
   }
   await go('sylvara', [40, 18]);
   const joins = await p.evaluate(() => BridgeWorld.getWorld().interactions.filter(i => i._join).map(i => i.label));
-  if (joins.length !== 2) fail('Elderglade\'s ways out: ' + joins);
+  const wantJoins = (await isOpen('sylvara-roots') ? 1 : 0) + (await isOpen('sylvara-river') ? 1 : 0);
+  if (joins.length !== wantJoins) fail('Elderglade\'s ways out: ' + joins);
   await go('sylvara-hall', [2, 8]);
   const hall = await p.evaluate(() => BridgeWorld.getWorld().interactions.filter(i => i._join).map(i => i.label));
-  if (!hall.includes('THE HEARTWOOD STAIR')) fail('no stair up from the Heartwood Hall');
+  if (await isOpen('sylvara-crown') && !hall.includes('THE HEARTWOOD STAIR')) fail('no stair up from the Heartwood Hall');
   console.log('ways: exits checked', exits, 'elderglade', joins.join(', '), 'hall', hall.join(', '));
 
   // ---- Corin's bows, Merrow's stall ------------------------------------------------------------------------------------
@@ -87,6 +91,7 @@ const OUT = process.argv[2] || '/tmp';
   await shut();
   console.log('range: rounds', after.rounds, 'best', after.best, 'coins', await p.evaluate(() => window._coins - 1e6));
 
+  if (await live(['sylvara-boughs'])) {
   // ---- the Boughs: a fire arrow lights a high lantern; an arrow lets the ladder down; the nook's box; the zip line ---------------
   await go('sylvara-boughs', [21, 26]);
   await give('fire_arrow', 2); await select('fire_arrow');
@@ -113,6 +118,7 @@ const OUT = process.argv[2] || '/tmp';
   const at = await p.evaluate(() => [BridgeCharacter.getX(), BridgeCharacter.getY()]);
   if (at[0] !== Z.to[0] || at[1] !== Z.to[1]) fail('the zip line left you at ' + at + ', not ' + Z.to);
   console.log('boughs: lantern lit, ladder down, box opened, zip rigged and ridden to', at.join(','));
+  }
 
   // ---- brewing with Mirelle, and what the potions do ------------------------------------------------------------------
   await go('sylvara', [34, 13]);
@@ -133,6 +139,7 @@ const OUT = process.argv[2] || '/tmp';
   if (!potions.eyes) fail('no night eyes');
   console.log('brewing: before', JSON.stringify(before), 'after', JSON.stringify(potions));
 
+  if (await live(['sylvara-river', 'sylvara-lake'])) {
   // ---- the river shrine; the Moonwell's source -------------------------------------------------------------------------
   await go('sylvara-river', [24, 1]);
   await give('moonpetal', 1);
@@ -146,11 +153,13 @@ const OUT = process.argv[2] || '/tmp';
   const hp = await p.evaluate(() => BridgeInventory.getStats());
   if (hp.hp < hp.maxHP) fail('the source didn\'t fill you up');
   console.log('river shrine blessing', true, 'source hp', hp.hp + '/' + hp.maxHP);
+  }
 
   // ---- a shot of every place by the hour ---------------------------------------------------------------------------------
   const SPOTS = { 'sylvara-roots': [22, 24], 'sylvara-boughs': [21, 26], 'sylvara-crown': [12, 18], 'sylvara-river': [24, 1], 'sylvara-falls': [19, 23],
                   'sylvara-lake': [26, 30], 'sylvara-deepwood': [20, 24], 'sylvara-tavern': [12, 12], 'sylvara-fallcave': [9, 12] };
   for (const [w, at] of Object.entries(SPOTS)) {
+    if (!await isOpen(w)) continue;
     await go(w, at);
     for (const hour of [12.4, 17.9, 1]) {
       await p.evaluate((h) => { if (typeof BridgeLit !== 'undefined' && BridgeLit._force) BridgeLit._force({ hour: h, season: 'summer', weather: 'clear' }); }, hour);

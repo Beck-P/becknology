@@ -35,6 +35,12 @@
 
   "sylvara":                { "n": 7,  "wardrobe": "sylvara", "busy": "always", "emerge": 4 },
   "sylvara-hall":           { "n": 4,  "wardrobe": "sylvara", "busy": "always" },
+  "sylvara-roots":          { "n": 16, "wardrobe": "sylvara", "busy": "day", "emerge": 3 },
+  "sylvara-boughs":         { "n": 9,  "wardrobe": "sylvara", "busy": "always" },
+  "sylvara-tavern":         { "n": 6,  "wardrobe": "sylvara", "busy": "night" },
+  "sylvara-crown":          { "n": 3,  "wardrobe": "sylvara", "busy": "night" },
+  "sylvara-river":          { "n": 6,  "wardrobe": "sylvara", "busy": "day", "emerge": 2 },
+  "sylvara-lake":           { "n": 2,  "wardrobe": "sylvara", "busy": "night", "emerge": 2 },
 
   "_lines": {
     "sapphire": ["BLUE GLASS, GREEN GLASS, GLASS THAT SINGS WHEN THE WIND BLOWS. ASK FOR IT BY THE CRATE.", "EVERYTHING ON THE SAPPHIRE HAS A PRICE. THE TRICK IS KNOWING IT BEFORE THE OTHER FELLOW DOES.", "THE FLOATING MARKET'S LASHED TOGETHER EVERY DUSK. IF YOU FALL IN, YOU PAY THE BOATMAN TO FISH YOU OUT.", "THE GLASSWORKS NEVER LETS ITS FURNACE GO OUT. NOT ONCE IN NINETY YEARS. THEY SAY SO, ANYWAY.", "HAVE YOU SEEN THE CLIFF TOWN? WHITE AS SALT, AND EVERY STEP OF IT UPHILL.", "I'VE A CARGO OF SILK DUE FROM ROSE COVE. IF IT'S LATE AGAIN I'M BUYING MY OWN BOAT.", "NO CREDIT, NO BARTER, NO HAGGLING ON A FEAST DAY. THOSE ARE THE RULES. MOSTLY.", "MY GRANDMOTHER BLEW THE GLASS FOR THE LIGHTHOUSE LENS. ONE BREATH, SHE SAID. ONE GOOD BREATH."],

@@ -94,6 +94,7 @@ var BridgeSylvara = (function () {
   };
   function joins(worldId, data) {
     (JOINS[worldId] || []).forEach(function (j) {
+      if (!isOpen(j.target)) return;
       if ((data.interactions || []).some(function (it) { return it.target === j.target && it.x === j.x && it.y === j.y; })) return;
       var it = {};
       for (var k in j) it[k] = j[k];
@@ -237,9 +238,15 @@ var BridgeSylvara = (function () {
     BridgeInteractions.say('THE LANTERNS', words[group] || 'THE LAST LANTERN CATCHES.');
   }
 
+  // The city's new places go live one at a time, as each one's render ships: a way into one that isn't here yet stays
+  // hidden (a door, a lift, a stair, the canoe's way on). Add a place's id as its scene goes in.
+  var OPEN = ['sylvara-roots'];
+  var NEW = /^sylvara-(roots|boughs|crown|tavern|river|falls|fallcave|lake|deepwood)$/;
+  function isOpen(id) { return !NEW.test(id) || OPEN.indexOf(id) >= 0; }
   function decorate(worldId, data) {                 // js/world.js, as each world loads
     if (!data) return;
     reg();
+    if (data.interactions) data.interactions = data.interactions.filter(function (it) { return !it.target || isOpen(it.target); });
     if (typeof BridgeBows !== 'undefined') BridgeBows.decorate(worldId, data);
     if (typeof BridgeCanoe !== 'undefined') BridgeCanoe.decorate(worldId, data);
     if (/^sylvara/.test(worldId)) joins(worldId, data);
@@ -470,5 +477,5 @@ var BridgeSylvara = (function () {
   }
   setTimeout(reg, 0);
 
-  return { over: over, decorate: decorate, use: use, topic: topic, groupLit: groupLit, rangeOpen: rangeHours, JOINS: JOINS, SHOPS: SHOPS };
+  return { over: over, decorate: decorate, use: use, topic: topic, groupLit: groupLit, rangeOpen: rangeHours, isOpen: isOpen, OPEN: OPEN, JOINS: JOINS, SHOPS: SHOPS };
 })();

@@ -68,20 +68,23 @@ SWITCH = (25.5, 13.4)                                            # the leaf targ
 LADDER = (25, 12, 2.0)                                           # the ladder: the first cell it opens, its length (tiles)
 
 # ---- far below: the floor in the gloom, the lower boughs -----------------------------------------------------------------
-k.box(-2, -6, FLOOR - 0.2, COLS + 2, ROWS + 22, FLOOR, ('#1e2a1a', 0.4), 'ground_gloom')
-for _ in range(60):
-    x, r = rng.uniform(-2, COLS + 2), rng.uniform(-4, ROWS + 20)
+# (15 down, the floor lands 10.6 rows further down the screen: it starts that much further north to fill the top)
+k.box(-2, -24, FLOOR - 0.2, COLS + 2, ROWS + 22, FLOOR, ('#1e2a1a', 0.4), 'ground_gloom')
+for _ in range(110):
+    x, r = rng.uniform(-2, COLS + 2), rng.uniform(-22, ROWS + 20)
     s = rng.uniform(0.3, 0.9)
     k.blob(x, r, FLOOR, s, s * 0.8, 0.08, (shade('#2a3a24', rng.uniform(0.8, 1.2)), 0.4), 'ground_moss', segs=8)
 for _ in range(14):                                              # the city's lanterns far below, tiny
-    x, r = rng.uniform(0, COLS), rng.uniform(4, ROWS + 18)
+    x, r = rng.uniform(0, COLS), rng.uniform(-14, ROWS + 18)
     A.leaf_lantern(k, x, r, FLOOR + 1.5, s=0.12, energy=0.0)
-A.lower_canopy(k, -2, 0, COLS + 2, ROWS + 14, z=-5.5, n=70)
-A.lower_canopy(k, -2, 6, COLS + 2, ROWS + 18, z=-10.0, n=40)
+A.lower_canopy(k, -2, -6, COLS + 2, ROWS + 14, z=-5.5, n=90)
+A.lower_canopy(k, -2, -9, COLS + 2, ROWS + 16, z=-7.8, n=60)
+A.lower_canopy(k, -2, -13, COLS + 2, ROWS + 18, z=-10.0, n=60)
 
 # ---- the trunks, the platforms ----------------------------------------------------------------------------------------
+TOP = {n: (10.0 if n == 'queen' else 6.5 if (ro or n == 'tavern') else 9.5) for n, (_x, _r, _rad, ro) in T.items()}   # the queen's goes higher: her stair winds up it
 for i, (name, (x, r, rad, ro)) in enumerate(T.items()):
-    A.column_trunk(k, x, r, rad, FLOOR, 9.5, seed=60 + i)
+    A.column_trunk(k, x, r, rad, FLOOR, TOP[name], seed=60 + i)
 def gap_toward(name, x, r):
     tx, tr, _rad, _ro = T[name]
     return math.atan2((r - tr) / 0.92, x - tx)
@@ -190,9 +193,8 @@ with k.foliage('leaf'):
                          (47.5, 26.0, 3.6, 1.2), (6.0, 36.5, 2.2, 1.3), (20.0, 37.0, 2.0, 1.2), (34.0, 36.5, 2.4, 1.3), (44.0, 37.5, 2.0, 1.1),
                          (17.5, 3.0, 4.4, 1.0), (30.0, 2.2, 4.8, 1.0)):
         A.crown(k, x, r, z, s * 0.75)
-for name in ('edge1', 'edge2', 'edge3'):                        # the edge trunks carry a crown of their own, low
-    x, r, rad, _ = T[name]
-    A.crown(k, x, r, 5.2, 0.9)
+for name, (x, r, rad, ro) in T.items():                           # each giant goes on up into its own crown, seated over its top
+    A.crown(k, x, r - 0.1, TOP[name] + 0.55, rad * 0.4 + 0.15, hang=False)
 # leaves on the trunks at walkway height and sprays out over the drop
 with k.foliage('leaf'):
     for name, (x, r, rad, ro) in T.items():

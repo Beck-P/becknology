@@ -223,7 +223,8 @@ var BridgeCanoe = (function () {
   }
   function edgeOut(w, x, y) {
     var R = w.river;
-    var at = function (e) { return e && ((e.edge === 'bottom' && y > w.height - 0.3) || (e.edge === 'top' && y < 0.3) || (e.edge === 'left' && x < 0.3) || (e.edge === 'right' && x > w.width - 0.3)); };
+    var open = function (e) { return typeof BridgeSylvara === 'undefined' || !BridgeSylvara.isOpen || BridgeSylvara.isOpen(e.target); };
+    var at = function (e) { return e && open(e) && ((e.edge === 'bottom' && y > w.height - 0.3) || (e.edge === 'top' && y < 0.3) || (e.edge === 'left' && x < 0.3) || (e.edge === 'right' && x > w.width - 0.3)); };
     if (at(R.down)) return R.down;
     if (at(R.up)) return R.up;
     var forks = R.forks || [];

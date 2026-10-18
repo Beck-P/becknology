@@ -67,6 +67,10 @@ const OUT = process.argv[2] || '/tmp';
     return true;
   };
 
+  if (!await p.evaluate(() => ['sylvara-river', 'sylvara-falls', 'sylvara-lake', 'sylvara-deepwood'].every(w => BridgeSylvara.isOpen(w)))) {
+    console.log('skipped: the river isn\'t open yet (BridgeSylvara.OPEN)'); await b.close(); return;
+  }
+
   // ---- the upper Silverrun: off the rack, down the river ----------------------------------------------------------------
   await go('sylvara-river', [24, 1]);
   await useKind('canoe');
