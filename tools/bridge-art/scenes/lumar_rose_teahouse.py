@@ -29,7 +29,7 @@ A.room(k, 1, 2, 14, 9, H, door=(7.0, 8.0), floor_tone='#8a6a48', plaster='#ecdcc
        beam='#3a2228')
 # mats over the floor: woven, edged in dark cloth
 for (x0, r0) in [(x, r) for x in (1.2, 4.2, 7.2, 10.2) for r in (2.2, 5.2)]:
-    k.box(x0, r0, 0.0, x0 + 2.9, r0 + 2.9, 0.03, ('#c8b07a', 0.3), 'floor_mat')
+    k.box(x0, r0, 0.0, x0 + 2.9, r0 + 2.9, 0.03, ('#c8b07a', 0.05), 'floor_mat')
     k.box(x0, r0, 0.03, x0 + 2.9, r0 + 0.08, 0.035, '#3a2228', 'floor_mat_edge')
     k.box(x0, r0 + 2.82, 0.03, x0 + 2.9, r0 + 2.9, 0.035, '#3a2228', 'floor_mat_edge')
 # the paper screens along the back wall, lit
@@ -54,13 +54,42 @@ k.solid(HX - 0.6, HR - 0.6, HX + 0.6, HR + 0.6)
 # low tables with cushions, cups and a pot on each
 TABLES = [(7.6, 5.2), (10.8, 5.2), (7.6, 7.4), (10.8, 7.4)]
 for (tx, tr) in TABLES:
-    k.box(tx - 0.45, tr - 0.3, 0.0, tx + 0.45, tr + 0.3, 0.32, ('#4a2a2a', 0.15), 'tea_table', bevel=0.03)
-    k.sphere(tx, tr, 0.4, 0.09, 0.08, ('#e8e0d8', 0.1), 'teapot', segs=10)
-    for dx in (-0.25, 0.25):
-        k.cyl(tx + dx, tr + 0.1, 0.32, 0.38, 0.05, '#e8e0d8', 'tea_cup', verts=8)
-    for dx in (-0.75, 0.75):
-        k.box(tx + dx - 0.22, tr - 0.22, 0.0, tx + dx + 0.22, tr + 0.22, 0.1, (rng.choice(('#c8607a', '#7a4a8a', '#c8a050')), 0.3), 'cushion', bevel=0.04)
-    k.solid(tx - 0.45, tr - 0.3, tx + 0.45, tr + 0.3)
+    k.box(tx - 0.6, tr - 0.4, 0.0, tx + 0.6, tr + 0.4, 0.34, ('#4a2a2a', 0.06), 'tea_table', bevel=0.03)
+    k.box(tx - 0.55, tr - 0.35, 0.34, tx + 0.55, tr + 0.35, 0.36, ('#6a3a3a', 0.06), 'tea_table_top')
+    k.sphere(tx, tr, 0.46, 0.12, 0.1, ('#e8e0d8', 0.04), 'teapot', segs=10)
+    k.tube((tx + 0.1, tr, 0.47), (tx + 0.2, tr, 0.52), 0.02, '#e8e0d8', 'teapot_spout', verts=5)
+    for dx in (-0.32, 0.32):
+        k.cyl(tx + dx, tr + 0.12, 0.36, 0.43, 0.06, '#e8e0d8', 'tea_cup', verts=8)
+    k.box(tx - 0.2, tr - 0.3, 0.36, tx + 0.2, tr - 0.15, 0.39, '#c8a050', 'sweets_tray')
+    for dx in (-0.85, 0.85):
+        k.box(tx + dx - 0.26, tr - 0.26, 0.0, tx + dx + 0.26, tr + 0.26, 0.12, (rng.choice(('#c8607a', '#7a4a8a', '#c8a050')), 0.06), 'cushion', bevel=0.04)
+    k.solid(tx - 0.6, tr - 0.4, tx + 0.6, tr + 0.4)
+# the alcove (west of the window): a hanging scroll of a mountain and the sea, a low stand with a spray of silk-tree
+# blossom in a celadon bowl
+k.box(9.2, 1.95, 0.0, 11.2, 2.06, 2.1, ('#e8dcc8', 0.04), 'alcove_back')
+k.box(9.15, 2.0, 0.0, 11.25, 2.5, 0.18, ('#4a2a2a', 0.06), 'alcove_dais', bevel=0.02)
+k.box(9.15, 2.0, 2.0, 11.25, 2.1, 2.12, '#3a2228', 'alcove_beam')
+k.box(9.75, 2.07, 0.75, 10.65, 2.09, 1.85, ('#f0e8d8', 0.03), 'scroll')
+k.box(9.82, 2.09, 0.95, 10.58, 2.1, 1.6, '#8a8a9a', 'scroll_ink')
+k.box(9.82, 2.09, 1.3, 10.58, 2.1, 1.38, '#c8607a', 'scroll_ink')
+k.cyl_x(9.7, 10.7, 2.09, 1.86, 0.03, 0.03, '#3a2228', 'scroll_rod', verts=6)
+k.cyl_x(9.7, 10.7, 2.09, 0.74, 0.03, 0.03, '#3a2228', 'scroll_rod', verts=6)
+k.cone(10.6, 2.28, 0.18, 0.34, 0.12, 0.17, ('#8ab8a0', 0.04), 'flower_bowl', verts=12)
+for i in range(7):
+    a = i * 0.8
+    k.tube((10.6, 2.28, 0.34), (10.6 + math.cos(a) * 0.3, 2.28 + math.sin(a) * 0.1, 0.62 + (i % 3) * 0.12), 0.012, '#4a3a2a', 'flower_twig', verts=4)
+    k.sphere(10.6 + math.cos(a) * 0.3, 2.28 + math.sin(a) * 0.1, 0.64 + (i % 3) * 0.12, 0.06, 0.05, '#f0a8c8', 'blossom', segs=6)
+k.solid(9, 2, 11.3, 2.6)
+# a folding screen in the corner, painted with cranes; a potted silk tree
+for i in range(4):
+    k.box(1.3 + i * 0.36, 8.2 - (i % 2) * 0.12, 0.0, 1.64 + i * 0.36, 8.3 - (i % 2) * 0.12, 1.4, ('#e8d8b8', 0.04), 'screen_panel')
+    k.box(1.36 + i * 0.36, 8.31 - (i % 2) * 0.12, 0.7, 1.58 + i * 0.36, 8.32 - (i % 2) * 0.12, 0.9, '#c8607a', 'screen_paint')
+k.solid(1.2, 8.0, 2.8, 8.4)
+k.cyl(12.8, 8.2, 0.0, 0.3, 0.22, ('#5a3a3a', 0.06), 'pot', verts=12)
+with k.foliage('leaf'):
+    W.leafy_crown(k, 12.8, 8.2, 0.9, 0.42, 0.34, 0.35, '#5a7a4a')
+k.solid(12.5, 7.9, 13.1, 8.5)
+
 # the shelves of tea on the east wall
 for lv, z in enumerate((0.5, 1.0, 1.5)):
     k.box(12.3, 2.1, z - 0.05, 13.9, 4.4, z, ('#4a2a2a', 0.15), 'shelf')
@@ -88,8 +117,8 @@ w['interactions'] = [
      'dialog': 'BELOW, THE POOLS STEAMING IN THEIR WHITE TERRACES, BATHERS UP TO THEIR SHOULDERS, LANTERNS ON THE STAIR. ABOVE THEM THE SILK GROVES GLOW FAINTLY PINK WHERE THE COCOONS HANG.'},
     {'x': 12, 'y': 5, 'type': 'dialog', 'label': 'TEA JARS', 'prompt': 'PRESS E TO LOOK',
      'dialog': 'TEA FROM EVERY SEA. A RED TIN FROM THE CRIMSON MARKED "DO NOT". A BLUE JAR FROM SAPPHIRE. A PLAIN ONE, UNLABELLED, THAT LIOR SAYS CAME FROM A SEA NOBODY HAS CHARTED. IT SMELLS OF RAIN.'},
-] + [{'x': int(tx + 0.75 * dx), 'y': int(tr), 'type': 'dialog', 'label': 'CUSHION', 'prompt': 'PRESS E TO SIT', 'action': 'sit',
-      'seat': [round(tx + 0.75 * dx, 2), round(tr + 0.1, 2)], 'facing': 'left' if dx > 0 else 'right',
+] + [{'x': int(tx + 0.85 * dx), 'y': int(tr), 'type': 'dialog', 'label': 'CUSHION', 'prompt': 'PRESS E TO SIT', 'action': 'sit',
+      'seat': [round(tx + 0.85 * dx, 2), round(tr + 0.1, 2)], 'facing': 'left' if dx > 0 else 'right',
       'dialog': 'YOU KNEEL AT THE LOW TABLE. THE STEAM FROM THE POOLS DRIFTS PAST THE WINDOW.'} for (tx, tr) in TABLES for dx in (-1, 1)]
 open(WORLD, 'w').write(json.dumps(w, indent=2) + '\n')
 k.solid(3, 3, 4, 4)
