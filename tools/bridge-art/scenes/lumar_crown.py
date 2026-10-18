@@ -235,7 +235,32 @@ def inlay_rose(cx, cr, R=1.25):
 
 # the grand square, the Exchange's forecourt, the church's: big pale flags; setts in rings round the fountain
 SQUARE = (21.6, 12.1, 43.0, 23.0)
-flags(*SQUARE, '#b0a693', w=(0.5, 0.9), h=(0.36, 0.5), skip=lambda x, r: 1.35 < ring_d(x, r) < 3.55)
+
+
+def in_band(x, r):
+    """The square's paving in panels: a border of dark setts round it, and bands of them running from the fountain's
+    rings to each side (the flags fill the panels between)."""
+    x0, r0, x1, r1 = SQUARE
+    if ring_d(x, r) < 3.55:
+        return False
+    return (x < x0 + 0.42 or x > x1 - 0.42 or r < r0 + 0.42 or r > r1 - 0.42 or abs(x - SQ[0]) < 0.42 or abs(r - SQ[1]) < 0.42)
+
+
+flags(*SQUARE, '#b4a892', w=(0.45, 0.85), h=(0.34, 0.48), skip=lambda x, r: 1.35 < ring_d(x, r) < 3.55 or in_band(x, r))
+xx = SQUARE[0]
+while xx < SQUARE[2] - 0.05:                          # the bands' setts
+    rr_ = SQUARE[1]
+    while rr_ < SQUARE[3] - 0.05:
+        cx_, cr_ = xx + 0.1, rr_ + 0.1
+        if in_band(cx_, cr_) and not under(cx_, cr_):
+            k.box(xx + 0.012, rr_ + 0.012, -0.05, xx + 0.19, rr_ + 0.19, rng.uniform(-0.004, 0.01),
+                  (shade('#80786a', rng.uniform(0.86, 1.1)), 0.14), 'paving_setts', bevel=0.012)
+        rr_ += 0.205
+    xx += 0.205
+for _ in range(60):                                   # moss in the joints and worn, darker flags where people cross
+    x, r = rng.uniform(SQUARE[0] + 0.5, SQUARE[2] - 0.5), rng.uniform(SQUARE[1] + 0.5, SQUARE[3] - 0.5)
+    if not under(x, r) and ring_d(x, r) > 3.6:
+        k.blob(x, r, 0.012, rng.uniform(0.08, 0.16), rng.uniform(0.02, 0.04), 0.008, (rng.choice(('#4a6a3a', '#5a7a44')), 0.3), 'moss', segs=6)
 for (x0, r0, x1, r1) in ((11.0, 19.0, 21.6, 23.0), (11.0, 11.0, 12.4, 19.0), (43.0, 18.4, 53.0, 23.0), (51.0, 11.0, 53.0, 18.4),
                          (12.4, 11.0, 17.0, 12.6), (47.0, 11.0, 51.0, 12.1), (17.0, 12.0, 21.6, 12.6)):
     flags(x0, r0, x1, r1, '#aaa08e', skip=lambda x, r: math.hypot(x - 16.5, r - 21.0) < 1.38 or (abs(x - 47.5) < 0.38 and 19.0 < r < 22.6)
@@ -595,6 +620,51 @@ for (x, r) in ((24.4, 15.2), (39.6, 15.2), (24.4, 19.6), (39.6, 19.6)):
     k.solid(x - 0.45, r - 0.45, x + 0.45, r + 0.45)
 W.cart(k, 34.6, 24.2)
 k.solid(33.4, 23.8, 35.2, 24.6)
+# the square's corners: a coffee kiosk and its tables in the north-east, a poster pillar in the north-west, the old
+# pump on the west side, a bench in the east (all off the walkers' beats)
+KX, KR = 42.5, 15.45
+k.box(KX - 0.45, KR - 0.35, 0.0, KX + 0.45, KR + 0.35, 1.05, ('#2e5a44', 0.12), 'kiosk', bevel=0.012)
+k.box(KX - 0.4, KR + 0.35, 0.55, KX + 0.4, KR + 0.38, 0.95, '#4a3218', 'window_glass', emit=(W.GLOW, 0.7))
+k.box(KX - 0.48, KR - 0.38, 1.05, KX + 0.48, KR + 0.38, 1.12, (A.WOOD_D, 0.1), 'kiosk_top')
+for i in range(6):
+    a = KX - 0.55 + i * 0.183
+    k.quads([((a, KR + 0.38, 1.3), (a + 0.183, KR + 0.38, 1.3), (a + 0.183, KR + 0.8, 1.05), (a, KR + 0.8, 1.05))],
+            ('#c84a3a' if i % 2 else '#ece0c8', 0.1), 'awning')
+k.cyl(KX + 0.2, KR + 0.1, 1.12, 1.3, 0.05, '#c8c0b0', 'chimney_pipe', verts=8)
+for (tx, tr) in ((40.55, 15.55), (41.25, 16.45)):
+    k.cyl(tx, tr, 0.0, 0.62, 0.035, A.IRON, 'table_leg', verts=6)
+    k.cyl(tx, tr, 0.62, 0.66, 0.26, ('#d8d0c0', 0.1), 'table', verts=14)
+    k.cyl(tx, tr, 0.66, 0.7, 0.04, '#e8e4dc', 'cup', verts=8)
+    k.cyl(tx, tr, 0.66, 1.55, 0.02, A.WOOD_D, 'umbrella_pole', verts=5)
+    for i in range(8):
+        a, b = i / 8 * math.tau, (i + 1) / 8 * math.tau
+        k.poly([(tx, tr, 1.68), (tx + math.cos(a) * 0.62, tr + math.sin(a) * 0.55, 1.36), (tx + math.cos(b) * 0.62, tr + math.sin(b) * 0.55, 1.36)],
+               ('#2e6a4a' if i % 2 else '#e8e0cc', 0.1), 'umbrella')
+    for s_ in (-1, 1):
+        cx_ = tx + s_ * 0.38
+        k.cyl(cx_, tr, 0.0, 0.42, 0.02, A.IRON, 'chair_leg', verts=5)
+        k.cyl(cx_, tr, 0.42, 0.46, 0.13, (A.WOOD, 0.12), 'chair', verts=10)
+        k.box(cx_ - 0.13, tr - 0.16, 0.46, cx_ + 0.13, tr - 0.12, 0.78, (A.WOOD, 0.12), 'chair')
+k.solid(40.1, 15.1, 43.0, 16.9)
+PX_, PR_ = 22.55, 15.7                                # a pillar of posters with a lamp on top
+k.cyl(PX_, PR_, 0.0, 0.18, 0.36, (shade(STONE, 0.9), 0.12), 'pillar_base', verts=16)
+k.cyl(PX_, PR_, 0.18, 1.7, 0.3, ('#2a4a3a', 0.12), 'pillar', verts=16)
+for i in range(5):
+    a = math.pi / 2 + (i - 2) * 0.55
+    px_, pr_ = PX_ + math.cos(a) * 0.305, PR_ + math.sin(a) * 0.305
+    k.box(px_ - 0.11, pr_ - 0.01, 0.45 + (i % 2) * 0.15, px_ + 0.11, pr_ + 0.01, 1.05 + (i % 2) * 0.35,
+          rng.choice(('#e8dcc0', '#d8b080', '#c8d0d8', '#e0c8c0')), 'poster')
+k.cone(PX_, PR_, 1.7, 2.0, 0.34, 0.06, ('#2a4a3a', 0.12), 'pillar_cap', verts=16)
+W.lantern(k, PX_, PR_, 2.0, 2.3, s=0.09, energy=10)
+k.solid(PX_ - 0.3, PR_ - 0.3, PX_ + 0.3, PR_ + 0.3)
+HK.pump(k, 22.45, 18.05)
+W.bench(k, 40.2, 41.6, 18.7)
+k.solid(40.2, 18.5, 41.6, 19.0)
+for i in range(7):                                    # more pigeons pecking between the stalls and the statue
+    px_, pr_ = rng.uniform(29.0, 35.0), rng.uniform(21.2, 22.6)
+    k.blob(px_, pr_, 0.06, 0.07, 0.05, 0.05, rng.choice(('#8a8e98', '#9a9ca4', '#6a6e78')), 'pigeon', segs=8)
+    k.sphere(px_ + 0.06, pr_, 0.12, 0.035, 0.035, '#7a7e88', 'pigeon', segs=6)
+
 # more life round the square's edges: a flower stall before the Exchange, a candle-seller by St Brendan's, a cart of
 # flowers by the palace gate, tubs, a bench outside the church
 W.market_stall(k, 12.0, 13.8, 19.35, 19.95, awning=('#e8e4d0', '#c84a6a'), goods='produce')

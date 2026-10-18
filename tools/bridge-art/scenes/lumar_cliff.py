@@ -674,7 +674,7 @@ BALCONIES = [(22, 24), (35, 37)]                    # columns (inclusive) on row
 
 def balcony(x0, x1):
     r0, r1 = 21.0, 21.95
-    k.box(x0, r0 - 0.05, -0.12, x1, r1, 0.0, ('#e8e2d4', 0.18), 'deck_terrace', bevel=0.03)
+    k.box(x0, r0 - 0.05, -0.16, x1, r1, -0.1, ('#e8e2d4', 0.18), 'deck_terrace', bevel=0.03)   # under the grout: flush with the flags, its top drew lines all over them
     CL.paving(k, x0, r0 - 0.05, x1, r1, z=0.0, seed=int(x0))
     for xx in (x0 + 0.2, x1 - 0.2):                 # brackets down into the rock
         k.tube((xx, r1 - 0.1, -0.1), (xx, r0 + 0.1, -1.4), 0.07, ('#d8d0c0', 0.2), 'balcony_strut', verts=6)

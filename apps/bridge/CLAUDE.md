@@ -376,8 +376,11 @@ spreading where it lands; in a hard frost only a thread down the middle still ru
 stays out of the glow image: its light at night is the water's. On Hoarfell the snow is coloured by the hour as the Look
 Book's tarn was (`hoarfell()` in litscene.js): lit or shade from the sun's share of the light against the best-lit snow
 that hour, the hollows a step down from the sky pass, pink-gold where the sun lands at either end of the day and a cool
-blue-grey in the shade, white and blue at noon, blue under the lamps at night; a trodden lane a touch darker, ice (pale
-and bluish) leaned blue with its marks kept, and a warm lean where the sun lands on everything else. A composition takes a few ms a frame (`BUDGET`) whenever the light has moved on enough to show — about once a real minute — and fades in over the last (`FADE`). Characters are lit from the same passes at their feet (`tint`): in shadow under a tree, gold at sunset, lamplit at night.
+blue-grey in the shade, white and blue at noon, blue under the lamps at night; the snow's own painted tones kept as flat
+steps of 0.02 against fresh snow, a quarter stronger than painted so they still show in sunlit white (a piste's corduroy
+in two tones, powder a touch cooler: ground up to 22 bluer than red is snow), a trodden lane (under 0.92 of fresh snow)
+a step darker, ice (pale and bluish, or darker and blue-green — grey-blue strata are rock) leaned blue with its marks
+kept, and a warm lean where the sun lands on everything else. A composition takes a few ms a frame (`BUDGET`) whenever the light has moved on enough to show — about once a real minute — and fades in over the last (`FADE`). Characters are lit from the same passes at their feet (`tint`): in shadow under a tree, gold at sunset, lamplit at night.
 - **Hooks:** js/scene.js calls `BridgeLit.load(sc)`, `.layers(sc, use, masks)` (decor and stand-ins carry their lit passes), `.frame(sc)` in drawBackground, `.water(…)` after it and `.tint(…)` in tintAt; a scene without `lit` draws as before. Previews and tests: `BridgeLit._force({ hour, season, weather })` (hour on the 24-hour face; season `spring|summer|autumn|winter`; weather `clear|cloud|rain|fog|snow`), `BridgeLit._stats(id)`, `BridgeLit.light(id)`.
 - The open sea has its own reflections, glitter path, moon road and stars (js/sea.js, *The sea in the engine*). Not yet: firelight flicker in the live picture (its lamps burn steady; the baked `full` / `dim` cross-fade only shows without live light), a per-scene sun path (every scene's sun comes from the same side). The re-renders are the backlog (`_claude_docs/requests.md`, *The new look*).
 
@@ -722,6 +725,13 @@ lanes three rows or more and the houses south of a lane mostly two storeys.
   `find` scores best in the island's collisions as it loads, so a re-render of the island moves them with it; `BACK`
   points each district's way home at that tile. Re-run `python3 tools/bridge-art/atlas.py` after adding one (its
   `EXTRA` lists Crownhaven's).
+- **Walking the map:** a solid longer than a tile blocks every cell it touches, so beds, parterres, canal walls and bridge
+  parapets are laid on whole tiles with whole-tile walks between (the Hill's garden and the canal bridges were walled
+  shut until they were). Nothing a district stands on may lie below the sea's level (`assets_coast.WZ` and its foam band)
+  unless it's meant to be water — the game draws seawater over anything lower (the Arsenal's dry dock came out flooded).
+- Test: `world/capital.js` — every district in `BUILT` loads, its spawn and every interaction can be reached (across a
+  counter too, as js/interactions.js allows), each door and gate both ways, Crownhaven's three doors, the theatre, the
+  cast's words, live light; shots `capital_<id>_{noon,golden,night}.png`.
 
 ### The Sapphire and Rose seas: Lanternfall, the floating market, Rosewell (Lumar)
 Workstream B1 of the denser worlds (`_claude_docs/spec-denser-worlds.md`; Beck: "the Emerald, Sapphire and Rose seas are your different places… each of their people and cities should probably be a little bit more unique"). What each sea's places do is `js/sapphire.js` (BridgeSapphire, interaction types `lanternfall` and `sapphire`) and `js/rose.js` (BridgeRose, type `rose`).
@@ -880,7 +890,9 @@ Beck: "instead of Runouts being like a game or a casino game, it's an actual int
 The top of Arcadia (L480; the plan is `_claude_docs/spec-arcadia-above.md`, Workstream D): above the smog, the only place
 in the city with real stars — white stone, gold and soft pastel neon, quiet. Beck: "really cool views and stuff as you get
 up above the ground". `js/spires.js` (BridgeSpires) is what its places do; the kit is `tools/bridge-art/assets_spires.py`.
-- **The crown plaza** (`arcadia-spires`, `scenes/arcadia_spires.py`, 96 × 46): a platform of white stone hung on the side of
+- **The crown plaza** (`arcadia-spires`, `scenes/arcadia_spires.py`, 96 × 46; the paving one surface — `assets_spires.flagstones`,
+  flags in running bond, no tile grid — under even starlight with small lamp pools and few bounces, so the toy finish
+  draws no blotches): a platform of white stone hung on the side of
   Halcyon's tower, a backdrop world in the skyline's **spires mode** (js/skyline.js `drawSpires`, the world JSON's
   `skyline.mode: 'spires'`: a clear sky of real stars, a galaxy band, a white moon and the odd shooting star; the other
   spires — the `peaks` layer, white stone and gold rendered by `tools/bridge-art/spires_backdrop.py` into its own
@@ -894,8 +906,10 @@ up above the ground". `js/spires.js` (BridgeSpires) is what its places do; the k
   Halcyon's crown fountain (a gilt crown spilling falls of water into a bowl), winged statues, lamps, benches, a flower
   cart; the foot of **Halcyon's tower** (HALCYON in gold, `L480 · THE SPIRES`): LUMEN's jewel-box windows, the **Spire
   Express** (`express_lift`, shaft `spire`, at 40, 9), the great doors (by appointment; Aurelio the concierge), the **Core
-  Express** (shaft `core`, 54, 9), the Orrery's bronze door. East, **the Lyra** (the opera) up its steps behind a colonnade,
-  **Aurelle** behind its round windows and velvet ropes, and **the sky docks** out over the drop: teak decking, the **air
+  Express** (shaft `core`, 54, 9), the Orrery's bronze door. East, **the Lyra** (the opera) up its steps behind a colonnade
+  and its forecourt (a red carpet between velvet ropes and gilt candelabra, bill columns, a flower kiosk, benches looking
+  over the docks), **Aurelle** behind its round windows and velvet ropes with its terrace (tables under pastel parasols,
+  festoons), and **the sky docks** out over the drop: teak decking, the **air
   cab** pad (`air_cab` pad `spires`, 70, 34), Harlan Quay's dockmaster's kiosk, luggage trolleys, champagne crates, and the
   yacht *Lumière* lying alongside on her lift fields with her steward at the gangway. A white balustrade round it all, frosted
   globes on its piers, a telescope at the front (`spires` view: js/actions.js draws the skyline's spires mode in it; seats
